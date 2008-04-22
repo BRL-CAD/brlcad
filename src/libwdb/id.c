@@ -1,7 +1,7 @@
 /*                            I D . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2007 United States Government as represented by
+ * Copyright (c) 1987-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,16 +28,13 @@
  *	Paul R. Stay
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
-
 #include <stdio.h>
 #include <math.h>
-#include "machine.h"
+#include "bio.h"
+
 #include "bu.h"
 #include "db.h"
 #include "vmath.h"
@@ -54,7 +51,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 int
 mk_id(struct rt_wdb *fp, const char *title)
 {
-	return mk_id_editunits( fp, title, 1.0 );
+    return mk_id_editunits( fp, title, 1.0 );
 }
 
 /*
@@ -70,7 +67,7 @@ mk_id(struct rt_wdb *fp, const char *title)
 int
 mk_id_units(struct rt_wdb *fp, const char *title, register const char *units)
 {
-	return mk_id_editunits( fp, title, bu_units_conversion(units) );
+    return mk_id_editunits( fp, title, bu_units_conversion(units) );
 }
 
 /*
@@ -96,20 +93,20 @@ mk_id_units(struct rt_wdb *fp, const char *title, register const char *units)
  */
 int
 mk_id_editunits(
-	struct rt_wdb *wdbp,
-	const char *title,
-	double local2mm )
+    struct rt_wdb *wdbp,
+    const char *title,
+    double local2mm )
 {
-	RT_CK_WDB(wdbp);
-	return db_update_ident( wdbp->dbip, title, local2mm );
+    RT_CK_WDB(wdbp);
+    return db_update_ident( wdbp->dbip, title, local2mm );
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

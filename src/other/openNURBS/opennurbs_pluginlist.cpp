@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -54,7 +54,7 @@ bool ON_PlugInRef::Write( ON_BinaryArchive& file ) const
     if (rc) rc = file.WriteString(m_plugin_version);
     if (rc) rc = file.WriteString(m_plugin_filename);
 
-    // version 1.1 fields 
+    // version 1.1 fields
     if (rc) rc = file.WriteString(m_developer_organization);
     if (rc) rc = file.WriteString(m_developer_address);
     if (rc) rc = file.WriteString(m_developer_country);

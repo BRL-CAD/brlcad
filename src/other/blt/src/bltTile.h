@@ -47,17 +47,17 @@ extern void Blt_TileRectangle _ANSI_ARGS_((Tk_Window tkwin, Drawable drawable,
 	Blt_Tile tile, int x, int y, unsigned int width, unsigned int height));
 extern void Blt_TileRectangles _ANSI_ARGS_((Tk_Window tkwin, Drawable drawable,
 	Blt_Tile tile, XRectangle *rectArr, int nRects));
-extern void Blt_TilePolygon _ANSI_ARGS_((Tk_Window tkwin, Drawable drawable, 
+extern void Blt_TilePolygon _ANSI_ARGS_((Tk_Window tkwin, Drawable drawable,
 	Blt_Tile tile, XPoint *pointArr, int nPoints));
 extern Pixmap Blt_PixmapOfTile _ANSI_ARGS_((Blt_Tile tile));
 
 extern void Blt_SizeOfTile _ANSI_ARGS_((Blt_Tile tile, int *widthPtr,
 	int *heightPtr));
 
-extern void Blt_SetTileOrigin _ANSI_ARGS_((Tk_Window tkwin, Blt_Tile tile, 
+extern void Blt_SetTileOrigin _ANSI_ARGS_((Tk_Window tkwin, Blt_Tile tile,
 	int x, int y));
 
-extern void Blt_SetTSOrigin _ANSI_ARGS_((Tk_Window tkwin, Blt_Tile tile, 
+extern void Blt_SetTSOrigin _ANSI_ARGS_((Tk_Window tkwin, Blt_Tile tile,
 	int x, int y));
 
 #endif /* BLT_TILE_H */

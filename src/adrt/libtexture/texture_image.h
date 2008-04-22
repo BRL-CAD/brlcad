@@ -1,7 +1,7 @@
 /*                     T E X T U R E _ I M A G E . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2007 United States Government as represented by
+ * Copyright (c) 2002-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,34 +23,29 @@
  *  Comments -
  *      Texture Library - Image Header
  *
- *  Author -
- *      Justin L. Shumaker
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- * $Id$
  */
 
 #ifndef _TEXTURE_IMAGE_H
 #define _TEXTURE_IMAGE_H
 
+#if 0
+
+#include "common.h"
+
+#endif
 
 #include "texture.h"
 
 
 typedef struct texture_image_s {
-  short	w;
-  short	h;
-  unsigned char *image;
+    short	w;
+    short	h;
+    unsigned char *image;
 } texture_image_t;
 
-
-extern	void	texture_image_init(texture_t *texture, short w, short h, unsigned char *image);
-extern	void	texture_image_free(texture_t *texture);
-extern	void	texture_image_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel);
-
+void texture_image_init(texture_t *texture, short w, short h, unsigned char *image);
+void texture_image_free(texture_t *texture);
+void texture_image_work(__TEXTURE_WORK_PROTOTYPE__);
 
 #endif
 
@@ -58,8 +53,8 @@ extern	void	texture_image_work(texture_t *texture, common_mesh_t *mesh, tie_ray_
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

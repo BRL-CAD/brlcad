@@ -143,7 +143,7 @@ Blt_FileToPostScript(tokenPtr, fileName)
     Tcl_DStringAppend(&dString, "/", -1);
     Tcl_DStringAppend(&dString, fileName, -1);
     fileName = Tcl_DStringValue(&dString);
-    Blt_AppendToPostScript(tokenPtr, "\n% including file \"", fileName, 
+    Blt_AppendToPostScript(tokenPtr, "\n% including file \"", fileName,
 	"\"\n\n", (char *)NULL);
     channel = Tcl_OpenFileChannel(interp, fileName, "r", 0);
     if (channel == NULL) {
@@ -154,8 +154,8 @@ Blt_FileToPostScript(tokenPtr, fileName)
     for(;;) {
 	nBytes = Tcl_Read(channel, buf, PSTOKEN_BUFSIZ);
 	if (nBytes < 0) {
-	    Tcl_AppendResult(interp, "error reading prologue file \"", 
-		     fileName, "\": ", Tcl_PosixError(interp), 
+	    Tcl_AppendResult(interp, "error reading prologue file \"",
+		     fileName, "\": ", Tcl_PosixError(interp),
 		     (char *)NULL);
 	    Tcl_Close(interp, channel);
 	    Tcl_DStringFree(&dString);
@@ -182,9 +182,9 @@ Blt_FileToPostScript(tokenPtr, fileName)
  *	name.
  *
  *	Maps an X color intensity (0 to 2^16-1) to a floating point
- *      value [0..1].  Many versions of Tk don't properly handle the 
- *	the lower 8 bits of the color intensity, so we can only 
- *	consider the upper 8 bits. 
+ *      value [0..1].  Many versions of Tk don't properly handle the
+ *	the lower 8 bits of the color intensity, so we can only
+ *	consider the upper 8 bits.
  *
  * Results:
  *	The string representing the color mode is returned.
@@ -196,9 +196,9 @@ XColorToPostScript(tokenPtr, colorPtr)
     struct PsTokenStruct *tokenPtr;
     XColor *colorPtr;		/* Color value to be converted */
 {
-    /* 
+    /*
      * Shift off the lower byte before dividing because some versions
-     * of Tk don't fill the lower byte correctly.  
+     * of Tk don't fill the lower byte correctly.
      */
     Blt_FormatToPostScript(tokenPtr, "%g %g %g",
 	((double)(colorPtr->red >> 8) / 255.0),
@@ -699,8 +699,8 @@ void
 Blt_ClearBackgroundToPostScript(tokenPtr)
     struct PsTokenStruct *tokenPtr;
 {
-    Blt_AppendToPostScript(tokenPtr, 
-	" 1.0 1.0 1.0 SetBgColor\n", 
+    Blt_AppendToPostScript(tokenPtr,
+	" 1.0 1.0 1.0 SetBgColor\n",
 	(char *)NULL);
 }
 
@@ -716,8 +716,8 @@ Blt_CapStyleToPostScript(tokenPtr, capStyle)
     if (capStyle > 0) {
 	capStyle--;
     }
-    Blt_FormatToPostScript(tokenPtr, 
-	"%d setlinecap\n", 
+    Blt_FormatToPostScript(tokenPtr,
+	"%d setlinecap\n",
 	capStyle);
 }
 
@@ -729,8 +729,8 @@ Blt_JoinStyleToPostScript(tokenPtr, joinStyle)
     /*
      * miter = 0, round = 1, bevel = 2
      */
-    Blt_FormatToPostScript(tokenPtr, 
-	"%d setlinejoin\n", 
+    Blt_FormatToPostScript(tokenPtr,
+	"%d setlinejoin\n",
 	joinStyle);
 }
 
@@ -742,8 +742,8 @@ Blt_LineWidthToPostScript(tokenPtr, lineWidth)
     if (lineWidth < 1) {
 	lineWidth = 1;
     }
-    Blt_FormatToPostScript(tokenPtr, 
-	"%d setlinewidth\n", 
+    Blt_FormatToPostScript(tokenPtr,
+	"%d setlinewidth\n",
 	lineWidth);
 }
 
@@ -787,8 +787,8 @@ Blt_RectangleToPostScript(tokenPtr, x, y, width, height)
     double x, y;
     int width, height;
 {
-    Blt_FormatToPostScript(tokenPtr, 
-	"%g %g %d %d Box fill\n\n", 
+    Blt_FormatToPostScript(tokenPtr,
+	"%g %g %d %d Box fill\n\n",
 	x, y, width, height);
 }
 
@@ -798,7 +798,7 @@ Blt_RegionToPostScript(tokenPtr, x, y, width, height)
     double x, y;
     int width, height;
 {
-    Blt_FormatToPostScript(tokenPtr, "%g %g %d %d Box\n\n", 
+    Blt_FormatToPostScript(tokenPtr, "%g %g %d %d Box\n\n",
 			   x, y, width, height);
 }
 
@@ -811,7 +811,7 @@ Blt_PathToPostScript(tokenPtr, screenPts, nScreenPts)
     register Point2D *pointPtr, *endPtr;
 
     pointPtr = screenPts;
-    Blt_FormatToPostScript(tokenPtr, "newpath %g %g moveto\n", 
+    Blt_FormatToPostScript(tokenPtr, "newpath %g %g moveto\n",
 	pointPtr->x, pointPtr->y);
     pointPtr++;
     endPtr = screenPts + nScreenPts;
@@ -842,9 +842,9 @@ Blt_SegmentsToPostScript(tokenPtr, segPtr, nSegments)
     register int i;
 
     for (i = 0; i < nSegments; i++, segPtr++) {
-	Blt_FormatToPostScript(tokenPtr, "%d %d moveto\n", 
+	Blt_FormatToPostScript(tokenPtr, "%d %d moveto\n",
 			       segPtr->x1, segPtr->y1);
-	Blt_FormatToPostScript(tokenPtr, " %d %d lineto\n", 
+	Blt_FormatToPostScript(tokenPtr, " %d %d lineto\n",
 			       segPtr->x2, segPtr->y2);
 	Blt_AppendToPostScript(tokenPtr, "DashesProc stroke\n", (char *)NULL);
     }
@@ -860,8 +860,8 @@ Blt_RectanglesToPostScript(tokenPtr, rectArr, nRects)
     register int i;
 
     for (i = 0; i < nRects; i++) {
-	Blt_RectangleToPostScript(tokenPtr, 
-		  (double)rectArr[i].x, (double)rectArr[i].y, 
+	Blt_RectangleToPostScript(tokenPtr,
+		  (double)rectArr[i].x, (double)rectArr[i].y,
 		  (int)rectArr[i].width, (int)rectArr[i].height);
     }
 }
@@ -927,10 +927,10 @@ Blt_Draw3DRectangleToPostScript(tokenPtr, border, x, y, width, height,
 	halfWidth = borderWidth / 2;
 	insideOffset = borderWidth - halfWidth;
 	Blt_Draw3DRectangleToPostScript(tokenPtr, border, (double)x, (double)y,
-	    width, height, halfWidth, 
+	    width, height, halfWidth,
 	    (relief == TK_RELIEF_GROOVE) ? TK_RELIEF_SUNKEN : TK_RELIEF_RAISED);
-	Blt_Draw3DRectangleToPostScript(tokenPtr, border, 
-  	    (double)(x + insideOffset), (double)(y + insideOffset), 
+	Blt_Draw3DRectangleToPostScript(tokenPtr, border,
+  	    (double)(x + insideOffset), (double)(y + insideOffset),
 	    width - insideOffset * 2, height - insideOffset * 2, halfWidth,
 	    (relief == TK_RELIEF_GROOVE) ? TK_RELIEF_RAISED : TK_RELIEF_SUNKEN);
 	return;
@@ -997,12 +997,12 @@ Blt_StippleToPostScript(tokenPtr, display, bitmap)
     int width, height;
 
     Tk_SizeOfBitmap(display, bitmap, &width, &height);
-    Blt_FormatToPostScript(tokenPtr, 
-	"gsave\n  clip\n  %d %d\n", 
+    Blt_FormatToPostScript(tokenPtr,
+	"gsave\n  clip\n  %d %d\n",
 	width, height);
     Blt_BitmapDataToPostScript(tokenPtr, display, bitmap, width, height);
-    Blt_AppendToPostScript(tokenPtr, 
-	"  StippleFill\ngrestore\n", 
+    Blt_AppendToPostScript(tokenPtr,
+	"  StippleFill\ngrestore\n",
 	(char *)NULL);
 }
 
@@ -1042,7 +1042,7 @@ Blt_ColorImageToPostScript(tokenPtr, image, x, y)
     Blt_FormatToPostScript(tokenPtr, "  %d %d 8\n", width, height);
     Blt_FormatToPostScript(tokenPtr, "  [%d 0 0 %d 0 %d] ", width, -height,
 	height);
-    Blt_AppendToPostScript(tokenPtr, 
+    Blt_AppendToPostScript(tokenPtr,
 	"{\n    currentfile tmpStr readhexstring pop\n  } ",
 	(char *)NULL);
     if (tokenPtr->colorMode != PS_MODE_COLOR) {
@@ -1050,13 +1050,13 @@ Blt_ColorImageToPostScript(tokenPtr, image, x, y)
 	Blt_ColorImageToGreyscale(image);
 	Blt_ColorImageToPsData(image, 1, &(tokenPtr->dString), " ");
     } else {
-	Blt_AppendToPostScript(tokenPtr, 
-		"false 3 colorimage\n", 
+	Blt_AppendToPostScript(tokenPtr,
+		"false 3 colorimage\n",
 		(char *)NULL);
 	Blt_ColorImageToPsData(image, 3, &(tokenPtr->dString), " ");
     }
-    Blt_AppendToPostScript(tokenPtr, 
-	"\ngrestore\n\n", 
+    Blt_AppendToPostScript(tokenPtr,
+	"\ngrestore\n\n",
 	(char *)NULL);
 }
 
@@ -1084,7 +1084,7 @@ Blt_WindowToPostScript(tokenPtr, tkwin, x, y)
 
     width = Tk_Width(tkwin);
     height = Tk_Height(tkwin);
-    image = Blt_DrawableToColorImage(tkwin, Tk_WindowId(tkwin), 0, 0, width, 
+    image = Blt_DrawableToColorImage(tkwin, Tk_WindowId(tkwin), 0, 0, width,
 	height, GAMMA);
     if (image == NULL) {
 	/* Can't grab window image so paint the window area grey */
@@ -1194,8 +1194,8 @@ Blt_FontToPostScript(tokenPtr, font)
 		    pointSize = (double)newSize;
 		}
 	    }
-	    Blt_FormatToPostScript(tokenPtr, 
-				   "%g /%s SetFont\n", 
+	    Blt_FormatToPostScript(tokenPtr,
+				   "%g /%s SetFont\n",
 				   pointSize, fontName);
 	    if (propArr != (char **)NULL) {
 		Blt_Free(propArr);
@@ -1303,7 +1303,7 @@ TextLayoutToPostScript(tokenPtr, x, y, textPtr)
 	     */
 	    src += Tcl_UtfToUniChar(src, &ch);
 	    c = (unsigned char)(ch & 0xff);
-#else 
+#else
 	    c = *src++;
 #endif
 
@@ -1317,7 +1317,7 @@ TextLayoutToPostScript(tokenPtr, x, y, textPtr)
 		*dst++ = c;
 		count += 2;
 	    } else if ((c < ' ') || (c > '~')) {
-		/* 
+		/*
 		 * Present non-printable characters in their octal
 		 * representation.
 		 */
@@ -1372,20 +1372,20 @@ Blt_TextToPostScript(tokenPtr, string, tsPtr, x, y)
     }
     theta = FMOD(tsPtr->theta, (double)360.0);
     textPtr = Blt_GetTextLayout(string, tsPtr);
-    Blt_GetBoundingBox(textPtr->width, textPtr->height, theta, &rotWidth, 
+    Blt_GetBoundingBox(textPtr->width, textPtr->height, theta, &rotWidth,
 		       &rotHeight, (Point2D *)NULL);
     /*
      * Find the center of the bounding box
      */
     anchorPos.x = x, anchorPos.y = y;
-    anchorPos = Blt_TranslatePoint(&anchorPos, ROUND(rotWidth), 
+    anchorPos = Blt_TranslatePoint(&anchorPos, ROUND(rotWidth),
 	ROUND(rotHeight), tsPtr->anchor);
     anchorPos.x += (rotWidth * 0.5);
     anchorPos.y += (rotHeight * 0.5);
 
     /* Initialize text (sets translation and rotation) */
-    Blt_FormatToPostScript(tokenPtr, "%d %d %g %g %g BeginText\n", 
-	textPtr->width, textPtr->height, tsPtr->theta, anchorPos.x, 
+    Blt_FormatToPostScript(tokenPtr, "%d %d %g %g %g BeginText\n",
+	textPtr->width, textPtr->height, tsPtr->theta, anchorPos.x,
 	anchorPos.y);
 
     Blt_FontToPostScript(tokenPtr, tsPtr->font);
@@ -1393,7 +1393,7 @@ Blt_TextToPostScript(tokenPtr, string, tsPtr, x, y)
     /* All coordinates are now relative to what was set by BeginText */
     if ((tsPtr->shadow.offset > 0) && (tsPtr->shadow.color != NULL)) {
 	Blt_ForegroundToPostScript(tokenPtr, tsPtr->shadow.color);
-	TextLayoutToPostScript(tokenPtr, tsPtr->shadow.offset, 
+	TextLayoutToPostScript(tokenPtr, tsPtr->shadow.offset,
 	       tsPtr->shadow.offset, textPtr);
     }
     Blt_ForegroundToPostScript(tokenPtr, (tsPtr->state & STATE_ACTIVE)
@@ -1430,19 +1430,19 @@ Blt_LineToPostScript(tokenPtr, pointPtr, nPoints)
     if (nPoints <= 0) {
 	return;
     }
-    Blt_FormatToPostScript(tokenPtr, " newpath %d %d moveto\n", 
+    Blt_FormatToPostScript(tokenPtr, " newpath %d %d moveto\n",
 			   pointPtr->x, pointPtr->y);
     pointPtr++;
     for (i = 1; i < (nPoints - 1); i++, pointPtr++) {
-	Blt_FormatToPostScript(tokenPtr, " %d %d lineto\n", 
+	Blt_FormatToPostScript(tokenPtr, " %d %d lineto\n",
 			       pointPtr->x, pointPtr->y);
 	if ((i % PS_MAXPATH) == 0) {
 	    Blt_FormatToPostScript(tokenPtr,
-		"DashesProc stroke\n newpath  %d %d moveto\n", 
+		"DashesProc stroke\n newpath  %d %d moveto\n",
 				   pointPtr->x, pointPtr->y);
 	}
     }
-    Blt_FormatToPostScript(tokenPtr, " %d %d lineto\n", 
+    Blt_FormatToPostScript(tokenPtr, " %d %d lineto\n",
 			   pointPtr->x, pointPtr->y);
     Blt_AppendToPostScript(tokenPtr, "DashesProc stroke\n", (char *)NULL);
 }
@@ -1461,11 +1461,11 @@ Blt_BitmapToPostScript(tokenPtr, display, bitmap, scaleX, scaleY)
     scaledWidth = (double)width * scaleX;
     scaledHeight = (double)height * scaleY;
     Blt_AppendToPostScript(tokenPtr, "  gsave\n", (char *)NULL);
-    Blt_FormatToPostScript(tokenPtr, "    %g %g translate\n", 
+    Blt_FormatToPostScript(tokenPtr, "    %g %g translate\n",
 			   scaledWidth * -0.5, scaledHeight * 0.5);
-    Blt_FormatToPostScript(tokenPtr, "    %g %g scale\n", 
+    Blt_FormatToPostScript(tokenPtr, "    %g %g scale\n",
 			   scaledWidth, -scaledHeight);
-    Blt_FormatToPostScript(tokenPtr, "    %d %d true [%d 0 0 %d 0 %d] {", 
+    Blt_FormatToPostScript(tokenPtr, "    %d %d true [%d 0 0 %d 0 %d] {",
 			   width, height, width, -height, height);
     Blt_BitmapDataToPostScript(tokenPtr, display, bitmap, width, height);
     Blt_AppendToPostScript(tokenPtr, "    } imagemask\n  grestore\n",
@@ -1481,9 +1481,9 @@ Blt_2DSegmentsToPostScript(psToken, segPtr, nSegments)
     register Segment2D *endPtr;
 
     for (endPtr = segPtr + nSegments; segPtr < endPtr; segPtr++) {
-	Blt_FormatToPostScript(psToken, "%g %g moveto\n", 
+	Blt_FormatToPostScript(psToken, "%g %g moveto\n",
 			       segPtr->p.x, segPtr->p.y);
-	Blt_FormatToPostScript(psToken, " %g %g lineto\n", 
+	Blt_FormatToPostScript(psToken, " %g %g lineto\n",
 			       segPtr->q.x, segPtr->q.y);
 	Blt_AppendToPostScript(psToken, "DashesProc stroke\n", (char *)NULL);
     }

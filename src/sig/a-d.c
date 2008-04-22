@@ -1,7 +1,7 @@
 /*                           A - D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,89 +20,80 @@
 /** @file a-d.c
  *
  * Ascii to double.
+ *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <ctype.h>
-#include <unistd.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
+#include "bio.h"
 
-#include "machine.h"
 #include "bu.h"
 
 
 #define	COMMENT_CHAR	'#'
 
-static char usage[] = "\
-Usage: a-d [values] < ascii > doubles\n";
 
 int main(int argc, char **argv)
 {
-	double	d;
-	int	i;
+    double	d;
+    int	i;
 
-	if( isatty(fileno(stdout)) ) {
-		fprintf( stderr, usage );
-		exit( 1 );
+    if ( isatty(fileno(stdout)) ) {
+	bu_exit(1, "Usage: a-d [values] < ascii > doubles\n");
+    }
+
+    if ( argc > 1 ) {
+	/* get them from the command line */
+	for ( i = 1; i < argc; i++ ) {
+	    d = atof( argv[i] );
+	    fwrite( &d, sizeof(d), 1, stdout );
 	}
-
-	if( argc > 1 ) {
-		/* get them from the command line */
-		for( i = 1; i < argc; i++ ) {
-			d = atof( argv[i] );
-			fwrite( &d, sizeof(d), 1, stdout );
-		}
-	} else {
-		/* get them from stdin */
+    } else {
+	/* get them from stdin */
 #if 0
-		char	s[80];
-		while( bu_fgets(s, 80, stdin) != NULL ) {
-			d = atof( s );
+	char	s[80];
+	while ( bu_fgets(s, 80, stdin) != NULL ) {
+	    d = atof( s );
 #else
-		/* XXX This one is slower but allows more than 1 per line */
-		while (1) {
-		    int	ch;
+	    /* XXX This one is slower but allows more than 1 per line */
+	    while (1) {
+		int	ch;
 
-		    while (isspace(ch = getchar()))
+		while (isspace(ch = getchar()))
+		    ;
+		if (ch == COMMENT_CHAR) {
+		    while (((ch = getchar()) != '\n') && (ch != EOF))
 			;
-		    if (ch == COMMENT_CHAR) {
-			while (((ch = getchar()) != '\n') && (ch != EOF))
-			    ;
-		    }
-		    if (ch == EOF)
-			exit (0);
-		    else
-			ungetc(ch, stdin);
-
-		    if ( scanf("%lf", &d) == 1 ) {
-#endif
-			fwrite( &d, sizeof(d), 1, stdout );
-		    }
-		    else if (feof(stdin))
-			exit (0);
-		    else {
-			bu_log("Error in input stream\n");
-			exit (1);
-		    }
 		}
+		if (ch == EOF)
+		    bu_exit(0, NULL);
+		else
+		    ungetc(ch, stdin);
+
+		if ( scanf("%lf", &d) == 1 ) {
+#endif
+		    fwrite( &d, sizeof(d), 1, stdout );
+		}
+		else if (feof(stdin))
+		    bu_exit(0, NULL);
+		else {
+		    bu_exit(1, "Error in input stream\n");
+		}
+	    }
 	}
 	return 0;
-}
+    }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

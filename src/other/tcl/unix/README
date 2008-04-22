@@ -82,6 +82,10 @@ How To Compile And Install Tcl:
 				should be reachable under several names.
 	--enable-man-compression=PROG
 				Compress the manpages using PROG.
+	--enable-dtrace		Enable tcl DTrace provider (if DTrace is
+				available on the platform), c.f. tclDTrace.d
+				for descriptions of the probes made available,
+				see http://wiki.tcl.tk/DTrace for more details.
     Mac OS X only: 
 	--enable-framework	package Tcl as a framework.
 	--disable-corefoundation disable use of CoreFoundation API and revert to
@@ -89,7 +93,7 @@ How To Compile And Install Tcl:
 				using naked fork (i.e. not followed by execve).
 
     Note: by default gcc will be used if it can be located on the PATH.
-    if you want to use cc instead of gcc, set the CC environment variable
+    If you want to use cc instead of gcc, set the CC environment variable
     to "cc" before running configure. It is not safe to edit the
     Makefile to use gcc after configure is run. Also note that
     you should use the same compiler when building extensions.
@@ -100,14 +104,16 @@ How To Compile And Install Tcl:
 (d) Type "make".  This will create a library archive called
     "libtcl<version>.a" or "libtcl<version>.so" and an interpreter
     application called "tclsh" that allows you to type Tcl commands
-    interactively or execute script files.
+    interactively or execute script files.  It will also create
+    a stub library archive "libtclstub<version>.a" that developers
+    may link against other C code to produce loadable extensions for Tcl.
 
 (e) If the make fails then you'll have to personalize the Makefile
     for your site or possibly modify the distribution in other ways.
     First check the porting Web page above to see if there are hints
     for compiling on your system.  If you need to modify Makefile,
-    are comments at the beginning of it that describe the things you
-    might want to change and how to change them.
+    there are comments at the beginning of it that describe the things
+    you might want to change and how to change them.
 
 (f) Type "make install" to install Tcl binaries and script files in
     standard places.  You'll need write permission on the installation
@@ -116,10 +122,15 @@ How To Compile And Install Tcl:
     the --prefix and --exec-prefix options to "configure".  See the
     Makefile for information on what directories were chosen; you
     can override these choices by modifying the "prefix" and
-    "exec_prefix" variables in the Makefile.
+    "exec_prefix" variables in the Makefile.  The installed binaries
+    have embedded within them path values relative to the install
+    directory.  If you change your mind about where Tcl should be
+    installed, start this procedure over again from step (a) so that
+    the path embedded in the binaries agrees with the install location.
 
-(g) At this point you can play with Tcl by running "make shell"
-    and typing Tcl commands at the prompt.
+(g) At this point you can play with Tcl by running the installed "tclsh"
+    executable, or via the "make shell" target, and typing Tcl commands
+    at the interactive prompt.
 
 If you have trouble compiling Tcl, see the URL noted above about working
 platforms.  It contains information that people have provided about changes

@@ -92,7 +92,8 @@ ON_INC = \
 	opennurbs_viewport.h \
 	opennurbs_workspace.h \
 	opennurbs_x.h \
-	opennurbs_xform.h 
+	opennurbs_xform.h \
+	opennurbs_zlib.h
 
 ON_SRC = \
 	opennurbs_3dm_attributes.cpp \
@@ -187,7 +188,7 @@ ON_SRC = \
 	opennurbs_workspace.cpp \
 	opennurbs_wstring.cpp \
 	opennurbs_xform.cpp \
-	opennurbs_zlib.cpp 
+	opennurbs_zlib.cpp
 
 nurbincludedir = $(includedir)/openNURBS
 nurbinclude_HEADERS = $(ON_INC)
@@ -198,24 +199,59 @@ libopenNURBS_nil_la_CFLAGS = ${LIBZ_CPPFLAGS}
 libopenNURBS_nil_la_CXXFLAGS = -Wall ${LIBZ_CPPFLAGS}
 libopenNURBS_nil_la_LIBADD = ${LIBZ}
 
-libopenNURBS_la_SOURCES = 
+libopenNURBS_la_SOURCES =
 libopenNURBS_la_LIBADD = libopenNURBS_nil.la
 
+ON_EXTRA = \
+	opennurbs.sln \
+	opennurbs.vcproj \
+	opennurbs_bezier_volume.cpp \
+	opennurbs_bezier_volume.h \
+	opennurbs_curvetree.cpp \
+	opennurbs_exception.cpp \
+	opennurbs_exception.h \
+	opennurbs_ginfinity.cpp \
+	opennurbs_ginfinity.h \
+	opennurbs_layerset.cpp \
+	opennurbs_layerset.h \
+	opennurbs_linestyle.cpp \
+	opennurbs_meshtree.cpp \
+	opennurbs_meshtree.h \
+	opennurbs_meshx.cpp \
+	opennurbs_staticlib.vcproj \
+	opennurbs_surfacetree.cpp \
+	opennurbs_vc60.dsw \
+	opennurbs.rc \
+	opennurbs_array_defs.h.orig \
+	opennurbs_brep_io.cpp.orig \
+	opennurbs_dll.cpp \
+	opennurbs_dll_resource.h \
+	opennurbs_gl.cpp \
+	opennurbs_precompiledheader.cpp \
+	opennurbs_static_vc60.dsp \
+	opennurbs_temp.h \
+	opennurbs_vc60.dsp \
+	opennurbs_x.cpp
+
 EXTRA_DIST = \
+	${ON_EXTRA} \
+        CMakeLists.txt \
 	example_brep \
 	example_dump \
 	example_gl \
+	example_read \
 	example_roundtrip \
 	example_userdata \
 	example_write \
 	faq.txt \
-	opennurbs.dsp \
-	opennurbs_zlib.h \
 	opennurbs_memory_new.cpp \
 	opennurbs_zlib_memory.cpp \
 	readme.txt
 
-MAINTAINERCLEANFILES = Makefile.in
+if BUILD_ZLIB
+DEPADD = src/other/libz
+endif
+DEPENDS = ${DEPADD}
 
 include $(top_srcdir)/misc/Makefile.defs
 

@@ -1,7 +1,7 @@
 /*                          I M O D . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2007 United States Government as represented by
+ * Copyright (c) 1986-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,38 +25,21 @@
  *  exponentiation operations to be performed on a picture.
  *  Keeps track of and reports clipping.
  *
- *  Author -
- *  	Lee A. Butler
- *	25 October 1990
- *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
 #include <math.h>
+#include "bio.h"
 
-#include "machine.h"
 #include "bu.h"
 
 
 char *progname = "(noname)";
 char *file_name = NULL;
 
-char usage[] = "\
-Usage: imod {-a add -s sub -m mult -d div -A(abs) -e exp -r root} [file.s]\n";
 
 #define	ADD	1
 #define MULT	2
@@ -77,7 +60,7 @@ get_args(int argc, register char **argv)
     double	d;
 
     while ( (c = bu_getopt( argc, argv, "a:s:m:d:Ae:r:" )) != EOF )  {
-	switch( c )  {
+	switch ( c )  {
 	    case 'a':
 		op[ numop ] = ADD;
 		val[ numop++ ] = atof(bu_optarg);
@@ -93,9 +76,8 @@ get_args(int argc, register char **argv)
 	    case 'd':
 		op[ numop ] = MULT;
 		d = atof(bu_optarg);
-		if( d == 0.0 ) {
-		    (void)fprintf( stderr, "bwmod: divide by zero!\n" );
-		    exit( 2 );
+		if ( d == 0.0 ) {
+		    bu_exit(2, "bwmod: divide by zero!\n" );
 		}
 		val[ numop++ ] = 1.0 / d;
 		break;
@@ -110,9 +92,8 @@ get_args(int argc, register char **argv)
 	    case 'r':
 		op[ numop ] = POW;
 		d = atof(bu_optarg);
-		if( d == 0.0 ) {
-		    (void)fprintf( stderr, "bwmod: zero root!\n" );
-		    exit( 2 );
+		if ( d == 0.0 ) {
+		    bu_exit(2, "bwmod: zero root!\n" );
 		}
 		val[ numop++ ] = 1.0 / d;
 		break;
@@ -122,13 +103,13 @@ get_args(int argc, register char **argv)
 	}
     }
 
-    if( bu_optind >= argc )  {
-	if( isatty((int)fileno(stdin)) )
+    if ( bu_optind >= argc )  {
+	if ( isatty((int)fileno(stdin)) )
 	    return(0);
 	file_name = "-";
     } else {
 	file_name = argv[bu_optind];
-	if( freopen(file_name, "r", stdin) == NULL )  {
+	if ( freopen(file_name, "r", stdin) == NULL )  {
 	    (void)fprintf( stderr,
 			   "bwmod: cannot open \"%s\" for reading\n",
 			   file_name );
@@ -148,9 +129,9 @@ void mk_trans_tbl(void)
     register double d;
 
     /* create translation map */
-    for (j = -32768; j < 32768 ; ++j) {
+    for (j = -32768; j < 32768; ++j) {
 	d = j;
-	for (i=0 ; i < numop ; i++) {
+	for (i=0; i < numop; i++) {
 	    switch (op[i]) {
 		case ADD : d += val[i]; break;
 		case MULT: d *= val[i]; break;
@@ -182,10 +163,8 @@ int main(int argc, char **argv)
     if (!(progname=strrchr(*argv, '/')))
 	progname = *argv;
 
-    if( !get_args( argc, argv ) || isatty(fileno(stdin))
-	|| isatty(fileno(stdout)) ) {
-	(void)fputs(usage, stderr);
-	exit( 1 );
+    if ( !get_args( argc, argv ) || isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
+	bu_exit( 1, "Usage: imod {-a add -s sub -m mult -d div -A(abs) -e exp -r root} [file.s]\n" );
     }
 
     mk_trans_tbl();
@@ -194,7 +173,7 @@ int main(int argc, char **argv)
 
     while ( (n=fread(iobuf, sizeof(*iobuf), BUFLEN, stdin)) > 0) {
 	/* translate */
-	for (p=iobuf, q= &iobuf[n] ; p < q ; ++p) {
+	for (p=iobuf, q= &iobuf[n]; p < q; ++p) {
 	    i = *p + 32768;
 	    if (mapbuf[i] > 32767) { ++clip_high; *p = 32767; }
 	    else if (mapbuf[i] < -32768) { ++clip_low; *p = -32768; }
@@ -202,13 +181,11 @@ int main(int argc, char **argv)
 	}
 	/* output */
 	if (fwrite(iobuf, sizeof(*iobuf), n, stdout) != n) {
-	    (void)fprintf(stderr, "%s: Error writing stdout\n",
-			  progname);
-	    exit(-1);
+	    bu_exit(-1, "%s: Error writing stdout\n", progname);
 	}
     }
 
-    if( clip_high != 0L || clip_low != 0L ) {
+    if ( clip_high != 0L || clip_low != 0L ) {
 	(void)fprintf( stderr, "%s: clipped %lu high, %lu low\n",
 		       progname,
 		       clip_high, clip_low );
@@ -221,8 +198,8 @@ int main(int argc, char **argv)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

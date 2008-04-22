@@ -42,7 +42,7 @@ XCreateBitmapFromData(
     unsigned int width,
     unsigned int height)
 {
-    XImage ximage;
+    XImage *ximage;
     GC gc;
     Pixmap pix;
 
@@ -51,23 +51,13 @@ XCreateBitmapFromData(
     if (gc == NULL) {
 	return None;
     }
-    ximage.height = height;
-    ximage.width = width;
-    ximage.depth = 1;
-    ximage.bits_per_pixel = 1;
-    ximage.xoffset = 0;
-    ximage.format = XYBitmap;
-    ximage.data = (char *)data;
-    ximage.byte_order = LSBFirst;
-    ximage.bitmap_unit = 8;
-    ximage.bitmap_bit_order = LSBFirst;
-    ximage.bitmap_pad = 8;
-    ximage.bytes_per_line = (width+7)/8;
-#ifdef MAC_OSX_TK
-    ximage.obdata = NULL;
-#endif
-
-    TkPutImage(NULL, 0, display, pix, gc, &ximage, 0, 0, 0, 0, width, height);
+    ximage = XCreateImage(display, NULL, 1, XYBitmap, 0, (char*) data, width,
+	    height, 8, (width + 7) / 8);
+    ximage->bitmap_bit_order = LSBFirst;
+    _XInitImageFuncPtrs(ximage);
+    TkPutImage(NULL, 0, display, pix, gc, ximage, 0, 0, 0, 0, width, height);
+    ximage->data = NULL;
+    XDestroyImage(ximage);
     XFreeGC(display, gc);
     return pix;
 }

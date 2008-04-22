@@ -1,12 +1,12 @@
 .\" -*- Text -*-
 .\" Copyright (c) 1990, University of Michigan
-.\" Template man page.  
+.\" Template man page.
 .TH SHOW3 1 "February, 1992" 1
-.UC 4 
+.UC 4
 .SH NAME
 show3 \- flip through three IFF ILBM files in rapid succession
 .SH SYNOPSIS
-.B show3 
+.B show3
 .I redfile greenfile bluefile
 .B show3
 .I filename
@@ -16,11 +16,11 @@ will render the three specified IFF ILBM files in three different
 screens, then flip through them in rapid succession, thus combining
 them into a single picture. Its main use is to combine the three
 r, g, b components of a picture created by saving a picture rendered
-using 
+using
 .I getami \-3
 into the original picture.
 
-If 
+If
 .I show3
 is called using the second form, then the extensions ".r",
 ".g", and ".b" will be appended to the file name given, to produce the
@@ -28,11 +28,11 @@ required three file names.
 
 Click the left mouse button to exit from this program.
 
-This program will only work if you have Christian Weber's 
+This program will only work if you have Christian Weber's
 .I iff.library
 in your LIBS: directory.
 .SH CAVEAT
-As with 
+As with
 .IR "getami \-3" ,
 the screen will flicker, especially in conjunction
 with interlace. If you are sensitive to screen flicker, please do not

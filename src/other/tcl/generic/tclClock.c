@@ -323,7 +323,7 @@ ClockConvertlocaltoutcObjCmd(
 		&secondsObj) != TCL_OK)
 	    || (Tcl_GetWideIntFromObj(interp, secondsObj,
 		&(fields.localSeconds)) != TCL_OK)
-	    || (Tcl_GetIntFromObj(interp, objv[3], &changeover) != TCL_OK)
+	    || (TclGetIntFromObj(interp, objv[3], &changeover) != TCL_OK)
 	    || ConvertLocalToUTC(interp, &fields, objv[2], changeover)) {
 	return TCL_ERROR;
     }
@@ -401,7 +401,7 @@ ClockGetdatefieldsObjCmd(
 	return TCL_ERROR;
     }
     if (Tcl_GetWideIntFromObj(interp, objv[1], &(fields.seconds)) != TCL_OK
-	    || Tcl_GetIntFromObj(interp, objv[3], &changeover) != TCL_OK) {
+	    || TclGetIntFromObj(interp, objv[3], &changeover) != TCL_OK) {
 	return TCL_ERROR;
     }
 
@@ -514,15 +514,15 @@ ClockGetjuliandayfromerayearmonthdayObjCmd (
 		&era) != TCL_OK
 	    || Tcl_DictObjGet(interp, dict, literals[LIT_YEAR],
 		&fieldPtr) != TCL_OK
-	    || Tcl_GetIntFromObj(interp, fieldPtr, &(fields.year)) != TCL_OK
+	    || TclGetIntFromObj(interp, fieldPtr, &(fields.year)) != TCL_OK
 	    || Tcl_DictObjGet(interp, dict, literals[LIT_MONTH],
 		&fieldPtr) != TCL_OK
-	    || Tcl_GetIntFromObj(interp, fieldPtr, &(fields.month)) != TCL_OK
+	    || TclGetIntFromObj(interp, fieldPtr, &(fields.month)) != TCL_OK
 	    || Tcl_DictObjGet(interp, dict, literals[LIT_DAYOFMONTH],
 		&fieldPtr) != TCL_OK
-	    || Tcl_GetIntFromObj(interp, fieldPtr,
+	    || TclGetIntFromObj(interp, fieldPtr,
 		&(fields.dayOfMonth)) != TCL_OK
-	    || Tcl_GetIntFromObj(interp, objv[2], &changeover) != TCL_OK) {
+	    || TclGetIntFromObj(interp, objv[2], &changeover) != TCL_OK) {
 	return TCL_ERROR;
     }
     fields.era = era;
@@ -605,17 +605,17 @@ ClockGetjuliandayfromerayearweekdayObjCmd (
 		&era) != TCL_OK
 	    || Tcl_DictObjGet(interp, dict, literals[LIT_ISO8601YEAR],
 		&fieldPtr) != TCL_OK
-	    || Tcl_GetIntFromObj(interp, fieldPtr,
+	    || TclGetIntFromObj(interp, fieldPtr,
 		&(fields.iso8601Year)) != TCL_OK
 	    || Tcl_DictObjGet(interp, dict, literals[LIT_ISO8601WEEK],
 		&fieldPtr) != TCL_OK
-	    || Tcl_GetIntFromObj(interp, fieldPtr,
+	    || TclGetIntFromObj(interp, fieldPtr,
 		&(fields.iso8601Week)) != TCL_OK
 	    || Tcl_DictObjGet(interp, dict, literals[LIT_DAYOFWEEK],
 		&fieldPtr) != TCL_OK
-	    || Tcl_GetIntFromObj(interp, fieldPtr,
+	    || TclGetIntFromObj(interp, fieldPtr,
 		&(fields.dayOfWeek)) != TCL_OK
-	    || Tcl_GetIntFromObj(interp, objv[2], &changeover) != TCL_OK) {
+	    || TclGetIntFromObj(interp, objv[2], &changeover) != TCL_OK) {
 	return TCL_ERROR;
     }
     fields.era = era;
@@ -678,7 +678,7 @@ ConvertLocalToUTC(
      * Unpack the tz data.
      */
 
-    if (Tcl_ListObjGetElements(interp, tzdata, &rowc, &rowv) != TCL_OK) {
+    if (TclListObjGetElements(interp, tzdata, &rowc, &rowv) != TCL_OK) {
 	return TCL_ERROR;
     }
 
@@ -743,9 +743,9 @@ ConvertLocalToUTCUsingTable(
     while (!found) {
 	row = LookupLastTransition(interp, fields->seconds, rowc, rowv);
 	if ((row == NULL)
-		|| Tcl_ListObjGetElements(interp, row, &cellc,
+		|| TclListObjGetElements(interp, row, &cellc,
 		    &cellv) != TCL_OK
-		|| Tcl_GetIntFromObj(interp, cellv[1],
+		|| TclGetIntFromObj(interp, cellv[1],
 		    &(fields->tzOffset)) != TCL_OK) {
 	    return TCL_ERROR;
 	}
@@ -882,7 +882,7 @@ ConvertUTCToLocal(
      * Unpack the tz data.
      */
 
-    if (Tcl_ListObjGetElements(interp, tzdata, &rowc, &rowv) != TCL_OK) {
+    if (TclListObjGetElements(interp, tzdata, &rowc, &rowv) != TCL_OK) {
 	return TCL_ERROR;
     }
 
@@ -934,8 +934,8 @@ ConvertUTCToLocalUsingTable(
 
     row = LookupLastTransition(interp, fields->seconds, rowc, rowv);
     if (row == NULL ||
-	    Tcl_ListObjGetElements(interp, row, &cellc, &cellv) != TCL_OK ||
-	    Tcl_GetIntFromObj(interp,cellv[1],&(fields->tzOffset)) != TCL_OK) {
+	    TclListObjGetElements(interp, row, &cellc, &cellv) != TCL_OK ||
+	    TclGetIntFromObj(interp,cellv[1],&(fields->tzOffset)) != TCL_OK) {
 	return TCL_ERROR;
     }
 
@@ -1577,7 +1577,7 @@ ClockGetenvObjCmd(
 	Tcl_WrongNumArgs(interp, 1, objv, "name");
 	return TCL_ERROR;
     }
-    varName = Tcl_GetStringFromObj(objv[1], NULL);
+    varName = TclGetString(objv[1]);
     varValue = getenv(varName);
     if (varValue == NULL) {
 	varValue = "";

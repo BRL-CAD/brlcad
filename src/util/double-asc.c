@@ -1,7 +1,7 @@
 /*                    D O U B L E - A S C . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2007 United States Government as represented by
+ * Copyright (c) 1996-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,35 +19,23 @@
  */
 /** @file double-asc.c
  *
- *  		Take a stream of IEEE doubles and make them ASCII
- *
- *  Author -
- *	Paul Tanenbaum
+ * Take a stream of IEEE doubles and make them ASCII
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
-#include <fcntl.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
+#include "bio.h"
 
-#include "machine.h"
-#include "bu.h"
 #include "vmath.h"
+#include "bu.h"
 #include "bn.h"
 #include "fb.h"
+
+
+#define OPT_STRING	"acf:hs:n:w#:?"
 
 
 static char	*file_name;
@@ -63,14 +51,14 @@ static long int	file_height = 512L;	/* default input height */
 static int	make_cells = 0;		/* Insert cell coords in output? */
 static int	d_per_l = 1;		/* doubles per line of output */
 
+
 void print_usage (void)
 {
-#define OPT_STRING	"acf:hs:n:w#:?"
-
-    bu_log("Usage: 'double-asc %s\n%s [file.d]'\n",
-	"[-{ah}] [-s squaresize] [-w width] [-n height]",
-	   "                   [-c] [-f format] [-# depth]");
+    bu_exit(1, "Usage: 'double-asc %s\n%s [file.d]'\n",
+	    "[-{ah}] [-s squaresize] [-w width] [-n height]",
+	    "                   [-c] [-f format] [-# depth]");
 }
+
 
 int
 get_args(int argc, register char **argv)
@@ -105,18 +93,17 @@ get_args(int argc, register char **argv)
 		file_width = atol(bu_optarg);
 		autosize = 0;
 		break;
-	    /*
-	     *	application-specific options
-	     */
+		/*
+		 *	application-specific options
+		 */
 	    case 'c':
 		make_cells = 1;
 		break;
 	    case 'f':
 		if (format != 0)
 		    bu_free(format, "format_string");
-		format = (char *)
-			    bu_malloc(strlen(bu_optarg) + 1, "format string");
-		strcpy(format, bu_optarg);
+		format = (char *)bu_malloc(strlen(bu_optarg)+1, "format string");
+		bu_strlcpy(format, bu_optarg, strlen(bu_optarg)+1);
 		break;
 	    case '#':
 		d_per_l = atoi(bu_optarg);
@@ -124,8 +111,6 @@ get_args(int argc, register char **argv)
 	    case '?':
 	    default:
 		print_usage();
-		exit (ch != '?');
-		return(0);
 	}
     }
     if (format == 0)
@@ -143,21 +128,16 @@ get_args(int argc, register char **argv)
 	case 1:
 	    file_name = argv[bu_optind++];
 	    if ((infd = open(file_name, O_RDONLY)) == -1)
-	    {
-		bu_log ("Cannot open file '%s'\n", file_name);
-		exit (1);
-	    }
+		bu_exit (1, "Cannot open file '%s'\n", file_name);
 	    fileinput = 1;
 	    break;
 	default:
 	    print_usage();
-	    exit (1);
     }
 
     if (argc > ++bu_optind)
     {
 	print_usage();
-	exit (1);
     }
 
     return(1);		/* OK */
@@ -179,7 +159,6 @@ main (int argc, char **argv)
     if (!get_args( argc, argv))
     {
 	print_usage();
-	exit (1);
     }
 
     /* autosize input? */
@@ -230,7 +209,7 @@ main (int argc, char **argv)
     if (num < 0)
     {
 	perror("double-asc");
-	exit (1);
+	bu_exit (1, NULL);
     }
     return 0;
 }
@@ -239,8 +218,8 @@ main (int argc, char **argv)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

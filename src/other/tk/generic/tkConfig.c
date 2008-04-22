@@ -25,9 +25,7 @@
 #define __NO_OLD_CONFIG
 #endif
 
-#include "tk.h"
 #include "tkInt.h"
-#include "tkPort.h"
 #include "tkFont.h"
 
 /*
@@ -1435,79 +1433,64 @@ Tk_RestoreSavedOptions(
 		    = savePtr->items[i].valuePtr;
 	}
 	if (specPtr->internalOffset >= 0) {
+	    register char *ptr = (char *) &savePtr->items[i].internalForm;
+
 	    switch (specPtr->type) {
 	    case TK_OPTION_BOOLEAN:
-		*((int *) internalPtr) =
-			*((int *) &savePtr->items[i].internalForm);
+		*((int *) internalPtr) = *((int *) ptr);
 		break;
 	    case TK_OPTION_INT:
-		*((int *) internalPtr) =
-			*((int *) &savePtr->items[i].internalForm);
+		*((int *) internalPtr) = *((int *) ptr);
 		break;
 	    case TK_OPTION_DOUBLE:
-		*((double *) internalPtr) =
-			*((double *) &savePtr->items[i].internalForm);
+		*((double *) internalPtr) = *((double *) ptr);
 		break;
 	    case TK_OPTION_STRING:
-		*((char **) internalPtr) =
-			*((char **) &savePtr->items[i].internalForm);
+		*((char **) internalPtr) = *((char **) ptr);
 		break;
 	    case TK_OPTION_STRING_TABLE:
-		*((int *) internalPtr) =
-			*((int *) &savePtr->items[i].internalForm);
+		*((int *) internalPtr) = *((int *) ptr);
 		break;
 	    case TK_OPTION_COLOR:
-		*((XColor **) internalPtr) =
-			*((XColor **) &savePtr->items[i].internalForm);
+		*((XColor **) internalPtr) = *((XColor **) ptr);
 		break;
 	    case TK_OPTION_FONT:
-		*((Tk_Font *) internalPtr) =
-			*((Tk_Font *) &savePtr->items[i].internalForm);
+		*((Tk_Font *) internalPtr) = *((Tk_Font *) ptr);
 		break;
 	    case TK_OPTION_STYLE:
-		*((Tk_Style *) internalPtr) =
-			*((Tk_Style *) &savePtr->items[i].internalForm);
+		*((Tk_Style *) internalPtr) = *((Tk_Style *) ptr);
 		break;
 	    case TK_OPTION_BITMAP:
-		*((Pixmap *) internalPtr) =
-			*((Pixmap *) &savePtr->items[i].internalForm);
+		*((Pixmap *) internalPtr) = *((Pixmap *) ptr);
 		break;
 	    case TK_OPTION_BORDER:
-		*((Tk_3DBorder *) internalPtr) =
-			*((Tk_3DBorder *) &savePtr->items[i].internalForm);
+		*((Tk_3DBorder *) internalPtr) = *((Tk_3DBorder *) ptr);
 		break;
 	    case TK_OPTION_RELIEF:
-		*((int *) internalPtr) =
-			*((int *) &savePtr->items[i].internalForm);
+		*((int *) internalPtr) = *((int *) ptr);
 		break;
 	    case TK_OPTION_CURSOR:
-		*((Tk_Cursor *) internalPtr) =
-			*((Tk_Cursor *) &savePtr->items[i].internalForm);
+		*((Tk_Cursor *) internalPtr) = *((Tk_Cursor *) ptr);
 		Tk_DefineCursor(savePtr->tkwin, *((Tk_Cursor *) internalPtr));
 		break;
 	    case TK_OPTION_JUSTIFY:
-		*((Tk_Justify *) internalPtr) =
-			*((Tk_Justify *) &savePtr->items[i].internalForm);
+		*((Tk_Justify *) internalPtr) = *((Tk_Justify *) ptr);
 		break;
 	    case TK_OPTION_ANCHOR:
-		*((Tk_Anchor *) internalPtr) =
-			*((Tk_Anchor *) &savePtr->items[i].internalForm);
+		*((Tk_Anchor *) internalPtr) = *((Tk_Anchor *) ptr);
 		break;
 	    case TK_OPTION_PIXELS:
-		*((int *) internalPtr) =
-			*((int *) &savePtr->items[i].internalForm);
+		*((int *) internalPtr) = *((int *) ptr);
 		break;
 	    case TK_OPTION_WINDOW:
-		*((Tk_Window *) internalPtr) =
-			*((Tk_Window *) &savePtr->items[i].internalForm);
+		*((Tk_Window *) internalPtr) = *((Tk_Window *) ptr);
 		break;
 	    case TK_OPTION_CUSTOM: {
 		Tk_ObjCustomOption *custom = optionPtr->extra.custom;
 
 		if (custom->restoreProc != NULL) {
-		    custom->restoreProc(custom->clientData,
-			    savePtr->tkwin, internalPtr,
-			    (char *)&savePtr->items[i].internalForm);
+		    custom->restoreProc(custom->clientData, savePtr->tkwin,
+			    internalPtr, ptr);
 		}
 		break;
 	    }

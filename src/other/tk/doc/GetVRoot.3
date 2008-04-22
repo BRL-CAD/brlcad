@@ -34,14 +34,15 @@ Points to word in which to store height of virtual root.
 .SH DESCRIPTION
 .PP
 \fBTk_GetVRootGeometry\fR returns geometry information about the virtual
-root window associated with \fItkwin\fR.  The ``associated'' virtual
-root is the one in which \fItkwin\fR's nearest top-level ancestor (or
+root window associated with \fItkwin\fR.  The
+.QW associated
+virtual root is the one in which \fItkwin\fR's nearest top-level ancestor (or
 \fItkwin\fR itself if it is a top-level window) has
 been reparented by the window manager.  This window is identified by
 a \fB__SWM_ROOT\fR or \fB__WM_ROOT\fR property placed on the top-level
 window by the window manager.
 If \fItkwin\fR is not associated with a virtual root (e.g.
-because the window manager doesn't use virtual roots) then *\fIxPtr\fR and
+because the window manager does not use virtual roots) then *\fIxPtr\fR and
 *\fIyPtr\fR will be set to 0 and *\fIwidthPtr\fR and *\fIheightPtr\fR
 will be set to the dimensions of the screen containing \fItkwin\fR.
 

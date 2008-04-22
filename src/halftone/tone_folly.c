@@ -1,7 +1,7 @@
 /*                    T O N E _ F O L L Y . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -23,15 +23,11 @@
  *	Christopher T. Johnson	- 90/03/21
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
 #include <stdio.h>
 
-#include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 
@@ -45,10 +41,10 @@ extern struct bn_unif *RandomFlag;
  * 	From page 135 of Digital Halftoning.
  */
 static unsigned char	ordered[4][4] = {
-	{2,16,3,13},
-	{12,8,9,5},
-	{4,14,1,15},
-	{10,6,11,7}};
+    {2, 16, 3, 13},
+    {12, 8, 9, 5},
+    {4, 14, 1, 15},
+    {10, 6, 11, 7}};
 
 /*	tone_folly	4x4 square ordered dither dispersed (folly and van dam)
  *
@@ -77,20 +73,20 @@ static unsigned char	ordered[4][4] = {
 int
 tone_folly(int pix, int x, int y, int nx, int ny, int new)
 {
-	register int threshold = 16*ordered[ x % 4][ y % 4];
+    register int threshold = 16*ordered[ x % 4][ y % 4];
 
-	if (RandomFlag) {
-		threshold += BN_UNIF_DOUBLE(RandomFlag)*63;
-	}
-	return ((pix*Levels + threshold)/255);
+    if (RandomFlag) {
+	threshold += BN_UNIF_DOUBLE(RandomFlag)*63;
+    }
+    return ((pix*Levels + threshold)/255);
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

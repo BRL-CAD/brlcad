@@ -12,7 +12,6 @@ AM_CFLAGS = ${X_CFLAGS}
 
 noinst_LTLIBRARIES = libblts.la
 
-# libblts_la_LDFLAGS = -module -static
 libblts_la_SOURCES = \
 	bltAlloc.c \
 	bltArrayObj.c \
@@ -70,10 +69,8 @@ libblts_la_SOURCES = \
 	bltTreeViewStyle.c \
 	bltUnixDnd.c \
 	bltUnixImage.c \
-	bltUnixMain.c \
 	bltUnixPipe.c \
 	bltUtil.c \
-	bltVecCmd.c \
 	bltVecMath.c \
 	bltVecObjCmd.c \
 	bltVector.c \
@@ -85,19 +82,28 @@ libblts_la_SOURCES = \
 	tkFrame.c
 
 EXTRA_DIST = \
+	Makefile-cyg.in \
+	Makefile.bc \
+	Makefile.vc \
+	blt.mak \
+	bltConfig.h \
+	bltTuple.c \
+	bltTupleCmd.c \
+	bltUnixMain.c \
+	bltVecCmd.c \
+	bltWinConfig.h \
 	bltWinDde.c \
-	bltWindow.c \
 	bltWinDraw.c \
 	bltWinImage.c \
 	bltWinMain.c \
-	bltWinop.c \
 	bltWinPipe.c \
 	bltWinPrnt.c \
 	bltWinUtil.c \
+	bltWindow.c \
+	bltWinop.c \
 	pure_api.c \
-	tkScrollbar.c \
-	bltConfig.h \
-	bltWinConfig.h
+	tkMenubutton.c \
+	tkScrollbar.c
 
 include_HEADERS = \
 	blt.h \
@@ -133,7 +139,5 @@ include_HEADERS = \
 
 brlcadincludedir = $(includedir)/brlcad
 brlcadinclude_HEADERS = $(include_HEADERS)
-
-MAINTAINERCLEANFILES = Makefile.in
 
 include $(top_srcdir)/misc/Makefile.defs

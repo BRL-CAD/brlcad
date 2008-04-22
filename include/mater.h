@@ -1,7 +1,7 @@
 /*                         M A T E R . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2007 United States Government as represented by
+ * Copyright (c) 1985-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,10 +28,6 @@
  *  @author
  *	Michael John Muuss
  *
- *  @par Source
- *	SECAD/VLD Computing Consortium, Bldg 394
- *  @n	The U. S. Army Ballistic Research Laboratory
- *  @n	Aberdeen Proving Ground, Maryland  21005
  */
 
 #include "bu.h"
@@ -49,27 +45,27 @@
 #endif
 
 struct mater {
-	short		mt_low;		/**< @brief bounds of region IDs, inclusive */
-	short		mt_high;
-	unsigned char	mt_r;		/**< @brief color */
-	unsigned char	mt_g;
-	unsigned char	mt_b;
-	long		mt_daddr;	/**< @brief db address, for updating */
-	struct mater	*mt_forw;	/**< @brief next in chain */
+    short		mt_low;		/**< @brief bounds of region IDs, inclusive */
+    short		mt_high;
+    unsigned char	mt_r;		/**< @brief color */
+    unsigned char	mt_g;
+    unsigned char	mt_b;
+    long		mt_daddr;	/**< @brief db address, for updating */
+    struct mater	*mt_forw;	/**< @brief next in chain */
 };
 #define MATER_NULL	((struct mater *)0)
 #define MATER_NO_ADDR	(-1L)		/**< @brief invalid mt_daddr */
 
 RT_EXPORT extern struct mater *rt_material_head; /**< @brief defined in mater.c */
 RT_EXPORT BU_EXTERN(void rt_insert_color,
-		       (struct mater *newp));
+		    (struct mater *newp));
 /** @} */
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

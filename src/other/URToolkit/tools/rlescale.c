@@ -1,6 +1,6 @@
-/* 
+/*
  * rlescale.c - Generate a gray-scale RLE file.
- * 
+ *
  * Author:	Spencer W. Thomas
  * 		Electrical Engineering & Computer Science Dept.
  * 		University of Michigan
@@ -14,7 +14,7 @@
  * Has color squares along the bottom, with nsteps (default 16) gray
  * log stepped intensity gray rectangles above that.  The -l flag
  * makes a linear scale instead of a log scale.  If -c is
- * specified, does separate white, red, green, and blue scales. 
+ * specified, does separate white, red, green, and blue scales.
  */
 
 #include <stdlib.h>
@@ -66,7 +66,7 @@ char ** argv;
     rle_addhist( argv, (rle_hdr *)0, &hdr );
 
     sprintf( buf, "IMAGE_TYPE=%s scale image with %d log steps",
-	     cflag ? "Color" : "Gray", nsteps );  
+	     cflag ? "Color" : "Gray", nsteps );
     rle_putcom( buf, &hdr );
 
     /* Allocate storage for the output rows */

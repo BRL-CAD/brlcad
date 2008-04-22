@@ -38,7 +38,7 @@
  * RCS: @(#) $Id$
  */
 
-#include "tkMacOSXInt.h"
+#include "tkMacOSXPrivate.h"
 #include "tkMacOSXFont.h"
 
 /*
@@ -157,6 +157,38 @@ static int antialiasedTextEnabled;
 #define APPLFONT_NAME		"application"
 #define MENUITEMFONT_NAME	"menu"
 
+struct SystemFontMapEntry {
+    const ThemeFontID id;
+    const char *systemName;
+    const char *tkName;
+    const char *tkName1;
+};
+
+#define ThemeFont(n, ...) { kTheme##n##Font, "system" #n "Font", ##__VA_ARGS__ }
+static const struct SystemFontMapEntry systemFontMap[] = {
+    ThemeFont(System, 			"TkDefaultFont", "TkIconFont"),
+    ThemeFont(EmphasizedSystem,		"TkCaptionFont"),
+    ThemeFont(SmallSystem,		"TkHeadingFont", "TkTooltipFont"),
+    ThemeFont(SmallEmphasizedSystem),
+    ThemeFont(Application,		"TkTextFont"),
+    ThemeFont(Label,			"TkSmallCaptionFont"),
+    ThemeFont(Views),
+    ThemeFont(MenuTitle),
+    ThemeFont(MenuItem,			"TkMenuFont"),
+    ThemeFont(MenuItemMark),
+    ThemeFont(MenuItemCmdKey),
+    ThemeFont(WindowTitle),
+    ThemeFont(PushButton),
+    ThemeFont(UtilityWindowTitle),
+    ThemeFont(AlertHeader),
+    ThemeFont(Toolbar),
+    ThemeFont(MiniSystem),
+    { kThemeSystemFontDetail,		"systemDetailSystemFont" },
+    { kThemeSystemFontDetailEmphasized,	"systemDetailEmphasizedSystemFont" },
+    { -1, NULL }
+};
+#undef ThemeFont
+
 /*
  * Procedures used only in this file.
  */
@@ -221,9 +253,13 @@ static OSStatus FontFamilyEnumCallback(ATSFontFamilyRef family, void *refCon);
 static void SortFontFamilies(void);
 static int CompareFontFamilies(const void *vp1, const void *vp2);
 static const char *AddString(const char *in);
+
 static OSStatus GetThemeFontAndFamily(const ThemeFontID themeFontId,
 	FMFontFamily *fontFamily, unsigned char *fontName, SInt16 *fontSize,
 	Style *fontStyle);
+static void InitSystemFonts(TkMainInfo *mainPtr);
+static int CreateNamedSystemFont(Tcl_Interp *interp, Tk_Window tkwin,
+	const char* name, TkFontAttributes *faPtr);
 
 
 /*
@@ -249,10 +285,103 @@ TkpFontPkgInit(
     TkMainInfo *mainPtr)	/* The application being created. */
 {
     InitFontFamilies();
+    InitSystemFonts(mainPtr);
 
 #if TK_MAC_COALESCE_LINE
     Tcl_DStringInit(&currentLine);
 #endif
+}
+
+/*
+ *-------------------------------------------------------------------------
+ *
+ * InitSystemFonts --
+ *
+ *	Initialize named system fonts.
+ *
+ * Results:
+ *
+ *	None.
+ *
+ * Side effects:
+ *
+ *	None.
+ *
+ *-------------------------------------------------------------------------
+ */
+
+static void
+InitSystemFonts(
+    TkMainInfo *mainPtr)
+{
+    Tcl_Interp *interp = mainPtr->interp;
+    Tk_Window tkwin = (Tk_Window) mainPtr->winPtr;
+    const struct SystemFontMapEntry *systemFont = systemFontMap;
+    TkFontAttributes fa;
+
+    /* force this for now */
+    if (!mainPtr->winPtr->mainPtr) {
+	mainPtr->winPtr->mainPtr = mainPtr;
+    }
+    TkInitFontAttributes(&fa);
+    while (systemFont->systemName) {
+	Str255 fontName;
+	SInt16 fontSize;
+	Style  fontStyle;
+
+	if (GetThemeFont(systemFont->id, smSystemScript, fontName,
+		&fontSize, &fontStyle) == noErr) {
+	    CopyPascalStringToC(fontName, (char*)fontName);
+	    fa.family = Tk_GetUid((char*)fontName);
+	    fa.size = fontSize;
+	    fa.weight = (fontStyle & bold) ? TK_FW_BOLD : TK_FW_NORMAL;
+	    fa.slant = (fontStyle & italic) ? TK_FS_ITALIC : TK_FS_ROMAN;
+	    fa.underline = ((fontStyle & underline) != 0);
+	    CreateNamedSystemFont(interp, tkwin, systemFont->systemName, &fa);
+	    if (systemFont->tkName) {
+		CreateNamedSystemFont(interp, tkwin, systemFont->tkName, &fa);
+	    }
+	    if (systemFont->tkName1) {
+		CreateNamedSystemFont(interp, tkwin, systemFont->tkName1, &fa);
+	    }
+	}
+	systemFont++;
+    }
+    fa.family = Tk_GetUid("monaco");
+    fa.size = 11;
+    fa.weight = TK_FW_NORMAL;
+    fa.slant = TK_FS_ROMAN;
+    fa.underline = 0;
+    CreateNamedSystemFont(interp, tkwin, "TkFixedFont", &fa);
+}
+
+/*
+ *-------------------------------------------------------------------------
+ *
+ * CreateNamedSystemFont --
+ *
+ *	Register a system font with the Tk named font mechanism.
+ *
+ * Results:
+ *
+ *	Result from TkCreateNamedFont().
+ *
+ * Side effects:
+ *
+ *	A new named font is added to the Tk font registry.
+ *
+ *-------------------------------------------------------------------------
+ */
+
+static int
+CreateNamedSystemFont(
+    Tcl_Interp *interp,
+    Tk_Window tkwin,
+    const char* name,
+    TkFontAttributes *faPtr)
+{
+    TkDeleteNamedFont(NULL, tkwin, name);
+    return TkCreateNamedFont(interp, tkwin, name, faPtr);
 }
 
 /*
@@ -316,14 +445,14 @@ GetThemeFontAndFamily(
 TkFont *
 TkpGetNativeFont(
     Tk_Window tkwin,		/* For display where font will be used. */
-    const char * name)		/* Platform-specific font name. */
+    const char *name)		/* Platform-specific font name. */
 {
     ThemeFontID themeFontId;
     FMFontFamily fontFamily;
     Str255 fontName;
     SInt16 fontSize;
     Style  fontStyle;
-    MacFont * fontPtr;
+    MacFont *fontPtr;
 
     if (strcmp(name, SYSTEMFONT_NAME) == 0) {
 	themeFontId = kThemeSystemFont;
@@ -549,7 +678,10 @@ TkpGetFontAttrsForChar(
      * But the name of the actual font may still differ, so we activate the
      * string as an ATSU layout and ask ATSU about the fallback.
      */
-    TkMacOSXSetupDrawingContext(Tk_WindowId(tkwin), NULL, 1, &drawingContext);
+    if (!TkMacOSXSetupDrawingContext(Tk_WindowId(tkwin), NULL, 1,
+	    &drawingContext)) {
+	Tcl_Panic("TkpGetFontAttrsForChar: drawingContext not setup");
+    }
 
     LayoutSetString(fontPtr, &drawingContext, &uchar, 1);
 
@@ -691,21 +823,25 @@ TkpMeasureCharsInContext(
 				 * which only partially fits on this line.
 				 * TK_WHOLE_WORDS means stop on a word
 				 * boundary, if possible. TK_AT_LEAST_ONE
-				 * means return at least one character (or at
-				 * least the first partial word in case
-				 * TK_WHOLE_WORDS is also set) even if no
-				 * characters (words) fit. TK_ISOLATE_END
-				 * means that the last character should not be
-				 * considered in context with the rest of the
-				 * string (used for breaking lines). */
+				 * means return at least one character even
+				 * if no characters fit.  If TK_WHOLE_WORDS
+				 * and TK_AT_LEAST_ONE are set and the first
+				 * word doesn't fit, we return at least one
+				 * character or whatever characters fit into
+				 * maxLength.  TK_ISOLATE_END means that the
+				 * last character should not be considered in
+				 * context with the rest of the string (used
+				 * for breaking lines). */
     int *lengthPtr)		/* Filled with x-location just after the
 				 * terminating character. */
 {
     const MacFont *fontPtr = (const MacFont *) tkfont;
     int curX = -1, curByte = 0;
     UniChar *uchars;
-    int ulen, urstart, urlen, urend;
+    int ulen;
+    UniCharArrayOffset urstart, urlen, urend;
     Tcl_DString ucharBuffer;
+    int forceCharacterMode = 0;
 
     /*
      * Sanity checks.
@@ -792,71 +928,64 @@ TkpMeasureCharsInContext(
 	     * also something we like to decide for ourself.
 	     */
 
-	    while ((offset > (UniCharArrayOffset)urstart) &&
-		    (uchars[offset-1] == ' ')) {
+	    while ((offset > urstart) && (uchars[offset-1] == ' ')) {
 		offset--;
 	    }
+	}
 
-	    /*
-	     * Fix up left-overs for the TK_WHOLE_WORDS case.
-	     */
+	/*
+	 * Fix up left-overs for the TK_WHOLE_WORDS case.
+	 */
 
-	    if (flags & TK_WHOLE_WORDS) {
-		if (flags & TK_AT_LEAST_ONE) {
-		    /*
-		     * If we are the the start of the range, we need to look
-		     * forward. If we are not at the end of a word, we must
-		     * be in the middle of the first word, so we also look
-		     * forward.
-		     */
+	if (flags & TK_WHOLE_WORDS) {
+	    if ((flags & TK_AT_LEAST_ONE) && ((offset == urstart)
+		    || ((offset != urend) && (uchars[offset] != ' ')))) {
+		/*
+		 * With TK_AT_LEAST_ONE, if we are the the start of the
+		 * range, we need to add at least one character.  If we are
+		 * not at the end of a word, we must be in the middle of the
+		 * first word still and we want to just use what we have so
+		 * far.  In both cases we still need to find the right
+		 * character boundary, so we set a flag that gets us into the
+		 * code for character mode below.
+		 */
 
-		    if ((offset == (UniCharArrayOffset)urstart) ||
-			    (uchars[offset] != ' ')) {
-			while ((offset < (UniCharArrayOffset)urend)
-				&& (uchars[offset] != ' ')) {
-			    offset++;
-			}
-		    }
-		} else {
-		    /*
-		     * If we are not at the end of a word, we need to look
-		     * backward.
-		     */
+		forceCharacterMode = 1;
 
-		    if ((offset != (UniCharArrayOffset)urend) &&
-			    (uchars[offset] != ' ')) {
-			while ((offset > (UniCharArrayOffset)urstart)
-				&& (uchars[offset-1] != ' ')) {
-			    offset--;
-			}
-			while ((offset > (UniCharArrayOffset)urstart)
-				&& (uchars[offset-1] == ' ')) {
-			    offset--;
-			}
-		    }
+	    } else {
+		/*
+		 * If we are not at the end of a word, we must be in the
+		 * middle of the first word still.  Return 0.
+		 */
+
+		if ((offset != urend) && (uchars[offset] != ' ')) {
+		    offset = urstart;
+		    curX = 0;
 		}
 	    }
 	}
 
-	if (offset > (UniCharArrayOffset)urend) {
+	if (offset > urend) {
 	    offset = urend;
 	}
 
 	/*
 	 * If "flags" says that we don't actually want a word break, we need
-	 * to find the next character break ourself, as ATSUBreakLine() will
-	 * only give us word breaks. Do a simple linear search.
+	 * to find the next character break ourself, as ATSUBreakLine will
+	 * only give us word breaks.  Do a simple linear search.
+	 *
+	 * Even do this, if ATSUBreakLine returned kATSULineBreakInWord,
+	 * because we have not accounted correctly for all of the flags yet,
+	 * like TK_AT_LEAST_ONE.
 	 */
 
-	if ((err != kATSULineBreakInWord)
-		&& !(flags & TK_WHOLE_WORDS)
-		&& (offset <= (UniCharArrayOffset)urend)) {
+	if ((!(flags & TK_WHOLE_WORDS) || forceCharacterMode) && (offset <= urend)) {
 	    UniCharArrayOffset lastOffset = offset;
 	    UniCharArrayOffset nextoffset;
 	    int lastX = -1;
 	    int wantonemorechar = -1; /* undecided */
 
-	    while (offset <= (UniCharArrayOffset)urend) {
+	    while (offset <= urend) {
 		if (flags & TK_ISOLATE_END) {
 		    LayoutSetString(fontPtr, NULL, uchars, offset);
 		}
@@ -876,7 +1005,7 @@ TkpMeasureCharsInContext(
 
 		    if (wantonemorechar == -1) {
 			wantonemorechar = ((flags & TK_AT_LEAST_ONE) &&
-				(lastOffset == (UniCharArrayOffset)urstart)) ||
+				(lastOffset == urstart)) ||
 				((flags & TK_PARTIAL_OK) &&
 				(lastX != maxLength));
 			if (!wantonemorechar) {
@@ -907,7 +1036,7 @@ TkpMeasureCharsInContext(
 		 * into account.
 		 */
 
-		if (offset >= (UniCharArrayOffset)urend) {
+		if (offset >= urend) {
 		    break;
 		}
 		nextoffset = 0;
@@ -952,13 +1081,14 @@ TkpMeasureCharsInContext(
     Tcl_DStringFree(&ucharBuffer);
 
 #ifdef TK_MAC_DEBUG_FONTS
-    TkMacOSXDbgMsg("measure: '%.*s', maxpix=%d, -> width=%d, bytes=%d, "
-	    "flags=%s%s%s%s", rangeLength, source+rangeStart, maxLength, curX,
-	    curByte,
+    TkMacOSXDbgMsg("measure: '%.*s', maxLength=%d, flags=%s%s%s%s "
+	    "-> width=%d, bytes=%d",
+	    rangeLength, source+rangeStart, maxLength,
 	    flags & TK_PARTIAL_OK   ? "partialOk "  : "",
 	    flags & TK_WHOLE_WORDS  ? "wholeWords " : "",
 	    flags & TK_AT_LEAST_ONE ? "atLeastOne " : "",
-	    flags & TK_ISOLATE_END  ? "isolateEnd " : "");
+	    flags & TK_ISOLATE_END  ? "isolateEnd " : "",
+	    curX, curByte);
 #endif
 
     *lengthPtr = curX;
@@ -1058,10 +1188,16 @@ TkpDrawCharsInContext(
     Tcl_DString runString;
 #endif
 
-    TkMacOSXSetupDrawingContext(drawable, gc, 1, &drawingContext);
+    if (!TkMacOSXSetupDrawingContext(drawable, gc, tkMacOSXUseCGDrawing,
+	    &drawingContext)) {
+	return;
+    }
 
 #if 0
-    /* TODO: implement stippled text drawing */
+    /*
+     * TODO: implement stippled text drawing
+     */
+
     if ((gc->fill_style == FillStippled
 	    || gc->fill_style == FillOpaqueStippled)
 	    && gc->stipple != None) {
@@ -2288,8 +2424,7 @@ TkMacOSXInitControlFontStyle(
  *	disabling of antialiased text from tcl.
  *	The possible values for this variable are:
  *
- *	-1 - Use system default as configurable in "System Preferences" ->
- *	   "General".
+ *	-1 - Use system default as configurable in "System Prefs" -> "General".
  *	 0 - Unconditionally disable antialiasing.
  *	 1 - Unconditionally enable antialiasing.
  *

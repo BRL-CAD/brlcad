@@ -1,7 +1,7 @@
 /*                          B A R Y . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2007 United States Government as represented by
+ * Copyright (c) 1995-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,16 +19,7 @@
  */
 /** @file bary.c
  *
- *  Author -
- *	Paul J. Tanenbaum
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 
@@ -36,7 +27,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include <stdio.h>
 #include <math.h>
 
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -52,12 +42,11 @@ struct site
 #define	SITE_NULL	((struct site *) 0)
 #define	SITE_MAGIC	0x73697465
 #define s_magic		l.magic
+#define OPT_STRING	"ns:t?"
 
 void print_usage (void)
 {
-#define OPT_STRING	"ns:t?"
-
-    bu_log("Usage: 'bary [-nt] [-s \"x y z\"] [file]'\n");
+    bu_exit(1, "Usage: 'bary [-nt] [-s \"x y z\"] [file]'\n");
 }
 
 void enqueue_site (struct bu_list *sl, fastf_t x, fastf_t y, fastf_t z)
@@ -84,7 +73,7 @@ void show_sites (struct bu_list *sl)
     for (BU_LIST_FOR(sp, site, sl))
     {
 	bu_log("I got a site (%g, %g, %g)\n",
-	    sp -> s_x, sp -> s_y, sp -> s_z);
+	       sp -> s_x, sp -> s_y, sp -> s_z);
     }
 }
 
@@ -97,7 +86,7 @@ int read_point (FILE *fp, fastf_t *c_p, int c_len, int normalize, struct bu_vls 
     static int		line_nm = 0;
     struct bu_vls	*bp;
 
-    for (bp = bu_vls_vlsinit(); ; bu_vls_trunc(bp, 0))
+    for (bp = bu_vls_vlsinit();; bu_vls_trunc(bp, 0))
     {
 	if (bu_vls_gets(bp, fp) == -1)
 	{
@@ -120,11 +109,8 @@ int read_point (FILE *fp, fastf_t *c_p, int c_len, int normalize, struct bu_vls 
 
 	    c_p[i] = strtod(cp, &endp);
 	    if (endp == cp)
-	    {
-		bu_log("Illegal input at line %d: '%s'\n",
-		    line_nm, bu_vls_addr(bp));
-		exit (1);
-	    }
+		bu_exit (1, "Illegal input at line %d: '%s'\n",
+			 line_nm, bu_vls_addr(bp));
 	    cp = endp;
 	}
 
@@ -139,14 +125,14 @@ int read_point (FILE *fp, fastf_t *c_p, int c_len, int normalize, struct bu_vls 
 	goto wrap_up;
     }
 
-    wrap_up:
-	if ((return_code == 1) && (tail != 0))
-	{
-	    bu_vls_trunc(tail, 0);
-	    bu_vls_strcat(tail, cp);
-	}
-	bu_vls_vlsfree(bp);
-	return (return_code);
+ wrap_up:
+    if ((return_code == 1) && (tail != 0))
+    {
+	bu_vls_trunc(tail, 0);
+	bu_vls_strcat(tail, cp);
+    }
+    bu_vls_vlsfree(bp);
+    return (return_code);
 }
 
 int
@@ -176,7 +162,6 @@ main (int argc, char **argv)
 		{
 		    bu_log("Illegal site: '%s'\n", bu_optarg);
 		    print_usage();
-		    exit (1);
 		}
 		enqueue_site(&site_list, x, y, z);
 		break;
@@ -187,7 +172,6 @@ main (int argc, char **argv)
 	    case '?':
 	    default:
 		print_usage();
-		exit (ch != '?');
 	}
 
     switch (argc - bu_optind)
@@ -199,14 +183,10 @@ main (int argc, char **argv)
 	case 1:
 	    inf_name = argv[bu_optind++];
 	    if ((infp = fopen(inf_name, "r")) == NULL)
-	    {
-		bu_log ("Cannot open file '%s'\n", inf_name);
-		exit (1);
-	    }
+		bu_exit (1, "Cannot open file '%s'\n", inf_name);
 	    break;
 	default:
 	    print_usage();
-	    exit (1);
     }
 
     if (BU_LIST_IS_EMPTY(&site_list))
@@ -221,7 +201,7 @@ main (int argc, char **argv)
 	++nm_sites;
 
     coeff = (fastf_t *)
-		bu_malloc(nm_sites * sizeof(fastf_t), "coefficient array");
+	bu_malloc(nm_sites * sizeof(fastf_t), "coefficient array");
 
     while (read_point(infp, coeff, nm_sites, normalize, tail_buf) != EOF)
     {
@@ -246,8 +226,8 @@ main (int argc, char **argv)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

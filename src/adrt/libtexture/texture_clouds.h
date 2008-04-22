@@ -1,7 +1,7 @@
 /*                     T E X T U R E _ C L O U D S . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2007 United States Government as represented by
+ * Copyright (c) 2002-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,14 +22,6 @@
  *  Comments -
  *      Texture Library - Perlin Clouds Header
  *
- *  Author -
- *      Justin L. Shumaker
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- * $Id$
  */
 
 #ifndef _TEXTURE_CLOUDS_H
@@ -41,19 +33,17 @@
 
 
 typedef struct texture_clouds_s {
-  tfloat size;
-  int octaves;
-  int absolute;
-  TIE_3	scale;
-  TIE_3 translate;
-  texture_perlin_t perlin;
+    tfloat size;
+    int octaves;
+    int absolute;
+    TIE_3	scale;
+    TIE_3 translate;
+    texture_perlin_t perlin;
 } texture_clouds_t;
 
-
-extern	void	texture_clouds_init(texture_t *texture, tfloat size, int octaves, int absolute, TIE_3 scale, TIE_3 translate);
-extern	void	texture_clouds_free(texture_t *texture);
-extern	void	texture_clouds_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel);
-
+void texture_clouds_init(texture_t *texture, tfloat size, int octaves, int absolute, TIE_3 scale, TIE_3 translate);
+void texture_clouds_free(texture_t *texture);
+void texture_clouds_work(__TEXTURE_WORK_PROTOTYPE__);
 
 #endif
 
@@ -61,8 +51,8 @@ extern	void	texture_clouds_work(texture_t *texture, common_mesh_t *mesh, tie_ray
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -1,7 +1,7 @@
 /*                         I F _ T K . C
  * BRL-CAD
  *
- * Copyright (c) 2007 United States Government as represented by
+ * Copyright (c) 2007-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,7 +39,6 @@
 #include <tcl.h>
 #include <tk.h>
 
-#include "machine.h"
 #include "fb.h"
 
 
@@ -117,7 +116,7 @@ HIDDEN int
 fb_tk_open(FBIO *ifp, char *file, int width, int height)
 {
     FB_CK_FBIO(ifp);
-    if( file == (char *)NULL )
+    if ( file == (char *)NULL )
 	fb_log( "fb_open( 0x%lx, NULL, %d, %d )\n",
 		(unsigned long)ifp, width, height );
     else
@@ -125,15 +124,16 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 		(unsigned long)ifp, file, width, height );
 
     /* check for default size */
-    if( width <= 0 )
+    if ( width <= 0 )
 	width = ifp->if_width;
-    if( height <= 0 )
+    if ( height <= 0 )
 	height = ifp->if_height;
 
     /* set debug bit vector */
-    if( file != NULL ) {
+    if ( file != NULL ) {
 	char *cp;
-	for( cp = file; *cp != '\0' && !isdigit(*cp); cp++ ) ;
+	for ( cp = file; *cp != '\0' && !isdigit(*cp); cp++ )
+	    ;
 	sscanf( cp, "%d", &ifp->if_debug );
     } else {
 	ifp->if_debug = 0;
@@ -214,7 +214,7 @@ HIDDEN int
 tk_clear(FBIO *ifp, unsigned char *pp)
 {
     FB_CK_FBIO(ifp);
-    if( pp == 0 )
+    if ( pp == 0 )
 	fb_log( "fb_clear( 0x%lx, NULL )\n", (unsigned long)ifp );
     else
 	fb_log( "fb_clear( 0x%lx, &[%d %d %d] )\n",
@@ -246,16 +246,16 @@ tk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 	    (unsigned long)pixelp, count );
 
     /* write them out, four per line */
-    if( ifp->if_debug & FB_DEBUG_RW ) {
-	for( i = 0; i < count; i++ ) {
-	    if( i % 4 == 0 )
+    if ( ifp->if_debug & FB_DEBUG_RW ) {
+	for ( i = 0; i < count; i++ ) {
+	    if ( i % 4 == 0 )
 		fb_log( "%4d:", i );
 	    fb_log( "  [%3d,%3d,%3d]", *(pixelp+(i*3)+RED),
 		    *(pixelp+(i*3)+GRN), *(pixelp+(i*3)+BLU) );
-	    if( i % 4 == 3 )
+	    if ( i % 4 == 3 )
 		fb_log( "\n" );
 	}
-	if( i % 4 != 0 )
+	if ( i % 4 != 0 )
 	    fb_log( "\n" );
     }
 
@@ -293,15 +293,15 @@ tk_wmap(FBIO *ifp, const ColorMap *cmp)
     int	i;
 
     FB_CK_FBIO(ifp);
-    if( cmp == NULL )
+    if ( cmp == NULL )
 	fb_log( "fb_wmap( 0x%lx, NULL )\n",
 		(unsigned long)ifp );
     else
 	fb_log( "fb_wmap( 0x%lx, 0x%lx )\n",
 		(unsigned long)ifp, (unsigned long)cmp );
 
-    if( ifp->if_debug & FB_DEBUG_CMAP && cmp != NULL ) {
-	for( i = 0; i < 256; i++ ) {
+    if ( ifp->if_debug & FB_DEBUG_CMAP && cmp != NULL ) {
+	for ( i = 0; i < 256; i++ ) {
 	    fb_log( "%3d: [ 0x%4lx, 0x%4lx, 0x%4lx ]\n",
 		    i,
 		    (unsigned long)cmp->cm_red[i],
@@ -357,7 +357,7 @@ HIDDEN int
 tk_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 {
     FB_CK_FBIO(ifp);
-    fb_log( "fb_getcursor( 0x%lx, 0x%x,0x%x,0x%x )\n",
+    fb_log( "fb_getcursor( 0x%lx, 0x%x, 0x%x, 0x%x )\n",
 	    (unsigned long)ifp, mode, x, y );
     fb_sim_getcursor( ifp, mode, x, y );
     fb_log( " <= %d %d %d\n", *mode, *x, *y );
@@ -453,14 +453,19 @@ Usage: /dev/tk[#]\n\
     return	0;
 }
 
+#else
+
+/* quell empty-compilation unit warnings */
+static const int unused = 0;
+
 #endif /* IF_TK */
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

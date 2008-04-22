@@ -26,7 +26,7 @@ Points to a Tcl object containing a command (or sequence of commands)
 to execute.
 .AP int flags in
 An OR'ed combination of flag bits.  \fBTCL_NO_EVAL\fR means record the
-command but don't evaluate it.  \fBTCL_EVAL_GLOBAL\fR means evaluate
+command but do not evaluate it.  \fBTCL_EVAL_GLOBAL\fR means evaluate
 the command at global level instead of the current stack level.
 .BE
 
@@ -40,7 +40,7 @@ It returns a completion code such as \fBTCL_OK\fR just like \fBTcl_EvalObjEx\fR,
 as well as a result object containing additional information
 (a result value or error message)
 that can be retrieved using \fBTcl_GetObjResult\fR.
-If you don't want the command recorded on the history list then
+If you do not want the command recorded on the history list then
 you should invoke \fBTcl_EvalObjEx\fR instead of \fBTcl_RecordAndEvalObj\fR.
 Normally \fBTcl_RecordAndEvalObj\fR is only called with top-level
 commands typed by the user, since the purpose of history is to

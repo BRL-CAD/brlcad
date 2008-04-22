@@ -1,7 +1,7 @@
 #                       T A B L E . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2007 United States Government as represented by
+# Copyright (c) 1998-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -18,15 +18,6 @@
 # information.
 #
 ###
-#
-# Author -
-#	Bob Parker
-#
-# Source -
-#	The U. S. Army Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#
 #
 # Description -
 #       This class comprises a collection of methods for querying/modifying tables.
@@ -256,7 +247,7 @@
 
 		eval lappend newtable [lrange $table 0 [expr {$i1 - 1}]]
 		eval lappend newtable [lrange $table [expr {$i1 + 1}] \
-						     [expr {$i2 - 1}]]
+					   [expr {$i2 - 1}]]
 		lappend newtable $rdata
 		eval lappend newtable [lrange $table $i2 end]
 	    } else {
@@ -266,7 +257,7 @@
 		eval lappend newtable [lrange $table 0 [expr {$i1 - 1}]]
 		lappend newtable $rdata
 		eval lappend newtable [lrange $table $i1 \
-						     [expr {$i2 - 1}]]
+					   [expr {$i2 - 1}]]
 		eval lappend newtable [lrange $table [expr {$i2 + 1}] end]
 	    }
 

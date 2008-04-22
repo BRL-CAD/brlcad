@@ -2,13 +2,11 @@
 # The next line is executed by /bin/sh, but not tcl \
 exec tclsh8.4 "$0" ${1+"$@"}
 
-package require Tcl 8.4
+package require Tcl 8.5
 
-# Convert Ousterhout format man pages into highly crosslinked
-# hypertext.
+# Convert Ousterhout format man pages into highly crosslinked hypertext.
 #
-# Along the way detect many unmatched font changes and other odd
-# things.
+# Along the way detect many unmatched font changes and other odd things.
 #
 # Note well, this program is a hack rather than a piece of software
 # engineering.  In that sense it's probably a good example of things
@@ -18,54 +16,10 @@ package require Tcl 8.4
 # try to use this, you'll be very much on your own.
 #
 # Copyright (c) 1995-1997 Roger E. Critchlow Jr
-#
-# The authors hereby grant permission to use, copy, modify, distribute,
-# and license this software and its documentation for any purpose, provided
-# that existing copyright notices are retained in all copies and that this
-# notice is included verbatim in any distributions. No written agreement,
-# license, or royalty fee is required for any of the authorized uses.
-# Modifications to this software may be copyrighted by their authors
-# and need not follow the licensing terms described here, provided that
-# the new terms are clearly indicated on the first page of each file where
-# they apply.
-# 
-# IN NO EVENT SHALL THE AUTHORS OR DISTRIBUTORS BE LIABLE TO ANY PARTY
-# FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES
-# ARISING OUT OF THE USE OF THIS SOFTWARE, ITS DOCUMENTATION, OR ANY
-# DERIVATIVES THEREOF, EVEN IF THE AUTHORS HAVE BEEN ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
-# 
-# THE AUTHORS AND DISTRIBUTORS SPECIFICALLY DISCLAIM ANY WARRANTIES,
-# INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.  THIS SOFTWARE
-# IS PROVIDED ON AN "AS IS" BASIS, AND THE AUTHORS AND DISTRIBUTORS HAVE
-# NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR
-# MODIFICATIONS.
-#
-# Revisions:
-#  May 15, 1995 - initial release
-#  May 16, 1995 - added a back to home link to toplevel table of
-#	contents.
-#  May 18, 1995 - broke toplevel table of contents into separate
-#	pages for each section, and broke long table of contents
-#	into a one page for each man page.
-#  Mar 10, 1996 - updated for tcl7.5b3/tk4.1b3
-#  Apr 14, 1996 - incorporated command line parsing from Tom Tromey,
-#		  <tromey@creche.cygnus.com> -- thanks Tom.
-#		- updated for tcl7.5/tk4.1 final release.
-#		- converted to same copyright as the man pages.
-#  Sep 14, 1996 - made various modifications for tcl7.6b1/tk4.2b1
-#  Oct 18, 1996 - added tcl7.6/tk4.2 to the list of distributions.
-#  Oct 22, 1996 - major hacking on indentation code and elsewhere.
-#  Mar  4, 1997 - 
-#  May 28, 1997 - added tcl8.0b1/tk8.0b1 to the list of distributions
-#		- cleaned source for tclsh8.0 execution
-#		- renamed output files for windoze installation
-#		- added spaces to tables
-#  Oct 24, 1997 - moved from 8.0b1 to 8.0 release
-#
 
-set Version "0.32"
+set Version "0.40"
+
+set ::CSSFILE "docs.css"
 
 proc parse_command_line {} {
     global argv Version
@@ -140,13 +94,16 @@ proc parse_command_line {} {
 	}
     }
 
-    if {!$build_tcl && !$build_tk} {set build_tcl 1; set build_tk 1}
+    if {!$build_tcl && !$build_tk} {
+	set build_tcl 1;
+	set build_tk 1
+    }
 
     if {$build_tcl} {
 	# Find Tcl.
 	set tcldir [lindex [lsort [glob -nocomplain -tails -type d \
-				       -directory $tcltkdir tcl$useversion]] end]
-	if {$tcldir == ""} then {
+		-directory $tcltkdir tcl$useversion]] end]
+	if {$tcldir eq ""} {
 	    puts stderr "tcltk-man-html: couldn't find Tcl below $tcltkdir"
 	    exit 1
 	}
@@ -157,7 +114,7 @@ proc parse_command_line {} {
 	# Find Tk.
 	set tkdir [lindex [lsort [glob -nocomplain -tails -type d \
 				      -directory $tcltkdir tk$useversion]] end]
-	if {$tkdir == ""} then {
+	if {$tkdir eq ""} {
 	    puts stderr "tcltk-man-html: couldn't find Tk below $tcltkdir"
 	    exit 1
 	}
@@ -167,10 +124,16 @@ proc parse_command_line {} {
     # the title for the man pages overall
     global overall_title
     set overall_title ""
-    if {$build_tcl} {append overall_title "[capitalize $tcldir]"}
-    if {$build_tcl && $build_tk} {append overall_title "/"}
-    if {$build_tk} {append overall_title "[capitalize $tkdir]"}
-    append overall_title " Manual"
+    if {$build_tcl} {
+	append overall_title "[capitalize $tcldir]"
+    }
+    if {$build_tcl && $build_tk} {
+	append overall_title "/"
+    }
+    if {$build_tk} {
+	append overall_title "[capitalize $tkdir]"
+    }
+    append overall_title " Documentation"
 }
 
 proc capitalize {string} {
@@ -186,28 +149,168 @@ proc manerror {msg} {
     global manual
     set name {}
     set subj {}
+    set procname [lindex [info level -1] 0]
     if {[info exists manual(name)]} {
 	set name $manual(name)
     }
     if {[info exists manual(section)] && [string length $manual(section)]} {
-	puts stderr "$name: $manual(section):  $msg"
+	puts stderr "$name: $manual(section): $procname: $msg"
     } else {
-	puts stderr "$name: $msg"
+	puts stderr "$name: $procname: $msg"
     }
 }
 
 proc manreport {level msg} {
     global manual
     if {$level < $manual(report-level)} {
-	manerror $msg
+	uplevel 1 [list manerror $msg]
     }
 }
 
 proc fatal {msg} {
     global manual
-    manerror $msg
+    uplevel 1 [list manerror $msg]
     exit 1
 }
+
+##
+## templating
+##
+proc indexfile {} {
+    if {[info exists ::TARGET] && $::TARGET eq "devsite"} {
+	return "index.tml"
+    } else {
+	return "contents.htm"
+    }
+}
+proc copyright {copyright {level {}}} {
+    # We don't actually generate a separate copyright page anymore
+    #set page "${level}copyright.htm"
+    #return "<A HREF=\"$page\">Copyright</A> &#169; [htmlize-text [lrange $copyright 2 end]]"
+    # obfuscate any email addresses that may appear in name
+    set who [string map {@ (at)} [lrange $copyright 2 end]]
+    return "Copyright &copy; [htmlize-text $who]"
+}
+proc copyout {copyrights {level {}}} {
+    set out "<div class=\"copy\">"
+    foreach c $copyrights {
+	append out "[copyright $c $level]\n"
+    }
+    append out "</div>"
+    return $out
+}
+proc CSS {{level ""}} {
+    return "<link rel=\"stylesheet\" href=\"${level}$::CSSFILE\" type=\"text/css\" media=\"all\">\n"
+}
+proc DOCTYPE {} {
+    return "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">"
+}
+proc htmlhead {title header args} {
+    set level ""
+    if {[lindex $args end] eq "../[indexfile]"} {
+	# XXX hack - assume same level for CSS file
+	set level "../"
+    }
+    set out "[DOCTYPE]\n<HTML>\n<HEAD><TITLE>$title</TITLE>\n[CSS $level]</HEAD>\n"
+    foreach {uptitle url} $args {
+	set header "<a href=\"$url\">$uptitle</a> <small>&gt;</small> $header"
+    }
+    append out "<BODY><H2>$header</H2>"
+    global manual
+    if {[info exists manual(subheader)]} {
+	set subs {}
+	foreach {name subdir} $manual(subheader) {
+	    if {$name eq $title} {
+		lappend subs $name
+	    } else {
+		lappend subs "<A HREF=\"${level}$subdir/[indexfile]\">$name</A>"
+	    }
+	}
+	append out "\n<H3>[join $subs { | }]</H3>"
+    }
+    return $out
+}
+proc gencss {} {
+    set hBd "1px dotted #11577b"
+    return "
+body, div, p, th, td, li, dd, ul, ol, dl, dt, blockquote {
+    font-family: Verdana, sans-serif;
+}
+
+pre, code { font-family: 'Courier New', Courier, monospace; }
+
+pre {
+    background-color:  #f6fcec;
+    border-top:        1px solid #6A6A6A;
+    border-bottom:     1px solid #6A6A6A;
+    padding:           1em;
+    overflow:          auto;
+}
+
+body {
+    background-color:  #FFFFFF;
+    font-size:         12px;
+    line-height:       1.25;
+    letter-spacing:    .2px;
+    padding-left:      .5em;
+}
+
+h1, h2, h3, h4 {
+    font-family:       Georgia, serif;
+    padding-left:      1em;
+    margin-top:        1em;
+}
+
+h1 {
+    font-size:         18px;
+    color:             #11577b;
+    border-bottom:     $hBd;
+    margin-top:        0px;
+}
+
+h2 {
+    font-size:         14px;
+    color:             #11577b;
+    background-color:  #c5dce8;
+    padding-left:      1em;
+    border:            1px solid #6A6A6A;
+}
+
+h3, h4 {
+    color:             #1674A4;
+    background-color:  #e8f2f6;
+    border-bottom:     $hBd;
+    border-top:        $hBd;
+}
+
+h3 { font-size: 12px; }
+h4 { font-size: 11px; }
+
+.keylist dt, .arguments dt {
+  width: 20em;
+  float: left;
+  padding: 2px;
+  border-top: 1px solid #999;
+}
+
+.keylist dt { font-weight: bold; }
+
+.keylist dd, .arguments dd {
+  margin-left: 20em;
+  padding: 2px;
+  border-top: 1px solid #999;
+}
+
+.copy {
+    background-color:  #f6fcfc;
+    white-space:       pre;
+    font-size:         80%;
+    border-top:        1px solid #6A6A6A;
+    margin-top:        2em;
+}
+"
+}
+
 ##
 ## parsing
 ##
@@ -216,36 +319,53 @@ proc unquote arg {
 }
 
 proc parse-directive {line codename restname} {
-    upvar $codename code $restname rest
+    upvar 1 $codename code $restname rest
     return [regexp {^(\.[.a-zA-Z0-9]*) *(.*)} $line all code rest]
+}
+
+proc htmlize-text {text {charmap {}}} {
+    # contains some extras for use in nroff->html processing
+    # build on the list passed in, if any
+    lappend charmap \
+	{&}	{&amp;} \
+	{\\}	"&#92;" \
+	{\e}	"&#92;" \
+	{\ }	{&nbsp;} \
+	{\|}	{&nbsp;} \
+	{\0}	{ } \
+	\"	{&quot;} \
+	{<}	{&lt;} \
+	{>}	{&gt;} \
+	\u201c "&#8220;" \
+	\u201d "&#8221;"
+
+    return [string map $charmap $text]
 }
 
 proc process-text {text} {
     global manual
     # preprocess text
-    set text [string map [list \
-	    {\&}	"\t" \
-	    {&}		{&amp;} \
-	    {\\}	{&#92;} \
-	    {\e}	{&#92;} \
-	    {\ }	{&nbsp;} \
-	    {\|}	{&nbsp;} \
-	    {\0}	{ } \
-	    {\%}	{} \
-	    "\\\n"	"\n" \
-	    \"		{&quot;} \
-	    {<}		{&lt;} \
-	    {>}		{&gt;} \
-	    {\(+-}	{&#177;} \
-	    {\fP}	{\fR} \
-	    {\.}	. \
-	    {\(bu}	{&#8226;} \
-	    ] $text]
-    regsub -all {\\o'o\^'} $text {\&ocirc;} text; # o-circumflex in re_syntax.n
-    regsub -all {\\-\\\|\\-} $text -- text;	# two hyphens
-    regsub -all -- {\\-\\\^\\-} $text -- text;	# two hyphens
-    regsub -all {\\-} $text - text;		# a hyphen
-    regsub -all "\\\\\n" $text "\\&#92;\n" text; # backslashed newline
+    set charmap [list \
+		     {\&}	"\t" \
+		     {\%}	{} \
+		     "\\\n"	"\n" \
+		     {\(+-}	"&#177;" \
+		     {\(co}	"&copy;" \
+		     {\(em}	"&#8212;" \
+		     {\(fm}	"&#8242;" \
+		     {\(mu}	"&#215;" \
+		     {\(->}	"<font size=\"+1\">&#8594;</font>" \
+		     {\fP}	{\fR} \
+		     {\.}	. \
+		     {\(bu}	"&#8226;" \
+		    ]
+    lappend charmap {\o'o^'} {&ocirc;} ; # o-circumflex in re_syntax.n
+    lappend charmap {\-\|\-} --        ; # two hyphens
+    lappend charmap {\-} -             ; # a hyphen
+
+    set text [htmlize-text $text $charmap]
+    # General quoted entity
+    regsub -all {\\N'(\d+)'} $text "\\&#\\1;" text
     while {[string first "\\" $text] >= 0} {
 	# C R
 	if {[regsub {^([^\\]*)\\fC([^\\]*)\\fR(.*)$} $text \
@@ -263,19 +383,21 @@ proc process-text {text} {
 	if {[regsub {^([^\\]*)\\fI([^\\]*)\\fB(.*)$} $text \
 		{\1<I>\2</I>\\fB\3} text]} continue
 	# B B, I I, R R
-	if {[regsub {^([^\\]*)\\fB([^\\]*)\\fB(.*)$} $text \
+	if {
+	    [regsub {^([^\\]*)\\fB([^\\]*)\\fB(.*)$} $text \
 		{\1\\fB\2\3} ntext]
 	    || [regsub {^([^\\]*)\\fI([^\\]*)\\fI(.*)$} $text \
 		    {\1\\fI\2\3} ntext]
 	    || [regsub {^([^\\]*)\\fR([^\\]*)\\fR(.*)$} $text \
-		    {\1\\fR\2\3} ntext]} {
-	    manerror "process-text: impotent font change: $text"
+		    {\1\\fR\2\3} ntext]
+	} then {
+	    manerror "impotent font change: $text"
 	    set text $ntext
 	    continue
 	}
 	# unrecognized
-	manerror "process-text: uncaught backslash: $text"
-	set text [string map [list "\\" "#92;"] $text]
+	manerror "uncaught backslash: $text"
+	set text [string map [list "\\" "&#92;"] $text]
     }
     return $text
 }
@@ -305,13 +427,13 @@ proc is-a-directive {line} {
     return [string match .* $line]
 }
 proc split-directive {line opname restname} {
-    upvar $opname op $restname rest
+    upvar 1 $opname op $restname rest
     set op [string range $line 0 2]
     set rest [string trim [string range $line 3 end]]
 }
 proc next-op-is {op restname} {
     global manual
-    upvar $restname rest
+    upvar 1 $restname rest
     if {[more-text]} {
 	set text [lindex $manual(text) $manual(text-pointer)]
 	if {[string equal -length 3 $text $op]} {
@@ -342,13 +464,13 @@ proc match-text args {
 	}
 	set arg [string trim $arg]
 	set targ [string trim [lindex $manual(text) $manual(text-pointer)]]
-	if {[string equal $arg $targ]} {
+	if {$arg eq $targ} {
 	    incr nback
 	    incr manual(text-pointer)
 	    continue
 	}
 	if {[regexp {^@(\w+)$} $arg all name]} {
-	    upvar $name var
+	    upvar 1 $name var
 	    set var $targ
 	    incr nback
 	    incr manual(text-pointer)
@@ -356,7 +478,7 @@ proc match-text args {
 	}
 	if {[regexp -nocase {^(\.[A-Z][A-Z])@(\w+)$} $arg all op name]\
 		&& [string equal $op [lindex $targ 0]]} {
-	    upvar $name var
+	    upvar 1 $name var
 	    set var [lrange $targ 1 end]
 	    incr nback
 	    incr manual(text-pointer)
@@ -394,36 +516,40 @@ proc long-toc {text} {
 proc option-toc {name class switch} {
     global manual
     if {[string match "*OPTIONS" $manual(section)]} {
-	# link the defined option into the long table of contents
-	set link [long-toc "$switch, $name, $class"]
-	regsub -- "$switch, $name, $class" $link "$switch" link
-	return $link
-    } elseif {[string equal $manual(name):$manual(section) \
-	    "options:DESCRIPTION"]} {
-	# link the defined standard option to the long table of
-	# contents and make a target for the standard option references
-	# from other man pages.
-	set first [lindex $switch 0]
-	set here M$first
-	set there L[incr manual(long-toc-n)]
-	set manual(standard-option-$first) "<A HREF=\"$manual(name).htm#$here\">$switch, $name, $class</A>"
-	lappend manual(section-toc) "<DD><A HREF=\"$manual(name).htm#$here\" NAME=\"$there\">$switch, $name, $class</A>"
-	return "<A NAME=\"$here\">$switch</A>"
-    } else {
+	if {$manual(name) ne "ttk_widget"} {
+	    # link the defined option into the long table of contents
+	    set link [long-toc "$switch, $name, $class"]
+	    regsub -- "$switch, $name, $class" $link "$switch" link
+	    return $link
+	}
+    } elseif {"$manual(name):$manual(section)" ne "options:DESCRIPTION"} {
 	error "option-toc in $manual(name) section $manual(section)"
     }
+
+    # link the defined standard option to the long table of contents and make
+    # a target for the standard option references from other man pages.
+
+    set first [lindex $switch 0]
+    set here M$first
+    set there L[incr manual(long-toc-n)]
+    set manual(standard-option-$manual(name)-$first) \
+	"<A HREF=\"$manual(name).htm#$here\">$switch, $name, $class</A>"
+    lappend manual(section-toc) \
+	"<DD><A HREF=\"$manual(name).htm#$here\" NAME=\"$there\">$switch, $name, $class</A>"
+    return "<A NAME=\"$here\">$switch</A>"
 }
-proc std-option-toc {name} {
+proc std-option-toc {name page} {
     global manual
-    if {[info exists manual(standard-option-$name)]} {
-	lappend manual(section-toc) <DD>$manual(standard-option-$name)
-	return $manual(standard-option-$name)
+    if {[info exists manual(standard-option-$page-$name)]} {
+	lappend manual(section-toc) <DD>$manual(standard-option-$page-$name)
+	return $manual(standard-option-$page-$name)
     }
+    manerror "missing reference to \"$name\" in $page.n"
     set here M[incr manual(section-toc-n)]
     set there L[incr manual(long-toc-n)]
     set other M$name
-    lappend manual(section-toc) "<DD><A HREF=\"options.htm#$other\">$name</A>"
-    return "<A HREF=\"options.htm#$other\">$name</A>"
+    lappend manual(section-toc) "<DD><A HREF=\"$page.htm#$other\">$name</A>"
+    return "<A HREF=\"$page.htm#$other\">$name</A>"
 }
 ##
 ## process the widget option section
@@ -436,8 +562,10 @@ proc output-widget-options {rest} {
     backup-text 1
     set para {}
     while {[next-op-is .OP rest]} {
-	switch -exact [llength $rest] {
-	    3 { foreach {switch name class} $rest { break } }
+	switch -exact -- [llength $rest] {
+	    3 {
+		lassign $rest switch name class
+	    }
 	    5 {
 		set switch [lrange $rest 0 2]
 		set name [lindex $rest 3]
@@ -447,12 +575,13 @@ proc output-widget-options {rest} {
 		fatal "bad .OP $rest"
 	    }
 	}
-	if {![regexp {^(<.>)([-\w ]+)(</.>)$} $switch all oswitch switch cswitch]} {
-	    if {![regexp {^(<.>)([-\w ]+) or ([-\w ]+)(</.>)$} $switch all oswitch switch1 switch2 cswitch]} {
+	if {![regexp {^(<.>)([-\w ]+)(</.>)$} $switch \
+		all oswitch switch cswitch]} {
+	    if {![regexp {^(<.>)([-\w ]+) or ([-\w ]+)(</.>)$} $switch \
+		    all oswitch switch1 switch2 cswitch]} {
 		error "not Switch: $switch"
-	    } else {
-		set switch "$switch1$cswitch or $oswitch$switch2"
 	    }
+	    set switch "$switch1$cswitch or $oswitch$switch2"
 	}
 	if {![regexp {^(<.>)([\w]*)(</.>)$} $name all oname name cname]} {
 	    error "not Name: $name"
@@ -465,6 +594,30 @@ proc output-widget-options {rest} {
 	man-puts "<DT>Database Class: $oclass$class$cclass"
 	man-puts <DD>[next-text]
 	set para <P>
+
+	if {[next-op-is .RS rest]} {
+	    while {[more-text]} {
+		set line [next-text]
+		if {[is-a-directive $line]} {
+		    split-directive $line code rest
+		    switch -exact -- $code {
+			.RE {
+			    break
+			}
+			.SH - .SS {
+			    manerror "unbalanced .RS at section end"
+			    backup-text 1
+			    break
+			}
+			default {
+			    output-directive $line
+			}
+		    }
+		} else {
+		    man-puts $line
+		}
+	    }
+	}
     }
     man-puts </DL>
     lappend manual(section-toc) </DL>
@@ -494,7 +647,7 @@ proc output-RS-list {} {
 	set line [next-text]
 	if {[is-a-directive $line]} {
 	    split-directive $line code rest
-	    switch -exact $code {
+	    switch -exact -- $code {
 		.RE {
 		    break
 		}
@@ -510,7 +663,7 @@ proc output-RS-list {} {
 	} else {
 	    man-puts $line
 	}
-    }	
+    }
     man-puts </DL>
 }
 
@@ -527,11 +680,11 @@ proc output-IP-list {context code rest} {
 	    set line [next-text]
 	    if {[is-a-directive $line]} {
 		split-directive $line code rest
-		if {[string equal $code ".IP"] && [string equal $rest {}]} {
+		if {$code eq ".IP" && $rest eq {}} {
 		    man-puts "<P>"
 		    continue
 		}
-		if {[lsearch {.br .DS .RS} $code] >= 0} {
+		if {$code in {.br .DS .RS}} {
 		    output-directive $line
 		} else {
 		    backup-text 1
@@ -544,14 +697,12 @@ proc output-IP-list {context code rest} {
 	man-puts </DL>
     } else {
 	# labelled list, make contents
-	if {
-	    [string compare $context ".SH"] &&
-	    [string compare $context ".SS"]
-	} then {
+	if {$context ne ".SH" && $context ne ".SS"} {
 	    man-puts <P>
 	}
-	man-puts <DL>
-	lappend manual(section-toc) <DL>
+	set dl "<DL class=\"[string tolower $manual(section)]\">"
+	man-puts $dl
+	lappend manual(section-toc) $dl
 	backup-text 1
 	set accept_RE 0
 	set para {}
@@ -559,31 +710,28 @@ proc output-IP-list {context code rest} {
 	    set line [next-text]
 	    if {[is-a-directive $line]} {
 		split-directive $line code rest
-		switch -exact $code {
+		switch -exact -- $code {
 		    .IP {
 			if {$accept_RE} {
 			    output-IP-list .IP $code $rest
 			    continue
 			}
-			if {[string equal $manual(section) "ARGUMENTS"] || \
+			if {$manual(section) eq "ARGUMENTS" || \
 				[regexp {^\[\d+\]$} $rest]} {
 			    man-puts "$para<DT>$rest<DD>"
-			} elseif {[string equal {&#8226;} $rest]} {
-			   man-puts "$para<DT><DD>$rest&nbsp;"
+			} elseif {"&#8226;" eq $rest} {
+			    man-puts "$para<DT><DD>$rest&nbsp;"
 			} else {
 			    man-puts "$para<DT>[long-toc $rest]<DD>"
 			}
-			if {[string equal $manual(name):$manual(section) \
-				"selection:DESCRIPTION"]} {
+			if {"$manual(name):$manual(section)" eq \
+				"selection:DESCRIPTION"} {
 			    if {[match-text .RE @rest .RS .RS]} {
 				man-puts <DT>[long-toc $rest]<DD>
 			    }
 			}
 		    }
-		    .sp -
-		    .br -
-		    .DS -
-		    .CS {
+		    .sp - .br - .DS - .CS {
 			output-directive $line
 		    }
 		    .RS {
@@ -664,7 +812,7 @@ proc output-name {line} {
     # output line to manual page untouched
     man-puts $line
     # output line to long table of contents
-    lappend manual(section-toc) <DL><DD>$line</DL>
+    lappend manual(section-toc) <DL><DD>$line</DD></DL>
     # separate out the names for future reference
     foreach name [split $head ,] {
 	set name [string trim $name]
@@ -680,11 +828,11 @@ proc output-name {line} {
 ##
 proc cross-reference {ref} {
     global manual
-    if {[string match Tcl_* $ref]} {
+    if {[string match "Tcl_*" $ref]} {
 	set lref $ref
-    } elseif {[string match Tk_* $ref]} {
+    } elseif {[string match "Tk_*" $ref]} {
 	set lref $ref
-    } elseif {[string equal $ref "Tcl"]} {
+    } elseif {$ref eq "Tcl"} {
 	set lref $ref
     } else {
 	set lref [string tolower $ref]
@@ -693,15 +841,17 @@ proc cross-reference {ref} {
     ## nothing to reference
     ##
     if {![info exists manual(name-$lref)]} {
-	foreach name {array file history info interp string trace
-	after clipboard grab image option pack place selection tk tkwait update winfo wm} {
+	foreach name {
+	    array file history info interp string trace after clipboard grab
+	    image option pack place selection tk tkwait update winfo wm
+	} {
 	    if {[regexp "^$name \[a-z0-9]*\$" $lref] && \
 		    [info exists manual(name-$name)] && \
-		    [string compare $manual(tail) "$name.n"]} {
+		    $manual(tail) ne "$name.n"} {
 		return "<A HREF=\"../$manual(name-$name).htm\">$ref</A>"
 	    }
 	}
-	if {[lsearch {stdin stdout stderr end} $lref] >= 0} {
+	if {$lref in {stdin stdout stderr end}} {
 	    # no good place to send these
 	    # tcl tokens?
 	    # also end
@@ -712,7 +862,7 @@ proc cross-reference {ref} {
     ## would be a self reference
     ##
     foreach name $manual(name-$lref) {
-	if {[lsearch $name $manual(wing-file)/$manual(name)] >= 0} {
+	if {"$manual(wing-file)/$manual(name)" in $name} {
 	    return $ref
 	}
     }
@@ -724,15 +874,15 @@ proc cross-reference {ref} {
 	set tcl_ref [lindex $manual(name-$lref) $tcl_i]
 	set tk_i [lsearch -glob $manual(name-$lref) *TkCmd*]
 	set tk_ref [lindex $manual(name-$lref) $tk_i]
-	if {$tcl_i >= 0 && "$manual(wing-file)" == {TclCmd} \
-		||  "$manual(wing-file)" == {TclLib}} {
+	if {$tcl_i >= 0 && $manual(wing-file) eq "TclCmd"
+		|| $manual(wing-file) eq "TclLib"} {
 	    return "<A HREF=\"../$tcl_ref.htm\">$ref</A>"
 	}
-	if {$tk_i >= 0 && "$manual(wing-file)" == {TkCmd} \
-		|| "$manual(wing-file)" == {TkLib}} {
+	if {$tk_i >= 0 && $manual(wing-file) eq "TkCmd"
+		|| $manual(wing-file) eq "TkLib"} {
 	    return "<A HREF=\"../$tk_ref.htm\">$ref</A>"
 	}
-	if {"$lref" == {exit} && "$manual(tail)" == {tclsh.1} && $tcl_i >= 0} {
+	if {$lref eq "exit" && $manual(tail) eq "tclsh.1" && $tcl_i >= 0} {
 	    return "<A HREF=\"../$tcl_ref.htm\">$ref</A>"
 	}
 	puts stderr "multiple cross reference to $ref in $manual(name-$lref) from $manual(wing-file)/$manual(tail)"
@@ -741,57 +891,56 @@ proc cross-reference {ref} {
     ##
     ## exceptions, sigh, to the rule
     ##
-    switch $manual(tail) {
+    switch -exact -- $manual(tail) {
 	canvas.n {
-	    if {$lref == {focus}} {
-		upvar tail tail
+	    if {$lref eq "focus"} {
+		upvar 1 tail tail
 		set clue [string first command $tail]
 		if {$clue < 0 ||  $clue > 5} {
 		    return $ref
 		}
 	    }
-	    if {[lsearch {bitmap image text} $lref] >= 0} {
+	    if {$lref in {bitmap image text}} {
 		return $ref
 	    }
 	}
-	checkbutton.n -
-	radiobutton.n {
-	    if {[lsearch {image} $lref] >= 0} {
+	checkbutton.n - radiobutton.n {
+	    if {$lref in {image}} {
 		return $ref
 	    }
 	}
 	menu.n {
-	    if {[lsearch {checkbutton radiobutton} $lref] >= 0} {
+	    if {$lref in {checkbutton radiobutton}} {
 		return $ref
 	    }
 	}
 	options.n {
-	    if {[lsearch {bitmap image set} $lref] >= 0} {
+	    if {$lref in {bitmap image set}} {
 		return $ref
 	    }
 	}
 	regexp.n {
-	    if {[lsearch {string} $lref] >= 0} {
+	    if {$lref in {string}} {
 		return $ref
 	    }
 	}
 	source.n {
-	    if {[lsearch {text} $lref] >= 0} {
+	    if {$lref in {text}} {
 		return $ref
 	    }
 	}
 	history.n {
-	    if {[lsearch {exec} $lref] >= 0} {
+	    if {$lref in {exec}} {
 		return $ref
 	    }
 	}
 	return.n {
-	    if {[lsearch {error continue break} $lref] >= 0} {
+	    if {$lref in {error continue break}} {
 		return $ref
 	    }
 	}
 	scrollbar.n {
-	    if {[lsearch {set} $lref] >= 0} {
+	    if {$lref in {set}} {
 		return $ref
 	    }
 	}
@@ -860,7 +1009,7 @@ proc insert-cross-references {text} {
     ##
     ## see which we want to use
     ##
-    switch -exact $invert([lindex $offsets 0]) {
+    switch -exact -- $invert([lindex $offsets 0]) {
 	anchor {
 	    if {$offset(end-anchor) < 0} {
 		return [reference-error {Missing end anchor} $text]
@@ -873,13 +1022,13 @@ proc insert-cross-references {text} {
 	    if {$offset(end-quote) < 0} {
 		return [reference-error "Missing end quote" $text]
 	    }
-	    if {$invert([lindex $offsets 1]) == "tk"} {
+	    if {$invert([lindex $offsets 1]) eq "tk"} {
 		set offsets [lreplace $offsets 1 1]
 	    }
-	    if {$invert([lindex $offsets 1]) == "tcl"} {
+	    if {$invert([lindex $offsets 1]) eq "tcl"} {
 		set offsets [lreplace $offsets 1 1]
 	    }
-	    switch -exact $invert([lindex $offsets 1]) {
+	    switch -exact -- $invert([lindex $offsets 1]) {
 		end-quote {
 		    set head [string range $text 0 [expr {$offset(quote)-1}]]
 		    set body [string range $text [expr {$offset(quote)+2}] \
@@ -900,14 +1049,16 @@ proc insert-cross-references {text} {
 	    return [reference-error "Uncaught quote case" $text]
 	}
 	bold {
-	    if {$offset(end-bold) < 0} { return $text }
-	    if {$invert([lindex $offsets 1]) == "tk"} {
+	    if {$offset(end-bold) < 0} {
+		return $text
+	    }
+	    if {$invert([lindex $offsets 1]) eq "tk"} {
 		set offsets [lreplace $offsets 1 1]
 	    }
-	    if {$invert([lindex $offsets 1]) == "tcl"} {
+	    if {$invert([lindex $offsets 1]) eq "tcl"} {
 		set offsets [lreplace $offsets 1 1]
 	    }
-	    switch -exact $invert([lindex $offsets 1]) {
+	    switch -exact -- $invert([lindex $offsets 1]) {
 		end-bold {
 		    set head [string range $text 0 [expr {$offset(bold)-1}]]
 		    set body [string range $text [expr {$offset(bold)+3}] \
@@ -964,9 +1115,8 @@ proc output-directive {line} {
     global manual
     # process format directive
     split-directive $line code rest
-    switch -exact $code {
-	.BS -
-	.BE {
+    switch -exact -- $code {
+	.BS - .BE {
 	    # man-puts <HR>
 	}
 	.SH - .SS {
@@ -976,16 +1126,16 @@ proc output-directive {line} {
 	    # start our own stack of stuff
 	    set manual($manual(name)-$manual(section)) {}
 	    lappend manual(has-$manual(section)) $manual(name)
-	    if {[string compare .SS $code]} {
+	    if {$code ne ".SS"} {
 		man-puts "<H3>[long-toc $manual(section)]</H3>"
 	    } else {
 		man-puts "<H4>[long-toc $manual(section)]</H4>"
 	    }
 	    # some sections can simply free wheel their way through the text
 	    # some sections can be processed in their own loops
-	    switch -exact $manual(section) {
+	    switch -exact -- $manual(section) {
 		NAME {
-		    if {[lsearch {CrtImgType.3 CrtItemType.3 CrtPhImgFmt.3} $manual(tail)] >= 0} {
+		    if {$manual(tail) in {CrtImgType.3 CrtItemType.3 CrtPhImgFmt.3}} {
 			# these manual pages have two NAME sections
 			if {[info exists manual($manual(tail)-NAME)]} {
 			    return
@@ -1007,15 +1157,19 @@ proc output-directive {line} {
 		SYNOPSIS {
 		    lappend manual(section-toc) <DL>
 		    while {1} {
-			if {[next-op-is .nf rest]
-			 || [next-op-is .br rest]
-			 || [next-op-is .fi rest]} {
+			if {
+			    [next-op-is .nf rest]
+			    || [next-op-is .br rest]
+			    || [next-op-is .fi rest]
+			} then {
 			    continue
 			}
-			if {[next-op-is .SH rest]
-		         || [next-op-is .SS rest]
-		         || [next-op-is .BE rest]
-			 || [next-op-is .SO rest]} {
+			if {
+			    [next-op-is .SH rest]
+			    || [next-op-is .SS rest]
+			    || [next-op-is .BE rest]
+			    || [next-op-is .SO rest]
+			} then {
 			    backup-text 1
 			    break
 			}
@@ -1028,12 +1182,11 @@ proc output-directive {line} {
 			    manerror "in SYNOPSIS found $more"
 			    backup-text 1
 			    break
-			} else {
-			    foreach more [split $more \n] {
-				man-puts $more<BR>
-				if {[lsearch {TclLib TkLib} $manual(wing-file)] < 0} {
-				    lappend manual(section-toc) <DD>$more
-				}
+			}
+			foreach more [split $more \n] {
+			    man-puts $more<BR>
+			    if {$manual(wing-file) in {TclLib TkLib}} {
+				lappend manual(section-toc) <DD>$more
 			    }
 			}
 		    }
@@ -1101,18 +1254,14 @@ proc output-directive {line} {
 	    return
 	}
 	.SO {
+	    set targetPage $rest
 	    if {[match-text @stuff .SE]} {
 		output-directive {.SH STANDARD OPTIONS}
-		set opts {}
-		foreach line [split $stuff \n] {
-		    foreach option [split $line \t] {
-			lappend opts $option
-		    }
-		}
+		set opts [split $stuff \n\t]
 		man-puts <DL>
 		lappend manual(section-toc) <DL>
-		foreach option [lsort $opts] {
-		    man-puts "<DT><B>[std-option-toc $option]</B>"
+		foreach option [lsort -dictionary $opts] {
+		    man-puts "<DT><B>[std-option-toc $option $targetPage]</B>"
 		}
 		man-puts </DL>
 		lappend manual(section-toc) </DL>
@@ -1149,10 +1298,13 @@ proc output-directive {line} {
 	}
 	.DS {
 	    if {[next-op-is .ta rest]} {
-		
+		# skip the leading .ta directive if it is there
 	    }
 	    if {[match-text @stuff .DE]} {
-		man-puts <PRE>$stuff</PRE>
+		set td "<td><p style=\"font-size:12px;padding-left:.5em;padding-right:.5em;\">"
+		set bodyText [string map [list \n <tr>$td \t $td] \n$stuff]
+		man-puts "<dl><dd><table border=\"0\">$bodyText</table></dl>"
+		#man-puts <PRE>$stuff</PRE>
 	    } elseif {[match-text .fi @ul1 @ul2 .nf @stuff .DE]} {
 		man-puts "<PRE>[lindex $ul1 1][lindex $ul2 1]\n$stuff</PRE>"
 	    } else {
@@ -1162,7 +1314,7 @@ proc output-directive {line} {
 	}
 	.CS {
 	    if {[next-op-is .ta rest]} {
-		
+		# ???
 	    }
 	    if {[match-text @stuff .CE]} {
 		man-puts <PRE>$stuff</PRE>
@@ -1180,7 +1332,7 @@ proc output-directive {line} {
 	}
 	.ta {
 	    # these are tab stop settings for short tables
-	    switch -exact $manual(name):$manual(section) {
+	    switch -exact -- $manual(name):$manual(section) {
 		{bind:MODIFIERS} -
 		{bind:EVENT TYPES} -
 		{bind:BINDING SCRIPTS AND SUBSTITUTIONS} -
@@ -1270,32 +1422,38 @@ proc output-directive {line} {
 ## merge copyright listings
 ## 
 proc merge-copyrights {l1 l2} {
+    set merge {}
+    set re1 {^Copyright +(?:\(c\)|\\\(co|&copy;) +(\w.*?)(?:all rights reserved)?(?:\. )*$}
+    set re2 {^(\d+) +(?:by +)?(\w.*)$}         ;# date who
+    set re3 {^(\d+)-(\d+) +(?:by +)?(\w.*)$}   ;# from to who
+    set re4 {^(\d+), *(\d+) +(?:by +)?(\w.*)$} ;# date1 date2 who
     foreach copyright [concat $l1 $l2] {
-	if {[regexp {^Copyright +\(c\) +(\d+) +(by +)?(\w.*)$} $copyright all date by who]} {
-	    lappend dates($who) $date
-	    continue
-	}
-	if {[regexp {^Copyright +\(c\) +(\d+)-(\d+) +(by +)?(\w.*)$} $copyright all from to by who]} {
-	    for {set date $from} {$date <= $to} {incr date} {
+	if {[regexp -nocase -- $re1 $copyright -> info]} {
+	    set info [string trimright $info ". "] ; # remove extra period
+	    if {[regexp -- $re2 $info -> date who]} {
 		lappend dates($who) $date
+		continue
+	    } elseif {[regexp -- $re3 $info -> from to who]} {
+		for {set date $from} {$date <= $to} {incr date} {
+		    lappend dates($who) $date
+		}
+		continue
+	    } elseif {[regexp -- $re3 $info -> date1 date2 who]} {
+		lappend dates($who) $date1 $date2
+		continue
 	    }
-	    continue
-	}
-	if {[regexp {^Copyright +\(c\) +(\d+), *(\d+) +(by +)?(\w.*)$} $copyright all date1 date2 by who]} {
-	    lappend dates($who) $date1 $date2
-	    continue
 	}
 	puts "oops: $copyright"
     }
     foreach who [array names dates] {
-	set list [lsort $dates($who)]
-	if {[llength $list] == 1 || [lindex $list 0] == [lrange $list end end]} {
-	    lappend merge "Copyright (c) [lindex $list 0] $who"
+	set list [lsort -dictionary $dates($who)]
+	if {[llength $list] == 1 || [lindex $list 0] eq [lrange $list end end]} {
+	    lappend merge "Copyright &copy; [lindex $list 0] $who"
 	} else {
-	    lappend merge "Copyright (c) [lindex $list 0]-[lrange $list end end] $who"
+	    lappend merge "Copyright &copy; [lindex $list 0]-[lrange $list end end] $who"
 	}
     }
-    return [lsort $merge]
+    return [lsort -dictionary $merge]
 }
 
 proc makedirhier {dir} {
@@ -1305,35 +1463,64 @@ proc makedirhier {dir} {
     }
 }
 
+proc addbuffer {args} {
+    global manual
+    if {$manual(partial-text) ne ""} {
+	append manual(partial-text) \n
+    }
+    append manual(partial-text) [join $args ""]
+}
+proc flushbuffer {} {
+    global manual
+    if {$manual(partial-text) ne ""} {
+	lappend manual(text) [process-text $manual(partial-text)]
+	set manual(partial-text) ""
+    }
+}
+
 ##
 ## foreach of the man directories specified by args
 ## convert manpages into hypertext in the directory
 ## specified by html.
 ##
 proc make-man-pages {html args} {
-    global env manual overall_title tcltkdesc
+    global manual overall_title tcltkdesc
     makedirhier $html
+    set cssfd [open $html/$::CSSFILE w]
+    puts $cssfd [gencss]
+    close $cssfd
     set manual(short-toc-n) 1
-    set manual(short-toc-fp) [open $html/contents.htm w]
-    puts $manual(short-toc-fp) "<HTML><HEAD><TITLE>$overall_title</TITLE></HEAD>"
-    puts $manual(short-toc-fp) "<BODY><HR><H3>$overall_title</H3><HR><DL>"
+    set manual(short-toc-fp) [open $html/[indexfile] w]
+    puts $manual(short-toc-fp) [htmlhead $overall_title $overall_title]
+    puts $manual(short-toc-fp) "<DL class=\"keylist\">"
     set manual(merge-copyrights) {}
     foreach arg $args {
-	if {$arg == ""} {continue}
+	# preprocess to set up subheader for the rest of the files
+	if {![llength $arg]} {
+	    continue
+	}
+	set name [lindex $arg 1]
+	set file [lindex $arg 2]
+	lappend manual(subheader) $name $file
+    }
+    foreach arg $args {
+	if {![llength $arg]} {
+	    continue
+	}
 	set manual(wing-glob) [lindex $arg 0]
 	set manual(wing-name) [lindex $arg 1]
 	set manual(wing-file) [lindex $arg 2]
 	set manual(wing-description) [lindex $arg 3]
 	set manual(wing-copyrights) {}
 	makedirhier $html/$manual(wing-file)
-	set manual(wing-toc-fp) [open $html/$manual(wing-file)/contents.htm w]
+	set manual(wing-toc-fp) [open $html/$manual(wing-file)/[indexfile] w]
 	# whistle
 	puts stderr "scanning section $manual(wing-name)"
 	# put the entry for this section into the short table of contents
-	puts $manual(short-toc-fp) "<DT><A HREF=\"$manual(wing-file)/contents.htm\">$manual(wing-name)</A><DD>$manual(wing-description)"
+	puts $manual(short-toc-fp) "<DT><A HREF=\"$manual(wing-file)/[indexfile]\">$manual(wing-name)</A></DT><DD>$manual(wing-description)</DD>"
 	# initialize the wing table of contents
-	puts $manual(wing-toc-fp) "<HTML><HEAD><TITLE>$manual(wing-name) Manual</TITLE></HEAD>"
-	puts $manual(wing-toc-fp) "<BODY><HR><H3>$manual(wing-name)</H3><HR>"
+	puts $manual(wing-toc-fp) [htmlhead $manual(wing-name) \
+		$manual(wing-name) $overall_title "../[indexfile]"]
 	# initialize the short table of contents for this section
 	set manual(wing-toc) {}
 	# initialize the man directory for this section
@@ -1341,19 +1528,26 @@ proc make-man-pages {html args} {
 	# initialize the long table of contents for this section
 	set manual(long-toc-n) 1
 	# get the manual pages for this section
-	set manual(pages) [lsort [glob $manual(wing-glob)]]
-	if {[lsearch -glob $manual(pages) */options.n] >= 0} {
-	    set n [lsearch $manual(pages) */options.n]
+	set manual(pages) [lsort -dictionary [glob $manual(wing-glob)]]
+	set n [lsearch -glob $manual(pages) */ttk_widget.n]
+	if {$n >= 0} {
+	    set manual(pages) "[lindex $manual(pages) $n] [lreplace $manual(pages) $n $n]"
+	}
+	set n [lsearch -glob $manual(pages) */options.n]
+	if {$n >= 0} {
 	    set manual(pages) "[lindex $manual(pages) $n] [lreplace $manual(pages) $n $n]"
 	}
 	# set manual(pages) [lrange $manual(pages) 0 5]
-	foreach manual(page) $manual(pages) {
+	set LQ \u201c
+	set RQ \u201d
+	foreach manual_page $manual(pages) {
+	    set manual(page) $manual_page
 	    # whistle
 	    puts stderr "scanning page $manual(page)"
 	    set manual(tail) [file tail $manual(page)]
 	    set manual(name) [file root $manual(tail)]
 	    set manual(section) {}
-	    if {[lsearch {case pack-old menubar} $manual(name)] >= 0} {
+	    if {$manual(name) in {case pack-old menubar}} {
 		# obsolete
 		manerror "discarding $manual(name)"
 		continue
@@ -1369,140 +1563,167 @@ proc make-man-pages {html args} {
 	    set manual(section-toc) {}
 	    set manual(section-toc-n) 1
 	    set manual(copyrights) {}
+	    lappend manual(copyrights) "Copyright &copy; 1995-1997 Roger E. Critchlow Jr."
 	    lappend manual(all-pages) $manual(wing-file)/$manual(tail)
 	    manreport 100 $manual(name)
 	    while {[gets $manual(infp) line] >= 0} {
 		manreport 100 $line
 		if {[regexp {^[`'][/\\]} $line]} {
-		    if {[regexp {Copyright \(c\).*$} $line copyright]} {
+		    if {[regexp {Copyright (?:\(c\)|\\\(co).*$} $line copyright]} {
 			lappend manual(copyrights) $copyright
 		    }
 		    # comment
 		    continue
 		}
-		if {"$line" == {'}} {
+		if {"$line" eq {'}} {
 		    # comment
 		    continue
 		}
-		if {[parse-directive $line code rest]} {
-		    switch -exact $code {
-			.ad - .na - .so - .ne - .AS - .VE - .VS -
-			. {
-			    # ignore
-			    continue
+		if {![parse-directive $line code rest]} {
+		    addbuffer $line
+		    continue
+		}
+		switch -exact -- $code {
+		    .ad - .na - .so - .ne - .AS - .VE - .VS - . {
+			# ignore
+			continue
+		    }
+		}
+		switch -exact -- $code {
+		    .SH - .SS {
+			flushbuffer
+			if {[llength $rest] == 0} {
+			    gets $manual(infp) rest
+			}
+			lappend manual(text) "$code [unquote $rest]"
+		    }
+		    .TH {
+			flushbuffer
+			lappend manual(text) "$code [unquote $rest]"
+		    }
+		    .QW {
+			set rest [regexp -all -inline {\"(?:[^""]+)\"|\S+} $rest]
+			addbuffer $LQ [unquote [lindex $rest 0]] $RQ \
+			    [unquote [lindex $rest 1]]
+		    }
+		    .PQ {
+			set rest [regexp -all -inline {\"(?:[^""]+)\"|\S+} $rest]
+			addbuffer ( $LQ [unquote [lindex $rest 0]] $RQ \
+			    [unquote [lindex $rest 1]] ) \
+			    [unquote [lindex $rest 2]]
+		    }
+		    .QR {
+			set rest [regexp -all -inline {\"(?:[^""]+)\"|\S+} $rest]
+			addbuffer $LQ [unquote [lindex $rest 0]] - \
+			    [unquote [lindex $rest 1]] $RQ \
+			    [unquote [lindex $rest 2]]
+		    }
+		    .MT {
+			addbuffer $LQ$RQ
+		    }
+		    .HS - .UL - .ta {
+			flushbuffer
+			lappend manual(text) "$code [unquote $rest]"
+		    }
+		    .BS - .BE - .br - .fi - .sp - .nf {
+			flushbuffer
+			if {"$rest" ne {}} {
+			    manerror "unexpected argument: $line"
+			}
+			lappend manual(text) $code
+		    }
+		    .AP {
+			flushbuffer
+			lappend manual(text) [concat .IP [process-text "[lindex $rest 0] \\fB[lindex $rest 1]\\fR ([lindex $rest 2])"]]
+		    }
+		    .IP {
+			flushbuffer
+			regexp {^(.*) +\d+$} $rest all rest
+			lappend manual(text) ".IP [process-text [unquote [string trim $rest]]]"
+		    }
+		    .TP {
+			flushbuffer
+			while {[is-a-directive [set next [gets $manual(infp)]]]} {
+			    manerror "ignoring $next after .TP"
+			}
+			if {"$next" ne {'}} {
+			    lappend manual(text) ".IP [process-text $next]"
 			}
 		    }
-		    if {"$manual(partial-text)" != {}} {
-			lappend manual(text) [process-text $manual(partial-text)]
-			set manual(partial-text) {}
+		    .OP {
+			flushbuffer
+			lappend manual(text) [concat .OP [process-text \
+				"\\fB[lindex $rest 0]\\fR \\fB[lindex $rest 1]\\fR \\fB[lindex $rest 2]\\fR"]]
 		    }
-		    switch -exact $code {
-			.SH - .SS {
-			    if {[llength $rest] == 0} {
-				gets $manual(infp) rest
-			    }
+		    .PP - .LP {
+			flushbuffer
+			lappend manual(text) {.PP}
+		    }
+		    .RS {
+			flushbuffer
+			incr manual(.RS)
+			lappend manual(text) $code
+		    }
+		    .RE {
+			flushbuffer
+			incr manual(.RS) -1
+			lappend manual(text) $code
+		    }
+		    .SO {
+			flushbuffer
+			incr manual(.SO)
+			if {[llength $rest] == 0} {
+			    lappend manual(text) "$code options"
+			} else {
 			    lappend manual(text) "$code [unquote $rest]"
-			}
-			.TH {
-			    lappend manual(text) "$code [unquote $rest]"
-			}
-			.HS - .UL -
-			.ta {
-			    lappend manual(text) "$code [unquote $rest]"
-			}
-			.BS - .BE - .br - .fi - .sp -
-			.nf {
-			    if {"$rest" != {}} {
-				manerror "unexpected argument: $line"
-			    }
-			    lappend manual(text) $code
-			}
-			.AP {
-			    lappend manual(text) [concat .IP [process-text "[lindex $rest 0] \\fB[lindex $rest 1]\\fR ([lindex $rest 2])"]]
-			}
-			.IP {
-			    regexp {^(.*) +\d+$} $rest all rest
-			    lappend manual(text) ".IP [process-text [unquote [string trim $rest]]]"
-			}
-			.TP {
-			    while {[is-a-directive [set next [gets $manual(infp)]]]} {
-			    	manerror "ignoring $next after .TP"
-			    }
-			    if {"$next" != {'}} {
-				lappend manual(text) ".IP [process-text $next]"
-			    }
-			}
-			.OP {
-			    lappend manual(text) [concat .OP [process-text \
-				    "\\fB[lindex $rest 0]\\fR \\fB[lindex $rest 1]\\fR \\fB[lindex $rest 2]\\fR"]]
-			}
-			.PP -
-			.LP {
-			    lappend manual(text) {.PP}
-			}
-			.RS {
-			    incr manual(.RS)
-			    lappend manual(text) $code
-			}
-			.RE {
-			    incr manual(.RS) -1
-			    lappend manual(text) $code
-			}
-			.SO {
-			    incr manual(.SO)
-			    lappend manual(text) $code
-			}
-			.SE {
-			    incr manual(.SO) -1
-			    lappend manual(text) $code
-			}
-			.DS {
-			    incr manual(.DS)
-			    lappend manual(text) $code
-			}
-			.DE {
-			    incr manual(.DS) -1
-			    lappend manual(text) $code
-			}
-			.CS {
-			    incr manual(.CS)
-			    lappend manual(text) $code
-			}
-			.CE {
-			    incr manual(.CS) -1
-			    lappend manual(text) $code
-			}
-			.de {
-			    while {[gets $manual(infp) line] >= 0} {
-				if {[string match "..*" $line]} {
-				    break
-				}
-			    }
-			}
-			.. {
-			    error "found .. outside of .de"
-			}
-			default {
-			    manerror "unrecognized format directive: $line"
 			}
 		    }
-		} else {
-		    if {$manual(partial-text) == ""} {
-			set manual(partial-text) $line
-		    } else {
-			append manual(partial-text) \n$line
+		    .SE {
+			flushbuffer
+			incr manual(.SO) -1
+			lappend manual(text) $code
+		    }
+		    .DS {
+			flushbuffer
+			incr manual(.DS)
+			lappend manual(text) $code
+		    }
+		    .DE {
+			flushbuffer
+			incr manual(.DS) -1
+			lappend manual(text) $code
+		    }
+		    .CS {
+			flushbuffer
+			incr manual(.CS)
+			lappend manual(text) $code
+		    }
+		    .CE {
+			flushbuffer
+			incr manual(.CS) -1
+			lappend manual(text) $code
+		    }
+		    .de {
+			while {[gets $manual(infp) line] >= 0} {
+			    if {[string match "..*" $line]} {
+				break
+			    }
+			}
+		    }
+		    .. {
+			error "found .. outside of .de"
+		    }
+		    default {
+			flushbuffer
+			manerror "unrecognized format directive: $line"
 		    }
 		}
 	    }
-	    if {$manual(partial-text) != ""} {
-		lappend manual(text) [process-text $manual(partial-text)]
-	    }
+	    flushbuffer
 	    close $manual(infp)
 	    # fixups
 	    if {$manual(.RS) != 0} {
-		if {$manual(name) != "selection"} {
-		    puts "unbalanced .RS .RE"
-		}
+		puts "unbalanced .RS .RE"
 	    }
 	    if {$manual(.DS) != 0} {
 		puts "unbalanced .DS .DE"
@@ -1515,25 +1736,17 @@ proc make-man-pages {html args} {
 	    }
 	    # output conversion
 	    open-text
+	    set haserror 0
 	    if {[next-op-is .HS rest]} {
 		set manual($manual(name)-title) \
 			"[lrange $rest 1 end] [lindex $rest 0] manual page"
-		while {[more-text]} {
-		    set line [next-text]
-		    if {[is-a-directive $line]} {
-			output-directive $line
-		    } else {
-			man-puts $line
-		    }
-		}
-		man-puts <HR><PRE>
-		foreach copyright $manual(copyrights) {
-		    man-puts "<A HREF=\"../copyright.htm\">Copyright</A> &#169; [lrange $copyright 2 end]"
-		}
-		man-puts "<A HREF=\"../copyright.htm\">Copyright</A> &#169; 1995-1997 Roger E. Critchlow Jr.</PRE>"
-		set manual(wing-copyrights) [merge-copyrights $manual(wing-copyrights) $manual(copyrights)]
 	    } elseif {[next-op-is .TH rest]} {
-		set manual($manual(name)-title) "[lrange $rest 4 end] - [lindex $rest 0] manual page"
+		set manual($manual(name)-title) "[lindex $rest 0] manual page - [lrange $rest 4 end]"
+	    } else {
+		set haserror 1
+		manerror "no .HS or .TH record found"
+	    }
+	    if {!$haserror} {
 		while {[more-text]} {
 		    set line [next-text]
 		    if {[is-a-directive $line]} {
@@ -1542,19 +1755,13 @@ proc make-man-pages {html args} {
 			man-puts $line
 		    }
 		}
-		man-puts <HR><PRE>
-		foreach copyright $manual(copyrights) {
-		    man-puts "<A HREF=\"../copyright.htm\">Copyright</A> &#169; [lrange $copyright 2 end]"
-		}
-		man-puts "<A HREF=\"../copyright.htm\">Copyright</A> &#169; 1995-1997 Roger E. Critchlow Jr.</PRE>"
+		man-puts [copyout $manual(copyrights) "../"]
 		set manual(wing-copyrights) [merge-copyrights $manual(wing-copyrights) $manual(copyrights)]
-	    } else {
-		manerror "no .HS or .TH record found"
 	    }
 	    #
 	    # make the long table of contents for this page
 	    #
-	    set manual(toc-$manual(wing-file)-$manual(name)) [concat <DL> $manual(section-toc) </DL><HR>]
+	    set manual(toc-$manual(wing-file)-$manual(name)) [concat <DL> $manual(section-toc) </DL>]
 	}
 
 	#
@@ -1570,7 +1777,7 @@ proc make-man-pages {html args} {
 	set nrows [expr {([llength $manual(wing-toc)]+$perline)/$perline}]
 	set n 0
         catch {unset rows}
-	foreach name [lsort $manual(wing-toc)] {
+	foreach name [lsort -dictionary $manual(wing-toc)] {
 	    set tail $manual(name-$name)
 	    if {[llength $tail] > 1} {
 		manerror "$name is defined in more than one file: $tail"
@@ -1590,12 +1797,8 @@ proc make-man-pages {html args} {
 	#
 	# insert wing copyrights
 	#
-	puts $manual(wing-toc-fp) "<HR><PRE>"
-	foreach copyright $manual(wing-copyrights) {
-	    puts $manual(wing-toc-fp) "<A HREF=\"../copyright.htm\">Copyright</A> &#169; [lrange $copyright 2 end]"
-	}
-	puts $manual(wing-toc-fp) "<A HREF=\"../copyright.htm\">Copyright</A> &#169; 1995-1997 Roger E. Critchlow Jr."
-	puts $manual(wing-toc-fp) "</PRE></BODY></HTML>"
+	puts $manual(wing-toc-fp) [copyout $manual(wing-copyrights) "../"]
+	puts $manual(wing-toc-fp) "</BODY></HTML>"
 	close $manual(wing-toc-fp)
 	set manual(merge-copyrights) [merge-copyrights $manual(merge-copyrights) $manual(wing-copyrights)]
     }
@@ -1603,66 +1806,68 @@ proc make-man-pages {html args} {
     ##
     ## build the keyword index.
     ##
-    proc strcasecmp {a b} { return [string compare -nocase $a $b] }
-    set keys [lsort -command strcasecmp [array names manual keyword-*]]
+    file delete -force -- $html/Keywords
     makedirhier $html/Keywords
-    catch {eval file delete -- [glob $html/Keywords/*]}
-    puts $manual(short-toc-fp) "<DT><A HREF=\"Keywords/contents.htm\">Keywords</A><DD>The keywords from the $tcltkdesc man pages."
-    set keyfp [open $html/Keywords/contents.htm w]
-    puts $keyfp "<HTML><HEAD><TITLE>$tcltkdesc Keywords</TITLE></HEAD>"
-    puts $keyfp "<BODY><HR><H3>$tcltkdesc Keywords</H3><HR><H2>"
-    foreach a {A B C D E F G H I J K L M N O P Q R S T U V W X Y Z} {
-	puts $keyfp "<A HREF=\"$a.htm\">$a</A>"
+    set keyfp [open $html/Keywords/[indexfile] w]
+    puts $keyfp [htmlhead "$tcltkdesc Keywords" "$tcltkdesc Keywords" \
+		     $overall_title "../[indexfile]"]
+    set letters {A B C D E F G H I J K L M N O P Q R S T U V W X Y Z}
+    # Create header first
+    set keyheader {}
+    foreach a $letters {
+	set keys [array names manual "keyword-\[[string totitle $a$a]\]*"]
+	if {[llength $keys]} {
+	    lappend keyheader "<A HREF=\"$a.htm\">$a</A>"
+	} else {
+	    # No keywords for this letter
+	    lappend keyheader $a
+	}
+    }
+    set keyheader "<H3>[join $keyheader " |\n"]</H3>"
+    puts $keyfp $keyheader
+    foreach a $letters {
+	set keys [array names manual "keyword-\[[string totitle $a$a]\]*"]
+	if {![llength $keys]} {
+	    continue
+	}
+	# Per-keyword page
 	set afp [open $html/Keywords/$a.htm w]
-	puts $afp "<HTML><HEAD><TITLE>$tcltkdesc Keywords - $a</TITLE></HEAD>"
-	puts $afp "<BODY><HR><H3>$tcltkdesc Keywords - $a</H3><HR><H2>"
-	foreach b {A B C D E F G H I J K L M N O P Q R S T U V W X Y Z} {
-	    puts $afp "<A HREF=\"$b.htm\">$b</A>"
-	}
-	puts $afp "</H2><HR><DL>"
-	foreach k $keys {
-	    if {[string match -nocase "keyword-${a}*" $k]} {
-		set k [string range $k 8 end]
-		puts $afp "<DT><A NAME=\"$k\">$k</A><DD>"
-		set refs {}
-		foreach man $manual(keyword-$k) {
-		    set name [lindex $man 0]
-		    set file [lindex $man 1]
-		    lappend refs "<A HREF=\"../$file\">$name</A>"
-		}
-		puts $afp [join $refs {, }]
+	puts $afp [htmlhead "$tcltkdesc Keywords - $a" \
+		       "$tcltkdesc Keywords - $a" \
+		       $overall_title "../[indexfile]"]
+	puts $afp $keyheader
+	puts $afp "<DL class=\"keylist\">"
+	foreach k [lsort -dictionary $keys] {
+	    set k [string range $k 8 end]
+	    puts $afp "<DT><A NAME=\"$k\">$k</A></DT>"
+	    puts $afp "<DD>"
+	    set refs {}
+	    foreach man $manual(keyword-$k) {
+		set name [lindex $man 0]
+		set file [lindex $man 1]
+		lappend refs "<A HREF=\"../$file\">$name</A>"
 	    }
+	    puts $afp "[join $refs {, }]</DD>"
 	}
-	puts $afp "</DL><HR><PRE>"
+	puts $afp "</DL>"
 	# insert merged copyrights
-	foreach copyright $manual(merge-copyrights) {
-	    puts $afp "<A HREF=\"copyright.htm\">Copyright</A> &#169; [lrange $copyright 2 end]"
-	}
-	puts $afp "<A HREF=\"copyright.htm\">Copyright</A> &#169; 1995-1997 Roger E. Critchlow Jr."
-	puts $afp "</PRE></BODY></HTML>"
+	puts $afp [copyout $manual(merge-copyrights)]
+	puts $afp "</BODY></HTML>"
 	close $afp
     }
-    puts $keyfp "</H2><HR><PRE>"
-
     # insert merged copyrights
-    foreach copyright $manual(merge-copyrights) {
-	puts $keyfp "<A HREF=\"copyright.htm\">Copyright</A> &#169; [lrange $copyright 2 end]"
-    }
-    puts $keyfp "<A HREF=\"copyright.htm\">Copyright</A> &#169; 1995-1997 Roger E. Critchlow Jr."
-    puts $keyfp </PRE><HR></BODY></HTML>
+    puts $keyfp [copyout $manual(merge-copyrights)]
+    puts $keyfp "</BODY></HTML>"
     close $keyfp
 
     ##
     ## finish off short table of contents
     ##
-    puts $manual(short-toc-fp) {<DT><A HREF="http://www.elf.org">Source</A><DD>More information about these man pages.}
-    puts $manual(short-toc-fp) "</DL><HR><PRE>"
+    puts $manual(short-toc-fp) "<DT><A HREF=\"Keywords/[indexfile]\">Keywords</A><DD>The keywords from the $tcltkdesc man pages."
+    puts $manual(short-toc-fp) "</DL>"
     # insert merged copyrights
-    foreach copyright $manual(merge-copyrights) {
-	puts $manual(short-toc-fp) "<A HREF=\"copyright.htm\">Copyright</A> &#169; [lrange $copyright 2 end]"
-    }
-    puts $manual(short-toc-fp) "<A HREF=\"copyright.htm\">Copyright</A> &#169; 1995-1997 Roger E. Critchlow Jr."
-    puts $manual(short-toc-fp) "</PRE></BODY></HTML>"
+    puts $manual(short-toc-fp) [copyout $manual(merge-copyrights)]
+    puts $manual(short-toc-fp) "</BODY></HTML>"
     close $manual(short-toc-fp)
 
     ##
@@ -1686,22 +1891,26 @@ proc make-man-pages {html args} {
 	    incr ntoc
 	}
 	puts stderr "rescanning page $manual(name) $ntoc/$ntext"
-	set manual(outfp) [open $html/$manual(wing-file)/$manual(name).htm w]
-	puts $manual(outfp) "<HTML><HEAD><TITLE>$manual($manual(name)-title)</TITLE></HEAD><BODY>"
-	if {($ntext > 60) && ($ntoc > 32) || [lsearch {
-	    Hash LinkVar SetVar TraceVar ConfigWidg CrtImgType CrtItemType
-	    CrtPhImgFmt DoOneEvent GetBitmap GetColor GetCursor GetDash
-	    GetJustify GetPixels GetVisual ParseArgv QueueEvent
-	} $manual(tail)] >= 0} {
+	set outfd [open $html/$manual(wing-file)/$manual(name).htm w]
+	puts $outfd [htmlhead "$manual($manual(name)-title)" \
+		$manual(name) $manual(wing-file) "[indexfile]" \
+		$overall_title "../[indexfile]"]
+	if {
+	    (($ntext > 60) && ($ntoc > 32)) || $manual(tail) in {
+		Hash LinkVar SetVar TraceVar ConfigWidg CrtImgType CrtItemType
+		CrtPhImgFmt DoOneEvent GetBitmap GetColor GetCursor GetDash
+		GetJustify GetPixels GetVisual ParseArgv QueueEvent
+	    }
+	} then {
 	    foreach item $toc {
-		puts $manual(outfp) $item
+		puts $outfd $item
 	    }
 	}
 	foreach item $text {
-	    puts $manual(outfp) [insert-cross-references $item]
+	    puts $outfd [insert-cross-references $item]
 	}
-	puts $manual(outfp) </BODY></HTML>
-	close $manual(outfp)
+	puts $outfd "</BODY></HTML>"
+	close $outfd
     }
     return {}
 }
@@ -1709,16 +1918,28 @@ proc make-man-pages {html args} {
 parse_command_line
 
 set tcltkdesc ""; set cmdesc ""; set appdir ""
-if {$build_tcl} {append tcltkdesc "Tcl"; append cmdesc "Tcl"; append appdir "$tcldir"}
-if {$build_tcl && $build_tk} {append tcltkdesc "/"; append cmdesc " and "; append appdir ","}
-if {$build_tk} {append tcltkdesc "Tk"; append cmdesc "Tk"; append appdir "$tkdir"}
+if {$build_tcl} {
+    append tcltkdesc "Tcl"
+    append cmdesc "Tcl"
+    append appdir "$tcldir"
+}
+if {$build_tcl && $build_tk} {
+    append tcltkdesc "/"
+    append cmdesc " and "
+    append appdir ","
+}
+if {$build_tk} {
+    append tcltkdesc "Tk"
+    append cmdesc "Tk"
+    append appdir "$tkdir"
+}
 
 set usercmddesc "The interpreters which implement $cmdesc."
 set tclcmddesc {The commands which the <B>tclsh</B> interpreter implements.}
 set tkcmddesc {The additional commands which the <B>wish</B> interpreter implements.}
 set tcllibdesc {The C functions which a Tcl extended C program may use.}
 set tklibdesc {The additional C functions which a Tk extended C program may use.}
-		
+
 if {1} {
     if {[catch {
 	make-man-pages $webdir \

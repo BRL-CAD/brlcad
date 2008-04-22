@@ -1,7 +1,7 @@
 /*                    D I S P A T C H E R . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007 United States Government as represented by
+ * Copyright (c) 2007-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,10 +19,9 @@
  */
 /** @file dispatcher.c
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
+
+#include "common.h"
 
 #include "dispatcher.h"
 #include <stdio.h>
@@ -30,16 +29,15 @@
 #include <string.h>
 #include <sys/time.h>
 #include "adrt_common.h"
-#include "common.h"
+
+#include "bio.h"
 #include "rise.h"
 #include "tienet.h"
 
-#include <unistd.h>
-
 #ifdef HAVE_SYS_SYSINFO_H
-#include <sys/sysinfo.h>
+#  include <sys/sysinfo.h>
 #elif defined(HAVE_SYS_SYSCTL_H)
-#include <sys/sysctl.h>
+#  include <sys/sysctl.h>
 #endif
 
 
@@ -64,52 +62,52 @@ void rise_dispatcher_free() {
 
 
 void rise_dispatcher_generate(common_db_t *db, void *data, int data_len) {
-  int i, n;
-  common_work_t work;
-  void *mesg;
+    int i, n;
+    common_work_t work;
+    void *mesg;
 
-  mesg = malloc(sizeof(common_work_t) + data_len);
-  if (!mesg) {
-      perror("mesg");
-      exit(1);
-  }
-  tienet_master_begin();
-
-  work.size_x = db->env.tile_w;
-  work.size_y = db->env.tile_h;
-  work.format = COMMON_BIT_DEPTH_128;
-  for(i = 0; i < db->env.img_vh; i += db->env.tile_w) {
-    for(n = 0; n < db->env.img_vw; n += db->env.tile_h) {
-      /*
-      * Check to see if the alpha component of the rise_image_raw is high or low.
-      * If the alpha value is low then this tile will get batched for computing.
-      */
-#if 0
-      if(rise_image_raw[(i*db->env.img_vw+n)*4 + 3]) {
-	rise_dispatcher_progress += RISE_TILE_SIZE * RISE_TILE_SIZE;
-      } else {
-#endif
-	work.orig_x = n;
-	work.orig_y = i;
-	memcpy(&((char *)mesg)[0], &work, sizeof(common_work_t));
-	memcpy(&((char *)mesg)[sizeof(common_work_t)], data, data_len);
-	tienet_master_push(mesg, sizeof(common_work_t)+data_len);
-#if 0
-      }
-#endif
+    mesg = malloc(sizeof(common_work_t) + data_len);
+    if (!mesg) {
+	perror("mesg");
+	exit(1);
     }
-  }
+    tienet_master_begin();
 
-  tienet_master_end();
-  free(mesg);
+    work.size_x = db->env.tile_w;
+    work.size_y = db->env.tile_h;
+    work.format = COMMON_BIT_DEPTH_128;
+    for (i = 0; i < db->env.img_vh; i += db->env.tile_w) {
+	for (n = 0; n < db->env.img_vw; n += db->env.tile_h) {
+	    /*
+	     * Check to see if the alpha component of the rise_image_raw is high or low.
+	     * If the alpha value is low then this tile will get batched for computing.
+	     */
+#if 0
+	    if (rise_image_raw[(i*db->env.img_vw+n)*4 + 3]) {
+		rise_dispatcher_progress += RISE_TILE_SIZE * RISE_TILE_SIZE;
+	    } else {
+#endif
+		work.orig_x = n;
+		work.orig_y = i;
+		memcpy(&((char *)mesg)[0], &work, sizeof(common_work_t));
+		memcpy(&((char *)mesg)[sizeof(common_work_t)], data, data_len);
+		tienet_master_push(mesg, sizeof(common_work_t)+data_len);
+#if 0
+	    }
+#endif
+	}
+    }
+
+    tienet_master_end();
+    free(mesg);
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

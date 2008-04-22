@@ -3,6 +3,7 @@
 lib_LTLIBRARIES = libtclcad.la
 
 libtclcad_la_SOURCES = \
+	tclcad.c \
 	tclcadAutoPath.c \
 	tclcadTkSetup.c \
 	tkImgFmtPIX.c
@@ -23,8 +24,6 @@ libtclcad_la_LIBADD = ${TCLCAD_LIBS}
 
 EXTRA_DIST = libtclcad.dsp
 
-DEPS=src/libfb
-
-MAINTAINERCLEANFILES = Makefile.in
+DEPS=src/libfb src/other/blt
 
 include $(top_srcdir)/misc/Makefile.defs

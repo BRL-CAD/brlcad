@@ -11,6 +11,8 @@
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
+package require Ttk
+
 # Ensure existence of ::tk::dialog namespace
 #
 namespace eval ::tk::dialog {}
@@ -165,6 +167,9 @@ proc ::tk::MessageBox {args} {
 	    "warning"   {set data(-icon) "caution"}
 	    "info"      {set data(-icon) "note"}
 	}
+	option add *Dialog*background systemDialogBackgroundActive widgetDefault
+	option add *Dialog*Button.highlightBackground \
+		systemDialogBackgroundActive widgetDefault
     }
 
     if {![winfo exists $data(-parent)]} {
@@ -241,16 +246,17 @@ proc ::tk::MessageBox {args} {
 	set w .__tk__messagebox
     }
 
+    # There is only one background colour for the whole dialog
+    set bg [ttk::style lookup . -background]
+
     # 3. Create the top-level window and divide it into top
     # and bottom parts.
 
     catch {destroy $w}
-    toplevel $w -class Dialog
+    toplevel $w -class Dialog -bg $bg
     wm title $w $data(-title)
     wm iconname $w Dialog
     wm protocol $w WM_DELETE_WINDOW { }
-    # There is only one background colour for the whole dialog
-    set bg [$w cget -background]
 
     # Message boxes should be transient with respect to their parent so that
     # they always stay on top of the parent window.  But some window managers
@@ -261,20 +267,20 @@ proc ::tk::MessageBox {args} {
     #
     if {[winfo viewable [winfo toplevel $data(-parent)]] } {
 	wm transient $w $data(-parent)
-    }    
-
-    if {$windowingsystem eq "aqua"} {
-	unsupported::MacWindowStyle style $w dBoxProc
     }
 
-    frame $w.bot -background $bg
+    if {$windowingsystem eq "aqua"} {
+	::tk::unsupported::MacWindowStyle style $w moveableModal {}
+    }
+
+    ttk::frame $w.bot;# -background $bg
     grid anchor $w.bot center
     pack $w.bot -side bottom -fill both
-    frame $w.top -background $bg
+    ttk::frame $w.top;# -background $bg
     pack $w.top -side top -fill both -expand 1
     if {$windowingsystem ne "aqua"} {
-	$w.bot configure -relief raised -bd 1
-	$w.top configure -relief raised -bd 1
+	#$w.bot configure -relief raised -bd 1
+	#$w.top configure -relief raised -bd 1
     }
 
     # 4. Fill the top part with bitmap, message and detail (use the
@@ -283,23 +289,19 @@ proc ::tk::MessageBox {args} {
 
     option add *Dialog.msg.wrapLength 3i widgetDefault
     option add *Dialog.dtl.wrapLength 3i widgetDefault
-    if {$windowingsystem eq "aqua"} {
-	option add *Dialog.msg.font system widgetDefault
-	option add *Dialog.dtl.font system widgetDefault
-    } else {
-	option add *Dialog.msg.font {Times 14} widgetDefault
-	option add *Dialog.dtl.font {Times 10} widgetDefault
-    }
+    option add *Dialog.msg.font TkCaptionFont widgetDefault
+    option add *Dialog.dtl.font TkDefaultFont widgetDefault
 
-    label $w.msg -anchor nw -justify left -text $data(-message) \
-	    -background $bg
+    ttk::label $w.msg -anchor nw -justify left -text $data(-message)
+    #-background $bg
     if {$data(-detail) ne ""} {
-	label $w.dtl -anchor nw -justify left -text $data(-detail) \
-		-background $bg
+	ttk::label $w.dtl -anchor nw -justify left -text $data(-detail)
+	#-background $bg
     }
     if {$data(-icon) ne ""} {
 	if {$windowingsystem eq "aqua"
 		|| ([winfo depth $w] < 4) || $tk_strictMotif} {
+	    # ttk::label has no -bitmap option
 	    label $w.bitmap -bitmap $data(-icon) -background $bg
 	} else {
 	    canvas $w.bitmap -width 32 -height 32 -highlightthickness 0 \
@@ -358,8 +360,9 @@ proc ::tk::MessageBox {args} {
 	    set opts [list -text $capName]
 	}
 
-	eval [list tk::AmpWidget button $w.$name -padx 3m] $opts \
+	eval [list tk::AmpWidget ttk::button $w.$name] $opts \
 		[list -command [list set tk::Priv(button) $name]]
+	# -padx 3m
 
 	if {$name eq $data(-default)} {
 	    $w.$name configure -default active
@@ -368,6 +371,16 @@ proc ::tk::MessageBox {args} {
 	}
 	grid $w.$name -in $w.bot -row 0 -column $i -padx 3m -pady 2m -sticky ew
 	grid columnconfigure $w.bot $i -uniform buttons
+	# We boost the size of some Mac buttons for l&f
+	if {$windowingsystem eq "aqua"} {
+	    set tmp [string tolower $name]
+	    if {$tmp eq "ok" || $tmp eq "cancel" || $tmp eq "yes" ||
+		    $tmp eq "no" || $tmp eq "abort" || $tmp eq "retry" ||
+		    $tmp eq "ignore"} {
+		grid columnconfigure $w.bot $i -minsize 90
+	    }
+	    grid configure $w.$name -pady 7
+	}
         incr i
 
 	# create the binding for the key accelerator, based on the underline
@@ -398,12 +411,12 @@ proc ::tk::MessageBox {args} {
 
     bind $w <Return> {
 	if {[winfo class %W] eq "Button"} {
-	    tk::ButtonInvoke %W
+	    %W invoke
 	}
     }
 
     # Invoke the designated cancelling operation
-    bind $w <Escape> [list tk::ButtonInvoke $w.$cancel]
+    bind $w <Escape> [list $w.$cancel invoke]
 
     # At <Destroy> the buttons have vanished, so must do this directly.
     bind $w.msg <Destroy> [list set tk::Priv(button) $cancel]

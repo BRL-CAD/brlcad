@@ -1,7 +1,7 @@
 /*                     T E X T U R E _ S T A C K . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2007 United States Government as represented by
+ * Copyright (c) 2002-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,14 +22,6 @@
  *  Comments -
  *      Texture Library - Stack Header
  *
- *  Author -
- *      Justin L. Shumaker
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- * $Id$
  */
 
 #ifndef _TEXTURE_STACK_H
@@ -40,14 +32,14 @@
 
 
 typedef struct texture_stack_s {
-  int			num;
-  texture_t		**list;
+    int			num;
+    texture_t		**list;
 } texture_stack_t;
 
 
 extern	void	texture_stack_init(texture_t *texture);
 extern	void	texture_stack_free(texture_t *texture);
-extern	void	texture_stack_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel);
+extern	void	texture_stack_work(__TEXTURE_WORK_PROTOTYPE__);
 extern	void	texture_stack_push(texture_t *texture, texture_t *texture_new);
 
 
@@ -57,8 +49,8 @@ extern	void	texture_stack_push(texture_t *texture, texture_t *texture_new);
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

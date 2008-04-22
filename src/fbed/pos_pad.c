@@ -1,7 +1,7 @@
 /*                       P O S _ P A D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,32 +18,20 @@
  * information.
  */
 /** @file pos_pad.c
-	Author:		Douglas P. Kingston III
-			Gary S. Moss
-*/
-#if ! defined( lint )
-static const char RCSid[] = "@(#) pos_pad.c 2.1, modified 12/9/86 at 15:54:52, archive /vld/moss/src/fbed/s.pos_pad.c";
-#endif
+ *
+ */
 
 #include "common.h"
 
-#include <stdio.h>
 #ifdef HAVE_TERMIO_H
 #  include <termio.h>
 #endif
-#ifdef HAVE_FCNTL_H
-#  include <fcntl.h>
-#endif
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
-#include "machine.h"
 #include "fb.h"
 
 #include "./std.h"
 #include "./ascii.h"
-#include "./font.h"
 #include "./try.h"
 #include "./extern.h"
 
@@ -60,7 +48,7 @@ static	int npoints;
 int
 pad_open(int n)
 {
-    if( (pfd = open(padfile, 2)) < 0 ) {
+    if ( (pfd = open(padfile, 2)) < 0 ) {
 	perror( padfile );
 	return -1;
     }
@@ -90,7 +78,7 @@ getpos(Point *pos)
     register char *cend = (char *)NULL;
     char *last = (char *)NULL;
 
-    while( nread < 9 ) {
+    while ( nread < 9 ) {
 	if (empty(pfd)) {
 	    return -1;
 	}
@@ -107,7 +95,7 @@ getpos(Point *pos)
 
     cend = str + nread - 4;
     nread = 0;
-    for( cp = str; cp < cend; cp++ ) {
+    for ( cp = str; cp < cend; cp++ ) {
 	if (!(cp[0] & P_FLAG)) {
 	    continue;
 	}
@@ -117,7 +105,7 @@ getpos(Point *pos)
 	}
     }
 
-    if( last == NULL ) {
+    if ( last == NULL ) {
 	return buttons;	/* no position parsed */
     }
     last++;
@@ -132,8 +120,8 @@ getpos(Point *pos)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

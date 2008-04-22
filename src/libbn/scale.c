@@ -1,7 +1,7 @@
 /*                         S C A L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,29 +23,15 @@
  *
  * @brief scale geometry points.
  *
- * @author
- *	Michael John Muuss
- *
- * @par Source
- *	The U. S. Army Research Laboratory
- * @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  *	@note
  *	This file is a candidate for deletion.
  *	Nothing else in BRL-CAD uses this.
  */
 
-
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (ARL)";
-#endif
-
 #include "common.h"
-
 
 #include <stdio.h>
 #include <math.h>
-#include "machine.h"
 #include "vmath.h"
 #include "plot3.h"
 
@@ -61,7 +47,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  * occupy more space than the output.  Also output are
  * the minimum value encountered (MIN), and a delta
  * factor showing the increase in value each XXXX.
- * This DX factor is rounded to 1,2,4,5,8,or 10 to
+ * This DX factor is rounded to 1, 2, 4, 5, 8, or 10 to
  * produce nicer looking axes.
  *
  *
@@ -117,91 +103,91 @@ tp_scale(int *idata,
 	 double *min,
 	 double *dx)
 {
-	double xmax, xmin, x, workdx;
-	register int i;			/* Index variable */
-	static double log_10;		/* Saved value for log base-2(10) */
-	float *ifloatp;			/* Used to convert pointer-to-int to float */
-	double *idoublep;		/* Used to convert pointer-to-int to double */
-	double fractional;		/* Fractional part of DX */
-	int integral;			/* Integral part of DX */
+    double xmax, xmin, x, workdx;
+    register int i;			/* Index variable */
+    static double log_10;		/* Saved value for log base-2(10) */
+    float *ifloatp;			/* Used to convert pointer-to-int to float */
+    double *idoublep;		/* Used to convert pointer-to-int to double */
+    double fractional;		/* Fractional part of DX */
+    int integral;			/* Integral part of DX */
 
-	/* Prepare to use a pointer to an array of variable type */
-	ifloatp = (float *)idata;
-	idoublep = (double *)idata;
-	/* Find the maximum and minimum data values */
-	xmax = xmin = 0.0;
-	for( i=0; i<elements; i++ )  {
-		x = (mode=='f')
-			? ifloatp[i]
-			: ( (mode=='d')
-				? idoublep[i]
-				: idata[i]
-			);
-		if( x > xmax )
-			xmax = x;
-		if( x < xmin )
-			xmin = x;
-	}
+    /* Prepare to use a pointer to an array of variable type */
+    ifloatp = (float *)idata;
+    idoublep = (double *)idata;
+    /* Find the maximum and minimum data values */
+    xmax = xmin = 0.0;
+    for ( i=0; i<elements; i++ )  {
+	x = (mode=='f')
+	    ? ifloatp[i]
+	    : ( (mode=='d')
+		? idoublep[i]
+		: idata[i]
+		);
+	if ( x > xmax )
+	    xmax = x;
+	if ( x < xmin )
+	    xmin = x;
+    }
 
-	/* Split initial DX into integral and fractional exponents of 10 */
-	if( log_10 <= 0.0 )
-		log_10 = log(10.0);
+    /* Split initial DX into integral and fractional exponents of 10 */
+    if ( log_10 <= 0.0 )
+	log_10 = log(10.0);
 
-	fractional = log( (xmax-xmin)/length ) / log_10;	/* LOG10(DX) */
-	integral = fractional;			/* truncate! */
-	fractional -= integral;			/* leave only fract */
+    fractional = log( (xmax-xmin)/length ) / log_10;	/* LOG10(DX) */
+    integral = fractional;			/* truncate! */
+    fractional -= integral;			/* leave only fract */
 
-	if( fractional < 0.0 )  {
-		fractional += 1.0;		/* ?? */
-		integral -= 1;
-	}
+    if ( fractional < 0.0 )  {
+	fractional += 1.0;		/* ?? */
+	integral -= 1;
+    }
 
-	fractional = pow( 10.0, fractional );
-	i = fractional - 0.01;
-	switch( i )  {
+    fractional = pow( 10.0, fractional );
+    i = fractional - 0.01;
+    switch ( i )  {
 
 	case 1:
-		fractional = 2.0;
-		break;
+	    fractional = 2.0;
+	    break;
 
 	case 2:
 	case 3:
-		fractional = 4.0;
-		break;
+	    fractional = 4.0;
+	    break;
 
 	case 4:
-		fractional = 5.0;
-		break;
+	    fractional = 5.0;
+	    break;
 
 	case 5:
 	case 6:
 	case 7:
-		fractional = 8.0;
-		break;
+	    fractional = 8.0;
+	    break;
 
 	case 8:
 	case 9:
-		fractional = 10.0;
+	    fractional = 10.0;
 
-	}
+    }
 
-	/* Compute DX factor, combining power of ten & adjusted co-efficient */
-	workdx = pow( 10.0, (double)integral ) * fractional;
+    /* Compute DX factor, combining power of ten & adjusted co-efficient */
+    workdx = pow( 10.0, (double)integral ) * fractional;
 
-	/* Apply the MIN and DX values to the users input data */
-	for( i=0; i<elements; i++ )  {
-		if( mode == 'f' )
-			odata[i] = (ifloatp[i] - xmin) / workdx;
-		else
-			if( mode == 'd' )
-				odata[i] = (idoublep[i] - xmin) / workdx;
-			else
-				odata[i] = (idata[i] - xmin) / workdx;
-	}
+    /* Apply the MIN and DX values to the users input data */
+    for ( i=0; i<elements; i++ )  {
+	if ( mode == 'f' )
+	    odata[i] = (ifloatp[i] - xmin) / workdx;
+	else
+	    if ( mode == 'd' )
+		odata[i] = (idoublep[i] - xmin) / workdx;
+	    else
+		odata[i] = (idata[i] - xmin) / workdx;
+    }
 
-	/* Send MIN and DX back to the user */
-	*min = xmin;
-	*dx = workdx;
+    /* Send MIN and DX back to the user */
+    *min = xmin;
+    *dx = workdx;
 }
 
 
@@ -210,15 +196,15 @@ tp_scale(int *idata,
  */
 void
 PL_FORTRAN(fscale, FSCALE)( idata, elements, mode, length, odata, min, dx )
-int	idata[];
-int	*elements;
-char	*mode;
-int	*length;
-int	odata[];
-double	*min;
-double	*dx;
+    int	idata[];
+    int	*elements;
+    char	*mode;
+    int	*length;
+    int	odata[];
+    double	*min;
+    double	*dx;
 {
-	tp_scale( idata, *elements, *mode, *length, odata, min, dx );
+    tp_scale( idata, *elements, *mode, *length, odata, min, dx );
 }
 
 /** @} */
@@ -226,8 +212,8 @@ double	*dx;
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

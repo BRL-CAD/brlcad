@@ -47,7 +47,7 @@ struct Blt_ListNodeStruct {
     } key;			/* MUST BE LAST FIELD IN RECORD!! */
 };
 
-typedef int (Blt_ListCompareProc) _ANSI_ARGS_((Blt_ListNode *node1Ptr, 
+typedef int (Blt_ListCompareProc) _ANSI_ARGS_((Blt_ListNode *node1Ptr,
 	Blt_ListNode *node2Ptr));
 
 /*
@@ -64,7 +64,7 @@ EXTERN void Blt_ListInit _ANSI_ARGS_((Blt_List list, int type));
 EXTERN void Blt_ListReset _ANSI_ARGS_((Blt_List list));
 EXTERN Blt_List Blt_ListCreate _ANSI_ARGS_((int type));
 EXTERN void Blt_ListDestroy _ANSI_ARGS_((Blt_List list));
-EXTERN Blt_ListNode Blt_ListCreateNode _ANSI_ARGS_((Blt_List list, 
+EXTERN Blt_ListNode Blt_ListCreateNode _ANSI_ARGS_((Blt_List list,
 	CONST char *key));
 EXTERN void Blt_ListDeleteNode _ANSI_ARGS_((Blt_ListNode node));
 
@@ -72,14 +72,14 @@ EXTERN Blt_ListNode Blt_ListAppend _ANSI_ARGS_((Blt_List list, CONST char *key,
 	ClientData clientData));
 EXTERN Blt_ListNode Blt_ListPrepend _ANSI_ARGS_((Blt_List list, CONST char *key,
 	ClientData clientData));
-EXTERN void Blt_ListLinkAfter _ANSI_ARGS_((Blt_List list, Blt_ListNode node, 
+EXTERN void Blt_ListLinkAfter _ANSI_ARGS_((Blt_List list, Blt_ListNode node,
 	Blt_ListNode afterNode));
-EXTERN void Blt_ListLinkBefore _ANSI_ARGS_((Blt_List list, Blt_ListNode node, 
+EXTERN void Blt_ListLinkBefore _ANSI_ARGS_((Blt_List list, Blt_ListNode node,
 	Blt_ListNode beforeNode));
 EXTERN void Blt_ListUnlinkNode _ANSI_ARGS_((Blt_ListNode node));
-EXTERN Blt_ListNode Blt_ListGetNode _ANSI_ARGS_((Blt_List list, 
+EXTERN Blt_ListNode Blt_ListGetNode _ANSI_ARGS_((Blt_List list,
 	CONST char *key));
-EXTERN void Blt_ListDeleteNodeByKey _ANSI_ARGS_((Blt_List list, 
+EXTERN void Blt_ListDeleteNodeByKey _ANSI_ARGS_((Blt_List list,
 	CONST char *key));
 EXTERN Blt_ListNode Blt_ListGetNthNode _ANSI_ARGS_((Blt_List list,
 	int position, int direction));

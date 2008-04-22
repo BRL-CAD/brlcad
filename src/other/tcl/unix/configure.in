@@ -6,7 +6,7 @@ dnl	to configure the system for the local environment.
 # RCS: @(#) $Id$
 
 AC_INIT([tcl],[8.5])
-AC_PREREQ(2.52)
+AC_PREREQ(2.59)
 
 dnl This is only used when included from macosx/configure.ac
 m4_ifdef([SC_USE_CONFIG_HEADERS], [
@@ -27,7 +27,7 @@ m4_ifdef([SC_USE_CONFIG_HEADERS], [
 TCL_VERSION=8.5
 TCL_MAJOR_VERSION=8
 TCL_MINOR_VERSION=5
-TCL_PATCH_LEVEL="a6"
+TCL_PATCH_LEVEL=".1"
 VERSION=${TCL_VERSION}
 
 #------------------------------------------------------------------------
@@ -61,6 +61,7 @@ if test "${CFLAGS+set}" != "set" ; then
 fi
 
 AC_PROG_CC
+AC_C_INLINE
 
 #--------------------------------------------------------------------
 # Supply substitutes for missing POSIX header files.  Special notes:
@@ -150,7 +151,7 @@ AC_CHECK_FUNCS(getcwd, , [AC_DEFINE(USEGETWD, 1, [Is getcwd Posix-compliant?])])
 # Nb: if getcwd uses popen and pwd(1) (like SunOS 4) we should really
 # define USEGETWD even if the posix getcwd exists. Add a test ?
 
-AC_REPLACE_FUNCS(opendir strtol strtoll strtoull tmpnam waitpid)
+AC_REPLACE_FUNCS(opendir strtol waitpid)
 AC_CHECK_FUNC(strerror, , [AC_DEFINE(NO_STRERROR, 1, [Do we have strerror()])])
 AC_CHECK_FUNC(getwd, , [AC_DEFINE(NO_GETWD, 1, [Do we have getwd()])])
 AC_CHECK_FUNC(wait3, , [AC_DEFINE(NO_WAIT3, 1, [Do we have wait3()])])
@@ -163,6 +164,8 @@ if test "`uname -s`" = "Darwin" && test "${TCL_THREADS}" = 1 && \
     ac_cv_func_realpath=no
 fi
 AC_CHECK_FUNC(realpath, , [AC_DEFINE(NO_REALPATH, 1, [Do we have realpath()])])
+
+SC_TCL_GETADDRINFO
 
 #-------------------------------------------------------------------- 
 #	Look for thread-safe variants of some library functions.
@@ -584,6 +587,7 @@ AC_MSG_RESULT([$tcl_ok])
 #	to be installed by Tcl. The default is autodetection, but can
 #	be overriden on the configure command line either way.
 #------------------------------------------------------------------------
+
 AC_MSG_CHECKING([for timezone data])
 AC_ARG_WITH(tzdata,
     AC_HELP_STRING([--with-tzdata],
@@ -628,7 +632,54 @@ then
     AC_MSG_RESULT([supplied by Tcl])
     INSTALL_TZDATA=install-tzdata
 fi
-AC_SUBST(INSTALL_TZDATA)
+
+#--------------------------------------------------------------------
+#	DTrace support
+#--------------------------------------------------------------------
+
+AC_ARG_ENABLE(dtrace,
+    AC_HELP_STRING([--enable-dtrace],
+	[build with DTrace support (default: off)]),
+    [tcl_ok=$enableval], [tcl_ok=no])
+if test $tcl_ok = yes; then
+    AC_CHECK_HEADER(sys/sdt.h, [tcl_ok=yes], [tcl_ok=no])
+fi
+if test $tcl_ok = yes; then
+    AC_PATH_PROG(DTRACE, dtrace,, [$PATH:/usr/sbin])
+    test -z "$ac_cv_path_DTRACE" && tcl_ok=no
+fi
+AC_MSG_CHECKING([whether to enable DTrace support])
+if test $tcl_ok = yes; then
+    AC_DEFINE(USE_DTRACE, 1, [Are we building with DTrace support?])
+    DTRACE_SRC="\${DTRACE_SRC}"
+    DTRACE_HDR="\${DTRACE_HDR}"
+    if test "`uname -s`" != "Darwin" ; then
+	DTRACE_OBJ="\${DTRACE_OBJ}"
+    fi
+fi
+AC_MSG_RESULT([$tcl_ok])
+
+#--------------------------------------------------------------------
+#  Does the C stack grow upwards or downwards? Or cross-compiling?
+#--------------------------------------------------------------------
+
+AC_CACHE_CHECK([if the C stack grows upwards in memory], tcl_cv_stack_grows_up, [
+    AC_TRY_RUN([
+	int StackGrowsUp(int *parent) {
+	    int here;
+	    return (&here < parent);
+	}
+	int main (int argc, char *argv[]) {
+	    int foo;
+	    return StackGrowsUp(&foo);
+	}
+    ], tcl_cv_stack_grows_up=yes, tcl_cv_stack_grows_up=no,
+    tcl_cv_stack_grows_up=unknown)])
+if test $tcl_cv_stack_grows_up = unknown; then
+    AC_DEFINE(TCL_CROSS_COMPILE, 1, [Are we cross-compiling?])
+elif test $tcl_cv_stack_grows_up = yes; then
+    AC_DEFINE(TCL_STACK_GROWS_UP, 1, [The C stack grows upwards in memory.])
+fi
 
 #--------------------------------------------------------------------
 #	The statements below define a collection of symbols related to
@@ -657,12 +708,17 @@ HTML_DIR='$(DISTDIR)/html'
 if test "`uname -s`" = "Darwin" ; then
     SC_ENABLE_FRAMEWORK
     TCL_SHLIB_LD_EXTRAS="-compatibility_version ${TCL_VERSION} -current_version ${TCL_VERSION}`echo ${TCL_PATCH_LEVEL} | awk ['{match($0, "\\\.[0-9]+"); print substr($0,RSTART,RLENGTH)}']`"
-    TCL_SHLIB_LD_EXTRAS="${TCL_SHLIB_LD_EXTRAS}"' -install_name ${DYLIB_INSTALL_DIR}/${TCL_LIB_FILE} -seg1addr 0xa000000'
+    TCL_SHLIB_LD_EXTRAS="${TCL_SHLIB_LD_EXTRAS}"' -install_name ${DYLIB_INSTALL_DIR}/${TCL_LIB_FILE}'
+    echo "$LDFLAGS " | grep -q -- '-prebind ' && TCL_SHLIB_LD_EXTRAS="${TCL_SHLIB_LD_EXTRAS}"' -seg1addr 0xa000000'
+    TCL_SHLIB_LD_EXTRAS="${TCL_SHLIB_LD_EXTRAS}"' -sectcreate __TEXT __info_plist Tcl-Info.plist'
+    EXTRA_TCLSH_LIBS='-sectcreate __TEXT __info_plist Tclsh-Info.plist'
+    EXTRA_APP_CC_SWITCHES='-mdynamic-no-pic'
+    AC_CONFIG_FILES([Tcl-Info.plist:../macosx/Tcl-Info.plist.in Tclsh-Info.plist:../macosx/Tclsh-Info.plist.in])
+    TCL_YEAR="`date +%Y`"
 fi
 
 if test "$FRAMEWORK_BUILD" = "1" ; then
     AC_DEFINE(TCL_FRAMEWORK, 1, [Is Tcl built as a framework?])
-    AC_CONFIG_FILES([Tcl-Info.plist:../macosx/Tcl-Info.plist.in])
     # Construct a fake local framework structure to make linking with
     # '-framework Tcl' and running of tcltest work
     AC_CONFIG_COMMANDS([Tcl.framework], [n=Tcl &&
@@ -691,7 +747,6 @@ if test "$FRAMEWORK_BUILD" = "1" ; then
     EXTRA_INSTALL_BINARIES='@echo "Installing Info.plist to $(LIB_INSTALL_DIR)/Resources" && mkdir -p "$(LIB_INSTALL_DIR)/Resources" && $(INSTALL_DATA) Tcl-Info.plist "$(LIB_INSTALL_DIR)/Resources/Info.plist"'
     EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && echo "Installing license.terms to $(LIB_INSTALL_DIR)/Resources" && $(INSTALL_DATA) "$(TOP_DIR)/license.terms" "$(LIB_INSTALL_DIR)/Resources"'
     EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && echo "Finalizing Tcl.framework" && rm -f "$(LIB_INSTALL_DIR)/../Current" && ln -s "$(VERSION)" "$(LIB_INSTALL_DIR)/../Current" && for f in "$(LIB_FILE)" tclConfig.sh Resources Headers PrivateHeaders; do rm -f "$(LIB_INSTALL_DIR)/../../$$f" && ln -s "Versions/Current/$$f" "$(LIB_INSTALL_DIR)/../.."; done && f="$(STUB_LIB_FILE)" && rm -f "$(LIB_INSTALL_DIR)/../../$$f" && ln -s "Versions/$(VERSION)/$$f" "$(LIB_INSTALL_DIR)/../.."'
-    TCL_YEAR="`date +%Y`"
     # Don't use AC_DEFINE for the following as the framework version define 
     # needs to go into the Makefile even when using autoheader, so that we  
     # can pick up a potential make override of VERSION. Also, don't put this
@@ -735,12 +790,14 @@ VERSION=${TCL_VERSION}
 #--------------------------------------------------------------------
 
 if test "$FRAMEWORK_BUILD" = "1" ; then
-    TCL_PACKAGE_PATH="~/Library/Tcl /Library/Tcl /Network/Library/Tcl /System/Library/Tcl ~/Library/Frameworks /Library/Frameworks /Network/Library/Frameworks /System/Library/Frameworks"
-    TCL_MODULE_PATH="~/Library/Tcl /Library/Tcl /Network/Library/Tcl /System/Library/Tcl"
+    test -z "$TCL_PACKAGE_PATH" && \
+	TCL_PACKAGE_PATH="~/Library/Tcl /Library/Tcl /Network/Library/Tcl /System/Library/Tcl ~/Library/Frameworks /Library/Frameworks /Network/Library/Frameworks /System/Library/Frameworks"
+    test -z "$TCL_MODULE_PATH"  && \
+	TCL_MODULE_PATH="~/Library/Tcl /Library/Tcl /Network/Library/Tcl /System/Library/Tcl"
 elif test "$prefix/lib" != "$libdir"; then
-    TCL_PACKAGE_PATH="${libdir} ${prefix}/lib"
+    TCL_PACKAGE_PATH="${libdir} ${prefix}/lib ${TCL_PACKAGE_PATH}"
 else
-    TCL_PACKAGE_PATH="${prefix}/lib"
+    TCL_PACKAGE_PATH="${prefix}/lib ${TCL_PACKAGE_PATH}"
 fi
 
 #--------------------------------------------------------------------
@@ -811,6 +868,12 @@ AC_SUBST(TCL_UNSHARED_LIB_SUFFIX)
 
 AC_SUBST(TCL_HAS_LONGLONG)
 
+AC_SUBST(INSTALL_TZDATA)
+
+AC_SUBST(DTRACE_SRC)
+AC_SUBST(DTRACE_HDR)
+AC_SUBST(DTRACE_OBJ)
+
 AC_SUBST(BUILD_DLTEST)
 AC_SUBST(TCL_PACKAGE_PATH)
 AC_SUBST(TCL_MODULE_PATH)
@@ -820,9 +883,11 @@ AC_SUBST(PRIVATE_INCLUDE_DIR)
 AC_SUBST(HTML_DIR)
 
 AC_SUBST(EXTRA_CC_SWITCHES)
+AC_SUBST(EXTRA_APP_CC_SWITCHES)
 AC_SUBST(EXTRA_INSTALL)
 AC_SUBST(EXTRA_INSTALL_BINARIES)
 AC_SUBST(EXTRA_BUILD_HTML)
+AC_SUBST(EXTRA_TCLSH_LIBS)
 
 AC_SUBST(DLTEST_LD)
 AC_SUBST(DLTEST_SUFFIX)

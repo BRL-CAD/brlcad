@@ -78,7 +78,7 @@ with each line in the file corresponding to an element in the list:
 set fl [open /proc/meminfo]
 set data [\fBread\fR $fl]
 close $fl
-set lines [split $data \\n]
+set lines [split $data \en]
 .CE
 
 .SH "SEE ALSO"

@@ -1,7 +1,7 @@
 /*                      P I X C O U N T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2007 United States Government as represented by
+ * Copyright (c) 1998-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,29 +19,16 @@
  */
 /** @file pixcount.c
  *
- *	Sort the pixels of an input stream by color value.
+ * Sort the pixels of an input stream by color value.
  *
- *  Author -
- *	Paul J. Tanenbaum
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
-#include "machine.h"
 #include "bu.h"
 
 
@@ -60,14 +47,15 @@ struct pixel {
 int		pixel_size = 3;		/* Bytes/pixel */
 FILE		*outfp = NULL;		/* output file */
 
-static char usage[] = "\
+static const char usage[] = "\
 Usage: 'pixcount [-# bytes_per_pixel]\n\
 		 [infile.pix [outfile]]'\n";
 #define OPT_STRING	"#:?"
 
+
 static void print_usage (void)
 {
-    (void) bu_log("%s", usage);
+    bu_exit(1, "%s", usage);
 }
 
 /*
@@ -83,8 +71,8 @@ struct pixel *mk_pixel (unsigned char *color)
 
     pp -> p_magic = PIXEL_MAGIC;
     pp -> p_color = (unsigned char *)
-		bu_malloc(pixel_size * sizeof(unsigned char),
-			"pixel color");
+	bu_malloc(pixel_size * sizeof(unsigned char),
+		  "pixel color");
     for (i = 0; i < pixel_size; ++i)
 	pp -> p_color[i] = color[i];
     pp -> p_count = 0;
@@ -185,8 +173,7 @@ struct pixel *lookup_pixel(bu_rb_tree *palette, unsigned char *color)
 	    pp = qpp;
 	    break;
 	default:
-	    bu_log("bu_rb_insert() returns %d:  This should not happen\n", rc);
-	    exit (1);
+	    bu_exit(1, "bu_rb_insert() returns %d:  This should not happen\n", rc);
     }
 
     return (pp);
@@ -217,13 +204,11 @@ main (int argc, char **argv)
 		{
 		    bu_log("Invalid pixel size: '%s'\n", bu_optarg);
 		    print_usage();
-		    exit (1);
 		}
 		break;
 	    case '?':
 	    default:
 		print_usage();
-		exit (ch != '?');
 	}
     switch (argc - bu_optind)
     {
@@ -239,7 +224,6 @@ main (int argc, char **argv)
 	    break;
 	default:
 	    print_usage();
-	    exit (1);
     }
 
     /*
@@ -249,18 +233,12 @@ main (int argc, char **argv)
     {
 	inf_name = argv[bu_optind];
 	if ((infp = fopen(inf_name, "r")) == NULL)
-	{
-	    bu_log ("Cannot open input file '%s'\n", inf_name);
-	    exit (1);
-	}
+	    bu_exit(1, "Cannot open input file '%s'\n", inf_name);
 	if (outfp == NULL)
 	{
 	    outf_name = argv[++bu_optind];
 	    if ((outfp = fopen(outf_name, "w")) == NULL)
-	    {
-		bu_log ("Cannot open output file '%s'\n", outf_name);
-		exit (1);
-	    }
+		bu_exit(1, "Cannot open output file '%s'\n", outf_name);
 	}
     }
 
@@ -273,7 +251,6 @@ main (int argc, char **argv)
 	{
 	    bu_log("FATAL: pixcount reads only from file or pipe\n");
 	    print_usage();
-	    exit (1);
 	}
     }
 
@@ -284,10 +261,10 @@ main (int argc, char **argv)
      *	Read the input stream into the palette
      */
     buf = (unsigned char *)
-		bu_malloc(pixel_size * sizeof(unsigned char),
-			"pixel buffer");
+	bu_malloc(pixel_size * sizeof(unsigned char),
+		  "pixel buffer");
     while (fread((void *) buf, pixel_size * sizeof(unsigned char), 1, infp)
-	    == 1)
+	   == 1)
     {
 	pp = lookup_pixel(palette, buf);
 	BU_CKMAG(pp, PIXEL_MAGIC, "pixel");
@@ -305,8 +282,8 @@ main (int argc, char **argv)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

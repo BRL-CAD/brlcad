@@ -9,6 +9,7 @@
 TCLVERSION		= @TCL_VERSION@
 TCLPATCHL		= @TCL_PATCH_LEVEL@
 VERSION			= @TK_VERSION@
+PATCH_LEVEL		= @TK_PATCH_LEVEL@
 
 #----------------------------------------------------------------
 # Things you can change to personalize the Makefile for your own
@@ -236,6 +237,7 @@ TKTEST_OBJS = \
 	testMain.$(OBJEXT) \
 	tkSquare.$(OBJEXT) \
 	tkTest.$(OBJEXT) \
+	tkOldTest.$(OBJEXT) \
 	tkWinTest.$(OBJEXT)
 
 XLIB_OBJS = \
@@ -387,8 +389,7 @@ TTK_OBJS = \
 	ttkStubLib.$(OBJEXT)
 
 STUB_OBJS = \
-	tkStubLib.$(OBJEXT) \
-	tkStubImg.$(OBJEXT)
+	tkStubLib.$(OBJEXT)
 
 TCL_DOCS = "$(TCL_SRC_DIR_NATIVE)"/doc/*.[13n]
 TK_DOCS = "$(ROOT_DIR_NATIVE)"/doc/*.[13n]
@@ -479,10 +480,9 @@ install-binaries: binaries
 	@echo "Creating package index $(PKG_INDEX)"; 
 	@$(RM) $(PKG_INDEX);
 	@(\
-	echo "if {![package vsatisfies [package provide Tcl] $(TCLVERSION)]} { return }";\
-	echo "if {[package vcompare [package provide Tcl]\
-		$(TCLVERSION)$(TCLPATCHL)] != 0} { return }";\
-	echo "package ifneeded Tk $(VERSION)$(TCLPATCHL)\
+	echo "if {[catch {package present Tcl\
+		$(TCLVERSION)$(TCLPATCHL)}]} { return }";\
+	echo "package ifneeded Tk $(VERSION)$(PATCH_LEVEL)\
 		[list load [file join \$$dir .. .. bin $(TK_DLL_FILE)] Tk]";\
 	) > $(PKG_INDEX);
 	@for i in tkConfig.sh $(TK_LIB_FILE) $(TK_STUB_LIB_FILE); \
@@ -612,7 +612,7 @@ $(TKTEST): $(TK_LIB_FILE) $(TKTEST_OBJS) wish.$(RES) $(CAT32)
 $(TCL_SRC_DIR)/win/cat.c:
 
 cat32.${OBJEXT}: $(TCL_SRC_DIR)/win/cat.c
-	$(CC) -c $(CC_SWITCHES) @DEPARG@ $(CC_OBJNAME)
+	$(CC) -c $(CC_SWITCHES) "$(TCL_SRC_DIR)/win/cat.c" $(CC_OBJNAME)
 
 $(CAT32): cat32.${OBJEXT}
 	$(CC) $(CFLAGS) cat32.$(OBJEXT) $(CC_EXENAME) $(LIBS) $(LDFLAGS_CONSOLE)
@@ -645,11 +645,19 @@ testMain.$(OBJEXT): winMain.c
 tkTest.$(OBJEXT): tkTest.c
 	$(CC) -c $(CC_SWITCHES) @DEPARG@ $(CC_OBJNAME)
 
+tkOldTest.$(OBJEXT): tkOldTest.c
+	$(CC) -c $(CC_SWITCHES) @DEPARG@ $(CC_OBJNAME)
+
 tkWinTest.$(OBJEXT): tkWinTest.c
 	$(CC) -c $(CC_SWITCHES) @DEPARG@ $(CC_OBJNAME)
 
 tkSquare.$(OBJEXT): tkSquare.c
 	$(CC) -c $(CC_SWITCHES) @DEPARG@ $(CC_OBJNAME)
+
+# Extra dependency info
+tkConsole.$(OBJEXT): configure Makefile
+tkMain.$(OBJEXT): configure Makefile
+tkWindow.$(OBJEXT): configure Makefile
 
 # Add the object extension to the implicit rules.  By default .obj is not
 # automatically added.

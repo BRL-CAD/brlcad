@@ -1,7 +1,7 @@
 /*                         U S A G E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2007 United States Government as represented by
+ * Copyright (c) 1990-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -23,11 +23,6 @@
  *	Susanne L. Muuss
  *	Earl P. Weaver
  *
- *  Source -
- *	VLD/ASB Building 1065
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
 
 #include "common.h"
@@ -35,7 +30,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "machine.h"
 #include "bu.h"
 
 
@@ -59,16 +53,15 @@ options, it is ignored for all other options\n";
 void
 usage()
 {
-	bu_log( message );
-	exit( 1 );
+    bu_exit( 1, message );
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

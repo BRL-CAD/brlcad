@@ -1,7 +1,7 @@
 /*                     T E X T U R E _ I N T E R N A L . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2007 United States Government as represented by
+ * Copyright (c) 2002-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,14 +22,6 @@
  *  Comments -
  *      Texture Library - Internal texture include
  *
- *  Author -
- *      Justin L. Shumaker
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- * $Id$
  */
 
 #ifndef _TEXTURE_INTERNAL_H
@@ -37,19 +29,20 @@
 
 
 #include "tie.h"
-#include "adrt_common.h"
+
+#define __TEXTURE_WORK_PROTOTYPE__ texture_t *texture, void *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel
 
 struct texture_s;
 struct mesh_s;
 typedef void texture_init_t(struct texture_s *texture);
 typedef void texture_free_t(struct texture_s *texture);
-typedef void texture_work_t(struct texture_s *texture, struct mesh_s *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel);
+typedef void texture_work_t(struct texture_s *texture, void *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel);
 
 
 typedef struct texture_s {
-  texture_free_t *free;
-  texture_work_t *work;
-  void *data;
+    texture_free_t *free;
+    texture_work_t *work;
+    void *data;
 } texture_t;
 
 
@@ -59,8 +52,8 @@ typedef struct texture_s {
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

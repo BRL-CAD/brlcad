@@ -1,7 +1,7 @@
 /*                           H U R T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2007 United  States Government as represented by
+ * Copyright (c) 1985-2008 United  States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,24 +26,17 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-#ifdef HAVE_FCNTL_H
-#  include <fcntl.h>
-#endif
 #ifdef HAVE_SYS_TYPES_H
 # include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_STAT_H
 # include <sys/stat.h>
 #endif
+#include "bio.h"
 
-#include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
@@ -165,7 +158,7 @@ struct bu_structparse view_parse[] = {
     {"%d",	1, "bounces",	bu_byteoffset(max_bounces),		BU_STRUCTPARSE_FUNC_NULL, "bounces", &max_bounces },
     {"%d",	1, "ireflect",	bu_byteoffset(max_ireflect),		BU_STRUCTPARSE_FUNC_NULL, "max ireflect", &max_ireflect },
     {"%d",	1, "a_onehit",	bu_byteoffset(a_onehit),		BU_STRUCTPARSE_FUNC_NULL, "one hit", &a_onehit },
-    {"%f", ELEMENTS_PER_VECT, "background",bu_byteoffset(background[0]),	BU_STRUCTPARSE_FUNC_NULL, "background color", &background },
+    {"%f", ELEMENTS_PER_VECT, "background", bu_byteoffset(background[0]),	BU_STRUCTPARSE_FUNC_NULL, "background color", &background },
     {"",	0, (char *)0,	0,				BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -174,7 +167,7 @@ struct bu_structparse set_parse[] = {
     {"%d",	1, "height",	bu_byteoffset(height),		BU_STRUCTPARSE_FUNC_NULL, "height", &height },
     {"%f",	1, "perspective", bu_byteoffset(rt_perspective),	BU_STRUCTPARSE_FUNC_NULL, "perspective", &rt_perspective },
     {"%f",	1, "angle",	bu_byteoffset(rt_perspective),	BU_STRUCTPARSE_FUNC_NULL, "angle", &rt_perspective },
-    {"i", bu_byteoffset(view_parse[0]),"View_Module-Specific Parameters", 0, BU_STRUCTPARSE_FUNC_NULL, "params", NULL },
+    {"i", bu_byteoffset(view_parse[0]), "View_Module-Specific Parameters", 0, BU_STRUCTPARSE_FUNC_NULL, "params", NULL },
     {"",	0, (char *)0,	0,				BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -241,8 +234,7 @@ int main(int argc, char **argv)
 
     /* Before option processing, get default number of processors */
     npsw = bu_avail_cpus();		/* Use all that are present */
-    if( npsw > DEFAULT_PSW )  npsw = DEFAULT_PSW;
-    if( npsw > MAX_PSW )  npsw = MAX_PSW;
+    if ( npsw > MAX_PSW )  npsw = MAX_PSW;
 
     /* Before option processing, do application-specific initialization */
     RT_APPLICATION_INIT( &ap );
@@ -259,18 +251,18 @@ int main(int argc, char **argv)
 		      rt_version(),
 		      bn_version(),
 		      bu_version()
-		      );
+	    );
     }
 
     /* Identify what host we're running on */
     if (rt_verbosity & VERBOSE_LIBVERSIONS) {
 	char	hostname[512] = {0};
-	if( gethostname( hostname, sizeof(hostname) ) >= 0 && hostname[0] != '\0' )
+	if ( gethostname( hostname, sizeof(hostname) ) >= 0 && hostname[0] != '\0' )
 	    (void)fprintf(stderr, "Running on %s\n", hostname);
     }
 
-    if( bu_optind >= argc )  {
-	fprintf(stderr,"%s:  MGED database not specified\n", argv[0]);
+    if ( bu_optind >= argc )  {
+	fprintf(stderr, "%s:  MGED database not specified\n", argv[0]);
 	(void)fputs(usage, stderr);
 	return 1;
     }
@@ -278,9 +270,9 @@ int main(int argc, char **argv)
     ap.a_logoverlap = ((void (*)())0);
 
     /* If user gave no sizing info at all, use 512 as default */
-    if( width <= 0 && cell_width <= 0 )
+    if ( width <= 0 && cell_width <= 0 )
 	width = 512;
-    if( height <= 0 && cell_height <= 0 )
+    if ( height <= 0 && cell_height <= 0 )
 	height = 512;
 
     /* If user didn't provide an aspect ratio, use the image
@@ -294,7 +286,7 @@ int main(int argc, char **argv)
      *  Handle parallel initialization, if applicable.
      */
 
-    if( npsw < 0 )  {
+    if ( npsw < 0 )  {
 	/* Negative number means "all but" npsw */
 	npsw = bu_avail_cpus() + npsw;
     }
@@ -302,7 +294,7 @@ int main(int argc, char **argv)
     if (npsw > 1) {
 	rt_g.rtg_parallel = 1;
 	if (rt_verbosity & VERBOSE_MULTICPU)
-	    fprintf(stderr,"Planning to run with %d processors\n", npsw );
+	    fprintf(stderr, "Planning to run with %d processors\n", npsw );
     } else {
 	rt_g.rtg_parallel = 0;
     }
@@ -323,7 +315,7 @@ int main(int argc, char **argv)
     nobjs = argc - bu_optind - 1;
     objtab = &(argv[bu_optind+1]);
 
-    if( nobjs <= 0 )  {
+    if ( nobjs <= 0 )  {
 	bu_log("%s: no objects specified -- raytrace aborted\n", argv[0]);
 	return 1;
     }
@@ -339,7 +331,7 @@ int main(int argc, char **argv)
 	bu_vls_from_argv( &str,
 			  nobjs <= 16 ? nobjs : 16,
 			  (const char **)argv+bu_optind+1 );
-	if( nobjs > 16 )
+	if ( nobjs > 16 )
 	    bu_vls_strcat( &str, " ...");
 	else
 	    bu_vls_putc( &str, ';' );
@@ -350,7 +342,7 @@ int main(int argc, char **argv)
     /* Build directory of GED database */
     bu_vls_init( &times );
     rt_prep_timer();
-    if( (rtip=rt_dirbuild(title_file, idbuf, sizeof(idbuf))) == RTI_NULL ) {
+    if ( (rtip=rt_dirbuild(title_file, idbuf, sizeof(idbuf))) == RTI_NULL ) {
 	bu_log("rt:  rt_dirbuild(%s) failure\n", title_file);
 	return 2;
     }
@@ -367,11 +359,11 @@ int main(int argc, char **argv)
     rtip->rti_nugrid_dimlimit = nugrid_dimlimit;
     rtip->rti_nu_gfactor = nu_gfactor;
     rtip->useair = 0;
-    if( rt_dist_tol > 0 )  {
+    if ( rt_dist_tol > 0 )  {
 	rtip->rti_tol.dist = rt_dist_tol;
 	rtip->rti_tol.dist_sq = rt_dist_tol * rt_dist_tol;
     }
-    if( rt_perp_tol > 0 )  {
+    if ( rt_perp_tol > 0 )  {
 	rtip->rti_tol.perp = rt_perp_tol;
 	rtip->rti_tol.para = 1 - rt_perp_tol;
     }
@@ -379,7 +371,7 @@ int main(int argc, char **argv)
 	rt_pr_tol( &rtip->rti_tol );
 
     /* before view_init */
-    if( outputfile && strcmp( outputfile, "-") == 0 )
+    if ( outputfile && strcmp( outputfile, "-") == 0 )
 	outputfile = (char *)0;
 
     /*
@@ -387,7 +379,7 @@ int main(int argc, char **argv)
      *  Note that width & height may not have been set yet,
      *  since they may change from frame to frame.
      */
-    if( view_init( &ap, title_file, title_obj, outputfile!=(char *)0, framebuffer!=(char *)0 ) != 0 )  {
+    if ( view_init( &ap, title_file, title_obj, outputfile!=(char *)0, framebuffer!=(char *)0 ) != 0 )  {
 	/* Framebuffer is desired */
 	register int xx, yy;
 	int	zoom;
@@ -395,27 +387,27 @@ int main(int argc, char **argv)
 	/* Ask for a fb big enough to hold the image, at least 512. */
 	/* This is so MGED-invoked "postage stamps" get zoomed up big enough to see */
 	xx = yy = 512;
-	if( width > xx || height > yy )  {
+	if ( width > xx || height > yy )  {
 	    xx = width;
 	    yy = height;
 	}
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	fbp = fb_open( framebuffer, xx, yy );
 	bu_semaphore_release( BU_SEM_SYSCALL );
-	if( fbp == FBIO_NULL )  {
-	    fprintf(stderr,"rt:  can't open frame buffer\n");
+	if ( fbp == FBIO_NULL )  {
+	    fprintf(stderr, "rt:  can't open frame buffer\n");
 	    return 12;
 	}
 
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	/* If fb came out smaller than requested, do less work */
-	if( fb_getwidth(fbp) < width )  width = fb_getwidth(fbp);
-	if( fb_getheight(fbp) < height )  height = fb_getheight(fbp);
+	if ( fb_getwidth(fbp) < width )  width = fb_getwidth(fbp);
+	if ( fb_getheight(fbp) < height )  height = fb_getheight(fbp);
 
 	/* If the fb is lots bigger (>= 2X), zoom up & center */
-	if( width > 0 && height > 0 )  {
+	if ( width > 0 && height > 0 )  {
 	    zoom = fb_getwidth(fbp)/width;
-	    if( fb_getheight(fbp)/height < zoom )
+	    if ( fb_getheight(fbp)/height < zoom )
 		zoom = fb_getheight(fbp)/height;
 	} else {
 	    zoom = 1;
@@ -424,11 +416,11 @@ int main(int argc, char **argv)
 		       zoom, zoom );
 	bu_semaphore_release( BU_SEM_SYSCALL );
     }
-    if( (outputfile == (char *)0) && (fbp == FBIO_NULL) )  {
+    if ( (outputfile == (char *)0) && (fbp == FBIO_NULL) )  {
 	/* If not going to framebuffer, or to a file, then use stdout */
-	if( outfp == NULL )  outfp = stdout;
-	if( isatty(fileno(outfp)) )  {
-	    fprintf(stderr,"rt:  attempting to send binary output to terminal, aborting\n");
+	if ( outfp == NULL )  outfp = stdout;
+	if ( isatty(fileno(outfp)) )  {
+	    fprintf(stderr, "rt:  attempting to send binary output to terminal, aborting\n");
 	    return 14;
 	}
     }
@@ -437,19 +429,19 @@ int main(int argc, char **argv)
      *  Initialize all the per-CPU memory resources.
      *  The number of processors can change at runtime, init them all.
      */
-    for( i=0; i < MAX_PSW; i++ )  {
+    for ( i=0; i < MAX_PSW; i++ )  {
 	rt_init_resource( &resource[i], i, rtip );
 	bn_rand_init( resource[i].re_randptr, i );
     }
 
-    if( !matflag )  {
+    if ( !matflag )  {
 	int frame_retval;
 	def_tree( rtip );		/* Load the default trees */
 	do_ae( azimuth, elevation );
 	frame_retval = do_frame( curframe );
 	if (frame_retval != 0) {
 	    /* Release the framebuffer, if any */
-	    if( fbp != FBIO_NULL ) {
+	    if ( fbp != FBIO_NULL ) {
 		fb_close(fbp);
 	    }
 	    return 1;
@@ -463,13 +455,13 @@ int main(int argc, char **argv)
 	 * All the work happens in the functions
 	 * called by rt_do_cmd().
 	 */
-	while( (buf = rt_read_cmd( stdin )) != (char *)0 )  {
+	while ( (buf = rt_read_cmd( stdin )) != (char *)0 )  {
 	    ret = rt_do_cmd( rtip, buf, rt_cmdtab );
 	    bu_free( buf, "rt_read_cmd command buffer" );
-	    if( ret < 0 )
+	    if ( ret < 0 )
 		break;
 	}
-	if( curframe < desiredframe )  {
+	if ( curframe < desiredframe )  {
 	    fprintf(stderr,
 		    "rt:  Desired frame %d not reached, last was %d\n",
 		    desiredframe, curframe);
@@ -477,7 +469,7 @@ int main(int argc, char **argv)
     }
 
     /* Release the framebuffer, if any */
-    if( fbp != FBIO_NULL )
+    if ( fbp != FBIO_NULL )
 	fb_close(fbp);
 
     return(0);
@@ -496,19 +488,15 @@ int get_args( int argc, register char **argv )
 
 
 
-    while( (c=bu_getopt( argc, argv, GETOPT_STR )) != EOF )  {
-	switch( c )  {
+    while ( (c=bu_getopt( argc, argv, GETOPT_STR )) != EOF )  {
+	switch ( c )  {
 	    case 'q':
 		i = atoi(bu_optarg);
-		if (i <= 0) {
-		    bu_log("-q %d is < 0\n", i);
-		    bu_bomb("");
-		}
-		if ( i > BN_RANDHALFTABSIZE) {
-		    bu_log("-q %d is > maximum (%d)\n",
-			   i, BN_RANDHALFTABSIZE);
-		    bu_bomb("");
-		}
+		if (i <= 0)
+		    bu_exit(EXIT_FAILURE, "-q %d is < 0\n", i);
+		if ( i > BN_RANDHALFTABSIZE)
+		    bu_exit(EXIT_FAILURE, "-q %d is > maximum (%d)\n", i, 
+			    BN_RANDHALFTABSIZE);
 		bn_randhalftabsize = i;
 		break;
 	    case '.':
@@ -524,42 +512,42 @@ int get_args( int argc, register char **argv )
 		(void)rt_do_cmd( (struct rt_i *)0, bu_optarg, rt_cmdtab );
 		break;
 	    case 'C':
-		{
-		    int		r,g,b;
-		    register char	*cp = bu_optarg;
+	    {
+		int		r, g, b;
+		register char	*cp = bu_optarg;
 
-		    r = atoi(cp);
-		    while( (*cp >= '0' && *cp <= '9') )  cp++;
-		    while( *cp && (*cp < '0' || *cp > '9') ) cp++;
-		    g = atoi(cp);
-		    while( (*cp >= '0' && *cp <= '9') )  cp++;
-		    while( *cp && (*cp < '0' || *cp > '9') ) cp++;
-		    b = atoi(cp);
+		r = atoi(cp);
+		while ( (*cp >= '0' && *cp <= '9') )  cp++;
+		while ( *cp && (*cp < '0' || *cp > '9') ) cp++;
+		g = atoi(cp);
+		while ( (*cp >= '0' && *cp <= '9') )  cp++;
+		while ( *cp && (*cp < '0' || *cp > '9') ) cp++;
+		b = atoi(cp);
 
-		    if( r < 0 || r > 255 )  r = 255;
-		    if( g < 0 || g > 255 )  g = 255;
-		    if( b < 0 || b > 255 )  b = 255;
+		if ( r < 0 || r > 255 )  r = 255;
+		if ( g < 0 || g > 255 )  g = 255;
+		if ( b < 0 || b > 255 )  b = 255;
 
-		    if (r == 0)
-			background[0] = 0.0;
-		    else
-			background[0] = r / 255.0;
-		    if (g == 0)
-			background[1] = 0.0;
-		    else
-			background[1] = g / 255.0;
-		    if (b == 0)
-			background[2] = 0.0;
-		    else
-			background[2] = b / 255.0;
-		}
-		break;
+		if (r == 0)
+		    background[0] = 0.0;
+		else
+		    background[0] = r / 255.0;
+		if (g == 0)
+		    background[1] = 0.0;
+		else
+		    background[1] = g / 255.0;
+		if (b == 0)
+		    background[2] = 0.0;
+		else
+		    background[2] = b / 255.0;
+	    }
+	    break;
 	    case 'J':
 		sscanf( bu_optarg, "%x", &jitter );
 		break;
 	    case 'H':
 		hypersample = atoi( bu_optarg );
-		if( hypersample > 0 )
+		if ( hypersample > 0 )
 		    jitter = 1;
 		break;
 	    case 'F':
@@ -623,8 +611,8 @@ int get_args( int argc, register char **argv )
 		break;
 	    case 'p':
 		rt_perspective = atof( bu_optarg );
-		if( rt_perspective < 0 || rt_perspective > 179 ) {
-		    fprintf(stderr,"persp=%g out of range\n", rt_perspective);
+		if ( rt_perspective < 0 || rt_perspective > 179 ) {
+		    fprintf(stderr, "persp=%g out of range\n", rt_perspective);
 		    rt_perspective = 0;
 		}
 		break;
@@ -658,62 +646,32 @@ int get_args( int argc, register char **argv )
 		break;
 	    case 'V':
 		/* View aspect */
-		{
-		    fastf_t xx, yy;
-		    register char *cp = bu_optarg;
+	    {
+		fastf_t xx, yy;
+		register char *cp = bu_optarg;
 
-		    xx = atof(cp);
-		    while( (*cp >= '0' && *cp <= '9')
-			   || *cp == '.' )  cp++;
-		    while( *cp && (*cp < '0' || *cp > '9') ) cp++;
-		    yy = atof(cp);
-		    if( NEAR_ZERO(yy, SMALL) )
-			aspect = xx;
-		    else
-			aspect = xx/yy;
-		    if( aspect <= 0.0 ) {
-			fprintf(stderr,"Bogus aspect %g, using 1.0\n", aspect);
-			aspect = 1.0;
-		    }
+		xx = atof(cp);
+		while ( (*cp >= '0' && *cp <= '9')
+			|| *cp == '.' )  cp++;
+		while ( *cp && (*cp < '0' || *cp > '9') ) cp++;
+		yy = atof(cp);
+		if ( NEAR_ZERO(yy, SMALL) )
+		    aspect = xx;
+		else
+		    aspect = xx/yy;
+		if ( aspect <= 0.0 ) {
+		    fprintf(stderr, "Bogus aspect %g, using 1.0\n", aspect);
+		    aspect = 1.0;
 		}
-		break;
+	    }
+	    break;
 	    default:		/* '?' */
-		fprintf(stderr,"unknown option %c\n", c);
+		fprintf(stderr, "unknown option %c\n", c);
 		return(0);	/* BAD */
 	}
     }
 
     return(1);			/* OK */
-}
-
-
-/*
- *			O L D _ F R A M E
- *
- *  Acquire particulars about a frame, in the old format.
- *  Returns -1 if unable to acquire info, 0 if successful.
- */
-int
-old_frame(FILE *fp)
-{
-    register int i;
-    char number[128];
-
-    /* Visible part is from -1 to +1 in view space */
-    if( fscanf( fp, "%s", number ) != 1 )  return(-1);
-    viewsize = atof(number);
-    if( fscanf( fp, "%s", number ) != 1 )  return(-1);
-    eye_model[X] = atof(number);
-    if( fscanf( fp, "%s", number ) != 1 )  return(-1);
-    eye_model[Y] = atof(number);
-    if( fscanf( fp, "%s", number ) != 1 )  return(-1);
-    eye_model[Z] = atof(number);
-    for( i=0; i < 16; i++ )  {
-	if( fscanf( fp, "%s", number ) != 1 )
-	    return(-1);
-	Viewrotscale[i] = atof(number);
-    }
-    return(0);		/* OK */
 }
 
 
@@ -729,28 +687,28 @@ int cm_start( int argc, char **argv)
     if (argc < 1) return -1;
 
     frame = atoi(argv[1]);
-    if( finalframe >= 0 && frame > finalframe )
+    if ( finalframe >= 0 && frame > finalframe )
 	return(-1);	/* Indicate EOF -- user declared a halt */
-    if( frame >= desiredframe )  {
+    if ( frame >= desiredframe )  {
 	curframe = frame;
 	return(0);
     }
 
     /* Skip over unwanted frames -- find next frame start */
-    while( (buf = rt_read_cmd( stdin )) != (char *)0 )  {
+    while ( (buf = rt_read_cmd( stdin )) != (char *)0 )  {
 	register char *cp;
 
 	cp = buf;
-	while( *cp && isspace(*cp) )  cp++;	/* skip spaces */
-	if( strncmp( cp, "start", 5 ) != 0 )  continue;
-	while( *cp && !isspace(*cp) )  cp++;	/* skip keyword */
-	while( *cp && isspace(*cp) )  cp++;	/* skip spaces */
+	while ( *cp && isspace(*cp) )  cp++;	/* skip spaces */
+	if ( strncmp( cp, "start", 5 ) != 0 )  continue;
+	while ( *cp && !isspace(*cp) )  cp++;	/* skip keyword */
+	while ( *cp && isspace(*cp) )  cp++;	/* skip spaces */
 	frame = atoi(cp);
 	bu_free( buf, "rt_read_cmd command buffer (skipping frames)" );
 	buf = (char *)0;
-	if( finalframe >= 0 && frame > finalframe )
+	if ( finalframe >= 0 && frame > finalframe )
 	    return(-1);			/* "EOF" */
-	if( frame >= desiredframe )  {
+	if ( frame >= desiredframe )  {
 	    curframe = frame;
 	    return(0);
 	}
@@ -770,7 +728,7 @@ int cm_eyept(int argc, char **argv)
     register int i;
 
     if (argc < 1) return -1;
-    for( i=0; i<3; i++ )
+    for ( i=0; i<3; i++ )
 	eye_model[i] = atof( argv[i+1] );
     return(0);
 }
@@ -782,12 +740,12 @@ int cm_lookat_pt(int argc, char **argv)
     int	yflip = 0;
     quat_t quat;
 
-    if( argc < 4 )
+    if ( argc < 4 )
 	return(-1);
     pt[X] = atof(argv[1]);
     pt[Y] = atof(argv[2]);
     pt[Z] = atof(argv[3]);
-    if( argc > 4 )
+    if ( argc > 4 )
 	yflip = atoi(argv[4]);
 
     /*
@@ -813,7 +771,7 @@ int cm_vrot( int argc, char **argv)
 
     if (argc < 1) return -1;
 
-    for( i=0; i<16; i++ )
+    for ( i=0; i<16; i++ )
 	Viewrotscale[i] = atof( argv[i+1] );
     return(0);
 }
@@ -824,7 +782,7 @@ int cm_orientation(int argc, char **argv)
     quat_t		quat;
 
     if (argc < 1) return -1;
-    for( i=0; i<4; i++ )
+    for ( i=0; i<4; i++ )
 	quat[i] = atof( argv[i+1] );
     quat_quat2mat( Viewrotscale, quat );
     return(0);
@@ -836,15 +794,15 @@ int cm_end(int argc, char **argv)
 
     if (argc < 0 || !argv) return -1;
 
-    if( rtip && BU_LIST_IS_EMPTY( &rtip->HeadRegion ) )  {
+    if ( rtip && BU_LIST_IS_EMPTY( &rtip->HeadRegion ) )  {
 	def_tree( rtip );		/* Load the default trees */
     }
 
     /* If no matrix or az/el specified yet, use params from cmd line */
-    if( Viewrotscale[15] <= 0.0 )
+    if ( Viewrotscale[15] <= 0.0 )
 	do_ae( azimuth, elevation );
 
-    if( do_frame( curframe ) < 0 )  return(-1);
+    if ( do_frame( curframe ) < 0 )  return(-1);
     return(0);
 }
 
@@ -853,14 +811,14 @@ int cm_tree( int argc, const char **argv)
     register struct rt_i *rtip = ap.a_rt_i;
     struct bu_vls	times;
 
-    if( argc <= 1 )  {
+    if ( argc <= 1 )  {
 	def_tree( rtip );		/* Load the default trees */
 	return(0);
     }
     bu_vls_init( &times );
 
     rt_prep_timer();
-    if( rt_gettrees(rtip, argc-1, &argv[1], npsw) < 0 )
+    if ( rt_gettrees(rtip, argc-1, &argv[1], npsw) < 0 )
 	bu_log("rt_gettrees(%s) FAILED\n", argv[0]);
     (void)rt_get_timer( &times, NULL );
 
@@ -887,10 +845,10 @@ int cm_multiview( int argc, char **argv)
 
     if (argc < 0 || !argv) return -1;
 
-    if( rtip && BU_LIST_IS_EMPTY( &rtip->HeadRegion ) )  {
+    if ( rtip && BU_LIST_IS_EMPTY( &rtip->HeadRegion ) )  {
 	def_tree( rtip );		/* Load the default trees */
     }
-    for( i=0; i<(sizeof(a)/sizeof(a[0])); i++ )  {
+    for ( i=0; i<(sizeof(a)/sizeof(a[0])); i++ )  {
 	do_ae( (double)a[i], (double)e[i] );
 	(void)do_frame( curframe++ );
     }
@@ -907,7 +865,7 @@ int cm_multiview( int argc, char **argv)
 int cm_anim(int argc, const char **argv)
 {
     if (argc < 1 || !argv) return -1;
-    if( db_parse_anim( ap.a_rt_i->rti_dbip, argc, argv ) < 0 )  {
+    if ( db_parse_anim( ap.a_rt_i->rti_dbip, argc, argv ) < 0 )  {
 	bu_log("cm_anim:  %s %s failed\n", argv[1], argv[2]);
 	return(-1);		/* BAD */
     }
@@ -940,14 +898,14 @@ int cm_set(int argc, char **argv)
 {
     struct bu_vls	str;
 
-    if( argc <= 1 ) {
+    if ( argc <= 1 ) {
 	bu_struct_print( "Generic and Application-Specific Parameter Values",
 			 set_parse, (char *)0 );
 	return(0);
     }
     bu_vls_init( &str );
     bu_vls_from_argv( &str, argc-1, (const char **)argv+1 );
-    if( bu_struct_parse( &str, set_parse, (char *)0 ) < 0 )  {
+    if ( bu_struct_parse( &str, set_parse, (char *)0 ) < 0 )  {
 	bu_vls_free( &str );
 	return(-1);
     }
@@ -975,7 +933,7 @@ int cm_opt(int argc, char **argv)
 {
     int old_bu_optind=bu_optind;	/* need to restore this value after calling get_args() */
 
-    if( get_args( argc, argv ) <= 0 ) {
+    if ( get_args( argc, argv ) <= 0 ) {
 	bu_optind = old_bu_optind;
 	return(-1);
     }
@@ -998,7 +956,7 @@ struct command_tab rt_cmdtab[] = {
     {"lookat_pt", "x y z [yflip]", "set eye look direction, in X-Y plane",
      cm_lookat_pt,	4, 5},
     {"viewrot", "4x4 matrix", "set view direction from matrix",
-     cm_vrot,	17,17},
+     cm_vrot,	17, 17},
     {"orientation", "quaturnion", "set view direction from quaturnion",
      cm_orientation,	5, 5},
     {"end", 	"", "end of frame setup, begin raytrace",
@@ -1036,7 +994,7 @@ def_tree(register struct rt_i *rtip)
 
     bu_vls_init( &times );
     rt_prep_timer();
-    if( rt_gettrees(rtip, nobjs, (const char **)objtab, npsw) < 0 )
+    if ( rt_gettrees(rtip, nobjs, (const char **)objtab, npsw) < 0 )
 	bu_log("rt_gettrees(%s) FAILED\n", objtab[0]);
     (void)rt_get_timer( &times, NULL );
 
@@ -1056,7 +1014,7 @@ do_prep(struct rt_i *rtip)
     struct bu_vls	times;
 
     RT_CHECK_RTI(rtip);
-    if( rtip->needprep )  {
+    if ( rtip->needprep )  {
 	/* Allow lighting model to set up (e.g. lights, materials, etc) */
 	view_setup(rtip);
 
@@ -1099,8 +1057,8 @@ grid_setup(void)
     vect_t temp;
     mat_t toEye;
 
-    if( viewsize <= 0.0 )
-	bu_bomb("viewsize <= 0");
+    if ( viewsize <= 0.0 )
+	bu_exit(EXIT_FAILURE, "viewsize <= 0");
     /* model2view takes us to eye_model location & orientation */
     MAT_IDN( toEye );
     MAT_DELTAS_VEC_NEG( toEye, eye_model );
@@ -1109,9 +1067,9 @@ grid_setup(void)
     bn_mat_inv( view2model, model2view );
 
     /* Determine grid cell size and number of pixels */
-    if( cell_newsize ) {
-	if( cell_width <= 0.0 ) cell_width = cell_height;
-	if( cell_height <= 0.0 ) cell_height = cell_width;
+    if ( cell_newsize ) {
+	if ( cell_width <= 0.0 ) cell_width = cell_height;
+	if ( cell_height <= 0.0 ) cell_height = cell_width;
 	width = (viewsize / cell_width) + 0.99;
 	height = (viewsize / (cell_height*aspect)) + 0.99;
 	cell_newsize = 0;
@@ -1131,7 +1089,7 @@ grid_setup(void)
     VSCALE( dy_model, dy_unit, cell_height );
 
     /* "Lower left" corner of viewing plane */
-    if( rt_perspective > 0.0 )  {
+    if ( rt_perspective > 0.0 )  {
 	fastf_t	zoomout;
 	zoomout = 1.0 / tan( bn_degtorad * rt_perspective / 2.0 );
 	VSET( temp, -1, -1/aspect, -zoomout );	/* viewing plane */
@@ -1153,11 +1111,11 @@ grid_setup(void)
 	ap.a_rbeam = 0.5 * viewsize / width;
 	ap.a_diverge = 0;
     }
-    if( NEAR_ZERO(ap.a_rbeam, SMALL) && NEAR_ZERO(ap.a_diverge, SMALL) )
-	bu_bomb("zero-radius beam");
+    if ( NEAR_ZERO(ap.a_rbeam, SMALL) && NEAR_ZERO(ap.a_diverge, SMALL) )
+	bu_exit(EXIT_FAILURE, "zero-radius beam");
     MAT4X3PNT( viewbase_model, view2model, temp );
 
-    if( jitter & JITTER_FRAME )  {
+    if ( jitter & JITTER_FRAME )  {
 	/* Move the frame in a smooth circular rotation in the plane */
 	fastf_t		ang;	/* radians */
 	fastf_t		dx, dy;
@@ -1170,16 +1128,16 @@ grid_setup(void)
 		dy, dy_model );
     }
 
-    if( cell_width <= 0 || cell_width >= INFINITY ||
-	cell_height <= 0 || cell_height >= INFINITY )  {
+    if ( cell_width <= 0 || cell_width >= INFINITY ||
+	 cell_height <= 0 || cell_height >= INFINITY )  {
 	bu_log("grid_setup: cell size ERROR (%g, %g) mm\n",
 	       cell_width, cell_height );
-	bu_bomb("cell size");
+	bu_exit(EXIT_FAILURE, "cell size");
     }
-    if( width <= 0 || height <= 0 )  {
+    if ( width <= 0 || height <= 0 )  {
 	bu_log("grid_setup: ERROR bad image size (%d, %d)\n",
 	       width, height );
-	bu_bomb("bad size");
+	bu_exit(EXIT_FAILURE, "bad size");
     }
 }
 
@@ -1214,10 +1172,8 @@ do_frame(int framenumber)
 	bu_log("Tree: %d solids in %d regions\n",
 	       rtip->nsolids, rtip->nregions );
 
-    if( rtip->nsolids <= 0 )  {
-	bu_log("rt ERROR: No solids\n");
-	exit(3);
-    }
+    if ( rtip->nsolids <= 0 )
+	bu_exit(3, "rt ERROR: No solids\n");
 
     if (rt_verbosity & VERBOSE_VIEWDETAIL)
 	bu_log("Model: X(%g,%g), Y(%g,%g), Z(%g,%g)\n",
@@ -1230,15 +1186,15 @@ do_frame(int framenumber)
      *  This may alter cell size or width/height.
      */
     grid_setup();
-    /* az/el 0,0 is when screen +Z is model +X */
+    /* az/el 0, 0 is when screen +Z is model +X */
     VSET( work, 0, 0, 1 );
     MAT3X3VEC( temp, view2model, work );
     bn_ae_vec( &azimuth, &elevation, temp );
 
     if (rt_verbosity & VERBOSE_VIEWDETAIL)
 	bu_log(
-	       "View: %g azimuth, %g elevation off of front view\n",
-	       azimuth, elevation);
+	    "View: %g azimuth, %g elevation off of front view\n",
+	    azimuth, elevation);
     quat_mat2quat( quat, model2view );
     if (rt_verbosity & VERBOSE_VIEWDETAIL) {
 	bu_log("Orientation: %g, %g, %g, %g\n", V4ARGS(quat) );
@@ -1252,7 +1208,7 @@ do_frame(int framenumber)
     }
 
     /* Process -b and ??? options now, for this frame */
-    if( pix_start == -1 )  {
+    if ( pix_start == -1 )  {
 	pix_start = 0;
 	pix_end = height * width - 1;
     }
@@ -1266,17 +1222,17 @@ do_frame(int framenumber)
      *  Determine output file name
      *  On UNIX only, check to see if this is a "restart".
      */
-    if( outputfile != (char *)0 )  {
-	if( framenumber <= 0 )  {
-	    sprintf( framename, outputfile );
+    if ( outputfile != (char *)0 )  {
+	if ( framenumber <= 0 )  {
+	    snprintf( framename, 128, "%s", outputfile );
 	}  else  {
-	    sprintf( framename, "%s.%d", outputfile, framenumber );
+	    snprintf( framename, 128, "%s.%d", outputfile, framenumber );
 	}
 
 	/* Ordinary case for creating output file */
-	if( outfp == NULL && (outfp = fopen( framename, "w+b" )) == NULL )  {
+	if ( outfp == NULL && (outfp = fopen( framename, "w+b" )) == NULL )  {
 	    perror( framename );
-	    if( matflag )  return(0);	/* OK */
+	    if ( matflag )  return(0);	/* OK */
 	    return(-1);			/* Bad */
 	}
 	if (rt_verbosity & VERBOSE_OUTPUTFILE)
@@ -1357,7 +1313,7 @@ do_frame(int framenumber)
 	       rtip->rti_nrays,
 	       wallclock, ((double)(rtip->rti_nrays))/wallclock );
     }
-    if( outfp != NULL )  {
+    if ( outfp != NULL )  {
 	(void)fclose(outfp);
 	outfp = NULL;
     }
@@ -1373,7 +1329,7 @@ do_frame(int framenumber)
  *
  *  Compute the rotation specified by the azimuth and elevation
  *  parameters.  First, note that these are specified relative
- *  to the GIFT "front view", ie, model (X,Y,Z) is view (Z,X,Y):
+ *  to the GIFT "front view", ie, model (X, Y, Z) is view (Z, X, Y):
  *  looking down X axis, Y right, Z up.
  *  A positive azimuth represents rotating the *eye* around the
  *  Y axis, or, rotating the *model* in -Y.
@@ -1388,12 +1344,12 @@ do_ae(double azim, double elev)
     mat_t	toEye;
     struct rt_i *rtip = ap.a_rt_i;
 
-    if( rtip->nsolids <= 0 )
-	bu_bomb("do_ae: no solids active\n");
+    if ( rtip->nsolids <= 0 )
+	bu_exit(EXIT_FAILURE, "do_ae: no solids active\n");
     if ( rtip->nregions <= 0 )
-	bu_bomb("do_ae: no regions active\n");
+	bu_exit(EXIT_FAILURE, "do_ae: no regions active\n");
 
-    if( rtip->mdl_max[X] >= INFINITY ) {
+    if ( rtip->mdl_max[X] >= INFINITY ) {
 	bu_log("do_ae: infinite model bounds? setting a unit minimum\n");
 	VSETALL( rtip->mdl_min, -1 );
     }
@@ -1428,10 +1384,10 @@ do_ae(double azim, double elev)
     /* Fit a sphere to the model RPP, diameter is viewsize,
      * unless viewsize command used to override.
      */
-    if( viewsize <= 0 ) {
+    if ( viewsize <= 0 ) {
 	VSUB2( diag, rtip->mdl_max, rtip->mdl_min );
 	viewsize = MAGNITUDE( diag );
-	if( aspect > 1 ) {
+	if ( aspect > 1 ) {
 	    /* don't clip any of the image when autoscaling */
 	    viewsize *= aspect;
 	}
@@ -1456,7 +1412,7 @@ do_ae(double azim, double elev)
 static void
 jitter_start_pt(vect_t point, struct application *a, int samplenum, int pat_num)
 {
-    FAST fastf_t dx, dy;
+    fastf_t dx, dy;
 
     if (pat_num >= 0) {
 	dx = a->a_x + pt_pats[pat_num].coords[samplenum*2] +
@@ -1478,9 +1434,9 @@ void do_pixel(int cpu,
 	      int pat_num,
 	      int pixelnum)
 {
-    LOCAL	struct	application	a;
-    LOCAL	struct	pixel_ext	pe;
-    LOCAL	vect_t			point;		/* Ref point on eye or view plane */
+    struct	application	a;
+    struct	pixel_ext	pe;
+    vect_t			point;		/* Ref point on eye or view plane */
     vect_t			colorsum = {(fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0};
     int				samplenum = 0;
     static const double one_over_255 = 1.0 / 255.0;
@@ -1506,7 +1462,7 @@ void do_pixel(int cpu,
 
 	    /* we're done */
 	    view_pixel( &a );
-	    if( a.a_x == width-1 ) {
+	    if ( a.a_x == width-1 ) {
 		view_eol( &a );		/* End of scan line */
 	    }
 	    return;
@@ -1547,7 +1503,7 @@ void do_pixel(int cpu,
 	    a.a_pixelext = &pe;
 	}
 
-	if( rt_perspective > 0.0 )  {
+	if ( rt_perspective > 0.0 )  {
 	    VSUB2( a.a_ray.r_dir, point, eye_model );
 	    VUNITIZE( a.a_ray.r_dir );
 	    VMOVE( a.a_ray.r_pt, eye_model );
@@ -1582,7 +1538,7 @@ void do_pixel(int cpu,
     } else {
 	/* hypersampling, so iterate */
 
-	for( samplenum=0; samplenum<=hypersample; samplenum++ )  {
+	for ( samplenum=0; samplenum<=hypersample; samplenum++ )  {
 	    /* shoot at a point based on the jitter pattern number */
 
 	    /**********************/
@@ -1603,7 +1559,7 @@ void do_pixel(int cpu,
 		a.a_pixelext = &pe;
 	    }
 
-	    if( rt_perspective > 0.0 )  {
+	    if ( rt_perspective > 0.0 )  {
 		VSUB2( a.a_ray.r_dir, point, eye_model );
 		VUNITIZE( a.a_ray.r_dir );
 		VMOVE( a.a_ray.r_pt, eye_model );
@@ -1638,17 +1594,17 @@ void do_pixel(int cpu,
 
 	{
 	    /* scale the hypersampled results */
-	    FAST fastf_t f;
+	    fastf_t f;
 	    f = 1.0 / (hypersample+1);
 	    VSCALE( a.a_color, colorsum, f );
 	}
     } /* end unrolling else case */
 
-    /* bu_log("2: [%d,%d] : [%.2f,%.2f,%.2f]\n",pixelnum%width,pixelnum/width,a.a_color[0],a.a_color[1],a.a_color[2]); */
+    /* bu_log("2: [%d,%d] : [%.2f,%.2f,%.2f]\n", pixelnum%width, pixelnum/width, a.a_color[0], a.a_color[1], a.a_color[2]); */
 
     /* we're done */
     view_pixel( &a );
-    if( a.a_x == width-1 ) {
+    if ( a.a_x == width-1 ) {
 	view_eol( &a );		/* End of scan line */
     }
     return;
@@ -1677,11 +1633,11 @@ worker(int cpu, genptr_t arg)
     if (cpu < 0 && !arg) return;
 
     /* The more CPUs at work, the bigger the bites we take */
-    if( per_processor_chunk <= 0 )  per_processor_chunk = npsw;
+    if ( per_processor_chunk <= 0 )  per_processor_chunk = npsw;
 
-    if( cpu >= MAX_PSW )  {
+    if ( cpu >= MAX_PSW )  {
 	bu_log("rt/worker() cpu %d > MAX_PSW %d, array overrun\n", cpu, MAX_PSW);
-	bu_bomb("rt/worker() cpu > MAX_PSW, array overrun\n");
+	bu_exit(EXIT_FAILURE, "rt/worker() cpu > MAX_PSW, array overrun\n");
     }
     RT_CK_RESOURCE( &resource[cpu] );
 
@@ -1690,7 +1646,7 @@ worker(int cpu, genptr_t arg)
 	int i, ray_samples;
 
 	ray_samples = hypersample + 1;
-	for (i=0 ; pt_pats[i].num_samples != 0 ; i++) {
+	for (i=0; pt_pats[i].num_samples != 0; i++) {
 	    if (pt_pats[i].num_samples == ray_samples) {
 		pat_num = i;
 		goto pat_found;
@@ -1704,12 +1660,12 @@ worker(int cpu, genptr_t arg)
 	pixel_start = cur_pixel;
 	cur_pixel += per_processor_chunk;
 	bu_semaphore_release(RT_SEM_WORKER);
-	
+
 	for (pixelnum = pixel_start; pixelnum < pixel_start+per_processor_chunk; pixelnum++) {
-	    
+
 	    if (pixelnum > last_pixel)
 		return;
-	    
+
 	    do_pixel(cpu, pat_num, pixelnum);
 	}
     }
@@ -1730,7 +1686,7 @@ void do_run( int a, int b )
     cur_pixel = a;
     last_pixel = b;
 
-    if( !rt_g.rtg_parallel )  {
+    if ( !rt_g.rtg_parallel )  {
 	/*
 	 * SERIAL case -- one CPU does all the work.
 	 */
@@ -1771,9 +1727,9 @@ void do_run( int a, int b )
 void
 view_pixel(register struct application *ap)
 {
-    register int	r,g,b;
+    register int	r, g, b;
 
-    if( ap->a_user == 0 )  {
+    if ( ap->a_user == 0 )  {
 	/* Shot missed the model, don't dither */
 	r = ibackground[0];
 	g = ibackground[1];
@@ -1784,14 +1740,14 @@ view_pixel(register struct application *ap)
 	g = ap->a_color[1]*255.+bn_rand0to1(ap->a_resource->re_randptr);
 	b = ap->a_color[2]*255.+bn_rand0to1(ap->a_resource->re_randptr);
 
-	if( r > 255 ) r = 255;
-	else if( r < 0 )  r = 0;
-	if( g > 255 ) g = 255;
-	else if( g < 0 )  g = 0;
-	if( b > 255 ) b = 255;
-	else if( b < 0 )  b = 0;
-	if( r == ibackground[0] && g == ibackground[1] &&
-	    b == ibackground[2] )  {
+	if ( r > 255 ) r = 255;
+	else if ( r < 0 )  r = 0;
+	if ( g > 255 ) g = 255;
+	else if ( g < 0 )  g = 0;
+	if ( b > 255 ) b = 255;
+	else if ( b < 0 )  b = 0;
+	if ( r == ibackground[0] && g == ibackground[1] &&
+	     b == ibackground[2] )  {
 	    r = inonbackground[0];
 	    g = inonbackground[1];
 	    b = inonbackground[2];
@@ -1805,26 +1761,26 @@ view_pixel(register struct application *ap)
     {
 	RGBpixel	p;
 	int		npix;
-	
-	p[0] = r ;
-	p[1] = g ;
-	p[2] = b ;
-	
-	if( outfp != NULL )  {
+
+	p[0] = r;
+	p[1] = g;
+	p[2] = b;
+
+	if ( outfp != NULL )  {
 	    bu_semaphore_acquire( BU_SEM_SYSCALL );
-	    if( fseek( outfp, (ap->a_y*width*3) + (ap->a_x*3), 0 ) != 0 )
+	    if ( fseek( outfp, (ap->a_y*width*3) + (ap->a_x*3), 0 ) != 0 )
 		fprintf(stderr, "fseek error\n");
-	    if( fwrite( p, 3, 1, outfp ) != 1 )
-		bu_bomb("pixel fwrite error");
+	    if ( fwrite( p, 3, 1, outfp ) != 1 )
+		bu_exit(EXIT_FAILURE, "pixel fwrite error");
 	    bu_semaphore_release( BU_SEM_SYSCALL);
 	}
-	
-	if( fbp != FBIO_NULL )  {
+
+	if ( fbp != FBIO_NULL )  {
 	    /* Framebuffer output */
 	    bu_semaphore_acquire( BU_SEM_SYSCALL );
 	    npix = fb_write( fbp, ap->a_x, ap->a_y, (unsigned char *)p, 1 );
 	    bu_semaphore_release( BU_SEM_SYSCALL);
-	    if( npix < 1 )  bu_bomb("pixel fb_write error");
+	    if ( npix < 1 )  bu_exit(EXIT_FAILURE, "pixel fb_write error");
 	}
     }
     return;
@@ -1871,20 +1827,20 @@ view_setup(struct rt_i *rtip)
      *  may be clear how to repackage this operation.
      */
     regp = BU_LIST_FIRST( region, &rtip->HeadRegion );
-    while( BU_LIST_NOT_HEAD( regp, &rtip->HeadRegion ) )  {
-	switch( mlib_setup( &mfHead, regp, rtip ) )  {
+    while ( BU_LIST_NOT_HEAD( regp, &rtip->HeadRegion ) )  {
+	switch ( mlib_setup( &mfHead, regp, rtip ) )  {
 	    case -1:
 	    default:
 		bu_log("mlib_setup failure on %s\n", regp->reg_name);
 		break;
 	    case 0:
-		{
-		    struct region *r = BU_LIST_NEXT( region, &regp->l );
-		    /* zap reg_udata? beware of light structs */
-		    rt_del_regtree( rtip, regp, &rt_uniresource );
-		    regp = r;
-		    continue;
-		}
+	    {
+		struct region *r = BU_LIST_NEXT( region, &regp->l );
+		/* zap reg_udata? beware of light structs */
+		rt_del_regtree( rtip, regp, &rt_uniresource );
+		regp = r;
+		continue;
+	    }
 	    case 1:
 		/* Full success */
 		break;
@@ -1910,21 +1866,21 @@ view_re_setup( struct rt_i *rtip )
     struct region *rp;
 
     rp = BU_LIST_FIRST( region, &(rtip->HeadRegion) );
-    while( BU_LIST_NOT_HEAD( rp, &(rtip->HeadRegion) ) ) {
-	if( !rp->reg_mfuncs ) {
-	    switch( mlib_setup( &mfHead, rp, rtip ) ) {
+    while ( BU_LIST_NOT_HEAD( rp, &(rtip->HeadRegion) ) ) {
+	if ( !rp->reg_mfuncs ) {
+	    switch ( mlib_setup( &mfHead, rp, rtip ) ) {
 		default:
 		case -1:
 		    bu_log( "view_re_setup(): mlib_setup failed for region %s\n", rp->reg_name );
 		    break;
 		case 0:
-		    {
-			struct region *r = BU_LIST_NEXT( region, &rp->l );
-			/* zap reg_udata? beware of light structs */
-			rt_del_regtree( rtip, rp, &rt_uniresource );
-			rp = r;
-			continue;
-		    }
+		{
+		    struct region *r = BU_LIST_NEXT( region, &rp->l );
+		    /* zap reg_udata? beware of light structs */
+		    rt_del_regtree( rtip, rp, &rt_uniresource );
+		    rp = r;
+		    continue;
+		}
 		case 1:
 		    break;
 	    }
@@ -1943,10 +1899,10 @@ void view_cleanup(struct rt_i	*rtip)
     register struct region	*regp;
 
     RT_CHECK_RTI(rtip);
-    for( BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ) )  {
+    for ( BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ) )  {
 	mlib_free( regp );
     }
-    if( env_region.reg_mfuncs )  {
+    if ( env_region.reg_mfuncs )  {
 	bu_free( (char *)env_region.reg_name, "env_region.reg_name" );
 	env_region.reg_name = (char *)0;
 	mlib_free( &env_region );
@@ -1964,14 +1920,14 @@ void view_cleanup(struct rt_i	*rtip)
  */
 static int hit_nothing(register struct application *ap)
 {
-    if( env_region.reg_mfuncs )  {
+    if ( env_region.reg_mfuncs )  {
 	struct gunk {
 	    struct partition part;
 	    struct hit	hit;
 	    struct shadework sw;
 	} u;
 
-	memset( (char *)&u, 0, sizeof(u) );
+	memset((char *)&u, 0, sizeof(u));
 	/* Make "miss" hit the environment map */
 	/* Build up the fakery */
 	u.part.pt_magic = PT_MAGIC;
@@ -1992,7 +1948,7 @@ static int hit_nothing(register struct application *ap)
 	/* U is azimuth, atan() range: -pi to +pi */
 	u.sw.sw_uv.uv_u = bn_atan2( ap->a_ray.r_dir[Y],
 				    ap->a_ray.r_dir[X] ) * bn_inv2pi;
-	if( u.sw.sw_uv.uv_u < 0 )
+	if ( u.sw.sw_uv.uv_u < 0 )
 	    u.sw.sw_uv.uv_u += 1.0;
 	/*
 	 *  V is elevation, atan() range: -pi/2 to +pi/2,
@@ -2034,24 +1990,24 @@ colorview(register struct application *ap, struct partition *PartHeadp, struct s
     struct shadework sw;
 
     pp = PartHeadp->pt_forw;
-    if( ap->a_flag == 1 )
-	{
-	    /* This ray is an escaping internal ray after refraction through glass.
-	     * Sometimes, after refraction and starting a new ray at the glass exit,
-	     * the new ray hits a sliver of the same glass, and gets confused. This bit
-	     * of code attempts to spot this behavior and skip over the glass sliver.
-	     * Any sliver less than 0.05mm thick will be skipped (0.05 is a SWAG).
-	     */
-	    if( (genptr_t)pp->pt_regionp == ap->a_uptr &&
-		pp->pt_forw != PartHeadp &&
-		pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist < 0.05 )
-		pp = pp->pt_forw;
-	}
+    if ( ap->a_flag == 1 )
+    {
+	/* This ray is an escaping internal ray after refraction through glass.
+	 * Sometimes, after refraction and starting a new ray at the glass exit,
+	 * the new ray hits a sliver of the same glass, and gets confused. This bit
+	 * of code attempts to spot this behavior and skip over the glass sliver.
+	 * Any sliver less than 0.05mm thick will be skipped (0.05 is a SWAG).
+	 */
+	if ( (genptr_t)pp->pt_regionp == ap->a_uptr &&
+	     pp->pt_forw != PartHeadp &&
+	     pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist < 0.05 )
+	    pp = pp->pt_forw;
+    }
 
-    for( ; pp != PartHeadp; pp = pp->pt_forw )
-	if( pp->pt_outhit->hit_dist >= 0.0 ) break;
+    for (; pp != PartHeadp; pp = pp->pt_forw )
+	if ( pp->pt_outhit->hit_dist >= 0.0 ) break;
 
-    if( pp == PartHeadp )  {
+    if ( pp == PartHeadp )  {
 	bu_log("colorview:  no hit out front?\n");
 	return(0);
     }
@@ -2063,7 +2019,7 @@ colorview(register struct application *ap, struct partition *PartHeadp, struct s
     RT_CK_RAY(hitp->hit_rayp);
     ap->a_uptr = (genptr_t)pp->pt_regionp;	/* note which region was shaded */
 
-    if( hitp->hit_dist >= INFINITY )  {
+    if ( hitp->hit_dist >= INFINITY )  {
 	bu_log("colorview:  entry beyond infinity\n");
 	VSET( ap->a_color, .5, 0, 0 );
 	ap->a_user = 1;		/* Signal view_pixel:  HIT */
@@ -2080,12 +2036,12 @@ colorview(register struct application *ap, struct partition *PartHeadp, struct s
      *  really want to do this
      */
 
-    if( hitp->hit_dist < 0.0 && pp->pt_regionp->reg_aircode == 0 ) {
+    if ( hitp->hit_dist < 0.0 && pp->pt_regionp->reg_aircode == 0 ) {
 	struct application sub_ap;
-	FAST fastf_t f;
+	fastf_t f;
 
-	if( pp->pt_outhit->hit_dist >= INFINITY ||
-	    ap->a_level > max_bounces )  {
+	if ( pp->pt_outhit->hit_dist >= INFINITY ||
+	     ap->a_level > max_bounces )  {
 	    VSETALL( ap->a_color, 0.18 );	/* 18% Grey */
 	    ap->a_user = 1;		/* Signal view_pixel:  HIT */
 	    ap->a_dist = hitp->hit_dist;
@@ -2111,7 +2067,7 @@ colorview(register struct application *ap, struct partition *PartHeadp, struct s
 	goto out;
     }
 
-    memset( (char *)&sw, 0, sizeof(sw) );
+    memset((char *)&sw, 0, sizeof(sw));
     sw.sw_transmit = sw.sw_reflect = 0.0;
     sw.sw_refrac_index = 1.0;
     sw.sw_extinction = 0;
@@ -2162,7 +2118,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o, i
 void
 collect_soltabs( struct bu_ptbl *stp_list, union tree *tr )
 {
-    switch( tr->tr_op ) {
+    switch ( tr->tr_op ) {
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_XOR:
@@ -2198,15 +2154,15 @@ view_2init(register struct application *ap, char *framename)
     ap->a_onehit = a_onehit;
 
     bu_log("Single pixel I/O, unbuffered\n");
-    
+
     ap->a_hit = colorview;
 
     /* If user did not specify any light sources then
      *	create default light sources
      */
-    if( BU_LIST_IS_EMPTY( &(LightHead.l) )  ||
-	BU_LIST_UNINITIALIZED( &(LightHead.l ) ) )  {
-	if(R_DEBUG&RDEBUG_SHOWERR)bu_log("No explicit light\n");
+    if ( BU_LIST_IS_EMPTY( &(LightHead.l) )  ||
+	 BU_LIST_UNINITIALIZED( &(LightHead.l ) ) )  {
+	if (R_DEBUG&RDEBUG_SHOWERR)bu_log("No explicit light\n");
 	light_maker(1, view2model);
     }
     ap->a_rt_i->rti_nlights = light_init(ap);
@@ -2216,7 +2172,7 @@ view_2init(register struct application *ap, char *framename)
      * from the soltab structures in the space paritioning tree
      */
     bu_ptbl_init( &stps, 8, "soltabs to delete" );
-    for( i=0 ; i<BU_PTBL_LEN( &ap->a_rt_i->delete_regs ) ; i++ ) {
+    for ( i=0; i<BU_PTBL_LEN( &ap->a_rt_i->delete_regs ); i++ ) {
 	struct region *rp;
 	struct soltab *stp;
 	int j;
@@ -2230,15 +2186,15 @@ view_2init(register struct application *ap, char *framename)
 	collect_soltabs( &stps, rp->reg_treetop );
 
 	/* remove the invisible light region pointers from the soltab structs */
-	for( j=0 ; j<BU_PTBL_LEN( &stps ) ; j++ ) {
+	for ( j=0; j<BU_PTBL_LEN( &stps ); j++ ) {
 	    int k;
 	    struct region *rp2;
 	    stp = (struct soltab *)BU_PTBL_GET( &stps, j );
 
 	    k = BU_PTBL_LEN( &stp->st_regions ) - 1;
-	    for( ; k>=0 ; k-- ) {
+	    for (; k>=0; k-- ) {
 		rp2 = (struct region *)BU_PTBL_GET( &stp->st_regions, k );
-		if( rp2 == rp ) {
+		if ( rp2 == rp ) {
 		    bu_ptbl_rm( &stp->st_regions, (long *)rp2 );
 		}
 	    }
@@ -2259,14 +2215,14 @@ view_2init(register struct application *ap, char *framename)
      * background, modify it slightly, to permit compositing.
      * Perturb the background color channel with the largest intensity.
      */
-    if( inonbackground[0] > inonbackground[1] )  {
-	if( inonbackground[0] > inonbackground[2] )  i = 0;
+    if ( inonbackground[0] > inonbackground[1] )  {
+	if ( inonbackground[0] > inonbackground[2] )  i = 0;
 	else i = 2;
     } else {
-	if( inonbackground[1] > inonbackground[2] ) i = 1;
+	if ( inonbackground[1] > inonbackground[2] ) i = 1;
 	else i = 2;
     }
-    if( inonbackground[i] < 127 ) inonbackground[i]++;
+    if ( inonbackground[i] < 127 ) inonbackground[i]++;
     else inonbackground[i]--;
 
 }
@@ -2276,8 +2232,8 @@ view_2init(register struct application *ap, char *framename)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

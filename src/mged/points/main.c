@@ -1,7 +1,7 @@
 /*                          M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 2007 United States Government as represented by
+ * Copyright (c) 2007-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,10 +37,10 @@ int main(int argc, char *argv[])
 #else
 
 #  include "tcl.h"
-ClientData *cdata;
-Tcl_Interp *twerp;
+    ClientData *cdata;
+    Tcl_Interp *twerp;
 
-int parse_point_file(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+    int parse_point_file(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 #endif
 {
     long int datapoints;
@@ -97,8 +97,8 @@ int parse_point_file(ClientData clientData, Tcl_Interp *interp, int argc, char *
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

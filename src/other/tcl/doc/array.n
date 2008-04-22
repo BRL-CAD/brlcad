@@ -16,7 +16,6 @@ array \- Manipulate array variables
 .SH SYNOPSIS
 \fBarray \fIoption arrayName\fR ?\fIarg arg ...\fR?
 .BE
-
 .SH DESCRIPTION
 .PP
 This command performs one of several operations on the
@@ -36,7 +35,7 @@ check, and must have been the return value from a previous
 invocation of \fBarray startsearch\fR.
 This option is particularly useful if an array has an element
 with an empty name, since the return value from
-\fBarray nextelement\fR won't indicate whether the search
+\fBarray nextelement\fR will not indicate whether the search
 has been completed.
 .TP
 \fBarray donesearch \fIarrayName searchId\fR
@@ -60,24 +59,24 @@ array are included in the result.
 If \fIpattern\fR is specified, then only those elements whose names
 match \fIpattern\fR (using the matching rules of
 \fBstring match\fR) are included.
-If \fIarrayName\fR isn't the name of an array variable, or if
+If \fIarrayName\fR is not the name of an array variable, or if
 the array contains no elements, then an empty list is returned.
-If traces on the array modify the list of elements, the elements 
-returned are those that exist both before and after the call to 
+If traces on the array modify the list of elements, the elements
+returned are those that exist both before and after the call to
 \fBarray get\fR.
 .TP
 \fBarray names \fIarrayName\fR ?\fImode\fR? ?\fIpattern\fR?
 Returns a list containing the names of all of the elements in
 the array that match \fIpattern\fR.  \fIMode\fR may be one of
-\fB-exact\fR, \fB-glob\fR, or \fB-regexp\fR.  If specified, \fImode\fR
+\fB\-exact\fR, \fB\-glob\fR, or \fB\-regexp\fR.  If specified, \fImode\fR
 designates which matching rules to use to match \fIpattern\fR against
 the names of the elements in the array.  If not specified, \fImode\fR
-defaults to \fB-glob\fR.  See the documentation for \fBstring match\fR
+defaults to \fB\-glob\fR.  See the documentation for \fBstring match\fR
 for information on glob style matching, and the documentation for
 \fBregexp\fR for information on regexp matching.
 If \fIpattern\fR is omitted then the command returns all of
 the element names in the array.  If there are no (matching) elements
-in the array, or if \fIarrayName\fR isn't the name of an array
+in the array, or if \fIarrayName\fR is not the name of an array
 variable, then an empty string is returned.
 .TP
 \fBarray nextelement \fIarrayName searchId\fR
@@ -105,7 +104,7 @@ and \fIlist\fR is empty,
 \fBarray size \fIarrayName\fR
 Returns a decimal string giving the number of elements in the
 array.
-If \fIarrayName\fR isn't the name of an array then 0 is returned.
+If \fIarrayName\fR is not the name of an array then 0 is returned.
 .TP
 \fBarray startsearch \fIarrayName\fR
 This command initializes an element-by-element search through the
@@ -131,7 +130,7 @@ the buckets.
 .TP
 \fBarray unset \fIarrayName\fR ?\fIpattern\fR?
 Unsets all of the elements in the array that match \fIpattern\fR (using the
-matching rules of \fBstring match\fR).  If \fIarrayName\fR isn't the name
+matching rules of \fBstring match\fR).  If \fIarrayName\fR is not the name
 of an array variable or there are no matching elements in the array, no
 error will be raised.  If \fIpattern\fR is omitted and \fIarrayName\fR is
 an array variable, then the command unsets the entire array.
@@ -148,7 +147,7 @@ The command always returns an empty string.
 foreach {color count} [\fBarray get\fR colorcount] {
    puts "Color: $color Count: $count"
 }
- => Color: blue Count: 4
+  \fB\(->\fR Color: blue Count: 4
     Color: white Count: 9
     Color: green Count: 5
     Color: red Count: 1
@@ -156,7 +155,7 @@ foreach {color count} [\fBarray get\fR colorcount] {
 foreach color [\fBarray names\fR colorcount] {
    puts "Color: $color Count: $colorcount($color)"
 }
- => Color: blue Count: 4
+  \fB\(->\fR Color: blue Count: 4
     Color: white Count: 9
     Color: green Count: 5
     Color: red Count: 1
@@ -164,13 +163,13 @@ foreach color [\fBarray names\fR colorcount] {
 foreach color [lsort [\fBarray names\fR colorcount]] {
    puts "Color: $color Count: $colorcount($color)"
 }
- => Color: blue Count: 4
+  \fB\(->\fR Color: blue Count: 4
     Color: green Count: 5
     Color: red Count: 1
     Color: white Count: 9
 
 \fBarray statistics\fR colorcount
- => 4 entries in table, 4 buckets
+  \fB\(->\fR 4 entries in table, 4 buckets
     number of buckets with 0 entries: 1
     number of buckets with 1 entries: 2
     number of buckets with 2 entries: 1
@@ -184,9 +183,7 @@ foreach color [lsort [\fBarray names\fR colorcount]] {
     number of buckets with 10 or more entries: 0
     average search distance for entry: 1.2
 .CE
-
 .SH "SEE ALSO"
 list(n), string(n), variable(n), trace(n), foreach(n)
-
 .SH KEYWORDS
 array, element names, search

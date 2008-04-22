@@ -1,7 +1,7 @@
 #                       M O U S E . T C L
 # BRL-CAD
 #
-# Copyright (c) 1995-2007 United States Government as represented by
+# Copyright (c) 1995-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -18,15 +18,6 @@
 # information.
 #
 ###
-#
-# Author -
-#	Robert Parker
-#
-# Source -
-#	The U. S. Army Ballistic Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#
 #
 # Description -
 #       Mouse routines.
@@ -52,9 +43,9 @@ proc mouse_get_spath { x y } {
 
     if {![llength $paths]} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
-		"Nothing was hit!"\
-		"Nothing was hit!"\
-		"" 0 OK
+	    "Nothing was hit!"\
+	    "Nothing was hit!"\
+	    "" 0 OK
 	return ""
     }
 
@@ -77,21 +68,21 @@ proc mouse_get_spath { x y } {
     set mged_gui($id,edit_menu) $top
 
     bind_listbox $top "<B1-Motion>"\
+	"set item \[get_listbox_entry %W %x %y\];\
+	    solid_illum \$item"
+    if 0 {
+	bind_listbox $top "<ButtonPress-1>"\
 	    "set item \[get_listbox_entry %W %x %y\];\
 	    solid_illum \$item"
-if 0 {
-    bind_listbox $top "<ButtonPress-1>"\
-	    "set item \[get_listbox_entry %W %x %y\];\
-	    solid_illum \$item"
-    bind_listbox $top "<Double-1>"\
+	bind_listbox $top "<Double-1>"\
 	    "set mged_gui($id,mgs_path) \[get_listbox_entry %W %x %y\];\
 	    destroy $top"
-} else {
-    bind_listbox $top "<ButtonPress-1>" \
+    } else {
+	bind_listbox $top "<ButtonPress-1>" \
 	    "lbdcHack %W %x %y %t $id s2 junkpath"
-}
+    }
     bind_listbox $top "<ButtonRelease-1>" \
-	    "%W selection clear 0 end; _mged_press reject"
+	"%W selection clear 0 end; _mged_press reject"
 
     wm protocol $top WM_DELETE_WINDOW "mouse_spath_destroy $id $top"
 
@@ -138,26 +129,26 @@ proc mouse_get_spath_and_pos { x y } {
     set mged_gui($id,edit_menu) $top
 
     bind_listbox $top "<B1-Motion>"\
-	    "set item \[%W index @%x,%y\];\
+	"set item \[%W index @%x,%y\];\
 	    _mged_press reject;\
 	    _mged_press oill;\
 	    _mged_ill -i 1 \$mged_gui($id,mgs_path);\
 	    _mged_matpick -n \$item"
-if 0 {
-    bind_listbox $top "<ButtonPress-1>"\
+    if 0 {
+	bind_listbox $top "<ButtonPress-1>"\
 	    "set item \[%W index @%x,%y\];\
 	    _mged_press oill;\
 	    _mged_ill -i 1 \$mged_gui($id,mgs_path);\
 	    _mged_matpick -n \$item"
-    bind_listbox $top "<Double-1>"\
+	bind_listbox $top "<Double-1>"\
 	    "set mged_gui($id,mgs_pos) \[%W index @%x,%y\];\
 	    destroy $top"
-} else {
-    bind_listbox $top "<ButtonPress-1>" \
+    } else {
+	bind_listbox $top "<ButtonPress-1>" \
 	    "lbdcHack %W %x %y %t $id m2 \$mged_gui($id,mgs_path)"
-}
+    }
     bind_listbox $top "<ButtonRelease-1>" \
-	    "%W selection clear 0 end; _mged_press reject"
+	"%W selection clear 0 end; _mged_press reject"
 
     wm protocol $top WM_DELETE_WINDOW "mouse_spath_and_pos_destroy $id $top"
 
@@ -196,9 +187,9 @@ proc mouse_get_comb { x y } {
     set paths [ray_get_info $ray in path]
     if {![llength $paths]} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
-		"Nothing was hit!"\
-		"Nothing was hit!"\
-		"" 0 OK
+	    "Nothing was hit!"\
+	    "Nothing was hit!"\
+	    "" 0 OK
 	return ""
     }
     set combs [build_comb_list $paths]
@@ -224,25 +215,25 @@ proc mouse_get_comb { x y } {
     set mged_gui($id,edit_menu) $top
 
     bind_listbox $top "<B1-Motion>"\
+	"set comb \[%W get @%x,%y\];\
+	    set spath \[comb_get_solid_path \$comb\];\
+	    set path_pos \[comb_get_path_pos \$spath \$comb\];\
+	    matrix_illum \$spath \$path_pos"
+    if 0 {
+	bind_listbox $top "<ButtonPress-1>"\
 	    "set comb \[%W get @%x,%y\];\
 	    set spath \[comb_get_solid_path \$comb\];\
 	    set path_pos \[comb_get_path_pos \$spath \$comb\];\
 	    matrix_illum \$spath \$path_pos"
-if 0 {
-    bind_listbox $top "<ButtonPress-1>"\
-	    "set comb \[%W get @%x,%y\];\
-	    set spath \[comb_get_solid_path \$comb\];\
-	    set path_pos \[comb_get_path_pos \$spath \$comb\];\
-	    matrix_illum \$spath \$path_pos"
-    bind_listbox $top "<Double-1>"\
+	bind_listbox $top "<Double-1>"\
 	    "set mged_gui($id,mgc_comb) \[%W get @%x,%y\];\
 	    destroy $top"
-} else {
-    bind_listbox $top "<ButtonPress-1>" \
+    } else {
+	bind_listbox $top "<ButtonPress-1>" \
 	    "lbdcHack %W %x %y %t $id c1 junkpath"
-}
+    }
     bind_listbox $top "<ButtonRelease-1>"\
-	    "%W selection clear 0 end;\
+	"%W selection clear 0 end;\
 	    _mged_press reject"
 
     wm protocol $top WM_DELETE_WINDOW "mouse_comb_destroy $id $top"
@@ -348,7 +339,7 @@ proc mouse_rt_obj_select { x y } {
 
     switch $rt_control($id,omode) {
 	all
-	    -
+	-
 	one {
 	    rt_olist_set $id $component
 	    do_Raytrace $id

@@ -41,8 +41,9 @@ Different commands interpret their words differently.
 Words of a command are separated by white space (except for
 newlines, which are command separators).
 .IP "[4] \fBDouble quotes.\fR"
-If the first character of a word is double-quote (``"'') then
-the word is terminated by the next double-quote character.
+If the first character of a word is double-quote
+.PQ \N'34'
+then the word is terminated by the next double-quote character.
 If semi-colons, close brackets, or white space characters
 (including newlines) appear between the quotes then they are treated
 as ordinary characters and included in the word.
@@ -51,18 +52,25 @@ are performed on the characters between the quotes as described below.
 The double-quotes are not retained as part of the word.
 .VS 8.5 br
 .IP "[5] \fBArgument expansion.\fR"
-If a word starts with the string ``{*}'' followed by a 
-non-whitespace character, then the leading ``{*}'' is removed
-and the rest of the word is parsed and substituted as any other  
+If a word starts with the string
+.QW {*}
+followed by a non-whitespace character, then the leading
+.QW {*}
+is removed
+and the rest of the word is parsed and substituted as any other
 word. After substitution, the word is parsed again without
 substitutions, and its words are added to the command being
-substituted. For instance, ``cmd a {*}{b c} d {*}{e f}'' is
-equivalent to ``cmd a b c d e f''. 
+substituted. For instance,
+.QW "cmd a {*}{b c} d {*}{e f}"
+is equivalent to
+.QW "cmd a b c d e f" .
 .VE 8.5
 .IP "[6] \fBBraces.\fR"
-If the first character of a word is an open brace (``{'') and
-rule [5] does not apply, then
-the word is terminated by the matching close brace (``}'').
+If the first character of a word is an open brace
+.PQ {
+and rule [5] does not apply, then
+the word is terminated by the matching close brace
+.PQ } "" .
 Braces nest within the word: for each additional open
 brace there must be an additional close brace (however,
 if an open brace or close brace within the word is
@@ -75,19 +83,23 @@ or white space receive any special interpretation.
 The word will consist of exactly the characters between the
 outer braces, not including the braces themselves.
 .IP "[7] \fBCommand substitution.\fR"
-If a word contains an open bracket (``['') then Tcl performs
-\fIcommand substitution\fR.
+If a word contains an open bracket
+.PQ [
+then Tcl performs \fIcommand substitution\fR.
 To do this it invokes the Tcl interpreter recursively to process
 the characters following the open bracket as a Tcl script.
 The script may contain any number of commands and must be terminated
-by a close bracket (``]'').
+by a close bracket
+.PQ ] "" .
 The result of the script (i.e. the result of its last command) is
 substituted into the word in place of the brackets and all of the
 characters between them.
 There may be any number of command substitutions in a single word.
 Command substitution is not performed on words enclosed in braces.
 .IP "[8] \fBVariable substitution.\fR"
-If a word contains a dollar-sign (``$'') followed by one of the forms
+If a word contains a dollar-sign
+.PQ $
+followed by one of the forms
 described below, then Tcl performs \fIvariable
 substitution\fR:  the dollar-sign and the following characters are
 replaced in the word by the value of a variable.
@@ -115,8 +127,9 @@ There may be any number of variable substitutions in a single word.
 Variable substitution is not performed on words enclosed in braces.
 .RE
 .IP "[9] \fBBackslash substitution.\fR"
-If a backslash (``\e'') appears within a word then
-\fIbackslash substitution\fR occurs.
+If a backslash
+.PQ \e
+appears within a word then \fIbackslash substitution\fR occurs.
 In all cases but those described below the backslash is dropped and
 the following character is treated as an ordinary
 character and included in the word.
@@ -154,11 +167,12 @@ A single space character replaces the backslash, newline, and all spaces
 and tabs after the newline.  This backslash sequence is unique in that it
 is replaced in a separate pre-pass before the command is actually parsed.
 This means that it will be replaced even when it occurs between braces,
-and the resulting space will be treated as a word separator if it isn't
+and the resulting space will be treated as a word separator if it is not
 in braces or quotes.
 .TP 7
 \e\e
-Backslash (``\e'').
+Backslash
+.PQ \e "" .
 .TP 7
 \e\fIooo\fR 
 .
@@ -184,7 +198,9 @@ Backslash substitution is not performed on words enclosed in braces,
 except for backslash-newline as described above.
 .RE
 .IP "[10] \fBComments.\fR"
-If a hash character (``#'') appears at a point where Tcl is
+If a hash character
+.PQ #
+appears at a point where Tcl is
 expecting the first character of the first word of a command,
 then the hash character and the characters that follow it, up
 through the next newline, are treated as a comment and ignored.

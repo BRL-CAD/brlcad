@@ -1,7 +1,7 @@
 /*                          E X T R . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2007 United States Government as represented by
+ * Copyright (c) 2000-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,28 +21,15 @@
  *
  * Support for extrusion solids
  *
- *  Author -
- *	John Anderson
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-#ifndef lint
-static const char extr_RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
-
 #include <stdio.h>
 #include <math.h>
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#include <strings.h>
-#endif
-#include "machine.h"
+#include "bio.h"
+
 #include "bu.h"
 #include "db.h"
 #include "vmath.h"
@@ -53,36 +40,36 @@ static const char extr_RCSid[] = "@(#)$Header$ (BRL)";
 
 int
 mk_extrusion(
-	struct rt_wdb *fp,
-	const char *name,
-	const char *sketch_name,
-	const point_t V,
-	const vect_t h,
-	const vect_t u_vec,
-	const vect_t v_vec,
-	int keypoint )
+    struct rt_wdb *fp,
+    const char *name,
+    const char *sketch_name,
+    const point_t V,
+    const vect_t h,
+    const vect_t u_vec,
+    const vect_t v_vec,
+    int keypoint )
 {
-	struct rt_extrude_internal *extr;
+    struct rt_extrude_internal *extr;
 
-	BU_GETSTRUCT( extr, rt_extrude_internal );
-	extr->magic = RT_EXTRUDE_INTERNAL_MAGIC;
-	extr->sketch_name = bu_strdup( sketch_name );
-	VMOVE( extr->V, V );
-	VMOVE( extr->h, h );
-	VMOVE( extr->u_vec, u_vec );
-	VMOVE( extr->v_vec, v_vec );
-	extr->keypoint = keypoint;
-	extr->skt = (struct rt_sketch_internal *)NULL;
+    BU_GETSTRUCT( extr, rt_extrude_internal );
+    extr->magic = RT_EXTRUDE_INTERNAL_MAGIC;
+    extr->sketch_name = bu_strdup( sketch_name );
+    VMOVE( extr->V, V );
+    VMOVE( extr->h, h );
+    VMOVE( extr->u_vec, u_vec );
+    VMOVE( extr->v_vec, v_vec );
+    extr->keypoint = keypoint;
+    extr->skt = (struct rt_sketch_internal *)NULL;
 
-	return wdb_export( fp, name, (genptr_t)extr, ID_EXTRUDE, mk_conv2mm );
+    return wdb_export( fp, name, (genptr_t)extr, ID_EXTRUDE, mk_conv2mm );
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

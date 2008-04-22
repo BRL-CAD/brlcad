@@ -1,7 +1,7 @@
 /*                       P R O C E S S . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,7 +33,6 @@
 
 #include "common.h"
 
-#include "machine.h"
 #include "vmath.h"
 
 #include "./count.h"
@@ -71,7 +70,7 @@ typedef struct point_line {
     (x).val[X] = (x).val[Y] = (x).val[Z] = (fastf_t)0.0;\
 }
 
-#define COPY_POINT_LINE_T(x,y) {\
+#define COPY_POINT_LINE_T(x, y) {\
     (x).type = (y).type;\
     (x).code = (y).code;\
     (x).index = (y).index;\
@@ -127,8 +126,8 @@ int create_pipe(point_line_t **plta, int count);
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

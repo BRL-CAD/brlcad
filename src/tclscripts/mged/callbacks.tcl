@@ -1,7 +1,7 @@
 #                   C A L L B A C K S . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2007 United States Government as represented by
+# Copyright (c) 2004-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -18,16 +18,6 @@
 # information.
 #
 ###
-##
-#				C A L L B A C K S . T C L
-#
-# Authors -
-#	Bob Parker
-#
-# Source -
-#	The U. S. Army Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
 #
 # Description -
 #	This file contains the standard mged callback proc's.

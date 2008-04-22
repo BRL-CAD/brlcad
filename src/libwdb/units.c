@@ -1,7 +1,7 @@
 /*                         U N I T S . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2007 United States Government as represented by
+ * Copyright (c) 1990-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,17 +25,13 @@
  *	Michael John Muuss
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
-
 #include <stdio.h>
 #include <ctype.h>
+#include "bio.h"
 
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
@@ -57,10 +53,10 @@ double	mk_conv2mm = 1.0;		/* Conversion factor to mm */
 int
 mk_conversion(char *str)
 {
-	double	d;
+    double	d;
 
-	if( (d = bu_units_conversion(str)) <= 0.0 )  return(-1);
-	return( mk_set_conversion(d) );
+    if ( (d = bu_units_conversion(str)) <= 0.0 )  return(-1);
+    return( mk_set_conversion(d) );
 }
 
 /*
@@ -75,17 +71,17 @@ mk_conversion(char *str)
 int
 mk_set_conversion(double val)
 {
-	if( val <= 0.0 )  return(-1);
-	mk_conv2mm = val;
-	return(0);
+    if ( val <= 0.0 )  return(-1);
+    mk_conv2mm = val;
+    return(0);
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

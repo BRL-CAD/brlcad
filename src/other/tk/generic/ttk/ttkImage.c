@@ -258,8 +258,6 @@ static void ImageElementSize(
     }
 
     *paddingPtr = imageData->padding;
-    *widthPtr -= Ttk_PaddingWidth(imageData->padding);
-    *heightPtr -= Ttk_PaddingHeight(imageData->padding);
 }
 
 static void ImageElementDraw(

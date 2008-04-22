@@ -1,6 +1,17 @@
 # $Id$
 
 EXTRA_DIST = \
+	BLT.mann \
+	Blt_Tree.man3 \
+	Blt_TreeCreate.man3 \
+	Blt_TreeCreateNode.man3 \
+	Blt_TreeDeleteNode.man3 \
+	Blt_TreeExists.man3 \
+	Blt_TreeGetNode.man3 \
+	Blt_TreeGetToken.man3 \
+	Blt_TreeName.man3 \
+	Blt_TreeNodeId.man3 \
+	Blt_TreeReleaseToken.man3 \
 	barchart.mann \
 	beep.mann \
 	bgexec.mann \
@@ -25,7 +36,5 @@ EXTRA_DIST = \
 	vector.mann \
 	watch.mann \
 	winop.mann
-
-MAINTAINERCLEANFILES = Makefile.in
 
 include $(top_srcdir)/misc/Makefile.defs

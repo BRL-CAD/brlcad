@@ -44,7 +44,7 @@ If its \fIstring\fR argument is \fBnew\fR then a new colormap is
 created;  otherwise \fIstring\fR must be the name of another window
 with the same screen and visual as \fItkwin\fR, and the colormap from that
 window is returned.
-If \fIstring\fR doesn't make sense, or if it refers to a window on
+If \fIstring\fR does not make sense, or if it refers to a window on
 a different screen from \fItkwin\fR or with
 a different visual than \fItkwin\fR, then \fBTk_GetColormap\fR returns
 \fBNone\fR and leaves an error message in \fIinterp->result\fR.

@@ -1,7 +1,7 @@
 /*                       V M A T H U I . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -374,7 +374,7 @@ proc pnt3x4mat { p m } {\
 		 [expr ([lindex $m 2]*[lindex $p 0] + \
 			[lindex $m 6]*[lindex $p 1] + \
 			[lindex $m 10]*[lindex $p 2] + [lindex $m 14])*$f]];\
-}    ;\
+};\
 \
 proc mat4x4pnt { m h } {\
     return [list [hdot [lrange $m 0 3] $h] \
@@ -729,8 +729,8 @@ proc vblend2n { b c  d e  n } {\
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

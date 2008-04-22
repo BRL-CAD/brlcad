@@ -1,7 +1,7 @@
 /*                      B A D M A G I C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,23 +27,11 @@
  *  Routines involved with handling "magic numbers" used to identify
  *  various in-memory data structures.
  *
- *  @author Lee A. Butler
- *  @author Michael John Muuss
- *
- *  @par Source -
- *	The U. S. Army Research Laboratory			@n
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-
-#ifndef lint
-static const char RCSbadmagic[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 
-
 #include <stdio.h>
-#include "machine.h"
 #include "bu.h"
 
 #define MAGICBUFSIZ 512
@@ -54,36 +42,36 @@ static const char RCSbadmagic[] = "@(#)$Header$ (ARL)";
  *  Support routine for BU_CKMAG macro
  */
 void
-bu_badmagic(const long int *ptr, unsigned long int magic, const char *str, const char *file, int line)
+bu_badmagic(const unsigned long *ptr, unsigned long magic, const char *str, const char *file, int line)
 {
-	char	buf[MAGICBUFSIZ];
+    char	buf[MAGICBUFSIZ];
 
-	if( !(ptr) )  {
-		snprintf(buf, MAGICBUFSIZ, "ERROR: NULL %s pointer, file %s, line %d\n",
-			str, file, line );
-		bu_bomb(buf);
-	}
-	if( ((size_t)(ptr)) & (sizeof(long)-1) )  {
-		snprintf(buf, MAGICBUFSIZ, "ERROR: x%lx mis-aligned %s pointer, file %s, line %d\n",
-			(long)ptr, str, file, line );
-		bu_bomb(buf);
-	}
-	if( *(ptr) != (long int)(magic) )  {
-		snprintf(buf, MAGICBUFSIZ, "ERROR: bad pointer x%lx: s/b %s(x%lx), was %s(x%lx), file %s, line %d\n",
-			(long)ptr,
-			str, magic,
-			bu_identify_magic( *(ptr) ), *(ptr),
-			file, line );
-		bu_bomb(buf);
-	}
+    if ( !(ptr) )  {
+	snprintf(buf, MAGICBUFSIZ, "ERROR: NULL %s pointer, file %s, line %d\n",
+		 str, file, line );
+	bu_bomb(buf);
+    }
+    if ( ((size_t)(ptr)) & (sizeof(unsigned long)-1) )  {
+	snprintf(buf, MAGICBUFSIZ, "ERROR: x%lx mis-aligned %s pointer, file %s, line %d\n",
+		 (unsigned long)ptr, str, file, line );
+	bu_bomb(buf);
+    }
+    if ( *(ptr) != (unsigned long)(magic) )  {
+	snprintf(buf, MAGICBUFSIZ, "ERROR: bad pointer x%lx: s/b %s(x%lx), was %s(x%lx), file %s, line %d\n",
+		 (unsigned long)ptr,
+		 str, magic,
+		 bu_identify_magic( (unsigned long)*(ptr) ), *(ptr),
+		 file, line );
+	bu_bomb(buf);
+    }
 }
 /** @} */
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -14,8 +14,9 @@
  */
 
 #include "tkMacOSXInt.h"
-#include "tkMacOSXEvent.h"	/* TkMacOSXKeycodeToUnicode() FIXME: That
-				 * function should probably move here. */
+#include "tkMacOSXEvent.h"	/* for TkMacOSXKeycodeToUnicode()
+				 * FIXME: That function should probably move
+				 * here. */
 
 /*
  * A couple of simple definitions to make code a bit more self-explaining.

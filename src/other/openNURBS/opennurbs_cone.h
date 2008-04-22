@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -74,7 +74,7 @@ public:
   const ON_3dVector& Axis() const;
 
   // Returns:
-  //   The angle (in radians) between the axis and the 
+  //   The angle (in radians) between the axis and the
   //   side of the cone.
   //   The angle and the height have the same sign.
   double AngleInRadians() const;
@@ -82,7 +82,7 @@ public:
   // Returns:
   //   The angle Iin degrees) between the axis and the side.
   //   The angle and the height have the same sign.
-  double AngleInDegrees() const;           
+  double AngleInDegrees() const;
 
   // evaluate parameters and return point
   // Parameters:
@@ -108,7 +108,7 @@ public:
   //   Get iso curve circle at a specified height.
   // Parameters:
   //   height_parameter - [in] 0 = apex, height = base
-  ON_Circle CircleAt( 
+  ON_Circle CircleAt(
     double height_parameter
     ) const;
 
@@ -116,20 +116,20 @@ public:
   //   Get iso curve line segment at a specified angle.
   // Parameters:
   //   radial_parameter - [in] (in radians) 0.0 to 2.0*ON_PI
-  ON_Line LineAt( 
-    double radial_parameter 
+  ON_Line LineAt(
+    double radial_parameter
     ) const;
 
   // returns parameters of point on cone that is closest to given point
-  bool ClosestPointTo( 
-          ON_3dPoint point, 
+  bool ClosestPointTo(
+          ON_3dPoint point,
           double* radial_parameter,
           double* height_parameter
          ) const;
 
   // returns point on cone that is closest to given point
-  ON_3dPoint ClosestPointTo( 
-         ON_3dPoint 
+  ON_3dPoint ClosestPointTo(
+         ON_3dPoint
          ) const;
 
   BOOL Transform( const ON_Xform& );
@@ -171,7 +171,7 @@ public:
   Parameters:
     srf - [in] if not NULL, then this srf is used.
   Result:
-    A surface of revolution or NULL if the cylinder is not 
+    A surface of revolution or NULL if the cylinder is not
     valid or is infinite.
   */
   ON_RevSurface* RevSurfaceForm( ON_RevSurface* srf = NULL ) const;

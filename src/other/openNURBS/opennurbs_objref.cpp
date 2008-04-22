@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -16,7 +16,7 @@
 
 #include "opennurbs.h"
 
-ON_COMPONENT_INDEX::ON_COMPONENT_INDEX() 
+ON_COMPONENT_INDEX::ON_COMPONENT_INDEX()
                    : m_type(ON_COMPONENT_INDEX::invalid_type),
                      m_index(-1)
 {
@@ -25,7 +25,7 @@ ON_COMPONENT_INDEX::ON_COMPONENT_INDEX()
 ON_COMPONENT_INDEX::ON_COMPONENT_INDEX(
                                        ON_COMPONENT_INDEX::TYPE type,
                                        int index
-                                       ) 
+                                       )
                    : m_type(type),
                      m_index(index)
 {
@@ -63,7 +63,7 @@ ON_COMPONENT_INDEX::TYPE ON_COMPONENT_INDEX::Type(int i)
 void ON_COMPONENT_INDEX::Set(
                                        ON_COMPONENT_INDEX::TYPE type,
                                        int index
-                                       ) 
+                                       )
 {
   m_type = type;
   m_index = index;
@@ -327,7 +327,7 @@ bool ON_ObjRefEvaluationParameter::Read( ON_BinaryArchive& archive )
   return rc;
 }
 
-ON_ObjRef::ON_ObjRef() 
+ON_ObjRef::ON_ObjRef()
           : m_uuid(ON_nil_uuid),
             m_geometry(0),
             m_parent_geometry(0),
@@ -340,7 +340,7 @@ ON_ObjRef::ON_ObjRef()
 {
 }
 
-ON_ObjRef::ON_ObjRef( const ON_ObjRef& src ) 
+ON_ObjRef::ON_ObjRef( const ON_ObjRef& src )
           : m_uuid(src.m_uuid),
             m_geometry(src.m_geometry),
             m_parent_geometry(src.m_parent_geometry),
@@ -360,11 +360,11 @@ ON_ObjRef::ON_ObjRef( const ON_ObjRef& src )
   }
 }
 
-ON_ObjRef& ON_ObjRef::operator=( const ON_ObjRef& src ) 
+ON_ObjRef& ON_ObjRef::operator=( const ON_ObjRef& src )
 {
   if ( this != &src )
   {
-    // Remove any reference this ON_ObjRef class 
+    // Remove any reference this ON_ObjRef class
     // may currently have.
     DecrementProxyReferenceCount();
 
@@ -432,9 +432,9 @@ bool ON_ObjRef_IRefID::Read( ON_BinaryArchive& archive )
 
   int major_version = 0;
   int minor_version = 0;
-  bool rc = archive.BeginRead3dmChunk( 
-                          TCODE_ANONYMOUS_CHUNK, 
-                          &major_version, 
+  bool rc = archive.BeginRead3dmChunk(
+                          TCODE_ANONYMOUS_CHUNK,
+                          &major_version,
                           &minor_version );
   if ( !rc )
     return false;
@@ -633,7 +633,7 @@ const ON_Brep* ON_BrepParent( const ON_Geometry* geo )
 	    brep = edge->Brep();
 	}
 	break;
-	
+
       case ON_COMPONENT_INDEX::brep_face:
 	{
 	  const ON_BrepFace* face = ON_BrepFace::Cast(geo);
@@ -641,7 +641,7 @@ const ON_Brep* ON_BrepParent( const ON_Geometry* geo )
 	    brep = face->Brep();
 	}
 	break;
-	
+
       case ON_COMPONENT_INDEX::brep_trim:
 	{
 	  const ON_BrepTrim* trim = ON_BrepTrim::Cast(geo);
@@ -649,7 +649,7 @@ const ON_Brep* ON_BrepParent( const ON_Geometry* geo )
 	    brep = trim->Brep();
 	}
 	break;
-	
+
       case ON_COMPONENT_INDEX::brep_loop:
 	{
 	  const ON_BrepLoop* loop = ON_BrepLoop::Cast(geo);
@@ -688,7 +688,7 @@ const ON_Mesh* ON_MeshParent( const ON_Geometry* geo )
 	    mesh = vref->m_mesh;
 	}
 	break;
-	
+
       case ON_COMPONENT_INDEX::meshtop_edge:
 	{
 	  const ON_MeshEdgeRef* eref = ON_MeshEdgeRef::Cast(geo);
@@ -696,7 +696,7 @@ const ON_Mesh* ON_MeshParent( const ON_Geometry* geo )
 	    mesh = eref->m_mesh;
 	}
 	break;
-	
+
       case ON_COMPONENT_INDEX::mesh_face:
 	{
 	  const ON_MeshFaceRef* fref = ON_MeshFaceRef::Cast(geo);
@@ -704,7 +704,7 @@ const ON_Mesh* ON_MeshParent( const ON_Geometry* geo )
 	    mesh = fref->m_mesh;
 	}
 	break;
-	
+
       default:
 	/* unsupported */
 	break;
@@ -725,7 +725,7 @@ bool ON_ObjRef::SetParentIRef( const ON_InstanceRef& iref,
   {
     // nested irefs
     if (    0 == m__proxy2
-         || 0 == m__proxy_ref_count 
+         || 0 == m__proxy_ref_count
          || *m__proxy_ref_count <= 0 )
     {
       return false;
@@ -874,15 +874,15 @@ bool ON_ObjRef::SetParentIRef( const ON_InstanceRef& iref,
   return rc;
 }
 
-void ON_ObjRef::SetProxy( 
-          ON_Object* proxy1, 
-          ON_Object* proxy2, 
-          bool bCountReferences 
+void ON_ObjRef::SetProxy(
+          ON_Object* proxy1,
+          ON_Object* proxy2,
+          bool bCountReferences
           )
 {
   if ( m__proxy1 || m__proxy2 || m__proxy_ref_count )
   {
-    // Remove any reference this ON_ObjRef class 
+    // Remove any reference this ON_ObjRef class
     // may currently have.
     DecrementProxyReferenceCount();
   }
@@ -898,9 +898,9 @@ void ON_ObjRef::SetProxy(
 
 void ON_ObjRef::DecrementProxyReferenceCount()
 {
-  if ( 0 != m__proxy_ref_count ) 
+  if ( 0 != m__proxy_ref_count )
   {
-    if (*m__proxy_ref_count > 1) 
+    if (*m__proxy_ref_count > 1)
     {
       // Including this class, there are *m__proxy_ref_count
       // ON_ObjRef classes using m__proxy and m_geometry.
@@ -918,7 +918,7 @@ void ON_ObjRef::DecrementProxyReferenceCount()
       // to NULL.
 
       // Setting *m__proxy_ref_count to zero, prevents crashes
-      // if somebody incorrectly uses memcpy() instead of the 
+      // if somebody incorrectly uses memcpy() instead of the
       // copy constructor or operator= to duplicate this class.
       *m__proxy_ref_count = 0;
       if ( m__proxy1 )

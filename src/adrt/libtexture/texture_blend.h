@@ -1,7 +1,7 @@
 /*                     T E X T U R E _ B L E N D . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2007 United States Government as represented by
+ * Copyright (c) 2002-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,14 +22,6 @@
  *  Comments -
  *      Texture Library - Blend Header
  *
- *  Author -
- *      Justin L. Shumaker
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- * $Id$
  */
 
 #ifndef _TEXTURE_BLEND_H
@@ -40,14 +32,14 @@
 
 
 typedef struct texture_blend_s {
-  TIE_3 color1;
-  TIE_3 color2;
+    TIE_3 color1;
+    TIE_3 color2;
 } texture_blend_t;
 
 
-extern  void    texture_blend_init(texture_t *texture, TIE_3 color1, TIE_3 color2);
-extern  void    texture_blend_free(texture_t *texture);
-extern  void    texture_blend_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel);
+extern void texture_blend_init(texture_t *texture, TIE_3 color1, TIE_3 color2);
+extern void texture_blend_free(texture_t *texture);
+extern void texture_blend_work(__TEXTURE_WORK_PROTOTYPE__);
 
 
 #endif
@@ -56,8 +48,8 @@ extern  void    texture_blend_work(texture_t *texture, common_mesh_t *mesh, tie_
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

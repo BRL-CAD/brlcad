@@ -1,7 +1,7 @@
 /*                     C A M E R A . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2007 United States Government as represented by
+ * Copyright (c) 2002-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,14 +22,6 @@
  *  Comments -
  *      Utilities Library - Camera Header
  *
- *  Author -
- *      Justin L. Shumaker
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- * $Id$
  */
 
 #ifndef _UTIL_CAMERA_H
@@ -45,33 +37,33 @@
 
 
 typedef struct util_camera_view_s {
-  TIE_3 step_x;
-  TIE_3 step_y;
-  TIE_3 pos;
-  TIE_3 top_l;
+    TIE_3 step_x;
+    TIE_3 step_y;
+    TIE_3 pos;
+    TIE_3 top_l;
 } util_camera_view_t;
 
 
 typedef struct util_camera_s {
-  TIE_3 pos;
-  TIE_3 focus;
-  tfloat tilt;
-  tfloat fov;
-  tfloat dof;
-  int thread_num;
-  int view_num;
-  util_camera_view_t *view_list;
+    TIE_3 pos;
+    TIE_3 focus;
+    tfloat tilt;
+    tfloat fov;
+    tfloat dof;
+    int thread_num;
+    int view_num;
+    util_camera_view_t *view_list;
 } util_camera_t;
 
 
 typedef struct util_camera_thread_data_s {
-  common_db_t *db;
-  util_camera_t *camera;
-  tie_t *tie;
-  common_work_t work;
-  void *res_buf;
-  unsigned int *scanline;
-  pthread_mutex_t mut;
+    common_db_t *db;
+    util_camera_t *camera;
+    tie_t *tie;
+    common_work_t work;
+    void *res_buf;
+    unsigned int *scanline;
+    pthread_mutex_t mut;
 } util_camera_thread_data_t;
 
 
@@ -86,8 +78,8 @@ void util_camera_render(util_camera_t *camera, common_db_t *db, tie_t *tie, void
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -1,7 +1,7 @@
 .\" Copyright (c) 1986, University of Utah
 .\" Template man page.  Taken from wtm's page for getcx3d
 .TH RLELDMAP 1 "Nov 12, 1986" 1
-.UC 4 
+.UC 4
 .SH NAME
 rleldmap \- Load a new color map into an RLE file
 .SH SYNOPSIS
@@ -39,13 +39,13 @@ rleldmap \- Load a new color map into an RLE file
 .SH DESCRIPTION
 The program will load a specified color map into an
 .IR RLE (5)
-file.  The color map may be computed by 
+file.  The color map may be computed by
 .I rleldmap
 or loaded from a file in one of several formats.  The input is read from
 .I infile
 or stdin if no file is given, and the result is written to
 .I outfile
-or stdout.  
+or stdout.
 
 The following terms are used in the description of the program and its options:
 .TP
@@ -67,9 +67,9 @@ is specified, this is equal to the applied map.  Otherwise it will be
 the composition of the input and applied maps.
 .TP
 map composition:
-If the applied map is composed 
+If the applied map is composed
 .I after
-the input map, then the output map will be 
+the input map, then the output map will be
 .IR "applied map" [ "input map" ].
 Composing the applied map before the input map produces an output map
 equal to
@@ -87,8 +87,8 @@ for the applied map (since the color map in an
 file is always stored left justified in 16 bit words).  This also
 applies to the applied map if it is taken from an
 .IR RLE (5)
-file 
-.RB ( \-r 
+file
+.RB ( \-r
 option below).  Note that if there is no input map, that the result of
 composition will be exactly the applied map.
 .TP
@@ -109,7 +109,7 @@ The maximum value of a color map entry, equal to 2**bits \- 1.
 .SH OPTIONS
 .TP
 .B \-a
-Compose the applied map 
+Compose the applied map
 .I after
 the input map.
 .TP
@@ -148,7 +148,7 @@ or
 must be specified.
 .TP
 .BI \-l " factor"
-Generate a linear applied map with the 
+Generate a linear applied map with the
 .I nth
 entry equal to
 .br
@@ -163,7 +163,7 @@ will generate a map with values equal to
 .TP
 .BI \-g " gamma"
 Generate an applied map to compensate for a display
-with the given gamma.  The 
+with the given gamma.  The
 .I nth
 entry is equal to
 .br

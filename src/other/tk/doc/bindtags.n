@@ -57,8 +57,9 @@ For example, the command
 .CE
 reverses the order in which binding scripts will be evaluated for
 a button named \fB.b\fR so that \fBall\fR bindings are invoked
-first, following by bindings for \fB.b\fR's toplevel (``.''), followed by
-class bindings, followed by bindings for \fB.b\fR.
+first, following by bindings for \fB.b\fR's toplevel
+.PQ . "" ,
+followed by class bindings, followed by bindings for \fB.b\fR.
 If \fItagList\fR is an empty list then the binding tags for \fIwindow\fR
 are returned to the default state described above.
 .PP

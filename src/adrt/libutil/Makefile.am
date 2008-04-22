@@ -1,12 +1,23 @@
 # $Id$
 
-lib_LIBRARIES = libutil.a
-libutil_a_SOURCES = camera.c display.c image.c rand.c umath.c
+lib_LTLIBRARIES = libtieutil.la
+libtieutil_la_SOURCES = camera.c rand.c umath.c
 
-AM_CFLAGS = @SDL_CFLAGS@ -I${top_srcdir}/src/adrt/libtie -I${top_srcdir}/src/adrt/libtienet -I${top_srcdir}/src/adrt/libcommon -I${top_srcdir}/src/adrt/librender -I${top_srcdir}/src/adrt/libtexture
+AM_CFLAGS = \
+	-I${top_srcdir}/src/adrt \
+	-I${top_srcdir}/src/adrt/libtie \
+	-I${top_srcdir}/src/adrt/libtienet \
+	-I${top_srcdir}/src/adrt/libcommon \
+	-I${top_srcdir}/src/adrt/librender \
+	-I${top_srcdir}/src/adrt/libtexture \
+	${TCL_CPPFLAGS}
 
-noinst_HEADERS = camera.h display.h font.h image.h rand.h umath.h
+libtieutil_la_LIBADD= \
+	$(top_builddir)/src/libbu/libbu.la
 
-MAINTAINERCLEANFILES = Makefile.in
+noinst_HEADERS = camera.h font.h
+
+tieincludedir = $(includedir)/tie
+tieinclude_HEADERS = umath.h rand.h 
 
 include $(top_srcdir)/misc/Makefile.defs

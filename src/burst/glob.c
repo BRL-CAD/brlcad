@@ -1,7 +1,7 @@
 /*                          G L O B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -21,17 +21,16 @@
 /** @file glob.c
  *	Author:		Gary S. Moss
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 #include <stdio.h>
 #include <signal.h>
-#include "machine.h"
+
 #include "vmath.h"
 #include "fb.h"
 #include "raytrace.h"
+
 #include "./burst.h"
 #include "./extern.h"
+
 
 Colors	colorids;	/* ident range to color mappings for plots */
 FBIO *fbiop = NULL;	/* frame buffer specific access from libfb */
@@ -65,7 +64,7 @@ boolean dithercells = DFL_DITHER;	/* if true, randomize shot within cell */
 boolean fatalerror;		/* must abort ray tracing */
 boolean groundburst = 0;	/* if true, burst on imaginary ground */
 boolean reportoverlaps = DFL_OVERLAPS;
-				/* if true, overlaps are reported */
+/* if true, overlaps are reported */
 boolean reqburstair = 1;	/* if true, burst air required for shotburst */
 boolean shotburst = 0;		/* if true, burst along shotline */
 boolean tty = 1;		/* if true, full screen display is used */
@@ -97,15 +96,15 @@ char tmpfname[TIMER_LEN];	/* temporary file for logging input */
 char *cmdptr;
 
 fastf_t	bdist = DFL_BDIST;
-			/* fusing distance for warhead */
+/* fusing distance for warhead */
 fastf_t	burstpoint[3];	/* explicit burst point coordinates */
 fastf_t	cellsz = DFL_CELLSIZE;
-			/* shotline separation */
+/* shotline separation */
 fastf_t	conehfangle = DFL_CONEANGLE;
-			/* spall cone half angle */
+/* spall cone half angle */
 fastf_t	fire[3];	/* explicit firing coordinates (2-D or 3-D) */
 fastf_t griddn;		/* distance in model coordinates from origin to
-				bottom border of grid */
+			   bottom border of grid */
 fastf_t gridlf;		/* distance to left border */
 fastf_t	gridrt;		/* distance to right border */
 fastf_t gridup;		/* distance to top border */
@@ -119,7 +118,7 @@ fastf_t grndlf = 0.0;	/* distance to left border of ground plane (+Y) */
 fastf_t grndrt = 0.0;	/* distance to right border of ground plane (-Y) */
 fastf_t	modlcntr[3];	/* centroid of target's bounding RPP */
 fastf_t modldn = 0.0;	/* distance in model coordinates from origin to bottom
-				 extent of projection of model in grid plane */
+			   extent of projection of model in grid plane */
 fastf_t modllf = 0.0;	/* distance to left extent */
 fastf_t modlrt = 0.0;	/* distance to right extent */
 fastf_t modlup = 0.0;	/* distance to top extent */
@@ -127,13 +126,13 @@ fastf_t raysolidangle;	/* solid angle per spall sampling ray */
 fastf_t	standoff;	/* distance from model origin to grid */
 fastf_t	unitconv = 1.0;	/* units conversion factor (mm to "units") */
 fastf_t	viewazim = DFL_AZIMUTH;
-			/* degrees from X-axis to firing position */
+/* degrees from X-axis to firing position */
 fastf_t	viewelev = DFL_ELEVATION;
-			/* degrees from XY-plane to firing position */
+/* degrees from XY-plane to firing position */
 
 /* These are the angles and fusing distance used to specify the path of
-	the canted warhead in Bob Wilson's simulation.
- */
+   the canted warhead in Bob Wilson's simulation.
+*/
 fastf_t	pitch = 0.0;	/* elevation above path of main penetrator */
 fastf_t	yaw = 0.0;	/* deviation right of path of main penetrator */
 
@@ -155,13 +154,13 @@ int gridwidth;		/* Grid width in cells. */
 int gridheight;		/* Grid height in cells. */
 int li;			/* lines of text displayable on video screen */
 int nbarriers = DFL_BARRIERS;
-			/* no. of barriers allowed to critical comp */
+/* no. of barriers allowed to critical comp */
 int noverlaps = 0;	/* no. of overlaps encountered in this view */
 int nprocessors;	/* no. of processors running concurrently */
 int nriplevels = DFL_RIPLEVELS;
-			/* no. of levels of ripping (0 = no ripping) */
+/* no. of levels of ripping (0 = no ripping) */
 int nspallrays = DFL_NRAYS;
-			/* no. of spall rays at each burst point */
+/* no. of spall rays at each burst point */
 int units = DFL_UNITS;	/* target units (default is millimeters) */
 int zoom = 1;		/* magnification factor on frame buffer */
 
@@ -175,8 +174,8 @@ void	(*abort_sig)(); /* active during ray tracing only */
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

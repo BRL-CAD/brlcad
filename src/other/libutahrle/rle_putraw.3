@@ -1,6 +1,6 @@
 .\" Copyright (c) 1986, 1987, University of Utah
 .TH RLE_PUTRAW 3 2/2/87 3
-.UC 4 
+.UC 4
 .SH NAME
 rle_putraw \- write run length encoded data to an RLE file.
 .SH SYNOPSIS
@@ -24,16 +24,16 @@ rle_hdr * the_hdr;
 .SH DESCRIPTION
 The function
 .I rle_putraw
-provides a structured method for creating 
+provides a structured method for creating
 run length encoded output.  It is passed an array,
 .IR scanraw ,
-of pointers to arrays of 
+of pointers to arrays of
 .IR rle_op (3)
 structures, and an array of lengths.  Each
 .I rle_op
 structure specifies a run or sequence of pixel values.  The array
 .I nraw
-gives the number of 
+gives the number of
 .I rle_op
 structures for each channel.  I.e.,
 .I nraw[i]

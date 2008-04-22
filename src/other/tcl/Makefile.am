@@ -3,16 +3,16 @@
 all: all-am
 
 all-am:
-	cd unix && $(MAKE) $(AM_MAKEFLAGS) all
+	if test -d unix ; then cd unix && $(MAKE) $(AM_MAKEFLAGS) all ; fi
 
 clean-am:
-	cd unix && $(MAKE) $(AM_MAKEFLAGS) clean
+	if test -d unix ; then cd unix && $(MAKE) $(AM_MAKEFLAGS) clean ; fi
 
 distclean-am:
-	cd unix && $(MAKE) $(AM_MAKEFLAGS) distclean
+	if test -d unix ; then cd unix && $(MAKE) $(AM_MAKEFLAGS) distclean ; fi
 
 install-am: all-am
-	cd unix && $(MAKE) $(AM_MAKEFLAGS) install
+	if test -d unix ; then cd unix && $(MAKE) $(AM_MAKEFLAGS) install ; fi
 
 INSTALLED_BINARIES = \
 	tclsh8.5
@@ -29,12 +29,12 @@ INSTALLED_ARCHIVES = \
 	libtcl8.5.* \
 	libtclstub.* \
 	libtclstub8.5.* \
-	tcl8/8.4/http-2.5.3.tm \
-	tcl8/8.4/platform/shell-1.1.3.tm \
+	tcl8/8.4/http-*.tm \
+	tcl8/8.4/platform/shell-*.tm \
 	tcl8/8.4/platform \
-	tcl8/8.4/platform-1.0.2.tm \
-	tcl8/8.5/msgcat-1.4.2.tm \
-	tcl8/8.5/tcltest-2.3a1.tm \
+	tcl8/8.4/platform-*.tm \
+	tcl8/8.5/msgcat-*.tm \
+	tcl8/8.5/tcltest-*.tm \
 	tcl8.5 \
 	tclConfig.sh
 
@@ -311,6 +311,7 @@ EXTRA_DIST = \
 	ChangeLog.2002 \
 	ChangeLog.2003 \
 	ChangeLog.2004 \
+	ChangeLog.2005 \
 	README \
 	changes \
 	compat \
@@ -337,7 +338,6 @@ EXTRA_DIST = \
 	unix/dltest/pkgc.c \
 	unix/dltest/pkgd.c \
 	unix/dltest/pkge.c \
-	unix/dltest/pkgf.c \
 	unix/dltest/pkgua.c \
 	unix/install-sh \
 	unix/installManPage \

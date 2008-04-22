@@ -15,7 +15,7 @@
 '\" consequential damages or any damages whatsoever resulting from loss of use,
 '\" data or profits, whether in an action of contract, negligence or other
 '\" tortuous action, arising out of or in connection with the use or performance
-'\" of this software.  
+'\" of this software.
 '\"
 '\"
 .so man.macros
@@ -27,7 +27,7 @@ Blt_TreeReleaseToken \- Releases token associated with tree object.
 .nf
 \fB#include <bltTree.h>\fR
 .sp
-int 
+int
 \fBBlt_TreeReleaseToken\fR(\fItoken\fR)
 .SH ARGUMENTS
 .AS Blt_Tree token
@@ -42,11 +42,11 @@ released, then the data object itself will be freed.  The arguments
 are as follows:
 .TP 1i
 token
-Token of the tree data object to be released.  This token was 
+Token of the tree data object to be released.  This token was
 initialized either by \fBTcl_TreeGetToken\fI or \fIBlt_TreeCreate\fR
 earlier.
 .SH RETURNS
-Nothing.  
+Nothing.
 .SH EXAMPLE
 The following example creates and then releases a new token.
 .CS

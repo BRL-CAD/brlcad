@@ -34,108 +34,108 @@
 # These are Defined in HTML 2.0
 
 array set HMtag_map {
-	a	   {Tlink link}
-	b      {weight bold}
-	blockquote	{style i indent 1 Trindent rindent}
-	bq		{style i indent 1 Trindent rindent}
-	cite   {style i}
-	code   {family courier}
-	dfn    {style i}
-	dir    {indent 1}
-	dl     {indent 1}
-	em     {style i}
-	h1     {size 24 weight bold}
-	h2     {size 22}
-	h3     {size 20}
-	h4     {size 18}
-	h5     {size 16}
-	h6     {style i}
-	i      {style i}
-	kbd    {family courier weight bold}
-	menu     {indent 1}
-	ol     {indent 1}
-	pre    {fill 0 family courier Tnowrap nowrap}
-	samp   {family courier}
-	strong {weight bold}
-	tt     {family courier}
-	u	 {Tunderline underline}
-	ul     {indent 1}
-	var    {style i}
+    a	   {Tlink link}
+    b      {weight bold}
+    blockquote	{style i indent 1 Trindent rindent}
+    bq		{style i indent 1 Trindent rindent}
+    cite   {style i}
+    code   {family courier}
+    dfn    {style i}
+    dir    {indent 1}
+    dl     {indent 1}
+    em     {style i}
+    h1     {size 24 weight bold}
+    h2     {size 22}
+    h3     {size 20}
+    h4     {size 18}
+    h5     {size 16}
+    h6     {style i}
+    i      {style i}
+    kbd    {family courier weight bold}
+    menu     {indent 1}
+    ol     {indent 1}
+    pre    {fill 0 family courier Tnowrap nowrap}
+    samp   {family courier}
+    strong {weight bold}
+    tt     {family courier}
+    u	 {Tunderline underline}
+    ul     {indent 1}
+    var    {style i}
 }
 
 # These are in common(?) use, but not defined in html2.0
 
 array set HMtag_map {
-	center {Tcenter center}
-	strike {Tstrike strike}
-	u	   {Tunderline underline}
+    center {Tcenter center}
+    strike {Tstrike strike}
+    u	   {Tunderline underline}
 }
 
 # initial values
 
 set HMtag_map(hmstart) {
-	family times   weight medium   style r   size 14
-	Tcenter ""   Tlink ""   Tnowrap ""   Tunderline ""   list list
-	fill 1   indent "" counter 0 adjust 0
+    family times   weight medium   style r   size 14
+    Tcenter ""   Tlink ""   Tnowrap ""   Tunderline ""   list list
+    fill 1   indent "" counter 0 adjust 0
 }
 
 # html tags that insert white space
 
 array set HMinsert_map {
-	blockquote "\n\n" /blockquote "\n"
-	br	"\n"
-	dd	"\n" /dd	"\n"
-	dl	"\n" /dl	"\n"
-	dt	"\n"
-	form "\n"	/form "\n"
-	h1	"\n\n"	/h1	"\n"
-	h2	"\n\n"	/h2	"\n"
-	h3	"\n\n"	/h3	"\n"
-	h4	"\n"	/h4	"\n"
-	h5	"\n"	/h5	"\n"
-	h6	"\n"	/h6	"\n"
-	li   "\n"
-	/dir "\n"
-	/ul "\n"
-	/ol "\n"
-	/menu "\n"
-	p	"\n\n"
-	pre "\n"	/pre "\n"
+    blockquote "\n\n" /blockquote "\n"
+    br	"\n"
+    dd	"\n" /dd	"\n"
+    dl	"\n" /dl	"\n"
+    dt	"\n"
+    form "\n"	/form "\n"
+    h1	"\n\n"	/h1	"\n"
+    h2	"\n\n"	/h2	"\n"
+    h3	"\n\n"	/h3	"\n"
+    h4	"\n"	/h4	"\n"
+    h5	"\n"	/h5	"\n"
+    h6	"\n"	/h6	"\n"
+    li   "\n"
+    /dir "\n"
+    /ul "\n"
+    /ol "\n"
+    /menu "\n"
+    p	"\n\n"
+    pre "\n"	/pre "\n"
 }
 
 # tags that are list elements, that support "compact" rendering
 
 array set HMlist_elements {
-	ol 1   ul 1   menu 1   dl 1   dir 1
+    ol 1   ul 1   menu 1   dl 1   dir 1
 }
 ############################################
 # initialize the window and stack state
 
 proc HMinit_win {win} {
-	upvar #0 HM$win var
+    upvar #0 HM$win var
 
-	HMinit_state $win
-	$win tag configure underline -underline 1
-	$win tag configure center -justify center
-	$win tag configure nowrap -wrap none
-	$win tag configure rindent -rmargin $var(S_tab)c
-	$win tag configure strike -overstrike 1
-	$win tag configure mark -foreground red		;# list markers
-	$win tag configure list -spacing1 3p -spacing3 3p		;# regular lists
-	$win tag configure compact -spacing1 0p		;# compact lists
-	$win tag configure link -foreground blue	;# hypertext links
-	HMset_indent $win $var(S_tab)
-	$win configure -wrap word
+    HMinit_state $win
+    $win tag configure underline -underline 1
+    $win tag configure center -justify center
+    $win tag configure nowrap -wrap none
+    $win tag configure rindent -rmargin $var(S_tab)c
+    $win tag configure strike -overstrike 1
+    $win tag configure mark -foreground red		;# list markers
+    $win tag configure list -spacing1 3p -spacing3 3p		;# regular lists
+    $win tag configure compact -spacing1 0p		;# compact lists
+    $win tag configure link -foreground blue	;# hypertext links
+    HMset_indent $win $var(S_tab)
+    $win configure -wrap word
 
-	# for horizontal rules
-	$win tag configure thin -font [HMx_font Times 14 Medium R]
-	$win tag configure hr -relief sunken -borderwidth 2 -wrap none \
-		-tabs [winfo width $win]
-	bind $win <Configure> {%W tag configure hr -tabs %w}
+    # for horizontal rules
+    $win tag configure thin -font [HMx_font Times 14 Medium R]
+    $win tag configure hr -relief sunken -borderwidth 2 -wrap none \
+	-tabs [winfo width $win]
+    bind $win <Configure> {%W tag configure hr -tabs %w}
 
-	# generic link enter callback
+    # generic link enter callback
 
-	$win tag bind link <1> "HMlink_hit $win %x %y"
+    $win tag bind link <1> "HMlink_hit $win %x %y"
 }
 
 # set the indent spacing (in cm) for lists
@@ -143,25 +143,25 @@ proc HMinit_win {win} {
 # space if the current line position is past the tab setting
 
 proc HMset_indent {win cm} {
-	set tabs [expr $cm / 2.0]
-	$win configure -tabs ${tabs}c
-	foreach i {1 2 3 4 5 6 7 8 9} {
-		set tab [expr $i * $cm]
-		$win tag configure indent$i -lmargin1 ${tab}c -lmargin2 ${tab}c \
-			-tabs "[expr $tab + $tabs]c [expr $tab + 2*$tabs]c"
-	}
+    set tabs [expr $cm / 2.0]
+    $win configure -tabs ${tabs}c
+    foreach i {1 2 3 4 5 6 7 8 9} {
+	set tab [expr $i * $cm]
+	$win tag configure indent$i -lmargin1 ${tab}c -lmargin2 ${tab}c \
+	    -tabs "[expr $tab + $tabs]c [expr $tab + 2*$tabs]c"
+    }
 }
 
 # reset the state of window - get ready for the next page
 # remove all but the font tags
 
 proc HMreset_win {win} {
-	regsub -all { +[^L ][^ ]*} " [$win tag names] " {} tags
-	catch "$win tag delete $tags"
-	eval $win mark unset [$win mark names]
-	$win delete 0.0 end
-	$win tag configure hr -tabs [winfo width $win]
-	HMinit_state $win
+    regsub -all { +[^L ][^ ]*} " [$win tag names] " {} tags
+    catch "$win tag delete $tags"
+    eval $win mark unset [$win mark names]
+    $win delete 0.0 end
+    $win tag configure hr -tabs [winfo width $win]
+    HMinit_state $win
 }
 
 # initialize the window's state array
@@ -175,21 +175,21 @@ proc HMreset_win {win} {
 #  symbols:		Symbols to use on un-ordered lists
 
 proc HMinit_state {win} {
-	upvar #0 HM$win var
-	array set tmp [array get var S_*]
-	catch {unset var}
-	array set var {
-		stop 0
-		tags 0
-		fill 0
-		list list
-		S_adjust_size 0
-		S_tab 1.0
-		S_unknown \xb7
-		S_update 10
-		S_symbols O*=+-o\xd7\xb0>:\xb7
-	}
-	array set var [array get tmp]
+    upvar #0 HM$win var
+    array set tmp [array get var S_*]
+    catch {unset var}
+    array set var {
+	stop 0
+	tags 0
+	fill 0
+	list list
+	S_adjust_size 0
+	S_tab 1.0
+	S_unknown \xb7
+	S_update 10
+	S_symbols O*=+-o\xd7\xb0>:\xb7
+    }
+    array set var [array get tmp]
 }
 
 # alter the parameters of the text state
@@ -197,23 +197,23 @@ proc HMinit_state {win} {
 # it is called as: HMset_state -param value -param value ...
 
 array set HMparam_map {
-	-update S_update
-	-tabs S_tab
-	-unknown S_unknown
-	-stop S_stop
-	-size S_adjust_size
-	-symbols S_symbols
+    -update S_update
+    -tabs S_tab
+    -unknown S_unknown
+    -stop S_stop
+    -size S_adjust_size
+    -symbols S_symbols
 }
 
 proc HMset_state {win args} {
-	upvar #0 HM$win var
-	global HMparam_map
-	set bad 0
-	if {[catch {array set params $args}]} {return 0}
-	foreach i [array names params] {
-		incr bad [catch {set var($HMparam_map($i)) $params($i)}]
-	}
-	return [expr $bad == 0]
+    upvar #0 HM$win var
+    global HMparam_map
+    set bad 0
+    if {[catch {array set params $args}]} {return 0}
+    foreach i [array names params] {
+	incr bad [catch {set var($HMparam_map($i)) $params($i)}]
+    }
+    return [expr $bad == 0]
 }
 
 ############################################
@@ -227,49 +227,49 @@ proc HMset_state {win args} {
 #   text:  The plain text until the next html tag
 
 proc HMrender {win tag not param text} {
-	upvar #0 HM$win var
-	if {$var(stop)} return
-	global HMtag_map HMinsert_map HMlist_elements
-	set tag [string tolower $tag]
-	set text [HMmap_esc $text]
+    upvar #0 HM$win var
+    if {$var(stop)} return
+    global HMtag_map HMinsert_map HMlist_elements
+    set tag [string tolower $tag]
+    set text [HMmap_esc $text]
 
-	# manage compact rendering of lists
-	if {[info exists HMlist_elements($tag)]} {
-		set list "list [expr {[HMextract_param $param compact] ? "compact" : "list"}]"
-	} else {
-		set list ""
-	}
+    # manage compact rendering of lists
+    if {[info exists HMlist_elements($tag)]} {
+	set list "list [expr {[HMextract_param $param compact] ? "compact" : "list"}]"
+    } else {
+	set list ""
+    }
 
-	# adjust tag state
-	catch {HMstack $win $not "$HMtag_map($tag) $list"}
+    # adjust tag state
+    catch {HMstack $win $not "$HMtag_map($tag) $list"}
 
-	# insert white space (with current font)
-	# adding white space can get a bit tricky.  This isn't quite right
-	set bad [catch {$win insert end $HMinsert_map($not$tag) "space $var(font)"}]
-	if {!$bad && [llength $var(fill)]>0 && [lindex $var(fill) end]} {
-		set text [string trimleft $text]
-	}
+    # insert white space (with current font)
+    # adding white space can get a bit tricky.  This isn't quite right
+    set bad [catch {$win insert end $HMinsert_map($not$tag) "space $var(font)"}]
+    if {!$bad && [llength $var(fill)]>0 && [lindex $var(fill) end]} {
+	set text [string trimleft $text]
+    }
 
-	# to fill or not to fill
-	if {[llength $var(fill)]>0 && [lindex $var(fill) end]} {
-		set text [HMzap_white $text]
-	}
+    # to fill or not to fill
+    if {[llength $var(fill)]>0 && [lindex $var(fill) end]} {
+	set text [HMzap_white $text]
+    }
 
-	# do any special tag processing
-	catch {HMtag_$not$tag $win $param text} msg
+    # do any special tag processing
+    catch {HMtag_$not$tag $win $param text} msg
 
-	# debugging only (code will not be here if no debugging was set)
+    # debugging only (code will not be here if no debugging was set)
 
-	# add the text with proper tags
-	set tags [HMcurrent_tags $win]
-	$win insert end $text $tags
+    # add the text with proper tags
+    set tags [HMcurrent_tags $win]
+    $win insert end $text $tags
 
-	# We need to do an update every so often to insure interactive response.
-	# This can cause us to re-enter the event loop, and cause recursive
-	# invocations of HMrender, so we need to be careful.
-	if {!([incr var(tags)] % $var(S_update))} {
-		update
-	}
+    # We need to do an update every so often to insure interactive response.
+    # This can cause us to re-enter the event loop, and cause recursive
+    # invocations of HMrender, so we need to be careful.
+    if {!([incr var(tags)] % $var(S_update))} {
+	update
+    }
 }
 
 # html tags requiring special processing
@@ -282,53 +282,53 @@ proc HMrender {win tag not param text} {
 #          next.
 
 proc HMtag_title {win param text} {
-	upvar $text data
-	wm title [winfo toplevel $win] $data
-	set data ""
+    upvar $text data
+    wm title [winfo toplevel $win] $data
+    set data ""
 }
 
 proc HMtag_hr {win param text} {
-	$win insert end "\n" space "\n" thin "\t" "thin hr" "\n" thin
+    $win insert end "\n" space "\n" thin "\t" "thin hr" "\n" thin
 }
 
 # list element tags
 
 proc HMtag_ol {win param text} {
-	upvar #0 HM$win var
-	set var(count$var(level)) 0
+    upvar #0 HM$win var
+    set var(count$var(level)) 0
 }
 
 proc HMtag_ul {win param text} {
-	upvar #0 HM$win var
-	catch {unset var(count$var(level))}
+    upvar #0 HM$win var
+    catch {unset var(count$var(level))}
 }
 
 proc HMtag_menu {win param text} {
-	upvar #0 HM$win var
-	set var(menu) ->
-	set var(compact) 1
+    upvar #0 HM$win var
+    set var(menu) ->
+    set var(compact) 1
 }
 
 proc HMtag_/menu {win param text} {
-	upvar #0 HM$win var
-	catch {unset var(menu)}
-	catch {unset var(compact)}
+    upvar #0 HM$win var
+    catch {unset var(menu)}
+    catch {unset var(compact)}
 }
 
 proc HMtag_dt {win param text} {
-	upvar #0 HM$win var
-	upvar $text data
-	set level $var(level)
-	incr level -1
-	$win insert end "$data" "hi [lindex $var(list) end] indent$level $var(font)"
-	set data {}
+    upvar #0 HM$win var
+    upvar $text data
+    set level $var(level)
+    incr level -1
+    $win insert end "$data" "hi [lindex $var(list) end] indent$level $var(font)"
+    set data {}
 }
 
 proc HMtag_li {win param text} {
-	upvar #0 HM$win var
-	set level $var(level)
-	incr level -1
-	set x [string index $var(S_symbols)+-+-+-+-" $level]
+    upvar #0 HM$win var
+    set level $var(level)
+    incr level -1
+    set x [string index $var(S_symbols)+-+-+-+-" $level]
 	catch {set x [incr var(count$level)]}
 	catch {set x $var(menu)}
 	$win insert end \t$x\t "mark [lindex $var(list) end] indent$level $var(font)"
@@ -337,17 +337,17 @@ proc HMtag_li {win param text} {
 # hypertext links.
 
 proc HMtag_a {win param text} {
-	upvar #0 HM$win var
+    upvar #0 HM$win var
 
-	if {[HMextract_param $param href]} {
-		set var(Tref) L:$href
-		HMlink_setup $win $href
-	}
+    if {[HMextract_param $param href]} {
+	set var(Tref) L:$href
+	HMlink_setup $win $href
+    }
 }
 
 proc HMtag_/a {win param text} {
-	upvar #0 HM$win var
-	catch {unset var(Tref)}
+    upvar #0 HM$win var
+    catch {unset var(Tref)}
 }
 
 # This interface is subject to change
@@ -365,65 +365,65 @@ proc HMtag_/a {win param text} {
 #    border: The size of the window border
 
 proc HMtag_img {win param text} {
-	upvar #0 HM$win var
+    upvar #0 HM$win var
 
-	# get alignment
-	array set align_map {top top    middle center    bottom bottom}
-	set align bottom		;# The spec isn't clear what the default should be
-	HMextract_param $param align
-	catch {set align $align_map([string tolower $align])}
+    # get alignment
+    array set align_map {top top    middle center    bottom bottom}
+    set align bottom		;# The spec isn't clear what the default should be
+    HMextract_param $param align
+    catch {set align $align_map([string tolower $align])}
 
-	# get alternate text
-	set alt "<image>"
-	HMextract_param $param alt
-	set alt [HMmap_esc $alt]
+    # get alternate text
+    set alt "<image>"
+    HMextract_param $param alt
+    set alt [HMmap_esc $alt]
 
-	# get the border width
-	set border 1
-	HMextract_param $param border
+    # get the border width
+    set border 1
+    HMextract_param $param border
 
-	# see if we have an image size hint
-	# If so, make a frame the "hint" size to put the label in
-	# otherwise just make the label
-	set item $win.$var(tags)
-	catch {destroy $item}
-	if {[HMextract_param $param width] && [HMextract_param $param height]} {
-		frame $item -width $width -height $height
-		pack propagate $item 0
-		set label $item.label
-		label $label
-		pack $label -expand 1 -fill both
-	} else {
-		set label $item
-		label $label
+    # see if we have an image size hint
+    # If so, make a frame the "hint" size to put the label in
+    # otherwise just make the label
+    set item $win.$var(tags)
+    catch {destroy $item}
+    if {[HMextract_param $param width] && [HMextract_param $param height]} {
+	frame $item -width $width -height $height
+	pack propagate $item 0
+	set label $item.label
+	label $label
+	pack $label -expand 1 -fill both
+    } else {
+	set label $item
+	label $label
+    }
+
+    $label configure -relief ridge -fg orange -text $alt
+    catch {$label configure -bd $border}
+    $win window create end -align $align -window $item -pady 2
+
+    # add in all the current tags (this is overkill)
+    set tags [HMcurrent_tags $win]
+    foreach tag $tags {
+	$win tag add $tag $item
+    }
+
+    # set imagemap callbacks
+    if {[HMextract_param $param ismap]} {
+	set link ""
+	regsub -all {[^L]*L:([^ ]*).*}  $tags {\1} link
+	global HMevents
+	foreach i [array names HMevents] {
+	    bind $label <$i> "%W configure $HMevents($i)"
 	}
+	bind ismap <ButtonRelease-1> "HMlink_callback $win $link?%x,%y"
+	bindtags $label "ismap [bindtags $label]"
+    }
 
-	$label configure -relief ridge -fg orange -text $alt
-	catch {$label configure -bd $border}
-	$win window create end -align $align -window $item -pady 2
-
-	# add in all the current tags (this is overkill)
-	set tags [HMcurrent_tags $win]
-	foreach tag $tags {
-		$win tag add $tag $item
-	}
-
-	# set imagemap callbacks
-	if {[HMextract_param $param ismap]} {
-		set link ""
-		regsub -all {[^L]*L:([^ ]*).*}  $tags {\1} link
-		global HMevents
-		foreach i [array names HMevents] {
-			bind $label <$i> "%W configure $HMevents($i)"
-		}
-		bind ismap <ButtonRelease-1> "HMlink_callback $win $link?%x,%y"
-		bindtags $label "ismap [bindtags $label]"
-	}
-
-	# now callback to the application
-	set src ""
-	HMextract_param $param src
-	HMset_image $label $src
+    # now callback to the application
+    set src ""
+    HMextract_param $param src
+    HMset_image $label $src
 }
 
 # The app needs to supply one of these
@@ -438,14 +438,14 @@ proc HMtag_img {win param text} {
 # if we have a clickable image, arrange for a callback
 
 proc HMgot_image {win image_error} {
-	# if we're in a frame turn on geometry propogation
-	if {[winfo name $win] == "label"} {
-		pack propagate [winfo parent $win] 1
-	}
-	if {[catch {$win configure -image $image_error}]} {
-		$win configure -image {}
-		$win configure -text $image_error
-	}
+    # if we're in a frame turn on geometry propogation
+    if {[winfo name $win] == "label"} {
+	pack propagate [winfo parent $win] 1
+    }
+    if {[catch {$win configure -image $image_error}]} {
+	$win configure -image {}
+	$win configure -text $image_error
+    }
 }
 
 # Sample hypertext link callback routine - should be replaced by app
@@ -456,18 +456,18 @@ proc HMgot_image {win image_error} {
 #   href:  The HREF link for this <a> tag.
 
 array set HMevents {
-	Enter	{-borderwidth 2 -relief raised }
-	Leave	{-borderwidth 0 -relief flat }
-	1		{-borderwidth 2 -relief sunken}
-	ButtonRelease-1	{-relief raised}
+    Enter	{-borderwidth 2 -relief raised }
+    Leave	{-borderwidth 0 -relief flat }
+    1		{-borderwidth 2 -relief sunken}
+    ButtonRelease-1	{-relief raised}
 }
 
 proc HMlink_setup {win href} {
-	global HMevents
-	foreach i [array names HMevents] {
-		eval $win tag bind L:$href <$i> \
-			\{$win tag configure L:$href $HMevents($i)\}
-	}
+    global HMevents
+    foreach i [array names HMevents] {
+	eval $win tag bind L:$href <$i> \
+	    \{$win tag configure L:$href $HMevents($i)\}
+    }
 }
 
 # generic link-hit callback
@@ -477,9 +477,9 @@ proc HMlink_setup {win href} {
 #   x,y:   The cursor position at the "click"
 
 proc HMlink_hit {win x y} {
-	set tags [$win tag names @$x,$y]
-	regsub -all {[^L]*L:([^ ]*).*}  $tags {\1} link
-	HMlink_callback $win $link
+    set tags [$win tag names @$x,$y]
+    regsub -all {[^L]*L:([^ ]*).*}  $tags {\1} link
+    HMlink_callback $win $link
 }
 
 # replace this!
@@ -499,31 +499,31 @@ proc HMlink_hit {win x y} {
 
 proc HMextract_param {param key {val ""}} {
 
-	if {$val == ""} {
-		upvar $key result
-	} else {
-		upvar $val result
-	}
+    if {$val == ""} {
+	upvar $key result
+    } else {
+	upvar $val result
+    }
 
-	# look for name=value combinations.  Either (') or (") are valid delimeters
-	if {
-	  [regsub -nocase [format {.*%s *= *"([^"]*).*} $key] $param {\1} value] ||
-	  [regsub -nocase [format {.*%s *= *'([^']*).*} $key] $param {\1} value] ||
-	  [regsub -nocase [format {.*%s *= *([^ ]+).*} $key] $param {\1} value] } {
-		set result $value
-		return 1
-	}
+    # look for name=value combinations.  Either (') or (") are valid delimeters
+    if {
+	[regsub -nocase [format {.*%s *= *"([^"]*).*} $key] $param {\1} value] ||
+[regsub -nocase [format {.*%s *= *'([^']*).*} $key] $param {\1} value] ||
+[regsub -nocase [format {.*%s *= *([^ ]+).*} $key] $param {\1} value] } {
+set result $value
+return 1
+}
 
-	# now look for valueless names
-	# I should strip out name=value pairs, so we don't end up with "name"
-	# inside the "value" part of some other key word - some day
+# now look for valueless names
+# I should strip out name=value pairs, so we don't end up with "name"
+# inside the "value" part of some other key word - some day
 
-	set bad \[^a-zA-Z\]+
-	if {[regexp -nocase  "$bad$key$bad" -$param-]} {
-		return 1
-	} else {
-		return 0
-	}
+set bad \[^a-zA-Z\]+
+if {[regexp -nocase  "$bad$key$bad" -$param-]} {
+    return 1
+} else {
+    return 0
+}
 }
 
 # These next two routines manage the display state of the page.
@@ -532,46 +532,46 @@ proc HMextract_param {param key {val ""}} {
 # the current tag is the last item on the list
 
 proc HMstack {win push list} {
-	upvar #0 HM$win var
-	array set tags $list
-	if {$push == ""} {
-		foreach tag [array names tags] {
-			lappend var($tag) $tags($tag)
-		}
-	} else {
-		foreach tag [array names tags] {
-			set cnt [regsub { *[^ ]+$} $var($tag) {} var($tag)]
-		}
+    upvar #0 HM$win var
+    array set tags $list
+    if {$push == ""} {
+	foreach tag [array names tags] {
+	    lappend var($tag) $tags($tag)
 	}
+    } else {
+	foreach tag [array names tags] {
+	    set cnt [regsub { *[^ ]+$} $var($tag) {} var($tag)]
+	}
+    }
 }
 
 # extract set of current text tags
 # tags starting with T map directly to text tags
 
 proc HMcurrent_tags {win} {
-	upvar #0 HM$win var
-	set font font
-	foreach i {family size weight style} {
-		set $i [lindex $var($i) end]
-		append font :[set $i]
-	}
-	set xfont [HMx_font $family $size $weight $style $var(S_adjust_size)]
-	catch {$win tag configure $font -font $xfont} msg
-	set indent [llength $var(indent)]
-	incr indent -1
-	lappend tags $font indent$indent
-	foreach tag [array names var T*] {
-		append tags " [lindex $var($tag) end]"
-	}
-	set var(font) $font
-	set var(level) $indent
-	return $tags
+    upvar #0 HM$win var
+    set font font
+    foreach i {family size weight style} {
+	set $i [lindex $var($i) end]
+	append font :[set $i]
+    }
+    set xfont [HMx_font $family $size $weight $style $var(S_adjust_size)]
+    catch {$win tag configure $font -font $xfont} msg
+    set indent [llength $var(indent)]
+    incr indent -1
+    lappend tags $font indent$indent
+    foreach tag [array names var T*] {
+	append tags " [lindex $var($tag) end]"
+    }
+    set var(font) $font
+    set var(level) $indent
+    return $tags
 }
 
 # generate an X font name
 proc HMx_font {family size weight style {adjust_size 0}} {
-	catch {incr size $adjust_size}
-	return "-*-$family-$weight-$style-normal--${size}-*-*-*-*-*-*-*"
+    catch {incr size $adjust_size}
+    return "-*-$family-$weight-$style-normal--${size}-*-*-*-*-*-*-*"
 }
 ############################################
 # Turn HTML into TCL commands
@@ -579,58 +579,58 @@ proc HMx_font {family size weight style {adjust_size 0}} {
 #   cmd		A command to run for each html tag found
 
 proc HMparse_html {html {cmd HMtest_parse}} {
-	regsub -all \{ $html {\&ob;} html
-	regsub -all \} $html {\&cb;} html
-	set w " \t\r\n"	;# white space
-	proc HMcl x {return "\[$x\]"}
-	set exp <(/?)([HMcl ^$w>]+)[HMcl $w]*([HMcl ^>]*)>
-	set sub "\}\n$cmd {\\2} {\\1} {\\3} \{"
-	regsub -all $exp $html $sub html
-	eval "$cmd hmstart {} {} \{ $html \}"
-	eval "$cmd hmstart / {} {}"
+    regsub -all \{ $html {\&ob;} html
+    regsub -all \} $html {\&cb;} html
+    set w " \t\r\n"	;# white space
+    proc HMcl x {return "\[$x\]"}
+    set exp <(/?)([HMcl ^$w>]+)[HMcl $w]*([HMcl ^>]*)>
+    set sub "\}\n$cmd {\\2} {\\1} {\\3} \{"
+    regsub -all $exp $html $sub html
+    eval "$cmd hmstart {} {} \{ $html \}"
+    eval "$cmd hmstart / {} {}"
 }
 
 proc HMtest_parse {command tag slash text_after_tag} {
-	puts "==> $command $tag $slash $text_after_tag"
+    puts "==> $command $tag $slash $text_after_tag"
 }
 
 # Convert multiple white space into a single space
 
 proc HMzap_white {data} {
-	regsub -all "\[ \t\r\n\]+" $data " " data
-	return $data
+    regsub -all "\[ \t\r\n\]+" $data " " data
+    return $data
 }
 
 # find HTML escape characters of the form &xxx;
 
 proc HMmap_esc {text} {
-	if {![regexp & $text]} {return $text}
-	regsub -all {([][$\\])} $text {\\\1} new
-	regsub -all {&#([0-9][0-9][0-9]?);?} \
-		$new {[format %c \1]} new
+    if {![regexp & $text]} {return $text}
+    regsub -all {([][$\\])} $text {\\\1} new
+    regsub -all {&#([0-9][0-9][0-9]?);?} \
+		     $new {[format %c \1]} new
 	regsub -all {&([^ ;]+);?} $new {[HMdo_map \1]} new
 	return [subst $new]
-}
+    }
 
-# convert an HTML escape sequence into character
+    # convert an HTML escape sequence into character
 
-proc HMdo_map {text {unknown ?}} {
+    proc HMdo_map {text {unknown ?}} {
 	global HMesc_map
 	set result $unknown
 	catch {set result $HMesc_map($text)}
 	return $result
-}
+    }
 
-# table of escape characters (ISO latin-1 esc's are in a different table)
+    # table of escape characters (ISO latin-1 esc's are in a different table)
 
-array set HMesc_map {
-   lt <   gt >   amp &   quot \"   copy \xa9
-   reg \xae   ob \x7b   cb \x7d   nbsp \xa0
-}
-#############################################################
-# ISO Latin-1 escape codes
+    array set HMesc_map {
+	lt <   gt >   amp &   quot \"   copy \xa9
+	reg \xae   ob \x7b   cb \x7d   nbsp \xa0
+    }
+    #############################################################
+    # ISO Latin-1 escape codes
 
-array set HMesc_map {
+    array set HMesc_map {
 	nbsp \xa0 iexcl \xa1 cent \xa2 pound \xa3 curren \xa4
 	yen \xa5 brvbar \xa6 sect \xa7 uml \xa8 copy \xa9
 	ordf \xaa laquo \xab not \xac shy \xad reg \xae
@@ -651,13 +651,13 @@ array set HMesc_map {
 	otilde \xf5 ouml \xf6 divide \xf7 oslash \xf8 ugrave \xf9
 	uacute \xfa ucirc \xfb uuml \xfc yacute \xfd thorn \xfe
 	yuml \xff
-}
+    }
 
-# Local Variables:
-# mode: Tcl
-# tab-width: 8
-# c-basic-offset: 4
-# tcl-indent-level: 4
-# indent-tabs-mode: t
-# End:
-# ex: shiftwidth=4 tabstop=8
+    # Local Variables:
+    # mode: Tcl
+    # tab-width: 8
+    # c-basic-offset: 4
+    # tcl-indent-level: 4
+    # indent-tabs-mode: t
+    # End:
+    # ex: shiftwidth=4 tabstop=8

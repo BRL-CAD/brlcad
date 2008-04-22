@@ -1,7 +1,7 @@
 /*                         B U R S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -21,9 +21,6 @@
 /** @file burst.c
  *  Author:		Gary S. Moss
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -61,24 +58,25 @@ getCommand( char *name, char *buf, int len, FILE *fp )
     assert( name != NULL );
     assert( buf != NULL );
     assert( fp != NULL );
-    while( bu_fgets( buf, len, fp ) != NULL )
+    while ( bu_fgets( buf, len, fp ) != NULL )
+    {
+	if ( buf[0] != CHAR_COMMENT )
 	{
-	    if( buf[0] != CHAR_COMMENT )
-		{
-		    if( sscanf( buf, "%s", name ) == 1 )
-			{
-			    buf[strlen(buf)-1] = NUL; /* clobber newline */
-			    return	1;
-			}
-		    else /* Skip over blank lines. */
-			continue;
-		}
-	    else
-		{ /* Generate comment command. */
-		    (void) strcpy( name, CMD_COMMENT );
-		    return	1;
-		}
+	    if ( sscanf( buf, "%1330s", name ) == 1 ) /* LNBUFSZ */
+	    {
+		buf[strlen(buf)-1] = NUL; /* clobber newline */
+		return	1;
+	    }
+	    else /* Skip over blank lines. */
+		continue;
 	}
+	else
+	{
+	    /* Generate comment command. */
+	    bu_strlcpy( name, CMD_COMMENT, LNBUFSZ );
+	    return	1;
+	}
+    }
     return	0; /* EOF */
 }
 
@@ -92,29 +90,29 @@ static void
 setupSigs( void )
 {
     register int i;
-    for( i = 0; i < NSIG; i++ )
-	switch( i )
-	    {
-		case SIGINT :
-		    if( (norml_sig = signal( i, SIG_IGN )) == SIG_IGN )
-			abort_sig = SIG_IGN;
-		    else
-			{
-			    norml_sig = intr_sig;
-			    abort_sig = abort_RT;
-			    (void) signal( i,  norml_sig );
-			}
-		    break;
-		case SIGCHLD :
-		    break; /* leave SIGCLD alone */
-		case SIGPIPE :
-		    (void) signal( i, SIG_IGN );
-		    break;
-		case SIGQUIT :
-		    break;
-		case SIGTSTP :
-		    break;
-	    }
+    for ( i = 0; i < NSIG; i++ )
+	switch ( i )
+	{
+	    case SIGINT :
+		if ( (norml_sig = signal( i, SIG_IGN )) == SIG_IGN )
+		    abort_sig = SIG_IGN;
+		else
+		{
+		    norml_sig = intr_sig;
+		    abort_sig = abort_RT;
+		    (void) signal( i,  norml_sig );
+		}
+		break;
+	    case SIGCHLD :
+		break; /* leave SIGCLD alone */
+	    case SIGPIPE :
+		(void) signal( i, SIG_IGN );
+		break;
+	    case SIGQUIT :
+		break;
+	    case SIGTSTP :
+		break;
+	}
     return;
 }
 
@@ -125,20 +123,21 @@ setupSigs( void )
 */
 static int
 parsArgv( int argc, char **argv )
-{	register int c;
+{
+    register int c;
 /* Parse options.						*/
- while( (c = bu_getopt( argc, argv, "b" )) != EOF )
-     {
-	 switch( c )
-	     {
-		 case 'b' :
-		     tty = 0;
-		     break;
-		 case '?' :
-		     return	0;
-	     }
-     }
- return	1;
+    while ( (c = bu_getopt( argc, argv, "b" )) != EOF )
+    {
+	switch ( c )
+	{
+	    case 'b' :
+		tty = 0;
+		break;
+	    case '?' :
+		return	0;
+	}
+    }
+    return	1;
 }
 
 /*
@@ -151,31 +150,35 @@ readBatchInput( FILE *fp )
 {
     assert( fp != (FILE *) NULL );
     batchmode = 1;
-    while( getCommand( cmdname, cmdbuf, LNBUFSZ, fp ) )
-	{	Func	*cmdfunc;
-	if( (cmdfunc = getTrie( cmdname, cmdtrie )) == NULL )
-	    {	register int i, len = strlen( cmdname );
+    while ( getCommand( cmdname, cmdbuf, LNBUFSZ, fp ) )
+    {
+	Func	*cmdfunc;
+	if ( (cmdfunc = getTrie( cmdname, cmdtrie )) == NULL )
+	{
+	    register int i, len = strlen( cmdname );
 	    brst_log( "ERROR -- command syntax:\n" );
 	    brst_log( "\t%s\n", cmdbuf );
 	    brst_log( "\t" );
-	    for( i = 0; i < len; i++ )
+	    for ( i = 0; i < len; i++ )
 		brst_log( " " );
 	    brst_log( "^\n" );
-	    }
-	else
-	    if( strcmp( cmdname, CMD_COMMENT ) == 0 )
-		{ /* special handling for comments */
-		    cmdptr = cmdbuf;
-		    cmdbuf[strlen(cmdbuf)-1] = '\0'; /* clobber newline */
-		    (*cmdfunc)( (HmItem *) 0 );
-		}
-	    else
-		{ /* Advance pointer past nul at end of
-		     command name. */
-		    cmdptr = cmdbuf + strlen( cmdname ) + 1;
-		    (*cmdfunc)( (HmItem *) 0 );
-		}
 	}
+	else
+	    if ( strcmp( cmdname, CMD_COMMENT ) == 0 )
+	    {
+		/* special handling for comments */
+		cmdptr = cmdbuf;
+		cmdbuf[strlen(cmdbuf)-1] = '\0'; /* clobber newline */
+		(*cmdfunc)( (HmItem *) 0 );
+	    }
+	    else
+	    {
+		/* Advance pointer past nul at end of
+		   command name. */
+		cmdptr = cmdbuf + strlen( cmdname ) + 1;
+		(*cmdfunc)( (HmItem *) 0 );
+	    }
+    }
     batchmode = 0;
     return;
 }
@@ -188,25 +191,18 @@ main( int argc, char *argv[] )
 {
     bu_setlinebuf(stderr);
 
-    if(	tmpnam( tmpfname ) == NULL
-	||	(tmpfp = fopen( tmpfname, "w" )) == (FILE *) NULL
-	)
-	{
-	    perror( tmpfname );
-	    (void) fprintf( stderr,
-			    "Write access denied for file (%s).\n",
-			    tmpfname );
-	    goto	death;
-	}
-    if( ! parsArgv( argc, argv ) )
-	{
-	    prntUsage();
-	    goto	clean;
-	}
+    tmpfp = bu_temp_file(tmpfname, TIMER_LEN);
+    if (!tmpfp) {
+	bu_exit(EXIT_FAILURE, "ERROR: Unable to create temporary file.\n");
+    }
+    if ( ! parsArgv( argc, argv ) ) {
+	prntUsage();
+	return EXIT_FAILURE;
+    }
 
     setupSigs();
-    if( ! initUi() ) /* must be called before any output is produced */
-	goto	clean;
+    if ( ! initUi() ) /* must be called before any output is produced */
+	return EXIT_FAILURE;
 
 #if DEBUG_BURST
     prntTrie( cmdtrie, 0 );
@@ -215,15 +211,14 @@ main( int argc, char *argv[] )
     assert( armorids.i_next == NULL );
     assert( critids.i_next == NULL );
 
-    if( ! isatty( 0 ) || ! tty )
+    if ( ! isatty( 0 ) || ! tty )
 	readBatchInput( stdin );
-    if( tty )
+    if ( tty )
 	(void) HmHit( mainhmenu );
     exitCleanly( EXIT_SUCCESS );
- clean:
-    (void) unlink( tmpfname );
- death:
-    return EXIT_FAILURE;
+
+    /* not reached */
+    return EXIT_SUCCESS;
 }
 
 /*
@@ -234,10 +229,10 @@ main( int argc, char *argv[] )
 void
 exitCleanly( int code )
 {
-    if( tty )
+    if ( tty )
 	closeUi(); /* keep screen straight */
     (void) fclose( tmpfp );
-    if( unlink( tmpfname ) == -1 )
+    if ( unlink( tmpfname ) == -1 )
 	locPerror( tmpfname );
     exit( code );
 }
@@ -246,8 +241,8 @@ exitCleanly( int code )
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -1,7 +1,7 @@
 /*                           S P M . H
  * BRL-CAD
  *
- * Copyright (c) 1986-2007 United States Government as represented by
+ * Copyright (c) 1986-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,12 +44,12 @@
 #endif
 
 typedef	struct	{
-	long	magic;
-	int	ny;		/**< @brief  Number of "y" bins */
-	int	*nx;		/**< @brief  Number of "x" bins per "y" bin */
-	int	elsize;		/**< @brief  Size of each bin element */
-	unsigned char **xbin;	/**< @brief  staring addresses of "x" bins */
-	unsigned char *_data;	/**< @brief  For freeing purposes, start of data */
+    unsigned long magic;
+    int	ny;		/**< @brief  Number of "y" bins */
+    int	*nx;		/**< @brief  Number of "x" bins per "y" bin */
+    int	elsize;		/**< @brief  Size of each bin element */
+    unsigned char **xbin;	/**< @brief  staring addresses of "x" bins */
+    unsigned char *_data;	/**< @brief  For freeing purposes, start of data */
 } spm_map_t;
 
 #define	SPM_NULL (spm_map_t *)0
@@ -83,8 +83,8 @@ BN_EXPORT extern int spm_px_load( spm_map_t *mapp, char *filename, int nx, int n
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

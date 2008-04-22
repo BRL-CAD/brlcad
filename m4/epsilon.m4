@@ -1,7 +1,7 @@
 #                    E P S I L O N . M 4
 # BRL-CAD
 #
-# Copyright (c) 2005-2007 United States Government as represented by
+# Copyright (c) 2005-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -156,8 +156,8 @@ int main (int ac, char *av[]) {
     }
     return 0;
 }
-], [ AC_MSG_RESULT(yes) ], [ AC_MSG_RESULT(no) ]
-)
+], [bc_compliant_float=yes], [bc_compliant_float=no])
+AC_MSG_RESULT([$bc_compliant_float])
 ])
 
 
@@ -200,6 +200,6 @@ int main (int ac, char *av[]) {
     }
     return 0;
 }
-], [ AC_MSG_RESULT(yes) ], [ AC_MSG_RESULT(no) ]
-)
+], [bc_compliant_double=yes], [bc_compliant_double=no])
+AC_MSG_RESULT([$bc_compliant_double])
 ])

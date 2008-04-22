@@ -85,7 +85,6 @@ acceptable to \fBTk_GetPixels\fR.
 If this option is less than or equal to zero then the window will
 not request any size at all.
 .BE
-
 .SH DESCRIPTION
 .PP
 The \fBlabelframe\fR command creates a new window (given by the
@@ -143,10 +142,10 @@ This shows how to build part of a GUI for a hamburger vendor. The
 the kinds of things that the choices are being made over.
 .PP
 .CS
-grid [\fBlabelframe\fR .burger -text "Burger"] \\
-     [\fBlabelframe\fR .bun    -text "Bun"] -sticky news
-grid [\fBlabelframe\fR .cheese -text "Cheese Option"] \\
-     [\fBlabelframe\fR .pickle -text "Pickle Option"] -sticky news
+grid [\fBlabelframe\fR .burger \-text "Burger"] \e
+     [\fBlabelframe\fR .bun    \-text "Bun"] \-sticky news
+grid [\fBlabelframe\fR .cheese \-text "Cheese Option"] \e
+     [\fBlabelframe\fR .pickle \-text "Pickle Option"] \-sticky news
 foreach {type name val} {
     burger Beef    beef
     burger Lamb    lamb
@@ -160,7 +159,7 @@ foreach {type name val} {
     cheese Cheddar cheddar
     cheese Edam    edam
     cheese Brie    brie
-    cheese Gruy\\u00e8re gruyere
+    cheese Gruy\eu00e8re gruyere
     cheese "Monterey Jack" jack
 
     pickle None    none
@@ -168,18 +167,16 @@ foreach {type name val} {
     pickle Onions  onion
     pickle Chili   chili
 } {
-    set w [radiobutton .$type.$val -text $name -anchor w \\
-            -variable $type -value $val]
-    pack $w -side top -fill x
+    set w [radiobutton .$type.$val \-text $name \-anchor w \e
+            \-variable $type \-value $val]
+    pack $w \-side top \-fill x
 }
 set burger beef
 set bun    white
 set cheese none
 set pickle none
 .CE
-
 .SH "SEE ALSO"
-frame(n), label(n), ttk_labelframe(n)
-
+frame(n), label(n), ttk::labelframe(n)
 .SH KEYWORDS
 labelframe, widget

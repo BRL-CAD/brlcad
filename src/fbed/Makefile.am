@@ -8,10 +8,8 @@ fbed_SOURCES = \
 	execshell.c \
 	fbed.c \
 	fill_buf.c \
-	getfont.c \
 	getinput.c \
 	glob.c \
-	loadfont.c \
 	pos_pad.c \
 	prnt.c \
 	sgi_dep.c \
@@ -23,13 +21,16 @@ noinst_HEADERS = \
 	cursorbits.h \
 	extern.h \
 	fb_ik.h \
-	font.h \
 	popup.h \
 	std.h \
 	try.h
 
-fbed_CFLAGS = ${TERMLIB_CPPFLAGS}
+fbed_CFLAGS = \
+	${TERMLIB_CPPFLAGS} \
+	${TCL_CPPFLAGS}
+
 fbed_LDADD = \
+	$(top_builddir)/src/vfont/libvfont_nil.la \
 	${FB} \
 	${TERMIO} \
 	${CURSOR} \
@@ -41,6 +42,8 @@ man_MANS = fbed.1
 EXTRA_DIST = \
 	$(man_MANS) \
 	font.doc
+
+DEPENDS = src/vfont
 
 include $(top_srcdir)/misc/Makefile.defs
 

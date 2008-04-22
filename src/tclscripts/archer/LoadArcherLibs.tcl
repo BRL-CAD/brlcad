@@ -1,7 +1,7 @@
 #              L O A D A R C H E R L I B S . T C L
 # BRL-CAD
 #
-# Copyright (c) 2006-2007 United States Government as represented by
+# Copyright (c) 2006-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -26,53 +26,39 @@
 #    Code to load Archer's shared libraries.
 ###
 
-proc LoadArcherLibs {dir} {
+proc LoadArcherCoreLibs {} {
     global tcl_platform
 
+    # load tkimg
     if {$tcl_platform(platform) == "windows"} {
-	if {[info exists Archer::debug] && $Archer::debug} {
-	    load [file join $dir bin itcl33_d.dll]
-	    load [file join $dir bin itk33_d.dll]
-	    load [file join $dir bin BLT24_d.dll]
-
-	    # Load Brlcad libraries
-	    load [file join $dir bin libbu_d]
-	    load [file join $dir bin libbn_d]
-	    load [file join $dir bin libsysv_d]
-	    load [file join $dir bin librt_d]
-	    load [file join $dir bin libdm_d]
-	    load [file join $dir bin tkimg_d]
-	} else {
-	    load [file join $dir bin itcl33.dll]
-	    load [file join $dir bin itk33.dll]
-	    load [file join $dir bin BLT24.dll]
-
-	    # Load Brlcad libraries
-	    load [file join $dir bin libbu.dll]
-	    load [file join $dir bin libbn.dll]
-	    load [file join $dir bin libsysv.dll]
-	    load [file join $dir bin librt.dll]
-	    load [file join $dir bin libdm.dll]
-	    load [file join $dir bin tkimg.dll]
-	}
+	set ext "dll"
+	set tkimgdir [bu_brlcad_root "bin"]
     } else {
-	if {[info exists $Archer::debug] && $Archer::debug} {
-	} else {
-	  set dir [bu_brlcad_root "lib"]
-	    load [file join $dir libblt2.4.so]
-
-	    # Load Brlcad libraries
-	    #load [file join $dir lib libpng.so]
-	    load [file join $dir tkimg.so]
+	set ext "so"
+	set tkimgdir [bu_brlcad_root "lib"]
+	if {![file exists $tkimgdir]} {
+	    set tkimgdir [file join [bu_brlcad_data "src"] other tkimg .libs]
 	}
     }
 
-    # Try to load Sdb
-    if {[catch {package require Sdb 1.1}]} {
-	set Archer::haveSdb 0
-    } else {
-	set Archer::haveSdb 1
+    # can't use sharedlibextension without changing tkimg build
+    if {![file exists [file join $tkimgdir tkimg.$ext]]} {
+	puts "ERROR: Unable to initialize ArcherCore imagery"
+	exit 1
     }
+
+    load [file join $tkimgdir tkimg.$ext]
+
+    if { [catch {package require Swidgets} _initialized] } {
+	puts "$_initialized"
+	puts ""
+	puts "ERROR: Unable to load ArcherCore Scripting"
+	exit 1
+    }
+}
+
+proc LoadArcherLibs {} {
+    # Nothing for now
 }
 
 # Local Variables:

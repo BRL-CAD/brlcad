@@ -1,9 +1,9 @@
 
 /* pngconf.h - machine configurable file for libpng
  *
- * libpng version 1.2.19 - August 18, 2007
+ * libpng version 1.2.25 - February 18, 2008
  * For conditions of distribution and use, see copyright notice in png.h
- * Copyright (c) 1998-2007 Glenn Randers-Pehrson
+ * Copyright (c) 1998-2008 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
  * (Version 0.88 Copyright (c) 1995, 1996 Guy Eric Schalnat, Group 42, Inc.)
  */
@@ -75,13 +75,13 @@
 
 /* End of material added to libpng-1.2.8 */
 
-/* Added at libpng-1.2.19 */
-#ifndef PNG_NO_WARN_UNINITIALIZED_ROW
-#  ifndef PNG_WARN_UNINITIALIZED_ROW
-#    define PNG_WARN_UNINITIALIZED_ROW 1 /* 0: warning; 1: error */
-#  endif
+/* Added at libpng-1.2.19, removed at libpng-1.2.20 because it caused trouble
+   Restored at libpng-1.2.21 */
+#if !defined(PNG_NO_WARN_UNINITIALIZED_ROW) && \
+    !defined(PNG_WARN_UNINITIALIZED_ROW)
+#  define PNG_WARN_UNINITIALIZED_ROW 1
 #endif
-/* End of material added at libpng-1.2.19 */
+/* End of material added at libpng-1.2.19/1.2.21 */
 
 /* This is the size of the compression buffer, and thus the size of
  * an IDAT chunk.  Make this whatever size you feel is best for your
@@ -323,7 +323,7 @@
      /* If you encounter a compiler error here, see the explanation
       * near the end of INSTALL.
       */
-         __png.h__ already includes setjmp.h;
+         __pngconf.h__ already includes setjmp.h;
          __dont__ include it again.;
 #    endif
 #  endif /* __linux__ */
@@ -333,7 +333,9 @@
 
 #  ifdef __linux__
 #    ifdef PNG_SAVE_BSD_SOURCE
-#      define _BSD_SOURCE
+#      ifndef _BSD_SOURCE
+#        define _BSD_SOURCE
+#      endif
 #      undef PNG_SAVE_BSD_SOURCE
 #    endif
 #  endif /* __linux__ */
@@ -603,10 +605,10 @@
 #endif /* PNG_READ_TRANSFORMS_SUPPORTED */
 
 #if !defined(PNG_NO_PROGRESSIVE_READ) && \
- !defined(PNG_PROGRESSIVE_READ_NOT_SUPPORTED) /* if you don't do progressive */
-#  define PNG_PROGRESSIVE_READ_SUPPORTED    /* reading.  This is not talking */
-#endif                              /* about interlacing capability!  You'll */
-             /* still have interlacing unless you change the following line: */
+ !defined(PNG_PROGRESSIVE_READ_SUPPORTED) /* if you don't do progressive   */
+#  define PNG_PROGRESSIVE_READ_SUPPORTED  /* reading.  This is not talking */
+#endif                            /* about interlacing capability!  You'll */
+           /* still have interlacing unless you change the following line: */
 
 #define PNG_READ_INTERLACING_SUPPORTED /* required in PNG-compliant decoders */
 
@@ -730,15 +732,8 @@
 #endif
 
 /* PNG_ASSEMBLER_CODE was enabled by default in version 1.2.0 
- * even when PNG_USE_PNGVCRD or PNG_USE_PNGGCCRD is not defined.
- *
- * PNG_NO_ASSEMBLER_CODE disables use of all assembler code,
- * and removes several functions from the API.
- *
- * PNG_NO_MMX_CODE disables the use of MMX code without changing the API.
- * When MMX code is off, then optimized C replacement functions are used,
- * if PNG_NO_OPTIMIZED_CODE is not enabled.  This was added in version
- * 1.2.19.
+ * and removed from version 1.2.20.  The following will be removed
+ * from libpng-1.4.0
 */
 
 #if defined(PNG_READ_SUPPORTED) && !defined(PNG_NO_OPTIMIZED_CODE)
@@ -752,26 +747,31 @@
 #    define PNG_ASSEMBLER_CODE_SUPPORTED
 #  endif
 
+#  if defined(__GNUC__) && defined(__x86_64__) && (__GNUC__ < 4)
+     /* work around 64-bit gcc compiler bugs in gcc-3.x */
+#    if !defined(PNG_MMX_CODE_SUPPORTED) && !defined(PNG_NO_MMX_CODE)
+#      define PNG_NO_MMX_CODE
+#    endif
+#  endif
+
+#  if defined(__APPLE__)
+#    if !defined(PNG_MMX_CODE_SUPPORTED) && !defined(PNG_NO_MMX_CODE)
+#      define PNG_NO_MMX_CODE
+#    endif
+#  endif
+
+#  if (defined(__MWERKS__) && ((__MWERKS__ < 0x0900) || macintosh))
+#    if !defined(PNG_MMX_CODE_SUPPORTED) && !defined(PNG_NO_MMX_CODE)
+#      define PNG_NO_MMX_CODE
+#    endif
+#  endif
+
 #  if !defined(PNG_MMX_CODE_SUPPORTED) && !defined(PNG_NO_MMX_CODE)
 #    define PNG_MMX_CODE_SUPPORTED
 #  endif
 
-#  if !defined(PNG_USE_PNGVCRD) && defined(PNG_MMX_CODE_SUPPORTED) && \
-     defined(_MSC_VER)
-#    define PNG_USE_PNGVCRD
-#  endif
-
-#  if !defined(PNG_USE_PNGGCCRD) && defined(PNG_MMX_CODE_SUPPORTED) && \
-     !defined(PNG_USE_PNGVCRD)
-#    define PNG_USE_PNGGCCRD
-     /* If you are sure that you don't need thread safety and you are compiling
-        with PNG_USE_PNGCCRD for an MMX application, you can define this for
-        faster execution.  See pnggccrd.c.
-#    define PNG_THREAD_UNSAFE_OK
-     */
-#  endif
-
 #endif
+/* end of obsolete code to be removed from libpng-1.4.0 */
 
 #if !defined(PNG_1_0_X)
 #if !defined(PNG_NO_USER_MEM) && !defined(PNG_USER_MEM_SUPPORTED)
@@ -1432,8 +1432,6 @@ typedef z_stream FAR *  png_zstreamp;
 #  define CVT_PTR(ptr) (png_far_to_near(png_ptr,ptr,CHECK))
 #  define CVT_PTR_NOCHECK(ptr) (png_far_to_near(png_ptr,ptr,NOCHECK))
 #  define png_snprintf _fsnprintf   /* Added to v 1.2.19 */
-#  define png_strcpy  _fstrcpy
-#  define png_strncpy _fstrncpy   /* Added to v 1.2.6 */
 #  define png_strlen  _fstrlen
 #  define png_memcmp  _fmemcmp    /* SJT: added */
 #  define png_memcpy  _fmemcpy
@@ -1462,8 +1460,6 @@ typedef z_stream FAR *  png_zstreamp;
 #    define png_snprintf6(s1,n,fmt,x1,x2,x3,x4,x5,x6) \
         sprintf(s1,fmt,x1,x2,x3,x4,x5,x6)
 #  endif
-#  define png_strcpy  strcpy
-#  define png_strncpy strncpy     /* Added to v 1.2.6 */
 #  define png_strlen  strlen
 #  define png_memcmp  memcmp      /* SJT: added */
 #  define png_memcpy  memcpy
@@ -1478,56 +1474,6 @@ typedef z_stream FAR *  png_zstreamp;
 #  undef PNG_ZBUF_SIZE
 #  define PNG_ZBUF_SIZE 65536L
 #endif
-
-#ifdef PNG_READ_SUPPORTED
-/* Prior to libpng-1.0.9, this block was in pngasmrd.h */
-#if defined(PNG_INTERNAL)
-
-#if defined(PNG_USE_PNGGCCRD) || defined(PNG_USE_PNGVCRD)
-  /* Platform must be Pentium.  Makefile must assemble and load
-   * pnggccrd.c or  pngvcrd.c. MMX will be detected at run time and
-   * used if present.
-   */
-#  ifndef PNG_NO_MMX_COMBINE_ROW
-#    define PNG_HAVE_MMX_COMBINE_ROW
-#  endif
-#  ifndef PNG_NO_MMX_READ_INTERLACE
-#    define PNG_HAVE_MMX_READ_INTERLACE
-#  endif
-#  ifndef PNG_NO_MMX_READ_FILTER_ROW
-#    define PNG_HAVE_MMX_READ_FILTER_ROW
-#    ifndef PNG_NO_MMX_FILTER_SUB
-#      define PNG_MMX_READ_FILTER_SUB_SUPPORTED
-#    endif
-#    if !(defined(__GNUC__) && defined(__x86_64__) && (__GNUC__ < 4))
-       /* work around 64-bit gcc compiler bugs in gcc-3.x */
-#      ifndef PNG_NO_MMX_FILTER_UP
-#        define PNG_MMX_READ_FILTER_UP_SUPPORTED
-#      endif
-#      ifndef PNG_NO_MMX_FILTER_AVG
-#        define PNG_MMX_READ_FILTER_AVG_SUPPORTED
-#      endif
-#      ifndef PNG_NO_MMX_FILTER_PAETH
-#        define PNG_MMX_READ_FILTER_PAETH_SUPPORTED
-#      endif
-#    endif /* !((__x86_64__) && (GNUC < 4)) */
-#  endif
-  /* These are the default thresholds before the MMX code kicks in; if either
-   * rowbytes or bitdepth is below the threshold, plain C code is used.  These
-   * can be overridden at runtime via the png_set_mmx_thresholds() call in
-   * libpng 1.2.0 and later.  The values below were chosen by Intel.
-   */
-#  ifndef PNG_MMX_ROWBYTES_THRESHOLD_DEFAULT
-#    define PNG_MMX_ROWBYTES_THRESHOLD_DEFAULT  128  /*  >=  */
-#  endif
-#  ifndef PNG_MMX_BITDEPTH_THRESHOLD_DEFAULT
-#    define PNG_MMX_BITDEPTH_THRESHOLD_DEFAULT  9    /*  >=  */   
-#  endif
-#endif /* PNG_USE_PNGGCCRD || PNG_USE_PNGVCRD */
-/* - see pngvcrd.c or pnggccrd.c for info about what is currently enabled */
-
-#endif /* PNG_INTERNAL */
-#endif /* PNG_READ_SUPPORTED */
 
 /* Added at libpng-1.2.8 */
 #endif /* PNG_VERSION_INFO_ONLY */

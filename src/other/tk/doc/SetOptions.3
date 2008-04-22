@@ -95,10 +95,12 @@ options are supported, these procedures handle all the details of
 parsing options and storing their values into a C structure associated
 with the widget or object. The procedures were designed primarily for
 widgets in Tk, but they can also be used for other kinds of objects that
-have configuration options.  In the rest of this manual page ``widget'' will
-be used to refer to the object whose options are being managed; in
-practice the object may not actually be a widget.  The term ``widget
-record'' is used to refer to the C-level structure in
+have configuration options.  In the rest of this manual page
+.QW widget
+will be used to refer to the object whose options are being managed; in
+practice the object may not actually be a widget.  The term
+.QW "widget record"
+is used to refer to the C-level structure in
 which information about a particular widget or object is stored.
 .PP
 Note: the easiest way to learn how to use these procedures is to
@@ -141,7 +143,7 @@ was already present in the widget record.  \fBTk_InitOptions\fR normally
 returns \fBTCL_OK\fR.  If an error occurred while setting the default values
 (e.g., because a default value was erroneous) then \fBTCL_ERROR\fR is returned
 and an error message is left in \fIinterp\fR's result if \fIinterp\fR
-isn't NULL.
+is not NULL.
 .PP
 \fBTk_SetOptions\fR is invoked to modify configuration options based
 on information specified in a Tcl command.  The command might be one that
@@ -156,10 +158,10 @@ and stores the value of the option into the widget record given by
 \fIrecordPtr\fR.  \fBTk_SetOptions\fR normally returns \fBTCL_OK\fR.  If
 an error occurred (such as an unknown option name or an illegal option
 value) then \fBTCL_ERROR\fR is returned and an error message is left in
-\fIinterp\fR's result if \fIinterp\fR isn't NULL.
+\fIinterp\fR's result if \fIinterp\fR is not NULL.
 .PP
 \fBTk_SetOptions\fR has two additional features.  First, if the
-\fImaskPtr\fR argument isn't NULL then it points to an integer
+\fImaskPtr\fR argument is not NULL then it points to an integer
 value that is filled in with information about the options that were
 modified.  For each option in the template passed to
 \fBTk_CreateOptionTable\fR there is a \fItypeMask\fR field.  The
@@ -172,8 +174,8 @@ that bit set.  Another bit might indicate that the geometry of the widget
 must be recomputed, and so on.  \fBTk_SetOptions\fR OR's together the
 \fItypeMask\fR fields from all the options that were modified and returns
 this value at *\fImaskPtr\fR; the caller can then use this information
-to optimize itself so that, for example, it doesn't redisplay the widget
-if the modified options don't affect the widget's appearance.
+to optimize itself so that, for example, it does not redisplay the widget
+if the modified options do not affect the widget's appearance.
 .PP
 The second additional feature of \fBTk_SetOptions\fR has to do with error
 recovery.  If an error occurs while processing configuration options, this
@@ -382,7 +384,7 @@ flag; if a NULL value is set, the internal representation is set to zero.
 \fBTK_OPTION_END\fR
 Marks the end of the template.  There must be a Tk_OptionSpec structure
 with \fItype\fR \fBTK_OPTION_END\fR at the end of each template.  If the
-\fIclientData\fR field of this structure isn't NULL, then it points to
+\fIclientData\fR field of this structure is not NULL, then it points to
 an additional array of Tk_OptionSpec's, which is itself terminated by
 another \fBTK_OPTION_END\fR entry.  Templates may be chained arbitrarily
 deeply.  This feature allows common options to be shared by several
@@ -410,7 +412,7 @@ The internal form is a Tk_Justify like the values returned by
 The value must specify a screen distance such as \fB2i\fR or \fB6.4\fR.
 The internal form is an integer value giving a
 distance in pixels, like the values returned by
-\fBTk_GetPixelsFromObj\fR.  Note: if the \fIobjOffset\fR field isn't
+\fBTk_GetPixelsFromObj\fR.  Note: if the \fIobjOffset\fR field is not
 used then information about the original value of this option will be lost.
 See \fBOBJOFFSET VS. INTERNALOFFSET\fR below for details.  This option
 type supports the \fBTK_OPTION_NULL_OK\fR flag; if a NULL value is set, the
@@ -480,7 +482,7 @@ an error occurs in \fBTk_InitOptions\fR.
 In most cases it is simplest to use the \fIinternalOffset\fR field of
 a Tk_OptionSpec structure and not the \fIobjOffset\fR field.  This
 makes the internal form of the value immediately available to the
-widget code so the value doesn't have to be extracted from an object
+widget code so the value does not have to be extracted from an object
 each time it is used.  However, there are two cases where the
 \fIobjOffset\fR field is useful.  The first case is for
 \fBTK_OPTION_PIXELS\fR options.  In this case, the internal form is

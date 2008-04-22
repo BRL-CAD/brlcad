@@ -23,7 +23,7 @@ the application if no events are ready.  It continues processing
 events until some event handler sets the value of variable
 \fIvarName\fR.  Once \fIvarName\fR has been set, the \fBvwait\fR
 command will return as soon as the event handler that modified
-\fIvarName\fR completes.  \fIvarName\fR must globally scoped
+\fIvarName\fR completes.  \fIvarName\fR must be globally scoped
 (either with a call to \fBglobal\fR for the \fIvarName\fR, or with
 the full namespace path specification).
 .PP

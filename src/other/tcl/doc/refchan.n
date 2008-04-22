@@ -6,11 +6,11 @@
 '\"
 '\" RCS: @(#) $Id$
 .so man.macros
-.TH reflectedchan n 8.5 Tcl "Tcl Built-In Commands"
+.TH refchan n 8.5 Tcl "Tcl Built-In Commands"
 .BS
-'\" Note:  do not modify the .SH NAME line immediately below!
+.\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
-reflectedchan \- Command handler API of reflected channels, version 1
+refchan \- Command handler API of reflected channels, version 1
 .SH SYNOPSIS
 \fBcmdPrefix \fIoption\fR ?\fIarg arg ...\fR?
 .BE
@@ -53,7 +53,7 @@ here, then the \fBfinalize\fR subcommand will not be called.
 .PP
 The \fImode\fR argument tells the handler whether the channel was
 opened for reading, writing, or both. It is a list containing any of
-the strings "\fBread\fR" or "\fBwrite\fR". The list will always
+the strings \fBread\fR or \fBwrite\fR. The list will always
 contain at least one element.
 .PP
 The subcommand must throw an error if the chosen mode is not
@@ -86,8 +86,8 @@ aborted during \fBinitialize\fR (See above).
 .
 This subcommand notifies the \fIcmdPrefix\fR that the specified
 \fIchannelId\fR is interested in the events listed in the
-\fIeventspec\fR. This argument is a list containing any of "\fBread\fR"
-and "\fBwrite\fR". The list may be empty, which signals that the
+\fIeventspec\fR. This argument is a list containing any of \fBread\fR
+and \fBwrite\fR. The list may be empty, which signals that the
 channel does not wish to be notified of any events. In that situation,
 the handler should disable event generation completely.
 .RS
@@ -185,7 +185,7 @@ invocation (usually \fBseek\fR, or \fBtell\fR) will appear to have
 thrown this error. Any exception beyond \fIerror\fR (e.g. \fIbreak\fR,
 etc.) is treated as and converted to an error.
 .PP
-The offset/base combination of 0/"\fBcurrent\fR" signals a \fBtell\fR
+The offset/base combination of 0/\fBcurrent\fR signals a \fBtell\fR
 request, i.e. seek nothing relative to the current location, making
 the new location identical to the current one, which is then returned.
 .RE

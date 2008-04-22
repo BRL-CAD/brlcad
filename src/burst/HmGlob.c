@@ -1,7 +1,7 @@
 /*                        H M G L O B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,14 +19,13 @@
  *
  */
 /** @file HmGlob.c
- *	Author:	Gary S. Moss
+ *
  */
 
-/*LINTLIBRARY*/
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
+#include "common.h"
+
 #include <stdio.h>
+
 FILE	*HmTtyFp = NULL;   /* read keyboard, not stdin */
 int	HmLftMenu = 1;	   /* default top-level menu position */
 int	HmTopMenu = 1;
@@ -38,8 +37,8 @@ int	HmTtyFd; 	   /* read keyboard, not stdin */
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

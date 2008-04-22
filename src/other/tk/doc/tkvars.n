@@ -31,7 +31,7 @@ an interpreter;  this is done by searching several different directories
 until one is found that contains an appropriate Tk startup script.
 If the \fBTK_LIBRARY\fR environment variable exists, then
 the directory it names is checked first.
-If \fBTK_LIBRARY\fR isn't set or doesn't refer to an appropriate
+If \fBTK_LIBRARY\fR is not set or does not refer to an appropriate
 directory, then Tk checks several other directories based on a
 compiled-in default location, the location of the Tcl library directory,
 the location of the binary containing the application, and the current

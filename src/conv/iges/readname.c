@@ -1,7 +1,7 @@
 /*                      R E A D N A M E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2007 United States Government as represented by
+ * Copyright (c) 1990-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,100 +18,95 @@
  * information.
  */
 /** @file readname.c
+ *
+ * This routine reads the next field in "card" buffer.  It expects the
+ * field to contain a character string of the form "nHstring" where n
+ * is the length of "string". If "id" is not the null string, then
+ * "id" is printed followed by "string".  A pointer to the string is
+ * returned in "ptr".
+ *
+ *	"eof" is the "end-of-field" delimiter
+ *	"eor" is the "end-of-record" delimiter
+ *
  *  Authors -
  *	John R. Anderson
  *	Susanne L. Muuss
  *	Earl P. Weaver
  *
- *  Source -
- *	VLD/ASB Building 1065
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
-
-/* This routine reads the next field in "card" buffer
-	It expects the field to contain a character string
-	of the form "nHstring" where n is the length
-	of "string". If "id" is not the null string, then
-	"id" is printed followed by "string".  A pointer
-	to the string is returned in "ptr"
-
-	"eof" is the "end-of-field" delimiter
-	"eor" is the "end-of-record" delimiter	*/
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
 void
-Readname( ptr , id )
-char *id,**ptr;
+Readname( ptr, id )
+    char *id, **ptr;
 {
-	int i=(-1),length=0,done=0,lencard;
-	char num[80],*ch;
+    int i=(-1), length=0, done=0, lencard;
+    char num[80], *ch;
 
 
-	if( card[counter] == eof ) /* This is an empty field */
-	{
-		*ptr = (char *)NULL;
-		counter++;
-		return;
-	}
-	else if( card[counter] == eor ) /* Up against the end of record */
-	{
-		*ptr = (char *)NULL;
-		return;
-	}
+    if ( card[counter] == eof ) /* This is an empty field */
+    {
+	*ptr = (char *)NULL;
+	counter++;
+	return;
+    }
+    else if ( card[counter] == eor ) /* Up against the end of record */
+    {
+	*ptr = (char *)NULL;
+	return;
+    }
 
-	if( card[72] == 'P' )
-		lencard = PARAMLEN;
+    if ( card[72] == 'P' )
+	lencard = PARAMLEN;
+    else
+	lencard = CARDLEN;
+
+    if ( counter > lencard )
+	Readrec( ++currec );
+
+    if ( *id != '\0' )
+	bu_log( "%s", id );
+
+    while ( !done )
+    {
+	while ( (num[++i] = card[counter++]) != 'H' &&
+		counter <= lencard);
+	if ( counter > lencard )
+	    Readrec( ++currec );
 	else
-		lencard = CARDLEN;
+	    done = 1;
+    }
+    num[++i] = '\0';
+    length = atoi( num );
+    *ptr = (char *)bu_malloc( (length + 1)*sizeof( char ), "Readname: name" );
+    ch = *ptr;
+    for ( i=0; i<length; i++ )
+    {
+	if ( counter > lencard )
+	    Readrec( ++currec );
+	ch[i] = card[counter++];
+	if ( *id != '\0' )
+	    bu_log( "%c", ch[i] );
+    }
+    ch[length] = '\0';
+    if ( *id != '\0' )
+	bu_log( "%c", '\n' );
 
-	if( counter > lencard )
-		Readrec( ++currec );
+    done = 0;
+    while ( !done )
+    {
+	while ( card[counter++] != eof && card[counter] != eor &&
+		counter <= lencard );
+	if ( counter > lencard && card[counter] != eor && card[counter] != eof )
+	    Readrec( ++currec );
+	else
+	    done = 1;
+    }
 
-	if( *id != '\0' )
-		bu_log( "%s" , id );
-
-	while( !done )
-	{
-		while( (num[++i] = card[counter++]) != 'H' &&
-				counter <= lencard);
-		if( counter > lencard )
-			Readrec( ++currec );
-		else
-			done = 1;
-	}
-	num[++i] = '\0';
-	length = atoi( num );
-	*ptr = (char *)bu_malloc( (length + 1)*sizeof( char ) , "Readname: name" );
-	ch = *ptr;
-	for( i=0 ; i<length ; i++ )
-	{
-		if( counter > lencard )
-			Readrec( ++currec );
-		ch[i] = card[counter++];
-		if( *id != '\0' )
-			bu_log( "%c", ch[i] );
-	}
-	ch[length] = '\0';
-	if( *id != '\0' )
-		bu_log( "%c", '\n' );
-
-	done = 0;
-	while( !done )
-	{
-		while( card[counter++] != eof && card[counter] != eor &&
-			counter <= lencard );
-		if( counter > lencard && card[counter] != eor && card[counter] != eof )
-			Readrec( ++currec );
-		else
-			done = 1;
-	}
-
-	if( card[counter-1] == eor )
-		counter--;
+    if ( card[counter-1] == eor )
+	counter--;
 }
 
 
@@ -119,8 +114,8 @@ char *id,**ptr;
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

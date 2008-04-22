@@ -2,7 +2,7 @@
 #                     M A K E _ T A R . S H
 # BRL-CAD
 #
-# Copyright (c) 2005-2007 United States Government as represented by
+# Copyright (c) 2005-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -43,32 +43,20 @@
 ######################################################################
 
 NAME="$1"
-MAJOR_VERSION="$2"
-MINOR_VERSION="$3"
-PATCH_VERSION="$4"
-ARCHIVE="$5"
+VERSION="$2"
+ARCHIVE="$3"
 if [ "x$NAME" = "x" ] ; then
-    echo "Usage: $0 name major_version minor_version patch_version archive_dir"
+    echo "Usage: $0 name version archive_dir"
     echo "ERROR: must specify a package name"
     exit 1
 fi
-if [ "x$MINOR_VERSION" = "x" ] ; then
-    echo "Usage: $0 name major_version minor_version patch_version archive_dir"
-    echo "ERROR: must specify a major package version"
-    exit 1
-fi
-if [ "x$MINOR_VERSION" = "x" ] ; then
-    echo "ERROR: must specify a minor package version"
-    echo "Usage: $0 name major_version minor_version patch_version archive_dir"
-    exit 1
-fi
-if [ "x$PATCH_VERSION" = "x" ] ; then
-    echo "Usage: $0 name major_version minor_version patch_version archive_dir"
-    echo "ERROR: must specify a patch package version"
+if [ "x$VERSION" = "x" ] ; then
+    echo "Usage: $0 name version archive_dir"
+    echo "ERROR: must specify a version"
     exit 1
 fi
 if [ "x$ARCHIVE" = "x" ] ; then
-    echo "Usage: $0 name major_version minor_version patch_version archive_dir"
+    echo "Usage: $0 name version archive_dir"
     echo "ERROR: must specify an archive directory"
     exit 1
 fi
@@ -77,7 +65,6 @@ if [ ! -d "$ARCHIVE" ] ; then
     exit 1
 fi
 
-VERSION="${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}"
 PKG_NAME="${NAME}-${VERSION}"
 TAR_NAME="${PKG_NAME}.bin.tar"
 

@@ -75,7 +75,7 @@
 
 /*
  * These macros are used to control whether functions are being declared for
- * import or export in Windows, 
+ * import or export in Windows,
  * They map to no-op declarations on non-Windows systems.
  * Assumes that tcl.h defines DLLEXPORT & DLLIMPORT correctly.
  * The default build on windows is for a DLL, which causes the DLLIMPORT

@@ -36,9 +36,9 @@
 
 #define INDEX_SPECIAL	(1<<0)	/* Recognize "min", "max", and "++end" as
 				 * valid indices */
-#define INDEX_COLON	(1<<1)	/* Also recognize a range of indices 
+#define INDEX_COLON	(1<<1)	/* Also recognize a range of indices
 				 * separated by a colon */
-#define INDEX_CHECK	(1<<2)	/* Verify that the specified index or 
+#define INDEX_CHECK	(1<<2)	/* Verify that the specified index or
 				 * range of indices are within limits */
 #define INDEX_ALL_FLAGS    (INDEX_SPECIAL | INDEX_COLON | INDEX_CHECK)
 
@@ -183,40 +183,40 @@ typedef struct {
     } \
 }
 
-extern void Blt_VectorInstallSpecialIndices 
+extern void Blt_VectorInstallSpecialIndices
 	_ANSI_ARGS_((Blt_HashTable *tablePtr));
 
-extern void Blt_VectorInstallMathFunctions 
+extern void Blt_VectorInstallMathFunctions
 	_ANSI_ARGS_((Blt_HashTable *tablePtr));
 
-extern void Blt_VectorUninstallMathFunctions 
+extern void Blt_VectorUninstallMathFunctions
 	_ANSI_ARGS_((Blt_HashTable *tablePtr));
 
-extern VectorInterpData *Blt_VectorGetInterpData 
+extern VectorInterpData *Blt_VectorGetInterpData
 	_ANSI_ARGS_((Tcl_Interp *interp));
 
 extern VectorObject *Blt_VectorNew _ANSI_ARGS_((VectorInterpData *dataPtr));
 
-extern int Blt_VectorDuplicate _ANSI_ARGS_((VectorObject *destPtr, 
+extern int Blt_VectorDuplicate _ANSI_ARGS_((VectorObject *destPtr,
 	VectorObject *srcPtr));
 
-extern int Blt_VectorChangeLength _ANSI_ARGS_((VectorObject *vPtr, 
+extern int Blt_VectorChangeLength _ANSI_ARGS_((VectorObject *vPtr,
 	int length));
 
-extern VectorObject *Blt_VectorParseElement _ANSI_ARGS_((Tcl_Interp *interp, 
-	VectorInterpData *dataPtr, CONST char *start, char **endPtr, 
+extern VectorObject *Blt_VectorParseElement _ANSI_ARGS_((Tcl_Interp *interp,
+	VectorInterpData *dataPtr, CONST char *start, char **endPtr,
 	int flags));
 
 extern void Blt_VectorFree _ANSI_ARGS_((VectorObject *vPtr));
 
-extern int *Blt_VectorSortIndex _ANSI_ARGS_((VectorObject **vPtrPtr, 
+extern int *Blt_VectorSortIndex _ANSI_ARGS_((VectorObject **vPtrPtr,
 	int nVectors));
 
-extern int Blt_VectorLookupName _ANSI_ARGS_((VectorInterpData *dataPtr, 
+extern int Blt_VectorLookupName _ANSI_ARGS_((VectorInterpData *dataPtr,
 	char *vecName, VectorObject **vPtrPtr));
 
-extern VectorObject *Blt_VectorCreate _ANSI_ARGS_((VectorInterpData *dataPtr, 
-	CONST char *name, CONST char *cmdName, CONST char *varName, 
+extern VectorObject *Blt_VectorCreate _ANSI_ARGS_((VectorInterpData *dataPtr,
+	CONST char *name, CONST char *cmdName, CONST char *varName,
 	int *newPtr));
 
 extern void Blt_VectorUpdateRange _ANSI_ARGS_((VectorObject *vPtr));
@@ -228,20 +228,20 @@ extern void Blt_VectorFlushCache _ANSI_ARGS_((VectorObject *vPtr));
 extern int Blt_VectorReset _ANSI_ARGS_((VectorObject *vPtr, double *dataArr,
 	int nValues, int arraySize, Tcl_FreeProc *freeProc));
 
-extern int  Blt_VectorGetIndex _ANSI_ARGS_((Tcl_Interp *interp, 
+extern int  Blt_VectorGetIndex _ANSI_ARGS_((Tcl_Interp *interp,
 	VectorObject *vPtr, CONST char *string, int *indexPtr, int flags,
 	Blt_VectorIndexProc **procPtrPtr));
 
-extern int  Blt_VectorGetIndexRange _ANSI_ARGS_((Tcl_Interp *interp, 
-	VectorObject *vPtr, CONST char *string, int flags, 
+extern int  Blt_VectorGetIndexRange _ANSI_ARGS_((Tcl_Interp *interp,
+	VectorObject *vPtr, CONST char *string, int flags,
 	Blt_VectorIndexProc **procPtrPtr));
 
-extern int Blt_VectorMapVariable _ANSI_ARGS_((Tcl_Interp *interp, 
+extern int Blt_VectorMapVariable _ANSI_ARGS_((Tcl_Interp *interp,
 	VectorObject *vPtr, CONST char *name));
 
-#if (TCL_MAJOR_VERSION == 7) 
+#if (TCL_MAJOR_VERSION == 7)
 extern Tcl_CmdProc Blt_VectorInstCmd;
-#else 
+#else
 extern Tcl_ObjCmdProc Blt_VectorInstCmd;
 #endif
 

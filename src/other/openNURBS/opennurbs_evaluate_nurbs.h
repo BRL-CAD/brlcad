@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -19,7 +19,7 @@
 
 ON_DECL
 bool ON_IncreaseBezierDegree(
-        int,    // dimension 
+        int,    // dimension
         BOOL,   // TRUE if Bezier is rational
         int,    // order (>=2)
         int,    // cv_stride (>=dim+1)
@@ -28,7 +28,7 @@ bool ON_IncreaseBezierDegree(
 
 ON_DECL
 bool ON_RemoveBezierSingAt0( // input bezier is rational with 0/0 at start
-        int,    // dimension 
+        int,    // dimension
         int,    // order (>=2)
         int,    // cv_stride (>=dim+1)
         double* // cv[order*cv_stride] array
@@ -36,7 +36,7 @@ bool ON_RemoveBezierSingAt0( // input bezier is rational with 0/0 at start
 
 ON_DECL
 bool ON_RemoveBezierSingAt1( // input bezier is rational with 0/0 at end
-        int,    // dimension 
+        int,    // dimension
         int,    // order (>=2)
         int,    // cv_stride (>=dim+1)
         double* // cv[order*cv_stride] array
@@ -44,7 +44,7 @@ bool ON_RemoveBezierSingAt1( // input bezier is rational with 0/0 at end
 
 ON_DECL
 double ON_EvaluateBernsteinBasis( // returns (i choose d)*(1-t)^(d-i)*t^i
-        int, // degree, 
+        int, // degree,
         int, // 0 <= i <= degree
         double //  t
         );
@@ -73,9 +73,9 @@ bool ON_EvaluateBezier(
         int,            // v_stride (>=dimension)
         double*         // v[(der_count+1)*v_stride] array
         );
-                                      
+
 ON_DECL
-bool ON_EvaluateNurbsBasis( 
+bool ON_EvaluateNurbsBasis(
                   int,           // order (>=1)
                   const double*, // knot[] array of 2*(order-1) knots
                   double,        // evaluation parameter
@@ -83,12 +83,12 @@ bool ON_EvaluateNurbsBasis(
                   );
 
 ON_DECL
-bool ON_EvaluateNurbsBasisDerivatives( 
+bool ON_EvaluateNurbsBasisDerivatives(
                   int,           // order (>=1)
                   const double*, // knot[] array of 2*(order-1) knots
                   int,           // number of derivatives
                   double*        // basis_values[] array of length order*order
-                  );                      
+                  );
 
 
 
@@ -126,7 +126,7 @@ Description:
 Parameters:
   dim - [in]
     dimension (> 0).
-  is_rat - [in] 
+  is_rat - [in]
     true or false.
   order - [in]
     order=degree+1 (order>=2)
@@ -136,17 +136,17 @@ Parameters:
   cv - [in]
     For 0 <= i < order the i-th control vertex is
 
-          cv[n],...,cv[n+(is_rat?dim:dim+1)], 
+          cv[n],...,cv[n+(is_rat?dim:dim+1)],
 
     where n = i*cv_stride.  If is_rat is true the cv is
     in homogeneous form.
-  der_count - [in] 
+  der_count - [in]
     number of derivatives to evaluate (>=0)
-  t - [in] 
+  t - [in]
     evaluation parameter
   v_stride - [in]
   v - [out]
-    An array of length v_stride*(der_count+1). The evaluation 
+    An array of length v_stride*(der_count+1). The evaluation
     results are returned in this array.
 
               P = v[0],...,v[m_dim-1]
@@ -157,7 +157,7 @@ Parameters:
             In general, Dt^i returned in v[n],...,v[n+m_dim-1], where
 
               n = v_stride*i.
-    
+
 Returns:
   True if successful.
 See Also:
@@ -165,7 +165,7 @@ See Also:
   ON_EvaluateNurbsSurfaceSpan
   ON_EvaluateNurbsCageSpan
 */
-bool ON_EvaluateNurbsSpan( 
+bool ON_EvaluateNurbsSpan(
         int dim,
         int is_rat,
         int order,
@@ -186,7 +186,7 @@ Parameters:
   is_rat - [in] true of false
   order0 - [in] >= 2
   order1 - [in] >= 2
-  knot0 - [in] 
+  knot0 - [in]
     NURBS knot vector with 2*(order0-1) knots, knot0[order0-2] != knot0[order0-1]
   knot1 - [in]
     NURBS knot vector with 2*(order1-1) knots, knot1[order1-2] != knot1[order1-1]
@@ -195,11 +195,11 @@ Parameters:
   cv - [in]
     For 0 <= i < order0 and  0 <= j < order1, the (i,j) control vertex is
 
-          cv[n],...,cv[n+(is_rat?dim:dim+1)], 
+          cv[n],...,cv[n+(is_rat?dim:dim+1)],
 
     where n = i*cv_stride0 + j*cv_stride1.  If is_rat is true the cv is
     in homogeneous form.
-   
+
   der_count - [in] (>=0)
   s - [in]
   t - [in] (s,t) is the evaluation parameter
@@ -229,7 +229,7 @@ ON_DECL
 bool ON_EvaluateNurbsSurfaceSpan(
         int dim,
         int is_rat,
-        int order0, 
+        int order0,
         int order1,
         const double* knot0,
         const double* knot1,
@@ -242,7 +242,7 @@ bool ON_EvaluateNurbsSurfaceSpan(
         int v_stride,
         double* v
         );
-            
+
 
 
 /*
@@ -254,7 +254,7 @@ Parameters:
   order0 - [in] >= 2
   order1 - [in] >= 2
   order2 - [in] >= 2
-  knot0 - [in] 
+  knot0 - [in]
     NURBS knot vector with 2*(order0-1) knots, knot0[order0-2] != knot0[order0-1]
   knot1 - [in]
     NURBS knot vector with 2*(order1-1) knots, knot1[order1-2] != knot1[order1-1]
@@ -264,14 +264,14 @@ Parameters:
   cv_stride1 - [in]
   cv_stride2 - [in]
   cv - [in]
-    For 0 <= i < order0, 0 <= j < order1, and 0 <= k < order2, 
+    For 0 <= i < order0, 0 <= j < order1, and 0 <= k < order2,
     the (i,j,k)-th control vertex is
 
-          cv[n],...,cv[n+(is_rat?dim:dim+1)], 
+          cv[n],...,cv[n+(is_rat?dim:dim+1)],
 
-    where n = i*cv_stride0 + j*cv_stride1 *k*cv_stride2.  
+    where n = i*cv_stride0 + j*cv_stride1 *k*cv_stride2.
     If is_rat is true the cv is in homogeneous form.
-   
+
   der_count - [in] (>=0)
   r - [in]
   s - [in]
@@ -294,7 +294,7 @@ Parameters:
             In general, Dr^i Ds^j Dt^k is returned in v[n],...,v[n+dim-1], where
 
                d = (i+j+k)
-               n = v_stride*( d*(d+1)*(d+2)/6 + (j+k)*(j+k+1)/2 + k) 
+               n = v_stride*( d*(d+1)*(d+2)/6 + (j+k)*(j+k+1)/2 + k)
 
 Returns:
   True if succcessful.
@@ -315,7 +315,7 @@ bool ON_EvaluateNurbsCageSpan(
         const double* cv,
         int der_count,
         double t0, double t1, double t2,
-        int v_stride, 
+        int v_stride,
         double* v
         );
 
@@ -355,7 +355,7 @@ bool ON_EvaluateNurbsDeBoor( // for expert users only - no support available
 
 ON_DECL
 bool ON_EvaluateNurbsBlossom(int, // cvdim,
-                             int, // order, 
+                             int, // order,
                              int, // cv_stride,
                              const double*, //CV, size cv_stride*order
                              const double*, //knot, nondecreasing, size 2*(order-1)
@@ -371,7 +371,7 @@ bool ON_EvaluateNurbsBlossom(int, // cvdim,
 ON_DECL
 void ON_ConvertNurbSpanToBezier(
         int,       // cvdim (dim+1 for rational curves)
-        int,       // order, 
+        int,       // order,
         int,       // cvstride (>=cvdim)
         double*,   // cv array - input has NURBS cvs, output has Bezier cvs
         const double*, // (2*order-2) knots for the NURBS span

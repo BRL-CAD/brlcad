@@ -1,7 +1,7 @@
 /*                     V I E W D U M M Y . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,21 +28,11 @@
  *  The RT View-Module Interface'', in the Proceedings of the
  *  BRL-CAD Symposium 1991.
  *
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  */
-#ifndef lint
-static const char RCSview[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
-
 #include <stdio.h>
-#include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 
@@ -64,7 +54,7 @@ int	use_air = 0;		/* Handling of air in librt */
  *  the command line, or from within an animation script.
  */
 struct bu_structparse view_parse[] = {
-	"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL
+    "",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL
 };
 
 /*
@@ -92,7 +82,7 @@ int	raymiss(register struct application *ap);
  */
 view_init(register struct application *ap, char *file, char *obj, int minus_o)
 {
-	return(0);		/* no framebuffer needed */
+    return(0);		/* no framebuffer needed */
 }
 
 /*
@@ -104,9 +94,9 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 void
 view_2init(struct application *ap)
 {
-	ap->a_hit = rayhit;
-	ap->a_miss = raymiss;
-	ap->a_onehit = 1;
+    ap->a_hit = rayhit;
+    ap->a_miss = raymiss;
+    ap->a_onehit = 1;
 }
 
 /*
@@ -171,9 +161,9 @@ view_cleanup(struct rt_i *rtip)
 int
 rayhit(register struct application *ap, struct partition *PartHeadp)
 {
-	bu_log("hit: 0x%x\n", ap->a_resource);
+    bu_log("hit: 0x%x\n", ap->a_resource);
 
-	return(1);	/* report hit to main routine */
+    return(1);	/* report hit to main routine */
 }
 
 /*
@@ -184,9 +174,9 @@ rayhit(register struct application *ap, struct partition *PartHeadp)
 int
 raymiss(register struct application *ap)
 {
-	bu_log("miss: 0x%x\n", ap->a_resource);
+    bu_log("miss: 0x%x\n", ap->a_resource);
 
-	return(0);
+    return(0);
 }
 
 void application_init (void) {}
@@ -195,8 +185,8 @@ void application_init (void) {}
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

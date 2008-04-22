@@ -1,7 +1,7 @@
 /*                         B I N F O . C
  * BRL-CAD
  *
- * Copyright (c) 2002-2007 United States Government as represented by
+ * Copyright (c) 2002-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,60 +18,44 @@
  * information.
  */
 /** @file binfo.c
- *		G 2 A S C . C
  *
- *
- *  Usage:  binfo
+ *  provides information about the version of libraries in use
  *
  *  Author -
  *  	Charles M Kennedy
  *	Christopher Sean Morrison
  *
- *  Source -
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header";
-#endif
 
 #include "common.h"
 
 #include <stdlib.h>
 #include <stdio.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
 
-#include "machine.h"
-#include "vmath.h"
-#include "db.h"
-#include "raytrace.h"
-#include "wdb.h"
-#include "rtgeom.h"
 #include "tcl.h"
 
+#include "vmath.h"
+#include "raytrace.h"
+#include "rtgeom.h"
+#include "wdb.h"
+#include "bu.h"
+#include "db.h"
 
-static char usage[] = "\
-Usage: binfo \
- returns information about the BRL-CAD runtime environment characteristics\n\
-";
 
 int
 main(int argc, char *argv[])
 {
-  if (argc > 0) {
-    printf("%s", usage);
-  }
+    if (argc > 0) {
+	bu_log("Usage: binfo\n\treturns information about the BRL-CAD runtime environment characteristics\n");
+    }
 
-  printf("bu_version=[%s]\n", bu_version());
-  printf("bn_version=[%s]\n", bn_version());
-  printf("rt_version=[%s]\n", rt_version());
-  printf("fb_version=[%s]\n", fb_version());
+    bu_log("bu_version=[%s]\n", bu_version());
+    bu_log("bn_version=[%s]\n", bn_version());
+    bu_log("rt_version=[%s]\n", rt_version());
+    bu_log("fb_version=[%s]\n", fb_version());
 
-  exit(0);
+    return 0;
 }
 
 
@@ -79,8 +63,8 @@ main(int argc, char *argv[])
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -1,6 +1,6 @@
 /* BRL-CAD                     F E N C E . H
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,16 +19,10 @@
  */
 /** @file fence.h
  *
- *      This is the header file to the program that generages a
- *      chain-link fence.  Every parameter of the fence may be adjusted
- *      by changing the #defined macros below.
+ * This is the header file to the program that generages a chain-link
+ * fence.  Every parameter of the fence may be adjusted by changing
+ * the #defined macros below.
  *
- *  Author -
- *      Christopher Sean Morrison
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #ifndef __FENCE_H__
@@ -39,13 +33,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#include <strings.h>
-#endif
 
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
@@ -113,7 +102,7 @@
  *   fence, poles, mesh, and wire are all truth values (1 == TRUE,
  *     0 == FALSE) that indicate whether or not the user will be prompted
  *     for respective values when the program is running in interactive
- *     mode.  that is to say that if the values are (1,1,1,0) respectively,
+ *     mode.  that is to say that if the values are (1, 1, 1, 0) respectively,
  *     then the user will be prompted (if in interactive mode) for the
  *     height and width of the fence, poles, and mesh, but will not be
  *     prompted for values for the wire (such as wire radius).  default
@@ -124,14 +113,14 @@
  *     may be changed through a command-line value
  */
 #define DEFAULT_FENCENAME "fence"
-#define DEFAULT_FENCESTARTPOSITION {0.0,0.0,0.0}
-#define DEFAULT_FENCEENDPOSITION {3000.0,0.0,0.0}
-#define DEFAULT_FENCEWIDTH {3000.0,0.0,0.0}
-#define DEFAULT_FENCEHEIGHT {0.0,0.0,2000.0}
+#define DEFAULT_FENCESTARTPOSITION {0.0, 0.0, 0.0}
+#define DEFAULT_FENCEENDPOSITION {3000.0, 0.0, 0.0}
+#define DEFAULT_FENCEWIDTH {3000.0, 0.0, 0.0}
+#define DEFAULT_FENCEHEIGHT {0.0, 0.0, 2000.0}
 #define DEFAULT_FENCEPOLESPACING 3000.0
 #define DEFAULT_FENCEMATERIAL "plastic"
 #define DEFAULT_FENCEMATERIALPARAMS "sh=16 sp=.5 di=.5"
-#define DEFAULT_FENCEMATERIALCOLOR {128,128,128}
+#define DEFAULT_FENCEMATERIALCOLOR {128, 128, 128}
 
 #define DEFAULT_FENCEFENCE 1
 #define DEFAULT_FENCEPOLES 0
@@ -156,7 +145,7 @@
 #define DEFAULT_POLERADIUS 30.0
 #define DEFAULT_POLEMATERIAL "plastic"
 #define DEFAULT_POLEMATERIALPARAMS "sh=16 sp=.5 di=.5"
-#define DEFAULT_POLEMATERIALCOLOR {128,128,128}
+#define DEFAULT_POLEMATERIALCOLOR {128, 128, 128}
 
 /* these are the parameters for the mesh object that gets generated.
  * there is only one mesh object, consisting of two wires translated
@@ -170,7 +159,7 @@
 #define DEFAULT_MESHWIDTH DEFAULT_FENCEPOLESPACING
 #define DEFAULT_MESHMATERIAL "plastic"
 #define DEFAULT_MESHMATERIALPARAMS "sh=16 sp=.5 di=.5"
-#define DEFAULT_MESHMATERIALCOLOR {128,128,128}
+#define DEFAULT_MESHMATERIALCOLOR {128, 128, 128}
 
 /*   the mesh piece count is a count of the number of actual wire segments
  *     that form a single mesh cell.  this value should not be changed (20)
@@ -197,7 +186,7 @@
 #define DEFAULT_WIREANGLE 45.0
 #define DEFAULT_WIREMATERIAL "plastic"
 #define DEFAULT_WIREMATERIALPARAMS "sh=16 sp=.5 di=.5"
-#define DEFAULT_WIREMATERIALCOLOR {128,128,128}
+#define DEFAULT_WIREMATERIALCOLOR {128, 128, 128}
 #define DEFAULT_WIRESEGMENTLENGTH 50.0
 #define DEFAULT_WIRESEGMENTSEPARATION DEFAULT_WIRERADIUS
 /* the max wire segments should not be changed as it is mearly a max
@@ -246,27 +235,27 @@ extern "C" {
 #endif
 
 
-BU_EXTERN(void argumentHelp, (FILE *fp, char *progname, char *message));
-BU_EXTERN(void argumentExamples, (FILE *fp, char *progname));
-BU_EXTERN(void defaultSettings, (FILE *fp));
-BU_EXTERN(int parseArguments, (int argc, char *argv[]));
-BU_EXTERN(void printMatrix, (FILE *fp, char *n, mat_t m));
-BU_EXTERN(char *getName, (char *base, int id, char *suffix));
-BU_EXTERN(char *getPrePostName, (char *prefix, char *base, char *suffix));
+    BU_EXTERN(void argumentHelp, (FILE *fp, char *progname, char *message));
+    BU_EXTERN(void argumentExamples, (FILE *fp, char *progname));
+    BU_EXTERN(void defaultSettings, (FILE *fp));
+    BU_EXTERN(int parseArguments, (int argc, char *argv[]));
+    BU_EXTERN(void printMatrix, (FILE *fp, char *n, mat_t m));
+    BU_EXTERN(char *getName, (const char *base, int id, const char *suffix));
+    BU_EXTERN(char *getPrePostName, (char *prefix, char *base, char *suffix));
 
-BU_EXTERN(int generateFence_s, (struct rt_wdb *fp, char *fencename, point_t startpostion, point_t endposition));
-BU_EXTERN(int generateFence, (struct rt_wdb *fp, char *fencename, point_t startpostion, vect_t heightvector, vect_t widthvector));
+    BU_EXTERN(int generateFence_s, (struct rt_wdb *fp, char *fencename, point_t startpostion, point_t endposition));
+    BU_EXTERN(int generateFence, (struct rt_wdb *fp, char *fencename, point_t startpostion, vect_t heightvector, vect_t widthvector));
 
-BU_EXTERN(int generatePoles_s, (struct rt_wdb *fp, char *polename));
-BU_EXTERN(int generatePoles, (struct rt_wdb *fp, char *polename, point_t startposition, vect_t heightvector, vect_t widthvector, double radius));
+    BU_EXTERN(int generatePoles_s, (struct rt_wdb *fp, char *polename));
+    BU_EXTERN(int generatePoles, (struct rt_wdb *fp, char *polename, point_t startposition, vect_t heightvector, vect_t widthvector, double radius));
 
-BU_EXTERN(int generateMesh_s, (struct rt_wdb *fp, char *meshname));
-BU_EXTERN(int generateMesh, (struct rt_wdb *fp, char *meshname, point_t startposition, vect_t heightvector, vect_t widthvector));
+    BU_EXTERN(int generateMesh_s, (struct rt_wdb *fp, char *meshname));
+    BU_EXTERN(int generateMesh, (struct rt_wdb *fp, char *meshname, point_t startposition, vect_t heightvector, vect_t widthvector));
 
-BU_EXTERN(int generateWire_s, (struct rt_wdb *fp, char *wirename, point_t position));
-BU_EXTERN(int generateWire, (struct rt_wdb *fp, char *wirename, point_t position, vect_t heightvector, vect_t widthvector, double radius, double angle, double wiresegmentlength));
+    BU_EXTERN(int generateWire_s, (struct rt_wdb *fp, char *wirename, point_t position));
+    BU_EXTERN(int generateWire, (struct rt_wdb *fp, char *wirename, point_t position, vect_t heightvector, vect_t widthvector, double radius, double angle, double wiresegmentlength));
 
-BU_EXTERN(int createWire, (struct rt_wdb *fp, char *segmentname, vect_t heightvector, vect_t widthvector, double radius, double angle, double segmentlength, double segmentdepthseparation));
+    BU_EXTERN(int createWire, (struct rt_wdb *fp, char *segmentname, vect_t heightvector, vect_t widthvector, double radius, double angle, double segmentlength, double segmentdepthseparation));
 
 
 #ifdef __cplusplus
@@ -280,8 +269,8 @@ BU_EXTERN(int createWire, (struct rt_wdb *fp, char *segmentname, vect_t heightve
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

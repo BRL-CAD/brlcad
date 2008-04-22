@@ -1,7 +1,7 @@
 /*                          T P K G . C
  * BRL-CAD
  *
- * Copyright (c) 2006-2007 United States Government as represented by
+ * Copyright (c) 2006-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,8 +19,6 @@
  */
 /** @file tpkg.c
  *
- * Author: Christopher Sean Morrison
- *
  * Relatively simple example file transfer program using libpkg,
  * written in a ttcp style.
  *
@@ -36,12 +34,9 @@
 #include <signal.h>
 #include <string.h>
 #include <stdio.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 /* interface headers */
-#include "machine.h"
 #include "bu.h"
 #include "pkg.h"
 
@@ -241,7 +236,7 @@ run_client(const char *server, int port, const char *file)
     buffer = bu_calloc(TPKG_BUFSIZE, 1, "buffer allocation");
 
     /* make sure the file can be opened */
-    fp = fopen(file, "r");
+    fp = fopen(file, "rb");
     if (fp == NULL) {
 	bu_log("Unable to open %s\n", file);
 	bu_bomb("Unable to read file\n");
@@ -320,27 +315,27 @@ main(int argc, char *argv[]) {
     /* process the command-line arguments after the application name */
     while ((c = bu_getopt(argc, argv, "tTrRp:P:hH")) != EOF) {
 	switch (c) {
-	case 't':
-	case 'T':
-	    /* sending */
-	    server = 0;
-	    break;
-	case 'r':
-	case 'R':
-	    /* receiving */
-	    server = 1;
-	    break;
-	case 'p':
-	case 'P':
-	    port = atoi(bu_optarg);
-	    break;
-	case 'h':
-	case 'H':
-	    /* help */
-	    usage(NULL, argv0);
-	    break;
-	default:
-	    usage("ERROR: Unknown argument\n", argv0);
+	    case 't':
+	    case 'T':
+		/* sending */
+		server = 0;
+		break;
+	    case 'r':
+	    case 'R':
+		/* receiving */
+		server = 1;
+		break;
+	    case 'p':
+	    case 'P':
+		port = atoi(bu_optarg);
+		break;
+	    case 'h':
+	    case 'H':
+		/* help */
+		usage(NULL, argv0);
+		break;
+	    default:
+		usage("ERROR: Unknown argument\n", argv0);
 	}
     }
 
@@ -391,8 +386,8 @@ main(int argc, char *argv[]) {
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -1,7 +1,7 @@
 #                    D R A W A B L E . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2007 United States Government as represented by
+# Copyright (c) 1998-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -18,15 +18,6 @@
 # information.
 #
 ###
-#
-# Author -
-#	Bob Parker
-#
-# Source -
-#	The U. S. Army Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#
 #
 # Description -
 #	The Drawable class wraps LIBRT's drawable geometry object.
@@ -244,17 +235,16 @@
 }
 
 ::itcl::body Drawable::help_init {} {
-    set help [cadwidgets::Help #auto]
+    set help [cadwidgets::Help \#auto]
 
     $help add autoview		{{view_obj} {set the view object's size and center}}
-    $help add E			{{[-s] <objects>} {evaluated edit of objects. Option 's' provides a slower,
-	but better fidelity evaluation}}
-    $help add blast		{{-C#/#/# <objects>} {clear screen, draw objects}}
+    $help add E			{{[-s] <objects>} {evaluated edit of objects. Option 's' provides a slower, but better fidelity evaluation}}
+    $help add blast		{{"-C#/#/# <objects>"} {clear screen, draw objects}}
     $help add clear		{{} {clear screen}}
-    $help add draw		{{-C#/#/# <objects>} {draw objects}}
+    $help add draw		{{"-C#/#/# <objects>"} {draw objects}}
     $help add erase		{{<objects>} {remove objects from the screen}}
     $help add erase_all		{{<objects>} {remove all occurrences of object(s) from the screen}}
-    $help add ev		{{[-dfnqstuvwT] [-P #] <objects>} {evaluate objects via NMG tessellation}}
+    $help add ev		{{"[-dfnqstuvwT] [-P #] <objects>"} {evaluate objects via NMG tessellation}}
     $help add get_autoview	{{} {get view parameters that shows drawn geometry}}
     $help add how		{{obj} {returns how an object is being displayed}}
     $help add illum		{{name} {illuminate object}}

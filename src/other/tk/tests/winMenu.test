@@ -879,7 +879,7 @@ test winMenu-32.4 {TkpComputeStandardMenuGeometry - separator} win {
     .m1 add separator
     list [update idletasks] [destroy .m1]
 } {{} {}}
-test winMenu-32.5 {TkpComputeStandardMenuGeometry - tearoff entry} unix {
+test winMenu-32.5 {TkpComputeStandardMenuGeometry - tearoff entry} {unix nonUnixUserInteraction} {
     catch {destroy .m1}
     menubutton .mb -text "test" -menu .mb.m
     menu .mb.m

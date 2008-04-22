@@ -53,9 +53,11 @@ instead of accessing \fBerrno\fR directly.
 \fBTcl_ErrnoId\fR and \fBTcl_ErrnoMsg\fR return string
 representations of \fBerrno\fR values.  \fBTcl_ErrnoId\fR
 returns a machine-readable textual identifier such as
-"EACCES" that corresponds to the current value of \fBerrno\fR.
+.QW EACCES
+that corresponds to the current value of \fBerrno\fR.
 \fBTcl_ErrnoMsg\fR returns a human-readable string such as
-"permission denied" that corresponds to the value of its
+.QW "permission denied"
+that corresponds to the value of its
 \fIerrorCode\fR argument.  The \fIerrorCode\fR argument is
 typically the value returned by \fBTcl_GetErrno\fR.
 The strings returned by these functions are

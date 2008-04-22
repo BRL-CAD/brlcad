@@ -10,6 +10,4 @@ EXTRA_DIST = \
 	libtermio.dsp \
 	termio_win32.c
 
-MAINTAINERCLEANFILES = Makefile.in
-
 include $(top_srcdir)/misc/Makefile.defs

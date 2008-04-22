@@ -1,7 +1,7 @@
 #                     R A Y P I C K . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2007 United States Government as represented by
+# Copyright (c) 2004-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -54,7 +54,7 @@ proc raypick { } {
 	set i 0
 	foreach solid $solids {
 	    button .raypick.s$i -text $solid \
-		    -command "destroy .raypick; sed $solid"
+		-command "destroy .raypick; sed $solid"
 	    pack .raypick.s$i -side top -fill x
 	    incr i
 	}

@@ -1,7 +1,7 @@
 /*                       B R E P . H
  * BRL-CAD
  *
- * Copyright (c) 2007 United States Government as represented by
+ * Copyright (c) 2007-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,15 +28,12 @@
  *
  * @author	Jason Owens
  *
- * @par Source
- * 	SECAD/VLD Computing Consortium, Bldg 394
- *@n	The U.S. Army Ballistic Research Laboratory
- *@n 	Aberdeen Proving Ground, Maryland 21005
  */
 
 #ifndef BREP_H
 #define BREP_H
 
+#include "common.h"
 
 #ifdef __cplusplus
 extern "C++" {
@@ -50,14 +47,15 @@ extern "C++" {
 #include "opennurbs_ext.h"
 #include <iostream>
 #include <fstream>
-
 }
-extern "C" {
+
+__BEGIN_DECLS
+
 #endif
 
-#include "machine.h"
 #include "vmath.h"
 #include "bu.h"
+
 
 #ifndef __cplusplus
 typedef struct _on_brep_placeholder {
@@ -65,7 +63,7 @@ typedef struct _on_brep_placeholder {
 } ON_Brep;
 #endif
 
-    
+
     /* Maximum number of newton iterations on root finding */
 #define BREP_MAX_ITERATIONS 100
     /* Root finding threshold */
@@ -75,13 +73,13 @@ typedef struct _on_brep_placeholder {
 #define BREP_SAME_POINT_TOLERANCE 1e-3
     /* Use vector operations? For debugging */
 #define DO_VECTOR 1
-    
+
 
 #ifndef __cplusplus
 typedef struct _bounding_volume_placeholder {
     int dummy;
 } BrepBoundingVolume;
-#else 
+#else
 /* namespace brlcad { */
 /*     class BBNode; */
 /* }; */
@@ -101,9 +99,7 @@ struct brep_specific {
     BrepBoundingVolume* bvh;
 };
 
-#ifdef __cplusplus
-}
-#endif
+__END_DECLS
 
 #endif  /* BREP_H */
 
@@ -111,8 +107,8 @@ struct brep_specific {
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

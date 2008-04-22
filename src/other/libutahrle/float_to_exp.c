@@ -1,14 +1,14 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
@@ -18,9 +18,9 @@
  *  Modified at BRL 16-May-88 by Mike Muuss to avoid Alliant STDC problem
  *  with <math.h> having defines for "exp" conflicting with local vars.
  */
-/* 
+/*
  * float_to_exp.c - Convert floating point values to exponent bytes
- * 
+ *
  * Author:	John W. Peterson
  * 		Computer Science Dept.
  * 		University of Utah
@@ -34,7 +34,7 @@
 
 /*****************************************************************
  * TAG( float_to_exp )
- * 
+ *
  * Takes an array of count floating point numbers, and makes an array
  * of count+1 pixels out of it.
  */
@@ -71,8 +71,8 @@ rle_pixel * pixels;
 
     fptr = floats;
     for( i = 0; i < count; i++ )  /* Extra casts for broken HP compiler */
-        *pixels++ = (rle_pixel) ((int)(*fptr++ * f_exp)); 
+        *pixels++ = (rle_pixel) ((int)(*fptr++ * f_exp));
 
     /* Excess 127 exponent */
-    *pixels = (rle_pixel) (max_exp + 127); 
+    *pixels = (rle_pixel) (max_exp + 127);
 }

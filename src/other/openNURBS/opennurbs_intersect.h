@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -69,8 +69,8 @@ Remarks:
 */
 ON_DECL
 bool ON_IntersectLineLine(
-          const ON_Line& lineA, 
-          const ON_Line& lineB, 
+          const ON_Line& lineA,
+          const ON_Line& lineB,
           double* a,
           double* b,
           double tolerance,
@@ -93,15 +93,15 @@ Returns:
             AoA  -AoB
            -AoB   BoB
 
- is numerically singluar, where A = lineA.to-lineA.from 
+ is numerically singluar, where A = lineA.to-lineA.from
  and B = lineB.to-lineB.from.
 See Also:
   ON_IntersectLineLine
 */
 ON_DECL
 bool ON_Intersect(
-          const ON_Line& lineA, 
-          const ON_Line& lineB, 
+          const ON_Line& lineA,
+          const ON_Line& lineB,
           double* a,
           double* b
           );
@@ -111,27 +111,27 @@ bool ON_Intersect( // Returns FALSE unless intersection is a single point
                    // If returned parameter is < 0 or > 1, then the line
                    // segment between line.m_point[0] and line.m_point[1]
                    // does not intersect the plane
-          const ON_Line&, 
-          const ON_Plane&, 
+          const ON_Line&,
+          const ON_Plane&,
           double* // parameter on line
           );
 
 ON_DECL
-bool ON_Intersect( const ON_Plane&, 
-                  const ON_Plane&, 
+bool ON_Intersect( const ON_Plane&,
+                  const ON_Plane&,
                    ON_Line& // intersection line is returned here
                    );
 
 ON_DECL
-bool ON_Intersect( const ON_Plane&, 
-                  const ON_Plane&, 
+bool ON_Intersect( const ON_Plane&,
+                  const ON_Plane&,
                   const ON_Plane&,
                   ON_3dPoint& // intersection point is returned here
                   );
 
 ON_DECL
-int ON_Intersect( // returns 0 = no intersections, 
-                  // 1 = intersection = single point, 
+int ON_Intersect( // returns 0 = no intersections,
+                  // 1 = intersection = single point,
                   // 2 = intersection = circle
                   // If 0 is returned, returned circle has radius=0
                   // and center = point on sphere closest to plane.
@@ -142,10 +142,10 @@ int ON_Intersect( // returns 0 = no intersections,
                   );
 
 ON_DECL
-int ON_Intersect( // returns 0 = no intersections, 
-                  // 1 = one intersection, 
+int ON_Intersect( // returns 0 = no intersections,
+                  // 1 = one intersection,
                   // 2 = 2 intersections
-                  // If 0 is returned, first point is point 
+                  // If 0 is returned, first point is point
                   // on line closest to sphere and 2nd point is the point
                   // on the sphere closest to the line.
                   // If 1 is returned, first point is obtained by evaluating
@@ -156,11 +156,11 @@ int ON_Intersect( // returns 0 = no intersections,
                   );
 
 ON_DECL
-int ON_Intersect( // returns 0 = no intersections, 
-                  // 1 = one intersection, 
+int ON_Intersect( // returns 0 = no intersections,
+                  // 1 = one intersection,
                   // 2 = 2 intersections
                   // 3 = line lies on cylinder
-                  // If 0 is returned, first point is point 
+                  // If 0 is returned, first point is point
                   // on line closest to cylinder and 2nd point is the point
                   // on the sphere closest to the line.
                   // If 1 is returned, first point is obtained by evaluating
@@ -185,8 +185,8 @@ Returns:
   True if the line intersects the box and false otherwise.
 */
 ON_DECL
-bool ON_Intersect( const ON_BoundingBox& bbox, 
-                   const ON_Line& line, 
+bool ON_Intersect( const ON_BoundingBox& bbox,
+                   const ON_Line& line,
                    double tolerance,
                    ON_Interval* line_parameters
                    );

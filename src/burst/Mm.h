@@ -1,7 +1,7 @@
 /*                            M M . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,18 +25,20 @@
 #define __MM_H__
 
 /* Emulate MUVES Mm package using malloc. */
+
 #include "common.h"
 
 #include <stdlib.h>
 #include <string.h>
 
+#include "bu.h"
 
-#define MmAllo( typ )		(typ *) malloc( sizeof(typ) )
-#define MmFree( typ, ptr )	free( (char *) ptr )
-#define MmVAllo( ct, typ )	(typ *) malloc( (ct)*sizeof(typ) )
-#define MmVFree( ct, typ, ptr )	free( (char *) ptr )
-#define MmStrDup( str )		strcpy( malloc( strlen(str)+1 ), str )
-#define MmStrFree( str )	free( str )
+#define MmAllo( typ )		(typ *) bu_malloc( sizeof(typ), BU_FLSTR )
+#define MmFree( typ, ptr )	bu_free( (char *) ptr, BU_FLSTR )
+#define MmVAllo( ct, typ )	(typ *) bu_malloc( (ct)*sizeof(typ), BU_FLSTR )
+#define MmVFree( ct, typ, ptr )	bu_free( (char *) ptr, BU_FLSTR )
+#define MmStrDup( str )		bu_strdup(str)
+#define MmStrFree( str )	bu_free( str, BU_FLSTR )
 
 #endif  /* __MM_H__ */
 
@@ -44,8 +46,8 @@
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

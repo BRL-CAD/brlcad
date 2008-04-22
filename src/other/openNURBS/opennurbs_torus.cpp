@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -144,9 +144,9 @@ double ON_Torus::MinorRadius() const
   return minor_radius;
 }
 
-BOOL ON_Torus::ClosestPointTo( 
-         ON_3dPoint test_point, 
-         double* major__angle_radians, 
+BOOL ON_Torus::ClosestPointTo(
+         ON_3dPoint test_point,
+         double* major__angle_radians,
          double* minor__angle_radians
        ) const
 {

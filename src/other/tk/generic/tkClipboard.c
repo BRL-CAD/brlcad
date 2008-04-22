@@ -15,7 +15,6 @@
  */
 
 #include "tkInt.h"
-#include "tkPort.h"
 #include "tkSelect.h"
 
 /*
@@ -62,7 +61,7 @@ ClipboardHandler(
     TkClipboardTarget *targetPtr = (TkClipboardTarget*) clientData;
     TkClipboardBuffer *cbPtr;
     char *srcPtr, *destPtr;
-    int count = 0;
+    size_t count = 0;
     int scanned = 0;
     size_t length, freeCount;
 
@@ -105,7 +104,7 @@ ClipboardHandler(
 	srcPtr = cbPtr->buffer;
 	length = cbPtr->length;
     }
-    return count;
+    return (int)count;
 }
 
 /*
@@ -151,7 +150,7 @@ ClipboardAppHandler(
 	length = maxBytes;
     }
     strncpy(buffer, p, length);
-    return length;
+    return (int)length;
 }
 
 /*

@@ -1,7 +1,7 @@
 #                     U T I L I T Y . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2007 United States Government as represented by
+# Copyright (c) 2002-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -27,9 +27,9 @@
 #
 
 if [ file exists Utility ] {
-  cd Utility
-  Archer::pluginLoadCWDFiles
-  cd ..
+    cd Utility
+    Archer::pluginLoadCWDFiles
+    cd ..
 }
 
 # Local Variables:

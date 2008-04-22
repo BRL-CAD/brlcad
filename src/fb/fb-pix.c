@@ -1,7 +1,7 @@
 /*                        F B - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2007 United States Government as represented by
+ * Copyright (c) 1986-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,34 +20,23 @@
  */
 /** @file fb-pix.c
  *
- *  Program to take a frame buffer image and write a .pix image.
- *
- *  Author -
- *	Michael John Muuss
+ * Program to take a frame buffer image and write a .pix image.
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 #include <sys/stat.h>
+#include "bio.h"
 
-#include "machine.h"
 #include "bu.h"
 #include "fb.h"
 
 #include "pkg.h"
 
-#ifdef _WIN32
+#ifdef HAVE_WINSOCK_H
 #  include <winsock.h>
-#  include <fcntl.h>
 #endif
 
 static unsigned char	*scanline;		/* 1 scanline pixel buffer */
@@ -73,138 +62,136 @@ Usage: fb-pix [-h -i -c] [-F framebuffer]\n\
 int
 get_args(int argc, register char **argv)
 {
-	register int c;
+    register int c;
 
-	while ( (c = bu_getopt( argc, argv, "chiF:s:w:n:" )) != EOF )  {
-		switch( c )  {
-		case 'c':
-			crunch = 1;
-			break;
-		case 'h':
-			/* high-res */
-			screen_height = screen_width = 1024;
-			break;
-		case 'i':
-			inverse = 1;
-			break;
-		case 'F':
-			framebuffer = bu_optarg;
-			break;
-		case 's':
-			/* square size */
-			screen_height = screen_width = atoi(bu_optarg);
-			break;
-		case 'w':
-			screen_width = atoi(bu_optarg);
-			break;
-		case 'n':
-			screen_height = atoi(bu_optarg);
-			break;
+    while ( (c = bu_getopt( argc, argv, "chiF:s:w:n:" )) != EOF )  {
+	switch ( c )  {
+	    case 'c':
+		crunch = 1;
+		break;
+	    case 'h':
+		/* high-res */
+		screen_height = screen_width = 1024;
+		break;
+	    case 'i':
+		inverse = 1;
+		break;
+	    case 'F':
+		framebuffer = bu_optarg;
+		break;
+	    case 's':
+		/* square size */
+		screen_height = screen_width = atoi(bu_optarg);
+		break;
+	    case 'w':
+		screen_width = atoi(bu_optarg);
+		break;
+	    case 'n':
+		screen_height = atoi(bu_optarg);
+		break;
 
-		default:		/* '?' */
-			return(0);
-		}
+	    default:		/* '?' */
+		return(0);
 	}
+    }
 
-	if( bu_optind >= argc )  {
-		if( isatty(fileno(stdout)) )
-			return(0);
-		file_name = "-";
-		outfp = stdout;
-	} else {
-		file_name = argv[bu_optind];
-		if( (outfp = fopen(file_name, "wb")) == NULL )  {
-			(void)fprintf( stderr,
-				"fb-pix: cannot open \"%s\" for writing\n",
-				file_name );
-			return(0);
-		}
-		(void)chmod(file_name, 0444);
+    if ( bu_optind >= argc )  {
+	if ( isatty(fileno(stdout)) )
+	    return(0);
+	file_name = "-";
+	outfp = stdout;
+    } else {
+	file_name = argv[bu_optind];
+	if ( (outfp = fopen(file_name, "wb")) == NULL )  {
+	    (void)fprintf( stderr,
+			   "fb-pix: cannot open \"%s\" for writing\n",
+			   file_name );
+	    return(0);
 	}
+	(void)bu_fchmod(outfp, 0444);
+    }
 
-	if ( argc > ++bu_optind )
-		(void)fprintf( stderr, "fb-pix: excess argument(s) ignored\n" );
+    if ( argc > ++bu_optind )
+	(void)fprintf( stderr, "fb-pix: excess argument(s) ignored\n" );
 
-	return(1);		/* OK */
+    return(1);		/* OK */
 }
 
 int
 main(int argc, char **argv)
 {
-	register FBIO *fbp;
-	register int y;
+    register FBIO *fbp;
+    register int y;
 
-	screen_height = screen_width = 512;		/* Defaults */
+    screen_height = screen_width = 512;		/* Defaults */
 
-	if ( !get_args( argc, argv ) )  {
-		(void)fputs(usage, stderr);
-		exit( 1 );
+    if ( !get_args( argc, argv ) )  {
+	(void)fputs(usage, stderr);
+	bu_exit( 1, NULL );
+    }
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    setmode(fileno(stdout), O_BINARY);
+#endif
+
+    scanpix = screen_width;
+    scanbytes = scanpix * sizeof(RGBpixel);
+    if ( (scanline = (unsigned char *)malloc(scanbytes)) == RGBPIXEL_NULL )  {
+	fprintf(stderr,
+		"fb-pix:  malloc(%d) failure\n", scanbytes );
+	bu_exit(2, NULL);
+    }
+
+    if ((fbp = fb_open(framebuffer, screen_width, screen_height)) == NULL) {
+	bu_exit(12, NULL);
+    }
+
+    if ( screen_height > fb_getheight(fbp) )
+	screen_height = fb_getheight(fbp);
+    if ( screen_width > fb_getwidth(fbp) )
+	screen_width = fb_getwidth(fbp);
+
+    if ( crunch )  {
+	if ( fb_rmap( fbp, &cmap ) == -1 )  {
+	    crunch = 0;
+	} else if ( fb_is_linear_cmap( &cmap ) ) {
+	    crunch = 0;
 	}
+    }
 
-	if (pkg_init() != 0)
-	    exit(1);
-
-	scanpix = screen_width;
-	scanbytes = scanpix * sizeof(RGBpixel);
-	if( (scanline = (unsigned char *)malloc(scanbytes)) == RGBPIXEL_NULL )  {
-		fprintf(stderr,
-			"fb-pix:  malloc(%d) failure\n", scanbytes );
-		pkg_terminate();
-		exit(2);
+    if ( !inverse )  {
+	/*  Regular -- read bottom to top */
+	for ( y=0; y < screen_height; y++ )  {
+	    fb_read( fbp, 0, y, scanline, screen_width );
+	    if ( crunch )
+		cmap_crunch( (RGBpixel *)scanline, scanpix, &cmap );
+	    if ( fwrite( (char *)scanline, scanbytes, 1, outfp ) != 1 )  {
+		perror("fwrite");
+		break;
+	    }
 	}
-
-	if ((fbp = fb_open(framebuffer, screen_width, screen_height)) == NULL) {
-	    pkg_terminate();
-	    exit(12);
+    }  else  {
+	/*  Inverse -- read top to bottom */
+	for ( y = screen_height-1; y >= 0; y-- )  {
+	    fb_read( fbp, 0, y, scanline, screen_width );
+	    if ( crunch )
+		cmap_crunch( (RGBpixel *)scanline, scanpix, &cmap );
+	    if ( fwrite( (char *)scanline, scanbytes, 1, outfp ) != 1 )  {
+		perror("fwrite");
+		break;
+	    }
 	}
-
-	if( screen_height > fb_getheight(fbp) )
-		screen_height = fb_getheight(fbp);
-	if( screen_width > fb_getwidth(fbp) )
-		screen_width = fb_getwidth(fbp);
-
-	if( crunch )  {
-		if( fb_rmap( fbp, &cmap ) == -1 )  {
-			crunch = 0;
-		} else if( fb_is_linear_cmap( &cmap ) ) {
-			crunch = 0;
-		}
-	}
-
-	if( !inverse )  {
-		/*  Regular -- read bottom to top */
-		for( y=0; y < screen_height; y++ )  {
-			fb_read( fbp, 0, y, scanline, screen_width );
-			if( crunch )
-				cmap_crunch( (RGBpixel *)scanline, scanpix, &cmap );
-			if( fwrite( (char *)scanline, scanbytes, 1, outfp ) != 1 )  {
-				perror("fwrite");
-				break;
-			}
-		}
-	}  else  {
-		/*  Inverse -- read top to bottom */
-		for( y = screen_height-1; y >= 0; y-- )  {
-			fb_read( fbp, 0, y, scanline, screen_width );
-			if( crunch )
-				cmap_crunch( (RGBpixel *)scanline, scanpix, &cmap );
-			if( fwrite( (char *)scanline, scanbytes, 1, outfp ) != 1 )  {
-				perror("fwrite");
-				break;
-			}
-		}
-	}
-	fb_close( fbp );
-	pkg_terminate();
-	exit(0);
+    }
+    fb_close( fbp );
+    bu_exit(0, NULL);
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

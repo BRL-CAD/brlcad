@@ -1,7 +1,7 @@
 /*                          B O M B . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2007 United States Government as represented by
+ * Copyright (c) 1998-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,32 +24,20 @@
  *  Checks LIBRT-specific error flags, then
  *  hands the error off to LIBBU.
  *
- *  Author -
- *	Michael John Muuss
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 /** @} */
-
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
+#include "bio.h"
 
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
-
-#undef rt_bomb		/* in case compat4.h defines one */
 
 
 /**
@@ -67,7 +55,7 @@ WARNING: rt_bomb() is deprecated and will likely disappear in\n\
 a future release of BRL-CAD.  Applications should utilize\n\
 bu_bomb() instead for fatal errors.\n\
 \n");
-    if(RT_G_DEBUG || rt_g.NMG_debug )
+    if (RT_G_DEBUG || rt_g.NMG_debug )
 	bu_debug |= BU_DEBUG_COREDUMP;
     bu_bomb(s);
 }
@@ -76,8 +64,8 @@ bu_bomb() instead for fatal errors.\n\
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

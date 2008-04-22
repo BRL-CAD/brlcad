@@ -1,7 +1,7 @@
 /*                      A D D _ F A C E . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2007 United States Government as represented by
+ * Copyright (c) 1993-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,13 +18,6 @@
  * information.
  */
 /** @file add_face.c
- *  Authors -
- *	John R. Anderson
- *
- *  Source -
- *	SLAD/BVLD/VMB
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  *
  */
 
@@ -35,7 +28,7 @@
 void
 Add_face_to_brep(ON_Brep* brep, int entityno, int face_orient)
 {
-    
+
 }
 
 struct faceuse *

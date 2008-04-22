@@ -12,6 +12,7 @@ AM_CPPFLAGS = \
 	-I${top_srcdir}/src/other/tkimg/png \
 	-I${top_srcdir}/src/other/tkimg/pngtcl \
 	${PNG_CPPFLAGS} \
+	${LIBZ_CPPFLAGS} \
 	${TCL_CPPFLAGS} \
 	${TK_CPPFLAGS}
 
@@ -22,11 +23,10 @@ tkimgp_la_SOURCES = \
 	png.c
 
 EXTRA_DIST = \
+	aclocal.m4 \
 	init.c \
 	pkgIndex.tcl.in \
 	tests
-
-MAINTAINERCLEANFILES = Makefile.in
 
 include $(top_srcdir)/misc/Makefile.defs
 

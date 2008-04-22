@@ -1,7 +1,7 @@
 #               M E N U _ O V E R R I D E . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2007 United States Government as represented by
+# Copyright (c) 1998-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -18,17 +18,6 @@
 # information.
 #
 ###
-##
-#				M E N U _ O V E R R I D E . T C L
-#
-# Author -
-#	Bob Parker
-#
-# Source -
-#	The U. S. Army Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#
 #
 # Description -
 #	The proc's below were copied from libtk/menu.tcl and modified.
@@ -104,7 +93,7 @@ proc cad_MenuFirstEntry { menu } {
 
     for {set i 0} {$i <= $last} {incr i} {
 	if {([catch {set state [$menu entrycget $i -state]}] == 0)
-	&& ($state != "disabled") && ([$menu type $i] != "tearoff")} {
+	    && ($state != "disabled") && ([$menu type $i] != "tearoff")} {
 	    $menu activate $i
 	    ::tk::GenerateMenuSelect $menu
 	    if {[$menu type $i] == "cascade"} {
@@ -174,7 +163,7 @@ proc ::tk::MenuNextMenu {menu direction} {
 	    set parent [winfo parent $menu]
 	    while {($parent != ".")} {
 		if {([winfo class $parent] == "Menu")
-			&& ([$parent cget -type] == "menubar")} {
+		    && ([$parent cget -type] == "menubar")} {
 		    tk_menuSetFocus $parent
 		    ::tk::MenuNextEntry $parent 1
 		    return
@@ -229,9 +218,9 @@ proc ::tk::MenuNextMenu {menu direction} {
 	}
 	set mb [lindex $buttons $i]
 	if {([winfo class $mb] == "Menubutton")
-		&& ([$mb cget -state] != "disabled")
-		&& ([$mb cget -menu] != "")
-		&& ([[$mb cget -menu] index last] != "none")} {
+	    && ([$mb cget -state] != "disabled")
+	    && ([$mb cget -menu] != "")
+	    && ([[$mb cget -menu] index last] != "none")} {
 	    break
 	}
 	if {$mb == $w} {
@@ -288,7 +277,7 @@ proc ::tk::MenuNextEntry {menu count} {
 	set cascade [$menu entrycget $i -menu]
 	if {[string compare $cascade ""] != 0} {
 	    $menu postcascade $i
-#	    ::tk::MenuFirstEntry $cascade
+	    #	    ::tk::MenuFirstEntry $cascade
 	}
     }
 }

@@ -2,7 +2,7 @@
 #                     M A K E _ D M G . S H
 # BRL-CAD
 #
-# Copyright (c) 2005-2007 United States Government as represented by
+# Copyright (c) 2005-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -45,32 +45,19 @@
 ######################################################################
 
 NAME="$1"
-MAJOR_VERSION="$2"
-MINOR_VERSION="$3"
-PATCH_VERSION="$4"
+VERSION="$2"
 if [ "x$NAME" = "x" ] ; then
-    echo "Usage: $0 title major_version minor_version patch_version [background] [contents ...]"
+    echo "Usage: $0 title version [background] [contents ...]"
     echo "ERROR: must specify a title for the package name"
     exit 1
 fi
-if [ "x$MINOR_VERSION" = "x" ] ; then
-    echo "Usage: $0 title major_version minor_version patch_version [background] [contents ...]"
-    echo "ERROR: must specify a major package version"
+if [ "x$VERSION" = "x" ] ; then
+    echo "Usage: $0 title version [background] [contents ...]"
+    echo "ERROR: must specify a version"
     exit 1
 fi
-if [ "x$MINOR_VERSION" = "x" ] ; then
-    echo "ERROR: must specify a minor package version"
-    echo "Usage: $0 title major_version minor_version patch_version [background] [contents ...]"
-    exit 1
-fi
-if [ "x$PATCH_VERSION" = "x" ] ; then
-    echo "Usage: $0 title major_version minor_version patch_version [background] [contents ...]"
-    echo "ERROR: must specify a patch package version"
-    exit 1
-fi
-shift 4
+shift 2
 
-DMG_CAPACITY=250
 OPENUP=`dirname $0`/../misc/macosx/openUp
 
 PATH=/bin:/usr/bin:/usr/sbin
@@ -90,7 +77,6 @@ if [ "x$TMPDIR" = "x" ] || [ ! -w $TMPDIR ] ; then
     fi
 fi
 
-VERSION="${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}"
 DMG_NAME="${NAME}-${VERSION}"
 DMG="${DMG_NAME}.dmg"
 if [ -d "$DMG" ] ; then
@@ -143,6 +129,25 @@ if [ -f "${DMG}.sparseimage" ] ; then
     fi
 fi
 
+PKG="${DMG_NAME}.pkg"
+if [ -d "$PKG" ] ; then
+    :
+elif [ -d "/tmp/$PKG" ] ; then
+    PKG="/tmp/${DMG_NAME}.pkg"
+fi
+
+# calculate capacity required
+DMG_CAPACITY=50
+while [ ! "x$*" = "x" ] ; do
+    ARG="$1"
+    shift
+    size="`du -ks $ARG | awk '{print $1}'`"
+    size="`echo \"$size 1024 / p\" | dc`"
+    DMG_CAPACITY="`expr $DMG_CAPACITY + $size`"
+done
+pkg_size="`du -ks $PKG | awk '{print $1}'`"
+DMG_CAPACITY="`expr $DMG_CAPACITY + $pkg_size`"
+
 hdiutil create "$DMG" -megabytes $DMG_CAPACITY -layout NONE -type SPARSE -volname $DMG_NAME
 if [ ! "x$?" = "x0" ] ; then
     echo "ERROR: hdiutil failed to complete successfully"
@@ -163,7 +168,7 @@ if [ "x$hdidDisk" = "x" ] ; then
     exit 1
 fi
 
-/sbin/newfs_hfs -w -v ${DMG_NAME} -b 4096 $hdidDisk
+/sbin/newfs_hfs -v ${DMG_NAME} -b 4096 $hdidDisk
 if [ ! "x$?" = "x0" ] ; then
     echo "ERROR: unable to successfully create a new hfs filesystem on $hdidDisk"
     exit 1
@@ -205,12 +210,6 @@ if [ ! -d "$VOL_DIR" ] ; then
     exit 1
 fi
 
-PKG="${DMG_NAME}.pkg"
-if [ -d "$PKG" ] ; then
-    :
-elif [ -d "/tmp/$PKG" ] ; then
-    PKG="/tmp/${DMG_NAME}.pkg"
-fi
 if [ -d "$PKG" ] ; then
     if [ ! -r "$PKG" ] ; then
 	echo "ERROR: unable to read the installer package"
@@ -308,7 +307,7 @@ while [ ! "x$*" = "x" ] ; do
 done
 
 if [ ! "x$found_background" = "xno" ] ; then
-    echo "You now have 30 seconds to set the background on the disk image."
+    echo "You now have 60 seconds to set the background on the disk image."
 fi
 osascript <<EOF
 set oldApp to (path to frontmost application as string)
@@ -340,8 +339,8 @@ tell application "Finder"
 	keystroke "j" using command down
     end tell
 
-    say "You now have half a minute to set a background on the disk image."
-    delay 30
+    say "You now have one minute to set a background on the disk image."
+    delay 60
 
     tell application "System Events"
 	keystroke "j" using command down

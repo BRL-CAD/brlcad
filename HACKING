@@ -352,14 +352,17 @@ initial implementation of a BRL-CAD Geometry Server is written in PHP.
 
 With release 7.0, BRL-CAD has moved forward and worked toward making
 all of BRL-CAD C code conform strictly with the ANSI/ISO standard for
-C language compilation (ISO/IEC 9899:1990).  Support for older
-compilers and older K&R-based system facilities is being migrated to
-the build system declarations and preprocessor defines.
+C language compilation (ISO/IEC 9899:1990, i.e. c89).  Support for
+older compilers and older K&R-based system facilities is being
+migrated to build system declarations, preprocessor defines, or being
+removed outright.  It's okay to make modifications that assume
+compiler conformance with the ANSI C standard (c89).
 
-There is currently not a unified C++ interface to any of the libraries
-nor any tools written in C++ in BRL-CAD at this time, though several
-of both have been written over the years for various purposes.  While
-C++ as an implementation language of new tools and new library
+There currently no C++ interface to the core BRL-CAD libraries.  There
+are a few tools and enhancements to libraries that are implemented in
+C++ (the new BREP object type in librt, for example), but there are
+presently no C++ bindings available beyond experimental developments.
+While C++ as an implementation language of new tools and new library
 interfaces is not prohibitied, the mixing of C++ semantics and C++
 code (including simple // style comments) in the existing C files is
 not allowed.  As new interfaces are developed, new contributors become
@@ -385,7 +388,7 @@ abstracted in such a way that it is useful to other applications,
 should be put in a library and not in application directories.
 
 C files use the .c extension.  Header files use the .h extension.  C++
-files use the .cxx extension.  PHP files use the .php extension.
+files use the .cpp extension.  PHP files use the .php extension.
 Tcl/Tk files use the .tcl/.tk extensions.  POSIX Bourne-style shell
 scripts use the .sh extension.
 
@@ -396,7 +399,7 @@ level, with the exception of manual pages that should be colocated
 with any corresponding source files.
 
 Header files private to a library go into that library's directory.
-Public header files go intp the include/ directory on the top level.
+Public header files go into the include/ directory on the top level.
 Public header files should not include any headers that are private.
 Headers should include any other headers that they require for correct
 parsing (this is an on-going clean-up effort).  Public header files
@@ -453,20 +456,28 @@ variables should be utilized instead of the standard C facility:
   bu_free() instead of free()
   bu_log() instead of printf()
   bu_bomb() instead of abort()
+  bu_exit() instead of printf()+exit()
   bu_dirname() instead of dirname()
   bu_getopt() instead of getopt()
   bu_opterr instead of opterr
   bu_optind instead of optind
   bu_optopt instead of optopt
   bu_optarg instead of optarg
+  bu_strlcat instead of strcat(), strncat(), and strlcat()
+  bu_strlcpy instead of strcpy(), strncpy(), and strlcpy()
+
+Similarly, ANSI C functions are preferred over the BSD and POSIX
+interfaces.  The following functions should be used:
+
+  memset instead of bzero
+  memcpy instead of bcopy
 
 The code should strive to achieve conformance with the GNU coding
 standard with a few exceptions.  One such exception is NOT utilizing
-the GNU indentation style, but instead utilizing the K&R indentation
-style (also commonly recognized as the primary Java coding style as
-published by Sun) is utilized for brace placement indentation, and
-most code formatting convention.  The following examples should be
-strictly adhered to, if only for the sake of being consistent.
+the GNU indentation style, but instead utilizing the BSD KNF
+indentation style which is basically the K&R indentation style with 4
+character indents.  The following examples should be strictly adhered
+to, if only for the sake of being consistent.
 
 1) Whitespace
 
@@ -480,8 +491,8 @@ file:
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
@@ -490,32 +501,42 @@ A similar block can be used on source and script files in other
 languages (such as Tcl, Shell, Perl, etc).  See the local variable
 footer script in sh/footer.sh to automatically set/update files.
 
-Space around operators and before multiple statements.
-  a = (b + c) * d;  /* ok */
-  b = 2; c = 3;     /* ok */
+Space around operators and between multiple statements.
+  a = (b + c) * d;                  /* ok */
+  b = 2; c = 3;                     /* ok */
 
 No space immediately inside parentheses.
-  while (1) { ...   /* ok */
+  while (1) { ...                   /* ok */
   for (i = 0; i < max; i++) { ...   /* ok */
-  while ( max ) { ... /* discouraged */
+  while ( max ) { ...               /* discouraged */
 
 Commas and semicolons are followed by whitespace.
   int main(int argc, char *argv[]); /* ok */
   for (i = 0; i < max; i++) { ...   /* ok */
 
+Native language statements (if, while, for, switch, and return)
+have a separating space, functions do not.
+  int my_function(int i) { ...      /* ok, no space */
+  while (argc--) ...                /* ok, has space */
+  if( var == val )                  /* discouraged */
+
 2) Braces
 
-Opening braces should be on the same line as their statement, close
-braces should line up with that same statement.  This is intently not
-the GNU or BSD indent style, but rather the K&R style (see
-http://en.wikipedia.org/wiki/Indent_style for details).
+BRL-CAD uses the "The One True Brace Style" from BSD KNF and K&R.
+Opening braces should be on the same line as their statement, closing
+braces should line up with that same statement.  Functions, however,
+are treated special and place the opening brace on a separate line.
+See http://en.wikipedia.org/wiki/Indent_style for details.
 
-  for (i = 0; i < 100; i++) {
-    if (i % 10 == 0) {
-      j += 1;
-    } else {
-      j -= 1;
-    }
+  int some_function(char *j)
+  {
+      for (i = 0; i < 100; i++) {
+          if (i % 10 == 0) {
+              j += 1;
+          } else {
+              j -= 1;
+          }
+      }
   }
 
 3) Names
@@ -595,7 +616,7 @@ DOCUMENTATION
 BRL-CAD has extensive documentation in various formats and presently
 maintained in various locations.  It is an on-going desire and goal of
 the project to have all documentation located along with the source
-code in CVS.
+code in our Subversion (SVN) repository.
 
 In line with that goal and where beneficial, a large portion of the
 tutorial documentation is being converted to the Docbook XML format.
@@ -664,34 +685,32 @@ PATCH SUBMISSION GUIDELINES
 
 To contribute to BRL-CAD, begin by submitting modifications to the
 patches section at http://sf.net/projects/brlcad/.  Patches in the
-universal diff format (diff -u) are generally preferred when modifying
+unified diff format (diff -u) are generally preferred when modifying
 existing source or other text files.  Otherwise, contributors are
 welcome to submit their changes in full to the patches tracker as
 compressed file attachments.
 
 All text patches should be submitted in the unified diff format where
-it's feasible to create one either using CVS or using the unmodified
+it's feasible to create one either using SVN or using the unmodified
 original file.  This is generally the "-u" option to diff, and is also
-supported by the CVS diff command:
+supported by the SVN diff command:
 
-cvs diff -u > my_patch.diff
+svn diff > mychanges.patch
 
-Where possible, diffs should be generated against the latest CVS
-version available to make it easier to review and patch the changes
-in.  If a modification involves the addition or removal of files,
-those files should be provided separately with instructions on where
-they belong (or what should be removed).  If CVS cannot be used,
-please provide the complete release and build number of the files you
-worked with.
+Where possible, patch files should be generated against the latest
+sources available to make it easier to review and apply the changes.
+If a modification involves the addition or removal of files, those
+files can be provided separately with instructions on where they
+belong (or what should be removed).  If SVN cannot be used, please
+provide the complete release and build number of the files you worked
+with.
 
 ANY MODIFICATIONS THAT ARE PROVIDED MUST NOT MODIFY OR CONFLICT WITH
 THE EXISTING "COPYING" FILE DISTRIBUTION REQUIREMENTS.  This means
-that library modifications must be LGPL-compatible and changes to
-applications must be GPL-compatible.  Similarly, GPL libraries may NOT
-be used or otherwised linked against BRL-CAD.  Contributors are asked
-to only provide patches that may legally be incorporated into BRL-CAD
-under the existing distribution provisions described in the COPYING
-file.
+that most modifications must be LGPL-compatible.  Contributors are
+asked to only provide patches that may legally be incorporated into
+BRL-CAD under the existing distribution provisions described in the
+COPYING file.
 
 Patches that are difficult to apply are difficult to accept.
 
@@ -719,21 +738,20 @@ only.
 COMMIT ACCESS
 -------------
 
-Details on the particulars of how to interact with CVS are described
-in the doc/cvspolicy.txt document.  In brief, BRL-CAD has a STABLE
-branch in CVS that should always compile and run with expected
-behavior on all supported platforms.  On the contrary, while the CVS
-HEAD is generally always expected to compile, more flexibility is
-allowed for resolution of cross-platform build issues and on-going
-development.  Read the aforementioned CVS policy document for more
-details.
+BRL-CAD has a STABLE branch in SVN that should always compile and run
+with expected behavior on all supported platforms.  Contrary to
+STABLE, the SVN trunk is generally expected to compile but more
+flexibility is allowed for resolution of cross-platform build issues
+and on-going development.
 
 Commit access is evaluated on a person-to-person basis at the
-discretion of existing contributors.  If you would like to have commit
-access, there is usually no need to ask.  Getting involved with the
-other contributors and making patches will generally result in
-automatic consideration for commit access.  If you have to ask for it,
-you probably won't get it.
+discretion of existing contributors, but generally readily granted so
+long as there is an existing developer with commit access willing to
+mentor the new developer.  If you would like to have commit access,
+there is usually no need to ask -- they will ask you.  Getting
+involved with the other contributors and making patches will generally
+result in automatic consideration for commit access.  If you have to
+ask for it, you probably won't get it.
 
 Those with commit access have a responsibility to ensure that other
 developers are following the guidelines that have been described in
@@ -769,7 +787,7 @@ maintainability, and portability of the source code at all times.
 
 2) Bugs, typos, and compilation errors are to be expected as part of
 the process of active software development and documentation, but it
-is ultimately unacceptible to allow them to persist.  If it is
+is ultimately unacceptable to allow them to persist.  If it is
 discovered that a recent modification introduces a new problem, such
 as causing a compilation portability failure, then it is the
 responsibility of the contributor that introduced the change to assist
@@ -807,8 +825,8 @@ VERSION NUMBERS & COMPATIBILITY
 -------------------------------
 
 The BRL-CAD version number is in the include/conf directory in the
-MAJOR, MINOR, and PATCH files.  The README, ChangeLog, HISTORY files
-as well as a variety of documents in the doc/ directory may also make
+MAJOR, MINOR, and PATCH files.  The README, ChangeLog, NEWS files as
+well as a variety of documents in the doc/ directory may also make
 references to version numbers.  See the MAKING A RELEASE steps listed
 below for a more concise list of what needs to be updated.
 
@@ -832,10 +850,7 @@ The MINOR_VERSION is updated more frequently and serves the dual role
 as previously mentioned of easily identifying a build as a public
 release.  A minor version update is generally issued after significant
 development activity (generally several months of activity) has been
-tested and deemed sufficiently stable.  When a stable release is made,
-it may (but not necessarily) be tagged as a maintenance branch in CVS
-(see doc/cvspolicy.txt) with patch releases being performed on that
-branch.
+tested and deemed sufficiently stable.
 
 The PATCH_VERSION may and should be updated as frequently as is
 necessary.  Every public maintenance release should increment the
@@ -868,7 +883,7 @@ major or minor version of BRL-CAD is going to be updated, it is very
 important to follow and ensure that the following steps have been
 successfully performed:
 
-0) All code is committed to CVS.
+0) All code is committed to SVN.
 
 1) Verify that the NEWS file includes a comment for all relevant and
 significant items added since the previous release.
@@ -884,7 +899,7 @@ COMPATIBILITY section.  Commit the changes to the source repository.
 the updated ChangeLog.  Use the YYYY-MM-DD of the previous release.
 Get the date from the NEWS file.
 
-    rcs2log -h users.sourceforge.net -r "-d>YYYY-MM-DD" | fold -s > ChangeLog
+    svn2cl.sh --break-before-msg -r {YYYY-MM-DD}:HEAD
 
 5) A "./configure && make" completes successfully on all platforms.
 
@@ -893,15 +908,16 @@ proper source distribution tarball may be generated and that a build
 should compile properly regardless of the existence of the GNU Build
 System tools (autoconf, automake, etc).
 
-7) Tag the release using the format "rel-MAJOR-MINOR-PATCH".  See the
-doc/cvspolicy.txt document for details.  e.g. cvs tag rel-7-2-4
+7) Tag the release using "rel-MAJOR-MINOR-PATCH" format.  See the
+doc/cvspolicy.txt file for details.  e.g. svn cp trunk tags/rel-7-2-4
 
-8) Export a tagged version of the sources (required so that RCS ids
-are correct):  cvs export -r rel-MAJOR-MINOR-PATCH brlcad
+8) Checkout a tagged version of the sources (required so that the
+source distribution is correct):
+svn checkout https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/tags/rel-MAJOR-MINOR-PATCH brlcad
 
-9) Perform another "make distcheck" on the exported/updated sources
-(preferably on Mac OS X) to generate the distributable compressed
-source tarballs.
+9) Perform another "make distcheck" on the exported/updated sources on
+a system with the latest GNU Autotools installed to generate the
+distributable compressed source tarballs.
 
 10) Verify that the source distribution tarballs may be expanded; and
 that they build, run, and that the file permissions are correct.
@@ -913,7 +929,7 @@ platform-specific builds.  Test the build:  make test && make bench
 SourceForge (i.e. upload them via ftp to upload.sf.net's incoming
 directory and select them on the sf.net File Release System).
 
-13) Increment and commit the next BRL-CAD release numbers to CVS;
+13) Increment and commit the next BRL-CAD release numbers to SVN;
 update the include/conf/(MAJOR|MINOR|PATCH) version files, and NEWS
 immediately to an odd-numbered minor version or a new patch developer
 version (e.g. 7.11.0 or 7.4.1).  Update the README version to next
@@ -958,10 +974,6 @@ Linux binary release:
       cad-linux@freelists.org
 	with news details
 
-      Dutch CAD for Linux portal
-      news@cad4linux.nl
-	short without news details (preferably in Dutch)
-
       Linux Softpedia
       http://linux.softpedia.com/get/Multimedia/Graphics/BRL-CAD-105.shtml
 
@@ -1005,6 +1017,9 @@ Multiple platform binary release:
       Joab Jackson
       jjackson@gcn.com
 	short without news details
+
+      DevMaster.net (if major and engine-related)
+      http://www.devmaster.net/news/submit.php
 
 15) Sit back and enjoy a beverage for a job well done.
 

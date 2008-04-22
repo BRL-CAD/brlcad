@@ -1,7 +1,7 @@
 #                       A P P L Y . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2007 United States Government as represented by
+# Copyright (c) 2004-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -44,7 +44,7 @@ proc mged_apply_active { id cmd } {
     global mged_gui
 
     winset $mged_gui($id,active_dm)
-    catch { uplevel #0 $cmd } msg
+    catch { uplevel \#0 $cmd } msg
 
     return $msg
 }
@@ -53,16 +53,16 @@ proc mged_apply_local { id cmd } {
     global mged_gui
 
     winset $mged_gui($id,top).ul
-    catch { uplevel #0 $cmd } msg
+    catch { uplevel \#0 $cmd } msg
 
     winset $mged_gui($id,top).ur
-    catch { uplevel #0 $cmd } msg
+    catch { uplevel \#0 $cmd } msg
 
     winset $mged_gui($id,top).ll
-    catch { uplevel #0 $cmd } msg
+    catch { uplevel \#0 $cmd } msg
 
     winset $mged_gui($id,top).lr
-    catch { uplevel #0 $cmd } msg
+    catch { uplevel \#0 $cmd } msg
 
     winset $mged_gui($id,active_dm)
 
@@ -75,7 +75,7 @@ proc mged_apply_using_list { id cmd } {
     set msg ""
     foreach dm $mged_gui($id,apply_list) {
 	winset $dm
-	catch { uplevel #0 $cmd } msg
+	catch { uplevel \#0 $cmd } msg
     }
 
     winset $mged_gui($id,active_dm)
@@ -87,7 +87,7 @@ proc mged_apply_all { win cmd } {
     set msg ""
     foreach dm [get_dm_list] {
 	winset $dm
-	catch { uplevel #0 $cmd } msg
+	catch { uplevel \#0 $cmd } msg
     }
 
     winset $win

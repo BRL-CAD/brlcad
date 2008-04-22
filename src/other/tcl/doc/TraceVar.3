@@ -62,7 +62,6 @@ If non-NULL, gives last value returned by \fBTcl_VarTraceInfo\fR or
 next trace.  If NULL, this call will return information about first
 trace.
 .BE
-
 .SH DESCRIPTION
 .PP
 \fBTcl_TraceVar\fR allows a C procedure to monitor and control
@@ -70,7 +69,7 @@ access to a Tcl variable, so that the C procedure is invoked
 whenever the variable is read or written or unset.
 If the trace is created successfully then \fBTcl_TraceVar\fR returns
 \fBTCL_OK\fR.  If an error occurred (e.g. \fIvarName\fR specifies an element
-of an array, but the actual variable isn't an array) then \fBTCL_ERROR\fR
+of an array, but the actual variable is not an array) then \fBTCL_ERROR\fR
 is returned and an error message is left in the interpreter's result.
 .PP
 The \fIflags\fR argument to \fBTcl_TraceVar\fR indicates when the
@@ -188,7 +187,7 @@ argument.
 If the \fIprevClientData\fR argument is NULL then the return
 value corresponds to the first (most recently created) matching
 trace, or NULL if there are no matching traces.
-If the \fIprevClientData\fR argument isn't NULL, then it should
+If the \fIprevClientData\fR argument is not NULL, then it should
 be the return value from a previous call to \fBTcl_VarTraceInfo\fR.
 In this case, the new return value will correspond to the next
 matching trace after the one whose \fIclientData\fR matches
@@ -196,7 +195,6 @@ matching trace after the one whose \fIclientData\fR matches
 or if there are no more matching traces after it.
 This mechanism makes it possible to step through all of the
 traces for a given variable that have the same \fIproc\fR.
-
 .SH "TWO-PART NAMES"
 .PP
 The procedures \fBTcl_TraceVar2\fR, \fBTcl_UntraceVar2\fR, and
@@ -213,13 +211,10 @@ treated as an element name (which can have any string value) and
 the characters before the first open
 parenthesis are treated as the name of an array variable.
 If \fIname2\fR is NULL and \fIname1\fR does not refer
-to an array element 
-it means that either the variable is
+to an array element it means that either the variable is
 a scalar or the trace is to be set on the entire array rather
 than an individual element (see WHOLE-ARRAY TRACES below for
 more information). 
-
-
 .SH "ACCESSING VARIABLES DURING TRACES"
 .PP
 During read, write, and array traces, the
@@ -245,7 +240,6 @@ from the variable before any trace procedures are invoked.
 If new traces are set by unset trace procedures, these traces
 will be invoked on accesses to the variable by the trace
 procedures.
-
 .SH "CALLBACK TIMING"
 .PP
 When read tracing has been specified for a variable, the trace
@@ -285,7 +279,6 @@ When unset tracing has been specified, the trace procedure
 will be invoked whenever the variable is destroyed.
 The traces will be called after the variable has been
 completely unset.
-
 .SH "WHOLE-ARRAY TRACES"
 .PP
 If a call to \fBTcl_TraceVar\fR or \fBTcl_TraceVar2\fR specifies
@@ -298,7 +291,6 @@ When an array is unset, a whole-array trace will be invoked
 just once, with \fIname1\fR equal to the name of the array
 and \fIname2\fR NULL;  it will not be invoked once for each
 element.
-
 .SH "MULTIPLE TRACES"
 .PP
 It is possible for multiple traces to exist on the same variable.
@@ -310,7 +302,6 @@ before the individual-element traces.
 If a read or write trace unsets the variable then all of the unset
 traces will be invoked but the remainder of the read and write traces
 will be skipped.
-
 .SH "ERROR RETURNS"
 .PP
 Under normal conditions trace procedures should return NULL, indicating
@@ -337,7 +328,6 @@ The return value from \fIproc\fR is only used during read and
 write tracing.
 During unset traces, the return value is ignored and all relevant
 trace procedures will always be invoked.
-
 .SH "RESTRICTIONS"
 .PP
 A trace procedure can be called at any time, even when there
@@ -346,26 +336,24 @@ the trace procedure does anything that could damage this result (such
 as calling \fBTcl_Eval\fR) then it must save the original values of
 the interpreter's \fBresult\fR and \fBfreeProc\fR fields and restore
 them before it returns.
-
 .SH "UNDEFINED VARIABLES"
 .PP
 It is legal to set a trace on an undefined variable.
 The variable will still appear to be undefined until the
 first time its value is set.
 If an undefined variable is traced and then unset, the unset will fail
-with an error (``no such variable''), but the trace
-procedure will still be invoked.
-
+with an error
+.PQ "no such variable" "" ,
+but the trace procedure will still be invoked.
 .SH "TCL_TRACE_DESTROYED FLAG"
 .PP
 In an unset callback to \fIproc\fR, the \fBTCL_TRACE_DESTROYED\fR bit
 is set in \fIflags\fR if the trace is being removed as part
 of the deletion.
 Traces on a variable are always removed whenever the variable
-is deleted;  the only time \fBTCL_TRACE_DESTROYED\fR isn't set is for
+is deleted;  the only time \fBTCL_TRACE_DESTROYED\fR is not set is for
 a whole-array trace invoked when only a single element of an
 array is unset.
-
 .SH "TCL_INTERP_DESTROYED"
 .PP
 When an interpreter is destroyed, unset traces are called for
@@ -378,15 +366,13 @@ It is not safe for the procedures to invoke any Tcl procedures
 on the interpreter, since its state is partially deleted.
 All that trace procedures should do under these circumstances is
 to clean up and free their own internal data structures.
-
 .SH BUGS
 .PP
-Tcl doesn't do any error checking to prevent trace procedures
+Tcl does not do any error checking to prevent trace procedures
 from misusing the interpreter during traces with \fBTCL_INTERP_DESTROYED\fR
 set.
 .PP
-Array traces are not yet integrated with the Tcl "info exists" command,
+Array traces are not yet integrated with the Tcl \fBinfo exists\fR command,
 nor is there Tcl-level access to array traces.
-
 .SH KEYWORDS
 clientData, trace, variable

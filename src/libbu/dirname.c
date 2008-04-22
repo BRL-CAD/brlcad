@@ -1,7 +1,7 @@
 /*                      D I R N A M E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,19 +27,10 @@
  * @author      Christopher Sean Morrison
  */
 
-#ifndef lint
-static const char RCSmalloc[] = "@(#)$Header$ (ARL)";
-#endif
-
 #include "common.h"
 
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
 
-#include "machine.h"
 #include "bu.h"
 
 
@@ -70,12 +61,12 @@ bu_dirname(const char *cp)
     int	len;
 
     /* Special cases */
-    if( cp == NULL )  return bu_strdup(".");
-    if( strcmp( cp, "/" ) == 0 )
+    if ( cp == NULL )  return bu_strdup(".");
+    if ( strcmp( cp, "/" ) == 0 )
 	return bu_strdup("/");
-    if( strcmp( cp, "." ) == 0 ||
-	strcmp( cp, ".." ) == 0 ||
-	strrchr(cp, '/') == NULL )
+    if ( strcmp( cp, "." ) == 0 ||
+	 strcmp( cp, ".." ) == 0 ||
+	 strrchr(cp, '/') == NULL )
 	return bu_strdup(".");
 
     /* Make a duplicate copy of the string, and shorten it in place */
@@ -83,16 +74,16 @@ bu_dirname(const char *cp)
 
     /* A trailing slash doesn't count */
     len = strlen(ret);
-    if( ret[len-1] == '/' )  ret[len-1] = '\0';
+    if ( ret[len-1] == '/' )  ret[len-1] = '\0';
 
     /* If no slashes remain, return "." */
-    if( (slash = strrchr(ret, '/')) == NULL )  {
+    if ( (slash = strrchr(ret, '/')) == NULL )  {
 	bu_free( ret, "bu_dirname" );
 	return bu_strdup(".");
     }
 
     /* Remove trailing slash, unless it's at front */
-    if( slash == ret )
+    if ( slash == ret )
 	ret[1] = '\0';		/* ret == "/" */
     else
 	*slash = '\0';
@@ -106,8 +97,8 @@ bu_dirname(const char *cp)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

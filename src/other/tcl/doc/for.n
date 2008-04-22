@@ -12,7 +12,7 @@
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
-for \- ``For'' loop
+for \- 'For' loop
 .SH SYNOPSIS
 \fBfor \fIstart test next body\fR
 .BE

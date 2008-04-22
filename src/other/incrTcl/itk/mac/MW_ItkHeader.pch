@@ -4,7 +4,7 @@
  *  This file is the source for a pre-compilied header that gets used
  *  for all files in the Tk projects.  This make compilies go a bit
  *  faster.  This file is only intended to be used in the MetroWerks
- *  CodeWarrior environment.  It essentially acts as a place to set 
+ *  CodeWarrior environment.  It essentially acts as a place to set
  *  compiler flags.  See MetroWerks documention for more details.
  *
  * Copyright (c) 1995-1996 Sun Microsystems, Inc.
@@ -31,7 +31,7 @@
 
 /*
  * Macintosh Tcl must be compiled with certain compiler options to
- * ensure that it will work correctly.  The following pragmas are 
+ * ensure that it will work correctly.  The following pragmas are
  * used to ensure that those options are set correctly.  An error
  * will occur at compile time if they are not set correctly.
  */

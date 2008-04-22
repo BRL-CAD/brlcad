@@ -8,7 +8,7 @@
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 # 
 # Copyright (c) 2001-2003 David Gravereaux.
-# Copyright (c) 2003-2006 Patrick Thoyts
+# Copyright (c) 2003-2007 Patrick Thoyts
 #
 #------------------------------------------------------------------------------
 # RCS: @(#) $Id$
@@ -50,6 +50,7 @@ CFG_ENCODING	= \"cp1252\"
 
 !if "$(OS)" == "Windows_NT"
 RMDIR	= rmdir /S /Q
+ERRNULL  = 2>NUL
 !if ![ver | find "4.0" > nul]
 CPY	= echo y | xcopy /i >NUL
 COPY	= copy >NUL
@@ -61,9 +62,10 @@ COPY	= copy /y >NUL
 CPY	= xcopy /i >_JUNK.OUT # On Win98 NUL does not work here.
 COPY	= copy >_JUNK.OUT # On Win98 NUL does not work here.
 RMDIR	= deltree /Y
+NULL    = \NUL # Used in testing directory existence
+ERRNULL = >NUL # Win9x shell cannot redirect stderr
 !endif
 MKDIR   = mkdir
-COPY    = copy /y >NUL
 
 !message ===============================================================================
 
@@ -86,7 +88,7 @@ COPY    = copy /y >NUL
 !message *** Compiler has 'Optimizations'
 OPTIMIZING	= 1
 !else
-!message *** Compiler doesn't have 'Optimizations'
+!message *** Compiler does not have 'Optimizations'
 OPTIMIZING	= 0
 !endif
 
@@ -104,12 +106,8 @@ OPTIMIZATIONS  = $(OPTIMIZATIONS) -Oi
 OPTIMIZATIONS  = $(OPTIMIZATIONS) -Op
 !endif
 
-!if [nmakehlp -c -fp:precise]
-OPTIMIZATIONS  = $(OPTIMIZATIONS) -fp:precise
-!endif
-
-!if [nmakehlp -c -fp:except]
-OPTIMIZATIONS  = $(OPTIMIZATIONS) -fp:except
+!if [nmakehlp -c -fp:strict]
+OPTIMIZATIONS  = $(OPTIMIZATIONS) -fp:strict
 !endif
 
 !if [nmakehlp -c -Gs]
@@ -147,7 +145,7 @@ OPTIMIZATIONS  = $(OPTIMIZATIONS) -YX
 !message *** Compiler has 'Pentium 0x0f fix'
 COMPILERFLAGS  = $(COMPILERFLAGSS) -QI0f
 !else
-!message *** Compiler doesn't have 'Pentium 0x0f fix'
+!message *** Compiler does not have 'Pentium 0x0f fix'
 !endif
 !endif
 
@@ -167,7 +165,7 @@ COMPILERFLAGS   = $(COMPILERFLAGS) -QIA64_Bx
 !message *** Linker has 'Win98 alignment problem'
 ALIGN98_HACK	= 1
 !else
-!message *** Linker doesn't have 'Win98 alignment problem'
+!message *** Linker does not have 'Win98 alignment problem'
 ALIGN98_HACK	= 0
 !endif
 !else
@@ -187,16 +185,25 @@ LINKERFLAGS     =-ltcg
 
 _VC_MANIFEST_EMBED_EXE=
 _VC_MANIFEST_EMBED_DLL=
-!if ![cl /Zs /Tc NUL 2>&1 | find "Version 12" > NUL]
-VCVER=6
-!elseif ![cl /Zs /Tc NUL 2>&1 | find "Version 13" > NUL]
-VCVER=7
-!elseif ![cl /Zs /Tc NUL 2>&1 | find "Version 14" > NUL]
+VCVER=0
+!if ![echo VCVERSION=_MSC_VER > vercl.x] \
+    && ![cl -nologo -TC -P vercl.x $(ERRNULL)]
+!include vercl.i
+!if $(VCVERSION) >= 1500
+VCVER=9
+!elseif $(VCVERSION) >= 1400
 VCVER=8
+!elseif $(VCVERSION) >= 1300
+VCVER=7
+!elseif $(VCVERSION) >= 1200
+VCVER=6
+!endif
+!endif
+
+# Since MSVC8 we must deal with manifest resources.
+!if $(VCVERSION) >= 1400
 _VC_MANIFEST_EMBED_EXE=if exist $@.manifest mt -nologo -manifest $@.manifest -outputresource:$@;1
 _VC_MANIFEST_EMBED_DLL=if exist $@.manifest mt -nologo -manifest $@.manifest -outputresource:$@;2
-!else
-VCVER=0
 !endif
 
 #----------------------------------------------------------
@@ -213,7 +220,6 @@ LOIMPACT	= 0
 TCL_USE_STATIC_PACKAGES	= 0
 USE_THREAD_ALLOC = 0
 UNCHECKED	= 0
-HAVE_UXTHEME_H  = 1
 !else
 !if [nmakehlp -f $(OPTS) "static"]
 !message *** Doing static
@@ -268,12 +274,6 @@ USE_THREAD_ALLOC = 0
 UNCHECKED = 1
 !else
 UNCHECKED = 0
-!endif
-!if [nmakehlp -f $(OPTS) "noxp"]
-!message *** Exclude support for XP theme
-HAVE_UXTHEME_H  = 0
-!else
-HAVE_UXTHEME_H  = 1
 !endif
 !endif
 
@@ -386,7 +386,7 @@ TCL_COMPILE_DEBUG   = 0
 
 !if "$(CHECKS)" == "" || [nmakehlp -f "$(CHECKS)" "none"]
 TCL_NO_DEPRECATED	    = 0
-FULLWARNINGS		    = 0
+WARNINGS		    = -W3
 !else
 !if [nmakehlp -f $(CHECKS) "nodep"]
 !message *** Doing nodep check
@@ -396,12 +396,18 @@ TCL_NO_DEPRECATED	    = 0
 !endif
 !if [nmakehlp -f $(CHECKS) "fullwarn"]
 !message *** Doing full warnings check
-FULLWARNINGS		    = 1
+WARNINGS		    = -W4
+!if [nmakehlp -l -warn:3]
+LINKERFLAGS		    = $(LINKERFLAGS) -warn:3
+!endif
 !else
-FULLWARNINGS		    = 0
+WARNINGS		    = -W3
+!endif
+!if [nmakehlp -f $(CHECKS) "64bit"] && [nmakehlp -c -Wp64]
+!message *** Doing 64bit portability warnings
+WARNINGS		    = $(WARNINGS) -Wp64
 !endif
 !endif
-
 
 #----------------------------------------------------------
 # Set our defines now armed with our options.
@@ -442,16 +448,26 @@ OPTDEFINES	= $(OPTDEFINES) -DTCL_CFG_DO64BIT
 
 
 #----------------------------------------------------------
-# Get common info used when building extensions.
+# Locate the Tcl headers to build against
 #----------------------------------------------------------
 
-!if "$(PROJECT)" != "tcl"
+!if "$(PROJECT)" == "tcl"
+
+_TCL_H          = ..\generic\tcl.h
+
+!else
+
+# If INSTALLDIR set to tcl root dir then reset to the lib dir.
+!if exist("$(_INSTALLDIR)\include\tcl.h")
+_INSTALLDIR=$(_INSTALLDIR)\lib
+!endif
 
 !if !defined(TCLDIR)
-!if exist("$(_INSTALLDIR)\include\tcl.h")
-TCLH		= "$(_INSTALLDIR)\include\tcl.h"
+!if exist("$(_INSTALLDIR)\..\include\tcl.h")
 TCLINSTALL	= 1
-_TCLDIR		= $(_INSTALLDIR)
+_TCLDIR		= $(_INSTALLDIR)\..
+_TCL_H          = $(_INSTALLDIR)\..\include\tcl.h
+TCLDIR          = $(_INSTALLDIR)\..
 !else
 MSG=^
 Failed to find tcl.h.  Set the TCLDIR macro.
@@ -460,48 +476,64 @@ Failed to find tcl.h.  Set the TCLDIR macro.
 !else
 _TCLDIR	= $(TCLDIR:/=\)
 !if exist("$(_TCLDIR)\include\tcl.h")
-TCLH		= "$(_TCLDIR)\include\tcl.h"
 TCLINSTALL	= 1
+_TCL_H          = $(_TCLDIR)\include\tcl.h
 !elseif exist("$(_TCLDIR)\generic\tcl.h")
-TCLH		= "$(_TCLDIR)\generic\tcl.h"
 TCLINSTALL	= 0
+_TCL_H          = $(_TCLDIR)\generic\tcl.h
 !else
 MSG =^
 Failed to find tcl.h.  The TCLDIR macro does not appear correct.
 !error $(MSG)
 !endif
 !endif
-
-#----------------------------------------------------------
-# Get the version from the header file.  Try all possibles
-# even though some aren't fully valid.
-#----------------------------------------------------------
-
-!if [nmakehlp -g $(TCLH) TCL_VERSION] == 76
-TCL_DOTVERSION	= 7.6
-!elseif [nmakehlp -g $(TCLH) TCL_VERSION] == 80
-TCL_DOTVERSION	= 8.0
-!elseif [nmakehlp -g $(TCLH) TCL_VERSION] == 81
-TCL_DOTVERSION	= 8.1
-!elseif [nmakehlp -g $(TCLH) TCL_VERSION] == 82
-TCL_DOTVERSION	= 8.2
-!elseif [nmakehlp -g $(TCLH) TCL_VERSION] == 83
-TCL_DOTVERSION	= 8.3
-!elseif [nmakehlp -g $(TCLH) TCL_VERSION] == 84
-TCL_DOTVERSION	= 8.4
-!elseif [nmakehlp -g $(TCLH) TCL_VERSION] == 85
-TCL_DOTVERSION	= 8.5
-!elseif [nmakehlp -g $(TCLH) TCL_VERSION] == 86
-TCL_DOTVERSION	= 8.6
-!elseif [nmakehlp -g $(TCLH) TCL_VERSION] == 90
-TCL_DOTVERSION	= 9.0
-!elseif [nmakehlp -g $(TCLH) TCL_VERSION] == 0
-MSG =^
-Can't get version string from $(TCLH)
-!error $(MSG)
 !endif
 
-TCL_VERSION	= $(TCL_DOTVERSION:.=)
+#--------------------------------------------------------------
+# Extract various version numbers from tcl headers
+# The generated file is then included in the makefile.
+#--------------------------------------------------------------
+
+!if [echo REM = This file is generated from rules.vc > versions.vc]
+!endif
+!if [echo TCL_MAJOR_VERSION = \>> versions.vc] \
+   && [nmakehlp -V "$(_TCL_H)" TCL_MAJOR_VERSION >> versions.vc]
+!endif
+!if [echo TCL_MINOR_VERSION = \>> versions.vc] \
+   && [nmakehlp -V "$(_TCL_H)" TCL_MINOR_VERSION >> versions.vc]
+!endif
+!if [echo TCL_PATCH_LEVEL = \>> versions.vc] \
+   && [nmakehlp -V "$(_TCL_H)" TCL_PATCH_LEVEL >> versions.vc]
+!endif
+
+# If building the tcl core then we need additional package versions
+!if "$(PROJECT)" == "tcl"
+!if [echo PKG_HTTP_VER = \>> versions.vc] \
+   && [nmakehlp -V ..\library\http\pkgIndex.tcl http >> versions.vc]
+!endif
+!if [echo PKG_TCLTEST_VER = \>> versions.vc] \
+   && [nmakehlp -V ..\library\tcltest\pkgIndex.tcl tcltest >> versions.vc]
+!endif
+!if [echo PKG_MSGCAT_VER = \>> versions.vc] \
+   && [nmakehlp -V ..\library\msgcat\pkgIndex.tcl msgcat >> versions.vc]
+!endif
+!if [echo PKG_PLATFORM_VER = \>> versions.vc] \
+   && [nmakehlp -V ..\library\platform\pkgIndex.tcl "platform " >> versions.vc]
+!endif
+!if [echo PKG_SHELL_VER = \>> versions.vc] \
+   && [nmakehlp -V ..\library\platform\pkgIndex.tcl "platform::shell" >> versions.vc]
+!endif
+!endif
+
+!include versions.vc
+
+#--------------------------------------------------------------
+# Setup tcl version dependent stuff headers
+#--------------------------------------------------------------
+
+!if "$(PROJECT)" != "tcl"
+
+TCL_VERSION	= $(TCL_MAJOR_VERSION)$(TCL_MINOR_VERSION)
 
 !if $(TCL_VERSION) < 81
 TCL_DOES_STUBS	= 0
@@ -510,16 +542,23 @@ TCL_DOES_STUBS	= 1
 !endif
 
 !if $(TCLINSTALL)
-TCLSH		= "$(_INSTALLDIR)\bin\tclsh$(TCL_VERSION)$(SUFX).exe"
-TCLSTUBLIB	= "$(_INSTALLDIR)\lib\tclstub$(TCL_VERSION).lib"
-TCLIMPLIB	= "$(_INSTALLDIR)\lib\tcl$(TCL_VERSION)$(SUFX).lib"
-TCL_LIBRARY	= $(_INSTALLDIR)\lib
-TCLREGLIB	= "$(_INSTALLDIR)\lib\tclreg11$(SUFX:t=).lib"
-TCLDDELIB	= "$(_INSTALLDIR)\lib\tcldde12$(SUFX:t=).lib"
+TCLSH		= "$(_TCLDIR)\bin\tclsh$(TCL_VERSION)$(SUFX).exe"
+!if !exist($(TCLSH)) && $(TCL_THREADS)
+TCLSH           = "$(_TCLDIR)\bin\tclsh$(TCL_VERSION)t$(SUFX).exe"
+!endif
+TCLSTUBLIB	= "$(_TCLDIR)\lib\tclstub$(TCL_VERSION).lib"
+TCLIMPLIB	= "$(_TCLDIR)\lib\tcl$(TCL_VERSION)$(SUFX).lib"
+TCL_LIBRARY	= $(_TCLDIR)\lib
+TCLREGLIB	= "$(_TCLDIR)\lib\tclreg11$(SUFX:t=).lib"
+TCLDDELIB	= "$(_TCLDIR)\lib\tcldde12$(SUFX:t=).lib"
 COFFBASE	= \must\have\tcl\sources\to\build\this\target
 TCLTOOLSDIR	= \must\have\tcl\sources\to\build\this\target
+TCL_INCLUDES    = -I"$(_TCLDIR)\include"
 !else
 TCLSH		= "$(_TCLDIR)\win\$(BUILDDIRTOP)\tclsh$(TCL_VERSION)$(SUFX).exe"
+!if !exist($(TCLSH)) && $(TCL_THREADS)
+TCLSH		= "$(_TCLDIR)\win\$(BUILDDIRTOP)\tclsh$(TCL_VERSION)t$(SUFX).exe"
+!endif
 TCLSTUBLIB	= "$(_TCLDIR)\win\$(BUILDDIRTOP)\tclstub$(TCL_VERSION).lib"
 TCLIMPLIB	= "$(_TCLDIR)\win\$(BUILDDIRTOP)\tcl$(TCL_VERSION)$(SUFX).lib"
 TCL_LIBRARY	= $(_TCLDIR)\library
@@ -527,10 +566,85 @@ TCLREGLIB	= "$(_TCLDIR)\win\$(BUILDDIRTOP)\tclreg11$(SUFX:t=).lib"
 TCLDDELIB	= "$(_TCLDIR)\win\$(BUILDDIRTOP)\tcldde12$(SUFX:t=).lib"
 COFFBASE	= "$(_TCLDIR)\win\coffbase.txt"
 TCLTOOLSDIR	= $(_TCLDIR)\tools
+TCL_INCLUDES	= -I"$(_TCLDIR)\generic" -I"$(_TCLDIR)\win"
 !endif
 
 !endif
 
+#-------------------------------------------------------------------------
+# Locate the Tk headers to build against
+#-------------------------------------------------------------------------
+
+!if "$(PROJECT)" == "tk"
+_TK_H          = ..\generic\tk.h
+_INSTALLDIR    = $(_INSTALLDIR)\..
+!endif
+
+!ifdef PROJECT_REQUIRES_TK
+!if !defined(TKDIR)
+!if exist("$(_INSTALLDIR)\..\include\tk.h")
+TKINSTALL      = 1
+_TKDIR         = $(_INSTALLDIR)\..
+_TK_H          = $(_TKDIR)\include\tk.h
+TKDIR          = $(_TKDIR)
+!elseif exist("$(_TCLDIR)\include\tk.h")
+TKINSTALL      = 1
+_TKDIR         = $(_TCLDIR)
+_TK_H          = $(_TKDIR)\include\tk.h
+TKDIR          = $(_TKDIR)
+!endif
+!else
+_TKDIR = $(TKDIR:/=\)
+!if exist("$(_TKDIR)\include\tk.h")
+TKINSTALL      = 1
+_TK_H          = $(_TKDIR)\include\tk.h
+!elseif exist("$(_TKDIR)\generic\tk.h")
+TKINSTALL      = 0
+_TK_H          = $(_TKDIR)\generic\tk.h
+!else
+MSG =^
+Failed to find tk.h. The TKDIR macro does not appear correct.
+!error $(MSG)
+!endif
+!endif
+!endif
+
+#-------------------------------------------------------------------------
+# Extract Tk version numbers
+#-------------------------------------------------------------------------
+
+!if defined(PROJECT_REQUIRES_TK) || "$(PROJECT)" == "tk"
+
+!if [echo TK_MAJOR_VERSION = \>> versions.vc] \
+   && [nmakehlp -V $(_TK_H) TK_MAJOR_VERSION >> versions.vc]
+!endif
+!if [echo TK_MINOR_VERSION = \>> versions.vc] \
+   && [nmakehlp -V $(_TK_H) TK_MINOR_VERSION >> versions.vc]
+!endif
+!if [echo TK_PATCH_LEVEL = \>> versions.vc] \
+   && [nmakehlp -V $(_TK_H) TK_PATCH_LEVEL >> versions.vc]
+!endif
+
+!include versions.vc
+
+TK_DOTVERSION	= $(TK_MAJOR_VERSION).$(TK_MINOR_VERSION)
+TK_VERSION	= $(TK_MAJOR_VERSION)$(TK_MINOR_VERSION)
+
+!if "$(PROJECT)" != "tk"
+!if $(TKINSTALL)
+WISH		= "$(_TKDIR)\bin\wish$(TK_VERSION)$(SUFX).exe"
+TKSTUBLIB	= "$(_TKDIR)\lib\tkstub$(TK_VERSION).lib"
+TKIMPLIB	= "$(_TKDIR)\lib\tk$(TK_VERSION)$(SUFX).lib"
+TK_INCLUDES     = -I"$(_TKDIR)\include"
+!else
+WISH		= "$(_TKDIR)\win\$(BUILDDIRTOP)\wish$(TCL_VERSION)$(SUFX).exe"
+TKSTUBLIB	= "$(_TKDIR)\win\$(BUILDDIRTOP)\tkstub$(TCL_VERSION).lib"
+TKIMPLIB	= "$(_TKDIR)\win\$(BUILDDIRTOP)\tk$(TCL_VERSION)$(SUFX).lib"
+TK_INCLUDES     = -I"$(_TKDIR)\generic" -I"$(_TKDIR)\win" -I"$(_TKDIR)\xlib"
+!endif
+!endif
+
+!endif
 
 #----------------------------------------------------------
 # Display stats being used.
@@ -540,8 +654,8 @@ TCLTOOLSDIR	= $(_TCLDIR)\tools
 !message *** Output directory will be '$(OUT_DIR)'
 !message *** Suffix for binaries will be '$(SUFX)'
 !message *** Optional defines are '$(OPTDEFINES)'
-!message *** Compiler version $(VCVER)
-!message *** Compiler options '$(OPTIMIZATIONS) $(DEBUGFLAGS)'
+!message *** Compiler version $(VCVER). Target machine is $(MACHINE)
+!message *** Compiler options '$(COMPILERFLAGS) $(OPTIMIZATIONS) $(DEBUGFLAGS) $(WARNINGS)'
 !message *** Link options '$(LINKERFLAGS)'
 
 !endif

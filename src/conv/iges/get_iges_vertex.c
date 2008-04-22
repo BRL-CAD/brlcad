@@ -1,7 +1,7 @@
 /*               G E T _ I G E S _ V E R T E X . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2007 United States Government as represented by
+ * Copyright (c) 1995-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,53 +18,43 @@
  * information.
  */
 /** @file get_iges_vertex.c
- *  Authors -
- *	John R. Anderson
- *
- *  Source -
- *	SLAD/BVLD/VMB
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
 struct iges_vertex *
 Get_iges_vertex( v )
-struct vertex *v;
+    struct vertex *v;
 {
-	struct iges_vertex_list *vert_list;
+    struct iges_vertex_list *vert_list;
 
-	NMG_CK_VERTEX( v );
+    NMG_CK_VERTEX( v );
 
-	vert_list = vertex_root;
+    vert_list = vertex_root;
 
-	while( vert_list )
+    while ( vert_list )
+    {
+	int vert_no;
+
+	for ( vert_no=0; vert_no < vert_list->no_of_verts; vert_no++ )
 	{
-		int vert_no;
-
-		for( vert_no=0 ; vert_no < vert_list->no_of_verts ; vert_no++ )
-		{
-			if( vert_list->i_verts[vert_no].v == v )
-				return( &(vert_list->i_verts[vert_no]) );
-		}
-		vert_list = vert_list->next;
+	    if ( vert_list->i_verts[vert_no].v == v )
+		return( &(vert_list->i_verts[vert_no]) );
 	}
+	vert_list = vert_list->next;
+    }
 
-	return( (struct iges_vertex *)NULL );
+    return( (struct iges_vertex *)NULL );
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -96,7 +96,7 @@
 #define DMBIN_CASSETTE      14
 #define DMBIN_FORMSOURCE    15
 
-#ifndef DMBIN_LAST 
+#ifndef DMBIN_LAST
 #define DMBIN_LAST          DMBIN_FORMSOURCE
 #endif /*DMBIN_LAST*/
 

@@ -177,7 +177,7 @@ test scrollbar-3.13 {ScrollbarWidgetCmd procedure, "cget" option} win {
 } {0 0}
 test scrollbar-3.14 {ScrollbarWidgetCmd procedure, "cget" option} {unix notAqua} {
     list [catch {.s2 cget -highlightthickness} msg] $msg
-} {0 1}
+} {0 0}
 test scrollbar-3.14.1 {ScrollbarWidgetCmd procedure, "cget" option} aqua {
     list [catch {.s2 cget -highlightthickness} msg] $msg
 } {0 0}

@@ -1,7 +1,7 @@
 /*                       D B _ O P E N . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2007 United States Government as represented by
+ * Copyright (c) 1988-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,40 +21,25 @@
 /** @{ */
 /** @file db_open.c
  *
- * Functions -
- *	db_open		Open the database
- *	db_create	Create a new database
- *	db_close	Close a database, releasing dynamic memory
- *	db_clone_dbi	Clone a given database instance
- *
- *  Authors -
- *	Michael John Muuss
- *	Robert Jon Reschly Jr.
+ * Routines for opening, creating, and replicating BRL-CAD geometry
+ * database files.  BRL-CAD geometry database files are managed in a
+ * given application through a "database instance" (dbi).  An
+ * application may maintain multiple database instances open to a
+ * given geometry database file.
  *
  */
 
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
-
 #include "common.h"
 
-#include <stdio.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
+#include <string.h>
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
 #endif
-#include <fcntl.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
+#ifdef HAVE_SYS_STAT_H
+#  include <sys/stat.h>
 #endif
-#ifdef HAVE_UNIX_IO
-# include <sys/types.h>
-# include <sys/stat.h>
-#endif
+#include "bio.h"
 
-#include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "db.h"
@@ -63,7 +48,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./debug.h"
 
 #ifndef SEEK_SET
-# define SEEK_SET	0
+#  define SEEK_SET	0
 #endif
 
 #define DEFAULT_DB_TITLE "Untitled BRL-CAD Database"
@@ -97,18 +82,29 @@ db_open(const char *name, const char *mode)
     }
 
     if (mode && mode[0] == 'r' && mode[1] == '\0') {
+	/* Read-only mode */
+
 	struct bu_mapped_file	*mfp;
 
-	/* Read-only mode */
 	mfp = bu_open_mapped_file( name, "db_i" );
-	if (mfp == NULL)
-	    goto fail;
+	if (mfp == NULL) {
+	    if (RT_G_DEBUG & DEBUG_DB) {
+		bu_log("db_open(%s) FAILED, unable to open as a mapped file\n", name);
+	    }
+	    return DBI_NULL;
+	}
 
 	/* Is this a re-use of a previously mapped file? */
 	if (mfp->apbuf) {
 	    dbip = (struct db_i *)mfp->apbuf;
 	    RT_CK_DBI(dbip);
 	    dbip->dbi_uses++;
+
+	    /*
+	     * decrement the mapped file reference counter by 1,
+	     * references are already counted in dbip->dbi_uses
+	     */
+	    bu_close_mapped_file(mfp);
 
 	    if (RT_G_DEBUG & DEBUG_DB) {
 		bu_log("db_open(%s) dbip=x%x: reused previously mapped file\n", name, dbip);
@@ -123,38 +119,35 @@ db_open(const char *name, const char *mode)
 	dbip->dbi_inmem = mfp->buf;
 	dbip->dbi_mf->apbuf = (genptr_t)dbip;
 
-#ifdef HAVE_UNIX_IO
 	/* Do this too, so we can seek around on the file */
-	if( (dbip->dbi_fd = open( name, O_RDONLY )) < 0 )
-	    goto fail;
-	if( (dbip->dbi_fp = fdopen( dbip->dbi_fd, "rb" )) == NULL )
-	    goto fail;
-#else /* HAVE_UNIX_IO */
-	if( (dbip->dbi_fp = fopen( name, "rb")) == NULL )
-	    goto fail;
-	dbip->dbi_fd = -1;
-#endif
+	if ((dbip->dbi_fp = fopen( name, "rb")) == NULL) {
+	    if (RT_G_DEBUG & DEBUG_DB) {
+		bu_log("db_open(%s) FAILED, unable to open file for reading\n", name);
+	    }
+	    bu_free( (char *)dbip, "struct db_i" );
+	    return DBI_NULL;
+	}
+
 	dbip->dbi_read_only = 1;
     }  else  {
 	/* Read-write mode */
+
 	BU_GETSTRUCT( dbip, db_i );
 	dbip->dbi_eof = -1L;
 
-#ifdef HAVE_UNIX_IO
-	if( (dbip->dbi_fd = open( name, O_RDWR )) < 0 )
-	    goto fail;
-	if( (dbip->dbi_fp = fdopen( dbip->dbi_fd, "r+w" )) == NULL )
-	    goto fail;
-#else /* HAVE_UNIX_IO */
-	if( (dbip->dbi_fp = fopen( name, "r+b")) == NULL )
-	    goto fail;
-	dbip->dbi_fd = -1;
-#endif
+	if ( (dbip->dbi_fp = fopen( name, "r+b")) == NULL ) {
+	    if (RT_G_DEBUG & DEBUG_DB) {
+		bu_log("db_open(%s) FAILED, unable to open file for reading/writing\n", name);
+	    }
+	    bu_free( (char *)dbip, "struct db_i" );
+	    return DBI_NULL;
+	}
+
 	dbip->dbi_read_only = 0;
     }
 
     /* Initialize fields */
-    for( i=0; i<RT_DBNHASH; i++ )
+    for ( i=0; i<RT_DBNHASH; i++ )
 	dbip->dbi_Head[i] = DIR_NULL;
 
     dbip->dbi_local2base = 1.0;		/* mm */
@@ -183,27 +176,8 @@ db_open(const char *name, const char *mode)
     }
 
     return dbip;
-
- fail:
-    if (RT_G_DEBUG & DEBUG_DB) {
-	bu_log("db_open(%s) FAILED\n", name);
-    }
-
-    if (dbip && dbip->dbi_fd >= 0) {
-	(void)close(dbip->dbi_fd);
-	dbip->dbi_fd = -1;
-    }
-    if (dbip && dbip->dbi_fp) {
-	(void)fclose(dbip->dbi_fp);
-	dbip->dbi_fp = (FILE *)NULL;
-    }
-
-    if (dbip) {
-	bu_free( (char *)dbip, "struct db_i" );
-    }
-
-    return DBI_NULL;
 }
+
 
 /**
  *			D B _ C R E A T E
@@ -252,15 +226,16 @@ db_create(const char *name,
     if (result < 0)
 	return DBI_NULL;
 
-    if( (dbip = db_open( name, "r+w" ) ) == DBI_NULL )
+    if ( (dbip = db_open( name, "r+w" ) ) == DBI_NULL )
 	return DBI_NULL;
 
     /* Do a quick scan to determine version, find _GLOBAL, etc. */
-    if( db_dirbuild( dbip ) < 0 )
+    if ( db_dirbuild( dbip ) < 0 )
 	return DBI_NULL;
 
     return dbip;
 }
+
 
 /**
  *			D B _ C L O S E _ C L I E N T
@@ -278,6 +253,7 @@ db_close_client(struct db_i *dbip, long int *client)
     db_close(dbip);
 }
 
+
 /**
  *			D B _ C L O S E
  *
@@ -291,11 +267,11 @@ db_close(register struct db_i *dbip)
     register struct directory *dp, *nextdp;
 
     RT_CK_DBI(dbip);
-    if(RT_G_DEBUG&DEBUG_DB) bu_log("db_close(%s) x%x uses=%d\n",
-				   dbip->dbi_filename, dbip, dbip->dbi_uses );
+    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_close(%s) x%x uses=%d\n",
+				    dbip->dbi_filename, dbip, dbip->dbi_uses );
 
     bu_semaphore_acquire(BU_SEM_LISTS);
-    if( (--dbip->dbi_uses) > 0 )  {
+    if ( (--dbip->dbi_uses) > 0 )  {
 	bu_semaphore_release(BU_SEM_LISTS);
 	/* others are still using this database */
 	return;
@@ -305,7 +281,7 @@ db_close(register struct db_i *dbip)
     /* ready to free the database -- use count is now zero */
 
     /* free up any mapped files */
-    if( dbip->dbi_mf )  {
+    if ( dbip->dbi_mf )  {
 	/*
 	 *  We're using an instance of a memory mapped file.
 	 *  We have two choices:
@@ -324,15 +300,13 @@ db_close(register struct db_i *dbip)
     /* try to ensure/encourage that the file is written out */
     db_sync(dbip);
 
-#ifdef HAVE_UNIX_IO
-    (void)close( dbip->dbi_fd );
-#endif
     if (dbip->dbi_fp) {
 	fclose( dbip->dbi_fp );
     }
-    if( dbip->dbi_title )
+
+    if ( dbip->dbi_title )
 	bu_free( dbip->dbi_title, "dbi_title" );
-    if( dbip->dbi_filename )
+    if ( dbip->dbi_filename )
 	bu_free( dbip->dbi_filename, "dbi_filename" );
 
     db_free_anim( dbip );
@@ -347,8 +321,8 @@ db_close(register struct db_i *dbip)
     bu_ptbl_free(&dbip->dbi_clients);
 
     /* Free all directory entries */
-    for( i=0; i < RT_DBNHASH; i++ )  {
-	for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; )  {
+    for ( i=0; i < RT_DBNHASH; i++ )  {
+	for ( dp = dbip->dbi_Head[i]; dp != DIR_NULL; )  {
 	    RT_CK_DIR(dp);
 	    nextdp = dp->d_forw;
 	    RT_DIR_FREE_NAMEP(dp);	/* frees d_namep */
@@ -379,6 +353,7 @@ db_close(register struct db_i *dbip)
     bu_free( (char *)dbip, "struct db_i" );
 }
 
+
 /**
  *			D B _ D U M P
  *
@@ -393,8 +368,8 @@ db_close(register struct db_i *dbip)
  */
 int
 db_dump(struct rt_wdb *wdbp, struct db_i *dbip)
-     /* output */
-     /* input */
+    /* output */
+    /* input */
 {
     register int		i;
     register struct directory *dp;
@@ -404,15 +379,15 @@ db_dump(struct rt_wdb *wdbp, struct db_i *dbip)
     RT_CK_WDB(wdbp);
 
     /* Output all directory entries */
-    for( i=0; i < RT_DBNHASH; i++ )  {
-	for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
+    for ( i=0; i < RT_DBNHASH; i++ )  {
+	for ( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
 	    RT_CK_DIR(dp);
 	    /* XXX Need to go to internal form, if database versions don't match */
-	    if( db_get_external( &ext, dp, dbip ) < 0 )  {
+	    if ( db_get_external( &ext, dp, dbip ) < 0 )  {
 		bu_log("db_dump() read failed on %s, skipping\n", dp->d_namep );
 		continue;
 	    }
-	    if( wdb_export_external( wdbp, &ext, dp->d_namep, dp->d_flags, dp->d_minor_type ) < 0 )  {
+	    if ( wdb_export_external( wdbp, &ext, dp->d_namep, dp->d_flags, dp->d_minor_type ) < 0 )  {
 		bu_log("db_dump() write failed on %s, aborting\n", dp->d_namep);
 		bu_free_external( &ext );
 		return -1;
@@ -422,6 +397,7 @@ db_dump(struct rt_wdb *wdbp, struct db_i *dbip)
     }
     return 0;
 }
+
 
 /**
  *			D B _ C L O N E _ D B I
@@ -441,6 +417,7 @@ db_clone_dbi(struct db_i *dbip, long int *client)
     return dbip;
 }
 
+
 /**
  *			D B _ S Y N C
  *
@@ -459,7 +436,7 @@ db_sync(struct db_i *dbip)
 
 #ifdef HAVE_FSYNC
     /* make sure it's written out */
-    (void)fsync(dbip->dbi_fd);
+    (void)fsync(fileno(dbip->dbi_fp));
 #else
 #  ifdef HAVE_SYNC
     /* try the whole filesystem if sans fsync() */
@@ -475,8 +452,8 @@ db_sync(struct db_i *dbip)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

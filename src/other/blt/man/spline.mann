@@ -15,7 +15,7 @@
 '\" consequential damages or any damages whatsoever resulting from loss of use,
 '\" data or profits, whether in an action of contract, negligence or other
 '\" tortuous action, arising out of or in connection with the use or performance
-'\" of this software.  
+'\" of this software.
 '\"
 '\" Spline command created by George Howlett.
 '\"
@@ -38,7 +38,7 @@ images (y-coordinates) at a given set of x-coordinates.
 .SH INTRODUCTION
 Curve fitting has many applications.  In graphs, curve fitting can
 be useful for displaying curves which are aesthetically pleasing to the
-eye.  Another advantage is that you can quickly generate arbitrary points 
+eye.  Another advantage is that you can quickly generate arbitrary points
 on the curve from a small set of data points.
 .PP
 A spline is a device used in drafting to produce smoothed curves.  The
@@ -56,7 +56,7 @@ The \fBspline\fR command performs spline interpolation using cubic
 based upon the knots, which are given as x and y vectors.  The
 interpolated new points are determined by another vector which
 represents the abscissas (x-coordinates) or the new points.  The
-ordinates (y-coordinates) are interpolated using the spline and 
+ordinates (y-coordinates) are interpolated using the spline and
 written to another vector.
 .SH EXAMPLE
 Before we can use the \fBspline\fR command, we need to create two BLT
@@ -64,7 +64,7 @@ vectors which will represent the knots (x and y coordinates) of the
 data that we're going to fit.  Obviously, both vectors must be the
 same length.
 .CS
-# Create sample data of ten points. 
+# Create sample data of ten points.
 vector x(10) y(10)
 
 for {set i 10} {$i > 0} {incr i -1} {
@@ -74,7 +74,7 @@ for {set i 10} {$i > 0} {incr i -1} {
 .CE
 We now have two vectors \f(CWx\fR and \f(CWy\fR representing the ten data
 points we're trying to fit.  The order of the values of \f(CWx\fR must
-be monotonically increasing.  We can use the vector's \fBsort\fR operation 
+be monotonically increasing.  We can use the vector's \fBsort\fR operation
 to sort the vectors.
 .CS
 x sort y
@@ -114,7 +114,7 @@ spline natural x y sx sy
 This creates a new vector \f(CWsy\fR.  It will have the same length as
 \f(CWsx\fR.  The vectors \f(CWsx\fR and \f(CWsy\fR represent the smoothed
 curve which we can now plot.
-.CS 
+.CS
 graph .graph
 \&.graph element create original -x x -y x -color blue
 \&.graph element create spline -x sx -y sy -color red
@@ -127,14 +127,14 @@ wood), while still passing through each knot.  In mathematical terms,
 the second derivatives of the first and last points are zero.
 .PP
 Alternatively, you can generate a spline using the \fBquadratic\fR
-operation.  Quadratic interpolation produces a spline which follows 
-the line segments of the data points much more closely.  
+operation.  Quadratic interpolation produces a spline which follows
+the line segments of the data points much more closely.
 .CS
-spline quadratic x y sx sy 
+spline quadratic x y sx sy
 .CE
 .SH OPERATIONS
 .TP
-\fBspline natural \fIx y sx sy\fR 
+\fBspline natural \fIx y sx sy\fR
 Computes a cubic spline from the data points represented by the
 vectors \fIx\fR and \fIy\fR and interpolates new points using vector
 \fIsx\fR as the x-coordinates.  The resulting y-coordinates are
@@ -149,7 +149,7 @@ of the components of \fIsx\fR must be monotonically increasing.
 will be stored.  If \fIsy\fR does not already exist, a new vector will be
 created.
 .TP
-\fBspline quadratic \fIx y sx sy\fR 
+\fBspline quadratic \fIx y sx sy\fR
 Computes a quadratic spline from the data points represented by the
 vectors \fIx\fR and \fIy\fR and interpolates new points using vector
 \fIsx\fR as the x-coordinates.  The resulting y-coordinates are
@@ -167,10 +167,10 @@ created.
 .nf
 .sp
 Numerical Analysis
-by R. Burden, J. Faires and A. Reynolds.	
+by R. Burden, J. Faires and A. Reynolds.
 Prindle, Weber & Schmidt, 1981, pp. 112
 .sp
-Shape Preserving Quadratic Splines 
+Shape Preserving Quadratic Splines
 by D.F.Mcallister & J.A.Roulier
 Coded by S.L.Dodd & M.Roulier N.C.State University.
 .sp

@@ -239,7 +239,7 @@ ChnRead (interp, chan, fileName, format, imageHandle,
 
     png_ptr=png_create_read_struct(PNG_LIBPNG_VER_STRING,
 	    (png_voidp) &cleanup,tk_png_error,tk_png_warning);
-    if (!png_ptr) return(0); 
+    if (!png_ptr) return(0);
 
     png_set_read_fn(png_ptr, (png_voidp) &handle, tk_png_read);
 
@@ -266,7 +266,7 @@ ObjRead (interp, dataObj, format, imageHandle,
 
     png_ptr=png_create_read_struct(PNG_LIBPNG_VER_STRING,
 	    (png_voidp) &cleanup,tk_png_error,tk_png_warning);
-    if (!png_ptr) return TCL_ERROR; 
+    if (!png_ptr) return TCL_ERROR;
 
     tkimg_ReadInit(dataObj,'\211',&handle);
 
@@ -497,7 +497,7 @@ CommonWritePNG(interp, png_ptr, info_ptr, format, blockPtr)
     int greenOffset, blueOffset, alphaOffset;
     int tagcount = 0;
     Tcl_Obj **tags = (Tcl_Obj **) NULL;
-    int I, pass, number_passes, color_type;  
+    int I, pass, number_passes, color_type;
     int newPixelSize;
     png_bytep row_pointers = (png_bytep) NULL;
 
@@ -565,7 +565,7 @@ CommonWritePNG(interp, png_ptr, info_ptr, format, blockPtr)
 	    text.key = Tcl_GetStringFromObj(tags[2*I+1], (int *) NULL);
 	    text.text = Tcl_GetStringFromObj(tags[2*I+2], &length);
 	    text.text_length = length;
-	    if (text.text_length>COMPRESS_THRESHOLD) { 
+	    if (text.text_length>COMPRESS_THRESHOLD) {
 		text.compression = PNG_TEXT_COMPRESSION_zTXt;
 	    } else {
 		text.compression = PNG_TEXT_COMPRESSION_NONE;

@@ -1,23 +1,23 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
+/*
  * rletopaint.c - Convert an RLE file to macpaint format, using dithering.
- * 
+ *
  * Author:	John W. Peterson
  * 		Computer Science Dept.
  * 		University of Utah
@@ -27,7 +27,7 @@
  * Byte compression code (compress_line) by Jim Schimpf.
  *
  * Usage is:
- *   rle2paint [-l] [-i] [-g [gamma]] [-o outfile.paint] [infile.rle] 
+ *   rle2paint [-l] [-i] [-g [gamma]] [-o outfile.paint] [infile.rle]
  *
  * -l		Uses a linear color map in converting the RLE image
  * -r		Invert the bits in the MacPaint output.
@@ -101,7 +101,7 @@ char *argv[];
     rle_get_setup_ok( &hdr, NULL, NULL );
 
     out_fp = rle_open_f(hdr.cmd, out_fname, "w");
-    
+
     /* set up rows to point to our copy of the scanline */
     if (rle_row_alloc( &hdr, &rows ))
     {
@@ -144,14 +144,14 @@ char *argv[];
     {
 	for (i = 0; i < 72; i++) /* Kludge - pad bottom with blank lines */
 	rawbits[i] = 0;
-	
+
 	databytes = compress_line(); 	/* Blank compressed data */
 	for (i = hdr.ymax+1; i < 720; i++)
 	    write_paint_line(databytes, out_fp);
     }
 }
-	
-    
+
+
 /* Write a scanline to the macpaint file. */
 void
 write_paint_line(num, fp)
@@ -209,7 +209,7 @@ int y;
 	rawbits[(i / 8)] |= pixel << (7-(i % 8));
     }
 }
-    
+
 /*
  * Compress the bits in rawbits to run-length encoded bytes in squishedbits.
  *
@@ -228,7 +228,7 @@ compress_line()
     unsigned char pixel;
 #define SAME 1
 #define NOTSAME 0
-                      
+
     i = 0;
     j = 2;
     if( rawbits[0] == rawbits[1] )
@@ -248,7 +248,7 @@ compress_line()
     {
 	switch( flag )
 	{
-                                
+
 	    /*  Same case see how far the run goes then update stuff */
 
 	case SAME:
@@ -274,13 +274,13 @@ compress_line()
 		squishedbits[cntpsn] = 0xff & pixel;
 
 		/*  Set the flag for the other & advance j to next frame */
-                       
+
 		flag = NOTSAME;
 	    }
 	    else
 		flag = NOTSAME;
 	    break;
-                                
+
 	    /*  Not the same, look for a run of something if found quit */
 
 	case NOTSAME:
@@ -309,7 +309,7 @@ compress_line()
 		    /* Set the flag for the other and back up the psn
 		     * to get the start of the run.
 		     */
-		    
+
 		    k = k - 1;
 		    j--;
 		    flag = SAME;
@@ -322,11 +322,11 @@ compress_line()
 
 
 	/* End of loop update the positions of the count save lcn and
-	 * next character to look at 
-	 *   
-	 * Only do update on non zero counts 
+	 * next character to look at
+	 *
+	 * Only do update on non zero counts
 	 */
-                                             
+
 	if( count != 0 )
 	{
 	    /* Sometimes 'compression' doesn't.  Check for this. */

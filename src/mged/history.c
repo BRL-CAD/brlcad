@@ -1,7 +1,7 @@
 /*                       H I S T O R Y . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2007 United States Government as represented by
+ * Copyright (c) 1995-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,16 +19,6 @@
  */
 /** @file history.c
  *
- *  Authors -
- *	Glenn Durfee
- *	Bob Parker
- *
- *  Functions -
- *      history_record -
- *
- *  Source -
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  */
 
 #include "common.h"
@@ -45,7 +35,7 @@
 
 #include "tcl.h"
 
-#include "machine.h"
+#include "bio.h"
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -69,10 +59,10 @@ void history_journalize(struct mged_hist *hptr);
 
 void
 history_record(
-	struct bu_vls *cmdp,
-	struct timeval *start,
-	struct timeval *finish,
-	int status)			   /* Either CMD_OK or CMD_BAD */
+    struct bu_vls *cmdp,
+    struct timeval *start,
+    struct timeval *finish,
+    int status)			   /* Either CMD_OK or CMD_BAD */
 {
     struct mged_hist *new_hist;
 
@@ -133,7 +123,7 @@ history_journalize(struct mged_hist *hptr)
     fprintf(journalfp, "%s", bu_vls_addr(&hptr->mh_command));
 
     if (journal_delay)
-      fprintf(journalfp, "mged_update 1\n");
+	fprintf(journalfp, "mged_update 1\n");
 }
 
 /*
@@ -147,51 +137,51 @@ history_journalize(struct mged_hist *hptr)
 int
 f_journal(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-  if(argc < 1 || 3 < argc){
-    struct bu_vls vls;
+    if (argc < 1 || 3 < argc) {
+	struct bu_vls vls;
 
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help journal");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "help journal");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
 
-  /* close previously open journal file */
-  if (journalfp != NULL) {
-    fclose(journalfp);
-    journalfp = NULL;
-  }
-  journal_delay = 0;
+    /* close previously open journal file */
+    if (journalfp != NULL) {
+	fclose(journalfp);
+	journalfp = NULL;
+    }
+    journal_delay = 0;
 
-  if (argc < 2)
+    if (argc < 2)
+	return TCL_OK;
+
+    if (argv[1][0] == '-' && argv[1][1] == 'd') {
+	journal_delay = 1;
+	++argv;
+	--argc;
+    }
+
+    if (argc < 2) {
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "help journal");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    journalfp = fopen(argv[1], "a+");
+    if (journalfp == NULL) {
+	Tcl_AppendResult(interp, "Error opening ", argv[1],
+			 " for appending\n", (char *)NULL);
+	return TCL_ERROR;
+    }
+    firstjournal = 1;
+
     return TCL_OK;
-
-  if(argv[1][0] == '-' && argv[1][1] == 'd'){
-    journal_delay = 1;
-    ++argv;
-    --argc;
-  }
-
-  if (argc < 2) {
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help journal");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  journalfp = fopen(argv[1], "a+");
-  if (journalfp == NULL) {
-    Tcl_AppendResult(interp, "Error opening ", argv[1],
-		     " for appending\n", (char *)NULL);
-    return TCL_ERROR;
-  }
-  firstjournal = 1;
-
-  return TCL_OK;
 }
 
 /*
@@ -206,14 +196,14 @@ f_delay(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     struct timeval tv;
 
-    if(argc < 3 || 3 < argc){
-      struct bu_vls vls;
+    if (argc < 3 || 3 < argc) {
+	struct bu_vls vls;
 
-      bu_vls_init(&vls);
-      bu_vls_printf(&vls, "help delay");
-      Tcl_Eval(interp, bu_vls_addr(&vls));
-      bu_vls_free(&vls);
-      return TCL_ERROR;
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "help delay");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
     }
 
     tv.tv_sec = atoi(argv[1]);
@@ -238,39 +228,39 @@ f_history(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     struct bu_vls str;
     struct timeval tvdiff;
 
-    if(argc < 1 || 4 < argc){
-      struct bu_vls vls;
+    if (argc < 1 || 4 < argc) {
+	struct bu_vls vls;
 
-      bu_vls_init(&vls);
-      bu_vls_printf(&vls, "help history");
-      Tcl_Eval(interp, bu_vls_addr(&vls));
-      bu_vls_free(&vls);
-      return TCL_ERROR;
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "help history");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
     }
 
     fp = NULL;
-    while( argc >= 2 ) {
-	if( strcmp(argv[1], "-delays") == 0 )
+    while ( argc >= 2 ) {
+	if ( strcmp(argv[1], "-delays") == 0 )
 	    with_delays = 1;
-	else if( strcmp(argv[1], "-outfile") == 0 ) {
-	    if( fp != NULL ) {
-	      Tcl_AppendResult(interp, "history: -outfile option given more than once\n",
-			       (char *)NULL);
-	      return TCL_ERROR;
-	    } else if( argc < 3 || strcmp(argv[2], "-delays") == 0 ) {
-	      Tcl_AppendResult(interp, "history: I need a file name\n", (char *)NULL);
-	      return TCL_ERROR;
+	else if ( strcmp(argv[1], "-outfile") == 0 ) {
+	    if ( fp != NULL ) {
+		Tcl_AppendResult(interp, "history: -outfile option given more than once\n",
+				 (char *)NULL);
+		return TCL_ERROR;
+	    } else if ( argc < 3 || strcmp(argv[2], "-delays") == 0 ) {
+		Tcl_AppendResult(interp, "history: I need a file name\n", (char *)NULL);
+		return TCL_ERROR;
 	    } else {
 		fp = fopen( argv[2], "a+" );
-		if( fp == NULL ) {
-		  Tcl_AppendResult(interp, "history: error opening file", (char *)NULL);
-		  return TCL_ERROR;
+		if ( fp == NULL ) {
+		    Tcl_AppendResult(interp, "history: error opening file", (char *)NULL);
+		    return TCL_ERROR;
 		}
 		--argc;
 		++argv;
 	    }
 	} else {
-	  Tcl_AppendResult(interp, "Invalid option ", argv[1], "\n", (char *)NULL);
+	    Tcl_AppendResult(interp, "Invalid option ", argv[1], "\n", (char *)NULL);
 	}
 	--argc;
 	++argv;
@@ -293,7 +283,7 @@ f_history(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	if (fp != NULL)
 	    bu_vls_fwrite(fp, &str);
 	else
-	  Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
+	    Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
     }
 
     if (fp != NULL)
@@ -313,8 +303,8 @@ history_prev(const char *pat)
     do {
 	hp = BU_LIST_PREV(mged_hist, &(hp->l));
     } while (   !BU_LIST_IS_HEAD(hp, &(mged_hist_head.l))
-	     && pat
-	     && !strstr(bu_vls_addr(&(hp->mh_command)), pat));
+		&& pat
+		&& !strstr(bu_vls_addr(&(hp->mh_command)), pat));
 
     if (BU_LIST_IS_HEAD(hp, &(mged_hist_head.l)))
 	return NULL;
@@ -350,8 +340,8 @@ history_next(const char *pat)
     do {
 	hp = BU_LIST_NEXT(mged_hist, &(hp->l));
     } while (   !BU_LIST_IS_HEAD(hp, &(mged_hist_head.l))
-	     && pat
-	     && !strstr(bu_vls_addr(&(hp->mh_command)), pat));
+		&& pat
+		&& !strstr(bu_vls_addr(&(hp->mh_command)), pat));
 
     if (BU_LIST_IS_HEAD(hp, &(mged_hist_head.l))) {
 	curr_cmd_list->cl_cur_hist = hp;
@@ -365,106 +355,106 @@ history_next(const char *pat)
 int
 cmd_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-  struct bu_vls *vp;
-  struct bu_vls vls;
+    struct bu_vls *vp;
+    struct bu_vls vls;
 
-  bu_vls_init(&vls);
+    bu_vls_init(&vls);
 
-  if(argc < 2){
+    if (argc < 2) {
+	bu_vls_printf(&vls, "helpdevel hist");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    if (strcmp(argv[1], "add") == 0) {
+	struct timeval zero;
+
+	if (argc != 3) {
+	    bu_vls_printf(&vls, "helpdevel hist");
+	    Tcl_Eval(interp, bu_vls_addr(&vls));
+	    bu_vls_free(&vls);
+	    return TCL_ERROR;
+	}
+
+	if (argv[2][0] == '\n' || argv[2][0] == '\0')
+	    return TCL_OK;
+
+	bu_vls_strcpy(&vls, argv[2]);
+	if (argv[2][strlen(argv[2])-1] != '\n')
+	    bu_vls_putc(&vls, '\n');
+
+	zero.tv_sec = zero.tv_usec = 0L;
+	history_record(&vls, &zero, &zero, CMD_OK);
+
+	bu_vls_free(&vls);
+	return TCL_OK;
+    }
+
+    if (strcmp(argv[1], "next") == 0) {
+	if (argc == 2) {
+	    vp = history_next((const char *)NULL);
+	    if (vp == NULL)
+		return TCL_ERROR;
+	} else if (argc == 3) {
+	    vp = history_next(argv[2]);
+	    if (vp == NULL)
+		return TCL_ERROR;
+	} else {
+	    bu_vls_printf(&vls, "helpdevel hist");
+	    Tcl_Eval(interp, bu_vls_addr(&vls));
+	    bu_vls_free(&vls);
+	    return TCL_ERROR;
+	}
+
+	Tcl_AppendResult(interp, bu_vls_addr(vp), (char *)NULL);
+	bu_vls_free(&vls);
+	return TCL_OK;
+    }
+
+    if (strcmp(argv[1], "prev") == 0) {
+	if (argc == 2) {
+	    vp = history_prev((const char *)NULL);
+	    if (vp == NULL)
+		return TCL_ERROR;
+	} else if (argc == 3) {
+	    vp = history_prev(argv[2]);
+	    if (vp == NULL)
+		return TCL_ERROR;
+	} else {
+	    bu_vls_printf(&vls, "helpdevel hist");
+	    Tcl_Eval(interp, bu_vls_addr(&vls));
+	    bu_vls_free(&vls);
+	    return TCL_ERROR;
+	}
+
+
+	Tcl_AppendResult(interp, bu_vls_addr(vp), (char *)NULL);
+	bu_vls_free(&vls);
+	return TCL_OK;
+    }
+
+    if (strcmp(argv[1], "cur") == 0) {
+	if (argc != 2) {
+	    bu_vls_printf(&vls, "helpdevel hist");
+	    Tcl_Eval(interp, bu_vls_addr(&vls));
+	    bu_vls_free(&vls);
+	    return TCL_ERROR;
+	} else {
+	    vp = history_cur();
+	    if (vp == NULL)
+		return TCL_ERROR;
+	}
+
+	Tcl_AppendResult(interp, bu_vls_addr(vp), (char *)NULL);
+	bu_vls_free(&vls);
+	return TCL_OK;
+    }
+
     bu_vls_printf(&vls, "helpdevel hist");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
-  }
-
-  if(strcmp(argv[1], "add") == 0){
-    struct timeval zero;
-
-    if(argc != 3){
-      bu_vls_printf(&vls, "helpdevel hist");
-      Tcl_Eval(interp, bu_vls_addr(&vls));
-      bu_vls_free(&vls);
-      return TCL_ERROR;
-    }
-
-    if (argv[2][0] == '\n' || argv[2][0] == '\0')
-	return TCL_OK;
-
-    bu_vls_strcpy(&vls, argv[2]);
-    if (argv[2][strlen(argv[2])-1] != '\n')
-	bu_vls_putc(&vls, '\n');
-
-    zero.tv_sec = zero.tv_usec = 0L;
-    history_record(&vls, &zero, &zero, CMD_OK);
-
-    bu_vls_free(&vls);
-    return TCL_OK;
-  }
-
-  if(strcmp(argv[1], "next") == 0){
-    if(argc == 2){
-      vp = history_next((const char *)NULL);
-      if (vp == NULL)
-	return TCL_ERROR;
-    } else if(argc == 3){
-      vp = history_next(argv[2]);
-      if (vp == NULL)
-	return TCL_ERROR;
-    } else {
-      bu_vls_printf(&vls, "helpdevel hist");
-      Tcl_Eval(interp, bu_vls_addr(&vls));
-      bu_vls_free(&vls);
-      return TCL_ERROR;
-    }
-
-    Tcl_AppendResult(interp, bu_vls_addr(vp), (char *)NULL);
-    bu_vls_free(&vls);
-    return TCL_OK;
-  }
-
-  if(strcmp(argv[1], "prev") == 0){
-    if(argc == 2){
-      vp = history_prev((const char *)NULL);
-      if (vp == NULL)
-	return TCL_ERROR;
-    } else if(argc == 3){
-      vp = history_prev(argv[2]);
-    if (vp == NULL)
-      return TCL_ERROR;
-    } else {
-      bu_vls_printf(&vls, "helpdevel hist");
-      Tcl_Eval(interp, bu_vls_addr(&vls));
-      bu_vls_free(&vls);
-      return TCL_ERROR;
-    }
-
-
-    Tcl_AppendResult(interp, bu_vls_addr(vp), (char *)NULL);
-    bu_vls_free(&vls);
-    return TCL_OK;
-  }
-
-  if(strcmp(argv[1], "cur") == 0){
-    if(argc != 2){
-      bu_vls_printf(&vls, "helpdevel hist");
-      Tcl_Eval(interp, bu_vls_addr(&vls));
-      bu_vls_free(&vls);
-      return TCL_ERROR;
-    } else {
-      vp = history_cur();
-    if (vp == NULL)
-      return TCL_ERROR;
-    }
-
-    Tcl_AppendResult(interp, bu_vls_addr(vp), (char *)NULL);
-    bu_vls_free(&vls);
-    return TCL_OK;
-  }
-
-  bu_vls_printf(&vls, "helpdevel hist");
-  Tcl_Eval(interp, bu_vls_addr(&vls));
-  bu_vls_free(&vls);
-  return TCL_ERROR;
 }
 
 void
@@ -483,8 +473,8 @@ history_setup(void)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -2,7 +2,7 @@
 .\"                         C Y - G . 1
 .\" BRL-CAD
 .\"
-.\" Copyright (c) 2005-2007 United States Government as represented by
+.\" Copyright (c) 2005-2008 United States Government as represented by
 .\" the U.S. Army Research Laboratory.
 .\"
 .\" Redistribution and use in source (Docbook format) and 'compiled'
@@ -39,7 +39,7 @@
 .\"
 .\".\".\"
 .SH NAME
-cy-g \- CY Translator (Cyberware Digitizer Data to BRL-CAD)
+cy-g \- Cyberware Echo file format to BRL-CAD converter
 .SH SYNOPSIS
 .B cy-g
 input_cy_file database.g
@@ -49,25 +49,17 @@ converts the specified
 .I input_cy_file
 to a BRL-CAD
 .I database.g
-file. The input data must be Cyberware digitizer data in cylindrical scan format.
-The result of the conversion is a single
+file. The input data must be Cyberware digitizer data in the Cyberware
+Echo (.cy) file format.  Support is limited to scans in cylindrical
+scan format.  The result of the conversion is a single
 .I ARS
-(Arbitrary faceted solid) solid named
-.I laser_scan.
+(Arbitrary faceted solid) solid.
 .SH EXAMPLE
 .RS
 $ \|\fIcy-g \|sample.cy \|sample.g\fP
 .RE
 .SH DIAGNOSTICS
 Error messages are intended to be self-explanatory.
-.SH AUTHOR
-John Anderson
-.SH SOURCE
-SLAD/BVLD/VMB Advanced Computer Systems Team
-.br
-The U. S. Army Research Laboratory
-.br
-Aberdeen Proving Ground, MD  21005
 .SH "BUG REPORTS"
 Reports of bugs or problems should be submitted via electronic
 mail to <devs@brlcad.org>.

@@ -7,19 +7,19 @@
 CFG=example_dump - Win32 Release
 !MESSAGE This is not a valid makefile. To build this project using NMAKE,
 !MESSAGE use the Export Makefile command and run
-!MESSAGE 
+!MESSAGE
 !MESSAGE NMAKE /f "example_dump_vc60.mak".
-!MESSAGE 
+!MESSAGE
 !MESSAGE You can specify a configuration when running NMAKE
 !MESSAGE by defining the macro CFG on the command line. For example:
-!MESSAGE 
+!MESSAGE
 !MESSAGE NMAKE /f "example_dump_vc60.mak" CFG="example_dump - Win32 Release"
-!MESSAGE 
+!MESSAGE
 !MESSAGE Possible choices for configuration are:
-!MESSAGE 
+!MESSAGE
 !MESSAGE "example_dump - Win32 Release" (based on "Win32 (x86) Console Application")
 !MESSAGE "example_dump - Win32 Debug" (based on "Win32 (x86) Console Application")
-!MESSAGE 
+!MESSAGE
 
 # Begin Project
 # PROP AllowPerConfigDependencies 0
@@ -76,7 +76,7 @@ LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386
 # ADD LINK32 kernel32.lib user32.lib gdi32.lib advapi32.lib Rpcrt4.lib /nologo /subsystem:console /debug /machine:I386 /out:".\Debug_vc60/example_dump.exe"
 
-!ENDIF 
+!ENDIF
 
 # Begin Target
 
@@ -107,7 +107,7 @@ SOURCE=..\DebugStaticLib_vc60\opennurbs_static_vc60d.lib
 
 !ELSEIF  "$(CFG)" == "example_dump - Win32 Debug"
 
-!ENDIF 
+!ENDIF
 
 # End Source File
 # Begin Source File
@@ -120,7 +120,7 @@ SOURCE=..\zlib\Debug_vc60\zlib_vc60d.lib
 
 !ELSEIF  "$(CFG)" == "example_dump - Win32 Debug"
 
-!ENDIF 
+!ENDIF
 
 # End Source File
 # End Group
@@ -137,7 +137,7 @@ SOURCE=..\ReleaseStaticLib_vc60\opennurbs_static_vc60.lib
 
 # PROP Exclude_From_Build 1
 
-!ENDIF 
+!ENDIF
 
 # End Source File
 # Begin Source File
@@ -150,7 +150,7 @@ SOURCE=..\zlib\Release_vc60\zlib_vc60.lib
 
 # PROP Exclude_From_Build 1
 
-!ENDIF 
+!ENDIF
 
 # End Source File
 # End Group

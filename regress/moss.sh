@@ -54,7 +54,8 @@ EOF
 
 
 if [ ! -f moss.pix ] ; then
-    echo raytrace failed
+    echo "raytrace failed to create moss.pix"
+    NUMBER_WRONG=-1
 else
     if [ ! -f $1/regress/mosspix.asc ] ; then
 	echo "No reference file for moss.pix"
@@ -64,25 +65,25 @@ else
 	    moss_ref.pix \
 	    > moss.pix.diff \
 	    2> moss-diff.log
-	
+
 	echo -n moss.pix
 	tr , '\012' < moss-diff.log | grep many
 	if test $? -ne 0 ; then
 	    echo ""
 	fi
     fi
-fi
 
-../src/util/pix-png -s 512 moss.pix > moss.png
-../src/util/png-pix moss.png > moss2.pix
-../src/util/pixdiff moss.pix moss2.pix > moss_png.diff 2> moss-png.log
-NUMBER_WRONG=`tr , '\012' < moss-png.log | awk '/many/ {print $1}'`
-echo moss.pix $NUMBER_WRONG off by many
+    ../src/util/pix-png -s 512 moss.pix > moss.png
+    ../src/util/png-pix moss.png > moss2.pix
+    ../src/util/pixdiff moss.pix moss2.pix > moss_png.diff 2> moss-png.log
+    NUMBER_WRONG=`tr , '\012' < moss-png.log | awk '/many/ {print $1}'`
+    echo moss.pix $NUMBER_WRONG off by many
+fi
 
 if [ X$NUMBER_WRONG = X0 ] ; then
     echo '-> moss.sh succeeded'
 else
-    echo '-> moss.sh failed'
+    echo '-> moss.sh FAILED'
 fi
 
 exit $NUMBER_WRONG

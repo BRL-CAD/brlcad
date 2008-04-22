@@ -1,7 +1,7 @@
 /*                         T P L O T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,23 +23,23 @@
  *
  * @brief
  *	This routine is designed to simplify the creation of
- *  X,Y plots for user.
+ *  X, Y plots for user.
  *
  *			George W. Hartwig, Jr.
  *				16 March 1979
  *
  *	This routine is designed to simplify the creation of
- * X,Y plots for user. The user need only furnish this program
+ * X, Y plots for user. The user need only furnish this program
  * the data arrays to be plotted, the lengths of the respective
  * axis, titles for the axis, and the point on the page corresponding
- * to data point (0,0).
+ * to data point (0, 0).
  *	The program will then do everything else required to make
  * the plot appear on the user's terminal including scaling of the
  * data, centering of the titles and positioning on the page.
  *
  * where
- * -	int xp,yp	page point corresponding to (0,0) of the data
- * -	int xl,yl	lengths of the x and y axis, respectively
+ * -	int xp, yp	page point corresponding to (0, 0) of the data
+ * -	int xl, yl	lengths of the x and y axis, respectively
  * -	char xtitle[], ytitle[]	titles for the axis
  * -	float x[], y[]	the floating point data arrays
  * -	int n		the number of points in the data arrays
@@ -56,20 +56,14 @@
  *				and not zero as with c.
  */
 
-
 #include "common.h"
 
 /* system headers */
 #include <stdio.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
 #include <math.h>
 
 /* interface headers */
-#include "machine.h"
 #include "vmath.h"
 #include "plot3.h"
 
@@ -89,8 +83,8 @@ double tp_ipow(double x, int n);
  * @param fp file pointer
  * @param xtitle title for the x axis
  * @param ytitle title for the y axis
- * @param xp is the x page point desired to be (0,0) for plot
- * @param yp is the y page point desired to be (0,0) for plot
+ * @param xp is the x page point desired to be (0, 0) for plot
+ * @param yp is the y page point desired to be (0, 0) for plot
  * @param xl is the length of the x axis
  * @param yl is the length of the y axis
  * @param n is the number of points
@@ -118,7 +112,7 @@ tp_plot(FILE *fp,
     int ix[101], iy[101], isave;
     char str[32];
 
-    if( xl == 0 ){
+    if ( xl == 0 ) {
 	j = 0;
 	goto loop;
     }
@@ -135,22 +129,22 @@ tp_plot(FILE *fp,
     xpen = xp;
 
     pl_move(fp, xpen, yp-TIC);
-    pl_cont(fp, xpen,yp);
+    pl_cont(fp, xpen, yp);
 
     /* label first tic */
     lab = xmin;
     snprintf( str, 32, "%3.3g", xmin );
-    tp_2symbol( fp, str, (double)(xpen-171),(double)(yp-TIC-NUM_DISTANCE), cscale, 0.0);
+    tp_2symbol( fp, str, (double)(xpen-171), (double)(yp-TIC-NUM_DISTANCE), cscale, 0.0);
 
     i = 0;
-    while((xpen+ddx)<=xend){
+    while ((xpen+ddx)<=xend) {
 	i++;
 	xpen += ddx;
 	pl_line( fp, xpen, yp, xpen, yp-TIC );
 	/* while here label this tic mark if no overlapping will occur */
 	lab += dx;
 	/* need if test here to check for overlap */
-	if( (i%xtics) == 0){
+	if ( (i%xtics) == 0) {
 	    snprintf( str, 32, "%3.3g", lab );
 	    tp_2symbol( fp, str, (double)(xpen-171), (double)(yp-TIC-NUM_DISTANCE), cscale, 0.0);
 	}
@@ -159,7 +153,7 @@ tp_plot(FILE *fp,
     /* insert axis label here */
     xtl = xp+(xl - strlen(xtitle)*cscale)/2;
     ytl = yp - 8 * cscale;
-    tp_2symbol( fp, xtitle,(double)xtl, (double)ytl, 100.0, 0.0);
+    tp_2symbol( fp, xtitle, (double)xtl, (double)ytl, 100.0, 0.0);
     yend = yl+yp;
     ypen= yp;
     pl_line( fp, xp-TIC, ypen, xp, ypen );
@@ -167,38 +161,38 @@ tp_plot(FILE *fp,
     /* draw first y label */
     lab = ymin;
     snprintf( str, 32, "%3.3g", lab );
-    tp_2symbol( fp,str, (double)(xp-TIC-LAB_LNGTH-NUM_DISTANCE), (double)ypen, cscale, 0.0);
+    tp_2symbol( fp, str, (double)(xp-TIC-LAB_LNGTH-NUM_DISTANCE), (double)ypen, cscale, 0.0);
 
     i=0;
-    while((ypen+ddy)<=yend){
+    while ((ypen+ddy)<=yend) {
 	i++;
 	ypen += ddy;
 	pl_line( fp, xp, ypen, xp-TIC, ypen );
 	/* label the y-axis now, nicely */
 	lab += dy;
-	if(( i%ytics) ==0){
+	if (( i%ytics) ==0) {
 	    snprintf( str, 32, "%3.3g", lab );
-	    tp_2symbol( fp,str, (double)(xp-TIC-LAB_LNGTH-NUM_DISTANCE), (double)ypen, cscale, 0.0);
+	    tp_2symbol( fp, str, (double)(xp-TIC-LAB_LNGTH-NUM_DISTANCE), (double)ypen, cscale, 0.0);
 	}
     }
 
     /* insert y-axis title here */
     xtl= xp-1500;
-    ytl= yp + (yl - strlen(ytitle)*cscale)/2 ;
-    tp_2symbol( fp,ytitle,(double)xtl,(double)ytl,100.0,90.0);
+    ytl= yp + (yl - strlen(ytitle)*cscale)/2;
+    tp_2symbol( fp, ytitle, (double)xtl, (double)ytl, 100.0, 90.0);
 
     /* now at long last plot the data */
     j = 0;
 
  loop:
-    if( n <= 100 ) {
+    if ( n <= 100 ) {
 	isave = n-1;
     } else {
 	isave = 100;
 	n -= 101;
     }
 
-    if(j == 0){
+    if (j == 0) {
 	ix[0] = (x[j] - xmin)*xs + xp;
 	iy[0] = (y[j] - ymin)*ys + yp;
 	j++;
@@ -208,14 +202,14 @@ tp_plot(FILE *fp,
     }
 
     i = 1;
-    while( i <= isave ){
+    while ( i <= isave ) {
 	ix[i] = (x[j] - xmin)*xs + xp;
 	iy[i] = (y[j] - ymin)*ys + yp;
 	i++;
 	j++;
     }
     tp_i2list( fp, ix, iy, isave+1 );
-    if( isave == 100 ) {
+    if ( isave == 100 ) {
 	goto loop;
     }
 }
@@ -230,13 +224,13 @@ tp_plot(FILE *fp,
 void
 tp_ftoa(float x, char *s)
 {
-    int ex,tmp;
+    int ex, tmp;
     float coef;
     char esgn, nsgn;
     char i;
 
     tp_sep(x, &coef, &ex);
-    if( ex < -15 ){
+    if ( ex < -15 ) {
 	ex = 0;
 	*s++ = '0';
 	*s++ = '.';
@@ -247,18 +241,18 @@ tp_ftoa(float x, char *s)
 	*s++ = '+';
 	*s++ = '0';
 	*s++ = '0';
-	*s   =  0 ;
+	*s   =  0;
 	return;
     }
 
-    if(ex < 0){
+    if (ex < 0) {
 	esgn = '-';
 	ex = -ex;
     } else {
 	esgn = '+';
     }
 
-    if( coef < 0.0){
+    if ( coef < 0.0) {
 	nsgn = '-';
 	coef = -coef;
     } else {
@@ -273,7 +267,7 @@ tp_ftoa(float x, char *s)
     *s++ = '.';
 
     /* now do the three after the decimal */
-    for( i=1 ; i<=3 ; ++i){
+    for ( i=1; i<=3; ++i) {
 	tmp = coef;
 	coef = (coef - tmp)*10.0;
 	*s++ = tmp + '0';
@@ -286,13 +280,13 @@ tp_ftoa(float x, char *s)
     *s++ = esgn;
 
     /* and the exponent */
-    if( ex < 0)
+    if ( ex < 0)
 	ex = -ex;
 
-    if( ex < 10 ){
+    if ( ex < 10 ) {
 	*s++ = '0';
 	*s++ = ex + '0';
-    } else{
+    } else {
 	tmp = ex/10;
 	*s++ = tmp + '0';
 	ex = ex - tmp*10;
@@ -342,20 +336,20 @@ tp_fixsc(float *x,
 
     txmi=txma=x[0];
     i = 0;
-    while( i <= npts ) {
-	if( x[i] < txmi)
+    while ( i <= npts ) {
+	if ( x[i] < txmi)
 	    txmi = x[i];
-	if( x[i] > txma)
+	if ( x[i] > txma)
 	    txma = x[i];
 	i++;
     }
 
     diff = txma - txmi;
-    if( diff < .000001 )
+    if ( diff < .000001 )
 	diff = .000001;
 
     tp_sep (diff, &coef, &ex);
-    if( coef < 2.0 )
+    if ( coef < 2.0 )
 	delta = .1;
     else if ( coef < 4.0 )
 	delta = .2;
@@ -363,24 +357,24 @@ tp_fixsc(float *x,
 	delta = .5;
 
     i = 0;
-    if(ex < 0 ){
+    if (ex < 0 ) {
 	ex = -ex;
 	i=12;
     }
 
-    delta *= tp_ipow(10.0,ex);
-    if(i == 12)
+    delta *= tp_ipow(10.0, ex);
+    if (i == 12)
 	delta = 1.0/delta;
     *dx = delta;
 
     i = (fabs(txmi)/delta);
     *xmin = i*delta;
-    if( txmi < 0.0 )
+    if ( txmi < 0.0 )
 	*xmin = -(*xmin+delta);
 
     i = (fabs(txma)/delta);
     *xmax = i*delta;
-    if( txma < 0.0)
+    if ( txma < 0.0)
 	*xmax = - *xmax;
     else
 	*xmax = *xmax+delta;
@@ -400,37 +394,37 @@ tp_sep(float x, float *coef, int *ex)
     float xx;
 
     isv = 1;
-    if(x < 0.0 ){
+    if (x < 0.0 ) {
 	isv = -1;
 	x = -x;
     }
 
-    if( x > 1.0 ){
+    if ( x > 1.0 ) {
 	xx = x;
 	*ex = 0;
 	*coef = 0.0;
 
-	if ( xx < 10.0){
+	if ( xx < 10.0) {
 	    *coef = xx*isv;
 	    return;
 	}
 
-	for ( i=1 ; i < 39 ; ++i){
+	for ( i=1; i < 39; ++i) {
 	    *ex += 1;
 	    xx = xx/10.0;
-	    if( xx < 10.0 )
+	    if ( xx < 10.0 )
 		break;
 	}
 	*coef = xx*isv;
 	return;
-    } else{
+    } else {
 	xx = x;
 	*ex = 0;
 	*coef = 0.0;
-	for ( i=1 ; i<39 ; ++i){
+	for ( i=1; i<39; ++i) {
 	    *ex -= 1;
 	    xx *= 10.0;
-	    if( xx >= 1.0 )
+	    if ( xx >= 1.0 )
 		break;
 	}
 	*coef = xx*isv;
@@ -447,7 +441,7 @@ tp_sep(float x, float *coef, int *ex)
  */
 double tp_ipow (double x, int n)
 {
-    return(n>0?x*tp_ipow(x,n-1):1);
+    return(n>0?x*tp_ipow(x, n-1):1);
 }
 
 
@@ -465,8 +459,8 @@ PL_FORTRAN(fplot, FPLOT)(FILE **fp, int *xp, int *yp, int *xl, int *yl, char *xt
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

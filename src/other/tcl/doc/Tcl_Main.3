@@ -36,7 +36,9 @@ Address of an application-specific event loop procedure.
 .SH DESCRIPTION
 .PP
 \fBTcl_Main\fR can serve as the main program for Tcl-based shell
-applications.  A ``shell application'' is a program
+applications.  A
+.QW "shell application"
+is a program
 like tclsh or wish that supports both interactive interpretation
 of Tcl and evaluation of a script contained in a file given as
 a command line argument.  \fBTcl_Main\fR is offered as a convenience
@@ -77,8 +79,8 @@ more information.
 .PP
 \fBTcl_Main\fR supports two modes of operation, depending on the
 values of \fIargc\fR and \fIargv\fR.  If the first few arguments
-in \fIargv\fR match ?\fB-encoding \fIname\fR? ?\fIfileName\fR?,
-where \fIfileName\fR does not begin with the character \fI-\fR,
+in \fIargv\fR match ?\fB\-encoding \fIname\fR? ?\fIfileName\fR?,
+where \fIfileName\fR does not begin with the character \fI\-\fR,
 then \fIfileName\fR is taken to be the name of a file containing
 a \fIstartup script\fR, and \fIname\fR is taken to be the name
 of the encoding of the contents of that file, which \fBTcl_Main\fR
@@ -91,8 +93,9 @@ the Tcl variables \fIargc\fR, \fIargv\fR, \fIargv0\fR, and
 .PP
 When it has finished its own initialization, but before it processes
 commands, \fBTcl_Main\fR calls the procedure given by the
-\fIappInitProc\fR argument.  This procedure provides a ``hook'' for
-the application to perform its own initialization of the interpreter
+\fIappInitProc\fR argument.  This procedure provides a
+.QW hook
+for the application to perform its own initialization of the interpreter
 created by \fBTcl_Main\fR, such as defining application-specific
 commands.  The procedure must have an interface that matches the
 type \fBTcl_AppInitProc\fR:

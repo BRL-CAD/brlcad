@@ -84,6 +84,9 @@ typedef struct DateInfo {
 #define YYPARSE_PARAM	info
 #define YYLEX_PARAM	info
 
+#define YYMALLOC	ckalloc
+#define YYFREE(x)	(ckfree((void*) (x)))
+
 #define yyDSTmode	(((DateInfo *) info)->dateDSTmode)
 #define yyDayOrdinal	(((DateInfo *) info)->dateDayOrdinal)
 #define yyDayNumber	(((DateInfo *) info)->dateDayNumber)

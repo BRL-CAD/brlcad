@@ -1,7 +1,7 @@
 /*                       S P L I N E F . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2007 United States Government as represented by
+ * Copyright (c) 1990-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -23,47 +23,41 @@
  *	Susanne L. Muuss
  *	Earl P. Weaver
  *
- *  Source -
- *	VLD/ASB Building 1065
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
 
 /* spline function */
 
 #include "common.h"
 
-
 #include <stdio.h>
 
-#include "machine.h"
+#include "bu.h"
 
 fastf_t
-splinef( c , s )
-fastf_t c[4],s;
+splinef( c, s )
+    fastf_t c[4], s;
 {
-	int i;
-	float retval;
-	double stopow=1.0;
+    int i;
+    float retval;
+    double stopow=1.0;
 
-	retval = c[0];
-	for( i=1 ; i<4 ; i++ )
-	{
-		stopow *= s;
-		if( c[i] != 0.0 )
-			retval += c[i]*stopow;
-	}
+    retval = c[0];
+    for ( i=1; i<4; i++ )
+    {
+	stopow *= s;
+	if ( c[i] != 0.0 )
+	    retval += c[i]*stopow;
+    }
 
-	return( retval );
+    return( retval );
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

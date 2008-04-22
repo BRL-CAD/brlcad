@@ -15,6 +15,4 @@ EXTRA_DIST = \
 	ug_misc.c \
 	ug_misc.h
 
-MAINTAINERCLEANFILES = Makefile.in
-
 include $(top_srcdir)/misc/Makefile.defs

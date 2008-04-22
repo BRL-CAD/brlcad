@@ -15,6 +15,4 @@ libmultispectral_la_SOURCES = \
 	init.c \
 	sh_temp.c
 
-MAINTAINERCLEANFILES = Makefile.in
-
 include $(top_srcdir)/misc/Makefile.defs

@@ -1,24 +1,24 @@
 
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
+/*
  * rawtorle.c - Convert the kitchen sink to RLE format.
- * 
+ *
  * Author:	Martin R. Friedmann while residing@media-lab
  * 		Vision and Modeling Group/Media Lab
  * 		Massachusetts Institute of Technology
@@ -43,7 +43,7 @@
  * JPLs ODL voyager pics  :  rawtorle -w 800 -h 800 -f 2508 -t 1672 -n 1 -p 36
  * 24bit rasterfile       :  rawtorle -f 32 -w ... -h ... -n 3
  * 8 bit rasterfile w/cmap:  Uh er Uh....   use rastorle anyway huh?
- * pic.[000-100].[rgb]    :  cat pic.* | rawtorle -w ... -h ... -n 3 -s -r 
+ * pic.[000-100].[rgb]    :  cat pic.* | rawtorle -w ... -h ... -n 3 -s -r
  */
 
 #include <stdlib.h>
@@ -68,10 +68,10 @@
 }
 
 int
-main(argc,argv) 
+main(argc,argv)
 int argc;
 char *argv[];
-{ 
+{
     int i;
     char *header_bytes = NULL, *trailer_bytes = NULL;
     char *infname = NULL, *outfname = NULL;
@@ -93,7 +93,7 @@ char *argv[];
     unsigned char *inrows;
     int inrows_size;
 
-    if ( scanargs( argc, argv, 
+    if ( scanargs( argc, argv,
 		  "% Ns%- r%- w%-width!d h%-height!d f%-header-size!d \n\
 \t\tt%-trailer-size!d n%-nchannels!d a%-alpha-value%d  \n\
 \t\tp%-scanline-pad!d l%-left-scanline-pad!d o%-outfile!s \n\
@@ -131,11 +131,11 @@ char *argv[];
 		hdr.cmd, nochan);
 	exit(-2);
     }
-	
+
     /* For 2 channels we assume one is an alpha channel */
     if ( nochan == 2 || nochan == 4 )
 	input_alpha = 1;
-    
+
     /* either way, who cares */
     if ( Nflag && nochan == 1 )
 	Nsflag = 0;
@@ -144,7 +144,7 @@ char *argv[];
 	fprintf( stderr,
 		 "%s: -N with -l or -p is not supported, padding ignored.\n",
 		 hdr.cmd );
-	
+
     /* Open Raw file */
     infile = rle_open_f( hdr.cmd, infname, "r" );
     outfile = rle_open_f( hdr.cmd, outfname, "w" );
@@ -158,9 +158,9 @@ char *argv[];
 	exit(-2);
     }
     /* HACK: we allocate more memory; we jack the size for the first fread */
-    if ( Nflag ) 
+    if ( Nflag )
 	inrows_size = width * height * (nochan - 1) + width;
-    
+
     img_size = width * height;
 
     rle_dflt_hdr.rle_file = outfile;
@@ -181,11 +181,11 @@ char *argv[];
     else
 	RLE_CLR_BIT( rle_dflt_hdr, RLE_ALPHA );
     rle_addhist( argv, (rle_hdr *)NULL, &rle_dflt_hdr );
-    
+
     /* maybe faster to malloc and fread than to do lots of GETCs, Idunno */
-    if (fflag) 
+    if (fflag)
 	header_bytes = (char *) malloc ( header );
-    if (tflag) 
+    if (tflag)
 	trailer_bytes = (char *) malloc ( trailer );
 
     if (rle_row_alloc( &rle_dflt_hdr, &outrows )) {
@@ -198,7 +198,7 @@ char *argv[];
     if ( aflag && !input_alpha )
 	for (i = 0; i < width; i++)
 	    outrows[RLE_ALPHA][i] = alpha_value;
-    
+
     /* setup byte positions for reversed colors or otherwise */
     if ( rflag ) {
 	alpha_pos = 0;
@@ -218,7 +218,7 @@ char *argv[];
 	    blue_pos = 2;
 	}
     }
-    
+
     if ( Nflag ) {
 	red_pos *= img_size;
 	green_pos *= img_size;
@@ -242,7 +242,7 @@ char *argv[];
 	/* skip the header */
 	if (fflag)
 	    fread( header_bytes, 1, header, infile );
-	
+
 	while (--y >= 0) {
 	    register rle_pixel *p, *o;
 	    register int stride = nochan, count;
@@ -257,11 +257,11 @@ char *argv[];
 		    perror( "read error" );
 		exit (!first_line);
 	    }
-	    
+
 	    /* RIGHT_PAD */
 	    for (count = 0; count < right_pad; count++)
 		getc(infile);
-	    
+
 	    /* non-interleaved data is easier to compute than interleaved */
 	    if ( Nflag ) {
 		/*
@@ -274,8 +274,8 @@ char *argv[];
 		    fread_len = width;
 		    fread_pos = inrows + (img_size * (nochan - 1));
 		}
-		
-		if ( input_alpha ) 
+
+		if ( input_alpha )
 		    outrows[RLE_ALPHA] = (rflag ? inrows + ni_y : fread_pos);
 
 		if ( rflag )
@@ -297,9 +297,9 @@ char *argv[];
 		if (first_line) {
 		    if ( input_alpha )
 			outrows[RLE_ALPHA] = inrows + alpha_pos;
-		    
+
 		    outrows[RLE_RED] = inrows + red_pos;
-		    
+
 		    if (nochan > 2) {
 			outrows[RLE_GREEN] = inrows + green_pos;
 			outrows[RLE_BLUE] = inrows +  blue_pos;
@@ -313,19 +313,19 @@ char *argv[];
 		    p = inrows + alpha_pos;
 		    count = width;
 		    duff(count, *o++ = *p; p += stride);
-		}	    
-		
+		}
+
 		o = outrows[RLE_RED];
 		p = inrows + red_pos;
 		count = width;
 		duff( count, *o++ = *p; p += stride);
-		
+
 		if (nochan > 2) {
 		    o = outrows[RLE_GREEN];
 		    p = inrows + green_pos;
 		    count = width;
 		    duff( count, *o++ = *p; p += stride);
-		    
+
 		    o = outrows[RLE_BLUE];
 		    p = inrows + blue_pos;
 		    count = width;
@@ -340,7 +340,7 @@ char *argv[];
 	    rle_putrow( outrows, width, &rle_dflt_hdr );
 	}
 	rle_puteof( &rle_dflt_hdr );
-	
+
  	/* skip the trailer */
 	if (tflag)
 	    fread( trailer_bytes, 1, trailer, infile );

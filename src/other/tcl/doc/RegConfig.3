@@ -72,9 +72,9 @@ NULL. The function makes \fBno\fR copy of the \fIconfiguration\fR
 array. This means that the caller has to make sure that the memory
 holding this array is never released. This is the meaning behind the
 word \fBnon-volatile\fR used earlier. The easiest way to accomplish
-this is to define a global static array of Tcl_Config entries. See the
-file "generic/tclPkgConfig.c" in the sources of the Tcl core for an
-example.
+this is to define a global static array of Tcl_Config entries. See the file
+.QW generic/tclPkgConfig.c
+in the sources of the Tcl core for an example.
 .PP
 When called \fBTcl_RegisterConfig\fR will
 .IP (1)
@@ -97,20 +97,17 @@ Returns a list containing the names of all defined keys.
 Returns the configuration value associated with the specified
 \fIkey\fR.
 .RE
-
 .SH TCL_CONFIG
-
+.PP
 The \fBTcl_Config\fR structure contains the following fields:
 .PP
 .CS
 typedef struct Tcl_Config {
-        const char* key;
-        const char* value;
+    const char* key;
+    const char* value;
 } Tcl_Config;
 .CE
-
-'\" No cross references yet.
-'\" .SH "SEE ALSO"
-
+.\" No cross references yet.
+.\" .SH "SEE ALSO"
 .SH KEYWORDS
 embedding, configuration, bianry library

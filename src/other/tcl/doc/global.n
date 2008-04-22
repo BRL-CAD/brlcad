@@ -48,7 +48,7 @@ opened with \fBsocket\fR or as part of a counted HTTP response).
 .CS
 proc accum {string} {
     \fBglobal\fR accumulator
-    append accumulator $string \\n
+    append accumulator $string \en
 }
 .CE
 

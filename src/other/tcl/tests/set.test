@@ -190,9 +190,9 @@ test set-1.22 {TclCompileSetCmd: doing assignment, large int} {
 } 200000
 test set-1.23 {TclCompileSetCmd: doing assignment, formatted int != int} {
     set i 25
-    set i 000012345     ;# an octal literal == 5349 decimal
+    set i 0o00012345     ;# an octal literal == 5349 decimal
     list $i [incr i]
-} {000012345 5350}
+} {0o00012345 5350}
 
 test set-1.24 {TclCompileSetCmd: too many arguments} {
     set i 10
@@ -465,9 +465,9 @@ test set-3.22 {uncompiled set command: doing assignment, large int} {
 test set-3.23 {uncompiled set command: doing assignment, formatted int != int} {
     set z set
     $z i 25
-    $z i 000012345     ;# an octal literal == 5349 decimal
+    $z i 0o00012345     ;# an octal literal == 5349 decimal
     list $i [incr i]
-} {000012345 5350}
+} {0o00012345 5350}
 
 test set-3.24 {uncompiled set command: too many arguments} {
     set z set
@@ -513,6 +513,13 @@ test set-4.6 {set command: runtime error, basic array operations} {
     set z set
     list [catch {$z a} msg] $msg
 } {1 {can't read "a": variable is array}}
+
+test set-5.1 {error on malformed array name} {
+    unset -nocomplain z
+    catch {testset2 z(a) b} msg
+    catch {testset2 z(b) a} msg1
+    list $msg $msg1
+} {{can't read "z(a)(b)": variable isn't array} {can't read "z(b)(a)": variable isn't array}}
 
 # cleanup
 catch {unset a}

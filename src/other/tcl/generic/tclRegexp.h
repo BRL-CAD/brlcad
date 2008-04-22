@@ -32,6 +32,7 @@ typedef struct TclRegexp {
 				 * subexpressions. */
     CONST char *string;		/* Last string passed to Tcl_RegExpExec. */
     Tcl_Obj *objPtr;		/* Last object passed to Tcl_RegExpExecObj. */
+    Tcl_Obj *globObjPtr;	/* Glob pattern rep of RE or NULL if none. */
     regmatch_t *matches;	/* Array of indices into the Tcl_UniChar
 				 * representation of the last string matched
 				 * with this regexp to indicate the location

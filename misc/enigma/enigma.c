@@ -16,6 +16,8 @@
  *	Added backwards-compatibility for handling illegal salt chars.
  */
 
+#define _XOPEN_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -45,7 +47,7 @@ int	len;
 	while( len-- > 0 )  {
 		fprintf(stderr, "%2.2x ", (*cp++) & 0xFF );
 	}
-	fprintf(stderr,"\n");
+	fprintf(stderr, "\n");
 }
 
 /* Different versions of crypt(3) interpret illegal chars differently.
@@ -223,8 +225,8 @@ shuffle(deck)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -1,7 +1,7 @@
 /*                       L I N E B U F . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,26 +26,12 @@
  *
  *	A portable way of doing setlinebuf().
  *
- *  @author	Doug A. Gwyn
- *  @author	Michael John Muuss
- *  @author	Christopher Sean Morrison
- *
- *  @par Source -
- *  @n	The U. S. Army Research Laboratory
- *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
-
-
-#ifndef lint
-static const char libbu_linebuf_RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 
 #include <stdio.h>
 
-#include "machine.h"
 #include "bu.h"
 
 #ifndef BUFSIZE
@@ -61,31 +47,28 @@ port_setlinebuf(FILE *fp)
 WARNING: port_setlinebuf is deprecated and will be removed in a\n\
 future release of BRL-CAD.  Use bu_setlinebuf instead.\n");
     bu_setlinebuf(fp);
-    return ;
+    return;
 }
 
 void
 bu_setlinebuf(FILE *fp)
 {
-#if defined(HAVE_SETVBUF)
+    if (!fp) {
+	return;
+    }
+
     /* prefer this one */
     if (setvbuf( fp, (char *) NULL, _IOLBF, BUFSIZE) != 0) {
 	perror("bu_setlinebuf");
     }
-#elif defined(HAVE_SETLINEBUF)
-    /* setlinebuf() returns int on bsd, void on linux */
-    (void)setlinebuf( fp );
-#else
-#  error "Do not know how to set line buffered mode for this platform"
-#endif
 }
 /** @} */
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

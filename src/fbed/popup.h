@@ -1,7 +1,7 @@
 /*                         P O P U P . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,48 +24,48 @@
 #define MENU_FONT	"/usr/lib/vfont/fix.6"
 
 typedef struct
-	{
-	int p_x;
-	int p_y;
-	}
+{
+    int p_x;
+    int p_y;
+}
 Point;
 
 typedef struct
-	{
-	Point r_origin;
-	Point r_corner;
-	}
+{
+    Point r_origin;
+    Point r_corner;
+}
 Rectangle;
 
 typedef struct
-	{
-	RGBpixel color;
-	void (*func)();
-	char *label;
-	} Seg;
+{
+    RGBpixel color;
+    void (*func)();
+    char *label;
+} Seg;
 
 typedef struct
-	{
-	int wid, hgt;
-	int n_segs, seg_hgt;
-	int max_chars, char_base;
-	int on_flag, cmap_base;
-	int last_pick;
-	Rectangle rect;
-	RGBpixel *outlines, *touching, *selected;
-	RGBpixel *under, *image;
-	char *title, *font;
-	Seg		*segs;
-	ColorMap	cmap;
-	}
+{
+    int wid, hgt;
+    int n_segs, seg_hgt;
+    int max_chars, char_base;
+    int on_flag, cmap_base;
+    int last_pick;
+    Rectangle rect;
+    RGBpixel *outlines, *touching, *selected;
+    RGBpixel *under, *image;
+    char *title, *font;
+    Seg		*segs;
+    ColorMap	cmap;
+}
 Menu;
 
 typedef struct
-	{
-	RGBpixel  *n_buf;
-	int n_wid;
-	int n_hgt;
-	}
+{
+    RGBpixel  *n_buf;
+    int n_wid;
+    int n_hgt;
+}
 Panel;
 
 #define RESERVED_CMAP  ((pallet.cmap_base+pallet.n_segs+1)*2)
@@ -74,8 +74,8 @@ Panel;
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

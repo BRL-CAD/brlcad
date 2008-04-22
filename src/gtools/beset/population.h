@@ -1,7 +1,7 @@
 /*                    P O P U L A T I O N . H
  * BRL-CAD
  *
- * Copyright (c) 2007 United States Government as represented by
+ * Copyright (c) 2007-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,9 +30,9 @@
 
 #define GEO_SPHERE 1
 
-#define VSCALE_SELF(a,c) { (a)[X] *= (c); (a)[Y] *= (c); (a)[Z]*=(c);}
-#define VMUTATE(a){VMUT(a,-MUT_STEP/2+MUT_STEP*pop_rand())} 
-#define VMUT(a,c){(a)[X] += ((a)[X] == 0)?0:(c); (a)[Y] += ((a)[Y] == 0)?0:(c); (a)[Z]+=((a)[Z]==0)?0:(c);}
+#define VSCALE_SELF(a, c) { (a)[X] *= (c); (a)[Y] *= (c); (a)[Z]*=(c);}
+#define VMUTATE(a) {VMUT(a, -MUT_STEP/2+MUT_STEP*pop_rand())}
+#define VMUT(a, c) {(a)[X] += ((a)[X] == 0)?0:(c); (a)[Y] += ((a)[Y] == 0)?0:(c); (a)[Z]+=((a)[Z]==0)?0:(c);}
 #define MUT_STEP .8
 
 
@@ -51,8 +51,8 @@ struct population {
     struct individual *parent;
     struct individual *child;
 
-    struct db_i *db_p; 
-    struct db_i *db_c; 
+    struct db_i *db_p;
+    struct db_i *db_c;
 
     char **name;
     int size;
@@ -73,10 +73,10 @@ int  pop_wrand_gop  (void);
 fastf_t pop_rand    (void);
 int pop_find_nodes(union tree *tp);
 
-void pop_gop(int gop, char *parent1, char *parent2, char * child1, char *child2,  struct db_i *dbi_p, 
+void pop_gop(int gop, char *parent1, char *parent2, char * child1, char *child2,  struct db_i *dbi_p,
 	     struct db_i *dbi_c, struct resource *resp);
 int pop_put_internal(const char *n, struct directory *dp, struct db_i *dbip, struct rt_db_internal *ip,
-	struct resource *resp);
+		     struct resource *resp);
 
 
 
@@ -88,8 +88,8 @@ int pop_put_internal(const char *n, struct directory *dp, struct db_i *dbip, str
  * Local Variables:
  * tab-width: 8
  * mode: C
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

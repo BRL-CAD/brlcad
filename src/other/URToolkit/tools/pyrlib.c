@@ -1,12 +1,12 @@
-/* 
+/*
  * pyrlib.c - Library routines for pyramids
- * 
+ *
  * Author:	Rod Bogart
  * 		Computer Science Dept.
  * 		University of Utah
  * Date:	Thu Mar 12 1987
  * Copyright (c) 1987 Rod Bogart
- * 
+ *
  */
 #ifndef lint
 static char rcs_ident[] = "$Id$";
@@ -112,7 +112,7 @@ float * mask_mult_table;
 	bandpyr->ylen = (int *) malloc( levels * sizeof( int ) );
 	bandpyr->corners = (rle_pixel **) malloc(levels * sizeof(rle_pixel *));
 
-	RLE_CHECK_ALLOC( in_hdr->cmd, 
+	RLE_CHECK_ALLOC( in_hdr->cmd,
 			 bandpyr->corners && bandpyr->xlen && bandpyr->ylen,
 			 "band pyramid" );
 
@@ -247,7 +247,7 @@ pyramid * pyr;
  * pixel to find the outer boundary pixels.  In actuality, there
  * should be some nifty mask thingy that flags known and unknown
  * pixels.  Then one could extrapolate any unknown pixel that has
- * known neighbors. 
+ * known neighbors.
  */
 void
 extrap_level(level,pyr)
@@ -457,7 +457,7 @@ float *mask_mult_table;
     /* this assumes that the gauss images are extrapolated */
     /* the result pyramid will NOT be extrapolated */
 
-    /* second level will be expanded and subtracted from first 
+    /* second level will be expanded and subtracted from first
      * to produce out */
     firstbase = gausspyr->corners[level];
     expand_level(level+1, gausspyr, &secondbase, mask_mult_table);
@@ -804,7 +804,7 @@ float *mask_mult_table;
 	}
     }
     /*************************************************************
-     * Free levels of int pyramid 
+     * Free levels of int pyramid
      *************************************************************/
     for(i=0; i < levels; i++)
 	free(intcorners[i]);

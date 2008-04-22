@@ -79,13 +79,6 @@ typedef off_t		Tcl_SeekOffset;
 #   define TclOSlstat		lstat
 #endif
 
-#if !HAVE_STRTOLL && defined(TCL_WIDE_INT_TYPE) && !TCL_WIDE_INT_IS_LONG
-EXTERN Tcl_WideInt	strtoll _ANSI_ARGS_((CONST char *string,
-					     char **endPtr, int base));
-EXTERN Tcl_WideUInt	strtoull _ANSI_ARGS_((CONST char *string,
-					      char **endPtr, int base));
-#endif
-
 #include <sys/file.h>
 #ifdef HAVE_SYS_SELECT_H
 #   include <sys/select.h>
@@ -484,10 +477,16 @@ extern int errno;
  * Variables provided by the C library:
  */
 
-#if defined(_sgi) || defined(__sgi) || (defined(__APPLE__) && defined(__DYNAMIC__))
-#   define environ _environ
-#endif
+#if defined(__APPLE__) && defined(__DYNAMIC__)
+#   include <crt_externs.h>
+#   define environ (*_NSGetEnviron())
+#   define USE_PUTENV 1
+#else
+#   if defined(_sgi) || defined(__sgi)
+#       define environ _environ
+#   endif
 extern char **environ;
+#endif
 
 /*
  * At present (12/91) not all stdlib.h implementations declare strtod.

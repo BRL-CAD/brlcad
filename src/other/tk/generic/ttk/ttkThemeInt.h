@@ -28,10 +28,13 @@ MODULE_SCOPE void Ttk_DrawElement(
 MODULE_SCOPE Tcl_Obj *Ttk_QueryStyle(
     Ttk_Style, void *, Tk_OptionTable, const char *, Ttk_State state);
 
-MODULE_SCOPE Ttk_LayoutTemplate Ttk_ParseLayoutTemplate(Tcl_Interp *, Tcl_Obj *);
+MODULE_SCOPE Ttk_LayoutTemplate Ttk_ParseLayoutTemplate(
+	Tcl_Interp *, Tcl_Obj *);
 MODULE_SCOPE Tcl_Obj *Ttk_UnparseLayoutTemplate(Ttk_LayoutTemplate);
 MODULE_SCOPE Ttk_LayoutTemplate Ttk_BuildLayoutTemplate(Ttk_LayoutSpec);
 MODULE_SCOPE void Ttk_FreeLayoutTemplate(Ttk_LayoutTemplate);
+MODULE_SCOPE void Ttk_RegisterLayoutTemplate(
+    Ttk_Theme theme, const char *layoutName, Ttk_LayoutTemplate);
 
 MODULE_SCOPE Ttk_Style Ttk_GetStyle(Ttk_Theme themePtr, const char *styleName);
 MODULE_SCOPE Ttk_LayoutTemplate Ttk_FindLayoutTemplate(

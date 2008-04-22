@@ -7,10 +7,10 @@
 </HEAD>
 <BODY BGCOLOR="#efefef" TEXT="black" LINK="blue" VLINK="#551A8B" ALINK="red">
 <A HREF="#toc">Table of Contents</A><P>
- 
+
 <H2><A NAME="sect0" HREF="#toc0">Name</A></H2>
 busy - Make Tk widgets busy, temporarily blocking
-user interactions. 
+user interactions.
 <H2><A NAME="sect1" HREF="#toc1">Synopsis</A></H2>
 <B>busy hold <I>window</I></B> ?<I>option value</I>?... <P>
 <B>busy release
@@ -21,12 +21,12 @@ user interactions.
 <B>busy isbusy </B>?<I>pattern</I>? <P>
 <B>busy names </B>?<I>pattern</I>? <P>
 <B>busy status <I>window</I></B>
- 
+
 <H2><A NAME="sect2" HREF="#toc2">Description</A></H2>
 <P>
 The <B>busy</B> command provides a simple means to block keyboard,
 button, and pointer events from Tk widgets, while overriding the widget's
-cursor with a configurable busy cursor. 
+cursor with a configurable busy cursor.
 <H2><A NAME="sect3" HREF="#toc3">Introduction</A></H2>
 <P>
 There are many times
@@ -79,7 +79,7 @@ busy command. <P>
 
 <H2><A NAME="sect5" HREF="#toc5">Operations</A></H2>
 The following operations are available for the <B>busy</B>
-command: 
+command:
 <DL>
 
 <DT><B>busy hold <I>window</I></B> ?<I>option value</I>?... </DT>
@@ -182,7 +182,7 @@ bind ._Busy &lt;Enter&gt; { ... } <BR>
 <H2><A NAME="sect7" HREF="#toc7"></CODE><P>Enter/Leave Events</A></H2>
 Mapping and unmapping busy windows generates Enter/Leave
 events for all widgets they cover.  Please note this if you are tracking
-Enter/Leave events in widgets. 
+Enter/Leave events in widgets.
 <H2><A NAME="sect8" HREF="#toc8">Keyboard Events</A></H2>
 When a widget is made busy,
 the widget is prevented from gaining the keyboard focus by the busy window.
@@ -194,7 +194,7 @@ focus .dummy<BR>
 update<BR>
 </CODE><P>The above example moves the focus from .frame immediately after invoking
 the <B>hold</B> so that no keyboard events will be sent to <I>.frame</I> or any of its
-descendants. 
+descendants.
 <H2><A NAME="sect9" HREF="#toc9">Keywords</A></H2>
 busy, keyboard events, pointer events, window, cursor
 <P>

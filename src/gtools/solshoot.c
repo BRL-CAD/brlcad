@@ -1,7 +1,7 @@
 /*                      S O L S H O O T . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2007 United States Government as represented by
+ * Copyright (c) 1995-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,23 +19,15 @@
  */
 /** @file solshoot.c
  *
- *  Author -
- *	Paul J. Tanenbaum
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-#ifndef lint
-static char RCSid[] = "@(#)$Header$ (ARL)";
-#endif
+
+#include "common.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
 
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -106,7 +98,7 @@ struct sol_name_dist *mk_solid (char *name, fastf_t dist)
     struct sol_name_dist	*sp;
 
     sp = (struct sol_name_dist *)
-	    bu_malloc(sizeof(struct sol_name_dist), "solid name-and_dist");
+	bu_malloc(sizeof(struct sol_name_dist), "solid name-and_dist");
     sp -> magic = SOL_NAME_DIST_MAGIC;
     sp -> name = name;
     sp -> dist = dist;
@@ -153,20 +145,17 @@ static int rpt_hit (struct application *ap, struct partition *ph, struct seg *se
     struct sol_name_dist	*old_sol;
     struct sol_name_dist	*sol;
     static int			(*orders[])() =
-				{
-				    sol_comp_name,
-				    sol_comp_dist
-				};
+	{
+	    sol_comp_name,
+	    sol_comp_dist
+	};
 
     bu_log("I hit it!\n");
     /*
      *	Initialize the solid list
      */
     if ((solids = bu_rb_create("Solid list", 2, orders)) == BU_RB_TREE_NULL)
-    {
-	bu_log("%s: %d: bu_rb_create() bombed\n", __FILE__, __LINE__);
-	exit (1);
-    }
+	bu_exit (1, "%s: %d: bu_rb_create() bombed\n", __FILE__, __LINE__);
     solids -> rbt_print = print_solid;
     bu_rb_uniq_on(solids, ORDER_BY_NAME);
 
@@ -178,21 +167,21 @@ static int rpt_hit (struct application *ap, struct partition *ph, struct seg *se
     pp = ph -> pt_forw;
     BU_CKMAG(pp, PT_MAGIC, "partition structure");
     for (sh = pp -> pt_inseg;
-	    *((long *) sh) != BU_LIST_HEAD_MAGIC;
-	    sh = (struct seg *) (sh -> l.forw))
+	 *((long *) sh) != BU_LIST_HEAD_MAGIC;
+	 sh = (struct seg *) (sh -> l.forw))
 	BU_CKMAG(sh, RT_SEG_MAGIC, "segment structure");
 
     /*
      *	March down the list of segments
      */
     for (sp = (struct seg *) (sh -> l.forw);
-	    sp != sh;
-	    sp = (struct seg *) sp -> l.forw)
+	 sp != sh;
+	 sp = (struct seg *) sp -> l.forw)
     {
 	BU_CKMAG(sp, RT_SEG_MAGIC, "seg structure");
 	bu_log("I saw solid %s at distance %g\n",
-	    sp -> seg_stp -> st_name,
-	    sp -> seg_in.hit_dist);
+	       sp -> seg_stp -> st_name,
+	       sp -> seg_in.hit_dist);
 
 	sol = mk_solid(sp -> seg_stp -> st_name, sp -> seg_in.hit_dist);
 	if (bu_rb_insert(solids, (void *) sol) < 0)
@@ -224,17 +213,24 @@ static int rpt_hit (struct application *ap, struct partition *ph, struct seg *se
     return (1);
 }
 
-/*			N O _ O P
- *
- *	Null event handler for use by rt_shootray().
- *
- *	Does nothing.  Returns 1.
- */
-static int no_op (struct application *ap)
+
+/* Null event handler for use by rt_shootray()'s miss callback. */
+static int
+no_miss_op (struct application *ap)
 {
     return (1);
 }
 
+
+/* Null event handler for use by rt_shootray()'s overlap callback. */
+static int
+no_ov_op (struct application *ap, struct partition *pp, struct region *r1, struct region *r2, struct partition *hp)
+{
+    return (1);
+}
+
+
+int
 main (int argc, char **argv)
 {
     struct application	ap;
@@ -250,7 +246,7 @@ main (int argc, char **argv)
     /* Read in the geometry model */
     bu_log("Database file:  '%s'\n", *++argv);
     bu_log("Building the directory... ");
-    if ((rtip = rt_dirbuild(*argv , db_title, TITLE_LEN)) == RTI_NULL)
+    if ((rtip = rt_dirbuild(*argv, db_title, TITLE_LEN)) == RTI_NULL)
     {
 	bu_log("Could not build directory for file '%s'\n", *argv);
 	return 1;
@@ -272,9 +268,9 @@ main (int argc, char **argv)
     /* Initialize the application structure */
     RT_APPLICATION_INIT(&ap);
     ap.a_hit = rpt_hit;
-    ap.a_miss = no_op;
+    ap.a_miss = no_miss_op;
     ap.a_resource = RESOURCE_NULL;
-    ap.a_overlap = no_op;
+    ap.a_overlap = no_ov_op;
     ap.a_onehit = 0;		/* Don't stop at first partition */
     ap.a_rt_i = rtip;
     ap.a_zero1 = 0;		/* Sanity checks for LIBRT(3) */
@@ -295,8 +291,8 @@ main (int argc, char **argv)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

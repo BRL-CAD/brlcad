@@ -95,7 +95,7 @@ typedef struct {
 				 * the event. */
 } Blt_TupleNotifyEvent;
 
-typedef int (Blt_TupleNotifyEventProc)(ClientData clientData, 
+typedef int (Blt_TupleNotifyEventProc)(ClientData clientData,
 	Blt_TupleNotifyEvent *eventPtr);
 
 struct Blt_TupleNotifierStruct {
@@ -112,7 +112,7 @@ struct Blt_TupleNotifierStruct {
 
 
 EXTERN Blt_TupleNotifier Blt_TupleCreateNotifier(Blt_TupleTable table,
-	unsigned int mask, Blt_TupleNotifyEventProc *proc, 
+	unsigned int mask, Blt_TupleNotifyEventProc *proc,
 	ClientData clientData);
 
 EXTERN void Blt_TupleDeleteNotifier(Blt_TupleNotifier notifier);
@@ -138,14 +138,14 @@ EXTERN Blt_Tuple Blt_TupleFirstTagged(Tcl_Interp *interp, Blt_TupleTable table,
 EXTERN Blt_Tuple Blt_TupleNextTagged(Blt_TupleTagSearch *cursorPtr);
 
 EXTERN void Blt_TupleClearTags(Blt_TupleTable table, Blt_Tuple tuple);
-EXTERN void Blt_TupleRemoveTag(Blt_TupleTable table, Blt_Tuple tuple, 
+EXTERN void Blt_TupleRemoveTag(Blt_TupleTable table, Blt_Tuple tuple,
 	CONST char *tagName);
-EXTERN int Blt_TupleHasTag(Blt_TupleTable table, Blt_Tuple tuple, 
+EXTERN int Blt_TupleHasTag(Blt_TupleTable table, Blt_Tuple tuple,
 	CONST char *tagName);
-EXTERN void Blt_TupleAddTag(Blt_TupleTable table, Blt_Tuple tuple, 
+EXTERN void Blt_TupleAddTag(Blt_TupleTable table, Blt_Tuple tuple,
 	CONST char *tagName);
 EXTERN void Blt_TupleForgetTag(Blt_TupleTable table, CONST char *tagName);
-EXTERN Blt_HashTable *Blt_TupleTagHashTable(Blt_TupleTable table, 
+EXTERN Blt_HashTable *Blt_TupleTagHashTable(Blt_TupleTable table,
 	CONST char *tagName);
 EXTERN int Blt_TupleTagTableIsShared(Blt_TupleTable table);
 
@@ -161,7 +161,7 @@ EXTERN int Blt_TupleTagTableIsShared(Blt_TupleTable table);
 #define TUPLE_TRACE_FOREIGN_ONLY (1<<8)
 #define TUPLE_TRACE_ACTIVE	(1<<9)
 
-typedef int (Blt_TupleTraceProc)(ClientData clientData, Tcl_Interp *interp, 
+typedef int (Blt_TupleTraceProc)(ClientData clientData, Tcl_Interp *interp,
 	unsigned int row, unsigned int column, unsigned int flags);
 
 struct Blt_TupleTraceStruct {
@@ -176,41 +176,41 @@ struct Blt_TupleTraceStruct {
     ClientData clientData;
 };
 
-EXTERN Blt_TupleTrace Blt_TupleCreateTrace(Blt_TupleTable table, 
-	Blt_Tuple tuple, CONST char *tagName, CONST char *keyList, 
+EXTERN Blt_TupleTrace Blt_TupleCreateTrace(Blt_TupleTable table,
+	Blt_Tuple tuple, CONST char *tagName, CONST char *keyList,
 	unsigned int mask, Blt_TupleTraceProc *proc, ClientData clientData);
 
 EXTERN void Blt_TupleDeleteTrace(Blt_TupleTrace trace);
 
-EXTERN int Blt_TupleGetValueByIndex(Tcl_Interp *interp, Blt_TupleTable table, 
+EXTERN int Blt_TupleGetValueByIndex(Tcl_Interp *interp, Blt_TupleTable table,
 	unsigned int row, unsigned int column, Tcl_Obj **objPtrPtr);
-EXTERN int Blt_TupleSetValueByIndex(Tcl_Interp *interp, Blt_TupleTable table, 
+EXTERN int Blt_TupleSetValueByIndex(Tcl_Interp *interp, Blt_TupleTable table,
 	unsigned int row, unsigned int column, Tcl_Obj *objPtr);
-EXTERN int Blt_TupleUnsetValueByIndex(Tcl_Interp *interp, Blt_TupleTable table, 
+EXTERN int Blt_TupleUnsetValueByIndex(Tcl_Interp *interp, Blt_TupleTable table,
 	unsigned int row, unsigned int column);
-EXTERN int Blt_TupleGetValue(Tcl_Interp *interp, Blt_TupleTable table, 
+EXTERN int Blt_TupleGetValue(Tcl_Interp *interp, Blt_TupleTable table,
 	Blt_Tuple tuple, CONST char *key, Tcl_Obj **objPtrPtr);
-EXTERN int Blt_TupleSetValue(Tcl_Interp *interp, Blt_TupleTable table, 
+EXTERN int Blt_TupleSetValue(Tcl_Interp *interp, Blt_TupleTable table,
 	Blt_Tuple tuple, CONST char *key, Tcl_Obj *objPtr);
-EXTERN int Blt_TupleUnsetValue(Tcl_Interp *interp, Blt_TupleTable table, 
+EXTERN int Blt_TupleUnsetValue(Tcl_Interp *interp, Blt_TupleTable table,
 	Blt_Tuple tuple, CONST char *key);
 
-EXTERN int Blt_TupleGetArrayValue(Tcl_Interp *interp, Blt_TupleTable table, 
-	Blt_Tuple tuple, CONST char *key, CONST char *elemName, 
+EXTERN int Blt_TupleGetArrayValue(Tcl_Interp *interp, Blt_TupleTable table,
+	Blt_Tuple tuple, CONST char *key, CONST char *elemName,
 	Tcl_Obj **objPtrPtr);
-EXTERN int Blt_TupleSetArrayValue(Tcl_Interp *interp, Blt_TupleTable table, 
-	Blt_Tuple tuple, CONST char *key, CONST char *elemName,   
+EXTERN int Blt_TupleSetArrayValue(Tcl_Interp *interp, Blt_TupleTable table,
+	Blt_Tuple tuple, CONST char *key, CONST char *elemName,
 	Tcl_Obj *objPtr);
-EXTERN int Blt_TupleUnsetArrayValue(Tcl_Interp *interp, Blt_TupleTable table, 
+EXTERN int Blt_TupleUnsetArrayValue(Tcl_Interp *interp, Blt_TupleTable table,
 	Blt_Tuple tuple, CONST char *key, CONST char *elemName);
 
-EXTERN unsigned int Blt_TupleAddColumn(Blt_TupleTable table, CONST char *key, 
+EXTERN unsigned int Blt_TupleAddColumn(Blt_TupleTable table, CONST char *key,
 	int *isNewPtr);
 EXTERN unsigned int Blt_TupleRowIndex(Blt_Tuple tuple);
 EXTERN CONST char *Blt_TupleGetColumnKey(Blt_TupleTable table, int column);
-EXTERN Blt_HashEntry *Blt_TupleFirstTag(Blt_TupleTable table, 
+EXTERN Blt_HashEntry *Blt_TupleFirstTag(Blt_TupleTable table,
 	Blt_HashSearch *cursorPtr);
-EXTERN Blt_Tuple Blt_TupleGetTupleByIndex(Blt_TupleTable table, 
+EXTERN Blt_Tuple Blt_TupleGetTupleByIndex(Blt_TupleTable table,
 	unsigned int row);
 EXTERN int Blt_TupleExtendRows(Blt_TupleTable table, unsigned int extra);
 EXTERN Blt_Tuple Blt_TupleNextTuple(Blt_TupleTable table, Blt_Tuple tuple);

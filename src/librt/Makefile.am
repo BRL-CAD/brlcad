@@ -4,27 +4,17 @@
 lib_LTLIBRARIES = librt.la
 noinst_LTLIBRARIES = librt_nil.la
 
-if WITH_OPENNURBS
-
 BREP_SRCS = g_brep.cpp opennurbs_ext.cpp
 BREP_TEST = brep_test
-BREP_CPPFLAGS = @SSE@ -DOBJ_BREP=1 $(TNT_CPPFLAGS) $(OPENNURBS_CPPFLAGS)
-BREP_LIBADD = $(OPENNURBS)
+BREP_CPPFLAGS = @SSE@ -DOBJ_BREP=1 ${TNT_CPPFLAGS} ${OPENNURBS_CPPFLAGS}
+BREP_LIBADD = ${OPENNURBS}
 
 brep_test_SOURCES = brep_test.cpp
 # cannot set per-target CPPFLAGS until automake 1.7+
 brep_test_CXXFLAGS = ${SSE}
 brep_test_LDADD = \
-	librt.la
-
-else # !WITH_OPENNURBS
-
-BREP_SRCS =
-BREP_TEST =
-BREP_CPPFLAGS =
-BREP_LIBADD =
-
-endif # WITH_OPENNURBS
+	librt.la \
+	${RT_LIBS}
 
 # cannot set per-target CPPFLAGS until automake 1.7+
 AM_CPPFLAGS = \
@@ -179,7 +169,8 @@ librt_nil_la_SOURCES = \
 	wdb_obj.c
 
 EXTRA_librt_nil_la_SOURCES = \
-	g_brep.cpp
+	g_brep.cpp \
+	opennurbs_ext.cpp
 
 librt_nil_la_LIBADD = ${BREP_LIBADD}
 
@@ -191,11 +182,13 @@ librt_la_LIBADD = \
 
 comb_SOURCES = comb.c
 comb_LDADD = \
-	librt.la
+	librt.la \
+	${RT_LIBS}
 
 nurb_example_SOURCES = nurb_example.c
 nurb_example_LDADD = \
-	librt.la
+	librt.la \
+	${RT_LIBS}
 
 # XXX this should be noinst or moved to include
 include_HEADERS = \
@@ -217,28 +210,23 @@ sample_applications_DATA = \
 EXTRA_DIST = \
 	$(BREP_SRCS) \
 	$(sample_applications_DATA) \
+        CMakeLists.txt \
+	brep_test.cpp \
 	g_bot_include.c \
-	librt.dsp \
 	nmg_junk.c \
 	parse.c \
 	pmalloc.c \
-	sqrt.gould.s \
-	sqrt.vax.s \
 	timer-nt.c \
 	timer52brl.c \
-	timercos.c \
 	timerhep.c \
 	timerunix.c \
 	vshoot.c
 
-if BUILD_OPENNURBS
-DEPADD=src/other/openNURBS
-else
-DEPADD=
+if BUILD_REGEX
+DEPADD = src/other/libregex
 endif
-DEPS=src/libbn src/libsysv $(DEPADD)
 
-MAINTAINERCLEANFILES = Makefile.in
+DEPENDS = src/libbn src/libsysv src/other/openNURBS ${DEPADD}
 
 include $(top_srcdir)/misc/Makefile.defs
 

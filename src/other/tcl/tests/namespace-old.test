@@ -17,7 +17,7 @@
 # RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest
+    package require tcltest 2.2
     namespace import -force ::tcltest::*
 }
 
@@ -336,9 +336,9 @@ test namespace-old-5.9 {usage for "namespace children"} {
     list [catch {namespace children test_ns_hier1 y z} msg] $msg
 } {1 {wrong # args: should be "namespace children ?name? ?pattern?"}}
 
-test namespace-old-5.10 {command "namespace children" must get valid namespace} {
-    list [catch {namespace children xyzzy} msg] $msg
-} {1 {unknown namespace "xyzzy" in namespace children command}}
+test namespace-old-5.10 {command "namespace children" must get valid namespace} -body {
+    namespace children xyzzy
+} -returnCodes error -result {namespace "xyzzy" not found in "::"}
 
 test namespace-old-5.11 {querying namespace children} {
     lsort [namespace children :: test_ns_hier*]
@@ -372,9 +372,9 @@ test namespace-old-5.18 {usage for "namespace parent"} {
     list [catch {namespace parent x y} msg] $msg
 } {1 {wrong # args: should be "namespace parent ?name?"}}
 
-test namespace-old-5.19 {command "namespace parent" must get valid namespace} {
-    list [catch {namespace parent xyzzy} msg] $msg
-} {1 {unknown namespace "xyzzy" in namespace parent command}}
+test namespace-old-5.19 {command "namespace parent" must get valid namespace} -body {
+    namespace parent xyzzy
+} -returnCodes error -result {namespace "xyzzy" not found in "::"}
 
 test namespace-old-5.20 {querying namespace parent} {
     list [namespace eval :: {namespace parent}] \

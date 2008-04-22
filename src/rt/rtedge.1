@@ -2,7 +2,7 @@
 .\"                       R T E D G E . 1
 .\" BRL-CAD
 .\"
-.\" Copyright (c) 2001-2007 United States Government as represented by
+.\" Copyright (c) 2001-2008 United States Government as represented by
 .\" the U.S. Army Research Laboratory.
 .\"
 .\" Redistribution and use in source (Docbook format) and 'compiled'
@@ -255,6 +255,12 @@ Overlay mode allows
 to write into an existing framebuffer. The framebuffer is
 specified with the \-F option.
 
+and
+.TP
+.B \-c"set max_dist=#"
+over-ride the maximum hit distance of neighboring pixels before being declared an edge.
+The default value is computed based on the size of the output image, approximately 1000 for the default image/fb size.
+
 .SH OCCLUSION CHECKING
 .I Rtedge
 has ability to perform occlusion checking between
@@ -461,7 +467,7 @@ Ronald Anthony Bowers
 .br
 Michael John Muuss
 .SH COPYRIGHT
-This software is Copyright (c) 2001-2007 United States Government as
+This software is Copyright (c) 2001-2008 United States Government as
 represented by the U.S. Army Research Laboratory. All rights reserved.
 .SH BUGS
 .LP

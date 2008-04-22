@@ -423,6 +423,15 @@ test text-8.24 {TextWidgetCmd procedure, "replace" option with peers, undo} {
 	lappend res 1
     }
 } {foo 0 1}
+test text-8.25 {TextWidgetCmd procedure, "replace" option crash} -setup {
+    destroy .tt
+} -body {
+    text .tt
+    .tt insert 0.0 foo\n
+    .tt replace end-1l end bar
+} -cleanup {
+    destroy .tt
+} -result {}
 
 .t delete 1.0 end; .t insert 1.0 $prevtext
 
@@ -3032,6 +3041,21 @@ test text-25.10 {TextEditCmd procedure, set modified flag} {
     .t edit modified 1
     .t edit modified
 } {1}
+test text-25.10.1 {TextEditCmd procedure, set modified flag repeat} {
+    catch {destroy .t}
+    text .t
+    pack .t
+    set ::retval {}
+    bind .t <<Modified>> "lappend ::retval modified"
+    # Shouldn't require [update idle] to trigger event [Bug 1809538]
+    lappend ::retval [.t edit modified]
+    .t edit modified 1
+    update idletasks
+    lappend ::retval [.t edit modified]
+    .t edit modified 1 ; # binding should only fire once [Bug 1799782]
+    update idletasks
+    lappend ::retval [.t edit modified]
+} {0 modified 1 1}
 test text-25.11 {<<Modified>> virtual event} {
     set ::retval unmodified
     catch {destroy .t}
@@ -3042,6 +3066,26 @@ test text-25.11 {<<Modified>> virtual event} {
     .t insert end "nothing special\n"
     set ::retval
 } {modified}
+test text-25.11.1 {<<Modified>> virtual event - insert before Modified} {
+    set ::retval {}
+    destroy .t
+    pack [text .t -undo 1]
+    bind .t <<Modified>> { set ::retval [.t get 1.0 end-1c] }
+    update idletasks
+    .t insert end "nothing special"
+    set ::retval
+} {nothing special}
+test text-25.11.2 {<<Modified>> virtual event - delete before Modified} {
+    # Bug 1737288, make sure we delete chars before triggering <<Modified>>
+    set ::retval {}
+    destroy .t
+    pack [text .t -undo 1]
+    bind .t <<Modified>> { set ::retval [.t get 1.0 end-1c] }
+    .t insert end "nothing special"
+    .t edit modified 0
+    .t delete 1.0 1.2
+    set ::retval
+} {thing special}
 test text-25.12 {<<Selection>> virtual event} {
     set ::retval no_selection
     catch {destroy .t}

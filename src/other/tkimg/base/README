@@ -24,9 +24,9 @@ Tk_ImageFileMatchProc	int				int
 ==============================================================================
 Tk_ImageStringMatchProc	int				int
 			------------------------------------------------------
-			char *string,			Tcl_Obj *dataObj, 
-			char *formatString,		Tcl_Obj *format, 
-			int *widthPtr,			int *widthPtr, 
+			char *string,			Tcl_Obj *dataObj,
+			char *formatString,		Tcl_Obj *format,
+			int *widthPtr,			int *widthPtr,
 			int *heightPtr			int *heightPtr,
 							Tcl_Interp *interp
 ==============================================================================

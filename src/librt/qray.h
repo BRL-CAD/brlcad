@@ -1,7 +1,7 @@
 /*                          Q R A Y . H
  * BRL-CAD
  *
- * Copyright (c) 2007 United States Government as represented by
+ * Copyright (c) 2007-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,10 +23,6 @@
  *
  * Header file for "Query Ray" variables.
  *
- * Source -
- *	SLAD CAD Team
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005
  */
 /** @} */
 
@@ -45,16 +41,16 @@
 #define DG_GED_MIN -2048.0
 
 struct dg_qray_fmt_data {
-  char type;
-  char *fmt;
+    char type;
+    char *fmt;
 };
 
 struct dg_qray_dataList {
-  struct bu_list l;
-  fastf_t x_in;
-  fastf_t y_in;
-  fastf_t z_in;
-  fastf_t los;
+    struct bu_list l;
+    fastf_t x_in;
+    fastf_t y_in;
+    fastf_t z_in;
+    fastf_t los;
 };
 
 extern void qray_data_to_vlist();
@@ -64,8 +60,8 @@ extern void qray_data_to_vlist();
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

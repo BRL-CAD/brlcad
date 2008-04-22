@@ -1,7 +1,7 @@
 /*                         S E D I T . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2007 United States Government as represented by
+ * Copyright (c) 1985-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -23,16 +23,6 @@
  *  which holds all the information necessary for solid editing.
  *  Storage is actually allocated in edsol.c
  *
- *  Author -
- *	Keith A Applin
- *	Michael John Muuss
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
- *  $Header$
  */
 
 #define MGED_SMALL_SCALE 1.0e-10
@@ -289,8 +279,8 @@ extern int arb_planes[5][24];	/* from edarb.c */
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

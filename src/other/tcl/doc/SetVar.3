@@ -119,7 +119,7 @@ returned as a pointer to a Tcl_Obj.  For \fBTcl_GetVar\fR and
 usually less efficient, so \fBTcl_GetVar2Ex\fR or \fBTcl_ObjGetVar2\fR
 are preferred.
 If an error occurs while reading the variable (e.g. the variable
-doesn't exist or an array element is specified for a scalar
+does not exist or an array element is specified for a scalar
 variable), then NULL is returned and an error message is left
 in \fIinterp\fR's result if the \fBTCL_LEAVE_ERR_MSG\fR \fIflag\fR
 bit is set.
@@ -130,7 +130,7 @@ an error.
 The arguments to these procedures are treated in the same way
 as the arguments to the procedures above.
 If the variable is successfully removed then \fBTCL_OK\fR is returned.
-If the variable cannot be removed because it doesn't exist then
+If the variable cannot be removed because it does not exist then
 \fBTCL_ERROR\fR is returned and an error message is left
 in \fIinterp\fR's result if the \fBTCL_LEAVE_ERR_MSG\fR \fIflag\fR
 bit is set.
@@ -150,7 +150,7 @@ close parenthesis, then the value between the parentheses is
 treated as an index (which can have any string value) and
 the characters before the first open
 parenthesis are treated as the name of an array variable.
-If \fIvarName\fR doesn't have parentheses as described above, then
+If \fIvarName\fR does not have parentheses as described above, then
 the entire string is treated as the name of a scalar variable.
 .IP [2]
 If the \fIname1\fR and \fIname2\fR arguments are provided and
@@ -192,7 +192,7 @@ If an error is returned and this bit is set in \fIflags\fR, then
 an error message will be left in the interpreter's result,
 where it can be retrieved with \fBTcl_GetObjResult\fR
 or \fBTcl_GetStringResult\fR.
-If this flag bit isn't set then no error message is left
+If this flag bit is not set then no error message is left
 and the interpreter's result will not be modified.
 .TP
 \fBTCL_APPEND_VALUE\fR
@@ -207,7 +207,10 @@ Tcl list element before setting (or appending to) the variable.
 A separator space is appended before the new list element unless
 the list element is going to be the first element in a list or
 sublist (i.e. the variable's current value is empty, or contains
-the single character ``{'', or ends in `` }'').
+the single character
+.QW { ,
+or ends in
+.QW " }" ).
 When appending, the original value of the variable must also be
 a valid list, so that the operation is the appending of a new
 list element onto a list.
@@ -225,7 +228,7 @@ and \fBTCL_LEAVE_ERR_MSG\fR, both of
 which have
 the same meaning as for \fBTcl_SetVar\fR.
 If an error occurs in reading the variable (e.g. the variable
-doesn't exist or an array element is specified for a scalar
+does not exist or an array element is specified for a scalar
 variable), then NULL is returned.
 .PP
 \fBTcl_UnsetVar\fR and \fBTcl_UnsetVar2\fR may be used to remove
@@ -234,7 +237,7 @@ for the variable will return an error.
 The arguments to these procedures are treated in the same way
 as the arguments to \fBTcl_GetVar\fR and \fBTcl_GetVar2\fR.
 If the variable is successfully removed then \fBTCL_OK\fR is returned.
-If the variable cannot be removed because it doesn't exist then
+If the variable cannot be removed because it does not exist then
 \fBTCL_ERROR\fR is returned.
 If an array element is specified, the given element is removed
 but the array remains.

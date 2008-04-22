@@ -2,17 +2,17 @@
 
 package require BLT
 # --------------------------------------------------------------------------
-# Starting with Tcl 8.x, the BLT commands are stored in their own 
+# Starting with Tcl 8.x, the BLT commands are stored in their own
 # namespace called "blt".  The idea is to prevent name clashes with
 # Tcl commands and variables from other packages, such as a "table"
-# command in two different packages.  
+# command in two different packages.
 #
 # You can access the BLT commands in a couple of ways.  You can prefix
 # all the BLT commands with the namespace qualifier "blt::"
-#  
+#
 #    blt::graph .g
 #    blt::table . .g -resize both
-# 
+#
 # or you can import all the command into the global namespace.
 #
 #    namespace import blt::*
@@ -43,9 +43,9 @@ proc GetEpsBBox { canvas tagName } {
     set right [expr $left + $width]
     set bottom [expr $top + $height]
 }
-    
+
 proc SaveImageCoords { canvas x y } {
-    global lastX lastY 
+    global lastX lastY
     set lastX $x
     set lastY $y
     $canvas configure -cursor sb_h_double_arrow
@@ -62,7 +62,7 @@ proc StartResize { canvas tagName x y anchor } {
     global left top right bottom image
 
     GetEpsBBox $canvas $tagName
-    $canvas itemconfigure $tagName-image -quick yes 
+    $canvas itemconfigure $tagName-image -quick yes
     $canvas itemconfigure $tagName-grip -fill red
     $canvas create line $left $top $right $bottom  \
 	-tags "$tagName $tagName-cross $tagName-l1" \
@@ -74,7 +74,7 @@ proc StartResize { canvas tagName x y anchor } {
     $canvas raise $tagName-grip
     global cursors
     $canvas configure -cursor $cursors($anchor)
-    global lastX lastY 
+    global lastX lastY
     set lastX $x
     set lastY $y
 }
@@ -94,19 +94,19 @@ proc ResetGrips { canvas tagName } {
 
     GetEpsBBox $canvas $tagName
     $canvas coords $tagName-nw \
-	$left $top [expr $left + $gripSize] [expr $top + $gripSize] 
+	$left $top [expr $left + $gripSize] [expr $top + $gripSize]
     $canvas coords $tagName-se \
-	[expr $right - $gripSize] [expr $bottom - $gripSize] $right $bottom 
+	[expr $right - $gripSize] [expr $bottom - $gripSize] $right $bottom
     $canvas coords $tagName-ne \
-	[expr $right - $gripSize] [expr $top + $gripSize] $right $top 
+	[expr $right - $gripSize] [expr $top + $gripSize] $right $top
     $canvas coords $tagName-sw \
-	$left $bottom [expr $left + $gripSize] [expr $bottom - $gripSize] 
-    $canvas coords $tagName-l1 $left $top $right $bottom  
-    $canvas coords $tagName-l2 $left $bottom $right $top 
+	$left $bottom [expr $left + $gripSize] [expr $bottom - $gripSize]
+    $canvas coords $tagName-l1 $left $top $right $bottom
+    $canvas coords $tagName-l2 $left $bottom $right $top
 }
 
 proc ResizeEpsItem { canvas anchor tagName x y } {
-    global lastX lastY left top right bottom 
+    global lastX lastY left top right bottom
 
     GetEpsBBox $canvas $tagName
     switch $anchor {
@@ -169,8 +169,8 @@ proc MakeEps { canvas {epsFile ""} {imageFile ""} } {
 	-fill orange \
 	-file $epsFile \
 
-#	-image $image 
-    
+#	-image $image
+
     set gripSize 8
     GetEpsBBox $canvas $tagName
     global left top right bottom
@@ -213,14 +213,14 @@ source scripts/stipples.tcl
 
 #
 # Script to test the BLT "eps" canvas item.
-# 
+#
 
 canvas .layout -bg white
 
 button .print -text "Print" -command {
     wm iconify .
     update
-    .layout postscript -file eps.ps 
+    .layout postscript -file eps.ps
     wm deiconify .
     update
 }

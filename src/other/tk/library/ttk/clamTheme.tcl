@@ -45,7 +45,8 @@ namespace eval ttk::theme::clam {
 	    ;
 	# -selectbackground [list  !focus "#847d73"]
 
-	ttk::style configure TButton -width -11 -padding 5 -relief raised
+	ttk::style configure TButton \
+	    -anchor center -width -11 -padding 5 -relief raised
 	ttk::style map TButton \
 	    -background [list \
 			     disabled $colors(-frame) \
@@ -56,7 +57,8 @@ namespace eval ttk::theme::clam {
 	    -bordercolor [list alternate "#000000"] \
 	    ;
 
-	ttk::style configure Toolbutton -padding 2 -relief flat
+	ttk::style configure Toolbutton \
+	    -anchor center -padding 2 -relief flat
 	ttk::style map Toolbutton \
 	    -relief [list \
 		    disabled flat \
@@ -85,7 +87,7 @@ namespace eval ttk::theme::clam {
 	    [list  disabled $colors(-frame)  pressed $colors(-frame)]
 
 	ttk::style configure TMenubutton \
-	    -width -11 -padding 5 -relief raised -anchor w
+	    -width -11 -padding 5 -relief raised
 
 	ttk::style configure TEntry -padding 1 -insertwidth 1
 	ttk::style map TEntry \

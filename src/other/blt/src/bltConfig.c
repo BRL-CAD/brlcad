@@ -789,7 +789,7 @@ GetDashes(interp, string, dashesPtr)
 	    return TCL_ERROR;
 	}
 	if (nValues > 11) {	/* This is the postscript limit */
-	    Tcl_AppendResult(interp, "too many values in dash list \"", 
+	    Tcl_AppendResult(interp, "too many values in dash list \"",
 			     string, "\"", (char *)NULL);
 	    Blt_Free(strArr);
 	    return TCL_ERROR;
@@ -1236,7 +1236,7 @@ TCL_VARARGS_DEF(Tk_ConfigSpec *, arg1)
  *----------------------------------------------------------------------
  */
 int
-Blt_ConfigureWidgetComponent(interp, parent, resName, className, specsPtr, 
+Blt_ConfigureWidgetComponent(interp, parent, resName, className, specsPtr,
 	argc, argv, widgRec, flags)
     Tcl_Interp *interp;
     Tk_Window parent;		/* Window to associate with component */
@@ -1268,7 +1268,7 @@ Blt_ConfigureWidgetComponent(interp, parent, resName, className, specsPtr,
 	isTemporary = TRUE;
     }
     if (tkwin == NULL) {
-	Tcl_AppendResult(interp, "can't find window in \"", 
+	Tcl_AppendResult(interp, "can't find window in \"",
 		 Tk_PathName(parent), "\"", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -1323,7 +1323,7 @@ Blt_StringToEnum(clientData, interp, tkwin, string, widgRec, offset)
 
     Tcl_AppendResult(interp, "bad value \"", string, "\": should be ",
 		(char *)NULL);
-    p = (char **)clientData; 
+    p = (char **)clientData;
     if (count > 0) {
 	Tcl_AppendResult(interp, p[0], (char *)NULL);
     }

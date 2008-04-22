@@ -112,9 +112,9 @@
 #define TOKEN_TIMEOUT	5000	/* 5 second timeout for drop requests. */
 
 /*
- *   Each widget representing a drag & drop target is tagged with 
- *   a "BltDndTarget" property in XA_STRING format.  This property 
- *   identifies the window as a target.  It's formated as a Tcl list 
+ *   Each widget representing a drag & drop target is tagged with
+ *   a "BltDndTarget" property in XA_STRING format.  This property
+ *   identifies the window as a target.  It's formated as a Tcl list
  *   and contains the following information:
  *
  *	"flags DATA_TYPE DATA_TYPE ..."
@@ -122,22 +122,22 @@
  *	"INTERP_NAME TARGET_NAME WINDOW_ID DATA_TYPE DATA_TYPE ..."
  *
  *	INTERP_NAME	Name of the target application's interpreter.
- *	TARGET_NAME	Path name of widget registered as the drop target.  
- *	WINDOW_ID	Window Id of the target's communication window. 
- *			Used to forward Enter/Leave/Motion event information 
+ *	TARGET_NAME	Path name of widget registered as the drop target.
+ *	WINDOW_ID	Window Id of the target's communication window.
+ *			Used to forward Enter/Leave/Motion event information
  *			to the target.
  *	DATA_TYPE	One or more "types" handled by the target.
  *
  *   When the user invokes the "drag" operation, the window hierarchy
  *   is progressively examined.  Window information is cached during
  *   the operation, to minimize X server traffic. Windows carrying a
- *   "BltDndTarget" property are identified.  When the token is dropped 
- *   over a valid site, the drop information is sent to the application 
- *   via the usual "send" command.  If communication fails, the drag&drop 
- *   facility automatically posts a rejection symbol on the token window.  
+ *   "BltDndTarget" property are identified.  When the token is dropped
+ *   over a valid site, the drop information is sent to the application
+ *   via the usual "send" command.  If communication fails, the drag&drop
+ *   facility automatically posts a rejection symbol on the token window.
  */
 
-/* 
+/*
  * Drop Protocol:
  *
  *		Source				Target
@@ -145,25 +145,25 @@
  *   ButtonRelease-? event.
  *   Invokes blt::dnd drop
  *		   +
- *   Send "drop" message to target (via 
- *   ClientMessage). Contains X-Y, key/ --> Gets "drop" message. 
+ *   Send "drop" message to target (via
+ *   ClientMessage). Contains X-Y, key/ --> Gets "drop" message.
  *   button state, source window XID.       Invokes LeaveCmd proc.
- *					    Gets property from source of 
- *					    ordered matching formats.  
+ *					    Gets property from source of
+ *					    ordered matching formats.
  *					            +
  *					    Invokes DropCmd proc. Arguments
- *					    are X-Y coordinate, key/button 
- *					    state, transaction timestamp, 
- *					    list of matching formats.  
+ *					    are X-Y coordinate, key/button
+ *					    state, transaction timestamp,
+ *					    list of matching formats.
  *						    +
  *					    Target selects format and invokes
  *					    blt::dnd pull to transfer the data
  *					    in the selected format.
  *						    +
- *					    Sends "drop start" message to 
+ *					    Sends "drop start" message to
  *					    source.  Contains selected format
  *   Gets "drop start" message.		<-- (as atom), ?action?, target window
- *   Invokes data handler for the     	    ID, transaction timestamp. 
+ *   Invokes data handler for the     	    ID, transaction timestamp.
  *   selected format.				    +
  *                +			    Waits for property to change on
  *   Places first packet of data in         its window.  Time out set for
@@ -173,9 +173,9 @@
  *   change. Time out set for no resp.  <-- property on source window.
  *   If non-zero length packet, error               +
  *   occurred, packet is error message.     Sends "drop finished" message.
- *					    Contains transaction timestamp, 
+ *					    Contains transaction timestamp,
  *   Gets "drop finished" message.      <-- status, ?action?.
- *   Invokes FinishCmd proc. 
+ *   Invokes FinishCmd proc.
  */
 
 /* Configuration Parameters */
@@ -213,8 +213,8 @@
 #define DEF_TOKEN_REJECT_STIPPLE_MONO	RGB_GREY50
 #define DEF_TOKEN_RELIEF		"raised"
 
-static int StringToCursors _ANSI_ARGS_((ClientData clientData, 
-	Tcl_Interp *interp, Tk_Window tkwin, char *string, char *widgRec, 
+static int StringToCursors _ANSI_ARGS_((ClientData clientData,
+	Tcl_Interp *interp, Tk_Window tkwin, char *string, char *widgRec,
 	int offset));
 static char *CursorsToString _ANSI_ARGS_((ClientData clientData, Tk_Window tkwin,
 	char *widgRec, int offset, Tcl_FreeProc **freeProcPtr));
@@ -225,7 +225,7 @@ Tk_CustomOption cursorsOption =
 };
 
 typedef struct {
-    Blt_HashTable dndTable;	/* Hash table of dnd structures keyed by 
+    Blt_HashTable dndTable;	/* Hash table of dnd structures keyed by
 				 * the address of the reference Tk window */
     Tk_Window mainWindow;
     Display *display;
@@ -235,7 +235,7 @@ typedef struct {
     Atom commAtom;		/* Communication property atom. */
 
 #ifdef HAVE_XDND
-    Blt_HashTable handlerTable; /* Table of toplevel windows with XdndAware 
+    Blt_HashTable handlerTable; /* Table of toplevel windows with XdndAware
 				 * properties attached to them. */
     Atom XdndActionListAtom;
     Atom XdndAwareAtom;
@@ -272,7 +272,7 @@ typedef struct {
 				 * either PROTO_BLT or PROTO_XDND. */
 } DropPending;
 
-/* 
+/*
  * SubstDescriptors --
  *
  *	Structure to hold letter-value pairs for percent substitutions.
@@ -339,38 +339,38 @@ typedef struct {
  *	This structure represents a window hierarchy examined during a single
  *	"drag" operation.  It's used to cache information to reduce the round
  *	trip calls to the server needed to query window geometry information
- *	and grab the target property.  
+ *	and grab the target property.
  */
 typedef struct WinfoStruct {
     Window window;		/* Window in hierarchy. */
-    
+
     int initialized;		/* If zero, the rest of this structure's
 				 * information hasn't been set. */
-    
+
     int x1, y1, x2, y2;		/* Extents of the window (upper-left and
 				 * lower-right corners). */
-    
+
     struct WinfoStruct *parentPtr;	/* Parent node. NULL if root. Used to
 				 * compute offset for X11 windows. */
-    
+
     Blt_Chain *chainPtr;	/* List of this window's children. If NULL,
 				 * there are no children. */
-    
+
     int isTarget;		/* Indicates if this window is a drag&drop
 				 * target. */
     int lookedForProperty;	/* Indicates if this window  */
-    
-    int eventFlags;		/* Retrieved from the target's drag&drop 
+
+    int eventFlags;		/* Retrieved from the target's drag&drop
 				 * property, indicates what kinds of pointer
 				 * events should be relayed to the target via
-				 * ClientMessages. Possible values are OR-ed 
-				 * combinations of the following bits: 
-				 *	001 Enter events.  
+				 * ClientMessages. Possible values are OR-ed
+				 * combinations of the following bits:
+				 *	001 Enter events.
 				 *	010 Motion events.
-				 *	100 Leave events.  
+				 *	100 Leave events.
 				 */
     char *matches;
-    
+
 } Winfo;
 
 /*
@@ -378,14 +378,14 @@ typedef struct WinfoStruct {
  *
  *	This structure represents the drag&drop manager.  It is associated
  *	with a widget as a drag&drop source, target, or both.  It contains
- *	both the source and target components, since a widget can be both 
- *	a drag source and a drop target.  
+ *	both the source and target components, since a widget can be both
+ *	a drag source and a drop target.
  */
 typedef struct {
     Tcl_Interp *interp;		/* Interpreter associated with the drag&drop
 				 * manager. */
-    
-    Tk_Window tkwin;		/* Tk window representing the drag&drop 
+
+    Tk_Window tkwin;		/* Tk window representing the drag&drop
 				 * manager (can be source and/or target). */
 
     Display *display;		/* Display for drag&drop widget. Saved to free
@@ -396,7 +396,7 @@ typedef struct {
     int isTarget;		/* Indicates if this drag&drop manager can act
 				 * as a drop target. */
 
-    int targetPropertyExists;	/* Indicates is the drop target property has 
+    int targetPropertyExists;	/* Indicates is the drop target property has
 				 * been set. */
 
     unsigned int flags;		/* Various flags;  see below for
@@ -407,10 +407,10 @@ typedef struct {
 
     Blt_HashEntry *hashPtr;
 
-    DndInterpData *dataPtr;	
+    DndInterpData *dataPtr;
 
     /* Source component. */
-    
+
     Blt_HashTable getDataTable;	/* Table of data handlers (converters)
 				 * registered for this source. */
 
@@ -421,22 +421,22 @@ typedef struct {
 
     Tk_Cursor cursor;		/* Cursor restored after dragging */
 
-    int selfTarget;		/* Indicated if the source should drop onto 
+    int selfTarget;		/* Indicated if the source should drop onto
 				 * itself. */
 
     char **reqFormats;		/* List of requested data formats. The
-				 * list should be ordered with the more 
+				 * list should be ordered with the more
 				 * desireable formats first. You can also
-				 * temporarily turn off a source by setting 
+				 * temporarily turn off a source by setting
 				 * the value to the empty string. */
 
     Winfo *rootPtr;		/* Cached window information: Gathered
-				 * and used during the "drag" operation 
-				 * to see if the mouse pointer is over a 
+				 * and used during the "drag" operation
+				 * to see if the mouse pointer is over a
 				 * valid target. */
 
-    Winfo *windowPtr;		/* Points to information about the last 
-				 * target the pointer was over. If NULL, 
+    Winfo *windowPtr;		/* Points to information about the last
+				 * target the pointer was over. If NULL,
 				 * the pointer was not over a valid target. */
 
     char **packageCmd;		/* Tcl command executed at start of the drag
@@ -445,11 +445,11 @@ typedef struct {
     char **resultCmd;		/* Tcl command executed at the end of the
 				 * "drop" operation to indicate its status. */
 
-    char **siteCmd;		/* Tcl command executed to update token 
+    char **siteCmd;		/* Tcl command executed to update token
 				 * window. */
 
     Token *tokenPtr;		/* Token used to provide special cursor. */
-    
+
 
     Tcl_TimerToken timerToken;
 
@@ -489,18 +489,18 @@ typedef struct {
 typedef struct {
     Tk_Window tkwin;		/* Toplevel window of the drop target. */
     int refCount;		/* # of targets referencing this structure. */
-    Dnd *dndPtr;		/* Last drop target selected.  Used the 
-				 * implement Enter/Leave events for targets. 
-				 * If NULL, indicates that no drop target was 
+    Dnd *dndPtr;		/* Last drop target selected.  Used the
+				 * implement Enter/Leave events for targets.
+				 * If NULL, indicates that no drop target was
 				 * previously selected. */
     int lastRepsonse;		/* Indicates what the last response was. */
     Window window;		/* Window id of the top-level window (ie.
 				 * the wrapper). */
-    char **formatArr;		/* List of formats available from source. 
+    char **formatArr;		/* List of formats available from source.
 				 * Must be pruned down to matching list. */
     DndInterpData *dataPtr;
     int x, y;
-    
+
 } XDndHandler;
 
 extern Tk_CustomOption bltListOption;
@@ -508,45 +508,45 @@ extern Tk_CustomOption bltDistanceOption;
 
 static Tk_ConfigSpec configSpecs[] =
 {
-    {TK_CONFIG_CUSTOM, "-allowformats", "allowFormats", "AllowFormats", 
-	DEF_DND_SEND, Tk_Offset(Dnd, reqFormats), 
+    {TK_CONFIG_CUSTOM, "-allowformats", "allowFormats", "AllowFormats",
+	DEF_DND_SEND, Tk_Offset(Dnd, reqFormats),
         TK_CONFIG_NULL_OK, &bltListOption},
     {TK_CONFIG_INT, "-button", "buttonNumber", "ButtonNumber",
 	DEF_DND_BUTTON_NUMBER, Tk_Offset(Dnd, reqButton), 0},
     {TK_CONFIG_CUSTOM, "-dragthreshold", "dragThreshold", "DragThreshold",
-	DEF_DND_DRAG_THRESHOLD, Tk_Offset(Dnd, dragStart), 0, 
+	DEF_DND_DRAG_THRESHOLD, Tk_Offset(Dnd, dragStart), 0,
         &bltDistanceOption},
     {TK_CONFIG_CUSTOM, "-cursors", "cursors", "cursors",
-	DEF_TOKEN_CURSOR, Tk_Offset(Dnd, cursors), 
+	DEF_TOKEN_CURSOR, Tk_Offset(Dnd, cursors),
 	TK_CONFIG_NULL_OK, &cursorsOption },
     {TK_CONFIG_CUSTOM, "-onenter", "onEnter", "OnEnter",
-	DEF_DND_ENTER_COMMAND, Tk_Offset(Dnd, enterCmd), 
+	DEF_DND_ENTER_COMMAND, Tk_Offset(Dnd, enterCmd),
 	TK_CONFIG_NULL_OK, &bltListOption},
     {TK_CONFIG_CUSTOM, "-onmotion", "onMotion", "OnMotion",
-	DEF_DND_MOTION_COMMAND, Tk_Offset(Dnd, motionCmd), 
+	DEF_DND_MOTION_COMMAND, Tk_Offset(Dnd, motionCmd),
 	TK_CONFIG_NULL_OK, &bltListOption},
     {TK_CONFIG_CUSTOM, "-onleave", "onLeave", "OnLeave",
-	DEF_DND_LEAVE_COMMAND, Tk_Offset(Dnd, leaveCmd), 
+	DEF_DND_LEAVE_COMMAND, Tk_Offset(Dnd, leaveCmd),
 	TK_CONFIG_NULL_OK, &bltListOption},
     {TK_CONFIG_CUSTOM, "-ondrop", "onDrop", "OnDrop",
-	DEF_DND_DROP_COMMAND, Tk_Offset(Dnd, dropCmd), 
+	DEF_DND_DROP_COMMAND, Tk_Offset(Dnd, dropCmd),
 	TK_CONFIG_NULL_OK, &bltListOption},
     {TK_CONFIG_CUSTOM, "-package", "packageCommand", "PackageCommand",
-	DEF_DND_PACKAGE_COMMAND, Tk_Offset(Dnd, packageCmd), 
+	DEF_DND_PACKAGE_COMMAND, Tk_Offset(Dnd, packageCmd),
         TK_CONFIG_NULL_OK, &bltListOption },
     {TK_CONFIG_CUSTOM, "-result", "result", "Result",
-	DEF_DND_RESULT_COMMAND, Tk_Offset(Dnd, resultCmd), 
+	DEF_DND_RESULT_COMMAND, Tk_Offset(Dnd, resultCmd),
 	TK_CONFIG_NULL_OK, &bltListOption},
     {TK_CONFIG_BOOLEAN, "-selftarget", "selfTarget", "SelfTarget",
 	DEF_DND_SELF_TARGET, Tk_Offset(Dnd, selfTarget), 0},
     {TK_CONFIG_CUSTOM, "-site", "siteCommand", "Command",
-	DEF_DND_SITE_COMMAND, Tk_Offset(Dnd, siteCmd), 
+	DEF_DND_SITE_COMMAND, Tk_Offset(Dnd, siteCmd),
         TK_CONFIG_NULL_OK, &bltListOption},
     {TK_CONFIG_BOOLEAN, "-source", "source", "Source",
 	DEF_DND_IS_SOURCE, Tk_Offset(Dnd, isSource), 0},
     {TK_CONFIG_BOOLEAN, "-target", "target", "Target",
 	DEF_DND_IS_TARGET, Tk_Offset(Dnd, isTarget), 0},
-    {TK_CONFIG_END, (char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL, 
+    {TK_CONFIG_END, (char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL,
 	0, 0},
 };
 
@@ -556,14 +556,14 @@ static Tk_ConfigSpec tokenConfigSpecs[] =
 	"ActiveBackground", DEF_TOKEN_ACTIVE_BACKGROUND,
 	Tk_Offset(Token, activeBorder), TK_CONFIG_COLOR_ONLY},
     {TK_CONFIG_BORDER, "-activebackground", "activeBackground",
-	"ActiveBackground", DEF_TOKEN_ACTIVE_BG_MONO, 
+	"ActiveBackground", DEF_TOKEN_ACTIVE_BG_MONO,
 	Tk_Offset(Token, activeBorder), TK_CONFIG_MONO_ONLY},
     {TK_CONFIG_RELIEF, "-activerelief", "activeRelief", "activeRelief",
 	DEF_TOKEN_ACTIVE_RELIEF, Tk_Offset(Token, activeRelief), 0},
     {TK_CONFIG_ANCHOR, "-anchor", "anchor", "Anchor",
 	DEF_TOKEN_ANCHOR, Tk_Offset(Token, anchor), 0},
     {TK_CONFIG_PIXELS, "-activeborderwidth", "activeBorderWidth",
-	"ActiveBorderWidth", DEF_TOKEN_ACTIVE_BORDERWIDTH, 
+	"ActiveBorderWidth", DEF_TOKEN_ACTIVE_BORDERWIDTH,
 	Tk_Offset(Token, activeBorderWidth), 0},
     {TK_CONFIG_BORDER, "-background", "background", "Background",
 	DEF_TOKEN_BACKGROUND, Tk_Offset(Token, normalBorder),
@@ -574,16 +574,16 @@ static Tk_ConfigSpec tokenConfigSpecs[] =
     {TK_CONFIG_PIXELS, "-borderwidth", "borderWidth", "BorderWidth",
 	DEF_TOKEN_BORDERWIDTH, Tk_Offset(Token, borderWidth), 0},
     {TK_CONFIG_COLOR, "-outline", "outline", "Outline",
-	DEF_TOKEN_REJECT_BACKGROUND, Tk_Offset(Token, outlineColor), 
+	DEF_TOKEN_REJECT_BACKGROUND, Tk_Offset(Token, outlineColor),
 	TK_CONFIG_COLOR_ONLY},
     {TK_CONFIG_COLOR, "-outline", "outline", "Outline",
-	DEF_TOKEN_REJECT_BG_MONO, Tk_Offset(Token, outlineColor), 
+	DEF_TOKEN_REJECT_BG_MONO, Tk_Offset(Token, outlineColor),
 	TK_CONFIG_MONO_ONLY},
     {TK_CONFIG_COLOR, "-fill", "fill", "Fill",
-	DEF_TOKEN_REJECT_FOREGROUND, Tk_Offset(Token, fillColor), 
+	DEF_TOKEN_REJECT_FOREGROUND, Tk_Offset(Token, fillColor),
 	TK_CONFIG_COLOR_ONLY},
     {TK_CONFIG_COLOR, "-fill", "fill", "Fill",
-	DEF_TOKEN_REJECT_BACKGROUND, Tk_Offset(Token, fillColor), 
+	DEF_TOKEN_REJECT_BACKGROUND, Tk_Offset(Token, fillColor),
 	TK_CONFIG_MONO_ONLY},
     {TK_CONFIG_BITMAP, "-rejectstipple", "rejectStipple", "Stipple",
 	DEF_TOKEN_REJECT_STIPPLE_COLOR, Tk_Offset(Token, rejectStipple),
@@ -597,7 +597,7 @@ static Tk_ConfigSpec tokenConfigSpecs[] =
 	(char *)NULL, Tk_Offset(Token, reqWidth), 0},
     {TK_CONFIG_INT, "-height", "height", "Height",
 	(char *)NULL, Tk_Offset(Token, reqHeight), 0},
-    {TK_CONFIG_END, (char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL, 
+    {TK_CONFIG_END, (char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL,
 	0, 0},
 };
 
@@ -607,14 +607,14 @@ static Tk_ConfigSpec tokenConfigSpecs[] =
  */
 static int DndCmd _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp,
 	int argc, char **argv));
-static void TokenEventProc _ANSI_ARGS_((ClientData clientData, 
+static void TokenEventProc _ANSI_ARGS_((ClientData clientData,
 	XEvent *eventPtr));
 static void MoveToken _ANSI_ARGS_((Dnd *dndPtr));
 static void DisplayToken _ANSI_ARGS_((ClientData clientData));
 static void HideToken _ANSI_ARGS_((Dnd *dndPtr));
 static void DrawRejectSymbol _ANSI_ARGS_((Dnd *dndPtr));
 
-static int GetDnd _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp, 
+static int GetDnd _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp,
 	char *name, Dnd **dndPtrPtr));
 static Dnd *CreateDnd _ANSI_ARGS_((Tcl_Interp *interp, Tk_Window tkwin));
 static void DestroyDnd _ANSI_ARGS_((DestroyData data));
@@ -678,7 +678,7 @@ StringToCursors(clientData, interp, tkwin, string, widgRec, offset)
 		result = TCL_ERROR;
 		break;
 	    }
-	}    
+	}
 	Blt_Free(elemArr);
 	*cursorPtrPtr = cursorArr;
     }
@@ -716,7 +716,7 @@ CursorsToString(clientData, tkwin, widgRec, offset, freeProcPtr)
     }
     Tcl_DStringInit(&dString);
     for (cursorPtr = cursorArr; *cursorPtr != NULL; cursorPtr++) {
-	Tcl_DStringAppendElement(&dString, 
+	Tcl_DStringAppendElement(&dString,
 		 Tk_NameOfCursor(Tk_Display(tkwin), *cursorPtr));
     }
     result = Blt_Strdup(Tcl_DStringValue(&dString));
@@ -799,7 +799,7 @@ SendClientMsg(display, window, mesgAtom, data0, data1, data2, data3, data4)
  *	Returns a chain of the child windows according to their stacking
  *	order. The window ids are ordered from top to bottom.
  *
- * ------------------------------------------------------------------------ 
+ * ------------------------------------------------------------------------
  */
 static Blt_Chain *
 GetWindowZOrder(display, window)
@@ -818,9 +818,9 @@ GetWindowZOrder(display, window)
 
 	chainPtr = Blt_ChainCreate();
 	for (i = 0; i < nChildren; i++) {
-	    /* 
+	    /*
 	     * XQuery returns windows in bottom to top order.  We only care
-	     * about the top window.  
+	     * about the top window.
 	     */
 	    Blt_ChainPrepend(chainPtr, (ClientData)childArr[i]);
 	}
@@ -850,7 +850,7 @@ GetMaxPropertySize(display)
  *	Returns the data associated with the named property on the
  *	given window.  All data is assumed to be 8-bit string data.
  *
- * ------------------------------------------------------------------------ 
+ * ------------------------------------------------------------------------
  */
 static char *
 GetProperty(display, window, atom)
@@ -897,7 +897,7 @@ GetProperty(display, window, atom)
  *	Associates the given data with the a property on a given window.
  *	All data is assumed to be 8-bit string data.
  *
- * ------------------------------------------------------------------------ 
+ * ------------------------------------------------------------------------
  */
 static void
 SetProperty(tkwin, atom, data)
@@ -914,14 +914,14 @@ SetProperty(tkwin, atom, data)
  *
  *  GetWindowRegion --
  *
- *	Queries for the upper-left and lower-right corners of the 
- *	given window.  
+ *	Queries for the upper-left and lower-right corners of the
+ *	given window.
  *
  *  Results:
  *	Returns if the window is currently viewable.  The coordinates
  *	of the window are returned via parameters.
  *
- * ------------------------------------------------------------------------ 
+ * ------------------------------------------------------------------------
  */
 static int
 GetWindowRegion(display, windowPtr)
@@ -971,11 +971,11 @@ FindTopWindow(dndPtr, x, y)
     }
     windowPtr = rootPtr;
 
-    /*  
+    /*
      * The window list is ordered top to bottom, so stop when we find the
      * first child that contains the X-Y coordinate. It will be the topmost
      * window in that hierarchy.  If none exists, then we already have the
-     * topmost window.  
+     * topmost window.
      */
   descend:
     for (linkPtr = Blt_ChainFirstLink(rootPtr->chainPtr); linkPtr != NULL;
@@ -989,10 +989,10 @@ FindTopWindow(dndPtr, x, y)
 	}
 	if ((x >= rootPtr->x1) && (x <= rootPtr->x2) &&
 	    (y >= rootPtr->y1) && (y <= rootPtr->y2)) {
-	    /*   
+	    /*
 	     * Remember the last window containing the pointer and descend
 	     * into its window hierarchy. We'll look for a child that also
-	     * contains the pointer.  
+	     * contains the pointer.
 	     */
 	    windowPtr = rootPtr;
 	    goto descend;
@@ -1007,12 +1007,12 @@ FindTopWindow(dndPtr, x, y)
  *  GetWidgetCursor --
  *
  *	Queries a widget for its current cursor.   The given window
- *	may or may not be a Tk widget that has a -cursor option. 
+ *	may or may not be a Tk widget that has a -cursor option.
  *
  *  Results:
  *	Returns the current cursor of the widget.
  *
- * ------------------------------------------------------------------------ 
+ * ------------------------------------------------------------------------
  */
 static Tk_Cursor
 GetWidgetCursor(interp, tkwin)
@@ -1172,7 +1172,7 @@ static void
 AnimateActiveCursor(clientData)
     ClientData clientData;
 {
-    Dnd *dndPtr = clientData;    
+    Dnd *dndPtr = clientData;
     Tk_Cursor cursor;
 
     dndPtr->cursorPos++;
@@ -1188,7 +1188,7 @@ AnimateActiveCursor(clientData)
 
 static void
 StartActiveCursor(dndPtr)
-    Dnd *dndPtr;    
+    Dnd *dndPtr;
 {
     if (dndPtr->timerToken != NULL) {
 	Tcl_DeleteTimerHandler(dndPtr->timerToken);
@@ -1200,7 +1200,7 @@ StartActiveCursor(dndPtr)
 	cursor = dndPtr->cursors[1];
 	if (cursor != None) {
 	    Tk_DefineCursor(dndPtr->tkwin, cursor);
-	    dndPtr->timerToken = Tcl_CreateTimerHandler(125, 
+	    dndPtr->timerToken = Tcl_CreateTimerHandler(125,
 		AnimateActiveCursor, dndPtr);
 	}
     }
@@ -1208,7 +1208,7 @@ StartActiveCursor(dndPtr)
 
 static void
 StopActiveCursor(dndPtr)
-    Dnd *dndPtr;    
+    Dnd *dndPtr;
 {
     if (dndPtr->cursorPos > 0) {
 	dndPtr->cursorPos = 0;
@@ -1248,7 +1248,7 @@ EventuallyRedrawToken(dndPtr)
 	return;
     }
     tokenPtr = dndPtr->tokenPtr;
-    if ((tokenPtr->tkwin != NULL) && (tokenPtr->tkwin != NULL) && 
+    if ((tokenPtr->tkwin != NULL) && (tokenPtr->tkwin != NULL) &&
 	!(tokenPtr->flags & TOKEN_REDRAW)) {
 	tokenPtr->flags |= TOKEN_REDRAW;
 	Tcl_DoWhenIdle(DisplayToken, dndPtr);
@@ -1271,7 +1271,7 @@ RaiseToken(dndPtr)
     if (dndPtr->flags & DND_INITIATED) {
 	if ((Tk_Width(tokenPtr->tkwin) != Tk_ReqWidth(tokenPtr->tkwin)) ||
 	    (Tk_Height(tokenPtr->tkwin) != Tk_ReqHeight(tokenPtr->tkwin))) {
-	    Blt_ResizeToplevel(tokenPtr->tkwin, 
+	    Blt_ResizeToplevel(tokenPtr->tkwin,
 		Tk_ReqWidth(tokenPtr->tkwin),
 		Tk_ReqHeight(tokenPtr->tkwin));
 	}
@@ -1312,9 +1312,9 @@ DisplayToken(clientData)
 	border = tokenPtr->normalBorder;
 	borderWidth = tokenPtr->borderWidth;
 	StopActiveCursor(dndPtr);
-    } 
-    Blt_Fill3DRectangle(tokenPtr->tkwin, Tk_WindowId(tokenPtr->tkwin), border, 
-	0, 0, Tk_Width(tokenPtr->tkwin), Tk_Height(tokenPtr->tkwin), 
+    }
+    Blt_Fill3DRectangle(tokenPtr->tkwin, Tk_WindowId(tokenPtr->tkwin), border,
+	0, 0, Tk_Width(tokenPtr->tkwin), Tk_Height(tokenPtr->tkwin),
 	borderWidth, relief);
     tokenPtr->lastStatus = tokenPtr->status;
     if (tokenPtr->status == DROP_FAIL) {
@@ -1334,7 +1334,7 @@ DisplayToken(clientData)
 static void
 FadeToken(dndPtr)
     Dnd *dndPtr;		/* Drag-and-drop manager (source). */
-{ 
+{
     Token *tokenPtr = dndPtr->tokenPtr;
     int w, h;
     int dx, dy;
@@ -1352,7 +1352,7 @@ FadeToken(dndPtr)
     if (tokenPtr->timerToken != NULL) {
 	Tcl_DeleteTimerHandler(tokenPtr->timerToken);
     }
-    tokenPtr->timerToken = Tcl_CreateTimerHandler(10, 
+    tokenPtr->timerToken = Tcl_CreateTimerHandler(10,
 		  (Tcl_TimerProc *)FadeToken, dndPtr);
     tokenPtr->nSteps--;
 
@@ -1360,14 +1360,14 @@ FadeToken(dndPtr)
     h = Tk_ReqHeight(tokenPtr->tkwin) * tokenPtr->nSteps / 10;
     if (w < 1) {
 	w = 1;
-    } 
+    }
     if (h < 1) {
 	h = 1;
     }
     dx = (Tk_ReqWidth(tokenPtr->tkwin) - w) / 2;
     dy = (Tk_ReqHeight(tokenPtr->tkwin) - h) / 2;
     window = Blt_GetRealWindowId(tokenPtr->tkwin);
-    XMoveResizeWindow(dndPtr->display, window, tokenPtr->x + dx, 
+    XMoveResizeWindow(dndPtr->display, window, tokenPtr->x + dx,
 	     tokenPtr->y + dy, (unsigned int)w, (unsigned int)h);
     tokenPtr->width = w, tokenPtr->height = h;
 }
@@ -1384,7 +1384,7 @@ FadeToken(dndPtr)
 static void
 SnapToken(dndPtr)
     Dnd *dndPtr;		/* drag&drop source window data */
-{ 
+{
     Token *tokenPtr = dndPtr->tokenPtr;
 
     if (tokenPtr->nSteps == 1) {
@@ -1394,12 +1394,12 @@ SnapToken(dndPtr)
     if (tokenPtr->timerToken != NULL) {
 	Tcl_DeleteTimerHandler(tokenPtr->timerToken);
     }
-    tokenPtr->timerToken = Tcl_CreateTimerHandler(10, 
+    tokenPtr->timerToken = Tcl_CreateTimerHandler(10,
 	(Tcl_TimerProc *)SnapToken, dndPtr);
     tokenPtr->nSteps--;
     tokenPtr->x -= (tokenPtr->x - tokenPtr->startX) / tokenPtr->nSteps;
     tokenPtr->y -= (tokenPtr->y - tokenPtr->startY) / tokenPtr->nSteps;
-    if ((tokenPtr->x != Tk_X(tokenPtr->tkwin)) || 
+    if ((tokenPtr->x != Tk_X(tokenPtr->tkwin)) ||
 	(tokenPtr->y != Tk_Y(tokenPtr->tkwin))) {
 	Tk_MoveToplevelWindow(tokenPtr->tkwin, tokenPtr->x, tokenPtr->y);
     }
@@ -1436,9 +1436,9 @@ HideToken(dndPtr)
 	    Tk_DefineCursor(dndPtr->tkwin, dndPtr->cursor);
 	}
 	if (tokenPtr->tkwin != NULL) {
-	    Tk_UnmapWindow(tokenPtr->tkwin); 
-	    Blt_ResizeToplevel(tokenPtr->tkwin, 
-			Tk_ReqWidth(tokenPtr->tkwin), 
+	    Tk_UnmapWindow(tokenPtr->tkwin);
+	    Blt_ResizeToplevel(tokenPtr->tkwin,
+			Tk_ReqWidth(tokenPtr->tkwin),
 			Tk_ReqHeight(tokenPtr->tkwin));
 	}
     }
@@ -1462,7 +1462,7 @@ HideToken(dndPtr)
 static void
 MorphToken(dndPtr)
     Dnd *dndPtr;		/* Drag-and-drop manager (source). */
-{ 
+{
     Token *tokenPtr = dndPtr->tokenPtr;
 
     if (tokenPtr->status == DROP_FAIL) {
@@ -1477,7 +1477,7 @@ MorphToken(dndPtr)
     if (tokenPtr->timerToken != NULL) {
 	Tcl_DeleteTimerHandler(tokenPtr->timerToken);
     }
-    tokenPtr->timerToken = Tcl_CreateTimerHandler(10, 
+    tokenPtr->timerToken = Tcl_CreateTimerHandler(10,
 	(Tcl_TimerProc *)MorphToken, dndPtr);
     tokenPtr->nSteps--;
 
@@ -1485,7 +1485,7 @@ MorphToken(dndPtr)
 	tokenPtr->nSteps--;
 	tokenPtr->x -= (tokenPtr->x - tokenPtr->startX) / tokenPtr->nSteps;
 	tokenPtr->y -= (tokenPtr->y - tokenPtr->startY) / tokenPtr->nSteps;
-	if ((tokenPtr->x != Tk_X(tokenPtr->tkwin)) || 
+	if ((tokenPtr->x != Tk_X(tokenPtr->tkwin)) ||
 	    (tokenPtr->y != Tk_Y(tokenPtr->tkwin))) {
 	    Tk_MoveToplevelWindow(tokenPtr->tkwin, tokenPtr->x, tokenPtr->y);
 	}
@@ -1498,14 +1498,14 @@ MorphToken(dndPtr)
 	h = Tk_ReqHeight(tokenPtr->tkwin) * tokenPtr->nSteps / 10;
 	if (w < 1) {
 	    w = 1;
-	} 
+	}
 	if (h < 1) {
 	    h = 1;
 	}
 	dx = (Tk_ReqWidth(tokenPtr->tkwin) - w) / 2;
 	dy = (Tk_ReqHeight(tokenPtr->tkwin) - h) / 2;
 	window = Blt_GetRealWindowId(tokenPtr->tkwin);
-	XMoveResizeWindow(dndPtr->display, window, tokenPtr->x + dx, 
+	XMoveResizeWindow(dndPtr->display, window, tokenPtr->x + dx,
 			  tokenPtr->y + dy, (unsigned int)w, (unsigned int)h);
 	tokenPtr->width = w, tokenPtr->height = h;
     }
@@ -1516,7 +1516,7 @@ static void
 GetTokenPosition(dndPtr, x, y)
     Dnd *dndPtr;
     int x, y;
-{ 
+{
     Token *tokenPtr = dndPtr->tokenPtr;
     int maxX, maxY;
     int vx, vy, dummy;
@@ -1558,11 +1558,11 @@ GetTokenPosition(dndPtr, x, y)
 static void
 MoveToken(dndPtr)
     Dnd *dndPtr;		/* drag&drop source window data */
-{ 
+{
     Token *tokenPtr = dndPtr->tokenPtr;
 
     GetTokenPosition(dndPtr, dndPtr->x, dndPtr->y);
-    if ((tokenPtr->x != Tk_X(tokenPtr->tkwin)) || 
+    if ((tokenPtr->x != Tk_X(tokenPtr->tkwin)) ||
 	(tokenPtr->y != Tk_Y(tokenPtr->tkwin))) {
 	Tk_MoveToplevelWindow(tokenPtr->tkwin, tokenPtr->x, tokenPtr->y);
     }
@@ -1599,7 +1599,7 @@ ChangeToken(dndPtr, status)
 	Tcl_Interp *interp = dndPtr->interp;
 	Tcl_DString dString, savedResult;
 	char **p;
-	
+
 	Tcl_DStringInit(&dString);
 	for (p = dndPtr->siteCmd; *p != NULL; p++) {
 	    Tcl_DStringAppendElement(&dString, *p);
@@ -1680,7 +1680,7 @@ DrawRejectSymbol(dndPtr)
     if (tokenPtr->timerToken != NULL) {
 	Tcl_DeleteTimerHandler(tokenPtr->timerToken);
     }
-    tokenPtr->timerToken = Tcl_CreateTimerHandler(1000, 
+    tokenPtr->timerToken = Tcl_CreateTimerHandler(1000,
 	(Tcl_TimerProc *)HideToken, dndPtr);
     RaiseToken(dndPtr);
     dndPtr->flags &= ~(DND_ACTIVE | DND_VOIDED);
@@ -1722,7 +1722,7 @@ DestroyToken(data)
 	Tk_FreeGC(dndPtr->display, tokenPtr->outlineGC);
     }
     if (tokenPtr->tkwin != NULL) {
-	Tk_DeleteEventHandler(tokenPtr->tkwin, 
+	Tk_DeleteEventHandler(tokenPtr->tkwin,
 	      ExposureMask | StructureNotifyMask, TokenEventProc, dndPtr);
 	Tk_DestroyWindow(tokenPtr->tkwin);
     }
@@ -1796,7 +1796,7 @@ CreateToken(interp, dndPtr)
 	return TCL_ERROR;
     }
     tokenPtr->tkwin = tkwin;
-    Tk_SetClass(tkwin, "DndToken"); 
+    Tk_SetClass(tkwin, "DndToken");
     Tk_CreateEventHandler(tkwin, ExposureMask | StructureNotifyMask,
 	TokenEventProc, dndPtr);
     attrs.override_redirect = True;
@@ -1834,7 +1834,7 @@ ConfigureToken(interp, dndPtr, argc, argv, flags)
     unsigned long gcMask;
 
     Tk_MakeWindowExist(tokenPtr->tkwin);
-    if (Tk_ConfigureWidget(interp, tokenPtr->tkwin, tokenConfigSpecs, argc, 
+    if (Tk_ConfigureWidget(interp, tokenPtr->tkwin, tokenConfigSpecs, argc,
 		argv, (char *)tokenPtr, flags) != TCL_OK) {
 	return TCL_ERROR;
     }
@@ -1874,7 +1874,7 @@ ConfigureToken(interp, dndPtr, argc, argv, flags)
     tokenPtr->fillGC = newGC;
 
     if ((tokenPtr->reqWidth > 0) && (tokenPtr->reqHeight > 0)) {
-	Tk_GeometryRequest(tokenPtr->tkwin, tokenPtr->reqWidth, 
+	Tk_GeometryRequest(tokenPtr->tkwin, tokenPtr->reqWidth,
 		tokenPtr->reqHeight);
     }
     /*
@@ -1902,7 +1902,7 @@ GetFormattedData(dndPtr, format, timestamp, resultPtr)
     /* Find the data converter for the prescribed format. */
     hPtr = Blt_FindHashEntry(&(dndPtr->getDataTable), format);
     if (hPtr == NULL) {
-	Tcl_AppendResult(interp, "can't find format \"", format, 
+	Tcl_AppendResult(interp, "can't find format \"", format,
 	 "\" in source \"", Tk_PathName(dndPtr->tkwin), "\"", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -2103,7 +2103,7 @@ ConfigureDnd(interp, dndPtr)
 
     if (!Tcl_GetCommandInfo(interp, "blt::DndInit", &cmdInfo)) {
 	static char cmd[] = "source [file join $blt_library dnd.tcl]";
-	/* 
+	/*
 	 * If the "DndInit" routine hasn't been sourced, do it now.
 	 */
 	if (Tcl_GlobalEval(interp, cmd) != TCL_OK) {
@@ -2112,9 +2112,9 @@ ConfigureDnd(interp, dndPtr)
 	    return TCL_ERROR;
 	}
     }
-    /*  
+    /*
      * Reset the target property if it's changed state or
-     * added/subtracted one of its callback procedures.  
+     * added/subtracted one of its callback procedures.
      */
     if (Blt_ConfigModified(configSpecs, "-target", "-onenter",  "-onmotion",
 	   "-onleave", (char *)NULL)) {
@@ -2131,7 +2131,7 @@ ConfigureDnd(interp, dndPtr)
     if (dndPtr->isSource) {
 	/* Check the button binding for valid range (0 or 1-5) */
 	if ((dndPtr->reqButton < 0) || (dndPtr->reqButton > 5)) {
-	    Tcl_AppendResult(interp, 
+	    Tcl_AppendResult(interp,
 			     "button must be 1-5, or 0 for no bindings",
 			     (char *)NULL);
 	    return TCL_ERROR;
@@ -2141,7 +2141,7 @@ ConfigureDnd(interp, dndPtr)
 	button = 0;
     }
     Tcl_DStringInit(&dString);
-    Blt_DStringAppendElements(&dString, "blt::DndInit", 
+    Blt_DStringAppendElements(&dString, "blt::DndInit",
 	Tk_PathName(dndPtr->tkwin), Blt_Itoa(button), (char *)NULL);
     result = Tcl_GlobalEval(interp, Tcl_DStringValue(&dString));
     Tcl_DStringFree(&dString);
@@ -2215,10 +2215,10 @@ SendTimerProc(clientData)
 {
     int *statusPtr = clientData;
 
-    /* 
+    /*
      * An unusually long amount of time has elapsed since the drag
      * start message was sent.  Assume that the other party has died
-     * and abort the operation.  
+     * and abort the operation.
      */
     *statusPtr = DROP_FAIL;
 }
@@ -2250,7 +2250,7 @@ TargetPropertyEventProc(clientData, eventPtr)
     fprintf(stderr, "TargetPropertyEventProc\n");
 #endif
     if ((eventPtr->type != PropertyNotify) ||
-	(eventPtr->xproperty.atom != pendingPtr->commAtom) || 
+	(eventPtr->xproperty.atom != pendingPtr->commAtom) ||
 	(eventPtr->xproperty.state != PropertyNewValue)) {
 	return;
     }
@@ -2270,7 +2270,7 @@ TargetPropertyEventProc(clientData, eventPtr)
         &bytesAfter,		/* (out) # of bytes remaining to be read. */
 	(unsigned char **)&data);
 #ifdef notdef
-    fprintf(stderr, 
+    fprintf(stderr,
 	"TargetPropertyEventProc: result=%d, typeAtom=%d, format=%d, nItems=%d\n",
 	    result, typeAtom, format, nItems);
 #endif
@@ -2284,27 +2284,27 @@ TargetPropertyEventProc(clientData, eventPtr)
 	XFree(data);
 	if (nItems == pendingPtr->packetSize) {
 	    /* Normally, we'll receive the data in one chunk. But if
-	     * more are required, reset the timer and go back into the 
+	     * more are required, reset the timer and go back into the
 	     * wait loop again. */
-	    pendingPtr->timerToken = Tcl_CreateTimerHandler(WAIT_INTERVAL, 
+	    pendingPtr->timerToken = Tcl_CreateTimerHandler(WAIT_INTERVAL,
 		SendTimerProc, &pendingPtr->status);
 	    pendingPtr->status = DROP_CONTINUE;
 	}
-    } 
+    }
     /* Set an empty, zero-length value on the source's property. This
      * acts as a handshake, indicating that the target received the
      * latest chunk. */
 #ifdef notdef
     fprintf(stderr, "TargetPropertyEventProc: set response property\n");
 #endif
-    XChangeProperty(pendingPtr->display, pendingPtr->window, 
-	pendingPtr->commAtom, XA_STRING, 8, PropModeReplace, 
+    XChangeProperty(pendingPtr->display, pendingPtr->window,
+	pendingPtr->commAtom, XA_STRING, 8, PropModeReplace,
 	(unsigned char *)"", 0);
 }
 
 #ifdef HAVE_XDND
 
-static int 
+static int
 XDndSelectionProc(clientData, interp, portion)
     ClientData clientData;
     Tcl_Interp *interp;
@@ -2344,7 +2344,7 @@ CompleteDataTransaction(dndPtr, format, pendingPtr)
 	    Dnd *srcPtr;
 
 	    srcPtr = (Dnd *)Blt_GetHashValue(hPtr);
-	    GetFormattedData(srcPtr, format, pendingPtr->timestamp, 
+	    GetFormattedData(srcPtr, format, pendingPtr->timestamp,
 		&(pendingPtr->dString));
 	}
 	return;
@@ -2352,10 +2352,10 @@ CompleteDataTransaction(dndPtr, format, pendingPtr)
 
     formatAtom = XInternAtom(pendingPtr->display, format, False);
 
-    if (pendingPtr->protocol == PROTO_XDND) { 
+    if (pendingPtr->protocol == PROTO_XDND) {
 #ifdef HAVE_XDND
-	if (Tk_GetSelection(dndPtr->interp, dndPtr->tkwin, 
-		dataPtr->XdndSelectionAtom, formatAtom, XDndSelectionProc, 
+	if (Tk_GetSelection(dndPtr->interp, dndPtr->tkwin,
+		dataPtr->XdndSelectionAtom, formatAtom, XDndSelectionProc,
 		pendingPtr) != TCL_OK) {
 	    pendingPtr->status = DROP_FAIL;
 	}
@@ -2365,23 +2365,23 @@ CompleteDataTransaction(dndPtr, format, pendingPtr)
 	Tk_RestrictProc *proc;
 	ClientData arg;
 
-	SendClientMsg(pendingPtr->display, pendingPtr->window, 
-		dataPtr->mesgAtom, 
-		TS_START_DROP, 
+	SendClientMsg(pendingPtr->display, pendingPtr->window,
+		dataPtr->mesgAtom,
+		TS_START_DROP,
 		(int)Tk_WindowId(dndPtr->tkwin),
-		pendingPtr->timestamp, 
-		(int)formatAtom, 
+		pendingPtr->timestamp,
+		(int)formatAtom,
 		(int)pendingPtr->commAtom);
 
 	pendingPtr->commAtom = dndPtr->dataPtr->commAtom;
 	pendingPtr->status = DROP_CONTINUE;
 	pendingPtr->display = dndPtr->display;
 	proc = Tk_RestrictEvents(SendRestrictProc, dndPtr, &arg);
-	Tk_CreateEventHandler(dndPtr->tkwin, PropertyChangeMask, 
+	Tk_CreateEventHandler(dndPtr->tkwin, PropertyChangeMask,
 		TargetPropertyEventProc, pendingPtr);
-	pendingPtr->timerToken = Tcl_CreateTimerHandler(WAIT_INTERVAL, 
+	pendingPtr->timerToken = Tcl_CreateTimerHandler(WAIT_INTERVAL,
 	       SendTimerProc, &pendingPtr->status);
-	/*  
+	/*
 	 * ----------------------------------------------------------
 	 *
 	 * Enter a loop processing X events until the all the data is
@@ -2390,15 +2390,15 @@ CompleteDataTransaction(dndPtr, format, pendingPtr)
 	 * just property-related events so that the transfer is
 	 * synchronous with respect to other events in the widget.
 	 *
-	 * ---------------------------------------------------------- 
+	 * ----------------------------------------------------------
 	 */
-	while (pendingPtr->status == DROP_CONTINUE) { 
+	while (pendingPtr->status == DROP_CONTINUE) {
 	    /* Wait for property event. */
 	    Tcl_DoOneEvent(TCL_ALL_EVENTS);
 	}
 	Tk_RestrictEvents(proc, arg, &arg);
 	Tcl_DeleteTimerHandler(pendingPtr->timerToken);
-	Tk_DeleteEventHandler(dndPtr->tkwin, PropertyChangeMask, 
+	Tk_DeleteEventHandler(dndPtr->tkwin, PropertyChangeMask,
 	      TargetPropertyEventProc, pendingPtr);
     }
 #ifdef notdef
@@ -2413,8 +2413,8 @@ CompleteDataTransaction(dndPtr, format, pendingPtr)
  *
  *	Invoked by the Tk dispatcher when a PropertyNotify event occurs
  *	on the source window.  The event acts as a handshake between the
- *	target and the source.  The source acknowledges the target has 
- *	received the last packet of data and sends the next packet.  
+ *	target and the source.  The source acknowledges the target has
+ *	received the last packet of data and sends the next packet.
  *
  *	Note a special case.  If the data is divisible by the packetsize,
  *	then an extra zero-length packet is sent to mark the end of the
@@ -2424,7 +2424,7 @@ CompleteDataTransaction(dndPtr, format, pendingPtr)
  *	errored occurred on the target, it will contain the error
  *	message.
  *
- * ------------------------------------------------------------------------ 
+ * ------------------------------------------------------------------------
  */
 static void
 SourcePropertyEventProc(clientData, eventPtr)
@@ -2478,7 +2478,7 @@ SourcePropertyEventProc(clientData, eventPtr)
     fprintf(stderr, "<- SourcePropertyEventProc: error\n");
 #endif
 	return;			/* Error occurred on target. */
-    }    
+    }
     bytesLeft = Tcl_DStringLength(&(pendingPtr->dString)) - pendingPtr->offset;
     if (bytesLeft <= 0) {
 #ifdef notdef
@@ -2490,12 +2490,12 @@ SourcePropertyEventProc(clientData, eventPtr)
 	size = MIN(bytesLeft, pendingPtr->packetSize);
 	pendingPtr->status = DROP_CONTINUE;
     }
-    p = (unsigned char *)Tcl_DStringValue(&(pendingPtr->dString)) + 
+    p = (unsigned char *)Tcl_DStringValue(&(pendingPtr->dString)) +
 	pendingPtr->offset;
-    XChangeProperty(pendingPtr->display, pendingPtr->window, 
+    XChangeProperty(pendingPtr->display, pendingPtr->window,
 	pendingPtr->commAtom, XA_STRING, 8, PropModeReplace, p, size);
     pendingPtr->offset += size;
-    pendingPtr->timerToken = Tcl_CreateTimerHandler(WAIT_INTERVAL, 
+    pendingPtr->timerToken = Tcl_CreateTimerHandler(WAIT_INTERVAL,
 	   SendTimerProc, &pendingPtr->status);
 #ifdef notdef
     fprintf(stderr, "<- SourcePropertyEventProc\n");
@@ -2515,20 +2515,20 @@ SendDataToTarget(dndPtr, pendingPtr)
 #ifdef notdef
     fprintf(stderr, "-> SendDataToTarget\n");
 #endif
-    Tk_CreateEventHandler(dndPtr->tkwin, PropertyChangeMask, 
+    Tk_CreateEventHandler(dndPtr->tkwin, PropertyChangeMask,
 	SourcePropertyEventProc, pendingPtr);
-    pendingPtr->timerToken = Tcl_CreateTimerHandler(WAIT_INTERVAL, 
+    pendingPtr->timerToken = Tcl_CreateTimerHandler(WAIT_INTERVAL,
 	SendTimerProc, &pendingPtr->status);
     size = MIN(Tcl_DStringLength(&pendingPtr->dString), pendingPtr->packetSize);
 
     proc = Tk_RestrictEvents(SendRestrictProc, dndPtr, &arg);
 
-    /* 
+    /*
      * Setting the property starts the process.  The target will
-     * see the PropertyChange event and respond accordingly.  
+     * see the PropertyChange event and respond accordingly.
      */
-    XChangeProperty(dndPtr->display, pendingPtr->window, 
-	pendingPtr->commAtom, XA_STRING, 8, PropModeReplace, 
+    XChangeProperty(dndPtr->display, pendingPtr->window,
+	pendingPtr->commAtom, XA_STRING, 8, PropModeReplace,
 	(unsigned char *)Tcl_DStringValue(&(pendingPtr->dString)), size);
     pendingPtr->offset += size;
 
@@ -2546,7 +2546,7 @@ SendDataToTarget(dndPtr, pendingPtr)
     }
     Tk_RestrictEvents(proc, arg, &arg);
     Tcl_DeleteTimerHandler(pendingPtr->timerToken);
-    Tk_DeleteEventHandler(dndPtr->tkwin, PropertyChangeMask, 
+    Tk_DeleteEventHandler(dndPtr->tkwin, PropertyChangeMask,
 	  SourcePropertyEventProc, pendingPtr);
 #ifdef notdef
     fprintf(stderr, "<- SendDataToTarget\n");
@@ -2576,17 +2576,17 @@ DoDrop(dndPtr, eventPtr)
     dropPtr = (struct DropRequest *)eventPtr->xclient.data.l;
     format = XGetAtomName(dndPtr->display, dropPtr->formatAtom);
 #ifdef notdef
-    fprintf(stderr, "DoDrop %s 0x%x\n", Tk_PathName(dndPtr->tkwin), 
+    fprintf(stderr, "DoDrop %s 0x%x\n", Tk_PathName(dndPtr->tkwin),
 	    dropPtr->window);
 #endif
     if (GetFormattedData(dndPtr, format, dropPtr->timestamp, &(pending.dString))
 	!= TCL_OK) {
 	Tcl_BackgroundError(interp);
 	/* Send empty string to break target's wait loop. */
-	XChangeProperty(dndPtr->display, dropPtr->window, dataPtr->commAtom, 
+	XChangeProperty(dndPtr->display, dropPtr->window, dataPtr->commAtom,
 		XA_STRING, 8, PropModeReplace, (unsigned char *)"", 0);
 	return;
-    } 
+    }
     pending.window = dropPtr->window;
     pending.display = dndPtr->display;
     pending.commAtom = dataPtr->commAtom;
@@ -2642,7 +2642,7 @@ DropFinished(dndPtr, eventPtr)
 
 
 static void
-FreeFormats(dndPtr) 
+FreeFormats(dndPtr)
     Dnd *dndPtr;
 {
     if (dndPtr->matchingFormats != NULL) {
@@ -2660,9 +2660,9 @@ GetSourceFormats(dndPtr, window, timestamp)
 {
     if (dndPtr->lastId != timestamp) {
 	char *data;
-	
+
 	FreeFormats(dndPtr);
-	data = GetProperty(dndPtr->display, window, 
+	data = GetProperty(dndPtr->display, window,
 		   dndPtr->dataPtr->formatsAtom);
 	if (data != NULL) {
 	    dndPtr->matchingFormats = Blt_Strdup(data);
@@ -2675,7 +2675,7 @@ GetSourceFormats(dndPtr, window, timestamp)
     }
     return dndPtr->matchingFormats;
 }
- 
+
 
 static int
 InvokeCallback(dndPtr, cmd, x, y, formats, button, keyState, timestamp)
@@ -2728,20 +2728,20 @@ InvokeCallback(dndPtr, cmd, x, y, formats, button, keyState, timestamp)
     return result;
 }
 
-/* 
+/*
  * ------------------------------------------------------------------------
  *
  *  AcceptDrop --
- *	
+ *
  *	Invokes a Tcl procedure to handle the target's side of the
- *	drop.  A Tcl procedure is invoked, either one designated for 
- *	this target by the user (-ondrop) or a default Tcl procedure. 
+ *	drop.  A Tcl procedure is invoked, either one designated for
+ *	this target by the user (-ondrop) or a default Tcl procedure.
  *	It is passed the following arguments:
  *
- *		widget		The path name of the target. 
- *		x		X-coordinate of the mouse relative to the 
+ *		widget		The path name of the target.
+ *		x		X-coordinate of the mouse relative to the
  *				widget.
- *		y		Y-coordinate of the mouse relative to the 
+ *		y		Y-coordinate of the mouse relative to the
  *				widget.
  *		formats		A list of data formats acceptable to both
  *				the source and target.
@@ -2756,7 +2756,7 @@ InvokeCallback(dndPtr, cmd, x, y, formats, button, keyState, timestamp)
  *
  *		"cancel"	Drop was canceled.
  *		"copy"		Source data has been successfully copied.
- *		"link"		Target has made a link to the data. It's 
+ *		"link"		Target has made a link to the data. It's
  *				Ok for the source to remove it's association
  *				with the data, but not to delete the data
  *				itself.
@@ -2778,7 +2778,7 @@ InvokeCallback(dndPtr, cmd, x, y, formats, button, keyState, timestamp)
  * ------------------------------------------------------------------------
  */
 static int
-AcceptDrop(dndPtr, x, y, formats, button, keyState, timestamp) 
+AcceptDrop(dndPtr, x, y, formats, button, keyState, timestamp)
     Dnd *dndPtr;		/* Target where the drop event occurred. */
     int x, y;
     char *formats;
@@ -2788,16 +2788,16 @@ AcceptDrop(dndPtr, x, y, formats, button, keyState, timestamp)
     char **cmd;
     Tcl_DString dString, savedResult;
     int result;
-    
+
     if (dndPtr->motionCmd != NULL) {
-	result = InvokeCallback(dndPtr, dndPtr->motionCmd, x, y, formats, 
+	result = InvokeCallback(dndPtr, dndPtr->motionCmd, x, y, formats,
 		button, keyState, timestamp);
 	if (result != DROP_OK) {
 	    return result;
 	}
     }
     if (dndPtr->leaveCmd != NULL) {
-	InvokeCallback(dndPtr, dndPtr->leaveCmd, x, y, formats, button, 
+	InvokeCallback(dndPtr, dndPtr->leaveCmd, x, y, formats, button,
 	       keyState, timestamp);
     }
     Tcl_DStringInit(&dString);
@@ -2842,11 +2842,11 @@ AcceptDrop(dndPtr, x, y, formats, button, keyState, timestamp)
     return result;
 }
 
-/* 
+/*
  * ------------------------------------------------------------------------
  *
  *  HandleDropEvent --
- *	
+ *
  *	Invokes a Tcl procedure to handle the target's side of the
  *	drop.  This routine is triggered via a client message from the
  *	drag source indicating that the token was dropped over this
@@ -2858,14 +2858,14 @@ AcceptDrop(dndPtr, x, y, formats, button, keyState, timestamp)
  *		data.l[3]	Screen Y-coordinate of the pointer.
  *		data.l[4]	Id of the drag&drop transaction.
  *
- *	A Tcl procedure is invoked, either one designated for this 
+ *	A Tcl procedure is invoked, either one designated for this
  *	target by the user (-ondrop) or a default Tcl procedure. It
  *	is passed the following arguments:
  *
- *		widget		The path name of the target. 
- *		x		X-coordinate of the mouse relative to the 
+ *		widget		The path name of the target.
+ *		x		X-coordinate of the mouse relative to the
  *				widget.
- *		y		Y-coordinate of the mouse relative to the 
+ *		y		Y-coordinate of the mouse relative to the
  *				widget.
  *		formats		A list of data formats acceptable to both
  *				the source and target.
@@ -2876,7 +2876,7 @@ AcceptDrop(dndPtr, x, y, formats, button, keyState, timestamp)
  *
  *		"cancel"	Drop was canceled.
  *		"copy"		Source data has been successfully copied.
- *		"link"		Target has made a link to the data. It's 
+ *		"link"		Target has made a link to the data. It's
  *				Ok for the source to remove it's association
  *				with the data, but not to delete the data
  *				itself.
@@ -2898,7 +2898,7 @@ AcceptDrop(dndPtr, x, y, formats, button, keyState, timestamp)
  * ------------------------------------------------------------------------
  */
 static void
-HandleDropEvent(dndPtr, eventPtr) 
+HandleDropEvent(dndPtr, eventPtr)
     Dnd *dndPtr;		/* Target where the drop event occurred. */
     XEvent *eventPtr;		/* Message sent from the drag source. */
 {
@@ -2931,28 +2931,28 @@ HandleDropEvent(dndPtr, eventPtr)
     formats = GetSourceFormats(dndPtr, dropPtr->window, dropPtr->timestamp);
 
     dndPtr->pendingPtr = &pending;
-    result = AcceptDrop(dndPtr, x, y, formats, button, keyState, 
+    result = AcceptDrop(dndPtr, x, y, formats, button, keyState,
 	dropPtr->timestamp);
     dndPtr->pendingPtr = NULL;
 
     /* Target-to-Source: Drop result message. */
     SendClientMsg(dndPtr->display, dropPtr->window, dndPtr->dataPtr->mesgAtom,
-	TS_DROP_RESULT, (int)Tk_WindowId(dndPtr->tkwin), dropPtr->timestamp, 
+	TS_DROP_RESULT, (int)Tk_WindowId(dndPtr->tkwin), dropPtr->timestamp,
 	result, 0);
     FreeFormats(dndPtr);
 }
 
-/* 
+/*
  * ------------------------------------------------------------------------
  *
  *  HandleDragEvent --
- *	
- *	Invokes one of 3 Tcl procedures to handle the target's side of 
- *	the drag operation.  This routine is triggered via a ClientMessage 
+ *
+ *	Invokes one of 3 Tcl procedures to handle the target's side of
+ *	the drag operation.  This routine is triggered via a ClientMessage
  *	from the drag source indicating that the token as either entered,
  *	moved, or left this target.  The source sends messages only if
- *	Tcl procedures on the target have been defined to watch the 
- *	events. The message_type field can be either 
+ *	Tcl procedures on the target have been defined to watch the
+ *	events. The message_type field can be either
  *
  *	  ST_DRAG_ENTER		The mouse has entered the target.
  *	  ST_DRAG_MOTION	The mouse has moved within the target.
@@ -2968,13 +2968,13 @@ HandleDropEvent(dndPtr, eventPtr)
  *	For any of the 3 Tcl procedures, the following arguments
  *	are passed:
  *
- *	  widget		The path name of the target. 
+ *	  widget		The path name of the target.
  *	  x			X-coordinate of the mouse in the widget.
  *	  y			Y-coordinate of the mouse in the widget.
  *	  formats		A list of data formats acceptable to both
  *				the source and target.
  *
- *	If the Tcl procedure returns "cancel", this indicates that the drag 
+ *	If the Tcl procedure returns "cancel", this indicates that the drag
  *	operation has been canceled and the reject symbol should be displayed.
  *	Otherwise it should return a boolean:
  *
@@ -2984,12 +2984,12 @@ HandleDropEvent(dndPtr, eventPtr)
  *	The purpose of the Enter and Leave procedure is to allow the
  *	target to provide visual feedback that the drop can occur or not.
  *	The Motion procedure is for cases where the drop area is a smaller
- *	area within the target, such as a canvas item on a canvas. The 
- *	procedure can determine (based upon the X-Y coordinates) whether 
+ *	area within the target, such as a canvas item on a canvas. The
+ *	procedure can determine (based upon the X-Y coordinates) whether
  *	the pointer is over the canvas item and return a value accordingly.
  *
- *	The result of the Tcl procedure is then relayed back to the 
- *	source by a ClientMessage.  
+ *	The result of the Tcl procedure is then relayed back to the
+ *	source by a ClientMessage.
  *
  * Results:
  *	None.
@@ -3002,7 +3002,7 @@ HandleDropEvent(dndPtr, eventPtr)
  * ------------------------------------------------------------------------
  */
 static void
-HandleDragEvent(dndPtr, eventPtr) 
+HandleDragEvent(dndPtr, eventPtr)
     Dnd *dndPtr;		/* Target where the drag event occurred. */
     XEvent *eventPtr;		/* Message sent from the drag source. */
 {
@@ -3032,7 +3032,7 @@ HandleDragEvent(dndPtr, eventPtr)
     case ST_DRAG_LEAVE:
 	cmd = dndPtr->leaveCmd;
 	break;
-    } 
+    }
     if (cmd == NULL) {
 	return;			/* Nothing to do. */
     }
@@ -3044,7 +3044,7 @@ HandleDragEvent(dndPtr, eventPtr)
 
     /* Target-to-Source: Drag result message. */
     SendClientMsg(dndPtr->display, dragPtr->window, dndPtr->dataPtr->mesgAtom,
-	TS_DRAG_STATUS, (int)Tk_WindowId(dndPtr->tkwin), dragPtr->timestamp, 
+	TS_DRAG_STATUS, (int)Tk_WindowId(dndPtr->tkwin), dragPtr->timestamp,
 	resp, 0);
 }
 
@@ -3092,7 +3092,7 @@ DndEventProc(clientData, eventPtr)
 	case TS_START_DROP:
 	    DoDrop(dndPtr, eventPtr);
 	    return 1;
-	    
+
 	case TS_DROP_RESULT:
 	    result = eventPtr->xclient.data.l[MESG_RESPONSE];
 	    dndPtr->tokenPtr->status = result;
@@ -3164,7 +3164,7 @@ RelayLeaveEvent(dndPtr, windowPtr, x, y)
     Dnd *dndPtr;
     Winfo *windowPtr;
     int x, y;
-{ 
+{
     if ((windowPtr != NULL) && (windowPtr->eventFlags & WATCH_LEAVE)) {
 	SendPointerMessage(dndPtr, ST_DRAG_LEAVE, windowPtr, x, y);
     }
@@ -3225,9 +3225,9 @@ FreeWinfo(windowPtr)
  *	hierarchy and caches the window-related information.
  *	If the current point lies over an uninitialized window (i.e.
  *	one that already has an allocated Winfo structure, but has
- *	not been filled in yet), this routine is called to query 
- *	window coordinates.  If the window has any children, more 
- *	uninitialized Winfo structures are allocated.  Further queries 
+ *	not been filled in yet), this routine is called to query
+ *	window coordinates.  If the window has any children, more
+ *	uninitialized Winfo structures are allocated.  Further queries
  *	will cause these structures to be initialized in turn.
  *
  * ------------------------------------------------------------------------
@@ -3328,12 +3328,12 @@ ParseProperty(interp, dndPtr, windowPtr, data)
     Tcl_DString dString;
     int count;
     register int i;
-    
+
     if (Tcl_SplitList(interp, data, &nElems, &elemArr) != TCL_OK) {
 	return TCL_ERROR;	/* Malformed property list. */
     }
     if (nElems < 1) {
-	Tcl_AppendResult(interp, "Malformed property \"", data, "\"", 
+	Tcl_AppendResult(interp, "Malformed property \"", data, "\"",
 			 (char *)NULL);
 	goto error;
     }
@@ -3346,7 +3346,7 @@ ParseProperty(interp, dndPtr, windowPtr, data)
      * The target property contains a list of possible formats.
      * Compare this with what formats the source is willing to
      * convert and compress the list down to just the matching
-     * formats.  It's up to the target to request the specific 
+     * formats.  It's up to the target to request the specific
      * type (or types) that it wants.
      */
     count = 0;
@@ -3384,15 +3384,15 @@ ParseProperty(interp, dndPtr, windowPtr, data)
 	fprintf(stderr, "source/target mismatch: No matching types\n");
 #endif
 	return TCL_BREAK;
-    } 
+    }
     if (eventFlags != 0) {
-	SetProperty(dndPtr->tkwin, dndPtr->dataPtr->formatsAtom, 
+	SetProperty(dndPtr->tkwin, dndPtr->dataPtr->formatsAtom,
 		Tcl_DStringValue(&dString));
 	windowPtr->matches = NULL;
     } else {
 	windowPtr->matches = Blt_Strdup(Tcl_DStringValue(&dString));
     }
-    Tcl_DStringFree(&dString);	
+    Tcl_DStringFree(&dString);
     windowPtr->eventFlags = eventFlags;
     return TCL_OK;
  error:
@@ -3426,10 +3426,10 @@ OverTarget(dndPtr)
     int dummy;
     Winfo *windowPtr;
 
-    /* 
+    /*
      * If no window info has been been gathered yet for this target,
      * then abort this call.  This probably means that the token is
-     * moved before it has been properly built.  
+     * moved before it has been properly built.
      */
     if (dndPtr->rootPtr == NULL) {
 	fprintf(stderr, "rootPtr not initialized\n");
@@ -3444,7 +3444,7 @@ OverTarget(dndPtr)
     if (windowPtr == NULL) {
 	return NULL;		/* Not over a window. */
     }
-    if ((!dndPtr->selfTarget) && 
+    if ((!dndPtr->selfTarget) &&
 	(Tk_WindowId(dndPtr->tkwin) == windowPtr->window)) {
 	return NULL;		/* If the self-target flag isn't set,
 				 *  don't allow the source window to
@@ -3456,7 +3456,7 @@ OverTarget(dndPtr)
 
 	windowPtr->lookedForProperty = TRUE;
 	/* See if this window has a "BltDndTarget" property. */
-	data = GetProperty(dndPtr->display, windowPtr->window, 
+	data = GetProperty(dndPtr->display, windowPtr->window,
 		dndPtr->dataPtr->targetAtom);
 	if (data == NULL) {
 #ifdef notdef
@@ -3475,7 +3475,7 @@ OverTarget(dndPtr)
 	if (result != TCL_OK) {
 	    Tcl_BackgroundError(interp);
 	    return NULL;		/* Malformed property list. */
-	} 
+	}
 	windowPtr->isTarget = TRUE;
     }
     if (!windowPtr->isTarget) {
@@ -3536,7 +3536,7 @@ AddTargetProperty(dndPtr)
 	fmt = Blt_GetHashKey(&(dndPtr->setDataTable), hPtr);
 	Tcl_DStringAppendElement(&dString, fmt);
     }
-    SetProperty(dndPtr->tkwin, dndPtr->dataPtr->targetAtom, 
+    SetProperty(dndPtr->tkwin, dndPtr->dataPtr->targetAtom,
 	Tcl_DStringValue(&dString));
     dndPtr->targetPropertyExists = TRUE;
     Tcl_DStringFree(&dString);
@@ -3572,11 +3572,11 @@ DragInit(dndPtr, x, y)
     Winfo *newPtr;
 
     assert((dndPtr->flags & DND_ACTIVE) == DND_SELECTED);
-    
+
     if (dndPtr->rootPtr != NULL) {
 	FreeWinfo(dndPtr->rootPtr);
     }
-    dndPtr->rootPtr = InitRoot(dndPtr); /* Reset information cache. */ 
+    dndPtr->rootPtr = InitRoot(dndPtr); /* Reset information cache. */
     dndPtr->flags &= ~DND_VOIDED;
 
     dndPtr->x = x;	/* Save current location. */
@@ -3643,7 +3643,7 @@ DragInit(dndPtr, x, y)
 
     if (dndPtr->cursor != None) {
 	Tk_Cursor cursor;
-	
+
 	/* Save the old cursor */
 	cursor = GetWidgetCursor(dndPtr->interp, dndPtr->tkwin);
 	if (dndPtr->cursor != None) {
@@ -3669,7 +3669,7 @@ DragInit(dndPtr, x, y)
     if (tokenPtr->lastStatus != tokenPtr->status) {
 	EventuallyRedrawToken(dndPtr);
     }
-    MoveToken(dndPtr);		/* Move token to current drag point. */ 
+    MoveToken(dndPtr);		/* Move token to current drag point. */
     RaiseToken(dndPtr);
     return TCL_OK;
 }
@@ -3680,9 +3680,9 @@ DragInit(dndPtr, x, y)
  *  CancelOp --
  *
  *	Cancels the current drag&drop operation for the source.  Calling
- *	this operation does not affect the transfer of data from the 
- *	source to the target, once the drop has been made.  From the 
- *	source's point of view, the drag&drop operation is already over. 
+ *	this operation does not affect the transfer of data from the
+ *	source to the target, once the drop has been made.  From the
+ *	source's point of view, the drag&drop operation is already over.
  *
  *	Example: dnd cancel .widget
  *
@@ -3709,7 +3709,7 @@ CancelOp(clientData, interp, argc, argv)
 	return TCL_ERROR;
     }
     if (!dndPtr->isSource) {
-	Tcl_AppendResult(interp, "widget \"", Tk_PathName(dndPtr->tkwin), 
+	Tcl_AppendResult(interp, "widget \"", Tk_PathName(dndPtr->tkwin),
 	 "\" is not a registered drag&drop source.", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -3771,12 +3771,12 @@ ConfigureOp(clientData, interp, argc, argv)
     }
     flags = TK_CONFIG_ARGV_ONLY;
     if (argc == 3) {
-	return Tk_ConfigureInfo(interp, dndPtr->tkwin, configSpecs, 
+	return Tk_ConfigureInfo(interp, dndPtr->tkwin, configSpecs,
 		(char *)dndPtr, (char *)NULL, flags);
     } else if (argc == 4) {
 	return Tk_ConfigureInfo(interp, dndPtr->tkwin, configSpecs,
 	    (char *)dndPtr, argv[3], flags);
-    } 
+    }
     if (Tk_ConfigureWidget(interp, dndPtr->tkwin, configSpecs, argc - 3,
 		   argv + 3, (char *)dndPtr, flags) != TCL_OK) {
 	return TCL_ERROR;
@@ -3803,10 +3803,10 @@ ConfigureOp(clientData, interp, argc, argv)
  *	A standard Tcl result.
  *
  * Side Effects:
- *	Deletes the drag&drop manager.  Also the source and target window 
+ *	Deletes the drag&drop manager.  Also the source and target window
  *	properties are removed from the widget.
  *
- * ------------------------------------------------------------------------ 
+ * ------------------------------------------------------------------------
  */
 static int
 DeleteOp(clientData, interp, argc, argv)
@@ -3835,10 +3835,10 @@ DeleteOp(clientData, interp, argc, argv)
  *
  *	Initializes a drag&drop transaction.  Typically this operation
  *	is called from a ButtonPress event on a source widget.  The
- *	window information cache is initialized, and the token is 
- *	initialized and displayed.  
+ *	window information cache is initialized, and the token is
+ *	initialized and displayed.
  *
- *	Example: dnd pickup .widget x y 
+ *	Example: dnd pickup .widget x y
  *
  * Results:
  *	A standard Tcl result.
@@ -3866,13 +3866,13 @@ SelectOp(clientData, interp, argc, argv)
 	return TCL_ERROR;
     }
     if (!dndPtr->isSource) {
-	Tcl_AppendResult(interp, "widget \"", Tk_PathName(dndPtr->tkwin), 
+	Tcl_AppendResult(interp, "widget \"", Tk_PathName(dndPtr->tkwin),
 	 "\" is not a registered drag&drop source.", (char *)NULL);
 	return TCL_ERROR;
     }
     tokenPtr = dndPtr->tokenPtr;
     if (tokenPtr == NULL) {
-	Tcl_AppendResult(interp, "no drag&drop token created for \"", 
+	Tcl_AppendResult(interp, "no drag&drop token created for \"",
 		 argv[2], "\"", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -3889,7 +3889,7 @@ SelectOp(clientData, interp, argc, argv)
 
     if (tokenPtr->timerToken != NULL) {
 	HideToken(dndPtr);	/* If the user selected again before the
-				 * token snap/melt has completed, first 
+				 * token snap/melt has completed, first
 				 * disable the token timer callback. */
     }
     /* At this point, simply save the starting pointer location. */
@@ -3899,7 +3899,7 @@ SelectOp(clientData, interp, argc, argv)
     tokenPtr->startY = tokenPtr->y;
     dndPtr->timestamp = timestamp;
     dndPtr->flags |= DND_SELECTED;
-    
+
     if (dndPtr->dragStart == 0) {
 	if (DragInit(dndPtr, x, y) == TCL_ERROR) {
 	    return TCL_ERROR;
@@ -3918,7 +3918,7 @@ SelectOp(clientData, interp, argc, argv)
  *	event messages are possibly sent to the target, indicating Enter,
  *	Leave, and Motion events.
  *
- *	Example: dnd drag .widget x y 
+ *	Example: dnd drag .widget x y
  *
  * Results:
  *	A standard Tcl result.
@@ -3945,12 +3945,12 @@ DragOp(clientData, interp, argc, argv)
 	return TCL_ERROR;
     }
     if (!dndPtr->isSource) {
-	Tcl_AppendResult(interp, "widget \"", Tk_PathName(dndPtr->tkwin), 
+	Tcl_AppendResult(interp, "widget \"", Tk_PathName(dndPtr->tkwin),
 	 "\" is not a registered drag&drop source.", (char *)NULL);
 	return TCL_ERROR;
     }
     if (dndPtr->tokenPtr == NULL) {
-	Tcl_AppendResult(interp, "no drag&drop token created for \"", 
+	Tcl_AppendResult(interp, "no drag&drop token created for \"",
 		 argv[2], "\"", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -3961,15 +3961,15 @@ DragOp(clientData, interp, argc, argv)
 
     if ((dndPtr->flags & DND_SELECTED) == 0) {
 	return TCL_OK;		/* Re-entered this routine. */
-    }	
-    /* 
-     * The following code gets tricky because the package command may 
-     * call "update" or "tkwait".  A motion event may then trigger 
-     * this routine, before the token has been initialized. Until the 
-     * package command finishes, no target messages are sent and drops 
-     * are silently ignored.  Note that we do still track mouse 
-     * movements, so that when the package command completes, it will 
-     * have the latest pointer position.  
+    }
+    /*
+     * The following code gets tricky because the package command may
+     * call "update" or "tkwait".  A motion event may then trigger
+     * this routine, before the token has been initialized. Until the
+     * package command finishes, no target messages are sent and drops
+     * are silently ignored.  Note that we do still track mouse
+     * movements, so that when the package command completes, it will
+     * have the latest pointer position.
      */
     dndPtr->x = x;	/* Save current location. */
     dndPtr->y = y;
@@ -4000,18 +4000,18 @@ DragOp(clientData, interp, argc, argv)
     oldPtr = dndPtr->windowPtr;
     newPtr = OverTarget(dndPtr);
     if (newPtr == oldPtr) {
-	RelayMotionEvent(dndPtr, oldPtr, x, y); 
+	RelayMotionEvent(dndPtr, oldPtr, x, y);
 	dndPtr->windowPtr = oldPtr;
     } else {
 	RelayLeaveEvent(dndPtr, oldPtr, x, y);
 	RelayEnterEvent(dndPtr, newPtr, x, y);
 	dndPtr->windowPtr = newPtr;
-    } 
+    }
     dndPtr->tokenPtr->status = (newPtr != NULL) ? DROP_OK : DROP_CONTINUE;
     if (dndPtr->tokenPtr->lastStatus != dndPtr->tokenPtr->status) {
 	EventuallyRedrawToken(dndPtr);
     }
-    MoveToken(dndPtr);		/* Move token to current drag point. */ 
+    MoveToken(dndPtr);		/* Move token to current drag point. */
     RaiseToken(dndPtr);
     return TCL_OK;
 }
@@ -4023,12 +4023,12 @@ DragOp(clientData, interp, argc, argv)
  *  DropOp --
  *
  *	Finishes the drag&drop transaction by dropping the data on the
- *	selected target.  Typically this operation is called from a 
+ *	selected target.  Typically this operation is called from a
  *	ButtonRelease event on a source widget.  Note that a Leave message
  *	is always sent to the target so that is can un-highlight itself.
  *	The token is hidden and a drop message is sent to the target.
  *
- *	Example: dnd drop .widget x y 
+ *	Example: dnd drop .widget x y
  *
  * Results:
  *	A standard Tcl result.
@@ -4054,7 +4054,7 @@ DropOp(clientData, interp, argc, argv)
 	return TCL_ERROR;
     }
     if (!dndPtr->isSource) {
-	Tcl_AppendResult(interp, "widget \"", Tk_PathName(dndPtr->tkwin), 
+	Tcl_AppendResult(interp, "widget \"", Tk_PathName(dndPtr->tkwin),
 	 "\" is not a registered drag&drop source.", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -4074,10 +4074,10 @@ DropOp(clientData, interp, argc, argv)
     windowPtr = OverTarget(dndPtr);
     if (windowPtr != NULL) {
 	if (windowPtr->matches != NULL) {
-	    SetProperty(dndPtr->tkwin, dndPtr->dataPtr->formatsAtom, 
+	    SetProperty(dndPtr->tkwin, dndPtr->dataPtr->formatsAtom,
 			windowPtr->matches);
 	}
-	MoveToken(dndPtr);	/* Move token to current drag point. */ 
+	MoveToken(dndPtr);	/* Move token to current drag point. */
 	RaiseToken(dndPtr);
 	RelayDropEvent(dndPtr, windowPtr, x, y);
 #ifdef notdef
@@ -4095,24 +4095,24 @@ DropOp(clientData, interp, argc, argv)
  *
  *  GetdataOp --
  *
- *	Registers one or more data formats with a drag&drop source.  
+ *	Registers one or more data formats with a drag&drop source.
  *	Each format has a Tcl command associated with it.  This command
  *	is automatically invoked whenever data is pulled from the source
- *	to a target requesting the data in that particular format.  The 
- *	purpose of the Tcl command is to get the data from in the 
- *	application. When the Tcl command is invoked, special percent 
+ *	to a target requesting the data in that particular format.  The
+ *	purpose of the Tcl command is to get the data from in the
+ *	application. When the Tcl command is invoked, special percent
  *	substitutions are made:
  *
  *		%#		Drag&drop transaction timestamp.
  *		%W		Source widget.
  *
- *	If a converter (command) already exists for a format, it 
+ *	If a converter (command) already exists for a format, it
  *	overwrites the existing command.
  *
  *	Example: dnd getdata .widget "color" { %W cget -bg }
  *
  * Results:
- *	A standard Tcl result.  
+ *	A standard Tcl result.
  *
  * ------------------------------------------------------------------------
  */
@@ -4146,7 +4146,7 @@ GetdataOp(clientData, interp, argc, argv)
     if (argc == 4) {
 	hPtr = Blt_FindHashEntry(&(dndPtr->getDataTable), argv[3]);
 	if (hPtr == NULL) {
-	    Tcl_AppendResult(interp, "can't find handler for format \"", 
+	    Tcl_AppendResult(interp, "can't find handler for format \"",
 	     argv[3], "\" for source \"", Tk_PathName(dndPtr->tkwin), "\"",
 	     (char *)NULL);
 	    return TCL_ERROR;
@@ -4219,10 +4219,10 @@ NamesOp(clientData, interp, argc, argv)
 	    argc--, argv++;
 	}
     }
-    for (hPtr = Blt_FirstHashEntry(&(dataPtr->dndTable), &cursor); 
+    for (hPtr = Blt_FirstHashEntry(&(dataPtr->dndTable), &cursor);
 	 hPtr != NULL; hPtr = Blt_NextHashEntry(&cursor)) {
 	dndPtr = (Dnd *)Blt_GetHashValue(hPtr);
-	if ((argc > 3) && 
+	if ((argc > 3) &&
 	    (!Tcl_StringMatch(Tk_PathName(dndPtr->tkwin), argv[3]))) {
 	    continue;
 	}
@@ -4248,7 +4248,7 @@ NamesOp(clientData, interp, argc, argv)
  *	A standard Tcl result.
  *
  * Side Effects:
- *	Invokes the target's data converter to store the data. 
+ *	Invokes the target's data converter to store the data.
  *
  * ------------------------------------------------------------------------
  */
@@ -4269,13 +4269,13 @@ PullOp(clientData, interp, argc, argv)
 	return TCL_ERROR;
     }
     if (!dndPtr->isTarget) {
-	Tcl_AppendResult(interp, "widget \"", Tk_PathName(dndPtr->tkwin), 
+	Tcl_AppendResult(interp, "widget \"", Tk_PathName(dndPtr->tkwin),
 	 "\" is not a registered drag&drop target.", (char *)NULL);
 	return TCL_ERROR;
     }
     hPtr = Blt_FindHashEntry(&(dndPtr->setDataTable), argv[3]);
     if (hPtr == NULL) {
-	Tcl_AppendResult(interp, "can't find format \"", argv[3], 
+	Tcl_AppendResult(interp, "can't find format \"", argv[3],
 	 "\" in target \"", Tk_PathName(dndPtr->tkwin), "\"", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -4301,12 +4301,12 @@ PullOp(clientData, interp, argc, argv)
 	Tcl_DStringAppendElement(&dString, "y");
 	Tcl_DStringAppendElement(&dString, Blt_Itoa(dndPtr->dropY));
 	Tcl_DStringAppendElement(&dString, "timestamp");
-	Tcl_DStringAppendElement(&dString, 
+	Tcl_DStringAppendElement(&dString,
 		Blt_Utoa(dndPtr->pendingPtr->timestamp));
 	Tcl_DStringAppendElement(&dString, "format");
 	Tcl_DStringAppendElement(&dString, argv[3]);
 	Tcl_DStringAppendElement(&dString, "value");
-	Tcl_DStringAppendElement(&dString, 
+	Tcl_DStringAppendElement(&dString,
 		Tcl_DStringValue(&(dndPtr->pendingPtr->dString)));
 	Tcl_DStringInit(&savedResult);
 	Tcl_DStringGetResult(interp, &savedResult);
@@ -4324,12 +4324,12 @@ PullOp(clientData, interp, argc, argv)
  *
  *  SetdataOp --
  *
- *	Registers one or more data formats with a drag&drop target.  
+ *	Registers one or more data formats with a drag&drop target.
  *	Each format has a Tcl command associated with it.  This command
  *	is automatically invoked whenever data arrives from a source
- *	to be converted to that particular format.  The purpose of the 
- *	command is to set the data somewhere in the application (either 
- *	using a Tcl command or variable).   When the Tcl command is invoked, 
+ *	to be converted to that particular format.  The purpose of the
+ *	command is to set the data somewhere in the application (either
+ *	using a Tcl command or variable).   When the Tcl command is invoked,
  *	special percent substitutions are made:
  *
  *		%#		Drag&drop transaction timestamp.
@@ -4337,7 +4337,7 @@ PullOp(clientData, interp, argc, argv)
  *		%v		Data value transfered from the source to
  *				be converted into the correct format.
  *
- *	If a converter (command) already exists for a format, it 
+ *	If a converter (command) already exists for a format, it
  *	overwrites the existing command.
  *
  *	Example: dnd setdata .widget color { . configure -bg %v }
@@ -4376,7 +4376,7 @@ SetdataOp(clientData, interp, argc, argv)
     if (argc == 4) {
 	hPtr = Blt_FindHashEntry(&(dndPtr->setDataTable), argv[3]);
 	if (hPtr == NULL) {
-	    Tcl_AppendResult(interp, "can't find handler for format \"", 
+	    Tcl_AppendResult(interp, "can't find handler for format \"",
 	     argv[3], "\" for target \"", Tk_PathName(dndPtr->tkwin), "\"",
 	     (char *)NULL);
 	    return TCL_ERROR;
@@ -4410,7 +4410,7 @@ SetdataOp(clientData, interp, argc, argv)
  *
  *  RegisterOp --
  *
- *  dnd register .window 
+ *  dnd register .window
  * ------------------------------------------------------------------------
  */
 static int
@@ -4432,7 +4432,7 @@ RegisterOp(clientData, interp, argc, argv)
     }
     hPtr = Blt_CreateHashEntry(&(dataPtr->dndTable), (char *)tkwin, &isNew);
     if (!isNew) {
-	Tcl_AppendResult(interp, "\"", Tk_PathName(tkwin), 
+	Tcl_AppendResult(interp, "\"", Tk_PathName(tkwin),
 	     "\" is already registered as a drag&drop manager", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -4513,7 +4513,7 @@ TokenCgetOp(clientData, interp, argc, argv)
 		 (char *)NULL);
 	return TCL_ERROR;
     }
-    return Tk_ConfigureValue(interp, dndPtr->tokenPtr->tkwin, tokenConfigSpecs, 
+    return Tk_ConfigureValue(interp, dndPtr->tokenPtr->tkwin, tokenConfigSpecs,
 	     (char *)dndPtr->tokenPtr, argv[4], TK_CONFIG_ARGV_ONLY);
 }
 
@@ -4551,16 +4551,16 @@ TokenConfigureOp(clientData, interp, argc, argv)
     } else if (argc == 4) {
 	return Tk_ConfigureInfo(interp, tokenPtr->tkwin, tokenConfigSpecs,
 	    (char *)tokenPtr, argv[3], flags);
-    } 
+    }
     return ConfigureToken(interp, dndPtr, argc - 4, argv + 4, flags);
 }
 
 static Blt_OpSpec tokenOps[] =
 {
     {"cget", 2, (Blt_Op)TokenCgetOp, 5, 5, "widget option",},
-    {"configure", 2, (Blt_Op)TokenConfigureOp, 4, 0, 
+    {"configure", 2, (Blt_Op)TokenConfigureOp, 4, 0,
 	"widget ?option value?...",},
-    {"window", 5, (Blt_Op)TokenWindowOp, 4, 0, 
+    {"window", 5, (Blt_Op)TokenWindowOp, 4, 0,
 	"widget ?option value?...",},
 };
 
@@ -4595,7 +4595,7 @@ static Blt_OpSpec dndOps[] =
 {
     {"cancel", 2, (Blt_Op)CancelOp, 3, 3, "widget",},
     {"cget", 2, (Blt_Op)CgetOp, 4, 4, "widget option",},
-    {"configure", 4, (Blt_Op)ConfigureOp, 3, 0, 
+    {"configure", 4, (Blt_Op)ConfigureOp, 3, 0,
 	"widget ?option value?...",},
 #ifdef notdef
     {"convert", 4, (Blt_Op)ConvertOp, 5, 5, "widget data format",},
@@ -4646,7 +4646,7 @@ DndCmd(clientData, interp, argc, argv)
  *
  * DndInterpDeleteProc --
  *
- *	This is called when the interpreter hosting the "dnd" command is 
+ *	This is called when the interpreter hosting the "dnd" command is
  *	destroyed.
  *
  * Results:
@@ -4706,14 +4706,14 @@ GetDndInterpData(interp)
 	dataPtr->commAtom = XInternAtom(display, "BLT Dnd CommData", False);
 
 #ifdef HAVE_XDND
-	dataPtr->XdndActionListAtom = XInternAtom(display, "XdndActionList", 
+	dataPtr->XdndActionListAtom = XInternAtom(display, "XdndActionList",
 		False);
 	dataPtr->XdndAwareAtom = XInternAtom(display, "XdndAware", False);
 	dataPtr->XdndEnterAtom = XInternAtom(display, "XdndEnter", False);
 	dataPtr->XdndFinishedAtom = XInternAtom(display, "XdndFinished", False);
 	dataPtr->XdndLeaveAtom = XInternAtom(display, "XdndLeave", False);
 	dataPtr->XdndPositionAtom = XInternAtom(display, "XdndPosition", False);
-	dataPtr->XdndSelectionAtom = XInternAtom(display, "XdndSelection", 
+	dataPtr->XdndSelectionAtom = XInternAtom(display, "XdndSelection",
 						 False);
 	dataPtr->XdndStatusAtom = XInternAtom(display, "XdndStatus", False);
 	dataPtr->XdndTypeListAtom = XInternAtom(display, "XdndTypeList", False);
@@ -4763,14 +4763,14 @@ Blt_DndSetOutlineBitmap(tkwin, bitmap, x, y)
     Pixmap bitmap;
     int x, y;
 {
-    
+
 }
 #endif
 
 #ifdef HAVE_XDND
 
 static void
-XDndFreeFormats(handlerPtr) 
+XDndFreeFormats(handlerPtr)
     XDndHandler *handlerPtr;
 {
     if (handlerPtr->formatArr != NULL) {
@@ -4879,15 +4879,15 @@ XDndPointerEvent(handlerPtr, eventPtr)
     int flags;
     Atom action;
     Window window;
-    
+
     flags = 0;
     action = None;
     window = eventPtr->xclient.data.l[MESG_XDND_WINDOW];
-    /* 
+    /*
      * If the XDND source has no formats specified, don't process any further.
      * Simply send a "no accept" action with the message.
      */
-    if (handlerPtr->formatArr != NULL) { 
+    if (handlerPtr->formatArr != NULL) {
 	Dnd *newPtr, *oldPtr;
 	int point;
 	int button, keyState;
@@ -4897,17 +4897,17 @@ XDndPointerEvent(handlerPtr, eventPtr)
 	point = (int)eventPtr->xclient.data.l[MESG_XDND_POINT];
 	UNPACK(point, x, y);
 
-	/*  
+	/*
 	 * See if the mouse pointer currently over a drop target. We first
-	 * determine what Tk window is under the mouse, and then check if 
-	 * that window is registered as a drop target.  
+	 * determine what Tk window is under the mouse, and then check if
+	 * that window is registered as a drop target.
 	 */
 	newPtr = NULL;
 	tkwin = Tk_CoordsToWindow(x, y, handlerPtr->tkwin);
 	if (tkwin != NULL) {
 	    Blt_HashEntry *hPtr;
-	    
-	    hPtr = Blt_FindHashEntry(&(handlerPtr->dataPtr->dndTable), 
+
+	    hPtr = Blt_FindHashEntry(&(handlerPtr->dataPtr->dndTable),
 		(char *)tkwin);
 	    if (hPtr != NULL) {
 		newPtr = (Dnd *)Blt_GetHashValue(hPtr);
@@ -4917,7 +4917,7 @@ XDndPointerEvent(handlerPtr, eventPtr)
 		formats = GetMatchingFormats(newPtr, handlerPtr->formatArr);
 		if (formats == NULL) {
 		    newPtr = NULL; /* Source has no matching formats. */
-		} 
+		}
 	    }
 	}
 	button = keyState = 0;
@@ -4934,17 +4934,17 @@ XDndPointerEvent(handlerPtr, eventPtr)
 			 keyState, dndPtr->timestamp);
 	    }
 	    if ((newPtr != NULL) && (newPtr->enterCmd != NULL)) {
-		resp = InvokeCallback(newPtr, newPtr->enterCmd, x, y, formats, 
+		resp = InvokeCallback(newPtr, newPtr->enterCmd, x, y, formats,
 			button, keyState, dndPtr->timestamp);
 	    }
 	    handlerPtr->dndPtr = newPtr;
-	    /* 
+	    /*
 	     * Save the current mouse position, since we get them from the
-	     * drop message. 
+	     * drop message.
 	     */
-	    newPtr->x = x;	
+	    newPtr->x = x;
 	    newPtr->y = y;
-	} 
+	}
 	if (formats != NULL) {
 	    Blt_Free(formats);
 	}
@@ -4955,8 +4955,8 @@ XDndPointerEvent(handlerPtr, eventPtr)
 	}
     }
     /* Target-to-Source: Drag result message. */
-    SendClientMsg(handlerPtr->display, window, 
-	handlerPtr->dataPtr->XdndStatusAtom, handlerPtr->window, 
+    SendClientMsg(handlerPtr->display, window,
+	handlerPtr->dataPtr->XdndStatusAtom, handlerPtr->window,
 	flags, 0, 0, action);
 }
 
@@ -4976,13 +4976,13 @@ XDndDropEvent(handlerPtr, eventPtr)
     window = eventPtr->xclient.data.l[MESG_XDND_WINDOW];
     timestamp = eventPtr->xclient.data.l[MESG_XDND_TIMESTAMP];
 
-    /* 
-     * If no formats were specified for the XDND source or if the last 
-     * motion event did not place the mouse over a valid drop target, 
-     * don't process any further. Simply send a "no accept" action with 
+    /*
+     * If no formats were specified for the XDND source or if the last
+     * motion event did not place the mouse over a valid drop target,
+     * don't process any further. Simply send a "no accept" action with
      * the message.
      */
-    if ((handlerPtr->formatArr != NULL) && (handlerPtr->dndPtr != NULL)) { 
+    if ((handlerPtr->formatArr != NULL) && (handlerPtr->dndPtr != NULL)) {
 	int button, keyState;
 	Dnd *dndPtr = handlerPtr->dndPtr;
 	DropPending pending;
@@ -4998,7 +4998,7 @@ XDndDropEvent(handlerPtr, eventPtr)
 	pending.protocol = PROTO_XDND;
 	pending.packetSize = GetMaxPropertySize(pending.display);
 	Tcl_DStringInit(&(pending.dString));
-	
+
 	formats = GetMatchingFormats(handlerPtr->dndPtr, handlerPtr->formatArr);
 	if (formats == NULL) {
 	}
@@ -5012,8 +5012,8 @@ XDndDropEvent(handlerPtr, eventPtr)
 	}
     }
     /* Target-to-Source: Drag result message. */
-    SendClientMsg(handlerPtr->display, window, 
-	handlerPtr->dataPtr->XdndStatusAtom, handlerPtr->window, 
+    SendClientMsg(handlerPtr->display, window,
+	handlerPtr->dataPtr->XdndStatusAtom, handlerPtr->window,
 	flags, 0, 0, action);
 }
 
@@ -5044,7 +5044,7 @@ XDndProtoEventProc(clientData, eventPtr)
 	return 0;		/* Not a ClientMessage event. */
     }
     /* Was the recipient a registered toplevel window? */
-    hPtr = Blt_FindHashEntry(&(dataPtr->handlerTable), 
+    hPtr = Blt_FindHashEntry(&(dataPtr->handlerTable),
 	     (char *)eventPtr->xclient.window);
     if (hPtr == NULL) {
 	return 0;		/* No handler registered with window. */
@@ -5059,7 +5059,7 @@ XDndProtoEventProc(clientData, eventPtr)
     } else if (mesg == dataPtr->XdndLeaveAtom) {
 	XDndFreeFormats(handlerPtr);	/* Free up any collected formats. */
 	if (handlerPtr->dndPtr != NULL) {
-	    InvokeCallback(handlerPtr->dndPtr, handlerPtr->dndPtr->leaveCmd, 
+	    InvokeCallback(handlerPtr->dndPtr, handlerPtr->dndPtr->leaveCmd,
 		-1, -1, NULL, 0, 0);
 	    /* Send leave event to drop target. */
 	}
@@ -5073,7 +5073,7 @@ XDndProtoEventProc(clientData, eventPtr)
 }
 
 static XDndHandler *
-XDndCreateHandler(dndPtr) 
+XDndCreateHandler(dndPtr)
     Dnd *dndPtr;
 {
     Tk_Window tkwin;
@@ -5082,14 +5082,14 @@ XDndCreateHandler(dndPtr)
     int isNew;
     XDndHandler *handlerPtr;
 
-    /* 
-     * Find the containing toplevel of this window. See if an XDND 
-     * handler is already registered for it.  
+    /*
+     * Find the containing toplevel of this window. See if an XDND
+     * handler is already registered for it.
      */
     tkwin = Blt_GetToplevel(dndPtr->tkwin);
     window = Blt_GetRealWindowId(tkwin); /* Use the wrapper window as
 					  * the real toplevel window. */
-    hPtr = Blt_CreateHashEntry(&(dataPtr->XDndHandlerTable), (char *)window, 
+    hPtr = Blt_CreateHashEntry(&(dataPtr->XDndHandlerTable), (char *)window,
 	&isNew);
     if (!isNew) {
 	handlerPtr = (XDndHandler *)Blt_GetHashEntry(hPtr);
@@ -5108,7 +5108,7 @@ XDndCreateHandler(dndPtr)
 }
 
 static void
-XDndDeleteHandler(dndPtr) 
+XDndDeleteHandler(dndPtr)
     Dnd *dndPtr;
 {
     Tk_Window tkwin;
@@ -5116,7 +5116,7 @@ XDndDeleteHandler(dndPtr)
     Blt_HashEntry *hPtr;
 
     tkwin = Blt_GetToplevel(dndPtr->tkwin);
-    window = Blt_GetRealWindowId(tkwin); /* Use the wrapper window as the real 
+    window = Blt_GetRealWindowId(tkwin); /* Use the wrapper window as the real
 					  * toplevel window. */
     hPtr = Blt_FindHashEntry(&(dataPtr->XDndHandlerTable), (char *)window);
     if (hPtr != NULL) {
@@ -5125,8 +5125,8 @@ XDndDeleteHandler(dndPtr)
 	handlerPtr = (XDndHandler *)Blt_GetHashEntry(hPtr);
 	handlerPtr->refCount--;
 	if (handlerPtr->refCount == 0) {
-	    XDndFreeFormats(handlerPtr); 
-	    XDeleteProperty(dndPtr->display, window, 
+	    XDndFreeFormats(handlerPtr);
+	    XDeleteProperty(dndPtr->display, window,
 		dndPtr->dataPtr->XdndAwareAtom);
 	    Blt_DeleteHashEntry(&(dataPtr->XDndHandlerTable), hPtr);
 	    Blt_Free(handlerPtr);

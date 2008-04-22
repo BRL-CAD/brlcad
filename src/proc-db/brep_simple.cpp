@@ -1,7 +1,7 @@
 /*                           B R E P _ C U B E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,8 +18,8 @@
  * information.
  */
 /** @file brep_cube.c
- * 
- * Creates a brep with the following topology making direct use of 
+ *
+ * Creates a brep with the following topology making direct use of
  * the openNURBS API:
  *
  *             H-------e6-------G
@@ -51,18 +51,15 @@
 
 #include "common.h"
 
-#include <stdio.h>		/* Direct the output to stdout */
-
 /* without OBJ_BREP, this entire procedural example is disabled */
 #ifdef OBJ_BREP
 
-#include <unistd.h>
+#include "bio.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "machine.h"		/* BRL-CAD specific machine data types */
 #include "vmath.h"		/* BRL-CAD Vector macros */
 #include "wdb.h"
 
@@ -82,7 +79,7 @@ enum {
     ABCD, BEHC, EFGH, FADG, FEBA, DCHG
 };
 
-ON_Curve* 
+ON_Curve*
 TwistedCubeEdgeCurve( const ON_3dPoint& from, const ON_3dPoint& to)
 {
     // creates a 3d line segment to be used as a 3d curve in an ON_Brep
@@ -91,8 +88,8 @@ TwistedCubeEdgeCurve( const ON_3dPoint& from, const ON_3dPoint& to)
     return c3d;
 }
 
-void 
-MakeTwistedCubeEdge(ON_Brep& brep, int from, int to, int curve) 
+void
+MakeTwistedCubeEdge(ON_Brep& brep, int from, int to, int curve)
 {
     ON_BrepVertex& v0 = brep.m_V[from];
     ON_BrepVertex& v1 = brep.m_V[to];
@@ -117,7 +114,7 @@ MakeTwistedCubeEdges(ON_Brep& brep)
     MakeTwistedCubeEdge(brep, D, G, DG);
 }
 
-ON_Surface* 
+ON_Surface*
 TwistedCubeSideSurface(const ON_3dPoint& SW, const ON_3dPoint& SE, const ON_3dPoint& NE, const ON_3dPoint& NW)
 {
     ON_NurbsSurface* pNurbsSurface = new ON_NurbsSurface(3, // dimension
@@ -126,7 +123,7 @@ TwistedCubeSideSurface(const ON_3dPoint& SW, const ON_3dPoint& SE, const ON_3dPo
 							 2, // v order,
 							 2, // number of control vertices in u
 							 2 // number of control verts in v
-							 );
+	);
     pNurbsSurface->SetCV(0, 0, SW);
     pNurbsSurface->SetCV(1, 0, SE);
     pNurbsSurface->SetCV(1, 1, NE);
@@ -137,26 +134,26 @@ TwistedCubeSideSurface(const ON_3dPoint& SW, const ON_3dPoint& SE, const ON_3dPo
     // v knots
     pNurbsSurface->SetKnot(1, 0, 0.0);
     pNurbsSurface->SetKnot(1, 1, 1.0);
-  
+
     return pNurbsSurface;
 }
 
-ON_Curve* 
+ON_Curve*
 TwistedCubeTrimmingCurve(const ON_Surface& s,
 			 int side // 0 = SW to SE, 1 = SE to NE, 2 = NE to NW, 3 = NW, SW
-			 ) 
+    )
 {
     // a trimming curve is a 2d curve whose image lies in the surface's
     // domain. The "active" portion of the surface is to the left of the
     // trimming curve (looking down the orientation of the curve). An
     // outer trimming loop consists of a simple closed curve running
     // counter-clockwise around the region it trims
-  
+
     ON_2dPoint from, to;
     double u0, u1, v0, v1;
     s.GetDomain(0, &u0, &u1);
     s.GetDomain(1, &v0, &v1);
-  
+
     switch (side) {
 	case 0:
 	    from.x = u0; from.y = v0;
@@ -181,7 +178,7 @@ TwistedCubeTrimmingCurve(const ON_Surface& s,
     c2d->SetDomain(0.0,1.0);
     return c2d;
 }
-			
+
 
 int // return value not used?
 MakeTwistedCubeTrimmingLoop(ON_Brep& brep,
@@ -194,24 +191,24 @@ MakeTwistedCubeTrimmingLoop(ON_Brep& brep,
 {
     // get a reference to the surface
     const ON_Surface& srf = *brep.m_S[face.m_si];
-  
+
     ON_BrepLoop& loop = brep.NewLoop(ON_BrepLoop::outer, face);
-  
+
     // create the trimming curves running counter-clockwise around the
     // surface's domain, start at the south side
     ON_Curve* c2;
     int c2i, ei = 0, bRev3d = 0;
     ON_2dPoint q;
-  
+
     // flags for isoparametric curves
     ON_Surface::ISO iso = ON_Surface::not_iso;
-  
+
     for (int side = 0; side < 4; side++) {
 	// side: 0=south, 1=east, 2=north, 3=west
 	c2 = TwistedCubeTrimmingCurve( srf, side );
 	c2i = brep.m_C2.Count();
 	brep.m_C2.Append(c2);
-    
+
 	switch (side) {
 	    case 0:
 		ei = e0;
@@ -234,13 +231,10 @@ MakeTwistedCubeTrimmingLoop(ON_Brep& brep,
 		iso = ON_Surface::W_iso;
 		break;
 	}
-    
+
 	ON_BrepTrim& trim = brep.NewTrim(brep.m_E[ei], bRev3d, loop, c2i);
-	// not sure these two lines are needed!
-	q = c2->PointAtStart();
-	q = c2->PointAtEnd();
 	trim.m_iso = iso;
-    
+
 	// the type gives metadata on the trim type in this case, "mated"
 	// means the trim is connected to an edge, is part of an
 	// outer/inner/slit loop, no other trim from the same loop is
@@ -257,14 +251,14 @@ MakeTwistedCubeTrimmingLoop(ON_Brep& brep,
 }
 
 void
-MakeTwistedCubeFace(ON_Brep& brep, 
-		    int surf, 
-		    int orientation, 
+MakeTwistedCubeFace(ON_Brep& brep,
+		    int surf,
+		    int orientation,
 		    int v0, int v1, int v2, int v3, // the indices of corner vertices
 		    int e0, int eo0, // edge index + orientation
 		    int e1, int eo1,
 		    int e2, int eo2,
-		    int e3, int eo3) 
+		    int e3, int eo3)
 {
     ON_BrepFace& face = brep.NewFace(surf);
     MakeTwistedCubeTrimmingLoop(brep,
@@ -281,48 +275,48 @@ MakeTwistedCubeFace(ON_Brep& brep,
 void
 MakeTwistedCubeFaces(ON_Brep& brep)
 {
-    MakeTwistedCubeFace(brep, 
+    MakeTwistedCubeFace(brep,
 			ABCD, // index of surface geometry
 			+1,   // orientation of surface w.r.t. brep
 			A, B, C, D, // indices of vertices listed in order
 			AB, +1, // south edge, orientation w.r.t. trimming curve?
 			BC, +1, // east edge, orientation w.r.t. trimming curve?
 			CD, +1,
-			DA, +1); // XXX ????
+			DA, +1);
 
-    MakeTwistedCubeFace(brep, 
+    MakeTwistedCubeFace(brep,
 			BEHC, // index of surface geometry
 			+1,   // orientation of surface w.r.t. brep
 			B, E, H, C, // indices of vertices listed in order
 			BE, +1, // south edge, orientation w.r.t. trimming curve?
 			EH, +1, // east edge, orientation w.r.t. trimming curve?
 			HC, +1,
-			BC, -1); // XXX ????
+			BC, -1);
 
     // ok, i think I understand the trimming curve orientation
     // thingie. maybe.  since the edge "directions" are arbitrary
     // (e.g. AD instead of DA (which would be more appropriate)) one
     // must indicate that the direction with relation to the trimming
-    // curve (which only goes in ONE direction) - 1="in the same
-    // direction" and -1="in the opposite direction"
+    // curve (which only goes in ONE direction): 
+    // 1="in the same direction" and -1="in the opposite direction"
 
-    MakeTwistedCubeFace(brep, 
+    MakeTwistedCubeFace(brep,
 			EFGH, // index of surface geometry
 			+1,   // orientation of surface w.r.t. brep
 			E, F, G, H, // indices of vertices listed in order
 			EF, +1, // south edge, orientation w.r.t. trimming curve?
 			FG, +1, // east edge, orientation w.r.t. trimming curve?
 			GH, +1,
-			EH, -1); // XXX ????
+			EH, -1);
 
-    MakeTwistedCubeFace(brep, 
+    MakeTwistedCubeFace(brep,
 			FADG, // index of surface geometry
 			+1,   // orientation of surface w.r.t. brep
 			F, A, D, G, // indices of vertices listed in order
 			FA, +1, // south edge, orientation w.r.t. trimming curve?
 			DA, -1, // east edge, orientation w.r.t. trimming curve?
 			DG, +1,
-			FG, -1); // XXX ????
+			FG, -1);
 
     MakeTwistedCubeFace(brep,
 			FEBA, // index of surface geometry
@@ -331,24 +325,24 @@ MakeTwistedCubeFaces(ON_Brep& brep)
 			EF, -1, // south edge, orientation w.r.t. trimming curve?
 			BE, -1, // east edge, orientation w.r.t. trimming curve?
 			AB, -1,
-			FA, -1); // XXX ????
+			FA, -1);
 
-    MakeTwistedCubeFace(brep, 
+    MakeTwistedCubeFace(brep,
 			DCHG, // index of surface geometry
 			+1,   // orientation of surface w.r.t. brep
 			D, C, H, G, // indices of vertices listed in order
 			CD, -1, // south edge, orientation w.r.t. trimming curve?
 			HC, -1, // east edge, orientation w.r.t. trimming curve?
 			GH, -1,
-			DG, -1); // XXX ????
-  
+			DG, -1);
+
 }
 
-ON_Brep* 
+ON_Brep*
 MakeTwistedCube(ON_TextLog& error_log)
 {
     ON_3dPoint point[8] = {
-	// front 
+	// front
 	ON_3dPoint( 0.0,  0.0,  1.0), // Point A
 	ON_3dPoint( 1.0,  0.0,  1.0), // Point B
 	ON_3dPoint( 1.0,  1.2,  1.0), // Point C
@@ -360,9 +354,9 @@ MakeTwistedCube(ON_TextLog& error_log)
 	ON_3dPoint( 0.0,  1.0,  0.0), // Point G
 	ON_3dPoint( 1.0,  1.0,  0.0), // Point H
     };
-  
+
     ON_Brep* brep = new ON_Brep();
-  
+
     // create eight vertices located at the eight points
     for (int i = 0; i < 8; i++) {
 	ON_BrepVertex& v = brep->NewVertex(point[i]);
@@ -371,7 +365,7 @@ MakeTwistedCube(ON_TextLog& error_log)
 	// ON_BrepVertex for definition of non-exact data
     }
 
-    // create 3d curve geometry - 
+    // create 3d curve geometry -
     brep->m_C3.Append(TwistedCubeEdgeCurve(point[A], point[B])); // AB
     brep->m_C3.Append(TwistedCubeEdgeCurve(point[B], point[C])); // BC
     brep->m_C3.Append(TwistedCubeEdgeCurve(point[C], point[D])); // CD
@@ -379,13 +373,13 @@ MakeTwistedCube(ON_TextLog& error_log)
     brep->m_C3.Append(TwistedCubeEdgeCurve(point[B], point[E])); // BE
     brep->m_C3.Append(TwistedCubeEdgeCurve(point[E], point[H])); // EH
     brep->m_C3.Append(TwistedCubeEdgeCurve(point[H], point[C])); // HC
-    brep->m_C3.Append(TwistedCubeEdgeCurve(point[E], point[F])); // EF  
-    brep->m_C3.Append(TwistedCubeEdgeCurve(point[F], point[G])); // FG  
-    brep->m_C3.Append(TwistedCubeEdgeCurve(point[G], point[H])); // GH  
-    brep->m_C3.Append(TwistedCubeEdgeCurve(point[F], point[A])); // FA  
+    brep->m_C3.Append(TwistedCubeEdgeCurve(point[E], point[F])); // EF
+    brep->m_C3.Append(TwistedCubeEdgeCurve(point[F], point[G])); // FG
+    brep->m_C3.Append(TwistedCubeEdgeCurve(point[G], point[H])); // GH
+    brep->m_C3.Append(TwistedCubeEdgeCurve(point[F], point[A])); // FA
     brep->m_C3.Append(TwistedCubeEdgeCurve(point[D], point[G])); // DG
- 
-    // create the 12 edges the connect the corners
+
+    // create the 12 edges that connect the corners
     MakeTwistedCubeEdges( *brep );
 
     // create the 3d surface geometry. the orientations are arbitrary so
@@ -396,7 +390,7 @@ MakeTwistedCube(ON_TextLog& error_log)
     brep->m_S.Append(TwistedCubeSideSurface(point[F], point[A], point[D], point[G])); //FADG
     brep->m_S.Append(TwistedCubeSideSurface(point[F], point[E], point[B], point[A])); //FEBA
     brep->m_S.Append(TwistedCubeSideSurface(point[D], point[C], point[H], point[G])); //DCHG
-  
+
     // create the faces
     MakeTwistedCubeFaces(*brep);
 
@@ -425,36 +419,41 @@ printPoints(struct rt_brep_internal* bi)
     }
 }
 
-int 
+int
 main(int argc, char** argv)
 {
     struct rt_wdb* outfp;
     ON_Brep* brep;
     ON_TextLog error_log;
-    char* id_name = "B-Rep Example";
-    char* geom_name = "cube.s";
+    const char* id_name = "B-Rep Example";
+    const char* geom_name = "cube.s";
 
     ON::Begin();
-  
-    if (argc > 1) {
-	printf("Writing a twisted cube b-rep...\n");
-	outfp = wdb_fopen("brep_simple.g");
-	mk_id(outfp, id_name);
-	brep = MakeTwistedCube(error_log);
-	mk_brep(outfp, geom_name, brep);
 
-	//mk_comb1(outfp, "cube.r", geom_name, 1);
-	unsigned char rgb[] = {255,255,255};
-	mk_region1(outfp, "cube.r", geom_name, "plastic", "", rgb);
-	
-	wdb_close(outfp);	
+    printf("Writing a twisted cube b-rep...\n");
+    outfp = wdb_fopen("brep_simple.g");
+    mk_id(outfp, id_name);
+
+    brep = MakeTwistedCube(error_log);
+    if (!brep) {
+	bu_exit(1, "ERROR: unable to make the twisted cube\n");
     }
+    mk_brep(outfp, geom_name, brep);
     
+    unsigned char rgb[] = {255,255,255};
+    mk_region1(outfp, "cube.r", geom_name, "plastic", "", rgb);
+    
+    wdb_close(outfp);
+    delete brep;
+
     printf("Reading a twisted cube b-rep...\n");
     struct db_i* dbip = db_open("brep_simple.g", "r");
+    if (!dbip) {
+	bu_exit(1, "Unable to open brep_simple.g\n");
+    }
     db_dirbuild(dbip);
     struct directory* dirp;
-    if (dirp = db_lookup(dbip, "cube.s", 0)) {
+    if ((dirp = db_lookup(dbip, "cube.s", 0)) != DIR_NULL) {
 	printf("\tfound cube.s\n");
 	struct rt_db_internal ip;
 	mat_t mat;
@@ -466,7 +465,7 @@ main(int argc, char** argv)
 	}
     }
     db_close(dbip);
-    
+
     ON::End();
 
     return 0;
@@ -490,6 +489,7 @@ main(int argc, char *argv[])
  * mode: C++
  * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

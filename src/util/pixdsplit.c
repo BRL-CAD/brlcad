@@ -1,7 +1,7 @@
 /*                     P I X D S P L I T . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2007 United States Government as represented by
+ * Copyright (c) 1995-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,48 +19,34 @@
  */
 /** @file pixdsplit.c
  *
- *	Disentangle the chars from the doubles in a pixd(5) stream
+ * Disentangle the chars from the doubles in a pixd(5) stream
  *
- *  Author -
- *	Paul J. Tanenbaum
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
 #include <math.h>
 #include <errno.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 
 
+#define OPT_STRING	"c:d:#:?"
 #define	made_it()	bu_log("%s:%d\n", __FILE__, __LINE__);
 
 void print_usage (void)
 {
-#define OPT_STRING	"c:d:#:?"
-
-    bu_log("Usage: 'pixdsplit %s'\n",
-	"[-c file.pix] [-d file.d] [-# n.m] [file.pixd]");
+    bu_exit(1, "Usage: 'pixdsplit %s'\n",
+	    "[-c file.pix] [-d file.d] [-# n.m] [file.pixd]");
 }
+
 
 int
 main (int argc, char *argv[])
@@ -99,40 +85,38 @@ main (int argc, char *argv[])
 	switch (ch)
 	{
 	    case 'd':
-		df_name = (char *) bu_malloc(strlen(bu_optarg) + 1, "df_name");
-		(void) strcpy(df_name, bu_optarg);
+		df_name = (char *) bu_malloc(strlen(bu_optarg)+1, "df_name");
+		bu_strlcpy(df_name, bu_optarg, strlen(bu_optarg)+1);
 		break;
 	    case 'c':
-		cf_name = (char *) bu_malloc(strlen(bu_optarg) + 1, "cf_name");
-		(void) strcpy(cf_name, bu_optarg);
+		cf_name = (char *) bu_malloc(strlen(bu_optarg)+1, "cf_name");
+		bu_strlcpy(cf_name, bu_optarg, strlen(bu_optarg)+1);
 		break;
 	    case '#':
 		if ((sscanf(bu_optarg, "%d.%d", &c_per_p, &d_per_p) != 2)
-		 && (sscanf(bu_optarg, ".%d", &d_per_p) != 1)
-		 && (sscanf(bu_optarg, "%d", &c_per_p) != 1))
+		    && (sscanf(bu_optarg, ".%d", &d_per_p) != 1)
+		    && (sscanf(bu_optarg, "%d", &c_per_p) != 1))
 		{
 		    bu_log("Invalid pixel-size specification: '%s'\n",
-			bu_optarg);
+			   bu_optarg);
 		    print_usage();
-		    return 1;
 		}
 		break;
 	    case '?':
 	    default:
 		print_usage();
-		exit (ch != '?');
 	}
 
-	if (c_per_p <= 0)
-	{
-	    bu_log("Illegal number of color bytes per pixel: %d\n", c_per_p);
-	    return 1;
-	}
-	if (d_per_p <= 0)
-	{
-	    bu_log("Illegal number of doubles per pixel: %d\n", d_per_p);
-	    return 1;
-	}
+    if (c_per_p <= 0)
+    {
+	bu_log("Illegal number of color bytes per pixel: %d\n", c_per_p);
+	return 1;
+    }
+    if (d_per_p <= 0)
+    {
+	bu_log("Illegal number of doubles per pixel: %d\n", d_per_p);
+	return 1;
+    }
 
     /*
      *	Establish the input stream
@@ -147,13 +131,12 @@ main (int argc, char *argv[])
 	    inf_name = argv[bu_optind++];
 	    if ((infd = open(inf_name, O_RDONLY)) == -1)
 	    {
-		bu_log ("Cannot open file '%s'\n", inf_name);
+		bu_log("Cannot open file '%s'\n", inf_name);
 		return 1;
 	    }
 	    break;
 	default:
 	    print_usage();
-	    return 1;
     }
     /*
      *	Establish the output stream for chars
@@ -169,7 +152,7 @@ main (int argc, char *argv[])
     }
     else if ((cfd = open(cf_name, O_WRONLY | O_CREAT | O_TRUNC, 0644)) == -1)
     {
-	bu_log ("Cannot open file '%s'\n", cf_name);
+	bu_log("Cannot open file '%s'\n", cf_name);
 	return 1;
     }
     /*
@@ -186,7 +169,7 @@ main (int argc, char *argv[])
     }
     else if ((dfd = open(df_name, O_WRONLY | O_CREAT | O_TRUNC, 0644)) == -1)
     {
-	bu_log ("Cannot open file '%s'\n", df_name);
+	bu_log("Cannot open file '%s'\n", df_name);
 	return 1;
     }
 
@@ -234,8 +217,8 @@ main (int argc, char *argv[])
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

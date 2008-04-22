@@ -1,7 +1,7 @@
 /*		Q R A Y . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,21 +18,17 @@
  * information.
  */
 /** @file qray.h
- */
-#ifndef SEEN_QRAY_H
-#define SEEN_QRAY_H
-
-/*
- *
- *			Q R A Y . H
  *
  * Header file for "Query Ray" variables.
  *
- * Source -
- *	SLAD CAD Team
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005
  */
+
+#ifndef SEEN_QRAY_H
+#define SEEN_QRAY_H
+
+#include "common.h"
+
+#include "bu.h"
 
 #define QRAY_BASENAME "query_ray"
 #define QRAY_TEXT	(qray_effects == 't' ||\
@@ -52,27 +48,27 @@
 #endif
 
 struct qray_color {
-  unsigned char r;
-  unsigned char g;
-  unsigned char b;
+    unsigned char r;
+    unsigned char g;
+    unsigned char b;
 };
 
 struct qray_fmt {
-  char type;
-  struct bu_vls fmt;
+    char type;
+    struct bu_vls fmt;
 };
 
 struct qray_fmt_data {
-  char type;
-  char *fmt;
+    char type;
+    char *fmt;
 };
 
 struct qray_dataList {
-  struct bu_list l;
-  fastf_t x_in;
-  fastf_t y_in;
-  fastf_t z_in;
-  fastf_t los;
+    struct bu_list l;
+    fastf_t x_in;
+    fastf_t y_in;
+    fastf_t z_in;
+    fastf_t los;
 };
 
 extern struct bu_vls qray_basename;
@@ -88,8 +84,8 @@ extern void qray_data_to_vlist(struct bn_vlblock *vbp, struct qray_dataList *hea
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

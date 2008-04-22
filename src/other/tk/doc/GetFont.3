@@ -47,7 +47,7 @@ for the \fBfont\fR command for details on acceptable formats.
 Internal rep will be modified to cache corresponding Tk_Font.
 .AP "const char" *string in
 Same as \fIobjPtr\fR except description of font is passed as a string and
-resulting Tk_Font isn't cached.
+resulting Tk_Font is not cached.
 .AP Tk_Font tkfont in
 Opaque font token.
 .BE
@@ -64,7 +64,7 @@ the documentation for the \fBfont\fR command for a description of the
 valid formats.  If \fBTk_AllocFontFromObj\fR is unsuccessful (because,
 for example, \fIobjPtr\fR did not contain a valid font specification) then it
 returns \fBNULL\fR and leaves an error message in \fIinterp\fR's result
-if \fIinterp\fR isn't \fBNULL\fR.  \fBTk_AllocFontFromObj\fR caches
+if \fIinterp\fR is not \fBNULL\fR.  \fBTk_AllocFontFromObj\fR caches
 information about the return
 value in \fIobjPtr\fR, which speeds up future calls to procedures
 such as \fBTk_AllocFontFromObj\fR and \fBTk_GetFontFromObj\fR.
@@ -77,7 +77,7 @@ matching Tk_Font, so \fBTk_GetFont\fR is less efficient than
 .PP
 \fBTk_GetFontFromObj\fR returns the token for an existing font, given
 the window and description used to create the font.
-\fBTk_GetFontFromObj\fR doesn't actually create the font; the font
+\fBTk_GetFontFromObj\fR does not actually create the font; the font
 must already have been created with a previous call to
 \fBTk_AllocFontFromObj\fR or \fBTk_GetFont\fR.  The return
 value is cached in \fIobjPtr\fR, which speeds up

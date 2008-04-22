@@ -1,7 +1,7 @@
 /*                        E X T E R N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,34 +18,47 @@
  * information.
  */
 /** @file extern.h
- *	Author:		Gary S. Moss
+ *
  */
 
-/* For production use, set to "static" */
-#ifndef STATIC
-#define STATIC static
-#endif
+#include "common.h"
+
+#ifndef FBED_EXTERN_H
+#define FBED_EXTERN_H
+
+#define MAX_LN			81
+#define Toggle(f)		(f) = ! (f)
+#define De_Bounce_Pen()		while ( do_Bitpad( &cursor_pos ) ) ;
+#define BOTTOM_STATUS_AREA	2
+#define TOP_SCROLL_WIN		(BOTTOM_STATUS_AREA-1)
+#define PROMPT_LINE		(LI-2)
+#define MACROBUFSZ		(BUFSIZ*10)
+#define Malloc_Bomb() \
+		fb_log(	"\"%s\"(%d) Malloc() no more space.\n", \
+				__FILE__, __LINE__ \
+				); \
+		return 0;
 
 typedef struct
-	{
-	int p_x;
-	int p_y;
-	}
+{
+    int p_x;
+    int p_y;
+}
 Point;
 
 typedef struct
-	{
-	Point r_origin;
-	Point r_corner;
-	}
+{
+    Point r_origin;
+    Point r_corner;
+}
 Rectangle;
 
 typedef struct
-	{
-	RGBpixel *n_buf;
-	int n_wid;
-	int n_hgt;
-	}
+{
+    RGBpixel *n_buf;
+    int n_wid;
+    int n_hgt;
+}
 Panel;
 
 extern FBIO *fbp;
@@ -57,9 +70,8 @@ extern Point windo_center;
 extern Point windo_anchor;
 extern Try *try_rootp;
 extern bool isSGI;
-extern char cread_buf[BUFSIZ*10], *cptr;
-extern char macro_buf[];
-extern char *macro_ptr;
+extern char cread_buf[MACROBUFSZ], *cptr;
+extern char macro_buf[MACROBUFSZ], *macro_ptr;
 extern int brush_sz;
 extern int gain;
 extern int pad_flag;
@@ -71,47 +83,36 @@ extern int tty_fd;
 extern int zoom_factor;
 extern int LI, CO;
 
-extern Func_Tab	*get_Func_Name(char *inbuf, int bufsz, char *msg);
+extern struct vfont font;
+
+extern Func_Tab	*get_Func_Name(char* inbuf, size_t bufsz, const char* msg);
 extern RGBpixel *get_Fb_Panel();
 extern char *char_To_String(int i);
-extern int add_Try(Func_Tab *ftbl, register char *name, register Try **trypp);
+extern int add_Try(Func_Tab* ftbl, register const char* name, register Try** trypp);
 extern int bitx(register char *bitstring, register int posn);
 extern int fb_Init_Menu();
 extern int getpos(Point *pos);
-extern int get_Input(char *inbuf, int bufsz, char *msg);
+extern int get_Input(char* inbuf, size_t bufsz, const char* msg);
 extern void fb_Get_Pixel(unsigned char *pixel);
 extern void pos_close();
 extern void init_Status(void);
 extern void init_Tty(void), restore_Tty(void);
 extern void prnt_Status(void);
 extern void prnt_Usage(void);
-#if defined(HAVE_STDARG_H)
-extern void prnt_Scroll( char * fmt, ... );
-extern void prnt_Debug( char *fmt, ... );
-extern void prnt_Event( char *fmt, ... );
-#else
-#  if defined(HAVE_VARARGS_H)
-extern void prnt_Scroll( char * fmt, va_dcl va_alist );
-extern void prnt_Debug( char *fmt, va_dcl va_alist );
-extern void prnt_Event( char *fmt, va_dcl va_alist );
-#  else
-extern void prnt_Scroll(char *a, char *b, char *c, char *d, char *e, char *f, char *g, char *h, char *i);
-extern void prnt_Debug(char *a, char *b, char *c, char *d, char *e, char *f, char *g, char *h, char *i);
-extern void prnt_Event(char *a, char *b, char *c, char *d, char *e, char *f, char *g, char *h, char *i);
-#  endif
-#endif
-extern void prnt_Rectangle(char *str, register Rectangle *rectp);
+extern void prnt_Scroll( const char * fmt, ... );
+extern void prnt_Debug( const char *fmt, ... );
+extern void prnt_Event( const char *fmt, ... );
+extern void prnt_Rectangle(const char *str, register Rectangle *rectp);
 extern void do_Key_Cmd(register int key, register int n);
 extern int InitTermCap();
-extern int get_Font(char *fontname);
-extern void prnt_Prompt(char *msg);
+extern void prnt_Prompt(const char *msg);
 extern int empty(int fd);
 extern int get_Char(void);
 extern int get_Mouse_Pos(Point *pointp);
 extern int SetStandout();
 extern int ClrStandout();
 extern int exec_Shell(char **args);
-extern void do_line(int xpos, int ypos, register char *line, RGBpixel (*menu_border));
+extern void do_line(int xpos, int ypos, register const char *line, RGBpixel (*menu_border));
 extern int pad_open(int n);
 extern void save_Tty();
 extern void set_Raw();
@@ -129,25 +130,14 @@ extern int SetScrlReg();
 extern int ResetScrlReg();
 extern void set_HUPCL();
 
-#define MAX_LN			81
-#define Toggle(f)		(f) = ! (f)
-#define De_Bounce_Pen()		while( do_Bitpad( &cursor_pos ) ) ;
-#define BOTTOM_STATUS_AREA	2
-#define TOP_SCROLL_WIN		(BOTTOM_STATUS_AREA-1)
-#define PROMPT_LINE		(LI-2)
-#define MACROBUFSZ		(BUFSIZ*10)
-#define Malloc_Bomb() \
-		fb_log(	"\"%s\"(%d) Malloc() no more space.\n", \
-				__FILE__, __LINE__ \
-				); \
-		return 0;
+#endif /* FBED_EXTERN_H */
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

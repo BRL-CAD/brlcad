@@ -6251,75 +6251,235 @@ ttk::radiobutton, ttk::checkbutton, ttk::treeview, ttk::separator,
 ttk::scrollbar, ttk::entry, ttk::frame and ttk::labelframe widgets.  Adds
 ttk::style command.
 
-2006-11-02 (enhancement) Improve OS X Carbon event handling.
+2006-11-02 (enhancement) Improve OS X Carbon Update event handling (steffen)
 
-2006-11-07 (configure change) Unix --enable-xft is enabled by default now.
+2006-11-07 (configure change) Unix --enable-xft is enabled by default (kenny)
 
-2006-11-23 (bug fix)[1599877] Fix unicode character underline in menus.
+2006-11-23 (bug fix)[1599877] Fix unicode character underline in menus (hobbs)
 
 2006-11-24 (bug fix)[1487701] Better handling of tcl_interactive on OS X to
-control display of console.
+control display of console (hobbs, steffen)
 
-2006-11-30 (bug fix) Fix handling of Escape binding on OS X dialogs.
+2006-11-26 (platform support)[1230558] --enable-64bit on more systems (steffen)
 
-2006-12-01 (new feature) Add -transparentcolor wm attribute on Windows.
+2006-11-30 (bug fix) Fix handling of Escape binding on OS X dialogs (steffen)
 
-2006-12-02 (new feature)[TIP 300] Added [font actual $font $char].
+2006-12-01 (new feature) Add -transparentcolor wm attribute on Windows (hobbs)
 
-2006-12-04 (new feature)[TIP 286] Added [$menu xposition] subcommand.
+2006-12-01 (new feature)[TIP 300] Added [font actual $font $char] (kenny)
+
+2006-12-04 (new feature)[TIP 286] Added [$menu xposition] subcommand (bron)
 
 2006-12-11 (enhancement) Improved EWMH support for _NET_WM_PID and
-_NET_WM_PING.
+_NET_WM_PING (fellows)
 
-2007-01-19 (configure change) Ensure CPPFLAGS env var is used when set.
+2007-01-25 (configure change) ensure CPPFLAGS env var used when set (steffen)
 
 2007-02-19 (configure change) Use SHLIB_SUFFIX=".so" on HP-UX IA64 (was
-".sl").
+".sl") (hobbs)
 
-2007-04-10 (platform support) Correctly handle theming on Vista/Aero.
+2007-04-10 (platform support) Correctly handle theming on Vista/Aero (english)
 
-2007-04-23 (enhancement) Allow empty value for -selectforeground option.
+2007-04-23 (enhancement) Allow empty value for -selectforeground opt (steffen)
 
 2007-04-23 (platform support) Aqua: remove Tk-internal double buffering that is
 wasteful on Aqua; allows direct-to-window CoreGraphics drawing (e.g. adding 
-support for colors with alpha).
+support for colors with alpha) (steffen)
 
 2007-04-23 (platform support) Aqua: add all OS theme colors/brushes (patterns)
-as system colors.
+as system colors (steffen)
 
-2007-04-23 (platform support) Aqua: use OS theme for tk_dialog and bgerror.
+2007-04-23 (platform support) Aqua: tk_dialog & bgerror use OS theme (steffen)
 
-2007-04-23 (platform support) Aqua: add 'none' cursor & missing theme cursors.
+2007-04-23 (platform support) Aqua: add 'none' & missing theme cursors (steffen)
 
-2007-04-23 (platform support) Aqua: [tk_getOpenFile -parent] uses sheet dialog.
+2007-04-23 (platform support) Aqua: [tk_getOpenFile -parent] et al use sheet
+dialog (steffen)
 
-2007-04-23 (bug fix) Aqua: fix custom MDEF and tearoff menu display.
+2007-04-23 (bug fix) Aqua: fix custom MDEF and tearoff menu display (steffen)
 
-2007-04-23 (bug fix)[1620826] Aqua: fix <<MenuSelect>> support.
+2007-04-23 (bug fix)[1620826] Aqua: fix <<MenuSelect>> support (steffen)
 
 2007-04-23 (platform support) Aqua: add support for live window resizing and
 asynchronous window dragging; prevent window from becoming inacessible
-offscreen or under Dock after dragging; use transparent grow box.
+offscreen or under Dock after dragging; use transparent grow box (steffen)
 
 2007-04-23 (platform support) Aqua: improve event processing during nested
-event loops (e.g. modal dialogs, menu tracking, window resizing etc).
+event loops (e.g. modal dialogs, menu tracking, window resizing etc) (steffen)
 
 2007-04-23 (bug fix) Aqua: add support for all possible aqua scrollbar arrow
 positions, scrollbar variants and for "jump to here" scrollbar behaviour;
-correct scroll view size computation; enforce minimal scrollbar height.
+correct scroll view size computation; enforce minimal scrollbar height (steffen)
 
 2007-04-23 (platform support) Aqua: add [wm attributes] -topmost, -fullscreen
-and -transparent (allows fully transparent window via -bg "systemTransparent").
+and -transparent (fully transparent win via -bg "systemTransparent") (steffen)
 
 2007-04-23 (platform support) Aqua: determine win min/max sizes dynamically;
 correct size handling of gridded windows; improve computation of initial
-window bounds; correct window size handling on multi-headed systems.
+window bounds; correct window size handling on multi-headed systems (steffen)
 
 2007-04-23 (platform support) Aqua: correct composite attribute handling in
 [tk::unsupported::MacWindowStyle] and add new attributes; allow changing
-window class of already existing windows.
+window class of already existing windows (steffen)
 
 2007-04-23 (platform support) Aqua: add tcl document extensions and mime type
-to Wish.app's Info.plist.
+to Wish.app's Info.plist (steffen)
 
 --- Released 8.5a6, April 25, 2007 --- See ChangeLog for details ---
+
+2007-05-04 (new feature)[TIP 145] Enhanced font handling (thoyts)
+
+2007-05-14 (bug fix)[1712081] restored USE_OLD_IMAGE support (porter)
+
+2007-05-15 (bug fix)[1717830,800149] memory leaks (jenglish)
+
+2007-05-15 (bug fix)[1677608] [grid *configure] crash (porter)
+
+2007-05-31 (platform support) Aqua: improve interaction of Expose events and
+idle-time redraws (steffen)
+
+2007-05-31 (bug fix) Aqua: gridded window max-size calculation (steffen)
+
+2007-06-02 (bug fix)[1731734] Aqua: menu cascades outside menubar (steffen)
+
+2007-06-06 (platform support) Aqua: enable MouseWheel events in background
+windows (steffen)
+
+2007-06-09 (bug fix)[1724223] Unicode menu entry crash (hobbs)
+
+2007-06-09 (bug fix)[1467997] Blue/red reversal in icons (hobbs,janssen)
+
+2007-06-23 (bug fix) Aqua: nav dialog sheet crash (steffen)
+
+2007-06-29 (platform support) Aqua: remove private internal declarations from
+installed tkMacOSXInt.h header (steffen)
+
+2007-06-29 (bug fix) Aqua: scrollbar thumb size calculation (steffen)
+
+2007-07-09 (bug fix) Aqua: app-is-frontmost detection (steffen)
+
+2007-07-09 (bug fix) Aqua: window click activation & titlebar click handling
+in presence of grabs or modal windows (steffen)
+
+2007-07-25 (bug fix)[1743786] Aqua: [tk_getOpenFile] result (steffen)
+
+2007-08-01 (bug fix)[1692927] [tk_messageBox -detail] buffer (davies,thoyts)
+
+2007-08-27 (bug fix)[1782105] Aqua: tk_chooseColor result (steffen)
+
+2007-09-06 (platform support) Aqua: drop support for Xcode 1.5 project, add
+project for Xcode 3.0 (steffen)
+
+2007-09-11 (bug fix) Animated GIF buffer overrun (max)
+
+2007-09-15 (platform support) SunOS-5.1x link with cc, not ld (steffen)
+
+2007-09-17 (enhancement)[1780286] Aqua: combobox appearance (english)
+
+2007-09-17 (platform support)[1748251] Fix NetBSD link failures (english)
+
+2007-09-20 (bug fix)[1791052] [text] DLine layout crash (khomoutov,fellows)
+
+--- Released 8.5b1, September 26, 2007 --- See ChangeLog for details ---
+
+2007-09-26 (enhancement)[1800742] msg catalog for Hungarian. (reszo)
+
+2007-10-11 (bug fix)[1810818] Aqua: [wm resizeable] (steffen)
+
+2007-10-12 (platform support) Aqua: replace RgnHandles by HIShapeRefs (steffen)
+	*** POTENTIAL INCOMPATIBILITY for C code acessing MacDrawable Rgns ***
+
+2007-10-15 (platform support) Mac OS X: 64-bit X11 support (steffen)
+
+2007-10-15 (new feature)[TIP 125][998125] dockable frame support (hobbs)
+
+2007-10-22 (bug fix)[1814778,1780286,1609168,1349586] combobox overhaul(english)
+
+2007-10-22 (platform support) Aqua: TIP 145 and Aqua Theme fonts (steffen)
+
+2007-10-23 (bug fix)[1818441] combobox & reparentable frames (hobbs)
+
+2007-10-24 (bug fix)[1723362] Win: transparent bitmaps (mcdonald,thoyts)
+
+2007-10-25 (bug fix)[1818491] crash in [place] manager (mcdonald)
+
+2007-10-25 (new feature)[TIP 242][1156388] file dialog filter (hobbs)
+
+2007-10-25 (bug fix)[1817596] ttk::notebook (english)
+
+2007-10-26 (bug fix)[1816252] Aqua: [wm transient] (steffen)
+
+Improvements to demo suite to make more use of Tk 8.5 features (fellows,steffen)
+
+--- Released 8.5b2, October 26, 2007 --- See ChangeLog for details ---
+
+2007-10-29 (appearance change) Default look and fonts on X11 (hobbs)
+	*** POTENTIAL INCOMPATIBILITY; [::tk::classic::restore] to undo ***
+
+2007-10-30 (bug fix)[1803723] Win: Arabic and Hebrew rendering (fellows)
+
+2007-10-30 (bug fix)[1550528] [tk_chooseDirectory -mustexist true] disables
+the "OK" until valid selection (hobbs)
+
+2007-11-03 (new feature) adjustable [console] fonts (thoyts)
+
+2007-11-04 (enhancement) Aqua: "Run Widget Demo" menu item (steffen)
+
+2007-11-09 (bug fix) Aqua: activate event after window expansion (steffen)
+
+2007-11-09 (bug fix)[1824521] Aqua: menubutton crash with -bitmap (steffen)
+
+2007-11-09 (platform support) Aqua: (menu)button pressed/inactive/disabled
+look&feel; menubutton size with -image/-bitmap (steffen)
+
+2007-11-09 (bug fix) Aqua: [tk_getOpenFile] (et al.) and help menu crashes on
+Mac OS X Leopard (steffen)
+
+2007-11-11 (bug fix)[1824638] Aqua: small max-width text measuring (riefenstahl)
+
+2007-11-14 (bug fix)[1831803] sv.msg catalog for "sv" locale (fellows)
+
+Many significant improvements to the documentation and demos (fellows, hobbs,
+steffen, kupries)
+
+--- Released 8.5b3, Novemeber 19, 2007 --- See ChangeLog for details ---
+
+2007-11-25 (bug fix)[1343984] ttk::notebook bugs (english,boudaillier) 
+
+2007-11-26 (bug fix)[1822391] [photo put] segfault w/ PPM data (kenny)
+
+2007-11-26 (bug fix)[1822076] [tk_saveFile] and path w/spaces (bauer,kenny)
+
+2007-12-04 (new feature)[1844143] Danish message catalog (berg)
+
+2007-12-11 (bug fix)[1602537] crash in [$text replace] (goth,porter,fellows)
+
+2007-12-12 (bug fix)[1845899] Aqua: [wm transient] (steffen)
+
+2007-12-12 (bug fix)[1809538,1799782,1737288] fixes for the <<Modified>>
+virtual event on [text] widgets (hobbs)
+
+2007-12-13 (bug fix) correctly trace menubutton -textvariable for -compound
+use (hobbs)
+
+Several documentation and release notes improvements
+
+--- Released 8.5.0, December 18, 2007 --- See ChangeLog for details ---
+
+2007-12-30 (bug fix)[1860802] fixed Dutch message catalog (markus,fellows)
+
+2008-01-06 (bug fix)[1442006,1821939,18862692] MouseWheel for treeview (english)
+
+2008-01-08 (bug fix)[1865898,1679067] button size & state (english)
+
+2008-01-08 (bug fix)[1867122] [labelframe -style] crash (english,rib)
+
+2008-01-27 (bug fix)[1835848] size value returned by [font actual] (english)
+
+2008-01-27 (bug fix)[1878298] [notebook] redraws on tab visibility (english)
+
+2008-01-31 (bug fix)[1881892] messagebox default title (hobbs)
+
+2008-02-01 (bug fix)[CVE-2008-0553] buffer overflow in GIF format (max)
+
+--- Released 8.5.1, February 5, 2008 --- See ChangeLog for details ---

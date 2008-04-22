@@ -1,7 +1,7 @@
 /*                      T E S T F R E E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,7 +26,6 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 
@@ -53,11 +52,11 @@ main (void)
     wp = (struct whatsit *) bu_malloc(sizeof(struct whatsit), "the whatsit");
 
     bu_log("Before initializing, the whatsit = <%x> (%x, %g)\n",
-	    wp, wp -> w_magic, wp -> w_d);
+	   wp, wp -> w_magic, wp -> w_d);
     wp -> w_magic = WHATSIT_MAGIC;
     wp -> w_d = 4.96962656372528225336310;
     bu_log("After initializing, the whatsit = <%x> (%x, %g)\n",
-	    wp, wp -> w_magic, wp -> w_d);
+	   wp, wp -> w_magic, wp -> w_d);
 
     free_whatsit(wp, "the whatsit once");
     bu_log("Freed it once\n");
@@ -70,8 +69,8 @@ main (void)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

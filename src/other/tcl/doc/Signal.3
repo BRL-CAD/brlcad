@@ -31,8 +31,11 @@ A POSIX signal number such as \fBSIGPIPE\fR.
 \fBTcl_SignalId\fR and \fBTcl_SignalMsg\fR return a string
 representation of the provided signal number (\fIsig\fR).
 \fBTcl_SignalId\fR returns a machine-readable textual identifier such
-as "SIGPIPE". \fBTcl_SignalMsg\fR returns a human-readable string such
-as "bus error".  The strings returned by these functions are
+as
+.QW SIGPIPE .
+\fBTcl_SignalMsg\fR returns a human-readable string such as
+.QW "bus error" .
+The strings returned by these functions are
 statically allocated and the caller must not free or modify them.
 
 .SH KEYWORDS

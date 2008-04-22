@@ -1,7 +1,7 @@
 /*                          K I L L . C
  * BRL-CAD
  *
- * Copyright (c) 2007 United States Government as represented by
+ * Copyright (c) 2007-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,10 +27,12 @@
  * Source -
  *   BRL-CAD Open Source
  */
+
 #include "common.h"
 
 /* system headers */
 #include <signal.h>
+#include "bio.h"
 
 /* common headers */
 #include "bu.h"
@@ -51,10 +53,10 @@ bu_terminate(int process)
 #ifdef HAVE_KILL
     /* kill() returns 0 for success */
     successful = kill(process, SIGKILL);
-    successful = !successful; 
+    successful = !successful;
 #else
     HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, TRUE, (DWORD)process);
-    if(hProcess != NULL) {
+    if (hProcess != NULL) {
 	successful = TerminateProcess(hProcess, 0);
     }
 #endif
@@ -66,8 +68,8 @@ bu_terminate(int process)
  * Local Variables:
  * tab-width: 8
  * mode: C
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

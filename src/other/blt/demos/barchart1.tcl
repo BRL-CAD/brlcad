@@ -2,17 +2,17 @@
 
 package require BLT
 # --------------------------------------------------------------------------
-# Starting with Tcl 8.x, the BLT commands are stored in their own 
+# Starting with Tcl 8.x, the BLT commands are stored in their own
 # namespace called "blt".  The idea is to prevent name clashes with
 # Tcl commands and variables from other packages, such as a "table"
-# command in two different packages.  
+# command in two different packages.
 #
 # You can access the BLT commands in a couple of ways.  You can prefix
 # all the BLT commands with the namespace qualifier "blt::"
-#  
+#
 #    blt::graph .g
 #    blt::table . .g -resize both
-# 
+#
 # or you can import all the command into the global namespace.
 #
 #    namespace import blt::*
@@ -46,7 +46,7 @@ proc FormatLabel { w value } {
     set names [$w element show]
     set index [expr round($value)]
     if { $index != $value } {
-	return $value 
+	return $value
     }
     global elemLabels
     if { [info exists elemLabels($index)] } {
@@ -86,7 +86,7 @@ option add *Grid.hide			no
 option add *Grid.dashes			{ 2 4 }
 option add *Grid.mapX			""
 
-set visual [winfo screenvisual .] 
+set visual [winfo screenvisual .]
 if { $visual != "staticgray" && $visual != "grayscale" } {
     option add *print.background yellow
     option add *quit.background red
@@ -94,27 +94,27 @@ if { $visual != "staticgray" && $visual != "grayscale" } {
 }
 
 htext .header -text {
-    The barchart has several components: coordinate axes, data 
-    elements, legend, crosshairs, grid,  postscript, and markers.  
+    The barchart has several components: coordinate axes, data
+    elements, legend, crosshairs, grid,  postscript, and markers.
     They each control various aspects of the barchart.  For example,
-    the postscript component lets you generate PostScript output.  
+    the postscript component lets you generate PostScript output.
     Pressing the %%
 
     set w $htext(widget)
     button $w.print -text {Print} -command {
 	.bc postscript output bar.ps
-    } 
+    }
     $w append $w.print
 
-%% button will create a file "bar.ps" 
+%% button will create a file "bar.ps"
 }
 
 htext .footer -text {
     Hit the %%
 
     set w $htext(widget)
-    button $w.quit -text quit -command exit 
-    $w append $w.quit 
+    button $w.quit -text quit -command exit
+    $w append $w.quit
 
 %% button when you've seen enough.%%
 
@@ -126,13 +126,13 @@ htext .footer -text {
 barchart .bc
 
 #
-# Element attributes:  
+# Element attributes:
 #
 #    Label	Foreground	Background	Stipple Pattern
 
 source scripts/stipples.tcl
 
-set bitmaps { 
+set bitmaps {
     bdiagonal1 bdiagonal2 checker2 checker3 cross1 cross2 cross3 crossdiag
     dot1 dot2 dot3 dot4 fdiagonal1 fdiagonal2 hline1 hline2 lbottom ltop
     rbottom rtop vline1 vline2
@@ -140,12 +140,12 @@ set bitmaps {
 set count 1
 foreach stipple $bitmaps {
     set label [file tail $stipple]
-    set label [file root $label] 
+    set label [file root $label]
     set y [random -2 10]
     set yhigh [expr $y + 0.5]
     set ylow [expr $y - 0.5]
     .bc element create $label -y $y -x $count \
-	-fg brown -bg orange -stipple $stipple -yhigh $yhigh -ylow $ylow 
+	-fg brown -bg orange -stipple $stipple -yhigh $yhigh -ylow $ylow
     set elemLabels($count) $label
     incr count
 }
@@ -153,8 +153,8 @@ foreach stipple $bitmaps {
 table . \
     0,0 .header -fill x \
     1,0 .bc -fill both \
-    2,0	.footer -fill x	
-	
+    2,0	.footer -fill x
+
 table configure . r0 r2 -resize none
 
 Blt_ZoomStack .bc

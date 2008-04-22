@@ -292,7 +292,7 @@ tkimg_FixStringWriteProc(data, interp, dataPtr, format, blockPtr)
     Tk_PhotoImageBlock **blockPtr;
 {
     if (!*blockPtr) {
-	*blockPtr = (Tk_PhotoImageBlock *) *format;	
+	*blockPtr = (Tk_PhotoImageBlock *) *format;
 	*format   = (Tcl_Obj *) *dataPtr;
 	*dataPtr  = data;
 	Tcl_DStringInit(data);

@@ -31,7 +31,7 @@
  * Exported function declarations:
  */
 
-#ifdef __WIN32__
+#ifdef __WIN32__ /* WIN */
 #ifndef Tk_AttachHWND_TCL_DECLARED
 #define Tk_AttachHWND_TCL_DECLARED
 /* 0 */
@@ -64,8 +64,8 @@ EXTERN int		Tk_TranslateWinEvent (HWND hwnd, UINT message,
 				WPARAM wParam, LPARAM lParam, 
 				LRESULT * result);
 #endif
-#endif /* __WIN32__ */
-#ifdef MAC_OSX_TK
+#endif /* WIN */
+#ifdef MAC_OSX_TK /* AQUA */
 #ifndef Tk_MacOSXSetEmbedHandler_TCL_DECLARED
 #define Tk_MacOSXSetEmbedHandler_TCL_DECLARED
 /* 0 */
@@ -127,21 +127,21 @@ EXTERN void		Tk_MacOSXSetupTkNotifier (void);
 /* 10 */
 EXTERN int		Tk_MacOSXIsAppInFront (void);
 #endif
-#endif /* MAC_OSX_TK */
+#endif /* AQUA */
 
 typedef struct TkPlatStubs {
     int magic;
     struct TkPlatStubHooks *hooks;
 
-#ifdef __WIN32__
+#ifdef __WIN32__ /* WIN */
     Window (*tk_AttachHWND) (Tk_Window tkwin, HWND hwnd); /* 0 */
     HINSTANCE (*tk_GetHINSTANCE) (void); /* 1 */
     HWND (*tk_GetHWND) (Window window); /* 2 */
     Tk_Window (*tk_HWNDToWindow) (HWND hwnd); /* 3 */
     void (*tk_PointerEvent) (HWND hwnd, int x, int y); /* 4 */
     int (*tk_TranslateWinEvent) (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT * result); /* 5 */
-#endif /* __WIN32__ */
-#ifdef MAC_OSX_TK
+#endif /* WIN */
+#ifdef MAC_OSX_TK /* AQUA */
     void (*tk_MacOSXSetEmbedHandler) (Tk_MacOSXEmbedRegisterWinProc * registerWinProcPtr, Tk_MacOSXEmbedGetGrafPortProc * getPortProcPtr, Tk_MacOSXEmbedMakeContainerExistProc * containerExistProcPtr, Tk_MacOSXEmbedGetClipProc * getClipProc, Tk_MacOSXEmbedGetOffsetInParentProc * getOffsetProc); /* 0 */
     void (*tk_MacOSXTurnOffMenus) (void); /* 1 */
     void (*tk_MacOSXTkOwnsCursor) (int tkOwnsIt); /* 2 */
@@ -153,7 +153,7 @@ typedef struct TkPlatStubs {
     ControlRef (*tkMacOSXGetRootControl) (Drawable drawable); /* 8 */
     void (*tk_MacOSXSetupTkNotifier) (void); /* 9 */
     int (*tk_MacOSXIsAppInFront) (void); /* 10 */
-#endif /* MAC_OSX_TK */
+#endif /* AQUA */
 } TkPlatStubs;
 
 #ifdef __cplusplus
@@ -170,7 +170,7 @@ extern TkPlatStubs *tkPlatStubsPtr;
  * Inline function declarations:
  */
 
-#ifdef __WIN32__
+#ifdef __WIN32__ /* WIN */
 #ifndef Tk_AttachHWND
 #define Tk_AttachHWND \
 	(tkPlatStubsPtr->tk_AttachHWND) /* 0 */
@@ -195,8 +195,8 @@ extern TkPlatStubs *tkPlatStubsPtr;
 #define Tk_TranslateWinEvent \
 	(tkPlatStubsPtr->tk_TranslateWinEvent) /* 5 */
 #endif
-#endif /* __WIN32__ */
-#ifdef MAC_OSX_TK
+#endif /* WIN */
+#ifdef MAC_OSX_TK /* AQUA */
 #ifndef Tk_MacOSXSetEmbedHandler
 #define Tk_MacOSXSetEmbedHandler \
 	(tkPlatStubsPtr->tk_MacOSXSetEmbedHandler) /* 0 */
@@ -241,7 +241,7 @@ extern TkPlatStubs *tkPlatStubsPtr;
 #define Tk_MacOSXIsAppInFront \
 	(tkPlatStubsPtr->tk_MacOSXIsAppInFront) /* 10 */
 #endif
-#endif /* MAC_OSX_TK */
+#endif /* AQUA */
 
 #endif /* defined(USE_TK_STUBS) && !defined(USE_TK_STUB_PROCS) */
 

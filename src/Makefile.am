@@ -60,6 +60,7 @@ kitchensink_dirs = \
 	bwish \
 	canon \
 	fb \
+	vfont \
 	fbed \
 	gtools \
 	halftone \
@@ -124,9 +125,6 @@ DIST_SUBDIRS= \
 	$(bench_dirs) \
 	$(rts_dirs) \
 	$(kitchensink_dirs)
-
-MAINTAINERCLEANFILES = \
-	Makefile.in
 
 EXTRA_DIST = README
 

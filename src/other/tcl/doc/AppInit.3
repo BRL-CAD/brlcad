@@ -26,7 +26,9 @@ Interpreter for the application.
 
 .SH DESCRIPTION
 .PP
-\fBTcl_AppInit\fR is a ``hook'' procedure that is invoked by
+\fBTcl_AppInit\fR is a
+.QW hook
+procedure that is invoked by
 the main programs for Tcl applications such as \fBtclsh\fR and \fBwish\fR.
 Its purpose is to allow new Tcl applications to be created without
 modifying the main programs provided as part of Tcl and Tk.
@@ -60,7 +62,7 @@ Tcl_Main(argc, argv, Tcl_AppInit);
 .CE
 The third argument to \fBTcl_Main\fR gives the address of the
 application-specific initialization procedure to invoke.
-This means that you don't have to use the name \fBTcl_AppInit\fR
+This means that you do not have to use the name \fBTcl_AppInit\fR
 for the procedure, but in practice the name is nearly always
 \fBTcl_AppInit\fR (in versions before Tcl 7.4 the name \fBTcl_AppInit\fR
 was implicit;  there was no way to specify the procedure explicitly).

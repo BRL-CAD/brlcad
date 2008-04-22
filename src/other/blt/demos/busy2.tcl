@@ -2,17 +2,17 @@
 
 package require BLT
 # --------------------------------------------------------------------------
-# Starting with Tcl 8.x, the BLT commands are stored in their own 
+# Starting with Tcl 8.x, the BLT commands are stored in their own
 # namespace called "blt".  The idea is to prevent name clashes with
 # Tcl commands and variables from other packages, such as a "table"
-# command in two different packages.  
+# command in two different packages.
 #
 # You can access the BLT commands in a couple of ways.  You can prefix
 # all the BLT commands with the namespace qualifier "blt::"
-#  
+#
 #    blt::graph .g
 #    blt::table . .g -fill both
-# 
+#
 # or you can import all the command into the global namespace.
 #
 #    namespace import blt::*
@@ -29,7 +29,7 @@ if { $tcl_version >= 8.0 } {
 
 #
 # Script to test the "busy" command.
-# 
+#
 
 #
 # General widget class resource attributes
@@ -41,7 +41,7 @@ option add *Scale.relief 	sunken
 option add *Entry.relief 	sunken
 option add *Frame.borderWidth 	2
 
-set visual [winfo screenvisual .] 
+set visual [winfo screenvisual .]
 if { $visual == "staticgray"  || $visual == "grayscale" } {
     set activeBg black
     set normalBg white
@@ -84,24 +84,24 @@ option add *entryLabel.text	"Entries"
 option add *scaleLabel.text	"Scales"
 option add *textLabel.text	"Text"
 
-proc LoseFocus {} { 
-    focus -force . 
+proc LoseFocus {} {
+    focus -force .
 }
 proc KeepRaised { w } {
     bindtags $w keepRaised
 }
 
-bind keepRaised <Visibility> { raise %W } 
+bind keepRaised <Visibility> { raise %W }
 
 set file ./images/chalk.gif
 image create photo textureBg -file $file
 
 #
-# This never gets used; it's reset by the Animate proc. It's 
+# This never gets used; it's reset by the Animate proc. It's
 # here to just demonstrate how to set busy window options via
 # the host window path name
 #
-#option add *f1.busyCursor 	bogosity 
+#option add *f1.busyCursor 	bogosity
 
 
 #
@@ -109,7 +109,7 @@ image create photo textureBg -file $file
 #
 set numWin 0
 
-menu .menu 
+menu .menu
 .menu add command -label "First"
 .menu add command -label "Second"
 .menu add command -label "Third"
@@ -119,7 +119,7 @@ menu .menu
 #
 # Create two frames. The top frame will be the host window for the
 # busy window.  It'll contain widgets to test the effectiveness of
-# the busy window.  The bottom frame will contain buttons to 
+# the busy window.  The bottom frame will contain buttons to
 # control the testing.
 #
 frame .f1
@@ -129,11 +129,11 @@ frame .f2
 # Create some widgets to test the busy window and its cursor
 #
 label .buttonLabel
-button .testButton -command { 
-    puts stdout "Not busy." 
+button .testButton -command {
+    puts stdout "Not busy."
 }
 button .quitButton -command { exit }
-entry .entry 
+entry .entry
 scale .scale
 text .text -width 20 -height 4
 
@@ -155,7 +155,7 @@ button .holdButton -command {
         global activeBg
 	.f1 configure -bg $activeBg
     }
-    busy .f1 
+    busy .f1
     busy .#menu
     LoseFocus
 }
@@ -176,25 +176,25 @@ table .f1 \
     .scale 1,0 \
     .entry 0,1 \
     .text 1,1 -fill both \
-    .quitButton 2,0 
+    .quitButton 2,0
 
 table .f2 \
     .newButton 0,0 \
     .holdButton 1,0 \
-    .releaseButton 2,0  
+    .releaseButton 2,0
 
 table configure .f1 .testButton .scale .entry .quitButton -padx 10 -pady 10 -fill both
-table configure .f2 .newButton .holdButton .releaseButton -padx 10 -pady 10 
+table configure .f2 .newButton .holdButton .releaseButton -padx 10 -pady 10
 table configure .f2 c0 -resize none
 #
 # Finally, realize and map the top level window
 #
 table . \
     .f1 0,0  \
-    .f2 1,0 
+    .f2 1,0
 
 table configure . .f1 .f2 -fill both
-# Initialize a list of bitmap file names which make up the animated 
+# Initialize a list of bitmap file names which make up the animated
 # fish cursor. The bitmap mask files have a "m" appended to them.
 
 table configure . r1 -resize none
@@ -202,9 +202,9 @@ table configure . r1 -resize none
 set bitmapList { left left1 mid right1 right }
 
 #
-# Simple cursor animation routine: Uses the "after" command to 
+# Simple cursor animation routine: Uses the "after" command to
 # circulate through a list of cursors every 0.075 seconds. The
-# first pass through the cursor list may appear sluggish because 
+# first pass through the cursor list may appear sluggish because
 # the bitmaps have to be read from the disk.  Tk's cursor cache
 # takes care of it afterwards.
 #
@@ -223,7 +223,7 @@ proc StartAnimation { widget count } {
     set afterId($widget) [after 125 StartAnimation $widget $count]
 }
 
-proc StopAnimation { widget } {    
+proc StopAnimation { widget } {
     global afterId
     after cancel $afterId($widget)
 }
@@ -239,16 +239,16 @@ proc TranslateBusy { window } {
 }
 
 if { [info exists tcl_platform] && $tcl_platform(platform) == "unix" } {
-    bind Busy <Map> { 
+    bind Busy <Map> {
 	StartAnimation [TranslateBusy %W] 0
     }
-    bind Busy <Unmap> { 
-	StopAnimation  [TranslateBusy %W] 
+    bind Busy <Unmap> {
+	StopAnimation  [TranslateBusy %W]
     }
 }
 
 #
-# For testing, allow the top level window to be resized 
+# For testing, allow the top level window to be resized
 #
 wm min . 0 0
 

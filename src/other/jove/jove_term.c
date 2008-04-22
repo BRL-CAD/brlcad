@@ -15,7 +15,6 @@ static const char RCSid[] = "@(#)$Header$";
 
 #include "common.h"
 
-
 #include "./jove.h"
 
 #ifdef HAVE_TERMIOS_H

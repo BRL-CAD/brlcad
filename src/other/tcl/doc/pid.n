@@ -25,7 +25,7 @@ In this case the \fBpid\fR command will return a list whose elements
 are the process identifiers of all the processes in the pipeline,
 in order.
 The list will be empty if \fIfileId\fR refers to an open file
-that isn't a process pipeline.
+that is not a process pipeline.
 If no \fIfileId\fR argument is given then \fBpid\fR returns the process
 identifier of the current process.
 All process identifiers are returned as decimal strings.

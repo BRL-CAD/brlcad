@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -18,7 +18,7 @@
 
 
 void ON_Brep::RebuildTrimsForV2(
-                ON_BrepFace& face, 
+                ON_BrepFace& face,
                 const ON_NurbsSurface& nurbs_surface
                 )
 {
@@ -33,10 +33,10 @@ void ON_Brep::RebuildTrimsForV2(
   // 6 August 2003 Dale Lear:
   //
   //   The PRIMARY use of ON_Brep::RebuildTrimsForV2()
-  //   is to create geometry that can be written to 
+  //   is to create geometry that can be written to
   //   files that V2 can read.
   //
-  //   NEVER change this function without first completely 
+  //   NEVER change this function without first completely
   //   understanding how TL_Brep::Write() works.  You MUST
   //   do extensive testing of saving V2 files from V3
   //   and then reading those files into Rhino V2 before
@@ -111,7 +111,7 @@ void ON_Brep::RebuildTrimsForV2(
           double pbtol = edge->m_tolerance;
           if ( pbtol < 0.001 )
             pbtol = 0.001;
-          if (trim.m_bRev3d) 
+          if (trim.m_bRev3d)
             c2 = nurbs_surface.Pullback(*edge,pbtol,NULL,uv1,uv0);
           else
             c2 = nurbs_surface.Pullback(*edge,pbtol,NULL,uv0,uv1);
@@ -127,8 +127,8 @@ void ON_Brep::RebuildTrimsForV2(
             T2.Translation(v);
             double s1 = a0.DistanceTo(a1);
             double s2 = uv0.DistanceTo(uv1);
-            if ( s1 > 0.0 && s2 > 0.0 
-                 && s2 > s1*ON_SQRT_EPSILON 
+            if ( s1 > 0.0 && s2 > 0.0
+                 && s2 > s1*ON_SQRT_EPSILON
                  &&  s1 > s2*ON_SQRT_EPSILON )
             {
               ON_Xform S(1), R(1);
@@ -185,10 +185,10 @@ void ON_Brep::RebuildTrimsForV2(
   // 6 August 2003 Dale Lear:
   //
   //   The PRIMARY use of ON_Brep::RebuildTrimsForV2()
-  //   is to create geometry that can be written to 
+  //   is to create geometry that can be written to
   //   files that V2 can read.
   //
-  //   NEVER change this function without first completely 
+  //   NEVER change this function without first completely
   //   understanding how TL_Brep::Write() works.  You MUST
   //   do extensive testing of saving V2 files from V3
   //   and then reading those files into Rhino V2 before
@@ -243,8 +243,8 @@ bool ON_Brep::MakeDeformable()
     edge.DestroyRuntimeCache();
 
     // Fix for RR 12669
-    //   When edge uses a subset of a polycurve and MakeDeformable 
-    //   reparameterizes the area where the edge begins or ends, 
+    //   When edge uses a subset of a polycurve and MakeDeformable
+    //   reparameterizes the area where the edge begins or ends,
     //   then the ends of the edge change.
     ON_Curve* edge_curve = 0;
     if ( edge.ProxyCurveDomain() == crv->Domain() )
@@ -257,7 +257,7 @@ bool ON_Brep::MakeDeformable()
     {
       // edge.DuplicateCurve() returns a copy of the subsed of crv
       // that is used by the edge.
-      edge_curve = edge.DuplicateCurve(); 
+      edge_curve = edge.DuplicateCurve();
       if ( 0 == edge_curve )
       {
         delete edge_curve;
@@ -312,7 +312,7 @@ bool ON_Brep::MakeDeformable()
       // we can simply make the surface deformable.
       // If the trims are more complicated, we have
       // to convert the whole thing to NURBS so we
-      // can reliably rebuild the trimming curves 
+      // can reliably rebuild the trimming curves
       // when the surface parameterization changes.
       if ( const_cast<ON_Surface*>(srf)->MakeDeformable() )
       {
@@ -323,7 +323,7 @@ bool ON_Brep::MakeDeformable()
 
 
     ON_NurbsSurface* nurbs_surface = ON_NurbsSurface::New();
-    
+
     int nurbform_rc = srf->GetNurbForm(*nurbs_surface);
     if ( 0 == nurbform_rc )
     {
@@ -331,7 +331,7 @@ bool ON_Brep::MakeDeformable()
       rc = false;
       continue;
     }
-    
+
     if ( 2 == nurbform_rc )
     {
       // 13 Sep 2005 Dale Lear
@@ -531,7 +531,7 @@ bool ON_Brep::MakeValidForV2()
       P1 = next_trim.PointAtStart();
       if ( P0 != P1 )
       {
-        // tweak end of curve 
+        // tweak end of curve
         ON_NurbsCurve* c = new ON_NurbsCurve;
         if ( trim.GetNurbForm( *c ) )
         {
@@ -556,7 +556,7 @@ bool ON_Brep::MakeValidForV2()
       loop.m_pbox.Union(trim.m_pbox);
     }
   }
-  
+
   const int face_count = m_F.Count();
   for ( fi = 0; fi < face_count; fi++ )
   {
@@ -617,8 +617,8 @@ bool ON_Brep::IsValidForV2( const ON_BrepTrim& trim ) const
     }
   }
 
-  if (    nurbs_curve->m_cv_count >= 4 
-       && 0 == ON_ComparePoint( nurbs_curve->m_dim, nurbs_curve->m_is_rat, nurbs_curve->m_cv, nurbs_curve->CV(nurbs_curve->m_cv_count-1) ) 
+  if (    nurbs_curve->m_cv_count >= 4
+       && 0 == ON_ComparePoint( nurbs_curve->m_dim, nurbs_curve->m_is_rat, nurbs_curve->m_cv, nurbs_curve->CV(nurbs_curve->m_cv_count-1) )
        )
   {
     // 14 April 2003 Dale Lear
@@ -630,7 +630,7 @@ bool ON_Brep::IsValidForV2( const ON_BrepTrim& trim ) const
         return false;
     }
   }
-  
+
   if ( curve->Domain() != trim.Domain() )
     return false;
 
@@ -681,8 +681,8 @@ bool ON_Brep::IsValidForV2( const ON_BrepEdge& edge ) const
 
   // 14 April 2003 Dale Lear
   //     RR 8808 - V2 requires edges to be strictly closed/open
-  if (    nurbs_curve->m_cv_count >= 4 
-       && 0 == ON_ComparePoint( nurbs_curve->m_dim, nurbs_curve->m_is_rat, nurbs_curve->m_cv, nurbs_curve->CV(nurbs_curve->m_cv_count-1) ) 
+  if (    nurbs_curve->m_cv_count >= 4
+       && 0 == ON_ComparePoint( nurbs_curve->m_dim, nurbs_curve->m_is_rat, nurbs_curve->m_cv, nurbs_curve->CV(nurbs_curve->m_cv_count-1) )
        )
   {
     if ( edge.m_vi[0] != edge.m_vi[1] )

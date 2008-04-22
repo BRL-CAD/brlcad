@@ -1,7 +1,7 @@
 /*                         C H O R E . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,15 +22,6 @@
  *
  *  Header file for multi-threaded scanner support.
  *
- *  Author -
- *	Michael John Muuss
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- *
- *  $Header$
  */
 
 struct chore {
@@ -44,12 +35,12 @@ struct chore {
 
 
 #define GET(item, queue)	{\
-	while( queue == NULL )  sginap(1); \
+	while ( queue == NULL )  sginap(1); \
 	item = queue; \
 	queue = NULL; }
 
 #define PUT(queue, item)	{ \
-	while( queue != NULL )  sginap(1); \
+	while ( queue != NULL )  sginap(1); \
 	queue = item; \
 	item = NULL;  }
 
@@ -57,8 +48,8 @@ struct chore {
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

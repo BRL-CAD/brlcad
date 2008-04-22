@@ -21,12 +21,11 @@ AM_CPPFLAGS = \
 AM_CFLAGS = ${X_CFLAGS}
 
 lib_LTLIBRARIES = \
-	libblt.la \
-	libblt@BLT_VERSION@.la
+	libBLT.la \
+	libBLT@BLT_SUFFIX@.la
 
-libblt_la_SOURCES =
-# libblt_la_LDFLAGS = -module
-libblt_la_LIBADD = \
+libBLT_la_SOURCES =
+libBLT_la_LIBADD = \
 	src/bltAlloc.lo \
 	src/bltArrayObj.lo \
 	src/bltBeep.lo \
@@ -83,10 +82,8 @@ libblt_la_LIBADD = \
 	src/bltTreeViewStyle.lo \
 	src/bltUnixDnd.lo \
 	src/bltUnixImage.lo \
-	src/bltUnixMain.lo \
 	src/bltUnixPipe.lo \
 	src/bltUtil.lo \
-	src/bltVecCmd.lo \
 	src/bltVecMath.lo \
 	src/bltVecObjCmd.lo \
 	src/bltVector.lo \
@@ -102,10 +99,14 @@ libblt_la_LIBADD = \
 	${TK} \
 	${X_LIBS}
 
-libblt@BLT_VERSION@_la_SOURCES = $(libblt_la_SOURCES)
-libblt@BLT_VERSION@_la_LDFLAGS = $(libblt_la_LDFLAGS)
-libblt@BLT_VERSION@_la_LIBADD = $(libblt_la_LIBADD)
+EXTRA_DIST = \
+	MANIFEST \
+	Makefile.vc \
+	PROBLEMS \
+	blt.mak
 
-MAINTAINERCLEANFILES = Makefile.in
+libBLT@BLT_SUFFIX@_la_SOURCES = $(libBLT_la_SOURCES)
+libBLT@BLT_SUFFIX@_la_LDFLAGS = $(libBLT_la_LDFLAGS)
+libBLT@BLT_SUFFIX@_la_LIBADD = $(libBLT_la_LIBADD)
 
 include $(top_srcdir)/misc/Makefile.defs

@@ -1,6 +1,6 @@
-/* 
+/*
  * rleaddeof.c - Add an EOF opcode to RLE files without one.
- * 
+ *
  * Author:	Spencer W. Thomas
  * 		Computer Science Dept.
  * 		University of Michigan
@@ -15,7 +15,7 @@
 
 /*****************************************************************
  * TAG( main )
- * 
+ *
  * Usage:
  *     rleaddeof [-o outfile] [infile]
  * Inputs:

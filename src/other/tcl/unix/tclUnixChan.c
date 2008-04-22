@@ -128,6 +128,15 @@
 #endif	/* !USE_TERMIOS */
 
 /*
+ * Helper macros to make parts of this file clearer. The macros do exactly
+ * what they say on the tin. :-) They also only ever refer to their arguments
+ * once, and so can be used without regard to side effects.
+ */
+
+#define SET_BITS(var, bits)	((var) |= (bits))
+#define CLEAR_BITS(var, bits)	((var) &= ~(bits))
+
+/*
  * This structure describes per-instance state of a file based channel.
  */
 
@@ -224,26 +233,23 @@ typedef struct TcpState {
  * Static routines for this file:
  */
 
-static TcpState *	CreateSocket(Tcl_Interp *interp,
-			    int port, const char *host, int server,
-			    const char *myaddr, int myport, int async);
+static TcpState *	CreateSocket(Tcl_Interp *interp, int port,
+			    const char *host, int server, const char *myaddr,
+			    int myport, int async);
 static int		CreateSocketAddress(struct sockaddr_in *sockaddrPtr,
-			    const char *host, int port);
+			    const char *host, int port, int willBind,
+			    const char **errorMsgPtr);
 static int		FileBlockModeProc(ClientData instanceData, int mode);
 static int		FileCloseProc(ClientData instanceData,
 			    Tcl_Interp *interp);
 static int		FileGetHandleProc(ClientData instanceData,
 			    int direction, ClientData *handlePtr);
-static int		FileInputProc(ClientData instanceData,
-			    char *buf, int toRead, int *errorCode);
+static int		FileInputProc(ClientData instanceData, char *buf,
+			    int toRead, int *errorCode);
 static int		FileOutputProc(ClientData instanceData,
 			    const char *buf, int toWrite, int *errorCode);
-static int		FileSeekProc(ClientData instanceData,
-			    long offset, int mode, int *errorCode);
-#ifdef DEPRECATED
-static void		FileThreadActionProc(ClientData instanceData,
-			    int action);
-#endif
+static int		FileSeekProc(ClientData instanceData, long offset,
+			    int mode, int *errorCode);
 static int		FileTruncateProc(ClientData instanceData,
 			    Tcl_WideInt length);
 static Tcl_WideInt	FileWideSeekProc(ClientData instanceData,
@@ -258,8 +264,8 @@ static int		TcpGetHandleProc(ClientData instanceData,
 static int		TcpGetOptionProc(ClientData instanceData,
 			    Tcl_Interp *interp, const char *optionName,
 			    Tcl_DString *dsPtr);
-static int		TcpInputProc(ClientData instanceData,
-			    char *buf, int toRead,  int *errorCode);
+static int		TcpInputProc(ClientData instanceData, char *buf,
+			    int toRead, int *errorCode);
 static int		TcpOutputProc(ClientData instanceData,
 			    const char *buf, int toWrite, int *errorCode);
 static void		TcpWatchProc(ClientData instanceData, int mask);
@@ -281,8 +287,8 @@ static int		TtyOutputProc(ClientData instanceData,
 			    const char *buf, int toWrite, int *errorCode);
 #endif /* BAD_TIP35_FLUSH */
 static int		TtyParseMode(Tcl_Interp *interp, const char *mode,
-			    int *speedPtr, int *parityPtr,
-			    int *dataPtr, int *stopPtr);
+			    int *speedPtr, int *parityPtr, int *dataPtr,
+			    int *stopPtr);
 static void		TtySetAttributes(int fd, TtyAttrs *ttyPtr);
 static int		TtySetOptionProc(ClientData instanceData,
 			    Tcl_Interp *interp, const char *optionName,
@@ -312,11 +318,7 @@ static Tcl_ChannelType fileChannelType = {
     NULL,			/* flush proc. */
     NULL,			/* handler proc. */
     FileWideSeekProc,		/* wide seek proc. */
-#ifdef DEPRECATED
-    FileThreadActionProc,	/* thread actions */
-#else
     NULL,
-#endif
     FileTruncateProc,		/* truncate proc. */
 };
 
@@ -407,9 +409,9 @@ FileBlockModeProc(
 #ifndef USE_FIONBIO
     curStatus = fcntl(fsPtr->fd, F_GETFL);
     if (mode == TCL_MODE_BLOCKING) {
-	curStatus &= (~(O_NONBLOCK));
+	CLEAR_BITS(curStatus, O_NONBLOCK);
     } else {
-	curStatus |= O_NONBLOCK;
+	SET_BITS(curStatus, O_NONBLOCK);
     }
     if (fcntl(fsPtr->fd, F_SETFL, curStatus) < 0) {
 	return errno;
@@ -600,7 +602,7 @@ FileSeekProc(
     oldLoc = TclOSseek(fsPtr->fd, (Tcl_SeekOffset) 0, SEEK_CUR);
     if (oldLoc == Tcl_LongAsWide(-1)) {
 	/*
-	 * Bad things are happening.  Error out...
+	 * Bad things are happening. Error out...
 	 */
 
 	*errorCodePtr = errno;
@@ -687,9 +689,9 @@ FileWatchProc(
     FileState *fsPtr = (FileState *) instanceData;
 
     /*
-     * Make sure we only register for events that are valid on this file.
-     * Note that we are passing Tcl_NotifyChannel directly to
-     * Tcl_CreateFileHandler with the channel pointer as the client data.
+     * Make sure we only register for events that are valid on this file. Note
+     * that we are passing Tcl_NotifyChannel directly to Tcl_CreateFileHandler
+     * with the channel pointer as the client data.
      */
 
     mask &= fsPtr->validMask;
@@ -724,16 +726,15 @@ static int
 FileGetHandleProc(
     ClientData instanceData,	/* The file state. */
     int direction,		/* TCL_READABLE or TCL_WRITABLE */
-    ClientData *handlePtr)	/* Where to store the handle.  */
+    ClientData *handlePtr)	/* Where to store the handle. */
 {
     FileState *fsPtr = (FileState *) instanceData;
 
     if (direction & fsPtr->validMask) {
 	*handlePtr = (ClientData) INT2PTR(fsPtr->fd);
 	return TCL_OK;
-    } else {
-	return TCL_ERROR;
     }
+    return TCL_ERROR;
 }
 
 #ifdef SUPPORTS_TTY
@@ -814,14 +815,14 @@ TtyOutputProc(
 {
     if (TclInExit()) {
 	/*
-	 * Do not write data during Tcl exit.  Serial port may block
-	 * preventing Tcl from exit.
+	 * Do not write data during Tcl exit. Serial port may block preventing
+	 * Tcl from exit.
 	 */
 
 	return toWrite;
-    } else {
-	return FileOutputProc(instanceData, buf, toWrite, errorCodePtr);
     }
+
+    return FileOutputProc(instanceData, buf, toWrite, errorCodePtr);
 }
 #endif /* BAD_TIP35_FLUSH */
 
@@ -838,8 +839,8 @@ TtyOutputProc(
 
 static void
 TtyModemStatusStr(
-    int status,		   /* RS232 modem status */
-    Tcl_DString *dsPtr)	   /* Where to store string */
+    int status,			/* RS232 modem status */
+    Tcl_DString *dsPtr)		/* Where to store string */
 {
 #ifdef TIOCM_CTS
     Tcl_DStringAppendElement(dsPtr, "CTS");
@@ -927,17 +928,17 @@ TtySetOptionProc(
 	 */
 
 	GETIOSTATE(fsPtr->fd, &iostate);
-	iostate.c_iflag &= ~(IXON | IXOFF | IXANY);
+	CLEAR_BITS(iostate.c_iflag, IXON | IXOFF | IXANY);
 #ifdef CRTSCTS
-	iostate.c_cflag &= ~CRTSCTS;
+	CLEAR_BITS(iostate.c_cflag, CRTSCTS);
 #endif /* CRTSCTS */
 	if (strncasecmp(value, "NONE", vlen) == 0) {
 	    /* leave all handshake options disabled */
 	} else if (strncasecmp(value, "XONXOFF", vlen) == 0) {
-	    iostate.c_iflag |= (IXON | IXOFF | IXANY);
+	    SET_BITS(iostate.c_iflag, IXON | IXOFF | IXANY);
 	} else if (strncasecmp(value, "RTSCTS", vlen) == 0) {
 #ifdef CRTSCTS
-	    iostate.c_cflag |= CRTSCTS;
+	    SET_BITS(iostate.c_cflag, CRTSCTS);
 #else /* !CRTSTS */
 	    UNSUPPORTED_OPTION("-handshake RTSCTS");
 	    return TCL_ERROR;
@@ -967,13 +968,20 @@ TtySetOptionProc(
 	    return TCL_ERROR;
 	}
 	if (argc == 2) {
-	    iostate.c_cc[VSTART] = argv[0][0];
-	    iostate.c_cc[VSTOP]	 = argv[1][0];
+	    Tcl_DString ds;
+	    Tcl_DStringInit(&ds);
+
+	    Tcl_UtfToExternalDString(NULL, argv[0], -1, &ds);
+	    iostate.c_cc[VSTART] = *(const cc_t *) Tcl_DStringValue(&ds);
+	    Tcl_DStringSetLength(&ds, 0);
+
+	    Tcl_UtfToExternalDString(NULL, argv[1], -1, &ds);
+	    iostate.c_cc[VSTOP] = *(const cc_t *) Tcl_DStringValue(&ds);
+	    Tcl_DStringFree(&ds);
 	} else {
 	    if (interp) {
-		Tcl_AppendResult(interp,
-		    "bad value for -xchar: should be a list of two elements",
-		    NULL);
+		Tcl_AppendResult(interp, "bad value for -xchar: "
+			"should be a list of two elements", NULL);
 	    }
 	    ckfree((char *) argv);
 	    return TCL_ERROR;
@@ -994,8 +1002,8 @@ TtySetOptionProc(
 	if (Tcl_GetInt(interp, value, &msec) != TCL_OK) {
 	    return TCL_ERROR;
 	}
-	iostate.c_cc[VMIN]  = 0;
-	iostate.c_cc[VTIME] = (msec == 0) ? 0 : (msec < 100) ? 1 : (msec+50)/100;
+	iostate.c_cc[VMIN] = 0;
+	iostate.c_cc[VTIME] = (msec==0) ? 0 : (msec<100) ? 1 : (msec+50)/100;
 	SETIOSTATE(fsPtr->fd, &iostate);
 	return TCL_OK;
     }
@@ -1006,14 +1014,14 @@ TtySetOptionProc(
 
     if ((len > 4) && (strncmp(optionName, "-ttycontrol", len) == 0)) {
 	int i;
+
 	if (Tcl_SplitList(interp, value, &argc, &argv) == TCL_ERROR) {
 	    return TCL_ERROR;
 	}
 	if ((argc % 2) == 1) {
 	    if (interp) {
-		Tcl_AppendResult(interp,
-			"bad value for -ttycontrol: should be a list of"
-			"signal,value pairs", NULL);
+		Tcl_AppendResult(interp, "bad value for -ttycontrol: "
+			"should be a list of signal,value pairs", NULL);
 	    }
 	    ckfree((char *) argv);
 	    return TCL_ERROR;
@@ -1028,9 +1036,9 @@ TtySetOptionProc(
 	    if (strncasecmp(argv[i], "DTR", strlen(argv[i])) == 0) {
 #ifdef TIOCM_DTR
 		if (flag) {
-		    control |= TIOCM_DTR;
+		    SET_BITS(control, TIOCM_DTR);
 		} else {
-		    control &= ~TIOCM_DTR;
+		    CLEAR_BITS(control, TIOCM_DTR);
 		}
 #else /* !TIOCM_DTR */
 		UNSUPPORTED_OPTION("-ttycontrol DTR");
@@ -1040,9 +1048,9 @@ TtySetOptionProc(
 	    } else if (strncasecmp(argv[i], "RTS", strlen(argv[i])) == 0) {
 #ifdef TIOCM_RTS
 		if (flag) {
-		    control |= TIOCM_RTS;
+		    SET_BITS(control, TIOCM_RTS);
 		} else {
-		    control &= ~TIOCM_RTS;
+		    CLEAR_BITS(control, TIOCM_RTS);
 		}
 #else /* !TIOCM_RTS*/
 		UNSUPPORTED_OPTION("-ttycontrol RTS");
@@ -1074,7 +1082,7 @@ TtySetOptionProc(
     }
 
     return Tcl_BadChannelOption(interp, optionName,
-	    "mode handshake timeout ttycontrol xchar ");
+	    "mode handshake timeout ttycontrol xchar");
 
 #else /* !USE_TERMIOS */
     return Tcl_BadChannelOption(interp, optionName, "mode");
@@ -1087,7 +1095,7 @@ TtySetOptionProc(
  * TtyGetOptionProc --
  *
  *	Gets a mode associated with an IO channel. If the optionName arg is
- *	non NULL, retrieves the value of that option. If the optionName arg is
+ *	non-NULL, retrieves the value of that option. If the optionName arg is
  *	NULL, retrieves a list of alternating option names and values for the
  *	given channel.
  *
@@ -1097,7 +1105,7 @@ TtySetOptionProc(
  *
  * Side effects:
  *	The string returned by this function is in static storage and may be
- *	reused at any time subsequent to the call.  Sets Error message if
+ *	reused at any time subsequent to the call. Sets error message if
  *	needed (by calling Tcl_BadChannelOption).
  *
  *----------------------------------------------------------------------
@@ -1112,9 +1120,8 @@ TtyGetOptionProc(
 {
     FileState *fsPtr = (FileState *) instanceData;
     unsigned int len;
-    char buf[3 * TCL_INTEGER_SPACE + 16];
-    TtyAttrs tty;
-    int valid = 0;  /* flag if valid option parsed */
+    char buf[3*TCL_INTEGER_SPACE + 16];
+    int valid = 0;		/* Flag if valid option parsed. */
 
     if (optionName == NULL) {
 	len = 0;
@@ -1125,6 +1132,8 @@ TtyGetOptionProc(
 	Tcl_DStringAppendElement(dsPtr, "-mode");
     }
     if (len==0 || (len>2 && strncmp(optionName, "-mode", len)==0)) {
+	TtyAttrs tty;
+
 	valid = 1;
 	TtyGetAttributes(fsPtr->fd, &tty);
 	sprintf(buf, "%d,%c,%d,%d", tty.baud, tty.parity, tty.data, tty.stop);
@@ -1133,7 +1142,7 @@ TtyGetOptionProc(
 
 #ifdef USE_TERMIOS
     /*
-     * get option -xchar
+     * Get option -xchar
      */
 
     if (len == 0) {
@@ -1142,27 +1151,33 @@ TtyGetOptionProc(
     }
     if (len==0 || (len>1 && strncmp(optionName, "-xchar", len)==0)) {
 	IOSTATE iostate;
+	Tcl_DString ds;
 	valid = 1;
 
 	GETIOSTATE(fsPtr->fd, &iostate);
-	sprintf(buf, "%c", iostate.c_cc[VSTART]);
-	Tcl_DStringAppendElement(dsPtr, buf);
-	sprintf(buf, "%c", iostate.c_cc[VSTOP]);
-	Tcl_DStringAppendElement(dsPtr, buf);
+	Tcl_DStringInit(&ds);
+
+	Tcl_ExternalToUtfDString(NULL,  (const char *) &iostate.c_cc[VSTART], 1, &ds);
+	Tcl_DStringAppendElement(dsPtr, (const char *) Tcl_DStringValue(&ds));
+	Tcl_DStringSetLength(&ds, 0);
+
+	Tcl_ExternalToUtfDString(NULL,  (const char *) &iostate.c_cc[VSTOP], 1, &ds);
+	Tcl_DStringAppendElement(dsPtr, (const char *) Tcl_DStringValue(&ds));
+	Tcl_DStringFree(&ds);
     }
     if (len == 0) {
 	Tcl_DStringEndSublist(dsPtr);
     }
 
     /*
-     * get option -queue
-     * option is readonly and returned by [fconfigure chan -queue] but not
-     * returned by unnamed [fconfigure chan]
+     * Get option -queue
+     * Option is readonly and returned by [fconfigure chan -queue] but not
+     * returned by unnamed [fconfigure chan].
      */
 
     if ((len > 1) && (strncmp(optionName, "-queue", len) == 0)) {
-	int inQueue=0, outQueue=0;
-	int inBuffered, outBuffered;
+	int inQueue=0, outQueue=0, inBuffered, outBuffered;
+
 	valid = 1;
 #ifdef GETREADQUEUE
 	GETREADQUEUE(fsPtr->fd, inQueue);
@@ -1170,7 +1185,7 @@ TtyGetOptionProc(
 #ifdef GETWRITEQUEUE
 	GETWRITEQUEUE(fsPtr->fd, outQueue);
 #endif /* GETWRITEQUEUE */
-	inBuffered  = Tcl_InputBuffered(fsPtr->channel);
+	inBuffered = Tcl_InputBuffered(fsPtr->channel);
 	outBuffered = Tcl_OutputBuffered(fsPtr->channel);
 
 	sprintf(buf, "%d", inBuffered+inQueue);
@@ -1180,12 +1195,13 @@ TtyGetOptionProc(
     }
 
     /*
-     * get option -ttystatus
-     * option is readonly and returned by [fconfigure chan -ttystatus] but not
-     * returned by unnamed [fconfigure chan]
+     * Get option -ttystatus
+     * Option is readonly and returned by [fconfigure chan -ttystatus] but not
+     * returned by unnamed [fconfigure chan].
      */
     if ((len > 4) && (strncmp(optionName, "-ttystatus", len) == 0)) {
 	int status;
+
 	valid = 1;
 	GETCONTROL(fsPtr->fd, &status);
 	TtyModemStatusStr(status, dsPtr);
@@ -1194,20 +1210,17 @@ TtyGetOptionProc(
 
     if (valid) {
 	return TCL_OK;
-    } else {
-	return Tcl_BadChannelOption(interp, optionName,
+    }
+    return Tcl_BadChannelOption(interp, optionName, "mode"
 #ifdef USE_TERMIOS
-	    "mode queue ttystatus xchar"
-#else /* !USE_TERMIOS */
-	    "mode"
+	    " queue ttystatus xchar"
 #endif /* USE_TERMIOS */
 	    );
-    }
 }
 
 #ifdef DIRECT_BAUD
-#   define TtyGetSpeed(baud)   ((unsigned) (baud))
-#   define TtyGetBaud(speed)   ((int) (speed))
+#   define TtyGetSpeed(baud)	((unsigned) (baud))
+#   define TtyGetBaud(speed)	((int) (speed))
 #else /* !DIRECT_BAUD */
 
 static struct {int baud; unsigned long speed;} speeds[] = {
@@ -1356,7 +1369,7 @@ TtyGetSpeed(
  *	get the baus rate that corresponds to that mask value.
  *
  * Results:
- *	As above.  If the mask value was not recognized, 0 is returned.
+ *	As above. If the mask value was not recognized, 0 is returned.
  *
  * Side effects:
  *	None.
@@ -1504,25 +1517,28 @@ TtySetAttributes(
     flag = 0;
     parity = ttyPtr->parity;
     if (parity != 'n') {
-	flag |= PARENB;
+	SET_BITS(flag, PARENB);
 #ifdef PAREXT
-	iostate.c_cflag &= ~PAREXT;
+	CLEAR_BITS(iostate.c_cflag, PAREXT);
 	if ((parity == 'm') || (parity == 's')) {
-	    flag |= PAREXT;
+	    SET_BITS(flag, PAREXT);
 	}
 #endif /* PAREXT */
 	if ((parity == 'm') || (parity == 'o')) {
-	    flag |= PARODD;
+	    SET_BITS(flag, PARODD);
 	}
     }
     data = ttyPtr->data;
-    flag |= (data == 5) ? CS5 : (data == 6) ? CS6 : (data == 7) ? CS7 : CS8;
+    SET_BITS(flag,
+	    (data == 5) ? CS5 :
+	    (data == 6) ? CS6 :
+	    (data == 7) ? CS7 : CS8);
     if (ttyPtr->stop == 2) {
-	flag |= CSTOPB;
+	SET_BITS(flag, CSTOPB);
     }
 
-    iostate.c_cflag &= ~(PARENB | PARODD | CSIZE | CSTOPB);
-    iostate.c_cflag |= flag;
+    CLEAR_BITS(iostate.c_cflag, PARENB | PARODD | CSIZE | CSTOPB);
+    SET_BITS(iostate.c_cflag, flag);
 
 #endif	/* USE_TERMIOS */
 
@@ -1530,28 +1546,31 @@ TtySetAttributes(
     int parity, data, flag;
 
     GETIOSTATE(fd, &iostate);
-    iostate.c_cflag &= ~CBAUD;
-    iostate.c_cflag |= TtyGetSpeed(ttyPtr->baud);
+    CLEAR_BITS(iostate.c_cflag, CBAUD);
+    SET_BITS(iostate.c_cflag, TtyGetSpeed(ttyPtr->baud));
 
     flag = 0;
     parity = ttyPtr->parity;
     if (parity != 'n') {
-	flag |= PARENB;
+	SET_BITS(flag, PARENB);
 	if ((parity == 'm') || (parity == 's')) {
-	    flag |= PAREXT;
+	    SET_BITS(flag, PAREXT);
 	}
 	if ((parity == 'm') || (parity == 'o')) {
-	    flag |= PARODD;
+	    SET_BITS(flag, PARODD);
 	}
     }
     data = ttyPtr->data;
-    flag |= (data == 5) ? CS5 : (data == 6) ? CS6 : (data == 7) ? CS7 : CS8;
+    SET_BITS(flag,
+	    (data == 5) ? CS5 :
+	    (data == 6) ? CS6 :
+	    (data == 7) ? CS7 : CS8);
     if (ttyPtr->stop == 2) {
-	flag |= CSTOPB;
+	SET_BITS(flag, CSTOPB);
     }
 
-    iostate.c_cflag &= ~(PARENB | PARODD | PAREXT | CSIZE | CSTOPB);
-    iostate.c_cflag |= flag;
+    CLEAR_BITS(iostate.c_cflag, PARENB | PARODD | PAREXT | CSIZE | CSTOPB);
+    SET_BITS(iostate.c_cflag, flag);
 
 #endif	/* USE_TERMIO */
 
@@ -1564,11 +1583,11 @@ TtySetAttributes(
 
     parity = ttyPtr->parity;
     if (parity == 'e') {
-	iostate.sg_flags &= ~ODDP;
-	iostate.sg_flags |= EVENP;
+	CLEAR_BITS(iostate.sg_flags, ODDP);
+	SET_BITS(iostate.sg_flags, EVENP);
     } else if (parity == 'o') {
-	iostate.sg_flags &= ~EVENP;
-	iostate.sg_flags |= ODDP;
+	CLEAR_BITS(iostate.sg_flags, EVENP);
+	SET_BITS(iostate.sg_flags, ODDP);
     }
 #endif	/* USE_SGTTY */
 
@@ -1605,7 +1624,7 @@ TtyParseMode(
 {
     int i, end;
     char parity;
-    static char *bad = "bad value for -mode";
+    static const char *bad = "bad value for -mode";
 
     i = sscanf(mode, "%d,%c,%d,%d%n", speedPtr, &parity, dataPtr,
 	    stopPtr, &end);
@@ -1619,7 +1638,7 @@ TtyParseMode(
 
     /*
      * Only allow setting mark/space parity on platforms that support it Make
-     * sure to allow for the case where strchr is a macro.  [Bug: 5089]
+     * sure to allow for the case where strchr is a macro. [Bug: 5089]
      */
 
 #if defined(PAREXT) || defined(USE_TERMIO)
@@ -1662,9 +1681,9 @@ TtyParseMode(
  *
  *	Given file descriptor that refers to a serial port, initialize the
  *	serial port to a set of sane values so that Tcl can talk to a device
- *	located on the serial port.  Note that no initialization happens if
- *	the initialize flag is not set; this is necessary for the correct
- *	handling of UNIX console TTYs at startup.
+ *	located on the serial port. Note that no initialization happens if the
+ *	initialize flag is not set; this is necessary for the correct handling
+ *	of UNIX console TTYs at startup.
  *
  * Results:
  *	A pointer to a FileState suitable for use with Tcl_CreateChannel and
@@ -1672,7 +1691,7 @@ TtyParseMode(
  *
  * Side effects:
  *	Serial device initialized to non-blocking raw mode, similar to sockets
- *	(if initialize flag is non-zero.)  All other modes can be simulated on
+ *	(if initialize flag is non-zero.) All other modes can be simulated on
  *	top of this in Tcl.
  *
  *---------------------------------------------------------------------------
@@ -1704,7 +1723,7 @@ TtyInit(
 	iostate.c_iflag = IGNBRK;
 	iostate.c_oflag = 0;
 	iostate.c_lflag = 0;
-	iostate.c_cflag |= CREAD;
+	SET_BITS(iostate.c_cflag, CREAD);
 	iostate.c_cc[VMIN] = 1;
 	iostate.c_cc[VTIME] = 0;
 #endif	/* USE_TERMIOS|USE_TERMIO */
@@ -1714,8 +1733,8 @@ TtyInit(
 		!(iostate.sg_flags & RAW)) {
 	    ttyPtr->stateUpdated = 1;
 	}
-	iostate.sg_flags &= (EVENP | ODDP);
-	iostate.sg_flags |= RAW;
+	iostate.sg_flags &= EVENP | ODDP;
+	SET_BITS(iostate.sg_flags, RAW);
 #endif	/* USE_SGTTY */
 
 	/*
@@ -1790,7 +1809,7 @@ TclpOpenFileChannel(
     }
 
 #ifdef DJGPP
-    mode |= O_BINARY;
+    SET_BITS(mode, O_BINARY);
 #endif
 
     fd = TclOSopen(native, mode, permissions);
@@ -1838,18 +1857,6 @@ TclpOpenFileChannel(
 	channelTypePtr = &fileChannelType;
 	fsPtr = (FileState *) ckalloc((unsigned) sizeof(FileState));
     }
-
-#ifdef DEPRECATED
-    if (channelTypePtr == &fileChannelType) {
-	/*
-	 * TIP #218. Removed the code inserting the new structure into the
-	 * global list. This is now handled in the thread action callbacks,
-	 * and only there.
-	 */
-
-	fsPtr->nextPtr = NULL;
-    }
-#endif /* DEPRECATED */
 
     fsPtr->validMask = channelPermissions | TCL_EXCEPTION;
     fsPtr->fd = fd;
@@ -1967,24 +1974,24 @@ TcpBlockModeProc(
 #ifndef USE_FIONBIO
     setting = fcntl(statePtr->fd, F_GETFL);
     if (mode == TCL_MODE_BLOCKING) {
-	statePtr->flags &= (~(TCP_ASYNC_SOCKET));
-	setting &= (~(O_NONBLOCK));
+	CLEAR_BITS(statePtr->flags, TCP_ASYNC_SOCKET);
+	CLEAR_BITS(setting, O_NONBLOCK);
     } else {
-	statePtr->flags |= TCP_ASYNC_SOCKET;
-	setting |= O_NONBLOCK;
+	SET_BITS(statePtr->flags, TCP_ASYNC_SOCKET);
+	SET_BITS(setting, O_NONBLOCK);
     }
     if (fcntl(statePtr->fd, F_SETFL, setting) < 0) {
 	return errno;
     }
 #else /* USE_FIONBIO */
     if (mode == TCL_MODE_BLOCKING) {
-	statePtr->flags &= (~(TCP_ASYNC_SOCKET));
+	CLEAR_BITS(statePtr->flags, TCP_ASYNC_SOCKET);
 	setting = 0;
 	if (ioctl(statePtr->fd, (int) FIONBIO, &setting) == -1) {
 	    return errno;
 	}
     } else {
-	statePtr->flags |= TCP_ASYNC_SOCKET;
+	SET_BITS(statePtr->flags, TCP_ASYNC_SOCKET);
 	setting = 1;
 	if (ioctl(statePtr->fd, (int) FIONBIO, &setting) == -1) {
 	    return errno;
@@ -2038,7 +2045,7 @@ WaitForConnect(
 	if (!(statePtr->flags & TCP_ASYNC_SOCKET)) {
 #ifndef USE_FIONBIO
 	    flags = fcntl(statePtr->fd, F_GETFL);
-	    flags &= (~(O_NONBLOCK));
+	    CLEAR_BITS(flags, O_NONBLOCK);
 	    (void) fcntl(statePtr->fd, F_SETFL, flags);
 #else /* USE_FIONBIO */
 	    flags = 0;
@@ -2049,7 +2056,7 @@ WaitForConnect(
 	    return -1;
 	}
 	if (state & TCL_WRITABLE) {
-	    statePtr->flags &= (~(TCP_ASYNC_CONNECT));
+	    CLEAR_BITS(statePtr->flags, TCP_ASYNC_CONNECT);
 	} else if (timeOut == 0) {
 	    *errorCodePtr = errno = EWOULDBLOCK;
 	    return -1;
@@ -2225,13 +2232,13 @@ TcpCloseProc(
 
 static int
 TcpGetOptionProc(
-    ClientData instanceData,	 /* Socket state. */
-    Tcl_Interp *interp,		 /* For error reporting - can be NULL. */
-    const char *optionName,	 /* Name of the option to retrieve the value
-				  * for, or NULL to get all options and their
-				  * values. */
-    Tcl_DString *dsPtr)		 /* Where to store the computed value;
-				  * initialized by caller. */
+    ClientData instanceData,	/* Socket state. */
+    Tcl_Interp *interp,		/* For error reporting - can be NULL. */
+    const char *optionName,	/* Name of the option to retrieve the value
+				 * for, or NULL to get all options and their
+				 * values. */
+    Tcl_DString *dsPtr)		/* Where to store the computed value;
+				 * initialized by caller. */
 {
     TcpState *statePtr = (TcpState *) instanceData;
     struct sockaddr_in sockname;
@@ -2380,9 +2387,9 @@ TcpWatchProc(
     TcpState *statePtr = (TcpState *) instanceData;
 
     /*
-     * Make sure we don't mess with server sockets since they will never
-     * be readable or writable at the Tcl level.  This keeps Tcl scripts
-     * from interfering with the -accept behavior.
+     * Make sure we don't mess with server sockets since they will never be
+     * readable or writable at the Tcl level. This keeps Tcl scripts from
+     * interfering with the -accept behavior.
      */
 
     if (!statePtr->acceptProc) {
@@ -2419,7 +2426,7 @@ static int
 TcpGetHandleProc(
     ClientData instanceData,	/* The socket state. */
     int direction,		/* Not used. */
-    ClientData *handlePtr)	/* Where to store the handle.  */
+    ClientData *handlePtr)	/* Where to store the handle. */
 {
     TcpState *statePtr = (TcpState *) instanceData;
 
@@ -2463,14 +2470,15 @@ CreateSocket(
     struct sockaddr_in sockaddr;	/* socket address */
     struct sockaddr_in mysockaddr;	/* Socket address for client */
     TcpState *statePtr;
+    const char *errorMsg = NULL;
 
     sock = -1;
     origState = 0;
-    if (! CreateSocketAddress(&sockaddr, host, port)) {
+    if (!CreateSocketAddress(&sockaddr, host, port, 0, &errorMsg)) {
 	goto addressError;
     }
     if ((myaddr != NULL || myport != 0) &&
-	    ! CreateSocketAddress(&mysockaddr, myaddr, myport)) {
+	    !CreateSocketAddress(&mysockaddr, myaddr, myport, 1, &errorMsg)) {
 	goto addressError;
     }
 
@@ -2529,8 +2537,8 @@ CreateSocket(
 
 	if (async) {
 #ifndef USE_FIONBIO
-	    origState = fcntl(sock, F_GETFL);
-	    curState = origState | O_NONBLOCK;
+	    curState = fcntl(sock, F_GETFL);
+	    SET_BITS(curState, O_NONBLOCK);
 	    status = fcntl(sock, F_SETFL, curState);
 #else /* USE_FIONBIO */
 	    curState = 1;
@@ -2551,15 +2559,15 @@ CreateSocket(
 		/*
 		 * Here we are if the connect succeeds. In case of an
 		 * asynchronous connect we have to reset the channel to
-		 * blocking mode.  This appears to happen not very often, but
+		 * blocking mode. This appears to happen not very often, but
 		 * e.g. on a HP 9000/800 under HP-UX B.11.00 we enter this
 		 * stage. [Bug: 4388]
 		 */
 
 		if (async) {
 #ifndef USE_FIONBIO
-		    origState = fcntl(sock, F_GETFL);
-		    curState = origState & ~(O_NONBLOCK);
+		    curState = fcntl(sock, F_GETFL);
+		    CLEAR_BITS(curState, O_NONBLOCK);
 		    status = fcntl(sock, F_SETFL, curState);
 #else /* USE_FIONBIO */
 		    curState = 0;
@@ -2602,6 +2610,9 @@ CreateSocket(
     if (interp != NULL) {
 	Tcl_AppendResult(interp, "couldn't open socket: ",
 		Tcl_PosixError(interp), NULL);
+	if (errorMsg != NULL) {
+	    Tcl_AppendResult(interp, " (", errorMsg, ")", NULL);
+	}
     }
     return NULL;
 }
@@ -2627,17 +2638,80 @@ static int
 CreateSocketAddress(
     struct sockaddr_in *sockaddrPtr,	/* Socket address */
     const char *host,			/* Host. NULL implies INADDR_ANY */
-    int port)				/* Port number */
+    int port,				/* Port number */
+    int willBind,			/* Is this an address to bind() to or
+					 * to connect() to? */
+    const char **errorMsgPtr)		/* Place to store the error message
+					 * detail, if available. */
 {
-    struct hostent *hostent;		/* Host database entry */
+#ifdef HAVE_GETADDRINFO
+    struct addrinfo hints, *resPtr = NULL;
+    char *native;
+    Tcl_DString ds;
+    int result;
+
+    if (host == NULL) {
+	sockaddrPtr->sin_family = AF_INET;
+	sockaddrPtr->sin_addr.s_addr = INADDR_ANY;
+    addPort:
+	sockaddrPtr->sin_port = htons((unsigned short) (port & 0xFFFF));
+	return 1;
+    }
+
+    (void) memset(&hints, 0, sizeof(struct addrinfo));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    if (willBind) {
+	hints.ai_flags |= AI_PASSIVE;
+    }
+
+    /*
+     * Note that getaddrinfo() *is* thread-safe. If a platform doesn't get
+     * that right, it shouldn't use this part of the code.
+     */
+
+    native = Tcl_UtfToExternalDString(NULL, host, -1, &ds);
+    result = getaddrinfo(native, NULL, &hints, &resPtr);
+    Tcl_DStringFree(&ds);
+    if (result == 0) {
+	memcpy(sockaddrPtr, resPtr->ai_addr, sizeof(struct sockaddr_in));
+	freeaddrinfo(resPtr);
+	goto addPort;
+    }
+
+    /*
+     * Ought to use gai_strerror() here...
+     */
+
+    switch (result) {
+    case EAI_NONAME:
+    case EAI_SERVICE:
+#if defined(EAI_ADDRFAMILY) && EAI_ADDRFAMILY != EAI_NONAME
+    case EAI_ADDRFAMILY:
+#endif
+#if defined(EAI_NODATA) && EAI_NODATA != EAI_NONAME
+    case EAI_NODATA:
+#endif
+	*errorMsgPtr = gai_strerror(result);
+	errno = EHOSTUNREACH;
+	return 0;
+    case EAI_SYSTEM:
+	return 0;
+    default:
+	*errorMsgPtr = gai_strerror(result);
+	errno = ENXIO;
+	return 0;
+    }
+#else /* !HAVE_GETADDRINFO */
     struct in_addr addr;		/* For 64/32 bit madness */
 
-    (void) memset((void *) sockaddrPtr, '\0', sizeof(struct sockaddr_in));
+    (void) memset(sockaddrPtr, '\0', sizeof(struct sockaddr_in));
     sockaddrPtr->sin_family = AF_INET;
     sockaddrPtr->sin_port = htons((unsigned short) (port & 0xFFFF));
     if (host == NULL) {
 	addr.s_addr = INADDR_ANY;
     } else {
+	struct hostent *hostent;	/* Host database entry */
 	Tcl_DString ds;
 	const char *native;
 
@@ -2647,15 +2721,16 @@ CreateSocketAddress(
 	    native = Tcl_UtfToExternalDString(NULL, host, -1, &ds);
 	}
 	addr.s_addr = inet_addr(native);		/* INTL: Native. */
+
 	/*
-	 * This is 0xFFFFFFFF to ensure that it compares as a 32bit -1
-	 * on either 32 or 64 bits systems.
+	 * This is 0xFFFFFFFF to ensure that it compares as a 32bit -1 on
+	 * either 32 or 64 bits systems.
 	 */
+
 	if (addr.s_addr == 0xFFFFFFFF) {
-	    hostent = gethostbyname(native);		/* INTL: Native. */
+	    hostent = TclpGetHostByName(native);	/* INTL: Native. */
 	    if (hostent != NULL) {
-		memcpy((void *) &addr,
-			(void *) hostent->h_addr_list[0],
+		memcpy(&addr, hostent->h_addr_list[0],
 			(size_t) hostent->h_length);
 	    } else {
 #ifdef	EHOSTUNREACH
@@ -2668,7 +2743,7 @@ CreateSocketAddress(
 		if (native != NULL) {
 		    Tcl_DStringFree(&ds);
 		}
-		return 0;	/* error */
+		return 0;	/* Error. */
 	    }
 	}
 	if (native != NULL) {
@@ -2679,12 +2754,13 @@ CreateSocketAddress(
     /*
      * NOTE: On 64 bit machines the assignment below is rumored to not do the
      * right thing. Please report errors related to this if you observe
-     * incorrect behavior on 64 bit machines such as DEC Alphas.  Should we
+     * incorrect behavior on 64 bit machines such as DEC Alphas. Should we
      * modify this code to do an explicit memcpy?
      */
 
     sockaddrPtr->sin_addr.s_addr = addr.s_addr;
-    return 1;	/* Success. */
+    return 1;			/* Success. */
+#endif /* HAVE_GETADDRINFO */
 }
 
 /*
@@ -3052,10 +3128,9 @@ Tcl_GetOpenFile(
     ClientData *filePtr)	/* Store pointer to FILE structure here. */
 {
     Tcl_Channel chan;
-    int chanMode;
+    int chanMode, fd;
     const Tcl_ChannelType *chanTypePtr;
     ClientData data;
-    int fd;
     FILE *f;
 
     chan = Tcl_GetChannel(interp, chanID, &chanMode);
@@ -3126,7 +3201,7 @@ Tcl_GetOpenFile(
  *	present on file at the time of the return. This function will not
  *	return until either "timeout" milliseconds have elapsed or at least
  *	one of the conditions given by mask has occurred for file (a return
- *	value of 0 means that a timeout occurred).  No normal events will be
+ *	value of 0 means that a timeout occurred). No normal events will be
  *	serviced during the execution of this function.
  *
  * Side effects:
@@ -3186,9 +3261,9 @@ TclUnixWaitForFile(
 	Tcl_Panic("TclWaitForFile can't handle file id %d", fd);
 	/* must never get here, or readyMasks overrun will occur below */
     }
-    memset((void *) readyMasks, 0, 3*MASK_SIZE*sizeof(fd_mask));
-    index = fd/(NBBY*sizeof(fd_mask));
-    bit = ((fd_mask)1) << (fd%(NBBY*sizeof(fd_mask)));
+    memset(readyMasks, 0, 3*MASK_SIZE*sizeof(fd_mask));
+    index = fd / (NBBY*sizeof(fd_mask));
+    bit = ((fd_mask)1) << (fd % (NBBY*sizeof(fd_mask)));
 
     /*
      * Loop in a mini-event loop of our own, waiting for either the file to
@@ -3239,13 +3314,13 @@ TclUnixWaitForFile(
 		(SELECT_MASK *) maskp[2], timeoutPtr);
 	if (numFound == 1) {
 	    if (readyMasks[index] & bit) {
-		result |= TCL_READABLE;
+		SET_BITS(result, TCL_READABLE);
 	    }
 	    if ((readyMasks+MASK_SIZE)[index] & bit) {
-		result |= TCL_WRITABLE;
+		SET_BITS(result, TCL_WRITABLE);
 	    }
 	    if ((readyMasks+2*(MASK_SIZE))[index] & bit) {
-		result |= TCL_EXCEPTION;
+		SET_BITS(result, TCL_EXCEPTION);
 	    }
 	    result &= mask;
 	    if (result) {
@@ -3265,67 +3340,12 @@ TclUnixWaitForFile(
 
 	Tcl_GetTime(&now);
 	if ((abortTime.sec < now.sec)
-		|| ((abortTime.sec == now.sec)
-		&& (abortTime.usec <= now.usec))) {
+		|| (abortTime.sec==now.sec && abortTime.usec<=now.usec)) {
 	    break;
 	}
     }
     return result;
 }
-
-#ifdef DEPRECATED
-/*
- *----------------------------------------------------------------------
- *
- * FileThreadActionProc --
- *
- *	Insert or remove any thread local refs to this channel.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	None. This is a no-op under unix.
- *
- *----------------------------------------------------------------------
- */
-
-static void
-FileThreadActionProc(
-    ClientData instanceData,
-    int action)
-{
-    ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
-    FileState *fsPtr = (FileState *) instanceData;
-
-    if (action == TCL_CHANNEL_THREAD_INSERT) {
-	fsPtr->nextPtr = tsdPtr->firstFilePtr;
-	tsdPtr->firstFilePtr = fsPtr;
-    } else {
-	FileState **nextPtrPtr;
-	int removed = 0;
-
-	for (nextPtrPtr = &(tsdPtr->firstFilePtr); (*nextPtrPtr) != NULL;
-		nextPtrPtr = &((*nextPtrPtr)->nextPtr)) {
-	    if ((*nextPtrPtr) == fsPtr) {
-		(*nextPtrPtr) = fsPtr->nextPtr;
-		removed = 1;
-		break;
-	    }
-	}
-
-	/*
-	 * This could happen if the channel was created in one thread and then
-	 * moved to another without updating the thread local data in each
-	 * thread.
-	 */
-
-	if (!removed) {
-	    Tcl_Panic("file info ptr not on thread channel list");
-	}
-    }
-}
-#endif /* DEPRECATED */
 
 /*
  *----------------------------------------------------------------------

@@ -76,9 +76,19 @@ vcrtorle_SOURCES = vcrtorle.c
 wasatchrle_SOURCES = wasatchrle.c
 xbmtorle_SOURCES = xbmtorle.c
 
-EXTRA_DIST = README
-
-MAINTAINERCLEANFILES = Makefile.in
+EXTRA_DIST = \
+	README \
+	iristorle.c \
+	pgmtorle.c \
+	ppmtorle.c \
+	rastorle.c \
+	rlatorle.c \
+	rletocgm.c \
+	rletoiris.c \
+	rletoppm.c \
+	rletorast.c \
+	rletotiff.c \
+	tifftorle.c
 
 include $(top_srcdir)/misc/Makefile.defs
 

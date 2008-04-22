@@ -14,12 +14,12 @@ rle_hdr *in_hdr;
 .SH DESCRIPTION
 This routine skips the unread part of an
 .IR RLE (5)
-image.  
+image.
 Each time
 .I rle_getskip
-is called, a scanline in the image described by 
+is called, a scanline in the image described by
 .I in_hdr
-will be skipped.  
+will be skipped.
 .I rle_getskip
 returns the scanline number of the next scanline that would be read by
 .IR rle_getrow (3)

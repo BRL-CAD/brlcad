@@ -14,6 +14,9 @@
 #define PNG_NO_WARNINGS
 #define png_warning(s1,s2) ""
 #define png_chunk_warning(s1,s2) ""
+#define PNG_NO_ERROR_TEXT
+#define png_error(s1,s2) png_err(s1)
+#define png_chunk_error(s1,s2) png_err(s1)
 
 #define PNG_NO_WRITE_BACKGROUND
 #define PNG_NO_WRITE_GAMMA
@@ -47,7 +50,7 @@
 #define PNG_NO_WRITE_OPT_PLTE
 #define PNG_NO_WRITE_FILTER
 #define PNG_NO_WRITE_WEIGHTED_FILTER
-#define PNG_NO_WRITE_INTERLACING_SUPPORTED  /* effective libpng-1.3.0 */
+#define PNG_NO_WRITE_INTERLACING_SUPPORTED
 
 #define PNG_NO_INFO_IMAGE
 #define PNG_NO_USER_MEM

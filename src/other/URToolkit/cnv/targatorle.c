@@ -18,20 +18,20 @@
  * Copyright (c) 1986, John W. Peterson
  */
 
-/* 
+/*
  * targatorle.c - Convert some Truevision TARGA images to RLE.  Not all
  *   variations of the TARGA format are supported (yet).
- * 
+ *
  * Author:	Hann-Bin Chuang
  * 		Department of Chemistry
  *		Boston University
  * Date:	Tue. Aug 25 1987
  *
  * Usage is:
- *   targatorle  [-h header.lis] [-n nchannels] [-o outfile.rle] [infile.tga] 
+ *   targatorle  [-h header.lis] [-n nchannels] [-o outfile.rle] [infile.tga]
  *
  * -h header.lis	write the targa header information to file "header.lis"
- * -n nchannels		Number of channels to write to output RLE file for 
+ * -n nchannels		Number of channels to write to output RLE file for
  *			color images (3 or 4), default is same as source image.
  * -o outfile.rle	instead of stdout, use outfile.rle as output.
  *
@@ -66,7 +66,7 @@
 
   What:		Added run-length compression decoding, tested with known type 10 images.
 		Type 11 *should* also work, but who knows?  No support for any of the
-		colormapped formats yet.  Also changed colormap code to properly read 
+		colormapped formats yet.  Also changed colormap code to properly read
 		and discard the colormap section if the image is in a true-color format.
 */
 
@@ -121,14 +121,14 @@ void init_comp();
 unsigned char getbyte();
 
 int
-main(argc,argv) 
+main(argc,argv)
 int argc;
 char *argv[];
-{ 
+{
     FILE       *outfile;
     FILE       *hdrfile=NULL;
-    char       *infname=NULL, 
-    	       *outfname=NULL, 
+    char       *infname=NULL,
+    	       *outfname=NULL,
     	       *hdrfname=NULL;
     int		oflag=0,
 		nflag=0,
@@ -196,7 +196,7 @@ char *argv[];
 
     /* Check Color Map Type.  Currently, Truevision defines only 0 and 1 */
 
-    if (tga_head.cmap_type==0) { 
+    if (tga_head.cmap_type==0) {
 	if (hflag) {
 	    fprintf (hdrfile, "Color Map Type = 0 \n");
 	}
@@ -338,7 +338,7 @@ char *argv[];
 		     out_hdr.cmd, (unsigned)tga_head.cmap_size);
 	    exit(1);
 	}
-	tga_head.cmap_data = 
+	tga_head.cmap_data =
 		(unsigned char *)calloc((unsigned)tga_head.cmap_length,cmapbytes);
 	fread (tga_head.cmap_data, cmapbytes, (unsigned)tga_head.cmap_length, infile);
 

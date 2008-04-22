@@ -343,6 +343,8 @@ static int		TestsetassocdataCmd(ClientData dummy,
 			    Tcl_Interp *interp, int argc, const char **argv);
 static int		TestsetCmd(ClientData dummy,
 			    Tcl_Interp *interp, int argc, const char **argv);
+static int		Testset2Cmd(ClientData dummy,
+			    Tcl_Interp *interp, int argc, const char **argv);
 static int		TestseterrorcodeCmd(ClientData dummy,
 			    Tcl_Interp *interp, int argc, const char **argv);
 static int		TestsetobjerrorcodeCmd(
@@ -665,6 +667,8 @@ Tcltest_Init(
     Tcl_CreateCommand(interp, "testsetnoerr", TestsetCmd,
 	    (ClientData) 0, NULL);
     Tcl_CreateCommand(interp, "testseterr", TestsetCmd,
+	    (ClientData) TCL_LEAVE_ERR_MSG, NULL);
+    Tcl_CreateCommand(interp, "testset2", Testset2Cmd,
 	    (ClientData) TCL_LEAVE_ERR_MSG, NULL);
     Tcl_CreateCommand(interp, "testseterrorcode", TestseterrorcodeCmd,
 	    (ClientData) 0, NULL);
@@ -1213,9 +1217,25 @@ TestcmdtraceCmd(
 	} else {
 	    return result;
 	}
+    } else if ( strcmp(argv[1], "doubletest" ) == 0 ) {
+	Tcl_Trace t1, t2;
+
+	Tcl_DStringInit(&buffer);
+	t1 = Tcl_CreateTrace(interp, 1,
+		(Tcl_CmdTraceProc *) CmdTraceProc, (ClientData) &buffer);
+	t2 = Tcl_CreateTrace(interp, 50000,
+		(Tcl_CmdTraceProc *) CmdTraceProc, (ClientData) &buffer);
+	result = Tcl_Eval(interp, argv[2]);
+	if (result == TCL_OK) {
+	    Tcl_ResetResult(interp);
+	    Tcl_AppendResult(interp, Tcl_DStringValue(&buffer), NULL);
+	}
+	Tcl_DeleteTrace(interp, t2);
+	Tcl_DeleteTrace(interp, t1);
+	Tcl_DStringFree(&buffer);
     } else {
 	Tcl_AppendResult(interp, "bad option \"", argv[1],
-		"\": must be tracetest, deletetest or resulttest", NULL);
+		"\": must be tracetest, deletetest, doubletest or resulttest", NULL);
 	return TCL_ERROR;
     }
     return TCL_OK;
@@ -4796,6 +4816,38 @@ TestsetCmd(
 	return TCL_ERROR;
     }
 }
+static int
+Testset2Cmd(
+    ClientData data,		/* Additional flags for Get/SetVar2. */
+    register Tcl_Interp *interp,/* Current interpreter. */
+    int argc,			/* Number of arguments. */
+    const char **argv)		/* Argument strings. */
+{
+    int flags = PTR2INT(data);
+    const char *value;
+
+    if (argc == 3) {
+	Tcl_SetResult(interp, "before get", TCL_STATIC);
+	value = Tcl_GetVar2(interp, argv[1], argv[2], flags);
+	if (value == NULL) {
+	    return TCL_ERROR;
+	}
+	Tcl_AppendElement(interp, value);
+	return TCL_OK;
+    } else if (argc == 4) {
+	Tcl_SetResult(interp, "before set", TCL_STATIC);
+	value = Tcl_SetVar2(interp, argv[1], argv[2], argv[3], flags);
+	if (value == NULL) {
+	    return TCL_ERROR;
+	}
+	Tcl_AppendElement(interp, value);
+	return TCL_OK;
+    } else {
+	Tcl_AppendResult(interp, "wrong # args: should be \"",
+		argv[0], " varName elemName ?newValue?\"", NULL);
+	return TCL_ERROR;
+    }
+}
 
 /*
  *----------------------------------------------------------------------
@@ -6805,7 +6857,6 @@ SimpleMatchInDirectory(
     resPtr = Tcl_NewObj();
     Tcl_IncrRefCount(resPtr);
     origPtr = SimpleRedirect(dirPtr);
-    Tcl_IncrRefCount(origPtr);
     res = Tcl_FSMatchInDirectory(interp, resPtr, origPtr, pattern, types);
     if (res == TCL_OK) {
 	int gLength, j;

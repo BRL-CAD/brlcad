@@ -1,7 +1,7 @@
 .\" Copyright (c) 1986, University of Utah
 .\" Template man page.  Taken from wtm's page for getcx3d
 .TH RLEDITHER 1 "Month DD, YYYY" 1
-.UC 4 
+.UC 4
 .SH NAME
 rledither \- Floyd Steinberg dither an image to the given colors.
 .SH SYNOPSIS
@@ -10,7 +10,7 @@ rledither \- Floyd Steinberg dither an image to the given colors.
 [
 .B \-e
 .I edge_factor
-] 
+]
 [
 .B \-l
 .I "nchan length"
@@ -18,10 +18,10 @@ rledither \- Floyd Steinberg dither an image to the given colors.
 .B \-{tf}
 .I mapfile
 [
-.B \-o 
+.B \-o
 .I outfile
-] [ 
-.I infile 
+] [
+.I infile
 ]
 .SH DESCRIPTION
 This program accepts an
@@ -38,11 +38,11 @@ good for most images.
 .TP
 .BI \-l " nchan length"
 Specifies the number of channels in the colormap, and the number of entries
-in each channel.  The default is 3 channels of 256 entries, which is 
+in each channel.  The default is 3 channels of 256 entries, which is
 appropriate for an eight bit color display.
 .TP
 .BI \-{tf} " mapfile"
-The 
+The
 .I mapfile
 must contain at least
 .I "nchan*length"
@@ -52,7 +52,7 @@ to be read as R G B R G B R G B...  The \fB-f\fR flag implies the entries are
 listed as R R R... G G G... B B B...
 .TP
 .BI \-o " outfile"
-If specified, the output will be written to this file.  If 
+If specified, the output will be written to this file.  If
 .I outfile
 is "\-", or if it is not specified, the output will be written to the
 standard output stream.
@@ -72,5 +72,5 @@ input stream.
 Rod G. Bogart, University of Michigan
 .SH BUGS
 It should read colormaps from RLE files, too.  For the moment, edit
-the output from 
+the output from
 .IR "rlehdr -m".

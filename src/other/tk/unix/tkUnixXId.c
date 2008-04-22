@@ -28,7 +28,6 @@
 #define XLIB_ILLEGAL_ACCESS 1
 
 #include "tkUnixInt.h"
-#include "tkPort.h"
 
 /*
  * A structure of the following type is used to hold one or more available

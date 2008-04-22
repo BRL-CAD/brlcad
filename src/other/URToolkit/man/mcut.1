@@ -1,6 +1,6 @@
 .\" Copyright (c) 1986, University of Utah
 .TH MCUT 1 "Nov 8, 1987" 1
-.UC 4 
+.UC 4
 .SH NAME
 mcut \- Quantize colors in an image using the median cut algorithm
 .SH SYNOPSIS
@@ -21,7 +21,7 @@ mcut \- Quantize colors in an image using the median cut algorithm
 reads an RLE file and tries to choose the "best" subset of colors to
 represent the colors present in the original image.  A common use for this
 is to display a 24 bit image on a frame buffer with only eight bits per
-pixel using a 24 bit color map.  
+pixel using a 24 bit color map.
 .I Mcut
 first quantizes intensity values
 from eight bits to five bits, and then chooses the colors from this space.
@@ -46,7 +46,7 @@ that have a small number of colors.
 .I infile
 The input will be read from this file.  If it is a multi-image file,
 each image will be quantized to its own colormap.
-Piped input is not allowed.  
+Piped input is not allowed.
 .TP
 .BI \-o " outfile"
 If specified, output will be written to this file, otherwise it will

@@ -56,22 +56,31 @@ EXTRA_DIST = \
 	README \
 	TODO \
 	Y2KINFO \
+	aclocal.m4 \
+	autogen.sh \
+	config.h.in \
 	configure \
+	configure.ac \
 	contrib \
 	example.c \
-	libpng-1.2.19.txt \
+	libpng-1.2.25.txt \
 	pngbar.jpg \
 	pngbar.png \
 	pngnow.png \
 	pngtest.png \
 	projects \
-	scripts
+	scripts \
+	test-pngtest.sh
 
 .PHONY : test
 test:	pngtest
 	./pngtest ${top_srcdir}/src/other/libpng/pngtest.png
 
-MAINTAINERCLEANFILES = Makefile.in
+if BUILD_ZLIB
+DEPADD = src/other/libz
+endif
+
+DEPENDS = ${DEPADD}
 
 include $(top_srcdir)/misc/Makefile.defs
 

@@ -1,7 +1,7 @@
 #                     E D I T O B J . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2007 United States Government as represented by
+# Copyright (c) 2004-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -19,31 +19,9 @@
 #
 ###
 #
-# Author -
-#	Glen Durfee
-#
-# Source -
-#	The U. S. Army Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#
 # Description -
 #	Generic object editor for MGED
 #
-# Modifications -
-#	(Bob Parker):
-#		- Generalized the code to accommodate multiple instances
-#		  of the user interface.
-#		- added eoformat_string to control format of entry strings
-#		- added eoinc_operation and eodec_operation to control increment
-#		  and decrement of entry values
-#		- when checking for the existence of the editor, instead of complaining,
-#		  raise the editor and return
-#		- when creating for the first time, make the editor appear to the
-#		  lower right of mouse pointer
-#		- modify eoinc and eodec to NOT apply changes, that's what the "Apply"
-#		  button is for.
-#		- display info in local units and assume the same when applying to database
 #
 
 set eoname(V) "Vertex"
@@ -110,18 +88,18 @@ proc editobj { id oname } {
 	for { set num 0 } { $num<$fieldlen } { incr num } {
 	    if { [string first "%f" $field]>-1 } then {
 		button .eo$oname.t.r.f$attr.dec$num -text \- -command \
-			"eodec $oname .eo$oname.t.r.f$attr.e$num"
+		    "eodec $oname .eo$oname.t.r.f$attr.e$num"
 		button .eo$oname.t.r.f$attr.inc$num -text \+ -command \
-			"eoinc $oname .eo$oname.t.r.f$attr.e$num"
+		    "eoinc $oname .eo$oname.t.r.f$attr.e$num"
 		entry .eo$oname.t.r.f$attr.e$num -width 6 -relief sunken
 		pack .eo$oname.t.r.f$attr.dec$num -side left
 		pack .eo$oname.t.r.f$attr.e$num -side left -fill x -expand yes
 		pack .eo$oname.t.r.f$attr.inc$num -side left
 		.eo$oname.t.r.f$attr.e$num insert insert \
-			[format $eoformat_string [expr [lindex \
-			[lindex $vals [expr $i+1]] $num] * $base2local]]
+		    [format $eoformat_string [expr [lindex \
+							[lindex $vals [expr $i+1]] $num] * $base2local]]
 		set eofin$oname [eval concat \[set eofin$oname\] \
-			\\\[expr \\\[.eo$oname.t.r.f$attr.e$num get\\\] * $local2base\\\]]
+				     \\\[expr \\\[.eo$oname.t.r.f$attr.e$num get\\\] * $local2base\\\]]
 		bind .eo$oname.t.r.f$attr.e$num <Key-Return> "eoapply $oname; break"
 	    }
 	}
@@ -129,7 +107,7 @@ proc editobj { id oname } {
 	set eofin$oname [eval concat \[set eofin$oname\] \\\"]
 
 	if { [catch { label .eo$oname.t.l.l$attr -text "$eoname($attr)" \
-		-anchor w }]!=0 } then {
+			  -anchor w }]!=0 } then {
 	    label .eo$oname.t.l.l$attr -text "$attr" -anchor w
 	}
 
@@ -172,8 +150,8 @@ proc eoapply { oname } {
 	    if { [string first "%f" $field]>-1 } {
 		.eo$oname.t.r.f$attr.e$num delete 0 end
 		.eo$oname.t.r.f$attr.e$num insert insert \
-			[format $eoformat_string [expr [lindex \
-			[lindex $vals [expr $i+1]] $num] * $base2local]]
+		    [format $eoformat_string [expr [lindex \
+							[lindex $vals [expr $i+1]] $num] * $base2local]]
 	    }
 	}
     }

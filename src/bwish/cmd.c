@@ -1,7 +1,7 @@
 /*                           C M D . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2007 United States Government as represented by
+ * Copyright (c) 1998-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,27 +24,12 @@
  * The history routines were borrowed from mged/history.c
  * and modified for use in this application.
  *
- *  Author -
- *	   Robert G. Parker
- *
- *  Authors of mged/history.c -
- *	   Glenn Durfee
- *	   Bob Parker
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
 
 #ifdef BWISH
 #  include "tk.h"
@@ -52,7 +37,6 @@
 #  include "tcl.h"
 #endif
 
-#include "machine.h"
 #include "cmd.h"
 #include "libtermio.h"
 
@@ -69,13 +53,13 @@ HIDDEN struct bu_cmdhist histHead;
 HIDDEN struct bu_cmdhist *currHist;
 
 HIDDEN struct bu_cmdtab bwish_cmds[] =
-    {
-	{"exit",		cmd_quit},
-	{"history",		cmd_history},
-	{"hist",		cmd_hist},
-	{"q",			cmd_quit},
-	{(char *)NULL,		CMD_NULL}
-    };
+{
+    {"exit",		cmd_quit},
+    {"history",		cmd_history},
+    {"hist",		cmd_hist},
+    {"q",			cmd_quit},
+    {(char *)NULL,		CMD_NULL}
+};
 
 #ifdef BWISH
 extern Tk_PhotoImageFormat tkImgFmtPIX;
@@ -146,7 +130,7 @@ void
 history_record(struct bu_vls *cmdp, struct timeval *start, struct timeval *finish, int status)
 
 
-     /* Either TCL_OK or TCL_ERROR */
+    /* Either TCL_OK or TCL_ERROR */
 {
     struct bu_cmdhist *new_hist;
 
@@ -204,7 +188,7 @@ timediff(struct timeval *tvdiff, struct timeval *start, struct timeval *finish)
 #if 0
 void
 history_journalize(hptr)
-     struct bu_cmdhist *hptr;
+    struct bu_cmdhist *hptr;
 {
     struct timeval tvdiff;
     struct bu_cmdhist *lasthptr;
@@ -231,12 +215,12 @@ history_journalize(hptr)
  */
 int
 cmd_journal(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int argc;
-     char **argv;
+    ClientData clientData;
+    Tcl_Interp *interp;
+    int argc;
+    char **argv;
 {
-    if(argc < 1 || 3 < argc){
+    if (argc < 1 || 3 < argc) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -256,7 +240,7 @@ cmd_journal(clientData, interp, argc, argv)
     if (argc < 2)
 	return TCL_OK;
 
-    if(argv[1][0] == '-' && argv[1][1] == 'd'){
+    if (argv[1][0] == '-' && argv[1][1] == 'd') {
 	journal_delay = 1;
 	++argv;
 	--argc;
@@ -292,14 +276,14 @@ cmd_journal(clientData, interp, argc, argv)
 
 int
 f_delay(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int argc;
-     char **argv;
+    ClientData clientData;
+    Tcl_Interp *interp;
+    int argc;
+    char **argv;
 {
     struct timeval tv;
 
-    if(argc < 3 || 3 < argc){
+    if (argc < 3 || 3 < argc) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -452,15 +436,15 @@ cmd_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     bu_vls_init(&vls);
 
-    if(argc < 2){
+    if (argc < 2) {
 	Tcl_AppendResult(interp, "hist command\n\troutine for maintaining command history", (char *)0);
 	return TCL_ERROR;
     }
 
-    if(strcmp(argv[1], "add") == 0){
+    if (strcmp(argv[1], "add") == 0) {
 	struct timeval zero;
 
-	if(argc != 3){
+	if (argc != 3) {
 	    Tcl_AppendResult(interp, "hist add command\n\tadd command to history", (char *)0);
 	    return TCL_ERROR;
 	}
@@ -479,8 +463,8 @@ cmd_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_OK;
     }
 
-    if(strcmp(argv[1], "next") == 0){
-	if(argc != 2){
+    if (strcmp(argv[1], "next") == 0) {
+	if (argc != 2) {
 	    Tcl_AppendResult(interp, "hist next\n\treturn next command in history", (char *)0);
 	    return TCL_ERROR;
 	}
@@ -494,8 +478,8 @@ cmd_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_OK;
     }
 
-    if(strcmp(argv[1], "prev") == 0){
-	if(argc != 2){
+    if (strcmp(argv[1], "prev") == 0) {
+	if (argc != 2) {
 	    Tcl_AppendResult(interp, "hist prev\n\treturn previous command in history", (char *)0);
 	    return TCL_ERROR;
 	}
@@ -517,8 +501,8 @@ cmd_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

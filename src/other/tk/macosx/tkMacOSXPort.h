@@ -60,6 +60,9 @@
 #	include <time.h>
 #   endif
 #endif
+#if HAVE_INTTYPES_H
+#    include <inttypes.h>
+#endif
 #include <unistd.h>
 #include <X11/Xlib.h>
 #include <X11/cursorfont.h>

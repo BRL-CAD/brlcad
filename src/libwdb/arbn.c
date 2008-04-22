@@ -1,7 +1,7 @@
 /*                          A R B N . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2007 United States Government as represented by
+ * Copyright (c) 1989-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,16 +25,13 @@
  *	Michael John Muuss
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
-
 #include <stdio.h>
 #include <math.h>
-#include "machine.h"
+#include "bio.h"
+
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
@@ -54,24 +51,24 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 int
 mk_arbn(struct rt_wdb *filep, const char *name, int neqn, plane_t (*eqn))
 {
-	struct rt_arbn_internal	*arbn;
+    struct rt_arbn_internal	*arbn;
 
-	if( neqn <= 0 )  return(-1);
+    if ( neqn <= 0 )  return(-1);
 
-	BU_GETSTRUCT( arbn, rt_arbn_internal );
-	arbn->magic = RT_ARBN_INTERNAL_MAGIC;
-	arbn->neqn = neqn;
-	arbn->eqn = eqn;
+    BU_GETSTRUCT( arbn, rt_arbn_internal );
+    arbn->magic = RT_ARBN_INTERNAL_MAGIC;
+    arbn->neqn = neqn;
+    arbn->eqn = eqn;
 
-	return wdb_export( filep, name, (genptr_t)arbn, ID_ARBN, mk_conv2mm );
+    return wdb_export( filep, name, (genptr_t)arbn, ID_ARBN, mk_conv2mm );
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

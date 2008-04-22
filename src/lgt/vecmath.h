@@ -1,7 +1,7 @@
 /*                       V E C M A T H . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@
  * information.
  */
 /** @file vecmath.h
-	Author:		Gary S. Moss
+    Author:		Gary S. Moss
 */
 #ifndef Abs
 #define Abs( a )		((a) > 0 ? (a) : -(a))
@@ -31,9 +31,9 @@
 				(C)[Y] = (A)[Y]+(B)[Y]; \
 				(C)[Z] = (A)[Z]+(B)[Z]; }
 #define AproxEq( a, b, e )	(Abs( (a)-(b) ) < (e))
-#define AproxEqVec( A, B, e ) ( AproxEq((A)[X],(B)[X],(e)) && \
-				AproxEq((A)[Y],(B)[Y],(e)) && \
-				AproxEq((A)[Z],(B)[Z],(e)) )
+#define AproxEqVec( A, B, e ) ( AproxEq((A)[X], (B)[X], (e)) && \
+				AproxEq((A)[Y], (B)[Y], (e)) && \
+				AproxEq((A)[Z], (B)[Z], (e)) )
 #define CopyVec( A, B )	      { (A)[X] = (B)[X]; \
 				(A)[Y] = (B)[Y]; \
 				(A)[Z] = (B)[Z]; }
@@ -41,7 +41,7 @@
 				(C)[Y] = (A)[Z]*(B)[X]-(A)[X]*(B)[Z]; \
 				(C)[Z] = (A)[X]*(B)[Y]-(A)[Y]*(B)[X]; }
 #define DEGRAD	57.2957795130823208767981548141051703324054724665642
-					/* degrees per radian */
+/* degrees per radian */
 #define DiffVec( A, B )       { (A)[X] -= (B)[X]; \
 				(A)[Y] -= (B)[Y]; \
 				(A)[Z] -= (B)[Z]; }
@@ -61,9 +61,9 @@
 #endif
 #define Expand_Vec_Int( V )	(int)(V)[X], (int)(V)[Y], (int)(V)[Z]
 #define LOG10E	0.43429448190325182765112891891660508229439700580367
-					/* log of e to the base 10 */
-#define Mag( A )	      	sqrt( AbsDotProd(A,A) )
-#define Mag3(a1,a2,a3)		(sqrt(Sqr(a1)+Sqr(a2)+Sqr(a3)))
+/* log of e to the base 10 */
+#define Mag( A )	      	sqrt( AbsDotProd(A, A) )
+#define Mag3(a1, a2, a3)		(sqrt(Sqr(a1)+Sqr(a2)+Sqr(a3)))
 #ifndef Min
 #define Min( a, b )		((a) < (b) ? (a) : (b))
 #define Max( a, b )		((a) > (b) ? (a) : (b))
@@ -79,7 +79,7 @@
 #define NonZeroVec( V )	(!NearZero((V)[X]) || !NearZero((V)[Y])|| !NearZero((V)[Z]))
 #if !defined(PI)
 #define PI	3.14159265358979323846264338327950288419716939937511
-					/* ratio of circumf. to diam. */
+/* ratio of circumf. to diam. */
 #endif
 #define RelDist3d( A, B )	(Sqr((A)[X]-(B)[X])+\
 				 Sqr((A)[Y]-(B)[Y])+\
@@ -95,7 +95,7 @@
 /* Scale vector 'a' to have magnitude 'l'.				*/
 #define V_Length( a, l ) \
 		{	double f, m; \
-		if( (m=Mag(a)) == 0.0 ) \
+		if ( NEAR_ZERO((m=Mag(a)), SMALL_FASTF) ) \
 			(void) fprintf( stderr, "Magnitude is zero!\n" ); \
 		else \
 			{ \
@@ -104,7 +104,7 @@
 			} \
 		}
 
-#define V_Print(a,b,func) \
+#define V_Print(a, b, func) \
 		func( "%s\t<%12.6f,%12.6f,%12.6f>\n", a, (b)[0], (b)[1], (b)[2] )
 #ifndef X
 #define X		0
@@ -116,8 +116,8 @@
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

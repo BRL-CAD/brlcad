@@ -1,7 +1,7 @@
 /*                        R E N D E R . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007 United States Government as represented by
+ * Copyright (c) 2007-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,14 +28,16 @@
 #define _RENDER_H
 
 #include "component.h"
+#include "cut.h"
 #include "depth.h"
 #include "flat.h"
+#include "flos.h"
 #include "grid.h"
 #include "normal.h"
 #include "path.h"
 #include "phong.h"
-#include "plane.h"
 #include "spall.h"
+#include "surfel.h"
 #include "render_internal.h"
 
 #endif
@@ -44,8 +46,8 @@
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

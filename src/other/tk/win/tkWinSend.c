@@ -13,6 +13,7 @@
  * RCS: @(#) $Id$
  */
 
+#include "tkInt.h"
 #include "tkWinSendCom.h"
 
 /*
@@ -66,14 +67,14 @@ static void		CmdDeleteProc(ClientData clientData);
 static void		InterpDeleteProc(ClientData clientData,
 			    Tcl_Interp *interp);
 static void		RevokeObjectRegistration(RegisteredInterp *riPtr);
-static HRESULT		BuildMoniker(CONST char *name, LPMONIKER *pmk);
-static HRESULT		RegisterInterp(CONST char *name,
+static HRESULT		BuildMoniker(const char *name, LPMONIKER *pmk);
+static HRESULT		RegisterInterp(const char *name,
 			    RegisteredInterp *riPtr);
 static int		FindInterpreterObject(Tcl_Interp *interp,
-			    CONST char *name, LPDISPATCH *ppdisp);
+			    const char *name, LPDISPATCH *ppdisp);
 static int		Send(LPDISPATCH pdispInterp, Tcl_Interp *interp,
 			    int async, ClientData clientData, int objc,
-			    Tcl_Obj *CONST objv[]);
+			    Tcl_Obj *const objv[]);
 static Tcl_Obj *	Win32ErrorObj(HRESULT hrError);
 static void		SendTrace(const char *format, ...);
 static Tcl_EventProc	SendEventProc;
@@ -109,12 +110,12 @@ static Tcl_EventProc	SendEventProc;
  *--------------------------------------------------------------
  */
 
-CONST char *
+const char *
 Tk_SetAppName(
     Tk_Window tkwin,		/* Token for any window in the application to
 				 * be named: it is just used to identify the
 				 * application and the display.  */
-    CONST char *name)		/* The name that will be used to refer to the
+    const char *name)		/* The name that will be used to refer to the
 				 * interpreter in later "send" commands. Must
 				 * be globally unique. */
 {
@@ -127,7 +128,7 @@ Tk_SetAppName(
 #else /* TK_SEND_ENABLED_ON_WINDOWS */
 
     ThreadSpecificData *tsdPtr = NULL;
-    TkWindow *winPtr = (TkWindow *)tkwin;
+    TkWindow *winPtr = (TkWindow *) tkwin;
     RegisteredInterp *riPtr = NULL;
     Tcl_Interp *interp;
     HRESULT hr = S_OK;
@@ -160,26 +161,28 @@ Tk_SetAppName(
 
     riPtr = Tcl_GetAssocData(interp, "tkWinSend::ri", NULL);
     if (riPtr == NULL) {
+	LPUNKNOWN *objPtr;
 
-	riPtr = (RegisteredInterp *)ckalloc(sizeof(RegisteredInterp));
+	riPtr = (RegisteredInterp *) ckalloc(sizeof(RegisteredInterp));
 	memset(riPtr, 0, sizeof(RegisteredInterp));
 	riPtr->interp = interp;
 
+	objPtr = &riPtr->obj;
 	hr = TkWinSendCom_CreateInstance(interp, &IID_IUnknown,
-		(void **)&riPtr->obj);
+		(void **) objPtr);
 
-	Tcl_CreateObjCommand(interp, "send", Tk_SendObjCmd,
-		(ClientData)riPtr, CmdDeleteProc);
+	Tcl_CreateObjCommand(interp, "send", Tk_SendObjCmd, riPtr,
+		CmdDeleteProc);
 	if (Tcl_IsSafe(interp)) {
 	    Tcl_HideCommand(interp, "send", "send");
 	}
-	Tcl_SetAssocData(interp, "tkWinSend::ri", NULL, (ClientData)riPtr);
+	Tcl_SetAssocData(interp, "tkWinSend::ri", NULL, riPtr);
     } else {
 	RevokeObjectRegistration(riPtr);
     }
 
     RegisterInterp(name, riPtr);
-    return (CONST char *) riPtr->name;
+    return (const char *) riPtr->name;
 #endif /* TK_SEND_ENABLED_ON_WINDOWS */
 }
 
@@ -312,12 +315,12 @@ Tk_SendObjCmd(
 				 * field is used). */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument strings. */
+    Tcl_Obj *const objv[])	/* Argument strings. */
 {
     enum {
 	SEND_ASYNC, SEND_DISPLAYOF, SEND_LAST
     };
-    static CONST char *sendOptions[] = {
+    static const char *sendOptions[] = {
 	"-async",   "-displayof",   "--",  NULL
     };
     int result = TCL_OK;
@@ -404,7 +407,7 @@ Tk_SendObjCmd(
 static int
 FindInterpreterObject(
     Tcl_Interp *interp,
-    CONST char *name,
+    const char *name,
     LPDISPATCH *ppdisp)
 {
     LPRUNNINGOBJECTTABLE pROT = NULL;
@@ -420,15 +423,15 @@ FindInterpreterObject(
 
 	    hr = BuildMoniker(name, &pmk);
 	    if (SUCCEEDED(hr)) {
-		IUnknown* punkInterp = NULL;
+		IUnknown *pUnkInterp = NULL, **ppUnkInterp = &pUnkInterp;
 
 		hr = pROT->lpVtbl->IsRunning(pROT, pmk);
 		hr = pmk->lpVtbl->BindToObject(pmk, pBindCtx, NULL,
-			&IID_IUnknown, (void**)&punkInterp);
+			&IID_IUnknown, (void **) ppUnkInterp);
 		if (SUCCEEDED(hr)) {
-		    hr = punkInterp->lpVtbl->QueryInterface(punkInterp,
-			    &IID_IDispatch, (void**)ppdisp);
-		    punkInterp->lpVtbl->Release(punkInterp);
+		    hr = pUnkInterp->lpVtbl->QueryInterface(pUnkInterp,
+			    &IID_IDispatch, (void **) ppdisp);
+		    pUnkInterp->lpVtbl->Release(pUnkInterp);
 
 		} else {
 		    Tcl_ResetResult(interp);
@@ -593,7 +596,7 @@ InterpDeleteProc(
 
 static HRESULT
 BuildMoniker(
-    CONST char *name,
+    const char *name,
     LPMONIKER *ppmk)
 {
     LPMONIKER pmkClass = NULL;
@@ -637,14 +640,14 @@ BuildMoniker(
 
 static HRESULT
 RegisterInterp(
-    CONST char *name,
+    const char *name,
     RegisteredInterp *riPtr)
 {
     HRESULT hr = S_OK;
     LPRUNNINGOBJECTTABLE pROT = NULL;
     LPMONIKER pmk = NULL;
     int i, offset;
-    CONST char *actualName = name;
+    const char *actualName = name;
     Tcl_DString dString;
     Tcl_DStringInit(&dString);
 
@@ -719,7 +722,7 @@ Send(
     ClientData clientData,	/* The RegisteredInterp structure for this
 				 * interp. */
     int objc,			/* Number of arguments to be sent. */
-    Tcl_Obj *CONST objv[])	/* The arguments to be sent. */
+    Tcl_Obj *const objv[])	/* The arguments to be sent. */
 {
     VARIANT vCmd, vResult;
     DISPPARAMS dp;
@@ -877,7 +880,7 @@ SetExcepInfo(
     if (pExcepInfo) {
 	Tcl_Obj *opError, *opErrorInfo, *opErrorCode;
 	ICreateErrorInfo *pCEI;
-	IErrorInfo *pEI;
+	IErrorInfo *pEI, **ppEI = &pEI;
 	HRESULT hr;
 
 	opError = Tcl_GetObjResult(interp);
@@ -904,7 +907,7 @@ SetExcepInfo(
 		    pExcepInfo->bstrDescription);
 	    hr = pCEI->lpVtbl->SetSource(pCEI, pExcepInfo->bstrSource);
 	    hr = pCEI->lpVtbl->QueryInterface(pCEI, &IID_IErrorInfo,
-		    (void**) &pEI);
+		    (void**) ppEI);
 	    if (SUCCEEDED(hr)) {
 		SetErrorInfo(0, pEI);
 		pEI->lpVtbl->Release(pEI);

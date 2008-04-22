@@ -7,7 +7,7 @@ if [ $# = 1 ] ; then
     if [ -d $1 ] ; then
 	cd $1
     else
-	/bin/echo $1 is not a directory
+	echo $1 is not a directory
     fi
 fi
 
@@ -24,7 +24,7 @@ eval `awk '/Release/ {print $2}' < README | \
 
 
 # Update configure.ac with the release we found in README
-/bin/echo configure
+echo configure
 if [ ! -f configure.ac.orig ] ; then
     mv configure.ac configure.ac.orig
 fi
@@ -47,27 +47,27 @@ NEW_MAJOR=`grep '^MAJOR_VERSION=' configure.ac | awk -F \= '{print $2}'`
 NEW_MINOR=`grep '^MINOR_VERSION=' configure.ac | awk -F \= '{print $2}'`
 NEW_PATCH=`grep '^PATCH_VERSION=' configure.ac | awk -F \= '{print $2}'`
 
-/bin/echo "checkout configure.ac version $OLD_MAJOR $OLD_MINOR $OLD_PATCH"
-/bin/echo "Version from README           $MAJOR $MINOR $PATCH"
-/bin/echo "New configure version         $NEW_MAJOR $NEW_MINOR $NEW_PATCH"
+echo "checkout configure.ac version $OLD_MAJOR $OLD_MINOR $OLD_PATCH"
+echo "Version from README           $MAJOR $MINOR $PATCH"
+echo "New configure version         $NEW_MAJOR $NEW_MINOR $NEW_PATCH"
 
 if [ X$NEW_PATCH != X$PATCH -o \
       X$NEW_MINOR != X$MINOR -o \
       X$NEW_MAJOR != X$MAJOR ] ; then
-    /bin/echo "did not set new version number properly"
+    echo "did not set new version number properly"
     exit -1
 fi
 
 # get a build environment so we can "make dist"
-/bin/echo autogen
-/bin/echo autogen >> $LOG_FILE 2>&1
-/bin/sh ./autogen.sh >> $LOG_FILE 2>&1
+echo autogen
+echo autogen >> $LOG_FILE 2>&1
+sh ./autogen.sh >> $LOG_FILE 2>&1
 
-/bin/echo configure
+echo configure
 ./configure --enable-everything >> $LOG_FILE 2>&1
 
 # Prepare a source distribution
-/bin/echo making dist
+echo making dist
 make dist >> $LOG_FILE 2>&1
 cd ..
 
@@ -82,7 +82,7 @@ echo $MAJOR $MINOR $PATCH
 tar xzf ../brlcad/brlcad-$MAJOR.$MINOR.$PATCH.tar.gz
 
 # Let the other regression hosts start doing their work
-/bin/echo semaphores
+echo semaphores
 HOSTS="wopr liu amdws2 vast cocoa"
 for i in $HOSTS ; do
     echo $MAJOR.$MINOR.$PATCH > $i

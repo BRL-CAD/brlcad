@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -44,10 +44,10 @@ ON_Workspace::~ON_Workspace()
 void* ON_Workspace::GetMemory( size_t size )
 {
   void* p = NULL;
-  if ( size > 0 ) 
+  if ( size > 0 )
   {
     struct MBLK* pBlk = (struct MBLK*)onmalloc(sizeof(*pBlk));
-    if ( pBlk ) 
+    if ( pBlk )
     {
       pBlk->pMem = p = onmalloc(size);
       pBlk->pNext = m_pMemBlk;
@@ -203,10 +203,10 @@ ON_3dVector* ON_Workspace::GrowVectorMemory( ON_3dVector* p, size_t size )
 }
 
 
-FILE* ON_Workspace::OpenFile( const char* sFileName, const char* sMode ) 
+FILE* ON_Workspace::OpenFile( const char* sFileName, const char* sMode )
 {
   FILE* pFile = ON::OpenFile( sFileName, sMode );
-  if ( pFile ) 
+  if ( pFile )
   {
     struct FBLK* pFileBlk = (struct FBLK*)GetMemory( sizeof(*pFileBlk) );
     pFileBlk->pNext = m_pFileBlk;
@@ -216,10 +216,10 @@ FILE* ON_Workspace::OpenFile( const char* sFileName, const char* sMode )
   return pFile;
 }
 
-FILE* ON_Workspace::OpenFile( const wchar_t* sFileName, const wchar_t* sMode ) 
+FILE* ON_Workspace::OpenFile( const wchar_t* sFileName, const wchar_t* sMode )
 {
   FILE* pFile = ON::OpenFile( sFileName, sMode );
-  if ( pFile ) 
+  if ( pFile )
   {
     struct FBLK* pFileBlk = (struct FBLK*)GetMemory( sizeof(*pFileBlk) );
     pFileBlk->pNext = m_pFileBlk;

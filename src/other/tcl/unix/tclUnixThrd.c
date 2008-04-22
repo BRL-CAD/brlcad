@@ -157,13 +157,17 @@ int
 Tcl_JoinThread(
     Tcl_ThreadId threadId,	/* Id of the thread to wait upon. */
     int *state)			/* Reference to the storage the result of the
-				 * thread we wait upon will be written
-				 * into. */
+				 * thread we wait upon will be written into.
+				 * May be NULL. */
 {
 #ifdef TCL_THREADS
     int result;
+    unsigned long retcode, *retcodePtr = &retcode;
 
-    result = pthread_join((pthread_t) threadId, (void**) state);
+    result = pthread_join((pthread_t) threadId, (void**) retcodePtr);
+    if (state) {
+	*state = (int) retcode;
+    }
     return (result == 0) ? TCL_OK : TCL_ERROR;
 #else
     return TCL_ERROR;
@@ -212,24 +216,61 @@ TclpThreadExit(
  *----------------------------------------------------------------------
  */
 
-int
+size_t
 TclpThreadGetStackSize(void)
 {
     size_t stackSize = 0;
 #if defined(HAVE_PTHREAD_ATTR_SETSTACKSIZE) && defined(TclpPthreadGetAttrs)
     pthread_attr_t threadAttr;	/* This will hold the thread attributes for
 				 * the current thread. */
+#ifdef __GLIBC__ 
+    /*
+     * Fix for [Bug 1815573]
+     *
+     * DESCRIPTION:
+     * On linux TclpPthreadGetAttrs (which is pthread_attr_get_np) may return
+     * bogus values on the initial thread. 
+     *
+     * ASSUMPTIONS:
+     * There seems to be no api to determine if we are on the initial
+     * thread. The simple scheme implemented here assumes:
+     *   1. The first Tcl interp to be created lives in the initial thread. If
+     *      this assumption is not true, the fix is to call
+     *      TclpThreadGetStackSize from the initial thread previous to
+     *      creating any Tcl interpreter. In this case, especially if another
+     *      Tcl interpreter may be created in the initial thread, it might be
+     *      better to enable the second branch in the #if below
+     *   2. There will be no races in creating the first Tcl interp - ie, the
+     *      second Tcl interp will be created only after the first call to
+     *      Tcl_CreateInterp returns.
+     *
+     * These assumptions are satisfied by tclsh. Embedders on linux may want
+     * to check their validity, and possibly adapt the code on failing to meet
+     * them.
+     */
 
-    if (pthread_attr_init(&threadAttr) != 0) {
-	return -1;
+    static int initialized = 0;
+
+    if (!initialized) {
+	initialized = 1;
+	return 0;
+    } else {
+#else
+    {
+#endif
+	if (pthread_attr_init(&threadAttr) != 0) {
+	    return -1;
+	}
+	if (TclpPthreadGetAttrs(pthread_self(), &threadAttr) != 0) {
+	    pthread_attr_destroy(&threadAttr);
+	    return (size_t)-1;
+	}
     }
-    if (TclpPthreadGetAttrs(pthread_self(), &threadAttr) != 0) {
-	pthread_attr_destroy(&threadAttr);
-	return -1;
-    }
+
+    
     if (pthread_attr_getstacksize(&threadAttr, &stackSize) != 0) {
 	pthread_attr_destroy(&threadAttr);
-	return -1;
+	return (size_t)-1;
     }
     pthread_attr_destroy(&threadAttr);
 #elif defined(HAVE_PTHREAD_GET_STACKSIZE_NP)
@@ -247,7 +288,7 @@ TclpThreadGetStackSize(void)
      * want to try looking at the process accounting limits instead.
      */
 #endif
-    return (int) stackSize;
+    return stackSize;
 }
 #endif /* TCL_THREADS */
 

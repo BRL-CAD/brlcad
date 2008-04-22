@@ -1,7 +1,7 @@
 /*                           X D R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,33 +30,15 @@
  *  Uses encoding compatible with routines found in libpkg,
  *  and BSD system routines ntohl(), ntons(), ntohl(), ntohs().
  *
- *
- *  @author
- *	Michael John Muuss
- *
- *  @par Source -
- *	The U. S. Army Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
-
-
-#ifndef lint
-static const char libbu_xdr_RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
 
-#include "machine.h"
 #include "bu.h"
 
 
@@ -133,8 +115,8 @@ typedef unsigned char ext_timeval_t[8+4];	/* storage for on-wire format */
 
 void
 bu_gtimeval( tvp, msgp )
-     struct timeval *tvp;
-     const unsigned char *msgp;
+    struct timeval *tvp;
+    const unsigned char *msgp;
 {
     tvp->tv_sec = (((time_t)BU_GLONG( msgp+0 )) << 32) |
 	BU_GLONG( msgp+4 );
@@ -143,8 +125,8 @@ bu_gtimeval( tvp, msgp )
 
 unsigned char *
 bu_ptimeval( msgp, tvp )
-     const struct timeval *tvp;
-     unsigned char *msgp;
+    const struct timeval *tvp;
+    unsigned char *msgp;
 {
     long upper = (long)(tvp->tv_sec >> 32);
     long lower = (long)(tvp->tv_sec & 0xFFFFFFFFL);
@@ -160,8 +142,8 @@ bu_ptimeval( msgp, tvp )
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

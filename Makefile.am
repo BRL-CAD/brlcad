@@ -1,7 +1,7 @@
 #                     M A K E F I L E . A M
 # BRL-CAD
 #
-# Copyright (c) 2005-2007 United States Government as represented by
+# Copyright (c) 2005-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -33,10 +33,10 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ###
-# $Id$
 
 AUTOMAKE_OPTIONS = 1.6 dist-zip dist-bzip2
 ACLOCAL_AMFLAGS = -I m4
+DISTCHECK_CONFIGURE_FLAGS = --enable-all
 
 required_dirs = \
 	include \
@@ -111,21 +111,19 @@ DISTCLEANFILES = \
 	libtool \
 	so_locations
 
-MAINTAINERCLEANFILES = Makefile.in
-
 
 ##########################
 # packaged distributions #
 ##########################
 
-$(PACKAGE)-$(VERSION).tar.gz: dist
+$(PACKAGE)-$(BRLCAD_VERSION).tar.gz: dist
 
 # Build a Mac OS X Installer .pkg -- make sure the package resources
 # reflect the correct version.  we specifically do not use an autoconf
 # template so that the file may be edited without doing a configure
 # (which would also cause a need to regenerate the template to keep in
 # sync every time it's edited).
-$(PACKAGE_NAME)-$(VERSION).pkg:
+$(PACKAGE_NAME)-$(BRLCAD_VERSION).pkg:
 	@if ! test -f "install.$(host_triplet).log" ; then \
 	  $(ECHO) ; \
 	  $(ECHO) "}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}" ; \
@@ -143,48 +141,48 @@ $(PACKAGE_NAME)-$(VERSION).pkg:
 	@$(ECHO) "         does not contain extra files and comprises a full clean install."
 	@$(ECHO)
 	@if test -f "$(top_srcdir)/misc/macosx/Resources/ReadMe.rtfd/TXT.rtf" ; then \
-	  perl -pi -e "s/BRL-CAD [0-9]*\.[0-9]*\.[0-9]/BRL-CAD $(VERSION)/g" $(top_srcdir)/misc/macosx/Resources/ReadMe.rtfd/TXT.rtf ; \
+	  perl -pi -e "s/BRL-CAD [0-9]*\.[0-9]*\.[0-9]/BRL-CAD $(BRLCAD_VERSION)/g" $(top_srcdir)/misc/macosx/Resources/ReadMe.rtfd/TXT.rtf ; \
 	fi
 	@if test -f "$(top_srcdir)/misc/macosx/Resources/Welcome.rtfd/TXT.rtf" ; then \
-	  perl -pi -e "s/BRL-CAD [0-9]*\.[0-9]*\.[0-9]/BRL-CAD $(VERSION)/g" $(top_srcdir)/misc/macosx/Resources/Welcome.rtfd/TXT.rtf ; \
+	  perl -pi -e "s/BRL-CAD [0-9]*\.[0-9]*\.[0-9]/BRL-CAD $(BRLCAD_VERSION)/g" $(top_srcdir)/misc/macosx/Resources/Welcome.rtfd/TXT.rtf ; \
 	fi
-	@${SH} $(top_srcdir)/sh/make_pkg.sh "$(PACKAGE_NAME)" "$(MAJOR_VERSION)" "$(MINOR_VERSION)" "$(PATCH_VERSION)" "$(DESTDIR)$(prefix)" "$(top_srcdir)/misc/macosx/Resources"
+	@${SH} $(top_srcdir)/sh/make_pkg.sh "$(PACKAGE_NAME)" "$(BRLCAD_VERSION)" "$(DESTDIR)$(prefix)" "$(top_srcdir)/misc/macosx/Resources"
 
 openUp:
 	cd misc/macosx && make openUp
 
-$(PACKAGE_NAME)-$(VERSION).dmg: $(PACKAGE_NAME)-$(VERSION).pkg openUp
+$(PACKAGE_NAME)-$(BRLCAD_VERSION).dmg: $(PACKAGE_NAME)-$(BRLCAD_VERSION).pkg openUp
 	@$(ECHO) "Building a Disk Image for Mac OS X"
 	@$(ECHO)
-	@${SH} $(top_srcdir)/sh/make_dmg.sh "$(PACKAGE_NAME)" "$(MAJOR_VERSION)" "$(MINOR_VERSION)" "$(PATCH_VERSION)" "$(top_srcdir)/misc/macosx/background.png"
+	@${SH} $(top_srcdir)/sh/make_dmg.sh "$(PACKAGE_NAME)" "$(BRLCAD_VERSION)" "$(top_srcdir)/misc/macosx/background.png"
 
 # using home is probably not a great choice..
-$(PACKAGE)-$(VERSION).rpm: $(PACKAGE)-$(VERSION).tar.gz
+$(PACKAGE)-$(BRLCAD_VERSION).rpm: $(PACKAGE)-$(BRLCAD_VERSION).tar.gz
 	@$(ECHO) "Building binary RPM for RedHat Linux"
 	@$(ECHO)
-	@CP@ $(PACKAGE)-$(VERSION).tar.gz ${HOME}/rpm/SOURCES/
+	@CP@ $(PACKAGE)-$(BRLCAD_VERSION).tar.gz ${HOME}/rpm/SOURCES/
 	rpmbuild -ba $(top_builddir)/misc/brlcad.spec
-	@CP@ ${HOME}/rpm/RPMS/i386/$(PACKAGE)-$(VERSION)-*.i386.rpm .
-	@touch $(PACKAGE)-$(VERSION).rpm
-	@$(ECHO) "WARNING: Fake make placeholder created as $(PACKAGE)-$(VERSION).rpm"
+	@CP@ ${HOME}/rpm/RPMS/i386/$(PACKAGE)-$(BRLCAD_VERSION)-*.i386.rpm .
+	@touch $(PACKAGE)-$(BRLCAD_VERSION).rpm
+	@$(ECHO) "WARNING: Fake make placeholder created as $(PACKAGE)-$(BRLCAD_VERSION).rpm"
 	@$(ECHO)
 
 # using home is probably not a great choice..
-$(PACKAGE)-$(VERSION).src.rpm: $(PACKAGE)-$(VERSION).tar.gz
+$(PACKAGE)-$(BRLCAD_VERSION).src.rpm: $(PACKAGE)-$(BRLCAD_VERSION).tar.gz
 	@$(ECHO) "Building source RPM for RedHat Linux"
-	@CP@ $(PACKAGE)-$(VERSION).tar.gz ${HOME}/rpm/SOURCES/
+	@CP@ $(PACKAGE)-$(BRLCAD_VERSION).tar.gz ${HOME}/rpm/SOURCES/
 	rpmbuild -ba $(top_builddir)/misc/brlcad.spec
-	@CP@ ${HOME}/rpm/SRPMS/$(PACKAGE)-$(VERSION)-*.src.rpm .
-	@touch $(PACKAGE)-$(VERSION).src.rpm
-	@$(ECHO) "WARNING: Fake make placeholder created as $(PACKAGE)-$(VERSION).src.rpm"
+	@CP@ ${HOME}/rpm/SRPMS/$(PACKAGE)-$(BRLCAD_VERSION)-*.src.rpm .
+	@touch $(PACKAGE)-$(BRLCAD_VERSION).src.rpm
+	@$(ECHO) "WARNING: Fake make placeholder created as $(PACKAGE)-$(BRLCAD_VERSION).src.rpm"
 	@$(ECHO)
 
-$(PACKAGE)-$(VERSION).deb:
+$(PACKAGE)-$(BRLCAD_VERSION).deb:
 	@$(ECHO) "Building a package for Debian Linux"
 	@$(ECHO)
-	@${SH} $(top_srcdir)/sh/make_deb.sh "$(PACKAGE_NAME)-$(VERSION)"
+	@${SH} $(top_srcdir)/sh/make_deb.sh "$(PACKAGE_NAME)-$(BRLCAD_VERSION)"
 
-$(PACKAGE)-$(VERSION).bin.zip:
+$(PACKAGE)-$(BRLCAD_VERSION).bin.zip:
 	@if ! test -f "install.$(host_triplet).log" ; then \
 	  $(ECHO) ; \
 	  $(ECHO) "}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}" ; \
@@ -198,25 +196,25 @@ $(PACKAGE)-$(VERSION).bin.zip:
 	fi
 	@$(ECHO) "Building a zip-compressed file archive"
 	@$(ECHO)
-	@${SH} $(top_srcdir)/sh/make_zip.sh "$(PACKAGE_NAME)-$(VERSION)"
+	@${SH} $(top_srcdir)/sh/make_zip.sh "$(PACKAGE_NAME)-$(BRLCAD_VERSION)"
 	@$(ECHO)
-	@$(ECHO) "Built $(PACKAGE_NAME)-$(VERSION).bin.zip for $(host_triplet)"
+	@$(ECHO) "Built $(PACKAGE_NAME)-$(BRLCAD_VERSION).bin.zip for $(host_triplet)"
 
- $(PACKAGE)-$(VERSION).bin.tar.gz: $(PACKAGE)-$(VERSION).bin.tar
+ $(PACKAGE)-$(BRLCAD_VERSION).bin.tar.gz: $(PACKAGE)-$(BRLCAD_VERSION).bin.tar
 	@$(ECHO) "Building a gzip-compressed tape archive"
 	@$(ECHO)
-	@${SH} $(top_srcdir)/sh/make_tgz.sh "$(PACKAGE_NAME)-$(VERSION)"
+	@${SH} $(top_srcdir)/sh/make_tgz.sh "$(PACKAGE_NAME)-$(BRLCAD_VERSION)"
 	@$(ECHO)
-	@$(ECHO) "Built $(PACKAGE_NAME)-$(VERSION).bin.tar.gz for $(host_triplet)"
+	@$(ECHO) "Built $(PACKAGE_NAME)-$(BRLCAD_VERSION).bin.tar.gz for $(host_triplet)"
 
- $(PACKAGE)-$(VERSION).bin.tar.bz2: $(PACKAGE)-$(VERSION).bin.tar
+ $(PACKAGE)-$(BRLCAD_VERSION).bin.tar.bz2: $(PACKAGE)-$(BRLCAD_VERSION).bin.tar
 	@$(ECHO) "Building a bzip2-compressed tape archive"
 	@$(ECHO)
-	@${SH} $(top_srcdir)/sh/make_bz2.sh "$(PACKAGE_NAME)-$(VERSION)"
+	@${SH} $(top_srcdir)/sh/make_bz2.sh "$(PACKAGE_NAME)-$(BRLCAD_VERSION)"
 	@$(ECHO)
-	@$(ECHO) "Built $(PACKAGE_NAME)-$(VERSION).bin.tar.bz2 for $(host_triplet)"
+	@$(ECHO) "Built $(PACKAGE_NAME)-$(BRLCAD_VERSION).bin.tar.bz2 for $(host_triplet)"
 
- $(PACKAGE)-$(VERSION).bin.tar:
+ $(PACKAGE)-$(BRLCAD_VERSION).bin.tar:
 	@if ! test -f "install.$(host_triplet).log" ; then \
 	  $(ECHO) ; \
 	  $(ECHO) "}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}" ; \
@@ -230,9 +228,9 @@ $(PACKAGE)-$(VERSION).bin.zip:
 	fi
 	@$(ECHO) "Building an uncompressed tape archive"
 	@$(ECHO)
-	@${SH} $(top_srcdir)/sh/make_tar.sh "$(PACKAGE_NAME)" "$(MAJOR_VERSION)" "$(MINOR_VERSION)" "$(PATCH_VERSION)" "$(DESTDIR)$(prefix)"
+	@${SH} $(top_srcdir)/sh/make_tar.sh "$(PACKAGE_NAME)" "$(BRLCAD_VERSION)" "$(DESTDIR)$(prefix)"
 	@$(ECHO)
-	@$(ECHO) "Built $(PACKAGE_NAME)-$(VERSION).bin.tar for $(host_triplet)"
+	@$(ECHO) "Built $(PACKAGE_NAME)-$(BRLCAD_VERSION).bin.tar for $(host_triplet)"
 
 
 #############
@@ -259,28 +257,28 @@ regress: regression
 
 test: regression
 
-pkg: $(PACKAGE_NAME)-$(VERSION).pkg
+pkg: $(PACKAGE_NAME)-$(BRLCAD_VERSION).pkg
 	@$(ECHO) "Done."
 
-dmg: pkg $(PACKAGE_NAME)-$(VERSION).dmg
+dmg: pkg $(PACKAGE_NAME)-$(BRLCAD_VERSION).dmg
 	@$(ECHO) "Done."
 
-rpm: $(PACKAGE)-$(VERSION).rpm $(PACKAGE)-$(VERSION).src.rpm
+rpm: $(PACKAGE)-$(BRLCAD_VERSION).rpm $(PACKAGE)-$(BRLCAD_VERSION).src.rpm
 	@$(ECHO) "Done."
 
-deb: $(PACKAGE)-$(VERSION).deb
+deb: $(PACKAGE)-$(BRLCAD_VERSION).deb
 	@$(ECHO) "Done."
 
-zip: $(PACKAGE)-$(VERSION).bin.zip
+zip: $(PACKAGE)-$(BRLCAD_VERSION).bin.zip
 	@$(ECHO) "Done."
 
-tgz: $(PACKAGE)-$(VERSION).bin.tar.gz
+tgz: $(PACKAGE)-$(BRLCAD_VERSION).bin.tar.gz
 	@$(ECHO) "Done."
 
-bz2: $(PACKAGE)-$(VERSION).bin.tar.bz2
+bz2: $(PACKAGE)-$(BRLCAD_VERSION).bin.tar.bz2
 	@$(ECHO) "Done."
 
-tar: $(PACKAGE)-$(VERSION).bin.tar
+tar: $(PACKAGE)-$(BRLCAD_VERSION).bin.tar
 	@$(ECHO) "Done."
 
 package:
@@ -298,10 +296,29 @@ package:
 	@$(ECHO) "  make tar	-	Builds a uncompressed tape archive"
 	@$(ECHO)
 
-# delete files that should not be in the distribution
+# make sure all files are in the repository are also in the dist.
+# make sure files that should not be in the distribution in fact are
+# not included.
 dist-hook:
-	rm -f $(distdir)/include/brlcad_config.h
-	rm -rf `find $(distdir) -type d -name CVS`
+	files="`find . -name entries -exec grep 'name=' {} /dev/null \; | sed 's/:[[:space:]]*name=\"\(.*\)\"/\1/g' | sed 's/\/\.svn\/entries/\//g' | grep -v 'brlcad-' | grep -v '\/$$'`" ; \
+	missing=0 ; \
+	for file in $$files ; do \
+		if test ! -e $(distdir)/$$file ; then \
+			missing=1 ; \
+			echo "MISSING FROM DIST: $$file" ; \
+		fi ; \
+	done ; \
+	if test "x$$missing" = "x1" ; then \
+		exit 1 ; \
+	fi
+	files="`find $(distdir)/src/tclscripts \( -name pkgIndex.tcl -o -name tclIndex \)`" ; \
+	empty=`for file in $$files ; do found="\`grep -v '^#' $$file | perl -0777 -pi -e 's/^\n//g'\`" ; if test "x$$found" = "x" ; then echo $$file ; fi ; done | wc | awk '{print $$1}'` ; \
+	if test $$empty -gt 9 ; then \
+		echo "TOO MANY EMPTY PKGINDEX.TCL/TCLINDEX FILES" ; \
+		exit 1 ; \
+	fi
+	find $(distdir) -type f \( -name '.cvsignore' -or -name 'brlcad_config.h' \) -exec rm -f {} \;
+	find $(distdir) -type d \( -name 'CVS' -or -name '.svn' \) -prune -exec rm -rf {} \;
 
 
 ##########################
@@ -324,6 +341,20 @@ install-data-local:
 	    d?????-???*) warn_umask=yes ;; \
 	    d??-??????*) warn_umask=yes ;; \
 	  esac ; \
+	fi ; \
+	files="`find $(top_builddir)/src/tclscripts \( -name pkgIndex.tcl -o -name tclIndex \)`" ; \
+	empty=`for file in $$files ; do found="\`grep -v '^#' $$file | perl -0777 -pi -e 's/^\n//g'\`" ; if test "x$$found" = "x" ; then echo $$file ; fi ; done | wc | awk '{print $$1}'` ; \
+	if test $$empty -gt 9 ; then \
+	    $(ECHO) ; \
+	    $(ECHO) "}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}" ; \
+	    $(ECHO) "  WARNING: Too many of the pkgIndex.tcl and" ; \
+	    $(ECHO) "           tclIndex files are empty." ; \
+	    $(ECHO) ; \
+	    $(ECHO) "  It is likely that the indices are not being" ; \
+	    $(ECHO) "  generated properly which will affect run-time" ; \
+	    $(ECHO) "  functionality. VERIFY THE FILES." ; \
+	    $(ECHO) "{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{" ; \
+	    $(ECHO) ; \
 	fi ; \
 	if test "x$$warn_umask" = "xyes" ; then \
 	    $(ECHO) ; \
@@ -384,6 +415,7 @@ install-data-local:
 		USER="unknown" ; \
 	    fi ; \
 	    $(ECHO) "Installed BRL-CAD Release @BRLCAD_VERSION@ Build @CONFIG_DATE@ by ${USER} to $(DESTDIR)$(prefix) on `date`" >> install.$(host_triplet).log ; \
+	    chmod ugo+rw install.$(host_triplet).log ; \
 	fi
 
 
@@ -419,7 +451,7 @@ all-local:
 	  $(ECHO) ;\
 	  line1="  BRL-CAD @BRLCAD_VERSION@ is now installed into $(prefix)" ;\
 	  line2="  Be sure to add $(prefix)/bin to your PATH" ;\
-	  separator="`$(ECHO) $$line1 | tr '[a-zA-Z0-9.\-/ ]' '*'`" ;\
+	  separator="`$(ECHO) $$line1 | tr '[[:print:]]' '*'`" ;\
 	  $(ECHO) "$${separator}****" ;\
 	  $(ECHO) "$$line1" ;\
 	  $(ECHO) "$$line2" ;\

@@ -36,7 +36,7 @@ struct Blt_ChainLinkStruct {
     ClientData clientData;	/* Pointer to the data object */
 };
 
-typedef int (Blt_ChainCompareProc) _ANSI_ARGS_((Blt_ChainLink **l1PtrPtr, 
+typedef int (Blt_ChainCompareProc) _ANSI_ARGS_((Blt_ChainLink **l1PtrPtr,
 	Blt_ChainLink **l2PtrPtr));
 
 /*

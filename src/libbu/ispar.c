@@ -1,7 +1,7 @@
 /*                         I S P A R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,40 +21,25 @@
 /** @{ */
 /** @file ispar.c
  *
- *  @brief
- *  subroutine to determine if we are multi-threaded
+ * @brief
+ * subroutine to determine if we are multi-threaded
  *
- *  This subroutine is separated off from parallel.c so that
- *  bu_bomb() and others can call it, without causing either
- *  parallel.c or semaphore.c to get referenced and thus causing
- *  the loader to drag in all the parallel processing stuff from
- *  the vendor library.
+ * This subroutine is separated off from parallel.c so that bu_bomb()
+ * and others can call it, without causing either parallel.c or
+ * semaphore.c to get referenced and thus causing the loader to drag
+ * in all the parallel processing stuff from the vendor library.
  *
- *  @author
- *	Michael John Muuss
- *
- *  @par Source -
- *  @n	The U. S. Army Research Laboratory
- *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-
-#ifndef lint
-static const char RCSispar[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 
-#include <stdio.h>
 #include <math.h>
 #include <signal.h>
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
-#include "machine.h"
 #include "bu.h"
 
 
@@ -99,8 +84,8 @@ bu_kill_parallel(void)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

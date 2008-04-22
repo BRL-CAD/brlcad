@@ -64,7 +64,7 @@ is unmapped, the slave is automatically removed by the screen
 by X.
 .PP
 \fBTk_MaintainGeometry\fR deals with these problems for slaves
-whose masters aren't their parents, as well as handling the simpler
+whose masters are not their parents, as well as handling the simpler
 case of slaves whose masters are their parents.
 \fBTk_MaintainGeometry\fR is typically called by a window manager
 once it has decided where a slave should be positioned relative
@@ -97,7 +97,6 @@ If \fBTk_MaintainGeometry\fR is called repeatedly for the same
 \fImaster\fR\-\fIslave\fR pair, the information from the most
 recent call supersedes any older information.
 If \fBTk_UnmaintainGeometry\fR is called for a \fImaster\fR\-\fIslave\fR
-pair that is isn't currently managed, the call has no effect.
-
+pair that is is not currently managed, the call has no effect.
 .SH KEYWORDS
 geometry manager, map, master, parent, position, slave, unmap

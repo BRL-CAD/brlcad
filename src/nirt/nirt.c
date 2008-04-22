@@ -1,7 +1,7 @@
 /*                          N I R T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,45 +19,18 @@
  */
 /** @file nirt.c
  *
- *       This program is an Interactive Ray-Tracer
- *
- *
- *       Written by:  Natalie L. Barker <barker@brl>
- *                    U.S. Army Ballistic Research Laboratory
- *
- *       Date:  Jan 90 -
- *
- *       To compile:  /bin/cc -I/usr/include/brlcad nirt.c
- *                    /usr/brlcad/lib/librt.a -lm -o nirt
- *
- *       To run:  nirt [-options] file.g object[s]
- *
- *       Help menu:  nirt -?
+ * This program is Natalie's Interactive Ray-Tracer
  *
  */
-#ifndef lint
-static const char RCSid[] = "$Header$";
-#endif
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <math.h>
-#if HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-#ifdef HAVE_FCNTL_H
-#  include <fcntl.h>
-#endif
+#include <string.h>
+#include "bio.h"
 
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -73,7 +46,7 @@ extern void	cm_debug();
 extern void	cm_attr();
 
 
-char	usage[] = "\
+const char	usage[] = "\
 Usage: 'nirt [options] model.g objects...'\n\
 Options:\n\
  -b        back out of geometry before first shot\n\
@@ -90,50 +63,62 @@ Options:\n\
 ";
 
 char		*db_name;	/* the name of the BRL-CAD geometry file */
-com_table	ComTab[] =
-		{
-		    { "attr", cm_attr, "select attributes", "<-f(flush) | -p(print) | attribute_name>" },
-		    { "ae", az_el, "set/query azimuth and elevation",
-			"azimuth elevation" },
-		    { "dir", dir_vect, "set/query direction vector",
-			"x-component y-component z-component" },
-		    { "hv", grid_coor, "set/query gridplane coordinates",
-			"horz vert [dist]" },
-		    { "xyz", target_coor, "set/query target coordinates",
-			"X Y Z" },
-		    { "s", shoot, "shoot a ray at the target" },
-		    { "backout", backout, "back out of model" },
-		    { "useair", use_air, "set/query use of air",
-			"<0|1|2|...>" },
-		    { "units", nirt_units, "set/query local units",
-			"<mm|cm|m|in|ft>" },
-		    { "overlap_claims", do_overlap_claims,
-			"set/query overlap rebuilding/retention",
-			"<0|1|2|3>" },
-		    { "fmt", format_output, "set/query output formats",
-			"{rhpfmo} format item item ..." },
-		    { "dest", direct_output, "set/query output destination",
-			"file/pipe" },
-		    { "statefile", state_file,
-			"set/query name of state file", "file" },
-		    { "dump", dump_state,
-			"write current state of NIRT to the state file" },
-		    { "load", load_state,
-			"read new state for NIRT from the state file" },
-		    { "print", print_item, "query an output item",
-			"item" },
-		    { "bot_minpieces", bot_minpieces,
-		      "Get/Set value for rt_bot_minpieces (0 means do not use pieces, default is 32)",
-		      "min_pieces" },
-		    { "libdebug", cm_libdebug,
-			"set/query librt debug flags", "hex_flag_value" },
-		    { "debug", cm_debug,
-			"set/query nirt debug flags", "hex_flag_value" },
-		    { "!", sh_esc, "escape to the shell" },
-		    { "q", quit, "quit" },
-		    { "?", show_menu, "display this help menu" },
-		    { (char *)NULL, NULL, (char *)NULL, (char *)NULL }
-		};
+const com_table	ComTab[] = {
+    { "attr", cm_attr, "select attributes", "<-f(flush) | -p(print) | attribute_name>" },
+    { "ae", az_el, "set/query azimuth and elevation",
+      "azimuth elevation" },
+    { "dir", dir_vect, "set/query direction vector",
+      "x-component y-component z-component" },
+    { "hv", grid_coor, "set/query gridplane coordinates",
+      "horz vert [dist]" },
+    { "xyz", target_coor, "set/query target coordinates",
+      "X Y Z" },
+    { "s", shoot, "shoot a ray at the target" },
+    { "backout", backout, "back out of model" },
+    { "useair", use_air, "set/query use of air",
+      "<0|1|2|...>" },
+    { "units", nirt_units, "set/query local units",
+      "<mm|cm|m|in|ft>" },
+    { "overlap_claims", do_overlap_claims,
+      "set/query overlap rebuilding/retention",
+      "<0|1|2|3>" },
+    { "fmt", format_output, "set/query output formats",
+      "{rhpfmo} format item item ..." },
+    { "dest", direct_output, "set/query output destination",
+      "file/pipe" },
+    { "statefile", state_file,
+      "set/query name of state file", "file" },
+    { "dump", dump_state,
+      "write current state of NIRT to the state file" },
+    { "load", load_state,
+      "read new state for NIRT from the state file" },
+    { "print", print_item, "query an output item",
+      "item" },
+    { "bot_minpieces", bot_minpieces,
+      "Get/Set value for rt_bot_minpieces (0 means do not use pieces, default is 32)",
+      "min_pieces" },
+    { "libdebug", cm_libdebug,
+      "set/query librt debug flags", "hex_flag_value" },
+    { "debug", cm_debug,
+      "set/query nirt debug flags", "hex_flag_value" },
+    { "!", sh_esc, "escape to the shell" },
+    { "q", quit, "quit" },
+    { "?", show_menu, "display this help menu" },
+    { (char *)NULL, NULL, (char *)NULL, (char *)NULL }
+};
+
+
+struct script_rec
+{
+    struct bu_list	l;
+    int			sr_type;	/* Direct or indirect */
+    struct bu_vls	sr_script;	/* Literal or file name */
+};
+#define	SCRIPT_REC_NULL	((struct script_rec *) 0)
+#define SCRIPT_REC_MAGIC	0x73637270
+#define	sr_magic		l.magic
+
+
 int		do_backout = 0;			/* Backout before shooting? */
 int		overlap_claims = OVLP_RESOLVE;	/* Rebuild/retain overlaps? */
 char		*ocname[4];
@@ -153,7 +138,7 @@ attr_table a_tab;
 
 void printusage(void)
 {
-    (void) fputs(usage, stderr);
+    bu_log("%s", usage);
 }
 
 
@@ -162,24 +147,25 @@ attrib_print(void)
 {
     int i;
 
-    for (i=0 ; i < a_tab.attrib_use ; i++) {
+    for (i=0; i < a_tab.attrib_use; i++) {
 	bu_log("\"%s\"\n", a_tab.attrib[i]);
     }
-
 }
 
+
+/**
+ * flush the list of desired attributes
+ */
 void
 attrib_flush(void)
 {
     int i;
-    /* flush the list of desired attributs */
 
     a_tab.attrib_use = 0;
-    for (i=0 ; i < a_tab.attrib_use; i++ )
+    for (i=0; i < a_tab.attrib_use; i++ )
 	bu_free(a_tab.attrib[i], "strdup");
-
-    return;
 }
+
 
 void
 attrib_add(char *a)
@@ -210,45 +196,34 @@ attrib_add(char *a)
 	p = strtok((char *)NULL, "\t ");
 	need_prep = 1;
     }
-
 }
 
 
-struct script_rec
-{
-    struct bu_list	l;
-    int			sr_type;	/* Direct or indirect */
-    struct bu_vls	sr_script;	/* Literal or file name */
-};
-#define	SCRIPT_REC_NULL	((struct script_rec *) 0)
-#define SCRIPT_REC_MAGIC	0x73637270
-#define	sr_magic		l.magic
 
+/**
+ * string is a literal or a file name
+ */
 static void enqueue_script (struct bu_list *qp, int type, char *string)
-
-
-				/* Literal or file name */
-
 {
     struct script_rec	*srp;
 
     BU_CK_LIST_HEAD(qp);
 
     srp = (struct script_rec *)
-	    bu_malloc(sizeof(struct script_rec), "script record");
-    srp -> sr_magic = SCRIPT_REC_MAGIC;
-    srp -> sr_type = type;
-    bu_vls_init(&(srp -> sr_script));
-    bu_vls_strcat(&(srp -> sr_script), string);
+	bu_malloc(sizeof(struct script_rec), "script record");
+    srp->sr_magic = SCRIPT_REC_MAGIC;
+    srp->sr_type = type;
+    bu_vls_init(&(srp->sr_script));
+    bu_vls_strcat(&(srp->sr_script), string);
 
-    BU_LIST_INSERT(qp, &(srp -> l));
+    BU_LIST_INSERT(qp, &(srp->l));
 }
 
+
+/**
+ * text is for the title line
+ */
 static void show_scripts (struct bu_list *sl, char *text)
-
-
-				/* for title line */
-
 {
     int			i;
     struct script_rec	*srp;
@@ -257,26 +232,27 @@ static void show_scripts (struct bu_list *sl, char *text)
 
     i = 0;
     bu_log("- - - - - - - The command-line scripts %s\n");
-    for (BU_LIST_FOR(srp, script_rec, sl))
-    {
+    for (BU_LIST_FOR(srp, script_rec, sl)) {
 	BU_CKMAG(srp, SCRIPT_REC_MAGIC, "script record");
 
 	bu_log("%d. script %s '%s'\n",
-	    ++i,
-	    (srp -> sr_type == READING_STRING) ? "string" :
-	    (srp -> sr_type == READING_FILE) ? "file" : "???",
-	    bu_vls_addr(&(srp -> sr_script)));
+	       ++i,
+	       (srp->sr_type == READING_STRING) ? "string" :
+	       (srp->sr_type == READING_FILE) ? "file" : "???",
+	       bu_vls_addr(&(srp->sr_script)));
     }
     bu_log("- - - - - - - - - - - - - - - - - - - - - - - - - -\n");
 }
+
 
 static void free_script (struct script_rec *srp)
 {
     BU_CKMAG(srp, SCRIPT_REC_MAGIC, "script record");
 
-    bu_vls_free(&(srp -> sr_script));
+    bu_vls_free(&(srp->sr_script));
     bu_free((genptr_t) srp, "script record");
 }
+
 
 static void run_scripts (struct bu_list *sl)
 {
@@ -286,47 +262,48 @@ static void run_scripts (struct bu_list *sl)
 
     if (nirt_debug & DEBUG_SCRIPTS)
 	show_scripts(sl, "before running them");
-    while (BU_LIST_WHILE(srp, script_rec, sl))
-    {
-	BU_LIST_DEQUEUE(&(srp -> l));
+
+    while (BU_LIST_WHILE(srp, script_rec, sl)) {
+	BU_LIST_DEQUEUE(&(srp->l));
 	BU_CKMAG(srp, SCRIPT_REC_MAGIC, "script record");
-	cp = bu_vls_addr(&(srp -> sr_script));
-	if (nirt_debug & DEBUG_SCRIPTS)
+	cp = bu_vls_addr(&(srp->sr_script));
+
+	if (nirt_debug & DEBUG_SCRIPTS) {
 	    bu_log("  Attempting to run %s '%s'\n",
-		(srp -> sr_type == READING_STRING) ? "literal" :
-		(srp -> sr_type == READING_FILE) ? "file" : "???",
-		cp);
-	switch (srp -> sr_type)
-	{
+		   (srp->sr_type == READING_STRING) ? "literal" :
+		   (srp->sr_type == READING_FILE) ? "file" : "???",
+		   cp);
+	}
+
+	switch (srp->sr_type) {
 	    case READING_STRING:
 		interact(READING_STRING, cp);
 		break;
 	    case READING_FILE:
-		if ((fPtr = fopen(cp, "r")) == NULL)
+		if ((fPtr = fopen(cp, "rb")) == NULL) {
 		    bu_log("Cannot open script file '%s'\n", cp);
-		else
-		{
+		} else {
 		    interact(READING_FILE, fPtr);
 		    fclose(fPtr);
 		}
 		break;
 	    default:
-		bu_log("%s:%d: script of type %d.  This shouldn't happen\n",
-		    __FILE__, __LINE__, srp -> sr_type);
-		exit (1);
+		bu_exit (1, "%s:%d: script of type %d.  This shouldn't happen\n", __FILE__, __LINE__, srp->sr_type);
 	}
 	free_script(srp);
     }
+
     if (nirt_debug & DEBUG_SCRIPTS)
 	show_scripts(sl, "after running them");
 }
+
 
 int
 main (int argc, char **argv)
 {
     char                db_title[TITLE_LEN+1];/* title from MGED file      */
     const char		*tmp_str;
-    extern char		local_u_name[];
+    extern char		local_u_name[65];
     extern double	base2local;
     extern double	local2base;
     FILE		*fPtr;
@@ -337,10 +314,8 @@ main (int argc, char **argv)
     struct bu_list	script_list;	/* For -e and -f options */
     struct script_rec	*srp;
     extern outval	ValTab[];
+
     /* FUNCTIONS */
-    int                    if_overlap(register struct application *ap, register struct partition *pp, struct region *reg1, struct region *reg2, struct partition *InputHdp);    /* routine if you overlap         */
-    int             	   if_hit(struct application *ap, struct partition *part_head, struct seg *finished_segs);        /* routine if you hit target      */
-    int             	   if_miss(struct application *ap);       /* routine if you miss target     */
     void                   do_rt_gettrees(struct rt_i *rtip, char **object_name, int nm_objects);
     void		   grid2targ(void);
     void		   targ2grid(void);
@@ -359,14 +334,15 @@ main (int argc, char **argv)
     void		   print_item(char *buffer, com_table *ctp);
     void		   shoot();
 
-#ifdef _WIN32
-#if 1
-    _setmode(_fileno(stdin), _O_BINARY);
-    _setmode(_fileno(stdout), _O_BINARY);
-    _setmode(_fileno(stderr), _O_BINARY);
-#else
-    _fmode = _O_BINARY;
-#endif
+    /* callback functions for overlap, hit, and miss shots */
+    int                    if_overlap(register struct application *ap, register struct partition *pp, struct region *reg1, struct region *reg2, struct partition *InputHdp);
+    int             	   if_hit(struct application *ap, struct partition *part_head, struct seg *finished_segs);
+    int             	   if_miss(struct application *ap);
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+    setmode(fileno(stderr), O_BINARY);
 #endif
 
     BU_LIST_INIT(&script_list);
@@ -380,9 +356,8 @@ main (int argc, char **argv)
     bu_optind = 1;		/* restart */
 
     /* Handle command-line options */
-    while ((Ch = bu_getopt(argc, argv, OPT_STRING)) != EOF)
-	switch (Ch)
-	{
+    while ((Ch = bu_getopt(argc, argv, OPT_STRING)) != EOF) {
+	switch (Ch) {
 	    case 'A':
 		attrib_add(bu_optarg);
 		break;
@@ -395,9 +370,8 @@ main (int argc, char **argv)
 	    case 'E':
 		if (nirt_debug & DEBUG_SCRIPTS)
 		    show_scripts(&script_list, "before erasure");
-		while (BU_LIST_WHILE(srp, script_rec, &script_list))
-		{
-		    BU_LIST_DEQUEUE(&(srp -> l));
+		while (BU_LIST_WHILE(srp, script_rec, &script_list)) {
+		    BU_LIST_DEQUEUE(&(srp->l));
 		    free_script(srp);
 		}
 		if (nirt_debug & DEBUG_SCRIPTS)
@@ -417,7 +391,7 @@ main (int argc, char **argv)
 		mat_flag = 1;
 		break;
 	    case 'O':
-		sscanf(bu_optarg, "%s", ocastring);
+		sscanf(bu_optarg, "%1024s", ocastring);
 		break;
 	    case 's':
 		silent_flag = SILENT_YES;	/* Positively yes */
@@ -432,45 +406,42 @@ main (int argc, char **argv)
 		sscanf( bu_optarg, "%x", (unsigned int *)&nirt_debug );
 		break;
 	    case 'u':
-		if (sscanf(bu_optarg, "%d", &use_of_air) != 1)
-		{
+		if (sscanf(bu_optarg, "%d", &use_of_air) != 1) {
 		    (void) fprintf(stderr,
-			"Illegal use-air specification: '%s'\n", bu_optarg);
+				   "Illegal use-air specification: '%s'\n", bu_optarg);
 		    return 1;
 		}
 		break;
 	    case '?':
 	    default:
 		printusage();
-		exit (Ch != '?');
+		bu_exit (Ch != '?', NULL);
 	}
-    if (argc - bu_optind < 2)
-    {
+    } /* end while getopt */
+
+    if (argc - bu_optind < 2) {
 	printusage();
 	return 1;
     }
-    if (isatty(0))
-    {
+
+    if (isatty(0)) {
 	if (silent_flag != SILENT_YES)
 	    silent_flag = SILENT_NO;
-    }
-    else	/* stdin is not a TTY */
-    {
+    } else {
+	/* stdin is not a TTY */
 	if (silent_flag != SILENT_NO)
 	    silent_flag = SILENT_YES;
     }
     if (silent_flag != SILENT_YES)
 	(void) fputs(brlcad_ident("Natalie's Interactive Ray Tracer"), stdout);
 
-    if (use_of_air && (use_of_air != 1))
-    {
+    if (use_of_air && (use_of_air != 1)) {
 	fprintf(stderr,
-	    "Warning: useair=%d specified, will set to 1\n", use_of_air);
+		"Warning: useair=%d specified, will set to 1\n", use_of_air);
 	use_of_air = 1;
     }
 
-    switch (*ocastring)
-    {
+    switch (*ocastring) {
 	case '\0':
 	    overlap_claims = OVLP_RESOLVE;
 	    break;
@@ -478,12 +449,11 @@ main (int argc, char **argv)
 	case '1':
 	case '2':
 	case '3':
-	    if (ocastring[1] == '\0')
+	    if (ocastring[1] == '\0') {
 		sscanf(ocastring, "%d", &overlap_claims);
-	    else
-	    {
-		(void) fprintf(stderr,
-		    "Illegal overlap_claims specification: '%s'\n", ocastring);
+	    } else {
+		fprintf(stderr,
+			"Illegal overlap_claims specification: '%s'\n", ocastring);
 		return 1;
 	    }
 	    break;
@@ -496,37 +466,35 @@ main (int argc, char **argv)
 		overlap_claims = OVLP_REBUILD_ALL;
 	    else if (strcmp(ocastring, "retain") == 0)
 		overlap_claims = OVLP_RETAIN;
-	    else
-	    {
-		(void) fprintf(stderr,
-		    "Illegal overlap_claims specification: '%s'\n", ocastring);
+	    else {
+		fprintf(stderr,
+			"Illegal overlap_claims specification: '%s'\n", ocastring);
 		return 1;
 	    }
 	    break;
 	default:
-	    (void) fprintf(stderr,
-		"Illegal overlap_claims specification: '%s'\n", ocastring);
+	    fprintf(stderr,
+		    "Illegal overlap_claims specification: '%s'\n", ocastring);
 	    return 1;
     }
 
     db_name = argv[bu_optind];
 
     /* build directory for target object */
-    if (silent_flag != SILENT_YES)
-    {
+    if (silent_flag != SILENT_YES) {
 	printf("Database file:  '%s'\n", db_name);
 	printf("Building the directory...");
     }
-    if ((rtip = rt_dirbuild( db_name , db_title, TITLE_LEN )) == RTI_NULL)
-    {
+    if ((rtip = rt_dirbuild( db_name, db_title, TITLE_LEN )) == RTI_NULL) {
 	fflush(stdout);
 	fprintf(stderr, "Could not load file %s\n", db_name);
 	return 1;
     }
+
     rti_tab[use_of_air] = rtip;
     rti_tab[1 - use_of_air] = RTI_NULL;
-    rtip -> useair = use_of_air;
-    rtip -> rti_save_overlaps = (overlap_claims > 0);
+    rtip->useair = use_of_air;
+    rtip->rti_save_overlaps = (overlap_claims > 0);
 
     ++bu_optind;
     do_rt_gettrees (rtip, argv + bu_optind, argc - bu_optind);
@@ -564,31 +532,29 @@ main (int argc, char **argv)
     default_ospec();
 
     /* initialize NIRT's local units */
-    base2local = rtip -> rti_dbip -> dbi_base2local;
-    local2base = rtip -> rti_dbip -> dbi_local2base;
+    base2local = rtip->rti_dbip->dbi_base2local;
+    local2base = rtip->rti_dbip->dbi_local2base;
     tmp_str = bu_units_string(local2base);
-    if( tmp_str ) {
-	    strncpy(local_u_name, bu_units_string(local2base), 64);
+    if ( tmp_str ) {
+	bu_strlcpy(local_u_name, bu_units_string(local2base), sizeof(local_u_name));
     } else {
-	    strcpy( local_u_name, "Unknown units" );
+	strcpy( local_u_name, "Unknown units" );
     }
 
-    if (silent_flag != SILENT_YES)
-    {
+    if (silent_flag != SILENT_YES) {
 	printf("Database title: '%s'\n", db_title);
 	printf("Database units: '%s'\n", local_u_name);
 	printf("model_min = (%g, %g, %g)    model_max = (%g, %g, %g)\n",
-	    rtip -> mdl_min[X] * base2local,
-	    rtip -> mdl_min[Y] * base2local,
-	    rtip -> mdl_min[Z] * base2local,
-	    rtip -> mdl_max[X] * base2local,
-	    rtip -> mdl_max[Y] * base2local,
-	    rtip -> mdl_max[Z] * base2local);
+	       rtip->mdl_min[X] * base2local,
+	       rtip->mdl_min[Y] * base2local,
+	       rtip->mdl_min[Z] * base2local,
+	       rtip->mdl_max[X] * base2local,
+	       rtip->mdl_max[Y] * base2local,
+	       rtip->mdl_max[Z] * base2local);
     }
 
     /* Run the run-time configuration file, if it exists */
-    if ((fPtr = fopenrc()) != NULL)
-    {
+    if ((fPtr = fopenrc()) != NULL) {
 	interact(READING_FILE, fPtr);
 	fclose(fPtr);
     }
@@ -607,67 +573,60 @@ main (int argc, char **argv)
     return 0;
 }
 
+
 void
 do_rt_gettrees (struct rt_i *rtip, char **object_name, int nm_objects)
 {
     static char	**prev_names = 0;
     static int	prev_nm = 0;
+    int i;
 
-    if (object_name == NULL)
-    {
+    if (object_name == NULL) {
 	if ((object_name = prev_names) == 0)
-	{
-	    bu_log("%s:%d: This shouldn't happen\n", __FILE__, __LINE__);
-	    exit (1);
-	}
+	    bu_exit (1, "%s:%d: This shouldn't happen\n", __FILE__, __LINE__);
 	nm_objects = prev_nm;
     }
-    if (prev_names == 0)
-    {
+
+    if (prev_names == 0) {
 	prev_names = object_name;
 	prev_nm = nm_objects;
     }
 
     if (silent_flag != SILENT_YES) {
-	    printf("\nGet trees...");
-	    fflush(stdout);
-    }
-
-    if (rt_gettrees_and_attrs(rtip, (const char **)a_tab.attrib, nm_objects, (const char **) object_name, 1))
-    {
+	printf("\nGet trees...");
 	fflush(stdout);
-	fprintf(stderr, "rt_gettrees() failed\n");
-	exit (1);
     }
 
-    if( need_prep ) {
-	    if (silent_flag != SILENT_YES) {
-		    printf("\nPrepping the geometry...");
-		    fflush(stdout);
-	    }
-	    rt_prep( rtip );
-	    need_prep = 0;
+    i = rt_gettrees_and_attrs(rtip, (const char **)a_tab.attrib, nm_objects, (const char **) object_name, 1);
+    if (i) {
+	fflush(stdout);
+	bu_exit (1, "rt_gettrees() failed\n");
     }
 
-    if (silent_flag != SILENT_YES)
-    {
-	int	i;
+    if ( need_prep ) {
+	if (silent_flag != SILENT_YES) {
+	    printf("\nPrepping the geometry...");
+	    fflush(stdout);
+	}
+	rt_prep( rtip );
+	need_prep = 0;
+    }
 
+    if (silent_flag != SILENT_YES) {
 	printf("\n%s", (nm_objects == 1) ? "Object" : "Objects");
 	for (i = 0; i < nm_objects; ++i)
 	    printf(" '%s'", object_name[i]);
 	printf(" processed\n");
     }
-
-
 }
+
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

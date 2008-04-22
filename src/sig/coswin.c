@@ -1,7 +1,7 @@
 /*                        C O S W I N . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,9 +24,11 @@
  */
 
 #include "common.h"
+
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
-#include "machine.h"
+
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
@@ -34,55 +36,6 @@
 static int	_init_length = 0;	/* Internal: last initialized size */
 static int	maxinitlen = 0;
 static double	*coswintab = NULL;
-
-int init_coswintab( int size );
-
-void
-coswin(double *data, int length, double percent)
-{
-	int	num, i;
-
-	num = percent * length/2 + 0.5;
-
-	/* Check for window table initialization */
-	if( num != _init_length ) {
-		if( init_coswintab( num ) == 0 ) {
-			/* Can't do requested size */
-			return;
-		}
-	}
-
-	/* Do window - could use pointers here... */
-	for( i = 0; i < num; i++ ) {
-		data[i] *= coswintab[i];
-		data[length-i-1] *= coswintab[i];
-	}
-}
-
-/*
- * Complex Data Version.
- */
-void
-ccoswin(bn_complex_t *data, int length, double percent)
-{
-	int	num, i;
-
-	num = percent * length/2 + 0.5;
-
-	/* Check for window table initialization */
-	if( num != _init_length ) {
-		if( init_coswintab( num ) == 0 ) {
-			/* Can't do requested size */
-			return;
-		}
-	}
-
-	/* Do window - could use pointers here... */
-	for( i = 0; i < num; i++ ) {
-		data[i].re *= coswintab[i];
-		data[length-i-1].re *= coswintab[i];
-	}
-}
 
 /*
  *		I N I T _ C O S W I N T A B
@@ -93,44 +46,93 @@ ccoswin(bn_complex_t *data, int length, double percent)
 int
 init_coswintab(int size)
 {
-	int	i;
-	double	theta;
+    int	i;
+    double	theta;
 
-	if( size > maxinitlen ) {
-		if( coswintab != NULL ) {
-			free( coswintab );
-			maxinitlen = 0;
-		}
-		if( (coswintab = (double *)malloc(size*sizeof(double))) == NULL ) {
-			fprintf( stderr, "coswin: couldn't malloc space for %d elements\n", size );
-			return( 0 );
-		}
-		maxinitlen = size;
+    if ( size > maxinitlen ) {
+	if ( coswintab != NULL ) {
+	    bu_free( coswintab, "coswintab" );
+	    maxinitlen = 0;
 	}
+	coswintab = (double *)bu_malloc(size*sizeof(double), "coswintab");
+	maxinitlen = size;
+    }
 
-	/* Check for odd lengths? XXX */
+    /* Check for odd lengths? XXX */
 
-	/*
-	 * Size is okay.  Set up tables.
-	 */
-	for( i = 0; i < size; i++ ) {
-		theta = M_PI * i / (double)(size);
-		coswintab[ i ] = 0.5 - 0.5 * cos( theta );
+    /*
+     * Size is okay.  Set up tables.
+     */
+    for ( i = 0; i < size; i++ ) {
+	theta = M_PI * i / (double)(size);
+	coswintab[ i ] = 0.5 - 0.5 * cos( theta );
+    }
+
+    /*
+     * Mark size and return success.
+     */
+    _init_length = size;
+    return( 1 );
+}
+
+
+void
+coswin(double *data, int length, double percent)
+{
+    int	num, i;
+
+    num = percent * length/2 + 0.5;
+
+    /* Check for window table initialization */
+    if ( num != _init_length ) {
+	if ( init_coswintab( num ) == 0 ) {
+	    /* Can't do requested size */
+	    return;
 	}
+    }
 
-	/*
-	 * Mark size and return success.
-	 */
-	_init_length = size;
-	return( 1 );
+    /* Do window - could use pointers here... */
+    for ( i = 0; i < num; i++ ) {
+	data[i] *= coswintab[i];
+	data[length-i-1] *= coswintab[i];
+    }
+
+    bu_free(coswintab, "coswintab");
+}
+
+/*
+ * Complex Data Version.
+ */
+void
+ccoswin(bn_complex_t *data, int length, double percent)
+{
+    int	num, i;
+
+    num = percent * length/2 + 0.5;
+
+    /* Check for window table initialization */
+    if ( num != _init_length ) {
+	if ( init_coswintab( num ) == 0 ) {
+	    /* Can't do requested size */
+	    return;
+	}
+    }
+
+    /* Do window - could use pointers here... */
+    for ( i = 0; i < num; i++ ) {
+	data[i].re *= coswintab[i];
+	data[length-i-1].re *= coswintab[i];
+    }
+
+    bu_free(coswintab, "coswintab");
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

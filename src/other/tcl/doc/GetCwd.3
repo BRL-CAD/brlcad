@@ -41,7 +41,7 @@ the same functionality as the Tcl \fBpwd\fR command.
 .PP
 \fBTcl_GetCwd\fR returns a pointer to a string specifying the current
 directory, or NULL if the current directory could not be determined.
-If NULL is returned, an error message is left in the interp's result.
+If NULL is returned, an error message is left in the \fIinterp\fR's result.
 Storage for the result string is allocated in bufferPtr; the caller
 must call \fBTcl_DStringFree()\fR when the result is no longer needed.
 The format of the path is UTF\-8.

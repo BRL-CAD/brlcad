@@ -75,7 +75,8 @@ scripties = \
 	solid.tcl \
 	text.tcl \
 	titles.tcl \
-	tree.tcl
+	tree.tcl \
+	xclone.tcl
 
 dist_tcl_DATA = \
 	l_i0_v0_s0.gif \
@@ -131,11 +132,9 @@ BUILT_SOURCES = \
 
 EXTRA_DIST = \
 	$(dist_tcl_DATA) \
-	$(scripties)
+	$(tcl_SCRIPTS)
 
 # CLEANFILES = $(BUILT_SOURCES)
-
-MAINTAINERCLEANFILES = Makefile.in
 
 pkgIndex.tcl:
 	TCL_LIBRARY=$(top_srcdir)/src/other/tcl/library \

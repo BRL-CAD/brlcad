@@ -69,7 +69,7 @@ displays.
 If the application currently has the input focus on \fIwindow\fR's
 display, this command resets the input focus for \fIwindow\fR's display
 to \fIwindow\fR and returns an empty string.
-If the application doesn't currently have the  input focus on
+If the application does not currently have the input focus on
 \fIwindow\fR's display, \fIwindow\fR will be remembered as the focus
 for its top-level;  the next time the focus arrives at the top-level,
 Tk will redirect it to \fIwindow\fR.
@@ -77,12 +77,12 @@ If \fIwindow\fR is an empty string then the command does nothing.
 .TP
 \fBfocus \-displayof\fR \fIwindow\fR
 Returns the name of the focus window on the display containing \fIwindow\fR.
-If the focus window for \fIwindow\fR's display isn't in this
+If the focus window for \fIwindow\fR's display is not in this
 application, the return value is an empty string.
 .TP
 \fBfocus \-force \fIwindow\fR
 Sets the focus of \fIwindow\fR's display to \fIwindow\fR, even if
-the application doesn't currently have the input focus for the display.
+the application does not currently have the input focus for the display.
 This command should be used sparingly, if at all.
 In normal usage, an application should not claim the focus for
 itself;  instead, it should wait for the window manager to give it
@@ -99,7 +99,7 @@ will receive the input focus the next time the window manager gives
 the focus to the top-level.
 .SH "QUIRKS"
 .PP
-When an internal window receives the input focus, Tk doesn't actually
+When an internal window receives the input focus, Tk does not actually
 set the X focus to that window;  as far as X is concerned, the focus
 will stay on the top-level window containing the window with the focus.
 However, Tk generates FocusIn and FocusOut events just as if the X
@@ -112,11 +112,11 @@ To make a window that only participates in the focus traversal ring
 when a variable is set, add the following bindings to the widgets
 \fIbefore\fR and \fIafter\fR it in that focus ring:
 .CS
-button .before -text "Before"
-button .middle -text "Middle"
-button .after  -text "After"
-checkbutton .flag -variable traverseToMiddle -takefocus 0
-pack .flag -side left
+button .before \-text "Before"
+button .middle \-text "Middle"
+button .after  \-text "After"
+checkbutton .flag \-variable traverseToMiddle \-takefocus 0
+pack .flag \-side left
 pack .before .middle .after
 bind .before <Tab> {
    if {!$traverseToMiddle} {
@@ -124,7 +124,7 @@ bind .before <Tab> {
       break
    }
 }
-bind .after <Shift-Tab> {
+bind .after <Shift\-Tab> {
    if {!$traverseToMiddle} {
       \fBfocus\fR .before
       break

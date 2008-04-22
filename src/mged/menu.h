@@ -1,7 +1,7 @@
 /*                          M E N U . H
  * BRL-CAD
  *
- * Copyright (c) 2007 United States Government as represented by
+ * Copyright (c) 2007-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,24 +24,14 @@
  * to an array of menu items.  The first ([0]) menu item is the title
  * for the menu, and the remaining items are individual menu entries.
  *
- *  Authors -
- *	Bob Suckling
- *	Mike Muuss
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
- * $Header$
  */
 #ifndef SEEN_MENU_H
 #define SEEN_MENU_H
 
 struct	menu_item  {
-	char	*menu_string;
-	void	(*menu_func)();
-	int	menu_arg;
+    char	*menu_string;
+    void	(*menu_func)();
+    int	menu_arg;
 };
 
 
@@ -64,8 +54,8 @@ extern int cur_menu, cur_item, menuflag;
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

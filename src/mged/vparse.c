@@ -1,7 +1,7 @@
 /*                        V P A R S E . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2007 United States Government as represented by
+ * Copyright (c) 1998-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -23,22 +23,12 @@
  *	Routines for interfacing with the LIBBU struct parsing
  *	utilities.
  *
- * Source -
- *      SLAD CAD Team
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005
- *
- * Authors -
- *      Robert G. Parker
- *	Lee A. Butler
- *      Glenn Durfee
  */
 
 #include "common.h"
-
+#include "bio.h"
 
 #include <stdio.h>
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -53,51 +43,51 @@ mged_vls_struct_parse(struct bu_vls		*vls,
 		      int			argc,
 		      char			*argv[])
 {
-	if (argc < 2) {
-		/* Bare set command, print out current settings */
-		bu_vls_struct_print2(vls, title, how_to_parse, structp);
-	} else if (argc == 2) {
-		bu_vls_struct_item_named(vls, how_to_parse, argv[1], structp, ' ');
-	} else {
-		struct bu_vls tmp_vls;
+    if (argc < 2) {
+	/* Bare set command, print out current settings */
+	bu_vls_struct_print2(vls, title, how_to_parse, structp);
+    } else if (argc == 2) {
+	bu_vls_struct_item_named(vls, how_to_parse, argv[1], structp, ' ');
+    } else {
+	struct bu_vls tmp_vls;
 
-		bu_vls_init(&tmp_vls);
-		bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
-		bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);
-		bu_vls_putc(&tmp_vls, '\"');
-		bu_struct_parse(&tmp_vls, how_to_parse, structp);
-		bu_vls_free(&tmp_vls);
-	}
+	bu_vls_init(&tmp_vls);
+	bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
+	bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);
+	bu_vls_putc(&tmp_vls, '\"');
+	bu_struct_parse(&tmp_vls, how_to_parse, structp);
+	bu_vls_free(&tmp_vls);
+    }
 }
 
 void
 mged_vls_struct_parse_old(
-	struct bu_vls *vls,
-	const char *title,
-	struct bu_structparse *how_to_parse,
-	char *structp,
-	int argc,
-	char *argv[])
+    struct bu_vls *vls,
+    const char *title,
+    struct bu_structparse *how_to_parse,
+    char *structp,
+    int argc,
+    char *argv[])
 {
-	if (argc < 2) {
-		/* Bare set command, print out current settings */
-		bu_vls_struct_print2(vls, title, how_to_parse, structp);
-	} else if (argc == 2) {
-		struct bu_vls tmp_vls;
+    if (argc < 2) {
+	/* Bare set command, print out current settings */
+	bu_vls_struct_print2(vls, title, how_to_parse, structp);
+    } else if (argc == 2) {
+	struct bu_vls tmp_vls;
 
-		bu_vls_init(&tmp_vls);
-		bu_vls_strcpy(&tmp_vls, argv[1]);
-		bu_struct_parse(&tmp_vls, how_to_parse, structp);
-		bu_vls_free(&tmp_vls);
-	}
+	bu_vls_init(&tmp_vls);
+	bu_vls_strcpy(&tmp_vls, argv[1]);
+	bu_struct_parse(&tmp_vls, how_to_parse, structp);
+	bu_vls_free(&tmp_vls);
+    }
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -1,7 +1,7 @@
 /*                     D B 5 _ T Y P E S . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2007 United States Government as represented by
+ * Copyright (c) 2000-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,19 +27,14 @@
  *	Paul J. Tanenbaum
  *
  */
-#ifndef lint
-static const char RCSell[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
-
 #include <stdio.h>
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 #include <math.h>
-#include "machine.h"
+#include "bio.h"
+
 #include "bu.h"
 #include "vmath.h"
 #include "db5.h"
@@ -225,8 +220,8 @@ db5_type_tag_from_major( char **tag, const int major ) {
     register struct db5_type	*tp;
 
     for (tp = (struct db5_type *) type_table;
-	    tp -> major_code != DB5_MAJORTYPE_RESERVED;
-	    ++tp) {
+	 tp -> major_code != DB5_MAJORTYPE_RESERVED;
+	 ++tp) {
 	if ((tp -> major_code == major) && !(tp -> heed_minor)) {
 	    *tag = tp -> tag;
 	    return 0;
@@ -240,8 +235,8 @@ db5_type_descrip_from_major( char **descrip, const int major ) {
     register struct db5_type	*tp;
 
     for (tp = (struct db5_type *) type_table;
-	    tp -> major_code != DB5_MAJORTYPE_RESERVED;
-	    ++tp) {
+	 tp -> major_code != DB5_MAJORTYPE_RESERVED;
+	 ++tp) {
 	if ((tp -> major_code == major) && !(tp -> heed_minor)) {
 	    *descrip = tp -> description;
 	    return 0;
@@ -256,8 +251,8 @@ db5_type_tag_from_codes( char **tag, const int major, const int minor ) {
     register int		found_minors = 0;
 
     for (tp = (struct db5_type *) type_table;
-	    tp -> major_code != DB5_MAJORTYPE_RESERVED;
-	    ++tp) {
+	 tp -> major_code != DB5_MAJORTYPE_RESERVED;
+	 ++tp) {
 	if (tp -> major_code == major) {
 	    if (tp -> heed_minor)
 		found_minors = 1;
@@ -272,13 +267,13 @@ db5_type_tag_from_codes( char **tag, const int major, const int minor ) {
 
 int
 db5_type_descrip_from_codes( char **descrip, const int major,
-			    const int minor ) {
+			     const int minor ) {
     register struct db5_type	*tp;
     register int		found_minors = 0;
 
     for (tp = (struct db5_type *) type_table;
-	    tp -> major_code != DB5_MAJORTYPE_RESERVED;
-	    ++tp) {
+	 tp -> major_code != DB5_MAJORTYPE_RESERVED;
+	 ++tp) {
 	if (tp -> major_code == major) {
 	    if (tp -> heed_minor)
 		found_minors = 1;
@@ -297,8 +292,8 @@ db5_type_codes_from_tag( int *major, int *minor, const char *tag ) {
 
 
     for (tp = (struct db5_type *) type_table;
-	    tp -> major_code != DB5_MAJORTYPE_RESERVED;
-	    ++tp) {
+	 tp -> major_code != DB5_MAJORTYPE_RESERVED;
+	 ++tp) {
 	if ((*(tp -> tag) == *tag) && (strcmp(tp -> tag, tag) == 0)) {
 	    *major = tp -> major_code;
 	    *minor = tp -> minor_code;
@@ -314,10 +309,10 @@ db5_type_codes_from_descrip( int *major, int *minor, const char *descrip ) {
 
 
     for (tp = (struct db5_type *) type_table;
-	    tp -> major_code != DB5_MAJORTYPE_RESERVED;
-	    ++tp) {
+	 tp -> major_code != DB5_MAJORTYPE_RESERVED;
+	 ++tp) {
 	if ((*(tp -> description) == *descrip)
-	 && (strcmp(tp -> description, descrip) == 0)) {
+	    && (strcmp(tp -> description, descrip) == 0)) {
 	    *major = tp -> major_code;
 	    *minor = tp -> minor_code;
 	    return 0;
@@ -377,8 +372,8 @@ db5_type_sizeof_n_binu( const int minor ) {
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

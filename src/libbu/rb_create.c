@@ -1,7 +1,7 @@
 /*                     R B _ C R E A T E . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2007 United States Government as represented by
+ * Copyright (c) 1998-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,25 +23,12 @@
  *
  *		Routines to create a red-black tree
  *
- *  @author	Paul J. Tanenbaum
- *
- *  @par Source -
- *	The U. S. Army Research Laboratory
- *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
-
-
-#ifndef lint
-static const char libbu_rb_create_RCSid[] = "@(#) $Header$";
-#endif
 
 #include "common.h"
 
-
 #include <stdio.h>
 #include <math.h>
-#include "machine.h"
 #include "bu.h"
 #include "./rb_internals.h"
 
@@ -65,32 +52,32 @@ bu_rb_tree *bu_rb_create (char *description, int nm_orders, int (**order_funcs)(
      */
     tree = (bu_rb_tree *) bu_malloc(sizeof(bu_rb_tree), "red-black tree");
     tree -> rbt_root = (struct bu_rb_node **)
-		    bu_malloc(nm_orders * sizeof(struct bu_rb_node),
-			"red-black roots");
+	bu_malloc(nm_orders * sizeof(struct bu_rb_node),
+		  "red-black roots");
     tree -> rbt_unique = (char *)
-		bu_malloc((size_t) ceil((double) (nm_orders / 8.0)),
-			    "red-black uniqueness flags");
+	bu_malloc((size_t) ceil((double) (nm_orders / 8.0)),
+		  "red-black uniqueness flags");
     bu_rb_null(tree) = (struct bu_rb_node *)
-		    bu_malloc(sizeof(struct bu_rb_node),
-				"red-black empty node");
+	bu_malloc(sizeof(struct bu_rb_node),
+		  "red-black empty node");
     bu_rb_null(tree) -> rbn_parent = (struct bu_rb_node **)
-		bu_malloc(nm_orders * sizeof(struct bu_rb_node *),
-			    "red-black parents");
+	bu_malloc(nm_orders * sizeof(struct bu_rb_node *),
+		  "red-black parents");
     bu_rb_null(tree) -> rbn_left = (struct bu_rb_node **)
-		bu_malloc(nm_orders * sizeof(struct bu_rb_node *),
-			    "red-black left children");
+	bu_malloc(nm_orders * sizeof(struct bu_rb_node *),
+		  "red-black left children");
     bu_rb_null(tree) -> rbn_right = (struct bu_rb_node **)
-		bu_malloc(nm_orders * sizeof(struct bu_rb_node *),
-			    "red-black right children");
+	bu_malloc(nm_orders * sizeof(struct bu_rb_node *),
+		  "red-black right children");
     bu_rb_null(tree) -> rbn_color = (char *)
-		bu_malloc((size_t) ceil((double) (nm_orders / 8.0)),
-			    "red-black colors");
+	bu_malloc((size_t) ceil((double) (nm_orders / 8.0)),
+		  "red-black colors");
     bu_rb_null(tree) -> rbn_size = (int *)
-		bu_malloc(nm_orders * sizeof(int),
-			    "red-black subtree sizes");
+	bu_malloc(nm_orders * sizeof(int),
+		  "red-black subtree sizes");
     bu_rb_null(tree) -> rbn_package = (struct bu_rb_package **)
-		bu_malloc(nm_orders * sizeof(struct bu_rb_package *),
-			    "red-black packages");
+	bu_malloc(nm_orders * sizeof(struct bu_rb_package *),
+		  "red-black packages");
     /*
      *	Fill in the tree
      */
@@ -144,7 +131,7 @@ bu_rb_tree *bu_rb_create1 (char *description, int (*order_func) (/* ??? */))
     int		(**ofp)();
 
     ofp = (int (**)())
-		bu_malloc(sizeof(int (*)()), "red-black function table");
+	bu_malloc(sizeof(int (*)()), "red-black function table");
     *ofp = order_func;
     return (bu_rb_create(description, 1, ofp));
 }
@@ -154,8 +141,8 @@ bu_rb_tree *bu_rb_create1 (char *description, int (*order_func) (/* ??? */))
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

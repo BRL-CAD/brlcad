@@ -1,7 +1,7 @@
 /*                        G E T P U T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,65 +26,62 @@
  */
 /** @} */
 
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 unsigned short
 fbgetshort(char *msgp)
 {
-	register unsigned char *p = (unsigned char *) msgp;
+    register unsigned char *p = (unsigned char *) msgp;
 #ifdef vax
-	/*
-	 * vax compiler doesn't put shorts in registers
-	 */
-	register unsigned long u;
+    /*
+     * vax compiler doesn't put shorts in registers
+     */
+    register unsigned long u;
 #else
-	register unsigned short u;
+    register unsigned short u;
 #endif
 
-	u = *p++ << 8;
-	return ((unsigned short)(u | *p));
+    u = *p++ << 8;
+    return ((unsigned short)(u | *p));
 }
 
 unsigned long
 fbgetlong(char *msgp)
 {
-	register unsigned char *p = (unsigned char *) msgp;
-	register unsigned long u;
+    register unsigned char *p = (unsigned char *) msgp;
+    register unsigned long u;
 
-	u = *p++; u <<= 8;
-	u |= *p++; u <<= 8;
-	u |= *p++; u <<= 8;
-	return (u | *p);
+    u = *p++; u <<= 8;
+    u |= *p++; u <<= 8;
+    u |= *p++; u <<= 8;
+    return (u | *p);
 }
 
 char *
 fbputshort(register short unsigned int s, register char *msgp)
 {
 
-	msgp[1] = s;
-	msgp[0] = s >> 8;
-	return(msgp+2);
+    msgp[1] = s;
+    msgp[0] = s >> 8;
+    return(msgp+2);
 }
 
 char *
 fbputlong(register long unsigned int l, register char *msgp)
 {
 
-	msgp[3] = l;
-	msgp[2] = (l >>= 8);
-	msgp[1] = (l >>= 8);
-	msgp[0] = l >> 8;
-	return(msgp+4);
+    msgp[3] = l;
+    msgp[2] = (l >>= 8);
+    msgp[1] = (l >>= 8);
+    msgp[0] = l >> 8;
+    return(msgp+4);
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

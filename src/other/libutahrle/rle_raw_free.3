@@ -1,6 +1,6 @@
 .\" Copyright (c) 1986, 1987, University of Utah
 .TH RLE_RAW_ALLOC 3 2/2/87 3
-.UC 4 
+.UC 4
 .SH NAME
 .HP
 rle_raw_alloc \- Allocate memory for rle_getraw or rle_putraw.
@@ -52,7 +52,7 @@ described by the
 structure.
 .I Rle_raw_alloc
 allocates
-.RI ( the_hdr \(-> xmax 
+.RI ( the_hdr \(-> xmax
 \-
 .IR the_hdr \(-> xmin
 + 1)
@@ -60,7 +60,7 @@ elements per channel, which is more than should ever be needed for a
 valid \fIRLE\fP file.
 
 .I Rle_raw_free
-should be used to free memory allocated by 
+should be used to free memory allocated by
 .IR rle_raw_alloc (3).
 The arguments are pointers to the allocated storage.
 This is distinct from
@@ -72,7 +72,7 @@ structures, while
 frees the storage consumed by the arrays of pointers and
 .I rle_op
 structures.
-In fact, 
+In fact,
 .IR rle_freeraw
 should be called before calling
 .IR rle_raw_free .

@@ -1,7 +1,7 @@
 /*                        B R L A B S . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2007 United States Government as represented by
+ * Copyright (c) 1990-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,44 +18,39 @@
  * information.
  */
 /** @file brlabs.c
+ *
  *  Authors -
  *	John R. Anderson
  *	Susanne L. Muuss
  *	Earl P. Weaver
  *
- *  Source -
- *	VLD/ASB Building 1065
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
 
 #include "common.h"
 
-
 #include <stdio.h>
 
-#include "machine.h"
+#include "bu.h"
 
 fastf_t brlabs( a )
-register const fastf_t a;
+    register const fastf_t a;
 {
-	register fastf_t b;
+    register fastf_t b;
 
-	if( a > 0 )
-		b = a;
-	else
-		b = (-a);
+    if ( a > 0 )
+	b = a;
+    else
+	b = (-a);
 
-	return( b );
+    return( b );
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

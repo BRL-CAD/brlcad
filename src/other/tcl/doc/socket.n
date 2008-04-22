@@ -118,7 +118,7 @@ channel shuts down the server so that no new connections will be
 accepted;  however, existing connections will be unaffected.
 .PP
 Server sockets depend on the Tcl event mechanism to find out when
-new connections are opened.  If the application doesn't enter the
+new connections are opened.  If the application does not enter the
 event loop, for example by invoking the \fBvwait\fR command or
 calling the C procedure \fBTcl_DoOneEvent\fR, then no connections
 will be accepted.

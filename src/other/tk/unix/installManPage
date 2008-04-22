@@ -27,6 +27,7 @@ test -z "$S" && S="$DIR/"
 #	n             ;# Read next line
 #	s/,//g        ;# Remove all commas ...
 #	s/\\\ //g     ;# .. and backslash-escaped spaces.
+#       s/::/_/g       ;# Convert '::' to '_'
 #	s/ \\\-.*//   ;# Delete from \- to the end of line
 #	p             ;# print the result
 #	q             ;# exit
@@ -43,6 +44,7 @@ NAMES=`sed -n '
 	n
 	s/,//g
 	s/\\\ //g
+	s/::/_/g
 	s/ \\\-.*//
 	p
 	q

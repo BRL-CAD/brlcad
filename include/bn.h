@@ -1,7 +1,7 @@
 /*                            B N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,35 +28,6 @@
  *  vector math, matrix math, quaternion math, complex math,
  *  synthetic division, root finding, etc.
  *
- * @li This header file depends on vmath.h
- * @li This header file depends on bu.h and LIBBU;  it is safe to use
- *      bu.h macros (e.g. BU_EXTERN) here.
- *
- *  @author	Michael John Muuss
- *  @author	Lee A Butler
- *  @author	Douglas A Gwyn
- *  @author	Jeff Hanes
- *
- *  @par Modifications & Additions
- *      Christopher Sean Morrison
- *
- *  @par Source -
- *	The U. S. Army Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- *  Include Sequencing -
-@code
-	# include "common.h"
-	# include <stdio.h>
-	# include <math.h>
-	# include "machine.h"	/_* For fastf_t definition on this machine *_/
-	# include "bu.h"
-	# include "vmath.h"
-	# include "bn.h"
-@endcode
- *
- *  @par Libraries Used -
- *	-lm -lc
  */
 
 #ifndef __BN_H__
@@ -67,7 +38,6 @@
 __BEGIN_DECLS
 
 /* interface headers */
-#include "machine.h"	/* required for fastf_t */
 #include "bu.h"		/* required for BU_EXTERN, BU_CKMAG */
 #include "vmath.h"	/* required for mat_t, vect_t */
 
@@ -103,43 +73,43 @@ __BEGIN_DECLS
  *	If two points are closer together than dist, then they are to
  *	be considered the same point.
  *	For example:
-@code
-		point_t	a,b;
-		vect_t	diff;
-		VSUB2( diff, a, b );
-		if( MAGNITUDE(diff) < tol->dist )	a & b are the same.
-	or, more efficiently:
-		if( MAQSQ(diff) < tol->dist_sq )
-@endcode
+ @code
+ point_t	a, b;
+ vect_t	diff;
+ VSUB2( diff, a, b );
+ if ( MAGNITUDE(diff) < tol->dist )	a & b are the same.
+ or, more efficiently:
+ if ( MAQSQ(diff) < tol->dist_sq )
+ @endcode
  *  perp & para establish the angular tolerance.
  *
  *	If two rays emanate from the same point, and their dot product
  *	is nearly one, then the two rays are the same, while if their
  *	dot product is nearly zero, then they are perpendicular.
  *	For example:
-@code
-		vect_t	a,b;
-		if( fabs(VDOT(a,b)) >= tol->para )	a & b are parallel
-		if( fabs(VDOT(a,b)) <= tol->perp )	a & b are perpendicular
-@endcode
+ @code
+ vect_t	a, b;
+ if ( fabs(VDOT(a, b)) >= tol->para )	a & b are parallel
+ if ( fabs(VDOT(a, b)) <= tol->perp )	a & b are perpendicular
+ @endcode
  *
  *  @note
  *	tol->dist_sq = tol->dist * tol->dist;
  *@n	tol->para = 1 - tol->perp;
  */
 struct bn_tol {
-	unsigned long	magic;
-	double		dist;			/**< @brief >= 0 */
-	double		dist_sq;		/**< @brief dist * dist */
-	double		perp;			/**< @brief nearly 0 */
-	double		para;			/**< @brief nearly 1 */
+    unsigned long	magic;
+    double		dist;			/**< @brief >= 0 */
+    double		dist_sq;		/**< @brief dist * dist */
+    double		perp;			/**< @brief nearly 0 */
+    double		para;			/**< @brief nearly 1 */
 };
 #define BN_TOL_MAGIC	0x98c734bb
 #define BN_CK_TOL(_p)	BU_CKMAG(_p, BN_TOL_MAGIC, "bn_tol")
 
-#define	BN_VECT_ARE_PARALLEL(_dot,_tol)		\
+#define	BN_VECT_ARE_PARALLEL(_dot, _tol)		\
 	(((_dot) < 0) ? ((-(_dot))>=(_tol)->para) : ((_dot) >= (_tol)->para))
-#define BN_VECT_ARE_PERP(_dot,_tol)		\
+#define BN_VECT_ARE_PERP(_dot, _tol)		\
 	(((_dot) < 0) ? ((-(_dot))<=(_tol)->perp) : ((_dot) <= (_tol)->perp))
 
 #define BN_APPROXEQUAL(_a, _b, _tol) (fabs( (_a) - (_b) ) <= _tol->dist)
@@ -295,8 +265,8 @@ BN_EXPORT BU_EXTERN(void bn_tcl_mat_print,
 
 /* "complex number" data type: */
 typedef struct bn_complex {
-	double		re;		/**< @brief real part */
-	double		im;		/**< @brief imaginary part */
+    double		re;		/**< @brief real part */
+    double		im;		/**< @brief imaginary part */
 }  bn_complex_t;
 
 /* functions that are efficiently done as macros: */
@@ -316,7 +286,7 @@ typedef struct bn_complex {
 #define bn_cx_sub( ap, bp )		{ (ap)->re -= (bp)->re; (ap)->im -= (bp)->im;}
 
 #define bn_cx_mul( ap, bp )	 	\
-	{ FAST fastf_t a__re, b__re; \
+	{ register fastf_t a__re, b__re; \
 	(ap)->re = ((a__re=(ap)->re)*(b__re=(bp)->re)) - (ap)->im*(bp)->im; \
 	(ap)->im = a__re*(bp)->im + (ap)->im*b__re; }
 
@@ -357,9 +327,9 @@ BN_EXPORT BU_EXTERN(double bn_atan2,
 	(_m)[4] = (_m)[5] = (_m)[6] = (_m)[7] = \
 	(_m)[8] = (_m)[9] = (_m)[10] = (_m)[11] = \
 	(_m)[12] = (_m)[13] = (_m)[14] = (_m)[15] = 0.0; }
-  /*
-#define	bn_mat_zero( _m )	(void)memset( (void *)_m, 0, sizeof(mat_t))
-  */
+/*
+  #define	bn_mat_zero( _m )	(void)memset( (void *)_m, 0, sizeof(mat_t))
+*/
 #define bn_mat_idn( _m )	{ \
 	bu_log("%s:%d bn_mat_idn() is deprecated, use MAT_IDN()\n", \
 			__FILE__, __LINE__); \
@@ -367,9 +337,9 @@ BN_EXPORT BU_EXTERN(double bn_atan2,
 	(_m)[6] = (_m)[7] = (_m)[8] = (_m)[9] = \
 	(_m)[11] = (_m)[12] = (_m)[13] = (_m)[14] = 0.0; \
 	(_m)[0] = (_m)[5] = (_m)[10] = (_m)[15] = 1.0; }
-  /*
-#define bn_mat_idn( _m )	(void)memcpy( (void *)_m, (const void *)bn_mat_identity, sizeof(mat_t))
-  */
+/*
+  #define bn_mat_idn( _m )	(void)memcpy( (void *)_m, (const void *)bn_mat_identity, sizeof(mat_t))
+*/
 
 #define bn_mat_copy( _d, _s )	{ \
 	bu_log("%s:%d bn_mat_copy() is deprecated, use MAT_COPY()\n", \
@@ -390,9 +360,9 @@ BN_EXPORT BU_EXTERN(double bn_atan2,
 	(_d)[13] = (_s)[13];\
 	(_d)[14] = (_s)[14];\
 	(_d)[15] = (_s)[15]; }
-  /*
-#define bn_mat_copy(_d,_s)	(void)memcpy( (void *)_d, (const void *)(_s), sizeof(mat_t))
-  */
+/*
+  #define bn_mat_copy(_d, _s)	(void)memcpy( (void *)_d, (const void *)(_s), sizeof(mat_t))
+*/
 
 
 BN_EXPORT BU_EXTERN(void bn_mat_mul,
@@ -536,12 +506,12 @@ BN_EXPORT BU_EXTERN(int bn_mat_is_non_unif,
  */
 
 struct bn_unif {
-	long	magic;
-	long	msr_seed;
-	int	msr_double_ptr;
-	double	*msr_doubles;
-	int	msr_long_ptr;
-	long	*msr_longs;
+    unsigned long magic;
+    long	msr_seed;
+    int	msr_double_ptr;
+    double	*msr_doubles;
+    int	msr_long_ptr;
+    long	*msr_longs;
 };
 
 #define BN_UNIF_MAGIC	12481632
@@ -557,12 +527,12 @@ struct bn_unif {
  * msr_gauss_fill.
  */
 struct bn_gauss {
-	long	magic;
-	long	msr_gauss_seed;
-	int	msr_gauss_dbl_ptr;
-	double	*msr_gauss_doubles;
-	int	msr_gauss_ptr;
-	double	*msr_gausses;
+    unsigned long	magic;
+    long	msr_gauss_seed;
+    int	msr_gauss_dbl_ptr;
+    double	*msr_gauss_doubles;
+    int	msr_gauss_ptr;
+    double	*msr_gausses;
 };
 
 BN_EXPORT BU_EXTERN(struct bn_unif *bn_unif_init,
@@ -591,14 +561,14 @@ BN_EXPORT BU_EXTERN(double bn_gauss_fill,
 		(_p)->msr_doubles[--(_p)->msr_double_ptr] : \
 		bn_unif_double_fill(_p))
 
-#define BN_UNIF_CIRCLE(_p,_x,_y,_r) { \
+#define BN_UNIF_CIRCLE(_p, _x, _y, _r) { \
 	do { \
 		(_x) = 2.0*BN_UNIF_DOUBLE((_p)); \
 		(_y) = 2.0*BN_UNIF_DOUBLE((_p)); \
 		(_r) = (_x)*(_x)+(_y)*(_y); \
 	} while ((_r) >= 1.0);  }
 
-#define	BN_UNIF_SPHERE(_p,_x,_y,_z,_r) { \
+#define	BN_UNIF_SPHERE(_p, _x, _y, _z, _r) { \
 	do { \
 		(_x) = 2.0*BN_UNIF_DOUBLE(_p); \
 		(_y) = 2.0*BN_UNIF_DOUBLE(_p); \
@@ -875,15 +845,15 @@ BN_EXPORT BU_EXTERN(int bn_isect_planes,
 /** @addtogroup poly */
 /** @{ */
 
-			/* This could be larger, or even dynamic... */
+/* This could be larger, or even dynamic... */
 #define BN_MAX_POLY_DEGREE	4	/* Maximum Poly Order */
 /**
  *  Polynomial data type
  */
 typedef  struct bn_poly {
-	long		magic;
-	int		dgr;
-	double		cf[BN_MAX_POLY_DEGREE+1];
+    unsigned long	magic;
+    int		dgr;
+    double		cf[BN_MAX_POLY_DEGREE+1];
 }  bn_poly_t;
 #define BN_POLY_MAGIC	0x506f4c79	/* 'PoLy' */
 #define BN_CK_POLY(_p)	BU_CKMAG(_p, BN_POLY_MAGIC, "struct bn_poly")
@@ -985,16 +955,16 @@ BN_EXPORT BU_EXTERN(void quat_log,
  *  range with a period of 4096.
  *
  * @par Usage:
-@code
-	unsigned idx;
-	float f;
+ @code
+ unsigned idx;
+ float f;
 
-	BN_RANDSEED( idx, integer_seed );
+ BN_RANDSEED( idx, integer_seed );
 
-	while (NEED_MORE_RAND_NUMBERS) {
-		f = BN_RANDOM( idx );
-	}
-@endcode
+ while (NEED_MORE_RAND_NUMBERS) {
+ f = BN_RANDOM( idx );
+ }
+ @endcode
  * Note that the values from bn_rand_half() become all 0.0 when the benchmark
  * flag is set (bn_rand_halftab is set to all 0's).  The numbers from
  * bn_rand_table do not change, because the procedural noise would cease to
@@ -1055,14 +1025,14 @@ BN_EXPORT extern void bn_mathtab_constant();
 /* wavelet.c */
 
 #define CK_POW_2(dimen) { register unsigned long j; register int ok;\
-	for (ok=0, j=0 ; j < sizeof(unsigned long) * 8 ; j++) { \
+	for (ok=0, j=0; j < sizeof(unsigned long) * 8; j++) { \
 		if ( (unsigned long)(1<<j) == dimen) { ok = 1;  break; } \
 	} \
 	if ( ! ok ) { \
 		bu_log("%s:%d value %d should be power of 2 (2^%d)\n", \
 			__FILE__, __LINE__, dimen, j); \
 		bu_bomb("CK_POW_2"); \
-		}\
+	}\
 }
 
 BN_EXPORT BU_EXTERN(void bn_wlt_haar_1d_double_decompose,
@@ -1380,9 +1350,9 @@ BN_EXPORT extern const double bn_radtodeg;
  *	spectrum.h, spectrum.c
  */
 struct bn_table {
-	long		magic;
-	int		nx;
-	fastf_t		x[1];	/**< @brief array of nx+1 wavelengths, dynamically sized */
+    unsigned long	magic;
+    int		nx;
+    fastf_t		x[1];	/**< @brief array of nx+1 wavelengths, dynamically sized */
 };
 #define BN_TABLE_MAGIC	0x53706374
 #define BN_CK_TABLE(_p)	BU_CKMAG(_p, BN_TABLE_MAGIC, "bn_table")
@@ -1391,7 +1361,7 @@ struct bn_table {
 /* Gets an bn_table, with x[] having size _nx+1 */
 #ifndef NO_BOMBING_MACROS
 #  define BN_GET_TABLE(_table, _nx)  { \
-	if( (_nx) < 1 )  bu_bomb("RT_GET_TABLE() _nx < 1\n"); \
+	if ( (_nx) < 1 )  bu_bomb("RT_GET_TABLE() _nx < 1\n"); \
 	_table = (struct bn_table *)bu_calloc( 1, \
 		sizeof(struct bn_table) + sizeof(fastf_t)*(_nx), \
 		"struct bn_table" ); \
@@ -1407,10 +1377,10 @@ struct bn_table {
 #endif
 
 struct bn_tabdata {
-	long		magic;
-	int		ny;
-	const struct bn_table *table;	/**< @brief Up pointer to definition of X axis */
-	fastf_t		y[1];		/**< @brief array of ny samples, dynamically sized */
+    unsigned long	magic;
+    int		ny;
+    const struct bn_table *table;	/**< @brief Up pointer to definition of X axis */
+    fastf_t		y[1];		/**< @brief array of ny samples, dynamically sized */
 };
 #define BN_TABDATA_MAGIC	0x53736d70
 #define BN_CK_TABDATA(_p)	BU_CKMAG(_p, BN_TABDATA_MAGIC, "bn_tabdata")
@@ -1595,27 +1565,27 @@ BN_EXPORT BU_EXTERN(struct bn_tabdata *bn_tabdata_mk_linear_filter,
  *  The head of the doubly linked list can be just a "struct bu_list" head.
  *
  *  To visit all the elements in the vlist:
- *	for( BU_LIST_FOR( vp, rt_vlist, hp ) )  {
+ *	for ( BU_LIST_FOR( vp, rt_vlist, hp ) )  {
  *		register int	i;
  *		register int	nused = vp->nused;
  *		register int	*cmd = vp->cmd;
  *		register point_t *pt = vp->pt;
- *		for( i = 0; i < nused; i++,cmd++,pt++ )  {
+ *		for ( i = 0; i < nused; i++, cmd++, pt++ )  {
  *			access( *cmd, *pt );
  *			access( vp->cmd[i], vp->pt[i] );
  *		}
  *	}
  */
 struct bn_vlist  {
-	struct bu_list	l;			/**< @brief  magic, forw, back */
-	int		nused;			/**< @brief  elements 0..nused active */
-	int		cmd[BN_VLIST_CHUNK];	/**< @brief  VL_CMD_* */
-	point_t		pt[BN_VLIST_CHUNK];	/**< @brief  associated 3-point/vect */
+    struct bu_list	l;			/**< @brief  magic, forw, back */
+    int		nused;			/**< @brief  elements 0..nused active */
+    int		cmd[BN_VLIST_CHUNK];	/**< @brief  VL_CMD_* */
+    point_t		pt[BN_VLIST_CHUNK];	/**< @brief  associated 3-point/vect */
 };
 #define BN_VLIST_NULL	((struct bn_vlist *)0)
 #define BN_VLIST_MAGIC	0x98237474
 #define BN_CK_VLIST(_p) BU_CKMAG((_p), BN_VLIST_MAGIC, "bn_vlist")
-#define BN_CK_VLIST_TCL(_interp,_p) BU_CKMAG_TCL(_interp,(_p), BN_VLIST_MAGIC, "bn_vlist")
+#define BN_CK_VLIST_TCL(_interp, _p) BU_CKMAG_TCL(_interp, (_p), BN_VLIST_MAGIC, "bn_vlist")
 
 /* Values for cmd[] */
 #define BN_VLIST_LINE_MOVE	0
@@ -1633,9 +1603,9 @@ struct bn_vlist  {
  *
  * Note that BN_GET_VLIST and BN_FREE_VLIST are non-PARALLEL.
  */
-#define BN_GET_VLIST(_free_hd,p) {\
+#define BN_GET_VLIST(_free_hd, p) {\
 		(p) = BU_LIST_FIRST( bn_vlist, (_free_hd) ); \
-		if( BU_LIST_IS_HEAD( (p), (_free_hd) ) )  { \
+		if ( BU_LIST_IS_HEAD( (p), (_free_hd) ) )  { \
 			(p) = (struct bn_vlist *)bu_malloc(sizeof(struct bn_vlist), "bn_vlist"); \
 			(p)->l.magic = BN_VLIST_MAGIC; \
 		} else { \
@@ -1645,16 +1615,16 @@ struct bn_vlist  {
 	}
 
 /** Place an entire chain of bn_vlist structs on the freelist _free_hd */
-#define BN_FREE_VLIST(_free_hd,hd)	{ \
+#define BN_FREE_VLIST(_free_hd, hd)	{ \
 	BU_CK_LIST_HEAD( (hd) ); \
 	BU_LIST_APPEND_LIST( (_free_hd), (hd) ); \
 	}
 
-#define BN_ADD_VLIST(_free_hd,_dest_hd,pnt,draw)  { \
+#define BN_ADD_VLIST(_free_hd, _dest_hd, pnt, draw)  { \
 	register struct bn_vlist *_vp; \
 	BU_CK_LIST_HEAD( _dest_hd ); \
 	_vp = BU_LIST_LAST( bn_vlist, (_dest_hd) ); \
-	if( BU_LIST_IS_HEAD( _vp, (_dest_hd) ) || _vp->nused >= BN_VLIST_CHUNK )  { \
+	if ( BU_LIST_IS_HEAD( _vp, (_dest_hd) ) || _vp->nused >= BN_VLIST_CHUNK )  { \
 		BN_GET_VLIST(_free_hd, _vp); \
 		BU_LIST_INSERT( (_dest_hd), &(_vp->l) ); \
 	} \
@@ -1669,12 +1639,12 @@ struct bn_vlist  {
  *  blocks of vlists, each with an associated color.
  */
 struct bn_vlblock {
-	long		magic;
-	int		nused;
-	int		max;
-	long		*rgb;		/**< @brief  rgb[max] variable size array */
-	struct bu_list	*head;		/**< @brief  head[max] variable size array */
-	struct bu_list	*free_vlist_hd;	/**< @brief  where to get/put free vlists */
+    unsigned long	magic;
+    int		nused;
+    int		max;
+    long		*rgb;		/**< @brief  rgb[max] variable size array */
+    struct bu_list	*head;		/**< @brief  head[max] variable size array */
+    struct bu_list	*free_vlist_hd;	/**< @brief  where to get/put free vlists */
 };
 #define BN_VLBLOCK_MAGIC	0x981bd112
 #define BN_CK_VLBLOCK(_p)	BU_CKMAG((_p), BN_VLBLOCK_MAGIC, "bn_vlblock")
@@ -1706,12 +1676,12 @@ BN_EXPORT BU_EXTERN(void bn_vlist_2string,
  * holds all the required info for a single vertex tree
  */
 struct vert_root {
-	long magic;
-	int tree_type;			/**< @brief  vertices or vertices with normals */
-	union vert_tree *the_tree;	/**< @brief  the actual vertex tree */
-	fastf_t *the_array;		/**< @brief  the array of vertices */
-	unsigned long curr_vert;	/**< @brief  the number of vertices currently in the array */
-	unsigned long max_vert;		/**< @brief  the current maximum capacity of the array */
+    unsigned long magic;
+    int tree_type;			/**< @brief  vertices or vertices with normals */
+    union vert_tree *the_tree;	/**< @brief  the actual vertex tree */
+    fastf_t *the_array;		/**< @brief  the array of vertices */
+    unsigned long curr_vert;	/**< @brief  the number of vertices currently in the array */
+    unsigned long max_vert;		/**< @brief  the current maximum capacity of the array */
 };
 
 #define TREE_TYPE_VERTS			1
@@ -1773,31 +1743,31 @@ __END_DECLS
 #define pl_A	pl_points[0]		/* Synonym for A point */
 
 struct plane_specific  {
-	int	pl_npts;		/* number of points on plane */
-	point_t	pl_points[MAXPTS];	/* Actual points on plane */
-	vect_t	pl_Xbasis;		/* X (B-A) vector (for 2d coords) */
-	vect_t	pl_Ybasis;		/* Y (C-A) vector (for 2d coords) */
-	vect_t	pl_N;			/* Unit-length Normal (outward) */
-	fastf_t	pl_NdotA;		/* Normal dot A */
-	fastf_t	pl_2d_x[MAXPTS];	/* X 2d-projection of points */
-	fastf_t	pl_2d_y[MAXPTS];	/* Y 2d-projection of points */
-	fastf_t	pl_2d_com[MAXPTS];	/* pre-computed common-term */
-	struct plane_specific *pl_forw;	/* Forward link */
-	char	pl_code[MAXPTS+1];	/* Face code string.  Decorative. */
+    int	pl_npts;		/* number of points on plane */
+    point_t	pl_points[MAXPTS];	/* Actual points on plane */
+    vect_t	pl_Xbasis;		/* X (B-A) vector (for 2d coords) */
+    vect_t	pl_Ybasis;		/* Y (C-A) vector (for 2d coords) */
+    vect_t	pl_N;			/* Unit-length Normal (outward) */
+    fastf_t	pl_NdotA;		/* Normal dot A */
+    fastf_t	pl_2d_x[MAXPTS];	/* X 2d-projection of points */
+    fastf_t	pl_2d_y[MAXPTS];	/* Y 2d-projection of points */
+    fastf_t	pl_2d_com[MAXPTS];	/* pre-computed common-term */
+    struct plane_specific *pl_forw;	/* Forward link */
+    char	pl_code[MAXPTS+1];	/* Face code string.  Decorative. */
 };
 
 /*
  *  Describe the tri_specific structure.
  */
 struct tri_specific  {
-	point_t	tri_A;			/* triangle vertex (A) */
-	vect_t	tri_BA;			/* B - A (second point) */
-	vect_t	tri_CA;			/* C - A (third point) */
-	vect_t	tri_wn;			/* facet normal (non-unit) */
-	vect_t	tri_N;			/* unit normal vector */
-	fastf_t *tri_normals;		/* unit vertex normals A, B, C  (this is malloced storage) */
-	int	tri_surfno;		/* solid specific surface number */
-	struct tri_specific *tri_forw;	/* Next facet */
+    point_t	tri_A;			/* triangle vertex (A) */
+    vect_t	tri_BA;			/* B - A (second point) */
+    vect_t	tri_CA;			/* C - A (third point) */
+    vect_t	tri_wn;			/* facet normal (non-unit) */
+    vect_t	tri_N;			/* unit normal vector */
+    fastf_t *tri_normals;		/* unit vertex normals A, B, C  (this is malloced storage) */
+    int	tri_surfno;		/* solid specific surface number */
+    struct tri_specific *tri_forw;	/* Next facet */
 };
 
 typedef struct tri_specific tri_specific_double;
@@ -1806,14 +1776,14 @@ typedef struct tri_specific tri_specific_double;
  *	A more memory conservative version
  */
 struct tri_float_specific  {
-	float	tri_A[3];			/* triangle vertex (A) */
-	float	tri_BA[3];			/* B - A (second point) */
-	float	tri_CA[3];			/* C - A (third point) */
-	float	tri_wn[3];			/* facet normal (non-unit) */
-	float	tri_N[3];			/* unit normal vector */
-	signed char *tri_normals;		/* unit vertex normals A, B, C  (this is malloced storage) */
-	int	tri_surfno;		/* solid specific surface number */
-	struct tri_float_specific *tri_forw;	/* Next facet */
+    float	tri_A[3];			/* triangle vertex (A) */
+    float	tri_BA[3];			/* B - A (second point) */
+    float	tri_CA[3];			/* C - A (third point) */
+    float	tri_wn[3];			/* facet normal (non-unit) */
+    float	tri_N[3];			/* unit normal vector */
+    signed char *tri_normals;		/* unit vertex normals A, B, C  (this is malloced storage) */
+    int	tri_surfno;		/* solid specific surface number */
+    struct tri_float_specific *tri_forw;	/* Next facet */
 };
 
 typedef struct tri_float_specific tri_specific_float;
@@ -1827,8 +1797,8 @@ typedef struct tri_float_specific tri_specific_float;
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

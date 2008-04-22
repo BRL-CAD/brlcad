@@ -1,7 +1,7 @@
 /*	                  C L O N E . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2007 United States Government as represented by
+ * Copyright (c) 2005-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,6 +36,27 @@
  * TODO:
  *   use bu_vls strings
  *   use bu_list lists
+ *
+ * ISSUES/TODO (for DK, ^D means done)
+ *  1. No -c option.  This allows the increment given in the '-i' to
+ *  act on the second number
+ * D2. Remove 15 char name limit.  I ran into this today.
+ *  3. No -p option.  I couldn't get this to work.  I re-centered the
+ *     geometry, then it tried to work but I ran into the 15 char limit
+ *     and had to kill the process (^C).
+ *  4. Names - This tool is built around a naming convention.  Currently,
+ *     the second number does not list properly (it just truncated the
+ *     second number of the 'cut' prims so they ended up 'mess.s1.c' instead
+ *     of 'mess.s1.c1').  And the '+' and '-' didn't work, I had to switch
+ *     from 'mess.s1-1' to 'mess.s1.c1'.  Also, prims need to increment
+ *     by the 'i' number but combs, regions, and assemblies (.c#, .r#, or
+ *     just name with a # at the end) should increment by 1.  So you end
+ *     up with widget_1, widget_2, widget_3   and not widget_1, widget_4,
+ *     widget_7...
+ *  5. Tree structure - please retain tree structure to the extent that
+ *     you can and try not to re-create prims or combs used more than once.
+ *     No warning needed for redundant copies.  Warnings can come later...
+ * D6. Display - do display clones but do not resize or re-center view. 
  */
 
 #include "common.h"
@@ -46,7 +67,7 @@
 #include <math.h>
 #include <string.h>
 
-#include "machine.h"
+#include "bio.h"
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
@@ -56,7 +77,7 @@
 
 
 #define CLONE_VERSION "Clone ver 4.0\n2006-08-08\n"
-
+#define CLONE_BUFSIZE 512
 
 /*
  * NOTE: in order to not shadow the global "dbip" pointer used
@@ -167,7 +188,7 @@ add_to_list(struct nametbl *l, char *name)
 	l->names = (struct name *)bu_realloc(l->names, sizeof(struct name)*(l->names_len+1), "realloc l->names");
 	for (i = l->names_used; i < l->names_len; i++) {
 	    bu_vls_init(&l->names[i].src);
-	    l->names[i].dest = (struct bu_vls *)bu_calloc(l->name_size,sizeof(struct bu_vls), "alloc l->names.dest");
+	    l->names[i].dest = (struct bu_vls *)bu_calloc(l->name_size, sizeof(struct bu_vls), "alloc l->names.dest");
 	    for (j = 0; j < l->name_size; j++)
 		bu_vls_init(&l->names[i].dest[j]);
 	}
@@ -197,7 +218,7 @@ index_in_list(struct nametbl l, char *name)
 static int
 is_in_list(struct nametbl l, char *name)
 {
-    return index_in_list(l,name) != -1;
+    return index_in_list(l, name) != -1;
 }
 
 /**
@@ -209,21 +230,21 @@ static struct bu_vls *
 get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, int iter)
 {
     struct bu_vls *newname;
-    char prefix[BUFSIZ] = {0}, suffix[BUFSIZ] = {0}, buf[BUFSIZ] = {0}, suffix2[BUFSIZ] = {0};
+    char prefix[CLONE_BUFSIZE] = {0}, suffix[CLONE_BUFSIZE] = {0}, buf[CLONE_BUFSIZE] = {0}, suffix2[CLONE_BUFSIZE] = {0};
     int num = 0, i = 1, j = 0;
 
     newname = bu_vls_vlsinit();
 
     /* Ugh. This needs much repair/cleanup. */
-    if( state->updpos == 0 ) {
-	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%s", &prefix, &num, &suffix, &suffix2);
-	strncat(suffix, suffix2, BUFSIZ);
+    if ( state->updpos == 0 ) {
+	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%512s", &prefix, &num, &suffix, &suffix2); /* CLONE_BUFSIZE */
+	snprintf(suffix, CLONE_BUFSIZE, "%s", suffix2);
     } else if ( state->updpos == 1 ) {
 	int num2 = 0;
 	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%d%[!-/,:-~]", &prefix, &num2, &suffix2, &num, &suffix);
-	snprintf(prefix, BUFSIZ, "%s%d%s", prefix, num2, suffix2);
+	snprintf(prefix, CLONE_BUFSIZE, "%s%d%s", prefix, num2, suffix2);
     } else
-	bu_bomb("multiple -c options not supported yet.");
+	bu_exit(EXIT_FAILURE, "multiple -c options not supported yet.");
 
     do {
 	/* choke the name back to the prefix */
@@ -231,11 +252,11 @@ get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, in
 	bu_vls_strcpy(newname, prefix);
 
         if ((dp->d_flags & DIR_SOLID) || (dp->d_flags & DIR_REGION)) {
-    	/* primitives and regions */
+	    /* primitives and regions */
     	    if (suffix[0] != 0)
     		if ((i == 1) && is_in_list(obj_list, buf)) {
     		    j = index_in_list(obj_list, buf);
-    		    snprintf(buf, BUFSIZ, "%s%d", prefix, num);	/* save the name for the next pass */
+    		    snprintf(buf, CLONE_BUFSIZE, "%s%d", prefix, num);	/* save the name for the next pass */
 		    /* clear and set the name */
 		    bu_vls_trunc(newname, 0);
 		    bu_vls_printf(newname, "%s%s", obj_list.names[j].dest[iter], suffix);
@@ -244,7 +265,7 @@ get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, in
     	    else
     		bu_vls_printf(newname, "%d", num + i*state->incr);
 	} else /* non-region combinations */
-    	    bu_vls_printf(newname, "%d", (num==0)?2:num+i);
+    	    bu_vls_printf(newname, "%d", (num==0)?i+1:i+num);
 	i++;
     } while (db_lookup(_dbip, bu_vls_addr(newname), LOOKUP_QUIET) != NULL);
     return newname;
@@ -267,8 +288,13 @@ copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 
 	if (i==0)
 	    name = get_name(_dbip, proto, state, i);
-	else
-	    name = get_name(_dbip, db_lookup(_dbip, bu_vls_addr(&obj_list.names[idx].dest[i-1]), LOOKUP_QUIET), state, i);
+	else {
+	    dp = db_lookup(_dbip, bu_vls_addr(&obj_list.names[idx].dest[i-1]), LOOKUP_QUIET);
+	    if (!dp) {
+		continue;
+	    }
+	    name = get_name(_dbip, dp, state, i);
+	}
 
 	/* XXX: this can probably be optimized. */
 	bu_vls_strcpy(&obj_list.names[idx].dest[i], bu_vls_addr(name));
@@ -288,7 +314,7 @@ copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	}
 
 	if (rp->u_id == ID_SOLID) {
-	    strncpy(rp->s.s_name, dp->d_namep, BUFSIZ);
+	    bu_strlcpy(rp->s.s_name, dp->d_namep, CLONE_BUFSIZE);
 
 	    /* mirror */
 	    if (state->miraxis != W) {
@@ -342,11 +368,13 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 {
     int i;
     mat_t matrix;
+
     MAT_IDN(matrix);
 
     /* mirror */
     if (state->miraxis != W) {
-	bu_log("WARNING: mirroring not implemented!");
+	matrix[state->miraxis*5] = -1.0;
+	matrix[3 + state->miraxis*4] -= 2 * (matrix[3 + state->miraxis*4] - state->mirpos);
     }
 
     /* translate */
@@ -356,8 +384,16 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
     /* rotation */
     if (state->rot[W]) {
     	mat_t m2, t;
+
 	bn_mat_angles(m2, state->rot[X], state->rot[Y], state->rot[Z]);
-	bn_mat_mul(t, matrix, m2);
+	if (state->rpnt[W]) {
+	    mat_t m3;
+
+	    bn_mat_xform_about_pt(m3, m2, state->rpnt);
+	    bn_mat_mul(t, matrix, m3);
+	} else
+	    bn_mat_mul(t, matrix, m2);
+
 	MAT_COPY(matrix, t);
     }
 
@@ -373,6 +409,10 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	    dp = proto;
 	else
 	    dp = db_lookup(_dbip, bu_vls_addr(&obj_list.names[idx].dest[i-1]), LOOKUP_QUIET);
+
+	if (!dp) {
+	    continue;
+	}
 
 	name = get_name(_dbip, dp, state, i); /* get new name */
 	bu_vls_strcpy(&obj_list.names[idx].dest[i], bu_vls_addr(name));
@@ -394,6 +434,11 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	/* pull the new name */
 	dp = db_lookup(_dbip, bu_vls_addr(name), LOOKUP_QUIET);
 	bu_vls_free(name);
+	if (!dp) {
+	    bu_vls_free(name);
+	    continue;
+	}
+
 	/* write the new matrix to the new object */
 	if (rt_db_put_internal(dp, wdbp->dbip, &intern, &rt_uniresource) < 0)
 	    bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
@@ -464,12 +509,17 @@ copy_v4_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 	    struct bu_vls *name;
 	    if (i==0)
 		name = get_name(_dbip, proto, state, i);
-	    else
-		name = get_name(_dbip, db_lookup(_dbip, bu_vls_addr(&obj_list.names[idx].dest[i-1]), LOOKUP_QUIET), state, i);
+	    else {
+		dp = db_lookup(_dbip, bu_vls_addr(&obj_list.names[idx].dest[i-1]), LOOKUP_QUIET);
+		if (!dp) {
+		    continue;
+		}
+		name = get_name(_dbip, dp, state, i);
+	    }
 	    bu_vls_strcpy(&obj_list.names[idx].dest[i], bu_vls_addr(name));
 	    bu_vls_free(name);
 	}
-	strncpy(rp[0].c.c_name, bu_vls_addr(&obj_list.names[idx].dest[i]), BUFSIZ);
+	bu_strlcpy(rp[0].c.c_name, bu_vls_addr(&obj_list.names[idx].dest[i]), CLONE_BUFSIZE);
 
 	/* add the object to the directory */
 	dp = db_diradd(_dbip, rp->c.c_name, RT_DIR_PHONY_ADDR, proto->d_len, proto->d_flags, &proto->d_minor_type);
@@ -483,7 +533,7 @@ copy_v4_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 		bu_log("ERROR: clone internal error looking up %s\n", rp[j].M.m_instname);
 		return NULL;
 	    }
-	    snprintf(rp[j].M.m_instname, BUFSIZ, "%s", obj_list.names[index_in_list(obj_list, rp[j].M.m_instname)].dest[i]);
+	    snprintf(rp[j].M.m_instname, CLONE_BUFSIZE, "%s", obj_list.names[index_in_list(obj_list, rp[j].M.m_instname)].dest[i]);
 	}
 
 	/* write the object to disk */
@@ -507,7 +557,7 @@ int
 copy_v5_comb_tree(union tree *tree, int idx)
 {
     char *buf;
-    switch(tree->tr_op){
+    switch (tree->tr_op) {
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
@@ -522,7 +572,7 @@ copy_v5_comb_tree(union tree *tree, int idx)
 	    break;
 	case OP_DB_LEAF:
 	    buf = tree->tr_l.tl_name;
-	    tree->tr_l.tl_name = bu_strdup(bu_vls_addr(&obj_list.names[index_in_list(obj_list,buf)].dest[idx]));
+	    tree->tr_l.tl_name = bu_strdup(bu_vls_addr(&obj_list.names[index_in_list(obj_list, buf)].dest[idx]));
 	    bu_free(buf, "node name");
 	    break;
 	default:
@@ -552,8 +602,13 @@ copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
     for (i = 0; i < state->n_copies; i++) {
 	if (i==0)
 	    name = get_name(_dbip, proto, state, i);
-	else
-	    name = get_name(_dbip, db_lookup(_dbip, bu_vls_addr(&obj_list.names[idx].dest[i-1]), LOOKUP_QUIET), state, i);
+	else {
+	    dp = db_lookup(_dbip, bu_vls_addr(&obj_list.names[idx].dest[i-1]), LOOKUP_QUIET);
+	    if (!dp) {
+		continue;
+	    }
+	    name = get_name(_dbip, dp, state, i);
+	}
 	bu_vls_strcpy(&obj_list.names[idx].dest[i], bu_vls_addr(name));
 
 	/* we have a before and an after, do the copy */
@@ -562,6 +617,10 @@ copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 	    struct rt_comb_internal *comb;
 
 	    dp = db_lookup(_dbip, proto->d_namep, LOOKUP_QUIET);
+	    if (!dp) {
+		bu_vls_free(name);
+		continue;
+	    }
 	    if (rt_db_get_internal(&dbintern, dp, _dbip, bn_mat_identity, &rt_uniresource) < 0) {
 		bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
 		return NULL;
@@ -692,7 +751,7 @@ copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struc
     }
 
     nextname = get_name(_dbip, dp, state, 0);
-    if (strcmp(bu_vls_addr(copyname), bu_vls_addr(nextname)) == 0)
+    if (bu_vls_strcmp(copyname, nextname) == 0)
 	bu_log("ERROR: unable to successfully clone \"%s\" to \"%s\"\n", dp->d_namep, copyname);
     else
 	copy = db_lookup(_dbip, bu_vls_addr(copyname), LOOKUP_QUIET);
@@ -733,12 +792,12 @@ copy_object(struct db_i *_dbip, struct resource *resp, struct clone_state *state
 	char *av[3] = {"e", NULL, NULL};
 
 	idx = index_in_list(obj_list, state->src->d_namep);
-	for (i = 0; i < (state->n_copies > obj_list.name_size ? obj_list.name_size : state->n_copies) ; i++) {
+	for (i = 0; i < (state->n_copies > obj_list.name_size ? obj_list.name_size : state->n_copies); i++) {
 	    av[1] = bu_vls_addr(&obj_list.names[idx].dest[i]);
 	    /* draw does not use clientdata */
 	    cmd_draw( (ClientData)NULL, INTERP, 2, av );
 	}
-	if(state->autoview) {
+	if (state->autoview) {
 	    av[0] = "autoview";
 	    cmd_autoview((ClientData)NULL, INTERP, 1, av);
 	}
@@ -852,6 +911,7 @@ get_args(Tcl_Interp *interp, int argc, char **argv, struct clone_state *state)
 		state->rpnt[Y] = atof(argv[bu_optind++]);
 		state->rpnt[Z] = atof(argv[bu_optind++]);
 		state->rpnt[W] = 1;
+		break;
 	    case 'r':
 		state->rot[X] = atof(bu_optarg);
 		state->rot[Y] = atof(argv[bu_optind++]);
@@ -910,9 +970,10 @@ int
 f_clone(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     struct clone_state	state;
+    struct directory *copy;
 
     /* allow interrupts */
-    if( setjmp( jmp_env ) == 0 )
+    if ( setjmp( jmp_env ) == 0 )
 	(void)signal( SIGINT, sig3);
     else
 	return TCL_OK;
@@ -927,7 +988,13 @@ f_clone(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
 
     /* do it, use global dbip */
-    (void)copy_object(dbip, &rt_uniresource, &state);
+    if ((copy = copy_object(dbip, &rt_uniresource, &state)) != (struct directory *)NULL) {
+	Tcl_DString ds;
+
+	Tcl_DStringInit(&ds);
+	Tcl_DStringAppend(&ds, copy->d_namep, -1);
+	Tcl_DStringResult(interp, &ds);
+    }
 
     (void)signal( SIGINT, SIG_IGN );
     return TCL_OK;
@@ -985,7 +1052,7 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     int no_draw = 0;
 
     /* allow interrupts */
-    if( setjmp( jmp_env ) == 0 )
+    if ( setjmp( jmp_env ) == 0 )
 	(void)signal( SIGINT, sig3 );
     else
 	return TCL_OK;
@@ -1058,37 +1125,36 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	bu_fgets(line, 81, points);
     while (strcmp(strtok(line, ","), "112") != 0);
 
-    strcpy(tok, strtok(NULL, ","));
-    strcpy(tok, strtok(NULL, ","));
-    strcpy(tok, strtok(NULL, ","));
-    strcpy(tok, strtok(NULL, ","));
+    bu_strlcpy(tok, strtok(NULL, ","), sizeof(tok));
+    bu_strlcpy(tok, strtok(NULL, ","), sizeof(tok));
+    bu_strlcpy(tok, strtok(NULL, ","), sizeof(tok));
+    bu_strlcpy(tok, strtok(NULL, ","), sizeof(tok));
     s.n_segs = atoi(tok);
     s.t = (fastf_t *)bu_malloc(sizeof(fastf_t) * (s.n_segs+1), "t");
     s.k = (struct knot *)bu_malloc(sizeof(struct knot) * (s.n_segs+1), "k");
     for (i = 0; i <= s.n_segs; i++) {
-	strcpy(tok, strtok(NULL, ","));
+	bu_strlcpy(tok, strtok(NULL, ","), sizeof(tok));
 	if (strstr(tok, "P") != NULL) {
 	    bu_fgets(line, 81, points);
 	    bu_fgets(line, 81, points);
-	    strcpy(tok, strtok(line, ","));
+	    bu_strlcpy(tok, strtok(line, ","), sizeof(tok));
 	}
 	s.t[i] = atof(tok);
     }
     for (i = 0; i <= s.n_segs; i++)
 	for (j = 0; j < 3; j++) {
 	    for (k = 0; k < 4; k++) {
-		strcpy(tok, strtok(NULL, ","));
+		bu_strlcpy(tok, strtok(NULL, ","), sizeof(tok));
 		if (strstr(tok, "P") != NULL) {
 		    bu_fgets(line, 81, points);
 		    bu_fgets(line, 81, points);
-		    strcpy(tok, strtok(line, ","));
+		    bu_strlcpy(tok, strtok(line, ","), sizeof(tok));
 		}
 		s.k[i].c[j][k] = atof(tok);
 	    }
 	    s.k[i].pt[j] = s.k[i].c[j][0];
 	}
     fclose(points);
-
 
     /* Interpolate link vertices *********************/
     for (i = 0; i < s.n_segs; i++) /* determine initial track length */
@@ -1097,7 +1163,8 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     VMOVE(verts[0], s.k[0].pt);
     olen = 2*len;
 
-    for (i = 0; (fabs(olen-len) >= VUNITIZE_TOL) && (i < 250); i++) { /* number of track iterations */
+    for (i = 0; (fabs(olen-len) >= VUNITIZE_TOL) && (i < 250); i++) {
+	/* number of track iterations */
 	fprintf(stdout, ".");
 	fflush(stdout);
 	for (j = 0; j < n_links; j++) /* set length of each link based on current track length */
@@ -1107,7 +1174,8 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	mid = 0;
 
 	for (j = 0; j < n_verts+1; j++) /* around the track once */
-	    for (k = 0; k < n_links; k++) { /* for each sub-link */
+	    for (k = 0; k < n_links; k++) {
+		/* for each sub-link */
 		if ((k == 0) && (j == 0)) {continue;} /* the first sub-link of the first link is already in position */
 		min = mid;
 		max = s.t[s.n_segs];
@@ -1153,10 +1221,10 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	vect_t *rots;
 
 	for (i = 0; i < 2; i++)
-	    vargs[i] = (char *)bu_malloc(sizeof(char)*BUFSIZ, "alloc vargs1");
+	    vargs[i] = (char *)bu_malloc(sizeof(char)*CLONE_BUFSIZE, "alloc vargs1");
 
-	strcpy(vargs[0], "e");
-	strcpy(vargs[1], bu_vls_addr(&links[j].name));
+	bu_strlcpy(vargs[0], "e", sizeof(vargs[0]));
+	bu_strlcpy(vargs[1], bu_vls_addr(&links[j].name), CLONE_BUFSIZE);
 	vargs[2] = NULL;
 
 	state.interp = interp;
@@ -1170,7 +1238,7 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	for (i = 0; i < n_links; i++) {
 	    /* global dbip */
 	    dps[i] = db_lookup(dbip, bu_vls_addr(&links[i].name), LOOKUP_QUIET);
-	    /* VSET(rots[i], 0,0,0);*/
+	    /* VSET(rots[i], 0, 0, 0);*/
 	}
 
 	for (i = 0; i < n_verts-1; i++)
@@ -1186,15 +1254,15 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		     -atan2(pt[Y], sqrt(pt[X]*pt[X]+pt[Z]*pt[Z])));
 		VSCALE(state.rot, state.rot, radtodeg);
 		/*
-		VSUB2(state.rot, state.rot, rots[j]);
-		VADD2(rots[j], state.rot, rots[j]);
+		  VSUB2(state.rot, state.rot, rots[j]);
+		  VADD2(rots[j], state.rot, rots[j]);
 		*/
 
 		state.src = dps[j];
 		/* global dbip */
 		dps[j] = copy_object(dbip, &rt_uniresource, &state);
-		strcpy(vargs[1], dps[j]->d_namep);
-		/* strcpy(vargs[1], obj_list.names[index_in_list(obj_list, links[j].name)].dest[0]);*/
+		bu_strlcpy(vargs[1], dps[j]->d_namep, CLONE_BUFSIZE);
+		/* bu_strlcpy(vargs[1], obj_list.names[index_in_list(obj_list, links[j].name)].dest[0], sizeof(vargs[1]));*/
 
 		if (!no_draw || !is_dm_null()) {
 		    drawtrees(2, vargs, 1);
@@ -1224,8 +1292,8 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

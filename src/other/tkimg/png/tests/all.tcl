@@ -4,7 +4,7 @@
 #
 # Copyright (c) 2002         Andreas Kupries <andreas_kupries@users.sourceforge.net>
 # All rights reserved.
-# 
+#
 # RCS: @(#) $Id$
 
 set _pwd  [pwd]

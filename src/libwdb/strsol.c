@@ -1,7 +1,7 @@
 /*                        S T R S O L . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2007 United States Government as represented by
+ * Copyright (c) 1994-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,7 +39,8 @@
 #include "common.h"
 
 #include <stdio.h>
-#include "machine.h"
+#include "bio.h"
+
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
@@ -58,33 +59,39 @@
  */
 int
 mk_strsol( fp, name, string_solid, string_arg )
-FILE		*fp;
-const char	*name;
-const char	*string_solid;
-const char	*string_arg;
+    FILE		*fp;
+    const char	*name;
+    const char	*string_solid;
+    const char	*string_arg;
 {
-	union record	rec[DB_SS_NGRAN];
+    union record	rec[DB_SS_NGRAN];
 
-	BU_ASSERT_LONG( mk_version, <=, 4 );
+    BU_ASSERT_LONG( mk_version, <=, 4 );
 
-	bzero( (char *)rec, sizeof(rec) );
-	rec[0].ss.ss_id = DBID_STRSOL;
-	NAMEMOVE( name, rec[0].ss.ss_name );
-	strncpy( rec[0].ss.ss_keyword, string_solid, sizeof(rec[0].ss.ss_keyword)-1 );
-	strncpy( rec[0].ss.ss_args, string_arg, DB_SS_LEN-1 );
+    memset((char *)rec, 0, sizeof(rec));
+    rec[0].ss.ss_id = DBID_STRSOL;
+    NAMEMOVE( name, rec[0].ss.ss_name );
+    bu_strlcpy( rec[0].ss.ss_keyword, string_solid, sizeof(rec[0].ss.ss_keyword) );
+    bu_strlcpy( rec[0].ss.ss_args, string_arg, DB_SS_LEN );
 
-	if( fwrite( (char *)rec, sizeof(rec), 1, fp ) != 1 )
-		return -1;
-	return 0;
+    if ( fwrite( (char *)rec, sizeof(rec), 1, fp ) != 1 )
+	return -1;
+    return 0;
 }
+
+#else
+
+/* quell empty-compilation unit warnings */
+static const int unused = 0;
+
 #endif
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

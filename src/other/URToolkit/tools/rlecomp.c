@@ -1,30 +1,30 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
+/*
  * rlecomp.c - Digitial image compositor (The Poor Man's Pixar)
- * 
+ *
  * Author:	Rod Bogart and John W. Peterson
  * 		Computer Science Dept.
  * 		University of Utah
  * Date:	Tue Feb 25 1986
  * Copyright (c) 1986 Rod Bogart and John W. Peterson
- * 
- *    For an explanation of the compositing algorithms, see 
+ *
+ *    For an explanation of the compositing algorithms, see
  *    "Compositing Digital Images", by Porter and Duff,
  *    SIGGRAPH 84, p.255.
  */
@@ -58,7 +58,7 @@
 void get_scanline();
 void copy_scanline();
 
-/* 
+/*
  * Global raw data structures for copy_scanline.
  */
 rle_op ** Araw, **Braw;
@@ -89,7 +89,7 @@ char	*argv[];
     int 	Askip, Bskip;	/* Blank space counters for copy_scanline */
     int		rle_cnt, rle_err;
     char	*err_fname;
-      
+
     static CONST_DECL char *comp_ops[NUM_OPS] =
 	 { "clear",
 	   "over",
@@ -121,13 +121,13 @@ char	*argv[];
     op_code = -1;
     for (i=0; i < NUM_OPS; i++)
 	if (strcmp(op_name, comp_ops[i]) == 0) op_code = i;
-    
+
     if (op_code == -1)
     {
 	fprintf(stderr, "%s: Invalid compositor operation\n", op_name);
 	exit(-2);
     }
-    
+
     A_hdr = *rle_hdr_init( NULL );
     B_hdr = *rle_hdr_init( NULL );
     out_hdr = *rle_hdr_init( NULL );
@@ -238,7 +238,7 @@ char	*argv[];
 
 	for ( j = out_hdr.ymin; j <= out_hdr.ymax ; j++)
 	{
-	    /* 
+	    /*
 	     * Special case - if this scanline is in picture A but not
 	     * B, don't do the compositing arithmaticly - just copy (or
 	     * don't copy) the picture information, depending on the
@@ -382,7 +382,7 @@ char	*argv[];
 				break;
 			    }
 
-			    *scan = (rle_pixel) ((int_result > 255) ? 255 : 
+			    *scan = (rle_pixel) ((int_result > 255) ? 255 :
 						 ((int_result < 0) ? 0 : int_result));
 			}
 		    }
@@ -471,7 +471,7 @@ int * tmp_nraw;			/* copy_scanline. */
  * if alpha isn't present.
  */
 void
-copy_scanline( in_hdr, out_hdr, ypos, num_skip, out_raw, out_nraw, 
+copy_scanline( in_hdr, out_hdr, ypos, num_skip, out_raw, out_nraw,
 	       blank_output )
 rle_hdr * in_hdr, * out_hdr;
 int ypos;
@@ -503,7 +503,7 @@ int blank_output;		/* if non-zero, just eat input & blank output */
 	    *num_skip = -1;	/* Flag data available. */
 	return;
     }
-    
+
     if (! *num_skip)		/* num_skip == 0, must read data... */
 	*num_skip = rle_getraw( in_hdr, out_raw, out_nraw );
     else
@@ -572,13 +572,13 @@ int blank_output;		/* if non-zero, just eat input & blank output */
 	     */
 	    fakeruns = 0;
 	    i = 0;
-	
+
 	    while ( i < xlen )
 	    {
 		j = 0;
 		out_raw[RLE_ALPHA][fakeruns].opcode = RRunDataOp;
 		out_raw[RLE_ALPHA][fakeruns].u.run_val = (rle_pixel) 255;
-	    
+
 		while ( (non_zero_pixels[i] == (rle_pixel) 0) && (i < xlen) )
 		    i++;
 		out_raw[RLE_ALPHA][fakeruns].xloc = i + xmin;
@@ -590,7 +590,7 @@ int blank_output;		/* if non-zero, just eat input & blank output */
 	    }
 	    out_nraw[RLE_ALPHA] = fakeruns;
 	}
-		
+
 	/* dump the raw stuff to the output file */
 	rle_putraw( out_raw, out_nraw, out_hdr );
     }

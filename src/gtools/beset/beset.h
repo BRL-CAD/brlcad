@@ -1,7 +1,7 @@
 /*                         B E S E T . H
  * BRL-CAD
  *
- * Copyright (c) 2007 United States Government as represented by
+ * Copyright (c) 2007-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,18 +43,18 @@
 #define NL(a) pop.name[(a)]
 #define NL_P(a) p->name[(a)]
 
-struct options{
+struct beset_options{
     int pop_size;
     int gens;
     int res;
     int kill_lower;
     int keep_upper;
     int mut_rate;
-    int cross_rate
+    int cross_rate;
 };
 
 
-/* 
+/*
  * MACROS TO IMPROVE READABILITY
  * OF FITNESS FUNCTION
  */
@@ -68,8 +68,8 @@ struct options{
  * Local Variables:
  * tab-width: 8
  * mode: C
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

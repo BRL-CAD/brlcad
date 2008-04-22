@@ -13,9 +13,7 @@
  */
 
 #include <stdio.h>
-#include "tk.h"
 #include "tkInt.h"
-#include "tkPort.h"
 #include "tkCanvas.h"
 
 /*

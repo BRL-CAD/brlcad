@@ -1,7 +1,7 @@
 /*                         B U R S T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  *
  */
 /** @file burst.h
- *	Author:		Gary S. Moss
+ *
  */
 
 #ifndef __BURST_H__
@@ -28,12 +28,12 @@
 #include "common.h"
 
 /* for genptr_t */
-#include "machine.h"
+#include "bu.h"
 
 
 /* NSIG not always defined in <signal.h> */
 #ifndef NSIG
-#define NSIG 64
+#  define NSIG 64
 #endif
 
 /* ANSI C definitions */
@@ -42,20 +42,6 @@ typedef genptr_t pointer;			/* generic pointer */
 
 
 #define DEGRAD	57.2957795130823208767981548141051703324054724665642
-
-/* allow for SGI screw-up, the single-precision math libraries */
-#if defined( sgi ) && ! defined( mips )
-#  define SINGLE_PRECISION 1
-#else
-#  define SINGLE_PRECISION 0
-#endif
-
-/* allow for SGI screw-up, winclose() dumps core on some systems */
-#if defined(SGI4D_Rel2)
-#  define SGI_WINCLOSE_BUG 1
-#else
-#  define SGI_WINCLOSE_BUG 0
-#endif
 
 /* menu configuration */
 #define MENU_LFT	1
@@ -104,10 +90,10 @@ typedef genptr_t pointer;			/* generic pointer */
 #define DFL_UNITS	U_MILLIMETERS
 
 /* firing mode bit definitions */
-#define ASNBIT(w,b)	(w = (b))
-#define SETBIT(w,b)	(w |= (b))
-#define CLRBIT(w,b)	(w &= ~(b))
-#define TSTBIT(w,b)	((w)&(b))
+#define ASNBIT(w, b)	(w = (b))
+#define SETBIT(w, b)	(w |= (b))
+#define CLRBIT(w, b)	(w &= ~(b))
+#define TSTBIT(w, b)	((w)&(b))
 #define FM_GRID  0	/* generate grid of shotlines */
 #define FM_DFLT	 FM_GRID
 #define FM_PART  (1)	/* bit 0: ON = partial envelope, OFF = full */
@@ -190,14 +176,14 @@ typedef genptr_t pointer;			/* generic pointer */
 #define OUTSIDE_AIR	1	/* outside air is called 01 air */
 
 #define Air(rp)		((rp)->reg_aircode > 0)
-#define DiffAir(rp,sp)	((rp)->reg_aircode != (sp)->reg_aircode)
-#define SameAir(rp,sp)	((rp)->reg_aircode == (sp)->reg_aircode)
-#define SameCmp(rp,sp)	((rp)->reg_regionid == (sp)->reg_regionid)
+#define DiffAir(rp, sp)	((rp)->reg_aircode != (sp)->reg_aircode)
+#define SameAir(rp, sp)	((rp)->reg_aircode == (sp)->reg_aircode)
+#define SameCmp(rp, sp)	((rp)->reg_regionid == (sp)->reg_regionid)
 #define OutsideAir(rp)	((rp)->reg_aircode == OUTSIDE_AIR)
 #define InsideAir(rp)	(Air(rp)&& !OutsideAir(rp))
 
 #define Malloc_Bomb( _bytes_ ) \
-		brst_log( "\"%s\"(%d) : allocation of %d bytes failed.\n",\
+		brst_log( "\"%s\"(%d) : allocation of %d bytes failed.\n", \
 				__FILE__, __LINE__, _bytes_ )
 
 #define Swap_Doubles( a_, b_ ) \
@@ -209,29 +195,29 @@ typedef genptr_t pointer;			/* generic pointer */
 
 typedef struct ids	Ids;
 struct ids
-	{
-	short	i_lower;
-	short	i_upper;
-	Ids	*i_next;
-	};
+{
+    short	i_lower;
+    short	i_upper;
+    Ids	*i_next;
+};
 #define IDS_NULL	(Ids *) 0
 
 typedef struct colors	Colors;
 struct colors
-	{
-	short	c_lower;
-	short	c_upper;
-	unsigned char	c_rgb[3];
-	Colors	*c_next;
-	};
+{
+    short	c_lower;
+    short	c_upper;
+    unsigned char	c_rgb[3];
+    Colors	*c_next;
+};
 #define COLORS_NULL	(Colors *) 0
 
 typedef struct pt_queue	Pt_Queue;
 struct pt_queue
-	{
-	struct partition	*q_part;
-	Pt_Queue		*q_next;
-	};
+{
+    struct partition	*q_part;
+    Pt_Queue		*q_next;
+};
 
 #define PT_Q_NULL	(Pt_Queue *) 0
 
@@ -241,8 +227,8 @@ struct pt_queue
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

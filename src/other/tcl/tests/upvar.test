@@ -455,7 +455,7 @@ test upvar-NS-1.3 {nsupvar links to correct variable} \
 	    set w
 	}
     } \
-    -result {namespace "test_ns_0" does not exist} \
+    -result {namespace "test_ns_0" not found in "::test_ns_1"} \
     -returnCodes error \
     -cleanup {namespace delete test_ns_1}
 
@@ -469,7 +469,7 @@ test upvar-NS-1.4 {nsupvar links to correct variable} \
 	    return [a]
 	}
     } \
-    -result {namespace "test_ns_0" does not exist} \
+    -result {namespace "test_ns_0" not found in "::test_ns_1"} \
     -returnCodes error \
     -cleanup {namespace delete test_ns_1}
 
@@ -540,7 +540,7 @@ test upvar-NS-1.9 {nsupvar links to correct variable} \
 	    return [a]
 	}
     } \
-    -result {namespace "test_ns_0" does not exist} \
+    -result {namespace "test_ns_0" not found in "::test_ns_1"} \
     -returnCodes error \
     -cleanup {namespace delete test_ns_1}
 

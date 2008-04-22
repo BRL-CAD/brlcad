@@ -1,14 +1,14 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
@@ -18,9 +18,9 @@
  *  Modified at BRL 16-May-88 by Mike Muuss to avoid Alliant STDC desire
  *  to have all "void" functions so declared.
  */
-/* 
+/*
  * rle_putrow.c - Save a row of the fb to a file.
- * 
+ *
  * Author:	Spencer W. Thomas
  * 		Computer Science Dept.
  * 		University of Utah
@@ -29,7 +29,7 @@
  *
  * $Id$
  */
- 
+
 #include "stdio.h"
 #include "rle_put.h"
 #include "rle.h"
@@ -50,7 +50,7 @@ static int findruns();
 /*****************************************************************
  * TAG( rle_putrow )
  * Write a scanline to the output file.
- * 
+ *
  * Inputs:
  *	rows:		Pointer to vector of pointers to
  *			rle_pixel arrays containing the pixel information.
@@ -114,7 +114,7 @@ register rle_hdr * the_hdr;
 	the_hdr->priv.put.nblank += rowlen;
 	return;
     }
-    /* 
+    /*
      * If not done already, allocate space to remember runs of
      * non-background color.  A run of bg color must be at least 2
      * bytes long to count, so there can be at most rowlen/3 of them.
@@ -135,7 +135,7 @@ register rle_hdr * the_hdr;
 	bits[i] = RLE_BIT( *the_hdr, i );
     bits[255] = RLE_BIT( *the_hdr, -1 );
 
-    /* 
+    /*
      * If saving only non-background pixels, find runs of them.  Note
      * that the alpha channel is considered to be background iff it is
      * zero.
@@ -143,7 +143,7 @@ register rle_hdr * the_hdr;
 #ifdef	FASTRUNS
     if ( the_hdr->background )
     {
-	/* 
+	/*
 	 * Find runs in each color individually, merging them as we go.
 	 */
 	nrun = 0;		/* start out with no runs */
@@ -176,7 +176,7 @@ register rle_hdr * the_hdr;
 		else
 		    PBRUN[j][0] = i; /* start of run */
 		for ( i++;
-		      i < rowlen && 
+		      i < rowlen &&
 			( !same_color( i, rows, the_hdr->bg_color,
 					 the_hdr->ncolors, bits ) ||
 			  (the_hdr->alpha && rows[-1][i] != 0) );
@@ -262,7 +262,7 @@ register rle_hdr * the_hdr;
 			    rstart = i;
 			}
 			break;
-	    
+
 		    case RUN4:
 			if (runval == row[i])
 			{
@@ -276,7 +276,7 @@ register rle_hdr * the_hdr;
 				state  = RUN5;	/* Need some more. */
 			    else
 				state = RUN7;	/* Next one makes a run. */
-			    
+
 			}
 			else
 			{
@@ -329,7 +329,7 @@ register rle_hdr * the_hdr;
 			    rstart = i;
 			}
 			break;
-	    
+
 		    case INRUN:
 			if (runval != row[i])	/* if run out */
 			{
@@ -375,7 +375,7 @@ register rle_hdr * the_hdr;
 
 /*****************************************************************
  * TAG( rle_skiprow )
- * 
+ *
  * Skip rows in RLE file.
  * Inputs:
  * 	the_hdr:    	Header struct for RLE output file.
@@ -400,8 +400,8 @@ int nrow;
 
 /*****************************************************************
  * TAG( rle_put_init )
- * 
- * Initialize the header structure for writing scanlines. 
+ *
+ * Initialize the header structure for writing scanlines.
  * Inputs:
  *	[None]
  * Outputs:
@@ -438,7 +438,7 @@ register rle_hdr *the_hdr;
 
 /*****************************************************************
  * TAG( rle_put_setup )
- * 
+ *
  * Initialize for writing RLE, and write header to output file.
  * Inputs:
  * 	the_hdr:	Describes output image.
@@ -492,7 +492,7 @@ register rle_hdr * the_hdr;
 #ifndef FASTRUNS
 /*****************************************************************
  * TAG( same_color )
- * 
+ *
  * Determine if the color at the given index position in the scan rows
  * is the same as the background color.
  * Inputs:
@@ -525,7 +525,7 @@ char *bits;
 
 /*****************************************************************
  * TAG( findruns )
- * 
+ *
  * Find runs not a given color in the row.
  * Inputs:
  * 	row:		Row of pixel values
@@ -652,7 +652,7 @@ short (*brun)[2];
 	    putc( '\n', stderr );
 #endif
 	}
-	
+
 	/* Search in next space */
 	i++;
     }
@@ -663,7 +663,7 @@ short (*brun)[2];
 
 /*****************************************************************
  * TAG( rgb_to_bw )
- * 
+ *
  * Perform the NTSC Y transform on RGB data to get B&W data.
  * Inputs:
  * 	red_row, green_row, blue_row:	Given RGB pixel data.

@@ -1,7 +1,7 @@
 /*                     G _ T R A N S F E R . C
  * BRL-CAD
  *
- * Copyright (c) 2006-2007 United States Government as represented by
+ * Copyright (c) 2006-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,8 +18,6 @@
  * information.
  */
 /** @file g_transfer.c
- *
- * Author: Christopher Sean Morrison
  *
  * Relatively simple example database transfer program that shows how
  * to open a database, extract a serialized version of specified
@@ -39,12 +37,9 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
 /* interface headers */
-#include "machine.h"
 #include "raytrace.h"
 #include "bu.h"
 #include "pkg.h"
@@ -90,16 +85,14 @@ usage(const char *msg, const char *argv0)
 	bu_log("%s\n", msg);
     }
     bu_log("Usage: %s [-t] [-p#] host gfile [geometry ...]\n\t-p#\tport number to send to (default 2000)\n\thost\thostname or IP address of receiving server\n\tgfile\tBRL-CAD .g database file\n\tgeometry\tname(s) of geometry to send (OPTIONAL)\n", argv0 ? argv0 : "g_transfer");
-    bu_log("Usage: %s -r [-p#]\n\t-p#\tport number to listen on (default 2000)\n", argv0 ? argv0 : "g_transfer");
-    exit(1);
+    bu_exit(1, "Usage: %s -r [-p#]\n\t-p#\tport number to listen on (default 2000)\n", argv0 ? argv0 : "g_transfer");
 }
 
 
 void
 validate_port(int port) {
-    if (port < 0) {
-	bu_bomb("Invalid negative port range\n");
-    }
+    if (port < 0)
+	bu_exit(EXIT_FAILURE, "Invalid negative port range\n");
 }
 
 
@@ -173,12 +166,12 @@ server_args(struct pkg_conn *connection, char *buf)
      */
     srv_argc++;
     if (!srv_argv) {
-	srv_argv = bu_calloc(1, sizeof(char *), "server_args() srv_argv calloc");
+	srv_argv = bu_calloc(1, srv_argc * sizeof(char *), "server_args() srv_argv calloc");
     } else {
 	srv_argv = bu_realloc(srv_argv, srv_argc * sizeof(char *), "server_args() srv_argv realloc");
     }
-    srv_argv[srv_argc - 1] = bu_calloc(1, sizeof(buf) + 1, "server_args() srv_argv[] calloc");
-    strcpy(srv_argv[srv_argc - 1], buf);
+    srv_argv[srv_argc - 1] = bu_calloc(1, strlen(buf)+1, "server_args() srv_argv[] calloc");
+    bu_strlcpy(srv_argv[srv_argc - 1], buf, strlen(buf)+1);
 
     bu_log("Planning to shoot at %s\n", buf);
 
@@ -229,7 +222,7 @@ server_ciao(struct pkg_conn *connection, char *buf)
 
     if (DBIP != NULL) {
 	/* uncomment to avoid an in-mem dbip close bug */
-	/* DBIP->dbi_fp = fopen("/dev/null", "r");*/
+	/* DBIP->dbi_fp = fopen("/dev/null", "rb");*/
 	db_close(DBIP);
 	DBIP = NULL;
     }
@@ -261,9 +254,8 @@ run_server(int port) {
     /* start up the server on the given port */
     snprintf(portname, MAX_DIGITS - 1, "%d", port);
     netfd = pkg_permserver(portname, "tcp", 0, 0);
-    if (netfd < 0) {
-	bu_bomb("Unable to start the server");
-    }
+    if (netfd < 0)
+	bu_exit(EXIT_FAILURE, "Unable to start the server");
 
     /* listen for a good client indefinitely */
     do {
@@ -358,7 +350,7 @@ send_to_server(struct db_i *dbip, struct directory *dp, genptr_t connection)
     }
 
     /* send the external representation over the wire */
-    bu_log("Sending %s\n",dp->d_namep);
+    bu_log("Sending %s\n", dp->d_namep);
 
     /* pad the data with the length in ascii for convenience */
     bytes_sent = pkg_send(MSG_GEOM, ext.ext_buf, ext.ext_nbytes, stash->connection);
@@ -395,7 +387,7 @@ run_client(const char *server, int port, struct db_i *dbip, int geomc, const cha
     stash.connection = pkg_open(server, s_port, "tcp", NULL, NULL, NULL, NULL);
     if (stash.connection == PKC_ERROR) {
 	bu_log("Connection to %s, port %d, failed.\n", server, port);
-	bu_bomb("ERROR: Unable to open a connection to the server\n");
+	bu_exit(EXIT_FAILURE, "ERROR: Unable to open a connection to the server\n");
     }
     stash.server = server;
     stash.port = port;
@@ -407,7 +399,7 @@ run_client(const char *server, int port, struct db_i *dbip, int geomc, const cha
     if (bytes_sent < 0) {
 	pkg_close(stash.connection);
 	bu_log("Connection to %s, port %d, seems faulty.\n", server, port);
-	bu_bomb("ERROR: Unable to communicate with the server\n");
+	bu_exit(EXIT_FAILURE, "ERROR: Unable to communicate with the server\n");
     }
 
     bu_log("Database title is:\n%s\n", dbip->dbi_title);
@@ -427,14 +419,14 @@ run_client(const char *server, int port, struct db_i *dbip, int geomc, const cha
 	    if (bytes_sent < 0) {
 		pkg_close(stash.connection);
 		bu_log("Unable to request server shot at %s\n", geomv[i]);
-		bu_bomb("ERROR: Unable to communicate request to server\n");
+		bu_exit(EXIT_FAILURE, "ERROR: Unable to communicate request to server\n");
 	    }
 
 	    dp = db_lookup(dbip, geomv[i], LOOKUP_NOISY);
 	    if (dp == DIR_NULL) {
 		pkg_close(stash.connection);
 		bu_log("Unable to lookup %s\n", geomv[i]);
-		bu_bomb("ERROR: requested geometry could not be found\n");
+		bu_exit(EXIT_FAILURE, "ERROR: requested geometry could not be found\n");
 	    }
 	    db_functree(dbip, dp, send_to_server, send_to_server, &rt_uniresource, (genptr_t)&stash);
 	}
@@ -517,7 +509,7 @@ main(int argc, char *argv[]) {
 	}
 
 	/* mark the database as in-memory only */
-	//	XXX = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM);
+	/* XXX = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM); */
 
 	/* ignore broken pipes */
 	(void)signal(SIGPIPE, SIG_IGN);
@@ -545,7 +537,7 @@ main(int argc, char *argv[]) {
     /* make sure the geometry file exists */
     if (!bu_file_exists(geometry_file)) {
 	bu_log("Geometry file does not exist: %s\n", geometry_file);
-	bu_bomb("Need a BRL-CAD .g geometry database file\n");
+	bu_exit(EXIT_FAILURE, "Need a BRL-CAD .g geometry database file\n");
     }
 
     /* XXX fixed in latest db_open(), but call for now just in case
@@ -559,15 +551,15 @@ main(int argc, char *argv[]) {
     if (dbip == DBI_NULL) {
 	bu_log("Cannot open %s\n", geometry_file);
 	perror(argv0);
-	bu_bomb("Need a geometry file");
+	bu_exit(EXIT_FAILURE, "Need a geometry file");
     }
 
     /* load the database directory into memory */
     if (db_dirbuild(dbip) < 0) {
 	db_close(dbip);
 	bu_log("Unable to load the database directory for file: %s\n", geometry_file);
-	bu_bomb("Can't read geometry file");
-     }
+	bu_exit(EXIT_FAILURE, "Can't read geometry file");
+    }
 
     /* fire up the client */
     bu_log("Connecting to %s, port %d\n", server_name, port);
@@ -583,8 +575,8 @@ main(int argc, char *argv[]) {
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

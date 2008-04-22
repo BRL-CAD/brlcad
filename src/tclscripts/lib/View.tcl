@@ -1,7 +1,7 @@
 #                        V I E W . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2007 United States Government as represented by
+# Copyright (c) 1998-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -18,16 +18,6 @@
 # information.
 #
 ###
-##                 V I E W . T C L
-#
-# Author -
-#	Bob Parker
-#
-# Source -
-#	The U. S. Army Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#
 #
 # Description -
 #	The View class wraps LIBRT's view object.
@@ -45,6 +35,7 @@
     destructor {}
 
     public method ae {args}
+    public method ae2dir {args}
     public method arot {args}
     public method base2local {args}
     public method center {args}
@@ -153,6 +144,10 @@
     set ae $args
 
     return
+}
+
+::itcl::body View::ae2dir {args} {
+    eval $view ae2dir $args
 }
 
 ::itcl::body View::arot {args} {
@@ -349,7 +344,7 @@
 }
 
 ::itcl::body View::size {args} {
-#    eval $view size $args
+    #    eval $view size $args
     return [eval $view size $args]
 }
 
@@ -440,9 +435,10 @@
 }
 
 ::itcl::body View::help_init {} {
-    set help [cadwidgets::Help #auto]
+    set help [cadwidgets::Help \#auto]
 
     $help add ae		{{["az el tw"]} {set/get the azimuth, elevation and twist}}
+    $help add ae2dir		{{[-i] az el} {return the view direction}}
     $help add arot		{{x y z angle} {rotate about axis x,y,z by angle (degrees)}}
     $help add center		{{["x y z"]} {set/get the view center}}
     $help add coord		{{[m|v]} {set/get the coodinate system}}
@@ -468,7 +464,7 @@
     $help add slew		{{"x y"} {slew the view}}
     $help add tra		{{[-v|-m] "x y z"} {translate the view}}
     $help add units		{{[unit]} {get/set the local units}}
-    $help add viewDir		{{[-1]} {return the view direction}}
+    $help add viewDir		{{[-i]} {return the view direction}}
     $help add vrot		{{xdeg ydeg zdeg} {rotate viewpoint}}
     $help add vtra		{{"x y z"} {translate the view}}
     $help add zoom		{{sf} {zoom view by specified scale factor}}

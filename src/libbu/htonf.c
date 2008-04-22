@@ -1,7 +1,7 @@
 /*                         H T O N F . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,20 +24,12 @@
  * @brief convert floats to host/network format
  *
  * Host to Network Floats  +  Network to Host Floats.
- *  Author -
- *	Michael John Muuss
+ *
  */
-
-
-#ifndef lint
-static const char libbu_htond_RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
-
 #include <stdio.h>
-#include "machine.h"
 #include "bu.h"
 
 #ifdef HAVE_MEMORY_H
@@ -46,99 +38,87 @@ static const char libbu_htond_RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 
 /**
- *			H T O N F
+ * H T O N F
  *
- *  Host to Network Floats
+ * Host to Network Floats
  */
 void
 htonf(register unsigned char *out, register const unsigned char *in, int count)
 {
-#if	defined(NATURAL_IEEE)
-	/*
-	 *  First, the case where the system already operates in
-	 *  IEEE format internally, using big-endian order.
-	 *  These are the lucky ones.
-	 */
-#	ifdef HAVE_MEMORY_H
-		memcpy( out, in, count*SIZEOF_NETWORK_FLOAT );
-#	else
-		bcopy( in, out, count*SIZEOF_NETWORK_FLOAT );
-#	endif
-	return;
-#	define	HTONF	yes1
-#endif
+    register int i;
 
-#if	defined(REVERSE_IEEE)
-	/* This machine uses IEEE, but in little-endian byte order */
-	register int	i;
-	for( i=count-1; i >= 0; i-- )  {
+    switch (bu_byteorder()) {
+	case BU_BIG_ENDIAN:
+	    /*
+	     * First, the case where the system already operates in
+	     * IEEE format internally, using big-endian order.  These
+	     * are the lucky ones.
+	     */
+	    memcpy(out, in, count*SIZEOF_NETWORK_FLOAT);
+	    return;
+	case BU_LITTLE_ENDIAN:
+	    /*
+	     * This machine uses IEEE, but in little-endian byte order
+	     */
+	    for ( i=count-1; i >= 0; i-- )  {
 		*out++ = in[3];
 		*out++ = in[2];
 		*out++ = in[1];
 		*out++ = in[0];
 		in += SIZEOF_NETWORK_FLOAT;
-	}
-	return;
-#	define	HTONF	yes2
-#endif
+	    }
+	    return;
+    }
 
-	/* Now, for the machine-specific stuff. */
-
-#ifndef HTONF
-# include "ntohf.c:  ERROR, no NtoHD conversion for this machine type"
-#endif
+    bu_bomb("ntohf.c:  ERROR, no NtoHD conversion for this machine type\n");
 }
 
 
 /**
- *			N T O H F
+ * N T O H F
  *
- *  Network to Host Floats
+ * Network to Host Floats
  */
 void
 ntohf(register unsigned char *out, register const unsigned char *in, int count)
 {
-#ifdef NATURAL_IEEE
-	/*
-	 *  First, the case where the system already operates in
-	 *  IEEE format internally, using big-endian order.
-	 *  These are the lucky ones.
-	 */
-	if( sizeof(float) != SIZEOF_NETWORK_FLOAT )
+    register int i;
+
+    switch (bu_byteorder()) {
+	case BU_BIG_ENDIAN:
+	    /*
+	     *  First, the case where the system already operates in
+	     *  IEEE format internally, using big-endian order.  These
+	     *  are the lucky ones.
+	     */
+	    if ( sizeof(float) != SIZEOF_NETWORK_FLOAT )
 		bu_bomb("ntohf:  sizeof(float) != SIZEOF_NETWORK_FLOAT\n");
-#	ifdef HAVE_MEMORY_H
-		memcpy( out, in, count*SIZEOF_NETWORK_FLOAT );
-#	else
-		bcopy( in, out, count*SIZEOF_NETWORK_FLOAT );
-#	endif
-	return;
-#	define	NTOHF	yes1
-#endif
-#if	defined(REVERSE_IEEE)
-	/* This machine uses IEEE, but in little-endian byte order */
-	register int	i;
-	for( i=count-1; i >= 0; i-- )  {
+	    memcpy(out, in, count*SIZEOF_NETWORK_FLOAT);
+	    return;
+	case BU_LITTLE_ENDIAN:
+	    /*
+	     * This machine uses IEEE, but in little-endian byte order
+	     */
+	    for ( i=count-1; i >= 0; i-- )  {
 		*out++ = in[3];
 		*out++ = in[2];
 		*out++ = in[1];
 		*out++ = in[0];
 		in += SIZEOF_NETWORK_FLOAT;
-	}
-	return;
-#	define	NTOHF	yes2
-#endif
+	    }
+	    return;
+    }
 
-#ifndef NTOHF
-# include "ntohf.c:  ERROR, no NtoHD conversion for this machine type"
-#endif
+    bu_bomb("ntohf.c:  ERROR, no NtoHD conversion for this machine type\n");
 }
+
 /** @} */
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

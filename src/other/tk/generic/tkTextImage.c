@@ -12,9 +12,8 @@
  * RCS: @(#) $Id$
  */
 
-#include "tk.h"
-#include "tkText.h"
 #include "tkPort.h"
+#include "tkText.h"
 
 /*
  * Macro that determines the size of an embedded image segment:
@@ -329,7 +328,7 @@ EmbImageConfigure(
     char *name;
     int count = 0;		/* The counter for picking a unique name */
     int conflict = 0;		/* True if we have a name conflict */
-    unsigned int len;		/* length of image name */
+    size_t len;		/* length of image name */
 
     if (Tk_SetOptions(textPtr->interp, (char*)&eiPtr->body.ei,
 	    eiPtr->body.ei.optionTable,

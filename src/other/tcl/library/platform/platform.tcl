@@ -220,20 +220,22 @@ proc ::platform::patterns {id} {
 
     switch -glob --  $id {
 	solaris*-* {
-	    if {![regexp {solaris([^-]*)-(.*)} $id -> v cpu]} {return $id}
-	    if {$v eq ""} {return $id}
-	    foreach {major minor} [split $v .] break
-	    incr minor -1
-	    for {set j $minor} {$j >= 6} {incr j -1} {
-		lappend res solaris${major}.${j}-${cpu}
+	    if {[regexp {solaris([^-]*)-(.*)} $id -> v cpu]} {
+		if {$v eq ""} {return $id}
+		foreach {major minor} [split $v .] break
+		incr minor -1
+		for {set j $minor} {$j >= 6} {incr j -1} {
+		    lappend res solaris${major}.${j}-${cpu}
+		}
 	    }
 	}
 	linux*-* {
-	    if {![regexp {linux-glibc([^-]*)-(.*)} $id -> v cpu]} {return $id}
-	    foreach {major minor} [split $v .] break
-	    incr minor -1
-	    for {set j $minor} {$j >= 0} {incr j -1} {
-		lappend res linux-glibc${major}.${j}-${cpu}
+	    if {[regexp {linux-glibc([^-]*)-(.*)} $id -> v cpu]} {
+		foreach {major minor} [split $v .] break
+		incr minor -1
+		for {set j $minor} {$j >= 0} {incr j -1} {
+		    lappend res linux-glibc${major}.${j}-${cpu}
+		}
 	    }
 	}
 	macosx-powerpc -
@@ -249,7 +251,7 @@ proc ::platform::patterns {id} {
 # ### ### ### ######### ######### #########
 ## Ready
 
-package provide platform 1.0.2
+package provide platform 1.0.3
 
 # ### ### ### ######### ######### #########
 ## Demo application

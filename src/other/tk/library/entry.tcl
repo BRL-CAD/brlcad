@@ -60,7 +60,8 @@ bind Entry <<Paste>> {
     }
 }
 bind Entry <<Clear>> {
-    %W delete sel.first sel.last
+    # ignore if there is no selection
+    catch { %W delete sel.first sel.last }
 }
 bind Entry <<PasteSelection>> {
     if {$tk_strictMotif || ![info exists tk::Priv(mouseMoved)]

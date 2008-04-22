@@ -47,7 +47,7 @@ Archer
 by MGED, Archer is a new GUI-based solid model viewer and editing
 tool.  Archer is based on MGED in many respects while providing an
 improved GUI.
-	
+
 ADRT
 	The Advanced Distributed Ray-Tracer (ADRT) includes a high
 performance triangle intersection engine (libtie), a real-time
@@ -79,7 +79,7 @@ support several common formats including PNG, RLE, PPM, PS, and SUN
 images as well as a variety of image processing tools that work on raw
 image data.
 
-Signal processing 
+Signal processing
 	There are a variety of signal processing utilities (e.g. *mod,
 ifft, dfft, s-i, i-d, cv, wavelet) in the package that categorically
 manipulate raw data streams according to specified criteria.  These

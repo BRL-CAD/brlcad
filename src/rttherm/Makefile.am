@@ -6,6 +6,8 @@ bin_PROGRAMS = \
 	ssamp-bw \
 	ssampview
 
+noinst_PROGRAMS = pixtest
+
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
 dist_bin_SCRIPTS = ssampview.tcl
@@ -43,16 +45,17 @@ ssamp_bw_SOURCES = ssamp-bw.c
 ssamp_bw_LDADD = ${OPTICAL}
 
 # pixtest removed, looks like an outdated sample_application
-#pixtest_SOURCES = \
-#	pixtest.c \
-#	spectrum.c
+pixtest_SOURCES = \
+	pixtest.c \
+	spectrum.c
+pixtest_LDADD = \
+	${MULTISPECTRAL} \
+	${OPTICAL}
 
 EXTRA_DIST = \
 	$(man_MANS) \
 	std_day_1km.dat \
 	test.sh
-
-MAINTAINERCLEANFILES = Makefile.in
 
 include $(top_srcdir)/misc/Makefile.defs
 

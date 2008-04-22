@@ -1,7 +1,7 @@
 /*                       S H _ N U L L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,19 +25,12 @@
  *
  * This is the most basic shader.
  *
- * Author -
- * Christopher Sean Morrison
- *
- * Source -
- * The U.S. Army Research Laboratory
- * Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-#include "common.h"
 
+#include "common.h"
 
 #include <stdio.h>
 #include <math.h>
-#include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtprivate.h"
@@ -54,14 +47,14 @@ HIDDEN void	sh_null_free(char *cp);
  * four shader functions *must* be defined, even if they do nothing.
  */
 struct mfuncs null_mfuncs[] = {
-	{MF_MAGIC,	"null",		0,		MFI_HIT,	0,
-	sh_null_setup,	sh_null_render,	sh_null_print,	sh_null_free },
+    {MF_MAGIC,	"null",		0,		MFI_HIT,	0,
+     sh_null_setup,	sh_null_render,	sh_null_print,	sh_null_free },
 
-	{MF_MAGIC,	"invisible",		0,		MFI_HIT,	0,
-	sh_null_setup,	sh_null_render,	sh_null_print,	sh_null_free },
+    {MF_MAGIC,	"invisible",		0,		MFI_HIT,	0,
+     sh_null_setup,	sh_null_render,	sh_null_print,	sh_null_free },
 
-	{0,		(char *)0,	0,		0,		0,
-	0,		0,		0,		0 }
+    {0,		(char *)0,	0,		0,		0,
+     0,		0,		0,		0 }
 };
 
 
@@ -81,12 +74,12 @@ struct mfuncs null_mfuncs[] = {
 HIDDEN int
 sh_null_setup( register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip ) {
 
-	/* no point to check the arguments since we do nothing with them.  we leave the error
-	 * checking to elsewhere when used.
-	 */
+    /* no point to check the arguments since we do nothing with them.  we leave the error
+     * checking to elsewhere when used.
+     */
 
-	/* no point in keeping this region's data around */
-	return 0;
+    /* no point in keeping this region's data around */
+    return 0;
 }
 
 
@@ -106,21 +99,21 @@ sh_null_setup( register struct region *rp, struct bu_vls *matparm, char **dpp, s
 HIDDEN int
 sh_null_render( struct application *ap, struct partition *pp, struct shadework *swp, char *dp ) {
 
-	/* check the validity of the arguments we got */
-	RT_AP_CHECK(ap);
-	RT_CHECK_PT(pp);
-	/* shadework structures do not have magic numbers or other means to test
-	 * their validity
-	 */
+    /* check the validity of the arguments we got */
+    RT_AP_CHECK(ap);
+    RT_CHECK_PT(pp);
+    /* shadework structures do not have magic numbers or other means to test
+     * their validity
+     */
 
-	bu_log("Who called sh_null_render explicitly?");
+    bu_log("Who called sh_null_render explicitly?");
 
-	/* here is what actually makes the object invisible/null instead of being a
-	 * black void (if render ever is called).
-	 */
-	(void)rr_render(ap, pp, swp);
+    /* here is what actually makes the object invisible/null instead of being a
+     * black void (if render ever is called).
+     */
+    (void)rr_render(ap, pp, swp);
 
-	return(1);
+    return(1);
 }
 
 
@@ -131,7 +124,7 @@ sh_null_render( struct application *ap, struct partition *pp, struct shadework *
  */
 HIDDEN void
 sh_null_print( register struct region *rp, char *dp ) {
-	bu_log("%S uses the null shader\n", rp->reg_name);
+    bu_log("%S uses the null shader\n", rp->reg_name);
 }
 
 
@@ -152,8 +145,8 @@ sh_null_free( char *cp ) {
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -32,7 +32,8 @@ then \fBbody2\fR is executed, and so on.
 If none of the expressions evaluates to true then \fIbodyN\fR is
 executed.
 The \fBthen\fR and \fBelse\fR arguments are optional
-``noise words'' to make the command easier to read.
+.QW "noise words"
+to make the command easier to read.
 There may be any number of \fBelseif\fR clauses, including zero.
 \fIBodyN\fR may also be omitted as long as \fBelse\fR is omitted too.
 The return value from the command is the result of the body script

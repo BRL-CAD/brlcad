@@ -52,13 +52,13 @@ typedef struct TkUndoSubAtom {
 				 * apply/revert scripts. If NULL then it is
 				 * assumed the apply/revert scripts already
 				 * contain everything. */
-    TkUndoProc *funcPtr;        /* Function pointer for callback to perform
+    TkUndoProc *funcPtr;	/* Function pointer for callback to perform
 				 * undo/redo actions. */
-    ClientData clientData;      /* data for 'funcPtr' */
+    ClientData clientData;	/* Data for 'funcPtr'. */
     Tcl_Obj *action;		/* Command to apply the action that was
-				 * taken */
-    struct TkUndoSubAtom *next; /* Pointer to the next element in the linked
-				 * list */
+				 * taken. */
+    struct TkUndoSubAtom *next;	/* Pointer to the next element in the linked
+				 * list. */
 } TkUndoSubAtom;
 
 /*
@@ -68,11 +68,12 @@ typedef struct TkUndoSubAtom {
 typedef struct TkUndoAtom {
     TkUndoAtomType type;	/* The type that will trigger the required
 				 * action. */
-    TkUndoSubAtom *apply;       /* Linked list of 'apply' actions to perform
-                                 * for this operation. */
-    TkUndoSubAtom *revert;      /* Linked list of 'revert' actions to perform
-                                 * for this operation. */
-    struct TkUndoAtom *next;	/* Pointer to the next element in the stack */
+    TkUndoSubAtom *apply;	/* Linked list of 'apply' actions to perform
+				 * for this operation. */
+    TkUndoSubAtom *revert;	/* Linked list of 'revert' actions to perform
+				 * for this operation. */
+    struct TkUndoAtom *next;	/* Pointer to the next element in the
+				 * stack. */
 } TkUndoAtom;
 
 /*
@@ -80,10 +81,10 @@ typedef struct TkUndoAtom {
  */
 
 typedef struct TkUndoRedoStack {
-    TkUndoAtom *undoStack;	/* The undo stack */
-    TkUndoAtom *redoStack;	/* The redo stack */
+    TkUndoAtom *undoStack;	/* The undo stack. */
+    TkUndoAtom *redoStack;	/* The redo stack. */
     Tcl_Interp *interp;		/* The interpreter in which to execute the
-				 * revert and apply scripts */
+				 * revert and apply scripts. */
     int maxdepth;
     int depth;
 } TkUndoRedoStack;

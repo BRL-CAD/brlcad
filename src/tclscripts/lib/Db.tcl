@@ -1,7 +1,7 @@
 #                          D B . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2007 United States Government as represented by
+# Copyright (c) 1998-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -18,15 +18,6 @@
 # information.
 #
 ###
-#
-# Author -
-#	Bob Parker
-#
-# Source -
-#	The U. S. Army Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#
 #
 # Description -
 #	The Db class wraps LIBRT's database object.
@@ -469,34 +460,34 @@
 }
 
 ::itcl::body Db::help_init {} {
-    set help [cadwidgets::Help #auto]
+    set help [cadwidgets::Help \#auto]
 
     $help add adjust	{{} {adjust database object parameters}}
     $help add attr      {{ {set|get|rm|append} object [args]}
-	      {set, get, remove or append to attribute values for the specified object.
-	 for the "set" subcommand, the arguments are attribute name/value pairs
-	 for the "get" subcommand, the arguments are attribute names
-	 for the "rm" subcommand, the arguments are attribute names
-	 for the "append" subcommand, the arguments are attribute name/value pairs } }
+	{set, get, remove or append to attribute values for the specified object.
+	    for the "set" subcommand, the arguments are attribute name/value pairs
+	    for the "get" subcommand, the arguments are attribute names
+	    for the "rm" subcommand, the arguments are attribute names
+	    for the "append" subcommand, the arguments are attribute name/value pairs } }
 
     $help add binary	{{(-i|-o) major_type minor_type dest source}
-		{manipulate opaque objects.
-		 Must specify one of -i (for creating or adjusting objects (input))
-		 or -o for extracting objects (output).
-		 If the major type is "u" the minor type must be one of:
-		      "f" -> float
-		      "d" -> double
-		      "c" -> char (8 bit)
-		      "s" -> short (16 bit)
-		      "i" -> int (32 bit)
-		      "l" -> long (64 bit)
-		      "C" -> unsigned char (8 bit)
-		      "S" -> unsigned short (16 bit)
-		      "I" -> unsigned int (32 bit)
-		      "L" -> unsigned long (64 bit)
-		 For input, source is a file name and dest is an object name.
-		 For output source is an object name and dest is a file name.
-		 Only uniform array binary objects (major_type=u) are currently supported}}
+	{manipulate opaque objects.
+	    Must specify one of -i (for creating or adjusting objects (input))
+	    or -o for extracting objects (output).
+	    If the major type is "u" the minor type must be one of:
+	    "f" -> float
+	    "d" -> double
+	    "c" -> char (8 bit)
+	    "s" -> short (16 bit)
+	    "i" -> int (32 bit)
+	    "l" -> long (64 bit)
+	    "C" -> unsigned char (8 bit)
+	    "S" -> unsigned short (16 bit)
+	    "I" -> unsigned int (32 bit)
+	    "L" -> unsigned long (64 bit)
+	    For input, source is a file name and dest is an object name.
+	    For output source is an object name and dest is a file name.
+	    Only uniform array binary objects (major_type=u) are currently supported}}
     $help add c		{{[-gr] comb_name <boolean_expr>} {create or extend a combination using standard notation}}
     $help add cat	{{<objects>} {list attributes (brief)}}
     $help add color	{{low high r g b str} {make color entry}}
@@ -531,7 +522,7 @@
     $help add nmg_collapse    {{nmg_solid new_solid maximum_error_distance [minimum_allowed_angle]}	{decimate NMG solid via edge collapse}}
     $help add nmg_simplify    {{[arb|tgc|ell|poly] new_solid nmg_solid}	{simplify nmg_solid, if possible}}
     $help add open	{{?dbfile?} {open a database}}
-    $help add ocenter 	{{obj(s)} {get center for obj(s)}}
+    $help add ocenter 	{{obj [x y z]} {get/set center for obj}}
     $help add ocrotate	{{obj x y z} {rotate object about its center by x, y, z degrees}}
     $help add orotate	{{x y z} {rotate object}}
     $help add oscale	{{sf} {scale object}}
@@ -550,10 +541,10 @@
     $help add showmats	{{path}	{show xform matrices along path}}
     $help add summary	{{[s r g]}	{count/list solid/reg/groups}}
     $help add title	{{?string?} {print or change the title}}
-    $help add tol	{{[abs #] [rel #] [norm #] [dist #] [perp #]} {show/set tessellation and calculation tolerances}}
+    $help add tol	{{"[abs #] [rel #] [norm #] [dist #] [perp #]"} {show/set tessellation and calculation tolerances}}
     $help add tops	{{} {find all top level objects}}
     $help add track	{{args} {create a track}}
-    $help add tree	{{[-c] [-i n] [-o outfile] object(s)} {print out a tree of all members of an object}}
+    $help add tree	{{[-c] [-i n] [-d n] [-o outfile] object(s)} {print out a tree of all members of an object, or all members to depth n in the tree if n -d option is supplied}}
     $help add unhide	{{[objects]} {unset the "hidden" flag for the specified objects so they will appear in a "t" or "ls" command output}}
     $help add units	{{[mm|cm|m|in|ft|...]}	{change units}}
     $help add version	{{} {return the database version}}

@@ -1,7 +1,7 @@
 /*                          D M - T K . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2007 United States Government as represented by
+ * Copyright (c) 1993-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,12 +33,12 @@
 #define ColormapNull (Colormap *)NULL
 
 struct tk_vars {
-  GC gc;
-  Pixmap pix;
-  mat_t xmat;
-  int is_trueColor;
-  unsigned long bd, bg, fg;   /* color of border, background, foreground */
-  unsigned long pixels[NUM_PIXELS];
+    GC gc;
+    Pixmap pix;
+    mat_t xmat;
+    int is_trueColor;
+    unsigned long bd, bg, fg;   /* color of border, background, foreground */
+    unsigned long pixels[NUM_PIXELS];
 };
 
 #endif /* __DM_TK__ */
@@ -48,8 +48,8 @@ struct tk_vars {
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

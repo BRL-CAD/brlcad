@@ -40,7 +40,7 @@ int
 .sp
 void
 \fBTcl_RegExpGetInfo\fR(\fIregexp\fR, \fIinfoPtr\fR)
-
+.fi
 .SH ARGUMENTS
 .AS Tcl_RegExpInfo *interp in/out
 .AP Tcl_Interp *interp in
@@ -63,8 +63,9 @@ by \fBTcl_GetRegExpFromObj\fR or \fBTcl_RegExpCompile\fR.
 .AP char *start in
 If \fItext\fR is just a portion of some other string, this argument
 identifies the beginning of the larger string.
-If it isn't the same as \fItext\fR, then no \fB^\fR matches
-will be allowed.
+If it is not the same as \fItext\fR, then no
+.QW \fB^\fR
+matches will be allowed.
 .AP int index in
 Specifies which range is desired:  0 means the range of the entire
 match, 1 or greater means the range that matched a parenthesized
@@ -76,7 +77,11 @@ NULL if there is no such range.
 The address of the character just after the last one in the range
 is stored here, or NULL if there is no such range.
 .AP int cflags in
-OR-ed combination of compilation flags. See below for more information.
+OR-ed combination of the compilation flags \fBTCL_REG_ADVANCED\fR,
+\fBTCL_REG_EXTENDED\fR, \fBTCL_REG_BASIC\fR, \fBTCL_REG_EXPANDED\fR,
+\fBTCL_REG_QUOTE\fR, \fBTCL_REG_NOCASE\fR, \fBTCL_REG_NEWLINE\fR,
+\fBTCL_REG_NLSTOP\fR, \fBTCL_REG_NLANCH\fR, \fBTCL_REG_NOSUB\fR, and
+\fBTCL_REG_CANMATCH\fR. See below for more information.
 .AP int offset in
 The character offset into the text where matching should begin.
 The value of the offset has no impact on \fB^\fR matches.  This
@@ -84,18 +89,17 @@ behavior is controlled by \fIeflags\fR.
 .AP int nmatches in
 The number of matching subexpressions that should be remembered for
 later use.  If this value is 0, then no subexpression match
-information will be computed.  If the value is -1, then
+information will be computed.  If the value is \-1, then
 all of the matching subexpressions will be remembered.  Any other
 value will be taken as the maximum number of subexpressions to
 remember.
 .AP int eflags in
-OR-ed combination of the values \fBTCL_REG_NOTBOL\fR and \fBTCL_REG_NOTEOL\fR.
-See below for more information.
+OR-ed combination of the execution flags \fBTCL_REG_NOTBOL\fR and
+\fBTCL_REG_NOTEOL\fR. See below for more information.
 .AP Tcl_RegExpInfo *infoPtr out
 The address of the location where information about a previous match
 should be stored by \fBTcl_RegExpGetInfo\fR.
 .BE
-
 .SH DESCRIPTION
 .PP
 \fBTcl_RegExpMatch\fR determines whether its \fIpattern\fR argument
@@ -139,7 +143,9 @@ For example, when searching for the second occurrence of a
 match, the \fItext\fR argument might point to the character
 just after the first match;  however, it is important for the
 pattern matcher to know that this is not the start of the entire string,
-so that it doesn't allow \fB^\fR atoms in the pattern to match.
+so that it does not allow
+.QW \fB^\fR
+atoms in the pattern to match.
 The \fIstart\fR argument provides this information by pointing
 to the start of the overall string containing \fItext\fR.
 \fIStart\fR will be less than or equal to \fItext\fR;  if it
@@ -180,23 +186,29 @@ occurs while compiling the regular expression then
 \fBTcl_GetRegExpFromObj\fR returns NULL and leaves an error message in
 the interpreter result.  The regular expression token can be used as
 long as the internal representation of \fIpatObj\fR refers to the
-compiled form.  The \fIeflags\fR argument is a bit-wise OR of
+compiled form.  The \fIcflags\fR argument is a bit-wise OR of
 zero or more of the following flags that control the compilation of
 \fIpatObj\fR:
 .RS 2
 .TP
 \fBTCL_REG_ADVANCED\fR
-Compile advanced regular expressions (`AREs').  This mode corresponds to
+Compile advanced regular expressions
+.PQ ARE s .
+This mode corresponds to
 the normal regular expression syntax accepted by the Tcl \fBregexp\fR and
 \fBregsub\fR commands.
 .TP
 \fBTCL_REG_EXTENDED\fR
-Compile extended regular expressions (`EREs').  This mode corresponds
+Compile extended regular expressions
+.PQ ERE s .
+This mode corresponds
 to the regular expression syntax recognized by Tcl 8.0 and earlier
 versions. 
 .TP
 \fBTCL_REG_BASIC\fR
-Compile basic regular expressions (`BREs').  This mode corresponds
+Compile basic regular expressions
+.PQ BRE s .
+This mode corresponds
 to the regular expression syntax recognized by common Unix utilities
 like \fBsed\fR and \fBgrep\fR.  This is the default if no flags are
 specified.
@@ -216,9 +228,16 @@ Compile for matching that ignores upper/lower case distinctions.
 \fBTCL_REG_NEWLINE\fR
 Compile for newline-sensitive matching.  By default, newline is a
 completely ordinary character with no special meaning in either
-regular expressions or strings.  With this flag, `[^' bracket
-expressions and `.' never match newline, `^' matches an empty string
-after any newline in addition to its normal function, and `$' matches
+regular expressions or strings.  With this flag,
+.QW [^
+bracket expressions and
+.QW .
+never match newline,
+.QW ^
+matches an empty string
+after any newline in addition to its normal function, and
+.QW $
+matches
 an empty string before any newline in addition to its normal function.
 \fBREG_NEWLINE\fR is the bit-wise OR of \fBREG_NLSTOP\fR and
 \fBREG_NLANCH\fR.
@@ -226,16 +245,37 @@ an empty string before any newline in addition to its normal function.
 \fBTCL_REG_NLSTOP\fR
 Compile for partial newline-sensitive matching,
 with the behavior of
-`[^' bracket expressions and `.' affected,
-but not the behavior of `^' and `$'.  In this mode, `[^' bracket
-expressions and `.' never match newline.
+.QW [^
+bracket expressions and
+.QW .
+affected, but not the behavior of
+.QW ^
+and
+.QW $ .
+In this mode,
+.QW [^
+bracket expressions and
+.QW .
+never match newline.
 .TP
 \fBTCL_REG_NLANCH\fR
 Compile for inverse partial newline-sensitive matching,
-with the behavior
-of `^' and `$' (the ``anchors'') affected, but not the behavior of
-`[^' bracket expressions and `.'.  In this mode `^' matches an empty string
-after any newline in addition to its normal function, and `$' matches
+with the behavior of
+.QW ^
+and
+.QW $
+(the
+.QW anchors )
+affected, but not the behavior of
+.QW [^
+bracket expressions and
+.QW . .
+In this mode
+.QW ^
+matches an empty string
+after any newline in addition to its normal function, and
+.QW $
+matches
 an empty string before any newline in addition to its normal function.
 .TP
 \fBTCL_REG_NOSUB\fR
@@ -263,7 +303,7 @@ error message in the interpreter result.  The \fInmatches\fR value
 indicates to the matcher how many subexpressions are of interest.  If
 \fInmatches\fR is 0, then no subexpression match information is
 recorded, which may allow the matcher to make various optimizations.
-If the value is -1, then all of the subexpressions in the pattern are
+If the value is \-1, then all of the subexpressions in the pattern are
 remembered.  If the value is a positive integer, then only that number
 of subexpressions will be remembered.  Matching begins at the
 specified Unicode character index given by \fIoffset\fR.  Unlike
@@ -275,13 +315,21 @@ zero or more of the following flags:
 .TP
 \fBTCL_REG_NOTBOL\fR
 The starting character will not be treated as the beginning of a
-line or the beginning of the string, so `^' will not match there.
-Note that this flag has no effect on how `\fB\eA\fR' matches.
+line or the beginning of the string, so
+.QW ^
+will not match there.
+Note that this flag has no effect on how
+.QW \fB\eA\fR
+matches.
 .TP
 \fBTCL_REG_NOTEOL\fR
 The last character in the string will not be treated as the end of a
-line or the end of the string, so '$' will not match there.
-Note that this flag has no effect on how `\fB\eZ\fR' matches.
+line or the end of the string, so
+.QW $
+will not match there.
+Note that this flag has no effect on how
+.QW \fB\eZ\fR
+matches.
 .RE
 .PP
 \fBTcl_RegExpGetInfo\fR retrieves information about the last match
@@ -321,7 +369,7 @@ subexpression.  The \fIend\fR index identifies the first character
 after the matched subexpression.  If the subexpression matched the
 empty string, then \fIstart\fR and \fIend\fR will be equal.  If the
 subexpression did not participate in the match, then \fIstart\fR and
-\fIend\fR will be set to -1.
+\fIend\fR will be set to \-1.
 .PP
 The \fIextendStart\fR field in \fBTcl_RegExpInfo\fR is only set if the
 \fBTCL_REG_CANMATCH\fR flag was used.  It indicates the first
@@ -330,8 +378,7 @@ found, this will be the same as the beginning of the current match.
 If no match was found, then it indicates the earliest point at which a
 match might occur if additional text is appended to the string.  If it
 is no match is possible even with further text, this field will be set 
-to -1.
-
+to \-1.
 .SH "SEE ALSO"
 re_syntax(n)
 .SH KEYWORDS

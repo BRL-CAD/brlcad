@@ -95,7 +95,7 @@ main(argc, argv)
 
 #ifdef TCL_ONLY
     Tcl_Main(argc, argv, Tcl_AppInit);
-#else 
+#else
     Tk_Main(argc, argv, Tcl_AppInit);
 #endif
     return 0;			/* Needed only to prevent compiler warning. */
@@ -126,7 +126,7 @@ Tcl_AppInit(interp)
     Tcl_Interp *interp;		/* Interpreter for application. */
 {
 #ifdef TCLLIBPATH
-    /* 
+    /*
      * It seems that some distributions of Tcl don't compile-in a
      * default location of the library.  This causes Tcl_Init to fail
      * if bltwish and bltsh are moved to another directory. The

@@ -148,7 +148,8 @@ testConstraint notAqua [expr {[tk windowingsystem] ne "aqua"}]
 testConstraint aqua [expr {[tk windowingsystem] eq "aqua"}]
 testConstraint userInteraction 0
 testConstraint nonUnixUserInteraction [expr {
-    [testConstraint userInteraction] || [testConstraint unix]
+    [testConstraint userInteraction] || 
+    ([testConstraint unix] && [testConstraint notAqua])
 }]
 testConstraint haveDISPLAY [info exists env(DISPLAY)]
 testConstraint altDisplay  [info exists env(TK_ALT_DISPLAY)]
@@ -158,6 +159,7 @@ testConstraint noExceed [expr {
 
 # constraints for testing facilities defined in the tktest executable...
 testConstraint testImageType [expr {[lsearch [image types] test] >= 0}]
+testConstraint testOldImageType [expr {[lsearch [image types] oldtest] >= 0}]
 testConstraint testbitmap    [llength [info commands testbitmap]]
 testConstraint testborder    [llength [info commands testborder]]
 testConstraint testcbind     [llength [info commands testcbind]]

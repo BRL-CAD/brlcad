@@ -1,11 +1,9 @@
 # $Id$
 
 EXTRA_DIST = \
+        CMakeLists.txt \
 	brlcad.def \
-	brlcad.dsp \
 	brlcad.rc \
 	TclDummies.c
-
-MAINTAINERCLEANFILES = Makefile.in
 
 include $(top_srcdir)/misc/Makefile.defs

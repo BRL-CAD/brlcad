@@ -15,7 +15,6 @@
  */
 
 #include "tkInt.h"
-#include "tkPort.h"
 
 /*
  * The table below maps from symbolic names for visual classes to the
@@ -102,7 +101,8 @@ Tk_GetVisual(
     XVisualInfo template, *visInfoList, *bestPtr;
     long mask;
     Visual *visual;
-    int length, c, numVisuals, prio, bestPrio, i;
+    ptrdiff_t length;
+    int c, numVisuals, prio, bestPrio, i;
     CONST char *p;
     VisualDictionary *dictPtr;
     TkColormap *cmapPtr;

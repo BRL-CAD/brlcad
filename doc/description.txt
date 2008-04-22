@@ -94,7 +94,7 @@ Patch Contributions: http://sourceforge.net/tracker/?group_id=105292&atid=640804
 Internet Relay Chat: irc://irc.freenode.net/brlcad i.e. #brlcad on the Freenode network
 Mailing Lists: http://sourceforge.net/mail/?group_id=105292
 Forums: http://sourceforge.net/forum/?group_id=105292
-CVS Access: http://sourceforge.net/cvs/?group_id=105292
+SVN Access: http://sourceforge.net/svn/?group_id=105292
 
 
 KEYWORDS & CATEGORIES

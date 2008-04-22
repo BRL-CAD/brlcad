@@ -1,7 +1,7 @@
 /*			S H A D E F U N C S . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2007 United States Government as represented by
+ * Copyright (c) 1993-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,10 +21,8 @@
 /** @{ */
 /** @file shadefuncs.h
  *
- *  @par Source
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
+
 #ifndef SHADEFUNCS
 #define SHADEFUNCS
 
@@ -46,15 +44,15 @@
  *  The interface to the various material property & texture routines.
  */
 struct mfuncs {
-	long		mf_magic;	/**< @brief  To validate structure */
-	char		*mf_name;	/**< @brief  Keyword for material */
-	struct mfuncs	*mf_forw;	/**< @brief  Forward link */
-	int		mf_inputs;	/**< @brief  shadework inputs needed */
-	int		mf_flags;	/**< @brief  Flags describing shader */
-	int		(*mf_setup)();	/**< @brief  Routine for preparing */
-	int		(*mf_render)();	/**< @brief  Routine for rendering */
-	void		(*mf_print)();	/**< @brief  Routine for printing */
-	void		(*mf_free)();	/**< @brief  Routine for releasing storage */
+    unsigned long	mf_magic;	/**< @brief  To validate structure */
+    char		*mf_name;	/**< @brief  Keyword for material */
+    struct mfuncs	*mf_forw;	/**< @brief  Forward link */
+    int		mf_inputs;	/**< @brief  shadework inputs needed */
+    int		mf_flags;	/**< @brief  Flags describing shader */
+    int		(*mf_setup)();	/**< @brief  Routine for preparing */
+    int		(*mf_render)();	/**< @brief  Routine for rendering */
+    void		(*mf_print)();	/**< @brief  Routine for printing */
+    void		(*mf_free)();	/**< @brief  Routine for releasing storage */
 };
 #define MF_MAGIC	0x55968058
 #define MF_NULL		((struct mfuncs *)0)
@@ -62,7 +60,7 @@ struct mfuncs {
 
 /*
  *  mf_inputs lists what optional shadework fields are needed.
- *  dist, point, color, & default(trans,reflect,ri) are always provided
+ *  dist, point, color, & default(trans, reflect, ri) are always provided
  */
 #define MFI_NORMAL	0x01		/**< @brief  Need normal */
 #define MFI_UV		0x02		/**< @brief  Need uv */
@@ -99,8 +97,8 @@ OPTICAL_EXPORT BU_EXTERN(struct mfuncs *load_dynamic_shader,
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

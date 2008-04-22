@@ -1,7 +1,7 @@
 #                   C O M P I L E R . M 4
 # BRL-CAD
 #
-# Copyright (c) 2005-2007 United States Government as represented by
+# Copyright (c) 2005-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -67,7 +67,7 @@ AC_TRY_COMPILE( [], [int i;], [if AC_TRY_COMMAND([grep "nrecognize" conftest.err
 m4_popdef([AC_TRY_EVAL])
 rm -f conftest.err
 AC_TRY_RUN( [
-#include <stdio.h>
+#include <stdlib.h>
 int main(){exit(0);}
 ], [], [bc_[$2]_works=no])
 AC_MSG_RESULT($bc_[$2]_works)
@@ -155,9 +155,13 @@ BC_PREPROCESSOR_RECOGNIZES([$1], [$2], [$3])
 ])
 
 AC_DEFUN([BC_SANITY_CHECK], [
-AC_MSG_CHECKING(compiler and flags for sanity)
+__msg="$1"
+if test "x$__msg" = "x" ; then
+	__msg="compiler and flags for sanity"
+fi
+AC_MSG_CHECKING([$__msg])
 AC_TRY_RUN([
-#include <stdio.h>
+#include <stdlib.h>
 int main(){exit(0);}
 	],
 	[	AC_MSG_RESULT(yes) ],

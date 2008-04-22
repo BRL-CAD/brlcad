@@ -9,21 +9,21 @@
  *  Lucent Technologies 1996
  *
  */
- 
+
 
 #define ITK_LIBRARY_RESOURCES 3500
 
-/* 
+/*
  * We now load the Itk library into the resource fork of the application.
  */
 
-read 'TEXT' (ITK_LIBRARY_RESOURCES+1, "itk", purgeable) 
+read 'TEXT' (ITK_LIBRARY_RESOURCES+1, "itk", purgeable)
 	"::library:itk.tcl";
-read 'TEXT' (ITK_LIBRARY_RESOURCES+3, "Itk_Archetype", purgeable) 
+read 'TEXT' (ITK_LIBRARY_RESOURCES+3, "Itk_Archetype", purgeable)
 	"::library:Archetype.itk";
-read 'TEXT' (ITK_LIBRARY_RESOURCES+4, "Itk_Widget", purgeable) 
+read 'TEXT' (ITK_LIBRARY_RESOURCES+4, "Itk_Widget", purgeable)
 	"::library:Widget.itk";
-read 'TEXT' (ITK_LIBRARY_RESOURCES+5, "Itk_Toplevel", purgeable) 
+read 'TEXT' (ITK_LIBRARY_RESOURCES+5, "Itk_Toplevel", purgeable)
 	"::library:Toplevel.itk";
 
 

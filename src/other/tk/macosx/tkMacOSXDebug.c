@@ -57,13 +57,10 @@
  * RCS: @(#) $Id$
  */
 
-#include "tkMacOSXInt.h"
+#include "tkMacOSXPrivate.h"
 #include "tkMacOSXDebug.h"
 
 #ifdef TK_MAC_DEBUG
-
-#include <mach-o/dyld.h>
-#include <mach-o/nlist.h>
 
 typedef struct {
     EventKind kind;
@@ -453,6 +450,39 @@ TkMacOSXMouseTrackingResultToAscii(MouseTrackingResult r, char * buf)
 }
 #endif /* TK_MACOSXDEBUG_UNUSED */
 
+MODULE_SCOPE void
+TkMacOSXDebugFlashRegion(
+    Drawable d,
+    HIShapeRef rgn)
+{
+    TkMacOSXInitNamedDebugSymbol(HIToolbox, int, QDDebugFlashRegion,
+	    CGrafPtr port, RgnHandle region);
+    CFShow(rgn);
+    if (d && rgn && QDDebugFlashRegion && !HIShapeIsEmpty(rgn)) {
+	CGrafPtr port = TkMacOSXGetDrawablePort(d);
+
+	if (port) {
+	    static RgnHandle qdRgn = NULL;
+
+	    if (!qdRgn) {
+		qdRgn = NewRgn();
+	    }
+	    ChkErr(HIShapeGetAsQDRgn, rgn, qdRgn);
+
+	    /*
+	     * Carbon-internal region flashing SPI (c.f. Technote 2124)
+	     */
+
+	    QDDebugFlashRegion(port, qdRgn);
+	    SetEmptyRgn(qdRgn);
+	}
+    }
+}
+#endif /* TK_MAC_DEBUG */
+
+#include <mach-o/dyld.h>
+#include <mach-o/nlist.h>
+
 /*
  *----------------------------------------------------------------------
  *
@@ -482,14 +512,16 @@ TkMacOSXMouseTrackingResultToAscii(MouseTrackingResult r, char * buf)
  */
 
 MODULE_SCOPE void *
-TkMacOSXGetNamedDebugSymbol(const char* module, const char* symbol)
+TkMacOSXGetNamedDebugSymbol(
+    const char* module,
+    const char* symbol)
 {
     void* addr = TkMacOSXGetNamedSymbol(module, symbol);
 #ifndef __LP64__
     if (!addr) {
 	const struct mach_header *mh = NULL;
 	uint32_t i, n = _dyld_image_count();
-	size_t module_len;
+	size_t module_len = 0;
 
 	if (module && *module) {
 	    module_len = strlen(module);
@@ -584,5 +616,3 @@ TkMacOSXGetNamedDebugSymbol(const char* module, const char* symbol)
 #endif /* __LP64__ */
     return addr;
 }
-
-#endif /* TK_MAC_DEBUG */

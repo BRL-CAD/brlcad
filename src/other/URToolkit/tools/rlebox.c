@@ -1,6 +1,6 @@
-/* 
+/*
  * rlebox.c - Find bounding box for an RLE image
- * 
+ *
  * Author:	Spencer W. Thomas
  * 		Computer Science Dept.
  * 		University of Utah
@@ -19,7 +19,7 @@ rlebox()			Tag the file.
 
 /*****************************************************************
  * TAG( main )
- * 
+ *
  * Find a bounding box for an RLE image.
  *
  * Usage:
@@ -36,7 +36,7 @@ rlebox()			Tag the file.
  *	minimum and maximum values of x and y for which there is some
  *	non-background data.
  * Assumptions:
- * 	
+ *
  * Algorithm:
  * 	Read the image file and find the smallest and largest X and Y
  *	coordinates of real image data.  Use raw interface for speed.

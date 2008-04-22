@@ -15,7 +15,6 @@
  * RCS: @(#) $Id$
  */
 
-#include "tkPort.h"
 #include "tkInt.h"
 #include "tkText.h"
 
@@ -1552,6 +1551,7 @@ LayoutDLine(
 		 */
 
 		TkTextLine *linePtr = TkBTreeNextLine(NULL, curIndex.linePtr);
+
 		if (linePtr != NULL) {
 		    dlPtr->logicalLinesMerged++;
 		    curIndex.byteIndex = 0;
@@ -1610,11 +1610,15 @@ LayoutDLine(
 	    }
 	    FreeStyle(textPtr, chunkPtr->stylePtr);
 	    breakChunkPtr->nextPtr = chunkPtr->nextPtr;
-	    (*chunkPtr->undisplayProc)(textPtr, chunkPtr);
+	    if (chunkPtr->undisplayProc != NULL) {
+		(*chunkPtr->undisplayProc)(textPtr, chunkPtr);
+	    }
 	    ckfree((char *) chunkPtr);
 	}
 	if (breakByteOffset != breakChunkPtr->numBytes) {
-	    (*breakChunkPtr->undisplayProc)(textPtr, breakChunkPtr);
+	    if (breakChunkPtr->undisplayProc != NULL) {
+		(*breakChunkPtr->undisplayProc)(textPtr, breakChunkPtr);
+	    }
 	    segPtr = TkTextIndexToSeg(&breakIndex, &byteOffset);
 	    (*segPtr->typePtr->layoutProc)(textPtr, &breakIndex,
 		    segPtr, byteOffset, maxX, breakByteOffset, 0,
@@ -7511,32 +7515,34 @@ CharUndisplayProc(
 {
     CharInfo *ciPtr = (CharInfo *) chunkPtr->clientData;
 
+    if (ciPtr) {
 #if TK_LAYOUT_WITH_BASE_CHUNKS
-    if (chunkPtr == ciPtr->baseChunkPtr) {
-	/*
-	 * Basechunks are undisplayed first, when DLines are freed or
-	 * partially freed, so this makes sure we don't access their data any
-	 * more.
-	 */
+	if (chunkPtr == ciPtr->baseChunkPtr) {
+	    /*
+	     * Basechunks are undisplayed first, when DLines are freed or
+	     * partially freed, so this makes sure we don't access their data
+	     * any more.
+	     */
 
-	FreeBaseChunk(chunkPtr);
-    } else if (ciPtr->baseChunkPtr != NULL) {
-	/*
-	 * When other char chunks are undisplayed, drop their characters from
-	 * the base chunk. This usually happens, when they are last in a line
-	 * and need to be re-layed out.
-	 */
+	    FreeBaseChunk(chunkPtr);
+	} else if (ciPtr->baseChunkPtr != NULL) {
+	    /*
+	     * When other char chunks are undisplayed, drop their characters
+	     * from the base chunk. This usually happens, when they are last
+	     * in a line and need to be re-layed out.
+	     */
 
-	RemoveFromBaseChunk(chunkPtr);
-    }
+	    RemoveFromBaseChunk(chunkPtr);
+	}
 
-    ciPtr->baseChunkPtr = NULL;
-    ciPtr->chars = NULL;
-    ciPtr->numBytes = 0;
+	ciPtr->baseChunkPtr = NULL;
+	ciPtr->chars = NULL;
+	ciPtr->numBytes = 0;
 #endif /* TK_LAYOUT_WITH_BASE_CHUNKS */
 
-    ckfree((char *) ciPtr);
-    chunkPtr->clientData = NULL;
+	ckfree((char *) ciPtr);
+	chunkPtr->clientData = NULL;
+    }
 }
 
 /*
@@ -8450,7 +8456,9 @@ RemoveFromBaseChunk(
     BaseCharInfo *bciPtr;
 
     if (chunkPtr->displayProc != CharDisplayProc) {
+#ifdef DEBUG_LAYOUT_WITH_BASE_CHUNKS
 	fprintf(stderr,"RemoveFromBaseChunk called with wrong chunk type\n");
+#endif
 	return;
     }
 
@@ -8469,11 +8477,13 @@ RemoveFromBaseChunk(
 
     if ((ciPtr->baseOffset + ciPtr->numBytes)
 	    != Tcl_DStringLength(&bciPtr->baseChars)) {
+#ifdef DEBUG_LAYOUT_WITH_BASE_CHUNKS
 	fprintf(stderr,"RemoveFromBaseChunk called with wrong chunk "
 		"(not last)\n");
+#endif
     }
 
-    Tcl_DStringSetLength(&bciPtr->baseChars,ciPtr->baseOffset);
+    Tcl_DStringSetLength(&bciPtr->baseChars, ciPtr->baseOffset);
 
     /*
      * Invalidate the stored pixel width of the base chunk.

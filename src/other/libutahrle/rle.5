@@ -1,11 +1,11 @@
 .\" Copyright (c) 1986, University of Utah
 .TH RLE 5 9/14/82 5
 .\" $Header$
-.UC 4 
+.UC 4
 .SH NAME
 rle \- Run length encoded file format produced by the rle library
 .SH DESCRIPTION
-The output file format is (note: all words are 16 bits, and in PDP-11 byte 
+The output file format is (note: all words are 16 bits, and in PDP-11 byte
 order):
 .TP
 .B Word 0
@@ -69,7 +69,7 @@ Log base 2 of the number of entries in the color map for each color channel.
 I.e., would be 8 for a color map with 256 entries.
 .TP
 .B Bytes 15\-...
-The background color.  There are 
+The background color.  There are
 .I ncolors
 bytes of background color.  If
 .I ncolors
@@ -86,7 +86,7 @@ present, if
 is not set in
 .IR flags .
 
-If 
+If
 .I ncmap
 is non-zero, then the color map will follow as
 .IR ncmap *2^ cmaplen
@@ -140,11 +140,11 @@ the last byte in the run.
 .TP
 .B EOF (7)
 This opcode indicates the logical end of image data.  A physical
-end-of-file will also serve as well.  The 
+end-of-file will also serve as well.  The
 .B EOF
 opcode may be used to concatenate several images in a single file.
 .SH SEE ALSO
 .I librle(3)
 .SH AUTHOR
-.PP 
+.PP
 Spencer W. Thomas, Todd Fuqua

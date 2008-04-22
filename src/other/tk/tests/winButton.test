@@ -37,8 +37,8 @@ test winbutton-1.1 {TkpComputeButtonGeometry procedure} {testImageType win} {
     image1 changed 0 0 0 0 60 40
     label .b1 -image image1 -bd 4 -padx 0 -pady 2
     button .b2 -image image1 -bd 4 -padx 0 -pady 2
-    checkbutton .b3 -image image1 -bd 4 -padx 1 -pady 1
-    radiobutton .b4 -image image1 -bd 4 -padx 2 -pady 0
+    checkbutton .b3 -image image1 -bd 4 -padx 1 -pady 1 -font {{MS Sans Serif} 8}
+    radiobutton .b4 -image image1 -bd 4 -padx 2 -pady 0 -font {{MS Sans Serif} 8}
     pack .b1 .b2 .b3 .b4
     update
     # with patch 463234 with native L&F enabled, this returns:
@@ -52,8 +52,8 @@ test winbutton-1.2 {TkpComputeButtonGeometry procedure} win {
     deleteWindows
     label .b1 -bitmap question -bd 3 -padx 0 -pady 2
     button .b2 -bitmap question -bd 3 -padx 0 -pady 2
-    checkbutton .b3 -bitmap question -bd 3 -padx 1 -pady 1
-    radiobutton .b4 -bitmap question -bd 3 -padx 2 -pady 0
+    checkbutton .b3 -bitmap question -bd 3 -padx 1 -pady 1 -font {{MS Sans Serif} 8}
+    radiobutton .b4 -bitmap question -bd 3 -padx 2 -pady 0 -font {{MS Sans Serif} 8}
     pack .b1 .b2 .b3 .b4
     update
     # with patch 463234 with native L&F enabled, this returns:

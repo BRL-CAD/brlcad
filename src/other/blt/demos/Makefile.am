@@ -4,6 +4,7 @@ SUBDIRS = \
 	bitmaps
 
 EXTRA_DIST = \
+	Makefile.vc \
 	barchart1.tcl \
 	barchart2.tcl \
 	barchart3.tcl \
@@ -56,7 +57,5 @@ EXTRA_DIST = \
 	winop2.tcl \
 	images \
 	scripts
-
-MAINTAINERCLEANFILES = Makefile.in
 
 include $(top_srcdir)/misc/Makefile.defs

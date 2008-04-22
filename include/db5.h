@@ -1,7 +1,7 @@
 /*                           D B 5 . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,17 +20,10 @@
 /** @addtogroup db5 */
 /** @{ */
 /** @file db5.h
+ *
  * @brief
  *  Definition of the BRL-CAD "v5" database format used for new ".g" files.
  *
- * @author	Michael John Muuss
- * @author	Lee A. Butler
- * @author	Paul J. Tanenbaum
- * @author	John R. Anderson
- *
- *  @par Source
- *	The U. S. Army Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #ifndef __DB5_H__
@@ -55,14 +48,14 @@ __BEGIN_DECLS
  * as best we can describe its variable size with a "C" structure.
  */
 struct db5_ondisk_header {
-	unsigned char	db5h_magic1;		/* [0] */
-	unsigned char	db5h_hflags;		/* [1] */
-	unsigned char	db5h_aflags;		/* [2] */
-	unsigned char	db5h_bflags;		/* [3] */
-	unsigned char	db5h_major_type;	/* [4] */
-	unsigned char	db5h_minor_type;	/* [5] */
-	/* Next is a mandatory variable-size length field starting at [6] */
-	/* Next are optional object name length & data fields */
+    unsigned char	db5h_magic1;		/* [0] */
+    unsigned char	db5h_hflags;		/* [1] */
+    unsigned char	db5h_aflags;		/* [2] */
+    unsigned char	db5h_bflags;		/* [3] */
+    unsigned char	db5h_major_type;	/* [4] */
+    unsigned char	db5h_minor_type;	/* [5] */
+    /* Next is a mandatory variable-size length field starting at [6] */
+    /* Next are optional object name length & data fields */
 };
 
 #define DB5HDR_MAGIC1	0x76		/* 'v' */
@@ -186,26 +179,26 @@ extern const char *binu_types[];
  *  Magic number1 has already been checked, and is not stored.
  */
 struct db5_raw_internal {
-	long		magic;
-	unsigned char	h_object_width;		/* DB5HDR_WIDTHCODE_x */
-	unsigned char	h_name_hidden;
-	unsigned char	h_name_present;
-	unsigned char	h_name_width;		/* DB5HDR_WIDTHCODE_x */
-	unsigned char	h_dli;
-	unsigned char	a_width;		/* DB5HDR_WIDTHCODE_x */
-	unsigned char	a_present;
-	unsigned char	a_zzz;
-	unsigned char	b_width;		/* DB5HDR_WIDTHCODE_x */
-	unsigned char	b_present;
-	unsigned char	b_zzz;
-	unsigned char	major_type;
-	unsigned char	minor_type;
-	long		object_length;		/* in bytes, on disk */
-	/* These three MUST NOT be passed to bu_free_external()! */
-	struct bu_external name;
-	struct bu_external body;
-	struct bu_external attributes;
-	unsigned char	*buf;		/* if non-null needs to be bu_free()ed */
+    long		magic;
+    unsigned char	h_object_width;		/* DB5HDR_WIDTHCODE_x */
+    unsigned char	h_name_hidden;
+    unsigned char	h_name_present;
+    unsigned char	h_name_width;		/* DB5HDR_WIDTHCODE_x */
+    unsigned char	h_dli;
+    unsigned char	a_width;		/* DB5HDR_WIDTHCODE_x */
+    unsigned char	a_present;
+    unsigned char	a_zzz;
+    unsigned char	b_width;		/* DB5HDR_WIDTHCODE_x */
+    unsigned char	b_present;
+    unsigned char	b_zzz;
+    unsigned char	major_type;
+    unsigned char	minor_type;
+    long		object_length;		/* in bytes, on disk */
+    /* These three MUST NOT be passed to bu_free_external()! */
+    struct bu_external name;
+    struct bu_external body;
+    struct bu_external attributes;
+    unsigned char	*buf;		/* if non-null needs to be bu_free()ed */
 };
 #define DB5_RAW_INTERNAL_MAGIC	0x64357269	/* "d5ri" */
 #define RT_CK_RIP(_ptr)		BU_CKMAG( _ptr, DB5_RAW_INTERNAL_MAGIC, "db5_raw_internal" )
@@ -230,8 +223,8 @@ __END_DECLS
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

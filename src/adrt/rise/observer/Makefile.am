@@ -12,6 +12,7 @@ rise_observer_CFLAGS = \
 	-D__STRICT_ANSI__ \
 	@SDL_CFLAGS@ \
 	-I.. \
+	-I${top_srcdir}/src/adrt \
 	-I${top_srcdir}/src/adrt/libtie \
 	-I${top_srcdir}/src/adrt/libtienet \
 	-I${top_srcdir}/src/adrt/libtexture \
@@ -28,14 +29,12 @@ rise_observer_LDADD = \
 	${top_builddir}/src/adrt/libtexture/libtexture.la \
 	${top_builddir}/src/adrt/libcommon/libcommon.la \
 	${top_builddir}/src/adrt/librender/librender.la \
-	${top_builddir}/src/adrt/libutil/libutil.a \
+	${top_builddir}/src/adrt/libutil/libtieutil.la \
 	${SDL_LIBS} \
 	${LIBTHREAD} \
 	${LIBM} \
 	${LIBZ}
 
 noinst_HEADERS = observer.h
-
-MAINTAINERCLEANFILES = Makefile.in
 
 include $(top_srcdir)/misc/Makefile.defs

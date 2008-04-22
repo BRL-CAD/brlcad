@@ -43,13 +43,13 @@ test info-1.3 {info args option} {
     proc t1 "" {return foo}
     info args t1
 } {}
-test info-1.4 {info args option} {
+test info-1.4 {info args option} -body {
     catch {rename t1 {}}
-    list [catch {info args t1} msg] $msg
-} {1 {"t1" isn't a procedure}}
-test info-1.5 {info args option} {
-    list [catch {info args set} msg] $msg
-} {1 {"set" isn't a procedure}}
+    info args t1
+} -returnCodes error -result {"t1" isn't a procedure}
+test info-1.5 {info args option} -body {
+    info args set
+} -returnCodes error -result {"set" isn't a procedure}
 test info-1.6 {info args option} {
     proc t1 {a b} {set c 123; set d $c}
     t1 1 2
@@ -67,12 +67,12 @@ test info-2.1 {info body option} {
     proc t1 {} {body of t1}
     info body t1
 } {body of t1}
-test info-2.2 {info body option} {
-    list [catch {info body set} msg] $msg
-} {1 {"set" isn't a procedure}}
-test info-2.3 {info body option} {
-    list [catch {info args set 1} msg] $msg
-} {1 {wrong # args: should be "info args procname"}}
+test info-2.2 {info body option} -body {
+    info body set
+} -returnCodes error -result {"set" isn't a procedure}
+test info-2.3 {info body option} -body {
+    info args set 1
+} -returnCodes error -result {wrong # args: should be "info args procname"}
 test info-2.4 {info body option} {
     catch {namespace delete test_ns_info2}
     namespace eval test_ns_info2 {
@@ -112,17 +112,17 @@ proc testinfocmdcount {} {
 }
 test info-3.1 {info cmdcount compiled} {
     testinfocmdcount
-} 3
+} 4
 test info-3.2 {info cmdcount evaled} {
     set x [info cmdcount]
     set y 12345
     set z [info cm]
     expr $z-$x
-} 3
-test info-3.3 {info cmdcount evaled} [info body testinfocmdcount] 3
-test info-3.4 {info cmdcount option} {
-    list [catch {info cmdcount 1} msg] $msg
-} {1 {wrong # args: should be "info cmdcount"}}
+} 4
+test info-3.3 {info cmdcount evaled} [info body testinfocmdcount] 4
+test info-3.4 {info cmdcount option} -body {
+    info cmdcount 1
+} -returnCodes error -result {wrong # args: should be "info cmdcount"}
 
 test info-4.1 {info commands option} {
     proc t1 {} {}
@@ -149,14 +149,14 @@ test info-4.4 {info commands option} {
 } {_t1_ _t2_}
 catch {rename _t1_ {}}
 catch {rename _t2_ {}}
-test info-4.5 {info commands option} {
-    list [catch {info commands a b} msg] $msg
-} {1 {wrong # args: should be "info commands ?pattern?"}}
+test info-4.5 {info commands option} -returnCodes error -body {
+    info commands a b
+} -result {wrong # args: should be "info commands ?pattern?"}
 # Also some tests in namespace.test
 
-test info-5.1 {info complete option} {
-    list [catch {info complete} msg] $msg
-} {1 {wrong # args: should be "info complete command"}}
+test info-5.1 {info complete option} -body {
+    info complete
+} -returnCodes error -result {wrong # args: should be "info complete command"}
 test info-5.2 {info complete option} {
     info complete abc
 } 1
@@ -199,28 +199,30 @@ test info-6.5 {info default option} {
     set x [info default t1 e value]
     list $x $value
 } {1 {long default value}}
-test info-6.6 {info default option} {
-    list [catch {info default a b} msg] $msg
-} {1 {wrong # args: should be "info default procname arg varname"}}
-test info-6.7 {info default option} {
-    list [catch {info default _nonexistent_ a b} msg] $msg
-} {1 {"_nonexistent_" isn't a procedure}}
-test info-6.8 {info default option} {
+test info-6.6 {info default option} -returnCodes error -body {
+    info default a b
+} -result {wrong # args: should be "info default procname arg varname"}
+test info-6.7 {info default option} -returnCodes error -body {
+    info default _nonexistent_ a b
+} -result {"_nonexistent_" isn't a procedure}
+test info-6.8 {info default option} -returnCodes error -body {
     proc t1 {a b} {}
-    list [catch {info default t1 x value} msg] $msg
-} {1 {procedure "t1" doesn't have an argument "x"}}
-test info-6.9 {info default option} {
+    info default t1 x value
+} -result {procedure "t1" doesn't have an argument "x"}
+test info-6.9 {info default option} -returnCodes error -setup {
     catch {unset a}
+} -body {
     set a(0) 88
     proc t1 {a b} {}
-    list [catch {info default t1 a a} msg] $msg
-} {1 {couldn't store default value in variable "a"}}
-test info-6.10 {info default option} {
+    info default t1 a a
+} -returnCodes error -result {couldn't store default value in variable "a"}
+test info-6.10 {info default option} -setup {
     catch {unset a}
+} -body {
     set a(0) 88
     proc t1 {{a 18} b} {}
-    list [catch {info default t1 a a} msg] $msg
-} {1 {couldn't store default value in variable "a"}}
+    info default t1 a a
+} -returnCodes error -result {couldn't store default value in variable "a"}
 test info-6.11 {info default option} {
     catch {namespace delete test_ns_info2}
     namespace eval test_ns_info2 {
@@ -260,18 +262,19 @@ test info-7.6 {info exists option} {
     proc t1 {x} {return [info exists value]}
     t1 2
 } 0
-test info-7.7 {info exists option} {
+test info-7.7 {info exists option} -setup {
     catch {unset x}
+} -body {
     set x(2) 44
     list [info exists x] [info exists x(1)] [info exists x(2)]
-} {1 0 1}
+} -result {1 0 1}
 catch {unset x}
-test info-7.8 {info exists option} {
-    list [catch {info exists} msg] $msg
-} {1 {wrong # args: should be "info exists varName"}}
-test info-7.9 {info exists option} {
-    list [catch {info exists 1 2} msg] $msg
-} {1 {wrong # args: should be "info exists varName"}}
+test info-7.8 {info exists option} -body {
+    info exists
+} -returnCodes error -result {wrong # args: should be "info exists varName"}
+test info-7.9 {info exists option} -body {
+    info exists 1 2
+} -returnCodes error -result {wrong # args: should be "info exists varName"}
 
 test info-8.1 {info globals option} {
     set x 1
@@ -286,9 +289,9 @@ test info-8.2 {info globals option} {
     set _xxx2 2
     lsort [info g _xxx*]
 } {_xxx1 _xxx2}
-test info-8.3 {info globals option} {
-    list [catch {info globals 1 2} msg] $msg
-} {1 {wrong # args: should be "info globals ?pattern?"}}
+test info-8.3 {info globals option} -returnCodes error -body {
+    info globals 1 2
+} -result {wrong # args: should be "info globals ?pattern?"}
 test info-8.4 {info globals option: may have leading namespace qualifiers} {
     set x 0
     list [info globals x] [info globals :x] [info globals ::x] [info globals :::x] [info globals ::::x]
@@ -336,23 +339,23 @@ test info-9.4 {info level option} {
     }
     t1
 } {1 t1}
-test info-9.5 {info level option} {
-    list [catch {info level 1 2} msg] $msg
-} {1 {wrong # args: should be "info level ?number?"}}
-test info-9.6 {info level option} {
-    list [catch {info level 123a} msg] $msg
-} {1 {expected integer but got "123a"}}
-test info-9.7 {info level option} {
-    list [catch {info level 0} msg] $msg
-} {1 {bad level "0"}}
-test info-9.8 {info level option} {
+test info-9.5 {info level option} -body {
+    info level 1 2
+} -returnCodes error -result {wrong # args: should be "info level ?number?"}
+test info-9.6 {info level option} -body {
+    info level 123a
+} -returnCodes error -result {expected integer but got "123a"}
+test info-9.7 {info level option} -body {
+    info level 0
+} -returnCodes error -result {bad level "0"}
+test info-9.8 {info level option} -body {
     proc t1 {} {info level -1}
-    list [catch {t1} msg] $msg
-} {1 {bad level "-1"}}
-test info-9.9 {info level option} {
+    t1
+} -returnCodes error -result {bad level "-1"}
+test info-9.9 {info level option} -body {
     proc t1 {x} {info level $x}
-    list [catch {t1 -3} msg] $msg
-} {1 {bad level "-3"}}
+    t1 -3
+} -returnCodes error -result {bad level "-3"}
 test info-9.10 {info level option, namespaces} {
     set msg [namespace eval t {info level 0}]
     namespace delete t
@@ -378,22 +381,22 @@ test info-9.12 {info level option, ensembles} -constraints knownBug -setup {
 } -result {a foo 1 2 3}
 
 set savedLibrary $tcl_library
-test info-10.1 {info library option} {
-    list [catch {info library x} msg] $msg
-} {1 {wrong # args: should be "info library"}}
+test info-10.1 {info library option} -body {
+    info library x
+} -returnCodes error -result {wrong # args: should be "info library"}
 test info-10.2 {info library option} {
     set tcl_library 12345
     info library
 } {12345}
-test info-10.3 {info library option} {
+test info-10.3 {info library option} -body {
     unset tcl_library
-    list [catch {info library} msg] $msg
-} {1 {no library has been specified for Tcl}}
+    info library
+} -returnCodes error -result {no library has been specified for Tcl}
 set tcl_library $savedLibrary
 
-test info-11.1 {info loaded option} {
-    list [catch {info loaded a b} msg] $msg
-} {1 {wrong # args: should be "info loaded ?interp?"}}
+test info-11.1 {info loaded option} -body {
+    info loaded a b
+} -returnCodes error -result {wrong # args: should be "info loaded ?interp?"}
 test info-11.2 {info loaded option} {
     list [catch {info loaded {}}] [catch {info loaded gorp} msg] $msg
 } {0 1 {could not find interpreter "gorp"}}
@@ -419,9 +422,9 @@ test info-12.2 {info locals option} {
     }
     lsort [t1 2 3]
 } {x xx1 xx2}
-test info-12.3 {info locals option} {
-    list [catch {info locals 1 2} msg] $msg
-} {1 {wrong # args: should be "info locals ?pattern?"}}
+test info-12.3 {info locals option} -body {
+    info locals 1 2
+} -returnCodes error -result {wrong # args: should be "info locals ?pattern?"}
 test info-12.4 {info locals option} {
     info locals
 } {}
@@ -445,24 +448,25 @@ test info-12.7 {info locals with temporary variables} {
     t1
 } {a}
 
-test info-13.1 {info nameofexecutable option} {
-    list [catch {info nameofexecutable foo} msg] $msg
-} {1 {wrong # args: should be "info nameofexecutable"}}
+test info-13.1 {info nameofexecutable option} -returnCodes error -body {
+    info nameofexecutable foo
+} -result {wrong # args: should be "info nameofexecutable"}
 
 test info-14.1 {info patchlevel option} {
     set a [info patchlevel]
     regexp {[0-9]+\.[0-9]+([p[0-9]+)?} $a
 } 1
-test info-14.2 {info patchlevel option} {
-    list [catch {info patchlevel a} msg] $msg
-} {1 {wrong # args: should be "info patchlevel"}}
-test info-14.3 {info patchlevel option} {
+test info-14.2 {info patchlevel option} -returnCodes error -body {
+    info patchlevel a
+} -result {wrong # args: should be "info patchlevel"}
+test info-14.3 {info patchlevel option} -setup {
     set t $tcl_patchLevel
+} -body {
     unset tcl_patchLevel
-    set result [list [catch {info patchlevel} msg] $msg]
+    info patchlevel
+} -cleanup {
     set tcl_patchLevel $t
-    set result
-} {1 {can't read "tcl_patchLevel": no such variable}}
+} -returnCodes error -result {can't read "tcl_patchLevel": no such variable}
 
 test info-15.1 {info procs option} {
     proc t1 {} {}
@@ -478,19 +482,21 @@ test info-15.2 {info procs option} {
 } {_tt1 _tt2}
 catch {rename _tt1 {}}
 catch {rename _tt2 {}}
-test info-15.3 {info procs option} {
-    list [catch {info procs 2 3} msg] $msg
-} {1 {wrong # args: should be "info procs ?pattern?"}}
-test info-15.4 {info procs option} {
+test info-15.3 {info procs option} -body {
+    info procs 2 3
+} -returnCodes error -result {wrong # args: should be "info procs ?pattern?"}
+test info-15.4 {info procs option} -setup {
     catch {namespace delete test_ns_info2}
+} -body {
     namespace eval test_ns_info2 {
         namespace import ::test_ns_info1::*
         proc r {} {}
         list [info procs] [info procs p*]
     }
-} {{p q r} p}
-test info-15.5 {info procs option with a proc in a namespace} {
+} -result {{p q r} p}
+test info-15.5 {info procs option with a proc in a namespace} -setup {
     catch {namespace delete test_ns_info2}
+} -body {
     namespace eval test_ns_info2 {
 	proc p1 { arg } {
 	    puts cmd
@@ -500,9 +506,10 @@ test info-15.5 {info procs option with a proc in a namespace} {
 	}
     }
     info procs ::test_ns_info2::p1
-} {::test_ns_info2::p1}
-test info-15.6 {info procs option with a pattern in a namespace} {
+} -result {::test_ns_info2::p1}
+test info-15.6 {info procs option with a pattern in a namespace} -setup {
     catch {namespace delete test_ns_info2}
+} -body {
     namespace eval test_ns_info2 {
 	proc p1 { arg } {
 	    puts cmd
@@ -512,9 +519,10 @@ test info-15.6 {info procs option with a pattern in a namespace} {
 	}
     }
     lsort [info procs ::test_ns_info2::p*]
-} [lsort [list ::test_ns_info2::p1 ::test_ns_info2::p2]]
-test info-15.7 {info procs option with a global shadowing proc} {
+} -result [lsort [list ::test_ns_info2::p1 ::test_ns_info2::p2]]
+test info-15.7 {info procs option with a global shadowing proc} -setup {
     catch {namespace delete test_ns_info2}
+} -body {
     proc string_cmd { arg } {
         puts cmd
     }
@@ -524,12 +532,13 @@ test info-15.7 {info procs option with a global shadowing proc} {
 	}
     }
     info procs test_ns_info2::string*
-} {::test_ns_info2::string_cmd}
+} -result {::test_ns_info2::string_cmd}
 # This regression test is currently commented out because it requires
 # that the implementation of "info procs" looks into the global namespace,
 # which it does not (in contrast to "info commands")
-test info-15.8 {info procs option with a global shadowing proc} knownBug {
+test info-15.8 {info procs option with a global shadowing proc} -setup {
     catch {namespace delete test_ns_info2}
+} -constraints knownBug -body {
     proc string_cmd { arg } {
         puts cmd
     }
@@ -544,11 +553,11 @@ test info-15.8 {info procs option with a global shadowing proc} knownBug {
     namespace eval test_ns_info2 {
         lsort [info procs string*]
     }
-} [lsort [list string_cmd string_cmd2]]
+} -result [lsort [list string_cmd string_cmd2]]
 
-test info-16.1 {info script option} {
-    list [catch {info script x x} msg] $msg
-} {1 {wrong # args: should be "info script ?filename?"}}
+test info-16.1 {info script option} -returnCodes error -body {
+    info script x x
+} -result {wrong # args: should be "info script ?filename?"}
 test info-16.2 {info script option} {
     file tail [info sc]
 } "info.test"
@@ -583,24 +592,24 @@ test info-16.8 {info script option} {
 } [list [list $gorpfile foo.bar] info.test]
 removeFile gorp.info
 
-test info-17.1 {info sharedlibextension option} {
-    list [catch {info sharedlibextension foo} msg] $msg
-} {1 {wrong # args: should be "info sharedlibextension"}}
+test info-17.1 {info sharedlibextension option} -returnCodes error -body {
+    info sharedlibextension foo
+} -result {wrong # args: should be "info sharedlibextension"}
 
 test info-18.1 {info tclversion option} {
-    set x [info tclversion]
-    scan $x "%d.%d%c" a b c
+    scan [info tclversion] "%d.%d%c" a b c
 } 2
-test info-18.2 {info tclversion option} {
-    list [catch {info t 2} msg] $msg
-} {1 {wrong # args: should be "info tclversion"}}
-test info-18.3 {info tclversion option} {
-    set t $tcl_version
+test info-18.2 {info tclversion option} -body {
+    info t 2
+} -returnCodes error -result {wrong # args: should be "info tclversion"}
+test info-18.3 {info tclversion option} -body {
     unset tcl_version
-    set result [list [catch {info tclversion} msg] $msg]
+    info tclversion
+} -returnCodes error -setup {
+    set t $tcl_version
+} -cleanup {
     set tcl_version $t
-    set result
-} {1 {can't read "tcl_version": no such variable}}
+} -result {can't read "tcl_version": no such variable}
 
 test info-19.1 {info vars option} {
     set a 1
@@ -625,9 +634,9 @@ test info-19.2 {info vars option} {
 test info-19.3 {info vars option} {
     lsort [info vars]
 } [lsort [info globals]]
-test info-19.4 {info vars option} {
-    list [catch {info vars a b} msg] $msg
-} {1 {wrong # args: should be "info vars ?pattern?"}}
+test info-19.4 {info vars option} -returnCodes error -body {
+    info vars a b
+} -result {wrong # args: should be "info vars ?pattern?"}
 test info-19.5 {info vars with temporary variables} {
     proc t1 {} {
         foreach a {b c} {}
@@ -657,25 +666,25 @@ test info-20.3 {info functions option} {
 test info-20.4 {info functions option} {
     lsort [info functions *tan*]
 } {atan atan2 tan tanh}
-test info-20.5 {info functions option} {
-    list [catch {info functions raise an error} msg] $msg
-} {1 {wrong # args: should be "info functions ?pattern?"}}
+test info-20.5 {info functions option} -returnCodes error -body {
+    info functions raise an error
+} -result {wrong # args: should be "info functions ?pattern?"}
 
-test info-21.1 {miscellaneous error conditions} {
-    list [catch {info} msg] $msg
-} {1 {wrong # args: should be "info option ?arg arg ...?"}}
-test info-21.2 {miscellaneous error conditions} {
-    list [catch {info gorp} msg] $msg
-} {1 {bad option "gorp": must be args, body, cmdcount, commands, complete, default, exists, frame, functions, globals, hostname, level, library, loaded, locals, nameofexecutable, patchlevel, procs, script, sharedlibextension, tclversion, or vars}}
-test info-21.3 {miscellaneous error conditions} {
-    list [catch {info c} msg] $msg
-} {1 {ambiguous option "c": must be args, body, cmdcount, commands, complete, default, exists, frame, functions, globals, hostname, level, library, loaded, locals, nameofexecutable, patchlevel, procs, script, sharedlibextension, tclversion, or vars}}
-test info-21.4 {miscellaneous error conditions} {
-    list [catch {info l} msg] $msg
-} {1 {ambiguous option "l": must be args, body, cmdcount, commands, complete, default, exists, frame, functions, globals, hostname, level, library, loaded, locals, nameofexecutable, patchlevel, procs, script, sharedlibextension, tclversion, or vars}}
-test info-21.5 {miscellaneous error conditions} {
-    list [catch {info s} msg] $msg
-} {1 {ambiguous option "s": must be args, body, cmdcount, commands, complete, default, exists, frame, functions, globals, hostname, level, library, loaded, locals, nameofexecutable, patchlevel, procs, script, sharedlibextension, tclversion, or vars}}
+test info-21.1 {miscellaneous error conditions} -returnCodes error -body {
+    info
+} -result {wrong # args: should be "info subcommand ?argument ...?"}
+test info-21.2 {miscellaneous error conditions} -returnCodes error -body {
+    info gorp
+} -result {unknown or ambiguous subcommand "gorp": must be args, body, cmdcount, commands, complete, default, exists, frame, functions, globals, hostname, level, library, loaded, locals, nameofexecutable, patchlevel, procs, script, sharedlibextension, tclversion, or vars}
+test info-21.3 {miscellaneous error conditions} -returnCodes error -body {
+    info c
+} -result {unknown or ambiguous subcommand "c": must be args, body, cmdcount, commands, complete, default, exists, frame, functions, globals, hostname, level, library, loaded, locals, nameofexecutable, patchlevel, procs, script, sharedlibextension, tclversion, or vars}
+test info-21.4 {miscellaneous error conditions} -returnCodes error -body {
+    info l
+} -result {unknown or ambiguous subcommand "l": must be args, body, cmdcount, commands, complete, default, exists, frame, functions, globals, hostname, level, library, loaded, locals, nameofexecutable, patchlevel, procs, script, sharedlibextension, tclversion, or vars}
+test info-21.5 {miscellaneous error conditions} -returnCodes error -body {
+    info s
+} -result {unknown or ambiguous subcommand "s": must be args, body, cmdcount, commands, complete, default, exists, frame, functions, globals, hostname, level, library, loaded, locals, nameofexecutable, patchlevel, procs, script, sharedlibextension, tclversion, or vars}
 
 ##
 # ### ### ### ######### ######### #########
@@ -727,82 +736,69 @@ proc etrace {} {
 test info-22.0 {info frame, levels} {!singleTestInterp} {
     info frame
 } 7
-
 test info-22.1 {info frame, bad level relative} {!singleTestInterp} {
     # catch is another level!, i.e. we have 8, not 7
     catch {info frame -8} msg
     set msg
 } {bad level "-8"}
-
 test info-22.2 {info frame, bad level absolute} {!singleTestInterp} {
     # catch is another level!, i.e. we have 8, not 7
     catch {info frame 9} msg
     set msg
 } {bad level "9"}
-
 test info-22.3 {info frame, current, relative} {
     info frame 0
 } {type eval line 2 cmd {info frame 0}}
-
 test info-22.4 {info frame, current, relative, nested} {
     set res [info frame 0]
 } {type eval line 2 cmd {info frame 0}}
-
 test info-22.5 {info frame, current, absolute} {!singleTestInterp} {
     reduce [info frame 7]
 } {type eval line 2 cmd {info frame 7}}
-
 test info-22.6 {info frame, global, relative} {!singleTestInterp} {
     reduce [info frame -6]
-} {type source line 755 file info.test cmd test\ info-22.6\ \{info\ frame,\ global,\ relative\}\ \{!singleTestInter level 0}
-
+} {type source line 758 file info.test cmd test\ info-22.6\ \{info\ frame,\ global,\ relative\}\ \{!singleTestInter level 0}
 test info-22.7 {info frame, global, absolute} {!singleTestInterp} {
     reduce [info frame 1]
-} {type source line 759 file info.test cmd test\ info-22.7\ \{info\ frame,\ global,\ absolute\}\ \{!singleTestInter level 0}
-
-test info-22.8 {info frame, basic trace} {!singleTestInterp} {
+} {type source line 761 file info.test cmd test\ info-22.7\ \{info\ frame,\ global,\ absolute\}\ \{!singleTestInter level 0}
+test info-22.8 {info frame, basic trace} {knownBug !singleTestInterp} {
     join [etrace] \n
-} {8 {type source line 719 file info.test cmd {info frame $level} proc ::etrace level 0}
+} {8 {type source line 728 file info.test cmd {info frame $level} proc ::etrace level 0}
 7 {type eval line 2 cmd etrace}
 6 {type source line 2299 file tcltest.tcl cmd {uplevel 1 $script} proc ::tcltest::RunTest}
 5 {type eval line 1 cmd {::tcltest::RunTest info-22}}
 4 {type source line 1621 file tcltest.tcl cmd {uplevel 1 $script} proc ::tcltest::Eval}
 3 {type eval line 1 cmd ::tcltest::Eval\ \{::tcltest::RunTest\ info-22}
 2 {type source line 1967 file tcltest.tcl cmd {uplevel 1 [list [namespace origin Eval] $command 1]} proc ::tcltest::test}
-1 {type source line 763 file info.test cmd test\ info-22.8\ \{info\ frame,\ basic\ trace\}\ \{!singleTestInter level 1}}
+1 {type source line 764 file info.test cmd test\ info-22.8\ \{info\ frame,\ basic\ trace\}\ \{!singleTestInter level 1}}
+
 ## The line 1967 is off by 5 from the true value of 1972. This is a knownBug, see testcase 30.0
 test info-23.0 {eval'd info frame} {!singleTestInterp} {
     eval {info frame}
 } 8
-
 test info-23.1 {eval'd info frame, semi-dynamic} {!singleTestInterp} {
     eval info frame
 } 8
-
 test info-23.2 {eval'd info frame, dynamic} {!singleTestInterp} {
     set script {info frame}
     eval $script
 } 8
-
 test info-23.3 {eval'd info frame, literal} {
     eval {
 	info frame 0
     }
 } {type eval line 2 cmd {info frame 0}}
-
 test info-23.4 {eval'd info frame, semi-dynamic} {
     eval info frame 0
 } {type eval line 1 cmd {info frame 0}}
-
 test info-23.5 {eval'd info frame, dynamic} {
     set script {info frame 0}
     eval $script
 } {type eval line 1 cmd {info frame 0}}
-
-test info-23.6 {eval'd info frame, trace} {!singleTestInterp} {
+test info-23.6 {eval'd info frame, trace} {knownBug !singleTestInterp} {
     set script {etrace}
     join [eval $script] \n
-} {9 {type source line 719 file info.test cmd {info frame $level} proc ::etrace level 0}
+} {9 {type source line 728 file info.test cmd {info frame $level} proc ::etrace level 0}
 8 {type eval line 1 cmd etrace}
 7 {type eval line 3 cmd {eval $script}}
 6 {type source line 2299 file tcltest.tcl cmd {uplevel 1 $script} proc ::tcltest::RunTest}
@@ -810,7 +806,7 @@ test info-23.6 {eval'd info frame, trace} {!singleTestInterp} {
 4 {type source line 1621 file tcltest.tcl cmd {uplevel 1 $script} proc ::tcltest::Eval}
 3 {type eval line 1 cmd ::tcltest::Eval\ \{::tcltest::RunTest\ info-23}
 2 {type source line 1967 file tcltest.tcl cmd {uplevel 1 [list [namespace origin Eval] $command 1]} proc ::tcltest::test}
-1 {type source line 802 file info.test cmd test\ info-23.6\ \{eval'd\ info\ frame,\ trace\}\ \{!singleTestInter level 1}}
+1 {type source line 798 file info.test cmd test\ info-23.6\ \{eval'd\ info\ frame,\ trace\}\ \{!singleTestInter level 1}}
 ## The line 1967 is off by 5 from the true value of 1972. This is a knownBug, see testcase 30.0
 # -------------------------------------------------------------------------
 
@@ -822,17 +818,19 @@ test info-23.6 {eval'd info frame, trace} {!singleTestInterp} {
 # causes the connection to the context to be lost. Currently only
 # procedure bodies are able to remember their context.
 
+# NOTE THAT THESE DO NOT USE THE -setup OPTION TO [test]
+
 # -------------------------------------------------------------------------
 
 namespace eval foo {
     proc bar {} {info frame 0}
 }
 
-test info-24.0 {info frame, interaction, namespace eval} {
+test info-24.0 {info frame, interaction, namespace eval} -body {
     reduce [foo::bar]
-} {type source line 828 file info.test cmd {info frame 0} proc ::foo::bar level 0}
-
-namespace delete foo
+} -cleanup {
+    namespace delete foo
+} -result {type source line 826 file info.test cmd {info frame 0} proc ::foo::bar level 0}
 
 # -------------------------------------------------------------------------
 
@@ -842,11 +840,11 @@ if {$flag} {
     proc ::foo::bar {} {info frame 0}
 }
 
-test info-24.1 {info frame, interaction, if} {
+test info-24.1 {info frame, interaction, if} -body {
     reduce [foo::bar]
-} {type source line 842 file info.test cmd {info frame 0} proc ::foo::bar level 0}
-
-namespace delete foo
+} -cleanup {
+    namespace delete foo
+} -result {type source line 840 file info.test cmd {info frame 0} proc ::foo::bar level 0}
 
 # -------------------------------------------------------------------------
 
@@ -857,11 +855,11 @@ while {$flag} {
     set flag 0
 }
 
-test info-24.2 {info frame, interaction, while} {
+test info-24.2 {info frame, interaction, while} -body {
     reduce [foo::bar]
-} {type source line 856 file info.test cmd {info frame 0} proc ::foo::bar level 0}
-
-namespace delete foo
+} -cleanup {
+    namespace delete foo
+} -result {type source line 854 file info.test cmd {info frame 0} proc ::foo::bar level 0}
 
 # -------------------------------------------------------------------------
 
@@ -870,11 +868,11 @@ catch {
     proc ::foo::bar {} {info frame 0}
 }
 
-test info-24.3 {info frame, interaction, catch} {
+test info-24.3 {info frame, interaction, catch} -body {
     reduce [foo::bar]
-} {type source line 870 file info.test cmd {info frame 0} proc ::foo::bar level 0}
-
-namespace delete foo
+} -cleanup {
+    namespace delete foo
+} -result {type source line 868 file info.test cmd {info frame 0} proc ::foo::bar level 0}
 
 # -------------------------------------------------------------------------
 
@@ -884,11 +882,11 @@ foreach var val {
     break
 }
 
-test info-24.4 {info frame, interaction, foreach} {
+test info-24.4 {info frame, interaction, foreach} -body {
     reduce [foo::bar]
-} {type source line 883 file info.test cmd {info frame 0} proc ::foo::bar level 0}
-
-namespace delete foo
+} -cleanup {
+    namespace delete foo
+} -result {type source line 881 file info.test cmd {info frame 0} proc ::foo::bar level 0}
 
 # -------------------------------------------------------------------------
 
@@ -898,11 +896,11 @@ for {} {1} {} {
     break
 }
 
-test info-24.5 {info frame, interaction, for} {
+test info-24.5 {info frame, interaction, for} -body {
     reduce [foo::bar]
-} {type source line 897 file info.test cmd {info frame 0} proc ::foo::bar level 0}
-
-namespace delete foo
+} -cleanup {
+    namespace delete foo
+} -result {type source line 895 file info.test cmd {info frame 0} proc ::foo::bar level 0}
 
 # -------------------------------------------------------------------------
 
@@ -912,12 +910,15 @@ eval {
 
 test info-25.0 {info frame, proc in eval} {
     reduce [bar]
-} {type source line 910 file info.test cmd {info frame 0} proc ::bar level 0}
+} {type source line 908 file info.test cmd {info frame 0} proc ::bar level 0}
+# Don't need to clean up yet...
 
 proc bar {} {info frame 0}
+
 test info-25.1 {info frame, regular proc} {
     reduce [bar]
-} {type source line 917 file info.test cmd {info frame 0} proc ::bar level 0}
+} {type source line 916 file info.test cmd {info frame 0} proc ::bar level 0}
+
 rename bar {}
 
 # -------------------------------------------------------------------------
@@ -993,12 +994,12 @@ switch -exact -- $x {
     }
 }
 
-test info-24.6.0 {info frame, interaction, switch, list body} {
+test info-24.6.0 {info frame, interaction, switch, list body} -body {
     reduce [foo::bar]
-} {type source line 992 file info.test cmd {info frame 0} proc ::foo::bar level 0}
-
-namespace delete foo
-unset x
+} -cleanup {
+    namespace delete foo
+    unset x
+} -result {type source line 993 file info.test cmd {info frame 0} proc ::foo::bar level 0}
 
 # -------------------------------------------------------------------------
 
@@ -1008,12 +1009,12 @@ switch -exact -- $x foo {
     proc ::foo::bar {} {info frame 0}
 }
 
-test info-24.6.1 {info frame, interaction, switch, multi-body} {
+test info-24.6.1 {info frame, interaction, switch, multi-body} -body {
     reduce [foo::bar]
-} {type source line 1008 file info.test cmd {info frame 0} proc ::foo::bar level 0}
-
-namespace delete foo
-unset x
+} -cleanup {
+    namespace delete foo
+    unset x
+} -result {type source line 1009 file info.test cmd {info frame 0} proc ::foo::bar level 0}
 
 # -------------------------------------------------------------------------
 
@@ -1023,12 +1024,12 @@ switch -exact -- $x [list foo {
     proc ::foo::bar {} {info frame 0}
 }]
 
-test info-24.6.2 {info frame, interaction, switch, list body, dynamic} {
+test info-24.6.2 {info frame, interaction, switch, list body, dynamic} -body {
     reduce [foo::bar]
-} {type proc line 1 cmd {info frame 0} proc ::foo::bar level 0}
-
-namespace delete foo
-unset x
+} -cleanup {
+    namespace delete foo
+    unset x
+} -result {type proc line 1 cmd {info frame 0} proc ::foo::bar level 0}
 
 # -------------------------------------------------------------------------
 
@@ -1042,12 +1043,12 @@ namespace eval foo {}
 set x foo
 switch -exact -- $x $body
 
-test info-31.7 {info frame, interaction, switch, dynamic} {
+test info-31.7 {info frame, interaction, switch, dynamic} -body {
     reduce [foo::bar]
-} {type proc line 1 cmd {info frame 0} proc ::foo::bar level 0}
-
-namespace delete foo
-unset x
+} -cleanup {
+    namespace delete foo
+    unset x
+} -result {type proc line 1 cmd {info frame 0} proc ::foo::bar level 0}
 
 # -------------------------------------------------------------------------
 
@@ -1058,40 +1059,40 @@ set body {
 namespace eval foo {}
 eval $body
 
-test info-32.0 {info frame, dynamic procedure} {
+test info-32.0 {info frame, dynamic procedure} -body {
     reduce [foo::bar]
-} {type proc line 1 cmd {info frame 0} proc ::foo::bar level 0}
-
-namespace delete foo
+} -cleanup {
+    namespace delete foo
+} -result {type proc line 1 cmd {info frame 0} proc ::foo::bar level 0}
 
 # -------------------------------------------------------------------------
 
-namespace {expand}{
+namespace {*}{
     eval
     foo
     {proc bar {} {info frame 0}}
 }
-test info-33.0 {expand, literal, direct} {
+test info-33.0 {{*}, literal, direct} -body {
     reduce [foo::bar]
-} {type source line 1072 file info.test cmd {info frame 0} proc ::foo::bar level 0}
-
-namespace delete foo
+} -cleanup {
+    namespace delete foo
+} -result {type source line 1073 file info.test cmd {info frame 0} proc ::foo::bar level 0}
 
 # -------------------------------------------------------------------------
 
 namespace eval foo {}
 proc foo::bar {} {
     set flag 1
-    if {expand}{
+    if {*}{
 	{$flag}
 	{info frame 0}
     }
 }
-test info-33.1 {expand, literal, simple, bytecompiled} {
+test info-33.1 {{*}, literal, simple, bytecompiled} -body {
     reduce [foo::bar]
-} {type source line 1087 file info.test cmd {info frame 0} proc ::foo::bar level 0}
-
-namespace delete foo
+} -cleanup {
+    namespace delete foo
+} -result {type source line 1088 file info.test cmd {info frame 0} proc ::foo::bar level 0}
 
 # -------------------------------------------------------------------------
 
@@ -1102,8 +1103,8 @@ set body {
 	info frame 0
     }}
 }
-namespace {expand}$body
-test info-34.0 {expand, dynamic, direct} {
+namespace {*}$body
+test info-34.0 {{*}, dynamic, direct} {
     reduce [foo::bar]
 } {type proc line 2 cmd {info frame 0} proc ::foo::bar level 0}
 
@@ -1119,9 +1120,9 @@ set body {
 }
 proc foo::bar {} {
     global body ; set flag 1
-    if {expand}$body
+    if {*}$body
 }
-test info-34.1 {expand, literal, bytecompiled} {
+test info-34.1 {{*}, literal, bytecompiled} {
     reduce [foo::bar]
 } {type eval line 1 cmd {info frame 0} proc ::foo::bar level 0}
 
@@ -1138,7 +1139,7 @@ proc foo {} {
 }
 test info-35.0 {apply, literal} {
     reduce [foo]
-} {type source line 1136 file info.test cmd {info frame 0} lambda {
+} {type source line 1137 file info.test cmd {info frame 0} lambda {
 	{x y}
 	{info frame 0}
     } level 0}
@@ -1165,7 +1166,7 @@ dict for {k v} {foo bar} {
 
 test info-24.7 {info frame, interaction, dict for} {
     reduce [foo::bar]
-} {type source line 1163 file info.test cmd {info frame 0} proc ::foo::bar level 0}
+} {type source line 1164 file info.test cmd {info frame 0} proc ::foo::bar level 0}
 
 namespace delete foo
 
@@ -1179,7 +1180,7 @@ dict with thedict {
 
 test info-24.8 {info frame, interaction, dict with} {
     reduce [foo::bar]
-} {type source line 1177 file info.test cmd {info frame 0} proc ::foo::bar level 0}
+} {type source line 1178 file info.test cmd {info frame 0} proc ::foo::bar level 0}
 
 namespace delete foo
 unset thedict
@@ -1194,7 +1195,7 @@ dict filter {foo bar} script {k v} {
 
 test info-24.9 {info frame, interaction, dict filter} {
     reduce [foo::bar]
-} {type source line 1191 file info.test cmd {info frame 0} proc ::foo::bar level 0}
+} {type source line 1192 file info.test cmd {info frame 0} proc ::foo::bar level 0}
 
 namespace delete foo
 unset x
@@ -1210,7 +1211,7 @@ proc foo::bar {} {
 }
 test info-36.0 {info frame, dict for, bcc} {
     reduce [foo::bar]
-} {type source line 1207 file info.test cmd {info frame 0} proc ::foo::bar level 0}
+} {type source line 1208 file info.test cmd {info frame 0} proc ::foo::bar level 0}
 
 namespace delete foo
 
@@ -1227,7 +1228,7 @@ proc foo::bar {} {
 
 test info-36.1.0 {switch, list literal, bcc} {
     reduce [foo::bar]
-} {type source line 1223 file info.test cmd {info frame 0} proc ::foo::bar level 0}
+} {type source line 1224 file info.test cmd {info frame 0} proc ::foo::bar level 0}
 
 namespace delete foo
 
@@ -1242,28 +1243,28 @@ proc foo::bar {} {
 
 test info-36.1.1 {switch, multi-body literals, bcc} {
     reduce [foo::bar]
-} {type source line 1239 file info.test cmd {info frame 0} proc ::foo::bar level 0}
+} {type source line 1240 file info.test cmd {info frame 0} proc ::foo::bar level 0}
 
 namespace delete foo
 
 # -------------------------------------------------------------------------
 
-namespace {expand}"
+namespace {*}"
     eval
     foo
     {proc bar {} {info frame 0}}
 "
-test info-33.2 {expand, literal, direct} {
+test info-33.2 {{*}, literal, direct} {
     reduce [foo::bar]
-} {type source line 1254 file info.test cmd {info frame 0} proc ::foo::bar level 0}
+} {type source line 1255 file info.test cmd {info frame 0} proc ::foo::bar level 0}
 
 namespace delete foo
 
 # -------------------------------------------------------------------------
 
-namespace {expand}"eval\nfoo\n{proc bar {} {info frame 0}}\n"
+namespace {*}"eval\nfoo\n{proc bar {} {info frame 0}}\n"
 
-test info-33.2a {expand, literal, not simple, direct} {
+test info-33.2a {{*}, literal, not simple, direct} {
     reduce [foo::bar]
 } {type proc line 1 cmd {info frame 0} proc ::foo::bar level 0}
 
@@ -1274,14 +1275,14 @@ namespace delete foo
 namespace eval foo {}
 proc foo::bar {} {
     set flag 1
-    if {expand}"
+    if {*}"
 	{1}
 	{info frame 0}
     "
 }
-test info-33.3 {expand, literal, simple, bytecompiled} {
+test info-33.3 {{*}, literal, simple, bytecompiled} {
     reduce [foo::bar]
-} {type source line 1279 file info.test cmd {info frame 0} proc ::foo::bar level 0}
+} {type source line 1280 file info.test cmd {info frame 0} proc ::foo::bar level 0}
 
 namespace delete foo
 
@@ -1290,9 +1291,9 @@ namespace delete foo
 namespace eval foo {}
 proc foo::bar {} {
     set flag 1
-    if {expand}"\n{1}\n{info frame 0}"
+    if {*}"\n{1}\n{info frame 0}"
 }
-test info-33.3a {expand, literal, not simple, bytecompiled} {
+test info-33.3a {{*}, literal, not simple, bytecompiled} {
     reduce [foo::bar]
 } {type eval line 1 cmd {info frame 0} proc ::foo::bar level 0}
 

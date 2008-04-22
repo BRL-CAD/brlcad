@@ -1,7 +1,7 @@
 /*                           L G T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,45 +18,18 @@
  * information.
  */
 /** @file lgt.c
-    Author:		Gary S. Moss
-*/
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
+ *
+ */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
-#include <fcntl.h>
+#include <string.h>
 #include <math.h>
 #include <signal.h>
 #include <assert.h>
+#include "bio.h"
 
-#if defined( CRAY )
-#  include <sys/category.h>
-#  include <sys/resource.h>
-#  include <sys/types.h>
-#  if defined( CRAY1 )
-#    include <sys/machd.h>	/* For HZ */
-#  endif
-#  if defined( CRAY2 )
-#    undef MAXINT
-#    include <sys/param.h>
-#  endif
-#  define MAX_CPU_TICKS	(200000*HZ) /* Max ticks = seconds * ticks/sec.	*/
-#  define NICENESS	-6 /* should bring it down from 16 to 10 */
-#endif	/* Cray */
-
-#include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
@@ -88,9 +61,9 @@ int		key_Frame(void);
 static int
 substr(char *str, char *pattern)
 {
-    if( *str == '\0' )
+    if ( *str == '\0' )
 	return	0;
-    if( *str != *pattern || strncmp( str, pattern, strlen( pattern ) ) )
+    if ( *str != *pattern || strncmp( str, pattern, strlen( pattern ) ) )
 	return	substr( str+1, pattern );
     return	1;
 }
@@ -103,100 +76,63 @@ main(int argc, char **argv)
 
     bu_setlinebuf(stderr);
 
-    beginptr = (char *) sbrk(0);
-
     bu_log( "\n\nThis program is deprecated and will not be supported in future releases\n" );
     bu_log( "\tPlease use \"rtedge\" instead\n" );
     bu_log( "\tPlease notify \"devs@brlcad.org\" if you need enhancements to \"rtedge\"\n" );
     bu_log( "\nPress \"Enter\" to continue\n\n" );
     (void)getchar();
     npsw = bu_avail_cpus();
-    if( npsw > MAX_PSW )
+    if ( npsw > MAX_PSW )
 	npsw = MAX_PSW;
-    if( npsw > 1 )
+    if ( npsw > 1 )
 	rt_g.rtg_parallel = 1;
     else
 	rt_g.rtg_parallel = 0;
     bu_semaphore_init( RT_SEM_LAST );
 
-#if defined( CRAY )
-    {
-	int	newnice;
-	long	oldlimit;
-	long	newlimit;
-	if( (newnice = nicem( C_PROC, 0, NICENESS )) == -1 )
-	    perror( "nicem" );
-	else
-	    bu_log( "Program niced to %d.\n", newnice - 20 );
-	oldlimit = limit( C_PROC, 0, L_CPU, MAX_CPU_TICKS );
-	newlimit = limit( C_PROC, 0, L_CPU, -1 );
-	bu_log(	"CPU time limit: was %d seconds, now set to %d seconds.\n",
-		oldlimit/HZ,
-		newlimit/HZ
-		);
-	bu_log(	"Memory limit set to %dKW.\n",
-		limit( C_PROC, 0, L_MEM, -1 ) );
-    }
-#endif
-
     init_Lgts();
 
-    if( ! pars_Argv( argc, argv ) )
-	{
-	    prnt_Usage();
-	    return	1;
-	}
+    if ( ! pars_Argv( argc, argv ) )
+    {
+	prnt_Usage();
+	return	1;
+    }
 
-    /* XXX - ismex() uses dgl on SGI servers which causes problems when client
-       machine does not grant access to server via 'xhost'. */
-#if 0
-    if( ismex() && tty )
+    for ( i = 0; i < NSIG; i++ )
+	switch ( i )
 	{
-	    sgi_console = substr( getenv( "TERM" ), "iris" );
-	    (void) sprintf( prompt,
-			    "Do you want to use the IRIS mouse ? [y|n](%c) ",
-			    sgi_usemouse ? 'y' : 'n'
-			    );
-	    if( get_Input( input_ln, MAX_LN, prompt ) != NULL )
-		sgi_usemouse = input_ln[0] != 'n';
-	    if( sgi_usemouse )
-		sgi_Init_Popup_Menu();
-	}
-#endif
-    for( i = 0; i < NSIG; i++ )
-	switch( i )
-	    {
-		case SIGINT :
-		    if( (norml_sig = signal( i, SIG_IGN )) == SIG_IGN )
-			{
-			    if( ! tty )
-				abort_sig = SIG_IGN;
-			    else
-				{ /* MEX windows on IRIS (other than
-				     the console) ignore SIGINT. */
-				    prnt_Scroll( "WARNING: Signal 1 was being ignored!" );
-				    goto	tty_sig;
-				}
-			}
+	    case SIGINT :
+		if ( (norml_sig = signal( i, SIG_IGN )) == SIG_IGN )
+		{
+		    if ( ! tty )
+			abort_sig = SIG_IGN;
 		    else
-			{
-			tty_sig:
-			    norml_sig = intr_sig;
-			    abort_sig = abort_RT;
-			    (void) signal( i,  norml_sig );
-			}
-		    break;
-		case SIGCHLD :
-		    break; /* Leave SIGCHLD alone. */
-		case SIGPIPE :
-		    (void) signal( i, SIG_IGN );
-		    break;
-		case SIGQUIT :
-		    break;
-		case SIGTSTP :
-		    (void) signal( i, stop_sig );
-		    break;
-	    }
+		    {
+			/* MEX windows on IRIS (other than
+			   the console) ignore SIGINT. */
+			prnt_Scroll( "WARNING: Signal 1 was being ignored!" );
+			goto	tty_sig;
+		    }
+		}
+		else
+		{
+		tty_sig:
+		    norml_sig = intr_sig;
+		    abort_sig = abort_RT;
+		    (void) signal( i,  norml_sig );
+		}
+		break;
+	    case SIGCHLD :
+		break; /* Leave SIGCHLD alone. */
+	    case SIGPIPE :
+		(void) signal( i, SIG_IGN );
+		break;
+	    case SIGQUIT :
+		break;
+	    case SIGTSTP :
+		(void) signal( i, stop_sig );
+		break;
+	}
     /* Main loop.							*/
     user_Interaction();
     /*NOTREACHED*/
@@ -208,18 +144,19 @@ int
 interpolate_Frame(int frame)
 {
     fastf_t	rel_frame = (fastf_t) frame / movie.m_noframes;
-    if( movie.m_noframes == 1 )
+    if ( movie.m_noframes == 1 )
 	return	1;
-    if( ! movie.m_fullscreen )
-	{	register int	frames_across;
+    if ( ! movie.m_fullscreen )
+    {
+	register int	frames_across;
 	register int	size;
 	size = MovieSize( movie.m_frame_sz, movie.m_noframes );
 	frames_across = size / movie.m_frame_sz;
 	x_fb_origin = (frame % frames_across) * movie.m_frame_sz;
 	y_fb_origin = (frame / frames_across) * movie.m_frame_sz;
-	}
+    }
     bu_log( "Frame %d:\n", frame );
-    if( movie.m_keys )
+    if ( movie.m_keys )
 	return	key_Frame() == -1 ? 0 : 1;
     lgts[0].azim = movie.m_azim_beg +
 	rel_frame * (movie.m_azim_end - movie.m_azim_beg);
@@ -230,32 +167,32 @@ interpolate_Frame(int frame)
     bu_log( "\tview azimuth\t%g\n", lgts[0].azim*DEGRAD );
     bu_log( "\tview elevation\t%g\n", lgts[0].elev*DEGRAD );
     bu_log( "\tview roll\t%g\n", grid_roll*DEGRAD );
-    if( movie.m_over )
+    if ( movie.m_over )
+    {
+	lgts[0].over = 1;
+	lgts[0].dist = movie.m_dist_beg +
+	    rel_frame * (movie.m_dist_end - movie.m_dist_beg);
+	grid_dist = movie.m_grid_beg +
+	    rel_frame * (movie.m_grid_end - movie.m_grid_beg);
+	bu_log( "\teye distance\t%g\n", lgts[0].dist );
+	bu_log( "\tgrid distance\t%g\n", grid_dist );
+    }
+    else
+    {
+	lgts[0].over = 0;
+	if ( NEAR_ZERO(movie.m_pers_beg, SMALL_FASTF) && NEAR_ZERO(movie.m_pers_end, SMALL_FASTF) )
 	{
-	    lgts[0].over = 1;
-	    lgts[0].dist = movie.m_dist_beg +
-		rel_frame * (movie.m_dist_end - movie.m_dist_beg);
+	    rel_perspective = 0.0;
 	    grid_dist = movie.m_grid_beg +
 		rel_frame * (movie.m_grid_end - movie.m_grid_beg);
-	    bu_log( "\teye distance\t%g\n", lgts[0].dist );
 	    bu_log( "\tgrid distance\t%g\n", grid_dist );
 	}
-    else
-	{
-	    lgts[0].over = 0;
-	    if( movie.m_pers_beg == 0.0 && movie.m_pers_end == 0.0 )
-		{
-		    rel_perspective = 0.0;
-		    grid_dist = movie.m_grid_beg +
-			rel_frame * (movie.m_grid_end - movie.m_grid_beg);
-		    bu_log( "\tgrid distance\t%g\n", grid_dist );
-		}
-	    else
-		if( movie.m_pers_beg >= 0.0 )
-		    rel_perspective = movie.m_pers_beg +
-			rel_frame * (movie.m_pers_end - movie.m_pers_beg);
-	    bu_log( "\tperspective\t%g\n", rel_perspective );
-	}
+	else
+	    if ( movie.m_pers_beg >= 0.0 )
+		rel_perspective = movie.m_pers_beg +
+		    rel_frame * (movie.m_pers_end - movie.m_pers_beg);
+	bu_log( "\tperspective\t%g\n", rel_perspective );
+    }
     return	1;
 }
 
@@ -264,7 +201,7 @@ void
 exit_Neatly(int status)
 {
     prnt_Event( "Quitting...\n" );
-    exit( status );
+    bu_exit( status, NULL );
 }
 
 /*	r e a d y _ O u t p u t _ D e v i c e ( )			*/
@@ -272,36 +209,37 @@ int
 ready_Output_Device(int frame)
 {
     int size;
-    if( force_cellsz )
-	{
-	    grid_sz = (int)(view_size / cell_sz);
-	    grid_sz = Max( grid_sz, 1 ); /* must be non-zero */
-	    setGridSize( grid_sz );
-	    prnt_Status();
-	}
+    if ( force_cellsz )
+    {
+	grid_sz = (int)(view_size / cell_sz);
+	grid_sz = Max( grid_sz, 1 ); /* must be non-zero */
+	setGridSize( grid_sz );
+	prnt_Status();
+    }
     /* Calculate size of frame buffer image (pixels across square image). */
-    if( movie.m_noframes > 1 && ! movie.m_fullscreen )
+    if ( movie.m_noframes > 1 && ! movie.m_fullscreen )
 	/* Fit frames of movie. */
 	size = MovieSize( grid_sz, movie.m_noframes );
     else
-	if( force_fbsz && ! DiskFile(fb_file) )
+	if ( force_fbsz && ! DiskFile(fb_file) )
 	    size = fb_size; /* user-specified size */
 	else
 	    size = grid_sz; /* just 1 pixel/ray */
-    if( movie.m_noframes > 1 && movie.m_fullscreen )
-	{	char	framefile[MAX_LN];
+    if ( movie.m_noframes > 1 && movie.m_fullscreen )
+    {
+	char	framefile[MAX_LN];
 	/* We must be doing full-screen frames. */
 	size = grid_sz;
-	(void) sprintf( framefile, "%s.%04d", prefix, frame );
-	if( ! fb_Setup( framefile, size ) )
+	(void) snprintf( framefile, MAX_LN, "%s.%04d", prefix, frame );
+	if ( ! fb_Setup( framefile, size ) )
 	    return	0;
-	}
+    }
     else
-	{
-	    if( frame == movie.m_curframe && ! fb_Setup( fb_file, size ) )
-		return	0;
-	    fb_Zoom_Window();
-	}
+    {
+	if ( frame == movie.m_curframe && ! fb_Setup( fb_file, size ) )
+	    return	0;
+	fb_Zoom_Window();
+    }
     return	1;
 }
 
@@ -309,22 +247,19 @@ ready_Output_Device(int frame)
 void
 close_Output_Device(int frame)
 {
-    assert( fbiop != FBIO_NULL );
-#if SGI_WINCLOSE_BUG
-    if( strncmp( fbiop->if_name, "/dev/sgi", 8 ) != 0 )
-#endif
-	if(	(movie.m_noframes > 1 && movie.m_fullscreen)
-		||	frame == movie.m_endframe )
-	    {
-		(void) fb_close( fbiop );
-		fbiop = FBIO_NULL;
-	    }
+    if ((movie.m_noframes > 1 && movie.m_fullscreen) ||
+	(frame == movie.m_endframe))
+    {
+	(void) fb_close( fbiop );
+	fbiop = FBIO_NULL;
+    }
     return;
 }
 
 static void
 intr_sig(int sig)
 {
+    sig = sig;
     (void) signal( SIGINT, intr_sig );
     return;
 }
@@ -336,7 +271,7 @@ static void
 init_Lgts(void)
 {
     /* Ambient lighting.						*/
-    (void) strcpy( lgts[0].name, "EYE" );
+    bu_strlcpy( lgts[0].name, "EYE", sizeof(lgts[0].name));
     lgts[0].beam = 0;
     lgts[0].over = 0;
     lgts[0].rgb[0] = 255;
@@ -349,7 +284,7 @@ init_Lgts(void)
     lgts[0].stp = SOLTAB_NULL;
 
     /* Primary lighting.						*/
-    (void) strcpy( lgts[1].name, "LIGHT" );
+    bu_strlcpy( lgts[1].name, "LIGHT", sizeof(lgts[1].name) );
     lgts[1].beam = 0;
     lgts[1].over = 1;
     lgts[1].rgb[0] = 255;
@@ -369,8 +304,8 @@ init_Lgts(void)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

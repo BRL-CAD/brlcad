@@ -1,7 +1,7 @@
 /*                R B _ O R D E R _ S T A T S . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2007 United States Government as represented by
+ * Copyright (c) 1998-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,20 +20,11 @@
 /** @addtogroup rb */
 /** @{ */
 /** @file rb_order_stats.c
+ *
  *	Routines to support order-statistic operations for a red-black tree
  *
- *  @author
- *	Paul J. Tanenbaum
- *
- *  @par Source -
- *	The U. S. Army Research Laboratory
- *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 /** @} */
-
-#ifndef lint
-static const char libbu_rb_order_stats_RCSid[] = "@(#) $Header$";
-#endif
 
 #include "common.h"
 
@@ -63,8 +54,8 @@ static struct bu_rb_node *_rb_select (struct bu_rb_node *root, int order, int k)
 
     rank = bu_rb_size(bu_rb_left_child(root, order), order) + 1;
     if (root -> rbn_tree -> rbt_debug & BU_RB_DEBUG_OS)
-	bu_log("_rb_select(<%x>, %d, %d): rank=%d\n",
-	    root, order, k, rank);
+	bu_log("_rb_select(<%p>, %d, %d): rank=%d\n",
+	       root, order, k, rank);
 
     if (rank == k)
 	return (root);
@@ -93,17 +84,17 @@ void *bu_rb_select (bu_rb_tree *tree, int order, int k)
     if ((k < 1) || (k > tree -> rbt_nm_nodes))
     {
 	if (tree -> rbt_debug & BU_RB_DEBUG_OS)
-	    bu_log("bu_rb_select(<%x>, %d, %d): k out of bounds [1, %d]\n",
-		tree, order, k, tree -> rbt_nm_nodes);
+	    bu_log("bu_rb_select(<%p>, %d, %d): k out of bounds [1, %d]\n",
+		   tree, order, k, tree -> rbt_nm_nodes);
 	bu_rb_current(tree) = bu_rb_null(tree);
 	return (NULL);
     }
     if (tree -> rbt_debug & BU_RB_DEBUG_OS)
-	bu_log("bu_rb_select(<%x>, %d, %d): root=<%x>\n",
-	    tree, order, k, bu_rb_root(tree, order));
+	bu_log("bu_rb_select(<%p>, %d, %d): root=<%p>\n",
+	       tree, order, k, bu_rb_root(tree, order));
 
     bu_rb_current(tree) = node
-			= _rb_select(bu_rb_root(tree, order), order, k);
+	= _rb_select(bu_rb_root(tree, order), order, k);
     return (bu_rb_data(node, order));
 }
 
@@ -147,8 +138,8 @@ int bu_rb_rank (bu_rb_tree *tree, int order)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -1,7 +1,7 @@
 /*                         S P A L L . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007 United States Government as represented by
+ * Copyright (c) 2007-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,11 +30,11 @@
 #include "render_internal.h"
 
 typedef struct render_spall_s {
-  TIE_3 ray_pos;
-  TIE_3 ray_dir;
-  tfloat plane[4];
-  tfloat angle;
-  tie_t tie;
+    TIE_3 ray_pos;
+    TIE_3 ray_dir;
+    tfloat plane[4];
+    tfloat angle;
+    tie_t tie;
 } render_spall_t;
 
 void render_spall_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir, tfloat angle);
@@ -47,8 +47,8 @@ void render_spall_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

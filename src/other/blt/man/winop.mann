@@ -15,7 +15,7 @@
 '\" consequential damages or any damages whatsoever resulting from loss of use,
 '\" data or profits, whether in an action of contract, negligence or other
 '\" tortuous action, arising out of or in connection with the use or performance
-'\" of this software.  
+'\" of this software.
 '\"
 '\" Window command created by George Howlett.
 '\"
@@ -53,7 +53,7 @@ manager won't perform the operation as expected.
 For example, if you positioned a toplevel window using \fBwm geometry\fR,
 the window may not actually be at those particular coordinates.  The
 position of the window may be offset by dimensions of the title bar added
-by the window manager.  
+by the window manager.
 .PP
 In situations like these, the \fBwinop\fR command can be used to
 workaround these difficulties.  Instead, it makes low-level Xlib
@@ -63,7 +63,7 @@ operations.
 toplevel .top
 wm withdraw .top
 
-# Set the geometry to make the window manager 
+# Set the geometry to make the window manager
 # place the window.
 wm geometry .top +100+100
 
@@ -71,7 +71,7 @@ wm geometry .top +100+100
 # and "update" to force the window manager
 # to recognize it.
 winop move .top 100 100
-update 
+update
 
 wm deiconify .top
 winop move .top 100 100
@@ -81,17 +81,17 @@ The following operations are available for the \fBwinop\fR command:
 .TP
 \fBwinop lower\fR ?\fIwindow\fR?...
 Lowers \fIwindow\fR to the bottom of the X window stack.  \fIWindow\fR is
-the path name of a Tk window.  
+the path name of a Tk window.
 .TP
 \fBwinop map\fR ?\fIwindow\fR?...
 Maps \fIwindow\fR on the screen.  \fIWindow\fR
 is the path name of a Tk window. If \fIwindow\fR is already mapped,
-this command has no effect.  
+this command has no effect.
 .TP
 \fBwinop move \fIwindow x y\fR
 Move \fIwindow\fR to the screen location specified by \fIx\fR
 and \fIy\fR. \fIWindow\fR is the path name of a Tk window, while
-\fIx\fR and \fIy\fR are screen coordinates.  This command returns 
+\fIx\fR and \fIy\fR are screen coordinates.  This command returns
 the empty string.
 .TP
 \fBwinop raise\fR ?\fIwindow\fR?...
@@ -103,13 +103,13 @@ Takes a snapshot of the \fIwindow\fR and stores the contents in the
 photo image \fIphotoName\fR. \fIWindow\fR is the valid path name of a
 Tk window which must be totally visible (unobscured).  \fIPhotoName\fR
 is the name of a Tk photo image which must already exist.  This command
-can fail if the window is obscured in any fashion, such as covered by 
+can fail if the window is obscured in any fashion, such as covered by
 another window or partially offscreen.  In that case, an error message
 is returned.
 .TP
 \fBwinop unmap\fR ?\fIwindow\fR?...
 Unmaps \fIwindow\fR from the screen. \fIWindow\fR is the path name of a Tk
-window. 
+window.
 .TP
 \fBwinop warpto\fR ?\fIwindow\fR?
 Warps the pointer to \fIwindow\fR. \fIWindow\fR is the path name of a Tk window

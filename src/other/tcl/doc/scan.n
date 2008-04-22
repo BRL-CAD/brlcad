@@ -17,7 +17,6 @@ scan \- Parse string using conversion specifiers in the style of sscanf
 .SH SYNOPSIS
 \fBscan \fIstring format \fR?\fIvarName varName ...\fR?
 .BE
-
 .SH INTRODUCTION
 .PP
 This command parses substrings from an input string in a fashion similar
@@ -40,7 +39,7 @@ performed.
 If the next character in \fIformat\fR is a blank or tab then it
 matches any number of white space characters in \fIstring\fR (including
 zero).
-Otherwise, if it isn't a \fB%\fR character then it 
+Otherwise, if it is not a \fB%\fR character then it 
 must match the next character of \fIstring\fR.
 When a \fB%\fR is encountered in \fIformat\fR, it indicates
 the start of a conversion specifier.
@@ -60,7 +59,8 @@ conversion specifier and stores the result in the variable given
 by the next argument to \fBscan\fR.
 .PP
 If the \fB%\fR is followed by a decimal number and a \fB$\fR, as in
-``\fB%2$d\fR'', then the variable to use is not taken from the next
+.QW \fB%2$d\fR ,
+then the variable to use is not taken from the next
 sequential argument.  Instead, it is taken from the argument indicated
 by the number, where 1 corresponds to the first \fIvarName\fR.  If
 there are any positional specifiers in \fIformat\fR then all of the
@@ -239,7 +239,7 @@ looking for the terminating character explicitly:
 set string "(5.2,-4e-2)"
 # Note that the spaces before the literal parts of
 # the scan pattern are significant, and that ")" is
-# the Unicode character \\u0029
+# the Unicode character \eu0029
 if {
    [\fBscan\fR $string " (%f ,%f %c" x y last] != 3
    || $last != 0x0029
@@ -263,9 +263,7 @@ values determined by size modifiers:
 20000000000000000000
 .CE
 .VE 8.5
-
 .SH "SEE ALSO"
 format(n), sscanf(3)
-
 .SH KEYWORDS
 conversion specifier, parse, scan

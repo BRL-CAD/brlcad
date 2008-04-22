@@ -1,7 +1,7 @@
 #                    R T W I Z A R D . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2007 United States Government as represented by
+# Copyright (c) 2004-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -73,7 +73,8 @@ namespace eval RtWizard {
 
     set dbFile ""
     set helpFont {-family helvetica -size 12 \
-	    -slant italic}
+		      -slant italic}
+
 
     #
     # main
@@ -85,10 +86,10 @@ namespace eval RtWizard {
 	#
 	# Create the Feedback
 	#
-	set fb [ FeedbackDialog .#auto \
-		-title "Loading RtWizard ..." \
-		-width 250 \
-		-height 100 ]
+	set fb [ FeedbackDialog .\#auto \
+		     -title "Loading RtWizard ..." \
+		     -width 250 \
+		     -height 100 ]
 
 	$fb center
 	$fb activate
@@ -97,7 +98,7 @@ namespace eval RtWizard {
 	#
 	# Create the wizard
 	#
-	set w [ RtWizard::Wizard .#auto ]
+	set w [ RtWizard::Wizard .\#auto ]
 	$fb inform "Wizard megawidget created" 5
 
 	#
@@ -156,13 +157,10 @@ namespace eval RtWizard {
 	$fb inform "Support for image type F loaded." 2
 
 	#
-	# XXX need to disable all menu options
-	#
-
-	#
 	# Pack the wizard
 	#
 	pack $w -expand 1 -fill both
+	wm protocol . WM_DELETE_WINDOW ::exit
 	$fb inform "Megawidgets packed." 5
 
 	#
@@ -191,7 +189,7 @@ namespace eval RtWizard {
 
 	    #
 	    # Start up the gui, and run until the dbFile has
-	    # be specified.
+	    # been specified.
 	    #
 	    vwait ::RtWizard::dbFile
 
@@ -201,12 +199,15 @@ namespace eval RtWizard {
 	    wm deiconify $fb
 	}
 
+	$w activateMenu image
+	$w activateMenu help
+
 	#
 	# At this point, the database should be specified.
 	# We load the database ourselves and hand it to the
 	# pages.
 	#
-	set ::mgedObj [Mged .#auto $::RtWizard::dbFile]
+	set ::mgedObj [Mged .\#auto $::RtWizard::dbFile]
 	$::mgedObj configure -multi_pane 0
 	$fb inform "MGED object instantiated." 40
 
@@ -236,6 +237,7 @@ namespace eval RtWizard {
     }
 
 }
+
 
 #
 # Start main

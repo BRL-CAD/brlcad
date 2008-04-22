@@ -1683,6 +1683,17 @@ EXTERN void		Tk_ResetUserInactiveTime (Display * dpy);
 /* 271 */
 EXTERN Tcl_Interp *	Tk_Interp (Tk_Window tkwin);
 #endif
+#ifndef Tk_CreateOldImageType_TCL_DECLARED
+#define Tk_CreateOldImageType_TCL_DECLARED
+/* 272 */
+EXTERN void		Tk_CreateOldImageType (Tk_ImageType * typePtr);
+#endif
+#ifndef Tk_CreateOldPhotoImageFormat_TCL_DECLARED
+#define Tk_CreateOldPhotoImageFormat_TCL_DECLARED
+/* 273 */
+EXTERN void		Tk_CreateOldPhotoImageFormat (
+				Tk_PhotoImageFormat * formatPtr);
+#endif
 
 typedef struct TkStubHooks {
     struct TkPlatStubs *tkPlatStubs;
@@ -1967,6 +1978,8 @@ typedef struct TkStubs {
     long (*tk_GetUserInactiveTime) (Display * dpy); /* 269 */
     void (*tk_ResetUserInactiveTime) (Display * dpy); /* 270 */
     Tcl_Interp * (*tk_Interp) (Tk_Window tkwin); /* 271 */
+    void (*tk_CreateOldImageType) (Tk_ImageType * typePtr); /* 272 */
+    void (*tk_CreateOldPhotoImageFormat) (Tk_PhotoImageFormat * formatPtr); /* 273 */
 } TkStubs;
 
 #ifdef __cplusplus
@@ -3064,6 +3077,14 @@ extern TkStubs *tkStubsPtr;
 #ifndef Tk_Interp
 #define Tk_Interp \
 	(tkStubsPtr->tk_Interp) /* 271 */
+#endif
+#ifndef Tk_CreateOldImageType
+#define Tk_CreateOldImageType \
+	(tkStubsPtr->tk_CreateOldImageType) /* 272 */
+#endif
+#ifndef Tk_CreateOldPhotoImageFormat
+#define Tk_CreateOldPhotoImageFormat \
+	(tkStubsPtr->tk_CreateOldPhotoImageFormat) /* 273 */
 #endif
 
 #endif /* defined(USE_TK_STUBS) && !defined(USE_TK_STUB_PROCS) */

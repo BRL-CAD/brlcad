@@ -2,17 +2,17 @@
 
 package require BLT
 # --------------------------------------------------------------------------
-# Starting with Tcl 8.x, the BLT commands are stored in their own 
+# Starting with Tcl 8.x, the BLT commands are stored in their own
 # namespace called "blt".  The idea is to prevent name clashes with
 # Tcl commands and variables from other packages, such as a "table"
-# command in two different packages.  
+# command in two different packages.
 #
 # You can access the BLT commands in a couple of ways.  You can prefix
 # all the BLT commands with the namespace qualifier "blt::"
-#  
+#
 #    blt::graph .g
 #    blt::table . .g -resize both
-# 
+#
 # or you can import all the command into the global namespace.
 #
 #    namespace import blt::*
@@ -26,7 +26,7 @@ if { $tcl_version >= 8.0 } {
 }
 source scripts/demo.tcl
 
-set visual [winfo screenvisual .] 
+set visual [winfo screenvisual .]
 if { $visual == "staticgray"  || $visual == "grayscale" } {
     set activeBg black
     set normalBg white
@@ -64,11 +64,11 @@ proc Blt_FindPattern { htext } {
 	.search.entry 	0,1 -cspan 2 -pady 4 -padx 4 -reqwidth 3i \
 	.search.search  3,0 -reqwidth .75i -anchor w -padx 10 -pady 5  \
 	.search.clear	3,1 -reqwidth .75i -anchor center -padx 10 -pady 5 \
-	.search.cancel	3,2 -reqwidth .75i -anchor e -padx 10 -pady 5 
+	.search.cancel	3,2 -reqwidth .75i -anchor e -padx 10 -pady 5
     focus .search.entry
     bind .search <Visibility> { raise .search }
 }
-       
+
 set last 0
 set lastPattern {}
 
@@ -85,7 +85,7 @@ proc Blt_Search&Move { h } {
     if { $pattern == "" } {
 	return
     }
-	
+
     set indices [$h search $pattern $last end]
     if { $indices == "" } {
 	bell
@@ -99,21 +99,21 @@ proc Blt_Search&Move { h } {
 }
 
 # Create horizonatal and vertical scrollbars
-scrollbar .vscroll -command { .htext yview } -orient vertical 
+scrollbar .vscroll -command { .htext yview } -orient vertical
 scrollbar .hscroll -command { .htext xview } -orient horizontal
 
-# Create the hypertext widget 
+# Create the hypertext widget
 htext .htext -file ./htext.txt  \
     -yscrollcommand { .vscroll set } \
     -xscrollcommand { .hscroll set } \
     -yscrollunits 10m -xscrollunits .25i \
-    -height 6i 
+    -height 6i
 
 
 table . \
     .htext 0,0 -fill both \
     .vscroll 0,1 -fill y \
-    .hscroll 1,0 -fill x 
+    .hscroll 1,0 -fill x
 
 table configure . r1 c1 -resize none
 
@@ -146,7 +146,7 @@ bind .htext <3> {
     %W select adjust @%x,%y
 }
 
-bind .htext <Control-p> { 
+bind .htext <Control-p> {
     set line [%W gotoline]
     if { $line == 0 } {
 	bell
@@ -155,7 +155,7 @@ bind .htext <Control-p> {
 	%W gotoline $line.0
     }
 }
-bind .htext <Control-n> { 
+bind .htext <Control-n> {
     set line [%W gotoline]
     incr line
     if { [%W gotoline $line.0] != $line } {
@@ -163,15 +163,15 @@ bind .htext <Control-n> {
     }
 }
 
-bind .htext <Control-v> { 
+bind .htext <Control-v> {
     %W yview [expr [%W yview]+10]
 }
 
-bind .htext <Meta-v> { 
+bind .htext <Meta-v> {
     %W yview [expr [%W yview]-10]
 }
 
-bind .htext <Alt-v> { 
+bind .htext <Alt-v> {
     %W yview [expr [%W yview]-10]
 }
 

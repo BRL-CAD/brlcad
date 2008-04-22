@@ -1643,16 +1643,16 @@ proc ::tcl::clock::ParseClockScanFormat {formatString locale} {
 			    i {7 1 2 3 4 5 6} \
 			    abr [mc DAYS_OF_WEEK_ABBREV] \
 			    full [mc DAYS_OF_WEEK_FULL] {
-				dict set l $abr $i
-				dict set l $full $i
+				dict set l [string tolower $abr] $i
+				dict set l [string tolower $full] $i
 				incr i
 			    }
 			foreach { regex lookup } [UniquePrefixRegexp $l] break
 			append re ( $regex )
 			dict set fieldSet dayOfWeek [incr fieldCount]
 			append postcode "dict set date dayOfWeek \[" \
-			    "dict get " [list $lookup] " \$field" \
-			    [incr captureCount] \
+			    "dict get " [list $lookup] " " \
+			    \[ {string tolower $field} [incr captureCount] \] \
 			    "\]\n"
 		    }
 		    b - B - h {		# Name of month
@@ -1662,15 +1662,16 @@ proc ::tcl::clock::ParseClockScanFormat {formatString locale} {
 			    abr [mc MONTHS_ABBREV] \
 			    full [mc MONTHS_FULL] {
 				incr i
-				dict set l $abr $i
-				dict set l $full $i
+				dict set l [string tolower $abr] $i
+				dict set l [string tolower $full] $i
 			    }
 			foreach { regex lookup } [UniquePrefixRegexp $l] break
 			append re ( $regex )
 			dict set fieldSet month [incr fieldCount]
 			append postcode "dict set date month \[" \
-			    "dict get " [list $lookup] " \$field" \
-			    [incr captureCount] \
+			    "dict get " [list $lookup] \
+			    " " \[ {string tolower $field} \
+			    [incr captureCount] \] \
 			    "\]\n"
 		    }
 		    C {			# Gregorian century
@@ -1761,7 +1762,8 @@ proc ::tcl::clock::ParseClockScanFormat {formatString locale} {
 			set state %O
 		    }
 		    p - P { 		# AM/PM indicator
-			set l [list [mc AM] 0 [mc PM] 1]
+			set l [list [string tolower [mc AM]] 0 \
+				   [string tolower [mc PM]] 1]
 			foreach { regex lookup } [UniquePrefixRegexp $l] break
 			append re ( $regex )
 			dict set fieldSet amPmIndicator [incr fieldCount]
@@ -1889,25 +1891,26 @@ proc ::tcl::clock::ParseClockScanFormat {formatString locale} {
 			set d {}
 			foreach triple [mc LOCALE_ERAS] {
 			    foreach {t symbol year} $triple break
-			    dict set d $symbol $year
+			    dict set d [string tolower $symbol] $year
 			}
 			foreach { regex lookup } [UniquePrefixRegexp $d] break
 			append re (?: $regex )
 		    }
 		    E {
 			set l {}
-			dict set l [mc BCE] BCE
-			dict set l [mc CE] CE
-			dict set l B.C.E. BCE
-			dict set l C.E. CE
-			dict set l B.C. BCE
-			dict set l A.D. CE
+			dict set l [string tolower [mc BCE]] BCE
+			dict set l [string tolower [mc CE]] CE
+			dict set l b.c.e. BCE
+			dict set l c.e. CE
+			dict set l b.c. BCE
+			dict set l a.d. CE
 			foreach {regex lookup} [UniquePrefixRegexp $l] break
 			append re ( $regex )
 			dict set fieldSet era [incr fieldCount]
 			append postcode "dict set date era \["\
-			    "dict get " [list $lookup] " \$field" \
-			    [incr captureCount] \
+			    "dict get " [list $lookup] \
+			    { } \[ {string tolower $field} \
+			    [incr captureCount] \] \
 			    "\]\n"
 		    }
 		    y {			# Locale-dependent year of the era

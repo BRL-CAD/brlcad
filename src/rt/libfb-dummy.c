@@ -1,7 +1,7 @@
 /*                   L I B F B - D U M M Y . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,27 +24,26 @@
 
 #include <stdio.h>
 
-#include "machine.h"
 #include "fb.h"
 
 FBIO *
 fb_open( name, w, h )
-char *name;
+    char *name;
 {
-	return(FBIO_NULL);
+    return(FBIO_NULL);
 }
 
 int
 fb_close() {
-	return(0);
+    return(0);
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

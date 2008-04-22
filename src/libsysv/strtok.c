@@ -4,7 +4,7 @@
 	purpose by anyone.
 
 	Henry Spencer @ U of Toronto Zoology
-	{allegra,ihnp4,decvax,pyramid}!utzoo!henry
+	{allegra, ihnp4, decvax, pyramid}!utzoo!henry
 	Wed Jun 25 19:21:34 EDT 1986
 */
 
@@ -83,8 +83,8 @@ strtok(char *s, register const char *delim)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

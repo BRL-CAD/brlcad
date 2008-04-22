@@ -5,17 +5,17 @@
 
 package require BLT
 # --------------------------------------------------------------------------
-# Starting with Tcl 8.x, the BLT commands are stored in their own 
+# Starting with Tcl 8.x, the BLT commands are stored in their own
 # namespace called "blt".  The idea is to prevent name clashes with
 # Tcl commands and variables from other packages, such as a "table"
-# command in two different packages.  
+# command in two different packages.
 #
 # You can access the BLT commands in a couple of ways.  You can prefix
 # all the BLT commands with the namespace qualifier "blt::"
-#  
+#
 #    blt::graph .g
 #    blt::table . .g -resize both
-# 
+#
 # or you can import all the command into the global namespace.
 #
 #    namespace import blt::*
@@ -62,7 +62,7 @@ frame .border -bd 2 -relief raised
 
 label .status \
     -anchor w \
-    -font -*-helvetica-medium-r-*-*-14-*-*-*-*-*-*-* 
+    -font -*-helvetica-medium-r-*-*-14-*-*-*-*-*-*-*
 
 button .quit -text "Quit" -command "exit"
 button .next -text "Next" -command "DisplayColors next"
@@ -71,24 +71,24 @@ button .prev -text "Previous" -command "DisplayColors last"
 selection handle .name GetColor
 selection handle .rgb GetValue
 
-bind .name <Enter> { 
+bind .name <Enter> {
     .status config -text \
 	"Press button to write color name into primary selection"
 }
 
-bind .rgb <Enter> { 
+bind .rgb <Enter> {
     .status config -text \
 	"Press button to write RGB value into primary selection"
 }
-bind .name <Leave> { 
+bind .name <Leave> {
     .status config -text ""
 }
 
-bind .rgb <Leave> { 
+bind .rgb <Leave> {
     .status config -text ""
 }
 
-bind .canvas <Enter> { 
+bind .canvas <Enter> {
     .status config -text \
 	"Press button 1 to change background; Button 2 changes foreground"
 }
@@ -104,7 +104,7 @@ table . \
     .status 4,0 -cspan 2 -fill both  \
     .quit 4,1 -anchor e -reqwidth 1i -fill y -padx 10 -pady 4 \
     .prev 5,0 -anchor e -reqwidth 1i -fill y -padx 10 -pady 4 \
-    .next 5,1 -anchor e -reqwidth 1i -fill y -padx 10 -pady 4 
+    .next 5,1 -anchor e -reqwidth 1i -fill y -padx 10 -pady 4
 
 proc AddSelection { what } {
     selection own .$what
@@ -134,7 +134,7 @@ proc ShowInfo { tagId what info } {
     set lastTagId $tagId
 
     set name [lindex $info 3]
-    .name config -text $name 
+    .name config -text $name
     set value [format "#%0.2x%0.2x%0.2x" \
 	       [lindex $info 0] [lindex $info 1] [lindex $info 2]]
     .rgb config -text $value
@@ -144,7 +144,7 @@ proc ShowInfo { tagId what info } {
 
 
 proc MakeCell { info } {
-    global numCols numRows maxCols cellWidth cellHeight numCells 
+    global numCols numRows maxCols cellWidth cellHeight numCells
 
     set x [expr $numCols*$cellWidth]
     set y [expr $numRows*$cellHeight]
@@ -154,7 +154,7 @@ proc MakeCell { info } {
 	return "ok"
     }
 #    if { [tk colormodel .] != "color" } {
-#	bind . <Leave> { 
+#	bind . <Leave> {
 #	    .status config -text "Color table full after $numCells entries."
 #	}
 #	.status config -text "Color table full after $numCells entries."
@@ -170,7 +170,7 @@ proc MakeCell { info } {
 
     .canvas bind $id <1> [list ShowInfo $id -bg $info]
     .canvas bind $id <2> [list ShowInfo $id -fg $info]
-    
+
     incr numCols
     if { $numCols > $maxCols } {
 	set numCols 0
@@ -180,9 +180,9 @@ proc MakeCell { info } {
 }
 
 proc DisplayColors { how } {
-    global lastCount numCells cellHeight numRows numCols rgbText 
+    global lastCount numCells cellHeight numRows numCols rgbText
     global map beginInput
-    
+
 #    tk colormodel . color
     set initialized no
 
@@ -220,13 +220,13 @@ proc DisplayColors { how } {
 	}
     }
     if { $entryCount == 0 } {
-	bind . <Leave> { 
+	bind . <Leave> {
 	    .status config -text "No more entries in RGB database"
 	}
 	.status config -text "No more entries in RGB database"
-    } 
+    }
     set lastCount $lineCount
-    proc tkerror {args} { 
+    proc tkerror {args} {
 	#dummy procedure
     }
 

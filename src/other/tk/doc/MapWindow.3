@@ -31,7 +31,7 @@ Token for window.
 These procedures may be used to map and unmap windows
 managed by Tk.  \fBTk_MapWindow\fR maps the window given
 by \fItkwin\fR, and also creates an X window corresponding
-to \fItkwin\fR if it doesn't already exist.  See the
+to \fItkwin\fR if it does not already exist.  See the
 \fBTk_CreateWindow\fR manual entry for information on
 deferred window creation.
 \fBTk_UnmapWindow\fR unmaps \fItkwin\fR's window
@@ -39,7 +39,7 @@ from the screen.
 .PP
 If \fItkwin\fR is a child window (i.e. \fBTk_CreateWindow\fR was
 used to create a child window), then event handlers interested in map 
-and unmap events are invoked immediately.  If \fItkwin\fR isn't an 
+and unmap events are invoked immediately.  If \fItkwin\fR is not an 
 internal window, then the event handlers will be invoked later, after 
 X has seen the request and returned an event for it.
 .PP

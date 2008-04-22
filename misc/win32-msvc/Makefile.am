@@ -1,12 +1,9 @@
 # $Id$
 
 SUBDIRS = \
-	aPrep \
 	Dll
 
 EXTRA_DIST = \
-	brlcad.dsw
-
-MAINTAINERCLEANFILES = Makefile.in
+        CMakeLists.txt
 
 include $(top_srcdir)/misc/Makefile.defs

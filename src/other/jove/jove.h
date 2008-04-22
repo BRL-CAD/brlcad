@@ -15,11 +15,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <setjmp.h>
-#ifdef HAVE_STRINGS_H
-#  include <strings.h>
-#else
-#  include <string.h>
-#endif
+#include <string.h>
 
 
 /*
@@ -47,31 +43,17 @@
  *		return status;
  *	}
  */
-#ifdef HAVE_STDARG_H
-#  include <stdarg.h>
-#  define	VA_T(t)		t,
-#  define	VA_DOTS		...
-#  define	VA_ALIST	...
-#  define	VA_D(d)         /* nothing */
-#  define	VA_DCL		/* nothing */
-#  define	VA_LIST(ap)	va_list ap;
-#  define	VA_START(ap,A0)	va_start(ap,A0);
-#  define	VA_I(ap,T,Ai)	/* nothing */
-#  define	VA_ARG(ap,T)	va_arg(ap,T)
-#  define	VA_END(ap)	va_end(ap);
-#else
-#  include <varargs.h>
-#  define	VA_T(t)		/* nothing */
-#  define	VA_DOTS		/* nothing */
-#  define	VA_ALIST	va_alist
-#  define	VA_D(d)		d;
-#  define	VA_DCL		va_dcl
-#  define	VA_LIST(ap)	va_list ap;
-#  define	VA_START(ap,A0)	va_start(ap);
-#  define	VA_I(ap,T,Ai)	Ai = va_arg(ap,T);
-#  define	VA_ARG(ap,T)	va_arg(ap,T)
-#  define	VA_END(ap)	va_end(ap);
-#endif
+#include <stdarg.h>
+#define	VA_T(t)		t,
+#define	VA_DOTS		...
+#define	VA_ALIST	...
+#define	VA_D(d)         /* nothing */
+#define	VA_DCL		/* nothing */
+#define	VA_LIST(ap)	va_list ap;
+#define	VA_START(ap,A0)	va_start(ap,A0);
+#define	VA_I(ap,T,Ai)	/* nothing */
+#define	VA_ARG(ap,T)	va_arg(ap,T)
+#define	VA_END(ap)	va_end(ap);
 
 #ifdef __convex__
 #  define	HAS_TEMPNAM	0	/* No tempnam()! */
@@ -511,7 +493,7 @@ extern void b_format(),
 	WriteMacs(),
 	SetMacro(),
 	MacNolen(),
-	NameMac(),	
+	NameMac(),
 	DoMacro(),
 	ExecMacro(),
 	Forget(),
@@ -576,28 +558,3 @@ extern void b_format(),
 #define	SAVE_NO		0
 #define	SAVE_ASK	1
 #define	SAVE_ALWAYS	2
-
-#ifdef CRAY2
-/* Common SYSV definitions not supported on the CRAY2 */
-#  define SIGBUS  SIGPRE
-#  define SIGSEGV SIGORE
-
-#  define VQUIT   1
-#  define VERASE  2
-#  define VKILL   3
-#  define VMIN    4
-#  define VTIME   5
-#  define INLCR	0000100
-#  define ICRNL 0000400
-#  define IUCLC 0001000
-#  define OLCUC	0000002
-#  define ONLCR	0000004
-#  define OCRNL	0000010
-#  define ONOCR	0000020
-#  define ONLRET	0000040
-#  define OFILL	0000100
-#  define TABDLY  0014000
-#  define TAB3  0014000
-#  define CBAUD 0000017
-#  define ISIG	0000001		/* line disc. 0 modes */
-#endif

@@ -1,7 +1,7 @@
 /*                          D M . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2007 United States Government as represented by
+ * Copyright (c) 1993-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,6 @@
 
 #include "common.h"
 
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #ifdef USE_FBSERV
@@ -66,7 +65,7 @@
 /*
  * Display coordinate conversion:
  *  GED is using -2048..+2048,
- *  X is 0..width,0..height
+ *  X is 0..width, 0..height
  */
 #define DIVBY4096(x) (((double)(x))*INV_4096)
 #define	GED_TO_Xx(_dmp, x) ((int)((DIVBY4096(x)+0.5)*_dmp->dm_width))
@@ -112,16 +111,16 @@
 #define IS_DM_TYPE_PEX(_t) ((_t) == DM_TYPE_PEX)
 #define IS_DM_TYPE_WGL(_t) ((_t) == DM_TYPE_WGL)
 
-#define GET_DM(p,structure,w,hp) { \
+#define GET_DM(p, structure, w, hp) { \
 	register struct structure *tp; \
-	for(BU_LIST_FOR(tp, structure, hp)) { \
-		if(w == tp->win) { \
+	for (BU_LIST_FOR(tp, structure, hp)) { \
+		if (w == tp->win) { \
 			(p) = tp; \
 			break; \
 		} \
 	} \
 \
-	if(BU_LIST_IS_HEAD(tp, hp)) \
+	if (BU_LIST_IS_HEAD(tp, hp)) \
 		p = (struct structure *)NULL; \
 }
 
@@ -148,11 +147,11 @@
 #define DM_BLUE		DM_BLUE_R, DM_BLUE_G, DM_BLUE_B
 #define DM_YELLOW	DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B
 #define DM_WHITE	DM_WHITE_R, DM_WHITE_G, DM_WHITE_B
-#define DM_COPY_COLOR(_dr,_dg,_db,_sr,_sg,_sb){\
+#define DM_COPY_COLOR(_dr, _dg, _db, _sr, _sg, _sb) {\
 	(_dr) = (_sr);\
 	(_dg) = (_sg);\
 	(_db) = (_sb); }
-#define DM_SAME_COLOR(_dr,_dg,_db,_sr,_sg,_sb)(\
+#define DM_SAME_COLOR(_dr, _dg, _db, _sr, _sg, _sb)(\
 	(_dr) == (_sr) &&\
 	(_dg) == (_sg) &&\
 	(_db) == (_sb))
@@ -173,69 +172,69 @@
 #define LIGHT_RESET	2		/* all lights out */
 
 struct dm_vars {
-  genptr_t pub_vars;
-  genptr_t priv_vars;
+    genptr_t pub_vars;
+    genptr_t priv_vars;
 };
 
 /**
  * Interface to a specific Display Manager
  */
 struct dm {
-  int (*dm_close)();
-  int (*dm_drawBegin)();	/**< @brief formerly dmr_prolog */
-  int (*dm_drawEnd)();		/**< @brief formerly dmr_epilog */
-  int (*dm_normal)();
-  int (*dm_loadMatrix)();
-  int (*dm_drawString2D)();	/**< @brief formerly dmr_puts */
-  int (*dm_drawLine2D)();	/**< @brief formerly dmr_2d_line */
-  int (*dm_drawPoint2D)();
-  int (*dm_drawVList)();	/**< @brief formerly dmr_object */
-  int (*dm_setFGColor)(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
-  int (*dm_setBGColor)(struct dm *, unsigned char, unsigned char, unsigned char);
-  int (*dm_setLineAttr)();	/**< @brief currently - linewidth, (not-)dashed */
-  int (*dm_configureWin)();
-  int (*dm_setWinBounds)();
-  int (*dm_setLight)();
-  int (*dm_setTransparency)();
-  int (*dm_setDepthMask)();
-  int (*dm_setZBuffer)();
-  int (*dm_debug)();		/**< @brief Set DM debug level */
-  int (*dm_beginDList)();
-  int (*dm_endDList)();
-  int (*dm_drawDList)();
-  int (*dm_freeDLists)();
-  unsigned long dm_id;          /**< @brief window id */
-  int dm_displaylist;		/**< @brief !0 means device has displaylist */
-  int dm_stereo;                /**< @brief stereo flag */
-  double dm_bound;		/**< @brief zoom-in limit */
-  int dm_boundFlag;
-  char *dm_name;		/**< @brief short name of device */
-  char *dm_lname;		/**< @brief long name of device */
-  int dm_type;			/**< @brief display manager type */
-  int dm_top;                   /**< @brief !0 means toplevel window */
-  int dm_width;
-  int dm_height;
-  int dm_lineWidth;
-  int dm_lineStyle;
-  fastf_t dm_aspect;
-  fastf_t *dm_vp;		/**< @brief XXX--ogl still depends on this--Viewscale pointer */
-  struct dm_vars dm_vars;	/**< @brief display manager dependant variables */
-  struct bu_vls dm_pathName;	/**< @brief full Tcl/Tk name of drawing window */
-  struct bu_vls dm_tkName;	/**< @brief short Tcl/Tk name of drawing window */
-  struct bu_vls dm_dName;	/**< @brief Display name */
-  unsigned char dm_bg[3];	/**< @brief background color */
-  unsigned char dm_fg[3];	/**< @brief foreground color */
-  vect_t dm_clipmin;		/**< @brief minimum clipping vector */
-  vect_t dm_clipmax;		/**< @brief maximum clipping vector */
-  int dm_debugLevel;		/**< @brief !0 means debugging */
-  int dm_perspective;		/**< @brief !0 means perspective on */
-  int dm_light;			/**< @brief !0 means lighting on */
-  int dm_transparency;		/**< @brief !0 means transparency on */
-  int dm_depthMask;		/**< @brief !0 means depth buffer is writable */
-  int dm_zbuffer;		/**< @brief !0 means zbuffer on */
-  int dm_zclip;			/**< @brief !0 means zclipping */
-  int dm_clearBufferAfter;	/**< @brief 1 means clear back buffer after drawing and swap */
-  Tcl_Interp *dm_interp;	/**< @brief Tcl interpreter */
+    int (*dm_close)();
+    int (*dm_drawBegin)();	/**< @brief formerly dmr_prolog */
+    int (*dm_drawEnd)();		/**< @brief formerly dmr_epilog */
+    int (*dm_normal)();
+    int (*dm_loadMatrix)();
+    int (*dm_drawString2D)();	/**< @brief formerly dmr_puts */
+    int (*dm_drawLine2D)();	/**< @brief formerly dmr_2d_line */
+    int (*dm_drawPoint2D)();
+    int (*dm_drawVList)();	/**< @brief formerly dmr_object */
+    int (*dm_setFGColor)(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
+    int (*dm_setBGColor)(struct dm *, unsigned char, unsigned char, unsigned char);
+    int (*dm_setLineAttr)();	/**< @brief currently - linewidth, (not-)dashed */
+    int (*dm_configureWin)();
+    int (*dm_setWinBounds)();
+    int (*dm_setLight)();
+    int (*dm_setTransparency)();
+    int (*dm_setDepthMask)();
+    int (*dm_setZBuffer)();
+    int (*dm_debug)();		/**< @brief Set DM debug level */
+    int (*dm_beginDList)();
+    int (*dm_endDList)();
+    int (*dm_drawDList)();
+    int (*dm_freeDLists)();
+    unsigned long dm_id;          /**< @brief window id */
+    int dm_displaylist;		/**< @brief !0 means device has displaylist */
+    int dm_stereo;                /**< @brief stereo flag */
+    double dm_bound;		/**< @brief zoom-in limit */
+    int dm_boundFlag;
+    char *dm_name;		/**< @brief short name of device */
+    char *dm_lname;		/**< @brief long name of device */
+    int dm_type;			/**< @brief display manager type */
+    int dm_top;                   /**< @brief !0 means toplevel window */
+    int dm_width;
+    int dm_height;
+    int dm_lineWidth;
+    int dm_lineStyle;
+    fastf_t dm_aspect;
+    fastf_t *dm_vp;		/**< @brief XXX--ogl still depends on this--Viewscale pointer */
+    struct dm_vars dm_vars;	/**< @brief display manager dependant variables */
+    struct bu_vls dm_pathName;	/**< @brief full Tcl/Tk name of drawing window */
+    struct bu_vls dm_tkName;	/**< @brief short Tcl/Tk name of drawing window */
+    struct bu_vls dm_dName;	/**< @brief Display name */
+    unsigned char dm_bg[3];	/**< @brief background color */
+    unsigned char dm_fg[3];	/**< @brief foreground color */
+    vect_t dm_clipmin;		/**< @brief minimum clipping vector */
+    vect_t dm_clipmax;		/**< @brief maximum clipping vector */
+    int dm_debugLevel;		/**< @brief !0 means debugging */
+    int dm_perspective;		/**< @brief !0 means perspective on */
+    int dm_light;			/**< @brief !0 means lighting on */
+    int dm_transparency;		/**< @brief !0 means transparency on */
+    int dm_depthMask;		/**< @brief !0 means depth buffer is writable */
+    int dm_zbuffer;		/**< @brief !0 means zbuffer on */
+    int dm_zclip;			/**< @brief !0 means zclipping */
+    int dm_clearBufferAfter;	/**< @brief 1 means clear back buffer after drawing and swap */
+    Tcl_Interp *dm_interp;	/**< @brief Tcl interpreter */
 };
 
 /**
@@ -244,43 +243,43 @@ struct dm {
  * A display manager object is used for interacting with a display manager.
  */
 struct dm_obj {
-  struct bu_list	l;
-  struct bu_vls		dmo_name;		/**< @brief display manager object name/cmd */
-  struct dm		*dmo_dmp;		/**< @brief display manager pointer */
+    struct bu_list	l;
+    struct bu_vls		dmo_name;		/**< @brief display manager object name/cmd */
+    struct dm		*dmo_dmp;		/**< @brief display manager pointer */
 #ifdef USE_FBSERV
-  struct fbserv_obj	dmo_fbs;		/**< @brief fbserv object */
+    struct fbserv_obj	dmo_fbs;		/**< @brief fbserv object */
 #endif
-  struct bu_observer	dmo_observers;		/**< @brief fbserv observers */
-  mat_t			viewMat;
-  int			(*dmo_drawLabelsHook)();
-  void			*dmo_drawLabelsHookClientData;
+    struct bu_observer	dmo_observers;		/**< @brief fbserv observers */
+    mat_t			viewMat;
+    int			(*dmo_drawLabelsHook)();
+    void			*dmo_drawLabelsHookClientData;
 };
 
-#define DM_OPEN(_type,_argc,_argv) dm_open(_type,_argc,_argv)
+#define DM_OPEN(_interp, _type, _argc, _argv) dm_open(_interp, _type, _argc, _argv)
 #define DM_CLOSE(_dmp) _dmp->dm_close(_dmp)
 #define DM_DRAW_BEGIN(_dmp) _dmp->dm_drawBegin(_dmp)
 #define DM_DRAW_END(_dmp) _dmp->dm_drawEnd(_dmp)
 #define DM_NORMAL(_dmp) _dmp->dm_normal(_dmp)
-#define DM_LOADMATRIX(_dmp,_mat,_eye) _dmp->dm_loadMatrix(_dmp,_mat,_eye)
-#define DM_DRAW_STRING_2D(_dmp,_str,_x,_y,_size,_use_aspect)\
-     _dmp->dm_drawString2D(_dmp,_str,_x,_y,_size,_use_aspect)
-#define DM_DRAW_LINE_2D(_dmp,_x1,_y1,_x2,_y2) _dmp->dm_drawLine2D(_dmp,_x1,_y1,_x2,_y2)
-#define DM_DRAW_POINT_2D(_dmp,_x,_y) _dmp->dm_drawPoint2D(_dmp,_x,_y)
-#define DM_DRAW_VLIST(_dmp,_vlist) _dmp->dm_drawVList(_dmp,_vlist)
-#define DM_SET_FGCOLOR(_dmp,_r,_g,_b,_strict,_transparency) _dmp->dm_setFGColor(_dmp,_r,_g,_b,_strict,_transparency)
-#define DM_SET_BGCOLOR(_dmp,_r,_g,_b) _dmp->dm_setBGColor(_dmp,_r,_g,_b)
-#define DM_SET_LINE_ATTR(_dmp,_width,_dashed) _dmp->dm_setLineAttr(_dmp,_width,_dashed)
+#define DM_LOADMATRIX(_dmp, _mat, _eye) _dmp->dm_loadMatrix(_dmp, _mat, _eye)
+#define DM_DRAW_STRING_2D(_dmp, _str, _x, _y, _size, _use_aspect)\
+     _dmp->dm_drawString2D(_dmp, _str, _x, _y, _size, _use_aspect)
+#define DM_DRAW_LINE_2D(_dmp, _x1, _y1, _x2, _y2) _dmp->dm_drawLine2D(_dmp, _x1, _y1, _x2, _y2)
+#define DM_DRAW_POINT_2D(_dmp, _x, _y) _dmp->dm_drawPoint2D(_dmp, _x, _y)
+#define DM_DRAW_VLIST(_dmp, _vlist) _dmp->dm_drawVList(_dmp, _vlist)
+#define DM_SET_FGCOLOR(_dmp, _r, _g, _b, _strict, _transparency) _dmp->dm_setFGColor(_dmp, _r, _g, _b, _strict, _transparency)
+#define DM_SET_BGCOLOR(_dmp, _r, _g, _b) _dmp->dm_setBGColor(_dmp, _r, _g, _b)
+#define DM_SET_LINE_ATTR(_dmp, _width, _dashed) _dmp->dm_setLineAttr(_dmp, _width, _dashed)
 #define DM_CONFIGURE_WIN(_dmp) _dmp->dm_configureWin(_dmp)
-#define DM_SET_WIN_BOUNDS(_dmp,_w) _dmp->dm_setWinBounds(_dmp,_w)
-#define DM_SET_LIGHT(_dmp,_on) _dmp->dm_setLight(_dmp,_on)
-#define DM_SET_TRANSPARENCY(_dmp,_on) _dmp->dm_setTransparency(_dmp,_on)
-#define DM_SET_DEPTH_MASK(_dmp,_on) _dmp->dm_setDepthMask(_dmp,_on)
-#define DM_SET_ZBUFFER(_dmp,_on) _dmp->dm_setZBuffer(_dmp,_on)
-#define DM_DEBUG(_dmp,_lvl) _dmp->dm_debug(_dmp,_lvl)
-#define DM_BEGINDLIST(_dmp,_list) _dmp->dm_beginDList(_dmp,_list)
+#define DM_SET_WIN_BOUNDS(_dmp, _w) _dmp->dm_setWinBounds(_dmp, _w)
+#define DM_SET_LIGHT(_dmp, _on) _dmp->dm_setLight(_dmp, _on)
+#define DM_SET_TRANSPARENCY(_dmp, _on) _dmp->dm_setTransparency(_dmp, _on)
+#define DM_SET_DEPTH_MASK(_dmp, _on) _dmp->dm_setDepthMask(_dmp, _on)
+#define DM_SET_ZBUFFER(_dmp, _on) _dmp->dm_setZBuffer(_dmp, _on)
+#define DM_DEBUG(_dmp, _lvl) _dmp->dm_debug(_dmp, _lvl)
+#define DM_BEGINDLIST(_dmp, _list) _dmp->dm_beginDList(_dmp, _list)
 #define DM_ENDDLIST(_dmp) _dmp->dm_endDList(_dmp)
-#define DM_DRAWDLIST(_dmp,_list) _dmp->dm_drawDList(_dmp,_list)
-#define DM_FREEDLISTS(_dmp,_list,_range) _dmp->dm_freeDLists(_dmp,_list,_range)
+#define DM_DRAWDLIST(_dmp, _list) _dmp->dm_drawDList(_dmp, _list)
+#define DM_FREEDLISTS(_dmp, _list, _range) _dmp->dm_freeDLists(_dmp, _list, _range)
 
 DM_EXPORT extern struct dm dm_Null;
 
@@ -388,8 +387,8 @@ DM_EXPORT BU_EXTERN(void dm_applicationfocus, (void));
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

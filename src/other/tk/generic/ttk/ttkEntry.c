@@ -750,13 +750,15 @@ EntryStoreValue(Entry *entryPtr, const char *value)
  * 	linked -textvariable, if any.  The write trace on the
  * 	text variable is temporarily disabled; however, other
  * 	write traces may change the value of the variable.
- * 	If so, the new value is used instead (bypassing validation).
+ * 	If so, the widget is updated again with the new value.
  *
  * Returns:
  * 	TCL_OK if successful, TCL_ERROR otherwise.
  */
 static int EntrySetValue(Entry *entryPtr, const char *value)
 {
+    EntryStoreValue(entryPtr, value);
+
     if (entryPtr->entry.textVariableObj) {
 	const char *textVarName =
 	    Tcl_GetString(entryPtr->entry.textVariableObj);
@@ -765,12 +767,16 @@ static int EntrySetValue(Entry *entryPtr, const char *value)
 	    value = Tcl_SetVar(entryPtr->core.interp, textVarName,
 		    value, TCL_GLOBAL_ONLY|TCL_LEAVE_ERR_MSG);
 	    entryPtr->core.flags &= ~SYNCING_VARIABLE;
-	    if (!value || WidgetDestroyed(&entryPtr->core))
+	    if (!value || WidgetDestroyed(&entryPtr->core)) {
 		return TCL_ERROR;
+	    } else if (strcmp(value, entryPtr->entry.string) != 0) {
+		/* Some write trace has changed the variable value.
+		 */
+		EntryStoreValue(entryPtr, value);
+	    }
 	}
     }
 
-    EntryStoreValue(entryPtr, value);
     return TCL_OK;
 }
 
@@ -1164,7 +1170,6 @@ static GC EntryGetGC(Entry *entryPtr, Tcl_Obj *colorObj)
     }
     return Tk_GetGC(entryPtr->core.tkwin, mask, &gcValues);
 }
-
 
 /* EntryDisplay --
  *	Redraws the contents of an entry window.

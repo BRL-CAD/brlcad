@@ -1,6 +1,6 @@
-/* 
+/*
  * rlesplit.c - Split concatenated RLE files into separate files.
- * 
+ *
  * Author:	Spencer W. Thomas
  * 		Computer Science Dept.
  * 		University of Utah
@@ -21,7 +21,7 @@ rlesplit()			Tag the file.
 
 /*****************************************************************
  * TAG( main )
- * 
+ *
  * Usage:
  *     rlesplit [-n number [digits]] [-p prefix] [rlefile]
  * Inputs:
@@ -32,7 +32,7 @@ rlesplit()			Tag the file.
  * 	digits:		The number of digits to be used in the numeric
  * 			portion of the output file names.  Defaults to 3.
  * 			All numbers will be leading zero filled.
- * 
+ *
  * 	-p prefix:	If specified, output files will be named
  *			"prefix.#.rle".  If not specified, and
  *			an rlefile is specified, then output files
@@ -44,7 +44,7 @@ rlesplit()			Tag the file.
  *
  * 	-t:		Use TITLE comment as output file name.
  * 			Obviously, these should be distinct!
- * 
+ *
  *	infile:	If specified, input will be read from here,
  *			otherwise, input will be read from stdin.
  * Outputs:

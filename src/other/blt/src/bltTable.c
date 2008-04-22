@@ -1093,7 +1093,7 @@ CreateEntry(tablePtr, tkwin)
 	(char *)tkwin, &dummy);
     Blt_SetHashValue(entryPtr->hashPtr, entryPtr);
 
-    Tk_CreateEventHandler(tkwin, StructureNotifyMask, WidgetEventProc, 
+    Tk_CreateEventHandler(tkwin, StructureNotifyMask, WidgetEventProc,
 	entryPtr);
     Tk_ManageGeometry(tkwin, &tableMgrInfo, (ClientData)entryPtr);
 
@@ -1139,7 +1139,7 @@ DestroyEntry(entryPtr)
 	      WidgetEventProc, (ClientData)entryPtr);
 	Tk_ManageGeometry(entryPtr->tkwin, (Tk_GeomMgr *)NULL,
 			  (ClientData)entryPtr);
-	if ((tablePtr->tkwin != NULL) && 
+	if ((tablePtr->tkwin != NULL) &&
 	    (Tk_Parent(entryPtr->tkwin) != tablePtr->tkwin)) {
 	    Tk_UnmaintainGeometry(entryPtr->tkwin, tablePtr->tkwin);
 	}
@@ -1566,14 +1566,14 @@ ConfigureRowColumn(tablePtr, infoPtr, pattern, argc, argv)
     if (nMatches == 0) {
 	int n;
 
-	/* 
-	 * We found no existing partitions matching this pattern, so 
-	 * see if this designates an new partition (one beyond the 
-	 * current range).  
+	/*
+	 * We found no existing partitions matching this pattern, so
+	 * see if this designates an new partition (one beyond the
+	 * current range).
 	 */
 	if ((Tcl_GetInt(NULL, pattern + 1, &n) != TCL_OK) || (n < 0)) {
-	    Tcl_AppendResult(tablePtr->interp, "pattern \"", pattern, 
-		     "\" matches no ", infoPtr->type, " in table \"", 
+	    Tcl_AppendResult(tablePtr->interp, "pattern \"", pattern,
+		     "\" matches no ", infoPtr->type, " in table \"",
 		     Tk_PathName(tablePtr->tkwin), "\"", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -3454,7 +3454,7 @@ ArrangeEntries(tablePtr)
 	    Tk_MaintainGeometry(entryPtr->tkwin, tablePtr->tkwin, x, y,
 		winWidth, winHeight);
 	} else {
-	    if ((x != Tk_X(entryPtr->tkwin)) || 
+	    if ((x != Tk_X(entryPtr->tkwin)) ||
 		(y != Tk_Y(entryPtr->tkwin)) ||
 		(winWidth != Tk_Width(entryPtr->tkwin)) ||
 		(winHeight != Tk_Height(entryPtr->tkwin))) {
@@ -4041,12 +4041,12 @@ ExtentsOp(dataPtr, interp, argc, argv)
 	    if (c == 'r') {
 		r1Ptr = r2Ptr = rcPtr;
 		c1Ptr = GetRowColumn(&(tablePtr->columnInfo), 0);
-		c2Ptr = GetRowColumn(&(tablePtr->columnInfo), 
+		c2Ptr = GetRowColumn(&(tablePtr->columnInfo),
 				     tablePtr->nColumns - 1);
 	    } else {
 		c1Ptr = c2Ptr = rcPtr;
 		r1Ptr = GetRowColumn(&(tablePtr->rowInfo), 0);
-		r2Ptr = GetRowColumn(&(tablePtr->rowInfo), 
+		r2Ptr = GetRowColumn(&(tablePtr->rowInfo),
 				     tablePtr->nRows - 1);
 	    }
 	    x = c1Ptr->offset;
@@ -4095,7 +4095,7 @@ ForgetOp(dataPtr, interp, argc, argv)
     Blt_HashSearch cursor;
     Table *tablePtr;
     Tk_Window tkwin, mainWindow;
-    
+
     tablePtr = NULL;
     mainWindow = Tk_MainWindow(interp);
     for (i = 2; i < argc; i++) {
@@ -4210,7 +4210,7 @@ InsertOp(dataPtr, interp, argc, argv)
     Tcl_Interp *interp;
     int argc;
     char **argv;
-{ 
+{
     Table *tablePtr;
     long int span;
     int before;
@@ -4231,8 +4231,8 @@ InsertOp(dataPtr, interp, argc, argv)
 	} else if (strcmp(argv[3], "-after") == 0) {
 	    linkBefore = FALSE;
 	    argv++; argc--;
-	}	    
-    } 
+	}
+    }
     if (argc == 3) {
 	Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
 			 "insert ", argv[2], "row|column ?span?", (char *)NULL);
@@ -4881,8 +4881,8 @@ TableCmd(clientData, interp, argc, argv)
  *
  * TableInterpDeleteProc --
  *
- *	This is called when the interpreter hosting the table command 
- *	is destroyed.  
+ *	This is called when the interpreter hosting the table command
+ *	is destroyed.
  *
  * Results:
  *	None.
@@ -4927,7 +4927,7 @@ GetTableInterpData(interp)
     if (dataPtr == NULL) {
 	dataPtr = Blt_Malloc(sizeof(TableInterpData));
 	assert(dataPtr);
-	Tcl_SetAssocData(interp, TABLE_THREAD_KEY, TableInterpDeleteProc, 
+	Tcl_SetAssocData(interp, TABLE_THREAD_KEY, TableInterpDeleteProc,
 		dataPtr);
 	Blt_InitHashTable(&(dataPtr->tableTable), BLT_ONE_WORD_KEYS);
     }

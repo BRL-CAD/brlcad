@@ -1,7 +1,7 @@
 /*                          U - B W . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,52 +20,56 @@
 /** @file u-bw.c
  *
  * convert unsigned shorts to unsigned char.
+ *
  */
-#include <unistd.h>
-#include <stdio.h>
+
+#include "common.h"
+
+#include "bio.h"
+
 
 unsigned short ibuf[512];
 unsigned char obuf[512];
 
 int main(int ac, char **av)
 {
-	int num, i;
+    int num, i;
 
-	if (isatty(fileno(stdin)) || isatty(fileno(stdout))) {
-		(void)fprintf(stderr, "Usage: %s < u_shorts > bwfile\n",
-			*av);
+    if (isatty(fileno(stdin)) || isatty(fileno(stdout))) {
+	(void)fprintf(stderr, "Usage: %s < u_shorts > bwfile\n",
+		      *av);
+	return(-1);
+    }
+
+    if (ac > 1 && *av[1] == '-' && *av[2] == 'l')
+	while ((num = fread(&ibuf[0], sizeof(*ibuf), 512, stdin)) > 0 ) {
+	    for (i=0; i < num; i++)
+		obuf[i] = (unsigned char)ibuf[i];
+
+	    if (fwrite(&obuf[0], sizeof(*obuf), num, stdout)!=num) {
+		(void)fprintf(stderr, "%s: error writing output\n", *av);
 		return(-1);
+	    }
 	}
+    else
+	while ((num = fread(&ibuf[0], sizeof(*ibuf), 512, stdin)) > 0 ) {
+	    for (i=0; i < num; i++)
+		obuf[i] = (unsigned char)(ibuf[i] >> 8);
 
-	if (ac > 1 && *av[1] == '-' && *av[2] == 'l')
-	    while ((num = fread(&ibuf[0], sizeof(*ibuf), 512, stdin)) > 0 ){
-		for (i=0 ; i < num ; i++)
-			obuf[i] = (unsigned char)ibuf[i];
-
-		if (fwrite(&obuf[0], sizeof(*obuf),num,stdout)!=num) {
-			(void)fprintf(stderr, "%s: error writing output\n", *av);
-			return(-1);
-		}
+	    if (fwrite(&obuf[0], sizeof(*obuf), num, stdout)!=num) {
+		(void)fprintf(stderr, "%s: error writing output\n", *av);
+		return(-1);
 	    }
-	else
-	    while ((num = fread(&ibuf[0], sizeof(*ibuf), 512, stdin)) > 0 ){
-		for (i=0 ; i < num ; i++)
-			obuf[i] = (unsigned char)(ibuf[i] >> 8);
-
-		if (fwrite(&obuf[0], sizeof(*obuf),num,stdout)!=num) {
-			(void)fprintf(stderr, "%s: error writing output\n", *av);
-			return(-1);
-		}
-	    }
-	return 0;
+	}
+    return 0;
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

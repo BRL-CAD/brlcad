@@ -9,7 +9,7 @@
 .so man.macros
 .TH colors n 8.3 Tk "Tk Built-In Commands"
 .BS
-'\" Note:  do not modify the .SH NAME line immediately below!
+.\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
 colors \- symbolic color names recognized by Tk
 .BE
@@ -779,11 +779,10 @@ yellow3                    205   205     0
 yellow4                    139   139     0
 YellowGreen                154   205    50
 .CE
-
 .SH "PORTABILITY ISSUES"
-
 .TP
 \fBMac OS X\fR
+.
 On Mac OS X, the following additional system colors are available
 (note that the actual color values depend on the currently active OS theme,
 and typically many of these will in fact be patterns rather than pure colors):
@@ -925,7 +924,41 @@ systemNotificationText
 systemSystemDetailText
 .CE
 .RE
-
+.TP
+\fBWindows\fR
+.
+On Windows, the following additional system colors are available
+(note that the actual color values depend on the currently active OS theme):
+.RS
+.CS
+3dDarkShadow
+3dLight
+ActiveBorder
+ActiveCaption
+AppWorkspace
+Background
+ButtonFace
+ButtonHighlight
+ButtonShadow
+ButtonText
+CaptionText
+DisabledText
+GrayText
+Highlight
+HighlightText
+InactiveBorder
+InactiveCaption
+InactiveCaptionText
+InfoBackground
+InfoText
+Menu
+MenuText
+Scrollbar
+Window
+WindowFrame
+WindowText
+.CE
+.RE
 .SH "SEE ALSO"
 options(n), Tk_GetColor(3)
 .SH KEYWORDS

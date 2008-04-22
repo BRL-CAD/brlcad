@@ -1,7 +1,7 @@
 /*                          P I P E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2007 United States Government as represented by
+ * Copyright (c) 1990-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,16 +34,13 @@
  *	Susanne L. Muuss
  *
  */
-#ifndef lint
-static const char part_RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
-
 #include <stdio.h>
 #include <math.h>
-#include "machine.h"
+#include "bio.h"
+
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
@@ -63,17 +60,17 @@ static const char part_RCSid[] = "@(#)$Header$ (BRL)";
 int
 mk_particle(struct rt_wdb *fp, const char *name, fastf_t *vertex, fastf_t *height, double vradius, double hradius)
 {
-	struct rt_part_internal	*part;
+    struct rt_part_internal	*part;
 
-	BU_GETSTRUCT( part, rt_part_internal );
-	part->part_magic = RT_PART_INTERNAL_MAGIC;
-	VMOVE( part->part_V, vertex );
-	VMOVE( part->part_H, height );
-	part->part_vrad = vradius;
-	part->part_hrad = hradius;
-	part->part_type = 0;		/* sanity, unused */
+    BU_GETSTRUCT( part, rt_part_internal );
+    part->part_magic = RT_PART_INTERNAL_MAGIC;
+    VMOVE( part->part_V, vertex );
+    VMOVE( part->part_H, height );
+    part->part_vrad = vradius;
+    part->part_hrad = hradius;
+    part->part_type = 0;		/* sanity, unused */
 
-	return wdb_export( fp, name, (genptr_t)part, ID_PARTICLE, mk_conv2mm );
+    return wdb_export( fp, name, (genptr_t)part, ID_PARTICLE, mk_conv2mm );
 }
 
 
@@ -90,21 +87,21 @@ mk_particle(struct rt_wdb *fp, const char *name, fastf_t *vertex, fastf_t *heigh
 int
 mk_pipe(struct rt_wdb *fp, const char *name, struct bu_list *headp)
 {
-	struct rt_pipe_internal *pipe;
+    struct rt_pipe_internal *pipe;
 
-	if( rt_pipe_ck( headp ) )
-	{
-		bu_log( "mk_pipe: BAD PIPE SOLID (%s)\n" , name );
-		return( 1 );
-	}
+    if ( rt_pipe_ck( headp ) )
+    {
+	bu_log( "mk_pipe: BAD PIPE SOLID (%s)\n", name );
+	return( 1 );
+    }
 
-	BU_GETSTRUCT( pipe, rt_pipe_internal );
-	pipe->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
-	BU_LIST_INIT( &pipe->pipe_segs_head );
-	/* linked list from caller */
-	BU_LIST_APPEND_LIST( &pipe->pipe_segs_head, headp );
+    BU_GETSTRUCT( pipe, rt_pipe_internal );
+    pipe->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
+    BU_LIST_INIT( &pipe->pipe_segs_head );
+    /* linked list from caller */
+    BU_LIST_APPEND_LIST( &pipe->pipe_segs_head, headp );
 
-	return wdb_export( fp, name, (genptr_t)pipe, ID_PIPE, mk_conv2mm );
+    return wdb_export( fp, name, (genptr_t)pipe, ID_PIPE, mk_conv2mm );
 }
 
 /*
@@ -116,12 +113,12 @@ mk_pipe(struct rt_wdb *fp, const char *name, struct bu_list *headp)
 void
 mk_pipe_free( struct bu_list *headp )
 {
-	register struct wdb_pipept	*wp;
+    register struct wdb_pipept	*wp;
 
-	while( BU_LIST_WHILE( wp, wdb_pipept, headp ) )  {
-		BU_LIST_DEQUEUE( &wp->l );
-		bu_free( (char *)wp, "mk_pipe_free" );
-	}
+    while ( BU_LIST_WHILE( wp, wdb_pipept, headp ) )  {
+	BU_LIST_DEQUEUE( &wp->l );
+	bu_free( (char *)wp, "mk_pipe_free" );
+    }
 }
 
 
@@ -133,23 +130,23 @@ mk_pipe_free( struct bu_list *headp )
  */
 void
 mk_add_pipe_pt(
-	struct bu_list *headp,
-	const point_t coord,
-	double od,
-	double id,
-	double bendradius )
+    struct bu_list *headp,
+    const point_t coord,
+    double od,
+    double id,
+    double bendradius )
 {
-	struct wdb_pipept *new;
+    struct wdb_pipept *new;
 
-	BU_CKMAG( headp, WDB_PIPESEG_MAGIC, "pipe point" )
+    BU_CKMAG( headp, WDB_PIPESEG_MAGIC, "pipe point" )
 
 	BU_GETSTRUCT( new, wdb_pipept );
-	new->l.magic = WDB_PIPESEG_MAGIC;
-	new->pp_od = od;
-	new->pp_id = id;
-	new->pp_bendradius = bendradius;
-	VMOVE( new->pp_coord, coord );
-	BU_LIST_INSERT( headp, &new->l );
+    new->l.magic = WDB_PIPESEG_MAGIC;
+    new->pp_od = od;
+    new->pp_id = id;
+    new->pp_bendradius = bendradius;
+    VMOVE( new->pp_coord, coord );
+    BU_LIST_INSERT( headp, &new->l );
 }
 
 /*
@@ -160,16 +157,16 @@ mk_add_pipe_pt(
 void
 mk_pipe_init( struct bu_list *headp )
 {
-	BU_LIST_INIT( headp );
-	headp->magic = WDB_PIPESEG_MAGIC;
+    BU_LIST_INIT( headp );
+    headp->magic = WDB_PIPESEG_MAGIC;
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

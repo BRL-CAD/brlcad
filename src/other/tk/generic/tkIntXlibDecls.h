@@ -34,7 +34,7 @@
  * Exported function declarations:
  */
 
-#ifdef __WIN32__
+#ifdef __WIN32__ /* WIN */
 #ifndef XSetDashes_TCL_DECLARED
 #define XSetDashes_TCL_DECLARED
 /* 0 */
@@ -659,8 +659,8 @@ EXTERN void		XFillRectangle (Display * display, Drawable d, GC gc,
 				int x, int y, unsigned int width, 
 				unsigned int height);
 #endif
-#endif /* __WIN32__ */
-#ifdef MAC_OSX_TK
+#endif /* WIN */
+#ifdef MAC_OSX_TK /* AQUA */
 #ifndef XSetDashes_TCL_DECLARED
 #define XSetDashes_TCL_DECLARED
 /* 0 */
@@ -1208,13 +1208,13 @@ EXTERN Status		XQueryTree (Display * d, Window w1, Window * w2,
 /* 91 */
 EXTERN int		XSync (Display * display, Bool flag);
 #endif
-#endif /* MAC_OSX_TK */
+#endif /* AQUA */
 
 typedef struct TkIntXlibStubs {
     int magic;
     struct TkIntXlibStubHooks *hooks;
 
-#ifdef __WIN32__
+#ifdef __WIN32__ /* WIN */
     void (*xSetDashes) (Display * display, GC gc, int dash_offset, _Xconst char * dash_list, int n); /* 0 */
     XModifierKeymap * (*xGetModifierMapping) (Display * d); /* 1 */
     XImage * (*xCreateImage) (Display * d, Visual * v, unsigned int ui1, int i1, int i2, char * cp, unsigned int ui2, unsigned int ui3, int i3, int i4); /* 2 */
@@ -1322,8 +1322,8 @@ typedef struct TkIntXlibStubs {
     void (*xDrawLine) (Display * d, Drawable dr, GC g, int x1, int y1, int x2, int y2); /* 104 */
     void (*xWarpPointer) (Display * d, Window s, Window dw, int sx, int sy, unsigned int sw, unsigned int sh, int dx, int dy); /* 105 */
     void (*xFillRectangle) (Display * display, Drawable d, GC gc, int x, int y, unsigned int width, unsigned int height); /* 106 */
-#endif /* __WIN32__ */
-#ifdef MAC_OSX_TK
+#endif /* WIN */
+#ifdef MAC_OSX_TK /* AQUA */
     void (*xSetDashes) (Display * display, GC gc, int dash_offset, _Xconst char * dash_list, int n); /* 0 */
     XModifierKeymap * (*xGetModifierMapping) (Display * d); /* 1 */
     XImage * (*xCreateImage) (Display * d, Visual * v, unsigned int ui1, int i1, int i2, char * cp, unsigned int ui2, unsigned int ui3, int i3, int i4); /* 2 */
@@ -1416,7 +1416,7 @@ typedef struct TkIntXlibStubs {
     void (*xQueryColors) (Display * display, Colormap colormap, XColor * defs_in_out, int ncolors); /* 89 */
     Status (*xQueryTree) (Display * d, Window w1, Window * w2, Window * w3, Window ** w4, unsigned int * ui); /* 90 */
     int (*xSync) (Display * display, Bool flag); /* 91 */
-#endif /* MAC_OSX_TK */
+#endif /* AQUA */
 } TkIntXlibStubs;
 
 #ifdef __cplusplus
@@ -1433,7 +1433,7 @@ extern TkIntXlibStubs *tkIntXlibStubsPtr;
  * Inline function declarations:
  */
 
-#ifdef __WIN32__
+#ifdef __WIN32__ /* WIN */
 #ifndef XSetDashes
 #define XSetDashes \
 	(tkIntXlibStubsPtr->xSetDashes) /* 0 */
@@ -1859,8 +1859,8 @@ extern TkIntXlibStubs *tkIntXlibStubsPtr;
 #define XFillRectangle \
 	(tkIntXlibStubsPtr->xFillRectangle) /* 106 */
 #endif
-#endif /* __WIN32__ */
-#ifdef MAC_OSX_TK
+#endif /* WIN */
+#ifdef MAC_OSX_TK /* AQUA */
 #ifndef XSetDashes
 #define XSetDashes \
 	(tkIntXlibStubsPtr->xSetDashes) /* 0 */
@@ -2229,7 +2229,7 @@ extern TkIntXlibStubs *tkIntXlibStubsPtr;
 #define XSync \
 	(tkIntXlibStubsPtr->xSync) /* 91 */
 #endif
-#endif /* MAC_OSX_TK */
+#endif /* AQUA */
 
 #endif /* defined(USE_TK_STUBS) && !defined(USE_TK_STUB_PROCS) */
 

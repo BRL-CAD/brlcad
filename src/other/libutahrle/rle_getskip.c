@@ -1,23 +1,23 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
+/*
  * rle_getskip.c - Skip scanlines on input.
- * 
+ *
  * Author:	Spencer W. Thomas
  * 		EECS Dept.
  * 		University of Michigan
@@ -31,7 +31,7 @@
 /* Read a two-byte "short" that started in VAX (LITTLE_ENDIAN) order */
 #define VAXSHORT( var, fp )\
 	{ var = fgetc(fp)&0xFF; var |= (fgetc(fp)) << 8; }
-  
+
 /* Instruction format -- first byte is opcode, second is datum. */
 
 #define OPCODE(inst) (inst[0] & ~LONG)
@@ -40,7 +40,7 @@
 
 /*****************************************************************
  * TAG( rle_getskip )
- * 
+ *
  * Skip the next scanline with data on it.
  * Most useful for skipping to end-of-image.
  * Inputs:
@@ -62,13 +62,13 @@ rle_hdr *the_hdr;
     int nc;
 
     /* Add in vertical skip from last scanline */
-    if ( the_hdr->priv.get.vert_skip > 0) 
+    if ( the_hdr->priv.get.vert_skip > 0)
 	the_hdr->priv.get.scan_y += the_hdr->priv.get.vert_skip;
     the_hdr->priv.get.vert_skip = 0;
 
     if ( the_hdr->priv.get.is_eof )
 	return 32768;		/* too big for 16 bits, signal EOF */
-    
+
     /* Otherwise, read and interpret instructions until a skipLines
      * instruction is encountered.
      */

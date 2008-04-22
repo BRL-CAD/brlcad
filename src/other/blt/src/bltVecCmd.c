@@ -45,31 +45,31 @@
 #if (TCL_MAJOR_VERSION == 7)
 
 static void
-GetValues(vPtr, first, last, resultPtr) 
+GetValues(vPtr, first, last, resultPtr)
     VectorObject *vPtr;
     int first, last;
     Tcl_DString *resultPtr;
-{ 
-    register int i; 
-    char valueString[TCL_DOUBLE_SPACE + 1]; 
+{
+    register int i;
+    char valueString[TCL_DOUBLE_SPACE + 1];
 
-    for (i = first; i <= last; i++) { 
-	Tcl_PrintDouble(vPtr->interp, vPtr->valueArr[i], valueString); 
-	Tcl_DStringAppendElement(resultPtr, valueString); 
-    } 
+    for (i = first; i <= last; i++) {
+	Tcl_PrintDouble(vPtr->interp, vPtr->valueArr[i], valueString);
+	Tcl_DStringAppendElement(resultPtr, valueString);
+    }
 }
 
 static void
-ReplicateValue(vPtr, first, last, value) 
+ReplicateValue(vPtr, first, last, value)
     VectorObject *vPtr;
     int first, last;
     double value;
-{ 
-    register int i; 
-    for (i = first; i <= last; i++) { 
-	vPtr->valueArr[i] = value; 
-    } 
-    vPtr->notifyFlags |= UPDATE_RANGE; 
+{
+    register int i;
+    for (i = first; i <= last; i++) {
+	vPtr->valueArr[i] = value;
+    }
+    vPtr->notifyFlags |= UPDATE_RANGE;
 }
 
 static int
@@ -130,7 +130,7 @@ AppendList(vPtr, nElem, elemArr)
     }
     count = oldSize;
     for (i = 0; i < nElem; i++) {
-	if (Tcl_ExprDouble(vPtr->interp, elemArr[i], &value) 
+	if (Tcl_ExprDouble(vPtr->interp, elemArr[i], &value)
 	    != TCL_OK) {
 	    vPtr->length = count;
 	    return TCL_ERROR;
@@ -173,7 +173,7 @@ AppendOp(vPtr, interp, argc, argv)
     VectorObject *v2Ptr;
 
     for (i = 2; i < argc; i++) {
-	v2Ptr = Blt_VectorParseElement((Tcl_Interp *)NULL, vPtr->dataPtr, 
+	v2Ptr = Blt_VectorParseElement((Tcl_Interp *)NULL, vPtr->dataPtr,
 		argv[i], (char **)NULL, NS_SEARCH_BOTH);
 	if (v2Ptr != NULL) {
 	    result = AppendVector(vPtr, v2Ptr);
@@ -271,8 +271,8 @@ DeleteOp(vPtr, interp, argc, argv)
     unsetArr = Blt_Calloc(sizeof(unsigned char), vPtr->length);
     assert(unsetArr);
     for (i = 2; i < argc; i++) {
-	if (Blt_VectorGetIndexRange(interp, vPtr, argv[i], 
-		(INDEX_COLON | INDEX_CHECK), (Blt_VectorIndexProc **) NULL) 
+	if (Blt_VectorGetIndexRange(interp, vPtr, argv[i],
+		(INDEX_COLON | INDEX_CHECK), (Blt_VectorIndexProc **) NULL)
 		!= TCL_OK) {
 	    Blt_Free(unsetArr);
 	    return TCL_ERROR;
@@ -329,7 +329,7 @@ DupOp(vPtr, interp, argc, argv)
     register int i;
 
     for (i = 2; i < argc; i++) {
-	v2Ptr = Blt_VectorCreate(vPtr->dataPtr, argv[i], argv[i], argv[i], 
+	v2Ptr = Blt_VectorCreate(vPtr->dataPtr, argv[i], argv[i], argv[i],
 		&isNew);
 	if (v2Ptr == NULL) {
 	    return TCL_ERROR;
@@ -374,7 +374,7 @@ IndexOp(vPtr, interp, argc, argv)
 {
     int first, last;
 
-    if (Blt_VectorGetIndexRange(interp, vPtr, argv[2], INDEX_ALL_FLAGS, 
+    if (Blt_VectorGetIndexRange(interp, vPtr, argv[2], INDEX_ALL_FLAGS,
 		(Blt_VectorIndexProc **) NULL) != TCL_OK) {
 	return TCL_ERROR;
     }
@@ -557,7 +557,7 @@ MergeOp(vPtr, interp, argc, argv)
     *vPtrPtr = NULL;
     valueArr = Blt_Malloc(sizeof(double) * nElem);
     if (valueArr == NULL) {
-	Tcl_AppendResult(vPtr->interp, "not enough memory to allocate ", 
+	Tcl_AppendResult(vPtr->interp, "not enough memory to allocate ",
 		 Blt_Itoa(nElem), " vector elements", (char *)NULL);
 	Blt_Free(vecArr);
 	return TCL_ERROR;
@@ -604,7 +604,7 @@ NormalizeOp(vPtr, interp, argc, argv)
 	VectorObject *v2Ptr;
 	int isNew;
 
-	v2Ptr = Blt_VectorCreate(vPtr->dataPtr, argv[2], argv[2], argv[2], 
+	v2Ptr = Blt_VectorCreate(vPtr->dataPtr, argv[2], argv[2], argv[2],
 		&isNew);
 	if (v2Ptr == NULL) {
 	    return TCL_ERROR;
@@ -729,7 +729,7 @@ PopulateOp(vPtr, interp, argc, argv)
     register double *valuePtr;
     int count;
 
-    v2Ptr = Blt_VectorCreate(vPtr->dataPtr, argv[2], argv[2], argv[2], 
+    v2Ptr = Blt_VectorCreate(vPtr->dataPtr, argv[2], argv[2], argv[2],
 		     &isNew);
     if (v2Ptr == NULL) {
 	return TCL_ERROR;
@@ -830,7 +830,7 @@ RangeOp(vPtr, interp, argc, argv)
  *	Please note, min can't be greater than max.
  *
  * Results:
- *	If the value is within of the interval [min..max], 1 is 
+ *	If the value is within of the interval [min..max], 1 is
  *	returned; 0 otherwise.
  *
  * ----------------------------------------------------------------------
@@ -932,7 +932,7 @@ GetBinaryFormat(interp, string, sizePtr)
 	    (char *)NULL);
 	return FMT_UNKNOWN;
     }
-    Tcl_AppendResult(interp, "can't handle format \"", string, "\"", 
+    Tcl_AppendResult(interp, "can't handle format \"", string, "\"",
 		     (char *)NULL);
     return FMT_UNKNOWN;
 }
@@ -1119,7 +1119,7 @@ BinreadOp(vPtr, interp, argc, argv)
 		    "\"", (char *)NULL);
 		return TCL_ERROR;
 	    }
-	    if (Blt_VectorGetIndex(interp, vPtr, argv[i], &first, 0, 
+	    if (Blt_VectorGetIndex(interp, vPtr, argv[i], &first, 0,
 			 (Blt_VectorIndexProc **)NULL) != TCL_OK) {
 		return TCL_ERROR;
 	    }
@@ -1410,10 +1410,10 @@ SetOp(vPtr, interp, argc, argv)
 	if (vPtr == v2Ptr) {
 	    VectorObject *tmpPtr;
 
-	    /* 
+	    /*
 	     * Source and destination vectors are the same.  Copy the
 	     * source first into a temporary vector to avoid memory
-	     * overlaps. 
+	     * overlaps.
 	     */
 	    tmpPtr = Blt_VectorNew(vPtr->dataPtr);
 	    result = Blt_VectorDuplicate(tmpPtr, v2Ptr);
@@ -1690,7 +1690,7 @@ ArithOp(vPtr, interp, argc, argv)
     register int i;
     VectorObject *v2Ptr;
 
-    v2Ptr = Blt_VectorParseElement((Tcl_Interp *)NULL, vPtr->dataPtr, argv[2], 
+    v2Ptr = Blt_VectorParseElement((Tcl_Interp *)NULL, vPtr->dataPtr, argv[2],
 		(char **)NULL, NS_SEARCH_BOTH);
     if (v2Ptr != NULL) {
 	register int j;
@@ -1872,7 +1872,7 @@ Blt_VectorVarTrace(clientData, interp, part1, part2, flags)
 	}
 	return NULL;
     }
-    if (Blt_VectorGetIndexRange(interp, vPtr, part2, INDEX_ALL_FLAGS, 
+    if (Blt_VectorGetIndexRange(interp, vPtr, part2, INDEX_ALL_FLAGS,
 		&indexProc) != TCL_OK) {
 	goto error;
     }
@@ -1925,7 +1925,7 @@ Blt_VectorVarTrace(clientData, interp, part1, part2, flags)
 		value = (*indexProc) ((Blt_Vector *) vPtr);
 	    }
 	    Tcl_PrintDouble(interp, value, string);
-	    if (Tcl_SetVar2(interp, part1, part2, string, varFlags) 
+	    if (Tcl_SetVar2(interp, part1, part2, string, varFlags)
 		== NULL) {
 		goto error;
 	    }
@@ -1935,7 +1935,7 @@ Blt_VectorVarTrace(clientData, interp, part1, part2, flags)
 
 	    Tcl_DStringInit(&dString);
 	    GetValues(vPtr, first, last, &dString);
-	    result = Tcl_SetVar2(interp, part1, part2, 
+	    result = Tcl_SetVar2(interp, part1, part2,
 		Tcl_DStringValue(&dString), varFlags);
 	    Tcl_DStringFree(&dString);
 	    if (result == NULL) {
@@ -1969,7 +1969,7 @@ Blt_VectorVarTrace(clientData, interp, part1, part2, flags)
     Tcl_ResetResult(interp);
     return NULL;
 
- error: 
+ error:
     strncpy(message, Tcl_GetStringResult(interp), MAX_ERR_MSG);
     message[MAX_ERR_MSG] = '\0';
     return message;

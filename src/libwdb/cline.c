@@ -1,7 +1,7 @@
 /*                         C L I N E . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2007 United States Government as represented by
+ * Copyright (c) 2000-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,23 +21,14 @@
  *
  * Support for cline solids (kludges from FASTGEN)
  *
- *  Author -
- *	John Anderson
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-#ifndef lint
-static const char part_RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
-
 #include <stdio.h>
 #include <math.h>
-#include "machine.h"
+#include "bio.h"
+
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
@@ -47,31 +38,31 @@ static const char part_RCSid[] = "@(#)$Header$ (BRL)";
 
 int
 mk_cline(
-	struct rt_wdb *fp,
-	const char *name,
-	const point_t V,
-	const vect_t height,
-	fastf_t radius,
-	fastf_t thickness )
+    struct rt_wdb *fp,
+    const char *name,
+    const point_t V,
+    const vect_t height,
+    fastf_t radius,
+    fastf_t thickness )
 {
-	struct rt_cline_internal *cli;
+    struct rt_cline_internal *cli;
 
-	BU_GETSTRUCT( cli, rt_cline_internal );
-	cli->magic = RT_CLINE_INTERNAL_MAGIC;
-	VMOVE( cli->v, V );
-	VMOVE( cli->h, height );
-	cli->thickness = thickness;
-	cli->radius = radius;
+    BU_GETSTRUCT( cli, rt_cline_internal );
+    cli->magic = RT_CLINE_INTERNAL_MAGIC;
+    VMOVE( cli->v, V );
+    VMOVE( cli->h, height );
+    cli->thickness = thickness;
+    cli->radius = radius;
 
-	return wdb_export( fp, name, (genptr_t)cli, ID_CLINE, mk_conv2mm );
+    return wdb_export( fp, name, (genptr_t)cli, ID_CLINE, mk_conv2mm );
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

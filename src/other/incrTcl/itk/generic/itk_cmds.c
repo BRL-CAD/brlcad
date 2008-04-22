@@ -50,8 +50,7 @@ static int Initialize _ANSI_ARGS_((Tcl_Interp *interp));
  * initialization.
  */
 
-static char *initScript;
-static char initScriptA[] = "\n\
+static char initScript[] = "\n\
 namespace eval ::itk {\n\
     proc _find_init {} {\n\
         global env tcl_library\n\
@@ -74,18 +73,14 @@ namespace eval ::itk {\n\
             lappend dirs [file join $bindir .. library]\n\
             lappend dirs [file join $bindir .. .. library]\n\
             lappend dirs [file join $bindir .. .. itk library]\n\
-            lappend dirs [file join $bindir .. .. .. itk library]\n\
-            lappend dirs [file join $bindir .. .. .. .. itk library]\n\
-            lappend dirs [file join $bindir .. .. .. .. .. itk library]\n\
-            lappend dirs [file join $bindir src other incrTcl itk library]\n\
-            lappend dirs [file join $bindir .. src other incrTcl itk library]\n\
-            lappend dirs [file join $bindir .. .. src other incrTcl itk library]\n\
-            lappend dirs [file join $bindir .. .. .. src other incrTcl itk library]\n\
-            lappend dirs [file join $bindir .. .. .. .. src other incrTcl itk library]\n\
-            lappend dirs [file join $bindir .. .. .. .. .. src other incrTcl itk library]\n\
+            # On MacOSX, check the directories in the tcl_pkgPath\n\
+            if {[string equal $::tcl_platform(platform) \"unix\"] && \
+                    [string equal $::tcl_platform(os) \"Darwin\"]} {\n\
+                foreach d $::tcl_pkgPath {\n\
+                    lappend dirs [file join $d itk$version]\n\
+                }\n\
+            }\n\
         }\n\
-";
-static char initScriptB[] = "\n\
         foreach i $dirs {\n\
             set library $i\n\
             set itkfile [file join $i itk.tcl]\n\
@@ -154,7 +149,7 @@ Initialize(interp)
         (Tcl_Namespace*)NULL, /* flags */ 0);
 
     if (!parserNs) {
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "cannot initialize [incr Tk]: [incr Tcl] has not been installed\n",
             "Make sure that Itcl_Init() is called before Itk_Init()",
             (char*)NULL);
@@ -266,13 +261,6 @@ int
 Itk_Init(interp)
     Tcl_Interp *interp;  /* interpreter to be updated */
 {
-    int lenA = strlen(initScriptA);
-    int lenB = strlen(initScriptB);
-
-    initScript = ckalloc(lenA + lenB + 1);
-    strcpy(initScript, initScriptA);
-    strcpy(initScript+lenA, initScriptB);
-
     if (Initialize(interp) != TCL_OK) {
 	return TCL_ERROR;
     }
@@ -360,7 +348,7 @@ Itk_ConfigBodyCmd(dummy, interp, objc, objv)
     Itcl_ParseNamespPath(token, &buffer, &head, &tail);
 
     if (!head || *head == '\0') {
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "missing class specifier for body declaration \"", token, "\"",
             (char*)NULL);
         result = TCL_ERROR;

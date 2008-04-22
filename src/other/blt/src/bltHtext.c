@@ -46,7 +46,7 @@
 #include <bltChain.h>
 #include <bltHash.h>
 #include "bltTile.h"
- 
+
 #include <sys/stat.h>
 #include <X11/Xatom.h>
 #include <ctype.h>
@@ -125,7 +125,7 @@ typedef struct {
     short int width, height;	/* Dimensions of the line */
     int textStart, textEnd;	/* Start and end indices of characters
 				 * forming the line in the text array */
-    Blt_Chain *chainPtr;	/* Chain of embedded widgets on the line of 
+    Blt_Chain *chainPtr;	/* Chain of embedded widgets on the line of
 				 * text */
 } Line;
 
@@ -506,7 +506,7 @@ static Tk_ConfigSpec widgetConfigSpecs[] =
 
 /* Forward Declarations */
 static void DestroyText _ANSI_ARGS_((DestroyData dataPtr));
-static void EmbeddedWidgetEventProc _ANSI_ARGS_((ClientData clientdata, 
+static void EmbeddedWidgetEventProc _ANSI_ARGS_((ClientData clientdata,
 	XEvent *eventPtr));
 static void DisplayText _ANSI_ARGS_((ClientData clientData));
 static void TextDeleteCmdProc _ANSI_ARGS_((ClientData clientdata));
@@ -1448,7 +1448,7 @@ EmbeddedWidgetCustodyProc(clientData, tkwin)
     }
     Tk_DeleteEventHandler(winPtr->tkwin, StructureNotifyMask,
 	EmbeddedWidgetEventProc, winPtr);
-    hPtr = Blt_FindHashEntry(&(winPtr->htPtr->widgetTable), 
+    hPtr = Blt_FindHashEntry(&(winPtr->htPtr->widgetTable),
 			     (char *)winPtr->tkwin);
     Blt_DeleteHashEntry(&(winPtr->htPtr->widgetTable), hPtr);
     winPtr->cavityWidth = winPtr->cavityHeight = 0;
@@ -1524,12 +1524,12 @@ FindEmbeddedWidget(htPtr, tkwin)
  *
  * Results:
  *	The return value is a pointer to a structure describing the
- *	new embedded widget.  If an error occurred, then the return 
+ *	new embedded widget.  If an error occurred, then the return
  *	value is NULL and an error message is left in interp->result.
  *
  * Side effects:
- *	Memory is allocated. EmbeddedWidget window is mapped. 
- *	Callbacks are set up for embedded widget resizes and geometry 
+ *	Memory is allocated. EmbeddedWidget window is mapped.
+ *	Callbacks are set up for embedded widget resizes and geometry
  *	requests.
  *
  * ----------------------------------------------------------------------
@@ -2516,7 +2516,7 @@ ComputeCavitySize(winPtr)
 	width = (int)((double)Tk_Width(winPtr->htPtr->tkwin) *
 	    winPtr->relCavityWidth + 0.5);
     } else {
-	width = GetEmbeddedWidgetWidth(winPtr) + PADDING(winPtr->padX) + 
+	width = GetEmbeddedWidgetWidth(winPtr) + PADDING(winPtr->padX) +
 	    twiceBW;
     }
     winPtr->cavityWidth = width;
@@ -2527,7 +2527,7 @@ ComputeCavitySize(winPtr)
 	height = (int)((double)Tk_Height(winPtr->htPtr->tkwin) *
 	    winPtr->relCavityHeight + 0.5);
     } else {
-	height = GetEmbeddedWidgetHeight(winPtr) + PADDING(winPtr->padY) + 
+	height = GetEmbeddedWidgetHeight(winPtr) + PADDING(winPtr->padY) +
 	    twiceBW;
     }
     winPtr->cavityHeight = height;
@@ -3033,7 +3033,7 @@ DrawPage(htPtr, deltaY)
 	} else {
 	    Blt_SetTileOrigin(htPtr->tkwin, htPtr->tile, 0, 0);
 	}
-	Blt_TileRectangle(htPtr->tkwin, pixmap, htPtr->tile, 0, 0, width, 
+	Blt_TileRectangle(htPtr->tkwin, pixmap, htPtr->tile, 0, 0, width,
 		height);
     } else {
 	XFillRectangle(display, pixmap, htPtr->fillGC, 0, 0, width, height);
@@ -3831,7 +3831,7 @@ XViewOp(htPtr, interp, argc, argv)
     }
     htPtr->pendingX = htPtr->xOffset;
     if (Blt_GetScrollInfo(interp, argc - 2, argv + 2, &(htPtr->pendingX),
-	    worldWidth, width, htPtr->xScrollUnits, BLT_SCROLL_MODE_LISTBOX) 
+	    worldWidth, width, htPtr->xScrollUnits, BLT_SCROLL_MODE_LISTBOX)
 	!= TCL_OK) {
 	return TCL_ERROR;
     }
@@ -4464,7 +4464,7 @@ TextCmd(clientData, interp, argc, argv)
      *
      * ------------------------------------------------------------------
      */
-    htPtr->cmdToken = Tcl_CreateCommand(interp, argv[1], TextWidgetCmd, htPtr, 
+    htPtr->cmdToken = Tcl_CreateCommand(interp, argv[1], TextWidgetCmd, htPtr,
 	TextDeleteCmdProc);
 #ifdef ITCL_NAMESPACES
     Itk_SetWidgetCommand(htPtr->tkwin, htPtr->cmdToken);

@@ -1,7 +1,7 @@
 /*                        P I X C M P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,22 +28,14 @@
  *  This routine operates on a pixel-by-pixel basis, and thus
  *  is independent of the resolution of the image.
  *
- *  Author -
- *	Christopher Sean Morrison
- *	Charles M. Kennedy
- *	Michael John Muuss
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
-#include <stdio.h>
+#include "common.h"
+
 #include <stdlib.h>
 #include <string.h>
+#include "bio.h"
 
-#ifndef _WIN32
-#  include <unistd.h>
-#endif
 
 /* exit codes for argument processing errors */
 #define OPTS_ERROR 127
@@ -82,7 +74,7 @@ void
 handle_i_opt(const char *arg, long *skip1, long *skip2)
 {
     const char *endptr = arg;
-    if ((arg == NULL) || ((skip1 == NULL) && (skip2 == NULL))){
+    if ((arg == NULL) || ((skip1 == NULL) && (skip2 == NULL))) {
 	/* nothing to do */
 	return;
     }
@@ -162,7 +154,7 @@ main(int argc, char *argv[])
     argv += optind;
 
     /* validate what is left over */
-    if( argc < 1 || argc > 4)  {
+    if ( argc < 1 || argc > 4)  {
 	fprintf(stderr, "ERROR: incorrect number of arguments provided\n\n");
 	usage(argv[0]);
 	exit(OPTS_ERROR);
@@ -193,13 +185,13 @@ main(int argc, char *argv[])
 
     if (strcmp(argv[0], "-") == 0 ) {
 	f1 = stdin;
-    } else if ((f1 = fopen(argv[0], "r")) == NULL)  {
+    } else if ((f1 = fopen(argv[0], "rb")) == NULL)  {
 	perror(argv[1]);
 	exit(FILE_ERROR);
     }
     if ((argc < 2) || (strcmp(argv[1], "-") == 0)) {
 	f2 = stdin;
-    } else if ((f2 = fopen(argv[1], "r")) == NULL) {
+    } else if ((f2 = fopen(argv[1], "rb")) == NULL) {
 	perror(argv[1]);
 	exit(FILE_ERROR);
     }
@@ -219,7 +211,7 @@ main(int argc, char *argv[])
 	perror("FILE1 fseek failure");
 	exit(FILE_ERROR);
     }
-    
+
     /* skip requested pixels in FILE2 */
     if (f2_skip && fseek(f2, f2_skip, SEEK_SET)) {
 	fprintf(stderr,
@@ -234,7 +226,7 @@ main(int argc, char *argv[])
     /* iterate over the pixels/bytes in the files */
     while ((!feof(f1) && !feof(f2)) &&
 	   (!ferror(f1) && !ferror(f2))) {
-	register int r1 , r2, g1, g2, b1, b2;
+	register int r1, r2, g1, g2, b1, b2;
 	r1 = r2 = g1 = g2 = b1 = b2 = -1;
 
 	r1 = fgetc( f1 );
@@ -331,8 +323,8 @@ main(int argc, char *argv[])
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

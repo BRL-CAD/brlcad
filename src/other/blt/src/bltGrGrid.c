@@ -192,7 +192,7 @@ Blt_DrawGrid(graphPtr, drawable)
 	return;
     }
     if (gridPtr->x.nSegments > 0) {
-	Blt_Draw2DSegments(graphPtr->display, drawable, gridPtr->gc, 
+	Blt_Draw2DSegments(graphPtr->display, drawable, gridPtr->gc,
 			 gridPtr->x.segments, gridPtr->x.nSegments);
     }
     if (gridPtr->y.nSegments > 0) {
@@ -226,11 +226,11 @@ Blt_GridToPostScript(graphPtr, psToken)
     Blt_LineAttributesToPostScript(psToken, gridPtr->colorPtr,
 	gridPtr->lineWidth, &(gridPtr->dashes), CapButt, JoinMiter);
     if (gridPtr->x.nSegments > 0) {
-	Blt_2DSegmentsToPostScript(psToken, gridPtr->x.segments, 
+	Blt_2DSegmentsToPostScript(psToken, gridPtr->x.segments,
 			gridPtr->x.nSegments);
     }
     if (gridPtr->y.nSegments > 0) {
-	Blt_2DSegmentsToPostScript(psToken, gridPtr->y.segments, 
+	Blt_2DSegmentsToPostScript(psToken, gridPtr->y.segments,
 			gridPtr->y.nSegments);
     }
 }

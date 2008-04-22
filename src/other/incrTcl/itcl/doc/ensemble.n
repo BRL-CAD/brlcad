@@ -13,7 +13,7 @@
 .SH NAME
 ensemble \- create or modify a composite command
 .SH SYNOPSIS
-\fBensemble \fIensName\fR ?\fIcommand arg arg...\fR?
+\fBitcl::ensemble \fIensName\fR ?\fIcommand arg arg...\fR?
 .br
 or
 .br
@@ -150,14 +150,14 @@ wait window .
 .CE
 The Tcl package could define the following ensemble:
 .CS
-ensemble wait part variable {name} {
+itcl::ensemble wait part variable {name} {
     uplevel vwait $name
 }
 .CE
 The Tk package could add some options to this ensemble, with a
 command like this:
 .CS
-ensemble wait {
+itcl::ensemble wait {
     part visibility {name} {
         tkwait visibility $name
     }

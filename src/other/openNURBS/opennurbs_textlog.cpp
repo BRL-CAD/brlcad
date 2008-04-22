@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -111,14 +111,14 @@ void ON_TextLog::Print( const char* format, ... )
   va_list args;
 
   s[0] = 0;
-  if (format) 
+  if (format)
   {
     va_start(args, format);
     on_vsnprintf( s, MAX_MSG_LENGTH-1, format, args);
     va_end(args);
     s[MAX_MSG_LENGTH] = 0;
   }
-  if ( *s ) 
+  if ( *s )
   {
     char* s0 = s;
     char* s1 = s;
@@ -127,7 +127,7 @@ void ON_TextLog::Print( const char* format, ... )
         *s1 = 0;
         if ( m_beginning_of_line && m_indent && m_indent[0] )
           AppendText( m_indent );
-        if (*s0) 
+        if (*s0)
           AppendText(s0);
         AppendText("\n");
         m_beginning_of_line = 1;
@@ -151,14 +151,14 @@ void ON_TextLog::Print( const wchar_t* wformat, ... )
   va_list args;
 
   s[0] = 0;
-  if (wformat) 
+  if (wformat)
   {
     va_start(args, wformat);
     on_vsnwprintf( s, MAX_MSG_LENGTH-1, wformat, args);
     va_end(args);
     s[MAX_MSG_LENGTH] = 0;
   }
-  if ( *s ) 
+  if ( *s )
   {
     wchar_t* s0 = s;
     wchar_t* s1 = s;
@@ -167,7 +167,7 @@ void ON_TextLog::Print( const wchar_t* wformat, ... )
         *s1 = 0;
         if ( m_beginning_of_line && m_indent && m_indent[0] )
           AppendText( m_indent );
-        if (*s0) 
+        if (*s0)
           AppendText(s0);
         AppendText("\n");
         m_beginning_of_line = 1;
@@ -186,14 +186,14 @@ void ON_TextLog::Print( const wchar_t* wformat, ... )
 
 void ON_TextLog::AppendText( const char* s )
 {
-  // This is a virtual function 
-  if ( s && *s ) 
+  // This is a virtual function
+  if ( s && *s )
   {
     if ( m_pString )
     {
       (*m_pString) += s;
     }
-    else if ( m_pFile ) 
+    else if ( m_pFile )
     {
       fputs( s, m_pFile );
     }
@@ -210,15 +210,15 @@ void ON_TextLog::AppendText( const char* s )
 
 void ON_TextLog::AppendText( const wchar_t* s )
 {
-  // This is a virtual function 
+  // This is a virtual function
   if ( m_pString )
   {
     (*m_pString) += s;
   }
   else
   {
-    // To properly handle conversion of UNICODE values > 255, 
-    // you will probably have to derive a class from ON_TextLog, 
+    // To properly handle conversion of UNICODE values > 255,
+    // you will probably have to derive a class from ON_TextLog,
     // override ON_TextLog::AppendText(const wchar_t* s ),
     // and do whatever is appropriate for your OS and compiler.
     ON_String str = s;
@@ -296,7 +296,7 @@ void ON_TextLog::Print( const ON_Xform& xform )
 
 void ON_TextLog::Print( const ON_UUID& uuid )
 {
-  Print("%08X-%04X-%04x-%02X%02X-%02X%02X%02X%02X%02X%02X", 
+  Print("%08X-%04X-%04x-%02X%02X-%02X%02X%02X%02X%02X%02X",
         uuid.Data1, uuid.Data2, uuid.Data3,
         uuid.Data4[0], uuid.Data4[1], uuid.Data4[2], uuid.Data4[3],
         uuid.Data4[4], uuid.Data4[5], uuid.Data4[6], uuid.Data4[7]
@@ -441,17 +441,17 @@ void ON_TextLog::PrintPointList( int dim, int is_rat, int count, int stride, con
       Print(m_double_format, P[j] );
     }
     Print("%c", (is_rat) ? ']' : ')' );
-    if ( is_rat ) 
+    if ( is_rat )
     {
       w = P[dim];
-      if ( w != 0.0 ) 
+      if ( w != 0.0 )
       {
         // print euclidean coordinates
         w = 1.0/w;
         x = w*P[0];
         Print( " = (");
         Print( m_double_format, x );
-        for ( j = 1; j < dim; j++ ) 
+        for ( j = 1; j < dim; j++ )
         {
           x = w*P[j];
           Print( ", ");
@@ -465,8 +465,8 @@ void ON_TextLog::PrintPointList( int dim, int is_rat, int count, int stride, con
   }
 }
 
-void ON_TextLog::PrintPointGrid( int dim, int is_rat, 
-                                int point_count0, int point_count1, 
+void ON_TextLog::PrintPointGrid( int dim, int is_rat,
+                                int point_count0, int point_count1,
                                 int point_stride0, int point_stride1,
                                 const double* P,
                                 const char* sPreamble )
@@ -523,7 +523,7 @@ void ON_TextLog::Print( const ON_Matrix& M, const char* sPreamble, int precision
   char* sRow;
   char* sIJ;
   int xi, row_count, column_count, row_index, column_index;
-  
+
   row_count = M.RowCount();
   column_count = M.ColCount();
 
@@ -634,7 +634,7 @@ ON_TextLog& ON_TextLog::operator<<(float x)
   return *this;
 }
 
-ON_TextLog& ON_TextLog::operator<<(double x)  
+ON_TextLog& ON_TextLog::operator<<(double x)
 {
   Print(m_double_format,x);
   return *this;
@@ -714,7 +714,7 @@ void ON_TextLog::PrintWrappedText( const wchar_t* s, int line_length )
         if ( s[i] == 10 && s[i-1] == 13 ) {
           // it's a CR+LF hard end of line - skip LF too
           i++;
-        }      
+        }
         bPrintLine = TRUE;
       }
       else if ( i && s[i] == 32 ) {

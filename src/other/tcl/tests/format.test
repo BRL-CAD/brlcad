@@ -553,6 +553,10 @@ test format-19.1 {
     list [expr { ~ $x }] [format %08x [expr { ~$x }]]
 } -match regexp -result {-2414724693 f*701239ab}
 
+test format-19.2 {Bug 1867855} {
+    format %llx 0
+} 0
+
 # cleanup
 catch {unset a}
 catch {unset b}

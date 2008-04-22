@@ -2,7 +2,7 @@
 #                        A M P I . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2007 United States Government as represented by
+# Copyright (c) 2004-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -20,9 +20,9 @@
 #
 ###
 # This is a comment \
-/bin/echo "This is not a shell script"
+    /bin/echo "This is not a shell script"
 # This is a comment \
-exit
+    exit
 
 # make the pkgIndex.tcl
 if {![info exists argv]} {
@@ -34,7 +34,7 @@ foreach arg $argv {
     # generate a pkgIndex.tcl file in the arg dir
     puts "Generating pkgIndex.tcl in $arg"
     catch {pkg_mkIndex -verbose $arg *.tcl *.itcl *.itk *.sh}
-    
+
     if {![file exists "$arg/pkgIndex.tcl"]} {
 	puts "ERROR: pkgIndex.tcl does not exist in $arg"
 	continue
@@ -53,7 +53,7 @@ foreach arg $argv {
 	}
     }
     close $fd
-    
+
     # write out the sorted pkgIndex.tcl
     set fd [open "$arg/pkgIndex.tcl" {WRONLY TRUNC CREAT}]
     foreach line $header {

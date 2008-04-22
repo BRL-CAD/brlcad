@@ -1,7 +1,7 @@
 .\" Copyright (c) 1986, University of Utah
 .\" Template man page.  Taken from wtm's page for getcx3d
 .TH AVG4 1 "Nov 12, 1986" 1
-.UC 4 
+.UC 4
 .SH NAME
 avg4 \- Downfilter an image by simple averaging.
 .SH SYNOPSIS
@@ -9,19 +9,19 @@ avg4 \- Downfilter an image by simple averaging.
 [
 .B \-o
 .I outfile
-] [ 
+] [
 .I infile
-] 
+]
 .SH DESCRIPTION
 .IR Avg4
 downfilters an RLE image into a resulting image of 1/4th the size,
 by simply averaging four pixel values in the input image to produce a single
 pixel in the output.  If the original image does not contain an alpha
 channel, avg4 creates one by counting the number of non-zero pixels in each
-group of four input pixels and using the count to produce a coverage value. 
+group of four input pixels and using the count to produce a coverage value.
 While the alpha channel produced this way is crude (only four levels of
-coverage) it is enough to make a noticeable improvement in the edges of 
-composited images.  
+coverage) it is enough to make a noticeable improvement in the edges of
+composited images.
 .SH OPTIONS
 .TP
 .I infile

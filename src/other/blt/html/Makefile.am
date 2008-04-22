@@ -1,6 +1,7 @@
 # $Id$
 
 EXTRA_DIST = \
+	BLT.html \
 	Makefile.vc \
 	barchart.html \
 	beep.html \
@@ -26,7 +27,5 @@ EXTRA_DIST = \
 	vector.html \
 	watch.html \
 	winop.html
-
-MAINTAINERCLEANFILES = Makefile.in
 
 include $(top_srcdir)/misc/Makefile.defs

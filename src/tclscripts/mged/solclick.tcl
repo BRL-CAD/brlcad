@@ -1,7 +1,7 @@
 #                    S O L C L I C K . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2007 United States Government as represented by
+# Copyright (c) 2004-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -53,20 +53,20 @@ proc solclick { } {
 	    eval [concat _mged_M $args]
 	}
 
-#	set w .solclick$id
+	#	set w .solclick$id
 	set w .metasolclick.solclick
 
 	catch { destroy $w }
 
 	set solids [solids_on_ray $x $y]
 
-#	toplevel $w -screen $mged_gui($id,screen)
+	#	toplevel $w -screen $mged_gui($id,screen)
 	toplevel $w
 	wm title $w "Primitive edit"
 	set i 0
 	foreach solid $solids {
 	    button $w.s$i -text [lindex [split $solid /] end] \
-		    -command "destroy $w; sed $solid"
+		-command "destroy $w; sed $solid"
 	    pack $w.s$i -side top -fill x -expand yes
 	    incr i
 	}
@@ -85,7 +85,7 @@ proc init_solclick { id } {
 	return
     }
 
-#    catch { destroy $w }
+    #    catch { destroy $w }
     set solclick_user $id
     toplevel $w -screen $mged_gui($id,screen)
     wm title $w "My 1st menu"

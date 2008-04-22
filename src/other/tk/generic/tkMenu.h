@@ -139,7 +139,7 @@ typedef struct TkMenuEntry {
 				 * Malloc'ed. */
     Tcl_Obj *namePtr;		/* Name of variable (for check buttons and
 				 * radio buttons) or menu (for cascade
-				 * entries).  Malloc'ed.*/
+				 * entries). Malloc'ed. */
     Tcl_Obj *onValuePtr;	/* Value to store in variable when selected
 				 * (only for radio and check buttons).
 				 * Malloc'ed. */
@@ -155,19 +155,19 @@ typedef struct TkMenuEntry {
 				 * horizontal dimension. Not used except in
 				 * menubars. The width of norma menus is
 				 * dependent on the rest of the menu. */
-    int x;			/* X-coordinate of leftmost pixel in entry */
+    int x;			/* X-coordinate of leftmost pixel in entry. */
     int height;			/* Number of pixels occupied by entry in
 				 * vertical dimension, including raised border
 				 * drawn around entry when active. */
     int y;			/* Y-coordinate of topmost pixel in entry. */
-    GC textGC;			/* GC for drawing text in entry.  NULL means
+    GC textGC;			/* GC for drawing text in entry. NULL means
 				 * use overall textGC for menu. */
     GC activeGC;		/* GC for drawing text in entry when active.
 				 * NULL means use overall activeGC for
 				 * menu. */
     GC disabledGC;		/* Used to produce disabled effect for entry.
 				 * NULL means use overall disabledGC from menu
-				 * structure.  See comments for disabledFg in
+				 * structure. See comments for disabledFg in
 				 * menu structure for more information. */
     GC indicatorGC;		/* For drawing indicators. None means use GC
 				 * from menu. */
@@ -313,8 +313,8 @@ typedef struct TkMenu {
      * Information about geometry of menu.
      */
 
-    int totalWidth;		/* Width of entire menu */
-    int totalHeight;		/* Height of entire menu */
+    int totalWidth;		/* Width of entire menu. */
+    int totalHeight;		/* Height of entire menu. */
 
     /*
      * Miscellaneous information:
@@ -335,16 +335,16 @@ typedef struct TkMenu {
 				 * whenever the menu is torn-off. */
     Tcl_Obj *takeFocusPtr;	/* Value of -takefocus option; not used in the
 				 * C code, but used by keyboard traversal
-				 * scripts.  Malloc'ed, but may be NULL. */
+				 * scripts. Malloc'ed, but may be NULL. */
     Tcl_Obj *cursorPtr;		/* Current cursor for window, or None. */
     Tcl_Obj *postCommandPtr;	/* Used to detect cycles in cascade hierarchy
     				 * trees when preprocessing postcommands on
     				 * some platforms. See PostMenu for more
     				 * details. */
     int postCommandGeneration;	/* Need to do pre-invocation post command
-				 * traversal */
+				 * traversal. */
     int menuFlags;		/* Flags for use by X; see below for
-				   definition */
+				 * definition. */
     TkMenuEntry *postedCascade;	/* Points to menu entry for cascaded submenu
 				 * that is currently posted or NULL if no
 				 * submenu posted. */
@@ -373,8 +373,8 @@ typedef struct TkMenu {
     				 * have this menu specified as a cascade. */
     TkMenuPlatformData platformData;
 				/* The data for the specific type of menu.
-  				 * Depends on platform and menu type what kind
-  				 * of options are in this structure. */
+				 * Depends on platform and menu type what kind
+				 * of options are in this structure. */
     Tk_OptionSpec *extensionPtr;/* Needed by the configuration package for
 				 * this widget to be extended. */
     Tk_SavedOptions *errorStructPtr;
@@ -391,7 +391,7 @@ typedef struct TkMenu {
 
 typedef struct TkMenuTopLevelList {
     struct TkMenuTopLevelList *nextPtr;
-    				/* The next window in the list */
+    				/* The next window in the list. */
     Tk_Window tkwin;		/* The window that has this menu as its
 				 * menubar. */
 } TkMenuTopLevelList;
@@ -451,14 +451,14 @@ typedef struct TkMenuOptionTables {
  *				when TkDestroyMenu was called again on this
  *				menu (via a destroy binding or somesuch).
  * MENU_WIN_DESTRUCTION_PENDING Non-zero means we are in the middle of
- *                              destroying this menu's Tk_Window.
+ *				destroying this menu's Tk_Window.
  * MENU_PLATFORM_FLAG1...	Reserved for use by the platform-specific menu
  *				code.
  */
 
-#define REDRAW_PENDING		        1
-#define RESIZE_PENDING		        2
-#define MENU_DELETION_PENDING	        4
+#define REDRAW_PENDING			1
+#define RESIZE_PENDING			2
+#define MENU_DELETION_PENDING		4
 #define MENU_WIN_DESTRUCTION_PENDING	8
 #define MENU_PLATFORM_FLAG1	(1 << 30)
 #define MENU_PLATFORM_FLAG2	(1 << 29)
@@ -482,9 +482,9 @@ typedef struct TkMenuOptionTables {
  * Various geometry definitions:
  */
 
-#define CASCADE_ARROW_HEIGHT 10
-#define CASCADE_ARROW_WIDTH 8
-#define DECORATION_BORDER_WIDTH 2
+#define CASCADE_ARROW_HEIGHT	10
+#define CASCADE_ARROW_WIDTH	8
+#define DECORATION_BORDER_WIDTH	2
 
 /*
  * Menu-related functions that are shared among Tk modules but not exported to
@@ -560,4 +560,3 @@ MODULE_SCOPE void	TkpSetWindowMenuBar(Tk_Window tkwin, TkMenu *menuPtr);
 # define TCL_STORAGE_CLASS DLLIMPORT
 
 #endif /* _TKMENU */
-

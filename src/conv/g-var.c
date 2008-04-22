@@ -1,7 +1,7 @@
 /*                     G - V A R . C
  * BRL-CAD
  *
- * Copyright (c) 2002-2007 United States Government as represented by
+ * Copyright (c) 2002-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,33 +20,16 @@
  */
 /** @file g-var.c
  *
- *  BRL-CAD to (OpenGL) Vertex Array Exporter.
+ * BRL-CAD to (OpenGL) Vertex Array Exporter.
  *
- *  Author -
- *      Prasad P. Silva
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-
-#ifndef lint
-static const char RCSid[] = "$Header $";
-#endif
 
 #include "common.h"
 
 /* system headers */
 #include <stdlib.h>
-#include <stdio.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#endif
+#include <string.h>
+#include "bio.h"
 
 #ifdef HAVE_STDINT_H
 #  include <stdint.h>
@@ -55,7 +38,6 @@ static const char RCSid[] = "$Header $";
 #include <math.h>
 
 /* interface headers */
-#include "machine.h"		/* machine specific definitions */
 #include "wdb.h"
 #include "raytrace.h"
 
@@ -71,7 +53,7 @@ struct mesh {
 };
 
 
-static char		usage[] = "Usage: %s [-v] [-y] [-s scale] [-f] [-o out_file] brlcad_db.h object\n";
+static const char	usage[] = "Usage: %s [-v] [-y] [-s scale] [-f] [-o out_file] brlcad_db.h object\n";
 
 static uint8_t 		verbose = 0;
 static uint8_t		yup = 0;
@@ -84,11 +66,6 @@ static char		*object = NULL;
 static FILE		*fp_out;
 static struct db_i	*dbip;
 
-#ifndef WORDS_BIGENDIAN
-static uint8_t		endian = 0;
-#else
-static uint8_t		endian = 1;
-#endif
 static uint8_t		format_version = MESH_FORMAT_VERSION;
 static struct mesh	*head = NULL;
 static struct mesh	*curr = NULL;
@@ -156,6 +133,7 @@ void dealloc_mesh_list()
 void write_header( struct db_i *dbip )
 {
     uint16_t len;
+    char endian;
     /*
       Header format:
       Endian (1 byte) {0=little; !0=big}
@@ -168,7 +146,13 @@ void write_header( struct db_i *dbip )
     */
 
     /* endian */
+    if (bu_byteorder() == BU_BIG_ENDIAN) {
+	endian = 1;
+    } else {
+	endian = 0;
+    }
     fwrite( &endian, sizeof(char), 1, fp_out );
+
     /* format version */
     fwrite( &format_version, sizeof(char), 1, fp_out );
     len = strlen( dbip->dbi_title );
@@ -288,9 +272,9 @@ void write_mesh_data()
 	char format;
 
 	/* face triples */
-	uint8_t ind8[3] = {0,0,0};
-	uint16_t ind16[3] = {0,0,0};
-	uint32_t ind32[3] = {0,0,0};
+	uint8_t ind8[3] = {0, 0, 0};
+	uint16_t ind16[3] = {0, 0, 0};
+	uint32_t ind32[3] = {0, 0, 0};
 
 	if ( verbose ) {
 	    fprintf( stderr, ">> writing out mesh '%s' (%u, %u)\n", curr->name,
@@ -403,7 +387,7 @@ int main(int argc, char *argv[])
 
     /* process command line arguments */
     while ( (c = bu_getopt(argc, argv, "vo:ys:f") ) != EOF ) {
-	switch(c) {
+	switch (c) {
 	    case 'v':
 		verbose++;
 		break;
@@ -425,15 +409,13 @@ int main(int argc, char *argv[])
 		break;
 
 	    default:
-		fprintf(stderr, usage, argv[0]);
-		exit(1);
+		bu_exit(1, usage, argv[0]);
 		break;
 	}
     }
     /* param check */
     if (bu_optind+1 >= argc) {
-	fprintf(stderr, usage, argv[0]);
-	exit(1);
+	bu_exit(1, usage, argv[0]);
     }
     /* get database filename and object */
     db_file = argv[bu_optind++];
@@ -441,20 +423,22 @@ int main(int argc, char *argv[])
 
     /* open BRL-CAD database */
     if ( (dbip = db_open( db_file, "r") ) == DBI_NULL ) {
-	bu_log( "Cannot open %s\n", db_file );
 	perror(argv[0]);
-	exit(1);
+	bu_exit(1, "Cannot open %s\n", db_file );
     }
     if ( db_dirbuild( dbip ) ) {
-	bu_bomb( "db_dirbuild() failed!\n" );
+	bu_exit(1, "db_dirbuild() failed!\n" );
     }
     if ( verbose ) {
 	fprintf(stderr, ">> opened db '%s'\n", dbip->dbi_title);
     }
 
     /* setup output stream */
-    if ( out_file == NULL ) {
+    if (out_file == NULL) {
 	fp_out = stdout;
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	setmode(fileno(fp_out), O_BINARY);
+#endif
     } else {
 	if ( (fp_out = fopen( out_file, "wb") ) == NULL ) {
 	    bu_log( "Cannot open %s\n", out_file );
@@ -468,8 +452,7 @@ int main(int argc, char *argv[])
 
     dp = db_lookup( dbip, object, 0 );
     if ( dp == DIR_NULL ) {
-	bu_log( "Object %s not found in database!\n", object );
-	exit(1);
+	bu_exit(1, "Object %s not found in database!\n", object );
     }
 
     /* generate mesh list */
@@ -494,8 +477,8 @@ int main(int argc, char *argv[])
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -1,7 +1,7 @@
 #                          D M . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2007 United States Government as represented by
+# Copyright (c) 1998-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -18,15 +18,6 @@
 # information.
 #
 ###
-#
-# Author -
-#	Bob Parker
-#
-# Source -
-#	The U. S. Army Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#
 #
 # Description -
 #	The Dm class wraps LIBDM's display manager object.
@@ -48,10 +39,10 @@
     itk_option define -zclip zclip Zclip 0
 
     if {$tcl_platform(os) != "Windows NT"} {
-	itk_option define -fb_active fb_active Fb_active 0
-	itk_option define -fb_observe fb_observe Fb_observe 1
-	itk_option define -listen listen Listen -1
     }
+    itk_option define -fb_active fb_active Fb_active 0
+    itk_option define -fb_observe fb_observe Fb_observe 1
+    itk_option define -listen listen Listen -1
 
     constructor {args} {}
     destructor {}
@@ -94,11 +85,11 @@
     public method zclip {args}
 
     if {$tcl_platform(os) != "Windows NT"} {
-	public method listen {args}
-	public method refreshfb {}
-	public method fb_active {args}
-	public method fb_observe {args}
     }
+    public method listen {args}
+    public method refreshfb {}
+    public method fb_active {args}
+    public method fb_observe {args}
 
     public method ? {}
     public method apropos {key}
@@ -142,7 +133,10 @@
     global tcl_platform
     global env
 
-    set display $env(DISPLAY)
+    catch {set display $env(DISPLAY)}
+    if {![info exists display] || $display == ""} {
+	set display :0
+    }
 
     if {[catch {dm_bestXType $display} priv_type]} {
 	if {$tcl_platform(os) != "Windows NT"} {
@@ -163,7 +157,7 @@
 }
 
 ::itcl::body Dm::destructor {} {
-#    $tkwin listen -1
+    #    $tkwin listen -1
     rename $tkwin ""
 
     catch {delete object $help}
@@ -185,22 +179,22 @@
 }
 
 if {$tcl_platform(os) != "Windows NT"} {
-    ::itcl::configbody Dm::listen {
-	if {!$initializing} {
-	    Dm::listen $itk_option(-listen)
-	}
+}
+::itcl::configbody Dm::listen {
+    if {!$initializing} {
+	Dm::listen $itk_option(-listen)
     }
+}
 
-    ::itcl::configbody Dm::fb_active {
-	if {!$initializing} {
-	    Dm::fb_active $itk_option(-fb_active)
-	}
+::itcl::configbody Dm::fb_active {
+    if {!$initializing} {
+	Dm::fb_active $itk_option(-fb_active)
     }
+}
 
-    ::itcl::configbody Dm::fb_observe {
-	if {!$initializing} {
-	    Dm::fb_observe $itk_option(-fb_observe)
-	}
+::itcl::configbody Dm::fb_observe {
+    if {!$initializing} {
+	Dm::fb_observe $itk_option(-fb_observe)
     }
 }
 
@@ -462,17 +456,17 @@ if {$tcl_platform(os) != "Windows NT"} {
 }
 
 if {$tcl_platform(os) != "Windows NT"} {
-    ::itcl::body Dm::listen {args} {
-	if {$args == ""} {
-	    return $itk_option(-listen)
-	}
-
-	set itk_option(-listen) [$itk_component(dm) listen $args]
+}
+::itcl::body Dm::listen {args} {
+    if {$args == ""} {
+	return $itk_option(-listen)
     }
 
-    ::itcl::body Dm::refreshfb {} {
-	$itk_component(dm) refreshfb
-    }
+    set itk_option(-listen) [$itk_component(dm) listen $args]
+}
+
+::itcl::body Dm::refreshfb {} {
+    $itk_component(dm) refreshfb
 }
 
 ::itcl::body Dm::flush {} {
@@ -509,39 +503,39 @@ if {$tcl_platform(os) != "Windows NT"} {
 }
 
 if {$tcl_platform(os) != "Windows NT"} {
-    ::itcl::body Dm::fb_active {args} {
-	if {$args == ""} {
-	    return $itk_option(-fb_active)
-	}
-
-	if {$args < 0 || 2 < $args} {
-	    error "Usage: fb_active \[0|1|2\]"
-	}
-
-	# update saved value
-	set itk_option(-fb_active) $args
+}
+::itcl::body Dm::fb_active {args} {
+    if {$args == ""} {
+	return $itk_option(-fb_active)
     }
 
-    ::itcl::body Dm::fb_observe {args} {
-	if {$args == ""} {
-	    return $itk_option(-fb_observe)
+    if {$args < 0 || 2 < $args} {
+	error "Usage: fb_active \[0|1|2\]"
+    }
+
+    # update saved value
+    set itk_option(-fb_active) $args
+}
+
+::itcl::body Dm::fb_observe {args} {
+    if {$args == ""} {
+	return $itk_option(-fb_observe)
+    }
+
+    if {$args != 0 && $args != 1} {
+	error "Usage: fb_observe \[0|1\]"
+    }
+
+    # update saved value
+    set itk_option(-fb_observe) $args
+
+    switch $itk_option(-fb_observe) {
+	0 {
+	    catch {Dm::observer detach $this}
+	    return ""
 	}
-
-	if {$args != 0 && $args != 1} {
-	    error "Usage: fb_observe \[0|1\]"
-	}
-
-	# update saved value
-	set itk_option(-fb_observe) $args
-
-	switch $itk_option(-fb_observe) {
-	    0 {
-		catch {Dm::observer detach $this}
-		return ""
-	    }
-	    1 {
-		Dm::observer attach $this
-	    }
+	1 {
+	    Dm::observer attach $this
 	}
     }
 }
@@ -598,7 +592,7 @@ if {$tcl_platform(os) != "Windows NT"} {
 
 ::itcl::body Dm::handle_configure {} {
     $itk_component(dm) configure
-#    [namespace tail $itk_component(dm)] configure
+    #    [namespace tail $itk_component(dm)] configure
 
     set itk_option(-dmsize) [$itk_component(dm) size]
     set width [lindex $itk_option(-dmsize) 0]
@@ -611,7 +605,7 @@ if {$tcl_platform(os) != "Windows NT"} {
 
 ::itcl::body Dm::changeType {type} {
     if {$type != $priv_type} {
-#	$itk_component(dm) listen -1
+	#	$itk_component(dm) listen -1
 
 	# the close method no longer exists
 	#$itk_component(dm) close
@@ -637,10 +631,11 @@ if {$tcl_platform(os) != "Windows NT"} {
 
     eval Dm::dmsize $itk_option(-dmsize)
     if {$tcl_platform(os) != "Windows NT"} {
-	Dm::fb_active $itk_option(-fb_active)
-	Dm::fb_observe $itk_option(-fb_observe)
-	Dm::listen $itk_option(-listen)
     }
+    Dm::fb_active $itk_option(-fb_active)
+    Dm::fb_observe $itk_option(-fb_observe)
+    Dm::listen $itk_option(-listen)
+
     eval Dm::bg $itk_option(-bg)
     Dm::light $itk_option(-light)
     Dm::zclip $itk_option(-zclip)
@@ -690,7 +685,7 @@ if {$tcl_platform(os) != "Windows NT"} {
 }
 
 ::itcl::body Dm::helpInit {} {
-    set help [cadwidgets::Help #auto]
+    set help [cadwidgets::Help \#auto]
 
     $help add png		{{file} {Dump contents of window to a png file}}
 }

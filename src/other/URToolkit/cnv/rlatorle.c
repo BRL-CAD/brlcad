@@ -164,7 +164,7 @@ int *height;
        }
    VPRINTF(stderr, "Channel color space %s\n", head.rla_head.chan);
    if ( rlb_flag )
-       VPRINTF(stderr, "Interlaced?         %s\n", head.rlb_head.filter_type);
+       VPRINTF(stderr, "Interlaced?         %hd\n", head.rlb_head.filter_type);
    else
        VPRINTF(stderr, "Interlaced?         %s\n", "-unused-");
    if (do_matte)

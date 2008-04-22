@@ -1,7 +1,7 @@
 /*                         P H O N G . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007 United States Government as represented by
+ * Copyright (c) 2007-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,13 +26,13 @@
 
 #include "phong.h"
 #include "hit.h"
-#include "adrt_common.h"
+#include "adrt_struct.h"
 #include <stdio.h>
 
 
 void render_phong_init(render_t *render) {
-  render->work = render_phong_work;
-  render->free = render_phong_free;
+    render->work = render_phong_work;
+    render->free = render_phong_free;
 }
 
 
@@ -41,31 +41,31 @@ void render_phong_free(render_t *render) {
 
 
 void render_phong_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel) {
-  tie_id_t		id;
-  common_mesh_t		*m;
-  TIE_3			vec;
-  tfloat		angle;
+    tie_id_t		id;
+    adrt_mesh_t		*mesh;
+    TIE_3			vec;
+    tfloat		angle;
 
-  if((m = (common_mesh_t*)tie_work(tie, ray, &id, render_hit, NULL))) {
-    *pixel = m->prop->color;
-    if(m->texture)
-      m->texture->work(m->texture, (struct mesh_s *)m, ray, &id, pixel);
-  } else {
-    return;
-  }
+    if ((mesh = (adrt_mesh_t*)tie_work(tie, ray, &id, render_hit, NULL))) {
+	*pixel = mesh->attributes->color;
+	if (mesh->texture)
+	    mesh->texture->work(mesh->texture, mesh, ray, &id, pixel);
+    } else {
+	return;
+    }
 
-  MATH_VEC_SUB(vec, ray->pos, id.pos);
-  MATH_VEC_UNITIZE(vec);
-  MATH_VEC_DOT(angle, vec, id.norm);
-  MATH_VEC_MUL_SCALAR((*pixel), (*pixel), angle);
+    MATH_VEC_SUB(vec, ray->pos, id.pos);
+    MATH_VEC_UNITIZE(vec);
+    MATH_VEC_DOT(angle, vec, id.norm);
+    MATH_VEC_MUL_SCALAR((*pixel), (*pixel), angle);
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

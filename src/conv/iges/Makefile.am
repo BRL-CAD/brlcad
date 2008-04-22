@@ -1,12 +1,7 @@
 # $Id$
 
-if BUILD_OPENNURBS
 ON_IGES = iges
 IGES_FLAGS = -g $(OPENNURBS_CPPFLAGS) $(TNT_CPPFLAGS)
-else
-ON_IGES = 
-IGES_FLAGS = 
-endif
 
 bin_PROGRAMS = iges-g g-iges
 EXTRA_PROGRAMS = iges
@@ -32,6 +27,8 @@ iges_SOURCES = \
 
 iges_LDADD = \
 	${WDB} \
+	${BU} \
+	${BU_LIBS} \
 	${OPENNURBS}
 
 iges_g_SOURCES = \
@@ -108,14 +105,16 @@ iges_g_SOURCES = \
 	wedge.c
 
 iges_g_LDADD = \
-	${WDB}
+	${WDB} \
+	${WDB_LIBS}
 
 g_iges_SOURCES = \
 	g-iges.c \
 	iges.c
 
 g_iges_LDADD = \
-	${RT}
+	${RT} \
+	${RT_LIBS}
 
 EXTRA_DIST = \
 	$(man_MANS) \
@@ -131,8 +130,6 @@ EXTRA_DIST = \
 	treecheck.c \
 	wing128.igs \
 	woodie.igs
-
-MAINTAINERCLEANFILES = Makefile.in
 
 include $(top_srcdir)/misc/Makefile.defs
 

@@ -30,7 +30,7 @@ proc Pica { dist } {
 proc TileFiles { outFile args } {
     global page
 
-    set row 0 
+    set row 0
     set column 0
 
 
@@ -41,13 +41,13 @@ proc TileFiles { outFile args } {
     set gutter [Pica $page(gutter)]
 
     set totalGutters [expr $gutter * ($page(columns) - 1)]
-    set w [expr $width - (2 * $padx) - $totalGutters] 
+    set w [expr $width - (2 * $padx) - $totalGutters]
     set totalGutters [expr $gutter * ($page(rows) - 1)]
     set h [expr $height - (2 * $pady) - $totalGutters]
 
     set cellWidth  [expr double($w) / $page(columns)]
     set cellHeight [expr double($h) / $page(rows)]
-    
+
     set out [open $outFile "w"]
 
     puts $out "%!PS-Adobe-3.0 EPSF-3.0"
@@ -56,7 +56,7 @@ proc TileFiles { outFile args } {
     puts $out "%%DocumentNeededResources: font Helvetica Courier"
     puts $out "%%CreationDate: [clock format [clock seconds]]"
     puts $out "%%EndComments"
-    
+
     puts $out "/showsheet { showpage } bind def"
     puts $out "/showpage { } def"
     puts $out "$padx $pady translate"
@@ -66,7 +66,7 @@ proc TileFiles { outFile args } {
 	set in [open $inFile "r"]
 
 	# Warning, this is assuming that the BoundingBox is in the first
-	# twenty lines of the graph's PostScript.  
+	# twenty lines of the graph's PostScript.
 
 	for { set count 0 } { $count < 20 } { incr count } {
 	    gets $in line
@@ -95,7 +95,7 @@ proc TileFiles { outFile args } {
 
 	set w [expr abs($x2 - $x1)]
 	set h [expr abs($y2 - $y1)]
-	
+
 	set scaleX [expr $cellWidth / $w]
 	set scaleY [expr $cellHeight / $h]
 	if { $scaleX > $scaleY } {

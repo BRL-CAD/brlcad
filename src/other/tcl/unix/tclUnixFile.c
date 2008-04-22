@@ -886,15 +886,15 @@ TclpObjLink(
 	    Tcl_DecrRefCount(dirPtr);
 	} else {
 	    target = Tcl_FSGetNativePath(toPtr);
+	    if (target == NULL) {
+		return NULL;
+	    }
 	    if (access(target, F_OK) == -1) {
 		/*
 		 * Target doesn't exist.
 		 */
 
 		errno = ENOENT;
-		return NULL;
-	    }
-	    if (target == NULL) {
 		return NULL;
 	    }
 	}

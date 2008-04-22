@@ -122,6 +122,7 @@ set auto_index(::tk::ensure_psenc_is_loaded) [list source [file join $dir mkpsen
 set auto_index(::tk::MessageBox) [list source [file join $dir msgbox.tcl]]
 set auto_index(tk_menuBar) [list source [file join $dir obsolete.tcl]]
 set auto_index(tk_bindForTraversal) [list source [file join $dir obsolete.tcl]]
+set auto_index(::tk::classic::restore) [list source [file join $dir obsolete.tcl]]
 set auto_index(tk_optionMenu) [list source [file join $dir optMenu.tcl]]
 set auto_index(tk_setPalette) [list source [file join $dir palette.tcl]]
 set auto_index(::tk::RecolorTree) [list source [file join $dir palette.tcl]]

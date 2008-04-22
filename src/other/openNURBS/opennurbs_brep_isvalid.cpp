@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -42,7 +42,7 @@ ON_Brep::IsValidVertexTopology( int vertex_index, ON_TextLog* text_log ) const
 
   const int vertex_edge_count = vertex.m_ei.Count();
   int i, j, vei, ei;
-  for ( vei = 0; vei < vertex_edge_count; vei++ ) 
+  for ( vei = 0; vei < vertex_edge_count; vei++ )
   {
     ei = vertex.m_ei[vei];
 
@@ -86,9 +86,9 @@ ON_Brep::IsValidVertexTopology( int vertex_index, ON_TextLog* text_log ) const
       return false;
     }
 
-    for ( i = 0; i < vei; i++ ) 
+    for ( i = 0; i < vei; i++ )
     {
-      if ( vertex.m_ei[i] == ei ) 
+      if ( vertex.m_ei[i] == ei )
       {
         // edge should be closed
         if ( edge.m_vi[0] != vertex_index || edge.m_vi[1] != vertex_index )
@@ -105,7 +105,7 @@ ON_Brep::IsValidVertexTopology( int vertex_index, ON_TextLog* text_log ) const
           }
           return false;
         }
-        for (j = i+1; j < vei; j++ ) 
+        for (j = i+1; j < vei; j++ )
         {
           if ( vertex.m_ei[j] == ei )
           {
@@ -180,10 +180,10 @@ ON_Brep::IsValidFaceTopology( int face_index, ON_TextLog* text_log  ) const
   }
 
   int i, fli, li;
-  for ( fli = 0; fli < face_loop_count; fli++ ) 
+  for ( fli = 0; fli < face_loop_count; fli++ )
   {
     li = face.m_li[fli];
-    for ( i = 0; i < fli; i++ ) 
+    for ( i = 0; i < fli; i++ )
     {
       if ( face.m_li[i] == li )
       {
@@ -270,7 +270,7 @@ ON_Brep::IsValidFaceTopology( int face_index, ON_TextLog* text_log  ) const
       text_log->Print("brep.m_F[%d] face is not valid.\n",face_index);
       text_log->PushIndent();
       text_log->Print("face.m_si=%d (should be >=0 and <%d=m_S.Count())\n",
-                      face.m_si,m_S.Count());                      
+                      face.m_si,m_S.Count());
       text_log->PopIndent();
     }
     return false;
@@ -324,7 +324,7 @@ ON_Brep::IsValidFaceTopology( int face_index, ON_TextLog* text_log  ) const
     return false;
   }
 
-  return true; 
+  return true;
 }
 
 bool
@@ -391,7 +391,7 @@ ON_Brep::IsValidEdgeTopology( int edge_index, ON_TextLog* text_log ) const
     }
     return false;
   }
-  
+
   if ( 0 == m_C3[c3i] )
   {
     if ( text_log )
@@ -487,7 +487,7 @@ ON_Brep::IsValidEdgeTopology( int edge_index, ON_TextLog* text_log ) const
     return false;
   }
   int evi;
-  for ( evi = 0; evi < 2; evi++ ) 
+  for ( evi = 0; evi < 2; evi++ )
   {
     const ON_BrepVertex& vertex = m_V[edge.m_vi[evi]];
 
@@ -508,7 +508,7 @@ ON_Brep::IsValidEdgeTopology( int edge_index, ON_TextLog* text_log ) const
     const int vertex_edge_count = vertex.m_ei.Count();
     BOOL bFoundIt = false;
     int vei;
-    for ( vei = 0; vei < vertex_edge_count && !bFoundIt; vei++ ) 
+    for ( vei = 0; vei < vertex_edge_count && !bFoundIt; vei++ )
     {
       bFoundIt = (vertex.m_ei[vei] == edge_index);
     }
@@ -564,7 +564,7 @@ ON_Brep::IsValidEdgeTopology( int edge_index, ON_TextLog* text_log ) const
       }
       return false;
     }
-    for ( i = 0; i < eti; i++ ) 
+    for ( i = 0; i < eti; i++ )
     {
       if ( edge.m_ti[i] == ti )
       {
@@ -939,7 +939,7 @@ ON_Brep::IsValidTrimTopology( int trim_index, ON_TextLog* text_log ) const
         text_log->Print("ON_Brep.m_T[%d].m_ei = %d is not invalid.\n",trim_index,trim.m_ei);
       return false;
     }
-  
+
     const ON_BrepEdge& edge = m_E[trim.m_ei];
     if ( edge.m_edge_index != trim.m_ei )
     {
@@ -1039,7 +1039,7 @@ ON_Brep::IsValidTopology( ON_TextLog* text_log ) const
   }
 
   // check element indices match array positions
-  for ( vi = 0; vi < vertex_count; vi++ ) 
+  for ( vi = 0; vi < vertex_count; vi++ )
   {
     if ( m_V[vi].m_vertex_index == -1 )
     {
@@ -1061,7 +1061,7 @@ ON_Brep::IsValidTopology( ON_TextLog* text_log ) const
     }
   }
 
-  for ( ei = 0; ei < edge_count; ei++ ) 
+  for ( ei = 0; ei < edge_count; ei++ )
   {
     if ( m_E[ei].m_edge_index == -1 )
     {
@@ -1111,7 +1111,7 @@ ON_Brep::IsValidTopology( ON_TextLog* text_log ) const
     }
   }
 
-  for ( ti = 0; ti < trim_count; ti++ ) 
+  for ( ti = 0; ti < trim_count; ti++ )
   {
     if ( m_T[ti].m_trim_index == -1 )
     {
@@ -1167,7 +1167,7 @@ ON_Brep::IsValidTopology( ON_TextLog* text_log ) const
     }
   }
 
-  for ( li = 0; li < loop_count; li++ ) 
+  for ( li = 0; li < loop_count; li++ )
   {
     if ( m_L[li].m_loop_index == -1 )
     {
@@ -1196,7 +1196,7 @@ ON_Brep::IsValidTopology( ON_TextLog* text_log ) const
     }
   }
 
-  for ( fi = 0; fi < face_count; fi++ ) 
+  for ( fi = 0; fi < face_count; fi++ )
   {
     if ( m_F[fi].m_face_index == -1 )
     {
@@ -1244,7 +1244,7 @@ ON_Brep::IsValidTopology( ON_TextLog* text_log ) const
   }
 
   // check edges
-  for ( ei = 0; ei < edge_count; ei++ ) 
+  for ( ei = 0; ei < edge_count; ei++ )
   {
     if ( m_E[ei].m_edge_index == -1 )
       continue;
@@ -1256,7 +1256,7 @@ ON_Brep::IsValidTopology( ON_TextLog* text_log ) const
   }
 
   // check faces
-  for ( fi = 0; fi < face_count; fi++ ) 
+  for ( fi = 0; fi < face_count; fi++ )
   {
     if ( m_F[fi].m_face_index == -1 )
       continue;
@@ -1365,7 +1365,7 @@ ON_Brep::IsValidEdgeGeometry( int edge_index, ON_TextLog* text_log ) const
 
   int vi0 = edge.m_vi[0];
   int vi1 = edge.m_vi[1];
-  if ( edge.IsClosed() ) 
+  if ( edge.IsClosed() )
   {
     if ( vi0 != vi1 )
     {
@@ -1568,7 +1568,7 @@ ON_Brep::IsValidGeometry( ON_TextLog* text_log ) const
   }
 
   // check edges
-  for ( ei = 0; ei < edge_count; ei++ ) 
+  for ( ei = 0; ei < edge_count; ei++ )
   {
     if ( m_E[ei].m_edge_index == -1 )
       continue;
@@ -1580,7 +1580,7 @@ ON_Brep::IsValidGeometry( ON_TextLog* text_log ) const
   }
 
   // check faces
-  for ( fi = 0; fi < face_count; fi++ ) 
+  for ( fi = 0; fi < face_count; fi++ )
   {
     if ( m_F[fi].m_face_index == -1 )
       continue;
@@ -1801,7 +1801,7 @@ ON_Brep::IsValidTolerancesAndFlags( ON_TextLog* text_log ) const
   }
 
   // check edges
-  for ( ei = 0; ei < edge_count; ei++ ) 
+  for ( ei = 0; ei < edge_count; ei++ )
   {
     if ( m_E[ei].m_edge_index == -1 )
       continue;
@@ -1813,7 +1813,7 @@ ON_Brep::IsValidTolerancesAndFlags( ON_TextLog* text_log ) const
   }
 
   // check faces
-  for ( fi = 0; fi < face_count; fi++ ) 
+  for ( fi = 0; fi < face_count; fi++ )
   {
     if ( m_F[fi].m_face_index == -1 )
       continue;

@@ -16,7 +16,6 @@
  */
 
 #include "tkInt.h"
-#include "tkPort.h"
 
 /*
  * One of these structures is created per thread to store thread-specific

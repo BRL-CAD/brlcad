@@ -1,7 +1,7 @@
 /*                      P I X M O R P H . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2007 United States Government as represented by
+ * Copyright (c) 1996-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -21,36 +21,28 @@
  *
  *  Utility for morphing two BRL-CAD pix files.
  *
- *  Author -
- *      Glenn Durfee
- *
- *  Description -
- *      Morphs two pix files.  Performs the morph according to the given line
- *      segment correspondence file and two values in [0,1]: the first,
- *      warpfrac, is a value which describes how far each image is warped;
- *      the second, dissolvefrac, specifies how much of a cross-dissolve
- *      is performed on the two resulting warped images to produce an
- *      output.  Typically, the user sets warpfrac = dissolvefrac.
- *      See the man page for more details.
+ *  Morphs two pix files.  Performs the morph according to the given
+ *  line segment correspondence file and two values in [0, 1]: the
+ *  first, warpfrac, is a value which describes how far each image is
+ *  warped; the second, dissolvefrac, specifies how much of a
+ *  cross-dissolve is performed on the two resulting warped images to
+ *  produce an output.  Typically, the user sets warpfrac =
+ *  dissolvefrac.  See the man page for more details.
  *
  *  For details of the morph algorithm, see
- *        T. Beier and S. Neely.  Feature-Based Image Metamorphosis.  In
- *        "SIGGRAPH 1992 Computer Graphics Proceedings (volume 26 number 2)"
- *        (Chicago, July 26-31, 1992).
+ *    T. Beier and S. Neely.  Feature-Based Image Metamorphosis.  In
+ *    "SIGGRAPH 1992 Computer Graphics Proceedings (volume 26 number 2)"
+ *    (Chicago, July 26-31, 1992).
  */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <math.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
@@ -148,7 +140,7 @@ warp_image(unsigned char *dest, unsigned char *src,
 	fflush(stderr);
 	for (j = 0; j < width; j++, dest += 3) {
 	    double dsum_x, dsum_y, weightsum, x_x, x_y, new_x, new_y,
-		   frac_x, frac_y, newcolor;
+		frac_x, frac_y, newcolor;
 	    int fin_x, fin_y, findex;
 
 	    x_x = (double)j;
@@ -157,13 +149,13 @@ warp_image(unsigned char *dest, unsigned char *src,
 	    weightsum = dsum_x = dsum_y = 0.0;
 	    for (k = 0, tlines = lines; k < numlines; k++, tlines++) {
 		register double x_minus_p_x, x_minus_p_y, u, v, x, y, weight,
-				dist, tmpx, tmpy;
+		    dist, tmpx, tmpy;
 		register long int l2;
 
 		/* This is a fairly straightforward implementation of the
 		   algorithm in Beier and Neely's paper.
 		   We work only with vector components here... note that
-		   Perpindicular((a,b)) = (b, -a). */
+		   Perpindicular((a, b)) = (b, -a). */
 
 		x_minus_p_x = x_x - tlines->s[MIDDLE].x1;
 		x_minus_p_y = x_y - tlines->s[MIDDLE].y1;
@@ -250,15 +242,15 @@ warp_image(unsigned char *dest, unsigned char *src,
 	    dest[RED] = ICLAMP(newcolor, 0, 255);
 
 	    newcolor = ((1-frac_x)*(1-frac_y)*(double)src[findex+GRN] +
-			     (1-frac_y)*frac_x*(double)src[findex+3+GRN] +
-			     frac_y*frac_x*(double)src[findex+width3+3+GRN] +
-			     frac_y*(1-frac_x)*(double)src[findex+width3+GRN]);
+			(1-frac_y)*frac_x*(double)src[findex+3+GRN] +
+			frac_y*frac_x*(double)src[findex+width3+3+GRN] +
+			frac_y*(1-frac_x)*(double)src[findex+width3+GRN]);
 	    dest[GRN] = ICLAMP(newcolor, 0, 255);
 
 	    newcolor = ((1-frac_x)*(1-frac_y)*(double)src[findex+BLU] +
-			     (1-frac_y)*frac_x*(double)src[findex+3+BLU] +
-			     frac_y*frac_x*(double)src[findex+width3+3+BLU] +
-			     frac_y*(1-frac_x)*(double)src[findex+width3+BLU]);
+			(1-frac_y)*frac_x*(double)src[findex+3+BLU] +
+			frac_y*frac_x*(double)src[findex+width3+3+BLU] +
+			frac_y*(1-frac_x)*(double)src[findex+width3+BLU]);
 	    dest[BLU] = ICLAMP(newcolor, 0, 255);
 	}
     }
@@ -289,7 +281,7 @@ lines_read(FILE *fp, long int numlines,
 	if (fscanf(fp, "%lf %lf %lf %lf %lf %lf %lf %lf ",
 		   &x1, &y1, &x2, &y2, &x3, &y3, &x4, &y4) < 4) {
 	    fprintf(stderr, "pixmorph: lines_read: failure\n");
-	    exit(1);
+	    bu_exit (1, NULL);
 	}
 
 	if ((fabs(x1-x2) < EPSILON && fabs(y1-y2) < EPSILON) ||
@@ -344,7 +336,7 @@ lines_headerinfo(FILE *fp, double *ap, double *bp, double *pp, long int *np)
 {
     if (fscanf(fp, "%lf %lf %lf %ld ", ap, bp, pp, np) < 4) {
 	fprintf(stderr, "pixmorph: cannot read header info in lines file\n");
-	exit(1);
+	bu_exit (1, NULL);
     }
 }
 
@@ -360,16 +352,16 @@ get_args(int argc, char **argv, char **picAnamep, char **picBnamep, char **lines
 
     while ((c = bu_getopt(argc, argv, "w:n:")) != EOF) {
 	switch (c) {
-	case 'w':
-	    *widthp = atol(bu_optarg);
-	    *autosizep = 0;
-	    break;
-	case 'n':
-	    *heightp = atol(bu_optarg);
-	    *autosizep = 0;
-	    break;
-	default:
-	    return 0;
+	    case 'w':
+		*widthp = atol(bu_optarg);
+		*autosizep = 0;
+		break;
+	    case 'n':
+		*heightp = atol(bu_optarg);
+		*autosizep = 0;
+		break;
+	    default:
+		return 0;
 	}
     }
 
@@ -411,15 +403,11 @@ main(int argc, char **argv)
     struct lineseg *lines;
     register long int i;
     long int autosize;
-#if 0
-    npsw = bu_avail_cpus();
-    if (npsw > DEFAULT_PSW) npsw = DEFAULT_PSW;
-#endif
 
     autosize = 1L;
     pa_width = pa_height = 0;
     if (get_args(argc, argv, &picAname, &picBname, &linesfilename,
-	  &warpfrac, &dissolvefrac, &autosize, &pa_width, &pa_height) == 0
+		 &warpfrac, &dissolvefrac, &autosize, &pa_width, &pa_height) == 0
 	|| isatty(fileno(stdout))) {
 	fprintf(stderr,
 		"usage: pixmorph [-w width] [-n height] picA.pix picB.pix linesfile warpfrac dissolvefrac > out.pix\n");
@@ -468,7 +456,7 @@ main(int argc, char **argv)
 	if (pa_width > 0) {
 	    pa_height = sb.st_size/(3*pa_width);
 	    fprintf(stderr, "width = %ld, size = %ld, so height = %ld\n",
-		   pa_width, (long)sb.st_size, pa_height);
+		    pa_width, (long)sb.st_size, pa_height);
 	} else if (pa_height > 0) pa_width = sb.st_size/(3*pa_height);
 
 	if (pa_width <= 0 || pa_height <= 0) {
@@ -526,7 +514,7 @@ main(int argc, char **argv)
 	    "pixmorph: Warping first image into first intermediate image.\n");
     warp_image(wa, pa, lines, FIRST, pa_width, pa_height, numlines, a, b, p);
     fprintf(stderr,
-	   "pixmorph: Warping second image into second intermediate image.\n");
+	    "pixmorph: Warping second image into second intermediate image.\n");
     warp_image(wb, pb, lines, LAST, pa_width, pa_height, numlines, a, b, p);
 
     /* Do the dissolve */
@@ -551,8 +539,8 @@ main(int argc, char **argv)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

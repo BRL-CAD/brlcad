@@ -21,7 +21,7 @@
 
 static void setargv _ANSI_ARGS_((int *argcPtr, char ***argvPtr));
 
-#if (TCL_VERSION_NUMBER >= _VERSION(8,2,0)) 
+#if (TCL_VERSION_NUMBER >= _VERSION(8,2,0))
 static BOOL consoleRequired = TRUE;
 #endif
 
@@ -126,7 +126,7 @@ setargv(
 		slashes--;
 	    }
 
-	    if ((*p == '\0') || (!inquote && ((*p == ' ') || 
+	    if ((*p == '\0') || (!inquote && ((*p == ' ') ||
 	      (*p == '\t')))) {	/* INTL: ISO space. */
 		break;
 	    }
@@ -197,7 +197,7 @@ main(argc, argv)
 
 #else /* TCL_ONLY */
 
-#if (TK_VERSION_NUMBER < _VERSION(8,2,0)) 
+#if (TK_VERSION_NUMBER < _VERSION(8,2,0))
 /*
  * The following declarations refer to internal Tk routines.  These
  * interfaces are available for use, but are not supported.
@@ -302,7 +302,7 @@ WinMain(
      * channels.  All I/O will be discarded until TkConsoleInit is
      * called to attach the console to a text widget.
      */
-#if (TCL_VERSION_NUMBER >= _VERSION(8,2,0)) 
+#if (TCL_VERSION_NUMBER >= _VERSION(8,2,0))
     consoleRequired = TRUE;
 #else
     TkConsoleCreate();
@@ -338,7 +338,7 @@ static int
 AppInit(Tcl_Interp *interp)
 {				/* Interpreter for application. */
 #ifdef TCLLIBPATH
-    /* 
+    /*
      * It seems that some distributions of Tcl don't compile-in a
      * default location of the library.  This causes Tcl_Init to fail
      * if bltwish and bltsh are moved to another directory. The
@@ -357,13 +357,13 @@ AppInit(Tcl_Interp *interp)
     return TCL_OK;
 }
 
-#else 
+#else
 
 static int
 AppInit(Tcl_Interp *interp)
 {				/* Interpreter for application. */
 #ifdef TCLLIBPATH
-    /* 
+    /*
      * It seems that some distributions of Tcl don't compile-in a
      * default location of the library.  This causes Tcl_Init to fail
      * if bltwish and bltsh are moved to another directory. The
@@ -387,7 +387,7 @@ AppInit(Tcl_Interp *interp)
      * Initialize the console only if we are running as an interactive
      * application.
      */
-#if (TCL_VERSION_NUMBER >= _VERSION(8,2,0)) 
+#if (TCL_VERSION_NUMBER >= _VERSION(8,2,0))
     if (consoleRequired) {
 	if (Tk_CreateConsoleWindow(interp) == TCL_ERROR) {
 	    goto error;

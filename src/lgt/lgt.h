@@ -1,7 +1,7 @@
 /*                           L G T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,16 +18,14 @@
  * information.
  */
 /** @file lgt.h
-	Author:		Gary S. Moss
+    Author:		Gary S. Moss
 */
 #ifndef INCL_LGT
 #define INCL_LGT
 
-#ifdef HAVE_STRING_H
+#include "common.h"
+
 #include <string.h>
-#else
-#include <strings.h>
-#endif
 
 
 #define OVERLAPTOL	0.25	/* Thinner overlaps won't be reported. */
@@ -51,8 +49,8 @@
 		}
 #define Toggle(f)	(f) = !(f)
 #define Malloc_Bomb( _bytes_ ) \
-		fb_log( "\"%s\"(%d) : allocation of %d bytes failed.\n", \
-				__FILE__, __LINE__, _bytes_ )
+		fb_log( "\"%s\"(%d) : allocation of %lu bytes failed.\n", \
+				__FILE__, __LINE__, (unsigned long)(_bytes_) )
 
 /* Guess whether or not a frame buffer name is a disk file. (XXX) */
 #define DiskFile(fil)	(*fil != '\0'\
@@ -75,7 +73,7 @@
 #define Rotate( f )	(f) = (f) + 1 > 2 ? 0 : (f) + 1
 
 #ifndef DEBUG_OFF /* This is from "librt/debug.h", #include <debug.h> would
-			be better.					*/
+		     be better.					*/
 #define DEBUG_OFF	0	/* No debugging */
 
 /* These definitions are each for one bit */
@@ -115,52 +113,52 @@
 typedef int	bool;
 
 /* Light source (LS) specific global information.
-	Directions are with respect to the center of the model as calculated
-	by 'librt.a'.
- */
+   Directions are with respect to the center of the model as calculated
+   by 'librt.a'.
+*/
 typedef struct
-	{
-	char	name[MAX_LGT_NM];/* Name of entry (i.e. ambient).	*/
-	int	beam;	/* Flag denotes gaussian beam intensity.	*/
-	int	over;	/* Flag denotes manual overide of position.	*/
-	int	rgb[3];	/* Pixel color of LS (0 to 255) for RGB.	*/
-	fastf_t	loc[3];	/* Location of LS in model space.		*/
-	fastf_t	azim;	/* Azimuthal direction of LS in radians.	*/
-	fastf_t	elev;	/* Elevational direction of LS in radians.	*/
-	fastf_t	dir[3];	/* Direction vector to LS.			*/
-	fastf_t	dist;	/* Distance to LS in from centroid of model.	*/
-	fastf_t	energy;	/* Intensity of LS.				*/
-	fastf_t	coef[3];/* Color of LS as coefficient (0.0 to 1.0).	*/
-	fastf_t	radius;	/* Radius of beam.				*/
-	struct soltab	*stp;	/* Solid table pointer to LIGHT solid.	*/
-	}
+{
+    char	name[MAX_LGT_NM];/* Name of entry (i.e. ambient).	*/
+    int	beam;	/* Flag denotes gaussian beam intensity.	*/
+    int	over;	/* Flag denotes manual overide of position.	*/
+    int	rgb[3];	/* Pixel color of LS (0 to 255) for RGB.	*/
+    fastf_t	loc[3];	/* Location of LS in model space.		*/
+    fastf_t	azim;	/* Azimuthal direction of LS in radians.	*/
+    fastf_t	elev;	/* Elevational direction of LS in radians.	*/
+    fastf_t	dir[3];	/* Direction vector to LS.			*/
+    fastf_t	dist;	/* Distance to LS in from centroid of model.	*/
+    fastf_t	energy;	/* Intensity of LS.				*/
+    fastf_t	coef[3];/* Color of LS as coefficient (0.0 to 1.0).	*/
+    fastf_t	radius;	/* Radius of beam.				*/
+    struct soltab	*stp;	/* Solid table pointer to LIGHT solid.	*/
+}
 Lgt_Source;
 #define LGT_NULL	(Lgt_Source *) NULL
 
 typedef struct
-	{
-	bool	m_fullscreen;
-	bool	m_lgts;
-	bool	m_over;
-	bool	m_keys;
-	int	m_noframes;
-	int	m_curframe;
-	int	m_endframe;
-	int	m_frame_sz;
-	FILE	*m_keys_fp;
-	fastf_t	m_azim_beg;
-	fastf_t m_azim_end;
-	fastf_t	m_elev_beg;
-	fastf_t m_elev_end;
-	fastf_t	m_roll_beg;
-	fastf_t m_roll_end;
-	fastf_t	m_dist_beg;
-	fastf_t m_dist_end;
-	fastf_t	m_grid_beg;
-	fastf_t m_grid_end;
-	fastf_t	m_pers_beg;
-	fastf_t m_pers_end;
-	}
+{
+    bool	m_fullscreen;
+    bool	m_lgts;
+    bool	m_over;
+    bool	m_keys;
+    int	m_noframes;
+    int	m_curframe;
+    int	m_endframe;
+    int	m_frame_sz;
+    FILE	*m_keys_fp;
+    fastf_t	m_azim_beg;
+    fastf_t m_azim_end;
+    fastf_t	m_elev_beg;
+    fastf_t m_elev_end;
+    fastf_t	m_roll_beg;
+    fastf_t m_roll_end;
+    fastf_t	m_dist_beg;
+    fastf_t m_dist_end;
+    fastf_t	m_grid_beg;
+    fastf_t m_grid_end;
+    fastf_t	m_pers_beg;
+    fastf_t m_pers_end;
+}
 Movie;
 #define MovieSize( sz, nf )	(int)sqrt((double)(nf)+0.5)*(sz)
 #define IK_INTENSITY	255.0
@@ -196,7 +194,6 @@ int		ClrEOL();
 int		ResetScrlReg();
 int		DeleteLn();
 int		init_Temp_To_RGB();
-int		get_Font();
 int		do_More();
 int		append_PtList();
 int		delete_Node_OcList();
@@ -215,8 +212,8 @@ int		write_Octree();
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

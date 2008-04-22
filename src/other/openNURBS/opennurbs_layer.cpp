@@ -3,7 +3,7 @@
 
 ON_OBJECT_IMPLEMENT(ON_Layer,ON_Object,"95809813-E985-11d3-BFE5-0010830122F0");
 
-ON_Layer::ON_Layer() 
+ON_Layer::ON_Layer()
 {
   Default();
 }
@@ -13,8 +13,8 @@ void ON_Layer::Default()
   m_layer_id = ON_nil_uuid;
   m_parent_layer_id = ON_nil_uuid;
   m_layer_index = -1; // 10 March 2006 Dale Lear - changed from 0 to -1
-  m_iges_level = -1; 
-  m_material_index = -1; 
+  m_iges_level = -1;
+  m_material_index = -1;
   m_rendering_attributes.Default();
   m_linetype_index = -1;
   m_color.SetRGB(0,0,0);
@@ -90,7 +90,7 @@ BOOL ON_Layer::Write(
 
     // Starting with version 200312110, this value is zero.  For files written
     // with earlier versions, the number was a "model index" value that was
-    // set to something >= 1, but never used.  We have to continue to 
+    // set to something >= 1, but never used.  We have to continue to
     // read/write an integer here so that old/new versions of opennurbs can
     // read files written by new/old versions.
     i = 0;
@@ -99,7 +99,7 @@ BOOL ON_Layer::Write(
 
     rc = file.WriteColor( m_color );
     if (!rc) break;
-    
+
     {
       // OBSOLETE LINE STYLE if ( rc ) rc = file.WriteLineStyle( LineStyle() );
       // Starting with version 200503170, this section is "officially" not used.
@@ -130,7 +130,7 @@ BOOL ON_Layer::Write(
     rc = file.WriteDouble( m_plot_weight_mm);
     if (!rc) break;
 
-    // 1.4 field - 3 May 2005 Dale Lear 
+    // 1.4 field - 3 May 2005 Dale Lear
     //           - locked and visible are independent settings
     rc = file.WriteBool( m_bLocked );
     if (!rc) break;
@@ -170,11 +170,11 @@ BOOL ON_Layer::Read(
   int mode = ON::normal_layer;
   Default();
   BOOL rc = file.Read3dmChunkVersion(&major_version,&minor_version);
-  if ( rc && major_version == 1 ) 
+  if ( rc && major_version == 1 )
   {
     // common to all 1.x formats
     if ( rc ) rc = file.ReadInt( &mode );
-    if ( rc ) 
+    if ( rc )
     {
       switch(mode)
       {
@@ -231,12 +231,12 @@ BOOL ON_Layer::Read(
             if (rc && minor_version >= 5 )
             {
               rc = file.ReadUuid(m_layer_id);
-              if ( rc 
-                   && minor_version >= 6 
+              if ( rc
+                   && minor_version >= 6
                    && file.ArchiveOpenNURBSVersion() > 200505110
                  )
               {
-                // Some files saved with opennurbs version 200505110 
+                // Some files saved with opennurbs version 200505110
                 // do not contain correctly written m_parent_layer_id
                 // and m_bExpanded values.
                 // It is ok to default these values.
@@ -350,7 +350,7 @@ int ON_Layer::LinetypeIndex() const
 //{
 //  // OBSOLETE - use IsVisible() and IsLocked() instead
 //
-//  // If you are looking at this code in the debugger, you need to 
+//  // If you are looking at this code in the debugger, you need to
 //  // change your code to use ON_Layer::IsLocked() and/or
 //  // ON_Layer::IsVisible().  This function is OBSOLETE
 //  // and will be removed soon!
@@ -455,8 +455,8 @@ double ON_Layer::PlotWeight() const
 
 void ON_Layer::SetPlotWeight(double plot_weight_mm)
 {
-  m_plot_weight_mm = (ON_IsValid(plot_weight_mm)) 
-                   ? plot_weight_mm 
+  m_plot_weight_mm = (ON_IsValid(plot_weight_mm))
+                   ? plot_weight_mm
                    : 0.0;
 }
 

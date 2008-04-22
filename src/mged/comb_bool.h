@@ -1,7 +1,7 @@
 /*                     C O M B _ B O O L . H
  * BRL-CAD
  *
- * Copyright (c) 1995-2007 United States Government as represented by
+ * Copyright (c) 1995-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,12 +19,6 @@
  */
 /** @file comb_bool.h
  *
- *  Author -
- *	Paul Tanenbaum
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 struct bool_tree_node
@@ -49,7 +43,7 @@ struct bool_tree_node
 
 #define bt_opn(n)		((n) -> btn_opn)
 #define bt_leaf_name(n)		((n) -> btn_operands.leaf_name)
-#define bt_opd(n,d)		((n) -> btn_operands.operands[(d)])
+#define bt_opd(n, d)		((n) -> btn_operands.operands[(d)])
 
 #define bt_is_leaf(n)		(bt_opn((n)) == OPN_NULL)
 
@@ -81,7 +75,7 @@ extern struct bool_tree_node	*comb_bool_tree;
 	{                                                               \
 	    fprintf(stderr, "%s:%d: Ran out of memory\n",		\
 		    __FILE__, __LINE__);                                \
-	    exit(1);                                                    \
+	    bu_exit(1, NULL);                                              \
 	}
 
 /*
@@ -90,13 +84,13 @@ extern struct bool_tree_node	*comb_bool_tree;
 
 #ifdef USE_PROTOTYPES
 extern struct bool_tree_node	*bt_create_internal (
-				    int,
-				    struct bool_tree_node *,
-				    struct bool_tree_node *);
+    int,
+    struct bool_tree_node *,
+    struct bool_tree_node *);
 extern struct bool_tree_node	*bt_create_leaf (char*);
 extern void			show_tree_infix (
-				    struct bool_tree_node *,
-				    int);
+    struct bool_tree_node *,
+    int);
 extern void			show_tree_lisp (struct bool_tree_node *);
 extern int			cvt_to_gift_bool (struct bool_tree_node *);
 extern void			show_gift_bool (struct bool_tree_node *, int);
@@ -107,7 +101,7 @@ extern int cvt_to_gift_bool();
 #endif
 
 
-#define show_tree(t,l)		if (l)				\
+#define show_tree(t, l)		if (l)				\
 				{				\
 				    show_tree_lisp((t));	\
 				    printf("\n");		\
@@ -119,8 +113,8 @@ extern int cvt_to_gift_bool();
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

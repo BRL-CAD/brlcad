@@ -1,7 +1,7 @@
 /*                       P I X - I P U . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2007 United States Government as represented by
+ * Copyright (c) 1996-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -21,16 +21,6 @@
 /** @file pix-ipu.c
  *
  *  Print a BRL-CAD .pix or .bw file on the Canon CLC-500 scanner.
- *
- *  Authors -
- *	Lee A. Butler
- *	Michael John Muuss
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- *
  *
  *	Options
  *	a	autosize image file
@@ -59,20 +49,11 @@
  *	v	verbose;
  *	V	verbose;
  */
-#ifndef lint
-static char RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 
 #include <stdio.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
-
-#include "machine.h"
+#include <string.h>
 
 #include "./canon.h"
 
@@ -108,22 +89,22 @@ struct chore	*await3;
  *  this can take a long time.
  */
 void step1(aa)
-     void *aa;
+    void *aa;
 {
     struct chore	*chorep;
     int		pix_y;
     static int	nstarted = 0;
 
     pix_y = 0;
-    for(;;)  {
-	if( nstarted < 3 )  {
+    for (;;)  {
+	if ( nstarted < 3 )  {
 	    chorep = &chores[nstarted++];
 	    chorep->cbuf = malloc( 255*1024 );
 	} else {
 	    GET( chorep, await1 );
 	}
 
-	if( pix_y >= height )  {
+	if ( pix_y >= height )  {
 	    /* Send through a "done" chore and exit */
 	    chorep->pix_y = -1;
 	    PUT( await2, chorep );
@@ -135,34 +116,34 @@ void step1(aa)
 
 	chorep->pix_y = pix_y;
 	chorep->todo = 255*1024 / (ipu_bytes_per_pixel*width);	/* Limit 255 Kbytes */
-	if( height - pix_y < chorep->todo )  chorep->todo = height - pix_y;
+	if ( height - pix_y < chorep->todo )  chorep->todo = height - pix_y;
 	chorep->buflen = chorep->todo * ipu_bytes_per_pixel * width;
 
-	if( bu_mread( fd, chorep->obuf, chorep->buflen ) != chorep->buflen )  {
+	if ( bu_mread( fd, chorep->obuf, chorep->buflen ) != chorep->buflen )  {
 	    perror("pix-ipu READ ERROR");
 	    fprintf(stderr, "buffer read error, line %d\n", chorep->pix_y);
-	    exit(2);
+	    bu_exit(2, NULL);
 	}
 	pix_y += chorep->todo;
 
 	/* Pass this chore off to next process */
 	PUT( await2, chorep );
     }
-    exit(0);
+    bu_exit(0, NULL);
 }
 
 /* format conversion */
 void step2(aa)
-     void	*aa;
+    void	*aa;
 {
     struct chore	*chorep;
     register unsigned char	*cp;
     unsigned char *green, *blue;
     int	buf_y;
 
-    for(;;)  {
+    for (;;)  {
 	GET(chorep, await2);
-	if( chorep->pix_y < 0 )  {
+	if ( chorep->pix_y < 0 )  {
 	    /* Pass on "done" token and exit */
 	    PUT( await3, chorep );
 	    break;
@@ -170,11 +151,11 @@ void step2(aa)
 
 	cp = chorep->obuf;
 
-	if( ipu_bytes_per_pixel == 3 )  {
+	if ( ipu_bytes_per_pixel == 3 )  {
 	    green = &chorep->cbuf[width*chorep->todo];
 	    blue = &chorep->cbuf[width*chorep->todo*2];
 
-	    for( buf_y = chorep->todo-1; buf_y >= 0; buf_y-- )  {
+	    for ( buf_y = chorep->todo-1; buf_y >= 0; buf_y-- )  {
 		int	offset;
 		register unsigned char	*rp, *gp, *bp;
 		register int		x;
@@ -183,7 +164,7 @@ void step2(aa)
 		rp = &chorep->cbuf[offset];
 		gp = &green[offset];
 		bp = &blue[offset];
-		for( x = width-1; x >= 0; x-- )  {
+		for ( x = width-1; x >= 0; x-- )  {
 		    *rp++ = *cp++;
 		    *gp++ = *cp++;
 		    *bp++ = *cp++;
@@ -191,30 +172,30 @@ void step2(aa)
 	    }
 	} else {
 	    /* Monochrome */
-	    for( buf_y = chorep->todo-1; buf_y >= 0; buf_y-- )  {
+	    for ( buf_y = chorep->todo-1; buf_y >= 0; buf_y-- )  {
 		int	offset;
 		register unsigned char	*rp;
 		offset = buf_y * width;
 		rp = &chorep->cbuf[offset];
-		bcopy( cp, rp, width );
+		memcpy(rp, cp, width);
 		cp += width;
 	    }
 	}
 	PUT( await3, chorep );
     }
-    exit(0);
+    bu_exit(0, NULL);
 }
 
 /* output via SCSI bus to IPU.  This is the time consuming step. */
 void step3(aa)
-     void	*aa;
+    void	*aa;
 {
     struct chore	*chorep;
     int		canon_y;
 
-    for(;;)  {
+    for (;;)  {
 	GET( chorep, await3 );
-	if( chorep->pix_y < 0 )  {
+	if ( chorep->pix_y < 0 )  {
 	    break;	/* "done" token */
 	}
 
@@ -225,7 +206,7 @@ void step3(aa)
 	/* Pass this chore off to next process for recycling */
 	PUT( await1, chorep );
     }
-    exit(0);	/* exit this thread */
+    bu_exit(0, NULL);	/* exit this thread */
 }
 
 
@@ -300,22 +281,22 @@ main(int ac, char *av[])
     pid[1] = sproc( step2, PR_SALL|PR_SFDS );
     pid[2] = sproc( step3, PR_SALL|PR_SFDS );
 
-    for( i=0; i<3; i++ )  {
+    for ( i=0; i<3; i++ )  {
 	int	this_pid;
 	int	pstat;
 	int	j;
 
 	pstat = 0;
-	if( (this_pid = wait(&pstat)) <= 0  )  {
+	if ( (this_pid = wait(&pstat)) <= 0  )  {
 	    perror("wait");
 	    fprintf(stderr, "wait returned %d\n", this_pid);
-	    for( j=0; j<3; j++) kill(pid[j], 9);
-	    exit(3);
+	    for ( j=0; j<3; j++) kill(pid[j], 9);
+	    bu_exit(3, NULL);
 	}
-	if( (pstat & 0xFF) != 0 )  {
+	if ( (pstat & 0xFF) != 0 )  {
 	    fprintf(stderr, "*** child pid %d blew out with error x%x\n", this_pid, pstat);
-	    for( j=0; j<3; j++) kill(pid[j], 9);
-	    exit(4);
+	    for ( j=0; j<3; j++) kill(pid[j], 9);
+	    bu_exit(4, NULL);
 	}
     }
     /* All children are finished */
@@ -323,7 +304,7 @@ main(int ac, char *av[])
     ipu_print_config(dsp, units, divisor, conv,
 		     mosaic, ipu_gamma, tray);
 
-    if( ipu_filetype == IPU_PALETTE_FILE )
+    if ( ipu_filetype == IPU_PALETTE_FILE )
 	ipu_set_palette(dsp, NULL);
 
     if (strcmp(progname, "pix-ipu")==0)
@@ -353,8 +334,8 @@ main(int ac, char *av[])
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

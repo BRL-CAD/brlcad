@@ -1,7 +1,7 @@
 /*                       F I T N E S S . H
  * BRL-CAD
  *
- * Copyright (c) 2007 United States Government as represented by
+ * Copyright (c) 2007-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -63,7 +63,7 @@ struct fitness_state {
     int res[2]; /*  ray resolution on u and v axes */
     double gridSpacing[2]; /* grid spacing on u and v axes */
     int row; /* current v axis index */
-    
+
     int capture; /* flags whether to store the object */
     fastf_t diff; /* linear difference between source and object */
     fastf_t same;
@@ -120,8 +120,8 @@ void free_rays (struct fitness_state *fstate);
  * Local Variables:
  * tab-width: 8
  * mode: C
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

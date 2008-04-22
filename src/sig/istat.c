@@ -1,7 +1,7 @@
 /*                         I S T A T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,87 +28,75 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
+#include "bio.h"
 
-#include "machine.h"
 #include "bu.h"
 
-
-char *options = "h";
-char *progname = "(noname)";
 
 /*
  *	U S A G E --- tell user how to invoke this program, then exit
  */
-void usage(void)
+void usage(const char *progname)
 {
-	(void) fprintf(stderr, "Usage: %s [ file ]\n", progname);
-	exit(1);
+    bu_exit(1, "Usage: %s [ file ]\n", progname);
 }
 
 /*
  *	P A R S E _ A R G S --- Parse through command line flags
  */
-int parse_args(int ac, char **av)
+int parse_args(int ac, char **av, char *progname)
 {
-	int  c;
+    int  c;
 
-	if (!(progname=strrchr(*av, '/')))
-		progname = *av;
+    if (!(progname=strrchr(*av, '/')))
+	progname = *av;
 
-	/* Turn off bu_getopt's error messages */
-	bu_opterr = 0;
+    /* Turn off bu_getopt's error messages */
+    bu_opterr = 0;
 
-	/* get all the option flags from the command line */
-	while ((c=bu_getopt(ac,av,options)) != EOF)
-		switch (c) {
-		case '?'	:
-		case 'h'	:
-		default		: usage(); break;
-		}
+    /* get all the option flags from the command line */
+    while ((c=bu_getopt(ac, av, "h")) != EOF)
+	switch (c) {
+	    case '?'	:
+	    case 'h'	:
+	    default		: usage(progname); break;
+	}
 
-	return(bu_optind);
+    return(bu_optind);
 }
 
 void comp_stats(FILE *fd)
 {
-	short *buffer=(short *)NULL;
-	short min, max;
-	double stdev, sum, sum_sq, num, sqrt(double);
-	int count;
-	int i;
+    short *buffer=(short *)NULL;
+    short min, max;
+    double stdev, sum, sum_sq, num, sqrt(double);
+    int count;
+    int i;
 
 
-	buffer = (short *)bu_calloc(10240, sizeof(short), "buffer");
+    buffer = (short *)bu_calloc(10240, sizeof(short), "buffer");
 
-	stdev = sum = sum_sq = count = num = 0.0;
-	min = 32767;
-	max = -32768;
+    stdev = sum = sum_sq = count = num = 0.0;
+    min = 32767;
+    max = -32768;
 
-	while ( (count=fread((void *)buffer, sizeof(short), 10240, fd)) ) {
-		for (i=0 ; i < count ; ++i) {
-			sum += (double)buffer[i];
-			sum_sq += (double)(buffer[i] * buffer[i]);
-			if (buffer[i] > max) max = buffer[i];
-			if (buffer[i] < min) min = buffer[i];
-		}
-		num += (double)count;
+    while ( (count=fread((void *)buffer, sizeof(short), 10240, fd)) ) {
+	for (i=0; i < count; ++i) {
+	    sum += (double)buffer[i];
+	    sum_sq += (double)(buffer[i] * buffer[i]);
+	    if (buffer[i] > max) max = buffer[i];
+	    if (buffer[i] < min) min = buffer[i];
 	}
+	num += (double)count;
+    }
 
-	stdev = sqrt( ((num * sum_sq) - (sum*sum)) / (num * (num-1)) );
+    stdev = sqrt( ((num * sum_sq) - (sum*sum)) / (num * (num-1)) );
 
-	(void)printf("   Num: %g\n   Min: %hd\n   Max: %hd\n   Sum: %g\n  Mean: %g\nSStdev: %g\n",
-		num, min, max, sum, sum/num, stdev);
+    (void)printf("   Num: %g\n   Min: %hd\n   Max: %hd\n   Sum: %g\n  Mean: %g\nSStdev: %g\n",
+		 num, min, max, sum, sum/num, stdev);
 
-	bu_free(buffer, "buffer");
+    bu_free(buffer, "buffer");
 }
 
 
@@ -120,32 +108,33 @@ void comp_stats(FILE *fd)
  */
 int main(int ac, char **av)
 {
-	int arg_index;
+    char *progname = "(noname)";
+    int arg_index;
 
-	/* parse command flags
-	 */
-	arg_index = parse_args(ac, av);
-	if (arg_index < ac) {
-		/* open file of shorts */
-		if (freopen(av[arg_index], "r", stdin) == (FILE *)NULL) {
-			perror(av[arg_index]);
-			return(-1);
-		}
-	} else if (isatty((int)fileno(stdin))) {
-		usage();
+    /* parse command flags
+     */
+    arg_index = parse_args(ac, av, progname);
+    if (arg_index < ac) {
+	/* open file of shorts */
+	if (freopen(av[arg_index], "r", stdin) == (FILE *)NULL) {
+	    perror(av[arg_index]);
+	    return(-1);
 	}
+    } else if (isatty((int)fileno(stdin))) {
+	usage(progname);
+    }
 
-	comp_stats(stdin);
+    comp_stats(stdin);
 
-	return 0;
+    return 0;
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

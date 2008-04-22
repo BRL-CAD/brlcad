@@ -1,7 +1,7 @@
 /*                     B O T - B L D X F . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,13 +22,13 @@
  *	Options
  *	h	help
  */
+
 #include "common.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
@@ -60,7 +60,7 @@ void usage(char *s)
 
     (void) fprintf(stderr, "Usage: %s [ -%s ] [<] infile [> outfile]\n",
 		   progname, options);
-    exit(1);
+    bu_exit(1, NULL);
 }
 
 /*
@@ -79,12 +79,12 @@ int parse_args(int ac, char *av[])
     bu_opterr = 0;
 
     /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac,av,options)) != EOF)
+    while ((c=bu_getopt(ac, av, options)) != EOF)
 	switch (c) {
-	case 'd'	: debug = strtol(bu_optarg, NULL, 16); break;
-	case '?'	:
-	case 'h'	:
-	default		: usage("Bad or help flag specified\n"); break;
+	    case 'd'	: debug = strtol(bu_optarg, NULL, 16); break;
+	    case '?'	:
+	    case 'h'	:
+	    default		: usage("Bad or help flag specified\n"); break;
 	}
 
     return(bu_optind);
@@ -92,24 +92,24 @@ int parse_args(int ac, char *av[])
 
 
 static int tbl[19][8] = {
-	{ 0, 1, 3, 4,	1, 2, 0, 5},
-	{ 0, 1, 4, 3,	1, 2, 0, 5},
-	{ 0, 1, 3, 5,	1, 2, 0, 4},
-	{ 0, 1, 5, 3,	1, 2, 0, 4},
-	{ 0, 1, 5, 4,	1, 2, 0, 3},
-	{ 0, 1, 4, 5,	1, 2, 0, 3},
-	{ 0, 2, 3, 4,	0, 1, 2, 5},
-	{ 0, 2, 4, 3,	0, 1, 2, 5},
-	{ 0, 2, 3, 5,	0, 1, 2, 4},
-	{ 0, 2, 5, 3,	0, 1, 2, 4},
-	{ 0, 2, 4, 5,	0, 1, 2, 3},
-	{ 0, 2, 5, 4,	0, 1, 2, 3},
-	{ 1, 2, 3, 4,	0, 1, 5, 2},
-	{ 1, 2, 4, 3,	0, 1, 5, 2},
-	{ 1, 2, 3, 5,	0, 1, 4, 2},
-	{ 1, 2, 5, 3,	0, 1, 4, 2},
-	{ 1, 2, 4, 5,	0, 1, 3, 2},
-	{ 1, 2, 5, 4,	0, 1, 3, 2}
+    { 0, 1, 3, 4,	1, 2, 0, 5},
+    { 0, 1, 4, 3,	1, 2, 0, 5},
+    { 0, 1, 3, 5,	1, 2, 0, 4},
+    { 0, 1, 5, 3,	1, 2, 0, 4},
+    { 0, 1, 5, 4,	1, 2, 0, 3},
+    { 0, 1, 4, 5,	1, 2, 0, 3},
+    { 0, 2, 3, 4,	0, 1, 2, 5},
+    { 0, 2, 4, 3,	0, 1, 2, 5},
+    { 0, 2, 3, 5,	0, 1, 2, 4},
+    { 0, 2, 5, 3,	0, 1, 2, 4},
+    { 0, 2, 4, 5,	0, 1, 2, 3},
+    { 0, 2, 5, 4,	0, 1, 2, 3},
+    { 1, 2, 3, 4,	0, 1, 5, 2},
+    { 1, 2, 4, 3,	0, 1, 5, 2},
+    { 1, 2, 3, 5,	0, 1, 4, 2},
+    { 1, 2, 5, 3,	0, 1, 4, 2},
+    { 1, 2, 4, 5,	0, 1, 3, 2},
+    { 1, 2, 5, 4,	0, 1, 3, 2}
 };
 
 /*
@@ -134,7 +134,7 @@ tris_are_planar_quad(struct rt_bot_internal *bot, int faceidx, int vidx[4])
 
     if (debug&DEBUG_QUAD) {
 	fprintf(stderr, "tris_are_planar_quad()\n");
-	for (i=0 ; i < 6 ;i++) {
+	for (i=0; i < 6;i++) {
 	    fprintf(stderr, "%d: %d   %7g %7g %7g\n", i, vnum[i],
 		    V3ARGS(&v[3* vnum[i]]));
 	}
@@ -193,7 +193,7 @@ tris_are_planar_quad(struct rt_bot_internal *bot, int faceidx, int vidx[4])
 
     /* find adjacent/matching verticies */
 
-    for (i=0 ; i < 18 ; i++) {
+    for (i=0; i < 18; i++) {
 	int *t;
 
 	t = &tbl[i][0];
@@ -210,7 +210,7 @@ tris_are_planar_quad(struct rt_bot_internal *bot, int faceidx, int vidx[4])
 	    vidx[3] = vnum[t[7]];
 	    if (debug&DEBUG_QUAD) {
 		fprintf(stderr, "%d %d %d %d\n", V4ARGS(vidx));
-		for (tmp=0 ; tmp < 4 ; tmp++)
+		for (tmp=0; tmp < 4; tmp++)
 		    fprintf(stderr, "%d vidx:%d %7g %7g %7g\n", tmp, vidx[tmp],
 			    V3ARGS(&v[3*vidx[tmp]]));
 	    }
@@ -226,7 +226,7 @@ int count_quad_faces(struct rt_bot_internal *bot)
     int count = 0;
     int vidx[4];
 
-    for (i=0 ; i < bot->num_faces ; i++) {
+    for (i=0; i < bot->num_faces; i++) {
 	if (tris_are_planar_quad(bot, i, vidx))
 	    ++count;
     }
@@ -257,9 +257,9 @@ void write_dxf(struct rt_bot_internal *bot, char *name)
     faces = bot->faces;
 
 
-    sprintf(Value,"%s.dxf",name);
-    if (debug&DEBUG_NAMES) fprintf(stderr, "Writing DXF: %s\n",Value);
-    FH= fopen(Value,"w");
+    snprintf(Value, 32, "%s.dxf", name);
+    if (debug&DEBUG_NAMES) fprintf(stderr, "Writing DXF: %s\n", Value);
+    FH= fopen(Value, "wb");
 
 
     /* Write Header */
@@ -275,8 +275,7 @@ void write_dxf(struct rt_bot_internal *bot, char *name)
     fprintf(FH, "20\n0.0\n");
     fprintf(FH, "30\n0.0\n");
     fprintf(FH, "3\n");
-    sprintf(Value,"%s\n",name);
-    fprintf(FH, Value);
+    fprintf(FH, "%s\n", name);
     fprintf(FH, "0\n");
     fprintf(FH, "POLYLINE\n");
     fprintf(FH, "66\n");
@@ -290,33 +289,33 @@ void write_dxf(struct rt_bot_internal *bot, char *name)
     fprintf(FH, "64\n");
     fprintf(FH, "71\n"); /* number of verticies */
 
-    fprintf(FH, "%d\n",num_vertices);
+    fprintf(FH, "%d\n", num_vertices);
 
     quads = count_quad_faces(bot);
 
     fprintf(FH, "72\n"); /* number of faces */
-    fprintf(FH, "%d\n",num_faces-quads);
+    fprintf(FH, "%d\n", num_faces-quads);
     fprintf(FH, "0\n");
 
 
     if (debug&DEBUG_STATS)
-	fprintf(stderr, "writing %d verticies\n",num_vertices);
+	fprintf(stderr, "writing %d verticies\n", num_vertices);
     for (i= 0; i < num_vertices; i++) {
 	fprintf(FH, "VERTEX\n");
 	fprintf(FH, "8\n");
 	fprintf(FH, "Meshes\n");
 	fprintf(FH, "10\n");
-	fprintf(FH, "%.6f\n",vertices[3*i+0]/1000.0);
+	fprintf(FH, "%.6f\n", vertices[3*i+0]/1000.0);
 
 	fprintf(FH, "20\n");
-	fprintf(FH, "%.6f\n",vertices[3*i+1]/1000.0);
+	fprintf(FH, "%.6f\n", vertices[3*i+1]/1000.0);
 
 	fprintf(FH, "30\n");
-	fprintf(FH, "%.6f\n",vertices[3*i+2]/1000.0);
+	fprintf(FH, "%.6f\n", vertices[3*i+2]/1000.0);
 	fprintf(FH, "70\n");
 	fprintf(FH, "192\n");
 	fprintf(FH, "0\n");
-	/*printf("\t%g %g %g\n",vertices[3*i+0],vertices[3*i+1],vertices[3*i+2]);*/
+	/*printf("\t%g %g %g\n", vertices[3*i+0], vertices[3*i+1], vertices[3*i+2]);*/
     }
 
     if (debug&DEBUG_STATS)
@@ -338,15 +337,15 @@ void write_dxf(struct rt_bot_internal *bot, char *name)
 	fprintf(FH, "10\n0.0\n20\n0.0\n30\n0.0\n"); /* WCS origin */
 	fprintf(FH, "70\n128\n");/* line type pattern is continuous */
 	if (  tris_are_planar_quad(bot, i, vidx) ) {
-	    fprintf(FH, "71\n%d\n",vidx[0]+1); /* vertex 1 */
-	    fprintf(FH, "72\n%d\n",vidx[1]+1); /* vertex 2 */
-	    fprintf(FH, "73\n%d\n",vidx[2]+1); /* vertex 3 */
-	    fprintf(FH, "74\n%d\n",vidx[3]+1); /* vertex 4 */
+	    fprintf(FH, "71\n%d\n", vidx[0]+1); /* vertex 1 */
+	    fprintf(FH, "72\n%d\n", vidx[1]+1); /* vertex 2 */
+	    fprintf(FH, "73\n%d\n", vidx[2]+1); /* vertex 3 */
+	    fprintf(FH, "74\n%d\n", vidx[3]+1); /* vertex 4 */
 	    i++;
 	} else {
-	    fprintf(FH, "71\n%d\n",faces[i*3+0]+1); /* vertex 1 */
-	    fprintf(FH, "72\n%d\n",faces[i*3+1]+1); /* vertex 2 */
-	    fprintf(FH, "73\n%d\n",faces[i*3+2]+1); /* vertex 3 */
+	    fprintf(FH, "71\n%d\n", faces[i*3+0]+1); /* vertex 1 */
+	    fprintf(FH, "72\n%d\n", faces[i*3+1]+1); /* vertex 2 */
+	    fprintf(FH, "73\n%d\n", faces[i*3+2]+1); /* vertex 3 */
 	}
 	fprintf(FH, "0\n");
     }
@@ -368,17 +367,13 @@ void write_dxf(struct rt_bot_internal *bot, char *name)
     fprintf(FH, "8\n");
     fprintf(FH, "1\n");
     fprintf(FH, "2\n");
-    sprintf(Value,"%s\n",name);
-    fprintf(FH, Value);
+    fprintf(FH, "%s\n", name);
     fprintf(FH, "10\n");
-    sprintf(Value,"%.6f\n",0.0);
-    fprintf(FH, Value);
+    fprintf(FH, "%.6f\n", 0.0);
     fprintf(FH, "20\n");
-    sprintf(Value,"%.6f\n",0.0);
-    fprintf(FH, Value);
+    fprintf(FH, "%.6f\n", 0.0);
     fprintf(FH, "30\n");
-    sprintf(Value,"%.6f\n",0.0);
-    fprintf(FH, Value);
+    fprintf(FH, "%.6f\n", 0.0);
     fprintf(FH, "41\n");
     fprintf(FH, "1.000000\n");
     fprintf(FH, "42\n");
@@ -396,15 +391,15 @@ void write_dxf(struct rt_bot_internal *bot, char *name)
 }
 
 int r_start (
-		struct db_tree_state * tsp,
-		struct db_full_path * pathp,
-		const struct rt_comb_internal * combp,
-		genptr_t client_data )
+    struct db_tree_state * tsp,
+    struct db_full_path * pathp,
+    const struct rt_comb_internal * combp,
+    genptr_t client_data )
 {
     int i;
     if (debug&DEBUG_NAMES) {
 	bu_log("r_start %d ", ((struct rt_bot_internal *)client_data)->num_vertices);
-	for (i=0 ; i < pathp->fp_len ; i++) {
+	for (i=0; i < pathp->fp_len; i++) {
 	    if (pathp->fp_len - (i+1)) {
 		bu_log("%s/", pathp->fp_names[i]->d_namep);
 	    } else {
@@ -416,15 +411,15 @@ int r_start (
 }
 
 union tree *r_end (
-		struct db_tree_state * tsp,
-		struct db_full_path * pathp,
-		union tree * curtree,
-		genptr_t client_data )
+    struct db_tree_state * tsp,
+    struct db_full_path * pathp,
+    union tree * curtree,
+    genptr_t client_data )
 {
     int i;
     if (debug&DEBUG_NAMES) {
 	bu_log("r_end %d ", ((struct rt_bot_internal *)client_data)->num_vertices);
-	for (i=0 ; i < pathp->fp_len ; i++) {
+	for (i=0; i < pathp->fp_len; i++) {
 	    if (pathp->fp_len - (i+1)) {
 		bu_log("%s/", pathp->fp_names[i]->d_namep);
 	    } else {
@@ -445,9 +440,9 @@ void add_bots(struct rt_bot_internal *bot_dest,
     int limit;
 
     if (debug&DEBUG_BOTS)
-    bu_log("adding bots v:%d f:%d  v:%d f:%d\n",
-	   bot_dest->num_vertices, bot_dest->num_faces,
-	   bot_src->num_vertices, bot_src->num_faces);
+	bu_log("adding bots v:%d f:%d  v:%d f:%d\n",
+	       bot_dest->num_vertices, bot_dest->num_faces,
+	       bot_src->num_vertices, bot_src->num_faces);
 
     /* allocate space for extra vertices */
     bot_dest->vertices =
@@ -468,28 +463,28 @@ void add_bots(struct rt_bot_internal *bot_dest,
      */
     limit = bot_src->num_faces * 3;
     ptr = &bot_src->faces[limit];
-    for (i=0 ; i < limit ; i++)
+    for (i=0; i < limit; i++)
 	ptr[i] = bot_src->faces[i] + bot_dest->num_vertices;
 
     bot_dest->num_vertices += bot_src->num_vertices;
     bot_dest->num_faces += bot_src->num_faces;
 
     if (debug&DEBUG_BOTS)
-    bu_log("...new bot v:%d f:%d\n",
-	   bot_dest->num_vertices, bot_dest->num_faces);
+	bu_log("...new bot v:%d f:%d\n",
+	       bot_dest->num_vertices, bot_dest->num_faces);
 }
 
 union tree * l_func (
-		struct db_tree_state * tsp,
-		struct db_full_path * pathp,
-		struct rt_db_internal * ip,
-		genptr_t client_data )
+    struct db_tree_state * tsp,
+    struct db_full_path * pathp,
+    struct rt_db_internal * ip,
+    genptr_t client_data )
 {
     int i;
     struct rt_bot_internal *bot;
 
     if (debug&DEBUG_NAMES) {
-	for (i=0 ; i < pathp->fp_len ; i++) {
+	for (i=0; i < pathp->fp_len; i++) {
 	    if (pathp->fp_len - (i+1)) {
 		bu_log("%s/", pathp->fp_names[i]->d_namep);
 	    } else {
@@ -538,8 +533,8 @@ int main(int ac, char *av[])
 
     RT_INIT_DB_INTERNAL(&intern);
 
-    if ((rtip=rt_dirbuild(av[arg_count], idbuf, sizeof(idbuf)))==RTI_NULL){
-	fprintf(stderr,"rtexample: rt_dirbuild failure\n");
+    if ((rtip=rt_dirbuild(av[arg_count], idbuf, sizeof(idbuf)))==RTI_NULL) {
+	fprintf(stderr, "rtexample: rt_dirbuild failure\n");
 	return 2;
     }
 
@@ -549,8 +544,8 @@ int main(int ac, char *av[])
     if (arg_count < ac) {
 	struct directory *dirp;
 
-	for ( ; arg_count < ac ; arg_count++ ) {
-	    printf("current: %s\n",av[arg_count]);
+	for (; arg_count < ac; arg_count++ ) {
+	    printf("current: %s\n", av[arg_count]);
 
 	    if (!rt_db_lookup_internal(rtip->rti_dbip, av[arg_count],
 				       &dirp,
@@ -599,15 +594,15 @@ int main(int ac, char *av[])
 	/* dump all the bots */
 	FOR_ALL_DIRECTORY_START(dp, rtip->rti_dbip)
 
-	/* we only dump BOT primitives, so skip some obvious exceptions */
-	if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD) continue;
+	    /* we only dump BOT primitives, so skip some obvious exceptions */
+	    if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD) continue;
 	if (dp->d_flags & DIR_COMB) continue;
 
 	if (debug&DEBUG_NAMES)
 	    fprintf(stderr, "%s\n", dp->d_namep);
 
 	/* get the internal form */
-	i=rt_db_get_internal(&intern, dp, rtip->rti_dbip, mat,&rt_uniresource);
+	i=rt_db_get_internal(&intern, dp, rtip->rti_dbip, mat, &rt_uniresource);
 
 	if (i < 0) {
 	    fprintf(stderr, "rt_get_internal failure %d on %s\n", i, dp->d_namep);
@@ -624,8 +619,8 @@ int main(int ac, char *av[])
 
 	write_dxf(bot, dp->d_namep);
 
-FOR_ALL_DIRECTORY_END
-    }
+	FOR_ALL_DIRECTORY_END
+	    }
     return 0;
 }
 
@@ -634,8 +629,8 @@ FOR_ALL_DIRECTORY_END
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

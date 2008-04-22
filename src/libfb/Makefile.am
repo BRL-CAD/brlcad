@@ -87,7 +87,6 @@ dist_man_MANS = libfb.3
 
 # XXX lots of work is needed here to make the other if_ interfaces available.
 EXTRA_DIST = \
-	fbserv_obj_win32.c \
 	if_4d.c \
 	if_TEMPLATE.c \
 	if_adage.c \
@@ -102,8 +101,6 @@ EXTRA_DIST = \
 	libfb.dsp \
 	sgiselect.s
 
-
-MAINTAINERCLEANFILES = Makefile.in
 
 DEPS=src/libpkg
 

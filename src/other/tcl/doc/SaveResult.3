@@ -62,8 +62,8 @@ These routines are passed a pointer to a \fBTcl_SavedResult\fR structure
 that is used to store enough information to restore the interpreter result.
 This structure can be allocated on the stack of the calling
 procedure.  These routines do not save the state of any error
-information in the interpreter (e.g. the \fB-errorcode\fR or
-\fB-errorinfo\fR return options, when an error is in progress).
+information in the interpreter (e.g. the \fB\-errorcode\fR or
+\fB\-errorinfo\fR return options, when an error is in progress).
 .PP
 Because the routines \fBTcl_SaveInterpState\fR,
 \fBTcl_RestoreInterpState\fR, and \fBTcl_DiscardInterpState\fR perform
@@ -77,7 +77,7 @@ of existing programs that may already be using them.
 interpreter state that make up the full result of script evaluation.
 This include the interpreter result, the return code (passed in
 as the \fIstatus\fR argument, and any return options, including
-\fB-errorinfo\fR and \fB-errorcode\fR when an error is in progress.
+\fB\-errorinfo\fR and \fB\-errorcode\fR when an error is in progress.
 This snapshot is returned as an opaque token of type \fBTcl_InterpState\fR.
 The call to \fBTcl_SaveInterpState\fR does not itself change the
 state of the interpreter.  Unlike \fBTcl_SaveResult\fR, it does

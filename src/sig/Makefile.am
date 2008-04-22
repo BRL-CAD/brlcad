@@ -43,29 +43,53 @@ a_d_SOURCES = a-d.c
 a_d_LDADD = ${BU}
 
 d_a_SOURCES = d-a.c
-i_d_SOURCES = i-d.c
-d_i_SOURCES = d-i.c
-d_u_SOURCES = d-u.c
+d_a_LDADD = ${BU}
+
 bw_d_SOURCES = bw-d.c
-d_bw_SOURCES = d-bw.c
-d_f_SOURCES = d-f.c
-f_d_SOURCES = f-d.c
-f_i_SOURCES = f-i.c
-i_f_SOURCES = i-f.c
+bw_d_LDADD = ${BU}
 
 c_d_SOURCES = c-d.c
-c_d_LDADD = ${LIBM}
+c_d_LDADD = ${BU} ${LIBM}
+
+d_i_SOURCES = d-i.c
+d_i_LDADD = ${BU}
+
+d_u_SOURCES = d-u.c
+d_u_LDADD = ${BU}
+
+d_bw_SOURCES = d-bw.c
+d_bw_LDADD = ${BU}
+
+d_f_SOURCES = d-f.c
+d_f_LDADD = ${BU}
+
+f_d_SOURCES = f-d.c
+f_d_LDADD = ${BU}
+
+f_i_SOURCES = f-i.c
+f_i_LDADD = ${BU}
+
+i_d_SOURCES = i-d.c
+i_d_LDADD = ${BU}
+
+i_f_SOURCES = i-f.c
+i_f_LDADD = ${BU}
 
 i_a_SOURCES = i-a.c
 u_a_SOURCES = u-a.c
+
 u_d_SOURCES = u-d.c
+u_d_LDADD = ${BU}
+
 u_f_SOURCES = u-f.c
+u_f_LDADD =  ${BU}
+
 u_bw_SOURCES = u-bw.c
 
 #  Processors
 
 dwin_SOURCES = dwin.c coswin.c hamwin.c
-dwin_LDADD = ${LIBM}
+dwin_LDADD = ${BU} ${LIBM}
 
 dauto_SOURCES = dauto.c
 dauto_LDADD = ${BU}
@@ -77,7 +101,7 @@ dfft_SOURCES = dfft.c interp.c butter.c
 dfft_LDADD = ${FFT} ${BU}
 
 dconv_SOURCES = dconv.c
-dconv_LDADD = ${FFT}
+dconv_LDADD = ${BU} ${FFT}
 
 ddisp_SOURCES = ddisp.c
 ddisp_LDADD = ${FB}
@@ -95,9 +119,10 @@ umod_LDADD = ${BU} ${LIBM}
 #  Misc
 
 dstat_SOURCES = dstat.c
-dstat_LDADD = ${LIBM}
+dstat_LDADD = ${BU} ${LIBM}
 
 dsel_SOURCES = dsel.c
+dsel_LDADD = ${BU}
 
 istat_SOURCES = istat.c
 istat_LDADD = ${BU}
@@ -109,13 +134,19 @@ ustat_LDADD = ${BU}
 #  Experimental
 
 dpeak_SOURCES = dpeak.c
+dpeak_LDADD = ${BU}
 
 syn_SOURCES = syn.c
-syn_LDADD = ${LIBM}
+syn_LDADD = ${BU} ${LIBM}
 
 damdf_SOURCES = damdf.c
+damdf_LDADD = ${BU}
+
 dauto2_SOURCES = dauto2.c
+dauto2_LDADD = ${BU}
+
 ihist_SOURCES = ihist.c
+ihist_LDADD = ${BU}
 
 # XXX need to review why these are not built
 EXTRA_DIST = \
@@ -124,9 +155,7 @@ EXTRA_DIST = \
 	fhor3.c \
 	smod.c
 
-MAINTAINERCLEANFILES = Makefile.in
-
-DEPS=src/libfb src/libfft 
+DEPS=src/libfb src/libfft
 
 include $(top_srcdir)/misc/Makefile.defs
 

@@ -1,7 +1,7 @@
 #                    C O M B O B O X . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2007 United States Government as represented by
+# Copyright (c) 1998-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -18,15 +18,6 @@
 # information.
 #
 ###
-#
-# Author -
-#	Bob Parker
-#
-# Source -
-#	The U. S. Army Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#
 #
 # Description -
 #	The ComboBox combines an entry widget with a menubutton and menu.
@@ -93,7 +84,7 @@
 
     itk_component add menubutton {
 	::menubutton $itk_interior.menubutton -relief raised -bd 2 \
-		-menu $itk_interior.menubutton.m -indicatoron 1
+	    -menu $itk_interior.menubutton.m -indicatoron 1
     } {
 	usual
     }
@@ -106,7 +97,7 @@
     }
 
     grid $itk_component(entry) $itk_component(menubutton) \
-	    -sticky "nsew" -in $itk_component(frame)
+	-sticky "nsew" -in $itk_component(frame)
     grid rowconfigure $itk_component(frame) 0 -weight 1
     grid columnconfigure $itk_component(frame) 0 -weight 1
     grid $itk_component(label) $itk_component(frame) -sticky "nsew"
@@ -147,16 +138,16 @@
 }
 
 ::itcl::body cadwidgets::ComboBox::getText {} {
-#    set ev [cget -entryvariable]
+    #    set ev [cget -entryvariable]
 
     # $-substitution should work, but doesn't
-#    return [set $ev]
+    #    return [set $ev]
     return $entrytext
 }
 
 ::itcl::body cadwidgets::ComboBox::setText {val} {
-#    set ev [cget -entryvariable]
-#    set $ev $val
+    #    set ev [cget -entryvariable]
+    #    set $ev $val
     set entrytext $val
 }
 

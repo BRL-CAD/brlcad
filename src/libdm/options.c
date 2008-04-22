@@ -1,7 +1,7 @@
 /*                       O P T I O N S . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2007 United States Government as represented by
+ * Copyright (c) 1999-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,21 +21,14 @@
  *
  * Option processing routines.
  *
- * Source -
- *	SLAD CAD Team
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
- * Author -
- *	Robert G. Parker
  */
+
 #include "common.h"
 
 #include <stdlib.h>
 
 #include "tcl.h"
 
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "dm.h"
@@ -43,52 +36,52 @@
 int
 dm_processOptions(struct dm *dmp, struct bu_vls *init_proc_vls, int argc, char **argv)
 {
-  register int c;
+    register int c;
 
-  bu_optind = 0;	 /* re-init bu_getopt */
-  bu_opterr = 0;
-  while((c = bu_getopt(argc, argv, "N:S:W:s:d:i:n:t:")) != EOF){
-    switch(c){
-    case 'N':
-      dmp->dm_height = atoi(bu_optarg);
-      break;
-    case 'S':
-    case 's':
-      dmp->dm_width = dmp->dm_height = atoi(bu_optarg);
-      break;
-    case 'W':
-      dmp->dm_width = atoi(bu_optarg);
-      break;
-    case 'd':
-      bu_vls_strcpy(&dmp->dm_dName, bu_optarg);
-      break;
-    case 'i':
-      bu_vls_strcpy(init_proc_vls, bu_optarg);
-      break;
-    case 'n':
-      if(*bu_optarg != '.')
-	bu_vls_printf(&dmp->dm_pathName, ".%s", bu_optarg);
-      else
-	bu_vls_strcpy(&dmp->dm_pathName, bu_optarg);
-      break;
-    case 't':
-      dmp->dm_top = atoi(bu_optarg);
-      break;
-    default:
-      bu_log("dm_processOptions: option '%c' unknown\n", bu_optopt);
-      break;
+    bu_optind = 0;	 /* re-init bu_getopt */
+    bu_opterr = 0;
+    while ((c = bu_getopt(argc, argv, "N:S:W:s:d:i:n:t:")) != EOF) {
+	switch (c) {
+	    case 'N':
+		dmp->dm_height = atoi(bu_optarg);
+		break;
+	    case 'S':
+	    case 's':
+		dmp->dm_width = dmp->dm_height = atoi(bu_optarg);
+		break;
+	    case 'W':
+		dmp->dm_width = atoi(bu_optarg);
+		break;
+	    case 'd':
+		bu_vls_strcpy(&dmp->dm_dName, bu_optarg);
+		break;
+	    case 'i':
+		bu_vls_strcpy(init_proc_vls, bu_optarg);
+		break;
+	    case 'n':
+		if (*bu_optarg != '.')
+		    bu_vls_printf(&dmp->dm_pathName, ".%s", bu_optarg);
+		else
+		    bu_vls_strcpy(&dmp->dm_pathName, bu_optarg);
+		break;
+	    case 't':
+		dmp->dm_top = atoi(bu_optarg);
+		break;
+	    default:
+		bu_log("dm_processOptions: option '%c' unknown\n", bu_optopt);
+		break;
+	}
     }
-  }
 
-  return bu_optind;
+    return bu_optind;
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

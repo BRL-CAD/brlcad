@@ -15,6 +15,16 @@
 
 #include "tclWinInt.h"
 
+#ifndef TCL_NO_STACK_CHECK
+/*
+ * The following functions implement stack depth checking
+ */
+typedef struct ThreadSpecificData {
+    int *stackBound;            /* The current stack boundary */
+} ThreadSpecificData;
+static Tcl_ThreadDataKey dataKey;
+#endif /* TCL_NO_STACK_CHECK */
+
 /*
  * The following data structures are used when loading the thunking library
  * for execing child processes under Win32s.
@@ -514,127 +524,79 @@ TclWinNoBackslash(
 /*
  *----------------------------------------------------------------------
  *
- * TclpCheckStackSpace --
+ * TclpGetStackParams --
  *
- *	Detect if we are about to blow the stack. Called before an evaluation
- *	can happen when nesting depth is checked.
+ *	Determine the stack params for the current thread: in which
+ *	direction does the stack grow, and what is the stack lower (resp.
+ *	upper) bound for safe invocation of a new command? This is used to
+ *	cache the values needed for an efficient computation of
+ *	TclpCheckStackSpace() when the interp is known.
  *
  * Results:
- *	1 if there is enough stack space to continue; 0 if not.
- *
- * Side effects:
- *	None.
+ *	Returns 1 if the stack grows down, in which case a stack lower bound
+ *	is stored at stackBoundPtr. If the stack grows up, 0 is returned and
+ *	an upper bound is stored at stackBoundPtr. If a bound cannot be
+ *	determined NULL is stored at stackBoundPtr.
  *
  *----------------------------------------------------------------------
  */
 
+#ifndef TCL_NO_STACK_CHECK
 int
-TclpCheckStackSpace(void)
+TclpGetCStackParams(
+    int **stackBoundPtr)
 {
+    ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
+    SYSTEM_INFO si;		/* The system information, used to
+				 * determine the page size */
+    MEMORY_BASIC_INFORMATION mbi;
+				/* The information about the memory
+				 * area in which the stack resides */
 
-#ifdef HAVE_NO_SEH
-    EXCEPTION_REGISTRATION registration;
-#endif
-    int retval = 0;
+    if (!tsdPtr->stackBound
+	|| ((UINT_PTR)&tsdPtr < (UINT_PTR)tsdPtr->stackBound)) {
 
-    /*
-     * We can recurse only if there is at least TCL_WIN_STACK_THRESHOLD bytes
-     * of stack space left. alloca() is cheap on windows; basically it just
-     * subtracts from the stack pointer causing the OS to throw an exception
-     * if the stack pointer is set below the bottom of the stack.
-     */
-
-#ifdef HAVE_NO_SEH
-    __asm__ __volatile__ (
-
-	/*
-	 * Construct an EXCEPTION_REGISTRATION to protect the call to __alloca
+	/* 
+	 * Either we haven't determined the stack bound in this thread,
+	 * or else we've overflowed the bound that we previously
+	 * determined.  We need to find a new stack bound from
+	 * Windows.
 	 */
 
-	"leal	%[registration], %%edx"		"\n\t"
-	"movl	%%fs:0,		%%eax"		"\n\t"
-	"movl	%%eax,		0x0(%%edx)"	"\n\t" /* link */
-	"leal	1f,		%%eax"		"\n\t"
-	"movl	%%eax,		0x4(%%edx)"	"\n\t" /* handler */
-	"movl	%%ebp,		0x8(%%edx)"	"\n\t" /* ebp */
-	"movl	%%esp,		0xc(%%edx)"	"\n\t" /* esp */
-	"movl	%[error],	0x10(%%edx)"	"\n\t" /* status */
+	GetSystemInfo(&si);
+	if (VirtualQuery((LPCVOID) &tsdPtr, &mbi, sizeof(mbi)) == 0) {
 
-	/*
-	 * Link the EXCEPTION_REGISTRATION on the chain
-	 */
+	    /* For some reason, the system didn't let us query the
+	     * stack size.  Nevertheless, we got here and haven't
+	     * blown up yet.  Don't update the calculated stack bound.
+	     * If there is no calculated stack bound yet, set it to
+	     * the base of the current page of stack. */
 
-	"movl	%%edx,		%%fs:0"		"\n\t"
+	    if (!tsdPtr->stackBound) {
+		tsdPtr->stackBound =
+		    (int*) ((UINT_PTR)(&tsdPtr)
+			    & ~ (UINT_PTR)(si.dwPageSize - 1));
+	    }
 
-	/*
-	 * Attempt a call to __alloca, to determine whether there's sufficient
-	 * memory to be had.
-	 */
+	} else {
 
-	"movl	%[size],	%%eax"		"\n\t"
-	"pushl	%%eax"				"\n\t"
-	"call	__alloca"			"\n\t"
+	    /* The allocation base of the stack segment has to be advanced
+	     * by one page (to allow for the guard page maintained in the
+	     * C runtime) and then by TCL_WIN_STACK_THRESHOLD (to allow
+	     * for the amount of stack that Tcl needs).
+	     */
 
-	/*
-	 * Come here on a normal exit. Recover the EXCEPTION_REGISTRATION and
-	 * store a TCL_OK status
-	 */
-
-	"movl	%%fs:0,		%%edx"		"\n\t"
-	"movl	%[ok],		%%eax"		"\n\t"
-	"movl	%%eax,		0x10(%%edx)"	"\n\t"
-	"jmp	2f"				"\n"
-
-	/*
-	 * Come here on an exception. Get the EXCEPTION_REGISTRATION that we
-	 * previously put on the chain.
-	 */
-
-	"1:"					"\t"
-	"movl	%%fs:0,		%%edx"		"\n\t"
-	"movl	0x8(%%edx),	%%edx"		"\n\t"
-
-	/*
-	 * Come here however we exited. Restore context from the
-	 * EXCEPTION_REGISTRATION in case the stack is unbalanced.
-	 */
-
-	"2:"					"\t"
-	"movl	0xc(%%edx),	%%esp"		"\n\t"
-	"movl	0x8(%%edx),	%%ebp"		"\n\t"
-	"movl	0x0(%%edx),	%%eax"		"\n\t"
-	"movl	%%eax,		%%fs:0"		"\n\t"
-
-	:
-	/* No outputs */
-	:
-	[registration]	"m"	(registration),
-	[ok]		"i"	(TCL_OK),
-	[error]		"i"	(TCL_ERROR),
-	[size]		"i"	(TCL_WIN_STACK_THRESHOLD)
-	:
-	"%eax", "%ebx", "%ecx", "%edx", "%esi", "%edi", "memory"
-	);
-    retval = (registration.status == TCL_OK);
-
-#else /* !HAVE_NO_SEH */
-    __try {
-#ifdef HAVE_ALLOCA_GCC_INLINE
-	__asm__ __volatile__ (
-	    "movl  %0, %%eax" "\n\t"
-	    "call  __alloca" "\n\t"
-	    :
-	    : "i"(TCL_WIN_STACK_THRESHOLD)
-	    : "%eax");
-#else
-	alloca(TCL_WIN_STACK_THRESHOLD);
-#endif /* HAVE_ALLOCA_GCC_INLINE */
-	retval = 1;
-    } __except (EXCEPTION_EXECUTE_HANDLER) {}
-#endif /* HAVE_NO_SEH */
-
-    return retval;
+	    tsdPtr->stackBound =
+		(int*) ((UINT_PTR)(mbi.AllocationBase)
+			+ (UINT_PTR)(si.dwPageSize)
+			+ TCL_WIN_STACK_THRESHOLD);
+	}
+    }
+    *stackBoundPtr = tsdPtr->stackBound;
+    return 1;
 }
+#endif
+
 
 /*
  *---------------------------------------------------------------------------

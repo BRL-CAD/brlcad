@@ -15,7 +15,42 @@ on-going issues.
 Recent Bugs
 -----------
 
-* dbconcat apparently hangs on an empty tree node
+* /dev/ogl framebuffer is not refreshing/updating on mac os x,
+  resulting in the window remaining blank until you give expose events
+
+* report of mged being locked up on startup taking full cpu, works
+  fine with with -c with X dm.
+
+* MGED File->Preferences->Fonts results in error "named font "button
+  _font" doesn't exist on Linux.
+
+* lingering default isn't working for at least one linux user
+
+* rtwizard seems to be busted (again)
+
+* mged tab-completion doesn't work if the object names have spaces
+
+* OpenGL display manager doesn't refresh automatically when the
+  context is invalidated (on Mac OS X) any more
+
+* Open dialog in MGED seems rather busted for scrolling and selection
+  (seems to be Mac OS X specific)
+
+* turning on Framebuffer->Rectangle Area in mged disables the
+  embedded framebuffer diplay on Mac OS X when you sweep a raytrace
+  rectangle.  sweeping still works if you leave it at All.
+
+* invalid shaders result in an "Unable to locate where BRL-CAD ... is
+  installed" message that refers to being unable to find a
+  /lib/libSHADER.so file.  Quite a bogus message and probably not
+  something that should abort the ray-trace.
+
+* rtedge seems to get stuck in a loop at the end of rendering, never
+  terminates (unless you rtabort/kill the process); works with -P1
+
+* nirt fails to report LOS and sometimes even hits on a BoT that is
+  marked as unoriented or is inverted (even though it sometimes will
+  report the segments, just without LOS)
 
 * nirt/query_ray reports intersection messages in triplicate if the
   shot routines miss but still print out messages
@@ -42,15 +77,8 @@ Recent Bugs
 * dsp primitive is going into what seems to be an unbounded memory
   allocation loop during prep, inside dsp_layers().
 
-* units command in mged doesn't work right?
-
-* mged -c, select ogl display manager, crashes X11 -- tested on os x
-
 * crashes during photonmap raytrace of m35 where right node is invalid
   rt -o test.pix -V 1.0 -P4 -J0 -l7 -A0 ~/Desktop/m35.g all.g box.r sph.r
-
-* "touch file.g && mged -c file.g units m" results in a BU_ASSERT
-  failure and bombs.
 
 * libfb cannot utilize standard output/error "device" files without
   path trickery.  it recognizes the /dev/ prefix and presumes it's a
@@ -105,17 +133,11 @@ Recent Bugs
 * mged View menu says I and O are keybindings for zoom in/out -- they
   are apparently not.
 
-* usage of lt says "lt object", yet if you actually type exactly that,
-  you get a bus error.  Nice.
-
 * raytracers report the wrong amount of cumulative time (reports as
   0.0 seconds elapsed) on amd64 linux; most likely the same pthread
   accounting bug visited a couple years ago.
 
 * Create menu.. create "part" boo hiss..
-
-* xpush sometimes doesn't work, e.g. objects with empty trees,
-  resulting in the db being left in a bad situation.
 
 * wavelet isn't working correctly on a simple image decomposition &
   reconstruction.
@@ -207,8 +229,6 @@ Recent Bugs
 
 * bot-bldxf fails in db_walk_tree(), interface may have changed
 
-* bwmod gives a divide by zero error whenever you use the "-d" option
-
 * you can't run a make benchmark unless you're compiling in place
 
 
@@ -219,6 +239,10 @@ Older Bugs
 
 * X11 framebuffer often fails to display on certain middle bit depth
   displays. (e.g. 15 or 16 bit depth)
+
+* mk_lcomb fails on large combinations due to mk_tree_pure() building
+  a left-heavy tree and wdb_put_internal() then recursively performing
+  lookup and put calls.
 
 
 Annoyances

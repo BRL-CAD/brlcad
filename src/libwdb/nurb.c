@@ -1,7 +1,7 @@
 /*                          N U R B . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2007 United States Government as represented by
+ * Copyright (c) 1987-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,22 +26,14 @@
  *	Michael John Muuss
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
-
 #include <stdio.h>
 #include <math.h>
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#include <strings.h>
-#endif
+#include "bio.h"
 
-#include "machine.h"
 #include "bu.h"
 #include "db.h"
 #include "vmath.h"
@@ -60,23 +52,24 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 int
 mk_bspline( struct rt_wdb *wdbp, const char *name, struct face_g_snurb **surfs )
 {
-	struct rt_nurb_internal	*ni;
+    struct rt_nurb_internal	*ni;
 
-	BU_GETSTRUCT( ni, rt_nurb_internal );
-	ni->magic = RT_NURB_INTERNAL_MAGIC;
-	ni->srfs = surfs;
+    BU_GETSTRUCT( ni, rt_nurb_internal );
+    ni->magic = RT_NURB_INTERNAL_MAGIC;
+    ni->srfs = surfs;
 
-	for( ni->nsrf = 0; ni->srfs[ni->nsrf] != NULL; ni->nsrf++ )  /* NIL */ ;
+    for ( ni->nsrf = 0; ni->srfs[ni->nsrf] != NULL; ni->nsrf++ )  
+	; /* NIL */
 
-	return wdb_export( wdbp, name, (genptr_t)ni, ID_BSPLINE, mk_conv2mm );
+    return wdb_export( wdbp, name, (genptr_t)ni, ID_BSPLINE, mk_conv2mm );
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

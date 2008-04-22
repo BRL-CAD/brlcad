@@ -16,7 +16,6 @@
 
 #include "tkInt.h"
 #include "tkCanvas.h"
-#include "tkPort.h"
 
 /*
  * See tkCanvas.h for key data structures used to implement canvases.
@@ -161,7 +160,7 @@ TkCanvPostscriptCmd(
 				 * this command enough to know that argv[1] is
 				 * "postscript". */
 {
-    TkPostscriptInfo psInfo;
+    TkPostscriptInfo psInfo, *psInfoPtr = &psInfo;
     Tk_PostscriptInfo oldInfoPtr;
     int result;
     Tk_Item *itemPtr;
@@ -191,7 +190,7 @@ TkCanvPostscriptCmd(
         return result;
     }
     oldInfoPtr = canvasPtr->psInfo;
-    canvasPtr->psInfo = (Tk_PostscriptInfo) &psInfo;
+    canvasPtr->psInfo = (Tk_PostscriptInfo) psInfoPtr;
     psInfo.x = canvasPtr->xOrigin;
     psInfo.y = canvasPtr->yOrigin;
     psInfo.width = -1;
@@ -493,14 +492,14 @@ TkCanvPostscriptCmd(
 	Tcl_AppendResult(interp, string, NULL);
 	sprintf(string,
 		"%d %.15g moveto %d %.15g lineto %d %.15g lineto %d %.15g",
-		psInfo.x,
-		Tk_PostscriptY((double)psInfo.y, (Tk_PostscriptInfo)&psInfo),
-		psInfo.x2,
-		Tk_PostscriptY((double)psInfo.y, (Tk_PostscriptInfo)&psInfo),
-		psInfo.x2,
-		Tk_PostscriptY((double)psInfo.y2, (Tk_PostscriptInfo)&psInfo),
-		psInfo.x,
-		Tk_PostscriptY((double)psInfo.y2, (Tk_PostscriptInfo)&psInfo));
+		psInfo.x, Tk_PostscriptY((double)psInfo.y,
+			(Tk_PostscriptInfo)psInfoPtr),
+		psInfo.x2, Tk_PostscriptY((double)psInfo.y,
+			(Tk_PostscriptInfo)psInfoPtr),
+		psInfo.x2, Tk_PostscriptY((double)psInfo.y2,
+			(Tk_PostscriptInfo)psInfoPtr),
+		psInfo.x, Tk_PostscriptY((double)psInfo.y2,
+			(Tk_PostscriptInfo)psInfoPtr));
 	Tcl_AppendResult(interp, string,
 		" lineto closepath clip newpath\n", NULL);
     }

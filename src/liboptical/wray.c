@@ -1,7 +1,7 @@
 /*                          W R A Y . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2007 United States Government as represented by
+ * Copyright (c) 1985-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,48 +29,35 @@
  *	/vld/bin/vectplot -mMM < file.vect > file.plot
  *	tplot -Tmeg file.plot		# or equivalent
  *
- *  Author -
- *	Michael John Muuss
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
-#ifndef lint
-static const char RCSwray[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
-
 #include <stdio.h>
 #include <math.h>
-#include "machine.h"
+
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
 
 
-/* /vld/include/ray.h -- ray segment data format (D A Gwyn) */
 /* binary ray segment data record; see ray(4V) (SCCS vers 1.4) */
 struct vldray
 {
-	float	ox;			/* origin coordinates */
-	float	oy;
-	float	oz;
-	float	rx;			/* ray vector */
-	float	ry;
-	float	rz;
-	float	na;			/* origin surface normal */
-	float	ne;
-	float	pa;			/* principal direction */
-	float	pe;
-	float	pc;			/* principal curvature */
-	float	sc;			/* secondary curvature */
-	long	ob;			/* object code */
-	long	rt;			/* ray tag */
+    float	ox;			/* origin coordinates */
+    float	oy;
+    float	oz;
+    float	rx;			/* ray vector */
+    float	ry;
+    float	rz;
+    float	na;			/* origin surface normal */
+    float	ne;
+    float	pa;			/* principal direction */
+    float	pe;
+    float	pc;			/* principal curvature */
+    float	sc;			/* secondary curvature */
+    long	ob;			/* object code */
+    long	rt;			/* ray tag */
 };
 
 /*
@@ -120,7 +107,7 @@ struct vldray
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 #define WRAY_TAG(_ray, _ap)	{ \
-		if( (_ray.rt = _ap->a_level) > 0x3F || _ray.rt < 0 ) \
+		if ( (_ray.rt = _ap->a_level) > 0x3F || _ray.rt < 0 ) \
 			_ray.rt = 0x3F; \
 		_ray.rt |= ((_ap->a_x & 0x1FFF) << 6 ) | \
 			   ((_ap->a_y & 0x1FFF) << (6+13) ); \
@@ -132,29 +119,29 @@ struct vldray
 void
 wray( struct partition *pp, struct application *ap, FILE *fp, const vect_t inormal )
 {
-	LOCAL struct vldray vldray;
-	register struct hit *hitp= pp->pt_inhit;
+    struct vldray vldray;
+    register struct hit *hitp= pp->pt_inhit;
 
-	VMOVE( &(vldray.ox), hitp->hit_point );
-	VSUB2( &(vldray.rx), pp->pt_outhit->hit_point,
-		hitp->hit_point );
+    VMOVE( &(vldray.ox), hitp->hit_point );
+    VSUB2( &(vldray.rx), pp->pt_outhit->hit_point,
+	   hitp->hit_point );
 
-	WRAY_NORMAL( vldray, inormal );
+    WRAY_NORMAL( vldray, inormal );
 
-	vldray.pa = vldray.pe = vldray.pc = vldray.sc = 0;	/* no curv */
+    vldray.pa = vldray.pe = vldray.pc = vldray.sc = 0;	/* no curv */
 
-	/*  Air is marked by zero or negative region ID codes.
-	 *  When air is encountered, the air code is taken from reg_aircode.
-	 *  The negative of the air code is used for the "ob" field, to
-	 *  distinguish air from other regions.
-	 */
-	if( (vldray.ob = pp->pt_regionp->reg_regionid) <= 0 )
-		vldray.ob = -(pp->pt_regionp->reg_aircode);
+    /*  Air is marked by zero or negative region ID codes.
+     *  When air is encountered, the air code is taken from reg_aircode.
+     *  The negative of the air code is used for the "ob" field, to
+     *  distinguish air from other regions.
+     */
+    if ( (vldray.ob = pp->pt_regionp->reg_regionid) <= 0 )
+	vldray.ob = -(pp->pt_regionp->reg_aircode);
 
-	WRAY_TAG( vldray, ap );
+    WRAY_TAG( vldray, ap );
 
-	if( fwrite( &vldray, sizeof(struct vldray), 1, fp ) != 1 )
-		bu_bomb("rway:  write error");
+    if ( fwrite( &vldray, sizeof(struct vldray), 1, fp ) != 1 )
+	bu_bomb("rway:  write error");
 }
 
 /*
@@ -170,22 +157,22 @@ wray( struct partition *pp, struct application *ap, FILE *fp, const vect_t inorm
 void
 wraypts( vect_t in, vect_t inorm, vect_t out, int id, struct application *ap, FILE *fp )
 {
-	LOCAL struct vldray vldray;
-	vect_t	norm;
+    struct vldray vldray;
+    vect_t	norm;
 
-	VMOVE( &(vldray.ox), in );
-	VSUB2( &(vldray.rx), out, in );
+    VMOVE( &(vldray.ox), in );
+    VSUB2( &(vldray.rx), out, in );
 
-	VREVERSE( norm, inorm );
-	WRAY_NORMAL( vldray, norm );
+    VREVERSE( norm, inorm );
+    WRAY_NORMAL( vldray, norm );
 
-	vldray.pa = vldray.pe = vldray.pc = vldray.sc = 0;	/* no curv */
+    vldray.pa = vldray.pe = vldray.pc = vldray.sc = 0;	/* no curv */
 
-	vldray.ob = id;
+    vldray.ob = id;
 
-	WRAY_TAG( vldray, ap );
+    WRAY_TAG( vldray, ap );
 
-	fwrite( &vldray, sizeof(struct vldray), 1, fp );
+    fwrite( &vldray, sizeof(struct vldray), 1, fp );
 }
 
 /*
@@ -196,28 +183,28 @@ wraypts( vect_t in, vect_t inorm, vect_t out, int id, struct application *ap, FI
 void
 wraypaint( vect_t start, vect_t norm, int paint, struct application *ap, FILE *fp )
 {
-	LOCAL struct vldray vldray;
+    struct vldray vldray;
 
-	VMOVE( &(vldray.ox), start );
-	VSETALL( &(vldray.rx), 0 );
+    VMOVE( &(vldray.ox), start );
+    VSETALL( &(vldray.rx), 0 );
 
-	WRAY_NORMAL( vldray, norm );
+    WRAY_NORMAL( vldray, norm );
 
-	vldray.pa = vldray.pe = vldray.pc = vldray.sc = 0;	/* no curv */
+    vldray.pa = vldray.pe = vldray.pc = vldray.sc = 0;	/* no curv */
 
-	vldray.ob = paint;
+    vldray.ob = paint;
 
-	WRAY_TAG( vldray, ap );
+    WRAY_TAG( vldray, ap );
 
-	fwrite( &vldray, sizeof(struct vldray), 1, fp );
+    fwrite( &vldray, sizeof(struct vldray), 1, fp );
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -1,7 +1,7 @@
 /*                       S U B M O D E L . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2007 United States Government as represented by
+ * Copyright (c) 1994-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,7 +26,8 @@
 
 #include "common.h"
 
-#include "machine.h"
+#include "bio.h"
+
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
@@ -48,25 +49,25 @@
 int
 mk_submodel(struct rt_wdb *fp, const char *name, const char *file, const char *treetop, int meth)
 {
-	struct rt_submodel_internal *in;
+    struct rt_submodel_internal *in;
 
-	BU_GETSTRUCT( in, rt_submodel_internal );
-	in->magic = RT_SUBMODEL_INTERNAL_MAGIC;
-	bu_vls_init( &in->file );
-	if( file )  bu_vls_strcpy( &in->file, file );
-	bu_vls_init( &in->treetop );
-	bu_vls_strcpy( &in->treetop, treetop );
-	in->meth = meth;
+    BU_GETSTRUCT( in, rt_submodel_internal );
+    in->magic = RT_SUBMODEL_INTERNAL_MAGIC;
+    bu_vls_init( &in->file );
+    if ( file )  bu_vls_strcpy( &in->file, file );
+    bu_vls_init( &in->treetop );
+    bu_vls_strcpy( &in->treetop, treetop );
+    in->meth = meth;
 
-	return wdb_export( fp, name, (genptr_t)in, ID_SUBMODEL, mk_conv2mm );
+    return wdb_export( fp, name, (genptr_t)in, ID_SUBMODEL, mk_conv2mm );
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

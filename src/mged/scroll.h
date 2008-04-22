@@ -1,7 +1,7 @@
 /*                        S C R O L L . H
  * BRL-CAD
  *
- * Copyright (c) 1989-2007 United States Government as represented by
+ * Copyright (c) 1989-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -21,21 +21,12 @@
  *
  *  Data structures for "scroll-bar" support
  *
- *  Author -
- *	Bill Mermagen Jr.
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
- *  $Header$
  */
 struct	scroll_item  {
-	char	*scroll_string;
-	void	(*scroll_func)();
-	int	scroll_val;
-	char	*scroll_cmd;
+    char	*scroll_string;
+    void	(*scroll_func)();
+    int	scroll_val;
+    char	*scroll_cmd;
 };
 #define SCROLL_NULL		((struct scroll_item *)0)
 
@@ -43,8 +34,8 @@ struct	scroll_item  {
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

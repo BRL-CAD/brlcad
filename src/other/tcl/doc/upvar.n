@@ -24,7 +24,7 @@ procedure to refer to variables in an enclosing procedure call or
 to global variables.
 \fILevel\fR may have any of the forms permitted for the \fBuplevel\fR
 command, and may be omitted if the first letter of the first \fIotherVar\fR
-isn't \fB#\fR or a digit (it defaults to \fB1\fR).
+is not \fB#\fR or a digit (it defaults to \fB1\fR).
 For each \fIotherVar\fR argument, \fBupvar\fR makes the variable
 by that name in the procedure frame given by \fIlevel\fR (or at
 global level, if \fIlevel\fR is \fB#0\fR) accessible
@@ -81,7 +81,10 @@ unexpected manner.  If a variable trace is defined on \fIotherVar\fR, that
 trace will be triggered by actions involving \fImyVar\fR.  However,
 the trace procedure will be passed the name of \fImyVar\fR, rather
 than the name of \fIotherVar\fR.  Thus, the output of the following code
-will be "\fIlocalVar\fR" rather than "\fIoriginalVar\fR":
+will be
+.QW "\fIlocalVar\fR"
+rather than
+.QW "\fIoriginalVar\fR" :
 .CS
 proc \fItraceproc\fR { name index op } {
    puts $name

@@ -44,7 +44,7 @@ dispatch events through \fBTcl_DoOneEvent\fR or through Tcl commands
 such as \fBvwait\fR.
 The call to \fIproc\fR may not be made at the exact time given by
 \fImilliseconds\fR:  it will be made at the next opportunity
-after that time.  For example, if \fBTcl_DoOneEvent\fR isn't
+after that time.  For example, if \fBTcl_DoOneEvent\fR is not
 called until long after the time has elapsed, or if there
 are other pending events to process before the call to
 \fIproc\fR, then the call to \fIproc\fR will be delayed.

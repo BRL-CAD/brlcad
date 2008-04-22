@@ -1,7 +1,7 @@
 /*                        G E T O P T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,21 +32,11 @@
  *	to reinitialize bu_optind=1 before beginning on the next argument list.
  */
 
-
-#ifndef lint
-static const char libbu_getopt_RCSid[] = "@(#)$Header$ (BRL)";
-#endif
-
 #include "common.h"
 
 #include <stdio.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
 
-#include "machine.h"
 #include "bu.h"
 
 
@@ -57,9 +47,9 @@ char	*bu_optarg = NULL;	/**< argument associated with option */
 
 #define BADCH	(int)'?'
 #define EMSG	""
-#define tell(s)	if(bu_opterr)  { \
-		fputs(*nargv,stderr);fputs(s,stderr); \
-		fputc(bu_optopt,stderr);fputc('\n',stderr); \
+#define tell(s)	if (bu_opterr)  { \
+		fputs(*nargv, stderr);fputs(s, stderr); \
+		fputc(bu_optopt, stderr);fputc('\n', stderr); \
 	} return(BADCH);
 
 
@@ -74,21 +64,23 @@ bu_getopt(int nargc, char *const *nargv, const char *ostr)
     static char	*place = EMSG;	/* option letter processing */
     register char	*oli;		/* option letter list index */
 
-    if(*place=='\0') {			/* update scanning pointer */
-	if(bu_optind >= nargc || *(place = nargv[bu_optind]) != '-' ||
-	   !*++place)  {
+    if (*place=='\0') {
+	/* update scanning pointer */
+	if (bu_optind >= nargc || *(place = nargv[bu_optind]) != '-' ||
+	    !*++place)  {
 	    place = EMSG;
 	    return(EOF);
 	}
-	if (*place == '-') {	/* found "--" */
+	if (*place == '-') {
+	    /* found "--" */
 	    place = EMSG;
 	    ++bu_optind;
 	    return(EOF);
 	}
     }				/* option letter okay? */
-    if ((bu_optopt = (int)*place++) == (int)':' || !(oli = strchr(ostr,bu_optopt))) {
+    if ((bu_optopt = (int)*place++) == (int)':' || !(oli = strchr(ostr, bu_optopt))) {
 #if 0
-	if(*place == '\0') {
+	if (*place == '\0') {
 	    ++bu_optind;
 	    place = EMSG;
 	}
@@ -98,16 +90,19 @@ bu_getopt(int nargc, char *const *nargv, const char *ostr)
 #endif
 	tell(": illegal option -- ");
     }
-    if (*++oli != ':') {		/* don't need argument */
+    if (*++oli != ':') {
+	/* don't need argument */
 	bu_optarg = NULL;
 	if (*place == '\0') {
 	    ++bu_optind;
 	    place = EMSG;
 	}
     }
-    else {				/* need an argument */
+    else {
+	/* need an argument */
 	if (*place) bu_optarg = place;	/* no white space */
-	else if (nargc <= ++bu_optind) {	/* no arg */
+	else if (nargc <= ++bu_optind) {
+	    /* no arg */
 	    place = EMSG;
 	    tell(": option requires an argument -- ");
 	}
@@ -122,8 +117,8 @@ bu_getopt(int nargc, char *const *nargv, const char *ostr)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

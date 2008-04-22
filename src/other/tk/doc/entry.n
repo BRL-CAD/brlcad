@@ -45,7 +45,8 @@ this option is the empty string, the normal background color is used.
 If this option is specified, then the true contents of the entry
 are not displayed in the window.
 Instead, each character in the entry's value will be displayed as
-the first character in the value of this option, such as ``*''.
+the first character in the value of this option, such as
+.QW * .
 This is useful, for example, if the entry is to be used to enter
 a password.
 If characters in the entry are selected and copied elsewhere, the
@@ -60,7 +61,7 @@ contents of the widget may still be selected.  If the entry is
 disabled, the value may not be changed, no insertion cursor will be
 displayed, the contents will not be selectable, and the entry may
 be displayed in a different color, depending on the values of the
-\fB-disabledforeground\fR and \fB-disabledbackground\fR options.
+\fB\-disabledforeground\fR and \fB\-disabledbackground\fR options.
 .OP \-validate validate Validate
 Specifies the mode in which validation should operate: \fBnone\fR,
 \fBfocus\fR, \fBfocusin\fR, \fBfocusout\fR, \fBkey\fR, or \fBall\fR.
@@ -80,7 +81,6 @@ in average-size characters of the widget's font.
 If the value is less than or equal to zero, the widget picks a
 size just large enough to hold its current text.
 .BE
-
 .SH DESCRIPTION
 .PP
 The \fBentry\fR command creates a new window (given by the
@@ -140,9 +140,9 @@ are recognized:
 .PP
 .IP \fB%d\fR 5
 Type of action: 1 for \fBinsert\fR, 0 for \fBdelete\fR,
-or -1 for focus, forced or textvariable validation.
+or \-1 for focus, forced or textvariable validation.
 .IP \fB%i\fR 5
-Index of char string to be inserted/deleted, if any, otherwise -1.
+Index of char string to be inserted/deleted, if any, otherwise \-1.
 .IP \fB%P\fR 5
 The value of the entry if the edit is allowed.  If you are configuring the
 entry widget to have a new textvariable, this will be the value of that
@@ -179,7 +179,7 @@ validated.  If you wish to edit the entry widget (for example set it to {})
 during validation and still have the \fBvalidate\fR option set, you should
 include the command
 .CS
-after idle {%W config -validate %v}
+after idle {%W config \-validate %v}
 .CE
 in the \fBvalidateCommand\fR or \fBinvalidCommand\fR (whichever one you
 were editing the entry widget from).  It is also recommended to not set an
@@ -191,10 +191,11 @@ The \fBentry\fR command creates a new Tcl command whose
 name is \fIpathName\fR.  This command may be used to invoke various
 operations on the widget.  It has the following general form:
 .CS
-\fIpathName option \fR?\fIarg arg ...\fR?
+\fIpathName subcommand \fR?\fIarg arg ...\fR?
 .CE
-\fIOption\fR and the \fIarg\fRs
+\fISubcommand\fR and the \fIarg\fRs
 determine the exact behavior of the command.
+.SS INDICES
 .PP
 Many of the widget commands for entries take one or more indices as
 arguments.  An index specifies a particular character in the entry's
@@ -219,22 +220,27 @@ insertion cursor.
 .TP 12
 \fBsel.first\fR
 Indicates the first character in the selection.  It is an error to
-use this form if the selection isn't in the entry window.
+use this form if the selection is not in the entry window.
 .TP 12
 \fBsel.last\fR
 Indicates the character just after the last one in the selection.
-It is an error to use this form if the selection isn't in the
+It is an error to use this form if the selection is not in the
 entry window.
 .TP 12
 \fB@\fInumber\fR
 In this form, \fInumber\fR is treated as an x-coordinate in the
 entry's window;  the character spanning that x-coordinate is used.
-For example, ``\fB@0\fR'' indicates the left-most character in the
-window.
+For example,
+.QW \fB@0\fR
+indicates the left-most character in the window.
 .LP
-Abbreviations may be used for any of the forms above, e.g. ``\fBe\fR''
-or ``\fBsel.f\fR''.  In general, out-of-range indices are automatically
-rounded to the nearest legal value.
+Abbreviations may be used for any of the forms above, e.g.
+.QW \fBe\fR
+or
+.QW \fBsel.f\fR .
+In general, out-of-range indices are automatically rounded to the
+nearest legal value.
+.SS SUBCOMMANDS
 .PP
 The following commands are possible for entry widgets:
 .TP
@@ -273,7 +279,7 @@ Delete one or more elements of the entry.
 \fIFirst\fR is the index of the first character to delete, and
 \fIlast\fR is the index of the character just after the last
 one to delete.
-If \fIlast\fR isn't specified it defaults to \fIfirst\fR+1,
+If \fIlast\fR is not specified it defaults to \fIfirst\fR+1,
 i.e. a single character is deleted.
 This command returns an empty string.
 .TP
@@ -323,19 +329,19 @@ Locate the end of the selection nearest to the character given by
 (i.e. including but not going beyond \fIindex\fR).  The other
 end of the selection is made the anchor point for future
 \fBselect to\fR commands.  If the selection
-isn't currently in the entry, then a new selection is created to
+is not currently in the entry, then a new selection is created to
 include the characters between \fIindex\fR and the most recent
 selection anchor point, inclusive.
 Returns an empty string.
 .TP
 \fIpathName \fBselection clear\fR
 Clear the selection if it is currently in this widget.  If the
-selection isn't in this widget then the command has no effect.
+selection is not in this widget then the command has no effect.
 Returns an empty string.
 .TP
 \fIpathName \fBselection from \fIindex\fR
 Set the selection anchor point to just before the character
-given by \fIindex\fR.  Doesn't change the selection.
+given by \fIindex\fR.  Does not change the selection.
 Returns an empty string.
 .TP
 \fIpathName \fBselection present\fR
@@ -359,7 +365,7 @@ to the characters from the anchor point up to but not including
 \fIindex\fR.
 The anchor point is determined by the most recent \fBselect from\fR
 or \fBselect adjust\fR command in this widget.
-If the selection isn't in this widget then a new selection is
+If the selection is not in this widget then a new selection is
 created using the most recent anchor point specified for the widget.
 Returns an empty string.
 .RE
@@ -411,10 +417,11 @@ become visible.
 .SH "DEFAULT BINDINGS"
 .PP
 Tk automatically creates class bindings for entries that give them
-the following default behavior.
-In the descriptions below, ``word'' refers to a contiguous group
-of letters, digits, or ``_'' characters, or any single character
-other than these.
+the following default behavior. In the descriptions below,
+.QW word
+refers to a contiguous group of letters, digits, or
+.QW _
+characters, or any single character other than these.
 .IP [1]
 Clicking mouse button 1 positions the insertion cursor
 just before the character underneath the mouse cursor, sets the
@@ -475,7 +482,7 @@ Shift-End moves the cursor to the end and extends the selection
 to that point.
 .IP [12]
 The Select key and Control-Space set the selection anchor to the position
-of the insertion cursor.  They don't affect the current selection.
+of the insertion cursor.  They do not affect the current selection.
 Shift-Select and Control-Shift-Space adjust the selection to the
 current position of the insertion cursor, selecting from the anchor
 to the insertion cursor if there was not any selection previously.
@@ -525,9 +532,7 @@ entry whatever the value of its \fB\-state\fR option.
 .PP
 The behavior of entries can be changed by defining new bindings for
 individual widgets or by redefining the class bindings.
-
 .SH "SEE ALSO"
-ttk_entry(n)
-
+ttk::entry(n)
 .SH KEYWORDS
 entry, widget

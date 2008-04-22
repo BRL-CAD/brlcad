@@ -137,7 +137,7 @@ static int blueloop();
  * 		else
  * 			if detect then
  * 				break
- * 				
+ *
  * Repeat the above loop with i := here-1 to min by -1.  Note that
  * the "detect" value should not be reinitialized.  If it was
  * "true", and center is not inside the cell, then none of the
@@ -190,7 +190,7 @@ static int blueloop();
  * 	    	    	buffer entries.
  *  	i(l): 	    	The index for this row.
  *  	?xx:	    	The accumulated increment value.
- *  	
+ *
  *  	here(l):    	The starting index for this color.  The
  *  	    	    	following variables are associated with here,
  *  	    	    	in the sense that they must be updated if here
@@ -204,7 +204,7 @@ static int blueloop();
  *  	    	    	from the previous level initializes this level.
  *  	?rgbp:	    	Pointer into the rgb buffer.  The value
  *  	    	    	from the previous level initializes this level.
- * 
+ *
  * The blue and green levels modify 'here-associated' variables (dp,
  * rgbp, dist) on the green and red levels, respectively, when here is
  * changed.
@@ -314,7 +314,7 @@ redloop()
 	else if ( detect )
 	    break;
     }
-    
+
     /* Basic loop down. */
     for ( r = rcenter - 1, rxx = crinc - txsqr, rdist = cdist - rxx,
 	  rdp = cdp - rstride, rrgbp = crgbp - rstride, first = 1;
@@ -330,7 +330,7 @@ redloop()
 	else if ( detect )
 	    break;
     }
-    
+
     return detect;
 }
 
@@ -412,7 +412,7 @@ int restart;
 	    break;
 	}
     }
-    
+
     /* Basic loop down. */
     for ( g = here - 1, gxx = ginc - txsqr, gcdist = gdist = rdist - gxx,
 	  gcdp = gdp = rdp - gstride, gcrgbp = grgbp = rrgbp - gstride,
@@ -452,7 +452,7 @@ int restart;
 	    break;
 	}
     }
-    
+
 #ifdef MINMAX_TRACK
     /* If we saw something, update the edge trackers.  For now, only
      * tracks edges that are "shrinking" (min increasing, max
@@ -622,10 +622,10 @@ int restart;
 		 "*** After up loop at %d,%d,%d; dist = %ld != bdist = %ld\n",
 		 red, green, b, dist, bdist );
 #endif /* DEBUG */
-    
+
     /* Basic loop down. */
     /* Do initializations here, since the 'find' loop might not get
-     * executed. 
+     * executed.
      */
     lim = min;
     b = here - 1;
@@ -754,7 +754,7 @@ int restart;
 	if ( thismin > prevmin )
 	    min = thismin;
 #endif /* DMIN_DMAX_TRACK */
-    
+
 	/* Remember the min and max values. */
 	prevmax = thismax;
 	prevmin = thismin;

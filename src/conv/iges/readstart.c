@@ -1,7 +1,7 @@
 /*                     R E A D S T A R T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2007 United States Government as represented by
+ * Copyright (c) 1990-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -23,11 +23,6 @@
  *	Susanne L. Muuss
  *	Earl P. Weaver
  *
- *  Source -
- *	VLD/ASB Building 1065
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
 
 /*		Read and print Start Section		*/
@@ -39,25 +34,22 @@ void
 Readstart()
 {
 
-	int i=0,done=0;
+    int i=0, done=0;
 
-	while( !done )
+    while ( !done )
+    {
+	if ( Readrec( ++i ) )
+	    bu_exit( 1, "End of file encountered\n" );
+
+	if ( card[72] != 'S' )
 	{
-		if( Readrec( ++i ) )
-		{
-			bu_log( "End of file encountered\n" );
-			exit( 1 );
-		}
-
-		if( card[72] != 'S' )
-		{
-			done = 1;
-			break;
-		}
-		card[72] = '\0';
-		bu_log( "%s\n" , card );
+	    done = 1;
+	    break;
 	}
-	bu_log( "%c", '\n' );
+	card[72] = '\0';
+	bu_log( "%s\n", card );
+    }
+    bu_log( "%c", '\n' );
 }
 
 
@@ -65,8 +57,8 @@ Readstart()
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

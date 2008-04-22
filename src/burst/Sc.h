@@ -1,7 +1,7 @@
 /*                            S C . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,18 +22,18 @@
  *	Author:	Gary S. Moss
  */
 /**
-	<Sc.h> -- MUVES "Sc" (Screen manager) package definitions
+   <Sc.h> -- MUVES "Sc" (Screen manager) package definitions
 **/
 
 /**
 
-	The Sc package provides an interface to the termcap library
-	(termlib(3)) for doing cursor movement, character attribute,
-	and other low-level screen management operations.  It is
-	intended for use in building terminal-independent full-screen
-	user interfaces.  Do to its use of the tgoto() termlib(3)
-	routine, programs that use this package should turn off TAB3
-	in the terminal handler.
+The Sc package provides an interface to the termcap library
+(termlib(3)) for doing cursor movement, character attribute,
+and other low-level screen management operations.  It is
+intended for use in building terminal-independent full-screen
+user interfaces.  Do to its use of the tgoto() termlib(3)
+routine, programs that use this package should turn off TAB3
+in the terminal handler.
 
 **/
 #ifndef Sc_H_INCLUDE
@@ -41,93 +41,89 @@
 #include "./burst.h"
 
 /**
-	boolean	ScInit( FILE *fp )
+   boolean	ScInit( FILE *fp )
 
-	ScInit() must be invoked before any other function in the Sc
-	package.  Stream fp must be open for writing and all terminal
-	control sequences will be sent to fp, giving the application
-	the option of using STDOUT for other things.  Besides setting
-	the output stream, ScInit() does the following:
+   ScInit() must be invoked before any other function in the Sc
+   package.  Stream fp must be open for writing and all terminal
+   control sequences will be sent to fp, giving the application
+   the option of using STDOUT for other things.  Besides setting
+   the output stream, ScInit() does the following:
 
-	Initializes the terminal.
+   Initializes the terminal.
 
-	Fills terminal name and capabilities into these externals:
+   Fills terminal name and capabilities into these externals:
 
-	char	ScTermname[ScTERMSIZ]	(terminal name from $TERM)
-	char	ScTermcap[ScTCAPSIZ]	(terminal capabilities entry)
+   char	ScTermname[ScTERMSIZ]	(terminal name from $TERM)
+   char	ScTermcap[ScTCAPSIZ]	(terminal capabilities entry)
 
-	Gets terminal control strings into external variables (here
-	are some that don't have individual functions to output them,
-	the ones that DO are below):
+   Gets terminal control strings into external variables (here
+   are some that don't have individual functions to output them,
+   the ones that DO are below):
 
-	char	*ScBC	(backspace character)
-	char	*ScPC	(padding character)
-	char	*ScUP	(move the cursor up one line)
-	char	*ScTI	(initialize the terminal)
+   char	*ScBC	(backspace character)
+   char	*ScPC	(padding character)
+   char	*ScUP	(move the cursor up one line)
+   char	*ScTI	(initialize the terminal)
 
-	Gets individual terminal parameters into these externals:
+   Gets individual terminal parameters into these externals:
 
-	int	ScLI	(number of lines on screen)
-	int	ScCO	(number of columns on screen)
+   int	ScLI	(number of lines on screen)
+   int	ScCO	(number of columns on screen)
 
-	Returns "1" for success, "0" for failure and prints
-	appropriate diagnostics on STDERR if $TERM is not set or
-	there is a problem in retrieving the corresponding termcap
-	entry.
+   Returns "1" for success, "0" for failure and prints
+   appropriate diagnostics on STDERR if $TERM is not set or
+   there is a problem in retrieving the corresponding termcap
+   entry.
 **/
-#if _STDC_
-extern boolean	ScInit( FILE *fp );
-#else
-extern boolean	ScInit();
-#endif
+    extern boolean	ScInit( FILE *fp );
 
 /**
 
-	Below are functions paired with terminal control strings that
-	they output to the stream specified with ScInit().  It is not
-	recommended that the control strings be used directly, but it
-	may be useful in certain applications to check their value;
-	if ScInit() has not been invoked or the corresponding terminal
-	capability does not exist, its control string will be NULL,
-	AND the function will return "false".  Otherwise, they will
-	return "true" (assuming that it worked).  There is no way to
-	be sure of this.
+Below are functions paired with terminal control strings that
+they output to the stream specified with ScInit().  It is not
+recommended that the control strings be used directly, but it
+may be useful in certain applications to check their value;
+if ScInit() has not been invoked or the corresponding terminal
+capability does not exist, its control string will be NULL,
+AND the function will return "false".  Otherwise, they will
+return "true" (assuming that it worked).  There is no way to
+be sure of this.
 
-	char	*ScCE 	(clear from under the cursor to end of line)
-	boolean	ScClrEOL( void )
+char	*ScCE 	(clear from under the cursor to end of line)
+boolean	ScClrEOL( void )
 
-	char	*ScCS	(change scrolling region)
-	boolean	ScClrScrlReg( void )
+char	*ScCS	(change scrolling region)
+boolean	ScClrScrlReg( void )
 
-	char	*ScSE	(end standout mode)
-	boolean	ScClrStandout( void )
+char	*ScSE	(end standout mode)
+boolean	ScClrStandout( void )
 
-	char	*ScCL	(clear screen, and home cursor)
-	boolean	ScClrText( void )
+char	*ScCL	(clear screen, and home cursor)
+boolean	ScClrText( void )
 
-	char	*ScAL	(insert a line under the cursor)
-	boolean	ScInsertLn( void )
+char	*ScAL	(insert a line under the cursor)
+boolean	ScInsertLn( void )
 
-	char	*ScDL	(delete the line under the cursor)
-	boolean	ScDeleteLn( void )
+char	*ScDL	(delete the line under the cursor)
+boolean	ScDeleteLn( void )
 
-	char	*ScSR	(scroll text backwards 1 line)
-	boolean	ScDnScroll( void )
+char	*ScSR	(scroll text backwards 1 line)
+boolean	ScDnScroll( void )
 
-	char	*ScHO	(move cursor to top-left corner of screen)
-	boolean	ScHmCursor( void )
+char	*ScHO	(move cursor to top-left corner of screen)
+boolean	ScHmCursor( void )
 
-	char	*ScCM	(move cursor to column and row <x,y>)
-	boolean	ScMvCursor( x, y )
+char	*ScCM	(move cursor to column and row <x, y>)
+boolean	ScMvCursor( x, y )
 
-	char	*ScCS	(set scrolling region from top to btm incl.)
-	boolean	ScSetScrlReg( top, btm )
+char	*ScCS	(set scrolling region from top to btm incl.)
+boolean	ScSetScrlReg( top, btm )
 
-	char	*ScSO	(begin standout mode)
-	boolean	ScSetStandout( void )
+char	*ScSO	(begin standout mode)
+boolean	ScSetStandout( void )
 
-	char	*ScSF	(scroll text forwards 1 line)
-	boolean	ScUpScroll( void )
+char	*ScSF	(scroll text forwards 1 line)
+boolean	ScUpScroll( void )
 
 **/
 extern char	*ScBC;
@@ -148,7 +144,6 @@ extern char	*ScSF;
 extern int	ScLI;
 extern int	ScCO;
 
-#if _STDC_
 extern boolean	ScClrEOL( void );
 extern boolean	ScClrScrlReg( void );
 extern boolean	ScClrStandout( void );
@@ -161,20 +156,6 @@ extern boolean	ScMvCursor( int x, int y );
 extern boolean	ScSetScrlReg( int top, int btm );
 extern boolean	ScSetStandout( void );
 extern boolean	ScUpScroll( void );
-#else
-extern boolean	ScClrEOL();
-extern boolean	ScClrScrlReg();
-extern boolean	ScClrStandout();
-extern boolean	ScClrText();
-extern boolean	ScDeleteLn();
-extern boolean	ScDnScroll();
-extern boolean	ScHmCursor();
-extern boolean	ScInsertLn();
-extern boolean	ScMvCursor();
-extern boolean	ScSetScrlReg();
-extern boolean	ScSetStandout();
-extern boolean	ScUpScroll();
-#endif
 
 #define ScTCAPSIZ	1024
 #define ScTERMSIZ	80
@@ -189,8 +170,8 @@ extern char	ScTermname[];
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

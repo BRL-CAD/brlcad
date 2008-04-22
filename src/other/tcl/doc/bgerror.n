@@ -32,13 +32,13 @@ releases of Tcl.  Applications intending to support only
 Tcl releases 8.5 and later should simply make use of \fBinterp bgerror\fR.
 .VE 8.5
 .PP
-The \fBbgerror\fR command doesn't exist as built-in part of Tcl.  Instead,
+The \fBbgerror\fR command does not exist as built-in part of Tcl.  Instead,
 individual applications or users can define a \fBbgerror\fR
 command (e.g. as a Tcl procedure) if they wish to handle background
 errors.
 .PP
 A background error is one that occurs in an event handler or some
-other command that didn't originate with the application.
+other command that did not originate with the application.
 For example, if an error occurs while executing a command specified
 with the \fBafter\fR command, then it is a background error.
 For a non-background error, the error can simply be returned up

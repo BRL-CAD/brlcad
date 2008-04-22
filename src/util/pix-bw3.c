@@ -1,7 +1,7 @@
 /*                       P I X - B W 3 . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2007 United States Government as represented by
+ * Copyright (c) 1986-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,74 +22,61 @@
  * Converts a RGB pix file into 3 8-bit BW files.
  *  (i.e. seperates the colors)
  *
- *  Author -
- *	Phillip Dykstra
- *	13 June 1986
- *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
-
-#include <stdio.h>
 #include <stdlib.h>
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#include <strings.h>
-#endif
-#include <unistd.h>
+#include "bio.h"
+
+#include "bu.h"
+
 
 unsigned char	ibuf[3*1024];
 unsigned char	red[1024], green[1024], blue[1024];
 
-char *Usage = "usage: pix-bw3 redout greenout blueout < file.pix\n";
 
 int
 main(int argc, char **argv)
 {
-	int	i, num;
-	FILE	*rfp, *bfp, *gfp;
-	register unsigned char *ibufp;
+    int	i, num;
+    FILE	*rfp, *bfp, *gfp;
+    register unsigned char *ibufp;
 
-	if( argc != 4 || isatty(fileno(stdin)) ) {
-		fputs( Usage, stderr );
-		exit( 1 );
+    if ( argc != 4 || isatty(fileno(stdin)) ) {
+	bu_exit(1, "usage: pix-bw3 redout greenout blueout < file.pix\n");
+    }
+
+    rfp = fopen( argv[1], "w" );
+    gfp = fopen( argv[2], "w" );
+    bfp = fopen( argv[3], "w" );
+
+    if ( rfp == NULL || gfp == NULL || bfp == NULL ) {
+	bu_exit(2, "pix-bw3: Can't open output files\n" );
+    }
+
+    while ( (num = fread( ibuf, sizeof( char ), 3*1024, stdin )) > 0 ) {
+	ibufp = &ibuf[0];
+	for ( i = 0; i < num/3; i++ ) {
+	    red[i] = *ibufp++;
+	    green[i] = *ibufp++;
+	    blue[i] = *ibufp++;
 	}
+	fwrite( red, sizeof( *red ), num/3, rfp );
+	fwrite( green, sizeof( *green ), num/3, gfp );
+	fwrite( blue, sizeof( *blue ), num/3, bfp );
+    }
 
-	rfp = fopen( argv[1], "w" );
-	gfp = fopen( argv[2], "w" );
-	bfp = fopen( argv[3], "w" );
-
-	if( rfp == NULL || gfp == NULL || bfp == NULL ) {
-		fprintf( stderr, "pix-bw3: Can't open output files\n" );
-		exit( 2 );
-	}
-
-	while( (num = fread( ibuf, sizeof( char ), 3*1024, stdin )) > 0 ) {
-		ibufp = &ibuf[0];
-		for( i = 0; i < num/3; i++ ) {
-			red[i] = *ibufp++;
-			green[i] = *ibufp++;
-			blue[i] = *ibufp++;
-		}
-		fwrite( red, sizeof( *red ), num/3, rfp );
-		fwrite( green, sizeof( *green ), num/3, gfp );
-		fwrite( blue, sizeof( *blue ), num/3, bfp );
-	}
-
-	return 0;
+    return 0;
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

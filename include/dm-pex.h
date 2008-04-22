@@ -1,7 +1,7 @@
 /*                          D M - P E X . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2007 United States Government as represented by
+ * Copyright (c) 1993-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@
 /*
  * Display coordinate conversion:
  *  GED is using -2048..+2048,
- *  X is 0..width,0..height
+ *  X is 0..width, 0..height
  */
 #define	GED_TO_Xx(_dmp, x) ((int)(((x)/4096.0+0.5)*((struct pex_vars *)((_dmp)->dmr_vars))->width))
 #define	GED_TO_Xy(_dmp, x) ((int)((0.5-(x)/4096.0)*((struct pex_vars *)((_dmp)->dmr_vars))->height))
@@ -41,34 +41,34 @@
 
 struct modifiable_pex_vars {
 #if TRY_DEPTHCUE
-  int cue;
+    int cue;
 #endif
-  int perspective_mode;
-  int dummy_perspective;
+    int perspective_mode;
+    int dummy_perspective;
 };
 
 struct pex_vars {
-  struct bu_list l;
-  Display *dpy;
-  Window win;
-  Tk_Window xtkwin;
-  int width;
-  int height;
-  int omx, omy;
-  unsigned int mb_mask;
-  int perspective_angle;
-  XFontStruct *fontstruct;
-  GC gc;
+    struct bu_list l;
+    Display *dpy;
+    Window win;
+    Tk_Window xtkwin;
+    int width;
+    int height;
+    int omx, omy;
+    unsigned int mb_mask;
+    int perspective_angle;
+    XFontStruct *fontstruct;
+    GC gc;
 #ifdef DOUBLE_BUFFERING_WITH_PIXMAPS
-  Pixmap pix;
-  int pix_width, pix_height;
+    Pixmap pix;
+    int pix_width, pix_height;
 #endif
-  PEXRenderer renderer;
-  PEXRendererAttributes rattrs;
-  int is_monochrome;
-  unsigned long black,gray,white,yellow,red,blue;
-  unsigned long bd, bg, fg;   /* color of border, background, foreground */
-  struct modifiable_pex_vars mvars;
+    PEXRenderer renderer;
+    PEXRendererAttributes rattrs;
+    int is_monochrome;
+    unsigned long black, gray, white, yellow, red, blue;
+    unsigned long bd, bg, fg;   /* color of border, background, foreground */
+    struct modifiable_pex_vars mvars;
 };
 
 extern void Pex_configure_window_shape();
@@ -83,8 +83,8 @@ extern struct pex_vars head_pex_vars;
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

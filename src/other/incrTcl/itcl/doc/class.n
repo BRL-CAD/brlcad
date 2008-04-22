@@ -13,7 +13,7 @@
 .SH NAME
 class \- create a class of objects
 .SH SYNOPSIS
-\fBclass \fIclassName\fR \fB{
+\fBitcl::class \fIclassName\fR \fB{
 .br
     \fBinherit \fIbaseClass\fR ?\fIbaseClass\fR...?
 .br
@@ -227,7 +227,7 @@ Once a common data member has been defined, it can be set using
 This allows common data members to be initialized as arrays.
 For example:
 .CS
-class Foo {
+itcl::class Foo {
     common boolean
     set boolean(true) 1
     set boolean(false) 0
@@ -366,7 +366,7 @@ derived class handle the same operations as the base class, but
 with its own specialized behavior.  For example, suppose we have
 a Toaster class that looks like this:
 .CS
-class Toaster {
+itcl::class Toaster {
     variable crumbs 0
     method toast {nslices} {
         if {$crumbs > 50} {
@@ -383,7 +383,7 @@ We might create another class like SmartToaster that redefines
 the "toast" method.  If we want to access the base class method,
 we can qualify it with the base class name, to avoid ambiguity:
 .CS
-class SmartToaster {
+itcl::class SmartToaster {
     inherit Toaster
     method toast {nslices} {
         if {$crumbs > 40} {
@@ -396,7 +396,7 @@ class SmartToaster {
 Instead of hard-coding the base class name, we can use the
 "chain" command like this:
 .CS
-class SmartToaster {
+itcl::class SmartToaster {
     inherit Toaster
     method toast {nslices} {
         if {$crumbs > 40} {

@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -21,7 +21,7 @@ ON_OBJECT_IMPLEMENT(ON_CurveOnSurface,ON_Curve,"4ED7D4D8-E947-11d3-BFE5-00108301
 ON_CurveOnSurface::ON_CurveOnSurface() : m_c2(0), m_c3(0), m_s(0)
 {}
 
-ON_CurveOnSurface::ON_CurveOnSurface( ON_Curve* c2, ON_Curve* c3, ON_Surface* s ) 
+ON_CurveOnSurface::ON_CurveOnSurface( ON_Curve* c2, ON_Curve* c3, ON_Surface* s )
                  : m_c2(c2), m_c3(c3), m_s(s)
 {}
 
@@ -121,7 +121,7 @@ ON_CurveOnSurface::Dump( ON_TextLog& dump ) const
   dump.Print("ON_CurveOnSurface \n");
 }
 
-BOOL 
+BOOL
 ON_CurveOnSurface::Write(
        ON_BinaryArchive& file // open binary file
      ) const
@@ -138,13 +138,13 @@ ON_CurveOnSurface::Write(
   return rc;
 }
 
-BOOL 
+BOOL
 ON_CurveOnSurface::Read(
        ON_BinaryArchive& file // open binary file
      )
 {
-  delete m_c2; 
-  delete m_c3; 
+  delete m_c2;
+  delete m_c3;
   m_c2 = 0;
   m_c3 = 0;
   delete m_s;
@@ -189,13 +189,13 @@ ON_CurveOnSurface::Read(
   return rc;
 }
 
-int 
+int
 ON_CurveOnSurface::Dimension() const
 {
   return ( m_s ) ? m_s->Dimension() : FALSE;
 }
 
-BOOL 
+BOOL
 ON_CurveOnSurface::GetBBox( // returns TRUE if successful
          double* boxmin,    // minimum
          double* boxmax,    // maximum
@@ -232,8 +232,8 @@ int ON_CurveOnSurface::SpanCount() const
   return m_c2 ? m_c2->SpanCount() : 0;
 }
 
-BOOL ON_CurveOnSurface::GetSpanVector( // span "knots" 
-       double* s // array of length SpanCount() + 1 
+BOOL ON_CurveOnSurface::GetSpanVector( // span "knots"
+       double* s // array of length SpanCount() + 1
        ) const
 {
   return m_c2 ? m_c2->GetSpanVector(s) : FALSE;
@@ -244,7 +244,7 @@ int ON_CurveOnSurface::Degree() const
   return m_c2 ? m_c2->Degree() : 0;
 }
 
-BOOL 
+BOOL
 ON_CurveOnSurface::GetParameterTolerance(
          double t,  // t = parameter in domain
          double* tminus, // tminus
@@ -297,7 +297,7 @@ ON_CurveOnSurface::IsInPlane(
   return FALSE;
 }
 
-BOOL 
+BOOL
 ON_CurveOnSurface::IsClosed() const
 {
   BOOL rc = ( m_c2 && m_s ) ? m_c2->IsClosed() : FALSE;
@@ -306,7 +306,7 @@ ON_CurveOnSurface::IsClosed() const
   return rc;
 }
 
-BOOL 
+BOOL
 ON_CurveOnSurface::IsPeriodic() const
 {
   return ( m_c2 && m_s ) ? m_c2->IsPeriodic() : FALSE;
@@ -321,7 +321,7 @@ ON_CurveOnSurface::Reverse()
   return rc;
 }
 
-BOOL 
+BOOL
 ON_CurveOnSurface::Evaluate( // returns FALSE if unable to evaluate
        double t,       // evaluation parameter
        int der_count,  // number of derivatives (>=0)
@@ -329,7 +329,7 @@ ON_CurveOnSurface::Evaluate( // returns FALSE if unable to evaluate
        double* v,      // v[] array of length stride*(ndir+1)
        int side,       // optional - determines which side to evaluate from
                        //         0 = default
-                       //      <  0 to evaluate from below, 
+                       //      <  0 to evaluate from below,
                        //      >  0 to evaluate from above
        int* hint       // optional - evaluation hint (int) used to speed
                        //            repeated evaluations
@@ -404,7 +404,7 @@ ON_CurveOnSurface::Evaluate( // returns FALSE if unable to evaluate
                   if ( dim > 1 ) v[1] = 0.0;
                   if ( dim > 2 ) v[2] = 0.0;
                   v += v_stride;
-                  rc = FALSE; // TODO - generic chain rule 
+                  rc = FALSE; // TODO - generic chain rule
                 }
               }
             }
@@ -417,16 +417,16 @@ ON_CurveOnSurface::Evaluate( // returns FALSE if unable to evaluate
 }
 
 
-int 
+int
 ON_CurveOnSurface::GetNurbForm( // returns 0: unable to create NURBS representation
                  //            with desired accuracy.
                  //         1: success - returned NURBS parameterization
                  //            matches the curve's to wthe desired accuracy
                  //         2: success - returned NURBS point locus matches
                  //            the curve's to the desired accuracy but, on
-                 //            the interior of the curve's domain, the 
+                 //            the interior of the curve's domain, the
                  //            curve's parameterization and the NURBS
-                 //            parameterization may not match to the 
+                 //            parameterization may not match to the
                  //            desired accuracy.
       ON_NurbsCurve& nurbs,
       double tolerance,  // (>=0)

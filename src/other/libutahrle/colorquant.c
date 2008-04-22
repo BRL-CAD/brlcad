@@ -1,14 +1,14 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
@@ -28,6 +28,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 14.2  2005/01/23 14:29:55  brlcad
+ * update from a patched 3.0 to urt 3.1b1 (library)
+ *
  * Revision 3.0.1.4  1992/04/30  14:06:48  spencer
  * patch3: lint fixes.
  *
@@ -42,46 +45,46 @@
  * Revision 3.0.1.2  90/11/29  15:18:04  spencer
  * Remove a typo.
  * 
- * 
+ *
  * Revision 3.0.1.1  90/11/19  16:59:48  spencer
  * Use inv_cmap instead of find_colors.
  * Changes to process multiple files into one colormap (accum_hist arg).
  * Delete 'otherimages' argument -- unnecessary with faster inv_cmap code.
- * 
- * 
+ *
+ *
  * Revision 3.0  90/08/03  15:20:11  spencer
  * Establish version 3.0 base.
- * 
+ *
  * Revision 1.6  90/07/29  08:06:06  spencer
  * If HUGE isn't defined, make it HUGE_VAL (for ansi).
- * 
+ *
  * Revision 1.5  90/07/26  17:25:48  rgb
  * Added a parameter to colorquant for rgbmap construction.
- * 
+ *
  * Revision 1.4  90/07/13  14:53:31  spencer
  * Get rid of ARB_ARG sh*t.
  * Change a couple of vars to double so that HUGE won't cause problems.
- * 
+ *
  * Revision 1.3  90/06/28  21:42:56  spencer
  * Declare internal functions properly.
  * Delete unused global variable.
- * 
+ *
  * Revision 1.2  90/06/28  13:18:56  spencer
  * Make internal functions static.
  * Build entire RGB cube, not just those colors used by this image.  This
  * is so dithering will work.
- * 
+ *
  * Revision 1.1  90/06/18  20:45:17  spencer
  * Initial revision
- * 
+ *
  * Revision 1.3  89/12/03  18:27:16  craig
  * Removed bogus integer casts in distance calculation in makenearest().
- * 
+ *
  * Revision 1.2  89/12/03  18:13:12  craig
  * FindCutpoint now returns FALSE if the given box cannot be cut.  This
  * to avoid overflow problems in CutBox.
  * "whichbox" in GreatestVariance() is now initialized to 0.
- * 
+ *
  */
 static char rcsid[] = "$Header$";
 
@@ -118,25 +121,25 @@ static int  FindCutpoint();
 
 
 
-/* 
+/*
  * The colorquant() routine has been tested on an Iris 4D70 workstation,
  * a Sun 3/60 workstation, and (to some extent), a Macintosh.
- * 
+ *
  * Calls to bzero() may have to be replaced with the appropriate thing on
  * your system.  (bzero(ptr, len) writes 'len' 0-bytes starting at the location
  * pointed to by ptr.)
- * 
+ *
  * Although I've tried to avoid integer overflow problems where ever possible,
  * it's likely I've missed a spot where an 'int' should really be a 'long'.
  * (On the machine this was developed on, an int == long == 32 bits.)
- * 
+ *
  * Note that it's quite easy to optimize this code for a given value for
  * 'bits'.  In addition, if you assume bits is small and
  * that the total number of pixels is relatively small, there are several
  * places that integer arithmetic may be substituted for floating-point.
  * One such place is the loop in BoxStats -- mean and var need not necessary
  * be floats.
- * 
+ *
  * As things stand, the maximum number of colors to which an image may
  * be quantized is 256.  This limit may be overcome by changing rgbmap and
  * colormap from pointers to characters to pointers to something larger.
@@ -159,9 +162,9 @@ static int  FindCutpoint();
 /*
  * Readability constants.
  */
-#define REDI		0	
+#define REDI		0
 #define GREENI		1
-#define BLUEI		2	
+#define BLUEI		2
 #define TRUE		1
 #define FALSE		0
 
@@ -198,7 +201,7 @@ static Box		*Boxes;			/* Array of color boxes. */
  *				colormap[0][i], colormap[1][i] and
  *				colormap[2][i].  Each entry is an unsigned char.
  *	colors			The number of colormap entries, stored
- *				as an integer.	
+ *				as an integer.
  *	bits			The number of significant bits in each entry
  *				of the red, greena and blue arrays. An integer.
  *	rgbmap			An array of unsigned chars of size (2^bits)^3.
@@ -222,12 +225,12 @@ static Box		*Boxes;			/* Array of color boxes. */
  * 				the routine slightly.  If not set, the
  * 				data has been prequantized to 'bits'
  * 				significant bits.
- * 		
- *	accum_hist		If non-zero the histogram will accumulate and 
+ *
+ *	accum_hist		If non-zero the histogram will accumulate and
  *				reflect pixels from multiple images.
  *				when 1, the histogram will be initialized and
- *				summed, but not thrown away OR processed. when 
- *				2 the image RGB will be added to it.  When 3 
+ *				summed, but not thrown away OR processed. when
+ *				2 the image RGB will be added to it.  When 3
  *				Boxes are cut and a colormap and rgbmap
  *				are be returned, Histogram is freed too.
  *				When zero, all code is executed as per normal.
@@ -249,7 +252,7 @@ int flags, accum_hist;
 {
     int	i,			/* Counter */
     OutColors,			/* # of entries computed */
-    Colormax;			/* quantized full-intensity */ 
+    Colormax;			/* quantized full-intensity */
     float	Cfactor;	/* Conversion factor */
 
     if (accum_hist < 0 || accum_hist > PROCESS_HIST)
@@ -262,7 +265,7 @@ int flags, accum_hist;
     Cfactor = (float)FULLINTENSITY / Colormax;
 
     if (! accum_hist || accum_hist == INIT_HIST) {
-	Histogram = (unsigned long *)calloc(ColormaxI*ColormaxI*ColormaxI, 
+	Histogram = (unsigned long *)calloc(ColormaxI*ColormaxI*ColormaxI,
 					    sizeof(long));
 	Boxes = (Box *)malloc(colors * sizeof(Box));
 	/*
@@ -276,7 +279,7 @@ int flags, accum_hist;
 
     SumPixels += NPixels;
 
-    if ( accum_hist != PROCESS_HIST ) 
+    if ( accum_hist != PROCESS_HIST )
 	QuantHistogram(red, green, blue, &Boxes[0], flags&CQ_QUANTIZE);
 
     if ( !accum_hist || accum_hist == PROCESS_HIST) {
@@ -327,9 +330,9 @@ int quantize;
 	/*
 	 * We compute both the histogram and the proj. frequencies of
 	 * the first box at the same time to save a pass through the
-	 * entire image. 
+	 * entire image.
 	 */
-	
+
 	if ( !quantize )
 	    for (i = 0; i < NPixels; i++) {
 		rf[*r]++;
@@ -350,14 +353,14 @@ int quantize;
 		Histogram[(((rr<<Bits)|gg)<<Bits)|bb]++;
 	    }
 	}
-	    
+
 }
 
 /*
  * Interatively cut the boxes.
  */
 static int
-CutBoxes(boxes, colors) 
+CutBoxes(boxes, colors)
 Box	*boxes;
 int	colors;
 {
@@ -453,7 +456,7 @@ Box *box, *newbox;
 	/*
 	 * Find 'optimal' cutpoint along each of the red, green and blue
 	 * axes.  Sum the variances of the two boxes which would result
-	 * by making each cut and store the resultant boxes for 
+	 * by making each cut and store the resultant boxes for
 	 * (possible) later use.
 	 */
 	for (i = 0; i < 3; i++) {
@@ -552,7 +555,7 @@ register Box *box1, *box2;
 
 	bzero(box1->freq[0], ColormaxI * sizeof(unsigned long));
 	bzero(box1->freq[1], ColormaxI * sizeof(unsigned long));
-	bzero(box1->freq[2], ColormaxI * sizeof(unsigned long)); 
+	bzero(box1->freq[2], ColormaxI * sizeof(unsigned long));
 
 	for (r = box1->low[0]; r < box1->high[0]; r++) {
 		roff = r << Bits;
@@ -616,7 +619,7 @@ unsigned char *rgbmap;
 int bits;
 {
 	register int r, g, b;
-	
+
 	for (r = box->low[REDI]; r < box->high[REDI]; r++) {
 		for (g = box->low[GREENI]; g < box->high[GREENI]; g++) {
 			for (b = box->low[BLUEI]; b < box->high[BLUEI]; b++) {
@@ -654,7 +657,7 @@ int otherimages;
 		 * color in the box.
 		 */
 		num = getneighbors(boxes, i, neighbors, colors, colormap);
-		makenearest(boxes, i, num, neighbors, rgbmap, bits, colormap, 
+		makenearest(boxes, i, num, neighbors, rgbmap, bits, colormap,
 			    otherimages);
 	}
 	free((char *)neighbors);
@@ -735,7 +738,7 @@ unsigned char *colormap[3];
  * one whose centroid is closest to the current color.
  */
 static
-makenearest(boxes, boxnum, nneighbors, neighbors, rgbmap, bits, colormap, 
+makenearest(boxes, boxnum, nneighbors, neighbors, rgbmap, bits, colormap,
 	    otherimages)
 Box *boxes;
 int boxnum;
@@ -757,7 +760,7 @@ int otherimages;
  * The following "if" is to avoid doing extra work when the RGBmap is
  * not going to be used for other images.
  */
-			        if ((!otherimages) && 
+			        if ((!otherimages) &&
 				    (Histogram[(((r<<bits)|g)<<bits)|b] == 0))
 					continue;
 
@@ -774,7 +777,7 @@ int otherimages;
 					dist = rdist*rdist + gdist*gdist + bdist*bdist;
 					if (dist < mindist) {
 						mindist = dist;
-						which = *np; 
+						which = *np;
 					}
 				}
 				/*

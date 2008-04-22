@@ -1,7 +1,7 @@
 /*                          D M _ X V A R S . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2007 United States Government as represented by
+ * Copyright (c) 1993-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -49,7 +49,7 @@ struct dm_xvars {
 #ifdef IF_WGL
     PIXELFORMATDESCRIPTOR *vip;
     HFONT fontstruct;
-    HDC  hdc;      // device context of device that OpenGL calls are to be drawn on
+    HDC  hdc;      /* device context of device that OpenGL calls are to be drawn on */
 #endif
 #if defined(DM_X) || defined (DM_OGL)
     XVisualInfo *vip;
@@ -70,8 +70,8 @@ struct dm_xvars {
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

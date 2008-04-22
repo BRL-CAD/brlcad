@@ -33,13 +33,13 @@ msgcat \- Tcl message catalog
 .sp
 \fB::msgcat::mcunknown \fIlocale src-string\fR
 .BE
-
 .SH DESCRIPTION
 .PP
 The \fBmsgcat\fR package provides a set of functions
 that can be used to manage multi-lingual user interfaces.
-Text strings are defined in a ``message catalog'' which
-is independent from the application, and
+Text strings are defined in a
+.QW "message catalog"
+which is independent from the application, and
 which can be edited or localized without modifying
 the application source code.  New languages
 or locales are provided by adding a new file to
@@ -55,6 +55,7 @@ Returns a translation of \fIsrc-string\fR according to the
 user's current locale.  If additional arguments past \fIsrc-string\fR
 are given, the \fBformat\fR command is used to substitute the
 additional arguments in the translation of \fIsrc-string\fR.
+.RS
 .PP
 \fB::msgcat::mc\fR will search the messages defined
 in the current namespace for a translation of \fIsrc-string\fR; if
@@ -69,6 +70,7 @@ application can pass the English string through \fB::msgcat::mc\fR and
 use the result.  If an application is written for a single language in
 this fashion, then it is easy to add support for additional languages
 later simply by defining new message catalog entries.
+.RE
 .TP
 \fB::msgcat::mcmax ?\fIsrc-string src-string ...\fR?
 Given several source strings, \fB::msgcat::mcmax\fR returns the length
@@ -100,8 +102,9 @@ returns \fB{en_US_funky en_US en {}}\fR.
 \fB::msgcat::mcload \fIdirname\fR
 Searches the specified directory for files that match
 the language specifications returned by \fB::msgcat::mcpreferences\fR
-(note that these are all lowercase), extended by the file
-extension ``.msg''.  Each matching file is 
+(note that these are all lowercase), extended by the file extension
+.QW .msg .
+Each matching file is
 read in order, assuming a UTF-8 encoding.  The file contents are
 then evaluated as a Tcl script.  This means that Unicode characters
 may be present in the message file either directly in their UTF-8
@@ -141,10 +144,15 @@ The locale is specified to \fBmsgcat\fR by a locale string
 passed to \fB::msgcat::mclocale\fR.
 The locale string consists of
 a language code, an optional country code, and an optional
-system-specific code, each separated by ``_''.  The country and language
+system-specific code, each separated by
+.QW _ .
+The country and language
 codes are specified in standards ISO-639 and ISO-3166.
-For example, the locale ``en'' specifies English and ``en_US'' specifies
-U.S. English.
+For example, the locale
+.QW en
+specifies English and
+.QW en_US
+specifies U.S. English.
 .PP
 When the msgcat package is first loaded, the locale is initialized
 according to the user's environment.  The variables \fBenv(LC_ALL)\fR,
@@ -163,12 +171,20 @@ On Windows, if none of those environment variables is set, msgcat will
 attempt to extract locale information from the
 registry.  If all these attempts to discover an initial locale
 from the user's environment fail, msgcat defaults to an initial
-locale of ``C''.
+locale of
+.QW C .
 .PP
-When a locale is specified by the user, a ``best match'' search is
-performed during string translation.  For example, if a user specifies
+When a locale is specified by the user, a
+.QW "best match"
+search is performed during string translation.  For example, if a user
+specifies
 .VS 1.4
-en_GB_Funky, the locales ``en_GB_Funky'', ``en_GB'', ``en'' and ``''
+en_GB_Funky, the locales
+.QW en_GB_Funky ,
+.QW en_GB ,
+.QW en
+and
+.MT
 (the empty string)
 .VE 1.4
 are searched in order until a matching translation
@@ -201,10 +217,13 @@ hello from ::foo
 When searching for a translation of a message, the
 message catalog will search first the current namespace,
 then the parent of the current namespace, and so on until
-the global namespace is reached.  This allows child namespaces
-to "inherit" messages from their parent namespace.
+the global namespace is reached.  This allows child namespaces to
+.QW inherit
+messages from their parent namespace.
 .PP
-For example, executing (in the ``en'' locale) the code 
+For example, executing (in the
+.QW en
+locale) the code
 .CS
 \fB::msgcat::mcset\fR en m1 ":: message1"
 \fB::msgcat::mcset\fR en m2 ":: message2"
@@ -234,17 +253,22 @@ to the following conditions:
 .IP [1]
 All message files for a package are in the same directory.
 .IP [2]
-The message file name is a msgcat locale specifier (all lowercase)
-followed by ``.msg''.  For example:
+The message file name is a msgcat locale specifier (all lowercase) followed by
+.QW .msg .
+For example:
 .CS
-es.msg    -- spanish
-en_gb.msg -- United Kingdom English
+es.msg    \(em spanish
+en_gb.msg \(em United Kingdom English
 .CE
 .VS 1.4
-\fIException:\fR The message file for the root locale ``'' is
-called \fBROOT.msg\fR.  This exception is made so as not to
+\fIException:\fR The message file for the root locale
+.MT
+is called
+.QW \fBROOT.msg\fR .
+This exception is made so as not to
 cause peculiar behavior, such as marking the message file as
-``hidden'' on Unix file systems.
+.QW hidden
+on Unix file systems.
 .VE 1.4
 .IP [3]
 The file contains a series of calls to \fBmcset\fR and
@@ -289,8 +313,8 @@ format "In location %s we produced %d units" $city $num
 This can be handled by using the positional
 parameters:
 .CS
-format "We produced %1\\$d units in location %2\\$s" $num $city
-format "In location %2\\$s we produced %1\\$d units" $num $city
+format "We produced %1\e$d units in location %2\e$s" $num $city
+format "In location %2\e$s we produced %1\e$d units" $num $city
 .CE
 .PP
 Similarly, positional parameters can be used with \fBscan\fR to
@@ -298,9 +322,7 @@ extract values from internationalized strings.
 .SH CREDITS
 .PP
 The message catalog code was developed by Mark Harrison.
-
 .SH "SEE ALSO"
 format(n), scan(n), namespace(n), package(n)
-
 .SH KEYWORDS
 internationalization, i18n, localization, l10n, message, text, translation

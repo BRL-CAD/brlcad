@@ -142,6 +142,8 @@ TclThreadDataKeyGet(
  *	Keep a list of (mutexes/condition variable/data key) used during
  *	finalization.
  *
+ *	Assume master lock is held.
+ *
  * Results:
  *	None.
  *
@@ -159,10 +161,21 @@ RememberSyncObject(
     char **newList;
     int i, j;
 
+
     /*
-     * Save the pointer to the allocated object so it can be finalized. Grow
-     * the list of pointers if necessary, copying only non-NULL pointers to
-     * the new list.
+     * Reuse any free slot in the list.
+     */
+
+    for (i=0 ; i < recPtr->num ; ++i) {
+	if (recPtr->list[i] == NULL) {
+	    recPtr->list[i] = objPtr;
+	    return;
+	}
+    }
+
+    /*
+     * Grow the list of pointers if necessary, copying only non-NULL
+     * pointers to the new list.
      */
 
     if (recPtr->num >= recPtr->max) {
@@ -179,6 +192,7 @@ RememberSyncObject(
 	recPtr->list = newList;
 	recPtr->num = j;
     }
+
     recPtr->list[recPtr->num] = objPtr;
     recPtr->num++;
 }
@@ -189,6 +203,7 @@ RememberSyncObject(
  * ForgetSyncObject
  *
  *	Remove a single object from the list.
+ *	Assume master lock is held.
  *
  * Results:
  *	None.
@@ -220,6 +235,7 @@ ForgetSyncObject(
  * TclRememberMutex
  *
  *	Keep a list of mutexes used during finalization.
+ *	Assume master lock is held.
  *
  * Results:
  *	None.
@@ -261,7 +277,9 @@ Tcl_MutexFinalize(
 #ifdef TCL_THREADS
     TclpFinalizeMutex(mutexPtr);
 #endif
+    TclpMasterLock();
     ForgetSyncObject((char *) mutexPtr, &mutexRecord);
+    TclpMasterUnlock();
 }
 
 /*
@@ -270,6 +288,7 @@ Tcl_MutexFinalize(
  * TclRememberCondition
  *
  *	Keep a list of condition variables used during finalization.
+ *	Assume master lock is held.
  *
  * Results:
  *	None.
@@ -311,7 +330,9 @@ Tcl_ConditionFinalize(
 #ifdef TCL_THREADS
     TclpFinalizeCondition(condPtr);
 #endif
+    TclpMasterLock();
     ForgetSyncObject((char *) condPtr, &condRecord);
+    TclpMasterUnlock();
 }
 
 /*
@@ -357,32 +378,34 @@ TclFinalizeThreadData(void)
 void
 TclFinalizeSynchronization(void)
 {
-#ifdef TCL_THREADS
+    int i;
     void *blockPtr;
     Tcl_ThreadDataKey *keyPtr;
+#ifdef TCL_THREADS
     Tcl_Mutex *mutexPtr;
     Tcl_Condition *condPtr;
-    int i;
 
     TclpMasterLock();
+#endif
 
     /*
      * If we're running unthreaded, the TSD blocks are simply stored inside
      * their thread data keys. Free them here.
      */
 
-    for (i=0 ; i<keyRecord.num ; i++) {
-	keyPtr = (Tcl_ThreadDataKey *) keyRecord.list[i];
-	blockPtr = (void *) *keyPtr;
-	ckfree(blockPtr);
-    }
     if (keyRecord.list != NULL) {
+	for (i=0 ; i<keyRecord.num ; i++) {
+	    keyPtr = (Tcl_ThreadDataKey *) keyRecord.list[i];
+	    blockPtr = (void *) *keyPtr;
+	    ckfree(blockPtr);
+	}
 	ckfree((char *) keyRecord.list);
 	keyRecord.list = NULL;
     }
     keyRecord.max = 0;
     keyRecord.num = 0;
-
+    
+#ifdef TCL_THREADS
     /*
      * Call thread storage master cleanup.
      */
@@ -416,13 +439,6 @@ TclFinalizeSynchronization(void)
     condRecord.num = 0;
 
     TclpMasterUnlock();
-#else /* TCL_THREADS */
-    if (keyRecord.list != NULL) {
-	ckfree((char *) keyRecord.list);
-	keyRecord.list = NULL;
-    }
-    keyRecord.max = 0;
-    keyRecord.num = 0;
 #endif /* TCL_THREADS */
 }
 

@@ -8,6 +8,7 @@
 #
 # Copyright (c) 1995-1997 Sun Microsystems, Inc.
 # Copyright (c) 1998-2000 Ajuba Solutions.
+# Copyright (c) 2007 Daniel A. Steffen <das@users.sourceforge.net>
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -96,22 +97,47 @@ proc ::tk::ConsoleInit {} {
 		-command tk::ConsoleAbout
     }
 
+    AmpMenuArgs .menubar.edit add separator
+    AmpMenuArgs .menubar.edit add command -label [mc "&Increase Font Size"] \
+        -accel "$mod++" -command {event generate .console <<Console_FontSizeIncr>>}
+    AmpMenuArgs .menubar.edit add command -label [mc "&Decrease Font Size"] \
+        -accel "$mod+-" -command {event generate .console <<Console_FontSizeDecr>>}
+
     . configure -menu .menubar
 
-    set con [text .console -yscrollcommand [list .sb set] -setgrid true]
-    scrollbar .sb -command [list $con yview]
-    pack .sb -side right -fill both
-    pack $con -fill both -expand 1 -side left
-    switch -exact $tcl_platform(platform) {
-	"windows" {
-	    $con configure -font systemfixed
-	}
-	"unix" {
-	    if {[tk windowingsystem] eq "aqua"} {
-		$con configure -font {Monaco 9 normal} -highlightthickness 0
-	    }
-	}
+    # See if we can find a better font than the TkFixedFont
+    font create TkConsoleFont {*}[font configure TkFixedFont]
+    set families [font families]
+    switch -exact -- [tk windowingsystem] {
+        aqua { set preferred {Monaco 10} }
+        win32 { set preferred {ProFontWindows 8 Consolas 8} }
+        default { set preferred {} }
     }
+    foreach {family size} $preferred {
+        if {[lsearch -exact $families $family] != -1} {
+            font configure TkConsoleFont -family $family -size $size
+            break
+        }
+    }
+
+    # Provide the right border for the text widget (platform dependent).
+    ::ttk::style layout ConsoleFrame {
+        Entry.field -sticky news -border 1 -children {
+            ConsoleFrame.padding -sticky news
+        }
+    }
+    ::ttk::frame .consoleframe -style ConsoleFrame
+
+    set con [text .console -yscrollcommand [list .sb set] -setgrid true \
+                 -borderwidth 0 -highlightthickness 0 -font TkConsoleFont]
+    if {[tk windowingsystem] eq "aqua"} {
+        scrollbar .sb -command [list $con yview]
+    } else {
+        ::ttk::scrollbar .sb -command [list $con yview]
+    }
+    pack .sb  -in .consoleframe -fill both -side right -padx 1 -pady 1
+    pack $con -in .consoleframe -fill both -expand 1 -side left -padx 1 -pady 1
+    pack .consoleframe -fill both -expand 1 -side left
 
     ConsoleBind $con
 
@@ -356,11 +382,21 @@ proc ::tk::ConsoleBind {w} {
 	<<Console_Transpose>>		<Control-Key-t>
 	<<Console_ClearLine>>		<Control-Key-u>
 	<<Console_SaveCommand>>		<Control-Key-z>
+        <<Console_FontSizeIncr>>	<Control-Key-plus>
+        <<Console_FontSizeDecr>>	<Control-Key-minus>
     } {
 	event add $ev $key
 	bind Console $key {}
     }
-
+    if {[tk windowingsystem] eq "aqua"} {
+	foreach {ev key} {
+	    <<Console_FontSizeIncr>>	<Command-Key-plus>
+	    <<Console_FontSizeDecr>>	<Command-Key-minus>
+	} {
+	    event add $ev $key
+	    bind Console $key {}
+	}
+    }
     bind Console <<Console_Expand>> {
 	if {[%W compare insert > promptEnd]} {
 	    ::tk::console::Expand %W
@@ -515,6 +551,14 @@ proc ::tk::ConsoleBind {w} {
 		tk::ConsoleInsert %W $x
 	    }
 	}
+    }
+    bind Console <<Console_FontSizeIncr>> {
+        set size [font configure TkConsoleFont -size]
+        font configure TkConsoleFont -size [incr size]
+    }
+    bind Console <<Console_FontSizeDecr>> {
+        set size [font configure TkConsoleFont -size]
+        font configure TkConsoleFont -size [incr size -1]
     }
 
     ##

@@ -499,7 +499,7 @@ TclpSetVariables(
 {
     CONST char *ptr;
     char buffer[TCL_INTEGER_SPACE * 2];
-    SYSTEM_INFO sysInfo;
+    SYSTEM_INFO sysInfo, *sysInfoPtr = &sysInfo;
     OemId *oemId;
     OSVERSIONINFOA osInfo;
     Tcl_DString ds;
@@ -512,7 +512,7 @@ TclpSetVariables(
     osInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
     GetVersionExA(&osInfo);
 
-    oemId = (OemId *) &sysInfo;
+    oemId = (OemId *) sysInfoPtr;
     GetSystemInfo(&sysInfo);
 
     /*
@@ -592,7 +592,7 @@ TclpSetVariables(
  * TclpFindVariable --
  *
  *	Locate the entry in environ for a given name. On Unix this routine is
- *	case sensetive, on Windows this matches mioxed case.
+ *	case sensitive, on Windows this matches mioxed case.
  *
  * Results:
  *	The return value is the index in environ of an entry with the name

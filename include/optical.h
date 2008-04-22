@@ -1,7 +1,7 @@
 /*                            O P T I C A L . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -107,10 +107,6 @@ OPTICAL_EXPORT extern int	rdebug;
  *  @author
  *	Michael John Muuss
  *
- *  @par Source
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  */
 
 /* These definitions are each for one bit */
@@ -181,13 +177,13 @@ OPTICAL_EXPORT extern int max_bounces;
 OPTICAL_EXPORT extern int max_ireflect;
 
 struct floatpixel {
-	double	ff_dist;		/**< @brief range to ff_hitpt[], <-INFINITY for miss */
-	float	ff_hitpt[3];
-	struct region *ff_regp;
-	int	ff_frame;		/**< @brief >= 0 means pixel was reprojected */
-	short	ff_x;			/**< @brief screen x,y coords of first location */
-	short	ff_y;
-	char	ff_color[3];
+    double	ff_dist;		/**< @brief range to ff_hitpt[], <-INFINITY for miss */
+    float	ff_hitpt[3];
+    struct region *ff_regp;
+    int	ff_frame;		/**< @brief >= 0 means pixel was reprojected */
+    short	ff_x;			/**< @brief screen x, y coords of first location */
+    short	ff_y;
+    char	ff_color[3];
 };
 
 __END_DECLS
@@ -199,8 +195,8 @@ __END_DECLS
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

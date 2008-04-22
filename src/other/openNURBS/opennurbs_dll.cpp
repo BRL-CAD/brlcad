@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -20,14 +20,14 @@
 
 #if defined(ON_OS_WINDOWS) && defined(ON_DLL_EXPORTS)
 
-BOOL APIENTRY DllMain( HANDLE hModule, 
-                       DWORD  ul_reason_for_call, 
+BOOL APIENTRY DllMain( HANDLE hModule,
+                       DWORD  ul_reason_for_call,
                        LPVOID lpReserved
 					 )
 {
-  if ( DLL_PROCESS_ATTACH == ul_reason_for_call ) 
+  if ( DLL_PROCESS_ATTACH == ul_reason_for_call )
   {
-    ON_ClassId::IncrementMark(); // make sure each DLL that each process that 
+    ON_ClassId::IncrementMark(); // make sure each DLL that each process that
                                  // uses OpenNURBS has a unique mark.
   }
 

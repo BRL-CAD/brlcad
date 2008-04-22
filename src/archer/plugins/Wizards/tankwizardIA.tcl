@@ -1,7 +1,7 @@
 #                T A N K W I Z A R D I A . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2007 United States Government as represented by
+# Copyright (c) 2002-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -26,8 +26,19 @@
 #	 This is a script for loading/registering the tank wizard.
 #
 
-set brlcadDataPath [bu_brlcad_data ""]
-source [file join $brlcadDataPath plugins archer Wizards tankwizardIA TankWizardIA.tcl]
+set brlcadDataPath [bu_brlcad_data "plugins"]
+# puts "pwd is [pwd], path is $brlcadDataPath"
+set filename [file join $brlcadDataPath archer Wizards tankwizardIA TankWizardIA.tcl]
+if { ![file exists $filename] } {
+    # non-tclscript resource, look in the source invocation path
+    set brlcadDataPath [bu_brlcad_data "src"]
+    set filename [file join $brlcadDataPath archer plugins Wizards tankwizardIA TankWizardIA.tcl]
+}
+if { ![file exists $filename] } {
+    puts "Could not load the TankWizard plugin, skipping $filename"
+    return
+}
+source $filename
 
 # Load only once
 set pluginMajorType $TankWizardIA::wizardMajorType

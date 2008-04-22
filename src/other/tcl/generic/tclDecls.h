@@ -89,7 +89,7 @@ EXTERN int		Tcl_DbCkfree (char * ptr, CONST char * file,
 EXTERN char *		Tcl_DbCkrealloc (char * ptr, unsigned int size, 
 				CONST char * file, int line);
 #endif
-#if !defined(__WIN32__) /* UNIX */
+#if !defined(__WIN32__) && !defined(MAC_OSX_TCL) /* UNIX */
 #ifndef Tcl_CreateFileHandler_TCL_DECLARED
 #define Tcl_CreateFileHandler_TCL_DECLARED
 /* 9 */
@@ -97,13 +97,28 @@ EXTERN void		Tcl_CreateFileHandler (int fd, int mask,
 				Tcl_FileProc * proc, ClientData clientData);
 #endif
 #endif /* UNIX */
-#if !defined(__WIN32__) /* UNIX */
+#ifdef MAC_OSX_TCL /* MACOSX */
+#ifndef Tcl_CreateFileHandler_TCL_DECLARED
+#define Tcl_CreateFileHandler_TCL_DECLARED
+/* 9 */
+EXTERN void		Tcl_CreateFileHandler (int fd, int mask, 
+				Tcl_FileProc * proc, ClientData clientData);
+#endif
+#endif /* MACOSX */
+#if !defined(__WIN32__) && !defined(MAC_OSX_TCL) /* UNIX */
 #ifndef Tcl_DeleteFileHandler_TCL_DECLARED
 #define Tcl_DeleteFileHandler_TCL_DECLARED
 /* 10 */
 EXTERN void		Tcl_DeleteFileHandler (int fd);
 #endif
 #endif /* UNIX */
+#ifdef MAC_OSX_TCL /* MACOSX */
+#ifndef Tcl_DeleteFileHandler_TCL_DECLARED
+#define Tcl_DeleteFileHandler_TCL_DECLARED
+/* 10 */
+EXTERN void		Tcl_DeleteFileHandler (int fd);
+#endif
+#endif /* MACOSX */
 #ifndef Tcl_SetTimer_TCL_DECLARED
 #define Tcl_SetTimer_TCL_DECLARED
 /* 11 */
@@ -691,20 +706,27 @@ EXTERN void		Tcl_DeleteHashTable (Tcl_HashTable * tablePtr);
 /* 110 */
 EXTERN void		Tcl_DeleteInterp (Tcl_Interp * interp);
 #endif
-#if !defined(__WIN32__) /* UNIX */
+#if !defined(__WIN32__) && !defined(MAC_OSX_TCL) /* UNIX */
 #ifndef Tcl_DetachPids_TCL_DECLARED
 #define Tcl_DetachPids_TCL_DECLARED
 /* 111 */
 EXTERN void		Tcl_DetachPids (int numPids, Tcl_Pid * pidPtr);
 #endif
 #endif /* UNIX */
-#ifdef __WIN32__
+#ifdef __WIN32__ /* WIN */
 #ifndef Tcl_DetachPids_TCL_DECLARED
 #define Tcl_DetachPids_TCL_DECLARED
 /* 111 */
 EXTERN void		Tcl_DetachPids (int numPids, Tcl_Pid * pidPtr);
 #endif
-#endif /* __WIN32__ */
+#endif /* WIN */
+#ifdef MAC_OSX_TCL /* MACOSX */
+#ifndef Tcl_DetachPids_TCL_DECLARED
+#define Tcl_DetachPids_TCL_DECLARED
+/* 111 */
+EXTERN void		Tcl_DetachPids (int numPids, Tcl_Pid * pidPtr);
+#endif
+#endif /* MACOSX */
 #ifndef Tcl_DeleteTimerHandler_TCL_DECLARED
 #define Tcl_DeleteTimerHandler_TCL_DECLARED
 /* 112 */
@@ -1019,7 +1041,7 @@ EXTERN CONST char *	Tcl_GetNameOfExecutable (void);
 /* 166 */
 EXTERN Tcl_Obj *	Tcl_GetObjResult (Tcl_Interp * interp);
 #endif
-#if !defined(__WIN32__) /* UNIX */
+#if !defined(__WIN32__) && !defined(MAC_OSX_TCL) /* UNIX */
 #ifndef Tcl_GetOpenFile_TCL_DECLARED
 #define Tcl_GetOpenFile_TCL_DECLARED
 /* 167 */
@@ -1028,6 +1050,15 @@ EXTERN int		Tcl_GetOpenFile (Tcl_Interp * interp,
 				int checkUsage, ClientData * filePtr);
 #endif
 #endif /* UNIX */
+#ifdef MAC_OSX_TCL /* MACOSX */
+#ifndef Tcl_GetOpenFile_TCL_DECLARED
+#define Tcl_GetOpenFile_TCL_DECLARED
+/* 167 */
+EXTERN int		Tcl_GetOpenFile (Tcl_Interp * interp, 
+				CONST char * chanID, int forWriting, 
+				int checkUsage, ClientData * filePtr);
+#endif
+#endif /* MACOSX */
 #ifndef Tcl_GetPathType_TCL_DECLARED
 #define Tcl_GetPathType_TCL_DECLARED
 /* 168 */
@@ -1184,7 +1215,7 @@ EXTERN Tcl_Obj *	Tcl_ObjSetVar2 (Tcl_Interp * interp,
 				Tcl_Obj * part1Ptr, Tcl_Obj * part2Ptr, 
 				Tcl_Obj * newValuePtr, int flags);
 #endif
-#if !defined(__WIN32__) /* UNIX */
+#if !defined(__WIN32__) && !defined(MAC_OSX_TCL) /* UNIX */
 #ifndef Tcl_OpenCommandChannel_TCL_DECLARED
 #define Tcl_OpenCommandChannel_TCL_DECLARED
 /* 197 */
@@ -1192,14 +1223,22 @@ EXTERN Tcl_Channel	Tcl_OpenCommandChannel (Tcl_Interp * interp,
 				int argc, CONST84 char ** argv, int flags);
 #endif
 #endif /* UNIX */
-#ifdef __WIN32__
+#ifdef __WIN32__ /* WIN */
 #ifndef Tcl_OpenCommandChannel_TCL_DECLARED
 #define Tcl_OpenCommandChannel_TCL_DECLARED
 /* 197 */
 EXTERN Tcl_Channel	Tcl_OpenCommandChannel (Tcl_Interp * interp, 
 				int argc, CONST84 char ** argv, int flags);
 #endif
-#endif /* __WIN32__ */
+#endif /* WIN */
+#ifdef MAC_OSX_TCL /* MACOSX */
+#ifndef Tcl_OpenCommandChannel_TCL_DECLARED
+#define Tcl_OpenCommandChannel_TCL_DECLARED
+/* 197 */
+EXTERN Tcl_Channel	Tcl_OpenCommandChannel (Tcl_Interp * interp, 
+				int argc, CONST84 char ** argv, int flags);
+#endif
+#endif /* MACOSX */
 #ifndef Tcl_OpenFileChannel_TCL_DECLARED
 #define Tcl_OpenFileChannel_TCL_DECLARED
 /* 198 */
@@ -1255,20 +1294,27 @@ EXTERN void		Tcl_QueueEvent (Tcl_Event * evPtr,
 EXTERN int		Tcl_Read (Tcl_Channel chan, char * bufPtr, 
 				int toRead);
 #endif
-#if !defined(__WIN32__) /* UNIX */
+#if !defined(__WIN32__) && !defined(MAC_OSX_TCL) /* UNIX */
 #ifndef Tcl_ReapDetachedProcs_TCL_DECLARED
 #define Tcl_ReapDetachedProcs_TCL_DECLARED
 /* 207 */
 EXTERN void		Tcl_ReapDetachedProcs (void);
 #endif
 #endif /* UNIX */
-#ifdef __WIN32__
+#ifdef __WIN32__ /* WIN */
 #ifndef Tcl_ReapDetachedProcs_TCL_DECLARED
 #define Tcl_ReapDetachedProcs_TCL_DECLARED
 /* 207 */
 EXTERN void		Tcl_ReapDetachedProcs (void);
 #endif
-#endif /* __WIN32__ */
+#endif /* WIN */
+#ifdef MAC_OSX_TCL /* MACOSX */
+#ifndef Tcl_ReapDetachedProcs_TCL_DECLARED
+#define Tcl_ReapDetachedProcs_TCL_DECLARED
+/* 207 */
+EXTERN void		Tcl_ReapDetachedProcs (void);
+#endif
+#endif /* MACOSX */
 #ifndef Tcl_RecordAndEval_TCL_DECLARED
 #define Tcl_RecordAndEval_TCL_DECLARED
 /* 208 */
@@ -3475,18 +3521,24 @@ typedef struct TclStubs {
     char * (*tcl_DbCkalloc) (unsigned int size, CONST char * file, int line); /* 6 */
     int (*tcl_DbCkfree) (char * ptr, CONST char * file, int line); /* 7 */
     char * (*tcl_DbCkrealloc) (char * ptr, unsigned int size, CONST char * file, int line); /* 8 */
-#if !defined(__WIN32__) /* UNIX */
+#if !defined(__WIN32__) && !defined(MAC_OSX_TCL) /* UNIX */
     void (*tcl_CreateFileHandler) (int fd, int mask, Tcl_FileProc * proc, ClientData clientData); /* 9 */
 #endif /* UNIX */
-#ifdef __WIN32__
+#ifdef __WIN32__ /* WIN */
     void *reserved9;
-#endif /* __WIN32__ */
-#if !defined(__WIN32__) /* UNIX */
+#endif /* WIN */
+#ifdef MAC_OSX_TCL /* MACOSX */
+    void (*tcl_CreateFileHandler) (int fd, int mask, Tcl_FileProc * proc, ClientData clientData); /* 9 */
+#endif /* MACOSX */
+#if !defined(__WIN32__) && !defined(MAC_OSX_TCL) /* UNIX */
     void (*tcl_DeleteFileHandler) (int fd); /* 10 */
 #endif /* UNIX */
-#ifdef __WIN32__
+#ifdef __WIN32__ /* WIN */
     void *reserved10;
-#endif /* __WIN32__ */
+#endif /* WIN */
+#ifdef MAC_OSX_TCL /* MACOSX */
+    void (*tcl_DeleteFileHandler) (int fd); /* 10 */
+#endif /* MACOSX */
     void (*tcl_SetTimer) (Tcl_Time * timePtr); /* 11 */
     void (*tcl_Sleep) (int ms); /* 12 */
     int (*tcl_WaitForEvent) (Tcl_Time * timePtr); /* 13 */
@@ -3587,12 +3639,15 @@ typedef struct TclStubs {
     void (*tcl_DeleteHashEntry) (Tcl_HashEntry * entryPtr); /* 108 */
     void (*tcl_DeleteHashTable) (Tcl_HashTable * tablePtr); /* 109 */
     void (*tcl_DeleteInterp) (Tcl_Interp * interp); /* 110 */
-#if !defined(__WIN32__) /* UNIX */
+#if !defined(__WIN32__) && !defined(MAC_OSX_TCL) /* UNIX */
     void (*tcl_DetachPids) (int numPids, Tcl_Pid * pidPtr); /* 111 */
 #endif /* UNIX */
-#ifdef __WIN32__
+#ifdef __WIN32__ /* WIN */
     void (*tcl_DetachPids) (int numPids, Tcl_Pid * pidPtr); /* 111 */
-#endif /* __WIN32__ */
+#endif /* WIN */
+#ifdef MAC_OSX_TCL /* MACOSX */
+    void (*tcl_DetachPids) (int numPids, Tcl_Pid * pidPtr); /* 111 */
+#endif /* MACOSX */
     void (*tcl_DeleteTimerHandler) (Tcl_TimerToken token); /* 112 */
     void (*tcl_DeleteTrace) (Tcl_Interp * interp, Tcl_Trace trace); /* 113 */
     void (*tcl_DontCallWhenDeleted) (Tcl_Interp * interp, Tcl_InterpDeleteProc * proc, ClientData clientData); /* 114 */
@@ -3648,12 +3703,15 @@ typedef struct TclStubs {
     Tcl_Interp * (*tcl_GetMaster) (Tcl_Interp * interp); /* 164 */
     CONST char * (*tcl_GetNameOfExecutable) (void); /* 165 */
     Tcl_Obj * (*tcl_GetObjResult) (Tcl_Interp * interp); /* 166 */
-#if !defined(__WIN32__) /* UNIX */
+#if !defined(__WIN32__) && !defined(MAC_OSX_TCL) /* UNIX */
     int (*tcl_GetOpenFile) (Tcl_Interp * interp, CONST char * chanID, int forWriting, int checkUsage, ClientData * filePtr); /* 167 */
 #endif /* UNIX */
-#ifdef __WIN32__
+#ifdef __WIN32__ /* WIN */
     void *reserved167;
-#endif /* __WIN32__ */
+#endif /* WIN */
+#ifdef MAC_OSX_TCL /* MACOSX */
+    int (*tcl_GetOpenFile) (Tcl_Interp * interp, CONST char * chanID, int forWriting, int checkUsage, ClientData * filePtr); /* 167 */
+#endif /* MACOSX */
     Tcl_PathType (*tcl_GetPathType) (CONST char * path); /* 168 */
     int (*tcl_Gets) (Tcl_Channel chan, Tcl_DString * dsPtr); /* 169 */
     int (*tcl_GetsObj) (Tcl_Channel chan, Tcl_Obj * objPtr); /* 170 */
@@ -3683,12 +3741,15 @@ typedef struct TclStubs {
     void (*tcl_NotifyChannel) (Tcl_Channel channel, int mask); /* 194 */
     Tcl_Obj * (*tcl_ObjGetVar2) (Tcl_Interp * interp, Tcl_Obj * part1Ptr, Tcl_Obj * part2Ptr, int flags); /* 195 */
     Tcl_Obj * (*tcl_ObjSetVar2) (Tcl_Interp * interp, Tcl_Obj * part1Ptr, Tcl_Obj * part2Ptr, Tcl_Obj * newValuePtr, int flags); /* 196 */
-#if !defined(__WIN32__) /* UNIX */
+#if !defined(__WIN32__) && !defined(MAC_OSX_TCL) /* UNIX */
     Tcl_Channel (*tcl_OpenCommandChannel) (Tcl_Interp * interp, int argc, CONST84 char ** argv, int flags); /* 197 */
 #endif /* UNIX */
-#ifdef __WIN32__
+#ifdef __WIN32__ /* WIN */
     Tcl_Channel (*tcl_OpenCommandChannel) (Tcl_Interp * interp, int argc, CONST84 char ** argv, int flags); /* 197 */
-#endif /* __WIN32__ */
+#endif /* WIN */
+#ifdef MAC_OSX_TCL /* MACOSX */
+    Tcl_Channel (*tcl_OpenCommandChannel) (Tcl_Interp * interp, int argc, CONST84 char ** argv, int flags); /* 197 */
+#endif /* MACOSX */
     Tcl_Channel (*tcl_OpenFileChannel) (Tcl_Interp * interp, CONST char * fileName, CONST char * modeString, int permissions); /* 198 */
     Tcl_Channel (*tcl_OpenTcpClient) (Tcl_Interp * interp, int port, CONST char * address, CONST char * myaddr, int myport, int async); /* 199 */
     Tcl_Channel (*tcl_OpenTcpServer) (Tcl_Interp * interp, int port, CONST char * host, Tcl_TcpAcceptProc * acceptProc, ClientData callbackData); /* 200 */
@@ -3698,12 +3759,15 @@ typedef struct TclStubs {
     CONST84_RETURN char * (*tcl_PosixError) (Tcl_Interp * interp); /* 204 */
     void (*tcl_QueueEvent) (Tcl_Event * evPtr, Tcl_QueuePosition position); /* 205 */
     int (*tcl_Read) (Tcl_Channel chan, char * bufPtr, int toRead); /* 206 */
-#if !defined(__WIN32__) /* UNIX */
+#if !defined(__WIN32__) && !defined(MAC_OSX_TCL) /* UNIX */
     void (*tcl_ReapDetachedProcs) (void); /* 207 */
 #endif /* UNIX */
-#ifdef __WIN32__
+#ifdef __WIN32__ /* WIN */
     void (*tcl_ReapDetachedProcs) (void); /* 207 */
-#endif /* __WIN32__ */
+#endif /* WIN */
+#ifdef MAC_OSX_TCL /* MACOSX */
+    void (*tcl_ReapDetachedProcs) (void); /* 207 */
+#endif /* MACOSX */
     int (*tcl_RecordAndEval) (Tcl_Interp * interp, CONST char * cmd, int flags); /* 208 */
     int (*tcl_RecordAndEvalObj) (Tcl_Interp * interp, Tcl_Obj * cmdPtr, int flags); /* 209 */
     void (*tcl_RegisterChannel) (Tcl_Interp * interp, Tcl_Channel chan); /* 210 */
@@ -4128,18 +4192,30 @@ extern TclStubs *tclStubsPtr;
 #define Tcl_DbCkrealloc \
 	(tclStubsPtr->tcl_DbCkrealloc) /* 8 */
 #endif
-#if !defined(__WIN32__) /* UNIX */
+#if !defined(__WIN32__) && !defined(MAC_OSX_TCL) /* UNIX */
 #ifndef Tcl_CreateFileHandler
 #define Tcl_CreateFileHandler \
 	(tclStubsPtr->tcl_CreateFileHandler) /* 9 */
 #endif
 #endif /* UNIX */
-#if !defined(__WIN32__) /* UNIX */
+#ifdef MAC_OSX_TCL /* MACOSX */
+#ifndef Tcl_CreateFileHandler
+#define Tcl_CreateFileHandler \
+	(tclStubsPtr->tcl_CreateFileHandler) /* 9 */
+#endif
+#endif /* MACOSX */
+#if !defined(__WIN32__) && !defined(MAC_OSX_TCL) /* UNIX */
 #ifndef Tcl_DeleteFileHandler
 #define Tcl_DeleteFileHandler \
 	(tclStubsPtr->tcl_DeleteFileHandler) /* 10 */
 #endif
 #endif /* UNIX */
+#ifdef MAC_OSX_TCL /* MACOSX */
+#ifndef Tcl_DeleteFileHandler
+#define Tcl_DeleteFileHandler \
+	(tclStubsPtr->tcl_DeleteFileHandler) /* 10 */
+#endif
+#endif /* MACOSX */
 #ifndef Tcl_SetTimer
 #define Tcl_SetTimer \
 	(tclStubsPtr->tcl_SetTimer) /* 11 */
@@ -4540,18 +4616,24 @@ extern TclStubs *tclStubsPtr;
 #define Tcl_DeleteInterp \
 	(tclStubsPtr->tcl_DeleteInterp) /* 110 */
 #endif
-#if !defined(__WIN32__) /* UNIX */
+#if !defined(__WIN32__) && !defined(MAC_OSX_TCL) /* UNIX */
 #ifndef Tcl_DetachPids
 #define Tcl_DetachPids \
 	(tclStubsPtr->tcl_DetachPids) /* 111 */
 #endif
 #endif /* UNIX */
-#ifdef __WIN32__
+#ifdef __WIN32__ /* WIN */
 #ifndef Tcl_DetachPids
 #define Tcl_DetachPids \
 	(tclStubsPtr->tcl_DetachPids) /* 111 */
 #endif
-#endif /* __WIN32__ */
+#endif /* WIN */
+#ifdef MAC_OSX_TCL /* MACOSX */
+#ifndef Tcl_DetachPids
+#define Tcl_DetachPids \
+	(tclStubsPtr->tcl_DetachPids) /* 111 */
+#endif
+#endif /* MACOSX */
 #ifndef Tcl_DeleteTimerHandler
 #define Tcl_DeleteTimerHandler \
 	(tclStubsPtr->tcl_DeleteTimerHandler) /* 112 */
@@ -4772,12 +4854,18 @@ extern TclStubs *tclStubsPtr;
 #define Tcl_GetObjResult \
 	(tclStubsPtr->tcl_GetObjResult) /* 166 */
 #endif
-#if !defined(__WIN32__) /* UNIX */
+#if !defined(__WIN32__) && !defined(MAC_OSX_TCL) /* UNIX */
 #ifndef Tcl_GetOpenFile
 #define Tcl_GetOpenFile \
 	(tclStubsPtr->tcl_GetOpenFile) /* 167 */
 #endif
 #endif /* UNIX */
+#ifdef MAC_OSX_TCL /* MACOSX */
+#ifndef Tcl_GetOpenFile
+#define Tcl_GetOpenFile \
+	(tclStubsPtr->tcl_GetOpenFile) /* 167 */
+#endif
+#endif /* MACOSX */
 #ifndef Tcl_GetPathType
 #define Tcl_GetPathType \
 	(tclStubsPtr->tcl_GetPathType) /* 168 */
@@ -4891,18 +4979,24 @@ extern TclStubs *tclStubsPtr;
 #define Tcl_ObjSetVar2 \
 	(tclStubsPtr->tcl_ObjSetVar2) /* 196 */
 #endif
-#if !defined(__WIN32__) /* UNIX */
+#if !defined(__WIN32__) && !defined(MAC_OSX_TCL) /* UNIX */
 #ifndef Tcl_OpenCommandChannel
 #define Tcl_OpenCommandChannel \
 	(tclStubsPtr->tcl_OpenCommandChannel) /* 197 */
 #endif
 #endif /* UNIX */
-#ifdef __WIN32__
+#ifdef __WIN32__ /* WIN */
 #ifndef Tcl_OpenCommandChannel
 #define Tcl_OpenCommandChannel \
 	(tclStubsPtr->tcl_OpenCommandChannel) /* 197 */
 #endif
-#endif /* __WIN32__ */
+#endif /* WIN */
+#ifdef MAC_OSX_TCL /* MACOSX */
+#ifndef Tcl_OpenCommandChannel
+#define Tcl_OpenCommandChannel \
+	(tclStubsPtr->tcl_OpenCommandChannel) /* 197 */
+#endif
+#endif /* MACOSX */
 #ifndef Tcl_OpenFileChannel
 #define Tcl_OpenFileChannel \
 	(tclStubsPtr->tcl_OpenFileChannel) /* 198 */
@@ -4939,18 +5033,24 @@ extern TclStubs *tclStubsPtr;
 #define Tcl_Read \
 	(tclStubsPtr->tcl_Read) /* 206 */
 #endif
-#if !defined(__WIN32__) /* UNIX */
+#if !defined(__WIN32__) && !defined(MAC_OSX_TCL) /* UNIX */
 #ifndef Tcl_ReapDetachedProcs
 #define Tcl_ReapDetachedProcs \
 	(tclStubsPtr->tcl_ReapDetachedProcs) /* 207 */
 #endif
 #endif /* UNIX */
-#ifdef __WIN32__
+#ifdef __WIN32__ /* WIN */
 #ifndef Tcl_ReapDetachedProcs
 #define Tcl_ReapDetachedProcs \
 	(tclStubsPtr->tcl_ReapDetachedProcs) /* 207 */
 #endif
-#endif /* __WIN32__ */
+#endif /* WIN */
+#ifdef MAC_OSX_TCL /* MACOSX */
+#ifndef Tcl_ReapDetachedProcs
+#define Tcl_ReapDetachedProcs \
+	(tclStubsPtr->tcl_ReapDetachedProcs) /* 207 */
+#endif
+#endif /* MACOSX */
 #ifndef Tcl_RecordAndEval
 #define Tcl_RecordAndEval \
 	(tclStubsPtr->tcl_RecordAndEval) /* 208 */

@@ -1,7 +1,7 @@
 #                  S H A D E R E D I T . T C L
 # BRL-CAD
 #
-# Copyright (c) 2006-2007 United States Government as represented by
+# Copyright (c) 2006-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -728,7 +728,7 @@
     if {$slen > 0} {
 	set stype [lindex $shaderSpec 0]
 
-#	set ignoreShaderSpec 1
+	#	set ignoreShaderSpec 1
 
 	if {$shaderType == $stype} {
 	    updateForm_$stype $id
@@ -747,7 +747,7 @@
 	    }
 	}
 
-#	set ignoreShaderSpec 0
+	#	set ignoreShaderSpec 0
     } else {
 	destroyCurrentShader
 	set shaderType ""

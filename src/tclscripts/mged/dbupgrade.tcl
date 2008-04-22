@@ -1,7 +1,7 @@
 #                   D B U P G R A D E . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2007 United States Government as represented by
+# Copyright (c) 1998-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -18,15 +18,6 @@
 # information.
 #
 ###
-#
-# Author -
-#	 Robert G. Parker
-#
-# Source -
-#	The U. S. Army Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#
 #
 # Description -
 #	Routines for handling database upgrades.
@@ -128,7 +119,7 @@ proc dbupgrade {args} {
 	if {[opendb] == ""} {
 	    if {[info exists ::tk::Priv(cad_dialog)]} {
 		cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
-			"No database has been opened!" info 0 OK
+		    "No database has been opened!" info 0 OK
 		return
 	    } else {
 		error "No database has been opened!"
@@ -159,9 +150,9 @@ proc dbupgrade {args} {
 
 	if {[info exists ::tk::Priv(cad_dialog)]} {
 	    set result [cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
-		    "Would you like to upgrade $dbname?" \
-		    $dbupgrade_priv(message) \
-		    "" 0 Upgrade Cancel]
+			    "Would you like to upgrade $dbname?" \
+			    $dbupgrade_priv(message) \
+			    "" 0 Upgrade Cancel]
 
 	    if {$result == 1} {
 		unset dbupgrade_priv(dbname)
@@ -234,9 +225,9 @@ proc dbupgrade {args} {
 	    # not a directory, so prompt the user about overwriting
 	    if {[info exists ::tk::Priv(cad_dialog)]} {
 		set result [cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
-			"About to overwrite $dbname\R4"\
-			"Would you like to overwrite $dbname\R4"\
-			"" 0 Overwrite Cancel]
+				"About to overwrite $dbname\R4"\
+				"Would you like to overwrite $dbname\R4"\
+				"" 0 Overwrite Cancel]
 
 		if {$result == 1} {
 		    # restore original database

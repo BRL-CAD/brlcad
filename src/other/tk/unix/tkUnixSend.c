@@ -14,8 +14,6 @@
  * RCS: @(#) $Id$
  */
 
-#include "tkPort.h"
-#include "tkInt.h"
 #include "tkUnixInt.h"
 
 /*
@@ -265,6 +263,7 @@ RegOpen(
     int result, actualFormat;
     unsigned long bytesAfter;
     Atom actualType;
+    char **propertyPtr;
 
     if (dispPtr->commTkwin == NULL) {
 	SendInit(interp, dispPtr);
@@ -275,6 +274,7 @@ RegOpen(
     regPtr->locked = 0;
     regPtr->modified = 0;
     regPtr->allocedByX = 1;
+    propertyPtr = &regPtr->property;
 
     if (lock && !localData.sendDebug) {
 	XGrabServer(dispPtr->display);
@@ -290,7 +290,7 @@ RegOpen(
 	    dispPtr->registryProperty, 0, MAX_PROP_WORDS,
 	    False, XA_STRING, &actualType, &actualFormat,
 	    &regPtr->propLength, &bytesAfter,
-	    (unsigned char **) &regPtr->property);
+	    (unsigned char **) propertyPtr);
 
     if (actualType == None) {
 	regPtr->propLength = 0;
@@ -586,7 +586,7 @@ ValidateName(
     int result, actualFormat, argc, i;
     unsigned long length, bytesAfter;
     Atom actualType;
-    char *property;
+    char *property, **propertyPtr = &property;
     Tk_ErrorHandler handler;
     CONST char **argv;
 
@@ -602,7 +602,7 @@ ValidateName(
     result = XGetWindowProperty(dispPtr->display, commWindow,
 	    dispPtr->appNameProperty, 0, MAX_PROP_WORDS,
 	    False, XA_STRING, &actualType, &actualFormat,
-	    &length, &bytesAfter, (unsigned char **) &property);
+	    &length, &bytesAfter, (unsigned char **) propertyPtr);
 
     if ((result == Success) && (actualType == None)) {
 	XWindowAttributes atts;
@@ -1340,7 +1340,7 @@ SendEventProc(
     XEvent *eventPtr)		/* Information about event. */
 {
     TkDisplay *dispPtr = (TkDisplay *) clientData;
-    char *propInfo;
+    char *propInfo, **propInfoPtr = &propInfo;
     register char *p;
     int result, actualFormat;
     unsigned long numItems, bytesAfter;
@@ -1362,7 +1362,7 @@ SendEventProc(
     result = XGetWindowProperty(dispPtr->display,
 	    Tk_WindowId(dispPtr->commTkwin), dispPtr->commProperty, 0,
 	    MAX_PROP_WORDS, True, XA_STRING, &actualType, &actualFormat,
-	    &numItems, &bytesAfter, (unsigned char **) &propInfo);
+	    &numItems, &bytesAfter, (unsigned char **) propInfoPtr);
 
     /*
      * If the property doesn't exist or is improperly formed then ignore it.
@@ -1903,7 +1903,7 @@ TkpTestsendCmd(
 	int result, actualFormat;
 	unsigned long length, bytesAfter;
 	Atom actualType, propName;
-	char *property, *p, *end;
+	char *property, **propertyPtr = &property, *p, *end;
 	Window w;
 
 	if ((argc != 4) && (argc != 5)) {
@@ -1923,7 +1923,7 @@ TkpTestsendCmd(
 	    property = NULL;
 	    result = XGetWindowProperty(winPtr->dispPtr->display, w, propName,
 		    0, 100000, False, XA_STRING, &actualType, &actualFormat,
-		    &length, &bytesAfter, (unsigned char **) &property);
+		    &length, &bytesAfter, (unsigned char **) propertyPtr);
 	    if ((result == Success) && (actualType != None)
 		    && (actualFormat == 8) && (actualType == XA_STRING)) {
 		for (p = property; (unsigned long)(p-property) < length; p++) {

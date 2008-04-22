@@ -12,7 +12,10 @@ comgeom_g_SOURCES = \
 	region.c \
 	solid.c \
 	tools.c
-comgeom_g_LDADD = ${WDB}
+comgeom_g_LDADD = \
+	${WDB} \
+	${BU} \
+	${BU_LIBS}
 
 noinst_HEADERS = 3d.h ged_types.h
 
@@ -21,8 +24,6 @@ man_MANS = comgeom-g.1
 EXTRA_DIST = \
 	$(man_MANS) \
 	try.sh
-
-MAINTAINERCLEANFILES = Makefile.in
 
 DEPS=src/libwdb src/librt
 

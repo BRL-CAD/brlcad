@@ -120,6 +120,9 @@ channel, a two-element list will always be returned.  The default value
 for \fB\-eofchar\fR is the empty string in all cases except for files
 under Windows.  In that case the \fB\-eofchar\fR is Control-z (\ex1a) for
 reading and the empty string for writing.
+The acceptable range for \fB\-eofchar\fR values is \ex01 - \ex7f;
+attempting to set \fB\-eofchar\fR to a value outside of this range will
+generate an error.
 .TP
 \fB\-translation\fR \fImode\fR
 .TP
@@ -168,8 +171,8 @@ No end-of-line translations are performed.  This is nearly identical to
 end-of-file character to the empty string (which disables it) and sets the
 encoding to \fBbinary\fR (which disables encoding filtering).  See the
 description of \fB\-eofchar\fR and \fB\-encoding\fR for more information.
-.PP
 .RS
+.PP
 Internally, i.e. when it comes to the actual behaviour of the
 translator this value \fBis\fR identical to \fBlf\fR and is therefore
 reported as such when queried. Even if \fBbinary\fR was used to set

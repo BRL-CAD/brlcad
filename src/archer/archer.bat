@@ -1,7 +1,9 @@
+@ECHO OFF
+
 REM                      A R C H E R . B A T
 REM  BRL-CAD
 REM 
-REM  Copyright (c) 2006-2007 United States Government as represented by
+REM  Copyright (c) 2006-2008 United States Government as represented by
 REM  the U.S. Army Research Laboratory.
 REM 
 REM  This library is free software; you can redistribute it and/or
@@ -17,22 +19,20 @@ REM  You should have received a copy of the GNU Lesser General Public
 REM  License along with this file; see the file named COPYING for more
 REM  information.
 REM 
-REM REM REM 
-@ECHO OFF
 
 REM	Author:		Bob Parker
 REM	Company:	Survice Engineering
 
 SETLOCAL
+SET CAD_VERSION=7.12.1
 SET SAVE_CD=%CD%
 SET PATH=%~dp0
 SET ARCHER=%~dp0archer
-CD %PATH%
-CD ..
-SET BRLCAD_DATA=%CD%
+CD %PATH%\..
+SET BRLCAD_DATA=%CD%\share\brlcad\%CAD_VERSION%
 CD %SAVE_CD%
 
-START /B wish "%ARCHER%" %1
+START /B bwish "%ARCHER%" %1
 
 CLS
 EXIT

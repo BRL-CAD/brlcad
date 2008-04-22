@@ -1,7 +1,7 @@
 /*                           L O G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,10 +23,10 @@
  *
  * @brief parallel safe version of fprintf for logging
  *
- *  BRL-CAD support library, error logging routine.
- *  Note that the user may provide his own logging routine,
- *  by replacing these functions.  That is why this is in file of it's own.
- *  For example, LGT and RTSRV take advantage of this.
+ * BRL-CAD support library, error logging routine.  Note that the user
+ * may provide his own logging routine, by replacing these functions.
+ * That is why this is in file of it's own.  For example, LGT and
+ * RTSRV take advantage of this.
  *
  * @par  Primary Functions (replacements MUST implement all these) -
  * @n	bu_log			Called to log library events.
@@ -37,41 +37,34 @@
  *	bu_log_add_hook		Start catching log events (used by mged/cmd.c)
  * @n	bu_putchar
  *
- *  @author	Michael John Muuss
- *  @author	Glenn Durfee
- *
- * @par  Source -
- *	The U. S. Army Research Laboratory
- * @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-
-#ifndef lint
-static const char RCSlog[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
-#if defined(HAVE_STDARG_H)
-# include <stdarg.h>
-#else
-#  if defined(HAVE_VARARGS_H)
-#    include <varargs.h>
-#  endif
-#endif
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#endif
+#include <string.h>
+#include <stdarg.h>
 
-#include "machine.h"
 #include "bu.h"
 
-#if defined(HAVE_VARARGS_H) || defined(HAVE_STDARG_H)
-BU_EXTERN(void	bu_vls_vprintf, (struct bu_vls *vls, const char *fmt, va_list ap));
-#endif
 
-static int	bu_log_indent_cur_level = 0; /* formerly rt_g.rtg_logindent */
+struct bu_hook_list bu_log_hook_list = {
+    {
+	BU_LIST_HEAD_MAGIC,
+	&bu_log_hook_list.l,
+	&bu_log_hook_list.l
+    },
+    BUHOOK_NULL,
+    GENPTR_NULL
+};
+
+static int bu_log_first_time = 1;
+static int bu_log_hooks_called = 0;
+static int bu_log_indent_cur_level = 0;
+
+
 /**
  *			B U _ L O G _ I N D E N T _ D E L T A
  *
@@ -81,9 +74,10 @@ static int	bu_log_indent_cur_level = 0; /* formerly rt_g.rtg_logindent */
 void
 bu_log_indent_delta(int delta)
 {
-	if( (bu_log_indent_cur_level += delta) < 0 )
-		bu_log_indent_cur_level = 0;
+    if ( (bu_log_indent_cur_level += delta) < 0 )
+	bu_log_indent_cur_level = 0;
 }
+
 
 /**
  *			B U _ L O G _ I N D E N T _ V L S
@@ -95,24 +89,9 @@ bu_log_indent_delta(int delta)
 void
 bu_log_indent_vls(struct bu_vls *v)
 {
-	bu_vls_spaces( v, bu_log_indent_cur_level );
+    bu_vls_spaces( v, bu_log_indent_cur_level );
 }
 
-#if 1
-struct bu_hook_list bu_log_hook_list = {
-	{	BU_LIST_HEAD_MAGIC,
-		&bu_log_hook_list.l,
-		&bu_log_hook_list.l
-	},
-	BUHOOK_NULL,
-	GENPTR_NULL
-};
-#else
-struct bu_hook_list bu_log_hook_list;
-#endif
-
-static int bu_log_first_time = 1;
-static int bu_log_hooks_called = 0;
 
 /**
  *			B U _ L O G _ A D D _ H O O K
@@ -171,7 +150,6 @@ bu_log_delete_hook(bu_hook_t func, genptr_t clientdata)
 #endif
 }
 
-#if 1
 HIDDEN void
 bu_log_call_hooks(genptr_t buf)
 {
@@ -193,7 +171,7 @@ bu_log_call_hooks(genptr_t buf)
 
     bu_log_hooks_called = 0;
 }
-#endif
+
 
 /**
  *			B U _ L O G _ D O _ I N D E N T _ L E V E L
@@ -205,9 +183,8 @@ bu_log_call_hooks(genptr_t buf)
  *  level of all messages at that recursion level, even if the calls
  *  to bu_log come from non-librt routines.
  */
-
 HIDDEN void
-bu_log_do_indent_level(struct bu_vls *new, register char *old)
+bu_log_do_indent_level(struct bu_vls *new, register const char *old)
 {
     register int i;
 
@@ -222,26 +199,37 @@ bu_log_do_indent_level(struct bu_vls *new, register char *old)
     }
 }
 
+
 /**
  *			B U _ P U T C H A R
  *
  * Log a single character with no flushing.
  */
-
 void
 bu_putchar(int c)
 {
+    int ret = EOF;
+
     if ( BU_LIST_IS_EMPTY( &(bu_log_hook_list.l) ) ) {
-	fputc(c, stderr);
+
+	if (stderr) {
+	    ret = fputc(c, stderr);
+	}
+
+	if (ret == EOF && stdout) {
+	    ret = fputc(c, stdout);
+	}
+
+	if (ret == EOF) {
+	    bu_bomb("bu_putchar: write error");
+	}
+	    
     } else {
 	char buf[2];
 	buf[0] = (char)c;
 	buf[1] = '\0';
-#if 1
+
 	bu_log_call_hooks(buf);
-#else
-	bu_call_hook(&bu_log_hook_list, (genptr_t)buf);
-#endif
     }
 
     if (bu_log_indent_cur_level > 0 && c == '\n') {
@@ -253,59 +241,26 @@ bu_putchar(int c)
     }
 }
 
+
 /**
  *  			B U _ L O G
  *
  *  Log a library event in the Standard way.
  */
 void
-#if defined(HAVE_STDARG_H)
-bu_log(char *fmt, ...)                      /* ANSI C */
+bu_log(const char *fmt, ...)
 {
     va_list ap;
-#else
-#  if defined(HAVE_VARARGS_H)
-bu_log(va_alist)                            /* VARARGS */
-va_dcl
-{
-    va_list ap;
-    char *fmt;
-#  else
-bu_log(fmt, a,b,c,d,e,f,g,h,i,j)            /* Cray XMP */
-char *fmt;
-{
-#  endif
-#endif
 
     struct bu_vls output;
 
     bu_vls_init(&output);
 
-#if defined(HAVE_STDARG_H)                  /* ANSI C */
+    if (!fmt || strlen(fmt) == 0) {
+	return;
+    }
+
     va_start(ap, fmt);
-
-    if (!fmt || strlen(fmt) == 0) {
-	return;
-    }
-
-    if (bu_log_indent_cur_level > 0) {
-	struct bu_vls newfmt;
-
-	bu_vls_init(&newfmt);
-	bu_log_do_indent_level(&newfmt, fmt);
-	bu_vls_vprintf(&output, bu_vls_addr(&newfmt), ap);
-	bu_vls_free(&newfmt);
-    } else {
-	bu_vls_vprintf(&output, fmt, ap);   /* VARARGS */
-    }
-#else
-#  if defined(HAVE_VARARGS_H)
-    va_start(ap);
-    fmt = va_arg(ap, char *);
-
-    if (!fmt || strlen(fmt) == 0) {
-	return;
-    }
 
     if (bu_log_indent_cur_level > 0) {
 	struct bu_vls newfmt;
@@ -317,26 +272,11 @@ char *fmt;
     } else {
 	bu_vls_vprintf(&output, fmt, ap);
     }
-#  else                                     /* Cray XMP */
-    if (!fmt || strlen(fmt) == 0) {
-	return;
-    }
 
-    if (bu_log_indent_cur_level > 0) {
-	struct bu_vls newfmt;
+    va_end(ap);
 
-	bu_vls_init(&newfmt);
-	bu_log_do_indent_level(&newfmt, fmt);
-	bu_vls_printf(&output, bu_vls_addr(&newfmt), a,b,c,d,e,f,g,h,i,j);
-	bu_vls_free(&newfmt);
-    } else {
-	bu_vls_printf(&output, fmt, a,b,c,d,e,f,g,h,i,j);
-    }
-#  endif
-#endif
-
-    if ( BU_LIST_IS_EMPTY( &(bu_log_hook_list.l) )  || bu_log_hooks_called) {
-	int ret;
+    if ( BU_LIST_IS_EMPTY(&(bu_log_hook_list.l)) || bu_log_hooks_called) {
+	int ret = EOF;
 	size_t len;
 
 	if (bu_log_first_time) {
@@ -345,28 +285,39 @@ char *fmt;
 	}
 
 	len = bu_vls_strlen(&output);
-	if(len){
-	  bu_semaphore_acquire(BU_SEM_SYSCALL);
-	  ret = fwrite( bu_vls_addr(&output), len, 1, stderr );
-	  (void)fflush(stderr);
-	  bu_semaphore_release(BU_SEM_SYSCALL);
-	  if( ret != 1 )  bu_bomb("bu_log: write error");
+	if (len <= 0) {
+	    return;
+	}
+
+	if (stderr) {
+	    bu_semaphore_acquire(BU_SEM_SYSCALL);
+	    ret = fwrite( bu_vls_addr(&output), len, 1, stderr );
+	    fflush(stderr);
+	    bu_semaphore_release(BU_SEM_SYSCALL);
+	}
+
+	if (!ret && stdout) {
+	    /* if stderr fails, try stdout instead */
+	    bu_semaphore_acquire(BU_SEM_SYSCALL);
+	    ret = fwrite(bu_vls_addr(&output), len, 1, stdout );
+	    fflush(stdout);
+	    bu_semaphore_release(BU_SEM_SYSCALL);
+	}
+
+	if (ret != 1) {
+ 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
+	    perror("fwrite failed");
+	    bu_semaphore_release(BU_SEM_SYSCALL);
+	    bu_bomb("bu_log: write error");
 	}
 
     } else {
-#if 1
-	    bu_log_call_hooks(bu_vls_addr(&output));
-#else
-	    bu_call_hook(&bu_log_hook_list, (genptr_t)bu_vls_addr(&output));
-#endif
+	bu_log_call_hooks(bu_vls_addr(&output));
     }
-
-#if defined(HAVE_STDARG_H) || defined(HAVE_VARARGS_H)
-    va_end(ap);
-#endif
 
     bu_vls_free(&output);
 }
+
 
 /**
  *  			B U _ F L O G
@@ -374,47 +325,15 @@ char *fmt;
  *  Log a library event in the Standard way, to a specified file.
  */
 void
-#if defined(HAVE_STDARG_H)
-bu_flog(FILE *fp, char *fmt, ...)                      /* ANSI C */
+bu_flog(FILE *fp, const char *fmt, ...)
 {
     va_list ap;
-#else
-#  if defined(HAVE_VARARGS_H)
-bu_flog(va_alist)                            /* VARARGS */
-va_dcl
-{
-    va_list ap;
-    FILE *fp;
-    char *fmt;
-#  else
-bu_flog(fp, fmt, a,b,c,d,e,f,g,h,i,j)            /* Cray XMP */
-FILE *fp;
-char *fmt;
-{
-#  endif
-#endif
 
     struct bu_vls output;
 
     bu_vls_init(&output);
 
-#if defined(HAVE_STDARG_H)                  /* ANSI C */
     va_start(ap, fmt);
-    if (bu_log_indent_cur_level > 0) {
-	struct bu_vls newfmt;
-
-	bu_vls_init(&newfmt);
-	bu_log_do_indent_level(&newfmt, fmt);
-	bu_vls_vprintf(&output, bu_vls_addr(&newfmt), ap);
-	bu_vls_free(&newfmt);
-    } else {
-	bu_vls_vprintf(&output, fmt, ap);   /* VARARGS */
-    }
-#else
-#  if defined(HAVE_VARARGS_H)
-    va_start(ap);
-    fp = va_arg(ap, FILE *);
-    fmt = va_arg(ap, char *);
     if (bu_log_indent_cur_level > 0) {
 	struct bu_vls newfmt;
 
@@ -425,43 +344,24 @@ char *fmt;
     } else {
 	bu_vls_vprintf(&output, fmt, ap);
     }
-#  else                                     /* Cray XMP */
-    if (bu_log_indent_cur_level > 0) {
-	struct bu_vls newfmt;
-
-	bu_vls_init(&newfmt);
-	bu_log_do_indent_level(&newfmt, fmt);
-	bu_vls_printf(&output, bu_vls_addr(&newfmt), a,b,c,d,e,f,g,h,i,j);
-	bu_vls_free(&newfmt);
-    } else {
-	bu_vls_printf(&output, fmt, a,b,c,d,e,f,g,h,i,j);
-    }
-#  endif
-#endif
 
     if ( BU_LIST_IS_EMPTY( &(bu_log_hook_list.l) ) || bu_log_hooks_called) {
 	int ret;
 	size_t len;
 
 	len = bu_vls_strlen(&output);
-	if(len){
-	  bu_semaphore_acquire(BU_SEM_SYSCALL);
-	  ret = fwrite( bu_vls_addr(&output), len, 1, fp );
-	  bu_semaphore_release(BU_SEM_SYSCALL);
-	  if( ret != 1 )  bu_bomb("bu_flog: write error");
+	if (len) {
+	    bu_semaphore_acquire(BU_SEM_SYSCALL);
+	    ret = fwrite( bu_vls_addr(&output), len, 1, fp );
+	    bu_semaphore_release(BU_SEM_SYSCALL);
+	    if ( ret != 1 )  bu_bomb("bu_flog: write error");
 	}
 
     } else {
-#if 1
-	    bu_log_call_hooks(bu_vls_addr(&output));
-#else
-	    bu_call_hook(&bu_log_hook_list, (genptr_t)bu_vls_addr(&output));
-#endif
+	bu_log_call_hooks(bu_vls_addr(&output));
     }
 
-#if defined(HAVE_STDARG_H) || defined(HAVE_VARARGS_H)
     va_end(ap);
-#endif
 
     bu_vls_free(&output);
 }
@@ -472,8 +372,8 @@ char *fmt;
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

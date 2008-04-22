@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -61,7 +61,7 @@ void* onrealloc( void* memblock, size_t sz )
   {
     return onmalloc(sz);
   }
-  
+
   if ( sz <= 0 )
   {
     onfree(memblock);
@@ -72,30 +72,30 @@ void* onrealloc( void* memblock, size_t sz )
 
   /* use malloc() and memcpy() instead of buggy realloc() */
   memblocksz = _msize(memblock);
-  if ( sz <= memblocksz ) 
+  if ( sz <= memblocksz )
   {
     /* shrink */
-    if ( memblocksz <= 28 || 8*sz >= 7*memblocksz ) 
+    if ( memblocksz <= 28 || 8*sz >= 7*memblocksz )
     {
       /* don't bother reallocating */
       p = memblock;
     }
-    else 
+    else
     {
       /* allocate smaller block */
       p = malloc(sz);
-      if ( p ) 
+      if ( p )
       {
         memcpy( p, memblock, sz );
         free(memblock);
       }
     }
   }
-  else if ( sz > memblocksz ) 
+  else if ( sz > memblocksz )
   {
     /* grow */
     p = malloc(sz);
-    if ( p ) 
+    if ( p )
     {
       memcpy( p, memblock, memblocksz );
       free(memblock);

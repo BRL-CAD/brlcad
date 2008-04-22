@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -20,12 +20,12 @@
 static int w2c_size( int, const wchar_t* ); // gets minimum "c_count" arg for w2c().
 static int w2c( int,            // w_count = number of wide chars to convert
                 const wchar_t*, // source wide char string
-                int,            // c_count, 
+                int,            // c_count,
                 char*           // array of at least c_count+1 characters
                 );
 static int c2w( int,           // c_count = number of chars to convert
                 const char*,   // source byte char string
-                int,           // w_count, 
+                int,           // w_count,
                 wchar_t*       // array of at least c_count+1 wide characters
                 );
 static wchar_t c2w( char );
@@ -43,14 +43,14 @@ static int w2c_size( int w_count, const wchar_t* w )
   return rc;
 }
 
-static int w2c( int w_count, 
-                const wchar_t* w, 
-                int c_count, 
+static int w2c( int w_count,
+                const wchar_t* w,
+                int c_count,
                 char* c // array of at least c_count+1 characters
                 )
 {
   int rc = 0;
-  if ( c ) 
+  if ( c )
     c[0] = 0;
   // returns length of converted c[]
   if ( c_count > 0 && c ) {
@@ -75,14 +75,14 @@ static wchar_t c2w( char c )
   return w[0];
 }
 
-static int c2w( int c_count, 
-                const char* c, 
-                int w_count, 
+static int c2w( int c_count,
+                const char* c,
+                int w_count,
                 wchar_t* w // array of at least c_count+1 wide characters
                 )
 {
   int rc = 0;
-  if ( w ) 
+  if ( w )
     w[0] = 0;
   // returns length of converted c[]
   if ( w_count > 0 && w && c_count > 0 && c && c[0] ) {
@@ -120,8 +120,8 @@ void ON_String::CopyToArray( int w_count, const wchar_t* w )
 
 static struct {
   ON_wStringHeader header;
-  wchar_t           s;  
-} empty_wstring = { {-1, 0, 0}, 0 }; // ref_count=-1, length=0, capacity=0, s=0 
+  wchar_t           s;
+} empty_wstring = { {-1, 0, 0}, 0 }; // ref_count=-1, length=0, capacity=0, s=0
 static ON_wStringHeader* pEmptyStringHeader = &empty_wstring.header;
 static const wchar_t* pEmptywString = &empty_wstring.s;
 
@@ -217,22 +217,22 @@ void ON_wString::ReserveArray( size_t array_capacity )
 {
   ON_wStringHeader* p = Header();
   const int capacity = (int)array_capacity; // for 64 bit compiler
-  if ( p == pEmptyStringHeader ) 
+  if ( p == pEmptyStringHeader )
   {
 		CreateArray(capacity);
   }
-  else if ( p->ref_count > 1 ) 
+  else if ( p->ref_count > 1 )
   {
 		CreateArray(capacity);
     ON_wStringHeader* p1 = Header();
     const int size = (capacity < p->string_length) ? capacity : p->string_length;
-    if ( size > 0 ) 
+    if ( size > 0 )
     {
       memcpy( p1->string_array(), p->string_array(), size*sizeof(*m_s) );
       p1->string_length = size;
     }
   }
-	else if ( capacity > p->string_capacity ) 
+	else if ( capacity > p->string_capacity )
   {
 		p = (ON_wStringHeader*)onrealloc( p, sizeof(ON_wStringHeader) + (capacity+1)*sizeof(*m_s) );
     m_s = p->string_array();
@@ -396,7 +396,7 @@ ON_wString::ON_wString(const ON_String& src)
 ON_wString::ON_wString( const char* s )
 {
 	Create();
-  if ( s && s[0] ) 
+  if ( s && s[0] )
   {
     CopyToArray( (int)strlen(s), s ); // the (int) is for 64 bit size_t conversion
   }
@@ -523,20 +523,20 @@ bool ON_wString::IsEmpty() const
 
 const ON_wString& ON_wString::operator=(const ON_wString& src)
 {
-	if (m_s != src.m_s)	
+	if (m_s != src.m_s)
   {
-    if ( src.IsEmpty() ) 
+    if ( src.IsEmpty() )
     {
       Destroy();
       Create();
     }
-    else if ( src.Header()->ref_count > 0 ) 
+    else if ( src.Header()->ref_count > 0 )
     {
       Destroy();
       src.Header()->ref_count++;
       m_s = src.m_s;
     }
-    else 
+    else
     {
       ReserveArray(src.Length());
       memcpy( m_s, src.Array(), src.Length()*sizeof(*m_s));
@@ -842,7 +842,7 @@ bool ON_WildCardMatch(const wchar_t* s, const wchar_t* pattern)
     pattern++;
     while ( *pattern == '*' )
       pattern++;
-    
+
     if ( !pattern[0] )
       return TRUE;
 
@@ -865,7 +865,7 @@ bool ON_WildCardMatch(const wchar_t* s, const wchar_t* pattern)
       }
       return FALSE;
     }
-    
+
     if ( *pattern == '\\' ) {
       switch( pattern[1] )
       {
@@ -885,7 +885,7 @@ bool ON_WildCardMatch(const wchar_t* s, const wchar_t* pattern)
     pattern++;
     s++;
   }
-  
+
   return ON_WildCardMatch(s,pattern);
 }
 
@@ -900,7 +900,7 @@ bool ON_WildCardMatchNoCase(const wchar_t* s, const wchar_t* pattern)
     pattern++;
     while ( *pattern == '*' )
       pattern++;
-    
+
     if ( !pattern[0] )
       return TRUE;
 
@@ -923,7 +923,7 @@ bool ON_WildCardMatchNoCase(const wchar_t* s, const wchar_t* pattern)
       }
       return FALSE;
     }
-    
+
     if ( *pattern == '\\' ) {
       switch( pattern[1] )
       {
@@ -943,7 +943,7 @@ bool ON_WildCardMatchNoCase(const wchar_t* s, const wchar_t* pattern)
     pattern++;
     s++;
   }
-  
+
   return ON_WildCardMatch(s,pattern);
 }
 
@@ -1092,7 +1092,7 @@ int ON_wString::Replace( const wchar_t* token1, const wchar_t* token2 )
         //       ReserveArray(newlen);
         //    but when newlen < len and the string had multiple
         //    references, the ReserveArray(newlen) call truncated
-        //    the input array.  
+        //    the input array.
         ReserveArray( (newlen<len) ? len : newlen );
 
         int i0, i1, ni, j;

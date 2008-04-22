@@ -1,7 +1,7 @@
 /*                           N M G . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,26 +21,11 @@
 /** @{ */
 /** @file nmg.h
  *
- *
- *  @author	Lee A. Butler
- *  @author	Michael John Muuss
- *
  * @brief
  *  Definition of data structures for "Non-Manifold Geometry Modelling."
  *  Developed from "Non-Manifold Geometric Boundary Modeling" by
  *  Kevin Weiler, 5/7/87 (SIGGraph 1989 Course #20 Notes)
  *
- *  Include Sequencing -
- *	#  include <stdio.h>
- *	# include <math.h>
- *	# include "machine.h"	/_* For fastf_t definition on this machine *_/
- *	# include "vmath.h"	/_* For vect_t definition *_/
- *	# include "nmg.h"
- *	# include "raytrace.h"
- *	# include "nurb.h"	/_* OPTIONAL, follows raytrace.h when used *_/
- *
- *  @par Libraries Used -
- *	LIBRT LIBRT_LIBES -lm -lc
  */
 
 #ifndef __NMG_H__
@@ -49,7 +34,6 @@
 #include "common.h"
 
 /* interface headers */
-#include "machine.h"
 #include "vmath.h"
 #include "bu.h"
 
@@ -57,7 +41,7 @@
 #  define NULL 0
 #endif
 
-#define	NMG_EXTERN(type_and_name,args)	RT_EXTERN(type_and_name,args)
+#define	NMG_EXTERN(type_and_name, args)	RT_EXTERN(type_and_name, args)
 
 
 #define DEBUG_PL_ANIM	0x00000001	/**< @brief 1 mged: animated evaluation */
@@ -158,10 +142,10 @@
 /**
  * macros to check/validate a structure pointer
  */
-#define NMG_CKMAG(_ptr, _magic, _str)	BU_CKMAG(_ptr,_magic,_str)
+#define NMG_CKMAG(_ptr, _magic, _str)	BU_CKMAG(_ptr, _magic, _str)
 #define NMG_CK2MAG(_ptr, _magic1, _magic2, _str)	\
-	if( !(_ptr) || (*((long *)(_ptr)) != (_magic1) && *((long *)(_ptr)) != (_magic2) ) )  { \
-		bu_badmagic( (long *)(_ptr), _magic1, _str, __FILE__, __LINE__ ); \
+	if ( !(_ptr) || (*((unsigned long *)(_ptr)) != (_magic1) && *((unsigned long *)(_ptr)) != (_magic2) ) )  { \
+		bu_badmagic( (unsigned long *)(_ptr), _magic1, _str, __FILE__, __LINE__ ); \
 	}
 
 #define NMG_CK_MODEL(_p)	NMG_CKMAG(_p, NMG_MODEL_MAGIC, "model")
@@ -195,13 +179,15 @@
 	if (!(_p)->l.forw || !(_p)->l.back || !(_p)->eumate_p || \
 	    !(_p)->radial_p || !(_p)->e_p || !(_p)->vu_p || \
 	    !(_p)->up.magic_p ) { \
-		bu_log("in %s at %d Bad edgeuse member pointer\n",\
+		bu_log("in %s at %d, Bad edgeuse member pointer\n", \
 			 __FILE__, __LINE__);  nmg_pr_eu(_p, (char *)NULL); \
-			bu_bomb("Null pointer\n"); \
+		bu_bomb("NULL pointer\n"); \
 	} else if ((_p)->vu_p->up.eu_p != (_p) || \
-	(_p)->eumate_p->vu_p->up.eu_p != (_p)->eumate_p) {\
-		bu_log("in %s at %d edgeuse lost vertexuse\n",\
-			 __FILE__, __LINE__); bu_bomb("bye");}
+		(_p)->eumate_p->vu_p->up.eu_p != (_p)->eumate_p) {\
+		bu_log("in %s at %d, edgeuse lost vertexuse\n", \
+			 __FILE__, __LINE__); \
+		bu_bomb("bye"); \
+	}
 
 /**
  *			K N O T _ V E C T O R
@@ -212,9 +198,9 @@
  *  (Exactly the same as the definition in nurb.h)
  */
 struct knot_vector {
-	int		magic;
-	int		k_size;		/**< @brief knot vector size */
-	fastf_t		* knots;	/**< @brief pointer to knot vector  */
+    unsigned int	magic;
+    int		k_size;		/**< @brief knot vector size */
+    fastf_t		* knots;	/**< @brief pointer to knot vector  */
 };
 #define RT_KNOT_VECTOR_MAGIC	NMG_KNOT_VECTOR_MAGIC	/**< @brief nurb.h compat */
 
@@ -241,28 +227,28 @@ struct knot_vector {
  *			M O D E L
  */
 struct model {
-	long			magic;
-	struct bu_list		r_hd;	/**< @brief list of regions */
-	long			index;	/**< @brief struct # in this model */
-	long			maxindex; /**< @brief # of structs so far */
+    unsigned long		magic;
+    struct bu_list		r_hd;	/**< @brief list of regions */
+    long			index;	/**< @brief struct # in this model */
+    long			maxindex; /**< @brief # of structs so far */
 };
 
 /**
  *			R E G I O N
  */
 struct nmgregion {
-	struct bu_list		l;	/**< @brief regions, in model's r_hd list */
-	struct model   		*m_p;	/**< @brief owning model */
-	struct nmgregion_a	*ra_p;	/**< @brief attributes */
-	struct bu_list		s_hd;	/**< @brief list of shells in region */
-	long			index;	/**< @brief struct # in this model */
+    struct bu_list		l;	/**< @brief regions, in model's r_hd list */
+    struct model   		*m_p;	/**< @brief owning model */
+    struct nmgregion_a	*ra_p;	/**< @brief attributes */
+    struct bu_list		s_hd;	/**< @brief list of shells in region */
+    long			index;	/**< @brief struct # in this model */
 };
 
 struct nmgregion_a {
-	long			magic;
-	point_t			min_pt;	/**< @brief minimums of bounding box */
-	point_t			max_pt;	/**< @brief maximums of bounding box */
-	long			index;	/**< @brief struct # in this model */
+    unsigned long		magic;
+    point_t			min_pt;	/**< @brief minimums of bounding box */
+    point_t			max_pt;	/**< @brief maximums of bounding box */
+    long			index;	/**< @brief struct # in this model */
 };
 
 /**
@@ -276,7 +262,7 @@ struct nmgregion_a {
  *
  *  The wire edgeuses are disconnected line segments.
  *  There is a special interpetation to the eu_hd list of wire edgeuses.
- *  Unlike edgeuses seen in loops, the eu_hd list contains eu1, eu1mate,
+ *  Unlike edgeuses seen in loops, the eu_hd list contains eu1, eu1mate, 
  *  eu2, eu2mate, ..., where each edgeuse and it's mate comprise a
  *  *non-connected* "wire" edge which starts at eu1->vu_p->v_p and ends
  *  at eu1mate->vu_p->v_p.  There is no relationship between the pairs
@@ -284,22 +270,22 @@ struct nmgregion_a {
  *  list.
  */
 struct shell {
-	struct bu_list		l;	/**< @brief shells, in region's s_hd list */
-	struct nmgregion	*r_p;	/**< @brief owning region */
-	struct shell_a		*sa_p;	/**< @brief attribs */
+    struct bu_list		l;	/**< @brief shells, in region's s_hd list */
+    struct nmgregion	*r_p;	/**< @brief owning region */
+    struct shell_a		*sa_p;	/**< @brief attribs */
 
-	struct bu_list		fu_hd;	/**< @brief list of face uses in shell */
-	struct bu_list		lu_hd;	/**< @brief wire loopuses (edge groups) */
-	struct bu_list		eu_hd;	/**< @brief wire list (shell has wires) */
-	struct vertexuse	*vu_p;	/**< @brief internal ptr to single vertexuse */
-	long			index;	/**< @brief struct # in this model */
+    struct bu_list		fu_hd;	/**< @brief list of face uses in shell */
+    struct bu_list		lu_hd;	/**< @brief wire loopuses (edge groups) */
+    struct bu_list		eu_hd;	/**< @brief wire list (shell has wires) */
+    struct vertexuse	*vu_p;	/**< @brief internal ptr to single vertexuse */
+    long			index;	/**< @brief struct # in this model */
 };
 
 struct shell_a {
-	long			magic;
-	point_t			min_pt;	/**< @brief minimums of bounding box */
-	point_t			max_pt;	/**< @brief maximums of bounding box */
-	long			index;	/**< @brief struct # in this model */
+    unsigned long		magic;
+    point_t			min_pt;	/**< @brief minimums of bounding box */
+    point_t			max_pt;	/**< @brief maximums of bounding box */
+    long			index;	/**< @brief struct # in this model */
 };
 
 /**
@@ -309,56 +295,56 @@ struct shell_a {
  *  To find them, go up fu_p for one, then across fumate_p to other.
  */
 struct face {
-	struct bu_list		l;	/**< @brief faces in face_g's f_hd list */
-	struct faceuse		*fu_p;	/**< @brief Ptr up to one use of this face */
-	union {
-		long		    *magic_p;
-		struct face_g_plane *plane_p;
-		struct face_g_snurb *snurb_p;
-	} g;				/**< @brief geometry */
-	int			flip;	/**< @brief !0 ==> flip normal of fg */
-	/* These might be better stored in a face_a (not faceuse_a!) */
-	/* These are not stored on disk */
-	point_t			min_pt;	/**< @brief minimums of bounding box */
-	point_t			max_pt;	/**< @brief maximums of bounding box */
-	long			index;	/**< @brief struct # in this model */
+    struct bu_list		l;	/**< @brief faces in face_g's f_hd list */
+    struct faceuse		*fu_p;	/**< @brief Ptr up to one use of this face */
+    union {
+	unsigned long	    *magic_p;
+	struct face_g_plane *plane_p;
+	struct face_g_snurb *snurb_p;
+    } g;				/**< @brief geometry */
+    int			flip;	/**< @brief !0 ==> flip normal of fg */
+    /* These might be better stored in a face_a (not faceuse_a!) */
+    /* These are not stored on disk */
+    point_t			min_pt;	/**< @brief minimums of bounding box */
+    point_t			max_pt;	/**< @brief maximums of bounding box */
+    long			index;	/**< @brief struct # in this model */
 };
 
 struct face_g_plane {
-	long			magic;
-	struct bu_list		f_hd;	/**< @brief list of faces sharing this surface */
-	plane_t			N;	/**< @brief Plane equation (incl normal) */
-	long			index;	/**< @brief struct # in this model */
+    unsigned long		magic;
+    struct bu_list		f_hd;	/**< @brief list of faces sharing this surface */
+    plane_t			N;	/**< @brief Plane equation (incl normal) */
+    long			index;	/**< @brief struct # in this model */
 };
 
 struct face_g_snurb {
-	/* NOTICE:  l.forw & l.back *not* stored in database.  For LIBNURB internal use only. */
-	struct bu_list		l;
-	struct bu_list		f_hd;	/**< @brief list of faces sharing this surface */
-	int			order[2]; /**< @brief surface order [0] = u, [1] = v */
-	struct knot_vector	u;	/**< @brief surface knot vectors */
-	struct knot_vector	v;	/**< @brief surface knot vectors */
-	/* surface control points */
-	int			s_size[2]; /**< @brief mesh size, u,v */
-	int			pt_type; /**< @brief surface point type */
-	fastf_t			*ctl_points; /**< @brief array [size[0]*size[1]] */
-	/* START OF ITEMS VALID IN-MEMORY ONLY -- NOT STORED ON DISK */
-	int			dir;	/**< @brief direction of last refinement */
-	point_t			min_pt;	/**< @brief min corner of bounding box */
-	point_t			max_pt;	/**< @brief max corner of bounding box */
-	/*   END OF ITEMS VALID IN-MEMORY ONLY -- NOT STORED ON DISK */
-	long			index;	/**< @brief struct # in this model */
+    /* NOTICE:  l.forw & l.back *not* stored in database.  For LIBNURB internal use only. */
+    struct bu_list		l;
+    struct bu_list		f_hd;	/**< @brief list of faces sharing this surface */
+    int			order[2]; /**< @brief surface order [0] = u, [1] = v */
+    struct knot_vector	u;	/**< @brief surface knot vectors */
+    struct knot_vector	v;	/**< @brief surface knot vectors */
+    /* surface control points */
+    int			s_size[2]; /**< @brief mesh size, u, v */
+    int			pt_type; /**< @brief surface point type */
+    fastf_t			*ctl_points; /**< @brief array [size[0]*size[1]] */
+    /* START OF ITEMS VALID IN-MEMORY ONLY -- NOT STORED ON DISK */
+    int			dir;	/**< @brief direction of last refinement */
+    point_t			min_pt;	/**< @brief min corner of bounding box */
+    point_t			max_pt;	/**< @brief max corner of bounding box */
+    /*   END OF ITEMS VALID IN-MEMORY ONLY -- NOT STORED ON DISK */
+    long			index;	/**< @brief struct # in this model */
 };
 
 struct faceuse {
-	struct bu_list		l;	/**< @brief fu's, in shell's fu_hd list */
-	struct shell		*s_p;	/**< @brief owning shell */
-	struct faceuse		*fumate_p;    /**< @brief opposite side of face */
-	int			orientation;  /**< @brief rel to face geom defn */
-	int			outside; /**< @brief RESERVED for future:  See Lee Butler */
-	struct face		*f_p;	/**< @brief face definition and attributes */
-	struct bu_list		lu_hd;	/**< @brief list of loops in face-use */
-	long			index;	/**< @brief struct # in this model */
+    struct bu_list		l;	/**< @brief fu's, in shell's fu_hd list */
+    struct shell		*s_p;	/**< @brief owning shell */
+    struct faceuse		*fumate_p;    /**< @brief opposite side of face */
+    int			orientation;  /**< @brief rel to face geom defn */
+    int			outside; /**< @brief RESERVED for future:  See Lee Butler */
+    struct face		*f_p;	/**< @brief face definition and attributes */
+    struct bu_list		lu_hd;	/**< @brief list of loops in face-use */
+    long			index;	/**< @brief struct # in this model */
 };
 
 /** Returns a 3-tuple (vect_t), given faceuse and state of flip flags */
@@ -369,7 +355,7 @@ struct faceuse {
 	NMG_CK_FACE(_fu1->f_p); \
 	_fg = _fu1->f_p->g.plane_p; \
 	NMG_CK_FACE_G_PLANE(_fg); \
-	if( (_fu1->orientation != OT_SAME) != (_fu1->f_p->flip != 0) )  { \
+	if ( (_fu1->orientation != OT_SAME) != (_fu1->f_p->flip != 0) )  { \
 		VREVERSE( _N, _fg->N); \
 	} else { \
 		VMOVE( _N, _fg->N ); \
@@ -383,7 +369,7 @@ struct faceuse {
 	NMG_CK_FACE(_fu1->f_p); \
 	_fg = _fu1->f_p->g.plane_p; \
 	NMG_CK_FACE_G_PLANE(_fg); \
-	if( (_fu1->orientation != OT_SAME) != (_fu1->f_p->flip != 0) )  { \
+	if ( (_fu1->orientation != OT_SAME) != (_fu1->f_p->flip != 0) )  { \
 		HREVERSE( _N, _fg->N); \
 	} else { \
 		HMOVE( _N, _fg->N ); \
@@ -413,35 +399,35 @@ struct faceuse {
  *  The edges of an exterior (OT_SAME) loop occur in counter-clockwise
  *  order, as viewed from the normalward side (outside).
  */
-#define RT_LIST_SET_DOWN_TO_VERT(_hp,_vu)	{ \
+#define RT_LIST_SET_DOWN_TO_VERT(_hp, _vu)	{ \
 	(_hp)->forw = &((_vu)->l); (_hp)->back = (struct bu_list *)NULL; }
 
 struct loop {
-	long			magic;
-	struct loopuse		*lu_p;	/**< @brief Ptr to one use of this loop */
-	struct loop_g		*lg_p;  /**< @brief Geometry */
-	long			index;	/**< @brief struct # in this model */
+    unsigned long		magic;
+    struct loopuse		*lu_p;	/**< @brief Ptr to one use of this loop */
+    struct loop_g		*lg_p;  /**< @brief Geometry */
+    long			index;	/**< @brief struct # in this model */
 };
 
 struct loop_g {
-	long			magic;
-	point_t			min_pt;	/**< @brief minimums of bounding box */
-	point_t			max_pt;	/**< @brief maximums of bounding box */
-	long			index;	/**< @brief struct # in this model */
+    unsigned long		magic;
+    point_t			min_pt;	/**< @brief minimums of bounding box */
+    point_t			max_pt;	/**< @brief maximums of bounding box */
+    long			index;	/**< @brief struct # in this model */
 };
 
 struct loopuse {
-	struct bu_list		l;	/**< @brief lu's, in fu's lu_hd, or shell's lu_hd */
-	union {
-		struct faceuse  *fu_p;	/**< @brief owning face-use */
-		struct shell	*s_p;
-		long		*magic_p;
-	} up;
-	struct loopuse		*lumate_p; /**< @brief loopuse on other side of face */
-	int			orientation;  /**< @brief OT_SAME=outside loop */
-	struct loop		*l_p;	/**< @brief loop definition and attributes */
-	struct bu_list		down_hd; /**< @brief eu list or vu pointer */
-	long			index;	/**< @brief struct # in this model */
+    struct bu_list		l;	/**< @brief lu's, in fu's lu_hd, or shell's lu_hd */
+    union {
+	struct faceuse  *fu_p;	/**< @brief owning face-use */
+	struct shell	*s_p;
+	unsigned long	*magic_p;
+    } up;
+    struct loopuse		*lumate_p; /**< @brief loopuse on other side of face */
+    int			orientation;  /**< @brief OT_SAME=outside loop */
+    struct loop		*l_p;	/**< @brief loop definition and attributes */
+    struct bu_list		down_hd; /**< @brief eu list or vu pointer */
+    long			index;	/**< @brief struct # in this model */
 };
 
 /**
@@ -452,7 +438,7 @@ struct loopuse {
  *
  *  Only the first vertex of an edge is kept in an edgeuse (eu->vu_p).
  *  The other vertex can be found by either eu->eumate_p->vu_p or
- *  by BU_LIST_PNEXT_CIRC(edgeuse,eu)->vu_p.  Note that the first
+ *  by BU_LIST_PNEXT_CIRC(edgeuse, eu)->vu_p.  Note that the first
  *  form gives a vertexuse in the faceuse of *opposite* orientation,
  *  while the second form gives a vertexuse in the faceuse of the correct
  *  orientation.  If going on to the vertex (vu_p->v_p), both forms
@@ -465,10 +451,10 @@ struct loopuse {
  *  geometry's parameter space.  (cnurbs only)
  */
 struct edge {
-	long			magic;
-	struct edgeuse		*eu_p;	/**< @brief Ptr to one use of this edge */
-	long			is_real;/**< @brief artifact or modeled edge (from tessellator) */
-	long			index;	/**< @brief struct # in this model */
+    unsigned long		magic;
+    struct edgeuse		*eu_p;	/**< @brief Ptr to one use of this edge */
+    long			is_real;/**< @brief artifact or modeled edge (from tessellator) */
+    long			index;	/**< @brief struct # in this model */
 };
 
 /**
@@ -477,15 +463,15 @@ struct edge {
  *  eu_hd2 list must be in same place for both.
  */
 struct edge_g_lseg {
-	struct bu_list		l;	/**< @brief NOTICE:  l.forw & l.back *not* stored in database.  For alignment only. */
-	struct bu_list		eu_hd2;	/**< @brief heads l2 list of edgeuses on this line */
-	point_t			e_pt;	/**< @brief parametric equation of the line */
-	vect_t			e_dir;
-	long			index;	/**< @brief struct # in this model */
+    struct bu_list		l;	/**< @brief NOTICE:  l.forw & l.back *not* stored in database.  For alignment only. */
+    struct bu_list		eu_hd2;	/**< @brief heads l2 list of edgeuses on this line */
+    point_t			e_pt;	/**< @brief parametric equation of the line */
+    vect_t			e_dir;
+    long			index;	/**< @brief struct # in this model */
 };
 
 /*
- *  The ctl_points on this curve are (u,v) values on the face's surface.
+ *  The ctl_points on this curve are (u, v) values on the face's surface.
  *  As a storage and performance efficiency measure, if order <= 0,
  *  then the cnurb is a straight line segment in parameter space,
  *  and the k.knots and ctl_points pointers will be NULL.
@@ -493,37 +479,37 @@ struct edge_g_lseg {
  *  the path through parameter space.
  */
 struct edge_g_cnurb {
-	struct bu_list		l;	/**< @brief NOTICE:  l.forw & l.back *not* stored in database.  For LIBNURB internal use only. */
-	struct bu_list		eu_hd2;	/**< @brief heads l2 list of edgeuses on this curve */
-	int			order;	/**< @brief Curve Order */
-	struct knot_vector	k;	/**< @brief curve knot vector */
-	/* curve control polygon */
-	int			c_size;	/**< @brief number of ctl points */
-	int			pt_type;/**< @brief curve point type */
-	fastf_t			*ctl_points; /**< @brief array [c_size] */
-	long			index;	/**< @brief struct # in this model */
+    struct bu_list		l;	/**< @brief NOTICE:  l.forw & l.back *not* stored in database.  For LIBNURB internal use only. */
+    struct bu_list		eu_hd2;	/**< @brief heads l2 list of edgeuses on this curve */
+    int			order;	/**< @brief Curve Order */
+    struct knot_vector	k;	/**< @brief curve knot vector */
+    /* curve control polygon */
+    int			c_size;	/**< @brief number of ctl points */
+    int			pt_type;/**< @brief curve point type */
+    fastf_t			*ctl_points; /**< @brief array [c_size] */
+    long			index;	/**< @brief struct # in this model */
 };
 
 struct edgeuse {
-	struct bu_list		l;	/**< @brief cw/ccw edges in loop or wire edges in shell */
-	struct bu_list		l2;	/**< @brief member of edge_g's eu_hd2 list */
-	union {
-		struct loopuse	*lu_p;
-		struct shell	*s_p;
-		long	        *magic_p; /**< @brief for those times when we're not sure */
-	} up;
-	struct edgeuse		*eumate_p;  /**< @brief eu on other face or other end of wire*/
-	struct edgeuse		*radial_p;  /**< @brief eu on radially adj. fu (null if wire)*/
-	struct edge		*e_p;	    /**< @brief edge definition and attributes */
-	int	  		orientation;/**< @brief compared to geom (null if wire) */
-	struct vertexuse	*vu_p;	    /**< @brief first vu of eu in this orient */
-	union {
-		long		    *magic_p;
-		struct edge_g_lseg  *lseg_p;
-		struct edge_g_cnurb *cnurb_p;
-	} g;				/**< @brief geometry */
-	/* (u,v,w) param[] of vu is found in vu_p->vua_p->param */
-	long			index;	/**< @brief struct # in this model */
+    struct bu_list		l;	/**< @brief cw/ccw edges in loop or wire edges in shell */
+    struct bu_list		l2;	/**< @brief member of edge_g's eu_hd2 list */
+    union {
+	struct loopuse	*lu_p;
+	struct shell	*s_p;
+	unsigned long	*magic_p; /**< @brief for those times when we're not sure */
+    } up;
+    struct edgeuse		*eumate_p;  /**< @brief eu on other face or other end of wire*/
+    struct edgeuse		*radial_p;  /**< @brief eu on radially adj. fu (null if wire)*/
+    struct edge		*e_p;	    /**< @brief edge definition and attributes */
+    int	  		orientation;/**< @brief compared to geom (null if wire) */
+    struct vertexuse	*vu_p;	    /**< @brief first vu of eu in this orient */
+    union {
+	unsigned long	    *magic_p;
+	struct edge_g_lseg  *lseg_p;
+	struct edge_g_cnurb *cnurb_p;
+    } g;				/**< @brief geometry */
+    /* (u, v, w) param[] of vu is found in vu_p->vua_p->param */
+    long			index;	/**< @brief struct # in this model */
 };
 
 /**
@@ -535,45 +521,45 @@ struct edgeuse {
  *  that use the vertex are linked onto.
  */
 struct vertex {
-	long			magic;
-	struct bu_list		vu_hd;	/**< @brief heads list of vu's of this vertex */
-	struct vertex_g		*vg_p;	/**< @brief geometry */
-	long			index;	/**< @brief struct # in this model */
+    unsigned long		magic;
+    struct bu_list		vu_hd;	/**< @brief heads list of vu's of this vertex */
+    struct vertex_g		*vg_p;	/**< @brief geometry */
+    long			index;	/**< @brief struct # in this model */
 };
 
 struct vertex_g {
-	long			magic;
-	point_t			coord;	/**< @brief coordinates of vertex in space */
-	long			index;	/**< @brief struct # in this model */
+    unsigned long		magic;
+    point_t			coord;	/**< @brief coordinates of vertex in space */
+    long			index;	/**< @brief struct # in this model */
 };
 
 struct vertexuse {
-	struct bu_list		l;	/**< @brief list of all vu's on a vertex */
-	union {
-		struct shell	*s_p;	/**< @brief no fu's or eu's on shell */
-		struct loopuse	*lu_p;	/**< @brief loopuse contains single vertex */
-		struct edgeuse	*eu_p;	/**< @brief eu causing this vu */
-		long		*magic_p; /**< @brief for those times when we're not sure */
-	} up;
-	struct vertex		*v_p;	/**< @brief vertex definition and attributes */
-	union {
-		long				*magic_p;
-		struct vertexuse_a_plane	*plane_p;
-		struct vertexuse_a_cnurb	*cnurb_p;
-	} a;				/**< @brief Attributes */
-	long			index;	/**< @brief struct # in this model */
+    struct bu_list		l;	/**< @brief list of all vu's on a vertex */
+    union {
+	struct shell	*s_p;	/**< @brief no fu's or eu's on shell */
+	struct loopuse	*lu_p;	/**< @brief loopuse contains single vertex */
+	struct edgeuse	*eu_p;	/**< @brief eu causing this vu */
+	unsigned long	*magic_p; /**< @brief for those times when we're not sure */
+    } up;
+    struct vertex		*v_p;	/**< @brief vertex definition and attributes */
+    union {
+	unsigned long			*magic_p;
+	struct vertexuse_a_plane	*plane_p;
+	struct vertexuse_a_cnurb	*cnurb_p;
+    } a;				/**< @brief Attributes */
+    long			index;	/**< @brief struct # in this model */
 };
 
 struct vertexuse_a_plane {
-	long			magic;
-	vect_t			N;	/**< @brief (opt) surface Normal at vertexuse */
-	long			index;	/**< @brief struct # in this model */
+    unsigned long		magic;
+    vect_t			N;	/**< @brief (opt) surface Normal at vertexuse */
+    long			index;	/**< @brief struct # in this model */
 };
 
 struct vertexuse_a_cnurb {
-	long			magic;
-	fastf_t			param[3]; /**< @brief (u,v,w) of vu on eu's cnurb */
-	long			index;	/**< @brief struct # in this model */
+    unsigned long		magic;
+    fastf_t			param[3]; /**< @brief (u, v, w) of vu on eu's cnurb */
+    long			index;	/**< @brief struct # in this model */
 };
 
 /**
@@ -581,18 +567,13 @@ struct vertexuse_a_cnurb {
  *  Primarily used by nmg_mk.c
  */
 
-#define NMG_GETSTRUCT(p,str)	BU_GETSTRUCT(p,str)
+#define NMG_GETSTRUCT(p, str)	BU_GETSTRUCT(p, str)
 
 
-#if __STDC__ && !defined(alliant) && !defined(apollo)
-# define NMG_FREESTRUCT(ptr, str) \
-	{ bzero((char *)(ptr), sizeof(struct str)); \
-	  bu_free((char *)(ptr), "freestruct " #str); }
-#else
-# define NMG_FREESTRUCT(ptr, str) \
-	{ bzero((char *)(ptr), sizeof(struct str)); \
-	  bu_free((char *)(ptr), "freestruct str"); }
-#endif
+#define NMG_FREESTRUCT(ptr, str) { \
+    memset((char *)(ptr), 0, sizeof(struct str)); \
+    bu_free((char *)(ptr), "freestruct " #str); \
+}
 
 
 /*
@@ -602,29 +583,29 @@ struct vertexuse_a_cnurb {
  *  In particular, application code should NEVER do these things.
  *  Any need to do so should be handled by extending nmg_mk.c
  */
-#define NMG_INCR_INDEX(_p,_m)	\
+#define NMG_INCR_INDEX(_p, _m)	\
 	NMG_CK_MODEL(_m); (_p)->index = ((_m)->maxindex)++
 
-#define GET_REGION(p,m)	    {NMG_GETSTRUCT(p, nmgregion); NMG_INCR_INDEX(p,m);}
-#define GET_REGION_A(p,m)   {NMG_GETSTRUCT(p, nmgregion_a); NMG_INCR_INDEX(p,m);}
-#define GET_SHELL(p,m)	    {NMG_GETSTRUCT(p, shell); NMG_INCR_INDEX(p,m);}
-#define GET_SHELL_A(p,m)    {NMG_GETSTRUCT(p, shell_a); NMG_INCR_INDEX(p,m);}
-#define GET_FACE(p,m)	    {NMG_GETSTRUCT(p, face); NMG_INCR_INDEX(p,m);}
-#define GET_FACE_G_PLANE(p,m) {NMG_GETSTRUCT(p, face_g_plane); NMG_INCR_INDEX(p,m);}
-#define GET_FACE_G_SNURB(p,m) {NMG_GETSTRUCT(p, face_g_snurb); NMG_INCR_INDEX(p,m);}
-#define GET_FACEUSE(p,m)    {NMG_GETSTRUCT(p, faceuse); NMG_INCR_INDEX(p,m);}
-#define GET_LOOP(p,m)	    {NMG_GETSTRUCT(p, loop); NMG_INCR_INDEX(p,m);}
-#define GET_LOOP_G(p,m)	    {NMG_GETSTRUCT(p, loop_g); NMG_INCR_INDEX(p,m);}
-#define GET_LOOPUSE(p,m)    {NMG_GETSTRUCT(p, loopuse); NMG_INCR_INDEX(p,m);}
-#define GET_EDGE(p,m)	    {NMG_GETSTRUCT(p, edge); NMG_INCR_INDEX(p,m);}
-#define GET_EDGE_G_LSEG(p,m)  {NMG_GETSTRUCT(p, edge_g_lseg); NMG_INCR_INDEX(p,m);}
-#define GET_EDGE_G_CNURB(p,m) {NMG_GETSTRUCT(p, edge_g_cnurb); NMG_INCR_INDEX(p,m);}
-#define GET_EDGEUSE(p,m)    {NMG_GETSTRUCT(p, edgeuse); NMG_INCR_INDEX(p,m);}
-#define GET_VERTEX(p,m)	    {NMG_GETSTRUCT(p, vertex); NMG_INCR_INDEX(p,m);}
-#define GET_VERTEX_G(p,m)   {NMG_GETSTRUCT(p, vertex_g); NMG_INCR_INDEX(p,m);}
-#define GET_VERTEXUSE(p,m)  {NMG_GETSTRUCT(p, vertexuse); NMG_INCR_INDEX(p,m);}
-#define GET_VERTEXUSE_A_PLANE(p,m) {NMG_GETSTRUCT(p, vertexuse_a_plane); NMG_INCR_INDEX(p,m);}
-#define GET_VERTEXUSE_A_CNURB(p,m) {NMG_GETSTRUCT(p, vertexuse_a_cnurb); NMG_INCR_INDEX(p,m);}
+#define GET_REGION(p, m)	    {NMG_GETSTRUCT(p, nmgregion); NMG_INCR_INDEX(p, m);}
+#define GET_REGION_A(p, m)   {NMG_GETSTRUCT(p, nmgregion_a); NMG_INCR_INDEX(p, m);}
+#define GET_SHELL(p, m)	    {NMG_GETSTRUCT(p, shell); NMG_INCR_INDEX(p, m);}
+#define GET_SHELL_A(p, m)    {NMG_GETSTRUCT(p, shell_a); NMG_INCR_INDEX(p, m);}
+#define GET_FACE(p, m)	    {NMG_GETSTRUCT(p, face); NMG_INCR_INDEX(p, m);}
+#define GET_FACE_G_PLANE(p, m) {NMG_GETSTRUCT(p, face_g_plane); NMG_INCR_INDEX(p, m);}
+#define GET_FACE_G_SNURB(p, m) {NMG_GETSTRUCT(p, face_g_snurb); NMG_INCR_INDEX(p, m);}
+#define GET_FACEUSE(p, m)    {NMG_GETSTRUCT(p, faceuse); NMG_INCR_INDEX(p, m);}
+#define GET_LOOP(p, m)	    {NMG_GETSTRUCT(p, loop); NMG_INCR_INDEX(p, m);}
+#define GET_LOOP_G(p, m)	    {NMG_GETSTRUCT(p, loop_g); NMG_INCR_INDEX(p, m);}
+#define GET_LOOPUSE(p, m)    {NMG_GETSTRUCT(p, loopuse); NMG_INCR_INDEX(p, m);}
+#define GET_EDGE(p, m)	    {NMG_GETSTRUCT(p, edge); NMG_INCR_INDEX(p, m);}
+#define GET_EDGE_G_LSEG(p, m)  {NMG_GETSTRUCT(p, edge_g_lseg); NMG_INCR_INDEX(p, m);}
+#define GET_EDGE_G_CNURB(p, m) {NMG_GETSTRUCT(p, edge_g_cnurb); NMG_INCR_INDEX(p, m);}
+#define GET_EDGEUSE(p, m)    {NMG_GETSTRUCT(p, edgeuse); NMG_INCR_INDEX(p, m);}
+#define GET_VERTEX(p, m)	    {NMG_GETSTRUCT(p, vertex); NMG_INCR_INDEX(p, m);}
+#define GET_VERTEX_G(p, m)   {NMG_GETSTRUCT(p, vertex_g); NMG_INCR_INDEX(p, m);}
+#define GET_VERTEXUSE(p, m)  {NMG_GETSTRUCT(p, vertexuse); NMG_INCR_INDEX(p, m);}
+#define GET_VERTEXUSE_A_PLANE(p, m) {NMG_GETSTRUCT(p, vertexuse_a_plane); NMG_INCR_INDEX(p, m);}
+#define GET_VERTEXUSE_A_CNURB(p, m) {NMG_GETSTRUCT(p, vertexuse_a_cnurb); NMG_INCR_INDEX(p, m);}
 
 #define FREE_MODEL(p)	    NMG_FREESTRUCT(p, model)
 #define FREE_REGION(p)	    NMG_FREESTRUCT(p, nmgregion)
@@ -650,14 +631,14 @@ struct vertexuse_a_cnurb {
 #define FREE_VERTEXUSE_A_CNURB(p) NMG_FREESTRUCT(p, vertexuse_a_cnurb)
 
 /** Do two edgeuses share the same two vertices? If yes, eu's should be joined. */
-#define NMG_ARE_EUS_ADJACENT(_eu1,_eu2)	(  \
+#define NMG_ARE_EUS_ADJACENT(_eu1, _eu2)	(  \
 	( (_eu1)->vu_p->v_p == (_eu2)->vu_p->v_p &&   \
 	  (_eu1)->eumate_p->vu_p->v_p == (_eu2)->eumate_p->vu_p->v_p )  ||  \
 	( (_eu1)->vu_p->v_p == (_eu2)->eumate_p->vu_p->v_p &&  \
 	  (_eu1)->eumate_p->vu_p->v_p == (_eu2)->vu_p->v_p ) )
 
 /** Compat: Used in nmg_misc.c and nmg_mod.c */
-#define EDGESADJ(_e1, _e2) NMG_ARE_EUS_ADJACENT(_e1,_e2)
+#define EDGESADJ(_e1, _e2) NMG_ARE_EUS_ADJACENT(_e1, _e2)
 
 /** Print a plane equation. */
 #define PLPRINT(_s, _pl) bu_log("%s %gx + %gy + %gz = %g\n", (_s), \
@@ -677,14 +658,14 @@ struct vertexuse_a_cnurb {
 
 
 struct nmg_boolstruct {
-	struct bu_ptbl	ilist;		/**< @brief vertexuses on intersection line */
-	fastf_t		tol;
-	point_t		pt;		/**< @brief line of intersection */
-	vect_t		dir;
-	int		coplanar;
-	char		*vertlist;
-	int		vlsize;
-	struct model	*model;
+    struct bu_ptbl	ilist;		/**< @brief vertexuses on intersection line */
+    fastf_t		tol;
+    point_t		pt;		/**< @brief line of intersection */
+    vect_t		dir;
+    int		coplanar;
+    char		*vertlist;
+    int		vlsize;
+    struct model	*model;
 };
 
 #define PREEXIST 1
@@ -699,38 +680,38 @@ struct nmg_boolstruct {
 
 
 struct nmg_struct_counts {
-	/* Actual structure counts (Xuse, then X) */
-	long	model;
-	long	region;
-	long	region_a;
-	long	shell;
-	long	shell_a;
-	long	faceuse;
-	long	face;
-	long	face_g_plane;
-	long	face_g_snurb;
-	long	loopuse;
-	long	loop;
-	long	loop_g;
-	long	edgeuse;
-	long	edge;
-	long	edge_g_lseg;
-	long	edge_g_cnurb;
-	long	vertexuse;
-	long	vertexuse_a_plane;
-	long	vertexuse_a_cnurb;
-	long	vertex;
-	long	vertex_g;
-	/* Abstractions */
-	long	max_structs;
-	long	face_loops;
-	long	face_edges;
-	long	face_lone_verts;
-	long	wire_loops;
-	long	wire_loop_edges;
-	long	wire_edges;
-	long	wire_lone_verts;
-	long	shells_of_lone_vert;
+    /* Actual structure counts (Xuse, then X) */
+    long	model;
+    long	region;
+    long	region_a;
+    long	shell;
+    long	shell_a;
+    long	faceuse;
+    long	face;
+    long	face_g_plane;
+    long	face_g_snurb;
+    long	loopuse;
+    long	loop;
+    long	loop_g;
+    long	edgeuse;
+    long	edge;
+    long	edge_g_lseg;
+    long	edge_g_cnurb;
+    long	vertexuse;
+    long	vertexuse_a_plane;
+    long	vertexuse_a_cnurb;
+    long	vertex;
+    long	vertex_g;
+    /* Abstractions */
+    long	max_structs;
+    long	face_loops;
+    long	face_edges;
+    long	face_lone_verts;
+    long	wire_loops;
+    long	wire_loop_edges;
+    long	wire_edges;
+    long	wire_lone_verts;
+    long	shells_of_lone_vert;
 };
 
 /*
@@ -745,21 +726,21 @@ struct nmg_struct_counts {
  *  is not used, to avoid the possibility of integer overflow from
  *  repeated test-and-set operations on one item.
  */
-#define NMG_INDEX_VALUE(_tab,_index)	((_tab)[_index])
-#define NMG_INDEX_TEST(_tab,_p)		( (_tab)[(_p)->index] )
-#define NMG_INDEX_SET(_tab,_p)		{(_tab)[(_p)->index] = 1;}
-#define NMG_INDEX_CLEAR(_tab,_p)	{(_tab)[(_p)->index] = 0;}
-#define NMG_INDEX_TEST_AND_SET(_tab,_p)	\
+#define NMG_INDEX_VALUE(_tab, _index)	((_tab)[_index])
+#define NMG_INDEX_TEST(_tab, _p)		( (_tab)[(_p)->index] )
+#define NMG_INDEX_SET(_tab, _p)		{(_tab)[(_p)->index] = 1;}
+#define NMG_INDEX_CLEAR(_tab, _p)	{(_tab)[(_p)->index] = 0;}
+#define NMG_INDEX_TEST_AND_SET(_tab, _p)	\
 	( (_tab)[(_p)->index] == 0 ? ((_tab)[(_p)->index] = 1) : 0 )
-#define NMG_INDEX_IS_SET(_tab,_p)	NMG_INDEX_TEST(_tab,_p)
-#define NMG_INDEX_FIRST_TIME(_tab,_p)	NMG_INDEX_TEST_AND_SET(_tab,_p)
-#define NMG_INDEX_ASSIGN(_tab,_p,_val)	{(_tab)[(_p)->index] = _val;}
-#define NMG_INDEX_GET(_tab,_p)		((_tab)[(_p)->index])
-#define NMG_INDEX_GETP(_ty,_tab,_p)	((struct _ty *)((_tab)[(_p)->index]))
-#define NMG_INDEX_OR(_tab,_p,_val)	{(_tab)[(_p)->index] |= _val;}
-#define NMG_INDEX_AND(_tab,_p,_val)	{(_tab)[(_p)->index] &= _val;}
-#define NMG_INDEX_RETURN_IF_SET_ELSE_SET(_tab,_index)	\
-	{ if( (_tab)[_index] )  return; \
+#define NMG_INDEX_IS_SET(_tab, _p)	NMG_INDEX_TEST(_tab, _p)
+#define NMG_INDEX_FIRST_TIME(_tab, _p)	NMG_INDEX_TEST_AND_SET(_tab, _p)
+#define NMG_INDEX_ASSIGN(_tab, _p, _val)	{(_tab)[(_p)->index] = _val;}
+#define NMG_INDEX_GET(_tab, _p)		((_tab)[(_p)->index])
+#define NMG_INDEX_GETP(_ty, _tab, _p)	((struct _ty *)((_tab)[(_p)->index]))
+#define NMG_INDEX_OR(_tab, _p, _val)	{(_tab)[(_p)->index] |= _val;}
+#define NMG_INDEX_AND(_tab, _p, _val)	{(_tab)[(_p)->index] &= _val;}
+#define NMG_INDEX_RETURN_IF_SET_ELSE_SET(_tab, _index)	\
+	{ if ( (_tab)[_index] )  return; \
 	  else (_tab)[_index] = 1; }
 
 /* flags for manifold-ness */
@@ -771,7 +752,7 @@ struct nmg_struct_counts {
 # define NMG_DANGLING	8 /* NMG_2MANIFOLD + 4th bit for special cond */
 #endif
 
-#define NMG_SET_MANIFOLD(_t,_p,_v) NMG_INDEX_OR(_t, _p, _v)
+#define NMG_SET_MANIFOLD(_t, _p, _v) NMG_INDEX_OR(_t, _p, _v)
 #define NMG_MANIFOLDS(_t, _p)	   NMG_INDEX_VALUE(_t, (_p)->index)
 #define NMG_CP_MANIFOLD(_t, _p, _q) (_t)[(_p)->index] = (_t)[(_q)->index]
 
@@ -797,43 +778,43 @@ struct nmg_struct_counts {
  *  to allow generic handlers to be written, if desired.
  */
 struct nmg_visit_handlers {
-	void	(*bef_model) NMG_ARGS((long *, genptr_t, int));
-	void	(*aft_model) NMG_ARGS((long *, genptr_t, int));
+    void	(*bef_model) NMG_ARGS((long *, genptr_t, int));
+    void	(*aft_model) NMG_ARGS((long *, genptr_t, int));
 
-	void	(*bef_region) NMG_ARGS((long *, genptr_t, int));
-	void	(*aft_region) NMG_ARGS((long *, genptr_t, int));
+    void	(*bef_region) NMG_ARGS((long *, genptr_t, int));
+    void	(*aft_region) NMG_ARGS((long *, genptr_t, int));
 
-	void	(*vis_region_a) NMG_ARGS((long *, genptr_t, int));
+    void	(*vis_region_a) NMG_ARGS((long *, genptr_t, int));
 
-	void	(*bef_shell) NMG_ARGS((long *, genptr_t, int));
-	void	(*aft_shell) NMG_ARGS((long *, genptr_t, int));
+    void	(*bef_shell) NMG_ARGS((long *, genptr_t, int));
+    void	(*aft_shell) NMG_ARGS((long *, genptr_t, int));
 
-	void	(*vis_shell_a) NMG_ARGS((long *, genptr_t, int));
+    void	(*vis_shell_a) NMG_ARGS((long *, genptr_t, int));
 
-	void	(*bef_faceuse) NMG_ARGS((long *, genptr_t, int));
-	void	(*aft_faceuse) NMG_ARGS((long *, genptr_t, int));
+    void	(*bef_faceuse) NMG_ARGS((long *, genptr_t, int));
+    void	(*aft_faceuse) NMG_ARGS((long *, genptr_t, int));
 
-	void	(*vis_face) NMG_ARGS((long *, genptr_t, int));
-	void	(*vis_face_g) NMG_ARGS((long *, genptr_t, int));
+    void	(*vis_face) NMG_ARGS((long *, genptr_t, int));
+    void	(*vis_face_g) NMG_ARGS((long *, genptr_t, int));
 
-	void	(*bef_loopuse) NMG_ARGS((long *, genptr_t, int));
-	void	(*aft_loopuse) NMG_ARGS((long *, genptr_t, int));
+    void	(*bef_loopuse) NMG_ARGS((long *, genptr_t, int));
+    void	(*aft_loopuse) NMG_ARGS((long *, genptr_t, int));
 
-	void	(*vis_loop) NMG_ARGS((long *, genptr_t, int));
-	void	(*vis_loop_g) NMG_ARGS((long *, genptr_t, int));
+    void	(*vis_loop) NMG_ARGS((long *, genptr_t, int));
+    void	(*vis_loop_g) NMG_ARGS((long *, genptr_t, int));
 
-	void	(*bef_edgeuse) NMG_ARGS((long *, genptr_t, int));
-	void	(*aft_edgeuse) NMG_ARGS((long *, genptr_t, int));
+    void	(*bef_edgeuse) NMG_ARGS((long *, genptr_t, int));
+    void	(*aft_edgeuse) NMG_ARGS((long *, genptr_t, int));
 
-	void	(*vis_edge) NMG_ARGS((long *, genptr_t, int));
-	void	(*vis_edge_g) NMG_ARGS((long *, genptr_t, int));
+    void	(*vis_edge) NMG_ARGS((long *, genptr_t, int));
+    void	(*vis_edge_g) NMG_ARGS((long *, genptr_t, int));
 
-	void	(*bef_vertexuse) NMG_ARGS((long *, genptr_t, int));
-	void	(*aft_vertexuse) NMG_ARGS((long *, genptr_t, int));
+    void	(*bef_vertexuse) NMG_ARGS((long *, genptr_t, int));
+    void	(*aft_vertexuse) NMG_ARGS((long *, genptr_t, int));
 
-	void	(*vis_vertexuse_a) NMG_ARGS((long *, genptr_t, int));
-	void	(*vis_vertex) NMG_ARGS((long *, genptr_t, int));
-	void	(*vis_vertex_g) NMG_ARGS((long *, genptr_t, int));
+    void	(*vis_vertexuse_a) NMG_ARGS((long *, genptr_t, int));
+    void	(*vis_vertex) NMG_ARGS((long *, genptr_t, int));
+    void	(*vis_vertex_g) NMG_ARGS((long *, genptr_t, int));
 };
 
 #endif /* __NMG_H__ */
@@ -843,8 +824,8 @@ struct nmg_visit_handlers {
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

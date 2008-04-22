@@ -38,11 +38,9 @@
 #endif
 
 /*
- * Define this if you want to revert to the old behavior of never checking the
- * stack.
+ * Define TCL_NO_STACK_CHECK in the compiler options if you want to revert to
+ * the old behavior of never checking the stack.
  */
-
-#undef TCL_NO_STACK_CHECK
 
 /*
  * Define this if you want to see a lot of output regarding stack checking.
@@ -78,11 +76,17 @@
 typedef struct ThreadSpecificData {
     int *outerVarPtr;		/* The "outermost" stack frame pointer for
 				 * this thread. */
-    int initialised;		/* Have we found what the stack size was? */
-    int stackDetermineResult;	/* What happened when we did that? */
-    size_t stackSize;		/* The size of the current stack. */
+    int *stackBound;            /* The current stack boundary */
 } ThreadSpecificData;
 static Tcl_ThreadDataKey dataKey;
+#ifdef TCL_CROSS_COMPILE
+static int stackGrowsDown = -1;
+static int StackGrowsDown(int *parent);
+#elif defined(TCL_STACK_GROWS_UP)
+#define stackGrowsDown 0
+#else
+#define stackGrowsDown 1
+#endif
 #endif /* TCL_NO_STACK_CHECK */
 
 #ifdef TCL_DEBUG_STACK_CHECK
@@ -343,6 +347,7 @@ static int		MacOSXGetLibraryPath(Tcl_Interp *interp,
 MODULE_SCOPE long tclMacOSXDarwinRelease;
 long tclMacOSXDarwinRelease = 0;
 #endif
+
 
 /*
  *---------------------------------------------------------------------------
@@ -415,7 +420,8 @@ TclpInitPlatform(void)
     /*
      * Find local symbols. Don't report an error if we fail.
      */
-    (void) dlopen (NULL, RTLD_NOW);			/* INTL: Native. */
+
+    (void) dlopen(NULL, RTLD_NOW);			/* INTL: Native. */
 #endif
 
     /*
@@ -441,6 +447,7 @@ TclpInitPlatform(void)
 #ifdef GET_DARWIN_RELEASE
     {
 	struct utsname name;
+
 	if (!uname(&name)) {
 	    tclMacOSXDarwinRelease = strtol(name.release, NULL, 10);
 	}
@@ -762,7 +769,6 @@ TclpSetVariables(
     struct utsname name;
 #endif
     int unameOK;
-    CONST char *user;
     Tcl_DString ds;
 
 #ifdef HAVE_COREFOUNDATION
@@ -772,6 +778,7 @@ TclpSetVariables(
     /*
      * Set msgcat fallback locale to current CFLocale identifier.
      */
+
     CFLocaleRef localeRef;
     
     if (CFLocaleCopyCurrent != NULL && CFLocaleGetIdentifier != NULL &&
@@ -790,11 +797,10 @@ TclpSetVariables(
 	}
 	CFRelease(localeRef);
     }
-#endif
+#endif /* MAC_OS_X_VERSION_MAX_ALLOWED > 1020 */
 
     if (MacOSXGetLibraryPath(interp, MAXPATHLEN, tclLibPath) == TCL_OK) {
 	CONST char *str;
-	Tcl_DString ds;
 	CFBundleRef bundleRef;
 
 	Tcl_SetVar(interp, "tclDefaultLibrary", tclLibPath, TCL_GLOBAL_ONLY);
@@ -912,12 +918,12 @@ TclpSetVariables(
 	    Tcl_SetVar2(interp, "tcl_platform", "osVersion", name.release,
 		    TCL_GLOBAL_ONLY|TCL_APPEND_VALUE);
 
-#endif
+#endif /* DJGPP */
 	}
 	Tcl_SetVar2(interp, "tcl_platform", "machine", name.machine,
 		TCL_GLOBAL_ONLY);
     }
-#endif
+#endif /* !NO_UNAME */
     if (!unameOK) {
 	Tcl_SetVar2(interp, "tcl_platform", "os", "", TCL_GLOBAL_ONLY);
 	Tcl_SetVar2(interp, "tcl_platform", "osVersion", "", TCL_GLOBAL_ONLY);
@@ -925,19 +931,24 @@ TclpSetVariables(
     }
 
     /*
-     * Copy USER or LOGNAME environment variable into tcl_platform(user).
+     * Copy the username of the real user (according to getuid()) into
+     * tcl_platform(user).
      */
 
-    Tcl_DStringInit(&ds);
-    user = TclGetEnv("USER", &ds);
-    if (user == NULL) {
-	user = TclGetEnv("LOGNAME", &ds);
-	if (user == NULL) {
+    {
+	struct passwd *pwEnt = TclpGetPwUid(getuid());
+	const char *user;
+
+	if (pwEnt == NULL) {
 	    user = "";
+	    Tcl_DStringInit(&ds);	/* ensure cleanliness */
+	} else {
+	    user = Tcl_ExternalToUtfDString(NULL, pwEnt->pw_name, -1, &ds);
 	}
+
+	Tcl_SetVar2(interp, "tcl_platform", "user", user, TCL_GLOBAL_ONLY);
+	Tcl_DStringFree(&ds);
     }
-    Tcl_SetVar2(interp, "tcl_platform", "user", user, TCL_GLOBAL_ONLY);
-    Tcl_DStringFree(&ds);
 }
 
 /*
@@ -997,111 +1008,111 @@ TclpFindVariable(
     return result;
 }
 
+#ifndef TCL_NO_STACK_CHECK
 /*
  *----------------------------------------------------------------------
  *
- * TclpCheckStackSpace --
+ * TclpGetCStackParams --
  *
- *	Detect if we are about to blow the stack. Called before an evaluation
- *	can happen when nesting depth is checked.
+ *	Determine the stack params for the current thread: in which
+ *	direction does the stack grow, and what is the stack lower (resp.
+ *	upper) bound for safe invocation of a new command? This is used to
+ *	cache the values needed for an efficient computation of
+ *	TclpCheckStackSpace() when the interp is known.
  *
  * Results:
- *	1 if there is enough stack space to continue; 0 if not.
- *
- * Side effects:
- *	None.
+ *	Returns 1 if the stack grows down, in which case a stack lower bound
+ *	is stored at stackBoundPtr. If the stack grows up, 0 is returned and
+ *	an upper bound is stored at stackBoundPtr. If a bound cannot be
+ *	determined NULL is stored at stackBoundPtr.
  *
  *----------------------------------------------------------------------
  */
 
 int
-TclpCheckStackSpace(void)
+TclpGetCStackParams(
+    int **stackBoundPtr)
 {
-#ifdef TCL_NO_STACK_CHECK
-
-    /*
-     * This function was normally unimplemented on Unix platforms and this
-     * implements old behavior, i.e. no stack checking performed.
-     */
-
-    return 1;
-
-#else
-
+    int result = TCL_OK;
+    size_t stackSize = 0;	/* The size of the current stack. */
     ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
 				/* Most variables are actually in a
 				 * thread-specific data block to minimise the
 				 * impact on the stack. */
-    register size_t stackUsed;
-    int localVar;		/* Reference to somewhere on the local stack.
-				 * This is declared last so it's as "deep" as
-				 * possible. */
-
-    if (tsdPtr == NULL) {
+#ifdef TCL_CROSS_COMPILE
+    if (stackGrowsDown == -1) {
 	/*
-	 * This should probably be a panic(); if we're out of stack, we might
-	 * have virtually no room to manoeuver at all.
+	 * Not initialised!
 	 */
 
-	Tcl_Panic("failed to get thread specific stack check data");
+	stackGrowsDown = StackGrowsDown(&result);
     }
-
+#endif
+    
     /*
-     * The first time through, we record the "outermost" stack frame.
+     * The first time through in a thread: record the "outermost" stack
+     * frame and inquire with the OS about the stack size.
      */
 
     if (tsdPtr->outerVarPtr == NULL) {
-	tsdPtr->outerVarPtr = &localVar;
+	tsdPtr->outerVarPtr = &result;
+	result = GetStackSize(&stackSize);
+	if (result != TCL_OK) {
+	    /* Can't check, assume it always succeeds */
+#ifdef TCL_CROSS_COMPILE
+	    stackGrowsDown = 1;
+#endif
+	    tsdPtr->stackBound = NULL;
+	    goto done;
+	}
     }
 
-    if (tsdPtr->initialised == 0) {
+    if (stackSize || (tsdPtr->stackBound &&
+	    ((stackGrowsDown && (&result < tsdPtr->stackBound)) ||
+	    (!stackGrowsDown && (&result > tsdPtr->stackBound))))) {
 	/*
-	 * We appear to have not computed the stack size before. Attempt to
-	 * retrieve it from either the current thread or, failing that, the
-	 * process accounting limit. Note that we assume that stack sizes do
-	 * not change throughout the lifespan of the thread/process; this is
-	 * almost always true.
+	 * Either the thread's first pass or stack failure: set the params
 	 */
 
-	tsdPtr->stackDetermineResult = GetStackSize(&tsdPtr->stackSize);
-	tsdPtr->initialised = 1;
+	if (!stackSize) {
+	    /*
+	     * Stack failure: if we didn't already blow up, we are within the
+	     * safety area. Recheck with the OS in case the stack was grown. 
+	     */
+	    result = GetStackSize(&stackSize);
+	    if (result != TCL_OK) {
+		/* Can't check, assume it always succeeds */
+#ifdef TCL_CROSS_COMPILE
+		stackGrowsDown = 1;
+#endif
+		tsdPtr->stackBound = NULL;
+		goto done;
+	    }
+	}
+
+	if (stackGrowsDown) {
+	    tsdPtr->stackBound = (int *) ((char *)tsdPtr->outerVarPtr -
+		    stackSize);
+	} else {
+	    tsdPtr->stackBound = (int *) ((char *)tsdPtr->outerVarPtr +
+		    stackSize);
+	}
     }
 
-    switch (tsdPtr->stackDetermineResult) {
-    case TCL_BREAK:
-	STACK_DEBUG(("skipping stack check with failure\n"));
-	return 0;
-    case TCL_CONTINUE:
-	STACK_DEBUG(("skipping stack check with success\n"));
-	return 1;
-    }
-
-    /*
-     * Sanity check to see if somehow the stack started going the
-     * other way.
-     */
-
-    if (&localVar > tsdPtr->outerVarPtr) {
-	stackUsed = (char *)&localVar - (char *)tsdPtr->outerVarPtr;
-    } else {
-	stackUsed = (char *)tsdPtr->outerVarPtr - (char *)&localVar;
-    }
-
-    /*
-     * Now we perform the actual check. Are we about to blow our stack frame?
-     */
-
-    if (stackUsed < tsdPtr->stackSize) {
-	STACK_DEBUG(("stack OK\tin:%p\tout:%p\tuse:%04X\tmax:%04X\n",
-		&localVar, tsdPtr->outerVarPtr, stackUsed, tsdPtr->stackSize));
-	return 1;
-    } else {
-	STACK_DEBUG(("stack OVERFLOW\tin:%p\tout:%p\tuse:%04X\tmax:%04X\n",
-		&localVar, tsdPtr->outerVarPtr, stackUsed, tsdPtr->stackSize));
-	return 0;
-    }
-#endif /* TCL_NO_STACK_CHECK */
+    done:
+    *stackBoundPtr = tsdPtr->stackBound;
+    return stackGrowsDown;
 }
+
+#ifdef TCL_CROSS_COMPILE
+int
+StackGrowsDown(
+    int *parent)
+{
+    int here;
+    return (&here < parent);
+}
+#endif
 
 /*
  *----------------------------------------------------------------------
@@ -1126,7 +1137,6 @@ TclpCheckStackSpace(void)
  *----------------------------------------------------------------------
  */
 
-#ifndef TCL_NO_STACK_CHECK
 static int
 GetStackSize(
     size_t *stackSizePtr)
@@ -1135,12 +1145,13 @@ GetStackSize(
     struct rlimit rLimit;	/* The result from getrlimit(). */
 
 #ifdef TCL_THREADS
-    rawStackSize = (size_t) TclpThreadGetStackSize();
+    rawStackSize = TclpThreadGetStackSize();
     if (rawStackSize == (size_t) -1) {
 	/*
-	 * Some kind of confirmed error?!
+	 * Some kind of confirmed error in TclpThreadGetStackSize?! Fall back
+	 * to whatever getrlimit can determine.
 	 */
-	return TCL_BREAK;
+	STACK_DEBUG(("stack checks: TclpThreadGetStackSize failed in \n"));
     }
     if (rawStackSize > 0) {
 	goto finalSanityCheck;
@@ -1157,12 +1168,14 @@ GetStackSize(
 	/*
 	 * getrlimit() failed, just fail the whole thing.
 	 */
+	STACK_DEBUG(("skipping stack checks with failure: getrlimit failed\n"));
 	return TCL_BREAK;
     }
     if (rLimit.rlim_cur == RLIM_INFINITY) {
 	/*
 	 * Limit is "infinite"; there is no stack limit.
 	 */
+	STACK_DEBUG(("skipping stack checks with success: infinite limit\n"));
 	return TCL_CONTINUE;
     }
     rawStackSize = rLimit.rlim_cur;
@@ -1177,6 +1190,7 @@ GetStackSize(
   finalSanityCheck:
 #endif
     if (rawStackSize <= 0) {
+	STACK_DEBUG(("skipping stack checks with success\n"));
 	return TCL_CONTINUE;
     }
 

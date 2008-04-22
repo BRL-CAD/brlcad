@@ -1,7 +1,7 @@
 /*                   T K I M G F M T P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2007 United States Government as represented by
+ * Copyright (c) 1994-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,13 +36,6 @@
  *
  *      A photo image file handler for BRL-CAD(tm) ".pix" format files.
  *
- *  Author -
- *	Glenn Durfee
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  * Based on:
  *	tkImgFmtPPM.c --
  *
@@ -59,20 +52,11 @@
  *	   Australian National University.
  */
 
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (ARL)";
-#endif
-
 #include "common.h"
 
 #include <stdio.h>
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#include <strings.h>
-#endif
 
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
@@ -91,17 +75,17 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  */
 
 static int		FileMatchPIX _ANSI_ARGS_((Tcl_Channel chan,
-			    const char *fileName,
-			    Tcl_Obj *format, int *widthPtr,
-			    int *heightPtr, Tcl_Interp *interp));
+						  const char *fileName,
+						  Tcl_Obj *format, int *widthPtr,
+						  int *heightPtr, Tcl_Interp *interp));
 static int		FileReadPIX  _ANSI_ARGS_((Tcl_Interp *interp,
-			    Tcl_Channel chan,
-			    const char *fileName, Tcl_Obj *formatString,
-			    Tk_PhotoHandle imageHandle, int destX, int destY,
-			    int width, int height, int srcX, int srcY));
+						  Tcl_Channel chan,
+						  const char *fileName, Tcl_Obj *formatString,
+						  Tk_PhotoHandle imageHandle, int destX, int destY,
+						  int width, int height, int srcX, int srcY));
 static int		FileWritePIX _ANSI_ARGS_((Tcl_Interp *interp,
-			    const char *fileName, Tcl_Obj *formatString,
-			    Tk_PhotoImageBlock *blockPtr));
+						  const char *fileName, Tcl_Obj *formatString,
+						  Tk_PhotoImageBlock *blockPtr));
 
 Tk_PhotoImageFormat tkImgFmtPIX = {
     "PIX",			/* name */
@@ -139,11 +123,11 @@ Tk_PhotoImageFormat tkImgFmtPIX = {
 static int
 FileMatchPIX(Tcl_Channel chan, const char *fileName, Tcl_Obj *format, int *widthPtr, int *heightPtr, Tcl_Interp *interp)
 
-				/* The name of the image file. */
-			/* User-specified format string, or NULL. */
-				/* The dimensions of the image are
-				 * returned here if the file is a valid
-				 * raw PIX file. */
+    /* The name of the image file. */
+    /* User-specified format string, or NULL. */
+    /* The dimensions of the image are
+     * returned here if the file is a valid
+     * raw PIX file. */
 
 {
     /* The format string must be nonnull and it must contain the word "pix". */
@@ -197,17 +181,17 @@ FileMatchPIX(Tcl_Channel chan, const char *fileName, Tcl_Obj *format, int *width
 
 static int
 FileReadPIX(Tcl_Interp *interp, Tcl_Channel chan, const char *fileName, Tcl_Obj *format, Tk_PhotoHandle imageHandle, int destX, int destY, int width, int height, int srcX, int srcY)
-				/* Interpreter to use for reporting errors. */
+    /* Interpreter to use for reporting errors. */
 
-				/* The name of the image file. */
-				/* User-specified format string, or NULL. */
-				/* The photo image to write into. */
-				/* Coordinates of top-left pixel in
-				 * photo image to be written to. */
-				/* Dimensions of block of photo image to
-				 * be written to. */
-				/* Coordinates of top-left pixel to be used
-				 * in image being read. */
+    /* The name of the image file. */
+    /* User-specified format string, or NULL. */
+    /* The photo image to write into. */
+    /* Coordinates of top-left pixel in
+     * photo image to be written to. */
+    /* Dimensions of block of photo image to
+     * be written to. */
+    /* Coordinates of top-left pixel to be used
+     * in image being read. */
 {
     unsigned long int fileWidth, fileHeight;
     int nBytes, h, count;
@@ -260,7 +244,7 @@ FileReadPIX(Tcl_Interp *interp, Tcl_Channel chan, const char *fileName, Tcl_Obj 
 
     if ((srcY + height) < fileHeight) {
 	Tcl_Seek( chan, (long) ((fileHeight - srcY - height) * block.pitch),
-		SEEK_CUR );
+		  SEEK_CUR );
 
     }
 
@@ -273,9 +257,9 @@ FileReadPIX(Tcl_Interp *interp, Tcl_Channel chan, const char *fileName, Tcl_Obj 
 	count = Tcl_Read( chan, (char *)pixelPtr, nBytes );
 	if (count != nBytes) {
 	    Tcl_AppendResult(interp, "error reading PIX image file \"",
-		    fileName, "\": ",
-		    Tcl_Eof(chan) ? "not enough data" : Tcl_PosixError(interp),
-		    (char *) NULL);
+			     fileName, "\": ",
+			     Tcl_Eof(chan) ? "not enough data" : Tcl_PosixError(interp),
+			     (char *) NULL);
 	    bu_free((char *) pixelPtr, "PIX image");
 	    return TCL_ERROR;
 	}
@@ -319,12 +303,12 @@ FileWritePIX(Tcl_Interp *interp, const char *fileName, Tcl_Obj *format, Tk_Photo
 
     if ((f = fopen(fileName, "wb")) == NULL) {
 	Tcl_AppendResult(interp, fileName, ": ", Tcl_PosixError(interp),
-		(char *)NULL);
+			 (char *)NULL);
 	return TCL_ERROR;
     }
 
     pixLinePtr = blockPtr->pixelPtr + blockPtr->offset[0] +
-		 (blockPtr->height-1)*blockPtr->pitch;
+	(blockPtr->height-1)*blockPtr->pitch;
     greenOffset = blockPtr->offset[1] - blockPtr->offset[0];
     blueOffset = blockPtr->offset[2] - blockPtr->offset[0];
 
@@ -348,7 +332,7 @@ FileWritePIX(Tcl_Interp *interp, const char *fileName, Tcl_Obj *format, Tk_Photo
 
  writeerror:
     Tcl_AppendResult(interp, "error writing \"", fileName, "\": ",
-	    Tcl_PosixError(interp), (char *) NULL);
+		     Tcl_PosixError(interp), (char *) NULL);
     if (f != NULL) {
 	fclose(f);
     }
@@ -359,8 +343,8 @@ FileWritePIX(Tcl_Interp *interp, const char *fileName, Tcl_Obj *format, Tk_Photo
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

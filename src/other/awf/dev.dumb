@@ -39,7 +39,7 @@
 .^c + 1 +
 .\" we do not do backslash-space here, it can't be done with .^c, but the
 .\" other forms of space we can do
-.^c 0 1 " 
+.^c 0 1 "
 .^c | 0
 .^c ^ 0
 .^c & 0

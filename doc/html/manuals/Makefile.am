@@ -17,6 +17,7 @@ htmldocs_DATA = \
 	Obtain.html \
 	Overview.html \
 	eagleCAD.gif \
+	eagleCAD.bmp \
 	index.html \
 	small-eagleCAD.gif
 

@@ -1,7 +1,7 @@
 /*                     L I B T E R M I O . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,22 +20,9 @@
 /** @addtogroup libtermio */
 /** @{ */
 /** @file libtermio.h
- *			T E R M I O . H
  *
  *  Externs for the BRL-CAD library LIBTERMIO
  *
- *  @author
- *	Gary S. Moss
- *
- *  @par Source
- *	The U. S. Army Research Laboratory
- *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- *  @par Include Sequencing -
-@code	#include "common.h"
-	#include <stdio.h>
-	#include "termio.h"
-@endcode
  */
 
 void clr_Cbreak( int fd );
@@ -60,8 +47,8 @@ void prnt_Tio();	/* misc. types of args */
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

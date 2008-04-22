@@ -12,7 +12,6 @@
  * RCS: @(#) $Id$
  */
 
-#include "tkPort.h"
 #include "tkInt.h"
 
 #if !(defined(__WIN32__) || defined(MAC_OSX_TK))

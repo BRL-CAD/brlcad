@@ -1,7 +1,7 @@
 /*                     R T E X A M P L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,6 +30,7 @@
  *  cc -I/usr/brlcad/include/brlcad -L/usr/brlcad/lib -o rtexample rtexample.c -lbu -lrt -lm
  *
  */
+
 #include "common.h"
 
 #include <stdlib.h>
@@ -37,7 +38,6 @@
 #include <math.h>
 #include <string.h>
 
-#include "machine.h"		/* machine specific definitions */
 #include "vmath.h"		/* vector math macros */
 #include "raytrace.h"		/* librt interface definitions */
 #include "rtprivate.h"
@@ -60,7 +60,7 @@ main(int argc, char **argv)
     static struct rt_i *rtip;	/* rt_dirbuild returns this */
     char idbuf[RT_BUFSIZE] = {0};		/* First ID record info */
 
-    if( argc < 3 )  {
+    if ( argc < 3 )  {
 	(void)fputs(usage, stderr);
 	return 1;
     }
@@ -71,8 +71,8 @@ main(int argc, char **argv)
      *  the database to be ray traced.  It also gives you back the
      *  title string in the header (ID) record.
      */
-    if( (rtip=rt_dirbuild(argv[1], idbuf, sizeof(idbuf))) == RTI_NULL ) {
-	fprintf(stderr,"rtexample: rt_dirbuild failure\n");
+    if ( (rtip=rt_dirbuild(argv[1], idbuf, sizeof(idbuf))) == RTI_NULL ) {
+	fprintf(stderr, "rtexample: rt_dirbuild failure\n");
 	return 2;
     }
 
@@ -86,9 +86,9 @@ main(int argc, char **argv)
      * Here you identify any object trees in the database that you
      * want included in the ray trace.
      */
-    while( argc > 2 )  {
-	if( rt_gettree(rtip, argv[2]) < 0 )
-	    fprintf(stderr,"rt_gettree(%s) FAILED\n", argv[0]);
+    while ( argc > 2 )  {
+	if ( rt_gettree(rtip, argv[2]) < 0 )
+	    fprintf(stderr, "rt_gettree(%s) FAILED\n", argv[0]);
 	argc--;
 	argv++;
     }
@@ -96,7 +96,7 @@ main(int argc, char **argv)
      * This next call gets the database ready for ray tracing.
      * (it precomputes some values, sets up space partitioning, etc.)
      */
-    rt_prep_parallel(rtip,1);
+    rt_prep_parallel(rtip, 1);
 
     /*
      * Set the ray start point and direction
@@ -146,7 +146,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
     vect_t		onormal;
 
     /* examine each partition until we get back to the head */
-    for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
+    for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
 	bu_log("\n--- Hit region %s (in %s, out %s)\n",
 	       pp->pt_regionp->reg_name,
 	       pp->pt_inseg->seg_stp->st_name,
@@ -215,8 +215,8 @@ miss(register struct application *ap)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -14,12 +14,11 @@
 .SH NAME
 tk_optionMenu \- Create an option menubutton and its menu
 .SH SYNOPSIS
-\fBtk_optionMenu \fIw varName value \fR?\fIvalue value ...\fR?
+\fBtk_optionMenu \fIpathName varName value \fR?\fIvalue value ...\fR?
 .BE
-
 .SH DESCRIPTION
 .PP
-This procedure creates an option menubutton whose name is \fIw\fR,
+This procedure creates an option menubutton whose name is \fIpathName\fR,
 plus an associated menu.
 Together they allow the user to select one of the values
 given by the \fIvalue\fR arguments.
@@ -33,13 +32,12 @@ and appear in the option menubutton.
 The current value can also be changed by setting the variable.
 .PP
 The return value from \fBtk_optionMenu\fR is the name of the menu
-associated with \fIw\fR, so that the caller can change its configuration
-options or manipulate it in other ways.
+associated with \fIpathName\fR, so that the caller can change its
+configuration options or manipulate it in other ways.
 .SH EXAMPLE
 .CS
 tk_optionMenu .foo myVar Foo Bar Boo Spong Wibble
 pack .foo
 .CE
-
 .SH KEYWORDS
 option menu

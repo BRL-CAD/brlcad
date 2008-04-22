@@ -3,17 +3,17 @@
 package require BLT
 
 # --------------------------------------------------------------------------
-# Starting with Tcl 8.x, the BLT commands are stored in their own 
+# Starting with Tcl 8.x, the BLT commands are stored in their own
 # namespace called "blt".  The idea is to prevent name clashes with
 # Tcl commands and variables from other packages, such as a "table"
-# command in two different packages.  
+# command in two different packages.
 #
 # You can access the BLT commands in a couple of ways.  You can prefix
 # all the BLT commands with the namespace qualifier "blt::"
-#  
+#
 #    blt::graph .g
 #    blt::table . .g -resize both
-# 
+#
 # or you can import all the command into the global namespace.
 #
 #    namespace import blt::*
@@ -53,11 +53,11 @@ option add *Label.ipadX			200
 
 array set monthInfo {
     Jan { January 31 }
-    Feb { February 28 } 
-    Mar { March 31 } 
-    Apr { April 30 } 
-    May { May 31 } 
-    Jun { June 30 } 
+    Feb { February 28 }
+    Mar { March 31 }
+    Apr { April 30 }
+    May { May 31 }
+    Jun { June 30 }
     Jul { July 31 }
     Aug { August 31 }
     Sep { September 30 }
@@ -66,12 +66,12 @@ array set monthInfo {
     Dec { December 31 }
 }
 
-option add *tile calendar.texture.2 
+option add *tile calendar.texture.2
 set abbrDays { Sun Mon Tue Wed Thu Fri Sat }
 
 proc Calendar { weekday day month year } {
-    global monthInfo abbrDays 
-    
+    global monthInfo abbrDays
+
     set wkdayOffset [lsearch $abbrDays $weekday]
     if { $wkdayOffset < 0 } {
 	error "Invalid week day \"$weekday\""
@@ -82,7 +82,7 @@ proc Calendar { weekday day month year } {
     }
     set wkday [expr $wkdayOffset-$dayOffset-1]
     if { [info commands .calendar] == ".calendar" } {
-	destroy .calendar 
+	destroy .calendar
     }
     frame .calendar -class Calendar -width 3i -height 3i
 
@@ -95,10 +95,10 @@ proc Calendar { weekday day month year } {
 	-text "[lindex $info 0] $year"  \
 	-font { Courier 14 bold }
     table .calendar .calendar.month 1,0 -cspan 7  -pady 10
-    
+
     set cnt 0
     frame .calendar.weekframe -relief sunken -bd 1
-    table .calendar .calendar.weekframe 2,0 -columnspan 7 -fill both  
+    table .calendar .calendar.weekframe 2,0 -columnspan 7 -fill both
     foreach dayName $abbrDays {
 	set name [string tolower $dayName]
 	label .calendar.$name \
@@ -107,11 +107,11 @@ proc Calendar { weekday day month year } {
 	table .calendar .calendar.$name 2,$cnt -pady 2 -padx 2
 	incr cnt
     }
-    table configure .calendar c* r2 -pad 4 
+    table configure .calendar c* r2 -pad 4
     set week 0
     set numDays [lindex $info 1]
     for { set cnt 1 } { $cnt <= $numDays } { incr cnt } {
-	label .calendar.day${cnt} -text $cnt 
+	label .calendar.day${cnt} -text $cnt
 	if { $cnt == $day } {
 	    .calendar.day${cnt} configure -relief sunken -bd 1
 	}
@@ -121,14 +121,14 @@ proc Calendar { weekday day month year } {
 	    set wkday 0
 	}
 	table .calendar .calendar.day${cnt} $week+3,$wkday \
-	    -fill both -ipadx 10 -ipady 4 
+	    -fill both -ipadx 10 -ipady 4
     }
     frame .calendar.quit -bd 1 -relief sunken
-    button .calendar.quit.button -command { exit } -text {Quit} -bd 2 
+    button .calendar.quit.button -command { exit } -text {Quit} -bd 2
     table .calendar.quit \
 	.calendar.quit.button -padx 4 -pady 4
     table .calendar \
-	.calendar.quit $week+4,5 -cspan 2 -pady 4 
+	.calendar.quit $week+4,5 -cspan 2 -pady 4
     table . \
 	.calendar -fill both
     table configure .calendar r0 -resize none

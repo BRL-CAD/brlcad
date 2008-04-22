@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -55,7 +55,7 @@ int ON_Polyline::Clean( double tolerance )
 {
   // 14 January 2005 Dale Lear
   //     Fixed this cleaner so that it did not modify
-  //     the start and end point.  This is still a 
+  //     the start and end point.  This is still a
   //     pretty sloppy way of cleaning a polyline.
   int count0 = m_count;
   int i = m_count-2;
@@ -121,8 +121,8 @@ bool ON_Polyline::IsClosed( double tolerance ) const
     {
       if ( m_a[0].DistanceTo(m_a[count]) <= tolerance ) {
         for ( i = 1; i < count; i++ ) {
-          if (   m_a[i].DistanceTo(m_a[0]) > tolerance 
-              && m_a[i].DistanceTo(m_a[count]) > tolerance ) 
+          if (   m_a[i].DistanceTo(m_a[0]) > tolerance
+              && m_a[i].DistanceTo(m_a[count]) > tolerance )
           {
              rc = true;
              break;
@@ -133,7 +133,7 @@ bool ON_Polyline::IsClosed( double tolerance ) const
     else {
       if ( 0 == ON_ComparePoint(3,false,&m_a[0].x,&m_a[count].x) ) {
         for ( i = 1; i < count; i++ ) {
-          if (    ON_ComparePoint(3,false,&m_a[i].x,&m_a[0].x) 
+          if (    ON_ComparePoint(3,false,&m_a[i].x,&m_a[0].x)
                && ON_ComparePoint(3,false,&m_a[i].x,&m_a[count].x) )
           {
             rc = true;
@@ -147,12 +147,12 @@ bool ON_Polyline::IsClosed( double tolerance ) const
 }
 
 
-double ON_Polyline::Length() const 
+double ON_Polyline::Length() const
 {
   const int count = m_count;
   double d = 0;
   int i;
-  for ( i = 1; i < count; i++ ) 
+  for ( i = 1; i < count; i++ )
   {
     d += m_a[i].DistanceTo(m_a[i-1]);
   }
@@ -342,8 +342,8 @@ bool ON_Polyline::CreateStarPolygon(
             int side_count
             )
 {
-  bool rc = ( circle.IsValid() && side_count >= 3 && other_radius >= 0.0 ) 
-          ? true 
+  bool rc = ( circle.IsValid() && side_count >= 3 && other_radius >= 0.0 )
+          ? true
           : false;
   if ( rc )
   {

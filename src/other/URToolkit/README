@@ -68,7 +68,7 @@ To make and install the toolkit, you should:
 	   All the configuration files compile as many of the
 	   conversion tools as possible for the given machine.  If you
 	   don't want some of these tools, comment out the corresponding
-	   lines. 
+	   lines.
 
 	2. Configure the makefiles by running
 		Configure config/urt
@@ -104,7 +104,7 @@ indicated in parentheses):
 	Macintosh (MacOS) with MPW [at least library and getmac program]
 	Cray 2 (UNICOS) (config/cray)
 
-If you find bugs, make improvements, write new tools or conversions, 
+If you find bugs, make improvements, write new tools or conversions,
 or have questions or suggestions, please send them to the address below.
 
 If you want to write your own tool, we suggest that you start with
@@ -112,7 +112,7 @@ tools/rleskel.c.  This has all the right code it it for opening image
 files for input and output, for processing multiple images per file,
 error checking, etc.
 
-Our thanks to some beta testers (and contributors): 
+Our thanks to some beta testers (and contributors):
 	Eric Haines, 3D Eye
 	Gregg Townsend, CS Dept., U of Arizona
 	John Peterson, Apple Computer

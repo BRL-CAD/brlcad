@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -65,8 +65,8 @@ public:
     A pointer to the plug-in's mapping reference, if there
     is one. Otherwise NULL is returned.
   */
-  const ON_MappingRef* MappingRef( 
-    const ON_UUID& plugin_id 
+  const ON_MappingRef* MappingRef(
+    const ON_UUID& plugin_id
     ) const;
 
   /*
@@ -76,8 +76,8 @@ public:
     If a mapping ref exists, it is returned.  Otherwise
     one is added.
   */
-  ON_MappingRef* AddMappingRef( 
-    const ON_UUID& plugin_id 
+  ON_MappingRef* AddMappingRef(
+    const ON_UUID& plugin_id
     );
 
   /*
@@ -87,8 +87,8 @@ public:
     If a mapping ref exists, it is returned.  Otherwise
     one is added.
   */
-  bool DeleteMappingRef( 
-    const ON_UUID& plugin_id 
+  bool DeleteMappingRef(
+    const ON_UUID& plugin_id
     );
 
 
@@ -102,13 +102,13 @@ public:
     A pointer to the plug-in's mapping channel, if there
     is one. Otherwise NULL is returned.
   */
-  const ON_MappingChannel* MappingChannel( 
-    const ON_UUID& plugin_id, 
+  const ON_MappingChannel* MappingChannel(
+    const ON_UUID& plugin_id,
     int mapping_channel_id
     ) const;
 
-  const ON_MappingChannel* MappingChannel( 
-    const ON_UUID& plugin_id, 
+  const ON_MappingChannel* MappingChannel(
+    const ON_UUID& plugin_id,
     const ON_UUID& mapping_id
     ) const;
 
@@ -121,12 +121,12 @@ public:
       ON_TextureMapping id
   Returns:
     True if the mapping channel was added or a pefect
-    match already existed.  False if a mapping channel 
+    match already existed.  False if a mapping channel
     with a different mapping_id already exists for this
     plug-in and channel.
   */
   bool AddMappingChannel(
-    const ON_UUID& plugin_id, 
+    const ON_UUID& plugin_id,
     int mapping_channel_id,
     const ON_UUID& mapping_id
     );
@@ -141,12 +141,12 @@ public:
     True if a matching mapping channel was deleted.
   */
   bool DeleteMappingChannel(
-    const ON_UUID& plugin_id, 
+    const ON_UUID& plugin_id,
     int mapping_channel_id
     );
 
   bool DeleteMappingChannel(
-    const ON_UUID& plugin_id, 
+    const ON_UUID& plugin_id,
     const ON_UUID& mapping_id
     );
 
@@ -159,12 +159,12 @@ public:
     True if a matching mapping channel was found and changed.
   */
   bool ChangeMappingChannel(
-    const ON_UUID& plugin_id, 
+    const ON_UUID& plugin_id,
     int old_mapping_channel_id,
     int new_mapping_channel_id
     );
 
-  // Use AddMappingRef() or AddMappingChannel() if you 
+  // Use AddMappingRef() or AddMappingChannel() if you
   // want to add an element to this array.
   //
   // Every mapping ref in this array must have
@@ -179,7 +179,7 @@ public:
 
 #if defined(ON_DLL_TEMPLATE)
 // This stuff is here because of a limitation in the way Microsoft
-// handles templates and DLLs.  See Microsoft's knowledge base 
+// handles templates and DLLs.  See Microsoft's knowledge base
 // article ID Q168958 for details.
 #pragma warning( push )
 #pragma warning( disable : 4231 )

@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -49,7 +49,7 @@ void ON_DimStyle::SetDefaults()
   m_fontindex = -1;
 
   // Added at 1.3
-  m_lengthfactor = 1.0;  
+  m_lengthfactor = 1.0;
   m_bAlternate = false;
   m_alternate_lengthfactor = 25.4;
   m_alternate_lengthformat = 0;
@@ -129,7 +129,7 @@ BOOL ON_DimStyle::Write(
   if (rc) rc = file.WriteDouble(m_arrowsize);
   if (rc) rc = file.WriteDouble(m_centermark);
   if (rc) rc = file.WriteDouble(m_textgap);
-  
+
   if (rc) rc = file.WriteInt(m_textalign);
   if (rc) rc = file.WriteInt(m_arrowtype);
   if (rc) rc = file.WriteInt(m_angularunits);
@@ -182,17 +182,17 @@ BOOL ON_DimStyle::Read(
   BOOL rc = file.Read3dmChunkVersion(&major_version,&minor_version);
 
 
-  if ( major_version >= 1 ) 
+  if ( major_version >= 1 )
   {
     if ( rc) rc = file.ReadInt( &m_dimstyle_index);
     if ( rc) rc = file.ReadString( m_dimstyle_name);
-    
+
     if ( rc) rc = file.ReadDouble( &m_extextension);
     if ( rc) rc = file.ReadDouble( &m_extoffset);
     if ( rc) rc = file.ReadDouble( &m_arrowsize);
     if ( rc) rc = file.ReadDouble( &m_centermark);
     if ( rc) rc = file.ReadDouble( &m_textgap);
-    
+
     if ( rc) rc = file.ReadInt( &m_textalign);
     if ( rc) rc = file.ReadInt( &m_arrowtype);
     if ( rc) rc = file.ReadInt( &m_angularunits);

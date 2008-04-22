@@ -1,7 +1,7 @@
 /*                         M G D E V . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -54,8 +54,8 @@
 /*
  * Miscellaneous defines
  */
-#define MEG_WORD(x,y)		(((long)(x)<<16)|((long)(y)&0xFFFFL))
-#define MAKE(x,y,z,color)	MEG_WORD( 0177000,0010000|((z)&0xFFF)), MEG_WORD( 0100000|((x)&0xFFF),(color<<12)|(y&0xFFF) )
+#define MEG_WORD(x, y)		(((long)(x)<<16)|((long)(y)&0xFFFFL))
+#define MAKE(x, y, z, color)	MEG_WORD( 0177000, 0010000|((z)&0xFFF)), MEG_WORD( 0100000|((x)&0xFFF), (color<<12)|(y&0xFFF) )
 
 /*
  * MEGATEK Instructions
@@ -67,20 +67,20 @@
 /*#define MGI_ENABLE	MEG_WORD( 0xFE80, 0x0024 )	/* enable display 1 */
 #define MGI_ENABLE	MEG_WORD( 0xFE80, 0x0044 )	/* enable display 1+2 */
 
-#define MGI_SETORIGIN(x,y)	MEG_WORD( 0xD000|(x&0xFFF), 0x7000|(y&0xFFF) )
+#define MGI_SETORIGIN(x, y)	MEG_WORD( 0xD000|(x&0xFFF), 0x7000|(y&0xFFF) )
 #define MGI_SETCOLOR(c)		MEG_WORD( 0xFE10|(c&0x000F), 0x0000 )
 #define MGI_SETDASH(p)		MEG_WORD( 0xE008, (p&0xFFFF) )
 
-#define MGI_PA(x,y)		MEG_WORD( 0xC000|(x&0xFFF), 0x8000|(y&0xFFF) )
-#define MGI_PA_BLINK(x,y)	MEG_WORD( 0xD000|(x&0xFFF), 0x8000|(y&0xFFF) )
+#define MGI_PA(x, y)		MEG_WORD( 0xC000|(x&0xFFF), 0x8000|(y&0xFFF) )
+#define MGI_PA_BLINK(x, y)	MEG_WORD( 0xD000|(x&0xFFF), 0x8000|(y&0xFFF) )
 
 /* Absolute vector instructions, set color and blink */
-#define MGI_A_MOVE(x,y)		MEG_WORD( 0xC000|(x&0xFFF), 0x4000|(y&0xFFF) )
-#define MGI_A_DRAW(x,y,c)	MEG_WORD( 0x0000|(x&0xFFF), (c<<12)|(y&0xFFF) )
-#define MGI_A_DASH(x,y,c)	MEG_WORD( 0x2000|(x&0xFFF), (c<<12)|(y&0xFFF) )
+#define MGI_A_MOVE(x, y)		MEG_WORD( 0xC000|(x&0xFFF), 0x4000|(y&0xFFF) )
+#define MGI_A_DRAW(x, y, c)	MEG_WORD( 0x0000|(x&0xFFF), (c<<12)|(y&0xFFF) )
+#define MGI_A_DASH(x, y, c)	MEG_WORD( 0x2000|(x&0xFFF), (c<<12)|(y&0xFFF) )
 
 /* Absolute vector instruction, existing color and blink */
-#define MGI_DRAW(x,y)		MEG_WORD( 0xC000|(x&0xFFF), 0xC000|(y&0xFFF) )
+#define MGI_DRAW(x, y)		MEG_WORD( 0xC000|(x&0xFFF), 0xC000|(y&0xFFF) )
 
 #define MGI_Z_DRAW(z)	MEG_WORD( 0xFE00, 0xD000 | (z&0xFFF) ) /* PREV+DRAW */
 #define MGI_Z_MOVE(z)	MEG_WORD( 0xFE00, 0x5000 | (z&0xFFF) ) /* PREV+BLANK*/
@@ -94,7 +94,7 @@
  * NOTE that 2 characters go into the right halfword of the instruction.
  * The character list is terminated by a NULL byte.
  */
-#define MGCH(size,color)	(short)(0xF600 | size | color)
+#define MGCH(size, color)	(short)(0xF600 | size | color)
 #define MGCH_S0		0x00		/* 341x227 */
 #define MGCH_S1		0x10		/* 170x113 */
 #define MGCH_S2		0x20		/* 113x 75 */
@@ -125,8 +125,8 @@
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

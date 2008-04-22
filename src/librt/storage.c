@@ -1,7 +1,7 @@
 /*                       S T O R A G E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,34 +23,15 @@
  *
  * Ray Tracing program, storage manager.
  *
- *  Functions -
- *	rt_get_seg	Invoked by GET_SEG() macro
- *
- *  Author -
- *	Michael John Muuss
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
 /** @} */
 
-#ifndef lint
-static const char RCSstorage[] = "@(#)$Header$ (ARL)";
-#endif
-
 #include "common.h"
 
-
 #include <stdio.h>
-#ifdef HAVE_STRING_H
-# include <string.h>
-#else
-# include <strings.h>
-#endif
+#include <string.h>
+#include "bio.h"
 
-#include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "bu.h"
@@ -68,33 +49,33 @@ static const char RCSstorage[] = "@(#)$Header$ (ARL)";
 void
 rt_get_seg(register struct resource *res)
 {
-	register struct seg	*sp;
-	register int		bytes;
+    register struct seg	*sp;
+    register int		bytes;
 
-	RT_CK_RESOURCE(res);
+    RT_CK_RESOURCE(res);
 
-	if( BU_LIST_UNINITIALIZED( &res->re_seg ) )  {
-		BU_LIST_INIT( &(res->re_seg) );
-		bu_ptbl_init( &res->re_seg_blocks, 64, "re_seg_blocks ptbl" );
-	}
-	bytes = bu_malloc_len_roundup(64*sizeof(struct seg));
-	sp = (struct seg *)bu_malloc(bytes, "rt_get_seg()");
-	bu_ptbl_ins( &res->re_seg_blocks, (long *)sp );
-	while( bytes >= sizeof(struct seg) )  {
-		sp->l.magic = RT_SEG_MAGIC;
-		BU_LIST_INSERT(&(res->re_seg), &(sp->l));
-		res->re_seglen++;
-		sp++;
-		bytes -= sizeof(struct seg);
-	}
+    if ( BU_LIST_UNINITIALIZED( &res->re_seg ) )  {
+	BU_LIST_INIT( &(res->re_seg) );
+	bu_ptbl_init( &res->re_seg_blocks, 64, "re_seg_blocks ptbl" );
+    }
+    bytes = bu_malloc_len_roundup(64*sizeof(struct seg));
+    sp = (struct seg *)bu_malloc(bytes, "rt_get_seg()");
+    bu_ptbl_ins( &res->re_seg_blocks, (long *)sp );
+    while ( bytes >= sizeof(struct seg) )  {
+	sp->l.magic = RT_SEG_MAGIC;
+	BU_LIST_INSERT(&(res->re_seg), &(sp->l));
+	res->re_seglen++;
+	sp++;
+	bytes -= sizeof(struct seg);
+    }
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

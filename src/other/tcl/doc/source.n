@@ -21,7 +21,6 @@ source \- Evaluate a file or resource as a Tcl script
 \fBsource\fR \fB\-encoding \fIencodingName fileName\fR
 .VE 8.5
 .BE
-
 .SH DESCRIPTION
 .PP
 This command takes the contents of the specified file or resource
@@ -33,17 +32,24 @@ If a \fBreturn\fR command is invoked from within the script then the
 remainder of the file will be skipped and the \fBsource\fR command
 will return normally with the result from the \fBreturn\fR command.
 .PP
-The end-of-file character for files is '\\32' (^Z) for all platforms.
+The end-of-file character for files is
+.QW \e32
+(^Z) for all platforms.
 The source command will read files up to this character.  This
 restriction does not exist for the \fBread\fR or \fBgets\fR commands,
 allowing for files containing code and data segments (scripted documents).
-If you require a ``^Z'' in code for string comparison, you can use
-``\\032'' or ``\\u001a'', which will be safely substituted by the Tcl
-interpreter into ``^Z''.
+If you require a
+.QW ^Z
+in code for string comparison, you can use
+.QW \e032
+or
+.QW \eu001a ,
+which will be safely substituted by the Tcl interpreter into
+.QW ^Z .
 .PP
 .VS 8.5
-The \fB-encoding\fR option is used to specify the encoding of
-the data stored in \fIfileName\fR.  When the \fB-encoding\fR option
+The \fB\-encoding\fR option is used to specify the encoding of
+the data stored in \fIfileName\fR.  When the \fB\-encoding\fR option
 is omitted, the system encoding is assumed.
 .VE 8.5
 .SH EXAMPLE
@@ -59,9 +65,7 @@ foreach scriptFile {foo.tcl bar.tcl} {
    \fBsource\fR $scriptFile
 }
 .CE
-
 .SH "SEE ALSO"
 file(n), cd(n), encoding(n), info(n)
-
 .SH KEYWORDS
 file, script

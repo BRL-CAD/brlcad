@@ -1,7 +1,7 @@
 /*                           P K G . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,14 +24,6 @@
  * @brief
  *  Data structures and manifest constants for use with the PKG library.
  *
- *
- * @author	Michael John Muuss
- * @author	Charles M. Kennedy
- * @author	Phillip Dykstra
- *
- * @par Source
- *	The U. S. Army Research Laboratory
- * @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #ifndef __PKG_H__
@@ -56,10 +48,10 @@
  *  in parens.
  */
 #if __STDC__ || USE_PROTOTYPES
-#	define	PKG_EXTERN(type_and_name,args)	extern type_and_name args
+#	define	PKG_EXTERN(type_and_name, args)	extern type_and_name args
 #	define	PKG_ARGS(args)			args
 #else
-#	define	PKG_EXTERN(type_and_name,args)	extern type_and_name()
+#	define	PKG_EXTERN(type_and_name, args)	extern type_and_name()
 #	define	PKG_ARGS(args)			()
 #endif
 
@@ -100,7 +92,7 @@ struct pkg_conn {
     unsigned short	pkc_type;	/**< @brief pkg_type, in host order */
     /* OUTPUT BUFFER */
     char	pkc_stream[PKG_STREAMLEN]; /**< @brief output stream */
-    int		pkc_magic;	/**< @brief for validating pointers */
+    unsigned int	pkc_magic;	/**< @brief for validating pointers */
     int		pkc_strpos;	/**< @brief index into stream buffer */
     /* FIRST LEVEL INPUT BUFFER */
     char		*pkc_inbuf;	/**< @brief input stream buffer */
@@ -117,12 +109,10 @@ struct pkg_conn {
 #define PKC_ERROR	((struct pkg_conn *)(-1L))
 
 
-#define pkg_send_vls(type,vlsp,pkg)	\
+#define pkg_send_vls(type, vlsp, pkg)	\
 	pkg_send( (type), bu_vls_addr((vlsp)), bu_vls_strlen((vlsp))+1, (pkg) )
 
 
-PKG_EXPORT PKG_EXTERN(int pkg_init, ());
-PKG_EXPORT PKG_EXTERN(void pkg_terminate, ());
 PKG_EXPORT PKG_EXTERN(int pkg_process, (register struct pkg_conn *));
 PKG_EXPORT PKG_EXTERN(int pkg_suckin, (register struct pkg_conn *));
 PKG_EXPORT PKG_EXTERN(struct pkg_conn *pkg_open, (const char *host, const char *service, const char *protocol, const char *uname, const char *passwd, const struct pkg_switch* switchp, void (*errlog)PKG_ARGS((char *msg))));
@@ -131,9 +121,9 @@ PKG_EXPORT PKG_EXTERN(int pkg_permserver, (const char *service, const char *prot
 PKG_EXPORT PKG_EXTERN(int pkg_permserver_ip, (const char *ipOrHostname, const char *service, const char *protocol, int backlog, void (*errlog)PKG_ARGS((char *msg))));
 PKG_EXPORT PKG_EXTERN(struct pkg_conn *pkg_getclient, (int fd, const struct pkg_switch *switchp, void (*errlog)PKG_ARGS((char *msg)), int nodelay));
 PKG_EXPORT PKG_EXTERN(void pkg_close, (struct pkg_conn* pc));
-PKG_EXPORT PKG_EXTERN(int pkg_send, (int type, char *buf, int len, struct pkg_conn* pc));
+PKG_EXPORT PKG_EXTERN(int pkg_send, (int type, const char *buf, int len, struct pkg_conn* pc));
 PKG_EXPORT PKG_EXTERN(int pkg_2send, (int type, char *buf1, int len1, char *buf2, int len2, struct pkg_conn* pc));
-PKG_EXPORT PKG_EXTERN(int pkg_stream, (int type, char *buf, int len, struct pkg_conn* pc));
+PKG_EXPORT PKG_EXTERN(int pkg_stream, (int type, const char *buf, int len, struct pkg_conn* pc));
 PKG_EXPORT PKG_EXTERN(int pkg_flush, (struct pkg_conn* pc));
 PKG_EXPORT PKG_EXTERN(int pkg_waitfor, (int type, char *buf, int len, struct pkg_conn* pc));
 PKG_EXPORT PKG_EXTERN(char *pkg_bwaitfor, (int type, struct pkg_conn* pc));
@@ -158,8 +148,8 @@ PKG_EXPORT PKG_EXTERN(const char *pkg_version, (void));
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

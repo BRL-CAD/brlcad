@@ -1,7 +1,7 @@
 /*                       N M G - R I B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,23 +25,12 @@
  *	Options
  *	h	help
  *
- *  Author -
- *	Lee A. Butler
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 
-#include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
@@ -49,8 +38,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 /* declarations to support use of bu_getopt() system call */
 char *options = "ht";
-extern char *bu_optarg;
-extern int bu_optind, bu_opterr, bu_getopt(int, char *const *, const char *);
 
 char *progname = "(noname)";
 int triangulate = 0;
@@ -60,11 +47,12 @@ int triangulate = 0;
  */
 void usage(char *s)
 {
-    if (s) (void)fputs(s, stderr);
+    if (s) {
+	bu_log(s);
+    }
 
-    (void) fprintf(stderr, "Usage: %s [-t] file.g nmg_solid [ nmg_solid ... ]\n",
+    (void) bu_exit(1, "Usage: %s [-t] file.g nmg_solid [ nmg_solid ... ]\n",
 		   progname);
-    exit(1);
 }
 
 /*
@@ -84,7 +72,7 @@ int parse_args(int ac, char **av)
     bu_opterr = 0;
 
     /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac,av,options)) != EOF)
+    while ((c=bu_getopt(ac, av, options)) != EOF)
 	switch (c) {
 	    case 't'	: triangulate = !triangulate; break;
 	    case '?'	:
@@ -129,7 +117,7 @@ lu_to_rib(struct loopuse *lu, fastf_t *fu_normal, struct bu_vls *norms, struct b
 	    bu_vls_printf(norms, "%g %g %g  ",
 			  V3ARGS(fu_normal));
     } else {
-	bu_bomb("bad child of loopuse\n");
+	bu_exit(EXIT_FAILURE, "bad child of loopuse\n");
     }
 }
 
@@ -201,34 +189,30 @@ int main(int ac, char **av)
     /* open the database */
     if ((dbip = db_open(av[arg_index], "r")) == DBI_NULL) {
 	perror(av[arg_index]);
-	return 255;
+	bu_exit(255, "ERROR: unable to open geometry database (%s)\n", av[arg_index]);
     }
 
     if (++arg_index >= ac) usage("No NMG specified\n");
 
-    if( db_dirbuild( dbip ) ) {
-	bu_log( "db_dirbuild failed\n" );
-	exit(1);
+    if ( db_dirbuild( dbip ) ) {
+	bu_exit(1, "db_dirbuild failed\n" );
     }
 
     /* process each remaining argument */
-    for ( ; arg_index < ac ; arg_index++ ) {
+    for (; arg_index < ac; arg_index++ ) {
 
 	if ( ! (dp = db_lookup(dbip, av[arg_index], 1)) ) {
-	    fprintf(stderr, "%s: db_lookup failed\n", progname);
-	    return 255;
+	    bu_exit(255, "%s: db_lookup failed\n", progname);
 	}
 
 	MAT_IDN( my_mat );
 	if ((rt_db_get_internal( &ip, dp, dbip, my_mat, &rt_uniresource ))<0) {
-	    fprintf(stderr, "%s: rt_db_get_internal() failed\n", progname );
-	    return 255;
+	    bu_exit(255, "%s: rt_db_get_internal() failed\n", progname );
 	}
 
 	if (ip.idb_type != ID_NMG) {
-	    fprintf(stderr, "%s: solid type (%d) is NOT NMG!\n",
+	    bu_exit(255, "%s: solid type (%d) is NOT NMG!\n",
 		    progname, ip.idb_type);
-	    return 255;
 	}
 	nmg_to_rib((struct model *)ip.idb_ptr );
     }
@@ -239,8 +223,8 @@ int main(int ac, char **av)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -43,9 +43,9 @@ char *
 strchr(register char *sp, register char c)
 {
     do {
-	if( *sp == c )
+	if ( *sp == c )
 	    return( sp );
-    }  while( *sp++ );
+    }  while ( *sp++ );
     return( (char *)0 );
 }
 
@@ -55,8 +55,8 @@ strchr(register char *sp, register char c)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

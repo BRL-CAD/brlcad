@@ -1,7 +1,7 @@
 /*                          D M - T K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -21,19 +21,8 @@
  *
  *  Routines specific to MGED's use of LIBDM's Tk display manager.
  *
- *  Author -
- *	Timothy Myers
- *
- *  Source -
- *	SLAD CAD Team
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
 
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 #include "common.h"
 
 #include <stdlib.h>
@@ -43,7 +32,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "tk.h"
 
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "mater.h"
@@ -71,144 +59,144 @@ static int tk_doevent();
 #endif
 
 struct bu_structparse tk_vparse[] = {
-  {"%f",  1, "bound",		 DM_O(dm_bound),	dirty_hook},
-  {"%d",  1, "useBound",	 DM_O(dm_boundFlag),	dirty_hook},
-  {"%d",  1, "zclip",		 DM_O(dm_zclip),	zclip_hook},
-  {"%d",  1, "debug",		 DM_O(dm_debugLevel),	BU_STRUCTPARSE_FUNC_NULL},
-  {"",	  0, (char *)0,		 0,			BU_STRUCTPARSE_FUNC_NULL}
+    {"%f",  1, "bound",		 DM_O(dm_bound),	dirty_hook},
+    {"%d",  1, "useBound",	 DM_O(dm_boundFlag),	dirty_hook},
+    {"%d",  1, "zclip",		 DM_O(dm_zclip),	zclip_hook},
+    {"%d",  1, "debug",		 DM_O(dm_debugLevel),	BU_STRUCTPARSE_FUNC_NULL},
+    {"",	  0, (char *)0,		 0,			BU_STRUCTPARSE_FUNC_NULL}
 };
 
 int
 tk_dm_init(struct dm_list	*o_dm_list,
-	  int			argc,
-	  char			*argv[])
+	   int			argc,
+	   char			*argv[])
 {
-	struct bu_vls vls;
+    struct bu_vls vls;
 
-	dm_var_init(o_dm_list);
+    dm_var_init(o_dm_list);
 
-	/* register application provided routines */
-	cmd_hook = tk_dm;
+    /* register application provided routines */
+    cmd_hook = tk_dm;
 
-	Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
-	if ((dmp = dm_open(interp, DM_TYPE_TK, argc-1, argv)) == DM_NULL)
-		return TCL_ERROR;
+    Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
+    if ((dmp = dm_open(interp, DM_TYPE_TK, argc-1, argv)) == DM_NULL)
+	return TCL_ERROR;
 
-	/* keep display manager in sync */
-	dmp->dm_perspective = mged_variables->mv_perspective_mode;
+    /* keep display manager in sync */
+    dmp->dm_perspective = mged_variables->mv_perspective_mode;
 
-	eventHandler = tk_doevent;
-	Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
-	(void)DM_CONFIGURE_WIN(dmp);
+    eventHandler = tk_doevent;
+    Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
+    (void)DM_CONFIGURE_WIN(dmp);
 
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(&pathName));
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(&pathName));
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
 
-	return TCL_OK;
+    return TCL_OK;
 }
 
 void
 tk_fb_open(void)
 {
-	char *Tk_name = "/dev/tk";
+    char *Tk_name = "/dev/tk";
 
-	if ((fbp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
-		Tcl_AppendResult(interp, "tk_dm_init: failed to allocate framebuffer memory\n",
-				 (char *)NULL);
-		return;
-	}
+    if ((fbp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
+	Tcl_AppendResult(interp, "tk_dm_init: failed to allocate framebuffer memory\n",
+			 (char *)NULL);
+	return;
+    }
 
-	*fbp = tk_interface; /* struct copy */
-	fbp->if_name = malloc((unsigned)strlen(Tk_name) + 1);
-	(void)strcpy(fbp->if_name, Tk_name);
+    *fbp = tk_interface; /* struct copy */
+    fbp->if_name = malloc((unsigned)strlen(Tk_name) + 1);
+    bu_strlcpy(fbp->if_name, Tk_name, strlen(Tk_name)+1);
 
-	/* Mark OK by filling in magic number */
-	fbp->if_magic = FB_MAGIC;
+    /* Mark OK by filling in magic number */
+    fbp->if_magic = FB_MAGIC;
 
 /* XXX TJM implement _tk_open_existing
-	_tk_open_existing(fbp,
-			   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			   ((struct x_vars *)dmp->dm_vars.priv_vars)->pix,
-			   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-			   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap,
-			   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip,
-			   dmp->dm_width, dmp->dm_height,
-			   ((struct x_vars *)dmp->dm_vars.priv_vars)->gc);
+   _tk_open_existing(fbp,
+   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+   ((struct x_vars *)dmp->dm_vars.priv_vars)->pix,
+   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
+   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap,
+   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip,
+   dmp->dm_width, dmp->dm_height,
+   ((struct x_vars *)dmp->dm_vars.priv_vars)->gc);
 */
 }
 
 /*
-   This routine is being called from doEvent() to handle Expose events.
+  This routine is being called from doEvent() to handle Expose events.
 */
 static int
 tk_doevent(ClientData	clientData,
-	  XEvent	*eventPtr)
+	   XEvent	*eventPtr)
 {
-	if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
-		dirty = 1;
+    if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
+	dirty = 1;
 
-		/* no further processing of this event */
-		return TCL_RETURN;
-	}
+	/* no further processing of this event */
+	return TCL_RETURN;
+    }
 
-	/* allow further processing of this event */
-	return TCL_OK;
+    /* allow further processing of this event */
+    return TCL_OK;
 }
 
 static int
 tk_dm(int	argc,
-     char	*argv[])
+      char	*argv[])
 {
-	  if (!strcmp(argv[0], "set")) {
-		  struct bu_vls	vls;
+    if (!strcmp(argv[0], "set")) {
+	struct bu_vls	vls;
 
-		  bu_vls_init(&vls);
+	bu_vls_init(&vls);
 
-		  if (argc < 2) {
-			  /* Bare set command, print out current settings */
-			  bu_vls_struct_print2(&vls, "dm_Tk internal variables", tk_vparse, (const char *)dmp );
-		  } else if (argc == 2) {
-			  bu_vls_struct_item_named(&vls, tk_vparse, argv[1], (const char *)dmp, ',');
-		  } else {
-			  struct bu_vls tmp_vls;
+	if (argc < 2) {
+	    /* Bare set command, print out current settings */
+	    bu_vls_struct_print2(&vls, "dm_Tk internal variables", tk_vparse, (const char *)dmp );
+	} else if (argc == 2) {
+	    bu_vls_struct_item_named(&vls, tk_vparse, argv[1], (const char *)dmp, ',');
+	} else {
+	    struct bu_vls tmp_vls;
 
-			  bu_vls_init(&tmp_vls);
-			  bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
-			  bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);
-			  bu_vls_putc(&tmp_vls, '\"');
-			  bu_struct_parse(&tmp_vls, tk_vparse, (char *)dmp);
-			  bu_vls_free(&tmp_vls);
-		  }
+	    bu_vls_init(&tmp_vls);
+	    bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
+	    bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);
+	    bu_vls_putc(&tmp_vls, '\"');
+	    bu_struct_parse(&tmp_vls, tk_vparse, (char *)dmp);
+	    bu_vls_free(&tmp_vls);
+	}
 
-		  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-		  bu_vls_free(&vls);
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
 
-		  return TCL_OK;
-	  }
+	return TCL_OK;
+    }
 
-	  return common_dm(argc, argv);
+    return common_dm(argc, argv);
 }
 
 static void
 dirty_hook(void)
 {
-	dirty = 1;
+    dirty = 1;
 }
 
 static void
 zclip_hook(void)
 {
-	view_state->vs_vop->vo_zclip = dmp->dm_zclip;
-	dirty_hook();
+    view_state->vs_vop->vo_zclip = dmp->dm_zclip;
+    dirty_hook();
 }
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

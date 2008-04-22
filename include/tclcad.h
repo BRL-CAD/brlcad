@@ -1,7 +1,7 @@
 /*                        T C L C A D . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,9 +27,6 @@
  *  This library contains convenience routines for preparing and
  *  initializing Tcl.
  *
- *  @par Source
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #ifndef __TCLCAD_H__
@@ -38,7 +35,6 @@
 #include "common.h"
 
 #include "tcl.h"
-#include "machine.h"
 
 __BEGIN_DECLS
 
@@ -61,17 +57,18 @@ __BEGIN_DECLS
  *  in parens.
  */
 #if __STDC__ || USE_PROTOTYPES
-#	define	TCLCAD_EXTERN(type_and_name,args)	extern type_and_name args
+#	define	TCLCAD_EXTERN(type_and_name, args)	extern type_and_name args
 #	define	TCLCAD_ARGS(args)			args
 #else
-#	define	TCLCAD_EXTERN(type_and_name,args)	extern type_and_name()
+#	define	TCLCAD_EXTERN(type_and_name, args)	extern type_and_name()
 #	define	TCLCAD_ARGS(args)			()
 #endif
 
 
 TCLCAD_EXPORT TCLCAD_EXTERN(int tclcad_tk_setup, (Tcl_Interp *interp));
 TCLCAD_EXPORT TCLCAD_EXTERN(void tclcad_auto_path, (Tcl_Interp *interp));
-TCLCAD_EXPORT TCLCAD_EXTERN(void tclcad_tcl_library, (void));
+TCLCAD_EXPORT TCLCAD_EXTERN(void tclcad_tcl_library, (Tcl_Interp *interp));
+TCLCAD_EXPORT TCLCAD_EXTERN(int Tclcad_Init, (Tcl_Interp *interp));
 
 __END_DECLS
 
@@ -81,8 +78,8 @@ __END_DECLS
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

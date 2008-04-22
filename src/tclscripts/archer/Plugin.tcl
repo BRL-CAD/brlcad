@@ -1,7 +1,7 @@
 #                      P L U G I N . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2007 United States Government as represented by
+# Copyright (c) 2002-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -93,14 +93,7 @@
 #    create the registry for the plugin
 #
 ###############################################################################
-::itcl::body Plugin::constructor {majorType minorType name class file \
-				      {description ""} \
-				      {version "1.0"} \
-				      {developer ""} \
-				      {icon ""} \
-				      {toolTip ""} \
-				      {action ""} \
-				      {xmlAction ""}} {
+::itcl::body Plugin::constructor {majorType minorType name class file {description ""} {version "1.0"} {developer ""} {icon ""} {toolTip ""} {action ""} {xmlAction ""}} {
     set msMajorType $majorType
     set msMinorType $minorType
     set msName $name

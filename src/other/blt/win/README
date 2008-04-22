@@ -23,7 +23,7 @@ If you really need to build BLT yourself, then hold onto your hat.
 It's a lot more difficult to build BLT under Windows than under Unix.
 Most Windows software is designed to be delivered as a self-installing
 binary executable, therefore it's rare to find the installation tools
-necessary to build and install BLT from the source code.  
+necessary to build and install BLT from the source code.
 
 1. What versions of Tcl/Tk can I use?
 
@@ -40,7 +40,7 @@ necessary to build and install BLT from the source code.
    3. Borland Free compiler 5.5.1
 
   I normally build with VC++ 6.0.  This is also what the binary Tcl/Tk
-  distribution use.  
+  distribution use.
 
   Note: Unless it's your only option, I don't recommend using the
         Borland free compiler right now.
@@ -79,37 +79,37 @@ necessary to build and install BLT from the source code.
    The various workarounds are difficult.
 
    I haven't tested this, but I believe you can load a GNU CC
-   (-mno-cygwin) BLT24.dll into a VC++ compiled wish.  
+   (-mno-cygwin) BLT24.dll into a VC++ compiled wish.
 
    In general the best advice is to use the same compiler that
-   that you compiled Tcl/Tk to compile BLT.  
-   
+   that you compiled Tcl/Tk to compile BLT.
+
 7. What compiler should I use?
 
    Right now, probably Microsoft VC++.  This is what all Tcl/Tk
    releases 8.0 to present have been built with.  So you shouldn't
    have to work too hard to compile the Tcl and Tk libraries.
-   
+
    Having said that, Cygwin's GNU CC works just fine.  You can
    obtain versions from Mumit Khan to build Tcl and Tk.  I recommend
    compiling the Tcl/Tk libraries yourself with the -mno-cygwin
    option.
 
-   And if compiling Tcl and Tk is too much of a hassle, you can 
+   And if compiling Tcl and Tk is too much of a hassle, you can
    always built BLT with the cygwin Tcl/Tk libraries (cygtcl80.dll
    and cygtk80.dll).  The downside is that the cygwin libraries are
    1) pretty old (version 8.0) and 2) there may be some
    incompatibilities between the native Win32 calls in BLT
    and the cygwin emulation layer.
-  
-   I have built BLT with the Borland free compiler.  It's not 
-   100% yet.  The problems are 
+
+   I have built BLT with the Borland free compiler.  It's not
+   100% yet.  The problems are
       1) If you automatically load BLT from a script file, you
-         will generate exception in the DLL.  Oddly enough, 
+         will generate exception in the DLL.  Oddly enough,
          you can source the script manually.
       2) Resampled images are blank (see the graph3.tcl and eps.tcl
          demos).  The same code works with both GCC and VC++.
-      3) I can't even get wish83.exe to open a console window. 
+      3) I can't even get wish83.exe to open a console window.
          Weirdly, bltwish.exe does this properly.
       4) The turbo debugger is a pain.
 
@@ -119,17 +119,17 @@ Tcl/Tk libraries.
 ===================================================================
 
 1. Install the Tcl/Tk sources.  They should reside in the
-   same directory tree as the BLT sources.  
+   same directory tree as the BLT sources.
 
       	______________|______________
      	|          |       |        |
       blt2.4   tcl8.3.4  tk8.3.4   jpeg-6b
 
-   
+
 2. Build and install the Tcl and Tk libraries.
 
    cd tcl8.3.4/win
-   nmake -f Makefile.vc 
+   nmake -f Makefile.vc
    nmake -f Makefile.vc install
    cd ../../tk8.3.4/win
    nmake -f Makefile.vc
@@ -141,43 +141,43 @@ Tcl/Tk libraries.
 
      v1	= 8.3			Tcl/Tk version.
      v2	= 83			Version number without dots.
-     v3	= 8.3.4			Suffix of Tcl/Tk directories 
+     v3	= 8.3.4			Suffix of Tcl/Tk directories
 
      prefix = C:/Program\ Files/Tcl
 				Location of installed Tcl/Tk files.
      TOOLS32 = C:/Program\ Files/Microsoft\ Visual\ Studio/VC90
 				Location of MS C compiler and tools.
-     HAVE_JPEG = 0		
+     HAVE_JPEG = 0
 
 4. Compile and install.
-   
+
    make -f Makefile.vc
    make -f Makefile.vc install
-   
+
 5. Add the location of BLT24.dll to your PATH variable and test
    BLT
-	
+
    cd demos
    export PATH=/cygdrive/c/Program\ Files/Tcl/bin:$PATH
 
    bltwish.exe graph1.tcl
-   
+
 Building BLT with Microsoft VC++, nmake, and VC++ compiled Tcl/Tk
 libraries.
 ====================================================================
 
 1. Install the Tcl/Tk sources.  They should reside in the
-   same directory tree as the BLT sources.  
+   same directory tree as the BLT sources.
 
       	______________|______________
      	|          |       |        |
       blt2.4   tcl8.3.4  tk8.3.4   jpeg-6b
 
-   
+
 2. Build and install the Tcl and Tk libraries.
 
    cd tcl8.3.4\win
-   nmake -f Makefile.vc 
+   nmake -f Makefile.vc
    nmake -f Makefile.vc install
    cd ..\..\tk8.3.4\win
    nmake -f Makefile.vc
@@ -189,18 +189,18 @@ libraries.
 
      v1	= 8.3			Tcl/Tk version.
      v2	= 83			Version number without dots.
-     v3	= 8.3.4			Suffix of Tcl/Tk directories 
+     v3	= 8.3.4			Suffix of Tcl/Tk directories
 
      prefix = C:/Program\ Files/Tcl
 				Location of installed Tcl/Tk files.
      TOOLS32 = C:/Program\ Files/Microsoft\ Visual\ Studio/VC90
 				Location of MS C compiler and tools.
-     HAVE_JPEG = 0		
+     HAVE_JPEG = 0
 
 4. Compile BLT.
-   
+
    make -f blt.mak
-   
+
 5. Install BLT
 
    Since Windows doesn't provide tools to install software, we'll
@@ -210,7 +210,7 @@ libraries.
 	wish83.exe ./win/install.tcl
 
 6. Test BLT
-	
+
    cd demos
    bltwish.exe graph1.tcl
 
@@ -218,34 +218,34 @@ Building BLT with Cygwin GCC and mingw (-mno-cygwin) Tcl/Tk libraries.
 ======================================================================
 
 1. Install the Tcl/Tk sources.  They should reside in the
-   same directory tree as the BLT sources.  
+   same directory tree as the BLT sources.
 
       	______________|______________
      	|          |       |        |
       blt2.4   tcl8.3.4  tk8.3.4   jpeg-6b
 
-   
+
 2. Install the cygwin tool suite.
 
 3. Build and install the Tcl and Tk libraries.
 
    cd tcl8.3.4/win
    ./configure --prefix=/usr/local/tcl8.3.4
-   make 
+   make
    make install
    cd ../../tk8.3.4/win
    ./configure  --prefix=/usr/local/tcl8.3.4
-   make 
+   make
    make install
 
 3. Compile and install BLT.
-   
+
    ./configure --disable-cygwin --prefix=/usr/local/tcl8.3.4
-   make 
+   make
    make install
 
 4. Test BLT
-	
+
    Add the location of wish83.exe to your PATH and run bltwish.exe.
 
    cd demos
@@ -258,13 +258,13 @@ libraries.
 1. Install the cygwin tool suite.
 
 2. Compile and install BLT.
-   
+
    ./configure --disable-cygwin --with-scriptdir=/usr/share --prefix=/usr
-   make 
+   make
    make install
 
 3. Test BLT
-	
+
    Add the location of wish83.exe to your PATH and run bltwish.exe.
 
    cd demos
@@ -274,17 +274,17 @@ Building BLT with Borland bcc55 and Borland compiled Tcl/Tk libraries.
 ======================================================================
 
 1. Install the Tcl/Tk sources.  They should reside in the
-   same directory tree as the BLT sources.  
+   same directory tree as the BLT sources.
 
       	______________|______________
      	|          |       |        |
       blt2.4   tcl8.3.4  tk8.3.4   jpeg-6b
 
-   
+
 2. Build and install the Tcl and Tk libraries.
 
    cd tcl8.3.4\win
-   make -f Makefile.bc 
+   make -f Makefile.bc
    make -f Makefile.bc install
    cd ..\..\tk8.3.4\win
    make -f Makefile.bc
@@ -295,7 +295,7 @@ Building BLT with Borland bcc55 and Borland compiled Tcl/Tk libraries.
 
      v1	= 8.3			Tcl/Tk version.
      v2	= 83			Version number without dots.
-     v3	= 8.3.4			Suffix of Tcl/Tk directories 
+     v3	= 8.3.4			Suffix of Tcl/Tk directories
 
 4. Edit .\src\Makefile.bc
 
@@ -303,13 +303,13 @@ Building BLT with Borland bcc55 and Borland compiled Tcl/Tk libraries.
 				Location of installed Tcl/Tk files.
      TOOLS32 = C:\Borland\BCC55\
 				Location of Borland C compiler and tools.
-     HAVE_JPEG = 0		
+     HAVE_JPEG = 0
 
 4. Compile BLT.
-   
+
    cd src
    make -f Makefile.bc
-   
+
 5. Install BLT
 
    Since Windows doesn't provide tools to install software, we'll
@@ -319,7 +319,7 @@ Building BLT with Borland bcc55 and Borland compiled Tcl/Tk libraries.
 	wish83.exe ./win/install.tcl
 
 6. Test BLT
-	
+
    cd demos
    bltwish.exe graph1.tcl
 

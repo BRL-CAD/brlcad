@@ -22,6 +22,8 @@ libbu_nil_la_SOURCES = \
 	convert.c \
 	crashreport.c \
 	dirname.c \
+	endian.c \
+	fchmod.c \
 	fgets.c \
 	fopen_uniq.c \
 	getopt.c \
@@ -60,6 +62,8 @@ libbu_nil_la_SOURCES = \
 	rb_walk.c \
 	semaphore.c \
 	stat.c \
+	str.c \
+	temp.c \
 	units.c \
 	vers.c \
 	vfont.c \
@@ -76,7 +80,8 @@ libbu_la_LIBADD = \
 
 htester_SOURCES = htester.c
 htester_LDADD = \
-	libbu.la
+	libbu.la \
+	${BU_LIBS}
 
 include_HEADERS = rb_internals.h
 
@@ -87,20 +92,27 @@ man_MANS = \
 
 EXTRA_DIST = \
 	$(man_MANS) \
-	libbu.dsp
+	CMakeLists.txt
 
 AM_CPPFLAGS = \
 	-DPREFIX=\"$(prefix)\" \
 	${PNG_CPPFLAGS} \
-	${TCL_CPPFLAGS}
+	${TCL_CPPFLAGS} \
+	${LIBZ_CPPFLAGS}
 
 if BUILD_TCL
-DEPS = include src/other/tcl
+TCLDEP = $(LDEP) src/other/tcl
 else
-DEPS = include
+TCLDEP =
 endif
 
-MAINTAINERCLEANFILES = Makefile.in
+if BUILD_PNG
+PNGDEP = $(LDEP) src/other/libpng
+else
+PNGDEP =
+endif
+
+DEPENDS = include $(TCLDEP) $(PNGDEP)
 
 include $(top_srcdir)/misc/Makefile.defs
 

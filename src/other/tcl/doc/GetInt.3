@@ -47,7 +47,7 @@ integers).  Each of the procedures takes a \fIsrc\fR argument,
 converts it to an internal form of a particular type, and stores
 the converted value at the location indicated by the procedure's
 third argument.  If all goes well, each of the procedures returns
-\fBTCL_OK\fR.  If \fIsrc\fR doesn't have the proper syntax for the
+\fBTCL_OK\fR.  If \fIsrc\fR does not have the proper syntax for the
 desired type then \fBTCL_ERROR\fR is returned, an error message is left
 in the interpreter's result, and nothing is stored at *\fIintPtr\fR
 or *\fIdoublePtr\fR or *\fIboolPtr\fR.
@@ -55,20 +55,25 @@ or *\fIdoublePtr\fR or *\fIboolPtr\fR.
 \fBTcl_GetInt\fR expects \fIsrc\fR to consist of a collection
 of integer digits, optionally signed and optionally preceded by
 white space.  If the first two characters of \fIsrc\fR
-after the optional white space and sign are ``0x''
+after the optional white space and sign are
+.QW 0x
 then \fIsrc\fR is expected to be in hexadecimal form;  otherwise,
-if the first such character is ``0'' then \fIsrc\fR
+if the first such character is
+.QW 0
+then \fIsrc\fR
 is expected to be in octal form;  otherwise, \fIsrc\fR is
 expected to be in decimal form.
 .PP
 \fBTcl_GetDouble\fR expects \fIsrc\fR to consist of a floating-point
 number, which is:  white space;  a sign; a sequence of digits;  a
-decimal point;  a sequence of digits;  the letter ``e'';  a
-signed decimal exponent ; and more white space.
+decimal point;  a sequence of digits;  the letter
+.QW e ;
+a signed decimal exponent;  and more white space.
 Any of the fields may be omitted, except that
 the digits either before or after the decimal point must be present
-and if the ``e'' is present then it must be followed by the
-exponent number.
+and if the
+.QW e
+is present then it must be followed by the exponent number.
 .PP
 \fBTcl_GetBoolean\fR expects \fIsrc\fR to specify a boolean
 value.  If \fIsrc\fR is any of \fB0\fR, \fBfalse\fR,

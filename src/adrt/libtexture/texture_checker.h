@@ -1,7 +1,7 @@
 /*                     T E X T U R E _ C H E C K E R . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2007 United States Government as represented by
+ * Copyright (c) 2002-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,14 +22,6 @@
  *  Comments -
  *      Texture Library - Checker Header
  *
- *  Author -
- *      Justin L. Shumaker
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- * $Id$
  */
 
 #ifndef TEXTURE_CHECKER_H
@@ -40,13 +32,13 @@
 
 
 typedef struct texture_checker_s {
-  int tile;
+    int tile;
 } texture_checker_t;
 
 
-extern  void    texture_checker_init(texture_t *texture, int checker);
-extern  void    texture_checker_free(texture_t *texture);
-extern  void    texture_checker_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel);
+extern	void	texture_checker_init(texture_t *texture, int checker);
+extern	void	texture_checker_free(texture_t *texture);
+extern	void	texture_checker_work(__TEXTURE_WORK_PROTOTYPE__);
 
 
 #endif
@@ -55,8 +47,8 @@ extern  void    texture_checker_work(texture_t *texture, common_mesh_t *mesh, ti
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -124,21 +124,12 @@ static const struct {int type; int btnIds[3];} allowedTypes[] = {
  * Abstract trivial differences between Win32 and Win64.
  */
 
-#ifdef _WIN64
 #define TkWinGetHInstance(from) \
 	((HINSTANCE) GetWindowLongPtr((from), GWLP_HINSTANCE))
 #define TkWinGetUserData(from) \
 	GetWindowLongPtr((from), GWLP_USERDATA)
 #define TkWinSetUserData(to,what) \
 	SetWindowLongPtr((to), GWLP_USERDATA, (LPARAM)(what))
-#else
-#define TkWinGetHInstance(from) \
-	((HINSTANCE) GetWindowLong((from), GWL_HINSTANCE))
-#define TkWinGetUserData(from) \
-	GetWindowLong((from), GWL_USERDATA)
-#define TkWinSetUserData(to,what) \
-	SetWindowLong((to), GWL_USERDATA, (LPARAM)(what))
-#endif
 
 /*
  * The value of TK_MULTI_MAX_PATH dictactes how many files can be retrieved
@@ -189,7 +180,8 @@ static int 		GetFileNameW(ClientData clientData,
 			    Tcl_Interp *interp, int objc,
 			    Tcl_Obj *CONST objv[], int isOpen);
 static int 		MakeFilter(Tcl_Interp *interp, Tcl_Obj *valuePtr,
-			    Tcl_DString *dsPtr);
+			    Tcl_DString *dsPtr, Tcl_Obj *initialPtr,
+			    int *index);
 static UINT APIENTRY	OFNHookProc(HWND hdlg, UINT uMsg, WPARAM wParam,
 			    LPARAM lParam);
 static UINT APIENTRY	OFNHookProcW(HWND hdlg, UINT uMsg, WPARAM wParam,
@@ -575,10 +567,11 @@ GetFileNameW(
 {
     OPENFILENAMEW ofn;
     WCHAR file[TK_MULTI_MAX_PATH];
-    int result, winCode, oldMode, i, multi = 0;
+    int filterIndex, result, winCode, oldMode, i, multi = 0;
     char *extension, *filter, *title;
     Tk_Window tkwin;
     HWND hWnd;
+    Tcl_Obj *filterObj, *initialTypeObj, *typeVariableObj;
     Tcl_DString utfFilterString, utfDirString;
     Tcl_DString extString, filterString, dirString, titleString;
     Tcl_Encoding unicodeEncoding = TkWinGetUnicodeEncoding();
@@ -586,17 +579,17 @@ GetFileNameW(
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
     static CONST char *saveOptionStrings[] = {
 	"-defaultextension", "-filetypes", "-initialdir", "-initialfile",
-	"-parent", "-title", NULL
+	"-parent", "-title", "-typevariable", NULL
     };
     static CONST char *openOptionStrings[] = {
 	"-defaultextension", "-filetypes", "-initialdir", "-initialfile",
-	"-multiple", "-parent", "-title", NULL
+	"-multiple", "-parent", "-title", "-typevariable", NULL
     };
     CONST char **optionStrings;
 
     enum options {
 	FILE_DEFAULT,	FILE_TYPES,	FILE_INITDIR,	FILE_INITFILE,
-	FILE_MULTIPLE,	FILE_PARENT,	FILE_TITLE
+	FILE_MULTIPLE,	FILE_PARENT,	FILE_TITLE,     FILE_TYPEVARIABLE
     };
 
     result = TCL_ERROR;
@@ -612,6 +605,9 @@ GetFileNameW(
     Tcl_DStringInit(&utfDirString);
     tkwin = (Tk_Window) clientData;
     title = NULL;
+    filterObj = NULL;
+    typeVariableObj = NULL;
+    initialTypeObj = NULL;
 
     if (open) {
 	optionStrings = openOptionStrings;
@@ -663,11 +659,7 @@ GetFileNameW(
 	    extension = string;
 	    break;
 	case FILE_TYPES:
-	    Tcl_DStringFree(&utfFilterString);
-	    if (MakeFilter(interp, valuePtr, &utfFilterString) != TCL_OK) {
-		goto end;
-	    }
-	    filter = Tcl_DStringValue(&utfFilterString);
+	    filterObj = valuePtr;
 	    break;
 	case FILE_INITDIR:
 	    Tcl_DStringFree(&utfDirString);
@@ -702,14 +694,18 @@ GetFileNameW(
 	case FILE_TITLE:
 	    title = string;
 	    break;
+	case FILE_TYPEVARIABLE:
+	    typeVariableObj = valuePtr;
+	    initialTypeObj = Tcl_ObjGetVar2(interp, typeVariableObj, NULL, 0);
+	    break;
 	}
     }
 
-    if (filter == NULL) {
-	if (MakeFilter(interp, NULL, &utfFilterString) != TCL_OK) {
-	    goto end;
-	}
+    if (MakeFilter(interp, filterObj, &utfFilterString, initialTypeObj,
+		    &filterIndex) != TCL_OK) {
+	goto end;
     }
+    filter = Tcl_DStringValue(&utfFilterString);
 
     Tk_MakeWindowExist(tkwin);
     hWnd = Tk_GetHWND(Tk_WindowId(tkwin));
@@ -748,6 +744,7 @@ GetFileNameW(
 	    Tcl_DStringValue(&utfFilterString),
 	    Tcl_DStringLength(&utfFilterString), &filterString);
     ofn.lpstrFilter = (WCHAR *) Tcl_DStringValue(&filterString);
+    ofn.nFilterIndex = filterIndex;
 
     if (Tcl_DStringValue(&utfDirString)[0] != '\0') {
 	Tcl_UtfToExternalDString(unicodeEncoding,
@@ -878,6 +875,23 @@ GetFileNameW(
 		    (char *) ofn.lpstrFile, &ds), NULL);
 	    Tcl_DStringFree(&ds);
 	}
+	if ((ofn.nFilterIndex > 0) &&
+		Tcl_GetCharLength(Tcl_GetObjResult(interp)) > 0 &&
+		typeVariableObj && filterObj) {
+	    int listObjc, count;
+	    Tcl_Obj **listObjv = NULL;
+	    Tcl_Obj **typeInfo = NULL;
+	    if (Tcl_ListObjGetElements(interp, filterObj,
+			    &listObjc, &listObjv) != TCL_OK) {
+		result = TCL_ERROR;
+	    } else if (Tcl_ListObjGetElements(interp,
+			    listObjv[ofn.nFilterIndex - 1],
+			    &count, &typeInfo) != TCL_OK) {
+		result = TCL_ERROR;
+	    } else {
+		Tcl_ObjSetVar2(interp, typeVariableObj, NULL, typeInfo[0], 0);
+	    }
+	}
 	result = TCL_OK;
     } else {
 	/*
@@ -997,27 +1011,28 @@ GetFileNameA(
 {
     OPENFILENAME ofn;
     TCHAR file[TK_MULTI_MAX_PATH], savePath[MAX_PATH];
-    int result, winCode, oldMode, i, multi = 0;
+    int filterIndex, result, winCode, oldMode, i, multi = 0;
     char *extension, *filter, *title;
     Tk_Window tkwin;
     HWND hWnd;
+    Tcl_Obj *filterObj, *initialTypeObj, *typeVariableObj;
     Tcl_DString utfFilterString, utfDirString;
     Tcl_DString extString, filterString, dirString, titleString;
     ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
     static CONST char *saveOptionStrings[] = {
 	"-defaultextension", "-filetypes", "-initialdir", "-initialfile",
-	"-parent", "-title", NULL
+	"-parent", "-title", "-typevariable", NULL
     };
     static CONST char *openOptionStrings[] = {
 	"-defaultextension", "-filetypes", "-initialdir", "-initialfile",
-	"-multiple", "-parent", "-title", NULL
+	"-multiple", "-parent", "-title", "-typevariable", NULL
     };
     CONST char **optionStrings;
 
     enum options {
 	FILE_DEFAULT,	FILE_TYPES,	FILE_INITDIR,	FILE_INITFILE,
-	FILE_MULTIPLE,	FILE_PARENT,	FILE_TITLE
+	FILE_MULTIPLE,	FILE_PARENT,	FILE_TITLE, FILE_TYPEVARIABLE
     };
 
     result = TCL_ERROR;
@@ -1033,6 +1048,9 @@ GetFileNameA(
     Tcl_DStringInit(&utfDirString);
     tkwin = (Tk_Window) clientData;
     title = NULL;
+    filterObj = NULL;
+    typeVariableObj = NULL;
+    initialTypeObj = NULL;
 
     if (open) {
 	optionStrings = openOptionStrings;
@@ -1084,11 +1102,7 @@ GetFileNameA(
 	    extension = string;
 	    break;
 	case FILE_TYPES:
-	    Tcl_DStringFree(&utfFilterString);
-	    if (MakeFilter(interp, valuePtr, &utfFilterString) != TCL_OK) {
-		goto end;
-	    }
-	    filter = Tcl_DStringValue(&utfFilterString);
+	    filterObj = valuePtr;
 	    break;
 	case FILE_INITDIR:
 	    Tcl_DStringFree(&utfDirString);
@@ -1122,14 +1136,18 @@ GetFileNameA(
 	case FILE_TITLE:
 	    title = string;
 	    break;
+	case FILE_TYPEVARIABLE:
+	    typeVariableObj = valuePtr;
+	    initialTypeObj = Tcl_ObjGetVar2(interp, typeVariableObj, NULL, 0);
+	    break;
 	}
     }
 
-    if (filter == NULL) {
-	if (MakeFilter(interp, NULL, &utfFilterString) != TCL_OK) {
-	    goto end;
-	}
+    if (MakeFilter(interp, filterObj, &utfFilterString, initialTypeObj,
+		    &filterIndex) != TCL_OK) {
+	goto end;
     }
+    filter = Tcl_DStringValue(&utfFilterString);
 
     Tk_MakeWindowExist(tkwin);
     hWnd = Tk_GetHWND(Tk_WindowId(tkwin));
@@ -1306,6 +1324,23 @@ GetFileNameA(
 		    (char *) ofn.lpstrFile, &ds), NULL);
 	    Tcl_DStringFree(&ds);
 	}
+	if ((ofn.nFilterIndex > 0) &&
+		(Tcl_GetCharLength(Tcl_GetObjResult(interp)) > 0) &&
+		typeVariableObj && filterObj) {
+	    int listObjc, count;
+	    Tcl_Obj **listObjv = NULL;
+	    Tcl_Obj **typeInfo = NULL;
+	    if (Tcl_ListObjGetElements(interp, filterObj,
+			    &listObjc, &listObjv) != TCL_OK) {
+		result = TCL_ERROR;
+	    } else if (Tcl_ListObjGetElements(interp,
+			    listObjv[ofn.nFilterIndex - 1],
+			    &count, &typeInfo) != TCL_OK) {
+		result = TCL_ERROR;
+	    } else {
+		Tcl_ObjSetVar2(interp, typeVariableObj, NULL, typeInfo[0], 0);
+	    }
+	}
 	result = TCL_OK;
     } else {
 	/*
@@ -1422,14 +1457,21 @@ static int
 MakeFilter(
     Tcl_Interp *interp,		/* Current interpreter. */
     Tcl_Obj *valuePtr,		/* Value of the -filetypes option */
-    Tcl_DString *dsPtr)		/* Filled with windows filter string. */
+    Tcl_DString *dsPtr,		/* Filled with windows filter string. */
+    Tcl_Obj *initialPtr,	/* Initial type name  */
+    int *index)			/* Index of initial type in filter string */
 {
     char *filterStr;
     char *p;
+    char *initial = NULL;
     int pass;
+    int ix = 0; /* index counter */
     FileFilterList flist;
     FileFilter *filterPtr;
 
+    if (initialPtr) {
+	initial = Tcl_GetStringFromObj(initialPtr, NULL);
+    }
     TkInitFileFilters(&flist);
     if (TkGetFileFilters(interp, &flist, valuePtr, 1) != TCL_OK) {
 	return TCL_ERROR;
@@ -1483,6 +1525,15 @@ MakeFilter(
 		filterPtr = filterPtr->next) {
 	    char *sep;
 	    FileFilterClause *clausePtr;
+
+	    /*
+	     * Check initial index for match, set index.
+	     * Filter index is 1 based so increment first
+	     */
+	    ix++;
+	    if (index && initial && (strcmp(initial, filterPtr->name) == 0)) {
+		*index = ix;
+	    }
 
 	    /*
 	     * First, put in the name of the file type.
@@ -2007,12 +2058,10 @@ Tk_MessageBoxObjCmd(
 {
     Tk_Window tkwin, parent;
     HWND hWnd;
-    char *message, *title, *detail;
+    Tcl_Obj *messageObj, *titleObj, *detailObj, *tmpObj;
     int defaultBtn, icon, type;
     int i, oldMode, winCode;
     UINT flags;
-    Tcl_DString messageString, titleString;
-    Tcl_Encoding unicodeEncoding = TkWinGetUnicodeEncoding();
     static CONST char *optionStrings[] = {
 	"-default",	"-detail",	"-icon",	"-message",
 	"-parent",	"-title",	"-type",	NULL
@@ -2024,14 +2073,15 @@ Tk_MessageBoxObjCmd(
     ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
+    (void) TkWinGetUnicodeEncoding();
     tkwin = (Tk_Window) clientData;
 
     defaultBtn = -1;
-    detail = NULL;
+    detailObj = NULL;
     icon = MB_ICONINFORMATION;
-    message = NULL;
+    messageObj = NULL;
     parent = tkwin;
-    title = NULL;
+    titleObj = NULL;
     type = MB_OK;
 
     for (i = 1; i < objc; i += 2) {
@@ -2053,7 +2103,6 @@ Tk_MessageBoxObjCmd(
 	    return TCL_ERROR;
 	}
 
-	string = Tcl_GetString(valuePtr);
 	switch ((enum options) index) {
 	case MSG_DEFAULT:
 	    defaultBtn = TkFindStateNumObj(interp, optionPtr, buttonMap,
@@ -2064,7 +2113,7 @@ Tk_MessageBoxObjCmd(
 	    break;
 
 	case MSG_DETAIL:
-	    detail = string;
+	    detailObj = valuePtr;
 	    break;
 
 	case MSG_ICON:
@@ -2075,18 +2124,18 @@ Tk_MessageBoxObjCmd(
 	    break;
 
 	case MSG_MESSAGE:
-	    message = string;
+	    messageObj = valuePtr;
 	    break;
 
 	case MSG_PARENT:
-	    parent = Tk_NameToWindow(interp, string, tkwin);
+	    parent = Tk_NameToWindow(interp, Tcl_GetString(valuePtr), tkwin);
 	    if (parent == NULL) {
 		return TCL_ERROR;
 	    }
 	    break;
 
 	case MSG_TITLE:
-	    title = string;
+	    titleObj = valuePtr;
 	    break;
 
 	case MSG_TYPE:
@@ -2103,9 +2152,8 @@ Tk_MessageBoxObjCmd(
 
     flags = 0;
     if (defaultBtn >= 0) {
-	int defaultBtnIdx;
+	int defaultBtnIdx = -1;
 
-	defaultBtnIdx = -1;
 	for (i = 0; i < NUM_TYPES; i++) {
 	    if (type == allowedTypes[i].type) {
 		int j;
@@ -2130,24 +2178,13 @@ Tk_MessageBoxObjCmd(
 
     flags |= icon | type | MB_SYSTEMMODAL;
 
-    Tcl_UtfToExternalDString(unicodeEncoding, message, -1, &messageString);
-    if (detail != NULL) {
-	Tcl_DString detailString;
-
-	if (message != NULL) {
-	    Tcl_UtfToExternalDString(unicodeEncoding, "\n\n", -1,
-		    &detailString);
-	    Tcl_DStringAppend(&messageString, Tcl_DStringValue(&detailString),
-		    Tcl_DStringLength(&detailString));
-	    Tcl_DStringFree(&detailString);
-	}
-	Tcl_UtfToExternalDString(unicodeEncoding, detail, -1,
-		&detailString);
-	Tcl_DStringAppend(&messageString, Tcl_DStringValue(&detailString),
-		Tcl_DStringLength(&detailString));
-	Tcl_DStringFree(&detailString);
+    tmpObj = messageObj ? Tcl_DuplicateObj(messageObj)
+	    : Tcl_NewUnicodeObj(NULL, 0);
+    Tcl_IncrRefCount(tmpObj);
+    if (detailObj) {
+	Tcl_AppendUnicodeToObj(tmpObj, L"\n\n", 2);
+	Tcl_AppendObjToObj(tmpObj, detailObj);
     }
-    Tcl_UtfToExternalDString(unicodeEncoding, title, -1, &titleString);
 
     oldMode = Tcl_SetServiceMode(TCL_SERVICE_ALL);
 
@@ -2164,8 +2201,8 @@ Tk_MessageBoxObjCmd(
     tsdPtr->hBigIcon   = TkWinGetIcon(parent, ICON_BIG);
     tsdPtr->hMsgBoxHook = SetWindowsHookEx(WH_CBT, MsgBoxCBTProc, NULL,
 	    GetCurrentThreadId());
-    winCode = MessageBoxW(hWnd, (WCHAR *) Tcl_DStringValue(&messageString),
-		(WCHAR *) Tcl_DStringValue(&titleString), flags);
+    winCode = MessageBoxW(hWnd, Tcl_GetUnicode(tmpObj),
+	    titleObj ? Tcl_GetUnicode(titleObj) : L"", flags);
     UnhookWindowsHookEx(tsdPtr->hMsgBoxHook);
     (void) Tcl_SetServiceMode(oldMode);
 
@@ -2177,8 +2214,7 @@ Tk_MessageBoxObjCmd(
 
     EnableWindow(hWnd, 1);
 
-    Tcl_DStringFree(&messageString);
-    Tcl_DStringFree(&titleString);
+    Tcl_DecrRefCount(tmpObj);
 
     Tcl_SetResult(interp, TkFindStateString(buttonMap, winCode), TCL_STATIC);
     return TCL_OK;

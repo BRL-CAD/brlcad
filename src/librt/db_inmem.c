@@ -1,7 +1,7 @@
 /*                     D B _ I N M E M . C
  * BRL-CAD
  *
- * Copyright (c) 2006-2007 United States Government as represented by
+ * Copyright (c) 2006-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,7 +44,8 @@
 
 #include "common.h"
 
-#include "machine.h"
+#include "bio.h"
+
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
@@ -67,13 +68,12 @@ db_open_inmem(void)
 
     BU_GETSTRUCT( dbip, db_i );
     dbip->dbi_eof = -1L;
-    dbip->dbi_fd = -1;
     dbip->dbi_fp = NULL;
     dbip->dbi_mf = NULL;
     dbip->dbi_read_only = 1;
 
     /* Initialize fields */
-    for( i=0; i<RT_DBNHASH; i++ ) {
+    for ( i=0; i<RT_DBNHASH; i++ ) {
 	dbip->dbi_Head[i] = DIR_NULL;
     }
 
@@ -165,10 +165,10 @@ db_inmem(struct directory *dp, struct bu_external *ext, int flags, struct db_i *
     BU_CK_EXTERNAL(ext);
     RT_CK_DIR(dp);
 
-    if( dp->d_flags & RT_DIR_INMEM )
+    if ( dp->d_flags & RT_DIR_INMEM )
 	bu_free( dp->d_un.ptr, "db_inmem() ext ptr" );
     dp->d_un.ptr = ext->ext_buf;
-    if( dbip->dbi_version < 5 ) {
+    if ( dbip->dbi_version < 5 ) {
 	dp->d_len = ext->ext_nbytes / 128;	/* DB_MINREC granule size */
     } else {
 	dp->d_len = ext->ext_nbytes;
@@ -185,8 +185,8 @@ db_inmem(struct directory *dp, struct bu_external *ext, int flags, struct db_i *
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -22,7 +22,7 @@
 class ON_CLASS ON_X_EVENT
 {
 public:
-  
+
   // Default construction sets everything to zero.
   ON_X_EVENT();
 
@@ -30,7 +30,7 @@ public:
 
   /*
   Description:
-    Compares intersection events and sorts them in the 
+    Compares intersection events and sorts them in the
     canonical order.
   Returns:
     @untitled table
@@ -52,13 +52,13 @@ public:
   Parameters:
     text_log - [in] If not null and an error is found, then a description
                     of the error is printed to text_log.
-    intersection_tolerance - [in] 
+    intersection_tolerance - [in]
          0.0 or value used in intersection calculation.
-    overlap_tolerance - [in] 
+    overlap_tolerance - [in]
          0.0 or value used in intersection calculation.
-    curveA - [in] 
+    curveA - [in]
          NULL or curveA passed to intersection calculation.
-    curveA_domain - [in] 
+    curveA_domain - [in]
          NULL or curveA domain used in intersection calculation.
     curveB - [in]
          NULL or curveB passed to intersection calculation.
@@ -90,7 +90,7 @@ public:
   /*
   Description:
     Expert user tool to copy portions of the itersection
-    event information from one event to another.  
+    event information from one event to another.
     If src.m_type is ON_X_EVENT::csx_*, then the
     m_b[] and m_nodeB_t[] values are treated as
     surface parameters, otherwise the values are
@@ -102,17 +102,17 @@ public:
     dst - [out]
     dst_end - [in] 0 or 1 (m_A[] destination index)
   */
-  static 
+  static
   void CopyEventPart(
-        const ON_X_EVENT& src, 
+        const ON_X_EVENT& src,
         int src_end,
-        ON_X_EVENT& dst, 
-        int dst_end 
+        ON_X_EVENT& dst,
+        int dst_end
         );
 
   /*
   Description:
-    Expert user tool to cleanup a list of intersection 
+    Expert user tool to cleanup a list of intersection
     events.
   Parameters:
     event_tolerance - [in] If the distance between
@@ -189,11 +189,11 @@ public:
     True if sections overlap.
   */
   static
-  bool IsValidCurveCurveOverlap( 
+  bool IsValidCurveCurveOverlap(
         ON_Interval curveA_domain,
         int sample_count,
         double overlap_tolerance,
-        const class ON_CurveTreeNode* cnodeA, 
+        const class ON_CurveTreeNode* cnodeA,
         const class ON_CurveTreeNode* cnodeB,
         const ON_Interval* curveB_domain = 0
         );
@@ -212,8 +212,8 @@ public:
   Returns:
     True if curve lies on the plane
   */
-  static 
-  bool IsValidCurvePlaneOverlap( 
+  static
+  bool IsValidCurvePlaneOverlap(
         ON_Interval curveA_domain,
         int sample_count,
         double endpoint_tolerance,
@@ -237,12 +237,12 @@ public:
   Returns:
     True if sections overlap.
   */
-  static 
-  bool IsValidCurveSurfaceOverlap( 
+  static
+  bool IsValidCurveSurfaceOverlap(
         ON_Interval curveA_domain,
         int sample_count,
         double overlap_tolerance,
-        const class ON_CurveTreeNode* cnodeA, 
+        const class ON_CurveTreeNode* cnodeA,
         const class ON_SurfaceTreeNode* snodeB,
         const ON_Interval* surfaceB_udomain = 0,
         const ON_Interval* surfaceB_vdomain = 0
@@ -298,7 +298,7 @@ public:
 
 
   enum TYPE
-  { 
+  {
     no_x_event  =  0,
 
     // Two valid event types for curve-curve intersections
@@ -311,14 +311,14 @@ public:
   };
 
   // Event directions for use in the m_dirA[] and m_dirB[]
-  // fields. The "x_from_*" values are used to report the 
-  // behavior of the curve as it enters the intersection 
-  // event. The "x_to_*" values are used to report the 
+  // fields. The "x_from_*" values are used to report the
+  // behavior of the curve as it enters the intersection
+  // event. The "x_to_*" values are used to report the
   // behavior of the curve as it leaves the intersection
   // event.
   enum DIRECTION
-  { 
-    no_x_dir       = 0, 
+  {
+    no_x_dir       = 0,
 
     at_end_dir     = 1, // event is at the start/end/side of object's
                         // parameter space
@@ -333,7 +333,7 @@ public:
   };
 
   // This field is a scratch field for users.
-  // The constructor sets it to zero and the 
+  // The constructor sets it to zero and the
   // intersectors never use it.
   ON_U m_user;
 
@@ -346,13 +346,13 @@ public:
   ON_3dPoint m_B[2]; // intersection points on second curve or surface
   double m_a[2];     // intersection parameters on first curve
   double m_b[4];     // intersection parameters on second curve or surface
-  
+
   // There are cases when it is valuable to have direction
   // flags on intersection events.  The m_dirA[] and m_dirB[]
   // fields provide a place to store these flags.  Because this
   // information is rarely used, it is not computed by the
   // intersection routines.  You can use
-  //   ON_SetCurveCurveIntersectionDir 
+  //   ON_SetCurveCurveIntersectionDir
   // or
   //   ON_SetCurveSurfaceIntersectionDir
   // to fill in these fields.
@@ -361,7 +361,7 @@ public:
 
   // tree nodes where the intersection events occured.
   const class ON_CurveTreeNode* m_cnodeA[2];
-  double m_nodeA_t[2]; // nodeA bezier paramters corresponding to a[] values 
+  double m_nodeA_t[2]; // nodeA bezier paramters corresponding to a[] values
   const class ON_CurveTreeNode* m_cnodeB[2];
   const class ON_SurfaceTreeNode* m_snodeB[2];
   double m_nodeB_t[4]; // nodeB bezier paramters corresponding to b[] values.
@@ -396,7 +396,7 @@ public:
       cnodeB[0] = pointer to second curve's tree node for start point
       cnodeB[1] = pointer to second curve's tree node for end point
       snodeB[0] = snodeB[1] = 0
-   
+
    csx_point events:
       a[0] = a[1] = curve parameter
       A[0] = A[1] = intersection point on curve
@@ -426,7 +426,7 @@ public:
 /*
 Description:
   Sets ON_X_EVENT m_dirA[] and m_dirB[] flags for in intersection
-  of coplanar curves.  For each  m_dirA[]/m_dirB[] flag that is 
+  of coplanar curves.  For each  m_dirA[]/m_dirB[] flag that is
   set to ON_X_EVENT, the curve geometry at the itersection is
   examined to set the flags.
 Parameters:
@@ -456,8 +456,8 @@ bool ON_SetCurveCurveIntersectionDir(
 /*
 Description:
   Sets ON_X_EVENT m_dirA[] and m_dirB[] flags for a curve surface
-  intersection.  For each  m_dirA[]/m_dirB[] flag that is 
-  set to ON_X_EVENT, the curve and surface geometry at the 
+  intersection.  For each  m_dirA[]/m_dirB[] flag that is
+  set to ON_X_EVENT, the curve and surface geometry at the
   itersection is examined to set the flags.
 Parameters:
   xcount - [in] number of intersection events

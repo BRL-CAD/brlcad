@@ -159,15 +159,17 @@ it.)
 Any value written into the Tcl variable must have a proper unsigned
 integer form acceptable to \fBTcl_GetWideIntFromObj\fR (it will be
 cast to unsigned);
-'\" FIXME! Use bignums instead.
+.\" FIXME! Use bignums instead.
 attempts to write non-integer values into \fIvarName\fR will be
 rejected with Tcl errors.
 .VE 8.5
 .TP
 \fBTCL_LINK_BOOLEAN\fR
 The C variable is of type \fBint\fR.
-If its value is zero then it will read from Tcl as ``0'';
-otherwise it will read from Tcl as ``1''.
+If its value is zero then it will read from Tcl as
+.QW 0 ;
+otherwise it will read from Tcl as
+.QW 1 .
 Whenever \fIvarName\fR is
 modified, the C variable will be set to a 0 or 1 value.
 Any value written into the Tcl variable must have a proper boolean
@@ -183,7 +185,8 @@ Whenever the Tcl variable is modified the current C string will be
 freed and new memory will be allocated to hold a copy of the variable's
 new value.
 If the C variable contains a NULL pointer then the Tcl variable
-will read as ``NULL''.
+will read as
+.QW NULL .
 .PP
 If the \fBTCL_LINK_READ_ONLY\fR flag is present in \fItype\fR then the
 variable will be read-only from Tcl, so that its value can only be

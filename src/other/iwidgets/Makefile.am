@@ -13,6 +13,7 @@ EXTRA_DIST = \
 	$(brlcadscript_SCRIPTS) \
 	CHANGES \
 	aclocal.m4 \
+	configure.in \
 	demos \
 	incoming \
 	outgoing \
@@ -23,8 +24,6 @@ EXTRA_DIST = \
 DISTCLEANFILES = \
 	iwidgets.tcl \
 	pkgIndex.tcl
-
-MAINTAINERCLEANFILES = Makefile.in
 
 install-script-hook:
 	ln -fs ${INSTALL_DIR} ${libdir}/iwidgets

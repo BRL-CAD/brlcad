@@ -23,7 +23,7 @@ RLE_BIT(the_hdr,bit)
 .B
 rle_hdr the_hdr;
 .SH DESCRIPTION
-This data structure provides communication to and between all the 
+This data structure provides communication to and between all the
 .IR RLE (5)
 file routines.  It describes the parameters of the image being saved
 or read, and contains some variables describing file state that are
@@ -55,7 +55,7 @@ private to the routines.  The public components are described below.
 	char	**comments;	/* Pointer to array of pointers */
 			/* to comment strings. */
 	FILE *	rle_file;	/* I/O to this file */
-	/* 
+	/*
 	 * Bit map of channels to read/save.  Indexed by (channel mod 256).
 	 */
 	char    bits[256/8];
@@ -128,14 +128,14 @@ A bitmap that selects the channels that are actually written to/read
 from the file.  The macros below are used to modify this bitmap.
 .SH MACROS
 The macro
-.IR RLE_BIT 
+.IR RLE_BIT
 will retrieve the state of one of the bits in the
 .I bits
 map.
 .IR RLE_SET_BIT ,
 and
 .I RLE_CLR_BIT
-set and clear bits in the 
+set and clear bits in the
 .I bits
 map.  The predefined symbols
 .IR RLE_RED ,

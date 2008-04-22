@@ -1,23 +1,23 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
+/*
  * paint2rle.c - Convert MacPaint images to RLE.
- * 
+ *
  * Author:	John W. Peterson
  * 		Computer Science Dept.
  * 		University of Utah
@@ -25,7 +25,7 @@
  * Copyright (c) 1986, John W. Peterson
  *
  * Usage is:
- *   paint2rle [-c [r] [g] [b] [alpha]] [-r] [-o outfile.rle] [infile.paint] 
+ *   paint2rle [-c [r] [g] [b] [alpha]] [-r] [-o outfile.rle] [infile.paint]
  *
  * -r 		Inverts the pixels in the macpaint file
  *  r,g,b,a	Allows the value of the resulting RLE file to be specified.
@@ -48,10 +48,10 @@ int invert_flag = 0, oflag = 0;
 void init(), read_scan(), write_scan();
 
 int
-main(argc,argv) 
+main(argc,argv)
 int argc;
 char *argv[];
-{ 
+{
     char 	       *in_fname = NULL,
     		       *out_fname = NULL;
     int			cflag = 0;
@@ -67,7 +67,7 @@ char *argv[];
 		   &cflag, &redval, &grnval, &bluval, &alfval, &invert_flag,
 		   &oflag, &out_fname, &in_fname ) == 0)
 	exit(-1);
-  
+
     hdr = *rle_hdr_init( (rle_hdr *)NULL );
     rle_names( &hdr, cmd_name( argv ), in_fname, 0 );
     infile = rle_open_f( hdr.cmd, in_fname, "r" );
@@ -105,8 +105,8 @@ char *argv[];
     exit(0);
 }
 
-/* 
- * Read a line from the MacPaint file, uncompressing the data into in_line 
+/*
+ * Read a line from the MacPaint file, uncompressing the data into in_line
  */
 void
 read_scan( infile )
@@ -175,7 +175,7 @@ rle_hdr *hdr;
 
 /* Set up some tables for converting bits to bytes */
 void
-init() 
+init()
 {
     int bits[8], i, j;
 

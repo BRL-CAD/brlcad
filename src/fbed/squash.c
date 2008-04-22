@@ -1,7 +1,7 @@
 /*                        S Q U A S H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,9 +20,6 @@
 /** @file squash.c
  *	Author:		Gary S. Moss
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 /*
  * squash.c - Filter super-sampled image for one scan line
  */
@@ -44,38 +41,39 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 	of intensities at half the resolution.  N is the size of the bit
 	arrays.  The "bit arrays" are actually int arrays whose values are
 	assumed to be only 0 or 1.
- */
+*/
 void
 squash(register int *buf0, register int *buf1, register int *buf2, register float *ret_buf, register int n)
-{	register int     j;
+{
+    register int     j;
 #if DEBUG_SQUASH
-	fb_log( "squash: buf0=0x%x buf1=0x%x buf2=0x%x ret_buf=0x%x n=%d\n",
-		buf0, buf1, buf2, ret_buf, n );
+    fb_log( "squash: buf0=0x%x buf1=0x%x buf2=0x%x ret_buf=0x%x n=%d\n",
+	    buf0, buf1, buf2, ret_buf, n );
 #endif
-	for( j = 1; j < n - 1; j++ )
-		{
-		ret_buf[j] =
-			(
-			buf2[j - 1] * CRNR_WT +
-			buf2[j] * MID_WT +
-			buf2[j + 1] * CRNR_WT +
-			buf1[j - 1] * MID_WT +
-			buf1[j] * CNTR_WT +
-			buf1[j + 1] * MID_WT +
-			buf0[j - 1] * CRNR_WT +
-			buf0[j] * MID_WT +
-			buf0[j + 1] * CRNR_WT
-			);
-		}
-	return;
-	}
+    for ( j = 1; j < n - 1; j++ )
+    {
+	ret_buf[j] =
+	    (
+		buf2[j - 1] * CRNR_WT +
+		buf2[j] * MID_WT +
+		buf2[j + 1] * CRNR_WT +
+		buf1[j - 1] * MID_WT +
+		buf1[j] * CNTR_WT +
+		buf1[j + 1] * MID_WT +
+		buf0[j - 1] * CRNR_WT +
+		buf0[j] * MID_WT +
+		buf0[j + 1] * CRNR_WT
+		);
+    }
+    return;
+}
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -69,7 +69,6 @@ typedef struct InterpState {
 
 #define TCL_STATE_VALID 0x01233210  /* magic bit pattern for validation */
 
-
 
 /*
  * ------------------------------------------------------------------------
@@ -750,6 +749,22 @@ Itcl_SaveInterpState(interp, status)
     InterpState *info;
     CONST char *val;
 
+    /*
+     * ERR_IN_PROGRESS was replaced by new APIs in 8.5a2.  Call them if they
+     * are available, or somehow magic them in from the stubs table.
+     * Tcl_ChannelThreadActionProc is a stubs slot higher than the APIs we
+     * need, so its existence indicates slot-y goodness.
+     */
+#ifndef ERR_IN_PROGRESS
+    return (Itcl_InterpState) Tcl_SaveInterpState(interp, status);
+#elif defined(USE_TCL_STUBS) && defined(Tcl_ChannelThreadActionProc)
+    if (itclCompatFlags & ITCL_COMPAT_USE_ISTATE_API) {
+	Itcl_InterpState (*tcl_SaveInterpState)(Tcl_Interp *, int) =
+	    (Itcl_InterpState (*)(Tcl_Interp *, int)) tclStubsPtr->reserved535;
+	return (*tcl_SaveInterpState)(interp, status);
+    }
+#endif
+
     info = (InterpState*)ckalloc(sizeof(InterpState));
     info->validate = TCL_STATE_VALID;
     info->status = status;
@@ -767,19 +782,23 @@ Itcl_SaveInterpState(interp, status)
     /*
      *  If an error is in progress, preserve its state.
      */
-/* XXX     if ((iPtr->flags & ERR_IN_PROGRESS) != 0) { */
-/*         val = Tcl_GetVar(interp, "errorInfo", TCL_GLOBAL_ONLY); */
-/*         if (val) { */
-/*             info->errorInfo = ckalloc((unsigned)(strlen(val)+1)); */
-/*             strcpy(info->errorInfo, val); */
-/*         } */
+#ifdef ERR_IN_PROGRESS   /* this disappeared in 8.5a2 */
+    if ((iPtr->flags & ERR_IN_PROGRESS) != 0) {
+#else
+    if (iPtr->errorInfo != NULL) {
+#endif
+        val = Tcl_GetVar(interp, "errorInfo", TCL_GLOBAL_ONLY);
+        if (val) {
+            info->errorInfo = ckalloc((unsigned)(strlen(val)+1));
+            strcpy(info->errorInfo, val);
+        }
 
-/*         val = Tcl_GetVar(interp, "errorCode", TCL_GLOBAL_ONLY); */
-/*         if (val) { */
-/*             info->errorCode = ckalloc((unsigned)(strlen(val)+1)); */
-/*             strcpy(info->errorCode, val); */
-/*         } */
-/*     } */
+        val = Tcl_GetVar(interp, "errorCode", TCL_GLOBAL_ONLY);
+        if (val) {
+            info->errorCode = ckalloc((unsigned)(strlen(val)+1));
+            strcpy(info->errorCode, val);
+        }
+    }
 
     /*
      *  Now, reset the interpreter to a clean state.
@@ -808,9 +827,23 @@ Itcl_RestoreInterpState(interp, state)
     Tcl_Interp* interp;       /* interpreter being modified */
     Itcl_InterpState state;   /* token representing interpreter state */
 {
-    Interp *iPtr = (Interp*)interp;
     InterpState *info = (InterpState*)state;
     int status;
+
+    /*
+     * ERR_IN_PROGRESS was replaced by new APIs in 8.5a2.  Call them if they
+     * are available, or somehow magic them in from the stubs table.
+     * Tcl_ChannelThreadActionProc is a stubs slot higher than the APIs we
+     * need, so its existence indicates slot-y goodness.
+     */
+#ifndef ERR_IN_PROGRESS
+    return Tcl_RestoreInterpState(interp, (Tcl_InterpState)state);
+#elif defined(USE_TCL_STUBS) && defined(Tcl_ChannelThreadActionProc)
+    if (itclCompatFlags & ITCL_COMPAT_USE_ISTATE_API) {
+	int (*tcl_RestoreInterpState)() = (int (*)()) tclStubsPtr->reserved536;
+ 	return (*tcl_RestoreInterpState)(interp, state);
+    }
+#endif
 
     if (info->validate != TCL_STATE_VALID) {
         Tcl_Panic("bad token in Itcl_RestoreInterpState");
@@ -829,10 +862,7 @@ Itcl_RestoreInterpState(interp, state)
     }
 
     if (info->errorCode) {
-        (void) Tcl_SetVar2(interp, "errorCode", (char*)NULL,
-            info->errorCode, TCL_GLOBAL_ONLY);
-/* XXX        iPtr->flags |= ERROR_CODE_SET; */
-
+        Tcl_SetObjErrorCode(interp, Tcl_NewStringObj(info->errorCode, -1));
         ckfree(info->errorCode);
     }
 
@@ -867,6 +897,24 @@ Itcl_DiscardInterpState(state)
     Itcl_InterpState state;  /* token representing interpreter state */
 {
     InterpState *info = (InterpState*)state;
+
+    /*
+     * ERR_IN_PROGRESS was replaced by new APIs in 8.5a2.  Call them if they
+     * are available, or somehow magic them in from the stubs table.
+     * Tcl_ChannelThreadActionProc is a stubs slot higher than the APIs we
+     * need, so its existence indicates slot-y goodness.
+     */
+#ifndef ERR_IN_PROGRESS
+    Tcl_DiscardInterpState((Tcl_InterpState)state);
+    return;
+#elif defined(USE_TCL_STUBS) && defined(Tcl_ChannelThreadActionProc)
+    if (itclCompatFlags & ITCL_COMPAT_USE_ISTATE_API) {
+	void (* tcl_DiscardInterpState)() = (void (*)())
+	    tclStubsPtr->reserved537;
+	(*tcl_DiscardInterpState)(state);
+	return;
+    }
+#endif
 
     if (info->validate != TCL_STATE_VALID) {
         Tcl_Panic("bad token in Itcl_DiscardInterpState");
@@ -1086,7 +1134,7 @@ Itcl_GetTrueNamespace(interp, info)
     ItclObjectInfo *info;      /* object info associated with interp */
 {
     int i, transparent;
-    Tcl_CallFrame *framePtr, *transFramePtr;
+    Itcl_CallFrame *framePtr, *transFramePtr;
     Tcl_Namespace *contextNs;
 
     /*
@@ -1097,7 +1145,7 @@ Itcl_GetTrueNamespace(interp, info)
 
     framePtr = _Tcl_GetCallFrame(interp, 0);
     for (i = Itcl_GetStackSize(&info->transparentFrames)-1; i >= 0; i--) {
-        transFramePtr = (Tcl_CallFrame*)
+        transFramePtr = (Itcl_CallFrame*)
             Itcl_GetStackValue(&info->transparentFrames, i);
 
         if (framePtr == transFramePtr) {
@@ -1241,7 +1289,7 @@ Itcl_DecodeScopedCommand(interp, name, rNsPtr, rCmdPtr)
 		    &listv);
             if (result == TCL_OK) {
                 if (listc != 4) {
-                    Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+                    Tcl_AppendResult(interp,
                         "malformed command \"", name, "\": should be \"",
                         "namespace inscope namesp command\"",
                         (char*)NULL);
@@ -1324,7 +1372,7 @@ Itcl_EvalArgs(interp, objc, objv)
 
         if (cmd == NULL) {
             Tcl_ResetResult(interp);
-            Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+            Tcl_AppendResult(interp,
                 "invalid command name \"",
                 Tcl_GetStringFromObj(objv[0], NULL), "\"", NULL);
             return TCL_ERROR;

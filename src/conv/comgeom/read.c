@@ -1,7 +1,7 @@
 /*                          R E A D . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2007 United States Government as represented by
+ * Copyright (c) 1989-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,22 +29,14 @@
  *  Original Version -
  *	March 17, 1980
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
 
-#include "machine.h"
 #include "bu.h"
 
 extern FILE	*infp;
@@ -59,26 +51,26 @@ void	namecvt(register int n, register char **cp, int c);
 int
 get_line(register char *cp, int buflen, char *title)
 {
-	register int	c;
-	register int	count = buflen;
+    register int	c;
+    register int	count = buflen;
 
-	while( (c = fgetc(infp)) == '\n' ) /* Skip blank lines.		*/
-		;
-	while( c != EOF && c != '\n' )  {
-		*cp++ = c;
-		count--;
-		if( count <= 0 )  {
-			printf("get_line(x%lx, %d) input record overflows buffer for %s\n",
-			       (unsigned long)cp, buflen, title);
-			break;
-		}
-		c = fgetc(infp);
+    while ( (c = fgetc(infp)) == '\n' ) /* Skip blank lines.		*/
+	;
+    while ( c != EOF && c != '\n' )  {
+	*cp++ = c;
+	count--;
+	if ( count <= 0 )  {
+	    printf("get_line(x%lx, %d) input record overflows buffer for %s\n",
+		   (unsigned long)cp, buflen, title);
+	    break;
 	}
-	if( c == EOF )
-		return	EOF;
-	while( count-- > 0 )
-		*cp++ = 0;
-	return	c;
+	c = fgetc(infp);
+    }
+    if ( c == EOF )
+	return	EOF;
+    while ( count-- > 0 )
+	*cp++ = 0;
+    return	c;
 }
 
 /*
@@ -87,13 +79,13 @@ get_line(register char *cp, int buflen, char *title)
 int
 getint(char *cp, int start, int len)
 {
-	char	buf[128];
+    char	buf[128];
 
-	if( len >= sizeof(buf) )  len = sizeof(buf)-1;
+    if (len > sizeof(buf))
+	len = sizeof(buf);
 
-	strncpy( buf, cp+start, len );
-	buf[len] = '\0';
-	return atoi(buf);
+    bu_strlcpy( buf, cp+start, len );
+    return atoi(buf);
 }
 
 /*
@@ -102,31 +94,31 @@ getint(char *cp, int start, int len)
 double
 getdouble(char *cp, int start, int len)
 {
-	char	buf[128];
+    char	buf[128];
 
-	if( len >= sizeof(buf) )  len = sizeof(buf)-1;
+    if (len > sizeof(buf))
+	len = sizeof(buf);
 
-	strncpy( buf, cp+start, len );
-	buf[len] = '\0';
-	return atof(buf);
+    bu_strlcpy( buf, cp+start, len );
+    return atof(buf);
 }
 
 /*		N A M E C V T	 */
 void
 namecvt(register int n, register char **cp, int c)
 {
-	char str[16];
+    char str[16];
 
-	sprintf( str, "%c%d%.13s", (char)c, n, name_it );
-	*cp = bu_strdup( str );
+    sprintf( str, "%c%d%.13s", (char)c, n, name_it );
+    *cp = bu_strdup( str );
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -1,7 +1,7 @@
 dnl                    C O N F I G U R E . A C
 dnl BRL-CAD
 dnl
-dnl Copyright (c) 2004-2007 United States Government as represented by
+dnl Copyright (c) 2004-2008 United States Government as represented by
 dnl the U.S. Army Research Laboratory.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
@@ -218,6 +218,42 @@ else
 fi
 AC_SUBST(BRLCAD_ROOT)
 
+# make sure the user doesn't try to set /usr as the prefix
+if test "x$BRLCAD_ROOT" = "x/usr" ; then
+    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+    AC_MSG_WARN([It is STRONGLY recommended that you DO NOT install BRL-CAD into /usr])
+    AC_MSG_WARN([as BRL-CAD provides several libraries that may conflict with other])
+    AC_MSG_WARN([libraries (e.g. librt, libbu, libbn) on certain system configurations.])
+    AC_MSG_WARN([])
+    AC_MSG_WARN([Since our libraries predate all those that we're known to conflict with])
+    AC_MSG_WARN([and are at the very core of our geometry services and project heritage,])
+    AC_MSG_WARN([we have no plans to change the names of our libraries at this time.])
+    AC_MSG_WARN([])
+    AC_MSG_WARN([If you choose to continue installing into /usr, you do so entirely at])
+    AC_MSG_WARN([your own risk.  You have been warned.])
+    AC_MSG_NOTICE([])
+    AC_MSG_NOTICE([Consider using a different --prefix value.])
+    while true ; do
+	AC_MSG_NOTICE([])
+	AC_MSG_NOTICE([Would you like to continue with /usr as the install prefix? [[yes/no]]])
+	read bc_answer
+	case "x$bc_answer" in
+	    x*[[yY]][[eE]][[sS]]*)
+		bc_answer=yes
+		break ;;
+	    x*[[nN]][[oO]]*)
+		bc_answer=no
+		break ;;
+	    x*)
+		AC_MSG_NOTICE([Please answer 'yes' or 'no'])
+		;;
+	esac
+    done
+    if test "x$bc_answer" = "xno" ; then
+	AC_MSG_ERROR([*** Aborting due to --prefix=/usr ***])
+    fi
+fi
+
 # set up the BRLCAD_DATA install directory
 #   e.g. /usr/local/share/brlcad/7.4.0
 AC_MSG_CHECKING([where BRL-CAD resources are to be installed])
@@ -251,12 +287,12 @@ else
 fi
 AC_SUBST(BRLCAD_DATA)
 
-# if this is not a CVS checkout, disable dependency tracking for a
-# faster build. it's not likely that the user is doing development
-# from a source release. at least they really should not given the
-# extra steps that are necessary for making a proper useful diff.
+# if this is not a checkout, disable dependency tracking for a faster
+# build. it's not likely that the user is doing development from a
+# source release. at least they really should not given the extra
+# steps that are necessary for making a proper useful diff.
 AC_MSG_CHECKING([whether dependency tracking should be enabled])
-if test -d $srcdir/CVS ; then
+if test -d $srcdir/CVS -o -d $srcdir/.svn ; then
 	if test "x$enable_maintainer_mode" = "x" ; then
 		enable_maintainer_mode="yes"
 	fi
@@ -284,6 +320,9 @@ AM_MAINTAINER_MODE
 
 # write out all of our definitions to this header
 AM_CONFIG_HEADER([include/brlcad_config.h])
+
+# load the tcl SC_* macros
+builtin(include,src/other/tcl/unix/tcl.m4)
 
 # automatically enable and load our configure cache file if available
 BC_CONFIG_CACHE([config.cache.${host_os}.${ac_hostname}])
@@ -329,7 +368,7 @@ BC_ARG_ENABLE([build_zlib], [zlib-build], [Build the included zlib compression l
 BC_ARG_ENABLE([build_urt], [urt-build], [Build the included Utah Raster Toolkit], [auto])
 
 # force enable/disable building of openNURBS
-BC_ARG_ENABLE([build_opennurbs], [opennurbs-build], [Build the included openNURBS library], [no])
+BC_ARG_ENABLE([build_opennurbs], [opennurbs-build], [Build the included openNURBS library], [auto])
 
 # force enable/disable building of termlib
 BC_ARG_ENABLE([build_termlib], [termlib-build], [Build the included termlib library], [auto])
@@ -367,9 +406,6 @@ BC_ARG_ENABLE([build_ef], [ef-build], [Enable compilation of Endgame Framework m
 # unigraphics plugin
 BC_ARG_ENABLE([build_ug], [unigraphics-build], [Enable compilation of Unigraphics importer], [no])
 
-# ADRT (enables SDL and Python with options if they're not enabled)
-BC_ARG_ENABLE([build_adrt], [adrt-build], [Enable compilation of ADRT], [auto])
-
 # example geometry
 BC_ARG_ENABLE([install_geometry], [models-install], [Enable installation of example geometry models], [yes])
 
@@ -381,6 +417,12 @@ BC_ARG_ENABLE([use_debug], [debug], [Enable debug symbols], [auto])
 
 # profiling
 BC_ARG_ENABLE([use_profiling], [profiling], [Enable profiling], [no])
+
+# parallel
+BC_ARG_ENABLE([build_parallel], [parallel], [Compile for SMP architectures], [yes])
+
+# Sun dtrace
+BC_ARG_ENABLE([use_dtrace], [dtrace], [Enable dtrace support], [no])
 
 # verbosity
 BC_ARG_ENABLE([build_verbose], [verbose], [Enable verbose compilation], [auto])
@@ -409,12 +451,6 @@ BC_ARG_WITH([with_opengl], [ogl], [Specify use of or path to OpenGL], [auto])
 
 # use wgl
 BC_ARG_WITH([with_wgl], [wgl], [Specify use of or path to WindowsGL], [auto])
-
-# use sdl
-BC_ARG_WITH([with_sdl], [sdl], [Specify use of or path to SDL], [auto])
-
-# use python
-BC_ARG_WITH([with_python], [python], [Specify use of or path to python], [auto])
 
 # use pro/engineer
 BC_ARG_WITH([with_proe], [proe], [Specify build of Pro/ENGINEER plugin or path to Pro/ENGINEER installation], [no])
@@ -594,6 +630,11 @@ BC_ARG_ALIAS([use_debug], [debugging])
 BC_ARG_ALIAS([use_profiling], [profile])
 BC_ARG_ALIAS([use_profiling], [profiled])
 
+# parallel aliases (help uses parallel)
+BC_ARG_ALIAS([build_parallel], [parallel-build])
+BC_ARG_ALIAS([build_parallel], [smp])
+BC_ARG_ALIAS([build_parallel], [smp-build])
+
 # verbose output (help uses verbose)
 BC_ARG_ALIAS([build_verbose], [verbosity])
 BC_ARG_ALIAS([build_verbose], [output-verbose])
@@ -629,12 +670,6 @@ BC_ARG_WITH_ALIAS([with_opengl], [opengl])
 # with wgl aliases (help uses wgl)
 BC_ARG_WITH_ALIAS([with_wgl], [windowsgl])
 
-# with sdl aliases (help uses sdl)
-BC_ARG_WITH_ALIAS([with_sdl], [libsdl])
-
-# with python aliases (help uses python)
-BC_ARG_WITH_ALIAS([with_python], [libpython])
-
 
 ###
 # set up path searching
@@ -661,55 +696,55 @@ elif test "x$bc_everything" = "xno" ; then
 	set_everything=no
 fi
 if test "x$set_everything" != "x" ; then
-	if test "x$bc_build_runtime_debug" = "x$bc_build_runtime_debug_default" ; then
+	if test "x$bc_build_runtime_debug_set" = "xno" ; then
 		bc_build_runtime_debug="$set_everything"
 	fi
-	if test "x$bc_build_regex" = "x$bc_build_regex_default" ; then
+	if test "x$bc_build_regex_set" = "xno" ; then
 		bc_build_regex="$set_everything"
 	fi
-	if test "x$bc_build_png" = "x$bc_build_png_default" ; then
+	if test "x$bc_build_png_set" = "xno" ; then
 		bc_build_png="$set_everything"
 	fi
-	if test "x$bc_build_zlib" = "x$bc_build_zlib_default" ; then
+	if test "x$bc_build_zlib_set" = "xno" ; then
 		bc_build_zlib="$set_everything"
 	fi
-	if test "x$bc_build_urt" = "x$bc_build_urt_default" ; then
+	if test "x$bc_build_urt_set" = "xno" ; then
 		bc_build_urt="$set_everything"
 	fi
-	if test "x$bc_build_opennurbs" = "x$bc_build_opennurbs_default" ; then
+	if test "x$bc_build_opennurbs_set" = "xno" ; then
 		bc_build_opennurbs="$set_everything"
 	fi
-	if test "x$bc_build_termlib" = "x$bc_build_termlib_default" ; then
+	if test "x$bc_build_termlib_set" = "xno" ; then
 		bc_build_termlib="$set_everything"
 	fi
-	if test "x$bc_build_tcl" = "x$bc_build_tcl_default" ; then
+	if test "x$bc_build_tcl_set" = "xno" ; then
 		bc_build_tcl="$set_everything"
 	fi
-	if test "x$bc_build_tk" = "x$bc_build_tk_default" ; then
+	if test "x$bc_build_tk_set" = "xno" ; then
 		bc_build_tk="$set_everything"
 	fi
-	if test "x$bc_build_itcl" = "x$bc_build_itcl_default" ; then
+	if test "x$bc_build_itcl_set" = "xno" ; then
 		bc_build_itcl="$set_everything"
 	fi
-	if test "x$bc_build_iwidgets" = "x$bc_build_iwidgets_default" ; then
+	if test "x$bc_build_iwidgets_set" = "xno" ; then
 		bc_build_iwidgets="$set_everything"
 	fi
-	if test "x$bc_build_blt" = "x$bc_build_blt_default" ; then
+	if test "x$bc_build_blt_set" = "xno" ; then
 		bc_build_blt="$set_everything"
 	fi
-	if test "x$bc_build_tkimg" = "x$bc_build_tkimg_default" ; then
+	if test "x$bc_build_tkimg_set" = "xno" ; then
 		bc_build_tkimg="$set_everything"
 	fi
-	if test "x$bc_build_tnt" = "x$bc_build_tnt_default" ; then
+	if test "x$bc_build_tnt_set" = "xno" ; then
 		bc_build_tnt="$set_everything"
 	fi
-	if test "x$bc_build_jove" = "x$bc_build_jove_default" ; then
+	if test "x$bc_build_jove_set" = "xno" ; then
 		bc_build_jove="$set_everything"
 	fi
 	# Singe the Endgame Framework "simulation module" will only
 	# compile if you have it installed, don't enable it even if
 	# requesting everything.  fine to disable, though.
-	if test "x$bc_build_ef" = "x$bc_build_ef_default" ; then
+	if test "x$bc_build_ef_set" = "xno" ; then
 		if test "x$set_everything" = "xno" ; then
 			bc_build_ef=no
 		fi
@@ -717,15 +752,14 @@ if test "x$set_everything" != "x" ; then
 	# Since the Unigraphics importer is primarily tested on only one
 	# platform and requires UGOPEN, don't enable it even if
 	# requesting everything.  fine to disable, though.
-	if test "x$bc_build_ug" = "x$bc_build_ug_default" ; then
+	if test "x$bc_build_ug_set" = "xno" ; then
 		if test "x$set_everything" = "xno" ; then
 			bc_build_ug=no
 		fi
 	fi
-	# ADRT is known to not build right now on most platforms, so
-	# only allow it to be disabled and not enabled.
-	# User must specify --enable-adrt to get ADRT to build
-	if test "x$bc_build_adrt" = "x$bc_build_adrt_default" ; then
+	# ADRT is known to not build on several platforms due to its
+        # external dependencies, so only allow it to be disabled.
+	if test "x$bc_build_adrt_set" = "xno" ; then
 		if test "x$set_everything" = "xno" ; then
 			bc_build_adrt="no"
 		fi
@@ -759,43 +793,6 @@ if test "x$bc_with_opengl" = "xyes" ; then
 		AC_MSG_WARN([The X11 interface will not be built])
 		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
 	fi
-fi
-
-# enabling/disabling ADRT implies enabling/disabling the SDL and Python options
-if test "x$bc_build_adrt" = "xyes" ; then
-	if test "x$bc_with_sdl" = "xauto" ; then
-		bc_with_sdl=yes
-	elif test "x$bc_with_sdl" = "xno" ; then
-		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-		AC_MSG_WARN([ADRT presently requires SDL support])
-		AC_MSG_WARN([The SDL option has been enabled (--with-sdl=yes)])
-		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-		bc_with_sdl=yes
-	fi
-	if test "x$bc_with_python" = "xauto" ; then
-		bc_with_python=yes
-	elif test "x$bc_with_python" = "xno" ; then
-		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-		AC_MSG_WARN([ADRT presently requires Python support])
-		AC_MSG_WARN([The Python option has been enabled (--with-python=yes)])
-		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-		bc_with_python=yes
-	fi
-elif test "x$bc_build_adrt" = "xno" ; then
-	if test "x$bc_with_sdl" = "xyes" ; then
-		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-		AC_MSG_WARN([SDL was requested, yet ADRT was disabled.])
-		AC_MSG_WARN([Since only ADRT utilizes SDL, it will not be utilized (--with-sdl=no)])
-		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-	fi
-	if test "x$bc_with_python" = "xyes" ; then
-		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-		AC_MSG_WARN([Python was requested, yet ADRT was disabled.])
-		AC_MSG_WARN([Since only ADRT utilizes Python, it will not be utilized (--with-python=no)])
-		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-	fi
-	bc_with_sdl=no
-	bc_with_python=no
 fi
 
 # turning on verbose means turning on progress and warning verbosity
@@ -893,6 +890,9 @@ AC_MSG_RESULT($bc_use_debug)
 AC_MSG_CHECKING(whether to enable profile mode compilation)
 AC_MSG_RESULT($bc_use_profiling)
 
+AC_MSG_CHECKING(whether to enable support for SMP architectures)
+AC_MSG_RESULT($bc_build_parallel)
+
 AC_MSG_CHECKING(whether to enable verbose output)
 AC_MSG_RESULT($bc_build_verbose)
 
@@ -913,12 +913,6 @@ AC_MSG_RESULT($bc_with_opengl)
 
 AC_MSG_CHECKING(whether to compile the WindowsGL interfaces)
 AC_MSG_RESULT($bc_with_wgl)
-
-AC_MSG_CHECKING(whether to compile against SDL for ADRT)
-AC_MSG_RESULT($bc_with_sdl)
-
-AC_MSG_CHECKING(whether to compile against Python for ADRT)
-AC_MSG_RESULT($bc_with_python)
 
 AC_MSG_CHECKING(whether to compile the Pro/ENGINEER plugin)
 AC_MSG_RESULT($bc_with_proe)
@@ -942,7 +936,6 @@ AC_PROG_CC
 AM_PROG_CC_C_O
 
 AC_PROG_CXX
-
 
 AC_PROG_CPP
 AC_REQUIRE_CPP
@@ -1006,6 +999,10 @@ AC_PATH_PROG(MV, mv)
 AC_PATH_PROG(CP, cp)
 AC_PATH_PROG(RM, rm)
 
+if test "$bc_with_dtrace" == "yes" ; then
+	AC_PATH_PROG(DTRACE, dtrace, bc_with_dtrace=no, [$PATH:/usr/sbin])
+fi
+
 dnl figure out which compiler is seems like we are using
 dnl detected values include: gcc, mipspro, sunpro
 dnl none of the tests should be compiler-specific, but it's good to
@@ -1054,28 +1051,6 @@ AC_DEFINE(EXTERN_STDOUT,,[Stdout is extern])
 
 AC_FUNC_ALLOCA
 
-# test for sdl-config, auto for with-sdl is 'no'
-SDL_CONFIG=""
-if test "x$bc_with_sdl" = "xyes" ; then
-	AC_PATH_PROG(SDL_CONFIG, sdl-config, , $PATH)
-	if test "x$SDL_CONFIG" = "x" ; then
-		if test "x$bc_with_sdl" = "xyes" ; then
-			AC_MSG_NOTICE([sdl-config is presently required, searching more extensively])
-			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-			AC_MSG_WARN([Unable to find sdl-config])
-		fi
-	fi
-fi
-
-# test for python interpreter, auto for with-python is 'no'
-PYTHON=""
-if test "x$bc_with_python" = "xyes" ; then
-	AM_PATH_PYTHON(2.0,
-		       PYTHON_CFLAGS=-I`$PYTHON -c "import distutils.sysconfig;print distutils.sysconfig.get_config_var('INCLUDEPY')"`
-		       PYTHON_LIBS=`$PYTHON -c "import distutils.sysconfig; print distutils.sysconfig.get_config_var('LIBPL')+'/'+distutils.sysconfig.get_config_var('LIBRARY')+' '+distutils.sysconfig.get_config_var('LIBS')"`
-		       )
-fi
-
 dnl if building jove wasn't specifically requested and wasn't
 dnl disabled, see if there is either emacs or jove available.
 dnl i.e. auto for jove is dependant on what is installed
@@ -1102,13 +1077,13 @@ thread_link_works=no
 LIBTHREAD=""
 dnl try sgi sproc first
 AC_CHECK_LIB(c, sproc, thread_link_works=yes ; LIBTHREAD="-lc",
-    dnl check if the BSD c_r threading library link works
-    [AC_CHECK_LIB(c_r, pthread_create, thread_link_works=yes ; LIBTHREAD="-pthread",
-	dnl try solaris threading
-	[AC_CHECK_LIB(thread, thr_create, thread_link_works=yes ; LIBTHREAD="-lthread",
-	    dnl pthreading is a good default if none of the others are available
-	    dnl XXX need to test HPUX -- may require -lcma with pthreads
-	    [AC_CHECK_LIB(pthread, pthread_create, thread_link_works=yes ; LIBTHREAD="-lpthread")]
+    dnl try solaris threading
+    [AC_CHECK_LIB(thread, thr_create, thread_link_works=yes ; LIBTHREAD="-lthread",
+	dnl pthreading is a good default if none of the others are available
+	dnl XXX need to test HPUX -- may require -lcma with pthreads
+	[AC_CHECK_LIB(pthread, pthread_create, thread_link_works=yes ; LIBTHREAD="-lpthread",
+	    dnl check if the BSD c_r threading library link works
+	    [AC_CHECK_LIB(c_r, pthread_create, thread_link_works=yes ; LIBTHREAD="-pthread")]
 	)]
     )]
 )
@@ -1116,8 +1091,8 @@ AC_CHECK_LIB(c, sproc, thread_link_works=yes ; LIBTHREAD="-lc",
 dnl check whether we ended up with functioning posix threading.
 AC_MSG_CHECKING([whether we are using POSIX threading])
 posix_threading=no
-PRELDFLAGS="$LDFLAGS"
-LDFLAGS="$LDFLAGS $LIBTHREAD"
+PRELIBS="$LIBS"
+LIBS="$LIBS $LIBTHREAD"
 AC_TRY_LINK([#include <pthread.h>], [
     pthread_t th;
     pthread_join(th, 0);
@@ -1126,7 +1101,7 @@ AC_TRY_LINK([#include <pthread.h>], [
     pthread_create(0,0,0,0);
     pthread_cleanup_pop(0);
 ], [posix_threading=yes])
-LDFLAGS="$PRELDFLAGS"
+LIBS="$PRELIBS"
 AC_MSG_RESULT($posix_threading)
 
 dnl check whether the CoreFoundation framework is available (used when
@@ -1217,17 +1192,17 @@ dnl *** X11 ***
 if test "x$bc_with_x11" != "xno" ; then
 
     if test "x$bc_with_x11_val" != "x" ; then
-	if test "x$x_includes" = "xNONE"; then 
+	if test "x$x_includes" = "xNONE"; then
 	    x_includes="$bc_with_x11_val/include"
 	    ac_x_includes="$x_includes"
 	fi
-	if test "x$x_libraries" = "xNONE"; then 
+	if test "x$x_libraries" = "xNONE"; then
 	    x_libraries="$bc_with_x11_val/lib"
 	    ac_x_libraries="$x_libraries"
 	fi
     fi
 
-    dnl find X11 libraries
+    dnl find X11 libraries.  sets X_CFLAGS, X_LIBS, and X_EXTRA_LIBS
     AC_PATH_XTRA
     if test "x$have_x" = "xyes" ; then
 	AC_DEFINE(HAVE_X11_XLIB_H, 1, Define to 1 if you have the <X11/Xlib.h> header file.)
@@ -1239,16 +1214,21 @@ if test "x$bc_with_x11" != "xno" ; then
     LIBXI=""
 
     PRELIBS="$LIBS"
-    LIBS="$PRELIBS $X_LIBS"
+    PRECPPFLAGS="$CPPFLAGS"
+
+    CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+
+    LIBS="$LIBS $X_LIBS"
     AC_CHECK_LIB(X11, XCreateWindow, LIBX11="-lX11")
 
     LIBS="$LIBS $LIBX11"
     AC_CHECK_LIB(Xext, XShapeCombineMask, LIBXEXT="-lXext")
 
-    LIBS="$LIBS $LIBX11 $LIBXEXT"
+    LIBS="$LIBS $LIBXEXT"
     AC_CHECK_LIB(Xi, XGetExtensionVersion, LIBXI="-lXi")
-
     X_LIBS="$LIBS $LIBXI"
+
+    CPPFLAGS="$PRECPPFLAGS"
     LIBS="$PRELIBS"
 fi
 
@@ -1266,17 +1246,20 @@ AC_CHECK_LIB(c, regcomp, regex_link_works=yes ; LIBREGEX="-lc",
     )]
 )
 
-dnl check if a png library links
-png_link_works=no
-LIBPNG=""
-AC_CHECK_LIB(png, png_access_version_number, png_link_works=yes ; LIBPNG="-lpng")
-
 dnl check if zlib library links
 z_link_works=no
 LIBZLIB=""
 if test "x$bc_build_zlib" != "xyes" ; then
     AC_CHECK_LIB(z, deflate, z_link_works=yes ; LIBZLIB="-lz")
 fi
+
+dnl check if a png library links
+png_link_works=no
+LIBPNG=""
+PRELIBS="$LIBS"
+LIBS="$LIBS $LIBZLIB"
+AC_CHECK_LIB(png, png_access_version_number, png_link_works=yes ; LIBPNG="-lpng $LIBZLIB")
+LIBS="$PRELIBS"
 
 dnl check if utahrle library links
 utahrle_link_works=no
@@ -1305,7 +1288,11 @@ AC_CHECK_LIB(tcl8.6, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl8.6",
     [AC_CHECK_LIB(tcl86, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl86",
 	[AC_CHECK_LIB(tcl8.5, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl8.5",
 	    [AC_CHECK_LIB(tcl85, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl85",
-		[AC_CHECK_LIB(tcl, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl")]
+		[AC_CHECK_LIB(tcl8.4, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl8.4",
+		    [AC_CHECK_LIB(tcl84, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl84",
+			[AC_CHECK_LIB(tcl, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl")]
+		    )]
+	    	)]
 	    )]
 	)]
     )]
@@ -1318,7 +1305,11 @@ AC_CHECK_LIB(tclstub8.6, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-lt
     [AC_CHECK_LIB(tclstub86, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub86",
 	[AC_CHECK_LIB(tclstub8.5, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub8.5",
 	    [AC_CHECK_LIB(tclstub85, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub85",
-		[AC_CHECK_LIB(tclstub, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub")]
+	    	[AC_CHECK_LIB(tclstub8.4, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub8.4",
+		    [AC_CHECK_LIB(tclstub84, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub84",
+			[AC_CHECK_LIB(tclstub, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub")]
+		    )]
+		)]
 	    )]
 	)]
     )]
@@ -1331,7 +1322,11 @@ AC_CHECK_LIB(tk8.6, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk8.6",
     [AC_CHECK_LIB(tk86, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk86",
 	[AC_CHECK_LIB(tk8.5, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk8.5",
 	    [AC_CHECK_LIB(tk85, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk85",
-		[AC_CHECK_LIB(tk, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk")]
+		[AC_CHECK_LIB(tk8.4, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk8.4",
+		    [AC_CHECK_LIB(tk84, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk84",
+			[AC_CHECK_LIB(tk, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk")]
+		    )]
+	        )]
 	    )]
 	)]
     )]
@@ -1346,7 +1341,11 @@ AC_CHECK_LIB(tkstub8.6, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstu
     [AC_CHECK_LIB(tkstub86, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub86",
 	[AC_CHECK_LIB(tkstub8.5, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub8.5",
 	    [AC_CHECK_LIB(tkstub85, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub85",
-	    	[AC_CHECK_LIB(tkstub, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub")]
+	    	[AC_CHECK_LIB(tkstub8.4, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub8.4",
+		    [AC_CHECK_LIB(tkstub84, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub84",
+			[AC_CHECK_LIB(tkstub, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub")]
+		    )]
+		)]
 	    )]
 	)]
     )]
@@ -1356,11 +1355,15 @@ LIBS="$PRELIBS"
 dnl check if libitcl library links
 itcl_link_works=no
 LIBITCL=""
-AC_CHECK_LIB(itcl3.3, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl3.3",
-    [AC_CHECK_LIB(itcl33, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl33",
-	[AC_CHECK_LIB(itcl3.2, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl3.2",
-	    [AC_CHECK_LIB(itcl32, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl32",
-		[AC_CHECK_LIB(itcl, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl")]
+AC_CHECK_LIB(itcl3.4, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl3.4",
+    [AC_CHECK_LIB(itcl34, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl34",
+	[AC_CHECK_LIB(itcl3.3, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl3.3",
+	    [AC_CHECK_LIB(itcl33, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl33",
+		[AC_CHECK_LIB(itcl3.2, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl3.2",
+		    [AC_CHECK_LIB(itcl32, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl32",
+			[AC_CHECK_LIB(itcl, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl")]
+		    )]
+		)]
 	    )]
 	)]
     )]
@@ -1369,11 +1372,15 @@ AC_CHECK_LIB(itcl3.3, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl3.3",
 dnl check if libitk library links
 itk_link_works=no
 LIBITK=""
-AC_CHECK_LIB(itk3.3, Itk_Init, itk_link_works=yes ; LIBITK="-litk3.3",
-    [AC_CHECK_LIB(itk33, Itk_Init, itk_link_works=yes ; LIBITK="-litk33",
-	[AC_CHECK_LIB(itk3.2, Itk_Init, itk_link_works=yes ; LIBITK="-litk3.2",
-	    [AC_CHECK_LIB(itk32, Itk_Init, itk_link_works=yes ; LIBITK="-litk32",
-		[AC_CHECK_LIB(itk, Itk_Init, itk_link_works=yes ; LIBITK="-litk")]
+AC_CHECK_LIB(itk3.4, Itk_Init, itk_link_works=yes ; LIBITK="-litk3.4",
+    [AC_CHECK_LIB(itk34, Itk_Init, itk_link_works=yes ; LIBITK="-litk34",
+	[AC_CHECK_LIB(itk3.3, Itk_Init, itk_link_works=yes ; LIBITK="-litk3.3",
+	    [AC_CHECK_LIB(itk33, Itk_Init, itk_link_works=yes ; LIBITK="-litk33",
+		[AC_CHECK_LIB(itk3.2, Itk_Init, itk_link_works=yes ; LIBITK="-litk3.2",
+		    [AC_CHECK_LIB(itk32, Itk_Init, itk_link_works=yes ; LIBITK="-litk32",
+			[AC_CHECK_LIB(itk, Itk_Init, itk_link_works=yes ; LIBITK="-litk")]
+		    )]
+		)]
 	    )]
 	)]
     )]
@@ -1465,7 +1472,7 @@ stdcxx_link_works=no
 LIBSTDCXX=""
 AC_CHECK_LIB(stdc++, main, stdcxx_link_works=yes ; LIBSTDCXX="-lstdc++",
 	[PRELIBS="$LIBS"
-	 LIBS="$LIBS $LIBM" 
+	 LIBS="$LIBS $LIBM"
 	 AC_CHECK_LIB(stdc++, main, stdcxx_link_works=yes ; LIBSTDCXX="-lstdc++ $LIBM"
 	 LIBS="$PRELIBS"
 	 )]
@@ -1478,49 +1485,49 @@ dnl *************************
 
 BC_CONFIGURE_STAGE([headers], [4 of 9])
 
+# C89 headers: assert.h, ctype.h, errno.h, float.h, limits.h, locale.h,
+# math.h, setjmp.h, signal.h, stdarg.h, stddef.h, stdio.h, stdlib.h,
+# string.h, time.h
+
+# C95 headers: wchar.h, wctype.h, iso646.h
+
+# C99 headers: complex.h, fenv.h, inttypes.h, stdbool.h, stdint.h,
+# tgmath.h
+
+# POSIX.1 headers includes C89, C95, and C99 plus the following:
+# aio.h, arpa/inet.h, cpio.h, dirent.h, dlfcn.h, fcntl.h, fmtmsg.h,
+# fnmatch.h, ftw.h, glob.h, grp.h, iconv.h, langinfo.h, libgen.h,
+# monetary.h, mqueue.h, ndbm.h, net/if.h, netdb.h, netinet/in.h,
+# netinet/tcp.h, nl_types.h, poll.h, pthread.h, pwd.h, regex.h,
+# sched.h, search.h, semaphore.h, spawn.h, strings.h, stropts.h,
+# sys/ipc.h, sys/mman.h, sys/msg.h, sys/resource.h, sys/select.h,
+# sys/stat.h, sys/statvfs.h, sys/time.h, sys/timeb.h, sys/times.h,
+# sys/types.h, sys/uio.h, sys/un.h, sys/utsname.h, sys/wait.h,
+# syslog.h, tar.h, termios.h, trace.h, ucontext.h, ulimit.h, unistd.h,
+# utime.h, utmpx.h, wordexp.h
+
 AC_HEADER_STDC
 AC_HEADER_DIRENT
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS( \
 	Carbon/Carbon.h \
-	arpa/inet.h \
 	curses.h \
 	dslib.h \
-	errno.h \
-	fcntl.h \
-	float.h \
 	getopt.h \
 	gl/device.h \
-	ieeefp.h \
+	grp.h \
 	inttypes.h \
 	io.h \
-	itcl.h \
-	itk.h \
-	langinfo.h \
 	libgen.h \
-	limits.h \
-	locale.h \
-	malloc.h \
-	math.h \
 	memory.h \
 	ncurses.h \
-	netdb.h \
 	netinet/in.h \
 	pthread.h \
 	pwd.h \
 	rle.h \
 	sched.h \
-	setjmp.h \
 	sgtty.h \
-	signal.h \
-	socket.h \
-	stdarg.h \
-	stddef.h \
 	stdint.h \
-	stdlib.h \
-	string.h \
-	strings.h \
-	sys/errno.h \
 	sys/file.h \
 	sys/_ioctl.h \
 	sys/ioctl.h \
@@ -1529,16 +1536,13 @@ AC_CHECK_HEADERS( \
 	sys/mman.h \
 	sys/param.h \
 	sys/prctl.h \
-	sys/resource.h \
 	sys/select.h \
 	sys/socket.h \
 	sys/stat.h \
-	sys/statfs.h \
 	sys/sysctl.h \
 	sys/sysinfo.h \
 	sys/sysmp.h \
 	sys/time.h \
-	sys/timeb.h \
 	sys/times.h \
 	sys/types.h \
 	sys/un.h \
@@ -1551,18 +1555,16 @@ AC_CHECK_HEADERS( \
 	termio.h \
 	termios.h \
 	termlib.h \
-	time.h \
 	tinfo.h \
 	tk.h \
 	ulocks.h \
 	unistd.h \
-	utime.h \
-	values.h \
-	varargs.h \
-	waitflags.h \
-	wchar.h \
-	winsock.h
+	winsock.h \
 )
+
+if test "x$bc_with_dtrace" != "xno" ; then
+    AC_CHECK_HEADER(sys/sdt.h,, [bc_with_dtrace=no])
+fi
 
 GL_CPPFLAGS=""
 # optionally check for OpenGL headers
@@ -1611,9 +1613,6 @@ AC_CHECK_HEADER(sys/sched.h,
 #endif
 #include <sys/sched.h>
 ])
-
-AC_CHECK_HEADER(sys/stat.h, AC_DEFINE(HAVE_UNIX_IO,, Fix this, sys/types.h and sys/stat.h ...))
-AC_CHECK_HEADER(sys/time.h, AC_DEFINE(TIME_WITH_SYS_TIME,1,sys/time.h))
 
 AC_CHECK_HEADER(sys/mount.h,
 		AC_DEFINE(HAVE_SYS_MOUNT_H,1, Define to 1 if you have the <sys/mount.h> header file.),,
@@ -1739,6 +1738,7 @@ if test "x$bc_with_proe" != "xno" ; then
    CFLAGS="$PRE_CFLAGS"
 fi
 
+
 dnl **********************************
 dnl *** Check for types/structures ***
 dnl **********************************
@@ -1790,15 +1790,13 @@ if test "xyes" = "xyes" ; then
     dnl check for -fno-common (libtcl needs it on darwin)
     BC_COMPILER_AND_LINKER_RECOGNIZES([-fno-common])
 
-    dnl check for -fexceptions (if yes or auto).
+    dnl check for -fexceptions
     dnl this is needed to resolve __Unwind_Resume when compiling and
     dnl linking against openNURBS in librt for some binaries, for
     dnl example rttherm (i.e. any -static binaries)
-    if test "x$bc_build_opennurbs" != "xno" ; then
-	dnl go ahead and enable for everyone regardless
-	BC_COMPILER_AND_LINKER_RECOGNIZES([-fexceptions], [fexceptions])
-    fi
+    BC_COMPILER_AND_LINKER_RECOGNIZES([-fexceptions], [fexceptions])
 
+    dnl dynamic SSE optimizations for NURBS processing
     BC_COMPILER_AND_LINKER_RECOGNIZES([-msse], [msse], [nokeep])
     MSSE=""
     if test "x$bc_msse_works" = "xyes" ; then
@@ -1942,32 +1940,6 @@ if test "x$bc_build_warnings" != "xno" ; then
 	fi
 fi
 
-dnl AC_C_PROTOTYPES
-AM_C_PROTOTYPES
-AC_DEFINE(USE_PROTOTYPES,1,heh)
-
-AC_C_CONST
-AC_C_INLINE
-AC_C_VOLATILE
-AC_C_BIGENDIAN
-if test "x$ac_cv_c_bigendian" = "xyes" ; then
-	AC_DEFINE(NATURAL_IEEE, , [64-bit floating point storage technique is big endian])
-else
-	if test "x$ac_cv_c_bigendian" = "xno" ; then
-	       AC_DEFINE(REVERSE_IEEE, , [64-bit floating point storage technique is little endian])
-	else
-		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-		AC_MSG_ERROR([*** Don't know the endian of this machine! ***])
-	fi
-fi
-
-# figure out what size pointers the compiler is actually generating
-AC_CHECK_SIZEOF(int)
-AC_CHECK_SIZEOF(long)
-AC_CHECK_SIZEOF(long long)
-AC_CHECK_SIZEOF(void *, 4)
-pointer_size="$ac_cv_sizeof_void_p"
-
 # determine the minimum single-precision floating point tolerance
 # value at compile time such that: 1.0 + value != 1.0
 # ANSI defines this as FLT_EPSILON but float.h may not provide it.
@@ -1986,8 +1958,37 @@ BC_COMPLIANT_FLOAT
 # seems IEEE 754 compliant.
 BC_COMPLIANT_DOUBLE
 
-dnl Last step is to make sure that we can actually compile
-BC_SANITY_CHECK
+# warn if either floating point compliance failed
+if test "x$bc_compliant_float" = "xno" || test "x$bc_compliant_double" = "xno" ; then
+    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+    AC_MSG_WARN([The floating point implementation does not seem to be IEEE 754])
+    AC_MSG_WARN([compliant.  The behavior or htond and htonf may be incorrect.])
+    AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
+fi
+
+dnl AC_C_PROTOTYPES
+AM_C_PROTOTYPES
+AC_DEFINE(USE_PROTOTYPES,1,heh)
+
+AC_C_CONST
+AC_C_INLINE
+AC_C_VOLATILE
+AC_C_BIGENDIAN
+
+# figure out what size pointers the compiler is actually generating
+AC_CHECK_SIZEOF(int)
+AC_CHECK_SIZEOF(long)
+AC_CHECK_SIZEOF(long long)
+AC_CHECK_SIZEOF(void *, 4)
+pointer_size="$ac_cv_sizeof_void_p"
+
+dnl Make sure that we can actually compile C code
+BC_SANITY_CHECK([$CC compiler and flags for sanity])
+
+dnl Make sure that we can actually compile C++ code
+AC_LANG_PUSH([C++])
+BC_SANITY_CHECK([$CXX compiler and flags for sanity])
+AC_LANG_POP
 
 
 dnl ***************************
@@ -1998,97 +1999,71 @@ BC_CONFIGURE_STAGE([functions], [7 of 9])
 
 AC_TYPE_SIGNAL
 
+# specifically not checked for and not used:
+#   access - security concerns
+
+# specifically not checked for but used including any well-behaved
+# C89/posix functions.  this includes:
+#   stat
+
+# specifically checked for even though C89 (provided by libsysv):
+#   memset, strchr, strtok
+
+# some C89 functions: assert, isalnum, isalpha, iscntrl, isdigit,
+# isgraph, islower, isprint, ispunct, isspace, isupper, isxdigit,
+# tolower, toupper, localeconv, setlocale, acos, asin, atan, atan2,
+# ceil, cos, cosh, exp, fabs, floor, fmod, frexp, ldexp, log, log10,
+# modf, pow, sin, sinh, sqrt, tan, longjmp, setjmp, raise, signal,
+# va_arg, va_end, va_start, offsetof, clearerr, fclose, feof, ferror,
+# fflush, fgetc, fgetpos, fgets, fopen, fprintf, fputc, fputs, fread,
+# freopen, fscanf, fseek, fsetpos, fwrite, getc, getchar, gets,
+# perror, printf, putc, putchar, puts, remove, rename, rewind, scanf,
+# setbuf, setvbuf, sprintf, sscanf, tmpfile, tmpnam, ungetc, vprintf,
+# vsprintf, abort, abs, atexit, atof, atoi, atol, bsearch, calloc,
+# div, exit, free, ftell, getenv, labs, ldiv, malloc, mblen, mbtowcs,
+# mbtowc, qsort, rand, realloc, sizeof, srand, strtod, strtol,
+# strtoul, system, wctomb, wcstombs, memchr, memcmp, memcpy, memmove,
+# memset, strcat, strchr, strcmp, strcoll, strcpy, strcspn, strerror,
+# strlen, strncat, strncmp, strncpy, strpbrk, strrchr, strspn, strstr,
+# strtok, strxfrm, asctime, clock, ctime, difftime, gmtime, localtime,
+# mktime, strftime, time
+
 AC_CHECK_FUNCS(\
 	XQueryExtension \
-	access \
 	alarm \
-	atexit \
-	bzero \
-	calloc \
 	dlopen \
 	drand48 \
-	dup2 \
-	endgrent \
-	endpwent \
-	fabs  \
-	finite \
-	floor \
+	fchmod \
 	fsync \
-	ftime \
-	ftruncate \
-	getcwd \
-	getenv \
-	gethostbyaddr \
-	gethostbyname \
+	geteuid \
+	getegid \
 	gethostname \
-	getopt \
-	getpagesize \
-	getpass \
+	getopt_long \
 	getprogname \
-	gettimeofday \
-	inet_ntoa \
-	isascii \
-	isfinite \
 	kill \
-	localtime_r \
 	lrand48 \
 	lseek \
-	memchr \
-	memmove \
 	memset \
-	mkdir \
-	mkfifo \
-	modf \
-	munmap \
-	nl_langinfo \
-	panic \
+	mkstemp \
 	pipe \
-	pow \
-	prtcl \
-	putenv \
-	raise \
-	re_comp \
-	realpath \
+	random \
 	regcomp \
-	rmdir \
 	sbrk \
-	select \
 	setenv \
-	setlinebuf \
-	setlocale \
 	setpgid \
 	setpriority \
 	setprogname \
-	setvbuf \
-	socket \
-	sqrt \
 	srand48 \
-	stat \
-	strcasecmp \
 	strchr \
-	strcpy \
-	strcspn \
 	strdup \
-	strerror \
-	strerror_r \
-	strncasecmp \
-	strpbrk \
-	strrchr \
+	strlcat \
+	strlcpy \
 	strsep \
-	strspn \
-	strstr \
 	strtok \
-	strtol \
-	strtoul \
-	strtoull \
 	sync \
 	sysctl \
 	sysmp \
-	tzset \
-	uname \
-	utime\
 	vfork \
-	vprintf \
 	writev \
 )
 
@@ -2176,8 +2151,8 @@ fi
 dnl *** libpng ***
 png_works=no
 AC_MSG_CHECKING(for portable network graphics functionality)
-PRELDFLAGS="$LDFLAGS"
-LDFLAGS="$LDFLAGS $LIBPNG"
+PRELIBS="$LIBS"
+LIBS="$LIBS $LIBPNG"
 AC_TRY_RUN([
 #include <png.h>
 main() {
@@ -2185,7 +2160,7 @@ main() {
     return 0;
 }
 ], [png_works=yes])
-LDFLAGS="$PRELDFLAGS"
+LIBS="$PRELIBS"
 AC_MSG_RESULT($png_works)
 
 dnl figure out whether we need to build libpng
@@ -2228,8 +2203,8 @@ dnl *** libregex ***
 dnl See if regular expression support works
 regex_works=no
 AC_MSG_CHECKING(for regular expression functionality)
-PRELDFLAGS="$LDFLAGS"
-LDFLAGS="$LDFLAGS $LIBREGEX"
+PRELIBS="$LIBS"
+LIBS="$LIBS $LIBREGEX"
 AC_TRY_RUN([
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
@@ -2242,7 +2217,7 @@ int main() {
     return 0;
 }
 ], [regex_works=yes])
-LDFLAGS="$PRELDFLAGS"
+LIBS="$PRELIBS"
 AC_MSG_RESULT($regex_works)
 
 dnl figure out whether we need to build libregex
@@ -2280,8 +2255,8 @@ dnl *** libz ***
 dnl See if zlib library support works
 zlib_works=no
 AC_MSG_CHECKING(for zlib compression functionality)
-PRELDFLAGS="$LDFLAGS"
-LDFLAGS="$LDFLAGS $LIBZLIB"
+PRELIBS="$LIBS"
+LIBS="$LIBS $LIBZLIB"
 AC_TRY_RUN([
 #include <zlib.h>
 int main () {
@@ -2289,7 +2264,7 @@ int main () {
     return 0;
 }
 ], [zlib_works=yes])
-LDFLAGS="$PRELDFLAGS"
+LIBS="$PRELIBS"
 AC_MSG_RESULT($zlib_works)
 
 dnl figure out whether we need to build libz
@@ -2324,6 +2299,72 @@ else
 fi
 AC_SUBST(LIBZ)
 AC_SUBST(LIBZ_CPPFLAGS)
+
+
+dnl *** X11 interface compilation ***
+build_against_x11="no"
+if test "x$bc_with_x11" != "xno" ; then
+    x11_works=no
+    AC_MSG_CHECKING(for X11 header functionality)
+    PRELIBS="$LIBS"
+    PRECPPFLAGS="$CPPFLAGS"
+    CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+    AC_TRY_RUN([
+#include <X11/Xlib.h>
+main() {
+    XPoint pt;
+    pt.x = pt.y = 0;
+    return pt.x;
+}
+    ],[x11_works=yes])
+    AC_MSG_RESULT($x11_works)
+    if test "x$x11_works" = "xyes" ; then
+	LIBS="$LIBS $X_LIBS"
+	AC_MSG_CHECKING(for X11 link functionality)
+	AC_TRY_RUN([
+#include <X11/Xlib.h>
+main() {
+    XModifierKeymap *xmkm;
+    xmkm=XNewModifiermap(1);
+    return xmkm==NULL;
+}
+	],,x11_works=no)
+	AC_MSG_RESULT($x11_works)
+    fi
+    LIBS="$PRELIBS"
+    CPPFLAGS="$PRECPPFLAGS"
+
+    dnl figure out whether we need to build against X11
+    if test "x$bc_with_x11" != "xno" ; then
+	if test "x$bc_build_aquatk" = "xyes" ; then
+	    X_LIBS=""
+	    LIBGL=""
+	    X_CFLAGS=""
+	    build_against_opengl="no"
+	    if test "x$bc_with_x11" = "xyes" ; then
+		AC_MSG_ERROR([*** X11 was requested, but tk will be built for AquaTk ***])
+	    fi
+	else
+	    if test "x$x11_works" = "xyes" ; then
+		build_against_x11="yes"
+	    else
+		if test "x$bc_with_x11" = "xyes" ; then
+		    AC_MSG_NOTICE([X11 was requested, but no system X11 libraries were found])
+		    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+		    AC_MSG_NOTICE([Try adding --without-x11])
+		    AC_MSG_ERROR([*** Using X11 was requested, yet no system X11 was found ***])
+		else
+		    AC_MSG_NOTICE([X11 does not appear to be functionally available])
+		fi
+	    fi
+	fi
+    fi
+fi
+AC_SUBST(X_PREFIX)
+AC_SUBST(X_CFLAGS)
+AC_SUBST(X_LIBS)
+AC_MSG_CHECKING(whether to build against X11)
+AC_MSG_RESULT($build_against_x11)
 
 
 dnl *** utah raster toolkit ***
@@ -2388,8 +2429,8 @@ dnl *** openNURBS ***
 dnl See if openNURBS library support works
 opennurbs_works=no
 AC_MSG_CHECKING(for openNURBS functionality)
-PRELDFLAGS="$LDFLAGS"
-LDFLAGS="$LDFLAGS $LIBOPENNURBS $LIBZLIB"
+PRELIBS="$LIBS"
+LIBS="$LIBS $LIBOPENNURBS $LIBZLIB"
 AC_LANG_PUSH([C++])
 AC_TRY_RUN([
 #include <opennurbs.h>
@@ -2399,7 +2440,7 @@ int main () {
 }
 ], [opennurbs_works=yes])
 AC_LANG_POP
-LDFLAGS="$PRELDFLAGS"
+LIBS="$PRELIBS"
 AC_MSG_RESULT($opennurbs_works)
 
 dnl figure out whether we need to build openNURBS
@@ -2410,7 +2451,9 @@ else
     if test "x$bc_build_opennurbs" = "xno" ; then
 	if test "x$opennurbs_works" != "xyes" ; then
 	    AC_MSG_NOTICE([openNURBS was disabled, but no system openNURBS library was found])
-	    build_brlcad_opennurbs="no (doing without, BREP unsupported)"
+	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	    AC_MSG_NOTICE([Try adding --enable-opennurbs-build])
+	    AC_MSG_ERROR([*** openNURBS was disabled, yet no usable system openNURBS was found ***])
 	fi
     else
 	dnl automatic detection
@@ -2421,10 +2464,9 @@ else
 fi
 AC_MSG_CHECKING(whether to build the included openNURBS library)
 OPENNURBS=""
-OPENNURBS_CPPFLAGS=""
+OPENNURBS_CPPFLAGS='-I${top_srcdir}/src/other/openNURBS ${LIBZ_CPPFLAGS}'
 if test "x$build_brlcad_opennurbs" = "xyes" ; then
     OPENNURBS='${top_builddir}/src/other/openNURBS/libopenNURBS.la ${LIBSTDCXX}'
-    OPENNURBS_CPPFLAGS='-I${top_srcdir}/src/other/openNURBS'
     AC_MSG_RESULT(yes)
 else
     OPENNURBS="$LIBOPENNURBS $LIBSTDCXX $LIBZ"	# produces "  " if we didn't find OpenNURBS
@@ -2466,8 +2508,8 @@ int main() {
 #if TCL_MAJOR_VERSION < 8
     fprintf(stderr, "major version < 8\n");
     return 1;
-#elif TCL_MAJOR_VERSION == 8 && TCL_MINOR_VERSION < 5
-    fprintf(stderr, "minor version < 5\n");
+#elif TCL_MAJOR_VERSION == 8 && TCL_MINOR_VERSION < 4
+    fprintf(stderr, "minor version < 4\n");
     return 1;
 #endif
     return 0;
@@ -2497,20 +2539,13 @@ else
 	fi
     fi
 fi
-AC_MSG_CHECKING(whether to build Tcl)
 
-bc_abs_top_builddir="`pwd`"
+AC_MSG_CHECKING(whether to build Tcl)
 TCL=""
 TCLSTUB=""
 TCL_CPPFLAGS=""
-TCL_VERSION="8.5"
-case $host_os in
-     *netbsd-*|*freebsd-[[1-3]]*.*|*openbsd*|*sunos4*)
-	 # some OS's don't like dots in the lib name
-	 TCL_VERSION="`echo ${TCL_VERSION} | tr -d .`"
-	 ;;
-esac
 if test "x$build_brlcad_tcl" = "xyes" ; then
+    TCL_VERSION="8.5"
     AC_MSG_RESULT(yes)
     case $host_os in
 	 darwin*)
@@ -2524,6 +2559,16 @@ if test "x$build_brlcad_tcl" = "xyes" ; then
     TCL_CPPFLAGS='-I${top_srcdir}/src/other/tcl/generic -I${top_srcdir}/src/other/tcl/unix'
 else
     AC_MSG_RESULT(no)
+
+    dnl find tclConfig.sh, add --with-tcl option, don't cache result for AC_CONFIG_SUBDIRS
+    SC_PATH_TCLCONFIG
+    # keep TCL_BIN_DIR, don't keep ac_cv_c_tclconfig
+    unset ac_cv_c_tclconfig
+
+    dnl If we're using the system Tcl, then we need to load
+    dnl tclConfig.sh to get the TCL_VERSION and other vars.
+    SC_LOAD_TCLCONFIG
+
     if test "x$tcl_link_works" = "xyes" ; then
 	TCL="$LIBTCL"
     else
@@ -2576,13 +2621,13 @@ int main() {
 #define ATTEMPT(try,fail) if(try) { fprintf(stderr, fail": %s\n", \
 	interp->result); return -1; }
     ATTEMPT(Tcl_Init(interp) == TCL_ERROR,"Tcl_Init returned error");
-    ATTEMPT(Tk_ParseArgv(interp, NULL, &argl, arg, argtbl, 
+    ATTEMPT(Tk_ParseArgv(interp, NULL, &argl, arg, argtbl,
  	TK_ARGV_DONT_SKIP_FIRST_ARG) != TCL_OK, "Tk_ParseArgv");
 #if TK_MAJOR_VERSION < 8
     fprintf(stderr, "major version < 8  (it's %d)\n", TK_MAJOR_VERSION);
     return 4;
-#elif TK_MAJOR_VERSION == 8 && TK_MINOR_VERSION < 5
-    fprintf(stderr, "minor version < 5  (it's %d)\n", TK_MINOR_VERSION);
+#elif TK_MAJOR_VERSION == 8 && TK_MINOR_VERSION < 4
+    fprintf(stderr, "minor version < 4  (it's %d)\n", TK_MINOR_VERSION);
     return 5;
 #endif
     return 0;
@@ -2617,14 +2662,8 @@ AC_MSG_CHECKING(whether to build Tk)
 TK=""
 TKSTUB=""
 TK_CPPFLAGS=""
-TK_VERSION="8.5"
-case $host_os in
-     *netbsd-*|*freebsd-[[1-3]]*.*|*openbsd-[[1-3]]*|*sunos4*)
-	 # some OS's don't like dots in the lib name
-	 TK_VERSION="`echo ${TK_VERSION} | tr -d .`"
-	 ;;
-esac
 if test "x$build_brlcad_tk" = "xyes" ; then
+    TK_VERSION="8.5"
     build_against_tk="yes"
     AC_MSG_RESULT(yes)
     TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TCL_VERSION}"
@@ -2635,6 +2674,16 @@ if test "x$build_brlcad_tk" = "xyes" ; then
     fi
 else
     AC_MSG_RESULT(no)
+
+    dnl find tkConfig.sh, add --with-tk option, don't cache result for AC_CONFIG_SUBDIRS
+    SC_PATH_TKCONFIG
+    # keep TK_BIN_DIR, don't keep ac_cv_c_tkconfig
+    unset ac_cv_c_tkconfig
+
+    dnl If we're using the system Tk, then we need to load
+    dnl tkConfig.sh to get the TK_VERSION and other vars.
+    SC_LOAD_TKCONFIG
+
     if test "x$tk_link_works" = "xyes" ; then
 	TK="$LIBTK"
     else
@@ -2714,7 +2763,7 @@ ITCL=""
 ITK=""
 ITCL_CPPFLAGS=""
 ITK_CPPFLAGS=""
-ITCL_VERSION=3.3
+ITCL_VERSION=3.4
 case $host_os in
      *netbsd-*|*freebsd-[[1-3]]*.*|*openbsd-[[1-3]]*|*sunos4*)
 	 # some OS's don't like dots in the lib name
@@ -2742,6 +2791,11 @@ AC_SUBST(ITK_CPPFLAGS)
 AC_SUBST(LIBITCL)
 AC_SUBST(LIBITK)
 
+# XXX need incrTcl's configure for the proper .so/.dylib value
+ITCL_LIB_FILE="libitcl${ITCL_VERSION}.a"
+ITK_LIB_FILE="libitk${ITCL_VERSION}.a"
+AC_SUBST(ITCL_LIB_FILE)
+AC_SUBST(ITK_LIB_FILE)
 
 dnl *** iwidgets ***
 dnl See if the iwidgets are available
@@ -2771,7 +2825,7 @@ int main() {
 	printf("ITCL interp failed to initaliaze: %s\n", interp->result);
 	return 1;
     }
-    res = Tcl_Eval(interp, cmd); 
+    res = Tcl_Eval(interp, cmd);
     if ( res != TCL_OK) {
 	printf("Failed to load Iwidgets: %s\n", interp->result);
 	if(Tcl_Eval(interp, "package names") == TCL_ERROR)
@@ -2830,15 +2884,20 @@ AC_SUBST(BLT_SUFFIX)
 BLT_LIBRARY="${BRLCAD_ROOT}/lib/blt${BLT_VERSION}"
 AC_SUBST(BLT_LIBRARY)
 AC_MSG_CHECKING(whether to build libblt)
-if test ! "x$bc_build_blt" = "xno" ; then
-     build_brlcad_blt=yes
-     BLT='${top_builddir}/src/other/blt/libBLT${BLT_SUFFIX}.la'
-     AC_MSG_RESULT(yes)
-else
-     build_brlcad_blt=no
-     BLT=""
-     AC_MSG_RESULT(no)
+if test "x$build_against_x11" = "xno" ; then
+    # BLT *requires* X11
+    bc_built_blt=no
 fi
+if test ! "x$bc_build_blt" = "xno" ; then
+    build_brlcad_blt=yes
+    BLT='${top_builddir}/src/other/blt/libBLT${BLT_SUFFIX}.la'
+    AC_MSG_RESULT(yes)
+else
+    build_brlcad_blt=no
+    BLT=""
+    AC_MSG_RESULT(no)
+fi
+AC_SUBST(BLT)
 
 
 dnl *** tkImg ***
@@ -2861,6 +2920,7 @@ else
     TKIMG=""
     AC_MSG_RESULT(no)
 fi
+AC_SUBST(TKIMG)
 
 
 dnl *** TNT ***
@@ -2944,8 +3004,8 @@ dnl *** libtermlib ***
 dnl See if termlib library support works
 termlib_works=no
 AC_MSG_CHECKING(for termlib functionality)
-PRELDFLAGS="$LDFLAGS"
-LDFLAGS="$LDFLAGS $LIBTERMLIB"
+PRELIBS="$LIBS"
+LIBS="$LIBS $LIBTERMLIB"
 AC_TRY_RUN([
 #ifdef HAVE_TERMLIB_H
 #  include <termlib.h>
@@ -2979,7 +3039,7 @@ int main () {
     return 0;
 }
 ], [termlib_works=yes])
-LDFLAGS="$PRELDFLAGS"
+LIBS="$PRELIBS"
 AC_MSG_RESULT($termlib_works)
 
 dnl figure out whether we need to build libtermlib
@@ -3099,6 +3159,15 @@ AC_MSG_CHECKING(whether the Standard C++ library is available)
 AC_MSG_RESULT($stdcxx_link_works)
 AC_SUBST(LIBSTDCXX)
 
+if test "x$bc_with_dtrace" = "xyes" ; then
+    AC_DEFINE(USE_DTRACE, 1, [Are we building with DTrace support?])
+    DTRACE_SRC="\${DTRACE_SRC}"
+    DTRACE_HDR="\${DTRACE_HDR}"
+    DTRACE_OBJ="\${DTRACE_OBJ}"
+    AC_SUBST(DTRACE_SRC)
+    AC_SUBST(DTRACE_HDR)
+    AC_SUBST(DTRACE_OBJ)
+fi
 
 dnl *** 64-bit compilation ***
 dnl figure out whether we are building 64-bit
@@ -3217,80 +3286,14 @@ if test "x$bc_with_proe" != "xno" ; then
 fi
 
 
-dnl *** X11 interface compilation ***
-build_against_x11="no"
-if test "x$bc_with_x11" != "xno" ; then
-    x11_works=no
-    AC_MSG_CHECKING(for X11 header functionality)
-    PRELDFLAGS="$LDFLAGS"
-    PRECPPFLAGS="$CPPFLAGS"
-    CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-    AC_TRY_RUN([
-#include <X11/Xlib.h>
-main() {
-    XPoint pt;
-    pt.x = pt.y = 0;
-    return pt.x;
-}
-    ],[x11_works=yes])
-    AC_MSG_RESULT($x11_works)
-    if test "x$x11_works" = "xyes" ; then
-	LDFLAGS="$LDFLAGS $X_LIBS"
-	AC_MSG_CHECKING(for X11 link functionality)
-	AC_TRY_RUN([
-#include <X11/Xlib.h>
-main() {
-    XModifierKeymap *xmkm;
-    xmkm=XNewModifiermap(1);
-    return xmkm==NULL;
-}
-	],,x11_works=no)
-	AC_MSG_RESULT($x11_works)
-    fi
-    LDFLAGS="$PRELDFLAGS"
-    CPPFLAGS="$PRECPPFLAGS"
-
-    dnl figure out whether we need to build against X11
-    if test "x$bc_with_x11" != "xno" ; then
-	if test "x$bc_build_aquatk" = "xyes" ; then
-	    X_LIBS=""
-	    LIBGL=""
-	    X_CFLAGS=""
-	    build_against_opengl="no"
-	    if test "x$bc_with_x11" = "xyes" ; then
-		AC_MSG_ERROR([*** X11 was requested, but tk will be built for AquaTk ***])
-	    fi
-	else
-	    if test "x$x11_works" = "xyes" ; then
-		build_against_x11="yes"
-	    else
-		if test "x$bc_with_x11" = "xyes" ; then
-		    AC_MSG_NOTICE([X11 was requested, but no system X11 libraries were found])
-		    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-		    AC_MSG_NOTICE([Try adding --without-x11])
-		    AC_MSG_ERROR([*** Using X11 was requested, yet no system X11 was found ***])
-		else
-		    AC_MSG_NOTICE([X11 does not appear to be functionally available])
-		fi
-	    fi
-	fi
-    fi
-fi
-AC_SUBST(X_PREFIX)
-AC_SUBST(X_CFLAGS)
-AC_SUBST(X_LIBS)
-AC_MSG_CHECKING(whether to build against X11)
-AC_MSG_RESULT($build_against_x11)
-
-
 dnl *** OpenGL interface compilation ***
 build_against_opengl="no"
 if test "x$bc_with_opengl" != "xno" ; then
     AC_MSG_CHECKING(for OpenGL functionality)
     opengl_works=no
-    PRELDFLAGS="$LDFLAGS"
+    PRELIBS="$LIBS"
     PRECPPFLAGS="$CPPFLAGS"
-    LDFLAGS="$LDFLAGS $LIBGL"
+    LIBS="$LIBS $LIBGL"
     CPPFLAGS="$CPPFLAGS $GL_CPPFLAGS"
     AC_TRY_RUN([
 #ifdef HAVE_GL_GL_H
@@ -3307,7 +3310,7 @@ main(int argc, char *argv[]) {
     return 0;
 }
     ], [opengl_works=yes])
-    LDFLAGS="$PRELDFLAGS"
+    LIBS="$PRELIBS"
     CPPFLAGS="$PRECPPFLAGS"
     AC_MSG_RESULT($opengl_works)
 
@@ -3334,8 +3337,8 @@ build_against_wgl="no"
 if test "x$bc_with_wgl" != "xno" ; then
     AC_MSG_CHECKING(for WindowsGL functionality)
     wgl_works=no
-    PRELDFLAGS="$LDFLAGS"
-    LDFLAGS="$LDFLAGS $LIBWGL"
+    PRELIBS="$LIBS"
+    LIBS="$LIBS $LIBWGL"
     AC_TRY_RUN([
 #ifdef HAVE_GL_GL_H
 #  include <GL/gl.h>
@@ -3351,7 +3354,7 @@ main(int argc, char *argv[]) {
     return 0;
 }
     ], [wgl_works=yes])
-    LDFLAGS="$PRELDFLAGS"
+    LIBS="$PRELIBS"
     AC_MSG_RESULT($wgl_works)
 
     dnl figure out whether we need to build against wgl
@@ -3371,65 +3374,11 @@ fi # bc_with_wgl
 AC_MSG_CHECKING(whether to build against WindowsGL)
 AC_MSG_RESULT($build_against_wgl)
 
-
-dnl *** SDL availability  ***
-sdl_works="no"
-if test "x$bc_with_sdl" != "xno" ; then
-    if test "x$SDL_CONFIG" != "x" ; then
-	AM_PATH_SDL(1.2.0,,AC_MSG_ERROR([Cannot find SDL.]))
-	AC_SUBST(SDL_CFLAGS)
-	AC_SUBST(SDL_LIBS)
-	sdl_works="yes"
-    fi
-fi
-AC_MSG_CHECKING(for SDL functionality)
-AC_MSG_RESULT($sdl_works)
-
-
-dnl *** Python availability ***
-python_works="no"
-AC_MSG_CHECKING(for Python functionality)
-if test "x$bc_with_python" != "xno" ; then
-    if test "x$PYTHON" != "x" ; then
-	python_works="yes"
-    fi
-fi
-AC_SUBST(PYTHON_CFLAGS)
-AC_SUBST(PYTHON_LIBS)
-AC_MSG_RESULT($python_works)
-
-
 dnl *** ADRT compilation ***
 dnl figure out whether we have everything we need to build ADRT
-dnl requires sdl and python
 build_brlcad_adrt="no"
 if test "x$bc_build_adrt" = "xauto" ; then
-    if test "x$python_works" = "xyes" ; then
-	if test "x$sdl_works" = "xyes" ; then
-	    build_brlcad_adrt="yes"
-	else
-	    build_brlcad_adrt="no (need sdl)"
-	fi
-    else
-	if test "x$sdl_works" = "xyes" ; then
-	    build_brlcad_adrt="no (need python)"
-	else
-	    build_brlcad_adrt="no (need python and sdl)"
-	fi
-    fi
-elif test "x$bc_build_adrt" = "xyes" ; then
     build_brlcad_adrt="yes"
-    if test "x$sdl_works" = "xno" ; then
-	AC_MSG_NOTICE([ADRT requires SDL (and Python)])
-	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-	AC_MSG_NOTICE([Try adding --disable-adrt-build])
-	AC_MSG_ERROR([*** Using ADRT was requested, yet no system SDL library was found ***])
-    elif test "x$python_works" = "xno" ; then
-	AC_MSG_NOTICE([ADRT requires Python (and SDL)])
-	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-	AC_MSG_NOTICE([Try adding --disable-adrt-build])
-	AC_MSG_ERROR([*** Using ADRT was requested, yet no system Python interpreter was found ***])
-    fi
 fi
 
 
@@ -3467,7 +3416,7 @@ fi
 dnl search the BRL-CAD include directory (required for non-srcdir builds).
 dnl should come after the system services checks otherwise or our headers
 dnl may conflict.
-CPPFLAGS="$CPPFLAGS -DBRLCADBUILD=1 -I\${top_srcdir}/include"
+CPPFLAGS="$CPPFLAGS -DBRLCADBUILD=1 -I\${top_srcdir}/include $OPENNURBS_CPPFLAGS"
 
 # make sure ECHO and ECHO_N got defined and substituted
 if test "x$ECHO" = "x" ; then
@@ -3521,9 +3470,6 @@ AM_CONDITIONAL(WITH_JAVA, [test "x$build_against_java" != "xno"])
 AM_CONDITIONAL(WITH_PROE, [test "x$build_against_proe" != "xno"])
 AM_CONDITIONAL(WITH_PARSERS, [test "x$build_parsers" != "xno"])
 
-# FIXME: this needs to be actually set up above
-AM_CONDITIONAL(WITH_OPENNURBS, [test "x$build_against_opennurbs" != "x"])
-
 AM_CONDITIONAL(INSTALL_MODELS, [test "x$bc_install_geometry" = "xyes"])
 AM_CONDITIONAL(ONLY_BENCHMARK, [test "x$bc_only_benchmark" != "xno"])
 AM_CONDITIONAL(ONLY_RTS, [test "x$bc_only_rts" != "xno"])
@@ -3572,6 +3518,11 @@ else
 	AC_DEFINE(NDEBUG, 1, [Define to indicate non-debug code (assert utilizes)])
 fi
 
+dnl SMP-aware (i.e. PARALLEL) build
+if test "x$bc_build_parallel" != "xno" ; then
+	AC_DEFINE(PARALLEL, 1, [Define to enable SMP architecture parallel computation support ])
+fi
+
 AC_DEFINE_UNQUOTED([USE_FBSERV], [1], [Required for libdm/mged to allow direct fbserv render connections])
 
 
@@ -3604,10 +3555,10 @@ CURSOR_LIBS="${TERMLIB}"
 FFT_LIBS="${LIBM}"
 BU_LIBS="${TCL} ${PNG} ${LIBM} ${LIBMALLOC} ${LIBTHREAD}"
 BN_LIBS="${BU} ${BU_LIBS} ${TCL} ${LIBM}"
-FB_LIBS="${BU} ${BU_LIBS} ${PKG} ${TCL}" # additional/optional FB_LIBS: ${TK} ${X_LIBS} ${LIBGL}
-TCLCAD_LIBS="${FB} ${FB_LIBS} ${TK} ${TCLSTUB}"
+FB_LIBS="${BU} ${BU_LIBS} ${PKG} ${TCL} ${SOCKET} ${NSL}" # additional/optional FB_LIBS: ${TK} ${X_LIBS} ${LIBGL}
+TCLCAD_LIBS="${FB} ${FB_LIBS} ${TK} ${TCLSTUB} ${BLT}"
 OPTICAL_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${TCL}"
-MULTISPECTRAL_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
+MULTISPECTRAL_LIBS="${OPTICAL} ${OPTICAL_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 RT_LIBS="${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${REGEX} ${LIBM} ${SYSV} ${OPENNURBS}"
 WDB_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 DM_LIBS="${RT} ${RT_LIBS} ${FB} ${FB_LIBS} ${PNG} ${TK} ${X_LIBS} ${FRAMEWORK_CARBON}"
@@ -3675,22 +3626,24 @@ fi
 
 dnl configure Tcl
 if test "x$build_brlcad_tcl" = "xyes" ; then
-    AC_CONFIG_SUBDIRS([src/other/tcl/unix])
     TCL_PATH="$PWD/${ac_top_builddir}/src/other/tcl/unix"
-    TCL_PATH="`echo $TCL_PATH | sed 's/\\/\\//\\//g;s/\\//\\\\\\//g'`"
-    TK_PATH="$PWD/${ac_top_builddir}/src/other/tk/unix"
-    TK_PATH="`echo ${TK_PATH} | sed 's/\\/\\//\\//g;s/\\//\\\\\\//g'`"
+    ac_configure_args="$ac_configure_args --with-tcl=\"$TCL_PATH\""
+    AC_CONFIG_SUBDIRS([src/other/tcl/unix])
+    TCL_PATH="`echo ${TCL_PATH} | sed 's/\\/\\//\\//g;s/\\//\\\\\\//g'`"
 fi
 AC_SUBST(TCL_PATH)
-AC_SUBST(TK_PATH)
 
 dnl configure Tk
 if test "x$build_brlcad_tk" = "xyes" ; then
     if test "x$bc_build_aquatk" = "xyes" ; then
-	ac_configure_args="$ac_configure_args --enable-aqua"
+	ac_configure_args="$ac_configure_args --enable-aqua --disable-xft"
     fi
+    TK_PATH="$PWD/${ac_top_builddir}/src/other/tk/unix"
+    ac_configure_args="$ac_configure_args --with-tk=\"$TK_PATH\""
     AC_CONFIG_SUBDIRS([src/other/tk/unix])
+    TK_PATH="`echo ${TK_PATH} | sed 's/\\/\\//\\//g;s/\\//\\\\\\//g'`"
 fi
+AC_SUBST(TK_PATH)
 
 dnl configure enigma
 AC_CONFIG_SUBDIRS([misc/enigma])
@@ -3702,6 +3655,7 @@ AC_CONFIG_FILES([
 	db/Makefile
 	db/include/Makefile
 	doc/Makefile
+	doc/book/Makefile
 	doc/html/Makefile
 	doc/html/ReleaseNotes/Makefile
 	doc/html/ReleaseNotes/Rel5.0/Makefile
@@ -3724,9 +3678,6 @@ AC_CONFIG_FILES([
 	m4/Makefile
 	misc/Makefile
 	misc/archlinux/Makefile
-	misc/archlinux/PKGBUILD
-	misc/archlinux/brlcad.install
-	misc/archlinux/brlcad.sh
 	misc/brlcad-config
 	misc/brlcad.spec
 	misc/debian/Makefile
@@ -3748,33 +3699,31 @@ AC_CONFIG_FILES([
 	misc/pkgconfig/pkg.pc
 	misc/pkgconfig/rt.pc
 	misc/pkgconfig/wdb.pc
-	misc/vfont/Makefile
 	misc/win32-msvc/Dll/Makefile
 	misc/win32-msvc/Makefile
-	misc/win32-msvc/aPrep/Makefile
 	misc/win32-msvc7/Makefile
+	misc/win32-msvc8/Makefile
 	pix/Makefile
 	sh/Makefile
 	src/Makefile
 	src/adrt/Makefile
 	src/adrt/bench/Makefile
 	src/adrt/doc/Makefile
+	src/adrt/isst/Makefile
 	src/adrt/libcommon/Makefile
+	src/adrt/librender/Makefile
 	src/adrt/libtexture/Makefile
 	src/adrt/libtie/Makefile
 	src/adrt/libtienet/Makefile
 	src/adrt/libutil/Makefile
-	src/adrt/librender/Makefile
+	src/adrt/master/Makefile
+	src/adrt/misc/Makefile
 	src/adrt/rise/Makefile
 	src/adrt/rise/master/Makefile
 	src/adrt/rise/observer/Makefile
 	src/adrt/rise/slave/Makefile
-	src/adrt/isst/Makefile
-	src/adrt/isst/master/Makefile
-	src/adrt/isst/observer/Makefile
-	src/adrt/isst/slave/Makefile
 	src/adrt/scripts/Makefile
-	src/adrt/misc/Makefile
+	src/adrt/slave/Makefile
 	src/anim/Makefile
 	src/archer/Makefile
 	src/archer/plugins/Commands/Makefile
@@ -3796,6 +3745,7 @@ AC_CONFIG_FILES([
 	src/conv/jack/Makefile
 	src/conv/off/Makefile
 	src/conv/patch/Makefile
+	src/conv/3dm/Makefile
 	src/external/Makefile
 	src/external/Cubit/Makefile
 	src/external/EndgameFramework/Makefile
@@ -3845,6 +3795,18 @@ AC_CONFIG_FILES([
 	src/other/URToolkit/tools/Makefile
 	src/other/URToolkit/tools/clock/Makefile
 	src/other/awf/Makefile
+	src/other/blt/Makefile
+	src/other/blt/cf/Makefile
+	src/other/blt/demos/Makefile
+	src/other/blt/demos/bitmaps/Makefile
+	src/other/blt/examples/Makefile
+	src/other/blt/html/Makefile
+	src/other/blt/library/Makefile
+	src/other/blt/library/dd_protocols/Makefile
+	src/other/blt/library/pkgIndex.tcl
+	src/other/blt/man/Makefile
+	src/other/blt/src/Makefile
+	src/other/blt/win/Makefile
 	src/other/incrTcl/Makefile
 	src/other/incrTcl/doc/Makefile
 	src/other/incrTcl/itcl/Makefile
@@ -3858,6 +3820,7 @@ AC_CONFIG_FILES([
 	src/other/incrTcl/itk/library/Makefile
 	src/other/incrTcl/itk/pkgIndex.tcl
 	src/other/incrTcl/tools/Makefile
+	src/other/intaval/Makefile
 	src/other/iwidgets/Makefile
 	src/other/iwidgets/doc/Makefile
 	src/other/iwidgets/generic/Makefile
@@ -3867,30 +3830,19 @@ AC_CONFIG_FILES([
 	src/other/jove/teach-jove
 	src/other/libpng/Makefile
 	src/other/libregex/Makefile
-	src/other/tcl/Makefile
-	src/other/tk/Makefile
 	src/other/libtermlib/Makefile
 	src/other/libutahrle/Makefile
 	src/other/libutahrle/include/Makefile
 	src/other/libz/Makefile
 	src/other/openNURBS/Makefile
+	src/other/tcl/Makefile
+	src/other/tk/Makefile
 	src/other/tkimg/Makefile
 	src/other/tkimg/base/Makefile
 	src/other/tkimg/png/Makefile
 	src/other/tkimg/pngtcl/Makefile
 	src/other/tkimg/zlibtcl/Makefile
 	src/other/tnt/Makefile
-	src/other/blt/Makefile
-	src/other/blt/cf/Makefile
-	src/other/blt/demos/Makefile
-	src/other/blt/demos/bitmaps/Makefile
-	src/other/blt/examples/Makefile
-	src/other/blt/html/Makefile
-	src/other/blt/library/Makefile
-	src/other/blt/library/dd_protocols/Makefile
-	src/other/blt/man/Makefile
-	src/other/blt/src/Makefile
-	src/other/blt/win/Makefile
 	src/proc-db/Makefile
 	src/remrt/Makefile
 	src/rt/Makefile
@@ -3927,6 +3879,7 @@ AC_CONFIG_FILES([
 	src/util/Makefile
 	src/vas4/Makefile
 	src/vdeck/Makefile
+	src/vfont/Makefile
 ])
 
 AC_OUTPUT
@@ -4033,6 +3986,7 @@ AC_MSG_RESULT([Build 64-bit release .................: $build_brlcad_64bit])
 AC_MSG_RESULT([Build optimized release ..............: $bc_use_optimized])
 AC_MSG_RESULT([Build debug release ..................: $bc_use_debug])
 AC_MSG_RESULT([Build profile release ................: $bc_use_profiling])
+AC_MSG_RESULT([Build SMP-capable release ............: $bc_build_parallel])
 AC_MSG_RESULT([Build static libraries ...............: $enable_static])
 AC_MSG_RESULT([Build shared/dynamic libraries .......: $enable_shared])
 AC_MSG_RESULT([Print verbose compilation warnings ...: $bc_build_warnings])

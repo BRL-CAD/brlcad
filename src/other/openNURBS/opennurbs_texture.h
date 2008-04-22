@@ -7,7 +7,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -25,7 +25,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
 // Class ON_Texture
-// 
+//
 
 class ON_CLASS ON_Texture : public ON_Object
 {
@@ -59,7 +59,7 @@ public:
 
   void Default();
 
-  int Compare( const ON_Texture& other ) const; 
+  int Compare( const ON_Texture& other ) const;
 
   /*
   Description:
@@ -129,18 +129,18 @@ public:
     emap_channel = 0xFFFFFFFF  // Environment map the geometric object.
   };
 
-  // If the m_mapping_channel_id value is one of the built-in 
-  // mappings listed in the MAPPING_CHANNEL enum, then that 
+  // If the m_mapping_channel_id value is one of the built-in
+  // mappings listed in the MAPPING_CHANNEL enum, then that
   // mapping is used.  Otherwise, if an object has rendering
-  // attributes with an ON_MappingChannel entry that has a 
-  // matching m_mapping_channel_id value, then the mapping 
+  // attributes with an ON_MappingChannel entry that has a
+  // matching m_mapping_channel_id value, then the mapping
   // identified by ON_MappingChannel::m_mapping_id is used.
   // A value of zero means no mapping is supplied
   // and the texture coordinates on the mesh are
   // used.
   int m_mapping_channel_id;
 
-  // Bitmap filename  
+  // Bitmap filename
   //   During runtime, m_filename is the absolute path to the
   //   file in use.  If m_filename_bRelativePath is true, then
   //   the value saved in the 3dm archive will be a relative path.
@@ -151,7 +151,7 @@ public:
 
   // If false, texture is off and should be ignored.
   // The intended use is to allow people to turn textures
-  // on and off without have to create/destroy or change 
+  // on and off without have to create/destroy or change
   // other texture settings.
   bool m_bOn;
 
@@ -197,11 +197,11 @@ public:
 
     force_32bit_texture_filter = 0xFFFFFFFF
   };
-  
+
   // The value of m_minfilter determines how the color
   // of the image pixel is calculated when the image pixel
   // corresponds to multiple texture bitmap pixels.
-  FILTER m_minfilter;  
+  FILTER m_minfilter;
 
   // The magfilter setting controls how the color
   // of the image pixel is calculated when the image pixel
@@ -234,15 +234,15 @@ public:
   // not have an alpha channel and is used to set
   // runtime alpha values.  It needs to be parsed when the
   // texture is loaded and can be ignored at runtime.
-  // 
-  // If ON_UNSET_COLOR != m_transparent_color, then 
+  //
+  // If ON_UNSET_COLOR != m_transparent_color, then
   // a pixel in the bitmap file with a matching RGB
   // value is assigned the alpha value (ON_Color::Alpha)
-  // in m_transparent_color. The intended use is 
+  // in m_transparent_color. The intended use is
   // for non-rectangular decals defined by RGB bitmaps in
   // files that don't save an alpha channel.
   //
-  // For example if the decal is a red number 7 with a 
+  // For example if the decal is a red number 7 with a
   // white background, then you would set m_transparent_color's
   // RGB to white and its A to zero.
   ON_Color m_transparent_color;
@@ -252,39 +252,39 @@ public:
   // not have an alpha channel and is used to set
   // runtime alpha values.  It needs to be parsed when the
   // texture is loaded and can be ignored at runtime.
-  // 
+  //
   // If m_transparency_id is not nil, it is the id of another
   // texture in the ON_Material.m_textures[] array that has
   // type m_transparency_texture.  The runtime bitmap_texture's
   // alpha is set to (255-max(R,G,B)) (the "value" in the hue,
-  // saturation,value sense) of the correspondeing 
-  // transparency_texture pixel. 
+  // saturation,value sense) of the correspondeing
+  // transparency_texture pixel.
   //
-  // For example, if you had a bitmap texuture that was green 
+  // For example, if you had a bitmap texuture that was green
   // with purple dots saved in a RGB .bmp file and you wanted
   // the purple dots to be semi-transparent, you could create
   // another bitmap that was black, where the original was green,
-  // and gray, where the original was purple, have an 
+  // and gray, where the original was purple, have an
   // transparency_texture reference the white/gray bitmap,
-  // and have the bitmap_texture's m_transparency_id 
+  // and have the bitmap_texture's m_transparency_id
   // reference the transparency map.
   ON_UUID m_transparency_texture_id;
 
   // If the m_type is bump_texture, the height of the
   // bump is m_bump_scale.ParameterAt(value), where
-  // value is in the HSV sense and normalized 
-  // (black=0, white=1).  The interval can be 
+  // value is in the HSV sense and normalized
+  // (black=0, white=1).  The interval can be
   // decreasing.
   ON_Interval m_bump_scale;
 
   // If the m_mode is blend_texture, then m_blend_A[]
   // and m_blend_RGB[] determine the blending function.
-  //  new alpha  = m_blend_constant_A 
+  //  new alpha  = m_blend_constant_A
   //             + m_blend_A[0]*(current alpha)
   //             + m_blend_A[1]*(texture alpha)
   //             + m_blend_A[2]*min(current alpha,texture alpha)
   //             + m_blend_A[3]*max(current alpha,texture alpha)
-  //  new rgb    = m_blend_constant_RGB 
+  //  new rgb    = m_blend_constant_RGB
   //             + m_blend_RGB[0]*(current RGB)
   //             + m_blend_RGB[1]*(texture RGB)
   //             + m_blend_RGB[2]*min(current RGB,texture RGB)
@@ -297,8 +297,8 @@ public:
 
   // If an ON_Material m_textures[] array has more than
   // one texture, the textures are blended, and the textures
-  // have different m_blend_order values, the the texture 
-  // with the smaller m_blend_order is first. 
+  // have different m_blend_order values, the the texture
+  // with the smaller m_blend_order is first.
   int m_blend_order;
 
   // Applications use the m_runtime_ptr_id and m_runtime_ptr fields
@@ -317,7 +317,7 @@ public:
 
 #if defined(ON_DLL_TEMPLATE)
 // This stuff is here because of a limitation in the way Microsoft
-// handles templates and DLLs.  See Microsoft's knowledge base 
+// handles templates and DLLs.  See Microsoft's knowledge base
 // article ID Q168958 for details.
 #pragma warning( push )
 #pragma warning( disable : 4231 )

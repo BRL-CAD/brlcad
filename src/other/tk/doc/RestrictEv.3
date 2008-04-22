@@ -70,8 +70,9 @@ bindings with the \fBbind\fR Tcl command or by calling
 \fBTk_CreateEventHandler\fR and \fBTk_DeleteEventHandler\fR from C.
 The main place where \fBTk_RestrictEvents\fR must be used is when
 performing synchronous actions (for example, if you need to wait
-for a particular event to occur on a particular window but you don't
-want to invoke any handlers for any other events).  The ``obvious''
+for a particular event to occur on a particular window but you do not
+want to invoke any handlers for any other events).  The
+.QW obvious
 solution in these situations is to call \fBXNextEvent\fR or
 \fBXWindowEvent\fR, but these procedures cannot be used because
 Tk keeps its own event queue that is separate from the X event

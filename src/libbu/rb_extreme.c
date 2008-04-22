@@ -1,7 +1,7 @@
 /*                    R B _ E X T R E M E . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2007 United States Government as represented by
+ * Copyright (c) 1998-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,18 +24,8 @@
  *	Routines to extract mins, maxes, adjacent, and current nodes
  *			from a red-black tree
  *
- *  @author
- *	Paul J. Tanenbaum
- *
- *  @par Source -
- *	The U. S. Army Research Laboratory
- *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 /** @} */
-
-#ifndef lint
-static const char libbu_rb_extreme_RCSid[] = "@(#) $Header$";
-#endif
 
 #include "common.h"
 
@@ -72,7 +62,7 @@ static struct bu_rb_node *_rb_extreme (struct bu_rb_node *root, int order, int s
 	BU_RB_CKORDER(tree, order);
 
 	child = (sense == SENSE_MIN) ? bu_rb_left_child(root, order) :
-				       bu_rb_right_child(root, order);
+	    bu_rb_right_child(root, order);
 	if (child == empty_node)
 	    break;
 	root = child;
@@ -100,16 +90,14 @@ void *bu_rb_extreme (bu_rb_tree *tree, int order, int sense)
     BU_CKMAG(tree, BU_RB_TREE_MAGIC, "red-black tree");
     BU_RB_CKORDER(tree, order);
 
-    if ((sense != SENSE_MIN) && (sense != SENSE_MAX))
-    {
-	bu_log("FATAL: bu_rb_extreme(): invalid sense %d, file %s, line %s\n",
-	    sense, __FILE__, __LINE__);
-	bu_bomb("");
+    if ((sense != SENSE_MIN) && (sense != SENSE_MAX)) {
+	bu_exit(EXIT_FAILURE, "ERROR: bu_rb_extreme(): invalid sense %d, file %s, line %d\n",
+		sense, __FILE__, __LINE__);
     }
 
     /* Wade throught the tree */
     node = _rb_extreme(bu_rb_root(tree, order), order, sense,
-			bu_rb_null(tree));
+		       bu_rb_null(tree));
 
     if (node == bu_rb_null(tree))
 	return (NULL);
@@ -141,7 +129,7 @@ struct bu_rb_node *_rb_neighbor (struct bu_rb_node *node, int order, int sense)
     empty_node = bu_rb_null(tree);
 
     child = (sense == SENSE_MIN) ? bu_rb_left_child(node, order) :
-				   bu_rb_right_child(node, order);
+	bu_rb_right_child(node, order);
     if (child != empty_node)
 	return (_rb_extreme(child, order, 1 - sense, empty_node));
     parent = bu_rb_parent(node, order);
@@ -176,11 +164,9 @@ void *bu_rb_neighbor (bu_rb_tree *tree, int order, int sense)
     BU_CKMAG(tree, BU_RB_TREE_MAGIC, "red-black tree");
     BU_RB_CKORDER(tree, order);
 
-    if ((sense != SENSE_MIN) && (sense != SENSE_MAX))
-    {
-	bu_log("FATAL: bu_rb_neighbor(): invalid sense %d, file %s, line %s\n",
-	    sense, __FILE__, __LINE__);
-	bu_bomb("");
+    if ((sense != SENSE_MIN) && (sense != SENSE_MAX)) {
+	bu_exit(EXIT_FAILURE, "ERROR: bu_rb_neighbor(): invalid sense %d, file %s, line %d\n",
+		sense, __FILE__, __LINE__);
     }
 
     /* Wade through the tree */
@@ -220,8 +206,8 @@ void *bu_rb_curr (bu_rb_tree *tree, int order)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

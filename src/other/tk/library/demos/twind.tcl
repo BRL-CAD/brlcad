@@ -22,7 +22,7 @@ positionWindow $w
 set btns [addSeeDismiss $w.buttons $w]
 pack $btns -side bottom -fill x
 
-frame $w.f -highlightthickness 2 -borderwidth 2 -relief sunken
+frame $w.f -highlightthickness 1 -borderwidth 1 -relief sunken
 set t $w.f.text
 text $t -yscrollcommand "$w.scroll set" -setgrid true -font $font -width 70 \
 	-height 35 -wrap word -highlightthickness 0 -borderwidth 0
@@ -66,7 +66,7 @@ $t insert end "Or, here is another example.  If you "
 $t window create end -create {
     button %W.click -text "Click Here" -command "textWindPlot %W" \
 	    -cursor top_left_arrow}
-      
+
 $t insert end " a canvas displaying an x-y plot will appear right here."
 $t mark set plot insert
 $t mark gravity plot left
@@ -96,6 +96,10 @@ $t window create end \
   -create {button %W.split -text "Split Windows" -command "textSplitWindow %W" \
   -cursor top_left_arrow} -padx 3
 $t insert end " \n\n"
+
+$t insert end "Users of previous versions of Tk will also be interested "
+$t insert end "to note that now cursor movement is now by visual line by "
+$t insert end "default, and that all scrolling of this widget is by pixel.\n\n"
 
 $t insert end "You may also find it useful to put embedded windows in "
 $t insert end "a text without any actual text.  In this case the "
@@ -297,8 +301,9 @@ proc textMakePeer {parent} {
     while {[winfo exists .peer$n]} { incr n }
     set w [toplevel .peer$n]
     wm title $w "Text Peer #$n"
-    frame $w.f -highlightthickness 2 -borderwidth 2 -relief sunken
-    set t [$parent peer create $w.f.text -yscrollcommand "$w.scroll set"]
+    frame $w.f -highlightthickness 1 -borderwidth 1 -relief sunken
+    set t [$parent peer create $w.f.text -yscrollcommand "$w.scroll set" \
+	       -borderwidth 0 -highlightthickness 0]
     pack $t -expand  yes -fill both
     scrollbar $w.scroll -command "$t yview"
     pack $w.scroll -side right -fill y

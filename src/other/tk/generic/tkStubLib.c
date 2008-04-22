@@ -30,7 +30,6 @@
 #endif
 #undef USE_TK_STUB_PROCS
 
-#include "tkPort.h"
 #include "tkInt.h"
 
 #ifdef __WIN32__
@@ -41,31 +40,28 @@
 #include "tkMacOSXInt.h"
 #endif
 
-#include "tkDecls.h"
-#include "tkIntDecls.h"
+#if !(defined(__WIN32__) || defined(MAC_OSX_TK))
+#include "tkUnixInt.h"
+#endif
+
+/* TODO: These ought to come in some other way */
 #include "tkPlatDecls.h"
-#include "tkIntPlatDecls.h"
 #include "tkIntXlibDecls.h"
-
-/*
- * Ensure that Tk_InitStubs is built as an exported symbol. The other stub
- * symbols should be built as non-exported symbols.
- */
-
-#undef TCL_STORAGE_CLASS
-#define TCL_STORAGE_CLASS DLLEXPORT
-
-MODULE_SCOPE TkStubs *tkStubsPtr;
-MODULE_SCOPE TkPlatStubs *tkPlatStubsPtr;
-MODULE_SCOPE TkIntStubs *tkIntStubsPtr;
-MODULE_SCOPE TkIntPlatStubs *tkIntPlatStubsPtr;
-MODULE_SCOPE TkIntXlibStubs *tkIntXlibStubsPtr;
 
 TkStubs *tkStubsPtr;
 TkPlatStubs *tkPlatStubsPtr;
 TkIntStubs *tkIntStubsPtr;
 TkIntPlatStubs *tkIntPlatStubsPtr;
 TkIntXlibStubs *tkIntXlibStubsPtr;
+
+/*
+ * Use our own isdigit to avoid linking to libc on windows
+ */
+
+static int isDigit(const int c)
+{
+    return (c >= '0' && c <= '9');
+}
 
 /*
  *----------------------------------------------------------------------
@@ -89,18 +85,43 @@ TkIntXlibStubs *tkIntXlibStubsPtr;
 #undef Tk_InitStubs
 #endif
 
-MODULE_SCOPE CONST char *
+CONST char *
 Tk_InitStubs(
     Tcl_Interp *interp,
     CONST char *version,
     int exact)
 {
     CONST char *actualVersion;
+    TkStubs **stubsPtrPtr = &tkStubsPtr;	/* squelch warning */
 
-    actualVersion = Tcl_PkgRequireEx(interp, "Tk", version, exact,
-	    (ClientData *) &tkStubsPtr);
+    actualVersion = Tcl_PkgRequireEx(interp, "Tk", version, 0,
+	    (ClientData *) stubsPtrPtr);
     if (!actualVersion) {
 	return NULL;
+    }
+    if (exact) {
+        CONST char *p = version;
+        int count = 0;
+
+        while (*p) {
+            count += !isDigit(*p++);
+        }
+        if (count == 1) {
+	    CONST char *q = actualVersion;
+
+	    p = version;
+	    while (*p && (*p == *q)) {
+		p++; q++;
+	    }
+            if (*p) {
+                return NULL;
+            }
+        } else {
+            actualVersion = Tcl_PkgRequireEx(interp, "Tk", version, 1, NULL);
+            if (actualVersion == NULL) {
+                return NULL;
+            }
+        }
     }
 
     if (!tkStubsPtr) {

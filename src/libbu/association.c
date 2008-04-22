@@ -1,7 +1,7 @@
 /*                   A S S O C I A T I O N . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2007 United States Government as represented by
+ * Copyright (c) 1995-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,29 +23,16 @@
  *
  * Look up the association for a specified value.
  *
- *  @author -
- *	Paul Tanenbaum
- *
- *  @par Source -
- *	The U. S. Army Research Laboratory
- *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 /** @} */
-
-#ifndef lint
-static const char libbu_association_RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#if HAVE_STRING_H
-#  include <string.h>
-#endif
+#include <string.h>
 
-#include "machine.h"
 #include "bu.h"
 
 
@@ -57,9 +44,9 @@ static const char libbu_association_RCSid[] = "@(#)$Header$ (ARL)";
  *	This function reads the specified file, searches for the
  *	first line of the form
  *
-@code
-		    <value><field_sep>...
-@endcode
+ @code
+ <value><field_sep>...
+ @endcode
  *
  *	and returns the rest of the line beyond the field separator.
  */
@@ -74,9 +61,9 @@ bu_association (const char *fname,
     struct bu_vls	*vp = 0;
     struct bu_vls	buffer;
 
-	/* XXX NONPARALLEL */
-	/* I'd prefer using "bu_open_mapped_file()" here instead, I think  -Mike */
-    if ((fp = fopen(fname, "r")) == NULL) {
+    /* XXX NONPARALLEL */
+    /* I'd prefer using "bu_open_mapped_file()" here instead, I think  -Mike */
+    if ((fp = fopen(fname, "rb")) == NULL) {
 	/*	XXX
 	 *	Should we be exiting here?
 	 *	I don't want to just return 0,
@@ -84,8 +71,7 @@ bu_association (const char *fname,
 	 *	between ERROR_PERFORMING_THE_LOOKUP
 	 *	and VALUE_NOT_FOUND.
 	 */
-	bu_log("bu_association:  Cannot open association file '%s'\n", fname);
-	exit (1);
+	bu_exit(1, "bu_association:  Cannot open association file '%s'\n", fname);
     }
 
     bu_vls_init(&buffer);
@@ -104,7 +90,7 @@ bu_association (const char *fname,
     bu_vls_init(vp);
     bu_vls_strcpy(vp, cp + len + 1);
 
-wrap_up:
+ wrap_up:
     bu_vls_trunc(&buffer, 0);
     fclose(fp);
     return (vp);
@@ -114,8 +100,8 @@ wrap_up:
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -85,7 +85,7 @@ typedef struct {
 static Blt_HashTable watchTable;
 static int refCount = 0;
 
-static Blt_SwitchSpec switchSpecs[] = 
+static Blt_SwitchSpec switchSpecs[] =
 {
     {BLT_SWITCH_LIST, "-precmd", Blt_Offset(Watch, preCmd), 0},
     {BLT_SWITCH_LIST, "-postcmd", Blt_Offset(Watch, postCmd), 0},

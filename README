@@ -1,5 +1,5 @@
 			    BRL-CAD
-			 Release 7.10.4
+			 Release 7.12.2
 		       http://brlcad.org/
 
 BRL-CAD is a powerful cross-platform open source combinatorial
@@ -211,11 +211,10 @@ code form through the BRL-CAD project website on Sourceforge:
 
   http://sf.net/projects/brlcad/
 
-The package is similarly available via the Concurrent Versions System
-(CVS) software version control repository.  To obtain the latest,
-follow the directions for anonymous checkout at:
+The package is similarly available via a Subversion repository.  To
+obtain the latest, follow the directions for anonymous checkout at:
 
-  http://sourceforge.net/cvs/?group_id=105292
+  http://sourceforge.net/svn/?group_id=105292
 
 There is also a paid-for full-service support distribution available
 for those interested through SURVICE Engineering, Inc., and the

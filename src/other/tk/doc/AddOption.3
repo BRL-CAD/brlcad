@@ -39,22 +39,17 @@ this value will be returned in calls to \fBTk_GetOption\fR.
 queried using \fBTk_GetOption\fR, the value with the highest priority
 is returned.  \fIPriority\fR must be between 0 and \fBTK_MAX_PRIO\fR.  Some
 common priority values are:
-.TP
-20
+.IP 20
 Used for default values hard-coded into widgets.
-.TP
-40
+.IP 40
 Used for options specified in application-specific startup files.
-.TP
-60
+.IP 60
 Used for options specified in user-specific defaults files, such as
 \fB.Xdefaults\fR, resource databases loaded into the X server, or
 user-specific startup files.
-.TP
-80
+.IP 80
 Used for options specified interactively after the application starts
 running.
-.PP
 
 .SH KEYWORDS
 class, name, option, add

@@ -87,14 +87,16 @@ the new string.  The string can also be retrieved from the
 \fIstring\fR field of the Tcl_DString structure.
 .PP
 \fBTcl_DStringAppendElement\fR is similar to \fBTcl_DStringAppend\fR
-except that it doesn't take a \fIlength\fR argument (it appends
+except that it does not take a \fIlength\fR argument (it appends
 all of \fIelement\fR) and it converts the string to a proper list element
 before appending.
 \fBTcl_DStringAppendElement\fR adds a separator space before the
 new list element unless the new list element is the first in a
 list or sub-list (i.e. either the current string is empty, or it
-contains the single character ``{'', or the last two characters of
-the current string are `` {'').
+contains the single character
+.QW { ,
+or the last two characters of the current string are
+.QW " {" ).
 \fBTcl_DStringAppendElement\fR returns a pointer to the
 characters of the new string.
 .PP
@@ -132,7 +134,7 @@ will still need to be called.
 This procedure is now deprecated.  \fBTcl_DStringSetLength\fR  should
 be used instead.
 .PP
-\fBTcl_DStringFree\fR should be called when you're finished using
+\fBTcl_DStringFree\fR should be called when you are finished using
 the string.  It frees up any memory that was allocated for the string
 and reinitializes the string's value to an empty string.
 .PP

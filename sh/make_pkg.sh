@@ -2,7 +2,7 @@
 #                     M A K E _ P K G . S H
 # BRL-CAD
 #
-# Copyright (c) 2005-2007 United States Government as represented by
+# Copyright (c) 2005-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -44,33 +44,21 @@
 ######################################################################
 
 NAME="$1"
-MAJOR_VERSION="$2"
-MINOR_VERSION="$3"
-PATCH_VERSION="$4"
-ARCHIVE="$5"
-RESOURCES="$6"
+VERSION="$2"
+ARCHIVE="$3"
+RESOURCES="$4"
 if [ "x$NAME" = "x" ] ; then
-    echo "Usage: $0 title major_version minor_version patch_version archive_dir [resource_dir]"
+    echo "Usage: $0 title version archive_dir [resource_dir]"
     echo "ERROR: must specify a title for the package name"
     exit 1
 fi
-if [ "x$MINOR_VERSION" = "x" ] ; then
-    echo "Usage: $0 title major_version minor_version patch_version archive_dir [resource_dir]"
-    echo "ERROR: must specify a major package version"
-    exit 1
-fi
-if [ "x$MINOR_VERSION" = "x" ] ; then
-    echo "ERROR: must specify a minor package version"
-    echo "Usage: $0 title major_version minor_version patch_version archive_dir [resource_dir]"
-    exit 1
-fi
-if [ "x$PATCH_VERSION" = "x" ] ; then
-    echo "Usage: $0 title major_version minor_version patch_version archive_dir [resource_dir]"
-    echo "ERROR: must specify a patch package version"
+if [ "x$VERSION" = "x" ] ; then
+    echo "Usage: $0 title version archive_dir [resource_dir]"
+    echo "ERROR: must specify a version"
     exit 1
 fi
 if [ "x$ARCHIVE" = "x" ] ; then
-    echo "Usage: $0 title major_version minor_version patch_version archive_dir [resource_dir]"
+    echo "Usage: $0 title version archive_dir [resource_dir]"
     echo "ERROR: must specify an archive directory"
     exit 1
 fi
@@ -85,6 +73,25 @@ else
 	echo "ERROR: specified resource path (${RESOURCES}) is not a readable directory"
 	exit 1
     fi
+fi
+
+MAJOR_VERSION="`echo $VERSION | cut -f1 -d.`""
+MINOR_VERSION="`echo $VERSION | cut -f2 -d.`""
+PATCH_VERSION="`echo $VERSION | cut -f3 -d.`""
+if [ "x$MAJOR_VERSION" = "x" ] ; then
+    echo "Usage: $0 title version archive_dir [resource_dir]"
+    echo "ERROR: unable to get major version number from [$VERSION]"
+    exit 1
+fi
+if [ "x$MINOR_VERSION" = "x" ] ; then
+    echo "Usage: $0 title version archive_dir [resource_dir]"
+    echo "ERROR: unable to get minor version number from [$VERSION]"
+    exit 1
+fi
+if [ "x$PATCH_VERSION" = "x" ] ; then
+    echo "Usage: $0 title version archive_dir [resource_dir]"
+    echo "ERROR: unable to get patch version number from [$VERSION]"
+    exit 1
 fi
 
 PATH=/bin:/usr/bin:/usr/sbin
@@ -105,7 +112,6 @@ if [ "x$TMPDIR" = "x" ] || [ ! -w $TMPDIR ] ; then
 fi
 
 PRE_PWD="`pwd`"
-VERSION="${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}"
 PKG_NAME="${NAME}-${VERSION}"
 PKG="${PKG_NAME}.pkg"
 

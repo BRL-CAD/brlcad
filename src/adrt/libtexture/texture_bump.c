@@ -1,7 +1,7 @@
 /*                     T E X T U R E _ B U M P . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2007 United States Government as represented by
+ * Copyright (c) 2002-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,75 +20,59 @@
 /** @file texture_bump.c
  *
  *  Comments -
- *      Texture Library - Bump Mapping maps R,G,Z to surface normal X,Y,Z
+ *      Texture Library - Bump Mapping maps R, G, Z to surface normal X, Y, Z
  *
- *  Author -
- *      Justin L. Shumaker
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- * $Id$
  */
 
 #include "texture_bump.h"
 #include <stdlib.h>
 #include "umath.h"
 
-
-void texture_bump_init(texture_t *texture, TIE_3 coef);
-void texture_bump_free(texture_t *texture);
-void texture_bump_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel);
-
+#include "bu.h"
 
 void texture_bump_init(texture_t *texture, TIE_3 coef) {
-  texture_bump_t *sd;
+    texture_bump_t *sd;
 
-  texture->data = malloc(sizeof(texture_bump_t));
-  if (!texture->data) {
-      perror("texture->data");
-      exit(1);
-  }
-  texture->free = texture_bump_free;
-  texture->work = (texture_work_t *)texture_bump_work;
+    texture->data = bu_malloc(sizeof(texture_bump_t), "texture data");
+    texture->free = texture_bump_free;
+    texture->work = (texture_work_t *)texture_bump_work;
 
-  sd = (texture_bump_t *)texture->data;
-  sd->coef = coef;
+    sd = (texture_bump_t *)texture->data;
+    sd->coef = coef;
 }
 
 
 void texture_bump_free(texture_t *texture) {
-  free(texture->data);
+    bu_free(texture->data, "texture data");
 }
 
 
-void texture_bump_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel) {
-  texture_bump_t *sd;
-  TIE_3 n;
-  tfloat d;
+void texture_bump_work(__TEXTURE_WORK_PROTOTYPE__) {
+    texture_bump_t *sd;
+    TIE_3 n;
+    tfloat d;
 
 
-  sd = (texture_bump_t *)texture->data;
+    sd = (texture_bump_t *)texture->data;
 
 
-  n.v[0] = id->norm.v[0] + sd->coef.v[0]*(2*pixel->v[0]-1.0);
-  n.v[1] = id->norm.v[1] + sd->coef.v[1]*(2*pixel->v[1]-1.0);
-  n.v[2] = id->norm.v[2] + sd->coef.v[2]*(2*pixel->v[2]-1.0);
-  MATH_VEC_UNITIZE(n);
+    n.v[0] = id->norm.v[0] + sd->coef.v[0]*(2*pixel->v[0]-1.0);
+    n.v[1] = id->norm.v[1] + sd->coef.v[1]*(2*pixel->v[1]-1.0);
+    n.v[2] = id->norm.v[2] + sd->coef.v[2]*(2*pixel->v[2]-1.0);
+    MATH_VEC_UNITIZE(n);
 
-  MATH_VEC_DOT(d, n, id->norm);
-  if(d < 0)
-    MATH_VEC_MUL_SCALAR(n, n, -1.0);
-  id->norm = n;
+    MATH_VEC_DOT(d, n, id->norm);
+    if (d < 0)
+	MATH_VEC_MUL_SCALAR(n, n, -1.0);
+    id->norm = n;
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

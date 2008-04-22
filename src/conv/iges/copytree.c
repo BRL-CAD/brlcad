@@ -1,7 +1,7 @@
 /*                      C O P Y T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2007 United States Government as represented by
+ * Copyright (c) 1990-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,54 +18,50 @@
  * information.
  */
 /** @file copytree.c
- *  Authors -
+ *
+ * This routine copies a tree rooted at "root" by recursion the
+ * "parent" field of the root of the new tree is filed by the "parent"
+ * argument.
+ *
+ * Authors -
  *	John R. Anderson
  *	Susanne L. Muuss
  *	Earl P. Weaver
  *
- *  Source -
- *	VLD/ASB Building 1065
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
-
-/*	This routine copies a tree rooted at "root" by recursion
-	the "parent" field of the root of the new tree is filed by
-	the "parent" argument	*/
 
 #include "./iges_struct.h"
 
-struct node *Copytree( root , parent )
-struct node *root,*parent;
+struct node *Copytree( root, parent )
+    struct node *root, *parent;
 {
 
-	struct node *ptr;
+    struct node *ptr;
 
-	if( root == NULL )
-		return( (struct node *)NULL );
+    if ( root == NULL )
+	return( (struct node *)NULL );
 
 
-	ptr = (struct node *)bu_malloc( sizeof( struct node ), "Copytree: ptr" );
+    ptr = (struct node *)bu_malloc( sizeof( struct node ), "Copytree: ptr" );
 
-	*ptr = (*root);
-	ptr->parent = parent;
+    *ptr = (*root);
+    ptr->parent = parent;
 
-	if( root->left != NULL )
-		ptr->left = Copytree( root->left , ptr );
+    if ( root->left != NULL )
+	ptr->left = Copytree( root->left, ptr );
 
-	if( root->right != NULL )
-		ptr->right = Copytree( root->right , ptr );
+    if ( root->right != NULL )
+	ptr->right = Copytree( root->right, ptr );
 
-	return( ptr );
+    return( ptr );
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -15,7 +15,7 @@ extern const char *TtkInitializeStubs(
 	interp, TTK_VERSION, TTK_STUBS_EPOCH, TTK_STUBS_REVISION)
 #else
 
-#define Ttk_InitStubs(interp) Tcl_PkgRequire(interp,"ttk",TTK_VERSION)
+#define Ttk_InitStubs(interp) Tcl_PkgRequire(interp,"Ttk",TTK_VERSION)
 
 #endif
 

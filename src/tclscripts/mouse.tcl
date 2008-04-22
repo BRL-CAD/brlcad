@@ -1,7 +1,7 @@
 #                       M O U S E . T C L
 # BRL-CAD
 #
-# Copyright (c) 1995-2007 United States Government as represented by
+# Copyright (c) 1995-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -18,15 +18,6 @@
 # information.
 #
 ###
-#
-# Author -
-#	Robert Parker
-#
-# Source -
-#	The U. S. Army Ballistic Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#
 #
 # Description -
 #       Mouse routines.

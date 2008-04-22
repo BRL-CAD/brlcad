@@ -2,7 +2,7 @@
 #                       H E A D E R . S H
 # BRL-CAD
 #
-# Copyright (c) 2004-2007 United States Government as represented by
+# Copyright (c) 2004-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -49,12 +49,6 @@
 #
 #   find src -type f \( -name \*.c -or -name \*.h \) -not -regex '.*src/lib.*' -exec sh/header.sh BSD {} \;
 #
-# Author -
-#   Christopher Sean Morrison
-#
-# Source -
-#   The U.S. Army Research Laboratory
-#   Aberdeen Proving Ground, Maryland 21005-5068  USA
 ###
 
 LICE="$1"
@@ -158,6 +152,11 @@ case $FILE in
 	;;
     *.hh | *.hp | *.hxx | *.hpp | *.HPP | *.h++ | *.H )
 	echo "$FILE is a C++ header"
+	wrap=1
+	commentprefix=" *"
+	;;
+    *.java )
+	echo "$FILE is a Java header"
 	wrap=1
 	commentprefix=" *"
 	;;
@@ -735,10 +734,7 @@ if [ "x$wrap" = "x1" ] ; then
  *
  * Brief description
  *
- * Author -
- *   Unknown
  */
-
 " >> $FILE
     else
 	echo "/${block}

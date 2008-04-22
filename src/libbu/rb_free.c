@@ -1,7 +1,7 @@
 /*                       R B _ F R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2007 United States Government as represented by
+ * Copyright (c) 1998-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,25 +23,13 @@
  *
  *		Routine to free a red-black tree
  *
- * @author
- *	Paul J. Tanenbaum
- *
- * @par Source -
- *	The U. S. Army Research Laboratory
- * @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 /** @} */
 
-#ifndef lint
-static const char libbu_rb_free_RCSid[] = "@(#) $Header$";
-#endif
-
 #include "common.h"
-
 
 #include <stdio.h>
 #include <math.h>
-#include "machine.h"
 #include "bu.h"
 #include "./rb_internals.h"
 
@@ -53,7 +41,7 @@ static const char libbu_rb_free_RCSid[] = "@(#) $Header$";
  *	to handle the application data.  bu_rb_free() traverses tree's lists
  *	of nodes and packages, freeing each one in turn, and then frees tree
  *	itself.  If free_data is non-NULL, then bu_rb_free() calls it just
- *	before freeing each package , passing it the package's rbp_data
+ *	before freeing each package, passing it the package's rbp_data
  *	member.  Otherwise, the application data is left untouched.
  */
 void bu_rb_free (bu_rb_tree *tree, void (*free_data) (/* ??? */))
@@ -156,7 +144,7 @@ void bu_rb_free_package (struct bu_rb_package *package)
      *	Remove node from the list of all packages
      */
     BU_CKMAG(package -> rbp_list_pos, BU_RB_LIST_MAGIC,
-	"red-black list element");
+	     "red-black list element");
     BU_LIST_DEQUEUE(&(package -> rbp_list_pos -> l));
 
     bu_free((genptr_t) package -> rbp_node, "red-black package nodes");
@@ -168,8 +156,8 @@ void bu_rb_free_package (struct bu_rb_package *package)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

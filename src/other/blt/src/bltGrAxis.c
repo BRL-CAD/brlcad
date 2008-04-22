@@ -171,7 +171,7 @@ static Tk_ConfigSpec configSpecs[] =
 {
     {TK_CONFIG_DOUBLE, "-autorange", "autoRange", "AutoRange",
 	DEF_AXIS_RANGE, Tk_Offset(Axis, windowSize),
-        ALL_GRAPHS | TK_CONFIG_DONT_SET_DEFAULT}, 
+        ALL_GRAPHS | TK_CONFIG_DONT_SET_DEFAULT},
     {TK_CONFIG_BORDER, "-background", "background", "Background",
 	DEF_AXIS_BACKGROUND, Tk_Offset(Axis, border),
 	ALL_GRAPHS | TK_CONFIG_NULL_OK},
@@ -179,7 +179,7 @@ static Tk_ConfigSpec configSpecs[] =
     {TK_CONFIG_CUSTOM, "-bindtags", "bindTags", "BindTags",
 	DEF_AXIS_TAGS, Tk_Offset(Axis, tags),
 	ALL_GRAPHS | TK_CONFIG_NULL_OK, &bltListOption},
-    {TK_CONFIG_SYNONYM, "-bd", "borderWidth", (char *)NULL, 
+    {TK_CONFIG_SYNONYM, "-bd", "borderWidth", (char *)NULL,
         (char *)NULL, 0, ALL_GRAPHS},
     {TK_CONFIG_CUSTOM, "-borderwidth", "borderWidth", "BorderWidth",
 	DEF_AXIS_BORDERWIDTH, Tk_Offset(Axis, borderWidth),
@@ -203,7 +203,7 @@ static Tk_ConfigSpec configSpecs[] =
 	DEF_AXIS_JUSTIFY, Tk_Offset(Axis, titleTextStyle.justify),
 	ALL_GRAPHS | TK_CONFIG_DONT_SET_DEFAULT},
     {TK_CONFIG_BOOLEAN, "-labeloffset", "labelOffset", "LabelOffset",
-        (char *)NULL, Tk_Offset(Axis, labelOffset), ALL_GRAPHS}, 
+        (char *)NULL, Tk_Offset(Axis, labelOffset), ALL_GRAPHS},
     {TK_CONFIG_COLOR, "-limitscolor", "limitsColor", "Color",
 	DEF_AXIS_FOREGROUND, Tk_Offset(Axis, limitsTextStyle.color),
 	TK_CONFIG_COLOR_ONLY | ALL_GRAPHS},
@@ -234,16 +234,16 @@ static Tk_ConfigSpec configSpecs[] =
 	(char *)NULL, Tk_Offset(Axis, t1Ptr),
 	TK_CONFIG_NULL_OK | ALL_GRAPHS, &majorTicksOption},
     {TK_CONFIG_CUSTOM, "-max", "max", "Max",
-	(char *)NULL, Tk_Offset(Axis, reqMax), 
+	(char *)NULL, Tk_Offset(Axis, reqMax),
 	TK_CONFIG_NULL_OK | ALL_GRAPHS, &limitOption},
     {TK_CONFIG_CUSTOM, "-min", "min", "Min",
-	(char *)NULL, Tk_Offset(Axis, reqMin), 
+	(char *)NULL, Tk_Offset(Axis, reqMin),
 	TK_CONFIG_NULL_OK | ALL_GRAPHS, &limitOption},
     {TK_CONFIG_CUSTOM, "-minorticks", "minorTicks", "MinorTicks",
 	(char *)NULL, Tk_Offset(Axis, t2Ptr),
 	TK_CONFIG_NULL_OK | ALL_GRAPHS, &minorTicksOption},
     {TK_CONFIG_RELIEF, "-relief", "relief", "Relief",
-	DEF_AXIS_RELIEF, Tk_Offset(Axis, relief), 
+	DEF_AXIS_RELIEF, Tk_Offset(Axis, relief),
         ALL_GRAPHS | TK_CONFIG_DONT_SET_DEFAULT},
     {TK_CONFIG_DOUBLE, "-rotate", "rotate", "Rotate",
 	DEF_AXIS_ROTATE, Tk_Offset(Axis, tickTextStyle.theta),
@@ -255,10 +255,10 @@ static Tk_ConfigSpec configSpecs[] =
 	DEF_AXIS_SCROLL_INCREMENT, Tk_Offset(Axis, scrollUnits),
 	ALL_GRAPHS | TK_CONFIG_DONT_SET_DEFAULT, &bltPositiveDistanceOption},
     {TK_CONFIG_CUSTOM, "-scrollmax", "scrollMax", "ScrollMax",
-	(char *)NULL, Tk_Offset(Axis, scrollMax), 
+	(char *)NULL, Tk_Offset(Axis, scrollMax),
 	TK_CONFIG_NULL_OK | ALL_GRAPHS, &limitOption},
     {TK_CONFIG_CUSTOM, "-scrollmin", "scrollMin", "ScrollMin",
-	(char *)NULL, Tk_Offset(Axis, scrollMin), 
+	(char *)NULL, Tk_Offset(Axis, scrollMin),
 	TK_CONFIG_NULL_OK | ALL_GRAPHS, &limitOption},
     {TK_CONFIG_DOUBLE, "-shiftby", "shiftBy", "ShiftBy",
 	DEF_AXIS_SHIFTBY, Tk_Offset(Axis, shiftBy),
@@ -347,7 +347,7 @@ SetAxisRange(AxisRange *rangePtr, double min, double max)
  *	Please note, *max* can't equal *min*.
  *
  * Results:
- *	If the value is within the interval [min..max], 1 is 
+ *	If the value is within the interval [min..max], 1 is
  *	returned; 0 otherwise.
  *
  * ----------------------------------------------------------------------
@@ -401,7 +401,7 @@ AxisIsHorizontal(graphPtr, axisPtr)
 /*ARGSUSED*/
 static int
 StringToAnyAxis(clientData, interp, tkwin, string, widgRec, offset)
-    ClientData clientData;	/* Class identifier of the type of 
+    ClientData clientData;	/* Class identifier of the type of
 				 * axis we are looking for. */
     Tcl_Interp *interp;		/* Interpreter to send results back to. */
     Tk_Window tkwin;		/* Used to look up pointer to graph. */
@@ -443,7 +443,7 @@ StringToAnyAxis(clientData, interp, tkwin, string, widgRec, offset)
 /*ARGSUSED*/
 static int
 StringToAxis(clientData, interp, tkwin, string, widgRec, offset)
-    ClientData clientData;	/* Class identifier of the type of 
+    ClientData clientData;	/* Class identifier of the type of
 				 * axis we are looking for. */
     Tcl_Interp *interp;		/* Interpreter to send results back to. */
     Tk_Window tkwin;		/* Used to look up pointer to graph. */
@@ -566,12 +566,12 @@ FormatToString(clientData, tkwin, widgRec, offset, freeProcPtr)
     Tcl_FreeProc **freeProcPtr;	/* Not used. */
 {
     Axis *axisPtr = (Axis *)(widgRec);
-    
+
     if (axisPtr->nFormats == 0) {
 	return "";
     }
     *freeProcPtr = (Tcl_FreeProc *)Blt_Free;
-    return Tcl_Merge(axisPtr->nFormats, axisPtr->limitsFormats); 
+    return Tcl_Merge(axisPtr->nFormats, axisPtr->limitsFormats);
 }
 
 /*
@@ -897,7 +897,7 @@ FreeLabels(chainPtr)
  *	Returns a new label in the string character buffer.  The formatted
  *	tick label will be displayed on the graph.
  *
- * ---------------------------------------------------------------------- 
+ * ----------------------------------------------------------------------
  */
 static TickLabel *
 MakeLabel(graphPtr, axisPtr, value)
@@ -929,13 +929,13 @@ MakeLabel(graphPtr, axisPtr, value)
 		" ", string, (char *)NULL) != TCL_OK) {
 	    Tcl_BackgroundError(interp);
 	} else {
-	    /* 
-	     * The proc could return a string of any length, so arbitrarily 
-	     * limit it to what will fit in the return string. 
+	    /*
+	     * The proc could return a string of any length, so arbitrarily
+	     * limit it to what will fit in the return string.
 	     */
 	    strncpy(string, Tcl_GetStringResult(interp), TICK_LABEL_SIZE);
 	    string[TICK_LABEL_SIZE] = '\0';
-	    
+
 	    Tcl_ResetResult(interp); /* Clear the interpreter's result. */
 	}
     }
@@ -1181,7 +1181,7 @@ FixAxisRange(axisPtr)
 	double value;
 
 	/*
-	 * There is no range of data (i.e. min is not less than max), 
+	 * There is no range of data (i.e. min is not less than max),
 	 * so manufacture one.
 	 */
 	value = min;
@@ -1196,7 +1196,7 @@ FixAxisRange(axisPtr)
     }
     SetAxisRange(&axisPtr->valueRange, min, max);
 
-    /*   
+    /*
      * The axis limits are either the current data range or overridden
      * by the values selected by the user with the -min or -max
      * options.
@@ -1206,13 +1206,13 @@ FixAxisRange(axisPtr)
     if (DEFINED(axisPtr->reqMin)) {
 	axisPtr->min = axisPtr->reqMin;
     }
-    if (DEFINED(axisPtr->reqMax)) { 
+    if (DEFINED(axisPtr->reqMax)) {
 	axisPtr->max = axisPtr->reqMax;
     }
 
     if (axisPtr->max < axisPtr->min) {
 
-	/*   
+	/*
 	 * If the limits still don't make sense, it's because one
 	 * limit configuration option (-min or -max) was set and the
 	 * other default (based upon the data) is too small or large.
@@ -1227,11 +1227,11 @@ FixAxisRange(axisPtr)
 	    axisPtr->max = axisPtr->min + (FABS(axisPtr->max) * 0.1);
 	}
     }
-    /* 
+    /*
      * If a window size is defined, handle auto ranging by shifting
-     * the axis limits. 
+     * the axis limits.
      */
-    if ((axisPtr->windowSize > 0.0) && 
+    if ((axisPtr->windowSize > 0.0) &&
 	(!DEFINED(axisPtr->reqMin)) && (!DEFINED(axisPtr->reqMax))) {
 	if (axisPtr->shiftBy < 0.0) {
 	    axisPtr->shiftBy = 0.0;
@@ -1261,7 +1261,7 @@ FixAxisRange(axisPtr)
  * NiceNum --
  *
  *	Reference: Paul Heckbert, "Nice Numbers for Graph Labels",
- *		   Graphics Gems, pp 61-63.  
+ *		   Graphics Gems, pp 61-63.
  *
  *	Finds a "nice" number approximately equal to x.
  *
@@ -1313,14 +1313,14 @@ GenerateTicks(sweepPtr)
     ticksPtr = Blt_Malloc(sizeof(Ticks) + (sweepPtr->nSteps * sizeof(double)));
     assert(ticksPtr);
 
-    if (sweepPtr->step == 0.0) { 
+    if (sweepPtr->step == 0.0) {
 	static double logTable[] = /* Precomputed log10 values [1..10] */
 	{
-	    0.0, 
-	    0.301029995663981, 0.477121254719662, 
-	    0.602059991327962, 0.698970004336019, 
+	    0.0,
+	    0.301029995663981, 0.477121254719662,
+	    0.602059991327962, 0.698970004336019,
 	    0.778151250383644, 0.845098040014257,
-	    0.903089986991944, 0.954242509439325, 
+	    0.903089986991944, 0.954242509439325,
 	    1.0
 	};
 	/* Hack: A zero step indicates to use log values. */
@@ -1429,11 +1429,11 @@ LogScaleAxis(axisPtr, min, max)
     if (min < max) {
 	min = (min != 0.0) ? log10(FABS(min)) : 0.0;
 	max = (max != 0.0) ? log10(FABS(max)) : 1.0;
-	
+
 	tickMin = floor(min);
 	tickMax = ceil(max);
 	range = tickMax - tickMin;
-	
+
 	if (range > 10) {
 	    /* There are too many decades to display a major tick at every
 	     * decade.  Instead, treat the axis as a linear scale.  */
@@ -1454,17 +1454,17 @@ LogScaleAxis(axisPtr, min, max)
 	    }
 	    majorStep = 1.0;
 	    nMajor = (int)(tickMax - tickMin + 1); /* FIXME: Check this. */
-	    
+
 	    minorStep = 0.0;	/* This is a special hack to pass
 				 * information to the GenerateTicks
 				 * routine. An interval of 0.0 tells
-				 *	1) this is a minor sweep and 
-				 *	2) the axis is log scale.  
+				 *	1) this is a minor sweep and
+				 *	2) the axis is log scale.
 				 */
 	    nMinor = 10;
 	}
 	if ((axisPtr->looseMin == TICK_RANGE_TIGHT) ||
-	    ((axisPtr->looseMin == TICK_RANGE_LOOSE) && 
+	    ((axisPtr->looseMin == TICK_RANGE_LOOSE) &&
 	     (DEFINED(axisPtr->reqMin)))) {
 	    tickMin = min;
 	    nMajor++;
@@ -1558,7 +1558,7 @@ LinearScaleAxis(axisPtr, min, max)
     tickMin = tickMax = 0.0;
     if (min < max) {
 	range = max - min;
-	
+
 	/* Calculate the major tick stepping. */
 	if (axisPtr->reqStep > 0.0) {
 	    /* An interval was designated by the user.  Keep scaling it
@@ -1572,17 +1572,17 @@ LinearScaleAxis(axisPtr, min, max)
 	    range = NiceNum(range, 0);
 	    step = NiceNum(range / DEF_NUM_TICKS, 1);
 	}
-	
+
 	/* Find the outer tick values. Add 0.0 to prevent getting -0.0. */
 	axisMin = tickMin = floor(min / step) * step + 0.0;
 	axisMax = tickMax = ceil(max / step) * step + 0.0;
-	
+
 	nTicks = Round((tickMax - tickMin) / step) + 1;
     }
     axisPtr->majorSweep.step = step;
     axisPtr->majorSweep.initial = tickMin;
     axisPtr->majorSweep.nSteps = nTicks;
-    
+
     /*
      * The limits of the axis are either the range of the data
      * ("tight") or at the next outer tick interval ("loose").  The
@@ -1603,10 +1603,10 @@ LinearScaleAxis(axisPtr, min, max)
 	axisMax = max;
     }
     SetAxisRange(&axisPtr->axisRange, axisMin, axisMax);
-    
+
     /* Now calculate the minor tick step and number. */
-    
-    if ((axisPtr->reqNumMinorTicks > 0) && 
+
+    if ((axisPtr->reqNumMinorTicks > 0) &&
 	((axisPtr->flags & AXIS_CONFIG_MAJOR) == 0)) {
 	nTicks = axisPtr->reqNumMinorTicks - 1;
 	step = 1.0 / (nTicks + 1);
@@ -1684,7 +1684,7 @@ Blt_ResetAxes(graphPtr)
     /*
      * Step 2:  For each element that's to be displayed, get the smallest
      *		and largest data values mapped to each X and Y-axis.  This
-     *		will be the axis limits if the user doesn't override them 
+     *		will be the axis limits if the user doesn't override them
      *		with -min and -max options.
      */
     for (linkPtr = Blt_ChainFirstLink(graphPtr->elements.displayList);
@@ -1731,7 +1731,7 @@ Blt_ResetAxes(graphPtr)
     /*
      * When any axis changes, we need to layout the entire graph.
      */
-    graphPtr->flags |= (GET_AXIS_GEOMETRY | LAYOUT_NEEDED | 
+    graphPtr->flags |= (GET_AXIS_GEOMETRY | LAYOUT_NEEDED |
 			MAP_ALL | REDRAW_WORLD);
 }
 
@@ -1900,7 +1900,7 @@ AxisOffsets(graphPtr, axisPtr, margin, axisOffset, infoPtr)
      * the individual major and minor ticks.
      */
     p = 0;		/* Suppress compiler warning */
-    
+
     switch (margin) {
     case MARGIN_TOP:
 	p = graphPtr->top - axisOffset - pad;
@@ -1916,7 +1916,7 @@ AxisOffsets(graphPtr, axisPtr, margin, axisOffset, infoPtr)
 	axisPtr->tickTextStyle.anchor = TK_ANCHOR_S;
 	offset = axisPtr->borderWidth + axisPtr->lineWidth / 2;
 	axisPtr->region.left = graphPtr->hOffset - offset - 2;
-	axisPtr->region.right = graphPtr->hOffset + graphPtr->hRange + 
+	axisPtr->region.right = graphPtr->hOffset + graphPtr->hRange +
 	    offset - 1;
 	axisPtr->region.top = p + labelOffset - 1;
 	axisPtr->region.bottom = p;
@@ -1929,22 +1929,22 @@ AxisOffsets(graphPtr, axisPtr, margin, axisOffset, infoPtr)
 	if (axisPtr->titleAlternate) {
 	    x = graphPtr->right + AXIS_TITLE_PAD;
 	    y = graphPtr->bottom + axisOffset + (axisPtr->height / 2);
-	    axisPtr->titleTextStyle.anchor = TK_ANCHOR_W; 
+	    axisPtr->titleTextStyle.anchor = TK_ANCHOR_W;
 	} else {
 	    x = (graphPtr->right + graphPtr->left) / 2;
-	    y = graphPtr->bottom + axisOffset + axisPtr->height + 
+	    y = graphPtr->bottom + axisOffset + axisPtr->height +
 		AXIS_TITLE_PAD;
-	    axisPtr->titleTextStyle.anchor = TK_ANCHOR_S; 
+	    axisPtr->titleTextStyle.anchor = TK_ANCHOR_S;
 	}
 	axisPtr->tickTextStyle.anchor = TK_ANCHOR_N;
 	offset = axisPtr->borderWidth + axisPtr->lineWidth / 2;
 	axisPtr->region.left = graphPtr->hOffset - offset - 2;
-	axisPtr->region.right = graphPtr->hOffset + graphPtr->hRange + 
+	axisPtr->region.right = graphPtr->hOffset + graphPtr->hRange +
 	    offset - 1;
 
-	axisPtr->region.top = graphPtr->bottom + axisOffset + 
+	axisPtr->region.top = graphPtr->bottom + axisOffset +
 	    axisPtr->lineWidth - axisPtr->lineWidth / 2;
-	axisPtr->region.bottom = graphPtr->bottom + axisOffset + 
+	axisPtr->region.bottom = graphPtr->bottom + axisOffset +
 	    axisPtr->lineWidth + labelOffset + 1;
 	axisPtr->titlePos.x = x;
 	axisPtr->titlePos.y = y;
@@ -1955,12 +1955,12 @@ AxisOffsets(graphPtr, axisPtr, margin, axisOffset, infoPtr)
 	if (axisPtr->titleAlternate) {
 	    x = graphPtr->left - axisOffset - (axisPtr->width / 2);
 	    y = graphPtr->top - AXIS_TITLE_PAD;
-	    axisPtr->titleTextStyle.anchor = TK_ANCHOR_SW; 
+	    axisPtr->titleTextStyle.anchor = TK_ANCHOR_SW;
 	} else {
 	    x = graphPtr->left - axisOffset - axisPtr->width -
 		graphPtr->plotBorderWidth;
 	    y = (graphPtr->bottom + graphPtr->top) / 2;
-	    axisPtr->titleTextStyle.anchor = TK_ANCHOR_W; 
+	    axisPtr->titleTextStyle.anchor = TK_ANCHOR_W;
 	}
 	axisPtr->tickTextStyle.anchor = TK_ANCHOR_E;
 	axisPtr->region.left = graphPtr->left - offset + labelOffset - 1;
@@ -1968,7 +1968,7 @@ AxisOffsets(graphPtr, axisPtr, margin, axisOffset, infoPtr)
 
 	offset = axisPtr->borderWidth + axisPtr->lineWidth / 2;
 	axisPtr->region.top = graphPtr->vOffset - offset - 2;
-	axisPtr->region.bottom = graphPtr->vOffset + graphPtr->vRange + 
+	axisPtr->region.bottom = graphPtr->vOffset + graphPtr->vRange +
 	    offset - 1;
 	axisPtr->titlePos.x = x;
 	axisPtr->titlePos.y = y;
@@ -1979,23 +1979,23 @@ AxisOffsets(graphPtr, axisPtr, margin, axisOffset, infoPtr)
 	if (axisPtr->titleAlternate) {
 	    x = graphPtr->right + axisOffset + (axisPtr->width / 2);
 	    y = graphPtr->top - AXIS_TITLE_PAD;
-	    axisPtr->titleTextStyle.anchor = TK_ANCHOR_SE; 
+	    axisPtr->titleTextStyle.anchor = TK_ANCHOR_SE;
 	} else {
-	    x = graphPtr->right + axisOffset + axisPtr->width + 
+	    x = graphPtr->right + axisOffset + axisPtr->width +
 		AXIS_TITLE_PAD;
 	    y = (graphPtr->bottom + graphPtr->top) / 2;
 	    axisPtr->titleTextStyle.anchor = TK_ANCHOR_E;
 	}
 	axisPtr->tickTextStyle.anchor = TK_ANCHOR_W;
 
-	axisPtr->region.left = graphPtr->right + axisOffset + 
+	axisPtr->region.left = graphPtr->right + axisOffset +
 	    axisPtr->lineWidth - axisPtr->lineWidth / 2;
-	axisPtr->region.right = graphPtr->right + axisOffset + 
+	axisPtr->region.right = graphPtr->right + axisOffset +
 	    labelOffset + axisPtr->lineWidth + 1;
 
 	offset = axisPtr->borderWidth + axisPtr->lineWidth / 2;
 	axisPtr->region.top = graphPtr->vOffset - offset - 2;
-	axisPtr->region.bottom = graphPtr->vOffset + graphPtr->vRange + 
+	axisPtr->region.bottom = graphPtr->vOffset + graphPtr->vRange +
 	    offset - 1;
 	axisPtr->titlePos.x = x;
 	axisPtr->titlePos.y = y;
@@ -2011,7 +2011,7 @@ AxisOffsets(graphPtr, axisPtr, margin, axisOffset, infoPtr)
 
     if (axisPtr->tickLength < 0) {
 	int hold;
-	
+
 	hold = infoPtr->t1;
 	infoPtr->t1 = infoPtr->axis;
 	infoPtr->axis = hold;
@@ -2146,7 +2146,7 @@ MapAxis(graphPtr, axisPtr, offset, margin)
 		t2 = t1 +
 		    (axisPtr->majorSweep.step * axisPtr->t2Ptr->values[j]);
 		if (InRange(t2, &axisPtr->axisRange)) {
-		    MakeTick(graphPtr, axisPtr, t2, info.t2, info.axis, 
+		    MakeTick(graphPtr, axisPtr, t2, info.t2, info.axis,
 			     segPtr);
 		    segPtr++;
 		}
@@ -2328,15 +2328,15 @@ DrawAxis(graphPtr, drawable, axisPtr)
 {
     if (axisPtr->border != NULL) {
 	Blt_Fill3DRectangle(graphPtr->tkwin, drawable, axisPtr->border,
-		axisPtr->region.left + graphPtr->plotBorderWidth, 
-		axisPtr->region.top + graphPtr->plotBorderWidth, 
-		axisPtr->region.right - axisPtr->region.left, 
-		axisPtr->region.bottom - axisPtr->region.top, 
+		axisPtr->region.left + graphPtr->plotBorderWidth,
+		axisPtr->region.top + graphPtr->plotBorderWidth,
+		axisPtr->region.right - axisPtr->region.left,
+		axisPtr->region.bottom - axisPtr->region.top,
 		axisPtr->borderWidth, axisPtr->relief);
     }
     if (axisPtr->title != NULL) {
 	Blt_DrawText(graphPtr->tkwin, drawable, axisPtr->title,
-		&axisPtr->titleTextStyle, (int)axisPtr->titlePos.x, 
+		&axisPtr->titleTextStyle, (int)axisPtr->titlePos.x,
 		(int)axisPtr->titlePos.y);
     }
     if (axisPtr->scrollCmdPrefix != NULL) {
@@ -2367,7 +2367,7 @@ DrawAxis(graphPtr, drawable, axisPtr)
 	    viewMin = log10(viewMin);
 	    viewMax = log10(viewMax);
 	}
-	worldWidth = worldMax - worldMin;	
+	worldWidth = worldMax - worldMin;
 	viewWidth = viewMax - viewMin;
 	isHoriz = AxisIsHorizontal(graphPtr, axisPtr);
 
@@ -2407,15 +2407,15 @@ DrawAxis(graphPtr, drawable, axisPtr)
 	TickLabel *labelPtr;
 
 	for (linkPtr = Blt_ChainFirstLink(axisPtr->tickLabels); linkPtr != NULL;
-	    linkPtr = Blt_ChainNextLink(linkPtr)) {	
+	    linkPtr = Blt_ChainNextLink(linkPtr)) {
 	    /* Draw major tick labels */
 	    labelPtr = Blt_ChainGetValue(linkPtr);
 	    Blt_DrawText(graphPtr->tkwin, drawable, labelPtr->string,
-		&axisPtr->tickTextStyle, (int)labelPtr->anchorPos.x, 
+		&axisPtr->tickTextStyle, (int)labelPtr->anchorPos.x,
 		(int)labelPtr->anchorPos.y);
 	}
     }
-    if ((axisPtr->nSegments > 0) && (axisPtr->lineWidth > 0)) {	
+    if ((axisPtr->nSegments > 0) && (axisPtr->lineWidth > 0)) {
 	/* Draw the tick marks and axis line. */
 	Blt_Draw2DSegments(graphPtr->display, drawable, axisPtr->tickGC,
 	    axisPtr->segments, axisPtr->nSegments);
@@ -2448,25 +2448,25 @@ AxisToPostScript(psToken, axisPtr)
     Axis *axisPtr;
 {
     if (axisPtr->title != NULL) {
-	Blt_TextToPostScript(psToken, axisPtr->title, &axisPtr->titleTextStyle, 
+	Blt_TextToPostScript(psToken, axisPtr->title, &axisPtr->titleTextStyle,
 		axisPtr->titlePos.x, axisPtr->titlePos.y);
     }
     if (axisPtr->showTicks) {
 	register Blt_ChainLink *linkPtr;
 	TickLabel *labelPtr;
 
-	for (linkPtr = Blt_ChainFirstLink(axisPtr->tickLabels); 
+	for (linkPtr = Blt_ChainFirstLink(axisPtr->tickLabels);
 	     linkPtr != NULL; linkPtr = Blt_ChainNextLink(linkPtr)) {
 	    labelPtr = Blt_ChainGetValue(linkPtr);
-	    Blt_TextToPostScript(psToken, labelPtr->string, 
-		&axisPtr->tickTextStyle, labelPtr->anchorPos.x, 
+	    Blt_TextToPostScript(psToken, labelPtr->string,
+		&axisPtr->tickTextStyle, labelPtr->anchorPos.x,
 		labelPtr->anchorPos.y);
 	}
     }
     if ((axisPtr->nSegments > 0) && (axisPtr->lineWidth > 0)) {
 	Blt_LineAttributesToPostScript(psToken, axisPtr->tickTextStyle.color,
 	    axisPtr->lineWidth, (Blt_Dashes *)NULL, CapButt, JoinMiter);
-	Blt_2DSegmentsToPostScript(psToken, axisPtr->segments, 
+	Blt_2DSegmentsToPostScript(psToken, axisPtr->segments,
 	   axisPtr->nSegments);
     }
 }
@@ -2539,7 +2539,7 @@ Blt_GetAxisSegments(graphPtr, axisPtr, segPtrPtr, nSegmentsPtr)
 	needed += (t1Ptr->nTicks * t2Ptr->nTicks);
     }
     if (needed == 0) {
-	return;			
+	return;
     }
     segments = Blt_Malloc(sizeof(Segment2D) * needed);
     if (segments == NULL) {
@@ -2611,7 +2611,7 @@ GetAxisGeometry(graphPtr, axisPtr)
 	TickLabel *labelPtr;
 
 	SweepTicks(axisPtr);
-	
+
 	if (axisPtr->t1Ptr->nTicks < 0) {
 	    fprintf(stderr, "%s major ticks can't be %d\n",
 		    axisPtr->name, axisPtr->t1Ptr->nTicks);
@@ -2622,7 +2622,7 @@ GetAxisGeometry(graphPtr, axisPtr)
 		    axisPtr->name, axisPtr->t1Ptr->nTicks);
 	    abort();
 	}
-	
+
 	maxHeight = maxWidth = 0;
 	nLabels = 0;
 	for (i = 0; i < axisPtr->t1Ptr->nTicks; i++) {
@@ -2636,11 +2636,11 @@ GetAxisGeometry(graphPtr, axisPtr)
 	    labelPtr = MakeLabel(graphPtr, axisPtr, x);
 	    Blt_ChainAppend(axisPtr->tickLabels, labelPtr);
 	    nLabels++;
-	    /* 
-	     * Get the dimensions of each tick label.  
-	     * Remember tick labels can be multi-lined and/or rotated. 
+	    /*
+	     * Get the dimensions of each tick label.
+	     * Remember tick labels can be multi-lined and/or rotated.
 	     */
-	    Blt_GetTextExtents(&axisPtr->tickTextStyle, labelPtr->string, 
+	    Blt_GetTextExtents(&axisPtr->tickTextStyle, labelPtr->string,
 	       &lw, &lh);
 	    labelPtr->width = lw;
 	    labelPtr->height = lh;
@@ -2648,7 +2648,7 @@ GetAxisGeometry(graphPtr, axisPtr)
 	    if (axisPtr->tickTextStyle.theta > 0.0) {
 		double rotWidth, rotHeight;
 
-		Blt_GetBoundingBox(lw, lh, axisPtr->tickTextStyle.theta, 
+		Blt_GetBoundingBox(lw, lh, axisPtr->tickTextStyle.theta,
 			&rotWidth, &rotHeight, (Point2D *)NULL);
 		lw = ROUND(rotWidth);
 		lh = ROUND(rotHeight);
@@ -2661,13 +2661,13 @@ GetAxisGeometry(graphPtr, axisPtr)
 	    }
 	}
 	assert(nLabels <= axisPtr->t1Ptr->nTicks);
-	
+
 	/* Because the axis cap style is "CapProjecting", we need to
 	 * account for an extra 1.5 linewidth at the end of each
 	 * line.  */
 
 	pad = ((axisPtr->lineWidth * 15) / 10);
-	
+
 	if (AxisIsHorizontal(graphPtr, axisPtr)) {
 	    height += maxHeight + pad;
 	} else {
@@ -2703,12 +2703,12 @@ GetAxisGeometry(graphPtr, axisPtr)
  *
  * GetMarginGeometry --
  *
- *	Examines all the axes in the given margin and determines the 
- *	area required to display them.  
+ *	Examines all the axes in the given margin and determines the
+ *	area required to display them.
  *
  *	Note: For multiple axes, the titles are displayed in another
  *	      margin. So we must keep track of the widest title.
- *	
+ *
  * Results:
  *	Returns the width or height of the margin, depending if it
  *	runs horizontally along the graph or vertically.
@@ -2790,7 +2790,7 @@ ComputeMargins(graphPtr)
     int width, height;
     int insets;
 
-    /* 
+    /*
      * Step 1:	Compute the amount of space needed to display the
      *		axes (there many be 0 or more) associated with the
      *		margin.
@@ -2800,16 +2800,16 @@ ComputeMargins(graphPtr)
     left = GetMarginGeometry(graphPtr, &graphPtr->leftMargin);
     right = GetMarginGeometry(graphPtr, &graphPtr->rightMargin);
 
-    /* 
-     * Step 2:  Add the graph title height to the top margin. 
+    /*
+     * Step 2:  Add the graph title height to the top margin.
      */
     if (graphPtr->title != NULL) {
 	top += graphPtr->titleTextStyle.height;
     }
     insets = 2 * (graphPtr->inset + graphPtr->plotBorderWidth);
 
-    /* 
-     * Step 3:  Use the current estimate of the plot area to compute 
+    /*
+     * Step 3:  Use the current estimate of the plot area to compute
      *		the legend size.  Add it to the proper margin.
      */
     width = graphPtr->width - (insets + left + right);
@@ -2837,22 +2837,22 @@ ComputeMargins(graphPtr)
 	}
     }
 
-    /* 
-     * Recompute the plotarea, now accounting for the legend. 
+    /*
+     * Recompute the plotarea, now accounting for the legend.
      */
     width = graphPtr->width - (insets + left + right);
     height = graphPtr->height - (insets + top + bottom);
 
     /*
-     * Step 5:	If necessary, correct for the requested plot area 
+     * Step 5:	If necessary, correct for the requested plot area
      *		aspect ratio.
      */
     if (graphPtr->aspect > 0.0) {
 	double ratio;
 
-	/* 
+	/*
 	 * Shrink one dimension of the plotarea to fit the requested
-	 * width/height aspect ratio.  
+	 * width/height aspect ratio.
 	 */
 	ratio = (double)width / (double)height;
 	if (ratio > graphPtr->aspect) {
@@ -2880,10 +2880,10 @@ ComputeMargins(graphPtr)
 	}
     }
 
-    /* 
-     * Step 6:	If there's multiple axes in a margin, the axis 
+    /*
+     * Step 6:	If there's multiple axes in a margin, the axis
      *		titles will be displayed in the adjoining marging.
-     *		Make sure there's room for the longest axis titles. 
+     *		Make sure there's room for the longest axis titles.
      */
 
     if (top < graphPtr->leftMargin.axesTitleLength) {
@@ -2899,16 +2899,16 @@ ComputeMargins(graphPtr)
 	right = graphPtr->topMargin.axesTitleLength;
     }
 
-    /* 
-     * Step 7:  Override calculated values with requested margin 
-     *		sizes. 
+    /*
+     * Step 7:  Override calculated values with requested margin
+     *		sizes.
      */
 
     graphPtr->leftMargin.width = left;
     graphPtr->rightMargin.width = right;
     graphPtr->topMargin.height =  top;
     graphPtr->bottomMargin.height = bottom;
-	    
+
     if (graphPtr->leftMargin.reqSize > 0) {
 	graphPtr->leftMargin.width = graphPtr->leftMargin.reqSize;
     }
@@ -3015,13 +3015,13 @@ Blt_LayoutMargins(graphPtr)
     int left, right, top, bottom;
 
     ComputeMargins(graphPtr);
-    left = graphPtr->leftMargin.width + graphPtr->inset + 
+    left = graphPtr->leftMargin.width + graphPtr->inset +
 	graphPtr->plotBorderWidth;
-    right = graphPtr->rightMargin.width + graphPtr->inset + 
+    right = graphPtr->rightMargin.width + graphPtr->inset +
 	graphPtr->plotBorderWidth;
-    top = graphPtr->topMargin.height + graphPtr->inset + 
+    top = graphPtr->topMargin.height + graphPtr->inset +
 	graphPtr->plotBorderWidth;
-    bottom = graphPtr->bottomMargin.height + graphPtr->inset + 
+    bottom = graphPtr->bottomMargin.height + graphPtr->inset +
 	graphPtr->plotBorderWidth;
 
     /* Based upon the margins, calculate the space left for the graph. */
@@ -3121,14 +3121,14 @@ ConfigureAxis(graphPtr, axisPtr)
 	axisPtr->titleHeight = (short int)h;
     }
 
-    /* 
+    /*
      * Don't bother to check what configuration options have changed.
      * Almost every option changes the size of the plotting area
      * (except for -color and -titlecolor), requiring the graph and
      * its contents to be completely redrawn.
      *
      * Recompute the scale and offset of the axis in case -min, -max
-     * options have changed.  
+     * options have changed.
      */
     graphPtr->flags |= REDRAW_WORLD;
     if (!Blt_ConfigModified(configSpecs, "-*color", "-background", "-bg",
@@ -3165,7 +3165,7 @@ CreateAxis(graphPtr, name, margin)
     int isNew;
 
     if (name[0] == '-') {
-	Tcl_AppendResult(graphPtr->interp, "name of axis \"", name, 
+	Tcl_AppendResult(graphPtr->interp, "name of axis \"", name,
 			 "\" can't start with a '-'", (char *)NULL);
 	return NULL;
     }
@@ -3193,11 +3193,11 @@ CreateAxis(graphPtr, name, margin)
 	axisPtr->reqMin = axisPtr->reqMax = VALUE_UNDEFINED;
 	axisPtr->scrollMin = axisPtr->scrollMax = VALUE_UNDEFINED;
 
-	if ((graphPtr->classUid == bltBarElementUid) && 
+	if ((graphPtr->classUid == bltBarElementUid) &&
 	    ((margin == MARGIN_TOP) || (margin == MARGIN_BOTTOM))) {
 	    axisPtr->reqStep = 1.0;
 	    axisPtr->reqNumMinorTicks = 0;
-	} 
+	}
 	if ((margin == MARGIN_RIGHT) || (margin == MARGIN_TOP)) {
 	    axisPtr->hidden = TRUE;
 	}
@@ -3325,9 +3325,9 @@ Blt_DefaultAxes(graphPtr)
 	axisPtr->flags |= AXIS_ONSCREEN;
 
 	/*
-	 * Blt_ConfigureWidgetComponent creates a temporary child window 
+	 * Blt_ConfigureWidgetComponent creates a temporary child window
 	 * by the name of the axis.  It's used so that the Tk routines
-	 * that access the X resource database can describe a single 
+	 * that access the X resource database can describe a single
 	 * component and not the entire graph.
 	 */
 	if (Blt_ConfigureWidgetComponent(graphPtr->interp, graphPtr->tkwin,
@@ -3365,7 +3365,7 @@ BindOp(graphPtr, axisPtr, argc, argv)
     return Blt_ConfigureBindings(interp, graphPtr->bindTable,
           Blt_MakeAxisTag(graphPtr, axisPtr->name), argc, argv);
 }
-          
+
 /*
  * ----------------------------------------------------------------------
  *
@@ -3471,12 +3471,12 @@ GetOp(graphPtr, argc, argv)
 
     axisPtr = (Axis *)Blt_GetCurrentItem(graphPtr->bindTable);
     /* Report only on axes. */
-    if ((axisPtr != NULL) && 
+    if ((axisPtr != NULL) &&
 	((axisPtr->classUid == bltXAxisUid) ||
-	 (axisPtr->classUid == bltYAxisUid) || 
+	 (axisPtr->classUid == bltYAxisUid) ||
 	 (axisPtr->classUid == NULL))) {
 	char c;
-	
+
 	c = argv[3][0];
 	if ((c == 'c') && (strcmp(argv[3], "current") == 0)) {
 	    Tcl_SetResult(interp, axisPtr->name, TCL_VOLATILE);
@@ -3564,7 +3564,7 @@ InvTransformOp(graphPtr, axisPtr, argc, argv)
      *
      * Check the site where the axis was positioned.  If the axis is
      * virtual, all we have to go on is how it was mapped to an
-     * element (using either -mapx or -mapy options).  
+     * element (using either -mapx or -mapy options).
      */
     if (AxisIsHorizontal(graphPtr, axisPtr)) {
 	y = Blt_InvHMap(graphPtr, axisPtr, (double)x);
@@ -3672,7 +3672,7 @@ UseOp(graphPtr, axisPtr, argc, argv)
 	axisPtr->flags &= ~AXIS_ONSCREEN;
 	/* Clear the axis type if it's not currently used.*/
 	if (axisPtr->refCount == 0) {
-	    axisPtr->classUid = NULL; 
+	    axisPtr->classUid = NULL;
 	}
     }
     Blt_ChainReset(chainPtr);
@@ -3682,11 +3682,11 @@ UseOp(graphPtr, axisPtr, argc, argv)
 	    return TCL_ERROR;
 	}
 	if (axisPtr->classUid == NULL) {
-	    axisPtr->classUid = classUid; 
+	    axisPtr->classUid = classUid;
 	} else if (axisPtr->classUid != classUid) {
-	    Tcl_AppendResult(graphPtr->interp, "wrong type axis \"", 
-		     axisPtr->name, "\": can't use ", classUid, " type axis.", 
-		     (char *)NULL);			     
+	    Tcl_AppendResult(graphPtr->interp, "wrong type axis \"",
+		     axisPtr->name, "\": can't use ", classUid, " type axis.",
+		     (char *)NULL);
 	    Blt_Free(names);
 	    return TCL_ERROR;
 	}
@@ -3704,7 +3704,7 @@ UseOp(graphPtr, axisPtr, argc, argv)
     /* When any axis changes, we need to layout the entire graph.  */
     graphPtr->flags |= (MAP_WORLD | REDRAW_WORLD);
     Blt_EventuallyRedrawGraph(graphPtr);
-    
+
     Blt_Free(names);
     return TCL_OK;
 }
@@ -3780,7 +3780,7 @@ BindVirtualOp(graphPtr, argc, argv)
 	}
 	return TCL_OK;
     }
-    return Blt_ConfigureBindings(interp, graphPtr->bindTable, 
+    return Blt_ConfigureBindings(interp, graphPtr->bindTable,
 	 Blt_MakeAxisTag(graphPtr, argv[3]), argc - 4, argv + 4);
 }
 
@@ -4068,10 +4068,10 @@ ViewOp(graphPtr, argc, argv)
     }
     viewMin = axisPtr->min;
     viewMax = axisPtr->max;
-    /* Bound the view within scroll region. */ 
+    /* Bound the view within scroll region. */
     if (viewMin < worldMin) {
 	viewMin = worldMin;
-    } 
+    }
     if (viewMax > worldMax) {
 	viewMax = worldMax;
     }
@@ -4105,7 +4105,7 @@ ViewOp(graphPtr, argc, argv)
 	return TCL_OK;
     }
     fract = axisOffset / worldWidth;
-    if (GetAxisScrollInfo(interp, argc - 4, argv + 4, &fract, 
+    if (GetAxisScrollInfo(interp, argc - 4, argv + 4, &fract,
 		viewWidth / worldWidth, scrollUnits) != TCL_OK) {
 	return TCL_ERROR;
     }
@@ -4136,7 +4136,7 @@ Blt_VirtualAxisOp(graphPtr, interp, argc, argv)
     int result;
     static Blt_OpSpec axisOps[] =
     {
-	{"bind", 1, (Blt_Op)BindVirtualOp, 3, 6, 
+	{"bind", 1, (Blt_Op)BindVirtualOp, 3, 6,
 	     "axisName sequence command",},
 	{"cget", 2, (Blt_Op)CgetVirtualOp, 5, 5, "axisName option",},
 	{"configure", 2, (Blt_Op)ConfigureVirtualOp, 4, 0,
@@ -4185,12 +4185,12 @@ Blt_AxisOp(graphPtr, margin, argc, argv)
     };
     static int nAxisOps = sizeof(axisOps) / sizeof(Blt_OpSpec);
 
-    proc = Blt_GetOp(graphPtr->interp, nAxisOps, axisOps, BLT_OP_ARG2, 
+    proc = Blt_GetOp(graphPtr->interp, nAxisOps, axisOps, BLT_OP_ARG2,
 	argc, argv, 0);
     if (proc == NULL) {
 	return TCL_ERROR;
     }
-    argv[2] = (char *)margin; /* Hack. Slide a reference to the margin in 
+    argv[2] = (char *)margin; /* Hack. Slide a reference to the margin in
 			       * the argument list. Needed only for UseOp.
 			       */
     axisPtr = Blt_GetFirstAxis(graphPtr->margins[margin].axes);
@@ -4207,7 +4207,7 @@ Blt_MapAxes(graphPtr)
     Blt_ChainLink *linkPtr;
     register int margin;
     int offset;
-    
+
     for (margin = 0; margin < 4; margin++) {
 	chainPtr = graphPtr->margins[margin].axes;
 	offset = 0;
@@ -4236,7 +4236,7 @@ Blt_DrawAxes(graphPtr, drawable)
     register int i;
 
     for (i = 0; i < 4; i++) {
-	for (linkPtr = Blt_ChainFirstLink(graphPtr->margins[i].axes); 
+	for (linkPtr = Blt_ChainFirstLink(graphPtr->margins[i].axes);
 	     linkPtr != NULL; linkPtr = Blt_ChainNextLink(linkPtr)) {
 	    axisPtr = Blt_ChainGetValue(linkPtr);
 	    if ((!axisPtr->hidden) && (axisPtr->flags & AXIS_ONSCREEN)) {
@@ -4256,7 +4256,7 @@ Blt_AxesToPostScript(graphPtr, psToken)
     register int i;
 
     for (i = 0; i < 4; i++) {
-	for (linkPtr = Blt_ChainFirstLink(graphPtr->margins[i].axes); 
+	for (linkPtr = Blt_ChainFirstLink(graphPtr->margins[i].axes);
 	     linkPtr != NULL; linkPtr = Blt_ChainNextLink(linkPtr)) {
 	    axisPtr = Blt_ChainGetValue(linkPtr);
 	    if ((!axisPtr->hidden) && (axisPtr->flags & AXIS_ONSCREEN)) {
@@ -4272,7 +4272,7 @@ Blt_AxesToPostScript(graphPtr, psToken)
  *
  * Blt_DrawAxisLimits --
  *
- *	Draws the min/max values of the axis in the plotting area. 
+ *	Draws the min/max values of the axis in the plotting area.
  *	The text strings are formatted according to the "sprintf"
  *	format descriptors in the limitsFormats array.
  *
@@ -4397,14 +4397,14 @@ Blt_AxisLimitsToPostScript(graphPtr, psToken)
 		if (axisPtr->classUid == bltXAxisUid) {
 		    axisPtr->limitsTextStyle.theta = 90.0;
 		    axisPtr->limitsTextStyle.anchor = TK_ANCHOR_SE;
-		    Blt_TextToPostScript(psToken, string, 
-					 &axisPtr->limitsTextStyle, 
+		    Blt_TextToPostScript(psToken, string,
+					 &axisPtr->limitsTextStyle,
 					 (double)graphPtr->right, hMax);
 		    hMax -= (textWidth + SPACING);
 		} else {
 		    axisPtr->limitsTextStyle.theta = 0.0;
 		    axisPtr->limitsTextStyle.anchor = TK_ANCHOR_NW;
-		    Blt_TextToPostScript(psToken, string, 
+		    Blt_TextToPostScript(psToken, string,
 			 &axisPtr->limitsTextStyle, vMax, (double)graphPtr->top);
 		    vMax += (textWidth + SPACING);
 		}
@@ -4418,14 +4418,14 @@ Blt_AxisLimitsToPostScript(graphPtr, psToken)
 		axisPtr->limitsTextStyle.anchor = TK_ANCHOR_SW;
 		if (axisPtr->classUid == bltXAxisUid) {
 		    axisPtr->limitsTextStyle.theta = 90.0;
-		    Blt_TextToPostScript(psToken, string, 
-					 &axisPtr->limitsTextStyle, 
+		    Blt_TextToPostScript(psToken, string,
+					 &axisPtr->limitsTextStyle,
 					 (double)graphPtr->left, hMin);
 		    hMin -= (textWidth + SPACING);
 		} else {
 		    axisPtr->limitsTextStyle.theta = 0.0;
-		    Blt_TextToPostScript(psToken, string, 
-					 &axisPtr->limitsTextStyle, 
+		    Blt_TextToPostScript(psToken, string,
+					 &axisPtr->limitsTextStyle,
 					 vMin, (double)graphPtr->bottom);
 		    vMin += (textWidth + SPACING);
 		}
@@ -4458,7 +4458,7 @@ Blt_NearestAxis(graphPtr, x, y)
     int width, height;
     double rotWidth, rotHeight;
     Point2D bbox[5];
-    
+
     for (hPtr = Blt_FirstHashEntry(&graphPtr->axes.table, &cursor);
 	 hPtr != NULL; hPtr = Blt_NextHashEntry(&cursor)) {
 	axisPtr = (Axis *)Blt_GetHashValue(hPtr);
@@ -4471,14 +4471,14 @@ Blt_NearestAxis(graphPtr, x, y)
 	    TickLabel *labelPtr;
 	    Point2D t;
 
-	    for (linkPtr = Blt_ChainFirstLink(axisPtr->tickLabels); 
-		 linkPtr != NULL; linkPtr = Blt_ChainNextLink(linkPtr)) {	
+	    for (linkPtr = Blt_ChainFirstLink(axisPtr->tickLabels);
+		 linkPtr != NULL; linkPtr = Blt_ChainNextLink(linkPtr)) {
 		labelPtr = Blt_ChainGetValue(linkPtr);
-		Blt_GetBoundingBox(labelPtr->width, labelPtr->height, 
+		Blt_GetBoundingBox(labelPtr->width, labelPtr->height,
 		    axisPtr->tickTextStyle.theta, &rotWidth, &rotHeight, bbox);
 		width = ROUND(rotWidth);
 		height = ROUND(rotHeight);
-		t = Blt_TranslatePoint(&labelPtr->anchorPos, width, height, 
+		t = Blt_TranslatePoint(&labelPtr->anchorPos, width, height,
 			axisPtr->tickTextStyle.anchor);
 		t.x = x - t.x - (width * 0.5);
 		t.y = y - t.y - (height * 0.5);
@@ -4495,17 +4495,17 @@ Blt_NearestAxis(graphPtr, x, y)
 
 	    Blt_GetTextExtents(&axisPtr->titleTextStyle, axisPtr->title,&width,
 		 &height);
-	    Blt_GetBoundingBox(width, height, axisPtr->titleTextStyle.theta, 
+	    Blt_GetBoundingBox(width, height, axisPtr->titleTextStyle.theta,
 		&rotWidth, &rotHeight, bbox);
 	    width = ROUND(rotWidth);
 	    height = ROUND(rotHeight);
-	    t = Blt_TranslatePoint(&axisPtr->titlePos, width, height, 
+	    t = Blt_TranslatePoint(&axisPtr->titlePos, width, height,
 		axisPtr->titleTextStyle.anchor);
-	    /* Translate the point so that the 0,0 is the upper left 
+	    /* Translate the point so that the 0,0 is the upper left
 	     * corner of the bounding box.  */
 	    t.x = x - t.x - (width / 2);
 	    t.y = y - t.y - (height / 2);
-	    
+
 	    bbox[4] = bbox[0];
 	    if (Blt_PointInPolygon(&t, bbox, 5)) {
 		axisPtr->detail = "title";
@@ -4521,7 +4521,7 @@ Blt_NearestAxis(graphPtr, x, y)
     }
     return NULL;
 }
- 
+
 ClientData
 Blt_MakeAxisTag(graphPtr, tagName)
     Graph *graphPtr;

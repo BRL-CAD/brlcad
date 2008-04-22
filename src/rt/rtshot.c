@@ -1,7 +1,7 @@
 /*                        R T S H O T . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2007 United  States Government as represented by
+ * Copyright (c) 1987-2008 United  States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,31 +25,16 @@
  *	at point
  *	direction vector
  *
- *  Author -
- *	Michael John Muuss
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  */
-#ifndef lint
-static const char RCSrt[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
 #include <stdlib.h>
 #include <stdio.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
 #include <ctype.h>
 #include <math.h>
 
-#include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtprivate.h"
@@ -122,16 +107,15 @@ main(int argc, char **argv)
     int attr_count=0, i;
     char **attrs = (char **)NULL;
 
-    if( argc < 3 )  {
-	(void)fputs(usage, stderr);
-	exit(1);
+    if ( argc < 3 )  {
+	bu_exit(1, usage);
     }
 
     RT_APPLICATION_INIT(&ap);
 
     argc--;
     argv++;
-    while( argv[0][0] == '-' ) switch( argv[0][1] )  {
+    while ( argv[0][0] == '-' ) switch ( argv[0][1] )  {
 	case 'R':
 	    bundle_radius = atof( argv[1] );
 	    argc -= 2;
@@ -150,19 +134,18 @@ main(int argc, char **argv)
 	case 'v':
 	    /* count the number of attribute names provided */
 	    ptr = argv[1];
-	    while( *ptr ) {
-		while( *ptr && isspace( *ptr ) )
+	    while ( *ptr ) {
+		while ( *ptr && isspace( *ptr ) )
 		    ptr++;
-		if( *ptr )
+		if ( *ptr )
 		    attr_count++;
-		while( *ptr && !isspace( *ptr ) )
+		while ( *ptr && !isspace( *ptr ) )
 		    ptr++;
 	    }
 
-	    if( attr_count == 0 ) {
-		bu_log( "missing list of attribute names!!!\n" );
-		(void)fputs(usage, stderr);
-		exit( 1 );
+	    if ( attr_count == 0 ) {
+		bu_log( "missing list of attribute names!\n" );
+		bu_exit( 1, usage );
 	    }
 
 	    /* allocate enough for a null terminated list */
@@ -171,7 +154,7 @@ main(int argc, char **argv)
 	    /* use strtok to actually grab the names */
 	    i = 0;
 	    ptr = strtok( argv[1], "\t " );
-	    while( ptr && i < attr_count ) {
+	    while ( ptr && i < attr_count ) {
 		attrs[i] = bu_strdup( ptr );
 		ptr = strtok( (char *)NULL, "\t " );
 		i++;
@@ -195,15 +178,15 @@ main(int argc, char **argv)
 	    argv += 2;
 	    break;
 	case 'r':
-	    {
-		float ray_len;
+	{
+	    float ray_len;
 
-		sscanf( argv[1], "%f", &ray_len );
-		set_ray_length = ray_len;
-	    }
-	    argc -= 2;
-	    argv += 2;
-	    break;
+	    sscanf( argv[1], "%f", &ray_len );
+	    set_ray_length = ray_len;
+	}
+	argc -= 2;
+	argv += 2;
+	break;
 	case 'U':
 	    sscanf( argv[1], "%d", &use_air );
 	    argc -= 2;
@@ -211,30 +194,30 @@ main(int argc, char **argv)
 	    break;
 	case 'u':
 	    sscanf( argv[1], "%x", (unsigned int *)&bu_debug );
-	    fprintf(stderr,"librt bu_debug=x%x\n", bu_debug);
+	    fprintf(stderr, "librt bu_debug=x%x\n", bu_debug);
 	    argc -= 2;
 	    argv += 2;
 	    break;
 	case 'x':
 	    sscanf( argv[1], "%x", (unsigned int *)&rt_g.debug );
-	    fprintf(stderr,"librt rt_g.debug=x%x\n", rt_g.debug);
+	    fprintf(stderr, "librt rt_g.debug=x%x\n", rt_g.debug);
 	    argc -= 2;
 	    argv += 2;
 	    break;
 	case 'X':
 	    sscanf( argv[1], "%x", (unsigned int *)&rdebug );
-	    fprintf(stderr,"rdebug=x%x\n", rdebug);
+	    fprintf(stderr, "rdebug=x%x\n", rdebug);
 	    argc -= 2;
 	    argv += 2;
 	    break;
 	case 'N':
 	    sscanf( argv[1], "%x", (unsigned int *)&rt_g.NMG_debug);
-	    fprintf(stderr,"librt rt_g.NMG_debug=x%x\n", rt_g.NMG_debug);
+	    fprintf(stderr, "librt rt_g.NMG_debug=x%x\n", rt_g.NMG_debug);
 	    argc -= 2;
 	    argv += 2;
 	    break;
 	case 'd':
-	    if( argc < 4 )  goto err;
+	    if ( argc < 4 )  goto err;
 	    ap.a_ray.r_dir[X] = atof( argv[1] );
 	    ap.a_ray.r_dir[Y] = atof( argv[2] );
 	    ap.a_ray.r_dir[Z] = atof( argv[3] );
@@ -244,7 +227,7 @@ main(int argc, char **argv)
 	    continue;
 
 	case 'p':
-	    if( argc < 4 )  goto err;
+	    if ( argc < 4 )  goto err;
 	    ap.a_ray.r_pt[X] = atof( argv[1] );
 	    ap.a_ray.r_pt[Y] = atof( argv[2] );
 	    ap.a_ray.r_pt[Z] = atof( argv[3] );
@@ -254,7 +237,7 @@ main(int argc, char **argv)
 	    continue;
 
 	case 'a':
-	    if( argc < 4 )  goto err;
+	    if ( argc < 4 )  goto err;
 	    at_vect[X] = atof( argv[1] );
 	    at_vect[Y] = atof( argv[2] );
 	    at_vect[Z] = atof( argv[3] );
@@ -264,44 +247,42 @@ main(int argc, char **argv)
 	    continue;
 
 	case 'O':
+	{
+	    if ( !strcmp( argv[1], "resolve" ) || !strcmp( argv[1], "0") )
+		overlap_claimant_handling = 0;
+	    else if ( !strcmp( argv[1], "rebuild_fastgen" ) || !strcmp( argv[1], "1") )
+		overlap_claimant_handling = 1;
+	    else if ( !strcmp( argv[1], "rebuild_all" ) || !strcmp( argv[1], "2") )
+		overlap_claimant_handling = 2;
+	    else if ( !strcmp( argv[1], "retain" ) || !strcmp( argv[1], "3") )
+		overlap_claimant_handling = 3;
+	    else
 	    {
-		if( !strcmp( argv[1], "resolve" ) || !strcmp( argv[1], "0") )
-		    overlap_claimant_handling = 0;
-		else if( !strcmp( argv[1], "rebuild_fastgen" ) || !strcmp( argv[1], "1") )
-		    overlap_claimant_handling = 1;
-		else if( !strcmp( argv[1], "rebuild_all" ) || !strcmp( argv[1], "2") )
-		    overlap_claimant_handling = 2;
-		else if( !strcmp( argv[1], "retain" ) || !strcmp( argv[1], "3") )
-		    overlap_claimant_handling = 3;
-		else
-		    {
-			bu_log( "Illegal argument (%s) to '-O' option.  Must be:\n", argv[1] );
-			bu_log( "\t'resolve' or '0'\n");
-			bu_log( "\t'rebuild_fastgen' or '1'\n");
-			bu_log( "\t'rebuild_all' or '2'\n");
-			bu_log( "\t'retain' or '3'\n");
-			exit( 1 );
-		    }
-		argc -= 2;
-		argv += 2;
+		bu_log( "Illegal argument (%s) to '-O' option.  Must be:\n", argv[1] );
+		bu_log( "\t'resolve' or '0'\n");
+		bu_log( "\t'rebuild_fastgen' or '1'\n");
+		bu_log( "\t'rebuild_all' or '2'\n");
+		bu_log( "\t'retain' or '3'\n");
+		bu_exit(1, NULL);
 	    }
-	    continue;
+	    argc -= 2;
+	    argv += 2;
+	}
+	continue;
 
 	default:
     err:
-	    (void)fputs(usage, stderr);
-	    exit(1);
+	    bu_exit(1, usage);
     }
-    if( argc < 2 )  {
-	fprintf(stderr,"rtshot: MGED database not specified\n");
+    if ( argc < 2 )  {
 	(void)fputs(usage, stderr);
-	exit(1);
+	bu_exit(1, "rtshot: MGED database not specified\n");
     }
 
-    if( set_dir + set_pt + set_at != 2 )  goto err;
+    if ( set_dir + set_pt + set_at != 2 )  goto err;
 
-    if( num_rings != 0 || rays_per_ring != 0 || bundle_radius != 0.0 ) {
-	if( num_rings <= 0 || rays_per_ring <= 0 || bundle_radius <= 0.0 ) {
+    if ( num_rings != 0 || rays_per_ring != 0 || bundle_radius != 0.0 ) {
+	if ( num_rings <= 0 || rays_per_ring <= 0 || bundle_radius <= 0.0 ) {
 	    fprintf( stderr, "Must have all of \"-R\", \"-n\", and \"-c\" set\n" );
 	    goto err;
 	}
@@ -311,12 +292,11 @@ main(int argc, char **argv)
     title_file = argv[0];
     argv++;
     argc--;
-    if( (rtip=rt_dirbuild(title_file, idbuf, sizeof(idbuf))) == RTI_NULL ) {
-	fprintf(stderr,"rtshot:  rt_dirbuild failure\n");
-	exit(2);
+    if ( (rtip=rt_dirbuild(title_file, idbuf, sizeof(idbuf))) == RTI_NULL ) {
+	bu_exit(2, "rtshot:  rt_dirbuild failure\n");
     }
 
-    if( overlap_claimant_handling )
+    if ( overlap_claimant_handling )
 	rtip->rti_save_overlaps = 1;
 
     ap.a_rt_i = rtip;
@@ -324,25 +304,24 @@ main(int argc, char **argv)
     rtip->useair = use_air;
 
     /* Walk trees */
-    if( rt_gettrees_and_attrs( rtip, (const char **)attrs, argc, (const char **)argv, 1 ) ) {
-	fprintf(stderr,"rt_gettrees FAILED\n");
-	exit( 1 );
+    if ( rt_gettrees_and_attrs( rtip, (const char **)attrs, argc, (const char **)argv, 1 ) ) {
+	bu_exit(1, "rt_gettrees FAILED\n");
     }
     ap.attrs = attrs;
 
     rt_prep(rtip);
 
-    if( R_DEBUG&RDEBUG_RAYPLOT )  {
-	if( (plotfp = fopen("rtshot.plot", "w")) == NULL )  {
+    if ( R_DEBUG&RDEBUG_RAYPLOT )  {
+	if ( (plotfp = fopen("rtshot.plot", "w")) == NULL )  {
 	    perror("rtshot.plot");
-	    exit(1);
+	    bu_exit(1, NULL);
 	}
 	pdv_3space( plotfp, rtip->rti_pmin, rtip->rti_pmax );
     }
 
     /* Compute r_dir and r_pt from the inputs */
-    if( set_at )  {
-	if( set_dir ) {
+    if ( set_at )  {
+	if ( set_dir ) {
 	    vect_t	diag;
 	    fastf_t	viewsize;
 	    VSUB2( diag, rtip->mdl_max, rtip->mdl_min );
@@ -356,18 +335,18 @@ main(int argc, char **argv)
     }
     VUNITIZE( ap.a_ray.r_dir );
 
-    if( rays_per_ring ) {
+    if ( rays_per_ring ) {
 	bu_log( "Central Ray:\n" );
     }
     VPRINT( "Pnt", ap.a_ray.r_pt );
     VPRINT( "Dir", ap.a_ray.r_dir );
 
-    if( set_onehit )
+    if ( set_onehit )
 	ap.a_onehit = set_onehit;
     else
 	ap.a_onehit = 0;
 
-    if( set_ray_length > 0.0 )
+    if ( set_ray_length > 0.0 )
 	ap.a_ray_length = set_ray_length;
     else
 	ap.a_ray_length = 0.0;
@@ -377,7 +356,7 @@ main(int argc, char **argv)
     ap.a_hit = hit;
     ap.a_miss = miss;
 
-    if( rays_per_ring ) {
+    if ( rays_per_ring ) {
 	vect_t avec, bvec;
 	struct xray *rp;
 
@@ -409,24 +388,24 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
     point_t inpt, outpt;
     vect_t	inormal, onormal;
 
-    if( (pp=PartHeadp->pt_forw) == PartHeadp )
+    if ( (pp=PartHeadp->pt_forw) == PartHeadp )
 	return(0);		/* Nothing hit?? */
 
-    if( overlap_claimant_handling == 1 )
+    if ( overlap_claimant_handling == 1 )
 	rt_rebuild_overlaps( PartHeadp, ap, 1 );
-    else if( overlap_claimant_handling == 2 )
+    else if ( overlap_claimant_handling == 2 )
 	rt_rebuild_overlaps( PartHeadp, ap, 0 );
 
     /* First, plot ray start to inhit */
-    if( R_DEBUG&RDEBUG_RAYPLOT )  {
-	if( pp->pt_inhit->hit_dist > 0.0001 )  {
+    if ( R_DEBUG&RDEBUG_RAYPLOT )  {
+	if ( pp->pt_inhit->hit_dist > 0.0001 )  {
 	    VJOIN1( inpt, ap->a_ray.r_pt,
 		    pp->pt_inhit->hit_dist, ap->a_ray.r_dir );
 	    pl_color( plotfp, 0, 0, 255 );
 	    pdv_3line( plotfp, ap->a_ray.r_pt, inpt );
 	}
     }
-    for( ; pp != PartHeadp; pp = pp->pt_forw )  {
+    for (; pp != PartHeadp; pp = pp->pt_forw )  {
 	matp_t inv_mat;
 	Tcl_HashEntry *entry;
 
@@ -437,8 +416,8 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 	       pp->pt_regionp->reg_bit);
 
 	entry = Tcl_FindHashEntry( (Tcl_HashTable *)ap->a_rt_i->Orca_hash_tbl,
-				   (char *)pp->pt_regionp->reg_bit );
-	if( !entry ) {
+				   (const char *)(size_t)pp->pt_regionp->reg_bit );
+	if ( !entry ) {
 	    inv_mat = (matp_t)NULL;
 	}
 	else {
@@ -446,15 +425,15 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 	    bn_mat_print( "inv_mat", inv_mat );
 	}
 
-	if( pp->pt_overlap_reg )
-	    {
-		struct region *pp_reg;
-		int j=-1;
+	if ( pp->pt_overlap_reg )
+	{
+	    struct region *pp_reg;
+	    int j=-1;
 
-		bu_log( "    Claiming regions:\n" );
-		while( (pp_reg=pp->pt_overlap_reg[++j]) )
-		    bu_log( "        %s\n", pp_reg->reg_name );
-	    }
+	    bu_log( "    Claiming regions:\n" );
+	    while ( (pp_reg=pp->pt_overlap_reg[++j]) )
+		bu_log( "        %s\n", pp_reg->reg_name );
+	}
 
 	/* inhit info */
 	stp = pp->pt_inseg->seg_stp;
@@ -468,7 +447,7 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 	bu_log(    "   PDir (%g, %g, %g) c1=%g, c2=%g\n",
 		   V3ARGS(cur.crv_pdir), cur.crv_c1, cur.crv_c2);
 
-	if( inv_mat ) {
+	if ( inv_mat ) {
 	    point_t in_trans;
 
 	    MAT4X3PNT( in_trans, inv_mat, inpt );
@@ -487,7 +466,7 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 	bu_log(    "   PDir (%g, %g, %g) c1=%g, c2=%g\n",
 		   V3ARGS(cur.crv_pdir), cur.crv_c1, cur.crv_c2);
 
-	if( inv_mat ) {
+	if ( inv_mat ) {
 	    point_t out_trans;
 	    vect_t dir_trans;
 
@@ -499,8 +478,8 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 	}
 
 	/* Plot inhit to outhit */
-	if( R_DEBUG&RDEBUG_RAYPLOT )  {
-	    if( (out = pp->pt_outhit->hit_dist) >= INFINITY )
+	if ( R_DEBUG&RDEBUG_RAYPLOT )  {
+	    if ( (out = pp->pt_outhit->hit_dist) >= INFINITY )
 		out = 10000;	/* to imply the direction */
 
 	    VJOIN1( outpt,
@@ -514,10 +493,10 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 	    struct region *regp = pp->pt_regionp;
 	    int i;
 
-	    if( ap->attrs ) {
+	    if ( ap->attrs ) {
 		bu_log( "\tattribute values:\n" );
 		i = 0;
-		while( ap->attrs[i] && regp->attr_values[i] ) {
+		while ( ap->attrs[i] && regp->attr_values[i] ) {
 		    bu_log( "\t\t%s:\n", ap->attrs[i] );
 		    bu_log( "\t\t\tstring rep = %s\n",
 			    BU_MRO_GETSTRING(regp->attr_values[i]));
@@ -536,7 +515,7 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 int miss(register struct application *ap)
 {
     bu_log("missed\n");
-    if( R_DEBUG&RDEBUG_RAYPLOT )  {
+    if ( R_DEBUG&RDEBUG_RAYPLOT )  {
 	vect_t	out;
 
 	VJOIN1( out, ap->a_ray.r_pt,
@@ -551,8 +530,8 @@ int miss(register struct application *ap)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -1,7 +1,7 @@
 #                        H E L P . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2007 United States Government as represented by
+# Copyright (c) 2004-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -43,25 +43,25 @@ set help_data(vrot)	{{xdeg ydeg zdeg} {rotate viewpoint}}
 set help_data(zoom)	{{scale_factor} {zoom view in or out}}
 
 proc help {args} {
-	global help_data
+    global help_data
 
-	if {[llength $args] > 0} {
-		return [help_comm help_data $args]
-	} else {
-		return [help_comm help_data]
-	}
+    if {[llength $args] > 0} {
+	return [help_comm help_data $args]
+    } else {
+	return [help_comm help_data]
+    }
 }
 
 proc ? {} {
-	global help_data
+	   global help_data
 
-	return [?_comm help_data 20 4]
-}
+	   return [?_comm help_data 20 4]
+       }
 
 proc apropos key {
-	global help_data
+    global help_data
 
-	return [apropos_comm help_data $key]
+    return [apropos_comm help_data $key]
 }
 
 

@@ -3,8 +3,7 @@
  *
  * Copyright (C) 2004 Joe English
  *
- * Ttk widget set: another theme engine.
- * Inspired by the XFCE family of Gnome themes.
+ * "clam" theme; inspired by the XFCE family of Gnome themes.
  */
 
 #include <tk.h>
@@ -131,7 +130,7 @@ static Ttk_ElementOptionSpec BorderElementOptions[] = {
  * the excess is used as padding.
  */
 
-static void BorderElementGeometry(
+static void BorderElementSize(
     void *clientData, void *elementRecord, Tk_Window tkwin,
     int *widthPtr, int *heightPtr, Ttk_Padding *paddingPtr)
 {
@@ -184,7 +183,7 @@ static Ttk_ElementSpec BorderElementSpec = {
     TK_STYLE_VERSION_2,
     sizeof(BorderElement),
     BorderElementOptions,
-    BorderElementGeometry,
+    BorderElementSize,
     BorderElementDraw
 };
 
@@ -211,7 +210,7 @@ static Ttk_ElementOptionSpec FieldElementOptions[] = {
     {0,0,0}
 };
 
-static void FieldElementGeometry(
+static void FieldElementSize(
     void *clientData, void *elementRecord, Tk_Window tkwin,
     int *widthPtr, int *heightPtr, Ttk_Padding *paddingPtr)
 {
@@ -237,7 +236,7 @@ static Ttk_ElementSpec FieldElementSpec = {
     TK_STYLE_VERSION_2,
     sizeof(FieldElement),
     FieldElementOptions,
-    FieldElementGeometry,
+    FieldElementSize,
     FieldElementDraw
 };
 
@@ -264,7 +263,7 @@ static Ttk_ElementSpec ComboboxFieldElementSpec = {
     TK_STYLE_VERSION_2,
     sizeof(FieldElement),
     FieldElementOptions,
-    FieldElementGeometry,
+    FieldElementSize,
     ComboboxFieldElementDraw
 };
 
@@ -297,20 +296,20 @@ static Ttk_ElementOptionSpec IndicatorElementOptions[] = {
     {0,0,0}
 };
 
-static void
-IndicatorElementGeometry(
+static void IndicatorElementSize(
     void *clientData, void *elementRecord, Tk_Window tkwin,
     int *widthPtr, int *heightPtr, Ttk_Padding *paddingPtr)
 {
     IndicatorElement *indicator = elementRecord;
+    Ttk_Padding margins;
     int size = 10;
-    Ttk_GetPaddingFromObj(NULL, tkwin, indicator->marginObj, paddingPtr);
+    Ttk_GetPaddingFromObj(NULL, tkwin, indicator->marginObj, &margins);
     Tk_GetPixelsFromObj(NULL, tkwin, indicator->sizeObj, &size);
-    *widthPtr = *heightPtr = size;
+    *widthPtr = size + Ttk_PaddingWidth(margins);
+    *heightPtr = size + Ttk_PaddingHeight(margins);
 }
 
-static void
-RadioIndicatorElementDraw(
+static void RadioIndicatorElementDraw(
     void *clientData, void *elementRecord, Tk_Window tkwin,
     Drawable d, Ttk_Box b, unsigned state)
 {
@@ -338,8 +337,7 @@ RadioIndicatorElementDraw(
     }
 }
 
-static void
-CheckIndicatorElementDraw(
+static void CheckIndicatorElementDraw(
     void *clientData, void *elementRecord, Tk_Window tkwin,
     Drawable d, Ttk_Box b, unsigned state)
 {
@@ -383,7 +381,7 @@ static Ttk_ElementSpec RadioIndicatorElementSpec = {
     TK_STYLE_VERSION_2,
     sizeof(IndicatorElement),
     IndicatorElementOptions,
-    IndicatorElementGeometry,
+    IndicatorElementSize,
     RadioIndicatorElementDraw
 };
 
@@ -391,7 +389,7 @@ static Ttk_ElementSpec CheckIndicatorElementSpec = {
     TK_STYLE_VERSION_2,
     sizeof(IndicatorElement),
     IndicatorElementOptions,
-    IndicatorElementGeometry,
+    IndicatorElementSize,
     CheckIndicatorElementDraw
 };
 
@@ -422,10 +420,13 @@ static void MenuIndicatorElementSize(
     int *widthPtr, int *heightPtr, Ttk_Padding *paddingPtr)
 {
     MenuIndicatorElement *indicator = elementRecord;
+    Ttk_Padding margins;
     int size = MENUBUTTON_ARROW_SIZE;
     Tk_GetPixelsFromObj(NULL, tkwin, indicator->sizeObj, &size);
+    Ttk_GetPaddingFromObj(NULL, tkwin, indicator->paddingObj, &margins);
     TtkArrowSize(size, ARROW_DOWN, widthPtr, heightPtr);
-    Ttk_GetPaddingFromObj(NULL, tkwin, indicator->paddingObj, paddingPtr);
+    *widthPtr += Ttk_PaddingWidth(margins);
+    *heightPtr += Ttk_PaddingHeight(margins);
 }
 
 static void MenuIndicatorElementDraw(
@@ -594,11 +595,11 @@ static Ttk_ElementSpec TroughElementSpec = {
     TK_STYLE_VERSION_2,
     sizeof(ScrollbarElement),
     ScrollbarElementOptions,
-    TtkNullElementGeometry,
+    TtkNullElementSize,
     TroughElementDraw
 };
 
-static void ThumbElementGeometry(
+static void ThumbElementSize(
     void *clientData, void *elementRecord, Tk_Window tkwin,
     int *widthPtr, int *heightPtr, Ttk_Padding *paddingPtr)
 {
@@ -656,14 +657,14 @@ static Ttk_ElementSpec ThumbElementSpec = {
     TK_STYLE_VERSION_2,
     sizeof(ScrollbarElement),
     ScrollbarElementOptions,
-    ThumbElementGeometry,
+    ThumbElementSize,
     ThumbElementDraw
 };
 
 /*------------------------------------------------------------------------
  * +++ Slider element.
  */
-static void SliderElementGeometry(
+static void SliderElementSize(
     void *clientData, void *elementRecord, Tk_Window tkwin,
     int *widthPtr, int *heightPtr, Ttk_Padding *paddingPtr)
 {
@@ -688,20 +689,22 @@ static Ttk_ElementSpec SliderElementSpec = {
     TK_STYLE_VERSION_2,
     sizeof(ScrollbarElement),
     ScrollbarElementOptions,
-    SliderElementGeometry,
+    SliderElementSize,
     ThumbElementDraw
 };
 
 /*------------------------------------------------------------------------
  * +++ Progress bar element
  */
-static void PbarElementGeometry(
+static void PbarElementSize(
     void *clientData, void *elementRecord, Tk_Window tkwin,
     int *widthPtr, int *heightPtr, Ttk_Padding *paddingPtr)
 {
-    SliderElementGeometry(clientData, elementRecord, tkwin,
+    SliderElementSize(clientData, elementRecord, tkwin,
 	    widthPtr, heightPtr, paddingPtr);
     *paddingPtr = Ttk_UniformPadding(2);
+    *widthPtr += 4;
+    *heightPtr += 4;
 }
 
 static void PbarElementDraw(
@@ -724,7 +727,7 @@ static Ttk_ElementSpec PbarElementSpec = {
     TK_STYLE_VERSION_2,
     sizeof(ScrollbarElement),
     ScrollbarElementOptions,
-    PbarElementGeometry,
+    PbarElementSize,
     PbarElementDraw
 };
 
@@ -734,7 +737,7 @@ static Ttk_ElementSpec PbarElementSpec = {
  */
 static int ArrowElements[] = { ARROW_UP, ARROW_DOWN, ARROW_LEFT, ARROW_RIGHT };
 
-static void ArrowElementGeometry(
+static void ArrowElementSize(
     void *clientData, void *elementRecord, Tk_Window tkwin,
     int *widthPtr, int *heightPtr, Ttk_Padding *paddingPtr)
 {
@@ -772,7 +775,7 @@ static Ttk_ElementSpec ArrowElementSpec = {
     TK_STYLE_VERSION_2,
     sizeof(ScrollbarElement),
     ScrollbarElementOptions,
-    ArrowElementGeometry,
+    ArrowElementSize,
     ArrowElementDraw
 };
 
@@ -803,7 +806,7 @@ static Ttk_ElementOptionSpec NotebookElementOptions[] = {
     {0,0,0}
 };
 
-static void TabElementGeometry(
+static void TabElementSize(
     void *clientData, void *elementRecord, Tk_Window tkwin,
     int *widthPtr, int *heightPtr, Ttk_Padding *paddingPtr)
 {
@@ -854,11 +857,11 @@ static Ttk_ElementSpec TabElementSpec =
     TK_STYLE_VERSION_2,
     sizeof(NotebookElement),
     NotebookElementOptions,
-    TabElementGeometry,
+    TabElementSize,
     TabElementDraw
 };
 
-static void ClientElementGeometry(
+static void ClientElementSize(
     void *clientData, void *elementRecord, Tk_Window tkwin,
     int *widthPtr, int *heightPtr, Ttk_Padding *paddingPtr)
 {
@@ -885,7 +888,7 @@ static Ttk_ElementSpec ClientElementSpec =
     TK_STYLE_VERSION_2,
     sizeof(NotebookElement),
     NotebookElementOptions,
-    ClientElementGeometry,
+    ClientElementSize,
     ClientElementDraw
 };
 
@@ -893,22 +896,23 @@ static Ttk_ElementSpec ClientElementSpec =
  * +++ Modified widget layouts.
  */
 
-TTK_BEGIN_LAYOUT(ComboboxLayout)
+TTK_BEGIN_LAYOUT_TABLE(LayoutTable)
+
+TTK_LAYOUT("TCombobox",
     TTK_NODE("Combobox.downarrow", TTK_PACK_RIGHT|TTK_FILL_Y)
     TTK_GROUP("Combobox.field", TTK_PACK_LEFT|TTK_FILL_BOTH|TTK_EXPAND,
 	TTK_GROUP("Combobox.padding", TTK_FILL_BOTH,
-	    TTK_NODE("Combobox.textarea", TTK_FILL_BOTH)))
-TTK_END_LAYOUT
+	    TTK_NODE("Combobox.textarea", TTK_FILL_BOTH))))
 
-TTK_BEGIN_LAYOUT(HorizontalSashLayout)
+TTK_LAYOUT("Horizontal.Sash",
     TTK_GROUP("Sash.hsash", TTK_FILL_BOTH,
-	TTK_NODE("Sash.hgrip", TTK_FILL_BOTH))
-TTK_END_LAYOUT
+	TTK_NODE("Sash.hgrip", TTK_FILL_BOTH)))
 
-TTK_BEGIN_LAYOUT(VerticalSashLayout)
+TTK_LAYOUT("Vertical.Sash",
     TTK_GROUP("Sash.vsash", TTK_FILL_BOTH,
-	TTK_NODE("Sash.vgrip", TTK_FILL_BOTH))
-TTK_END_LAYOUT
+	TTK_NODE("Sash.vgrip", TTK_FILL_BOTH)))
+
+TTK_END_LAYOUT_TABLE
 
 /*------------------------------------------------------------------------
  * +++ Initialization.
@@ -961,9 +965,7 @@ TtkClamTheme_Init(Tcl_Interp *interp)
     Ttk_RegisterElement(interp, theme, "vgrip",
 	    &GripElementSpec,  &GripClientData[1]);
 
-    Ttk_RegisterLayout(theme, "TCombobox", ComboboxLayout);
-    Ttk_RegisterLayout(theme, "Horizontal.Sash", HorizontalSashLayout);
-    Ttk_RegisterLayout(theme, "Vertical.Sash", VerticalSashLayout);
+    Ttk_RegisterLayouts(theme, LayoutTable);
 
     Tcl_PkgProvide(interp, "ttk::theme::clam", TTK_VERSION);
 

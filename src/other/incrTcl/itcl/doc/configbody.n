@@ -13,7 +13,7 @@
 .SH NAME
 configbody \- change the "config" code for a public variable
 .SH SYNOPSIS
-\fBconfigbody \fIclassName\fB::\fIvarName body\fR
+\fBitcl::configbody \fIclassName\fB::\fIvarName body\fR
 .BE
 
 .SH DESCRIPTION
@@ -76,7 +76,7 @@ existing file is closed, and a new file is opened.  Note that
 the "config" code for a public variable is optional.  The "-access"
 option, for example, does not have it.
 .CS
-class File {
+itcl::class File {
     private variable fid ""
 
     public variable name ""
@@ -96,17 +96,17 @@ class File {
     method eof {}
 }
 
-body File::get {} {
+itcl::body File::get {} {
     return [gets $fid]
 }
-body File::put {line} {
+itcl::body File::put {line} {
     puts $fid $line
 }
-body File::eof {} {
+itcl::body File::eof {} {
     return [::eof $fid]
 }
 
-configbody File::name {
+itcl::configbody File::name {
     if {$fid != ""} {
         close $fid
     }
@@ -122,7 +122,7 @@ x configure -name /etc/passwd
 while {![x eof]} {
     puts "=> [x get]"
 }
-delete object x
+itcl::delete object x
 .CE
 
 .SH KEYWORDS

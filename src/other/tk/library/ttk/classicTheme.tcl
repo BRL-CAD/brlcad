@@ -19,9 +19,8 @@ namespace eval ttk::theme::classic {
 	-indicator	"#b03060"
     }
 
-    namespace import -force ::ttk::style
-    style theme settings classic {
-	style configure "." \
+    ttk::style theme settings classic {
+	ttk::style configure "." \
 	    -font		TkDefaultFont \
 	    -background		$colors(-frame) \
 	    -foreground		black \
@@ -38,52 +37,53 @@ namespace eval ttk::theme::classic {
 	# To match pre-Xft X11 appearance, use:
 	#	ttk::style configure . -font {Helvetica 12 bold}
 
-	style map "." -background \
+	ttk::style map "." -background \
 	    [list disabled $colors(-frame) active $colors(-activebg)]
-	style map "." -foreground \
+	ttk::style map "." -foreground \
 	    [list disabled $colors(-disabledfg)]
 
-	style map "." -highlightcolor [list focus black]
+	ttk::style map "." -highlightcolor [list focus black]
 
-	style configure TButton -padding "3m 1m" -relief raised -shiftrelief 1
-	style map TButton -relief [list {!disabled pressed} sunken]
+	ttk::style configure TButton \
+	    -anchor center -padding "3m 1m" -relief raised -shiftrelief 1
+	ttk::style map TButton -relief [list {!disabled pressed} sunken]
 
-	style configure TCheckbutton -indicatorrelief raised
-	style map TCheckbutton \
+	ttk::style configure TCheckbutton -indicatorrelief raised
+	ttk::style map TCheckbutton \
 	    -indicatorcolor [list \
 		pressed $colors(-frame)  selected $colors(-indicator)] \
 	    -indicatorrelief {selected sunken  pressed sunken} \
 	    ;
 
-	style configure TRadiobutton -indicatorrelief raised
-	style map TRadiobutton \
+	ttk::style configure TRadiobutton -indicatorrelief raised
+	ttk::style map TRadiobutton \
 	    -indicatorcolor [list \
 		pressed $colors(-frame)  selected $colors(-indicator)] \
 	    -indicatorrelief {selected sunken  pressed sunken} \
 	    ;
 
-	style configure TMenubutton -relief raised -padding "3m 1m"
+	ttk::style configure TMenubutton -relief raised -padding "3m 1m"
 
-	style configure TEntry -relief sunken -padding 1 -font TkTextFont
-	style map TEntry -fieldbackground \
+	ttk::style configure TEntry -relief sunken -padding 1 -font TkTextFont
+	ttk::style map TEntry -fieldbackground \
 		[list readonly $colors(-frame) disabled $colors(-frame)]
-	style configure TCombobox -padding 1
-	style map TCombobox -fieldbackground \
+	ttk::style configure TCombobox -padding 1
+	ttk::style map TCombobox -fieldbackground \
 		[list readonly $colors(-frame) disabled $colors(-frame)]
 
-	style configure TLabelframe -borderwidth 2 -relief groove
+	ttk::style configure TLabelframe -borderwidth 2 -relief groove
 
-	style configure TScrollbar -relief raised
-	style map TScrollbar -relief {{pressed !disabled} sunken}
+	ttk::style configure TScrollbar -relief raised
+	ttk::style map TScrollbar -relief {{pressed !disabled} sunken}
 
-	style configure TScale -sliderrelief raised
-	style map TScale -sliderrelief {{pressed !disabled} sunken}
+	ttk::style configure TScale -sliderrelief raised
+	ttk::style map TScale -sliderrelief {{pressed !disabled} sunken}
 
-	style configure TProgressbar -background SteelBlue
-	style configure TNotebook.Tab \
+	ttk::style configure TProgressbar -background SteelBlue
+	ttk::style configure TNotebook.Tab \
 	    -padding {3m 1m} \
 	    -background $colors(-troughbg)
-	style map TNotebook.Tab -background [list selected $colors(-frame)]
+	ttk::style map TNotebook.Tab -background [list selected $colors(-frame)]
 
 	# Treeview:
 	ttk::style configure Heading -font TkHeadingFont -relief raised
@@ -99,10 +99,10 @@ namespace eval ttk::theme::classic {
 	#
 	# Toolbar buttons:
 	#
-	style configure Toolbutton -padding 2 -relief flat -shiftrelief 2
-	style map Toolbutton -relief \
+	ttk::style configure Toolbutton -padding 2 -relief flat -shiftrelief 2
+	ttk::style map Toolbutton -relief \
 	    {disabled flat selected sunken pressed sunken active raised}
-	style map Toolbutton -background \
+	ttk::style map Toolbutton -background \
 	    [list pressed $colors(-troughbg)  active $colors(-activebg)]
     }
 }

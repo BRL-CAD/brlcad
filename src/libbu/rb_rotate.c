@@ -1,7 +1,7 @@
 /*                     R B _ R O T A T E . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2007 United States Government as represented by
+ * Copyright (c) 1998-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,18 +23,8 @@
  *
  *	    Routines to perform rotations on a red-black tree
  *
- *  @author
- *	Paul J. Tanenbaum
- *
- *  @par Source -
- *	The U. S. Army Research Laboratory
- *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 /** @} */
-
-#ifndef lint
-static const char libbu_rb_rotate_RCSid[] = "@(#) $Header$";
-#endif
 
 #include "common.h"
 
@@ -72,7 +62,7 @@ void _rb_rot_left (struct bu_rb_node *x, int order)
     y = bu_rb_right_child(x, order);
 
     if (tree -> rbt_debug & BU_RB_DEBUG_ROTATE)
-	bu_log("_rb_rot_left(<%x>, %d)...\n", x, order);
+	bu_log("_rb_rot_left(<%p>, %d)...\n", x, order);
 
     bu_rb_right_child(x, order) = beta = bu_rb_left_child(y, order);
     if (beta != bu_rb_null(tree))
@@ -92,8 +82,8 @@ void _rb_rot_left (struct bu_rb_node *x, int order)
 	bu_rb_size(bu_rb_left_child(x, order), order) +
 	bu_rb_size(bu_rb_right_child(x, order), order) + 1;
     if (tree -> rbt_debug & BU_RB_DEBUG_OS)
-	bu_log("After rotation, size(%x, %d)=%d, size(%x, %d)=%d\n",
-	    x, order, bu_rb_size(x, order), y, order, bu_rb_size(y, order));
+	bu_log("After rotation, size(%p, %d)=%d, size(%p, %d)=%d\n",
+	       x, order, bu_rb_size(x, order), y, order, bu_rb_size(y, order));
 }
 
 /**		    _ R B _ R O T _ R I G H T ( )
@@ -120,7 +110,7 @@ void _rb_rot_right (struct bu_rb_node *y, int order)
     x = bu_rb_left_child(y, order);
 
     if (tree -> rbt_debug & BU_RB_DEBUG_ROTATE)
-	bu_log("_rb_rot_right(<%x>, %d)...\n", y, order);
+	bu_log("_rb_rot_right(<%p>, %d)...\n", y, order);
 
     bu_rb_left_child(y, order) = beta = bu_rb_right_child(x, order);
     if (beta != bu_rb_null(tree))
@@ -140,16 +130,16 @@ void _rb_rot_right (struct bu_rb_node *y, int order)
 	bu_rb_size(bu_rb_left_child(y, order), order) +
 	bu_rb_size(bu_rb_right_child(y, order), order) + 1;
     if (tree -> rbt_debug & BU_RB_DEBUG_OS)
-	bu_log("After rotation, size(%x, %d)=%d, size(%x, %d)=%d\n",
-	    x, order, bu_rb_size(x, order), y, order, bu_rb_size(y, order));
+	bu_log("After rotation, size(%p, %d)=%d, size(%p, %d)=%d\n",
+	       x, order, bu_rb_size(x, order), y, order, bu_rb_size(y, order));
 }
 /** @} */
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -1,7 +1,7 @@
 /*                         P L - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2007 United States Government as represented by
+ * Copyright (c) 1986-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -70,26 +70,15 @@
  *	"little-endian" (eg, VAX) byte-ordering.
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
 #include <stdlib.h>
 #include <signal.h>
-#include <stdio.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
 #include <ctype.h>
+#include "bio.h"
 
-#include "machine.h"
 #include "bu.h"
 #include "fb.h"
 #include "plot3.h"
@@ -102,16 +91,16 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 
   top of frame
-  ---------------------------------------------------------
+  -------------------------------------------------------
   |			.				|
-  |scan line ->...........................................|
-  ^	|			.				|
-  |	|			^				|
+  |scan line ->.........................................|
+  ^	|		.				|
+  |	|		^				|
   |			|				|
-  |Y axis							|
+  |Y axis						|
   |plot							|
-  ^	|^							|
-  |	||							|
+  ^	|^						|
+  |	||						|
   ||	X axis						|
   |-----> plot						|
   ---------------------------------------------------------
@@ -144,7 +133,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 /* helper macros */
 #define GET_STROKE(vp)    { \
-			while( ((vp)=freep) == STROKE_NULL ) \
+			while ( ((vp)=freep) == STROKE_NULL ) \
 				get_strokes(); \
 			freep = (vp)->freep; \
 			CK_STROKE(vp); \
@@ -194,8 +183,8 @@ typedef struct descr {
 #define STROKE_MAGIC	0x12997601	/* Magic number */
 
 #define	CK_STROKE(_sp)	{ \
-	if((_sp)->magic != STROKE_MAGIC)  {  \
-		fprintf(stderr,"Bad stroke struct, ptr=x%lx, magic was x%lx, s/b=x%lx, at file %s, line %d\n",  \
+	if ((_sp)->magic != STROKE_MAGIC)  {  \
+		fprintf(stderr, "Bad stroke struct, ptr=x%lx, magic was x%lx, s/b=x%lx, at file %s, line %d\n",  \
 			(long)(_sp), (long)((_sp)->magic), (long)STROKE_MAGIC,  \
 			__FILE__, __LINE__ );  \
 		abort();  \
@@ -217,12 +206,12 @@ static double	delta;			/* larger window dimension */
 static double	deltao2;		/* delta / 2 */
 
 struct	relvect {
-    short	x,y;			/* x, y values (255,255 is end) */
+    short	x, y;			/* x, y values (255, 255 is end) */
 };
 
-#define	END	-1,-1			/* end of stroke description */
-#define	NIL	0,0
-#define min(a,b)	((a)<(b)?(a):(b))
+#define	END	-1, -1			/* end of stroke description */
+#define	NIL	0, 0
+#define min(a, b)	((a)<(b)?(a):(b))
 /*
  *  These character sets are taken from the Motorola MC6575 Pattern Generator,
  *  page 5-119 of 'The Complete Motorola Microcomputer Data Library'
@@ -307,10 +296,19 @@ static short	line_thickness = 1;
 
 /* signals to be caught */
 static int sigs[] = {
+#ifdef SIGHUP
     SIGHUP,
+#endif
+#ifdef SIGINT
     SIGINT,
+#endif
+#ifdef SIGQUIT
     SIGQUIT,
-    SIGTERM
+#endif
+#ifdef SIGTERM
+    SIGTERM,
+#endif
+    0
 };
 
 static FILE	*pfin;		/* input file FIO block ptr */
@@ -335,14 +333,14 @@ static struct descr	*freep = STROKE_NULL;	/* head of free stroke list */
  */
 static stroke *
 Dequeue(register struct band *bp, register stroke **hp)
-     /* *hp -> first descr in list */
+    /* *hp -> first descr in list */
 {
     register stroke *vp;		/* -> descriptor */
 
     if ( (vp = *hp) != NULL )
 	*hp = vp->next; 	/* -> next element in list */
 
-    if( vp == NULL )
+    if ( vp == NULL )
 	bp->last = NULL;
 
     return vp;			/* may be NULL */
@@ -357,7 +355,7 @@ Requeue(register struct band *bp, register stroke *vp)
 {
     CK_STROKE(vp);
     vp->next = NULL;
-    if( bp->last )
+    if ( bp->last )
 	bp->last->next = vp;
     else
 	bp->first = vp;
@@ -380,8 +378,8 @@ Requeue(register struct band *bp, register stroke *vp)
  */
 static void
 Raster(register stroke *vp, register struct band *np)
-     /* -> rasterization descr */
-     /* *np -> next band 1st descr */
+    /* -> rasterization descr */
+    /* *np -> next band 1st descr */
 {
     register short	dy;		/* raster within active band */
 
@@ -393,7 +391,7 @@ Raster(register stroke *vp, register struct band *np)
     for ( dy = vp->pixel.y - ystart; dy < lines_per_band; ) {
 
 	/* set the appropriate pixel in the buffer */
-	if( immediate )  {
+	if ( immediate )  {
 	    fb_write( fbp, vp->pixel.x, dy, vp->col, 1 );
 	}  else  {
 	    register unsigned char *pp;
@@ -402,7 +400,8 @@ Raster(register stroke *vp, register struct band *np)
 	    COPYRGB( pp, vp->col );
 	}
 
-	if ( vp->major-- == 0 ) { /* done! */
+	if ( vp->major-- == 0 ) {
+	    /* done! */
 	    FREE_STROKE( vp );	/* return to "malloc" */
 	    return;
 	}
@@ -438,14 +437,14 @@ OutBuild(void)				/* returns true if successful */
     register struct band *np;	/* `hp' for next band */
     register stroke *vp;		/* -> rasterization descr */
 
-    if( single_banded ) {
-	if( debug ) fprintf(stderr,"OutBuild:  band y=%d\n", ystart);
-	if( fb_write( fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
+    if ( single_banded ) {
+	if ( debug ) fprintf(stderr, "OutBuild:  band y=%d\n", ystart);
+	if ( fb_write( fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
 	    return false;	/* can't write image file */
-	if( over )  {
+	if ( over )  {
 	    /* Read back the composite image */
-	    if( fb_read( fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
-		fprintf(stderr,"pl-fb:  band read error\n");
+	    if ( fb_read( fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
+		fprintf(stderr, "pl-fb:  band read error\n");
 	}
 	return true;
     }
@@ -460,15 +459,15 @@ OutBuild(void)				/* returns true if successful */
     for ( hp = &band[0], np = &band[1], ystart = 0;
 	  hp < bandEnd;
 	  hp = np++, ystart += lines_per_band
-	  )	{
-	if(debug) fprintf(stderr,"OutBuild:  band y=%d\n", ystart);
-	if( over )  {
+	)	{
+	if (debug) fprintf(stderr, "OutBuild:  band y=%d\n", ystart);
+	if ( over )  {
 	    /* Read in current band */
-	    if( fb_read( fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
-		fprintf(stderr,"pl-fb:  band read error\n");
+	    if ( fb_read( fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
+		fprintf(stderr, "pl-fb:  band read error\n");
 	} else {
 	    /* clear pixels in the band */
-	    bzero( (char *)buffer, buffersize );
+	    memset((char *)buffer, 0, buffersize);
 	}
 
 	while ( (vp = Dequeue( hp, &hp->first )) != NULL )
@@ -477,8 +476,8 @@ OutBuild(void)				/* returns true if successful */
 	/* Raster() either re-queued the descriptor onto the
 	   next band list or else it freed the descriptor */
 
-	if(debug) fprintf(stderr,"OutBuild:  fbwrite y=%d\n", ystart);
-	if( fb_write( fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
+	if (debug) fprintf(stderr, "OutBuild:  fbwrite y=%d\n", ystart);
+	if ( fb_write( fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
 	    return false;	/* can't write image file */
     }
 
@@ -496,17 +495,17 @@ get_strokes(void)
 
     /* ~32 strokes/KB */
     bytes = 640 * sizeof(stroke);
-    if( (cp = malloc(bytes)) == (char *)0 ) {
+    if ( (cp = malloc(bytes)) == (char *)0 ) {
 	/* Attempt to draw/free some vectors and try again */
 	OutBuild();
-	if( (cp = malloc(bytes)) == (char *)0 ) {
-	    fprintf(stderr,"pl-fb: malloc failed!\n");
-	    exit( 2 );
+	if ( (cp = malloc(bytes)) == (char *)0 ) {
+	    fprintf(stderr, "pl-fb: malloc failed!\n");
+	    bu_exit( 2, NULL );
 	}
     }
     /* link them all into the free list */
     sp = (stroke *)cp;
-    while( bytes >= sizeof(stroke) ) {
+    while ( bytes >= sizeof(stroke) ) {
 	sp->freep = freep;
 	sp->magic = STROKE_MAGIC;
 	freep = sp++;
@@ -526,7 +525,7 @@ long
 sxt16(register long int v)
 {
     register long w;
-    if( v <= 0x7FFF )  return(v);
+    if ( v <= 0x7FFF )  return(v);
     w = -1;
     w &= ~0x7FFF;
     return( w | v );
@@ -537,11 +536,11 @@ get_args(int argc, register char **argv)
 {
     register int c;
 
-    while( (c = bu_getopt( argc, argv, "hdoOit:F:s:S:w:W:n:N:" )) != EOF ) {
-	switch( c ) {
+    while ( (c = bu_getopt( argc, argv, "hdoOit:F:s:S:w:W:n:N:" )) != EOF ) {
+	switch ( c ) {
 	    case 't':
 		line_thickness = atoi(bu_optarg);
-		if( line_thickness <= 0 )
+		if ( line_thickness <= 0 )
 		    line_thickness = 1;
 		break;
 	    case 'i':
@@ -578,23 +577,23 @@ get_args(int argc, register char **argv)
 	}
     }
 
-    if( bu_optind >= argc ) {
+    if ( bu_optind >= argc ) {
 	/* no file name given, use stdin */
-	if( isatty(fileno(stdin)) )
+	if ( isatty(fileno(stdin)) )
 	    return(0);
 	filename = "-";
 	pfin = stdin;
     } else {
 	/* open file */
 	filename = argv[bu_optind];
-	if( (pfin = fopen(filename, "r")) == NULL ) {
+	if ( (pfin = fopen(filename, "rb")) == NULL ) {
 	    fprintf( stderr,
 		     "pl-fb: Can't open file \"%s\"\n", filename );
 	    return(0);
 	}
     }
 
-    if( argc > ++bu_optind )
+    if ( argc > ++bu_optind )
 	(void)fprintf( stderr, "pl-fb: excess argument(s) ignored\n" );
 
     return(1);		/* OK */
@@ -641,7 +640,7 @@ FreeUp(void)
 static int
 Foo(int code)				/* returns status code */
 {
-    if( debug ) fprintf(stderr,"Foo(%d)\n", code);
+    if ( debug ) fprintf(stderr, "Foo(%d)\n", code);
     fb_close( fbp );		/* release framebuffer */
 
     FreeUp();			/* deallocate descriptors */
@@ -693,7 +692,7 @@ prep_dda(register stroke *vp, register coords *pt1, register coords *pt2)
  */
 static bool
 BuildStr(coords *pt1, coords *pt2)		/* returns true or dies */
-     /* endpoints */
+    /* endpoints */
 {
     register stroke *vp;		/* -> rasterization descr */
     register int	thick;
@@ -712,11 +711,11 @@ BuildStr(coords *pt1, coords *pt2)		/* returns true or dies */
 
     /* Thicken by advancing alternating pixels in minor direction */
     thick = line_thickness - 1;	/* number of "extra" pixels */
-    if( thick >= vp->major && vp->major > 0 )  thick = vp->major-1;
-    for( ; thick >= 0; thick-- )  {
+    if ( thick >= vp->major && vp->major > 0 )  thick = vp->major-1;
+    for (; thick >= 0; thick-- )  {
 	register stroke *v2;
 
-	if( thick == 0 ) {
+	if ( thick == 0 ) {
 	    /* last pass, use vp */
 	    v2 = vp;
 	} else {
@@ -726,14 +725,14 @@ BuildStr(coords *pt1, coords *pt2)		/* returns true or dies */
 	}
 
 	/* Advance minor only */
-	if( vp->ymajor )
+	if ( vp->ymajor )
 	    v2->pixel.x += (vp->xsign!=0 ? vp->xsign : 1) *
 		((thick&1)==0 ? (thick+1)/2 : (thick+1)/-2 );
 	else
 	    v2->pixel.y += (vp->ysign!=0 ? vp->ysign : 1) *
 		((thick&1)==0 ? (thick+1)/2 : (thick+1)/-2 );
 
-	if( immediate || single_banded )  {
+	if ( immediate || single_banded )  {
 	    ystart = 0;
 	    Raster( v2, (struct band *)0 );
 	}  else
@@ -746,7 +745,7 @@ BuildStr(coords *pt1, coords *pt2)		/* returns true or dies */
 
 static bool
 GetCoords(register coords *coop)
-     /* -> input coordinates */
+    /* -> input coordinates */
 {
     unsigned char buf[4];
     double	x, y;
@@ -758,7 +757,7 @@ GetCoords(register coords *coop)
 
     x = sxt16((long)(buf[1]<<8) | buf[0]);
     y = sxt16((long)(buf[3]<<8) | buf[2]);
-    if( debug )  fprintf(stderr,"Coord: (%g,%g) ", x, y);
+    if ( debug )  fprintf(stderr, "Coord: (%g,%g) ", x, y);
 
     /* limit left, bottom */
     if ( (x -= space.left) < 0 )
@@ -776,15 +775,15 @@ GetCoords(register coords *coop)
     if ( coop->y > YMAX )
 	coop->y = YMAX;
 
-    if( debug )
-	fprintf( stderr,"Pixel: (%d,%d)\n", coop->x, coop->y);
+    if ( debug )
+	fprintf( stderr, "Pixel: (%d,%d)\n", coop->x, coop->y);
 
     return true;
 }
 
 
 /*
-  GetCoords - input x,y coordinates and scale into pixels
+  GetCoords - input x, y coordinates and scale into pixels
 */
 bool Get3Coords(register coords *coop)
 {
@@ -802,7 +801,7 @@ bool Get3DCoords(register coords *coop)
 {
     static unsigned char in[3*8];
     static double	out[2];
-    register double	x,y;
+    register double	x, y;
 
     /* read coordinates */
     if ( fread( in, sizeof(in), 1, pfin ) != 1 )
@@ -827,9 +826,9 @@ bool Get3DCoords(register coords *coop)
     if ( coop->y > YMAX )
 	coop->y = YMAX;
 
-    if( debug )  {
-	fprintf(stderr,"Coord3: (%g,%g) ", out[0], out[1]);
-	fprintf(stderr,"Pixel3: (%d,%d)\n", coop->x, coop->y);
+    if ( debug )  {
+	fprintf(stderr, "Coord3: (%g,%g) ", out[0], out[1]);
+	fprintf(stderr, "Pixel3: (%d,%d)\n", coop->x, coop->y);
     }
     return( true );
 }
@@ -837,11 +836,11 @@ bool Get3DCoords(register coords *coop)
 
 bool
 GetDCoords(register coords *coop)
-     /* -> input coordinates */
+    /* -> input coordinates */
 {
     static unsigned char	in[2*8];
     static double	out[2];
-    register double	x,y;
+    register double	x, y;
 
     /* read coordinates */
     if ( fread( in, sizeof(in), 1, pfin ) != 1 )
@@ -866,9 +865,9 @@ GetDCoords(register coords *coop)
     if ( coop->y > YMAX )
 	coop->y = YMAX;
 
-    if( debug )  {
-	fprintf(stderr,"Coord2: (%g,%g) ", out[0], out[1]);
-	fprintf(stderr,"Pixel2: (%d,%d)\n", coop->x, coop->y);
+    if ( debug )  {
+	fprintf(stderr, "Coord2: (%g,%g) ", out[0], out[1]);
+	fprintf(stderr, "Pixel2: (%d,%d)\n", coop->x, coop->y);
     }
     return true;
 }
@@ -882,10 +881,10 @@ GetDCoords(register coords *coop)
 void
 edgelimit(register coords *ppos)
 {
-    if( ppos->x >= Npixels )
+    if ( ppos->x >= Npixels )
 	ppos->x = Npixels -1;
 
-    if( ppos->y >= Nscanlines )
+    if ( ppos->y >= Nscanlines )
 	ppos->y = Nscanlines -1;
 }
 
@@ -902,16 +901,16 @@ put_vector_char(register char c, register coords *pos)
     register struct vectorchar	*vc;
     register struct relvect		*rv;
 
-    if( !isascii(c) )
+    if ( !isascii(c) )
 	c = '?';
-    if( islower(c) )
+    if ( islower(c) )
 	c = toupper(c);
 
-    for( vc = &charset[0]; vc->ascii; vc++)
-	if( vc->ascii == c )
+    for ( vc = &charset[0]; vc->ascii; vc++)
+	if ( vc->ascii == c )
 	    break;
 
-    if( !vc->ascii )  {
+    if ( !vc->ascii )  {
 	/* Character not found in table -- space over 1/2 char */
 	pos->x += X_CHAR_SIZE/2;
 	return;
@@ -921,7 +920,7 @@ put_vector_char(register char c, register coords *pos)
     start.x = vc->r[0].x + pos->x;
     start.y = Y_CHAR_SIZE - vc->r[0].y + pos->y;
 
-    for( rv = &vc->r[1]; (rv < &vc->r[10]) && rv->x >= 0; rv++ )  {
+    for ( rv = &vc->r[1]; (rv < &vc->r[10]) && rv->x >= 0; rv++ )  {
 	end.x = rv->x + pos->x;
 	end.y = Y_CHAR_SIZE - rv->y + pos->y;
 	edgelimit( &start );
@@ -959,358 +958,359 @@ DoFile(void)	/* returns vpl status code */
 
     /* process each frame into a raster image file */
 
-    for ( ; ; )			/* for each frame */
+    for (;;)			/* for each frame */
+    {
+	InitDesc();		/* empty descriptor lists */
+
+	virpos.x = virpos.y = 0;
+	plotted = false;
+
+	for (;;)		/* read until EOF*/
 	{
-	    InitDesc();		/* empty descriptor lists */
+	    c = getc( pfin );
+	    if ( debug > 1 )  fprintf(stderr, "%c\n", c);
+	    switch ( c )
+	    {
+		/* record type */
+		case EOF:
+		    if ( debug ) fprintf( stderr, "EOF\n");
 
-	    virpos.x = virpos.y = 0;
-	    plotted = false;
+		    if ( plotted )  {
+			/* flush strokes */
+			if ( debug ) fprintf( stderr, "flushing\n");
+			if ( !OutBuild() )
+			    return Foo( -6 );
+		    }
+		    return Foo( 0 );/* success */
 
-	    for ( ; ; )		/* read until EOF*/
+		case 'e':	/* erase */
+		    if ( debug )  fprintf( stderr, "Erase\n");
+
+		    if ( plotted )  {
+			/* flush strokes */
+			if ( debug ) fprintf( stderr, "flushing\n");
+			if ( !OutBuild() )
+			    return Foo( -6 );
+		    }
+		    if ( !firsterase ) {
+			if ( immediate )
+			    fb_clear( fbp, RGBPIXEL_NULL );
+			over = 0;
+		    }
+		    firsterase = false;
+		    break;	/* next frame */
+
+		case 'F':	/* flush */
+		    if ( debug )  fprintf( stderr, "Flush\n");
+
+		    if ( plotted )  {
+			/* flush strokes */
+			if ( debug ) fprintf( stderr, "flushing\n");
+			if ( !OutBuild() )
+			    return Foo( -6 );
+			if ( !immediate )
+			    over = 1;
+		    }
+		    firsterase = false;
+		    break;	/* next frame */
+
+		case 'f':	/* linemod */
+		    if (debug)
+			fprintf( stderr, "linemod\n");
+		    /* ignore for time being */
+		    while ( (c = getc( pfin )) != EOF
+			    && c != '\n'
+			)
+			;	/* eat string */
+		    continue;
+
+		case 'L':
+		case 'M':
+		    if ( !Get3Coords( &newpos ) )
+			return Foo( -8 );
+		    virpos = newpos;
+		    if ( c == 'M'  )  {
+			if ( debug )
+			    fprintf( stderr, "Move3\n");
+			continue;
+		    }
+		    if ( debug )
+			fprintf( stderr, "Line3\n");
+
+		case 'N':	/* continue3 */
+		case 'P':	/* point3 */
+		    if ( !Get3Coords( &newpos ) )
+			return Foo( -9 );
+		    if ( c == 'P' )  {
+			if ( debug )
+			    fprintf( stderr, "point3\n");
+			virpos = newpos;
+		    } else
+			if ( debug )
+			    fprintf( stderr, "cont3\n");
+
+		    if ( !BuildStr( &virpos, &newpos ) )
+			return Foo( -10 );
+		    plotted = true;
+		    virpos = newpos;
+		    continue;
+
+		case 'l':	/* line */
+		case 'm':	/* move */
+		    if ( !GetCoords( &newpos ) )
+			return Foo( -8 );
+		    virpos = newpos;
+		    if ( c == 'm' )  {
+			if ( debug )
+			    fprintf( stderr, "move\n");
+			continue;
+		    }
+		    /* line: fall through */
+		    if ( debug )
+			fprintf( stderr, "line\n");
+
+		case 'n':	/* cont */
+		case 'p':	/* point */
+		    if ( !GetCoords( &newpos ) )
+			return Foo( -9 );
+		    if ( c == 'p' )  {
+			if ( debug )
+			    fprintf( stderr, "point\n");
+			virpos = newpos;
+		    } else
+			if ( debug )
+			    fprintf( stderr, "cont\n");
+
+		    if ( !BuildStr( &virpos, &newpos ) )
+			return Foo( -10 );
+		    plotted = true;
+		    virpos = newpos;
+		    continue;
+
+		    /* IEEE */
+		case 'V':
+		case 'O':
+		    if ( !Get3DCoords( &newpos ) )
+			return Foo( -8 );
+		    virpos = newpos;
+		    if ( c == 'O'  )  {
+			if ( debug )
+			    fprintf( stderr, "dMove3\n");
+			continue;
+		    }
+		    if ( debug )
+			fprintf( stderr, "dLine3\n");
+
+		case 'Q':	/* continue3 */
+		case 'X':	/* point3 */
+		    if ( !Get3DCoords( &newpos ) )
+			return Foo( -9 );
+		    if ( c == 'X' )  {
+			if ( debug )
+			    fprintf( stderr, "dpoint3\n");
+			virpos = newpos;
+		    } else
+			if ( debug )
+			    fprintf( stderr, "dcont3\n");
+
+		    if ( !BuildStr( &virpos, &newpos ) )
+			return Foo( -10 );
+		    plotted = true;
+		    virpos = newpos;
+		    continue;
+
+		case 'v':	/* line */
+		case 'o':	/* move */
+		    if ( !GetDCoords( &newpos ) )
+			return Foo( -8 );
+		    virpos = newpos;
+		    if ( c == 'o' )  {
+			if ( debug )
+			    fprintf( stderr, "dmove\n");
+			continue;
+		    }
+		    /* line: fall through */
+		    if ( debug )
+			fprintf( stderr, "dline\n");
+
+		case 'q':	/* cont */
+		case 'x':	/* point */
+		    if ( !GetDCoords( &newpos ) )
+			return Foo( -9 );
+		    if ( c == 'x' )  {
+			if ( debug )
+			    fprintf( stderr, "dpoint\n");
+			virpos = newpos;
+		    } else
+			if ( debug )
+			    fprintf( stderr, "dcont\n");
+
+		    if ( !BuildStr( &virpos, &newpos ) )
+			return Foo( -10 );
+		    plotted = true;
+		    virpos = newpos;
+		    continue;
+
+		case 'W':
 		{
-		    c = getc( pfin );
-		    if( debug > 1 )  fprintf(stderr,"%c\n", c);
-		    switch ( c )
-			{	/* record type */
-			    case EOF:
-				if( debug ) fprintf( stderr,"EOF\n");
+		    unsigned char	in[6*8];
+		    double	out[6];
+		    if ( debug )
+			fprintf( stderr, "dspace3\n");
+		    if ( fread( in, sizeof(in), 1, pfin) != 1 )
+			return Foo( -11 );
+		    ntohd( (unsigned char *)out, in, 5 );
+		    /* Only need X and Y, ignore Z */
+		    space.left  = out[0]; /* x1 */
+		    space.bottom= out[1]; /* y1 */
+		    /* z1 */
+		    space.right = out[3]; /* x2 */
+		    space.top   = out[4]; /* y2 */
+		    /* z2 */
+		    goto spacend;
+		}
 
-				if ( plotted )  {
-				    /* flush strokes */
-				    if( debug ) fprintf( stderr,"flushing\n");
-				    if ( !OutBuild() )
-					return Foo( -6 );
-				}
-				return Foo( 0 );/* success */
+		case 'w':	/* space */
+		{
+		    unsigned char	in[4*8];
+		    double	out[4];
+		    if ( debug )
+			fprintf( stderr, "dspace\n");
+		    if ( fread( in, sizeof(in), 1, pfin) != 1 )
+			return Foo( -11 );
+		    ntohd( (unsigned char *)out, in, 4 );
+		    space.left  = out[0]; /* x1 */
+		    space.bottom= out[1]; /* y1 */
+		    space.right = out[2]; /* x2 */
+		    space.top   = out[3]; /* y2 */
+		    goto spacend;
+		}
 
-			    case 'e':	/* erase */
-				if( debug )  fprintf( stderr,"Erase\n");
+		case 'S':
+		{
+		    if ( debug )
+			fprintf( stderr, "space3\n");
+		    if ( fread( (char *)buf3,
+				(int)sizeof buf3, 1, pfin)
+			 != 1
+			)
+			return Foo( -11 );
+		    /* Only need X and Y, ignore Z */
+		    space.left  = sxt16((long)(buf3[1]<<8) | buf3[0]); /* x1 */
+		    space.bottom= sxt16((long)(buf3[3]<<8) | buf3[2]); /* y1 */
+		    /* z1 */
+		    space.right = sxt16((long)(buf3[7]<<8) | buf3[6]); /* x2 */
+		    space.top   = sxt16((long)(buf3[9]<<8) | buf3[8]); /* y2 */
+		    /* z2 */
+		    goto spacend;
+		}
 
-				if ( plotted )  {
-				    /* flush strokes */
-				    if( debug ) fprintf( stderr,"flushing\n");
-				    if ( !OutBuild() )
-					return Foo( -6 );
-				}
-				if( !firsterase ) {
-				    if( immediate )
-					fb_clear( fbp, RGBPIXEL_NULL );
-				    over = 0;
-				}
-				firsterase = false;
-				break;	/* next frame */
+		case 's':	/* space */
+		    if ( debug )
+			fprintf( stderr, "space\n");
+		    {
+			if ( fread( (char *)buf2,
+				    (int)sizeof buf2, 1, pfin
+				 ) != 1
+			    )
+			    return Foo( -11 );
+			space.left  = sxt16((long)(buf2[1]<<8) | buf2[0]); /* x1 */
+			space.bottom= sxt16((long)(buf2[3]<<8) | buf2[2]); /* y1 */
+			space.right = sxt16((long)(buf2[5]<<8) | buf2[4]); /* x2 */
+			space.top   = sxt16((long)(buf2[7]<<8) | buf2[6]); /* y2 */
+		    }
 
-			    case 'F':	/* flush */
-				if( debug )  fprintf( stderr,"Flush\n");
+	    spacend:
+		    delta = space.right - space.left;
+		    deltao2 = space.top - space.bottom;
+		    if ( deltao2 > delta )
+			delta = deltao2;
+		    if ( delta <= 0 )  {
+			fprintf( stderr, "pl-fb: delta = %g, bad space()\n", delta );
+			return Foo( -42 );
+		    }
+		    deltao2 = delta / 2.0;
+		    if ( debug )
+			fprintf( stderr, "Space: X=(%g,%g) Y=(%g,%g) delta=%g\n",
+				 space.left, space.right,
+				 space.bottom, space.top,
+				 delta );
+		    continue;
 
-				if ( plotted )  {
-				    /* flush strokes */
-				    if( debug ) fprintf( stderr,"flushing\n");
-				    if ( !OutBuild() )
-					return Foo( -6 );
-				    if( !immediate )
-					over = 1;
-				}
-				firsterase = false;
-				break;	/* next frame */
+		case 'C':	/* color */
+		    if ( fread( cur_color, 1, 3, pfin) != 3 )
+			return Foo( -11 );
+		    if ( debug )
+			fprintf( stderr, "Color is R%d G%d B%d\n",
+				 cur_color[RED],
+				 cur_color[GRN],
+				 cur_color[BLU]);
+		    continue;
 
-			    case 'f':	/* linemod */
-				if(debug)
-				    fprintf( stderr,"linemod\n");
-				/* ignore for time being */
-				while ( (c = getc( pfin )) != EOF
-					&& c != '\n'
-					)
-				    ;	/* eat string */
-				continue;
+		case 't':	/* label */
+		    if ( debug )
+			fprintf( stderr, "label: ");
 
-			    case 'L':
-			    case 'M':
-				if ( !Get3Coords( &newpos ) )
-				    return Foo( -8 );
-				virpos = newpos;
-				if( c == 'M'  )  {
-				    if( debug )
-					fprintf( stderr,"Move3\n");
-				    continue;
-				}
-				if( debug )
-				    fprintf( stderr,"Line3\n");
+		    newpos = virpos;
+		    while ( (c = getc( pfin )) != EOF && c != '\n'
+			)  {
+			/* vectorize the characters */
+			put_vector_char( c, &newpos);
 
-			    case 'N':	/* continue3 */
-			    case 'P':	/* point3 */
-				if ( !Get3Coords( &newpos ) )
-				    return Foo( -9 );
-				if ( c == 'P' )  {
-				    if( debug )
-					fprintf( stderr,"point3\n");
-				    virpos = newpos;
-				} else
-				    if( debug )
-					fprintf( stderr,"cont3\n");
+			if ( debug )
+			    putc( c, stderr );
+		    }
 
-				if ( !BuildStr( &virpos, &newpos ) )
-				    return Foo( -10 );
-				plotted = true;
-				virpos = newpos;
-				continue;
+		    plotted = true;
+		    virpos = newpos;
+		    continue;
 
-			    case 'l':	/* line */
-			    case 'm':	/* move */
-				if ( !GetCoords( &newpos ) )
-				    return Foo( -8 );
-				virpos = newpos;
-				if ( c == 'm' )  {
-				    if( debug )
-					fprintf( stderr,"move\n");
-				    continue;
-				}
-				/* line: fall through */
-				if( debug )
-				    fprintf( stderr,"line\n");
+		    /* discard the deadwood */
+		case 'c':
+		{
+		    char buf[3*2];
+		    if ( fread(buf, sizeof(buf), 1, pfin) != 1 )
+			return Foo( -11 );
+		    if ( debug )
+			fprintf( stderr, "circle ignored\n" );
+		    continue;
+		}
+		case 'i':
+		{
+		    char buf[3*8];
+		    if ( fread(buf, sizeof(buf), 1, pfin) != 1 )
+			return Foo( -11 );
+		    if ( debug )
+			fprintf( stderr, "d_circle ignored\n" );
+		    continue;
+		}
+		case 'a':
+		{
+		    char buf[6*2];
+		    if ( fread(buf, sizeof(buf), 1, pfin) != 1 )
+			return Foo( -11 );
+		    if ( debug )
+			fprintf( stderr, "arc ignored\n" );
+		    continue;
+		}
+		case 'r':
+		{
+		    char buf[6*8];
+		    if ( fread(buf, sizeof(buf), 1, pfin) != 1 )
+			return Foo( -11 );
+		    if ( debug )
+			fprintf( stderr, "d_arc ignored\n" );
+		    continue;
+		}
 
-			    case 'n':	/* cont */
-			    case 'p':	/* point */
-				if ( !GetCoords( &newpos ) )
-				    return Foo( -9 );
-				if ( c == 'p' )  {
-				    if( debug )
-					fprintf( stderr,"point\n");
-				    virpos = newpos;
-				} else
-				    if( debug )
-					fprintf( stderr,"cont\n");
+		default:
+		    fprintf( stderr, "bad command '%c' (0x%02x)\n", c, c );
 
-				if ( !BuildStr( &virpos, &newpos ) )
-				    return Foo( -10 );
-				plotted = true;
-				virpos = newpos;
-				continue;
-
-				/* IEEE */
-			    case 'V':
-			    case 'O':
-				if ( !Get3DCoords( &newpos ) )
-				    return Foo( -8 );
-				virpos = newpos;
-				if( c == 'O'  )  {
-				    if( debug )
-					fprintf( stderr,"dMove3\n");
-				    continue;
-				}
-				if( debug )
-				    fprintf( stderr,"dLine3\n");
-
-			    case 'Q':	/* continue3 */
-			    case 'X':	/* point3 */
-				if ( !Get3DCoords( &newpos ) )
-				    return Foo( -9 );
-				if ( c == 'X' )  {
-				    if( debug )
-					fprintf( stderr,"dpoint3\n");
-				    virpos = newpos;
-				} else
-				    if( debug )
-					fprintf( stderr,"dcont3\n");
-
-				if ( !BuildStr( &virpos, &newpos ) )
-				    return Foo( -10 );
-				plotted = true;
-				virpos = newpos;
-				continue;
-
-			    case 'v':	/* line */
-			    case 'o':	/* move */
-				if ( !GetDCoords( &newpos ) )
-				    return Foo( -8 );
-				virpos = newpos;
-				if ( c == 'o' )  {
-				    if( debug )
-					fprintf( stderr,"dmove\n");
-				    continue;
-				}
-				/* line: fall through */
-				if( debug )
-				    fprintf( stderr,"dline\n");
-
-			    case 'q':	/* cont */
-			    case 'x':	/* point */
-				if ( !GetDCoords( &newpos ) )
-				    return Foo( -9 );
-				if ( c == 'x' )  {
-				    if( debug )
-					fprintf( stderr,"dpoint\n");
-				    virpos = newpos;
-				} else
-				    if( debug )
-					fprintf( stderr,"dcont\n");
-
-				if ( !BuildStr( &virpos, &newpos ) )
-				    return Foo( -10 );
-				plotted = true;
-				virpos = newpos;
-				continue;
-
-			    case 'W':
-				{
-				    unsigned char	in[6*8];
-				    double	out[6];
-				    if( debug )
-					fprintf( stderr,"dspace3\n");
-				    if( fread( in, sizeof(in), 1, pfin) != 1 )
-					return Foo( -11 );
-				    ntohd( (unsigned char *)out, in, 5 );
-				    /* Only need X and Y, ignore Z */
-				    space.left  = out[0]; /* x1 */
-				    space.bottom= out[1]; /* y1 */
-				    /* z1 */
-				    space.right = out[3]; /* x2 */
-				    space.top   = out[4]; /* y2 */
-				    /* z2 */
-				    goto spacend;
-				}
-
-			    case 'w':	/* space */
-				{
-				    unsigned char	in[4*8];
-				    double	out[4];
-				    if( debug )
-					fprintf( stderr,"dspace\n");
-				    if( fread( in, sizeof(in), 1, pfin) != 1 )
-					return Foo( -11 );
-				    ntohd( (unsigned char *)out, in, 4 );
-				    space.left  = out[0]; /* x1 */
-				    space.bottom= out[1]; /* y1 */
-				    space.right = out[2]; /* x2 */
-				    space.top   = out[3]; /* y2 */
-				    goto spacend;
-				}
-
-			    case 'S':
-				{
-				    if( debug )
-					fprintf( stderr,"space3\n");
-				    if( fread( (char *)buf3,
-					       (int)sizeof buf3, 1, pfin)
-					!= 1
-					)
-					return Foo( -11 );
-				    /* Only need X and Y, ignore Z */
-				    space.left  = sxt16((long)(buf3[1]<<8) | buf3[0]); /* x1 */
-				    space.bottom= sxt16((long)(buf3[3]<<8) | buf3[2]); /* y1 */
-				    /* z1 */
-				    space.right = sxt16((long)(buf3[7]<<8) | buf3[6]); /* x2 */
-				    space.top   = sxt16((long)(buf3[9]<<8) | buf3[8]); /* y2 */
-				    /* z2 */
-				    goto spacend;
-				}
-
-			    case 's':	/* space */
-				if( debug )
-				    fprintf( stderr,"space\n");
-				{
-				    if ( fread( (char *)buf2,
-						(int)sizeof buf2, 1, pfin
-						) != 1
-					 )
-					return Foo( -11 );
-				    space.left  = sxt16((long)(buf2[1]<<8) | buf2[0]); /* x1 */
-				    space.bottom= sxt16((long)(buf2[3]<<8) | buf2[2]); /* y1 */
-				    space.right = sxt16((long)(buf2[5]<<8) | buf2[4]); /* x2 */
-				    space.top   = sxt16((long)(buf2[7]<<8) | buf2[6]); /* y2 */
-				}
-
-			spacend:
-				delta = space.right - space.left;
-				deltao2 = space.top - space.bottom;
-				if ( deltao2 > delta )
-				    delta = deltao2;
-				if( delta <= 0 )  {
-				    fprintf( stderr, "pl-fb: delta = %g, bad space()\n", delta );
-				    return Foo( -42 );
-				}
-				deltao2 = delta / 2.0;
-				if( debug )
-				    fprintf( stderr,"Space: X=(%g,%g) Y=(%g,%g) delta=%g\n",
-					     space.left, space.right,
-					     space.bottom, space.top,
-					     delta );
-				continue;
-
-			    case 'C':	/* color */
-				if( fread( cur_color, 1, 3, pfin) != 3 )
-				    return Foo( -11 );
-				if( debug )
-				    fprintf( stderr,"Color is R%d G%d B%d\n",
-					     cur_color[RED],
-					     cur_color[GRN],
-					     cur_color[BLU]);
-				continue;
-
-			    case 't':	/* label */
-				if( debug )
-				    fprintf( stderr,"label: ");
-
-				newpos = virpos;
-				while ( (c = getc( pfin )) != EOF && c != '\n'
-					)  {
-				    /* vectorize the characters */
-				    put_vector_char( c, &newpos);
-
-				    if( debug )
-					putc( c, stderr );
-				}
-
-				plotted = true;
-				virpos = newpos;
-				continue;
-
-				/* discard the deadwood */
-			    case 'c':
-				{
-				    char buf[3*2];
-				    if( fread(buf, sizeof(buf), 1, pfin) != 1 )
-					return Foo( -11 );
-				    if( debug )
-					fprintf( stderr,"circle ignored\n" );
-				    continue;
-				}
-			    case 'i':
-				{
-				    char buf[3*8];
-				    if( fread(buf, sizeof(buf), 1, pfin) != 1 )
-					return Foo( -11 );
-				    if( debug )
-					fprintf( stderr,"d_circle ignored\n" );
-				    continue;
-				}
-			    case 'a':
-				{
-				    char buf[6*2];
-				    if( fread(buf, sizeof(buf), 1, pfin) != 1 )
-					return Foo( -11 );
-				    if( debug )
-					fprintf( stderr,"arc ignored\n" );
-				    continue;
-				}
-			    case 'r':
-				{
-				    char buf[6*8];
-				    if( fread(buf, sizeof(buf), 1, pfin) != 1 )
-					return Foo( -11 );
-				    if( debug )
-					fprintf( stderr,"d_arc ignored\n" );
-				    continue;
-				}
-
-			    default:
-				fprintf( stderr,"bad command '%c' (0x%02x)\n", c, c );
-
-				return Foo( -12 );	/* bad input */
-			}
-		    break;
-		}		/* next input record */
-	}			/* next frame */
+		    return Foo( -12 );	/* bad input */
+	    }
+	    break;
+	}		/* next input record */
+    }			/* next frame */
 }
 
 
@@ -1319,16 +1319,14 @@ DoFile(void)	/* returns vpl status code */
 */
 static void
 Catch(register int sig)
-     /* signal number */
+    /* signal number */
 {
-    register int	pid;		/* this process's ID */
-    register int	*psig;		/* -> sigs[.] */
+    register int pid;		/* this process's ID */
+    register int *psig;		/* -> sigs[.] */
+    register int i;
 
-    for ( psig = &sigs[0];
-	  psig < &sigs[sizeof sigs / sizeof sigs[0]];
-	  ++psig
-	  )
-	(void)signal( *psig, SIG_IGN );
+    for (i = 0; sigs[i]; ++i)
+	(void)signal(sigs[i], SIG_IGN);
 
     (void)Foo( -13 );		/* clean up */
 
@@ -1352,13 +1350,12 @@ static void
 SetSigs(void)
 {
     register int	*psig;		/* -> sigs[.] */
+    register int i;
 
-    for ( psig = &sigs[0];
-	  psig < &sigs[sizeof sigs / sizeof sigs[0]];
-	  ++psig
-	  )
-	if ( signal( *psig, SIG_IGN ) != SIG_IGN )
-	    (void)signal( *psig, Catch );
+    for (i = 0; sigs[i]; ++i) {
+	if (signal(sigs[i], SIG_IGN) != SIG_IGN)
+	    (void)signal(sigs[i], Catch);
+    }
 }
 
 
@@ -1378,21 +1375,21 @@ main(int argc, char **argv)
 
     if ( !get_args( argc, argv ) )  {
 	(void)fputs(usage, stderr);
-	exit( 1 );
+	bu_exit( 1, NULL );
     }
 
     /* Open frame buffer, adapt to slightly smaller ones */
-    if( (fbp = fb_open(framebuffer, Npixels, Nscanlines)) == FBIO_NULL ) {
-	fprintf(stderr,"pl-fb: fb_open failed\n");
-	exit(1);
+    if ( (fbp = fb_open(framebuffer, Npixels, Nscanlines)) == FBIO_NULL ) {
+	fprintf(stderr, "pl-fb: fb_open failed\n");
+	bu_exit(1, NULL);
     }
     Npixels = fb_getwidth(fbp);
     Nscanlines = fb_getheight(fbp);
-    if( immediate )  {
+    if ( immediate )  {
 	lines_per_band = Nscanlines;
-	if( !over )
+	if ( !over )
 	    fb_clear( fbp, RGBPIXEL_NULL );
-    } else if( Nscanlines <= 512 ) {
+    } else if ( Nscanlines <= 512 ) {
 	/* make one full size band */
 	lines_per_band = Nscanlines;
 	single_banded = 1;
@@ -1401,7 +1398,7 @@ main(int argc, char **argv)
     /*
      * Handle image-size specific initializations
      */
-    if( (Nscanlines % lines_per_band) != 0 )  {
+    if ( (Nscanlines % lines_per_band) != 0 )  {
 	/* round it down - only necessary if buffered? */
 	Nscanlines = (Nscanlines / lines_per_band) * lines_per_band;
     }
@@ -1412,30 +1409,30 @@ main(int argc, char **argv)
     deltao2 = Nscanlines/2;
 
     buffersize = lines_per_band*Npixels*sizeof(RGBpixel);
-    if( (buffer = (unsigned char *)malloc(buffersize)) == RGBPIXEL_NULL)  {
-	fprintf(stderr,"pl-fb:  malloc error\n");
-	exit(1);
+    if ( (buffer = (unsigned char *)malloc(buffersize)) == RGBPIXEL_NULL)  {
+	fprintf(stderr, "pl-fb:  malloc error\n");
+	bu_exit(1, NULL);
     }
     /* Extra band protects against requeueing off the top */
     band = (struct band *)malloc((BANDSLOP)*sizeof(struct band));
-    if( band == (struct band *)0 )  {
-	fprintf(stderr,"pl-fb: malloc error2\n");
-	exit(1);
+    if ( band == (struct band *)0 )  {
+	fprintf(stderr, "pl-fb: malloc error2\n");
+	bu_exit(1, NULL);
     }
-    bzero( (char *)band, (BANDSLOP)*sizeof(struct band) );
+    memset((char *)band, 0, (BANDSLOP)*sizeof(struct band));
     bandEnd = &band[BANDS];
-    if( single_banded && over ) {
+    if ( single_banded && over ) {
 	/* Read in initial screen */
-	if( fb_read( fbp, 0, 0, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
-	    fprintf(stderr,"pl-fb: band read error\n");
+	if ( fb_read( fbp, 0, 0, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
+	    fprintf(stderr, "pl-fb: band read error\n");
     }
-    if( debug )
+    if ( debug )
 	fprintf(stderr, "pl-fb output of %s\n", filename);
 
     SetSigs();			/* set signal catchers */
 
     (void)DoFile( );	/* plot it */
-    exit(0);
+    bu_exit(0, NULL);
 }
 
 
@@ -1443,8 +1440,8 @@ main(int argc, char **argv)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -1,7 +1,7 @@
 /*                        F B H E L P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2007 United States Government as represented by
+ * Copyright (c) 1986-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,26 +20,16 @@
  */
 /** @file fbhelp.c
  *
- *  Print out info about the selected frame buffer.
- *  Just calls fb_help().
- *
- *  Authors -
- *	Phillip Dykstra
+ * Print out info about the selected frame buffer.
+ * Just calls fb_help().
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
-#include "machine.h"
 #include "bu.h"
 #include "fb.h"
 
@@ -52,24 +42,24 @@ Usage: fbhelp [-F framebuffer]\n";
 int
 main(int argc, char **argv)
 {
-	register int c;
-	FBIO	*fbp;
+    register int c;
+    FBIO	*fbp;
 
-	while ( (c = bu_getopt( argc, argv, "F:" )) != EOF ) {
-		switch( c ) {
-		case 'F':
-			framebuffer = bu_optarg;
-			break;
-		default:		/* '?' */
-			(void)fputs(usage, stderr);
-			return 1;
-		}
+    while ( (c = bu_getopt( argc, argv, "F:" )) != EOF ) {
+	switch ( c ) {
+	    case 'F':
+		framebuffer = bu_optarg;
+		break;
+	    default:		/* '?' */
+		(void)fputs(usage, stderr);
+		return 1;
 	}
-	if ( argc > ++bu_optind ) {
-		(void)fprintf( stderr, "fbhelp: excess argument(s) ignored\n" );
-	}
+    }
+    if ( argc > ++bu_optind ) {
+	(void)fprintf( stderr, "fbhelp: excess argument(s) ignored\n" );
+    }
 
-	printf("\
+    printf("\
 A Frame Buffer display device is selected by\n\
 setting the environment variable FB_FILE:\n\
 (/bin/sh )  FB_FILE=/dev/device; export FB_FILE\n\
@@ -77,24 +67,24 @@ setting the environment variable FB_FILE:\n\
 Many programs also accept a \"-F framebuffer\" flag.\n\
 Type \"man brlcad\" for more information.\n" );
 
-	printf("=============== Available Devices ================\n");
-	fb_genhelp();
+    printf("=============== Available Devices ================\n");
+    fb_genhelp();
 
-	printf("=============== Current Selection ================\n");
-	if( (fbp = fb_open( framebuffer, 0, 0 )) == FBIO_NULL ) {
-		fprintf( stderr, "fbhelp: Can't open frame buffer\n" );
-		return	1;
-	}
-	fb_help( fbp );
-	return	fb_close( fbp );
+    printf("=============== Current Selection ================\n");
+    if ( (fbp = fb_open( framebuffer, 0, 0 )) == FBIO_NULL ) {
+	fprintf( stderr, "fbhelp: Can't open frame buffer\n" );
+	return	1;
+    }
+    fb_help( fbp );
+    return	fb_close( fbp );
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -1,7 +1,7 @@
 /*                            D S P . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2007 United States Government as represented by
+ * Copyright (c) 1994-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,7 +23,8 @@
 
 #include "common.h"
 
-#include "machine.h"
+#include "bio.h"
+
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
@@ -34,32 +35,32 @@
 
 int
 mk_dsp(struct rt_wdb *fp, const char *name, const char *file, int xdim, int ydim, const matp_t mat)
-				/* name of file containing elevation data */
-				/* X dimension of file (w cells) */
-				/* Y dimension of file (n cells) */
-				/* convert solid coords to model space */
+    /* name of file containing elevation data */
+    /* X dimension of file (w cells) */
+    /* Y dimension of file (n cells) */
+    /* convert solid coords to model space */
 {
-	struct rt_dsp_internal *dsp;
+    struct rt_dsp_internal *dsp;
 
-	BU_GETSTRUCT( dsp, rt_dsp_internal );
-	dsp->magic = RT_DSP_INTERNAL_MAGIC;
-	bu_vls_init( &dsp->dsp_name );
-	bu_vls_strcpy( &dsp->dsp_name, "file:");
-	bu_vls_strcat( &dsp->dsp_name, file);
+    BU_GETSTRUCT( dsp, rt_dsp_internal );
+    dsp->magic = RT_DSP_INTERNAL_MAGIC;
+    bu_vls_init( &dsp->dsp_name );
+    bu_vls_strcpy( &dsp->dsp_name, "file:");
+    bu_vls_strcat( &dsp->dsp_name, file);
 
-	dsp->dsp_xcnt = xdim;
-	dsp->dsp_ycnt = ydim;
-	MAT_COPY( dsp->dsp_stom, mat );
+    dsp->dsp_xcnt = xdim;
+    dsp->dsp_ycnt = ydim;
+    MAT_COPY( dsp->dsp_stom, mat );
 
-	return wdb_export( fp, name, (genptr_t)dsp, ID_DSP, mk_conv2mm );
+    return wdb_export( fp, name, (genptr_t)dsp, ID_DSP, mk_conv2mm );
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

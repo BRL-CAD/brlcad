@@ -102,6 +102,7 @@ copy &quot;$(TargetDir)&quot;libz_d.lib ..\..\..\lib
 				ProgramDataBaseFileName=".\Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
+				DebugInformationFormat="0"
 				CompileAs="0"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
@@ -111,6 +112,7 @@ copy &quot;$(TargetDir)&quot;libz_d.lib ..\..\..\lib
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				AdditionalLibraryDirectories="../../../lib"
+				GenerateDebugInformation="FALSE"
 				ProgramDatabaseFile=".\Release/libz.pdb"
 				ImportLibrary=".\Release/libz.lib"
 				TargetMachine="1"/>

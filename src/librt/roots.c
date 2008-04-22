@@ -1,7 +1,7 @@
 /*                         R O O T S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2007 United States Government as represented by
+ * Copyright (c) 1985-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,26 +23,15 @@
  *
  * Find the roots of a polynomial
  *
- *  Author -
- *	Jeff Hanes
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  */
 /** @} */
-
-#ifndef lint
-static const char RCSroots[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
 #include <stdio.h>
 #include <math.h>
+#include "bio.h"
 
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
@@ -67,31 +56,31 @@ static const bn_poly_t bn_Zero_poly = { BN_POLY_MAGIC, 0, {0.0} };
  *
  * where
  *
- *	b0 = a0,	bi = b(i-1)*Z + ai,	i = 1,2,...n
- *	c0 = b0,	ci = c(i-1)*Z + bi,	i = 1,2,...n-1
- *	d0 = c0,	di = d(i-1)*Z + ci,	i = 1,2,...n-2
+ *	b0 = a0,	bi = b(i-1)*Z + ai,	i = 1, 2,...n
+ *	c0 = b0,	ci = c(i-1)*Z + bi,	i = 1, 2,...n-1
+ *	d0 = c0,	di = d(i-1)*Z + ci,	i = 1, 2,...n-2
  */
 void
 rt_poly_eval_w_2derivatives(register bn_complex_t *cZ, register bn_poly_t *eqn, register bn_complex_t *b, register bn_complex_t *c, register bn_complex_t *d)
-     /* input */
-     /* input */
-     /* outputs */
+    /* input */
+    /* input */
+    /* outputs */
 {
     register int	n;
     register int	m;
 
-    bn_cx_cons(b,eqn->cf[0],0.0);
+    bn_cx_cons(b, eqn->cf[0], 0.0);
     *c = *b;
     *d = *c;
 
-    for ( n=1; ( m = eqn->dgr - n ) >= 0; ++n){
+    for ( n=1; ( m = eqn->dgr - n ) >= 0; ++n) {
 	bn_cx_mul( b, cZ );
 	b->re += eqn->cf[n];
-	if ( m > 0 ){
+	if ( m > 0 ) {
 	    bn_cx_mul( c, cZ );
 	    bn_cx_add( c, b );
 	}
-	if ( m > 1 ){
+	if ( m > 1 ) {
 	    bn_cx_mul( d, cZ );
 	    bn_cx_add( d, c );
 	}
@@ -130,7 +119,7 @@ rt_poly_findroot(register bn_poly_t *eqn, /* polynomial */
     int	n;
     register int	i;		/* iteration counter		*/
 
-    for( i=0; i < 20; i++ ) {
+    for ( i=0; i < 20; i++ ) {
 	cZ = *nxZ;
 	rt_poly_eval_w_2derivatives( &cZ, eqn, &p0, &p1, &p2 );
 
@@ -144,7 +133,7 @@ rt_poly_findroot(register bn_poly_t *eqn, /* polynomial */
 
 	/* Calculate the next iteration for Laguerre's method.
 	 * Test to see whether addition or subtraction gives the
-	 * larger denominator for the next 'Z' , and use the
+	 * larger denominator for the next 'Z', and use the
 	 * appropriate value in the formula.
 	 */
 	bn_cx_sqrt( &cH, &cH );
@@ -152,7 +141,7 @@ rt_poly_findroot(register bn_poly_t *eqn, /* polynomial */
 	bn_cx_sub( &p1_H, &cH );
 	bn_cx_add( &p1, &cH );		/* p1 <== p1+H */
 	bn_cx_scal( &p0, (double)(eqn->dgr) );
-	if ( bn_cx_amplsq( &p1_H ) > bn_cx_amplsq( &p1 ) ){
+	if ( bn_cx_amplsq( &p1_H ) > bn_cx_amplsq( &p1 ) ) {
 	    bn_cx_div( &p0, &p1_H);
 	    bn_cx_sub( nxZ, &p0 );
 	} else {
@@ -173,11 +162,11 @@ rt_poly_findroot(register bn_poly_t *eqn, /* polynomial */
 	 */
 	b = bn_cx_amplsq( nxZ );
 	diff = bn_cx_amplsq( &p0 );
-	if( b < diff )
+	if ( b < diff )
 	    continue;
-	if( (b-diff) == b )
+	if ( (b-diff) == b )
 	    return(i);		/* OK -- can't do better */
-	if( diff > (b - diff)*1.0e-5 )
+	if ( diff > (b - diff)*1.0e-5 )
 	    continue;
 	return(i);			/* OK */
     }
@@ -209,7 +198,7 @@ rt_poly_findroot(register bn_poly_t *eqn, /* polynomial */
  *
  *		p(Z) = bn,	where
  *
- *		b0 = a0,	bi = b(i-1)*Z + ai,	i = 1,2,...n
+ *		b0 = a0,	bi = b(i-1)*Z + ai,	i = 1, 2,...n
  */
 int
 rt_poly_checkroots(register bn_poly_t *eqn, bn_complex_t *roots, register int nroots)
@@ -219,7 +208,7 @@ rt_poly_checkroots(register bn_poly_t *eqn, bn_complex_t *roots, register int nr
     register int	n;
     int		m;
 
-    for ( m=0; m < nroots; ++m ){
+    for ( m=0; m < nroots; ++m ) {
 	/* Select value of Z to evaluate at */
 	zr = bn_cx_real( &roots[m] );
 	zi = bn_cx_imag( &roots[m] );
@@ -306,8 +295,8 @@ rt_poly_roots(register bn_poly_t	*eqn,	/* equation to be solved */
     /* Remove leading coefficients which are too close to zero,
      * to prevent the polynomial factoring from blowing up, below.
      */
-    while( NEAR_ZERO( eqn->cf[0], SMALL ) )  {
-	for ( n=0; n <= eqn->dgr; n++ ){
+    while ( NEAR_ZERO( eqn->cf[0], SMALL ) )  {
+	for ( n=0; n <= eqn->dgr; n++ ) {
 	    eqn->cf[n] = eqn->cf[n+1];
 	}
 	if ( --eqn->dgr <= 0 )
@@ -324,21 +313,21 @@ rt_poly_roots(register bn_poly_t	*eqn,	/* equation to be solved */
     /* A trailing coefficient of zero indicates that zero
      * is a root of the equation.
      */
-    while( NEAR_ZERO( eqn->cf[eqn->dgr], SMALL ) )  {
+    while ( NEAR_ZERO( eqn->cf[eqn->dgr], SMALL ) )  {
 	roots[n].re = roots[n].im = 0.0;
 	--eqn->dgr;
 	++n;
     }
 
-    while ( eqn->dgr > 2 ){
+    while ( eqn->dgr > 2 ) {
 	if ( eqn->dgr == 4 )  {
-	    if( bn_poly_quartic_roots(&roots[n], eqn) )  {
-		if( rt_poly_checkroots( eqn, &roots[n], 4 ) == 0 )  {
+	    if ( bn_poly_quartic_roots(&roots[n], eqn) )  {
+		if ( rt_poly_checkroots( eqn, &roots[n], 4 ) == 0 )  {
 		    return( n+4 );
 		}
 	    }
 	} else if ( eqn->dgr == 3 )  {
-	    if( bn_poly_cubic_roots( &roots[n], eqn ) )  {
+	    if ( bn_poly_cubic_roots( &roots[n], eqn ) )  {
 		if ( rt_poly_checkroots( eqn, &roots[n], 3 ) == 0 )  {
 		    return ( n+3 );
 		}
@@ -353,7 +342,7 @@ rt_poly_roots(register bn_poly_t	*eqn,	/* equation to be solved */
 	if ( (rt_poly_findroot( eqn, &roots[n], name )) < 0 )
 	    return(n);	/* return those we found, anyways */
 
-	if ( fabs(roots[n].im) > 1.0e-5* fabs(roots[n].re) ){
+	if ( fabs(roots[n].im) > 1.0e-5* fabs(roots[n].re) ) {
 	    /* If root is complex, its complex conjugate is
 	     * also a root since complex roots come in con-
 	     * jugate pairs when all coefficients are real.
@@ -373,11 +362,11 @@ rt_poly_roots(register bn_poly_t	*eqn,	/* equation to be solved */
     /* For polynomials of lower degree, iterative techniques
      * are an inefficient way to find the roots.
      */
-    if ( eqn->dgr == 1 ){
+    if ( eqn->dgr == 1 ) {
 	roots[n].re = -(eqn->cf[1]);
 	roots[n].im = 0.0;
 	++n;
-    } else if ( eqn->dgr == 2 ){
+    } else if ( eqn->dgr == 2 ) {
 	bn_poly_quadratic_roots(&roots[n], eqn);
 	n += 2;
     }
@@ -389,8 +378,8 @@ rt_poly_roots(register bn_poly_t	*eqn,	/* equation to be solved */
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

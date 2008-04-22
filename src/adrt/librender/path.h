@@ -1,7 +1,7 @@
 /*                          P A T H . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007 United States Government as represented by
+ * Copyright (c) 2007-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,8 +31,8 @@
 
 
 typedef struct render_path_s {
-  int samples;
-  tfloat inv_samples;
+    int samples;
+    tfloat inv_samples;
 } render_path_t;
 
 
@@ -47,8 +47,8 @@ void render_path_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

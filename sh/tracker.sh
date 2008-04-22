@@ -2,7 +2,7 @@
 #                      T R A C K E R . S H
 # BRL-CAD
 #
-# Copyright (c) 2006-2007 United States Government as represented by
+# Copyright (c) 2006-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -73,7 +73,7 @@ identify ( ) {
     echo "*            t  r  a  c  k  e  r                 *"
     echo "* A tool for extracting Sourceforge tracker data *"
     echo "*     Author: Christopher Sean Morrison          *"
-    echo "*    Version 2006.3, BRL-CAD BSD License         *"
+    echo "*    Version 2008.1, BRL-CAD BSD License         *"
     echo "*              devs@brlcad.org                   *"
     echo "**************************************************"
     echo ""
@@ -124,15 +124,20 @@ isint ( ) {
 # computes the number of days since epoch for either the provided
 # year, month, and day in numeric form or from today otherwise.
 days ( ) {
-    if [ $# -ne 3 ] ; then
+    if [ $# -eq 3 ] ; then
+	_yer="$1"
+	_mon="$2"
+	_day="$3"
+    elif [ $# -eq 0 ] ; then
 	_yer="`date +%Y`"
 	_mon="`date +%m`"
 	_day="`date +%d`"
     else
-	_yer="$1"
-	_mon="$2"
-	_day="$3"
+	echo "ERROR: cannot compute the date" 1>&2
+	return 5
     fi
+
+    # echo "_yer=$_yer;_mon=$_mon;_day=$_day"
 
     if ! isint $_yer ; then
 	echo "ERROR: $_yer is not a number"
@@ -154,15 +159,15 @@ days ( ) {
 
     _dys=0
     case $_mon in
-	 1) _dys=0 ;;
-	 2) _dys=31 ;;
-	 3) _dys=59 ;;
-	 4) _dys=90 ;;
-	 5) _dys=120 ;;
-	 6) _dys=151 ;;
-	 7) _dys=181 ;;
-	 8) _dys=212 ;;
-	 9) _dys=243 ;;
+	1) _dys=0 ;;
+	2) _dys=31 ;;
+	3) _dys=59 ;;
+	4) _dys=90 ;;
+	5) _dys=120 ;;
+	6) _dys=151 ;;
+	7) _dys=181 ;;
+	8) _dys=212 ;;
+	9) _dys=243 ;;
 	10) _dys=273 ;;
 	11) _dys=304 ;;
 	12) _dys=334 ;;
@@ -530,7 +535,7 @@ for _item in $_itemURLS ; do
     [ $VERBOSE -gt 0 ] && echo "Processing $count of $_totalItemCount: $_itemTitle"
 
     # extract the type
-    _itemType="`echo \"$_itemData\" | grep -C10 Summary | grep selected | grep -v View | grep -v Browse | head -1 | sed 's/.*<a[^>]*>\([^<]*\)<\/a>.*/\1/'`"
+    _itemType="`echo \"$_itemData\" | grep -C1 Tracker | head -n 3 | tail -n 1 | sed 's/.*<a[^>]*>\([^<]*\)<\/a>.*/\1/'`"
     [ $VERBOSE -gt 1 ] && echo "${_itemID}: Type is $_itemType"
     _itemLine="$_itemLine,$_itemType"
 
@@ -589,6 +594,14 @@ for _item in $_itemURLS ; do
     [ $VERBOSE -gt 1 ] && echo "${_itemID}: Resolution is $_itemResolution"
     _itemLine="$_itemLine,$_itemResolution"
 
+    # extract the long description as a comment
+    _itemComment="`echo \"$_itemData\" | perl -0777 -pi -e 's/.*?<td colspan="2">.*?<\/td>.*?<td colspan="2">(.*?)<\/td>.*/\1/s' | sed 's/<b>Add a Comment:<\/b>//g' | perl -0777 -pi -e 's/<[^>]*?>//gs' | perl -0777 -pi -e 's/[^[:print:][:space:][:punct:]]/?/gs'`"
+    if [ `echo "$_itemComment" | wc | awk '{print $3}'` -gt 1020 ] ; then
+	_itemComment="`echo \"$_itemComment\" | perl -0777 -pi -e 's/^(.{1020}).*/\1.../s'`"
+    fi
+    [ $VERBOSE -gt 1 ] && echo "${_itemID}: Comment is $_itemComment"
+    _itemLine="$_itemLine,\"$_itemComment\""
+
     # if the item is closed, was it closed within CLOSED number of days?
     if [ "x$_itemStatus" = "xClosed" -o "x$_itemStatus" = "xDeleted" ] ; then
 	# item is closed or deleted.. figure out how many days ago
@@ -604,14 +617,14 @@ for _item in $_itemURLS ; do
 	    if [ "x$DELETED" = "xyes" -o "x$_itemStatus" = "xClosed" ] ; then
 		# add the item to the output list
 		_itemLines="$_itemLines
-$_itemLine"
+	$_itemLine"
 		wrote=$(($wrote + 1))
 	    fi
 	fi
     else
 	# add the item to the output list
 	_itemLines="$_itemLines
-$_itemLine"
+	$_itemLine"
 	wrote=$(($wrote + 1))
     fi
 
@@ -624,7 +637,7 @@ done
 ###
 [ $VERBOSE -gt 0 ] && echo "FORMATTING OUTPUT"
 # output a comma-separated value table with the following columns:
-echo "TRACKER ID,CATEGORY,DESCRIPTION,PRIORITY,STATUS,ASSIGNED TO,SUBMITTER,DATE SUBMITTED,DATE LAST UPDATED,RESOLUTION" >> $OUTPUT
+echo "TRACKER ID,CATEGORY,DESCRIPTION,PRIORITY,STATUS,ASSIGNED TO,SUBMITTER,DATE SUBMITTED,DATE LAST UPDATED,RESOLUTION,COMMENT" >> $OUTPUT
 echo "$_itemLines" | tail -n +2 >> $OUTPUT
 
 # Notify where the output was saved regardless of verbosity (sent to stderr)

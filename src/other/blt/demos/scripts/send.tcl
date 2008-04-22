@@ -3,7 +3,7 @@
 # --------------------------------------------------------------------------
 #
 # SendInit --
-#	
+#
 #	Creates a "send" proc to replace the former Tk send command.
 #	Uses DDE services to simulate the transfer.  This must be
 #	called before any drag&drop targets are registered. Otherwise
@@ -11,18 +11,18 @@
 #
 #	The first trick is to determine a unique application name. This
 #	is what other applications will use to send to us.  Tk used to
-#	do this for us.  
-#	
-#	Note that we can generate the same name for two different Tk 
+#	do this for us.
+#
+#	Note that we can generate the same name for two different Tk
 #	applications.  This can happen if two Tk applications picking
-#	names at exactly the same time.   [In the future, we should 
+#	names at exactly the same time.   [In the future, we should
 #	probably generate a name based upon a global system value, such
 #	as the handle of the main window ".".]   The proc "SendVerify"
 #	below will verify that you have only one DDE server registered
 #	with this application's name.
-#	
+#
 # Arguments:
-#	myInterp	Sets the application name explicitly to this 
+#	myInterp	Sets the application name explicitly to this
 #			string. If the argument isn't given, or is the
 #			empty string, then the routine picks a name for
 #			us.
@@ -52,10 +52,10 @@ proc SendInit { {myInterp ""} } {
 	set appName [tk appname]
 	set count 0
 	set suffix {}
-	
+
 	# Keep generating interpreter names by suffix-ing the original
 	# application name with " #number".  Sooner of later we'll find
-	# one that's not currently use. 
+	# one that's not currently use.
 
 	while { 1 } {
 	    set myInterp "${appName}${suffix}"
@@ -79,7 +79,7 @@ proc SendInit { {myInterp ""} } {
 # --------------------------------------------------------------------------
 #
 # SendVerify --
-#	
+#
 #	Verifies that application name picked is uniquely registered
 #	as a DDE server.  This checks that two Tk applications don't
 #	accidently use the same name.
@@ -107,9 +107,9 @@ proc SendVerify {} {
     }
     if {$count == 0} {
 	error "Service not found: wrong name registered???"
-    } 
+    }
     if { $count > 1 } {
 	error "Duplicate names found for \"[tk appname]\""
-    } 
+    }
 }
 

@@ -1,7 +1,7 @@
 /*                        O B J D I R . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2007 United States Government as represented by
+ * Copyright (c) 1985-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,28 +18,18 @@
  * information.
  */
 /** @file objdir.h
- *			D I R . H
  *
  * The in-core object directory
  *
- *  Author -
- *	Michael John Muuss
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
- *  $Header$
  */
 
 struct directory  {
-	char		*d_namep;	/* pointer to name string */
-	long		d_addr;		/* disk address in obj file */
-	short		d_flags;	/* flags */
-	short		d_len;		/* # of db granules used by obj */
-	short		d_nref;		/* # times referenced by COMBs */
-	struct directory *d_forw;	/* forward link */
+    char		*d_namep;	/* pointer to name string */
+    long		d_addr;		/* disk address in obj file */
+    short		d_flags;	/* flags */
+    short		d_len;		/* # of db granules used by obj */
+    short		d_nref;		/* # times referenced by COMBs */
+    struct directory *d_forw;	/* forward link */
 };
 #define DIR_NULL	((struct directory *) NULL)
 
@@ -51,16 +41,17 @@ struct directory  {
 #define LOOKUP_QUIET	0
 #define LOOKUP_NOISY	1
 
+/* should come from db.h */
 #ifndef NAMESIZE
-#define NAMESIZE		16
+#  define NAMESIZE		16
 #endif
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

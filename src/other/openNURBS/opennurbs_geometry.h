@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -50,7 +50,7 @@ public:
   ON_Geometry& operator=(const ON_Geometry&);
   virtual ~ON_Geometry();
 
-  // Description: 
+  // Description:
   //   Get object's 3d axis aligned bounding box.
   // Returns:
   //   3d bounding box.
@@ -63,9 +63,9 @@ public:
   //   union of the input box with the object's bounding box.
   // Parameters:
   //   bbox - [in/out] 3d axis aligned bounding box
-  //   bGrowBox - [in] (default=FALSE) 
-  //     If TRUE, then the union of the input bbox and the 
-  //     object's bounding box is returned in bbox.  
+  //   bGrowBox - [in] (default=FALSE)
+  //     If TRUE, then the union of the input bbox and the
+  //     object's bounding box is returned in bbox.
   //     If FALSE, the object's bounding box is returned in bbox.
   // Returns:
   //   TRUE if object has bounding box and calculation was successful.
@@ -83,8 +83,8 @@ public:
   // Parameters:
   //   bbox_min - [in/out] minimum corner of the 3d bounding box
   //   bbox_max - [in/out] maximum corner of the 3d bounding box
-  //   bGrowBox - [in] (default=FALSE) 
-  //     If TRUE, then the union of the input bbox and the 
+  //   bGrowBox - [in] (default=FALSE)
+  //     If TRUE, then the union of the input bbox and the
   //     object's bounding box is returned.
   //     If FALSE, the object's bounding box is returned.
   // Returns:
@@ -141,7 +141,7 @@ public:
   //   TRUE if object successfully translated
   // Remarks:
   //   Uses virtual Transform() function to calculate the result.
-  BOOL Translate( 
+  BOOL Translate(
     const ON_3dVector& translation_vector
     );
 
@@ -154,7 +154,7 @@ public:
   //   TRUE if object successfully scaled
   // Remarks:
   //   Uses virtual Transform() function to calculate the result.
-  BOOL Scale( 
+  BOOL Scale(
     double scale_factor
     );
 
@@ -166,7 +166,7 @@ public:
   //   The dimension is typically three.  For parameter space trimming
   //   curves the dimension is two.  In rare cases the dimension can
   //   be one or greater than three.
-  virtual 
+  virtual
   int Dimension() const = 0;
 
   // Description:
@@ -175,9 +175,9 @@ public:
   // Parameters:
   //   boxmin - [in/out] array of Dimension() doubles
   //   boxmax - [in/out] array of Dimension() doubles
-  //   bGrowBox - [in] (default=FALSE) 
-  //     If TRUE, then the union of the input bbox and the 
-  //     object's bounding box is returned in bbox.  
+  //   bGrowBox - [in] (default=FALSE)
+  //     If TRUE, then the union of the input bbox and the
+  //     object's bounding box is returned in bbox.
   //     If FALSE, the object's bounding box is returned in bbox.
   // Returns:
   //   TRUE if object has bounding box and calculation was successful
@@ -193,9 +193,9 @@ public:
     Get tight bounding box.
 	Parameters:
 		tight_bbox - [in/out] tight bounding box
-		bGrowBox -[in]	(default=false)			
+		bGrowBox -[in]	(default=false)
       If true and the input tight_bbox is valid, then returned
-      tight_bbox is the union of the input tight_bbox and the 
+      tight_bbox is the union of the input tight_bbox and the
       curve's tight bounding box.
 		xform -[in] (default=NULL)
       If not NULL, the tight bounding box of the transformed
@@ -207,8 +207,8 @@ public:
     especially when xform is not null.
   */
   virtual
-	bool GetTightBoundingBox( 
-			ON_BoundingBox& tight_bbox, 
+	bool GetTightBoundingBox(
+			ON_BoundingBox& tight_bbox,
       int bGrowBox = false,
 			const ON_Xform* xform = 0
       ) const;
@@ -217,7 +217,7 @@ public:
   //   Some objects cache bounding box information.
   //   If you modify an object, then call ClearBoundingBox()
   //   to inform the object that any cached bounding boxes
-  //   are invalid.  
+  //   are invalid.
   //
   // Remarks:
   //   Generally, ClearBoundingBox() overrides
@@ -231,17 +231,17 @@ public:
   /*
   Description:
     Transforms the object.
- 
+
   Parameters:
     xform - [in] transformation to apply to object.
       If xform.IsSimilarity() is zero, then you may
       want to call MakeSquishy() before calling
       Transform.
- 
+
   Remarks:
     When overriding this function, be sure to include a call
-    to ON_Object::TransformUserData() which takes care of 
-    transforming any ON_UserData that may be attached to 
+    to ON_Object::TransformUserData() which takes care of
+    transforming any ON_UserData that may be attached to
     the object.
 
   See Also:
@@ -254,14 +254,14 @@ public:
     definition.
   */
   virtual
-  BOOL Transform( 
+  BOOL Transform(
          const ON_Xform& xform
          );
 
   /*
   Returns:
-    True if object can be accuratly modified with 
-    "squishy" transformations like projections, 
+    True if object can be accuratly modified with
+    "squishy" transformations like projections,
     shears, an non-uniform scaling.
   See Also:
     ON_Geometry::MakeDeformable();
@@ -292,7 +292,7 @@ public:
   //   j - [in] coordinate index
   //
   // Remarks:
-  //   The default implementation uses the virtual Transform() 
+  //   The default implementation uses the virtual Transform()
   //   function to calculate the result.  If you are creating
   //   an object where Transform() is slow, coordinate swapping
   //   will be frequently used, and coordinate swapping can
@@ -321,7 +321,7 @@ public:
   See Also:
     ON_Geometry::IsMorphable
   */
-  virtual 
+  virtual
   bool Morph( const ON_SpaceMorph& morph );
 
   /*
@@ -340,7 +340,7 @@ public:
     Returns TRUE if the virtual ON_Geometry::BrepForm can compute
     an ON_Brep representation of this object.
   Remarks:
-    The default implementation of ON_Geometry::BrepForm returns 
+    The default implementation of ON_Geometry::BrepForm returns
     FALSE.
   See Also
     ON_Geometry::BrepForm
@@ -351,7 +351,7 @@ public:
   /*
   Description:
     If possible, BrepForm() creates a brep form of the
-    ON_Geometry. 
+    ON_Geometry.
   Parameters:
     brep - [in] if not NULL, brep is used to store the brep
         form of the geometry.
@@ -376,7 +376,7 @@ public:
   Returns:
     This object's component index.  If this object is
     not a sub-piece of a larger geometric entity, then
-    the returned index has 
+    the returned index has
     m_type = ON_COMPONENT_INDEX::invalid_type
     and
     m_index = -1.

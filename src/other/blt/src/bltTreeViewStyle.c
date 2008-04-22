@@ -63,7 +63,7 @@ Blt_CustomOption bltTreeViewIconOption =
 typedef struct {
     int refCount;		/* Usage reference count. */
     unsigned int flags;
-    char *name;			
+    char *name;
     TreeViewStyleClass *classPtr; /* Class-specific routines to manage style. */
     Blt_HashEntry *hashPtr;
 
@@ -103,47 +103,47 @@ typedef struct {
 
 static Blt_ConfigSpec textBoxSpecs[] =
 {
-    {BLT_CONFIG_BORDER, "-activebackground", "activeBackground", 
-	"ActiveBackground", DEF_STYLE_ACTIVE_BACKGROUND, 
+    {BLT_CONFIG_BORDER, "-activebackground", "activeBackground",
+	"ActiveBackground", DEF_STYLE_ACTIVE_BACKGROUND,
 	Blt_Offset(TreeViewTextBox, activeBorder), 0},
-    {BLT_CONFIG_SYNONYM, "-activebg", "activeBackground", 
+    {BLT_CONFIG_SYNONYM, "-activebg", "activeBackground",
 	(char *)NULL, (char *)NULL, 0, 0},
-    {BLT_CONFIG_SYNONYM, "-activefg", "activeFackground", 
+    {BLT_CONFIG_SYNONYM, "-activefg", "activeFackground",
 	(char *)NULL, (char *)NULL, 0, 0},
-    {BLT_CONFIG_COLOR, "-activeforeground", "activeForeground", 
-	"ActiveForeground", DEF_STYLE_ACTIVE_FOREGROUND, 
+    {BLT_CONFIG_COLOR, "-activeforeground", "activeForeground",
+	"ActiveForeground", DEF_STYLE_ACTIVE_FOREGROUND,
 	Blt_Offset(TreeViewTextBox, activeFgColor), 0},
     {BLT_CONFIG_BORDER, "-background", "background", "Background",
 	(char *)NULL, Blt_Offset(TreeViewTextBox, border), BLT_CONFIG_NULL_OK},
-    {BLT_CONFIG_SYNONYM, "-bg", "background", (char *)NULL, (char *)NULL, 
+    {BLT_CONFIG_SYNONYM, "-bg", "background", (char *)NULL, (char *)NULL,
 	0, 0},
     {BLT_CONFIG_CURSOR, "-cursor", "cursor", "Cursor",
 	DEF_TEXTBOX_CURSOR, Blt_Offset(TreeViewTextBox, cursor), 0},
-    {BLT_CONFIG_SYNONYM, "-fg", "foreground", (char *)NULL, (char *)NULL, 
+    {BLT_CONFIG_SYNONYM, "-fg", "foreground", (char *)NULL, (char *)NULL,
 	0, 0},
     {BLT_CONFIG_FONT, "-font", "font", "Font",
-	(char *)NULL, Blt_Offset(TreeViewTextBox, font), 
+	(char *)NULL, Blt_Offset(TreeViewTextBox, font),
         BLT_CONFIG_NULL_OK},
     {BLT_CONFIG_COLOR, "-foreground", "foreground", "Foreground",
 	(char *)NULL, Blt_Offset(TreeViewTextBox, fgColor),BLT_CONFIG_NULL_OK },
     {BLT_CONFIG_DISTANCE, "-gap", "gap", "Gap",
-	DEF_STYLE_GAP, Blt_Offset(TreeViewTextBox, gap), 
+	DEF_STYLE_GAP, Blt_Offset(TreeViewTextBox, gap),
 	BLT_CONFIG_DONT_SET_DEFAULT},
     {BLT_CONFIG_BORDER, "-highlightbackground", "highlightBackground",
-	"HighlightBackground", DEF_STYLE_HIGHLIGHT_BACKGROUND, 
+	"HighlightBackground", DEF_STYLE_HIGHLIGHT_BACKGROUND,
         Blt_Offset(TreeViewTextBox, highlightBorder), BLT_CONFIG_COLOR_ONLY},
-    {BLT_CONFIG_COLOR, "-highlightforeground", "highlightForeground", 
-	"HighlightForeground", DEF_STYLE_HIGHLIGHT_FOREGROUND, 
+    {BLT_CONFIG_COLOR, "-highlightforeground", "highlightForeground",
+	"HighlightForeground", DEF_STYLE_HIGHLIGHT_FOREGROUND,
 	 Blt_Offset(TreeViewTextBox, highlightFgColor), 0},
-    {BLT_CONFIG_SYNONYM, "-highlightbg", "highlightBackground", 
+    {BLT_CONFIG_SYNONYM, "-highlightbg", "highlightBackground",
 	(char *)NULL, (char *)NULL, 0, 0},
-    {BLT_CONFIG_SYNONYM, "-highlightfg", "highlightForeground", 
+    {BLT_CONFIG_SYNONYM, "-highlightfg", "highlightForeground",
 	(char *)NULL, (char *)NULL, 0, 0},
     {BLT_CONFIG_CUSTOM, "-icon", "icon", "Icon",
-	(char *)NULL, Blt_Offset(TreeViewTextBox, icon), 
+	(char *)NULL, Blt_Offset(TreeViewTextBox, icon),
 	BLT_CONFIG_NULL_OK, &bltTreeViewIconOption},
     {BLT_CONFIG_STRING, "-key", "key", "key",
-	(char *)NULL, Blt_Offset(TreeViewTextBox, key), 
+	(char *)NULL, Blt_Offset(TreeViewTextBox, key),
 	BLT_CONFIG_NULL_OK, 0},
     {BLT_CONFIG_SIDE, "-side", "side", "side",
 	DEF_TEXTBOX_SIDE, Tk_Offset(TreeViewTextBox, side),
@@ -157,7 +157,7 @@ typedef struct {
     unsigned int flags;		/* Contains style type and update flags. */
     char *name;			/* Instance name. */
     TreeViewStyleClass *classPtr; /* Class-specific routines to manage style. */
-    Blt_HashEntry *hashPtr;	
+    Blt_HashEntry *hashPtr;
 
     /* General style fields. */
     Tk_Cursor cursor;		/* X Cursor */
@@ -196,7 +196,7 @@ typedef struct {
     GC checkGC;
 
     TextLayout *onPtr, *offPtr;
-    
+
 } TreeViewCheckBox;
 
 #define DEF_CHECKBOX_BOX_COLOR		"black"
@@ -216,72 +216,72 @@ typedef struct {
 
 static Blt_ConfigSpec checkBoxSpecs[] =
 {
-    {BLT_CONFIG_BORDER, "-activebackground", "activeBackground", 
-	"ActiveBackground", DEF_STYLE_ACTIVE_BACKGROUND, 
+    {BLT_CONFIG_BORDER, "-activebackground", "activeBackground",
+	"ActiveBackground", DEF_STYLE_ACTIVE_BACKGROUND,
 	Blt_Offset(TreeViewCheckBox, activeBorder), 0},
-    {BLT_CONFIG_SYNONYM, "-activebg", "activeBackground", 
+    {BLT_CONFIG_SYNONYM, "-activebg", "activeBackground",
 	(char *)NULL, (char *)NULL, 0, 0},
-    {BLT_CONFIG_SYNONYM, "-activefg", "activeFackground", 
+    {BLT_CONFIG_SYNONYM, "-activefg", "activeFackground",
 	(char *)NULL, (char *)NULL, 0, 0},
-    {BLT_CONFIG_COLOR, "-activeforeground", "activeForeground", 
-	"ActiveForeground", DEF_STYLE_ACTIVE_FOREGROUND, 
+    {BLT_CONFIG_COLOR, "-activeforeground", "activeForeground",
+	"ActiveForeground", DEF_STYLE_ACTIVE_FOREGROUND,
 	Blt_Offset(TreeViewCheckBox, activeFgColor), 0},
     {BLT_CONFIG_BORDER, "-background", "background", "Background",
 	(char *)NULL, Blt_Offset(TreeViewCheckBox, border), BLT_CONFIG_NULL_OK},
-    {BLT_CONFIG_SYNONYM, "-bg", "background", (char *)NULL, (char *)NULL, 
+    {BLT_CONFIG_SYNONYM, "-bg", "background", (char *)NULL, (char *)NULL,
 	0, 0},
     {BLT_CONFIG_POS_DISTANCE, "-boxsize", "boxSize", "BoxSize",
-	DEF_CHECKBOX_SIZE, Blt_Offset(TreeViewCheckBox, size), 
+	DEF_CHECKBOX_SIZE, Blt_Offset(TreeViewCheckBox, size),
 	BLT_CONFIG_DONT_SET_DEFAULT},
     {BLT_CONFIG_CURSOR, "-cursor", "cursor", "Cursor",
 	DEF_CHECKBOX_CURSOR, Blt_Offset(TreeViewTextBox, cursor), 0},
-    {BLT_CONFIG_SYNONYM, "-fg", "foreground", (char *)NULL, (char *)NULL, 
+    {BLT_CONFIG_SYNONYM, "-fg", "foreground", (char *)NULL, (char *)NULL,
 	0, 0},
     {BLT_CONFIG_FONT, "-font", "font", "Font",
-	(char *)NULL, Blt_Offset(TreeViewCheckBox, font), 
+	(char *)NULL, Blt_Offset(TreeViewCheckBox, font),
         BLT_CONFIG_NULL_OK},
     {BLT_CONFIG_COLOR, "-foreground", "foreground", "Foreground",
-	(char *)NULL, Blt_Offset(TreeViewCheckBox, fgColor), 
+	(char *)NULL, Blt_Offset(TreeViewCheckBox, fgColor),
         BLT_CONFIG_NULL_OK },
     {BLT_CONFIG_DISTANCE, "-gap", "gap", "Gap",
-	DEF_CHECKBOX_GAP, Blt_Offset(TreeViewCheckBox, gap), 
+	DEF_CHECKBOX_GAP, Blt_Offset(TreeViewCheckBox, gap),
 	BLT_CONFIG_DONT_SET_DEFAULT},
     {BLT_CONFIG_BORDER, "-highlightbackground", "highlightBackground",
-	"HighlightBackground", DEF_STYLE_HIGHLIGHT_BACKGROUND, 
+	"HighlightBackground", DEF_STYLE_HIGHLIGHT_BACKGROUND,
         Blt_Offset(TreeViewCheckBox, highlightBorder), BLT_CONFIG_COLOR_ONLY},
-    {BLT_CONFIG_COLOR, "-highlightforeground", "highlightForeground", 
-	"HighlightForeground", DEF_STYLE_HIGHLIGHT_FOREGROUND, 
+    {BLT_CONFIG_COLOR, "-highlightforeground", "highlightForeground",
+	"HighlightForeground", DEF_STYLE_HIGHLIGHT_FOREGROUND,
 	 Blt_Offset(TreeViewCheckBox, highlightFgColor), 0},
-    {BLT_CONFIG_SYNONYM, "-highlightbg", "highlightBackground", 
+    {BLT_CONFIG_SYNONYM, "-highlightbg", "highlightBackground",
 	(char *)NULL, (char *)NULL, 0, 0},
-    {BLT_CONFIG_SYNONYM, "-highlightfg", "highlightForeground", 
+    {BLT_CONFIG_SYNONYM, "-highlightfg", "highlightForeground",
 	(char *)NULL, (char *)NULL, 0, 0},
     {BLT_CONFIG_CUSTOM, "-icon", "icon", "Icon",
-	(char *)NULL, Blt_Offset(TreeViewCheckBox, icon), 
+	(char *)NULL, Blt_Offset(TreeViewCheckBox, icon),
 	BLT_CONFIG_NULL_OK, &bltTreeViewIconOption},
     {BLT_CONFIG_STRING, "-key", "key", "key",
-	(char *)NULL, Blt_Offset(TreeViewCheckBox, key), 
+	(char *)NULL, Blt_Offset(TreeViewCheckBox, key),
 	BLT_CONFIG_NULL_OK, 0},
     {BLT_CONFIG_DISTANCE, "-linewidth", "lineWidth", "LineWidth",
-	DEF_CHECKBOX_LINEWIDTH, 
+	DEF_CHECKBOX_LINEWIDTH,
 	Blt_Offset(TreeViewCheckBox, lineWidth),
 	BLT_CONFIG_DONT_SET_DEFAULT},
-    {BLT_CONFIG_COLOR, "-checkcolor", "checkColor", "CheckColor", 
+    {BLT_CONFIG_COLOR, "-checkcolor", "checkColor", "CheckColor",
 	DEF_CHECKBOX_CHECK_COLOR, Blt_Offset(TreeViewCheckBox, checkColor), 0},
-    {BLT_CONFIG_COLOR, "-boxcolor", "boxColor", "BoxColor", 
+    {BLT_CONFIG_COLOR, "-boxcolor", "boxColor", "BoxColor",
 	DEF_CHECKBOX_BOX_COLOR, Blt_Offset(TreeViewCheckBox, boxColor), 0},
-    {BLT_CONFIG_COLOR, "-fillcolor", "fillColor", "FillColor", 
+    {BLT_CONFIG_COLOR, "-fillcolor", "fillColor", "FillColor",
 	DEF_CHECKBOX_FILL_COLOR, Blt_Offset(TreeViewCheckBox, fillColor), 0},
     {BLT_CONFIG_STRING, "-offvalue", "offValue", "OffValue",
-	DEF_CHECKBOX_OFFVALUE, Blt_Offset(TreeViewCheckBox, offValue), 
+	DEF_CHECKBOX_OFFVALUE, Blt_Offset(TreeViewCheckBox, offValue),
         BLT_CONFIG_NULL_OK},
     {BLT_CONFIG_STRING, "-onvalue", "onValue", "OnValue",
-	DEF_CHECKBOX_ONVALUE, Blt_Offset(TreeViewCheckBox, onValue), 
+	DEF_CHECKBOX_ONVALUE, Blt_Offset(TreeViewCheckBox, onValue),
         BLT_CONFIG_NULL_OK},
     {BLT_CONFIG_STRING, "-key", "key", "key",
 	(char *)NULL, Blt_Offset(TreeViewCheckBox, key), BLT_CONFIG_NULL_OK, 0},
     {BLT_CONFIG_BOOLEAN, "-showvalue", "showValue", "ShowValue",
-	DEF_CHECKBOX_SHOWVALUE, Blt_Offset(TreeViewCheckBox, showValue), 
+	DEF_CHECKBOX_SHOWVALUE, Blt_Offset(TreeViewCheckBox, showValue),
         BLT_CONFIG_DONT_SET_DEFAULT},
     {BLT_CONFIG_END, (char *)NULL, (char *)NULL, (char *)NULL,
 	(char *)NULL, 0, 0}
@@ -290,7 +290,7 @@ static Blt_ConfigSpec checkBoxSpecs[] =
 typedef struct {
     int refCount;		/* Usage reference count. */
     unsigned int flags;
-    char *name;			
+    char *name;
     TreeViewStyleClass *classPtr;/* Class-specific style routines. */
     Blt_HashEntry *hashPtr;
 
@@ -344,22 +344,22 @@ typedef struct {
 
 static Blt_ConfigSpec comboBoxSpecs[] =
 {
-    {BLT_CONFIG_BORDER, "-activebackground", "activeBackground", 
-	"ActiveBackground", DEF_STYLE_ACTIVE_BACKGROUND, 
+    {BLT_CONFIG_BORDER, "-activebackground", "activeBackground",
+	"ActiveBackground", DEF_STYLE_ACTIVE_BACKGROUND,
 	Blt_Offset(TreeViewComboBox, activeBorder), 0},
-    {BLT_CONFIG_SYNONYM, "-activebg", "activeBackground", 
+    {BLT_CONFIG_SYNONYM, "-activebg", "activeBackground",
 	(char *)NULL, (char *)NULL, 0, 0},
-    {BLT_CONFIG_SYNONYM, "-activefg", "activeFackground", 
+    {BLT_CONFIG_SYNONYM, "-activefg", "activeFackground",
 	(char *)NULL, (char *)NULL, 0, 0},
-    {BLT_CONFIG_COLOR, "-activeforeground", "activeForeground", 
-	"ActiveForeground", DEF_STYLE_ACTIVE_FOREGROUND, 
+    {BLT_CONFIG_COLOR, "-activeforeground", "activeForeground",
+	"ActiveForeground", DEF_STYLE_ACTIVE_FOREGROUND,
 	Blt_Offset(TreeViewComboBox, activeFgColor), 0},
     {BLT_CONFIG_BORDER, "-background", "background", "Background",
-	(char *)NULL, Blt_Offset(TreeViewComboBox, border), 
+	(char *)NULL, Blt_Offset(TreeViewComboBox, border),
 	BLT_CONFIG_NULL_OK},
-    {BLT_CONFIG_SYNONYM, "-bd", "borderWidth", (char *)NULL, (char *)NULL, 0, 
+    {BLT_CONFIG_SYNONYM, "-bd", "borderWidth", (char *)NULL, (char *)NULL, 0,
 	0},
-    {BLT_CONFIG_SYNONYM, "-bg", "background", (char *)NULL, (char *)NULL, 
+    {BLT_CONFIG_SYNONYM, "-bg", "background", (char *)NULL, (char *)NULL,
 	0, 0},
     {BLT_CONFIG_DISTANCE, "-borderwidth", "borderWidth", "BorderWidth",
 	DEF_COMBOBOX_BORDERWIDTH, Blt_Offset(TreeViewComboBox, borderWidth),
@@ -367,38 +367,38 @@ static Blt_ConfigSpec comboBoxSpecs[] =
     {BLT_CONFIG_RELIEF, "-buttonrelief", "buttonRelief", "ButtonRelief",
 	DEF_COMBOBOX_BUTTON_RELIEF, Blt_Offset(TreeViewComboBox, buttonRelief),
 	BLT_CONFIG_DONT_SET_DEFAULT},
-    {BLT_CONFIG_DISTANCE, "-buttonborderwidth", "buttonBorderWidth", 
-	"ButtonBorderWidth", DEF_COMBOBOX_BUTTON_BORDERWIDTH, 
+    {BLT_CONFIG_DISTANCE, "-buttonborderwidth", "buttonBorderWidth",
+	"ButtonBorderWidth", DEF_COMBOBOX_BUTTON_BORDERWIDTH,
 	Blt_Offset(TreeViewComboBox, buttonBorderWidth),
 	BLT_CONFIG_DONT_SET_DEFAULT},
     {BLT_CONFIG_CURSOR, "-cursor", "cursor", "Cursor",
 	DEF_COMBOBOX_CURSOR, Blt_Offset(TreeViewTextBox, cursor), 0},
-    {BLT_CONFIG_SYNONYM, "-fg", "foreground", (char *)NULL, (char *)NULL, 
+    {BLT_CONFIG_SYNONYM, "-fg", "foreground", (char *)NULL, (char *)NULL,
 	0, 0},
     {BLT_CONFIG_FONT, "-font", "font", "Font",
-	(char *)NULL, Blt_Offset(TreeViewComboBox, font), 
+	(char *)NULL, Blt_Offset(TreeViewComboBox, font),
 	BLT_CONFIG_NULL_OK},
     {BLT_CONFIG_COLOR, "-foreground", "foreground", "Foreground",
-	(char *)NULL, Blt_Offset(TreeViewComboBox, fgColor), 
+	(char *)NULL, Blt_Offset(TreeViewComboBox, fgColor),
 	BLT_CONFIG_NULL_OK },
     {BLT_CONFIG_DISTANCE, "-gap", "gap", "Gap",
-	DEF_STYLE_GAP, Blt_Offset(TreeViewComboBox, gap), 
+	DEF_STYLE_GAP, Blt_Offset(TreeViewComboBox, gap),
 	BLT_CONFIG_DONT_SET_DEFAULT},
     {BLT_CONFIG_BORDER, "-highlightbackground", "highlightBackground",
-	"HighlightBackground", DEF_STYLE_HIGHLIGHT_BACKGROUND, 
+	"HighlightBackground", DEF_STYLE_HIGHLIGHT_BACKGROUND,
         Blt_Offset(TreeViewComboBox, highlightBorder), BLT_CONFIG_COLOR_ONLY},
-    {BLT_CONFIG_COLOR, "-highlightforeground", "highlightForeground", 
-	"HighlightForeground", DEF_STYLE_HIGHLIGHT_FOREGROUND, 
+    {BLT_CONFIG_COLOR, "-highlightforeground", "highlightForeground",
+	"HighlightForeground", DEF_STYLE_HIGHLIGHT_FOREGROUND,
 	 Blt_Offset(TreeViewComboBox, highlightFgColor), 0},
-    {BLT_CONFIG_SYNONYM, "-highlightbg", "highlightBackground", 
+    {BLT_CONFIG_SYNONYM, "-highlightbg", "highlightBackground",
 	(char *)NULL, (char *)NULL, 0, 0},
-    {BLT_CONFIG_SYNONYM, "-highlightfg", "highlightForeground", 
+    {BLT_CONFIG_SYNONYM, "-highlightfg", "highlightForeground",
 	(char *)NULL, (char *)NULL, 0, 0},
     {BLT_CONFIG_CUSTOM, "-icon", "icon", "Icon",
-	(char *)NULL, Blt_Offset(TreeViewComboBox, icon), 
+	(char *)NULL, Blt_Offset(TreeViewComboBox, icon),
 	BLT_CONFIG_NULL_OK, &bltTreeViewIconOption},
     {BLT_CONFIG_STRING, "-key", "key", "key",
-        (char *)NULL, Blt_Offset(TreeViewComboBox, key), 
+        (char *)NULL, Blt_Offset(TreeViewComboBox, key),
 	BLT_CONFIG_NULL_OK, 0},
     {BLT_CONFIG_RELIEF, "-relief", "relief", "Relief",
 	DEF_COMBOBOX_RELIEF, Blt_Offset(TreeViewComboBox, relief),
@@ -407,7 +407,7 @@ static Blt_ConfigSpec comboBoxSpecs[] =
 	(char *)NULL, 0, 0}
 };
 
-typedef TreeViewStyle *(StyleCreateProc) _ANSI_ARGS_((TreeView *tvPtr, 
+typedef TreeViewStyle *(StyleCreateProc) _ANSI_ARGS_((TreeView *tvPtr,
 	Blt_HashEntry *hPtr));
 
 static StyleConfigProc ConfigureTextBox, ConfigureCheckBox, ConfigureComboBox;
@@ -520,7 +520,7 @@ static TreeViewStyleClass checkBoxClass = {
 };
 
 static TreeViewStyleClass comboBoxClass = {
-    "ComboBoxStyle", 
+    "ComboBoxStyle",
     comboBoxSpecs,
     ConfigureComboBox,
     MeasureComboBox,
@@ -567,7 +567,7 @@ CreateTextBox(tvPtr, hPtr)
  *
  * ConfigureTextBox --
  *
- *	Configures a "textbox" style.  This routine performs 
+ *	Configures a "textbox" style.  This routine performs
  *	generates the GCs required for a textbox style.
  *
  * Results:
@@ -655,7 +655,7 @@ MeasureTextBox(tvPtr, stylePtr, valuePtr)
     if (tbPtr->icon != NULL) {
 	iconWidth = TreeViewIconWidth(tbPtr->icon);
 	iconHeight = TreeViewIconHeight(tbPtr->icon);
-    } 
+    }
     if (valuePtr->textPtr != NULL) {
 	Blt_Free(valuePtr->textPtr);
 	valuePtr->textPtr = NULL;
@@ -668,7 +668,7 @@ MeasureTextBox(tvPtr, stylePtr, valuePtr)
 	ts.anchor = TK_ANCHOR_NW;
 	ts.justify = TK_JUSTIFY_LEFT;
 	valuePtr->textPtr = Blt_GetTextLayout(valuePtr->string, &ts);
-    } 
+    }
     gap = 0;
     if (valuePtr->textPtr != NULL) {
 	textWidth = valuePtr->textPtr->width;
@@ -692,7 +692,7 @@ MeasureTextBox(tvPtr, stylePtr, valuePtr)
  * DrawTextBox --
  *
  *	Draws the "textbox" given the screen coordinates and the
- *	value to be displayed.  
+ *	value to be displayed.
  *
  * Results:
  *	None.
@@ -740,11 +740,11 @@ DrawTextBox(tvPtr, drawable, entryPtr, valuePtr, stylePtr, x, y)
 	 * halo around the image when the tab is active.
 	 */
 	if (border != NULL) {
-	    Blt_Fill3DRectangle(tvPtr->tkwin, drawable, border, x, y, 
+	    Blt_Fill3DRectangle(tvPtr->tkwin, drawable, border, x, y,
 	       columnPtr->width, entryPtr->height, 0, TK_RELIEF_FLAT);
 	}
-    }    
-    columnWidth = columnPtr->width - 
+    }
+    columnWidth = columnPtr->width -
 	(2 * columnPtr->borderWidth + PADDING(columnPtr->pad));
     if (columnWidth > valuePtr->width) {
 	switch(columnPtr->justify) {
@@ -760,7 +760,7 @@ DrawTextBox(tvPtr, drawable, entryPtr, valuePtr, stylePtr, x, y)
     }
 
     textX = textY = iconX = iconY = 0;	/* Suppress compiler warning. */
-    
+
     iconWidth = iconHeight = 0;
     if (tbPtr->icon != NULL) {
 	iconWidth = TreeViewIconWidth(tbPtr->icon);
@@ -802,14 +802,14 @@ DrawTextBox(tvPtr, drawable, entryPtr, valuePtr, stylePtr, x, y)
 	break;
     }
     if (tbPtr->icon != NULL) {
-	Tk_RedrawImage(TreeViewIconBits(tbPtr->icon), 0, 0, iconWidth, 
+	Tk_RedrawImage(TreeViewIconBits(tbPtr->icon), 0, 0, iconWidth,
 		       iconHeight, drawable, iconX, iconY);
     }
     if (valuePtr->textPtr != NULL) {
 	TextStyle ts;
 	XColor *color;
 	Tk_Font font;
-	
+
 	font = CHOOSE(tvPtr->font, tbPtr->font);
 	if (Blt_TreeViewEntryIsSelected(tvPtr, entryPtr)) {
 	    color = SELECT_FG(tvPtr);
@@ -820,9 +820,9 @@ DrawTextBox(tvPtr, drawable, entryPtr, valuePtr, stylePtr, x, y)
 	} else {
 	    color = fgColor;
 	}
-	Blt_SetDrawTextStyle(&ts, font, gc, color, fgColor, NULL, 0.0, 
+	Blt_SetDrawTextStyle(&ts, font, gc, color, fgColor, NULL, 0.0,
 		TK_ANCHOR_NW, TK_JUSTIFY_LEFT, 0, 0);
-	Blt_DrawTextLayout(tvPtr->tkwin, drawable, valuePtr->textPtr, 
+	Blt_DrawTextLayout(tvPtr->tkwin, drawable, valuePtr->textPtr,
 		&ts, textX, textY);
 	if (color != fgColor) {
 	    XSetForeground(tvPtr->display, gc, fgColor->pixel);
@@ -864,8 +864,8 @@ EditTextBox(tvPtr, entryPtr, valuePtr, stylePtr)
  * FreeTextBox --
  *
  *	Releases resources allocated for the textbox. The resources
- *	freed by this routine are specific only to the "textbox".   
- *	Other resources (common to all styles) are freed in the 
+ *	freed by this routine are specific only to the "textbox".
+ *	Other resources (common to all styles) are freed in the
  *	Blt_TreeViewFreeStyle routine.
  *
  * Results:
@@ -937,7 +937,7 @@ CreateCheckBox(tvPtr, hPtr)
  *
  * ConfigureCheckbox --
  *
- *	Configures a "checkbox" style.  This routine performs 
+ *	Configures a "checkbox" style.  This routine performs
  *	generates the GCs required for a checkbox style.
  *
  * Results:
@@ -1052,7 +1052,7 @@ MeasureCheckBox(tvPtr, stylePtr, valuePtr)
     if (cbPtr->icon != NULL) {
 	iconWidth = TreeViewIconWidth(cbPtr->icon);
 	iconHeight = TreeViewIconHeight(cbPtr->icon);
-    } 
+    }
     if (cbPtr->onPtr != NULL) {
 	Blt_Free(cbPtr->onPtr);
 	cbPtr->onPtr = NULL;
@@ -1090,7 +1090,7 @@ MeasureCheckBox(tvPtr, stylePtr, valuePtr)
  * DrawCheckbox --
  *
  *	Draws the "checkbox" given the screen coordinates and the
- *	value to be displayed.  
+ *	value to be displayed.
  *
  * Results:
  *	None.
@@ -1155,10 +1155,10 @@ DrawCheckBox(tvPtr, drawable, entryPtr, valuePtr, stylePtr, x, y)
 	    Blt_Fill3DRectangle(tvPtr->tkwin, drawable, SELECT_BORDER(tvPtr),
 		x, y, columnWidth, entryPtr->height - 1, borderWidth, relief);
 	} else {
-	    Blt_Fill3DRectangle(tvPtr->tkwin, drawable, border, x, y, 
+	    Blt_Fill3DRectangle(tvPtr->tkwin, drawable, border, x, y,
 		columnWidth, entryPtr->height - 1, borderWidth, relief);
 	}
-    }    
+    }
 
     if (columnWidth > valuePtr->width) {
 	switch(columnPtr->justify) {
@@ -1177,7 +1177,7 @@ DrawCheckBox(tvPtr, drawable, entryPtr, valuePtr, stylePtr, x, y)
     textPtr = (bool) ? cbPtr->onPtr : cbPtr->offPtr;
 
     /*
-     * Draw the box and check. 
+     * Draw the box and check.
      *
      *		+-----------+
      *		|           |
@@ -1192,9 +1192,9 @@ DrawCheckBox(tvPtr, drawable, entryPtr, valuePtr, stylePtr, x, y)
     boxWidth = boxHeight = ODD(cbPtr->size);
     boxX = x + cbPtr->gap;
     boxY = y + (entryPtr->height - boxHeight) / 2;
-    XFillRectangle(tvPtr->display, drawable, cbPtr->fillGC, boxX, boxY, 
+    XFillRectangle(tvPtr->display, drawable, cbPtr->fillGC, boxX, boxY,
 		       boxWidth, boxHeight);
-    XDrawRectangle(tvPtr->display, drawable, cbPtr->boxGC, boxX, boxY, 
+    XDrawRectangle(tvPtr->display, drawable, cbPtr->boxGC, boxX, boxY,
 	boxWidth, boxHeight);
 
     if (bool) {
@@ -1204,9 +1204,9 @@ DrawCheckBox(tvPtr, drawable, entryPtr, valuePtr, stylePtr, x, y)
 	for (i = 0; i < 3; i++) {
 	    midX = boxX + 2 * boxWidth / 5;
 	    midY = boxY + boxHeight - 5 + i;
-	    XDrawLine(tvPtr->display, drawable, cbPtr->checkGC, 
+	    XDrawLine(tvPtr->display, drawable, cbPtr->checkGC,
 		      boxX + 2, boxY + boxHeight / 3 + 1 + i, midX, midY);
-	    XDrawLine(tvPtr->display, drawable, cbPtr->checkGC, 
+	    XDrawLine(tvPtr->display, drawable, cbPtr->checkGC,
 		      midX, midY, boxX + boxWidth - 2, boxY + i + 1);
 	}
     }
@@ -1235,13 +1235,13 @@ DrawCheckBox(tvPtr, drawable, entryPtr, valuePtr, stylePtr, x, y)
     textY = y + (entryPtr->height - textHeight) / 2;
 
     if (cbPtr->icon != NULL) {
-	Tk_RedrawImage(TreeViewIconBits(cbPtr->icon), 0, 0, iconWidth, 
+	Tk_RedrawImage(TreeViewIconBits(cbPtr->icon), 0, 0, iconWidth,
 		       iconHeight, drawable, iconX, iconY);
     }
     if ((cbPtr->showValue) && (textPtr != NULL)) {
 	TextStyle ts;
 	XColor *color;
-	
+
 	if (Blt_TreeViewEntryIsSelected(tvPtr, entryPtr)) {
 	    color = SELECT_FG(tvPtr);
 	    XSetForeground(tvPtr->display, gc, color->pixel);
@@ -1251,7 +1251,7 @@ DrawCheckBox(tvPtr, drawable, entryPtr, valuePtr, stylePtr, x, y)
 	} else {
 	    color = fgColor;
 	}
-	Blt_SetDrawTextStyle(&ts, font, gc, color, fgColor, NULL, 0.0, 
+	Blt_SetDrawTextStyle(&ts, font, gc, color, fgColor, NULL, 0.0,
 		TK_ANCHOR_NW, TK_JUSTIFY_LEFT, 0, 0);
 	Blt_DrawTextLayout(tvPtr->tkwin, drawable, textPtr, &ts, textX, textY);
 	if (color != fgColor) {
@@ -1267,7 +1267,7 @@ DrawCheckBox(tvPtr, drawable, entryPtr, valuePtr, stylePtr, x, y)
  * PickCheckbox --
  *
  *	Draws the "checkbox" given the screen coordinates and the
- *	value to be displayed.  
+ *	value to be displayed.
  *
  * Results:
  *	None.
@@ -1290,7 +1290,7 @@ PickCheckBox(entryPtr, valuePtr, stylePtr, worldX, worldY)
     int x, y, width, height;
 
     columnPtr = valuePtr->columnPtr;
-    columnWidth = columnPtr->width - 
+    columnWidth = columnPtr->width -
 	(2 * columnPtr->borderWidth + PADDING(columnPtr->pad));
     if (columnWidth > valuePtr->width) {
 	switch(columnPtr->justify) {
@@ -1305,10 +1305,10 @@ PickCheckBox(entryPtr, valuePtr, stylePtr, worldX, worldY)
 	}
     }
     width = height = ODD(cbPtr->size) + 2 * cbPtr->lineWidth;
-    x = columnPtr->worldX + columnPtr->pad.side1 + cbPtr->gap - 
+    x = columnPtr->worldX + columnPtr->pad.side1 + cbPtr->gap -
 	cbPtr->lineWidth;
     y = entryPtr->worldY + (entryPtr->height - height) / 2;
-    if ((worldX >= x) && (worldX < (x + width)) && 
+    if ((worldX >= x) && (worldX < (x + width)) &&
 	(worldY >= y) && (worldY < (y + height))) {
 	return TRUE;
     }
@@ -1342,7 +1342,7 @@ EditCheckBox(tvPtr, entryPtr, valuePtr, stylePtr)
     Tcl_Obj *objPtr;
 
     columnPtr = valuePtr->columnPtr;
-    if (Blt_TreeGetValueByKey(tvPtr->interp, tvPtr->tree, 
+    if (Blt_TreeGetValueByKey(tvPtr->interp, tvPtr->tree,
 	      entryPtr->node, columnPtr->key, &objPtr) != TCL_OK) {
 	return TCL_ERROR;
     }
@@ -1353,7 +1353,7 @@ EditCheckBox(tvPtr, entryPtr, valuePtr, stylePtr)
     }
     entryPtr->flags |= ENTRY_DIRTY;
     tvPtr->flags |= (TV_DIRTY | TV_LAYOUT | TV_SCROLL | TV_RESORT);
-    if (Blt_TreeSetValueByKey(tvPtr->interp, tvPtr->tree, 
+    if (Blt_TreeSetValueByKey(tvPtr->interp, tvPtr->tree,
 	      entryPtr->node, columnPtr->key, objPtr) != TCL_OK) {
 	return TCL_ERROR;
     }
@@ -1366,8 +1366,8 @@ EditCheckBox(tvPtr, entryPtr, valuePtr, stylePtr)
  * FreeCheckbox --
  *
  *	Releases resources allocated for the checkbox. The resources
- *	freed by this routine are specific only to the "checkbox".   
- *	Other resources (common to all styles) are freed in the 
+ *	freed by this routine are specific only to the "checkbox".
+ *	Other resources (common to all styles) are freed in the
  *	Blt_TreeViewFreeStyle routine.
  *
  * Results:
@@ -1454,7 +1454,7 @@ CreateComboBox(tvPtr, hPtr)
  *
  * ConfigureComboBox --
  *
- *	Configures a "combobox" style.  This routine performs 
+ *	Configures a "combobox" style.  This routine performs
  *	generates the GCs required for a combobox style.
  *
  * Results:
@@ -1547,7 +1547,7 @@ MeasureComboBox(tvPtr, stylePtr, valuePtr)
     if (cbPtr->icon != NULL) {
 	iconWidth = TreeViewIconWidth(cbPtr->icon);
 	iconHeight = TreeViewIconHeight(cbPtr->icon);
-    } 
+    }
     if (valuePtr->textPtr != NULL) {
 	Blt_Free(valuePtr->textPtr);
 	valuePtr->textPtr = NULL;
@@ -1561,7 +1561,7 @@ MeasureComboBox(tvPtr, stylePtr, valuePtr)
 	ts.anchor = TK_ANCHOR_NW;
 	ts.justify = TK_JUSTIFY_LEFT;
 	valuePtr->textPtr = Blt_GetTextLayout(valuePtr->string, &ts);
-    } 
+    }
     gap = 0;
     if (valuePtr->textPtr != NULL) {
 	textWidth = valuePtr->textPtr->width;
@@ -1571,7 +1571,7 @@ MeasureComboBox(tvPtr, stylePtr, valuePtr)
 	}
     }
     cbPtr->buttonWidth = STD_ARROW_WIDTH + 6 + 2 * cbPtr->buttonBorderWidth;
-    valuePtr->width = 2 * cbPtr->borderWidth + iconWidth + 4 * gap + 
+    valuePtr->width = 2 * cbPtr->borderWidth + iconWidth + 4 * gap +
 	cbPtr->buttonWidth + textWidth;
     valuePtr->height = MAX(textHeight, iconHeight) + 2 * cbPtr->borderWidth;
 }
@@ -1583,7 +1583,7 @@ MeasureComboBox(tvPtr, stylePtr, valuePtr)
  * DrawComboBox --
  *
  *	Draws the "combobox" given the screen coordinates and the
- *	value to be displayed.  
+ *	value to be displayed.
  *
  * Results:
  *	None.
@@ -1631,17 +1631,17 @@ DrawComboBox(tvPtr, drawable, entryPtr, valuePtr, stylePtr, x, y)
 	 * halo around the image when the tab is active.
 	 */
 	if (border != NULL) {
-	    Blt_Fill3DRectangle(tvPtr->tkwin, drawable, border, x, y, 
-		columnPtr->width, entryPtr->height, cbPtr->borderWidth, 
+	    Blt_Fill3DRectangle(tvPtr->tkwin, drawable, border, x, y,
+		columnPtr->width, entryPtr->height, cbPtr->borderWidth,
 		cbPtr->relief);
 	}
-    }    
+    }
     buttonX = x + columnPtr->width;
     buttonX -= columnPtr->pad.side2 + cbPtr->borderWidth  +
 	cbPtr->buttonWidth + cbPtr->gap;
     buttonY = y;
 
-    columnWidth = columnPtr->width - 
+    columnWidth = columnPtr->width -
 	(2 * columnPtr->borderWidth + PADDING(columnPtr->pad));
     if (columnWidth > valuePtr->width) {
 	switch(columnPtr->justify) {
@@ -1659,7 +1659,7 @@ DrawComboBox(tvPtr, drawable, entryPtr, valuePtr, stylePtr, x, y)
 #ifdef notdef
     textX = textY = iconX = iconY = 0;	/* Suppress compiler warning. */
 #endif
-    
+
     iconWidth = iconHeight = 0;
     if (cbPtr->icon != NULL) {
 	iconWidth = TreeViewIconWidth(cbPtr->icon);
@@ -1680,14 +1680,14 @@ DrawComboBox(tvPtr, drawable, entryPtr, valuePtr, stylePtr, x, y)
     textY = y + (entryPtr->height - textHeight) / 2;
 
     if (cbPtr->icon != NULL) {
-	Tk_RedrawImage(TreeViewIconBits(cbPtr->icon), 0, 0, iconWidth, 
+	Tk_RedrawImage(TreeViewIconBits(cbPtr->icon), 0, 0, iconWidth,
 	       iconHeight, drawable, iconX, iconY);
     }
     if (valuePtr->textPtr != NULL) {
 	TextStyle ts;
 	XColor *color;
 	Tk_Font font;
-	
+
 	font = CHOOSE(tvPtr->font, cbPtr->font);
 	if (Blt_TreeViewEntryIsSelected(tvPtr, entryPtr)) {
 	    color = SELECT_FG(tvPtr);
@@ -1698,28 +1698,28 @@ DrawComboBox(tvPtr, drawable, entryPtr, valuePtr, stylePtr, x, y)
 	} else {
 	    color = fgColor;
 	}
-	Blt_SetDrawTextStyle(&ts, font, gc, color, fgColor, NULL, 0.0, 
+	Blt_SetDrawTextStyle(&ts, font, gc, color, fgColor, NULL, 0.0,
 		TK_ANCHOR_NW, TK_JUSTIFY_LEFT, 0, 0);
-	Blt_DrawTextLayout(tvPtr->tkwin, drawable, valuePtr->textPtr, 
+	Blt_DrawTextLayout(tvPtr->tkwin, drawable, valuePtr->textPtr,
 		&ts, textX, textY);
 	if (color != fgColor) {
 	    XSetForeground(tvPtr->display, gc, fgColor->pixel);
 	}
     }
     if (valuePtr == tvPtr->activeValuePtr) {
-	Blt_Fill3DRectangle(tvPtr->tkwin, drawable, stylePtr->activeBorder, 
-	   buttonX, buttonY + cbPtr->borderWidth, cbPtr->buttonWidth, 
-	   entryPtr->height - 2 * cbPtr->borderWidth, 
-	cbPtr->buttonBorderWidth, cbPtr->buttonRelief); 
+	Blt_Fill3DRectangle(tvPtr->tkwin, drawable, stylePtr->activeBorder,
+	   buttonX, buttonY + cbPtr->borderWidth, cbPtr->buttonWidth,
+	   entryPtr->height - 2 * cbPtr->borderWidth,
+	cbPtr->buttonBorderWidth, cbPtr->buttonRelief);
     } else {
-	Blt_Fill3DRectangle(tvPtr->tkwin, drawable, columnPtr->titleBorder, 
-		buttonX, buttonY + cbPtr->borderWidth, cbPtr->buttonWidth, 
-		entryPtr->height - 2 * cbPtr->borderWidth, 
-		cbPtr->buttonBorderWidth, cbPtr->buttonRelief); 
+	Blt_Fill3DRectangle(tvPtr->tkwin, drawable, columnPtr->titleBorder,
+		buttonX, buttonY + cbPtr->borderWidth, cbPtr->buttonWidth,
+		entryPtr->height - 2 * cbPtr->borderWidth,
+		cbPtr->buttonBorderWidth, cbPtr->buttonRelief);
     }
     buttonX += cbPtr->buttonWidth / 2;
     buttonY += entryPtr->height / 2;
-    Blt_DrawArrow(tvPtr->display, drawable, gc, buttonX, buttonY, 
+    Blt_DrawArrow(tvPtr->display, drawable, gc, buttonX, buttonY,
 		  STD_ARROW_HEIGHT, ARROW_DOWN);
     stylePtr->flags &= ~STYLE_DIRTY;
 }
@@ -1730,7 +1730,7 @@ DrawComboBox(tvPtr, drawable, entryPtr, valuePtr, stylePtr, x, y)
  * PickCombobox --
  *
  *	Draws the "checkbox" given the screen coordinates and the
- *	value to be displayed.  
+ *	value to be displayed.
  *
  * Results:
  *	None.
@@ -1754,10 +1754,10 @@ PickComboBox(entryPtr, valuePtr, stylePtr, worldX, worldY)
     columnPtr = valuePtr->columnPtr;
     width = cbPtr->buttonWidth;
     height = entryPtr->height - 4;
-    x = columnPtr->worldX + columnPtr->width - columnPtr->pad.side2 - 
+    x = columnPtr->worldX + columnPtr->width - columnPtr->pad.side2 -
 	cbPtr->borderWidth - columnPtr->borderWidth - width;
     y = entryPtr->worldY + cbPtr->borderWidth;
-    if ((worldX >= x) && (worldX < (x + width)) && 
+    if ((worldX >= x) && (worldX < (x + width)) &&
 	(worldY >= y) && (worldY < (y + height))) {
 	return TRUE;
     }
@@ -1796,8 +1796,8 @@ EditComboBox(tvPtr, entryPtr, valuePtr, stylePtr)
  * FreeComboBox --
  *
  *	Releases resources allocated for the combobox. The resources
- *	freed by this routine are specific only to the "combobox".   
- *	Other resources (common to all styles) are freed in the 
+ *	freed by this routine are specific only to the "combobox".
+ *	Other resources (common to all styles) are freed in the
  *	Blt_TreeViewFreeStyle routine.
  *
  * Results:
@@ -1840,7 +1840,7 @@ GetStyle(interp, tvPtr, styleName)
     hPtr = Blt_FindHashEntry(&tvPtr->styleTable, styleName);
     if (hPtr == NULL) {
 	if (interp != NULL) {
-	    Tcl_AppendResult(interp, "can't find cell style \"", styleName, 
+	    Tcl_AppendResult(interp, "can't find cell style \"", styleName,
 		"\"", (char *)NULL);
 	}
 	return NULL;
@@ -1877,15 +1877,15 @@ CreateStyle(interp, tvPtr, type, styleName, objc, objv)
     char *styleName;		/* Name of the new style. */
     int objc;
     Tcl_Obj *CONST *objv;
-{    
+{
     Blt_HashEntry *hPtr;
     int isNew;
     TreeViewStyle *stylePtr;
-    
+
     hPtr = Blt_CreateHashEntry(&tvPtr->styleTable, styleName, &isNew);
     if (!isNew) {
 	if (interp != NULL) {
-	    Tcl_AppendResult(interp, "cell style \"", styleName, 
+	    Tcl_AppendResult(interp, "cell style \"", styleName,
 			     "\" already exists", (char *)NULL);
 	}
 	return NULL;
@@ -1905,8 +1905,8 @@ CreateStyle(interp, tvPtr, type, styleName, objc, objv)
 	return NULL;
     }
     bltTreeViewIconOption.clientData = tvPtr;
-    if (Blt_ConfigureComponentFromObj(interp, tvPtr->tkwin, styleName, 
-	stylePtr->classPtr->className, stylePtr->classPtr->specsPtr, 
+    if (Blt_ConfigureComponentFromObj(interp, tvPtr->tkwin, styleName,
+	stylePtr->classPtr->className, stylePtr->classPtr->specsPtr,
 	objc, objv, (char *)stylePtr, 0) != TCL_OK) {
 	Blt_TreeViewFreeStyle(tvPtr, stylePtr);
 	return NULL;
@@ -1933,7 +1933,7 @@ Blt_TreeViewCreateStyle(interp, tvPtr, type, styleName)
 				 * STYLE_COMBOBOX, or
 				 * STYLE_CHECKBOX */
     char *styleName;		/* Name of the new style. */
-{    
+{
     return CreateStyle(interp, tvPtr, type, styleName, 0, (Tcl_Obj **)NULL);
 }
 
@@ -1954,17 +1954,17 @@ Blt_TreeViewFreeStyle(tvPtr, stylePtr)
 	fprintf(stderr, "freeing %s\n", stylePtr->name);
 #endif
 	bltTreeViewIconOption.clientData = tvPtr;
-	Blt_FreeObjOptions(stylePtr->classPtr->specsPtr, (char *)stylePtr, 
+	Blt_FreeObjOptions(stylePtr->classPtr->specsPtr, (char *)stylePtr,
 		   tvPtr->display, 0);
-	(*stylePtr->classPtr->freeProc)(tvPtr, stylePtr); 
+	(*stylePtr->classPtr->freeProc)(tvPtr, stylePtr);
 	if (stylePtr->hashPtr != NULL) {
 	    Blt_DeleteHashEntry(&tvPtr->styleTable, stylePtr->hashPtr);
-	} 
+	}
 	if (stylePtr->name != NULL) {
 	    Blt_Free(stylePtr->name);
 	}
 	Blt_Free(stylePtr);
-    } 
+    }
 }
 
 void
@@ -1997,7 +1997,7 @@ Blt_TreeViewGetStyleBorder(tvPtr, stylePtr)
     TreeViewTextBox *tbPtr = (TreeViewTextBox *)stylePtr;
     Tk_3DBorder border;
 
-    border = (tbPtr->flags & STYLE_HIGHLIGHT) 
+    border = (tbPtr->flags & STYLE_HIGHLIGHT)
 	? tbPtr->highlightBorder : tbPtr->border;
     return (border != NULL) ? border : tvPtr->border;
 }
@@ -2072,7 +2072,7 @@ DrawValue(tvPtr, entryPtr, valuePtr)
 	return;			/* Value is clipped. */
     }
 
-    drawable = Tk_GetPixmap(tvPtr->display, Tk_WindowId(tvPtr->tkwin), 
+    drawable = Tk_GetPixmap(tvPtr->display, Tk_WindowId(tvPtr->tkwin),
 	width, height, Tk_Depth(tvPtr->tkwin));
     /* Draw the background of the value. */
     if ((valuePtr == tvPtr->activeValuePtr) ||
@@ -2083,11 +2083,11 @@ DrawValue(tvPtr, entryPtr, valuePtr)
 	Blt_Fill3DRectangle(tvPtr->tkwin, drawable, border, 0, 0, width, height,
 		0, TK_RELIEF_FLAT);
     } else {
-	Blt_Fill3DRectangle(tvPtr->tkwin, drawable, SELECT_BORDER(tvPtr), 0, 0, 
+	Blt_Fill3DRectangle(tvPtr->tkwin, drawable, SELECT_BORDER(tvPtr), 0, 0,
 		width, height, tvPtr->selBorderWidth, tvPtr->selRelief);
     }
     Blt_TreeViewDrawValue(tvPtr, entryPtr, valuePtr, drawable, 0, 0);
-    
+
     /* Clip the drawable if necessary */
     sx = sy = 0;
     if (dx < left) {
@@ -2106,7 +2106,7 @@ DrawValue(tvPtr, entryPtr, valuePtr)
     if ((dy + height) >= bottom) {
 	height -= (dy + height) - bottom;
     }
-    XCopyArea(tvPtr->display, drawable, Tk_WindowId(tvPtr->tkwin), 
+    XCopyArea(tvPtr->display, drawable, Tk_WindowId(tvPtr->tkwin),
       tvPtr->lineGC, sx, sy, width,  height, dx, dy);
     Tk_FreePixmap(tvPtr->display, drawable);
 }
@@ -2140,18 +2140,18 @@ StyleActivateOp(tvPtr, interp, objc, objv)
 
     oldPtr = tvPtr->activeValuePtr;
     if (objc == 3) {
-	Tcl_Obj *listObjPtr; 
+	Tcl_Obj *listObjPtr;
 
 	valuePtr = tvPtr->activeValuePtr;
 	entryPtr = tvPtr->activePtr;
 	listObjPtr = Tcl_NewListObj(0, (Tcl_Obj **)NULL);
 	if ((entryPtr != NULL) && (valuePtr != NULL)) {
-	    Tcl_Obj *objPtr; 
+	    Tcl_Obj *objPtr;
 	    objPtr = Tcl_NewIntObj(Blt_TreeNodeId(entryPtr->node));
 	    Tcl_ListObjAppendElement(interp, listObjPtr, objPtr);
 	    objPtr = Tcl_NewStringObj(valuePtr->columnPtr->key, -1);
 	    Tcl_ListObjAppendElement(interp, listObjPtr, objPtr);
-	} 
+	}
 	Tcl_SetObjResult(interp, listObjPtr);
 	return TCL_OK;
     } else if (objc == 4) {
@@ -2166,7 +2166,7 @@ StyleActivateOp(tvPtr, interp, objc, objv)
 	    return TCL_ERROR;
 	}
 
-	if (Blt_TreeViewGetColumn(interp, tvPtr, objv[4], &columnPtr) 
+	if (Blt_TreeViewGetColumn(interp, tvPtr, objv[4], &columnPtr)
 	    != TCL_OK) {
 	    return TCL_ERROR;
 	}
@@ -2214,7 +2214,7 @@ StyleCgetOp(tvPtr, interp, objc, objv)
     if (stylePtr == NULL) {
 	return TCL_ERROR;
     }
-    return Blt_ConfigureValueFromObj(interp, tvPtr->tkwin, 
+    return Blt_ConfigureValueFromObj(interp, tvPtr->tkwin,
 	stylePtr->classPtr->specsPtr, (char *)tvPtr, objv[4], 0);
 }
 
@@ -2237,7 +2237,7 @@ StyleCheckBoxOp(tvPtr, interp, objc, objv)
 {
     TreeViewStyle *stylePtr;
 
-    stylePtr = CreateStyle(interp, tvPtr, STYLE_CHECKBOX, 
+    stylePtr = CreateStyle(interp, tvPtr, STYLE_CHECKBOX,
 	Tcl_GetString(objv[3]), objc - 4, objv + 4);
     if (stylePtr == NULL) {
 	return TCL_ERROR;
@@ -2268,7 +2268,7 @@ StyleComboBoxOp(tvPtr, interp, objc, objv)
 {
     TreeViewStyle *stylePtr;
 
-    stylePtr = CreateStyle(interp, tvPtr, STYLE_COMBOBOX, 
+    stylePtr = CreateStyle(interp, tvPtr, STYLE_COMBOBOX,
 	Tcl_GetString(objv[3]), objc - 4, objv + 4);
     if (stylePtr == NULL) {
 	return TCL_ERROR;
@@ -2297,7 +2297,7 @@ StyleComboBoxOp(tvPtr, interp, objc, objv)
  * Side effects:
  *	Configuration information, such as text string, colors, font,
  *	etc. get set for stylePtr; old resources get freed, if there
- *	were any.  
+ *	were any.
  *
  *----------------------------------------------------------------------
  */
@@ -2315,15 +2315,15 @@ StyleConfigureOp(tvPtr, interp, objc, objv)
 	return TCL_ERROR;
     }
     if (objc == 4) {
-	return Blt_ConfigureInfoFromObj(interp, tvPtr->tkwin, 
+	return Blt_ConfigureInfoFromObj(interp, tvPtr->tkwin,
 	    stylePtr->classPtr->specsPtr, (char *)stylePtr, (Tcl_Obj *)NULL, 0);
     } else if (objc == 5) {
-	return Blt_ConfigureInfoFromObj(interp, tvPtr->tkwin, 
+	return Blt_ConfigureInfoFromObj(interp, tvPtr->tkwin,
 		stylePtr->classPtr->specsPtr, (char *)stylePtr, objv[5], 0);
     }
     bltTreeViewIconOption.clientData = tvPtr;
-    if (Blt_ConfigureWidgetFromObj(interp, tvPtr->tkwin, 
-	stylePtr->classPtr->specsPtr, objc - 4, objv + 4, (char *)stylePtr, 
+    if (Blt_ConfigureWidgetFromObj(interp, tvPtr->tkwin,
+	stylePtr->classPtr->specsPtr, objc - 4, objv + 4, (char *)stylePtr,
 	BLT_CONFIG_OBJV_ONLY) != TCL_OK) {
 	return TCL_ERROR;
     }
@@ -2371,7 +2371,7 @@ StyleForgetOp(tvPtr, interp, objc, objv)
 	if (stylePtr->hashPtr != NULL) {
 	    Blt_DeleteHashEntry(&tvPtr->styleTable, stylePtr->hashPtr);
 	    stylePtr->hashPtr = NULL;
-	} 
+	}
 	stylePtr->flags &= ~STYLE_USER;
 	if (stylePtr->refCount <= 0) {
 	    Blt_TreeViewFreeStyle(tvPtr, stylePtr);
@@ -2505,11 +2505,11 @@ StyleSetOp(tvPtr, interp, objc, objv)
 	if (Blt_TreeViewFindTaggedEntries(tvPtr, objv[i], &info) != TCL_OK) {
 	    return TCL_ERROR;
 	}
-	for (entryPtr = Blt_TreeViewFirstTaggedEntry(&info); entryPtr != NULL; 
+	for (entryPtr = Blt_TreeViewFirstTaggedEntry(&info); entryPtr != NULL;
 	     entryPtr = Blt_TreeViewNextTaggedEntry(&info)) {
 	    register TreeViewValue *valuePtr;
 
-	    for (valuePtr = entryPtr->values; valuePtr != NULL; 
+	    for (valuePtr = entryPtr->values; valuePtr != NULL;
 		 valuePtr = valuePtr->nextPtr) {
 		if (valuePtr->columnPtr->key == key) {
 		    stylePtr->refCount++;
@@ -2546,7 +2546,7 @@ StyleTextBoxOp(tvPtr, interp, objc, objv)
 {
     TreeViewStyle *stylePtr;
 
-    stylePtr = CreateStyle(interp, tvPtr, STYLE_TEXTBOX, 
+    stylePtr = CreateStyle(interp, tvPtr, STYLE_TEXTBOX,
 	Tcl_GetString(objv[3]), objc - 4, objv + 4);
     if (stylePtr == NULL) {
 	return TCL_ERROR;
@@ -2597,11 +2597,11 @@ StyleUnsetOp(tvPtr, interp, objc, objv)
 	if (Blt_TreeViewFindTaggedEntries(tvPtr, objv[i], &info) != TCL_OK) {
 	    return TCL_ERROR;
 	}
-	for (entryPtr = Blt_TreeViewFirstTaggedEntry(&info); entryPtr != NULL; 
+	for (entryPtr = Blt_TreeViewFirstTaggedEntry(&info); entryPtr != NULL;
 	     entryPtr = Blt_TreeViewNextTaggedEntry(&info)) {
 	    register TreeViewValue *valuePtr;
 
-	    for (valuePtr = entryPtr->values; valuePtr != NULL; 
+	    for (valuePtr = entryPtr->values; valuePtr != NULL;
 		 valuePtr = valuePtr->nextPtr) {
 		if (valuePtr->columnPtr->key == key) {
 		    if (valuePtr->stylePtr != NULL) {
@@ -2623,7 +2623,7 @@ StyleUnsetOp(tvPtr, interp, objc, objv)
  * StyleOp --
  *
  *	.t style activate $node $column
- *	.t style activate 
+ *	.t style activate
  *	.t style cget "highlight" -foreground
  *	.t style configure "highlight" -fg blue -bg green
  *	.t style checkbox "highlight"
@@ -2636,7 +2636,7 @@ StyleUnsetOp(tvPtr, interp, objc, objv)
  *	.t style set "mtime" "highlight" all
  *	.t style unset "mtime" all
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static Blt_OpSpec styleOps[] = {
     {"activate", 1, (Blt_Op)StyleActivateOp, 3, 5,"entry column",},
@@ -2646,7 +2646,7 @@ static Blt_OpSpec styleOps[] = {
     {"configure", 3, (Blt_Op)StyleConfigureOp, 4, 0, "styleName options...",},
     {"forget", 1, (Blt_Op)StyleForgetOp, 3, 0, "styleName...",},
     {"highlight", 1, (Blt_Op)StyleHighlightOp, 5, 5, "styleName boolean",},
-    {"names", 1, (Blt_Op)StyleNamesOp, 3, 3, "",}, 
+    {"names", 1, (Blt_Op)StyleNamesOp, 3, 3, "",},
     {"set", 1, (Blt_Op)StyleSetOp, 6, 6, "key styleName tagOrId...",},
     {"textbox", 1, (Blt_Op)StyleTextBoxOp, 4, 0, "styleName options...",},
     {"unset", 1, (Blt_Op)StyleUnsetOp, 5, 5, "key tagOrId",},
@@ -2664,7 +2664,7 @@ Blt_TreeViewStyleOp(tvPtr, interp, objc, objv)
     Blt_Op proc;
     int result;
 
-    proc = Blt_GetOpFromObj(interp, nStyleOps, styleOps, BLT_OP_ARG2, objc, 
+    proc = Blt_GetOpFromObj(interp, nStyleOps, styleOps, BLT_OP_ARG2, objc,
 	objv, 0);
     if (proc == NULL) {
 	return TCL_ERROR;

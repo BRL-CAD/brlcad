@@ -16,6 +16,7 @@ bin_PROGRAMS = \
 	rlebg \
 	rlebox \
 	rlecat \
+	rleccube \
 	rlecomp \
 	rledither \
 	rleflip \
@@ -61,6 +62,7 @@ rleaddcom_SOURCES = rleaddcom.c
 rlebg_SOURCES = rlebg.c
 rlebox_SOURCES = rlebox.c rle_box.c
 rlecat_SOURCES = rlecat.c
+rleccube_SOURCES = rleccube.c
 rlecomp_SOURCES = rlecomp.c
 rledither_SOURCES = rledither.c
 rleflip_SOURCES = rleflip.c
@@ -93,8 +95,6 @@ unslice_SOURCES = unslice.c
 EXTRA_DIST = \
 	rleaddeof.c \
 	rleskel.c
-
-MAINTAINERCLEANFILES = Makefile.in
 
 include $(top_srcdir)/misc/Makefile.defs
 

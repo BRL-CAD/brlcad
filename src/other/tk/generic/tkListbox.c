@@ -14,7 +14,6 @@
  * RCS: @(#) $Id$
  */
 
-#include "tkPort.h"
 #include "default.h"
 #include "tkInt.h"
 
@@ -40,7 +39,7 @@ typedef struct {
     Tk_Window tkwin;		/* Window that embodies the listbox. NULL
 				 * means that the window has been destroyed
 				 * but the data structures haven't yet been
-				 * cleaned up.*/
+				 * cleaned up. */
     Display *display;		/* Display containing widget. Used, among
 				 * other things, so that resources can be
 				 * freed even after tkwin has gone away. */
@@ -206,7 +205,8 @@ typedef struct {
 
 /*
  * The following enum is used to define a type for the -state option of the
- * Entry widget. These values are used as indices into the string table below.
+ * Listbox widget. These values are used as indices into the string table
+ * below.
  */
 
 enum state {
@@ -610,6 +610,7 @@ ListboxWidgetObjCmd(
      * Parse the command by looking up the second argument in the list of
      * valid subcommand names
      */
+
     result = Tcl_GetIndexFromObj(interp, objv[1], commandNames,
 	    "option", 0, &cmdIndex);
     if (result != TCL_OK) {
@@ -718,11 +719,11 @@ ListboxWidgetObjCmd(
 	 * search functions (Tcl_FirstHashEntry, Tcl_NextHashEntry), but then
 	 * the result wouldn't be in sorted order. So instead we loop through
 	 * the indices in order, adding them to the result if they are
-	 * selected
+	 * selected.
 	 */
 
 	for (i = 0; i < listPtr->nElements; i++) {
-	    if (Tcl_FindHashEntry(listPtr->selection, (char *)i) != NULL) {
+	    if (Tcl_FindHashEntry(listPtr->selection, (char *) INT2PTR(i))) {
 		sprintf(indexStringRep, "%d", i);
 		Tcl_AppendElement(interp, indexStringRep);
 	    }
@@ -816,6 +817,7 @@ ListboxWidgetObjCmd(
 	    /*
 	     * One element request - we return a string
 	     */
+
 	    Tcl_SetObjResult(interp, elemPtrs[first]);
 	} else {
 	    Tcl_SetListObj(Tcl_GetObjResult(interp), (last - first + 1),
@@ -1202,7 +1204,7 @@ ListboxSelectionSubCmd(
 	}
 	Tcl_SetObjResult(interp,
 		Tcl_NewBooleanObj((Tcl_FindHashEntry(listPtr->selection,
-			(char *)first) != NULL)));
+			(char *) INT2PTR(first)) != NULL)));
 	result = TCL_OK;
 	break;
     case SELECTION_SET:
@@ -1386,7 +1388,8 @@ ListboxGetItemAttributes(
     Tcl_HashEntry *entry;
     ItemAttr *attrs;
 
-    entry = Tcl_CreateHashEntry(listPtr->itemAttrTable, (char *)index, &isNew);
+    entry = Tcl_CreateHashEntry(listPtr->itemAttrTable,
+	    (char *) INT2PTR(index), &isNew);
     if (isNew) {
 	attrs = (ItemAttr *) ckalloc(sizeof(ItemAttr));
 	attrs->border = NULL;
@@ -1421,7 +1424,7 @@ ListboxGetItemAttributes(
 
 static void
 DestroyListbox(
-    char *memPtr)	/* Info about listbox widget. */
+    char *memPtr)		/* Info about listbox widget. */
 {
     register Listbox *listPtr = (Listbox *) memPtr;
     Tcl_HashEntry *entry;
@@ -1632,6 +1635,7 @@ ConfigureListbox(
 	    /*
 	     * Make sure the object is a good list object.
 	     */
+
 	    if (Tcl_ListObjLength(listPtr->interp, listVarObj, &dummy)
 		    != TCL_OK) {
 		Tcl_AppendResult(listPtr->interp,
@@ -1711,10 +1715,12 @@ ConfigureListboxItem(
 	return TCL_ERROR;
     }
     Tk_FreeSavedOptions(&savedOptions);
+
     /*
-     * Redraw this index - ListboxWorldChanged would need to be called
-     * if item attributes were checked in the "world".
+     * Redraw this index - ListboxWorldChanged would need to be called if item
+     * attributes were checked in the "world".
      */
+
     EventuallyRedrawRange(listPtr, index, index);
     return TCL_OK;
 }
@@ -1911,7 +1917,7 @@ DisplayListbox(
 	 * special foreground/background colors.
 	 */
 
-	entry = Tcl_FindHashEntry(listPtr->itemAttrTable, (char *)i);
+	entry = Tcl_FindHashEntry(listPtr->itemAttrTable, (char *) INT2PTR(i));
 
 	/*
 	 * If the listbox is enabled, items may be drawn differently; they may
@@ -1920,7 +1926,7 @@ DisplayListbox(
 	 */
 
 	if (listPtr->state & STATE_NORMAL) {
-	    if (Tcl_FindHashEntry(listPtr->selection, (char *)i) != NULL) {
+	    if (Tcl_FindHashEntry(listPtr->selection, (char *) INT2PTR(i))) {
 		/*
 		 * Selected items are drawn differently.
 		 */
@@ -2003,7 +2009,7 @@ DisplayListbox(
 		/* Draw bottom bevel */
 		if (i + 1 == listPtr->nElements ||
 			Tcl_FindHashEntry(listPtr->selection,
-				(char *)(i + 1)) == NULL ) {
+				(char *) INT2PTR(i + 1)) == NULL ) {
 		    Tk_3DHorizontalBevel(tkwin, pixmap, selectedBg, x-left,
 			    y + listPtr->lineHeight - listPtr->selBorderWidth,
 			    width+left+right, listPtr->selBorderWidth, 0, 0, 0,
@@ -2440,13 +2446,13 @@ ListboxDeleteSubCmd(
 	 * Remove selection information.
 	 */
 
-	entry = Tcl_FindHashEntry(listPtr->selection, (char *)i);
+	entry = Tcl_FindHashEntry(listPtr->selection, (char *) INT2PTR(i));
 	if (entry != NULL) {
 	    listPtr->numSelected--;
 	    Tcl_DeleteHashEntry(entry);
 	}
 
-	entry = Tcl_FindHashEntry(listPtr->itemAttrTable, (char *)i);
+	entry = Tcl_FindHashEntry(listPtr->itemAttrTable, (char *) INT2PTR(i));
 	if (entry != NULL) {
 	    ckfree((char *)Tcl_GetHashValue(entry));
 	    Tcl_DeleteHashEntry(entry);
@@ -2567,8 +2573,8 @@ ListboxDeleteSubCmd(
  *	None.
  *
  * Side effects:
- *	When the window gets deleted, internal structures get cleaned up.
- *	When it gets exposed, it is redisplayed.
+ *	When the window gets deleted, internal structures get cleaned up. When
+ *	it gets exposed, it is redisplayed.
  *
  *--------------------------------------------------------------
  */
@@ -2981,10 +2987,10 @@ NearestListboxElement(
  *
  * Side effects:
  *	All of the elements in the range between first and last are marked as
- *	either selected or deselected, depending on the "select" argument.
- *	Any items whose state changes are redisplayed. The selection is
- *	claimed from X when the number of selected elements changes from zero
- *	to non-zero.
+ *	either selected or deselected, depending on the "select" argument. Any
+ *	items whose state changes are redisplayed. The selection is claimed
+ *	from X when the number of selected elements changes from zero to
+ *	non-zero.
  *
  *----------------------------------------------------------------------
  */
@@ -3026,7 +3032,7 @@ ListboxSelect(
      */
 
     for (i = first; i <= last; i++) {
-	entry = Tcl_FindHashEntry(listPtr->selection, (char *)i);
+	entry = Tcl_FindHashEntry(listPtr->selection, (char *) INT2PTR(i));
 	if (entry != NULL) {
 	    if (!select) {
 		Tcl_DeleteHashEntry(entry);
@@ -3037,8 +3043,8 @@ ListboxSelect(
 	    }
 	} else {
 	    if (select) {
-		entry = Tcl_CreateHashEntry(listPtr->selection, (char *)i,
-			&isNew);
+		entry = Tcl_CreateHashEntry(listPtr->selection,
+			(char *) INT2PTR(i), &isNew);
 		Tcl_SetHashValue(entry, (ClientData) NULL);
 		listPtr->numSelected++;
 		if (firstRedisplay < 0) {
@@ -3109,7 +3115,7 @@ ListboxFetchSelection(
     needNewline = 0;
     Tcl_DStringInit(&selection);
     for (i = 0; i < listPtr->nElements; i++) {
-	entry = Tcl_FindHashEntry(listPtr->selection, (char *)i);
+	entry = Tcl_FindHashEntry(listPtr->selection, (char *) INT2PTR(i));
 	if (entry != NULL) {
 	    if (needNewline) {
 		Tcl_DStringAppend(&selection, "\n", 1);
@@ -3425,7 +3431,7 @@ ListboxListVarProc(
 	     * Clean up selection.
 	     */
 
-	    entry = Tcl_FindHashEntry(listPtr->selection, (char *)i);
+	    entry = Tcl_FindHashEntry(listPtr->selection, (char *) INT2PTR(i));
 	    if (entry != NULL) {
 		listPtr->numSelected--;
 		Tcl_DeleteHashEntry(entry);
@@ -3435,7 +3441,8 @@ ListboxListVarProc(
 	     * Clean up attributes.
 	     */
 
-	    entry = Tcl_FindHashEntry(listPtr->itemAttrTable, (char *)i);
+	    entry = Tcl_FindHashEntry(listPtr->itemAttrTable,
+		    (char *) INT2PTR(i));
 	    if (entry != NULL) {
 		ckfree((char *) Tcl_GetHashValue(entry));
 		Tcl_DeleteHashEntry(entry);
@@ -3509,23 +3516,23 @@ MigrateHashEntries(
 
     if (offset > 0) {
 	for (i = last; i >= first; i--) {
-	    entry = Tcl_FindHashEntry(table, (char *)i);
+	    entry = Tcl_FindHashEntry(table, (char *) INT2PTR(i));
 	    if (entry != NULL) {
 		clientData = Tcl_GetHashValue(entry);
 		Tcl_DeleteHashEntry(entry);
-		entry = Tcl_CreateHashEntry(table, (char *)(i + offset),
-			&isNew);
+		entry = Tcl_CreateHashEntry(table,
+			(char *) INT2PTR(i + offset), &isNew);
 		Tcl_SetHashValue(entry, clientData);
 	    }
 	}
     } else {
 	for (i = first; i <= last; i++) {
-	    entry = Tcl_FindHashEntry(table, (char *)i);
+	    entry = Tcl_FindHashEntry(table, (char *) INT2PTR(i));
 	    if (entry != NULL) {
 		clientData = Tcl_GetHashValue(entry);
 		Tcl_DeleteHashEntry(entry);
-		entry = Tcl_CreateHashEntry(table, (char *)(i + offset),
-			&isNew);
+		entry = Tcl_CreateHashEntry(table,
+			(char *) INT2PTR(i + offset), &isNew);
 		Tcl_SetHashValue(entry, clientData);
 	    }
 	}

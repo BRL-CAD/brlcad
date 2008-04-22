@@ -1,23 +1,23 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
+/*
  * rleldmap.c - Load a color map into an RLE file.
- * 
+ *
  * Author:	Spencer W. Thomas
  * 		Computer Science Dept.
  * 		University of Utah
@@ -41,7 +41,7 @@ void applymap(), shiftmap();
 
 /*****************************************************************
  * TAG( main )
- * 
+ *
  * Usage:
  *	rleldmap [-ab] [-n nchan length] [-s bits] [-l [factor]] [-g gamma]
  *		[-{tf} file] [-m files ...] [-r rlefile]
@@ -183,7 +183,7 @@ char **argv;
     if ( rflag )		/* from RLE file? */
     {
 	if ( lflag )
-	    fprintf(stderr, 
+	    fprintf(stderr,
 	    "%s: Nchan, length and bits ignored, values from rle file used\n",
 		    cmd_name( argv ));
 	rle_names( &rle_f_hdr, cmd_name( argv ), rlefname, 0 );
@@ -274,7 +274,7 @@ char **argv;
 		olength = ilength;
 		olbits = ilbits;
 	    }
-	
+
 	    /* Get convenient access to the input map */
 	    imap = allocmap( in_hdr.ncmap, 1 << in_hdr.cmaplen,
 			     in_hdr.cmap );
@@ -355,7 +355,7 @@ char **argv;
 
 /*****************************************************************
  * TAG( allocmap )
- * 
+ *
  * Allocate a color map of a given size.
  * Inputs:
  * 	nchan:		Number of channels in the map.
@@ -395,7 +395,7 @@ rle_map * cmap;
 
 /*****************************************************************
  * TAG( shiftmap )
- * 
+ *
  * Shift the entries in the color map to left justify them.
  * Inputs:
  * 	map:		The color map.
@@ -417,7 +417,7 @@ int nchan, length, bits;
 {
     register rle_map * e;
     register int i;
-    
+
     bits = 16 - bits;
     if ( bits == 0 )
 	return;			/* no work! */
@@ -428,7 +428,7 @@ int nchan, length, bits;
 
 /*****************************************************************
  * TAG( applymap )
- * 
+ *
  * Compose two maps: map[submap].
  * Inputs:
  *	map:		Map being "applied".
@@ -507,7 +507,7 @@ rle_map **omap;
 
 /*****************************************************************
  * TAG( linmap )
- * 
+ *
  * Build a linear map.
  * Inputs:
  * 	factor:		Linear factor to multiply map entries by.
@@ -552,7 +552,7 @@ rle_map **amap;
 
 /*****************************************************************
  * TAG( gammap )
- * 
+ *
  * Build a gamma compensation map.
  * Inputs:
  * 	gamma:	    Gamma exponent.
@@ -587,7 +587,7 @@ rle_map **amap;
 
 /*****************************************************************
  * TAG( filemap )
- * 
+ *
  * Read a color map from a file
  * Inputs:
  * 	tflag:	    	Flag for type of file: 1 means all entries for a
@@ -648,7 +648,7 @@ rle_map **amap;
 		switch ( fscanf( mapfile, "%d", &ent ) )
 		{
 		case EOF:	/* EOF */
-		    fprintf( stderr, 
+		    fprintf( stderr,
 		"rleldmap: Premature end of file reading map %s at entry %d, channel %d\n",
 			   mapfname, i, c );
 		    exit(-1);
@@ -676,7 +676,7 @@ rle_map **amap;
 
 /*****************************************************************
  * TAG( mfilemap )
- * 
+ *
  * Read a color map from a multiple files
  * Inputs:
  *  	mfnames:   	Name of files to read map from.  Each file contains
@@ -737,7 +737,7 @@ rle_map **amap;
 
 /*****************************************************************
  * TAG( get_rle_map )
- * 
+ *
  * Read the map from an RLE file.
  * Inputs:
  *  	fname:	    Name of file to read map from.

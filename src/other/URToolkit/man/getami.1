@@ -1,13 +1,13 @@
 .\" -*- Text -*-
 .\" Copyright (c) 1990, University of Michigan
-.\" Template man page.  
+.\" Template man page.
 .TH GETAMI 1 "February, 1992" 1
-.UC 4 
+.UC 4
 .SH NAME
 .HP
 getami \- display an RLE image on a Commodore Amiga and optionally save it as an IFF ILBM file.
 .SH SYNOPSIS
-.B getami 
+.B getami
 [
 .BI \-w " width"
 ] [
@@ -20,20 +20,20 @@ getami \- display an RLE image on a Commodore Amiga and optionally save it as an
 .I input_file
 ]
 .SH DESCRIPTION
-.I Getami 
-displays an 
+.I Getami
+displays an
 .IR RLE (5)
 image on a Commodore Amiga. The program tries
 to display the image in the best possible way, using HAM mode and
 overscan when appropriate. Both NTSC and PAL Amigas are catered for.
 In addition, the program allows you to save the displayed picture in
-IFF format, using Christian Weber's 
+IFF format, using Christian Weber's
 .I iff.library.
 .SH OPTIONS
 .TP
 .BI \-w " width"
 Override the screen width computed by getami. Eg., use
-.B -w 640 
+.B -w 640
 if
 .I getami
 selects a screen resolution of 320x400
@@ -41,7 +41,7 @@ selects a screen resolution of 320x400
 want is 640x400.
 .TP
 .BI -h " height"
-Override the screen height computed by 
+Override the screen height computed by
 .IR getami .
 .PP
 Apart from the example mentioned above, these two options
@@ -51,7 +51,7 @@ are probably obsolete.
 Make
 .I getami
 act as an RLE->IFF converter: after rendering the
-RLE file, 
+RLE file,
 .I getami
 saves the image in IFF form in the file specified, then exits.
 .TP
@@ -87,7 +87,7 @@ introduced by Hold And Modify.)
 Render the image in 4096 colors without using HAM. This is
 achieved by rendering the image in three screens, one for each
 of its r,g,b components, then flipping through them in rapid
-succession. Because of this rapid flipping, the image 
+succession. Because of this rapid flipping, the image
 flickers. This is especially noticeable in conjunction with
 interlace. If you are sensitive to screen flicker, please do
 not use this option.
@@ -113,12 +113,12 @@ IFF file. To cancel the save, simply give a null file name.
 This action can also be invoked by pressing right Amiga-A.
 .PP
 These two operations can only be invoked if you have Christian
-Weber's 
+Weber's
 .I iff.library
 in your LIBS: directory. If you save a
 picture which has been rendered with the -3 option, you will
 actually create three files, with extensions ".r", ".g", and
-".b", respectively. You can view this image using the 
+".b", respectively. You can view this image using the
 .IR show3 (1)
 program.
 .TP

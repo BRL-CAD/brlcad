@@ -2,7 +2,7 @@
 .\"                        L I B R T . 3
 .\" BRL-CAD
 .\"
-.\" Copyright (c) 1985-2007 United States Government as represented by
+.\" Copyright (c) 1985-2008 United States Government as represented by
 .\" the U.S. Army Research Laboratory.
 .\"
 .\" Redistribution and use in source (Docbook format) and 'compiled'
@@ -42,7 +42,6 @@
 librt \- library for raytracing an MGED database
 .SH SYNOPSIS
 .nf
-\fB#include "machine.h"
 \fB#include "vmath.h"
 \fB#include "raytrace.h"
 .sp
@@ -301,9 +300,6 @@ uses a default overlap handler.
 Additionally,
 .I librt
 provides the routine
-.I rt_overlap_quietly
-which behaves exactly as the default handler,
-excepting that it produces no warning messages on standard error.
 .P
 If the ray does not intersect the model, the
 .I a_miss
@@ -341,7 +337,6 @@ Here is a portion of a hypothetical program which uses the library:
 .RS
 .sp
 .nf
-#include <machine.h>
 #include <vmath.h>
 #include <raytrace.h>
 main( argc, argv )
@@ -448,19 +443,13 @@ to add more sub-trees to the active model after calling
 is called more than once.
 ``rt_prep: no solids to prep'' when there are no valid solids
 in the model.
-.SH AUTHOR(S)
-Michael John Muuss
 .SH BUGS
 On a VAX, the rootfinder detects ``hard'' cases by taking a SIGFPE
 and retrying
 with a slower but more stable algorithm.
 This is unfortunate.
-.SH SOURCE
- SECAD/VLD Computing Consortium, Bldg 394
- The U. S. Army Ballistic Research Laboratory
- Aberdeen Proving Ground, Maryland  21005
 .SH COPYRIGHT
-This software is Copyright (c) 1985-2007 United States Government as
+This software is Copyright (c) 1985-2008 United States Government as
 represented by the U.S. Army Research Laboratory. All rights reserved.
 .SH "BUG REPORTS"
 Reports of bugs or problems should be submitted via electronic

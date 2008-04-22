@@ -1,7 +1,7 @@
 #                     C O M M A N D . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2007 United States Government as represented by
+# Copyright (c) 1998-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -18,15 +18,6 @@
 # information.
 #
 ###
-#
-# Author -
-#	Bob Parker
-#
-# Source -
-#	The U. S. Army Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#
 #
 # Description -
 #	The Command class implements a command window with command line
@@ -52,6 +43,7 @@
     public method history {}
     public method edit_style {args}
     public method putstring {str}
+    public method reinitialize {} 
 
     private method invoke {}
     private method invokeMaster {hcmd}
@@ -158,23 +150,23 @@
 }
 
 ::itcl::configbody Command::selection_color {
-	$itk_component(text) tag configure sel -foreground $itk_option(-selection_color)
+    $itk_component(text) tag configure sel -foreground $itk_option(-selection_color)
 }
 
 ::itcl::configbody Command::prompt_color {
-	$itk_component(text) tag configure prompt -foreground $itk_option(-prompt_color)
+    $itk_component(text) tag configure prompt -foreground $itk_option(-prompt_color)
 }
 
 ::itcl::configbody Command::cmd_color {
-	$itk_component(text) tag configure cmd -foreground $itk_option(-cmd_color)
+    $itk_component(text) tag configure cmd -foreground $itk_option(-cmd_color)
 }
 
 ::itcl::configbody Command::oldcmd_color {
-	$itk_component(text) tag configure oldcmd -foreground $itk_option(-oldcmd_color)
+    $itk_component(text) tag configure oldcmd -foreground $itk_option(-oldcmd_color)
 }
 
 ::itcl::configbody Command::result_color {
-	$itk_component(text) tag configure result -foreground $itk_option(-result_color)
+    $itk_component(text) tag configure result -foreground $itk_option(-result_color)
 }
 
 ::itcl::configbody Command::maxlines {
@@ -263,6 +255,13 @@
     }
 }
 
+::itcl::body Command::reinitialize {} {
+    $itk_component(text) delete 1.0 end
+    print_prompt
+    $itk_component(text) insert insert " "
+    beginning_of_line
+}
+
 ############################## Protected/Private Methods  ##############################
 
 ::itcl::body Command::invoke {} {
@@ -318,7 +317,7 @@
     }
 
     if {[info complete $cmd]} {
-	set result [catch {uplevel #0 $cmd} msg]
+	set result [catch {uplevel \#0 $cmd} msg]
 
 	if {$result != 0} {
 	    $itk_component(text) tag add oldcmd promptEnd insert
@@ -421,7 +420,7 @@
 
 ::itcl::body Command::backward_delete_char {} {
     set w $itk_component(text)
-#    catch {$w tag remove sel sel.first promptEnd}
+    #    catch {$w tag remove sel sel.first promptEnd}
     if [$w compare insert > promptEnd] {
 	$w mark set insert {insert - 1c}
 	$w delete insert
@@ -431,7 +430,7 @@
 
 ::itcl::body Command::delete_char {} {
     set w $itk_component(text)
-#    catch {$w tag remove sel sel.first promptEnd}
+    #    catch {$w tag remove sel sel.first promptEnd}
     if {[$w compare insert >= promptEnd] && [$w compare insert < {end - 2c}]} {
 	$w delete insert
 	cursor_highlight
@@ -499,7 +498,7 @@
 	$w delete promptEnd {end - 2c}
 	$w mark set insert promptEnd
 	$w insert insert [string range $msg 0 \
-		[expr [string length $msg]-2]]
+			      [expr [string length $msg]-2]]
 
 	cursor_highlight
 	$w see insert
@@ -508,7 +507,7 @@
 	    $w delete promptEnd {end - 2c}
 	    $w mark set insert promptEnd
 	    $w insert insert [string range $scratchline 0\
-		    [expr [string length $scratchline] - 1]]
+				  [expr [string length $scratchline] - 1]]
 	    set freshline 1
 	    cursor_highlight
 	}
@@ -529,7 +528,7 @@
 	$w mark set insert promptEnd
 
 	$w insert insert [string range $msg 0 \
-		[expr [string length $msg]-2]]
+			      [expr [string length $msg]-2]]
 
 	cursor_highlight
 	$w see insert
@@ -1105,7 +1104,7 @@
 	    bind $w <Control-u> "[::itcl::code $this delete_beginning_of_line]; break"
 	}
 	default
-	    -
+	-
 	emacs {
 	    bind $w <Escape> "break"
 	    bind $w <Control-d> "[::itcl::code $this delete_char]; break"
@@ -1116,7 +1115,7 @@
 	}
     }
 
-# Common Key Bindings
+    # Common Key Bindings
     bind $w <Return> "[::itcl::code $this doReturn]; break"
     bind $w <KP_Enter> "[::itcl::code $this doReturn]; break"
     bind $w <Delete> "[::itcl::code $this backward_delete_char]; break"

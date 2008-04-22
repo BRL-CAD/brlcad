@@ -24,7 +24,6 @@ Tk_ItemType *
 .AP Tk_ItemType *typePtr in
 Structure that defines the new type of canvas item.
 .BE
-
 .SH INTRODUCTION
 .PP
 \fBTk_CreateItemType\fR is invoked to define a new kind of canvas item
@@ -54,7 +53,6 @@ for an existing type and modify it for the new type.
 Tk provides a number of utility procedures for the use of canvas
 type managers, such as \fBTk_CanvasCoords\fR and \fBTk_CanvasPsColor\fR;
 these are described in separate manual entries.
-
 .SH "DATA STRUCTURES"
 .PP
 A type manager consists of a collection of procedures that provide a
@@ -154,8 +152,7 @@ A Tk_Canvas handle is typically passed in to the
 procedures of a type manager, and the type manager can pass the
 handle back to library procedures such as Tk_CanvasTkwin
 to fetch information about the canvas.
-
-.SH NAME
+.SS NAME
 .PP
 This section and the ones that follow describe each of the fields
 in a Tk_ItemType structure in detail.
@@ -165,8 +162,7 @@ in \fBcreate\fR widget commands to create items of the new
 type.
 If there already existed an item type by this name then
 the new item type replaces the old one.
-
-.SH ITEMSIZE
+.SS ITEMSIZE
 \fItypePtr->itemSize\fR gives the size in bytes of item records
 of this type, including the Tk_Item header.
 Tk uses this size to allocate memory space for items of the type.
@@ -174,8 +170,7 @@ All of the item records for a given type must have the same size.
 If variable length fields are needed for an item (such as a list
 of points for a polygon), the type manager can allocate a separate
 object of variable length and keep a pointer to it in the item record.
-
-.SH CREATEPROC
+.SS CREATEPROC
 .PP
 \fItypePtr->createProc\fR points to a procedure for
 Tk to call whenever a new item of this type is created.
@@ -214,8 +209,7 @@ If an error occurs Tk will free the item record, so \fIcreateProc\fR
 must be sure to leave the item record in a clean state if it returns an error
 (e.g., it must free any additional memory that it allocated for
 the item).
-
-.SH CONFIGSPECS
+.SS CONFIGSPECS
 .PP
 Each type manager must provide a standard table describing its
 configuration options, in a form suitable for use with
@@ -229,8 +223,7 @@ for this type.
 Note: Tk provides a custom option type \fBtk_CanvasTagsOption\fR
 for implementing the \fB\-tags\fR option;  see an existing type
 manager for an example of how to use it in \fIconfigSpecs\fR.
-
-.SH CONFIGPROC
+.SS CONFIGPROC
 .PP
 \fItypePtr->configProc\fR is called by Tk whenever the
 \fBitemconfigure\fR widget command is invoked to change the
@@ -265,8 +258,7 @@ procedure will usually invoke \fIconfigProc\fR with different flag values.
 leaves an error message in \fIinterp->result\fR if an error occurs.
 It must update the item's bounding box to reflect the new configuration
 options.
-
-.SH COORDPROC
+.SS COORDPROC
 .PP
 \fItypePtr->coordProc\fR is invoked by Tk to implement the \fBcoords\fR
 widget command for an item.
@@ -295,8 +287,7 @@ box in the item's header), and return a standard Tcl completion
 code.
 If an error occurs, \fIcoordProc\fR must leave an error message in
 \fIinterp->result\fR.
-
-.SH DELETEPROC
+.SS DELETEPROC
 .PP
 \fItypePtr->deleteProc\fR is invoked by Tk to delete an item
 and free any resources allocated to it.
@@ -314,8 +305,7 @@ the canvas.
 so that Tk can free the item record.
 \fIdeleteProc\fR should not actually free the item record;  this will
 be done by Tk when \fIdeleteProc\fR returns.
-
-.SH "DISPLAYPROC AND ALWAYSREDRAW"
+.SS "DISPLAYPROC AND ALWAYSREDRAW"
 .PP
 \fItypePtr->displayProc\fR is invoked by Tk to redraw an item
 on the screen.
@@ -354,12 +344,11 @@ Normally an item's \fIdisplayProc\fR is only invoked if the item
 overlaps the area being displayed.
 However, if \fItypePtr->alwaysRedraw\fR has a non-zero value, then
 \fIdisplayProc\fR is invoked during every redisplay operation,
-even if the item doesn't overlap the area of redisplay.
+even if the item does not overlap the area of redisplay.
 \fIalwaysRedraw\fR should normally be set to 0;  it is only
 set to 1 in special cases such as window items that need to be
 unmapped when they are off-screen.
-
-.SH POINTPROC
+.SS POINTPROC
 .PP
 \fItypePtr->pointProc\fR is invoked by Tk to find out how close
 a given point is to a canvas item.
@@ -378,8 +367,7 @@ the x and y coordinates of a point.
 \fIpointProc\fR must return a real value giving the distance
 from the point to the item, or 0 if the point lies inside
 the item.
-
-.SH AREAPROC
+.SS AREAPROC
 .PP
 \fItypePtr->areaProc\fR is invoked by Tk to find out the relationship
 between an item and a rectangular area.
@@ -398,8 +386,7 @@ coordinates of the lower right corner.
 \fIareaProc\fR must return \-1 if the item lies entirely outside
 the given area, 0 if it lies partially inside and partially
 outside the area, and 1 if it lies entirely inside the area.
-
-.SH POSTSCRIPTPROC
+.SS POSTSCRIPTPROC
 .PP
 \fItypePtr->postscriptProc\fR is invoked by Tk to generate
 Postscript for an item during the \fBpostscript\fR widget command.
@@ -449,8 +436,7 @@ during the first pass;  the type manager can use \fIprepass\fR to skip
 all Postscript generation except for calls to \fBTk_CanvasPsFont\fR.
 During the second pass \fIprepass\fR will be 0, so the type manager
 must generate complete Postscript.
-
-.SH SCALEPROC
+.SS SCALEPROC
 \fItypePtr->scaleProc\fR is invoked by Tk to rescale a canvas item
 during the \fBscale\fR widget command.
 The procedure must match the following prototype:
@@ -469,15 +455,14 @@ the item is to be scaled, and \fIscaleX\fR and \fIscaleY\fR give the
 x and y scale factors.
 The item should adjust its coordinates so that a point in the item
 that used to have coordinates \fIx\fR and \fIy\fR will have new
-coordinates \fIx'\fR and \fIy'\fR, where
+coordinates \fIx\(fm\fR and \fIy\(fm\fR, where
 .CS
-\fIx' = originX  + scaleX*(x-originX)
-y' = originY + scaleY*(y-originY)\fR
+\fIx\(fm = originX  + scaleX*(x-originX)
+y\(fm = originY + scaleY*(y-originY)\fR
 .CE
 \fIscaleProc\fR must also update the bounding box in the item's
 header.
-
-.SH TRANSLATEPROC
+.SS TRANSLATEPROC
 \fItypePtr->translateProc\fR is invoked by Tk to translate a canvas item
 during the \fBmove\fR widget command.
 The procedure must match the following prototype:
@@ -493,8 +478,7 @@ and \fIdeltaX\fR and \fIdeltaY\fR give the amounts that should be
 added to each x and y coordinate within the item.
 The type manager should adjust the item's coordinates and
 update the bounding box in the item's header.
-
-.SH INDEXPROC
+.SS INDEXPROC
 \fItypePtr->indexProc\fR is invoked by Tk to translate a string
 index specification into a numerical index, for example during the
 \fBindex\fR widget command.
@@ -520,15 +504,14 @@ are supported (e.g., numbers, \fBinsert\fR,  \fBsel.first\fR,
 \fBend\fR, etc.).
 \fIindexProc\fR should return a Tcl completion code and set
 \fIinterp->result\fR in the event of an error.
-
-.SH ICURSORPROC
+.SS ICURSORPROC
 .PP
 \fItypePtr->icursorProc\fR is invoked by Tk during
 the \fBicursor\fR widget command to set the position of the
 insertion cursor in a textual item.
 It is only relevant for item types that support an insertion cursor;
 \fItypePtr->icursorProc\fR may be specified as NULL for item types
-that don't support an insertion cursor.
+that do not support an insertion cursor.
 The procedure must match the following prototype:
 .CS
 typedef void Tk_ItemCursorProc(
@@ -543,8 +526,7 @@ The type manager should position the insertion cursor in the
 item just before the character given by \fIindex\fR.
 Whether or not to actually display the insertion cursor is
 determined by other information provided by \fBTk_CanvasGetTextInfo\fR.
-
-.SH SELECTIONPROC
+.SS SELECTIONPROC
 .PP
 \fItypePtr->selectionProc\fR is invoked by Tk during selection
 retrievals;  it must return part or all of the selected text in
@@ -571,10 +553,9 @@ of bytes to return.
 \fIselectionProc\fR should extract up to \fImaxBytes\fR characters
 from the selection and copy them to \fImaxBytes\fR;  it should
 return a count of the number of bytes actually copied, which may
-be less than \fImaxBytes\fR if there aren't \fIoffset+maxBytes\fR bytes
+be less than \fImaxBytes\fR if there are not \fIoffset+maxBytes\fR bytes
 in the selection.
-
-.SH INSERTPROC
+.SS INSERTPROC
 .PP
 \fItypePtr->insertProc\fR is invoked by Tk during
 the \fBinsert\fR widget command to insert new text into a
@@ -597,8 +578,7 @@ contains new text to insert just before the character given
 by \fIindex\fR.
 The type manager should insert the text and recompute the bounding
 box in the item's header.
-
-.SH DCHARSPROC
+.SS DCHARSPROC
 .PP
 \fItypePtr->dCharsProc\fR is invoked by Tk during the \fBdchars\fR
 widget command to delete a range of text from a canvas item.
@@ -618,9 +598,7 @@ typedef void Tk_ItemDCharsProc(
 to be deleted, as returned by previous calls to \fItypePtr->indexProc\fR.
 The type manager should delete the specified characters and update
 the bounding box in the item's header.
-
 .SH "SEE ALSO"
 Tk_CanvasPsY, Tk_CanvasTextInfo, Tk_CanvasTkwin
-
 .SH KEYWORDS
 canvas, focus, item type, selection, type manager

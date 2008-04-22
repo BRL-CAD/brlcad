@@ -6,9 +6,9 @@ include ../win/makedefs
 
 srcdir =	.
 
-instdirs =	$(prefix) $(libdir) $(scriptdir) $(scriptdir)/html 
+instdirs =	$(prefix) $(libdir) $(scriptdir) $(scriptdir)/html
 
-all: 
+all:
 
 install: install-dirs install-html
 
@@ -24,10 +24,10 @@ install-html: install-dirs
 	for i in $(srcdir)/*.html ; do \
 	    $(RM) $(scriptdir)/html/$$i ; \
 	    $(INSTALL_DATA) $(srcdir)/$$i $(scriptdir)/html ; \
-	done 
+	done
 
 clean:
-	$(RM) $(srcdir)/*.bak $(srcdir)/*\~ $(srcdir)/"#"* 
+	$(RM) $(srcdir)/*.bak $(srcdir)/*\~ $(srcdir)/"#"*
 
 distclean: clean
 	$(RM) Makefile

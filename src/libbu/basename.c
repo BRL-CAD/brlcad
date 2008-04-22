@@ -1,7 +1,7 @@
 /*                     B A S E N A M E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,6 +27,7 @@
  */
 
 #include "common.h"
+
 #include "bu.h"
 
 
@@ -56,8 +57,8 @@ bu_basename(const char *str)
 	return NULL;
     }
 
-    while( *p != '\0' )
-	if( *p++ == '/' )
+    while ( *p != '\0' )
+	if ( *p++ == '/' )
 	    str = p;
 
     return str;
@@ -69,8 +70,8 @@ bu_basename(const char *str)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

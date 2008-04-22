@@ -1,7 +1,7 @@
 /*                    A D A G E F R A M E . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,27 +26,27 @@
 /** @} */
 
 11, 11,		/* size */
-7, 7,		/* origin */
+    7, 7,		/* origin */
 {
-0x00, 0xE0,
-0x00, 0xE0,
-0x00, 0xE0,
-0x00, 0xE0,
-0x00, 0xE0,
-0x00, 0xE0,
-0x00, 0xE0,
-0x00, 0xE0,
-0xFF, 0xE0,
-0xFF, 0xE0,
-0xFF, 0xE0
-}
+    0x00, 0xE0,
+	0x00, 0xE0,
+	0x00, 0xE0,
+	0x00, 0xE0,
+	0x00, 0xE0,
+	0x00, 0xE0,
+	0x00, 0xE0,
+	0x00, 0xE0,
+	0xFF, 0xE0,
+	0xFF, 0xE0,
+	0xFF, 0xE0
+	}
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

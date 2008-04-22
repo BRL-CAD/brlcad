@@ -1,6 +1,6 @@
 .\" Copyright (c) 1986, 1987, University of Utah
 .TH RLE_ROW_ALLOC 3 2/2/87 3
-.UC 4 
+.UC 4
 .SH NAME
 .HP
 rle_row_alloc \- Allocate scanline memory for rle_putrow or rle_getrow.
@@ -43,7 +43,7 @@ structure.
 .I rle_row_alloc
 allocates
 .RI ( the_hdr \(-> xmax " + 1)"
-bytes for each scanline, to allow for 
+bytes for each scanline, to allow for
 .I rle_getrow
 usage.  Only those rows enabled by the bit-map in
 .I the_hdr

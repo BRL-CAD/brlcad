@@ -1,7 +1,7 @@
 /*                           A R S . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2007 United States Government as represented by
+ * Copyright (c) 1989-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,16 +25,13 @@
  *	Michael John Muuss
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
-
 #include <stdio.h>
 #include <math.h>
-#include "machine.h"
+#include "bio.h"
+
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
@@ -58,23 +55,23 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 int
 mk_ars(struct rt_wdb *filep, const char *name, int ncurves, int pts_per_curve, fastf_t **curves)
 {
-	struct rt_ars_internal	*ars;
+    struct rt_ars_internal	*ars;
 
-	BU_GETSTRUCT( ars, rt_ars_internal );
-	ars->magic = RT_ARS_INTERNAL_MAGIC;
-	ars->ncurves = ncurves;
-	ars->pts_per_curve = pts_per_curve;
-	ars->curves = curves;
+    BU_GETSTRUCT( ars, rt_ars_internal );
+    ars->magic = RT_ARS_INTERNAL_MAGIC;
+    ars->ncurves = ncurves;
+    ars->pts_per_curve = pts_per_curve;
+    ars->curves = curves;
 
-	return wdb_export( filep, name, (genptr_t)ars, ID_ARS, mk_conv2mm );
+    return wdb_export( filep, name, (genptr_t)ars, ID_ARS, mk_conv2mm );
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

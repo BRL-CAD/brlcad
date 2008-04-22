@@ -1,7 +1,7 @@
 /*                   T I E N E T _ U T I L . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2007 United States Government as represented by
+ * Copyright (c) 2002-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,34 +22,51 @@
  *  Comments -
  *      TIE Networking Utilities Header
  *
- *  Author -
- *      Justin L. Shumaker
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- * $Id$
  */
 
 #ifndef _TIENET_UTIL_H
 #define _TIENET_UTIL_H
 
+#include "common.h"
 
 #include <pthread.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#ifdef HAVE_STDINT_H
+#  include <stdint.h>
+#endif
+
+#include "bu.h"
+
+#define TIENET_BUFFER_INIT(_b) { \
+	_b.data = NULL; \
+	_b.size = 0; \
+	_b.ind = 0; }
+
+#define TIENET_BUFFER_FREE(_b) bu_free(_b.data, "tienet buffer");
+
+#define TIENET_BUFFER_SIZE(_b, _s) { \
+	if (_s > _b.size) { \
+	  _b.data = bu_realloc(_b.data, _s, "tienet buffer size"); \
+	  _b.size = _s; \
+        } }
+
+typedef struct tienet_buffer_s {
+    uint8_t *data;
+    uint32_t size;
+    uint32_t ind;
+} tienet_buffer_t;
 
 
 typedef struct tienet_sem_s {
-  int val;
-  pthread_mutex_t mut;
-  pthread_cond_t cond;
+    int val;
+    pthread_mutex_t mut;
+    pthread_cond_t cond;
 } tienet_sem_t;
 
 
-extern	void	tienet_flip(void *src, void *dest, int size);
-extern	int	tienet_send(int socket, void *data, int size, int flip);
+extern	void	tienet_flip(void* src, void* dest, size_t size);
+extern	int	tienet_send(int socket, void* data, size_t size, const int flip);
 extern	int	tienet_recv(int socket, void *data, int size, int flip);
 
 extern	void	tienet_sem_init(tienet_sem_t *sem, int val);
@@ -63,8 +80,8 @@ extern	void	tienet_sem_post(tienet_sem_t *sem);
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

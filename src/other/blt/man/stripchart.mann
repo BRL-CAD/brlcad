@@ -14,7 +14,7 @@
 '\" consequential damages or any damages whatsoever resulting from loss of use,
 '\" data or profits, whether in an action of contract, negligence or other
 '\" tortuous action, arising out of or in connection with the use or performance
-'\" of this software.  
+'\" of this software.
 '\"
 '\" Stripchart widget created by Sani Nassif and George Howlett.
 '\"
@@ -35,14 +35,14 @@ hairs, etc.  They allow you to customize the look and feel of the
 strip chart.
 .PP
 The \fBstripchart\fR is essentially the same as the \fBgraph\fR
-widget.  It works almost exactly the very same way.  
+widget.  It works almost exactly the very same way.
 .PP
 The use of a strip chart differs in that the X-axis typically refers
 to time points.  Data values are added at intervals.  The strip chart
 lets you automatically maintain a view of the most recent time points.
 The axis options \fB\-shiftby\fR and \fB\-autorange\fR control this.
-You can specify different line styles for data points (see the 
-\fB\-styles\fR option).  
+You can specify different line styles for data points (see the
+\fB\-styles\fR option).
 .SH INTRODUCTION
 The \fBstripchart\fR command creates a new window for plotting
 two-dimensional data (x,y coordinates).  Data points are plotted in a
@@ -53,9 +53,9 @@ in the right margin.  The title is displayed in top margin.
 .PP
 A strip chart is composed of several components: coordinate axes, data
 elements, legend, grid, cross hairs, pens, postscript, and annotation
-markers. 
+markers.
 .TP 1i
-\f(CWaxis\fR 
+\f(CWaxis\fR
 The stripchart widget can display up to four coordinate axes (two
 X-coordinate and two Y-coordinate axes), but you can create and use
 any number of axes. Axes control what region of data is displayed and
@@ -69,33 +69,33 @@ to the coordinate axes. Two perpendicular lines are drawn across the
 plotting area, intersecting at the current location of the mouse
 pointer.
 .TP 1i
-\f(CWelement\fR 
-An element represents a set of data points. Elements can be plotted 
-with a symbol at each data point and lines connecting the points. 
-The appearance of the element, such as its symbol, line width, and 
+\f(CWelement\fR
+An element represents a set of data points. Elements can be plotted
+with a symbol at each data point and lines connecting the points.
+The appearance of the element, such as its symbol, line width, and
 color is configurable.
 .TP 1i
 \f(CWgrid\fR
-Extends the major and minor ticks of the X\-axis and/or Y\-axis across the 
-plotting area. 
+Extends the major and minor ticks of the X\-axis and/or Y\-axis across the
+plotting area.
 .TP 1i
-\f(CWlegend\fR 
-The legend displays the name and symbol of each data element. 
+\f(CWlegend\fR
+The legend displays the name and symbol of each data element.
 The legend can be drawn in any margin or in the plotting area.
 .TP 1i
 \f(CWmarker\fR
-Markers are used annotate or highlight areas of the graph. For 
-example, you could use a polygon marker to fill an area under a 
-curve, or a text marker to label a particular data point. Markers 
-come in various forms: text strings, bitmaps, connected line 
+Markers are used annotate or highlight areas of the graph. For
+example, you could use a polygon marker to fill an area under a
+curve, or a text marker to label a particular data point. Markers
+come in various forms: text strings, bitmaps, connected line
 segments, images, polygons, or embedded widgets.
 .TP 1i
-\f(CWpen\fR 
-Pens define attributes (both symbol and line style) for elements. 
-Data elements use pens to specify how they should be drawn.  A data 
-element may use many pens at once.  Here, the particular pen 
-used for a data point is determined from each element's weight 
-vector (see the element's \fB\-weight\fR and \fB\-style\fR options).  
+\f(CWpen\fR
+Pens define attributes (both symbol and line style) for elements.
+Data elements use pens to specify how they should be drawn.  A data
+element may use many pens at once.  Here, the particular pen
+used for a data point is determined from each element's weight
+vector (see the element's \fB\-weight\fR and \fB\-style\fR options).
 .TP 1i
 \f(CWpostscript\fR
 The widget can generate encapsulated PostScript output. This component
@@ -121,8 +121,8 @@ The general form is:
 \fIpathName \fIoperation\fR \fR?\fIarg\fR?...
 .DE
 Both \fIoperation\fR and its arguments determine the exact behavior of
-the command.  The operations available for the strip chart are described in 
-the 
+the command.  The operations available for the strip chart are described in
+the
 .SB "STRIPCHART OPERATIONS"
 section.
 .PP
@@ -135,7 +135,7 @@ function to be performed on that component. Each component has its own
 set of operations that manipulate that component.  They will be
 described below in their own sections.
 .SH EXAMPLE
-The \fBstripchart\fR command creates a new strip chart.  
+The \fBstripchart\fR command creates a new strip chart.
 .CS
 # Create a new strip chart.  Plotting area is black.
 stripchart .s -plotbackground black
@@ -149,13 +149,13 @@ the strip chart to "My Plot", you use the new command and the widget's
 \&.s configure \-title "My Plot"
 .CE
 A strip chart has several components. To access a particular component you
-use the component's name. For example, to add data elements, you use 
+use the component's name. For example, to add data elements, you use
 the new command and the \fBelement\fR component.
 .CS
 # Create a new element named "line1"
 \&.s element create line1 \\
 	\-xdata { 0.2 0.4 0.6 0.8 1.0 1.2 1.4 1.6 1.8 2.0 } \\
-	\-ydata { 26.18 50.46 72.85 93.31 111.86 128.47 143.14 
+	\-ydata { 26.18 50.46 72.85 93.31 111.86 128.47 143.14
 		155.85 166.60 175.38 }
 .CE
 The element's X and Y coordinates are specified using lists of
@@ -165,7 +165,7 @@ coordinates.
 # Create two vectors and add them to the strip chart.
 vector xVec yVec
 xVec set { 0.2 0.4 0.6 0.8 1.0 1.2 1.4 1.6 1.8 2.0 }
-yVec set { 26.18 50.46 72.85 93.31 111.86 128.47 143.14 155.85 
+yVec set { 26.18 50.46 72.85 93.31 111.86 128.47 143.14 155.85
 	166.60 175.38 }
 \&.s element create line1 \-xdata xVec \-ydata yVec
 .CE
@@ -220,7 +220,7 @@ To reset back to the default limits, set the \fB\-min\fR and
 \&.s axis configure y -min {} -max {}
 .CE
 It's common with strip charts to automatically maintain a view of
-the most recent time points.  You can do this my setting the 
+the most recent time points.  You can do this my setting the
 \fB\-autorange\fR option.
 .CS
 \&.s axis configure x -autorange 20.0
@@ -232,7 +232,7 @@ is added, the view will march along.
 Sometimes the rate of data is so high that changing the axis limits
 with each additional time point is prohibitive.  You can use the
 \fB\-shiftby\fR option to define an increment to shift the view
-when needed.  
+when needed.
 .CS
 \&.s axis configure x -shiftby 15.0
 .CE
@@ -256,7 +256,7 @@ option.
 The \fBstripchart\fR widget has simple drawing procedures called markers.
 They can be used to highlight or annotate data in the strip chart. The types
 of markers available are bitmaps, images, polygons, lines, or windows.
-Markers can be used, for example, to mark or brush points.  Here 
+Markers can be used, for example, to mark or brush points.  Here
 is a text marker which labels the data first point.  Markers
 are created using the \fBmarker\fR operation.
 .CS
@@ -297,13 +297,13 @@ area will be white).
 .SH "STRIPCHART OPERATIONS"
 .TP
 \fIpathName \fBaxis \fIoperation\fR ?\fIarg\fR?...
-See the 
+See the
 .SB "AXIS COMPONENTS"
 section.
 .TP
 \fIpathName \fBbar \fIelemName \fR?\fIoption value\fR?...
 Creates a new barchart element \fIelemName\fR.  It's an
-error if an element \fIelemName\fR already exists.  
+error if an element \fIelemName\fR already exists.
 See the manual for \fBbarchart\fR for details about
 what \fIoption\fR and \fIvalue\fR pairs are valid.
 .TP
@@ -351,9 +351,9 @@ The default is \f(CW1\fR.
 \fB\-buffergraph \fIboolean\fR
 Indicates whether to draw the graph into a pixmap first.
 If \fIboolean\fR is true, the entire graph is drawn into a pixmap and then
-copied onto the screen.  This reduces flashing.  If false, the graph is 
-drawn directly into the window.  Especially under Windows, turning off the 
-option can be helpful when the stripchart is updated frequently.  Turning 
+copied onto the screen.  This reduces flashing.  If false, the graph is
+drawn directly into the window.  Especially under Windows, turning off the
+option can be helpful when the stripchart is updated frequently.  Turning
 off this option also turns \fB\-bufferelements\fR off. See the
 .SB "SPEED TIPS"
 section.
@@ -363,11 +363,11 @@ The default is \f(CW1\fR.
 Specifies the widget's cursor.  The default
 cursor is \f(CWcrosshair\fR.
 .TP
-\fB\-font \fIfontName\fR 
+\fB\-font \fIfontName\fR
 Specifies the title font. The default is
 \f(CW*-Helvetica-Bold-R-Normal-*-18-180-*\fR.
 .TP
-\fB\-halo \fIpixels\fR 
+\fB\-halo \fIpixels\fR
 Specifies a maximum distance to consider when searching for the
 closest data point (see the element's \fBclosest\fR operation below).
 Data points further than \fIpixels\fR away are ignored.  The default is
@@ -389,7 +389,7 @@ the title contains more than one line of text. \fIJustify\fR must be
 \f(CWcenter\fR.
 .TP
 \fB\-leftmargin \fIpixels\fR
-Sets the size of the margin from the left edge of the window to 
+Sets the size of the margin from the left edge of the window to
 the Y\-coordinate axis.  If \fIpixels\fR is \f(CW0\fR, the size is
 calculated automatically.  The default is \f(CW0\fR.
 .TP
@@ -436,7 +436,7 @@ Sets the size of margin from the plotting area to the right edge of
 the window.  By default, the legend is displayed in this margin.  If
 \fIpixels\fR is than 1, the margin size is selected automatically.
 .TP
-\fB\-takefocus\fR \fIfocus\fR 
+\fB\-takefocus\fR \fIfocus\fR
 Provides information used when moving the focus from window to window
 via keyboard traversal (e.g., Tab and Shift-Tab).  If \fIfocus\fR is
 \f(CW0\fR, this means that this window should be skipped entirely during
@@ -445,14 +445,14 @@ receive the input focus.  An empty value means that the traversal
 scripts make the decision whether to focus on the window.
 The default is \f(CW""\fR.
 .TP
-\fB\-tile \fIimage\fR 
+\fB\-tile \fIimage\fR
 Specifies a tiled background.  If \fIimage\fR isn't
 \f(CW""\fR, the background is tiled using \fIimage\fR.
 Otherwise, the normal background color is drawn (see the
 \fB\-background\fR option).  \fIImage\fR must be an image created
 using the Tk \fBimage\fR command.  The default is \f(CW""\fR.
 .TP
-\fB\-title \fItext\fR 
+\fB\-title \fItext\fR
 Sets the title to \fItext\fR. If \fItext\fR is \f(CW""\fR,
 no title will be displayed.
 .TP
@@ -466,32 +466,32 @@ Specifies the requested width of the widget.  The default is
 .RE
 .TP
 \fIpathName \fBcrosshairs \fIoperation \fR?\fIarg\fR?
-See the 
+See the
 .SB "CROSSHAIRS COMPONENT"
 section.
 .TP
 \fIpathName \fBelement \fIoperation \fR?\fIarg\fR?...
-See the 
+See the
 .SB "ELEMENT COMPONENTS"
 section.
 .TP
-\fIpathName \fBextents \fIitem\fR 
+\fIpathName \fBextents \fIitem\fR
 Returns the size of a particular item in the strip chart.  \fIItem\fR must
 be either \f(CWleftmargin\fR, \f(CWrightmargin\fR, \f(CWtopmargin\fR,
 \f(CWbottommargin\fR, \f(CWplotwidth\fR, or \f(CWplotheight\fR.
 .TP
 \fIpathName \fBgrid \fIoperation \fR?\fIarg\fR?...
-See the 
+See the
 .SB "GRID COMPONENT"
 section.
 .TP
-\fIpathName \fBinvtransform \fIwinX winY\fR 
+\fIpathName \fBinvtransform \fIwinX winY\fR
 Performs an inverse coordinate transformation, mapping window
 coordinates back to graph coordinates, using the standard X\-axis and Y\-axis.
 Returns a list of containing the graph coordinates.
 .TP
 \fIpathName \fBlegend \fIoperation \fR?\fIarg\fR?...
-See the 
+See the
 .SB "LEGEND COMPONENT"
 section.
 .TP
@@ -499,18 +499,18 @@ section.
 The operation is the same as \fBelement\fR.
 .TP
 \fIpathName \fBmarker \fIoperation \fR?\fIarg\fR?...
-See the 
+See the
 .SB "MARKER COMPONENTS"
 section.
 .TP
 \fIpathName\fR \fBmetafile\fR ?\fIfileName\fR?
-\fIThis operation is for Window platforms only\fR.  
+\fIThis operation is for Window platforms only\fR.
 Creates a Windows enhanced metafile of the stripchart.
 If present, \fIfileName\fR is the file name of the new metafile.
 Otherwise, the metafile is automatically added to the clipboard.
 .TP
 \fIpathName \fBpostscript \fIoperation \fR?\fIarg\fR?...
-See the 
+See the
 .SB "POSTSCRIPT COMPONENT"
 section.
 .TP
@@ -519,19 +519,19 @@ Takes a snapshot of the strip chart and stores the contents in the photo
 image \fIphotoName\fR.  \fIPhotoName\fR is the name of a Tk photo
 image that must already exist.
 .TP
-\fIpathName \fBtransform \fIx y\fR 
+\fIpathName \fBtransform \fIx y\fR
 Performs a coordinate transformation, mapping graph coordinates to
 window coordinates, using the standard X\-axis and Y\-axis.
 Returns a list containing the X\-Y screen coordinates.
 .TP
 \fIpathName \fBxaxis \fIoperation\fR ?\fIarg\fR?...
 .TP
-\fIpathName \fBx2axis \fIoperation\fR ?\fIarg\fR?... 
+\fIpathName \fBx2axis \fIoperation\fR ?\fIarg\fR?...
 .TP
-\fIpathName \fByaxis \fIoperation\fR ?\fIarg\fR?... 
+\fIpathName \fByaxis \fIoperation\fR ?\fIarg\fR?...
 .TP
-\fIpathName \fBy2axis \fIoperation\fR ?\fIarg\fR?... 
-See the 
+\fIpathName \fBy2axis \fIoperation\fR ?\fIarg\fR?...
+See the
 .SB "AXIS COMPONENTS"
 section.
 .SH "STRIPCHART COMPONENTS"
@@ -540,7 +540,7 @@ elements, legend, grid, cross hairs, postscript, and annotation
 markers. Instead of one big set of configuration options and
 operations, the strip chart is partitioned, where each component has its own
 configuration options and operations that specifically control that
-aspect or part of the strip chart. 
+aspect or part of the strip chart.
 .SS "AXIS COMPONENTS"
 Four coordinate axes are automatically created: two X\-coordinate axes
 (\f(CWx\fR and \f(CWx2\fR) and two Y\-coordinate axes (\f(CWy\fR, and
@@ -551,7 +551,7 @@ margin, \f(CWy\fR in the left margin, \f(CWx2\fR in the top margin, and
 An axis consists of the axis line, title, major and minor ticks, and
 tick labels.  Major ticks are drawn at uniform intervals along the
 axis.  Each tick is labeled with its coordinate value.  Minor ticks
-are drawn at uniform intervals within major ticks.  
+are drawn at uniform intervals within major ticks.
 .PP
 The range of the axis controls what region of data is plotted.
 Data points outside the minimum and maximum limits of the axis are
@@ -582,7 +582,7 @@ different scales.
 To display a different axis, you invoke one of the following
 components: \fBxaxis\fR, \fByaxis\fR, \fBx2axis\fR, and \fBy2axis\fR.
 The \fBuse\fR operation designates the axis to be drawn in the
-corresponding margin: \fBxaxis\fR in the bottom, \fByaxis\fR in the left, 
+corresponding margin: \fBxaxis\fR in the bottom, \fByaxis\fR in the left,
 \fBx2axis\fR in the top, and \fBy2axis\fR in the right.
 .CS
 # Display the axis temperature in the left margin.
@@ -610,13 +610,13 @@ options for \fIaxisName\fR is returned.  If \fIoption\fR is specified, but
 not \fIvalue\fR, then a list describing \fIoption\fR is
 returned.  If one or more \fIoption\fR and \fIvalue\fR pairs are
 specified, then for each pair, the axis option \fIoption\fR is set to
-\fIvalue\fR.  
+\fIvalue\fR.
 The following options are valid for axes.
 .RS
 .TP
-\fB\-autorange \fIrange\fR 
+\fB\-autorange \fIrange\fR
 Sets the range of values for the axis to \fIrange\fR.  The axis limits
-are automatically reset  to display the most recent data points in this range.  
+are automatically reset  to display the most recent data points in this range.
 If \fIrange\fR is 0.0, the range is
 determined from the limits of the data.  If \fB\-min\fR or \fB-max\fR
 are specified, they override this option.  The default is \f(CW0.0\fR.
@@ -637,16 +637,16 @@ get the standard tick labels again by setting \fIprefix\fR to
 \f(CW""\fR.  The default is \f(CW""\fR.
 .sp 1
 Please note that this procedure is invoked while the strip chart is redrawn.
-You may query the configuration options.  But do not reset them, because 
+You may query the configuration options.  But do not reset them, because
 this can have unexpected results.
 .TP
-\fB\-descending \fIboolean\fR 
+\fB\-descending \fIboolean\fR
 Indicates whether the values along the axis are monotonically increasing or
 decreasing.  If \fIboolean\fR is true, the axis values will be
 decreasing.  The default is \f(CW0\fR.
 .TP
 \fB\-hide \fIboolean\fR
-Indicates whether the axis is displayed. 
+Indicates whether the axis is displayed.
 .TP
 \fB\-justify \fIjustify\fR
 Specifies how the axis title should be justified.  This matters only
@@ -661,7 +661,7 @@ left/right sides of the plotting area.  \fIFormatStr\fR is a list of
 one or two format descriptions.  If one description is supplied, both
 the minimum and maximum limits are formatted in the same way.  If two,
 the first designates the format for the minimum limit, the second for
-the maximum.  If \f(CW""\fR is given as either description, then 
+the maximum.  If \f(CW""\fR is given as either description, then
 the that limit will not be displayed.  The default is \f(CW""\fR.
 .TP
 \fB\-linewidth \fIpixels\fR
@@ -684,17 +684,17 @@ The default is \f(CW0\fR.
 Specifies where to display major axis ticks.  You can use this option
 to display ticks at non-uniform intervals.  \fIMajorList\fR is a list
 of axis coordinates designating the location of major ticks.  No
-minor ticks are drawn.  If \fImajorList\fR is \f(CW""\fR, 
+minor ticks are drawn.  If \fImajorList\fR is \f(CW""\fR,
 major ticks will be automatically computed. The default is \f(CW""\fR.
 .TP
 \fB\-max \fIvalue\fR
-Sets the maximum limit of \fIaxisName\fR.  Any data point greater 
-than \fIvalue\fR is not displayed.  If \fIvalue\fR is \f(CW""\fR, 
+Sets the maximum limit of \fIaxisName\fR.  Any data point greater
+than \fIvalue\fR is not displayed.  If \fIvalue\fR is \f(CW""\fR,
 the maximum limit is calculated using the largest data value.
 The default is \f(CW""\fR.
 .TP
 \fB\-min \fIvalue\fR
-Sets the minimum limit of \fIaxisName\fR. Any data point less than 
+Sets the minimum limit of \fIaxisName\fR. Any data point less than
 \fIvalue\fR is not displayed.  If \fIvalue\fR is \f(CW""\fR,
 the minimum limit is calculated using the smallest data value.
 The default is \f(CW""\fR.
@@ -727,16 +727,16 @@ axis line is drawn. The default is \f(CW1\fR.
 .TP
 \fB\-stepsize \fIvalue\fR
 Specifies the interval between major axis ticks.  If \fIvalue\fR isn't
-a valid interval (must be less than the axis range), 
+a valid interval (must be less than the axis range),
 the request is ignored and the step size is automatically calculated.
 .TP
-\fB\-subdivisions \fInumber\fR 
+\fB\-subdivisions \fInumber\fR
 Indicates how many minor axis ticks are
 to be drawn.  For example, if \fInumber\fR is two, only one minor
 tick is drawn.  If \fInumber\fR is one, no minor ticks are
 displayed.  The default is \f(CW2\fR.
 .TP
-\fB\-tickfont \fIfontName\fR 
+\fB\-tickfont \fIfontName\fR
 Specifies the font for axis tick labels. The default is
 \f(CW*-Courier-Bold-R-Normal-*-100-*\fR.
 .TP
@@ -747,13 +747,13 @@ will be inverted with ticks drawn pointing towards the plot.  The
 default is \f(CW0.1i\fR.
 .TP
 \fB\-title \fItext\fR
-Sets the title of the axis. If \fItext\fR is 
-\f(CW""\fR, no axis title will be displayed.  
+Sets the title of the axis. If \fItext\fR is
+\f(CW""\fR, no axis title will be displayed.
 .TP
 \fB\-titlecolor \fIcolor\fR
 Sets the color of the axis title. The default is \f(CWblack\fR.
 .TP
-\fB\-titlefont \fIfontName\fR 
+\fB\-titlefont \fIfontName\fR
 Specifies the font for axis title. The default is
 \f(CW*-Helvetica-Bold-R-Normal-*-14-140-*\fR.
 .PP
@@ -769,7 +769,7 @@ option add *Stripchart.x2.LogScale false
 .TP
 \fIpathName \fBaxis \fBcreate \fIaxisName \fR?\fIoption value\fR?...
 Creates a new axis by the name \fIaxisName\fR.  No axis by the same
-name can already exist. \fIOption\fR and \fIvalue\fR are described 
+name can already exist. \fIOption\fR and \fIvalue\fR are described
 in above in the axis \fBconfigure\fR operation.
 .TP
 \fIpathName \fBaxis \fBdelete \fR?\fIaxisName\fR?...
@@ -835,9 +835,9 @@ must be \fBxaxis\fR, \fBx2axis\fR, \fByaxis\fR, or \fBy2axis\fR.
 .TP
 \fIpathName \fIaxis\fB transform \fIvalue\fR
 .TP
-\fIpathName \fIaxis\fB use \fR?\fIaxisName\fR?  
+\fIpathName \fIaxis\fB use \fR?\fIaxisName\fR?
 Designates the axis \fIaxisName\fR is to be displayed at this
-location.  \fIAxisName\fR can not be already in use at another location.  
+location.  \fIAxisName\fR can not be already in use at another location.
 This command returns the name of the axis currently using this location.
 .SS "CROSSHAIRS COMPONENT"
 Cross hairs consist of two intersecting lines (one vertical and one horizontal)
@@ -854,7 +854,7 @@ Returns the current value of the cross hairs configuration option
 given by \fIoption\fR.  \fIOption\fR may be any option
 described below for the cross hairs \fBconfigure\fR operation.
 .TP
-\fIpathName \fBcrosshairs configure \fR?\fIoption value\fR?...  
+\fIpathName \fBcrosshairs configure \fR?\fIoption value\fR?...
 Queries or modifies the configuration options of the cross hairs.  If
 \fIoption\fR isn't specified, a list describing all the current
 options for the cross hairs is returned.  If \fIoption\fR is specified,
@@ -865,7 +865,7 @@ for each pair, the cross hairs option \fIoption\fR is set to
 The following options are available for cross hairs.
 .RS
 .TP
-\fB\-color \fIcolor\fR 
+\fB\-color \fIcolor\fR
 Sets the color of the cross hairs.  The default is \f(CWblack\fR.
 .TP
 \fB\-dashes \fIdashList\fR
@@ -882,7 +882,7 @@ cross hairs are not drawn.  The default is \f(CWyes\fR.
 \fB\-linewidth \fIpixels\fR
 Set the width of the cross hair lines.  The default is \f(CW1\fR.
 .TP
-\fB\-position \fIpos\fR 
+\fB\-position \fIpos\fR
 Specifies the screen position where the cross hairs intersect.
 \fIPos\fR must be in the form "\fI@x,y\fR", where \fIx\fR and \fIy\fR
 are the window coordinates of the intersection.
@@ -897,12 +897,12 @@ option add *Stripchart.Crosshairs.Color     red
 .RE
 .TP
 \fIpathName \fBcrosshairs off\fR
-Turns of the cross hairs. 
+Turns of the cross hairs.
 .TP
 \fIpathName \fBcrosshairs on\fR
 Turns on the display of the cross hairs.
 .TP
-\fIpathName \fBcrosshairs toggle\fR 
+\fIpathName \fBcrosshairs toggle\fR
 Toggles the current state of the cross hairs, alternately mapping and
 unmapping the cross hairs.
 .SS "ELEMENT COMPONENTS"
@@ -914,7 +914,7 @@ symbol type, line width, color etc.
 .PP
 When new data elements are created, they are automatically added to a
 list of displayed elements.   The display list controls what elements
-are drawn and in what order.  
+are drawn and in what order.
 .PP
 The following operations are available for elements.
 .TP
@@ -926,7 +926,7 @@ of the data point. If no indices are present then all data points
 become active.
 .TP
 \fIpathName \fBelement cget \fIelemName \fIoption\fR
-Returns the current value of the element configuration option given by 
+Returns the current value of the element configuration option given by
 \fIoption\fR.  \fIOption\fR may be any option described below
 for the element \fBconfigure\fR operation.
 .TP
@@ -950,9 +950,9 @@ stripchart's \fB\-halo\fR option.
 .TP
 \fB\-interpolate \fIboolean\fR
 Indicates that both the data points and interpolated points along
-the line segment formed should be considered.  If \fIboolean\fR 
+the line segment formed should be considered.  If \fIboolean\fR
 is true, the closest line segment will be selected instead of the
-closest point. If this option isn't specified, \fIboolean\fR defaults 
+closest point. If this option isn't specified, \fIboolean\fR defaults
 to \f(CW0\fR.
 .RE
 .TP
@@ -968,11 +968,11 @@ to \fIvalue\fR.  The following options are valid for elements.
 .TP
 \fB\-activepen \fIpenName\fR
 Specifies pen to use to draw active element.  If \fIpenName\fR is
-\f(CW""\fR, no active elements will be drawn.  The default is 
+\f(CW""\fR, no active elements will be drawn.  The default is
 \f(CWactiveLine\fR.
 .TP
-\fB\-color \fIcolor\fR 
-Sets the color of the traces connecting the data points.  
+\fB\-color \fIcolor\fR
+Sets the color of the traces connecting the data points.
 .TP
 \fB\-dashes \fIdashList\fR
 Sets the dash style of element line. \fIDashList\fR is a list of up to
@@ -985,7 +985,7 @@ Specifies the X\-Y coordinates of the data.  \fICoordList\fR is a
 list of numeric expressions representing the X\-Y coordinate pairs
 of each data point.
 .TP
-\fB\-fill \fIcolor\fR 
+\fB\-fill \fIcolor\fR
 Sets the interior color of symbols.  If \fIcolor\fR is \f(CW""\fR, then
 the interior of the symbol is transparent.  If \fIcolor\fR is
 \f(CWdefcolor\fR, then the color will be the same as the \fB\-color\fR
@@ -999,7 +999,7 @@ Sets the element's label in the legend.  If \fItext\fR
 is \f(CW""\fR, the element will have no entry in the legend.
 The default label is the element's name.
 .TP
-\fB\-linewidth \fIpixels\fR 
+\fB\-linewidth \fIpixels\fR
 Sets the width of the connecting lines between data points.  If
 \fIpixels\fR is \f(CW0\fR, no connecting lines will be drawn between
 symbols.  The default is \f(CW0\fR.
@@ -1019,13 +1019,13 @@ pixels will represent gaps instead of stripes.  If \fIcolor\fR is
 \f(CWdefcolor\fR, then the color will be the same as the \fB\-color\fR
 option.  The default is \f(CWdefcolor\fR.
 .TP
-\fB\-outline \fIcolor\fR 
+\fB\-outline \fIcolor\fR
 Sets the color or the outline around each symbol.  If \fIcolor\fR is
 \f(CW""\fR, then no outline is drawn. If \fIcolor\fR is \f(CWdefcolor\fR,
 then the color will be the same as the \fB\-color\fR option.  The
 default is \f(CWdefcolor\fR.
 .TP
-\fB\-outlinewidth \fIpixels\fR 
+\fB\-outlinewidth \fIpixels\fR
 Sets the width of the outline bordering each symbol.  If \fIpixels\fR
 is \f(CW0\fR, no outline will be drawn. The default is \f(CW1\fR.
 .TP
@@ -1033,7 +1033,7 @@ is \f(CW0\fR, no outline will be drawn. The default is \f(CW1\fR.
 Sets the size of symbols.  If \fIpixels\fR is \f(CW0\fR, no symbols will
 be drawn.  The default is \f(CW0.125i\fR.
 .TP
-\fB\-scalesymbols \fIboolean\fR 
+\fB\-scalesymbols \fIboolean\fR
 If \fIboolean\fR is true, the size of the symbols
 drawn for \fIelemName\fR will change with scale of the X\-axis and Y\-axis.
 At the time this option is set, the current ranges of the axes are
@@ -1044,7 +1044,7 @@ according to the smaller of the X\-axis and Y\-axis scales.  If \fIboolean\fR
 is false, the element's symbols are drawn at the designated size,
 regardless of axis scales.  The default is \f(CW0\fR.
 .TP
-\fB\-smooth \fIsmooth\fR 
+\fB\-smooth \fIsmooth\fR
 Specifies how connecting line segments are drawn between data points.
 \fISmooth\fR can be either \f(CWlinear\fR, \f(CWstep\fR, \f(CWnatural\fR, or
 \f(CWquadratic\fR.  If \fIsmooth\fR is \f(CWlinear\fR, a single line
@@ -1057,16 +1057,16 @@ vertical line, moving to the next y-coordinate.  Both \fInatural\fR and
 \fIquadratic\fR, a quadratic spline is used.  The default is
 \fIlinear\fR.
 .TP
-\fB\-styles \fIstyleList\fR 
+\fB\-styles \fIstyleList\fR
 Specifies what pen to use based upon the range of weights given.
 \fIStyleList\fR is a list of style specifications. Each style
 specification, in turn, is a list consisting of a pen name, and
 optionally a minimum and maximum range.  Data points whose weight (see
 the \fB\-weight\fR option) falls in this range, are drawn with this
 pen.  If no range is specified it defaults to the number of the pen in
-the list. 
+the list.
 .TP
-\fB\-symbol \fIsymbol\fR 
+\fB\-symbol \fIsymbol\fR
 Specifies the symbol for data points.  \fISymbol\fR can be either
 \f(CWsquare\fR, \f(CWcircle\fR, \f(CWdiamond\fR, \f(CWplus\fR, \f(CWcross\fR,
 \f(CWsplus\fR, \f(CWscross\fR, \f(CWtriangle\fR, \f(CW""\fR (where no symbol
@@ -1075,18 +1075,18 @@ is drawn), or a bitmap.  Bitmaps are specified as "\fIsource\fR
 \fImask\fR is the bitmap's optional mask.  The default is
 \f(CWcircle\fR.
 .TP
-\fB\-weights \fIwVec\fR 
+\fB\-weights \fIwVec\fR
 Specifies the weights of the individual data points.  This, in
 conjunction with the list pen styles (see the \fB\-styles\fR option)
 controls how data points are drawn.  \fIWVec\fR is the name of a BLT
 vector or a list of numeric expressions representing the weights for
 each data point.
 .TP
-\fB\-xdata \fIxVec\fR 
+\fB\-xdata \fIxVec\fR
 Specifies the x-coordinates of the data.  \fIXVec\fR is the name of
 a BLT vector or a list of numeric expressions.
 .TP
-\fB\-ydata \fIyVec\fR 
+\fB\-ydata \fIyVec\fR
 Specifies the y-coordinates of the data.  \fIYVec\fR is the name of
 a BLT vector or a list of numeric expressions.
 .PP
@@ -1102,7 +1102,7 @@ option add *Stripchart.e1.symbol line
 \fIpathName \fBelement create \fIelemName\fR ?\fIoption value\fR?...
 Creates a new element \fIelemName\fR.  It's an error is
 an element \fIelemName\fR already exists.  If
-additional arguments are present, they specify options valid for 
+additional arguments are present, they specify options valid for
 element \fBconfigure\fR operation.
 .TP
 \fIpathName \fBelement deactivate \fIelemName\fR ?\fIelemName\fR?...
@@ -1116,11 +1116,11 @@ Deletes all the named elements.  The graph is automatically redrawn.
 \fIpathName \fBelement exists \fIelemName\fR
 Returns \f(CW1\fR if an element \fIelemName\fR currently exists and \f(CW0\fR otherwise.
 .TP
-\fIpathName \fBelement names \fR?\fIpattern\fR?...  
+\fIpathName \fBelement names \fR?\fIpattern\fR?...
 Returns the elements matching one or more pattern.  If no
 \fIpattern\fR is given, the names of all elements is returned.
 .TP
-\fIpathName \fBelement show\fR ?\fInameList\fR?  
+\fIpathName \fBelement show\fR ?\fInameList\fR?
 Queries or modifies the element display list.  The element display
 list designates the elements drawn and in what
 order. \fINameList\fR is a list of elements to be displayed in the
@@ -1128,7 +1128,7 @@ order they are named.  If there is no \fInameList\fR argument,
 the current display list is returned.
 .TP
 \fIpathName \fBelement type\fR \fIelemName\fR
-Returns the type of \fIelemName\fR. 
+Returns the type of \fIelemName\fR.
 If the element is a bar element, the commands returns the string
 \f(CW"bar"\fR, otherwise it returns \f(CW"line"\fR.
 .CE
@@ -1138,7 +1138,7 @@ horizontally or vertically across the plotting area.  The following
 operations are available for grid lines.
 .TP
 \fIpathName \fBgrid cget \fIoption\fR
-Returns the current value of the grid line configuration option given by 
+Returns the current value of the grid line configuration option given by
 \fIoption\fR.  \fIOption\fR may be any option described below
 for the grid \fBconfigure\fR operation.
 .TP
@@ -1152,7 +1152,7 @@ specified, then for each pair, the grid line option \fIoption\fR is set to
 \fIvalue\fR.  The following options are valid for grid lines.
 .RS
 .TP
-\fB\-color \fIcolor\fR 
+\fB\-color \fIcolor\fR
 Sets the color of the grid lines.  The default is \f(CWblack\fR.
 .TP
 \fB\-dashes \fIdashList\fR
@@ -1177,13 +1177,13 @@ Specifies the Y\-axis to display grid lines.  \fIYAxis\fR
 must be the name of an axis. The default is \f(CWy\fR.
 .TP
 \fB\-minor \fIboolean\fR
-Indicates whether the grid lines should be drawn for minor ticks. 
+Indicates whether the grid lines should be drawn for minor ticks.
 If \fIboolean\fR is true, the lines will appear at
 minor tick intervals.  The default is \f(CW1\fR.
 .PP
-Grid configuration options may also be set by the 
-\fBoption\fR command.  The resource name and class are \f(CWgrid\fR and 
-\f(CWGrid\fR respectively. 
+Grid configuration options may also be set by the
+\fBoption\fR command.  The resource name and class are \f(CWgrid\fR and
+\f(CWGrid\fR respectively.
 .CS
 option add *Stripchart.grid.LineWidth 2
 option add *Stripchart.Grid.Color     black
@@ -1197,7 +1197,7 @@ Turns off the display the grid lines.
 Turns on the display the grid lines.
 .TP
 \fIpathName \fBgrid toggle\fR
-Toggles the display of the grid.  
+Toggles the display of the grid.
 .SS "LEGEND COMPONENT"
 The legend displays a list of the data elements.  Each entry consists
 of the element's symbol and label.  The legend can appear in any
@@ -1209,7 +1209,7 @@ The following operations are valid for the legend.
 \fIpathName \fBlegend activate \fIpattern\fR...
 Selects legend entries to be drawn using the active legend colors and relief.
 All entries whose element names match \fIpattern\fR  are selected.  To
-be selected, the element name must match only one \fIpattern\fR. 
+be selected, the element name must match only one \fIpattern\fR.
 .TP
 \fIpathName \fBlegend cget \fIoption\fR
 Returns the current value of a legend configuration option.
@@ -1240,7 +1240,7 @@ Sets the foreground color for active legend entries.  All legend
 entries marked as active (see the legend \fBactivate\fR operation) are
 drawn using this foreground color.
 .TP
-\fB\-activerelief \fIrelief\fR 
+\fB\-activerelief \fIrelief\fR
 Specifies the 3-D effect desired for active legend entries.
 \fIRelief\fR denotes how the interior of the entry should appear
 relative to the legend; for example, \f(CWraised\fR means the entry
@@ -1254,10 +1254,10 @@ option.  The default is \f(CWcenter\fR.
 .RS
 .TP 1.25i
 \f(CWleft\fR or \f(CWright\fR
-The anchor describes how to position the legend vertically.  
+The anchor describes how to position the legend vertically.
 .TP
 \f(CWtop\fR or \f(CWbottom\fR
-The anchor describes how to position the legend horizontally.  
+The anchor describes how to position the legend horizontally.
 .TP
 \f(CW@x,y\fR
 The anchor specifies how to position the legend relative to the
@@ -1284,12 +1284,12 @@ Sets the width of the 3-D border around the outside edge of the legend (if
 such border is being drawn; the \fBrelief\fR option determines this).
 The default is \f(CW2\fR pixels.
 .TP
-\fB\-font \fIfontName\fR 
+\fB\-font \fIfontName\fR
 \fIFontName\fR specifies a font to use when drawing the labels of each
 element into the legend.  The default is
 \f(CW*-Helvetica-Bold-R-Normal-*-12-120-*\fR.
 .TP
-\fB\-foreground \fIcolor\fR 
+\fB\-foreground \fIcolor\fR
 Sets the foreground color of the text drawn for the element's label.
 The default is \f(CWblack\fR.
 .TP
@@ -1297,7 +1297,7 @@ The default is \f(CWblack\fR.
 Indicates whether the legend should be displayed. If \fIboolean\fR is
 true, the legend will not be draw.  The default is \f(CWno\fR.
 .TP
-\fB\-ipadx \fIpad\fR 
+\fB\-ipadx \fIpad\fR
 Sets the amount of internal padding to be added to the width of each
 legend entry.  \fIPad\fR can be a list of one or two screen distances.  If
 \fIpad\fR has two elements, the left side of the legend entry is
@@ -1393,7 +1393,7 @@ the pen component and its create operation.
 .CS
 \&.s pen create myPen
 .CE
-You map pens to a data element using either the element's 
+You map pens to a data element using either the element's
 \fB\-pen\fR or \fB\-activepen\fR options.
 .CS
 \&.s element create "line1" -xdata $x -ydata $tempData \\
@@ -1424,12 +1424,12 @@ options for \fIpenName\fR is returned.  If \fIoption\fR is specified, but
 not \fIvalue\fR, then a list describing \fIoption\fR is
 returned.  If one or more \fIoption\fR and \fIvalue\fR pairs are
 specified, then for each pair, the pen option \fIoption\fR is set to
-\fIvalue\fR.  
+\fIvalue\fR.
 The following options are valid for pens.
 .RS
 .TP
-\fB\-color \fIcolor\fR 
-Sets the color of the traces connecting the data points.  
+\fB\-color \fIcolor\fR
+Sets the color of the traces connecting the data points.
 .TP
 \fB\-dashes \fIdashList\fR
 Sets the dash style of element line. \fIDashList\fR is a list of up to
@@ -1437,13 +1437,13 @@ Sets the dash style of element line. \fIDashList\fR is a list of up to
 gaps on the element line.  Each number must be between 1 and 255.  If
 \fIdashList\fR is \f(CW""\fR, the lines will be solid.
 .TP
-\fB\-fill \fIcolor\fR 
+\fB\-fill \fIcolor\fR
 Sets the interior color of symbols.  If \fIcolor\fR is \f(CW""\fR, then
 the interior of the symbol is transparent.  If \fIcolor\fR is
 \f(CWdefcolor\fR, then the color will be the same as the \fB\-color\fR
 option.  The default is \f(CWdefcolor\fR.
 .TP
-\fB\-linewidth \fIpixels\fR 
+\fB\-linewidth \fIpixels\fR
 Sets the width of the connecting lines between data points.  If
 \fIpixels\fR is \f(CW0\fR, no connecting lines will be drawn between
 symbols.  The default is \f(CW0\fR.
@@ -1455,13 +1455,13 @@ pixels will represent gaps instead of stripes.  If \fIcolor\fR is
 \f(CWdefcolor\fR, then the color will be the same as the \fB\-color\fR
 option.  The default is \f(CWdefcolor\fR.
 .TP
-\fB\-outline \fIcolor\fR 
+\fB\-outline \fIcolor\fR
 Sets the color or the outline around each symbol.  If \fIcolor\fR is
 \f(CW""\fR, then no outline is drawn. If \fIcolor\fR is \f(CWdefcolor\fR,
 then the color will be the same as the \fB\-color\fR option.  The
 default is \f(CWdefcolor\fR.
 .TP
-\fB\-outlinewidth \fIpixels\fR 
+\fB\-outlinewidth \fIpixels\fR
 Sets the width of the outline bordering each symbol.  If \fIpixels\fR
 is \f(CW0\fR, no outline will be drawn. The default is \f(CW1\fR.
 .TP
@@ -1469,7 +1469,7 @@ is \f(CW0\fR, no outline will be drawn. The default is \f(CW1\fR.
 Sets the size of symbols.  If \fIpixels\fR is \f(CW0\fR, no symbols will
 be drawn.  The default is \f(CW0.125i\fR.
 .TP
-\fB\-symbol \fIsymbol\fR 
+\fB\-symbol \fIsymbol\fR
 Specifies the symbol for data points.  \fISymbol\fR can be either
 \f(CWsquare\fR, \f(CWcircle\fR, \f(CWdiamond\fR, \f(CWplus\fR, \f(CWcross\fR,
 \f(CWsplus\fR, \f(CWscross\fR, \f(CWtriangle\fR, \f(CW""\fR (where no symbol
@@ -1478,7 +1478,7 @@ is drawn), or a bitmap.  Bitmaps are specified as "\fIsource\fR
 \fImask\fR is the bitmap's optional mask.  The default is
 \f(CWcircle\fR.
 .TP
-\fB\-type \fIelemType\fR 
+\fB\-type \fIelemType\fR
 Specifies the type of element the pen is to be used with.
 This option should only be employed when creating the pen.  This
 is for those that wish to mix different types of elements (bars and
@@ -1495,7 +1495,7 @@ option add *Stripchart.activeLine.color  green
 .TP
 \fIpathName \fBpen \fBcreate \fIpenName \fR?\fIoption value\fR?...
 Creates a new pen by the name \fIpenName\fR.  No pen by the same
-name can already exist. \fIOption\fR and \fIvalue\fR are described 
+name can already exist. \fIOption\fR and \fIvalue\fR are described
 in above in the pen \fBconfigure\fR operation.
 .TP
 \fIpathName \fBpen \fBdelete \fR?\fIpenName\fR?...
@@ -1516,14 +1516,14 @@ returned through the interpreter.
 .PP
 The following postscript operations are available.
 .TP
-\fIpathName \fBpostscript cget \fIoption\fR 
+\fIpathName \fBpostscript cget \fIoption\fR
 Returns the current value of the postscript option given by
 \fIoption\fR.  \fIOption\fR may be any option described
 below for the postscript \fBconfigure\fR operation.
 .TP
 \fIpathName \fBpostscript configure \fR?\fIoption value\fR?...
 Queries or modifies the configuration options for PostScript
-generation.  If \fIoption\fR isn't specified, a list describing 
+generation.  If \fIoption\fR isn't specified, a list describing
 the current postscript options for \fIpathName\fR is returned.  If
 \fIoption\fR is specified, but not \fIvalue\fR, then a list describing
 \fIoption\fR is returned.  If one or more \fIoption\fR and \fIvalue\fR
@@ -1542,8 +1542,8 @@ corner of the page.  The default is \f(CW1\fR.
 specifies a color mapping from the X color name to PostScript.  Each
 element of \fIvarName\fR must consist of PostScript code to set a
 particular color value (e.g. ``\f(CW1.0 1.0 0.0 setrgbcolor\fR'').  When
-outputting color information in PostScript, the array variable \fIvarName\fR 
-is checked to see if an element of the name of the color exists. If so, 
+outputting color information in PostScript, the array variable \fIvarName\fR
+is checked to see if an element of the name of the color exists. If so,
 it uses the value of the element as the PostScript
 command to set the color.  If this option hasn't been specified, or if
 there isn't an entry in \fIvarName\fR for a given color, then it uses
@@ -1554,15 +1554,15 @@ Specifies how to output color information.  \fIMode\fR must be either
 \f(CWcolor\fR (for full color output), \f(CWgray\fR (convert all colors to
 their gray-scale equivalents) or \f(CWmono\fR (convert foreground colors
 to black and background colors to white).  The default mode is
-\f(CWcolor\fR. 
+\f(CWcolor\fR.
 .TP
 \fB\-fontmap \fIvarName\fR
 \fIVarName\fR must be the name of a global array variable that
 specifies a font mapping from the X font name to PostScript.  Each
 element of \fIvarName\fR must consist of a Tcl list with one or two
 elements, which are the name and point size of a PostScript font.
-When outputting PostScript commands for a particular font, the 
-array variable \fIvarName\fR is checked to see an element of the specified 
+When outputting PostScript commands for a particular font, the
+array variable \fIvarName\fR is checked to see an element of the specified
 font exists.  If there is such an element, then the font
 information contained in that element is used in the PostScript
 output.  (If the point size is omitted from the list, the point size
@@ -1574,7 +1574,7 @@ Courier, etc.).  If all of this fails then the font defaults to
 .TP
 \fB\-decorations \fIboolean\fR
 Indicates if PostScript commands to generate color backgrounds and 3-D
-borders should be output.  If \fIboolean\fR is false, the background will 
+borders should be output.  If \fIboolean\fR is false, the background will
 be white and no 3-D borders will be generated. The
 default is \f(CW1\fR.
 .TP
@@ -1605,7 +1605,7 @@ by the first distance and the right border by the second.  If
 \fIpad\fR has just one distance, both the left and right borders are
 padded evenly.  The default is \f(CW1i\fR.
 .TP
-\fB\-pady \fIpad\fR 
+\fB\-pady \fIpad\fR
 Sets the vertical padding for the top and bottom page borders. The
 borders are exterior to the plot.  \fIPad\fR can be a list of one or
 two screen distances.  If \fIpad\fR has two elements, the top border is padded
@@ -1692,12 +1692,12 @@ If one or more \fIoption\fR and \fIvalue\fR pairs are specified, then
 for each pair, the marker option \fIoption\fR is set to \fIvalue\fR.
 .sp
 The following options are valid for all markers.
-Each type of marker also has its own type-specific options.  
+Each type of marker also has its own type-specific options.
 They are described in the sections below.
 .RS
 .TP
 \fB\-coords \fIcoordList\fR
-Specifies the coordinates of the marker.  \fICoordList\fR is 
+Specifies the coordinates of the marker.  \fICoordList\fR is
 a list of graph coordinates.  The number of coordinates required
 is dependent on the type of marker.  Text, image, and window markers
 need only two coordinates (an X\-Y coordinate).   Bitmap markers
@@ -1713,11 +1713,11 @@ drawn only if the element is also currently displayed (see the
 element's \fBshow\fR operation).  If \fIelemName\fR is \f(CW""\fR, the
 marker is always drawn.  The default is \f(CW""\fR.
 .TP
-\fB\-hide \fIboolean\fR 
+\fB\-hide \fIboolean\fR
 Indicates whether the marker is drawn. If \fIboolean\fR is true,
 the marker is not drawn.  The default is \f(CWno\fR.
 .TP
-\fB\-mapx \fIxAxis\fR 
+\fB\-mapx \fIxAxis\fR
 Specifies the X\-axis to map the marker's X\-coordinates onto.
 \fIXAxis\fR must the name of an axis.  The default is \f(CWx\fR.
 .TP
@@ -1726,7 +1726,7 @@ Specifies the Y\-axis to map the marker's Y\-coordinates onto.
 \fIYAxis\fR must the name of an axis.  The default is \f(CWy\fR.
 .TP
 \fB\-name \fImarkerId\fR
-Changes the identifier for the marker.  The identifier \fImarkerId\fR 
+Changes the identifier for the marker.  The identifier \fImarkerId\fR
 can not already be used by another marker.  If this option
 isn't specified, the marker's name is uniquely generated.
 .TP
@@ -1737,7 +1737,7 @@ underneath the data element symbols and lines.  Otherwise, the marker is
 drawn on top of the element.  The default is \f(CW0\fR.
 .TP
 \fB\-xoffset \fIpixels\fR
-Specifies a screen distance to offset the marker horizontally. 
+Specifies a screen distance to offset the marker horizontally.
 \fIPixels\fR is a valid screen distance, such as \f(CW2\fR or \f(CW1.2i\fR.
 The default is \f(CW0\fR.
 .TP
@@ -1747,7 +1747,7 @@ Specifies a screen distance to offset the markers vertically.
 The default is \f(CW0\fR.
 .PP
 Marker configuration options may also be set by the \fBoption\fR command.
-The resource class is either \f(CWBitmapMarker\fR,  \f(CWImageMarker\fR, 
+The resource class is either \f(CWBitmapMarker\fR,  \f(CWImageMarker\fR,
 \f(CWLineMarker\fR, \f(CWPolygonMarker\fR, \f(CWTextMarker\fR, or \f(CWWindowMarker\fR,
 depending on the type of marker.  The resource name is the name of the
 marker.
@@ -1761,7 +1761,7 @@ option add *Stripchart.m1.Background     blue
 \fIpathName \fBmarker create \fItype\fR ?\fIoption value\fR?...
 Creates a marker of the selected type. \fIType\fR may be either
 \f(CWtext\fR, \f(CWline\fR, \f(CWbitmap\fR, \f(CWimage\fR, \f(CWpolygon\fR, or
-\f(CWwindow\fR.  This command returns the marker identifier, 
+\f(CWwindow\fR.  This command returns the marker identifier,
 used as the \fImarkerId\fR argument in the other marker-related
 commands.  If the \fB\-name\fR option is used, this overrides the
 normal marker identifier.  If the name provided is already used for
@@ -1769,18 +1769,18 @@ another marker, the new marker will replace the old.
 .TP
 \fIpathName \fBmarker delete\fR ?\fIname\fR?...
 Removes one of more markers.  The graph will automatically be redrawn
-without the marker.\fR.  
+without the marker.\fR.
 .TP
-\fIpathName \fBmarker exists \fImarkerId\fR 
+\fIpathName \fBmarker exists \fImarkerId\fR
 Returns \f(CW1\fR if the marker \fImarkerId\fR exists and \f(CW0\fR
 otherwise.
 .TP
-\fIpathName \fBmarker names\fR ?\fIpattern\fR?  
+\fIpathName \fBmarker names\fR ?\fIpattern\fR?
 Returns the names of all the markers that currently exist.  If
 \fIpattern\fR is supplied, only those markers whose names match it
 will be returned.
 .TP
-\fIpathName \fBmarker type \fImarkerId\fR 
+\fIpathName \fBmarker type \fImarkerId\fR
 Returns the type of the marker given by \fImarkerId\fR, such as
 \f(CWline\fR or \f(CWtext\fR.  If \fImarkerId\fR is not a valid a marker
 identifier, \f(CW""\fR is returned.
@@ -1798,7 +1798,7 @@ the form:
 .DS
 \fIpathName \fBmarker create bitmap \fR?\fIoption value\fR?...
 .DE
-There may be many \fIoption\fR-\fIvalue\fR pairs, each 
+There may be many \fIoption\fR-\fIvalue\fR pairs, each
 sets a configuration options for the marker.  These
 same \fIoption\fR\-\fIvalue\fR pairs may be used with the marker's
 \fBconfigure\fR operation.
@@ -1814,7 +1814,7 @@ color is \f(CWwhite\fR.
 Specifies the bitmap to be displayed.  If \fIbitmap\fR is \f(CW""\fR,
 the marker will not be displayed.  The default is \f(CW""\fR.
 .TP
-\fB\-foreground \fIcolor\fR 
+\fB\-foreground \fIcolor\fR
 Sets the foreground color of the bitmap.  The default foreground color
 is \f(CWblack\fR.
 .TP
@@ -1870,8 +1870,8 @@ The following options are specific to line markers:
 .TP
 \fB\-background \fIcolor\fR
 Sets the background color of the line.
-The option is affects the line color only when the \fB\-stipple\fR option 
-is set.  
+The option is affects the line color only when the \fB\-stipple\fR option
+is set.
 If this option isn't specified then it defaults to \f(CWwhite\fR.
 .TP
 \fB\-dashes \fIdashList\fR
@@ -1920,7 +1920,7 @@ the interior of the polygon is transparent.
 The default is \f(CWwhite\fR.
 .TP
 \fB\-linewidth \fIpixels\fR
-Sets the width of the outline of the polygon. If \fIpixels\fR is zero, 
+Sets the width of the outline of the polygon. If \fIpixels\fR is zero,
 no outline is drawn. The default is \f(CW0\fR.
 .TP
 \fB\-outline \fIcolor\fR
@@ -1942,10 +1942,10 @@ annotate regions of the strip chart.  Text markers are created with the
 .DS
 \fIpathName \fBmarker create text \fR?\fIoption value\fR?...
 .DE
-There may be many \fIoption\fR-\fIvalue\fR pairs, 
-each sets a configuration option for the text marker.  
-These same \fIoption\fR\-\fIvalue\fR pairs may be used with the 
-marker's \fBconfigure\fR operation.  
+There may be many \fIoption\fR-\fIvalue\fR pairs,
+each sets a configuration option for the text marker.
+These same \fIoption\fR\-\fIvalue\fR pairs may be used with the
+marker's \fBconfigure\fR operation.
 .PP
 The following options are specific to text markers:
 .TP
@@ -2045,20 +2045,20 @@ related to the mouse and keyboard (such as \fBEnter\fR, \fBLeave\fR,
 .sp
 Only one element or marker can be picked during an event.  This means,
 that if the mouse is directly over both an element and a marker, only
-the uppermost component is selected.  This isn't true for legend entries.  
-Both a legend entry and an element (or marker) binding commands 
+the uppermost component is selected.  This isn't true for legend entries.
+Both a legend entry and an element (or marker) binding commands
 will be invoked if both items are picked.
 .sp
 It is possible for multiple bindings to match a particular event.
 This could occur, for example, if one binding is associated with the
 element name and another is associated with one of the element's tags
-(see the \fB\-bindtags\fR option).  When this occurs, all of the 
+(see the \fB\-bindtags\fR option).  When this occurs, all of the
 matching bindings are invoked.  A binding associated with the element
-name is invoked first, followed by one binding for each of the element's 
-bindtags.  If there are multiple matching bindings for a single tag, 
-then only the most specific binding is invoked.  A continue command 
-in a binding script terminates that script, and a break command 
-terminates that script and skips any remaining scripts for the event, 
+name is invoked first, followed by one binding for each of the element's
+bindtags.  If there are multiple matching bindings for a single tag,
+then only the most specific binding is invoked.  A continue command
+in a binding script terminates that script, and a break command
+terminates that script and skips any remaining scripts for the event,
 just as for the bind command.
 .sp
 The \fB\-bindtags\R option for these components controls addition
@@ -2102,7 +2102,7 @@ if ((Blt_GetVector(interp, "X", 50, &xVec) != TCL_OK) ||
 for (i = 0; i < 50; i++) {
     x[i] = i * 0.02;
     y[i] = sin(x[i]);
-}	
+}
 
 /* Put the data into BLT vectors */
 if ((Blt_ResetVector(xVec, x, 50, 50, TCL_VOLATILE) != TCL_OK) ||
@@ -2116,11 +2116,11 @@ There may be cases where the strip chart needs to be drawn and updated as
 quickly as possible.  If drawing speed becomes a big
 problem, here are a few tips to speed up displays.
 .TP 2
-\(bu 
+\(bu
 Try to minimize the number of data points.  The more data points
 the looked at, the more work the strip chart must do.
 .TP 2
-\(bu 
+\(bu
 If your data is generated as floating point values, the time required
 to convert the data values to and from ASCII strings can be
 significant, especially when there any many data points.  You can
@@ -2136,7 +2136,7 @@ draw symbols, try using the simple symbols such as \f(CWsplus\fR and
 \(bu
 Don't stipple or dash the element.  Solid lines are much faster.
 .TP 2
-\(bu 
+\(bu
 If you update data elements frequently, try turning off the
 widget's \fB\-bufferelements\fR option.  When the strip chart is first
 displayed, it draws data elements into an internal pixmap.  The pixmap
@@ -2162,7 +2162,7 @@ achieve the same results using the \fB\-hide\fR option instead.
 \&.s legend configure -mapped no
 
 # Instead use this.
-\&.s legend configure -hide yes    
-.CE 
+\&.s legend configure -hide yes
+.CE
 .SH KEYWORDS
 stripchart, graph, widget

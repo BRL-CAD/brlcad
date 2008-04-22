@@ -44,7 +44,7 @@
 #include <fcntl.h>
 #include <ctype.h>
 
-#if defined(_MSC_VER) || defined(__BORLANDC__) 
+#if defined(_MSC_VER) || defined(__BORLANDC__)
 #include <io.h>
 #define open _open
 #define close _close
@@ -54,7 +54,7 @@
 #define fdopen _fdopen
 #define fcntl _fcntl
 #ifdef _MSC_VER
-#define O_RDWR	_O_RDWR 
+#define O_RDWR	_O_RDWR
 #define O_CREAT	_O_CREAT
 #define O_TRUNC	_O_TRUNC
 #define O_EXCL	_O_EXCL
@@ -187,7 +187,7 @@ typedef struct {
 				 * image.  This is kept around for
 				 * resampling or resizing the image. */
 
-    int firstLine, lastLine; 
+    int firstLine, lastLine;
 				/* First and last line numbers of the
 				 * PostScript preview.  They are used
 				 * to skip over the preview when
@@ -348,7 +348,7 @@ static int ReadPostScript _ANSI_ARGS_((Tcl_Interp *interp, EpsItem *epsPtr));
 
 
 static char *
-SkipBlanks(piPtr) 
+SkipBlanks(piPtr)
      ParseInfo *piPtr;
 {
     char *s;
@@ -494,7 +494,7 @@ ReadEPSI(epsPtr, piPtr)
     char *dscBeginPreview;
 
     dscBeginPreview = piPtr->line + 16;
-    if (sscanf(dscBeginPreview, "%d %d %d %d", &width, &height, &bitsPerPixel, 
+    if (sscanf(dscBeginPreview, "%d %d %d %d", &width, &height, &bitsPerPixel,
 	&nLines) != 4) {
 #if DEBUG_READER
 	PurifyPrintf("bad %%BeginPreview (%s) format\n", dscBeginPreview);
@@ -621,8 +621,8 @@ ReadPostScript(interp, epsPtr)
     }
     if (epsPtr->psStart > 0) {
 	if (fseek(epsPtr->psFile, epsPtr->psStart, 0) != 0) {
-	    Tcl_AppendResult(interp, 
-			     "can't seek to start of PostScript code in \"", 
+	    Tcl_AppendResult(interp,
+			     "can't seek to start of PostScript code in \"",
 			     epsPtr->fileName, "\"", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -641,7 +641,7 @@ ReadPostScript(interp, epsPtr)
     /*
      * Initialize field flags to NULL. We want to look only at the
      * first appearance of these comment fields.  The file itself may
-     * have another EPS file embedded into it.  
+     * have another EPS file embedded into it.
      */
     dscBoundingBox = dscTitle = dscEndComments = NULL;
     pi.lineNumber = 1;
@@ -659,7 +659,7 @@ ReadPostScript(interp, epsPtr)
 		if ((strncmp(field, "BoundingBox:", 12) == 0) &&
 		    (dscBoundingBox == NULL)) {
 		    int nFields;
-		    
+
 		    dscBoundingBox = field + 12;
 		    nFields = sscanf(dscBoundingBox, "%d %d %d %d",
 				     &(epsPtr->llx), &(epsPtr->lly),
@@ -738,7 +738,7 @@ OpenEpsFile(interp, epsPtr)
     epsPtr->psStart = epsPtr->psLength = 0L;
     epsPtr->wmfStart = epsPtr->wmfLength = 0L;
     epsPtr->tiffStart = epsPtr->tiffLength = 0L;
-    
+
 #ifdef WIN32
     nBytes = fread(&dosHeader, sizeof(DOSEPSHEADER), 1, f);
     if ((nBytes == sizeof(DOSEPSHEADER)) &&
@@ -755,7 +755,7 @@ OpenEpsFile(interp, epsPtr)
 #ifdef HAVE_TIFF_H
 	if (epsPtr->tiffLength > 0) {
 	    epsPtr->previewFormat = PS_PREVIEW_TIFF;
-	}	    
+	}
 #endif /* HAVE_TIFF_H */
 	if (epsPtr->wmfLength > 0) {
 	    epsPtr->previewFormat = PS_PREVIEW_WMF;
@@ -809,13 +809,13 @@ ReadWMF(f, epsPtr, headerPtr)
     Tk_Window tkwin;
 
     if (fseek(f, headerPtr->wmfStart, 0) != 0) {
-	Tcl_AppendResult(interp, "can't seek in \"", epsPtr->fileName, 
+	Tcl_AppendResult(interp, "can't seek in \"", epsPtr->fileName,
 			 "\"", (char *)NULL);
 	return TCL_ERROR;
     }
     hMem = GlobalAlloc(GHND, size);
     if (hMem == NULL) {
-	Tcl_AppendResult(graphPtr->interp, "can't allocate global memory:", 
+	Tcl_AppendResult(graphPtr->interp, "can't allocate global memory:",
 			 Blt_LastError(), (char *)NULL);
 	return TCL_ERROR;
     }
@@ -831,7 +831,7 @@ ReadWMF(f, epsPtr, headerPtr)
     hDC = CreateEnhMetaFile(hRefDC, NULL, NULL, NULL);
     mfp.hMF = CloseEnhMetaFile(hDC);
     hMetaFile = SetWinMetaFileBits(size, buffer, MM_ANISOTROPIC, &pict);
-	Tcl_AppendResult(graphPtr->interp, "can't get metafile data:", 
+	Tcl_AppendResult(graphPtr->interp, "can't get metafile data:",
 		Blt_LastError(), (char *)NULL);
 	goto error;
 }
@@ -1084,7 +1084,7 @@ ConfigureEps(interp, canvas, itemPtr, argc, argv, flags)
 		    (char *)NULL);
 		return TCL_ERROR;
 	    }
-	    epsPtr->preview = Tk_GetImage(interp, tkwin, epsPtr->previewName, 
+	    epsPtr->preview = Tk_GetImage(interp, tkwin, epsPtr->previewName,
 			ImageChangedProc, epsPtr);
 	    if (epsPtr->preview == NULL) {
 		Tcl_AppendResult(interp, "can't find an image \"",
@@ -1335,7 +1335,7 @@ DisplayEps(canvas, itemPtr, display, drawable, x, y, width, height)
 	     * Resize the Tk photo image used to represent the EPS item.
 	     * We will over-write the temporary image with a resampled one.
 	     */
-	    photo = Blt_FindPhoto(epsPtr->interp, 
+	    photo = Blt_FindPhoto(epsPtr->interp,
 				  Blt_NameOfImage(epsPtr->tmpImage));
 	    Blt_ColorImageToPhoto(image, photo);
 	} else {
@@ -1383,7 +1383,7 @@ DisplayEps(canvas, itemPtr, display, drawable, x, y, width, height)
 	    XCopyArea(Tk_Display(tkwin), epsPtr->pixmap, drawable,
 		epsPtr->fillGC, 0, 0, width, height, x, y);
 	} else {
-	    Tk_RedrawImage(epsPtr->tmpImage, 0, 0, width, height, drawable, 
+	    Tk_RedrawImage(epsPtr->tmpImage, 0, 0, width, height, drawable,
 			   x, y);
 	}
     }
@@ -1395,7 +1395,7 @@ DisplayEps(canvas, itemPtr, display, drawable, x, y, width, height)
 
 	/* Translate the title to an anchor position within the EPS item */
 	textPtr = Blt_GetTextLayout(title, &(epsPtr->titleStyle));
-	Blt_GetBoundingBox(textPtr->width, textPtr->height, 
+	Blt_GetBoundingBox(textPtr->width, textPtr->height,
 	     epsPtr->titleStyle.theta, &rotWidth, &rotHeight, (Point2D *)NULL);
 	destWidth = (int)ceil(rotWidth);
 	destHeight = (int)ceil(rotHeight);
@@ -1632,12 +1632,12 @@ EpsToPostScript(interp, canvas, itemPtr, prepass)
 		x, y + epsPtr->height);
 	    Blt_FormatToPostScript(psToken, "  1 -1 scale\n");
 
-	    photo = Blt_FindPhoto(epsPtr->interp, 
+	    photo = Blt_FindPhoto(epsPtr->interp,
 			Blt_NameOfImage(epsPtr->tmpImage));
 	    Blt_PhotoToPostScript(psToken, photo, 0.0, 0.0);
 	    Blt_FormatToPostScript(psToken, "grestore\n");
 
-	    Tcl_AppendResult(interp, Blt_PostScriptFromToken(psToken), 
+	    Tcl_AppendResult(interp, Blt_PostScriptFromToken(psToken),
 		     (char *)NULL);
 	    Blt_ReleasePsToken(psToken);
 	}
@@ -1662,9 +1662,9 @@ EpsToPostScript(interp, canvas, itemPtr, prepass)
     Blt_FormatToPostScript(psToken, "%g %g scale\n", xScale, yScale);
     Blt_FormatToPostScript(psToken, "%d %d translate\n", -(epsPtr->llx),
 	-(epsPtr->lly));
-    Blt_FormatToPostScript(psToken, "%d %d %d %d SetClipRegion\n", 
+    Blt_FormatToPostScript(psToken, "%d %d %d %d SetClipRegion\n",
 	epsPtr->llx, epsPtr->lly, epsPtr->urx, epsPtr->ury);
-    Blt_AppendToPostScript(psToken, "%% including \"", epsPtr->fileName, 
+    Blt_AppendToPostScript(psToken, "%% including \"", epsPtr->fileName,
 			   "\"\n\n", (char *)NULL);
 
     Blt_AppendToPostScript(psToken, Tcl_DStringValue(&epsPtr->dString),

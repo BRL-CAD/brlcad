@@ -36549,6 +36549,45 @@ test clock-59.1 {military time zones} {
     join $trouble \n
 } {}
 
+# case-insensitive matching of weekday and month names [Bug 1781282]
+
+test clock-60.1 {case insensitive weekday names} {
+    clock scan "2000-W01 monday" -gmt true -format "%G-W%V %a"
+} [clock scan "2000-W01-1" -gmt true -format "%G-W%V-%u"] 
+test clock-60.2 {case insensitive weekday names} {
+    clock scan "2000-W01 Monday" -gmt true -format "%G-W%V %a"
+} [clock scan "2000-W01-1" -gmt true -format "%G-W%V-%u"] 
+test clock-60.3 {case insensitive weekday names} {
+    clock scan "2000-W01 MONDAY" -gmt true -format "%G-W%V %a"
+} [clock scan "2000-W01-1" -gmt true -format "%G-W%V-%u"] 
+test clock-60.4 {case insensitive weekday names} {
+    clock scan "2000-W01 friday" -gmt true -format "%G-W%V %a"
+} [clock scan "2000-W01-5" -gmt true -format "%G-W%V-%u"] 
+test clock-60.5 {case insensitive weekday names} {
+    clock scan "2000-W01 Friday" -gmt true -format "%G-W%V %a"
+} [clock scan "2000-W01-5" -gmt true -format "%G-W%V-%u"] 
+test clock-60.6 {case insensitive weekday names} {
+    clock scan "2000-W01 FRIDAY" -gmt true -format "%G-W%V %a"
+} [clock scan "2000-W01-5" -gmt true -format "%G-W%V-%u"] 
+test clock-60.7 {case insensitive month names} {
+    clock scan "1 january 2000" -gmt true -format "%d %b %Y"
+} [clock scan "2000-01-01" -gmt true -format "%Y-%m-%d"] 
+test clock-60.8 {case insensitive month names} {
+    clock scan "1 January 2000" -gmt true -format "%d %b %Y"
+} [clock scan "2000-01-01" -gmt true -format "%Y-%m-%d"] 
+test clock-60.9 {case insensitive month names} {
+    clock scan "1 JANUARY 2000" -gmt true -format "%d %b %Y"
+} [clock scan "2000-01-01" -gmt true -format "%Y-%m-%d"] 
+test clock-60.10 {case insensitive month names} {
+    clock scan "1 december 2000" -gmt true -format "%d %b %Y"
+} [clock scan "2000-12-01" -gmt true -format "%Y-%m-%d"] 
+test clock-60.11 {case insensitive month names} {
+    clock scan "1 December 2000" -gmt true -format "%d %b %Y"
+} [clock scan "2000-12-01" -gmt true -format "%Y-%m-%d"] 
+test clock-60.12 {case insensitive month names} {
+    clock scan "1 DECEMBER 2000" -gmt true -format "%d %b %Y"
+} [clock scan "2000-12-01" -gmt true -format "%Y-%m-%d"] 
+
 # cleanup
 
 namespace delete ::testClock

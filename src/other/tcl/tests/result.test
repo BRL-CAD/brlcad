@@ -114,7 +114,25 @@ test result-6.1 {Bug 1209759} -constraints testreturn -body {
     # Might panic if bug is not fixed.
     proc foo {} {catch {return -level 2}; testreturn}
     foo
+} -cleanup {
+    rename foo {}
 } -returnCodes ok -result {}
+test result-6.2 {Bug 1649062} -setup {
+    proc foo {} {
+        if {[catch {
+            return -code error -errorinfo custom -errorcode CUSTOM foo
+        } err]} {
+            return [list $err $::errorCode $::errorInfo]
+        }
+    }
+    set ::errorInfo {}
+    set ::errorCode {}
+} -body {
+    foo
+} -cleanup {
+    rename foo {}
+} -result {foo {} {}}
+
 
 # cleanup
 cleanupTests

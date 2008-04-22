@@ -41,7 +41,7 @@ namespace eval blt::Hiertable {
     set y 0
 }
 
-# 
+#
 # ButtonPress assignments
 #
 #	B1-Enter	start auto-scrolling
@@ -67,7 +67,7 @@ bind Hiertable <ButtonRelease-2> {
 
 bind Hiertable <B1-Leave> {
     if { $blt::Hiertable::scroll } {
-	blt::Hiertable::AutoScroll %W 
+	blt::Hiertable::AutoScroll %W
     }
 }
 
@@ -75,10 +75,10 @@ bind Hiertable <B1-Enter> {
     after cancel $blt::Hiertable::afterId
 }
 
-# 
+#
 # KeyPress assignments
 #
-#	Up			
+#	Up
 #	Down
 #	Shift-Up
 #	Shift-Down
@@ -152,7 +152,7 @@ bind Hiertable <KeyPress-space> {
     set blt::Hiertable::space on
 }
 
-bind Hiertable <KeyRelease-space> { 
+bind Hiertable <KeyRelease-space> {
     set blt::Hiertable::space off
 }
 
@@ -161,7 +161,7 @@ bind Hiertable <KeyPress-Return> {
     set blt::Hiertable::space on
 }
 
-bind Hiertable <KeyRelease-Return> { 
+bind Hiertable <KeyRelease-Return> {
     set blt::Hiertable::space off
 }
 
@@ -182,7 +182,7 @@ bind Hiertable <KeyPress-F1> {
 }
 
 bind Hiertable <KeyPress-F2> {
-    eval %W close -r [%W entry children root] 
+    eval %W close -r [%W entry children root]
 }
 
 #
@@ -195,14 +195,14 @@ bind Hiertable <KeyPress-F2> {
 #	o current is "" if
 #	   1) the pointer isn't over an entry.
 #	   2) the pointer is over a open/close button.
-#	   3) 
+#	   3)
 #
 #
 # ----------------------------------------------------------------------
 #
-# USAGE: blt::Hiertable::Init <hiertable> 
+# USAGE: blt::Hiertable::Init <hiertable>
 #
-# Invoked by internally by Hiertable_Init routine.  Initializes the 
+# Invoked by internally by Hiertable_Init routine.  Initializes the
 # default bindings for the hiertable widget entries.  These are local
 # to the widget, so they can't be set through the widget's class
 # bind tags.
@@ -214,11 +214,11 @@ proc blt::Hiertable::Init { widget } {
     #
     # Active entry bindings
     #
-    $widget bind Entry <Enter> { 
-	%W entry highlight current 
+    $widget bind Entry <Enter> {
+	%W entry highlight current
     }
-    $widget bind Entry <Leave> { 
-	%W entry highlight "" 
+    $widget bind Entry <Leave> {
+	%W entry highlight ""
     }
 
     #
@@ -247,8 +247,8 @@ proc blt::Hiertable::Init { widget } {
     #	5. Sets the selection anchor to this entry, just in case
     #	   this is "multiple" mode.
     #
-    
-    $widget bind Entry <ButtonPress-1> { 	
+
+    $widget bind Entry <ButtonPress-1> {
 	blt::Hiertable::SetSelectionAnchor %W current
 	set blt::Hiertable::scroll 1
     }
@@ -261,9 +261,9 @@ proc blt::Hiertable::Init { widget } {
     # B1-Motion
     #
     #	For "multiple" mode only.  Saves the current location of the
-    #	pointer for auto-scrolling.  Resets the selection mark.  
+    #	pointer for auto-scrolling.  Resets the selection mark.
     #
-    $widget bind Entry <B1-Motion> { 
+    $widget bind Entry <B1-Motion> {
 	set blt::Hiertable::x %x
 	set blt::Hiertable::y %y
 	set index [%W nearest %x %y]
@@ -277,9 +277,9 @@ proc blt::Hiertable::Init { widget } {
     #
     # ButtonRelease-1
     #
-    #	For "multiple" mode only.  
+    #	For "multiple" mode only.
     #
-    $widget bind Entry <ButtonRelease-1> { 
+    $widget bind Entry <ButtonRelease-1> {
 	if { [%W cget -selectmode] == "multiple" } {
 	    %W selection anchor current
 	}
@@ -293,7 +293,7 @@ proc blt::Hiertable::Init { widget } {
     #	For "multiple" mode only.
     #
 
-    $widget bind Entry <Shift-ButtonPress-1> { 
+    $widget bind Entry <Shift-ButtonPress-1> {
 	if { [%W cget -selectmode] == "multiple" && [%W selection present] } {
 	    if { [%W index anchor] == "" } {
 		%W selection anchor current
@@ -306,13 +306,13 @@ proc blt::Hiertable::Init { widget } {
 	}
     }
     $widget bind Entry <Shift-Double-ButtonPress-1> {
-	puts <Shift-Double-ButtonPress-1> 
+	puts <Shift-Double-ButtonPress-1>
 	# do nothing
     }
-    $widget bind Entry <Shift-B1-Motion> { 
+    $widget bind Entry <Shift-B1-Motion> {
 	# do nothing
     }
-    $widget bind Entry <Shift-ButtonRelease-1> { 
+    $widget bind Entry <Shift-ButtonRelease-1> {
 	after cancel $blt::Hiertable::afterId
 	set blt::Hiertable::scroll 0
     }
@@ -320,9 +320,9 @@ proc blt::Hiertable::Init { widget } {
     #
     # Control-ButtonPress-1
     #
-    #	For "multiple" mode only.  
+    #	For "multiple" mode only.
     #
-    $widget bind Entry <Control-ButtonPress-1> { 
+    $widget bind Entry <Control-ButtonPress-1> {
 	if { [%W cget -selectmode] == "multiple" } {
 	    set index [%W index current]
 	    %W selection toggle $index
@@ -332,18 +332,18 @@ proc blt::Hiertable::Init { widget } {
 	}
     }
     $widget bind Entry <Control-Double-ButtonPress-1> {
-	puts <Control-Double-ButtonPress-1> 
+	puts <Control-Double-ButtonPress-1>
 	# do nothing
     }
-    $widget bind Entry <Control-B1-Motion> { 
+    $widget bind Entry <Control-B1-Motion> {
 	# do nothing
     }
-    $widget bind Entry <Control-ButtonRelease-1> { 
+    $widget bind Entry <Control-ButtonRelease-1> {
 	after cancel $blt::Hiertable::afterId
 	set blt::Hiertable::scroll 0
     }
 
-    $widget bind Entry <Control-Shift-ButtonPress-1> { 
+    $widget bind Entry <Control-Shift-ButtonPress-1> {
 	if { [%W cget -selectmode] == "multiple" && [%W selection present] } {
 	    if { [%W index anchor] == "" } {
 		%W selection anchor current
@@ -359,10 +359,10 @@ proc blt::Hiertable::Init { widget } {
 	}
     }
     $widget bind Entry <Control-Shift-Double-ButtonPress-1> {
-	puts <Control-Shift-Double-ButtonPress-1> 
+	puts <Control-Shift-Double-ButtonPress-1>
 	# do nothing
     }
-    $widget bind Entry <Control-Shift-B1-Motion> { 
+    $widget bind Entry <Control-Shift-B1-Motion> {
 	# do nothing
     }
     $widget column bind all <Enter> {
@@ -526,7 +526,7 @@ proc blt::Hiertable::NextMatchingEntry { widget key } {
 #
 #  Edit mode assignments
 #
-#	ButtonPress-3   Enables/disables edit mode on entry.  Sets focus to 
+#	ButtonPress-3   Enables/disables edit mode on entry.  Sets focus to
 #			entry.
 #
 #  KeyPress
@@ -545,7 +545,7 @@ proc blt::Hiertable::NextMatchingEntry { widget key } {
 #	Ctrl-X		Cut
 #	Ctrl-V		Copy
 #	Ctrl-P		Paste
-#	
+#
 #  KeyRelease
 #
 #  ButtonPress-1	Start selection if in entry, otherwise clear selection.
@@ -556,7 +556,7 @@ proc blt::Hiertable::NextMatchingEntry { widget key } {
 #  ButtonPress-2	Same as above.
 #  B2-Motion		Same as above.
 #  ButtonRelease-2	Same as above.
-#	
+#
 # All bindings in editting mode will "break" to override other bindings.
 #
 #
@@ -725,13 +725,13 @@ bind HiertableEditor <Control-KeyPress> {
     # nothing
 }
 
-bind HiertableEditor <Escape> { 
-    %W text cancel 
+bind HiertableEditor <Escape> {
+    %W text cancel
     grab release %W
 }
 
-bind HiertableEditor <Return> { 
-    %W text apply 
+bind HiertableEditor <Return> {
+    %W text apply
     grab release %W
 }
 
@@ -766,7 +766,7 @@ bind HiertableEditor <ButtonPress-3> {
     if { [winfo viewable %W] } {
 	grab release %W
 	%W text cancel
-    } 
+    }
 }
 
 bind HiertableEditor <Control-a> {
@@ -902,7 +902,7 @@ if 0 {
     # Arguments:
     # w -		The entry window in which the cursor is to move.
     # start -	Position at which to start search.
-    
+
     if {![string compare $tcl_platform(platform) "windows"]}  {
 	proc blt::Hiertable::NextWord {w start} {
 	    set pos [tcl_endOfWord [$w get] [$w index $start]]
@@ -923,7 +923,7 @@ if 0 {
 	    return $pos
 	}
     }
-    
+
     # blt::Hiertable::PreviousWord --
     #
     # Returns the index of the previous word position before a given
@@ -932,7 +932,7 @@ if 0 {
     # Arguments:
     # w -		The entry window in which the cursor is to move.
     # start -	Position at which to start search.
-    
+
     proc blt::Hiertable::PreviousWord {w start} {
 	set pos [tcl_startOfPreviousWord [$w get] [$w index $start]]
 	if {$pos < 0} {

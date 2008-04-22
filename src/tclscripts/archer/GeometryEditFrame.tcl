@@ -1,7 +1,7 @@
 #           G E O M E T R Y E D I T F R A M E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2007 United States Government as represented by
+# Copyright (c) 2002-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -34,9 +34,9 @@
     itk_option define -geometryObject geometryObject GeometryObject ""
     itk_option define -geometryChangedCallback geometryChangedCallback GeometryChangedCallback ""
 
-    itk_option define -labelFont labelFont Font [list $::Archer::SystemWindowFont 12]
-    itk_option define -boldLabelFont boldLabelFont Font [list $::Archer::SystemWindowFont 12 bold]
-    itk_option define -entryFont entryFont Font [list $::Archer::SystemWindowFont 12]
+    itk_option define -labelFont labelFont Font [list $::ArcherCore::SystemWindowFont 12]
+    itk_option define -boldLabelFont boldLabelFont Font [list $::ArcherCore::SystemWindowFont 12 bold]
+    itk_option define -entryFont entryFont Font [list $::ArcherCore::SystemWindowFont 12]
     itk_option define -units units Units ""
     itk_option define -valueUnits valueUnits ValueUnits ""
 
@@ -405,13 +405,13 @@
 	    -editable false \
 	    -textvariable $var \
 	    -listheight $listHeight \
-	    -background $::Archer::SystemWindow \
-	    -textbackground $::Archer::SystemWindow \
+	    -background $::ArcherCore::SystemWindow \
+	    -textbackground $::ArcherCore::SystemWindow \
 	    -relief flat
     } {}
     $itk_component($name1\CB) component entry configure \
-	-disabledbackground $::Archer::SystemWindow \
-	-disabledforeground $::Archer::SystemWindowText
+	-disabledbackground $::ArcherCore::SystemWindow \
+	-disabledforeground $::ArcherCore::SystemWindowText
     eval $itk_component($name1\CB) insert list end $listOfChoices
 
     $itk_component($name1\CB) component arrowBtn configure \
@@ -429,11 +429,11 @@
     itk_component add $prefix\Arrow {
 	::swidgets::togglearrow $itk_component($prefix).arrow
     } {
-#	usual
+	#	usual
     }
     itk_component add $prefix\Label {
 	label $itk_component($prefix).label -text $text \
-		-anchor w
+	    -anchor w
     } {
 	usual
     }
@@ -447,8 +447,8 @@
     grid $itk_component($prefix\Label) -row 0 -column 1 -sticky w
     grid columnconfigure $itk_component($prefix) 1 -weight 1
     $itk_component($prefix\Arrow) configure -command [itcl::code $this toggleArrow \
-	    $itk_component($prefix\Arrow) $itk_component($prefix\View) -row 1 \
-	    -column 1 -sticky nsew]
+							  $itk_component($prefix\Arrow) $itk_component($prefix\View) -row 1 \
+							  -column 1 -sticky nsew]
 }
 
 itcl::body GeometryEditFrame::toggleArrow {arrow view args} {

@@ -21,11 +21,13 @@ EXTRA_DIST =
 	g-xxx.c \
 	g-xxx_facets.c \
 	g4-g5.c \
-	g5-g4.c
+	g5-g4.c \
+	walk_example.c
 
 else !ONLY_BENCHMARK
 
 SUBDIRS = \
+        3dm \
 	comgeom \
 	iges \
 	jack \
@@ -79,7 +81,8 @@ noinst_PROGRAMS = \
 	g4-g5 \
 	g5-g4 \
 	g-xxx \
-	g-xxx_facets
+	g-xxx_facets \
+	walk_example
 
 EXTRA_DIST = \
 	$(COMMON_EXTRA)
@@ -227,6 +230,10 @@ tankill_g_LDADD = ${WDB}
 viewpoint_g_SOURCES = viewpoint-g.c
 viewpoint_g_LDADD = ${WDB}
 
+walk_example_SOURCES = walk_example.c
+walk_example_LDADD = ${RT}
+
+dist_bin_SCRIPTS = intaval-g.py
 
 dist_man_MANS = \
 	asc-nmg.1 \
@@ -268,8 +275,6 @@ sample_applicationsdir = $(SAMPLE_APPLICATIONS_DIR)
 sample_applications_DATA = \
 	g-xxx.c \
 	g-xxx_facets.c
-
-MAINTAINERCLEANFILES = Makefile.in
 
 DEPS=src/libwdb src/librt
 

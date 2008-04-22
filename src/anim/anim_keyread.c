@@ -1,7 +1,7 @@
 /*                  A N I M _ K E Y R E A D . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2007 United States Government as represented by
+ * Copyright (c) 1993-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,22 +34,16 @@
  *
  *  This is more or less a special case of anim_orient.c
  *
- *  Author -
- *	Carl J. Nuzman
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"
 
-
 #include <stdio.h>
 #include <math.h>
-#include "machine.h"
+
 #include "vmath.h"
 #include "bu.h"
+
 
 #ifndef M_PI
 #define M_PI	3.14159265358979323846
@@ -87,10 +81,11 @@ main(int argc, char **argv)
     fastf_t eyept[3], viewrot[16], angle[3], quat[4];
     int anim_mat2ypr(fastf_t *, fastf_t *), anim_mat2zyx(const fastf_t *, fastf_t *), anim_mat2quat(fastf_t *, const fastf_t *);
 
-    if (!get_args(argc,argv))
-	fprintf(stderr,"anim_keyread: get_args error");
+    if (!get_args(argc, argv))
+	fprintf(stderr, "anim_keyread: get_args error");
 
-    while (!feof(stdin)){  /* read one keyframe */
+    while (!feof(stdin)) {
+	/* read one keyframe */
 	scanf("%lf", &time);
 	scanf("%lf", &viewsize);
 	scanf("%lf %lf %lf", eyept, eyept+1, eyept+2);
@@ -108,28 +103,28 @@ main(int argc, char **argv)
 
 	if (mode==YPR) {
 	    anim_v_unpermute(viewrot);
-	    c = anim_mat2ypr(angle,viewrot);
+	    c = anim_mat2ypr(angle, viewrot);
 	    if (c==ERROR1)
-		fprintf(stderr,"Warning: yaw and roll arbitrarily defined at time = %f.\n",time);
+		fprintf(stderr, "Warning: yaw and roll arbitrarily defined at time = %f.\n", time);
 	    else if (c==ERROR2)
-		fprintf(stderr,"Keyread: can't interpret matrix at time = %f.\n",time);
+		fprintf(stderr, "Keyread: can't interpret matrix at time = %f.\n", time);
 	    if (units == DEGREES)
-		VSCALE(angle,angle,RTOD);
-	    printf("%.10g\t%.10g\t%.10g\n",angle[0],angle[1],angle[2]);
+		VSCALE(angle, angle, RTOD);
+	    printf("%.10g\t%.10g\t%.10g\n", angle[0], angle[1], angle[2]);
 	}
 	else if (mode==XYZ) {
-	    c = anim_mat2zyx(angle,viewrot);
+	    c = anim_mat2zyx(angle, viewrot);
 	    if (c==ERROR1)
-		fprintf(stderr,"Warning: x and z rotations arbitrarily defined at time = %f.\n",time);
+		fprintf(stderr, "Warning: x and z rotations arbitrarily defined at time = %f.\n", time);
 	    else if (c==ERROR2)
-		fprintf(stderr,"Keyread: can't interpret matrix at time = %f\n.",time);
+		fprintf(stderr, "Keyread: can't interpret matrix at time = %f\n.", time);
 	    if (units == DEGREES)
-		VSCALE(angle,angle,RTOD);
-	    printf("%.10g\t%.10g\t%.10g\n",angle[X],angle[Y],angle[Z]);
+		VSCALE(angle, angle, RTOD);
+	    printf("%.10g\t%.10g\t%.10g\n", angle[X], angle[Y], angle[Z]);
 	}
-	else if (mode==QUATERNION){
-	    anim_mat2quat(quat,viewrot);
-	    printf("%.10g\t%.10g\t%.10g\t%.10g\n",quat[X],quat[Y],quat[Z],quat[W]);
+	else if (mode==QUATERNION) {
+	    anim_mat2quat(quat, viewrot);
+	    printf("%.10g\t%.10g\t%.10g\t%.10g\n", quat[X], quat[Y], quat[Z], quat[W]);
 	}
     }
     return( 0 );
@@ -146,23 +141,23 @@ int get_args(int argc, char **argv)
     mode = QUATERNION; /* default */
     units = DEGREES;
 
-    while ( (c=bu_getopt(argc,argv,OPT_STR)) != EOF) {
-	switch(c){
-	case 'y':
-	    mode = YPR;
-	    break;
-	case 'z':
-	    mode = XYZ;
-	    break;
-	case 'q':
-	    mode = QUATERNION;
-	    break;
-	case 'r':
-	    units = RADIANS;
-	    break;
-	default:
-	    fprintf(stderr,"Unknown option: -%c\n",c);
-	    return(0);
+    while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
+	switch (c) {
+	    case 'y':
+		mode = YPR;
+		break;
+	    case 'z':
+		mode = XYZ;
+		break;
+	    case 'q':
+		mode = QUATERNION;
+		break;
+	    case 'r':
+		units = RADIANS;
+		break;
+	    default:
+		fprintf(stderr, "Unknown option: -%c\n", c);
+		return(0);
 	}
     }
     return(1);
@@ -173,8 +168,8 @@ int get_args(int argc, char **argv)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -53,7 +53,7 @@ for { set i 1 } { $i <= 5 } { incr i } {
 #	<B?-Motion>	 Updates the drag.
 #	<ButtonRelease-?> Drop the data on the target.
 #
-# Arguments:	
+# Arguments:
 #	widget		source widget
 #	button		Mouse button used to activate drag.
 #	cmd		"dragdrop" or "blt::dragdrop"

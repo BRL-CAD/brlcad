@@ -259,7 +259,7 @@ proc ::tk::FDGetFileTypes {string} {
 	if {[llength $t] < 2 || [llength $t] > 3} {
 	    error "bad file type \"$t\", should be \"typeName {extension ?extensions ...?} ?{macType ?macTypes ...?}?\""
 	}
-	lappend fileTypes([lindex $t 0]) {expand}[lindex $t 1]
+	lappend fileTypes([lindex $t 0]) {*}[lindex $t 1]
     }
 
     set types {}

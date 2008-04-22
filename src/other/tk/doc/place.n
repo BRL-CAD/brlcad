@@ -104,7 +104,7 @@ In addition, \fImaster\fR and \fIwindow\fR must both be descendants
 of the same top-level window.
 These restrictions are necessary to guarantee
 that \fIwindow\fR is visible whenever \fImaster\fR is visible.
-If this option isn't specified then the master defaults to
+If this option is not specified then the master defaults to
 \fIwindow\fR's parent.
 .TP
 \fB\-relheight \fIsize\fR
@@ -182,7 +182,7 @@ the most recent option is used and the older one is ignored.
 \fBplace forget \fIwindow\fR
 Causes the placer to stop managing the geometry of \fIwindow\fR.  As a
 side effect of this command \fIwindow\fR will be unmapped so that it
-doesn't appear on the screen.  If \fIwindow\fR isn't currently managed
+does not appear on the screen.  If \fIwindow\fR is not currently managed
 by the placer then the command has no effect.  This command returns an
 empty string.
 .TP
@@ -209,12 +209,15 @@ This feature is useful in at least two situations.
 First, for complex window layouts it means you can create a
 hierarchy of subwindows whose only purpose
 is to assist in the layout of the parent.
-The ``real children'' of the parent (i.e. the windows that
+The
+.QW "real children"
+of the parent (i.e. the windows that
 are significant for the application's user interface) can be
 children of the parent yet be placed inside the windows
 of the geometry-management hierarchy.
-This means that the path names of the ``real children''
-don't reflect the geometry-management hierarchy and users
+This means that the path names of the
+.QW "real children"
+do not reflect the geometry-management hierarchy and users
 can specify options for the real children
 without being aware of the structure of the geometry-management
 hierarchy.
@@ -232,7 +235,7 @@ will be repositioned as well.
 .PP
 Unlike many other geometry managers (such as the packer)
 the placer does not make any attempt to manipulate the geometry of
-the master windows or the parents of slave windows (i.e. it doesn't
+the master windows or the parents of slave windows (i.e. it does not
 set their requested sizes).
 To control the sizes of these windows, make them windows like
 frames and canvases that provide configuration options for this purpose.
@@ -240,7 +243,7 @@ frames and canvases that provide configuration options for this purpose.
 Make the label occupy the middle bit of the toplevel, no matter how it
 is resized:
 .CS
-label .l \-text "In the\\nMiddle!" \-bg black \-fg white
+label .l \-text "In the\enMiddle!" \-bg black \-fg white
 \fBplace\fR .l \-relwidth .3 \-relx .35 \-relheight .3 \-rely .35
 .CE
 

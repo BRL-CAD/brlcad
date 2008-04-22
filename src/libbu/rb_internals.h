@@ -1,7 +1,7 @@
 /*                  R B _ I N T E R N A L S . H
  * BRL-CAD
  *
- * Copyright (c) 1998-2007 United States Government as represented by
+ * Copyright (c) 1998-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,21 +24,11 @@
  *	The constants, macro functions, etc. need within LIBBU(3)
  *	to handle the red-black tree utilities.
  *
- *  @author
- *	Paul J. Tanenbaum
- *
- *  @par Source -
- *	The U. S. Army Research Laboratory
- *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- *  $Header$
  */
 
 #include "common.h"
 
-#ifndef SEEN_BU_H
-#  include "bu.h"
-#endif
+#include "bu.h"
 
 #ifndef BU_RB_INTERNALS_H
 #define BU_RB_INTERNALS_H seen
@@ -63,10 +53,9 @@
 #define BU_RB_CKORDER(t, o)					\
     if (((o) < 0) || ((o) >= (t) -> rbt_nm_orders))		\
     {								\
-	bu_log(							\
+	bu_exit(0,						\
 	    "Error: Order %d outside 0..%d (nm_orders-1), file %s, line %d\n", \
 	    (o), (t) -> rbt_nm_orders - 1, __FILE__, __LINE__);	\
-	exit (0);						\
     }
 
 /*
@@ -148,21 +137,21 @@
  *	Functions internal to LIBREDBLACK
  */
 BU_EXTERN(struct bu_rb_node *_rb_neighbor, (struct bu_rb_node *node,
-					 int		order,
-					 int		sense
-					));
+					    int		order,
+					    int		sense
+	      ));
 BU_EXTERN(void _rb_rot_left,		(struct bu_rb_node	*x,
 					 int		order
-					));
+	      ));
 BU_EXTERN(void _rb_rot_right,		(struct bu_rb_node	*y,
 					 int		order
-					));
+	      ));
 BU_EXTERN(void _rb_walk,		(bu_rb_tree	*tree,
 					 int		order,
 					 void		(*visit)(),
 					 int		what_to_visit,
 					 int		trav_type
-					));
+	      ));
 BU_EXTERN(void bu_rb_free_node,		(struct bu_rb_node *node));
 BU_EXTERN(void bu_rb_free_package,	(struct bu_rb_package *package));
 
@@ -173,8 +162,8 @@ BU_EXTERN(void bu_rb_free_package,	(struct bu_rb_package *package));
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

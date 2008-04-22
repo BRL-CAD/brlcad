@@ -35,7 +35,7 @@
 #include "bltList.h"
 
 typedef struct {
-    Blt_HashTable tableTable;	/* Hash table of table structures keyed by 
+    Blt_HashTable tableTable;	/* Hash table of table structures keyed by
 				 * the address of the reference Tk window */
 } TableInterpData;
 
@@ -296,7 +296,7 @@ struct RowColumnStruct {
  */
 #define DEF_ARRAY_SIZE	32
 
-typedef Entry *(EntrySearchProc) _ANSI_ARGS_((Table *tablePtr, 
+typedef Entry *(EntrySearchProc) _ANSI_ARGS_((Table *tablePtr,
 	Tk_Window tkwin));
 
 /*
@@ -384,7 +384,7 @@ struct TableStruct {
  * Forward declarations
  */
 
-extern int Blt_GetTable _ANSI_ARGS_((TableInterpData *dataPtr, 
+extern int Blt_GetTable _ANSI_ARGS_((TableInterpData *dataPtr,
 	Tcl_Interp *interp, char *pathName, Table **tablePtrPtr));
 
 #endif /* _BLT_TABLE_H */

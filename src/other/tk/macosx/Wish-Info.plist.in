@@ -51,6 +51,10 @@ Copyright © 2001-2002, Apple Computer, Inc.</string>
 	<string>com.tcltk.wish</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		@CFBUNDLELOCALIZATIONS@
+	</array>
 	<key>CFBundleName</key>
 	<string>Wish</string>
 	<key>CFBundlePackageType</key>

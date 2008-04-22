@@ -1,7 +1,7 @@
 /*                       P R O C E S S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -137,7 +137,7 @@ create_sphere(point_line_t **plta, int count) {
     Tcl_Eval(twerp, bu_vls_addr(&vls2));
     if (twerp->result[0] != '\0') 
 	bu_log("create_cylinder failure: %s\n", twerp->result);
-     else 
+    else 
 	bu_log("create_cylinder created\n");
 #endif
 
@@ -582,7 +582,7 @@ create_pipe(point_line_t **plta, int count) {
     Tcl_Eval(twerp, bu_vls_addr(&vls2));
     if (twerp->result[0] != '\0') 
 	bu_log("create_pipe failure: %s\n", twerp->result);
-     else 
+    else 
 	bu_log("create_pipe created\n");
 #endif
 
@@ -613,7 +613,7 @@ create_points(point_line_t **plta, int count) {
     Tcl_Eval(twerp, bu_vls_addr(&vls2));
     if (twerp->result[0] != '\0') 
 	bu_log("create_points failure: %s\n", twerp->result);
-     else 
+    else 
 	bu_log("create_points created\n");
 #endif
 
@@ -640,7 +640,7 @@ process_group(point_line_t **plta, int count) {
 
     /* ignore insufficient counts */
     if (valid_count <= 2)
-	switch((*plta)[0].code) {
+	switch ((*plta)[0].code) {
 	    case(PLATE): /* need at least 3 (triangle) */
 		/*		printf("IGNORING PLATE POINT DUPLICATE(S)\n"); */
 		return 0;
@@ -656,7 +656,7 @@ process_group(point_line_t **plta, int count) {
        parser when a point-line of that particular type is
        encountered
     */
-    switch((*plta)[0].code) {
+    switch ((*plta)[0].code) {
 	case(PLATE):
 	    return create_plate(plta, valid_count);
 	case(ARB):
@@ -667,11 +667,11 @@ process_group(point_line_t **plta, int count) {
 	    return create_cyl(plta, valid_count);
 	case(POINTS):
 #if PRINT_ARRAY
-    static int print_counter = 0;
-    if (print_counter == 0) {
-	bu_log("--- POINTS ---\n");
-	print_array(plta, count);
-    }
+	    static int print_counter = 0;
+	    if (print_counter == 0) {
+		bu_log("--- POINTS ---\n");
+		print_array(plta, count);
+	    }
 #endif
 	    return create_points(plta, valid_count);
 	case(SYMMETRY):
@@ -690,8 +690,8 @@ process_group(point_line_t **plta, int count) {
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

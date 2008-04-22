@@ -13,7 +13,7 @@
  * RCS: @(#) $Id$
  */
 
-#include <tkInt.h>
+#include "tkInt.h"
 #ifdef HAVE_XSS
 #include <X11/extensions/scrnsaver.h>
 #endif

@@ -520,13 +520,6 @@
 
 #define TclpExit		exit
 
-#ifdef TCL_WIDE_INT_TYPE
-MODULE_SCOPE Tcl_WideInt	strtoll _ANSI_ARGS_((CONST char *string,
-					     char **endPtr, int base));
-MODULE_SCOPE Tcl_WideUInt	strtoull _ANSI_ARGS_((CONST char *string,
-					      char **endPtr, int base));
-#endif /* TCL_WIDE_INT_TYPE */
-
 #ifndef INVALID_SET_FILE_POINTER
 #define INVALID_SET_FILE_POINTER 0xFFFFFFFF
 #endif /* INVALID_SET_FILE_POINTER */

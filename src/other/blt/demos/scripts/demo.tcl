@@ -1,6 +1,6 @@
 # ----------------------------------------------------------------------------
 #
-#	The following code is solely a convenience so that you can test the 
+#	The following code is solely a convenience so that you can test the
 #	BLT distribution without first installing it.
 #
 # ----------------------------------------------------------------------------
@@ -20,7 +20,7 @@ if { [file exists ../library/bltGraph.pro] } {
 # "quit" button.
 
 wm protocol . WM_DELETE_WINDOW { DoExit 0 }
-bind all <Control-KeyPress-c> { DoExit 0 } 
+bind all <Control-KeyPress-c> { DoExit 0 }
 
 proc DoExit { code } {
     destroy .

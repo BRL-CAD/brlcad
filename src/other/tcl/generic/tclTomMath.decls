@@ -161,7 +161,8 @@ declare 44 generic {
     int TclBN_mp_to_unsigned_bin(mp_int* a, unsigned char* b)
 }
 declare 45 generic {
-    int TclBN_mp_to_unsigned_bin_n(mp_int* a, unsigned char* b, unsigned long* outlen)
+    int TclBN_mp_to_unsigned_bin_n(mp_int* a, unsigned char* b,
+	    unsigned long* outlen)
 }
 declare 46 generic {
     int TclBN_mp_toradix_n(mp_int* a, char* str, int radix, int maxlen)

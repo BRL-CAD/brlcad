@@ -1,7 +1,7 @@
 /*                        C O M M O N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,12 +31,6 @@
  *  are either detected via configure or hand crafted, as is the case
  *  for the win32 platform.
  *
- *  @author
- *	Christopher Sean Morrison
- *
- *  @par Source
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #ifndef __COMMON_H__
@@ -64,14 +58,35 @@
 #  define __END_DECLS
 #endif
 
+/* _O_TEMPORARY on Windows removes file when last descriptor is closed */
+#ifndef O_TEMPORARY
+#  define O_TEMPORARY 0
+#endif
+
+/* _O_BINARY on Windows indicates whether to use binary or text (default) I/O */
+#ifndef O_BINARY
+#  define O_BINARY 0
+#endif
+
+/* Functions local to one file should be declared HIDDEN.  This is
+ * sometimes helpful to debuggers.
+ */
+#if !defined(HIDDEN)
+#  if defined(lint)
+#    define HIDDEN	static
+#  else
+#    define HIDDEN	/***/
+#  endif
+#endif
+
 #endif  /* __COMMON_H__ */
 /** @} */
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

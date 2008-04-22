@@ -47,7 +47,7 @@ proc SetPaperSize { unit } {
     set pageInfo(-paperheight) [lindex $pageInfo(paperSize) 1]
     ApplyPs
 }
-    
+
 proc SetCanvasSize { canvas width height } {
     global pageInfo
 
@@ -79,26 +79,26 @@ proc SetOutline { canvas } {
     }
     set xMid [expr ($xMax + $xMin - $gripSize) * 0.5]
     set yMid [expr ($yMax + $yMin - $gripSize) * 0.5]
-    $canvas coords image $xMin $yMin 
+    $canvas coords image $xMin $yMin
     $canvas itemconfigure image \
 	-width [expr $xMax - $xMin] -height [expr $yMax - $yMin]
     $canvas coords nw \
-	$xMin $yMin [expr $xMin + $gripSize] [expr $yMin + $gripSize] 
+	$xMin $yMin [expr $xMin + $gripSize] [expr $yMin + $gripSize]
     $canvas coords se \
-	[expr $xMax - $gripSize] [expr $yMax - $gripSize] $xMax $yMax 
+	[expr $xMax - $gripSize] [expr $yMax - $gripSize] $xMax $yMax
     $canvas coords ne \
-	[expr $xMax - $gripSize] [expr $yMin + $gripSize] $xMax $yMin 
+	[expr $xMax - $gripSize] [expr $yMin + $gripSize] $xMax $yMin
     $canvas coords sw \
-	$xMin $yMax [expr $xMin + $gripSize] [expr $yMax - $gripSize] 
+	$xMin $yMax [expr $xMin + $gripSize] [expr $yMax - $gripSize]
     SetCanvasOrientation $canvas
     $canvas coords n \
-	$xMid $yMin [expr $xMid + $gripSize] [expr $yMin + $gripSize] 
+	$xMid $yMin [expr $xMid + $gripSize] [expr $yMin + $gripSize]
     $canvas coords s \
 	$xMid [expr $yMax - $gripSize] [expr $xMid + $gripSize] $yMax
      $canvas coords e \
- 	[expr $xMax - $gripSize] $yMid $xMax [expr $yMid + $gripSize] 
+ 	[expr $xMax - $gripSize] $yMid $xMax [expr $yMid + $gripSize]
      $canvas coords w \
- 	$xMin $yMid [expr $xMin + $gripSize] [expr $yMid + $gripSize] 
+ 	$xMin $yMid [expr $xMin + $gripSize] [expr $yMid + $gripSize]
 }
 
 proc CreateOutline { canvas } {
@@ -124,31 +124,31 @@ proc CreateOutline { canvas } {
     focus $canvas
     $canvas create rectangle \
 	$xMin $yMin [expr $xMin + $gripSize] [expr $yMin + $gripSize] \
-	-tags "outline grip nw" 
+	-tags "outline grip nw"
     $canvas create rectangle \
 	[expr $xMax - $gripSize] [expr $yMax - $gripSize] $xMax $yMax \
-	-tags "outline grip se" 
+	-tags "outline grip se"
     $canvas create rectangle \
 	[expr $xMax - $gripSize] [expr $yMin + $gripSize] $xMax $yMin \
-	-tags "outline grip ne" 
+	-tags "outline grip ne"
     $canvas create rectangle \
 	$xMin $yMax [expr $xMin + $gripSize] [expr $yMax - $gripSize] \
-	-tags "outline grip sw" 
+	-tags "outline grip sw"
 
     set xMid [expr ($xMax + $xMin - $gripSize) * 0.5]
     set yMid [expr ($yMax + $yMin - $gripSize) * 0.5]
     $canvas create rectangle \
 	$xMid $yMin [expr $xMid + $gripSize] [expr $yMin + $gripSize] \
-	-tags "outline grip n" 
+	-tags "outline grip n"
     $canvas create rectangle \
 	$xMid [expr $yMax - $gripSize] [expr $xMid + $gripSize] $yMax \
-	-tags "outline grip s" 
+	-tags "outline grip s"
      $canvas create rectangle \
  	[expr $xMax - $gripSize] $yMid $xMax [expr $yMid + $gripSize] \
- 	-tags "outline grip e" 
+ 	-tags "outline grip e"
      $canvas create rectangle \
  	$xMin $yMid [expr $xMin + $gripSize] [expr $yMid + $gripSize] \
- 	-tags "outline grip w" 
+ 	-tags "outline grip w"
     foreach grip { e w s n sw ne se nw } {
 	$canvas bind $grip <ButtonPress-1>   "StartResize %W $grip %x %y"
 	$canvas bind $grip <B1-Motion>	     "ResizeOutline %W %x %y"
@@ -187,7 +187,7 @@ proc EnterImage  { canvas } {
 }
 
 
-proc LeaveImage { canvas } {    
+proc LeaveImage { canvas } {
     bind $canvas <KeyPress-Left> ""
     bind $canvas <KeyPress-Right> ""
     bind $canvas <KeyPress-Up> ""
@@ -207,10 +207,10 @@ proc EnterGrip  { canvas grip x y } {
 	ResizeOutline %W [expr $pageInfo(lastX) + 1] $pageInfo(lastY)
     }
     bind $canvas <KeyPress-Up> {
-	ResizeOutline %W $pageInfo(lastX) [expr $pageInfo(lastY) - 1] 
+	ResizeOutline %W $pageInfo(lastX) [expr $pageInfo(lastY) - 1]
     }
     bind $canvas <KeyPress-Down> {
-	ResizeOutline %W $pageInfo(lastX) [expr $pageInfo(lastY) + 1] 
+	ResizeOutline %W $pageInfo(lastX) [expr $pageInfo(lastY) + 1]
     }
     focus $canvas
     $canvas configure -cursor $cursors($grip)
@@ -218,7 +218,7 @@ proc EnterGrip  { canvas grip x y } {
     set pageInfo(lastY) $y
 }
 
-proc LeaveGrip { canvas grip } {    
+proc LeaveGrip { canvas grip } {
     $canvas itemconfigure $grip -fill red -outline black
     bind $canvas <KeyPress-Left> ""
     bind $canvas <KeyPress-Right> ""
@@ -228,7 +228,7 @@ proc LeaveGrip { canvas grip } {
 }
 
 proc StartMove { canvas x y } {
-    global pageInfo 
+    global pageInfo
     set pageInfo(lastX) $x
     set pageInfo(lastY) $y
     set pageInfo(direction) "undecided"
@@ -258,7 +258,7 @@ proc ConstrainMoveOutline { canvas x y } {
 	}
     }
     switch $pageInfo(direction) {
-	x { set dy 0 ; set pageInfo(lastX) $x } 
+	x { set dy 0 ; set pageInfo(lastX) $x }
 	y { set dx 0 ; set pageInfo(lastY) $y }
     }
     $canvas move outline $dx $dy
@@ -288,7 +288,7 @@ proc StartResize { canvas grip x y } {
     global pageInfo
     $canvas itemconfigure image -quick yes
     set pageInfo(grip) $grip
-    $canvas itemconfigure $grip -fill red -outline black 
+    $canvas itemconfigure $grip -fill red -outline black
     $canvas raise grip
     global cursors
     $canvas configure -cursor $cursors($grip)
@@ -299,7 +299,7 @@ proc StartResize { canvas grip x y } {
 proc EndResize { canvas grip x y } {
     $canvas itemconfigure image -quick no
     ResizeOutline $canvas $x $y
-    $canvas itemconfigure $grip -fill "" -outline "" 
+    $canvas itemconfigure $grip -fill "" -outline ""
     $canvas configure -cursor ""
 }
 
@@ -429,7 +429,7 @@ proc PsDialog { graph } {
     set canvas $top.layout
     canvas $canvas -confine yes \
 	-width $pageInfo(paperWidth) -height $pageInfo(paperHeight) -bg gray \
-	-bd 2 -relief sunken 
+	-bd 2 -relief sunken
     CreateOutline $canvas
     SetCanvasOrientation $canvas
     label $top.titleLabel -text "PostScript Options"
@@ -466,7 +466,7 @@ proc PsDialog { graph } {
 	$row+2,$col+1 $top.large -anchor w \
 	$row+0,$col+2 $top.a3 -anchor w \
 	$row+1,$col+2 $top.a4 -anchor w \
-	$row+2,$col+2 $top.a5 -anchor w 
+	$row+2,$col+2 $top.a5 -anchor w
 
     incr row 3
 
@@ -479,14 +479,14 @@ proc PsDialog { graph } {
     table $top \
 	$row,$col+0   $top.orientLabel -anchor e \
 	$row,$col+1 $top.portrait -anchor w \
-	$row,$col+2 $top.landscape -anchor w 
+	$row,$col+2 $top.landscape -anchor w
 
     incr row 6
 
     set col 0
     label $top.plotLabel -text "Plot Options"
     table $top \
-	$row,$col   $top.plotLabel -cspan 3 
+	$row,$col   $top.plotLabel -cspan 3
     incr row
     label $top.sizeLabel -text "Size"
     radiobutton $top.default -text "Default" -value "default" \
@@ -503,10 +503,10 @@ proc PsDialog { graph } {
 	$row,$col   $top.sizeLabel -anchor e \
 	$row,$col+1 $top.default -anchor w \
 	$row+1,$col+1 $top.maxpect -anchor w \
-	$row+2,$col+1 $top.resize -anchor w 
+	$row+2,$col+1 $top.resize -anchor w
 
     #incr row 4
-    
+
     set pageInfo(oldPadX) $pageInfo(-padx)
     set pageInfo(oldPadY) $pageInfo(-pady)
 
@@ -532,7 +532,7 @@ proc PsDialog { graph } {
 	$row,$col+2 $top.posLabel -anchor e \
 	$row,$col+3 $top.center -anchor w \
 	$row+1,$col+3 $top.origin -anchor w \
-	$row+2,$col+3 $top.move -anchor w 
+	$row+2,$col+3 $top.move -anchor w
 
     incr row 4
     label $top.printLabel -text "Print To"
@@ -544,7 +544,7 @@ proc PsDialog { graph } {
 	-variable pageInfo(printTo) -command "
 	    $top.fileEntry configure -textvariable pageInfo(printCmd)
 	"
-    entry $top.fileEntry 
+    entry $top.fileEntry
     table configure $top r$row -pady { 4 0 }
     table configure $top r[expr $row+1] -pady { 4 0 }
     table configure $top r[expr $row+2] -pady { 4 0 }
@@ -552,7 +552,7 @@ proc PsDialog { graph } {
 	$row,0   $top.printLabel -anchor e \
 	$row,1   $top.toFile -anchor w \
 	$row+1,1 $top.toCmd -anchor w \
-	$row+2,1 $top.fileEntry -anchor w -fill x -cspan 3 
+	$row+2,1 $top.fileEntry -anchor w -fill x -cspan 3
     $top.toFile invoke
     incr row 3
     #table configure $top c4 -width .125i
@@ -562,7 +562,7 @@ proc PsDialog { graph } {
     table $top \
 	$row,1 $top.print  -width 1i -pady 2  \
 	$row,2 $top.advanced  -width 1i -pady 2 \
-	$row,3 $top.cancel  -width 1i -pady 2 -anchor w 
+	$row,3 $top.cancel  -width 1i -pady 2 -anchor w
 
     SetUnits "inches"
     foreach label [info commands $top.*Label] {
@@ -626,7 +626,7 @@ proc ChangeSize { w delta } {
 proc MakeSizeAdjustor { w label var } {
     frame $w
     label $w.label -text $label
-    button $w.plus -text "+" -padx 1 -pady 0 -font \*symbol\* 
+    button $w.plus -text "+" -padx 1 -pady 0 -font \*symbol\*
     entry $w.entry -width 6 -textvariable "pageInfo($var)"
     button $w.minus -text "-" -padx 1 -pady 0 -font \*symbol\*
     label $w.units -text "in"
@@ -639,8 +639,8 @@ proc MakeSizeAdjustor { w label var } {
 	1,1 $w.entry -rspan 2 -fill y \
 	1,0 $w.minus -padx 2 -pady 2 \
 	2,0 $w.plus -padx 2 -pady { 0 2 } \
-	1,2 $w.units -rspan 2 -fill y 
-    
+	1,2 $w.units -rspan 2 -fill y
+
 }
 
 
@@ -679,13 +679,13 @@ proc SetPlotSize { } {
     global pageInfo
     set graph $pageInfo(graph)
     switch $pageInfo(plotSize) {
-	default { 
+	default {
 	    set pageInfo(-width) 0
-	    set pageInfo(-height) 0 
+	    set pageInfo(-height) 0
 	    set pageInfo(-maxpect) 0
 	    set pageInfo(-padx) $pageInfo(oldPadX)
 	    set pageInfo(-pady) $pageInfo(oldPadY)
-	} maxpect { 
+	} maxpect {
 	    set pageInfo(-width) 0
 	    set pageInfo(-height) 0
 	    set pageInfo(-maxpect) 1
@@ -734,7 +734,7 @@ proc MarginDialog { graph } {
     table $top \
 	$row,$col   $top.modeLabel -anchor e \
 	$row,$col+1 $top.color -anchor w \
-	$row+1,$col+1 $top.greyscale -anchor w 
+	$row+1,$col+1 $top.greyscale -anchor w
 
     table configure $top r$row -pady { 4 0 }
 
@@ -747,7 +747,7 @@ proc MarginDialog { graph } {
     table $top \
 	$row,$col   $top.previewLabel -anchor e \
 	$row,$col+1 $top.previewYes -anchor w \
-	$row+1,$col+1 $top.previewNo -anchor w 
+	$row+1,$col+1 $top.previewNo -anchor w
     incr row 2
 
     button $top.cancel -text "Cancel" -command "destroy $top"
@@ -755,8 +755,8 @@ proc MarginDialog { graph } {
     table $top \
 	$row,0 $top.cancel -pady 4 -padx 4 -width 1i \
 	$row,1 $top.ok -pady 4 -padx 4 -width 1i
-	
-}    
+
+}
 
 proc CenterPlot { } {
     global pageInfo

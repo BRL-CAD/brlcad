@@ -1,7 +1,7 @@
 /*                    D M - G E N E R I C . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2007 United States Government as represented by
+ * Copyright (c) 1999-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,21 +21,14 @@
  *
  * Generic display manager routines.
  *
- * Source -
- *	SLAD CAD Team
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
- * Author -
- *	Robert G. Parker
  */
+
 #include "common.h"
 
 #include <string.h>
 
 #include "tcl.h"
 
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "dm.h"
@@ -68,34 +61,34 @@ extern int wgl_share_dlist();
 struct dm *
 dm_open(Tcl_Interp *interp, int type, int argc, char **argv)
 {
-	switch (type) {
+    switch (type) {
 	case DM_TYPE_NULL:
-		return Nu_open(interp, argc, argv);
+	    return Nu_open(interp, argc, argv);
 	case DM_TYPE_PLOT:
-		return plot_open(interp, argc, argv);
+	    return plot_open(interp, argc, argv);
 	case DM_TYPE_PS:
-		return ps_open(interp, argc, argv);
+	    return ps_open(interp, argc, argv);
 #ifdef DM_X
 	case DM_TYPE_X:
-		return X_open_dm(interp, argc, argv);
+	    return X_open_dm(interp, argc, argv);
 #endif
 #ifdef DM_TK
 	case DM_TYPE_TK:
-		return tk_open_dm(interp, argc, argv);
+	    return tk_open_dm(interp, argc, argv);
 #endif
 #ifdef DM_OGL
 	case DM_TYPE_OGL:
-		return ogl_open(interp, argc, argv);
+	    return ogl_open(interp, argc, argv);
 #endif
 #ifdef DM_WGL
 	case DM_TYPE_WGL:
-		return wgl_open(interp, argc, argv);
+	    return wgl_open(interp, argc, argv);
 #endif
-  default:
-    break;
-  }
+	default:
+	    break;
+    }
 
-  return DM_NULL;
+    return DM_NULL;
 }
 
 /*
@@ -105,89 +98,89 @@ dm_open(Tcl_Interp *interp, int type, int argc, char **argv)
 int
 dm_share_dlist(struct dm *dmp1, struct dm *dmp2)
 {
-  if(dmp1 == DM_NULL)
-    return TCL_ERROR;
+    if (dmp1 == DM_NULL)
+	return TCL_ERROR;
 
-  /*
-   * Only display managers of the same type and using the
-   * same OGL server are allowed to share display lists.
-   *
-   * XXX - need a better way to check if using the same OGL server.
-   */
-  if(dmp2 != DM_NULL)
-    if(dmp1->dm_type != dmp2->dm_type ||
-       strcmp(bu_vls_addr(&dmp1->dm_dName), bu_vls_addr(&dmp2->dm_dName)))
-      return TCL_ERROR;
+    /*
+     * Only display managers of the same type and using the
+     * same OGL server are allowed to share display lists.
+     *
+     * XXX - need a better way to check if using the same OGL server.
+     */
+    if (dmp2 != DM_NULL)
+	if (dmp1->dm_type != dmp2->dm_type ||
+	    bu_vls_strcmp(&dmp1->dm_dName, &dmp2->dm_dName))
+	    return TCL_ERROR;
 
-  switch(dmp1->dm_type){
+    switch (dmp1->dm_type) {
 #ifdef DM_OGL
-  case DM_TYPE_OGL:
-    return ogl_share_dlist(dmp1, dmp2);
+	case DM_TYPE_OGL:
+	    return ogl_share_dlist(dmp1, dmp2);
 #endif
 #ifdef DM_WGL
-  case DM_TYPE_WGL:
-    return wgl_share_dlist(dmp1, dmp2);
+	case DM_TYPE_WGL:
+	    return wgl_share_dlist(dmp1, dmp2);
 #endif
-  default:
-    return TCL_ERROR;
-  }
+	default:
+	    return TCL_ERROR;
+    }
 }
 
 fastf_t
 dm_Xx2Normal(struct dm *dmp, register int x)
 {
-  return ((x / (fastf_t)dmp->dm_width - 0.5) * 2.0);
+    return ((x / (fastf_t)dmp->dm_width - 0.5) * 2.0);
 }
 
 int
 dm_Normal2Xx(struct dm *dmp, register fastf_t f)
 {
-  return (f * 0.5 + 0.5) * dmp->dm_width;
+    return (f * 0.5 + 0.5) * dmp->dm_width;
 }
 
 fastf_t
 dm_Xy2Normal(struct dm *dmp, register int y, int use_aspect)
 {
-  if(use_aspect)
-    return ((0.5 - y / (fastf_t)dmp->dm_height) / dmp->dm_aspect * 2.0);
-  else
-    return ((0.5 - y / (fastf_t)dmp->dm_height) * 2.0);
+    if (use_aspect)
+	return ((0.5 - y / (fastf_t)dmp->dm_height) / dmp->dm_aspect * 2.0);
+    else
+	return ((0.5 - y / (fastf_t)dmp->dm_height) * 2.0);
 }
 
 int
 dm_Normal2Xy(struct dm *dmp, register fastf_t f, int use_aspect)
 {
-  if(use_aspect)
-    return (0.5 - f * 0.5 * dmp->dm_aspect) * dmp->dm_height;
-  else
-    return (0.5 - f * 0.5) * dmp->dm_height;
+    if (use_aspect)
+	return (0.5 - f * 0.5 * dmp->dm_aspect) * dmp->dm_height;
+    else
+	return (0.5 - f * 0.5) * dmp->dm_height;
 }
 
 void
 dm_fogHint(struct dm *dmp, int fastfog)
 {
-  switch(dmp->dm_type){
+    switch (dmp->dm_type) {
 #ifdef DM_OGL
-  case DM_TYPE_OGL:
-    ogl_fogHint(dmp, fastfog);
-    return;
+	case DM_TYPE_OGL:
+	    ogl_fogHint(dmp, fastfog);
+	    return;
 #endif
 #ifdef DM_WGL
-  case DM_TYPE_WGL:
-    wgl_fogHint(dmp, fastfog);
-    return;
+	case DM_TYPE_WGL:
+	    wgl_fogHint(dmp, fastfog);
+	    return;
 #endif
-  default:
-    return;
-  }
+	default:
+	    return;
+    }
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

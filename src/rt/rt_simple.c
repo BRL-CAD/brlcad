@@ -1,7 +1,7 @@
 /*                     R T _ S I M P L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -55,13 +55,8 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
 
-#include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 
@@ -106,8 +101,8 @@ int main(int argc, char **argv)
     /* First we need to build a directory (or table of contents) for
      * the objects in the database file.  That is the job of rt_dirbuild()
      */
-    if( (rtip=rt_dirbuild(argv[1], (char *)NULL, 0)) == RTI_NULL ) {
-	fprintf(stderr,"rt_dirbuild failure\n");
+    if ( (rtip=rt_dirbuild(argv[1], (char *)NULL, 0)) == RTI_NULL ) {
+	fprintf(stderr, "rt_dirbuild failure\n");
 	return 2;
     }
 
@@ -120,9 +115,9 @@ int main(int argc, char **argv)
     /* Add objects to the "active set".  These are the objects we are
      * interested in intersecting our ray with.
      */
-    if( rt_gettrees_and_attrs( rtip, (const char **)NULL,
-			       argc, (const char **)argv, 1 ) ) {
-	fprintf(stderr,"rt_gettrees FAILED\n");
+    if ( rt_gettrees_and_attrs( rtip, (const char **)NULL,
+				argc, (const char **)argv, 1 ) ) {
+	fprintf(stderr, "rt_gettrees FAILED\n");
 	return 1;
     }
 
@@ -161,7 +156,7 @@ int hit(struct application *ap,		/* application struct from main() */
 
     fprintf(stderr, "hit\n");
 
-    for (pp=PartHeadp->pt_forw ; pp != PartHeadp ; pp = pp->pt_forw ) {
+    for (pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw ) {
 
 	/* construct the actual hit-point from the ray and the distance
 	 * to the intersection point
@@ -190,8 +185,8 @@ int miss(register struct application *ap)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

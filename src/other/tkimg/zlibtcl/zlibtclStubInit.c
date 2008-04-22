@@ -1,4 +1,4 @@
-/* 
+/*
  * zlibtclStubInit.c --
  */
 

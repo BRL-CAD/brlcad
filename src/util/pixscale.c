@@ -1,7 +1,7 @@
 /*                      P I X S C A L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2007 United States Government as represented by
+ * Copyright (c) 1986-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,18 +31,15 @@
  *  Note: This is a simple extension to bwcrop.  Improvements made
  *  there should be incorporated here.
  *
- *  Author -
- *	Phillip Dykstra
- * 	23 Sep 1986
- *
  */
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
 
-extern int	bu_getopt(int, char *const *, const char *);
-extern char	*bu_optarg;
-extern int	bu_optind;
+#include "common.h"
+
+#include <stdlib.h>
+#include "bio.h"
+
+#include "bu.h"
+
 
 #define	MAXBUFBYTES	3*1024*1024	/* max bytes to malloc in buffer space */
 
@@ -71,78 +68,74 @@ Usage: pixscale [-h] [-r] [-s squareinsize] [-w inwidth] [-n inheight]\n\
 int
 get_args(int argc, register char **argv)
 {
-	register int c;
+    register int c;
 
-	while ( (c = bu_getopt( argc, argv, "rhs:w:n:S:W:N:" )) != EOF )  {
-		switch( c )  {
-		case 'r':
-			/* pixel replication */
-			rflag = 1;
-			break;
-		case 'h':
-			/* high-res */
-			inx = iny = 1024;
-			break;
-		case 'S':
-			/* square size */
-			outx = outy = atoi(bu_optarg);
-			break;
-		case 's':
-			/* square size */
-			inx = iny = atoi(bu_optarg);
-			break;
-		case 'W':
-			outx = atoi(bu_optarg);
-			break;
-		case 'w':
-			inx = atoi(bu_optarg);
-			break;
-		case 'N':
-			outy = atoi(bu_optarg);
-			break;
-		case 'n':
-			iny = atoi(bu_optarg);
-			break;
+    while ( (c = bu_getopt( argc, argv, "rhs:w:n:S:W:N:" )) != EOF )  {
+	switch ( c )  {
+	    case 'r':
+		/* pixel replication */
+		rflag = 1;
+		break;
+	    case 'h':
+		/* high-res */
+		inx = iny = 1024;
+		break;
+	    case 'S':
+		/* square size */
+		outx = outy = atoi(bu_optarg);
+		break;
+	    case 's':
+		/* square size */
+		inx = iny = atoi(bu_optarg);
+		break;
+	    case 'W':
+		outx = atoi(bu_optarg);
+		break;
+	    case 'w':
+		inx = atoi(bu_optarg);
+		break;
+	    case 'N':
+		outy = atoi(bu_optarg);
+		break;
+	    case 'n':
+		iny = atoi(bu_optarg);
+		break;
 
-		default:		/* '?' */
-			return(0);
-		}
+	    default:		/* '?' */
+		return(0);
 	}
+    }
 
-	/* XXX - backward compatability hack */
-	if( bu_optind+5 == argc ) {
-		file_name = argv[bu_optind++];
-		if( (buffp = fopen(file_name, "r")) == NULL )  {
-			(void)fprintf( stderr,
-				"pixscale: cannot open \"%s\" for reading\n",
-				file_name );
-			return(0);
-		}
-		inx = atoi(argv[bu_optind++]);
-		iny = atoi(argv[bu_optind++]);
-		outx = atoi(argv[bu_optind++]);
-		outy = atoi(argv[bu_optind++]);
-		return(1);
+    /* XXX - backward compatability hack */
+    if ( bu_optind+5 == argc ) {
+	file_name = argv[bu_optind++];
+	if ( (buffp = fopen(file_name, "r")) == NULL )  {
+	    bu_log("pixscale: cannot open \"%s\" for reading\n", file_name );
+	    return(0);
 	}
-	if( bu_optind >= argc )  {
-		if( isatty(fileno(stdin)) )
-			return(0);
-		file_name = "-";
-		buffp = stdin;
-	} else {
-		file_name = argv[bu_optind];
-		if( (buffp = fopen(file_name, "r")) == NULL )  {
-			(void)fprintf( stderr,
-				"pixscale: cannot open \"%s\" for reading\n",
-				file_name );
-			return(0);
-		}
+	inx = atoi(argv[bu_optind++]);
+	iny = atoi(argv[bu_optind++]);
+	outx = atoi(argv[bu_optind++]);
+	outy = atoi(argv[bu_optind++]);
+	return(1);
+    }
+    if ( bu_optind >= argc )  {
+	if ( isatty(fileno(stdin)) )
+	    return(0);
+	file_name = "-";
+	buffp = stdin;
+    } else {
+	file_name = argv[bu_optind];
+	if ( (buffp = fopen(file_name, "r")) == NULL )  {
+	    bu_log("pixscale: cannot open \"%s\" for reading\n", file_name );
+	    return(0);
 	}
+    }
 
-	if ( argc > ++bu_optind )
-		(void)fprintf( stderr, "pixscale: excess argument(s) ignored\n" );
+    if ( argc > ++bu_optind )
+	bu_log( "pixscale: excess argument(s) ignored\n" );
 
-	return(1);		/* OK */
+    return(1);		/* OK */
 }
 
 /****** THIS PROBABLY SHOULD BE ELSEWHERE *******/
@@ -150,7 +143,7 @@ get_args(int argc, register char **argv)
 /* ceiling and floor functions for positive numbers */
 #define	CEILING(x)	(((x) > (int)(x)) ? (int)(x)+1 : (int)(x))
 #define	FLOOR(x)	((int)(x))
-#define	MIN(x,y)	(((x) > (y)) ? (y) : (x))
+#define	MIN(x, y)	(((x) > (y)) ? (y) : (x))
 
 /*
  * Scale a file of pixels to a different size.
@@ -162,116 +155,113 @@ get_args(int argc, register char **argv)
 int
 scale(FILE *ofp, int ix, int iy, int ox, int oy)
 {
-	int	i, j, k, l;
-	double	pxlen, pylen;			/* # old pixels per new pixel */
-	double	xstart, xend, ystart, yend;	/* edges of new pixel in old coordinates */
-	double	xdist, ydist;			/* length of new pixel sides in old coord */
-	double	sumr, sumg, sumb;
-	unsigned char *op;
+    int	i, j, k, l;
+    double	pxlen, pylen;			/* # old pixels per new pixel */
+    double	xstart, xend, ystart, yend;	/* edges of new pixel in old coordinates */
+    double	xdist, ydist;			/* length of new pixel sides in old coord */
+    double	sumr, sumg, sumb;
+    unsigned char *op;
 
-	if( ix == ox )
-		pxlen = 1.0;
-	else
-		pxlen = (double)ix / (double)ox;
-	if( iy == oy )
-		pylen = 1.0;
-	else
-		pylen = (double)iy / (double)oy;
-	if ( (pxlen < 1.0 && pylen > 1.0) || (pxlen > 1.0 && pylen < 1.0) ) {
-		fprintf( stderr, "pixscale: can't stretch one way and compress another!\n" );
-		return( -1 );
+    if ( ix == ox )
+	pxlen = 1.0;
+    else
+	pxlen = (double)ix / (double)ox;
+    if ( iy == oy )
+	pylen = 1.0;
+    else
+	pylen = (double)iy / (double)oy;
+    if ( (pxlen < 1.0 && pylen > 1.0) || (pxlen > 1.0 && pylen < 1.0) ) {
+	bu_log( "pixscale: can't stretch one way and compress another!\n" );
+	return( -1 );
+    }
+    if ( pxlen < 1.0 || pylen < 1.0 ) {
+	if ( rflag ) {
+	    /* nearest neighbor interpolate */
+	    ninterp( ofp, ix, iy, ox, oy );
+	} else {
+	    /* bilinear interpolate */
+	    binterp( ofp, ix, iy, ox, oy );
 	}
-	if( pxlen < 1.0 || pylen < 1.0 ) {
-		if( rflag ) {
-			/* nearest neighbor interpolate */
-			ninterp( ofp, ix, iy, ox, oy );
-		} else {
-			/* bilinear interpolate */
-			binterp( ofp, ix, iy, ox, oy );
+	return( 0 );
+    }
+
+    /* for each output pixel */
+    for ( j = 0; j < oy; j++ ) {
+	ystart = j * pylen;
+	yend = ystart + pylen;
+	op = outbuf;
+	for ( i = 0; i < ox; i++ ) {
+	    xstart = i * pxlen;
+	    xend = xstart + pxlen;
+	    sumr = sumg = sumb = 0.0;
+	    /*
+	     * For each pixel of the original falling
+	     *  inside this new pixel.
+	     */
+	    for ( l = FLOOR(ystart); l < CEILING(yend); l++ ) {
+
+		/* Make sure we have this row in the buffer */
+		bufy = l - buf_start;
+		if ( bufy < 0 || bufy >= buflines ) {
+		    fill_buffer( l );
+		    bufy = l - buf_start;
 		}
-		return( 0 );
-	}
 
-	/* for each output pixel */
-	for( j = 0; j < oy; j++ ) {
-		ystart = j * pylen;
-		yend = ystart + pylen;
-		op = outbuf;
-		for( i = 0; i < ox; i++ ) {
-			xstart = i * pxlen;
-			xend = xstart + pxlen;
-			sumr = sumg = sumb = 0.0;
-			/*
-			 * For each pixel of the original falling
-			 *  inside this new pixel.
-			 */
-			for( l = FLOOR(ystart); l < CEILING(yend); l++ ) {
+		/* Compute height of this row */
+		if ( (double)l < ystart )
+		    ydist = CEILING(ystart) - ystart;
+		else
+		    ydist = MIN( 1.0, yend - (double)l );
 
-				/* Make sure we have this row in the buffer */
-				bufy = l - buf_start;
-				if( bufy < 0 || bufy >= buflines ) {
-					fill_buffer( l );
-					bufy = l - buf_start;
-				}
+		for ( k = FLOOR(xstart); k < CEILING(xend); k++ ) {
+		    /* Compute width of column */
+		    if ( (double)k < xstart )
+			xdist = CEILING(xstart) - xstart;
+		    else
+			xdist = MIN( 1.0, xend - (double)k );
 
-				/* Compute height of this row */
-				if( (double)l < ystart )
-					ydist = CEILING(ystart) - ystart;
-				else
-					ydist = MIN( 1.0, yend - (double)l );
-
-				for( k = FLOOR(xstart); k < CEILING(xend); k++ ) {
-					/* Compute width of column */
-					if( (double)k < xstart )
-						xdist = CEILING(xstart) - xstart;
-					else
-						xdist = MIN( 1.0, xend - (double)k );
-
-					/* Add this pixels contribution */
-					/* sum += old[l][k] * xdist * ydist; */
-					sumr += buffer[bufy * scanlen + 3*k] * xdist * ydist;
-					sumg += buffer[bufy * scanlen + 3*k+1] * xdist * ydist;
-					sumb += buffer[bufy * scanlen + 3*k+2] * xdist * ydist;
-				}
-			}
-			*op++ = (int)(sumr / (pxlen * pylen));
-			*op++ = (int)(sumg / (pxlen * pylen));
-			*op++ = (int)(sumb / (pxlen * pylen));
+		    /* Add this pixels contribution */
+		    /* sum += old[l][k] * xdist * ydist; */
+		    sumr += buffer[bufy * scanlen + 3*k] * xdist * ydist;
+		    sumg += buffer[bufy * scanlen + 3*k+1] * xdist * ydist;
+		    sumb += buffer[bufy * scanlen + 3*k+2] * xdist * ydist;
 		}
-		fwrite( outbuf, 3, ox, ofp );
+	    }
+	    *op++ = (int)(sumr / (pxlen * pylen));
+	    *op++ = (int)(sumg / (pxlen * pylen));
+	    *op++ = (int)(sumb / (pxlen * pylen));
 	}
-	return( 1 );
+	fwrite( outbuf, 3, ox, ofp );
+    }
+    return( 1 );
 }
 
 int
 main(int argc, char **argv)
 {
-	int i;
+    int i;
 
-	if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {
-		(void)fputs(usage, stderr);
-		exit( 1 );
-	}
+    if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {
+	bu_exit( 1, "%s", usage );
+    }
 
-	if( inx <= 0 || iny <= 0 || outx <= 0 || outy <= 0 ) {
-		fprintf( stderr, "pixscale: bad size\n" );
-		exit( 2 );
-	}
+    if ( inx <= 0 || iny <= 0 || outx <= 0 || outy <= 0 ) {
+	bu_exit( 2, "pixscale: bad size\n" );
+    }
 
-	/* See how many lines we can buffer */
-	scanlen = 3 * inx;
-	init_buffer( scanlen );
-	if (inx < outx) i = outx * 3;
-	else i = inx * 3;
+    /* See how many lines we can buffer */
+    scanlen = 3 * inx;
+    init_buffer( scanlen );
+    if (inx < outx) i = outx * 3;
+    else i = inx * 3;
 
-	if( (outbuf = malloc(i)) == NULL )
-		exit( 4 );
+    outbuf = bu_malloc(i, "outbuf");
 
-	/* Here we go */
-	i = scale( stdout, inx, iny, outx, outy );
-	free( outbuf );
-	free( buffer );
-	return( 0 );
+    /* Here we go */
+    i = scale( stdout, inx, iny, outx, outy );
+    bu_free( outbuf, "outbuf" );
+    bu_free( buffer, "buffer" );
+    return( 0 );
 }
 
 /*
@@ -282,22 +272,23 @@ main(int argc, char **argv)
 void
 init_buffer(int scanlen)
 {
-	int	max;
+    int	max;
 
-	/* See how many we could buffer */
-	max = MAXBUFBYTES / scanlen;
+    /* See how many we could buffer */
+    max = MAXBUFBYTES / scanlen;
 
-	/*
-	 * Do a max of 512.  We really should see how big
-	 * the input file is to decide if we should buffer
-	 * less than our max.
-	 */
-	if( max > 4096 ) max = 4096;
+    /*
+     * Do a max of 512.  We really should see how big
+     * the input file is to decide if we should buffer
+     * less than our max.
+     */
+    if ( max > 4096 ) max = 4096;
 
-	buflines = max;
-	buf_start = (-buflines);
-	buffer = malloc( buflines * scanlen );
+    buflines = max;
+    buf_start = (-buflines);
+    buffer = bu_malloc( buflines * scanlen, "buffer" );
 }
+
 
 /*
  * Load the buffer with scan lines centered around
@@ -306,20 +297,19 @@ init_buffer(int scanlen)
 void
 fill_buffer(int y)
 {
-	static int	file_pos = 0;
+    static int	file_pos = 0;
 
-	buf_start = y - buflines/2;
-	if( buf_start < 0 ) buf_start = 0;
+    buf_start = y - buflines/2;
+    if ( buf_start < 0 ) buf_start = 0;
 
-	if( file_pos != buf_start * scanlen )  {
-		if( fseek( buffp, buf_start * scanlen, 0 ) < 0 ) {
-			fprintf( stderr, "pixscale: Can't seek to input pixel! y=%d\n", y );
-			exit( 3 );
-		}
-		file_pos = buf_start * scanlen;
+    if ( file_pos != buf_start * scanlen )  {
+	if ( fseek( buffp, buf_start * scanlen, 0 ) < 0 ) {
+	    bu_exit(3, "pixscale: Can't seek to input pixel! y=%d\n", y );
 	}
-	fread( buffer, scanlen, buflines, buffp );
-	file_pos += buflines * scanlen;
+	file_pos = buf_start * scanlen;
+    }
+    fread( buffer, scanlen, buflines, buffp );
+    file_pos += buflines * scanlen;
 }
 
 
@@ -331,59 +321,59 @@ fill_buffer(int y)
 void
 binterp(FILE *ofp, int ix, int iy, int ox, int oy)
 {
-	int	i, j;
-	double	x, y, dx, dy, mid1, mid2;
-	double	xstep, ystep;
-	register unsigned char *op, *up, *lp;
+    int	i, j;
+    double	x, y, dx, dy, mid1, mid2;
+    double	xstep, ystep;
+    register unsigned char *op, *up, *lp;
 
-	xstep = (double)(ix - 1) / (double)ox - 1.0e-6;
-	ystep = (double)(iy - 1) / (double)oy - 1.0e-6;
+    xstep = (double)(ix - 1) / (double)ox - 1.0e-6;
+    ystep = (double)(iy - 1) / (double)oy - 1.0e-6;
 
-	/* For each output pixel */
-	for( j = 0; j < oy; j++ ) {
-		y = j * ystep;
-		/*
-		 * Make sure we have this row (and the one after it)
-		 * in the buffer
-		 */
-		bufy = (int)y - buf_start;
-		if( bufy < 0 || bufy >= buflines-1 ) {
-			fill_buffer( (int)y );
-			bufy = (int)y - buf_start;
-		}
-
-		op = outbuf;
-
-		for( i = 0; i < ox; i++ ) {
-			x = i * xstep;
-			dx = x - (int)x;
-			dy = y - (int)y;
-
-			/* Note: (1-a)*foo + a*bar = foo + a*(bar-foo) */
-
-			lp = &buffer[bufy*scanlen+(int)x*3];
-			up = &buffer[(bufy+1)*scanlen+(int)x*3];
-
-			/* Red */
-			mid1 = lp[0] + dx * ((double)lp[3] - (double)lp[0]);
-			mid2 = up[0] + dx * ((double)up[3] - (double)up[0]);
-			*op++ = mid1 + dy * (mid2 - mid1);
-			lp++; up++;
-
-			/* Green */
-			mid1 = lp[0] + dx * ((double)lp[3] - (double)lp[0]);
-			mid2 = up[0] + dx * ((double)up[3] - (double)up[0]);
-			*op++ = mid1 + dy * (mid2 - mid1);
-			lp++; up++;
-
-			/* Blue */
-			mid1 = lp[0] + dx * ((double)lp[3] - (double)lp[0]);
-			mid2 = up[0] + dx * ((double)up[3] - (double)up[0]);
-			*op++ = mid1 + dy * (mid2 - mid1);
-		}
-
-		(void) fwrite( outbuf, 3, ox, ofp );
+    /* For each output pixel */
+    for ( j = 0; j < oy; j++ ) {
+	y = j * ystep;
+	/*
+	 * Make sure we have this row (and the one after it)
+	 * in the buffer
+	 */
+	bufy = (int)y - buf_start;
+	if ( bufy < 0 || bufy >= buflines-1 ) {
+	    fill_buffer( (int)y );
+	    bufy = (int)y - buf_start;
 	}
+
+	op = outbuf;
+
+	for ( i = 0; i < ox; i++ ) {
+	    x = i * xstep;
+	    dx = x - (int)x;
+	    dy = y - (int)y;
+
+	    /* Note: (1-a)*foo + a*bar = foo + a*(bar-foo) */
+
+	    lp = &buffer[bufy*scanlen+(int)x*3];
+	    up = &buffer[(bufy+1)*scanlen+(int)x*3];
+
+	    /* Red */
+	    mid1 = lp[0] + dx * ((double)lp[3] - (double)lp[0]);
+	    mid2 = up[0] + dx * ((double)up[3] - (double)up[0]);
+	    *op++ = mid1 + dy * (mid2 - mid1);
+	    lp++; up++;
+
+	    /* Green */
+	    mid1 = lp[0] + dx * ((double)lp[3] - (double)lp[0]);
+	    mid2 = up[0] + dx * ((double)up[3] - (double)up[0]);
+	    *op++ = mid1 + dy * (mid2 - mid1);
+	    lp++; up++;
+
+	    /* Blue */
+	    mid1 = lp[0] + dx * ((double)lp[3] - (double)lp[0]);
+	    mid2 = up[0] + dx * ((double)up[3] - (double)up[0]);
+	    *op++ = mid1 + dy * (mid2 - mid1);
+	}
+
+	(void) fwrite( outbuf, 3, ox, ofp );
+    }
 }
 
 /*
@@ -394,47 +384,47 @@ binterp(FILE *ofp, int ix, int iy, int ox, int oy)
 void
 ninterp(FILE *ofp, int ix, int iy, int ox, int oy)
 {
-	int	i, j;
-	double	x, y;
-	double	xstep, ystep;
-	unsigned char *op, *lp;
+    int	i, j;
+    double	x, y;
+    double	xstep, ystep;
+    unsigned char *op, *lp;
 
-	xstep = (double)(ix - 1) / (double)ox - 1.0e-6;
-	ystep = (double)(iy - 1) / (double)oy - 1.0e-6;
+    xstep = (double)(ix - 1) / (double)ox - 1.0e-6;
+    ystep = (double)(iy - 1) / (double)oy - 1.0e-6;
 
-	/* For each output pixel */
-	for( j = 0; j < oy; j++ ) {
-		y = j * ystep;
-		/*
-		 * Make sure we have this row (and the one after it)
-		 * in the buffer
-		 */
-		bufy = (int)y - buf_start;
-		if( bufy < 0 || bufy >= buflines-1 ) {
-			fill_buffer( (int)y );
-			bufy = (int)y - buf_start;
-		}
-
-		op = outbuf;
-
-		for( i = 0; i < ox; i++ ) {
-			x = i * xstep;
-			lp = &buffer[bufy*scanlen+(int)x*3];
-			*op++ = lp[0];
-			*op++ = lp[1];
-			*op++ = lp[2];
-		}
-
-		(void) fwrite( outbuf, 3, ox, ofp );
+    /* For each output pixel */
+    for ( j = 0; j < oy; j++ ) {
+	y = j * ystep;
+	/*
+	 * Make sure we have this row (and the one after it)
+	 * in the buffer
+	 */
+	bufy = (int)y - buf_start;
+	if ( bufy < 0 || bufy >= buflines-1 ) {
+	    fill_buffer( (int)y );
+	    bufy = (int)y - buf_start;
 	}
+
+	op = outbuf;
+
+	for ( i = 0; i < ox; i++ ) {
+	    x = i * xstep;
+	    lp = &buffer[bufy*scanlen+(int)x*3];
+	    *op++ = lp[0];
+	    *op++ = lp[1];
+	    *op++ = lp[2];
+	}
+
+	(void) fwrite( outbuf, 3, ox, ofp );
+    }
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

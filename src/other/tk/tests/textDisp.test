@@ -3644,7 +3644,6 @@ test textDisp-32.0 {everything elided} {
     update ; update ; update ; update
     destroy .tt
 } {}
-
 test textDisp-32.1 {everything elided} {
     # Must not crash
     pack [text .tt]
@@ -3657,7 +3656,6 @@ test textDisp-32.1 {everything elided} {
     update ; update ; update ; update
     destroy .tt
 } {}
-
 test textDisp-32.2 {elide and tags} {
     pack [text .tt -height 30 -width 100 -bd 0 \
       -highlightthickness 0 -padx 0]
@@ -3675,7 +3673,6 @@ test textDisp-32.2 {elide and tags} {
     lappend res [list [.tt index "1.0 + 0 displaychars"] \
       [lindex [.tt bbox 1.0] 0] \
       [lindex [.tt bbox "1.0 + 0 displaychars"] 0]]
-    
     # hide tag 1, remaining text should not be indented, since
     # the indented tag and character is hidden.
     .tt tag configure testtag1 -elide 1 ; update
@@ -3683,11 +3680,9 @@ test textDisp-32.2 {elide and tags} {
     lappend res [list [.tt index "1.0 + 0 displaychars"] \
       [lindex [.tt bbox 1.0] 0] \
       [lindex [.tt bbox "1.0 + 0 displaychars"] 0]]
-    
     # reset
     .tt tag configure testtag1 -lmargin1 0
     .tt tag configure testtag1 -elide 0
-
     # indent left margin of tag 2 by 20 pixels
     # text should not be indented, since tag1 has lmargin1 of 0.
     .tt tag configure testtag2 -lmargin1 20 ; update
@@ -3695,7 +3690,6 @@ test textDisp-32.2 {elide and tags} {
     lappend res [list [.tt index "1.0 + 0 displaychars"] \
       [lindex [.tt bbox 1.0] 0] \
       [lindex [.tt bbox "1.0 + 0 displaychars"] 0]]
-    
     # hide tag 1, remaining text should now be indented, but
     # the bbox of 1.0 should have zero width and zero indent,
     # since it is elided at that position.
@@ -3704,11 +3698,9 @@ test textDisp-32.2 {elide and tags} {
     lappend res [list [.tt index "1.0 + 0 displaychars"] \
       [lindex [.tt bbox 1.0] 0] \
       [lindex [.tt bbox "1.0 + 0 displaychars"] 0]]
-    
     # reset
     .tt tag configure testtag2 -lmargin1 {}
     .tt tag configure testtag1 -elide 0
-
     # indent left margin of tag 3 by 20 pixels
     # text should be indented, since this tag takes
     # precedence over testtag1, and is applied to the
@@ -3718,7 +3710,6 @@ test textDisp-32.2 {elide and tags} {
     lappend res [list [.tt index "1.0 + 0 displaychars"] \
       [lindex [.tt bbox 1.0] 0] \
       [lindex [.tt bbox "1.0 + 0 displaychars"] 0]]
-    
     # hide tag 1, remaining text should still be indented,
     # since it still has testtag3 on it.  Again the
     # bbox of 1.0 should have 0.
@@ -3727,18 +3718,44 @@ test textDisp-32.2 {elide and tags} {
     lappend res [list [.tt index "1.0 + 0 displaychars"] \
       [lindex [.tt bbox 1.0] 0] \
       [lindex [.tt bbox "1.0 + 0 displaychars"] 0]]
-    
     .tt tag configure testtag3 -lmargin1 {} -elide 0
     .tt tag configure testtag1 -elide 1 -lmargin1 20
     #7
     lappend res [list [.tt index "1.0 + 0 displaychars"] \
       [lindex [.tt bbox 1.0] 0] \
       [lindex [.tt bbox "1.0 + 0 displaychars"] 0]]
-    
     destroy .tt
     set res
 } {{1.0 20 20} {1.29 0 0} {1.0 0 0} {1.29 0 20}\
   {1.0 20 20} {1.29 0 20} {1.0 20 20}}
+test textDisp-32.3 "NULL undisplayProc problems: #1791052" -setup {
+    set img [image create photo -data {
+	R0lGODlhEgASANUAAAAAAP/////iHP/mIPrWDPraEP/eGPfOAPbKAPbOBPrS
+	CP/aFPbGAPLCAPLGAN62ANauAMylAPbCAPW/APK+AN6uALKNAPK2APK5ANal
+	AOyzArGHBZp3B+6uAHFVBFVACO6qAOqqAOalAMGMAbF+Am1QBG5QBeuiAOad
+	AM6NAJ9vBW1MBFlACFQ9CVlBCuaZAOKVANyVAZlpBMyFAKZtBJVhBEAUEP//
+	/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAADcALAAAAAASABIAAAa+
+	wJtw+Ckah0iiZwNhODKk0icp/HAShEKBoEBgVFOkK0Iw2GyCs+BAGbGIlrIt
+	EJjXBYgL6X3zJMx1Z2d3EyEmNx9xaYGCdwgaNEUPBYt0do4XKUUOlAOCnmcD
+	CwcXMZsEAgOqq6oLBY+mHxUKBqysCwQSIDNFJAidtgKjFyeRfRQHB2ipAmZs
+	IDArVSTIyoI2bB0oxkIsIxcNyeIXICh7SR8yIhoXFxogJzE1YegrNCkoLzM0
+	K/RUiEY+tKASBAA7
+    }]
+    destroy .tt
+} -body {
+    text .tt
+    .tt tag configure emoticon -elide 1
+    .tt insert end X
+    .tt mark set MSGLEFT "end - 1 char"
+    .tt mark gravity MSGLEFT left
+    .tt insert end ":)" emoticon
+    .tt image create end -image $img
+    pack .tt
+    update; update; update
+} -cleanup {
+    image delete $img
+    destroy .tt
+}
 
 test textDisp-33.0 {one line longer than fits in the widget} {
     pack [text .tt -wrap char]

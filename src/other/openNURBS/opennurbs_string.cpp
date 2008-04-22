@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -22,8 +22,8 @@
 
 static struct {
   ON_aStringHeader header;
-  char           s;  
-} empty_astring = { {-1, 0, 0}, 0 }; // ref_count=-1, length=0, capacity=0, s=0 
+  char           s;
+} empty_astring = { {-1, 0, 0}, 0 }; // ref_count=-1, length=0, capacity=0, s=0
 static ON_aStringHeader* pEmptyStringHeader = &empty_astring.header;
 static const char* pEmptyaString = &empty_astring.s;
 
@@ -118,22 +118,22 @@ void ON_String::ReserveArray( size_t array_capacity )
 {
   ON_aStringHeader* p = Header();
   const int capacity = (int) array_capacity;
-  if ( p == pEmptyStringHeader ) 
+  if ( p == pEmptyStringHeader )
   {
 		CreateArray(capacity);
   }
-  else if ( p->ref_count > 1 ) 
+  else if ( p->ref_count > 1 )
   {
 		CreateArray(capacity);
     ON_aStringHeader* p1 = Header();
     const int size = (capacity < p->string_length) ? capacity : p->string_length;
-    if ( size > 0 ) 
+    if ( size > 0 )
     {
       memcpy( p1->string_array(), p->string_array(), size*sizeof(*m_s) );
       p1->string_length = size;
     }
   }
-	else if ( capacity > p->string_capacity ) 
+	else if ( capacity > p->string_capacity )
   {
 		p = (ON_aStringHeader*)onrealloc( p, sizeof(ON_aStringHeader) + (capacity+1)*sizeof(*m_s) );
     m_s = p->string_array();
@@ -284,7 +284,7 @@ ON_String::ON_String( char c, int repeat_count )
 ON_String::ON_String( const unsigned char* s )
 {
 	Create();
-  if ( s && s[0] ) 
+  if ( s && s[0] )
   {
     CopyToArray( (int)strlen((const char*)s), (const char*)s ); // the (int) is for 64 bit size_t conversion
   }
@@ -606,7 +606,7 @@ bool ON_WildCardMatch(const char* s, const char* pattern)
     pattern++;
     while ( *pattern == '*' )
       pattern++;
-    
+
     if ( !pattern[0] )
       return TRUE;
 
@@ -629,7 +629,7 @@ bool ON_WildCardMatch(const char* s, const char* pattern)
       }
       return FALSE;
     }
-    
+
     if ( *pattern == '\\' ) {
       switch( pattern[1] )
       {
@@ -649,7 +649,7 @@ bool ON_WildCardMatch(const char* s, const char* pattern)
     pattern++;
     s++;
   }
-  
+
   return ON_WildCardMatch(s,pattern);
 }
 
@@ -660,12 +660,12 @@ bool ON_WildCardMatchNoCase(const char* s, const char* pattern)
     return ( !s || !s[0] ) ? TRUE : FALSE;
   }
 
-  if ( *pattern == '*' ) 
+  if ( *pattern == '*' )
   {
     pattern++;
     while ( *pattern == '*' )
       pattern++;
-    
+
     if ( !pattern[0] )
       return TRUE;
 
@@ -688,7 +688,7 @@ bool ON_WildCardMatchNoCase(const char* s, const char* pattern)
       }
       return FALSE;
     }
-    
+
     if ( *pattern == '\\' ) {
       switch( pattern[1] )
       {
@@ -708,7 +708,7 @@ bool ON_WildCardMatchNoCase(const char* s, const char* pattern)
     pattern++;
     s++;
   }
-  
+
   return ON_WildCardMatch(s,pattern);
 }
 
@@ -782,7 +782,7 @@ int ON_String::Replace( const char* token1, const char* token2 )
         //       ReserveArray(newlen);
         //    but when newlen < len and the string had multiple
         //    references, the ReserveArray(newlen) call truncated
-        //    the input array.  
+        //    the input array.
         ReserveArray( ((newlen<len) ? len : newlen) );
 
         int i0, i1, ni, j;
@@ -1216,7 +1216,7 @@ void ON_CheckSum::Zero()
 {
   m_size = 0;
   m_time = 0;
-  for ( int i = 0; i < 8; i++ ) 
+  for ( int i = 0; i < 8; i++ )
     m_crc[i] = 0;
 }
 
@@ -1225,8 +1225,8 @@ bool ON_CheckSum::IsSet() const
   return ( m_size != 0 );
 }
 
-bool ON_CheckSum::SetBufferCheckSum( 
-                size_t size, 
+bool ON_CheckSum::SetBufferCheckSum(
+                size_t size,
                 const void* buffer,
                 time_t time
                )
@@ -1316,10 +1316,10 @@ bool ON::GetFileStats( FILE* fp,
 #if defined(ON_COMPILER_MSC)
 
     // Microsoft compilers
-    int fd = _fileno(fp);    
+    int fd = _fileno(fp);
 #if (_MSC_VER >= 1400)
-    // VC 8 (2005) 
-    // works for file sizes > 4GB 
+    // VC 8 (2005)
+    // works for file sizes > 4GB
     // when size_t is a 64 bit integer
     struct _stat64 sb;
     memset(&sb,0,sizeof(sb));
@@ -1441,12 +1441,12 @@ bool ON_CheckSum::Read(ON_BinaryArchive& archive)
   if (rc)
     rc = archive.ReadInt(8,&m_crc[0]);
 
-  if (    archive.ArchiveOpenNURBSVersion() < 200603100 
-       || archive.Archive3dmVersion() < 4 
+  if (    archive.ArchiveOpenNURBSVersion() < 200603100
+       || archive.Archive3dmVersion() < 4
        )
   {
     // ON_CheckSums in V3 archives and V4 archives with
-    // version < 200603100 have the same size but an 
+    // version < 200603100 have the same size but an
     // incompatible format.  These were not used.
     Zero();
   }
@@ -1468,8 +1468,8 @@ bool ON_CheckSum::SetFileCheckSum( const wchar_t* filename )
   return rc;
 }
 
-bool ON_CheckSum::CheckBuffer( 
-  size_t size, 
+bool ON_CheckSum::CheckBuffer(
+  size_t size,
   const void* buffer
   ) const
 {
@@ -1506,7 +1506,7 @@ bool ON_CheckSum::CheckBuffer(
   return true;
 }
 
-bool ON_CheckSum::CheckFile( 
+bool ON_CheckSum::CheckFile(
   FILE* fp,
   bool bSkipTimeCheck
   ) const
@@ -1570,7 +1570,7 @@ bool ON_CheckSum::CheckFile(
   return true;
 }
 
-bool ON_CheckSum::CheckFile( 
+bool ON_CheckSum::CheckFile(
   const wchar_t* filename,
   bool bSkipTimeCheck
   ) const

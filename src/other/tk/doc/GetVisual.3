@@ -33,7 +33,6 @@ Depth of returned visual gets stored here.
 If non-NULL then a suitable colormap for visual is found and its
 identifier is stored here.
 .BE
-
 .SH DESCRIPTION
 .PP
 \fBTk_GetVisual\fR takes a string description of a visual and
@@ -76,23 +75,28 @@ as \fItkwin\fR.
 Use the visual whose X identifier is \fInumber\fR.
 .TP 15
 \fBbest\fR ?\fIdepth\fR?
-Choose the ``best possible'' visual, using the following rules, in
-decreasing order of priority:
-(a) a visual that has exactly the desired depth is best, followed
+Choose the
+.QW "best possible"
+visual, using the following rules, in decreasing order of priority:
+.RS
+.IP (a)
+a visual that has exactly the desired depth is best, followed
 by a visual with greater depth than requested (but as little extra
 as possible), followed by a visual with less depth than requested
 (but as great a depth as possible);
-(b) if no \fIdepth\fR is specified, then the deepest available visual
+.IP (b)
+if no \fIdepth\fR is specified, then the deepest available visual
 is chosen;
-(c) \fBpseudocolor\fR is better than \fBtruecolor\fR or \fBdirectcolor\fR,
+.IP (c)
+\fBpseudocolor\fR is better than \fBtruecolor\fR or \fBdirectcolor\fR,
 which are better than \fBstaticcolor\fR, which is better than
 \fBstaticgray\fR or \fBgrayscale\fR;
-(d) the default visual for the screen is better than any other visual.
-
+.IP (d)
+the default visual for the screen is better than any other visual.
+.RE
 .SH CREDITS
 .PP
 The idea for \fBTk_GetVisual\fR, and the first implementation, came
 from Paul Mackerras.
-
 .SH KEYWORDS
 colormap, screen, visual

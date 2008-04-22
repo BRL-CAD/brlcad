@@ -8,7 +8,7 @@ int main( int argc, const char *argv[] )
   // to open the file.
 
   int argi;
-  if ( argc < 2 ) 
+  if ( argc < 2 )
   {
     printf("Syntax: %s [-out:outputfilename.txt] file1.3dm file2.3dm ...\n",argv[0] );
     return 0;
@@ -24,12 +24,12 @@ int main( int argc, const char *argv[] )
 
   ONX_Model model;
 
-  for ( argi = 1; argi < argc; argi++ ) 
+  for ( argi = 1; argi < argc; argi++ )
   {
     const char* arg = argv[argi];
 
     // check for -out or /out option
-    if ( ( 0 == strncmp(arg,"-out:",5) || 0 == strncmp(arg,"/out:",5) ) 
+    if ( ( 0 == strncmp(arg,"-out:",5) || 0 == strncmp(arg,"/out:",5) )
          && arg[5] )
     {
       // change destination of dump file
@@ -54,7 +54,7 @@ int main( int argc, const char *argv[] )
 
     // open file containing opennurbs archive
     FILE* archive_fp = ON::OpenFile( sFileName, "rb");
-    if ( !archive_fp ) 
+    if ( !archive_fp )
     {
       dump->Print("  Unable to open file.\n" );
       continue;
@@ -156,7 +156,7 @@ int main( int argc, const char *argv[] )
     delete dump;
     ON::CloseFile( dump_fp );
   }
-  
+
   // OPTIONAL: Call just before your application exits to clean
   //           up opennurbs class definition information.
   //           Opennurbs will not work correctly after ON::End()

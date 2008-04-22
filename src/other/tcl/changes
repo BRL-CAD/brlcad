@@ -6842,80 +6842,290 @@ URL validity checking against RFC 2986 (hobbs)
 --- Released 8.5a5, October 20, 2006 --- See ChangeLog for details ---
 
 2006-10-20 (configure change) Added autodetection for OS-supplied timezone
-files.
+files (max)
 
 2006-10-23 (enhancement)[1577278] Ensure the Tcl call stack always has a
-CallFrame, even at level 0.
+CallFrame, even at level 0 (sofer)
 	*** POTENTIAL INCOMPATIBILITY for users of tclInt.h ***
 
 2006-10-23 (enhancement)[1577492] Tcl_PushCallFrame and [info level]
-enhanced for ensemble rewrites.
+enhanced for ensemble rewrites (sofer)
 	*** POTENTIAL INCOMPATIBILITY for [info level 0] on interp alias ***
 
-2006-11-02 (feature change)[TIP 293] Replace {expand} with {*}
+2006-11-02 (feature change)[TIP 293] Replace {expand} with {*} (hobbs)
 	*** POTENTIAL INCOMPATIBILITY with previous 8.5 alphas only ***
 
-2006-11-04 (new feature)[TIP 274] Expression operator is right associative.
+2006-11-04 (new feature)[TIP 274] Exponentiation operator is right
+associative (porter)
 
 2006-11-09 (new feature)[TIP 272] Added [lreverse] and [string reverse]
-commands.
+commands (fellows)
 
 2006-11-14 (new feature)[TIP 261] [namespace import] returns list of
-imported commands.
+imported commands (porter)
 
 2006-11-15 (new feature)[TIP 270] New C routines Tcl_ObjPrintf,
 Tcl_AppendObjToErrorInfo, Tcl_Format, Tcl_AppendLimitedToObj,
-Tcl_AppendFormatToObj, Tcl_AppendPrintfToObj.
+Tcl_AppendFormatToObj, Tcl_AppendPrintfToObj (porter)
 
-2006-11-22 (feature change) Moved TCL_REG_BOSONLY from tcl.h to tclInt.h
+2006-11-22 (feature change) Moved TCL_REG_BOSONLY from tcl.h to tclInt (porter)
 
 2006-11-22 (new feature)[TIP 269] Added [string is list] classification
-command.
+command (mistackin, fellows)
 
 2006-11-25 (new feature)[TIP 174] Added commands corresponding to most
-expr operators in ::tcl::mathop.
+expr operators in ::tcl::mathop (fellows)
+
+2006-11-26 (platform support)[1230558] --enable-64bit on more systems (steffen)
 
 2006-11-27 (bug fix)[1602208] Fix 64-bit handling of select() on unix where
-fd was greater than 32.
+fd was greater than 32 (fontaine, kenny)
 
 2006-11-28 (new feature)[TIP 280] Added [info frame] command for more
-Tcl-level debugging information.
+Tcl-level debugging information (kupries)
 
 2006-12-01 (feature change)[TIP 298] Change Tcl_GetBignumAndClearObj to
-Tcl_TakeBignumFromObj.
+Tcl_TakeBignumFromObj (porter)
 
-2006-12-01 (new feature)[TIP 287] Added [chan pending] subcommand.
+2006-12-01 (new feature)[TIP 287] Added [chan pending] subcommand (cleverly)
 
-2006-12-01 (new feature)[TIP 299] Added isqrt() expr operator.
+2006-12-01 (new feature)[TIP 299] Added isqrt() expr operator (kenny)
 
-2006-12-04 (new feature)[TIP 267] Added -ignorestderr option to exec.
+2006-12-04 (new feature)[TIP 267] Added -ignorestderr option to exec (fellows)
 
-2006-12-05 (new feature)[TIP 291] Added ::tcl_platform(pointerSize) key.
+2006-12-05 (new feature)[TIP 291] ::tcl_platform(pointerSize) key (kupries)
 
-2007-01-11 (configure change) Remove "-Wconversion" from default CFLAGS.
+2007-01-11 (configure change) Remove "-Wconversion" from deflt CFLAGS (english)
 
-2007-01-25 (configure change) Ensure CPPFLAGS env var is used when set.
+2007-01-25 (configure change) Ensure CPPFLAGS env var is used when set (steffen)
 
 2007-02-19 (configure change) Use SHLIB_SUFFIX=".so" on HP-UX IA64 (was
-".sl").
+".sl") (hobbs)
 
-2007-02-20 (bug fix)[1479814] Handle Windows NT \\?\... extended paths.
+2007-02-20 (bug fix)[1479814] Handle Windows NT \\?\... extended paths (thoyts)
 
 2007-03-01 (bug fix)[1671138] Fix infinite loop in compiled foreach with an
-empty list.
+empty list (fellows)
 
 2007-03-07 (enhancement) Improved Windows time zone tables to handle new US
-DST rules.
+DST rules (kenny)
 
-2007-03-09 (enhancement) Improved Y2038 compliance of zoneinfo files.
+2007-03-09 (enhancement) Improved Y2038 compliance of zoneinfo files (kenny)
 
 2007-04-02 (enhancement) Added bytecode compilation for global, variable,
-upvar and namespace upvar.
+upvar and namespace upvar (sofer)
 
-2007-04-20 (bug fix) Improve clock localization for Japanese locale.
+2007-04-20 (bug fix) Improve clock localization for Japanese locale (kenny)
 
-2007-04-20 (enhancement) Documented Tcl_SetNotifier and Tcl_ServiceModeHook.
+2007-04-20 (enhancement) Document Tcl_SetNotifier & Tcl_ServiceModeHook (kenny)
 
-2007-04-23 (bug fix) Workaround crashing bug in fts_open() on 64bit Darawin.
+2007-04-23 (bug fix) fts_open() crash on 64bit Darwin 8 or earlier (steffen)
 
 --- Released 8.5a6, April 25, 2007 --- See ChangeLog for details ---
+
+2007-04-30 (bug fix)[1705778] many valgrind-detected leaks corrected
+
+2007-05-01 (bug fix)[1710709] leak in [string map] (porter)
+
+2007-05-02 (bug fix)[1710707] leaks in filesystem paths (mistachkin,kenny)
+
+2007-05-18 (feature change) {expand} syntax support removed. (porter)
+	*** POTENTIAL INCOMPATIBILITY with previous 8.5 alphas only ***
+
+2007-05-29 (bug fix)[1712723] Joinable thread death on 64-bit (virden,hobbs)
+
+2007-05-30 (feature change)[1725186] When expanded literals are parsed,
+(example: {*}{1 2 3}), TCL_TOKEN_EXPAND_WORD token is no longer returned.
+Tokens reflecting the expansion are returned instead. (porter)
+	*** POTENTIAL INCOMPATIBILITY with previous 8.5 alphas only ***
+
+2007-06-06 (platform support) Darwin: add plist to tclsh (steffen)
+
+2007-06-12 (enhancement) [info] is now a [namespace ensemble] (fellows)
+
+2007-06-20 (enhancement) better `make html` results (hobbs)
+
+2007-06-21 (feature change)[1740962] leave traces created during execution
+of traced command do not fire (sofer)
+	*** POTENTIAL INCOMPATIBILITY ***
+
+2007-06-23 (bug fix) Darwin: prevent post-fork() abort() (steffen)
+
+2007-06-27 (bug fix)[1743941] Infinite loop in Tcl_CreateTrace traces (porter)
+
+2007-06-29 (enhancement) Tcl_Alloc alignment on Darwin (steffen)
+
+2007-06-30 (bug fix)[1726873] crash in thread sync objects (vasiljevic,twylite)
+
+2007-06-30 (bug fix)[1717186] [lsort -command \{ $l] leak (afredd,fellows)
+
+2007-07-05 (bug fix)[1743676] no command named "" error message (porter,virden)
+
+2007-07-11 (bug fix)[1752146] [while 1 {}] & [interp limit] on commands (sofer)
+
+2007-07-31 (bug fix)[681877] tcl_platform(user) from system, not env (fellows)
+
+2007-07-31 (enhancement)[1750051] space efficiency of Tcl variables (sofer)
+	*** POTENTIAL INCOMPATIBILITY for C code that accesses internal
+	Tcl structs Var, Bytecode, Namespace, or CallFrame. ***
+
+2007-08-01 (enhancement)[1764318] word.tcl proc rewrites (petasis,fellows)
+
+2007-08-08 (bug fix)[1770224] [tcl::mathop::>> $big1 $big2] errors (porter)
+
+2007-08-14 (platform support) Darwin [load] from VFS on intel & 64bit (steffen)
+
+2007-08-15 (bug fix)[1773127] corrected open mode "a+" (rottman,fellows)
+
+2007-08-16 (bug fix)[1773040] ::errorInfo trace crash (janssen,porter)
+
+2007-08-16 (performance)[1564517] pre-compile constant expressions (porter)
+
+2007-08-21 (bug fix)[1775878] 'puts \' in interactive tclsh failed to move to
+prompt for continuation line (porter)
+
+2007-08-25 (bug fix)[1781282] [clock scan] case senstivity (kenny)
+
+2007-08-25 (performance)[1767293] ** on native integer types (kenny)
+
+2007-09-03 clock tzdata updated to Olson's tzdata2007g (kenny)
+
+2007-09-06 (platform support) Darwin: drop support for Xcode 1.5 project, add
+project for Xcode 3.0 (steffen)
+
+2007-09-08 (bug fix)[1786481] nested [dict update] crash (fellows)
+
+2007-09-08 (bug fix)[1710710] TclPtrSetVar leak (mistachkin,sofer)
+
+2005-09-09 (feature removed) Tcl_ObjType "nsName" no longer registered (porter)
+	*** POTENTIAL INCOMPATIBILITY for Tcl_GetObjType("nsName") ***
+
+2007-09-10 (bug fix)[1740631] Linked variable unlink prevention (maros,hobbs)
+
+2007-09-11 (bug fix)[1786481] [dict update] stack management (sofer)
+	*** POTENTIAL INCOMPATIBILITY with previous 8.5 alpha bytecode only ***
+
+2007-09-11 (bug fix)[1578344] [package require -exact] 8.4 compat (porter)
+	*** POTENTIAL INCOMPATIBILITY with previous 8.5 alphas only ***
+
+2007-09-11 (bug fix)[1772989,1071322] Support _, : in test constraints (porter)
+=> tcltest 2.3b1
+
+2007-09-11 (platform support) Windows AMD64 support (thoyts)
+
+2007-09-14 (enhancement)[1793984] DTrace provider for Tcl (steffen)
+
+2007-09-14 (bug fix)[1519940] surplus ns path invalidation (fellows,bauer)
+
+2007-09-15 (platform support) SunOS-5.1x link with cc, not ld (steffen)
+
+2007-09-17 (platform support)[1748251] Fix NetBSD link failures (english)
+
+(bug fix)[1066755] Several stack efficiency efforts increases recursion limit
+on Windows to be larger than the default [interp recursionlimit] value
+
+--- Released 8.5b1, September 26, 2007 --- See ChangeLog for details ---
+
+2007-10-02 (bug fix)[1806422] proper [tcl::tm::path] autoload (porter)
+
+2007-10-02 (bug fix) Improve Tcl_DecrRefCount() robustness (staplin)
+
+2007-10-11 (bug fix)[1805887] [string is int -failindex] for 0o, 0b (porter)
+
+2007-10-15 (bug fix)[1813528] Tcl_ParseBraces read past buffer (mistachkin)
+
+2007-10-25 (bug fix)[1726873] intermittent crash in threads (vasiljevic)
+
+--- Released 8.5b2, October 26, 2007 --- See ChangeLog for details ---
+
+2007-10-27 (bug fix)[1821159] fixed broken compile on x86_64 (sofer)
+
+2007-10-27 (bug fix)[1810264] stop panic in RE lexer (fellows)
+
+2007-10-28 (enhancement)[1826906] Embed iso8859-1 encoding in libtcl (fellows)
+
+2007-11-01 (bug fix)[1808258] [string is ascii \000] (fellows)
+
+2007-11-05 (bug fix)[1823576] [fconfigure $serial -xchar \000] (cassof)
+
+2007-11-07 (performance)[1827996] binary glob matching (hobbs)
+
+2007-11-07 (performance) binary [gets] (hobbs)
+
+2007-11-09 (performance)[1829248] interp state reset (sofer)
+
+2007-11-10 (performance) stack checking (sofer)
+
+2007-11-10 (performance) list indexing bytecode (sofer)
+
+2007-11-11 (performance)[1830038] macros to fetch Tcl_Obj intreps (sofer)
+
+2007-11-11 (performance)[1830166] RE bytecode for simple cases (hobbs)
+
+2007-11-13 (performance) [switch] & [regexp] use RE bytecode (hobbs, fellows)
+
+2007-11-14 (performance) bytecode for [info exists] (fellows)
+
+2007-11-15 (new feature)[1231022] configure option: --disable-rpath (fellows)
+
+2007-11-15 (bug fix)[1810038] infinite loop in RE compiler (lane,porter)
+
+Many significant documentation improvements (fellows, sofer)
+
+--- Released 8.5b3, November 19, 2007 --- See ChangeLog for details ---
+
+2007-11-20 (enhancement) string rep of dict has stable order (fellows)
+
+2007-11-21 (enhancement) compiled ensemble support (fellows)
+
+2007-11-22 (enhancement) [dict] is now an ensemble (fellows)
+
+2007-11-23 (enhancement) [string] is now an ensemble (fellows)
+
+2007-11-26 (bug fix)[1815573] Correct stack checking failure (sofer,golovan)
+
+2007-11-27 (bug fix)[800753] Document single byte char limit for
+[chan configure -eofchar] (cassoff)
+
+2007-12-03 (enhancement)[1836519] [switch $val $body] safe/fast (fellows,spjuth)
+
+2007-12-03 (release) tcltest package bump to 2.3.0 (porter)
+
+2007-12-03 (bug fix)[1618235] fix BSD compile errors (fellows)
+
+2007-12-05 (bug fix)[1844789] fix [lsearch -exact -integer] crash (fellows)
+
+2007-12-05 (performance)[1845092] Tcl_ObjType for channel names (hobbs)
+
+2007-12-14 (bug fix)[1602539] NUL pollution in [glob] result (hobbs)
+
+2007-12-17 (bug fix)[1851832,1851524] memory alignment correction (sofer)
+
+2007-12-18 (bug fix)[1810264] revised regexp engine to prevent debilitating
+over-consumption of resources (drewry,lane,ormandy,fellows)
+
+Several documentation and release notes improvements
+
+--- Released 8.5.0, December 20, 2007 --- See ChangeLog for details ---
+
+2007-12-23 (bug fix)[1857126] restore backref support to regexps (hobbs)
+
+2007-12-26 (enhancement)[1856994] [lsort] performance (sofer)
+
+2008-01-10 (bug fix)[1867855] fix [format %lli 0] crash (porter)
+
+2008-01-11 (bug fix)[1850424,1860425] stack checking on *bsd (sofer,noble)
+
+2008-01-13 (bug fix)[1353846] crash in read-only serial (hobbs,newman)
+
+2008-01-15 (bug fix)[1869989] mem leak; expr literals (porter,melbardis)
+
+2008-01-20 (bug fix)[1869405] binary [gets]; stacked channels (hobbs,ficicchia)
+
+2008-01-22 (bug fix)[1867855] fix [lreverse {}] crash (sofer,madden)
+
+2008-01-30 (bug fix)[1882373] fix Tcl_GetAlias pointer code (an00na)
+
+Several documentation and release notes improvements
+
+--- Released 8.5.1, February 5, 2008 --- See ChangeLog for details ---

@@ -7,7 +7,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 ////////////////////////////////////////////////////////////////
 //
 //   virtual base class for all openNURBS objects
@@ -27,7 +27,7 @@ class ON_ClassId; // used for runtime class identification
 
 // Description:
 //   Every class derived from ON_Object has a class id that records
-//   its class name, baseclass name, and class uuid.  The 
+//   its class name, baseclass name, and class uuid.  The
 //   ON_OBJECT_DECLARE and ON_OBJECT_IMPLEMENT macros generate
 //   the code that creates and initializes class ids.
 //
@@ -46,7 +46,7 @@ public:
   //   sBaseClassName - [in] name of baseclass (like ON_Object)
   //   create - [in] function to create a new object(like CreateNewON_Geometry())
   //   sUUID - [in] UUID in registry format from Windows guidgen.exe
-  ON_ClassId( 
+  ON_ClassId(
           const char* sClassName,
           const char* sBaseClassName,
           ON_Object* (*create)(),
@@ -54,28 +54,28 @@ public:
            );
   ~ON_ClassId();
 
-  // Description: 
+  // Description:
   //   Gets a class's ON_ClassId from the class's name.
   // Parameters:
   //   sClassName - [in] name of class
-  // Returns: 
+  // Returns:
   //   Pointer to the class's ON_ClassId.
   // Example:
   //   const ON_ClassId* brep_id = ON_CLassId::ClassId("ON_Brep");
-  static const ON_ClassId* ClassId( 
+  static const ON_ClassId* ClassId(
           const char* sClassName
           );
 
-  // Description: 
+  // Description:
   //   Gets a class's ON_ClassId from the class's uuid.
   // Parameters:
   //   class_uuid - [in] uuid for the class
-  // Returns: 
+  // Returns:
   //   Pointer to the class's ON_ClassId.
   // Example:
   //   ON_UUID brep_uuid = ON_UuidFromString("60B5DBC5-E660-11d3-BFE4-0010830122F0");
   //   const ON_ClassId* brep_id = ON_CLassId::ClassId(brep_uuid);
-  static const ON_ClassId* ClassId( 
+  static const ON_ClassId* ClassId(
           ON_UUID class_uuid
           );
 
@@ -92,12 +92,12 @@ public:
   //   Each class derived from ON_Object has a corresponding
   //   ON_ClassId stored in a linked list.  If a class definition
   //   is going to disappear (which happens when the derived object
-  //   definition is in a DLL that uses openNURBS as a DLL and the 
+  //   definition is in a DLL that uses openNURBS as a DLL and the
   //   DLL containing the derived object's definition is unloaded),
-  //   then the class's ON_ClassId needs to be removed from the class 
+  //   then the class's ON_ClassId needs to be removed from the class
   //   list.  ON_ClassId::Purge( mark ) removes all ON_ClassIds with a
   //   a prescribed mark and returns the number of classes that
-  //   were purged.  
+  //   were purged.
   // Parameters:
   //   mark - [in] All ON_ClassIds with this mark will be purged.
   // Returns:
@@ -110,7 +110,7 @@ public:
   //   // Call ON_ClassId::Purge() BEFORE unloading MY.DLL.
   //   ON_ClassId::Purge( my_dll_classid_mark );
   //   unload MY.DLL
-  static int Purge( 
+  static int Purge(
     int mark
     );
 
@@ -118,7 +118,7 @@ public:
   //   Dumps the ON_ClassId list
   // Parameters:
   //   dump - [in] destination for the text dump.
-  static void Dump( 
+  static void Dump(
     ON_TextLog& dump
     );
 
@@ -136,7 +136,7 @@ public:
   // Returns:
   //   base class name
   const char* BaseClassName() const;
-  
+
   // Returns:
   //   base class id
   const ON_ClassId* BaseClass() const;
@@ -148,7 +148,7 @@ public:
   //   potential_parent - [in] Class to test as parent.
   // Returns:
   //   TRUE if this is derived from potential_parent.
-	BOOL IsDerivedFrom( 
+	BOOL IsDerivedFrom(
     const ON_ClassId* potential_parent
     ) const;
 
@@ -178,7 +178,7 @@ private:
   static int m_mark0;  // current mark value
   ON_ClassId* m_pNext;         // next in the linked list of class ids
   const ON_ClassId* m_pBaseClassId;  // base class id
-  char m_sClassName[80];              
+  char m_sClassName[80];
   char m_sBaseClassName[80];
   ON_Object* (*m_create)();
   ON_UUID m_uuid;
@@ -207,7 +207,7 @@ typedef int (*ON_Vtable_func)(void);
 struct ON_Vtable
 {
   // The actual number of virtual functions depends on the class.
-  // The four in f[4] is just there to make it easy to see the 
+  // The four in f[4] is just there to make it easy to see the
   // first four in the debugger.  There can be fewer or more
   // than four virtual functions.  The function prototype
   // also depends on the class defintion.  In particular,
@@ -217,7 +217,7 @@ struct ON_Vtable
 
 /*
 Description:
-  Expert user function to get a pointer to 
+  Expert user function to get a pointer to
   a class's vtable.
 Parameters:
   pClass - [in] a class that has a vtable.
@@ -232,7 +232,7 @@ struct ON_Vtable* ON_ClassVtable(void* p);
 
 
 /*
-All classes derived from ON_Object must have 
+All classes derived from ON_Object must have
 
   ON_OBJECT_DECLARE( <classname> );
 
@@ -240,7 +240,7 @@ as the first line in their class definition an a corresponding
 
   ON_VIRTUAL_OBJECT_IMPLEMENT( <classname>, <basclassname>, <classuuid> );
 
-or 
+or
 
   ON_OBJECT_IMPLEMENT( <classname>, <basclassname>, <classuuid> );
 
@@ -273,7 +273,7 @@ in a .CPP file.
     /*Description: Expert level tool - no support available.*/  \
     /*If this class is derived from CRhinoObject, use CRhinoObject::DuplicateRhinoObject instead*/
 
-// Objects derived from ON_Object that do not have a valid new, operator=, 
+// Objects derived from ON_Object that do not have a valid new, operator=,
 // or copy constructor must use ON_VIRTUAL_OBJECT_IMPLEMENT instead of
 // ON_OBJECT_IMPLEMENT.  Objects defined with ON_VIRTUAL_OBJECT_IMPLEMENT
 // cannot be serialized using ON_BinaryArchive::ReadObject()/WriteObject()
@@ -292,7 +292,7 @@ in a .CPP file.
 
 // Objects derived from ON_Object that use ON_OBJECT_IMPLEMENT must
 // have a valid operator= and copy constructor.  Objects defined with
-// ON_OBJECT_IMPLEMENT may be serialized using 
+// ON_OBJECT_IMPLEMENT may be serialized using
 // ON_BinaryArchive::ReadObject()/WriteObject()
 // and duplicated by calling ON_Object::Duplicate().
 #define ON_OBJECT_IMPLEMENT( cls, basecls, uuid ) \
@@ -324,7 +324,7 @@ public:
 
 #if defined(ON_DLL_TEMPLATE)
 // This stuff is here because of a limitation in the way Microsoft
-// handles templates and DLLs.  See Microsoft's knowledge base 
+// handles templates and DLLs.  See Microsoft's knowledge base
 // article ID Q168958 for details.
 #pragma warning( push )
 #pragma warning( disable : 4231 )
@@ -380,9 +380,9 @@ public:
 
   /*
   Description:
-    The MemoryRelocate() function is called when an 
-    object's location in memory is changed.  For 
-    example, if an object resides in a chunk of 
+    The MemoryRelocate() function is called when an
+    object's location in memory is changed.  For
+    example, if an object resides in a chunk of
     memory that is grown by calling a realloc
     that has to allocate a new chunk and
     copy the contents of the old chunk to the
@@ -393,7 +393,7 @@ public:
     of ON_ObjectArray<>'s that use realloc to grow
     the dynamic array.
   */
-  virtual 
+  virtual
   void MemoryRelocate();
 
   /*
@@ -416,15 +416,15 @@ public:
   Remarks:
     The primary reason for IsKindOf() is to support the
     static Cast() members declared in the ON_OBJECT_DECLARE
-    macro.  If we determine that dynamic_cast is properly 
-    supported and implemented by all supported compilers, 
+    macro.  If we determine that dynamic_cast is properly
+    supported and implemented by all supported compilers,
     then IsKindOf() may dissappear.  If an application needs
     to determine if a pointer points to a class derived from
-    ON_SomeClassName, then call 
-    ON_SomeClassName::Cast(mystery pointer) and check for 
+    ON_SomeClassName, then call
+    ON_SomeClassName::Cast(mystery pointer) and check for
     a non-null return.
   */
-  BOOL IsKindOf( 
+  BOOL IsKindOf(
         const ON_ClassId* pClassId
         ) const;
 
@@ -436,9 +436,9 @@ public:
     text_log - [in] if the object is not valid and text_log
         is not NULL, then a brief englis description of the
         reason the object is not valid is appened to the log.
-        The information appended to text_log is suitable for 
-        low-level debugging purposes by programmers and is 
-        not intended to be useful as a high level user 
+        The information appended to text_log is suitable for
+        low-level debugging purposes by programmers and is
+        not intended to be useful as a high level user
         interface tool.
   Returns:
     @untitled table
@@ -456,7 +456,7 @@ public:
     for creating high quality text descriptions of an
     object.
 
-    The default implementations of this virtual function 
+    The default implementations of this virtual function
     prints the class's name.
   */
   virtual
@@ -493,9 +493,9 @@ public:
     Use ON_BinaryArchive::WriteObject() to write objects.
     This Write() function should just write the specific definition of
     this object.  It should not write and any chunk typecode or length
-    information.  
+    information.
 
-    The default implementation of this virtual function returns 
+    The default implementation of this virtual function returns
     FALSE and does nothing.
   */
   virtual
@@ -515,7 +515,7 @@ public:
     This Read() function should read the objects definition back into
     its data members.
 
-    The default implementation of this virtual function returns 
+    The default implementation of this virtual function returns
     FALSE and does nothing.
   */
   virtual
@@ -529,7 +529,7 @@ public:
     between basic object types like points, curves, surfaces,
     and so on.
 
-  Returns: 
+  Returns:
     ON::object_type enum value.
 
     @untitled table
@@ -559,7 +559,7 @@ public:
   /*
   Description:
     All objects in an opennurbs model have an id
-    ( ON_Layer.m_layer_id, ON_Font.m_font_id, 
+    ( ON_Layer.m_layer_id, ON_Font.m_font_id,
       ON_Material.m_material_id, ON_3dmObjectAttributes.m_uuid
       ).
   Returns:
@@ -583,14 +583,14 @@ public:
     perisist through copy construction, operator=, and file IO.
   Parameters:
     key - [in] id used to retrieve this string.
-    string_value - [in] 
+    string_value - [in]
       If NULL, the string with this id will be removed.
   Returns:
     True if successful.
   */
-  bool SetUserString( 
-    const wchar_t* key, 
-    const wchar_t* string_value 
+  bool SetUserString(
+    const wchar_t* key,
+    const wchar_t* string_value
     );
 
   /*
@@ -602,9 +602,9 @@ public:
   Returns:
     True if a string with id was found.
   */
-  bool GetUserString( 
-    const wchar_t* key, 
-    ON_wString& string_value 
+  bool GetUserString(
+    const wchar_t* key,
+    ON_wString& string_value
     ) const;
 
   /*
@@ -616,8 +616,8 @@ public:
   Returns:
     Number of elements appended to the user_strings list.
   */
-  int GetUserStrings( 
-    ON_ClassArray<ON_UserString>& user_strings 
+  int GetUserStrings(
+    ON_ClassArray<ON_UserString>& user_strings
     ) const;
 
   /*
@@ -629,8 +629,8 @@ public:
   Returns:
     Number of elements appended to the user_strings list.
   */
-  int GetUserStringKeys( 
-    ON_ClassArray<ON_wString>& user_string_keys 
+  int GetUserStringKeys(
+    ON_ClassArray<ON_wString>& user_string_keys
     ) const;
 
   /*
@@ -639,17 +639,17 @@ public:
   Parameters:
     pUserData - [in] user data to attach to object.
         The ON_UserData pointer passed to AttachUserData()
-        must be created with new.  
+        must be created with new.
   Returns:
     If TRUE is returned, then ON_Object will delete the user
-    data when appropriate.  If FALSE is returned, then data 
-    could not be attached and caller must delete.  
+    data when appropriate.  If FALSE is returned, then data
+    could not be attached and caller must delete.
   Remarks:
     AttachUserData() will fail if the user data's m_userdata_uuid
     field is nil or not unique.
   */
-  BOOL AttachUserData( 
-          ON_UserData* pUserData 
+  BOOL AttachUserData(
+          ON_UserData* pUserData
           );
 
   /*
@@ -658,8 +658,8 @@ public:
   Parameters:
     pUserData - [in] user data to attach to object.
         The ON_UserData pointer passed to DetachUserData()
-        must have been previously attached using 
-        AttachUserData().  
+        must have been previously attached using
+        AttachUserData().
   Returns:
     If TRUE is returned, then the user data was
     attached to this object and it was detached.  If FALSE
@@ -670,7 +670,7 @@ public:
     Call delete pUserData if you want to destroy the user data.
   */
   BOOL DetachUserData(
-          ON_UserData* pUserData 
+          ON_UserData* pUserData
           );
 
 
@@ -678,20 +678,20 @@ public:
   Description:
     Get a pointer to user data.
   Parameters:
-    userdata_uuid - [in] value of the user data's 
+    userdata_uuid - [in] value of the user data's
        m_userdata_uuid field.
   Remarks:
     The returned user data is still attached to the object.
     Deleting the returned user data will automatically remove
     the user data from the object.
   */
-  ON_UserData* GetUserData( 
+  ON_UserData* GetUserData(
           const ON_UUID& userdata_uuid
           ) const;
 
   /*
   Description:
-    PurgeUserData() removes all user data from object.  
+    PurgeUserData() removes all user data from object.
   Remarks:
     Use delete GetUserData(...) to destroy a single piece
     of user data.
@@ -705,7 +705,7 @@ public:
     linked list.  This is the most recent item attached
     using AttachUserData().
   Remark:
-    To iterate through all the user data on an object, 
+    To iterate through all the user data on an object,
     call FirstUserData() and then use ON_UserData::Next()
     to traverse the list.
   */
@@ -718,13 +718,13 @@ public:
   Parameters:
     xform - [in] transformation to apply to user data
   */
-  void TransformUserData( 
+  void TransformUserData(
     const ON_Xform& xform
     );
 
   /*
   Description:
-    Expert user tool that copies user data that has a positive 
+    Expert user tool that copies user data that has a positive
     m_userdata_copycount from the source_object to this.
   Parameters:
     source_object - [in] source of user data to copy
@@ -733,19 +733,19 @@ public:
     Simply rely on ON_Object::operator=() or the copy constructor
     to do the right thing.
   */
-  void CopyUserData( 
-    const ON_Object& source_object 
+  void CopyUserData(
+    const ON_Object& source_object
     );
 
   /*
   Description:
-    Expert user tool Moves user data from source_object 
+    Expert user tool Moves user data from source_object
     to this, including user data with a nil m_userdata_copycount.
     Deletes any source user data with a duplicate m_userdata_uuid
     on this.
   */
-  void MoveUserData( 
-    ON_Object& source_object 
+  void MoveUserData(
+    ON_Object& source_object
     );
 
 

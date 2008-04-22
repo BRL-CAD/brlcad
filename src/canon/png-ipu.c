@@ -1,7 +1,7 @@
 /*                       P N G - I P U . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2007 United States Government as represented by
+ * Copyright (c) 1992-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -54,33 +54,24 @@
  *	v	verbose;
  *	V	verbose;
  */
-#ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
+#include <fcntl.h>
 
 #include <png.h>
 
-#include "machine.h"
 #include "bu.h"
-
-#include <fcntl.h>
-#include <stdlib.h>
 
 #include "./canon.h"
 
 #ifdef IPU_FULL_LIB
 
 
-static png_color_16 def_backgrd={ 255,255,255,255,255 };	/* white */
+static png_color_16 def_backgrd={ 255, 255, 255, 255, 255 };	/* white */
 static double	def_screen_gamma=1.0;	/* Don't add more gamma, by default */
 
 static unsigned char **scanline;	/* 1 scanline pixel buffer */
@@ -117,8 +108,7 @@ main(int ac, char *av[])
 	if (autosize) fprintf(stderr, "Cannot autosize stdin\n");
 
     } else if (arg_index+1 < ac)
-	(void)fprintf(stderr,
-		      "%s: Excess command line arguments ignored\n", *av);
+	(void)fprintf(stderr, "%s: Excess command line arguments ignored\n", *av);
     else if (freopen(av[arg_index], "r", stdin) == NULL) {
 	perror(av[arg_index]);
 	return(-1);
@@ -132,19 +122,19 @@ main(int ac, char *av[])
     }
 
     /* Read the image */
-    if( fread( header, 8, 1, stdin ) != 1 )
-	bu_bomb( "png-ipu: ERROR: Failed while reading file header!!!\n" );
+    if ( fread( header, 8, 1, stdin ) != 1 )
+	bu_exit(1, "png-ipu: ERROR: Failed while reading file header!");
 
-    if( !png_check_sig( (png_bytep)header, 8 ) )
-	bu_bomb( "png-ipu: This is not a PNG file!!!\n" );
+    if ( !png_check_sig( (png_bytep)header, 8 ) )
+	bu_exit(2, "png-ipu: This is not a valid PNG file\n");
 
     png_p = png_create_read_struct( PNG_LIBPNG_VER_STRING, NULL, NULL, NULL );
-    if( !png_p )
-	bu_bomb( "png_create_read_struct() failed!!\n" );
+    if ( !png_p )
+	bu_exit(3, "png_create_read_struct() failed!\n");
 
     info_p = png_create_info_struct( png_p );
-    if( !info_p )
-	bu_bomb( "png_create_info_struct() failed!!\n" );
+    if ( !info_p )
+	bu_exit(4, "png_create_info_struct() failed!!\n");
 
     png_init_io( png_p, stdin );
 
@@ -156,62 +146,62 @@ main(int ac, char *av[])
 
     png_set_expand( png_p );
     bit_depth = png_get_bit_depth( png_p, info_p );
-    if( bit_depth == 16 )
+    if ( bit_depth == 16 )
 	png_set_strip_16( png_p );
 
     file_width = png_get_image_width( png_p, info_p );
     file_height = png_get_image_height( png_p, info_p );
 
-    if( ipu_debug )
+    if ( ipu_debug )
+    {
+	switch (color_type)
 	{
-	    switch (color_type)
-		{
-		case PNG_COLOR_TYPE_GRAY:
-		    bu_log( "color type: b/w (bit depth=%d)\n", bit_depth );
-		    break;
-		case PNG_COLOR_TYPE_GRAY_ALPHA:
-		    bu_log( "color type: b/w with alpha channel (bit depth=%d)\n", bit_depth );
-		    break;
-		case PNG_COLOR_TYPE_PALETTE:
-		    bu_log( "color type: color palette (bit depth=%d)\n", bit_depth );
-		    break;
-		case PNG_COLOR_TYPE_RGB:
-		    bu_log( "color type: RGB (bit depth=%d)\n", bit_depth );
-		    break;
-		case PNG_COLOR_TYPE_RGB_ALPHA:
-		    bu_log( "color type: RGB with alpha channel (bit depth=%d)\n", bit_depth );
-		    break;
-		default:
-		    bu_log( "Unrecognized color type (bit depth=%d)\n", bit_depth );
-		    break;
-		}
-	    bu_log( "Image size: %d X %d\n", file_width, file_height );
+	    case PNG_COLOR_TYPE_GRAY:
+		bu_log( "color type: b/w (bit depth=%d)\n", bit_depth );
+		break;
+	    case PNG_COLOR_TYPE_GRAY_ALPHA:
+		bu_log( "color type: b/w with alpha channel (bit depth=%d)\n", bit_depth );
+		break;
+	    case PNG_COLOR_TYPE_PALETTE:
+		bu_log( "color type: color palette (bit depth=%d)\n", bit_depth );
+		break;
+	    case PNG_COLOR_TYPE_RGB:
+		bu_log( "color type: RGB (bit depth=%d)\n", bit_depth );
+		break;
+	    case PNG_COLOR_TYPE_RGB_ALPHA:
+		bu_log( "color type: RGB with alpha channel (bit depth=%d)\n", bit_depth );
+		break;
+	    default:
+		bu_log( "Unrecognized color type (bit depth=%d)\n", bit_depth );
+		break;
 	}
+	bu_log( "Image size: %d X %d\n", file_width, file_height );
+    }
 
-    if( png_get_bKGD( png_p, info_p, &input_backgrd ) )
-	{
-	    if( ipu_debug && (color_type == PNG_COLOR_TYPE_GRAY_ALPHA ||
-			      color_type == PNG_COLOR_TYPE_RGB_ALPHA ) )
-		bu_log( "background color: %d %d %d\n", input_backgrd->red, input_backgrd->green, input_backgrd->blue );
-	    png_set_background( png_p, input_backgrd, PNG_BACKGROUND_GAMMA_FILE, 1, 1.0 );
-	}
+    if ( png_get_bKGD( png_p, info_p, &input_backgrd ) )
+    {
+	if ( ipu_debug && (color_type == PNG_COLOR_TYPE_GRAY_ALPHA ||
+			   color_type == PNG_COLOR_TYPE_RGB_ALPHA ) )
+	    bu_log( "background color: %d %d %d\n", input_backgrd->red, input_backgrd->green, input_backgrd->blue );
+	png_set_background( png_p, input_backgrd, PNG_BACKGROUND_GAMMA_FILE, 1, 1.0 );
+    }
     else
 	png_set_background( png_p, &def_backgrd, PNG_BACKGROUND_GAMMA_FILE, 0, 1.0 );
 
-    if( !png_get_gAMA( png_p, info_p, &gamma ) )
+    if ( !png_get_gAMA( png_p, info_p, &gamma ) )
 	gamma = 0.5;
     png_set_gamma( png_p, def_screen_gamma, gamma );
-    if( ipu_debug )
+    if ( ipu_debug )
 	bu_log( "file gamma: %f, additional screen gamma: %f\n",
 		gamma, def_screen_gamma );
 
-    if( ipu_debug )
-	{
-	    if( png_get_interlace_type( png_p, info_p ) == PNG_INTERLACE_NONE )
-		bu_log( "not interlaced\n" );
-	    else
-		bu_log( "interlaced\n" );
-	}
+    if ( ipu_debug )
+    {
+	if ( png_get_interlace_type( png_p, info_p ) == PNG_INTERLACE_NONE )
+	    bu_log( "not interlaced\n" );
+	else
+	    bu_log( "interlaced\n" );
+    }
 
     png_read_update_info( png_p, info_p );
 
@@ -222,29 +212,29 @@ main(int ac, char *av[])
     scanline = (unsigned char **)bu_calloc( file_height, sizeof( unsigned char *), "scanline" );
 
     /* Change order top-to-bottom */
-    for( i=0 ; i<file_height ; i++ )
+    for ( i=0; i<file_height; i++ )
 	scanline[file_height-1-i] = image+(i*file_width*3);
 
     png_read_image( png_p, scanline );
 
-    if( ipu_debug )
+    if ( ipu_debug )
+    {
+	png_timep mod_time;
+	png_textp text;
+	int num_text;
+
+	png_read_end(png_p, info_p );
+	if ( png_get_text( png_p, info_p, &text, &num_text ) )
 	{
-	    png_timep mod_time;
-	    png_textp text;
-	    int num_text;
+	    int i;
 
-	    png_read_end(png_p, info_p );
-	    if( png_get_text( png_p, info_p, &text, &num_text ) )
-		{
-		    int i;
-
-		    for( i=0 ; i<num_text ; i++ )
-			bu_log( "%s: %s\n", text[i].key, text[i].text );
-		}
-	    if( png_get_tIME( png_p, info_p, &mod_time ) )
-		bu_log( "Last modified: %d/%d/%d %d:%d:%d\n", mod_time->month, mod_time->day,
-			mod_time->year, mod_time->hour, mod_time->minute, mod_time->second );
+	    for ( i=0; i<num_text; i++ )
+		bu_log( "%s: %s\n", text[i].key, text[i].text );
 	}
+	if ( png_get_tIME( png_p, info_p, &mod_time ) )
+	    bu_log( "Last modified: %d/%d/%d %d:%d:%d\n", mod_time->month, mod_time->day,
+		    mod_time->year, mod_time->hour, mod_time->minute, mod_time->second );
+    }
 
     if (ipu_debug)
 	fprintf(stderr, "Image is %dx%d\n", file_width, file_height);
@@ -279,7 +269,7 @@ main(int ac, char *av[])
     ipu_print_config(dsp, units, divisor, conv,
 		     mosaic, ipu_gamma, tray);
 
-    if( ipu_filetype == IPU_PALETTE_FILE )
+    if ( ipu_filetype == IPU_PALETTE_FILE )
 	ipu_set_palette(dsp, NULL);
 
     ipu_print_file(dsp, (char)1, copies, 0/*wait*/,
@@ -308,8 +298,8 @@ main(int ac, char *av[])
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

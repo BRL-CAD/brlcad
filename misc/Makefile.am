@@ -7,9 +7,9 @@ SUBDIRS = \
 	macosx \
 	nsis \
 	pkgconfig \
-	vfont \
 	win32-msvc \
-	win32-msvc7
+	win32-msvc7 \
+	win32-msvc8
 
 sample_applicationsdir = $(SAMPLE_APPLICATIONS_DIR)
 sample_applications_DATA = fortran_example.f
@@ -29,6 +29,8 @@ EXTRA_DIST = \
 	brlcad-config.in \
 	brlcad.spec \
 	brlcad.spec.in \
+	doxygen_structure \
+	flawfinder \
 	libtool.m4 \
 	rcs2log
 
@@ -44,8 +46,7 @@ DISTCLEANFILES = \
 	ltmain.sh \
 	ltmain.sh.backup \
 	mkinstalldirs \
-	py-compile
-
-MAINTAINERCLEANFILES = Makefile.in
+	py-compile \
+	ylwrap
 
 include $(top_srcdir)/misc/Makefile.defs

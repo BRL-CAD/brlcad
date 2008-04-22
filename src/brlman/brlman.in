@@ -2,7 +2,7 @@
 #                          B R L M A N
 # BRL-CAD
 #
-# Copyright (c) 1991-2007 United States Government as represented by
+# Copyright (c) 1991-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -63,6 +63,10 @@ fi
 
 # Ensure that MANPATH is set and has BRL-CAD materials man dirs listed first.
 
+prefix="@prefix@"	# needed to fill @mandir@
+if test -d "@mandir@" ; then
+    MANPATH="@mandir@:$MANPATH"
+fi
 if test -d "@BRLCAD_ROOT@/share/brlcad/@BRLCAD_VERSION@/man" ; then
     MANPATH="@BRLCAD_ROOT@/share/brlcad/@BRLCAD_VERSION@/man:$MANPATH"
 fi

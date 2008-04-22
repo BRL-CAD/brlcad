@@ -88,7 +88,11 @@ number, then they store 0 at \fI*booleanPtr\fR if
 the value was zero and 1 otherwise.
 If the expression's actual value is a non-numeric string then
 it must be one of the values accepted by \fBTcl_GetBoolean\fR
-such as ``yes'' or ``no'', or else an error occurs.
+such as
+.QW yes
+or
+.QW no ,
+or else an error occurs.
 .PP
 If \fBTcl_ExprObj\fR successfully evaluates the expression,
 it stores a pointer to the Tcl object

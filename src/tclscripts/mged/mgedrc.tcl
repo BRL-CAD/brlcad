@@ -1,7 +1,7 @@
 #                      M G E D R C . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2007 United States Government as represented by
+# Copyright (c) 2004-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -18,16 +18,6 @@
 # information.
 #
 ###
-#
-#                       M G E D R C . T C L
-#
-# Author -
-#	Robert G. Parker
-#
-# Source -
-#	The U. S. Army Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
 #
 # Description -
 #	Procedure for dumping state to the user's .mgedrc file.
@@ -185,11 +175,11 @@ proc dump_mged_state {fd} {
     puts $fd "set mged_default(num_lines) $mged_gui($id,num_lines)"
     puts $fd ""
     puts $fd "# Determines where to look for MGED's html documentation"
-    puts $fd "set mged_default(html_dir) $mged_default(html_dir)"
+    puts $fd "set mged_default(html_dir) \"$mged_default(html_dir)\""
     puts $fd ""
-#    puts $fd "# Determines whether or not to use tearoff menus"
-#    puts $fd "set mged_default(tearoff_menus) $mged_default(tearoff_menus)"
-#    puts $fd ""
+    #    puts $fd "# Determines whether or not to use tearoff menus"
+    #    puts $fd "set mged_default(tearoff_menus) $mged_default(tearoff_menus)"
+    #    puts $fd ""
     puts $fd "# Combines geometry and command windows"
     puts $fd "set mged_default(comb) $mged_gui($id,comb)"
     puts $fd ""
@@ -249,7 +239,7 @@ proc dump_mged_state {fd} {
     puts $fd "set mged_default(multi_pane) $mged_gui($id,multi_pane)"
     puts $fd ""
     puts $fd "# Specifies the web browser"
-    puts $fd "set mged_default(web_browser) $mged_default(web_browser)"
+    puts $fd "set mged_default(web_browser) \"$mged_default(web_browser)\""
     puts $fd ""
     puts $fd "# Used by the font GUI to demonstrate overstrike"
     puts $fd "set mged_default(overstrike_font) [list $mged_default(overstrike_font)]"

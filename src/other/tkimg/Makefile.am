@@ -38,9 +38,11 @@ tkimg_la_LIBADD = \
 	${TK} \
 	${TCLSTUB}
 
-EXTRA_DIST = \
-	init.c
+# TCLSTUB is necessary so it will load as a dylib on Mac OS X without
+# unresolved stub symbols.
 
-MAINTAINERCLEANFILES = Makefile.in
+EXTRA_DIST = \
+	init.c \
+	license.terms
 
 include $(top_srcdir)/misc/Makefile.defs

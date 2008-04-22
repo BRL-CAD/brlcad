@@ -8,6 +8,7 @@
  * Copyright (c) 1999 by Scriptics Corporation.
  * Copyright (c) 2001 by ActiveState Corporation.
  * Copyright (c) 2005 by Kevin B. Kenny.  All rights reserved.
+ * Copyright (c) 2007 Daniel A. Steffen <das@users.sourceforge.net>
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -16,7 +17,6 @@
  */
 
 #include "tclInt.h"
-#include "tclCompile.h"
 #include "tommath.h"
 #include <float.h>
 
@@ -175,6 +175,7 @@ static void		UpdateStringOfDouble(Tcl_Obj *objPtr);
 static void		UpdateStringOfInt(Tcl_Obj *objPtr);
 #ifndef NO_WIDE_TYPE
 static void		UpdateStringOfWideInt(Tcl_Obj *objPtr);
+static int		SetWideIntFromAny(Tcl_Interp *interp, Tcl_Obj *objPtr);
 #endif
 static void		FreeBignum(Tcl_Obj *objPtr);
 static void		DupBignum(Tcl_Obj *objPtr, Tcl_Obj *copyPtr);
@@ -187,9 +188,6 @@ static int		GetBignumFromObj(Tcl_Interp *interp, Tcl_Obj *objPtr,
  */
 
 static Tcl_HashEntry *	AllocObjEntry(Tcl_HashTable *tablePtr, void *keyPtr);
-static int		CompareObjKeys(void *keyPtr, Tcl_HashEntry *hPtr);
-static void		FreeObjEntry(Tcl_HashEntry *hPtr);
-static unsigned int	HashObjKey(Tcl_HashTable *tablePtr, void *keyPtr);
 
 /*
  * Prototypes for the CommandName object type.
@@ -241,7 +239,7 @@ Tcl_ObjType tclWideIntType = {
     NULL,				/* freeIntRepProc */
     NULL,				/* dupIntRepProc */
     UpdateStringOfWideInt,		/* updateStringProc */
-    NULL				/* setFromAnyProc */
+    SetWideIntFromAny			/* setFromAnyProc */
 };
 #endif
 Tcl_ObjType tclBignumType = {
@@ -257,12 +255,12 @@ Tcl_ObjType tclBignumType = {
  */
 
 Tcl_HashKeyType tclObjHashKeyType = {
-    TCL_HASH_KEY_TYPE_VERSION,		/* version */
-    0,					/* flags */
-    HashObjKey,				/* hashKeyProc */
-    CompareObjKeys,			/* compareKeysProc */
-    AllocObjEntry,			/* allocEntryProc */
-    FreeObjEntry			/* freeEntryProc */
+    TCL_HASH_KEY_TYPE_VERSION,	/* version */
+    0,				/* flags */
+    TclHashObjKey,		/* hashKeyProc */
+    TclCompareObjKeys,		/* compareKeysProc */
+    AllocObjEntry,		/* allocEntryProc */
+    TclFreeObjEntry		/* freeEntryProc */
 };
 
 /*
@@ -299,7 +297,8 @@ typedef struct ResolvedCmdName {
     Command *cmdPtr;		/* A cached Command pointer. */
     Namespace *refNsPtr;	/* Points to the namespace containing the
 				 * reference (not the namespace that contains
-				 * the referenced command). */
+				 * the referenced command). NULL if the name
+				 * is fully qualified.*/
     long refNsId;		/* refNsPtr's unique namespace id. Used to
 				 * verify that refNsPtr is still valid (e.g.,
 				 * it's possible that the cmd's containing
@@ -358,13 +357,15 @@ TclInitObjSubsystem(void)
     Tcl_RegisterObjType(&tclDictType);
     Tcl_RegisterObjType(&tclByteCodeType);
     Tcl_RegisterObjType(&tclArraySearchType);
-    Tcl_RegisterObjType(&tclNsNameType);
     Tcl_RegisterObjType(&tclCmdNameType);
     Tcl_RegisterObjType(&tclRegexpType);
     Tcl_RegisterObjType(&tclProcBodyType);
 
     /* For backward compatibility only ... */
     Tcl_RegisterObjType(&oldBooleanType);
+#ifndef NO_WIDE_TYPE
+    Tcl_RegisterObjType(&tclWideIntType);
+#endif
 
 #ifdef TCL_COMPILE_STATS
     Tcl_MutexLock(&tclObjMutex);
@@ -489,7 +490,7 @@ Tcl_AppendAllObjTypes(
      * Get the test for a valid list out of the way first.
      */
 
-    if (Tcl_ListObjLength(interp, objPtr, &numElems) != TCL_OK) {
+    if (TclListObjLength(interp, objPtr, &numElems) != TCL_OK) {
 	return TCL_ERROR;
     }
 
@@ -790,7 +791,6 @@ TclAllocateFreeObjects(void)
      */
 
     basePtr = (char *) ckalloc(bytesToAlloc);
-    memset(basePtr, 0, bytesToAlloc);
 
     prevPtr = NULL;
     objPtr = (Tcl_Obj *) basePtr;
@@ -854,6 +854,7 @@ TclFreeObj(
     if (ObjDeletePending(context)) {
 	PushObjToDelete(context, objPtr);
     } else {
+	TCL_DTRACE_OBJ_FREE(objPtr);
 	if ((typePtr != NULL) && (typePtr->freeIntRepProc != NULL)) {
 	    ObjDeletionLock(context);
 	    typePtr->freeIntRepProc(objPtr);
@@ -863,22 +864,19 @@ TclFreeObj(
 	Tcl_MutexLock(&tclObjMutex);
 	ckfree((char *) objPtr);
 	Tcl_MutexUnlock(&tclObjMutex);
-#ifdef TCL_COMPILE_STATS
-	tclObjsFreed++;
-#endif /* TCL_COMPILE_STATS */
+	TclIncrObjsFreed();
 	ObjDeletionLock(context);
 	while (ObjOnStack(context)) {
 	    Tcl_Obj *objToFree;
 
 	    PopObjToDelete(context,objToFree);
+	    TCL_DTRACE_OBJ_FREE(objToFree);
 	    TclFreeIntRep(objToFree);
 
 	    Tcl_MutexLock(&tclObjMutex);
 	    ckfree((char *) objToFree);
 	    Tcl_MutexUnlock(&tclObjMutex);
-#ifdef TCL_COMPILE_STATS
-	    tclObjsFreed++;
-#endif /* TCL_COMPILE_STATS */
+	    TclIncrObjsFreed();
 	}
 	ObjDeletionUnlock(context);
     }
@@ -902,6 +900,7 @@ TclFreeObj(
 	 * other objects: it will not cause recursive calls to this function.
 	 */
 
+	TCL_DTRACE_OBJ_FREE(objPtr);
 	TclFreeObjStorage(objPtr);
 	TclIncrObjsFreed();
     } else {
@@ -924,6 +923,7 @@ TclFreeObj(
 	     * satisfy this.
 	     */
 
+	    TCL_DTRACE_OBJ_FREE(objPtr);
 	    ObjDeletionLock(context);
 	    objPtr->typePtr->freeIntRepProc(objPtr);
 	    ObjDeletionUnlock(context);
@@ -934,6 +934,7 @@ TclFreeObj(
 	    while (ObjOnStack(context)) {
 		Tcl_Obj *objToFree;
 		PopObjToDelete(context,objToFree);
+		TCL_DTRACE_OBJ_FREE(objToFree);
 		if ((objToFree->typePtr != NULL)
 			&& (objToFree->typePtr->freeIntRepProc != NULL)) {
 		    objToFree->typePtr->freeIntRepProc(objToFree);
@@ -954,7 +955,7 @@ TclFreeObj(
  *
  *	This function returns 1 when the Tcl_Obj is being deleted. It is
  *	provided for the rare cases where the reason for the loss of an
- *	internal rep might be relevant [FR 1512138]
+ *	internal rep might be relevant. [FR 1512138]
  *
  * Results:
  *	1 if being deleted, 0 otherwise.
@@ -1418,7 +1419,7 @@ ParseBoolean(
     register Tcl_Obj *objPtr)	/* The object to parse/convert. */
 {
     int i, length, newBool;
-    char lowerCase[6], *str = Tcl_GetStringFromObj(objPtr, &length);
+    char lowerCase[6], *str = TclGetStringFromObj(objPtr, &length);
 
     if ((length == 0) || (length > 5)) {
 	/* longest valid boolean string rep. is "false" */
@@ -1897,9 +1898,12 @@ Tcl_GetIntFromObj(
     register Tcl_Obj *objPtr,	/* The object from which to get a int. */
     register int *intPtr)	/* Place to store resulting int. */
 {
+#if (LONG_MAX == INT_MAX)
+    return TclGetLongFromObj(interp, objPtr, (long *) intPtr);
+#else
     long l;
 
-    if (Tcl_GetLongFromObj(interp, objPtr, &l) != TCL_OK) {
+    if (TclGetLongFromObj(interp, objPtr, &l) != TCL_OK) {
 	return TCL_ERROR;
     }
     if ((ULONG_MAX > UINT_MAX) && ((l > UINT_MAX) || (l < -(long)UINT_MAX))) {
@@ -1913,6 +1917,7 @@ Tcl_GetIntFromObj(
     }
     *intPtr = (int) l;
     return TCL_OK;
+#endif
 }
 
 /*
@@ -1937,7 +1942,7 @@ SetIntFromAny(
     Tcl_Obj *objPtr)		/* Pointer to the object to convert */
 {
     long l;
-    return Tcl_GetLongFromObj(interp, objPtr, &l);
+    return TclGetLongFromObj(interp, objPtr, &l);
 }
 
 /*
@@ -2532,6 +2537,33 @@ Tcl_GetWideIntFromObj(
 	    TCL_PARSE_INTEGER_ONLY)==TCL_OK);
     return TCL_ERROR;
 }
+#ifndef NO_WIDE_TYPE
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * SetWideIntFromAny --
+ *
+ *	Attempts to force the internal representation for a Tcl object to
+ *	tclWideIntType, specifically.
+ *
+ * Results:
+ *	The return value is a standard object Tcl result. If an error occurs
+ *	during conversion, an error message is left in the interpreter's
+ *	result unless "interp" is NULL.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static int
+SetWideIntFromAny(
+    Tcl_Interp *interp,		/* Tcl interpreter */
+    Tcl_Obj *objPtr)		/* Pointer to the object to convert */
+{
+    Tcl_WideInt w;
+    return Tcl_GetWideIntFromObj(interp, objPtr, &w);
+}
+#endif /* !NO_WIDE_TYPE */
 
 /*
  *----------------------------------------------------------------------
@@ -2607,6 +2639,8 @@ DupBignum(
  *
  * The object's existing string representation is NOT freed; memory will leak
  * if the string rep is still valid at the time this function is called.
+ *
+ *----------------------------------------------------------------------
  */
 
 static void
@@ -3287,6 +3321,7 @@ AllocObjEntry(
     hPtr = (Tcl_HashEntry *) ckalloc((unsigned) (sizeof(Tcl_HashEntry)));
     hPtr->key.oneWordValue = (char *) objPtr;
     Tcl_IncrRefCount(objPtr);
+    hPtr->clientData = NULL;
 
     return hPtr;
 }
@@ -3294,7 +3329,7 @@ AllocObjEntry(
 /*
  *----------------------------------------------------------------------
  *
- * CompareObjKeys --
+ * TclCompareObjKeys --
  *
  *	Compares two Tcl_Obj * keys.
  *
@@ -3308,8 +3343,8 @@ AllocObjEntry(
  *----------------------------------------------------------------------
  */
 
-static int
-CompareObjKeys(
+int
+TclCompareObjKeys(
     void *keyPtr,		/* New key to compare. */
     Tcl_HashEntry *hPtr)	/* Existing key to compare. */
 {
@@ -3357,7 +3392,7 @@ CompareObjKeys(
 /*
  *----------------------------------------------------------------------
  *
- * FreeObjEntry --
+ * TclFreeObjEntry --
  *
  *	Frees space for a Tcl_HashEntry containing the Tcl_Obj * key.
  *
@@ -3370,8 +3405,8 @@ CompareObjKeys(
  *----------------------------------------------------------------------
  */
 
-static void
-FreeObjEntry(
+void
+TclFreeObjEntry(
     Tcl_HashEntry *hPtr)	/* Hash entry to free. */
 {
     Tcl_Obj *objPtr = (Tcl_Obj *) hPtr->key.oneWordValue;
@@ -3383,7 +3418,7 @@ FreeObjEntry(
 /*
  *----------------------------------------------------------------------
  *
- * HashObjKey --
+ * TclHashObjKey --
  *
  *	Compute a one-word summary of the string representation of the
  *	Tcl_Obj, which can be used to generate a hash index.
@@ -3398,8 +3433,8 @@ FreeObjEntry(
  *----------------------------------------------------------------------
  */
 
-static unsigned int
-HashObjKey(
+unsigned int
+TclHashObjKey(
     Tcl_HashTable *tablePtr,	/* Hash table. */
     void *keyPtr)		/* Key from which to compute hash value. */
 {
@@ -3460,82 +3495,53 @@ Tcl_GetCommandFromObj(
 				 * up first in the current namespace, then in
 				 * global namespace. */
 {
-    Interp *iPtr = (Interp *) interp;
     register ResolvedCmdName *resPtr;
     register Command *cmdPtr;
-    Namespace *currNsPtr;
+    Namespace *refNsPtr;
     int result;
-    CallFrame *savedFramePtr;
-    char *name;
-
-    /*
-     * If the variable name is fully qualified, do as if the lookup were done
-     * from the global namespace; this helps avoid repeated lookups of fully
-     * qualified names. It costs close to nothing, and may be very helpful for
-     * OO applications which pass along a command name ("this"), [Patch
-     * 456668]
-     */
-
-    savedFramePtr = iPtr->varFramePtr;
-    name = Tcl_GetString(objPtr);
-    if ((*name++ == ':') && (*name == ':')) {
-	iPtr->varFramePtr = iPtr->rootFramePtr;
-    }
 
     /*
      * Get the internal representation, converting to a command type if
      * needed. The internal representation is a ResolvedCmdName that points to
      * the actual command.
-     */
-
-    if (objPtr->typePtr != &tclCmdNameType) {
-	result = tclCmdNameType.setFromAnyProc(interp, objPtr);
-	if (result != TCL_OK) {
-	    iPtr->varFramePtr = savedFramePtr;
-	    return (Tcl_Command) NULL;
-	}
-    }
-    resPtr = (ResolvedCmdName *) objPtr->internalRep.twoPtrValue.ptr1;
-
-    /*
-     * Get the current namespace.
-     */
-
-    currNsPtr = iPtr->varFramePtr->nsPtr;
-
-    /*
+     *
      * Check the context namespace and the namespace epoch of the resolved
-     * symbol to make sure that it is fresh. If not, then force another
-     * conversion to the command type, to discard the old rep and create a new
-     * one. Note that we verify that the namespace id of the context namespace
-     * is the same as the one we cached; this insures that the namespace
-     * wasn't deleted and a new one created at the same address with the same
-     * command epoch.
+     * symbol to make sure that it is fresh. Note that we verify that the
+     * namespace id of the context namespace is the same as the one we cached;
+     * this insures that the namespace wasn't deleted and a new one created at
+     * the same address with the same command epoch. Note that fully qualified
+     * names have a NULL refNsPtr, these checks needn't be made.
+     *
+     * Check also that the command's epoch is up to date, and that the command
+     * is not deleted.
+     *
+     * If any check fails, then force another conversion to the command type,
+     * to discard the old rep and create a new one.      
      */
 
-    cmdPtr = NULL;
-    if ((resPtr != NULL)
-	    && (resPtr->refNsPtr == currNsPtr)
-	    && (resPtr->refNsId == currNsPtr->nsId)
-	    && (resPtr->refNsCmdEpoch == currNsPtr->cmdRefEpoch)) {
-	cmdPtr = resPtr->cmdPtr;
-	if ((cmdPtr->cmdEpoch != resPtr->cmdEpoch) || (cmdPtr->flags & CMD_IS_DELETED)) {
+    resPtr = (ResolvedCmdName *) objPtr->internalRep.twoPtrValue.ptr1;
+    if ((objPtr->typePtr != &tclCmdNameType)
+	    || (resPtr == NULL)
+	    || (cmdPtr = resPtr->cmdPtr, cmdPtr->cmdEpoch != resPtr->cmdEpoch)
+	    || (interp != cmdPtr->nsPtr->interp)
+	    || (cmdPtr->flags & CMD_IS_DELETED)
+	    || ((resPtr->refNsPtr != NULL) && 
+		     (((refNsPtr = (Namespace *) TclGetCurrentNamespace(interp))
+			     != resPtr->refNsPtr)
+		     || (resPtr->refNsId != refNsPtr->nsId)
+		     || (resPtr->refNsCmdEpoch != refNsPtr->cmdRefEpoch)))
+	) {
+	
+	result = tclCmdNameType.setFromAnyProc(interp, objPtr);
+	
+	resPtr = (ResolvedCmdName *) objPtr->internalRep.twoPtrValue.ptr1;
+	if ((result == TCL_OK) && resPtr) {
+	    cmdPtr = resPtr->cmdPtr;
+	} else {
 	    cmdPtr = NULL;
 	}
     }
-
-    if (cmdPtr == NULL) {
-	result = tclCmdNameType.setFromAnyProc(interp, objPtr);
-	if (result != TCL_OK) {
-	    iPtr->varFramePtr = savedFramePtr;
-	    return (Tcl_Command) NULL;
-	}
-	resPtr = (ResolvedCmdName *) objPtr->internalRep.twoPtrValue.ptr1;
-	if (resPtr != NULL) {
-	    cmdPtr = resPtr->cmdPtr;
-	}
-    }
-    iPtr->varFramePtr = savedFramePtr;
+    
     return (Tcl_Command) cmdPtr;
 }
 
@@ -3571,48 +3577,42 @@ TclSetCmdNameObj(
     Interp *iPtr = (Interp *) interp;
     register ResolvedCmdName *resPtr;
     register Namespace *currNsPtr;
-    CallFrame *savedFramePtr;
     char *name;
 
     if (objPtr->typePtr == &tclCmdNameType) {
 	return;
     }
 
-    /*
-     * If the variable name is fully qualified, do as if the lookup were done
-     * from the global namespace; this helps avoid repeated lookups of fully
-     * qualified names. It costs close to nothing, and may be very helpful for
-     * OO applications which pass along a command name ("this"), [Patch
-     * 456668] (Copied over from Tcl_GetCommandFromObj)
-     */
-
-    savedFramePtr = iPtr->varFramePtr;
-    name = Tcl_GetString(objPtr);
-    if ((*name++ == ':') && (*name == ':')) {
-	iPtr->varFramePtr = iPtr->rootFramePtr;
-    }
-
-    /*
-     * Get the current namespace.
-     */
-
-    currNsPtr = iPtr->varFramePtr->nsPtr;
-
     cmdPtr->refCount++;
     resPtr = (ResolvedCmdName *) ckalloc(sizeof(ResolvedCmdName));
     resPtr->cmdPtr = cmdPtr;
-    resPtr->refNsPtr = currNsPtr;
-    resPtr->refNsId = currNsPtr->nsId;
-    resPtr->refNsCmdEpoch = currNsPtr->cmdRefEpoch;
     resPtr->cmdEpoch = cmdPtr->cmdEpoch;
     resPtr->refCount = 1;
+
+    name = TclGetString(objPtr);
+    if ((*name++ == ':') && (*name == ':')) {
+	/*
+	 * The name is fully qualified: set the referring namespace to
+	 * NULL. 
+	 */
+
+	resPtr->refNsPtr = NULL;
+    } else {
+	/*
+	 * Get the current namespace.
+	 */
+
+	currNsPtr = iPtr->varFramePtr->nsPtr;
+	
+	resPtr->refNsPtr = currNsPtr;
+	resPtr->refNsId = currNsPtr->nsId;
+	resPtr->refNsCmdEpoch = currNsPtr->cmdRefEpoch;
+    }
 
     TclFreeIntRep(objPtr);
     objPtr->internalRep.twoPtrValue.ptr1 = (void *) resPtr;
     objPtr->internalRep.twoPtrValue.ptr2 = NULL;
     objPtr->typePtr = &tclCmdNameType;
-
-    iPtr->varFramePtr = savedFramePtr;
 }
 
 /*
@@ -3659,7 +3659,7 @@ FreeCmdNameInternalRep(
 	     */
 
 	    Command *cmdPtr = resPtr->cmdPtr;
-	    TclCleanupCommand(cmdPtr);
+	    TclCleanupCommandMacro(cmdPtr);
 	    ckfree((char *) resPtr);
 	}
     }
@@ -3729,19 +3729,9 @@ SetCmdNameFromAny(
 {
     Interp *iPtr = (Interp *) interp;
     char *name;
-    Tcl_Command cmd;
     register Command *cmdPtr;
     Namespace *currNsPtr;
     register ResolvedCmdName *resPtr;
-
-    /*
-     * Get "objPtr"s string representation. Make it up-to-date if necessary.
-     */
-
-    name = objPtr->bytes;
-    if (name == NULL) {
-	name = Tcl_GetString(objPtr);
-    }
 
     /*
      * Find the Command structure, if any, that describes the command called
@@ -3751,38 +3741,62 @@ SetCmdNameFromAny(
      * referenced from a CmdName object.
      */
 
-    cmd = Tcl_FindCommand(interp, name, /*ns*/ NULL, /*flags*/ 0);
-    cmdPtr = (Command *) cmd;
-    if (cmdPtr != NULL) {
-	/*
-	 * Get the current namespace.
-	 */
-
-	currNsPtr = iPtr->varFramePtr->nsPtr;
-
-	cmdPtr->refCount++;
-	resPtr = (ResolvedCmdName *) ckalloc(sizeof(ResolvedCmdName));
-	resPtr->cmdPtr		= cmdPtr;
-	resPtr->refNsPtr	= currNsPtr;
-	resPtr->refNsId		= currNsPtr->nsId;
-	resPtr->refNsCmdEpoch	= currNsPtr->cmdRefEpoch;
-	resPtr->cmdEpoch	= cmdPtr->cmdEpoch;
-	resPtr->refCount	= 1;
-    } else {
-	resPtr = NULL;	/* no command named "name" was found */
-    }
+    name = TclGetString(objPtr);
+    cmdPtr = (Command *) Tcl_FindCommand(interp, name, /*ns*/ NULL, /*flags*/ 0);
 
     /*
-     * Free the old internalRep before setting the new one. We do this as late
-     * as possible to allow the conversion code, in particular
-     * GetStringFromObj, to use that old internalRep. If no Command structure
-     * was found, leave NULL as the cached value.
+     * Free the old internalRep before setting the new one. Do this after
+     * getting the string rep to allow the conversion code (in particular,
+     * Tcl_GetStringFromObj) to use that old internalRep.
      */
 
-    TclFreeIntRep(objPtr);
-    objPtr->internalRep.twoPtrValue.ptr1 = (void *) resPtr;
-    objPtr->internalRep.twoPtrValue.ptr2 = NULL;
-    objPtr->typePtr = &tclCmdNameType;
+    if (cmdPtr) {
+	cmdPtr->refCount++;
+	resPtr = (ResolvedCmdName *) objPtr->internalRep.otherValuePtr;
+	if ((objPtr->typePtr == &tclCmdNameType)
+		&& resPtr && (resPtr->refCount == 1)) {
+	    /*
+	     * Reuse the old ResolvedCmdName struct instead of freeing it
+	     */
+	    
+	    Command *oldCmdPtr = resPtr->cmdPtr;
+	    if (--oldCmdPtr->refCount == 0) {
+		TclCleanupCommandMacro(oldCmdPtr);
+	    }
+	} else {
+	    TclFreeIntRep(objPtr);
+	    resPtr = (ResolvedCmdName *) ckalloc(sizeof(ResolvedCmdName));
+	    resPtr->refCount = 1;
+	    objPtr->internalRep.twoPtrValue.ptr1 = (void *) resPtr;
+	    objPtr->internalRep.twoPtrValue.ptr2 = NULL;
+	    objPtr->typePtr = &tclCmdNameType;
+	}
+	resPtr->cmdPtr = cmdPtr;
+	resPtr->cmdEpoch = cmdPtr->cmdEpoch;
+	if ((*name++ == ':') && (*name == ':')) {
+	    /*
+	     * The name is fully qualified: set the referring namespace to 
+	     * NULL. 
+	     */
+
+	    resPtr->refNsPtr = NULL;
+	} else {
+	    /*
+	     * Get the current namespace.
+	     */
+
+	    currNsPtr = iPtr->varFramePtr->nsPtr;
+	    
+	    resPtr->refNsPtr = currNsPtr;
+	    resPtr->refNsId = currNsPtr->nsId;
+	    resPtr->refNsCmdEpoch = currNsPtr->cmdRefEpoch;
+	}
+    } else {
+	TclFreeIntRep(objPtr);
+	objPtr->internalRep.twoPtrValue.ptr1 = NULL;
+	objPtr->internalRep.twoPtrValue.ptr2 = NULL;
+	objPtr->typePtr = &tclCmdNameType;
+    }
     return TCL_OK;
 }
 

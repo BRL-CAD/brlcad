@@ -15,7 +15,7 @@
 '\" consequential damages or any damages whatsoever resulting from loss of use,
 '\" data or profits, whether in an action of contract, negligence or other
 '\" tortuous action, arising out of or in connection with the use or performance
-'\" of this software.  
+'\" of this software.
 '\"
 '\" Tree command created by George Howlett.
 '\"
@@ -45,7 +45,7 @@ data. Tree objects can also be managed via a C API.
 
 .SH SYNTAX
 .TP
-\fBtree create\fR ?\fItreeName\fR?  
+\fBtree create\fR ?\fItreeName\fR?
 Creates a new tree object.  The name of the new tree is returned.  If
 no \fItreeName\fR argument is present, then the name of the tree is
 automatically generated in the form "\f(CWtree0\fR", "\f(CWtree1\fR",
@@ -101,37 +101,37 @@ an error "refers to more than one node" is generated.
 .SH NODE MODIFIERS
 You can also specify node in relation to another node by appending one
 or more modifiers to the node id or tag.  A modifier refers to a node
-in relation to the specified node.  For example, 
+in relation to the specified node.  For example,
 "\f(CWroot->firstchild\fR"
 selects the first subtree of the root node.
 .PP
 The following modifiers are available:
 .RS
 .TP 1i
-\fBfirstchild\fR 
-Selects the first child of the node.  
+\fBfirstchild\fR
+Selects the first child of the node.
 .TP 1i
-\fBlastchild\fR 
-Selects the last child of the node.  
+\fBlastchild\fR
+Selects the last child of the node.
 .TP 1i
-\fBnext\fR 
-Selects the next node in preorder to the node.  
+\fBnext\fR
+Selects the next node in preorder to the node.
 .TP 1i
-\fBnextsibling\fR 
-Selects the next sibling of the node.  
+\fBnextsibling\fR
+Selects the next sibling of the node.
 .TP 1i
-\fBparent\fR 
-Selects the parent of the node.  
+\fBparent\fR
+Selects the parent of the node.
 .TP 1i
-\fBprevious\fR 
-Selects the previous node in preorder to the node.  
+\fBprevious\fR
+Selects the previous node in preorder to the node.
 .TP 1i
-\fBprevsibling\fR 
-Selects the previous sibling of the node.  
+\fBprevsibling\fR
+Selects the previous sibling of the node.
 .TP 1i
 "\fIlabel\fR"
-Selects the node whose label is \fIlabel\fR.  Enclosing \fIlabel\fR in 
-quotes indicates to always search for a node by its label (for example, 
+Selects the node whose label is \fIlabel\fR.  Enclosing \fIlabel\fR in
+quotes indicates to always search for a node by its label (for example,
 even if the node is labeled "parent").
 .RE
 .sp
@@ -140,7 +140,7 @@ It's an error the node can't be found.  For example,
 has no children.  The exception to this is the \fBindex\fR operation.
 You can use \fBindex\fR to test if a modifier is valid.
 .SH TREE OPERATIONS
-Once you create a tree object, you can use its Tcl command 
+Once you create a tree object, you can use its Tcl command
 to query or modify it.  The
 general form is
 .DS
@@ -163,13 +163,13 @@ operation differs from \fBfind\fR in two ways: 1) Tcl commands can be
 invoked both pre- and post-traversal of a node and 2) the tree is
 always traversed in depth first order.
 .sp
-The \fB\-exact\fR, \fB\-glob\fR, 
+The \fB\-exact\fR, \fB\-glob\fR,
 and \fB\-regexp\fR switches indicate both what kind of pattern matching
 to perform and the pattern.  By default each pattern will be compared
-with the node label.  You can set more than one of these switches.  If 
-any of the patterns match (logical or), the node matches.  
+with the node label.  You can set more than one of these switches.  If
+any of the patterns match (logical or), the node matches.
 If the \fB\-key\fR switch is
-used, it designates the data field to be matched.  
+used, it designates the data field to be matched.
 .sp
 The valid switches are listed
 below:
@@ -213,21 +213,21 @@ and the node itself.
 .TP 1i
 \fB\-precommand\fR \fIcommand\fR
 Invoke \fIcommand\fR for each matching node.  Before \fIcommand\fR is
-invoked, the id of the node is appended.  You can control 
-processing by the return value of \fIcommand\fR.  If \fIcommand\fR 
-generates an error, processing stops and the \fBfind\fR operation 
-returns an error.  But if \fIcommand\fR returns \fBbreak\fR, then 
-processing stops, no error is generated.  If \fIcommand\fR returns 
+invoked, the id of the node is appended.  You can control
+processing by the return value of \fIcommand\fR.  If \fIcommand\fR
+generates an error, processing stops and the \fBfind\fR operation
+returns an error.  But if \fIcommand\fR returns \fBbreak\fR, then
+processing stops, no error is generated.  If \fIcommand\fR returns
 \fBcontinue\fR, then processing
 stops on that subtree and continues on the next.
 .TP 1i
 \fB\-postcommand\fR \fIcommand\fR
 Invoke \fIcommand\fR for each matching node.  Before \fIcommand\fR is
-invoked, the id of the node is appended.  You can control 
-processing by the return value of \fIcommand\fR.  If \fIcommand\fR 
-generates an error, processing stops and the \fBfind\fR operation 
-returns an error.  But if \fIcommand\fR returns \fBbreak\fR, then 
-processing stops, no error is generated.  If \fIcommand\fR returns 
+invoked, the id of the node is appended.  You can control
+processing by the return value of \fIcommand\fR.  If \fIcommand\fR
+generates an error, processing stops and the \fBfind\fR operation
+returns an error.  But if \fIcommand\fR returns \fBbreak\fR, then
+processing stops, no error is generated.  If \fIcommand\fR returns
 \fBcontinue\fR, then processing
 stops on that subtree and continues on the next.
 .TP 1i
@@ -251,9 +251,9 @@ then an empty string is returned.
 \fItreeName\fR \fBcopy\fR \fIsrcNode\fR ?\fIdestTree\fR? \fIparentNode\fR ?\fIswitches\fR?
 Copies \fIsrcNode\fR into \fIparentNode\fR. Both nodes \fIsrcNode\fR and
 \fIparentNode\fR must already exist. The id of the new node is
-returned. You can copy from one tree to another.  If a \fIdestTree\fR 
-argument is present, it indicates the name of the destination tree.  
-By default both the source and destination trees are the same. The valid 
+returned. You can copy from one tree to another.  If a \fIdestTree\fR
+argument is present, it indicates the name of the destination tree.
+By default both the source and destination trees are the same. The valid
 \fIswitches\fR are listed below:
 .RS
 .TP
@@ -272,77 +272,77 @@ Recursively copy all the subtrees of \fIsrcNode\fR as well.  In this case,
 in a cyclic copy.
 .TP
 \fB\-tags\fR
-Copy tag inforation.  Normally the following node is copied: its 
+Copy tag inforation.  Normally the following node is copied: its
 label and data fields.  This indicates to copy tags as well.
 .RE
 .TP
-\fItreeName\fR \fBdegree\fR \fInode\fR 
+\fItreeName\fR \fBdegree\fR \fInode\fR
 Returns the number of children of \fInode\fR.
 .TP
 \fItreeName\fR \fBdelete\fR \fInode\fR...
-Recursively deletes one or more nodes from the tree.  
+Recursively deletes one or more nodes from the tree.
 The node and all its descendants are removed.   The one exception
 is the root node.  In this case, only its descendants are removed.
-The root node will remain.  Any tags or 
+The root node will remain.  Any tags or
 traces on the nodes are released.
 .TP
-\fItreeName\fR \fBdepth\fR \fInode\fR 
-Returns the depth of the node.  The depth is the number of 
+\fItreeName\fR \fBdepth\fR \fInode\fR
+Returns the depth of the node.  The depth is the number of
 steps from the node to the root of the tree.  The depth of the
 root node is \f(CW0\fR.
 .TP
-\fItreeName\fR \fBdump\fR \fInode\fR 
+\fItreeName\fR \fBdump\fR \fInode\fR
 Returns a list of the paths and respective data for \fInode\fR
 and its descendants.  The subtree designated by \fInode\fR is
 traversed returning the following information for each node: 1) the node's
 path relative to \fInode\fR, 2) a sublist key value pairs
-representing the node's data fields, and 3) a sublist of tags.  
+representing the node's data fields, and 3) a sublist of tags.
 This list returned can be used
 later to copy or restore the tree with the \fBrestore\fR operation.
 .TP
 \fItreeName\fR \fBdumpfile\fR \fInode\fR \fIfileName\fR
 Writes a list of the paths and respective data for \fInode\fR
-and its descendants to the given file \fIfileName\fR.  
-The subtree designated by \fInode\fR is traversed returning the 
+and its descendants to the given file \fIfileName\fR.
+The subtree designated by \fInode\fR is traversed returning the
 following information for each node: 1) the node's
 path relative to \fInode\fR, 2) a sublist key value pairs
-representing the node's data fields, and 3) a sublist of tags.  
+representing the node's data fields, and 3) a sublist of tags.
 This list returned can be used
 later to copy or restore the tree with the \fBrestore\fR operation.
 .TP
 \fItreeName\fR \fBexists\fR \fInode\fR ?\fIkey\fR?
 Indicates if \fInode\fR exists in the tree.  If a \fIkey\fR argument
-is present then the command also indicates if the named data field 
+is present then the command also indicates if the named data field
 exists.
 .TP
-\fItreeName\fR \fBfind\fR \fInode\fR ?\fIswitches\fR? 
-Finds for all nodes matching the criteria given by \fIswitches\fR 
-for the subtree designated by \fInode\fR.  A list of the selected 
+\fItreeName\fR \fBfind\fR \fInode\fR ?\fIswitches\fR?
+Finds for all nodes matching the criteria given by \fIswitches\fR
+for the subtree designated by \fInode\fR.  A list of the selected
 nodes is returned.  By default all nodes match, but you can set
 switches to narrow the match.
 .sp
-The \fB\-exact\fR, \fB\-glob\fR, 
+The \fB\-exact\fR, \fB\-glob\fR,
 and \fB\-regexp\fR switches indicate both what kind of pattern matching
 to perform and the pattern.  By default each pattern will be compared
-with the node label.  You can set more than one of these switches.  If 
-any of the patterns match (logical or), the node matches.  
+with the node label.  You can set more than one of these switches.  If
+any of the patterns match (logical or), the node matches.
 If the \fB\-key\fR switch is
-used, it designates the data field to be matched.  
+used, it designates the data field to be matched.
 .sp
-The order in 
+The order in
 which the nodes are traversed is controlled by the  \fB\-order\fR switch.
-The possible orderings are \fBpreorder\fR, \fBpostorder\fR, \fBinorder\fR, 
+The possible orderings are \fBpreorder\fR, \fBpostorder\fR, \fBinorder\fR,
 and \fBbreadthfirst\fR.  The default is \fBpostorder\fR.
 .sp
 The valid switches are listed
 below:
-.RS 
+.RS
 .TP 1i
-\fB\-addtag\fR \fIstring\fR 
-Add the tag \fIstring\fR to each selected node.  
+\fB\-addtag\fR \fIstring\fR
+Add the tag \fIstring\fR to each selected node.
 .TP 1i
 \fB\-count\fR \fInumber\fR
-Stop processing after \fInumber\fR (a positive integer) matches. 
+Stop processing after \fInumber\fR (a positive integer) matches.
 .TP 1i
 \fB\-depth\fR \fInumber\fR
 Descend at most \fInumber\fR (a non-negative integer) levels
@@ -355,11 +355,11 @@ exactly.
 .TP 1i
 \fB\-exec\fR \fIcommand\fR
 Invoke \fIcommand\fR for each matching node.  Before \fIcommand\fR is
-invoked, the id of the node is appended.  You can control 
-processing by the return value of \fIcommand\fR.  If \fIcommand\fR 
-generates an error, processing stops and the \fBfind\fR operation 
-returns an error.  But if \fIcommand\fR returns \fBbreak\fR, then 
-processing stops, no error is generated.  If \fIcommand\fR returns 
+invoked, the id of the node is appended.  You can control
+processing by the return value of \fIcommand\fR.  If \fIcommand\fR
+generates an error, processing stops and the \fBfind\fR operation
+returns an error.  But if \fIcommand\fR returns \fBbreak\fR, then
+processing stops, no error is generated.  If \fIcommand\fR returns
 \fBcontinue\fR, then processing
 stops on that subtree and continues on the next.
 .TP 1i
@@ -373,8 +373,8 @@ Select non-matching nodes.  Any node that \fIdoesn't\fR match
 the given criteria will be selected.
 .TP 1i
 \fB\-key\fR \fIkey\fR
-Compare the values of the data field keyed by \fIkey\fR instead of 
-the node's label. If no pattern is given (\fB\-exact\fR, \fB\-glob\fR, or 
+Compare the values of the data field keyed by \fIkey\fR instead of
+the node's label. If no pattern is given (\fB\-exact\fR, \fB\-glob\fR, or
 \fB\-regexp\fR switches), then any node with this data key will match.
 .TP 1i
 \fB\-leafonly\fR
@@ -383,23 +383,23 @@ Only test nodes with no children.
 \fB\-nocase\fR
 Ignore case when matching patterns.
 .TP
-\fB\-order\fR \fIstring\fR 
+\fB\-order\fR \fIstring\fR
 Traverse the tree and process nodes according to \fIstring\fR. \fIString\fR
 can be one of the following:
 .RS
 .TP 1i
-\fBbreadthfirst\fR 
+\fBbreadthfirst\fR
 Process the node and the subtrees at each sucessive level. Each node
 on a level is processed before going to the next level.
 .TP 1i
-\fBinorder\fR 
+\fBinorder\fR
 Recursively process the nodes of the first subtree, the node itself,
 and any the remaining subtrees.
 .TP 1i
-\fBpostorder\fR 
+\fBpostorder\fR
 Recursively process all subtrees before the node.
 .TP 1i
-\fBpreorder\fR 
+\fBpreorder\fR
 Recursively process the node first, then any subtrees.
 .RE
 .TP
@@ -414,12 +414,12 @@ Only test nodes that have the tag \fIstring\fR.
 .RE
 .TP
 \fItreeName\fR \fBfindchild\fR \fInode\fR \fIlabel\fR
-Searches for a child node \Ilabel\fR in \fInode\fR.  The id of the 
+Searches for a child node \Ilabel\fR in \fInode\fR.  The id of the
 child node is returned if found.  Otherwise \f(CW-1\fR is returned.
 .TP
-\fItreeName\fR \fBfirstchild\fR \fInode\fR 
+\fItreeName\fR \fBfirstchild\fR \fInode\fR
 Returns the id of the first child in the \fInode\fR's list
-of subtrees.  If \fInode\fR is a leaf (has no children), 
+of subtrees.  If \fInode\fR is a leaf (has no children),
 then \f(CW-1\fR is returned.
 .TP
 \fItreeName\fR \fBget\fR \fInode\fR ?\fIkey\fR? ?\fIdefaultValue\fR?
@@ -433,37 +433,37 @@ contain \fIkey\fR).  This feature can be used to access a data field of
 trigger \fBread\fR data traces.
 .TP
 \fItreeName\fR \fBindex\fR \fInode\fR
-Returns the id of \fInode\fR.  If \fInode\fR is a tag, it 
+Returns the id of \fInode\fR.  If \fInode\fR is a tag, it
 can only specify one node.  If \fInode\fR does not represent a valid
 node id or tag, or has modifiers that are invalid, then \f(CW-1\fR is returned.
 .TP
-\fItreeName\fR \fBinsert\fR \fIparent\fR ?\fIswitches\fR? 
-Inserts a new node into parent node \fIparent\fR.  
-The id of the new node is returned. The following switches 
+\fItreeName\fR \fBinsert\fR \fIparent\fR ?\fIswitches\fR?
+Inserts a new node into parent node \fIparent\fR.
+The id of the new node is returned. The following switches
 are available:
 .RS
 .TP 1i
-\fB\-after\fR \fIchild\fR 
-Position \fInode\fR after \fIchild\fR.  The node \fIchild\fR must be a 
+\fB\-after\fR \fIchild\fR
+Position \fInode\fR after \fIchild\fR.  The node \fIchild\fR must be a
 child of \fIparent\fR.
 .TP 1i
-\fB\-at\fR \fInumber\fR 
-Inserts the node into \fIparent\fR's list of children at 
+\fB\-at\fR \fInumber\fR
+Inserts the node into \fIparent\fR's list of children at
 position \fInumber\fR.  The default is to append \fInode\fR.
 .TP 1i
-\fB\-before\fR \fIchild\fR 
-Position \fInode\fR before \fIchild\fR.  The node \fIchild\fR must be a 
+\fB\-before\fR \fIchild\fR
+Position \fInode\fR before \fIchild\fR.  The node \fIchild\fR must be a
 child of \fIparent\fR.
 .TP 1i
 \fB\-data\fR \fIdataList\fR
-Sets the value for each data field in \fIdataList\fR for the 
+Sets the value for each data field in \fIdataList\fR for the
 new node. \fIDataList\fR is a list of key-value pairs.
 .TP 1i
-\fB\-label\fR \fIstring\fR 
+\fB\-label\fR \fIstring\fR
 Designates the labels of the node as \fIstring\fR.  By default, nodes
 are labeled as \f(CWnode0\fR, \f(CWnode1\fR, etc.
 .TP 1i
-\fB\-node\fR \fIid\fR 
+\fB\-node\fR \fIid\fR
 Designates the id for the node.  Normally new ids are automatically
 generated.  This allows you to create a node with a specific id.
 It is an error if the id is already used by another node in the tree.
@@ -473,18 +473,18 @@ Adds each tag in \fItagList\fR to the new node. \fITagList\fR is a list
 of tags, so be careful if a tag has embedded space.
 .RE
 .TP
-\fItreeName\fR \fBis\fR \fIproperty\fR \fIargs\fR  
+\fItreeName\fR \fBis\fR \fIproperty\fR \fIargs\fR
 Indicates the property of a node. Both \fIproperty\fR and \fIargs\fR
 determine the property being tested.  Returns \f(CW1\fR if true and
-\f(CW0\fR otherwise.  The following \fIproperty\fR and \fIargs\fR 
+\f(CW0\fR otherwise.  The following \fIproperty\fR and \fIargs\fR
 are valid:
 .RS
 .TP 1i
 \fBancestor\fR \fInode1\fR \fInode2\fR
-Indicates if \fInode1\fR is an ancestor of \fInode2\fR. 
+Indicates if \fInode1\fR is an ancestor of \fInode2\fR.
 .TP 1i
 \fBbefore\fR \fInode1\fR \fInode2\fR
-Indicates if \fInode1\fR is before \fInode2\fR in depth first traversal. 
+Indicates if \fInode1\fR is before \fInode2\fR in depth first traversal.
 .TP 1i
 \fBleaf\fR \fInode\fR
 Indicates if \fInode\fR is a leaf (it has no subtrees).
@@ -500,7 +500,7 @@ is present, the node is relabeled using it as the new label.
 .TP
 \fItreeName\fR \fBlastchild\fR \fInode\fR
 Returns the id of the last child in the \fInode\fR's list
-of subtrees.  If \fInode\fR is a leaf (has no children), 
+of subtrees.  If \fInode\fR is a leaf (has no children),
 then \f(CW-1\fR is returned.
 .TP
 \fItreeName\fR \fBmove\fR \fInode\fR \fInewParent\fR ?\fIswitches\fR?
@@ -509,39 +509,39 @@ list children of \fInewParent\fR.  \fINode\fR can not be an ancestor
 of \fInewParent\fR.  The valid flags for \fIswitches\fR are described below.
 .RS
 .TP 1i
-\fB\-after\fR \fIchild\fR 
-Position \fInode\fR after \fIchild\fR.  The node \fIchild\fR must be a 
+\fB\-after\fR \fIchild\fR
+Position \fInode\fR after \fIchild\fR.  The node \fIchild\fR must be a
 child of \fInewParent\fR.
 .TP 1i
-\fB\-at\fR \fInumber\fR 
-Inserts \fInode\fR into \fIparent\fR's list of children at 
+\fB\-at\fR \fInumber\fR
+Inserts \fInode\fR into \fIparent\fR's list of children at
 position \fInumber\fR. The default is to append the node.
 .TP 1i
-\fB\-before\fR \fIchild\fR 
-Position \fInode\fR before \fIchild\fR.  The node \fIchild\fR must be a 
+\fB\-before\fR \fIchild\fR
+Position \fInode\fR before \fIchild\fR.  The node \fIchild\fR must be a
 child of \fInewParent\fR.
 .RE
 .TP
 \fItreeName\fR \fBnext\fR \fInode\fR
 Returns the next node from \fInode\fR in a preorder traversal.
-If \fInode\fR is the last node in the tree, 
+If \fInode\fR is the last node in the tree,
 then \f(CW-1\fR is returned.
 .TP
 \fItreeName\fR \fBnextsibling\fR \fInode\fR
 Returns the node representing the next subtree from \fInode\fR
-in its parent's list of children.  If \fInode\fR is the last child, 
+in its parent's list of children.  If \fInode\fR is the last child,
 then \f(CW-1\fR is returned.
 .TP
-\fItreeName\fR \fBnotify\fR \fIargs\fR 
-Manages notification events that indicate that the tree structure has 
+\fItreeName\fR \fBnotify\fR \fIargs\fR
+Manages notification events that indicate that the tree structure has
 been changed.
-See the 
+See the
 .SB "NOTIFY OPERATIONS"
 section below.
 .TP
 \fItreeName\fR \fBparent\fR \fInode\fR
 Returns the parent node of \fInode\fR.  If \fInode\fR is the root
-of the tree, 
+of the tree,
 then \f(CW-1\fR is returned.
 .TP
 \fItreeName\fR \fBpath\fR \fInode\fR
@@ -554,23 +554,23 @@ The position of the root node is always 0.
 .TP
 \fItreeName\fR \fBprevious\fR \fInode\fR
 Returns the previous node from \fInode\fR in a preorder traversal.
-If \fInode\fR is the root of the tree, 
+If \fInode\fR is the root of the tree,
 then \f(CW-1\fR is returned.
 .TP
 \fItreeName\fR \fBprevsibling\fR \fInode\fR
 Returns the node representing the previous subtree from \fInode\fR
-in its parent's list of children.  If \fInode\fR is the first child, 
+in its parent's list of children.  If \fInode\fR is the first child,
 then \f(CW-1\fR is returned.
 .TP
 \fItreeName\fR \fBrestore\fR \fInode\fR \fIdataString\fR \fIswitches\fR
 Performs the inverse function of the \fBdump\fR operation, restoring
-nodes to the tree. The format of \fIdataString\fR is exactly what is 
+nodes to the tree. The format of \fIdataString\fR is exactly what is
 returned by the \fBdump\fR operation.  It's a list containing information
 for each node to be restored.  The information consists of 1) the relative
-path of the node, 2) a sublist of key value pairs representing the 
-node's data, and 3) a list of tags for the node.  Nodes are created 
-starting from \fInode\fR. Nodes can be listed in any order.  If a node's 
-path describes ancestor nodes that do not already exist, they are 
+path of the node, 2) a sublist of key value pairs representing the
+node's data, and 3) a list of tags for the node.  Nodes are created
+starting from \fInode\fR. Nodes can be listed in any order.  If a node's
+path describes ancestor nodes that do not already exist, they are
 automatically created.  The valid \fIswitches\fR are listed below:
 .RS
 .TP
@@ -582,14 +582,14 @@ switch indicates to add or overwrite the node's data fields.
 .TP
 \fItreeName\fR \fBrestorefile\fR \fInode\fR \fIfileName\fR \fIswitches\fR
 Performs the inverse function of the \fBdumpfile\fR operation, restoring
-nodes to the tree from the file \fIfileName\fR. The format of 
-\fIfileName\fR is exactly what is returned by the \fBdumpfile\fR operation.  
-It's a list containing information for each node to be restored.  
-The information consists of 1) the relative path of the node, 2) 
-a sublist of key value pairs representing the node's data, and 3) 
-a list of tags for the node.  Nodes are created 
-starting from \fInode\fR. Nodes can be listed in any order.  If a node's 
-path describes ancestor nodes that do not already exist, they are 
+nodes to the tree from the file \fIfileName\fR. The format of
+\fIfileName\fR is exactly what is returned by the \fBdumpfile\fR operation.
+It's a list containing information for each node to be restored.
+The information consists of 1) the relative path of the node, 2)
+a sublist of key value pairs representing the node's data, and 3)
+a list of tags for the node.  Nodes are created
+starting from \fInode\fR. Nodes can be listed in any order.  If a node's
+path describes ancestor nodes that do not already exist, they are
 automatically created.  The valid \fIswitches\fR are listed below:
 .RS
 .TP
@@ -607,7 +607,7 @@ Changing root affects operations such as \fBnext\fR, \fBpath\fR,
 \fBprevious\fR, etc.
 .TP
 \fItreeName\fR \fBset\fR \fInode\fR \fIkey value\fR ?\fIkey value\fR...?
-Sets one or more data fields in \fInode\fR. \fINode\fR may 
+Sets one or more data fields in \fInode\fR. \fINode\fR may
 be a tag that represents several nodes.  \fIKey\fR is the
 name of the data field to be set and \fIvalue\fR is its respective
 value.  This operation may trigger \fBwrite\fR and \fBcreate\fR data traces.
@@ -616,10 +616,10 @@ value.  This operation may trigger \fBwrite\fR and \fBcreate\fR data traces.
 Returns the number of nodes in the subtree. This includes the node
 and all its descendants.  The size of a leaf node is 1.
 .TP
-\fItreeName\fR \fBsort\fR \fInode\fR ?\fIswitches\fR? 
+\fItreeName\fR \fBsort\fR \fInode\fR ?\fIswitches\fR?
 .RS
 .TP 1i
-\fB\-ascii\fR 
+\fB\-ascii\fR
 Compare strings using the ASCII  collation order.
 .TP 1i
 \fB\-command\fR \fIstring\fR
@@ -634,18 +634,18 @@ second, respectively.
 Sort in decreasing order (largest items come first).
 .TP 1i
 \fB\-dictionary\fR
-Compare strings using a dictionary-style comparison.  This is the same 
-as \fB\-ascii\fR except (a) case is ignored except as a tie-breaker and (b) 
+Compare strings using a dictionary-style comparison.  This is the same
+as \fB\-ascii\fR except (a) case is ignored except as a tie-breaker and (b)
 if two strings contain embedded numbers, the numbers compare as integers, not
 characters.  For example, in \fB\-dictionary\fR mode, bigBoy sorts between
 bigbang and bigboy, and x10y sorts between x9y and x11y.
 .TP 1i
 \fB\-integer\fR
-Compare the nodes as integers.  
+Compare the nodes as integers.
 .TP 1i
 \fB\-key\fR \fIstring\fR
 Sort based upon the node's data field keyed by \fIstring\fR. Normally
-nodes are sorted according to their label. 
+nodes are sorted according to their label.
 .TP 1i
 \fB\-path\fR
 Compare the full path of each node.  The default is to compare only its
@@ -657,15 +657,15 @@ Compare the nodes as real numbers.
 \fB\-recurse\fR
 Recursively sort the entire subtree rooted at \fInode\fR.
 .TP 1i
-\fB\-reorder\fR 
+\fB\-reorder\fR
 Recursively sort subtrees for each node.  \fBWarning\fR.  Unlike
 the normal flat sort, where a list of nodes is returned, this will
-reorder the tree.  
+reorder the tree.
 .RE
 .TP
 \fItreeName\fR \fBtag\fR \fIargs\fR
 Manages tags for the tree object.
-See the 
+See the
 .SB "TAG OPERATIONS"
 section below.
 .TP
@@ -674,22 +674,22 @@ Manages traces for data fields in the tree object.
 Traces cause Tcl commands to be executed whenever a data field of a
 node is created, read, written, or unset.  Traces can be set for a
 specific node or a tag, representing possibly many nodes.
-See the 
+See the
 .SB "TRACE OPERATIONS"
 section below.
 .TP
 \fItreeName\fR \fBunset\fR \fInode\fR \fIkey\fR...
-Removes one or more data fields from \fInode\fR. \fINode\fR may 
+Removes one or more data fields from \fInode\fR. \fINode\fR may
 be a tag that represents several nodes.  \fIKey\fR is the
 name of the data field to be removed.  It's not an error is
-\fInode\fR does not contain \fIkey\fR.  
+\fInode\fR does not contain \fIkey\fR.
 This operation may trigger \fBunset\fR data traces.
 .RE
 .SH TAG OPERATIONS
 Tags are a general means of selecting and marking nodes in the tree.
 A tag is just a string of characters, and it may take any form except
 that of an integer.  The same tag may be associated with many
-different nodes.  
+different nodes.
 .sp
 There are two built-in tags: The tag \fBall\fR is implicitly
 associated with every node in the tree.  It may be used to invoke
@@ -699,7 +699,7 @@ that is currently set as the root of the tree.
 .sp
 Most tree operations use tags.  And several operations let you
 operate on multiple nodes at once.  For example, you can use the
-\fBset\fR operation with the tag \fBall\fR to set a data field in 
+\fBset\fR operation with the tag \fBall\fR to set a data field in
 for all nodes in the tree.
 .PP
 Tags are invoked by the \fBtag\fR operation.  The
@@ -714,7 +714,7 @@ the command.  The operations available for tags are listed below.
 Adds the tag \fIstring\fR to one of more nodes.
 .TP
 \fItreeName\fR \fBtag delete\fR \fIstring\fR \fInode\fR...
-Deletes the tag \fIstring\fR from one or more nodes.  
+Deletes the tag \fIstring\fR from one or more nodes.
 .TP
 \fItreeName\fR \fBtag forget\fR \fIstring\fR
 Removes the tag \fIstring\fR from all nodes.  It's not an error if no
@@ -734,9 +734,9 @@ particular data field of a node is created, read, written, or unset.
 A trace can apply to one or more nodes.  You can trace a specific node
 by using its id, or a group of nodes by a their tag.
 .PP
-The tree's \fBget\fR, \fBset\fR, and \fBunset\fR operations can 
-trigger various traces.  The \fBget\fR operation can cause 
-a \fIread\fR  trace to fire.  The \fBset\fR operation causes a \fIwrite\fR 
+The tree's \fBget\fR, \fBset\fR, and \fBunset\fR operations can
+trigger various traces.  The \fBget\fR operation can cause
+a \fIread\fR  trace to fire.  The \fBset\fR operation causes a \fIwrite\fR
 trace to fire.  And if the data field is written for the first time, you
 will also get a \fIcreate\fR trace.
 The \fBunset\fR operation triggers \fIunset\fR traces.
@@ -753,14 +753,14 @@ the command.  The operations available for traces are listed below.
 Creates a trace for \fInode\fR on data field \fIkey\fR.  \fINode\fR
 can refer to more than one node (for example, the tag \fBall\fR). If
 \fInode\fR is a tag, any node with that tag can possibly trigger a trace,
-invoking \fIcommand\fR.  
+invoking \fIcommand\fR.
 \fICommand\fR is command prefix, typically a procedure name.
 Whenever a trace is triggered, four arguments are appended to
 \fIcommand\fR before it is invoked: \fItreeName\fR, id of the
 node, \fIkey\fR and, \fIops\fR.
-Note that no nodes need have the field \fIkey\fR.  
+Note that no nodes need have the field \fIkey\fR.
 A trace identifier in the form "\f(CWtrace0\fR", "\f(CWtrace1\fR", etc.
-is returned.  
+is returned.
 .sp
 \fIOps\fR indicates which operations are of
 interest, and consists of one or more of the following letters:
@@ -777,9 +777,9 @@ write traces are temporarily disabled when \fIcommand\fR is executed.
 \fBc\fR
 Invoke \fIcommand\fR whenever \fIkey\fR is created.
 .TP
-\fBu\fR 
+\fBu\fR
 Invoke \fIcommand\fR whenever \fIkey\fR is unset.  Data fields are
-typically unset with the \fBunset\fR command.   Data fields are also 
+typically unset with the \fBunset\fR command.   Data fields are also
 unset when the tree is released, but all traces are disabled prior
 to that.
 .sp
@@ -789,7 +789,7 @@ to that.
 Deletes one of more traces.  \fITraceId\fR is
 the trace identifier returned by the \fBtrace create\fR operation.
 .TP
-\fItreeName\fR \fBtrace info\fR \fItraceId\fR 
+\fItreeName\fR \fBtrace info\fR \fItraceId\fR
 Returns information about the trace \fItraceId\fR.  \fITraceId\fR
 is a trace identifier previously returned by the \fBtrace create\fR operation.
 It's the same information specified for the \fBtrace create\fR operation.
@@ -804,7 +804,7 @@ Tree objects can be shared among many clients, such as a
 \fBhiertable\fR widget.  Any client can create or delete nodes,
 sorting the tree, etc.  You can request to be notified whenever these
 events occur.  Notify events cause Tcl commands to be executed
-whenever the tree structure is changed.  
+whenever the tree structure is changed.
 .PP
 Notifications are handled by the \fBnotify\fR operation.  The
 general form is
@@ -814,7 +814,7 @@ general form is
 Both \fIoperation\fR and its arguments determine the exact behavior of
 the command.  The operations available for events are listed below.
 .TP
-\fItreeName\fR \fBnotify create\fR ?\fIswitches\fR? \fIcommand\fR \fR?\fIargs\fR?...  
+\fItreeName\fR \fBnotify create\fR ?\fIswitches\fR? \fIcommand\fR \fR?\fIargs\fR?...
 Creates a notifier for the tree.  A notify identifier in the form
 "\f(CWnotify0\fR", "\f(CWnotify1\fR", etc.  is returned.
 .sp
@@ -826,7 +826,7 @@ One of more switches can be set to indicate the events that are of
 interest.  The valid switches are as follows:
 .RS
 .TP 1i
-\fB\-create\fR 
+\fB\-create\fR
 Invoke \fIcommand\fR whenever a new node has been added.
 .TP 1i
 \fB\-delete\fR
@@ -846,13 +846,13 @@ Invoke \fIcommand\fR whenever any of the above events occur.
 .TP 1i
 \fB\-whenidle\fR
 When an event occurs don't invoke \fIcommand\fR immediately, but
-queue it to be run the next time the event loop is entered and there 
-are no events to process.  If subsequent events occur before 
-the event loop is entered, \fIcommand\fR will still be 
+queue it to be run the next time the event loop is entered and there
+are no events to process.  If subsequent events occur before
+the event loop is entered, \fIcommand\fR will still be
 invoked only once.
 .RE
 .TP
-\fItreeName\fR \fBnotify delete\fR \fInotifyId\fR 
+\fItreeName\fR \fBnotify delete\fR \fInotifyId\fR
 Deletes one or more notifiers from the tree.  \fINotifyId\fR is the
 notifier identifier returned by the \fBnotify create\fR operation.
 .TP
@@ -866,45 +866,45 @@ form as \fIflags\fR) and, the command prefix.
 \fItreeName\fR \fBnotify names\fR
 Returns a list of identifers for all the current notifiers.
 .SH C LANGUAGE API
-Blt_TreeApply, 
-Blt_TreeApplyBFS, 
-Blt_TreeApplyDFS, 
-Blt_TreeChangeRoot, 
-Blt_TreeCreate, 
-Blt_TreeCreateEventHandler, 
-Blt_TreeCreateNode, 
-Blt_TreeCreateTrace, 
-Blt_TreeDeleteEventHandler, 
-Blt_TreeDeleteNode, 
-Blt_TreeDeleteTrace, 
-Blt_TreeExists, 
-Blt_TreeFindChild, 
-Blt_TreeFirstChild, 
-Blt_TreeFirstKey, 
-Blt_TreeGetNode, 
-Blt_TreeGetToken, 
-Blt_TreeGetValue, 
-Blt_TreeIsAncestor, 
-Blt_TreeIsBefore, 
-Blt_TreeIsLeaf, 
-Blt_TreeLastChild, 
-Blt_TreeMoveNode, 
-Blt_TreeName, 
-Blt_TreeNextKey, 
-Blt_TreeNextNode, 
-Blt_TreeNextSibling, 
-Blt_TreeNodeDegree, 
-Blt_TreeNodeDepth, 
-Blt_TreeNodeId, 
-Blt_TreeNodeLabel, 
-Blt_TreeNodeParent, 
-Blt_TreePrevNode, 
-Blt_TreePrevSibling, 
-Blt_TreeRelabelNode, 
-Blt_TreeReleaseToken, 
-Blt_TreeRootNode, 
-Blt_TreeSetValue, 
-Blt_TreeSize, 
+Blt_TreeApply,
+Blt_TreeApplyBFS,
+Blt_TreeApplyDFS,
+Blt_TreeChangeRoot,
+Blt_TreeCreate,
+Blt_TreeCreateEventHandler,
+Blt_TreeCreateNode,
+Blt_TreeCreateTrace,
+Blt_TreeDeleteEventHandler,
+Blt_TreeDeleteNode,
+Blt_TreeDeleteTrace,
+Blt_TreeExists,
+Blt_TreeFindChild,
+Blt_TreeFirstChild,
+Blt_TreeFirstKey,
+Blt_TreeGetNode,
+Blt_TreeGetToken,
+Blt_TreeGetValue,
+Blt_TreeIsAncestor,
+Blt_TreeIsBefore,
+Blt_TreeIsLeaf,
+Blt_TreeLastChild,
+Blt_TreeMoveNode,
+Blt_TreeName,
+Blt_TreeNextKey,
+Blt_TreeNextNode,
+Blt_TreeNextSibling,
+Blt_TreeNodeDegree,
+Blt_TreeNodeDepth,
+Blt_TreeNodeId,
+Blt_TreeNodeLabel,
+Blt_TreeNodeParent,
+Blt_TreePrevNode,
+Blt_TreePrevSibling,
+Blt_TreeRelabelNode,
+Blt_TreeReleaseToken,
+Blt_TreeRootNode,
+Blt_TreeSetValue,
+Blt_TreeSize,
 Blt_TreeSortNode, and
 Blt_TreeUnsetValue.
 .SH KEYWORDS

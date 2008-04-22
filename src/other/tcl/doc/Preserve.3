@@ -11,7 +11,7 @@
 .TH Tcl_Preserve 3 7.5 Tcl "Tcl Library Procedures"
 .BS
 .SH NAME
-Tcl_Preserve, Tcl_Release, Tcl_EventuallyFree \- avoid freeing storage while it's being used
+Tcl_Preserve, Tcl_Release, Tcl_EventuallyFree \- avoid freeing storage while it is being used
 .SH SYNOPSIS
 .nf
 \fB#include <tcl.h>\fR
@@ -38,7 +38,7 @@ having to do with widget deletion, but are also useful in many other
 situations.  When a widget is deleted, its
 widget record (the structure holding information specific to the
 widget) must be returned to the storage allocator.
-However, it's possible that the widget record is in active use
+However, it is possible that the widget record is in active use
 by one of the procedures on the stack at the time of the deletion.
 This can happen, for example, if the command associated with a button
 widget causes the button to be destroyed:  an X event causes an

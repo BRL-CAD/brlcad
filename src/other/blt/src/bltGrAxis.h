@@ -162,7 +162,7 @@ typedef struct {
 
     Point2D titlePos;		/* Position of the title */
 
-    unsigned short int titleWidth, titleHeight;	
+    unsigned short int titleWidth, titleHeight;
 
     int lineWidth;		/* Width of lines representing axis
 				 * (including ticks).  If zero, then
@@ -188,11 +188,11 @@ typedef struct {
 
     int tickLength;		/* Length of major ticks in pixels */
 
-    TextStyle tickTextStyle;	/* Text attributes (color, font, rotation, 
+    TextStyle tickTextStyle;	/* Text attributes (color, font, rotation,
 				 * etc.) for labels at each major tick. */
 
     char *formatCmd;		/* Specifies a Tcl command, to be invoked
-				 * by the axis whenever it has to generate 
+				 * by the axis whenever it has to generate
 				 * tick labels. */
 
     char *scrollCmdPrefix;
@@ -209,12 +209,12 @@ typedef struct {
 				 * (determined by auto-scaling). */
 
     double scrollMin, scrollMax;/* Defines the scrolling reqion of the axis.
-				 * Normally the region is determined from 
-				 * the data limits. If specified, these 
+				 * Normally the region is determined from
+				 * the data limits. If specified, these
 				 * values override the data-range. */
 
-    AxisRange valueRange;	/* Range of data values of elements mapped 
-				 * to this axis. This is used to auto-scale 
+    AxisRange valueRange;	/* Range of data values of elements mapped
+				 * to this axis. This is used to auto-scale
 				 * the axis in "tight" mode. */
 
     AxisRange axisRange;	/* Smallest and largest major tick values
@@ -224,23 +224,23 @@ typedef struct {
 
     double prevMin, prevMax;
 
-    double reqStep;		/* If > 0.0, overrides the computed major 
-				 * tick interval.  Otherwise a stepsize 
-				 * is automatically calculated, based 
-				 * upon the range of elements mapped to the 
+    double reqStep;		/* If > 0.0, overrides the computed major
+				 * tick interval.  Otherwise a stepsize
+				 * is automatically calculated, based
+				 * upon the range of elements mapped to the
 				 * axis. The default value is 0.0. */
 
-    double tickZoom;		/* If > 0.0, overrides the computed major 
-				 * tick interval.  Otherwise a stepsize 
-				 * is automatically calculated, based 
-				 * upon the range of elements mapped to the 
+    double tickZoom;		/* If > 0.0, overrides the computed major
+				 * tick interval.  Otherwise a stepsize
+				 * is automatically calculated, based
+				 * upon the range of elements mapped to the
 				 * axis. The default value is 0.0. */
 
 
     GC tickGC;			/* Graphics context for axis and tick labels */
 
     Ticks *t1Ptr;		/* Array of major tick positions. May be
-				 * set by the user or generated from the 
+				 * set by the user or generated from the
 				 * major sweep below. */
 
     Ticks *t2Ptr;		/* Array of minor tick positions. May be
@@ -274,7 +274,7 @@ typedef struct {
 
     int nSegments;		/* Number of segments in the above array. */
 
-    Blt_Chain *tickLabels;	/* Contains major tick label strings 
+    Blt_Chain *tickLabels;	/* Contains major tick label strings
 				 * and their offsets along the axis. */
     Region2D region;
 

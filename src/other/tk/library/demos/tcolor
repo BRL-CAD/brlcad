@@ -42,10 +42,6 @@ set updating 0
 set autoUpdate 1
 set name ""
 
-if {$tcl_platform(platform) eq "unix"} {
-    option add *Entry.background white
-}
-
 # Create the menu bar at the top of the window.
 
 . configure -menu [menu .menu]
@@ -69,8 +65,7 @@ menu .menu.file
 # with the update button.
 
 labelframe .command -text "Command:" -padx {1m 0}
-entry .command.e -relief sunken -borderwidth 2 -textvariable command \
-	-font {Courier 12}
+entry .command.e -textvariable command
 button .command.update -text Update -command doUpdate
 pack .command.update -side right -pady .1c -padx {.25c 0}
 pack .command.e -expand yes -fill x -ipadx 0.25c
@@ -96,12 +91,11 @@ foreach i {
     grid .names -row 0 -column 0 -sticky nsew -padx .15c -pady .15c -rowspan 2
     grid columnconfigure . 0 -weight 1
     listbox .names.lb -width 20 -height 12 -yscrollcommand ".names.s set" \
-	    -relief sunken -borderwidth 2 -exportselection false
+	-exportselection false
     bind .names.lb <Double-1> {
 	    tc_loadNamedColor [.names.lb get [.names.lb curselection]]
     }
-    scrollbar .names.s -orient vertical -command ".names.lb yview" \
-	    -relief sunken -borderwidth 2
+    scrollbar .names.s -orient vertical -command ".names.lb yview"
     pack .names.lb .names.s -side left -fill y -expand 1
     while {[gets $f line] >= 0} {
 	if {[regexp {^\s*\d+\s+\d+\s+\d+\s+(\S+)$} $line -> col]} {
@@ -127,8 +121,7 @@ foreach i {1 2 3} {
 grid .adjust -row 0 -column 1 -sticky nsew -padx .15c -pady .15c
 
 labelframe .name -text "Name:" -padx 1m -pady 1m
-entry .name.e -relief sunken -borderwidth 2 -textvariable name -width 10 \
-	-font {Courier 12}
+entry .name.e -textvariable name -width 10
 pack .name.e -side right -expand 1 -fill x
 bind .name.e <Return> {tc_loadNamedColor $name}
 grid .name   -column 1 -row 1 -sticky nsew -padx .15c -pady .15c

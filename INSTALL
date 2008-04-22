@@ -124,17 +124,17 @@ INSTALLING FROM SOURCE
 There are a couple means to obtain the BRL-CAD sources, usually via
 one of the following starting points:
 
-  1) from a CVS checkout/export, or
+  1) from a SVN checkout/export, or
   2) from a source distribution tarball
 
-Using the latest CVS sources is recommended where possible, since it
+Using the latest SVN sources is recommended where possible, since it
 will have the latest changes.  See the corresponding section below for
 details on how to install from either starting point.
 
 
-Starting From a CVS Checkout/Export:
+Starting From a SVN Checkout/Export:
 
-If you have obtained the BRL-CAD sources from the CVS revision control
+If you have obtained the BRL-CAD sources from the SVN revision control
 system, you will need to prepare the build for configuration:
 
   sh autogen.sh
@@ -276,13 +276,6 @@ functioning as expected.  Aliases:
 	--enable-everything-build
 	--enable-build-everything
 
---enable-automatic-flags tells configure whether it is allowed to
-automatically modify compilation flags (e.g. extra optimization flags
-and other CFLAGS).  Default is "yes".  Aliases:
-	--enable-auto-flags
-	--enable-auto-flag
-	--enable-automatic-flag
-
 --enable-only-benchmark prepares the build system to only compile and
 install the minimal set of libraries and binaries needed to run the
 BRL-CAD Benchmark suite.  Default is "no".  Aliases:
@@ -369,6 +362,18 @@ suitable system openNURBS library is not found.  Aliases:
 	--enable-open-nurbs
 	--enable-open-nurbs-build
 
+--enable-termlib-build turns on compilation of the termlib library
+that is provided in a BRL-CAD source distribution.  Default is "auto",
+meaning that libtermlib will be compiled and installed only if a
+suitable system termcap or termlib library is not found.  Aliases:
+	--enable-termlib
+	--enable-termcap
+	--enable-termcap-build
+	--enable-libtermlib
+	--enable-libtermlib-build
+	--enable-libtermcap
+	--enable-libtermcap-build
+
 --enable-tcl-build turns on compilation of the Tcl library that is
 provided in a BRL-CAD source distribution.  Default is "auto", meaning
 that libtcl will be compiled and installed only if a suitable system
@@ -421,18 +426,6 @@ tkimg library is not found.  Aliases:
 	--enable-tkimg
 	--enable-libtkimg
 	--enable-libtkimg-build
-
---enable-termlib-build turns on compilation of the termlib library
-that is provided in a BRL-CAD source distribution.  Default is "auto",
-meaning that libtermlib will be compiled and installed only if a
-suitable system termcap or termlib library is not found.  Aliases:
-	--enable-termlib
-	--enable-termcap
-	--enable-termcap-build
-	--enable-libtermlib
-	--enable-libtermlib-build
-	--enable-libtermcap
-	--enable-libtermcap-build
 
 --enable-tnt-install turns on installation of the Template Numerical
 Toolkit that is provided in a BRL-CAD source distribution.  Default is
@@ -500,6 +493,16 @@ Default is "yes".  Aliases:
 Aliases:
 	--enable-profile
 	--enable-profiled
+
+--enable-parallel turns on support for SMP architectures.  Default is "yes".
+Aliases:
+	--enable-parallel-build
+	--enable-smp
+	--enable-smp-build
+
+--enable-dtrace turns on Sun dtrace support.  Default is "no".
+Aliases:
+	None
 
 --enable-verbose turns on verbose compilation output effectively
 implying --enable-warnings and --enable-progress as described below.

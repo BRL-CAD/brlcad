@@ -1,7 +1,7 @@
 /*                           T C L . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2007 United States Government as represented by
+ * Copyright (c) 1998-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,15 +22,6 @@
  *
  *  The supporting Tcl routines for BWISH and BTCLSH.
  *
- *  Author -
- *	  Robert G. Parker
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- *
- *
  *  Cad_Main --
  *	     Main program for wish-like applications that desire command
  *	     line editing when in interactive mode. Much of this code was
@@ -49,7 +40,6 @@
 #endif
 #include "libtermio.h"
 
-#include "machine.h"
 #include "bu.h"
 
 /* defined in input.c */
@@ -125,10 +115,9 @@ Cad_Main(int argc, char **argv, Tcl_AppInitProc (*appInitProc), Tcl_Interp *inte
      */
     if ((*appInitProc)(interp) != TCL_OK) {
 #ifdef BWISH
-	TkpDisplayWarning(Tcl_GetStringResult(interp),
-			  "Application initialization failed");
+	TkpDisplayWarning("Application initialization failed", "ERROR");
 #else
-	bu_log( "Application initialization failed: %s", Tcl_GetStringResult(interp));
+	bu_log("ERROR: Application initialization failed\n");
 #endif
     }
 
@@ -151,7 +140,8 @@ Cad_Main(int argc, char **argv, Tcl_AppInitProc (*appInitProc), Tcl_Interp *inte
 #ifndef BWISH
 	Cad_Exit(status);
 #endif
-    } else { /* We're running interactively. */
+    } else {
+	/* We're running interactively. */
 	/* Set up to handle commands from user as well as
 	   provide a command line editing capability. */
 	initInput();
@@ -176,9 +166,9 @@ Cad_MainLoop(void)
 #else
 	while (1)
 #endif
-	    {
-		Tcl_DoOneEvent(0);
-	    }
+	{
+	    Tcl_DoOneEvent(0);
+	}
 }
 
 void
@@ -192,8 +182,8 @@ Cad_Exit(int status)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -1,18 +1,18 @@
-/* 
+/*
  * rlehisto.c - Create histogram image of an RLE file.
  *
  * Author:	Gregg Townsend
  *		Department of Computer Science
  *		University of Arizona
  * Date:	June 23, 1990
- * 
+ *
  * Original version:
  * Author:	Rod Bogart
  * 		Computer Science Dept.
  * 		University of Utah
  * Date:	Thu Nov  6 1986
  * Copyright (c) 1986 Rod Bogart
- * 
+ *
  * Flags:
  *    -b	Don't count background color values for scaling.
  *    		Ineffective when -c specified.
@@ -106,7 +106,7 @@ char	*argv[];
 	for ( j = 0; j < 256; j++)
 	{
 	    if ( rle_cnt == 0 )
-	    {		
+	    {
 		pixelcount[j] = (long *) malloc(sizeof(long) * nchan);
 		RLE_CHECK_ALLOC( cmd_name( argv ), pixelcount[j], 0 );
 	    }

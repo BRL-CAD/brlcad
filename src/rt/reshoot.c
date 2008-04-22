@@ -1,7 +1,7 @@
 /*                     S H O T L I N E S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,41 +29,41 @@
  * eliminate extraneous information to produce the input to this
  * program.  The following awk program, will suffice:  @verbatim
 
-	/Pnt/ { START=index($0,"(") + 1
-	       STR=substr($0, START, index($0,")") - START)
-	       gsub(  ", "  , "," , STR)
-	       printf "Pnt=%s\n",STR
+ /Pnt/ { START=index($0, "(") + 1
+ STR=substr($0, START, index($0, ")") - START)
+ gsub(  ", ", ",", STR)
+ printf "Pnt=%s\n", STR
 
-	       }
+ }
 
 
-	/Dir/ { START=index($0,"(") + 1
-	       STR=substr($0, START, index($0,")") - START)
-	       gsub(  ", "  , "," , STR)
-	       printf "Dir=%s\n",STR
-	       }
-	/PT/  { PARTIN=$3
-	       PARTOUT=$5
-	       }
-	/InHIT/ { INHIT=$2 }
-	/OutHIT/ { OUTHIT=$2 }
-	/Region/ { printf "\tregion=%s in=%s in%s out=%s out%s\n",$2,PARTIN,INHIT,PARTOUT,OUTHIT}
+ /Dir/ { START=index($0, "(") + 1
+ STR=substr($0, START, index($0, ")") - START)
+ gsub(  ", ", ",", STR)
+ printf "Dir=%s\n", STR
+ }
+ /PT/  { PARTIN=$3
+ PARTOUT=$5
+ }
+ /InHIT/ { INHIT=$2 }
+ /OutHIT/ { OUTHIT=$2 }
+ /Region/ { printf "\tregion=%s in=%s in%s out=%s out%s\n", $2, PARTIN, INHIT, PARTOUT, OUTHIT}
 
-@endverbatim
+ @endverbatim
  * If this awk program is stored in the file p.awk then: @verbatim
-	awk -f p.awk < logfile > inputfile
-@endverbatim
+ awk -f p.awk < logfile > inputfile
+ @endverbatim
  * will produce a suitable input file for this program.  The form is as
  * follows: @verbatim
-	Pnt=1,2,3
-	Dir=4,5,6
-		region=/all.g/platform.r in=platform.s indist=10016.8 out=platform.s outdist=10023.8
-@endverbatim
+ Pnt=1, 2, 3
+ Dir=4, 5, 6
+ region=/all.g/platform.r in=platform.s indist=10016.8 out=platform.s outdist=10023.8
+ @endverbatim
  * where the line begining with "region" may be repeated any number of times, representing each
  * region encountered along the ray.
  * now run this program as follows: @verbatim
-	reshoot geom.g obj [obj...] < inputfile
-@endverbatim
+ reshoot geom.g obj [obj...] < inputfile
+ @endverbatim
  * and this  will re-shoot all of the rays that the original program
  * shot, and compare the results.
  *
@@ -71,13 +71,15 @@
  * field a_onehit is set to zero in the original application, causing
  * all rays to be shot all the way through the geometry
  */
+
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
-#include <strings.h>
+#include <string.h>
 #include <math.h>
+#include <stddef.h>
 
-#include "machine.h"		/* machine specific definitions */
 #include "vmath.h"		/* vector math macros */
 #include "bu.h"
 #include "raytrace.h"		/* librt interface definitions */
@@ -102,9 +104,9 @@ struct shot {
  * The parse table for a struct shot
  */
 static const struct bu_structparse shot_sp[] = {
-    { "%f", 3, "Pnt", bu_offsetofarray(struct shot, pt)},
-    { "%f", 3, "Dir", bu_offsetofarray(struct shot, dir)},
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    { "%f", 3, "Pnt", bu_offsetofarray(struct shot, pt), BU_STRUCTPARSE_FUNC_NULL},
+    { "%f", 3, "Dir", bu_offsetofarray(struct shot, dir), BU_STRUCTPARSE_FUNC_NULL},
+    {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL }
 };
 
 /**
@@ -122,12 +124,12 @@ struct reg_hit {
 };
 
 static const struct bu_structparse reg_sp[] = {
-    {"%S", 1, "region", bu_offsetof(struct reg_hit, regname) },
-    {"%S", 1, "in", bu_offsetof(struct reg_hit, in_primitive)},
-    {"%S", 1, "out", bu_offsetof(struct reg_hit, out_primitive)},
-    {"%f", 1, "indist", bu_offsetof(struct reg_hit, indist)},
-    {"%f", 1, "outdist", bu_offsetof(struct reg_hit, outdist)},
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%S", 1, "region", bu_offsetof(struct reg_hit, regname), BU_STRUCTPARSE_FUNC_NULL },
+    {"%S", 1, "in", bu_offsetof(struct reg_hit, in_primitive), BU_STRUCTPARSE_FUNC_NULL},
+    {"%S", 1, "out", bu_offsetof(struct reg_hit, out_primitive), BU_STRUCTPARSE_FUNC_NULL},
+    {"%f", 1, "indist", bu_offsetof(struct reg_hit, indist), BU_STRUCTPARSE_FUNC_NULL},
+    {"%f", 1, "outdist", bu_offsetof(struct reg_hit, outdist), BU_STRUCTPARSE_FUNC_NULL},
+    {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL }
 };
 
 
@@ -138,10 +140,7 @@ void
 usage(char *s)
 {
     if (s) (void)fputs(s, stderr);
-
-    (void) fprintf(stderr, "Usage: %s geom.g obj [obj...] < rayfile \n",
-		   progname);
-    exit(1);
+    bu_exit(1, "Usage: %s geom.g obj [obj...] < rayfile \n", progname);
 }
 
 
@@ -177,7 +176,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 
     /* examine each partition until we get back to the head */
     rh = BU_LIST_FIRST(reg_hit, &sh->regions);
-    for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
+    for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
 
 	bu_vls_trunc(&result, 0);
 
@@ -211,11 +210,11 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 	}
 
 	if ( strcmp(pp->pt_inseg->seg_stp->st_dp->d_namep, bu_vls_addr(&rh->in_primitive))) {
-	    bu_vls_printf(&result,"\tin primitive name mismatch %s %s\n",pp->pt_inseg->seg_stp->st_dp->d_namep, bu_vls_addr(&rh->in_primitive));
+	    bu_vls_printf(&result, "\tin primitive name mismatch %s %s\n", pp->pt_inseg->seg_stp->st_dp->d_namep, bu_vls_addr(&rh->in_primitive));
 	    status = 1;
 	}
 	if ( strcmp(pp->pt_outseg->seg_stp->st_dp->d_namep, bu_vls_addr(&rh->out_primitive))) {
-	    bu_vls_printf(&result, "\tout primitive name mismatch %s %s\n",pp->pt_outseg->seg_stp->st_dp->d_namep, bu_vls_addr(&rh->out_primitive));
+	    bu_vls_printf(&result, "\tout primitive name mismatch %s %s\n", pp->pt_outseg->seg_stp->st_dp->d_namep, bu_vls_addr(&rh->out_primitive));
 	    status = 1;
 	}
 	if (bu_vls_strlen(&result) > 0) {
@@ -322,9 +321,8 @@ main(int argc, char **argv)
 
     progname = argv[0];
 
-    if( argc < 3 )  {
+    if ( argc < 3 )  {
 	usage("insufficient args\n");
-	exit(1);
     }
 
 
@@ -334,9 +332,8 @@ main(int argc, char **argv)
      *  the database to be ray traced.  It also gives you back the
      *  title string in the header (ID) record.
      */
-    if( (rtip=rt_dirbuild(argv[1], idbuf, sizeof(idbuf))) == RTI_NULL ) {
-	fprintf(stderr,"rtexample: rt_dirbuild failure\n");
-	exit(2);
+    if ( (rtip=rt_dirbuild(argv[1], idbuf, sizeof(idbuf))) == RTI_NULL ) {
+	bu_exit(2, "rtexample: rt_dirbuild failure\n");
     }
 
     /* intialize the application structure to all zeros */
@@ -348,9 +345,9 @@ main(int argc, char **argv)
      * Here you identify any object trees in the database that you
      * want included in the ray trace.
      */
-    while( argc > 2 )  {
-	if( rt_gettree(rtip, argv[2]) < 0 )
-	    fprintf(stderr,"rt_gettree(%s) FAILED\n", argv[0]);
+    while ( argc > 2 )  {
+	if ( rt_gettree(rtip, argv[2]) < 0 )
+	    fprintf(stderr, "rt_gettree(%s) FAILED\n", argv[0]);
 	argc--;
 	argv++;
     }
@@ -358,20 +355,20 @@ main(int argc, char **argv)
      * This next call gets the database ready for ray tracing.
      * (it precomputes some values, sets up space partitioning, etc.)
      */
-    rt_prep_parallel(rtip,1);
+    rt_prep_parallel(rtip, 1);
 
 
     bu_vls_init(&buf);
 
 
-    bzero((void *)&sh, sizeof(sh));
+    memset((void *)&sh, 0, sizeof(sh));
     BU_LIST_INIT(&sh.regions);
 
     while (bu_vls_gets(&buf, stdin) >= 0) {
 	char *p = bu_vls_addr(&buf);
 
 	switch (*p) {
-	case 'P' :
+	    case 'P' :
 	    {
 
 		if (BU_LIST_NON_EMPTY(&sh.regions)) {
@@ -379,20 +376,20 @@ main(int argc, char **argv)
 		}
 
 		if (bu_struct_parse(&buf, shot_sp, (const char *)&sh)) {
-		    bu_bomb("error parsing pt");
+		    bu_exit(EXIT_FAILURE, "error parsing pt");
 		}
 
 		break;
 	    }
-	case 'D' :
+	    case 'D' :
 	    {
 		if (bu_struct_parse(&buf, shot_sp, (const char *)&sh)) {
-		    bu_bomb("error parsing dir");
+		    bu_exit(EXIT_FAILURE, "error parsing dir");
 		}
 		break;
 	    }
 
-	default:
+	    default:
 	    {
 		struct reg_hit *rh = bu_calloc(1, sizeof (struct reg_hit), "");
 
@@ -419,8 +416,8 @@ main(int argc, char **argv)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

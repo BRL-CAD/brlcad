@@ -98,12 +98,18 @@ result; it can be retrieved using \fBTcl_GetObjResult\fR.
 \fBTcl_EvalFile\fR reads the file given by \fIfileName\fR and evaluates
 its contents as a Tcl script.  It returns the same information as
 \fBTcl_EvalObjEx\fR.
-If the file couldn't be read then a Tcl error is returned to describe
-why the file couldn't be read.
-The eofchar for files is '\\32' (^Z) for all platforms.
-If you require a ``^Z'' in code for string comparison, you can use
-``\\032'' or ``\\u001a'', which will be safely substituted by the Tcl
-interpreter into ``^Z''.
+If the file could not be read then a Tcl error is returned to describe
+why the file could not be read.
+The eofchar for files is
+.QW \e32
+(^Z) for all platforms. If you require a
+.QW ^Z
+in code for string comparison, you can use
+.QW \e032
+or
+.QW \eu001a ,
+which will be safely substituted by the Tcl interpreter into
+.QW ^Z .
 .PP
 \fBTcl_EvalObjv\fR executes a single pre-parsed command instead of a
 script.  The \fIobjc\fR and \fIobjv\fR arguments contain the values
@@ -128,7 +134,7 @@ executed again, \fBTcl_Eval\fR may be faster than \fBTcl_EvalObjEx\fR.
 Tcl 8.0, \fBTcl_Eval\fR copies the object result in \fIinterp\fR to
 \fIinterp->result\fR (use is deprecated) where it can be accessed directly.
  This makes \fBTcl_Eval\fR somewhat slower than \fBTcl_EvalEx\fR, which
-doesn't do the copy.
+does not do the copy.
 .PP
 \fBTcl_EvalEx\fR is an extended version of \fBTcl_Eval\fR that takes
 additional arguments \fInumBytes\fR and \fIflags\fR.  For the
@@ -165,8 +171,8 @@ compiled to bytecodes; instead it is executed directly
 as is done by \fBTcl_EvalEx\fR.  The
 \fBTCL_EVAL_DIRECT\fR flag is useful in situations where the
 contents of an object are going to change immediately, so the
-bytecodes won't be reused in a future execution.  In this case,
-it's faster to execute the script directly.
+bytecodes will not be reused in a future execution.  In this case,
+it is faster to execute the script directly.
 .TP 23
 \fBTCL_EVAL_GLOBAL\fR
 If this flag is set, the script is processed at global level.  This

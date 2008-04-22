@@ -2,7 +2,7 @@
 #                       F O O T E R . S H
 # BRL-CAD
 #
-# Copyright (c) 2004-2007 United States Government as represented by
+# Copyright (c) 2004-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -106,16 +106,16 @@ case $FILE in
     *.c )
 	echo "$FILE is a C source file"
 	mode="C"
-	mode_vars="c-basic-offset"
+	mode_vars=""
 	wrap=1
 	commentchar="*"
 	;;
     *.h )
 	echo "$FILE is a C header"
 	mode="C"
-	mode_vars="c-basic-offset"
-	wrap=0
-	commentchar="//"
+	mode_vars=""
+	wrap=1
+	commentchar="*"
 	;;
     *.cc | *.cp | *.cxx | *.cpp | *.CPP | *.c++ | *.C )
 	echo "$FILE is a C++ source file"
@@ -127,6 +127,13 @@ case $FILE in
     *.hh | *.hp | *.hxx | *.hpp | *.HPP | *.h++ | *.H )
 	echo "$FILE is a C++ header"
 	mode="C++"
+	mode_vars="c-basic-offset"
+	wrap=0
+	commentchar="//"
+	;;
+    *.java )
+	echo "$FILE is a Java source file"
+	mode="Java"
 	mode_vars="c-basic-offset"
 	wrap=0
 	commentchar="//"
@@ -148,14 +155,14 @@ case $FILE in
     *.l )
 	echo "$FILE is a Lex/Flex lexer source file"
 	mode="C"
-	mode_vars="c-basic-offset"
+	mode_vars=""
 	wrap=1
 	commentchar="*"
 	;;
     *.y )
 	echo "$FILE is a Yacc parser source file"
 	mode="C"
-	mode_vars="c-basic-offset"
+	mode_vars=""
 	wrap=1
 	commentchar="*"
 	;;
@@ -337,6 +344,10 @@ for mv in $mode_vars ; do
 done
 variables=( ${variables[@]} indent-tabs-mode )
 values=( ${values[@]} t )
+if [ "x$mode" = "xC" -o "x$mode" = "xC++" ] ; then
+    variables=( ${variables[@]} c-file-style )
+    values=( ${values[@]} "\"stroustrup\"" )
+fi
 
 
 ##############################

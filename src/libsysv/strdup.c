@@ -1,7 +1,7 @@
 /*                        S T R D U P . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2007 United States Government as represented by
+ * Copyright (c) 1985-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,6 @@
 
 #include "common.h"
 
-
 /* quell empty-compilation unit warnings */
 static const int unused = 0;
 
@@ -36,14 +35,7 @@ static const int unused = 0;
 
 /* for malloc */
 #include <stdlib.h>
-
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  ifdef HAVE_STRINGS_H
-#    include <strings.h>
-#  endif
-#endif
+#include <string.h>
 
 
 /*
@@ -59,10 +51,10 @@ strdup(register const char *cp)
     register int	len;
 
     len = strlen( cp )+2;
-    if( (base = (char *)malloc( len )) == (char *)0 )
+    if ( (base = (char *)malloc( len )) == (char *)0 )
 	return( (char *)0 );
 
-    bcopy( cp, base, len );
+    memcpy(base, cp, len);
     return(base);
 }
 
@@ -72,8 +64,8 @@ strdup(register const char *cp)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

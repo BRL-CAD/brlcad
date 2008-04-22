@@ -1,7 +1,7 @@
-/*                          B R E P . C P P 
+/*                          B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 1987-2007 United States Government as represented by
+ * Copyright (c) 1987-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,22 +26,14 @@
  *	Jason Owens
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
-
 #include <stdio.h>
 #include <math.h>
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#include <strings.h>
-#endif
+#include "bio.h"
 
-#include "machine.h"
 #include "bu.h"
 #include "db.h"
 #include "vmath.h"
@@ -52,16 +44,28 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 /*
  *                        M K _ B R E P
  *
- *  Create a brep in the geometry file. 
+ *  Create a brep in the geometry file.
  */
 int
 mk_brep( struct rt_wdb* file, const char* name, ON_Brep* brep )
 {
-  struct rt_brep_internal* bi;
+    struct rt_brep_internal* bi;
 
-  BU_ASSERT(brep != NULL);
-  BU_GETSTRUCT(bi, rt_brep_internal);
-  bi->magic = RT_BREP_INTERNAL_MAGIC;
-  bi->brep = brep;
-  return wdb_export(file, name, (genptr_t)bi, ID_BREP, mk_conv2mm);
+    BU_ASSERT(brep != NULL);
+    BU_GETSTRUCT(bi, rt_brep_internal);
+    bi->magic = RT_BREP_INTERNAL_MAGIC;
+    bi->brep = new ON_Brep(*brep); /* copy the users' brep */
+    if (!bi->brep) {
+	bu_log("mk_brep: Unable to copy BREP\n");
+    }
+    return wdb_export(file, name, (genptr_t)bi, ID_BREP, mk_conv2mm);
 }
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8

@@ -34,8 +34,11 @@ on the interpreter.  Interpreter structures contain many fields
 that are used by Tcl, but only three that may be accessed by
 clients:  \fIresult\fR, \fIfreeProc\fR, and \fIerrorLine\fR.
 .PP
-\fBNote that access to the \fIresult\fB and \fIfreeProc\fB fields is\fR
-\fBdeprecated.\fR  Use \fBTcl_SetResult\fR and \fBTcl_GetResult\fR instead.
+.VS 8.5
+\fBNote that access to all three fields, \fIresult\fB, \fIfreeProc\fB and
+\fIerrorLine\fB is deprecated.\fR  Use \fBTcl_SetResult\fR,
+\fBTcl_GetResult\fR, and \fBTcl_GetReturnOptions\fR instead.
+.VE 8.5
 .PP
 The \fIresult\fR and \fIfreeProc\fR fields are used to return
 results or error messages from commands.
@@ -43,7 +46,7 @@ This information is returned by command procedures back to \fBTcl_Eval\fR,
 and by \fBTcl_Eval\fR back to its callers.
 The \fIresult\fR field points to the string that represents the
 result or error message, and the \fIfreeProc\fR field tells how
-to dispose of the storage for the string when it isn't needed anymore.
+to dispose of the storage for the string when it is not needed anymore.
 The easiest way for command procedures to manipulate these
 fields is to call procedures like \fBTcl_SetResult\fR
 or \fBTcl_AppendResult\fR;  they

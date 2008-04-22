@@ -28,11 +28,11 @@ typedef struct PixelRep {
     ((objPtr)->internalRep.twoPtrValue.ptr2 == 0)
 
 #define SET_SIMPLEPIXEL(objPtr, intval)			\
-    (objPtr)->internalRep.twoPtrValue.ptr1 = (VOID *) (intval);	\
+    (objPtr)->internalRep.twoPtrValue.ptr1 = INT2PTR(intval);	\
     (objPtr)->internalRep.twoPtrValue.ptr2 = 0
 
 #define GET_SIMPLEPIXEL(objPtr)				\
-    ((int) (objPtr)->internalRep.twoPtrValue.ptr1)
+    (PTR2INT((objPtr)->internalRep.twoPtrValue.ptr1))
 
 #define SET_COMPLEXPIXEL(objPtr, repPtr)		\
     (objPtr)->internalRep.twoPtrValue.ptr1 = 0;		\
@@ -154,7 +154,7 @@ Tk_GetPixelsFromObj(
     double d;
     PixelRep *pixelPtr;
     static double bias[] = {
-	1.0,	10.0,	25.4,	25.4 / 72.0
+	1.0,	10.0,	25.4,	0.35278 /*25.4 / 72.0*/
     };
 
     if (objPtr->typePtr != &pixelObjType) {
@@ -390,7 +390,7 @@ Tk_GetMMFromObj(
     double d;
     MMRep *mmPtr;
     static double bias[] = {
-	10.0,	25.4,	1.0,	25.4 / 72.0
+	10.0,	25.4,	1.0,	0.35278 /*25.4 / 72.0*/
     };
 
     if (objPtr->typePtr != &mmObjType) {
@@ -513,7 +513,7 @@ UpdateStringOfMM(
     }
 
     Tcl_PrintDouble(NULL, mmPtr->value, buffer);
-    len = strlen(buffer);
+    len = (int)strlen(buffer);
 
     objPtr->bytes = (char *) ckalloc((unsigned) len + 1);
     strcpy(objPtr->bytes, buffer);

@@ -8,15 +8,15 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-# 
+#
 # RCS: @(#) $Id$
 
-package require Tcl 8.4
-package require tcltest 2.1
+package require Tcl 8.5
+package require tcltest 2.2
 package require Tk ;# This is the Tk test suite; fail early if no Tk!
-tcltest::configure -testdir [file join [pwd] [file dirname [info script]]]
+tcltest::configure {*}$argv
+tcltest::configure -testdir [file normalize [file dirname [info script]]]
 tcltest::configure -loadfile \
 	[file join [tcltest::testsDirectory] constraints.tcl]
 tcltest::configure -singleproc 1
-eval tcltest::configure $argv
 tcltest::runAllTests

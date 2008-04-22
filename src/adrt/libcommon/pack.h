@@ -1,7 +1,7 @@
 /*                     P A C K . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2007 United States Government as represented by
+ * Copyright (c) 2002-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,14 +21,6 @@
  *
  *  Common Library - Parsing and Packing Header
  *
- *  Author -
- *      Justin L. Shumaker
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- * $Id$
  */
 
 #ifndef _COMMON_PACK_H
@@ -43,7 +35,7 @@
 
 
 extern	int	common_pack(common_db_t *db, void **app_data, char *proj);
-extern	void	common_pack_write(void **dest, int *ind, void *src, int size);
+extern	void	common_pack_write(void** dest, int* ind, const void* src, size_t size);
 
 extern	int	common_pack_trinum;
 
@@ -53,8 +45,8 @@ extern	int	common_pack_trinum;
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

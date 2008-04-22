@@ -2,17 +2,17 @@
 
 package require BLT
 # --------------------------------------------------------------------------
-# Starting with Tcl 8.x, the BLT commands are stored in their own 
+# Starting with Tcl 8.x, the BLT commands are stored in their own
 # namespace called "blt".  The idea is to prevent name clashes with
 # Tcl commands and variables from other packages, such as a "table"
-# command in two different packages.  
+# command in two different packages.
 #
 # You can access the BLT commands in a couple of ways.  You can prefix
 # all the BLT commands with the namespace qualifier "blt::"
-#  
+#
 #    blt::graph .g
 #    blt::table . .g -resize both
-# 
+#
 # or you can import all the command into the global namespace.
 #
 #    namespace import blt::*
@@ -68,7 +68,7 @@ option add *Hierbox.activeIcons "closeFolder2 openFolder2"
 hierbox .h  \
     -activebackground blue \
     -yscrollcommand { .vs set } \
-    -xscrollcommand { .hs set } 
+    -xscrollcommand { .hs set }
 
 scrollbar .vs -orient vertical -command { .h yview }
 scrollbar .hs -orient horizontal -command { .h xview }
@@ -104,30 +104,30 @@ proc Find { dir } {
 set top ..
 set trim "$top"
 
-.h configure -separator "/" -autocreate yes 
+.h configure -separator "/" -autocreate yes
 
 proc GetAbsolutePath { dir } {
     set saved [pwd]
     cd $dir
-    set path [pwd] 
+    set path [pwd]
     cd $saved
     return $path
 }
-.h entry configure root -label [file tail [GetAbsolutePath $top]] 
+.h entry configure root -label [file tail [GetAbsolutePath $top]]
 .h configure -bg grey90
 update
 regsub -all {\.\./*} [Find $top] {} fileList
 eval .h insert end $fileList
 .h configure -bg white
 
-.h find -glob -name *.gif -exec { 
+.h find -glob -name *.gif -exec {
      %W entry configure %n -image [image create photo -file $top/%P]
 }
 
 focus .h
 
 set nodes [.h find -glob -name *.c]
-eval .h entry configure $nodes -labelcolor red 
+eval .h entry configure $nodes -labelcolor red
 
 cd $saved
 

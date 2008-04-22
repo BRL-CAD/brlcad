@@ -47,7 +47,7 @@ itcl::class itk::Widget {
         } {
             keep -background -cursor
         }
-        bind itk-delete-$itk_hull <Destroy> "itcl::delete object $this"
+        bind itk-delete-$itk_hull <Destroy> [list itcl::delete object $this]
 
         set tags [bindtags $itk_hull]
         bindtags $itk_hull [linsert $tags 0 itk-delete-$itk_hull]

@@ -1,7 +1,7 @@
 /*                          P A T H . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007 United States Government as represented by
+ * Copyright (c) 2007-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,136 +24,147 @@
  *
  */
 
+#ifndef TIE_PRECISION
+# define TIE_PRECISION 0
+#endif
+
 #include "path.h"
+
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
+
 #include "umath.h"
 #include "hit.h"
-#include "adrt_common.h"
+#include "adrt_struct.h"
 
+#include "bu.h"
 
 void render_path_init(render_t *render, int samples) {
-  render_path_t *d;
+    render_path_t *d;
 
-  render->work = render_path_work;
-  render->free = render_path_free;
-  render->data = (render_path_t *)malloc(sizeof(render_path_t));
-  if (!render->data) {
-      perror("render->data");
-      exit(1);
-  }
-  d = (render_path_t *)render->data;
-  d->samples = samples;
-  d->inv_samples = 1.0 / samples;
+    render->work = render_path_work;
+    render->free = render_path_free;
+    render->data = (render_path_t *)bu_malloc(sizeof(render_path_t), "render_path_init");
+    if (!render->data) {
+	perror("render->data");
+	exit(1);
+    }
+    d = (render_path_t *)render->data;
+    d->samples = samples;
+    d->inv_samples = 1.0 / samples;
 }
 
 
 void render_path_free(render_t *render) {
-  free(render->data);
+    bu_free(render->data, "render_path_free");
 }
 
 
 void render_path_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel) {
-  tie_ray_t	new_ray;
-  tie_id_t	new_id;
-  TIE_3		new_pix, accum, T, ref, bax, bay;
-  common_mesh_t	*new_mesh;
-  tfloat	sin_theta, cos_theta, sin_phi, cos_phi;
-  int		i, n, propogate;
-  render_path_t *rd;
+    tie_ray_t new_ray;
+    tie_id_t new_id;
+    TIE_3 new_pix, accum, T, ref, bax, bay;
+    adrt_mesh_t *new_mesh;
+    tfloat sin_theta, cos_theta, sin_phi, cos_phi;
+    int i, n, propogate;
+    render_path_t *rd;
 
 
-  rd = (render_path_t *)render->data;
+    rd = (render_path_t *)render->data;
 
-  accum.v[0] = accum.v[1] = accum.v[2] = 0;
+    accum.v[0] = accum.v[1] = accum.v[2] = 0;
 
-  for(i = 0; i < rd->samples; i++) {
-    /* Prime variables */
-    new_ray = *ray;
-    propogate = 1;
+    for (i = 0; i < rd->samples; i++) {
+	/* Prime variables */
+	new_ray = *ray;
+	propogate = 1;
 
-    /* Terminate if depth is too great. */
-    while(propogate) {
-      if((new_mesh = (common_mesh_t *)tie_work(tie, &new_ray, &new_id, render_hit, NULL)) && new_ray.depth < RENDER_MAX_DEPTH) {
-	if(new_mesh->prop->ior != 1.0) {	/* Refractive Caustic */
-	  /* Deal with refractive-fu */
-	} else if(new_mesh->prop->emission > 0.0) {	/* Emitting Light Source */
-	  T = new_mesh->prop->color;
-	  MATH_VEC_MUL_SCALAR(T, T, new_mesh->prop->emission);
-	  propogate = 0;
-	} else {	/* Diffuse */
-	  if(new_mesh->texture) {
-	    new_mesh->texture->work(new_mesh->texture, (struct mesh_s *)new_mesh, &new_ray, &new_id, &T);
-	  } else {
-	    T = new_mesh->prop->color;
-	  }
+	/* Terminate if depth is too great. */
+	while (propogate) {
+	    if ((new_mesh = (adrt_mesh_t *)tie_work(tie, &new_ray, &new_id, render_hit, NULL)) && new_ray.depth < RENDER_MAX_DEPTH) {
+		if (new_mesh->attributes->ior != 1.0) {
+		    /* Refractive Caustic */
+		    /* Deal with refractive-fu */
+		} else if (new_mesh->attributes->emission > 0.0) {
+		    /* Emitting Light Source */
+		    T = new_mesh->attributes->color;
+		    MATH_VEC_MUL_SCALAR(T, T, new_mesh->attributes->emission);
+		    propogate = 0;
+		} else {
+		    /* Diffuse */
+		    if (new_mesh->texture) {
+			new_mesh->texture->work(new_mesh->texture, new_mesh, &new_ray, &new_id, &T);
+		    } else {
+			T = new_mesh->attributes->color;
+		    }
+		}
+
+		if (new_ray.depth) {
+		    MATH_VEC_MUL(new_pix, new_pix, T);
+		} else {
+		    new_pix = T;
+		}
+
+		new_ray.depth++;
+
+		MATH_VEC_REFLECT(ref, new_ray.dir, new_id.norm);
+
+		new_ray.pos.v[0] = new_id.pos.v[0] + new_id.norm.v[0]*TIE_PREC;
+		new_ray.pos.v[1] = new_id.pos.v[1] + new_id.norm.v[1]*TIE_PREC;
+		new_ray.pos.v[2] = new_id.pos.v[2] + new_id.norm.v[2]*TIE_PREC;
+
+		T.v[0] = new_id.norm.v[0] - new_mesh->attributes->gloss*ref.v[0];
+		T.v[1] = new_id.norm.v[1] - new_mesh->attributes->gloss*ref.v[1];
+		T.v[2] = new_id.norm.v[2] - new_mesh->attributes->gloss*ref.v[2];
+		MATH_VEC_UNITIZE(T);
+
+		/* Form Basis X */
+		bax.v[0] = T.v[0] || T.v[1] ? -T.v[1] : 1.0;
+		bax.v[1] = T.v[0];
+		bax.v[2] = 0;
+		MATH_VEC_UNITIZE(bax);
+
+		/* Form Basis Y, Simplified Cross Product of two unit vectors is a unit vector */
+		bay.v[0] = -T.v[2]*bax.v[1];
+		bay.v[1] = T.v[2]*bax.v[0];
+		bay.v[2] = T.v[0]*bax.v[1] - T.v[1]*bax.v[0];
+
+		cos_theta = math_rand();
+		sin_theta = sqrt(cos_theta);
+		cos_theta = 1-cos_theta;
+
+		cos_phi = math_rand()*MATH_2_PI;
+		sin_phi = sin(cos_phi);
+		cos_phi = cos(cos_phi);
+
+		for (n = 0; n < 3; n++) {
+		    T.v[n] = sin_theta*cos_phi*bax.v[n] + sin_theta*sin_phi*bay.v[n] + cos_theta*T.v[n];
+		    /* Weigh reflected vector back in */
+		    new_ray.dir.v[n] = (1.0 - new_mesh->attributes->gloss)*T.v[n] + new_mesh->attributes->gloss * ref.v[n];
+		}
+
+		MATH_VEC_UNITIZE(new_ray.dir);
+	    } else {
+		new_pix.v[0] = 0;
+		new_pix.v[1] = 0;
+		new_pix.v[2] = 0;
+		propogate = 0;
+	    }
 	}
 
-	if(new_ray.depth) {
-	  MATH_VEC_MUL(new_pix, new_pix, T);
-	} else {
-	  new_pix = T;
-	}
-
-	new_ray.depth++;
-
-	MATH_VEC_REFLECT(ref, new_ray.dir, new_id.norm);
-
-	new_ray.pos.v[0] = new_id.pos.v[0] + new_id.norm.v[0]*TIE_PREC;
-	new_ray.pos.v[1] = new_id.pos.v[1] + new_id.norm.v[1]*TIE_PREC;
-	new_ray.pos.v[2] = new_id.pos.v[2] + new_id.norm.v[2]*TIE_PREC;
-
-	T.v[0] = new_id.norm.v[0] - new_mesh->prop->gloss*ref.v[0];
-	T.v[1] = new_id.norm.v[1] - new_mesh->prop->gloss*ref.v[1];
-	T.v[2] = new_id.norm.v[2] - new_mesh->prop->gloss*ref.v[2];
-	MATH_VEC_UNITIZE(T);
-
-	/* Form Basis X */
-	bax.v[0] = T.v[0] || T.v[1] ? -T.v[1] : 1.0;
-	bax.v[1] = T.v[0];
-	bax.v[2] = 0;
-	MATH_VEC_UNITIZE(bax);
-
-	/* Form Basis Y, Simplified Cross Product of two unit vectors is a unit vector */
-	bay.v[0] = -T.v[2]*bax.v[1];
-	bay.v[1] = T.v[2]*bax.v[0];
-	bay.v[2] = T.v[0]*bax.v[1] - T.v[1]*bax.v[0];
-
-	cos_theta = math_rand();
-	sin_theta = sqrt(cos_theta);
-	cos_theta = 1-cos_theta;
-
-	cos_phi = math_rand()*MATH_2_PI;
-	sin_phi = sin(cos_phi);
-	cos_phi = cos(cos_phi);
-
-	for(n = 0; n < 3; n++) {
-	  T.v[n] = sin_theta*cos_phi*bax.v[n] + sin_theta*sin_phi*bay.v[n] + cos_theta*T.v[n];
-	  /* Weigh reflected vector back in */
-	  new_ray.dir.v[n] = (1.0 - new_mesh->prop->gloss)*T.v[n] + new_mesh->prop->gloss * ref.v[n];
-	}
-
-	MATH_VEC_UNITIZE(new_ray.dir);
-      } else {
-	new_pix.v[0] = 0;
-	new_pix.v[1] = 0;
-	new_pix.v[2] = 0;
-	propogate = 0;
-      }
+	MATH_VEC_ADD(accum, accum, new_pix);
     }
 
-    MATH_VEC_ADD(accum, accum, new_pix);
-  }
-
-  MATH_VEC_MUL_SCALAR((*pixel), accum, rd->inv_samples);
+    MATH_VEC_MUL_SCALAR((*pixel), accum, rd->inv_samples);
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

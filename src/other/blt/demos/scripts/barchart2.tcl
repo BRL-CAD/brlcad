@@ -5,7 +5,7 @@ proc FormatXTicks { w value } {
 
     set index [expr round($value)]
     if { $index != $value } {
-	return $value 
+	return $value
     }
     incr index -1
 
@@ -26,10 +26,10 @@ set configOptions {
     Grid.Hide			no
     Grid.MapX			""
     Legend.Font			"-*-helvetica*-bold-r-*-*-12-*-*"
-    Legend.ActiveBorderWidth	2 
-    Legend.ActiveRelief		raised 
-    Legend.Anchor		ne 
-    Legend.BorderWidth		0 
+    Legend.ActiveBorderWidth	2
+    Legend.ActiveRelief		raised
+    Legend.Anchor		ne
+    Legend.BorderWidth		0
     Legend.Position		right
     TextMarker.Font		*Helvetica-Bold-R*14*
     activeBar.Foreground	black
@@ -48,7 +48,7 @@ foreach { option value } $configOptions {
     option add *$resource.$option $value
 }
 
-set visual [winfo screenvisual .] 
+set visual [winfo screenvisual .]
 if { $visual != "staticgray" && $visual != "grayscale" } {
     option add *print.background	yellow
     option add *quit.background		red
@@ -58,46 +58,46 @@ if { $visual != "staticgray" && $visual != "grayscale" } {
 vector X Y0 Y1 Y2 Y3 Y4
 
 X set { 1 2 3 4 5 6 7 8 9 }
-Y0 set { 
-    0.729111111  0.002250000  0.09108333  0.006416667  0.026509167 
-    0.007027778  0.1628611    0.06405278  0.08786667  
+Y0 set {
+    0.729111111  0.002250000  0.09108333  0.006416667  0.026509167
+    0.007027778  0.1628611    0.06405278  0.08786667
 }
 Y1 set {
     0.003120278	 0.004638889  0.01113889  0.048888889  0.001814722
-    0.291388889  0.0503500    0.13876389  0.04513333 
+    0.291388889  0.0503500    0.13876389  0.04513333
 }
 Y2 set {
-    11.534444444 3.879722222  4.54444444  4.460277778  2.334055556 
-    1.262194444  1.8009444    4.12194444  3.24527778  
+    11.534444444 3.879722222  4.54444444  4.460277778  2.334055556
+    1.262194444  1.8009444    4.12194444  3.24527778
 }
 Y3 set {
     1.015750000  0.462888889  0.49394444  0.429166667  1.053694444
-    0.466111111  1.4152500    2.17538889  2.55294444 
+    0.466111111  1.4152500    2.17538889  2.55294444
 }
 Y4 set {
-    0.022018611  0.516333333  0.54772222  0.177638889  0.021703889 
-    0.134305556  0.5189278    0.07957222  0.41155556  
+    0.022018611  0.516333333  0.54772222  0.177638889  0.021703889
+    0.134305556  0.5189278    0.07957222  0.41155556
 }
 
 
 #
-# Element attributes:  
+# Element attributes:
 #
 #    Label	yData	Color		Stipple Pattern
-set attributes { 
+set attributes {
     "Load"	Y2	lightblue	pattern1
     "Other"	Y4	lightpink	pattern1
     "Read In"	Y0	lightgoldenrod	pattern1
     "Setup"	Y1	lightyellow	pattern2
 }
-set attributes { 
+set attributes {
     "Load"	Y2	white	 	white3		""		0
     "Solve"	Y3	cyan1		cyan3		pattern2 	1
     "zOther"	Y4	lightpink1	lightpink3 	pattern1	1
     "Read In"	Y0	lightgoldenrod1	lightgoldenrod3 pattern1	1
     "Setup"	Y1	lightyellow1	lightyellow3	pattern2	1
 }
-     
+
 foreach {label yData fg bg stipple bd} $attributes {
     $graph element create $yData \
 	-label $label \

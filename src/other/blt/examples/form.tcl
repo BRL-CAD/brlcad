@@ -2,17 +2,17 @@
 
 package require BLT
 # --------------------------------------------------------------------------
-# Starting with Tcl 8.x, the BLT commands are stored in their own 
+# Starting with Tcl 8.x, the BLT commands are stored in their own
 # namespace called "blt".  The idea is to prevent name clashes with
 # Tcl commands and variables from other packages, such as a "table"
-# command in two different packages.  
+# command in two different packages.
 #
 # You can access the BLT commands in a couple of ways.  You can prefix
 # all the BLT commands with the namespace qualifier "blt::"
-#  
+#
 #    blt::graph .g
 #    blt::table . .g -resize both
-# 
+#
 # or you can import all the command into the global namespace.
 #
 #    namespace import blt::*
@@ -48,12 +48,12 @@ option add *Entry.highlightThickness 2
 #
 # Resources available
 #
-# Tk.normalBgColor: 
-# Tk.normalFgColor: 
-# Tk.focusHighlightColor: 
-# Tk.statusFont: 
-# Tk.titleFont: 
-# Tk.headingFont: 
+# Tk.normalBgColor:
+# Tk.normalFgColor:
+# Tk.focusHighlightColor:
+# Tk.statusFont:
+# Tk.titleFont:
+# Tk.headingFont:
 # Tk.subheadingFont:
 # Tk.entryFont:
 # Tk.textFont:
@@ -360,12 +360,12 @@ bitmap define globe_29 { { 32 32 } {
 
 # ----------------------------------------------------------------
 #
-# SetOption --  
-#	
+# SetOption --
+#
 #	Sets the option array associated with the resource. It
 # 	first check to see if the resource exists in the option
 #	data base, otherwise it uses the default value given.
-#	
+#
 #
 # Arguments
 #	name		-- Name of the resource. Used as index into
@@ -389,12 +389,12 @@ proc SetOption { name value } {
 set pq_dict(textIndex) {}
 
 set pq_dict(entryNames) {
-    last first middle 
-    area exch ext 
+    last first middle
+    area exch ext
     com org tl
-    room oldloc loc 
-    street 
-    city state zip 
+    room oldloc loc
+    street
+    city state zip
     ema
 }
 
@@ -428,19 +428,19 @@ if { ($visual == "staticgray") || ($visual == "grayscale") } {
 	SetOption normalBgColor grey90
 	SetOption normalFgColor #da5f5f
 	SetOption normalFgColor navyblue
-	SetOption focusHighlightColor #fffdf8 
+	SetOption focusHighlightColor #fffdf8
     }
     option add *Entry.background $pq_dict(normalBgColor) widgetDefault
     option add *Text.background $pq_dict(normalBgColor) widgetDefault
     option add *Label.foreground $pq_dict(normalFgColor) widgetDefault
     option add *Button.foreground $pq_dict(normalFgColor) widgetDefault
     set pq_dict(visual) color
-}    
+}
 
 SetOption statusFont 	 -*-Helvetica-Medium-R-*-*-14-*-*-*-*-*-*-*
 SetOption titleFont	 -*-Helvetica-Bold-R-*-*-14-*-*-*-*-*-*-*
 SetOption headingFont 	 -*-Helvetica-Medium-R-*-*-14-*-*-*-*-*-*-*
-SetOption subheadingFont -*-Helvetica-Medium-R-*-*-12-*-*-*-*-*-*-* 
+SetOption subheadingFont -*-Helvetica-Medium-R-*-*-12-*-*-*-*-*-*-*
 SetOption entryFont 	 -*-Courier-Medium-R-*-*-12-*-*-*-*-*-*-*
 SetOption textFont 	 -*-Courier-Bold-R-*-*-12-*-*-*-*-*-*-*
 #SetOption entryFont 	 fixed
@@ -508,16 +508,16 @@ option add *cancel_button.text	"Cancel"
 
 # ----------------------------------------------------------------
 #
-# StopQuery --  
-#	
+# StopQuery --
+#
 #	Stops any current "pq" request by setting the variable
-#	associated with the background subprocesses. 
+#	associated with the background subprocesses.
 #
 # Arguments
 #	None.
 #
 # Globals
-#	postOutput 	-- variable where collected output from 
+#	postOutput 	-- variable where collected output from
 #			   pq command will be stored
 #
 # ----------------------------------------------------------------
@@ -530,11 +530,11 @@ proc StopQuery {} {
 
 # ----------------------------------------------------------------
 #
-# PostQuery --  
-#	
-#	Collects the data from the entry widget fields and 
-#	executes a "pq" request.  The "pq" command is executed 
-#	in the background and a "wait" is setup to wait for the 
+# PostQuery --
+#
+#	Collects the data from the entry widget fields and
+#	executes a "pq" request.  The "pq" command is executed
+#	in the background and a "wait" is setup to wait for the
 #	command to finish.  This allows the animation routine
 #	to operate and exposure events to be handled properly.
 #
@@ -542,7 +542,7 @@ proc StopQuery {} {
 #	None.
 #
 # Globals
-#	postOutput 	    -- variable where collected output from 
+#	postOutput 	    -- variable where collected output from
 #			       pq command will be stored
 #	pq_dict(entryNames) -- list of entry widget names
 #	pq_dict(textIndex)  -- starting index of highlighted information
@@ -551,7 +551,7 @@ proc StopQuery {} {
 # ----------------------------------------------------------------
 
 proc PostQuery {} {
-    global pq_dict 
+    global pq_dict
 
     .status_label configure -text {}
     set cnt 0
@@ -599,8 +599,8 @@ proc PostQuery {} {
 
 # ----------------------------------------------------------------
 #
-# ClearFields --  
-#	
+# ClearFields --
+#
 #	Clears the all the entry fields.
 #
 # Arguments
@@ -614,7 +614,7 @@ proc PostQuery {} {
 # ----------------------------------------------------------------
 
 proc ClearFields {} {
-    global pq_dict 
+    global pq_dict
 
     busy hold . ; update
     foreach name $pq_dict(entryNames) {
@@ -628,8 +628,8 @@ proc ClearFields {} {
 
 # ----------------------------------------------------------------
 #
-# FillFields --  
-#	
+# FillFields --
+#
 #	Makes a post query based upon the highlighted line in
 #	the text widget to fill in all post entry fields.
 #
@@ -638,16 +638,16 @@ proc ClearFields {} {
 #	y 		    y screen coordinate
 #
 # Globals
-#	postOutput 	    variable where collected output from pq 
+#	postOutput 	    variable where collected output from pq
 #			    command will be stored
-#	pq_dict(format)     standard query format to collect data for 
+#	pq_dict(format)     standard query format to collect data for
 #			    all entry fields
 #	pq_dict(entryNames) list of entry widget names
 #
 # ----------------------------------------------------------------
 
 proc FillFields { x y } {
-    global pq_dict 
+    global pq_dict
 
     set info [.text get [list @$x,$y linestart] [list @$x,$y lineend]]
     set info [split $info \t]
@@ -678,7 +678,7 @@ proc FillFields { x y } {
 	bgexec postStatus -output postOutput \
 		pq -o $pq_dict(format) $query &
 	tkwait variable postStatus
-    }	
+    }
     Animate off
     if { $postOutput == "" } {
 	.status_label configure -text "Post query failed"
@@ -697,8 +697,8 @@ proc FillFields { x y } {
 
 # ----------------------------------------------------------------
 #
-# HighlightText --  
-#	
+# HighlightText --
+#
 #	Highlight the text under the current line (as based upon
 #	the given screen coordinates.  Only highlight the line if
 #	pointer has been moved to the another line.
@@ -726,7 +726,7 @@ proc HighlightText { x y } {
 	    .text tag configure highlight \
 		-foreground $pq_dict(normalFgColor) -underline on
 	} else {
-	    .text tag configure highlight -underline on 
+	    .text tag configure highlight -underline on
 	}
 	set pq_dict(textIndex) $newIndex
     }
@@ -735,17 +735,17 @@ proc HighlightText { x y } {
 
 # ----------------------------------------------------------------
 #
-# ChangeFocus --  
-#	
+# ChangeFocus --
+#
 #	Change the keyboard focus to the next/last entry widget.
 #
 # Arguments
-#	direction	    either "next" or "last"; indicates in 
+#	direction	    either "next" or "last"; indicates in
 #			    which direction to change focus
 #
 # Globals
 #	pq_dict(entryNames) list of entry widget names
-#	pq_dict(index)      current index in list of entry widget 
+#	pq_dict(index)      current index in list of entry widget
 #			    names of the keyboard focus. An index
 #			    of -1 indicates there is no focus.
 #	pq_dict(numEntries) number of names in entry widget list
@@ -753,7 +753,7 @@ proc HighlightText { x y } {
 # ----------------------------------------------------------------
 
 proc ChangeFocus direction {
-    global pq_dict 
+    global pq_dict
 
     case $direction {
 	next {
@@ -769,7 +769,7 @@ proc ChangeFocus direction {
 	    }
 	}
     }
-    focus .[lindex $pq_dict(entryNames) $pq_dict(index)]_entry 
+    focus .[lindex $pq_dict(entryNames) $pq_dict(index)]_entry
     update idletasks
     update
 }
@@ -777,9 +777,9 @@ proc ChangeFocus direction {
 
 # ----------------------------------------------------------------
 #
-# ColorFocus --  
-#	
-#	Change background color of entry widget with active 
+# ColorFocus --
+#
+#	Change background color of entry widget with active
 #	keyboard focus
 #
 # Arguments
@@ -790,7 +790,7 @@ proc ChangeFocus direction {
 #
 # Globals
 #	pq_dict(entryNames) list of entry widget names
-#	pq_dict(index)      current index in list of entry widget 
+#	pq_dict(index)      current index in list of entry widget
 #			    names of the keyboard focus. An index
 #			    of -1 indicates there is no focus.
 #	pq_dict(visual)     either "mono" or "color"; indicates if
@@ -799,35 +799,35 @@ proc ChangeFocus direction {
 # ----------------------------------------------------------------
 
 proc ColorFocus { w bool } {
-    global pq_dict 
+    global pq_dict
 
     regexp {\.([a-z]+)_entry} $w dummy name
     if { $pq_dict(visual) == "color" && [info commands $w] == $w } {
 	if { $bool == "on" } {
 	    set pq_dict(index) [lsearch $pq_dict(entryNames) $name]
-	    $w configure -background $pq_dict(focusHighlightColor) 
-        } else {	
-	    $w configure -background $pq_dict(normalBgColor) 
+	    $w configure -background $pq_dict(focusHighlightColor)
+        } else {
+	    $w configure -background $pq_dict(normalBgColor)
         }
     }
 }
 
 # ----------------------------------------------------------------
 #
-# Animate --  
-#	
+# Animate --
+#
 #	Activates/deactivates an animated bitmap and busy window.
 #	A cancel button is mapped and raised so that it is unaffected
 #	by the busy window.
 #
 # Arguments
-#	option		    either "on", "off", or "continue"; 
+#	option		    either "on", "off", or "continue";
 #			    indicates whether animation should
 #			    be started, stoped or continued.
 #
 # Globals
 #	pq_dict(entryNames) list of entry widget names
-#	pq_dict(index)      current index in list of entry widget 
+#	pq_dict(index)      current index in list of entry widget
 #			    names of the keyboard focus. An index
 #			    of -1 indicates there is no focus.
 #	pq_dict(visual)     either "mono" or "color"; indicates if
@@ -843,7 +843,7 @@ proc Animate option {
 
     case $option {
 	on {
-	    busy hold . 
+	    busy hold .
 	    .status_label configure -text "Searching..."
 	    global topLevel
 	    table $topLevel .cancel_button 18,8 -anchor e -reqwidth .70i
@@ -853,16 +853,16 @@ proc Animate option {
 	    winop raise .cancel_button
 	    set pq_dict(lastFocus) [focus]
             focus -force .
-	    set pq_dict(curBitmap) $pq_dict(lastBitmap) 
+	    set pq_dict(curBitmap) $pq_dict(lastBitmap)
 	    update
-	} 
+	}
 	off {
 	    table forget .cancel_button
 	    .quit_button configure -state normal
 	    .clear_button configure -state normal
 	    .trademark configure -bitmap attlogo
 	    set pq_dict(lastBitmap) $pq_dict(curBitmap)
-	    set pq_dict(curBitmap) -1 
+	    set pq_dict(curBitmap) -1
 	    focus $pq_dict(lastFocus)
 	    busy release .
 	}
@@ -871,7 +871,7 @@ proc Animate option {
     # Continue with next bitmap
     #
     if { $pq_dict(curBitmap) >= 0 } {
-	set bmap [format globe_%0.2d $pq_dict(curBitmap)] 
+	set bmap [format globe_%0.2d $pq_dict(curBitmap)]
 	.trademark configure -bitmap $bmap
 	incr pq_dict(curBitmap)
 	if { $pq_dict(curBitmap) >= 29 } {
@@ -881,12 +881,12 @@ proc Animate option {
     }
 }
 
-	
+
 # --------------------------------------------------------------------------
 #
 # main body of program
 #
-frame .frame 
+frame .frame
 set topLevel .frame
 
 label .overall_label -font  -*-Helvetica-Bold-R-*-*-18-*-*-*-*-*-*-*
@@ -897,7 +897,7 @@ label .org_title -font $pq_dict(titleFont)
 label .loc_title -font $pq_dict(titleFont)
 
 foreach name $pq_dict(entryNames) {
-    label .${name}_label 
+    label .${name}_label
     entry .${name}_entry
 }
 if [info exists env(POST_DEFAULTS)] {
@@ -918,14 +918,14 @@ label .orders_title -text "Current Orders" \
 set font -*-Helvetica-Bold-R-*-*-14-*-*-*-*-*-*-*
 button .clear_button -command ClearFields -font $font
 button .quit_button -command { exit }  -font $font
-button .search_button -text "Search" -font $font 
+button .search_button -text "Search" -font $font
 
 label .status_label
-button .cancel_button -command StopQuery 
+button .cancel_button -command StopQuery
 #-relief raised
-label .trademark -bitmap attlogo 
-text .text -yscrollcommand { .vscroll set } -state disabled 
-scrollbar .vscroll -command { .text yview } 
+label .trademark -bitmap attlogo
+text .text -yscrollcommand { .vscroll set } -state disabled
+scrollbar .vscroll -command { .text yview }
 
 table $topLevel \
     .overall_label	0,1 -cspan 10 -pady 5 \
@@ -978,21 +978,21 @@ table $topLevel \
 
 eval table configure $topLevel \
 	[info command .*_label] [info commands .*_title] \
-	-anchor w -padx 2 -ipadx 2 
+	-anchor w -padx 2 -ipadx 2
 eval table configure $topLevel [info command .*_entry] \
-	-fill both -padx 2 
+	-fill both -padx 2
 eval table configure $topLevel .name_label .tel_label .org_title \
     .com_label .addr_label .street_entry .street_label \
-    -cspan 3  
+    -cspan 3
 eval table configure $topLevel .last_entry .ema_entry .city_entry \
-    .ema_label .city_label -cspan 2 
+    .ema_label .city_label -cspan 2
 
 table configure $topLevel .overall_label -anchor center
 table configure $topLevel r16 -pady { 5 5 } -resize both
 table configure $topLevel c0 -width .vscroll
-table configure $topLevel c0 c10 -resize none 
+table configure $topLevel c0 c10 -resize none
 table configure $topLevel r3 r6 r10 r12 -resize none
-table configure $topLevel r17 -height { 40 {} } 
+table configure $topLevel r17 -height { 40 {} }
 table configure $topLevel r16 r18 -resize none
 table configure $topLevel c6 -pad { 5 5 }
 
@@ -1022,7 +1022,7 @@ bind .text <Enter> {
 }
 
 bind .text <Leave> {
-    if { [busy isbusy .] != "." } {	
+    if { [busy isbusy .] != "." } {
 	.text tag delete highlight
 	.status_label configure -text ""
     }
@@ -1041,11 +1041,11 @@ bind EntryFocus <Shift-Tab> {
 }
 
 if { $pq_dict(visual) == "color" } {
-    bind EntryFocus <FocusIn> { 
-	ColorFocus %W on 
+    bind EntryFocus <FocusIn> {
+	ColorFocus %W on
     }
-    bind EntryFocus <FocusOut> { 
-	ColorFocus %W off 
+    bind EntryFocus <FocusOut> {
+	ColorFocus %W off
     }
 }
 

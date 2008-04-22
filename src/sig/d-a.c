@@ -1,7 +1,7 @@
 /*                           D - A . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,55 +20,49 @@
 /** @file d-a.c
  *
  * double to ascii.
+ *
  */
 
 #include "common.h"
 
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
-
-#include <stdio.h>
+#include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
-#include <unistd.h>
+#include "bio.h"
 
 int	nflag = 0;
 
-static char usage[] = "\
+static const char usage[] = "\
 Usage: d-a [-n] < doubles > ascii\n";
 
 int main(int argc, char **argv)
 {
-	double	d;
+    double	d;
 
-	while( argc > 1 ) {
-		if( strcmp( argv[1], "-n" ) == 0 )
-			nflag++;
-		else
-			break;
-		argc--;
-		argv++;
-	}
-	if( argc > 1 || isatty(fileno(stdin)) ) {
-		fprintf( stderr, usage );
-		exit( 1 );
-	}
+    while ( argc > 1 ) {
+	if ( strcmp( argv[1], "-n" ) == 0 )
+	    nflag++;
+	else
+	    break;
+	argc--;
+	argv++;
+    }
+    if ( argc > 1 || isatty(fileno(stdin)) ) {
+	bu_exit(1, "%s", usage );
+    }
 
-	if( nflag ) {
-		long	n;
-		n = 0;
-		while( fread(&d, sizeof(d), 1, stdin) == 1 ) {
-			printf( "%ld %9g\n", n++, d );
-		}
-	} else {
-		while( fread(&d, sizeof(d), 1, stdin) == 1 ) {
-			printf( "%9g\n", d );
-		}
+    if ( nflag ) {
+	long	n;
+	n = 0;
+	while ( fread(&d, sizeof(d), 1, stdin) == 1 ) {
+	    printf( "%ld %9g\n", n++, d );
 	}
-	return 0;
+    } else {
+	while ( fread(&d, sizeof(d), 1, stdin) == 1 ) {
+	    printf( "%9g\n", d );
+	}
+    }
+    return 0;
 }
 
 
@@ -76,8 +70,8 @@ int main(int argc, char **argv)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

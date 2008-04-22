@@ -7,12 +7,12 @@
 </HEAD>
 <BODY BGCOLOR="#efefef" TEXT="black" LINK="blue" VLINK="#551A8B" ALINK="red">
 <A HREF="#toc">Table of Contents</A><P>
- 
+
 <H2><A NAME="sect0" HREF="#toc0">Name</A></H2>
 htext - Create and manipulate hypertext widgets
 
 <H2><A NAME="sect1" HREF="#toc1">Synopsis</A></H2>
-<B>htext</B> <I>pathName </I>?<I>option value</I>?... 
+<B>htext</B> <I>pathName </I>?<I>option value</I>?...
 <H2><A NAME="sect2" HREF="#toc2">Description</A></H2>
 <P>
 The <B>htext</B> command creates
@@ -34,7 +34,7 @@ or widget hierarchy can be packed in-line and made  to appear on the current
 line of the text.  Widgets are packed using the  <B>htext append</B> command.  All
 widgets must be children of the  <B>htext</B> window and must already exist before
 packing.  Once a widget has been packed it cannot be moved to a different
-position within the text.  Widgets can be resized but they will remain 
+position within the text.  Widgets can be resized but they will remain
 at the same position within the text. <P>
 Before a file or text string is parsed
 by the <B>htext</B> widget, all the widget's current children are destroyed.  You
@@ -45,7 +45,7 @@ option  will adjust the value of the other.  If both options are set, the
 file  takes precedence.  When a new file is read using the <B>-filename</B> option,
 the value of the <B>-text</B> option is reset to the empty string.  Likewise,  when
 the <B>-text</B> option is set, the string representing the  <B>-filename</B> option is
-cleared. 
+cleared.
 <H2><A NAME="sect3" HREF="#toc3">File Format</A></H2>
 The format of <B>htext</B> text file is typically ASCII text.
   Text enclosed by special double characters (by default, percent signs
@@ -102,7 +102,7 @@ an error to use this form if the selection isn't in the entry window. </DD>
 <P>
 The
 following global Tcl variables are maintained when an  <B>htext</B> file is parsed.
-  
+
 <DL>
 
 <DT><B>htext(widget)</B>  </DT>
@@ -119,7 +119,7 @@ string when the <B>-text</B> option is used. </DD>
 in the text.   </DD>
 </DL>
 <P>
-This information might be used to construct hyper links 
+This information might be used to construct hyper links
 between different files and/or lines. <P>
 
 <H2><A NAME="sect6" HREF="#toc6">Syntax</A></H2>
@@ -132,7 +132,7 @@ various operations on the widget.  It has the following general form: <BR>
 
 <H2><A NAME="sect7" HREF="#toc7">Operations</A></H2>
 The
-following operations are available for <B>htext</B> widgets: 
+following operations are available for <B>htext</B> widgets:
 <DL>
 
 <DT><I>pathName <B>append <I>window
@@ -155,7 +155,7 @@ cavity. The default is <I>center</I>. </DD>
 <DD>Specifies how the <I>window</I> should
 be stretched to occupy the extra space in the cavity surrounding it (if
 any exists).  <I>Style</I> is <I>none</I>, <I>x</I>, <I>y</I>, <I>both</I>.  If <I>style</I> is <I>x</I>, the width of <I>window</I>
-is expanded to fill the cavity.  If <I>style</I> is <B>y</B>, the height is expanded. 
+is expanded to fill the cavity.  If <I>style</I> is <B>y</B>, the height is expanded.
 The default is <I>none</I>. </DD>
 
 <DT><B>-height <I>pixels</I></B> </DT>
@@ -304,7 +304,7 @@ not specified, then no command will be executed. </DD>
 
 <DT><B>-yscrollcommand</B> <I>string</I> </DT>
 <DD>Specifies
-the prefix for a command used to communicate with vertical scrollbars. 
+the prefix for a command used to communicate with vertical scrollbars.
 When the view in the htext widget's window changes (or whenever anything
 else occurs that could change the display in a scrollbar, such as a change
 in the total size of the widget's contents), the widget invoke <I>string</I> concatenated

@@ -80,6 +80,7 @@ copy &quot;$(TargetDir)&quot;libpng_d.lib ..\..\..\lib
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
+				Optimization="2"
 				InlineFunctionExpansion="1"
 				AdditionalIncludeDirectories="../../../include;../../../src/other/libz"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;PNG_DLL;PNG_BUILD_DLL;PNG_NO_MODULEDEF;ZLIB_DLL;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;PACKAGE_NAME=\&quot;libpng\&quot;"

@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -21,7 +21,7 @@ ON__UINT16 ON_CRC16( ON__UINT16 current_remainder, size_t count, const void* p )
   // 16 bit cyclic redundancy check using CCITT generator polynomial
 
   // CRC calculations are typically done something like this:
-  // 
+  //
   // const short crc_seed = 0; // or 1, or your favorite starting value
   //
   // // Compute CRC on "good" data
@@ -63,44 +63,44 @@ ON__UINT16 ON_CRC16( ON__UINT16 current_remainder, size_t count, const void* p )
     0xEF1F,0xFF3E,0xCF5D,0xDF7C,0xAF9B,0xBFBA,0x8FD9,0x9FF8,0x6E17,0x7E36,0x4E55,0x5E74,0x2E93,0x3EB2,0x0ED1,0x1EF0};
 
   const unsigned char* b = (const unsigned char*)p;
-  if ( count > 0 && b ) 
+  if ( count > 0 && b )
   {
     ON__UINT16 r1;
 	  // update crc remainder
-	  while (count >= 8) 
+	  while (count >= 8)
     {
       // while() loop unrolled for speed
 		  r1 = ON_CRC16_CCITT_TABLE[(current_remainder & ((ON__UINT16)0xff00))>>8];
 		  current_remainder = (current_remainder << 8) ^ (*b++);
-		  current_remainder ^= r1;  
+		  current_remainder ^= r1;
 		  r1 = ON_CRC16_CCITT_TABLE[(current_remainder & ((ON__UINT16)0xff00))>>8];
 		  current_remainder = (current_remainder << 8) ^ (*b++);
-		  current_remainder ^= r1;  
+		  current_remainder ^= r1;
 		  r1 = ON_CRC16_CCITT_TABLE[(current_remainder & ((ON__UINT16)0xff00))>>8];
 		  current_remainder = (current_remainder << 8) ^ (*b++);
-		  current_remainder ^= r1;  
+		  current_remainder ^= r1;
 		  r1 = ON_CRC16_CCITT_TABLE[(current_remainder & ((ON__UINT16)0xff00))>>8];
 		  current_remainder = (current_remainder << 8) ^ (*b++);
-		  current_remainder ^= r1;  
+		  current_remainder ^= r1;
 		  r1 = ON_CRC16_CCITT_TABLE[(current_remainder & ((ON__UINT16)0xff00))>>8];
 		  current_remainder = (current_remainder << 8) ^ (*b++);
-		  current_remainder ^= r1;  
+		  current_remainder ^= r1;
 		  r1 = ON_CRC16_CCITT_TABLE[(current_remainder & ((ON__UINT16)0xff00))>>8];
 		  current_remainder = (current_remainder << 8) ^ (*b++);
-		  current_remainder ^= r1;  
+		  current_remainder ^= r1;
 		  r1 = ON_CRC16_CCITT_TABLE[(current_remainder & ((ON__UINT16)0xff00))>>8];
 		  current_remainder = (current_remainder << 8) ^ (*b++);
-		  current_remainder ^= r1;  
+		  current_remainder ^= r1;
 		  r1 = ON_CRC16_CCITT_TABLE[(current_remainder & ((ON__UINT16)0xff00))>>8];
 		  current_remainder = (current_remainder << 8) ^ (*b++);
-		  current_remainder ^= r1;  
+		  current_remainder ^= r1;
       count -= 8;
 	  }
-	  while (count--) 
+	  while (count--)
     {
 		  r1 = ON_CRC16_CCITT_TABLE[(current_remainder & ((ON__UINT16)0xff00))>>8];
 		  current_remainder = (current_remainder << 8) ^ (*b++);
-		  current_remainder ^= r1;  
+		  current_remainder ^= r1;
 	  }
   }
 
@@ -154,7 +154,7 @@ ON__UINT32 ON_CRC32( ON__UINT32 current_remainder, size_t count, const void* p )
 
 
   /*
-  ON_CRC32_ZLIB_TABLE[] is a table for a byte-wise 32-bit CRC calculation 
+  ON_CRC32_ZLIB_TABLE[] is a table for a byte-wise 32-bit CRC calculation
   using the generator polynomial:
   x^32+x^26+x^23+x^22+x^16+x^12+x^11+x^10+x^8+x^7+x^5+x^4+x^2+x+1.
   */
@@ -213,7 +213,7 @@ ON__UINT32 ON_CRC32( ON__UINT32 current_remainder, size_t count, const void* p )
     0x2d02ef8d
   };
 
-  if ( count > 0 && p ) 
+  if ( count > 0 && p )
   {
     const unsigned char* b = (const unsigned char*)p;
 
@@ -221,7 +221,7 @@ ON__UINT32 ON_CRC32( ON__UINT32 current_remainder, size_t count, const void* p )
     // Today it is more common for "int" to be a 32 bit integer and
     // "L" to be a 32 or 64 bit integer.  So, the L is causing more
     // problems that it is fixing.
-    // current_remainder ^= 0xffffffffL; 
+    // current_remainder ^= 0xffffffffL;
     current_remainder ^= 0xffffffff;
     while (count >= 8)
     {
@@ -236,7 +236,7 @@ ON__UINT32 ON_CRC32( ON__UINT32 current_remainder, size_t count, const void* p )
       current_remainder = ON_CRC32_ZLIB_TABLE[((int)current_remainder ^ (*b++)) & 0xff] ^ (current_remainder >> 8);
       count -= 8;
     }
-    while(count--) 
+    while(count--)
     {
       current_remainder = ON_CRC32_ZLIB_TABLE[((int)current_remainder ^ (*b++)) & 0xff] ^ (current_remainder >> 8);
     }

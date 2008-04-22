@@ -171,7 +171,7 @@ argument passed to \fBTcl_CreateObjCommand\fR.
 \fBTcl_DeleteCommand\fR deletes a command from a command interpreter.
 Once the call completes, attempts to invoke \fIcmdName\fR in
 \fIinterp\fR will result in errors.
-If \fIcmdName\fR isn't bound as a command in \fIinterp\fR then
+If \fIcmdName\fR is not bound as a command in \fIinterp\fR then
 \fBTcl_DeleteCommand\fR does nothing and returns -1;  otherwise
 it returns 0.
 There are no restrictions on \fIcmdName\fR:  it may refer to
@@ -280,7 +280,7 @@ This name does not include any \fB::\fR namespace qualifiers.
 The command corresponding to \fItoken\fR must not have been deleted.
 The string returned by \fBTcl_GetCommandName\fR is in dynamic memory
 owned by Tcl and is only guaranteed to retain its value as long as the
-command isn't deleted or renamed;  callers should copy the string if
+command is not deleted or renamed;  callers should copy the string if
 they need to keep it for a long time.
 .PP
 \fBTcl_GetCommandFullName\fR produces the fully qualified name

@@ -13,10 +13,8 @@ brlcadinclude_required = \
 	config_win.h \
 	raytrace.h \
 	rtgeom.h \
-	rtlist.h \
 	rtprivate.h \
 	rtserver.h \
-	rtstring.h \
 	tclcad.h
 
 brlcadinclude_wanted = \
@@ -24,10 +22,9 @@ brlcadinclude_wanted = \
 	brep.h \
 	brlcad.h \
 	cmd.h \
-	conf.h \
-	compat4.h \
 	db.h \
 	db5.h \
+	dg.h \
 	dm-Null.h \
 	dm-X.h \
 	dm-glx.h \
@@ -45,12 +42,8 @@ brlcadinclude_wanted = \
 	fbserv_obj.h \
 	libtermio.h \
 	light.h \
-	machine.h \
 	mater.h \
-	msr.h \
 	nmg.h \
-	noalias-prag.h \
-	noalias.h \
 	nurb.h \
 	opennurbs_ext.h \
 	optical.h \
@@ -63,8 +56,6 @@ brlcadinclude_wanted = \
 	regex.h \
 	shadefuncs.h \
 	shadework.h \
-	shortvect-pr.h \
-	shortvect.h \
 	solid.h \
 	spectrum.h \
 	spm.h \
@@ -76,10 +67,14 @@ brlcadinclude_wanted = \
 	vmath.h \
 	wdb.h
 
-# headers used by multiple packages but still considered private
+# headers used by multiple packages but still considered private.
+# public headers should NOT include these headers.
 noinst_HEADERS = \
 	brlcad_version.h \
+	bio.h \
+	conf.h \
 	fbmsg.h \
+	machine.h \
 	sysv.h
 
 EXTRA_DIST = \
@@ -107,7 +102,5 @@ endif
 endif
 # end ONLY_BENCHMARK
 
-
-MAINTAINERCLEANFILES = Makefile.in
 
 include $(top_srcdir)/misc/Makefile.defs

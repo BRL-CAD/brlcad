@@ -1,7 +1,7 @@
 /*                       D B _ W A L K . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2007 United States Government as represented by
+ * Copyright (c) 1988-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,8 +23,6 @@
  *
  * Functions -
  *	db_functree	No-frills tree-walk
- *	comb_functree	No-frills combination-walk (deprecated)
- *
  *
  *  Authors -
  *	Michael John Muuss
@@ -32,21 +30,12 @@
  *
  */
 
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
-
 #include "common.h"
 
-
 #include <stdio.h>
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#include <strings.h>
-#endif
+#include "bio.h"
 
-#include "machine.h"
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
@@ -66,7 +55,7 @@ db_traverse_subtree(union tree *tp,
 {
     struct directory *dp;
 
-    if( !tp )
+    if ( !tp )
 	return;
 
     RT_CK_DBTR( dtp );
@@ -74,10 +63,10 @@ db_traverse_subtree(union tree *tp,
     RT_CK_TREE( tp );
     RT_CK_RESOURCE( dtp->resp );
 
-    switch( tp->tr_op )  {
+    switch ( tp->tr_op )  {
 
 	case OP_DB_LEAF:
-	    if( (dp=db_lookup( dtp->dbip, tp->tr_l.tl_name, LOOKUP_NOISY )) == DIR_NULL )
+	    if ( (dp=db_lookup( dtp->dbip, tp->tr_l.tl_name, LOOKUP_NOISY )) == DIR_NULL )
 		return;
 	    traverse_func( dp, dtp );
 	    break;
@@ -115,11 +104,11 @@ db_preorder_traverse( struct directory *dp,
 
     if (RT_G_DEBUG & DEBUG_DB)
 	bu_log("db_preorder_traverse(%s) x%x, x%x, comb_enter=x%x, comb_exit=x%x, leaf=x%x, client_data=x%x\n",
-		dp->d_namep, dtp->dbip, dp, dtp->comb_enter_func, dtp->comb_exit_func, dtp->leaf_func, dtp->client_data );
+	       dp->d_namep, dtp->dbip, dp, dtp->comb_enter_func, dtp->comb_exit_func, dtp->leaf_func, dtp->client_data );
 
     if ( dp->d_flags & DIR_COMB )  {
 	/* entering region */
-	if( dtp->comb_enter_func )
+	if ( dtp->comb_enter_func )
 	    dtp->comb_enter_func( dtp->dbip, dp, dtp->client_data );
 	if ( dtp->dbip->dbi_version < 5 ) {
 	    register union record   *rp;
@@ -128,12 +117,12 @@ db_preorder_traverse( struct directory *dp,
 	     * Load the combination into local record buffer
 	     * This is in external v4 format.
 	     */
-	    if( (rp = db_getmrec( dtp->dbip, dp )) == (union record *)0 )
+	    if ( (rp = db_getmrec( dtp->dbip, dp )) == (union record *)0 )
 		return;
 	    /* recurse */
-	    for( i=1; i < dp->d_len; i++ )  {
-		if( (mdp = db_lookup( dtp->dbip, rp[i].M.m_instname,
-				LOOKUP_NOISY )) == DIR_NULL )
+	    for ( i=1; i < dp->d_len; i++ )  {
+		if ( (mdp = db_lookup( dtp->dbip, rp[i].M.m_instname,
+				       LOOKUP_NOISY )) == DIR_NULL )
 		    continue;
 		db_preorder_traverse( mdp, dtp );
 	    }
@@ -143,7 +132,7 @@ db_preorder_traverse( struct directory *dp,
 	    struct rt_comb_internal *comb;
 	    struct directory *ndp;
 
-	    if( rt_db_get_internal5( &in, dp, dtp->dbip, NULL, dtp->resp ) < 0 )
+	    if ( rt_db_get_internal5( &in, dp, dtp->dbip, NULL, dtp->resp ) < 0 )
 		return;
 
 	    comb = (struct rt_comb_internal *)in.idb_ptr;
@@ -153,15 +142,15 @@ db_preorder_traverse( struct directory *dp,
 	    rt_db_free_internal( &in, dtp->resp );
 	}
 	/* exiting region */
-	if( dtp->comb_exit_func )
+	if ( dtp->comb_exit_func )
 	    dtp->comb_exit_func( dtp->dbip, dp, dtp->client_data );
-    } else if( dp->d_flags & DIR_SOLID || dp->d_major_type & DB5_MAJORTYPE_BINARY_MASK )  {
+    } else if ( dp->d_flags & DIR_SOLID || dp->d_major_type & DB5_MAJORTYPE_BINARY_MASK )  {
 	/* at leaf */
-	if( dtp->leaf_func )
+	if ( dtp->leaf_func )
 	    dtp->leaf_func( dtp->dbip, dp, dtp->client_data );
     } else {
 	bu_log("db_preorder_traverse:  %s is neither COMB nor SOLID?\n",
-		dp->d_namep );
+	       dp->d_namep );
     }
 }
 
@@ -181,17 +170,17 @@ db_functree_subtree(struct db_i *dbip,
 {
     struct directory *dp;
 
-    if( !tp )
+    if ( !tp )
 	return;
 
     RT_CHECK_DBI( dbip );
     RT_CK_TREE( tp );
     RT_CK_RESOURCE( resp );
 
-    switch( tp->tr_op )  {
+    switch ( tp->tr_op )  {
 
 	case OP_DB_LEAF:
-	    if( (dp=db_lookup( dbip, tp->tr_l.tl_name, LOOKUP_NOISY )) == DIR_NULL )
+	    if ( (dp=db_lookup( dbip, tp->tr_l.tl_name, LOOKUP_NOISY )) == DIR_NULL )
 		return;
 	    db_functree( dbip, dp, comb_func, leaf_func, resp, client_data);
 	    break;
@@ -230,23 +219,30 @@ db_functree(struct db_i *dbip,
     register int		i;
 
     RT_CK_DBI(dbip);
-    if(RT_G_DEBUG&DEBUG_DB) bu_log("db_functree(%s) x%x, x%x, comb=x%x, leaf=x%x, client_data=x%x\n",
-				   dp->d_namep, dbip, dp, comb_func, leaf_func, client_data );
 
-    if( dp->d_flags & DIR_COMB )  {
-	if( dbip->dbi_version < 5 ) {
+    if ((!dp) || (!comb_func && !leaf_func)) {
+	return; /* nothing to do */
+    }
+
+    if (RT_G_DEBUG&DEBUG_DB) {
+	bu_log("db_functree(%s) x%x, x%x, comb=x%x, leaf=x%x, client_data=x%x\n",
+	       dp->d_namep, dbip, dp, comb_func, leaf_func, client_data );
+    }
+
+    if ( dp->d_flags & DIR_COMB )  {
+	if ( dbip->dbi_version < 5 ) {
 	    register union record	*rp;
 	    register struct directory *mdp;
 	    /*
 	     * Load the combination into local record buffer
 	     * This is in external v4 format.
 	     */
-	    if( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
+	    if ( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
 		return;
 
 	    /* recurse */
-	    for( i=1; i < dp->d_len; i++ )  {
-		if( (mdp = db_lookup( dbip, rp[i].M.m_instname, LOOKUP_NOISY )) == DIR_NULL )
+	    for ( i=1; i < dp->d_len; i++ )  {
+		if ( (mdp = db_lookup( dbip, rp[i].M.m_instname, LOOKUP_NOISY )) == DIR_NULL )
 		    continue;
 		db_functree( dbip, mdp, comb_func, leaf_func, resp, client_data );
 	    }
@@ -255,7 +251,7 @@ db_functree(struct db_i *dbip,
 	    struct rt_db_internal in;
 	    struct rt_comb_internal *comb;
 
-	    if( rt_db_get_internal5( &in, dp, dbip, NULL, resp ) < 0 )
+	    if ( rt_db_get_internal5( &in, dp, dbip, NULL, resp ) < 0 )
 		return;
 
 	    comb = (struct rt_comb_internal *)in.idb_ptr;
@@ -264,11 +260,11 @@ db_functree(struct db_i *dbip,
 	}
 
 	/* Finally, the combination itself */
-	if( comb_func )
+	if ( comb_func )
 	    comb_func( dbip, dp, client_data );
 
-    } else if( dp->d_flags & DIR_SOLID || dp->d_major_type & DB5_MAJORTYPE_BINARY_MASK )  {
-	if( leaf_func )
+    } else if ( dp->d_flags & DIR_SOLID || dp->d_major_type & DB5_MAJORTYPE_BINARY_MASK )  {
+	if ( leaf_func )
 	    leaf_func( dbip, dp, client_data );
     } else {
 	bu_log("db_functree:  %s is neither COMB nor SOLID?\n",
@@ -281,8 +277,8 @@ db_functree(struct db_i *dbip,
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -63,7 +63,7 @@ the \fIoptions\fR argument following each \fIwindow\fR consists of
 a list of one or more fields that govern the placement of that
 window.  In the discussion below, the term \fIcavity\fR refers
 to the space left in a parent when a particular child is placed
-(i.e. all the space that wasn't claimed by earlier children in
+(i.e. all the space that was not claimed by earlier children in
 the packing order).  The term \fIparcel\fR refers to the space
 allocated to a particular child;  this is not necessarily the
 same as the child window's final geometry.

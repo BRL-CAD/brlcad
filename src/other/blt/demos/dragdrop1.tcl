@@ -3,17 +3,17 @@
 package require BLT
 
 # --------------------------------------------------------------------------
-# Starting with Tcl 8.x, the BLT commands are stored in their own 
+# Starting with Tcl 8.x, the BLT commands are stored in their own
 # namespace called "blt".  The idea is to prevent name clashes with
 # Tcl commands and variables from other packages, such as a "table"
-# command in two different packages.  
+# command in two different packages.
 #
 # You can access the BLT commands in a couple of ways.  You can prefix
 # all the BLT commands with the namespace qualifier "blt::"
-#  
+#
 #    blt::graph .g
 #    blt::table . .g -resize both
-# 
+#
 # or you can import all the command into the global namespace.
 #
 #    namespace import blt::*
@@ -57,7 +57,7 @@ label .sample -text "Color" -height 2  -bd 10 -relief sunken
 #
 drag&drop source .sample \
     -packagecmd {package_color %t}  \
-    -sitecmd { puts "%s %t" } 
+    -sitecmd { puts "%s %t" }
 
 drag&drop source .sample handler color
 

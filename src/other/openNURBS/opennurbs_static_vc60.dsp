@@ -7,19 +7,19 @@
 CFG=opennurbs_static_vc60 - Win32 Debug
 !MESSAGE This is not a valid makefile. To build this project using NMAKE,
 !MESSAGE use the Export Makefile command and run
-!MESSAGE 
+!MESSAGE
 !MESSAGE NMAKE /f "opennurbs_static_vc60.mak".
-!MESSAGE 
+!MESSAGE
 !MESSAGE You can specify a configuration when running NMAKE
 !MESSAGE by defining the macro CFG on the command line. For example:
-!MESSAGE 
+!MESSAGE
 !MESSAGE NMAKE /f "opennurbs_static_vc60.mak" CFG="opennurbs_static_vc60 - Win32 Debug"
-!MESSAGE 
+!MESSAGE
 !MESSAGE Possible choices for configuration are:
-!MESSAGE 
+!MESSAGE
 !MESSAGE "opennurbs_static_vc60 - Win32 Release" (based on "Win32 (x86) Static Library")
 !MESSAGE "opennurbs_static_vc60 - Win32 Debug" (based on "Win32 (x86) Static Library")
-!MESSAGE 
+!MESSAGE
 
 # Begin Project
 # PROP AllowPerConfigDependencies 0
@@ -74,7 +74,7 @@ LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
 # ADD LIB32 /nologo /out:".\DebugStaticLib_vc60\opennurbs_static_vc60d.lib"
 
-!ENDIF 
+!ENDIF
 
 # Begin Target
 

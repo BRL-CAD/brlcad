@@ -812,7 +812,7 @@ destroy .f
 test frame-14.1 {labelframe labelwidget option} {
     # Test that label is moved in stacking order
     destroy .f .l
-    label .l -text Mupp
+    label .l -text Mupp -font {helvetica 8}
     labelframe .f -labelwidget .l
     pack .f
     frame .f.f -width 50 -height 50

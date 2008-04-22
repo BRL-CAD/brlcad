@@ -12,8 +12,8 @@
  * RCS: @(#) $Id$
  */
 
-#include "tkScale.h"
 #include "tkInt.h"
+#include "tkScale.h"
 
 /*
  * Forward declarations for functions defined later in this file:

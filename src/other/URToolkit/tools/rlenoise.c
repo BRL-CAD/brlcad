@@ -1,6 +1,6 @@
-/* 
+/*
  * rlenoise.c - Add random (uniform) noise to an image.
- * 
+ *
  * Copyright 1988
  * Center for Information Technology Integration (CITI)
  * Information Technology Division
@@ -74,7 +74,7 @@ char ** argv;
     in_hdr.rle_file = rle_open_f(cmd_name( argv ), in_fname, "r");
     rle_names( &in_hdr, cmd_name( argv ), in_fname, 0 );
     rle_names( &out_hdr, in_hdr.cmd, out_fname, 0 );
-   
+
     for ( rle_cnt = 0;
 	  (rle_err = rle_get_setup( &in_hdr )) == RLE_SUCCESS;
 	  rle_cnt++ )

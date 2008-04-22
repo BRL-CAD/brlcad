@@ -1,7 +1,7 @@
 /*                   C R A S H R E P O R T . C
  * BRL-CAD
  *
- * Copyright (c) 2007 United States Government as represented by
+ * Copyright (c) 2007-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -61,6 +61,8 @@ static const char *path = NULL;
  * information, and current version information.
  *
  * returns truthfully if the crash report was written.
+ *
+ * due to various reasons, this routine is NOT thread-safe.
  */
 int
 bu_crashreport(const char *filename)
@@ -69,7 +71,7 @@ bu_crashreport(const char *filename)
 	return 0;
     }
 
-    fp = fopen(filename, "a");
+    fp = fopen(filename, "ab");
     if (!fp) {
 	perror("unable to open crash report file");
 	bu_log("ERROR: Unable to open crash report file [%s]\n", filename);
@@ -95,7 +97,7 @@ bu_crashreport(const char *filename)
 	     ctime(&now));
 
     /* print the report header */
-    if (fprintf(fp, buffer) <= 0) {
+    if (fprintf(fp, (const char *)buffer) <= 0) {
 	/* cannot bomb */
 	bu_log("ERROR: Unable to write to crash report file [%s]\n", filename);
 	(void)fclose(fp);
@@ -111,7 +113,8 @@ bu_crashreport(const char *filename)
     }
 
     /* write out operating system information */
-    if ((path = bu_which("uname"))) {
+    path = bu_which("uname");
+    if (path) {
 	snprintf(buffer, CR_BUFSIZE, "%s -a 2>&1", path);
 	popenfp = popen(buffer, "r");
 	if (!popenfp) {
@@ -129,17 +132,18 @@ bu_crashreport(const char *filename)
     }
 
     /* write out kernel and hardware information */
-    if (path = bu_which("sysctl")) {
+    path = bu_which("sysctl");
+    if (path) {
 	/* need 2>&1 to capture stderr junk from sysctl on Mac OS X for kern.exec */
 	snprintf(buffer, CR_BUFSIZE, "%s -a 2>&1", path);
 	popenfp = popen(buffer, "r");
-	if (!popenfp) {
+	if (popenfp == (FILE *)NULL) {
 	    perror("unable to popen sysctl");
 	    bu_log("WARNING: Unable to obtain sysctl information\n");
 	} else {
 	    fprintf(fp, "\nSystem information:\n");
 	    while (bu_fgets(buffer, CR_BUFSIZE, popenfp)) {
-		if ((strlen(buffer) == 0) || ((strlen(buffer) == 1) && (buffer[0] = '\n'))) {
+		if ((strlen(buffer) == 0) || ((strlen(buffer) == 1) && (buffer[0] == '\n'))) {
 		    continue;
 		}
 		fprintf(fp, "%s", buffer);
@@ -166,8 +170,8 @@ bu_crashreport(const char *filename)
  * Local Variables:
  * tab-width: 8
  * mode: C
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

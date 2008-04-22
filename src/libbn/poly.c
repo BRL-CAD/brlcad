@@ -1,7 +1,7 @@
 /*                          P O L Y . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,17 +23,7 @@
  *
  *	Library for dealing with polynomials.
  *
- *  Author -
- *	Jeff Hanes
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-
-#ifndef lint
-static const char RCSpoly[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 
@@ -41,7 +31,6 @@ static const char RCSpoly[] = "@(#)$Header$ (ARL)";
 #include <math.h>
 #include <signal.h>
 
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
@@ -67,9 +56,9 @@ static jmp_buf	bn_abort_buf;
 
 HIDDEN void bn_catch_FPE(int sig)
 {
-    if( !bn_expecting_fpe )
+    if ( !bn_expecting_fpe )
 	bu_bomb("bn_catch_FPE() unexpected SIGFPE!");
-    if( !bu_is_parallel() )
+    if ( !bu_is_parallel() )
 	(void)signal(SIGFPE, bn_catch_FPE);	/* Renew handler */
     longjmp(bn_abort_buf, 1);	/* return error code */
 }
@@ -83,7 +72,7 @@ HIDDEN void bn_catch_FPE(int sig)
 struct bn_poly *
 bn_poly_mul(register struct bn_poly *product, register const struct bn_poly *m1, register const struct bn_poly *m2)
 {
-    if( m1->dgr == 1 && m2->dgr == 1 )  {
+    if ( m1->dgr == 1 && m2->dgr == 1 )  {
 	product->dgr = 2;
 	product->cf[0] = m1->cf[0] * m2->cf[0];
 	product->cf[1] = m1->cf[0] * m2->cf[1] +
@@ -91,7 +80,7 @@ bn_poly_mul(register struct bn_poly *product, register const struct bn_poly *m1,
 	product->cf[2] = m1->cf[1] * m2->cf[1];
 	return product;
     }
-    if( m1->dgr == 2 && m2->dgr == 2 )  {
+    if ( m1->dgr == 2 && m2->dgr == 2 )  {
 	product->dgr = 4;
 	product->cf[0] = m1->cf[0] * m2->cf[0];
 	product->cf[1] = m1->cf[0] * m2->cf[1] +
@@ -118,8 +107,8 @@ bn_poly_mul(register struct bn_poly *product, register const struct bn_poly *m1,
 	if ( (product->dgr = m1->dgr + m2->dgr) > BN_MAX_POLY_DEGREE )
 	    return BN_POLY_NULL;
 
-	for ( ct1=0; ct1 <= m1->dgr; ++ct1 ){
-	    for ( ct2=0; ct2 <= m2->dgr; ++ct2 ){
+	for ( ct1=0; ct1 <= m1->dgr; ++ct1 ) {
+	    for ( ct2=0; ct2 <= m2->dgr; ++ct2 ) {
 		product->cf[ct1+ct2] +=
 		    m1->cf[ct1] * m2->cf[ct2];
 	    }
@@ -139,7 +128,7 @@ bn_poly_scale(register struct bn_poly *eqn, double factor)
 {
     register int		cnt;
 
-    for ( cnt=0; cnt <= eqn->dgr; ++cnt ){
+    for ( cnt=0; cnt <= eqn->dgr; ++cnt ) {
 	eqn->cf[cnt] *= factor;
     }
     return eqn;
@@ -154,26 +143,26 @@ bn_poly_scale(register struct bn_poly *eqn, double factor)
 struct bn_poly *
 bn_poly_add(register struct bn_poly *sum, register const struct bn_poly *poly1, register const struct bn_poly *poly2)
 {
-    LOCAL struct bn_poly	tmp;
+    struct bn_poly	tmp;
     register int		i, offset;
 
     offset = Abs(poly1->dgr - poly2->dgr);
 
     tmp = bn_Zero_poly;
 
-    if ( poly1->dgr >= poly2->dgr ){
+    if ( poly1->dgr >= poly2->dgr ) {
 	*sum = *poly1;
-	for ( i=0; i <= poly2->dgr; ++i ){
+	for ( i=0; i <= poly2->dgr; ++i ) {
 	    tmp.cf[i+offset] = poly2->cf[i];
 	}
     } else {
 	*sum = *poly2;
-	for ( i=0; i <= poly1->dgr; ++i ){
+	for ( i=0; i <= poly1->dgr; ++i ) {
 	    tmp.cf[i+offset] = poly1->cf[i];
 	}
     }
 
-    for ( i=0; i <= sum->dgr; ++i ){
+    for ( i=0; i <= sum->dgr; ++i ) {
 	sum->cf[i] += tmp.cf[i];
     }
     return sum;
@@ -188,7 +177,7 @@ bn_poly_add(register struct bn_poly *sum, register const struct bn_poly *poly1, 
 struct bn_poly *
 bn_poly_sub(register struct bn_poly *diff, register const struct bn_poly *poly1, register const struct bn_poly *poly2)
 {
-    LOCAL struct bn_poly	tmp;
+    struct bn_poly	tmp;
     register int		i, offset;
 
     offset = Abs(poly1->dgr - poly2->dgr);
@@ -196,20 +185,20 @@ bn_poly_sub(register struct bn_poly *diff, register const struct bn_poly *poly1,
     *diff = bn_Zero_poly;
     tmp = bn_Zero_poly;
 
-    if ( poly1->dgr >= poly2->dgr ){
+    if ( poly1->dgr >= poly2->dgr ) {
 	*diff = *poly1;
-	for ( i=0; i <= poly2->dgr; ++i ){
+	for ( i=0; i <= poly2->dgr; ++i ) {
 	    tmp.cf[i+offset] = poly2->cf[i];
 	}
     } else {
 	diff->dgr = poly2->dgr;
-	for ( i=0; i <= poly1->dgr; ++i ){
+	for ( i=0; i <= poly1->dgr; ++i ) {
 	    diff->cf[i+offset] = poly1->cf[i];
 	}
 	tmp = *poly2;
     }
 
-    for ( i=0; i <= diff->dgr; ++i ){
+    for ( i=0; i <= diff->dgr; ++i ) {
 	diff->cf[i] -= tmp.cf[i];
     }
     return diff;
@@ -236,13 +225,13 @@ bn_poly_synthetic_division(register struct bn_poly *quo, register struct bn_poly
     if ((rem->dgr = dvsor->dgr - 1) > dvdend->dgr)
 	rem->dgr = dvdend->dgr;
 
-    for ( n=0; n <= quo->dgr; ++n){
+    for ( n=0; n <= quo->dgr; ++n) {
 	quo->cf[n] /= dvsor->cf[0];
-	for ( div=1; div <= dvsor->dgr; ++div){
+	for ( div=1; div <= dvsor->dgr; ++div) {
 	    quo->cf[n+div] -= quo->cf[n] * dvsor->cf[div];
 	}
     }
-    for ( n=1; n<=(rem->dgr+1); ++n){
+    for ( n=1; n<=(rem->dgr+1); ++n) {
 	rem->cf[n-1] = quo->cf[quo->dgr+n];
 	quo->cf[quo->dgr+n] = 0;
     }
@@ -261,12 +250,12 @@ bn_poly_synthetic_division(register struct bn_poly *quo, register struct bn_poly
 int
 bn_poly_quadratic_roots(register struct bn_complex *roots, register const struct bn_poly *quadrat)
 {
-    LOCAL fastf_t discrim, denom, rad;
+    fastf_t discrim, denom, rad;
     const fastf_t small = SMALL_FASTF;
 
-    if( NEAR_ZERO( quadrat->cf[0], small ) )  {
+    if ( NEAR_ZERO( quadrat->cf[0], small ) )  {
 	/* root = -cf[2] / cf[1] */
-	if( NEAR_ZERO( quadrat->cf[1], small ) )  {
+	if ( NEAR_ZERO( quadrat->cf[1], small ) )  {
 	    /* No solution.  Now what? */
 	    /*	    bu_log("bn_poly_quadratic_roots(): ERROR, no solution\n"); */
 	    return 0;
@@ -353,18 +342,18 @@ bn_poly_quadratic_roots(register struct bn_complex *roots, register const struct
 int
 bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_poly *eqn)
 {
-    LOCAL fastf_t	a, b, c1, c1_3rd, delta;
+    fastf_t	a, b, c1, c1_3rd, delta;
     register int	i;
     static int	first_time = 1;
 
-    if( !bu_is_parallel() ) {
+    if ( !bu_is_parallel() ) {
 	/* bn_abort_buf is NOT parallel! */
-	if( first_time )  {
+	if ( first_time )  {
 	    first_time = 0;
 	    (void)signal(SIGFPE, bn_catch_FPE);
 	}
 	bn_expecting_fpe = 1;
-	if( setjmp( bn_abort_buf ) )  {
+	if ( setjmp( bn_abort_buf ) )  {
 	    (void)signal(SIGFPE, bn_catch_FPE);
 	    bu_log("bn_poly_cubic_roots() Floating Point Error\n");
 	    return 0;	/* FAIL */
@@ -372,19 +361,19 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
     }
 
     c1 = eqn->cf[1];
-    if( Abs(c1) > SQRT_MAX_FASTF )  return 0;	/* FAIL */
+    if ( Abs(c1) > SQRT_MAX_FASTF )  return 0;	/* FAIL */
 
     c1_3rd = c1 * THIRD;
     a = eqn->cf[2] - c1*c1_3rd;
-    if( Abs(a) > SQRT_MAX_FASTF )  return 0;	/* FAIL */
+    if ( Abs(a) > SQRT_MAX_FASTF )  return 0;	/* FAIL */
     b = (2.0*c1*c1*c1 - 9.0*c1*eqn->cf[2] + 27.0*eqn->cf[3])*INV_TWENTYSEVEN;
-    if( Abs(b) > SQRT_MAX_FASTF )  return 0;	/* FAIL */
+    if ( Abs(b) > SQRT_MAX_FASTF )  return 0;	/* FAIL */
 
-    if( (delta = a*a) > SQRT_MAX_FASTF ) return 0;	/* FAIL */
+    if ( (delta = a*a) > SQRT_MAX_FASTF ) return 0;	/* FAIL */
     delta = b*b*0.25 + delta*a*INV_TWENTYSEVEN;
 
-    if ( delta > 0.0 ){
-	LOCAL fastf_t		r_delta, A, B;
+    if ( delta > 0.0 ) {
+	fastf_t		r_delta, A, B;
 
 	r_delta = sqrt( delta );
 	A = B = -0.5 * b;
@@ -398,31 +387,31 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
 
 	roots[0].im = 0.0;
 	roots[2].im = -( roots[1].im = (A - B)*SQRT3*0.5 );
-    } else if ( delta == 0.0 ){
-	LOCAL fastf_t	b_2;
+    } else if ( delta == 0.0 ) {
+	fastf_t	b_2;
 	b_2 = -0.5 * b;
 
 	roots[0].re = 2.0* CUBEROOT( b_2 );
 	roots[2].re = roots[1].re = -0.5 * roots[0].re;
 	roots[2].im = roots[1].im = roots[0].im = 0.0;
     } else {
-	LOCAL fastf_t		phi, fact;
-	LOCAL fastf_t		cs_phi, sn_phi_s3;
+	fastf_t		phi, fact;
+	fastf_t		cs_phi, sn_phi_s3;
 
-	if( a >= 0.0 )  {
+	if ( a >= 0.0 )  {
 	    fact = 0.0;
 	    phi = 0.0;
 	    cs_phi = 1.0;		/* cos( phi ); */
 	    sn_phi_s3 = 0.0;	/* sin( phi ) * SQRT3; */
 	} else {
-	    FAST fastf_t	f;
+	    register fastf_t	f;
 	    a *= -THIRD;
 	    fact = sqrt( a );
-	    if( (f = b * (-0.5) / (a*fact)) >= 1.0 )  {
+	    if ( (f = b * (-0.5) / (a*fact)) >= 1.0 )  {
 		phi = 0.0;
 		cs_phi = 1.0;		/* cos( phi ); */
 		sn_phi_s3 = 0.0;	/* sin( phi ) * SQRT3; */
-	    }  else if( f <= -1.0 )  {
+	    }  else if ( f <= -1.0 )  {
 		phi = PI_DIV_3;
 		cs_phi = cos( phi );
 		sn_phi_s3 = sin( phi ) * SQRT3;
@@ -441,7 +430,7 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
     for ( i=0; i < 3; ++i )
 	roots[i].re -= c1_3rd;
 
-    if( !bu_is_parallel() )
+    if ( !bu_is_parallel() )
 	bn_expecting_fpe = 0;
 
     return 1;		/* OK */
@@ -460,14 +449,14 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
 int
 bn_poly_quartic_roots(register struct bn_complex *roots, register const struct bn_poly *eqn)
 {
-    LOCAL struct bn_poly	cube, quad1, quad2;
-    LOCAL bn_complex_t	u[3];
-    LOCAL fastf_t		U, p, q, q1, q2;
+    struct bn_poly	cube, quad1, quad2;
+    bn_complex_t	u[3];
+    fastf_t		U, p, q, q1, q2;
 
     /* something considerably larger than squared floating point fuss */
     const fastf_t small = 1.0e-8;
 
-#define Max3(a,b,c) ((c)>((a)>(b)?(a):(b)) ? (c) : ((a)>(b)?(a):(b)))
+#define Max3(a, b, c) ((c)>((a)>(b)?(a):(b)) ? (c) : ((a)>(b)?(a):(b)))
 
     cube.dgr = 3;
     cube.cf[0] = 1.0;
@@ -556,10 +545,10 @@ bn_pr_poly(const char *title, register const struct bn_poly *eqn)
     bu_vls_strcat( &str, buf );
 
     exp = eqn->dgr;
-    for ( n=0; n<=eqn->dgr; n++,exp-- )  {
+    for ( n=0; n<=eqn->dgr; n++, exp-- )  {
 	register double coeff = eqn->cf[n];
-	if( n > 0 )  {
-	    if( coeff < 0 )  {
+	if ( n > 0 )  {
+	    if ( coeff < 0 )  {
 		bu_vls_strcat( &str, " - " );
 		coeff = -coeff;
 	    }  else  {
@@ -567,9 +556,9 @@ bn_pr_poly(const char *title, register const struct bn_poly *eqn)
 	    }
 	}
 	bu_vls_printf( &str, "%g", coeff );
-	if( exp > 1 )  {
+	if ( exp > 1 )  {
 	    bu_vls_printf( &str, " *X^%d", exp );
-	} else if( exp == 1 )  {
+	} else if ( exp == 1 )  {
 
 	    bu_vls_strcat( &str, " *X" );
 	} else {
@@ -592,7 +581,7 @@ bn_pr_roots(const char *title, const struct bn_complex *roots, int n)
     register int	i;
 
     bu_log("%s: %d roots:\n", title, n );
-    for( i=0; i<n; i++ )  {
+    for ( i=0; i<n; i++ )  {
 	bu_log("%4d %e + i * %e\n", i, roots[i].re, roots[i].im );
     }
 }
@@ -602,8 +591,8 @@ bn_pr_roots(const char *title, const struct bn_complex *roots, int n)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

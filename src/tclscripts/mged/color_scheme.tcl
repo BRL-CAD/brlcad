@@ -1,7 +1,7 @@
 #                C O L O R _ S C H E M E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2007 United States Government as represented by
+# Copyright (c) 2004-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -18,16 +18,6 @@
 # information.
 #
 ###
-##
-#				C O L O R _ S C H E M E . T C L
-#
-# Author -
-#	Robert G. Parker
-#
-# Source -
-#       The U. S. Army Research Laboratory
-#       Aberdeen Proving Ground, Maryland  21005
-#
 #
 # Description -
 #	GUI for setting the color scheme for display manager windows.

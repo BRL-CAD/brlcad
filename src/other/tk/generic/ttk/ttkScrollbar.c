@@ -313,6 +313,22 @@ static WidgetSpec ScrollbarWidgetSpec =
     TtkWidgetDisplay		/* displayProc */
 };
 
+TTK_BEGIN_LAYOUT(VerticalScrollbarLayout)
+    TTK_GROUP("Vertical.Scrollbar.trough", TTK_FILL_Y,
+	TTK_NODE("Vertical.Scrollbar.uparrow", TTK_PACK_TOP)
+	TTK_NODE("Vertical.Scrollbar.downarrow", TTK_PACK_BOTTOM)
+	TTK_NODE(
+	    "Vertical.Scrollbar.thumb", TTK_PACK_TOP|TTK_EXPAND|TTK_FILL_BOTH))
+TTK_END_LAYOUT
+
+TTK_BEGIN_LAYOUT(HorizontalScrollbarLayout)
+    TTK_GROUP("Horizontal.Scrollbar.trough", TTK_FILL_X,
+	TTK_NODE("Horizontal.Scrollbar.leftarrow", TTK_PACK_LEFT)
+	TTK_NODE("Horizontal.Scrollbar.rightarrow", TTK_PACK_RIGHT)
+	TTK_NODE(
+	"Horizontal.Scrollbar.thumb", TTK_PACK_LEFT|TTK_EXPAND|TTK_FILL_BOTH))
+TTK_END_LAYOUT
+
 /*------------------------------------------------------------------------
  * +++ Initialization.
  */
@@ -320,7 +336,12 @@ static WidgetSpec ScrollbarWidgetSpec =
 MODULE_SCOPE
 void TtkScrollbar_Init(Tcl_Interp *interp)
 {
+    Ttk_Theme theme = Ttk_GetDefaultTheme(interp);
+
+    Ttk_RegisterLayout(theme,"Vertical.TScrollbar",VerticalScrollbarLayout);
+    Ttk_RegisterLayout(theme,"Horizontal.TScrollbar",HorizontalScrollbarLayout);
+
     RegisterWidget(interp, "ttk::scrollbar", &ScrollbarWidgetSpec);
-} 
+}
 
 /*EOF*/

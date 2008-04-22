@@ -5,7 +5,7 @@ BRL-CAD Boundary-Representation Primitive
 
 This document describes the new Boundary-representation (BREP)
 primitive that has been implemented in BRL-CAD for use with external
-geometry import and improved visualisation. 
+geometry import and improved visualisation.
 
 The primitive is not yet complete, and is currently quite buggy, so
 this document also serves to describe the current state of
@@ -28,10 +28,10 @@ curve.
 Actually creating/using a BREP requires keeping track of a lot of details,
 including everything mentioned above, plus curve / face orientations
 (a CCW edge/vertex ordering is usually used for determining front/back
-designations.) 
+designations.)
 
 BRL-CAD has/had an existing BREP structure: the NMG (non-manifold
-geometry) primitive/library. 
+geometry) primitive/library.
 
 [[describe reasons for not using the existing library]]
 
@@ -73,7 +73,7 @@ through the built-in serialization facility (i.e. 3DM files).
 -- Raytracing BREPs --
 
 See Abert et al. (raytracing 06 paper: Direct and Fast Ray Tracing of NURBS
-Surfaces). 
+Surfaces).
 
 We use a two-dimensional root-finding technique: we represent the ray
 as two orthogonal planes (the intersection of the planes includes the
@@ -113,7 +113,7 @@ about BREPs that result in problematic situations during ray tracing:
 BREPs are not like implicit solid geometry: there is no nice equation
 to simply solve (a lot of numerical techniques are used); surfaces,
 curves and point geometry may not be aligned; there can be gaps
-between two mated surfaces... and the list goes on. 
+between two mated surfaces... and the list goes on.
 
 Since it's possible to miss a surface but *need* a hit (i.e. it hit an
 edge but passed between surfaces that did not mate up or overlap), we
@@ -128,7 +128,7 @@ capabilities: reading from a geom db, writing to a geom db, providing
 a plot of the primitive (for MGED display), and handling shot
 intersection, which involves finding all intersections with the
 primitive and returning the results as a list of "segments" (these
-segments will later be used by BRL-CAD to do its boolean weaving). 
+segments will later be used by BRL-CAD to do its boolean weaving).
 
 This primitive currently handles the first 3 capabilities fine, but
 has problems with the intersections (the most important part!)
@@ -138,7 +138,7 @@ Issues:
 * bad acne (possibly caused by missing surfaces? duplicate
   intersections (making an odd number of hits along the ray), trimming
   errors?
-  
+
 * problems with trimming (not completely sure the bezier clipping is
   correct)
 
@@ -172,7 +172,7 @@ model-space curve pullback to surface domain for trimming (introduces
 possible errors while trimming (i.e. at an edge its possible both
 surfaces can be trimmed because of inaccuracies of sampling)...
 
-multiple intersections found 
+multiple intersections found
 
 handling edge/surface grazing consistently
 
@@ -187,7 +187,7 @@ the problem of better fitting bounding boxes (without just arbitrarily
 increasing the size which would seriously affect performance) needs to
 be considered... currently attempting to sample an additional 5 points
 (instead of just the corners). This should serve to handle the current
-problem. 
+problem.
 
 Close-up axis aligned rendering of a cylinder from the circular ends
 produces a halo of spurious points. Ugh!
@@ -201,7 +201,7 @@ the bounding box/subsurface code).
 A significant bit of time was spent writing the skeleton for a new
 IGES converter in order to get non-trivial BREP geometry from an
 external package into BRL-CAD for testing purposes (have been using
-the piston head part from one of the Pro/E tutorial models). 
+the piston head part from one of the Pro/E tutorial models).
 
 I believe this converter can be made production-ready with some work:
 

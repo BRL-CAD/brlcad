@@ -1,6 +1,6 @@
-/* 
+/*
  * rlemandl.c - Compute images of the Mandelbrot set in RLE format
- * 
+ *
  * Author:	John W. Peterson
  * 		Computer Science Dept.
  * 		University of Utah
@@ -32,13 +32,13 @@ char **argv;
     int stop;
     /* May want to use floats...whatever's fastest */
     register double z_r, z_i, z_rs, z_is;
-    
+
     out_hdr = *rle_hdr_init( NULL );
 
     if (! scanargs(argc, argv,
 		   "% v%- s%-xsize!dysize!d b%-band-scale!Fband-offset%d \n\
 \to%-outfile!s real!f imag!f width!f",
-		   &verbose, 
+		   &verbose,
 		   &junk, &xsize, &ysize,
 		   &junk, &scale, &offset,
 		   &oflag, &out_fname,
@@ -60,7 +60,7 @@ char **argv;
     /* Change the default rle_dflt_hdr struct to match what we need */
     out_hdr.rle_file = rle_open_f(cmd_name( argv ), out_fname, "w");
     rle_names( &out_hdr, cmd_name( argv ), out_fname, 0 );
-   
+
     out_hdr.xmax = xsize - 1;
     out_hdr.ymax = ysize - 1;
     out_hdr.ncolors = 1;	/* One output channel */

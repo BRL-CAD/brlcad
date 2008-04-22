@@ -1,7 +1,7 @@
 #                     I C R E A T E . T C L
 # BRL-CAD
 #
-# Copyright (c) 1995-2007 United States Government as represented by
+# Copyright (c) 1995-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -18,25 +18,10 @@
 # information.
 #
 ###
-#			 I C R E A T E . T C L
-#
-# Author -
-#	Glenn Durfee
-#
-# Source -
-#	The U. S. Army Ballistic Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#
 #
 # Description -
 #       Program to allow automated generation and interactive placement of new
 #       instances of preexisting combinations.
-#
-# Modifications -
-#        (Bob Parker):
-#             Generalized the code to accommodate multiple instances of the
-#             user interface.
 #
 
 #=============================================================================
@@ -105,7 +90,7 @@ proc icreate { id args } {
     bind $w.t.l.ref <1> "ic_reflist $w $id; break"
 
     pack $w.t.l.format $w.t.l.indexvar $w.t.l.index $w.t.l.oper $w.t.l.type \
-	    $w.t.l.comb $w.t.l.ref -side top -fill y -expand yes -anchor w
+	$w.t.l.comb $w.t.l.ref -side top -fill y -expand yes -anchor w
 
     # Set up some reasonable defaults for the entry fields
     # If the default index variable does not exist, set it equal to 1
@@ -137,7 +122,7 @@ proc icreate { id args } {
     bind $w.t.r.index    <Key-Return> "set \$ic($w,indexvar) \$ic($w,index); break"
 
     pack $w.t.r.format $w.t.r.indexvar $w.t.r.index $w.t.r.oper $w.t.r.type \
-	    $w.t.r.comb $w.t.r.ref -side top -fill x -expand yes
+	$w.t.r.comb $w.t.r.ref -side top -fill x -expand yes
 
     # Bottom contains two frames: left and right, which each contain two
     # buttons

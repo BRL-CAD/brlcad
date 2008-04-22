@@ -39,7 +39,11 @@ TCLDIR=
 endif
 
 if BUILD_TK
+if WITH_X11
 TKDIR=tk
+else !WITH_X11
+TKDIR=
+endif
 else !BUILD_TK
 TKDIR=
 endif
@@ -63,13 +67,21 @@ TERMLIBDIR=
 endif
 
 if BUILD_TKIMG
+if WITH_X11
 TKIMGDIR=tkimg
+else !WITH_X11
+TKIMGDIR=
+endif
 else !BUILD_TKIMG
 TKIMGDIR=
 endif
 
 if BUILD_BLT
+if WITH_X11
 BLTDIR=blt
+else !WITH_X11
+BLTDIR=
+endif
 else !BUILD_BLT
 BLTDIR=
 endif
@@ -88,12 +100,24 @@ endif
 
 
 if ONLY_BENCHMARK
-SUBDIRS = ${TCLDIR}
+SUBDIRS = \
+	${ZDIR} \
+	${PNGDIR} \
+	${REGEXDIR} \
+	${TCLDIR} \
+	${OPENNURBSDIR} \
+	${TNTDIR}
 
 else !ONLY_BENCHMARK
 
 if ONLY_RTS
-SUBDIRS = ${TCLDIR}
+SUBDIRS = \
+	${ZDIR} \
+	${PNGDIR} \
+	${REGEXDIR} \
+	${TCLDIR} \
+	${OPENNURBSDIR} \
+	${TNTDIR}
 
 else !ONLY_RTS
 # do not sort SUBDIRS
@@ -113,7 +137,8 @@ SUBDIRS = \
 	${BLTDIR} \
 	${OPENNURBSDIR} \
 	${TNTDIR} \
-	awf
+	awf \
+	intaval
 
 endif
 # end ONLY_RTS
@@ -126,6 +151,7 @@ DIST_SUBDIRS = \
 	awf \
 	blt \
 	incrTcl \
+	intaval \
 	iwidgets \
 	jove \
 	libpng \
@@ -138,7 +164,5 @@ DIST_SUBDIRS = \
 	tk \
 	tkimg \
 	tnt
-
-MAINTAINERCLEANFILES = Makefile.in
 
 include $(top_srcdir)/misc/Makefile.defs

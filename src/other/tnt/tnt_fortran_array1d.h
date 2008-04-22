@@ -36,7 +36,7 @@ namespace TNT
 {
 
 template <class T>
-class Fortran_Array1D 
+class Fortran_Array1D
 {
 
   private:
@@ -51,7 +51,7 @@ class Fortran_Array1D
     void initialize_(int n);
     void copy_(T* p, const T*  q, int len) const;
     void set_(T* begin,  T* end, const T& val);
- 
+
 
   public:
 
@@ -89,7 +89,7 @@ template <class T>
 Fortran_Array1D<T>::Fortran_Array1D() : v_(), n_(0), data_(0) {}
 
 template <class T>
-Fortran_Array1D<T>::Fortran_Array1D(const Fortran_Array1D<T> &A) : v_(A.v_),  n_(A.n_), 
+Fortran_Array1D<T>::Fortran_Array1D(const Fortran_Array1D<T> &A) : v_(A.v_),  n_(A.n_),
 		data_(A.data_)
 {
 #ifdef TNT_DEBUG
@@ -108,7 +108,7 @@ Fortran_Array1D<T>::Fortran_Array1D(int n) : v_(n), n_(n), data_(v_.begin())
 }
 
 template <class T>
-Fortran_Array1D<T>::Fortran_Array1D(int n, const T &val) : v_(n), n_(n), data_(v_.begin()) 
+Fortran_Array1D<T>::Fortran_Array1D(int n, const T &val) : v_(n), n_(n), data_(v_.begin())
 {
 #ifdef TNT_DEBUG
 	std::cout << "Created Fortran_Array1D(int n, const T& val) \n";
@@ -126,27 +126,27 @@ Fortran_Array1D<T>::Fortran_Array1D(int n, T *a) : v_(a), n_(n) , data_(v_.begin
 }
 
 template <class T>
-inline T& Fortran_Array1D<T>::operator()(int i) 
-{ 
+inline T& Fortran_Array1D<T>::operator()(int i)
+{
 #ifdef TNT_BOUNDS_CHECK
 	assert(i>= 1);
 	assert(i <= n_);
 #endif
-	return data_[i-1]; 
+	return data_[i-1];
 }
 
 template <class T>
-inline const T& Fortran_Array1D<T>::operator()(int i) const 
-{ 
+inline const T& Fortran_Array1D<T>::operator()(int i) const
+{
 #ifdef TNT_BOUNDS_CHECK
 	assert(i>= 1);
 	assert(i <= n_);
 #endif
-	return data_[i-1]; 
+	return data_[i-1];
 }
 
 
-	
+
 
 template <class T>
 Fortran_Array1D<T> & Fortran_Array1D<T>::operator=(const T &a)
@@ -185,8 +185,8 @@ Fortran_Array1D<T> & Fortran_Array1D<T>::ref(const Fortran_Array1D<T> &A)
 	{
 		v_ = A.v_;		/* operator= handles the reference counting. */
 		n_ = A.n_;
-		data_ = A.data_; 
-		
+		data_ = A.data_;
+
 	}
 	return *this;
 }

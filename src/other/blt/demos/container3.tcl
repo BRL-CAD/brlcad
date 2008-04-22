@@ -388,21 +388,21 @@ image create photo mini-keyboard -data {
     QzQKZRlqwsq2kuTFHQPC2nkPqO32LxZrdGoYnI50gUV8rYul8mL2ntRqogAAOw==
 }
 
-set images1 { 
-    apm-alert apm-empty apm-full apm-half apm-loading apm-online 
-    apm-unknown folder arch asmail audiovol ball bball 
+set images1 {
+    apm-alert apm-empty apm-full apm-half apm-loading apm-online
+    apm-unknown folder arch asmail audiovol ball bball
 }
 set images2 {
-    bomb book1 book2 books briefcase bug1 bug2 bx2 calc camera cat 
-    cave cd cdlabel chinese clipboard clock colors connect crosbone 
+    bomb book1 book2 books briefcase bug1 bug2 bx2 calc camera cat
+    cave cd cdlabel chinese clipboard clock colors connect crosbone
 }
 set images3 {
-    cross desktop dfolder diff diskette display doc doc1 dog edit 
-    espada exclam exp eye eyes fax fdisk filemgr font fractal 
+    cross desktop dfolder diff diskette display doc doc1 dog edit
+    espada exclam exp eye eyes fax fdisk filemgr font fractal
 }
 set images4 {
-    frame ftp gball go gopher graph gv hammer happy hdisk heart hex 
-    hextris iconify icons keyboard 
+    frame ftp gball go gopher graph gv hammer happy hdisk heart hex
+    hextris iconify icons keyboard
 }
 
 proc MakeContainer { count images } {
@@ -411,30 +411,30 @@ proc MakeContainer { count images } {
     set b .b$count
 
     blt::container $c -bd 0 -highlightthickness 0
-    toplevel $top 
+    toplevel $top
     wm withdraw $top
 
     wm protocol $top WM_DELETE_WINDOW "$b invoke"
 
     frame $top.f -relief raised -highlightthickness 0
-    pack $top.f -expand yes -fill x 
+    pack $top.f -expand yes -fill x
 
     foreach img $images {
 	button $top.f.$img -image mini-$img -bd 1 -command "puts $img" \
 	    -highlightthickness 0
 	pack $top.f.$img -side left -padx 0 -pady 0
-    } 
+    }
     global $img
     checkbutton $b -variable $img -onvalue $top -offvalue "" -command \
 	[subst -nocommands { $c configure -window \$$img }]
-    $b select 
+    $b select
     blt::table . \
 	$b $count,0 -anchor w \
-	$c $count,1 -fill x 
+	$c $count,1 -fill x
     blt::table configure . c0 -resize none
     blt::table configure . r$count -resize none
     after 1 [subst {
-	update 
+	update
 	wm deiconify $top
 	$c configure -window $top
     }]
@@ -446,6 +446,6 @@ MakeContainer 2 $images2
 MakeContainer 3 $images3
 MakeContainer 4 $images4
 
-canvas .a 
+canvas .a
 blt::table . .a -cspan 40
 

@@ -13,7 +13,7 @@
 .SH NAME
 find \- search for classes and objects
 .SH SYNOPSIS
-\fBfind \fIoption\fR ?\fIarg arg ...\fR?
+\fBitcl::find \fIoption\fR ?\fIarg arg ...\fR?
 .BE
 
 .SH DESCRIPTION
@@ -42,7 +42,7 @@ in another context, this command reports its fully-qualified name.
 Therefore, you can use the following command to obtain a list where
 all names are fully-qualified:
 .CS
-find classes ::*
+itcl::find classes ::*
 .CE
 .TP
 \fBfind objects ?\fIpattern\fR? ?\fB-class \fIclassName\fR? ?\fB-isa \fIclassName\fR?
@@ -65,7 +65,7 @@ in another context, this command reports its fully-qualified name.
 Therefore, you can use the following command to obtain a list where
 all names are fully-qualified:
 .CS
-find objects ::*
+itcl::find objects ::*
 .CE
 
 .SH KEYWORDS

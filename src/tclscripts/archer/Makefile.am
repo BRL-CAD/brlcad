@@ -11,6 +11,7 @@ scripts = \
 	Arb7EditFrame.tcl \
 	Arb8EditFrame.tcl \
 	Archer.tcl \
+	ArcherCore.tcl \
 	bgerror.tcl \
 	BotEditFrame.tcl \
 	CombEditFrame.tcl \
@@ -45,11 +46,9 @@ tcl_SCRIPTS = \
 	$(BUILT_SOURCES) \
 	$(scripts)
 
-EXTRA_DIST = $(scripts)
+EXTRA_DIST = $(tcl_SCRIPTS)
 
 # CLEANFILES = $(BUILT_SOURCES)
-
-MAINTAINERCLEANFILES = Makefile.in
 
 pkgIndex.tcl:
 	TCL_LIBRARY=$(top_srcdir)/src/other/tcl/library \

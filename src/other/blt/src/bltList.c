@@ -36,7 +36,7 @@ FindString(listPtr, key)
     char c;
 
     c = key[0];
-    for (nodePtr = listPtr->headPtr; nodePtr != NULL; 
+    for (nodePtr = listPtr->headPtr; nodePtr != NULL;
 	 nodePtr = nodePtr->nextPtr) {
 	if ((c == nodePtr->key.string[0]) &&
 	    (strcmp(key, nodePtr->key.string) == 0)) {
@@ -53,7 +53,7 @@ FindOneWord(listPtr, key)
 {
     register struct Blt_ListNodeStruct *nodePtr;
 
-    for (nodePtr = listPtr->headPtr; nodePtr != NULL; 
+    for (nodePtr = listPtr->headPtr; nodePtr != NULL;
 	 nodePtr = nodePtr->nextPtr) {
 	if (key == nodePtr->key.oneWordValue) {
 	    return nodePtr;
@@ -71,7 +71,7 @@ FindArray(listPtr, key)
     int nBytes;
 
     nBytes = sizeof(int) * listPtr->type;
-    for (nodePtr = listPtr->headPtr; nodePtr != NULL; 
+    for (nodePtr = listPtr->headPtr; nodePtr != NULL;
 	 nodePtr = nodePtr->nextPtr) {
 	if (memcmp(key, nodePtr->key.words, nBytes) == 0) {
 	    return nodePtr;
@@ -112,7 +112,7 @@ FreeNode(nodePtr)
  *----------------------------------------------------------------------
  */
 /*LINTLIBRARY*/
-Blt_List 
+Blt_List
 Blt_ListCreate(type)
     int type;
 {
@@ -517,7 +517,7 @@ Blt_ListGetNthNode(listPtr, position, direction)
 
     if (listPtr != NULL) {
 	if (direction > 0) {
-	    for (nodePtr = listPtr->headPtr; nodePtr != NULL; 
+	    for (nodePtr = listPtr->headPtr; nodePtr != NULL;
 		 nodePtr = nodePtr->nextPtr) {
 		if (position == 0) {
 		    return nodePtr;
@@ -525,7 +525,7 @@ Blt_ListGetNthNode(listPtr, position, direction)
 		position--;
 	    }
 	} else {
-	    for (nodePtr = listPtr->tailPtr; nodePtr != NULL; 
+	    for (nodePtr = listPtr->tailPtr; nodePtr != NULL;
 		 nodePtr = nodePtr->prevPtr) {
 		if (position == 0) {
 		    return nodePtr;
@@ -568,11 +568,11 @@ Blt_ListSort(listPtr, proc)
 	return;			/* Out of memory. */
     }
     i = 0;
-    for (nodePtr = listPtr->headPtr; nodePtr != NULL; 
+    for (nodePtr = listPtr->headPtr; nodePtr != NULL;
 	 nodePtr = nodePtr->nextPtr) {
 	nodeArr[i++] = nodePtr;
     }
-    qsort((char *)nodeArr, listPtr->nNodes, 
+    qsort((char *)nodeArr, listPtr->nNodes,
 		sizeof(struct Blt_ListNodeStruct *), (QSortCompareProc *)proc);
 
     /* Rethread the list. */

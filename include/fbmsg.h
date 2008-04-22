@@ -1,7 +1,7 @@
 /*                          F B M S G . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,10 +28,6 @@
  *  @author	Phil Dykstra
  *  @author	Michael John Muuss
  *
- *  @par Source
- *	SECAD/VLD Computing Consortium, Bldg 394
- *  @n	The U. S. Army Ballistic Research Laboratory
- *  @n	Aberdeen Proving Ground, Maryland  21005
  */
 /** @} */
 
@@ -70,8 +66,8 @@
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

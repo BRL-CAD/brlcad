@@ -35,12 +35,12 @@ static Tcl_Interp *gStdoutInterp = NULL;
 #undef HAVE_UTF
 #endif
 
-#if (TCL_VERSION_NUMBER >= _VERSION(8,1,1)) 
+#if (TCL_VERSION_NUMBER >= _VERSION(8,1,1))
 #define HAVE_UTF 1
 #if 0
 extern void TclInitSubsystems _ANSI_ARGS_((CONST char *argv0));
 #endif
-#else 
+#else
 #endif
 
 /*
@@ -184,9 +184,9 @@ TkConsoleInit(interp)
     consoleInterp = Tcl_CreateInterp();
     if (consoleInterp == NULL) {
 	goto error;
-    } 
+    }
 #if defined(HAVE_BROKEN_LIB_PATH) && defined(TCLLIBPATH)
-    Tcl_SetVar(consoleInterp, "tclDefaultLibrary", 
+    Tcl_SetVar(consoleInterp, "tclDefaultLibrary",
 	       TCLLIBPATH, TCL_GLOBAL_ONLY);
 #endif
     /*

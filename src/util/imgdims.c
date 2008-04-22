@@ -1,7 +1,7 @@
 /*                       I M G D I M S . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2007 United States Government as represented by
+ * Copyright (c) 1997-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,33 +19,19 @@
  */
 /** @file imgdims.c
  *
- *			Guess the dimensions of an image
+ * Guess the dimensions of an image
  *
- *  Author -
- *	Paul J. Tanenbaum
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <ctype.h>
-#include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <string.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
@@ -60,9 +46,10 @@ Usage: 'imgdims [-ns] [-# bytes/pixel] file_name'\n\
     or 'imgdims [-# bytes/pixel] num_bytes'\n";
 #define OPT_STRING	"ns#:?"
 
+
 static void print_usage (void)
 {
-    (void) bu_log("%s", usage);
+    bu_exit(1, "%s", usage);
 }
 
 static int grab_number (char *buf, int *np)
@@ -73,11 +60,7 @@ static int grab_number (char *buf, int *np)
 	if (!isdigit(*bp))
 	    return (0);
     if (sscanf(buf, "%d", np) != 1)
-    {
-	bu_log("imgdims: grab_number(%s) failed.  This shouldn't happen\n",
-	    buf);
-	exit (1);
-    }
+	bu_exit (1, "imgdims: grab_number(%s) failed.  This shouldn't happen\n", buf);
     return (1);
 }
 
@@ -90,11 +73,11 @@ static int pixel_size (char *buf)
 	int	size;
     }			*ap;
     static struct assoc	a_tbl[] =
-			{
-			    {"bw", 1},
-			    {"pix", 3},
-			    {0, 0}
-			};
+	{
+	    {"bw", 1},
+	    {"pix", 3},
+	    {0, 0}
+	};
 
     if ((ep = strrchr(buf, '.')) == NULL)
 	return (DFLT_PIXEL_SIZE);
@@ -141,27 +124,23 @@ main (int argc, char **argv)
 		{
 		    bu_log("Invalid pixel-size value: '%s'\n", bu_optarg);
 		    print_usage();
-		    exit (1);
 		}
 		break;
 	    case '?':
 	    default:
 		print_usage();
-		exit (ch != '?');
 	}
     if (argc - bu_optind != 1)
     {
 	print_usage();
-	exit (1);
     }
 
     argument = argv[bu_optind];
     if ((stat(argument, &stat_buf) != 0)
-     && (!grab_number(argument, &nm_bytes)))
+	&& (!grab_number(argument, &nm_bytes)))
     {
 	bu_log("Cannot find file '%s'\n", argument);
 	print_usage();
-	exit (1);
     }
 
     /*
@@ -170,7 +149,7 @@ main (int argc, char **argv)
      */
     if (nm_bytes == -1) {
 	if ((how == BELIEVE_NAME)
-	 && fb_common_name_size(&width, &height, argument))
+	    && fb_common_name_size(&width, &height, argument))
 	    goto done;
 	else
 	{
@@ -185,25 +164,21 @@ main (int argc, char **argv)
     if (nm_bytes % bytes_per_pixel == 0)
 	nm_pixels = nm_bytes / bytes_per_pixel;
     else
-    {
-	bu_log("Image size (%d bytes) is not a multiple of pixel size (%d bytes)\n", nm_bytes, bytes_per_pixel);
-	exit (1);
-    }
+	bu_exit (1, "Image size (%d bytes) is not a multiple of pixel size (%d bytes)\n", nm_bytes, bytes_per_pixel);
 
     if (!fb_common_image_size(&width, &height, nm_pixels))
-	exit (0);
+	bu_exit (0, NULL);
 
-done:
-    printf("%lu %lu\n", width, height);
-    exit (0);
+ done:
+    bu_exit (0, "%lu %lu\n", width, height);
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -1,7 +1,7 @@
 /*                         A S I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,10 +29,6 @@
  */
 /** @} */
 
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
-
 #include "common.h"
 
 #include <stdio.h>
@@ -40,7 +36,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/stat.h>
 #include <string.h>
 
-#include "machine.h"
 #include "vmath.h"
 #include "bu.h"
 #include "fb.h"
@@ -48,36 +43,36 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 /* This table does not need to include any square sizes */
 struct sizes {
-	unsigned long int	width;		/* image width in pixels */
-	unsigned long int	height;		/* image height in pixels */
+    unsigned long int	width;		/* image width in pixels */
+    unsigned long int	height;		/* image height in pixels */
 };
 struct sizes fb_common_sizes[] = {
-	{  160,  120 },		/* quarter 640x480 */
-	{  192,  128 },		/* Kodak Photo-CD, level 1, Base/16 */
-	{  320,  200 },		/* PC screen format */
-	{  320,  240 },		/* half 640x480 */
-	{  384,  256 },		/* Kodak Photo-CD, level 2, Base/4 */
-	{  640,  512 },		/* half 1280x1024 */
-	{  640,  400 },		/* PC screen format */
-	{  640,	 480 },		/* Common video format */
-	{  640,	 485 },		/* Common video format, most correct */
-	{  640,	 486 },		/* Common video format */
-	{  720,	 485 },		/* Abekas video format, most correct */
-	{  720,	 486 },		/* Abekas video format */
-	{  768,  512 },		/* Kodak Photo-CD, level 3, Base */
-	{ 1024,	 768 },		/* SGI-3D screen size */
-	{ 1152,  900 },		/* Sun screen size */
-	{ 1280,  960 },		/* twice 640x480 */
-	{ 1280,	1024 },		/* SGI-4D screen size */
-	{ 1440,  972 },		/* double Abekas video format */
-	{ 1536, 1024 },		/* Kodak Photo-CD, level 4, 4*Base */
-	{ 1600, 1200 },		/* Digital camera */
-	{ 1600, 1280 },		/* Large monitor */
-	{ 3072, 2048 },		/* Kodak Photo-CD, level 5, 16*Base */
-	{ 3200, 4000 },		/* 8x10 inches, 400 dpi */
-	{ 3400, 4400 },		/* 8.5x11 inches, 400 dpi */
-	{ 4700, 3300 },		/* A4 size, 11.75x8.25 inches, 400 dpi */
-	{    0,	   0 }
+    {  160,  120 },		/* quarter 640x480 */
+    {  192,  128 },		/* Kodak Photo-CD, level 1, Base/16 */
+    {  320,  200 },		/* PC screen format */
+    {  320,  240 },		/* half 640x480 */
+    {  384,  256 },		/* Kodak Photo-CD, level 2, Base/4 */
+    {  640,  512 },		/* half 1280x1024 */
+    {  640,  400 },		/* PC screen format */
+    {  640,	 480 },		/* Common video format */
+    {  640,	 485 },		/* Common video format, most correct */
+    {  640,	 486 },		/* Common video format */
+    {  720,	 485 },		/* Abekas video format, most correct */
+    {  720,	 486 },		/* Abekas video format */
+    {  768,  512 },		/* Kodak Photo-CD, level 3, Base */
+    { 1024,	 768 },		/* SGI-3D screen size */
+    { 1152,  900 },		/* Sun screen size */
+    { 1280,  960 },		/* twice 640x480 */
+    { 1280,	1024 },		/* SGI-4D screen size */
+    { 1440,  972 },		/* double Abekas video format */
+    { 1536, 1024 },		/* Kodak Photo-CD, level 4, 4*Base */
+    { 1600, 1200 },		/* Digital camera */
+    { 1600, 1280 },		/* Large monitor */
+    { 3072, 2048 },		/* Kodak Photo-CD, level 5, 16*Base */
+    { 3200, 4000 },		/* 8x10 inches, 400 dpi */
+    { 3400, 4400 },		/* 8.5x11 inches, 400 dpi */
+    { 4700, 3300 },		/* A4 size, 11.75x8.25 inches, 400 dpi */
+    {    0,	   0 }
 };
 
 /*
@@ -95,42 +90,42 @@ struct sizes fb_common_sizes[] = {
  */
 int
 fb_common_file_size(unsigned long int *widthp, unsigned long int *heightp, const char *filename, int pixel_size)
-				/* pointer to returned width */
-				/* pointer to returned height */
-				/* image file to stat */
-				/* bytes per pixel */
+    /* pointer to returned width */
+    /* pointer to returned height */
+    /* image file to stat */
+    /* bytes per pixel */
 {
-	struct	stat	sbuf;
-	unsigned long int	size;
-	register const char	*cp;
+    struct	stat	sbuf;
+    unsigned long int	size;
+    register const char	*cp;
 
-	*widthp = *heightp = 0;		/* sanity */
+    *widthp = *heightp = 0;		/* sanity */
 
-	if (pixel_size <= 0) {
-	    return 0;
-	}
+    if (pixel_size <= 0) {
+	return 0;
+    }
 
-	if( filename == NULL || *filename == '\0' ) {
-	    return 0;
-	}
+    if ( filename == NULL || *filename == '\0' ) {
+	return 0;
+    }
 
-	/* Skip over directory names, if any */
-	cp = strchr( filename, '/' );
-	if( cp ) {
-	    cp++;			/* skip over slash */
-	} else {
-	    cp = filename;		/* no slash */
-	}
+    /* Skip over directory names, if any */
+    cp = strchr( filename, '/' );
+    if ( cp ) {
+	cp++;			/* skip over slash */
+    } else {
+	cp = filename;		/* no slash */
+    }
 
-	if( fb_common_name_size( widthp, heightp, cp ) )
-		return 1;
+    if ( fb_common_name_size( widthp, heightp, cp ) )
+	return 1;
 
-	if( stat( filename, &sbuf ) < 0 )
-		return	0;
+    if ( stat( filename, &sbuf ) < 0 )
+	return	0;
 
-	size = (unsigned long int)(sbuf.st_size / pixel_size);
+    size = (unsigned long int)(sbuf.st_size / pixel_size);
 
-	return fb_common_image_size( widthp, heightp, size );
+    return fb_common_image_size( widthp, heightp, size );
 }
 
 
@@ -147,17 +142,17 @@ fb_common_file_size(unsigned long int *widthp, unsigned long int *heightp, const
 
 int
 fb_common_name_size(unsigned long int *widthp, unsigned long int *heightp, const char *name)
-				/* pointer to returned width */
-				/* pointer to returned height */
-					/* name to parse */
+    /* pointer to returned width */
+    /* pointer to returned height */
+    /* name to parse */
 {
     register const char *cp = name;
 
     /* File name may have several minus signs in it.  Try repeatedly */
-    while( *cp )  {
+    while ( *cp )  {
 	cp = strchr( cp, '-' );		/* Find a minus sign */
-	if( cp == NULL )  break;
-	if( sscanf(cp, "-w%lu-n%lu", widthp, heightp ) == 2 )
+	if ( cp == NULL )  break;
+	if ( sscanf(cp, "-w%lu-n%lu", widthp, heightp ) == 2 )
 	    return 1;
 	cp++;				/* skip over the minus */
     }
@@ -180,44 +175,44 @@ fb_common_name_size(unsigned long int *widthp, unsigned long int *heightp, const
  */
 int
 fb_common_image_size(unsigned long int *widthp, unsigned long int *heightp, register unsigned long int npixels)
-				/* pointer to returned width */
-				/* pointer to returned height */
-				/* Number of pixels */
+    /* pointer to returned width */
+    /* pointer to returned height */
+    /* Number of pixels */
 {
-	register struct	sizes	*sp;
-	long int		root;
+    register struct	sizes	*sp;
+    long int		root;
 
-	if( npixels <= 0 )
-		return	0;
-
-	sp = fb_common_sizes;
-	while( sp->width != 0 ) {
-		if( npixels == sp->width * sp->height ) {
-			*widthp = sp->width;
-			*heightp = sp->height;
-			return	1;
-		}
-		sp++;
-	}
-
-	/* If the size is a perfect square, then use that. */
-	root = (long int)(sqrt((double)npixels)+0.999);
-	if( root*root == npixels )  {
-		*widthp = root;
-		*heightp = root;
-		return	1;
-	}
-
-	/* Nope, we are clueless. */
+    if ( npixels <= 0 )
 	return	0;
+
+    sp = fb_common_sizes;
+    while ( sp->width != 0 ) {
+	if ( npixels == sp->width * sp->height ) {
+	    *widthp = sp->width;
+	    *heightp = sp->height;
+	    return	1;
+	}
+	sp++;
+    }
+
+    /* If the size is a perfect square, then use that. */
+    root = (long int)(sqrt((double)npixels)+0.999);
+    if ( root*root == npixels )  {
+	*widthp = root;
+	*heightp = root;
+	return	1;
+    }
+
+    /* Nope, we are clueless. */
+    return	0;
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -31,7 +31,6 @@ test obj-1.1 {Tcl_AppendAllObjTypes, and InitTypeTable, Tcl_RegisterObjType} tes
 	cmdName
 	dict
 	end-offset
-	nsName
 	regexp
 	string
     } {

@@ -1,7 +1,7 @@
 /*                     P I X E L S W A P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,30 +19,16 @@
  */
 /** @file pixelswap.c
  *
+ * interchange pixel values in an image
+ *
  */
 
-/*	P I X E L S W A P -- interchange pixel values in an image
- *	Options
- *	h	help
- *
- *	$Id$
- */
 #include "common.h"
 
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-
-
-#include <stdio.h>
 #include <stdlib.h>
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#include <strings.h>
-#endif
+#include "bio.h"
 
-#include "machine.h"
 #include "bu.h"
 #include "fb.h"
 
@@ -62,11 +48,11 @@ unsigned char obuf[32767 * 3];
  */
 void usage(char *s)
 {
-	if (s) (void)fputs(s, stderr);
+    if (s) (void)fputs(s, stderr);
 
-	(void) fprintf(stderr, "Usage: %s [ -%s ] r g b R G B [ < infile > outfile]\n",
-			progname, options);
-	exit(1);
+    (void) fprintf(stderr, "Usage: %s [ -%s ] r g b R G B [ < infile > outfile]\n",
+		   progname, options);
+    bu_exit (1, NULL);
 }
 
 /*
@@ -74,30 +60,30 @@ void usage(char *s)
  */
 int parse_args(int ac, char **av)
 {
-	int  c;
+    int  c;
 
-	if (  ! (progname=strrchr(*av, '/'))  )
-		progname = *av;
-	else
-		++progname;
+    if (  ! (progname=strrchr(*av, '/'))  )
+	progname = *av;
+    else
+	++progname;
 
-	/* Turn off bu_getopt's error messages */
-	bu_opterr = 0;
+    /* Turn off bu_getopt's error messages */
+    bu_opterr = 0;
 
-	/* get all the option flags from the command line */
-	while ((c=bu_getopt(ac,av,options)) != EOF)
-		switch (c) {
-		case 'd'	: if ((c=atoi(bu_optarg)) > 0 )
-					depth = c;
-				   else
-					fprintf(stderr, "bad # of bytes per pixel (%d)\n", c);
-				break;
-		case '?'	:
-		case 'h'	:
-		default		: usage("Bad or help flag specified\n"); break;
-		}
+    /* get all the option flags from the command line */
+    while ((c=bu_getopt(ac, av, options)) != EOF)
+	switch (c) {
+	    case 'd'	: if ((c=atoi(bu_optarg)) > 0 )
+		depth = c;
+	    else
+		fprintf(stderr, "bad # of bytes per pixel (%d)\n", c);
+		break;
+	    case '?'	:
+	    case 'h'	:
+	    default		: usage("Bad or help flag specified\n"); break;
+	}
 
-	return(bu_optind);
+    return(bu_optind);
 }
 /*
  *	M A I N
@@ -107,57 +93,57 @@ int parse_args(int ac, char **av)
  */
 int main(int ac, char **av)
 {
-	int i, pixels;
-	unsigned char r, g, b, R, G, B;
+    int i, pixels;
+    unsigned char r, g, b, R, G, B;
 
-	if ((i=parse_args(ac, av))+6 > ac)
-		usage("missing pixel value(s)\n");
+    if ((i=parse_args(ac, av))+6 > ac)
+	usage("missing pixel value(s)\n");
 
-	if (isatty(fileno(stdout)) || isatty(fileno(stdin)))
-		usage("Redirect standard output\n");
+    if (isatty(fileno(stdout)) || isatty(fileno(stdin)))
+	usage("Redirect standard output\n");
 
-	/* get pixel values */
-	r = atoi(av[i++]);
-	g = atoi(av[i++]);
-	b = atoi(av[i++]);
+    /* get pixel values */
+    r = atoi(av[i++]);
+    g = atoi(av[i++]);
+    b = atoi(av[i++]);
 
-	R = atoi(av[i++]);
-	G = atoi(av[i++]);
-	B = atoi(av[i]);
+    R = atoi(av[i++]);
+    G = atoi(av[i++]);
+    B = atoi(av[i]);
 
-	/* process stdin */
-	while ((pixels = fread(ibuf, 3, sizeof(ibuf)/3, stdin)) > 0) {
-		for (i = 0 ; i < pixels ; i++ ) {
-			if (ibuf[i*3] == r &&
-			    ibuf[i*3+1] == g &&
-			    ibuf[i*3+2] == b) {
-				obuf[i*3] = R;
-				obuf[i*3+1] = G;
-				obuf[i*3+2] = B;
-			} else if (ibuf[i*3] == R &&
-			    ibuf[i*3+1] == G &&
-			    ibuf[i*3+2] == B) {
-				obuf[i*3] = r;
-				obuf[i*3+1] = g;
-				obuf[i*3+2] = b;
-			} else {
-				obuf[i*3] = ibuf[i*3];
-				obuf[i*3+1] = ibuf[i*3+1];
-				obuf[i*3+2] = ibuf[i*3+2];
-			}
-		}
-
-		fwrite(obuf, 3, pixels, stdout);
+    /* process stdin */
+    while ((pixels = fread(ibuf, 3, sizeof(ibuf)/3, stdin)) > 0) {
+	for (i = 0; i < pixels; i++ ) {
+	    if (ibuf[i*3] == r &&
+		ibuf[i*3+1] == g &&
+		ibuf[i*3+2] == b) {
+		obuf[i*3] = R;
+		obuf[i*3+1] = G;
+		obuf[i*3+2] = B;
+	    } else if (ibuf[i*3] == R &&
+		       ibuf[i*3+1] == G &&
+		       ibuf[i*3+2] == B) {
+		obuf[i*3] = r;
+		obuf[i*3+1] = g;
+		obuf[i*3+2] = b;
+	    } else {
+		obuf[i*3] = ibuf[i*3];
+		obuf[i*3+1] = ibuf[i*3+1];
+		obuf[i*3+2] = ibuf[i*3+2];
+	    }
 	}
-	return(0);
+
+	fwrite(obuf, 3, pixels, stdout);
+    }
+    return(0);
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

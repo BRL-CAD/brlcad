@@ -20,7 +20,7 @@
 
 /* Define if your processor stores words with the most significant
    byte first (like Motorola and SPARC, unlike Intel and VAX).  */
-#undef WORDS_BIGENDIAN	
+#undef WORDS_BIGENDIAN
 
 
 /* Define if DBL_EPSILON is not defined in float.h */
@@ -117,7 +117,7 @@
 #undef HAVE_SYS_PARAM_H
 
 /* Define if you have the <sys/time.h> header file.  */
-#undef HAVE_SYS_TIME_H		
+#undef HAVE_SYS_TIME_H
 
 /* Define if you have the <sys/wait.h> header file.  */
 #undef HAVE_SYS_WAIT_H

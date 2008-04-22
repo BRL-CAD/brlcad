@@ -19,7 +19,7 @@ rle_hdr *in_hdr, *out_hdr;
 This routine copies the image contents of one
 .IR RLE (5)
 file to another.
-The image described by 
+The image described by
 .I in_hdr
 will be copied to the image file described by
 .IR out_hdr .
@@ -33,7 +33,7 @@ respectively,
 in order for the input and output files to be "in sync".
 In any case, the header should have been written to the output file with
 .IR rle_put_setup (3).
-When 
+When
 .I rle_cp
 returns, the input image file will be positioned at the end of the
 image, and an end of image code will have been written to the output

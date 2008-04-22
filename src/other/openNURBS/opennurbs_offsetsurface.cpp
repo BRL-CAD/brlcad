@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -29,7 +29,7 @@ ON_OffsetSurface::~ON_OffsetSurface()
   if ( 0 != m__pSrf && this != m__pSrf )
     delete m__pSrf;
   m__pSrf = 0;
-  
+
 }
 
 ON_OffsetSurface::ON_OffsetSurface( const ON_OffsetSurface& src)
@@ -107,7 +107,7 @@ bool ON_OffsetSurface::SetBaseSurface(
 }
 
 bool ON_OffsetSurface::SetBaseSurface(
-      ON_Surface* base_surface, 
+      ON_Surface* base_surface,
       bool bManage
       )
 {
@@ -340,7 +340,7 @@ void ON_BumpFunction::Evaluate(double s, double t, int der_count, double* value)
   double tmp[20];
   double* xvalue;
   double* yvalue;
-  xvalue = ( der_count > 9 ) 
+  xvalue = ( der_count > 9 )
          ? ((double*)onmalloc((der_count+1)*2*sizeof(xvalue[0])))
          : &tmp[0];
   yvalue = xvalue + (der_count+1);
@@ -412,8 +412,8 @@ bool ON_OffsetSurfaceFunction::SetSideTangency(
 
 bool ON_OffsetSurfaceFunction::SideTangency(int side) const
 {
-  bool rc = ( 0 <= side && side < 4 ) 
-          ? m_bZeroSideDerivative[side] 
+  bool rc = ( 0 <= side && side < 4 )
+          ? m_bZeroSideDerivative[side]
           : false;
   return rc;
 }
@@ -644,7 +644,7 @@ bool ON_OffsetSurfaceFunction::Initialize()
     m_bumps.Reserve(count);
     int i;
     double a,b,ds,dt;
-    
+
     for (i = 0; i < count; i++ )
     {
       ON_BumpFunction& bump = m_bumps.AppendNew();
@@ -792,7 +792,7 @@ bool ON_OffsetSurfaceFunction::Initialize()
     double* B = (double*)onmalloc(2*count*sizeof(*B));
     double* X = B + count;
     int j;
-    for ( i = 0; i < count; i++ ) 
+    for ( i = 0; i < count; i++ )
     {
       ON_2dPoint p = m_bumps[i].m_point;
       B[i] = m_offset_value[i].m_distance;
@@ -814,7 +814,7 @@ bool ON_OffsetSurfaceFunction::Initialize()
     {
 #if 0 //defined(TL2_MATRIX_INC_)
       // Have access to SVD - try it
-      for ( i = 0; i < count; i++ ) 
+      for ( i = 0; i < count; i++ )
       {
         ON_2dPoint p = m_bumps[i].m_point;
         B[i] = m_offset_value[i].m_distance;

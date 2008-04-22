@@ -1,23 +1,23 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
+/*
  * xbmtorle.c - Convert X Bitmap files to RLE.
- * 
+ *
  * Author:	Spencer W. Thomas
  * 		EECS Dept.
  * 		University of Michigan
@@ -45,7 +45,7 @@ static int ReadBitmapFile();
 
 /*****************************************************************
  * TAG( main )
- * 
+ *
  * Usage:
  * 	xbmtorle [-b bg_color_comps ...] [-f fg_color_comps ...]
  * 			[-o outfile] [infile.xbm]
@@ -90,7 +90,7 @@ char **argv;
     rle_pixel **scans;
     rle_hdr	out_hdr;
 
-    if ( scanargs( argc, argv, 
+    if ( scanargs( argc, argv,
    "% b%-bg_color_comps%*d f%-fg_color_comps%*d o%-outfile!s infile.xbm%s\n(\
 \tConvert an X bitmap file (NOT X window dump) to URT format.\n\
 \t-b/-f\tSpecify color to use for background/foreground bits.\n\
@@ -218,7 +218,7 @@ char **dataP;
 		*heightP = v;
 	    continue;
 	}
-	
+
 	if ( sscanf( line, "static short %s = {", name_and_type ) == 1 )
 	{
 	    version10 = 1;
@@ -232,7 +232,7 @@ char **dataP;
 	else
 	    continue;
     }
- 
+
     if ( *widthP == -1 )
     {
 	fprintf( stderr, "%s: bitmap width invalid\n", MY_NAME );
@@ -250,7 +250,7 @@ char **dataP;
 
     bytes_per_line = (*widthP+7)/8 + padding;
     *bytesP = bytes_per_line;
-    
+
     raster_length =  bytes_per_line * *heightP;
     *dataP = (char *) malloc( raster_length );
     if ( *dataP == (char *) 0 )

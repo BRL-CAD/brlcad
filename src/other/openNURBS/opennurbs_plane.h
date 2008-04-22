@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -162,12 +162,12 @@ public:
        one of equation[0], equation[1], or equation[2]
        being non-zero.
   Remarks:
-    points on the plane will satisfy 
+    points on the plane will satisfy
     x*equation[0] +y*equation[1] + z*equation[2] + equation[3] = 0
   Returns:
     TRUE if valid plane is created.
   */
-  bool CreateFromEquation( 
+  bool CreateFromEquation(
     const double equation[4]
     );
 
@@ -212,7 +212,7 @@ public:
     origin - [in] the new origin
   */
   void SetOrigin( const ON_3dPoint& origin );
-  
+
   /*
   Description:
     Evaluate a point on the plane
@@ -252,7 +252,7 @@ public:
            e.g., line(t) = plane(t,c)
         1: first parameter is constant and second parameter varies
            e.g., line(t) = plane(c,t)
-    c - [in] value of constant parameter 
+    c - [in] value of constant parameter
   Returns:
     iso-parametric line
   */
@@ -274,7 +274,7 @@ public:
     If the point is below the plane the distance is < 0.
     The zaxis determines the plane's orientation.
   */
-  double DistanceTo( 
+  double DistanceTo(
         const ON_3dPoint& point
         ) const;
 
@@ -284,17 +284,17 @@ public:
 				   const ON_BoundingBox&, // Box
 
            //output
-				   double* min,    // min signed dist from plane to box 
+				   double* min,    // min signed dist from plane to box
            double* max     //max signed dist from plane to box
            ) const;
 
   // OBSOLETE - use plane_equation.ValueAt()
-  //__declspec(deprecated) double EquationAt( 
+  //__declspec(deprecated) double EquationAt(
   //      const ON_3dPoint& point
   //      ) const;
 
   // OBSOLETE - use plane_equation.ValueAt()
-  //__declspec(deprecated) double EquationAt( 
+  //__declspec(deprecated) double EquationAt(
   //      const ON_4dPoint& point
   //      ) const;
 
@@ -306,7 +306,7 @@ public:
     TRUE if successful.  FALSE if zaxis is zero.
   Remarks:
     If you modify a plane's origin or zaxis, call UpdateEquation()
-    to set equation[]. 
+    to set equation[].
   */
   bool UpdateEquation();
 
@@ -315,13 +315,13 @@ public:
     Get point on plane that is closest to a given point.
   Parameters:
     world_point - [in] 3d point
-    u - [out] 
+    u - [out]
     v - [out] The point ON_Plane::PointAt(*u,*v) is the point
               on the plane that is closest to world_point.
   Returns:
     TRUE if successful.
   */
-  bool ClosestPointTo( 
+  bool ClosestPointTo(
          ON_3dPoint world_point,
          double* u,
          double* v
@@ -335,7 +335,7 @@ public:
   Returns:
     A 3d point on the plane that is closest to world_point.
   */
-  ON_3dPoint ClosestPointTo( 
+  ON_3dPoint ClosestPointTo(
          ON_3dPoint point
          ) const;
 
@@ -349,7 +349,7 @@ public:
   Returns:
     TRUE if successful
   */
-  bool Transform( 
+  bool Transform(
         const ON_Xform& xform
         );
 
@@ -465,9 +465,9 @@ public:
   */
   bool Flip();
 
-// world plane coordinate system ON_Plane(ON_origin, ON_xaxis, ON_yaxis); 
+// world plane coordinate system ON_Plane(ON_origin, ON_xaxis, ON_yaxis);
 	const static
-	ON_Plane World_xy;	
+	ON_Plane World_xy;
 
 public:
   // origin of plane
@@ -521,7 +521,7 @@ public:
 #if defined(ON_DLL_TEMPLATE)
 
 // This stuff is here because of a limitation in the way Microsoft
-// handles templates and DLLs.  See Microsoft's knowledge base 
+// handles templates and DLLs.  See Microsoft's knowledge base
 // article ID Q168958 for details.
 #pragma warning( push )
 #pragma warning( disable : 4231 )
@@ -545,7 +545,7 @@ Parameters:
     but is too slow for hundreds of points.
   hull -[out]
     Equations of the sides of the convex hull are appended to
-    this list.  
+    this list.
     A point P is inside the hull if hull[i].ValueAt(P) <= 0 for
     every plane equation.
 Returns:
@@ -556,9 +556,9 @@ Returns:
   If >= 4, then the points are in a 3d convex hull.
 */
 ON_DECL
-int ON_Get3dConvexHull( 
-          const ON_SimpleArray<ON_3dPoint> & points, 
-          ON_SimpleArray<ON_PlaneEquation> & hull 
+int ON_Get3dConvexHull(
+          const ON_SimpleArray<ON_3dPoint> & points,
+          ON_SimpleArray<ON_PlaneEquation> & hull
           );
 
 #endif

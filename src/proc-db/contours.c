@@ -1,7 +1,7 @@
 /*                      C O N T O U R S . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2007 United States Government as represented by
+ * Copyright (c) 1986-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,48 +25,47 @@
  *	Michael John Muuss
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
 #include <stdio.h>
 
-#include "machine.h"
 #include "bu.h"
 #include "plot3.h"
 
 
-int	x,y,z;
+int	x, y, z;
 int	npts;
 char	name[128];
 
-main(void)
+int
+main(int argc, char *argv[])
 {
-  register int i;
+    register int i;
 
-  pl_3space( stdout, -32768,  -32768,  -32768, 32767, 32767, 32767 );
-  while( !feof(stdin) )  {
-    if( scanf( "%d %d %s", &npts, &z, name ) != 3 )  break;
-    for( i=0; i<npts; i++ )  {
-      if( scanf( "%d %d", &x, &y ) != 2 )
-	fprintf(stderr,"bad xy\n");
-      if( i==0 )
-	pl_3move( stdout, x, y, z );
-      else
-	pl_3cont( stdout, x, y, z );
+    pl_3space( stdout, -32768,  -32768,  -32768, 32767, 32767, 32767 );
+    while ( !feof(stdin) )  {
+	if ( scanf( "%d %d %128s", &npts, &z, name ) != 3 )  break;
+	for ( i=0; i<npts; i++ )  {
+	    if ( scanf( "%d %d", &x, &y ) != 2 )
+		fprintf(stderr, "bad xy\n");
+	    if ( i==0 )
+		pl_3move( stdout, x, y, z );
+	    else
+		pl_3cont( stdout, x, y, z );
+	}
+	/* Close curves? */
     }
-    /* Close curves? */
-  }
+
+    return 0;
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

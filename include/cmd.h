@@ -1,7 +1,7 @@
 /*                          C M D . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2007 United States Government as represented by
+ * Copyright (c) 1993-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,6 +34,7 @@
 #  include <sys/time.h>
 #endif
 #include <time.h>
+
 #include "bu.h"
 
 #define MAXARGS 9000
@@ -42,18 +43,18 @@
 #define CMDHIST_OBJ_NULL (struct bu_cmdhist_obj *)NULL
 
 struct bu_cmdhist {
-  struct bu_list l;
-  struct bu_vls h_command;
-  struct timeval h_start;
-  struct timeval h_finish;
-  int h_status;
+    struct bu_list l;
+    struct bu_vls h_command;
+    struct timeval h_start;
+    struct timeval h_finish;
+    int h_status;
 };
 
 struct bu_cmdhist_obj {
-  struct bu_list l;
-  struct bu_vls cho_name;
-  struct bu_cmdhist cho_head;
-  struct bu_cmdhist *cho_curr;
+    struct bu_list l;
+    struct bu_vls cho_name;
+    struct bu_cmdhist cho_head;
+    struct bu_cmdhist *cho_curr;
 };
 
 BU_EXPORT BU_EXTERN(int bu_cmd,
@@ -82,8 +83,8 @@ BU_EXPORT BU_EXTERN(int cho_open_tcl,
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

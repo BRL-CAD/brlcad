@@ -43,15 +43,25 @@ minigzip_LDADD = libz.la
 
 EXTRA_DIST = \
 	$(man_MANS) \
+        CMakeLists.txt \
 	FAQ \
 	INDEX \
+	Makefile.in.orig \
+	Makefile.orig \
 	algorithm.txt \
 	amiga \
+	as400 \
+	configure \
 	contrib \
+	examples \
+	make_vms.com \
 	minigzip.c \
-	msdos
-
-MAINTAINERCLEANFILES = Makefile.in
+	msdos \
+	old \
+	projects \
+	qnx \
+	win32 \
+	zconf.in.h
 
 include $(top_srcdir)/misc/Makefile.defs
 

@@ -1,7 +1,7 @@
 /*                      V I E W F R A C . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2007 United States Government as represented by
+ * Copyright (c) 1990-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,14 +25,10 @@
  *	Michael John Muuss
  *
  */
-#ifndef lint
-static const char RCSview[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
 #include <stdio.h>
-#include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "./ext.h"
@@ -58,7 +54,7 @@ int	use_air = 1;		/* Handling of air in librt */
  *  the command line, or from within an animation script.
  */
 struct bu_structparse view_parse[] = {
-	{"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL }
+    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL }
 };
 
 
@@ -88,17 +84,17 @@ int	raymiss(register struct application *ap);
 int
 view_init(register struct application *ap, char *file, char *obj, int minus_o)
 {
-	if( !minus_o )
-		outfp = stdout;
+    if ( !minus_o )
+	outfp = stdout;
 
-	output_is_binary = 0;		/* output is printable ascii */
+    output_is_binary = 0;		/* output is printable ascii */
 
-	if( npsw > 1 )  {
-		bu_log("rtfrac:  dropping down to 1 CPU\n");
-		npsw = 1;
-	}
+    if ( npsw > 1 )  {
+	bu_log("rtfrac:  dropping down to 1 CPU\n");
+	npsw = 1;
+    }
 
-	return(0);		/* no framebuffer needed */
+    return(0);		/* no framebuffer needed */
 }
 
 /*
@@ -110,16 +106,16 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 void
 view_2init(struct application *ap)
 {
-	extern double	cell_width;
-	extern int	width;
+    extern double	cell_width;
+    extern int	width;
 
-	ap->a_hit = rayhit;
-	ap->a_miss = raymiss;
-	ap->a_onehit = 1;
+    ap->a_hit = rayhit;
+    ap->a_miss = raymiss;
+    ap->a_onehit = 1;
 
-	cell_depth = cell_width;
-	depth = width;
-bu_log("cell_depth=%g, # depth cells=%d\n", cell_depth, depth);
+    cell_depth = cell_width;
+    depth = width;
+    bu_log("cell_depth=%g, # depth cells=%d\n", cell_depth, depth);
 }
 
 /*
@@ -184,39 +180,39 @@ view_cleanup(struct rt_i *rtip)
 int
 rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp)
 {
-	register struct partition *pp;
-	int		d;		/* current depth cell # */
-	fastf_t		cur_depth;
-	fastf_t		frac;
+    register struct partition *pp;
+    int		d;		/* current depth cell # */
+    fastf_t		cur_depth;
+    fastf_t		frac;
 
-	d = 0;
-	/* examine each partition until we get back to the head */
-	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
-		if( pp->pt_outhit->hit_dist <= 0 )  continue;
-		cur_depth = pp->pt_inhit->hit_dist;
-		while( cur_depth > (d+1) * cell_depth )  d++;
+    d = 0;
+    /* examine each partition until we get back to the head */
+    for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
+	if ( pp->pt_outhit->hit_dist <= 0 )  continue;
+	cur_depth = pp->pt_inhit->hit_dist;
+	while ( cur_depth > (d+1) * cell_depth )  d++;
 
-		/* Partition starts in this cell */
-more:
-		if( pp->pt_outhit->hit_dist <= (d+1) * cell_depth )  {
-			/* Partition ends in this cell */
-			frac = (pp->pt_outhit->hit_dist -
-				cur_depth) / cell_depth;
-			fprintf(outfp,"%d %d %d %d %8f\n",
-				ap->a_x, ap->a_y, d,
-				pp->pt_regionp->reg_regionid, frac );
-			continue;
-		}
-		/* Partition starts in this cell, ends in some later cell */
-		frac = ( (d+1) * cell_depth - cur_depth ) / cell_depth;
-		fprintf(outfp,"%d %d %d %d %8f\n",
-			ap->a_x, ap->a_y, d,
-			pp->pt_regionp->reg_regionid, frac );
-		d++;
-		goto more;
+	/* Partition starts in this cell */
+    more:
+	if ( pp->pt_outhit->hit_dist <= (d+1) * cell_depth )  {
+	    /* Partition ends in this cell */
+	    frac = (pp->pt_outhit->hit_dist -
+		    cur_depth) / cell_depth;
+	    fprintf(outfp, "%d %d %d %d %8f\n",
+		    ap->a_x, ap->a_y, d,
+		    pp->pt_regionp->reg_regionid, frac );
+	    continue;
 	}
+	/* Partition starts in this cell, ends in some later cell */
+	frac = ( (d+1) * cell_depth - cur_depth ) / cell_depth;
+	fprintf(outfp, "%d %d %d %d %8f\n",
+		ap->a_x, ap->a_y, d,
+		pp->pt_regionp->reg_regionid, frac );
+	d++;
+	goto more;
+    }
 
-	return(1);	/* report hit to main routine */
+    return(1);	/* report hit to main routine */
 }
 
 /*
@@ -227,7 +223,7 @@ more:
 int
 raymiss(register struct application *ap)
 {
-	return(0);
+    return(0);
 }
 
 void application_init (void) {}
@@ -236,8 +232,8 @@ void application_init (void) {}
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

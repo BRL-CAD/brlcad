@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -34,7 +34,7 @@ public:
   ON__UINT32     Data1;    // 32 bit unsigned integer
   ON__UINT16     Data2;    // 16 bit unsigned integer
   ON__UINT16     Data3;    // 16 bit unsigned integer
-  unsigned char  Data4[8]; 
+  unsigned char  Data4[8];
 
   bool operator==(const ON_UUID& other) const;
   bool operator!=(const ON_UUID& other) const;
@@ -81,7 +81,7 @@ Returns:
 Remarks:
   Only works on Windows.
 */
-ON_DECL 
+ON_DECL
 bool ON_CreateUuid( ON_UUID& uuid );
 
 /*
@@ -98,25 +98,25 @@ public:
   /*
   Dictionary compare m_id and then m_i.
   */
-  static 
+  static
   int CompareIdAndIndex( const ON_UuidIndex* a, const ON_UuidIndex* b );
 
   /*
   Dictionary compare m_id and then m_i.
   */
-  static 
+  static
   int CompareIndexAndId( const ON_UuidIndex* a, const ON_UuidIndex* b );
 
   /*
   Compare m_id and ignore m_i.
   */
-  static 
+  static
   int CompareId( const ON_UuidIndex* a, const ON_UuidIndex* b );
 
   /*
   Compare m_i and ignore m_id.
   */
-  static 
+  static
   int CompareIndex( const ON_UuidIndex* a, const ON_UuidIndex* b );
 
   // In cases when there is a discrepancy between the m_id and
@@ -140,10 +140,10 @@ Returns:
 Remarks:
   A NULL pointer is considered < a non-NULL pointer.
 */
-ON_DECL 
-int ON_UuidCompare( 
-        const ON_UUID* a, 
-        const ON_UUID* b 
+ON_DECL
+int ON_UuidCompare(
+        const ON_UUID* a,
+        const ON_UUID* b
         );
 
 /*
@@ -158,9 +158,9 @@ Returns:
    0    a == b
   +1    a > b
 */
-ON_DECL 
-int ON_UuidCompare( 
-        const ON_UUID& a, 
+ON_DECL
+int ON_UuidCompare(
+        const ON_UUID& a,
         const ON_UUID& b
         );
 
@@ -173,8 +173,8 @@ Returns:
   true if uuid is nil.
 */
 ON_DECL
-bool ON_UuidIsNil( 
-        const ON_UUID& uuid 
+bool ON_UuidIsNil(
+        const ON_UUID& uuid
         );
 
 /*
@@ -186,14 +186,14 @@ Returns:
   true if uuid is not nil (non zero)
 */
 ON_DECL
-bool ON_UuidIsNotNil( 
-        const ON_UUID& uuid 
+bool ON_UuidIsNotNil(
+        const ON_UUID& uuid
         );
 
 /*
 Description:
   Converts a string like
-    "{85A08515-f383-11d3-BFE7-0010830122F0}" 
+    "{85A08515-f383-11d3-BFE7-0010830122F0}"
   into a uuid.
   The brackets are optional and are ignored.
   Hyphens can appear anywhere or be missing.
@@ -201,16 +201,16 @@ Description:
 Parameters:
   s - [in]
 Returns:
-  uuid.  
+  uuid.
   If the string is not a uuid, then ON_nil_uuid is returnd.
 */
-ON_DECL 
+ON_DECL
 ON_UUID ON_UuidFromString( const char* s );
 
 /*
 Description:
   Converts a string like
-    "{85A08515-f383-11d3-BFE7-0010830122F0}" 
+    "{85A08515-f383-11d3-BFE7-0010830122F0}"
   into a uuid.
   The brackets are optional and are ignored.
   Hyphens can appear anywhere or be missing.
@@ -218,71 +218,71 @@ Description:
 Parameters:
   s - [in]
 Returns:
-  uuid.  
+  uuid.
   If the string is not a uuid, then ON_nil_uuid is returnd.
 */
-ON_DECL 
+ON_DECL
 ON_UUID ON_UuidFromString( const wchar_t* s );
 
 /*
 Description:
-  Converts a uuid to a null termintated ASCII string like 
-     "85a08515-f383-11d3-bfe7-0010830122f0". 
+  Converts a uuid to a null termintated ASCII string like
+     "85a08515-f383-11d3-bfe7-0010830122f0".
 Parameters:
   uuid - [in]
-  s - [out]  The s[] char array must have length >= 37.  
-             The returned char array will have a 36 
+  s - [out]  The s[] char array must have length >= 37.
+             The returned char array will have a 36
              character uuid in s[0..35] and a null in s[36].
 Returns:
   The pointer to the array is returned.
 */
-ON_DECL 
+ON_DECL
 char* ON_UuidToString( const ON_UUID& uuid, char* s );
 
 
 /*
 Description:
-  Converts a uuid to a null termintated UNICODE string like 
-     "85a08515-f383-11d3-bfe7-0010830122f0". 
+  Converts a uuid to a null termintated UNICODE string like
+     "85a08515-f383-11d3-bfe7-0010830122f0".
 Parameters:
   uuid - [in]
-  s - [out]  The s[] wchar_t array must have length >= 37.  
-             The returned char array will have a 36 
+  s - [out]  The s[] wchar_t array must have length >= 37.
+             The returned char array will have a 36
              character uuid in s[0..35] and a null in s[36].
 Returns:
   The pointer to the array is returned.
 */
-ON_DECL 
+ON_DECL
 wchar_t* ON_UuidToString( const ON_UUID& uuid, wchar_t* s );
 
 class ON_String;
 
 /*
 Description:
-  Converts a uuid to a null termintated string like 
-     "85a08515-f383-11d3-bfe7-0010830122f0". 
+  Converts a uuid to a null termintated string like
+     "85a08515-f383-11d3-bfe7-0010830122f0".
 Parameters:
   uuid - [in]
   s - [out]
 Returns:
   The pointer to the array is returned.
 */
-ON_DECL 
+ON_DECL
 const char* ON_UuidToString( const ON_UUID& uuid, ON_String& s);
 
 class ON_wString;
 
 /*
 Description:
-  Converts a uuid to a null termintated string like 
-     "85a08515-f383-11d3-bfe7-0010830122f0". 
+  Converts a uuid to a null termintated string like
+     "85a08515-f383-11d3-bfe7-0010830122f0".
 Parameters:
   uuid - [in]
   s - [out]
 Returns:
   The pointer to the array is returned.
 */
-ON_DECL 
+ON_DECL
 const wchar_t* ON_UuidToString( const ON_UUID& uuid, ON_wString& s);
 
 #endif

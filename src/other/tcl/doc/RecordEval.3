@@ -26,7 +26,7 @@ Tcl interpreter in which to evaluate command.
 Command (or sequence of commands) to execute.
 .AP int flags in
 An OR'ed combination of flag bits.  \fBTCL_NO_EVAL\fR means record the
-command but don't evaluate it.  \fBTCL_EVAL_GLOBAL\fR means evaluate
+command but do not evaluate it.  \fBTCL_EVAL_GLOBAL\fR means evaluate
 the command at global level instead of the current stack level.
 .BE
 
@@ -37,7 +37,7 @@ on the history list and then execute it using \fBTcl_Eval\fR
 (or \fBTcl_GlobalEval\fR if the \fBTCL_EVAL_GLOBAL\fR bit is set in \fIflags\fR).
 It returns a completion code such as \fBTCL_OK\fR just like \fBTcl_Eval\fR
 and it leaves information in the interpreter's result.
-If you don't want the command recorded on the history list then
+If you do not want the command recorded on the history list then
 you should invoke \fBTcl_Eval\fR instead of \fBTcl_RecordAndEval\fR.
 Normally \fBTcl_RecordAndEval\fR is only called with top-level
 commands typed by the user, since the purpose of history is to

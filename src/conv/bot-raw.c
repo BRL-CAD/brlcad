@@ -1,7 +1,7 @@
 /*                       B O T - R A W . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -21,13 +21,13 @@
 /** @file bot-raw.c
  *
  */
+
 #include "common.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
@@ -53,23 +53,23 @@ void write_bot(struct rt_bot_internal *bot, FILE *fh, char *name)
     printf ("name: %s, verts: %d, faces: %d\n", name, num_vertices, num_faces);
 
     /* Name */
-    memset (string, 0, 64);
+    memset(string, 0, 64);
     memcpy (string, name, strlen(name));
     fwrite (string, 64, 1, fh);
 
     /* Vertices */
     fwrite (&num_vertices, sizeof(int), 1, fh);
     for (i = 0; i < num_vertices; i++)
-      for (n = 0; n < 3; n++) {
-	v = (float)vertices[3*i+n] * 0.001;
-	fwrite ( &v , sizeof(float), 1, fh);
-      }
+	for (n = 0; n < 3; n++) {
+	    v = (float)vertices[3*i+n] * 0.001;
+	    fwrite ( &v, sizeof(float), 1, fh);
+	}
 
     /* Faces */
     fwrite (&num_faces, sizeof(int), 1, fh);
     for (i = 0; i < num_faces; i++)
-      for (n = 0; n < 3; n++)
-	fwrite (&faces[3*i+n], sizeof(int), 1, fh);
+	for (n = 0; n < 3; n++)
+	    fwrite (&faces[3*i+n], sizeof(int), 1, fh);
 }
 
 
@@ -98,8 +98,8 @@ int main(int ac, char *av[])
     printf("geometry file: %s\n", av[1]);
 
 
-    if ((rtip=rt_dirbuild(av[1], idbuf, sizeof(idbuf)))==RTI_NULL){
-	fprintf(stderr,"rtexample: rt_dirbuild failure\n");
+    if ((rtip=rt_dirbuild(av[1], idbuf, sizeof(idbuf)))==RTI_NULL) {
+	fprintf(stderr, "rtexample: rt_dirbuild failure\n");
 	return 2;
     }
 
@@ -110,19 +110,19 @@ int main(int ac, char *av[])
 	FILE *fh;
 
 
-	fh = fopen(av[2], "w");
+	fh = fopen(av[2], "wb");
 
 	MAT_IDN(mat);
 
 	/* dump all the bots */
 	FOR_ALL_DIRECTORY_START(dp, rtip->rti_dbip)
 
-	/* we only dump BOT primitives, so skip some obvious exceptions */
-	if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD) continue;
+	    /* we only dump BOT primitives, so skip some obvious exceptions */
+	    if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD) continue;
 	if (dp->d_flags & DIR_COMB) continue;
 
 	/* get the internal form */
-	i=rt_db_get_internal(&intern, dp, rtip->rti_dbip, mat,&rt_uniresource);
+	i=rt_db_get_internal(&intern, dp, rtip->rti_dbip, mat, &rt_uniresource);
 
 	if (i < 0) {
 	    fprintf(stderr, "rt_get_internal failure %d on %s\n", i, dp->d_namep);
@@ -138,7 +138,7 @@ int main(int ac, char *av[])
 	write_bot(bot, fh, dp->d_namep);
 
 	FOR_ALL_DIRECTORY_END
-    }
+	    }
     return 0;
 }
 
@@ -146,8 +146,8 @@ int main(int ac, char *av[])
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

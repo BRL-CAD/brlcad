@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -108,14 +108,14 @@ int ON_LineCurve::Dimension() const
   return m_dim;
 }
 
-BOOL 
+BOOL
 ON_LineCurve::GetBBox( // returns TRUE if successful
          double* boxmin,    // minimum
          double* boxmax,    // maximum
          BOOL bGrowBox
          ) const
 {
-  return ON_GetPointListBoundingBox( m_dim, FALSE, 2, 3, m_line.from, 
+  return ON_GetPointListBoundingBox( m_dim, FALSE, 2, 3, m_line.from,
                       boxmin, boxmax, bGrowBox?true:false
                       );
 }
@@ -258,7 +258,7 @@ int ON_LineCurve::SpanCount() const
   return 1;
 }
 
-BOOL ON_LineCurve::GetSpanVector( // span "knots" 
+BOOL ON_LineCurve::GetSpanVector( // span "knots"
        double* s
        ) const
 {
@@ -330,7 +330,7 @@ ON_LineCurve::IsPlanar(
       ) const
 {
   BOOL rc = IsValid();
-  if ( plane != NULL && rc ) 
+  if ( plane != NULL && rc )
   {
     if ( m_dim == 2 )
       rc = ON_Curve::IsPlanar(plane,tolerance);
@@ -356,13 +356,13 @@ ON_LineCurve::IsInPlane(
   return rc;
 }
 
-BOOL 
+BOOL
 ON_LineCurve::IsClosed() const
 {
   return FALSE;
 }
 
-BOOL 
+BOOL
 ON_LineCurve::IsPeriodic() const
 {
   return FALSE;
@@ -386,7 +386,7 @@ BOOL ON_LineCurve::Evaluate( // returns FALSE if unable to evaluate
        double* v,      // v[] array of length stride*(ndir+1)
        int side,       // optional - determines which side to evaluate from
                        //         0 = default
-                       //      <  0 to evaluate from below, 
+                       //      <  0 to evaluate from below,
                        //      >  0 to evaluate from above
        int* hint       // optional - evaluation hint (int) used to speed
                        //            repeated evaluations
@@ -400,7 +400,7 @@ BOOL ON_LineCurve::Evaluate( // returns FALSE if unable to evaluate
     v[1] = p.y;
     if ( m_dim == 3 )
       v[2] = p.z;
-    if ( der_count >= 1 ) 
+    if ( der_count >= 1 )
     {
       v += v_stride;
       ON_3dVector d = m_line.to - m_line.from;
@@ -444,7 +444,7 @@ bool ON_LineCurve::GetClosestPoint( const ON_3dPoint& test_point,
   if ( 0.0 != s )
   {
     s = (Q.x*P1.x + Q.y*P1.y + Q.z*P1.z)/s;
-    if ( s <= 0.0 ) 
+    if ( s <= 0.0 )
       s = 0.0;
     else if ( s > 1.0 )
       s = 1.0;
@@ -479,7 +479,7 @@ bool ON_LineCurve::GetClosestPoint( const ON_3dPoint& test_point,
       if ( d > maximum_distance )
         return false;
     }
-    
+
     *t = x;
 
     rc = true;
@@ -501,10 +501,10 @@ BOOL ON_LineCurve::GetLocalClosestPoint( const ON_3dPoint& test_point,
       seed_parameter = sub_domain->Max();
   }
   BOOL rc = GetClosestPoint( test_point, t, 0.0, sub_domain );
-  if ( rc 
-       && t 
+  if ( rc
+       && t
        && seed_parameter != *t
-       && test_point.DistanceTo(PointAt(seed_parameter)) <= test_point.DistanceTo(PointAt(*t)) 
+       && test_point.DistanceTo(PointAt(seed_parameter)) <= test_point.DistanceTo(PointAt(*t))
        )
   {
     *t = seed_parameter;
@@ -519,14 +519,14 @@ int ON_LineCurve::NumIntersectionsWith( const ON_Line& segment ) const
   if (((m_line[0].y < segment[0].y) && (m_line[1].y < segment[0].y)) ||
       ((m_line[0].y > segment[0].y) && (m_line[1].y > segment[0].y)) ||
       (m_line[0].x < segment[0].x && m_line[1].x < segment[0].x)) {
-    return 0; 
+    return 0;
   } else if (m_line[0].x > segment[0].x && m_line[1].x > segment[0].x) {
-    return 1; 
+    return 1;
   } else {
     // use the two point form of a line to solve for x at the y of the segment
-    double x = 
-      (segment[0].y-m_line[0].y)*(m_line[1].x-m_line[0].x) / 
-      (m_line[1].y-m_line[0].y) + 
+    double x =
+      (segment[0].y-m_line[0].y)*(m_line[1].x-m_line[0].x) /
+      (m_line[1].y-m_line[0].y) +
       m_line[0].x;
     if (x < segment[0].x) return 0;
     else return 1;
@@ -614,7 +614,7 @@ int ON_LineCurve::GetNurbForm(
       ) const
 {
   int rc = 0;
-  if ( c.Create( m_dim==2?2:3, FALSE, 2, 2 ) ) 
+  if ( c.Create( m_dim==2?2:3, FALSE, 2, 2 ) )
   {
     rc = 1;
     double t0 = m_t[0];
@@ -640,7 +640,7 @@ int ON_LineCurve::GetNurbForm(
       {
         rc = 0;
       }
-    }  
+    }
     if ( t0 < t1 )
     {
       c.m_knot[0] = t0;
@@ -686,7 +686,7 @@ BOOL ON_LineCurve::Trim( const ON_Interval& domain )
     DestroyCurveTree();
     ON_3dPoint p = PointAt( domain[0] );
     ON_3dPoint q = PointAt( domain[1] );
-		if( p.DistanceTo(q)>0){								// 2 April 2003 Greg Arden A successfull trim 
+		if( p.DistanceTo(q)>0){								// 2 April 2003 Greg Arden A successfull trim
 																					// should return an IsValid ON_LineCurve .
 			m_line.from = p;
 			m_line.to = q;
@@ -730,7 +730,7 @@ bool ON_LineCurve::Extend(
   return do_it;
 }
 
-BOOL ON_LineCurve::Split( 
+BOOL ON_LineCurve::Split(
       double t,
       ON_Curve*& left_side,
       ON_Curve*& right_side

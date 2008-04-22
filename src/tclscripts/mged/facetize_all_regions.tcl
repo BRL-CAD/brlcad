@@ -1,7 +1,7 @@
 #        F A C E T I Z E _ A L L _ R E G I O N S . T C L
 # BRL-CAD
 #
-# Copyright (c) 2007 United States Government as represented by
+# Copyright (c) 2007-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -109,7 +109,7 @@ proc facetize_all_regions {filename} {
 		puts "expanding $reg"
 		expand_comb ${reg}_ $reg 0
 		puts "sub-facetizing $reg"
-#		facetize_failed_comb ${reg}_ $reg_fail $fail
+		#		facetize_failed_comb ${reg}_ $reg_fail $fail
 	    }
 	    2 { # previous failure
 		puts "$reg failed before"

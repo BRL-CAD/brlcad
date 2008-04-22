@@ -1,7 +1,7 @@
 # $Id$
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
-LDFLAGS = \
+AM_LDFLAGS = \
 	${OPTICAL} \
 	${RT} ${FB}
 
@@ -10,6 +10,7 @@ bin_PROGRAMS = \
 	rt
 else !ONLY_BENCHMARK
 bin_PROGRAMS = \
+	reshoot \
 	rt \
 	rt_bot_faces \
 	rt_simple \
@@ -32,8 +33,9 @@ bin_PROGRAMS = \
 	rtweight \
 	rtxray
 
-EXTRA_PROGRAMS = hurt
-noinst_PROGRAMS = rtexample
+noinst_PROGRAMS = \
+	hurt \
+	rtexample
 
 endif
 # end of ONLY_BENCHMARK
@@ -48,6 +50,7 @@ ALLSRCS = \
 	$(COMMON) \
 	libfb-dummy.c \
 	read-rtlog.c \
+	reshoot.c \
 	rt_simple.c \
 	rtexample.c \
 	rtregis.c \
@@ -76,6 +79,7 @@ ALLSRCS = \
 
 rt_simple_SOURCES = rt_simple.c
 rtexample_SOURCES = rtexample.c
+reshoot_SOURCES = reshoot.c
 rtwalk_SOURCES = rtwalk.c
 rtshot_SOURCES = rtshot.c
 
@@ -161,10 +165,10 @@ rtxray_SOURCES = \
 
 noinst_HEADERS = \
 	ext.h \
-	rad.h \
-	scat.h
+	rad.h
 
 man_MANS = \
+	reshoot.1 \
 	rt.1 \
 	rt_bot_faces.1 \
 	rtarea.1 \
@@ -204,8 +208,6 @@ EXTRA_DIST = \
 	$(man_MANS) \
 	rt.dsp
 
-MAINTAINERCLEANFILES = Makefile.in
-
 DEPS=src/librt src/libfb src/liboptical
 
 include $(top_srcdir)/misc/Makefile.defs
@@ -217,6 +219,7 @@ FAST_OBJECTS = \
 
 else !ONLY_BENCHMARK
 FAST_OBJECTS = \
+	$(reshoot_OBJECTS) \
 	$(rt_OBJECTS) \
 	$(rt_bot_faces_OBJECTS) \
 	$(rt_simple_OBJECTS) \

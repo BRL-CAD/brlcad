@@ -8,7 +8,7 @@
  *
  *  Author -
  *	Michael John Muuss
- *  
+ *
  *  Distribution Status -
  *	Public Domain, Distribution Unlimitied.
  */

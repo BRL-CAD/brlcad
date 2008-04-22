@@ -1,7 +1,7 @@
 /*                          N I R T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,14 +19,37 @@
  */
 /** @file nirt.h
  *
+ * Common defines and declarations used by nirt.
+ *
+ * Author:
+ *   Natalie L. Barker
+ *
+ * Date:
+ *   Jan 90
+ *
  */
 
-/*      NIRT.H          */
+#ifndef __NIRT_H__
+#define __NIRT_H__
 
-/* Needed for some struct definitions */
-#include "./usrfmt.h"
+#ifdef __NetBSD__
+#define fmax(x, y) nbsd_fmax(x, y)
+static double nbsd_fmax(double x, double y)
+{
+  return x > y ? x : y;
+}
+#endif /* __NetBSD__ */
 
-/*	CONSTANTS	*/
+
+#include "common.h"
+
+#include "raytrace.h" /* for DEBUG_FORMAT */
+#include "vmath.h"
+
+#include "./usrfmt.h" /* Needed for some struct definitions */
+
+
+/** CONSTANTS */
 #define	VAR_NULL	((struct VarTable *) 0)
 #define	CT_NULL		((com_table *) 0)
 #define	SILENT_UNSET	0
@@ -35,9 +58,9 @@
 #define	NIRT_PROMPT	"nirt>  "
 #define	TITLE_LEN	80
 #if !defined(PI)
-#define	PI		3.141592654
+#  define	PI		3.141592654
 #endif
-#define	BACKOUT_DIST	1000.0
+
 #define	OFF		0
 #define	ON		1
 #define	YES		1
@@ -54,57 +77,46 @@
 #define	NO_AIR		0
 #define	READING_FILE	1
 #define	READING_STRING	2
-#define	deg2rad		0.01745329
 
-/*	FLAG VALUES FOR overlap_claims	*/
+/** FLAG VALUES FOR overlap_claims */
 #define	OVLP_RESOLVE		0
 #define	OVLP_REBUILD_FASTGEN	1
 #define	OVLP_REBUILD_ALL	2
 #define	OVLP_RETAIN		3
 
-/*	FLAG VALUES FOR nirt_debug	*/
+/** FLAG VALUES FOR nirt_debug */
 #define	DEBUG_INTERACT	0x001
 #define	DEBUG_SCRIPTS	0x002
 #define	DEBUG_MAT	0x004
 #define	DEBUG_BACKOUT	0x008
 #define	DEBUG_HITS	0x010
-#ifdef	DEBUG_FORMAT
-#   define RT_DEBUG_FMT	DEBUG_FORMAT
-#endif
+
+#define RT_DEBUG_FMT	DEBUG_FORMAT
 #define DEBUG_FMT	"\020\5HITS\4BACKOUT\3MAT\2SCRIPTS\1INTERACT"
 
-/*	STRING FOR USE WITH GETOPT(3)	*/
+/** STRING FOR USE WITH GETOPT(3) */
 #define	OPT_STRING      "A:bB:Ee:f:MO:su:vx:X:?"
 
 #define	made_it()	bu_log("Made it to %s:%d\n", __FILE__, __LINE__)
 
-/*	MACROS WITH ARGUMENTS	*/
-#ifndef _WIN32
-/* already defined */
-#  define	max(a,b)	(((a)>(b))?(a):(b))
-#  define	min(a,b)	(((a)<(b))?(a):(b))
-#endif
-#if !defined(abs)
-#  define	abs(a)	((a)>=0 ? (a):(-a))
-#endif
+/** MACROS WITH ARGUMENTS */
 #define	com_usage(c)	fprintf (stderr, "Usage:  %s %s\n", \
-				c -> com_name, c -> com_args);
+				c->com_name, c->com_args);
 
-/*	DATA STRUCTURES		*/
+/** DATA STRUCTURES */
 typedef struct {
-	char	*com_name;		/* for invoking	    	         */
-	void	(*com_func)();          /* what to do?      	         */
-	char	*com_desc;		/* Help description 	         */
-	char	*com_args;		/* Command arguments for usage   */
+    char	*com_name;		/* for invoking	    	         */
+    void	(*com_func)();          /* what to do?      	         */
+    char	*com_desc;		/* Help description 	         */
+    char	*com_args;		/* Command arguments for usage   */
 } com_table;
 
-struct VarTable
-{
-	double	azimuth;
-	double	elevation;
-	vect_t  direct;
-	vect_t  target;
-	vect_t  grid;
+struct VarTable {
+    double	azimuth;
+    double	elevation;
+    vect_t  direct;
+    vect_t  target;
+    vect_t  grid;
 };
 
 typedef struct attributes {
@@ -129,13 +141,13 @@ extern void		shoot();
 extern void		sh_esc();
 extern void	        quit();
 extern void		show_menu();
-extern void		format_output(char *buffer, com_table *ctp);
-extern void		direct_output(char *buffer, com_table *ctp);
+extern void		format_output(const char* buffer, com_table* ctp);
+extern void		direct_output(const char* buffer, com_table* ctp);
 extern void		nirt_units();
 extern void		do_overlap_claims();
 extern void		use_air();
-extern void		state_file(char *buffer, com_table *ctp);
-extern void		dump_state(char *buffer, com_table *ctp);
+extern void		state_file(const char* buffer, com_table* ctp);
+extern void		dump_state(const char* buffer, com_table* ctp);
 extern void		load_state(char *buffer, com_table *ctp);
 extern void		default_ospec(void);
 extern void		print_item(char *buffer, com_table *ctp);
@@ -152,12 +164,14 @@ extern void             do_rt_gettrees(struct rt_i *rtip, char **object_name, in
 extern void		bot_minpieces();
 extern int		need_prep;
 
+#endif /* __NIRT_H__ */
+
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

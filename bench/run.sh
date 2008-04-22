@@ -2,7 +2,7 @@
 #                          R U N . S H
 # BRL-CAD
 #
-# Copyright (c) 2004-2007 United States Government as represented by
+# Copyright (c) 2004-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -95,6 +95,7 @@
 #  Christopher Sean Morrison
 #
 #  @(#)$Header$ (BRL)
+
 
 # Ensure /bin/sh
 export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
@@ -325,18 +326,21 @@ look_for executable "the BRL-CAD raytracer" RT \
     ${PATH_TO_THIS}/../bin/rt \
     ${PATH_TO_THIS}/../src/rt/rt \
     ${PATH_TO_THIS}/src/rt/rt \
-    ./rt
+    ./rt \
+    ../src/rt/rt
 
-look_for directory "a benchmark geometry directory" DB \
-    ${PATH_TO_THIS}/../share/brlcad/*.*.*/db \
-    ${PATH_TO_THIS}/share/brlcad/*.*.*/db \
-    ${PATH_TO_THIS}/../share/brlcad/db \
-    ${PATH_TO_THIS}/share/brlcad/db \
-    ${PATH_TO_THIS}/../share/db \
-    ${PATH_TO_THIS}/share/db \
-    ${PATH_TO_THIS}/../db \
-    ${PATH_TO_THIS}/db \
-    ./db
+look_for file "a benchmark geometry directory" DB \
+    ${PATH_TO_THIS}/../share/brlcad/*.*.*/db/moss.g \
+    ${PATH_TO_THIS}/share/brlcad/*.*.*/db/moss.g \
+    ${PATH_TO_THIS}/../share/brlcad/db/moss.g \
+    ${PATH_TO_THIS}/share/brlcad/db/moss.g \
+    ${PATH_TO_THIS}/../share/db/moss.g \
+    ${PATH_TO_THIS}/share/db/moss.g \
+    ${PATH_TO_THIS}/../db/moss.g \
+    ${PATH_TO_THIS}/db/moss.g \
+    ./db/moss.g \
+    ../db/moss.g
+DB=`echo $DB | sed 's,/moss.g$,,'`
 
 look_for directory "a benchmark reference image directory" PIX \
     ${PATH_TO_THIS}/../share/brlcad/*.*.*/pix \

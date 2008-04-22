@@ -1,7 +1,7 @@
 /*                         Q U E R Y . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,37 +33,16 @@
  *		or	y
  *		or	response
  *
- *  Calls:
- *	get_args
- *
- *  Method:
- *	straight-forward.
- *
- *  Author:
- *	Christopher T. Johnson - 90/08/28
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-
-
-#include <stdio.h>
 #include <stdlib.h>
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#include <strings.h>
-#endif
 #include <signal.h>
 #include <errno.h>
+#include "bio.h"
 
-#include "machine.h"
 #include "bu.h"
 
 
@@ -74,38 +53,38 @@ int	Timeout=0;
 int	Loop=0;
 int	Done = 0;
 
-static char usage[] = "\
+static const char usage[] = "\
 Usage: %s [-v] [-t seconds] [-r response ] [-l]\n";
 
 int
 get_args(int argc, register char **argv)
 {
-	register int c;
+    register int c;
 
-	while ( (c = bu_getopt( argc, argv, "t:r:vl" )) != EOF )  {
-		switch( c )  {
-		case 't':
-			Timeout = atoi(bu_optarg);
-			break;
-		case 'r':
-			Response = bu_optarg;
-			break;
-		case 'v':
-			Verbose = 1 - Verbose;
-			break;
-		case 'l':
-			Loop = 1;
-			break;
-		default:		/* '?' */
-			return(0);
-		}
+    while ( (c = bu_getopt( argc, argv, "t:r:vl" )) != EOF )  {
+	switch ( c )  {
+	    case 't':
+		Timeout = atoi(bu_optarg);
+		break;
+	    case 'r':
+		Response = bu_optarg;
+		break;
+	    case 'v':
+		Verbose = 1 - Verbose;
+		break;
+	    case 'l':
+		Loop = 1;
+		break;
+	    default:		/* '?' */
+		return(0);
 	}
-	if (Timeout < 0) Timeout = 0;
-	if ( (Loop & Timeout) <= 0) Timeout=5;
+    }
+    if (Timeout < 0) Timeout = 0;
+    if ( (Loop & Timeout) <= 0) Timeout=5;
 
-	if (Loop) Verbose = 0;
+    if (Loop) Verbose = 0;
 
-	return(1);
+    return(1);
 }
 
 void handler(int);
@@ -113,79 +92,79 @@ void handler(int);
 int
 main(int argc, char **argv)
 {
-	char line[80];
-	char *eol;
-	char *flag;
+    char line[80];
+    char *eol;
+    char *flag;
 
-	if ( !get_args( argc, argv ) )  {
-		(void) fprintf(stderr,usage,argv[0]);
-		exit( 1 );
-	}
+    if ( !get_args( argc, argv ) )  {
+	bu_exit(1, usage, argv[0]);
+    }
 
+    (void) signal(SIGALRM, handler);
+    Done = 0;
+
+    for (;;) {
 	(void) signal(SIGALRM, handler);
-	Done = 0;
-
-	for(;;) {
-		(void) signal(SIGALRM, handler);
-		if (Verbose) {
-			if (Timeout) {
-				(void) fprintf(stderr,
-				    "(Default: %s in %d sec)", Response,
-				    Timeout);
-			} else {
-				(void) fprintf(stderr,
-				    "(Default: %s)", Response);
-			}
-		}
-
-		if (Loop) {
-			(void) fprintf(stderr,
-			    "(Default: %s, loop in %d sec)", Response, Timeout);
-		}
-		if (Timeout) alarm(Timeout);
-
-		flag = bu_fgets(line, 80, stdin);
-		if (Done) {
-			if (Loop) {
-				(void) fputs("\n\007", stderr);
-				Done = 0;
-			} else {
-				(void) fputs(Response, stdout);
-				(void) putchar('\n');
-				break;
-			}
-		} else if (flag == NULL) {
-			(void) fputs(Response, stdout);
-			break;
-		} else { /* good response */
-			eol = strlen(line) + line;
-			if (*(eol-1) == '\n') {
-				--eol;
-				*eol = '\0';
-			}
-			if (eol == line) {
-				(void) fputs(Response, stdout);
-			} else {
-				(void) fputs(line, stdout);
-			}
-			(void)putchar('\n');
-			break;
-		}
+	if (Verbose) {
+	    if (Timeout) {
+		(void) fprintf(stderr,
+			       "(Default: %s in %d sec)", Response,
+			       Timeout);
+	    } else {
+		(void) fprintf(stderr,
+			       "(Default: %s)", Response);
+	    }
 	}
-	exit(0);
+
+	if (Loop) {
+	    (void) fprintf(stderr,
+			   "(Default: %s, loop in %d sec)", Response, Timeout);
+	}
+	if (Timeout) alarm(Timeout);
+
+	flag = bu_fgets(line, 80, stdin);
+	if (Done) {
+	    if (Loop) {
+		(void) fputs("\n\007", stderr);
+		Done = 0;
+	    } else {
+		(void) fputs(Response, stdout);
+		(void) putchar('\n');
+		break;
+	    }
+	} else if (flag == NULL) {
+	    (void) fputs(Response, stdout);
+	    break;
+	} else {
+	    /* good response */
+	    eol = strlen(line) + line;
+	    if (*(eol-1) == '\n') {
+		--eol;
+		*eol = '\0';
+	    }
+	    if (eol == line) {
+		(void) fputs(Response, stdout);
+	    } else {
+		(void) fputs(line, stdout);
+	    }
+	    (void)putchar('\n');
+	    break;
+	}
+    }
+    bu_exit (0, NULL);
 }
 void
 handler(int sig)
 {
-	Done = 1;
+    Done = 1;
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

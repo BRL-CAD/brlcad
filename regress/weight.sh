@@ -41,12 +41,12 @@ Material  Density(g/cm^3)  Name
 
   Weight Matl LOS  Material Name  Density Name
  ------- ---- --- --------------- ------- -------------
-   7.829    1 100 steel            7.8295 /box.r                               
+   7.829    1 100 steel            7.8295 /box.r
 Weight by item number (in grams):
 
 Item  Weight  Region Names
 ---- -------- --------------------
-1000    7.829 /box.r                                                           
+1000    7.829 /box.r
 RT Weight Program Output:
 
 Database Title: "Untitled BRL-CAD Database"
@@ -75,10 +75,18 @@ fi
 rm -f weight.out_ns weight.ref_ns
 
 if [ X$STATUS = X0 ] ; then
-    /bin/echo '-> weight.sh succeeded'
+    echo "-> weight.sh succeeded"
 else
-    /bin/echo '-> weight.sh failed'
+    echo "-> weight.sh FAILED"
 fi
 
-
 exit $STATUS
+
+# Local Variables:
+# mode: sh
+# tab-width: 8
+# sh-indentation: 4
+# sh-basic-offset: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8

@@ -30,14 +30,14 @@ bwish_SOURCES = \
 blib_LIBS = \
 	${TCLCAD} \
 	${DM} \
+	${BLT} \
 	${ITK} \
 	${ITCL} \
 	${TK} \
 	${TCL} \
 	${TERMIO}
 
-bwish_LDADD = \
-	${blib_LIBS}
+bwish_LDADD = ${blib_LIBS}
 
 # static is required to avoid MIPSpro 7.3 long rpath linker bug
 if LINK_STATIC_REQUIRED
@@ -56,6 +56,12 @@ btclsh_SOURCES = \
 
 btclsh_LDADD = \
 	${blib_LIBS}
+
+EXTRA_DIST = \
+	consoleMain.c \
+	unixMain.c \
+	cadAppInit.c \
+	winMain.c
 
 DEPS=src/libdm
 

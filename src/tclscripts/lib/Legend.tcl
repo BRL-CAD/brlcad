@@ -1,7 +1,7 @@
 #                      L E G E N D . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2007 United States Government as represented by
+# Copyright (c) 1998-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -18,15 +18,6 @@
 # information.
 #
 ###
-#
-# Author -
-#	Bob Parker
-#
-# Source -
-#	The U. S. Army Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#
 #
 # Description -
 #       Widget for displaying colors and their corresponding values.
@@ -217,7 +208,7 @@ option add *Legend.height 30 widgetDefault
 	    set rgb [eval format "#%.2x%.2x%.2x" [eval $itk_option(-colorFunc) $low $high $val]]
 	}
 	$c create rectangle $x1 $y1 $x2 $y2 \
-		-outline "" -fill $rgb -tags $tags
+	    -outline "" -fill $rgb -tags $tags
     }
     $c create text $x $y -text $low -anchor s -tags $tags
     $c create text [expr {$w + $x}] $y -text $high -anchor s -tags $tags
@@ -274,13 +265,13 @@ option add *Legend.height 30 widgetDefault
 
 ::itcl::body cadwidgets::Legend::rgbValid {r g b} {
     if {![string is integer $r]} {
-	    return 0
+	return 0
     }
     if {![string is integer $g]} {
-	    return 0
+	return 0
     }
     if {![string is integer $b]} {
-	    return 0
+	return 0
     }
     if {$r < 0 || 255 < $r} {
 	return 0

@@ -100,7 +100,7 @@ for \fBTk_Fill3DRectangle\fR).
 .AP XPoint *pointPtr in
 Pointer to array of points describing the set of vertices in a polygon.
 The polygon need not be closed (it will be closed automatically if it
-isn't).
+is not).
 .AP int numPoints in
 Number of points at \fI*pointPtr\fR.
 .AP int polyBorderWidth in
@@ -168,7 +168,7 @@ prevents \fBTk_Get3DBorder\fR from caching the return value, so
 .PP
 \fBTk_Get3DBorderFromObj\fR returns the token for an existing border, given
 the window and color name used to create the border.
-\fBTk_Get3DBorderFromObj\fR doesn't actually create the border; it must
+\fBTk_Get3DBorderFromObj\fR does not actually create the border; it must
 already have been created with a previous call to
 \fBTk_Alloc3DBorderFromObj\fR or \fBTk_Get3DBorder\fR.  The return
 value is cached in \fIobjPtr\fR, which speeds up
@@ -238,7 +238,9 @@ Each procedure takes \fIx\fR, \fIy\fR, \fIwidth\fR, and \fIheight\fR
 arguments that describe the rectangular area of the beveled edge
 (e.g., \fIwidth\fR is the border width for \fBTk_3DVerticalBevel\fR).
 The \fIleftBorder\fR and \fItopBorder\fR arguments indicate the
-position of the border relative to the ``inside'' of the object, and
+position of the border relative to the
+.QW inside
+of the object, and
 \fIrelief\fR indicates the relief of the inside of the object relative
 to the outside.
 \fBTk_3DVerticalBevel\fR just draws a rectangular region.

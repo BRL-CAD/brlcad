@@ -200,14 +200,17 @@ EXTRA_DIST = \
 	bool_rewrite.c \
 	comb_bool_parse.y \
 	comb_bool_scan.l \
+	dm-ogl.c \
+	dm-wgl.c \
+	dm-X.c \
+	dm-tk.c \
 	fbserv_win32.c \
 	hideline.c \
 	memalloc.c \
+	mged.bat \
 	mged.dsp
 
 DEPS=src/libtermio src/libwdb src/libdm src/other/incrTcl src/libtclcad
-
-MAINTAINERCLEANFILES = Makefile.in
 
 include $(top_srcdir)/misc/Makefile.defs
 

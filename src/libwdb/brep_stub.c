@@ -1,7 +1,7 @@
 /*                          B R E P . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2007 United States Government as represented by
+ * Copyright (c) 1987-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,22 +26,13 @@
  *	Jason Owens
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
-
 #include <stdio.h>
 #include <math.h>
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#include <strings.h>
-#endif
 
-#include "machine.h"
 #include "bu.h"
 #include "db.h"
 #include "vmath.h"
@@ -52,11 +43,21 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 /*
  *                        M K _ B R E P
  *
- *  Create a brep in the geometry file. 
+ *  Create a brep in the geometry file.
  */
 int
 mk_brep( struct rt_wdb* file, const char* name, ON_Brep* brep )
 {
-  bu_log("mk_brep() requires BRL-CAD to be built with openNURBS");
-  return -1;
+    bu_log("mk_brep() requires BRL-CAD to be built with openNURBS\n");
+    return -1;
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

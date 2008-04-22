@@ -1,7 +1,7 @@
 /*                          B R E P . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2007 United States Government as represented by
+ * Copyright (c) 1994-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,16 +18,8 @@
  * information.
  */
 /** @file brep.c
- *  Authors -
- *	John R. Anderson
  *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
@@ -94,7 +86,7 @@ int entityno;
 	ON_Brep* outer = ON_Brep::New();
 	if (Get_outer_brep(outer, (shell_de - 1)/2, orient))
 	  goto err;
-	      
+
 
 	/* Put voids in */
 	for( i=0 ; i<num_of_voids ; i++ )

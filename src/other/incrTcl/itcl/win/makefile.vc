@@ -172,7 +172,7 @@ crt = -MT$(DBGX)
 !if $(TCLINSTALL)
 TCL_INCLUDES	= -I"$(TCLDIR)\include"
 !else
-TCL_INCLUDES	= -I"$(TCLDIR)\generic"
+TCL_INCLUDES	= -I"$(TCLDIR)\generic" -I"$(TCLDIR)\win"
 !endif
 
 ITCL_INCLUDES	= -I$(WINDIR) -I$(GENERICDIR)
@@ -268,7 +268,7 @@ test : setup $(ITCLLIB) $(ITCLSTUBLIB)
 	$(TCLSH) ..\tests\all.tcl $(TESTFLAGS) -loadfile <<
 	set env(ITCL_LIBRARY) [file normalize [file join $(MAKEDIR:\=/) .. library]]
 	load [file normalize [file join $(MAKEDIR:\=/) $(ITCLLIB:\=/)]]
-<<keep
+<<
 !endif
 
 #---------------------------------------------------------------------

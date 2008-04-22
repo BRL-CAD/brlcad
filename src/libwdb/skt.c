@@ -1,7 +1,7 @@
 /*                           S K T . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2007 United States Government as represented by
+ * Copyright (c) 2000-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,23 +21,14 @@
  *
  * Support for sketches
  *
- *  Author -
- *	John Anderson
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-#ifndef lint
-static const char skt_RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
-
 #include <stdio.h>
 #include <math.h>
-#include "machine.h"
+#include "bio.h"
+
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
@@ -47,21 +38,21 @@ static const char skt_RCSid[] = "@(#)$Header$ (BRL)";
 
 int
 mk_sketch(
-	struct rt_wdb *fp,
-	const char *name,
-	struct rt_sketch_internal *skt )
+    struct rt_wdb *fp,
+    const char *name,
+    struct rt_sketch_internal *skt )
 {
-	RT_SKETCH_CK_MAGIC( skt );
+    RT_SKETCH_CK_MAGIC( skt );
 
-	return wdb_export( fp, name, (genptr_t)skt, ID_SKETCH, mk_conv2mm );
+    return wdb_export( fp, name, (genptr_t)skt, ID_SKETCH, mk_conv2mm );
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

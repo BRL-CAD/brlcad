@@ -92,7 +92,7 @@ and fills in the structure pointed to by \fIparsePtr\fR
 with a collection of tokens describing the information that was parsed.
 The procedures normally return \fBTCL_OK\fR.
 However, if an error occurs then they return \fBTCL_ERROR\fR,
-leave an error message in \fIinterp's\fR result
+leave an error message in \fIinterp\fR's result
 (if \fIinterp\fR is not NULL),
 and leave nothing in \fIparsePtr\fR.
 .PP
@@ -119,7 +119,7 @@ result, and no information is left at \fI*parsePtr\fR.
 .PP
 \fBTcl_ParseBraces\fR parses a string or command argument
 enclosed in braces such as
-\fB{hello}\fR or \fB{string \\t with \\t tabs}\fR
+\fB{hello}\fR or \fB{string \et with \et tabs}\fR
 from the beginning of its argument \fIstart\fR.
 The first character of \fIstart\fR must be \fB{\fR. 
 If the braced string was parsed successfully,
@@ -137,13 +137,13 @@ and no information is left at \fI*parsePtr\fR or \fI*termPtr\fR.
 \fBTcl_ParseQuotedString\fR parses a double-quoted string such as
 \fB"sum is [expr {$a+$b}]"\fR
 from the beginning of the argument \fIstart\fR.
-The first character of \fIstart\fR must be \fB"\fR. 
+The first character of \fIstart\fR must be \fB\N'34'\fR. 
 If the double-quoted string was parsed successfully,
 \fBTcl_ParseQuotedString\fR returns \fBTCL_OK\fR,
 fills in the structure pointed to by \fIparsePtr\fR
 with information about the structure of the string
 (see below for details),
-and stores a pointer to the character just after the terminating \fB"\fR
+and stores a pointer to the character just after the terminating \fB\N'34'\fR
 in the location given by \fI*termPtr\fR.
 If an error occurs while parsing the string
 then \fBTCL_ERROR\fR is returned,
@@ -159,7 +159,7 @@ returns \fBTCL_OK\fR and fills in the structure pointed to by
 \fIparsePtr\fR with information about the structure of the variable name
 (see below for details).  If an error
 occurs while parsing the command then \fBTCL_ERROR\fR is returned, an
-error message is left in \fIinterp\fR's result (if \fIinterp\fR isn't
+error message is left in \fIinterp\fR's result (if \fIinterp\fR is not
 NULL), and no information is left at \fI*parsePtr\fR.
 .PP
 \fBTcl_ParseVar\fR parse a Tcl variable reference such as \fB$abc\fR
@@ -364,7 +364,7 @@ can be used to determine the number of operands.
 A binary operator such as \fB*\fR
 is followed by two \fBTCL_TOKEN_SUB_EXPR\fR tokens
 that describe its operands.
-A unary operator like \fB-\fR
+A unary operator like \fB\-\fR
 is followed by a single \fBTCL_TOKEN_SUB_EXPR\fR token
 for its operand.
 If the operator is a math function such as \fBlog10\fR,

@@ -1,7 +1,7 @@
 /*                       N M G - S G P . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2007 United States Government as represented by
+ * Copyright (c) 1997-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,26 +22,16 @@
  *
  *  Program to convert an NMG BRL-CAD model (in a .g file) to a SGP facetted model
  *
- *  Author -
- *	John R. Anderson
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
 #include <errno.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
-#include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
@@ -56,7 +46,7 @@ static char *out_file;
 static FILE *fd_in;
 static struct db_i *dbip;
 static struct bn_tol tol;
-static char *usage="Usage:\n\t%s [-d] [-v] [-x librt_debug_flag] [-X NMG_debug_flag] [-o output_file] brlcad_model.g object1 [object2 object3...]\n";
+static const char *usage="Usage:\n\t%s [-d] [-v] [-x librt_debug_flag] [-X NMG_debug_flag] [-o output_file] brlcad_model.g object1 [object2 object3...]\n";
 static long polygons=0;
 static int stats=0;
 static int triangles=0;
@@ -68,57 +58,57 @@ static point_t min_pt, max_pt;
 
 static void
 write_fu_as_sgp( fu )
-struct faceuse *fu;
+    struct faceuse *fu;
 {
-	struct loopuse *lu;
+    struct loopuse *lu;
 
-	NMG_CK_FACEUSE( fu );
+    NMG_CK_FACEUSE( fu );
 
-	nmg_triangulate_fu( fu, &tol );
+    nmg_triangulate_fu( fu, &tol );
 
-	for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+    for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+    {
+	struct edgeuse *eu;
+
+	if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+	    continue;
+
+	fprintf( fp_out, "polygon 3\n" );
+	polygons++;
+	for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 	{
-		struct edgeuse *eu;
+	    struct vertex_g *vg;
 
-		if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
-			continue;
-
-		fprintf( fp_out, "polygon 3\n" );
-		polygons++;
-		for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
-		{
-			struct vertex_g *vg;
-
-			vg = eu->vu_p->v_p->vg_p;
-			NMG_CK_VERTEX_G( vg );
-			fprintf( fp_out, "%f %f %f\n", vg->coord[X], -vg->coord[Y], -vg->coord[Z] );
-		}
+	    vg = eu->vu_p->v_p->vg_p;
+	    NMG_CK_VERTEX_G( vg );
+	    fprintf( fp_out, "%f %f %f\n", vg->coord[X], -vg->coord[Y], -vg->coord[Z] );
 	}
+    }
 }
 
 static void
 write_model_as_sgp( m )
-struct model *m;
+    struct model *m;
 {
-	struct nmgregion *r;
-	struct shell *s;
-	struct faceuse *fu;
+    struct nmgregion *r;
+    struct shell *s;
+    struct faceuse *fu;
 
-	NMG_CK_MODEL( m );
+    NMG_CK_MODEL( m );
 
-	for( BU_LIST_FOR( r, nmgregion, &m->r_hd ) )
+    for ( BU_LIST_FOR( r, nmgregion, &m->r_hd ) )
+    {
+	for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
 	{
-		for( BU_LIST_FOR( s, shell, &r->s_hd ) )
-		{
-			for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
-			{
-				if( fu->orientation != OT_SAME )
-					continue;
+	    for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+	    {
+		if ( fu->orientation != OT_SAME )
+		    continue;
 
-				write_fu_as_sgp( fu );
-			}
-		}
+		write_fu_as_sgp( fu );
+	    }
 	}
+    }
 }
 
 /*
@@ -126,143 +116,135 @@ struct model *m;
  */
 int
 main(argc, argv)
-int	argc;
-char	*argv[];
+    int	argc;
+    char	*argv[];
 {
-	int		i;
-	register int	c;
-	struct db_i	*dbip;
-	char		idbuf[132];
-	vect_t		h_delta, v_delta;
-	point_t		start_pt;
-	int		dir;
-	fastf_t		cell_width=100.0, cell_height=100.0;
+    int		i;
+    register int	c;
+    struct db_i	*dbip;
+    char		idbuf[132];
+    vect_t		h_delta, v_delta;
+    point_t		start_pt;
+    int		dir;
+    fastf_t		cell_width=100.0, cell_height=100.0;
 
-	bu_setlinebuf( stderr );
+    bu_setlinebuf( stderr );
 
 #if MEMORY_LEAK_CHECKING
-	rt_g.debug |= DEBUG_MEM_FULL;
+    rt_g.debug |= DEBUG_MEM_FULL;
 #endif
-	BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
+    BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
-	/* XXX These need to be improved */
-	tol.magic = BN_TOL_MAGIC;
-	tol.dist = 0.1;
-	tol.dist_sq = tol.dist * tol.dist;
-	tol.perp = 1e-6;
-	tol.para = 1 - tol.perp;
+    /* XXX These need to be improved */
+    tol.magic = BN_TOL_MAGIC;
+    tol.dist = 0.1;
+    tol.dist_sq = tol.dist * tol.dist;
+    tol.perp = 1e-6;
+    tol.para = 1 - tol.perp;
 
-	/* Get command line arguments. */
-	while ((c = bu_getopt(argc, argv, "do:vx:X:")) != EOF) {
-		switch (c) {
-		case 'd':		/* increment debug level */
-			debug++;
-			break;
-		case 'o':		/* Output file name */
-			out_file = bu_optarg;
-			break;
-		case 's':		/* edge length statistics */
-			stats = 1;
-			break;
-		case 'v':
-			verbose++;
-			break;
-		case 'x':
-			sscanf( bu_optarg, "%x", &rt_g.debug );
-			bu_printb( "librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT );
-			bu_log("\n");
-			break;
-		case 'X':
-			sscanf( bu_optarg, "%x", &rt_g.NMG_debug );
-			bu_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
-			bu_log("\n");
-			break;
-		default:
-			fprintf(stderr, usage, argv[0]);
-			return 1;
-			break;
-		}
+    /* Get command line arguments. */
+    while ((c = bu_getopt(argc, argv, "do:vx:X:")) != EOF) {
+	switch (c) {
+	    case 'd':		/* increment debug level */
+		debug++;
+		break;
+	    case 'o':		/* Output file name */
+		out_file = bu_optarg;
+		break;
+	    case 's':		/* edge length statistics */
+		stats = 1;
+		break;
+	    case 'v':
+		verbose++;
+		break;
+	    case 'x':
+		sscanf( bu_optarg, "%x", &rt_g.debug );
+		bu_printb( "librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT );
+		bu_log("\n");
+		break;
+	    case 'X':
+		sscanf( bu_optarg, "%x", &rt_g.NMG_debug );
+		bu_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
+		bu_log("\n");
+		break;
+	    default:
+		bu_exit(1, usage, argv[0]);
+		break;
 	}
+    }
 
-	if (bu_optind+1 >= argc) {
-		fprintf(stderr, usage, argv[0]);
-		return 1;
-	}
+    if (bu_optind+1 >= argc) {
+	bu_exit(1, usage, argv[0]);
+    }
 
-	/* Open BRL-CAD database */
-	if( (dbip = db_open( argv[bu_optind], "r" )) == DBI_NULL )
-	{
-		bu_log( "Cannot open %s\n" , argv[bu_optind] );
-		perror(argv[0]);
-		return 1;
-	}
-#if 0
-	if( stats )
-	{
-		edge_len_limits =
-	}
+    /* Open BRL-CAD database */
+    if ( (dbip = db_open( argv[bu_optind], "r" )) == DBI_NULL )
+    {
+	perror(argv[0]);
+	bu_exit(1, "Cannot open %s\n", argv[bu_optind] );
+    }
+
+    if ( db_dirbuild( dbip ) ) {
+	bu_exit(1, "db_dirbuild failed\n" );
+    }
+
+    if (out_file == NULL) {
+	fp_out = stdout;
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	setmode(fileno(fp_out), O_BINARY);
 #endif
-	if( db_dirbuild( dbip ) ) {
-	    bu_log( "db_dirbuild failed\n" );
-	    exit(1);
-	}
-
-	if( out_file == NULL )
-		fp_out = stdout;
-	else
+    } else {
+	if ((fp_out = fopen( out_file, "wb")) == NULL)
 	{
-		if ((fp_out = fopen( out_file , "w")) == NULL)
-		{
-			bu_log( "Cannot open %s\n" , out_file );
-			perror( argv[0] );
-			return 1;
-		}
+	    perror( argv[0] );
+	    bu_exit(1, "Cannot open %s\n", out_file );
 	}
+    }
 
-	fprintf( fp_out, "object\n" );
-	while( ++bu_optind < argc )
+    fprintf( fp_out, "object\n" );
+    while ( ++bu_optind < argc )
+    {
+	struct directory *dp;
+	struct rt_db_internal ip;
+	int id;
+	struct model *m;
+
+	if ( (dp=db_lookup( dbip, argv[bu_optind], LOOKUP_NOISY)) == DIR_NULL )
+	    continue;
+
+	if ( (id=rt_db_get_internal( &ip, dp, dbip, bn_mat_identity, &rt_uniresource )) < 0 )
 	{
-		struct directory *dp;
-		struct rt_db_internal ip;
-		int id;
-		struct model *m;
-
-		if( (dp=db_lookup( dbip, argv[bu_optind], LOOKUP_NOISY)) == DIR_NULL )
-			continue;
-
-		if( (id=rt_db_get_internal( &ip, dp, dbip, bn_mat_identity, &rt_uniresource )) < 0 )
-		{
-			bu_log( "Cannot get object (%s).....ignoring\n", dp->d_namep );
-			continue;
-		}
-
-		if( id != ID_NMG )
-		{
-			bu_log( "%s is not an NMG......ignoring\n", dp->d_namep );
-			rt_db_free_internal( &ip, &rt_uniresource );
-			continue;
-		}
-
-		m = (struct model *)ip.idb_ptr;
-		NMG_CK_MODEL( m );
-
-		write_model_as_sgp( m );
-		rt_db_free_internal( &ip, &rt_uniresource );
+	    bu_log( "Cannot get object (%s).....ignoring\n", dp->d_namep );
+	    continue;
 	}
 
-	fprintf( fp_out, "end_object\n" );
+	if ( id != ID_NMG )
+	{
+	    bu_log( "%s is not an NMG......ignoring\n", dp->d_namep );
+	    rt_db_free_internal( &ip, &rt_uniresource );
+	    continue;
+	}
 
-	bu_log( "\t%d polygons\n", polygons );
+	m = (struct model *)ip.idb_ptr;
+	NMG_CK_MODEL( m );
 
-	return 0;
+	write_model_as_sgp( m );
+	rt_db_free_internal( &ip, &rt_uniresource );
+    }
+
+    fprintf( fp_out, "end_object\n" );
+
+    bu_log( "\t%d polygons\n", polygons );
+
+    return 0;
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -1,7 +1,7 @@
 /*                T C L C A D A U T O P A T H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,31 +34,29 @@
 #include "tcl.h"
 #include "tk.h"
 #include "itcl.h"
+
+#if !defined(_WIN32) || defined(__CYGWIN__)
 #include "itk.h"
-/*#include "blt.h"*/
+#endif
+
+#include "blt.h"
 
 /* incrTcl prior to 3.3 doesn't provide ITK_VERSION */
 #ifndef ITK_VERSION
 #  define ITK_VERSION ITCL_VERSION
 #endif
 
-#include "machine.h"
 #include "bu.h"
+#include "tclcad.h"
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#ifdef BU_DIR_SEPARATOR
+#undef BU_DIR_SEPARATOR
+#endif
+#define BU_DIR_SEPARATOR '/'
+#endif
 
 #define MAX_BUF 2048
-
-/* #ifdef _WIN32 */
-/*     { */
-/* 	/\* XXX - nasty little hack to convert paths *\/ */
-/* 	int i; */
-
-/* 	strcat(pathname,"/"); */
-/* 	for (i = 0; i < strlen(pathname); i++) { */
-/* 	    if (pathname[i]=='\\') */
-/* 		pathname[i]='/'; */
-/* 	} */
-/*     } */
-/* #endif */
 
 
 /* helper routine to determine whether the full 'path' includes a
@@ -95,29 +93,56 @@ path_to_src(const char *path)
 }
 
 
-/** debug printing routine for printing out the tcl_library value(s)
+/**
+ * debug printing routine for printing out the tcl_library value(s)
  */
 void
-tclcad_tcl_library(void)
+tclcad_tcl_library(Tcl_Interp *interp)
 {
     int cnt = 0;
     int pathcount = 0;
     Tcl_Obj *dir = NULL;
     Tcl_Obj *tclpath = NULL;
+    char buffer[MAX_BUF] = {0};
 
     tclpath = TclGetLibraryPath();
+    if (!tclpath) {
+	bu_log("WARNING: Unable to get the library path\n");
+	return;
+    }
+
     Tcl_IncrRefCount(tclpath);
     Tcl_ListObjLength(NULL, tclpath, &pathcount);
     if (pathcount > 1) {
 	bu_log("WARNING: tcl_library is set to multiple paths?\n");
     } else if (pathcount <= 0) {
-	bu_log("WARNING: tcl_library is unset\n");
+	if (interp) {
+	    const char *setting;
+	    snprintf(buffer, MAX_BUF, "set tcl_library");
+	    Tcl_Eval(interp, buffer);
+	    setting = Tcl_GetStringResult(interp);
+	    if (setting && (strlen(setting) > 0)) {
+		Tcl_Obj *tcllib = Tcl_NewStringObj(setting, -1);
+		Tcl_Obj *listtl = Tcl_NewListObj(1, &tcllib);
+		TclSetLibraryPath(listtl);
+	    }
+	}
+	Tcl_DecrRefCount(tclpath);
+	tclpath = TclGetLibraryPath();
+	Tcl_IncrRefCount(tclpath);
+	Tcl_ListObjLength(NULL, tclpath, &pathcount);
+	if (pathcount <= 0) {
+	    bu_log("WARNING: tcl_library is unset (unexpected)\n");
+	}
     }
+
     for (cnt=0; cnt < pathcount; cnt++) {
 	Tcl_ListObjIndex(NULL, tclpath, cnt, &dir);
 	Tcl_IncrRefCount(dir);
 	if (dir) {
-	    bu_log("tcl_library is %s\n", Tcl_GetString(dir));
+#ifdef DEBUG
+	    bu_log("Using Tcl library at %s\n", Tcl_GetString(dir));
+#endif
 	}
 	Tcl_DecrRefCount(dir);
     }
@@ -172,8 +197,7 @@ tclcad_auto_path(Tcl_Interp *interp)
     const char *which_argv = NULL;
     const char *srcpath = NULL;
     int from_installed = 0;
-    char *stp = NULL;
-    
+
     Tcl_Obj *tclpath = NULL;
 
     int found_init_tcl = 0;
@@ -189,6 +213,25 @@ tclcad_auto_path(Tcl_Interp *interp)
     root = bu_brlcad_root("", 1);
     data = bu_brlcad_data("", 1);
 
+
+#ifdef _WIN32
+    {
+	char *cp;
+
+	if (root != (char *)0) {
+	    for (cp = root; *cp != '\0'; ++cp)
+		if (*cp == '\\') 
+		    *cp = '/';
+ 	}
+
+	if (data != (char *)0) {
+	    for (cp = data; *cp != '\0'; ++cp)
+		if (*cp == '\\') 
+		    *cp = '/';
+ 	}
+    }
+#endif
+
     bu_vls_init(&auto_path);
     bu_vls_init(&lappend);
 
@@ -198,6 +241,11 @@ tclcad_auto_path(Tcl_Interp *interp)
 	/* it is set, set auto_path. limit buf just because. */
 	bu_vls_strncat(&auto_path, library_path, MAX_BUF);
     }
+
+    /* make sure tcl_library path is in the auto_path */
+    snprintf(buffer, MAX_BUF, "set tcl_library");
+    Tcl_Eval(interp, buffer);
+    bu_vls_strncat(&auto_path, Tcl_GetStringResult(interp), MAX_BUF);
 
     /* get string of invocation binary */
     which_argv = bu_which(bu_argv0_full_path());
@@ -223,8 +271,8 @@ tclcad_auto_path(Tcl_Interp *interp)
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, ITK_VERSION);
 	bu_vls_printf(&auto_path, "%c%s%clib%ciwidgets%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, IWIDGETS_VERSION);
-	/*	bu_vls_printf(&auto_path, "%c%s%clib%cblt%s",
-		BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BLT_VERSION); */
+	bu_vls_printf(&auto_path, "%c%s%clib%cblt%s",
+		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BLT_VERSION);
 	bu_vls_printf(&auto_path, "%c%s%ctclscripts",
 		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%ctclscripts%clib",
@@ -236,6 +284,8 @@ tclcad_auto_path(Tcl_Interp *interp)
 	bu_vls_printf(&auto_path, "%c%s%ctclscripts%cgeometree",
 		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%ctclscripts%crtwizard",
+		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
+	bu_vls_printf(&auto_path, "%c%s%ctclscripts%carcher",
 		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
     }
 
@@ -260,8 +310,8 @@ tclcad_auto_path(Tcl_Interp *interp)
 		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%csrc%cother%ciwidgets",
 		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	/*	bu_vls_printf(&auto_path, "%c%s%csrc%cother%cblt%clibrary",
-		BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR); */
+	bu_vls_printf(&auto_path, "%c%s%csrc%cother%cblt%clibrary",
+		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%csrc%ctclscripts",
 		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%csrc%ctclscripts%clib",
@@ -273,6 +323,8 @@ tclcad_auto_path(Tcl_Interp *interp)
 	bu_vls_printf(&auto_path, "%c%s%csrc%ctclscripts%cgeometree",
 		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%csrc%ctclscripts%crtwizard",
+		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
+	bu_vls_printf(&auto_path, "%c%s%csrc%ctclscripts%carcher",
 		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
     }
 
@@ -297,8 +349,8 @@ tclcad_auto_path(Tcl_Interp *interp)
 			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%cother%ciwidgets",
 			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	    /*	bu_vls_printf(&auto_path, "%c%s%c..%csrc%cother%cblt%clibrary",
-		BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR); */
+	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%cother%cblt%clibrary",
+			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%ctclscripts",
 			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%ctclscripts%clib",
@@ -310,6 +362,8 @@ tclcad_auto_path(Tcl_Interp *interp)
 	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%ctclscripts%cgeometree",
 			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%ctclscripts%crtwizard",
+			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
+	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%ctclscripts%carcher",
 			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	}
     }
@@ -328,8 +382,8 @@ tclcad_auto_path(Tcl_Interp *interp)
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, ITK_VERSION);
 	bu_vls_printf(&auto_path, "%c%s%clib%ciwidgets%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, IWIDGETS_VERSION);
-	/*	bu_vls_printf(&auto_path, "%c%s%clib%cblt%s",
-		BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BLT_VERSION); */
+	bu_vls_printf(&auto_path, "%c%s%clib%cblt%s",
+		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BLT_VERSION);
 	bu_vls_printf(&auto_path, "%c%s%ctclscripts",
 		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%ctclscripts%clib",
@@ -342,14 +396,16 @@ tclcad_auto_path(Tcl_Interp *interp)
 		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%ctclscripts%crtwizard",
 		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
+	bu_vls_printf(&auto_path, "%c%s%ctclscripts%carcher",
+		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
     }
 
     /*    printf("AUTO_PATH IS %s\n", bu_vls_addr(&auto_path)); */
 
     /* iterate over the auto_path list and modify the real Tcl auto_path */
-    for (srcpath = strtok_r(bu_vls_addr(&auto_path), pathsep, &stp);
+    for (srcpath = strtok(bu_vls_addr(&auto_path), pathsep);
 	 srcpath;
-	 srcpath = strtok_r(NULL, pathsep, &stp)) {
+	 srcpath = strtok(NULL, pathsep)) {
 
 	/* make sure it exists before appending */
 	if (bu_file_exists(srcpath)) {
@@ -368,11 +424,11 @@ tclcad_auto_path(Tcl_Interp *interp)
 		/* these doesn't seem to do what one might expect
 		 * here, but call it anyways.
 		 */
-		Tcl_Obj *newpath = Tcl_NewStringObj(srcpath,-1);
+		Tcl_Obj *newpath = Tcl_NewStringObj(srcpath, -1);
 		Tcl_IncrRefCount(newpath);
 		TclSetLibraryPath(newpath);
 		Tcl_DecrRefCount(newpath);
-		
+
 		/* this really sets it */
 		snprintf(buffer, MAX_BUF, "set tcl_library \"%s\"", srcpath);
 		if (Tcl_Eval(interp, buffer)) {
@@ -409,8 +465,8 @@ tclcad_auto_path(Tcl_Interp *interp)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -1,7 +1,7 @@
 /*                      V I E W S C A T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2007 United States Government as represented by
+ * Copyright (c) 1985-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,28 +31,22 @@
  *	From viewpp.c and viewray.c by
  *	Michael John Muuss
  *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
-#ifndef lint
-static const char RCSppview[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include "machine.h"
+
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtprivate.h"
 #include "rad.h"
 
+
 #ifndef M_PI
-#define M_PI            3.14159265358979323846
+#  define M_PI            3.14159265358979323846
 #endif
 
 #define	MAXREFLECT	16
@@ -150,7 +144,7 @@ view_2init( struct application *ap )
     fastf_t backoff;
 
 
-    if( numreflect > MAXREFLECT ) {
+    if ( numreflect > MAXREFLECT ) {
 	bu_log("Warning: maxreflect too large (%d), using %d\n",
 	       numreflect, MAXREFLECT );
 	numreflect = MAXREFLECT;
@@ -174,14 +168,14 @@ view_2init( struct application *ap )
     uvertp[1] = uhoriz[2] * unorml[0] - unorml[2]* uhoriz[0];
     uvertp[2] = uhoriz[0] * unorml[1] - unorml[0]* uhoriz[1];
     VUNITIZE( uvertp );
-    VPRINT("uhoriz",uhoriz);
-    VPRINT("unorml",unorml);
-    VPRINT("uvertp",uvertp);
+    VPRINT("uhoriz", uhoriz);
+    VPRINT("unorml", unorml);
+    VPRINT("uvertp", uvertp);
     totali = 0.0;
     totalq = 0.0;
 
     VSET(temp, 0.0, 0.0, -1.414 );
-    MAT4X3PNT( aimpt,view2model, temp);
+    MAT4X3PNT( aimpt, view2model, temp);
     bu_log("aim point %f %f %f\n", aimpt[0], aimpt[1], aimpt[2]);
     bu_log("viewsize %f\n", viewsize);
     backoff = 1.414 * viewsize/2.0;
@@ -208,7 +202,7 @@ view_end()
 {
     fastf_t rcs;
     fastf_t iret, qret;
-    LOCAL int cpu_num, cpus;
+    int cpu_num, cpus;
 
     iret = 0.0;
     qret = 0.0;
@@ -228,37 +222,37 @@ radhit( struct application *ap, struct partition *PartHeadp )
 {
     register struct partition *pp;
     register struct hit *hitp;
-    LOCAL struct application sub_ap;
-    LOCAL struct rayinfo *rayp;
-    LOCAL fastf_t	f;
-    LOCAL vect_t	to_eye, work;
-    LOCAL int	depth;
-    LOCAL int	cpu_num;
+    struct application sub_ap;
+    struct rayinfo *rayp;
+    fastf_t	f;
+    vect_t	to_eye, work;
+    int	depth;
+    int	cpu_num;
 
 
-    for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
-	if( pp->pt_outhit->hit_dist >= 0.0 )  break;
-    if( pp == PartHeadp )  {
+    for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
+	if ( pp->pt_outhit->hit_dist >= 0.0 )  break;
+    if ( pp == PartHeadp )  {
 	bu_log("radhit:  no hit out front?\n");
 	return(0);
     }
 
-    if(R_DEBUG&RDEBUG_HITS)  {
+    if (R_DEBUG&RDEBUG_HITS)  {
 	rt_pr_pt( ap->a_rt_i, pp );
     }
 
     hitp = pp->pt_inhit;
-    if( hitp->hit_dist >= INFINITY )  {
+    if ( hitp->hit_dist >= INFINITY )  {
 	bu_log("radhit:  entry beyond infinity\n");
 	return(1);
     }
     /* Check to see if eye is "inside" the solid */
-    if( hitp->hit_dist < 0 )  {
+    if ( hitp->hit_dist < 0 )  {
 	/* XXX */
 	return(0);
     }
 
-    if(R_DEBUG&RDEBUG_HITS)  {
+    if (R_DEBUG&RDEBUG_HITS)  {
 	rt_pr_hit( " In", hitp );
     }
 
@@ -276,7 +270,7 @@ radhit( struct application *ap, struct partition *PartHeadp )
     rayp->surf = hitp->hit_surfno;
     RT_HIT_NORMAL( rayp->norm, hitp, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip );
     RT_CURVATURE( &(rayp->curvature), hitp, pp->pt_inflip, pp->pt_inseg->seg_stp );
-    if( VDOT( hitp->hit_normal, ap->a_ray.r_dir ) < 0 ) {
+    if ( VDOT( hitp->hit_normal, ap->a_ray.r_dir ) < 0 ) {
 	bu_log(" debug: curvature flip\n");
 	rayp->curvature.crv_c1 = - rayp->curvature.crv_c1;
 	rayp->curvature.crv_c2 = - rayp->curvature.crv_c2;
@@ -293,7 +287,7 @@ radhit( struct application *ap, struct partition *PartHeadp )
     VUNITIZE( rayp->spec );
 
     /* Save info for 1st ray */
-    if( ap->a_level == 0 ) {
+    if ( ap->a_level == 0 ) {
 	firstray[cpu_num] = ap->a_ray;	/* struct copy */
 	rayp->sight = 1;	/* the 1st intersect is always visible */
     } else {
@@ -304,7 +298,7 @@ radhit( struct application *ap, struct partition *PartHeadp )
     /*
      * Shoot another ray in the specular direction.
      */
-    if( ap->a_level < numreflect-1 ) {
+    if ( ap->a_level < numreflect-1 ) {
 	sub_ap = *ap;	/* struct copy */
 	sub_ap.a_level = ap->a_level+1;
 	sub_ap.a_purpose = "secondary ray";
@@ -315,7 +309,7 @@ radhit( struct application *ap, struct partition *PartHeadp )
 	depth = 0;
     }
 
-    if( ap->a_level == 0 ) {
+    if ( ap->a_level == 0 ) {
 	rayinfo[cpu_num][0].x = ap->a_x;
 	rayinfo[cpu_num][0].y = ap->a_y;
 	rayinfo[cpu_num][0].surf = depth+1;
@@ -348,17 +342,17 @@ hiteye( struct application *ap, struct partition *PartHeadp )
 {
     register struct partition *pp;
     register struct hit *hitp;
-    LOCAL vect_t work;
-    LOCAL int cpu_num;
+    vect_t work;
+    int cpu_num;
 
-    for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
-	if( pp->pt_outhit->hit_dist > 0 )  break;
-    if( pp == PartHeadp )  {
+    for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
+	if ( pp->pt_outhit->hit_dist > 0 )  break;
+    if ( pp == PartHeadp )  {
 	bu_log("hiteye:  no hit out front?\n");
 	return(1);
     }
     hitp = pp->pt_inhit;
-    if( hitp->hit_dist >= INFINITY )  {
+    if ( hitp->hit_dist >= INFINITY )  {
 	bu_log("hiteye:  entry beyond infinity\n");
 	return(1);
     }
@@ -366,7 +360,7 @@ hiteye( struct application *ap, struct partition *PartHeadp )
      * find out where it went in.
      * Check to see if eye is "inside" of the solid.
      */
-    if( hitp->hit_dist < -1.0e-10 )  {
+    if ( hitp->hit_dist < -1.0e-10 )  {
 	return(0);
     }
 
@@ -376,7 +370,7 @@ hiteye( struct application *ap, struct partition *PartHeadp )
 	cpu_num = ap->a_resource->re_cpu;
 
     VSUB2( work, firstray[cpu_num].r_pt, ap->a_ray.r_pt );
-    if( hitp->hit_dist * hitp->hit_dist > MAGSQ(work) )
+    if ( hitp->hit_dist * hitp->hit_dist > MAGSQ(work) )
 	return(1);
     else
 	return(0);
@@ -405,9 +399,9 @@ hittrue( struct application *ap, struct partition *PartHeadp )
 static int
 isvisible( struct application *ap, struct hit *hitp, const vect_t norm )
 {
-    LOCAL int cpu_num;
-    LOCAL struct application sub_ap;
-    LOCAL vect_t	rdir;
+    int cpu_num;
+    struct application sub_ap;
+    vect_t	rdir;
 
     if ( ap->a_resource == RESOURCE_NULL)
 	cpu_num = 0;
@@ -417,7 +411,7 @@ isvisible( struct application *ap, struct hit *hitp, const vect_t norm )
     /* compute the ray direction */
     VSUB2( rdir, firstray[cpu_num].r_pt, hitp->hit_point );
     VUNITIZE( rdir );
-    if( VDOT(rdir, norm) < 0 )
+    if ( VDOT(rdir, norm) < 0 )
 	return( 0 );	/* backfacing */
 
     sub_ap = *ap;	/* struct copy */
@@ -442,8 +436,8 @@ void application_init () {}
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

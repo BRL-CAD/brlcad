@@ -120,9 +120,9 @@ static int bltModes[] =
     WHITENESS			/* GXset */
 };
 
-#if (TCL_VERSION_NUMBER <  _VERSION(8,1,0)) 
+#if (TCL_VERSION_NUMBER <  _VERSION(8,1,0))
 typedef void *Tcl_Encoding;	/* Make up dummy type for encoding.  */
-#else 
+#else
 static Tcl_Encoding systemEncoding = NULL;
 #endif
 
@@ -156,7 +156,7 @@ Blt_GetSystemPalette(void)
  *
  * CreateRotatedFont --
  *
- *	Creates a rotated copy of the given font.  This only works 
+ *	Creates a rotated copy of the given font.  This only works
  *	for TrueType fonts.
  *
  * Results:
@@ -204,14 +204,14 @@ CreateRotatedFont(
     if (faPtr->family == NULL) {
 	lf.lfFaceName[0] = '\0';
     } else {
-#if (TCL_VERSION_NUMBER >= _VERSION(8,1,0)) 
+#if (TCL_VERSION_NUMBER >= _VERSION(8,1,0))
 	Tcl_DString dString;
 
 	Tcl_UtfToExternalDString(systemEncoding, faPtr->family, -1, &dString);
 
 	if (Blt_GetPlatformId() == VER_PLATFORM_WIN32_NT) {
 	    Tcl_UniChar *src, *dst;
-	    
+
 	    /*
 	     * We can only store up to LF_FACESIZE wide characters
 	     */
@@ -246,7 +246,7 @@ CreateRotatedFont(
 #if WINDEBUG
 	PurifyPrintf("can't create font: %s\n", Blt_LastError());
 #endif
-    } else { 
+    } else {
 	HFONT oldFont;
 	TEXTMETRIC tm;
 	HDC hRefDC;
@@ -256,7 +256,7 @@ CreateRotatedFont(
 
 	hRefDC = GetDC(NULL);		/* Get the desktop device context */
 	oldFont = SelectFont(hRefDC, hFont);
-	result = ((GetTextMetrics(hRefDC, &tm)) && 
+	result = ((GetTextMetrics(hRefDC, &tm)) &&
 		  (tm.tmPitchAndFamily & TMPF_TRUETYPE));
 	SelectFont(hRefDC, oldFont);
 	ReleaseDC(NULL, hRefDC);
@@ -292,7 +292,7 @@ Blt_GetBitmapData(
     int width,			/* Width of bitmap */
     int height,			/* Height of bitmap */
     int *pitchPtr)		/* (out) Number of bytes per row */
-{			
+{
     TkWinDCState state;
     HDC dc;
     int result;
@@ -315,7 +315,7 @@ Blt_GetBitmapData(
 
     hBitmap = ((TkWinDrawable *)bitmap)->bitmap.handle;
     dc = TkWinGetDrawableDC(display, bitmap, &state);
-    result = GetDIBits(dc, hBitmap, 0, height, (LPVOID)NULL, 
+    result = GetDIBits(dc, hBitmap, 0, height, (LPVOID)NULL,
 	(BITMAPINFO *)bmiPtr, DIB_RGB_COLORS);
     TkWinReleaseDrawableDC(bitmap, dc, &state);
     if (!result) {
@@ -328,7 +328,7 @@ Blt_GetBitmapData(
     bytesPerRow = ((width + 31) & ~31) / 8;
     if (imageSize == 0) {
          imageSize = bytesPerRow * height;
-    }	
+    }
     hMem2 = GlobalReAlloc(hMem, size + imageSize, 0);
     if (hMem2 == NULL) {
 	GlobalFree(hMem);
@@ -337,7 +337,7 @@ Blt_GetBitmapData(
     hMem = hMem2;
     bmiPtr = (LPBITMAPINFOHEADER)GlobalLock(hMem);
     dc = TkWinGetDrawableDC(display, bitmap, &state);
-    result = GetDIBits(dc, hBitmap, 0, height, (unsigned char *)bmiPtr + size, 
+    result = GetDIBits(dc, hBitmap, 0, height, (unsigned char *)bmiPtr + size,
         (BITMAPINFO *)bmiPtr, DIB_RGB_COLORS);
     TkWinReleaseDrawableDC(bitmap, dc, &state);
     bits = NULL;
@@ -390,7 +390,7 @@ Blt_EmulateXMaxRequestSize(Display *display)
  */
 void
 Blt_EmulateXLowerWindow(
-    Display *display, 
+    Display *display,
     Window window)
 {
     HWND hWnd;
@@ -409,7 +409,7 @@ Blt_EmulateXLowerWindow(
  */
 void
 Blt_EmulateXRaiseWindow(
-    Display *display, 
+    Display *display,
     Window window)
 {
     HWND hWnd;
@@ -428,7 +428,7 @@ Blt_EmulateXRaiseWindow(
  */
 void
 Blt_EmulateXUnmapWindow(
-    Display *display, 
+    Display *display,
     Window window)
 {
     HWND hWnd;
@@ -507,8 +507,8 @@ Blt_SetDashes(Display *display, GC gc, Blt_Dashes *dashesPtr)
 
 static int
 GetDashInfo(
-    HDC dc, 
-    GC gc, 
+    HDC dc,
+    GC gc,
     DashInfo *infoPtr)
 {
     int dashOffset, dashValue;
@@ -693,8 +693,8 @@ Blt_EmulateXCreateGC(
  *
  *	Set up the graphics port from the given GC.
  *
- *	Geometric and cosmetic pens available under both 95 and NT.  
- *	Geometric pens differ from cosmetic pens in that they can 
+ *	Geometric and cosmetic pens available under both 95 and NT.
+ *	Geometric pens differ from cosmetic pens in that they can
  *	  1. Draw in world units (can have thick lines: line width > 1).
  *	  2. Under NT, allow arbitrary line style.
  *	  3. Can have caps and join (needed for thick lines).
@@ -719,7 +719,7 @@ Blt_EmulateXCreateGC(
  *	  PS_JOIN_BEVEL
  *	  PS_JOIN_ROUND
  *	  PS_JOIN_MITER
- * 
+ *
  * Results:
  *	None.
  *
@@ -826,7 +826,7 @@ Blt_GCToPen(HDC dc, GC gc)
 	    /* Cosmetic pens are much faster. */
 	    pen = ExtCreatePen(PS_COSMETIC | lineAttrs | lineStyle, 1, &lBrush,
 		       nValues, dashPtr);
-	}	    
+	}
     } else {
 	/* Windows 95/98. */
 	if ((lineStyle == PS_SOLID) && (lineWidth > 1)) {
@@ -837,7 +837,7 @@ Blt_GCToPen(HDC dc, GC gc)
 	    /* Otherwise sacrifice thick lines for dashes. */
 	    pen = ExtCreatePen(PS_COSMETIC | lineStyle, 1, &lBrush, 0, NULL);
 	}
-    } 
+    }
     assert(pen != NULL);
     return pen;
 }
@@ -1122,7 +1122,7 @@ Blt_EmulateXDrawArcs(
     HDC dc;
     TkWinDCState state;
     register XArc *arcPtr, *endPtr;
-    
+
     display->request++;
     if (drawable == None) {
 	return;
@@ -1287,14 +1287,14 @@ DrawLine(
     brush = CreateSolidBrush(gc->foreground);
     oldBrush = SelectBrush(dc, brush);
     SetROP2(dc, tkpWinRopModes[gc->function]);
-    
+
     start = extra = 0;
-    /*  
+    /*
      * Depending if the line is wide (> 1 pixel), arbitrarily break
      * the line in sections of 100 points.  This bit of weirdness has
      * to do with wide geometric pens.  The longer the polyline, the
-     * slower it draws.  The trade off is that we lose dash and 
-     * cap uniformity for unbearably slow polyline draws.  
+     * slower it draws.  The trade off is that we lose dash and
+     * cap uniformity for unbearably slow polyline draws.
      */
     if (gc->line_width > 1) {
 	size = 100;
@@ -1366,7 +1366,7 @@ Blt_EmulateXDrawLines(
 	    }
 	} else {
 	    POINT *lastPtr;
-	    
+
 	    srcPtr = pointArr;
 	    destPtr = points;
 	    destPtr->x = (int)srcPtr->x;
@@ -1435,7 +1435,7 @@ Blt_EmulateXDrawSegments(
 	endPtr = segArr + nSegments;
 	for (segPtr = segArr; segPtr < endPtr; segPtr++) {
 	    info.count = 0; /* Reset dash counter after every segment. */
-	    LineDDA(segPtr->x1, segPtr->y1, segPtr->x2, segPtr->y2, DrawDot, 
+	    LineDDA(segPtr->x1, segPtr->y1, segPtr->x2, segPtr->y2, DrawDot,
 		(LPARAM)&info);
 	}
     } else {
@@ -1647,7 +1647,7 @@ Blt_EmulateXDrawString(
     if (drawable == None) {
 	return;
     }
-    Tk_DrawChars(display, drawable, gc, (Tk_Font)gc->font, string, length, 
+    Tk_DrawChars(display, drawable, gc, (Tk_Font)gc->font, string, length,
 	x, y);
 }
 
@@ -1689,7 +1689,7 @@ TileArea(destDC, srcDC, tileOriginX, tileOriginY, tileWidth, tileHeight,
 	}
     }
 #ifdef notdef
-    PurifyPrintf("tile is (%d,%d,%d,%d)\n", tileOriginX, tileOriginY, 
+    PurifyPrintf("tile is (%d,%d,%d,%d)\n", tileOriginX, tileOriginY,
 		 tileWidth, tileHeight);
     PurifyPrintf("region is (%d,%d,%d,%d)\n", x, y, width, height);
     PurifyPrintf("starting at %d,%d\n", xOrigin, yOrigin);
@@ -1706,7 +1706,7 @@ TileArea(destDC, srcDC, tileOriginX, tileOriginY, tileWidth, tileHeight,
 	    srcY = (top - y);
 	    destHeight = tileHeight - srcY;
 	    destY = top;
-	} 
+	}
 	if ((destY + destHeight) > bottom) {
 	    destHeight = (bottom - destY);
 	}
@@ -1718,7 +1718,7 @@ TileArea(destDC, srcDC, tileOriginX, tileOriginY, tileWidth, tileHeight,
 		srcX = (left - x);
 		destWidth = tileWidth - srcX;
 		destX = left;
-	    } 
+	    }
 	    if ((destX + destWidth) > right) {
 		destWidth = (right - destX);
 	    }
@@ -1726,7 +1726,7 @@ TileArea(destDC, srcDC, tileOriginX, tileOriginY, tileWidth, tileHeight,
 	    PurifyPrintf("drawing pattern (%d,%d,%d,%d) at %d,%d\n",
 		 srcX , srcY, destWidth, destHeight, destX, destY);
 #endif
-	    BitBlt(destDC, destX, destY, destWidth, destHeight, 
+	    BitBlt(destDC, destX, destY, destWidth, destHeight,
 		srcDC, srcX, srcY, SRCCOPY);
 	}
     }
@@ -1766,7 +1766,7 @@ Blt_EmulateXFillRectangles(
     TkWinDCState state;
     TkWinDrawable *twdPtr;
     register XRectangle *rectPtr, *endPtr;
-    
+
     if (drawable == None) {
 	return;
     }
@@ -1789,13 +1789,13 @@ Blt_EmulateXFillRectangles(
 	oldBitmap = SelectBitmap(memDC, twdPtr->bitmap.handle);
 	endPtr = rectArr + nRectangles;
         for (rectPtr = rectArr; rectPtr < endPtr; rectPtr++) {
-	    TileArea(hDC, memDC, gc->ts_x_origin, gc->ts_y_origin, bm.bmWidth, 
-		bm.bmHeight, (int)rectPtr->x, (int)rectPtr->y, 
+	    TileArea(hDC, memDC, gc->ts_x_origin, gc->ts_y_origin, bm.bmWidth,
+		bm.bmHeight, (int)rectPtr->x, (int)rectPtr->y,
 		(int)rectPtr->width, (int)rectPtr->height);
         }
 	SelectBitmap(memDC, oldBitmap);
 	DeleteDC(memDC);
-        break; 
+        break;
 
     case FillOpaqueStippled:
     case FillStippled:
@@ -1820,7 +1820,7 @@ Blt_EmulateXFillRectangles(
 	hBgBrush = CreateSolidBrush(gc->background);
 	endPtr = rectArr + nRectangles;
         for (rectPtr = rectArr; rectPtr < endPtr; rectPtr++) {
-	    hBitmap = CreateCompatibleBitmap(hDC, rectPtr->width, 
+	    hBitmap = CreateCompatibleBitmap(hDC, rectPtr->width,
 		rectPtr->height);
 	    oldBitmap = SelectObject(memDC, hBitmap);
 	    rect.left = rect.top = 0;
@@ -1831,7 +1831,7 @@ Blt_EmulateXFillRectangles(
 		memDC, 0, 0, COPYBG);
 	    if (gc->fill_style == FillOpaqueStippled) {
 		FillRect(memDC, &rect, hBgBrush);
-		BitBlt(hDC, rectPtr->x, rectPtr->y, rectPtr->width, 
+		BitBlt(hDC, rectPtr->x, rectPtr->y, rectPtr->width,
 			rectPtr->height, memDC, 0, 0, COPYFG);
 	    }
 	    SelectObject(memDC, oldBitmap);
@@ -1850,7 +1850,7 @@ Blt_EmulateXFillRectangles(
         hFgBrush = CreateSolidBrush(gc->foreground);
 	endPtr = rectArr + nRectangles;
         for (rectPtr = rectArr; rectPtr < endPtr; rectPtr++) {
-	    hBitmap = CreateCompatibleBitmap(hDC, rectPtr->width, 
+	    hBitmap = CreateCompatibleBitmap(hDC, rectPtr->width,
 		rectPtr->height);
 	    oldBitmap = SelectObject(memDC, hBitmap);
 	    rect.left = rect.top = 0;
@@ -1900,7 +1900,7 @@ Blt_EmulateXFillRectangle(
 	    HDC memDC;
 	    BITMAP bm;
 
-	    if (gc->tile == None) { 
+	    if (gc->tile == None) {
 		goto fillSolid;
 	    }
 #ifdef notdef
@@ -1914,13 +1914,13 @@ Blt_EmulateXFillRectangle(
 
 	    memDC = CreateCompatibleDC(hDC);
 	    oldBitmap = SelectBitmap(memDC, twdPtr->bitmap.handle);
-	    TileArea(hDC, memDC, gc->ts_x_origin, gc->ts_y_origin, bm.bmWidth, 
+	    TileArea(hDC, memDC, gc->ts_x_origin, gc->ts_y_origin, bm.bmWidth,
 		     bm.bmHeight, x, y, width, height);
 	    SelectBitmap(memDC, oldBitmap);
 	    DeleteDC(memDC);
 	}
-	break; 
-	    
+	break;
+
     case FillOpaqueStippled:
     case FillStippled:
 	{
@@ -1941,7 +1941,7 @@ Blt_EmulateXFillRectangle(
 	    SetBrushOrgEx(hDC, gc->ts_x_origin, gc->ts_y_origin, NULL);
 	    oldBrush = SelectBrush(hDC, hBrush);
 	    memDC = CreateCompatibleDC(hDC);
-	    
+
 	    hBrushFg = CreateSolidBrush(gc->foreground);
 	    hBrushBg = CreateSolidBrush(gc->background);
 	    hBitmap = CreateCompatibleBitmap(hDC, width, height);
@@ -1995,7 +1995,7 @@ DrawChars(HDC dc, int x, int y, char *string, int length)
 {
     BOOL result;
 
-#if (TCL_VERSION_NUMBER >= _VERSION(8,1,0)) 
+#if (TCL_VERSION_NUMBER >= _VERSION(8,1,0))
     if (systemEncoding == NULL) {
 	result = TextOutA(dc, x, y, string, length);
     } else {
@@ -2009,7 +2009,7 @@ DrawChars(HDC dc, int x, int y, char *string, int length)
 	result = TextOutW(dc, x, y, wstring, length);
 	Tcl_DStringFree(&dString);
     }
-#else 
+#else
     result = TextOutA(dc, x, y, string, length);
 #endif /* TCL_VERSION_NUMBER >= 8.1.0 */
     return result;
@@ -2033,18 +2033,18 @@ Blt_DrawRotatedText(
     double sinTheta, cosTheta;
     Point2D p, q, center;
     register TextFragment *fragPtr, *endPtr;
-#if (TCL_VERSION_NUMBER >=  _VERSION(8,1,0)) 
+#if (TCL_VERSION_NUMBER >=  _VERSION(8,1,0))
     static int initialized = 0;
 
     if (!initialized) {
 	if (Blt_GetPlatformId() == VER_PLATFORM_WIN32_NT) {
 	    /*
-	     * If running NT, then we will be calling some Unicode functions 
-	     * explictly.  So, even if the Tcl system encoding isn't Unicode, 
-	     * make sure we convert to/from the Unicode char set. 
+	     * If running NT, then we will be calling some Unicode functions
+	     * explictly.  So, even if the Tcl system encoding isn't Unicode,
+	     * make sure we convert to/from the Unicode char set.
 	     */
 	    systemEncoding = Tcl_GetEncoding(NULL, "unicode");
-	} 
+	}
 	initialized = 1;
     }
 #endif
@@ -2057,7 +2057,7 @@ Blt_DrawRotatedText(
     SetROP2(hDC, tsPtr->gc->function);
     oldFont = SelectFont(hDC, hFont);
 
-    Blt_GetBoundingBox(textPtr->width, textPtr->height, theta, &rotWidth, 
+    Blt_GetBoundingBox(textPtr->width, textPtr->height, theta, &rotWidth,
 		       &rotHeight, (Point2D *)NULL);
     bbWidth = ROUND(rotWidth);
     bbHeight = ROUND(rotHeight);
@@ -2083,24 +2083,24 @@ Blt_DrawRotatedText(
     if (tsPtr->state & (STATE_DISABLED | STATE_EMPHASIS)) {
 	TkBorder *borderPtr = (TkBorder *) tsPtr->border;
 	XColor *color1, *color2;
-	
+
 	color1 = borderPtr->lightColor, color2 = borderPtr->darkColor;
 	if (tsPtr->state & STATE_EMPHASIS) {
 	    XColor *hold;
-	    
+
 	    hold = color1, color1 = color2, color2 = hold;
 	}
 	if (color1 != NULL) {
 	    SetTextColor(hDC, color1->pixel);
 	    for (fragPtr = textPtr->fragArr; fragPtr < endPtr; fragPtr++) {
-		DrawChars(hDC, fragPtr->sx, fragPtr->sy, fragPtr->text, 
-			fragPtr->count); 
+		DrawChars(hDC, fragPtr->sx, fragPtr->sy, fragPtr->text,
+			fragPtr->count);
 	    }
 	}
 	if (color2 != NULL) {
 	    SetTextColor(hDC, color2->pixel);
 	    for (fragPtr = textPtr->fragArr; fragPtr < endPtr; fragPtr++) {
-		DrawChars(hDC, fragPtr->sx + 1, fragPtr->sy + 1, fragPtr->text, 
+		DrawChars(hDC, fragPtr->sx + 1, fragPtr->sy + 1, fragPtr->text,
 			fragPtr->count);
 	    }
 	}
@@ -2110,8 +2110,8 @@ Blt_DrawRotatedText(
     if ((tsPtr->shadow.offset > 0) && (tsPtr->shadow.color != NULL)) {
 	SetTextColor(hDC, tsPtr->shadow.color->pixel);
 	for (fragPtr = textPtr->fragArr; fragPtr < endPtr; fragPtr++) {
-	    DrawChars(hDC, fragPtr->sx + tsPtr->shadow.offset, 
-		    fragPtr->sy + tsPtr->shadow.offset, fragPtr->text, 
+	    DrawChars(hDC, fragPtr->sx + tsPtr->shadow.offset,
+		    fragPtr->sy + tsPtr->shadow.offset, fragPtr->text,
 		    fragPtr->count);
 	}
     }
@@ -2119,16 +2119,16 @@ Blt_DrawRotatedText(
 	SetTextColor(hDC, tsPtr->activeColor->pixel);
     } else {
 	SetTextColor(hDC, tsPtr->color->pixel);
-    }	    
+    }
 
     for (fragPtr = textPtr->fragArr; fragPtr < endPtr; fragPtr++) {
-	DrawChars(hDC, fragPtr->sx, fragPtr->sy, fragPtr->text, 
+	DrawChars(hDC, fragPtr->sx, fragPtr->sy, fragPtr->text,
 		    fragPtr->count);
     }
 
     if (isActive) {
 	SetTextColor(hDC, tsPtr->color->pixel);
-    }	    
+    }
  done:
     SelectFont(hDC, oldFont);
     DeleteFont(hFont);
@@ -2138,9 +2138,9 @@ Blt_DrawRotatedText(
 
 static void
 DrawPixel(
-    HDC hDC, 
-    int x, 
-    int y, 
+    HDC hDC,
+    int x,
+    int y,
     COLORREF color)
 {
     HDC memDC;
@@ -2148,7 +2148,7 @@ DrawPixel(
     HBITMAP oldBitmap, hBitmap;
     RECT rect;
     int size;
- 
+
     size = 1;
     memDC = CreateCompatibleDC(hDC);
     hBrushFg = CreateSolidBrush(color);
@@ -2205,7 +2205,7 @@ PixelateBitmap(
     HDC hDC;
     TkWinDCState state;
 
-    srcBits = Blt_GetBitmapData(display, srcBitmap, width, height, 
+    srcBits = Blt_GetBitmapData(display, srcBitmap, width, height,
 	&bytesPerRow);
     if (srcBits == NULL) {
 	return;
@@ -2225,7 +2225,7 @@ PixelateBitmap(
 	        pixel = (*maskPtr & (0x80 >> bitPos));
 	        if (pixel) {
 		    pixel = (*srcPtr & (0x80 >> bitPos));
-		    DrawPixel(hDC, dx, dy, 
+		    DrawPixel(hDC, dx, dy,
 		        (pixel) ? gc->foreground : gc->background);
 	        }
 	        if (bitPos == 7) {
@@ -2241,7 +2241,7 @@ PixelateBitmap(
 	    for (dx = destX, x = 0; x < width; x++, dx++) {
 	        bitPos = x % 8;
 		pixel = (*srcPtr & (0x80 >> bitPos));
-		DrawPixel(hDC, dx, dy, 
+		DrawPixel(hDC, dx, dy,
 		        (pixel) ? gc->foreground : gc->background);
 	        if (bitPos == 7) {
 		    srcPtr++;
@@ -2259,18 +2259,18 @@ PixelateBitmap(
  * Blt_EmulateXCopyPlane --
  *
  *	Simplified version of XCopyPlane.  Right now it ignores
- *		function, 
- *		clip_x_origin, 
+ *		function,
+ *		clip_x_origin,
  *		clip_y_origin
  *
  *	The plane argument must always be 1.
  *
- *	This routine differs from the Tk version in how it handles 
+ *	This routine differs from the Tk version in how it handles
  *	transparency.  It uses a different method of drawing transparent
  *	bitmaps that doesn't copy the background or use brushes.  The
  *	second change is to call a special routine when the destDC is
  *	a printer.   Stippling is done by a very slow brute-force
- *	method of drawing 1x1 rectangles for each pixel (bleech).  
+ *	method of drawing 1x1 rectangles for each pixel (bleech).
  *
  * Results:
  *	None.
@@ -2345,7 +2345,7 @@ Blt_EmulateXCopyPlane(
 
 #if WINDEBUG
 	PurifyPrintf("mask %s src\n", (mask == src) ? "==" : "!=");
-	PurifyPrintf("GetDeviceCaps=%x\n", 
+	PurifyPrintf("GetDeviceCaps=%x\n",
 		GetDeviceCaps(destDC, TECHNOLOGY) & DT_RASDISPLAY);
 #endif
 	{
@@ -2360,22 +2360,22 @@ Blt_EmulateXCopyPlane(
 	    SetBkMode(destDC, OPAQUE);
 	    SetTextColor(destDC, gc->background);
 	    SetBkColor(destDC, gc->foreground);
-	    BitBlt(destDC, destX, destY, width, height, srcDC, srcX, srcY, 
+	    BitBlt(destDC, destX, destY, width, height, srcDC, srcX, srcY,
 		   SRCINVERT);
-	    /* 
-	     * Make sure we treat the mask as a monochrome bitmap. 
-	     * We can get alpha-blending with non-black/white fg/bg 
+	    /*
+	     * Make sure we treat the mask as a monochrome bitmap.
+	     * We can get alpha-blending with non-black/white fg/bg
 	     * color selections.
 	     */
 	    SetTextColor(destDC, RGB(255,255,255));
 	    SetBkColor(destDC, RGB(0,0,0));
 
-	    /* FIXME: Handle gc->clip_?_origin's */ 
+	    /* FIXME: Handle gc->clip_?_origin's */
 	    BitBlt(destDC, destX, destY, width, height, maskDC, 0, 0, SRCAND);
 
 	    SetTextColor(destDC, gc->background);
 	    SetBkColor(destDC, gc->foreground);
-	    BitBlt(destDC, destX, destY, width, height, srcDC, srcX, srcY, 
+	    BitBlt(destDC, destX, destY, width, height, srcDC, srcX, srcY,
 		   SRCINVERT);
 	    if (mask != src) {
 		TkWinReleaseDrawableDC(mask, maskDC, &maskState);
@@ -2408,7 +2408,7 @@ Blt_EmulateXCopyPlane(
  *	Data is moved from a window or bitmap to a second window,
  *	bitmap, or printer.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 void
 Blt_EmulateXCopyArea(
@@ -2420,7 +2420,7 @@ Blt_EmulateXCopyArea(
     int srcY,			/* Source Y-coordinate. */
     unsigned int width,		/* Width of area. */
     unsigned int height,	/* Height of area. */
-    int destX,			/* Destination X-coordinate (in screen 
+    int destX,			/* Destination X-coordinate (in screen
 				 * coordinates). */
     int destY)			/* Destination Y-coordinate (in screen
 				 * coordinates). */
@@ -2441,7 +2441,7 @@ Blt_EmulateXCopyArea(
 	OffsetClipRgn(destDC, gc->clip_x_origin, gc->clip_y_origin);
     }
 
-    BitBlt(destDC, destX, destY, width, height, srcDC, srcX, srcY, 
+    BitBlt(destDC, destX, destY, width, height, srcDC, srcX, srcY,
 		bltModes[gc->function]);
     SelectClipRgn(destDC, NULL);
 
@@ -2471,7 +2471,7 @@ StippleRegion(
     int left, top, right, bottom;
     int srcX, srcY;
     int startX, startY;		/* Starting upper left corner of region. */
-    
+
     twdPtr = (TkWinDrawable *)gc->stipple;
     GetObject(twdPtr->bitmap.handle, sizeof(BITMAP), &bm);
 
@@ -2500,7 +2500,7 @@ StippleRegion(
 	}
     }
 #ifdef notdef
-    PurifyPrintf("tile is (%d,%d,%d,%d)\n", gc->ts_x_origin, gc->ts_y_origin, 
+    PurifyPrintf("tile is (%d,%d,%d,%d)\n", gc->ts_x_origin, gc->ts_y_origin,
 		 bm.bmWidth, bm.bmHeight);
     PurifyPrintf("region is (%d,%d,%d,%d)\n", x, y, width, height);
     PurifyPrintf("starting at %d,%d\n", startX, startY);
@@ -2516,7 +2516,7 @@ StippleRegion(
     if (gc->fill_style == FillStippled) { /* With transparency. */
 	if (gc->clip_mask != None) {
 	    TkpClipMask *clipPtr;
-	    
+
 	    mask = gc->stipple;
 	    clipPtr = (TkpClipMask *)gc->clip_mask;
 	    if  (clipPtr->type == TKP_CLIP_PIXMAP) {
@@ -2536,7 +2536,7 @@ StippleRegion(
 	    srcY = (top - y);
 	    destHeight = bm.bmHeight - srcY;
 	    destY = top;
-	} 
+	}
 	if ((destY + destHeight) > bottom) {
 	    destHeight = (bottom - destY);
 	}
@@ -2548,7 +2548,7 @@ StippleRegion(
 		srcX = (left - x);
 		destWidth = bm.bmWidth - srcX;
 		destX = left;
-	    } 
+	    }
 	    if ((destX + destWidth) > right) {
 		destWidth = (right - destX);
 	    }
@@ -2560,20 +2560,20 @@ StippleRegion(
 		SetBkMode(hDC, OPAQUE);
 		SetTextColor(hDC, gc->background);
 		SetBkColor(hDC, gc->foreground);
-		BitBlt(hDC, destX, destY, destWidth, destHeight, memDC, 
+		BitBlt(hDC, destX, destY, destWidth, destHeight, memDC,
 		       srcX, srcY, SRCINVERT);
 		SetTextColor(hDC, RGB(255,255,255));
 		SetBkColor(hDC, RGB(0,0,0));
-		BitBlt(hDC, destX, destY, destWidth, destHeight, maskDC, 
+		BitBlt(hDC, destX, destY, destWidth, destHeight, maskDC,
 		       srcX, srcY, SRCAND);
 		SetTextColor(hDC, gc->background);
 		SetBkColor(hDC, gc->foreground);
-		BitBlt(hDC, destX, destY, destWidth, destHeight, memDC, 
+		BitBlt(hDC, destX, destY, destWidth, destHeight, memDC,
 		       srcX, srcY, SRCINVERT);
 	    } else if (gc->fill_style == FillOpaqueStippled) { /* Opaque. */
 		SetBkColor(hDC, gc->foreground);
 		SetTextColor(hDC, gc->background);
-	        BitBlt(hDC, destX, destY, destWidth, destHeight, memDC, 
+	        BitBlt(hDC, destX, destY, destWidth, destHeight, memDC,
 			srcX, srcY, SRCCOPY);
 	    }
 	}
@@ -2591,23 +2591,23 @@ StippleRegion(
  * Blt_EmulateXFillPolygon --
  *
  *	This differs from Tk's XFillPolygon in that it works around
- *	deficencies in Windows 95/98: 
+ *	deficencies in Windows 95/98:
  *		1. Stippling bitmap is limited to 8x8.
  *		2. No tiling (with or without mask).
  * Results:
  *	None.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 void
 Blt_EmulateXFillPolygon(
-    Display *display, 
-    Drawable drawable, 
+    Display *display,
+    Drawable drawable,
     GC gc,
-    XPoint *pointPtr, 
-    int nPoints, 
-    int shape, 
-    int mode) 
+    XPoint *pointPtr,
+    int nPoints,
+    int shape,
+    int mode)
 {
     HDC hDC;
     HRGN hRgn;
@@ -2623,7 +2623,7 @@ Blt_EmulateXFillPolygon(
     /* Determine the bounding box of the polygon. */
     bbox.left = bbox.right = pointPtr->x;
     bbox.top = bbox.bottom = pointPtr->y;
-    
+
     hDC = TkWinGetDrawableDC(display, drawable, &state);
 
     /* Allocate array of POINTS to create the polygon's path. */
@@ -2632,13 +2632,13 @@ Blt_EmulateXFillPolygon(
     for (p = winPts; p < endPtr; p++) {
 	if (pointPtr->x < bbox.left) {
 	    bbox.left = pointPtr->x;
-	} 
+	}
 	if (pointPtr->x > bbox.right) {
 	    bbox.right = pointPtr->x;
 	}
 	if (pointPtr->y < bbox.top) {
 	    bbox.top = pointPtr->y;
-	} 
+	}
 	if (pointPtr->y > bbox.bottom) {
 	    bbox.bottom = pointPtr->y;
 	}
@@ -2650,7 +2650,7 @@ Blt_EmulateXFillPolygon(
     SetROP2(hDC, tkpWinRopModes[gc->function]);
     fillMode = (gc->fill_rule == EvenOddRule) ? ALTERNATE : WINDING;
 
-    if ((gc->fill_style == FillStippled) || 
+    if ((gc->fill_style == FillStippled) ||
 	(gc->fill_style == FillOpaqueStippled)) {
 	int width, height;
 
@@ -2664,22 +2664,22 @@ Blt_EmulateXFillPolygon(
 	hRgn = CreatePolygonRgn(winPts, nPoints, fillMode);
 	SelectClipRgn(hDC, hRgn);
 	OffsetClipRgn(hDC, bbox.left, bbox.top);
-	
+
 	/* Tile the bounding box. */
 	width = bbox.right - bbox.left + 1;
 	height = bbox.bottom - bbox.top + 1;
 	StippleRegion(display, hDC, gc, bbox.left, bbox.top, width, height);
-	
+
 	SelectClipRgn(hDC, NULL);
 	DeleteRgn(hRgn);
     } else {
 	HPEN oldPen;
 	HBRUSH oldBrush;
 
-	/* 
+	/*
 	 * FIXME: Right now, we're assuming that it's solid or
 	 * stippled and ignoring tiling. I'll merge the bits from
-	 * Blt_TilePolygon later. 
+	 * Blt_TilePolygon later.
 	 */
 	oldPen = SelectPen(hDC, GetStockObject(NULL_PEN));
 	oldBrush = SelectBrush(hDC, CreateSolidBrush(gc->foreground));

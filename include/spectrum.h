@@ -1,7 +1,7 @@
 /*                      S P E C T R U M . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -67,9 +67,9 @@
  *	10 to 390		Ultraviolet
  *	390 to 770		Visible
  *	770 to 1500		Near IR
- *	1500 to 6,000		Middle IR	(includes 3-5 um band)
- *	6,000 to 40,000		Far IR		(includes 8-12 um band)
- *	40,000 to 1,000,000	Extreme IR
+ *	1500 to 6, 000		Middle IR	(includes 3-5 um band)
+ *	6, 000 to 40, 000		Far IR		(includes 8-12 um band)
+ *	40, 000 to 1, 000, 000	Extreme IR
  *	> 10**6 nm		Microwaves	(300 GHz to 300 MHz)
  *	> 10**9 nm		Radio waves	(300 MHz and down)
  *
@@ -85,12 +85,6 @@
  *  determine if two wavelengths from different curves were the "same",
  *  without introducing a wavelength "tolerance" notion.  Ugh.
  *
- *  @author
- *	Michael John Muuss
- *
- *  @par Source
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"
@@ -124,8 +118,8 @@ RT_EXPORT BU_EXTERN(void			rt_spect_reflectance_rgb,
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

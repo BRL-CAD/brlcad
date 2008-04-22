@@ -35,7 +35,7 @@ proc CopyBindings { oper orig new args } {
 
 proc CloneGraph { orig new } {
     graph $new
-    CopyOptions "configure" $orig $new 
+    CopyOptions "configure" $orig $new
     # Axis component
     foreach axis [$orig axis names] {
 	if { [$new axis name $axis] == "" } {
@@ -83,6 +83,6 @@ proc CloneGraph { orig new } {
     }
     return $new
 }
-    
+
 toplevel .top
 pack [CloneGraph $graph .top.graph]

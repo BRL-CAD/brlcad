@@ -3,16 +3,16 @@
 all: all-am
 
 all-am:
-	cd unix && $(MAKE) $(AM_MAKEFLAGS) all
+	if test -d unix ; then cd unix && $(MAKE) $(AM_MAKEFLAGS) all ; fi
 
 clean-am:
-	cd unix && $(MAKE) $(AM_MAKEFLAGS) clean
+	if test -d unix ; then cd unix && $(MAKE) $(AM_MAKEFLAGS) clean ; fi
 
 distclean-am:
-	cd unix && $(MAKE) $(AM_MAKEFLAGS) distclean
+	if test -d unix ; then cd unix && $(MAKE) $(AM_MAKEFLAGS) distclean ; fi
 
 install-am: all-am
-	cd unix && $(MAKE) $(AM_MAKEFLAGS) install
+	if test -d unix ; then cd unix && $(MAKE) $(AM_MAKEFLAGS) install ; fi
 
 INSTALLED_BINARIES = \
 	wish8.5
@@ -164,6 +164,7 @@ EXTRA_DIST = \
 	unix/tcl.m4 \
 	unix/tk.spec \
 	unix/tkAppInit.c \
+	unix/tkConfig.h.in \
 	unix/tkConfig.sh \
 	unix/tkConfig.sh.in \
 	unix/tkUnix.c \

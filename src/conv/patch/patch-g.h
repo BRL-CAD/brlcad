@@ -1,7 +1,7 @@
 /*                       P A T C H - G . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -23,57 +23,58 @@
 
 struct input {
 
-	fastf_t x, y, z;
-	fastf_t	rsurf_thick;
-	int	surf_type;
-	int	surf_thick;
-	int	spacecode;
-	int	cc;
-	int  	ept[10];
-	int	mirror;
-	int	vc;
+    fastf_t x, y, z;
+    fastf_t	rsurf_thick;
+    int	surf_type;
+    int	surf_thick;
+    int	spacecode;
+    int	cc;
+    int  	ept[10];
+    int	mirror;
+    int	vc;
 
-	int	prevsurf_type;
-	char	surf_mode;
+    int	prevsurf_type;
+    char	surf_mode;
 
 } in[10000];
 
 struct patch_verts {
-	struct vertex *vp;
-	point_t coord;
+    struct vertex *vp;
+    point_t coord;
 };
 
 struct patch_faces
 {
-	struct faceuse *fu;
-	fastf_t thick;
+    struct faceuse *fu;
+    fastf_t thick;
 };
 
 struct patches{
 
-	fastf_t x,y,z;
-	int flag;
-	fastf_t radius;
-	int mirror;
-	fastf_t thick;
+    fastf_t x, y, z;
+    int flag;
+    fastf_t radius;
+    int mirror;
+    fastf_t thick;
 
 };
 
+#define NAMESIZE 16
 struct names{
 
-	char	ug[16];
-	char	lg[16];
-	int	eqlos,
-		matcode;
+    char	ug[NAMESIZE+1];
+    char	lg[NAMESIZE+1];
+    int	eqlos,
+	matcode;
 
 } nm[9999];
 
 struct subtract_list{
 
-	int			outsolid,
-				insolid,
-				inmirror;
-	struct subtract_list	*next;
+    int			outsolid,
+	insolid,
+	inmirror;
+    struct subtract_list	*next;
 };
 
 point_t		pt[4];
@@ -81,16 +82,15 @@ fastf_t		vertice[5][3];
 fastf_t		first[5][3];
 fastf_t		normal[5][3];
 point_t		ce[4];
-point_t		centroid,Centroid;	/* object, description centroids */
+point_t		centroid, Centroid;	/* object, description centroids */
 unsigned char	rgb[3];
 int debug = 0;
 float mmtin = 25.4;
 double conv_mm2in;
 fastf_t third = 0.333333333;
 
-/* char  name[17];	*/
-char  cname[17];
-char  tname[17];
+char  cname[NAMESIZE+1];
+char  tname[NAMESIZE+1];
 char  surf[2];
 char thick[3];
 char  space[2];
@@ -117,14 +117,14 @@ int nthicks;				/* number of unique plate thicknesses
 					   for a single plate mode solid */
 
 struct patches list[15000];
-fastf_t x[1500],y[1500],z[1500];
+fastf_t x[1500], y[1500], z[1500];
 int mirror[1500];
 fastf_t radius[1500];
 fastf_t thk[1500];
 
 struct wmember head;			/* solids for current region */
-struct wmember heada;			/* for component,regions on one side */
-struct wmember headb;			/* for component,mirror regions */
+struct wmember heada;			/* for component, regions on one side */
+struct wmember headb;			/* for component, mirror regions */
 struct wmember headc;			/* second level grouping ? */
 struct wmember headd;			/* current thousand series group */
 struct wmember heade;			/* group containing everything */
@@ -134,8 +134,8 @@ struct wmember headf;			/* check solids group */
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

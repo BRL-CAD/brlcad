@@ -179,11 +179,15 @@ proc ::tk::RecolorTree {w colors} {
 	    if {$defaultcolor eq "" || \
 		    ([info exists prototype] && \
 		    [$prototype cget $option] ne "$defaultcolor")} {
-		set defaultcolor [winfo rgb . [lindex $value 3]]
-	    } else {
+		set defaultcolor [lindex $value 3]
+	    }
+	    if {$defaultcolor ne ""} {
 		set defaultcolor [winfo rgb . $defaultcolor]
 	    }
-	    set chosencolor [winfo rgb . [lindex $value 4]]
+	    set chosencolor [lindex $value 4]
+	    if {$chosencolor ne ""} {
+		set chosencolor [winfo rgb . $chosencolor]
+	    }
 	    if {[string match $defaultcolor $chosencolor]} {
 		# Change the option database so that future windows will get
 		# the same colors.

@@ -1,7 +1,7 @@
 /*                     A D R T _ C O M M O N . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2007 United States Government as represented by
+ * Copyright (c) 2002-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,19 +22,12 @@
  *  Comments -
  *      Common Library - Main Include
  *
- *  Author -
- *      Justin L. Shumaker
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- * $Id$
  */
 
 #ifndef _COMMON_H
 #define _COMMON_H
 
+#include "adrt.h"
 
 #include "tie.h"
 #include "texture_internal.h"
@@ -44,102 +37,100 @@
 #define	COMMON_BIT_DEPTH_128	1
 
 /* bit's used in common_mesh_t.flags */
-#define MESH_HIT	0x1
-#define MESH_SELECT	0x2
+#define MESH_HIT	ADRT_MESH_HIT
+#define MESH_SELECT	ADRT_MESH_SELECT
 
 /* Work */
 typedef struct common_work_s {
-  short orig_x;
-  short orig_y;
-  short size_x;
-  short size_y;
-  short format;
+    short orig_x;
+    short orig_y;
+    short size_x;
+    short size_y;
+    short format;
 } common_work_t;
 
 
 /* Properties */
 typedef struct common_prop_s {
-  TIE_3 color; /* base color of the material */
-  tfloat density; /* density of the material, x-ray/vulnerability stuff */
-  tfloat gloss; /* smoothness of the surface, ability to reflect */
-  tfloat emission; /* emission, power of light source */
-  tfloat ior; /* index of refraction */
+    TIE_3 color; /* base color of the material */
+    tfloat density; /* density of the material, x-ray/vulnerability stuff */
+    tfloat gloss; /* smoothness of the surface, ability to reflect */
+    tfloat emission; /* emission, power of light source */
+    tfloat ior; /* index of refraction */
 } common_prop_t;
-
 
 /* Triangle */
 struct common_mesh_s;
 typedef struct common_triangle_s {
-  struct common_mesh_s *mesh;
-  tfloat *normals;
+    struct common_mesh_s *mesh;
+    tfloat *normals;
 } common_triangle_t;
-
 
 /* Mesh */
 typedef struct common_mesh_s {
-  int flags;
-  char name[256];
-  TIE_3 min, max;
-  tfloat matrix[16];
-  tfloat matinv[16];
-  common_prop_t *prop;
-  struct texture_s *texture;
-  int tri_num;
-  common_triangle_t *tri_list;
+    int flags;
+    char name[ADRT_NAME_SIZE];
+    TIE_3 min, max;
+    tfloat matrix[16];
+    tfloat matinv[16];
+    common_prop_t *prop;
+    struct texture_s *texture;
+    int tri_num;
+    common_triangle_t *tri_list;
 } common_mesh_t;
 
 
 typedef struct common_anim_transform_s {
-  char mesh_name[256];
-  tfloat matrix[16];
+    char mesh_name[ADRT_NAME_SIZE];
+    tfloat matrix[16];
 } common_anim_transform_t;
 
 
 typedef struct common_anim_frame_s {
-  TIE_3 pos;
-  TIE_3 focus;
-  tfloat tilt;
-  tfloat fov;
-  tfloat dof;
-  int tnum;
-  common_anim_transform_t *tlist;
+    TIE_3 pos;
+    TIE_3 focus;
+    tfloat tilt;
+    tfloat fov;
+    tfloat dof;
+    int tnum;
+    common_anim_transform_t *tlist;
 } common_anim_frame_t;
 
 
 typedef struct common_anim_s {
-  int frame_num;
-  common_anim_frame_t *frame_list;
+    int frame_num;
+    common_anim_frame_t *frame_list;
 } common_anim_t;
 
 
 typedef struct common_env_s {
-  render_t render;
-  int rm; /* render method */
+    render_t render;
+    int rm; /* render method */
 
-  int img_vw;	/* virtual width */
-  int img_vh;	/* virtual height */
-  int img_w;	/* actual width */
-  int img_h;	/* actual height */
-  int img_hs;	/* hypersamples */
-  int tile_w;	/* tile size width */
-  int tile_h;	/* tile size height */
+    int img_vw;	/* virtual width */
+    int img_vh;	/* virtual height */
+    int img_w;	/* actual width */
+    int img_h;	/* actual height */
+    int img_hs;	/* hypersamples */
+    int tile_w;	/* tile size width */
+    int tile_h;	/* tile size height */
 
-  char geometry_file[256];
-  char kdtree_cache_file[256];
-  char properties_file[256];
-  char textures_file[256];
-  char mesh_map_file[256];
-  char frames_file[256];
+    char geometry_file[ADRT_NAME_SIZE];
+    char kdtree_cache_file[ADRT_NAME_SIZE];
+    char properties_file[ADRT_NAME_SIZE];
+    char textures_file[ADRT_NAME_SIZE];
+    char mesh_map_file[ADRT_NAME_SIZE];
+    char frames_file[ADRT_NAME_SIZE];
 } common_env_t;
 
 
 /* Database */
 typedef struct common_db_s {
-  int mesh_num;
-  common_mesh_t **mesh_list;
+    int mesh_num;
+    common_mesh_t **mesh_list;
 
-  common_env_t env;
-  common_anim_t anim;
+    common_env_t env;
+    common_anim_t anim;
 } common_db_t;
 
 
@@ -149,8 +140,8 @@ typedef struct common_db_s {
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

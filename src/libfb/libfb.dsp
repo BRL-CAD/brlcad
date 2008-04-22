@@ -120,7 +120,7 @@ SOURCE=.\fb_util.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\fbserv_obj_win32.c
+SOURCE=.\fbserv_obj.c
 # End Source File
 # Begin Source File
 

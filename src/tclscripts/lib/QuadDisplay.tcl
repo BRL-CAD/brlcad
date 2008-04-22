@@ -1,7 +1,7 @@
 #                 Q U A D D I S P L A Y . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2007 United States Government as represented by
+# Copyright (c) 1998-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -18,15 +18,6 @@
 # information.
 #
 ###
-#
-# Author -
-#	Bob Parker
-#
-# Source -
-#	The U. S. Army Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#
 #
 # Description -
 #	The QuadDisplay class is comprised of four Display objects. This class
@@ -59,6 +50,7 @@ option add *QuadDisplay.height 400 widgetDefault
 
     # methods for controlling the view object
     public method ae {args}
+    public method ae2dir {args}
     public method arot {args}
     public method base2local {}
     public method center {args}
@@ -130,9 +122,9 @@ option add *QuadDisplay.height 400 widgetDefault
     public method zclip {args}
 
     if {$tcl_platform(os) != "Windows NT"} {
-	public method fb_active {args}
-	public method fb_observe {args}
     }
+    public method fb_active {args}
+    public method fb_observe {args}
 
     public method toggle_centerDotEnable {args}
     public method toggle_centerDotEnableAll {}
@@ -446,6 +438,10 @@ option add *QuadDisplay.height 400 widgetDefault
 
 ::itcl::body QuadDisplay::ae {args} {
     eval $itk_component($itk_option(-pane)) ae $args
+}
+
+::itcl::body QuadDisplay::ae2dir {args} {
+    eval $itk_component($itk_option(-pane)) ae2dir $args
 }
 
 ::itcl::body QuadDisplay::arot {args} {
@@ -814,8 +810,8 @@ option add *QuadDisplay.height 400 widgetDefault
 	set z [lindex $map 2]
 
 	return [list [expr {$x * $mm2local}] \
-		     [expr {$y * $mm2local}] \
-		     [expr {$z * $mm2local}]]
+		    [expr {$y * $mm2local}] \
+		    [expr {$z * $mm2local}]]
     }
 }
 
@@ -971,13 +967,13 @@ option add *QuadDisplay.height 400 widgetDefault
 }
 
 if {$tcl_platform(os) != "Windows NT"} {
-    ::itcl::body QuadDisplay::fb_active {args} {
-	eval $itk_component($itk_option(-pane)) fb_active $args
-    }
+}
+::itcl::body QuadDisplay::fb_active {args} {
+    eval $itk_component($itk_option(-pane)) fb_active $args
+}
 
-    ::itcl::body QuadDisplay::fb_observe {args} {
-	eval $itk_component($itk_option(-pane)) fb_observe $args
-    }
+::itcl::body QuadDisplay::fb_observe {args} {
+    eval $itk_component($itk_option(-pane)) fb_observe $args
 }
 
 ::itcl::body QuadDisplay::mouse_nirt {x y} {

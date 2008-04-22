@@ -1,7 +1,7 @@
 #                        T R E E . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2007 United States Government as represented by
+# Copyright (c) 1998-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -18,21 +18,13 @@
 # information.
 #
 ###
-# Author -
-#	Bob Parker
-#
-# Source -
-#	The U. S. Army Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#
 #
 # Description -
 #       This enhances MGED's tree command by adding a
 #       few options.
 #
 # Usage:
-#       tree [-c] [-i n] [-o outfile] object(s)
+#       tree [-c] [-i n] [-d n] [-o outfile] object(s)
 #
 proc tree {args} {
     set argc [llength $args]
@@ -43,18 +35,19 @@ proc tree {args} {
     set indent 0
     set fid ""
     set cflag 0
+    set displayDepth 0
 
     # process options
     for {set i 0} {$i < $argc} {incr i} {
 	set arg [lindex $args $i]
 	switch -- $arg {
 	    -c
-		-
+	    -
 	    -comb {
 		set cflag 1
 	    }
 	    -i
-		-
+	    -
 	    -indent {
 		incr i
 		if {$i == $argc} {
@@ -71,8 +64,26 @@ proc tree {args} {
 		    return [_mged_tree]
 		}
 	    }
+	    -d 
+	    -
+	    -depth {
+		incr i
+		if {$i == $argc} {
+		    if {$fid != ""} {
+			close $fid
+		    }
+		    return [_mged_tree]
+		}
+		set displayDepth [lindex $args $i]
+		if {[string is integer $displayDepth] == 0} {
+		    if {$fid != ""} {
+			close $fid
+		    }
+		    return [_mged_tree]
+		}
+	    }
 	    -o
-		-
+	    -
 	    -outfile {
 		incr i
 		if {$i == $argc} {

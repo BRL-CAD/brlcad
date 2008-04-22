@@ -1,7 +1,7 @@
 /*                         C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2007 United States Government as represented by
+ * Copyright (c) 1997-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,16 +21,6 @@
 /** @{ */
 /** @file color.c
  *
- *  Routines to convert between various color models.
- *
- *  @author
- *	Paul Tanenbaum
- *
- *  @par Source
- *	The U. S. Army Research Laboratory			@n
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- *
  *		Convert between RGB and HSV color models
  *
  *	R, G, and B are in {0, 1, ..., 255},
@@ -45,24 +35,15 @@
  *	Reading, MA, 1990.
  */
 
-static const char libbu_color_RCSid[] = "@(#)$Header$ (BRL)";
-
 #include "common.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <ctype.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
-#if defined(HAVE_STDARG_H)
-#  include <stdarg.h>
-#endif
+#include <string.h>
+#include <stdarg.h>
 
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 
@@ -122,15 +103,15 @@ void bu_rgb_to_hsv (unsigned char *rgb, fastf_t *hsv)
     /*
      *	Compute hue
      */
-    if (*sat == 0.0)
+    if (NEAR_ZERO(*sat, SMALL_FASTF))
 	*hue = ACHROMATIC;
     else
     {
-	if (red == max)
+	if (NEAR_ZERO(red - max, SMALL_FASTF)) /* red == max */
 	    *hue = (grn - blu) / delta;
-	else if (grn == max)
+	else if (NEAR_ZERO(grn - max, SMALL_FASTF)) /* grn == max */
 	    *hue = 2.0 + (blu - red) / delta;
-	else if (blu == max)
+	else if (NEAR_ZERO(blu - max, SMALL_FASTF)) /* blu == max */
 	    *hue = 4.0 + (red - grn) / delta;
 
 	/*
@@ -158,41 +139,41 @@ int bu_hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
     sat = hsv[SAT];
     val = hsv[VAL];
 
-    if ((((hue < 0.0) || (hue > 360.0)) && (hue != ACHROMATIC))
-     || (sat < 0.0) || (sat > 1.0)
-     || (val < 0.0) || (val > 1.0)
-     || ((hue == ACHROMATIC) && (sat > 0.0)))
+    if ((((hue < 0.0) || (hue > 360.0)) && (!NEAR_ZERO(hue - ACHROMATIC, SMALL_FASTF))) /* hue != ACHROMATIC */
+	|| (sat < 0.0) || (sat > 1.0)
+	|| (val < 0.0) || (val > 1.0)
+	|| ((NEAR_ZERO(hue - ACHROMATIC, SMALL_FASTF)) && (sat > 0.0))) /* hue == ACHROMATIC */
     {
 	bu_log("bu_hsv_to_rgb: Illegal HSV (%g, %g, %g)\n",
-	    V3ARGS(hsv));
+	       V3ARGS(hsv));
 	return (0);
     }
-    if (sat == 0.0)	/*	so hue == ACHROMATIC (or is ignored)	*/
+
+    /* so hue == ACHROMATIC (or is ignored)	*/
+    if (NEAR_ZERO(sat, SMALL_FASTF)) {
 	VSETALL(float_rgb, val)
-    else
-    {
-	if (hue == 360.0)
-	    hue = 0.0;
-	hue /= 60.0;
-	hue_int = floor((double) hue);
-	hue_frac = hue - hue_int;
-	p = val * (1.0 - sat);
-	q = val * (1.0 - (sat * hue_frac));
-	t = val * (1.0 - (sat * (1.0 - hue_frac)));
-	switch (hue_int)
-	{
-	    case 0: VSET(float_rgb, val, t, p); break;
-	    case 1: VSET(float_rgb, q, val, p); break;
-	    case 2: VSET(float_rgb, p, val, t); break;
-	    case 3: VSET(float_rgb, p, q, val); break;
-	    case 4: VSET(float_rgb, t, p, val); break;
-	    case 5: VSET(float_rgb, val, p, q); break;
-	    default:
-		bu_log("%s:%d: This shouldn't happen\n",
-		    __FILE__, __LINE__);
-		bu_bomb("unexpected condition encountered in bu_hsv_to_rgb\n");
-	}
-    }
+	    } else {
+		if (NEAR_ZERO(hue - 360.0, SMALL_FASTF))
+		    hue = 0.0;
+		hue /= 60.0;
+		hue_int = floor((double) hue);
+		hue_frac = hue - hue_int;
+		p = val * (1.0 - sat);
+		q = val * (1.0 - (sat * hue_frac));
+		t = val * (1.0 - (sat * (1.0 - hue_frac)));
+		switch (hue_int) {
+		    case 0: VSET(float_rgb, val, t, p); break;
+		    case 1: VSET(float_rgb, q, val, p); break;
+		    case 2: VSET(float_rgb, p, val, t); break;
+		    case 3: VSET(float_rgb, p, q, val); break;
+		    case 4: VSET(float_rgb, t, p, val); break;
+		    case 5: VSET(float_rgb, val, p, q); break;
+		    default:
+			bu_log("%s:%d: This shouldn't happen\n",
+			       __FILE__, __LINE__);
+			bu_bomb("unexpected condition encountered in bu_hsv_to_rgb\n");
+		}
+	    }
 
     rgb[RED] = float_rgb[RED] * 255;
     rgb[GRN] = float_rgb[GRN] * 255;
@@ -238,8 +219,8 @@ int bu_str_to_rgb (char *str, unsigned char *rgb)
 	}
 	VSET(rgb, r, g, b);
 	if ((r < 0) || (r > 255)
-	 || (g < 0) || (g > 255)
-	 || (b < 0) || (b > 255))
+	    || (g < 0) || (g > 255)
+	    || (b < 0) || (b > 255))
 	    return 0;
     }
     else
@@ -253,8 +234,8 @@ int bu_str_to_rgb (char *str, unsigned char *rgb)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

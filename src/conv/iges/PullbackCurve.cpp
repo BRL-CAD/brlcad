@@ -21,7 +21,7 @@ typedef struct pbc_data {
   ON_2dPointArray samples;
 } PBCData;
 
-typedef struct _bspline {  
+typedef struct _bspline {
   int p; // degree
   int m; // num_knots-1
   int n; // num_samples-1 (aka number of control points)
@@ -37,7 +37,7 @@ isFlat(const ON_2dPoint& p1, const ON_2dPoint& m, const ON_2dPoint& p2, double f
   return line.DistanceTo(ON_3dPoint(m)) <= flatness;
 }
 
-bool 
+bool
 toUV(PBCData& data, ON_2dPoint& out_pt, double t) {
   double u = 0, v = 0;
   ON_3dPoint pointOnCurve = data.curve->PointAt(t);
@@ -53,16 +53,16 @@ randomPointFromRange(PBCData& data, ON_2dPoint& out, double lo, double hi)
 {
   assert(lo < hi);
   double random_pos = drand48() * (RANGE_HI - RANGE_LO) + RANGE_LO;
-  double newt = random_pos * (hi - lo) + lo; 
+  double newt = random_pos * (hi - lo) + lo;
   assert(toUV(data, out, newt));
   return newt;
 }
 
-bool 
-sample(PBCData& data, 
-       double t1, 
-       double t2, 
-       const ON_2dPoint& p1, 
+bool
+sample(PBCData& data,
+       double t1,
+       double t2,
+       const ON_2dPoint& p1,
        const ON_2dPoint& p2)
 {
   ON_2dPoint m;
@@ -80,19 +80,19 @@ generateKnots(BSpline& bspline) {
   int num_knots = bspline.m + 1;
   bspline.knots.reserve(num_knots);
   for (int i = 0; i <= bspline.p; i++) {
-    bspline.knots[i] = 0.0;    
+    bspline.knots[i] = 0.0;
   }
   for (int i = bspline.m-bspline.p; i <= bspline.m; i++) {
-    bspline.knots[i] = 1.0;    
+    bspline.knots[i] = 1.0;
   }
   for (int i = 1; i <= bspline.n-bspline.p; i++) {
     bspline.knots[bspline.p+i] = (double)i / (bspline.n-bspline.p+1.0);
   }
 }
 
-int 
+int
 getKnotInterval(BSpline& bspline, double u) {
-  int k = 0; 
+  int k = 0;
   while (u >= bspline.knots[k]) k++;
   k = (k == 0) ? k : k-1;
   return k;
@@ -166,7 +166,7 @@ printMatrix(Array2D<double>& m) {
       printf("% 5.5f ", m[i][j]);
     }
     printf("\n");
-  }  
+  }
 }
 
 void
@@ -182,14 +182,14 @@ generateControlPoints(BSpline& bspline, PBCData& data)
     bigD[i][0] = data.samples[i].x;
     bigD[i][1] = data.samples[i].y;
   }
-  
+
   printMatrix(bigD);
   printMatrix(bigN);
 
   JAMA::LU<double> lu(bigN);
   assert(lu.isNonsingular() > 0);
   Array2D<double> bigP = lu.solve(bigD); // big linear algebra black box here...
-  
+
   // extract the control points
   for (int i = 0; i < bspline.n+1; i++) {
     ON_2dPoint& p = bspline.controls.AppendNew();
@@ -209,7 +209,7 @@ newNURBSCurve(BSpline& spline) {
   for (int i = 0; i < spline.knots.size(); i++) {
     c->m_knot[i] = spline.knots[i];
   }
-  
+
   for (int i = 0; i < spline.controls.Count(); i++) {
     c->SetCV(i, ON_3dPoint(spline.controls[i]));
   }
@@ -217,7 +217,7 @@ newNURBSCurve(BSpline& spline) {
   return c;
 }
 
-ON_Curve* 
+ON_Curve*
 interpolateCurve(PBCData& data) {
   if (data.samples.Count() == 2) {
     // build a line
@@ -232,7 +232,7 @@ interpolateCurve(PBCData& data) {
     generateParameters(spline);
     generateControlPoints(spline, data);
     ON_NurbsCurve* nurbs = newNURBSCurve(spline);
-    
+
     // XXX - attempt to simplify here!
 
     return nurbs;
@@ -240,9 +240,9 @@ interpolateCurve(PBCData& data) {
 }
 
 ON_Curve*
-pullback_curve(const ON_Surface* surface, 
-	       const ON_Curve* curve, 
-	       double tolerance, 
+pullback_curve(const ON_Surface* surface,
+	       const ON_Curve* curve,
+	       double tolerance,
 	       double flatness) {
   PBCData data;
   data.tolerance = tolerance;

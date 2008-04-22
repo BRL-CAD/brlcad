@@ -15,15 +15,13 @@ loadTk \- Load Tk into a safe interpreter.
 .SH SYNOPSIS
 \fB::safe::loadTk \fIslave\fR ?\fB\-use\fR \fIwindowId\fR? ?\fB\-display\fR \fIdisplayName\fR? 
 .BE
-
+.SH DESCRIPTION
 Safe Tk is based on Safe Tcl, which provides a mechanism 
 that allows restricted and mediated
 access to auto-loading and packages for safe interpreters.
 Safe Tk adds the ability to configure the interpreter
 for safe Tk operations and load Tk into safe 
 interpreters.
-
-.SH DESCRIPTION
 .PP
 The \fB::safe::loadTk\fR command initializes the required data structures
 in the named safe interpreter and then loads Tk into it.
@@ -31,14 +29,17 @@ The interpreter must have been created with \fB::safe::interpCreate\fR
 or have been initialized with \fB::safe::interpInit\fR.
 The command returns the name of the safe interpreter.
 If \fB\-use\fR is specified, the window identified by the specified system
-dependent identifier \fIwindowId\fR is used to contain the ``.''
+dependent identifier \fIwindowId\fR is used to contain the
+.QW .
 window of the safe interpreter; it can be any valid id, eventually 
 referencing a window belonging to another application. As a convenience,
 if the window you plan to use is a Tk Window of the application you
 can use the window name (e.g. \fB.x.y\fR) instead of its window Id 
 (\fB[winfo id .x.y]\fR).
 When \fB\-use\fR is not specified,
-a new toplevel window is created for the ``.'' window of
+a new toplevel window is created for the
+.QW .
+window of
 the safe interpreter. On X11 if you want the embedded window
 to use another display than the default one, specify it with
 \fB\-display\fR.

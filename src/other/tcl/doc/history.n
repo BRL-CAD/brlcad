@@ -16,13 +16,13 @@ history \- Manipulate the history list
 .SH SYNOPSIS
 \fBhistory \fR?\fIoption\fR? ?\fIarg arg ...\fR?
 .BE
-
 .SH DESCRIPTION
 .PP
 The \fBhistory\fR command performs one of several operations related to
 recently-executed commands recorded in a history list.  Each of
-these recorded commands is referred to as an ``event''.  When
-specifying an event to the \fBhistory\fR command, the following
+these recorded commands is referred to as an
+.QW event .
+When specifying an event to the \fBhistory\fR command, the following
 forms may be used:
 .IP [1]
 A number:  if positive, it refers to the event with
@@ -45,7 +45,7 @@ as \fBhistory info\fR, described below.
 \fBhistory add\fI command \fR?\fBexec\fR?
 Adds the \fIcommand\fR argument to the history list as a new event.  If
 \fBexec\fR is specified (or abbreviated) then the command is also
-executed and its result is returned.  If \fBexec\fR isn't specified
+executed and its result is returned.  If \fBexec\fR is not specified
 then an empty string is returned as result.
 .TP
 \fBhistory change\fI newValue\fR ?\fIevent\fR?
@@ -92,13 +92,13 @@ The current mechanism is more limited, and the old
 history operations \fBsubstitute\fR and \fBwords\fR have been removed.
 (As a consolation, the \fBclear\fR operation was added.)
 .PP
-The history option \fBredo\fR results in much simpler ``history revision''.
+The history option \fBredo\fR results in much simpler
+.QW "history revision" .
 When this option is invoked then the most recent event
 is modified to eliminate the history command and replace it with
 the result of the history command.
 If you want to redo an event without modifying history, then use
 the \fBevent\fR operation to retrieve some event,
 and the \fBadd\fR operation to add it to history and execute it.
-
 .SH KEYWORDS
 event, history, record

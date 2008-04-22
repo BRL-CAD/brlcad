@@ -1,7 +1,7 @@
 /*                     D U N N C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2007 United States Government as represented by
+ * Copyright (c) 1986-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,20 +30,15 @@
  *	August 1985
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
-
 #include <stdio.h>
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#include <strings.h>
-#endif
 #include <stdlib.h>
+
+#include "bu.h"
+
 
 extern int	fd;
 extern char	cmd;
@@ -59,50 +54,47 @@ int
 main(int argc, char **argv)
 {
 
-	dunnopen();
+    dunnopen();
 
-	if(!ready(5)) {
-		printf("dunncolor:  camera not ready\n");
-		exit(50);
-	}
+    if (!ready(5)) {
+	bu_exit(50, "dunncolor:  camera not ready\n");
+    }
 
-	if( argc > 2 && strcmp( argv[1], "-p" ) == 0 )  {
-		/* Polaroid rather than external camera */
-		polaroid = 1;
-		argc--; argv++;
-	}
-	getexposure("old");
-	if(!ready(5)) {
-		printf("dunncolor:  camera not ready\n");
-		exit(50);
-	}
+    if ( argc > 2 && strcmp( argv[1], "-p" ) == 0 )  {
+	/* Polaroid rather than external camera */
+	polaroid = 1;
+	argc--; argv++;
+    }
+    getexposure("old");
+    if (!ready(5)) {
+	bu_exit(50, "dunncolor:  camera not ready\n");
+    }
 
-	/* check argument */
-	if ( argc != 5 && argc != 6 ) {
-		printf("usage: dunncolor [-p] baseval redval greenval blueval\n");
-		exit(25);
-	}
+    /* check argument */
+    if ( argc != 5 && argc != 6 ) {
+	bu_exit(25, "usage: dunncolor [-p] baseval redval greenval blueval\n");
+    }
 
-	dunnsend('A',atoi(*++argv));
-	dunnsend('R',atoi(*++argv));
-	dunnsend('G',atoi(*++argv));
-	dunnsend('B',atoi(*++argv));
+    dunnsend('A', atoi(*++argv));
+    dunnsend('R', atoi(*++argv));
+    dunnsend('G', atoi(*++argv));
+    dunnsend('B', atoi(*++argv));
 
-	getexposure("new");
+    getexposure("new");
 
-	if(!ready(5)) {
-		printf("dunncolor:  camera not ready\n");
-		exit(50);
-	}
-	return 0;
+    if (!ready(5)) {
+	bu_exit(50, "dunncolor:  camera not ready\n");
+    }
+
+    return 0;
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

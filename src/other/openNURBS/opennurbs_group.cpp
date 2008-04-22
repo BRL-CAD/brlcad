@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -68,7 +68,7 @@ BOOL ON_Group::Read(
   int major_version = 0;
   int minor_version = 0;
   BOOL rc = file.Read3dmChunkVersion(&major_version,&minor_version);
-  if ( major_version == 1 ) 
+  if ( major_version == 1 )
   {
     if (rc) rc = file.ReadInt( &m_group_index );
     if (rc) rc = file.ReadString( m_group_name );

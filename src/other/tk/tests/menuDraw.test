@@ -422,7 +422,7 @@ test menuDraw-15.6 {TkPostTearoffMenu - tearoff off right} {
 } {0 {}}
 
 
-test menuDraw-16.1 {TkPostSubmenu} unix {
+test menuDraw-16.1 {TkPostSubmenu} nonUnixUserInteraction {
     catch {destroy .m1}
     catch {destroy .m2}
     menu .m1
@@ -433,7 +433,7 @@ test menuDraw-16.1 {TkPostSubmenu} unix {
     $tearoff postcascade 0
     list [$tearoff postcascade 0] [destroy .m1] [destroy .m2]
 } {{} {} {}}
-test menuDraw-16.2 {TkPostSubMenu} unix {
+test menuDraw-16.2 {TkPostSubMenu} nonUnixUserInteraction {
     catch {destroy .m1}
     catch {destroy .m2}
     catch {destroy .m3}

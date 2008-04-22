@@ -673,7 +673,7 @@ test entry-5.11 {ConfigureEntry procedure} {
     pack [entry .e -font {{open look glyph}}]
     .e scan dragto 30
     update
-} {}    
+} {}
 
 # No tests for DisplayEntry.
 

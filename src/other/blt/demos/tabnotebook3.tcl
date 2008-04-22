@@ -2,17 +2,17 @@
 
 package require BLT
 # --------------------------------------------------------------------------
-# Starting with Tcl 8.x, the BLT commands are stored in their own 
+# Starting with Tcl 8.x, the BLT commands are stored in their own
 # namespace called "blt".  The idea is to prevent name clashes with
 # Tcl commands and variables from other packages, such as a "table"
-# command in two different packages.  
+# command in two different packages.
 #
 # You can access the BLT commands in a couple of ways.  You can prefix
 # all the BLT commands with the namespace qualifier "blt::"
-#  
+#
 #    blt::graph .g
 #    blt::table . .g -resize both
-# 
+#
 # or you can import all the command into the global namespace.
 #
 #    namespace import blt::*
@@ -39,15 +39,15 @@ tabnotebook .tnb \
     -highlightcolor yellow \
     -tiers 5 \
     -scrollcommand { .s set } \
-    -scrollincrement 1 
+    -scrollincrement 1
 
 label .tnb.l -image testImage
 
 set attributes {
-    "Graph \#1" pink	
-    "Graph \#2" lightblue	
+    "Graph \#1" pink
+    "Graph \#2" lightblue
     "Graph \#3" orange
-    "Graph \#5" yellow	
+    "Graph \#5" yellow
     "Barchart \#2" green
 }
 
@@ -61,7 +61,7 @@ foreach { label color } $attributes {
 .tnb insert end -selectbackground salmon2 -background salmon3 \
     -selectbackground salmon3 -activebackground salmon2 -window .tnb.l
 
-set tabLabels { 
+set tabLabels {
     Aarhus Aaron Ababa aback abaft abandon abandoned abandoning
     abandonment abandons abase abased abasement abasements abases
     abash abashed abashes abashing abasing abate abated abatement
@@ -168,7 +168,7 @@ table . \
     .top 2,0 -cspan 2 \
     .left 3,0 \
     .right 3,1 \
-    .bottom 4,0 -cspan 2 
+    .bottom 4,0 -cspan 2
 
 table configure . r1 r3 r4 r2 -resize none
 focus .tnb
@@ -184,7 +184,7 @@ foreach file { graph1 graph2 graph3 graph5 barchart2 } {
 	    set graph [barchart .tnb.$file]
 	}
 	source scripts/$file.tcl
-	.tnb tab configure $filecount -window $graph -fill both 
+	.tnb tab configure $filecount -window $graph -fill both
 	incr filecount
     }
 }

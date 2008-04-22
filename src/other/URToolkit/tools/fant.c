@@ -1,23 +1,23 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
+/*
  * fant.c - Perform spacial transforms on images. (should be "remap")
- * 
+ *
  * Author:	John W. Peterson
  * 		Computer Science Dept.
  * 		University of Utah
@@ -44,11 +44,11 @@
  * Purpose: Add -c option: scale image so that it fits in -S
  * 	    rectangle, but keep its aspect ratio constant, and center
  * 	    the result if it doesn't exactly fit the rectangle.
- * 
+ *
  * $Id$
  */
 
-/* 
+/*
  * This program performs spatial transforms on images.  For full
  * details, consult the paper:
  *      Fant, Karl M. "A Nonaliasing, Real-Time, Spatial Transform
@@ -91,11 +91,11 @@ typedef struct point
 } point;
 
 /*
- * Each channel is stored in its own raster (an array_lines * array_width  
+ * Each channel is stored in its own raster (an array_lines * array_width
  * array of pixels).  This allows each channel to be transformed separately.
- * A single copy is used and updated in place.  
+ * A single copy is used and updated in place.
  */
-rle_pixel *** rast;	
+rle_pixel *** rast;
 rle_pixel *bufin;		/* A single channel scanline */
 
 int const_ind;			/* Constant index */
@@ -143,20 +143,20 @@ char *argv[];
     FILE 	 *outfile = stdout;
     int          rle_err;
     int          i, i1, i2;
-    point        p[5];		/* "5" so we can use 1-4 indices Fant does. */ 
+    point        p[5];		/* "5" so we can use 1-4 indices Fant does. */
     int          dims[3];
-   
-    
+
+
     X_origin = 0;
     Y_origin = 0;
     verboseflag = 0;
     originflag = 0;
     vpassonlyflag = 0;
-    
-    if (scanargs( argc, argv, 
+
+    if (scanargs( argc, argv,
 "% s%-xscale!Fyscale!F S%-xsize!Fysize!F c%- a%-angle!F b%-blur!F v%- \
 p%-xorg!dyorg!d t%-xoff!Fyoff!F \to%-outfile!s infile%s",
-                 &scaleflag, &xscale, &yscale, 
+                 &scaleflag, &xscale, &yscale,
 		 &sizeflag, &xsize, &ysize, &centerflag,
 		 &angleflag, &angle,
 		 &blurflag,  &blur,
@@ -164,21 +164,21 @@ p%-xorg!dyorg!d t%-xoff!Fyoff!F \to%-outfile!s infile%s",
 		 &translateflag, &xtrans, &ytrans,
 		 &oflag, &out_fname, &infilename ) == 0)
       exit(-1);
-    
+
     in_hdr = *rle_hdr_init( NULL );
     out_hdr = *rle_hdr_init( NULL );
 
     in_hdr.rle_file = rle_open_f(cmd_name( argv ), infilename, "r");
     rle_names( &in_hdr, cmd_name( argv ), infilename, 0 );
     rle_names( &out_hdr, in_hdr.cmd, out_fname, 0 );
-    
+
     if (fabs(angle) > 45.0)
       fprintf(stderr,
 	      "fant: Warning: angle larger than 45 degrees, image will blur.\n");
-    
+
     if (sizeflag && (angleflag || scaleflag || originflag || translateflag))
     {
-	fprintf( stderr, 
+	fprintf( stderr,
   "%s: size option (-S) is incompatible with the angle (-a), scale (-s),\n\
    \ttranslate (-t) and origin (-p) options\n",
 		 cmd_name( argv ) );
@@ -188,7 +188,7 @@ p%-xorg!dyorg!d t%-xoff!Fyoff!F \to%-outfile!s infile%s",
 	fprintf( stderr,
 		 "%s: center option (-c) ignored without size option (-S)\n",
 		 cmd_name( argv ) );
-    
+
     if (blur < 0)
     {
 	fprintf( stderr, "fant: blur factor must be positive\n" );
@@ -201,26 +201,26 @@ p%-xorg!dyorg!d t%-xoff!Fyoff!F \to%-outfile!s infile%s",
 	if (verboseflag)
 	  fprintf(stderr, "fant: Only performing vertical pass\n");
     }
-    
+
     for ( rle_cnt = 0;
 	 (rle_err = rle_get_setup( &in_hdr )) == RLE_SUCCESS;
 	 rle_cnt++ )
     {
 	nchan = in_hdr.ncolors + in_hdr.alpha;
-	
+
 	(void)rle_hdr_cp( &in_hdr, &out_hdr );
 	if ( rle_cnt == 0 )
 	  outfile = rle_open_f( cmd_name( argv ), out_fname, "w" );
 	out_hdr.rle_file = outfile;
-	
+
 	rle_addhist( argv, &in_hdr, &out_hdr );
-	
+
 	/*
 	 * To define the output rectangle, we start with a set of points
 	 * defined by the original image, and then rotate and scale them
 	 * as desired.  Note that we use a continuous coordinate system:
          * min to max+1  with pixel centers at the midpoints of each unit
-         * square.  
+         * square.
          *
          *  Mapping between coordinate systems:
 	 * if c = continuous coord and d = discrete coord, then
@@ -231,9 +231,9 @@ p%-xorg!dyorg!d t%-xoff!Fyoff!F \to%-outfile!s infile%s",
 	p[2].x = in_hdr.xmax+1; 	p[2].y = in_hdr.ymin;
 	p[3].x = in_hdr.xmax+1;         p[3].y = in_hdr.ymax+1;
 	p[4].x = in_hdr.xmin;		p[4].y = in_hdr.ymax+1;
-	
+
 	if (sizeflag)
-	{  
+	{
   	      /* Compute the scale factors from the desired destination size*/
 	    xscale = xsize / (p[2].x - p[1].x);
 	    yscale = ysize / (p[3].y - p[2].y);
@@ -246,7 +246,7 @@ p%-xorg!dyorg!d t%-xoff!Fyoff!F \to%-outfile!s infile%s",
 		{
 		    yscale = xscale;
 		    xtrans = 0;
-		    ytrans = (ysize - (p[3].y - p[2].y) * yscale) / 2;	
+		    ytrans = (ysize - (p[3].y - p[2].y) * yscale) / 2;
 		}
 		else
 		{
@@ -258,81 +258,81 @@ p%-xorg!dyorg!d t%-xoff!Fyoff!F \to%-outfile!s infile%s",
 	    originflag = 1;
 	}
 	xform_points(p, xscale, yscale, angle, xtrans, ytrans );
-	
-	
-	
-	/* Map the continous coordinates back to discrete coordinates to 
+
+
+
+	/* Map the continous coordinates back to discrete coordinates to
          * determine the output image size.  We only output a pixel if it's
          * a least partially covered.  Partial, for us, means at least
          * EPSILON coverage.  This is a little arbitrary but ensures that
          * extra pixels aren't included on the ends.
          */
-	  
-	  
+
+
 	i1 = (int) (p[1].x + EPSILON);
 	i2 = (int) (p[4].x + EPSILON);
 	out_hdr.xmin = MAX(0,MIN(i1,i2));
-	
+
 	i1 = (int) (p[1].y + EPSILON);
 	i2 = (int) (p[2].y + EPSILON);
 	out_hdr.ymin = MAX(0,MIN(i1,i2));
-	
+
 	i1 = (int) (p[2].x - EPSILON);
 	i2 = (int) (p[3].x - EPSILON);
 	out_hdr.xmax = MAX(i1,i2);
-	
+
 	i1 = (int) (p[3].y - EPSILON);
 	i2 = (int) (p[4].y - EPSILON);
 	out_hdr.ymax = MAX(i1,i2);
 
-	
+
 	/*
 	 * Need to grab the largest dimensions so the buffers will hold the
 	 * picture.  The arrays for storing the pictures extend from 0
-         * to xmax in width and from ymin to ymax in height.  
+         * to xmax in width and from ymin to ymax in height.
 	 */
 	array_width = MAX( out_hdr.xmax, in_hdr.xmax) +1;
-	array_lines = MAX(out_hdr.ymax,in_hdr.ymax) - 
+	array_lines = MAX(out_hdr.ymax,in_hdr.ymax) -
 	              MIN(out_hdr.ymin,in_hdr.ymin) + 1;
 	outlinewidth = out_hdr.xmax - out_hdr.xmin + 1;
-	
+
 	/*
 	 * Since the array begins at ymin, the four output corner points must be
 	 * translated to this coordinate system.
 	 */
 	for (i = 1; i <= 4; i++)
 	  p[i].y -= MIN(out_hdr.ymin,in_hdr.ymin);
-	
+
 	/* Oink. */
 
 	dims[0] = nchan;
 	dims[1] = array_lines;
 	dims[2] = array_width;
 	rast = (rle_pixel ***) mallocNd(3,dims,sizeof(rle_pixel));
-	bufin = (rle_pixel *) 
+	bufin = (rle_pixel *)
 	  malloc(MAX(array_lines,array_width)*sizeof(rle_pixel));
 	RLE_CHECK_ALLOC( cmd_name( argv ), rast && bufin, "raster" );
-	
+
 	getraster(rast);
-	
+
 	/* Transform each channel */
 	cur_chan = 0;
-	for (cur_chan = 0; cur_chan < nchan; cur_chan++) 
+	for (cur_chan = 0; cur_chan < nchan; cur_chan++)
 	  xform_image(p,blur);
-	
+
 	putraster(rast);
-	
+
 	rle_puteof( &out_hdr );
 	free(rast);
 	free(bufin);
     }
-    
+
     if ( rle_cnt == 0 || (rle_err != RLE_EOF && rle_err != RLE_EMPTY) )
       rle_get_error( rle_err, cmd_name( argv ), infilename );
     exit( 0 );
 }
 
-/* 
+/*
  * This transforms one channel (defined by cur_chan) of the image.
  * The result image is based on the points p, using linear
  * interpolation per scanline.
@@ -346,20 +346,20 @@ double blur;
     int i1, i2, ystart, yend;
     int xinlen = in_hdr.xmax - in_hdr.xmin + 1;
     int yinlen = in_hdr.ymax - in_hdr.ymin + 1;
-    
+
     if (verboseflag)
       fprintf(stderr, "transforming channel %d...\n",
 	      cur_chan - in_hdr.alpha);
-    
+
     /* Vertical pass */
     pass = V_PASS;
 /*     clear_raster( rast ); */
-    
+
     real_outpos = p[1].y;
-    
+
     sizefac = (p[4].y-p[1].y) / (yinlen);
     delta = (p[2].y - p[1].y) / (xinlen);
-    
+
     for ( const_ind = in_hdr.xmin;
 	 const_ind <= in_hdr.xmax; const_ind++ )
     {
@@ -368,18 +368,18 @@ double blur;
 		      array_lines-1  );
 	real_outpos += delta;
     }
-    
+
     if (! vpassonlyflag )
     {
 	/* Horizontal pass */
 	pass = H_PASS;
-	
+
 	real_outpos = ( ((p[2].y - p[4].y) * (p[1].x - p[4].x))
 		       / (p[1].y - p[4].y) ) + p[4].x;
 	sizefac = (p[2].x - real_outpos) / (xinlen);
-	delta = (p[4].x - real_outpos) 
-	  / ((double) ((int) p[4].y) - ((int) p[2].y)); 
-	
+	delta = (p[4].x - real_outpos)
+	  / ((double) ((int) p[4].y) - ((int) p[2].y));
+
 	/* If we're moving backwards, start at p1 (needs more thought...) */
 	if (delta < 0)
 	  real_outpos = p[1].x;
@@ -387,7 +387,7 @@ double blur;
 	i1 = (int) (p[1].y + EPSILON);
 	i2 = (int) (p[2].y + EPSILON);
 	ystart = MIN(i1,i2);
-	
+
 	i1 = (int) (p[3].y - EPSILON);
 	i2 = (int) (p[4].y - EPSILON);
 	yend = MAX(i1,i2);
@@ -397,7 +397,7 @@ double blur;
 	    real_outpos += delta * abs(ystart);
 	    ystart = 0;
 	}
-	
+
 	for ( const_ind = ystart; const_ind <= yend; const_ind++ )
 	{
 	    interp_row( sizefac, blur, in_hdr.xmin, real_outpos,
@@ -408,7 +408,7 @@ double blur;
     }
 }
 
-/* 
+/*
  * Transform the points p according to xscale, yscale and angle.
  * Rotation is done first, this allows the separate scaling factors to
  * be used to adjust aspect ratios.  Note the image quality of the
@@ -419,12 +419,12 @@ xform_points(p, xscale, yscale, angle, xtrans, ytrans)
 point *p;
 double xscale, yscale, angle, xtrans, ytrans;
 {
-    double s, c, xoff, yoff;		
+    double s, c, xoff, yoff;
     double tmp;
     int i;
-    
+
     /* Sleazy - should build real matrix */
-    
+
     c = cos(DEG(angle));
     s = sin(DEG(angle));
     if (!originflag)
@@ -441,22 +441,22 @@ double xscale, yscale, angle, xtrans, ytrans;
     }
     if (verboseflag)
       fprintf(stderr, "Output rectangle:\n");
-    
+
     for ( i = 1; i <= 4; i++ )
     {
 	p[i].x -= xoff;		/* translate to origin */
 	p[i].y -= yoff;
-	
+
 	tmp = p[i].x * c + p[i].y * s; /* Rotate... */
 	p[i].y = -p[i].x * s + p[i].y * c;
 	p[i].x = tmp;
-	
+
 	p[i].x *= xscale;	/* Scale */
 	p[i].y *= yscale;
-	
+
 	p[i].x += ( xoff + xtrans );	/* translate back from origin */
 	p[i].y += ( yoff + ytrans );
-	
+
 	if (verboseflag)
 	  fprintf(stderr, "  %4.1f\t%4.1f\n", p[i].x, p[i].y);
     }
@@ -469,7 +469,7 @@ double xscale, yscale, angle, xtrans, ytrans;
 #define SHIFT 16
 #define SCALE (1 << SHIFT)
 
-void 
+void
 interp_row( sizefac, blur, inmin, real_outpos, inmax, outmax)
 double sizefac;			/* scale factor (maps input to output) */
 double blur;			/* blur factor 1.0 normal; <1 jaggy; > 1 blury */
@@ -492,7 +492,7 @@ int inmax, outmax;		/* upper bounds on image indices */
     radius *= blur;
     /* clamp the filter radius on the bottom end to make sure we get complete
        coverage.  */
-    if (radius < 0.5+EPSILON) radius = 0.5+EPSILON; 
+    if (radius < 0.5+EPSILON) radius = 0.5+EPSILON;
 
 
     /*
@@ -506,7 +506,7 @@ int inmax, outmax;		/* upper bounds on image indices */
     xmax = floor((xmax + 0.5)*sizefac + real_outpos); /* -> output coords */
     if (xmax < 0)      xmax = 0;
     if (xmax > outmax) xmax = outmax;
-    
+
     inlen = inmax - inmin + 1;
     if (pass == V_PASS)
     {
@@ -520,9 +520,9 @@ int inmax, outmax;		/* upper bounds on image indices */
 	pout = rast[cur_chan][const_ind] + 0;
 	stride = 1;
     }
-    
 
-    /*  
+
+    /*
      *  Copy the input into a row buffer. This saves us some memory so
      *  we don't need a separate output array for the whole image.
      */
@@ -534,7 +534,7 @@ int inmax, outmax;		/* upper bounds on image indices */
 	pin += stride;
       }
     pin = bufin;
-    
+
     /* zero out the part of the output array we aren't going to touch */
     p = pout;
     pend = p + stride*xmin;
@@ -548,7 +548,7 @@ int inmax, outmax;		/* upper bounds on image indices */
 
     /* input coordinate of first output pixel center */
     pos = (xmin + 0.5 - real_outpos)*delta;
-    
+
     if (radius != 1.0)
       general_interp_row(pin,inlen,pout,stride,xmin,xmax,pos,radius,delta);
     else
@@ -573,7 +573,7 @@ double delta;			/* input coord delta between output pixels */
     register long pxl, fpos, weight, sum, accum;
     register int i, i0, i1, x;
     long rpos, rradius, rdelta ;
-    
+
 
     /* This is the general case.  We walk through all the output points.
      * for each output point we map back into the input coordinate system
@@ -581,20 +581,20 @@ double delta;			/* input coord delta between output pixels */
      * that overlap the filter support.  A triangle filter is hardwired at
      * present for speed.
      */
-    
+
     rpos = (long) (pos*SCALE + 0.5); /* fixed point forms */
     rradius = (long) (radius*SCALE + 0.5);
     rdelta = (long) (delta*SCALE + 0.5);
 
-    
+
     /* For each output pixel */
     for (x=xmin; x<=xmax; x++)
-    {  
+    {
 	/* find bounds in input array */
-	
+
 	i0 = (rpos - rradius + SCALE/2) >>SHIFT; /* floor(pos -radius +0.5); */
 	i1 = (rpos + rradius - SCALE/2) >>SHIFT; /* floor(pos +radius -0.5); */
-	
+
 	/* sum over each input pixel which effects this output pixel
          * weights are taken from a triangle filter of width radius.
          */
@@ -612,9 +612,9 @@ double delta;			/* input coord delta between output pixels */
 	    accum += pxl * weight;
 	    sum += weight;
 	}
-	if (sum > 0) 
+	if (sum > 0)
 	  *pout = accum/sum;
-	
+
 	/* advance to next input pixel (in src coordinates) */
 	rpos +=  rdelta;		/* pos += delta */
 	pout += stride;
@@ -624,8 +624,8 @@ double delta;			/* input coord delta between output pixels */
 
 /*
  *  This is a special case of general_interp_row for use when the filter
- *  radius is exactly 1, a common case.  It amounts to linear interpolation 
- *  between the input pixels. 
+ *  radius is exactly 1, a common case.  It amounts to linear interpolation
+ *  between the input pixels.
  */
 void fast_interp_row(pin,inlen, pout, stride, xmin, xmax, pos, delta)
 register rle_pixel *pin;	/* pointer to input buffer */
@@ -641,13 +641,13 @@ double delta;			/* input coord delta between output pixels */
     register rle_pixel *pend;
     long rpos;
     int i;
-    
+
     rpos = (long) (pos*SCALE + 0.5); /* fixed point forms */
     rdelta = (long) (delta*SCALE + 0.5);
-    
+
     /* find starting point in input array */
-    rpos -= SCALE/2; 
-    i  = (rpos  >> SHIFT); 
+    rpos -= SCALE/2;
+    i  = (rpos  >> SHIFT);
     inseg = (rpos - (i << SHIFT));
     if (inseg < 0)  {  i++;   inseg += SCALE;	}
     if (i > 0)  pin+= i;
@@ -663,16 +663,16 @@ double delta;			/* input coord delta between output pixels */
     {
 	/* Simple linear interpolation */
 	*pout = (pv*(SCALE-inseg) + nv*inseg + SCALE/2) >> SHIFT;
-	
+
 	/* advance to next input pixel (in src coordinates) */
 	inseg += rdelta;
 	if (inseg > SCALE)
 	{
 	    pv = nv;
 	    i++;
-	    if (i < 0 || i >= inlen)  
-	      nv = 0;  
-	    else 
+	    if (i < 0 || i >= inlen)
+	      nv = 0;
+	    else
 	      { nv = *pin; pin++; }
 	    inseg -= SCALE;
 	}
@@ -692,17 +692,17 @@ rle_pixel ***ras_ptrs;
     int i, chan;
     rle_pixel *ptrs[MAXCHAN];
     rle_pixel *rows[MAXCHAN];	/* Pointers for getrow/putrow */
-    
+
     for ( chan = 0; chan < nchan; chan++ )
       ptrs[chan] = ras_ptrs[chan][0];
-    
+
     for (i = in_hdr.ymin; i <= in_hdr.ymax; i++)
     {
 	for ( chan = 0; chan < nchan; chan++ )
 	  rows[chan] = ptrs[chan];
 	rle_getrow( &in_hdr, &(rows[in_hdr.alpha]) );
-	
-	
+
+
 	/* Bump pointers */
 	for ( chan = 0; chan < nchan; chan++ )
 	  ptrs[chan] += array_width;
@@ -717,26 +717,26 @@ rle_pixel ***ras_ptrs;
     int i, chan;
     rle_pixel *ptrs[MAXCHAN];
     rle_pixel *rows[MAXCHAN];	/* Pointers for getrow/putrow */
-    
+
     rle_put_setup( &out_hdr );
 
-    /* 
+    /*
      * If the output image is smaller than the input, we must offset
      * into the pixel array by the difference between the two.
      */
     if (in_hdr.ymin < out_hdr.ymin)
       for ( chan = 0; chan < nchan; chan++ )
 	ptrs[chan] = ras_ptrs[chan][(out_hdr.ymin - in_hdr.ymin)];
-    else 
+    else
       for ( chan = 0; chan < nchan; chan++ )
 	ptrs[chan] = ras_ptrs[chan][0];
-    
+
     for (i = out_hdr.ymin; i <= out_hdr.ymax; i++)
     {
 	for ( chan = 0; chan < nchan; chan++ )
 	  rows[chan] = &((ptrs[chan])[out_hdr.xmin]);
 	rle_putrow( &(rows[out_hdr.alpha]), outlinewidth, &out_hdr );
-	
+
 	/* Bump pointers */
 	for ( chan = 0; chan < nchan; chan++ )
 	  ptrs[chan] += array_width;
@@ -775,7 +775,7 @@ rle_pixel ***ras_ptrs;
 	}
 	fprintf(stderr,"\n");
       }
-    
+
 }
 #endif
 

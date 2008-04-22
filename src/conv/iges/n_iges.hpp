@@ -1,7 +1,7 @@
 /*                      N _ I G E S . H P P
  * BRL-CAD
  *
- * Copyright (c) 2007 United States Government as represented by
+ * Copyright (c) 2007-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,7 +40,6 @@
 #include <list>
 #include <map>
 
-#include "machine.h"
 #include "vmath.h"
 #include "bn.h"
 #include "bu.h"
@@ -61,15 +60,15 @@ namespace brlcad {
 
   template<class T>
   class IgesDataType {
-  public:    
+  public:
     IgesDataType(T val) {
       _val = val;
     }
     IgesDataType() {}
     IgesDataType(const IgesDataType<T>& i) {
       _val = i._val;
-    }     
-    
+    }
+
     bool operator==(const IgesDataType<T>& i) {
       return _val == i._val;
     }
@@ -86,7 +85,7 @@ namespace brlcad {
       return *this;
     }
 
-    bool operator<(const IgesDataType<T>& i) { 
+    bool operator<(const IgesDataType<T>& i) {
       return  _val < i._val;
     }
     bool operator<(T v) {
@@ -94,15 +93,15 @@ namespace brlcad {
     }
 
     T operator()() const { return _val; }
-    operator T() const { return _val; }        
+    operator T() const { return _val; }
 
     virtual FILE* read(FILE* in) = 0;
     virtual string write(FILE* out) = 0;
   protected:
-    T _val;    
+    T _val;
   };
 
-  
+
   class Integer : public IgesDataType<long> {
   public:
     Integer();
@@ -112,7 +111,7 @@ namespace brlcad {
     FILE* read(FILE* in);
     string write(FILE* out);
   };
-  
+
   class Pointer : public IgesDataType<int> {
   public:
     Pointer();
@@ -122,7 +121,7 @@ namespace brlcad {
     FILE* read(FILE* in);
     string write(FILE* out);
   };
-  
+
   class Real : public IgesDataType<double> {
   public:
     Real();
@@ -132,7 +131,7 @@ namespace brlcad {
     FILE* read(FILE* in);
     string write(FILE* out);
   };
-  
+
   class String : public IgesDataType<string> {
   public:
     String();
@@ -142,7 +141,7 @@ namespace brlcad {
     FILE* read(FILE* in);
     string write(FILE* out);
   };
-  
+
   class Logical : public IgesDataType<bool> {
   public:
     Logical();
@@ -198,7 +197,7 @@ namespace brlcad {
       ss << systemID() << endl;
       ss << preprocessorVersion() <<  endl;
       ss <<  numIntegerBits()  << endl;
-      ss <<  maxSingleExponent() << endl; 
+      ss <<  maxSingleExponent() << endl;
       ss <<  numSingleSignificant() << endl;
       ss <<  maxDoubleExponent() << endl;
       ss <<  numDoubleSignificant() << endl;
@@ -220,10 +219,10 @@ namespace brlcad {
       return ss.str();
     }
   };
-  
+
   template<class A, class B>
   class Dual {
-  public:    
+  public:
     static const int LEFT = 0;
     static const int RIGHT = 1;
 
@@ -267,7 +266,7 @@ namespace brlcad {
 
   class DirectoryEntry {
   public:
-    
+
     DirectoryEntry(const string& in);
 
     Integer type() const { return _type; }
@@ -287,8 +286,8 @@ namespace brlcad {
     Integer parameterLineCount() const { return _parameterLineCount; }
     Integer formId() const { return _formId; }
     String entityLabel() const { return _entityLabel; }
-    Integer entitySubscript() const { return _entitySubscript; }    
-    
+    Integer entitySubscript() const { return _entitySubscript; }
+
     string toString();
 
   private:
@@ -303,7 +302,7 @@ namespace brlcad {
     Pointer _structure; // negated pointer to definition entity or 0
     Dual<Integer,Pointer> _lineFontPattern; // integer if defines a known lineFontPattern, pointer to pattern definition DE otherwise
     Dual<Integer,Pointer> _level; // the level, or pointer to level definition DE
-    Pointer _view; 
+    Pointer _view;
     Pointer _xform; // or 0 (identity)
     Pointer _label; // or 0
     Visibility _visible; // visible or blanked
@@ -322,7 +321,7 @@ namespace brlcad {
   class ParameterData {
   public:
     ParameterData();
-    
+
     Pointer getPointer(int index) const;
     Integer getInteger(int index) const;
     Logical getLogical(int index) const;
@@ -361,18 +360,18 @@ namespace brlcad {
     // reset the stream to the start of this record
     void reset() { fseek(_fp, _start, SEEK_SET); }
     long where() { return ftell(_fp); }
-  
+
     GlobalSection* createGlobalSection();
     void createDirectory(vector<DirectoryEntry*>& dir);
     string getParameterData();
-    
-  private:    
+
+  private:
     FILE* _fp;
     bool _valid; // is this record valid?
     string _line; // the current read line (temporary)
     char _type; // the record type
     long _start; // the starting position of this record
-    
+
     ostringstream _card;
 
     GlobalSection* _gs;
@@ -382,13 +381,13 @@ namespace brlcad {
     static int _reclen;
     void calcRecsize(FILE* in);
     void _read();
-    bool _readLine();   
+    bool _readLine();
     void _undoRead(int numLines = 1);
     void _readStart();
     void _readGlobal();
     void _readDirectory();
     void _readParameter(int id);
-    
+
     string _field(int index);
   };
 
@@ -402,7 +401,7 @@ namespace brlcad {
   typedef list<DirectoryEntry*> DEList;
 
   typedef enum {
-    Null                   		= 0,    
+    Null                   		= 0,
     CircularArc            		= 100,
     CompositeCurve         		= 102,
     ConicArc               		= 104,
@@ -506,7 +505,7 @@ namespace brlcad {
   class EdgeUse;
   class PSpaceCurve;
   class BrepHandler : public Extractor {
-  public:    
+  public:
     BrepHandler();
     virtual ~BrepHandler();
 
@@ -526,13 +525,13 @@ namespace brlcad {
     virtual int handleRuledSurface() = 0;
     virtual int handleSurfaceOfRevolution(int line, int curve, double start, double end) = 0;
     virtual int handleTabulatedCylinder() = 0;
-    virtual int handleRationalBSplineSurface(int num_control[2], 
-					     int degree[2], 
-					     bool u_closed, 
-					     bool v_closed, 
-					     bool rational, 
-					     bool u_periodic, 
-					     bool v_periodic, 
+    virtual int handleRationalBSplineSurface(int num_control[2],
+					     int degree[2],
+					     bool u_closed,
+					     bool v_closed,
+					     bool rational,
+					     bool u_periodic,
+					     bool v_periodic,
 					     int u_num_knots,
 					     int v_num_knots,
 					     double u_knots[],
@@ -544,7 +543,7 @@ namespace brlcad {
     virtual int handleRightCircularCylindricalSurface() = 0;
     virtual int handleRightCircularConicalSurface() = 0;
     virtual int handleSphericalSurface() = 0;
-    virtual int handleToroidalSurface() = 0;    
+    virtual int handleToroidalSurface() = 0;
 
     // curve handlers (refactor to CurveHandler class?)
     virtual int handleCircularArc(double radius, point_t center, vect_t normal, point_t start, point_t end) = 0;
@@ -568,11 +567,11 @@ namespace brlcad {
 					   int num_control_points,
 					   double* weights,
 					   double* ctl_points) = 0;
-    virtual int handleOffsetCurve() = 0;    
+    virtual int handleOffsetCurve() = 0;
 
   protected:
     IGES* _iges;
-    
+
     DirectoryEntry* getEdge(Pointer& edgeList, int index);
     virtual void extractBrep(const DirectoryEntry* de);
     virtual void extractShell(const DirectoryEntry* de, bool isVoid, bool orientWithFace);
@@ -582,10 +581,10 @@ namespace brlcad {
     virtual int  extractEdge(const DirectoryEntry* de, int index);
     virtual int  extractVertex(const DirectoryEntry* de, int index);
     virtual int  extractCurve(const DirectoryEntry* de, bool isIso);
-        
+
     virtual int  extractCircularArc(const DirectoryEntry* de, const ParameterData& params);
     virtual int  extractLine(const DirectoryEntry* de, const ParameterData& params);
-    virtual int  extractLine(const Pointer& ptr);    
+    virtual int  extractLine(const Pointer& ptr);
     virtual int  extractRationalBSplineCurve(const DirectoryEntry* de, const ParameterData& params);
 
     virtual int  extractSurfaceOfRevolution(const ParameterData& params);
@@ -602,7 +601,7 @@ namespace brlcad {
     int surfaceIndex;
     int curveIndex;
     int edgeIndex;
-  };  
+  };
 
   typedef pair<const DirectoryEntry*,int> VertKey;
   typedef map<VertKey,int> VertMap;
@@ -611,24 +610,24 @@ namespace brlcad {
   typedef VertMap EdgeMap;
 
   //--------------------------------------------------------------------------------
-  // IGES 
+  // IGES
   class IGES {
   public:
-    
+
     // create a new IGES object, in preparation to write
     IGES();
     // create an IGES containing the entities in the given g file
     IGES(const struct db_i* dbip);
     // load an IGES file with the given filename
     IGES(const string& filename);
-    
-    ~IGES();    
+
+    ~IGES();
 
     //--------------------------------------------------------------------------------
     // info
     const GlobalSection& global() const;
-    string getTypeName(IGESEntity id) const;    
-    
+    string getTypeName(IGESEntity id) const;
+
     //--------------------------------------------------------------------------------
     // read
     bool readBreps(Extractor* handler);
@@ -636,13 +635,13 @@ namespace brlcad {
     void getParameter(const Pointer& ptr, ParameterData& outParam);
     DirectoryEntry* getDirectoryEntry(const Pointer& ptr);
     void getTransformation(const Pointer& ptr, mat_t xform);
-    
+
   protected:
     void readStart(FILE* in);
     void readGlobal(FILE* in);
     void readDirectory(FILE* in);
     void locateParameters(FILE* in);
-    
+
   private:
     FILE* _file;
     long paramSectionStart;
@@ -652,7 +651,7 @@ namespace brlcad {
 
 
   //--------------------------------------------------------------------------------
-  // utility  
+  // utility
   string format_arg_list(const char *fmt, va_list args);
   string format(const char *fmt, ...);
 }

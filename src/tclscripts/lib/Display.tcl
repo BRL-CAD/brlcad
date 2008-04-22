@@ -1,7 +1,7 @@
 #                     D I S P L A Y . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2007 United States Government as represented by
+# Copyright (c) 1998-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -18,15 +18,6 @@
 # information.
 #
 ###
-#
-# Author -
-#	Bob Parker
-#
-# Source -
-#	The U. S. Army Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#
 #
 # Description -
 #	The Display class inherits from View and Dm. This
@@ -172,8 +163,8 @@
     public method zbuffer {args}
     public method zclip {args}
     if {$tcl_platform(os) != "Windows NT"} {
-	public method fb_active {args}
     }
+    public method fb_active {args}
 
     public method toggle_modelAxesEnable {}
     public method toggle_modelAxesTickEnable {}
@@ -406,7 +397,7 @@
     # validate size
     if {![string is double $itk_option(-viewAxesSize)] ||
 	$itk_option(-viewAxesSize) < $minAxesSize} {
-	    error "-viewAxesSize must be >= $minAxesSize"
+	error "-viewAxesSize must be >= $minAxesSize"
     }
 
     refresh
@@ -416,7 +407,7 @@
     # validate size
     if {![string is double $itk_option(-modelAxesSize)] ||
 	$itk_option(-modelAxesSize) < $minAxesSize} {
-	    error "-modelAxesSize must be >= $minAxesSize"
+	error "-modelAxesSize must be >= $minAxesSize"
     }
 
     refresh
@@ -462,8 +453,8 @@
     # convert to mm
     set local2mm [local2base]
     set itk_option(-modelAxesPosition) [list [expr {$local2mm * $x}] \
-					     [expr {$local2mm * $y}] \
-					     [expr {$local2mm * $z}]]
+					    [expr {$local2mm * $y}] \
+					    [expr {$local2mm * $z}]]
 
     refresh
 }
@@ -472,7 +463,7 @@
     # validate line width
     if {![string is digit $itk_option(-viewAxesLineWidth)] ||
 	$itk_option(-viewAxesLineWidth) < $minAxesLineWidth} {
-	    error "-viewAxesLineWidth must be >= $minAxesLineWidth"
+	error "-viewAxesLineWidth must be >= $minAxesLineWidth"
     }
 
     refresh
@@ -482,7 +473,7 @@
     # validate line width
     if {![string is digit $itk_option(-modelAxesLineWidth)] ||
 	$itk_option(-modelAxesLineWidth) < $minAxesLineWidth} {
-	    error "-modelAxesLineWidth must be >= $minAxesLineWidth"
+	error "-modelAxesLineWidth must be >= $minAxesLineWidth"
     }
 
     refresh
@@ -611,7 +602,7 @@
     # validate tick length
     if {![string is digit $itk_option(-modelAxesTickLength)] ||
 	$itk_option(-modelAxesTickLength) < $minAxesTickLength} {
-	    error "-modelAxesTickLength must be >= $minAxesTickLength"
+	error "-modelAxesTickLength must be >= $minAxesTickLength"
     }
 
     refresh
@@ -621,7 +612,7 @@
     # validate major tick length
     if {![string is digit $itk_option(-modelAxesTickMajorLength)] ||
 	$itk_option(-modelAxesTickMajorLength) < $minAxesTickMajorLength} {
-	    error "-modelAxesTickMajorLength must be >= $minAxesTickMajorLength"
+	error "-modelAxesTickMajorLength must be >= $minAxesTickMajorLength"
     }
 
     refresh
@@ -721,11 +712,9 @@
 
     if {![info exists itk_option(-fb_active)] || $itk_option(-fb_active) < 2} {
 
-	if {$tcl_platform(os) != "Windows NT"} {
-	    if {$itk_option(-fb_active)} {
-		# underlay
-		Dm::refreshfb
-	    }
+	if {$itk_option(-fb_active)} {
+	    # underlay
+	    Dm::refreshfb
 	}
 
 	foreach geo $geolist {
@@ -766,46 +755,45 @@
 
 	if {$itk_option(-viewAxesEnable) ||
 	    $itk_option(-modelAxesEnable)} {
-		set vsize [expr {[View::local2base] * [View::size]}]
-		set rmat [View::rmat]
-		set model2view [View::model2view]
+	    set vsize [expr {[View::local2base] * [View::size]}]
+	    set rmat [View::rmat]
+	    set model2view [View::model2view]
 
-		if {$itk_option(-viewAxesEnable)} {
-		    set x [lindex $itk_option(-viewAxesPosition) 0]
-		    set y [lindex $itk_option(-viewAxesPosition) 1]
-		    set z [lindex $itk_option(-viewAxesPosition) 2]
-		    set y [expr {$y * $invAspect}]
-		    set modVAP "$x $y $z"
+	    if {$itk_option(-viewAxesEnable)} {
+		set x [lindex $itk_option(-viewAxesPosition) 0]
+		set y [lindex $itk_option(-viewAxesPosition) 1]
+		set z [lindex $itk_option(-viewAxesPosition) 2]
+		set y [expr {$y * $invAspect}]
+		set modVAP "$x $y $z"
 
-		    Dm::drawViewAxes $vsize $rmat $modVAP \
-			    $itk_option(-viewAxesSize) $itk_option(-viewAxesColor) \
-			    $itk_option(-viewAxesLabelColor) $itk_option(-viewAxesLineWidth) \
-			    1 $itk_option(-viewAxesTripleColor)
-		}
+		Dm::drawViewAxes $vsize $rmat $modVAP \
+		    $itk_option(-viewAxesSize) $itk_option(-viewAxesColor) \
+		    $itk_option(-viewAxesLabelColor) $itk_option(-viewAxesLineWidth) \
+		    1 $itk_option(-viewAxesTripleColor)
+	    }
 
-		if {$itk_option(-modelAxesEnable)} {
-		    Dm::drawModelAxes $vsize $rmat $itk_option(-modelAxesPosition) \
-			    $itk_option(-modelAxesSize) $itk_option(-modelAxesColor) \
-			    $itk_option(-modelAxesLabelColor) $itk_option(-modelAxesLineWidth) \
-			    0 $itk_option(-modelAxesTripleColor) \
-			    $model2view \
-			    $itk_option(-modelAxesTickEnable) \
-			    $itk_option(-modelAxesTickLength) \
-			    $itk_option(-modelAxesTickMajorLength) \
-			    $itk_option(-modelAxesTickInterval) \
-			    $itk_option(-modelAxesTicksPerMajor) \
-			    $itk_option(-modelAxesTickColor) \
-			    $itk_option(-modelAxesTickMajorColor) \
-			    $itk_option(-modelAxesTickThreshold)
-		}
+	    if {$itk_option(-modelAxesEnable)} {
+		Dm::drawModelAxes $vsize $rmat $itk_option(-modelAxesPosition) \
+		    $itk_option(-modelAxesSize) $itk_option(-modelAxesColor) \
+		    $itk_option(-modelAxesLabelColor) $itk_option(-modelAxesLineWidth) \
+		    0 $itk_option(-modelAxesTripleColor) \
+		    $model2view \
+		    $itk_option(-modelAxesTickEnable) \
+		    $itk_option(-modelAxesTickLength) \
+		    $itk_option(-modelAxesTickMajorLength) \
+		    $itk_option(-modelAxesTickInterval) \
+		    $itk_option(-modelAxesTicksPerMajor) \
+		    $itk_option(-modelAxesTickColor) \
+		    $itk_option(-modelAxesTickMajorColor) \
+		    $itk_option(-modelAxesTickThreshold)
+	    }
 	}
 
 	if {$itk_option(-centerDotEnable)} {
 	    Dm::drawCenterDot $itk_option(-centerDotColor)
 	}
 
-    } elseif {$tcl_platform(os) != "Windows NT"} {
-	# overlay
+    } else {
 	Dm::refreshfb
     }
 
@@ -899,10 +887,12 @@
     }
 
     set v_obj [View::get_viewname]
-    if {$tcl_platform(os) != "Windows NT"} {
-	eval $geo rt $v_obj -F $itk_option(-listen) -w $width -n $height -V $aspect $args
-    } else {
+
+    # If arguments remain, they should specify size, framebuffer etc.
+    if {[llength $args] > 0} {
 	eval $geo rt $v_obj $args
+    } else {
+	eval $geo rt $v_obj -F $itk_option(-listen) -w $width -n $height -V $aspect $args
     }
 }
 
@@ -974,10 +964,16 @@
     }
 
     set v_obj [View::get_viewname]
-    if {$tcl_platform(os) != "Windows NT"} {
-	eval $geo rtedge $v_obj -F $itk_option(-listen) -w $width -n $height -V $aspect $args
-    } else {
+    #    if {$tcl_platform(os) != "Windows NT"} {
+    #	eval $geo rtedge $v_obj -F $itk_option(-listen) -w $width -n $height -V $aspect $args
+    #    } else {
+    #    }
+
+    # If arguments remain, they should specify size, framebuffer etc.
+    if {[llength $args] > 0} {
 	eval $geo rtedge $v_obj $args
+    } else {
+	eval $geo rtedge $v_obj -F $itk_option(-listen) -w $width -n $height -V $aspect $args
     }
 }
 
@@ -1136,13 +1132,13 @@
 }
 
 if {$tcl_platform(os) != "Windows NT"} {
-    ::itcl::body Display::fb_active {args} {
-	if {$args == ""} {
-	    return $itk_option(-fb_active)
-	} else {
-	    eval Dm::fb_active $args
-	    refresh
-	}
+}
+::itcl::body Display::fb_active {args} {
+    if {$args == ""} {
+	return $itk_option(-fb_active)
+    } else {
+	eval Dm::fb_active $args
+	refresh
     }
 }
 

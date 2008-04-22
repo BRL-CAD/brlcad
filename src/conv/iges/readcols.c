@@ -1,7 +1,7 @@
 /*                      R E A D C O L S . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2007 United States Government as represented by
+ * Copyright (c) 1990-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,37 +18,33 @@
  * information.
  */
 /** @file readcols.c
+ *
+ * This routine reads a specific number of characters from the "card"
+ * buffer.  The number is "cols".  The string of characters read is
+ * pointed to by "id".
+ *
  *  Authors -
  *	John R. Anderson
  *	Susanne L. Muuss
  *	Earl P. Weaver
  *
- *  Source -
- *	VLD/ASB Building 1065
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
  */
-
-/* This routine reads a specific number of characters from the "card"
-	buffer.  The number is "cols".  The string of characters read
-	is pointed to by "id". 	*/
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
 void
-Readcols( id , cols )
-char *id;
-int cols;
+Readcols( id, cols )
+    char *id;
+    int cols;
 {
-	int i;
-	char *tmp;
+    int i;
+    char *tmp;
 
-	tmp = id;
+    tmp = id;
 
-	for( i=0 ; i<cols ; i++ )
-		*tmp++ = card[counter++];
+    for ( i=0; i<cols; i++ )
+	*tmp++ = card[counter++];
 }
 
 
@@ -56,8 +52,8 @@ int cols;
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

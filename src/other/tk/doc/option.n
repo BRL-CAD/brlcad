@@ -78,7 +78,7 @@ the X server, or user-specific startup files.
 .TP
 \fBinteractive\fR
 Level 80.  Used for options specified interactively after the application
-starts running.  If \fIpriority\fR isn't specified, it defaults to
+starts running.  If \fIpriority\fR is not specified, it defaults to
 this level.
 .LP
 Any of the above keywords may be abbreviated.  In addition, priorities

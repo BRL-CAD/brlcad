@@ -1,7 +1,7 @@
 /*                      C A N O N I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2007 United States Government as represented by
+ * Copyright (c) 1994-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,30 +19,16 @@
  *
  */
 /** @file canonize.c
- *			C A N O N I Z E
  *
  *  Queue an image to a Canon CLC500 via qpr/MDQS
  *
- *  Author -
- *	Lee A. Butler
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-#ifndef lint
-static char RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
 
 #include "./canon.h"
 
@@ -53,58 +39,58 @@ char cmdbuf[64]="/usr/mdqs/bin/qpr -q "; /* queue name filled in by main() */
  *	send an image off into the printer queuing system
  */
 void
-queue(fd)
-     FILE *fd;
+queue(fp)
+    FILE *fp;
 {
     char img_buffer[8 * 1024];
     int img_bytes, i, args, bytes_read;
-    FILE *pfd;
+    FILE *pfp;
 
     img_bytes = width * height * 3;
 
     /* open a pipe to the queuing program */
-    if ((pfd = popen(cmdbuf, "w")) == (FILE *)NULL) {
+    if ((pfp = popen(cmdbuf, "w")) == (FILE *)NULL) {
 	fprintf(stderr, "%s: ", progname);
 	perror(cmdbuf);
-	exit(-1);
+	bu_exit(-1, NULL);
     }
 
     if (ipu_debug)
 	fprintf(stderr, "pipe open\n");
 
-    fprintf(pfd, "CLC500"); /* magic cookie */
+    fprintf(pfp, "CLC500"); /* magic cookie */
 
     /* write the command line options out to the data stream */
-    for (args=1 ; args < arg_c ; args++) {
+    for (args=1; args < arg_c; args++) {
 
 	if (!strcmp(arg_v[args], "-a")) {
-	    fprintf(pfd, " -w %d -n %d", width, height);
+	    fprintf(pfp, " -w %d -n %d", width, height);
 	} if (!strcmp(arg_v[args], "-d")) {
 	    args += 2;	/* skip device specification */
 	} if (!strcmp(arg_v[args], "-v") ||
 	      !strcmp(arg_v[args], "-V")) {
 	    continue;	/* skip verbose specification */
 	} else {
-	    fprintf(pfd, " %s", arg_v[args]);
+	    fprintf(pfp, " %s", arg_v[args]);
 	}
     }
-    fprintf(pfd, "\n");
+    fprintf(pfp, "\n");
 
     if (ipu_debug)
 	fprintf(stderr, "args written\n");
 
     /* write the image down the pipe */
-    for( bytes_read = 0 ;
-	 bytes_read < img_bytes &&
-	     (i = fread(img_buffer, 1, sizeof(img_buffer), fd)) ;
-	 bytes_read += i ) {
-	fwrite(img_buffer, 1, i, pfd);
+    for ( bytes_read = 0;
+	  bytes_read < img_bytes &&
+	      (i = fread(img_buffer, 1, sizeof(img_buffer), fp));
+	  bytes_read += i ) {
+	fwrite(img_buffer, 1, i, pfp);
     }
 
     if (ipu_debug)
 	fprintf(stderr, "image written\n");
 
-    pclose(pfd);
+    pclose(pfp);
 
     if (ipu_debug)
 	fprintf(stderr, "image queued\n");
@@ -115,7 +101,7 @@ int
 main(int ac, char *av[])
 {
     int arg_ind;
-    FILE *fd;
+    FILE *fp;
 
 
     /* copy the relevant command line options */
@@ -125,16 +111,18 @@ main(int ac, char *av[])
 
 	if (autosize) usage("Cannot autosize stdin\n");
 
-	strncat(cmdbuf, print_queue, sizeof(cmdbuf)-strlen(cmdbuf)-1);
+	bu_strlcat(cmdbuf, print_queue, sizeof(cmdbuf));
+	cmdbuf[sizeof(cmdbuf)-1] = '\0';
 
 	queue(stdin);
 
 	return(0);
     }
 
-    strncat(cmdbuf, print_queue, sizeof(cmdbuf)-strlen(cmdbuf)-1);
+    bu_strlcat(cmdbuf, print_queue, sizeof(cmdbuf));
+    cmdbuf[sizeof(cmdbuf)-1] = '\0';
 
-    for ( ; arg_ind < ac ; arg_ind++) {
+    for (; arg_ind < ac; arg_ind++) {
 	if (autosize &&
 	    !fb_common_file_size( &width, &height, av[arg_ind], 3)) {
 	    fprintf(stderr,
@@ -143,13 +131,13 @@ main(int ac, char *av[])
 	    return(-1);
 	}
 
-	if ((fd=fopen(av[arg_ind], "r")) == (FILE *)NULL) {
+	if ((fp=fopen(av[arg_ind], "rb")) == (FILE *)NULL) {
 	    fprintf(stderr, "%s: ", progname);
 	    perror(av[arg_ind]);
 	    return(-1);
 	}
-	queue(fd);
-	fclose(fd);
+	queue(fp);
+	fclose(fp);
     }
     return(0);
 }
@@ -158,8 +146,8 @@ main(int ac, char *av[])
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

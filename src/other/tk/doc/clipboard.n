@@ -21,7 +21,7 @@ clipboard \- Manipulate Tk clipboard
 .PP
 This command provides a Tcl interface to the Tk clipboard,
 which stores data for later retrieval using the selection mechanism 
-(via the \fB-selection CLIPBOARD\fR option).
+(via the \fB\-selection CLIPBOARD\fR option).
 In order to copy data into the clipboard, \fBclipboard clear\fR must
 be called, followed by a sequence of one or more calls to \fBclipboard
 append\fR.  To ensure that the clipboard is updated atomically, all
@@ -34,8 +34,9 @@ forms are currently supported:
 .TP
 \fBclipboard clear\fR ?\fB\-displayof\fR \fIwindow\fR?
 Claims ownership of the clipboard on \fIwindow\fR's display and removes
-any previous contents.  \fIWindow\fR defaults to ``.''.  Returns an
-empty string.
+any previous contents.  \fIWindow\fR defaults to
+.QW . .
+Returns an empty string.
 .TP
 \fBclipboard append\fR ?\fB\-displayof\fR \fIwindow\fR? ?\fB\-format\fR \fIformat\fR? ?\fB\-type\fR \fItype\fR? ?\fB\-\|\-\fR? \fIdata\fR
 Appends \fIdata\fR to the clipboard on \fIwindow\fR's
@@ -45,7 +46,9 @@ display.
 .RS
 .PP
 \fIType\fR specifies the form in which the selection is to be returned
-(the desired ``target'' for conversion, in ICCCM terminology), and
+(the desired
+.QW target
+for conversion, in ICCCM terminology), and
 should be an atom name such as STRING or FILE_NAME; see the
 Inter-Client Communication Conventions Manual for complete details.
 \fIType\fR defaults to STRING.
@@ -67,7 +70,7 @@ boundaries.  All items appended to the clipboard with the same
 \fItype\fR must have the same \fIformat\fR.
 .PP
 The \fIformat\fR argument is needed only for compatibility with
-clipboard requesters that don't use Tk.  If the Tk toolkit is being
+clipboard requesters that do not use Tk.  If the Tk toolkit is being
 used to retrieve the CLIPBOARD selection then the value is converted back to
 a string at the requesting end, so \fIformat\fR is
 irrelevant.
@@ -80,10 +83,13 @@ with a \fB\-\fR.
 .TP
 \fBclipboard get\fR ?\fB\-displayof\fR \fIwindow\fR? ?\fB\-type\fR \fItype\fR?
 Retrieve data from the clipboard on \fIwindow\fR's display.
-\fIwindow\fR defaults to ".".  \fIType\fR specifies the form in which
+\fIWindow\fR defaults to
+.QW . .
+\fIType\fR specifies the form in which
 the data is to be returned and should be an atom name such as STRING
 or FILE_NAME.  \fIType\fR defaults to STRING.  This command is
-equivalent to \fBselection get -selection CLIPBOARD\fR.
+equivalent to
+.QW "\fBselection get \-selection CLIPBOARD\fR" .
 .SH EXAMPLES
 Get the current contents of the clipboard.
 .CS
@@ -111,10 +117,10 @@ proc getItemConfig {canvas tag} {
       append script {$canvas create } [$canvas type $item]
       append script { } [$canvas coords $item] { }
       foreach config [$canvas itemconf $item] {
-         lassign $config name - - - value
+         lassign $config name \- \- \- value
          append script [list $name $value] { }
       }
-      append script \\n
+      append script \en
    }
    return [string trim $script]
 }
@@ -122,10 +128,10 @@ proc getItemConfig {canvas tag} {
 # Set up a binding on a canvas to cut and paste an item
 set c [canvas .c]
 pack $c
-$c create text 150 30 -text "cut and paste me"
+$c create text 150 30 \-text "cut and paste me"
 bind $c <<Cut>> {
    \fBclipboard clear\fR
-   \fBclipboard append -type\fR TkCanvasItem \\
+   \fBclipboard append \-type\fR TkCanvasItem \e
          [getItemConfig %W current]
    # Delete because this is cut, not copy.
    %W delete current
@@ -133,7 +139,7 @@ bind $c <<Cut>> {
 bind $c <<Paste>> {
    catch {
       set canvas %W
-      eval [\fBclipboard get -type\fR TkCanvasItem]
+      eval [\fBclipboard get \-type\fR TkCanvasItem]
    }
 }
 .CE

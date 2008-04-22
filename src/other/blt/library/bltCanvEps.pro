@@ -21,20 +21,20 @@
 %
 
 %
-% The definitions of the next two macros are from Appendix H of 
+% The definitions of the next two macros are from Appendix H of
 % Adobe's "PostScript Language Reference Manual" pp. 709-736.
-% 
+%
 
 % Prepare for EPS file
 
-/BeginEPSF {				
+/BeginEPSF {
   /beforeInclusionState save def
   /dictCount countdictstack def		% Save the # objects in the dictionary
   /opCount count 1 sub def		% Count object on operator stack
-  userdict begin			% Make "userdict" the current 
+  userdict begin			% Make "userdict" the current
 					% dictionary
     /showpage {} def			% Redefine showpage to be null
-    0 setgray 
+    0 setgray
     0 setlinecap
     1 setlinewidth
     0 setlinejoin
@@ -42,7 +42,7 @@
     [] 0 setdash
     newpath
     /languagellevel where {
-      pop languagelevel 
+      pop languagelevel
       1 ne {
 	false setstrokeadjust false setoverprint
       } if
@@ -54,7 +54,7 @@
   count opCount sub {
     pop
   } repeat
-  countdictstack dictCount sub { 
+  countdictstack dictCount sub {
   end					% Clean up dictionary stack
   } repeat
   beforeInclusionState restore

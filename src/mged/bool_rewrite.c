@@ -1,7 +1,7 @@
 /*                  B O O L _ R E W R I T E . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2007 United States Government as represented by
+ * Copyright (c) 1995-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,21 +22,11 @@
  *	Conversion routines to mangle an arbitrary Boolean tree,
  *	leaving it in GIFT-Boolean form.
  *
- *  Author -
- *	Paul Tanenbaum
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 
 #include <stdio.h>
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -126,9 +116,7 @@ static int find_bool_tree_rewrite (struct bool_tree_node *rp)
 		}
 	    break;
 	default:
-	    bu_log("Reached %s:%d.  This shouldn't happen\n",
-		    __FILE__, __LINE__);
-	    exit (1);
+	    bu_exit (1, "Reached %s:%d.  This shouldn't happen\n", __FILE__, __LINE__);
     }
 
     return (rule_nm);
@@ -152,8 +140,8 @@ static struct bool_tree_node *dup_bool_tree (struct bool_tree_node *rp)
 	return (rp);
     else
 	return (bt_create_internal(bt_opn(rp),
-		    dup_bool_tree(bt_opd(rp, BT_LEFT)),
-		    dup_bool_tree(bt_opd(rp, BT_RIGHT))));
+				   dup_bool_tree(bt_opd(rp, BT_LEFT)),
+				   dup_bool_tree(bt_opd(rp, BT_RIGHT))));
 }
 
 /*
@@ -195,7 +183,7 @@ static void do_bool_tree_rewrite (struct bool_tree_node *rp, int rule_nm)
 	    bt_opd(rp, BT_RIGHT) = c;
 	    bt_opn(bt_opd(rp, BT_LEFT)) = bt_opn(rp);
 	    if ((rule_nm == 5) || (rule_nm == 8))
-	       bt_opn(rp) = OPN_DIFFERENCE;
+		bt_opn(rp) = OPN_DIFFERENCE;
 	    break;
 	case 2:		/*  (a U b) * c  :  (a * c) U (b * c)  */
 	case 4:		/*  (a U b) - c  :  (a - c) U (b - c)  */
@@ -216,13 +204,11 @@ static void do_bool_tree_rewrite (struct bool_tree_node *rp, int rule_nm)
 	    bt_opd(rp, BT_LEFT) = bt_create_internal(bt_opn(rp), a, b);
 	    bt_opn(rp) = OPN_UNION;
 	    bt_opn(right) = (rule_nm == 7) ? OPN_DIFFERENCE
-					   : OPN_INTERSECTION;
+		: OPN_INTERSECTION;
 	    bt_opd(right, BT_LEFT) = dup_bool_tree(a);
 	    break;
 	default:
-	    bu_log("Reached %s:%d.  This shouldn't happen\n",
-		    __FILE__, __LINE__);
-	    exit (1);
+	    bu_exit (1, "Reached %s:%d.  This shouldn't happen\n", __FILE__, __LINE__);
     }
 }
 
@@ -319,49 +305,49 @@ int cvt_to_gift_bool (struct bool_tree_node *rp)
 void
 show_gift_bool (struct bool_tree_node *rp, int new_line)
 {
-  BU_CKMAG(rp, BOOL_TREE_NODE_MAGIC, "Boolean tree node");
+    BU_CKMAG(rp, BOOL_TREE_NODE_MAGIC, "Boolean tree node");
 
-  if (bt_is_leaf(rp))
-    Tcl_AppendResult(interp, bt_leaf_name(rp), (char *)NULL);
-  else{
-    show_gift_bool(bt_opd(rp, BT_LEFT), 0);
-    switch (bt_opn(rp)){
-    case OPN_UNION:
-      Tcl_AppendResult(interp, " u ", (char *)NULL);
-      break;
-    case OPN_DIFFERENCE:
-      Tcl_AppendResult(interp, " - ", (char *)NULL);
-      break;
-    case OPN_INTERSECTION:
-      Tcl_AppendResult(interp, " + ", (char *)NULL);
-      break;
-    default:
-      {
-	struct bu_vls tmp_vls;
+    if (bt_is_leaf(rp))
+	Tcl_AppendResult(interp, bt_leaf_name(rp), (char *)NULL);
+    else {
+	show_gift_bool(bt_opd(rp, BT_LEFT), 0);
+	switch (bt_opn(rp)) {
+	    case OPN_UNION:
+		Tcl_AppendResult(interp, " u ", (char *)NULL);
+		break;
+	    case OPN_DIFFERENCE:
+		Tcl_AppendResult(interp, " - ", (char *)NULL);
+		break;
+	    case OPN_INTERSECTION:
+		Tcl_AppendResult(interp, " + ", (char *)NULL);
+		break;
+	    default:
+	    {
+		struct bu_vls tmp_vls;
 
-	bu_vls_init(&tmp_vls);
-	bu_vls_printf(&tmp_vls, "%s:%d: Illegal operation type: %d\n",
-		      __FILE__, __LINE__, bt_opn(rp));
-	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-	bu_vls_free(&tmp_vls);
+		bu_vls_init(&tmp_vls);
+		bu_vls_printf(&tmp_vls, "%s:%d: Illegal operation type: %d\n",
+			      __FILE__, __LINE__, bt_opn(rp));
+		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		bu_vls_free(&tmp_vls);
 
-	exit(1);
-      }
+		bu_exit(1, NULL);
+	    }
+	}
+
+	show_gift_bool(bt_opd(rp, BT_RIGHT), 0);
     }
 
-    show_gift_bool(bt_opd(rp, BT_RIGHT), 0);
-  }
-
-  if (new_line)
-    Tcl_AppendResult(interp, "\n", (char *)NULL);
+    if (new_line)
+	Tcl_AppendResult(interp, "\n", (char *)NULL);
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

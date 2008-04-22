@@ -7,16 +7,16 @@
 </HEAD>
 <BODY BGCOLOR="#efefef" TEXT="black" LINK="blue" VLINK="#551A8B" ALINK="red">
 <A HREF="#toc">Table of Contents</A><P>
- 
+
 <H2><A NAME="sect0" HREF="#toc0">Name</A></H2>
-vector -  Vector data type for Tcl 
+vector -  Vector data type for Tcl
 <H2><A NAME="sect1" HREF="#toc1">Synopsis</A></H2>
 <B>vector
 create <I>vecName </I></B>?<I>vecName</I>...? ?<I>switches</I>?  <P>
 <B>vector destroy <I>vecName </I></B>?<I>vecName</I>...? <P>
 <B>vector
 expr <I>expression</I></B> <P>
-<B>vector names </B>?<I>pattern</I>...? 
+<B>vector names </B>?<I>pattern</I>...?
 <H2><A NAME="sect2" HREF="#toc2">Description</A></H2>
 The <B>vector</B> command creates
 a vector of floating point values.  The vector's components can be manipulated
@@ -38,7 +38,7 @@ associative arrays as vectors.  Tcl arrays are easy to use.  You can access
 individual elements randomly by specifying the index, or the set the entire
 array by providing a list of index and value pairs for each element.  The
 disadvantages of  associative arrays as vectors lie in the fact they are
-implemented as hash tables. 
+implemented as hash tables.
 <UL>
 &#183;<LI>There's no implied ordering to the associative
 arrays.  If you used vectors for plotting, you would want to insure the
@@ -63,7 +63,7 @@ all indices are generated for the array, so printing the array (using the
 <B>parray</B> procedure) does not print out all the component values.  You can
 use the Tcl command to access the array as a whole.  You can copy, append,
 or sort vector using its command.  If you need greater performance, or customized
-behavior, you can write your own C code to manage vectors. 
+behavior, you can write your own C code to manage vectors.
 <H2><A NAME="sect4" HREF="#toc4">Example</A></H2>
 You create
 vectors using the <B>vector</B> command and its <B>create</B> operation. <BR>
@@ -102,7 +102,7 @@ and largest components of the vector.   <BR>
 <CODE># Print the bounds of the vector<BR>
 puts "min=$y(min) max=$y(max)"<BR>
 </CODE><P>To delete components from a vector, simply unset the corresponding array
-element. In the following example, the first component of <I>y</I> is deleted. 
+element. In the following example, the first component of <I>y</I> is deleted.
 All the remaining components of <I>y</I> will be moved down by one index as the
 length of the vector is reduced by one. <BR>
 <CODE># Delete the first component<BR>
@@ -165,7 +165,7 @@ vector destroy x<BR>
 
 <H2><A NAME="sect5" HREF="#toc5"></CODE><P>Syntax</A></H2>
 Vectors are created using the <B>vector create</B> operation.   Th <B>create</B>
-operation can be invoked in one of three forms: 
+operation can be invoked in one of three forms:
 <DL>
 
 <DT><B>vector create <I>vecName</I></B> </DT>
@@ -345,7 +345,7 @@ the results.  <BR>
 <B>asin</B><tt>&#32;</tt>&nbsp;<tt>&#32;</tt>&nbsp;<B>cosh</B><tt>&#32;</tt>&nbsp;<tt>&#32;</tt>&nbsp;<B>log</B><tt>&#32;</tt>&nbsp;<tt>&#32;</tt>&nbsp;<B>sqrt</B> <BR>
 <B>atan</B><tt>&#32;</tt>&nbsp;<tt>&#32;</tt>&nbsp;<B>exp</B><tt>&#32;</tt>&nbsp;<tt>&#32;</tt>&nbsp;<B>log10</B><tt>&#32;</tt>&nbsp;<tt>&#32;</tt>&nbsp;<B>tan</B>  <BR>
 <B>ceil</B><tt>&#32;</tt>&nbsp;<tt>&#32;</tt>&nbsp;<B>floor</B><tt>&#32;</tt>&nbsp;<tt>&#32;</tt>&nbsp;<B>sin</B><tt>&#32;</tt>&nbsp;<tt>&#32;</tt>&nbsp;<B>tanh</B> <BR>
-</CODE><P>Additional functions are: 
+</CODE><P>Additional functions are:
 <DL>
 
 <DT><B>abs</B> </DT>
@@ -363,13 +363,13 @@ of the vector. </DD>
 
 <DT><B>srandom</B> </DT>
 <DD>Initializes the random number generator using <I>srand48</I>.
-The high order 32-bits are set using the integral portion of the first 
+The high order 32-bits are set using the integral portion of the first
 vector component. All other components are ignored.  The low order 16-bits
  are set to an arbitrary value. </DD>
 </DL>
 <P>
 The following functions return a single
-value. 
+value.
 <DL>
 
 <DT><B>adev</B>  </DT>
@@ -430,7 +430,7 @@ of the vector minus 1. </DD>
 </DL>
 <P>
 The last set returns a vector of the same length
-as the argument. 
+as the argument.
 <DL>
 
 <DT><B>norm</B>  </DT>
@@ -455,7 +455,7 @@ to query or modify it.  The general form is <BR>
 <P>
 <CODE><I>vecName <I>operation</I></I> ?<I>arg</I>?...<BR>
 </CODE><P>Both <I>operation</I> and its arguments determine the exact behavior of the command.
- The operations available for vectors are listed below. 
+ The operations available for vectors are listed below.
 <DL>
 
 <DT><I>vecName <B>append</B></I> <I>item</I>
@@ -615,7 +615,7 @@ include the header file <I>blt.h</I>. It contains the definition of the structur
 components are stored in a double precision array, whose size size is represented
 by <I>arraySize</I>.  <I>NumValues</I> is the length of vector.  The size of the array
 is always equal to or larger than the length of the vector.  <I>Min</I> and <I>max</I>
-are minimum and maximum component values. 
+are minimum and maximum component values.
 <H2><A NAME="sect10" HREF="#toc10">Library Routines</A></H2>
 The following
 routines are available from C to manage vectors. Vectors are identified
@@ -1044,7 +1044,7 @@ vector clients (such as a graph widget). <P>
 #include &lt;blt.h&gt;<tt>&#32;</tt>&nbsp;<tt>&#32;</tt>&nbsp;<tt>&#32;</tt>&nbsp;<tt>&#32;</tt>&nbsp;<tt>&#32;</tt>&nbsp;<tt>&#32;</tt>&nbsp;<tt>&#32;</tt>&nbsp;<tt>&#32;</tt>&nbsp;<BR>
 
 <!--
-  
+
 Blt_Vector *vecPtr;<BR>
 double *newArr;<BR>
 FILE *f;<BR>
@@ -1097,7 +1097,7 @@ when the procedure returns. <BR>
 <P>
 </CODE><P>This has changed.  Variables are not automatically destroyed when their
 variable is unset.  You can restore the old behavior by setting the "-watchunset"
-switch. 
+switch.
 <H2><A NAME="sect13" HREF="#toc13"></CODE><P>Keywords</A></H2>
 vector, graph, widget <P>
 

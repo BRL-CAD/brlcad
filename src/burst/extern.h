@@ -1,7 +1,7 @@
 /*                        E X T E R N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,25 +27,11 @@
 
 #include "common.h"
 
-#if defined(HAVE_STDARG_H)
-#  include <stdarg.h>
-#else
-#  ifdef HAVE_VARARGS_H
-#    include <varargs.h>
-#  endif
-#endif
-
-#if HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include <stdarg.h>
+#include <stdlib.h>
 #include <string.h>
 
-/* External functions from C library. */
-#ifdef HAVE_STDLIB_H
-#  include <stdlib.h>
-#endif
-
-#include "machine.h"
+#include "bio.h"
 #include "fb.h"
 #include "bu.h"
 
@@ -103,13 +89,8 @@ extern void prntRayIntersect();
 extern void prntTimer();
 extern void prompt();
 extern void readCmdFile();
-#if defined(HAVE_STDARG_H)
-extern void prntScr( char *, ...);
-extern void brst_log( char *, ... );
-#else
-extern void brst_log();
-extern void prntScr();
-#endif
+extern void prntScr(const char *, ...);
+extern void brst_log(const char *, ... );
 extern void warning();
 extern void prntUsage();
 extern void clr_Tabs();
@@ -258,8 +239,8 @@ extern struct rt_i *rtip;
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

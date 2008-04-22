@@ -1,7 +1,7 @@
 /*                      V F O N T - I F . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -61,35 +61,41 @@
  *	Michael John Muuss
  */
 
+#include "bu.h"
+
 #define	SXT(c)		((c)|((c&0x80)?(~0xFF):0))
 
 struct vfont_dispatch  {
-	unsigned short	vd_addr;
-	short		vd_nbytes;
-	short		vd_up;
-	short		vd_down;
-	short		vd_left;
-	short		vd_right;
-	short		vd_width;
+    unsigned short	vd_addr;
+    short		vd_nbytes;
+    short		vd_up;
+    short		vd_down;
+    short		vd_left;
+    short		vd_right;
+    short		vd_width;
 };
 struct vfont {
-	short	vf_maxx;
-	short	vf_maxy;
-	short	vf_xtend;
-	struct vfont_dispatch	vf_dispatch[256];
-	char	*vf_bits;
+    short	vf_maxx;
+    short	vf_maxy;
+    short	vf_xtend;
+    struct vfont_dispatch	vf_dispatch[256];
+    char	*vf_bits;
 };
 #define	VFONT_NULL	((struct vfont *)NULL)
 
-extern struct vfont	*vfont_get();
-extern void		vfont_free();
+/* vfont.c */
+BU_EXPORT BU_EXTERN(struct vfont *vfont_get,
+		    (char *font));
+BU_EXPORT BU_EXTERN(void vfont_free,
+		    (struct vfont *font));
+
 /** @} */
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

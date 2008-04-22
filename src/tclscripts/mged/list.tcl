@@ -1,7 +1,7 @@
 #                        L I S T . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2007 United States Government as represented by
+# Copyright (c) 2004-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -142,7 +142,7 @@ proc lbdcHack {w x y t id type path} {
 	    }
 	    o {
 		bind $w <ButtonRelease-1> \
-			"destroy [winfo parent $w]; build_matrix_menu $id $item; break"
+		    "destroy [winfo parent $w]; build_matrix_menu $id $item; break"
 		set mged_gui($id,lastButtonPress) $t
 		set mged_gui($id,lastItem) $item
 		return
@@ -173,7 +173,7 @@ proc lbdcHack {w x y t id type path} {
 	}
 
 	bind $w <ButtonRelease-1> \
-		"destroy [winfo parent $w]; break"
+	    "destroy [winfo parent $w]; break"
     }
 
     set mged_gui($id,lastButtonPress) $t

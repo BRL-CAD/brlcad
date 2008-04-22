@@ -36,11 +36,11 @@ it. This is is often necessary when building GUIs in the style where
 you create your activity widgets first before laying them out on the
 display:
 .CS
-button .b -text "Hi there!"
-pack [frame .f -background blue]
-pack [label .f.l1 -text "This is above"]
-pack .b -in .f
-pack [label .f.l2 -text "This is below"]
+button .b \-text "Hi there!"
+pack [frame .f \-background blue]
+pack [label .f.l1 \-text "This is above"]
+pack .b \-in .f
+pack [label .f.l2 \-text "This is below"]
 \fBraise\fR .b
 .CE
 

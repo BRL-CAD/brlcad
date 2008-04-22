@@ -58,7 +58,7 @@ widget command.
 Specifies the desired height for the window in any of the forms
 acceptable to \fBTk_GetPixels\fR.  If this option is less than or equal
 to zero then the window will not request any size at all.  Note that this
-sets the total height of the frame, any \fB-borderwidth\fR or similar is
+sets the total height of the frame, any \fB\-borderwidth\fR or similar is
 not added.  Normally \fB\-height\fR should not be used if a propagating
 geometry manager, such as \fBgrid\fR or \fBpack\fR, is used within the
 frame since the geometry manager will override the height of the frame.
@@ -73,12 +73,11 @@ widget command.
 Specifies the desired width for the window in any of the forms
 acceptable to \fBTk_GetPixels\fR.  If this option is less than or equal
 to zero then the window will not request any size at all.  Note that this
-sets the total width of the frame, any \fB-borderwidth\fR or similar is
+sets the total width of the frame, any \fB\-borderwidth\fR or similar is
 not added.  Normally \fB\-width\fR should not be used if a propagating
 geometry manager, such as \fBgrid\fR or \fBpack\fR, is used within the
 frame since the geometry manager will override the width of the frame.
 .BE
-
 .SH DESCRIPTION
 .PP
 The \fBframe\fR command creates a new window (given by the
@@ -94,7 +93,6 @@ A frame is a simple widget.  Its primary purpose is to act as a
 spacer or container for complex window layouts.  The only features
 of a frame are its background color and an optional 3-D border to make the
 frame appear raised or sunken.
-
 .SH "WIDGET COMMAND"
 .PP
 The \fBframe\fR command creates a new Tcl command whose
@@ -128,14 +126,11 @@ modifies the given widget option(s) to have the given value(s);  in
 this case the command returns an empty string.
 \fIOption\fR may have any of the values accepted by the \fBframe\fR
 command.
-
 .SH BINDINGS
 .PP
 When a new frame is created, it has no default event bindings:
 frames are not intended to be interactive.
-
 .SH "SEE ALSO"
-labelframe(n), toplevel(n), ttk_frame(n)
-
+labelframe(n), toplevel(n), ttk::frame(n)
 .SH KEYWORDS
 frame, widget

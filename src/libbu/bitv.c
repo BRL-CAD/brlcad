@@ -1,7 +1,7 @@
 /*                          B I T V . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,39 +22,76 @@
 /** @file bitv.c
  *
  * @brief
- *  Routines for managing bit vectors of arbitrary length.
  *
- *  The basic type "bitv_t" is defined in h/machine.h; it is the
- *  widest integer datatype for which efficient hardware support exists.
- *  BITV_SHIFT and BITV_MASK are also defined in machine.h
+ * Routines for managing efficient high-performance bit vectors of
+ * arbitrary length.
  *
- *  These bit vectors are "little endian", bit 0 is in the right hand
- *  side of the [0] word.
+ * The basic type "bitv_t" is defined in include/bu.h; it is the
+ * widest integer datatype for which efficient hardware support
+ * exists.  BU_BITV_SHIFT and BU_BITV_MASK are also defined in bu.h
  *
- *  @author Michael John Muuss
- *
- *  @par Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ * These bit vectors are "little endian", bit 0 is in the right hand
+ * side of the [0] word.
  *
  */
-
-#ifndef lint
-static const char libbu_bitv_RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>		/* for bzero() */
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
 #include <ctype.h>
-#include "machine.h"
+
 #include "bu.h"
+
+
+/**
+ * private 32-bit recursive reduction using "SIMD Within A Register"
+ * (SWAR) to count the number of one bits in a given integer.  the
+ * first step is mapping 2-bit values into sum of 2 1-bit values in
+ * sneaky way.  this technique was taken from the University of
+ * Kentucky's Aggregate Magic Algorithms collection.
+ */
+static inline unsigned int
+count_ones32(register unsigned int x)
+{
+    x -= ((x >> 1) & 0x55555555);
+    x  = (((x >> 2) & 0x33333333) + (x & 0x33333333));
+    x  = (((x >> 4) + x) & 0x0f0f0f0f);
+    x += (x >> 8);
+    x += (x >> 16);
+    return x & 0x0000003f;
+}
+
+/**
+ * private 32-bit recursive reduction using "SIMD Within A Register"
+ * (SWAR) to compute a base-2 integer logarithm for a given integer.
+ * this technique was taken from the University of Kentucky's
+ * Aggregate Magic Algorithms collection.
+ */
+static inline unsigned int
+floor_ilog2(register unsigned int x)
+{
+    x |= (x >> 1);
+    x |= (x >> 2);
+    x |= (x >> 4);
+    x |= (x >> 8);
+    x |= (x >> 16);
+    return count_ones32(x >> 1);
+}
+
+
+/**
+ * wrap the above private routines for computing the bitv shift size.
+ * users should not call this directly, instead calling the
+ * BU_BITV_SHIFT macro instead.
+ */
+inline int
+bu_bitv_shift()
+{
+    return (floor_ilog2(sizeof(bitv_t)*8));
+}
+
 
 /**
  *			B U _ B I T V _ N E W
@@ -121,16 +158,15 @@ bu_bitv_or(struct bu_bitv *ov, const struct bu_bitv *iv)
     register const bitv_t	*in;
     register int		words;
 
-    if( ov->nbits != iv->nbits )  bu_bomb("bu_bitv_or: length mis-match");
+    if ( ov->nbits != iv->nbits )  bu_bomb("bu_bitv_or: length mis-match");
     out = ov->bits;
     in = iv->bits;
     words = BU_BITS2WORDS(iv->nbits);
 #ifdef VECTORIZE
-#	include "noalias.h"
-    for( --words; words >= 0; words-- )
+    for ( --words; words >= 0; words-- )
 	out[words] |= in[words];
 #else
-    while( words-- > 0 )
+    while ( words-- > 0 )
 	*out++ |= *in++;
 #endif
 }
@@ -145,16 +181,15 @@ bu_bitv_and(struct bu_bitv *ov, const struct bu_bitv *iv)
     register const bitv_t	*in;
     register int		words;
 
-    if( ov->nbits != iv->nbits )  bu_bomb("bu_bitv_and: length mis-match");
+    if ( ov->nbits != iv->nbits )  bu_bomb("bu_bitv_and: length mis-match");
     out = ov->bits;
     in = iv->bits;
     words = BU_BITS2WORDS(iv->nbits);
 #ifdef VECTORIZE
-#	include "noalias.h"
-    for( --words; words >= 0; words-- )
+    for ( --words; words >= 0; words-- )
 	out[words] &= in[words];
 #else
-    while( words-- > 0 )
+    while ( words-- > 0 )
 	*out++ &= *in++;
 #endif
 }
@@ -179,9 +214,9 @@ bu_bitv_vls(struct bu_vls *v, register const struct bu_bitv *bv)
     bu_vls_strcat( v, "(" );
 
     /* Visit all the bits in ascending order */
-    for( i=0; i<len; i++ )  {
-	if( BU_BITTEST(bv, i) == 0 )  continue;
-	if( seen )  bu_vls_strcat( v, ", " );
+    for ( i=0; i<len; i++ )  {
+	if ( BU_BITTEST(bv, i) == 0 )  continue;
+	if ( seen )  bu_vls_strcat( v, ", " );
 	bu_vls_printf( v, "%d", i );
 	seen = 1;
     }
@@ -226,15 +261,15 @@ bu_bitv_to_hex(struct bu_vls *v, register const struct bu_bitv *bv)
     byte_no = sizeof( bitv_t );
 
     bu_vls_extend( v, word_count * (unsigned int)sizeof( bitv_t ) * 2 + 1 );
-    while( word_count-- )
+    while ( word_count-- )
+    {
+	while ( byte_no-- )
 	{
-	    while( byte_no-- )
-		{
-		    bu_vls_printf( v, "%02lx",
-				   ((bv->bits[word_count] & (((bitv_t)0xff)<<(byte_no*8))) >> (byte_no*8)) & (bitv_t)0xff );
-		}
-	    byte_no = sizeof( bitv_t );
+	    bu_vls_printf( v, "%02lx",
+			   ((bv->bits[word_count] & (((bitv_t)0xff)<<(byte_no*8))) >> (byte_no*8)) & (bitv_t)0xff );
 	}
+	byte_no = sizeof( bitv_t );
+    }
 }
 
 /**
@@ -256,50 +291,50 @@ bu_hex_to_bitv(const char *str)
     abyte[2] = '\0';
 
     /* skip over any initial white space */
-    while( isspace( *str ) )
+    while ( isspace( *str ) )
 	str++;
 
     str_start = str;
     /* count hex digits */
-    while( isxdigit( *str ) )
+    while ( isxdigit( *str ) )
 	str++;
 
     len = str - str_start;
 
-    if( len < 2 || len%2 )
-	{
-	    /* Must be two digits per byte */
-	    bu_log( "bu_hex_to_bitv: illegal hex bitv (%s)\n", str_start );
-	    return( (struct bu_bitv *)NULL );
-	}
+    if ( len < 2 || len%2 )
+    {
+	/* Must be two digits per byte */
+	bu_log( "bu_hex_to_bitv: illegal hex bitv (%s)\n", str_start );
+	return( (struct bu_bitv *)NULL );
+    }
 
     bytes = len / 2; /* two hex digits per byte */
     bv = bu_bitv_new( len * 4 ); /* 4 bits per hex digit */
     bu_bitv_clear( bv );
     word_count = bytes/sizeof( bitv_t );
     byte_no = bytes % sizeof( bitv_t );
-    if( !byte_no )
+    if ( !byte_no )
 	byte_no = sizeof( bitv_t );
     else
 	word_count++;
 
     str = str_start;
-    while( word_count-- )
+    while ( word_count-- )
+    {
+	while ( byte_no-- )
 	{
-	    while( byte_no-- )
-		{
-		    /* get next two hex digits from string */
-		    abyte[0] = *str++;
-		    abyte[1] = *str++;
+	    /* get next two hex digits from string */
+	    abyte[0] = *str++;
+	    abyte[1] = *str++;
 
-		    /* convert into an unsigned long */
-		    c = strtoul( abyte, (char **)NULL, 16 );
+	    /* convert into an unsigned long */
+	    c = strtoul( abyte, (char **)NULL, 16 );
 
-		    /* set the appropriate bits in the bit vector */
-		    bv->bits[word_count] |= (bitv_t)c<<(byte_no*8);
-		}
-	    byte_no = sizeof( bitv_t );
+	    /* set the appropriate bits in the bit vector */
+	    bv->bits[word_count] |= (bitv_t)c<<(byte_no*8);
 	}
+	byte_no = sizeof( bitv_t );
+    }
 
     return( bv );
 }
@@ -325,8 +360,8 @@ bu_bitv_dup(register const struct bu_bitv *bv)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -132,13 +132,13 @@ typedef struct {
 				 * effect for the border, such as
 				 * TK_RELIEF_RAISED, to be used when a
 				 * checkbutton or radiobutton without
-				 * indicator is off */
+				 * indicator is off. */
     Tcl_Obj *highlightWidthPtr;	/* Value of -highlightthickness option:
 				 * specifies width in pixels of highlight to
 				 * draw around widget when it has the focus.
 				 * <= 0 means don't draw a highlight. */
     int highlightWidth;		/* Integer value corresponding to
-				 * highlightWidthPtr.  Always >= 0. */
+				 * highlightWidthPtr. Always >= 0. */
     Tk_3DBorder highlightBorder;/* Value of -highlightbackground option:
 				 * specifies background with which to draw 3-D
 				 * default ring and focus highlight area when
@@ -160,7 +160,7 @@ typedef struct {
     XColor *disabledFg;		/* Value of -disabledforeground option:
 				 * foreground color when disabled. NULL means
 				 * use normalFg with a 50% stipple instead. */
-    GC normalTextGC;		/* GC for drawing text in normal mode.  Also
+    GC normalTextGC;		/* GC for drawing text in normal mode. Also
 				 * used to copy from off-screen pixmap onto
 				 * screen. */
     GC activeTextGC;		/* GC for drawing text in active mode (NULL
@@ -203,7 +203,8 @@ typedef struct {
 				 * 0 means don't draw it. */
     Tk_3DBorder selectBorder;	/* Value of -selectcolor option: specifies
 				 * color for drawing indicator background, or
-				 * perhaps widget background, when selected */
+				 * perhaps widget background, when
+				 * selected. */
     int textWidth;		/* Width needed to display text as requested,
 				 * in pixels. */
     int textHeight;		/* Height needed to display text as requested,
@@ -233,9 +234,9 @@ typedef struct {
 				 * to store in variable when this button isn't
 				 * selected. Used only by checkbuttons. */
     Tcl_Obj *tristateValuePtr;	/* Value of -tristatevalue option: specifies
-                                 * value to display Tristate or Multivalue
-                                 * mode when variable matches this value.
-                                 * Used by check- buttons. */
+				 * value to display Tristate or Multivalue
+				 * mode when variable matches this value.
+				 * Used by check- buttons. */
 
     /*
      * Miscellaneous information:

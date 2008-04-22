@@ -1,7 +1,7 @@
 /*                          T R I E . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,24 +37,24 @@ typedef void Func();
 /* Trie tree node.  */
 typedef union trie Trie;
 union trie
-	{
-	struct  /* Internal nodes: datum is current letter. */
-		{
-		int t_char;   /* Current letter.  */
-		Trie *t_altr; /* Alternate letter node link.  */
-		Trie *t_next; /* Next letter node link.  */
-		}
-	n;
-	struct  /* Leaf nodes: datum is function ptr.  */
-		{
-		Func *t_func; /* Function pointer.  */
-		Trie *t_altr; /* Alternate letter node link.  */
-		Trie *t_next; /* Next letter node link.  */
-		}
-	l;
-	};
+{
+    struct  /* Internal nodes: datum is current letter. */
+    {
+	int t_char;   /* Current letter.  */
+	Trie *t_altr; /* Alternate letter node link.  */
+	Trie *t_next; /* Next letter node link.  */
+    }
+    n;
+    struct  /* Leaf nodes: datum is function ptr.  */
+    {
+	Func *t_func; /* Function pointer.  */
+	Trie *t_altr; /* Alternate letter node link.  */
+	Trie *t_next; /* Next letter node link.  */
+    }
+    l;
+};
 #define NewTrie( p ) \
-		if( ((p) = (Trie *) malloc( sizeof(Trie) )) == TRIE_NULL )\
+		if ( ((p) = (Trie *) malloc( sizeof(Trie) )) == TRIE_NULL )\
 			{\
 			Malloc_Bomb(sizeof(Trie));\
 			return	TRIE_NULL;\
@@ -66,8 +66,8 @@ extern Trie *cmd_trie;
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

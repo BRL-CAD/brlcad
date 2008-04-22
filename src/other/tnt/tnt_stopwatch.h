@@ -52,21 +52,21 @@ class Stopwatch {
 
 inline Stopwatch::Stopwatch() : running_(0), start_time_(0.0), total_(0.0) {}
 
-void Stopwatch::start() 
+void Stopwatch::start()
 {
 	running_ = 1;
 	total_ = 0.0;
 	start_time_ = seconds();
 }
 
-double Stopwatch::stop()  
+double Stopwatch::stop()
 {
-	if (running_) 
+	if (running_)
 	{
-         total_ += (seconds() - start_time_); 
+         total_ += (seconds() - start_time_);
          running_ = 0;
     }
-    return total_; 
+    return total_;
 }
 
 inline void Stopwatch::resume()
@@ -77,9 +77,9 @@ inline void Stopwatch::resume()
 		running_ = 1;
 	}
 }
-		
 
-inline double Stopwatch::read()   
+
+inline double Stopwatch::read()
 {
 	if (running_)
 	{
@@ -92,6 +92,6 @@ inline double Stopwatch::read()
 
 } /* TNT namespace */
 #endif
-    
 
-            
+
+

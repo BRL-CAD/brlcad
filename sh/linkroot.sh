@@ -2,7 +2,7 @@
 #                     L I N K R O O T . S H
 # BRL-CAD
 #
-# Copyright (c) 2007 United States Government as represented by
+# Copyright (c) 2007-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -69,13 +69,13 @@ usage ( ) {
     fi
 
     cat <<EOF
-Usage: $0 base_root stable_release
+    Usage: $0 base_root stable_release
 
-	base_root is a base directory that will contain your links
-	stable_release is the root directory to link "stable"
+    base_root is a base directory that will contain your links
+    stable_release is the root directory to link "stable"
 
-linkroot.sh installation support script by Christopher Sean Morrison
-revised 3-clause BSD-license, copyright (c) $__copyright
+    linkroot.sh installation support script by Christopher Sean Morrison
+    revised 3-clause BSD-license, copyright (c) $__copyright
 EOF
     exit 1
 }

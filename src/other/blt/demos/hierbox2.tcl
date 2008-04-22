@@ -2,17 +2,17 @@
 
 package require BLT
 # --------------------------------------------------------------------------
-# Starting with Tcl 8.x, the BLT commands are stored in their own 
+# Starting with Tcl 8.x, the BLT commands are stored in their own
 # namespace called "blt".  The idea is to prevent name clashes with
 # Tcl commands and variables from other packages, such as a "table"
-# command in two different packages.  
+# command in two different packages.
 #
 # You can access the BLT commands in a couple of ways.  You can prefix
 # all the BLT commands with the namespace qualifier "blt::"
-#  
+#
 #    blt::graph .g
 #    blt::table . .g -resize both
-# 
+#
 # or you can import all the command into the global namespace.
 #
 #    namespace import blt::*
@@ -28,7 +28,7 @@ source scripts/demo.tcl
 
 proc AddDirEntries { w dir } {
     if { [file isdirectory $dir] } {
-	set files [glob -nocomplain $dir/*] 
+	set files [glob -nocomplain $dir/*]
 	eval $w insert end [lsort $files]
 	set subdirs [glob -nocomplain $dir/*/]
 	eval $w entry configure [lsort $subdirs] -button yes
@@ -46,7 +46,7 @@ set top ../
 option add *Hierbox.TileOffset  yes
 
 option add *forceGadgets	no
-option add *Hierbox.openCommand	{ 
+option add *Hierbox.openCommand	{
     AddDirEntries %W "$top/%P"
 }
 option add *Hierbox.closeCommand {
@@ -87,14 +87,14 @@ table . \
 table configure . c1 r1 r2 r3 -resize none
 
 .h configure -separator "/" -trim $top \
-    -allowduplicates no 
+    -allowduplicates no
 
-#.h entry configure 0 -label [file tail $top] 
+#.h entry configure 0 -label [file tail $top]
 
 AddDirEntries .h $top
 focus .h
 set nodes [.h find -glob -name *.c]
-eval .h entry configure $nodes -labelcolor red 
+eval .h entry configure $nodes -labelcolor red
 
 wm protocol . WM_DELETE_WINDOW { destroy . }
 #blt::bltdebug 100

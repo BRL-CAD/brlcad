@@ -1,7 +1,7 @@
 /*                     P I X H I S T 3 D . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2007 United States Government as represented by
+ * Copyright (c) 1986-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,30 +27,17 @@
  *	|/
  *	+______G
  *
- *  Author -
- *	Phillip Dykstra
- *	20 June 1986
- *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#include <strings.h>
-#endif
+#include "bio.h"
 
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#include "machine.h"
 #include "fb.h"
+#include "bu.h"
+
 
 /*
  * Smallest non-zero value we will plot.
@@ -68,50 +55,48 @@ unsigned char ibuf[8*1024*3];
 
 void	disp_array(long int (*v)[256], int xoff, int yoff);
 
-static char *Usage = "usage: pixhist3d [file.pix]\n";
+static const char *Usage = "usage: pixhist3d [file.pix]\n";
+
 
 int
 main(int argc, char **argv)
 {
-	int	n;
+    int	n;
 
-	if( argc > 1 ) {
-		if( (fp = fopen(argv[1], "r")) == NULL ) {
-			fprintf( stderr, "pixhist3d: can't open \"%s\"\n", argv[1] );
-			fprintf( stderr, Usage );
-			exit( 1 );
-		}
-	} else
-		fp = stdin;
-
-	if( isatty(fileno(fp)) ) {
-		fprintf( stderr, Usage );
-		exit( 2 );
+    if ( argc > 1 ) {
+	if ( (fp = fopen(argv[1], "r")) == NULL ) {
+	    fprintf( stderr, "%s", Usage );
+	    bu_exit(1, "pixhist3d: can't open \"%s\"\n", argv[1] );
 	}
+    } else
+	fp = stdin;
 
-	if( (fbp = fb_open( NULL, 512, 512 )) == NULL )  {
-		fprintf(stderr,"fb_open failed\n");
-		exit(12);
+    if ( isatty(fileno(fp)) ) {
+	bu_exit(2, "%s", Usage );
+    }
+
+    if ( (fbp = fb_open( NULL, 512, 512 )) == NULL )  {
+	bu_exit(12, "fb_open failed\n");
+    }
+
+    while ( (n = fread(&ibuf[0], sizeof(*ibuf), sizeof(ibuf), fp)) > 0 ) {
+	register unsigned char *bp;
+	register int i;
+
+	bp = &ibuf[0];
+	for ( i = n/3; i > 0; i--, bp += 3 )  {
+	    rxb[ bp[RED] ][ bp[BLU] ]++;
+	    rxg[ bp[RED] ][ bp[GRN] ]++;
+	    bxg[ bp[BLU] ][ bp[GRN] ]++;
 	}
+    }
 
-	while( (n = fread(&ibuf[0], sizeof(*ibuf), sizeof(ibuf), fp)) > 0 ) {
-		register unsigned char *bp;
-		register int i;
+    disp_array( rxg, 0, 0 );
+    disp_array( rxb, 256, 0 );
+    disp_array( bxg, 0, 256 );
 
-		bp = &ibuf[0];
-		for( i = n/3; i > 0; i--, bp += 3 )  {
-			rxb[ bp[RED] ][ bp[BLU] ]++;
-			rxg[ bp[RED] ][ bp[GRN] ]++;
-			bxg[ bp[BLU] ][ bp[GRN] ]++;
-		}
-	}
-
-	disp_array( rxg, 0, 0 );
-	disp_array( rxb, 256, 0 );
-	disp_array( bxg, 0, 256 );
-
-	fb_close( fbp );
-	return 0;
+    fb_close( fbp );
+    return 0;
 }
 
 /*
@@ -120,41 +105,41 @@ main(int argc, char **argv)
 void
 disp_array(long int (*v)[256], int xoff, int yoff)
 {
-	register int	x, y;
-	static long	max;
-	static double scale;
-	unsigned char	obuf[256*3];
+    register int	x, y;
+    static long	max;
+    static double scale;
+    unsigned char	obuf[256*3];
 
-	/* Find max value */
-	max = 0;
-	for( y = 0; y < 256; y++ ) {
-		for( x = 0; x < 256; x++ ) {
-			if( v[y][x] > max )
-				max = v[y][x];
-		}
+    /* Find max value */
+    max = 0;
+    for ( y = 0; y < 256; y++ ) {
+	for ( x = 0; x < 256; x++ ) {
+	    if ( v[y][x] > max )
+		max = v[y][x];
 	}
-	scale = 255.0 / ((double)max);
+    }
+    scale = 255.0 / ((double)max);
 
-	/* plot them */
-	for( y = 0; y < 256; y++ ) {
-		for( x = 0; x < 256; x++ ) {
-			register int value;
+    /* plot them */
+    for ( y = 0; y < 256; y++ ) {
+	for ( x = 0; x < 256; x++ ) {
+	    register int value;
 
-			value = v[y][x] * scale;
-			if( value < THRESH && v[y][x] != 0 )
-				value = THRESH;
-			obuf[x*3+RED] = obuf[x*3+GRN] = obuf[x*3+BLU] = value;
-		}
-		fb_write( fbp, xoff, yoff+y, obuf, 256 );
+	    value = v[y][x] * scale;
+	    if ( value < THRESH && v[y][x] != 0 )
+		value = THRESH;
+	    obuf[x*3+RED] = obuf[x*3+GRN] = obuf[x*3+BLU] = value;
 	}
+	fb_write( fbp, xoff, yoff+y, obuf, 256 );
+    }
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

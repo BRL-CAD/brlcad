@@ -1,7 +1,7 @@
 /*                        T I T L E S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2007 United States Government as represented by
+ * Copyright (c) 1985-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,25 +19,15 @@
  */
 /** @file titles.c
  *
- * Functions -
- *	dotitles	Output GED "faceplate" & titles.
- *
- *  Author -
- *	Michael John Muuss
- *	Kieth A. Applin
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  */
+
 #include "common.h"
 
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
 
-#include "machine.h"
+#include "bio.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
@@ -87,7 +77,7 @@ create_text_overlay( struct bu_vls *vp )
      */
 
     /* print solid info at top of screen */
-    if( es_edflag >= 0 ) {
+    if ( es_edflag >= 0 ) {
 	dp = LAST_SOLID(illump);
 
 	bu_vls_strcat( vp, "** SOLID -- " );
@@ -96,7 +86,7 @@ create_text_overlay( struct bu_vls *vp )
 
 	vls_solid( vp, &es_int, bn_mat_identity );
 
-	if(illump->s_fullpath.fp_len > 1) {
+	if (illump->s_fullpath.fp_len > 1) {
 	    bu_vls_strcat( vp, "\n** PATH --  ");
 	    db_path_to_vls( vp, &illump->s_fullpath );
 	    bu_vls_strcat( vp, ": " );
@@ -107,13 +97,13 @@ create_text_overlay( struct bu_vls *vp )
     }
 
     /* display path info for object editing also */
-    if( state == ST_O_EDIT ) {
+    if ( state == ST_O_EDIT ) {
 	bu_vls_strcat( vp, "** PATH --  ");
 	db_path_to_vls( vp, &illump->s_fullpath );
 	bu_vls_strcat( vp, ": " );
 
 	/* print the evaluated (path) solid parameters */
-	if( illump->s_Eflag == 0 ) {
+	if ( illump->s_Eflag == 0 ) {
 	    mat_t	new_mat;
 	    /* NOT an evaluated region */
 	    /* object edit option selected */
@@ -137,32 +127,32 @@ create_text_overlay( struct bu_vls *vp )
 	 * we replace any TABs with spaces. Also, look for the
 	 * maximum line length.
 	 */
-	for(p = start; *p != '\0'; ++p){
-	    if(*p == '\t')
+	for (p = start; *p != '\0'; ++p) {
+	    if (*p == '\t')
 		*p = ' ';
-	    else if(*p == '\n'){
-		if(i > imax)
+	    else if (*p == '\n') {
+		if (i > imax)
 		    imax = i;
 		i = 0;
-	    }else
+	    } else
 		++i;
 	}
 
-	if(i > imax)
+	if (i > imax)
 	    imax = i;
 
 	/* Prep string for use with Tcl/Tk */
 	++imax;
 	i = 0;
 	bu_vls_init(&vls);
-	for(p = start; *p != '\0'; ++p){
-	    if(*p == '\n'){
-		for(j = 0; j < imax - i; ++j)
+	for (p = start; *p != '\0'; ++p) {
+	    if (*p == '\n') {
+		for (j = 0; j < imax - i; ++j)
 		    bu_vls_putc(&vls, ' ');
 
 		bu_vls_putc(&vls, *p);
 		i = 0;
-	    }else{
+	    } else {
 		bu_vls_putc(&vls, *p);
 		++i;
 	    }
@@ -185,9 +175,9 @@ create_text_overlay( struct bu_vls *vp )
  */
 void
 screen_vls(
-	   int	xbase,
-	   int	ybase,
-	   struct bu_vls	*vp)
+    int	xbase,
+    int	ybase,
+    struct bu_vls	*vp)
 {
     register char	*start;
     register char	*end;
@@ -202,8 +192,8 @@ screen_vls(
 		   color_scheme->cs_edit_info[2], 1, 1.0);
 
     start = bu_vls_addr( vp );
-    while( *start != '\0' )  {
-	if( (end = strchr( start, '\n' )) == NULL )  return;
+    while ( *start != '\0' )  {
+	if ( (end = strchr( start, '\n' )) == NULL )  return;
 
 	*end = '\0';
 
@@ -234,7 +224,7 @@ dotitles(struct bu_vls *overlay_vls)
     int             ss_line_not_drawn=1; /* true if the second status line has not been drawn */
     fastf_t		tmp_val;
 
-    if(dbip == DBI_NULL)
+    if (dbip == DBI_NULL)
 	return;
 
     bu_vls_init(&vls);
@@ -248,13 +238,13 @@ dotitles(struct bu_vls *overlay_vls)
 	bu_vls_init(&path_lhs);
 	bu_vls_init(&path_rhs);
 	for (i = 0; i < ipathpos; i++) {
-	    dp = DB_FULL_PATH_GET(&illump->s_fullpath,i);
+	    dp = DB_FULL_PATH_GET(&illump->s_fullpath, i);
 	    if (dp && dp->d_namep) {
 		bu_vls_printf(&path_lhs, "/%s", dp->d_namep);
 	    }
 	}
 	for (; i < illump->s_fullpath.fp_len; i++) {
-	    dp = DB_FULL_PATH_GET(&illump->s_fullpath,i);
+	    dp = DB_FULL_PATH_GET(&illump->s_fullpath, i);
 	    if (dp && dp->d_namep) {
 		bu_vls_printf(&path_rhs, "/%s", dp->d_namep);
 	    }
@@ -277,19 +267,19 @@ dotitles(struct bu_vls *overlay_vls)
 
     /* take some care here to avoid buffer overrun */
     tmp_val = -view_state->vs_vop->vo_center[MDX]*base2local;
-    if( fabs( tmp_val ) < 10e70 ) {
+    if ( fabs( tmp_val ) < 10e70 ) {
 	sprintf(cent_x, "%.3f", tmp_val);
     } else {
 	sprintf(cent_x, "%.3g", tmp_val);
     }
     tmp_val = -view_state->vs_vop->vo_center[MDY]*base2local;
-    if( fabs( tmp_val ) < 10e70 ) {
+    if ( fabs( tmp_val ) < 10e70 ) {
 	sprintf(cent_y, "%.3f", tmp_val);
     } else {
 	sprintf(cent_y, "%.3g", tmp_val);
     }
     tmp_val = -view_state->vs_vop->vo_center[MDZ]*base2local;
-    if( fabs( tmp_val ) < 10e70 ) {
+    if ( fabs( tmp_val ) < 10e70 ) {
 	sprintf(cent_z, "%.3f", tmp_val);
     } else {
 	sprintf(cent_z, "%.3g", tmp_val);
@@ -300,7 +290,7 @@ dotitles(struct bu_vls *overlay_vls)
 	       bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 
     tmp_val = view_state->vs_vop->vo_size*base2local;
-    if( fabs( tmp_val ) < 10e70 ) {
+    if ( fabs( tmp_val ) < 10e70 ) {
 	sprintf(size, "sz=%.3f", tmp_val);
     } else {
 	sprintf(size, "sz=%.3g", tmp_val);
@@ -330,15 +320,15 @@ dotitles(struct bu_vls *overlay_vls)
     DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, 0);
 
     /* Label the vertices of the edited solid */
-    if(es_edflag >= 0 || (state == ST_O_EDIT && illump->s_Eflag == 0))  {
+    if (es_edflag >= 0 || (state == ST_O_EDIT && illump->s_Eflag == 0))  {
 	mat_t			xform;
 	struct rt_point_labels	pl[8+1];
 	point_t lines[2*4];	/* up to 4 lines to draw */
 	int num_lines=0;
 
-	if( view_state->vs_vop->vo_perspective <= 0)
+	if ( view_state->vs_vop->vo_perspective <= 0)
 	    bn_mat_mul( xform, view_state->vs_model2objview, es_mat );
-	else{
+	else {
 	    mat_t tmat;
 
 	    bn_mat_mul( tmat, view_state->vs_model2objview, es_mat );
@@ -351,21 +341,21 @@ dotitles(struct bu_vls *overlay_vls)
 		       color_scheme->cs_geo_label[0],
 		       color_scheme->cs_geo_label[1],
 		       color_scheme->cs_geo_label[2], 1, 1.0);
-	for( i=0 ; i<num_lines ; i++ )
+	for ( i=0; i<num_lines; i++ )
 	    DM_DRAW_LINE_2D( dmp,
 			     GED2PM1(((int)(lines[i*2][X]*GED_MAX))),
 			     GED2PM1(((int)(lines[i*2][Y]*GED_MAX)) * dmp->dm_aspect),
 			     GED2PM1(((int)(lines[i*2+1][X]*GED_MAX))),
 			     GED2PM1(((int)(lines[i*2+1][Y]*GED_MAX)) * dmp->dm_aspect) );
-	for( i=0; i<8+1; i++ )  {
-	    if( pl[i].str[0] == '\0' )  break;
+	for ( i=0; i<8+1; i++ )  {
+	    if ( pl[i].str[0] == '\0' )  break;
 	    DM_DRAW_STRING_2D( dmp, pl[i].str,
 			       GED2PM1(((int)(pl[i].pt[X]*GED_MAX))+15),
 			       GED2PM1(((int)(pl[i].pt[Y]*GED_MAX))+15), 0, 1 );
 	}
     }
 
-    if(mged_variables->mv_faceplate){
+    if (mged_variables->mv_faceplate) {
 	/* Line across the bottom, above two bottom status lines */
 	DM_SET_FGCOLOR(dmp,
 		       color_scheme->cs_other_line[0],
@@ -375,7 +365,7 @@ dotitles(struct bu_vls *overlay_vls)
 			 GED2PM1(XMIN), GED2PM1(TITLE_YBASE-TEXT1_DY),
 			 GED2PM1(XMAX), GED2PM1(TITLE_YBASE-TEXT1_DY) );
 
-	if(mged_variables->mv_orig_gui){
+	if (mged_variables->mv_orig_gui) {
 	    /* Enclose window in decorative box.  Mostly for alignment. */
 	    DM_DRAW_LINE_2D( dmp,
 			     GED2PM1(XMIN), GED2PM1(YMIN),
@@ -402,7 +392,7 @@ dotitles(struct bu_vls *overlay_vls)
 			   color_scheme->cs_state_text1[2], 1, 1.0);
 	    DM_DRAW_STRING_2D(dmp, state_str[state],
 			      GED2PM1(MENUX), GED2PM1(MENUY - MENU_DY), 1, 0 );
-	}else{
+	} else {
 	    scroll_ybot = SCROLLY;
 	    x = XMIN + 20;
 	    y = YMAX+TEXT0_DY;
@@ -411,10 +401,10 @@ dotitles(struct bu_vls *overlay_vls)
 	/*
 	 * Print information about object illuminated
 	 */
-	if( illump != SOLID_NULL &&
-	    (state==ST_O_PATH || state==ST_O_PICK || state==ST_S_PICK) )  {
-	    for( i=0; i < illump->s_fullpath.fp_len; i++ )  {
-		if( i == ipathpos  &&  state == ST_O_PATH )  {
+	if ( illump != SOLID_NULL &&
+	     (state==ST_O_PATH || state==ST_O_PICK || state==ST_S_PICK) )  {
+	    for ( i=0; i < illump->s_fullpath.fp_len; i++ )  {
+		if ( i == ipathpos  &&  state == ST_O_PATH )  {
 		    DM_SET_FGCOLOR(dmp,
 				   color_scheme->cs_state_text1[0],
 				   color_scheme->cs_state_text1[1],
@@ -428,13 +418,13 @@ dotitles(struct bu_vls *overlay_vls)
 			       color_scheme->cs_state_text2[1],
 			       color_scheme->cs_state_text2[2], 1, 1.0);
 		DM_DRAW_STRING_2D( dmp,
-				   DB_FULL_PATH_GET(&illump->s_fullpath,i)->d_namep,
+				   DB_FULL_PATH_GET(&illump->s_fullpath, i)->d_namep,
 				   GED2PM1(x), GED2PM1(y), 0, 0 );
 		y += MENU_DY;
 	    }
 	}
 
-	if(mged_variables->mv_orig_gui){
+	if (mged_variables->mv_orig_gui) {
 	    DM_SET_FGCOLOR(dmp,
 			   color_scheme->cs_other_line[0],
 			   color_scheme->cs_other_line[1],
@@ -448,7 +438,7 @@ dotitles(struct bu_vls *overlay_vls)
 	    mmenu_display( y );
 
 	    /* print parameter locations on screen */
-	    if( state == ST_O_EDIT && illump->s_Eflag ) {
+	    if ( state == ST_O_EDIT && illump->s_Eflag ) {
 		/* region is a processed region */
 		MAT4X3PNT(temp, view_state->vs_model2objview, es_keypoint);
 		xloc = (int)(temp[X]*GED_MAX);
@@ -482,9 +472,9 @@ dotitles(struct bu_vls *overlay_vls)
 	 * Prepare the numerical display of the currently edited solid/object.
 	 */
 	/*	create_text_overlay( &vls ); */
-	if(mged_variables->mv_orig_gui){
+	if (mged_variables->mv_orig_gui) {
 	    screen_vls( SOLID_XBASE, scroll_ybot+TEXT0_DY, overlay_vls );
-	}else{
+	} else {
 	    screen_vls( x, y, overlay_vls );
 	}
 
@@ -517,7 +507,7 @@ dotitles(struct bu_vls *overlay_vls)
      * This way the adc info will be displayed during editing
      */
 
-    if( adc_state->adc_draw ) {
+    if ( adc_state->adc_draw ) {
 	fastf_t f;
 
 	f = view_state->vs_vop->vo_scale * base2local;
@@ -529,7 +519,7 @@ dotitles(struct bu_vls *overlay_vls)
 		       adc_state->adc_dst * f,
 		       adc_state->adc_pos_grid[X] * f, adc_state->adc_pos_grid[Y] * f,
 		       adc_state->adc_pos_view[X] * f, adc_state->adc_pos_view[Y] * f);
-	if(mged_variables->mv_faceplate){
+	if (mged_variables->mv_faceplate) {
 	    DM_SET_FGCOLOR(dmp,
 			   color_scheme->cs_status_text2[0],
 			   color_scheme->cs_status_text2[1],
@@ -540,11 +530,11 @@ dotitles(struct bu_vls *overlay_vls)
 	Tcl_SetVar(interp, bu_vls_addr(&curr_dm_list->dml_adc_name),
 		   bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 	ss_line_not_drawn = 0;
-    }else{
+    } else {
 	Tcl_SetVar(interp, bu_vls_addr(&curr_dm_list->dml_adc_name), "", TCL_GLOBAL_ONLY);
     }
 
-    if( state == ST_S_EDIT || state == ST_O_EDIT )  {
+    if ( state == ST_S_EDIT || state == ST_O_EDIT )  {
 	struct bu_vls kp_vls;
 
 	bu_vls_init(&kp_vls);
@@ -555,7 +545,7 @@ dotitles(struct bu_vls *overlay_vls)
 		       es_keypoint[X] * base2local,
 		       es_keypoint[Y] * base2local,
 		       es_keypoint[Z] * base2local);
-	if(mged_variables->mv_faceplate && ss_line_not_drawn){
+	if (mged_variables->mv_faceplate && ss_line_not_drawn) {
 	    DM_SET_FGCOLOR(dmp,
 			   color_scheme->cs_status_text2[0],
 			   color_scheme->cs_status_text2[1],
@@ -570,24 +560,24 @@ dotitles(struct bu_vls *overlay_vls)
 	Tcl_SetVar(interp, bu_vls_addr(&vls), bu_vls_addr(&kp_vls), TCL_GLOBAL_ONLY);
 
 	bu_vls_free(&kp_vls);
-    }else{
+    } else {
 	bu_vls_trunc(&vls, 0);
 	bu_vls_printf(&vls, "%s(keypoint)", MGED_DISPLAY_VAR);
 	Tcl_SetVar(interp, bu_vls_addr(&vls), "", TCL_GLOBAL_ONLY);
     }
 
-    if( illump != SOLID_NULL )  {
-	if(mged_variables->mv_faceplate && ss_line_not_drawn){
+    if ( illump != SOLID_NULL )  {
+	if (mged_variables->mv_faceplate && ss_line_not_drawn) {
 	    bu_vls_trunc(&vls, 0);
 
 	    /* Illuminated path */
 	    bu_vls_strcat(&vls, " Path: ");
-	    for( i=0; i < illump->s_fullpath.fp_len; i++ )  {
-		if( i == ipathpos  &&
-		    (state == ST_O_PATH || state == ST_O_EDIT) )
+	    for ( i=0; i < illump->s_fullpath.fp_len; i++ )  {
+		if ( i == ipathpos  &&
+		     (state == ST_O_PATH || state == ST_O_EDIT) )
 		    bu_vls_strcat( &vls, "/__MATRIX__" );
 		bu_vls_printf(&vls, "/%s",
-			      DB_FULL_PATH_GET(&illump->s_fullpath,i)->d_namep );
+			      DB_FULL_PATH_GET(&illump->s_fullpath, i)->d_namep );
 	    }
 	    DM_SET_FGCOLOR(dmp,
 			   color_scheme->cs_status_text2[0],
@@ -602,7 +592,7 @@ dotitles(struct bu_vls *overlay_vls)
 
     bu_vls_trunc(&vls, 0);
     bu_vls_printf(&vls, "%.2f fps", 1/frametime );
-    if(mged_variables->mv_faceplate && ss_line_not_drawn){
+    if (mged_variables->mv_faceplate && ss_line_not_drawn) {
 	DM_SET_FGCOLOR(dmp,
 		       color_scheme->cs_status_text2[0],
 		       color_scheme->cs_status_text2[1],
@@ -620,8 +610,8 @@ dotitles(struct bu_vls *overlay_vls)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

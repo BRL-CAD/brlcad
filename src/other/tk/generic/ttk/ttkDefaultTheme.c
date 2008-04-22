@@ -276,8 +276,7 @@ static void BorderElementSize(
     *paddingPtr = Ttk_UniformPadding((short)borderWidth);
 }
 
-static void
-BorderElementDraw(
+static void BorderElementDraw(
     void *clientData, void *elementRecord,
     Tk_Window tkwin, Drawable d, Ttk_Box b, unsigned int state)
 {
@@ -497,9 +496,10 @@ static void IndicatorElementSize(
 {
     IndicatorSpec *spec = clientData;
     IndicatorElement *indicator = elementRecord;
-    Ttk_GetPaddingFromObj(NULL, tkwin, indicator->marginObj, paddingPtr);
-    *widthPtr = spec->width;
-    *heightPtr = spec->height;
+    Ttk_Padding margins;
+    Ttk_GetPaddingFromObj(NULL, tkwin, indicator->marginObj, &margins);
+    *widthPtr = spec->width + Ttk_PaddingWidth(margins);
+    *heightPtr = spec->height + Ttk_PaddingHeight(margins);
 }
 
 static void IndicatorElementDraw(
@@ -650,7 +650,8 @@ static void ArrowElementSize(
     Tk_GetPixelsFromObj(NULL, tkwin, arrow->sizeObj, &width);
     width -= Ttk_PaddingWidth(ArrowPadding);
     TtkArrowSize(width/2, direction, widthPtr, heightPtr);
-    *paddingPtr = ArrowPadding;
+    *widthPtr += Ttk_PaddingWidth(ArrowPadding);
+    *heightPtr += Ttk_PaddingHeight(ArrowPadding);
 }
 
 static void ArrowElementDraw(
@@ -723,7 +724,8 @@ static void MenubuttonArrowElementSize(
     int size = MENUBUTTON_ARROW_SIZE;
     Tk_GetPixelsFromObj(NULL, tkwin, arrow->sizeObj, &size);
     *widthPtr = *heightPtr = 2 * size + 1;
-    *paddingPtr = MenubuttonArrowPadding;
+    *widthPtr += Ttk_PaddingWidth(MenubuttonArrowPadding);
+    *heightPtr += Ttk_PaddingHeight(MenubuttonArrowPadding);
 }
 
 static void MenubuttonArrowElementDraw(
@@ -1049,7 +1051,7 @@ static Ttk_ElementOptionSpec TreeitemIndicatorOptions[] =
     { "-diameter", TK_OPTION_PIXELS,
 	Tk_Offset(TreeitemIndicator,diameterObj), "9" },
     { "-indicatormargins", TK_OPTION_STRING,
-	Tk_Offset(TreeitemIndicator,marginObj), "0 2 4 2" },
+	Tk_Offset(TreeitemIndicator,marginObj), "2 2 4 2" },
     {NULL}
 };
 
@@ -1059,9 +1061,12 @@ static void TreeitemIndicatorSize(
 {
     TreeitemIndicator *indicator = elementRecord;
     int diameter = 0;
-    Ttk_GetPaddingFromObj(NULL, tkwin, indicator->marginObj, paddingPtr);
+    Ttk_Padding margins;
+
+    Ttk_GetPaddingFromObj(NULL, tkwin, indicator->marginObj, &margins);
     Tk_GetPixelsFromObj(NULL, tkwin, indicator->diameterObj, &diameter);
-    *widthPtr = *heightPtr = diameter;
+    *widthPtr = diameter + Ttk_PaddingWidth(margins);
+    *heightPtr = diameter + Ttk_PaddingHeight(margins);
 }
 
 static void TreeitemIndicatorDraw(

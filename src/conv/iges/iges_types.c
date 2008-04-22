@@ -1,7 +1,7 @@
 /*                    I G E S _ T Y P E S . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2007 United States Government as represented by
+ * Copyright (c) 1995-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,47 +18,37 @@
  * information.
  */
 /** @file iges_types.c
- *  Authors -
- *	John R. Anderson
- *
- *  Source -
- *	SLAD/BVLD/VMB
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
 char *
 iges_type( type )
-int type;
+    int type;
 {
-	int i;
-	int type_no=0;
+    int i;
+    int type_no=0;
 
-	for( i=1 ; i<ntypes ; i++ )
+    for ( i=1; i<ntypes; i++ )
+    {
+	if ( typecount[i].type == type )
 	{
-		if( typecount[i].type == type )
-		{
-			type_no = i;
-			break;
-		}
+	    type_no = i;
+	    break;
 	}
+    }
 
-	return( typecount[type_no].name );
+    return( typecount[type_no].name );
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

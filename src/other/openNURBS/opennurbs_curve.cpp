@@ -22,13 +22,13 @@ ON_Curve& ON_Curve::operator=(const ON_Curve& src)
 
 ON_Curve::~ON_Curve()
 {
-  // Do not call the (virtual) DestroyRuntimeCache or 
+  // Do not call the (virtual) DestroyRuntimeCache or
   // DestroyCurveTree (which calls DestroyRuntimeCache()
   // because it opens the potential for crashes in a
   // "dirty" destructors of classes derived from ON_Curve
   // that to not use DestroyRuntimeCache() in their
   // destructors and to not set deleted pointers to zero.
-  if ( m_ctree ) 
+  if ( m_ctree )
   {
 #if defined(OPENNURBS_PLUS_INC_)
     delete m_ctree;
@@ -43,7 +43,7 @@ unsigned int ON_Curve::SizeOf() const
   sz += (sizeof(*this) - sizeof(ON_Geometry));
   // Currently, the size of m_ctree is not included
   // because this is cached runtime information.
-  // Applications that care about object size are 
+  // Applications that care about object size are
   // typically storing "inactive" objects for potential
   // future use and should call DestroyRuntimeCache(true)
   // to remove any runtime cache information.
@@ -284,13 +284,13 @@ BOOL ON_Curve::IsArc( const ON_Plane* plane, ON_Arc* arc, double tolerance ) con
       P = PointAt( (1.0-t)*d[span_index] + t*d[span_index+1] );
       if ( !arc->ClosestPointTo(P,&c) ) {
         rc = false;
-        break;        
+        break;
       }
       if ( c < c0 ) {
         rc = false;
         break;
       }
-      C = arc->PointAt(c);        
+      C = arc->PointAt(c);
       if ( C.DistanceTo(P) > tolerance ) {
         rc = 0;
         break;
@@ -306,7 +306,7 @@ BOOL ON_Curve::IsPlanar( ON_Plane* plane, double tolerance ) const
 {
   BOOL rc = false;
   const int dim = Dimension();
-  if ( dim == 2 ) 
+  if ( dim == 2 )
   {
     // all 2d curves use this code to set the plane
     // so that there is consistent behavior.
@@ -327,7 +327,7 @@ BOOL ON_Curve::IsPlanar( ON_Plane* plane, double tolerance ) const
         line.InPlane( *plane, 0.0 );
     }
   }
-  else if ( dim == 3 ) 
+  else if ( dim == 3 )
   {
     const int span_count = SpanCount();
     if ( span_count < 1 )
@@ -417,9 +417,9 @@ BOOL ON_Curve::IsClosed() const
     //
     rc = ON_ComparePoint( dim, false, a, p )?false:true;
     if ( rc ) {
-      if (    !ON_ComparePoint( dim, false, a, b ) 
-           || !ON_ComparePoint( dim, false, a, c ) 
-           || !ON_ComparePoint( dim, false, p, b ) 
+      if (    !ON_ComparePoint( dim, false, a, b )
+           || !ON_ComparePoint( dim, false, a, c )
+           || !ON_ComparePoint( dim, false, p, b )
            || !ON_ComparePoint( dim, false, p, c ) )
         rc = false;
     }
@@ -435,7 +435,7 @@ BOOL ON_Curve::IsPeriodic() const
   return false;
 }
 
-bool ON_Curve::GetNextDiscontinuity( 
+bool ON_Curve::GetNextDiscontinuity(
                 ON::continuity c,
                 double t0,
                 double t1,
@@ -453,7 +453,7 @@ bool ON_Curve::GetNextDiscontinuity(
 
   if ( dtype )
     *dtype = 0;
-  
+
   if ( t0 != t1 )
   {
     bool bTestC0 = false;
@@ -494,8 +494,8 @@ bool ON_Curve::GetNextDiscontinuity(
       // 20 March 2003 Dale Lear:
       //   Have to look for locus discontinuities at ends.
       //   Must test both ends becuase t0 > t1 is valid input.
-      //   In particular, for ON_CurveProxy::GetNextDiscontinuity() 
-      //   to work correctly on reversed "real" curves, the 
+      //   In particular, for ON_CurveProxy::GetNextDiscontinuity()
+      //   to work correctly on reversed "real" curves, the
       //   t0 > t1 must work right.
       ON_Interval domain = Domain();
 
@@ -513,7 +513,7 @@ bool ON_Curve::GetNextDiscontinuity(
             // need to check locus continuity at start/end of closed curve.
             ON_3dPoint Pa, Pb;
             ON_3dVector D1a, D1b, D2a, D2b;
-            if (    Ev2Der(domain[0],Pa,D1a,D2a,1,NULL) 
+            if (    Ev2Der(domain[0],Pa,D1a,D2a,1,NULL)
                  && Ev2Der(domain[1],Pb,D1b,D2b,-1,NULL) )
             {
               Pb = Pa; // IsClosed() = true means assume Pa=Pb;
@@ -577,7 +577,7 @@ bool ON_Curve::GetNextDiscontinuity(
 
 bool ON_Curve::IsContinuous(
     ON::continuity desired_continuity,
-    double t, 
+    double t,
     int* hint, // default = NULL,
     double point_tolerance, // default=ON_ZERO_TOLERANCE
     double d1_tolerance, // default==ON_ZERO_TOLERANCE
@@ -622,7 +622,7 @@ bool ON_Curve::IsContinuous(
         // see comments by ON::continuity enum
         return false;
       }
-      else 
+      else
       {
         if ( ON::C0_locus_continuous == desired_continuity )
         {
@@ -662,7 +662,7 @@ bool ON_Curve::IsContinuous(
   case ON::unknown_continuity:
     break;
 
-  case ON::C0_continuous:  
+  case ON::C0_continuous:
     if ( !EvPoint( t1, Pm, -1, hint ) )
       return false;
     if ( !EvPoint( t0, Pp,  1, hint ) )
@@ -713,8 +713,8 @@ bool ON_Curve::IsContinuous(
       return false;
     if ( bIsClosed )
       Pm = Pp;
-    if ( !(Pm-Pp).IsTiny(point_tolerance) || Tm*Tp < cos_angle_tolerance || 
-					(Km-Kp).Length() > curvature_tolerance || 
+    if ( !(Pm-Pp).IsTiny(point_tolerance) || Tm*Tp < cos_angle_tolerance ||
+					(Km-Kp).Length() > curvature_tolerance ||
 					(!Km.IsTiny() && !Kp.IsTiny() && Km.Unitize()*Kp.Unitize() <.95 )  )
       return false;
     break;
@@ -797,7 +797,7 @@ BOOL ON_Curve::EvTangent(
   ON_3dVector D1, D2;//, K;
   tangent.Zero();
   int rc = Ev1Der( t, point, tangent, side, hint );
-  if ( rc && !tangent.Unitize() ) 
+  if ( rc && !tangent.Unitize() )
   {
     if ( Ev2Der( t, point, D1, D2, side, hint ) )
     {
@@ -805,7 +805,7 @@ BOOL ON_Curve::EvTangent(
       // exists, the 1rst derivative is zero, and the 2nd
       // derivative is nonzero, then the unit tangent is equal
       // to +/-the unitized 2nd derivative.  The sign is equal
-      // to the sign of D1(s) o D2(s) as s approaches the 
+      // to the sign of D1(s) o D2(s) as s approaches the
       // evaluation parameter.
       tangent = D2;
       rc = tangent.Unitize();
@@ -856,7 +856,7 @@ BOOL ON_Curve::EvTangent(
           }
           if ( negative_count > 0 && test_count == negative_count+zero_count )
           {
-            // all sampled d1od2 values were <= 0 
+            // all sampled d1od2 values were <= 0
             // and at least one was strictly < 0.
             tangent.Reverse();
           }
@@ -916,7 +916,7 @@ BOOL ON_Curve::EvPoint( // returns false if unable to evaluate
        ON_3dPoint& point,   // returns value of curve
        int side,        // optional - determines which side to evaluate from
                        //         0 = default
-                       //      <  0 to evaluate from below, 
+                       //      <  0 to evaluate from below,
                        //      >  0 to evaluate from above
        int* hint       // optional - evaluation hint used to speed repeated
                        //            evaluations
@@ -1071,7 +1071,7 @@ bool ON_Curve::EvaluatePoint( const class ON_ObjRef& objref, ON_3dPoint& P ) con
           if ( P.DistanceTo(Q) > P1.DistanceTo(Q) )
             P = P1;
         }
-      }      
+      }
     }
     break;
 
@@ -1092,7 +1092,7 @@ BOOL ON_Curve::Ev1Der( // returns false if unable to evaluate
        ON_3dPoint& point,
        ON_3dVector& derivative,
        int side,        // optional - determines which side to evaluate from
-                       //      <= 0 to evaluate from below, 
+                       //      <= 0 to evaluate from below,
                        //      >  0 to evaluate from above
        int* hint       // optional - evaluation hint used to speed repeated
                        //            evaluations
@@ -1137,7 +1137,7 @@ BOOL ON_Curve::Ev2Der( // returns false if unable to evaluate
        ON_3dVector& firstDervative,
        ON_3dVector& secondDervative,
        int side,        // optional - determines which side to evaluate from
-                       //      <= 0 to evaluate from below, 
+                       //      <= 0 to evaluate from below,
                        //      >  0 to evaluate from above
        int* hint       // optional - evaluation hint used to speed repeated
                        //            evaluations
@@ -1344,7 +1344,7 @@ bool ON_PolyCurve::IsShort(
           s1 = 1.0;
         tmp0[0] = tmp1.ParameterAt(s0);
         tmp0[1] = tmp1.ParameterAt(s1);
-      }  
+      }
       else
       {
         tmp0.Intersection(*sub_domain);
@@ -1414,7 +1414,7 @@ bool ON_PolylineCurve::IsShort(
     double s;
     double t = sub_domain->Min();
     i0 = ON_NurbsSpanIndex(2,count,m_t,t,0,0);
-    if ( i0 < 0 || i0 >= count ) 
+    if ( i0 < 0 || i0 >= count )
     {
       // handle degenerate cases when m_t[] array is bogus
       i0 = 0;
@@ -1451,7 +1451,7 @@ bool ON_PolylineCurve::IsShort(
   }
   for (i0++; i0 <= i1 && length <= tolerance; i0++)
     length += pline[i0-1].DistanceTo(pline[i0]);
-  
+
   return (length <= tolerance);
 }
 
@@ -1555,7 +1555,7 @@ bool ON_Curve::IsShort(
     ON_3dPoint P[65];
     int v_stride = 3;
     memset(P,0,sizeof(P));
-    
+
     if ( !Evaluate(domain[0],0,v_stride,&P[0].x,0,&hint0) )
       return false;
 
@@ -1631,7 +1631,7 @@ ON::eCurveType ON_CurveType( const ON_Curve* curve )
       return ON::ctOnsurface;
     id = id->BaseClass();
   }
-  
+
   return ON::ctCurve;
 }
 
@@ -1664,8 +1664,8 @@ bool ON_MatchCurveEnds( ON_Curve* curve0,
                         double gap_tolerance )
 {
   BOOL rc = false;
-  if ( 0 != curve0 && 0 != curve1 
-       && end0 >= 0 && end0 <= 1 
+  if ( 0 != curve0 && 0 != curve1
+       && end0 >= 0 && end0 <= 1
        && end1 >= 0 && end1 <= 1 )
   {
     ON_3dPoint P0 = end0 ? curve0->PointAtEnd() : curve0->PointAtStart();
@@ -1745,7 +1745,7 @@ bool ON_MatchCurveEnds( ON_Curve* curve0,
               if ( c->SpanCount() == 1 )
               {
                 // same as a line
-                fix[i] = 20; 
+                fix[i] = 20;
                 Q0 = c->PointAtStart();
                 Q1 = c->PointAtEnd();
               }
@@ -1803,7 +1803,7 @@ bool ON_MatchCurveEnds( ON_Curve* curve0,
            ? curve0->SetEndPoint(P1)
            : curve0->SetStartPoint(P1);
       }
-      else 
+      else
       {
         ON_3dPoint P = 0.5*(P0+P1);
         if ( P0.x == P1.x )
@@ -1823,7 +1823,7 @@ bool ON_MatchCurveEnds( ON_Curve* curve0,
         else if ( fixPoint[0].z != ON_UNSET_VALUE && fixPoint[1].z == ON_UNSET_VALUE )
           P.z = fixPoint[0].z;
         else if ( fixPoint[0].z == ON_UNSET_VALUE && fixPoint[1].z != ON_UNSET_VALUE )
-          P.z = fixPoint[1].z;   
+          P.z = fixPoint[1].z;
         BOOL rc0 =  end0
            ? curve0->SetEndPoint(P)
            : curve0->SetStartPoint(P);
@@ -1926,7 +1926,7 @@ bool ON_NurbsCurve::RepairBadKnots( double knot_tolerance, bool bRepair )
 {
   bool rc = false;
   if ( m_order >= 2 && m_cv_count > m_order
-       && 0 != m_cv && 0 != m_knot 
+       && 0 != m_cv && 0 != m_knot
        && m_dim > 0
        && m_cv_stride >= (m_is_rat)?(m_dim+1):m_dim
        && 0 != m_cv
@@ -2022,7 +2022,7 @@ bool ON_NurbsCurve::RepairBadKnots( double knot_tolerance, bool bRepair )
     }
 
 
-    if (    m_knot[m_order-1]-m_knot[m_order-2] > knot_tolerance 
+    if (    m_knot[m_order-1]-m_knot[m_order-2] > knot_tolerance
          && m_knot[m_cv_count-1]-m_knot[m_cv_count-2] > knot_tolerance )
     {
       // Remove interior knots with mulitiplicity >= m_order
@@ -2062,9 +2062,9 @@ bool ON_NurbsCurve::RepairBadKnots( double knot_tolerance, bool bRepair )
 bool ON_NurbsCurve::RemoveShortSegments( double tolerance, bool bRemoveShortSegments )
 {
   bool rc = false;
-  if ( m_order >= 2 
+  if ( m_order >= 2
        && m_cv_count > m_order
-       && 0 != m_cv && 0 != m_knot 
+       && 0 != m_cv && 0 != m_knot
        && m_dim > 0
        && m_cv_stride >= (m_is_rat)?(m_dim+1):m_dim
        )
@@ -2289,10 +2289,10 @@ bool ON_PolylineCurve::RemoveShortSegments( double tolerance, bool bRemoveShortS
 bool ON_Curve::RemoveShortSegments( double tolerance, bool bRemoveShortSegments )
 {
   bool rc = false;
-  // When the SDK freeze ends, RemoveShortSegments() will become a 
+  // When the SDK freeze ends, RemoveShortSegments() will become a
   // virtual function and this will be done right.  For now, I have
-  // to hack at it this way because adding a new virtual function 
-  // will change the vtable and break existing plug-ins.  
+  // to hack at it this way because adding a new virtual function
+  // will change the vtable and break existing plug-ins.
   // (The classid stuff avoids multiple (slow) calls to failed Cast().
   // When Cast() returns non-NULL, it is fast.)
 
@@ -2302,7 +2302,7 @@ bool ON_Curve::RemoveShortSegments( double tolerance, bool bRemoveShortSegments 
   // "fake virtual" handling of fast/easy special cases
   while (0 != id && curve_id != id )
   {
-    if (    &ON_ArcCurve::m_ON_ArcCurve_class_id == id 
+    if (    &ON_ArcCurve::m_ON_ArcCurve_class_id == id
          || &ON_LineCurve::m_ON_LineCurve_class_id == id
          || &ON_CurveProxy::m_ON_CurveProxy_class_id == id )
     {
@@ -2317,7 +2317,7 @@ bool ON_Curve::RemoveShortSegments( double tolerance, bool bRemoveShortSegments 
         rc = polyline_curve->ON_PolylineCurve::RemoveShortSegments(tolerance,bRemoveShortSegments);
       break;
     }
-    
+
     if ( &ON_PolyCurve::m_ON_PolyCurve_class_id == id )
     {
       ON_PolyCurve* poly_curve = ON_PolyCurve::Cast(this);
@@ -2325,7 +2325,7 @@ bool ON_Curve::RemoveShortSegments( double tolerance, bool bRemoveShortSegments 
         rc = poly_curve->ON_PolyCurve::RemoveShortSegments(tolerance,bRemoveShortSegments);
       break;
     }
-    
+
     if ( &ON_NurbsCurve::m_ON_NurbsCurve_class_id == id )
     {
       ON_NurbsCurve* nurbs_curve = ON_NurbsCurve::Cast(this);
@@ -2391,7 +2391,7 @@ bool ON_Curve::Extend(
 }
 
 
-ON_Curve* ON_TrimCurve( 
+ON_Curve* ON_TrimCurve(
             const ON_Curve& curve,
             ON_Interval trim_parameters
             )
@@ -2434,7 +2434,7 @@ ON_Curve* ON_TrimCurve(
     ON_PolyCurve* polycurve = ON_PolyCurve::Cast(left_crv);
     if ( polycurve == NULL )
     {
-      polycurve = new ON_PolyCurve();      
+      polycurve = new ON_PolyCurve();
       polycurve->Append( left_crv );
     }
 
@@ -2538,7 +2538,7 @@ BOOL ON_Curve::GetNurbFormParameterFromCurveParameter(
   return false;
 }
 
-ON_CurveArray::ON_CurveArray( int initial_capacity ) 
+ON_CurveArray::ON_CurveArray( int initial_capacity )
               : ON_SimpleArray<ON_Curve*>(initial_capacity)
 {}
 
@@ -2567,14 +2567,14 @@ bool ON_CurveArray::Duplicate( ON_CurveArray& dst ) const
   const int count = Count();
   int i;
   ON_Curve* curve;
-  for ( i = 0; i < count; i++ ) 
+  for ( i = 0; i < count; i++ )
   {
     curve = 0;
-    if ( m_a[i] ) 
+    if ( m_a[i] )
     {
       curve = m_a[i]->Duplicate();
     }
-    dst.Append(curve);      
+    dst.Append(curve);
   }
   return true;
 }
@@ -2589,7 +2589,7 @@ bool ON_CurveArray::Write( ON_BinaryArchive& file ) const
     for ( i = 0; rc && i < Count(); i++ ) {
       if ( m_a[i] ) {
         rc = file.WriteInt(1);
-        if ( rc ) 
+        if ( rc )
           rc = file.WriteObject( *m_a[i] ); // polymorphic curves
       }
       else {
@@ -2612,26 +2612,26 @@ bool ON_CurveArray::Read( ON_BinaryArchive& file )
   int i, flag;
   Destroy();
   bool rc = file.BeginRead3dmChunk( &tcode, &i );
-  if (rc) 
+  if (rc)
   {
     rc = ( tcode == TCODE_ANONYMOUS_CHUNK );
     if (rc) rc = file.Read3dmChunkVersion(&major_version,&minor_version);
-    if (rc && major_version == 1) 
+    if (rc && major_version == 1)
     {
       ON_Object* p;
       int count;
       BOOL rc = file.ReadInt( &count );
-      if (rc) 
+      if (rc)
       {
         SetCapacity(count);
         SetCount(count);
         Zero();
         int i;
-        for ( i = 0; rc && i < count && rc; i++ ) 
+        for ( i = 0; rc && i < count && rc; i++ )
         {
           flag = 0;
           rc = file.ReadInt(&flag);
-          if (rc && flag==1) 
+          if (rc && flag==1)
           {
             p = 0;
             rc = file.ReadObject( &p ); // polymorphic curves
@@ -2642,7 +2642,7 @@ bool ON_CurveArray::Read( ON_BinaryArchive& file )
         }
       }
     }
-    else 
+    else
     {
       rc = false;
     }
@@ -2695,7 +2695,7 @@ static void ReverseSegs(ON_SimpleArray<CurveJoinSeg>& SArray)
 ///////////////////////////////////////////////////////////////////////////////////////
 
 
-bool ON_Curve::IsClosable(double tolerance, 
+bool ON_Curve::IsClosable(double tolerance,
                           double min_abs_size, //0.0
                           double min_rel_size  //10.0
                           ) const
@@ -2745,7 +2745,7 @@ bool ON_Curve::IsClosable(double tolerance,
 
 
 
-int 
+int
 ON_JoinCurves(const ON_SimpleArray<const ON_Curve*>& InCurves,
                       ON_SimpleArray<ON_Curve*>& OutCurves,
                       double join_tol,
@@ -2769,7 +2769,7 @@ ON_JoinCurves(const ON_SimpleArray<const ON_Curve*>& InCurves,
     for (i=0; i<InCurves.Count(); i++) key->Append(-1);
   }
 
-  //Copy curves, take out closed curves. 
+  //Copy curves, take out closed curves.
   OutCurves.Reserve(InCurves.Count());
   ON_SimpleArray<ON_Curve*> IC(InCurves.Count());
   ON_SimpleArray<int> cmap(InCurves.Count());
@@ -2881,7 +2881,7 @@ ON_JoinCurves(const ON_SimpleArray<const ON_Curve*>& InCurves,
 
         //second curve is part of an existing sequence. Insert or append first curve.
         ON_SimpleArray<CurveJoinSeg>& SArray = SegsArray[endarray[ED.id[1]][1 - ED.end[1]] - 1];
-        endarray[ED.id[0]][ED.end[0]] = endarray[ED.id[1]][ED.end[1]] = 
+        endarray[ED.id[0]][ED.end[0]] = endarray[ED.id[1]][ED.end[1]] =
           endarray[ED.id[1]][1 - ED.end[1]];
 
         if (SArray[0].id == ED.id[1]){
@@ -2900,7 +2900,7 @@ ON_JoinCurves(const ON_SimpleArray<const ON_Curve*>& InCurves,
     else if (endarray[ED.id[1]][1 - ED.end[1]] == 0){
     //first curve is part of an existing sequence. Insert or append second curve.
       ON_SimpleArray<CurveJoinSeg>& SArray = SegsArray[endarray[ED.id[0]][1 - ED.end[0]] - 1];
-      endarray[ED.id[0]][ED.end[0]] = endarray[ED.id[1]][ED.end[1]] = 
+      endarray[ED.id[0]][ED.end[0]] = endarray[ED.id[1]][ED.end[1]] =
         endarray[ED.id[0]][1 - ED.end[0]];
 
       if (SArray[0].id == ED.id[0]){
@@ -2919,7 +2919,7 @@ ON_JoinCurves(const ON_SimpleArray<const ON_Curve*>& InCurves,
       //both are in existing sequences.  join the sequences.
       if (endarray[ED.id[0]][1 - ED.end[0]] == endarray[ED.id[1]][1 - ED.end[1]])
         //closes off this curve
-        endarray[ED.id[0]][ED.end[0]] = endarray[ED.id[1]][ED.end[1]] = 
+        endarray[ED.id[0]][ED.end[0]] = endarray[ED.id[1]][ED.end[1]] =
           endarray[ED.id[0]][1 - ED.end[0]];
       else {
         int segid0 = endarray[ED.id[0]][1 - ED.end[0]];
@@ -3061,7 +3061,7 @@ ON_JoinCurves(const ON_SimpleArray<const ON_Curve*>& InCurves,
 			ON_3dPoint s= OutCurves[i]->PointAtStart();
 			ON_3dPoint e = OutCurves[i]->PointAtEnd();
 			if(s.DistanceTo(e)<join_tol)
-				OutCurves[i]->SetEndPoint( s );			
+				OutCurves[i]->SetEndPoint( s );
 		}
 	}
   */
@@ -3073,7 +3073,7 @@ ON_JoinCurves(const ON_SimpleArray<const ON_Curve*>& InCurves,
     if (C->IsClosable(join_tol))
       C->SetEndPoint(C->PointAtStart());
   }
-    
+
   onfree((void*)endarray);
   onfree((void*)endspace);
 
@@ -3094,7 +3094,7 @@ bool ON_Curve::ParameterSearch(double t, int& index, bool bEnableSnap,
 	index = -1;
 	if(count>1 && ON_IsValid(t))
   {
-		
+
     index = ON_SearchMonotoneArray(m_t, count, t);
     // index < 0       : means t < m_t[0]
     // index == count-1: means t == m_t[count-1]
@@ -3114,13 +3114,13 @@ bool ON_Curve::ParameterSearch(double t, int& index, bool bEnableSnap,
         {
           // t is a hair bigger than m_t[index]
 					rc = true;
-			  } 
+			  }
         else if( t > middle_t && m_t[index+1]-t <= ktol)
         {
           // t is a hair smaller than m_t[index+1]
 					rc = true;
 					index ++;
-			  }	
+			  }
       }
       else if (index == count)
       {
@@ -3147,7 +3147,7 @@ bool ON_Curve::ParameterSearch(double t, int& index, bool bEnableSnap,
 	}
 	return rc;
 }
- 
+
 int
 ON_Curve::NumIntersectionsWith(const ON_Line& segment) const {
   // XXX - todo - subclass responsibility (make pure virtual?)
@@ -3159,11 +3159,11 @@ ON_Curve::NumIntersectionsWith(const ON_Line& segment) const {
 }
 
 
-bool 
+bool
 isFlat(const Sample& p1, const Sample& m, const Sample& p2, double chord_tol, double der_tol)
 {
   ON_Line line = ON_Line(p1.pt, p2.pt);
-  double chord = line.DistanceTo(m.pt);  
+  double chord = line.DistanceTo(m.pt);
   double der = (p1.tangent * m.tangent) * (m.tangent * p2.tangent);
   //  TRACE("isFlat " << der << "," << chord);
   return (der >= der_tol) && (chord <= chord_tol);
@@ -3182,12 +3182,12 @@ randomMidrange(double lo, double hi)
   return random_pos * (hi - lo) + lo;
 }
 
-void 
-sample(const ON_Curve* c, 
-       Sample& s1, 
+void
+sample(const ON_Curve* c,
+       Sample& s1,
        Sample& s2,
-       std::list<Sample>& out_samples, 
-       double chord_tol, double der_tol) 
+       std::list<Sample>& out_samples,
+       double chord_tol, double der_tol)
 {
   Sample m(c, randomMidrange(s1.t,s2.t));
   if (isFlat(s1,m,s2,chord_tol,der_tol)) {
@@ -3200,7 +3200,7 @@ sample(const ON_Curve* c,
 
 #define MAX_CLOSENESS_SEARCH_DEPTH 10
 
-Sample sample_arg_min(Sample& x, Sample& y, Sample& z) { 
+Sample sample_arg_min(Sample& x, Sample& y, Sample& z) {
   if (x.dist < y.dist) {
     if (x.dist < z.dist) return x;
     else return z;
@@ -3224,7 +3224,7 @@ search(const ON_Curve* c,
   if (m.dist < dist_tol) return m;
 
   Sample& side = (left.dist < right.dist) ? left : right;
-  if (side.t < m.t) 
+  if (side.t < m.t)
     return search(c, ray, side, m, dist_tol, ++depth);
   else
     return search(c, ray, m, side, dist_tol, ++depth);
@@ -3258,7 +3258,7 @@ search(const ON_Curve* c,
   }
 
   Sample side = (left.dist < right.dist) ? left : right;
-  if (side.t < m.t) 
+  if (side.t < m.t)
     return search(c, pt, side, m, dist_tol, ++depth);
   else
     return search(c, pt, m, side, dist_tol, ++depth);
@@ -3270,7 +3270,7 @@ search(const ON_Curve* c,
 //epsilon
 bool
 ON_Curve::CloseTo(const ON_3dPoint& pt, double epsilon, Sample& closest) const
-{  
+{
   TRACE1("CloseTo(" << PT(pt) << ")");
   std::list<Sample> samples;
   ON_Interval dom = Domain();
@@ -3281,21 +3281,21 @@ ON_Curve::CloseTo(const ON_3dPoint& pt, double epsilon, Sample& closest) const
   GetLength(&l);
   double tol = (l < 1) ? CLOSETO_CHORD_TOL : CLOSETO_CHORD_TOL * l;
   sample(this, left, right, samples, tol, CLOSETO_DER_TOL);
-  
+
   assert(samples.size() >= 2);
 
   for (std::list<Sample>::iterator i1 = samples.begin(); i1 != samples.end(); ++i1) {
     i1->dist = pt.DistanceTo(i1->pt);
-  }  
-  samples.sort();  
+  }
+  samples.sort();
   // after sorting, we have the closest 2 sampled points, which
   // *should* bound the closest point.
 
-  // use these to find the closest point through a 'binary' search 
+  // use these to find the closest point through a 'binary' search
   std::list<Sample>::iterator i2 = samples.begin();
   Sample s1 = samples.front(); samples.pop_front();
   Sample s2 = samples.front();
-  
+
 //   return samples.front().dist < epsilon;
 
   closest.dist = real.infinity();
@@ -3304,12 +3304,12 @@ ON_Curve::CloseTo(const ON_3dPoint& pt, double epsilon, Sample& closest) const
     TRACE1("1:" << s1.dist << " < " << epsilon);
     return true;
   }
-  
+
   Sample blah = search(this, pt, s1, s2);
   TRACE1("blah: " << blah.dist);
   closest = blah;
 //   Sample m(this, (s2.t-s1.t) * 0.5 + s1.t);
-//   return pt.DistanceTo(m.pt) < epsilon;  
+//   return pt.DistanceTo(m.pt) < epsilon;
   TRACE1("2:" << closest.dist << " < " << epsilon);
   return closest.dist < epsilon;
 }
@@ -3321,7 +3321,7 @@ ON_Curve::CloseTo(const ON_3dPoint& pt, double epsilon, Sample& closest) const
 //epsilon
 bool
 ON_Curve::CloseTo(const ON_Ray& ray, double epsilon, Sample& closest) const
-{  
+{
   std::list<Sample> samples;
   ON_Interval dom = Domain();
   Sample left(this, dom.Min());
@@ -3331,15 +3331,15 @@ ON_Curve::CloseTo(const ON_Ray& ray, double epsilon, Sample& closest) const
   GetLength(&l);
   double tol = (l < 1) ? CLOSETO_CHORD_TOL : CLOSETO_CHORD_TOL * l;
   sample(this, left, right, samples, tol, CLOSETO_DER_TOL);
-  
+
   for (std::list<Sample>::iterator i1 = samples.begin(); i1 != samples.end(); ++i1) {
     i1->dist = ray.DistanceTo(i1->pt, &i1->ray_t);
-  }  
-  samples.sort();  
+  }
+  samples.sort();
   // after sorting, we have the closest 2 sampled points, which
   // *should* bound the closest point.
 
-  // use these to find the closest point through a 'binary' search 
+  // use these to find the closest point through a 'binary' search
   std::list<Sample>::iterator i2 = samples.begin();
   Sample s1 = *i2;
   Sample s2 = *++i2;
@@ -3351,25 +3351,25 @@ ON_Curve::CloseTo(const ON_Ray& ray, double epsilon, Sample& closest) const
 
 
 
-bool ON_SortLines( 
-        int line_count, 
-        const ON_Line* line_list, 
-        int* index, 
-        bool* bReverse 
+bool ON_SortLines(
+        int line_count,
+        const ON_Line* line_list,
+        int* index,
+        bool* bReverse
         )
 {
   ON_3dPoint StartP, EndP, Q;
   double d, startd, endd;
   int Ni, start_i, start_end, end_i, end_end, i, end;
 
-  if ( index ) 
+  if ( index )
   {
-    for ( i = 0; i < line_count; i++ ) 
+    for ( i = 0; i < line_count; i++ )
       index[i] = i;
   }
   if ( bReverse  )
   {
-    for ( i = 0; i < line_count; i++ ) 
+    for ( i = 0; i < line_count; i++ )
       bReverse[i] = false;
   }
   if ( line_count < 1 || 0 == line_list || 0 == index || 0 == bReverse )
@@ -3383,7 +3383,7 @@ bool ON_SortLines(
   }
 
   // sort lines
-  for ( Ni = 1; Ni < line_count; Ni++ ) 
+  for ( Ni = 1; Ni < line_count; Ni++ )
   {
     /* index[] = some permutation of {0,...,line_count-1}
     // N[index[0]], ..., N[index[Ni-1]] are in order
@@ -3396,13 +3396,13 @@ bool ON_SortLines(
     startd = StartP.DistanceTo( line_list[index[start_i]].from ); // "from" is correct here
     endd   = EndP.DistanceTo( line_list[index[end_i]].from );     // "from" is correct here
 
-    for ( i = Ni; i < line_count; i++ ) 
+    for ( i = Ni; i < line_count; i++ )
     {
       Q = line_list[index[i]].from;
-      for ( end = 0; end < 2; end++ ) 
+      for ( end = 0; end < 2; end++ )
       {
         d = StartP.DistanceTo( Q );
-        if ( d < startd ) 
+        if ( d < startd )
         {
           start_i = i;
           start_end = end;
@@ -3410,7 +3410,7 @@ bool ON_SortLines(
         }
 
         d = EndP.DistanceTo( Q );
-        if ( d < endd ) 
+        if ( d < endd )
         {
           end_i = i;
           end_end = end;
@@ -3421,14 +3421,14 @@ bool ON_SortLines(
       }
     }
 
-    if ( startd < endd ) 
+    if ( startd < endd )
     {
       // N[index[start_i]] will be first in list
       i = index[Ni];
       index[Ni] = index[start_i];
       index[start_i] = i;
       start_i = index[Ni];
-      for ( i = Ni; i > 0; i-- ) 
+      for ( i = Ni; i > 0; i-- )
       {
         index[i] = index[i-1];
         bReverse[i] = bReverse[i-1];
@@ -3436,7 +3436,7 @@ bool ON_SortLines(
       index[0] = start_i;
       bReverse[0] = (start_end != 1);
     }
-    else 
+    else
     {
       // N[index[end_i]] will be next in the list
       i = index[Ni];
@@ -3451,10 +3451,10 @@ bool ON_SortLines(
 
 
 
-bool ON_SortLines( 
+bool ON_SortLines(
         const ON_SimpleArray<ON_Line>& line_list,
-        int* index, 
-        bool* bReverse 
+        int* index,
+        bool* bReverse
         )
 {
   return ON_SortLines(line_list.Count(),line_list.Array(),index,bReverse);
@@ -3466,14 +3466,14 @@ bool ON_SortCurves( int curve_count, const ON_Curve* const* curve_list, int* ind
 
   if ( curve_count < 1 || 0 == curve_list || 0 == curve_list[0] || 0 == index || 0 == bReverse )
   {
-    if ( index ) 
+    if ( index )
     {
-      for ( i = 0; i < curve_count; i++ ) 
+      for ( i = 0; i < curve_count; i++ )
         index[i] = i;
     }
     if ( bReverse  )
     {
-      for ( i = 0; i < curve_count; i++ ) 
+      for ( i = 0; i < curve_count; i++ )
         bReverse[i] = false;
     }
     ON_ERROR("ON_SortCurves - illegal input");
@@ -3491,7 +3491,7 @@ bool ON_SortCurves( int curve_count, const ON_Curve* const* curve_list, int* ind
   ON_SimpleArray< ON_Line > line_list(curve_count);
   ON_Interval d;
   bool rc = true;
-  for ( i = 0; i < curve_count; i++ ) 
+  for ( i = 0; i < curve_count; i++ )
   {
     index[i] = i;
     bReverse[0] = false;

@@ -37,6 +37,21 @@ test chan-3.1 {chan command: close subcommand} -body {
 test chan-4.1 {chan command: configure subcommand} -body {
     chan configure
 } -returnCodes error -result "wrong # args: should be \"chan configure channelId ?optionName? ?value? ?optionName value?...\""
+test chan-4.2 {chan command: [Bug 800753]} -body {
+    chan configure stdout -eofchar \u0100
+} -returnCodes error -match glob -result {bad value*}
+test chan-4.3 {chan command: [Bug 800753]} -body {
+    chan configure stdout -eofchar \u0000
+} -returnCodes error -match glob -result {bad value*}
+test chan-4.4 {chan command: check valid inValue, no outValue} -body {
+    chan configure stdout -eofchar [list \x27 {}]
+} -returnCodes ok -result {}
+test chan-4.5 {chan command: check valid inValue, invalid outValue} -body {
+    chan configure stdout -eofchar [list \x27 \x80]
+} -returnCodes error -match glob -result {bad value for -eofchar:*}
+test chan-4.6 {chan command: check no inValue, valid outValue} -body {
+    chan configure stdout -eofchar [list {} \x27]
+} -returnCodes ok -result {}
 
 test chan-5.1 {chan command: copy subcommand} -body {
     chan copy foo

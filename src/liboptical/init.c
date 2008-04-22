@@ -1,7 +1,7 @@
 /*                          I N I T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2007 United States Government as represented by
+ * Copyright (c) 1998-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,21 +26,11 @@
  *  Shaders are, of course, permitted to "upcall" into LIBRT as
  *  necessary.
  *
- *  Author -
- *	Michael John Muuss
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 
 #include <stdio.h>
-#include "machine.h"
 #include "vmath.h"
 #include "bu.h"
 #include "raytrace.h"
@@ -67,43 +57,43 @@ vect_t			background = { 0.0, 0.0, 0.0 }; /* Black */
 void
 optical_shader_init(struct mfuncs	**headp)
 {
-	/*
-	 *  Connect up shader ("material") interfaces
-	 *  Note that sh_plastic.c defines the required "default" entry.
-	 */
-	MFUNCS( phg_mfuncs );
-	MFUNCS( null_mfuncs ); /* null test shader */
-	MFUNCS( light_mfuncs );
-	MFUNCS( cloud_mfuncs );
-	MFUNCS( spm_mfuncs );
-	MFUNCS( txt_mfuncs );
-	MFUNCS( stk_mfuncs );
-	MFUNCS( cook_mfuncs );
-	MFUNCS( stxt_mfuncs );
-	MFUNCS( points_mfuncs );
-	MFUNCS( toyota_mfuncs );
-	MFUNCS( wood_mfuncs );
-	MFUNCS( camo_mfuncs );
-	MFUNCS( scloud_mfuncs );
-	MFUNCS( air_mfuncs );
-	MFUNCS( rtrans_mfuncs );
-	MFUNCS( fire_mfuncs );
-	MFUNCS( brdf_mfuncs );
-	MFUNCS( gauss_mfuncs );
-	MFUNCS( noise_mfuncs );
-	MFUNCS( prj_mfuncs );
-	MFUNCS( grass_mfuncs );
-	MFUNCS( tthrm_mfuncs );
-	MFUNCS( flat_mfuncs );
-	MFUNCS( bbd_mfuncs );
+    /*
+     *  Connect up shader ("material") interfaces
+     *  Note that sh_plastic.c defines the required "default" entry.
+     */
+    MFUNCS( phg_mfuncs );
+    MFUNCS( null_mfuncs ); /* null test shader */
+    MFUNCS( light_mfuncs );
+    MFUNCS( cloud_mfuncs );
+    MFUNCS( spm_mfuncs );
+    MFUNCS( txt_mfuncs );
+    MFUNCS( stk_mfuncs );
+    MFUNCS( cook_mfuncs );
+    MFUNCS( stxt_mfuncs );
+    MFUNCS( points_mfuncs );
+    MFUNCS( toyota_mfuncs );
+    MFUNCS( wood_mfuncs );
+    MFUNCS( camo_mfuncs );
+    MFUNCS( scloud_mfuncs );
+    MFUNCS( air_mfuncs );
+    MFUNCS( rtrans_mfuncs );
+    MFUNCS( fire_mfuncs );
+    MFUNCS( brdf_mfuncs );
+    MFUNCS( gauss_mfuncs );
+    MFUNCS( noise_mfuncs );
+    MFUNCS( prj_mfuncs );
+    MFUNCS( grass_mfuncs );
+    MFUNCS( tthrm_mfuncs );
+    MFUNCS( flat_mfuncs );
+    MFUNCS( bbd_mfuncs );
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

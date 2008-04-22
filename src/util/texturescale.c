@@ -1,7 +1,7 @@
 /*                  T E X T U R E S C A L E . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2007 United States Government as represented by
+ * Copyright (c) 1997-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,29 +19,16 @@
  */
 /** @file texturescale.c
  *
- *	Scale a PIX(5) stream to map onto a curved solid
+ * Scale a PIX(5) stream to map onto a curved solid
  *
- *  Author -
- *	Paul J. Tanenbaum
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
-#include "machine.h"
 #include "vmath.h"
 #include "bu.h"
 #include "bn.h"
@@ -85,7 +72,7 @@ static int read_radii (fastf_t *r1p, fastf_t *r2p, char *buf)
     if (sscanf(buf, "%lf %lf", tmp, tmp + 1) != 2)
 	return (0);
     if ((tmp[0] <= 0.0) || (tmp[1] <= 0.0))
-	    return (0);
+	return (0);
     *r1p = tmp[0];
     *r2p = tmp[1];
     return (1);
@@ -100,8 +87,8 @@ static int read_row (char *rp, long int width, FILE *infp)
 	return (0);
     *(rp + RED) = *(rp + GRN) = *(rp + BLU) = 0;
     *(rp + 3 * (width + 1) + RED) =
-    *(rp + 3 * (width + 1) + GRN) =
-    *(rp + 3 * (width + 1) + BLU) = 0;
+	*(rp + 3 * (width + 1) + GRN) =
+	*(rp + 3 * (width + 1) + BLU) = 0;
     return (1);
 }
 
@@ -143,14 +130,14 @@ get_args (int argc, register char **argv)
 		if (! read_radii(&r1, &r2, bu_optarg))
 		{
 		    (void) fprintf(stderr,
-			"Illegal torus radii: '%s'\n", bu_optarg);
+				   "Illegal torus radii: '%s'\n", bu_optarg);
 		    return (0);
 		}
 		solid_type = TORUS;
 		break;
 	    case '?':
 		(void) fputs(usage, stderr);
-		exit (0);
+		bu_exit (0, NULL);
 	    default:
 		return (0);
 	}
@@ -158,7 +145,7 @@ get_args (int argc, register char **argv)
 
     if (bu_optind >= argc)
     {
-	if(isatty(fileno(stdin)))
+	if (isatty(fileno(stdin)))
 	{
 	    (void) fprintf(stderr, "texturescale: cannot read from tty\n");
 	    return(0);
@@ -206,18 +193,18 @@ main (int argc, char **argv)
     if (!get_args( argc, argv ))
     {
 	(void) fputs(usage, stderr);
-	exit (1);
+	bu_exit (1, NULL);
     }
 
     if (solid_type == SPHERE)
     {
 	(void) fprintf(stderr, "Sphere scaling not yet implemented\n");
-	exit (1);
+	bu_exit (1, NULL);
     }
     else if (solid_type != TORUS)
     {
 	(void) fprintf(stderr, "Illegal solid type %d\n", solid_type);
-	exit (0);
+	bu_exit (0, NULL);
     }
 
     /*
@@ -261,7 +248,7 @@ main (int argc, char **argv)
 	{
 	    perror(file_name);
 	    (void) fprintf(stderr, "texturescale:  fread() error\n");
-	    exit(1);
+	    bu_exit (1, NULL);
 	}
 
 	/*
@@ -295,19 +282,19 @@ main (int argc, char **argv)
 	if (fwrite(outbuf, 3, file_width, stdout) != file_width)
 	{
 	    perror("stdout");
-	    exit(2);
+	    bu_exit (2, NULL);
 	}
     }
 
-    exit (1);
+    bu_exit (1, NULL);
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -19,29 +19,29 @@
 #endif
 
 // OpenNURBS core developers:
-//   If you change OpenNURBS definitions, set 
+//   If you change OpenNURBS definitions, set
 //   OPENNURBS_VERSION = YYYYMMDDn, where "n" starts at 0.
 
 // OpenNURBS users:
 //   Do not change OPENNURBS_VERSION or the OpenNURBS code
 //   that reads 3DM files not work correctly.
 
-// version 200210210: 
+// version 200210210:
 //   First V3 opennurbs source code release
 
-// version 200211190: 
+// version 200211190:
 //   First Rhino 3.0 SDK opennurbs source code release
 
-// version 200303050: 
+// version 200303050:
 //   Rhino 3.0 saves layers layer dialog sorted order
 
-// version 200306060: 
+// version 200306060:
 //   Rhino 3.0 SR2
 
-// version 200310100: 
+// version 200310100:
 //   Rhino 3.0 SR3
 
-// version 200310290: 
+// version 200310290:
 //   Opennurbs source code release corresponding to Rhino 3.0 SR3.
 
 // version 200311100
@@ -66,7 +66,7 @@
 //   Rhino V4 WIP began writing V4 files.
 
 // version 200501310
-//   Added ON_Viewport::m_viewport_id and 
+//   Added ON_Viewport::m_viewport_id and
 //   ON_3dmObjectAttributes::m_dmref[] to I/O support
 //   to 3dm binary archives.
 
@@ -135,8 +135,8 @@
 //    Added ON_3dmSettings.m_PageUnitsAndTolerances
 
 // version 200603070
-//    Added 
-//      ON_3dmSettings.m_model_basepoint, 
+//    Added
+//      ON_3dmSettings.m_model_basepoint,
 //      ON_InstanceDefinition.m_source_unit_system
 //      ON_InstanceDefinition.m_source_bRelativePath
 
@@ -159,7 +159,7 @@
 //
 
 // version 200607130
-//    Added ON_ObjRefEvaluationParameter 
+//    Added ON_ObjRefEvaluationParameter
 //    and enhanced ON_ObjRef_IRefID
 //
 
@@ -168,9 +168,9 @@
 //
 
 // The YYYYMMDD portion of the _DEBUG and release
-// version numbers are always the same.  
+// version numbers are always the same.
 // The last digit of a debug build version number
-// is 9. The last digit of a release build version 
+// is 9. The last digit of a release build version
 // number is not 9.
 #if defined(_DEBUG)
 #define OPENNURBS_VERSION 200612059

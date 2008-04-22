@@ -77,8 +77,8 @@ set var [linsert $var 0 {*}$args]
 .CE
 .VE 8.5
 
-.SH KEYWORDS
-concatenate, evaluate, script
-
 .SH "SEE ALSO"
 catch(n), concat(n), error(n), interp(n), list(n), namespace(n), subst(n), tclvars(n), uplevel(n)
+
+.SH KEYWORDS
+concatenate, evaluate, script

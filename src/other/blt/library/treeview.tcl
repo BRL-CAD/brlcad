@@ -93,11 +93,11 @@ proc blt::tv::Initialize { w } {
     #
     # Active entry bindings
     #
-    $w bind Entry <Enter> { 
-	%W entry highlight current 
+    $w bind Entry <Enter> {
+	%W entry highlight current
     }
-    $w bind Entry <Leave> { 
-	%W entry highlight "" 
+    $w bind Entry <Leave> {
+	%W entry highlight ""
     }
 
     #
@@ -126,8 +126,8 @@ proc blt::tv::Initialize { w } {
     #	5. Sets the selection anchor to this entry, just in case
     #	   this is "multiple" mode.
     #
-    
-    $w bind Entry <ButtonPress-1> { 	
+
+    $w bind Entry <ButtonPress-1> {
 	blt::tv::SetSelectionAnchor %W current
 	set blt::tv::scroll 1
     }
@@ -140,9 +140,9 @@ proc blt::tv::Initialize { w } {
     # B1-Motion
     #
     #	For "multiple" mode only.  Saves the current location of the
-    #	pointer for auto-scrolling.  Resets the selection mark.  
+    #	pointer for auto-scrolling.  Resets the selection mark.
     #
-    $w bind Entry <B1-Motion> { 
+    $w bind Entry <B1-Motion> {
 	set blt::tv::x %x
 	set blt::tv::y %y
 	set index [%W nearest %x %y]
@@ -156,9 +156,9 @@ proc blt::tv::Initialize { w } {
     #
     # ButtonRelease-1
     #
-    #	For "multiple" mode only.  
+    #	For "multiple" mode only.
     #
-    $w bind Entry <ButtonRelease-1> { 
+    $w bind Entry <ButtonRelease-1> {
 	if { [%W cget -selectmode] == "multiple" } {
 	    %W selection anchor current
 	}
@@ -172,7 +172,7 @@ proc blt::tv::Initialize { w } {
     #	For "multiple" mode only.
     #
 
-    $w bind Entry <Shift-ButtonPress-1> { 
+    $w bind Entry <Shift-ButtonPress-1> {
 	if { [%W cget -selectmode] == "multiple" && [%W selection present] } {
 	    if { [%W index anchor] == "" } {
 		%W selection anchor current
@@ -187,10 +187,10 @@ proc blt::tv::Initialize { w } {
     $w bind Entry <Shift-Double-ButtonPress-1> {
 	# do nothing
     }
-    $w bind Entry <Shift-B1-Motion> { 
+    $w bind Entry <Shift-B1-Motion> {
 	# do nothing
     }
-    $w bind Entry <Shift-ButtonRelease-1> { 
+    $w bind Entry <Shift-ButtonRelease-1> {
 	after cancel $blt::tv::afterId
 	set blt::tv::scroll 0
     }
@@ -198,9 +198,9 @@ proc blt::tv::Initialize { w } {
     #
     # Control-ButtonPress-1
     #
-    #	For "multiple" mode only.  
+    #	For "multiple" mode only.
     #
-    $w bind Entry <Control-ButtonPress-1> { 
+    $w bind Entry <Control-ButtonPress-1> {
 	if { [%W cget -selectmode] == "multiple" } {
 	    set index [%W index current]
 	    %W selection toggle $index
@@ -212,15 +212,15 @@ proc blt::tv::Initialize { w } {
     $w bind Entry <Control-Double-ButtonPress-1> {
 	# do nothing
     }
-    $w bind Entry <Control-B1-Motion> { 
+    $w bind Entry <Control-B1-Motion> {
 	# do nothing
     }
-    $w bind Entry <Control-ButtonRelease-1> { 
+    $w bind Entry <Control-ButtonRelease-1> {
 	after cancel $blt::tv::afterId
 	set blt::tv::scroll 0
     }
 
-    $w bind Entry <Control-Shift-ButtonPress-1> { 
+    $w bind Entry <Control-Shift-ButtonPress-1> {
 	if { [%W cget -selectmode] == "multiple" && [%W selection present] } {
 	    if { [%W index anchor] == "" } {
 		%W selection anchor current
@@ -238,11 +238,11 @@ proc blt::tv::Initialize { w } {
     $w bind Entry <Control-Shift-Double-ButtonPress-1> {
 	# do nothing
     }
-    $w bind Entry <Control-Shift-B1-Motion> { 
+    $w bind Entry <Control-Shift-B1-Motion> {
 	# do nothing
     }
 
-    $w bind Entry <Shift-ButtonPress-3> { 
+    $w bind Entry <Shift-ButtonPress-3> {
 	blt::tv::EditColumn %W %X %Y
     }
 
@@ -280,51 +280,51 @@ proc blt::tv::Initialize { w } {
 	}
 	%W column configure $blt::tv::column -titlerelief raised
     }
-    $w bind TextBoxStyle <ButtonPress-3> { 
+    $w bind TextBoxStyle <ButtonPress-3> {
 	if { [%W edit -root -test %X %Y] } {
 	    break
 	}
     }
-    $w bind TextBoxStyle <ButtonRelease-3> { 
+    $w bind TextBoxStyle <ButtonRelease-3> {
 	if { [%W edit -root -test %X %Y] } {
 	    blt::tv::EditColumn %W %X %Y
 	    break
 	}
     }
-    $w bind CheckBoxStyle <Enter> { 
+    $w bind CheckBoxStyle <Enter> {
 	set column [%W column current]
 	if { [%W column cget $column -edit] } {
 	    %W style activate current $column
-	} 
+	}
     }
-    $w bind CheckBoxStyle <Leave> { 
+    $w bind CheckBoxStyle <Leave> {
 	%W style activate ""
     }
-    $w bind CheckBoxStyle <ButtonPress-1> { 
+    $w bind CheckBoxStyle <ButtonPress-1> {
 	set column [%W column current]
 	if { [%W column cget $column -edit] } {
 	    break
 	}
     }
-    $w bind CheckBoxStyle <B1-Motion> { 
+    $w bind CheckBoxStyle <B1-Motion> {
 	set column [%W column current]
 	if { [%W column cget $column -edit] } {
 	    break
 	}
     }
-    $w bind CheckBoxStyle <ButtonRelease-1> { 
+    $w bind CheckBoxStyle <ButtonRelease-1> {
 	if { [%W edit -root -test %X %Y] } {
 	    %W edit -root %X %Y
 	    break
 	}
     }
-    $w bind ComboBoxStyle <ButtonPress-1> { 
+    $w bind ComboBoxStyle <ButtonPress-1> {
 	set column [%W column current]
 	if { [%W column cget $column -edit] } {
 	    break
 	}
     }
-    $w bind ComboBoxStyle <ButtonRelease-1> { 
+    $w bind ComboBoxStyle <ButtonRelease-1> {
 	if { [%W edit -root -test %X %Y] } {
 	    %W edit -root %X %Y
 	    break
@@ -467,9 +467,9 @@ proc blt::tv::NextMatch { w key } {
 #
 # InsertText --
 #
-#	Inserts a text string into an entry at the insertion cursor.  
-#	If there is a selection in the entry, and it covers the point 
-#	of the insertion cursor, then delete the selection before 
+#	Inserts a text string into an entry at the insertion cursor.
+#	If there is a selection in the entry, and it covers the point
+#	of the insertion cursor, then delete the selection before
 #	inserting.
 #
 # Arguments:
@@ -480,7 +480,7 @@ proc blt::tv::NextMatch { w key } {
 proc blt::tv::InsertText { w text } {
     if { [string length $text] > 0 } {
 	set index [$w index insert]
-	if { ($index >= [$w index sel.first]) && 
+	if { ($index >= [$w index sel.first]) &&
 	     ($index <= [$w index sel.last]) } {
 	    $w delete sel.first sel.last
 	}
@@ -555,7 +555,7 @@ proc blt::tv::EditColumn { w x y } {
     grab release $w.edit
 }
 
-# 
+#
 # ButtonPress assignments
 #
 #	B1-Enter	start auto-scrolling
@@ -581,7 +581,7 @@ bind ${className} <ButtonRelease-2> {
 
 bind ${className} <B1-Leave> {
     if { $blt::tv::scroll } {
-	blt::tv::AutoScroll %W 
+	blt::tv::AutoScroll %W
     }
 }
 
@@ -589,10 +589,10 @@ bind ${className} <B1-Enter> {
     after cancel $blt::tv::afterId
 }
 
-# 
+#
 # KeyPress assignments
 #
-#	Up			
+#	Up
 #	Down
 #	Shift-Up
 #	Shift-Down
@@ -666,7 +666,7 @@ bind ${className} <KeyPress-space> {
     set blt::tv::space on
 }
 
-bind ${className} <KeyRelease-space> { 
+bind ${className} <KeyRelease-space> {
     set blt::tv::space off
 }
 
@@ -675,7 +675,7 @@ bind ${className} <KeyPress-Return> {
     set blt::tv::space on
 }
 
-bind ${className} <KeyRelease-Return> { 
+bind ${className} <KeyRelease-Return> {
     set blt::tv::space off
 }
 
@@ -696,7 +696,7 @@ bind ${className} <KeyPress-F1> {
 }
 
 bind ${className} <KeyPress-F2> {
-    eval %W close -r [%W entry children root] 
+    eval %W close -r [%W entry children root]
 }
 
 #
@@ -709,13 +709,13 @@ bind ${className} <KeyPress-F2> {
 #	o current is "" if
 #	   1) the pointer isn't over an entry.
 #	   2) the pointer is over a open/close button.
-#	   3) 
+#	   3)
 #
 
 #
 #  Edit mode assignments
 #
-#	ButtonPress-3   Enables/disables edit mode on entry.  Sets focus to 
+#	ButtonPress-3   Enables/disables edit mode on entry.  Sets focus to
 #			entry.
 #
 #  KeyPress
@@ -734,7 +734,7 @@ bind ${className} <KeyPress-F2> {
 #	Ctrl-X		Cut
 #	Ctrl-V		Copy
 #	Ctrl-P		Paste
-#	
+#
 #  KeyRelease
 #
 #	ButtonPress-1	Start selection if in entry, otherwise clear selection.
@@ -746,7 +746,7 @@ bind ${className} <KeyPress-F2> {
 #	ButtonPress-2	Same as above.
 #	B2-Motion	Same as above.
 #	ButtonRelease-2	Same as above.
-#	
+#
 #
 
 
@@ -882,12 +882,12 @@ bind ${className}Editor <Control-KeyPress> {
     # nothing
 }
 
-bind ${className}Editor <Escape> { 
-    %W cancel 
+bind ${className}Editor <Escape> {
+    %W cancel
 }
 
-bind ${className}Editor <Return> { 
-    %W apply 
+bind ${className}Editor <Return> {
+    %W apply
 }
 
 bind ${className}Editor <Shift-Return> {
@@ -993,7 +993,7 @@ if 0 {
     # Arguments:
     # w -		The entry window in which the cursor is to move.
     # start -	Position at which to start search.
-    
+
     if {![string compare $tcl_platform(platform) "windows"]}  {
 	proc blt::tv::NextWord {w start} {
 	    set pos [tcl_endOfWord [$w get] [$w index $start]]
@@ -1014,7 +1014,7 @@ if 0 {
 	    return $pos
 	}
     }
-    
+
     # PreviousWord --
     #
     # Returns the index of the previous word position before a given
@@ -1023,7 +1023,7 @@ if 0 {
     # Arguments:
     # w -		The entry window in which the cursor is to move.
     # start -	Position at which to start search.
-    
+
     proc blt::tv::PreviousWord {w start} {
 	set pos [tcl_startOfPreviousWord [$w get] [$w index $start]]
 	if {$pos < 0} {

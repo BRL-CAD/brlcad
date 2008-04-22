@@ -1,6 +1,6 @@
 .\" Copyright (c) 1986, University of Utah
 .TH TOBW 1 "Month DD, YYYY" 1
-.UC 4 
+.UC 4
 .SH NAME
 tobw \- Convert a 24 bit RLE file to eight bits of gray scale value.
 .SH SYNOPSIS
@@ -16,13 +16,13 @@ tobw \- Convert a 24 bit RLE file to eight bits of gray scale value.
 .SH DESCRIPTION
 .IR Tobw
 converts an image with 24 bit pixel values (eight bits each of red,
-green and blue) to eight bits of grayscale information.  The 
+green and blue) to eight bits of grayscale information.  The
 .I NTSC Y
 transform is used.  If the
 .B \-t
 flag is given, then the monochrome pixel values are replicated on all three
 output channels (otherwise, just one channel of eight bit data is produced).
-If no input file is specified, 
+If no input file is specified,
 .IR tobw
 reads from stdin.  If no output file is specified with
 .B \-o,

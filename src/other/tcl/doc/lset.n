@@ -80,32 +80,43 @@ of a list.  If an index is outside the permitted range, an error is reported.
 In each of these examples, the initial value of \fIx\fR is:
 .CS
 set x [list [list a b c] [list d e f] [list g h i]]
-  => {a b c} {d e f} {g h i}
+      \fI\(-> {a b c} {d e f} {g h i}\fR
 .CE
 The indicated return value also becomes the new value of \fIx\fR
 (except in the last case, which is an error which leaves the value of
 \fIx\fR unchanged.)
 .CS
-lset x {j k l} => j k l
-lset x {} {j k l} => j k l
-lset x 0 j => j {d e f} {g h i}
-lset x 2 j => {a b c} {d e f} j
-lset x end j => {a b c} {d e f} j
-lset x end-1 j => {a b c} j {g h i}
-lset x 2 1 j => {a b c} {d e f} {g j i}
-lset x {2 1} j => {a b c} {d e f} {g j i}
-lset x {2 3} j => \fIlist index out of range\fR
+\fBlset\fR x {j k l}
+      \fI\(-> j k l\fR
+\fBlset\fR x {} {j k l}
+      \fI\(-> j k l\fR
+\fBlset\fR x 0 j
+      \fI\(-> j {d e f} {g h i}\fR
+\fBlset\fR x 2 j
+      \fI\(-> {a b c} {d e f} j\fR
+\fBlset\fR x end j
+      \fI\(-> {a b c} {d e f} j\fR
+\fBlset\fR x end-1 j
+      \fI\(-> {a b c} j {g h i}\fR
+\fBlset\fR x 2 1 j
+      \fI\(-> {a b c} {d e f} {g j i}\fR
+\fBlset\fR x {2 1} j
+      \fI\(-> {a b c} {d e f} {g j i}\fR
+\fBlset\fR x {2 3} j
+      \fI\(-> list index out of range\fR
 .CE
 In the following examples, the initial value of \fIx\fR is:
 .CS
 set x [list [list [list a b] [list c d]] \e
             [list [list e f] [list g h]]]
- => {{a b} {c d}} {{e f} {g h}}
+      \fI\(-> {{a b} {c d}} {{e f} {g h}}\fR
 .CE
 The indicated return value also becomes the new value of \fIx\fR.
 .CS
-lset x 1 1 0 j => {{a b} {c d}} {{e f} {j h}}
-lset x {1 1 0} j => {{a b} {c d}} {{e f} {j h}}
+\fBlset\fR x 1 1 0 j
+      \fI\(-> {{a b} {c d}} {{e f} {j h}}\fR
+\fBlset\fR x {1 1 0} j
+      \fI\(-> {{a b} {c d}} {{e f} {j h}}\fR
 .CE
 .SH "SEE ALSO"
 list(n), lappend(n), lindex(n), linsert(n), llength(n), lsearch(n), 

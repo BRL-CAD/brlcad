@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -71,13 +71,13 @@ static
 int ON_WindowsBitmapHelper_PaletteColorCount( int bmiHeader_biClrUsed, int bmiHeader_biBitCount )
 {
   int color_count = 0;
-  
+
   if ( bmiHeader_biClrUsed )
   {
     color_count = bmiHeader_biClrUsed;
   }
-  else 
-  {  
+  else
+  {
     switch( bmiHeader_biBitCount )
     {
     case 1:
@@ -89,7 +89,7 @@ int ON_WindowsBitmapHelper_PaletteColorCount( int bmiHeader_biClrUsed, int bmiHe
     default:
       color_count = 0;
     }
-  }  
+  }
   return color_count;
 }
 
@@ -106,7 +106,7 @@ size_t ON_WindowsBitmapHelper_SizeofPalette( int bmiHeader_biClrUsed, int bmiHea
 ON_WindowsBitmap::ON_WindowsBitmap() : m_bmi(0), m_bits(0), m_bFreeBMI(0)
 {}
 
-ON_WindowsBitmap::ON_WindowsBitmap( const ON_WindowsBitmap& src ) 
+ON_WindowsBitmap::ON_WindowsBitmap( const ON_WindowsBitmap& src )
                 : m_bmi(0), m_bits(0), m_bFreeBMI(0)
 {
   *this = src;
@@ -122,7 +122,7 @@ void ON_WindowsBitmap::EmergencyDestroy()
 
 void ON_WindowsBitmap::Destroy()
 {
-  if (m_bmi) 
+  if (m_bmi)
   {
     if ( 1 == m_bFreeBMI || 3 == m_bFreeBMI )
       onfree(m_bmi);
@@ -140,7 +140,7 @@ void ON_WindowsBitmap::Destroy()
 
 BOOL ON_WindowsBitmap::IsValid( ON_TextLog* text_log ) const
 {
-  bool rc = ( m_bmi != NULL && m_bits != NULL && Width() > 0 && Height() > 0) 
+  bool rc = ( m_bmi != NULL && m_bits != NULL && Width() > 0 && Height() > 0)
           ? true : false;
 
   if ( !rc && 0 != text_log )
@@ -153,7 +153,7 @@ BOOL ON_WindowsBitmap::IsValid( ON_TextLog* text_log ) const
 
 #if defined(ON_OS_WINDOWS_GDI)
 
-static BITMAPINFO* 
+static BITMAPINFO*
 ON_WindowsBitmapHelper_AllocBMI(size_t sizeof_palette, size_t sizeof_image)
 {
   // In theory,
@@ -172,7 +172,7 @@ ON_WindowsBitmapHelper_AllocBMI(size_t sizeof_palette, size_t sizeof_image)
 
 #else
 
-static 
+static
 ON_WindowsBITMAPINFO* ON_WindowsBitmapHelper_AllocBMI(size_t sizeof_palette, size_t sizeof_image)
 {
   size_t sz = sizeof(ON_WindowsBITMAPINFO) + sizeof_palette + sizeof_image;
@@ -188,7 +188,7 @@ ON_WindowsBITMAPINFO* ON_WindowsBitmapHelper_AllocBMI(size_t sizeof_palette, siz
 #endif
 
 
-bool ON_WindowsBitmap::Create( 
+bool ON_WindowsBitmap::Create(
        int width,
        int height,
        int bits_per_pixel // 1, 2, 4, 8, 16, 24, or 32
@@ -200,8 +200,8 @@ bool ON_WindowsBitmap::Create(
   {
     return false;
   }
-  if (   bits_per_pixel != 1 && bits_per_pixel !=  2 && bits_per_pixel !=  4 
-      && bits_per_pixel != 8 && bits_per_pixel != 16 && bits_per_pixel != 24 
+  if (   bits_per_pixel != 1 && bits_per_pixel !=  2 && bits_per_pixel !=  4
+      && bits_per_pixel != 8 && bits_per_pixel != 16 && bits_per_pixel != 24
       && bits_per_pixel != 32 )
   {
     return false;
@@ -246,7 +246,7 @@ bool ON_WindowsBitmap::Create(
 
   bool rc = false;
 
-  if ( m_bmi && palette_color_count > 0) 
+  if ( m_bmi && palette_color_count > 0)
   {
     m_bmi->bmiHeader = bh;
     m_bits = (unsigned char*)&m_bmi->bmiColors[palette_color_count];
@@ -254,7 +254,7 @@ bool ON_WindowsBitmap::Create(
     // default palette is gray scale
     const int rgb_delta = 256/palette_color_count;
     int i, rgb;
-    for ( i = 0, rgb = 0; i < palette_color_count; i++, rgb += rgb_delta ) 
+    for ( i = 0, rgb = 0; i < palette_color_count; i++, rgb += rgb_delta )
     {
       if ( rgb >= 256 ) rgb = 255;
       m_bmi->bmiColors[i].rgbBlue  = (unsigned char)rgb;
@@ -276,16 +276,16 @@ ON_WindowsBitmap::~ON_WindowsBitmap()
 
 ON_WindowsBitmap& ON_WindowsBitmap::operator=( const ON_WindowsBitmap& src )
 {
-  if ( this != &src ) 
+  if ( this != &src )
   {
     Destroy();
     ON_Bitmap::operator=(src);
-    if ( src.m_bmi ) 
+    if ( src.m_bmi )
     {
       const int sizeof_palette = src.SizeofPalette();
       const int sizeof_image   = src.SizeofImage();
       m_bmi = ON_WindowsBitmapHelper_AllocBMI( sizeof_palette, sizeof_image );
-      if ( m_bmi ) 
+      if ( m_bmi )
       {
         m_bFreeBMI = 1;
         m_bmi->bmiHeader = src.m_bmi->bmiHeader;
@@ -293,7 +293,7 @@ ON_WindowsBitmap& ON_WindowsBitmap::operator=( const ON_WindowsBitmap& src )
         {
           memcpy(&m_bmi->bmiColors[0],&src.m_bmi->bmiColors[0],sizeof_palette);
         }
-        if ( sizeof_image > 0 ) 
+        if ( sizeof_image > 0 )
         {
           m_bits = (unsigned char*)&m_bmi->bmiColors[PaletteColorCount()];
           if ( src.m_bits )
@@ -386,7 +386,7 @@ ON_Color ON_WindowsBitmap::Pixel( int column_index, const unsigned char* scanbit
   int r=0,g=0,b=0,a=0;
 
   unsigned int palindex;
-  
+
   if ( m_bmi && column_index >= 0 && column_index <= Width() && scanbits && !m_bmi->bmiHeader.biCompression ) {
     switch( m_bmi->bmiHeader.biBitCount ) {
     case 32:
@@ -396,23 +396,23 @@ ON_Color ON_WindowsBitmap::Pixel( int column_index, const unsigned char* scanbit
       r = *scanbits++;
       a = *scanbits;
       break;
-    
+
     case 24:
       scanbits += (column_index*3);
       b = *scanbits++;
       g = *scanbits++;
       r = *scanbits;
       break;
-    
+
     case 8:
       // 256 color bitmap uses palette
-      palindex = scanbits[column_index];    
+      palindex = scanbits[column_index];
       b = m_bmi->bmiColors[palindex].rgbBlue;
       g = m_bmi->bmiColors[palindex].rgbGreen;
       r = m_bmi->bmiColors[palindex].rgbRed;
       a = m_bmi->bmiColors[palindex].rgbReserved;
       break;
-    
+
     case 4:
       {
         // 16 color bitmap uses palette
@@ -426,18 +426,18 @@ ON_Color ON_WindowsBitmap::Pixel( int column_index, const unsigned char* scanbit
         a = m_bmi->bmiColors[palindex].rgbReserved;
       }
       break;
-    
+
     case 1:
-      // monochrome bitmap has 2 color palette 
+      // monochrome bitmap has 2 color palette
       palindex = ( scanbits[column_index/8] >> (7-(column_index%8)) ) & 0x01;
       b = m_bmi->bmiColors[palindex].rgbBlue;
       g = m_bmi->bmiColors[palindex].rgbGreen;
       r = m_bmi->bmiColors[palindex].rgbRed;
       a = m_bmi->bmiColors[palindex].rgbReserved;
-      break;		
+      break;
     }
   }
-  
+
   return ON_Color(r,g,b,a);
 }
 
@@ -454,7 +454,7 @@ bool ON_WindowsBitmap::WriteUncompressed( ON_BinaryArchive& file ) const
     bmiHeader = m_bmi->bmiHeader;
     bmiHeader.biSize = sizeof(bmiHeader);
   }
-  else 
+  else
   {
     memset(&bmiHeader,0,sizeof(bmiHeader));
   }
@@ -483,7 +483,7 @@ bool ON_WindowsBitmap::WriteUncompressed( ON_BinaryArchive& file ) const
   i = bmiHeader.biClrImportant;
   if (rc) rc = file.WriteInt(i);
 
-  if ( rc ) 
+  if ( rc )
   {
     const int color_count = PaletteColorCount();
     for (i = 0; i < color_count && rc; i++ )
@@ -494,7 +494,7 @@ bool ON_WindowsBitmap::WriteUncompressed( ON_BinaryArchive& file ) const
       if (rc) rc = file.WriteChar( m_bmi->bmiColors[i].rgbReserved );
     }
     const int sizeof_image = SizeofImage();
-    if ( sizeof_image > 0 && rc ) 
+    if ( sizeof_image > 0 && rc )
     {
       if (rc) rc = file.WriteByte( sizeof_image, &m_bmi->bmiColors[color_count] );
     }
@@ -528,32 +528,32 @@ bool ON_WindowsBitmap::ReadUncompressed( ON_BinaryArchive& file )
   if (rc) rc = file.ReadInt(&i);   bmiHeader.biClrUsed = i;
   if (rc) rc = file.ReadInt(&i);   bmiHeader.biClrImportant = i;
 
-  if ( rc ) 
+  if ( rc )
   {
     bmiHeader.biSize = sizeof(bmiHeader);
     const size_t sizeof_palette = ON_WindowsBitmapHelper_SizeofPalette(bmiHeader.biClrUsed, bmiHeader.biBitCount );
     const size_t sizeof_image   = bmiHeader.biSizeImage;
-    
+
     m_bmi = ON_WindowsBitmapHelper_AllocBMI( sizeof_palette, sizeof_image );
 
     if ( !m_bmi )
     {
       rc = false;
     }
-    else 
+    else
     {
       m_bFreeBMI = 1;
       m_bmi->bmiHeader = bmiHeader;
       const int color_count = ON_WindowsBitmapHelper_PaletteColorCount(bmiHeader.biClrUsed, bmiHeader.biBitCount );
       int i;
-      for (i = 0; i < color_count && rc; i++ ) 
+      for (i = 0; i < color_count && rc; i++ )
       {
         if (rc) rc = file.ReadChar( &m_bmi->bmiColors[i].rgbBlue );
         if (rc) rc = file.ReadChar( &m_bmi->bmiColors[i].rgbGreen );
         if (rc) rc = file.ReadChar( &m_bmi->bmiColors[i].rgbRed );
         if (rc) rc = file.ReadChar( &m_bmi->bmiColors[i].rgbReserved );
       }
-      if ( sizeof_image > 0 && rc ) 
+      if ( sizeof_image > 0 && rc )
       {
         m_bits = (unsigned char*)&m_bmi->bmiColors[color_count];
         if (rc) rc = file.ReadByte( sizeof_image, m_bits );
@@ -634,7 +634,7 @@ bool ON_WindowsBitmap::WriteCompressed( ON_BinaryArchive& file ) const
     if ( 0 == sizeof_image )
       bContiguousBitmap = true;
   }
-  else 
+  else
   {
     bContiguousBitmap = true;
     color_count = 0;
@@ -667,7 +667,7 @@ bool ON_WindowsBitmap::WriteCompressed( ON_BinaryArchive& file ) const
   i = bmiHeader.biClrImportant;
   if (rc) rc = file.WriteInt(i);
 
-  if ( rc ) 
+  if ( rc )
   {
     if ( bContiguousBitmap )
     {
@@ -679,7 +679,7 @@ bool ON_WindowsBitmap::WriteCompressed( ON_BinaryArchive& file ) const
     {
       // 28 July 2003
       //     Added support for writing non-contiguous bitmaps
-      // palette 
+      // palette
       rc = file.WriteCompressedBuffer( sizeof_palette, m_bmi->bmiColors );
       if (rc)
       {
@@ -715,7 +715,7 @@ bool ON_WindowsBitmap::ReadCompressed( ON_BinaryArchive& file )
   if (rc) rc = file.ReadInt(&i);   bmiHeader.biYPelsPerMeter = i;
   if (rc) rc = file.ReadInt(&i);   bmiHeader.biClrUsed = i;
   if (rc) rc = file.ReadInt(&i);   bmiHeader.biClrImportant = i;
-  if ( rc ) 
+  if ( rc )
   {
     bmiHeader.biSize = sizeof(bmiHeader);
     const size_t sizeof_palette = ON_WindowsBitmapHelper_SizeofPalette(bmiHeader.biClrUsed, bmiHeader.biBitCount );
@@ -725,7 +725,7 @@ bool ON_WindowsBitmap::ReadCompressed( ON_BinaryArchive& file )
     {
       rc = false;
     }
-    else 
+    else
     {
       m_bFreeBMI = 1;
       m_bmi->bmiHeader = bmiHeader;
@@ -740,7 +740,7 @@ bool ON_WindowsBitmap::ReadCompressed( ON_BinaryArchive& file )
         const size_t sizeof_colors = color_count*sizeof(*m_bmi->bmiColors);
         if (    sizeof_buffer == sizeof_colors
              || sizeof_buffer == sizeof_colors + sizeof_image
-           ) 
+           )
         {
           // palette and image bits are compressed into one or two chunks
           rc = file.ReadCompressedBuffer( sizeof_buffer, m_bmi->bmiColors, &bFailedCRC );
@@ -816,13 +816,13 @@ bool ON_WindowsBitmap::Create( const BITMAPINFO* bmi, const unsigned char* bits,
 
   if ( 0 != bmi )
   {
-    if ( bCopy ) 
+    if ( bCopy )
     {
       // allocate a contiguous Windows device independent bitmap
       const size_t sizeof_palette = ON_WindowsBitmapHelper_SizeofPalette(bmi->bmiHeader.biClrUsed, bmi->bmiHeader.biBitCount );
       const int sizeof_image   = bmi->bmiHeader.biSizeImage;
       m_bmi = ON_WindowsBitmapHelper_AllocBMI( sizeof_palette, (bCopy?sizeof_image:0) );
-      if ( 0 != m_bmi ) 
+      if ( 0 != m_bmi )
       {
         rc = true;
         m_bFreeBMI = 1; // ~ON_WindowsBitmap will free the m_bmi pointer
@@ -938,7 +938,7 @@ BOOL ON_EmbeddedBitmap::IsValid( ON_TextLog* text_log ) const
   return true;
 }
 
-BOOL ON_EmbeddedBitmap::Write( ON_BinaryArchive& file ) const 
+BOOL ON_EmbeddedBitmap::Write( ON_BinaryArchive& file ) const
 {
   BOOL rc = file.Write3dmChunkVersion(1,0);
   if (rc)
@@ -964,7 +964,7 @@ BOOL ON_EmbeddedBitmap::Write( ON_BinaryArchive& file ) const
   return rc;
 }
 
-BOOL ON_EmbeddedBitmap::Read( ON_BinaryArchive& file ) 
+BOOL ON_EmbeddedBitmap::Read( ON_BinaryArchive& file )
 {
   BOOL bFailedCRC = false;
   Destroy();

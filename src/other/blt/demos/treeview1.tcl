@@ -2,17 +2,17 @@
 
 package require BLT
 # --------------------------------------------------------------------------
-# Starting with Tcl 8.x, the BLT commands are stored in their own 
+# Starting with Tcl 8.x, the BLT commands are stored in their own
 # namespace called "blt".  The idea is to prevent name clashes with
 # Tcl commands and variables from other packages, such as a "table"
-# command in two different packages.  
+# command in two different packages.
 #
 # You can access the BLT commands in a couple of ways.  You can prefix
 # all the BLT commands with the namespace qualifier "blt::"
-#  
+#
 #    blt::graph .g
 #    blt::table . .g -resize both
-# 
+#
 # or you can import all the command into the global namespace.
 #
 #    namespace import blt::*
@@ -27,7 +27,7 @@ if { $tcl_version >= 8.0 } {
 source scripts/demo.tcl
 
 proc SortColumn { column } {
-    set old [.t sort cget -column] 
+    set old [.t sort cget -column]
     set decreasing 0
     if { "$old" == "$column" } {
 	set decreasing [.t sort cget -decreasing]
@@ -51,13 +51,13 @@ proc FormatSize { size } {
        set size [expr $size / 1000]
        if { $size > 0 } {
            set rem [format "%03d" $rem]
-       } 
+       }
        if { $string != "" } {
            set string "$rem,$string"
        } else {
            set string "$rem"
        }
-   } 
+   }
    return $string
 }
 
@@ -66,7 +66,7 @@ array set modes {
    1    --x
    2    -w-
    3    -wx
-   4    r-- 
+   4    r--
    5    r-x
    6    rw-
    7    rwx
@@ -84,7 +84,7 @@ proc FormatMode { mode } {
 }
 
 proc Find { tree parent dir } {
-    global count 
+    global count
     set saved [pwd]
 
     cd $dir
@@ -117,7 +117,7 @@ proc Find { tree parent dir } {
 proc GetAbsolutePath { dir } {
     set saved [pwd]
     cd $dir
-    set path [pwd] 
+    set path [pwd]
     cd $saved
     return $path
 }
@@ -142,7 +142,7 @@ set top [GetAbsolutePath ..]
 #set top [GetAbsolutePath /home/gah]
 set trim "$top"
 
-set tree [tree create]    
+set tree [tree create]
 treeview .t \
     -width 0 \
     -yscrollcommand { .vs set } \
@@ -150,11 +150,11 @@ treeview .t \
     -selectmode single \
     -tree $tree
 
-.t column configure treeView -text "" 
+.t column configure treeView -text ""
 #file
-.t column insert 0 mtime atime gid 
+.t column insert 0 mtime atime gid
 .t column insert end nlink mode type ctime uid ino size dev
-.t column configure uid -background \#eaeaff -relief raised 
+.t column configure uid -background \#eaeaff -relief raised
 .t column configure mtime -hide no -bg \#ffeaea -relief raised
 .t column configure size gid nlink uid ino dev -justify left -edit yes
 .t column configure size type -justify left -edit yes
@@ -202,11 +202,11 @@ pack .top.sbar -side right -fill y
 #.t configure -bg #ffffed
 .t style checkbox check \
     -onvalue 30 -offvalue "50" \
-    -showvalue yes 
+    -showvalue yes
 
 .t style combobox combo \
     -icon blt::tv::normalOpenFolder
 
 .t column configure uid -style combo
-.t column configure gid -style check 
+.t column configure gid -style check
 

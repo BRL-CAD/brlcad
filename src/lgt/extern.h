@@ -1,7 +1,7 @@
 /*                        E X T E R N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,36 +18,10 @@
  * information.
  */
 /** @file extern.h
-	Authors:	Gary S. Moss
-			Jeff Hanes	(math consultation)
-
-	Note: preceeding #include "./extern.h" must be the following:
-
-	#include <assert.h>
-
-	#include "machine.h"
-	#include "vmath.h"
-	#include "raytrace.h"
-	#include "fb.h"
-	#include "./hmenu.h"
-	#include "./lgt.h"
-*/
+ *
+ */
 
 #include "common.h"
-
-/* Set pre-processor switch to make up for SGI 4d Release 2 winclose() bug. */
-#ifdef SGI4D_Rel2
-#define SGI_WINCLOSE_BUG 1
-#else
-#define SGI_WINCLOSE_BUG 0
-#endif
-
-/* Set pre_processor switch to make up for SGI 3000 series math library. */
-#if defined(sgi) && ! defined(mips)
-#define SINGLE_PRECISION 1
-#else
-#define SINGLE_PRECISION 0
-#endif
 
 extern void (*norml_sig)(), (*abort_sig)();
 extern void abort_RT();
@@ -84,11 +58,7 @@ extern void prnt_Menu();
 extern void prnt_Octree();
 extern void prnt_Pixel();
 extern void prnt_Prompt();
-#if HAVE_STDARG_H
-extern void prnt_Scroll( char *, ... );
-#else
-extern void prnt_Scroll();
-#endif
+extern void prnt_Scroll( const char *, ... );
 extern void prnt_Status();
 extern void prnt_Timer();
 extern void prnt_Title();
@@ -109,7 +79,6 @@ extern RGBpixel bgpixel;
 extern RGBpixel *ir_table;
 
 extern char *CS, *DL;
-extern char *beginptr;
 extern char *ged_file;
 
 extern char err_file[];
@@ -188,6 +157,8 @@ extern int user_interrupt;
 extern int x_fb_origin, y_fb_origin;
 extern int zoom;
 
+extern struct vfont font;
+
 extern unsigned char arrowcursor[];
 extern unsigned char menucursor[];
 extern unsigned char sweeportrack[];
@@ -217,8 +188,8 @@ extern int win_active;
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

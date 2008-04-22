@@ -13,7 +13,7 @@
 .SH NAME
 local \- create an object local to a procedure
 .SH SYNOPSIS
-\fBlocal \fIclassName objName\fR ?\fIarg arg ...\fR?
+\fBitcl::local \fIclassName objName\fR ?\fIarg arg ...\fR?
 .BE
 
 .SH DESCRIPTION
@@ -37,7 +37,7 @@ procedure exits.  The \fBputs\fR statements included in the
 constructor/destructor show the object coming and going
 as the procedure is called.
 .CS
-class counter {
+itcl::class counter {
     private variable count 0
     constructor {} {
         puts "created: $this"
@@ -68,7 +68,7 @@ puts "test: $result"
 set result [test 10]
 puts "test: $result"
 
-puts "objects: [info objects]"
+puts "objects: [itcl::find objects *]"
 .CE
 
 .SH KEYWORDS

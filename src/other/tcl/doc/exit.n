@@ -21,7 +21,7 @@ exit \- End the application
 .PP
 Terminate the process, returning \fIreturnCode\fR to the
 system as the exit status.
-If \fIreturnCode\fR isn't specified then it defaults
+If \fIreturnCode\fR is not specified then it defaults
 to 0.
 .SH EXAMPLE
 Since non-zero exit codes are usually interpreted as error cases by

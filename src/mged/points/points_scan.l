@@ -1,7 +1,7 @@
 /*                   P O I N T S _ S C A N . L
  * BRL-CAD
  *
- * Copyright (c) 2005-2007 United States Government as represented by
+ * Copyright (c) 2005-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@
 /*                   P O I N T S _ S C A N . L
  * BRL-CAD
  *
- * Copyright (c) 2005-2007 United States Government as represented by
+ * Copyright (c) 2005-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -51,8 +51,6 @@
  * This lexer grammar is to tokenize comma-separated value point
  * files.
  *
- * Author -
- *   Christopher Sean Morrison
  */
 
 #include "common.h"
@@ -62,8 +60,8 @@
 #include <math.h>
 #include <string.h>
 
-#include "machine.h"
 #include "vmath.h"
+#include "bu.h"
 
 /* increase token limits of at&t and mk2 lex */
 #undef YYLMAX
@@ -77,11 +75,12 @@
 #include "./process.h"
 
 extern int yyerror(char *msg);
+extern YYSTYPE yylval;
 
 /* used to set the initial state */
 static int first_token = 1;
-char previous_linebuffer[YYLMAX] = {0};
-char linebuffer[YYLMAX] = {0};
+char previous_linebuffer[YYLMAX+1] = {0};
+char linebuffer[YYLMAX+1] = {0};
 
 %}
 
@@ -215,8 +214,8 @@ COMMA	[,]
     BEGIN(LINE);
 
     /* save the next line for error reporting */
-    strncpy(previous_linebuffer, linebuffer, YYLMAX);
-    strncpy(linebuffer, yytext+1, YYLMAX);
+    bu_strlcpy(previous_linebuffer, linebuffer, YYLMAX);
+    bu_strlcpy(linebuffer, yytext+1, YYLMAX);
 
     while (i < yyleng && (yytext[i] == '\n' || yytext[i] == '\r')) {
 	if (yytext[i] == '\n') {
@@ -234,12 +233,12 @@ COMMA	[,]
     printf("WARNING: Ignoring non-printable character (0x%x) on line %ld  (file offset %ld)\n", yytext[0], get_lines()+1, get_bytes());
 }
 
-. {   
+. {
     /* bad input?  */
     printf("TOKENIZE ERROR: Unexpected character ('%c' 0x%x) on line %ld, column %ld  (file offset %ld)\n", yytext[0], yytext[0], get_lines()+1, get_column(), get_bytes());
     yyerror(yytext);
     unput(' '); /* unreached, quell yyunput unused warning instead of using YY_NO_UNPUT */
-    exit(1);
+    bu_exit(1, NULL);
 }
 %%
 
@@ -248,8 +247,8 @@ COMMA	[,]
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -57,7 +57,7 @@
  * RCS: @(#) $Id$
  */
 
-#include "tkMacOSXInt.h"
+#include "tkMacOSXPrivate.h"
 #include "tkMacOSXEvent.h"
 
 /*
@@ -178,7 +178,12 @@ TkMacOSXProcessKeyboardEvent(
 	    case kHICommandPreferences:
 	    case kHICommandQuit:
 		statusPtr->stopProcessing = 0;
-		return 0; /* TODO: may not be on event on queue. */
+
+		/*
+		 * TODO: may not be on event on queue.
+		 */
+
+		return 0;
 		break;
 	    default:
 		break;
@@ -1118,8 +1123,8 @@ TkpSetCapture(
 	    m = kWindowModalityNone;
 	}
 	if (w && w->window != None && TkMacOSXHostToplevelExists(w)) {
-	    ChkErr(SetWindowModality, GetWindowFromPort(
-		    TkMacOSXGetDrawablePort(w->window)), m, NULL);
+	    ChkErr(SetWindowModality, TkMacOSXDrawableWindow(w->window), m,
+		    NULL);
 	}
     }
 #endif

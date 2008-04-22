@@ -1,7 +1,7 @@
 #                  C A D _ D I A L O G . T C L
 # BRL-CAD
 #
-# Copyright (c) 1995-2007 United States Government as represented by
+# Copyright (c) 1995-2008 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -19,29 +19,11 @@
 #
 ###
 #
-# Author -
-#	Glenn Durfee
-#
-# Source -
-#	The U. S. Army Ballistic Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#
-#
 # Description -
 #	"cad_dialog" and "cad_input_dialog" are based off of the
 #	"tk_dialog" that comes with Tk 4.0.
 #
-# Modifications -
-#        (Bob Parker):
-#		*- mods to pop up the dialog box near the pointer.
-#		*- mods to cad_dialog (i.e. use text widget with
-#		   scrollbar if string length becomes too large).
-#		*- add ::tk::Priv(wait_cmd) and use in all dialogs
-#	 (John Anderson):
-#		*- added cad_radio proc
-#
-#==============================================================================
+###############################################################################
 
 if {![info exists ::tk::Priv(wait_cmd)]} {
     set ::tk::Priv(wait_cmd) tkwait
@@ -108,10 +90,10 @@ proc cad_dialog { w screen title text bitmap default args } {
 	    raise $w.bot.button$i
 	    pack $w.bot.default -side left -expand yes -padx 2m -pady 1m
 	    pack $w.bot.button$i -in $w.bot.default -side left -padx 1m \
-		    -pady 1m -ipadx 1m -ipady 1
+		-pady 1m -ipadx 1m -ipady 1
 	} else {
 	    pack $w.bot.button$i -side left -expand yes \
-		    -padx 2m -pady 2m -ipadx 1m -ipady 1
+		-padx 2m -pady 2m -ipadx 1m -ipady 1
 	}
 	incr i
     }
@@ -170,17 +152,17 @@ proc cad_input_dialog { w screen title text entryvar defaultentry default entry_
     foreach but $args {
 	button $w.bot.button$i -text $but -command "set button$w $i"
 	hoc_register_data $w.bot.button$i "Button Action"\
-		{{summary "Dismiss the dialog box, taking other
+	    {{summary "Dismiss the dialog box, taking other
 actions as indicated by the button label."}}
 	if { $i == $default } {
 	    frame $w.bot.default -relief sunken -bd 1
 	    raise $w.bot.button$i
 	    pack $w.bot.default -side left -expand yes -padx 2m -pady 1m
 	    pack $w.bot.button$i -in $w.bot.default -side left -padx 1m \
-		    -pady 1m -ipadx 1m -ipady 1
+		-pady 1m -ipadx 1m -ipady 1
 	} else {
 	    pack $w.bot.button$i -side left -expand yes \
-		    -padx 2m -pady 2m -ipadx 1m -ipady 1
+		-padx 2m -pady 2m -ipadx 1m -ipady 1
 	}
 	incr i
     }
@@ -209,57 +191,57 @@ actions as indicated by the button label."}}
 #	default is the index of the default choice
 #	help_strings is a list of help strings for the corresponding labels in choice_labels
 proc cad_radio { my_widget_name screen radio_result title text_message default choice_labels help_strings } {
-	global $radio_result
-	global ::tk::Priv
-	# The screen parameter can be the pathname of some
-	# widget where the screen value can be obtained.
-	# Otherwise, it is assumed to be a genuine X DISPLAY
-	# string.
-	if [winfo exists $screen] {
-		set screen [winfo screen $screen]
-	}
+    global $radio_result
+    global ::tk::Priv
+    # The screen parameter can be the pathname of some
+    # widget where the screen value can be obtained.
+    # Otherwise, it is assumed to be a genuine X DISPLAY
+    # string.
+    if [winfo exists $screen] {
+	set screen [winfo screen $screen]
+    }
 
-	set done 0
-	set w $my_widget_name
+    set done 0
+    set w $my_widget_name
 
-	if [winfo exists $w] { catch "destroy $w" }
-	toplevel $w -screen $screen
-	wm title $w $title
-	wm iconname $w Dialog
-	message $w.mess -text $text_message -justify center -width 500
-	hoc_register_data $w.mess "Radio Button Selection Dialog" {
-		{ summary "Use this window to select any one of the possibilities listed" }
-	}
-	grid $w.mess -row 0 -column 0 -columnspan 2 -sticky ew
-	set counter 0
-	foreach choice $choice_labels {
-		radiobutton $w.but_$counter -value $counter -variable $radio_result
-		label $w.lab_$counter -text $choice
-		grid $w.lab_$counter -row [expr $counter + 1] -column 1 -sticky ew
-		grid $w.but_$counter -row [expr $counter + 1] -column 0 -sticky ew
-		set hoc_data [subst {{ summary \"[lindex $help_strings $counter]\" }}]
-		hoc_register_data $w.lab_$counter [lindex $choice_labels $counter] $hoc_data
-		hoc_register_data $w.but_$counter [lindex $choice_labels $counter] $hoc_data
-		incr counter
-	}
-	$w.but_$default invoke
+    if [winfo exists $w] { catch "destroy $w" }
+    toplevel $w -screen $screen
+    wm title $w $title
+    wm iconname $w Dialog
+    message $w.mess -text $text_message -justify center -width 500
+    hoc_register_data $w.mess "Radio Button Selection Dialog" {
+	{ summary "Use this window to select any one of the possibilities listed" }
+    }
+    grid $w.mess -row 0 -column 0 -columnspan 2 -sticky ew
+    set counter 0
+    foreach choice $choice_labels {
+	radiobutton $w.but_$counter -value $counter -variable $radio_result
+	label $w.lab_$counter -text $choice
+	grid $w.lab_$counter -row [expr $counter + 1] -column 1 -sticky ew
+	grid $w.but_$counter -row [expr $counter + 1] -column 0 -sticky ew
+	set hoc_data [subst {{ summary \"[lindex $help_strings $counter]\" }}]
+	hoc_register_data $w.lab_$counter [lindex $choice_labels $counter] $hoc_data
+	hoc_register_data $w.but_$counter [lindex $choice_labels $counter] $hoc_data
+	incr counter
+    }
+    $w.but_$default invoke
 
-	button $w.apply -text Apply -command {set done 1}
-	hoc_register_data $w.apply "Apply" {
-		{ summary "Click on this button to indicate you have finished making your selection" }
-	}
+    button $w.apply -text Apply -command {set done 1}
+    hoc_register_data $w.apply "Apply" {
+	{ summary "Click on this button to indicate you have finished making your selection" }
+    }
 
-	button $w.dismiss -text Dismiss -command "set $radio_result $default; set done 2"
-	hoc_register_data $w.dismiss "Dismiss" {
-		{ summary "Click on this button to indicate you do not want to change\nthis selection from its value when the window first appeared" }
-	}
+    button $w.dismiss -text Dismiss -command "set $radio_result $default; set done 2"
+    hoc_register_data $w.dismiss "Dismiss" {
+	{ summary "Click on this button to indicate you do not want to change\nthis selection from its value when the window first appeared" }
+    }
 
-	grid $w.apply -row [expr $counter + 1] -column 0
-	grid $w.dismiss -row [ expr $counter + 1] -column 1
-	update
+    grid $w.apply -row [expr $counter + 1] -column 0
+    grid $w.dismiss -row [ expr $counter + 1] -column 1
+    update
 
-	$::tk::Priv(wait_cmd) variable done
-	catch " destroy $w "
+    $::tk::Priv(wait_cmd) variable done
+    catch " destroy $w "
 }
 
 proc cad_list_buts { my_widget_name screen list_of_results cur_settings title text_message choice_labels help_strings } {

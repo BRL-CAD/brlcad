@@ -1,7 +1,7 @@
 /*                         P L O T 3 . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,18 +25,6 @@
  * This header file will also work if called by a "traditional" C
  * compiler.
  *
- *  For best results, before the
-@code
-     #include "plot3.h"
-@endcode
- * there should be:
- *
-@code
-	#include "machine.h"
-	#include "vmath.h"
-@endcode
- *
- *  although not doing this should not be fatal.
  */
 #ifndef	PLOT3_H
 #define	PLOT3_H
@@ -46,6 +34,7 @@ extern "C" {
 #endif
 
 #include "common.h"
+
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
@@ -289,7 +278,7 @@ BN_EXPORT BU_EXTERN(void pdv_3ray,
  *  declared above.
  */
 
-#define PL_FORTRAN(lc,uc)	BU_FORTRAN(lc,uc)
+#define PL_FORTRAN(lc, uc)	BU_FORTRAN(lc, uc)
 
 BN_EXPORT BU_EXTERN(void tp_i2list,
 		    (FILE *fp,
@@ -512,8 +501,8 @@ BN_EXPORT BU_EXTERN(void BU_FORTRAN(f3vect, F3VECT),
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -186,7 +186,7 @@ bitmap_hdr *image;
    * a file, we'll read the file into memory ( one access to disk ).
    */
   can_read_all = (handle != stdin);     /* a regular file ? */
-  VPRINTF(stderr, "Reading Alias from %s\n", 
+  VPRINTF(stderr, "Reading Alias from %s\n",
                   (can_read_all ? "file" : "stdin"));
 
   if (can_read_all) {
@@ -543,7 +543,7 @@ bitmap_hdr *image;
      * A image with cmap.
      */
     /* if a simple plane => stored on R component */
-    r = image->r + offset_last;      
+    r = image->r + offset_last;
     for (i= 0; i< image->ysize; i++) {
       rle_putrow(&r, image->xsize, &the_hdr);
       r -= image->xsize;

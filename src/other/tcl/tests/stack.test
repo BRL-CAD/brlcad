@@ -35,23 +35,40 @@ if {[testConstraint unix]} {
     }
 }
 
-test stack-1.1 {maxNestingDepth reached on infinite recursion} {minStack2400} {
+#
+# Custom match to detect a stack overflow independently of the mechanism that
+# triggered the error.
+#
+
+customMatch stackOverflow StackOverflow
+proc StackOverflow {- res} {
+    set msgList [list \
+            "too many nested evaluations (infinite loop?)"\
+	    "out of stack space (infinite loop?)"]
+    expr {$res in $msgList}
+}
+
+test stack-1.1 {maxNestingDepth reached on infinite recursion} -constraints {
+    minStack2400
+} -body {
     # do this in a sub process in case it segfaults
     exec [interpreter] << {
 	proc recurse {} { recurse }
 	catch { recurse } rv
 	puts $rv
     }
-} {too many nested evaluations (infinite loop?)}
+} -match stackOverflow
 
-test stack-2.1 {maxNestingDepth reached on infinite recursion} {minStack2400} {
+test stack-2.1 {maxNestingDepth reached on infinite recursion} -constraints {
+    minStack2400
+} -body {
     # do this in a sub process in case it segfaults
     exec [interpreter] << {
 	interp alias {} unknown {} notaknownproc
 	catch { unknown } msg
 	puts $msg
     }
-} {too many nested evaluations (infinite loop?)}
+} -match stackOverflow 
     
 # Make sure that there is enough stack to run regexp even if we're
 # close to the recursion limit. [Bug 947070] [Patch 746378]

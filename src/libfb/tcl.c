@@ -1,7 +1,7 @@
 /*                           T C L . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2007 United States Government as represented by
+ * Copyright (c) 1997-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,12 +23,6 @@
  *
  *  LIBFB's Tcl interface.
  *
- *  Authors -
- *	Robert G. Parker
- *
- *	Source -
- *		The U. S. Army Research Laboratory
- *		Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 /** @} */
 
@@ -39,8 +33,8 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bio.h"
 #include "tcl.h"
-#include "machine.h"
 #include "cmd.h"                  /* includes bu.h */
 #include "fb.h"
 #include "bu.h"
@@ -49,10 +43,10 @@
 #include "brlcad_version.h"
 
 
-#define FB_TCL_CKMAG(_ptr, _magic, _str){ \
+#define FB_TCL_CKMAG(_ptr, _magic, _str) { \
 	struct bu_vls _fb_vls; \
 \
-	if(!(_ptr)){ \
+	if (!(_ptr)) { \
 		bu_vls_init(&_fb_vls); \
 		bu_vls_printf(&_fb_vls, "ERROR: null %s ptr, file %s, line %d\n", \
 			_str, __FILE__, __LINE__ ); \
@@ -60,7 +54,7 @@
 		bu_vls_free(&_fb_vls); \
 \
 		return TCL_ERROR; \
-	}else if(*((long *)(_ptr)) != (_magic)){ \
+	} else if (*((long *)(_ptr)) != (_magic)) { \
 		bu_vls_init(&_fb_vls); \
 		bu_vls_printf(&_fb_vls, "ERROR: bad %s ptr x%lx, s/b x%x, was x%lx, file %s, line %d\n", \
 		_str, (long)_ptr, _magic, (long)*((long *)(_ptr)), __FILE__, __LINE__); \
@@ -117,10 +111,10 @@ int fb_cmd_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, c
 int fb_cmd_common_file_size(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
 static struct bu_cmdtab cmdtab[] = {
-	{"fb_open_existing",	 fb_cmd_open_existing},
-	{"fb_close_existing",	 fb_cmd_close_existing},
-	{"fb_common_file_size",	 fb_cmd_common_file_size},
-	{(char *)0, (int (*)())0}
+    {"fb_open_existing",	 fb_cmd_open_existing},
+    {"fb_close_existing",	 fb_cmd_close_existing},
+    {"fb_common_file_size",	 fb_cmd_common_file_size},
+    {(char *)0, (int (*)())0}
 };
 
 /* XXX this device list shouldn't be in here */
@@ -137,28 +131,28 @@ fb_cmd_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char *
     struct bu_vls vls;
     int found = 0;
 
-    if(argc < 2){
+    if (argc < 2) {
 	Tcl_AppendResult(interp, "XXXfb_open_existing: wrong number of args\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    if((ifp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL){
+    if ((ifp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
 	Tcl_AppendResult(interp, "fb_open_existing: failed to allocate ifp memory\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
 #ifdef IF_X
-    if(strcasecmp(argv[1], X_device_name) == 0) {
+    if (strcasecmp(argv[1], X_device_name) == 0) {
 	found=1;
 	*ifp = X24_interface; /* struct copy */
 
 	ifp->if_name = malloc((unsigned)strlen(X_device_name) + 1);
-	(void)strcpy(ifp->if_name, X_device_name);
+	bu_strlcpy(ifp->if_name, X_device_name, strlen(X_device_name)+1);
 
 	/* Mark OK by filling in magic number */
 	ifp->if_magic = FB_MAGIC;
 
-	if((X24_open_existing(ifp, argc - 1, argv + 1)) <= -1){
+	if ((X24_open_existing(ifp, argc - 1, argv + 1)) <= -1) {
 	    ifp->if_magic = 0; /* sanity */
 	    free((void *) ifp->if_name);
 	    free((void *) ifp);
@@ -171,17 +165,17 @@ fb_cmd_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char *
 #ifdef IF_TK
 #if 0
 /* XXX TJM implment tk_open_existing */
-    if(strcasecmp(argv[1], tk_device_name) == 0) {
+    if (strcasecmp(argv[1], tk_device_name) == 0) {
 	found=1;
 	*ifp = tk_interface; /* struct copy */
 
 	ifp->if_name = malloc((unsigned)strlen(tk_device_name) + 1);
-	(void)strcpy(ifp->if_name, tk_device_name);
+	bu_strlcpy(ifp->if_name, tk_device_name, strlen(tk_device_name)+1);
 
 	/* Mark OK by filling in magic number */
 	ifp->if_magic = FB_MAGIC;
 
-	if((tk_open_existing(ifp, argc - 1, argv + 1)) <= -1){
+	if ((tk_open_existing(ifp, argc - 1, argv + 1)) <= -1) {
 	    ifp->if_magic = 0; /* sanity */
 	    free((void *) ifp->if_name);
 	    free((void *) ifp);
@@ -193,17 +187,17 @@ fb_cmd_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char *
 #endif  /* IF_TK */
 
 #ifdef IF_WGL
-    if(strcasecmp(argv[1], wgl_device_name) == 0) {
+    if (strcasecmp(argv[1], wgl_device_name) == 0) {
 	found=1;
 	*ifp = wgl_interface; /* struct copy */
 
 	ifp->if_name = malloc((unsigned)strlen(wgl_device_name) + 1);
-	(void)strcpy(ifp->if_name, wgl_device_name);
+	bu_strlcpy(ifp->if_name, wgl_device_name, strlen(wgl_device_name)+1);
 
 	/* Mark OK by filling in magic number */
 	ifp->if_magic = FB_MAGIC;
 
-	if((wgl_open_existing(ifp, argc - 1, argv + 1)) <= -1){
+	if ((wgl_open_existing(ifp, argc - 1, argv + 1)) <= -1) {
 	    ifp->if_magic = 0; /* sanity */
 	    free((void *) ifp->if_name);
 	    free((void *) ifp);
@@ -214,17 +208,17 @@ fb_cmd_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char *
 #endif  /* IF_WGL */
 
 #ifdef IF_OGL
-    if(strcasecmp(argv[1], ogl_device_name) == 0) {
+    if (strcasecmp(argv[1], ogl_device_name) == 0) {
 	found=1;
 	*ifp = ogl_interface; /* struct copy */
 
 	ifp->if_name = malloc((unsigned)strlen(ogl_device_name) + 1);
-	(void)strcpy(ifp->if_name, ogl_device_name);
+	bu_strlcpy(ifp->if_name, ogl_device_name, strlen(ogl_device_name)+1);
 
 	/* Mark OK by filling in magic number */
 	ifp->if_magic = FB_MAGIC;
 
-	if((ogl_open_existing(ifp, argc - 1, argv + 1)) <= -1){
+	if ((ogl_open_existing(ifp, argc - 1, argv + 1)) <= -1) {
 	    ifp->if_magic = 0; /* sanity */
 	    free((void *) ifp->if_name);
 	    free((void *) ifp);
@@ -278,12 +272,12 @@ fb_cmd_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char 
     struct bu_vls vls;
     int status;
 
-    if(argc != 2){
+    if (argc != 2) {
 	/* XXX need help message */
 	return TCL_ERROR;
     }
 
-    if(sscanf(argv[1], "%lu", (unsigned long *)&ifp) != 1){
+    if (sscanf(argv[1], "%lu", (unsigned long *)&ifp) != 1) {
 	Tcl_AppendResult(interp, "fb_close_existing: failed to provide ifp\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -291,8 +285,8 @@ fb_cmd_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char 
     FB_TCL_CK_FBIO(ifp);
     _fb_pgflush(ifp);
 #ifdef IF_X
-    if(strcasecmp(ifp->if_name, X_device_name) == 0) {
-	if((status = X24_close_existing(ifp)) <= -1){
+    if (strcasecmp(ifp->if_name, X_device_name) == 0) {
+	if ((status = X24_close_existing(ifp)) <= -1) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "fb_close_existing: can not close device \"%s\", ret=%d.\n",
 			  ifp->if_name, status);
@@ -301,7 +295,7 @@ fb_cmd_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char 
 
 	    return TCL_ERROR;
 	}
-	if(ifp->if_pbase != PIXEL_NULL) {
+	if (ifp->if_pbase != PIXEL_NULL) {
 	    free((void *)ifp->if_pbase);
 	}
 	free((void *)ifp->if_name);
@@ -311,8 +305,8 @@ fb_cmd_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char 
 #endif  /* IF_X */
 
 #ifdef IF_WGL
-    if(strcasecmp(ifp->if_name, wgl_device_name) == 0) {
-	if((status = wgl_close_existing(ifp)) <= -1){
+    if (strcasecmp(ifp->if_name, wgl_device_name) == 0) {
+	if ((status = wgl_close_existing(ifp)) <= -1) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "fb_close_existing: can not close device \"%s\", ret=%d.\n",
 			  ifp->if_name, status);
@@ -321,7 +315,7 @@ fb_cmd_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char 
 
 	    return TCL_ERROR;
 	}
-	if(ifp->if_pbase != PIXEL_NULL)
+	if (ifp->if_pbase != PIXEL_NULL)
 	    free((void *)ifp->if_pbase);
 	free((void *)ifp->if_name);
 	free((void *)ifp);
@@ -330,8 +324,8 @@ fb_cmd_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char 
 #endif  /* IF_WGL */
 
 #ifdef IF_OGL
-    if(strcasecmp(ifp->if_name, ogl_device_name) == 0) {
-	if((status = ogl_close_existing(ifp)) <= -1){
+    if (strcasecmp(ifp->if_name, ogl_device_name) == 0) {
+	if ((status = ogl_close_existing(ifp)) <= -1) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "fb_close_existing: can not close device \"%s\", ret=%d.\n",
 			  ifp->if_name, status);
@@ -340,7 +334,7 @@ fb_cmd_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char 
 
 	    return TCL_ERROR;
 	}
-	if(ifp->if_pbase != PIXEL_NULL)
+	if (ifp->if_pbase != PIXEL_NULL)
 	    free((void *)ifp->if_pbase);
 	free((void *)ifp->if_name);
 	free((void *)ifp);
@@ -351,8 +345,8 @@ fb_cmd_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char 
 #ifdef IF_TK
 #if 0
 /* XXX TJM: not yet */
-    if(strcasecmp(ifp->if_name, tk_device_name) == 0) {
-	if((status = tk_close_existing(ifp)) <= -1){
+    if (strcasecmp(ifp->if_name, tk_device_name) == 0) {
+	if ((status = tk_close_existing(ifp)) <= -1) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "fb_close_existing: can not close device \"%s\", ret=%d.\n",
 			  ifp->if_name, status);
@@ -361,7 +355,7 @@ fb_cmd_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char 
 
 	    return TCL_ERROR;
 	}
-	if(ifp->if_pbase != PIXEL_NULL)
+	if (ifp->if_pbase != PIXEL_NULL)
 	    free((void *)ifp->if_pbase);
 	free((void *)ifp->if_name);
 	free((void *)ifp);
@@ -412,10 +406,15 @@ fb_refresh(FBIO *ifp, int x, int y, int w, int h)
 {
     int status=0;
 
+#if 1
+    if (w == 0 || h == 0)
+	return TCL_OK;
+#else
     if (w <= 0 || h <= 0) {
 	/* nothing to refresh */
 	return TCL_OK;
     }
+#endif
 
     if (!ifp || !ifp->if_name) {
 	/* unset/unknown framebuffer */
@@ -424,19 +423,19 @@ fb_refresh(FBIO *ifp, int x, int y, int w, int h)
 
 #ifdef IF_X
     status = -1;
-    if(!strncmp(ifp->if_name, X_device_name, strlen( X_device_name))) {
+    if (!strncmp(ifp->if_name, X_device_name, strlen( X_device_name))) {
 	status = X24_refresh(ifp, x, y, w, h);
     }
 #endif /* IF_X */
 #ifdef IF_WGL
     status = -1;
-    if(!strncmp(ifp->if_name, wgl_device_name, strlen( wgl_device_name))) {
+    if (!strncmp(ifp->if_name, wgl_device_name, strlen( wgl_device_name))) {
 	status = wgl_refresh(ifp, x, y, w, h);
     }
 #endif  /* IF_WGL */
 #ifdef IF_OGL
     status = -1;
-    if(!strncmp(ifp->if_name, ogl_device_name, strlen( ogl_device_name))) {
+    if (!strncmp(ifp->if_name, ogl_device_name, strlen( ogl_device_name))) {
 	status = ogl_refresh(ifp, x, y, w, h);
     }
 #endif  /* IF_OGL */
@@ -444,13 +443,13 @@ fb_refresh(FBIO *ifp, int x, int y, int w, int h)
 #if 0
 /* XXX TJM implement tk_refresh */
     status = -1;
-    if(!strncmp(ifp->if_name, tk_device_name, strlen( tk_device_name))) {
+    if (!strncmp(ifp->if_name, tk_device_name, strlen( tk_device_name))) {
 	status = tk_refresh(ifp, x, y, w, h);
     }
 #endif
 #endif  /* IF_TK */
 
-    if(status < 0) {
+    if (status < 0) {
 	return TCL_ERROR;
     }
 
@@ -482,7 +481,7 @@ fb_cmd_common_file_size(ClientData clientData, Tcl_Interp *interp, int argc, cha
 	bu_vls_init( &vls );
 	bu_vls_printf( &vls, "%lu %lu", width, height );
 	Tcl_SetObjResult( interp,
-	    Tcl_NewStringObj(bu_vls_addr( &vls ), bu_vls_strlen(&vls)) );
+			  Tcl_NewStringObj(bu_vls_addr( &vls ), bu_vls_strlen(&vls)) );
 	bu_vls_free( &vls );
 	return TCL_OK;
     }
@@ -505,18 +504,18 @@ int
 #ifdef BRLCAD_DEBUG
 Fb_d_Init(Tcl_Interp *interp)
 #else
-Fb_Init(Tcl_Interp *interp)
+    Fb_Init(Tcl_Interp *interp)
 #endif
 {
-	/* register commands */
-	bu_register_cmds(interp, cmdtab);
+    /* register commands */
+    bu_register_cmds(interp, cmdtab);
 
-	/* initialize framebuffer object code */
-	Fbo_Init(interp);
+    /* initialize framebuffer object code */
+    Fbo_Init(interp);
 
-	Tcl_PkgProvide(interp,  "Fb", brlcad_version());
+    Tcl_PkgProvide(interp,  "Fb", brlcad_version());
 
-	return TCL_OK;
+    return TCL_OK;
 }
 
 
@@ -524,8 +523,8 @@ Fb_Init(Tcl_Interp *interp)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

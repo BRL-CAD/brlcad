@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -59,7 +59,7 @@ public:
   int IndentSize() const; //  0: one tab per indent
                           // >0: number of spaces per indent
   void SetIndentSize(int);
-  
+
   void PrintWrappedText( const char*, int = 60 );    // last arg is maximum line length
   void PrintWrappedText( const wchar_t*, int = 60 ); // last arg is maximum line length
 
@@ -67,7 +67,7 @@ public:
   Description:
     Print a formatted ASCII string of up to 2000 characters.
   Parameters:
-    format - [in] NULL terminated format control string 
+    format - [in] NULL terminated format control string
   Remarks:
     To print strings longer than 2000 characters, you must
     use ON_TextLog::PrintString.
@@ -80,7 +80,7 @@ public:
   Description:
     Print a formatted INICODE string of up to 2000 characters.
   Parameters:
-    format - [in] NULL terminated format control string 
+    format - [in] NULL terminated format control string
   Remarks:
     To print strings longer than 2000 characters, you must
     use ON_TextLog::PrintString.
@@ -117,8 +117,8 @@ public:
   void Print( const ON_String& string );
 
   void Print( const ON_3dPointArray&, const char* = NULL );
-  void Print( 
-         const ON_Matrix&, 
+  void Print(
+         const ON_Matrix&,
          const char* = NULL, // optional preamble
          int = 0             // optional number precision
     );
@@ -145,7 +145,7 @@ public:
 
   void PrintTime( const struct tm& );
 
-  void PrintPointList( 
+  void PrintPointList(
     int,               // dim
     BOOL,              // TRUE for rational points
     int,               // count
@@ -154,7 +154,7 @@ public:
     const char* = NULL // optional preabmle
     );
 
-  void PrintPointGrid( 
+  void PrintPointGrid(
     int,               // dim
     BOOL,              // TRUE for rational points
     int, int,          // point_count0, point_count1
@@ -162,8 +162,8 @@ public:
     const double*,     // point[] array
     const char* = NULL // optional preabmle
     );
-    
-  void PrintKnotVector( 
+
+  void PrintKnotVector(
     int,             // order
     int,             // cv_count
     const double*    // knot[] array
@@ -186,11 +186,11 @@ protected:
   FILE* m_pFile;
   ON_wString* m_pString;
 
-  
+
   /*
   Description:
     If the ON_TextLog(ON_wString& wstr) constructor was used, the
-    default appends s to wstr.  If the ON_TextLog(FILE* fp) 
+    default appends s to wstr.  If the ON_TextLog(FILE* fp)
     constructor was used, the default calls fputs( fp, s).
     In all other cases, the default calls printf("%s",s).
   Parameters:
@@ -204,7 +204,7 @@ protected:
   /*
   Description:
     If the ON_TextLog(ON_wString& wstr) constructor was used, the
-    default appends s to wstr.  In all other cases, the default 
+    default appends s to wstr.  In all other cases, the default
     converts the string to an ON_String and calls the ASCII
     version AppendText(const char*).
   Parameters:
@@ -214,7 +214,7 @@ protected:
   void AppendText(
         const wchar_t* s
         );
-                  
+
 private:
   ON_String m_indent;
   ON_String m_double_format;

@@ -1,7 +1,7 @@
 /*                       R B _ W A L K . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2007 United States Government as represented by
+ * Copyright (c) 1998-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,13 +23,6 @@
  *
  *	    Routines for traversal of red-black trees
  *
- *  @author -
- *	Paul J. Tanenbaum
- *
- *  @par Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  *	The function bu_rb_walk() is defined in terms of the function
  *	_rb_walk(), which, in turn, calls any of the six functions
  *
@@ -48,10 +41,6 @@
  *	depth in the tree.
  */
 /** @} */
-
-#ifndef lint
-static const char libbu_rb_walk_RCSid[] = "@(#) $Header$";
-#endif
 
 #include "common.h"
 
@@ -176,10 +165,10 @@ static void postwalkdata (struct bu_rb_node *root, int order, void (*visit) (/* 
 void _rb_walk (bu_rb_tree *tree, int order, void (*visit) (/* ??? */), int what_to_visit, int trav_type)
 {
     static void (*walk[][3])() =
-		{
-		    { prewalknodes, inwalknodes, postwalknodes },
-		    { prewalkdata, inwalkdata, postwalkdata }
-		};
+	{
+	    { prewalknodes, inwalknodes, postwalknodes },
+	    { prewalkdata, inwalkdata, postwalkdata }
+	};
 
     BU_CKMAG(tree, BU_RB_TREE_MAGIC, "red-black tree");
     BU_RB_CKORDER(tree, order);
@@ -196,14 +185,14 @@ void _rb_walk (bu_rb_tree *tree, int order, void (*visit) (/* ??? */), int what_
 			(bu_rb_root(tree, order), order, visit, 0);
 		    break;
 		default:
-		    bu_log("FATAL: _rb_walk(): Illegal visitation object: %d\n",
-			what_to_visit);
+		    bu_log("ERROR: _rb_walk(): Illegal visitation object: %d\n",
+			   what_to_visit);
 		    bu_bomb("");
 	    }
 	    break;
 	default:
-	    bu_log("FATAL: _rb_walk(): Illegal traversal type: %d\n",
-		trav_type);
+	    bu_log("ERROR: _rb_walk(): Illegal traversal type: %d\n",
+		   trav_type);
 	    bu_bomb("");
     }
 }
@@ -230,8 +219,8 @@ void bu_rb_walk (bu_rb_tree *tree, int order, void (*visit) (/* ??? */), int tra
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -25,7 +25,7 @@ proc Installer::DoInstall { package version } {
     global prefix srcdir
 
     regsub {\.} $version {} v2
-    variable scriptdir 
+    variable scriptdir
     set scriptdir $prefix/lib/blt${version}
     variable component
     global tcl_platform
@@ -77,7 +77,7 @@ proc Installer::DoInstall { package version } {
 	    -pattern *.tcl \
 	    -pattern *.pro \
 	    -file tclIndex \
-	    $scriptdir 
+	    $scriptdir
 	Add ${srcdir}/library/dd_protocols \
 	    -pattern *.tcl \
 	    -file tclIndex \
@@ -141,11 +141,11 @@ proc Installer::InstallFile { src dest perm } {
 }
 
 proc Installer::Add { dir args } {
-    variable commandList 
+    variable commandList
     variable totalBytes
 
     if { ![file exists $dir] }  {
-	error "can't find directory \"$dir\"" 
+	error "can't find directory \"$dir\""
     }
     set argc [llength $args]
     set destDir [lindex $args end]
@@ -155,8 +155,8 @@ proc Installer::Add { dir args } {
     InstallDirectory $destDir
     foreach { option value } [lrange $args 0 $argc] {
 	switch -- $option {
-	    "-pattern" {  
-		foreach f [lsort [glob $dir/$value]] { 
+	    "-pattern" {
+		foreach f [lsort [glob $dir/$value]] {
 		    InstallFile $f $destDir/[file tail $f] $perm
 		}
 	    }
@@ -165,10 +165,10 @@ proc Installer::Add { dir args } {
 		set dest [lindex $value 1]
 		InstallFile $dir/$src $destDir/$dest $perm
 	    }
-    	    "-perm" {  
+    	    "-perm" {
 		set perm $value
 	    }
-    	    "-file" {  
+    	    "-file" {
 		InstallFile $dir/$value $destDir/$value $perm
 	    }
 	    default {
@@ -188,7 +188,7 @@ proc Installer::CheckPath { dest } {
 	    cd /
 	    set dest [string range $dest 1 end]
 	}
-    }	
+    }
     set dirs [file split $dest]
     foreach d $dirs {
 	if { ![file exists $d] } {
@@ -203,7 +203,7 @@ proc Installer::CheckPath { dest } {
 	    break
 	}
 	update
-	cd $d 
+	cd $d
     }
     cd $save
 }
@@ -220,7 +220,7 @@ proc Installer::MakePackageIndex { package version file } {
 	file delete $file
     }
     set cmd {
-	set fid [open $file "w"] 
+	set fid [open $file "w"]
 	puts $fid "# Package Index for $package"
 	puts $fid "# generated on [clock format [clock seconds]]"
 	puts $fid ""
@@ -233,29 +233,29 @@ proc Installer::MakePackageIndex { package version file } {
 }
 
 proc Installer::SetRegistryKey { package version valueName } {
-    variable scriptdir 
+    variable scriptdir
     global tcl_version
-    
+
     package require registry
-    set key HKEY_LOCAL_MACHINE\\Software\\$package\\$version\\$tcl_version 
+    set key HKEY_LOCAL_MACHINE\\Software\\$package\\$version\\$tcl_version
     registry set $key $valueName $scriptdir
 }
 
 proc Installer::Install { package version } {
-    variable commandList 
-    variable totalBytes 
+    variable commandList
+    variable totalBytes
     variable currentBytes 0
     variable totalFiles
-    variable scriptdir 
+    variable scriptdir
 
     .install.totals configure -text "Files: $totalFiles Size: $totalBytes"
     foreach cmd $commandList {
 	if { ![winfo exists .install] } {
-	    return 
+	    return
 	}
 	if { [catch $cmd result] != 0 } {
 	    .install.text insert end "Error: $result\n" fail
-	} 
+	}
 	update
     }
     global tcl_version tcl_platform prefix
@@ -294,8 +294,8 @@ proc Installer::Next {} {
 proc Installer::Back {} {
     variable panel
     variable continue
-    
-    incr panel -1 
+
+    incr panel -1
     if { $panel <= 0 } {
 	.back configure -state disabled
 	set panel 0
@@ -322,7 +322,7 @@ font create hugeFont -family {Times New Roman} -size 18 -slant italic \
     -weight bold
 
 proc Installer::MakeLink { widget tag command } {
-    $widget tag configure $tag -foreground blue -underline yes 
+    $widget tag configure $tag -foreground blue -underline yes
     $widget tag bind $tag <ButtonRelease-1> \
 	"$command; $widget tag configure $tag -foreground blue"
     $widget tag bind $tag <ButtonPress-1> \
@@ -330,7 +330,7 @@ proc Installer::MakeLink { widget tag command } {
 }
 
 proc Installer::Welcome { package version }  {
-    global tcl_version 
+    global tcl_version
     if { [winfo exists .panel] } {
 	destroy .panel
     }
@@ -350,7 +350,7 @@ proc Installer::Welcome { package version }  {
 	"${package} ${version}\n" package \
 	"binaries and components from the source directories to " "" \
 	"where Tcl/Tk is currently installed.\n\nThe compiled binaries " "" \
-	"require Tcl/Tk $tcl_version.\n\n" 
+	"require Tcl/Tk $tcl_version.\n\n"
     .panel insert end \
 	"Press the " "" \
 	"Next" next \
@@ -369,7 +369,7 @@ proc Installer::OpenDir { widget path atnode } {
     puts path=$path
     set save [pwd]
     global tcl_platform
-	
+
     if { $tcl_platform(platform) == "windows" } {
 	if { $path == "/" } {
 	    foreach v [file volumes] {
@@ -380,9 +380,9 @@ proc Installer::OpenDir { widget path atnode } {
 	    return
 	}
 	set path [string trimleft $path /]
-    } 
+    }
     cd $path/
-    foreach dir [lsort [glob -nocomplain */ ]] { 
+    foreach dir [lsort [glob -nocomplain */ ]] {
 	set node [$widget insert -at $atnode end $dir]
 	# Does the directory have subdirectories?
 	set subdirs [glob -nocomplain $dir/*/ ]
@@ -390,7 +390,7 @@ proc Installer::OpenDir { widget path atnode } {
 	    $widget entry configure $node -button yes
 	} else {
 	    $widget entry configure $node -button no
-	}	
+	}
     }
     cd $save
 }
@@ -421,12 +421,12 @@ proc Installer::Browse { }  {
     blt::hierbox .browser.h -hideroot yes -separator / -height 1i -width 3i \
 	-borderwidth 2 -relief sunken -autocreate yes -trim / \
 	-yscrollcommand { .browser.sbar set } \
-	-selectcommand { 
+	-selectcommand {
 	    set index [.browser.h curselection]
 	    set path [lindex [.browser.h get -full $index] 0]
 	    if { $tcl_platform(platform) == "windows" } {
 		set path [string trimleft $path /]
-	    } 
+	    }
 	    puts $path
 	    set Installer::selection $path
 	}
@@ -467,14 +467,14 @@ proc Installer::Browse { }  {
 	3,1 .browser.cancel -width .75i -padx 4 -pady 4
     blt::table configure .browser c2 r0 r2 r3 -resize none
     wm withdraw .browser
-    after idle { 
-	Installer::CenterPanel .browser 
+    after idle {
+	Installer::CenterPanel .browser
 	grab set .browser
-    } 
+    }
 }
 
 proc Installer::Directory { package version }  {
-    global tcl_version 
+    global tcl_version
     if { [winfo exists .panel] } {
 	destroy .panel
     }
@@ -488,14 +488,14 @@ proc Installer::Directory { package version }  {
     .panel.text insert end "\n\n"
     .panel.text insert end "Please select the directory where Tcl/Tk \
 $tcl_version is installed. This is also where $package $version will be \
-installed.\n" 
+installed.\n"
     .panel.text configure -state disabled
     frame .panel.frame -relief groove -borderwidth 2
     label .panel.frame.label -textvariable ::prefix
     button .panel.frame.button -text "Browse..." -command Installer::Browse
     blt::table .panel.frame \
 	0,0 .panel.frame.label -padx 4 -pady 4 -anchor w \
-	0,1 .panel.frame.button -padx 4 -pady 4 -anchor e 
+	0,1 .panel.frame.button -padx 4 -pady 4 -anchor e
     blt::table .panel \
 	0,0 .panel.text -padx 4 -pady 4 -fill both \
 	1,0 .panel.frame -padx 4 -fill x
@@ -505,7 +505,7 @@ installed.\n"
 }
 
 proc Installer::Components { package version }  {
-    global tcl_version 
+    global tcl_version
     if { [winfo exists .panel] } {
 	destroy .panel
     }
@@ -519,7 +519,7 @@ proc Installer::Components { package version }  {
     .panel.text insert end "Select Components\n" title
     .panel.text insert end "\n\n"
     .panel.text insert end "Please select the components you wish to install. \
-You should install all components.\n" 
+You should install all components.\n"
     .panel.text configure -state disabled
     frame .panel.frame -relief groove -borderwidth 2
     variable component
@@ -552,7 +552,7 @@ You should install all components.\n"
 	1,0 .panel.frame.scripts -padx 4 -pady 4 -anchor w \
 	2,0 .panel.frame.headers -padx 4 -pady 4 -anchor w \
 	3,0 .panel.frame.html -padx 4 -pady 4 -anchor w \
-	4,0 .panel.frame.demos -padx 4 -pady 4 -anchor w 
+	4,0 .panel.frame.demos -padx 4 -pady 4 -anchor w
     blt::table .panel \
 	0,0 .panel.text -padx 4 -pady 4 -fill both \
 	1,0 .panel.frame -padx 4 -fill both
@@ -562,7 +562,7 @@ You should install all components.\n"
 }
 
 proc Installer::Ready { package version }  {
-    global tcl_version 
+    global tcl_version
     if { [winfo exists .panel] } {
 	destroy .panel
     }
@@ -583,7 +583,7 @@ and its components.\n\n"
     .panel insert end \
 	"Press the " "" \
 	"Next" next \
-	" button to install all selected components.\n\n" "" 
+	" button to install all selected components.\n\n" ""
     .panel insert end \
 	"To reselect components, click on the " "" \
 	"Back" back \
@@ -610,7 +610,7 @@ proc Installer::Results { }  {
     toplevel .install
     text .install.text -height 10 -width 50 -wrap none -bg white \
 	-yscrollcommand { .install.ybar set } \
-	-xscrollcommand { .install.xbar set } 
+	-xscrollcommand { .install.xbar set }
     .install.text tag configure fail -foreground red
     label .install.totals -text "Files: 0  Bytes: 0" -width 50
     label .install.current -text "Installing:\n" -height 2 -width 50
@@ -628,17 +628,17 @@ proc Installer::Results { }  {
 	2,0 .install.text -fill both \
 	2,1 .install.ybar -fill y \
 	3,0 .install.xbar -fill x \
-	4,0 .install.cancel -width .75i -padx 4 -pady 4 -cspan 2 
+	4,0 .install.cancel -width .75i -padx 4 -pady 4 -cspan 2
     blt::table configure .install c1 r0 r1 r3  -resize none
     wm withdraw .install
-    after idle { 
-	Installer::CenterPanel .install 
+    after idle {
+	Installer::CenterPanel .install
 	grab set .install
-    } 
+    }
 }
 
 proc Installer::Finish { package version }  {
-    global tcl_version 
+    global tcl_version
     if { [winfo exists .panel] } {
 	destroy .panel
     }
@@ -734,6 +734,6 @@ while { 1 } {
 	variable panel
 	set cmd [lindex $panelList $panel]
 	eval [list $cmd $package $version]
-    }	
+    }
     update
-} 
+}

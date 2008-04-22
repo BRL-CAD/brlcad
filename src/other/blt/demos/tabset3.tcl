@@ -2,17 +2,17 @@
 
 package require BLT
 # --------------------------------------------------------------------------
-# Starting with Tcl 8.x, the BLT commands are stored in their own 
+# Starting with Tcl 8.x, the BLT commands are stored in their own
 # namespace called "blt".  The idea is to prevent name clashes with
 # Tcl commands and variables from other packages, such as a "table"
-# command in two different packages.  
+# command in two different packages.
 #
 # You can access the BLT commands in a couple of ways.  You can prefix
 # all the BLT commands with the namespace qualifier "blt::"
-#  
+#
 #    blt::graph .g
 #    blt::table . .g -resize both
-# 
+#
 # or you can import all the command into the global namespace.
 #
 #    namespace import blt::*
@@ -39,7 +39,7 @@ tabset .t \
     -highlightcolor yellow \
     -tiers 5 \
     -scrollcommand { .s set } \
-    -scrollincrement 1 
+    -scrollincrement 1
 
 label .t.l -image testImage
 
@@ -47,10 +47,10 @@ label .t.l -image testImage
 #option add *Tabset.Tab.fill both
 
 set attributes {
-    graph1 "Graph \#1" pink	
-    graph2 "Graph \#2" lightblue	
+    graph1 "Graph \#1" pink
+    graph2 "Graph \#2" lightblue
     graph3 "Graph \#3" orange
-    graph5 "Graph \#5" yellow	
+    graph5 "Graph \#5" yellow
     barchart2 "Barchart \#2" green
 }
 
@@ -64,7 +64,7 @@ foreach { name label color } $attributes {
 .t insert end Image -selectbackground salmon2 -background salmon3 \
     -selectbackground salmon3 -activebackground salmon2 -window .t.l
 
-set tabLabels { 
+set tabLabels {
     Aarhus Aaron Ababa aback abaft abandon abandoned abandoning
     abandonment abandons abase abased abasement abasements abases
     abash abashed abashes abashing abasing abate abated abatement
@@ -171,7 +171,7 @@ table . \
     .top 2,0 -cspan 2 \
     .left 3,0 \
     .right 3,1 \
-    .bottom 4,0 -cspan 2 
+    .bottom 4,0 -cspan 2
 
 table configure . r1 r3 r4 r2 -resize none
 focus .t
@@ -180,7 +180,7 @@ focus .t
 
 after 3000 {
 	.t move 0 after 3
-	.t tab configure [.t get 3] -state disabled 
+	.t tab configure [.t get 3] -state disabled
 }
 
 foreach file { graph1 graph2 graph3 graph5 barchart2 } {
@@ -191,7 +191,7 @@ foreach file { graph1 graph2 graph3 graph5 barchart2 } {
 	    set graph [barchart .t.$file]
 	}
 	source scripts/$file.tcl
-	.t tab configure $file -window $graph -fill both 
+	.t tab configure $file -window $graph -fill both
     }
 }
 

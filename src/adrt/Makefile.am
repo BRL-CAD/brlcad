@@ -1,31 +1,37 @@
 # $Id$
 
-adrtd = libtienet \
+adrtd = \
+	bench \
+	rise
+
+always_compile = \
+	isst \
 	libcommon \
 	librender \
 	libtexture \
+	libtie \
+	libtienet \
 	libutil \
-	bench \
-	rise \
-	isst
+	master \
+	slave
 
-# always compile libite
 if BUILD_ADRT
 SUBDIRS = \
-	libtie \
+	${always_compile} \
 	${adrtd}
-else !BUILD_ADRT
-SUBDIRS = \
-	libtie
+else
+SUBDIRS = ${always_compile}
 endif
-# end !BUILD_ADRT
 
 DIST_SUBDIRS = \
 	${adrtd} \
+	${always_compile} \
 	doc \
-	libtie \
 	misc \
 	scripts
+
+tieincludedir = $(includedir)/tie
+tieinclude_HEADERS = adrt.h adrt_struct.h
 
 if HAVE_DOXYGEN
 doxygen:
@@ -34,17 +40,11 @@ doxygen:
 endif
 
 EXTRA_DIST = \
-	acinclude.m4 \
 	AUTHORS \
-	ChangeLog \
-	config.h \
-	configure.ac \
 	COPYING \
 	Doxyfile \
 	NEWS \
 	README
-
-MAINTAINERCLEANFILES = Makefile.in
 
 DEPS = src/libbu
 

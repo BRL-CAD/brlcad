@@ -13,7 +13,7 @@
 .SH NAME
 code \- capture the namespace context for a code fragment
 .SH SYNOPSIS
-\fBcode \fR?\fB-namespace \fIname\fR? \fIcommand \fR?\fIarg arg ...\fR?
+\fBitcl::code \fR?\fB-namespace \fIname\fR? \fIcommand \fR?\fIarg arg ...\fR?
 .BE
 
 .SH DESCRIPTION

@@ -1,6 +1,6 @@
 .\" Copyright (c) 1986, 1987, University of Utah
 .TH RLE_PUTCOM 3 2/2/87 3
-.UC 4 
+.UC 4
 .SH NAME
 .HP
 rle_putcom \- set the value of a picture comment in an RLE file.
@@ -53,7 +53,7 @@ It may also be of the form
 .IR name .
 If there is another comment with the same
 .IR name ,
-it will be replaced with the new 
+it will be replaced with the new
 .IR value ,
 and the previous comment will be returned as the value of
 .IR rle_putcom .
@@ -62,7 +62,7 @@ and the previous comment will be returned as the value of
 returns a pointer to the data portion of a picture comment from an RLE file.
 The comment is assumed to be in the form
 .IR name=value ;
-a pointer to 
+a pointer to
 .I value
 is returned.  If the comment is of the form
 .IR name ,
@@ -81,7 +81,7 @@ structure.  It is called with the
 .I name
 of the comment and the
 .I the_hdr
-structure to be modified.  The first comment in the 
+structure to be modified.  The first comment in the
 .I rle_hdr
 structure of the form
 .I name=value

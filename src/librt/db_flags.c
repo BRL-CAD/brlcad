@@ -1,7 +1,7 @@
 /*                     D B _ F L A G S . C
  * BRL-CAD
  *
- * Copyright (c) 2006-2007 United States Government as represented by
+ * Copyright (c) 2006-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,7 +38,8 @@
 
 #include "common.h"
 
-#include "machine.h"
+#include "bio.h"
+
 #include "bu.h"
 #include "vmath.h"
 #include "db.h"
@@ -55,19 +56,19 @@
 int
 db_flags_internal(const struct rt_db_internal *intern)
 {
-	const struct rt_comb_internal	*comb;
+    const struct rt_comb_internal	*comb;
 
-	RT_CK_DB_INTERNAL(intern);
+    RT_CK_DB_INTERNAL(intern);
 
-	if( intern->idb_type != ID_COMBINATION )
-		return DIR_SOLID;
+    if ( intern->idb_type != ID_COMBINATION )
+	return DIR_SOLID;
 
-	comb = (struct rt_comb_internal *)intern->idb_ptr;
-	RT_CK_COMB(comb);
+    comb = (struct rt_comb_internal *)intern->idb_ptr;
+    RT_CK_COMB(comb);
 
-	if( comb->region_flag )
-		return DIR_COMB | DIR_REGION;
-	return DIR_COMB;
+    if ( comb->region_flag )
+	return DIR_COMB | DIR_REGION;
+    return DIR_COMB;
 }
 
 
@@ -113,8 +114,8 @@ db_flags_raw_internal(const struct db5_raw_internal *raw)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

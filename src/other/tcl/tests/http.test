@@ -436,30 +436,24 @@ test http-4.13 {http::Event} {
 } {timeout}
 #	Longer timeout to good host, bad port, gets an error after the
 #	connection "completes" but the socket is bad.
-test http-4.14 {http::Event} {
-    set code [catch {
-	set token [http::geturl $badurl/?timeout=10 -timeout 10000 -command {#}]
-	if {[string length $token] == 0} {
-	    error "bogus return from http::geturl"
-	}
-	http::wait $token
-	http::status $token
-    } err]
+test http-4.14 {http::Event} -body {
+    set token [http::geturl $badurl/?timeout=10 -timeout 10000 -command \#]
+    if {$token eq ""} {
+	error "bogus return from http::geturl"
+    }
+    http::wait $token
+    http::status $token
     # error code varies among platforms.
-    list $code [regexp {(connect failed|couldn't open socket)} $err]
-} {1 1}
+} -returnCodes 1 -match regexp -result {(connect failed|couldn't open socket)}
 # Bogus host
-test http-4.15 {http::Event} {
-    # This test may fail if you use a proxy server.  That is to be
+test http-4.15 {http::Event} -body {
+    # This test may fail if you use a proxy server. That is to be
     # expected and is not a problem with Tcl.
-    set code [catch {
-	set token [http::geturl //not_a_host.tcl.tk -timeout 1000 -command {#}]
-	http::wait $token
-	http::status $token
-    } err]
-    # error code varies among platforms.
-    list $code [string match "couldn't open socket*" $err]
-} {1 1}
+    set token [http::geturl //not_a_host.tcl.tk -timeout 1000 -command \#]
+    http::wait $token
+    http::status $token
+    # error codes vary among platforms.
+} -returnCodes 1 -match glob -result "couldn't open socket*"
 
 test http-5.1 {http::formatQuery} {
     http::formatQuery name1 value1 name2 "value two"

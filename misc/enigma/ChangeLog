@@ -3,16 +3,16 @@
 	* Makefile.am: sources
 
 	* enigma.1:
-	Joerg spelled CBW incorrectly -- the proper project name is the Crypt 
-Breaker's Workbench (this mistake has been impressively spread around the world 
+	Joerg spelled CBW incorrectly -- the proper project name is the Crypt
+Breaker's Workbench (this mistake has been impressively spread around the world
 now).
 
 	* configure.ac:
-	test application of PD headers, add a footer too along with detail that 
+	test application of PD headers, add a footer too along with detail that
 enigma comes from the Crypt Breaker's Workbench software
 
 	* Makefile.am:
-	remove the Makefile.defs since enigma has it's own configure and will 
+	remove the Makefile.defs since enigma has it's own configure and will
 otherwise mess with AC_CONFIG_SUBDIRS
 
 	* Makefile.am, configure.ac, configure.in:
@@ -26,7 +26,7 @@ otherwise mess with AC_CONFIG_SUBDIRS
 2005-11-13  brlcad  <brlcad@users.sourceforge.net>
 
 	* enigma.c:
-	merge changes from HEAD aka rel-7-6-4 to the rel-7-6-branch just in 
+	merge changes from HEAD aka rel-7-6-4 to the rel-7-6-branch just in
 case someone peeks a gander or tries to continue/build the branch
 
 2005-10-23  brlcad  <brlcad@users.sourceforge.net>
@@ -39,10 +39,10 @@ case someone peeks a gander or tries to continue/build the branch
 
 2004-11-16  morrison  <morrison@users.sourceforge.net>
 
-	* COPYING, Makefile.am, README, build.sh, configure.in, enigma.1, 
+	* COPYING, Makefile.am, README, build.sh, configure.in, enigma.1,
 enigma.c:
-	dawn of a new revision.  it shall be numbered 14 to match release 7.  
-begin the convergence by adding emacs/vi local variable footer blocks to 
+	dawn of a new revision.  it shall be numbered 14 to match release 7.
+begin the convergence by adding emacs/vi local variable footer blocks to
 encourage consistent formatting.
 
 2004-05-25  morrison  <morrison@users.sourceforge.net>
@@ -67,6 +67,6 @@ encourage consistent formatting.
 	add simple autoconf wrapping to handle detection of libcrypt when needed
 
 	* Makefile, enigma.1, enigma.c:
-	add enigma, the public domain crypt replacement to the distribution for 
+	add enigma, the public domain crypt replacement to the distribution for
 convenience
 

@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -24,14 +24,14 @@
 #define OPENNURBS_POLYCURVE_INC_
 
 /*
- Description: 
-		An ON_PolyCurve is an ON_Curve represented by a sequence of 
-	contiguous ON_Curve segments.    A valid polycurve is represented 
+ Description:
+		An ON_PolyCurve is an ON_Curve represented by a sequence of
+	contiguous ON_Curve segments.    A valid polycurve is represented
 	by an array m_segment of Count()>=1 curve objects	and a strictly
-	increasing array m_t of Count()+1 parameter values.  The i-th 
-	curve segment,  when considered as part of the polycurve, is affinely 
-	reparamaterized from m_t[i] to m_t[i+1], i.e., m_segment[i].Domain()[0] 
-	is mapped to 	m_t[i] and m_segment[i].Domain()[1] is mapped to m_t[i+1]. 
+	increasing array m_t of Count()+1 parameter values.  The i-th
+	curve segment,  when considered as part of the polycurve, is affinely
+	reparamaterized from m_t[i] to m_t[i+1], i.e., m_segment[i].Domain()[0]
+	is mapped to 	m_t[i] and m_segment[i].Domain()[1] is mapped to m_t[i+1].
 */
 class ON_PolyCurve;
 class ON_CLASS ON_PolyCurve : public ON_Curve
@@ -55,7 +55,7 @@ public:
   void EmergencyDestroy(); // call if memory used by ON_PolyCurve becomes invalid
 
 	ON_PolyCurve& operator=(const ON_PolyCurve&);
-  
+
   /////////////////////////////////////////////////////////////////
   // ON_Object overrides
 
@@ -73,9 +73,9 @@ public:
     text_log - [in] if the object is not valid and text_log
         is not NULL, then a brief englis description of the
         reason the object is not valid is appened to the log.
-        The information appended to text_log is suitable for 
-        low-level debugging purposes by programmers and is 
-        not intended to be useful as a high level user 
+        The information appended to text_log is suitable for
+        low-level debugging purposes by programmers and is
+        not intended to be useful as a high level user
         interface tool.
   Returns:
     @untitled table
@@ -112,9 +112,9 @@ public:
     Get tight bounding box.
 	Parameters:
 		tight_bbox - [in/out] tight bounding box
-		bGrowBox -[in]	(default=false)			
+		bGrowBox -[in]	(default=false)
       If true and the input tight_bbox is valid, then returned
-      tight_bbox is the union of the input tight_bbox and the 
+      tight_bbox is the union of the input tight_bbox and the
       curve's tight bounding box.
 		xform -[in] (default=NULL)
       If not NULL, the tight bounding box of the transformed
@@ -122,13 +122,13 @@ public:
 	Returns:
     True if a valid tight_bbox is returned.
   */
-	bool GetTightBoundingBox( 
-			ON_BoundingBox& tight_bbox, 
+	bool GetTightBoundingBox(
+			ON_BoundingBox& tight_bbox,
       int bGrowBox = false,
 			const ON_Xform* xform = 0
       ) const;
 
-  BOOL Transform( 
+  BOOL Transform(
          const ON_Xform&
          );
 
@@ -168,8 +168,8 @@ public:
   // Returns:
   //   TRUE if successful.
   BOOL SetDomain(
-        double t0, 
-        double t1 
+        double t0,
+        double t1
         );
 
   bool ChangeDimension(
@@ -188,19 +188,19 @@ public:
   Remarks:
     Overrides virtual ON_Curve::ChangeClosedCurveSeam
   */
-  BOOL ChangeClosedCurveSeam( 
-            double t 
+  BOOL ChangeClosedCurveSeam(
+            double t
             );
 
   int SpanCount() const; // number of smooth spans in curve
 
-  BOOL GetSpanVector( // span "knots" 
-         double* // array of length SpanCount() + 1 
-         ) const; // 
+  BOOL GetSpanVector( // span "knots"
+         double* // array of length SpanCount() + 1
+         ) const; //
 
-  int Degree( // returns maximum algebraic degree of any span 
+  int Degree( // returns maximum algebraic degree of any span
                   // ( or a good estimate if curve spans are not algebraic )
-    ) const; 
+    ) const;
 
   BOOL IsLinear( // TRUE if curve locus is a line segment between
                  // between specified points
@@ -253,9 +253,9 @@ public:
                   // periodic.)
 
   BOOL IsPeriodic(  // TRUE if curve is a single periodic segment
-        void 
+        void
         ) const;
-  
+
   /*
   Description:
     Search for a derivatitive, tangent, or curvature discontinuity.
@@ -267,14 +267,14 @@ public:
           parameter at the discontinuity.
     hint - [in/out] if GetNextDiscontinuity will be called repeatedly,
        passing a "hint" with initial value *hint=0 will increase the speed
-       of the search.       
+       of the search.
     dtype - [out] if not NULL, *dtype reports the kind of discontinuity
         found at *t.  A value of 1 means the first derivative or unit tangent
         was discontinuous.  A value of 2 means the second derivative or
         curvature was discontinuous.
     cos_angle_tolerance - [in] default = cos(1 degree) Used only when
         c is ON::G1_continuous or ON::G2_continuous.  If the cosine
-        of the angle between two tangent vectors 
+        of the angle between two tangent vectors
         is <= cos_angle_tolerance, then a G1 discontinuity is reported.
     curvature_tolerance - [in] (default = ON_SQRT_EPSILON) Used only when
         c is ON::G2_continuous.  If K0 and K1 are curvatures evaluated
@@ -285,7 +285,7 @@ public:
   Remarks:
     Overrides ON_Curve::GetNextDiscontinuity.
   */
-  bool GetNextDiscontinuity( 
+  bool GetNextDiscontinuity(
                   ON::continuity c,
                   double t0,
                   double t1,
@@ -311,7 +311,7 @@ public:
         greater than d2_tolerance, then the curve is not C2.
     cos_angle_tolerance - [in] default = cos(1 degree) Used only when
         c is ON::G1_continuous or ON::G2_continuous.  If the cosine
-        of the angle between two tangent vectors 
+        of the angle between two tangent vectors
         is <= cos_angle_tolerance, then a G1 discontinuity is reported.
     curvature_tolerance - [in] (default = ON_SQRT_EPSILON) Used only when
         c is ON::G2_continuous.  If K0 and K1 are curvatures evaluated
@@ -324,7 +324,7 @@ public:
   */
   bool IsContinuous(
     ON::continuity c,
-    double t, 
+    double t,
     int* hint = NULL,
     double point_tolerance=ON_ZERO_TOLERANCE,
     double d1_tolerance=ON_ZERO_TOLERANCE,
@@ -383,7 +383,7 @@ public:
          double*,        // array of length stride*(ndir+1)
          int = 0,        // optional - determines which side to evaluate from
                          //         0 = default
-                         //      <  0 to evaluate from below, 
+                         //      <  0 to evaluate from below,
                          //      >  0 to evaluate from above
          int* = 0        // optional - evaluation hint (int) used to speed
                          //            repeated evaluations
@@ -392,7 +392,7 @@ public:
   //////////
   // Find parameter of the point on a curve that is closest to test_point.
   // If the maximum_distance parameter is > 0, then only points whose distance
-  // to the given point is <= maximum_distance will be returned.  Using a 
+  // to the given point is <= maximum_distance will be returned.  Using a
   // positive value of maximum_distance can substantially speed up the search.
   // If the sub_domain parameter is not NULL, then the search is restricted
   // to the specified portion of the curve.
@@ -406,8 +406,8 @@ public:
           ) const;
 
   //////////
-  // Find parameter of the point on a curve that is locally closest to 
-  // the test_point.  The search for a local close point starts at 
+  // Find parameter of the point on a curve that is locally closest to
+  // the test_point.  The search for a local close point starts at
   // seed_parameter. If the sub_domain parameter is not NULL, then
   // the search is restricted to the specified portion of the curve.
   //
@@ -442,7 +442,7 @@ public:
   Parameters:
     tolerance - [in] (>=0)
     sub_domain - [in] If not NULL, the test is performed
-      on the interval that is the intersection of 
+      on the interval that is the intersection of
       sub_domain with Domain().
   Returns:
     True if the length of the curve is <= tolerance.
@@ -459,7 +459,7 @@ public:
   Description:
     Looks for segments that are shorter than tolerance
     that can be removed. If bRemoveShortSegments is true,
-    then the short segments are removed. Does not change the 
+    then the short segments are removed. Does not change the
     domain, but it will change the relative parameterization.
   Parameters:
     tolerance - [in]
@@ -477,7 +477,7 @@ public:
   /*
   Description:
     virtual ON_Curve::GetNormalizedArcLengthPoint override.
-    Get the parameter of the point on the line that is a 
+    Get the parameter of the point on the line that is a
     prescribed distance from the start of the line
   Parameters:
     s - [in] normalized arc length parameter.  E.g., 0 = start
@@ -501,13 +501,13 @@ public:
   /*
   Description:
     virtual ON_Curve::GetNormalizedArcLengthPoints override.
-    Get the parameter of the point on the curve that is a 
+    Get the parameter of the point on the curve that is a
     prescribed arc length from the start of the curve.
   Parameters:
     count - [in] number of parameters in s.
     s - [in] array of normalized arc length parameters. E.g., 0 = start
          of curve, 1/2 = midpoint of curve, 1 = end of curve.
-    t - [out] array of curve parameters such that the length of the 
+    t - [out] array of curve parameters such that the length of the
        curve from its start to t[i] is s[i]*curve_length.
     absolute_tolerance - [in] if absolute_tolerance > 0, then the difference
         between (s[i+1]-s[i])*curve_length and the length of the curve
@@ -545,10 +545,10 @@ public:
   // Description:
   //   Where possible, analytically extends curve to include domain.
   // Parameters:
-  //   domain - [in] if domain is not included in curve domain, 
-  //   curve will be extended so that its domain includes domain.  
+  //   domain - [in] if domain is not included in curve domain,
+  //   curve will be extended so that its domain includes domain.
   //   Will not work if curve is closed. Original curve is identical
-  //   to the restriction of the resulting curve to the original curve domain, 
+  //   to the restriction of the resulting curve to the original curve domain,
   // Returns:
   //   true if successful.
   bool Extend(
@@ -587,9 +587,9 @@ public:
                    //            matches the curve's to wthe desired accuracy
                    //         2: success - returned NURBS point locus matches
                    //            the curve's to the desired accuracy but, on
-                   //            the interior of the curve's domain, the 
+                   //            the interior of the curve's domain, the
                    //            curve's parameterization and the NURBS
-                   //            parameterization may not match to the 
+                   //            parameterization may not match to the
                    //            desired accuracy.
         ON_NurbsCurve&,
         double = 0.0,
@@ -602,9 +602,9 @@ public:
                    //            matches the curve's to wthe desired accuracy
                    //         2: success - returned NURBS point locus matches
                    //            the curve's to the desired accuracy but, on
-                   //            the interior of the curve's domain, the 
+                   //            the interior of the curve's domain, the
                    //            curve's parameterization and the NURBS
-                   //            parameterization may not match to the 
+                   //            parameterization may not match to the
                    //            desired accuracy.
         ) const;
 
@@ -645,7 +645,7 @@ public:
   Description:
     Converts a polycurve parameter to a segment curve parameter.
   Parameters:
-    polycurve_parameter - [in] 
+    polycurve_parameter - [in]
   Returns:
     Segment curve evaluation parameter or ON_UNSET_VALUE if the
     segment curve parameter cannot be computed.
@@ -661,7 +661,7 @@ public:
     Converts a segment curve parameter to a polycurve parameter.
   Parameters:
     segment_index - [in]
-    segmentcurve_parameter - [in] 
+    segmentcurve_parameter - [in]
   Returns:
     Polycurve evaluation parameter or ON_UNSET_VALUE if the
     polycurve curve parameter cannot be computed.
@@ -680,10 +680,10 @@ public:
     segment_index - [in] 0 based index  (0 <= segment_index < Count() )
   Returns:
     The polycurve subdomain assigned to a segment curve.
-    Returns ([ON_UNSET_VALUE,ON_UNSET_VALUE) if segment_index < 0  
+    Returns ([ON_UNSET_VALUE,ON_UNSET_VALUE) if segment_index < 0
     or segment_index >= Count().
   */
-  ON_Interval SegmentDomain( 
+  ON_Interval SegmentDomain(
     int segment_index
     ) const;
 
@@ -706,7 +706,7 @@ public:
     Find the segments with support on sub_domain.
   Parameters:
     sub_domain - [in] increasing interval
-    segment_index0 - [out] 
+    segment_index0 - [out]
     segment_index1 - [out] segments with index i where
       *segment_index0 <= i < *segment_index1 are the segments
       with support on the sub_domain
@@ -725,8 +725,8 @@ public:
 
   /*
   Description:
-    This is a quick way to see if the curve has 
-    gaps between the sub curve segments.  
+    This is a quick way to see if the curve has
+    gaps between the sub curve segments.
     The test is fairly severe (ON_ComparePoint).
   Returns:
     0:     The ends adjacent polycuve segments are coincident.
@@ -742,12 +742,12 @@ public:
   // the original curve segment to survive ~ON_PolyCurve().
   BOOL Prepend( ON_Curve* ); // Prepend curve.
   BOOL Append( ON_Curve* );  // Append curve.
-  BOOL Insert( 
+  BOOL Insert(
            int, // segment_index,
            ON_Curve*
            );
 
-  //PrependAndMatch() and AppendAndMatch() return FALSE if this->IsCLosed() or 
+  //PrependAndMatch() and AppendAndMatch() return FALSE if this->IsCLosed() or
   //this->Count() > 0 and curve is closed
   BOOL PrependAndMatch(ON_Curve*); //Prepend and match end of curve to start of polycurve
   BOOL AppendAndMatch(ON_Curve*);  //Append and match start of curve to end of polycurve
@@ -772,7 +772,7 @@ public:
   */
 	void RemoveNesting();
 
-  /* 
+  /*
   Description:
     Removes the nested of polycurves. The result will have not
     have an  ON_PolyCurve  as a segment but will have identical
@@ -784,8 +784,8 @@ public:
 	bool RemoveNestingEx();
 
 	//////////
-	// Expert user function  
-	//   Sets the m_segment[index] to crv. 
+	// Expert user function
+	//   Sets the m_segment[index] to crv.
 	void SetSegment(int index, ON_Curve* crv);
 
 	//////////
@@ -801,25 +801,25 @@ public:
 
 /*
 	Description:
-		Lookup a parameter in the m_t array, optionally using a built in snap tolerance to 
+		Lookup a parameter in the m_t array, optionally using a built in snap tolerance to
 		snap a parameter value to an element of m_t.
 	Parameters:
 		t    - [in]	  	parameter
-		index -[out]	index into m_t such that if the function returns true then t is equal 
-									to, or is within tolerance of m_t[index]. 
+		index -[out]	index into m_t such that if the function returns true then t is equal
+									to, or is within tolerance of m_t[index].
 					  			if function returns false then the value of index is
 
-									 @table  
+									 @table
 												condition									value of index
 						  			t<m_t[0] or m_t is empty				-1
 										m_t[i] < t < m_t[i+1]				i for 0<=i<=m_t.Count()-2
 										t>m_t[ m_t.Count()-1]				m_t.Count()-1
-									
-		bEnableSnap -[in]  if true use tolerance when comparing to m_t values 
-	Returns		
+
+		bEnableSnap -[in]  if true use tolerance when comparing to m_t values
+	Returns
 		true if the t is exactly equal to, or within tolerance of
-		(only if bEnableSnap==true) m_t[index]. 
-*/ 
+		(only if bEnableSnap==true) m_t[index].
+*/
 	bool ParameterSearch(double t, int& index, bool bEnableSnap) const;
 
   /*

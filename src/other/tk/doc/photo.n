@@ -41,8 +41,9 @@ command.
 Photos support the following \fIoptions\fR:
 .TP
 \fB\-data \fIstring\fR
-Specifies the contents of the image as a string.  The string can
-contain base64 encoded data or binary data.  The format of the
+Specifies the contents of the image as a string.  The string should
+contain binary data or, for some formats, base64-encoded data (this is
+currently guaranteed to be supported for GIF images).  The format of the
 string must be one of those for which there is an image file format
 handler that will accept string data.  If both the \fB\-data\fR
 and \fB\-file\fR options are specified, the \fB\-file\fR option takes
@@ -369,7 +370,7 @@ When reading an image file or processing
 string data specified with the \fB\-data\fR configuration option, the
 photo image code invokes each handler in turn until one is
 found that claims to be able to read the data in the file or string.
-Usually this will find the correct handler, but if it doesn't, the
+Usually this will find the correct handler, but if it does not, the
 user may give a format name with the \fB\-format\fR option to specify
 which handler to use.  In fact the photo image code will try those
 handlers whose names begin with the string specified for the
@@ -426,7 +427,7 @@ Load an image from a file and tile it to the size of a window, which
 is useful for producing a tiled background:
 .CS
 # These lines should be called once
-\fBimage create photo\fR untiled -file "theFile.ppm"
+\fBimage create photo\fR untiled \-file "theFile.ppm"
 \fBimage create photo\fR tiled
 
 # These lines should be called whenever .someWidget changes

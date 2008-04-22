@@ -1,7 +1,7 @@
 /*                     P A R S E _ F M T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,93 +19,94 @@
  */
 /** @file parse_fmt.c
  *
+ * Parse the output formatter
+ *
+ * Author:
+ *   Natalie L. Barker
+ *
+ * Date:
+ *   Jan 90
+ *
  */
-#ifndef lint
-static const char RCSid[] = "$Header$";
-#endif
 
 #include "common.h"
 
 #include <stdlib.h>
 #include <stdio.h>
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#else
-#  include <strings.h>
-#endif
+#include <string.h>
 #include <ctype.h>
 
-#include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "./nirt.h"
 #include "./usrfmt.h"
 
+
 /* The table of output values */
-outval		ValTab[] =
-		{
-		    { 0, VTI_LITERAL },
-		    { "x_orig", VTI_X_ORIG, OIT_FLOAT },
-		    { "y_orig", VTI_Y_ORIG, OIT_FLOAT },
-		    { "z_orig", VTI_Z_ORIG, OIT_FLOAT },
-		    { "h", VTI_H, OIT_FLOAT },
-		    { "v", VTI_V, OIT_FLOAT },
-		    { "d_orig", VTI_D_ORIG, OIT_FLOAT },
-		    { "x_dir", VTI_X_DIR, OIT_FNOUNIT },
-		    { "y_dir", VTI_Y_DIR, OIT_FNOUNIT },
-		    { "z_dir", VTI_Z_DIR, OIT_FNOUNIT },
-		    { "a", VTI_A, OIT_FNOUNIT },
-		    { "e", VTI_E, OIT_FNOUNIT },
-		    { "x_in", VTI_X_IN, OIT_FLOAT },
-		    { "y_in", VTI_Y_IN, OIT_FLOAT },
-		    { "z_in", VTI_Z_IN, OIT_FLOAT },
-		    { "d_in", VTI_D_IN, OIT_FLOAT },
-		    { "x_out", VTI_X_OUT, OIT_FLOAT },
-		    { "y_out", VTI_Y_OUT, OIT_FLOAT },
-		    { "z_out", VTI_Z_OUT, OIT_FLOAT },
-		    { "d_out", VTI_D_OUT, OIT_FLOAT },
-		    { "los", VTI_LOS, OIT_FLOAT },
-		    { "scaled_los", VTI_SLOS, OIT_FLOAT },
-		    { "path_name", VTI_PATH_NAME, OIT_STRING },
-		    { "reg_name", VTI_REG_NAME, OIT_STRING },
-		    { "reg_id", VTI_REG_ID, OIT_INT },
-		    { "obliq_in", VTI_OBLIQ_IN, OIT_FNOUNIT },
-		    { "obliq_out", VTI_OBLIQ_OUT, OIT_FNOUNIT },
-		    { "nm_x_in", VTI_NM_X_IN, OIT_FNOUNIT },
-		    { "nm_y_in", VTI_NM_Y_IN, OIT_FNOUNIT },
-		    { "nm_z_in", VTI_NM_Z_IN, OIT_FNOUNIT },
-		    { "nm_d_in", VTI_NM_D_IN, OIT_FNOUNIT },
-		    { "nm_h_in", VTI_NM_H_IN, OIT_FNOUNIT },
-		    { "nm_v_in", VTI_NM_V_IN, OIT_FNOUNIT },
-		    { "nm_x_out", VTI_NM_X_OUT, OIT_FNOUNIT },
-		    { "nm_y_out", VTI_NM_Y_OUT, OIT_FNOUNIT },
-		    { "nm_z_out", VTI_NM_Z_OUT, OIT_FNOUNIT },
-		    { "nm_d_out", VTI_NM_D_OUT, OIT_FNOUNIT },
-		    { "nm_h_out", VTI_NM_H_OUT, OIT_FNOUNIT },
-		    { "nm_v_out", VTI_NM_V_OUT, OIT_FNOUNIT },
-		    { "ov_reg1_name", VTI_OV_REG1_NAME, OIT_STRING },
-		    { "ov_reg1_id", VTI_OV_REG1_ID, OIT_INT },
-		    { "ov_reg2_name", VTI_OV_REG2_NAME, OIT_STRING },
-		    { "ov_reg2_id", VTI_OV_REG2_ID, OIT_INT },
-		    { "ov_sol_in", VTI_OV_SOL_IN, OIT_STRING },
-		    { "ov_sol_out", VTI_OV_SOL_OUT, OIT_STRING },
-		    { "ov_los", VTI_OV_LOS, OIT_FLOAT },
-		    { "ov_x_in", VTI_OV_X_IN, OIT_FLOAT },
-		    { "ov_y_in", VTI_OV_Y_IN, OIT_FLOAT },
-		    { "ov_z_in", VTI_OV_Z_IN, OIT_FLOAT },
-		    { "ov_d_in", VTI_OV_D_IN, OIT_FLOAT },
-		    { "ov_x_out", VTI_OV_X_OUT, OIT_FLOAT },
-		    { "ov_y_out", VTI_OV_Y_OUT, OIT_FLOAT },
-		    { "ov_z_out", VTI_OV_Z_OUT, OIT_FLOAT },
-		    { "ov_d_out", VTI_OV_D_OUT, OIT_FLOAT },
-		    { "surf_num_in", VTI_SURF_NUM_IN, OIT_INT },
-		    { "surf_num_out", VTI_SURF_NUM_OUT, OIT_INT },
-		    { "claimant_count", VTI_CLAIMANT_COUNT, OIT_INT },
-		    { "claimant_list", VTI_CLAIMANT_LIST, OIT_STRING },
-		    { "claimant_listn", VTI_CLAIMANT_LISTN, OIT_STRING },
-		    { "attributes", VTI_ATTRIBUTES, OIT_STRING },
-		    { 0 }
-		};
+outval ValTab[] = {
+    { 0, VTI_LITERAL },
+    { "x_orig", VTI_X_ORIG, OIT_FLOAT },
+    { "y_orig", VTI_Y_ORIG, OIT_FLOAT },
+    { "z_orig", VTI_Z_ORIG, OIT_FLOAT },
+    { "h", VTI_H, OIT_FLOAT },
+    { "v", VTI_V, OIT_FLOAT },
+    { "d_orig", VTI_D_ORIG, OIT_FLOAT },
+    { "x_dir", VTI_X_DIR, OIT_FNOUNIT },
+    { "y_dir", VTI_Y_DIR, OIT_FNOUNIT },
+    { "z_dir", VTI_Z_DIR, OIT_FNOUNIT },
+    { "a", VTI_A, OIT_FNOUNIT },
+    { "e", VTI_E, OIT_FNOUNIT },
+    { "x_in", VTI_X_IN, OIT_FLOAT },
+    { "y_in", VTI_Y_IN, OIT_FLOAT },
+    { "z_in", VTI_Z_IN, OIT_FLOAT },
+    { "d_in", VTI_D_IN, OIT_FLOAT },
+    { "x_out", VTI_X_OUT, OIT_FLOAT },
+    { "y_out", VTI_Y_OUT, OIT_FLOAT },
+    { "z_out", VTI_Z_OUT, OIT_FLOAT },
+    { "d_out", VTI_D_OUT, OIT_FLOAT },
+    { "los", VTI_LOS, OIT_FLOAT },
+    { "scaled_los", VTI_SLOS, OIT_FLOAT },
+    { "path_name", VTI_PATH_NAME, OIT_STRING },
+    { "reg_name", VTI_REG_NAME, OIT_STRING },
+    { "reg_id", VTI_REG_ID, OIT_INT },
+    { "obliq_in", VTI_OBLIQ_IN, OIT_FNOUNIT },
+    { "obliq_out", VTI_OBLIQ_OUT, OIT_FNOUNIT },
+    { "nm_x_in", VTI_NM_X_IN, OIT_FNOUNIT },
+    { "nm_y_in", VTI_NM_Y_IN, OIT_FNOUNIT },
+    { "nm_z_in", VTI_NM_Z_IN, OIT_FNOUNIT },
+    { "nm_d_in", VTI_NM_D_IN, OIT_FNOUNIT },
+    { "nm_h_in", VTI_NM_H_IN, OIT_FNOUNIT },
+    { "nm_v_in", VTI_NM_V_IN, OIT_FNOUNIT },
+    { "nm_x_out", VTI_NM_X_OUT, OIT_FNOUNIT },
+    { "nm_y_out", VTI_NM_Y_OUT, OIT_FNOUNIT },
+    { "nm_z_out", VTI_NM_Z_OUT, OIT_FNOUNIT },
+    { "nm_d_out", VTI_NM_D_OUT, OIT_FNOUNIT },
+    { "nm_h_out", VTI_NM_H_OUT, OIT_FNOUNIT },
+    { "nm_v_out", VTI_NM_V_OUT, OIT_FNOUNIT },
+    { "ov_reg1_name", VTI_OV_REG1_NAME, OIT_STRING },
+    { "ov_reg1_id", VTI_OV_REG1_ID, OIT_INT },
+    { "ov_reg2_name", VTI_OV_REG2_NAME, OIT_STRING },
+    { "ov_reg2_id", VTI_OV_REG2_ID, OIT_INT },
+    { "ov_sol_in", VTI_OV_SOL_IN, OIT_STRING },
+    { "ov_sol_out", VTI_OV_SOL_OUT, OIT_STRING },
+    { "ov_los", VTI_OV_LOS, OIT_FLOAT },
+    { "ov_x_in", VTI_OV_X_IN, OIT_FLOAT },
+    { "ov_y_in", VTI_OV_Y_IN, OIT_FLOAT },
+    { "ov_z_in", VTI_OV_Z_IN, OIT_FLOAT },
+    { "ov_d_in", VTI_OV_D_IN, OIT_FLOAT },
+    { "ov_x_out", VTI_OV_X_OUT, OIT_FLOAT },
+    { "ov_y_out", VTI_OV_Y_OUT, OIT_FLOAT },
+    { "ov_z_out", VTI_OV_Z_OUT, OIT_FLOAT },
+    { "ov_d_out", VTI_OV_D_OUT, OIT_FLOAT },
+    { "surf_num_in", VTI_SURF_NUM_IN, OIT_INT },
+    { "surf_num_out", VTI_SURF_NUM_OUT, OIT_INT },
+    { "claimant_count", VTI_CLAIMANT_COUNT, OIT_INT },
+    { "claimant_list", VTI_CLAIMANT_LIST, OIT_STRING },
+    { "claimant_listn", VTI_CLAIMANT_LISTN, OIT_STRING },
+    { "attributes", VTI_ATTRIBUTES, OIT_STRING },
+    { 0 }
+};
+
 outitem		*oi_list[FMT_NONE];
 static char	def_dest_string[] = "stdout";
 char		*dest_string = def_dest_string;
@@ -113,15 +114,14 @@ static char	def_sf_name[] = DEF_SF_NAME;
 char		*sf_name = def_sf_name;		/* Name of state file */
 
 FILE		*outf = (FILE *)NULL;
-char		*def_fmt[] =
-		{
-		    "\"Origin (x y z) = (%.8f %.8f %.8f)  (h v d) = (%.4f %.4f %.4f)\nDirection (x y z) = (%.8f %.8f %.8f)  (az el) = (%.8f %.8f)\n\" x_orig y_orig z_orig h v d_orig x_dir y_dir z_dir a e",
-		    "\"    Region Name               Entry (x y z)              LOS  Obliq_in Attrib\n\"",
-		    "\"%-20s (%9.4f %9.4f %9.4f) %8.4f %8.4f %s\n\" reg_name x_in y_in z_in los obliq_in attributes",
-		    "\"\"",
-		    "\"You missed the target\n\"",
-		    "\"OVERLAP: '%s' and '%s' xyz_in=(%g %g %g) los=%g\n\" ov_reg1_name ov_reg2_name ov_x_in ov_y_in ov_z_in ov_los"
-		};
+const char	*def_fmt[] = {
+    "\"Origin (x y z) = (%.8f %.8f %.8f)  (h v d) = (%.4f %.4f %.4f)\nDirection (x y z) = (%.8f %.8f %.8f)  (az el) = (%.8f %.8f)\n\" x_orig y_orig z_orig h v d_orig x_dir y_dir z_dir a e",
+    "\"    Region Name               Entry (x y z)              LOS  Obliq_in Attrib\n\"",
+    "\"%-20s (%9.4f %9.4f %9.4f) %8.4f %8.4f %s\n\" reg_name x_in y_in z_in los obliq_in attributes",
+    "\"\"",
+    "\"You missed the target\n\"",
+    "\"OVERLAP: '%s' and '%s' xyz_in=(%g %g %g) los=%g\n\" ov_reg1_name ov_reg2_name ov_x_in ov_y_in ov_z_in ov_los"
+};
 
 void				free_ospec(outitem *oil);
 
@@ -131,15 +131,16 @@ extern char			local_u_name[];
 extern int			overlap_claims;
 extern char			*ocname[];
 
+
 void
-format_output (char *buffer, com_table	*ctp)
+format_output (const char* buffer, com_table* ctp)
 {
-    char	*bp = buffer;	/* was  + 1; */
+    const char* bp = buffer;	/* was  + 1; */
     int		fmt_type = FMT_NONE;
     int		i;
     int		use_defaults = 0;
 
-    void	parse_fmt(char *uoutspec, int outcom_type);
+    void	parse_fmt(const char* uoutspec, int outcom_type);
     void	show_ospec(outitem *oil);
 
     /* Handle no args, arg=='?', and obvious bad arg */
@@ -147,8 +148,7 @@ format_output (char *buffer, com_table	*ctp)
 	++bp;
     while (isspace(*bp))
 	++bp;
-    switch (*bp)
-    {
+    switch (*bp) {
 	case 'r':
 	    fmt_type = FMT_RAY;
 	    break;
@@ -173,9 +173,8 @@ format_output (char *buffer, com_table	*ctp)
     }
     while (isspace(*++bp))
 	;
-
-    switch (*bp)
-    {
+    
+    switch (*bp) {
 	case '\0':     /* display current output specs */
 	    if (fmt_type == FMT_NONE)
 		fprintf(stderr, "Error: No output-statement type specified\n");
@@ -183,20 +182,17 @@ format_output (char *buffer, com_table	*ctp)
 		show_ospec(oi_list[fmt_type]);
 	    return;
 	case '"':
-	    if (fmt_type == FMT_NONE)
-	    {
+	    if (fmt_type == FMT_NONE) {
 		fprintf(stderr, "Error: No output-statement type specified\n");
 		return;
 	    }
 	    break;
 	default:
-	    if (strncmp(bp, "default", 7) == 0)
-	    {
+	    if (strncmp(bp, "default", 7) == 0) {
 		use_defaults = 1;
 		break;
 	    }
-	    fprintf(stderr, "Error: Illegal format specifiation: '%s'\n",
-		buffer);
+	    fprintf(stderr, "Error: Illegal format specifiation: '%s'\n", buffer);
 	    /* fall through here */
 	case '?':
 	    com_usage(ctp);
@@ -221,7 +217,8 @@ format_output (char *buffer, com_table	*ctp)
  * uoutspect is the user's output specification (format & args).
  * outcom_type is the type of output command
  */
-void parse_fmt(char *uoutspec, int outcom_type)
+void
+parse_fmt(const char *uoutspec, int outcom_type)
 {
     char	*of;		/* Format for current output item */
     char	*up;
@@ -232,46 +229,46 @@ void parse_fmt(char *uoutspec, int outcom_type)
     outitem	*oip;
     outitem	*prev_oip = OUTITEM_NULL;
     outval	*vtp;
+    int		slen;
+
 
     /* N.B. bu_malloc() only returns upon successful allocation */
 
-    mycopy = uos = bu_malloc(strlen(uoutspec) + 1, "uos");
-    strcpy(uos, uoutspec);
+    mycopy = uos = bu_malloc(strlen(uoutspec)+1, "uos");
+    bu_strlcpy(uos, uoutspec, strlen(uoutspec)+1);
+
     /* Break up the format specification into pieces,
      * one per conversion specification (and, hopefully)
      * one per argument.
      */
-    if (*uos != '"')
-    {
+    if (*uos != '"') {
 	fprintf(stderr,
-	    "parse_fmt sees first character `%c`.  Shouldn't happen.\n",
-	    *uos);
+		"parse_fmt sees first character `%c`.  Shouldn't happen.\n",
+		*uos);
 	bu_free(mycopy, "Copy of user's output spec");
 	return;
     }
     ++uos;
-    while (*uos != '"')
-    {
+    while (*uos != '"') {
 	nm_cs = 0;
 	/* Allocate storage for the next item in the output list */
 	oip = (outitem *) bu_malloc(sizeof(outitem), "output item");
-	oip -> next = OUTITEM_NULL;
+	oip->next = OUTITEM_NULL;
 
-	for (up = uos; *uos != '"'; ++uos)
-	{
-		if (*uos == '%') {
-			if (*(uos + 1) == '%')
-				++uos;
-			else if (nm_cs == 1)
-				break;
-			else /* nm_cs == 0 */
-				++nm_cs;
-		}
-		if (*uos == '\\')
-			if (*(uos + 1) == '"')
-				++uos;
+	for (up = uos; *uos != '"'; ++uos) {
+	    if (*uos == '%') {
+		if (*(uos + 1) == '%')
+		    ++uos;
+		else if (nm_cs == 1)
+		    break;
+		else /* nm_cs == 0 */
+		    ++nm_cs;
+	    }
+	    if (*uos == '\\')
+		if (*(uos + 1) == '"')
+		    ++uos;
 	}
-
+	
 	/* Allocate memory for and store the format.
 	 * The code_nm field will be used at this point
 	 * to record whether this format specification
@@ -279,12 +276,10 @@ void parse_fmt(char *uoutspec, int outcom_type)
 	 * contains 1 conversion spec vs. none)
 	 */
 	oip->format = bu_malloc(uos - up + 1, "format");
-	of = oip -> format;
-	while (up != uos)
-	{
-	    if (*up == '\\')
-		switch (*(up + 1))
-		{
+	of = oip->format;
+	while (up != uos) {
+	    if (*up == '\\') {
+		switch (*(up + 1)) {
 		    case 'n':
 			*of++ = '\n';
 			up += 2;
@@ -299,42 +294,41 @@ void parse_fmt(char *uoutspec, int outcom_type)
 			*of++ = *up++;
 			break;
 		}
-	    else
+	    } else {
 		*of++ = *up++;
+	    }
 	}
 	*of = '\0';
-	oip -> code_nm = nm_cs;
+	oip->code_nm = nm_cs;
 
 	if (prev_oip == OUTITEM_NULL)
 	    oil = oip;
 	else
-	    prev_oip -> next = oip;
+	    prev_oip->next = oip;
 	prev_oip = oip;
     }
-
+    
     /* Skip any garbage beyond the close quote */
     for (up = ++uos; (! isspace(*uos)) && (*uos != '\0'); ++uos)
 	;
-    if (up != uos)
-    {
+
+    if (up != uos) {
 	*uos = '\0';
 	fprintf(stderr,
-	    "Warning: suffix '%s' after format specification ignored\n",
-	    up);
+		"Warning: suffix '%s' after format specification ignored\n",
+		up);
     }
 
     /* Read in the list of objects to output */
-    for (oip = oil; oip != OUTITEM_NULL; oip = oip -> next)
-    {
-	if (oip -> code_nm == 0)
+    for (oip = oil; oip != OUTITEM_NULL; oip = oip->next) {
+	if (oip->code_nm == 0)
 	    continue;		/* outitem's format has no conversion spec */
-
+	
 	while (isspace(*uos))
 	    ++uos;
-	if (*uos == '\0')
-	{
+	if (*uos == '\0') {
 	    fprintf(stderr,
-		"Error: Fewer output items than conversion specs\n");
+		    "Error: Fewer output items than conversion specs\n");
 	    bu_free(mycopy, "Copy of user's output spec");
 	    return;
 	}
@@ -344,16 +338,15 @@ void parse_fmt(char *uoutspec, int outcom_type)
 	if (*uos != '\0')
 	    *uos++ = '\0';
 
-	oip -> code_nm = 0;
-	for (vtp = ValTab + 1; vtp -> name; ++vtp)
-	    if (strcmp(vtp -> name, up) == 0)
-	    {
-		oip -> code_nm = vtp -> code_nm;
+	oip->code_nm = 0;
+	for (vtp = (outval *)(ValTab + 1); vtp->name; ++vtp) {
+	    if (strcmp(vtp->name, up) == 0) {
+		oip->code_nm = vtp->code_nm;
 		break;
 	    }
+	}
 
-	if (vtp -> name == '\0')
-	{
+	if (vtp->name == '\0') {
 	    fprintf(stderr, "Error: Invalid output item '%s'\n", up);
 	    bu_free(mycopy, "Copy of user's output spec");
 	    return;
@@ -362,8 +355,8 @@ void parse_fmt(char *uoutspec, int outcom_type)
 
     while (isspace(*uos))
 	++uos;
-    if (*uos != '\0')
-    {
+
+    if (*uos != '\0') {
 	fprintf(stderr, "Error: More output items than conversion specs\n");
 	fprintf( stderr, "Offending spec:\n\t%s\n", mycopy );
 	bu_free(mycopy, "Copy of user's output spec");
@@ -381,84 +374,93 @@ void parse_fmt(char *uoutspec, int outcom_type)
     bu_free(mycopy, "Copy of user's output spec");
 }
 
-void default_ospec (void)
+void
+default_ospec (void)
 {
     int	i;
 
-    for (i = 0; i < FMT_NONE; ++i)
-    {
+    for (i = 0; i < FMT_NONE; ++i) {
 	oi_list[i] = OUTITEM_NULL;
 	parse_fmt(def_fmt[i], i);
     }
 }
 
-void show_ospec (outitem *oil)
 
-				/* List of output items */
-
+/**
+ * oil is a list of output items
+ */
+void
+show_ospec (outitem *oil)
 {
     outitem	*oip;		/* Pointer into list of output items */
     char	*c;
 
     /* Display the format specification */
     printf("Format: \"");
-    for (oip = oil; oip != OUTITEM_NULL; oip = oip -> next)
-	for (c = oip -> format; *c != '\0'; ++c)
+    for (oip = oil; oip != OUTITEM_NULL; oip = oip->next) {
+	for (c = oip->format; *c != '\0'; ++c) {
 	    if (*c == '\n')
 		printf("\\n");
 	    else
 		putchar(*c);
+	}
+    }
     printf("\"\n");
 
     /* Display the list of item names */
     printf("Item(s):");
-    for (oip = oil; oip != OUTITEM_NULL; oip = oip -> next)
-	if (ValTab[oip -> code_nm].name)
-	    printf(" %s", ValTab[oip -> code_nm].name);
+    for (oip = oil; oip != OUTITEM_NULL; oip = oip->next) {
+	if (ValTab[oip->code_nm].name)
+	    printf(" %s", ValTab[oip->code_nm].name);
+    }
     printf("\n");
 }
 
 
-void report(int outcom_type)
+void
+report(int outcom_type)
 {
     outitem	*oip;
 
-    if ((outcom_type < 0) || (outcom_type >= FMT_NONE))
-    {
+    if ((outcom_type < 0) || (outcom_type >= FMT_NONE)) {
 	fprintf(stderr,
-	    "Illegal output-statement type: %d.  Shouldn't happen\n",
-	    outcom_type);
+		"Illegal output-statement type: %d.  Shouldn't happen\n",
+		outcom_type);
 	return;
     }
-    if( outf == (FILE *)NULL )  outf = stdout;
-    for (oip = oi_list[outcom_type]; oip != OUTITEM_NULL; oip = oip -> next)
-	switch (ValTab[oip -> code_nm].type)
-	{
+    if ( outf == (FILE *)NULL )
+	outf = stdout;
+
+    for (oip = oi_list[outcom_type]; oip != OUTITEM_NULL; oip = oip->next) {
+	switch (ValTab[oip->code_nm].type) {
 	    case OIT_INT:
-		fprintf(outf, oip -> format, ValTab[oip -> code_nm].value.ival);
+		fprintf(outf, oip->format, ValTab[oip->code_nm].value.ival);
 		break;
 	    case OIT_FLOAT:
-		fprintf(outf, oip -> format,
-		    ValTab[oip -> code_nm].value.fval * base2local);
+		fprintf(outf, oip->format,
+			ValTab[oip->code_nm].value.fval * base2local);
 		break;
 	    case OIT_FNOUNIT:
-		fprintf(outf, oip -> format,
-		    ValTab[oip -> code_nm].value.fval);
+		fprintf(outf, oip->format,
+			ValTab[oip->code_nm].value.fval);
 		break;
 	    case OIT_STRING:
-		fprintf(outf, oip -> format, ValTab[oip -> code_nm].value.sval);
+		fprintf(outf, oip->format, ValTab[oip->code_nm].value.sval);
 		break;
 	    default:
 		fflush(stdout);
 		fprintf(stderr, "Fatal: Invalid item type %d.  ",
-		    ValTab[oip -> code_nm].type);
+			ValTab[oip->code_nm].type);
 		fprintf(stderr, "This shouldn't happen\n");
-		exit (1);
+		bu_exit (1, NULL);
 	}
+    }
     fflush(outf);
 }
 
-void print_item (char *buffer, com_table *ctp)
+
+void
+print_item (char *buffer, com_table *ctp)
 {
     char	*bp = buffer;
     char	*bp0;
@@ -468,10 +470,11 @@ void print_item (char *buffer, com_table *ctp)
     /* Handle no args, arg=='?', and obvious bad arg */
     if (*bp != '\0')
 	++bp;
+
     while (isspace(*bp))
 	++bp;
-    switch (*bp)
-    {
+
+    switch (*bp) {
 	case '\0':
 	case '?':
 	    com_usage(ctp);
@@ -479,8 +482,7 @@ void print_item (char *buffer, com_table *ctp)
     }
 
     /* Read in the list of objects to output */
-    while (*bp != '\0')
-    {
+    while (*bp != '\0') {
 	while (isspace(*bp))
 	    ++bp;
 
@@ -490,78 +492,76 @@ void print_item (char *buffer, com_table *ctp)
 	if (*bp != '\0')
 	    *bp++ = '\0';
 
-	for (vtp = ValTab + 1; vtp -> name; ++vtp)
-	    if (strcmp(vtp -> name, bp0) == 0)
-	    {
-		switch (vtp -> type)
-		{
+	for (vtp = (outval *)(ValTab + 1); vtp->name; ++vtp) {
+	    if (strcmp(vtp->name, bp0) == 0) {
+		switch (vtp->type) {
 		    case OIT_INT:
-			printf("%d\n", vtp -> value.ival);
+			printf("%d\n", vtp->value.ival);
 			break;
 		    case OIT_FLOAT:
-			printf("%g\n", vtp -> value.fval * base2local);
+			printf("%g\n", vtp->value.fval * base2local);
 			break;
 		    case OIT_FNOUNIT:
-			printf("%g\n", vtp -> value.fval);
+			printf("%g\n", vtp->value.fval);
 			break;
 		    case OIT_STRING:
-			printf("'%s'\n", vtp -> value.sval);
+			printf("'%s'\n", vtp->value.sval);
 			break;
 		    default:
 			fflush(stdout);
 			fprintf(stderr, "Fatal: Invalid item type %d.  ",
-			    ValTab[vtp -> code_nm].type);
+				ValTab[vtp->code_nm].type);
 			fprintf(stderr, "This shouldn't happen\n");
-			exit (1);
+			bu_exit (1, NULL);
 		}
 		break;
 	    }
+	}
 
-	if (vtp -> name == '\0')
-	{
+	if (vtp->name == '\0') {
 	    fprintf(stderr, "Error: Invalid output item '%s'\n", bp0);
 	    return;
 	}
     }
 }
 
-FILE *fopenrc(void)
+FILE *
+fopenrc(void)
 {
     char	*rc_file_name;
     char	*home;
     FILE	*fPtr;
+    int len;
 
-    if ((fPtr = fopen(DEF_RCF_NAME, "r")) == NULL)
-    {
-	if ((home = getenv("HOME")) != NULL)
-	{
-	    rc_file_name = bu_malloc(strlen(home) + strlen(DEF_RCF_NAME) + 2,
-				"rc_file_name");
-	    sprintf(rc_file_name, "%s/%s", home, DEF_RCF_NAME);
-	    fPtr = fopen(rc_file_name, "r");
+    if ((fPtr = fopen(DEF_RCF_NAME, "rb")) == NULL) {
+	if ((home = getenv("HOME")) != NULL) {
+	    len = strlen(home) + strlen(DEF_RCF_NAME) + 2;
+	    rc_file_name = bu_malloc(len, "rc_file_name");
+	    snprintf(rc_file_name, len, "%s/%s", home, DEF_RCF_NAME);
+	    fPtr = fopen(rc_file_name, "rb");
 	}
     }
     return (fPtr);
 }
 
-int check_conv_spec (outitem *oip)
+int
+check_conv_spec (outitem *oip)
 {
     char	*cp;
     int		oi_type;
     int		warnings = 0;
 
-    for ( ; oip != OUTITEM_NULL; oip = oip -> next)
-    {
-	for (cp = oip -> format; *cp != '\0'; ++cp)
-		if (*cp == '%') {
-			if (*(cp + 1) == '%')
-				++cp;
-			else
-			{
-				++cp;
-				break;
-			}
+    for (; oip != OUTITEM_NULL; oip = oip->next) {
+	for (cp = oip->format; *cp != '\0'; ++cp) {
+	    if (*cp == '%') {
+		if (*(cp + 1) == '%') {
+		    ++cp;
+		} else {
+		    ++cp;
+		    break;
 		}
+	    }
+	}
 
 	if (*cp == '\0')		/* Added 8 Jun 90 */
 	    continue;
@@ -576,22 +576,20 @@ int check_conv_spec (outitem *oip)
 	while (isdigit(*cp))
 	    ++cp;
 
-	oi_type = ValTab[oip -> code_nm].type;
-	switch (*cp)
-	{
+	oi_type = ValTab[oip->code_nm].type;
+	switch (*cp) {
 	    case 'd':
 	    case 'o':
 	    case 'u':
 	    case 'x':
-		if (oi_type != OIT_INT)
-		{
+		if (oi_type != OIT_INT) {
 		    ++warnings;
 		    fprintf(stderr,
-			"Warning: Conversion type '%%%c' specified",
-			*cp);
+			    "Warning: Conversion type '%%%c' specified",
+			    *cp);
 		    fprintf(stderr,
-			" for item %s, which is %s\n",
-			ValTab[oip -> code_nm].name, oit_name(oi_type));
+			    " for item %s, which is %s\n",
+			    ValTab[oip->code_nm].name, oit_name(oi_type));
 		}
 		break;
 	    case 'f':
@@ -599,48 +597,48 @@ int check_conv_spec (outitem *oip)
 	    case 'E':
 	    case 'g':
 	    case 'G':
-		if ((oi_type != OIT_FLOAT) && (oi_type != OIT_FNOUNIT))
-		{
+		if ((oi_type != OIT_FLOAT) && (oi_type != OIT_FNOUNIT)) {
 		    ++warnings;
 		    fprintf(stderr,
-			"Warning: Conversion type '%%%c' specified",
-			*cp);
+			    "Warning: Conversion type '%%%c' specified",
+			    *cp);
 		    fprintf(stderr,
-			" for item %s, which is %s\n",
-			ValTab[oip -> code_nm].name, oit_name(oi_type));
+			    " for item %s, which is %s\n",
+			    ValTab[oip->code_nm].name, oit_name(oi_type));
 		}
 		break;
 	    case 's':
-		if (oi_type != OIT_STRING)
-		{
+		if (oi_type != OIT_STRING) {
 		    ++warnings;
 		    fprintf(stderr,
-			"Warning: Conversion type '%%%c' specified",
-			*cp);
+			    "Warning: Conversion type '%%%c' specified",
+			    *cp);
 		    fprintf(stderr,
-			" for item %s, which is %s\n",
-			ValTab[oip -> code_nm].name, oit_name(oi_type));
+			    " for item %s, which is %s\n",
+			    ValTab[oip->code_nm].name, oit_name(oi_type));
 		}
 		break;
 	    case 'c':
 		++warnings;
 		fprintf(stderr,
-		    "Warning: Conversion type '%%%c' specified", *cp);
+			"Warning: Conversion type '%%%c' specified", *cp);
 		fprintf(stderr,
 			" for item %s, which is a %s\n",
-			ValTab[oip -> code_nm].name, oit_name(oi_type));
+			ValTab[oip->code_nm].name, oit_name(oi_type));
 		break;
 	    default:
 		++warnings;
 		fprintf(stderr,
-		    "Warning: Unknown conversion type '%%%c'\n", *cp);
+			"Warning: Unknown conversion type '%%%c'\n", *cp);
 		break;
 	}
     }
     return (warnings);
 }
 
-void direct_output(char *buffer, com_table *ctp)
+
+void
+direct_output(const char *buffer, com_table *ctp)
 {
     int 	i = 0;      /* current position on the *buffer        */
     FILE	*newf;
@@ -648,17 +646,16 @@ void direct_output(char *buffer, com_table *ctp)
     static FILE	*(*openfunc)() = 0;
 
     while (isspace(*(buffer+i)))
-	    ++i;
+	++i;
 
-    if (*(buffer+i) == '\0')     /* display current destination */
-    {
+    if (*(buffer+i) == '\0') {
+	/* display current destination */
 	printf("destination = %s%s'\n",
-	    (openfunc == popen) ? "'| " : "'", dest_string);
+	       (openfunc == popen) ? "'| " : "'", dest_string);
 	return;
     }
 
-    if (strcmp(buffer + i, "?") == 0)
-    {
+    if (strcmp(buffer + i, "?") == 0) {
 	com_usage(ctp);
 	return;
     }
@@ -671,15 +668,16 @@ void direct_output(char *buffer, com_table *ctp)
 	if (*(buffer + i) == '|') {
 	    openfunc=popen;
 	    ++i;
-	} else
+	} else {
 	    openfunc=fopen;
+	}
 
-	new_dest = bu_malloc(strlen(buffer + i)+1,"new_dest");
+	new_dest = bu_malloc(strlen(buffer + i)+1, "new_dest");
 
-	sprintf(new_dest, "%s", buffer + i);
+	snprintf(new_dest, strlen(buffer+i), "%s", buffer + i);
 	if ((newf = (*openfunc)(new_dest, "w")) == NULL) {
 	    fprintf(stderr, "Cannot open %s '%s'\n",
-		(openfunc == popen) ? "pipe" : "file", new_dest);
+		    (openfunc == popen) ? "pipe" : "file", new_dest);
 	    fprintf(stderr, "Destination remains = '%s'\n", dest_string);
 
 	    bu_free(new_dest, "new(now old)dest");
@@ -701,31 +699,32 @@ void direct_output(char *buffer, com_table *ctp)
     dest_string = new_dest;
 }
 
-void state_file(char *buffer, com_table *ctp)
+
+void
+state_file(const char *buffer, com_table *ctp)
 {
     int 	i = 0;      /* current position on the *buffer        */
     static char	*new_name;
 
     while (isspace(*(buffer+i)))
-	    ++i;
-    if (*(buffer+i) == '\0')     /* display current state name */
-    {
+	++i;
+
+    if (*(buffer+i) == '\0') {
+	/* display current state name */
 	printf("statefile = '%s'\n", sf_name);
 	return;
     }
 
-    if (strcmp(buffer + i, "?") == 0)
-    {
+    if (strcmp(buffer + i, "?") == 0) {
 	com_usage(ctp);
 	return;
     }
 
-    if (strcmp(buffer + i, "default") == 0)
+    if (strcmp(buffer + i, "default") == 0) {
 	new_name = def_sf_name;
-    else
-    {
+    } else {
 	new_name = bu_malloc(strlen(buffer + i)+1, "new_state_filename");
-	sprintf(new_name, "%s", buffer + i);
+	snprintf(new_name, strlen(buffer+i), "%s", buffer + i);
     }
 
     /* Clean up from previous output destination */
@@ -736,16 +735,17 @@ void state_file(char *buffer, com_table *ctp)
     sf_name = new_name;
 }
 
-void dump_state(char *buffer, com_table *ctp)
+
+void
+dump_state(const char *buffer, com_table *ctp)
 {
     char	*c;
-    static char	fmt_char[] = {'r', 'h', 'p', 'f', 'm', 'o'};
+    static const char	fmt_char[] = {'r', 'h', 'p', 'f', 'm', 'o'};
     FILE	*sfPtr;
     int		f;
     outitem	*oip;		/* Pointer into list of output items */
 
-    if ((sfPtr = fopen(sf_name, "w")) == NULL)
-    {
+    if ((sfPtr = fopen(sf_name, "wb")) == NULL) {
 	fprintf(stderr, "Cannot open statefile '%s'\n", sf_name);
 	return;
     }
@@ -754,7 +754,7 @@ void dump_state(char *buffer, com_table *ctp)
     fprintf(sfPtr, "%c file created by the dump command of nirt\n", CMT_CHAR);
     fprintf(sfPtr, "xyz %g %g %g\n", target(X), target(Y), target(Z));
     fprintf(sfPtr, "dir %g %g %g\n", direct(X), direct(Y), direct(Z));
-    fprintf(sfPtr, "useair %d\n", ap.a_rt_i -> useair);
+    fprintf(sfPtr, "useair %d\n", ap.a_rt_i->useair);
     fprintf(sfPtr, "units %s\n", local_u_name);
     if (strcmp(dest_string, "stdout") == 0)
 	fputs("dest default\n", sfPtr);
@@ -762,12 +762,11 @@ void dump_state(char *buffer, com_table *ctp)
 	fprintf(sfPtr, "dest %s\n", dest_string);
     fprintf(sfPtr, "overlap_claims %s\n", ocname[overlap_claims]);
 
-    for (f = 0; f < FMT_NONE; ++f)
-    {
+    for (f = 0; f < FMT_NONE; ++f) {
 	fprintf(sfPtr, "fmt %c \"", fmt_char[f]);
 	/* Display the conversion specifications */
-	for (oip = oi_list[f]; oip != OUTITEM_NULL; oip = oip -> next)
-	    for (c = oip -> format; *c != '\0'; ++c)
+	for (oip = oi_list[f]; oip != OUTITEM_NULL; oip = oip->next)
+	    for (c = oip->format; *c != '\0'; ++c)
 		if (*c == '\n')
 		    fprintf(sfPtr, "\\n");
 		else
@@ -775,21 +774,22 @@ void dump_state(char *buffer, com_table *ctp)
 	fprintf(sfPtr, "\"");
 
 	/* Display the item name */
-	for (oip = oi_list[f]; oip != OUTITEM_NULL; oip = oip -> next)
-	    if (ValTab[oip -> code_nm].name)
-		fprintf(sfPtr, " %s", ValTab[oip -> code_nm].name);
+	for (oip = oi_list[f]; oip != OUTITEM_NULL; oip = oip->next)
+	    if (ValTab[oip->code_nm].name)
+		fprintf(sfPtr, " %s", ValTab[oip->code_nm].name);
 	fprintf(sfPtr, "\n");
     }
     printf("\n");
     fclose(sfPtr);
 }
 
-void load_state(char *buffer, com_table *ctp)
+
+void
+load_state(char *buffer, com_table *ctp)
 {
     FILE	*sfPtr;
 
-    if ((sfPtr = fopen(sf_name, "r")) == NULL)
-    {
+    if ((sfPtr = fopen(sf_name, "rb")) == NULL) {
 	fprintf(stderr, "Cannot open statefile '%s'\n", sf_name);
 	return;
     }
@@ -799,19 +799,20 @@ void load_state(char *buffer, com_table *ctp)
     fclose(sfPtr);
 }
 
-void free_ospec (outitem *oil)
 
-				/* List of output items */
-
+/**
+ * oil is a list of output items
+ */
+void
+free_ospec (outitem *oil)
 {
     outitem	*next = oil;	/* Pointer to next output item */
     outitem	*oip;		/* Pointer to output item to free */
 
-    while (next != OUTITEM_NULL)
-    {
+    while (next != OUTITEM_NULL) {
 	oip = next;
-	next = oip -> next;
-	bu_free(oip -> format, "outitem.format");
+	next = oip->next;
+	bu_free(oip->format, "outitem.format");
 	if (oip != oil)
 	    bu_free((char *) oip, "outitem");
     }
@@ -821,8 +822,8 @@ void free_ospec (outitem *oil)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

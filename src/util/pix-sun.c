@@ -1,7 +1,7 @@
 /*                       P I X - S U N . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2007 United States Government as represented by
+ * Copyright (c) 1986-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,31 +18,20 @@
  * information.
  */
 /** @file pix-sun.c
- *	Program to take a BRL-CAD PIX format image file and convert the
- *	image to a Sun Microsystems 8-bit deep color "rasterfile" format
- *	image.
  *
- *  Author -
- *	Lee A. Butler
+ * Program to take a BRL-CAD PIX format image file and convert the
+ * image to a Sun Microsystems 8-bit deep color "rasterfile" format
+ * image.
  *
  */
+
 #include "common.h"
 
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-
 #include <stdlib.h>
-#include <stdio.h>
 #include <ctype.h>
-
-#ifdef HAVE_STRING_H
 #include <string.h>
-#else
-#include <strings.h>
-#endif
+#include "bio.h"
 
-#include "machine.h"
 #include "bu.h"
 
 
@@ -81,37 +70,37 @@ struct rasterfile {
  */
 unsigned char redmap[MAPSIZE] =
 { 0, 51,102,153,204,255,  0, 51,102,153,204,255,  0, 51,102,153,
-204,255,  0, 51,102,153,204,255,  0, 51,102,153,204,255,  0, 51,
-102,153,204,255,  0, 51,102,153,204,255,  0, 51,102,153,204,255,
+  204,255,  0, 51,102,153,204,255,  0, 51,102,153,204,255,  0, 51,
+  102,153,204,255,  0, 51,102,153,204,255,  0, 51,102,153,204,255,
   0, 51,102,153,204,255,  0, 51,102,153,204,255,  0, 51,102,153,
-204,255,  0, 51,102,153,204,255,  0, 51,102,153,204,255,  0, 51,
-102,153,204,255,  0, 51,102,153,204,255,  0, 51,102,153,204,255,
+  204,255,  0, 51,102,153,204,255,  0, 51,102,153,204,255,  0, 51,
+  102,153,204,255,  0, 51,102,153,204,255,  0, 51,102,153,204,255,
   0, 51,102,153,204,255,  0, 51,102,153,204,255,  0, 51,102,153,
-204,255,  0, 51,102,153,204,255,  0, 51,102,153,204,255,  0, 51,
-102,153,204,255,  0, 51,102,153,204,255,  0, 51,102,153,204,255,
+  204,255,  0, 51,102,153,204,255,  0, 51,102,153,204,255,  0, 51,
+  102,153,204,255,  0, 51,102,153,204,255,  0, 51,102,153,204,255,
   0, 51,102,153,204,255,  0, 51,102,153,204,255,  0, 51,102,153,
-204,255,  0, 51,102,153,204,255,  0, 51,102,153,204,255,  0, 51,
-102,153,204,255,  0, 51,102,153,204,255,  0, 51,102,153,204,255,
+  204,255,  0, 51,102,153,204,255,  0, 51,102,153,204,255,  0, 51,
+  102,153,204,255,  0, 51,102,153,204,255,  0, 51,102,153,204,255,
   0, 51,102,153,204,255,  0, 51,102,153,204,255,  0, 51,102,153,
-204,255,  0, 51,102,153,204,255, 17, 34, 68, 85,119,136,170,187,
-221,238,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+  204,255,  0, 51,102,153,204,255, 17, 34, 68, 85,119,136,170,187,
+  221,238,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
   0,  0,  0,  0,  0,  0, 17, 34, 68, 85,119,136,170,187,221,238 };
 
 unsigned char grnmap[MAPSIZE] =
 { 0,  0,  0,  0,  0,  0, 51, 51, 51, 51, 51, 51,102,102,102,102,
-102,102,153,153,153,153,153,153,204,204,204,204,204,204,255,255,
-255,255,255,255,  0,  0,  0,  0,  0,  0, 51, 51, 51, 51, 51, 51,
-102,102,102,102,102,102,153,153,153,153,153,153,204,204,204,204,
-204,204,255,255,255,255,255,255,  0,  0,  0,  0,  0,  0, 51, 51,
- 51, 51, 51, 51,102,102,102,102,102,102,153,153,153,153,153,153,
-204,204,204,204,204,204,255,255,255,255,255,255,  0,  0,  0,  0,
+  102,102,153,153,153,153,153,153,204,204,204,204,204,204,255,255,
+  255,255,255,255,  0,  0,  0,  0,  0,  0, 51, 51, 51, 51, 51, 51,
+  102,102,102,102,102,102,153,153,153,153,153,153,204,204,204,204,
+  204,204,255,255,255,255,255,255,  0,  0,  0,  0,  0,  0, 51, 51,
+  51, 51, 51, 51,102,102,102,102,102,102,153,153,153,153,153,153,
+  204,204,204,204,204,204,255,255,255,255,255,255,  0,  0,  0,  0,
   0,  0, 51, 51, 51, 51, 51, 51,102,102,102,102,102,102,153,153,
-153,153,153,153,204,204,204,204,204,204,255,255,255,255,255,255,
+  153,153,153,153,204,204,204,204,204,204,255,255,255,255,255,255,
   0,  0,  0,  0,  0,  0, 51, 51, 51, 51, 51, 51,102,102,102,102,
-102,102,153,153,153,153,153,153,204,204,204,204,204,204,255,255,
-255,255,255,255,  0,  0,  0,  0,  0,  0, 51, 51, 51, 51, 51, 51,
-102,102,102,102,102,102,153,153,153,153,153,153,204,204,204,204,
-204,204,255,255,255,255,255,255,  0,  0,  0,  0,  0,  0,  0,  0,
+  102,102,153,153,153,153,153,153,204,204,204,204,204,204,255,255,
+  255,255,255,255,  0,  0,  0,  0,  0,  0, 51, 51, 51, 51, 51, 51,
+  102,102,102,102,102,102,153,153,153,153,153,153,204,204,204,204,
+  204,204,255,255,255,255,255,255,  0,  0,  0,  0,  0,  0,  0,  0,
   0,  0, 17, 34, 68, 85,119,136,170,187,221,238,  0,  0,  0,  0,
   0,  0,  0,  0,  0,  0, 17, 34, 68, 85,119,136,170,187,221,238 };
 
@@ -119,30 +108,30 @@ unsigned char blumap[MAPSIZE] =
 { 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
   0,  0,  0,  0, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
- 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
- 51, 51, 51, 51, 51, 51, 51, 51,102,102,102,102,102,102,102,102,
-102,102,102,102,102,102,102,102,102,102,102,102,102,102,102,102,
-102,102,102,102,102,102,102,102,102,102,102,102,153,153,153,153,
-153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,
-153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,
-204,204,204,204,204,204,204,204,204,204,204,204,204,204,204,204,
-204,204,204,204,204,204,204,204,204,204,204,204,204,204,204,204,
-204,204,204,204,255,255,255,255,255,255,255,255,255,255,255,255,
-255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,
-255,255,255,255,255,255,255,255,  0,  0,  0,  0,  0,  0,  0,  0,
+  51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
+  51, 51, 51, 51, 51, 51, 51, 51,102,102,102,102,102,102,102,102,
+  102,102,102,102,102,102,102,102,102,102,102,102,102,102,102,102,
+  102,102,102,102,102,102,102,102,102,102,102,102,153,153,153,153,
+  153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,
+  153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,
+  204,204,204,204,204,204,204,204,204,204,204,204,204,204,204,204,
+  204,204,204,204,204,204,204,204,204,204,204,204,204,204,204,204,
+  204,204,204,204,255,255,255,255,255,255,255,255,255,255,255,255,
+  255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,
+  255,255,255,255,255,255,255,255,  0,  0,  0,  0,  0,  0,  0,  0,
   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 17, 34, 68, 85,
-119,136,170,187,221,238, 17, 34, 68, 85,119,136,170,187,221,238 };
+  119,136,170,187,221,238, 17, 34, 68, 85,119,136,170,187,221,238 };
 
 
 /* indicies of the primary colors and grey values in the color map */
 static unsigned char rvec[16] = { 0, 216, 217, 1, 218, 219, 2, 220, 221,
-				3, 222, 223, 4, 224, 225, 5};
+				  3, 222, 223, 4, 224, 225, 5};
 static unsigned char gvec[16] = {  0, 226, 227,  6, 228, 229, 12, 230,
-				231,  18, 232, 233, 24, 234, 235, 30};
+				   231,  18, 232, 233, 24, 234, 235, 30};
 static unsigned char bvec[16] = {  0, 236, 237,  36, 238, 239,  72, 240,
-				241, 108, 242, 243, 144, 244, 245, 180 };
+				   241, 108, 242, 243, 144, 244, 245, 180 };
 static unsigned char nvec[16] = {  0, 246, 247,  43, 248, 249,  86, 250,
-				251, 129, 252, 253, 172, 254, 255, 215};
+				   251, 129, 252, 253, 172, 254, 255, 215};
 
 #define MAG1	51.0	/* magnitude of dither noise in color cube */
 #define MAG2	8.0	/* magnitude of dither noise along primaries*/
@@ -163,31 +152,40 @@ double *end_table = &table[10];
 	dg = NOISE(); DITHER(_g, green, dg, MAG1); _g = (_g+26) / 51; \
 	db = NOISE(); DITHER(_b, blue, db, MAG1); _b = (_b+26) / 51; \
 	if (_r == _g) { \
-		if (_r == _b) {		/* grey */ \
+		if (_r == _b) { \
+ 			/* grey */ \
 			DITHER(_r, red, dr, MAG2); \
 			DITHER(_g, green, dg, MAG2); \
 			DITHER(_b, blue, db, MAG2); \
 			i = nvec[ ( (_r+_g+_b)/3) >> 4]; \
-		} else if (_r == 0) {	/* all blue */ \
+		} else if (_r == 0) { \
+ 			/* all blue */ \
 			DITHER(_r, red, dr, MAG2); \
 			DITHER(_g, green, dg, MAG2); \
 			DITHER(_b, blue, db, MAG2); \
 			i = bvec[ _b >> 4]; \
-		} else	/* color cube # */ \
+		} else { \
+			/* color cube # */ \
 			i = (unsigned char)(_r + _g * 6 + _b * 36); \
+		} \
 	} \
-	else if (_g == _b && _g == 0) {	/* all red */ \
+	else if (_g == _b && _g == 0) { \
+ 		/* all red */ \
 		DITHER(_r, red, dr, MAG2); \
 		DITHER(_g, green, dg, MAG2); \
 		DITHER(_b, blue, db, MAG2); \
 		i = rvec[ _r >> 4]; \
-	} else if (_r == _b && _r == 0) {	/* all green */ \
+	} else if (_r == _b && _r == 0) { \
+		/* all green */ \
 		DITHER(_r, red, dr, MAG2); \
 		DITHER(_g, green, dg, MAG2); \
 		DITHER(_b, blue, db, MAG2); \
 		i = gvec[_g >> 4]; \
-	} else	/* color cube # */ \
-		i = (unsigned char)(_r + _g * 6 + _b * 36); }
+	} else { \
+		/* color cube # */ \
+		i = (unsigned char)(_r + _g * 6 + _b * 36); \
+	} \
+}
 
 #define REMAPIXEL(red, green, blue, i) {\
 	register unsigned char _r, _g, _b; \
@@ -212,32 +210,32 @@ void doit(void)
 
     if ( ((ras.ras_width/2)*2) != ras.ras_width ) {
 	(void)fprintf(stderr, "%s: Cannot handle odd x dimension\n",progname);
-	exit(1);
+	bu_exit (1, NULL);
     }
 
     i = ras.ras_width * ras.ras_height;
     /* allocate buffer for the pix file */
     if ((pix=(unsigned char *)malloc(i*3)) == (unsigned char *)NULL) {
 	(void)fprintf(stderr, "%s: cannot get memory for a %d x %d pix file\n",
-		progname, ras.ras_width, ras.ras_height );
-	exit(1);
+		      progname, ras.ras_width, ras.ras_height );
+	bu_exit (1, NULL);
     }
 
     if ((rast=(unsigned char *)malloc(i)) == (unsigned char *)NULL) {
 	(void)fprintf(stderr, "%s: cannot get memory for a %d x %d pixrect\n",
-		progname, ras.ras_width, ras.ras_height );
-	exit(1);
+		      progname, ras.ras_width, ras.ras_height );
+	bu_exit (1, NULL);
     }
 
     /* load the pix file into memory (What's Virtual Memory for anyway?)
      * we reverse the order of the scan lines to compensate
      * for differences of origin location in rasterfiles vs. PIX files
      */
-    for (i=ras.ras_height-1 ; i >= 0 ; i--)
+    for (i=ras.ras_height-1; i >= 0; i--)
 	if (fread(&pix[i*ras.ras_width*3], ras.ras_width*3, 1, stdin) != 1) {
-	 (void)fprintf(stderr, "%s: error reading %d x %d pix file scanline %d\n",
-		progname, ras.ras_width, ras.ras_height, i);
-	 exit(1);
+	    (void)fprintf(stderr, "%s: error reading %d x %d pix file scanline %d\n",
+			  progname, ras.ras_width, ras.ras_height, i);
+	    bu_exit (1, NULL);
 	}
 
     /* convert 24 bit pixels to 8 bits,
@@ -245,8 +243,8 @@ void doit(void)
      * representations of PIX files and Sun pixrects
      */
     if (dither) {
-	for(cy=0 ; cy < ras.ras_height ; cy++)
-	    for(cx=0 ; cx < ras.ras_width ; cx++) {
+	for (cy=0; cy < ras.ras_height; cy++)
+	    for (cx=0; cx < ras.ras_width; cx++) {
 		red = pix[(cx + cy * ras.ras_width)*3];
 		green = pix[1 + (cx + cy * ras.ras_width)*3];
 		blue = pix[2 + (cx + cy * ras.ras_width)*3];
@@ -254,8 +252,8 @@ void doit(void)
 	    }
     }
     else {
-	for(cy=0 ; cy < ras.ras_height ; cy++)
-	    for(cx=0 ; cx < ras.ras_width ; cx++) {
+	for (cy=0; cy < ras.ras_height; cy++)
+	    for (cx=0; cx < ras.ras_width; cx++) {
 		red = pix[(cx + cy * ras.ras_width)*3];
 		green = pix[1 + (cx + cy * ras.ras_width)*3];
 		blue = pix[2 + (cx + cy * ras.ras_width)*3];
@@ -274,29 +272,29 @@ void doit(void)
     /* write the rasterfile header */
     if (fwrite(&ras, sizeof(ras), 1, stdout) != 1) {
 	(void)fprintf(stderr, "%s: error writing rasterfile header to stdout\n", progname);
-	exit(1);
+	bu_exit (1, NULL);
     }
 
     /* write the colormap */
     if (fwrite(redmap, MAPSIZE, 1, stdout) != 1) {
 	(void)fprintf(stderr, "%s: error writing colormap\n", progname);
-	exit(1);
+	bu_exit (1, NULL);
     }
 
     if (fwrite(grnmap, MAPSIZE, 1, stdout) != 1) {
 	(void)fprintf(stderr, "%s: error writing colormap\n", progname);
-	exit(1);
+	bu_exit (1, NULL);
     }
 
     if (fwrite(blumap, MAPSIZE, 1, stdout) != 1) {
 	(void)fprintf(stderr, "%s: error writing colormap\n", progname);
-	exit(1);
+	bu_exit (1, NULL);
     }
 
     /* write out the actual pixels */
-    if (fwrite(rast, ras.ras_width, ras.ras_height, stdout) != ras.ras_height){
+    if (fwrite(rast, ras.ras_width, ras.ras_height, stdout) != ras.ras_height) {
 	(void)fprintf(stderr, "%s: error writing image\n", progname);
-	exit(1);
+	bu_exit (1, NULL);
     }
     free(rast);
 }
@@ -306,7 +304,7 @@ void usage(void)
 
     (void)fprintf(stderr, "Usage: %s [-s squaresize] [-w width] [-n height] [ -d ]\n", progname);
     (void)fprintf(stderr, "\t< BRLpixfile > rasterfile\n");
-    exit(1);
+    bu_exit (1, NULL);
 }
 
 /*
@@ -323,23 +321,23 @@ int main(int ac, char **av)
     if (isatty(fileno(stdin))) usage();
 
     /* Get # of options & turn all the option flags off
-    */
+     */
     optlen = strlen(options);
 
-    for (c=0 ; c < optlen ; optflags[c++] = '\0');
+    for (c=0; c < optlen; optflags[c++] = '\0');
 
     /* Turn off bu_getopt's error messages */
     bu_opterr = 0;
 
     /* get all the option flags from the command line
-    */
+     */
     while ((c=bu_getopt(ac,av,options)) != EOF)
 	switch (c) {
-	case 'd'    : dither = !dither; break;
-	case 'w'    : ras.ras_width = atoi(bu_optarg); break;
-	case 'n'    : ras.ras_height = atoi(bu_optarg); break;
-	case 's'    : ras.ras_width = ras.ras_height = atoi(bu_optarg); break;
-	default     : usage(); break;
+	    case 'd'    : dither = !dither; break;
+	    case 'w'    : ras.ras_width = atoi(bu_optarg); break;
+	    case 'n'    : ras.ras_height = atoi(bu_optarg); break;
+	    case 's'    : ras.ras_width = ras.ras_height = atoi(bu_optarg); break;
+	    default     : usage(); break;
 	}
 
 
@@ -353,8 +351,8 @@ int main(int ac, char **av)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

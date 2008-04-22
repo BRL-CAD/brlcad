@@ -1,7 +1,7 @@
 /*                  F B S E R V _ W I N 3 2 . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2007 United States Government as represented by
+ * Copyright (c) 1995-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,34 +18,18 @@
  * information.
  */
 /** @file fbserv_win32.c
- *			F B S E R V . C
  *
- *  This code was developed by modifying the stand-alone version of fbserv to work
- *  within MGED.
+ * This code was developed by modifying the stand-alone version of
+ * fbserv to work within MGED.
  *
- *  Author -
- *	Robert Parker
- *
- *  Authors of the stand-alone fbserv -
- *	Phillip Dykstra
- *	Michael John Muuss
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
-
 
 #include <stdio.h>
 #include <ctype.h>
 
 #include "tcl.h"
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -76,7 +60,7 @@ LOCAL_STATIC void setup_socket();
  */
 LOCAL_STATIC void
 new_client(pcp)
-struct pkg_conn	*pcp;
+    struct pkg_conn	*pcp;
 {
     return;
 }
@@ -86,7 +70,7 @@ struct pkg_conn	*pcp;
  */
 LOCAL_STATIC void
 drop_client(sub)
-int sub;
+    int sub;
 {
     return;
 }
@@ -105,8 +89,8 @@ set_port()
  */
 LOCAL_STATIC void
 new_client_handler(clientData, mask)
-ClientData clientData;
-int mask;
+    ClientData clientData;
+    int mask;
 {
     return;
 }
@@ -116,15 +100,15 @@ int mask;
  */
 LOCAL_STATIC void
 existing_client_handler(clientData, mask)
-ClientData clientData;
-int mask;
+    ClientData clientData;
+    int mask;
 {
     return;
 }
 
 LOCAL_STATIC void
 setup_socket(fd)
-int	fd;
+    int	fd;
 {
     return;
 }
@@ -136,7 +120,7 @@ int	fd;
  */
 LOCAL_STATIC void
 comm_error(str)
-char *str;
+    char *str;
 {
     return;
 }
@@ -146,8 +130,8 @@ char *str;
  */
 void
 pkgfoo(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+    struct pkg_conn *pcp;
+    char *buf;
 {
     return;
 }
@@ -156,48 +140,48 @@ char *buf;
 
 void
 rfbopen(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+    struct pkg_conn *pcp;
+    char *buf;
 {
     return;
 }
 
 void
 rfbclose(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+    struct pkg_conn *pcp;
+    char *buf;
 {
     return;
 }
 
 void
 rfbfree(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+    struct pkg_conn *pcp;
+    char *buf;
 {
     return;
 }
 
 void
 rfbclear(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+    struct pkg_conn *pcp;
+    char *buf;
 {
     return;
 }
 
 void
 rfbread(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+    struct pkg_conn *pcp;
+    char *buf;
 {
     return;
 }
 
 void
 rfbwrite(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+    struct pkg_conn *pcp;
+    char *buf;
 {
     return;
 }
@@ -207,8 +191,8 @@ char *buf;
  */
 void
 rfbreadrect(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+    struct pkg_conn *pcp;
+    char *buf;
 {
     return;
 }
@@ -218,8 +202,8 @@ char *buf;
  */
 void
 rfbwriterect(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+    struct pkg_conn *pcp;
+    char *buf;
 {
     return;
 }
@@ -229,8 +213,8 @@ char *buf;
  */
 void
 rfbbwreadrect(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+    struct pkg_conn *pcp;
+    char *buf;
 {
     return;
 }
@@ -240,32 +224,32 @@ char *buf;
  */
 void
 rfbbwwriterect(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+    struct pkg_conn *pcp;
+    char *buf;
 {
     return;
 }
 
 void
 rfbcursor(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+    struct pkg_conn *pcp;
+    char *buf;
 {
     return;
 }
 
 void
 rfbgetcursor(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+    struct pkg_conn *pcp;
+    char *buf;
 {
     return;
 }
 
 void
 rfbsetcursor(pcp, buf)
-struct pkg_conn *pcp;
-char		*buf;
+    struct pkg_conn *pcp;
+    char		*buf;
 {
     return;
 }
@@ -273,8 +257,8 @@ char		*buf;
 /*OLD*/
 void
 rfbscursor(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+    struct pkg_conn *pcp;
+    char *buf;
 {
     return;
 }
@@ -282,8 +266,8 @@ char *buf;
 /*OLD*/
 void
 rfbwindow(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+    struct pkg_conn *pcp;
+    char *buf;
 {
     return;
 }
@@ -291,32 +275,32 @@ char *buf;
 /*OLD*/
 void
 rfbzoom(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+    struct pkg_conn *pcp;
+    char *buf;
 {
     return;
 }
 
 void
 rfbview(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+    struct pkg_conn *pcp;
+    char *buf;
 {
     return;
 }
 
 void
 rfbgetview(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+    struct pkg_conn *pcp;
+    char *buf;
 {
     return;
 }
 
 void
 rfbrmap(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+    struct pkg_conn *pcp;
+    char *buf;
 {
     return;
 }
@@ -331,24 +315,24 @@ char *buf;
  */
 void
 rfbwmap(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+    struct pkg_conn *pcp;
+    char *buf;
 {
     return;
 }
 
 void
 rfbflush(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+    struct pkg_conn *pcp;
+    char *buf;
 {
     return;
 }
 
 void
 rfbpoll(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+    struct pkg_conn *pcp;
+    char *buf;
 {
     return;
 }
@@ -359,8 +343,8 @@ char *buf;
  */
 void
 rfbhelp(pcp, buf)
-struct pkg_conn *pcp;
-char *buf;
+    struct pkg_conn *pcp;
+    char *buf;
 {
     return;
 }
@@ -369,8 +353,8 @@ char *buf;
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -1,7 +1,7 @@
 /*                   P O I N T S _ P A R S E . Y
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@
 /*                   P O I N T S _ P A R S E . Y
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -189,8 +189,8 @@ file_top_level_element: NL
   | pipe_line
   | sphere_line
   ;
-   
-file: 
+
+file:
   | file file_top_level_element
   ;
   /*
@@ -212,7 +212,7 @@ int yyerror(char *msg)
 	fprintf(stderr, "ERROR: Unexpected input on line %ld, column %ld  (file offset %ld)\n", get_lines()+1, get_column()-1, get_bytes());
     }
     /* printf("ERROR:\n%s\n%*s (line %ld, column %ld)\n%s\n", lastline, column, "^", line, column, msg); */
-    exit(1);
+    bu_exit(1, NULL);
 }
 
 int yywrap()
@@ -221,7 +221,7 @@ int yywrap()
     INITIALIZE_POINT_LINE_T(plt);
     plt.code = 0;
     process_point(&plt);
-    
+
     return(1);
 }
 
@@ -229,8 +229,8 @@ int yywrap()
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

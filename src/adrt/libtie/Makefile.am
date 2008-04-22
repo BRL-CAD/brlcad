@@ -2,9 +2,17 @@
 
 lib_LTLIBRARIES = libtie.la
 
-libtie_la_SOURCES = \
-	tie.c \
-	tie_kdtree.c
+libtie_la_LIBADD = libtie0.la libtie1.la ${BU}
+libtie_la_SOURCES =
+
+SOURCES = tie.c tie_kdtree.c
+libtie0_la_SOURCES = $(SOURCES)
+libtie1_la_SOURCES = $(SOURCES)
+
+libtie0_la_CFLAGS = -DTIE_PRECISION=0
+libtie1_la_CFLAGS = -DTIE_PRECISION=1
+
+noinst_LTLIBRARIES = libtie0.la libtie1.la
 
 tieincludedir = $(includedir)/tie
 tieinclude_HEADERS = \
@@ -21,7 +29,5 @@ lint:
 
 clean-local:
 	-rm -f $(HEADERS:.h=.h.lint) $(SOURCES:.c=.c.lint)
-
-MAINTAINERCLEANFILES = Makefile.in
 
 include $(top_srcdir)/misc/Makefile.defs

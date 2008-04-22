@@ -16,9 +16,8 @@
 package require tcltest
 namespace import -force ::tcltest::*
 
-if {[string compare test [info procs test]] == 1} then {source defs}
+::tcltest::loadTestedCommands
 
-package require Itk
 
 # ----------------------------------------------------------------------
 #  Make sure that slave interpreters can be created and loaded

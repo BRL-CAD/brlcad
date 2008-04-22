@@ -1,7 +1,7 @@
 /*                   W D B _ E X A M P L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,13 +27,13 @@
  *  This constrains the arguments to the mk_* routines to also be in
  *  millimeters.
  */
+
 #include "common.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
@@ -108,7 +108,7 @@ main(int ac, char *av[])
      * have passed the matrix in to mk_addmember as an argument or we
      * could add the following code:
      *
-     memcpy( wm_hd->wm_mat, trans_matrix, sizeof(mat_t));
+     memcpy(wm_hd->wm_mat, trans_matrix, sizeof(mat_t));
      *
      * Remember that values in the database are stored in millimeters.
      * so the values in the matrix must take this into account.
@@ -152,8 +152,8 @@ main(int ac, char *av[])
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

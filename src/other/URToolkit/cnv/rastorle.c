@@ -1,14 +1,14 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
@@ -17,14 +17,14 @@
  */
 /*
  * rastorle  --
- *   convert Sun Rasterfile to Utah RLE format 
+ *   convert Sun Rasterfile to Utah RLE format
  *   reads Sun rasterfile or stdin and writes stdout.
  *
  * Author:         Berry Kercheval (berry@mordor.s1.gov)
  *                 Lawrence Livermore National Laboratory
  *                 Livermore, CA.
  * Date:           9 March 1987
- * History:  
+ * History:
  *   27 March 1987:  bbk: make it understand depth one (B&W) rasterfiles.
  *   6 September 1990: Clark: make it understand RT_BYTE_ENCODED rasterfiles,
  *			      add flag so alpha channel is done only if desired,
@@ -64,7 +64,7 @@ static rle_map out_map[3*(1<<8)];
 static unsigned char   *outrows[4];	/* array of rows for RLE output */
 static unsigned char   *redline,	/* rle red row values */
 	               *grnline,
-	      	       *bluline, 
+	      	       *bluline,
 	      	       *alfline;	/* alpha channel values */
 static int		depth, npix;	/* Image size factors. */
 static unsigned char   *image;
@@ -84,14 +84,14 @@ char *argv[];
     FILE             *rasfile;	/* where input comes from */
     FILE             *outfile;	/* where output goes to */
     int               i;	/* useful index */
-    int               p = 0;	/* pixel value read from a file -- 
+    int               p = 0;	/* pixel value read from a file --
 				 * used to index rasterfile color map. */
     int               count = 9999;	/* Holds current byte count for
 				 *  rasterfiles of type RT_BYTE_ENCODED */
     int               h;	/* index for looping along a row */
     struct rasterfile rashdr;	/* standard header of a Sun rasterfile*/
     rle_hdr	      rlehdr;	/* Header of RLE file. */
-    
+
     if ( scanargs( argc, argv, "% a%- o%-outfile!s infile%s\n(\
 \tConvert a Sun Raster file to URT RLE format.\n\
 \t-a\tFake an alpha channel: opaque when pixel non-zero.)",
@@ -115,7 +115,7 @@ char *argv[];
     /* it has to start with the magic number... */
     if (rashdr.ras_magic != RAS_MAGIC)
     {
-	fprintf(stderr, "Error: \"%s\" is not a rasterfile.\n", 
+	fprintf(stderr, "Error: \"%s\" is not a rasterfile.\n",
 		rasfile==stdin?"stdin":argv[1]);
 	exit(EX_DATAERR);
     }
@@ -204,7 +204,7 @@ char *argv[];
             RLE_CLR_BIT(rlehdr, RLE_ALPHA );
 	rlehdr.ncolors = 1;
 	rlehdr.ncmap = 0 ;
-	for (i=0; i<rashdr.ras_height; i++) 
+	for (i=0; i<rashdr.ras_height; i++)
 	{
 	    for(h = 0; h < rashdr.ras_width; h++)
 	    {
@@ -229,7 +229,7 @@ char *argv[];
 	RLE_SET_BIT(rlehdr, RLE_BLUE);
 	if ( aflag )
             RLE_SET_BIT(rlehdr, RLE_ALPHA );
-        else 
+        else
             RLE_CLR_BIT(rlehdr, RLE_ALPHA );
 
 	if (rashdr.ras_depth == 8)
@@ -245,7 +245,7 @@ char *argv[];
         	out_map[i+(2<<8)] = blue[i] << 8;
 	    }
         }
-	
+
 	if (rashdr.ras_type == RT_BYTE_ENCODED)
 	    count = 9999;
 	for (i=0; i<rashdr.ras_height; i++)
@@ -271,7 +271,7 @@ char *argv[];
 				else
 				    p = getc(rasfile);
 			    }
-			} 
+			}
 			else
 			{
 			    if (--count == 0)
@@ -348,7 +348,7 @@ char *argv[];
     rlehdr.ymax = rashdr.ras_height-1;
     if ( aflag )
 	rlehdr.alpha = 1;
-    else 
+    else
 	rlehdr.alpha = 0;
 
     /* Write the header. */

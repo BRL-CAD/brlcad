@@ -1,4 +1,4 @@
-/* 
+/*
  * tkimgStubInit.c --
  */
 

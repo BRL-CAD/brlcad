@@ -1,7 +1,7 @@
 /*                     T E X T U R E _ G R A D I E N T . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2007 United States Government as represented by
+ * Copyright (c) 2002-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,72 +22,57 @@
  *  Comments -
  *      Texture Library - Produces Gradient to be used with Blend
  *
- *  Author -
- *      Justin L. Shumaker
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- * $Id$
  */
 
 #include "texture_gradient.h"
 #include <stdlib.h>
 #include "umath.h"
+#include "adrt_struct.h"
 
-
-void texture_gradient_init(texture_t *texture, int axis);
-void texture_gradient_free(texture_t *texture);
-void texture_gradient_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel);
-
+#include "bu.h"
 
 void texture_gradient_init(texture_t *texture, int axis) {
-  texture_gradient_t *td;
+    texture_gradient_t *td;
 
-  texture->data = malloc(sizeof(texture_gradient_t));
-  if (!texture->data) {
-      perror("texture->data");
-      exit(1);
-  }
-  texture->free = texture_gradient_free;
-  texture->work = (texture_work_t *)texture_gradient_work;
+    texture->data = bu_malloc(sizeof(texture_gradient_t), "gradient data");
+    texture->free = texture_gradient_free;
+    texture->work = (texture_work_t *)texture_gradient_work;
 
-  td = (texture_gradient_t *)texture->data;
-  td->axis = axis;
+    td = (texture_gradient_t *)texture->data;
+    td->axis = axis;
 }
 
 
 void texture_gradient_free(texture_t *texture) {
-  free(texture->data);
+    bu_free(texture->data, "gradient data");
 }
 
 
-void texture_gradient_work(texture_t *texture, common_mesh_t *mesh, tie_ray_t *ray, tie_id_t *id, TIE_3 *pixel) {
-  texture_gradient_t *td;
-  TIE_3 pt;
+void texture_gradient_work(__TEXTURE_WORK_PROTOTYPE__) {
+    texture_gradient_t *td;
+    TIE_3 pt;
 
 
-  td = (texture_gradient_t *)texture->data;
+    td = (texture_gradient_t *)texture->data;
 
-  /* Transform the Point */
-  MATH_VEC_TRANSFORM(pt, id->pos, mesh->matinv);
+    /* Transform the Point */
+    MATH_VEC_TRANSFORM(pt, id->pos, ADRT_MESH(mesh)->matinv);
 
-  if(td->axis == 1) {
-    pixel->v[0] = pixel->v[1] = pixel->v[2] = mesh->max.v[1] - mesh->min.v[1] > TIE_PREC ? (pt.v[1] - mesh->min.v[1]) / (mesh->max.v[1] - mesh->min.v[1]) : 0.0;
-  } else if(td->axis == 2) {
-    pixel->v[0] = pixel->v[1] = pixel->v[2] = mesh->max.v[2] - mesh->min.v[2] > TIE_PREC ? (pt.v[2] - mesh->min.v[2]) / (mesh->max.v[2] - mesh->min.v[1]) : 0.0;
-  } else {
-    pixel->v[0] = pixel->v[1] = pixel->v[2] = mesh->max.v[0] - mesh->min.v[0] > TIE_PREC ? (pt.v[0] - mesh->min.v[0]) / (mesh->max.v[0] - mesh->min.v[1]) : 0.0;
-  }
+    if (td->axis == 1) {
+	pixel->v[0] = pixel->v[1] = pixel->v[2] = ADRT_MESH(mesh)->max.v[1] - ADRT_MESH(mesh)->min.v[1] > TIE_PREC ? (pt.v[1] - ADRT_MESH(mesh)->min.v[1]) / (ADRT_MESH(mesh)->max.v[1] - ADRT_MESH(mesh)->min.v[1]) : 0.0;
+    } else if (td->axis == 2) {
+	pixel->v[0] = pixel->v[1] = pixel->v[2] = ADRT_MESH(mesh)->max.v[2] - ADRT_MESH(mesh)->min.v[2] > TIE_PREC ? (pt.v[2] - ADRT_MESH(mesh)->min.v[2]) / (ADRT_MESH(mesh)->max.v[2] - ADRT_MESH(mesh)->min.v[1]) : 0.0;
+    } else {
+	pixel->v[0] = pixel->v[1] = pixel->v[2] = ADRT_MESH(mesh)->max.v[0] - ADRT_MESH(mesh)->min.v[0] > TIE_PREC ? (pt.v[0] - ADRT_MESH(mesh)->min.v[0]) / (ADRT_MESH(mesh)->max.v[0] - ADRT_MESH(mesh)->min.v[1]) : 0.0;
+    }
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

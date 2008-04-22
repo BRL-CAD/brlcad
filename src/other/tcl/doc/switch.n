@@ -18,7 +18,6 @@ switch \- Evaluate one of several scripts, depending on a given value
 .sp
 \fBswitch \fR?\fIoptions\fR?\fI string \fR{\fIpattern body \fR?\fIpattern body \fR...?}
 .BE
-
 .SH DESCRIPTION
 .PP
 The \fBswitch\fR command matches its \fIstring\fR argument against each of
@@ -86,6 +85,10 @@ time as the \fB\-matchvar\fR option.
 \fB\-\|\-\fR
 Marks the end of options.  The argument following this one will
 be treated as \fIstring\fR even if it starts with a \fB\-\fR.
+.VS 8.5
+This is not required when the matching patterns and bodies are grouped
+together in a single argument.
+.VE 8.5
 .PP
 Two syntaxes are provided for the \fIpattern\fR and \fIbody\fR arguments.
 The first uses a separate argument for each of the patterns and commands;
@@ -102,9 +105,12 @@ no command or variable substitutions are performed on them;  this makes
 the behavior of the second form different than the first form in some
 cases.
 .PP
-If a \fIbody\fR is specified as ``\fB\-\fR'' it means that the \fIbody\fR
+If a \fIbody\fR is specified as
+.QW \fB\-\fR
+it means that the \fIbody\fR
 for the next pattern should also be used as the body for this
-pattern (if the next pattern also has a body of ``\fB\-\fR''
+pattern (if the next pattern also has a body of
+.QW \fB\-\fR
 then the body after that is used, and so on).
 This feature makes it possible to share a single \fIbody\fR among
 several patterns.
@@ -136,7 +142,7 @@ Whenever nothing matches, the \fBdefault\fR clause (which must be
 last) is taken.  This example has a result of \fI3\fR:
 .CS
 \fBswitch\fR xyz {
-   a  \-
+   a \-
    b {
       # Correct Comment Placement
       expr {1}
@@ -154,20 +160,21 @@ last) is taken.  This example has a result of \fI3\fR:
 When matching against regular expressions, information about what
 exactly matched is easily obtained using the \fB\-matchvar\fR option:
 .CS
-\fBswitch\fR -regexp -matchvar foo -- $bar {
+\fBswitch\fR \-regexp \-matchvar foo \-\- $bar {
    a(b*)c {
       puts "Found [string length [lindex $foo 1]] 'b's"
    }
    d(e*)f(g*)h {
-      puts "Found [string length [lindex $foo 1]] 'e's and\\
+      puts "Found [string length [lindex $foo 1]] 'e's and\e
             [string length [lindex $foo 2]] 'g's"
    }
 }
 .CE
 .VE 8.5
-
 .SH "SEE ALSO"
 for(n), if(n), regexp(n)
-
 .SH KEYWORDS
 switch, match, regular expression
+.\" Local Variables:
+.\" mode: nroff
+.\" End:

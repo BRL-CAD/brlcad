@@ -1,12 +1,12 @@
 .\" Copyright (c) 1986, University of Utah
 .TH RLEZOOM 1 "Feb 27, 1987" 1
-.UC 4 
+.UC 4
 .SH NAME
 rlezoom \- Magnify an RLE file by pixel replication.
 .SH SYNOPSIS
 .B rlezoom
 .I factor
-[ 
+[
 .I y-factor
 ] [
 .B \-f
@@ -24,7 +24,7 @@ a block of pixels in the output image.  If no
 .I y-factor
 is specified, then the image will be magnified by
 .I factor
-equally in both directions.  If 
+equally in both directions.  If
 .I y-factor
 is given, then each input pixel becomes a block of
 .IR factor \h'\w'i'u'\(mu\h'\w'i'u' y-factor
@@ -33,7 +33,7 @@ pixels in the output.  If
 or
 .I y-factor
 is less than 1.0, pixels will be dropped from the image.  There is no
-pixel blending performed.  Input is taken from 
+pixel blending performed.  Input is taken from
 .IR infile ,
 or from the standard input if not specified.  The magnified image is
 written to the standard output, or
@@ -45,19 +45,19 @@ You should use
 over
 .IR fant (1)
 if you just want a quick magnification of an image with the pixel
-boundaries showing.  It is significantly faster than 
+boundaries showing.  It is significantly faster than
 .I fant
 because it does no arithmetic on the pixel values.
 If you need blending between pixels in the magnified
-image, then 
+image, then
 .I fant
 is the correct program to use.  Use
 .I "rlezoom \-f factor y-factor"
-to produce an image the same size as 
+to produce an image the same size as
 .I "fant \-p 0 0 \-s factor y-factor"
 for previewing purposes.
 
-Note: due to the way that 
+Note: due to the way that
 .IR scanargs (3)
 parses the arguments from the command line, if the name of
 .I infile

@@ -1,7 +1,7 @@
 /*                     R B _ S E A R C H . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2007 United States Government as represented by
+ * Copyright (c) 1998-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,18 +23,8 @@
  *
  *	Routines to search for a node in a red-black tree
  *
- *  @author
- *	Paul J. Tanenbaum
- *
- *  @par Source -
- *	The U. S. Army Research Laboratory
- *  @n	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 /** @} */
-
-#ifndef lint
-static const char libbu_rb_search_RCSid[] = "@(#) $Header$";
-#endif
 
 #include "common.h"
 
@@ -113,8 +103,8 @@ void *bu_rb_search (bu_rb_tree *tree, int order, void *data)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

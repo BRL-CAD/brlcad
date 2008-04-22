@@ -48,28 +48,28 @@ stored in \fIresultVarName\fR is the value returned from \fIscript\fR.
 If the \fIoptionsVarName\fR argument is given, then the variable it
 names is set to a dictionary of return options returned by evaluation
 of \fIscript\fR.  Tcl specifies two entries that are always 
-defined in the dictionary: \fB-code\fR and \fB-level\fR.  When
+defined in the dictionary: \fB\-code\fR and \fB\-level\fR.  When
 the return code from evaluation of \fIscript\fR is not \fBTCL_RETURN\fR,
-the value of the \fB-level\fR entry will be 0, and the value
-of the \fB-code\fR entry will be the same as the return code.
+the value of the \fB\-level\fR entry will be 0, and the value
+of the \fB\-code\fR entry will be the same as the return code.
 Only when the return code is \fBTCL_RETURN\fR will the values of
-the \fB-level\fR and \fB-code\fR entries be something else, as
+the \fB\-level\fR and \fB\-code\fR entries be something else, as
 further described in the documentation for the \fBreturn\fR command.
 .PP
 When the return code from evaluation of \fIscript\fR is \fBTCL_ERROR\fR,
 three additional entries are defined in the dictionary of return options
-stored in \fIoptionsVarName\fR: \fB-errorinfo\fR, \fB-errorcode\fR, 
-and \fB-errorline\fR.  The value of the \fB-errorinfo\fR entry
+stored in \fIoptionsVarName\fR: \fB\-errorinfo\fR, \fB\-errorcode\fR, 
+and \fB\-errorline\fR.  The value of the \fB\-errorinfo\fR entry
 is a formatted stack trace containing more information about
 the context in which the error happened.  The formatted stack
 trace is meant to be read by a person.  The value of
-the \fB-errorcode\fR entry is additional information about the
-error stored as a list.  The \fB-errorcode\fR value is meant to
+the \fB\-errorcode\fR entry is additional information about the
+error stored as a list.  The \fB\-errorcode\fR value is meant to
 be further processed by programs, and may not be particularly
-readable by people.  The value of the \fB-errorline\fR entry
+readable by people.  The value of the \fB\-errorline\fR entry
 is an integer indicating which line of \fIscript\fR was being
-evaluated when the error occurred.  The values of the \fB-errorinfo\fR
-and \fB-errorcode\fR entries of the most recent error are also
+evaluated when the error occurred.  The values of the \fB\-errorinfo\fR
+and \fB\-errorcode\fR entries of the most recent error are also
 available as values of the global variables \fB::errorInfo\fR
 and \fB::errorCode\fR respectively.
 .PP
@@ -83,7 +83,7 @@ The \fBcatch\fR command may be used in an \fBif\fR to branch based on
 the success of a script.
 .CS
 if { [\fBcatch\fR {open $someFile w} fid] } {
-    puts stderr "Could not open $someFile for writing\\n$fid"
+    puts stderr "Could not open $someFile for writing\en$fid"
     exit 1
 }
 .CE

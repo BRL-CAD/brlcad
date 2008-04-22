@@ -1,7 +1,7 @@
 /*                       W A V E L E T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -113,20 +113,20 @@
  *  local temporary buffer will be allocated (and freed).
  *
  *  @par Examples:
-@code
-	double dbuffer[512], cbuffer[256];
-	...
-	bn_wlt_haar_1d_double_decompose(cbuffer, dbuffer, 512, 1, 1);
-@endcode
+ @code
+ double dbuffer[512], cbuffer[256];
+ ...
+ bn_wlt_haar_1d_double_decompose(cbuffer, dbuffer, 512, 1, 1);
+ @endcode
  *
  *    performs complete decomposition on the data in array "dbuffer".
  *
-@code
-	double buffer[3][512];	 /_* 512 samples, 3 values/sample (e.g. RGB?)*_/
-	double tbuffer[3][256];	 /_* the temporary buffer *_/
-	...
-	bn_wlt_haar_1d_double_decompose(tbuffer, buffer, 512, 3, 1);
-@endcode
+ @code
+ double buffer[3][512];	 /_* 512 samples, 3 values/sample (e.g. RGB?)*_/
+ double tbuffer[3][256];	 /_* the temporary buffer *_/
+ ...
+ bn_wlt_haar_1d_double_decompose(tbuffer, buffer, 512, 3, 1);
+ @endcode
  *
  *    This will completely decompose the data in buffer.  The first sample will
  *    be the average of all the samples.  Alternatively:
@@ -137,38 +137,24 @@
  *
  *  bn_wlt_haar_1d_*_reconstruct(tbuffer, buffer, dimen, channels, sub_sz, limit)
  *
- *
- *  @author
- *	Lee A. Butler
- *
- *  @par Modifications
- *      Christopher Sean Morrison
- *
- *  @par Source -
- *	The U. S. Army Research Laboratory
- *@n	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
 /** @} */
 
 #include "common.h"
 
 #include <stdio.h>
-#ifdef HAVE_STRING_H
 #include <string.h>
-#endif
 
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 
-
-#ifdef __STDC__
+/**
+ * This source file uses C-styple "templates" where functions specific
+ * to a set of specified data types are automatically
+ * declared/provided via one single macro implementation.
+ */
 #define decompose_1d(DATATYPE) bn_wlt_haar_1d_ ## DATATYPE ## _decompose
-#else
-#define decompose_1d(DATATYPE) bn_wlt_haar_1d_/**/DATATYPE/**/_decompose
-#endif
 
 
 #define make_wlt_haar_1d_decompose(DATATYPE)  \
@@ -201,17 +187,17 @@ unsigned long limit;	/* extent of decomposition */ \
 	/* each iteration of this loop decomposes the data into 2 halves: \
 	 * the "average image" and the "image detail" \
 	 */ \
-	for (img_size = dimen ; img_size > limit ; img_size = half_size ){ \
+	for (img_size = dimen; img_size > limit; img_size = half_size ) { \
 \
 		half_size = img_size/2; \
 		 \
 		detail = tbuffer; \
 		avg = buffer; \
 \
-		for ( x=0 ; x < img_size ; x += 2 ) { \
+		for ( x=0; x < img_size; x += 2 ) { \
 			x_tmp = x*channels; \
 \
-			for (d=0 ; d < channels ; d++, avg++, detail++) { \
+			for (d=0; d < channels; d++, avg++, detail++) { \
 				i = x_tmp + d; \
 				j = i + channels; \
 				*detail = (buffer[i] - buffer[j]) * onehalf; \
@@ -233,11 +219,7 @@ unsigned long limit;	/* extent of decomposition */ \
 }
 
 
-#if defined(__STDC__)
 #define reconstruct(DATATYPE ) bn_wlt_haar_1d_ ## DATATYPE ## _reconstruct
-#else
-#define reconstruct(DATATYPE) bn_wlt_haar_1d_/**/DATATYPE/**/_reconstruct
-#endif
 
 #define make_wlt_haar_1d_reconstruct( DATATYPE ) \
 void \
@@ -289,7 +271,7 @@ unsigned long limit; \
 	/* Each iteration of this loop reconstructs an image twice as \
 	 * large as the original using a "detail image". \
 	 */ \
-	for (img_size=subimage_size ; img_size < limit ; img_size=dbl_size) { \
+	for (img_size=subimage_size; img_size < limit; img_size=dbl_size) { \
 		dbl_size = img_size * 2; \
 \
 		d = img_size * channels; \
@@ -297,12 +279,12 @@ unsigned long limit; \
 \
 		/* copy the original or "average" data to temporary buffer */ \
 		avg = tbuffer; \
-		memcpy(avg, buffer, sizeof(*buffer) * d ); \
+		memcpy(avg, buffer, sizeof(*buffer) * d); \
 \
 \
-		for (x=0 ; x < dbl_size ; x += 2 ) { \
+		for (x=0; x < dbl_size; x += 2 ) { \
 			x_tmp = x * channels; \
-			for (d=0 ; d < channels ; d++, avg++, detail++ ) { \
+			for (d=0; d < channels; d++, avg++, detail++ ) { \
 				i = x_tmp + d; \
 				j = i + channels; \
 				buffer[i] = *avg + *detail; \
@@ -319,29 +301,25 @@ unsigned long limit; \
 /* Believe it or not, this is where the actual code is generated */
 
 make_wlt_haar_1d_decompose(double)
-make_wlt_haar_1d_reconstruct(double)
+    make_wlt_haar_1d_reconstruct(double)
 
-make_wlt_haar_1d_decompose(float)
-make_wlt_haar_1d_reconstruct(float)
+    make_wlt_haar_1d_decompose(float)
+    make_wlt_haar_1d_reconstruct(float)
 
-make_wlt_haar_1d_decompose(char)
-make_wlt_haar_1d_reconstruct(char)
+    make_wlt_haar_1d_decompose(char)
+    make_wlt_haar_1d_reconstruct(char)
 
-make_wlt_haar_1d_decompose(int)
-make_wlt_haar_1d_reconstruct(int)
+    make_wlt_haar_1d_decompose(int)
+    make_wlt_haar_1d_reconstruct(int)
 
-make_wlt_haar_1d_decompose(short)
-make_wlt_haar_1d_reconstruct(short)
+    make_wlt_haar_1d_decompose(short)
+    make_wlt_haar_1d_reconstruct(short)
 
-make_wlt_haar_1d_decompose(long)
-make_wlt_haar_1d_reconstruct(long)
+    make_wlt_haar_1d_decompose(long)
+    make_wlt_haar_1d_reconstruct(long)
 
 
-#ifdef __STDC__
 #define decompose_2d( DATATYPE ) bn_wlt_haar_2d_ ## DATATYPE ## _decompose
-#else
-#define decompose_2d(DATATYPE) bn_wlt_haar_2d_/* */DATATYPE/* */_decompose
-#endif
 
 #define make_wlt_haar_2d_decompose(DATATYPE) \
 void \
@@ -372,20 +350,20 @@ unsigned long limit; \
 	 * the "average image", the horizontal detail, the vertical detail \
 	 * and the horizontal-vertical detail \
 	 */ \
-	for (img_size = dimen ; img_size > limit ; img_size = half_size ) { \
+	for (img_size = dimen; img_size > limit; img_size = half_size ) { \
 		half_size = img_size/2; \
 \
 		/* do a horizontal detail decomposition first */ \
-		for (y=0 ; y < img_size ; y++ ) { \
+		for (y=0; y < img_size; y++ ) { \
 			y_tmp = y * dimen * channels; \
 \
 			detail = tbuffer; \
 			avg = &buffer[y_tmp]; \
 \
-			for (x=0 ; x < img_size ; x += 2 ) { \
+			for (x=0; x < img_size; x += 2 ) { \
 				x_tmp = x*channels + y_tmp; \
 \
-				for (d=0 ; d < channels ; d++, avg++, detail++){ \
+				for (d=0; d < channels; d++, avg++, detail++) { \
 					i = x_tmp + d; \
 					j = i + channels; \
 					*detail = (buffer[i] - buffer[j]) * onehalf; \
@@ -402,16 +380,16 @@ unsigned long limit; \
 		} \
 \
 		/* Now do the vertical decomposition */ \
-		for (x=0 ; x < img_size ; x ++ ) { \
+		for (x=0; x < img_size; x ++ ) { \
 			x_tmp = x*channels; \
 \
 			detail = tbuffer; \
 			avg = &buffer[x_tmp]; \
 \
-			for (y=0 ; y < img_size ; y += 2) { \
+			for (y=0; y < img_size; y += 2) { \
 				y_tmp =y*dimen*channels + x_tmp; \
 \
-				for (d=0 ; d < channels ; d++, avg++, detail++) { \
+				for (d=0; d < channels; d++, avg++, detail++) { \
 					i = y_tmp + d; \
 					j = i + dimen*channels; \
 					*detail = (buffer[i] - buffer[j]) * onehalf; \
@@ -428,8 +406,8 @@ unsigned long limit; \
 			 * copy the data back to the user buffer ourselves. \
 			 */ \
 			detail = tbuffer; \
-			for (y=half_size ; y < img_size ; y++) { \
-				for (d=0; d < channels ; d++) { \
+			for (y=half_size; y < img_size; y++) { \
+				for (d=0; d < channels; d++) { \
 					*avg++ = *detail++; \
 				} \
 				avg += (dimen-1)*channels; \
@@ -439,11 +417,7 @@ unsigned long limit; \
 }
 
 
-#ifdef __STDC__
 #define reconstruct_2d( DATATYPE ) bn_wlt_haar_2d_ ## DATATYPE ## _reconstruct
-#else
-#define reconstruct_2d(DATATYPE) bn_wlt_haar_2d_/* */DATATYPE/* */_reconstruct
-#endif
 
 #define make_wlt_haar_2d_reconstruct(DATATYPE) \
 void \
@@ -484,20 +458,20 @@ unsigned long limit; \
 	 * large as the original using a "detail image". \
 	 */ \
  \
-	for (img_size = avg_size ; img_size < limit ; img_size = dbl_size) { \
+	for (img_size = avg_size; img_size < limit; img_size = dbl_size) { \
 		dbl_size = img_size * 2; \
 		 \
 		 \
 		/* first is a vertical reconstruction */ \
-		for (x=0 ; x < dbl_size ; x++ ) { \
+		for (x=0; x < dbl_size; x++ ) { \
 			/* reconstruct column x */ \
  \
 			/* copy column of "average" data to tbuf */ \
 			x_tmp = x*channels; \
-			for (y=0 ; y < img_size ; y++) { \
+			for (y=0; y < img_size; y++) { \
 				i = x_tmp + y*row_len; \
 				j = y * channels; \
-				for (d=0 ; d < channels ; d++) { \
+				for (d=0; d < channels; d++) { \
 					tbuf[j++] = buf[i++]; \
 				} \
 			} \
@@ -505,12 +479,12 @@ unsigned long limit; \
 			detail = &buf[x_tmp + img_size*row_len]; \
  \
 			/* reconstruct column */ \
-			for (y=0 ; y < dbl_size ; y += 2) { \
+			for (y=0; y < dbl_size; y += 2) { \
  \
 				i = x_tmp + y*row_len; \
 				j = i + row_len; \
  \
-				for (d=0 ; d < channels ; d++,avg++,detail++){ \
+				for (d=0; d < channels; d++, avg++, detail++) { \
 					buf[i++] = *avg + *detail; \
 					buf[j++] = *avg - *detail; \
 				} \
@@ -519,7 +493,7 @@ unsigned long limit; \
 		} \
  \
 		/* now a horizontal reconstruction */ \
-		for (y=0 ; y < dbl_size ; y++ ) { \
+		for (y=0; y < dbl_size; y++ ) { \
 			/* reconstruct row y */ \
  \
 			/* copy "average" row to tbuf and set pointer to \
@@ -532,16 +506,16 @@ unsigned long limit; \
 			avg = &buf[ row_start ]; \
 			detail = &buf[ row_start + d]; \
  \
-			memcpy(tbuf, avg, sizeof(*buf) * d ); \
+			memcpy(tbuf, avg, sizeof(*buf) * d); \
 			avg = tbuf; \
  \
 			/* reconstruct row */ \
-			for (x=0 ; x < dbl_size ; x += 2 ) { \
+			for (x=0; x < dbl_size; x += 2 ) { \
 				x_tmp = x * channels; \
 				i = row_start + x * channels; \
 				j = i + channels; \
  \
-				for (d=0 ; d < channels ; d++,avg++,detail++){ \
+				for (d=0; d < channels; d++, avg++, detail++) { \
 					buf[i++] = *avg + *detail; \
 					buf[j++] = *avg - *detail; \
 				} \
@@ -551,26 +525,22 @@ unsigned long limit; \
 }
 
 
-make_wlt_haar_2d_decompose(double)
-make_wlt_haar_2d_decompose(float)
-make_wlt_haar_2d_decompose(char)
-make_wlt_haar_2d_decompose(int)
-make_wlt_haar_2d_decompose(short)
-make_wlt_haar_2d_decompose(long)
+    make_wlt_haar_2d_decompose(double)
+    make_wlt_haar_2d_decompose(float)
+    make_wlt_haar_2d_decompose(char)
+    make_wlt_haar_2d_decompose(int)
+    make_wlt_haar_2d_decompose(short)
+    make_wlt_haar_2d_decompose(long)
 
-make_wlt_haar_2d_reconstruct(double)
-make_wlt_haar_2d_reconstruct(float)
-make_wlt_haar_2d_reconstruct(char)
-make_wlt_haar_2d_reconstruct(int)
-make_wlt_haar_2d_reconstruct(short)
-make_wlt_haar_2d_reconstruct(long)
+    make_wlt_haar_2d_reconstruct(double)
+    make_wlt_haar_2d_reconstruct(float)
+    make_wlt_haar_2d_reconstruct(char)
+    make_wlt_haar_2d_reconstruct(int)
+    make_wlt_haar_2d_reconstruct(short)
+    make_wlt_haar_2d_reconstruct(long)
 
 
-#ifdef __STDC__
 #define decompose_2d_2( DATATYPE ) bn_wlt_haar_2d_ ## DATATYPE ## _decompose2
-#else
-#define decompose_2d_2(DATATYPE) bn_wlt_haar_2d_/* */DATATYPE/* */_decompose2
-#endif
 
 #define make_wlt_haar_2d_decompose2(DATATYPE) \
 void \
@@ -607,21 +577,21 @@ unsigned long limit; \
 	 * the "average image", the horizontal detail, the vertical detail \
 	 * and the horizontal-vertical detail \
 	 */ \
-	for (img_wsize = width, img_hsize = height ; (img_wsize > limit) && (img_hsize > limit) ; img_wsize = half_wsize, img_hsize = half_hsize ) { \
+	for (img_wsize = width, img_hsize = height; (img_wsize > limit) && (img_hsize > limit); img_wsize = half_wsize, img_hsize = half_hsize ) { \
 		half_wsize = img_wsize/2; \
 		half_hsize = img_hsize/2; \
 \
 		/* do a horizontal detail decomposition first */ \
-		for (y=0 ; y < img_hsize ; y++ ) { \
+		for (y=0; y < img_hsize; y++ ) { \
 			y_tmp = y * width * channels; \
 \
 			detail = tbuffer; \
 			avg = &buffer[y_tmp]; \
 \
-			for (x=0 ; x < img_wsize ; x += 2 ) { \
+			for (x=0; x < img_wsize; x += 2 ) { \
 				x_tmp = x*channels + y_tmp; \
 \
-				for (d=0 ; d < channels ; d++, avg++, detail++){ \
+				for (d=0; d < channels; d++, avg++, detail++) { \
 					i = x_tmp + d; \
 					j = i + channels; \
 					*detail = (buffer[i] - buffer[j]) * onehalf; \
@@ -638,16 +608,16 @@ unsigned long limit; \
 		} \
 \
 		/* Now do the vertical decomposition */ \
-		for (x=0 ; x < img_wsize ; x ++ ) { \
+		for (x=0; x < img_wsize; x ++ ) { \
 			x_tmp = x*channels; \
 \
 			detail = tbuffer; \
 			avg = &buffer[x_tmp]; \
 \
-			for (y=0 ; y < img_hsize ; y += 2) { \
+			for (y=0; y < img_hsize; y += 2) { \
 				y_tmp =y*width*channels + x_tmp; \
 \
-				for (d=0 ; d < channels ; d++, avg++, detail++) { \
+				for (d=0; d < channels; d++, avg++, detail++) { \
 					i = y_tmp + d; \
 					j = i + width*channels; \
 					*detail = (buffer[i] - buffer[j]) * onehalf; \
@@ -664,8 +634,8 @@ unsigned long limit; \
 			 * copy the data back to the user buffer ourselves. \
 			 */ \
 			detail = tbuffer; \
-			for (y=half_hsize ; y < img_hsize ; y++) { \
-				for (d=0; d < channels ; d++) { \
+			for (y=half_hsize; y < img_hsize; y++) { \
+				for (d=0; d < channels; d++) { \
 					*avg++ = *detail++; \
 				} \
 				avg += (width-1)*channels; \
@@ -674,20 +644,20 @@ unsigned long limit; \
 	} \
 }
 
-make_wlt_haar_2d_decompose2(double)
-make_wlt_haar_2d_decompose2(float)
-make_wlt_haar_2d_decompose2(char)
-make_wlt_haar_2d_decompose2(int)
-make_wlt_haar_2d_decompose2(short)
-make_wlt_haar_2d_decompose2(long)
+    make_wlt_haar_2d_decompose2(double)
+    make_wlt_haar_2d_decompose2(float)
+    make_wlt_haar_2d_decompose2(char)
+    make_wlt_haar_2d_decompose2(int)
+    make_wlt_haar_2d_decompose2(short)
+    make_wlt_haar_2d_decompose2(long)
 
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

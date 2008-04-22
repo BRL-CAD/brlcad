@@ -34,7 +34,7 @@ If \fIsplitChars\fR is an empty string then each character of
 Divide up a USENET group name into its hierarchical components:
 .CS
 \fBsplit\fR "comp.lang.tcl.announce" .
-     \fI=> comp lang tcl announce\fR
+      \fI\(-> comp lang tcl announce\fR
 .CE
 .PP
 See how the \fBsplit\fR command splits on \fIevery\fR character in
@@ -42,19 +42,19 @@ See how the \fBsplit\fR command splits on \fIevery\fR character in
 careful:
 .CS
 \fBsplit\fR "alpha beta gamma" "temp"
-     \fI=> al {ha b} {} {a ga} {} a\fR
+      \fI\(-> al {ha b} {} {a ga} {} a\fR
 .CE
 .PP
 Extract the list words from a string that is not a well-formed list:
 .CS
 \fBsplit\fR "Example with {unbalanced brace character"
-     \fI=> Example with \\{unbalanced brace character\fR
+      \fI\(-> Example with \e{unbalanced brace character\fR
 .CE
 .PP
 Split a string into its constituent characters
 .CS
 \fBsplit\fR "Hello world" {}
-     \fI=> H e l l o { } w o r l d\fR
+      \fI\(-> H e l l o { } w o r l d\fR
 .CE
 .SS "PARSING RECORD-ORIENTED FILES"
 Parse a Unix /etc/passwd file, which consists of one entry per line,
@@ -66,7 +66,7 @@ set content [read $fid]
 close $fid
 
 ## Split into records on newlines
-set records [\fBsplit\fR $content "\\n"]
+set records [\fBsplit\fR $content "\en"]
 
 ## Iterate over the records
 foreach rec $records {
@@ -75,7 +75,7 @@ foreach rec $records {
    set fields [\fBsplit\fR $rec ":"]
 
    ## Assign fields to variables and print some out...
-   lassign $fields \\
+   lassign $fields \e
          userName password uid grp longName homeDir shell
    puts "$longName uses [file tail $shell] for a login shell"
 }

@@ -1,7 +1,7 @@
 /*               R E N D E R _ I N T E R N A L . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007 United States Government as represented by
+ * Copyright (c) 2007-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,15 +29,19 @@
 
 #include "tie.h"
 
-#define RENDER_METHOD_FLAT	0
-#define RENDER_METHOD_GRID	1
-#define RENDER_METHOD_NORMAL	2
-#define RENDER_METHOD_PHONG	3
-#define RENDER_METHOD_PATH	4
-#define RENDER_METHOD_PLANE	5
-#define RENDER_METHOD_COMPONENT	6
-#define RENDER_METHOD_SPALL	7
-#define RENDER_METHOD_DEPTH	8
+#define RENDER_METHOD_COMPONENT	0x01
+#define RENDER_METHOD_CUT	0x02
+#define RENDER_METHOD_DEPTH	0x03
+#define RENDER_METHOD_FLAT	0x04
+#define RENDER_METHOD_FLOS	0x05
+#define RENDER_METHOD_GRID	0x06
+#define RENDER_METHOD_NORMAL	0x07
+#define RENDER_METHOD_PHONG	0x08
+#define RENDER_METHOD_PATH	0x09
+#define RENDER_METHOD_SPALL	0x0A
+#define RENDER_METHOD_SURFEL	0x0B
+
+#define RENDER_METHOD_PLANE	RENDER_METHOD_CUT
 
 
 #define RENDER_MAX_DEPTH	24
@@ -48,9 +52,9 @@ typedef void render_work_t(struct render_s *render, tie_t *tie, tie_ray_t *ray, 
 typedef void render_free_t(struct render_s *render);
 
 typedef struct render_s {
-  render_work_t *work;
-  render_free_t *free;
-  void *data;
+    render_work_t *work;
+    render_free_t *free;
+    void *data;
 } render_t;
 
 #endif
@@ -59,8 +63,8 @@ typedef struct render_s {
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

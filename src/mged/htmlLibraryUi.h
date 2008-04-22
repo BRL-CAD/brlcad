@@ -1,7 +1,7 @@
 /*                 H T M L L I B R A R Y U I . H
  * BRL-CAD
  *
- * Copyright (c) 1995-2007 United States Government as represented by
+ * Copyright (c) 1995-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,9 +18,9 @@
  * information.
  */
 /** @file htmlLibraryUi.h
-# Simple HTML display library by Stephen Uhler (stephen.uhler@sun.com)
-# Copyright (c) 1995 by Sun Microsystems
-# Version 0.1 Thu Jul 20 09:06:28 PDT 1995
+    # Simple HTML display library by Stephen Uhler (stephen.uhler@sun.com)
+    # Copyright (c) 1995 by Sun Microsystems
+    # Version 0.1 Thu Jul 20 09:06:28 PDT 1995
 */
 char *html_library_ui_str = "\
 array set HMtag_map {\
@@ -317,7 +317,7 @@ proc HMtag_img {win param text} {\
 		};\
 		bind ismap <ButtonRelease-1> \"HMlink_callback $win $link?%x,%y\";\
 		bindtags $label \"ismap [bindtags $label]\";\
-	} ;\
+	};\
 \
 	set src \"\";\
 	HMextract_param $param src;\
@@ -452,7 +452,7 @@ proc HMmap_esc {text} {\
 	if {![regexp & $text]} {return $text;};\
 	regsub -all {([][$\\\\])} $text {\\\\\\1} new;\
 	regsub -all {&#([0-9][0-9][0-9]?);?} \
-		$new {[format %c \\1]} new ;\
+		$new {[format %c \\1]} new;\
 	regsub -all {&([^ ;]+);?} $new {[HMdo_map \\1]} new;\
 	return [subst $new];\
 };\
@@ -497,8 +497,8 @@ array set HMesc_map {\
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

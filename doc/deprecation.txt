@@ -1,0 +1,127 @@
+						 -*- coding: utf-8 -*-
+BRL-CAD Deprecation Log
+=======================
+
+Included below is a deprecation log and notes for BRL-CAD API changes
+that potentially impact developers.  The general practice is that
+public API changes may go from deprecated to obsolete during one of
+the following events:
+
+a) during a major release
+    (e.g. going from 7.*.* to 8.*.*)
+b) during a minor release provided that
+    1) change was publicly announced as deprecated beforehand
+    2) sufficient deprecation warning was been given
+	i) at least three minor releases have passed since deprecation
+	ii) at least three months have passed since deprecation
+c) during a minor release provided that
+    1) the API was never publicly announced or otherwise documented
+    2) the interface was declared in a public header
+    3) there exists a an equivalent alternative interface
+    (e.g. changing the name of a function)
+
+Otherwise, changes to interfaces that are never publicly announced,
+are not part of publicly available documentation, and are not in
+public headers are fair game to implement as needed at any time.
+
+If a change will intentionally replace or remove routines, then those
+routines should be then marked as deprecated first.  If the change is
+"minimally impacting", i.e. a change to a non-critical routine that
+has a suitable and completely equivalent alternative, can generally be
+changed during minor releases.  An example of minimally impacting
+changes include modifications like adding a new parameter to a
+function or renaming a non-critical function.  Critical functions are
+those related directly to geometry creation, loading, processing, and
+ray-tracing; as well as the common library facilities in bu and bn.
+
+Marking routines as deprecated can be done during compile-time with
+#warning pre-processor declarations or during run-time with print
+statements.
+
+The items listed below are items that are deprecated or obsolete,
+categorized by the release in which the change was made.  If the
+change involved a rename/removal of a routine, both the original and
+new names should be listed for reference.
+
+
+**************
+* DEPRECATED *
+**************
+7.12
+----
+src/rt/viewarea.c
+	terminology and output format [deprecated 7.12]
+include/wdb.h
+	mk_fastgen_region() -> mk_comb() [deprecated 7.12]
+src/libbu/parallel.c
+	bu_get_load_average(), remove [deprecated 7.12]
+src/vas4
+	vas4, remove [deprecated 7.12]
+
+7.10
+----
+include/machine.h
+	machine.h -> common.h && bu.h [deprecated 7.10]	
+src/librt/bomb.c
+	rt_bomb() -> bu_bomb() [deprecated 7.10]
+
+
+************
+* OBSOLETE *
+************
+
+7.12.0
+------
+include/common.h
+	NATURAL_IEEE -> bu_byteorder() == BU_BIG_ENDIAN || defined(WORDS_BIGENDIAN)
+	REVERSE_IEEE -> bu_byteorder() == BU_LITTLE_ENDIAN
+include/bu.h
+	bu_log(char *, ...) -> bu_log(const char *, ...) [const]
+	bu_flog(FILE *, char *, ...) -> bu_flog(FILE *, const char *, ...) [const]
+	bu_vls_printf(struct bu_vls *, char *) -> bu_vls_printf(struct bu_vls *, const char *) [const]
+	bu_vls_sprintf(struct bu_vls *, char *) -> bu_vls_sprintf(struct bu_vls *, const char *) [const]
+include/wdb.h
+	removed mk_poly() [deprecated pre-7.0]
+	removed mk_polysolid() [deprecated pre-7.0]
+	removed mk_fpoly() [deprecated pre-7.0]
+	removed write_shell_as_polysolid() [deprecated 6.0]
+include/bu.h
+	char *bu_brlcad_path() -> const char *bu_brlcad_path() [const]
+include/bn.h
+	bn_mat_zero() -> MAT_ZERO() [deprecated pre-7.0]
+	bn_mat_idn() -> MAT_IDN() [deprecated pre-7.0]
+	bn_mat_copy() -> MAT_COPY() [deprecated pre-7.0]
+include/compat4.h
+	compat4.h -> bu.h && bn.h [deprecated 5.0]
+include/raytrace.h
+	rt_overlap_quietly() -> struct application.a_logoverlap = rt_silent_logoverlap [deprecated pre 7.0]
+include/bu.h
+	bu_brlcad_path() -> bu_brlcad_root() || bu_brlcad_data() [deprecated 7.4]
+	bu_tcl_brlcad_path() -> bu_tcl_brlcad_root() || bu_tcl_brlcad_data() [deprecated 7.4]
+include/fb.h
+	fb_log(char *fmt) -> fb_log(const char *fmt) [const]
+include/noalias-prag.h
+	removed [non-stdc]
+include/noalias.h
+	removed [non-stdc]
+src/librt/wdb_obj.c -> src/librt/db_obj.c
+	removed wdb_tree_cmd(), added dgo_tree_cmd() [rename]
+
+
+7.10.4
+------
+include/msr.h [pre 7.0]
+	msr.h -> bu.h
+include/rtlist.h [pre 7.0]
+	rtlist.h -> bu.h
+include/rtstring.h [pre 7.0]
+	rtstring.h -> bu.h
+include/shortvect.h [pre 7.0]
+include/shortvect-pr.h [pre 7.0]
+
+7.10.2
+------
+include/raytrace.h
+	rt_version -> rt_version() [private]
+include/[library].h (several)
+	[library]_version -> [library]_version() [private]

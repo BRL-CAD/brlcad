@@ -1,7 +1,7 @@
 /*                          G L O B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -18,20 +18,15 @@
  * information.
  */
 /** @file glob.c
-	Author:		Gary S. Moss
+    Author:		Gary S. Moss
 */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
-
 
 #include <stdio.h>
 #include <math.h>
 #include <assert.h>
 
-#include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
@@ -45,29 +40,29 @@ FBIO	*fbiop = FBIO_NULL;    /* Framebuffer interface ptr.	*/
 /* Initialization for root of IR data base octree.			*/
 PtList	ir_ptlist = { {0.0, 0.0, 0.0}, PTLIST_NULL };
 Octree	ir_octree =
-	{ 0, ABSOLUTE_ZERO, &ir_ptlist, TRIE_NULL, OCTREE_NULL, OCTREE_NULL };
+{ 0, ABSOLUTE_ZERO, &ir_ptlist, TRIE_NULL, OCTREE_NULL, OCTREE_NULL };
 
 /* Light sources.
-	lgts[0]		ambient lighting
-	lgts[1]		primary lighting
-	...		user defined
- */
+   lgts[0]		ambient lighting
+   lgts[1]		primary lighting
+   ...		user defined
+*/
 Lgt_Source	lgts[MAX_LGTS];
 
 /* Animation control structure.						*/
 Movie	movie =
-	{
-	false,	/* m_fullscreen */
-	true,	/* m_lgts */
-	false,	/* m_over */
-	false,	/* m_keys */
-	1,	/* m_noframes */
-	0,	/* m_curframe */
-	0,	/* m_endframe */
-	-1,	/* m_frame_sz */
-	NULL,	/* m_keys_fp */
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	};
+{
+    false,	/* m_fullscreen */
+    true,	/* m_lgts */
+    false,	/* m_over */
+    false,	/* m_keys */
+    1,	/* m_noframes */
+    0,	/* m_curframe */
+    0,	/* m_endframe */
+    -1,	/* m_frame_sz */
+    NULL,	/* m_keys_fp */
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+};
 
 /* Globals for line-buffering pixel I/O.				*/
 RGBpixel	bgpixel;		/* Background color.		*/
@@ -92,8 +87,6 @@ char	title[TITLE_LEN];
 char	timer[TIMER_LEN];
 char	script_file[MAX_LN];
 char	*ged_file = NULL;
-
-char	*beginptr;		     /* sbrk() at start of program.	*/
 
 /* Unit vectors representing horizontal and vertical directions of grid	*/
 fastf_t	grid_hor[3], grid_ver[3];
@@ -182,8 +175,8 @@ void (*norml_sig)(), (*abort_sig)();
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

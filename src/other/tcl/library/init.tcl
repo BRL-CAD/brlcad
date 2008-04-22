@@ -17,7 +17,7 @@
 if {[info commands package] == ""} {
     error "version mismatch: library\nscripts expect Tcl version 7.5b1 or later but the loaded version is\nonly [info patchlevel]"
 }
-package require -exact Tcl 8.5a6
+package require -exact Tcl 8.5.1
 
 # Compute the auto path to use in this interpreter.
 # The values on the path come from several locations:
@@ -72,31 +72,6 @@ namespace eval tcl {
         if {$Dir ni $Path} {
 	    lappend Path $Dir
 	    encoding dirs $Path
-        }
-    }
-
-    # Set up the 'chan' ensemble (TIP #208).
-    namespace eval chan {
-        # TIP #219. Added methods: create, postevent.
-	# TIP 287.  Added method: pending.
-        namespace ensemble create -command ::chan -map {
-            blocked     ::tcl::chan::blocked
-            close       ::tcl::chan::close
-            configure   ::tcl::chan::configure
-            copy        ::tcl::chan::copy
-            create      ::tcl::chan::rCreate
-            eof         ::tcl::chan::eof
-            event       ::tcl::chan::event
-            flush       ::tcl::chan::flush
-            gets        ::tcl::chan::gets
-            names       {::file channels}
-	    pending	::tcl::chan::Pending
-            postevent   ::tcl::chan::rPostevent
-            puts        ::tcl::chan::puts
-            read        ::tcl::chan::read
-            seek        ::tcl::chan::seek
-            tell        ::tcl::chan::tell
-            truncate    ::tcl::chan::Truncate
         }
     }
 
@@ -404,20 +379,18 @@ proc unknown args {
 		    "\n    (expanding command prefix \"$name\" in unknown)"
 	    return -options $opts $msg
 	}
-	# Handle empty $name separately due to strangeness in [string first]
-	if {$name eq ""} {
-	    if {[llength $candidates] != 1} {
-		return -code error "empty command name \"\""
-	    }
-	    # It's not really possible to reach here.
-	    return [uplevel 1 [lreplace $args 0 0 [lindex $candidates 0]]]
-	}
 	# Filter out bogus matches when $name contained
 	# a glob-special char [Bug 946952]
-	set cmds [list]
-	foreach x $candidates {
-	    if {[string first $name $x] == 0} {
-		lappend cmds $x
+	if {$name eq ""} {
+	    # Handle empty $name separately due to strangeness
+	    # in [string first] (See RFE 1243354)
+	    set cmds $candidates
+	} else {
+	    set cmds [list]
+	    foreach x $candidates {
+		if {[string first $name $x] == 0} {
+		    lappend cmds $x
+		}
 	    }
 	}
 	if {[llength $cmds] == 1} {
@@ -522,7 +495,7 @@ proc auto_load_index {} {
 		set id [gets $f]
 		if {$id eq "# Tcl autoload index file, version 2.0"} {
 		    eval [read $f]
-		} elseif {$id eq "# Tcl autoload index file: each line identifies a Tcl"]} {
+		} elseif {$id eq "# Tcl autoload index file: each line identifies a Tcl"} {
 		    while {[gets $f line] >= 0} {
 			if {([string index $line 0] eq "#") \
 				|| ([llength $line] != 2)} {

@@ -7,7 +7,7 @@
 </HEAD>
 <BODY BGCOLOR="#efefef" TEXT="black" LINK="blue" VLINK="#551A8B" ALINK="red">
 <A HREF="#toc">Table of Contents</A><P>
- 
+
 <H2><A NAME="sect0" HREF="#toc0">Name</A></H2>
 bitmap - Define a new bitmap from a Tcl script
 
@@ -20,13 +20,13 @@ text</I></B> ?<I>option value</I>?... <P>
 <B>bitmap
 data <I>bitmapName</I></B> <P>
 <B>bitmap height <I>bitmapName</I></B> <P>
-<B>bitmap width <I>bitmapName</I></B> 
+<B>bitmap width <I>bitmapName</I></B>
 <H2><A NAME="sect2" HREF="#toc2">Description</A></H2>
 The
 <B>bitmap</B> command lets you create new bitmaps directly from your Tcl script.
  The bitmap can be specified as a list of data or a text string which is
 converted into a bitmap.  You can arbitrarily scale or rotate the bitmap
-too. 
+too.
 <H2><A NAME="sect3" HREF="#toc3">Introduction</A></H2>
 Bitmaps are commonly used within Tk.  In label and button
 widgets, you display bitmaps them instead of text strings and in the canvas
@@ -40,7 +40,7 @@ you do just that.  You can specify the bitmap as in various formats (such
 as the X11 bitmap format).  You can also compose a bitmap from a text string.
  The <B>bitmap</B> command also lets you and arbitrarily rotate or scale the bitmap.
  For example, you could use this to create button widgets with the text
-label rotated 90 degrees. 
+label rotated 90 degrees.
 <H2><A NAME="sect4" HREF="#toc4">Example</A></H2>
 &lt;&lt;&lt;&lt;&lt;&lt;&lt; bitmap.mann You can define a new bitmap
 with the <B>define</B> operation.  For example, let's say you are using the X11
@@ -105,7 +105,7 @@ the network to another Tk application. <BR>
 send {wish #2} bitmap define ghost $data<BR>
 
 <H2><A NAME="sect5" HREF="#toc5"></CODE><P>Operations</A></H2>
-The following operations are available for <B>bitmap</B>: 
+The following operations are available for <B>bitmap</B>:
 <DL>
 
 <DT><B>bitmap compose
@@ -189,7 +189,7 @@ The source data is a  list of the hexadecimal values.   </DD>
 <H2><A NAME="sect6" HREF="#toc6">Limitations</A></H2>
 Tk currently
 offers no way of destroying bitmaps.  Once a bitmap is created, it exists
-until the application terminates. 
+until the application terminates.
 <H2><A NAME="sect7" HREF="#toc7">Keywords</A></H2>
 bitmap <P>
 

@@ -15,7 +15,7 @@
 '\" consequential damages or any damages whatsoever resulting from loss of use,
 '\" data or profits, whether in an action of contract, negligence or other
 '\" tortuous action, arising out of or in connection with the use or performance
-'\" of this software.  
+'\" of this software.
 '\"
 '\" Bitmap command created by George Howlett.
 '\"
@@ -68,7 +68,7 @@ use it, you would specify the location of the file.
 .CS
 label .l -bitmap @/usr/X11R6/include/X11/bitmaps/gray1
 .CE
-But you can simply cut and paste the contents of "gray1" into the 
+But you can simply cut and paste the contents of "gray1" into the
 \fBbitmap\fR command.
 .CS
 bitmap define gray1 {
@@ -102,7 +102,7 @@ two lists. The first list contains the height and width of the bitmap.
 The second list is the bitmap source data.  Each element of that list
 is an hexadecimal number specifying which pixels are foreground (1)
 and which are background (0) of the bitmap.  Note that the format of
-the source data is exactly that of the XBM format. 
+the source data is exactly that of the XBM format.
 .P
 You can scale or rotate the bitmap as you create it, by using the
 \fB-scale\fR or\fB-rotate\fR options.
@@ -116,7 +116,7 @@ bitmap define gray1 {
 .CE
 In addition, you can compose bitmaps from text strings.  This makes it
 easy to create rotated buttons or labels.  The text string can have
-multi-line.  
+multi-line.
 .CS
 bitmap compose rot_text "This is rotated\\ntext" \\
 	-rotate 90.0 -font fixed
@@ -133,8 +133,8 @@ bitmap source rot_text
 The \fBexists\fR operation indicates if a bitmap by that name is
 defined.  You can query the dimensions of the bitmap using the
 \fBwidth\fR and \fBheight\fR operations. The \fBdata\fR operation
-returns the list of the data used to create the bitmap.  
-For example, you could query the data of a bitmap and \fBsend\fR 
+returns the list of the data used to create the bitmap.
+For example, you could query the data of a bitmap and \fBsend\fR
 it across the network to another Tk application.
 .CS
 set data [bitmap data @/usr/X11R6/include/X11/bitmaps/ghost.xbm]
@@ -145,13 +145,13 @@ The following operations are available for \fBbitmap\fR:
 .TP
 \fBbitmap compose \fIbitmapName text \fR?\fIoption value\fR?...
 Creates a bitmap \fIbitmapName\fR from the text string \fItext\fR.
-A bitmap \fIbitmapName\fR can not already exist.  
+A bitmap \fIbitmapName\fR can not already exist.
 The following options are available.
 .RS
 .TP
-\fB\-font \fIfontName\fR 
+\fB\-font \fIfontName\fR
 Specifies a font to use when drawing text into the bitmap.
-If this option isn't specified then \fIfontName\fR defaults to 
+If this option isn't specified then \fIfontName\fR defaults to
 \f(CW*-Helvetica-Bold-R-Normal-*-140-*\fR.
 .TP
 \fB\-rotate \fItheta\fR
@@ -168,7 +168,7 @@ differents scales for the width and height of the bitmap.
 The default scale is \f(CW1.0\fR.
 .RE
 .TP
-\fBbitmap data \fIbitmapName\fR 
+\fBbitmap data \fIbitmapName\fR
 Returns a list of both the
 dimensions of the bitmap \fIbitmapName\fR and its source data.
 .TP
@@ -179,7 +179,7 @@ The \fIbitmapName\fR argument is the name of the bitmap; it must not
 previously have been defined in either a call to Tk_DefineBitmap or
 \fBbitmap\fR.  The argument \fIdata\fP describes the bitmap to
 be created.  It is either the X11 bitmap format (a C structure) or
-a list of two lists: the dimensions and source data.  The dimensions 
+a list of two lists: the dimensions and source data.  The dimensions
 are a list of two numbers which are the width
 and height of the bitmap.  The source data is a list of hexadecimal
 values in a format similar to the X11 or X10 bitmap format.  The
@@ -201,17 +201,17 @@ differents scales for the width and height of the bitmap.
 The default scale is \f(CW1.0\fR.
 .RE
 .TP
-\fBbitmap exists \fIbitmapName\fR 
-Returns \f(CW1\fR if a bitmap \fIbitmapName\fR exists, otherwise \f(CW0\fR. 
+\fBbitmap exists \fIbitmapName\fR
+Returns \f(CW1\fR if a bitmap \fIbitmapName\fR exists, otherwise \f(CW0\fR.
 .TP
-\fBbitmap height \fIbitmapName\fR 
+\fBbitmap height \fIbitmapName\fR
 Returns the height in pixels of the bitmap \fIbitmapName\fR.
 .TP
-\fBbitmap source \fIbitmapName\fR 
-Returns the source data of the bitmap \fIbitmapName\fR. The source data is a 
-list of the hexadecimal values.  
+\fBbitmap source \fIbitmapName\fR
+Returns the source data of the bitmap \fIbitmapName\fR. The source data is a
+list of the hexadecimal values.
 .TP
-\fBbitmap width \fIbitmapName\fR 
+\fBbitmap width \fIbitmapName\fR
 Returns the width in pixels of the bitmap \fIbitmapName\fR.
 .SH LIMITATIONS
 Tk currently offers no way of destroying bitmaps.  Once a bitmap is

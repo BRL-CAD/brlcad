@@ -1,7 +1,7 @@
 /*                       P L C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2007 United States Government as represented by
+ * Copyright (c) 1986-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,62 +19,52 @@
  */
 /** @file plcolor.c
  *
- *  Output a color in UNIX plot format, for inclusion in a plot file.
- *
- *  Author -
- *	Phillip Dykstra
+ * Output a color in UNIX plot format, for inclusion in a plot file.
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
-
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
 
 #include "common.h"
 
+#include <stdlib.h>
+#include "bio.h"
 
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "plot3.h"
 
 
-static char usage[] = "Usage: plcolor r g b\n";
+static const char usage[] = "Usage: plcolor r g b\n";
 
 int
 main(int argc, char **argv)
 {
-	int	c;
-	int	r, g, b;
+    int	c;
+    int	r, g, b;
 
-	if( argc != 4 || isatty(fileno(stdout)) ) {
-		fprintf( stderr, usage );
-		exit( 1 );
-	}
+    if ( argc != 4 || isatty(fileno(stdout)) ) {
+	bu_exit(1, "%s", usage );
+    }
 
-	if( !isatty(fileno(stdin)) ) {
-		/* Permit use in a pipeline -- copy input to output first */
-		while( (c = getchar()) != EOF )
-			putchar( c );
-	}
+    if ( !isatty(fileno(stdin)) ) {
+	/* Permit use in a pipeline -- copy input to output first */
+	while ( (c = getchar()) != EOF )
+	    putchar( c );
+    }
 
-	r = atoi( argv[1] );
-	g = atoi( argv[2] );
-	b = atoi( argv[3] );
+    r = atoi( argv[1] );
+    g = atoi( argv[2] );
+    b = atoi( argv[3] );
 
-	pl_color( stdout, r, g, b );
-	return 0;
+    pl_color( stdout, r, g, b );
+    return 0;
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

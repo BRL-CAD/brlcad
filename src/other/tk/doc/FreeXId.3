@@ -25,7 +25,6 @@ Display for which \fIid\fR was allocated.
 Identifier of X resource (window, font, pixmap, cursor, graphics
 context, or colormap) that is no longer in use.
 .BE
-
 .SH DESCRIPTION
 .PP
 The default allocator for resource identifiers provided by Xlib is very
@@ -44,9 +43,8 @@ However, if you allocate resources directly from Xlib, for example
 by calling \fBXCreatePixmap\fR, then you should call \fBTk_FreeXId\fR
 when you call the corresponding Xlib free procedure, such as
 \fBXFreePixmap\fR.
-If you don't call \fBTk_FreeXId\fR then the resource identifier will
+If you do not call \fBTk_FreeXId\fR then the resource identifier will
 be lost, which could cause problems if the application runs long enough
 to lose all of the available identifiers.
-
 .SH KEYWORDS
 resource identifier

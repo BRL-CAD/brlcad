@@ -39,7 +39,7 @@ Specifies a desired height for the menubutton.
 If an image or bitmap is being displayed in the menubutton then the value is in
 screen units (i.e. any of the forms acceptable to \fBTk_GetPixels\fR);
 for text it is in lines of text.
-If this option isn't specified, the menubutton's desired height is computed
+If this option is not specified, the menubutton's desired height is computed
 from the size of the image or bitmap or text being displayed in it.
 .OP \-indicatoron indicatorOn IndicatorOn
 The value must be a proper boolean value.  If it is true then
@@ -66,10 +66,9 @@ Specifies a desired width for the menubutton.
 If an image or bitmap is being displayed in the menubutton then the value is in
 screen units (i.e. any of the forms acceptable to \fBTk_GetPixels\fR);
 for text it is in characters.
-If this option isn't specified, the menubutton's desired width is computed
+If this option is not specified, the menubutton's desired width is computed
 from the size of the image or bitmap or text being displayed in it.
 .BE
-
 .SH INTRODUCTION
 .PP
 The \fBmenubutton\fR command creates a new window (given by the
@@ -107,7 +106,6 @@ new menubutton is posted instead.
 There are several interactions between menubuttons and menus;  see
 the \fBmenu\fR manual entry for information on various menu configurations,
 such as pulldown menus and option menus.
-
 .SH "WIDGET COMMAND"
 .PP
 The \fBmenubutton\fR command creates a new Tcl command whose
@@ -140,7 +138,6 @@ modifies the given widget option(s) to have the given value(s);  in
 this case the command returns an empty string.
 \fIOption\fR may have any of the values accepted by the \fBmenubutton\fR
 command.
-
 .SH "DEFAULT BINDINGS"
 .PP
 Tk automatically creates class bindings for menubuttons that give them
@@ -180,7 +177,7 @@ lower-case or upper-case equivalent), may be typed in any window
 under the menubutton's toplevel to post the menubutton.
 .IP [8]
 The F10 key may be typed in any window to post the first menubutton
-under its toplevel window that isn't disabled.
+under its toplevel window that is not disabled.
 .IP [9]
 If a menubutton has the input focus, the space and return keys
 post the menubutton.
@@ -190,9 +187,7 @@ actions occur:  the menubutton is completely non-responsive.
 .PP
 The behavior of menubuttons can be changed by defining new bindings for
 individual widgets or by redefining the class bindings.
-
 .SH "SEE ALSO"
-ttk_menubutton(n), menu(n)
-
+ttk::menubutton(n), menu(n)
 .SH KEYWORDS
 menubutton, widget

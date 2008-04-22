@@ -1,7 +1,7 @@
 /*                            E B M . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2007 United States Government as represented by
+ * Copyright (c) 1994-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,11 +23,9 @@
 
 #include "common.h"
 
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#endif
+#include <string.h>
+#include "bio.h"
 
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
@@ -42,31 +40,31 @@
  */
 int
 mk_ebm(struct rt_wdb *fp, const char *name, const char *file, int xdim, int ydim, fastf_t tallness, const matp_t mat)
-				/* name of file containing bitmap */
-				/* X dimansion of file (w cells) */
-				/* Y dimension of file (n cells) */
-				/* Z extrusion height (mm) */
-				/* convert local coords to model space */
+    /* name of file containing bitmap */
+    /* X dimansion of file (w cells) */
+    /* Y dimension of file (n cells) */
+    /* Z extrusion height (mm) */
+    /* convert local coords to model space */
 {
-	struct rt_ebm_internal	*ebm;
+    struct rt_ebm_internal	*ebm;
 
-	BU_GETSTRUCT( ebm, rt_ebm_internal );
-	ebm->magic = RT_EBM_INTERNAL_MAGIC;
-	strncpy( ebm->file, file, RT_EBM_NAME_LEN );
-	ebm->xdim = xdim;
-	ebm->ydim = ydim;
-	ebm->tallness = tallness;
-	MAT_COPY( ebm->mat , mat );
+    BU_GETSTRUCT( ebm, rt_ebm_internal );
+    ebm->magic = RT_EBM_INTERNAL_MAGIC;
+    bu_strlcpy( ebm->file, file, RT_EBM_NAME_LEN );
+    ebm->xdim = xdim;
+    ebm->ydim = ydim;
+    ebm->tallness = tallness;
+    MAT_COPY( ebm->mat, mat );
 
-	return wdb_export( fp, name, (genptr_t)ebm, ID_EBM, mk_conv2mm );
+    return wdb_export( fp, name, (genptr_t)ebm, ID_EBM, mk_conv2mm );
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

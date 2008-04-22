@@ -1,7 +1,7 @@
 /*                         S E T U P . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2007 United States Government as represented by
+ * Copyright (c) 1985-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -21,10 +21,6 @@
  *
  *  routines to initialize mged
  *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  */
 
 #include "common.h"
@@ -36,10 +32,10 @@
 #include <string.h>
 
 /* common headers */
-#include "machine.h"
+#include "bio.h"
 #include "bu.h"
 #include "bn.h"
-#include "raytrace.h"
+#include "dg.h"
 #include "vmath.h"
 #include "tclcad.h"
 
@@ -50,12 +46,22 @@
 extern void cmd_setup(void);
 extern void init_qray(void);
 
+void
+mged_rtCmdNotify()
+{
+    pr_prompt();
+}
+
 /*
  * Initialize mged, configure the path, set up the tcl interpreter.
  */
 void
 mged_setup(void)
 {
+    int try_auto_path = 0;
+
+    int init_tcl = 1;
+    int init_itcl = 1;
     struct bu_vls str;
     const char *name = bu_getprogname();
 
@@ -69,94 +75,109 @@ mged_setup(void)
     /* Create the interpreter */
     interp = Tcl_CreateInterp();
 
-    /* Locate the BRL-CAD-specific Tcl scripts, set the auto_path */
-    tclcad_auto_path(interp);
+    /* a two-pass init loop.  the first pass just tries default init
+     * routines while the second calls tclcad_auto_path() to help it
+     * find other, potentially uninstalled, resources.
+     */
+    while (1) {
 
-    /* This runs the init.tcl script */
-    if( Tcl_Init(interp) == TCL_ERROR )
-	bu_log("Tcl_Init error %s\n", Tcl_GetStringResult(interp));
+	/* not called first time through, give Tcl_Init() a chance */
+	if (try_auto_path) {
+	    /* Locate the BRL-CAD-specific Tcl scripts, set the auto_path */
+	    tclcad_auto_path(interp);
+	}
 
-    /* Initialize [incr Tcl] */
-    if (Itcl_Init(interp) == TCL_ERROR)
-	bu_log("Itcl_Init error %s\n", Tcl_GetStringResult(interp));
+	/* Initialize Tcl */
+	Tcl_ResetResult(interp);
+	if (init_tcl && Tcl_Init(interp) == TCL_ERROR) {
+	    if (!try_auto_path) {
+		try_auto_path=1;
+		continue;
+	    }
+	    bu_log("Tcl_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	    break;
+	}
+	init_tcl=0;
+
+	/* warn if tcl_library isn't set by now */
+	if (try_auto_path) {
+	    tclcad_tcl_library(interp);
+	}
+
+	/* Initialize [incr Tcl] */
+	Tcl_ResetResult(interp);
+	if (init_itcl && Itcl_Init(interp) == TCL_ERROR) {
+	    if (!try_auto_path) {
+		try_auto_path=1;
+		continue;
+	    }
+	    bu_log("Itcl_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	    break;
+	}
+	Tcl_StaticPackage(interp, "Itcl", Itcl_Init, Itcl_SafeInit);
+	init_itcl=0;
+
+	/* don't actually want to loop forever */
+	break;
+
+    } /* end iteration over Init() routines that need auto_path */
+    Tcl_ResetResult(interp);
+
+    /* if we haven't loaded by now, load auto_path so we find our tclscripts */
+    if (!try_auto_path) {
+	/* Locate the BRL-CAD-specific Tcl scripts */
+	tclcad_auto_path(interp);
+    }
 
     /* Import [incr Tcl] commands into the global namespace. */
-    if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
-		   "::itcl::*", /* allowOverwrite */ 1) != TCL_OK)
-	bu_log("Tcl_Import error %s\n", Tcl_GetStringResult(interp));
-
-#if 0 /* FIXME: disabled.  defined(HAVE_GETENV) */
-    /* append our own bin dir to (the end of) our search path.
-     * this must be performed before the Tcl interpreter is
-     * created, or we'll need to use Tcl_PutEnv() instead of
-     * setenv().
-     */
-    {
-	struct bu_vls newpath;
-	const char *path = getenv("PATH");
-	const char *binpath = bu_brlcad_root("bin", 1);
-	int set = 0;
-
-	if (binpath) {
-
-	    bu_vls_init(&newpath);
-
-	    if (path) {
-		if (path[strlen(path)-1] == ':') {
-		    bu_vls_printf(&newpath, "PATH=%s%s", path, binpath);
-		} else {
-		    bu_vls_printf(&newpath, "PATH=%s:%s", path, binpath);
-		}
-	    } else {
-		bu_vls_printf(&newpath, "PATH=%s", binpath);
-	    }
-
-#  ifdef HAVE_PUTENV
-	    set = putenv(bu_vls_addr(&newpath));
-#  else
-#    ifdef HAVE_SETENV
-	    /* skip the "PATH=" in the newpath */
-	    set = setenv("PATH", bu_vls_addr(&newpath)+5, 1);
-#    else
-#      error "No putenv or setenv available.. don't know how to set environment variables."
-#    endif
-#  endif
-	    Tcl_PutEnv(bu_vls_addr(&newpath));
-
-	    if (set != 0) {
-		perror("unable to modify PATH");
-	    }
-	    bu_vls_free(&newpath);
-	}
+    if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp), "::itcl::*", /* allowOverwrite */ 1) != TCL_OK) {
+	bu_log("Tcl_Import ERROR: %s\n", Tcl_GetStringResult(interp));
+	Tcl_ResetResult(interp);
     }
-#endif
 
 #ifdef BRLCAD_DEBUG
     /* Initialize libbu */
-    Bu_d_Init(interp);
+    if (Bu_d_Init(interp) == TCL_ERROR) {
+	bu_log("Bu_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	Tcl_ResetResult(interp);
+    }
 
     /* Initialize libbn */
-    Bn_d_Init(interp);
-
-    /* Initialize librt (includes database, drawable geometry and view objects) */
-    if (Rt_d_Init(interp) == TCL_ERROR) {
-	bu_log("Rt_d_Init error %s\n", Tcl_GetStringResult(interp));
+    if (Bn_d_Init(interp) == TCL_ERROR) {
+	bu_log("Bn_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	Tcl_ResetResult(interp);
     }
+
+    /* Initialize librt */
+    if (Rt_d_Init(interp) == TCL_ERROR) {
+	bu_log("Rt_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	Tcl_ResetResult(interp);
+    }
+    Tcl_StaticPackage(interp, "Rt", Rt_d_Init, (Tcl_PackageInitProc *) NULL);
 #else
     /* Initialize libbu */
-    Bu_Init(interp);
+    if (Bu_Init(interp) == TCL_ERROR) {
+	bu_log("Bu_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	Tcl_ResetResult(interp);
+    }
 
     /* Initialize libbn */
-    Bn_Init(interp);
-
-    /* Initialize librt (includes database, drawable geometry and view objects) */
-    if (Rt_Init(interp) == TCL_ERROR) {
-	bu_log("Rt_Init error %s\n", Tcl_GetStringResult(interp));
+    if (Bn_Init(interp) == TCL_ERROR) {
+	bu_log("Bn_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	Tcl_ResetResult(interp);
     }
+
+    /* Initialize librt */
+    if (Rt_Init(interp) == TCL_ERROR) {
+	bu_log("Rt_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	Tcl_ResetResult(interp);
+    }
+    Tcl_StaticPackage(interp, "Rt", Rt_Init, (Tcl_PackageInitProc *) NULL);
 #endif
 
     /* initialize MGED's drawable geometry object */
     dgop = dgo_open_cmd("mged", wdbp);
+    dgop->dgo_rtCmdNotify = mged_rtCmdNotify;
 
     view_state->vs_vop = vo_open_cmd("");
     view_state->vs_vop->vo_callback = mged_view_obj_callback;
@@ -193,8 +214,8 @@ mged_setup(void)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

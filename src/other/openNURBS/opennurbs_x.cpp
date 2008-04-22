@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -21,7 +21,7 @@ ON_X_EVENT::ON_X_EVENT()
   memset(this,0,sizeof(*this));
 }
 
-int ON_X_EVENT::Compare( const ON_X_EVENT* a, const ON_X_EVENT* b) 
+int ON_X_EVENT::Compare( const ON_X_EVENT* a, const ON_X_EVENT* b)
 {
   if ( !a )
   {
@@ -33,13 +33,13 @@ int ON_X_EVENT::Compare( const ON_X_EVENT* a, const ON_X_EVENT* b)
 
 	if( a->m_a[0] < b->m_a[0])
 		return -1;
-	
+
   if( a->m_a[0] > b->m_a[0])
 		return 1;
 
 	if( a->m_a[1] < b->m_a[1])
 		return -1;
-	
+
   if( a->m_a[1] > b->m_a[1])
 		return 1;
 

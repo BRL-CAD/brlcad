@@ -303,7 +303,7 @@ test unixMenu-17.1 {GetMenuSeparatorGeometry} unix {
     list [catch {tk::TearOffMenu .m1 40 40}] [destroy .m1]
 } {0 {}}
 
-test unixMenu-18.1 {GetTearoffEntryGeometry} unix {
+test unixMenu-18.1 {GetTearoffEntryGeometry} {unix nonUnixUserInteraction} {
     catch {destroy .m1}
     menubutton .mb -text "test" -menu .mb.m
     menu .mb.m
@@ -553,7 +553,7 @@ test unixMenu-20.1 {DrawTearoffEntry - menubar} unix {
     . configure -menu .m1
     list [catch {update} msg] $msg [. configure -menu ""] [destroy .m1]
 } {0 {} {} {}}
-test unixMenu-20.2 {DrawTearoffEntry - non-menubar} unix {
+test unixMenu-20.2 {DrawTearoffEntry - non-menubar} {unix nonUnixUserInteraction} {
     catch {destroy .m1}
     menu .m1
     .m1 add command -label foo
@@ -819,7 +819,7 @@ test unixMenu-25.4 {TkpComputeStandardMenuGeometry - separator} unix {
     .m1 add separator
     list [update idletasks] [destroy .m1]
 } {{} {}}
-test unixMenu-25.5 {TkpComputeStandardMenuGeometry - tearoff entry} unix {
+test unixMenu-25.5 {TkpComputeStandardMenuGeometry - tearoff entry} {unix nonUnixUserInteraction} {
     catch {destroy .m1}
     menubutton .mb -text "test" -menu .mb.m
     menu .mb.m

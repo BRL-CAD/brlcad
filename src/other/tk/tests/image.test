@@ -177,13 +177,23 @@ test image-5.5 {Tk_ImageCmd procedure, "type" option} testImageType {
     image delete myimage
     list [catch {image type myimage} msg] $msg
 } {1 {image "myimage" doesn't exist}}
+test image-5.6 {Tk_ImageCmd procedure, "type" option} testOldImageType {
+    image create oldtest myimage
+    image type myimage
+} {oldtest}
+test image-5.7 {Tk_ImageCmd procedure, "type" option} testOldImageType {
+    image create oldtest myimage
+    .c create image 50 50 -image myimage
+    image delete myimage
+    list [catch {image type myimage} msg] $msg
+} {1 {image "myimage" doesn't exist}}
 
 test image-6.1 {Tk_ImageCmd procedure, "types" option} {
     list [catch {image types x} msg] $msg
 } {1 {wrong # args: should be "image types"}}
 test image-6.2 {Tk_ImageCmd procedure, "types" option} testImageType {
     lsort [image types]
-} {bitmap photo test}
+} {bitmap oldtest photo test}
 
 test image-7.1 {Tk_ImageCmd procedure, "width" option} {
     list [catch {image width} msg] $msg
@@ -376,6 +386,26 @@ test image-13.2 {DeleteImage procedure} testImageType {
     image delete foo
     lappend x | [image names] | [catch {image delete foo} msg] | $msg | [image names] |
 } {{foo free} {foo free} {foo delete} | {} | 1 | {image "foo" doesn't exist} | {} |}
+
+test image-13.3 {Tk_SizeOfImage procedure} testOldImageType {
+    eval image delete [image names]
+    image create oldtest foo -variable x
+    set result [list [image width foo] [image height foo]]
+    foo changed 0 0 0 0 85 60
+    lappend result [image width foo] [image height foo]
+} {30 15 85 60}
+
+test image-13.4 {DeleteImage procedure} testOldImageType {
+    .c delete all
+    eval image delete [image names]
+    image create oldtest foo -variable x
+    .c create image 50 50 -image foo -tags i1
+    .c create image 90 100 -image foo -tags i2
+    set x {}
+    image delete foo
+    lappend x | [image names] | [catch {image delete foo} msg] | $msg | [image names] |
+} {{foo free} {foo free} {foo delete} | {} | 1 | {image "foo" doesn't exist} | {} |}
+
 
 catch {image delete hidden}
 set l [image names]

@@ -1,6 +1,6 @@
 .\" Copyright (c) 1989, University of Utah
 .TH GET4D 1 "June 20, 1989" 1
-.UC 4 
+.UC 4
 .SH NAME
 get4d \- get RLE images to a Silicon Graphics Iris/4D display
 .SH SYNOPSIS
@@ -27,7 +27,7 @@ get4d \- get RLE images to a Silicon Graphics Iris/4D display
 .I "xsize ysize"
 ] [
 .B \-w
-] [ 
+] [
 .I infile
 ]
 
@@ -72,23 +72,23 @@ Normally,
 .I get4d
 will fork itself after putting the image on the screen, so that the
 parent process may return the shell, leaving an "invisible" child to
-keep the image refreshed.  If 
+keep the image refreshed.  If
 .B \-f
 is specified, get4d will remain attached to the shell, whence it may be killed
 with an interrupt signal.  In either case the window manager "quit" menu
-button can be used to kill 
+button can be used to kill
 .I get4d.
 .TP
 .BI \-g " display_gamma"
 Specify the gamma of the display monitor.  If this flag is not specified,
 .I get4d
-looks in the user's home directory for a .gamma file.  This file is 
+looks in the user's home directory for a .gamma file.  This file is
 produced by the
 .IR gamma (1g)
 SGI command (This is not done on the IBM R6000).  The value in the .gamma
 file is used to determine the gamma of the display by calculating (2.4 /
 .I gamma_value
-) and using that as the 
+) and using that as the
 .I disp_gamma.
 .TP
 .BI \-i " image_gamma"
@@ -159,9 +159,9 @@ gamma compensation will be done once and for all by programs producing images.)
 is better when the image producing program does not do the gamma correction.
 You may want to put a gamma command in your .login file.
 .SH SEE ALSO
-.IR getmex (1), 
+.IR getmex (1),
 .IR urt (1),
-.IR gversion (3g), 
+.IR gversion (3g),
 .IR gamma (1g),
 .IR RLE (5).
 .SH AUTHOR

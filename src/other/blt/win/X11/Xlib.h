@@ -1,14 +1,14 @@
 /* $XConsortium: Xlib.h,v 11.221 93/07/02 14:13:28 gildea Exp $ */
-/* 
+/*
  * Copyright 1985, 1986, 1987, 1991 by the Massachusetts Institute of Technology
  *
  * Permission to use, copy, modify, and distribute this software and its
- * documentation for any purpose and without fee is hereby granted, provided 
- * that the above copyright notice appear in all copies and that both that 
- * copyright notice and this permission notice appear in supporting 
+ * documentation for any purpose and without fee is hereby granted, provided
+ * that the above copyright notice appear in all copies and that both that
+ * copyright notice and this permission notice appear in supporting
  * documentation, and that the name of M.I.T. not be used in advertising
- * or publicity pertaining to distribution of the software without specific, 
- * written prior permission. M.I.T. makes no representations about the 
+ * or publicity pertaining to distribution of the software without specific,
+ * written prior permission. M.I.T. makes no representations about the
  * suitability of this software for any purpose.  It is provided "as is"
  * without express or implied warranty.
  *
@@ -165,10 +165,10 @@ typedef struct {
 	unsigned long background;/* background pixel */
 	int line_width;		/* line width */
 	int line_style;	 	/* LineSolid, LineOnOffDash, LineDoubleDash */
-	int cap_style;	  	/* CapNotLast, CapButt, 
+	int cap_style;	  	/* CapNotLast, CapButt,
 				   CapRound, CapProjecting */
 	int join_style;	 	/* JoinMiter, JoinRound, JoinBevel */
-	int fill_style;	 	/* FillSolid, FillTiled, 
+	int fill_style;	 	/* FillSolid, FillTiled,
 				   FillStippled, FillOpaeueStippled */
 	int fill_rule;	  	/* EvenOddRule, WindingRule */
 	int arc_mode;		/* ArcChord, ArcPieSlice */
@@ -211,7 +211,7 @@ typedef struct {
 
 /*
  * Depth structure; contains information for each possible depth.
- */	
+ */
 typedef struct {
 	int depth;		/* this depth (Z) of the depth */
 	int nvisuals;		/* number of Visual types at this depth */
@@ -239,7 +239,7 @@ typedef struct {
 	unsigned long black_pixel;	/* White and Black pixel values */
 	int max_maps, min_maps;	/* max and min color maps */
 	int backing_store;	/* Never, WhenMapped, Always */
-	Bool save_unders;	
+	Bool save_unders;
 	long root_input_mask;	/* initial root input mask */
 } Screen;
 
@@ -350,7 +350,7 @@ typedef struct _XImage {
 	} f;
 } XImage;
 
-/* 
+/*
  * Data structure for XReconfigureWindow
  */
 typedef struct {
@@ -371,7 +371,7 @@ typedef struct {
 	char pad;
 } XColor;
 
-/* 
+/*
  * Data structures for graphics operations.  On most machines, these are
  * congruent with the wire protocol structures, so reformatting the data
  * can be avoided on these architectures.
@@ -383,12 +383,12 @@ typedef struct {
 typedef struct {
     short x, y;
 } XPoint;
-    
+
 typedef struct {
     short x, y;
     unsigned short width, height;
 } XRectangle;
-    
+
 typedef struct {
     short x, y;
     unsigned short width, height;
@@ -489,7 +489,7 @@ typedef struct _XDisplay {
 	struct _XExten *ext_procs; /* extensions initialized on this display */
 	/*
 	 * the following can be fixed size, as the protocol defines how
-	 * much address space is available. 
+	 * much address space is available.
 	 * While this could be done using the extension vector, there
 	 * may be MANY events processed, so a search through the extension
 	 * list to find the right procedure for each event might be
@@ -604,7 +604,7 @@ typedef struct {
 	int mode;		/* NotifyNormal, NotifyGrab, NotifyUngrab */
 	int detail;
 	/*
-	 * NotifyAncestor, NotifyVirtual, NotifyInferior, 
+	 * NotifyAncestor, NotifyVirtual, NotifyInferior,
 	 * NotifyNonlinear,NotifyNonlinearVirtual
 	 */
 	Bool same_screen;	/* same screen flag */
@@ -623,9 +623,9 @@ typedef struct {
 	int mode;		/* NotifyNormal, NotifyGrab, NotifyUngrab */
 	int detail;
 	/*
-	 * NotifyAncestor, NotifyVirtual, NotifyInferior, 
+	 * NotifyAncestor, NotifyVirtual, NotifyInferior,
 	 * NotifyNonlinear,NotifyNonlinearVirtual, NotifyPointer,
-	 * NotifyPointerRoot, NotifyDetailNone 
+	 * NotifyPointerRoot, NotifyDetailNone
 	 */
 } XFocusChangeEvent;
 typedef XFocusChangeEvent XFocusInEvent;
@@ -639,7 +639,7 @@ typedef struct {
 	Display *display;	/* Display the event was read from */
 	Window window;
 	char key_vector[32];
-} XKeymapEvent;	
+} XKeymapEvent;
 
 typedef struct {
 	int type;
@@ -1126,7 +1126,7 @@ typedef struct {
 typedef unsigned long XIMFeedback;
 
 #define XIMReverse	1
-#define XIMUnderline	(1<<1) 
+#define XIMUnderline	(1<<1)
 #define XIMHighlight	(1<<2)
 #define XIMPrimary 	(1<<5)
 #define XIMSecondary	(1<<6)
@@ -1135,11 +1135,11 @@ typedef unsigned long XIMFeedback;
 typedef struct _XIMText {
     unsigned short length;
     XIMFeedback *feedback;
-    Bool encoding_is_wchar; 
+    Bool encoding_is_wchar;
     union {
 	char *multi_byte;
 	wchar_t *wide_char;
-    } string; 
+    } string;
 } XIMText;
 
 typedef struct _XIMPreeditDrawCallbackStruct {
@@ -1154,13 +1154,13 @@ typedef enum {
     XIMForwardWord, XIMBackwardWord,
     XIMCaretUp, XIMCaretDown,
     XIMNextLine, XIMPreviousLine,
-    XIMLineStart, XIMLineEnd, 
+    XIMLineStart, XIMLineEnd,
     XIMAbsolutePosition,
     XIMDontChange
 } XIMCaretDirection;
 
 typedef enum {
-    XIMIsInvisible,	/* Disable caret feedback */ 
+    XIMIsInvisible,	/* Disable caret feedback */
     XIMIsPrimary,	/* UI defined caret feedback */
     XIMIsSecondary	/* UI defined caret feedback */
 } XIMCaretStyle;
@@ -1175,7 +1175,7 @@ typedef enum {
     XIMTextType,
     XIMBitmapType
 } XIMStatusDataType;
-	
+
 typedef struct _XIMStatusDrawCallbackStruct {
     XIMStatusDataType type;
     union {
@@ -1195,29 +1195,29 @@ _XFUNCPROTOBEGIN
 
 #include "X11/Xutil.h"
 
-extern void XSetDashes(Display * display, GC gc, int dash_offset, 
+extern void XSetDashes(Display * display, GC gc, int dash_offset,
 	_Xconst char* dash_list, int n);
 
 extern XModifierKeymap *XGetModifierMapping(Display *display);
 
 extern XImage *XCreateImage(Display *display, Visual *visual, unsigned int ui1,
-	int i1, int i2, char* cp, unsigned int ui2, unsigned int ui3, 
+	int i1, int i2, char* cp, unsigned int ui2, unsigned int ui3,
 	int i3, int i4);
 
-extern XImage *XGetImage(Display* display,Drawable dr, int i1, int i2, 
+extern XImage *XGetImage(Display* display,Drawable dr, int i1, int i2,
 	unsigned int ui1, unsigned int ui2, unsigned long ul, int i3);
 
 extern char *XGetAtomName(Display *d, Atom a);
 
 extern char *XKeysymToString(KeySym k);
 
-extern Colormap XCreateColormap(Display *d, Window w, Visual* v, 
+extern Colormap XCreateColormap(Display *d, Window w, Visual* v,
 	int i);
 
-extern Cursor XCreatePixmapCursor(Display *d, Pixmap p1, Pixmap p2,	
+extern Cursor XCreatePixmapCursor(Display *d, Pixmap p1, Pixmap p2,
 	XColor* x1, XColor* x2, unsigned int ui1, unsigned int ui2);
 
-extern Cursor XCreateGlyphCursor(Display *d, Font f1, Font f2, 
+extern Cursor XCreateGlyphCursor(Display *d, Font f1, Font f2,
 	unsigned int ui1, unsigned int ui2, XColor* x1, XColor* x2);
 
 extern GContext XGContextFromGC(GC g);
@@ -1236,32 +1236,32 @@ extern Status XIconifyWindow(Display *d, Window w, int i);
 
 extern Status XWithdrawWindow(Display *d, Window w, int i);
 
-extern Status XGetWMColormapWindows(Display *d, Window w, Window** wpp, 
+extern Status XGetWMColormapWindows(Display *d, Window w, Window** wpp,
 	int* ip);
 
 extern Status XAllocColor(Display *d, Colormap c, XColor* xp);
 
 extern void XBell(Display *d, int i);
 
-extern void XChangeProperty(Display *d, Window w, Atom a1, Atom a2, int i1, 
+extern void XChangeProperty(Display *d, Window w, Atom a1, Atom a2, int i1,
 	int i2, _Xconst unsigned char* c, int i3);
 
-extern void XChangeWindowAttributes(Display *d, Window w, unsigned long ul, 
+extern void XChangeWindowAttributes(Display *d, Window w, unsigned long ul,
 	XSetWindowAttributes* x);
 
 extern void XClearWindow(Display *d, Window w);
 
-extern void XConfigureWindow(Display *d, Window w, unsigned int i, 
+extern void XConfigureWindow(Display *d, Window w, unsigned int i,
 	XWindowChanges* x);
 
-extern void XCopyArea(Display *d, Drawable dr1, Drawable dr2, GC g, int i1, 
+extern void XCopyArea(Display *d, Drawable dr1, Drawable dr2, GC g, int i1,
 	int i2, unsigned int ui1, unsigned int ui2, int i3, int i4);
 
-extern void XCopyPlane(Display *d, Drawable dr1, Drawable dr2, GC g, int i1, 
-	int i2, unsigned int ui1, unsigned int ui2, int i3, int i4, 
+extern void XCopyPlane(Display *d, Drawable dr1, Drawable dr2, GC g, int i1,
+	int i2, unsigned int ui1, unsigned int ui2, int i3, int i4,
 	unsigned long ul);
 
-extern Pixmap XCreateBitmapFromData(Display *display, Drawable d, 
+extern Pixmap XCreateBitmapFromData(Display *display, Drawable d,
 	_Xconst char* data, unsigned int width, unsigned int height);
 
 extern void XDefineCursor(Display *d, Window w, Cursor c);
@@ -1270,43 +1270,43 @@ extern void XDeleteProperty(Display *d, Window w, Atom a);
 
 extern void XDestroyWindow(Display *d, Window w);
 
-extern void XDrawArc(Display *d, Drawable dr, GC g, int i1, int i2, 
+extern void XDrawArc(Display *d, Drawable dr, GC g, int i1, int i2,
 	unsigned int ui1, unsigned int ui2, int i3, int i4);
 
-extern void XDrawLines(Display *d, Drawable dr, GC g, XPoint* x, int i1, 
+extern void XDrawLines(Display *d, Drawable dr, GC g, XPoint* x, int i1,
 	int i2);
 
-extern void XDrawRectangle(Display *d, Drawable dr, GC g, int i1, int i2, 
+extern void XDrawRectangle(Display *d, Drawable dr, GC g, int i1, int i2,
 	unsigned int ui1, unsigned int ui2);
 
-extern void XFillArc(Display *d, Drawable dr, GC g, int i1, int i2, 
+extern void XFillArc(Display *d, Drawable dr, GC g, int i1, int i2,
 	unsigned int ui1, unsigned int ui2, int i3, int i4);
 
 extern void XFillPolygon(Display *d, Drawable dr, GC g, XPoint* x, int i1,
 	int i2, int i3);
 
-extern void XFillRectangles(Display *d, Drawable dr, GC g, XRectangle* x, 
+extern void XFillRectangles(Display *d, Drawable dr, GC g, XRectangle* x,
 	int i);
 
 extern void XForceScreenSaver(Display *d, int i);
 
 extern void XFreeColormap(Display *d, Colormap c);
 
-extern void XFreeColors(Display *d, Colormap c, unsigned long* ulp, int i, 
+extern void XFreeColors(Display *d, Colormap c, unsigned long* ulp, int i,
 	unsigned long ul);
 
 extern void XFreeCursor(Display *d, Cursor c);
 
 extern void XFreeModifiermap(XModifierKeymap* x);
 
-extern Status XGetGeometry(Display *d, Drawable dr, Window* w, int* i1, 
-	int* i2, unsigned int* ui1, unsigned int* ui2, unsigned int* ui3, 
+extern Status XGetGeometry(Display *d, Drawable dr, Window* w, int* i1,
+	int* i2, unsigned int* ui1, unsigned int* ui2, unsigned int* ui3,
 	unsigned int* ui4);
 
 extern void XGetInputFocus(Display *d, Window* w, int* i);
 
 extern int XGetWindowProperty(Display *d, Window w, Atom a1, long l1, long l2,
-	Bool b, Atom a2, Atom* ap, int* ip, unsigned long* ulp1, 
+	Bool b, Atom a2, Atom* ap, int* ip, unsigned long* ulp1,
 	unsigned long* ulp2, unsigned char** cpp);
 
 extern Status XGetWindowAttributes(Display *d, Window w, XWindowAttributes* x);
@@ -1318,12 +1318,12 @@ extern int XGrabPointer(Display *d, Window w1, Bool b, unsigned int ui, int i1,
 
 extern KeyCode XKeysymToKeycode(Display *d, KeySym k);
 
-extern Status XLookupColor(Display *d, Colormap c1, _Xconst char* c2, 
+extern Status XLookupColor(Display *d, Colormap c1, _Xconst char* c2,
 	XColor* x1, XColor* x2);
 
 extern void XMapWindow(Display *d, Window w);
 
-extern void XMoveResizeWindow(Display *d, Window w, int i1, int i2, 
+extern void XMoveResizeWindow(Display *d, Window w, int i1, int i2,
 	unsigned int ui1, unsigned int ui2);
 
 extern void XMoveWindow(Display *d, Window w, int i1, int i2);
@@ -1334,17 +1334,17 @@ extern void XPutBackEvent(Display *d, XEvent* x);
 
 extern void XQueryColors(Display *d, Colormap c, XColor* x, int i);
 
-extern Bool XQueryPointer(Display *d, Window w1, Window* w2, Window* w3, 
+extern Bool XQueryPointer(Display *d, Window w1, Window* w2, Window* w3,
 	int* i1, int* i2, int* i3, int* i4, unsigned int* ui);
 
-extern Status XQueryTree(Display *d, Window w1, Window* w2, Window* w3, 
+extern Status XQueryTree(Display *d, Window w1, Window* w2, Window* w3,
 	Window** w4, unsigned int* ui);
 
 extern void XRaiseWindow(Display *d, Window w);
 
 extern void XRefreshKeyboardMapping(XMappingEvent* x);
 
-extern void XResizeWindow(Display *d, Window w, unsigned int ui1, 
+extern void XResizeWindow(Display *d, Window w, unsigned int ui1,
 	unsigned int ui2);
 
 extern void XSelectInput(Display *d, Window w, long l);
@@ -1371,7 +1371,7 @@ extern void XSetWindowBorderWidth(Display *d, Window w, unsigned int ui);
 
 extern void XSetWindowColormap(Display *d, Window w, Colormap c);
 
-extern Bool XTranslateCoordinates(Display *d, Window w1, Window w2, int i1, 
+extern Bool XTranslateCoordinates(Display *d, Window w1, Window w2, int i1,
 	int i2, int* i3, int* i4, Window* w3);
 
 extern void XUngrabKeyboard(Display *d, Time t);
@@ -1386,22 +1386,22 @@ extern void XDestroyIC(XIC x);
 
 extern Bool XFilterEvent(XEvent* x, Window w);
 
-extern int XmbLookupString(XIC xi, XKeyPressedEvent* xk, char* c, int i, 
+extern int XmbLookupString(XIC xi, XKeyPressedEvent* xk, char* c, int i,
 	KeySym* k, Status* s);
 
-extern void TkPutImage(unsigned long * colors, int ncolors, Display *display, 
-	Drawable d, GC gc, XImage* image, int src_x, int src_y, 
+extern void TkPutImage(unsigned long * colors, int ncolors, Display *display,
+	Drawable d, GC gc, XImage* image, int src_x, int src_y,
 	int dest_x, int dest_y, unsigned int width, unsigned int height);
 
-extern Status XParseColor(Display * display, Colormap map, _Xconst char* spec, 
+extern Status XParseColor(Display * display, Colormap map, _Xconst char* spec,
 	XColor * colorPtr);
 
-extern GC XCreateGC(Display *display, Drawable d, unsigned long valuemask, 
+extern GC XCreateGC(Display *display, Drawable d, unsigned long valuemask,
 	XGCValues* values);
 
 extern void XFreeGC(Display *display, GC gc);
 
-extern Atom XInternAtom(Display *display, _Xconst char* atom_name, 
+extern Atom XInternAtom(Display *display, _Xconst char* atom_name,
 	Bool only_if_exists);
 
 extern void XSetBackground(Display *display, GC gc, unsigned long foreground);
@@ -1410,20 +1410,20 @@ extern void XSetForeground(Display *display, GC gc, unsigned long foreground);
 
 extern void XSetClipMask(Display *display, GC gc, Pixmap pixmap);
 
-extern void XSetClipOrigin(Display *display, GC gc, int clip_x_origin, 
+extern void XSetClipOrigin(Display *display, GC gc, int clip_x_origin,
 	int clip_y_origin);
 
-extern void XSetTSOrigin(Display *display, GC gc, int ts_x_origin, 
+extern void XSetTSOrigin(Display *display, GC gc, int ts_x_origin,
 	int ts_y_origin);
 
-extern void XChangeGC(Display *display, GC gc, unsigned long mask, 
+extern void XChangeGC(Display *display, GC gc, unsigned long mask,
 	XGCValues * values);
 
 extern void XSetFont(Display *display, GC gc, Font font);
 
 extern void XSetArcMode(Display *display, GC gc, int arc_mode);
 
-extern void XSetStipple(Display * display, GC gc, 
+extern void XSetStipple(Display * display, GC gc,
 				Pixmap stipple);
 
 extern void XSetFillRule(Display *display, GC gc, int fill_rule);
@@ -1432,30 +1432,30 @@ extern void XSetFillStyle(Display *display, GC gc, int fill_style);
 
 extern void XSetFunction(Display *display, GC gc, int function);
 
-extern void XSetLineAttributes(Display *display, GC gc, 
-	unsigned int line_width, int line_style, int cap_style, 
+extern void XSetLineAttributes(Display *display, GC gc,
+	unsigned int line_width, int line_style, int cap_style,
 	int join_style);
 
 extern int _XInitImageFuncPtrs(XImage * image);
 
 extern XIC XCreateIC(void);
 
-extern XVisualInfo *XGetVisualInfo(Display *display, long vinfo_mask, 
+extern XVisualInfo *XGetVisualInfo(Display *display, long vinfo_mask,
 	XVisualInfo* vinfo_template, int* nitems_return);
 
-extern void XSetWMClientMachine(Display *display, Window w, 
+extern void XSetWMClientMachine(Display *display, Window w,
 	XTextProperty* text_prop);
 
-extern Status XStringListToTextProperty(char** list, int count, 
+extern Status XStringListToTextProperty(char** list, int count,
 	XTextProperty* text_prop_return);
 
-extern void XDrawLine(Display *d, Drawable dr, GC g, int x1, int y1, int x2, 
+extern void XDrawLine(Display *d, Drawable dr, GC g, int x1, int y1, int x2,
 	int y2);
 
-extern void XWarpPointer(Display *d, Window s, Window dw, int sx, int sy, 
+extern void XWarpPointer(Display *d, Window s, Window dw, int sx, int sy,
 	unsigned int sw, unsigned int sh, int dx, int dy);
 
-extern void XFillRectangle(Display *display, Drawable d, GC gc, int x, int y, 
+extern void XFillRectangle(Display *display, Drawable d, GC gc, int x, int y,
 	unsigned int width, unsigned int height);
 
 _XFUNCPROTOEND

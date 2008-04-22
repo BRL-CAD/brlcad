@@ -23,7 +23,9 @@ of the standard options supported by that widget), but if a widget does
 support an option with one of the names listed below, then the option
 has exactly the effect described below.
 .PP
-In the descriptions below, ``Command-Line Name'' refers to the
+In the descriptions below,
+.QW "Command-Line Name"
+refers to the
 switch used in class commands and \fBconfigure\fR widget commands to
 set this value.  For example, if an option's command-line switch is
 \fB\-foreground\fR and there exists a widget \fB.a.b.c\fR, then the
@@ -34,9 +36,10 @@ command
 may be used to specify the value \fBblack\fR for the option in
 the widget \fB.a.b.c\fR.  Command-line switches may be abbreviated,
 as long as the abbreviation is unambiguous.
-``Database Name'' refers to the option's name in the option database (e.g.
-in .Xdefaults files).  ``Database Class'' refers to the option's class value
-in the option database.
+.QW "Database Name"
+refers to the option's name in the option database (e.g. in .Xdefaults files).
+.QW "Database Class"
+refers to the option's class value in the option database.
 .OP \-activebackground activeBackground Foreground
 Specifies background color to use when drawing active elements.
 An element (a widget or portion of a widget) is active if the
@@ -153,12 +156,16 @@ of the 3-D border to draw around the insertion cursor.
 The value may have any of the forms acceptable to \fBTk_GetPixels\fR.
 .OP \-insertofftime insertOffTime OffTime
 Specifies a non-negative integer value indicating the number of
-milliseconds the insertion cursor should remain ``off'' in each blink cycle.
-If this option is zero then the cursor doesn't blink:  it is on
+milliseconds the insertion cursor should remain
+.QW off
+in each blink cycle.
+If this option is zero then the cursor does not blink:  it is on
 all the time.
 .OP \-insertontime insertOnTime OnTime
 Specifies a non-negative integer value indicating the number of
-milliseconds the insertion cursor should remain ``on'' in each blink cycle.
+milliseconds the insertion cursor should remain
+.QW on
+in each blink cycle.
 .OP \-insertwidth insertWidth InsertWidth
 Specifies a  value indicating the total width of the insertion cursor.
 The value may have any of the forms acceptable to \fBTk_GetPixels\fR.
@@ -176,7 +183,9 @@ If the value is false, updates are made continuously as the
 slider is dragged.
 If the value is true, updates are delayed until the mouse button
 is released to end the drag;  at that point a single notification
-is made (the value ``jumps'' rather than changing smoothly).
+is made (the value
+.QW jumps
+rather than changing smoothly).
 .OP \-justify justify Justify
 When there are multiple lines of text displayed in a widget, this
 option determines how the lines line up with each other.
@@ -292,7 +301,7 @@ particular widget and may be determined by other options, such as
 .OP \-troughcolor troughColor Background
 Specifies the color to use for the rectangular trough areas
 in widgets such as scrollbars and scales.  This option is ignored for
-scrollbars on Windows (native widget doesn't recognize this option).
+scrollbars on Windows (native widget does not recognize this option).
 .OP \-underline underline Underline
 Specifies the integer index of a character to underline in the widget.
 This option is used by the default bindings to implement keyboard
@@ -327,7 +336,11 @@ the information just after the last portion that is visible.
 The command is
 then passed to the Tcl interpreter for execution.  Typically the
 \fBxScrollCommand\fR option consists of the path name of a scrollbar
-widget followed by ``set'', e.g. ``.x.scrollbar set'':  this will cause
+widget followed by
+.QW set ,
+e.g.
+.QW ".x.scrollbar set" :
+this will cause
 the scrollbar to be updated whenever the view in the window changes.
 If this option is not specified, then no command will be executed.
 .OP \-yscrollcommand yScrollCommand ScrollCommand

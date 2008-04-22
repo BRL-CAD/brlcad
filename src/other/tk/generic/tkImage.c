@@ -14,11 +14,6 @@
  */
 
 #include "tkInt.h"
-#include "tkPort.h"
-
-#ifndef USE_OLD_IMAGE
-MODULE_SCOPE void Tk_CreateOldImageType(Tk_ImageType *typePtr);
-#endif
 
 /*
  * Each call to Tk_GetImage returns a pointer to one of the following
@@ -579,7 +574,9 @@ Tk_GetImage(
     return (Tk_Image) imagePtr;
 
   noSuchImage:
-    Tcl_AppendResult(interp, "image \"", name, "\" doesn't exist", NULL);
+    if (interp) {
+	Tcl_AppendResult(interp, "image \"", name, "\" doesn't exist", NULL);
+    }
     return NULL;
 }
 

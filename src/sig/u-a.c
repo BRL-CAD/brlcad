@@ -1,7 +1,7 @@
 /*                           U - A . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,6 +20,7 @@
 /** @file u-a.c
  *
  */
+
 #include "common.h"
 
 #include <stdio.h>
@@ -30,22 +31,22 @@ unsigned short ibuf[MAXBUF];
 
 int main(void)
 {
-	int n, i;
+    int n, i;
 
-	while ((n=fread(ibuf, sizeof(*ibuf), MAXBUF, stdin)) > 0) {
-		for (i=0 ; i < n ; ++i)
-			printf("%hd\n", ibuf[i]);
-	}
+    while ((n=fread(ibuf, sizeof(*ibuf), MAXBUF, stdin)) > 0) {
+	for (i=0; i < n; ++i)
+	    printf("%hd\n", ibuf[i]);
+    }
 
-	return 0;
+    return 0;
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

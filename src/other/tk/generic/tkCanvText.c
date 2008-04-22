@@ -15,7 +15,6 @@
 #include <stdio.h>
 #include "tkInt.h"
 #include "tkCanvas.h"
-#include "tkPort.h"
 #include "default.h"
 
 /*

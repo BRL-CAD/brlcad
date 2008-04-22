@@ -83,10 +83,12 @@ typedef char *void_star;
 #endif /* USE_PROTOTYPES */
 #endif /* NO_DECLARE_MALLOC */
 
+#ifndef _WIN32
 #ifdef USE_PROTOTYPES
 extern char *getenv( CONST_DECL char *name );
 #else
 extern char *getenv();
+#endif
 #endif
 
 #endif /* USE_STDLIB_H */
@@ -123,6 +125,7 @@ extern char *getenv();
 /* include common.h so that HAVE_ symbols may be used to work around
  * compilation support issues.  e.g. sys_errlist on solaris.
  */
+
 #include "common.h"
 
 /** @} */

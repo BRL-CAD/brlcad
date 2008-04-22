@@ -21,7 +21,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../../include,../../../src/other/tk/generic,../../../src/other/tk/win,../../../src/other/tk/bitmaps,../../../src/other/tk/xlib,../../../src/other/tcl/generic,../../../src/other/tcl/win"
+				AdditionalIncludeDirectories="../../../include;../../../src/other/tk/generic;../../../src/other/tk/win;../../../src/other/tk/bitmaps;../../../src/other/tk/xlib;../../../src/other/tcl/generic;../../../src/other/tcl/win"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -70,7 +70,7 @@ copy &quot;$(TargetDir)&quot;tk84_d.lib ..\..\..\lib
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="_DEBUG"
 				Culture="1033"
-				AdditionalIncludeDirectories="../../../include"/>
+				AdditionalIncludeDirectories="../../../include;../../../src/other/tk/generic;../../../src/other/tk/win;../../../src/other/tk/win/rc;../../../src/other/tcl/generic"/>
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
@@ -98,6 +98,7 @@ copy &quot;$(TargetDir)&quot;tk84_d.lib ..\..\..\lib
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;USE_TCL_STUBS;TCL_THREADS=1;BUILD_tk;DOUBLE_BAR_TEAROFF;IGNORE_CONFIG_H"
 				StringPooling="TRUE"
 				RuntimeLibrary="2"
+				BufferSecurityCheck="TRUE"
 				EnableFunctionLevelLinking="TRUE"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderFile=".\Release/libtk.pch"
@@ -106,6 +107,7 @@ copy &quot;$(TargetDir)&quot;tk84_d.lib ..\..\..\lib
 				ProgramDataBaseFileName=".\Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
+				DebugInformationFormat="0"
 				CompileAs="0"/>
 			<Tool
 				Name="VCCustomBuildTool"/>
@@ -117,6 +119,7 @@ copy &quot;$(TargetDir)&quot;tk84_d.lib ..\..\..\lib
 				SuppressStartupBanner="TRUE"
 				AdditionalLibraryDirectories="../../../lib"
 				IgnoreDefaultLibraryNames="libcmt"
+				GenerateDebugInformation="FALSE"
 				ProgramDatabaseFile=".\Release/tk84.pdb"
 				ImportLibrary=".\Release/tk84.lib"
 				TargetMachine="1"/>
@@ -176,7 +179,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -196,7 +198,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -216,7 +217,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -236,7 +236,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -256,7 +255,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -276,7 +274,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -296,7 +293,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -316,7 +312,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -336,7 +331,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -356,7 +350,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -376,7 +369,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -396,7 +388,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -416,7 +407,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -436,7 +426,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -456,7 +445,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -476,7 +464,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -496,7 +483,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -516,7 +502,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -536,7 +521,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -556,7 +540,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -576,7 +559,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -596,7 +578,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -616,7 +597,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -636,7 +616,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -656,7 +635,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -676,7 +654,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -696,7 +673,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -716,7 +692,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -736,7 +711,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -756,7 +730,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -776,7 +749,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -796,7 +768,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -816,7 +787,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -836,7 +806,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -856,7 +825,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -876,7 +844,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -896,7 +863,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -916,7 +882,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -936,7 +901,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -956,7 +920,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -976,7 +939,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -996,7 +958,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1016,7 +977,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1036,7 +996,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1056,7 +1015,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1076,7 +1034,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1096,7 +1053,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1116,7 +1072,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1136,7 +1091,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1156,7 +1110,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1176,7 +1129,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1196,7 +1148,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1216,7 +1167,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1236,7 +1186,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1256,7 +1205,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1276,7 +1224,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1296,7 +1243,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1316,7 +1262,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1336,7 +1281,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1356,7 +1300,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1376,7 +1319,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1396,7 +1338,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1416,7 +1357,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1436,7 +1376,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1456,7 +1395,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1476,7 +1414,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1496,7 +1433,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1516,7 +1452,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1536,7 +1471,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1556,7 +1490,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1576,7 +1509,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1596,7 +1528,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1616,7 +1547,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1636,7 +1566,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1656,7 +1585,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1676,7 +1604,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1696,7 +1623,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1716,7 +1642,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1736,7 +1661,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1756,7 +1680,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1776,7 +1699,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1796,7 +1718,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1816,7 +1737,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1836,7 +1756,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1856,7 +1775,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1876,7 +1794,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1896,7 +1813,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1916,7 +1832,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1936,7 +1851,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1956,7 +1870,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1976,7 +1889,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -1996,7 +1908,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -2016,7 +1927,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -2036,7 +1946,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -2056,7 +1965,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -2076,7 +1984,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -2096,7 +2003,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -2119,7 +2025,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -2139,7 +2044,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -2159,7 +2063,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -2281,7 +2184,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -2301,7 +2203,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -2321,7 +2222,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -2341,7 +2241,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>
@@ -2361,7 +2260,6 @@ copy &quot;$(TargetDir)&quot;tk84.lib ..\..\..\lib
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						Optimization="2"
 						AdditionalIncludeDirectories=""/>
 				</FileConfiguration>
 			</File>

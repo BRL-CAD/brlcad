@@ -1,7 +1,7 @@
 /*                         F I X P T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,16 +29,6 @@
  *  The fractional part is stored in 28-bit integer form,
  *  to prevent roundoff errors.
  *
- *  Author -
- *	Michael John Muuss
- *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
- *
- *
- *  $Header$
  */
 /** @} */
 
@@ -47,8 +37,8 @@
 
 #define	FIXPT_SCALE	((1<<28)-1)
 struct fixpt  {
-	int	i;
-	int	f;		/* Ranges 0 to FIXPT_SCALE-1 */
+    int	i;
+    int	f;		/* Ranges 0 to FIXPT_SCALE-1 */
 };
 
 #define FIXPT_FLOAT( fp, fl )	{ \
@@ -59,21 +49,21 @@ struct fixpt  {
 #define FLOAT_FIXPT( fp )  ( fp.i + ((double)fp.f)/FIXPT_SCALE )
 
 #define FIXPT_NORMALIZE(fp)	{ \
-	if( fp.f < 0 )  { \
+	if ( fp.f < 0 )  { \
 		do {  \
 			fp.i--; \
 			fp.f += FIXPT_SCALE; \
-		} while( fp.f < 0 ); \
-	} else if( fp.f >= FIXPT_SCALE )  { \
+		} while ( fp.f < 0 ); \
+	} else if ( fp.f >= FIXPT_SCALE )  { \
 		do { \
 			fp.i++; \
 			fp.f -= FIXPT_SCALE; \
-		} while( fp.f >= FIXPT_SCALE ); \
+		} while ( fp.f >= FIXPT_SCALE ); \
 	} }
 
 #define FIXPT_ROUND(fp)		{ \
-	if( fp.f > FIXPT_SCALE/2 )  { \
-		if( fp.i >= 0 ) fp.i++; \
+	if ( fp.f > FIXPT_SCALE/2 )  { \
+		if ( fp.i >= 0 ) fp.i++; \
 		else fp.i--; \
 	}  fp.f = 0; }
 
@@ -93,8 +83,8 @@ struct fixpt  {
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

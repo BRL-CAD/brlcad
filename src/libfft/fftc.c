@@ -1,7 +1,7 @@
 /*                          F F T C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,20 +18,14 @@
  * information.
  */
 /** @file fftc.c
+ *
  *	Split Radix Decimation in Time
  *	FFT C code generator.
  *
  *  Author -
  *	Phil Dykstra
  *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (ARL)";
-#endif
 
 #include "common.h"
 
@@ -44,34 +38,31 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 extern int rfft_adds, rfft_mults;
 
-static char usage[] = "\
-Usage: fftc length > fftlength.c\n";
-
 int
 main(int argc, char **argv)
 {
-	double	x[4097];
-	int	n, m;
+    double	x[4097];
+    int	n, m;
 
-	if( argc != 2 ) {
-		fprintf( stderr, usage );
-		return 1;
-	}
+    if ( argc != 2 ) {
+	fprintf( stderr, "Usage: fftc length > fftlength.c\n" );
+	return 1;
+    }
 
-	n = atoi(argv[1]);
-	m = log((double)n)/log(2.0) + 0.5;	/* careful truncation */
+    n = atoi(argv[1]);
+    m = log((double)n)/log(2.0) + 0.5;	/* careful truncation */
 
-	splitdit( x, n, m );
-(void)fprintf( stderr, "adds = %d, mults = %d\n", rfft_adds, rfft_mults );
-	return(0);
+    splitdit( x, n, m );
+    fprintf( stderr, "adds = %d, mults = %d\n", rfft_adds, rfft_mults );
+    return 0;
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

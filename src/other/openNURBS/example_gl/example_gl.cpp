@@ -7,7 +7,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 ////////////////////////////////////////////////////////////////
 
 #include "../opennurbs.h"
@@ -22,8 +22,8 @@
 #define MY_GL_CALLBACK
 #endif
 
-// Before working on this file, be sure to study the OpenNURBS toolkit 
-// file example_read.cpp and to read chapters 1 through 11 of the 
+// Before working on this file, be sure to study the OpenNURBS toolkit
+// file example_read.cpp and to read chapters 1 through 11 of the
 // _Open_GL_Programming_Guide_.
 //
 // This file contains simple example in modeled after those found in
@@ -43,9 +43,9 @@ public:
   ON_BoundingBox m_bbox;
 };
 
-void CModel::GetObjectMaterial( 
+void CModel::GetObjectMaterial(
           int object_index,
-          ON_Material& material 
+          ON_Material& material
           ) const
 {
   material.Default();
@@ -143,7 +143,7 @@ CModel* glb_model = 0;
 
 BOOL myInitGL( const ON_Viewport&, GLUnurbsObj*& );
 
-void myBuildDisplayList( 
+void myBuildDisplayList(
       GLuint,                  // display_list_number,
       GLUnurbsObj*,            // pointer to GL nurbs render
       const CModel&            // geometry to render
@@ -226,7 +226,7 @@ int main( int argc, const char *argv[] )
     model.m_view.m_vp.GetCameraAngle( &angle );
     model.m_view.m_vp.Extents( angle, model.m_bbox );
   }
-  else 
+  else
   {
     GetDefaultView( model.m_bbox, model.m_view );
   }
@@ -237,13 +237,13 @@ int main( int argc, const char *argv[] )
   // value set by inspecting the bounding box of the geometry to be
   // displayed.
 
-  
+
   ///////////////////////////////////////////////////////////////////
   //
   // GL stuff starts here
   //
-  for(;;) {  
-    
+  for(;;) {
+
     wchar_t sWindowTitleString[256];
     sWindowTitleString[255] = 0;
     if ( argv[0] && argv[0][0] )
@@ -327,15 +327,15 @@ BOOL myInitGL( const ON_Viewport& viewport, GLUnurbsObj*& nobj )
   //ON_Color background_color(0,128,128);
   ON_Color background_color(0,63,127);
   //background_color = glb_model->m_settings.m_RenderSettings.m_background_color;
-  glClearColor( (float)background_color.FractionRed(), 
-                (float)background_color.FractionGreen(), 
-                (float)background_color.FractionBlue(), 
+  glClearColor( (float)background_color.FractionRed(),
+                (float)background_color.FractionGreen(),
+                (float)background_color.FractionBlue(),
                 1.0f
                 );
 
   glLightModeli( GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE );
   glDisable( GL_CULL_FACE );
-  
+
   // Rhino viewports have camera "Z" pointing at the camera in a right
   // handed coordinate system.
   glClearDepth( 0.0f );
@@ -355,7 +355,7 @@ BOOL myInitGL( const ON_Viewport& viewport, GLUnurbsObj*& nobj )
   nobj = gluNewNurbsRenderer();
   if ( !nobj )
     return false;
-  
+
   gluNurbsProperty( nobj, GLU_SAMPLING_TOLERANCE,   20.0f );
   gluNurbsProperty( nobj, GLU_PARAMETRIC_TOLERANCE, 0.5f );
   gluNurbsProperty( nobj, GLU_DISPLAY_MODE,         (GLfloat)GLU_FILL );
@@ -421,7 +421,7 @@ static void myRotateLeftRight( ON_Viewport& viewport, double angle )
 {
   // ON_3dVector axis = ON_zaxis; // rotate camera about world z axis (z up feel)
   ON_3dVector axis = ON_zaxis; // rotate camera about world y axis (u up feel)
-  
+
   ON_3dPoint center;
   if ( glb_model )
     center = glb_model->m_view.m_target;
@@ -568,28 +568,28 @@ void myDisplayObject( const ON_Object& geometry, const ON_Material& material, GL
   ON_GL( material );
 
   brep = ON_Brep::Cast(&geometry);
-  if ( brep ) 
+  if ( brep )
   {
     ON_GL(*brep, nobj);
     return;
   }
 
   mesh = ON_Mesh::Cast(&geometry);
-  if ( mesh ) 
+  if ( mesh )
   {
     ON_GL(*mesh);
     return;
   }
 
   curve = ON_Curve::Cast(&geometry);
-  if ( curve ) 
+  if ( curve )
   {
     ON_GL( *curve, nobj );
     return;
   }
 
   surface = ON_Surface::Cast(&geometry);
-  if ( surface ) 
+  if ( surface )
   {
     gluBeginSurface( nobj );
     ON_GL( *surface, nobj );
@@ -598,14 +598,14 @@ void myDisplayObject( const ON_Object& geometry, const ON_Material& material, GL
   }
 
   point = ON_Point::Cast(&geometry);
-  if ( point ) 
+  if ( point )
   {
     ON_GL(*point);
     return;
   }
 
   cloud = ON_PointCloud::Cast(&geometry);
-  if ( cloud ) 
+  if ( cloud )
   {
     ON_GL(*cloud);
     return;
@@ -761,7 +761,7 @@ void myBuildDisplayList( GLuint display_list_number,
   // display Rhino geometry using ON_GL() functions found in rhinoio_gl.cpp
   int i;
   const int object_count = model.m_object_table.Count();
-  for ( i = 0; i < object_count; i++ ) 
+  for ( i = 0; i < object_count; i++ )
   {
     const ONX_Model_Object& mo = model.m_object_table[i];
     if ( 0 != mo.m_object )
@@ -807,7 +807,7 @@ void MY_GL_CALLBACK myDisplay( void )
   }
 
   // display list built with myBuildDisplayList()
-  glCallList( glb_display_list_number ); 
+  glCallList( glb_display_list_number );
 
   glFlush();
 

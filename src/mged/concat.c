@@ -1,7 +1,7 @@
 /*                        C O N C A T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2007 United States Government as represented by
+ * Copyright (c) 1990-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,9 +28,6 @@
  *	Keith A. Applin
  *
  */
-#ifndef lint
-static const char RCSconcat[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -44,7 +41,7 @@ static const char RCSconcat[] = "@(#)$Header$ (BRL)";
 #  include <pwd.h>
 #endif
 
-#include "machine.h"
+#include "bio.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "db.h"
@@ -52,8 +49,8 @@ static const char RCSconcat[] = "@(#)$Header$ (BRL)";
 #include "./ged.h"
 #include "./sedit.h"
 
-char	new_name[NAMESIZE];
-char	prestr[NAMESIZE];
+char	new_name[NAMESIZE+1];
+char	prestr[NAMESIZE+1];
 int	ncharadd;
 
 
@@ -61,8 +58,8 @@ int	ncharadd;
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

@@ -1,7 +1,7 @@
 /*                     P I X B U S T U P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2007 United States Government as represented by
+ * Copyright (c) 1986-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,108 +19,90 @@
  */
 /** @file pixbustup.c
  *
- *	Take concatenated .pix files, and write them into individual files.
- *	Mostly a holdover from the days when RT wrote animations into
- *	one huge file, but still occasionally useful.
- *
- *  Author -
- *	Michael John Muuss
+ * Take concatenated .pix files, and write them into individual files.
+ * Mostly a holdover from the days when RT wrote animations into one
+ * huge file, but still occasionally useful.
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
+#include "bio.h"
 
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-
-#ifdef HAVE_FCNTL_H
-# include <fcntl.h>
-#endif
-
-#include "machine.h"
+#include "bu.h"
 
 
-static int scanbytes;			/* # of bytes of scanline */
-
+int infd;
 unsigned char *in1;
 
+static int scanbytes;			/* # of bytes of scanline */
 static int nlines;		/* Number of input lines */
 static int pix_line;		/* Number of pixels/line */
 
-char usage[] =
-"Usage: pixbustup basename width [image_offset] [first_number] <input.pix\n";
-
-int infd;
 
 int
 main(int argc, char **argv)
 {
-	int image_offset;
-	int framenumber;
-	char *base_name;
-	char name[128];
+    int image_offset;
+    int framenumber;
+    char *base_name;
+    char name[128];
 
-	if( argc < 3 )  {
-		fprintf(stderr,"%s", usage);
-		exit(1);
+    if ( argc < 3 )  {
+	bu_exit(1, "Usage: pixbustup basename width [image_offset] [first_number] <input.pix\n");
+    }
+
+    base_name = argv[1];
+    nlines = atoi(argv[2] );
+
+    pix_line = nlines;	/* Square pictures */
+    scanbytes = nlines * pix_line * 3;
+    in1 = (unsigned char  *) malloc( scanbytes );
+
+    if ( argc == 4 )  {
+	image_offset = atoi(argv[3]);
+	lseek(0, image_offset*scanbytes, 0);
+    }
+    if ( argc == 5 )
+	framenumber = atoi(argv[4]);
+    else
+	framenumber = 0;
+
+    for (;; framenumber++ )  {
+	int fd;
+	int rwval = read( 0, in1, scanbytes );
+
+	if ( rwval != scanbytes ) {
+	    if (rwval < 0) {
+		perror("pixbustup READ ERROR");
+	    }
+	    break;
 	}
-
-	base_name = argv[1];
-	nlines = atoi(argv[2] );
-
-	pix_line = nlines;	/* Square pictures */
-	scanbytes = nlines * pix_line * 3;
-	in1 = (unsigned char  *) malloc( scanbytes );
-
-	if( argc == 4 )  {
-		image_offset = atoi(argv[3]);
-		lseek(0, image_offset*scanbytes, 0);
+	snprintf(name, 128, "%s.%d", base_name, framenumber);
+	if ( (fd=creat(name, 0444))<0 )  {
+	    perror(name);
+	    continue;
 	}
-	if( argc == 5 )
-		framenumber = atoi(argv[4]);
-	else
-		framenumber = 0;
-
-	for( ; ; framenumber++ )  {
-		int fd;
-		int rwval = read( 0, in1, scanbytes );
-
-		if( rwval != scanbytes ) {
-		    if (rwval < 0) {
-			perror("pixbustup READ ERROR");
-		    }
-		    break;
-		}
-		sprintf(name, "%s.%d", base_name, framenumber);
-		if( (fd=creat(name,0444))<0 )  {
-			perror(name);
-			continue;
-		}
-		rwval = write( fd, in1, scanbytes );
-		if (rwval != scanbytes ) {
-		    if (rwval < 0) {
-			perror("pixbustup WRITE ERROR");
-		    }
-		}
-		(void)close(fd);
-		printf("wrote %s\n", name);
+	rwval = write( fd, in1, scanbytes );
+	if (rwval != scanbytes ) {
+	    if (rwval < 0) {
+		perror("pixbustup WRITE ERROR");
+	    }
 	}
-	exit(0);
+	(void)close(fd);
+	printf("wrote %s\n", name);
+    }
+
+    return 0;
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

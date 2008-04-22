@@ -16,7 +16,7 @@ namespace brlcad {
   public:
     BRLCADBrepHandler();
     ~BRLCADBrepHandler();
-    
+
     int handleShell(bool isVoid, bool orient);
     int handleFace(bool orient, int surfIndex);
     int handleLoop(bool isOuter, int faceIndex);
@@ -30,13 +30,13 @@ namespace brlcad {
     int handleRuledSurface();
     int handleSurfaceOfRevolution(int line, int curve, double start, double end);
     int handleTabulatedCylinder();
-    int handleRationalBSplineSurface(int num_control[2], 
-				     int degree[2], 
-				     bool u_closed, 
-				     bool v_closed, 
-				     bool rational, 
-				     bool u_periodic, 
-				     bool v_periodic, 
+    int handleRationalBSplineSurface(int num_control[2],
+				     int degree[2],
+				     bool u_closed,
+				     bool v_closed,
+				     bool rational,
+				     bool u_periodic,
+				     bool v_periodic,
 				     int u_num_knots,
 				     int v_num_knots,
 				     double u_knots[],
@@ -48,7 +48,7 @@ namespace brlcad {
     int handleRightCircularCylindricalSurface();
     int handleRightCircularConicalSurface();
     int handleSphericalSurface();
-    int handleToroidalSurface();    
+    int handleToroidalSurface();
 
     int handleCircularArc(double radius, point_t center, vect_t normal, point_t start, point_t end);
     int handleCompositeCurve();
@@ -72,7 +72,7 @@ namespace brlcad {
 				   double* weights,
 				   double* ctl_points);
 
-    int handleOffsetCurve();    
+    int handleOffsetCurve();
 
     void write(const string& filename);
 
@@ -82,7 +82,7 @@ namespace brlcad {
     string geom_name;
     bool _written;
 
-    vector<ON_Geometry*> _objects;    
+    vector<ON_Geometry*> _objects;
     vector<int> _topology;
 
     ON_BrepFace&   face() { return _brep->m_F[_face]; }

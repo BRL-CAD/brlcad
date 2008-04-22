@@ -1236,10 +1236,8 @@ FsAddMountsToGlobResult(
 	    }
 	}
 	if (!found && dir) {
-	    int len, mlen;
-	    const char *path;
-	    const char *mount;
 	    Tcl_Obj *norm;
+	    int len, mlen;
 
 	    /*
 	     * We know mElt is absolute normalized and lies inside pathPtr, so
@@ -1247,9 +1245,11 @@ FsAddMountsToGlobResult(
 	     * i.e. the representation which is relative to pathPtr.
 	     */
 
-	    mount = Tcl_GetStringFromObj(mElt, &mlen);
 	    norm = Tcl_FSGetNormalizedPath(NULL, pathPtr);
 	    if (norm != NULL) {
+		const char *path, *mount;
+
+		mount = Tcl_GetStringFromObj(mElt, &mlen);
 		path = Tcl_GetStringFromObj(norm, &len);
 		if (path[len-1] == '/') {
 		    /*
@@ -1258,7 +1258,8 @@ FsAddMountsToGlobResult(
 
 		    len--;
 		}
-		mElt = TclNewFSPathObj(pathPtr, mount + len + 1, mlen - len);
+		len++; /* account for '/' in the mElt [Bug 1602539] */
+		mElt = TclNewFSPathObj(pathPtr, mount + len, mlen - len);
 		Tcl_ListObjAppendElement(NULL, resultPtr, mElt);
 	    }
 	    /*
@@ -1569,22 +1570,16 @@ TclGetOpenModeEx(
 	    mode = O_WRONLY|O_CREAT|O_TRUNC;
 	    break;
 	case 'a':
-	    /* [Bug 680143].
-	     * Added O_APPEND for proper automatic
-	     * seek-to-end-on-write by the OS.
+	    /*
+	     * Added O_APPEND for proper automatic seek-to-end-on-write by the
+	     * OS. [Bug 680143]
 	     */
+
 	    mode = O_WRONLY|O_CREAT|O_APPEND;
 	    *seekFlagPtr = 1;
 	    break;
 	default:
-	error:
-	    *seekFlagPtr = 0;
-	    *binaryPtr = 0;
-	    if (interp != NULL) {
-		Tcl_AppendResult(interp, "illegal access mode \"", modeString,
-			"\"", NULL);
-	    }
-	    return -1;
+	    goto error;
 	}
 	i=1;
 	while (i<3 && modeString[i]) {
@@ -1593,7 +1588,12 @@ TclGetOpenModeEx(
 	    }
 	    switch (modeString[i++]) {
 	    case '+':
-		mode &= ~(O_RDONLY|O_WRONLY);
+		/*
+		 * Must remove the O_APPEND flag so that the seek command
+		 * works. [Bug 1773127]
+		 */
+
+		mode &= ~(O_RDONLY|O_WRONLY|O_APPEND);
 		mode |= O_RDWR;
 		break;
 	    case 'b':
@@ -1607,6 +1607,15 @@ TclGetOpenModeEx(
 	    goto error;
 	}
 	return mode;
+
+    error:
+	*seekFlagPtr = 0;
+	*binaryPtr = 0;
+	if (interp != NULL) {
+	    Tcl_AppendResult(interp, "illegal access mode \"", modeString,
+		    "\"", NULL);
+	}
+	return -1;
     }
 
     /*
@@ -1746,7 +1755,7 @@ Tcl_FSEvalFileEx(
     const char *encodingName)	/* If non-NULL, then use this encoding for the
 				 * file. NULL means use the system encoding. */
 {
-    int result, length;
+    int length, result = TCL_ERROR;
     Tcl_StatBuf statBuf;
     Tcl_Obj *oldScriptFile;
     Interp *iPtr;
@@ -1755,25 +1764,21 @@ Tcl_FSEvalFileEx(
     Tcl_Obj *objPtr;
 
     if (Tcl_FSGetNormalizedPath(interp, pathPtr) == NULL) {
-	return TCL_ERROR;
+	return result;
     }
-
-    result = TCL_ERROR;
-    objPtr = Tcl_NewObj();
-    Tcl_IncrRefCount(objPtr);
 
     if (Tcl_FSStat(pathPtr, &statBuf) == -1) {
 	Tcl_SetErrno(errno);
 	Tcl_AppendResult(interp, "couldn't read file \"",
 		Tcl_GetString(pathPtr), "\": ", Tcl_PosixError(interp), NULL);
-	goto end;
+	return result;
     }
     chan = Tcl_FSOpenFileChannel(interp, pathPtr, "r", 0644);
     if (chan == (Tcl_Channel) NULL) {
 	Tcl_ResetResult(interp);
 	Tcl_AppendResult(interp, "couldn't read file \"",
 		Tcl_GetString(pathPtr), "\": ", Tcl_PosixError(interp), NULL);
-	goto end;
+	return result;
     }
 
     /*
@@ -1792,10 +1797,12 @@ Tcl_FSEvalFileEx(
 	if (Tcl_SetChannelOption(interp, chan, "-encoding", encodingName)
 		!= TCL_OK) {
 	    Tcl_Close(interp,chan);
-	    goto end;
+	    return result;
 	}
     }
 
+    objPtr = Tcl_NewObj();
+    Tcl_IncrRefCount(objPtr);
     if (Tcl_ReadChars(chan, objPtr, -1, 0) < 0) {
 	Tcl_Close(interp, chan);
 	Tcl_AppendResult(interp, "couldn't read file \"",
@@ -3805,7 +3812,7 @@ Tcl_FSSplitPath(
      */
 
     if (lenPtr != NULL) {
-	Tcl_ListObjLength(NULL, result, lenPtr);
+	TclListObjLength(NULL, result, lenPtr);
     }
     return result;
 }

@@ -1,7 +1,7 @@
 /*                           G E D . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2007 United States Government as represented by
+ * Copyright (c) 1993-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -21,60 +21,28 @@
  *
  * Mainline portion of the graphics editor
  *
- *  Functions -
- *	pr_prompt	print prompt
- *	main		Mainline portion of the graphics editor
- *	refresh		Internal routine to perform displaylist output writing
- *	log_event	Log an event in the log file
- *	mged_finish	Terminate with logging.  To be used instead of exit().
- *	quit		General Exit routine
- *	sig2		user interrupt catcher
- *	new_mats	derive inverse and editing matrices, as required
- *
- *  Authors -
- *	Michael John Muuss
- *	Charles M Kennedy
- *	Douglas A Gwyn
- *	Bob Suckling
- *	Gary Steven Moss
- *	Earl P Weaver
- *	Phil Dykstra
- *	Bob Parker
- *      Christopher Sean Morrison
- *
- *  Source -
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <errno.h>
 #include <string.h>
 #include <ctype.h>
 #include <signal.h>
 #include <time.h>
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-#ifdef HAVE_FCNTL_H
-#  include <fcntl.h>
-#endif
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
+#include "bio.h"
 
 #include "tcl.h"
 #include "tk.h"
 
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "raytrace.h"
+#include "dg.h"
 #include "mater.h"
 #include "libtermio.h"
 #include "db.h"
@@ -88,10 +56,9 @@
 #include "./cmd.h"
 #include "brlcad_version.h"
 
-
 char MGEDCopyRight_Notice[] = "@(#) \
 BRL-CAD is Open Source software. \
-This software is Copyright (c) 1985-2007 by the United States Government \
+This software is Copyright (c) 1985-2008 by the United States Government \
 as represented by the U.S. Army Research Laboratory.  All rights reserved.";
 
 
@@ -218,12 +185,12 @@ int mged_bomb_hook(genptr_t clientData, genptr_t str);
 void mged_view_obj_callback(genptr_t clientData, struct view_obj *vop);
 
 #ifdef USE_PROTOTYPES
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(__CYGWIN__)
 Tcl_FileProc stdin_input;
 Tcl_FileProc std_out_or_err;
 #else
-void stdin_input(ClientData clientData,int mask);
-void std_out_or_err(ClientData clientData,int mask);
+void stdin_input(ClientData clientData, int mask);
+void std_out_or_err(ClientData clientData, int mask);
 #endif
 #else
 void stdin_input();
@@ -255,68 +222,65 @@ main(int argc, char **argv)
     int	c;
     int	read_only_flag=0;
 
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(__CYGWIN__)
     pid_t	pid;
 #endif
     int	parent_pipe[2];
     int	use_pipe = 0;
-    int run_in_foreground=0;
+    int run_in_foreground=1;
 
     Tcl_Channel chan;
 
-#ifdef _WIN32
-    _fmode = _O_BINARY;
-    run_in_foreground=1;
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+    setmode(fileno(stderr), O_BINARY);
 #endif
 
     bu_setprogname(argv[0]);
 
-    while ((c = bu_getopt(argc, argv, "d:hficnrx:X:")) != EOF)
+    while ((c = bu_getopt(argc, argv, "d:hbicnrx:X:")) != EOF)
+    {
+	switch ( c )
 	{
-	    switch( c )
-		{
-		    case 'd':
-			dpy_string = bu_optarg;
-			break;
-		    case 'r':
-			read_only_flag = 1;
-			break;
-		    case 'n':		/* "not new" == "classic" */
-		    case 'c':
-#ifndef _WIN32
-			classic_mged = 1;
-#else
-			MessageBox(NULL,"-c OPTION NOT AVAILABLE","NOT SUPPORTED",MB_OK);
-#endif
-			break;
-		    case 'x':
-			sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
-			break;
-		    case 'X':
-			sscanf( bu_optarg, "%x", (unsigned int *)&bu_debug );
-			break;
-		    case 'f':
-			run_in_foreground = 1;  /* run in foreground */
-			break;
-		    default:
-			fprintf( stdout, "Unrecognized option (%c)\n", c );
-			/* Fall through to help */
-		    case 'h':
-			fprintf(stdout, "Usage:  %s [-c] [-d display] [-h] [-r] [-x#] [-X#] [database [command]]\n", argv[0]);
-			fflush(stdout);
-			return(1);
-		}
+	    case 'd':
+		dpy_string = bu_optarg;
+		break;
+	    case 'r':
+		read_only_flag = 1;
+		break;
+	    case 'n':		/* "not new" == "classic" */
+	    case 'c':
+		classic_mged = 1;
+		break;
+	    case 'x':
+		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
+		break;
+	    case 'X':
+		sscanf( bu_optarg, "%x", (unsigned int *)&bu_debug );
+		break;
+	    case 'b':
+		run_in_foreground = 0;  /* run in background */
+		break;
+	    default:
+		fprintf( stdout, "Unrecognized option (%c)\n", c );
+		/* Fall through to help */
+	    case 'h':
+		fprintf(stdout, "Usage:  %s [-b] [-c] [-d display] [-h] [-r] [-x#] [-X#] [database [command]]\n", argv[0]);
+		fflush(stdout);
+		return(1);
 	}
+    }
 
     argc -= (bu_optind - 1);
     argv += (bu_optind - 1);
 
     /* Identify ourselves if interactive */
-    if( argc <= 2 )  {
+    if ( argc <= 2 )  {
 	if (isatty(fileno(stdin)) && isatty(fileno(stdout)))
 	    interactive = 1;
 
-	if (interactive && classic_mged){
+	if (interactive && classic_mged) {
 	    fprintf(stdout, "%s\n", brlcad_ident("Geometry Editor (MGED)"));
 	    fflush(stdout);
 
@@ -324,7 +288,7 @@ main(int argc, char **argv)
 #ifndef COMMAND_LINE_EDITING
 #  define COMMAND_LINE_EDITING 1
 #endif
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(__CYGWIN__)
 		/* Set up for character-at-a-time terminal IO. */
 		cbreak_mode = COMMAND_LINE_EDITING;
 		save_Tty(fileno(stdin));
@@ -347,7 +311,7 @@ main(int argc, char **argv)
 #endif /* SIGPIPE && SIGINT */
 
 #ifdef HAVE_PIPE
-    if( !classic_mged && !run_in_foreground ) {
+    if ( !classic_mged && !run_in_foreground ) {
 	fprintf( stdout, "Initializing and backgrounding, please wait..." );
 	fflush( stdout );
 
@@ -358,7 +322,7 @@ main(int argc, char **argv)
 	}
 
 	pid = fork();
-	if( pid > 0 ) {
+	if ( pid > 0 ) {
 	    fd_set set;
 	    struct timeval timeout;
 	    int read_result;
@@ -391,7 +355,7 @@ main(int argc, char **argv)
 	    /* exit instead of mged_finish as this is the
 	     * parent process.
 	     */
-	    exit( 0 );
+	    bu_exit( 0, NULL );
 	}
     }
 #endif /* HAVE_PIPE */
@@ -400,7 +364,7 @@ main(int argc, char **argv)
      * Do not run any commands before here.
      * Do not use bu_log() or bu_malloc() before here.
      */
-    if( bu_avail_cpus() > 1 )  {
+    if ( bu_avail_cpus() > 1 )  {
 	rt_g.rtg_parallel = 1;
 	bu_semaphore_init( RT_SEM_LAST );
     }
@@ -412,14 +376,14 @@ main(int argc, char **argv)
     BU_LIST_INIT(&rt_g.rtg_headwdb.l);
     BU_LIST_INIT(&head_run_rt.l);
 
-    bzero((void *)&head_cmd_list, sizeof(struct cmd_list));
+    memset((void *)&head_cmd_list, 0, sizeof(struct cmd_list));
     BU_LIST_INIT(&head_cmd_list.l);
     bu_vls_init(&head_cmd_list.cl_name);
     bu_vls_init(&head_cmd_list.cl_more_default);
     bu_vls_strcpy(&head_cmd_list.cl_name, "mged");
     curr_cmd_list = &head_cmd_list;
 
-    bzero((void *)&head_dm_list, sizeof(struct dm_list));
+    memset((void *)&head_dm_list, 0, sizeof(struct dm_list));
     BU_LIST_INIT( &head_dm_list.l );
 
     BU_GETSTRUCT(curr_dm_list, dm_list);
@@ -505,7 +469,7 @@ main(int argc, char **argv)
     new_mats();
 
     mmenu_init();
-    btn_head_menu(0,0,0);
+    btn_head_menu(0, 0, 0);
     mged_link_vars(curr_dm_list);
 
 
@@ -523,14 +487,14 @@ main(int argc, char **argv)
     if (dpy_string == (char *)NULL)
 	dpy_string = getenv("DISPLAY");
 
-    if (interactive && !classic_mged){
+    if (interactive && !classic_mged) {
 	int status;
 	struct bu_vls vls;
 	struct bu_vls error;
 
 	bu_vls_init(&vls);
 	bu_vls_init(&error);
-	if(dpy_string != (char *)NULL)
+	if (dpy_string != (char *)NULL)
 	    bu_vls_printf(&vls, "loadtk %s", dpy_string);
 	else
 	    bu_vls_strcpy(&vls, "loadtk");
@@ -545,7 +509,7 @@ main(int argc, char **argv)
 	}
 
 	if (status != TCL_OK) {
-	    if( !run_in_foreground && use_pipe ) {
+	    if ( !run_in_foreground && use_pipe ) {
 		notify_parent_done(parent_pipe[1]);
 	    }
 	    bu_log("%s\nMGED Aborted.\n", bu_vls_addr(&error));
@@ -553,27 +517,29 @@ main(int argc, char **argv)
 	}
 	bu_vls_free(&error);
 
+#if !defined(_WIN32)
 	/* bring application to focus if needed (Mac OS X only) */
 	dm_applicationfocus();
+#endif
     }
 
-    if(argc >= 2){
+    if (argc >= 2) {
 	/* Open the database, attach a display manager */
 	/* Command line may have more than 2 args, opendb only wants 2 */
-	if(f_opendb( (ClientData)NULL, interp, 2, argv ) == TCL_ERROR) {
-	    if( !run_in_foreground && use_pipe ) {
+	if (f_opendb( (ClientData)NULL, interp, 2, argv ) == TCL_ERROR) {
+	    if ( !run_in_foreground && use_pipe ) {
 		notify_parent_done(parent_pipe[1]);
 	    }
 	    mged_finish(1);
 	}
+    } else {
+	(void)Tcl_Eval(interp, "opendb_callback nul");
     }
 
-    if( dbip != DBI_NULL && (read_only_flag || dbip->dbi_read_only) ) {
+    if ( dbip != DBI_NULL && (read_only_flag || dbip->dbi_read_only) ) {
 	dbip->dbi_read_only = 1;
 	bu_log( "Opened in READ ONLY mode\n" );
     }
-
-    pkg_init();
 
     /* --- Now safe to process commands. --- */
     if (interactive) {
@@ -586,7 +552,7 @@ main(int argc, char **argv)
 	 */
 
 	if (classic_mged) {
-	    if( !run_in_foreground && use_pipe ) {
+	    if ( !run_in_foreground && use_pipe ) {
 		notify_parent_done(parent_pipe[1]);
 	    }
 
@@ -609,7 +575,7 @@ main(int argc, char **argv)
 	     * parent process know that we are done initializing so
 	     * that it may exit.
 	     */
-	    if( !run_in_foreground && use_pipe ) {
+	    if ( !run_in_foreground && use_pipe ) {
 		notify_parent_done(parent_pipe[1]);
 	    }
 
@@ -618,12 +584,11 @@ main(int argc, char **argv)
 		    /* too late to fall back to classic, we forked and detached already */
 		    bu_log("Unable to initialize an MGED graphical user interface.\nTry using foreground (-f) or classic-mode (-c) options to MGED.\n");
 		    bu_log("%s\nMGED aborted.\n", Tcl_GetStringResult(interp));
-		    pkg_terminate();
 		    mged_finish(1);
 		}
 		bu_log("%s\nMGED unable to initialize gui, reverting to classic mode.\n", Tcl_GetStringResult(interp));
 		classic_mged=1;
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(__CYGWIN__)
 		cbreak_mode = COMMAND_LINE_EDITING;
 		save_Tty(fileno(stdin));
 #endif
@@ -651,9 +616,10 @@ main(int argc, char **argv)
 	    } /* status -- gui initialized */
 	} /* classic */
 
-    } else { /* !interactive */
+    } else {
+	/* !interactive */
 
-	if( !run_in_foreground && use_pipe ) {
+	if ( !run_in_foreground && use_pipe ) {
 	    notify_parent_done(parent_pipe[1]);
 	}
 
@@ -662,7 +628,7 @@ main(int argc, char **argv)
     /* --- Now safe to process geometry. --- */
 
     /* If this is an argv[] invocation, do it now */
-    if( argc > 2 )  {
+    if ( argc > 2 )  {
 	char *av[2];
 
 	av[0] = "q";
@@ -672,7 +638,7 @@ main(int argc, char **argv)
 	  Call cmdline instead of calling mged_cmd directly
 	  so that access to Tcl/Tk is possible.
 	*/
-	for(argc -= 2, argv += 2; argc; --argc, ++argv)
+	for (argc -= 2, argv += 2; argc; --argc, ++argv)
 	    bu_vls_printf(&input_str, "%s ", *argv);
 
 	cmdline(&input_str, TRUE);
@@ -682,17 +648,17 @@ main(int argc, char **argv)
 	/* NOTREACHED */
     }
 
-#ifndef _WIN32
-    if(classic_mged || !interactive){
+    if (classic_mged || !interactive) {
 
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(__CYGWIN__)
 	ClientData stdin_file = STDIN_FILENO;
+	chan = Tcl_MakeFileChannel(stdin_file, TCL_READABLE);
+	Tcl_CreateChannelHandler(chan, TCL_READABLE, stdin_input, stdin_file);
 #else
 	ClientData stdin_file = GetStdHandle(STD_INPUT_HANDLE);
-#endif
-
 	chan = Tcl_MakeFileChannel(stdin_file, TCL_READABLE);
-	Tcl_CreateChannelHandler(chan,TCL_READABLE, stdin_input, stdin_file);
+	Tcl_CreateChannelHandler(chan, TCL_READABLE, stdin_input, chan);
+#endif
 
 #ifdef SIGINT
 	(void)signal( SIGINT, SIG_IGN );
@@ -701,16 +667,13 @@ main(int argc, char **argv)
 	bu_vls_strcpy(&mged_prompt, MGED_PROMPT);
 	pr_prompt();
 
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(__CYGWIN__)
 	if (cbreak_mode) {
 	    set_Cbreak(fileno(stdin));
 	    clr_Echo(fileno(stdin));
 	}
 #endif
     } else {
-#else
-    {
-#endif
 	ClientData out, err;
 	struct bu_vls vls;
 
@@ -719,26 +682,63 @@ main(int argc, char **argv)
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
-#ifndef _WIN32
-	out = (ClientData)(size_t)pipe_out[0];
-	err = (ClientData)(size_t)pipe_err[0];
-#else
-	out = (ClientData)GetStdHandle(STD_OUTPUT_HANDLE);
-	err = (ClientData)GetStdHandle(STD_ERROR_HANDLE);
-#endif
+#if !defined(_WIN32) || defined(__CYGWIN__)
+	/* Redirect stdout */
+	(void)close(1);
+	(void)dup(pipe_out[1]);
+	(void)close(pipe_out[1]);
 
+	/* Redirect stderr */
+	(void)close(2);
+	(void)dup(pipe_err[1]);
+	(void)close(pipe_err[1]);
+
+	out = (ClientData)(size_t)pipe_out[0];
 	chan = Tcl_MakeFileChannel(out, TCL_READABLE);
 	Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, out);
+	err = (ClientData)(size_t)pipe_err[0];
 	chan = Tcl_MakeFileChannel(err, TCL_READABLE);
 	Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, err);
+#else
+	{
+	    HANDLE handle[2];
+	    SECURITY_ATTRIBUTES saAttr;
+
+	    saAttr.nLength = sizeof(SECURITY_ATTRIBUTES); 
+	    saAttr.bInheritHandle = FALSE; 
+	    saAttr.lpSecurityDescriptor = NULL;
+
+	    if (CreatePipe(&handle[0], &handle[1], &saAttr, 0)) {
+		chan = Tcl_GetStdChannel(TCL_STDOUT);
+		Tcl_UnregisterChannel(interp, chan);
+		chan = Tcl_MakeFileChannel(handle[1], TCL_WRITABLE);
+		Tcl_RegisterChannel(interp, chan);
+		Tcl_SetChannelOption(interp, chan, "-blocking", "false");
+		Tcl_SetChannelOption(interp, chan, "-buffering", "line");
+		chan = Tcl_MakeFileChannel(handle[0], TCL_READABLE);
+		Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, chan);
+	    }
+
+	    if (CreatePipe(&handle[0], &handle[1], &saAttr, 0)) {
+		chan = Tcl_GetStdChannel(TCL_STDERR);
+		Tcl_UnregisterChannel(interp, chan);
+		chan = Tcl_MakeFileChannel(handle[1], TCL_WRITABLE);
+		Tcl_RegisterChannel(interp, chan);
+		Tcl_SetChannelOption(interp, chan, "-blocking", "false");
+		Tcl_SetChannelOption(interp, chan, "-buffering", "line");
+		chan = Tcl_MakeFileChannel(handle[0], TCL_READABLE);
+		Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, chan);
+	    }
+	}
+#endif
     }
 
     mged_init_flag = 0;	/* all done with initialization */
 
     /****************   M A I N   L O O P   *********************/
-    while(1) {
+    while (1) {
 	/* This test stops optimizers from complaining about an infinite loop */
-	if( (rateflag = event_check( rateflag )) < 0 )  break;
+	if ( (rateflag = event_check( rateflag )) < 0 )  break;
 
 	/*
 	 * Cause the control portion of the displaylist to be
@@ -752,7 +752,7 @@ main(int argc, char **argv)
 void
 pr_prompt(void)
 {
-    if( interactive )
+    if ( interactive )
 	bu_log("%S", &mged_prompt);
 }
 
@@ -781,17 +781,17 @@ pr_beep(void)
  * (or an entire line if the terminal is not in cbreak mode.)
  */
 
-#ifndef _WIN32
 void
 stdin_input(ClientData clientData, int mask)
 {
     int count;
     char ch;
     struct bu_vls temp;
-#ifndef _WIN32
-    long fd = (long)clientData;
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    Tcl_Channel chan = (Tcl_Channel)clientData;
+    Tcl_DString ds;
 #else
-    HANDLE fd = (HANDLE)clientData;
+    long fd = (long)clientData;
 #endif
 
     /* When not in cbreak mode, just process an entire line of input, and
@@ -800,16 +800,27 @@ stdin_input(ClientData clientData, int mask)
     if (!cbreak_mode) {
 	bu_vls_init(&temp);
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	Tcl_DStringInit(&ds);
+	count = Tcl_Gets(chan, &ds);
+
+	if (count < 0)
+	    quit();
+
+	bu_vls_strcat(&input_str, Tcl_DStringValue(&ds));
+	Tcl_DStringFree(&ds);
+#else
 	/* Get line from stdin */
-	if( bu_vls_gets(&temp, stdin) < 0 )
+	if ( bu_vls_gets(&temp, stdin) < 0 )
 	    quit();				/* does not return */
 	bu_vls_vlscat(&input_str, &temp);
+#endif
 
 	/* If there are any characters already in the command string (left
 	   over from a CMD_MORE), then prepend them to the new input. */
 
 	/* If no input and a default is supplied then use it */
-	if(!bu_vls_strlen(&input_str) && bu_vls_strlen(&curr_cmd_list->cl_more_default))
+	if (!bu_vls_strlen(&input_str) && bu_vls_strlen(&curr_cmd_list->cl_more_default))
 	    bu_vls_printf(&input_str_prefix, "%s%S\n",
 			  bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
 			  &curr_cmd_list->cl_more_default);
@@ -824,7 +835,7 @@ stdin_input(ClientData clientData, int mask)
 
 	if (Tcl_CommandComplete(bu_vls_addr(&input_str_prefix))) {
 	    curr_cmd_list = &head_cmd_list;
-	    if(curr_cmd_list->cl_tie)
+	    if (curr_cmd_list->cl_tie)
 		curr_dm_list = curr_cmd_list->cl_tie;
 	    if (cmdline_hook != NULL) {
 		if ((*cmdline_hook)(&input_str))
@@ -853,6 +864,7 @@ stdin_input(ClientData clientData, int mask)
 	    /* Allow the user to hit ^C. */
 	    (void)signal( SIGINT, sig2 );
 	}
+
 	bu_vls_free(&temp);
 	return;
     }
@@ -865,7 +877,7 @@ stdin_input(ClientData clientData, int mask)
 	char buf[4096];
 	int index;
 #  ifdef _WIN32
-	ReadFile(fd, buf, 4096, &count, NULL);
+	count = Tcl_Read(chan, buf, 4096);
 #  else
 	count = read((int)fd, (void *)buf, 4096);
 #  endif
@@ -890,7 +902,7 @@ stdin_input(ClientData clientData, int mask)
 
 #ifdef TRY_STDIN_INPUT_HACK
 	/* Process everything in buf */
-	for(index = 0, ch = buf[index]; index < count; ch = buf[++index]){
+	for (index = 0, ch = buf[index]; index < count; ch = buf[++index]) {
 #endif
 	    mged_process_char(ch);
 #ifdef TRY_STDIN_INPUT_HACK
@@ -914,12 +926,12 @@ do_tab_expansion()
     bu_vls_init( &tab_expansion );
     bu_vls_printf( &tab_expansion, "tab_expansion {%s}", bu_vls_addr(&input_str) );
     ret = Tcl_Eval( interp, bu_vls_addr( &tab_expansion));
-    if( ret == TCL_OK ){
+    if ( ret == TCL_OK ) {
         result = Tcl_GetObjResult( interp );
         Tcl_ListObjIndex(interp, result, 0, &newCommand);
         Tcl_ListObjIndex(interp, result, 1, &matches);
         Tcl_ListObjLength(interp, matches, &numExpansions );
-        if( numExpansions > 1 ) {
+        if ( numExpansions > 1 ) {
             /* show the possible matches */
             bu_log( "\n%s\n", Tcl_GetString(matches));
             pr_prompt();
@@ -1006,7 +1018,7 @@ mged_process_char(char ch)
 	       over from a CMD_MORE), then prepend them to the new input. */
 
 	    /* If no input and a default is supplied then use it */
-	    if(!bu_vls_strlen(&input_str) && bu_vls_strlen(&curr_cmd_list->cl_more_default))
+	    if (!bu_vls_strlen(&input_str) && bu_vls_strlen(&curr_cmd_list->cl_more_default))
 		bu_vls_printf(&input_str_prefix, "%s%S\n",
 			      bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
 			      &curr_cmd_list->cl_more_default);
@@ -1027,11 +1039,15 @@ mged_process_char(char ch)
 	    /* If this forms a complete command (as far as the Tcl parser is
 	       concerned) then execute it. */
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	    /*XXX Nothing yet */
+#else
 	    if (Tcl_CommandComplete(bu_vls_addr(&input_str_prefix))) {
 		curr_cmd_list = &head_cmd_list;
-		if(curr_cmd_list->cl_tie)
+		if (curr_cmd_list->cl_tie)
 		    curr_dm_list = curr_cmd_list->cl_tie;
-		if (cmdline_hook) {  /* Command-line hooks don't do CMD_MORE */
+		if (cmdline_hook) {
+		    /* Command-line hooks don't do CMD_MORE */
 		    reset_Tty(fileno(stdin));
 
 		    if ((*cmdline_hook)(&input_str_prefix))
@@ -1069,6 +1085,7 @@ mged_process_char(char ch)
 		/* Allow the user to hit ^C */
 		(void)signal( SIGINT, sig2 );
 	    }
+#endif
 	    pr_prompt(); /* Print prompt for more input */
 	    input_str_index = 0;
 	    freshline = 1;
@@ -1238,44 +1255,45 @@ mged_process_char(char ch)
 	    escaped = bracketed = 0;
 	    break;
 	case CTRL_W:                   /* backward-delete-word */
-	    {
-		char *start;
-		char *curr;
-		int len;
+	{
+	    char *start;
+	    char *curr;
+	    int len;
 
-		start = bu_vls_addr(&input_str);
-		curr = start + input_str_index - 1;
+	    start = bu_vls_addr(&input_str);
+	    curr = start + input_str_index - 1;
 
-		/* skip spaces */
-		while(curr > start && *curr == ' ')
-		    --curr;
+	    /* skip spaces */
+	    while (curr > start && *curr == ' ')
+		--curr;
 
-		/* find next space */
-		while(curr > start && *curr != ' ')
-		    --curr;
+	    /* find next space */
+	    while (curr > start && *curr != ' ')
+		--curr;
 
-		bu_vls_init(&temp);
-		bu_vls_strcat(&temp, start+input_str_index);
+	    bu_vls_init(&temp);
+	    bu_vls_strcat(&temp, start+input_str_index);
 
-		if(curr == start)
-		    input_str_index = 0;
-		else
-		    input_str_index = curr - start + 1;
+	    if (curr == start)
+		input_str_index = 0;
+	    else
+		input_str_index = curr - start + 1;
 
-		len = bu_vls_strlen(&input_str);
-		bu_vls_trunc(&input_str, input_str_index);
-		pr_prompt();
-		bu_log("%S%S%*s", &input_str, &temp, len - input_str_index, SPACES);
-		pr_prompt();
-		bu_log("%S", &input_str);
-		bu_vls_vlscat(&input_str, &temp);
-		bu_vls_free(&temp);
-	    }
+	    len = bu_vls_strlen(&input_str);
+	    bu_vls_trunc(&input_str, input_str_index);
+	    pr_prompt();
+	    bu_log("%S%S%*s", &input_str, &temp, len - input_str_index, SPACES);
+	    pr_prompt();
+	    bu_log("%S", &input_str);
+	    bu_vls_vlscat(&input_str, &temp);
+	    bu_vls_free(&temp);
+	}
 
-	    escaped = bracketed = 0;
-	    break;
+	escaped = bracketed = 0;
+	break;
 	case 'd':
-	    if (escaped) {                /* delete-word */
+	    if (escaped) {
+		/* delete-word */
 		char *start;
 		char *curr;
 		int i;
@@ -1284,11 +1302,11 @@ mged_process_char(char ch)
 		curr = start + input_str_index;
 
 		/* skip spaces */
-		while(*curr != '\0' && *curr == ' ')
+		while (*curr != '\0' && *curr == ' ')
 		    ++curr;
 
 		/* find next space */
-		while(*curr != '\0' && *curr != ' ')
+		while (*curr != '\0' && *curr != ' ')
 		    ++curr;
 
 		i = curr - start;
@@ -1301,13 +1319,14 @@ mged_process_char(char ch)
 		bu_log("%S", &input_str);
 		bu_vls_vlscat(&input_str, &temp);
 		bu_vls_free(&temp);
-	    }else
+	    } else
 		mged_insert_char(ch);
 
 	    escaped = bracketed = 0;
 	    break;
 	case 'f':
-	    if (escaped) {                /* forward-word */
+	    if (escaped) {
+		/* forward-word */
 		char *start;
 		char *curr;
 
@@ -1315,11 +1334,11 @@ mged_process_char(char ch)
 		curr = start + input_str_index;
 
 		/* skip spaces */
-		while(*curr != '\0' && *curr == ' ')
+		while (*curr != '\0' && *curr == ' ')
 		    ++curr;
 
 		/* find next space */
-		while(*curr != '\0' && *curr != ' ')
+		while (*curr != '\0' && *curr != ' ')
 		    ++curr;
 
 		input_str_index = curr - start;
@@ -1330,13 +1349,14 @@ mged_process_char(char ch)
 		bu_log("%S", &input_str);
 		bu_vls_vlscat(&input_str, &temp);
 		bu_vls_free(&temp);
-	    }else
+	    } else
 		mged_insert_char(ch);
 
 	    escaped = bracketed = 0;
 	    break;
 	case 'b':
-	    if (escaped) {                /* backward-word */
+	    if (escaped) {
+		/* backward-word */
 		char *start;
 		char *curr;
 
@@ -1344,14 +1364,14 @@ mged_process_char(char ch)
 		curr = start + input_str_index - 1;
 
 		/* skip spaces */
-		while(curr > start && *curr == ' ')
+		while (curr > start && *curr == ' ')
 		    --curr;
 
 		/* find next space */
-		while(curr > start && *curr != ' ')
+		while (curr > start && *curr != ' ')
 		    --curr;
 
-		if(curr == start)
+		if (curr == start)
 		    input_str_index = 0;
 		else
 		    input_str_index = curr - start + 1;
@@ -1363,7 +1383,7 @@ mged_process_char(char ch)
 		bu_log("%S", &input_str);
 		bu_vls_vlscat(&input_str, &temp);
 		bu_vls_free(&temp);
-	    }else
+	    } else
 		mged_insert_char(ch);
 
 	    escaped = bracketed = 0;
@@ -1412,7 +1432,6 @@ mged_insert_char(char ch)
 	bu_vls_free(&temp);
     }
 }
-#endif
 
 
 /* Stuff a string to stdout while leaving the current command-line alone */
@@ -1421,7 +1440,7 @@ cmd_stuff_str(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     int i;
 
-    if(argc != 2){
+    if (argc != 2) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -1431,12 +1450,12 @@ cmd_stuff_str(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    if(classic_mged){
+    if (classic_mged) {
 	bu_log("\r%s\n", argv[1]);
 	pr_prompt();
 	bu_log("%s", bu_vls_addr(&input_str));
 	pr_prompt();
-	for(i = 0; i < input_str_index; ++i)
+	for (i = 0; i < input_str_index; ++i)
 	    bu_log("%c", bu_vls_addr(&input_str)[i]);
     }
 
@@ -1446,10 +1465,11 @@ cmd_stuff_str(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 void
 std_out_or_err(ClientData clientData, int mask)
 {
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(__CYGWIN__)
     int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
 #else
-    HANDLE fd = clientData;
+    Tcl_Channel chan = (Tcl_Channel)clientData;
+    Tcl_DString ds;
 #endif
     int count;
     struct bu_vls vls;
@@ -1458,13 +1478,16 @@ std_out_or_err(ClientData clientData, int mask)
 
     /* Get data from stdout or stderr */
 
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(__CYGWIN__)
     count = read((int)fd, line, RT_MAXLINE);
 #else
-    ReadFile(fd, line, RT_MAXLINE, &count, 0);
+    Tcl_DStringInit(&ds);
+    count = Tcl_Gets(chan, &ds);
+    strncpy(line, Tcl_DStringValue(&ds), count);
+    line[count] = '\0';
 #endif
 
-    if(count <= 0) {
+    if (count <= 0) {
 	if (count < 0) {
 	    perror("READ ERROR");
 	}
@@ -1536,7 +1559,7 @@ event_check( int non_blocking )
      *  Handle rate-based processing *
      *********************************/
     save_dm_list = curr_dm_list;
-    if( edit_rateflag_model_rotate ) {
+    if ( edit_rateflag_model_rotate ) {
 	struct bu_vls vls;
 	char save_coords;
 
@@ -1544,11 +1567,11 @@ event_check( int non_blocking )
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'm';
 
-	if(state == ST_S_EDIT){
+	if (state == ST_S_EDIT) {
 	    save_edflag = es_edflag;
-	    if(!SEDIT_ROTATE)
+	    if (!SEDIT_ROTATE)
 		es_edflag = SROT;
-	}else{
+	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
 	}
@@ -1566,12 +1589,12 @@ event_check( int non_blocking )
 
 	mged_variables->mv_coords = save_coords;
 
-	if(state == ST_S_EDIT)
+	if (state == ST_S_EDIT)
 	    es_edflag = save_edflag;
 	else
 	    edobj = save_edflag;
     }
-    if( edit_rateflag_object_rotate ) {
+    if ( edit_rateflag_object_rotate ) {
 	struct bu_vls vls;
 	char save_coords;
 
@@ -1579,11 +1602,11 @@ event_check( int non_blocking )
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'o';
 
-	if(state == ST_S_EDIT){
+	if (state == ST_S_EDIT) {
 	    save_edflag = es_edflag;
-	    if(!SEDIT_ROTATE)
+	    if (!SEDIT_ROTATE)
 		es_edflag = SROT;
-	}else{
+	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
 	}
@@ -1601,12 +1624,12 @@ event_check( int non_blocking )
 
 	mged_variables->mv_coords = save_coords;
 
-	if(state == ST_S_EDIT)
+	if (state == ST_S_EDIT)
 	    es_edflag = save_edflag;
 	else
 	    edobj = save_edflag;
     }
-    if( edit_rateflag_view_rotate ) {
+    if ( edit_rateflag_view_rotate ) {
 	struct bu_vls vls;
 	char save_coords;
 
@@ -1614,11 +1637,11 @@ event_check( int non_blocking )
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'v';
 
-	if(state == ST_S_EDIT){
+	if (state == ST_S_EDIT) {
 	    save_edflag = es_edflag;
-	    if(!SEDIT_ROTATE)
+	    if (!SEDIT_ROTATE)
 		es_edflag = SROT;
-	}else{
+	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
 	}
@@ -1636,12 +1659,12 @@ event_check( int non_blocking )
 
 	mged_variables->mv_coords = save_coords;
 
-	if(state == ST_S_EDIT)
+	if (state == ST_S_EDIT)
 	    es_edflag = save_edflag;
 	else
 	    edobj = save_edflag;
     }
-    if( edit_rateflag_model_tran ) {
+    if ( edit_rateflag_model_tran ) {
 	char save_coords;
 	struct bu_vls vls;
 
@@ -1649,11 +1672,11 @@ event_check( int non_blocking )
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'm';
 
-	if(state == ST_S_EDIT){
+	if (state == ST_S_EDIT) {
 	    save_edflag = es_edflag;
-	    if(!SEDIT_TRAN)
+	    if (!SEDIT_TRAN)
 		es_edflag = STRANS;
-	}else{
+	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_XY;
 	}
@@ -1670,12 +1693,12 @@ event_check( int non_blocking )
 
 	mged_variables->mv_coords = save_coords;
 
-	if(state == ST_S_EDIT)
+	if (state == ST_S_EDIT)
 	    es_edflag = save_edflag;
 	else
 	    edobj = save_edflag;
     }
-    if( edit_rateflag_view_tran ) {
+    if ( edit_rateflag_view_tran ) {
 	char save_coords;
 	struct bu_vls vls;
 
@@ -1683,11 +1706,11 @@ event_check( int non_blocking )
 	save_coords = mged_variables->mv_coords;
 	mged_variables->mv_coords = 'v';
 
-	if(state == ST_S_EDIT){
+	if (state == ST_S_EDIT) {
 	    save_edflag = es_edflag;
-	    if(!SEDIT_TRAN)
+	    if (!SEDIT_TRAN)
 		es_edflag = STRANS;
-	}else{
+	} else {
 	    save_edflag = edobj;
 	    edobj = BE_O_XY;
 	}
@@ -1704,21 +1727,21 @@ event_check( int non_blocking )
 
 	mged_variables->mv_coords = save_coords;
 
-	if(state == ST_S_EDIT)
+	if (state == ST_S_EDIT)
 	    es_edflag = save_edflag;
 	else
 	    edobj = save_edflag;
     }
-    if( edit_rateflag_scale ) {
+    if ( edit_rateflag_scale ) {
 	struct bu_vls vls;
 
-	if(state == ST_S_EDIT){
+	if (state == ST_S_EDIT) {
 	    save_edflag = es_edflag;
-	    if(!SEDIT_SCALE)
+	    if (!SEDIT_SCALE)
 		es_edflag = SSCALE;
-	}else{
+	} else {
 	    save_edflag = edobj;
-	    if(!OEDIT_SCALE)
+	    if (!OEDIT_SCALE)
 		edobj = BE_O_SCALE;
 	}
 
@@ -1729,19 +1752,19 @@ event_check( int non_blocking )
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
-	if(state == ST_S_EDIT)
+	if (state == ST_S_EDIT)
 	    es_edflag = save_edflag;
 	else
 	    edobj = save_edflag;
     }
 
-    FOR_ALL_DISPLAYS(p, &head_dm_list.l){
-	if(!p->dml_owner)
+    FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
+	if (!p->dml_owner)
 	    continue;
 
 	curr_dm_list = p;
 
-	if( view_state->vs_rateflag_model_rotate ) {
+	if ( view_state->vs_rateflag_model_rotate ) {
 	    struct bu_vls vls;
 
 	    non_blocking++;
@@ -1755,7 +1778,7 @@ event_check( int non_blocking )
 	    Tcl_Eval(interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	}
-	if( view_state->vs_rateflag_model_tran ) {
+	if ( view_state->vs_rateflag_model_tran ) {
 	    struct bu_vls vls;
 
 	    non_blocking++;
@@ -1768,7 +1791,7 @@ event_check( int non_blocking )
 	    Tcl_Eval(interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	}
-	if( view_state->vs_rateflag_rotate )  {
+	if ( view_state->vs_rateflag_rotate )  {
 	    struct bu_vls vls;
 
 	    non_blocking++;
@@ -1782,7 +1805,7 @@ event_check( int non_blocking )
 	    Tcl_Eval(interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	}
-	if( view_state->vs_rateflag_tran )  {
+	if ( view_state->vs_rateflag_tran )  {
 	    struct bu_vls vls;
 
 	    non_blocking++;
@@ -1795,7 +1818,7 @@ event_check( int non_blocking )
 	    Tcl_Eval(interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	}
-	if( view_state->vs_rateflag_scale )  {
+	if ( view_state->vs_rateflag_scale )  {
 	    struct bu_vls vls;
 
 	    non_blocking++;
@@ -1870,25 +1893,24 @@ refresh(void)
 	if (mapped && dirty) {
 	    dirty = 0;
 	    do_time = 1;
-	    VMOVE(geometry_default_color,color_scheme->cs_geo_def);
+	    VMOVE(geometry_default_color, color_scheme->cs_geo_def);
 
-	    if(dbip != DBI_NULL){
-		if(do_overlay){
+	    if (dbip != DBI_NULL) {
+		if (do_overlay) {
 		    bu_vls_trunc(&overlay_vls, 0);
 		    create_text_overlay(&overlay_vls);
 		    do_overlay = 0;
 		}
 
 		/* XXX VR hack */
-		if( viewpoint_hook )  (*viewpoint_hook)();
+		if ( viewpoint_hook )  (*viewpoint_hook)();
 	    }
 
-	    if( mged_variables->mv_predictor )
+	    if ( mged_variables->mv_predictor )
 		predictor_frame();
 
 	    DM_DRAW_BEGIN(dmp);	/* update displaylist prolog */
 
-#ifndef _WIN32
 	    if (dbip != DBI_NULL) {
 		/* do framebuffer underlay */
 		if (mged_variables->mv_fb && !mged_variables->mv_fb_overlay) {
@@ -1970,69 +1992,16 @@ refresh(void)
 			       color_scheme->cs_center_dot[2], 1, 1.0);
 		DM_DRAW_POINT_2D(dmp, 0.0, 0.0);
 	    }
-#else
-	    if (dbip != DBI_NULL) {
-		/*  Draw each solid in it's proper place on the screen
-		 *  by applying zoom, rotation, & translation.
-		 *  Calls DM_LOADMATRIX() and DM_DRAW_VLIST().
-		 */
-
-		if (dmp->dm_stereo == 0 ||
-		    mged_variables->mv_eye_sep_dist <= 0) {
-		    /* Normal viewing */
-		    dozoom(0);
-		} else {
-		    /* Stereo viewing */
-		    dozoom(1);
-		    dozoom(2);
-		}
-
-		/* Restore to non-rotated, full brightness */
-		DM_NORMAL(dmp);
-
-		if (rubber_band->rb_active || rubber_band->rb_draw)
-		    draw_rect();
-
-		if (grid_state->gr_draw)
-		    draw_grid();
-
-		/* Compute and display angle/distance cursor */
-		if (adc_state->adc_draw)
-		    adcursor();
-
-		if (axes_state->ax_view_draw)
-		    draw_v_axes();
-
-		if (axes_state->ax_model_draw)
-		    draw_m_axes();
-
-		if (axes_state->ax_edit_draw &&
-		    (state == ST_S_EDIT || state == ST_O_EDIT))
-		    draw_e_axes();
-
-		/* Display titles, etc., if desired */
-		bu_vls_strcpy(&tmp_vls, bu_vls_addr(&overlay_vls));
-		dotitles(&tmp_vls);
-		bu_vls_trunc(&tmp_vls, 0);
-
-		/* Draw center dot */
-		DM_SET_FGCOLOR(dmp,
-			       color_scheme->cs_center_dot[0],
-			       color_scheme->cs_center_dot[1],
-			       color_scheme->cs_center_dot[2], 1, 1.0);
-		DM_DRAW_POINT_2D(dmp, 0.0, 0.0);
-	    }
-#endif
 
 	    DM_DRAW_END(dmp);
 	}
     }
 
     /* a frame was drawn */
-    if(do_time){
+    if (do_time) {
 	(void)rt_get_timer( (struct bu_vls *)0, &elapsed_time );
 	/* Only use reasonable measurements */
-	if( elapsed_time > 1.0e-5 && elapsed_time < 30 )  {
+	if ( elapsed_time > 1.0e-5 && elapsed_time < 30 )  {
 	    /* Smoothly transition to new speed */
 	    frametime = 0.9 * frametime + 0.1 * elapsed_time;
 	}
@@ -2087,7 +2056,7 @@ log_event(char *event, char *arg)
 		  dmp->dm_name,
 		  uname,
 		  arg
-		  );
+	);
 
 #ifdef _WIN32
     logfd = open( LOGFILE, _O_WRONLY|_O_APPEND|O_CREAT, _S_IREAD|_S_IWRITE );
@@ -2130,7 +2099,7 @@ mged_finish(int exitcode)
     log_event( "CEASE", place );
 
     /* Release all displays */
-    FOR_ALL_DISPLAYS(p, &head_dm_list.l){
+    FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
 	curr_dm_list = p;
 
 	if (curr_dm_list && dmp) {
@@ -2165,14 +2134,12 @@ mged_finish(int exitcode)
 
     /* XXX should deallocate libbu semaphores */
 
-    pkg_terminate();
-
     mged_global_variable_teardown(interp);
 
     /* 8.5 seems to have some bugs in their reference counting */
     /* Tcl_DeleteInterp(interp); */
 
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(__CYGWIN__)
     if (cbreak_mode > 0)
 	reset_Tty(fileno(stdin));
 #endif
@@ -2220,7 +2187,7 @@ sig3(int sig)
 void
 reset_input_strings()
 {
-    if(BU_LIST_IS_HEAD(curr_cmd_list, &head_cmd_list.l)){
+    if (BU_LIST_IS_HEAD(curr_cmd_list, &head_cmd_list.l)) {
 	/* Truncate input string */
 	bu_vls_trunc(&input_str, 0);
 	bu_vls_trunc(&input_str_prefix, 0);
@@ -2231,7 +2198,7 @@ reset_input_strings()
 	bu_vls_strcpy(&mged_prompt, MGED_PROMPT);
 	bu_log("\n");
 	pr_prompt();
-    }else{
+    } else {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -2262,8 +2229,8 @@ new_edit_mats(void)
     struct dm_list *save_dm_list;
 
     save_dm_list = curr_dm_list;
-    FOR_ALL_DISPLAYS(p, &head_dm_list.l){
-	if(!p->dml_owner)
+    FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
+	if (!p->dml_owner)
 	    continue;
 
 	curr_dm_list = p;
@@ -2313,14 +2280,14 @@ do_rc(void)
 #define ENVRC	"MGED_RCFILE"
 #define RCFILE	".mgedrc"
 
-    if( (path = getenv(ENVRC)) != (char *)NULL ) {
+    if ( (path = getenv(ENVRC)) != (char *)NULL ) {
 	if ((fp = fopen(path, "r")) != NULL ) {
 	    bu_vls_strcpy( &str, path );
 	}
     }
 
-    if( !fp ) {
-	if( (path = getenv("HOME")) != (char *)NULL )  {
+    if ( !fp ) {
+	if ( (path = getenv("HOME")) != (char *)NULL )  {
 	    bu_vls_strcpy( &str, path );
 	    bu_vls_strcat( &str, "/" );
 	    bu_vls_strcat( &str, RCFILE );
@@ -2329,35 +2296,35 @@ do_rc(void)
 	}
     }
 
-    if( !fp ) {
-	if( (fp = fopen( RCFILE, "r" )) != NULL )  {
+    if ( !fp ) {
+	if ( (fp = fopen( RCFILE, "r" )) != NULL )  {
 	    bu_vls_strcpy( &str, RCFILE );
 	}
     }
 
     /* At this point, if none of the above attempts panned out, give up. */
 
-    if( !fp ){
+    if ( !fp ) {
 	bu_vls_free(&str);
 	return -1;
     }
 
     bogus = 0;
-    while( !feof(fp) ) {
+    while ( !feof(fp) ) {
 	char buf[80];
 
 	/* Get beginning of line */
 	bu_fgets( buf, 80, fp );
 	/* If the user has a set command with an equal sign, remember to warn */
-	if( strstr(buf, "set") != NULL )
-	    if( strchr(buf, '=') != NULL ){
+	if ( strstr(buf, "set") != NULL )
+	    if ( strchr(buf, '=') != NULL ) {
 		bogus = 1;
 		break;
 	    }
     }
 
     fclose( fp );
-    if( bogus ) {
+    if ( bogus ) {
 	bu_log("\nWARNING: The new format of the \"set\" command is:\n");
 	bu_log("    set varname value\n");
 	bu_log("If you are setting variables in your %s, you will ", RCFILE);
@@ -2365,7 +2332,7 @@ do_rc(void)
     }
     if (Tcl_EvalFile( interp, bu_vls_addr(&str) ) != TCL_OK) {
 	bu_log("Error reading %s:\n%s\n", RCFILE,
-	       Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
+	       Tcl_GetVar(interp, "errorInfo", TCL_GLOBAL_ONLY) );
     }
 
     bu_vls_free(&str);
@@ -2390,10 +2357,10 @@ do_rc(void)
  */
 int
 f_opendb(
-	 ClientData clientData,
-	 Tcl_Interp *interp,
-	 int	argc,
-	 char	**argv)
+    ClientData clientData,
+    Tcl_Interp *interp,
+    int	argc,
+    char	**argv)
 {
     struct db_i		*save_dbip = DBI_NULL;
     struct mater		*save_materp = MATER_NULL;
@@ -2402,10 +2369,10 @@ f_opendb(
     int			create_new_db = 0;
 
 
-    if( argc <= 1 )  {
+    if ( argc <= 1 )  {
 
 	/* Invoked without args, return name of current database */
-	if( dbip != DBI_NULL )  {
+	if ( dbip != DBI_NULL )  {
 	    Tcl_AppendResult(interp, dbip->dbi_filename, (char *)NULL);
 	    return TCL_OK;
 	}
@@ -2416,7 +2383,7 @@ f_opendb(
 
     bu_vls_init(&vls);
 
-    if(3 < argc || (strlen(argv[1]) == 0)){
+    if (3 < argc || (strlen(argv[1]) == 0)) {
 	bu_vls_printf(&vls, "help opendb");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -2425,9 +2392,9 @@ f_opendb(
 
     bu_vls_init(&msg);
 
-    if(argc == 3 &&
-       strcmp("y", argv[2]) && strcmp("Y", argv[2]) &&
-       strcmp("n", argv[2]) && strcmp("N", argv[2])){
+    if (argc == 3 &&
+	strcmp("y", argv[2]) && strcmp("Y", argv[2]) &&
+	strcmp("n", argv[2]) && strcmp("N", argv[2])) {
 	bu_vls_printf(&vls, "help opendb");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -2441,34 +2408,38 @@ f_opendb(
     rt_material_head = MATER_NULL;
 
     /* Get input file */
-    if( ((dbip = db_open( argv[1], "r+w" )) == DBI_NULL ) &&
-	((dbip = db_open( argv[1], "r"   )) == DBI_NULL ) )  {
+    if ( ((dbip = db_open( argv[1], "r+w" )) == DBI_NULL ) &&
+	 ((dbip = db_open( argv[1], "r"   )) == DBI_NULL ) )  {
 	char line[128];
 
 	/*
 	 * Check to see if we can access the database
 	 */
-	if ((access(argv[1], R_OK) != 0 || access(argv[1], W_OK) != 0)  && errno != ENOENT) {
-	    perror(argv[1]);
+	if (bu_file_exists(argv[1])) {
+	    if (!bu_file_readable(argv[1])) {
+		bu_log("ERROR: Unable to read from %s\n", argv[1]);
+		return TCL_ERROR;
+	    }
+	    bu_log("ERROR: Unable to open %s as geometry database file \n", argv[1]);
 	    return TCL_ERROR;
 	}
 
 	/* File does not exist */
 	if (interactive) {
-	    if(mged_init_flag){
-		if(classic_mged){
+	    if (mged_init_flag) {
+		if (classic_mged) {
 		    bu_log("Create new database (y|n)[n]? ");
 		    (void)bu_fgets(line, sizeof(line), stdin);
-		    if( line[0] != 'y' && line[0] != 'Y' ) {
+		    if ( line[0] != 'y' && line[0] != 'Y' ) {
 			bu_log("Warning: no database is currently opened!\n");
 			bu_vls_free(&vls);
 			bu_vls_free(&msg);
 			return TCL_OK;
 		    }
-		} else{
+		} else {
 		    int status;
 
-		    if(dpy_string != (char *)NULL)
+		    if (dpy_string != (char *)NULL)
 			bu_vls_printf(&vls, "cad_dialog .createdb %s \"Create New Database?\" \"Create new database named %s?\" \"\" 0 Yes No Quit",
 				      dpy_string, argv[1]);
 		    else
@@ -2477,21 +2448,22 @@ f_opendb(
 
 		    status = Tcl_Eval(interp, bu_vls_addr(&vls));
 
-		    if(status != TCL_OK || Tcl_GetStringResult(interp)[0] == '2') {
+		    if (status != TCL_OK || Tcl_GetStringResult(interp)[0] == '2') {
 			bu_vls_free(&vls);
 			bu_vls_free(&msg);
 			return TCL_ERROR;
 		    }
 
-		    if(Tcl_GetStringResult(interp)[0] == '1') {
+		    if (Tcl_GetStringResult(interp)[0] == '1') {
 			bu_log("opendb: no database is currently opened!\n");
 			bu_vls_free(&vls);
 			bu_vls_free(&msg);
 			return TCL_OK;
 		    }
 		}
-	    } else { /* not initializing mged */
-		if(argc == 2){
+	    } else {
+		/* not initializing mged */
+		if (argc == 2) {
 		    /* need to reset this before returning */
 		    dbip = save_dbip;
 		    rt_material_head = save_materp;
@@ -2503,7 +2475,7 @@ f_opendb(
 		    return TCL_ERROR;
 		}
 
-		if( *argv[2] != 'y' && *argv[2] != 'Y' ){
+		if ( *argv[2] != 'y' && *argv[2] != 'Y' ) {
 		    dbip = save_dbip; /* restore previous database */
 		    rt_material_head = save_materp;
 		    bu_vls_free(&vls);
@@ -2527,7 +2499,7 @@ f_opendb(
 		return TCL_OK;
 	    }
 
-	    Tcl_AppendResult(interp, "opendb: failed to create ", argv[1], "\n",\
+	    Tcl_AppendResult(interp, "opendb: failed to create ", argv[1], "\n", \
 			     (char *)NULL);
 	    if (dbip == DBI_NULL)
 		Tcl_AppendResult(interp, "opendb: no database is currently opened!", \
@@ -2547,7 +2519,7 @@ f_opendb(
     }
 
     /* close out the old dbip */
-    if( save_dbip )  {
+    if ( save_dbip )  {
 	struct db_i *new_dbip;
 	struct mater *new_materp;
 
@@ -2576,14 +2548,14 @@ f_opendb(
 	}
     }
 
-    if( dbip->dbi_read_only )
+    if ( dbip->dbi_read_only )
 	bu_vls_printf(&msg, "%s: READ ONLY\n", dbip->dbi_filename);
 
     /* Quick -- before he gets away -- write a logfile entry! */
     log_event( "START", argv[1] );
 
     /* Provide LIBWDB C access to the on-disk database */
-    if( (wdbp = wdb_dbopen( dbip, RT_WDB_TYPE_DB_DISK )) == RT_WDB_NULL )  {
+    if ( (wdbp = wdb_dbopen( dbip, RT_WDB_TYPE_DB_DISK )) == RT_WDB_NULL )  {
 	Tcl_AppendResult(interp, "wdb_dbopen() failed?\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -2595,7 +2567,7 @@ f_opendb(
     if (wdb_init_obj(interp, wdbp, MGED_DB_NAME) != TCL_OK) {
 	bu_vls_printf(&msg, "%s\n%s\n",
 		      Tcl_GetStringResult(interp),
-		      Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
+		      Tcl_GetVar(interp, "errorInfo", TCL_GLOBAL_ONLY) );
 	Tcl_AppendResult(interp, bu_vls_addr(&msg), (char *)NULL);
 	bu_vls_free(&vls);
 	bu_vls_free(&msg);
@@ -2606,7 +2578,7 @@ f_opendb(
     if (wdb_create_cmd(interp, wdbp, MGED_DB_NAME) != TCL_OK) {
 	bu_vls_printf(&msg, "%s\n%s\n",
 		      Tcl_GetStringResult(interp),
-		      Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
+		      Tcl_GetVar(interp, "errorInfo", TCL_GLOBAL_ONLY) );
 	Tcl_AppendResult(interp, bu_vls_addr(&msg), (char *)NULL);
 	bu_vls_free(&vls);
 	bu_vls_free(&msg);
@@ -2619,7 +2591,7 @@ f_opendb(
     if (Tcl_Eval( interp, bu_vls_addr(&vls) ) != TCL_OK) {
 	bu_vls_printf(&msg, "%s\n%s\n",
 		      Tcl_GetStringResult(interp),
-		      Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
+		      Tcl_GetVar(interp, "errorInfo", TCL_GLOBAL_ONLY) );
 	Tcl_AppendResult(interp, bu_vls_addr(&msg), (char *)NULL);
 	bu_vls_free(&vls);
 	bu_vls_free(&msg);
@@ -2679,19 +2651,6 @@ f_opendb(
     bu_vls_free(&vls);
     bu_vls_free(&msg);
 
-#ifdef _WIN32
-    /*XXX
-     *    This combined with the mged.bat (which contains "mged.exe 2>&1 nul")
-     *    causes Windows to pass the stdout/stderr to mged's command window.
-     *    There must be a better way, but, I've run out of time (for now).
-     */
-    if (!strcmp(argv[1], "nul")) {
-	Tcl_Eval(interp, "rename db \"\"; rename .inmem \"\"");
-	dbip = DBI_NULL;
-	rt_material_head = MATER_NULL;
-    }
-#endif
-
     return TCL_OK;
 }
 
@@ -2704,14 +2663,14 @@ f_opendb(
  */
 int
 f_closedb(
-	  ClientData clientData,
-	  Tcl_Interp *interp,
-	  int	argc,
-	  char	**argv)
+    ClientData clientData,
+    Tcl_Interp *interp,
+    int	argc,
+    char	**argv)
 {
     char *av[2];
 
-    if( argc != 1 )  {
+    if ( argc != 1 )  {
 	Tcl_Eval(interp, "help closedb");
 	return TCL_ERROR;
     }
@@ -2775,8 +2734,8 @@ mged_bomb_hook(genptr_t clientData, genptr_t str)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

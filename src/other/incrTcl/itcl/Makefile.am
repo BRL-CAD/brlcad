@@ -13,14 +13,10 @@ EXTRA_DIST = \
 	aclocal.m4 \
 	itclConfig.sh.in \
 	license.terms \
-	mac \
 	tests \
 	win
 
 DISTCLEANFILES = pkgIndex.tcl
-
-MAINTAINERCLEANFILES = Makefile.in
-
 
 include $(top_srcdir)/misc/Makefile.defs
 

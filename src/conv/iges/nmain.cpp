@@ -8,10 +8,9 @@ int
 main(int argc, char** argv) {
   cout << argc << endl;
   if (argc != 3) {
-    cerr << "iges <iges_filename> <output_filename>" << endl;
-    exit(0);
-  } 
-  
+    bu_exit(0, "iges <iges_filename> <output_filename>\n");
+  }
+
   string file(argv[1]);
   IGES iges(file);
 
@@ -19,6 +18,6 @@ main(int argc, char** argv) {
   iges.readBreps(&bh);
   string out(argv[2]);
   bh.write(out);
-  
+
   return 0;
 }

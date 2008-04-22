@@ -1,7 +1,7 @@
 /*                  S H _ B I L L B O A R D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,6 +24,7 @@
  *	6) Edit shaders.tcl and comb.tcl in the ../tclscripts/mged directory to
  *		add a new gui for this shader.
  */
+
 #include "common.h"
 
 #include <stdlib.h>
@@ -32,7 +33,6 @@
 #include <string.h>
 #include <math.h>
 
-#include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtgeom.h"
@@ -115,7 +115,7 @@ struct bu_structparse bbd_print_tab[] = {
     {"",    0, (char *)0, 0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 struct bu_structparse bbd_parse_tab[] = {
-    {"i",bu_byteoffset(bbd_print_tab[0]), "bbd_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
+    {"i", bu_byteoffset(bbd_print_tab[0]), "bbd_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
     {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
 };
 
@@ -150,9 +150,9 @@ void new_image(register const struct bu_structparse	*sdp,	/*struct desc*/
     BU_GETSTRUCT(bbdi, bbd_img);
 
     bbdi->img_mf = bu_open_mapped_file_with_path(
-						 bbd_sp->rtip->rti_dbip->dbi_filepath,
-						 bu_vls_addr(&bbd_sp->img_filename),
-						 NULL);
+	bbd_sp->rtip->rti_dbip->dbi_filepath,
+	bu_vls_addr(&bbd_sp->img_filename),
+	NULL);
 
     if (!bbdi->img_mf) {
 	bu_log("error opening image %s\n", bu_vls_addr(&bbd_sp->img_filename));
@@ -186,7 +186,7 @@ bbd_setup( struct region *rp,
 	   char **dpp, /* pointer to reg_udata in *rp */
 	   struct mfuncs *mfp,
 	   struct rt_i *rtip
-	   )
+    )
 {
     register struct bbd_specific	*bbd_sp;
     struct rt_db_internal intern;
@@ -228,7 +228,7 @@ bbd_setup( struct region *rp,
     *dpp = (char *)bbd_sp;
 
     /* initialize the default values for the shader */
-    memcpy(bbd_sp, &bbd_defaults, sizeof(struct bbd_specific) );
+    memcpy(bbd_sp, &bbd_defaults, sizeof(struct bbd_specific));
     bu_vls_init(&bbd_sp->img_filename);
     BU_LIST_INIT(&bbd_sp->imgs);
     bbd_sp->rtip = rtip; /* because new_image() needs this */
@@ -340,7 +340,7 @@ plot_ray_img(struct application	*ap,
 
     sprintf(name, "bbd_%d.pl", plot_num++);
     bu_log("plotting %s\n", name);
-    if ((pfd = fopen(name, "w")) == (FILE *)NULL) {
+    if ((pfd = fopen(name, "wb")) == (FILE *)NULL) {
 	bu_bomb("can't open plot file\n");
     }
 
@@ -461,8 +461,8 @@ do_ray_image(struct application	*ap,
     tot = (uhi - ulo + 1) * (vhi - vlo + 1); /* total # of pixels */
     color_count = 0; /* */
     VSETALL(cum_color, 0.0);
-    for (v = vlo ; v <= vhi ; v++) {
-	for (u = ulo ; u <= uhi ; u++) {
+    for (v = vlo; v <= vhi; v++) {
+	for (u = ulo; u <= uhi; u++) {
 	    color = &pixels[v*bi->img_width*3 + u*3];
 	    val = color[0]+color[1]+color[2];
 	    if (val > bbd_sp->img_threshold) {
@@ -566,14 +566,14 @@ bbd_render( struct application *ap, struct partition *pp, struct shadework *swp,
 	id[i].index = i;
 	id[i].bi = bi;
 	id[i].status = bn_isect_line3_plane(&id[i].dist,
-					 ap->a_ray.r_pt, ap->a_ray.r_dir,
-					 bi->img_plane, &ap->a_rt_i->rti_tol);
+					    ap->a_ray.r_pt, ap->a_ray.r_dir,
+					    bi->img_plane, &ap->a_rt_i->rti_tol);
 	i++;
     }
 
     qsort(id, bbd_sp->img_count, sizeof(id[0]), &imgdist_compare);
 
-    for (i=0 ; i < bbd_sp->img_count && swp->sw_transmit > 0.0 ; i++) {
+    for (i=0; i < bbd_sp->img_count && swp->sw_transmit > 0.0; i++) {
 	if (id[i].status > 0) do_ray_image(ap, pp, swp, bbd_sp, id[i].bi, id[i].dist);
     }
     if (rdebug&RDEBUG_SHADE) {
@@ -600,8 +600,8 @@ bbd_render( struct application *ap, struct partition *pp, struct shadework *swp,
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

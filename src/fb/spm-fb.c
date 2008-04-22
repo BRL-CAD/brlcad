@@ -1,7 +1,7 @@
 /*                        S P M - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2007 United States Government as represented by
+ * Copyright (c) 1986-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,24 +20,14 @@
  */
 /** @file spm-fb.c
  *
- *  Author -
- *	Phil Dykstra
- *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
+#include "bio.h"
 
-#include "machine.h"
 #include "bu.h"
 #include "fb.h"
 #include "spm.h"
@@ -63,51 +53,51 @@ Usage: spm-fb [-h -s] [-F framebuffer]\n\
 int
 get_args(int argc, register char **argv)
 {
-	register int c;
+    register int c;
 
-	while ( (c = bu_getopt( argc, argv, "hF:sS:W:N:" )) != EOF )  {
-		switch( c )  {
-		case 'h':
-			/* high-res */
-			scr_height = scr_width = 1024;
-			break;
-		case 'F':
-			framebuffer = bu_optarg;
-			break;
-		case 's':
-			square = 1;
-			break;
-		case 'S':
-			scr_height = scr_width = atoi(bu_optarg);
-			break;
-		case 'W':
-			scr_width = atoi(bu_optarg);
-			break;
-		case 'N':
-			scr_height = atoi(bu_optarg);
-			break;
+    while ( (c = bu_getopt( argc, argv, "hF:sS:W:N:" )) != EOF )  {
+	switch ( c )  {
+	    case 'h':
+		/* high-res */
+		scr_height = scr_width = 1024;
+		break;
+	    case 'F':
+		framebuffer = bu_optarg;
+		break;
+	    case 's':
+		square = 1;
+		break;
+	    case 'S':
+		scr_height = scr_width = atoi(bu_optarg);
+		break;
+	    case 'W':
+		scr_width = atoi(bu_optarg);
+		break;
+	    case 'N':
+		scr_height = atoi(bu_optarg);
+		break;
 
-		default:		/* '?' */
-			return(0);
-		}
+	    default:		/* '?' */
+		return(0);
 	}
+    }
 
-	if( bu_optind >= argc )
-		return(0);		/* missing positional arg */
-	vsize = atoi( argv[bu_optind++] );
+    if ( bu_optind >= argc )
+	return(0);		/* missing positional arg */
+    vsize = atoi( argv[bu_optind++] );
 
-	if( bu_optind >= argc )  {
-		if( isatty(fileno(stdin)) )
-			return(0);
-		file_name = "-";
-	} else {
-		file_name = argv[bu_optind];
-	}
+    if ( bu_optind >= argc )  {
+	if ( isatty(fileno(stdin)) )
+	    return(0);
+	file_name = "-";
+    } else {
+	file_name = argv[bu_optind];
+    }
 
-	if ( argc > ++bu_optind )
-		(void)fprintf( stderr, "spm-fb: excess argument(s) ignored\n" );
+    if ( argc > ++bu_optind )
+	(void)fprintf( stderr, "spm-fb: excess argument(s) ignored\n" );
 
-	return(1);		/* OK */
+    return(1);		/* OK */
 }
 
 /*
@@ -116,32 +106,32 @@ get_args(int argc, register char **argv)
 int
 main(int argc, char **argv)
 {
-	register spm_map_t	*mp;
+    register spm_map_t	*mp;
 
-	if ( !get_args( argc, argv ) )  {
-		(void)fputs(usage, stderr);
-		exit( 1 );
-	}
+    if ( !get_args( argc, argv ) )  {
+	(void)fputs(usage, stderr);
+	bu_exit( 1, NULL );
+    }
 
-	if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == FBIO_NULL )
-		exit(12);
-	scr_width = fb_getwidth(fbp);
-	scr_height = fb_getheight(fbp);
+    if ( (fbp = fb_open( framebuffer, scr_width, scr_height )) == FBIO_NULL )
+	bu_exit(12, NULL);
+    scr_width = fb_getwidth(fbp);
+    scr_height = fb_getheight(fbp);
 
-	mp = spm_init( vsize, sizeof(RGBpixel) );
-	if( mp == SPM_NULL || fbp == FBIO_NULL )
-		exit( 1 );
+    mp = spm_init( vsize, sizeof(RGBpixel) );
+    if ( mp == SPM_NULL || fbp == FBIO_NULL )
+	bu_exit( 1, NULL );
 
-	spm_load( mp, file_name );
+    spm_load( mp, file_name );
 
-	if( square )
-		spm_square( mp );
-	else
-		spm_fb( mp );
+    if ( square )
+	spm_square( mp );
+    else
+	spm_fb( mp );
 
-	spm_free( mp );
-	fb_close( fbp );
-	exit(0);
+    spm_free( mp );
+    fb_close( fbp );
+    bu_exit(0, NULL);
 }
 
 /*
@@ -152,19 +142,19 @@ main(int argc, char **argv)
 void
 spm_fb(spm_map_t *mapp)
 {
-	register int	j;
+    register int	j;
 
-	for( j = 0; j < mapp->ny; j++ ) {
-		fb_write( fbp, 0, j, mapp->xbin[j], mapp->nx[j] );
+    for ( j = 0; j < mapp->ny; j++ ) {
+	fb_write( fbp, 0, j, mapp->xbin[j], mapp->nx[j] );
 #ifdef NEVER
-		for( i = 0; i < mapp->nx[j]; i++ ) {
-			rgb[RED] = mapp->xbin[j][i*3];
-			rgb[GRN] = mapp->xbin[j][i*3+1];
-			rgb[BLU] = mapp->xbin[j][i*3+2];
-			fb_write( fbp, i, j, (unsigned char *)rgb, 1 );
-		}
-#endif
+	for ( i = 0; i < mapp->nx[j]; i++ ) {
+	    rgb[RED] = mapp->xbin[j][i*3];
+	    rgb[GRN] = mapp->xbin[j][i*3+1];
+	    rgb[BLU] = mapp->xbin[j][i*3+2];
+	    fb_write( fbp, i, j, (unsigned char *)rgb, 1 );
 	}
+#endif
+    }
 }
 
 /*
@@ -175,27 +165,27 @@ spm_fb(spm_map_t *mapp)
 void
 spm_square(register spm_map_t *mapp)
 {
-	register int	x, y;
-	register unsigned char	*scanline;
+    register int	x, y;
+    register unsigned char	*scanline;
 
-	scanline = (unsigned char *)malloc( scr_width * sizeof(RGBpixel) );
+    scanline = (unsigned char *)malloc( scr_width * sizeof(RGBpixel) );
 
-	for( y = 0; y < scr_height; y++ ) {
-		for( x = 0; x < scr_width; x++ ) {
-			spm_read( mapp, scanline[x],
-				(double)x/(double)scr_width,
-				(double)y/(double)scr_height );
-		}
-		if( fb_write( fbp, 0, y, scanline, scr_width ) != scr_width )  break;
+    for ( y = 0; y < scr_height; y++ ) {
+	for ( x = 0; x < scr_width; x++ ) {
+	    spm_read( mapp, scanline[x],
+		      (double)x/(double)scr_width,
+		      (double)y/(double)scr_height );
 	}
+	if ( fb_write( fbp, 0, y, scanline, scr_width ) != scr_width )  break;
+    }
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

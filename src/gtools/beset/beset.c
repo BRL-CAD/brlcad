@@ -1,7 +1,7 @@
 /*                         B E S E T . C
  * BRL-CAD
  *
- * Copyright (c) 2007 United States Government as represented by
+ * Copyright (c) 2007-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,7 +26,6 @@
  *
  */
 
-
 #include "common.h"
 
 #include <strings.h>
@@ -38,7 +37,6 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -51,13 +49,15 @@
 struct rt_db_internal source_obj;
 
 
-void usage(){fprintf(stderr, "Usage: %s [options] db.g object\nOptions:\n -p #\t\tPopulation size\n -g #\t\tNumber of generations\n -r #\t\tResolution \n -u #\t\tUpper percent of individuals to keep\n -l #\t\tLower percent of individuals to kill\n",bu_getprogname());exit(1);}
+void usage() {
+    bu_exit(1, "Usage: %s [options] db.g object\nOptions:\n -p #\t\tPopulation size\n -g #\t\tNumber of generations\n -r #\t\tResolution \n -u #\t\tUpper percent of individuals to keep\n -l #\t\tLower percent of individuals to kill\n", bu_getprogname());
+}
 
 
 /* fitness of a given object compared to source */
 static int cmp_ind(const void *p1, const void *p2)
 {
-    if(((struct individual *)p2)->fitness > ((struct individual *)p1)->fitness)
+    if (((struct individual *)p2)->fitness > ((struct individual *)p1)->fitness)
 	return -1;
     else if (((struct individual *)p2)->fitness == ((struct individual *)p1)->fitness)
 	return 0;
@@ -66,7 +66,7 @@ static int cmp_ind(const void *p1, const void *p2)
 }
 
 int
-parse_args (int ac, char *av[], struct options *opts)
+parse_args (int ac, char *av[], struct beset_options *opts)
 {
     int c;
 
@@ -76,7 +76,7 @@ parse_args (int ac, char *av[], struct options *opts)
     bu_optind = 0;
     av++; ac--;
 
-    while ((c=bu_getopt(ac,av,OPTIONS)) != EOF) {
+    while ((c=bu_getopt(ac, av, OPTIONS)) != EOF) {
 	switch (c) {
 	    case 'm':
 		opts->mut_rate = atoi(bu_optarg);
@@ -114,16 +114,16 @@ parse_args (int ac, char *av[], struct options *opts)
 
 
 
-int main(int argc, char *argv[]){
+int main(int argc, char *argv[]) {
     int i, g; /* generation and parent counters */
     int parent1, parent2;
     int gop;
-    int best,worst;
+    int best, worst;
     fastf_t total_fitness = 0.0f;
     struct fitness_state fstate;
-    struct population pop = {NULL,NULL,NULL,NULL,NULL,0};
-    char dbname[256] = {0}; 
-    struct options opts = {DEFAULT_POP_SIZE, DEFAULT_GENS, DEFAULT_RES, 0, 0};
+    struct population pop = {NULL, NULL, NULL, NULL, NULL, 0};
+    char dbname[256] = {0};
+    struct beset_options opts = {DEFAULT_POP_SIZE, DEFAULT_GENS, DEFAULT_RES, 0, 0};
     struct individual *tmp = NULL;
     int  ac;
     struct directory *dp;
@@ -133,13 +133,13 @@ int main(int argc, char *argv[]){
 
 
     ac = parse_args(argc, argv, &opts);
-    if(argc - ac != 3)
+    if (argc - ac != 3)
 	usage();
-    
+
 
     /* read source model into fstate.rays */
     fit_prep(&fstate, opts.res, opts.res);
-    fit_store(argv[ac+2], argv[ac+1], &fstate); 
+    fit_store(argv[ac+2], argv[ac+1], &fstate);
 
 
     /* initialize population and spawn initial individuals */
@@ -148,52 +148,52 @@ int main(int argc, char *argv[]){
 
     source_db = db_open(argv[ac+1], "r+w");
     db_dirbuild(source_db);
-       pop.db_c = db_create("testdb", 5);
+    pop.db_c = db_create("testdb", 5);
     db_close(pop.db_c);
 
-    
-    for(g = 1; g < opts.gens; g++ ){
+
+    for (g = 1; g < opts.gens; g++ ) {
 #ifdef VERBOSE
-	printf("\nGeneration %d:\n" 
-		"--------------\n", g);
+	printf("\nGeneration %d:\n"
+	       "--------------\n", g);
 #endif
 
 	total_fitness = 0.0f;
-	best = worst = 0; 
+	best = worst = 0;
 
 	snprintf(dbname, 256, "gen%.3d", g);
 	pop.db_c = db_create(dbname, 5);
 
 	pop_gop(REPRODUCE, argv[ac+2], NULL, argv[ac+2], NULL, source_db, pop.db_c, &rt_uniresource);
- 
+
 
 
 	/* calculate sum of all fitnesses and find
 	 * the most fit individual in the population
 	 * note: need to calculate outside of main pop
 	 * loop because it's needed for pop_wrand_ind()*/
-	for(i = 0; i < pop.size; i++) {
-	   fit_diff(NL(pop.parent[i].id), pop.db_p, &fstate);
-	   pop.parent[i].fitness = fstate.fitness;
-	   total_fitness += FITNESS;
+	for (i = 0; i < pop.size; i++) {
+	    fit_diff(NL(pop.parent[i].id), pop.db_p, &fstate);
+	    pop.parent[i].fitness = fstate.fitness;
+	    total_fitness += FITNESS;
 	}
 	/* sort population - used for keeping top N and dropping bottom M */
 	qsort(pop.parent, pop.size, sizeof(struct individual), cmp_ind);
 
 	/* remove lower M of individuals */
-	for(i = 0; i < opts.kill_lower; i++) {
+	for (i = 0; i < opts.kill_lower; i++) {
 	    total_fitness -= pop.parent[i].fitness;
 	}
 
 
 	printf("Most fit from %s was %s with a fitness of %g\n", dbname, NL(pop.parent[pop.size-1].id), pop.parent[pop.size-1].fitness);
 	printf("%6.8g\t%6.8g\t%6.8g\n", total_fitness/pop.size, pop.parent[0].fitness, pop.parent[pop.size-1].fitness);
-	for(i = 0; i < pop.size; i++){
+	for (i = 0; i < pop.size; i++) {
 
 	    pop.child[i].id = i;
 
 	    /* keep upper N */
-	    if(i >= pop.size - opts.keep_upper){
+	    if (i >= pop.size - opts.keep_upper) {
 		pop_gop(REPRODUCE, NL(pop.parent[i].id), NULL, NL(pop.child[i].id), NULL,
 			pop.db_p, pop.db_c, &rt_uniresource);
 		continue;
@@ -204,9 +204,9 @@ int main(int argc, char *argv[]){
 	    gop = pop_wrand_gop();
 	    parent1 = pop_wrand_ind(pop.parent, pop.size, total_fitness, opts.kill_lower);
 	    /* only need 1 more individual, can't crossover, so reproduce */
-	    if(gop == CROSSOVER && i >= pop.size-opts.keep_upper-1)gop=REPRODUCE; 
+	    if (gop == CROSSOVER && i >= pop.size-opts.keep_upper-1)gop=REPRODUCE;
 
-	    if(gop & (REPRODUCE | MUTATE)){
+	    if (gop & (REPRODUCE | MUTATE)) {
 #ifdef VERBOSE
 		printf("r(%s)\t ---------------> (%s)\n", NL(pop.parent[parent1].id), NL(pop.child[i].id));
 #endif
@@ -214,27 +214,27 @@ int main(int argc, char *argv[]){
 		pop_gop(gop, NL(pop.parent[parent1].id), NULL, NL(pop.child[i].id), NULL,
 			pop.db_p, pop.db_c, &rt_uniresource);
 	    } else {
-	    /* If we're performing crossover, we need a second parent */
+		/* If we're performing crossover, we need a second parent */
 		parent2 = pop_wrand_ind(pop.parent, pop.size, total_fitness, opts.kill_lower);
 		++i;
 		pop.child[i].id = i;
 
-#ifdef VERBOSE 
+#ifdef VERBOSE
 		printf("x(%s, %s) --> (%s, %s)\n", NL(pop.parent[parent1].id), NL(pop.parent[parent2].id), pop.child[i-1].id, pop.child[i].id);
 #endif
 		/* perform the genetic operation and output the children to the cihld database */
 		pop_gop(gop, NL(pop.parent[parent1].id), NL(pop.parent[parent2].id), NL(pop.child[i-1].id), NL(pop.child[i].id),
 			pop.db_p, pop.db_c, &rt_uniresource);
-	    } 
-	    
+	    }
+
 	}
 
 
 
-	/* Close parent db and move children 
+	/* Close parent db and move children
 	 * to parent database and population
 	 * Note: pop size is constant so we
-	 * can keep the storage from the previous 
+	 * can keep the storage from the previous
 	 * pop.parent for the next pop.child*/
 	db_close(pop.db_p);
 	pop.db_p = pop.db_c;
@@ -247,10 +247,10 @@ int main(int argc, char *argv[]){
 
 #ifdef VERBOSE
     printf("\nFINAL POPULATION\n"
-	    "----------------\n");
-    for(i = 0; i < pop.size; i++)
-	printf("%s\tf:%.5g\n",NL(pop.child[i].id), 
-		pop.child[i].fitness);
+	   "----------------\n");
+    for (i = 0; i < pop.size; i++)
+	printf("%s\tf:%.5g\n", NL(pop.child[i].id),
+	       pop.child[i].fitness);
 #endif
 
 
@@ -265,8 +265,8 @@ int main(int argc, char *argv[]){
  * Local Variables:
  * tab-width: 8
  * mode: C
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

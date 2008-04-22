@@ -18,14 +18,13 @@
 #
 # RCS: @(#) $Id$
 
-package require Tcl 8.5		;# To provide an alpha version
-package require Tcl 8.3		;# uses [glob -directory]
+package require Tcl 8.5		;# -verbose line uses [info frame]
 namespace eval tcltest {
 
     # When the version number changes, be sure to update the pkgIndex.tcl file,
     # and the install directory in the Makefiles.  When the minor version
     # changes (new feature) be sure to update the man page as well.
-    variable Version 2.3a1
+    variable Version 2.3.0
 
     # Compatibility support for dumb variables defined in tcltest 1
     # Do not use these.  Call [package provide Tcl] and [info patchlevel]
@@ -2244,7 +2243,7 @@ proc tcltest::Skipped {name constraints} {
 	if {[string match {*[$\[]*} $constraints] != 0} {
 	    # full expression, e.g. {$foo > [info tclversion]}
 	    catch {set doTest [uplevel #0 expr $constraints]}
-	} elseif {[regexp {[^.a-zA-Z0-9 \n\r\t]+} $constraints] != 0} {
+	} elseif {[regexp {[^.:_a-zA-Z0-9 \n\r\t]+} $constraints] != 0} {
 	    # something like {a || b} should be turned into
 	    # $testConstraints(a) || $testConstraints(b).
 	    regsub -all {[.\w]+} $constraints {$testConstraints(&)} c
@@ -2265,7 +2264,7 @@ proc tcltest::Skipped {name constraints} {
 	    }
 	}
 	
-	if {$doTest == 0} {
+	if {!$doTest} {
 	    if {[IsVerbose skip]} {
 		puts [outputChannel] "++++ $name SKIPPED: $constraints"
 	    }

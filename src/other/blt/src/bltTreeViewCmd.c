@@ -50,7 +50,7 @@
 	(((val) < (low)) ? (low) : ((val) > (hi)) ? (hi) : (val))
 
 static TreeViewCompareProc ExactCompare, GlobCompare, RegexpCompare;
-static TreeViewApplyProc ShowEntryApplyProc, HideEntryApplyProc, 
+static TreeViewApplyProc ShowEntryApplyProc, HideEntryApplyProc,
 	MapAncestorsApplyProc, FixSelectionsApplyProc;
 static Tk_LostSelProc LostSelection;
 static TreeViewApplyProc SelectEntryApplyProc;
@@ -88,7 +88,7 @@ SkipSeparators(path, separator, length)
     char *path, *separator;
     int length;
 {
-    while ((path[0] == separator[0]) && 
+    while ((path[0] == separator[0]) &&
 	   (strncmp(path, separator, length) == 0)) {
 	path += length;
     }
@@ -104,7 +104,7 @@ SkipSeparators(path, separator, length)
  *	node, though.  If the root node is specified, simply remove
  *	all its children.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static void
 DeleteNode(tvPtr, node)
@@ -123,7 +123,7 @@ DeleteNode(tvPtr, node)
 	for (node = Blt_TreeFirstChild(node); node != NULL; node = next) {
 	    next = Blt_TreeNextSibling(node);
 	    Blt_TreeDeleteNode(tvPtr->tree, node);
-	}	    
+	}
     } else if (Blt_TreeIsAncestor(root, node)) {
 	Blt_TreeDeleteNode(tvPtr->tree, node);
     }
@@ -156,7 +156,7 @@ SplitPath(tvPtr, path, depthPtr, compPtrPtr)
     char *sep;
 
     if (tvPtr->pathSep == SEPARATOR_LIST) {
-	if (Tcl_SplitList(tvPtr->interp, path, depthPtr, compPtrPtr) 
+	if (Tcl_SplitList(tvPtr->interp, path, depthPtr, compPtrPtr)
 	    != TCL_OK) {
 	    return TCL_ERROR;
 	}
@@ -264,7 +264,7 @@ MapAncestors(tvPtr, entryPtr)
 	if (entryPtr->flags & (ENTRY_CLOSED | ENTRY_HIDDEN)) {
 	    tvPtr->flags |= TV_LAYOUT;
 	    entryPtr->flags &= ~(ENTRY_CLOSED | ENTRY_HIDDEN);
-	} 
+	}
     }
 }
 
@@ -340,7 +340,7 @@ FindPath(tvPtr, rootPtr, path)
     /* Trim off characters that we don't want */
     if (tvPtr->trimLeft != NULL) {
 	register char *s1, *s2;
-	
+
 	/* Trim off leading character string if one exists. */
 	for (s1 = path, s2 = tvPtr->trimLeft; *s2 != '\0'; s2++, s1++) {
 	    if (*s1 != *s2) {
@@ -384,7 +384,7 @@ FindPath(tvPtr, rootPtr, path)
 
 	Blt_TreeViewGetFullName(tvPtr, entryPtr, FALSE, &dString);
 	Tcl_AppendResult(tvPtr->interp, "can't find node \"", name,
-		 "\" in parent node \"", Tcl_DStringValue(&dString), "\"", 
+		 "\" in parent node \"", Tcl_DStringValue(&dString), "\"",
 		(char *)NULL);
 	Tcl_DStringFree(&dString);
     }
@@ -433,7 +433,7 @@ GetEntryFromSpecialId(tvPtr, string, entryPtrPtr)
     fromPtr = tvPtr->fromPtr;
     if (fromPtr == NULL) {
 	fromPtr = tvPtr->focusPtr;
-    } 
+    }
     if (fromPtr == NULL) {
 	fromPtr = tvPtr->rootPtr;
     }
@@ -475,13 +475,13 @@ GetEntryFromSpecialId(tvPtr, string, entryPtrPtr)
 	    entryPtr = Blt_TreeViewParentEntry(fromPtr);
 	}
     } else if ((c == 'c') && (strcmp(string, "current") == 0)) {
-	/* Can't trust picked item, if entries have been 
+	/* Can't trust picked item, if entries have been
 	 * added or deleted. */
 	if (!(tvPtr->flags & TV_DIRTY)) {
 	    ClientData context;
 
 	    context = Blt_GetCurrentContext(tvPtr->bindTable);
-	    if ((context == ITEM_ENTRY) || 
+	    if ((context == ITEM_ENTRY) ||
 		(context == ITEM_ENTRY_BUTTON) ||
 		(context >= ITEM_STYLE)) {
 		entryPtr = Blt_GetCurrentItem(tvPtr->bindTable);
@@ -501,7 +501,7 @@ GetEntryFromSpecialId(tvPtr, string, entryPtrPtr)
 	    if (entryPtr == NULL) {
 		entryPtr = fromPtr;
 	    }
-	    if ((entryPtr == tvPtr->rootPtr) && 
+	    if ((entryPtr == tvPtr->rootPtr) &&
 		(tvPtr->flags & TV_HIDE_ROOT)) {
 		entryPtr = Blt_TreeViewNextEntry(entryPtr, ENTRY_MASK);
 	    }
@@ -520,7 +520,7 @@ GetEntryFromSpecialId(tvPtr, string, entryPtrPtr)
 	    if (entryPtr == NULL) {
 		entryPtr = fromPtr;
 	    }
-	    if ((entryPtr == tvPtr->rootPtr) && 
+	    if ((entryPtr == tvPtr->rootPtr) &&
 		(tvPtr->flags & TV_HIDE_ROOT)) {
 		entryPtr = Blt_TreeViewNextEntry(entryPtr, ENTRY_MASK);
 	    }
@@ -541,7 +541,7 @@ GetEntryFromSpecialId(tvPtr, string, entryPtrPtr)
 	    if (entryPtr == NULL) {
 		entryPtr = LastEntry(tvPtr, tvPtr->rootPtr, ENTRY_MASK);
 	    }
-	    if ((entryPtr == tvPtr->rootPtr) && 
+	    if ((entryPtr == tvPtr->rootPtr) &&
 		(tvPtr->flags & TV_HIDE_ROOT)) {
 		entryPtr = Blt_TreeViewNextEntry(entryPtr, ENTRY_MASK);
 	    }
@@ -551,7 +551,7 @@ GetEntryFromSpecialId(tvPtr, string, entryPtrPtr)
 	if (tvPtr->flatView) {
 	    int i;
 
-	    i = entryPtr->flatIndex + 1; 
+	    i = entryPtr->flatIndex + 1;
 	    if (i >= tvPtr->nEntries) {
 		i = 0;
 	    }
@@ -583,7 +583,7 @@ GetEntryFromSpecialId(tvPtr, string, entryPtrPtr)
     } else if ((c == 'v') && (strcmp(string, "view.bottom") == 0)) {
 	if (tvPtr->nVisible > 0) {
 	    entryPtr = tvPtr->visibleArr[tvPtr->nVisible - 1];
-	} 
+	}
     } else {
 	return TCL_ERROR;
     }
@@ -597,7 +597,7 @@ GetTagInfo(tvPtr, tagName, infoPtr)
     char *tagName;
     TreeViewTagInfo *infoPtr;
 {
-    
+
     infoPtr->tagType = TAG_RESERVED | TAG_SINGLE;
     infoPtr->entryPtr = NULL;
 
@@ -610,10 +610,10 @@ GetTagInfo(tvPtr, tagName, infoPtr)
 	tablePtr = Blt_TreeTagHashTable(tvPtr->tree, tagName);
 	if (tablePtr != NULL) {
 	    Blt_HashEntry *hPtr;
-	    
+
 	    infoPtr->tagType = TAG_USER_DEFINED; /* Empty tags are not
 						  * an error. */
-	    hPtr = Blt_FirstHashEntry(tablePtr, &infoPtr->cursor); 
+	    hPtr = Blt_FirstHashEntry(tablePtr, &infoPtr->cursor);
 	    if (hPtr != NULL) {
 		Blt_TreeNode node;
 
@@ -625,7 +625,7 @@ GetTagInfo(tvPtr, tagName, infoPtr)
 	    }
 	}  else {
 	    infoPtr->tagType = TAG_UNKNOWN;
-	    Tcl_AppendResult(tvPtr->interp, "can't find tag or id \"", tagName, 
+	    Tcl_AppendResult(tvPtr->interp, "can't find tag or id \"", tagName,
 		"\" in \"", Tk_PathName(tvPtr->tkwin), "\"", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -645,7 +645,7 @@ Blt_TreeViewGetTags(interp, tvPtr, entryPtr, list)
     Blt_HashSearch cursor;
     Blt_TreeTagEntry *tPtr;
 
-    for (hPtr = Blt_TreeFirstTag(tvPtr->tree, &cursor); hPtr != NULL; 
+    for (hPtr = Blt_TreeFirstTag(tvPtr->tree, &cursor); hPtr != NULL;
 	hPtr = Blt_NextHashEntry(&cursor)) {
 	tPtr = Blt_GetHashValue(hPtr);
 	hPtr = Blt_FindHashEntry(&tPtr->nodeTable, (char *)entryPtr->node);
@@ -660,7 +660,7 @@ Blt_TreeViewGetTags(interp, tvPtr, entryPtr, list)
  *
  * AddTag --
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static int
 AddTag(tvPtr, node, tagName)
@@ -676,23 +676,23 @@ AddTag(tvPtr, node, tagName)
 	return TCL_ERROR;
     }
     if (isdigit(UCHAR(tagName[0]))) {
-	Tcl_AppendResult(tvPtr->interp, "invalid tag \"", tagName, 
+	Tcl_AppendResult(tvPtr->interp, "invalid tag \"", tagName,
 		"\": can't start with digit", (char *)NULL);
 	return TCL_ERROR;
-    } 
+    }
     if (isdigit(UCHAR(tagName[0]))) {
-	Tcl_AppendResult(tvPtr->interp, "invalid tag \"", tagName, 
+	Tcl_AppendResult(tvPtr->interp, "invalid tag \"", tagName,
 		"\": can't start with digit", (char *)NULL);
 	return TCL_ERROR;
-    } 
+    }
     if (tagName[0] == '@') {
-	Tcl_AppendResult(tvPtr->interp, "invalid tag \"", tagName, 
+	Tcl_AppendResult(tvPtr->interp, "invalid tag \"", tagName,
 		"\": can't start with \"@\"", (char *)NULL);
 	return TCL_ERROR;
-    } 
+    }
     tvPtr->fromPtr = NULL;
     if (GetEntryFromSpecialId(tvPtr, tagName, &entryPtr) == TCL_OK) {
-	Tcl_AppendResult(tvPtr->interp, "invalid tag \"", tagName, 
+	Tcl_AppendResult(tvPtr->interp, "invalid tag \"", tagName,
 		"\": is a special id", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -700,16 +700,16 @@ AddTag(tvPtr, node, tagName)
     Blt_TreeAddTag(tvPtr->tree, node, tagName);
     return TCL_OK;
 }
-    
+
 TreeViewEntry *
-Blt_TreeViewFirstTaggedEntry(infoPtr)	
+Blt_TreeViewFirstTaggedEntry(infoPtr)
     TreeViewTagInfo *infoPtr;
 {
     return infoPtr->entryPtr;
 }
 
 int
-Blt_TreeViewFindTaggedEntries(tvPtr, objPtr, infoPtr)	
+Blt_TreeViewFindTaggedEntries(tvPtr, objPtr, infoPtr)
     TreeView *tvPtr;
     Tcl_Obj *objPtr;
     TreeViewTagInfo *infoPtr;
@@ -717,7 +717,7 @@ Blt_TreeViewFindTaggedEntries(tvPtr, objPtr, infoPtr)
     char *tagName;
     TreeViewEntry *entryPtr;
 
-    tagName = Tcl_GetString(objPtr); 
+    tagName = Tcl_GetString(objPtr);
     tvPtr->fromPtr = NULL;
     if (isdigit(UCHAR(tagName[0]))) {
 	int inode;
@@ -741,7 +741,7 @@ Blt_TreeViewFindTaggedEntries(tvPtr, objPtr, infoPtr)
 }
 
 TreeViewEntry *
-Blt_TreeViewNextTaggedEntry(infoPtr) 
+Blt_TreeViewNextTaggedEntry(infoPtr)
     TreeViewTagInfo *infoPtr;
 {
     TreeViewEntry *entryPtr;
@@ -754,7 +754,7 @@ Blt_TreeViewNextTaggedEntry(infoPtr)
 	    entryPtr = Blt_TreeViewNextEntry(infoPtr->entryPtr, 0);
 	} else if (infoPtr->tagType & TAG_MULTIPLE) {
 	    Blt_HashEntry *hPtr;
-	    
+
 	    hPtr = Blt_NextHashEntry(&infoPtr->cursor);
 	    if (hPtr != NULL) {
 		Blt_TreeNode node;
@@ -762,7 +762,7 @@ Blt_TreeViewNextTaggedEntry(infoPtr)
 		node = Blt_GetHashValue(hPtr);
 		entryPtr = Blt_NodeToEntry(tvPtr, node);
 	    }
-	} 
+	}
 	infoPtr->entryPtr = entryPtr;
     }
     return entryPtr;
@@ -820,7 +820,7 @@ GetEntryFromObj2(tvPtr, objPtr, entryPtrPtr)
 
     string = Tcl_GetString(objPtr);
     *entryPtrPtr = NULL;
-    if (isdigit(UCHAR(string[0]))) {    
+    if (isdigit(UCHAR(string[0]))) {
 	Blt_TreeNode node;
 	int inode;
 
@@ -840,7 +840,7 @@ GetEntryFromObj2(tvPtr, objPtr, entryPtrPtr)
 	return TCL_ERROR;
     }
     if (info.tagType & TAG_MULTIPLE) {
-	Tcl_AppendResult(interp, "more than one entry tagged as \"", string, 
+	Tcl_AppendResult(interp, "more than one entry tagged as \"", string,
 		"\"", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -886,8 +886,8 @@ Blt_TreeViewGetEntry(tvPtr, objPtr, entryPtrPtr)
     }
     if (entryPtr == NULL) {
 	Tcl_ResetResult(tvPtr->interp);
-	Tcl_AppendResult(tvPtr->interp, "can't find entry \"", 
-		Tcl_GetString(objPtr), "\" in \"", Tk_PathName(tvPtr->tkwin), 
+	Tcl_AppendResult(tvPtr->interp, "can't find entry \"",
+		Tcl_GetString(objPtr), "\" in \"", Tk_PathName(tvPtr->tkwin),
 		"\"", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -895,7 +895,7 @@ Blt_TreeViewGetEntry(tvPtr, objPtr, entryPtrPtr)
     return TCL_OK;
 }
 
-static Blt_TreeNode 
+static Blt_TreeNode
 GetNthNode(parent, position)
     Blt_TreeNode parent;
     int position;
@@ -904,7 +904,7 @@ GetNthNode(parent, position)
     int count;
 
     count = 0;
-    for(node = Blt_TreeFirstChild(parent); node != NULL; 
+    for(node = Blt_TreeFirstChild(parent); node != NULL;
 	node = Blt_TreeNextSibling(node)) {
 	if (count == position) {
 	    return node;
@@ -923,7 +923,7 @@ GetNthEntry(
     int count;
 
     count = 0;
-    for(entryPtr = Blt_TreeViewFirstChild(parentPtr, mask); entryPtr != NULL; 
+    for(entryPtr = Blt_TreeViewFirstChild(parentPtr, mask); entryPtr != NULL;
 	entryPtr = Blt_TreeViewNextSibling(entryPtr, mask)) {
 	if (count == position) {
 	    return entryPtr;
@@ -1074,7 +1074,7 @@ EventuallyInvokeSelectCmd(tvPtr)
  * Blt_TreeViewPruneSelection --
  *
  *	The root entry being deleted or closed.  Deselect any of its
- *	descendants that are currently selected. 
+ *	descendants that are currently selected.
  *
  * Results:
  *      None.
@@ -1095,13 +1095,13 @@ Blt_TreeViewPruneSelection(tvPtr, rootPtr)
     TreeViewEntry *entryPtr;
     int selectionChanged;
 
-    /* 
+    /*
      * Check if any of the currently selected entries are a descendant
      * of of the current root entry.  Deselect the entry and indicate
      * that the treeview widget needs to be redrawn.
      */
     selectionChanged = FALSE;
-    for (linkPtr = Blt_ChainFirstLink(tvPtr->selChainPtr); linkPtr != NULL; 
+    for (linkPtr = Blt_ChainFirstLink(tvPtr->selChainPtr); linkPtr != NULL;
 	 linkPtr = nextPtr) {
 	nextPtr = Blt_ChainNextLink(linkPtr);
 	entryPtr = Blt_ChainGetValue(linkPtr);
@@ -1150,7 +1150,7 @@ FocusOp(tvPtr, interp, objc, objv)
 	     * entry layout stays the same. */
 	    if (tvPtr->focusPtr != NULL) {
 		tvPtr->focusPtr->flags |= ENTRY_REDRAW;
-	    } 
+	    }
 	    entryPtr->flags |= ENTRY_REDRAW;
 	    tvPtr->flags |= TV_SCROLL;
 	    tvPtr->focusPtr = entryPtr;
@@ -1277,9 +1277,9 @@ BboxOp(tvPtr, interp, objc, objv)
 	listObjPtr = Tcl_NewListObj(0, (Tcl_Obj **)NULL);
 	Tcl_ListObjAppendElement(interp, listObjPtr, Tcl_NewIntObj(left));
 	Tcl_ListObjAppendElement(interp, listObjPtr, Tcl_NewIntObj(top));
-	Tcl_ListObjAppendElement(interp, listObjPtr, 
+	Tcl_ListObjAppendElement(interp, listObjPtr,
 				 Tcl_NewIntObj(right - left));
-	Tcl_ListObjAppendElement(interp, listObjPtr, 
+	Tcl_ListObjAppendElement(interp, listObjPtr,
 				 Tcl_NewIntObj(bottom - top));
 	Tcl_SetObjResult(interp, listObjPtr);
     }
@@ -1310,7 +1310,7 @@ DrawButton(tvPtr, entryPtr)
 	((dy + height) < top) || (dy > bottom)) {
 	return;			/* Value is clipped. */
     }
-    drawable = Tk_GetPixmap(tvPtr->display, Tk_WindowId(tvPtr->tkwin), 
+    drawable = Tk_GetPixmap(tvPtr->display, Tk_WindowId(tvPtr->tkwin),
 	width, height, Tk_Depth(tvPtr->tkwin));
     /* Draw the background of the value. */
     Blt_TreeViewDrawButton(tvPtr, entryPtr, drawable, 0, 0);
@@ -1333,7 +1333,7 @@ DrawButton(tvPtr, entryPtr)
     if ((dy + height) >= bottom) {
 	height -= (dy + height) - bottom;
     }
-    XCopyArea(tvPtr->display, drawable, Tk_WindowId(tvPtr->tkwin), 
+    XCopyArea(tvPtr->display, drawable, Tk_WindowId(tvPtr->tkwin),
       tvPtr->lineGC, sx, sy, width,  height, dx, dy);
     Tk_FreePixmap(tvPtr->display, drawable);
 }
@@ -1406,7 +1406,7 @@ ButtonBindOp(tvPtr, interp, objc, objv)
     string = Tcl_GetString(objv[3]);
     /* Assume that this is a binding tag. */
     object = Blt_TreeViewButtonTag(tvPtr, string);
-    return Blt_ConfigureBindingsFromObj(interp, tvPtr->bindTable, object, 
+    return Blt_ConfigureBindingsFromObj(interp, tvPtr->bindTable, object,
 	objc - 4, objv + 4);
 }
 
@@ -1425,7 +1425,7 @@ ButtonCgetOp(tvPtr, interp, objc, objv)
     int objc;			/* Not used. */
     Tcl_Obj *CONST *objv;
 {
-    return Blt_ConfigureValueFromObj(interp, tvPtr->tkwin, 
+    return Blt_ConfigureValueFromObj(interp, tvPtr->tkwin,
 	bltTreeViewButtonSpecs, (char *)tvPtr, objv[3], 0);
 }
 
@@ -1459,15 +1459,15 @@ ButtonConfigureOp(tvPtr, interp, objc, objv)
     Tcl_Obj *CONST *objv;
 {
     if (objc == 3) {
-	return Blt_ConfigureInfoFromObj(interp, tvPtr->tkwin, 
+	return Blt_ConfigureInfoFromObj(interp, tvPtr->tkwin,
 	    bltTreeViewButtonSpecs, (char *)tvPtr, (Tcl_Obj *)NULL, 0);
     } else if (objc == 4) {
-	return Blt_ConfigureInfoFromObj(interp, tvPtr->tkwin, 
+	return Blt_ConfigureInfoFromObj(interp, tvPtr->tkwin,
 		bltTreeViewButtonSpecs, (char *)tvPtr, objv[3], 0);
     }
     bltTreeViewIconsOption.clientData = tvPtr;
-    if (Blt_ConfigureWidgetFromObj(tvPtr->interp, tvPtr->tkwin, 
-		bltTreeViewButtonSpecs, objc - 3, objv + 3, (char *)tvPtr, 
+    if (Blt_ConfigureWidgetFromObj(tvPtr->interp, tvPtr->tkwin,
+		bltTreeViewButtonSpecs, objc - 3, objv + 3, (char *)tvPtr,
 		BLT_CONFIG_OBJV_ONLY) != TCL_OK) {
 	return TCL_ERROR;
     }
@@ -1509,7 +1509,7 @@ ButtonOp(tvPtr, interp, objc, objv)
     Blt_Op proc;
     int result;
 
-    proc = Blt_GetOpFromObj(interp, nButtonOps, buttonOps, BLT_OP_ARG2, objc, 
+    proc = Blt_GetOpFromObj(interp, nButtonOps, buttonOps, BLT_OP_ARG2, objc,
 	objv, 0);
     if (proc == NULL) {
 	return TCL_ERROR;
@@ -1557,7 +1557,7 @@ CloseOp(tvPtr, interp, objc, objv)
 	int length;
 
 	string = Tcl_GetStringFromObj(objv[2], &length);
-	if ((string[0] == '-') && (length > 1) && 
+	if ((string[0] == '-') && (length > 1) &&
 	    (strncmp(string, "-recurse", length) == 0)) {
 	    objv++, objc--;
 	    recurse = TRUE;
@@ -1567,14 +1567,14 @@ CloseOp(tvPtr, interp, objc, objv)
 	if (Blt_TreeViewFindTaggedEntries(tvPtr, objv[i], &info) != TCL_OK) {
 	    return TCL_ERROR;
 	}
-	for (entryPtr = Blt_TreeViewFirstTaggedEntry(&info); entryPtr != NULL; 
+	for (entryPtr = Blt_TreeViewFirstTaggedEntry(&info); entryPtr != NULL;
 	     entryPtr = Blt_TreeViewNextTaggedEntry(&info)) {
-	    /* 
+	    /*
 	     * Clear the selections for any entries that may have become
-	     * hidden by closing the node.  
+	     * hidden by closing the node.
 	     */
 	    Blt_TreeViewPruneSelection(tvPtr, entryPtr);
-	    
+
 	    /*
 	     * -----------------------------------------------------------
 	     *
@@ -1586,32 +1586,32 @@ CloseOp(tvPtr, interp, objc, objv)
 	     *
 	     * -----------------------------------------------------------
 	     */
-	    if ((tvPtr->focusPtr != NULL) && 
+	    if ((tvPtr->focusPtr != NULL) &&
 		(Blt_TreeIsAncestor(entryPtr->node, tvPtr->focusPtr->node))) {
 		tvPtr->focusPtr = entryPtr;
 		Blt_SetFocusItem(tvPtr->bindTable, tvPtr->focusPtr, ITEM_ENTRY);
 	    }
-	    if ((tvPtr->selAnchorPtr != NULL) && 
-		(Blt_TreeIsAncestor(entryPtr->node, 
+	    if ((tvPtr->selAnchorPtr != NULL) &&
+		(Blt_TreeIsAncestor(entryPtr->node,
 				    tvPtr->selAnchorPtr->node))) {
 		tvPtr->selMarkPtr = tvPtr->selAnchorPtr = NULL;
 	    }
-	    if ((tvPtr->activePtr != NULL) && 
+	    if ((tvPtr->activePtr != NULL) &&
 		(Blt_TreeIsAncestor(entryPtr->node, tvPtr->activePtr->node))) {
 		tvPtr->activePtr = entryPtr;
 	    }
 	    if (recurse) {
-		result = Blt_TreeViewApply(tvPtr, entryPtr, 
+		result = Blt_TreeViewApply(tvPtr, entryPtr,
 					   Blt_TreeViewCloseEntry, 0);
 	    } else {
 		result = Blt_TreeViewCloseEntry(tvPtr, entryPtr);
 	    }
 	    if (result != TCL_OK) {
 		return TCL_ERROR;
-	    }	
+	    }
 	}
     }
-    /* Closing a node may affect the visible entries and the 
+    /* Closing a node may affect the visible entries and the
      * the world layout of the entries. */
     tvPtr->flags |= (TV_LAYOUT | TV_DIRTY | TV_RESORT);
     Blt_TreeViewEventuallyRedraw(tvPtr);
@@ -1649,12 +1649,12 @@ ConfigureOp(tvPtr, interp, objc, objv)
 	return Blt_ConfigureInfoFromObj(interp, tvPtr->tkwin, bltTreeViewSpecs,
 		(char *)tvPtr, (Tcl_Obj *)NULL, 0);
     } else if (objc == 3) {
-	return Blt_ConfigureInfoFromObj(interp, tvPtr->tkwin, 
+	return Blt_ConfigureInfoFromObj(interp, tvPtr->tkwin,
 		bltTreeViewSpecs, (char *)tvPtr, objv[2], 0);
-    } 
+    }
     bltTreeViewIconsOption.clientData = tvPtr;
     bltTreeViewTreeOption.clientData = tvPtr;
-    if (Blt_ConfigureWidgetFromObj(interp, tvPtr->tkwin, bltTreeViewSpecs, 
+    if (Blt_ConfigureWidgetFromObj(interp, tvPtr->tkwin, bltTreeViewSpecs,
 	objc - 2, objv + 2, (char *)tvPtr, BLT_CONFIG_OBJV_ONLY) != TCL_OK) {
 	return TCL_ERROR;
     }
@@ -1685,10 +1685,10 @@ CurselectionOp(tvPtr, interp, objc, objv)
 	    entryPtr = Blt_ChainGetValue(linkPtr);
 	    objPtr = NodeToObj(entryPtr->node);
 	    Tcl_ListObjAppendElement(interp, listObjPtr, objPtr);
-			
+
 	}
     } else {
-	for (entryPtr = tvPtr->rootPtr; entryPtr != NULL; 
+	for (entryPtr = tvPtr->rootPtr; entryPtr != NULL;
 	     entryPtr = Blt_TreeViewNextEntry(entryPtr, ENTRY_MASK)) {
 	    if (Blt_TreeViewEntryIsSelected(tvPtr, entryPtr)) {
 		objPtr = NodeToObj(entryPtr->node);
@@ -1743,8 +1743,8 @@ BindOp(tvPtr, interp, objc, objv)
     } else {
 	/* Assume that this is a binding tag. */
 	object = Blt_TreeViewEntryTag(tvPtr, string);
-    } 
-    return Blt_ConfigureBindingsFromObj(interp, tvPtr->bindTable, object, 
+    }
+    return Blt_ConfigureBindingsFromObj(interp, tvPtr->bindTable, object,
 	 objc - 3, objv + 3);
 }
 
@@ -1774,11 +1774,11 @@ EditOp(tvPtr, interp, objc, objv)
 	objv++, objc--;
     }
     if (objc != 4) {
-	Tcl_AppendResult(interp, "wrong # args: should be \"", 
-		Tcl_GetString(objv[0]), " ", Tcl_GetString(objv[1]), 
+	Tcl_AppendResult(interp, "wrong # args: should be \"",
+		Tcl_GetString(objv[0]), " ", Tcl_GetString(objv[1]),
 			" ?-root? x y\"", (char *)NULL);
 	return TCL_ERROR;
-			 
+
     }
     if ((Tcl_GetIntFromObj(interp, objv[2], &x) != TCL_OK) ||
 	(Tcl_GetIntFromObj(interp, objv[3], &y) != TCL_OK)) {
@@ -1798,26 +1798,26 @@ EditOp(tvPtr, interp, objc, objv)
 	int worldX;
 
 	worldX = WORLDX(tvPtr, x);
-	for (linkPtr = Blt_ChainFirstLink(tvPtr->colChainPtr); 
+	for (linkPtr = Blt_ChainFirstLink(tvPtr->colChainPtr);
 	     linkPtr != NULL; linkPtr = Blt_ChainNextLink(linkPtr)) {
 	    columnPtr = Blt_ChainGetValue(linkPtr);
 	    if (!columnPtr->editable) {
 		continue;		/* Column isn't editable. */
 	    }
-	    if ((worldX >= columnPtr->worldX) && 
+	    if ((worldX >= columnPtr->worldX) &&
 		(worldX < (columnPtr->worldX + columnPtr->width))) {
 		TreeViewValue *valuePtr;
-		
+
 		valuePtr = Blt_TreeViewFindValue(entryPtr, columnPtr);
 		if (valuePtr != NULL) {
 		    TreeViewStyle *stylePtr;
-		    
+
 		    stylePtr = valuePtr->stylePtr;
 		    if (stylePtr == NULL) {
 			stylePtr = columnPtr->stylePtr;
 		    }
 		    if ((stylePtr->classPtr->editProc != NULL) && (!isTest)) {
-			if ((*stylePtr->classPtr->editProc)(tvPtr, entryPtr, 
+			if ((*stylePtr->classPtr->editProc)(tvPtr, entryPtr,
 				    valuePtr, stylePtr) != TCL_OK) {
 			    return TCL_ERROR;
 			}
@@ -1867,7 +1867,7 @@ EntryActivateOp(tvPtr, interp, objc, objv)
     if (!(tvPtr->flags & TV_REDRAW) && (newPtr != oldPtr)) {
 	Drawable drawable;
 	int x, y;
-	
+
 	drawable = Tk_WindowId(tvPtr->tkwin);
 	if (oldPtr != NULL) {
 	    x = SCREENX(tvPtr, oldPtr->worldX);
@@ -1911,7 +1911,7 @@ EntryCgetOp(tvPtr, interp, objc, objv)
     if (Blt_TreeViewGetEntry(tvPtr, objv[3], &entryPtr) != TCL_OK) {
 	return TCL_ERROR;
     }
-    return Blt_ConfigureValueFromObj(interp, tvPtr->tkwin, 
+    return Blt_ConfigureValueFromObj(interp, tvPtr->tkwin,
 		bltTreeViewEntrySpecs, (char *)entryPtr, objv[4], 0);
 }
 
@@ -1970,18 +1970,18 @@ EntryConfigureOp(tvPtr, interp, objc, objv)
 	if (Blt_TreeViewFindTaggedEntries(tvPtr, objv[i], &info) != TCL_OK) {
 	    return TCL_ERROR;
 	}
-	for (entryPtr = Blt_TreeViewFirstTaggedEntry(&info); entryPtr != NULL; 
+	for (entryPtr = Blt_TreeViewFirstTaggedEntry(&info); entryPtr != NULL;
 	     entryPtr = Blt_TreeViewNextTaggedEntry(&info)) {
 	    if (configObjc == 0) {
-		return Blt_ConfigureInfoFromObj(interp, tvPtr->tkwin, 
-			bltTreeViewEntrySpecs, (char *)entryPtr, 
+		return Blt_ConfigureInfoFromObj(interp, tvPtr->tkwin,
+			bltTreeViewEntrySpecs, (char *)entryPtr,
 			(Tcl_Obj *)NULL, 0);
 	    } else if (configObjc == 1) {
-		return Blt_ConfigureInfoFromObj(interp, tvPtr->tkwin, 
-			bltTreeViewEntrySpecs, (char *)entryPtr, 
+		return Blt_ConfigureInfoFromObj(interp, tvPtr->tkwin,
+			bltTreeViewEntrySpecs, (char *)entryPtr,
 			configObjv[0], 0);
 	    }
-	    if (Blt_TreeViewConfigureEntry(tvPtr, entryPtr, configObjc, 
+	    if (Blt_TreeViewConfigureEntry(tvPtr, entryPtr, configObjc,
 		configObjv, BLT_CONFIG_OBJV_ONLY) != TCL_OK) {
 		return TCL_ERROR;
 	    }
@@ -2092,7 +2092,7 @@ EntryChildrenOp(tvPtr, interp, objc, objv)
     if (objc == 4) {
 	TreeViewEntry *entryPtr;
 
-	for (entryPtr = Blt_TreeViewFirstChild(parentPtr, mask); 
+	for (entryPtr = Blt_TreeViewFirstChild(parentPtr, mask);
 	     entryPtr != NULL;
 	     entryPtr = Blt_TreeViewNextSibling(entryPtr, mask)) {
 	    objPtr = NodeToObj(entryPtr->node);
@@ -2122,7 +2122,7 @@ EntryChildrenOp(tvPtr, interp, objc, objv)
 	    firstPtr = GetNthEntry(parentPtr, firstPos, mask);
 	}
 	if ((lastPos != END) && (firstPos > lastPos)) {
-	    for (entryPtr = lastPtr; entryPtr != NULL; 
+	    for (entryPtr = lastPtr; entryPtr != NULL;
 		entryPtr = Blt_TreeViewPrevEntry(entryPtr, mask)) {
 		objPtr = NodeToObj(entryPtr->node);
 		Tcl_ListObjAppendElement(interp, listObjPtr, objPtr);
@@ -2131,7 +2131,7 @@ EntryChildrenOp(tvPtr, interp, objc, objv)
 		}
 	    }
 	} else {
-	    for (entryPtr = firstPtr; entryPtr != NULL; 
+	    for (entryPtr = firstPtr; entryPtr != NULL;
 		 entryPtr = Blt_TreeViewNextEntry(entryPtr, mask)) {
 		objPtr = NodeToObj(entryPtr->node);
 		Tcl_ListObjAppendElement(interp, listObjPtr, objPtr);
@@ -2141,10 +2141,10 @@ EntryChildrenOp(tvPtr, interp, objc, objv)
 	    }
 	}
     } else {
-	Tcl_AppendResult(interp, "wrong # args: should be \"", 
+	Tcl_AppendResult(interp, "wrong # args: should be \"",
 			 Tcl_GetString(objv[0]), " ",
-			 Tcl_GetString(objv[1]), " ", 
-			 Tcl_GetString(objv[2]), " tagOrId ?first last?", 
+			 Tcl_GetString(objv[1]), " ",
+			 Tcl_GetString(objv[2]), " tagOrId ?first last?",
 			 (char *)NULL);
 	return TCL_ERROR;
     }
@@ -2177,7 +2177,7 @@ EntryDeleteOp(tvPtr, interp, objc, objv)
 	int entryPos;
 	Blt_TreeNode node;
 	/*
-	 * Delete a single child node from a hierarchy specified 
+	 * Delete a single child node from a hierarchy specified
 	 * by its numeric position.
 	 */
 	if (Blt_GetPositionFromObj(interp, objv[3], &entryPos) != TCL_OK) {
@@ -2212,7 +2212,7 @@ EntryDeleteOp(tvPtr, interp, objc, objv)
 	    firstPos = nEntries - 1;
 	}
 	if (firstPos >= nEntries) {
-	    Tcl_AppendResult(interp, "first position \"", 
+	    Tcl_AppendResult(interp, "first position \"",
 		Tcl_GetString(objv[4]), " is out of range", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -2220,7 +2220,7 @@ EntryDeleteOp(tvPtr, interp, objc, objv)
 	    lastPos = nEntries - 1;
 	}
 	if (firstPos > lastPos) {
-	    Tcl_AppendResult(interp, "bad range: \"", Tcl_GetString(objv[4]), 
+	    Tcl_AppendResult(interp, "bad range: \"", Tcl_GetString(objv[4]),
 		" > ", Tcl_GetString(objv[5]), "\"", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -2308,7 +2308,7 @@ static Blt_OpSpec entryOps[] =
     /*bbox*/
     /*bind*/
     {"cget", 2, (Blt_Op)EntryCgetOp, 5, 5, "tagOrId option",},
-    {"children", 2, (Blt_Op)EntryChildrenOp, 4, 6, 
+    {"children", 2, (Blt_Op)EntryChildrenOp, 4, 6,
 	"tagOrId firstPos lastPos",},
     /*close*/
     {"configure", 2, (Blt_Op)EntryConfigureOp, 4, 0,
@@ -2341,7 +2341,7 @@ EntryOp(tvPtr, interp, objc, objv)
     Blt_Op proc;
     int result;
 
-    proc = Blt_GetOpFromObj(interp, nEntryOps, entryOps, BLT_OP_ARG2, objc, 
+    proc = Blt_GetOpFromObj(interp, nEntryOps, entryOps, BLT_OP_ARG2, objc,
 	objv, 0);
     if (proc == NULL) {
 	return TCL_ERROR;
@@ -2476,7 +2476,7 @@ FindOp(tvPtr, interp, objc, objv)
 	    }
 	    i++;
 	    addTag = Tcl_GetString(objv[i]);
-	} else if ((c == 't') && (length > 1) && 
+	} else if ((c == 't') && (length > 1) &&
 		   (strncmp(option, "tag", length) == 0)) {
 	    if ((i + 1) == objc) {
 		goto missingArg;
@@ -2504,8 +2504,8 @@ FindOp(tvPtr, interp, objc, objv)
 	     * Verify that the switch is actually an entry configuration
 	     * option.
 	     */
-	    if (Blt_ConfigureValueFromObj(interp, tvPtr->tkwin, 
-		  bltTreeViewEntrySpecs, (char *)entryPtr, objv[i], 0) 
+	    if (Blt_ConfigureValueFromObj(interp, tvPtr->tkwin,
+		  bltTreeViewEntrySpecs, (char *)entryPtr, objv[i], 0)
 		!= TCL_OK) {
 		Tcl_ResetResult(interp);
 		Tcl_AppendResult(interp, "bad find switch \"", string, "\"",
@@ -2571,7 +2571,7 @@ FindOp(tvPtr, interp, objc, objv)
      *		the matching nodes.
      */
     listObjPtr = Tcl_NewListObj(0, (Tcl_Obj **)NULL);
-    for (entryPtr = firstPtr; entryPtr != NULL; 
+    for (entryPtr = firstPtr; entryPtr != NULL;
 	 entryPtr = (*nextProc) (entryPtr, 0)) {
 	if (namePattern != NULL) {
 	    result = (*compareProc)(interp, Blt_TreeNodeLabel(entryPtr->node),
@@ -2584,7 +2584,7 @@ FindOp(tvPtr, interp, objc, objv)
 	    Tcl_DString fullName;
 
 	    Blt_TreeViewGetFullName(tvPtr, entryPtr, FALSE, &fullName);
-	    result = (*compareProc) (interp, Tcl_DStringValue(&fullName), 
+	    result = (*compareProc) (interp, Tcl_DStringValue(&fullName),
 		fullPattern);
 	    Tcl_DStringFree(&fullName);
 	    if (result == invertMatch) {
@@ -2601,7 +2601,7 @@ FindOp(tvPtr, interp, objc, objv)
 	    node = Blt_ListNextNode(node)) {
 	    objPtr = (Tcl_Obj *)Blt_ListGetKey(node);
 	    Tcl_ResetResult(interp);
-	    Blt_ConfigureValueFromObj(interp, tvPtr->tkwin, 
+	    Blt_ConfigureValueFromObj(interp, tvPtr->tkwin,
 		bltTreeViewEntrySpecs, (char *)entryPtr, objPtr, 0);
 	    pattern = Blt_ListGetValue(node);
 	    objPtr = Tcl_GetObjResult(interp);
@@ -2610,7 +2610,7 @@ FindOp(tvPtr, interp, objc, objv)
 		goto nextEntry;	/* Failed to match */
 	    }
 	}
-	/* 
+	/*
 	 * Someone may actually delete the current node in the "exec"
 	 * callback.  Preserve the entry.
 	 */
@@ -2638,7 +2638,7 @@ FindOp(tvPtr, interp, objc, objv)
 		}
 	    }
 	}
-	    
+
 	Tcl_Release(entryPtr);
 	nMatches++;
 	if ((nMatches == maxMatches) && (maxMatches > 0)) {
@@ -2710,7 +2710,7 @@ GetOp(tvPtr, interp, objc, objv)
 	if (Blt_TreeViewFindTaggedEntries(tvPtr, objv[i], &info) != TCL_OK) {
 	    return TCL_ERROR;
 	}
-	for (entryPtr = Blt_TreeViewFirstTaggedEntry(&info); entryPtr != NULL; 
+	for (entryPtr = Blt_TreeViewFirstTaggedEntry(&info); entryPtr != NULL;
 	     entryPtr = Blt_TreeViewNextTaggedEntry(&info)) {
 	    Tcl_DStringSetLength(&dString2, 0);
 	    count++;
@@ -2720,10 +2720,10 @@ GetOp(tvPtr, interp, objc, objv)
 	    }
 	    if (useFullName) {
 		Blt_TreeViewGetFullName(tvPtr, entryPtr, FALSE, &dString2);
-		Tcl_DStringAppendElement(&dString1, 
+		Tcl_DStringAppendElement(&dString1,
 			 Tcl_DStringValue(&dString2));
 	    } else {
-		Tcl_DStringAppendElement(&dString1, 
+		Tcl_DStringAppendElement(&dString1,
 			 Blt_TreeNodeLabel(entryPtr->node));
 	    }
 	}
@@ -2826,7 +2826,7 @@ SearchAndApplyToTree(tvPtr, interp, objc, objv, proc, nonMatchPtr)
 	    }
 	    i++;
 	    namePattern = Tcl_GetString(objv[i]);
-	} else if ((c == 't') && (length > 1) && 
+	} else if ((c == 't') && (length > 1) &&
 		   (strncmp(option, "tag", length) == 0)) {
 	    if ((i + 1) == objc) {
 		goto missingArg;
@@ -2839,8 +2839,8 @@ SearchAndApplyToTree(tvPtr, interp, objc, objv, proc, nonMatchPtr)
 	    /*
 	     * Verify that the switch is actually an entry configuration option.
 	     */
-	    if (Blt_ConfigureValueFromObj(interp, tvPtr->tkwin, 
-		bltTreeViewEntrySpecs, (char *)entryPtr, objv[i], 0) 
+	    if (Blt_ConfigureValueFromObj(interp, tvPtr->tkwin,
+		bltTreeViewEntrySpecs, (char *)entryPtr, objv[i], 0)
 		!= TCL_OK) {
 		Tcl_ResetResult(interp);
 		Tcl_AppendResult(interp, "bad switch \"", string,
@@ -2869,10 +2869,10 @@ SearchAndApplyToTree(tvPtr, interp, objc, objv, proc, nonMatchPtr)
 	 * current spec.  Apply the input procedure to each of the
 	 * matching nodes.
 	 */
-	for (entryPtr = tvPtr->rootPtr; entryPtr != NULL; 
+	for (entryPtr = tvPtr->rootPtr; entryPtr != NULL;
 	     entryPtr = Blt_TreeViewNextEntry(entryPtr, 0)) {
 	    if (namePattern != NULL) {
-		result = (*compareProc) (interp, 
+		result = (*compareProc) (interp,
 			Blt_TreeNodeLabel(entryPtr->node), namePattern);
 		if (result == invertMatch) {
 		    continue;	/* Failed to match */
@@ -2882,7 +2882,7 @@ SearchAndApplyToTree(tvPtr, interp, objc, objv, proc, nonMatchPtr)
 		Tcl_DString dString;
 
 		Blt_TreeViewGetFullName(tvPtr, entryPtr, FALSE, &dString);
-		result = (*compareProc) (interp, Tcl_DStringValue(&dString), 
+		result = (*compareProc) (interp, Tcl_DStringValue(&dString),
 			fullPattern);
 		Tcl_DStringFree(&dString);
 		if (result == invertMatch) {
@@ -2899,8 +2899,8 @@ SearchAndApplyToTree(tvPtr, interp, objc, objv, proc, nonMatchPtr)
 		node = Blt_ListNextNode(node)) {
 		objPtr = (Tcl_Obj *)Blt_ListGetKey(node);
 		Tcl_ResetResult(interp);
-		if (Blt_ConfigureValueFromObj(interp, tvPtr->tkwin, 
-			bltTreeViewEntrySpecs, (char *)entryPtr, objPtr, 0) 
+		if (Blt_ConfigureValueFromObj(interp, tvPtr->tkwin,
+			bltTreeViewEntrySpecs, (char *)entryPtr, objPtr, 0)
 		    != TCL_OK) {
 		    return TCL_ERROR;	/* This shouldn't happen. */
 		}
@@ -2925,7 +2925,7 @@ SearchAndApplyToTree(tvPtr, interp, objc, objv, proc, nonMatchPtr)
 	if (Blt_TreeViewFindTaggedEntries(tvPtr, objv[i], &info) != TCL_OK) {
 	    return TCL_ERROR;
 	}
-	for (entryPtr = Blt_TreeViewFirstTaggedEntry(&info); entryPtr != NULL; 
+	for (entryPtr = Blt_TreeViewFirstTaggedEntry(&info); entryPtr != NULL;
 	     entryPtr = Blt_TreeViewNextTaggedEntry(&info)) {
 	    if ((*proc) (tvPtr, entryPtr) != TCL_OK) {
 		return TCL_ERROR;
@@ -2956,7 +2956,7 @@ FixSelectionsApplyProc(tvPtr, entryPtr)
 	    (Blt_TreeIsAncestor(entryPtr->node, tvPtr->focusPtr->node))) {
 	    if (entryPtr != tvPtr->rootPtr) {
 		entryPtr = Blt_TreeViewParentEntry(entryPtr);
-		tvPtr->focusPtr = (entryPtr == NULL) 
+		tvPtr->focusPtr = (entryPtr == NULL)
 		    ? tvPtr->focusPtr : entryPtr;
 		Blt_SetFocusItem(tvPtr->bindTable, tvPtr->focusPtr, ITEM_ENTRY);
 	    }
@@ -2998,7 +2998,7 @@ HideOp(tvPtr, interp, objc, objv)
 {
     int status, nonmatching;
 
-    status = SearchAndApplyToTree(tvPtr, interp, objc, objv, 
+    status = SearchAndApplyToTree(tvPtr, interp, objc, objv,
 	HideEntryApplyProc, &nonmatching);
 
     if (status != TCL_OK) {
@@ -3099,9 +3099,9 @@ IndexOp(tvPtr, interp, objc, objv)
 	objv += 2, objc -= 2;
     }
     if (objc != 3) {
-	Tcl_AppendResult(interp, "wrong # args: should be \"", 
-		Tcl_GetString(objv[0]), 
-		" index ?-at tagOrId? ?-path? tagOrId\"", 
+	Tcl_AppendResult(interp, "wrong # args: should be \"",
+		Tcl_GetString(objv[0]),
+		" index ?-at tagOrId? ?-path? tagOrId\"",
 		(char *)NULL);
 	return TCL_ERROR;
     }
@@ -3122,7 +3122,7 @@ IndexOp(tvPtr, interp, objc, objv)
 	    Tcl_SetObjResult(interp, NodeToObj(entryPtr->node));
 	}
     } else {
-	if ((GetEntryFromObj2(tvPtr, objv[2], &entryPtr) == TCL_OK) && 
+	if ((GetEntryFromObj2(tvPtr, objv[2], &entryPtr) == TCL_OK) &&
 	    (entryPtr != NULL)) {
 	    Tcl_SetObjResult(interp, NodeToObj(entryPtr->node));
 	}
@@ -3233,7 +3233,7 @@ InsertOp(tvPtr, interp, objc, objv)
 	    }
 	}
 	parent = rootPtr->node;
-	depth--;		
+	depth--;
 
 	/* Verify each component in the path preceding the tail.  */
 	for (n = 0, p = compArr; n < depth; n++, p++) {
@@ -3252,7 +3252,7 @@ InsertOp(tvPtr, interp, objc, objv)
 	    parent = node;
 	}
 	node = NULL;
-	if (((tvPtr->flags & TV_ALLOW_DUPLICATES) == 0) && 
+	if (((tvPtr->flags & TV_ALLOW_DUPLICATES) == 0) &&
 	    (Blt_TreeFindChild(parent, *p) != NULL)) {
 	    Tcl_AppendResult(interp, "entry \"", *p, "\" already exists in \"",
 		 path, "\"", (char *)NULL);
@@ -3315,9 +3315,9 @@ typedef struct {
     Blt_TreeNode parent;
 } InsertData;
 
-static Blt_SwitchSpec insertSwitches[] = 
+static Blt_SwitchSpec insertSwitches[] =
 {
-    {BLT_SWITCH_CUSTOM, "-after", Blt_Offset(InsertData, insertPos), 0, 
+    {BLT_SWITCH_CUSTOM, "-after", Blt_Offset(InsertData, insertPos), 0,
 	&afterSwitch},
     {BLT_SWITCH_INT_NONNEGATIVE, "-at", Blt_Offset(InsertData, insertPos), 0},
     {BLT_SWITCH_CUSTOM, "-before", Blt_Offset(InsertData, insertPos), 0,
@@ -3349,7 +3349,7 @@ AddOp(tvPtr, interp, objc, objv)
     data.cmdPtr = cmdPtr;
 
     /* Process any leading switches  */
-    i = Blt_ProcessObjSwitches(interp, addSwitches, objc - 2, objv + 2, 
+    i = Blt_ProcessObjSwitches(interp, addSwitches, objc - 2, objv + 2,
 	     (char *)&data, BLT_CONFIG_OBJV_PARTIAL);
     if (i < 0) {
 	return TCL_ERROR;
@@ -3357,7 +3357,7 @@ AddOp(tvPtr, interp, objc, objv)
     i += 2;
     /* Should have at the starting node */
     if (i >= objc) {
-	Tcl_AppendResult(interp, "starting node argument is missing", 
+	Tcl_AppendResult(interp, "starting node argument is missing",
 		(char *)NULL);
 	return TCL_ERROR;
     }
@@ -3416,7 +3416,7 @@ AddOp(tvPtr, interp, objc, objv)
 	    }
 	}
 	parent = rootPtr->node;
-	depth--;		
+	depth--;
 
 	/* Verify each component in the path preceding the tail.  */
 	for (n = 0, p = compArr; n < depth; n++, p++) {
@@ -3435,7 +3435,7 @@ AddOp(tvPtr, interp, objc, objv)
 	    parent = node;
 	}
 	node = NULL;
-	if (((tvPtr->flags & TV_ALLOW_DUPLICATES) == 0) && 
+	if (((tvPtr->flags & TV_ALLOW_DUPLICATES) == 0) &&
 	    (Blt_TreeFindChild(parent, *p) != NULL)) {
 	    Tcl_AppendResult(interp, "entry \"", *p, "\" already exists in \"",
 		 path, "\"", (char *)NULL);
@@ -3475,18 +3475,18 @@ AddOp(tvPtr, interp, objc, objv)
  *
  * DeleteOp --
  *
- *	Deletes nodes from the hierarchy. Deletes one or more entries 
+ *	Deletes nodes from the hierarchy. Deletes one or more entries
  *	(except root). In all cases, nodes are removed recursively.
  *
- *	Note: There's no need to explicitly clean up Entry structures 
- *	      or request a redraw of the widget. When a node is 
+ *	Note: There's no need to explicitly clean up Entry structures
+ *	      or request a redraw of the widget. When a node is
  *	      deleted in the tree, all of the Tcl_Objs representing
- *	      the various data fields are also removed.  The treeview 
+ *	      the various data fields are also removed.  The treeview
  *	      widget store the Entry structure in a data field. So it's
  *	      automatically cleaned up when FreeEntryInternalRep is
  *	      called.
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 /*ARGSUSED*/
 static int
@@ -3504,18 +3504,18 @@ DeleteOp(tvPtr, interp, objc, objv)
 	if (Blt_TreeViewFindTaggedEntries(tvPtr, objv[i], &info) != TCL_OK) {
 	    return TCL_ERROR;
 	}
-	for (entryPtr = Blt_TreeViewFirstTaggedEntry(&info); entryPtr != NULL; 
+	for (entryPtr = Blt_TreeViewFirstTaggedEntry(&info); entryPtr != NULL;
 	     entryPtr = Blt_TreeViewNextTaggedEntry(&info)) {
 	    if (entryPtr == tvPtr->rootPtr) {
 		Blt_TreeNode next, node;
 
-		/* 
+		/*
 		 *   Don't delete the root node.  We implicitly assume
 		 *   that even an empty tree has at a root.  Instead
 		 *   delete all the children regardless if they're closed
 		 *   or hidden.
 		 */
-		for (node = Blt_TreeFirstChild(entryPtr->node); node != NULL; 
+		for (node = Blt_TreeFirstChild(entryPtr->node); node != NULL;
 		     node = next) {
 		    next = Blt_TreeNextSibling(node);
 		    DeleteNode(tvPtr, node);
@@ -3524,7 +3524,7 @@ DeleteOp(tvPtr, interp, objc, objv)
 		DeleteNode(tvPtr, entryPtr->node);
 	    }
 	}
-    } 
+    }
     return TCL_OK;
 }
 
@@ -3575,7 +3575,7 @@ MoveOp(tvPtr, interp, objc, objv)
     if (Blt_TreeViewGetEntry(tvPtr, objv[4], &destPtr) != TCL_OK) {
 	return TCL_ERROR;
     }
-    for (srcPtr = Blt_TreeViewFirstTaggedEntry(&info); srcPtr != NULL; 
+    for (srcPtr = Blt_TreeViewFirstTaggedEntry(&info); srcPtr != NULL;
 	 srcPtr = Blt_TreeViewNextTaggedEntry(&info)) {
 	/* Verify they aren't ancestors. */
 	if (Blt_TreeIsAncestor(srcPtr->node, destPtr->node)) {
@@ -3583,8 +3583,8 @@ MoveOp(tvPtr, interp, objc, objv)
 	    char *path;
 
 	    path = Blt_TreeViewGetFullName(tvPtr, srcPtr, 1, &dString);
-	    Tcl_AppendResult(interp, "can't move node: \"", path, 
-			"\" is an ancestor of \"", Tcl_GetString(objv[4]), 
+	    Tcl_AppendResult(interp, "can't move node: \"", path,
+			"\" is an ancestor of \"", Tcl_GetString(objv[4]),
 			"\"", (char *)NULL);
 	    Tcl_DStringFree(&dString);
 	    return TCL_ERROR;
@@ -3595,16 +3595,16 @@ MoveOp(tvPtr, interp, objc, objv)
 	}
 	switch (action) {
 	case MOVE_INTO:
-	    Blt_TreeMoveNode(tvPtr->tree, srcPtr->node, destPtr->node, 
+	    Blt_TreeMoveNode(tvPtr->tree, srcPtr->node, destPtr->node,
 			     (Blt_TreeNode)NULL);
 	    break;
-	    
+
 	case MOVE_BEFORE:
 	    Blt_TreeMoveNode(tvPtr->tree, srcPtr->node, parent, destPtr->node);
 	    break;
-	    
+
 	case MOVE_AFTER:
-	    Blt_TreeMoveNode(tvPtr->tree, srcPtr->node, parent, 
+	    Blt_TreeMoveNode(tvPtr->tree, srcPtr->node, parent,
 			     Blt_TreeNextSibling(destPtr->node));
 	    break;
 	}
@@ -3633,13 +3633,13 @@ NearestOp(tvPtr, interp, objc, objv)
     if (strcmp("-root", string) == 0) {
 	isRoot = TRUE;
 	objv++, objc--;
-    } 
+    }
     if (objc < 4) {
-	Tcl_AppendResult(interp, "wrong # args: should be \"", 
-		Tcl_GetString(objv[0]), " ", Tcl_GetString(objv[1]), 
+	Tcl_AppendResult(interp, "wrong # args: should be \"",
+		Tcl_GetString(objv[0]), " ", Tcl_GetString(objv[1]),
 		" ?-root? x y\"", (char *)NULL);
 	return TCL_ERROR;
-			 
+
     }
     if ((Tk_GetPixelsFromObj(interp, tvPtr->tkwin, objv[2], &x) != TCL_OK) ||
 	(Tk_GetPixelsFromObj(interp, tvPtr->tkwin, objv[3], &y) != TCL_OK)) {
@@ -3677,14 +3677,14 @@ NearestOp(tvPtr, interp, objc, objv)
 		where = "button";
 		goto done;
 	    }
-	} 
+	}
 	depth = DEPTH(tvPtr, entryPtr->node);
 
 	icon = Blt_TreeViewGetEntryIcon(tvPtr, entryPtr);
 	if (icon != NULL) {
 	    int iconWidth, iconHeight, entryHeight;
 	    int iconX, iconY;
-	    
+
 	    entryHeight = MAX(entryPtr->iconHeight, tvPtr->button.height);
 	    iconHeight = TreeViewIconHeight(icon);
 	    iconWidth = TreeViewIconWidth(icon);
@@ -3694,7 +3694,7 @@ NearestOp(tvPtr, interp, objc, objv)
 		iconX += (ICONWIDTH(0) - iconWidth) / 2;
 	    } else {
 		iconX += (ICONWIDTH(depth + 1) - iconWidth) / 2;
-	    }	    
+	    }
 	    iconY += (entryHeight - iconHeight) / 2;
 	    if ((x >= iconX) && (x <= (iconX + iconWidth)) &&
 		(y >= iconY) && (y < (iconY + iconHeight))) {
@@ -3706,13 +3706,13 @@ NearestOp(tvPtr, interp, objc, objv)
 	labelY = entryPtr->worldY;
 	if (!tvPtr->flatView) {
 	    labelX += ICONWIDTH(depth + 1) + 4;
-	}	    
+	}
 	if ((x >= labelX) && (x < (labelX + entryPtr->labelWidth)) &&
 	    (y >= labelY) && (y < (labelY + entryPtr->labelHeight))) {
 	    where = "label";
 	}
     done:
-	if (Tcl_SetVar(interp, Tcl_GetString(objv[4]), where, 
+	if (Tcl_SetVar(interp, Tcl_GetString(objv[4]), where,
 		TCL_LEAVE_ERR_MSG) == NULL) {
 	    return TCL_ERROR;
 	}
@@ -3741,7 +3741,7 @@ OpenOp(tvPtr, interp, objc, objv)
 	char *string;
 
 	string = Tcl_GetStringFromObj(objv[2], &length);
-	if ((string[0] == '-') && (length > 1) && 
+	if ((string[0] == '-') && (length > 1) &&
 	    (strncmp(string, "-recurse", length) == 0)) {
 	    objv++, objc--;
 	    recurse = TRUE;
@@ -3751,10 +3751,10 @@ OpenOp(tvPtr, interp, objc, objv)
 	if (Blt_TreeViewFindTaggedEntries(tvPtr, objv[i], &info) != TCL_OK) {
 	    return TCL_ERROR;
 	}
-	for (entryPtr = Blt_TreeViewFirstTaggedEntry(&info); entryPtr != NULL; 
+	for (entryPtr = Blt_TreeViewFirstTaggedEntry(&info); entryPtr != NULL;
 	     entryPtr = Blt_TreeViewNextTaggedEntry(&info)) {
 	    if (recurse) {
-		result = Blt_TreeViewApply(tvPtr, entryPtr, 
+		result = Blt_TreeViewApply(tvPtr, entryPtr,
 					   Blt_TreeViewOpenEntry, 0);
 	    } else {
 		result = Blt_TreeViewOpenEntry(tvPtr, entryPtr);
@@ -3796,7 +3796,7 @@ RangeOp(tvPtr, interp, objc, objv)
 
     mask = 0;
     string = Tcl_GetStringFromObj(objv[2], &length);
-    if ((string[0] == '-') && (length > 1) && 
+    if ((string[0] == '-') && (length > 1) &&
 	(strncmp(string, "-open", length) == 0)) {
 	objv++, objc--;
 	mask |= ENTRY_CLOSED;
@@ -3810,15 +3810,15 @@ RangeOp(tvPtr, interp, objc, objv)
 	}
     } else {
 	lastPtr = LastEntry(tvPtr, firstPtr, mask);
-    }    
+    }
     if (mask & ENTRY_CLOSED) {
 	if (firstPtr->flags & ENTRY_HIDDEN) {
-	    Tcl_AppendResult(interp, "first node \"", Tcl_GetString(objv[2]), 
+	    Tcl_AppendResult(interp, "first node \"", Tcl_GetString(objv[2]),
 		"\" is hidden.", (char *)NULL);
 	    return TCL_ERROR;
 	}
 	if (lastPtr->flags & ENTRY_HIDDEN) {
-	    Tcl_AppendResult(interp, "last node \"", Tcl_GetString(objv[3]), 
+	    Tcl_AppendResult(interp, "last node \"", Tcl_GetString(objv[3]),
 		"\" is hidden.", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -3830,7 +3830,7 @@ RangeOp(tvPtr, interp, objc, objv)
      */
     listObjPtr = Tcl_NewListObj(0, (Tcl_Obj **)NULL);
     if (Blt_TreeIsBefore(lastPtr->node, firstPtr->node)) {
-	for (entryPtr = lastPtr; entryPtr != NULL; 
+	for (entryPtr = lastPtr; entryPtr != NULL;
 	     entryPtr = Blt_TreeViewPrevEntry(entryPtr, mask)) {
 	    objPtr = NodeToObj(entryPtr->node);
 	    Tcl_ListObjAppendElement(interp, listObjPtr, objPtr);
@@ -3839,7 +3839,7 @@ RangeOp(tvPtr, interp, objc, objv)
 	    }
 	}
     } else {
-	for (entryPtr = firstPtr; entryPtr != NULL; 
+	for (entryPtr = firstPtr; entryPtr != NULL;
 	     entryPtr = Blt_TreeViewNextEntry(entryPtr, mask)) {
 	    objPtr = NodeToObj(entryPtr->node);
 	    Tcl_ListObjAppendElement(interp, listObjPtr, objPtr);
@@ -3995,7 +3995,7 @@ SeeOp(tvPtr, interp, objc, objv)
     case TK_ANCHOR_E:
     case TK_ANCHOR_NE:
     case TK_ANCHOR_SE:
-	x = entryPtr->worldX + entryPtr->width + 
+	x = entryPtr->worldX + entryPtr->width +
 	    ICONWIDTH(DEPTH(tvPtr, entryPtr->node)) - width;
 	break;
     default:
@@ -4120,13 +4120,13 @@ SelectRange(tvPtr, fromPtr, toPtr)
 	    for (i = fromPtr->flatIndex; i <= toPtr->flatIndex; i++) {
 		SelectEntryApplyProc(tvPtr, tvPtr->flatArr[i]);
 	    }
-	}	    
+	}
     } else {
 	TreeViewEntry *entryPtr;
 	TreeViewIterProc *proc;
 	/* From the range determine the direction to select entries. */
 
-	proc = (Blt_TreeIsBefore(toPtr->node, fromPtr->node)) 
+	proc = (Blt_TreeIsBefore(toPtr->node, fromPtr->node))
 	    ? Blt_TreeViewPrevEntry : Blt_TreeViewNextEntry;
 	for (entryPtr = fromPtr; entryPtr != NULL;
 	     entryPtr = (*proc)(entryPtr, ENTRY_MASK)) {
@@ -4276,7 +4276,7 @@ SelectionMarkOp(tvPtr, interp, objc, objv)
 	return TCL_ERROR;
     }
     if (tvPtr->selAnchorPtr == NULL) {
-	Tcl_AppendResult(interp, "selection anchor must be set first", 
+	Tcl_AppendResult(interp, "selection anchor must be set first",
 		 (char *)NULL);
 	return TCL_ERROR;
     }
@@ -4285,7 +4285,7 @@ SelectionMarkOp(tvPtr, interp, objc, objv)
 	TreeViewEntry *selectPtr;
 
 	/* Deselect entry from the list all the way back to the anchor. */
-	for (linkPtr = Blt_ChainLastLink(tvPtr->selChainPtr); linkPtr != NULL; 
+	for (linkPtr = Blt_ChainLastLink(tvPtr->selChainPtr); linkPtr != NULL;
 	     linkPtr = nextPtr) {
 	    nextPtr = Blt_ChainPrevLink(linkPtr);
 	    selectPtr = Blt_ChainGetValue(linkPtr);
@@ -4380,9 +4380,9 @@ SelectionSetOp(tvPtr, interp, objc, objv)
     if (Blt_TreeViewGetEntry(tvPtr, objv[3], &firstPtr) != TCL_OK) {
 	return TCL_ERROR;
     }
-    if ((firstPtr->flags & ENTRY_HIDDEN) && 
+    if ((firstPtr->flags & ENTRY_HIDDEN) &&
 	(!(tvPtr->flags & TV_SELECT_CLEAR))) {
-	Tcl_AppendResult(interp, "can't select hidden node \"", 
+	Tcl_AppendResult(interp, "can't select hidden node \"",
 		Tcl_GetString(objv[3]), "\"", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -4391,9 +4391,9 @@ SelectionSetOp(tvPtr, interp, objc, objv)
 	if (Blt_TreeViewGetEntry(tvPtr, objv[4], &lastPtr) != TCL_OK) {
 	    return TCL_ERROR;
 	}
-	if ((lastPtr->flags & ENTRY_HIDDEN) && 
+	if ((lastPtr->flags & ENTRY_HIDDEN) &&
 		(!(tvPtr->flags & TV_SELECT_CLEAR))) {
-	    Tcl_AppendResult(interp, "can't select hidden node \"", 
+	    Tcl_AppendResult(interp, "can't select hidden node \"",
 		     Tcl_GetString(objv[4]), "\"", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -4459,7 +4459,7 @@ SelectionOp(tvPtr, interp, objc, objv)
     Blt_Op proc;
     int result;
 
-    proc = Blt_GetOpFromObj(interp, nSelectionOps, selectionOps, BLT_OP_ARG2, 
+    proc = Blt_GetOpFromObj(interp, nSelectionOps, selectionOps, BLT_OP_ARG2,
 	objc, objv, 0);
     if (proc == NULL) {
 	return TCL_ERROR;
@@ -4474,7 +4474,7 @@ SelectionOp(tvPtr, interp, objc, objv)
  *
  * TagForgetOp --
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 /*ARGSUSED*/
 static int
@@ -4497,7 +4497,7 @@ TagForgetOp(tvPtr, interp, objc, objv)
  *
  * TagNamesOp --
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static int
 TagNamesOp(tvPtr, interp, objc, objv)
@@ -4536,7 +4536,7 @@ TagNamesOp(tvPtr, interp, objc, objv)
 	    }
 	    list = Blt_ListCreate(BLT_ONE_WORD_KEYS);
 	    Blt_TreeViewGetTags(interp, tvPtr, entryPtr, list);
-	    for (listNode = Blt_ListFirstNode(list); listNode != NULL; 
+	    for (listNode = Blt_ListFirstNode(list); listNode != NULL;
 		 listNode = Blt_ListNextNode(listNode)) {
 		objPtr = Tcl_NewStringObj(Blt_ListGetKey(listNode), -1);
 		Tcl_ListObjAppendElement(interp, listObjPtr, objPtr);
@@ -4553,7 +4553,7 @@ TagNamesOp(tvPtr, interp, objc, objv)
  *
  * TagNodesOp --
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static int
 TagNodesOp(tvPtr, interp, objc, objv)
@@ -4578,13 +4578,13 @@ TagNodesOp(tvPtr, interp, objc, objv)
 	if (Blt_TreeViewFindTaggedEntries(tvPtr, objv[i], &info) != TCL_OK) {
 	    return TCL_ERROR;
 	}
-	for (entryPtr = Blt_TreeViewFirstTaggedEntry(&info); entryPtr != NULL; 
+	for (entryPtr = Blt_TreeViewFirstTaggedEntry(&info); entryPtr != NULL;
 	     entryPtr = Blt_TreeViewNextTaggedEntry(&info)) {
 	    Blt_CreateHashEntry(&nodeTable, (char *)entryPtr->node, &isNew);
 	}
     }
     listObjPtr = Tcl_NewListObj(0, (Tcl_Obj **) NULL);
-    for (hPtr = Blt_FirstHashEntry(&nodeTable, &cursor); hPtr != NULL; 
+    for (hPtr = Blt_FirstHashEntry(&nodeTable, &cursor); hPtr != NULL;
 	 hPtr = Blt_NextHashEntry(&cursor)) {
 	node = (Blt_TreeNode)Blt_GetHashKey(&nodeTable, hPtr);
 	objPtr = Tcl_NewIntObj(Blt_TreeNodeId(node));
@@ -4600,7 +4600,7 @@ TagNodesOp(tvPtr, interp, objc, objv)
  *
  * TagAddOp --
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static int
 TagAddOp(tvPtr, interp, objc, objv)
@@ -4617,22 +4617,22 @@ TagAddOp(tvPtr, interp, objc, objv)
     tagName = Tcl_GetString(objv[3]);
     tvPtr->fromPtr = NULL;
     if (strcmp(tagName, "root") == 0) {
-	Tcl_AppendResult(interp, "can't add reserved tag \"", tagName, "\"", 
+	Tcl_AppendResult(interp, "can't add reserved tag \"", tagName, "\"",
 		(char *)NULL);
 	return TCL_ERROR;
     }
     if (isdigit(UCHAR(tagName[0]))) {
-	Tcl_AppendResult(interp, "invalid tag \"", tagName, 
+	Tcl_AppendResult(interp, "invalid tag \"", tagName,
 		 "\": can't start with digit", (char *)NULL);
 	return TCL_ERROR;
     }
     if (tagName[0] == '@') {
-	Tcl_AppendResult(tvPtr->interp, "invalid tag \"", tagName, 
+	Tcl_AppendResult(tvPtr->interp, "invalid tag \"", tagName,
 		"\": can't start with \"@\"", (char *)NULL);
 	return TCL_ERROR;
-    } 
+    }
     if (GetEntryFromSpecialId(tvPtr, tagName, &entryPtr) == TCL_OK) {
-	Tcl_AppendResult(interp, "invalid tag \"", tagName, 
+	Tcl_AppendResult(interp, "invalid tag \"", tagName,
 		 "\": is a special id", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -4640,7 +4640,7 @@ TagAddOp(tvPtr, interp, objc, objv)
 	if (Blt_TreeViewFindTaggedEntries(tvPtr, objv[i], &info) != TCL_OK) {
 	    return TCL_ERROR;
 	}
-	for (entryPtr = Blt_TreeViewFirstTaggedEntry(&info); entryPtr != NULL; 
+	for (entryPtr = Blt_TreeViewFirstTaggedEntry(&info); entryPtr != NULL;
 	     entryPtr = Blt_TreeViewNextTaggedEntry(&info)) {
 	    if (AddTag(tvPtr, entryPtr->node, tagName) != TCL_OK) {
 		return TCL_ERROR;
@@ -4656,7 +4656,7 @@ TagAddOp(tvPtr, interp, objc, objv)
  *
  * TagDeleteOp --
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 /*ARGSUSED*/
 static int
@@ -4681,8 +4681,8 @@ TagDeleteOp(tvPtr, interp, objc, objv)
 	    if (Blt_TreeViewFindTaggedEntries(tvPtr, objv[i], &info)!= TCL_OK) {
 		return TCL_ERROR;
 	    }
-	    for (entryPtr = Blt_TreeViewFirstTaggedEntry(&info); 
-		entryPtr != NULL; 
+	    for (entryPtr = Blt_TreeViewFirstTaggedEntry(&info);
+		entryPtr != NULL;
 		entryPtr = Blt_TreeViewNextTaggedEntry(&info)) {
 	        hPtr = Blt_FindHashEntry(tablePtr, (char *)entryPtr->node);
 	        if (hPtr != NULL) {
@@ -4699,13 +4699,13 @@ TagDeleteOp(tvPtr, interp, objc, objv)
  *
  * TagOp --
  *
- *---------------------------------------------------------------------- 
+ *----------------------------------------------------------------------
  */
 static Blt_OpSpec tagOps[] = {
     {"add", 1, (Blt_Op)TagAddOp, 5, 0, "tag id...",},
     {"delete", 2, (Blt_Op)TagDeleteOp, 5, 0, "tag id...",},
     {"forget", 1, (Blt_Op)TagForgetOp, 4, 0, "tag...",},
-    {"names", 2, (Blt_Op)TagNamesOp, 3, 0, "?id...?",}, 
+    {"names", 2, (Blt_Op)TagNamesOp, 3, 0, "?id...?",},
     {"nodes", 2, (Blt_Op)TagNodesOp, 4, 0, "tag ?tag...?",},
 };
 
@@ -4721,7 +4721,7 @@ TagOp(tvPtr, interp, objc, objv)
     Blt_Op proc;
     int result;
 
-    proc = Blt_GetOpFromObj(interp, nTagOps, tagOps, BLT_OP_ARG2, objc, objv, 
+    proc = Blt_GetOpFromObj(interp, nTagOps, tagOps, BLT_OP_ARG2, objc, objv,
 	0);
     if (proc == NULL) {
 	return TCL_ERROR;
@@ -4744,7 +4744,7 @@ ToggleOp(tvPtr, interp, objc, objv)
     if (Blt_TreeViewFindTaggedEntries(tvPtr, objv[2], &info) != TCL_OK) {
 	return TCL_ERROR;
     }
-    for (entryPtr = Blt_TreeViewFirstTaggedEntry(&info); entryPtr != NULL; 
+    for (entryPtr = Blt_TreeViewFirstTaggedEntry(&info); entryPtr != NULL;
 	 entryPtr = Blt_TreeViewNextTaggedEntry(&info)) {
 	if (entryPtr == NULL) {
 	    return TCL_OK;
@@ -4753,13 +4753,13 @@ ToggleOp(tvPtr, interp, objc, objv)
 	    Blt_TreeViewOpenEntry(tvPtr, entryPtr);
 	} else {
 	    Blt_TreeViewPruneSelection(tvPtr, entryPtr);
-	    if ((tvPtr->focusPtr != NULL) && 
+	    if ((tvPtr->focusPtr != NULL) &&
 		(Blt_TreeIsAncestor(entryPtr->node, tvPtr->focusPtr->node))) {
 		tvPtr->focusPtr = entryPtr;
 		Blt_SetFocusItem(tvPtr->bindTable, tvPtr->focusPtr, ITEM_ENTRY);
 	    }
 	    if ((tvPtr->selAnchorPtr != NULL) &&
-		(Blt_TreeIsAncestor(entryPtr->node, 
+		(Blt_TreeIsAncestor(entryPtr->node,
 				    tvPtr->selAnchorPtr->node))) {
 		tvPtr->selAnchorPtr = NULL;
 	    }
@@ -4801,7 +4801,7 @@ XViewOp(tvPtr, interp, objc, objv)
 	return TCL_OK;
     }
     if (Blt_GetScrollInfoFromObj(interp, objc - 2, objv + 2, &tvPtr->xOffset,
-	    worldWidth, width, tvPtr->xScrollUnits, tvPtr->scrollMode) 
+	    worldWidth, width, tvPtr->xScrollUnits, tvPtr->scrollMode)
 	    != TCL_OK) {
 	return TCL_ERROR;
     }
@@ -4864,26 +4864,26 @@ YViewOp(tvPtr, interp, objc, objv)
  */
 static Blt_OpSpec treeViewOps[] =
 {
-    {"bbox", 2, (Blt_Op)BboxOp, 3, 0, "tagOrId...",}, 
-    {"bind", 2, (Blt_Op)BindOp, 3, 5, "tagName ?sequence command?",}, 
+    {"bbox", 2, (Blt_Op)BboxOp, 3, 0, "tagOrId...",},
+    {"bind", 2, (Blt_Op)BindOp, 3, 5, "tagName ?sequence command?",},
     {"button", 2, (Blt_Op)ButtonOp, 2, 0, "args",},
-    {"cget", 2, (Blt_Op)CgetOp, 3, 3, "option",}, 
-    {"close", 2, (Blt_Op)CloseOp, 2, 0, "?-recurse? tagOrId...",}, 
-    {"column", 3, (Blt_Op)Blt_TreeViewColumnOp, 2, 0, "oper args",}, 
+    {"cget", 2, (Blt_Op)CgetOp, 3, 3, "option",},
+    {"close", 2, (Blt_Op)CloseOp, 2, 0, "?-recurse? tagOrId...",},
+    {"column", 3, (Blt_Op)Blt_TreeViewColumnOp, 2, 0, "oper args",},
     {"configure", 3, (Blt_Op)ConfigureOp, 2, 0, "?option value?...",},
     {"curselection", 2, (Blt_Op)CurselectionOp, 2, 2, "",},
-    {"delete", 1, (Blt_Op)DeleteOp, 2, 0, "tagOrId ?tagOrId...?",}, 
+    {"delete", 1, (Blt_Op)DeleteOp, 2, 0, "tagOrId ?tagOrId...?",},
     {"edit", 2, (Blt_Op)EditOp, 4, 6, "?-root|-test? x y",},
     {"entry", 2, (Blt_Op)EntryOp, 2, 0, "oper args",},
-    {"find", 2, (Blt_Op)FindOp, 2, 0, "?flags...? ?first last?",}, 
-    {"focus", 2, (Blt_Op)FocusOp, 3, 3, "tagOrId",}, 
-    {"get", 1, (Blt_Op)GetOp, 2, 0, "?-full? tagOrId ?tagOrId...?",}, 
+    {"find", 2, (Blt_Op)FindOp, 2, 0, "?flags...? ?first last?",},
+    {"focus", 2, (Blt_Op)FocusOp, 3, 3, "tagOrId",},
+    {"get", 1, (Blt_Op)GetOp, 2, 0, "?-full? tagOrId ?tagOrId...?",},
     {"hide", 1, (Blt_Op)HideOp, 2, 0, "?-exact? ?-glob? ?-regexp? ?-nonmatching? ?-name string? ?-full string? ?-data string? ?--? ?tagOrId...?",},
     {"index", 3, (Blt_Op)IndexOp, 3, 6, "?-at tagOrId? ?-path? string",},
     {"insert", 3, (Blt_Op)InsertOp, 3, 0, "?-at tagOrId? position label ?label...? ?option value?",},
     {"move", 1, (Blt_Op)MoveOp, 5, 5, "tagOrId into|before|after tagOrId",},
-    {"nearest", 1, (Blt_Op)NearestOp, 4, 5, "x y ?varName?",}, 
-    {"open", 1, (Blt_Op)OpenOp, 2, 0, "?-recurse? tagOrId...",}, 
+    {"nearest", 1, (Blt_Op)NearestOp, 4, 5, "x y ?varName?",},
+    {"open", 1, (Blt_Op)OpenOp, 2, 0, "?-recurse? tagOrId...",},
     {"range", 1, (Blt_Op)RangeOp, 4, 5, "?-open? tagOrId tagOrId",},
     {"scan", 2, (Blt_Op)ScanOp, 5, 5, "dragto|mark x y",},
     {"see", 3, (Blt_Op)SeeOp, 3, 0, "?-anchor anchor? tagOrId",},
@@ -4910,7 +4910,7 @@ Blt_TreeViewWidgetInstCmd(clientData, interp, objc, objv)
     TreeView *tvPtr = clientData;
     int result;
 
-    proc = Blt_GetOpFromObj(interp, nTreeViewOps, treeViewOps, BLT_OP_ARG1, 
+    proc = Blt_GetOpFromObj(interp, nTreeViewOps, treeViewOps, BLT_OP_ARG1,
 	objc, objv, 0);
     if (proc == NULL) {
 	return TCL_ERROR;

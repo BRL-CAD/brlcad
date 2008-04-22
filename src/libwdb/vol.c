@@ -1,7 +1,7 @@
 /*                           V O L . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2007 United States Government as represented by
+ * Copyright (c) 1994-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,11 +23,9 @@
 
 #include "common.h"
 
-#ifdef HAVE_STRING_H
-#  include <string.h>
-#endif
+#include <string.h>
+#include "bio.h"
 
-#include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
@@ -42,37 +40,37 @@
  */
 int
 mk_vol(struct rt_wdb *fp, const char *name, const char *file, int xdim, int ydim, int zdim, int lo, int hi, const fastf_t *cellsize, const matp_t mat)
-				/* name of file containing bitmap */
-				/* X dimansion of file (w cells) */
-				/* Y dimension of file (n cells) */
-				/* Z dimension of file (d cells) */
-				/* Low threshold */
-				/* High threshold */
-				/* ideal coords: size of each cell */
-				/* convert local coords to model space */
+    /* name of file containing bitmap */
+    /* X dimansion of file (w cells) */
+    /* Y dimension of file (n cells) */
+    /* Z dimension of file (d cells) */
+    /* Low threshold */
+    /* High threshold */
+    /* ideal coords: size of each cell */
+    /* convert local coords to model space */
 {
-	struct rt_vol_internal	*vol;
+    struct rt_vol_internal	*vol;
 
-	BU_GETSTRUCT( vol, rt_vol_internal );
-	vol->magic = RT_VOL_INTERNAL_MAGIC;
-	strncpy( vol->file, file, RT_VOL_NAME_LEN );
-	vol->xdim = xdim;
-	vol->ydim = ydim;
-	vol->zdim = zdim;
-	vol->lo = lo;
-	vol->hi = hi;
-	VMOVE( vol->cellsize , cellsize );
-	MAT_COPY( vol->mat , mat );
+    BU_GETSTRUCT( vol, rt_vol_internal );
+    vol->magic = RT_VOL_INTERNAL_MAGIC;
+    bu_strlcpy( vol->file, file, RT_VOL_NAME_LEN );
+    vol->xdim = xdim;
+    vol->ydim = ydim;
+    vol->zdim = zdim;
+    vol->lo = lo;
+    vol->hi = hi;
+    VMOVE( vol->cellsize, cellsize );
+    MAT_COPY( vol->mat, mat );
 
-	return wdb_export( fp, name, (genptr_t)vol, ID_VOL, mk_conv2mm );
+    return wdb_export( fp, name, (genptr_t)vol, ID_VOL, mk_conv2mm );
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

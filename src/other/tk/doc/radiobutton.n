@@ -36,7 +36,7 @@ Specifies a desired height for the button.
 If an image or bitmap is being displayed in the button then the value is in
 screen units (i.e. any of the forms acceptable to \fBTk_GetPixels\fR);
 for text it is in lines of text.
-If this option isn't specified, the button's desired height is computed
+If this option is not specified, the button's desired height is computed
 from the size of the image or bitmap or text being displayed in it.
 .OP \-indicatoron indicatorOn IndicatorOn
 Specifies whether or not the indicator should be drawn.  Must be a
@@ -55,8 +55,12 @@ If specified as an empty string then no special color is used for
 displaying when the widget is selected.
 .OP \-offrelief offRelief OffRelief
 Specifies the relief for the checkbutton when the indicator is not drawn and
-the checkbutton is off.  The default value is "raised".  By setting this option
-to "flat" and setting -indicatoron to false and -overrelief to raised,
+the checkbutton is off.  The default value is
+.QW raised .
+By setting this option to
+.QW flat
+and setting \fB\-indicatoron\fR to false and \fB\-overrelief\fR to
+.QW raised ,
 the effect is achieved 
 of having a flat button that raises on mouse-over and which is
 depressed when activated.  This is the behavior typically exhibited by
@@ -95,7 +99,8 @@ specified.
 .OP \-tristatevalue tristateValue Value
 .VS 8.5
 Specifies the value that causes the radiobutton to display the multi-value 
-selection, also known as the tri-state mode.  Defaults to ``""''
+selection, also known as the tri-state mode.  Defaults to
+.QW "" .
 .VE 8.5
 .OP \-value value Value
 Specifies value to store in the button's associated variable whenever
@@ -110,10 +115,9 @@ Specifies a desired width for the button.
 If an image or bitmap is being displayed in the button, the value is in
 screen units (i.e. any of the forms acceptable to \fBTk_GetPixels\fR);
 for text it is in characters.
-If this option isn't specified, the button's desired width is computed
+If this option is not specified, the button's desired width is computed
 from the size of the image or bitmap or text being displayed in it.
 .BE
-
 .SH DESCRIPTION
 .PP
 The \fBradiobutton\fR command creates a new window (given by the
@@ -255,9 +259,7 @@ actions occur:  the radiobutton is completely non-responsive.
 .PP
 The behavior of radiobuttons can be changed by defining new bindings for
 individual widgets or by redefining the class bindings.
-
 .SH "SEE ALSO"
-checkbutton(n), labelframe(n), listbox(n), options(n), scale(n), ttk_radiobutton(n)
-
+checkbutton(n), labelframe(n), listbox(n), options(n), scale(n), ttk::radiobutton(n)
 .SH KEYWORDS
 radiobutton, widget

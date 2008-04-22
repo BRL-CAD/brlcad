@@ -17,7 +17,6 @@ subst \- Perform backslash, command, and variable substitutions
 .SH SYNOPSIS
 \fBsubst \fR?\fB\-nobackslashes\fR? ?\fB\-nocommands\fR? ?\fB\-novariables\fR? \fIstring\fR
 .BE
-
 .SH DESCRIPTION
 .PP
 This command performs variable substitutions, command substitutions,
@@ -37,13 +36,13 @@ is not performed:  open and close brackets are treated as ordinary characters
 with no special interpretation.
 .PP
 Note that the substitution of one kind can include substitution of 
-other kinds.  For example, even when the \fB-novariables\fR option
+other kinds.  For example, even when the \fB\-novariables\fR option
 is specified, command substitution is performed without restriction.
 This means that any variable substitution necessary to complete the
 command substitution will still take place.  Likewise, any command
 substitution necessary to complete a variable substitution will
-take place, even when \fB-nocommands\fR is specified.  See the
-EXAMPLES below.
+take place, even when \fB\-nocommands\fR is specified.  See the
+\fBEXAMPLES\fR below.
 .PP
 If an error occurs during substitution, then \fBsubst\fR will return
 that error.  If a break exception occurs during command or variable
@@ -55,8 +54,10 @@ will be substituted for that entire command or variable substitution
 (as long as it is well-formed Tcl.)  If a return exception occurs,
 or any other return code is returned during command or variable
 substitution, then the returned value is substituted for that
-substitution.  See the EXAMPLES below.  In this way, all exceptional
-return codes are ``caught'' by \fBsubst\fR.  The \fBsubst\fR command
+substitution.  See the \fBEXAMPLES\fR below.  In this way, all exceptional
+return codes are
+.QW caught
+by \fBsubst\fR.  The \fBsubst\fR command
 itself will either return an error, or will complete successfully.
 .SH EXAMPLES
 .PP
@@ -67,21 +68,31 @@ command substitutions) so the script
 set a 44
 \fBsubst\fR {xyz {$a}}
 .CE
-returns ``\fBxyz {44}\fR'', not ``\fBxyz {$a}\fR''
+returns
+.QW "\fBxyz {44}\fR" ,
+not
+.QW "\fBxyz {$a}\fR"
 and the script
 .CS
-set a "p\\} q \\{r"
+set a "p\e} q \e{r"
 \fBsubst\fR {xyz {$a}}
 .CE
-return ``\fBxyz {p} q {r}\fR'', not ``\fBxyz {p\\} q \\{r}\fR''.
+returns
+.QW "\fBxyz {p} q {r}\fR" ,
+not
+.QW "\fBxyz {p\e} q \e{r}\fR".
 .PP
 When command substitution is performed, it includes any variable
-substitution necessary to evaluate the script.  
+substitution necessary to evaluate the script.
 .CS
 set a 44
 \fBsubst\fR -novariables {$a [format $a]}
 .CE
-returns ``\fB$a 44\fR'', not ``\fB$a $a\fR''.  Similarly, when
+returns
+.QW "\fB$a 44\fR" ,
+not
+.QW "\fB$a $a\fR" .
+Similarly, when
 variable substitution is performed, it includes any command
 substitution necessary to retrieve the value of the variable.
 .CS
@@ -89,7 +100,10 @@ proc b {} {return c}
 array set a {c c [b] tricky}
 \fBsubst\fR -nocommands {[b] $a([b])}
 .CE
-returns ``\fB[b] c\fR'', not ``\fB[b] tricky\fR''.
+returns
+.QW "\fB[b] c\fR" ,
+not
+.QW "\fB[b] tricky\fR" .
 .PP
 The continue and break exceptions allow command substitutions to
 prevent substitution of the rest of the command substitution and the
@@ -98,24 +112,36 @@ when processing text using \fIsubst\fR.  For example, the script
 .CS
 \fBsubst\fR {abc,[break],def}
 .CE
-returns ``\fBabc,\fR'', not ``\fBabc,,def\fR'' and the script
+returns
+.QW \fBabc,\fR ,
+not
+.QW \fBabc,,def\fR
+and the script
 .CS
 \fBsubst\fR {abc,[continue;expr {1+2}],def}
 .CE
-returns ``\fBabc,,def\fR'', not ``\fBabc,3,def\fR''.
+returns
+.QW \fBabc,,def\fR ,
+not
+.QW \fBabc,3,def\fR .
 .PP
 Other exceptional return codes substitute the returned value
 .CS
 \fBsubst\fR {abc,[return foo;expr {1+2}],def}
 .CE
-returns ``\fBabc,foo,def\fR'', not ``\fBabc,3,def\fR'' and
+returns
+.QW \fBabc,foo,def\fR ,
+not
+.QW \fBabc,3,def\fR
+and
 .CS
 \fBsubst\fR {abc,[return -code 10 foo;expr {1+2}],def}
 .CE
-also returns ``\fBabc,foo,def\fR'', not ``\fBabc,3,def\fR''.
-
+also returns
+.QW \fBabc,foo,def\fR ,
+not
+.QW \fBabc,3,def\fR .
 .SH "SEE ALSO"
 Tcl(n), eval(n), break(n), continue(n)
-
 .SH KEYWORDS
 backslash substitution, command substitution, variable substitution

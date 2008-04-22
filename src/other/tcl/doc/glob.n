@@ -19,7 +19,9 @@ glob \- Return names of files that match patterns
 
 .SH DESCRIPTION
 .PP
-This command performs file name ``globbing'' in a fashion similar to
+This command performs file name
+.QW globbing
+in a fashion similar to
 the csh shell.  It returns a list of the files whose names match any
 of the \fIpattern\fR arguments.  No particular order is guaranteed
 in the list, so if a sorted list is required the caller should use 
@@ -101,8 +103,9 @@ The following are equivalent:
 \fBglob */\fR
 .CE
 .RE
-except that the first case doesn't return the trailing ``/'' and
-is more platform independent.
+except that the first case doesn't return the trailing
+.QW /
+and is more platform independent.
 .RE
 .TP
 \fB\-\|\-\fR
@@ -129,20 +132,35 @@ Matches the character \fIx\fR.
 \fB{\fIa\fB,\fIb\fB,\fI...\fR}
 Matches any of the strings \fIa\fR, \fIb\fR, etc.
 .LP
-On Unix, as with csh, a ``.'' at the beginning of a file's name or just
-after a ``/'' must be matched explicitly or with a {} construct,
-unless the ``-types hidden'' flag is given (since ``.'' at the beginning 
-of a file's name indicates that it is hidden).  On other platforms,
-files beginning with a ``.'' are handled no differently to any others,
-except the special directories ``.'' and ``..'' which must be matched
-explicitly (this is to avoid a recursive pattern like ``glob -join * *
-* *'' from recursing up the directory hierarchy as well as down).
-In addition, all ``/'' characters must be matched explicitly.
+On Unix, as with csh, a
+.QW .
+at the beginning of a file's name or just after a
+.QW /
+must be matched explicitly or with a {} construct, unless the
+\fB\-types hidden\fR flag is given (since
+.QW .
+at the beginning of a file's name indicates that it is hidden).  On
+other platforms, files beginning with a
+.QW .
+are handled no differently to any others, except the special directories
+.QW .
+and
+.QW ..
+which must be matched explicitly (this is to avoid a recursive pattern like
+.QW "glob -join * * * *"
+from recursing up the directory hierarchy as well as down). In addition, all
+.QW /
+characters must be matched explicitly.
 .LP
-If the first character in a \fIpattern\fR is ``~'' then it refers
-to the home directory for the user whose name follows the ``~''.
-If the ``~'' is followed immediately by ``/'' then the value of
-the HOME environment variable is used.
+If the first character in a \fIpattern\fR is
+.QW ~
+then it refers to the home directory for the user whose name follows the
+.QW ~ .
+If the
+.QW ~
+is followed immediately by
+.QW /
+then the value of the HOME environment variable is used.
 .LP
 The \fBglob\fR command differs from csh globbing in two ways.
 First, it does not sort its result list (use the \fBlsort\fR
@@ -152,9 +170,12 @@ exist;  in csh no check for existence is made unless a pattern
 contains a ?, *, or [] construct.
 .LP
 When the \fBglob\fR command returns relative paths whose filenames
-start with a tilde ``~'' (for example through \fBglob *\fR or 
-\fBglob -tails\fR, the returned list will not quote the tilde with
-``./''.  This means care must be taken if those names are later to
+start with a tilde
+.QW ~
+(for example through \fBglob *\fR or \fBglob -tails\fR, the returned
+list will not quote the tilde with
+.QW ./ .
+This means care must be taken if those names are later to
 be used with \fBfile join\fR, to avoid them being interpreted as
 absolute paths pointing to a given user's home directory.
 .SH "PORTABILITY ISSUES"
@@ -163,13 +184,18 @@ absolute paths pointing to a given user's home directory.
 .
 For Windows UNC names, the servername and sharename components of the path
 may not contain ?, *, or [] constructs.  On Windows NT, if \fIpattern\fR is
-of the form ``\fB~\fIusername\fB@\fIdomain\fR'' it refers to the home
+of the form
+.QW \fB~\fIusername\fB@\fIdomain\fR ,
+it refers to the home
 directory of the user whose account information resides on the specified NT
 domain server.  Otherwise, user account information is obtained from
 the local computer.  On Windows 95 and 98, \fBglob\fR accepts patterns
-like ``.../'' and ``..../'' for successively higher up parent directories.
-
-.
+like
+.QW .../
+and
+.QW ..../
+for successively higher up parent directories.
+.PP
 Since the backslash character has a special meaning to the glob 
 command, glob patterns containing Windows style path separators need 
 special care. The pattern \fIC:\e\efoo\e\e*\fR is interpreted as 
@@ -196,7 +222,12 @@ Find all subdirectories of the current directory:
 \fBglob\fR \-type d *
 .CE
 .PP
-Find all files whose name contains an "a", a "b" or the sequence "cde":
+Find all files whose name contains an
+.QW a ,
+a
+.QW b
+or the sequence
+.QW cde :
 .CS
 \fBglob\fR \-type f *{a,b,cde}*
 .CE

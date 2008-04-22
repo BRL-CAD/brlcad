@@ -5,17 +5,25 @@ bu_bitv_clear
 bu_bitv_free
 bu_bitv_new
 bu_calloc
+bu_file_exists
 bu_free
 bu_jmpbuf
+bu_log
+bu_ptbl_free
+bu_ptbl_init
 bu_setjmp_valid
 
 db_ck_v4gift_tree
+db_close
+db_dirbuild
 db_flatten_tree
 db_free_tree
 db_lookup
 db_non_union_push
+db_open
 db_tree_nleaves
 db_update_nref
+db_walk_tree
 
 mk_add_pipe_pt
 mk_addmember
@@ -25,8 +33,8 @@ mk_comb
 mk_freemembers
 mk_id
 mk_pipe
-mk_pipe_init
 mk_pipe_free
+mk_pipe_init
 mk_rcc
 mk_rpp
 mk_trc_h
@@ -40,9 +48,16 @@ rt_dirbuild
 rt_free_rti
 rt_gettree
 rt_init_resource
+rt_initial_tree_state
 rt_prep
 rt_shootray
 rt_uniresource
+
+nmg_booltree_leaf_tess
+nmg_km
+nmg_mm
+nmg_triangulate_model
+nmg_vertex_tabulate
 
 wdb_close
 wdb_fopen

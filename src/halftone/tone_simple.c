@@ -1,7 +1,7 @@
 /*                   T O N E _ S I M P L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -23,15 +23,11 @@
  *	Christopher T. Johnson	- 90/03/21
  *
  */
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
 #include <stdio.h>
 
-#include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 
@@ -69,21 +65,21 @@ extern struct bn_unif *RandomFlag;
 int
 tone_simple(int pix, int x, int y, int nx, int ny, int new)
 {
-	register int threshold;
-	if (RandomFlag) {
-		threshold = THRESHOLD + BN_UNIF_DOUBLE(RandomFlag)*127;
-	} else {
-		threshold = THRESHOLD;
-	}
-	return((pix*Levels + threshold) / 256 );
+    register int threshold;
+    if (RandomFlag) {
+	threshold = THRESHOLD + BN_UNIF_DOUBLE(RandomFlag)*127;
+    } else {
+	threshold = THRESHOLD;
+    }
+    return((pix*Levels + threshold) / 256 );
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

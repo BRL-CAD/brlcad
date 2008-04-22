@@ -1,7 +1,7 @@
 /*                         C O U N T . H
  * BRL-CAD
  *
- * Copyright (c) 2005-2007 United States Government as represented by
+ * Copyright (c) 2005-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -93,8 +93,8 @@ long int count_get_token(long int id);
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

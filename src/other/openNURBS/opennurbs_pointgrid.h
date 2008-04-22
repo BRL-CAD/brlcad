@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -29,7 +29,7 @@ public:
 
   void Initialize(void);  // zeros all fields
 
-  BOOL Create( 
+  BOOL Create(
           int,  // point count0 (>=1)
           int   // point count1 (>=1)
           );
@@ -44,7 +44,7 @@ public:
   // point_grid[i][j] returns GetPoint(i,j)
   ON_3dPoint* operator[](int);             // 0 <= index < PointCount(0)
   const ON_3dPoint* operator[](int) const; // 0 <= index < PointCount(0)
-  
+
   /////////////////////////////////////////////////////////////////
   // ON_Object overrides
 
@@ -56,9 +56,9 @@ public:
     text_log - [in] if the object is not valid and text_log
         is not NULL, then a brief englis description of the
         reason the object is not valid is appened to the log.
-        The information appended to text_log is suitable for 
-        low-level debugging purposes by programmers and is 
-        not intended to be useful as a high level user 
+        The information appended to text_log is suitable for
+        low-level debugging purposes by programmers and is
+        not intended to be useful as a high level user
         interface tool.
   Returns:
     @untitled table
@@ -97,24 +97,24 @@ public:
     Get tight bounding box of the point grid.
 	Parameters:
 		tight_bbox - [in/out] tight bounding box
-		bGrowBox -[in]	(default=false)			
+		bGrowBox -[in]	(default=false)
       If true and the input tight_bbox is valid, then returned
-      tight_bbox is the union of the input tight_bbox and the 
+      tight_bbox is the union of the input tight_bbox and the
       tight bounding box of the point grid.
 		xform -[in] (default=NULL)
       If not NULL, the tight bounding box of the transformed
       point grid is calculated.  The point grid is not modified.
 	Returns:
-    True if the returned tight_bbox is set to a valid 
+    True if the returned tight_bbox is set to a valid
     bounding box.
   */
-	bool GetTightBoundingBox( 
-			ON_BoundingBox& tight_bbox, 
+	bool GetTightBoundingBox(
+			ON_BoundingBox& tight_bbox,
       int bGrowBox = false,
 			const ON_Xform* xform = 0
       ) const;
 
-  BOOL Transform( 
+  BOOL Transform(
          const ON_Xform&
          );
 
@@ -131,7 +131,7 @@ public:
   /////////////////////////////////////////////////////////////////
   // Interface
 
-  BOOL IsClosed( 
+  BOOL IsClosed(
         int // dir
         ) const;
 

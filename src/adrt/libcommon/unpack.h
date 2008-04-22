@@ -1,7 +1,7 @@
 /*                     U N P A C K . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2007 United States Government as represented by
+ * Copyright (c) 2002-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,21 +21,13 @@
  *
  *  Common Library - Unpacking Header
  *
- *  Author -
- *      Justin L. Shumaker
- *
- *  Source -
- *      The U. S. Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5068  USA
- *
- * $Id$
  */
 
 #ifndef _COMMON_UNPACK_H
 #define _COMMON_UNPACK_H
 
 
-#include "camera.h"
+#include "libutil/camera.h"
 #include "cdb.h"
 #include "env.h"
 #include "texture.h"
@@ -48,20 +40,20 @@
 /**********************/
 
 typedef struct common_unpack_prop_node_s {
-  char 			name[256];
-  common_prop_t		prop;
+    char 			name[256];
+    common_prop_t		prop;
 } common_unpack_prop_node_t;
 
 
 typedef struct common_unpack_texture_node_s {
-  char			name[256];
-  texture_t		*texture;
+    char			name[256];
+    texture_t		*texture;
 } common_unpack_texture_node_t;
 
 
 typedef struct common_unpack_mesh_node_s {
-  char			name[256];
-  common_mesh_t		mesh;
+    char			name[256];
+    common_mesh_t		mesh;
 } common_unpack_mesh_node_t;
 
 
@@ -74,8 +66,8 @@ extern	void	common_unpack_free(common_db_t *db);
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

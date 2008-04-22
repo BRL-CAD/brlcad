@@ -1,7 +1,7 @@
 /*                         P L O T 3 . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,17 +41,10 @@
  *	24 Sep 1986
  */
 
-
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
-
 #include "common.h"
-
 
 #include <stdio.h>
 
-#include "machine.h"
 #include "vmath.h"
 #include "plot3.h"
 
@@ -59,8 +52,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 static int pl_outputMode = PL_OUTPUT_MODE_BINARY;
 
 /* For the sake of efficiency, we trust putc() to write only one byte */
-/*#define putsi(a)	putc(a&0377,plotfp); putc((a>>8)&0377,plotfp)*/
-#define putsi(a)	putc(a,plotfp); putc((a>>8),plotfp)
+/*#define putsi(a)	putc(a&0377, plotfp); putc((a>>8)&0377, plotfp)*/
+#define putsi(a)	putc(a, plotfp); putc((a>>8), plotfp)
 
 
 /*
@@ -112,8 +105,8 @@ pl_linmod(register FILE *plotfp, register char *s)
 {
     if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	putc( 'f', plotfp );
-	while( *s )
-		putc( *s++, plotfp );
+	while ( *s )
+	    putc( *s++, plotfp );
 	putc( '\n', plotfp );
     } else {
 	fprintf(plotfp, "f %s\n", s);
@@ -149,8 +142,8 @@ pl_label(register FILE *plotfp, register char *s)
 {
     if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	putc( 't', plotfp );
-	while( *s )
-		putc( *s++, plotfp );
+	while ( *s )
+	    putc( *s++, plotfp );
 	putc( '\n', plotfp );
     } else {
 	fprintf(plotfp, "t %s\n", s);
@@ -212,12 +205,12 @@ pl_arc(register FILE *plotfp, int xc, int yc, int x1, int y1, int x2, int y2)
 void
 pl_box(register FILE *plotfp, int x1, int y1, int x2, int y2)
 {
-	pl_move( plotfp, x1, y1 );
-	pl_cont( plotfp, x1, y2 );
-	pl_cont( plotfp, x2, y2 );
-	pl_cont( plotfp, x2, y1 );
-	pl_cont( plotfp, x1, y1 );
-	pl_move( plotfp, x2, y2 );
+    pl_move( plotfp, x1, y1 );
+    pl_cont( plotfp, x1, y2 );
+    pl_cont( plotfp, x2, y2 );
+    pl_cont( plotfp, x2, y1 );
+    pl_cont( plotfp, x1, y1 );
+    pl_move( plotfp, x2, y2 );
 }
 
 /*
@@ -324,28 +317,28 @@ pl_3line(register FILE *plotfp, int x1, int y1, int z1, int x2, int y2, int z2)
 void
 pl_3box(register FILE *plotfp, int x1, int y1, int z1, int x2, int y2, int z2)
 {
-	pl_3move( plotfp, x1, y1, z1 );
-	/* first side */
-	pl_3cont( plotfp, x1, y2, z1 );
-	pl_3cont( plotfp, x1, y2, z2 );
-	pl_3cont( plotfp, x1, y1, z2 );
-	pl_3cont( plotfp, x1, y1, z1 );
-	/* across */
-	pl_3cont( plotfp, x2, y1, z1 );
-	/* second side */
-	pl_3cont( plotfp, x2, y2, z1 );
-	pl_3cont( plotfp, x2, y2, z2 );
-	pl_3cont( plotfp, x2, y1, z2 );
-	pl_3cont( plotfp, x2, y1, z1 );
-	/* front edge */
-	pl_3move( plotfp, x1, y2, z1 );
-	pl_3cont( plotfp, x2, y2, z1 );
-	/* bottom back */
-	pl_3move( plotfp, x1, y1, z2 );
-	pl_3cont( plotfp, x2, y1, z2 );
-	/* top back */
-	pl_3move( plotfp, x1, y2, z2 );
-	pl_3cont( plotfp, x2, y2, z2 );
+    pl_3move( plotfp, x1, y1, z1 );
+    /* first side */
+    pl_3cont( plotfp, x1, y2, z1 );
+    pl_3cont( plotfp, x1, y2, z2 );
+    pl_3cont( plotfp, x1, y1, z2 );
+    pl_3cont( plotfp, x1, y1, z1 );
+    /* across */
+    pl_3cont( plotfp, x2, y1, z1 );
+    /* second side */
+    pl_3cont( plotfp, x2, y2, z1 );
+    pl_3cont( plotfp, x2, y2, z2 );
+    pl_3cont( plotfp, x2, y1, z2 );
+    pl_3cont( plotfp, x2, y1, z1 );
+    /* front edge */
+    pl_3move( plotfp, x1, y2, z1 );
+    pl_3cont( plotfp, x2, y2, z1 );
+    /* bottom back */
+    pl_3move( plotfp, x1, y1, z2 );
+    pl_3cont( plotfp, x2, y1, z2 );
+    /* top back */
+    pl_3move( plotfp, x1, y2, z2 );
+    pl_3cont( plotfp, x2, y2, z2 );
 }
 
 /*
@@ -492,12 +485,12 @@ pd_arc(register FILE *plotfp, double xc, double yc, double x1, double y1, double
 void
 pd_box(register FILE *plotfp, double x1, double y1, double x2, double y2)
 {
-	pd_move( plotfp, x1, y1 );
-	pd_cont( plotfp, x1, y2 );
-	pd_cont( plotfp, x2, y2 );
-	pd_cont( plotfp, x2, y1 );
-	pd_cont( plotfp, x1, y1 );
-	pd_move( plotfp, x2, y2 );
+    pd_move( plotfp, x1, y1 );
+    pd_cont( plotfp, x1, y2 );
+    pd_cont( plotfp, x2, y2 );
+    pd_cont( plotfp, x2, y1 );
+    pd_cont( plotfp, x1, y1 );
+    pd_move( plotfp, x2, y2 );
 }
 
 /* Double 3-D, both in vector and enumerated versions */
@@ -682,55 +675,55 @@ pd_3line(register FILE *plotfp, double x1, double y1, double z1, double x2, doub
 void
 pdv_3box(register FILE *plotfp, const fastf_t *a, const fastf_t *b)
 {
-	pd_3move( plotfp, a[X], a[Y], a[Z] );
-	/* first side */
-	pd_3cont( plotfp, a[X], b[Y], a[Z] );
-	pd_3cont( plotfp, a[X], b[Y], b[Z] );
-	pd_3cont( plotfp, a[X], a[Y], b[Z] );
-	pd_3cont( plotfp, a[X], a[Y], a[Z] );
-	/* across */
-	pd_3cont( plotfp, b[X], a[Y], a[Z] );
-	/* second side */
-	pd_3cont( plotfp, b[X], b[Y], a[Z] );
-	pd_3cont( plotfp, b[X], b[Y], b[Z] );
-	pd_3cont( plotfp, b[X], a[Y], b[Z] );
-	pd_3cont( plotfp, b[X], a[Y], a[Z] );
-	/* front edge */
-	pd_3move( plotfp, a[X], b[Y], a[Z] );
-	pd_3cont( plotfp, b[X], b[Y], a[Z] );
-	/* bottom back */
-	pd_3move( plotfp, a[X], a[Y], b[Z] );
-	pd_3cont( plotfp, b[X], a[Y], b[Z] );
-	/* top back */
-	pd_3move( plotfp, a[X], b[Y], b[Z] );
-	pd_3cont( plotfp, b[X], b[Y], b[Z] );
+    pd_3move( plotfp, a[X], a[Y], a[Z] );
+    /* first side */
+    pd_3cont( plotfp, a[X], b[Y], a[Z] );
+    pd_3cont( plotfp, a[X], b[Y], b[Z] );
+    pd_3cont( plotfp, a[X], a[Y], b[Z] );
+    pd_3cont( plotfp, a[X], a[Y], a[Z] );
+    /* across */
+    pd_3cont( plotfp, b[X], a[Y], a[Z] );
+    /* second side */
+    pd_3cont( plotfp, b[X], b[Y], a[Z] );
+    pd_3cont( plotfp, b[X], b[Y], b[Z] );
+    pd_3cont( plotfp, b[X], a[Y], b[Z] );
+    pd_3cont( plotfp, b[X], a[Y], a[Z] );
+    /* front edge */
+    pd_3move( plotfp, a[X], b[Y], a[Z] );
+    pd_3cont( plotfp, b[X], b[Y], a[Z] );
+    /* bottom back */
+    pd_3move( plotfp, a[X], a[Y], b[Z] );
+    pd_3cont( plotfp, b[X], a[Y], b[Z] );
+    /* top back */
+    pd_3move( plotfp, a[X], b[Y], b[Z] );
+    pd_3cont( plotfp, b[X], b[Y], b[Z] );
 }
 
 void
 pd_3box(register FILE *plotfp, double x1, double y1, double z1, double x2, double y2, double z2)
 {
-	pd_3move( plotfp, x1, y1, z1 );
-	/* first side */
-	pd_3cont( plotfp, x1, y2, z1 );
-	pd_3cont( plotfp, x1, y2, z2 );
-	pd_3cont( plotfp, x1, y1, z2 );
-	pd_3cont( plotfp, x1, y1, z1 );
-	/* across */
-	pd_3cont( plotfp, x2, y1, z1 );
-	/* second side */
-	pd_3cont( plotfp, x2, y2, z1 );
-	pd_3cont( plotfp, x2, y2, z2 );
-	pd_3cont( plotfp, x2, y1, z2 );
-	pd_3cont( plotfp, x2, y1, z1 );
-	/* front edge */
-	pd_3move( plotfp, x1, y2, z1 );
-	pd_3cont( plotfp, x2, y2, z1 );
-	/* bottom back */
-	pd_3move( plotfp, x1, y1, z2 );
-	pd_3cont( plotfp, x2, y1, z2 );
-	/* top back */
-	pd_3move( plotfp, x1, y2, z2 );
-	pd_3cont( plotfp, x2, y2, z2 );
+    pd_3move( plotfp, x1, y1, z1 );
+    /* first side */
+    pd_3cont( plotfp, x1, y2, z1 );
+    pd_3cont( plotfp, x1, y2, z2 );
+    pd_3cont( plotfp, x1, y1, z2 );
+    pd_3cont( plotfp, x1, y1, z1 );
+    /* across */
+    pd_3cont( plotfp, x2, y1, z1 );
+    /* second side */
+    pd_3cont( plotfp, x2, y2, z1 );
+    pd_3cont( plotfp, x2, y2, z2 );
+    pd_3cont( plotfp, x2, y1, z2 );
+    pd_3cont( plotfp, x2, y1, z1 );
+    /* front edge */
+    pd_3move( plotfp, x1, y2, z1 );
+    pd_3cont( plotfp, x2, y2, z1 );
+    /* bottom back */
+    pd_3move( plotfp, x1, y1, z2 );
+    pd_3cont( plotfp, x2, y1, z2 );
+    /* top back */
+    pd_3move( plotfp, x1, y2, z2 );
+    pd_3cont( plotfp, x2, y2, z2 );
 }
 
 /**
@@ -739,11 +732,11 @@ pd_3box(register FILE *plotfp, double x1, double y1, double z1, double x2, doubl
 void
 pdv_3ray(FILE *fp, const fastf_t *pt, const fastf_t *dir, double t)
 {
-	point_t	tip;
+    point_t	tip;
 
-	VJOIN1( tip, pt, t, dir );
-	pdv_3move( fp, pt );
-	pdv_3cont( fp, tip );
+    VJOIN1( tip, pt, t, dir );
+    pdv_3move( fp, pt );
+    pdv_3cont( fp, tip );
 }
 
 /** @} */
@@ -751,8 +744,8 @@ pdv_3ray(FILE *fp, const fastf_t *pt, const fastf_t *dir, double t)
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

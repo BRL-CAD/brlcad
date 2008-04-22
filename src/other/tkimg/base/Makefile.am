@@ -21,11 +21,14 @@ tkimgb_la_SOURCES = \
 	tkimgUtils.c
 
 EXTRA_DIST = \
+	aclocal.m4 \
+	configure.in \
+	pkgIndex.tcl.in \
 	tclconfig \
+	tkimg.decls \
 	tkimg.h \
+	tkimgConfig.sh.in \
 	tkimgDecls.h \
 	tools
-
-MAINTAINERCLEANFILES = Makefile.in
 
 include $(top_srcdir)/misc/Makefile.defs

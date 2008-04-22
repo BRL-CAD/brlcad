@@ -1,7 +1,7 @@
 /*                          P L A S T I C . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2007 United States Government as represented by
+ * Copyright (c) 1993-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,16 +31,16 @@
 
 /* Local information */
 struct phong_specific {
-	int	magic;
-	int	shine;
-	double	wgt_specular;
-	double	wgt_diffuse;
-	double	transmit;       /**< @brief Moss "transparency" */
-	double	reflect;        /**< @brief Moss "transmission" */
-	double	refrac_index;
-	double	extinction;
-	double	emission[3];
-	struct	mfuncs *mfp;
+    unsigned long magic;
+    int	shine;
+    double	wgt_specular;
+    double	wgt_diffuse;
+    double	transmit;       /**< @brief Moss "transparency" */
+    double	reflect;        /**< @brief Moss "transmission" */
+    double	refrac_index;
+    double	extinction;
+    double	emission[3];
+    struct	mfuncs *mfp;
 };
 
 extern struct bu_structparse phong_parse[];
@@ -50,8 +50,8 @@ extern struct bu_structparse phong_parse[];
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

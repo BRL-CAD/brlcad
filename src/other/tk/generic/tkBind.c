@@ -14,7 +14,6 @@
  *  RCS: @(#) $Id$
  */
 
-#include "tkPort.h"
 #include "tkInt.h"
 
 #ifdef __WIN32__
@@ -1003,7 +1002,7 @@ Tk_CreateBinding(
 
     oldStr = (char *) psPtr->clientData;
     if ((append != 0) && (oldStr != NULL)) {
-	int length;
+	size_t length;
 
 	length = strlen(oldStr) + strlen(command) + 2;
 	newStr = (char *) ckalloc((unsigned) length);
@@ -3936,7 +3935,7 @@ GetVirtualEventUid(
     char *virtString)
 {
     Tk_Uid uid;
-    int length;
+    size_t length;
 
     length = strlen(virtString);
 

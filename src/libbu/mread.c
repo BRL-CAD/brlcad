@@ -1,7 +1,7 @@
 /*                          M R E A D . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2007 United States Government as represented by
+ * Copyright (c) 1992-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,9 +32,6 @@
  * If a read error occurs, a negative value will be returns and errno
  * should be set (by read()).
  *
- * @authors   Robert S. Miles
- * @authors   Christopher Sean Morrison
- *
  */
 
 #include "common.h"
@@ -42,11 +39,8 @@
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
-#include "machine.h"
 #include "bu.h"
 
 
@@ -76,11 +70,12 @@ bu_mread(int fd, void *bufp, long int n)
 }
 /** @} */
 
-/* Local Variables:
- * mode: C
+/*
+ * Local Variables:
  * tab-width: 8
- * c-basic-offset: 4
+ * mode: C
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

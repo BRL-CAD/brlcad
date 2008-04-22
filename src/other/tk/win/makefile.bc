@@ -118,6 +118,7 @@ TKTESTOBJS = \
   $(TMPDIR)\tkTest.obj \
   $(TMPDIR)\tkSquare.obj \
   $(TMPDIR)\testMain.obj \
+  $(TMPDIR)\tkOldTest.obj \
   $(TMPDIR)\tkWinTest.obj \
   $(TCLLIBDIR)\tclThreadTest.obj
 
@@ -231,7 +232,7 @@ TKOBJS = \
 
 # Maintenance hint: Please have multiple members of TKSTUBOBJS be separated
 # by exactly one ' ' (see below the rule for making TKSTUBLIB)
-TKSTUBOBJS = $(TMPDIR)\tkStubLib.obj $(TMPDIR)\tkStubImg.obj
+TKSTUBOBJS = $(TMPDIR)\tkStubLib.obj
 
 WINDIR      = $(ROOT)\win
 GENERICDIR  = $(ROOT)\generic
@@ -447,6 +448,9 @@ $(TMPDIR)\testMain.obj: $(WINDIR)\winMain.c
   $(cc32) $(WISH_CFLAGS) -DTK_TEST -o$@ $?
 
 $(TMPDIR)\tkTest.obj: $(GENERICDIR)\tkTest.c
+  $(cc32) $(WISH_CFLAGS) -o$@ $?
+
+$(TMPDIR)\tkOldTest.obj: $(GENERICDIR)\tkOldTest.c
   $(cc32) $(WISH_CFLAGS) -o$@ $?
 
 $(TMPDIR)\tkWinTest.obj: $(WINDIR)\tkWinTest.c

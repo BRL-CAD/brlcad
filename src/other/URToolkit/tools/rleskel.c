@@ -1,23 +1,23 @@
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
- * modified, and redistributed, provided that the copyright notice is 
+ * modified, and redistributed, provided that the copyright notice is
  * preserved on all copies.
- * 
+ *
  * There is no warranty or other guarantee of fitness for this software,
  * it is provided solely "as is".  Bug reports or fixes may be sent
  * to the author, who may or may not act on them as he desires.
  *
  * You may not include this software in a program or other software product
- * without supplying the source, or without informing the end-user that the 
+ * without supplying the source, or without informing the end-user that the
  * source is available for no extra charge.
  *
  * If you modify this software, you should include a notice giving the
  * name of the person performing the modification, the date of modification,
  * and the reason for such modification.
  */
-/* 
+/*
  * rleskel.c - Skeleton RLE tool.
- * 
+ *
  * Author:	Spencer W. Thomas
  * 		EECS Dept.
  * 		University of Michigan
@@ -34,7 +34,7 @@ rleskel()			/* For tags. */
 
 /*****************************************************************
  * TAG( main )
- * 
+ *
  * A skeleton RLE tool.  Demonstrates argument parsing, opening,
  * reading, and writing RLE files.  Includes support for files
  * consisting of concatenated images.
@@ -63,7 +63,7 @@ char **argv;
     FILE       *outfile = 0;
     rle_hdr 	in_hdr, out_hdr;
     rle_pixel **rows;		/* Will be used for scanline storage. */
-    
+
     in_hdr = *rle_hdr_init( NULL );
     out_hdr = *rle_hdr_init( NULL );
 
@@ -120,13 +120,13 @@ char **argv;
 	 */
 	if ( rle_row_alloc( &in_hdr, &rows ) < 0 )
 	    RLE_CHECK_ALLOC( in_hdr.cmd, 0, "image memory" );
-	
+
 	/* Read the input image and copy it to the output file. */
 	for ( y = in_hdr.ymin; y <= in_hdr.ymax; y++ )
 	{
 	    /* Read a scanline. */
 	    rle_getrow( &in_hdr, rows );
-	    
+
 	    /* Process the scanline as desired here. */
 
 	    /* Write the processed scanline. */
@@ -143,7 +143,7 @@ char **argv;
 	/* Write an end-of-image code. */
 	rle_puteof( &out_hdr );
     }
-    
+
     /* Close the files. */
     rle_close_f( in_hdr.rle_file );
     rle_close_f( outfile );	/* Still safe if outfile == 0. */

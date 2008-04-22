@@ -1,7 +1,7 @@
 /*                         D M - P S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2007 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -21,18 +21,7 @@
  *
  *  Routines specific to MGED's use of LIBDM's Postscript display manager.
  *
- *  Author -
- *	Robert G. Parker
- *
- *  Source -
- *	SLAD CAD Team
- *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
  */
-
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include "common.h"
 
@@ -40,7 +29,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>		/* for struct timeval */
 #endif
-#include "machine.h"
+#include "bio.h"
 #include "bu.h"
 #include "vmath.h"
 #include "mater.h"
@@ -55,20 +44,20 @@ extern void dm_var_init(struct dm_list *initial_dm_list);
 int
 PS_dm_init(struct dm_list *o_dm_list, int argc, char **argv)
 {
-  dm_var_init(o_dm_list);
+    dm_var_init(o_dm_list);
 
-  if ((dmp = dm_open(interp, DM_TYPE_PS, argc, argv)) == DM_NULL)
-    return TCL_ERROR;
+    if ((dmp = dm_open(interp, DM_TYPE_PS, argc, argv)) == DM_NULL)
+	return TCL_ERROR;
 
-  return TCL_OK;
+    return TCL_OK;
 }
 
 /*
  * Local Variables:
  * mode: C
  * tab-width: 8
- * c-basic-offset: 4
  * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

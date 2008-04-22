@@ -7,18 +7,21 @@ bin_SCRIPTS = \
 	cray.sh \
 	facetall.sh \
 	indent.sh \
+	news2tracker.sh \
 	pixinfo.sh \
 	pixread.sh \
 	pixwrite.sh \
 	sgisnap.sh \
 	show.sh \
-	tracker.sh
+	tracker.sh \
+	trimconfig.sh
 
 EXTRA_DIST = \
 	$(bin_SCRIPTS) \
 	copyright.sh \
 	enumerate.sh \
 	footer.sh \
+	gforge.sh \
 	header.sh \
 	linkroot.sh \
 	make_deb.sh \

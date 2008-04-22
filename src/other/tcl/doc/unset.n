@@ -17,7 +17,6 @@ unset \- Delete variables
 .SH SYNOPSIS
 \fBunset \fR?\fI\-nocomplain\fR? ?\fI\-\-\fR? ?\fIname name name ...\fR?
 .BE
-
 .SH DESCRIPTION
 .PP
 This command removes one or more variables.
@@ -34,7 +33,7 @@ disambiguate it from possible variable names.  The option \fI\-\-\fR
 indicates the end of the options, and should be used if you wish to
 remove a variable with the same name as any of the options.
 If an error occurs, any variables after the named one causing the error not
-deleted.  An error can occur when the named variable doesn't exist, or the
+deleted.  An error can occur when the named variable does not exist, or the
 name refers to an array element but the variable is a scalar, or the name
 refers to a variable in a non-existent namespace.
 .SH EXAMPLE
@@ -58,9 +57,7 @@ parray squares
 puts "The prime squares are:"
 parray squares
 .CE
-
 .SH "SEE ALSO"
 set(n), trace(n), upvar(n)
-
 .SH KEYWORDS
 remove, variable

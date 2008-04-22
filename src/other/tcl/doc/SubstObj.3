@@ -32,7 +32,6 @@ perform.  The flags \fBTCL_SUBST_COMMANDS\fR,
 currently supported, and \fBTCL_SUBST_ALL\fR is provided as a
 convenience for the common case where all substitutions are desired.
 .BE
-
 .SH DESCRIPTION
 .PP
 The \fBTcl_SubstObj\fR function is used to perform substitutions on
@@ -55,17 +54,17 @@ replaced by the contents of the named variable.
 .PP
 When the \fBTCL_SUBST_COMMANDS\fR bit is set in \fIflags\fR, sequences
 that look like command substitutions for Tcl commands are replaced by
-the result of evaluating that script.  Where an uncaught `continue
-exception' occurs during the evaluation of a command substitution, an
-empty string is substituted for the command.  Where an uncaught `break
-exception' occurs during the evaluation of a command substitution, the
+the result of evaluating that script.  Where an uncaught
+.QW "continue exception"
+occurs during the evaluation of a command substitution, an
+empty string is substituted for the command.  Where an uncaught
+.QW "break exception"
+occurs during the evaluation of a command substitution, the
 result of the whole substitution on \fIobjPtr\fR will be truncated at
 the point immediately before the start of the command substitution,
 and no characters will be added to the result or substitutions
 performed after that point.
-
 .SH "SEE ALSO"
 subst(n)
-
 .SH KEYWORDS
 backslash substitution, command substitution, variable substitution

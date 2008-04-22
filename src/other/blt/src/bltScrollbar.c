@@ -943,7 +943,7 @@ DisplayScrollbar(clientData)
 
     if (scrollPtr->tile != NULL) {
 	Blt_SetTileOrigin(tkwin, scrollPtr->tile, 0, 0);
-	Blt_TileRectangle(tkwin, pixmap, scrollPtr->tile, scrollPtr->inset, 
+	Blt_TileRectangle(tkwin, pixmap, scrollPtr->tile, scrollPtr->inset,
 		scrollPtr->inset,
 		(unsigned)(Tk_Width(tkwin) - 2 * scrollPtr->inset),
 		(unsigned)(Tk_Height(tkwin) - 2 * scrollPtr->inset));
@@ -1002,15 +1002,15 @@ DisplayScrollbar(clientData)
 	    elementBorderWidth, relief);
     }
 #else
-    Blt_Fill3DRectangle(tkwin, pixmap, border, scrollPtr->inset, 
-       scrollPtr->inset, width, width, elementBorderWidth, relief); 
-    
-    Blt_DrawArrow(scrollPtr->display, pixmap, scrollPtr->copyGC, 
-		  scrollPtr->inset + width / 2, 
-		  scrollPtr->inset + width / 2, 
-		  STD_ARROW_HEIGHT, 
+    Blt_Fill3DRectangle(tkwin, pixmap, border, scrollPtr->inset,
+       scrollPtr->inset, width, width, elementBorderWidth, relief);
+
+    Blt_DrawArrow(scrollPtr->display, pixmap, scrollPtr->copyGC,
+		  scrollPtr->inset + width / 2,
+		  scrollPtr->inset + width / 2,
+		  STD_ARROW_HEIGHT,
 		  (scrollPtr->vertical) ? ARROW_UP : ARROW_LEFT);
-#endif    
+#endif
     /*
      * Display the bottom or right arrow.
      */
@@ -1057,17 +1057,17 @@ DisplayScrollbar(clientData)
 	    elementBorderWidth, relief);
     }
 #else
-    Blt_Fill3DRectangle(tkwin, pixmap, border, 
-		       Tk_Width(tkwin) - (width + scrollPtr->inset), 
+    Blt_Fill3DRectangle(tkwin, pixmap, border,
+		       Tk_Width(tkwin) - (width + scrollPtr->inset),
 		       Tk_Height(tkwin) - (width + scrollPtr->inset),
-		       width, width, elementBorderWidth, relief); 
-    
-    Blt_DrawArrow(scrollPtr->display, pixmap, scrollPtr->copyGC, 
-		  Tk_Width(tkwin) - (scrollPtr->inset + width / 2) - 1, 
-		  Tk_Height(tkwin) - (scrollPtr->inset + width / 2) - 1, 
-		  STD_ARROW_HEIGHT, 
+		       width, width, elementBorderWidth, relief);
+
+    Blt_DrawArrow(scrollPtr->display, pixmap, scrollPtr->copyGC,
+		  Tk_Width(tkwin) - (scrollPtr->inset + width / 2) - 1,
+		  Tk_Height(tkwin) - (scrollPtr->inset + width / 2) - 1,
+		  STD_ARROW_HEIGHT,
 		  (scrollPtr->vertical) ? ARROW_DOWN : ARROW_RIGHT);
-#endif    
+#endif
     /*
      * Display the slider.
      */
@@ -1089,7 +1089,7 @@ DisplayScrollbar(clientData)
     }
     if (scrollPtr->vertical) {
 	if (tile != NULL) {
-	    Blt_TileRectangle(tkwin, pixmap, tile, scrollPtr->inset, 
+	    Blt_TileRectangle(tkwin, pixmap, tile, scrollPtr->inset,
 		scrollPtr->sliderFirst, width - 1,
 		scrollPtr->sliderLast - scrollPtr->sliderFirst - 1);
 	    Blt_Draw3DRectangle(tkwin, pixmap, border,
@@ -1104,7 +1104,7 @@ DisplayScrollbar(clientData)
 	}
     } else {
 	if (tile != NULL) {
-	    Blt_TileRectangle(tkwin, pixmap, tile, scrollPtr->sliderFirst, 
+	    Blt_TileRectangle(tkwin, pixmap, tile, scrollPtr->sliderFirst,
 		scrollPtr->inset,
 		scrollPtr->sliderLast - scrollPtr->sliderFirst - 1, width - 1);
 	    Blt_Draw3DRectangle(tkwin, pixmap, border,

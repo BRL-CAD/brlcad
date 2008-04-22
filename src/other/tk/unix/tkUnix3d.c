@@ -12,7 +12,8 @@
  * RCS: @(#) $Id$
  */
 
-#include <tk3d.h>
+#include "tkInt.h"
+#include "tk3d.h"
 
 #if !(defined(__WIN32__) || defined(MAC_OSX_TK))
 #include "tkUnixInt.h"

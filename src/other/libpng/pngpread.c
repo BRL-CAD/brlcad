@@ -1,9 +1,9 @@
 
 /* pngpread.c - read a png file in push mode
  *
- * Last changed in libpng 1.2.19 August 18, 2007
+ * Last changed in libpng 1.2.25 [February 18, 2008]
  * For conditions of distribution and use, see copyright notice in png.h
- * Copyright (c) 1998-2007 Glenn Randers-Pehrson
+ * Copyright (c) 1998-2008 Glenn Randers-Pehrson
  * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
  * (Version 0.88 Copyright (c) 1995, 1996 Guy Eric Schalnat, Group 42, Inc.)
  */
@@ -28,7 +28,7 @@ void PNGAPI
 png_process_data(png_structp png_ptr, png_infop info_ptr,
    png_bytep buffer, png_size_t buffer_size)
 {
-   if(png_ptr == NULL) return;
+   if(png_ptr == NULL || info_ptr == NULL) return;
    png_push_restore_buffer(png_ptr, buffer, buffer_size);
 
    while (png_ptr->buffer_size)
@@ -216,7 +216,7 @@ png_push_read_chunk(png_structp png_ptr, png_infop info_ptr)
       png_ptr->mode |= PNG_HAVE_CHUNK_HEADER;
    }
 
-   if (!png_memcmp(png_ptr->chunk_name, (png_bytep)png_IDAT, 4))
+   if (!png_memcmp(png_ptr->chunk_name, png_IDAT, 4))
      if(png_ptr->mode & PNG_AFTER_IDAT)
         png_ptr->mode |= PNG_HAVE_CHUNK_AFTER_IDAT;
 
@@ -273,7 +273,7 @@ png_push_read_chunk(png_structp png_ptr, png_infop info_ptr)
       }
       png_handle_PLTE(png_ptr, info_ptr, png_ptr->push_length);
    }
-   else if (!png_memcmp(png_ptr->chunk_name, (png_bytep)png_IDAT, 4))
+   else if (!png_memcmp(png_ptr->chunk_name, png_IDAT, 4))
    {
       /* If we reach an IDAT chunk, this means we have read all of the
        * header chunks, and we can start reading the image (or if this
@@ -678,7 +678,7 @@ png_push_read_IDAT(png_structp png_ptr)
       png_crc_read(png_ptr, png_ptr->chunk_name, 4);
       png_ptr->mode |= PNG_HAVE_CHUNK_HEADER;
 
-      if (png_memcmp(png_ptr->chunk_name, (png_bytep)png_IDAT, 4))
+      if (png_memcmp(png_ptr->chunk_name, png_IDAT, 4))
       {
          png_ptr->process_mode = PNG_READ_CHUNK_MODE;
          if (!(png_ptr->flags & PNG_FLAG_ZLIB_FINISHED))
@@ -1001,11 +1001,6 @@ png_read_push_finish_row(png_structp png_ptr)
    /* offset to next interlace block in the y direction */
    PNG_CONST int FARDATA png_pass_yinc[] = {8, 8, 8, 4, 4, 2, 2};
 
-   /* Width of interlace block.  This is not currently used - if you need
-    * it, uncomment it here and in png.h
-   PNG_CONST int FARDATA png_pass_width[] = {8, 4, 4, 2, 2, 1, 1};
-   */
-
    /* Height of interlace block.  This is not currently used - if you need
     * it, uncomment it here and in png.h
    PNG_CONST int FARDATA png_pass_height[] = {8, 8, 4, 4, 2, 2, 1};
@@ -1023,32 +1018,37 @@ png_read_push_finish_row(png_structp png_ptr)
          png_ptr->rowbytes + 1);
       do
       {
-         png_ptr->pass++;
-         if ((png_ptr->pass == 1 && png_ptr->width < 5) ||
-             (png_ptr->pass == 3 && png_ptr->width < 3) ||
-             (png_ptr->pass == 5 && png_ptr->width < 2))
-           png_ptr->pass++;
+         int pass;
+         pass = png_ptr->pass;
+         pass++;
+         if ((pass == 1 && png_ptr->width < 5) ||
+             (pass == 3 && png_ptr->width < 3) ||
+             (pass == 5 && png_ptr->width < 2))
+           pass++;
 
-         if (png_ptr->pass > 7)
-            png_ptr->pass--;
-         if (png_ptr->pass >= 7)
-            break;
+         if (pass > 7)
+            pass--;
+         png_ptr->pass = (png_byte) pass;
+         if (pass < 7)
+           {
+             png_ptr->iwidth = (png_ptr->width +
+                png_pass_inc[pass] - 1 -
+                png_pass_start[pass]) /
+                png_pass_inc[pass];
 
-         png_ptr->iwidth = (png_ptr->width +
-            png_pass_inc[png_ptr->pass] - 1 -
-            png_pass_start[png_ptr->pass]) /
-            png_pass_inc[png_ptr->pass];
+             png_ptr->irowbytes = PNG_ROWBYTES(png_ptr->pixel_depth,
+                png_ptr->iwidth) + 1;
 
-         png_ptr->irowbytes = PNG_ROWBYTES(png_ptr->pixel_depth,
-            png_ptr->iwidth) + 1;
+             if (png_ptr->transformations & PNG_INTERLACE)
+                break;
 
-         if (png_ptr->transformations & PNG_INTERLACE)
-            break;
-
-         png_ptr->num_rows = (png_ptr->height +
-            png_pass_yinc[png_ptr->pass] - 1 -
-            png_pass_ystart[png_ptr->pass]) /
-            png_pass_yinc[png_ptr->pass];
+             png_ptr->num_rows = (png_ptr->height +
+                png_pass_yinc[pass] - 1 -
+                png_pass_ystart[pass]) /
+                png_pass_yinc[pass];
+           }
+         else
+           break;
 
       } while (png_ptr->iwidth == 0 || png_ptr->num_rows == 0);
    }
@@ -1125,7 +1125,7 @@ png_push_read_tEXt(png_structp png_ptr, png_infop info_ptr)
       for (text = key; *text; text++)
          /* empty loop */ ;
 
-      if (text != key + png_ptr->current_text_size)
+      if (text < key + png_ptr->current_text_size)
          text++;
 
       text_ptr = (png_textp)png_malloc(png_ptr,
@@ -1220,7 +1220,7 @@ png_push_read_zTXt(png_structp png_ptr, png_infop info_ptr)
          /* empty loop */ ;
 
       /* zTXt can't have zero text */
-      if (text == key + png_ptr->current_text_size)
+      if (text >= key + png_ptr->current_text_size)
       {
          png_ptr->current_text = NULL;
          png_free(png_ptr, key);
@@ -1417,7 +1417,7 @@ png_push_read_iTXt(png_structp png_ptr, png_infop info_ptr)
       for (lang = key; *lang; lang++)
          /* empty loop */ ;
 
-      if (lang != key + png_ptr->current_text_size)
+      if (lang < key + png_ptr->current_text_size - 3)
          lang++;
 
       comp_flag = *lang++;
@@ -1427,10 +1427,14 @@ png_push_read_iTXt(png_structp png_ptr, png_infop info_ptr)
          /* empty loop */ ;
       lang_key++;        /* skip NUL separator */
 
-      for (text = lang_key; *text; text++)
-         /* empty loop */ ;
+      text=lang_key;
+      if (lang_key < key + png_ptr->current_text_size - 1)
+      {
+        for (; *text; text++)
+           /* empty loop */ ;
+      }
 
-      if (text != key + png_ptr->current_text_size)
+      if (text < key + png_ptr->current_text_size)
          text++;
 
       text_ptr = (png_textp)png_malloc(png_ptr,
@@ -1468,59 +1472,61 @@ png_push_handle_unknown(png_structp png_ptr, png_infop info_ptr, png_uint_32
    if (!(png_ptr->chunk_name[0] & 0x20))
    {
 #if defined(PNG_READ_UNKNOWN_CHUNKS_SUPPORTED)
-      if(png_handle_as_unknown(png_ptr, png_ptr->chunk_name) !=
-           PNG_HANDLE_CHUNK_ALWAYS
+     if(png_handle_as_unknown(png_ptr, png_ptr->chunk_name) !=
+          PNG_HANDLE_CHUNK_ALWAYS
 #if defined(PNG_READ_USER_CHUNKS_SUPPORTED)
-           && png_ptr->read_user_chunk_fn == NULL
+          && png_ptr->read_user_chunk_fn == NULL
 #endif
-         )
+        )
 #endif
-         png_chunk_error(png_ptr, "unknown critical chunk");
+        png_chunk_error(png_ptr, "unknown critical chunk");
 
-      info_ptr = info_ptr; /* to quiet some compiler warnings */
+     info_ptr = info_ptr; /* to quiet some compiler warnings */
    }
 
 #if defined(PNG_READ_UNKNOWN_CHUNKS_SUPPORTED)
    if (png_ptr->flags & PNG_FLAG_KEEP_UNKNOWN_CHUNKS)
    {
 #ifdef PNG_MAX_MALLOC_64K
-       if (length > (png_uint_32)65535L)
-       {
-           png_warning(png_ptr, "unknown chunk too large to fit in memory");
-           skip = length - (png_uint_32)65535L;
-           length = (png_uint_32)65535L;
-       }
+      if (length > (png_uint_32)65535L)
+      {
+          png_warning(png_ptr, "unknown chunk too large to fit in memory");
+          skip = length - (png_uint_32)65535L;
+          length = (png_uint_32)65535L;
+      }
 #endif
-       png_strncpy((png_charp)png_ptr->unknown_chunk.name,
-	 (png_charp)png_ptr->chunk_name,
-         png_sizeof((png_charp)png_ptr->chunk_name));
-       png_ptr->unknown_chunk.data = (png_bytep)png_malloc(png_ptr, length);
-       png_ptr->unknown_chunk.size = (png_size_t)length;
-       png_crc_read(png_ptr, (png_bytep)png_ptr->unknown_chunk.data, length);
+      png_memcpy((png_charp)png_ptr->unknown_chunk.name,
+                 (png_charp)png_ptr->chunk_name, 
+                 png_sizeof(png_ptr->unknown_chunk.name));
+      png_ptr->unknown_chunk.name[png_sizeof(png_ptr->unknown_chunk.name)-1]='\0';
+
+      png_ptr->unknown_chunk.data = (png_bytep)png_malloc(png_ptr, length);
+      png_ptr->unknown_chunk.size = (png_size_t)length;
+      png_crc_read(png_ptr, (png_bytep)png_ptr->unknown_chunk.data, length);
 #if defined(PNG_READ_USER_CHUNKS_SUPPORTED)
-       if(png_ptr->read_user_chunk_fn != NULL)
-       {
-          /* callback to user unknown chunk handler */
-          int ret;
-          ret = (*(png_ptr->read_user_chunk_fn))
-            (png_ptr, &png_ptr->unknown_chunk);
-          if (ret < 0)
-             png_chunk_error(png_ptr, "error in user chunk");
-          if (ret == 0)
-          {
-             if (!(png_ptr->chunk_name[0] & 0x20))
-                if(png_handle_as_unknown(png_ptr, png_ptr->chunk_name) !=
-                     PNG_HANDLE_CHUNK_ALWAYS)
-                   png_chunk_error(png_ptr, "unknown critical chunk");
-                png_set_unknown_chunks(png_ptr, info_ptr,
-                   &png_ptr->unknown_chunk, 1);
-          }
-       }
-#else
-       png_set_unknown_chunks(png_ptr, info_ptr, &png_ptr->unknown_chunk, 1);
+      if(png_ptr->read_user_chunk_fn != NULL)
+      {
+         /* callback to user unknown chunk handler */
+         int ret;
+         ret = (*(png_ptr->read_user_chunk_fn))
+           (png_ptr, &png_ptr->unknown_chunk);
+         if (ret < 0)
+            png_chunk_error(png_ptr, "error in user chunk");
+         if (ret == 0)
+         {
+            if (!(png_ptr->chunk_name[0] & 0x20))
+               if(png_handle_as_unknown(png_ptr, png_ptr->chunk_name) !=
+                    PNG_HANDLE_CHUNK_ALWAYS)
+                  png_chunk_error(png_ptr, "unknown critical chunk");
+            png_set_unknown_chunks(png_ptr, info_ptr,
+               &png_ptr->unknown_chunk, 1);
+         }
+      }
+      else
 #endif
-       png_free(png_ptr, png_ptr->unknown_chunk.data);
-       png_ptr->unknown_chunk.data = NULL;
+        png_set_unknown_chunks(png_ptr, info_ptr, &png_ptr->unknown_chunk, 1);
+      png_free(png_ptr, png_ptr->unknown_chunk.data);
+      png_ptr->unknown_chunk.data = NULL;
    }
    else
 #endif
