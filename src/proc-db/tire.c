@@ -43,18 +43,20 @@
 #define COLS 5
 #define F_PI 3.1415926535897932384626433832795029L 
 
-void
-show_help(const char *name) {
+/* Help message printed when -h option is supplied */
+void show_help(const char *name) {
     printf("%s [-d <width>/<aspect>R<rim size>] [-a|-n <name>] [-t] [-h]\n", name);
-    printf("\t-d <width>/<aspect>R<rim size>\tSpecify tire dimensions (American units)\n");
-    printf("\t-a\t\tAutomatically generate top level name (tire-<width>-<aspect>R<rim size>\n");
-    printf("\t-n <name>\tSpecify custom top level name\n");
-    printf("\t-t\t\tGenerate tread\n");
-    printf("\t-h\t\tShow help\n");
+    printf("-a\t\tAutomatically generate top level name \n\t\t(tire-<width>-<aspect>R<rim size>)\n\n");
+    printf("-c <cnt>\tSpecify number of repeated tread patterns around tire\n\n");
+    printf("-d <width>/<aspect>R<rim size>\n\t\tSpecify tire dimensions (American units)\n\n");
+    printf("-g <depth>\tSpecify tread depth in terms of integer 32nds of an inch.\n\n");
+    printf("-n <name>\tSpecify custom top level root name\n\n");
+    printf("-t\t\tGenerate tread\n\n");
+    printf("-h\t\tShow help\n\n");
     return;
 }
 
-
+/* Return matrix needed to rotate an object around the y axis by theta degrees*/
 void getYRotMat(mat_t (*t), fastf_t theta)
 {
     fastf_t sin_ = sin(theta);
@@ -70,26 +72,15 @@ void getYRotMat(mat_t (*t), fastf_t theta)
     memcpy(*t, r, sizeof(*t));
 }
 
-void printVec(fastf_t *result1, int c, char *strname)
-{
-    int i=0;
-    bu_log("\n\n----%s------\n", strname);
-    for (i = 0; i < c; i++) {
-	bu_log("%.16f ", result1[i]);
-    }
-    bu_log("\n-------------------------\n\n");
-}
-
 /* Evaluate Partial Derivative of Ellipse Equation at a point */
 fastf_t GetEllPartialAtPoint(fastf_t *inarray, fastf_t x, fastf_t y)
 {
-    fastf_t A,B,C,D,E,F,partial;
+    fastf_t A,B,C,D,E,partial;
     A = inarray[0];
     B = inarray[1];
     C = inarray[2];
     D = inarray[3];
     E = inarray[4];
-    F = -1;
     partial = -(D+y*B+2*x*A)/(E+2*y*C+x*B);
     return partial;
 }
@@ -191,6 +182,13 @@ void Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dysi
     mat[4][5] = 0;
 }
 
+/**********************************************************************
+ *                                                                    *
+ *                 Matrix Routines for Solving General                *
+ *                 Conic Equations.                                   *
+ *                                                                    *
+ **********************************************************************/
+
 
 /* Sort Rows of 5x6 matrix - for use in Gaussian Elimination */
 void SortRows(fastf_t **mat, int colnum)
@@ -247,10 +245,16 @@ void SolveEchelon(fastf_t **mat, fastf_t *result1)
     }
 }
 
-/* Using the coefficients of the General Conic Equation
- * solution, calculate input values required by the
- * BRL-CAD mk_eto command.
- */
+
+/**********************************************************************
+ *                                                                    *
+ *                 Convert General Conic Equation                     *
+ *                 Coefficients to BRL-CAD eto input                  *
+ *                 Parameters                                         *
+ *                                                                    *
+ **********************************************************************/
+
+
 void CalcInputVals(fastf_t *inarray, fastf_t *outarray, int orientation)
 {
     fastf_t A,B,C,D,E,Fp;
@@ -314,7 +318,13 @@ void CalcInputVals(fastf_t *inarray, fastf_t *outarray, int orientation)
     outarray[3] = semimajory;
     outarray[4] = semiminor;
 }
-/* Function to create a wheel rim to go with a particular tire. */
+
+/**********************************************************************
+ *                                                                    *
+ *                 Create Wheel Structure to fit                      *
+ *                 Specified Tire Parameters                          *
+ *                                                                    *
+ **********************************************************************/
 
 void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t zhub, int bolts, fastf_t bolt_diam, fastf_t bolt_circ_diam, fastf_t spigot_diam, fastf_t fixing_offset, fastf_t bead_height, fastf_t bead_width, fastf_t rim_thickness)
 {
@@ -658,9 +668,17 @@ void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "wheel%s.r", suffix);	
     mk_lcomb(file, bu_vls_addr(&str), &wheel, 1, "plastic", "di=.8 sp=.2", rgb, 0);
-    
 
 }
+
+
+/**********************************************************************
+ *                                                                    *
+ *               Extrusion Creation Routines for Tire                 *
+ *               Tread Patterns - makes sketch and                    *
+ *               uses sketch to make extrustion                       *
+ *                                                                    *
+ **********************************************************************/
 
 void MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts, int vertcount, fastf_t patternwidth1, fastf_t patternwidth2, fastf_t tirewidth, fastf_t zbase, fastf_t ztire)
 {
@@ -706,7 +724,8 @@ void MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts, int vert
     skt->skt_curve.reverse = (int *)bu_calloc( skt->skt_curve.seg_count, sizeof( int ), "sketch: reverse" );    
     skt->skt_curve.segments = (genptr_t *)bu_calloc( skt->skt_curve.seg_count, sizeof( genptr_t ), "segs" );
 
-
+    
+    /* Insert all line segments except the last one */
     for (i = 0; i < vertcount-1; i++){
 	lsg = (struct line_seg *)bu_malloc( sizeof( struct line_seg ), "sketch: lsg" );
 	lsg->magic = CURVE_LSEG_MAGIC;
@@ -715,30 +734,32 @@ void MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts, int vert
 	skt->skt_curve.segments[i] = (genptr_t)lsg;
     }
 
+    /* Connect the last connected vertex to the first vertex */
     lsg = (struct line_seg *)bu_malloc( sizeof( struct line_seg ), "sketch: lsg" );
     lsg->magic = CURVE_LSEG_MAGIC;
     lsg->start = vertcount-1;
     lsg->end = 0;
-
     skt->skt_curve.segments[vertcount-1] = (genptr_t)lsg;
 
+    /* Make the sketch */
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str,"sketch%s",suffix);
     mk_sketch(file, bu_vls_addr(&str), skt );
 
-    /* Set height for eventual extrusion */
+
+    /* Make first slanted extrusion for depth vs. width of tread effect */
     VSET( h, patternwidth1/2-patternwidth2/2, 0, ztire-(zbase-.11*zbase));
     bu_vls_trunc(&str2,0);
     bu_vls_printf(&str2,"extrude1%s",suffix);
     mk_extrusion(file, bu_vls_addr(&str2), bu_vls_addr(&str), V, h, u_vec, v_vec, 0);    
 
-    /* Set height for eventual extrusion */
+    /* Make second slanted extrusion for depth vs. width effect */
     VSET( h, -patternwidth1/2+patternwidth2/2, 0, ztire-(zbase-.11*zbase)); 
     bu_vls_trunc(&str2,0);
     bu_vls_printf(&str2,"extrude2%s",suffix);
     mk_extrusion(file, bu_vls_addr(&str2), bu_vls_addr(&str), V, h, u_vec, v_vec, 0);
 
-    /* Set height for eventual extrusion */
+    /* Direct extrusion */
     VSET( h, 0, 0, ztire-(zbase-.11*zbase));
     bu_vls_trunc(&str2,0);
     bu_vls_printf(&str2,"extrude3%s",suffix);
@@ -746,7 +767,7 @@ void MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts, int vert
 }
 
 
-void MakeTreadPattern(struct rt_wdb (*file), char *suffix, fastf_t dwidth, fastf_t z_base, fastf_t ztire)
+void MakeTreadPattern(struct rt_wdb (*file), char *suffix, fastf_t dwidth, fastf_t z_base, fastf_t ztire, int number_of_patterns)
 {
     struct bu_vls str;
     bu_vls_init(&str);
@@ -755,12 +776,10 @@ void MakeTreadPattern(struct rt_wdb (*file), char *suffix, fastf_t dwidth, fastf
     struct wmember treadpattern, tread, treadrotated;
     fastf_t patternwidth1,patternwidth2;
     mat_t y;
-    int number_of_patterns;
     int i;
     unsigned char rgb[3];
     VSET(rgb, 40, 40, 40);
 
-    number_of_patterns = 30;
     patternwidth1=ztire*sin(F_PI/number_of_patterns);
     patternwidth2=z_base*sin(F_PI/number_of_patterns);
     
@@ -1155,7 +1174,7 @@ void MakeTireSurface(struct rt_wdb (*file), char *suffix, fastf_t *ell1cadparams
 
 /* Use the Gaussian Elimination Routines and MakeTireSurface routine to solve
  * for and insert the shapes needed for a hollow tire*/
-void MakeTireCore(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t dztred, fastf_t d1, fastf_t dyside1, fastf_t zside1, fastf_t ztire, fastf_t dyhub, fastf_t zhub, fastf_t thickness, int *add_tread)
+void MakeTireCore(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t dztred, fastf_t d1, fastf_t dyside1, fastf_t zside1, fastf_t ztire, fastf_t dyhub, fastf_t zhub, fastf_t thickness, int *add_tread, int number_of_tread_patterns, fastf_t tread_depth)
 {
     int i;
     fastf_t ell1partial,elltredpartial;
@@ -1179,7 +1198,7 @@ void MakeTireCore(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t d
     bu_vls_init(&str2);
 
     if (add_tread && *add_tread != 0){
-	ztire_with_offset = ztire-18.0/32.0*bu_units_conversion("in");
+	ztire_with_offset = ztire-tread_depth*bu_units_conversion("in");
     } else {
 	ztire_with_offset = ztire;
     }
@@ -1284,7 +1303,7 @@ void MakeTireCore(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t d
 	/* Call function to generate primitives and combinations for actual tread pattern */
 	bu_vls_trunc(&str,0);
 	bu_vls_printf(&str,"%s",suffix);
-	MakeTreadPattern(file, bu_vls_addr(&str), d1_intercept*2, ztire-d1, ztire);
+	MakeTreadPattern(file, bu_vls_addr(&str), d1_intercept*2, ztire-d1, ztire, number_of_tread_patterns);
 	
     }
     
@@ -1345,11 +1364,13 @@ void MakeTireCore(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t d
 
 
 /* Process command line arguments */
-int ReadArgs(int argc, char **argv, fastf_t *isoarray, struct bu_vls *name, struct bu_vls *dimens, int *gen_name, int *add_tread)
+int ReadArgs(int argc, char **argv, fastf_t *isoarray, struct bu_vls *name, struct bu_vls *dimens, int *gen_name, int *add_tread, int *number_of_tread_patterns, int *tread_depth)
 {
     int c = 0;
-    char *options="d:n:ath";
+    char *options="d:n:c:g:ath";
     int d1, d2, d3;
+    int count;
+    int treadep;
     char spacer1,tiretype;
     bu_log("Reading args\n");
 
@@ -1361,6 +1382,10 @@ int ReadArgs(int argc, char **argv, fastf_t *isoarray, struct bu_vls *name, stru
 	    case 'a' :
 		*gen_name = 1;
 		break;
+	    case 'c' :
+		sscanf(bu_optarg,"%d",&count);
+		*number_of_tread_patterns = count;
+		break;
 	    case 'd' :
 		sscanf(bu_optarg,"%d%c%d%c%d",&d1,&spacer1,&d2,&tiretype,&d3);
 		bu_log("Dimensions: Width=%2.0dmm, Ratio=%2.0d, Wheel Diameter=%2.0din\n",d1,d2,d3);
@@ -1369,6 +1394,11 @@ int ReadArgs(int argc, char **argv, fastf_t *isoarray, struct bu_vls *name, stru
 		isoarray[1] = d2;
 		isoarray[2] = d3;
                 break;
+	    case 'g':
+		sscanf(bu_optarg,"%d",&treadep);
+		*tread_depth = treadep;
+		bu_log("tread depth = %d\n",treadep);
+		break;
 	    case 'n':
 		bu_vls_trunc(name,0);
 		bu_vls_printf(name, "%s", bu_optarg);
@@ -1400,6 +1430,8 @@ int main(int ac, char *av[])
     struct bu_vls str;
     int gen_name = 0;
     int add_tread = 0;
+    int number_of_tread_patterns = 30;
+    int tread_depth = 11;
 
     bu_vls_init(&str);
     bu_vls_init(&name);
@@ -1413,7 +1445,10 @@ int main(int ac, char *av[])
     isoarray[2] = 18;
 
     /* Process arguments */
-    ReadArgs(ac, av, isoarray, &name, &dimen, &gen_name, &add_tread);
+    ReadArgs(ac, av, isoarray, &name, &dimen, &gen_name, &add_tread, &number_of_tread_patterns, &tread_depth);
+
+    /* Calculate floating point expression for tread depth */
+    fastf_t tread_depth_float = tread_depth/32.0;
 
     /* Based on arguments, assign name for toplevel object
      * Default of "tire" is respected unless overridden by
@@ -1464,7 +1499,7 @@ int main(int ac, char *av[])
     thickness = 15;
 
     /* Call routine to actually make the tire geometry*/
-    MakeTireCore(db_fp, bu_vls_addr(&dimen), dytred, dztred, d1, dyside1, zside1, ztire, dyhub, zhub, thickness, &add_tread);
+    MakeTireCore(db_fp, bu_vls_addr(&dimen), dytred, dztred, d1, dyside1, zside1, ztire, dyhub, zhub, thickness, &add_tread, number_of_tread_patterns, tread_depth_float);
      
    /* Combine the tire solid, tire cutout and tread into the
     * final tire region.
