@@ -782,11 +782,27 @@ void MakeTreadPattern(struct rt_wdb (*file), char *suffix, fastf_t dwidth, fastf
     
     
     point2d_t verts2[] = {
-	{ .5, .2 },
-	{ -.2, .3 },
-	{ 0, .4 },
-	{ .7, .3 }
+	{ .2, .13 },
+	{ -.5, .2 },
+	{ -.2, .27 },
+	{ .4, .2 }
     };
+
+    point2d_t verts3[] = {
+        { .5, .45 },
+        { -.1, .4 },
+        { -.4, .5 },
+        { .3, .55 }
+    };
+
+    point2d_t verts4[] = {
+        { .6, .73 },
+        { -.3, .8 },
+        { -.1, .87 },
+        { .8, .8 }
+    };
+
+
     BU_LIST_INIT(&treadpattern.l);
 
     bu_vls_trunc(&str,0);
@@ -818,6 +834,35 @@ void MakeTreadPattern(struct rt_wdb (*file), char *suffix, fastf_t dwidth, fastf
     bu_vls_printf(&str, "extrude3-2%s",suffix);
     (void)mk_addmember(bu_vls_addr(&str), &treadpattern.l, NULL, WMOP_UNION);
 
+
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str,"-3%s",suffix);
+    MakeExtrude(file, bu_vls_addr(&str), verts3, 4, 2*patternwidth1, 2*patternwidth2, dwidth, z_base, ztire);
+
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "extrude1-3%s",suffix);
+    (void)mk_addmember(bu_vls_addr(&str), &treadpattern.l, NULL, WMOP_UNION);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "extrude2-3%s",suffix);
+    (void)mk_addmember(bu_vls_addr(&str), &treadpattern.l, NULL, WMOP_UNION);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "extrude3-3%s",suffix);
+    (void)mk_addmember(bu_vls_addr(&str), &treadpattern.l, NULL, WMOP_UNION);
+
+
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str,"-4%s",suffix);
+    MakeExtrude(file, bu_vls_addr(&str), verts4, 4, 2*patternwidth1, 2*patternwidth2, dwidth, z_base, ztire);
+
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "extrude1-4%s",suffix);
+    (void)mk_addmember(bu_vls_addr(&str), &treadpattern.l, NULL, WMOP_UNION);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "extrude2-4%s",suffix);
+    (void)mk_addmember(bu_vls_addr(&str), &treadpattern.l, NULL, WMOP_UNION);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "extrude3-4%s",suffix);
+    (void)mk_addmember(bu_vls_addr(&str), &treadpattern.l, NULL, WMOP_UNION);
 
 
 
@@ -1123,14 +1168,18 @@ void MakeTireCore(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t d
     fastf_t cut1cadparams[5],cut2cadparams[5];
     fastf_t **matrixcut1,**matrixcut2;
     fastf_t ztire_with_offset,d1_intercept;
-    struct wmember tiretred;
+
+    point_t vertex; 
+    vect_t height;
+
+    struct wmember tiretred, tiretreadshape;
     struct bu_vls str;
     bu_vls_init(&str);
     struct bu_vls str2;
     bu_vls_init(&str2);
 
     if (add_tread && *add_tread != 0){
-	ztire_with_offset = ztire-11.0/32.0*bu_units_conversion("in");
+	ztire_with_offset = ztire-18.0/32.0*bu_units_conversion("in");
     } else {
 	ztire_with_offset = ztire;
     }
@@ -1182,6 +1231,8 @@ void MakeTireCore(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t d
     if (add_tread && *add_tread != 0) {
 	/* Find tread surface */
 	d1_intercept = GetValueAtZPoint(ell2coefficients,ztire-d1);
+
+	
 	Create_Ell1_Mat(matrixelltred1, dytred, dztred, d1, ztire);
 	Echelon(matrixelltred1);
 	SolveEchelon(matrixelltred1,ell1tredcoefficients);
@@ -1194,8 +1245,27 @@ void MakeTireCore(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t d
 	bu_vls_trunc(&str,0);
 	bu_vls_printf(&str,"-tread-outer%s",suffix);
 	MakeTireSurface(file,bu_vls_addr(&str),ell1tredcadparams,ell2tredcadparams,ztire,dztred,dytred,dyhub,zhub,d1_intercept*2);
-
 	
+
+	/*
+	BU_LIST_INIT(&tiretreadshape.l);
+	bu_vls_trunc(&str,0);
+	bu_vls_printf(&str,"tire-tread-outer%s-1.s",suffix);
+	VSET(vertex, 0, -d1_intercept, 0);
+	VSET(height, 0, d1_intercept*2, 0);
+	mk_rcc(file, bu_vls_addr(&str), vertex, height, ztire);
+	(void)mk_addmember(bu_vls_addr(&str),&tiretreadshape.l, NULL, WMOP_UNION);
+	bu_vls_trunc(&str,0);
+        bu_vls_printf(&str,"tire-tread-outer%s-2.s",suffix);
+        VSET(vertex, 0, -d1_intercept, 0);
+        VSET(height, 0, d1_intercept*2, 0);
+        mk_rcc(file, bu_vls_addr(&str), vertex, height, ztire-d1);
+	(void)mk_addmember(bu_vls_addr(&str),&tiretreadshape.l, NULL, WMOP_SUBTRACT);
+
+	bu_vls_trunc(&str,0);
+	bu_vls_printf(&str, "tire-tread-outer%s.c", suffix);
+	mk_lcomb(file, bu_vls_addr(&str), &tiretreadshape, 0, NULL, NULL, NULL, 0);
+	*/
 	/* The tire tread shape needed is the subtraction of the slick surface from the tread shape,
 	 * which is handled here to supply the correct shape for later tread work.
 	 */
