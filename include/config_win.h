@@ -89,6 +89,8 @@
 #define HAVE_SBRK 1
 #define sbrk(i) (NULL)
 
+#define fb_log bu_log
+
 /*
  * functions declared in io.h
  */

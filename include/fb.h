@@ -90,7 +90,9 @@ FB_EXPORT extern int	fb_tell(FBIO *ifp, int *xp, int *yp);
 FB_EXPORT extern int	fb_rpixel(FBIO *ifp, unsigned char *pp);
 FB_EXPORT extern int	fb_wpixel(FBIO *ifp, unsigned char *pp);
 FB_EXPORT extern int	fb_flush(FBIO *ifp);
+#if !defined(_WIN32) || defined(__CYGWIN__)
 FB_EXPORT extern void	fb_log(const char *fmt, ...) __BU_ATTR_FORMAT12;
+#endif
 FB_EXPORT extern int	fb_null(FBIO *ifp);
 FB_EXPORT extern int	fb_null_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig);
 
