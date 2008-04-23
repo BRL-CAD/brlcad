@@ -44,6 +44,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <errno.h>
+#include <windowsx.h>
 
 #include "bio.h"
 #ifdef HAVE_GL_GL_H
@@ -157,6 +158,8 @@ FBIO wgl_interface =
 };
 
 FBIO	*saveifp;
+int titleBarHeight = 0;
+int borderWidth = 0;
 
 /*
  *  Structure of color map in shared memory region.
@@ -602,7 +605,25 @@ LONG WINAPI MainWndProc (
 	    WGL(saveifp)->alive = 0;
 	    break;
 	case WM_MBUTTONUP:
-	    WGL(saveifp)->alive = 0;
+	{
+	    int	x, y;
+	    register struct wgl_pixel *wglp;
+
+	    x = GET_X_LPARAM(lParam);
+	    y = saveifp->if_height - GET_Y_LPARAM(lParam) - 1;
+
+	    if (x < 0 || y < 0) {
+		fb_log("No RGB (outside image viewport)\n");
+		break;
+	    }
+
+	    wglp = (struct wgl_pixel *)&saveifp->if_mem[
+		(y*SGI(saveifp)->mi_memwidth)*
+		sizeof(struct wgl_pixel)];
+
+	    fb_log("At image (%d, %d), real RGB=(%3d %3d %3d)\n",
+		   x, y, (int)wglp[x].red, (int)wglp[x].green, (int)wglp[x].blue);
+	}
 	    break;
 	case WM_KEYDOWN:
 	    break;
@@ -789,14 +810,17 @@ wgl_open( ifp, file, width, height )
 
     ret = RegisterClass (&wndclass);
 
+    titleBarHeight = GetSystemMetrics(SM_CYCAPTION);
+    borderWidth = GetSystemMetrics(SM_CYFRAME);
+
     WGL(ifp)->hwnd =  CreateWindow(
 	"Win OpenGL",  /* pointer to registered class name */
 	title, /* pointer to window name */
 	WS_OVERLAPPEDWINDOW | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,        /* window style */
 	CW_USEDEFAULT,                /* horizontal position of window */
 	CW_USEDEFAULT,                /* vertical position of window */
-	ifp->if_width,           /* window width */
-	ifp->if_height,          /* window height */
+	ifp->if_width + 2 * borderWidth,           /* window width */
+	ifp->if_height + titleBarHeight + 2 * borderWidth,          /* window height */
 	NULL,      /* handle to parent or owner window */
 	NULL,          /* handle to menu or child-window identifier */
 	Tk_GetHINSTANCE(),     /* handle to application instance */
@@ -2247,7 +2271,7 @@ wgl_choose_visual(FBIO *ifp)
 
 
     SGI(ifp)->mi_doublebuffer = 1;
-    WGL(ifp)->soft_cmap_flag = 0;
+    WGL(ifp)->soft_cmap_flag = 1;
 
     if (good) return ppfd;
     else return (PIXELFORMATDESCRIPTOR *)NULL;
