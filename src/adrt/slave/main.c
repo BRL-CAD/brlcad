@@ -77,8 +77,12 @@ int main(int argc, char **argv) {
 
     /* Default Port */
     signal(SIGINT, finish);
-    signal(SIGINFO, info);
+#ifdef SIGUSR1
     signal(SIGUSR1, info);
+#endif
+#ifdef SIGINFO
+    signal(SIGINFO, info);
+#endif
 
     /* Initialize strings */
     host[0] = 0;
