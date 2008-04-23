@@ -2119,7 +2119,7 @@ ogl_do_event(FBIO *ifp)
 			register struct ogl_pixel *oglp;
 
 			x = event.xbutton.x;
-			y = ifp->if_height - event.xbutton.y;
+			y = ifp->if_height - event.xbutton.y - 1;
 
 			if (x < 0 || y < 0) {
 			    fb_log("No RGB (outside image viewport)\n");
