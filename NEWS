@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2008-XX-XX  Release 7.12.3                                     ---
 ----------------------------------------------------------------------
 
+* add tire proc-db for easy tire/wheel model creation - Cliff Yapp
 * added query pixel support to the Windows framebuffer - Bob Parker
 * mirror across a distance along a given axis in mged - Bob Parker
 
