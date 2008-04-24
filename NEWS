@@ -12,6 +12,7 @@ entire history of the project is available through SVN.
 ----------------------------------------------------------------------
 
 * added query pixel support to the Windows framebuffer - Bob Parker
+* mirror across a distance along a given axis in mged - Bob Parker
 
 ----------------------------------------------------------------------
 --- 2008-04-23  Release 7.12.2                                     ---
@@ -48,7 +49,7 @@ included in the BRL-CAD sources as a contributed module.
 
 Of the numerous bug fixes and feature enhancements in this release,
 one of the biggest productivity enhancements is the addition of the
-mged "clone" and "tracker" commands.  Clone is a very powerful yet
+MGED "clone" and "tracker" commands.  Clone is a very powerful yet
 simple command that provides an intuitive means for performing deep
 copies of objects.  Tracker provides an interface for replicating
 objects along a spline path.  These 'new' commands originate from
@@ -67,7 +68,7 @@ continuous active development.
 * make fast4-g use GIFT_material=1 and los=100 - Sean Morrison
 * fixed Mac OS X 'ogl' framebuffer crash - Sean Morrison, Bob Parker
 * removed ogl framebuffer multiple window 'm' option - Sean Morrison
-* tree -d option in MGED for limiting tree display depth - Cliff Yapp
+* tree -d option in mged for limiting tree display depth - Cliff Yapp
 * added mouse color query support to OpenGL framebuffer - Bob Parker
 * fixed X11 framebuffer colormapping bug - Bob Parker 
 * libpng updated to 1.2.25 - Erik Greenwald
@@ -76,7 +77,7 @@ continuous active development.
 * document the signals rt responds to for progress - Sean Morrison
 * libpng updated to 1.2.24 - Erik Greenwald
 * TCL/TK updated to 8.5.1 - Erik Greenwald
-* MGED now runs in the foreground by default - Erik Greenwald
+* mged now runs in the foreground by default - Erik Greenwald
 * fixed g-dxf bug where incorrect object name is assigned - Bob Parker
 * fixed browser-based mged help on Mac OS X - Sean Morrison
 * added rest of BRL-CAD's geometry converters for Windows - Bob Parker
@@ -144,22 +145,22 @@ continuous active development.
 ----------------------------------------------------------------------
 
 A major productivity change introduced in this release is
-tab-completion in mged.  John Anderson's addition of tab-completion to
-mged allows modelers to have command and object names automatically
-completed when they press the tab key when operating on the mged
+tab-completion in MGED.  John Anderson's addition of tab-completion to
+MGED allows modelers to have command and object names automatically
+completed when they press the tab key when operating on the MGED
 command line.  If there are multiple matches, the user is presented
 with the list of those possible matches, similar to what one might see
 in a UNIX shell.
 
 After much debate and demand, this minor release marks a rather
-significant change in default behaviors for rt and mged.  The
+significant change in default behaviors for RT and MGED.  The
 ray-tracers that utilize a framebuffer interface now all create
 lingering windows by default instead of transient windows.  One of the
 main impacts of this change is that users should no longer need to
 specify the linger option when ray-tracing to a window via the -F
 framebuffer option nor do they need to set the FB_FILE environment
 variable in order to get the window to remain displayed.
-Additionally, the default mged preference setting for Z clipping is
+Additionally, the default MGED preference setting for Z clipping is
 now disabled in order to reduce confusion with clipped geometry.
 
 * lingering framebuffer windows by default - Sean Morrison
@@ -371,7 +372,7 @@ Other noteworthy enhancements provided in this release include new
 sample applications that demonstrate the capabilities of the libpkg
 networking library, in-memory geometry database processing, reshooting
 of rays from analysis codes for testing pursposes, and the librt root
-solver.  For analysts and modelers alike, the mged modeler also
+solver.  For analysts and modelers alike, the MGED modeler also
 acquires a few new commands including reid and remat that respectively
 assist with the assignment of region and material identifiers.
 
@@ -436,12 +437,12 @@ of BRL-CAD over the past 20 years.
 --- 2005-11-12  Release 7.6.4                                      ---
 ----------------------------------------------------------------------
 
-This release adds a new geometry creation interface to mged that
+This release adds a new geometry creation interface to MGED that
 supports reverse modeling geometry of existing objects.  New geometry
 creation commands read point data sets in a simple text file format,
 recognizing categories and collections of points.  Using
 point-acquisition devices such as X-Station Vulcan advanced surveying
-systems from Arc Second Inc., points may be collected and used in mged
+systems from Arc Second Inc., points may be collected and used in MGED
 to factilitate the generation of geometry models.  Collection
 techniques are recognized for polygonal plates, cylinders, spheres,
 point clouds, and more.
@@ -555,7 +556,7 @@ whereas the presented area is calculated without consideration for
 occlusions.  That is to say that if an object is in front covering a
 regions or assemblies from a particular view, the exposed area of the
 covered geometry would be reduced but the presented area would not.
-The rtarea command was added to mged as well, along with rtweight.
+The rtarea command was added to MGED as well, along with rtweight.
 
 * improved mged initialization failure reporting - Sean Morrison
 * applied zlib vulnerability patch (CAN-2005-2096) - Sean Morrison
@@ -780,7 +781,7 @@ NEW FEATURES
 The enhancements evident in this release of BRL-CAD include dozens of
 bug fixes and additional documentation across the entire package.
 MGED now sports a new Geometry Browser for traversing through
-geometry, as well as improved support for saving and restoring mged
+geometry, as well as improved support for saving and restoring MGED
 views.  There is now support for importing from Unigraphics and
 Pro-Engineer with the ug-g and proe-brl converters.  There is also a
 g-nff converter for exporting to the NFF file format.  There is
@@ -794,7 +795,7 @@ WINDOWS SUPPORT
 
 This release marks the first release with initial support for the
 Windows operating system platform.  All of the core BRL-CAD libraries
-as well as several tools (including mged, rt, nirt, asc2g, and more)
+as well as several tools (including MGED, RT, NIRT, ASC2G, and more)
 have completed the conversion.  While not yet a holistic port, all of
 the libraries and the core utilities have been ported and the rest will
 soon follow.
@@ -835,7 +836,7 @@ introduces a large number of new capabilities in BRL-CAD, including:
 
   Names of objects in the geometry database were previously limited to
   16 characters. This restriction was burdensome when constructing
-  complex systems. The new database format (and MGED/rt) allows for
+  complex systems. The new database format (and MGED/RT) allows for
   unlimited-length names for objects. The only limits remaining are
   usability/human factors (i.e., the user may wish to think twice
   before using 1024-character names for all objects).
