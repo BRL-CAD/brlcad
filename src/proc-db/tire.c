@@ -1345,7 +1345,7 @@ void MakeTire(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t dztre
     (void)mk_addmember(bu_vls_addr(&str), &tire.l, NULL, WMOP_SUBTRACT);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "tread%s.c",suffix);
-    if (add_tread != 0) (void)mk_addmember(bu_vls_addr(&str),&tire.l, NULL, WMOP_UNION);
+    if (add_tread && *add_tread != 0) (void)mk_addmember(bu_vls_addr(&str),&tire.l, NULL, WMOP_UNION);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "tire%s.r",suffix);
     mk_lcomb(file, bu_vls_addr(&str), &tire, 1,  "plastic", "di=.8 sp=.2", rgb, 0);
