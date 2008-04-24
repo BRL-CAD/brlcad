@@ -1776,8 +1776,7 @@ if test "xyes" = "xyes" ; then
 
     dnl check for -fno-strict-aliasing
     dnl XXX - THIS FLAG IS REQUIRED if any level of optimization is
-    dnl enabled with GCC as we do use aliasing and type-punning.  The
-    dnl compiler cannot assume that a given type is that type's size.
+    dnl enabled with GCC as we do use aliasing and type-punning.
     BC_COMPILER_AND_LINKER_RECOGNIZES([-fno-strict-aliasing])
 
     dnl check for -fno-common (libtcl needs it on darwin)
