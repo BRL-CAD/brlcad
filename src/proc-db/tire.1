@@ -75,6 +75,12 @@ used in the generated BRL-CAD database tree.  Works with the
 option or standalone.  Output format uses '-' instead of '/' because the
 latter has significance in BRL-CAD object trees.
 .TP
+.B \-c count
+sets the number of tread 
+.I patterns
+used when adding tread to a tire.  A tread pattern is the repeated shape
+or combination of shapes used in tire tread definitions.
+.TP
 .B \-d width/ratio/wheeldiam #
 This option accepts tire dimensions in the form of width of the tire
 (in mm), ratio of sidewall height to tire width, and the diameter of
@@ -84,6 +90,10 @@ and BRL-CAD can use these dimensions to create a model with approximately
 those dimensions.  The '/' character will work but other options are
 also allowed provided they don't have numeric significance - for example
 the common notation width/ratioRwheeldiam will work as-is.
+.TP
+.B \-g depth #
+Specify the tread depth in 32nds of an inch.  So, for example, -g 13 would
+create a tread depth of 13/32in.  Accepts only integer increments.
 .TP
 .B \-n name #
 allows the user to specify a name other than 'tire' for the root name
