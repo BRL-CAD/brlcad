@@ -2,10 +2,13 @@
 BRL-CAD Release Notes
 =====================
 
-Included below is the latest news pertaining to BRL-CAD releases.  The
-history or BRL-CAD prior to release 5.0 is covered in doc/history.txt,
-see that file and the SVN log for more historic information.  The
-entire history of the project is available through SVN.
+This document provides a transcript of release notes and user-visible
+changes for each release of BRL-CAD.  The individual changes are
+listed in chronological order with the most recent changes listed
+first and are grouped by release.  Each release also includes optional
+descriptive text that emphasizes or further describes significant
+changes made.  See document footer for additional details.
+
 
 ----------------------------------------------------------------------
 --- 2008-XX-XX  Release 7.12.3                                     ---
@@ -13,6 +16,7 @@ entire history of the project is available through SVN.
 
 * added query pixel support to the Windows framebuffer - Bob Parker
 * mirror across a distance along a given axis in mged - Bob Parker
+
 
 ----------------------------------------------------------------------
 --- 2008-04-23  Release 7.12.2                                     ---
@@ -1305,8 +1309,13 @@ See the doc/deprecation.txt file for a transcript of features that are
 deprecated or have already become obsolete.
 
 ---
+
 See doc/history.txt for more historic information on BRL-CAD.  There
 is contained information on releases that predate 1999 and the 5.0
-release.
+release.  The entire history of the project is available through
+Subversion revision control on Sourceforge.
 
-NEWS items should be formatted to column 70 (M-q in Emacs), no tabs.
+NEWS items should be formatted to column 70 (default M-q in Emacs),
+use no tabs, and include credits to all significant contributors.
+Multiple contributors may be listed on the following line but the
+summary description itself should never exceed column 70 or one line.
