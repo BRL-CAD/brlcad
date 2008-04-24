@@ -809,7 +809,10 @@ void MakeTreadPattern(struct rt_wdb (*file), char *suffix, fastf_t dwidth, fastf
     struct wmember treadpattern, tread, treadrotated;
     fastf_t patternwidth1,patternwidth2;
     mat_t y;
-    int i;
+    int i,j;
+    int sketchnum = 4;
+    int vertcounts[sketchnum];
+    point2d_t *verts[sketchnum];
     unsigned char rgb[3];
     VSET(rgb, 40, 40, 40);
 
@@ -832,6 +835,8 @@ void MakeTreadPattern(struct rt_wdb (*file), char *suffix, fastf_t dwidth, fastf
 	{ .4, 0 }
     };
     
+    verts[0] = verts1;
+    vertcounts[0] = 12;
     
     point2d_t verts2[] = {
 	{ .2, .13 },
@@ -840,12 +845,18 @@ void MakeTreadPattern(struct rt_wdb (*file), char *suffix, fastf_t dwidth, fastf
 	{ .4, .2 }
     };
 
+    verts[1] = verts2;
+     vertcounts[1] = 4;
+
     point2d_t verts3[] = {
         { .5, .45 },
         { -.1, .4 },
         { -.4, .5 },
         { .3, .55 }
     };
+
+    verts[2] = verts3;
+     vertcounts[2] = 4;
 
     point2d_t verts4[] = {
         { .6, .73 },
@@ -854,69 +865,21 @@ void MakeTreadPattern(struct rt_wdb (*file), char *suffix, fastf_t dwidth, fastf
         { .8, .8 }
     };
 
+    verts[3] = verts4;
+    vertcounts[3] = 4;
 
     BU_LIST_INIT(&treadpattern.l);
 
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str,"-1%s",suffix);
-    MakeExtrude(file, bu_vls_addr(&str), verts1, 12, 2*patternwidth1, 2*patternwidth2, dwidth, z_base, ztire);
-    
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "extrude1-1%s",suffix);
-    (void)mk_addmember(bu_vls_addr(&str), &treadpattern.l, NULL, WMOP_UNION);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "extrude2-1%s",suffix);
-    (void)mk_addmember(bu_vls_addr(&str), &treadpattern.l, NULL, WMOP_UNION);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "extrude3-1%s",suffix);
-    (void)mk_addmember(bu_vls_addr(&str), &treadpattern.l, NULL, WMOP_UNION);
-
-
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str,"-2%s",suffix);
-    MakeExtrude(file, bu_vls_addr(&str), verts2, 4, 2*patternwidth1, 2*patternwidth2, dwidth, z_base, ztire);
-    
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "extrude1-2%s",suffix);
-    (void)mk_addmember(bu_vls_addr(&str), &treadpattern.l, NULL, WMOP_UNION);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "extrude2-2%s",suffix);
-    (void)mk_addmember(bu_vls_addr(&str), &treadpattern.l, NULL, WMOP_UNION);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "extrude3-2%s",suffix);
-    (void)mk_addmember(bu_vls_addr(&str), &treadpattern.l, NULL, WMOP_UNION);
-
-
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str,"-3%s",suffix);
-    MakeExtrude(file, bu_vls_addr(&str), verts3, 4, 2*patternwidth1, 2*patternwidth2, dwidth, z_base, ztire);
-
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "extrude1-3%s",suffix);
-    (void)mk_addmember(bu_vls_addr(&str), &treadpattern.l, NULL, WMOP_UNION);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "extrude2-3%s",suffix);
-    (void)mk_addmember(bu_vls_addr(&str), &treadpattern.l, NULL, WMOP_UNION);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "extrude3-3%s",suffix);
-    (void)mk_addmember(bu_vls_addr(&str), &treadpattern.l, NULL, WMOP_UNION);
-
-
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str,"-4%s",suffix);
-    MakeExtrude(file, bu_vls_addr(&str), verts4, 4, 2*patternwidth1, 2*patternwidth2, dwidth, z_base, ztire);
-
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "extrude1-4%s",suffix);
-    (void)mk_addmember(bu_vls_addr(&str), &treadpattern.l, NULL, WMOP_UNION);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "extrude2-4%s",suffix);
-    (void)mk_addmember(bu_vls_addr(&str), &treadpattern.l, NULL, WMOP_UNION);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "extrude3-4%s",suffix);
-    (void)mk_addmember(bu_vls_addr(&str), &treadpattern.l, NULL, WMOP_UNION);
-
-
+    for ( i=0; i<sketchnum; i++ ){
+	bu_vls_trunc(&str,0);
+	bu_vls_printf(&str,"-%d%s",i+1,suffix);
+	MakeExtrude(file, bu_vls_addr(&str), verts[i], vertcounts[i], 2*patternwidth1, 2*patternwidth2, dwidth, z_base, ztire);
+	for (j = 1; j<=3; j++) {
+	    bu_vls_trunc(&str,0);
+	    bu_vls_printf(&str, "extrude%d-%d%s",j,i+1,suffix);
+	    (void)mk_addmember(bu_vls_addr(&str), &treadpattern.l, NULL, WMOP_UNION);
+	}
+    }
 
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "tread_master%s.c",suffix);
