@@ -345,10 +345,10 @@ void CalcInputVals(fastf_t *inarray, fastf_t *outarray, int orientation)
 
 
 
-void MakeWheelCenter(struct rt_wdb (*file), char *suffix, fastf_t fixing_start_right, fastf_t fixing_width, fastf_t rim_thickness, fastf_t bead_height, fastf_t zhub, fastf_t dyhub, fastf_t spigot_diam, int bolts,fastf_t bolt_circ_diam, fastf_t bolt_diam) 
+void MakeWheelCenter(struct rt_wdb (*file), char *suffix, fastf_t fixing_start_middle, fastf_t fixing_width, fastf_t rim_thickness, fastf_t bead_height, fastf_t zhub, fastf_t dyhub, fastf_t spigot_diam, int bolts,fastf_t bolt_circ_diam, fastf_t bolt_diam) 
 {
 
-    vect_t normal, height;
+    vect_t normal, height, a, b, c;
     point_t origin, vertex, C;
     mat_t y;
     struct bu_vls str;
@@ -356,20 +356,19 @@ void MakeWheelCenter(struct rt_wdb (*file), char *suffix, fastf_t fixing_start_r
     int i;
     struct wmember bolthole,boltholes,hubhole,hubholes,innerhub;
 
-    VSET(origin, 0, fixing_start_right, 0);
-    VSET(normal, 0, -1, 0);
-    VSET(C, 0, -fixing_width/2,(zhub-2*bead_height-rim_thickness)/2+rim_thickness*.4)
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Inner-Hub%s.s", suffix);	
-    mk_eto(file, bu_vls_addr(&str), origin, normal, C, (zhub-2*bead_height-rim_thickness)/2+rim_thickness*.4, 20);   
+    VSET(origin, 0, fixing_start_middle+fixing_width/4, 0);
+    VSET(a, (zhub-2*bead_height),0,0);
+    VSET(b, 0, -dyhub/3, 0);
+    VSET(c, 0, 0, (zhub-2*bead_height));
+    mk_ell(file,bu_vls_addr(&str), origin, a, b, c);
    
-    VSET(origin, 0,fixing_start_right-10, 0);
-    VSET(normal, 0, -1, 0);
-    VSET(C, 0, -fixing_width/2,(zhub-2*bead_height-rim_thickness)/2+rim_thickness*.4)
     bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "Inner-Hub-Cut1%s.s", suffix);	
-    mk_eto(file, bu_vls_addr(&str), origin, normal, C, (zhub-2*bead_height-rim_thickness)/2+rim_thickness*.4, 20);   
-
+    bu_vls_printf(&str, "Inner-Hub-Cut1%s.s", suffix);
+    VSET(origin, 0, fixing_start_middle+fixing_width/4-10, 0);
+    mk_ell(file,bu_vls_addr(&str), origin, a, b, c);
+	
     VSET(origin, 0,0, 0);
     VSET(height, 0, dyhub/2, 0);
     bu_vls_trunc(&str,0);
@@ -687,7 +686,7 @@ void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
     mk_lcomb(file, bu_vls_addr(&str), &wheelrim, 0, NULL, NULL, NULL, 0);
 
 
-    MakeWheelCenter(file, suffix, fixing_start_right, fixing_width, rim_thickness, bead_height, zhub, dyhub, spigot_diam, bolts, bolt_circ_diam, bolt_diam);
+    MakeWheelCenter(file, suffix, fixing_start_middle, fixing_width, rim_thickness, bead_height, zhub, dyhub, spigot_diam, bolts, bolt_circ_diam, bolt_diam);
 
 
 
