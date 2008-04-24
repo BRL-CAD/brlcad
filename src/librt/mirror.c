@@ -143,7 +143,6 @@ rt_mirror(struct db_i		*dbip,
 	    RT_ELL_CK_MAGIC( ell );
 
 	    ell->v[axis] -= 2 * (ell->v[axis] - mirror_pt);
-	    ell->v[axis] *= -1.0;
 	    ell->a[axis] *= -1.0;
 	    ell->b[axis] *= -1.0;
 	    ell->c[axis] *= -1.0;
@@ -318,7 +317,7 @@ rt_mirror(struct db_i		*dbip,
 	    part = (struct rt_part_internal *)internal.idb_ptr;
 	    RT_PART_CK_MAGIC( part );
 
-	    part->part_V[axis] *= -1.0;
+	    part->part_V[axis] -= 2 * (part->part_V[axis] - mirror_pt);
 	    part->part_H[axis] *= -1.0;
 
 	    break;
