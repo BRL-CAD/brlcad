@@ -136,12 +136,12 @@ fastf_t rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, stru
 
 		switch( mb->method ) {
 		case METABALL_METABALL:
-		    additive = fabs(mbpt2->fldstr) * mbpt2->fldstr / mag;
 		    break;
 		case METABALL_ISOPOTENTIAL:
-		    additive = exp(( mbpt2->sweat / mbpt2->fldstr ) * mag*mag - mbpt2->sweat);
+		    additive = fabs(mbpt2->fldstr) * mbpt2->fldstr / mag;
 		    break;
 		case METABALL_BLOB:
+		    additive = exp(( mbpt2->sweat / mbpt2->fldstr ) * mag*mag - mbpt2->sweat);
 		    break;
 		}
 
@@ -151,7 +151,7 @@ fastf_t rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, stru
 	if (dist > r)
 	    r = dist;
     }
-    return r;
+    return 1.02*r;
 }
 
 /**
