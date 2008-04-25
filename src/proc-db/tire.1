@@ -101,15 +101,18 @@ of the toplevel database object.  Works with the
 .B \a
 option or standalone.
 .TP
-.B \-t #
-If this flag is supplied, the procedure will model the tire to include
-geometric tread.  Tread modeling can SIGNIFICANTLY lengthen raytracing times.
+.B \-t type#
+If this flag is supplied with a non-zero integer argument, the procedure 
+will attempt to add a tread to the model.  Different integers correspond
+to different tread styles, so long as a tread routine has been associated
+with a given integer in the code.  Note: tread modeling can SIGNIFICANTLY 
+lengthen raytracing times, depending on the tread.
 
 .SH EXAMPLE
 The following will create a tire with width=185mm, ratio=65mm, and wheel
 diameter = 15in.  The 
 .B \-t
-flag will instruct the procedure to model using tread, the
+flag will instruct the procedure to model using tread type one, the
 .B \-n
 flag will set the root name to 'autowheel' instead of tire, and the
 .B \-a
@@ -119,7 +122,7 @@ Because a filename was supplied, the resulting model will be stored in
 mytire.g rather than tire.g (if necessary mytire.g will be created.)
 
 .nf
-	\fBtire -d 185/65R15 -t -a -n autowheel mytire.g\fR
+	\fBtire -d 185/65R15 -t 1 -a -n autowheel mytire.g\fR
 .fi
 
 .SH DIAGNOSTICS
