@@ -3,16 +3,16 @@
 COUNT: DATE HOST PATH USER
 	test -f $@ && expr `cat COUNT` + 1 > $@ || echo "1" > $@
 
-DATE: HOST PATH USER $(top_srcdir)/include/brlcad_config.h
+DATE: HOST PATH USER $(top_builddir)/include/brlcad_config.h
 	echo "\"`date`\"" > $@
 
-HOST: $(top_srcdir)/include/brlcad_config.h
+HOST: $(top_builddir)/include/brlcad_config.h
 	echo "\"`hostname`\"" > $@
 
-PATH: $(top_srcdir)/include/brlcad_config.h
+PATH: $(top_builddir)/include/brlcad_config.h
 	echo "\"$(DESTDIR)$(prefix)\"" > $@
 
-USER: $(top_srcdir)/include/brlcad_config.h
+USER: $(top_builddir)/include/brlcad_config.h
 	echo "\"`whoami`\"" > $@
 
 # this causes them to be dependencies on the 'all' target
