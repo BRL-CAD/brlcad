@@ -1007,6 +1007,50 @@ int viewit(register struct application *ap,
 	bu_log("viewit:  no hit out front?\n");
 	return(0);
     }
+
+    if( do_kut_plane ) {
+	fastf_t slant_factor;
+	fastf_t dist;
+	fastf_t norm_dist = DIST_PT_PLANE( ap->a_ray.r_pt, kut_plane );
+
+	if ( (slant_factor = -VDOT( kut_plane, ap->a_ray.r_dir )) < -1.0e-10 )  {
+	    /* exit point, ignore everything before "dist" */
+	    dist = norm_dist/slant_factor;
+	    for (; pp != PartHeadp; pp = pp->pt_forw ) {
+		if( pp->pt_outhit->hit_dist >= dist ) {
+		    if( pp->pt_inhit->hit_dist < dist ) {
+			pp->pt_inhit->hit_dist = dist;
+			pp->pt_inflip = 0;
+			pp->pt_inseg->seg_stp = kut_soltab;
+			RT_HIT_NORMAL( normal, pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip );
+		    }
+		    break;
+		}
+	    }
+	    if( pp == PartHeadp ) {
+		/* we ignored everything, this is now a miss */
+		ap->a_miss(ap);
+		return(0);
+	    }
+	} else if ( slant_factor > 1.0e-10 )  {
+	    /* entry point, ignore everything after "dist" */
+	    dist = norm_dist/slant_factor;
+	    if( pp->pt_inhit->hit_dist > dist ) {
+		/* everything is after kut plane, this is now a miss */
+		ap->a_miss(ap);
+		return(0);
+	    }
+	}  else  {
+	    /* ray is parallel to plane when dir.N == 0.
+	     * If it is inside the solid, this is a miss */
+	    if ( norm_dist < 0.0 ) {
+		ap->a_miss(ap);
+		return(0);
+	    }
+	}
+	
+    }
+
     hitp = pp->pt_inhit;
     RT_HIT_NORMAL( normal, hitp, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip );
 
