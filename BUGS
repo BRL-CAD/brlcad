@@ -15,6 +15,10 @@ on-going issues.
 Recent Bugs
 -----------
 
+* the graphics window does not acquire keybinding focus in mged on
+  ubuntu linux.  key events go to the command window even with the
+  graphics window has focus.
+
 * /dev/ogl framebuffer is not refreshing/updating on mac os x,
   resulting in the window remaining blank until you give expose events
 
