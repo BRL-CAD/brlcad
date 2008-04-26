@@ -1719,8 +1719,7 @@ int ReadArgs(int argc, char **argv, fastf_t *isoarray, struct bu_vls *name, stru
     int count;
     int treadep,tdtype,tthickness, hwidth, ptype;
     char spacer1,tiretype;
-    bu_log("Reading args\n");
-
+ 
     bu_opterr = 0;
 
     while ((c=bu_getopt(argc, argv, options)) != -1) {
@@ -1755,7 +1754,6 @@ int ReadArgs(int argc, char **argv, fastf_t *isoarray, struct bu_vls *name, stru
 	    case 'p':
 		sscanf(bu_optarg,"%d",&ptype);
 		*pattern_type = ptype;
-		bu_log("pattern type = %d\n",ptype);
 		break;
 	    case 't':
 		sscanf(bu_optarg,"%d",&tdtype);
@@ -1868,8 +1866,10 @@ int main(int ac, char *av[])
 	dyhub = hub_width*bu_units_conversion("in");
     }
 
-    if (tread_type != 0 && pattern_type == 0) pattern_type = 1;
-    if (pattern_type != 0 && tread_type == 0) tread_type = 1;
+    if (tread_type == 1 && pattern_type == 0) pattern_type = 1;
+    if (tread_type == 2 && pattern_type == 0) pattern_type = 2;
+    if (pattern_type == 1 && tread_type == 0) tread_type = 1;
+    if (pattern_type == 2 && tread_type == 0) tread_type = 2;
 
 
     /* Make the tire region*/
