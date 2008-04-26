@@ -1613,10 +1613,10 @@ int main(int ac, char *av[])
     bu_vls_trunc(&name,0);
     bu_vls_trunc(&dimen,0);
 
-    /* Set Default Parameters - 255/40R18 */ 
-    isoarray[0] = 255;
-    isoarray[1] = 40;
-    isoarray[2] = 18;
+    /* Set Default Parameters - 215/55R17 */ 
+    isoarray[0] = 215;
+    isoarray[1] = 55;
+    isoarray[2] = 17;
 
     /* Process arguments */
     ReadArgs(ac, av, isoarray, &name, &dimen, &gen_name, &tread_type, &number_of_tread_patterns, &tread_depth,
