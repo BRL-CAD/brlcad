@@ -168,7 +168,7 @@ static struct sched_param bu_param;
 #endif
 
 #ifdef CRAY
-struct taskcontrol {
+static struct taskcontrol {
     int	tsk_len;
     int	tsk_id;
     int	tsk_value;
