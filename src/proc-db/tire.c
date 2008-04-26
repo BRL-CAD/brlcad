@@ -801,7 +801,7 @@ void MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts, int vert
 }
 
 
-void MakeTreadPattern1(struct rt_wdb (*file), char *suffix, fastf_t dwidth, fastf_t z_base, fastf_t ztire, int number_of_patterns)
+void MakeTreadPattern2(struct rt_wdb (*file), char *suffix, fastf_t dwidth, fastf_t z_base, fastf_t ztire, int number_of_patterns)
 {
     struct bu_vls str;
     bu_vls_init(&str);
@@ -923,7 +923,7 @@ void MakeTreadPattern1(struct rt_wdb (*file), char *suffix, fastf_t dwidth, fast
 }
 
 
-void MakeTreadPattern2(struct rt_wdb (*file), char *suffix, fastf_t dwidth, fastf_t z_base, fastf_t ztire, int number_of_patterns)
+void MakeTreadPattern1(struct rt_wdb (*file), char *suffix, fastf_t dwidth, fastf_t z_base, fastf_t ztire, int number_of_patterns)
 {
     struct bu_vls str;
     bu_vls_init(&str);
