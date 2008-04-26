@@ -104,11 +104,12 @@ of the toplevel database object.  Works with the
 .B \a
 option or standalone.
 .TP
+.B \-p type#
+Select tread pattern to model.  Note: tread modeling can SIGNIFICANTLY 
+lengthen raytracing times, depending on the tread.
+.TP
 .B \-t type#
-If this flag is supplied with a non-zero integer argument, the procedure 
-will attempt to add a tread to the model.  Different integers correspond
-to different tread styles, so long as a tread routine has been associated
-with a given integer in the code.  Note: tread modeling can SIGNIFICANTLY 
+Select tread shape to model.  Note: tread modeling can SIGNIFICANTLY 
 lengthen raytracing times, depending on the tread.
 .TP
 .B \-u thickness#
