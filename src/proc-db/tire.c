@@ -50,6 +50,7 @@ void show_help(const char *name) {
     printf("-c <count>\tSpecify number of repeated tread patterns around tire\n\n");
     printf("-d <width>/<aspect>R<rim size>\n\t\tSpecify tire dimensions (American units)\n\n");
     printf("-g <depth>\tSpecify tread depth in terms of integer 32nds of an inch.\n\n");
+    printf("-j <width>\tSpecify rim width in inches.\n\n");
     printf("-n <name>\tSpecify custom top level root name\n\n");
     printf("-t\t\tGenerate tread\n\n");
     printf("-u <thickness>\tSpecify tire thickness\n\n");
@@ -469,9 +470,6 @@ void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
     struct bu_vls str;
     bu_vls_init(&str);
     
-    bu_log("zhub = %f\n",zhub);
-    bu_log("rim_thickness = %f\n",rim_thickness);
-
     /* Set wheel color */
     VSET(rgb, 217, 217, 217);
     
@@ -729,8 +727,6 @@ void MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts, int vert
     struct bu_vls str2;
     bu_vls_init(&str2);
     point2d_t tmpvert[] = {{0,0}};
-
-    bu_log("%f\n",verts[1][1]);
 
     /* Basic allocation of structure */
     skt = (struct rt_sketch_internal *)bu_calloc( 1, sizeof( struct rt_sketch_internal ), "sketch" );
@@ -1130,7 +1126,6 @@ void MakeTireSurface(struct rt_wdb (*file), char *suffix, fastf_t *ell1cadparams
     bu_vls_printf(&str, "InnerSolid%s.s", suffix);	
     (void)mk_addmember(bu_vls_addr(&str), &innersolid.l, NULL, WMOP_UNION);
     if ((dytred/2 - dyhub/2) > 0 && !NEAR_ZERO(dytred/2 - dyhub/2, SMALL_FASTF)) {
-    	bu_log("Subtracting cones\n");
     	bu_vls_trunc(&str,0);
     	bu_vls_printf(&str, "LeftCone%s.s", suffix);	
 	(void)mk_addmember(bu_vls_addr(&str), &innersolid.l, NULL, WMOP_SUBTRACT);
@@ -1139,7 +1134,6 @@ void MakeTireSurface(struct rt_wdb (*file), char *suffix, fastf_t *ell1cadparams
 	(void)mk_addmember(bu_vls_addr(&str), &innersolid.l, NULL, WMOP_SUBTRACT);
     }
     if ((dytred/2 - dyhub/2) < 0 && !NEAR_ZERO(dytred/2 - dyhub/2, SMALL_FASTF)) {
-    	bu_log("Adding cones\n");
     	bu_vls_trunc(&str,0);
     	bu_vls_printf(&str, "LeftCone%s.s", suffix);	
 	(void)mk_addmember(bu_vls_addr(&str), &innersolid.l, NULL, WMOP_UNION);
@@ -1534,20 +1528,19 @@ void MakeTire(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t dztre
 
 
 /* Process command line arguments */
-int ReadArgs(int argc, char **argv, fastf_t *isoarray, struct bu_vls *name, struct bu_vls *dimens, int *gen_name, int *treadtype, int *number_of_tread_patterns, int *tread_depth, int *tire_thickness)
+int ReadArgs(int argc, char **argv, fastf_t *isoarray, struct bu_vls *name, struct bu_vls *dimens, int *gen_name, int *treadtype, int *number_of_tread_patterns, int *tread_depth, int *tire_thickness, int *hub_width)
 {
     int c = 0;
-    char *options="d:n:c:g:t:u:ah";
+    char *options="d:n:c:g:j:t:u:ah";
     int d1, d2, d3;
     int count;
-    int treadep,tdtype,tthickness;
+    int treadep,tdtype,tthickness, hwidth;
     char spacer1,tiretype;
     bu_log("Reading args\n");
 
     bu_opterr = 0;
 
     while ((c=bu_getopt(argc, argv, options)) != -1) {
-	bu_log("in while loop -> %c\n",c);
         switch (c) {
 	    case 'a' :
 		*gen_name = 1;
@@ -1567,8 +1560,12 @@ int ReadArgs(int argc, char **argv, fastf_t *isoarray, struct bu_vls *name, stru
 	    case 'g':
 		sscanf(bu_optarg,"%d",&treadep);
 		*tread_depth = treadep;
-		bu_log("tread depth = %d\n",treadep);
 		break;
+	    case 'j':
+		sscanf(bu_optarg,"%d",&hwidth);
+		*hub_width = hwidth;
+		break;
+
 	    case 'n':
 		bu_vls_trunc(name,0);
 		bu_vls_printf(name, "%s", bu_optarg);
@@ -1608,6 +1605,7 @@ int main(int ac, char *av[])
     int tread_depth = 11;
     int tire_thickness = 0;
     fastf_t f_tire_thickness = 0;
+    int hub_width = 0;
 
     bu_vls_init(&str);
     bu_vls_init(&name);
@@ -1622,7 +1620,7 @@ int main(int ac, char *av[])
 
     /* Process arguments */
     ReadArgs(ac, av, isoarray, &name, &dimen, &gen_name, &tread_type, &number_of_tread_patterns, &tread_depth,
-	     &tire_thickness);
+	     &tire_thickness, &hub_width);
 
     /* Calculate floating point value for tread depth */
     fastf_t tread_depth_float = tread_depth/32.0;
@@ -1669,14 +1667,18 @@ int main(int ac, char *av[])
     zside1 = ztire-((ztire-zhub)/2*1.2);
     dztred = .001*ratio*zside1;
     dytred = .8 * width;
-    dyhub = dytred;
     d1 = (ztire-zhub)/2.5;
    
     if(tire_thickness == 0){
 	f_tire_thickness = dztred;
-	bu_log("tire thickness = %f\n",f_tire_thickness);
     }else{
 	f_tire_thickness = tire_thickness;
+    }
+
+    if(hub_width == 0){
+	dyhub = dytred;
+    }else{
+	dyhub = hub_width*bu_units_conversion("in");
     }
 
     /* Make the tire region*/
