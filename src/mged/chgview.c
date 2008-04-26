@@ -3397,7 +3397,6 @@ path_parse (char *path)
 	    ;
 	result[i] = (char *) bu_malloc((pp - start_addr + 1) * sizeof(char), "string");
 	bu_strlcpy(result[i], start_addr, (pp - start_addr + 1) * sizeof(char));
-	result[i][pp - start_addr] = '\0';
     }
     result[nm_constituents] = 0;
 
