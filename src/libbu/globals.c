@@ -33,7 +33,7 @@
 /**
  * this variable controls the libbu debug level
  */
-int	bu_debug = 0;
+int bu_debug = 0;
 
 /**
  * number of calls to bu_malloc()/bu_calloc()/bu_alloc().
@@ -41,7 +41,7 @@ int	bu_debug = 0;
  * used by rt.
  * not semaphore-protected and is thus only an estimate.
  */
-long	bu_n_malloc = 0;
+long bu_n_malloc = 0;
 
 /**
  * number of calls to bu_free().
@@ -49,7 +49,7 @@ long	bu_n_malloc = 0;
  * used by rt.
  * not semaphore-protected and is thus only an estimate.
  */
-long	bu_n_free = 0;
+long bu_n_free = 0;
 
 /**
  * number of calls to bu_realloc().
@@ -57,7 +57,7 @@ long	bu_n_free = 0;
  * used by rt.
  * not semaphore-protected and is thus only an estimate.
  */
-long	bu_n_realloc = 0;
+long bu_n_realloc = 0;
 
 /**
  * used by malloc and vls as the bu_malloc/bu_free debug string.
@@ -114,14 +114,35 @@ struct bu_hook_list bu_log_hook_list = {
  * If you replace bu_bomb() with one of your own, you must also
  * provide these variables, even if you don't use them.
  */
-int		bu_setjmp_valid = 0;
+int bu_setjmp_valid = 0;
 
 /**
  * for BU_SETJMP().  bu_jmpbuf is global because BU_SETJUMP() *must*
  * be a macro.  If you replace bu_bomb() with one of your own, you
  * must also provide these variables, even if you don't use them.
  */
-jmp_buf		bu_jmpbuf;
+jmp_buf bu_jmpbuf;
+
+/**
+ * for bu_getopt().  set to zero to suppress errors.
+ */
+int bu_opterr = 1;
+
+/**
+ * for bu_getopt().  current index into parent argv vector.
+ */
+
+int bu_optind = 1;
+
+/**
+ * for bu_getopt().  current option being checked for validity.
+ */
+int bu_optopt = 0;
+
+/**
+ * for bu_getopt().  current argument associated with current option.
+ */
+char *bu_optarg = NULL;
 
 
 /*
