@@ -67,6 +67,7 @@ bu_strlcatm(char *dst, const char *src, size_t size, const char *label)
 
     dstsize = strlen(dst);
     srcsize = strlen(src);
+
     if (dstsize == size - 1) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	fprintf(stderr, "WARNING: [%s] concatenation string is already full at %ld chars\n", label, size-1);
@@ -77,9 +78,11 @@ bu_strlcatm(char *dst, const char *src, size_t size, const char *label)
 	fprintf(stderr, "WARNING: [%s] concatenation string is already full, exceeds size (%ld > %ld)\n", label, dstsize, size-1);
 	bu_semaphore_release(BU_SEM_SYSCALL);
     } else if (srcsize >= size - dstsize) {
-	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	fprintf(stderr, "WARNING: [%s] string truncation, exceeding %ld char max concatenating %ld chars (started with %ld)\n", label, size-1, srcsize, dstsize);
-	bu_semaphore_release(BU_SEM_SYSCALL);
+	if (bu_debug) {
+	    bu_semaphore_acquire(BU_SEM_SYSCALL);
+	    fprintf(stderr, "WARNING: [%s] string truncation, exceeding %ld char max concatenating %ld chars (started with %ld)\n", label, size-1, srcsize, dstsize);
+	    bu_semaphore_release(BU_SEM_SYSCALL);
+	}
     }
 
 #ifdef HAVE_STRLCAT
@@ -128,10 +131,13 @@ bu_strlcpym(char *dst, const char *src, size_t size, const char *label)
     }
 
     srcsize = strlen(src);
-    if (srcsize >= size ) {
-	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	fprintf(stderr, "WARNING: [%s] string truncation, exceeding %ld char max copying %ld chars\n", label, size-1, srcsize);
-	bu_semaphore_release(BU_SEM_SYSCALL);
+
+    if (bu_debug) {
+	if (srcsize >= size ) {
+	    bu_semaphore_acquire(BU_SEM_SYSCALL);
+	    fprintf(stderr, "WARNING: [%s] string truncation, exceeding %ld char max copying %ld chars\n", label, size-1, srcsize);
+	    bu_semaphore_release(BU_SEM_SYSCALL);
+	}
     }
 
 #ifdef HAVE_STRLCPY
