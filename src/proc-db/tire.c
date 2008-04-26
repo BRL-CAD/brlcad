@@ -1199,12 +1199,20 @@ void MakeTreadSolid(struct rt_wdb (*file), char *suffix, fastf_t *ell2coefficien
     Create_Ell1_Mat(matrixelltred1, dytred, dztred, d1, ztire);
     Echelon(matrixelltred1);
     SolveEchelon(matrixelltred1,ell1tredcoefficients);
-    CalcInputVals(ell1tredcoefficients,ell1tredcadparams,0);
+    if ((ztire-d1) < (dytred/2)){
+	CalcInputVals(ell1tredcoefficients,ell1tredcadparams,1);
+    }else{
+	CalcInputVals(ell1tredcoefficients,ell1tredcadparams,0);
+    }
     elltredpartial = GetEllPartialAtPoint(ell1tredcoefficients,dytred/2,ztire-dztred);
     Create_Ell2_Mat(matrixelltred2, dytred, dztred, d1_intercept*2, ztire-d1, ztire, dyhub, zhub, elltredpartial);
     Echelon(matrixelltred2);
     SolveEchelon(matrixelltred2,ell2tredcoefficients);
-    CalcInputVals(ell2tredcoefficients,ell2tredcadparams,1);
+    if ((ztire-dztred)-zhub > (dyside1/2-dytred/2)){
+	CalcInputVals(ell2tredcoefficients,ell2tredcadparams,1);
+    }else{
+	CalcInputVals(ell2tredcoefficients,ell2tredcadparams,0);
+    }
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str,"-tread-outer%s",suffix);
     MakeTireSurface(file,bu_vls_addr(&str),ell1tredcadparams,ell2tredcadparams,ztire,dztred,dytred,dyhub,zhub,d1_intercept*2);
@@ -1410,9 +1418,17 @@ void MakeTire(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t dztre
     Echelon(matrixell2);
     SolveEchelon(matrixell2,ell2coefficients);
     /* Calculate BRL-CAD input parameters for outer tread ellipse */
-    CalcInputVals(ell1coefficients,ell1cadparams,0);
+    if ((ztire-d1) < (dytred/2)){
+	CalcInputVals(ell1coefficients,ell1cadparams,1);
+    }else{
+	CalcInputVals(ell1coefficients,ell1cadparams,0);
+    }
     /* Calculate BRL-CAD input parameters for outer side ellipse */
-    CalcInputVals(ell2coefficients,ell2cadparams,1);
+    if ((ztire-dztred)-zhub > (dyside1/2-dytred/2)){
+	CalcInputVals(ell2coefficients,ell2cadparams,1);
+    } else {
+	CalcInputVals(ell2coefficients,ell2cadparams,0);
+    }
     /* Insert outer tire volume */
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str,"-solid%s",suffix);
@@ -1451,9 +1467,17 @@ void MakeTire(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t dztre
     Echelon(matrixcut2);
     SolveEchelon(matrixcut2,cut2coefficients);
     /* Calculate BRL-CAD input parameters for inner cut tread ellipse */
-    CalcInputVals(cut1coefficients,cut1cadparams,0);
+    if ((cut_ztire-cut_d1) < (cut_dytred/2)){
+	CalcInputVals(cut1coefficients,cut1cadparams,1);
+    }else{
+	CalcInputVals(cut1coefficients,cut1cadparams,0);
+    }
     /* Calculate BRL-CAD input parameters for inner cut side ellipse */
-    CalcInputVals(cut2coefficients,cut2cadparams,1);
+    if ((cut_ztire-cut_dztred)-cut_zhub > (cut_dyside1/2-cut_dytred/2)){
+	CalcInputVals(cut2coefficients,cut2cadparams,1);
+    } else {
+	CalcInputVals(cut2coefficients,cut2cadparams,0);
+    }
     /* Insert inner tire cut volume */
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str,"-cut%s",suffix);
