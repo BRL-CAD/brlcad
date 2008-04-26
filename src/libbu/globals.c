@@ -27,29 +27,49 @@
  *
  */
 
-/** this variable controls the libbu debug level */
+/**
+ * this variable controls the libbu debug level
+ */
 int	bu_debug = 0;
 
 /**
  * number of calls to bu_malloc()/bu_calloc()/bu_alloc().
  *
- * not semaphore-protected and is thus only an estimate
+ * used by rt.
+ * not semaphore-protected and is thus only an estimate.
  */
 long	bu_n_malloc = 0;
 
 /**
  * number of calls to bu_free().
  *
- * not semaphore-protected and is thus only an estimate
+ * used by rt.
+ * not semaphore-protected and is thus only an estimate.
  */
 long	bu_n_free = 0;
 
 /**
  * number of calls to bu_realloc().
  *
- * not semaphore-protected and is thus only an estimate
+ * used by rt.
+ * not semaphore-protected and is thus only an estimate.
  */
 long	bu_n_realloc = 0;
+
+/**
+ * used by malloc and vls as the bu_malloc/bu_free debug string.
+ *
+ * NOT published in a public header.
+ */
+const char bu_vls_message[] = "bu_vls_str";
+
+/**
+ * used by malloc and vls as the bu_strdup debug string.
+ *
+ * NOT published in a public header.
+ */
+const char bu_strdup_message[] = "bu_strdup string";
+
 
 
 /*

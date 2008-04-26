@@ -74,7 +74,7 @@ static struct bu_list *bu_memq = BU_LIST_NULL;
 static struct bu_list bu_memqhd;
 #define MEMQDEBUG_NULL	((struct memqdebug *)0)
 
-/* from vls.c */
+/* non-published globals */
 extern const char bu_vls_message[];
 extern const char bu_strdup_message[];
 

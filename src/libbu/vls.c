@@ -41,10 +41,6 @@
 #include "bu.h"
 
 
-const char bu_vls_message[] = "bu_vls_str";
-const char bu_strdup_message[] = "bu_strdup string";
-
-
 /**
  * b u _ v l s _ i n i t
  *
