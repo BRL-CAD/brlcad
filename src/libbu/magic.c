@@ -41,6 +41,9 @@
 #include <stdio.h>
 #include "bio.h"
 
+/* ugh .. really shouldn't need to include the world for magic
+ * numbers
+ */
 #include "vmath.h"
 #include "nmg.h"
 #include "bu.h"
@@ -49,7 +52,9 @@
 #include "rtgeom.h"
 #include "wdb.h"
 #include "spm.h"
-#include "../libbu/rb_internals.h"
+
+#include "./rb_internals.h"
+
 
 /**
  *			B U _ I D E N T I F Y _ M A G I C
