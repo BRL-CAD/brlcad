@@ -20,6 +20,7 @@ set(LIBBU_SOURCES
     fgets.c
     fopen_uniq.c
     getopt.c
+    globals.c
     hash.c
     hist.c
     hook.c

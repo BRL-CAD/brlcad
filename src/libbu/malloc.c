@@ -43,10 +43,6 @@
 #define MALLOC_NOT_MP_SAFE 1
 
 
-/** this variable controls the libbu debug level */
-int	bu_debug = 0;
-
-
 /** used by the memory allocation routines passed to bu_alloc by
  * default to indicate whether allocated memory should be zero'd
  * first.
@@ -56,11 +52,6 @@ typedef enum {
     CALLOC
 } alloc_t;
 
-
-/* These counters are not semaphore-protected, and thus are only estimates */
-long	bu_n_malloc = 0;
-long	bu_n_free = 0;
-long	bu_n_realloc = 0;
 
 #define MDB_MAGIC	0x12348969
 struct memdebug {

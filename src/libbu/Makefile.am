@@ -27,6 +27,7 @@ libbu_nil_la_SOURCES = \
 	fgets.c \
 	fopen_uniq.c \
 	getopt.c \
+	globals.c \
 	hash.c \
 	hist.c \
 	hook.c \
