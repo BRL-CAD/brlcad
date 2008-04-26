@@ -107,6 +107,12 @@ will attempt to add a tread to the model.  Different integers correspond
 to different tread styles, so long as a tread routine has been associated
 with a given integer in the code.  Note: tread modeling can SIGNIFICANTLY 
 lengthen raytracing times, depending on the tread.
+.TP
+.B \-u thickness#
+If this flag is supplied with a non-zero integer argument, the default
+thickness of the tire (outer surface to hollow interior) will be overridden.
+Note that this thickness is an approximation and is not guaranteed to be
+absolutely correct everywhere on the tire.
 
 .SH EXAMPLE
 The following will create a tire with width=185mm, ratio=65mm, and wheel

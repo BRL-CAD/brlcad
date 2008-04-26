@@ -52,6 +52,7 @@ void show_help(const char *name) {
     printf("-g <depth>\tSpecify tread depth in terms of integer 32nds of an inch.\n\n");
     printf("-n <name>\tSpecify custom top level root name\n\n");
     printf("-t\t\tGenerate tread\n\n");
+    printf("-u <thickness>\tSpecify tire thickness\n\n");
     printf("-h\t\tShow help\n\n");
     return;
 }
@@ -366,7 +367,7 @@ void MakeWheelCenter(struct rt_wdb (*file), char *suffix, fastf_t fixing_start_m
    
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Inner-Hub-Cut1%s.s", suffix);
-    VSET(origin, 0, fixing_start_middle+fixing_width/4-10, 0);
+    VSET(origin, 0, fixing_start_middle+fixing_width/4-rim_thickness*1.5, 0);
     mk_ell(file,bu_vls_addr(&str), origin, a, b, c);
 	
     VSET(origin, 0,0, 0);
@@ -468,6 +469,9 @@ void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
     struct bu_vls str;
     bu_vls_init(&str);
     
+    bu_log("zhub = %f\n",zhub);
+    bu_log("rim_thickness = %f\n",rim_thickness);
+
     /* Set wheel color */
     VSET(rgb, 217, 217, 217);
     
@@ -1530,13 +1534,13 @@ void MakeTire(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t dztre
 
 
 /* Process command line arguments */
-int ReadArgs(int argc, char **argv, fastf_t *isoarray, struct bu_vls *name, struct bu_vls *dimens, int *gen_name, int *treadtype, int *number_of_tread_patterns, int *tread_depth)
+int ReadArgs(int argc, char **argv, fastf_t *isoarray, struct bu_vls *name, struct bu_vls *dimens, int *gen_name, int *treadtype, int *number_of_tread_patterns, int *tread_depth, int *tire_thickness)
 {
     int c = 0;
-    char *options="d:n:c:g:t:ah";
+    char *options="d:n:c:g:t:u:ah";
     int d1, d2, d3;
     int count;
-    int treadep,tdtype;
+    int treadep,tdtype,tthickness;
     char spacer1,tiretype;
     bu_log("Reading args\n");
 
@@ -1573,6 +1577,10 @@ int ReadArgs(int argc, char **argv, fastf_t *isoarray, struct bu_vls *name, stru
 		sscanf(bu_optarg,"%d",&tdtype);
 		*treadtype = tdtype;
 		break;
+	    case 'u':
+		sscanf(bu_optarg,"%d",&tthickness);
+		*tire_thickness = tthickness;
+		break;
 	    case 'h':
 		show_help(*argv);
 		bu_exit(EXIT_SUCCESS, "exiting after help");
@@ -1586,7 +1594,7 @@ int main(int ac, char *av[])
 {
     struct rt_wdb *db_fp;
     fastf_t dytred,dztred,dyside1,zside1,ztire,dyhub,zhub,d1;
-    fastf_t width, ratio, wheeldiam, thickness;
+    fastf_t width, ratio, wheeldiam;
     int bolts;
     fastf_t bolt_diam, bolt_circ_diam, spigot_diam, fixing_offset, bead_height, bead_width, rim_thickness;
     struct wmember wheel_and_tire;
@@ -1598,6 +1606,8 @@ int main(int ac, char *av[])
     int tread_type = 0;
     int number_of_tread_patterns = 30;
     int tread_depth = 11;
+    int tire_thickness = 0;
+    fastf_t f_tire_thickness = 0;
 
     bu_vls_init(&str);
     bu_vls_init(&name);
@@ -1611,7 +1621,8 @@ int main(int ac, char *av[])
     isoarray[2] = 18;
 
     /* Process arguments */
-    ReadArgs(ac, av, isoarray, &name, &dimen, &gen_name, &tread_type, &number_of_tread_patterns, &tread_depth);
+    ReadArgs(ac, av, isoarray, &name, &dimen, &gen_name, &tread_type, &number_of_tread_patterns, &tread_depth,
+	     &tire_thickness);
 
     /* Calculate floating point value for tread depth */
     fastf_t tread_depth_float = tread_depth/32.0;
@@ -1660,10 +1671,16 @@ int main(int ac, char *av[])
     dytred = .8 * width;
     dyhub = dytred;
     d1 = (ztire-zhub)/2.5;
-    thickness = 15;
+   
+    if(tire_thickness == 0){
+	f_tire_thickness = dztred;
+	bu_log("tire thickness = %f\n",f_tire_thickness);
+    }else{
+	f_tire_thickness = tire_thickness;
+    }
 
     /* Make the tire region*/
-    MakeTire(db_fp, bu_vls_addr(&dimen), dytred, dztred, d1, dyside1, zside1, ztire, dyhub, zhub, thickness, tread_type, number_of_tread_patterns, tread_depth_float);
+    MakeTire(db_fp, bu_vls_addr(&dimen), dytred, dztred, d1, dyside1, zside1, ztire, dyhub, zhub, f_tire_thickness, tread_type, number_of_tread_patterns, tread_depth_float);
      
 
     bolts = 5;
@@ -1673,7 +1690,7 @@ int main(int ac, char *av[])
     fixing_offset = 15;
     bead_height = 8;
     bead_width = 8;
-    rim_thickness = 5;
+    rim_thickness = f_tire_thickness/2.0;
 
     /* Make the wheel region*/
     MakeWheelRims(db_fp, bu_vls_addr(&dimen), dyhub, zhub, bolts, bolt_diam, bolt_circ_diam, spigot_diam, fixing_offset, bead_height, bead_width, rim_thickness);
