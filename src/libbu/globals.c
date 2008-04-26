@@ -27,6 +27,9 @@
  *
  */
 
+#include "bu.h"
+
+
 /**
  * this variable controls the libbu debug level
  */
@@ -86,6 +89,21 @@ struct bu_hook_list bu_bomb_hook_list = {
     	BU_LIST_HEAD_MAGIC,
 	&bu_bomb_hook_list.l,
 	&bu_bomb_hook_list.l
+    },
+    BUHOOK_NULL,
+    GENPTR_NULL
+};
+
+/**
+ * list of callbacks to call during bu_log.
+ *
+ * NOT published in a public header.
+ */
+struct bu_hook_list bu_log_hook_list = {
+    {
+	BU_LIST_HEAD_MAGIC,
+	&bu_log_hook_list.l,
+	&bu_log_hook_list.l
     },
     BUHOOK_NULL,
     GENPTR_NULL

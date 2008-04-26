@@ -1201,7 +1201,7 @@ struct bu_hook_list {
 #define BUHOOK_LIST_MAGIC	0x90d5dead	/* Nietzsche? */
 #define BUHOOK_LIST_NULL	((struct bu_hook_list *) 0)
 
-BU_EXPORT extern struct bu_hook_list bu_log_hook_list;
+/** list of callbacks to call during bu_bomb, used by mged. */
 BU_EXPORT extern struct bu_hook_list bu_bomb_hook_list;
 
 /*----------------------------------------------------------------------*/

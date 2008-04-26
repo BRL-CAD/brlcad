@@ -44,6 +44,8 @@
 
 #include "bu.h"
 
+/* non-published global */
+extern struct bu_hook_list bu_bomb_hook_list;
 
 /** failsafe storage to help ensure graceful shutdown */
 static char *_bu_bomb_failsafe = NULL;

@@ -49,16 +49,8 @@
 
 #include "bu.h"
 
-
-struct bu_hook_list bu_log_hook_list = {
-    {
-	BU_LIST_HEAD_MAGIC,
-	&bu_log_hook_list.l,
-	&bu_log_hook_list.l
-    },
-    BUHOOK_NULL,
-    GENPTR_NULL
-};
+/* non-published global */
+extern struct bu_hook_list bu_log_hook_list;
 
 static int bu_log_first_time = 1;
 static int bu_log_hooks_called = 0;

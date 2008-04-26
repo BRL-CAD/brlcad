@@ -1445,10 +1445,6 @@ Bu_d_Init(Tcl_Interp *interp)
 #endif
 {
     bu_tcl_setup(interp);
-#if 0
-    bu_hook_list_init(&bu_log_hook_list);
-    bu_hook_list_init(&bu_bomb_hook_list);
-#endif
     return TCL_OK;
 }
 /** @} */

@@ -41,6 +41,11 @@
 #include "bu.h"
 
 
+/* non-published globals */
+extern const char bu_vls_message[];
+extern const char bu_strdup_message[];
+
+
 /**
  * b u _ v l s _ i n i t
  *
