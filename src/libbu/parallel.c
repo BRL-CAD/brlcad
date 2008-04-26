@@ -643,7 +643,8 @@ bu_kill_workers(int tbl[MAX_PSW])
 }
 #  endif   /* end check if sgi_4d defined */
 
-extern int	bu_pid_of_initiating_thread;	/* From ispar.c */
+/* non-published global */
+extern int	bu_pid_of_initiating_thread;
 
 static int	bu_nthreads_started = 0;	/* # threads started */
 static int	bu_nthreads_finished = 0;	/* # threads properly finished */
