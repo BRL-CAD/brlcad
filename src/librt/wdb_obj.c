@@ -7278,8 +7278,7 @@ wdb_observer_cmd(struct rt_wdb	*wdbp,
 	return TCL_ERROR;
     }
 
-    return bu_cmd((ClientData)&wdbp->wdb_observers,
-		  interp, argc - 1, argv + 1, bu_observer_cmds, 0);
+    return bu_observer_cmd((ClientData)&wdbp->wdb_observers, interp, argc-1, argv+1);
 }
 
 /**

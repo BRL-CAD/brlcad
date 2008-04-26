@@ -2584,11 +2584,13 @@ BU_EXPORT BU_EXTERN(struct bu_vls *bu_association,
 /** @{ */
 
 /* Things that live in libbu/observer.c */
-BU_EXPORT extern struct bu_cmdtab bu_observer_cmds[];
-BU_EXPORT BU_EXTERN(void bu_observer_notify,
-		    ());
-BU_EXPORT BU_EXTERN(void bu_observer_free,
-		    (struct bu_observer *));
+BU_EXPORT BU_EXTERN(int bu_observer_cmd,
+		    (ClientData clientData,
+		     Tcl_Interp *interp,
+		     int argc,
+		     char **argv));
+BU_EXPORT BU_EXTERN(void bu_observer_notify,());
+BU_EXPORT BU_EXTERN(void bu_observer_free, (struct bu_observer *));
 
 /* bu_tcl.c */
 /* The presence of Tcl_Interp as an arg prevents giving arg list */

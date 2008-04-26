@@ -1806,8 +1806,7 @@ vo_observer_cmd(struct view_obj	*vop,
 	return TCL_ERROR;
     }
 
-    return bu_cmd((ClientData)&vop->vo_observers,
-		  interp, argc - 1, argv + 1, bu_observer_cmds, 0);
+    return bu_observer_cmd((ClientData)&vop->vo_observers, interp, argc-1, argv+1);
 }
 
 /*

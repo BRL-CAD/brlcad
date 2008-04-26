@@ -38,12 +38,29 @@ static int bu_observer_attach_tcl(ClientData clientData, Tcl_Interp *interp, int
 static int bu_observer_detach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int bu_observer_show_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
-struct bu_cmdtab bu_observer_cmds[] = {
+
+/**
+ * observer commands for libdm and librt's dg_obj, view_obj, and
+ * wdb_obj interfaces.
+ */
+static struct bu_cmdtab bu_observer_cmds[] = {
     {"attach",	bu_observer_attach_tcl},
     {"detach",	bu_observer_detach_tcl},
     {"show",	bu_observer_show_tcl},
     {(char *)0,	(int (*)())0}
 };
+
+
+/**
+ * runs a given command, calling the corresponding observer callback
+ * if it matches.
+ */
+int
+bu_observer_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+{
+    return bu_cmd(clientData, interp, argc, argv, bu_observer_cmds, 0);
+}
+
 
 /**
  * Attach observer.

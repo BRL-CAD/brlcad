@@ -3829,8 +3829,7 @@ dmo_observer_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 	return TCL_ERROR;
     }
 
-    return bu_cmd((ClientData)&dmop->dmo_observers,
-		  interp, argc - 2, argv + 2, bu_observer_cmds, 0);
+    return bu_observer_cmd((ClientData)&dmop->dmo_observers, interp, argc-2, argv+2);
 }
 
 #ifdef USE_FBSERV

@@ -2145,7 +2145,8 @@ int
 dgo_observer_cmd(struct dg_obj	*dgop,
 		 Tcl_Interp	*interp,
 		 int		argc,
-		 char		**argv) {
+		 char		**argv)
+{
     if (argc < 2) {
 	struct bu_vls vls;
 
@@ -2157,8 +2158,7 @@ dgo_observer_cmd(struct dg_obj	*dgop,
 	return TCL_ERROR;
     }
 
-    return bu_cmd((ClientData)&dgop->dgo_observers,
-		  interp, argc-1, argv+1, bu_observer_cmds, 0);
+    return bu_observer_cmd((ClientData)&dgop->dgo_observers, interp, argc-1, argv+1);
 }
 
 /*
