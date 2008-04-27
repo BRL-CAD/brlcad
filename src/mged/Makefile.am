@@ -143,6 +143,7 @@ mged_LDADD = \
 	${POINTS_LDADD} \
 	${TERMIO} \
 	${WDB} \
+	${GED} \
 	${DM} ${DM_LIBS} \
 	${ITK} \
 	${ITCL} \
