@@ -98,7 +98,7 @@ asc2g_LDFLAGS =
 endif
 
 asc2g_SOURCES = asc2g.c
-asc2g_LDADD = ${WDB}
+asc2g_LDADD = ${WDB} ${GED}
 
 asc2pix_SOURCES = asc2pix.c
 
