@@ -28,19 +28,12 @@
  */
 
 #include "common.h"
-#include "bu.h"
 
-/* see const.c for numeric constant globals */
-extern const fastf_t bn_pi;
-extern const fastf_t bn_twopi;
-extern const fastf_t bn_halfpi;
-extern const fastf_t bn_quarterpi;
-extern const fastf_t bn_invpi;
-extern const fastf_t bn_inv2pi;
-extern const fastf_t bn_inv4pi;
-extern const fastf_t bn_inv255;
-extern const fastf_t bn_deg2rad;
-extern const fastf_t bn_rad2deg;
+#include <math.h>
+
+#include "bu.h"
+#include "vmath.h"
+
 
 /* see rand.c for random constant globals */
 extern const float bn_rand_table[];
@@ -53,6 +46,53 @@ extern float bn_rand_poison_[];
 /* see vectfont.c for vector font constant globals */
 extern int *tp_cindex[];
 extern int tp_ctable[];
+
+
+/**
+ * pi
+ */
+const fastf_t bn_pi	= M_PI;
+/**
+ * pi*2
+ */
+const fastf_t bn_twopi	= 6.28318530717958647692;
+
+/**
+ * pi/2
+ */
+const fastf_t bn_halfpi		= M_PI_2;
+/**
+ * pi/4
+ */
+const fastf_t bn_quarterpi	= M_PI_4;
+
+/**
+ * 1/pi
+ */
+const fastf_t bn_invpi	= M_1_PI;
+/**
+ * 1/(pi*2)
+ */
+const fastf_t bn_inv2pi	= 0.159154943091895335769;
+/**
+ * 1/(pi*4)
+ */
+const fastf_t bn_inv4pi	= 0.07957747154594766788;
+
+/**
+ * 1.0/255.0
+ */
+const fastf_t bn_inv255	= 0.003921568627450980392156862745;
+
+/**
+ * (pi*2)/360
+ */
+const fastf_t bn_degtorad = DEG2RAD;
+/**
+ * 360/(pi*2)
+ */
+const fastf_t bn_radtodeg = RAD2DEG;
+
 
 /*
  * Local Variables:

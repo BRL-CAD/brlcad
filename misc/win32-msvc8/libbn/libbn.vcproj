@@ -172,18 +172,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\libbn\const.c"
-				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-					/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath="..\..\..\src\libbn\font.c"
 				>
 				<FileConfiguration
