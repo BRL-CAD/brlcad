@@ -19,6 +19,7 @@ libbrlcad_nil_la_SOURCES =
 libbrlcad_nil_la_LIBADD = \
 	$(top_builddir)/src/libbu/libbu_nil.la \
 	$(top_builddir)/src/libbn/libbn_nil.la \
+	$(top_builddir)/src/libged/libged_nil.la \
 	$(top_builddir)/src/librt/librt_nil.la \
 	$(top_builddir)/src/libwdb/libwdb_nil.la \
 	${ON_NIL} \
@@ -47,6 +48,7 @@ bench_dirs = \
 # anything not included from above
 kitchensink_dirs = \
 	libcursor \
+	libged \
 	libdm \
 	libfft \
 	libmultispectral \

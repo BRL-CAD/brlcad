@@ -56,7 +56,7 @@
 
 
 struct dg_client_data {
-    struct dg_obj		*dgop;
+    struct dg_obj	*dgop;
     Tcl_Interp		*interp;
     int			wireframe_color_override;
     int			wireframe_color[3];
@@ -72,8 +72,8 @@ struct dg_client_data {
     int			do_not_draw_nmg_solids_during_debugging;
     struct bn_vlblock	*draw_edge_uses_vbp;
     int			shaded_mode_override;
-    fastf_t			transparency;
-    int                     dmode;
+    fastf_t		transparency;
+    int			dmode;
 };
 
 struct dg_rt_client_data {
@@ -103,8 +103,6 @@ static int dgo_set_outputHandler_tcl();
 static int dgo_set_uplotOutputMode_tcl();
 static int dgo_set_transparency_tcl();
 static int dgo_shaded_mode_tcl();
-
-#include "./debug.h"
 
 #define DGO_CHECK_WDBP_NULL(_dgop, _interp)				\
     if (_dgop->dgo_wdbp == RT_WDB_NULL)					\
@@ -184,40 +182,40 @@ static struct solid FreeSolid;		/* head of free solid list */
 
 
 static struct bu_cmdtab dgo_cmds[] = {
-    {"assoc",		dgo_assoc_tcl},
+    {"assoc",			dgo_assoc_tcl},
     {"autoview",		dgo_autoview_tcl},
-    {"blast",		dgo_blast_tcl},
-    {"clear",		dgo_zap_tcl},
-    {"draw",		dgo_draw_tcl},
+    {"blast",			dgo_blast_tcl},
+    {"clear",			dgo_zap_tcl},
+    {"draw",			dgo_draw_tcl},
     {"E",			dgo_E_tcl},
-    {"erase",		dgo_erase_tcl},
+    {"erase",			dgo_erase_tcl},
     {"erase_all",		dgo_erase_all_tcl},
     {"ev",			dgo_ev_tcl},
-    {"get_autoview",	dgo_get_autoview_tcl},
-    {"get_eyemodel",	dgo_get_eyemodel_tcl},
+    {"get_autoview",		dgo_get_autoview_tcl},
+    {"get_eyemodel",		dgo_get_eyemodel_tcl},
     {"headSolid",		dgo_headSolid_tcl},
     {"how",			dgo_how_tcl},
-    {"illum",		dgo_illum_tcl},
-    {"label",		dgo_label_tcl},
-    {"nirt",		dgo_nirt_tcl},
+    {"illum",			dgo_illum_tcl},
+    {"label",			dgo_label_tcl},
+    {"nirt",			dgo_nirt_tcl},
     {"observer",		dgo_observer_tcl},
-    {"overlay",		dgo_overlay_tcl},
-    {"qray",		dgo_qray_tcl},
-    {"report",		dgo_report_tcl},
+    {"overlay",			dgo_overlay_tcl},
+    {"qray",			dgo_qray_tcl},
+    {"report",			dgo_report_tcl},
     {"rt",			dgo_rt_tcl},
-    {"rtabort",		dgo_rtabort_tcl},
-    {"rtcheck",		dgo_rtcheck_tcl},
-    {"rtedge",		dgo_rt_tcl},
+    {"rtabort",			dgo_rtabort_tcl},
+    {"rtcheck",			dgo_rtcheck_tcl},
+    {"rtedge",			dgo_rt_tcl},
     {"set_outputHandler",	dgo_set_outputHandler_tcl},
     {"set_uplotOutputMode",	dgo_set_uplotOutputMode_tcl},
     {"set_transparency",	dgo_set_transparency_tcl},
     {"shaded_mode",		dgo_shaded_mode_tcl},
-    {"tree",		dgo_tree_tcl},
-    {"vdraw",		dgo_vdraw_tcl},
-    {"vnirt",		dgo_vnirt_tcl},
+    {"tree",			dgo_tree_tcl},
+    {"vdraw",			dgo_vdraw_tcl},
+    {"vnirt",			dgo_vnirt_tcl},
     {"who",			dgo_who_tcl},
     {"zap",			dgo_zap_tcl},
-    {(char *)0,		(int (*)())0}
+    {(char *)0,			(int (*)())0}
 };
 
 /*

@@ -55,7 +55,6 @@ librt_nil_la_SOURCES = \
 	db_scan.c \
 	db_tree.c \
 	db_walk.c \
-	dg_obj.c \
 	dir.c \
 	dspline.c \
 	fortray.c \
@@ -162,11 +161,9 @@ librt_nil_la_SOURCES = \
 	tree.c \
 	vdraw.c \
 	vers.c \
-	view_obj.c \
 	vlist.c \
 	wdb.c \
-	wdb_comb_std.c \
-	wdb_obj.c
+	wdb_comb_std.c
 
 EXTRA_librt_nil_la_SOURCES = \
 	g_brep.cpp \

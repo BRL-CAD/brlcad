@@ -50,8 +50,6 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-#include "./debug.h"
-
 
 /*
  * rt_comb_ifree() should NOT be used here because
