@@ -44,29 +44,9 @@
 #include "nurb.h"
 
 
-/* this array depends on the values of the definitions of the DB5_MINORTYPE_BINU_... in db5.h */
-const char *binu_types[]={
-    NULL,
-    NULL,
-    "binary(float)",
-    "binary(double)",
-    "binary(u_8bit_int)",
-    "binary(u_16bit_int)",
-    "binary(u_32bit_int)",
-    "binary(u_64bit_int)",
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    "binary(8bit_int)",
-    "binary(16bit_int)",
-    "binary(32bit_int)",
-    "binary(64bit_int)"
-};
-
 /* size of each element (in bytes) for the different BINUNIF types */
 /* this array depends on the values of the definitions of the DB5_MINORTYPE_BINU_... in db5.h */
-const int binu_sizes[]={
+static const int binu_sizes[]={
     0,
     0,
     SIZEOF_NETWORK_FLOAT,
@@ -84,7 +64,9 @@ const int binu_sizes[]={
     4,
     8
 };
-/*
+
+
+/**
  * XXX these are the interface routines needed for table.c
  */
 int
@@ -141,10 +123,10 @@ rt_bin_mime_import5(struct rt_db_internal * ip,
 }
 
 /**
- *			R T _ B I N U N I F _ I M P O R T 5
+ * R T _ B I N U N I F _ I M P O R T 5
  *
- *  Import a uniform-array binary object from the database format to
- *  the internal structure.
+ * Import a uniform-array binary object from the database format to
+ * the internal structure.
  */
 int
 rt_binunif_import5( struct rt_db_internal	*ip,
@@ -164,7 +146,7 @@ rt_binunif_import5( struct rt_db_internal	*ip,
     BU_CK_EXTERNAL( ep );
 
     /*
-     *	There's no particular size to expect
+     * There's no particular size to expect
      *
      * BU_ASSERT_LONG( ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 3*4 );
      */
@@ -255,10 +237,11 @@ rt_binunif_import5( struct rt_db_internal	*ip,
     return 0;		/* OK */
 }
 
+
 /**
- *			R T _ B I N U N I F _ D U M P
+ * R T _ B I N U N I F _ D U M P
  *
- *  Diagnostic routine
+ * Diagnostic routine
  */
 void
 rt_binunif_dump( struct rt_binunif_internal *bip) {
@@ -272,10 +255,10 @@ rt_binunif_dump( struct rt_binunif_internal *bip) {
 
 
 /**
- *			R T _ B I N E X P M _ I M P O R T 5
+ * R T _ B I N E X P M _ I M P O R T 5
  *
- *  Import an experimental binary object from the database format to
- *  the internal structure.
+ * Import an experimental binary object from the database format to
+ * the internal structure.
  */
 int
 rt_binexpm_import5( struct rt_db_internal	*ip,
@@ -289,10 +272,10 @@ rt_binexpm_import5( struct rt_db_internal	*ip,
 
 
 /**
- *			R T _ B I N M I M E _ I M P O R T 5
+ * R T _ B I N M I M E _ I M P O R T 5
  *
- *  Import a MIME-typed binary object from the database format to
- *  the internal structure.
+ * Import a MIME-typed binary object from the database format to the
+ * internal structure.
  */
 int
 rt_binmime_import5( struct rt_db_internal	*ip,
@@ -306,10 +289,10 @@ rt_binmime_import5( struct rt_db_internal	*ip,
 
 
 /**
- *			R T _ B I N _ I M P O R T 5
+ * R T _ B I N _ I M P O R T 5
  *
- *  Wrapper for importing binary objects from the database format to
- *  the internal structure.
+ * Wrapper for importing binary objects from the database format to
+ * the internal structure.
  */
 int
 rt_bin_import5( struct rt_db_internal		*ip,
@@ -332,9 +315,9 @@ rt_bin_import5( struct rt_db_internal		*ip,
 }
 
 /**
- *			R T _ B I N U N I F _ E X P O R T 5
+ * R T _ B I N U N I F _ E X P O R T 5
  *
- *	Create the "body" portion of external form
+ * Create the "body" portion of external form
  */
 int
 rt_binunif_export5( struct bu_external		*ep,
@@ -435,11 +418,11 @@ rt_binunif_export5( struct bu_external		*ep,
 }
 
 /**
- *			R T _ B I N U N I F _ D E S C R I B E
+ * R T _ B I N U N I F _ D E S C R I B E
  *
- *  Make human-readable formatted presentation of this object.
- *  First line describes type of object.
- *  Additional lines are indented one tab, and give parameter values.
+ * Make human-readable formatted presentation of this object.  First
+ * line describes type of object.  Additional lines are indented one
+ * tab, and give parameter values.
  */
 int
 rt_binunif_describe( struct bu_vls		*str,
@@ -496,9 +479,9 @@ rt_binunif_describe( struct bu_vls		*str,
 }
 
 /**
- *		R T _ B I N U N I F _ F R E E
+ * R T _ B I N U N I F _ F R E E
  *
- *	Free the storage associated with a binunif_internal object
+ * Free the storage associated with a binunif_internal object
  */
 void
 rt_binunif_free( struct rt_binunif_internal *bip) {
@@ -508,10 +491,12 @@ rt_binunif_free( struct rt_binunif_internal *bip) {
     bip = GENPTR_NULL; /* sanity */
 }
 
+
 /**
- *			R T _ B I N U N I F _ I F R E E
+ * R T _ B I N U N I F _ I F R E E
  *
- *  Free the storage associated with the rt_db_internal version of this thing.
+ * Free the storage associated with the rt_db_internal version of this
+ * thing.
  */
 void
 rt_binunif_ifree( struct rt_db_internal	*ip )
@@ -539,7 +524,7 @@ rt_retrieve_binunif(struct rt_db_internal *intern,
     char				*tmp;
 
     /*
-     *	Find the guy we're told to write
+     *Find the guy we're told to write
      */
     if ( (dp = db_lookup( dbip, name, LOOKUP_NOISY)) == DIR_NULL )
 	return -1;
