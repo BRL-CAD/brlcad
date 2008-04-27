@@ -6,6 +6,7 @@ set(LIBBN_SOURCES
     const.c
     font.c
     fortran.c
+    globals.c
     list.c
     marker.c
     mat.c
