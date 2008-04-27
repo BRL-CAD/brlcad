@@ -39,14 +39,6 @@
 #include "mater.h"
 
 
-/* Number of bytes used for each value of DB5HDR_WIDTHCODE_* */
-const int db5_enc_len[4] = {
-    1,
-    2,
-    4,
-    8
-};
-
 /**
  *			D B 5 _ H E A D E R _ I S _ V A L I D
  *
