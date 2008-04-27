@@ -1155,8 +1155,8 @@ void MakeTireSurface(struct rt_wdb (*file), char *suffix, fastf_t *ell1cadparams
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "TopClipL%s.s", suffix);	
     mk_rcc(file, bu_vls_addr(&str), vertex, height, ztire - dztred);
-    VSET(vertex, 0, -dyside1/2,0);
-    VSET(height, 0, dyside1, 0);
+    VSET(vertex, 0, -dyside1/2-0.1*dyside1/2,0);
+    VSET(height, 0, dyside1+0.1*dyside1, 0);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "SideClipInner%s.s", suffix);	
     mk_rcc(file, bu_vls_addr(&str), vertex, height, zhub);
