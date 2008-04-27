@@ -43,9 +43,6 @@
 #include "wdb.h"
 #include "mater.h"
 
-/* local headers */
-#include "../librt/debug.h"
-
 
 BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
 

@@ -37,7 +37,7 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "bu.h"
-#include "../librt/debug.h"
+
 
 #define MAX_PTS	500
 

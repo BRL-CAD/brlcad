@@ -41,12 +41,7 @@
 #include "bu.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "../librt/debug.h"
 
-/*
-  extern char *bu_optarg;
-  extern int bu_optind, bu_opterr, bu_getopt();
-*/
 
 #define NUM_OF_CPUS_TO_USE 1
 
@@ -116,12 +111,12 @@ main(int argc, char *argv[])
 	    case 'v':		/* verbosity */
 		verbose++;
 		break;
-	    case 'x':		/* librt debug flag (see librt/debug.h) */
+	    case 'x':		/* librt debug flag */
 		sscanf( bu_optarg, "%x", &rt_g.debug );
 		bu_printb( "librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT );
 		bu_log("\n");
 		break;
-	    case 'X':		/* NMG debug flag (see h/nmg.h) */
+	    case 'X':		/* NMG debug flag */
 		sscanf( bu_optarg, "%x", &rt_g.NMG_debug );
 		bu_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
 		bu_log("\n");

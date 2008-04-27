@@ -44,9 +44,6 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-/* local headers */
-#include "../librt/debug.h"
-
 
 #define START_ARRAY_SIZE	64
 #define ARRAY_BLOCK_SIZE	64
