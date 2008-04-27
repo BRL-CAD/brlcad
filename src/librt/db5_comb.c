@@ -65,15 +65,15 @@ struct db_tree_counter_state {
 #define DB_CK_TREE_COUNTER_STATE(_p)	BU_CKMAG(_p, DB_TREE_COUNTER_STATE_MAGIC, "db_tree_counter_state");
 
 /**
- *			D B _ T R E E _ C O U N T E R
+ * D B _ T R E E _ C O U N T E R
  *
- *  Count number of non-identity matricies,
- *  number of leaf nodes, number of operator nodes, etc.
+ * Count number of non-identity matricies,
+ * number of leaf nodes, number of operator nodes, etc.
  *
- *  Returns -
+ * Returns -
  *	maximum depth of stack needed to unpack this tree, if serialized.
  *
- *  Notes -
+ * Notes -
  *	We over-estimate the size of the width fields used for
  *	holding the matrix subscripts.
  *	The caller is responsible for correcting by saying:
@@ -148,11 +148,12 @@ struct rt_comb_v5_serialize_state  {
 #define RT_COMB_V5_SERIALIZE_STATE_MAGIC	0x43357373	/* C5ss */
 #define RT_CK_COMB_V5_SERIALIZE_STATE(_p)	BU_CKMAG(_p, RT_COMB_V5_SERIALIZE_STATE_MAGIC, "rt_comb_v5_serialize_state")
 
+
 /**
- *			R T _ C O M B _ V 5 _ S E R I A L I Z E
+ * R T _ C O M B _ V 5 _ S E R I A L I Z E
  *
- *  In one single pass through the tree, serialize out all three
- *  output sections at once.
+ * In one single pass through the tree, serialize out all three output
+ * sections at once.
  */
 void
 rt_comb_v5_serialize(
@@ -168,9 +169,8 @@ rt_comb_v5_serialize(
     switch ( tp->tr_op )  {
 	case OP_DB_LEAF:
 	    /*
-	     *  Encoding of the leaf:
-	     *	A null-terminated name string, and
-	     *	the matrix subscript.  -1 == identity.
+	     * Encoding of the leaf: A null-terminated name string,
+	     *and the matrix subscript.  -1 == identity.
 	     */
 	    n = strlen(tp->tr_l.tl_name) + 1;
 	    memcpy(ssp->leafp, tp->tr_l.tl_name, n);
@@ -239,7 +239,7 @@ rt_comb_v5_serialize(
 }
 
 /**
- *			R T _ C O M B _ E X P O R T 5
+ * R T _ C O M B _ E X P O R T 5
  */
 int
 rt_comb_export5(
@@ -268,8 +268,8 @@ rt_comb_export5(
     comb = (struct rt_comb_internal *)ip->idb_ptr;
     RT_CK_COMB(comb);
 
-    /* First pass -- count number of non-identity matricies,
-     * number of leaf nodes, number of operator nodes.
+    /* First pass -- count number of non-identity matricies, number of
+     * leaf nodes, number of operator nodes.
      */
     memset((char *)&tcs, 0, sizeof(tcs));
     tcs.magic = DB_TREE_COUNTER_STATE_MAGIC;
@@ -289,8 +289,9 @@ rt_comb_export5(
 	tcs.n_mat | tcs.n_leaf | tcs.leafbytes |
 	rpn_len | max_stack_depth );
 
-    /* Apply correction factor to tcs.leafbytes now that we know 'wid'.
-     * Ignore the slight chance that a smaller 'wid' might now be possible.
+    /* Apply correction factor to tcs.leafbytes now that we know
+     * 'wid'.  Ignore the slight chance that a smaller 'wid' might now
+     * be possible.
      */
     tcs.leafbytes -= tcs.n_leaf * (8 - db5_enc_len[wid]);
 
@@ -323,14 +324,14 @@ rt_comb_export5(
     cp = db5_encode_length( cp, max_stack_depth, wid );
 
     /*
-     *  The output format has three sections:
-     *	Section 1:  matricies
-     *	Section 2:  leaf nodes
-     *	Section 3:  Optional RPN expression
+     * The output format has three sections:
+     * Section 1:  matricies
+     * Section 2:  leaf nodes
+     * Section 3:  Optional RPN expression
      *
-     *  We have pre-computed the exact size of all three sections,
-     *  so they can all be searialized together in one pass.
-     *  Establish pointers to the start of each section.
+     * We have pre-computed the exact size of all three sections, so
+     * they can all be searialized together in one pass.  Establish
+     * pointers to the start of each section.
      */
     ss.magic = RT_COMB_V5_SERIALIZE_STATE_MAGIC;
     ss.wid = wid;
@@ -360,9 +361,9 @@ rt_comb_export5(
     if ( avsp->magic != BU_AVS_MAGIC )
 	bu_avs_init( avsp, 32, "rt_comb v5 attributes" );
     if ( comb->region_flag )  {
-	/* Presence of this attribute means this comb is a region. */
-	/* Current code values are 0, 1, and 2; all are regions.
-	 * See raytrace.h for meanings of different values
+	/* Presence of this attribute means this comb is a region.
+	 * Current code values are 0, 1, and 2; all are regions.  See
+	 * raytrace.h for meanings of different values
 	 */
 	bu_vls_trunc( &value, 0 );
 	switch (comb->is_fastgen) {
@@ -447,17 +448,17 @@ rt_comb_export5(
 }
 
 /**
- *			R T _ C O M B _ I M P O R T 5
+ * R T _ C O M B _ I M P O R T 5
  *
- *  Read a combination object in v5 external (on-disk) format,
- *  and convert it into the internal format described in h/rtgeom.h
+ * Read a combination object in v5 external (on-disk) format, and
+ * convert it into the internal format described in rtgeom.h
  *
- *  This is an unusual conversion, because some of the data is taken
- *  from attributes, not just from the object body.
- *  By the time this is called, the attributes will already have been
- *  cracked into ip->idb_avs, we get the attributes from there.
+ * This is an unusual conversion, because some of the data is taken
+ * from attributes, not just from the object body.  By the time this
+ * is called, the attributes will already have been cracked into
+ * ip->idb_avs, we get the attributes from there.
  *
- *  Returns -
+ * Returns -
  *	0	OK
  *	-1	FAIL
  */
@@ -630,8 +631,8 @@ rt_comb_import5(
     }
 
     /*
-     *  Bring the RPN expression back from the disk,
-     *  populating leaves and matricies in the order they are encountered.
+     * Bring the RPN expression back from the disk, populating leaves
+     * and matricies in the order they are encountered.
      */
     if ( max_stack_depth > MAX_V5_STACK )  {
 	bu_log("Combination needs stack depth %d, only have %d, aborted\n",
@@ -796,7 +797,7 @@ rt_comb_import5(
 	bu_vls_strcat( &comb->shader, ap );
     }
 
-    return 0;			/* OK */
+    return 0; /* OK */
 }
 
 /*
