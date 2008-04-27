@@ -325,7 +325,7 @@ void SolveEchelon(fastf_t **mat, fastf_t *result1)
  **********************************************************************/
 
 
-void CalcInputVals(fastf_t *inarray, fastf_t *outarray, int orientation)
+void CalcInputVals(fastf_t *inarray, fastf_t *outarray)
 {
     fastf_t A,B,C,D,E,Fp;
     fastf_t App, Bpp,Cpp;
@@ -1387,13 +1387,13 @@ void MakeTreadSolid(struct rt_wdb (*file), char *suffix, fastf_t *ell2coefficien
     Create_Ell1_Mat(matrixelltread1, dytred, dztred, d1, ztire);
     Echelon(matrixelltread1);
     SolveEchelon(matrixelltread1,ell1treadcoefficients);
-    CalcInputVals(ell1treadcoefficients,ell1treadcadparams,0);
+    CalcInputVals(ell1treadcoefficients,ell1treadcadparams);
     
     elltreadpartial = GetEllPartialAtPoint(ell1treadcoefficients,dytred/2,ztire-dztred);
     Create_Ell2_Mat(matrixelltread2, dytred, dztred, d1_intercept*2, ztire-d1, ztire, dyhub, zhub, elltreadpartial);
     Echelon(matrixelltread2);
     SolveEchelon(matrixelltread2,ell2treadcoefficients);
-    CalcInputVals(ell2treadcoefficients,ell2treadcadparams,1);
+    CalcInputVals(ell2treadcoefficients,ell2treadcadparams);
     
     /* Insert primitives */
     VSET(origin, 0, ell1treadcadparams[0], 0);
@@ -1514,7 +1514,7 @@ void MakeTreadSolid1(struct rt_wdb (*file), char *suffix, fastf_t *ell2coefficie
     Create_Ell1_Mat(matrixelltred1, d1_intercept*2, dztred, d1, ztire);
     Echelon(matrixelltred1);
     SolveEchelon(matrixelltred1,ell1tredcoefficients);
-    CalcInputVals(ell1tredcoefficients,ell1tredcadparams,0);
+    CalcInputVals(ell1tredcoefficients,ell1tredcadparams);
     VSET(origin, 0, ell1tredcadparams[0], 0);
     VSET(normal, 0, 1, 0);
     VSET(C, 0, ell1tredcadparams[2],ell1tredcadparams[3]);
@@ -1667,14 +1667,11 @@ void MakeTire(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t dztre
 
 
     /* Calculate BRL-CAD input parameters for outer tread ellipse */
-    CalcInputVals(ell1coefficients,ell1cadparams,0);
+    CalcInputVals(ell1coefficients,ell1cadparams);
     /* Calculate BRL-CAD input parameters for outer side top ellipse */
-    CalcInputVals(ell2coefficients,ell2cadparams,1);
+    CalcInputVals(ell2coefficients,ell2cadparams);
     /* Calculate BRL-CAD input parameters for outer side bottom ellipse */
-
-
-    /***********Figure out auto-orientation here!!!!!****************/
-    CalcInputVals(ell3coefficients,ell3cadparams,0);
+    CalcInputVals(ell3coefficients,ell3cadparams);
 
     /* Insert outer tire volume */
     bu_vls_trunc(&str,0);
@@ -1721,13 +1718,13 @@ void MakeTire(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t dztre
     SolveEchelon(matrixcut3,cut3coefficients);
 
     /* Calculate BRL-CAD input parameters for inner cut tread ellipse */
-    CalcInputVals(cut1coefficients,cut1cadparams,0);
+    CalcInputVals(cut1coefficients,cut1cadparams);
     
     /* Calculate BRL-CAD input parameters for inner cut side ellipse */
-    CalcInputVals(cut2coefficients,cut2cadparams,1);
+    CalcInputVals(cut2coefficients,cut2cadparams);
     
     /* Calculate BRL-CAD input parameters for inner cut side ellipse */
-    CalcInputVals(cut3coefficients,cut3cadparams,0);
+    CalcInputVals(cut3coefficients,cut3cadparams);
 
 
 
