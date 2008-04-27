@@ -19,10 +19,7 @@
  */
 /** @file main.c
  *
- *  Authors -
- *	John R. Anderson
- *	Susanne L. Muuss
- *	Earl P. Weaver
+ * IGES to BRL-CAD converter
  *
  */
 
@@ -31,7 +28,6 @@
 /* private */
 #include "./iges_struct.h"
 #include "./iges_types.h"
-#include "../../librt/debug.h"
 #include "brlcad_version.h"
 
 
