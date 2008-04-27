@@ -40,7 +40,7 @@
 #include "rtgeom.h"
 #include "./ged.h"
 #include "./sedit.h"
-#include "../librt/debug.h"	/* XXX */
+
 
 /* Maximum line length allowed for MUVES input files */
 #define MUVES_LINE_LEN		256

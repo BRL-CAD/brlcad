@@ -19,7 +19,7 @@
  */
 /** @file opt.c
  *
- *  Option handling for Ray Tracing main program.
+ * Option handling for Ray Tracing main program.
  *
  */
 
@@ -37,7 +37,7 @@
 #include "./ext.h"
 
 #include "rtprivate.h"
-#include "../librt/debug.h"
+
 
 int		rpt_dist = 0;		/* report distance to each pixel */
 int		width = 0;		/* # of pixels in X */

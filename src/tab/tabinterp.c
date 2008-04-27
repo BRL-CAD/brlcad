@@ -19,19 +19,19 @@
  */
 /** @file tabinterp.c
  *
- *  This program is the crucial middle step in the key-frame animation
- *  software.
+ * This program is the crucial middle step in the key-frame animation
+ * software.
  *
- *  First, one or more files, on different time scales, are read into
- *  internal "channels", with FILE and RATE commands.
+ * First, one or more files, on different time scales, are read into
+ * internal "channels", with FILE and RATE commands.
  *
- *  Next, the TIMES command is given.
+ * Next, the TIMES command is given.
  *
- *  Next, a section of those times is interpolated, and
- *  multi-channel output is produced, on uniform time samples.
+ * Next, a section of those times is interpolated, and multi-channel
+ * output is produced, on uniform time samples.
  *
- *  This multi-channel output is fed to the next stage to generate
- *  control scripts, etc.
+ * This multi-channel output is fed to the next stage to generate
+ * control scripts, etc.
  *
  */
 
@@ -47,7 +47,6 @@
 #include "bn.h"
 #include "raytrace.h"
 
-#include "../librt/debug.h"
 
 struct chan {
     /* INPUTS */

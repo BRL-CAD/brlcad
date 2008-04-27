@@ -46,7 +46,6 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "../librt/debug.h"
 #include "mater.h"
 
 

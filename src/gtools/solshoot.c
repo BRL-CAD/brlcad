@@ -31,7 +31,6 @@
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "../librt/debug.h"
 
 
 #define	TITLE_LEN		80

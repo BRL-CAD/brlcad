@@ -55,11 +55,10 @@
 #include "pkg.h"
 #include "fb.h"
 
-#include "../librt/debug.h"
 #include "../rt/ext.h"
+#include "./protocol.h"
 #include "rtprivate.h"
 
-#include "./protocol.h"
 
 
 struct bu_list	WorkHead;

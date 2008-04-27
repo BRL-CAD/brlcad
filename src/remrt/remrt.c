@@ -64,7 +64,6 @@
 #include "rtprivate.h"
 
 /* private */
-#include "../librt/debug.h"
 #include "./protocol.h"
 #include "./ihost.h"
 #include "brlcad_version.h"

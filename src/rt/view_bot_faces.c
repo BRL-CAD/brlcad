@@ -19,7 +19,7 @@
  */
 /** @file view_bot_faces.c
  *
- *  Ray Tracing program view module to find visible bot faces
+ * Ray Tracing program view module to find visible bot faces
  *
  */
 
@@ -41,7 +41,6 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "./ext.h"
-#include "../librt/debug.h"
 #include "plot3.h"
 #include "rtprivate.h"
 

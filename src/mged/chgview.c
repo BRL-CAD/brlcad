@@ -41,7 +41,7 @@
 #include "./mged_solid.h"
 #include "./mged_dm.h"
 #include "./cmd.h"
-#include "../librt/debug.h"	/* XXX */
+
 
 extern struct db_tree_state	mged_initial_tree_state;	/* dodraw.c */
 

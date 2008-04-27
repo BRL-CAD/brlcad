@@ -280,7 +280,7 @@ defines the width of each scanline in pixels.
 sets the
 .IR librt (3)
 debug flags to the given hexadecimal bit vector.
-See librt/debug.h for the bit definitions.
+See raytrace.h for the bit definitions.
 .B \-!#
 sets the
 .IR libbu (3)
@@ -438,12 +438,12 @@ Sets the background image color to white.
 .B \-X#
 Turns on the
 .IR rt (1)
-program debugging flags.  See rt/rdebug.h for the meaning of these bits.
+program debugging flags.  See raytrace.h for the meaning of these bits.
 .TP
 .B \-!#
 Turns on the
 .IR libbu (3)
-library debugging flags.  See h/bu.h for the meaning of these bits.
+library debugging flags.  See bu.h for the meaning of these bits.
 In particular, specifying
 .B \-!1
 will cause

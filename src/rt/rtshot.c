@@ -19,8 +19,8 @@
  */
 /** @file rtshot.c
  *
- *  Demonstration Ray Tracing main program, using RT library.
- *  Fires a single ray, given any two of these three parameters:
+ * Demonstration Ray Tracing main program, using RT library.
+ * Fires a single ray, given any two of these three parameters:
  *	start point
  *	at point
  *	direction vector
@@ -38,7 +38,6 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtprivate.h"
-#include "../librt/debug.h"
 #include "plot3.h"
 
 

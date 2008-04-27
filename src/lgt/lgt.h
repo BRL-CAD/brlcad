@@ -72,8 +72,8 @@
 #define B_LINE		2	/* Line-buffered I/O (DMA).		*/
 #define Rotate( f )	(f) = (f) + 1 > 2 ? 0 : (f) + 1
 
-#ifndef DEBUG_OFF /* This is from "librt/debug.h", #include <debug.h> would
-		     be better.					*/
+/* !!! rely on raytrace.h */
+#ifndef DEBUG_OFF
 #define DEBUG_OFF	0	/* No debugging */
 
 /* These definitions are each for one bit */

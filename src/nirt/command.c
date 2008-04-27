@@ -21,12 +21,6 @@
  *
  * process nirt commands
  *
- * Author:
- *   Natalie L. Barker
- *
- * Date:
- *   Jan 90
- *
  */
 
 #include "common.h"
@@ -39,7 +33,6 @@
 #include "vmath.h"
 #include "raytrace.h"
 
-#include "../librt/debug.h"
 #include "./nirt.h"
 #include "./usrfmt.h"
 

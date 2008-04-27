@@ -40,7 +40,6 @@
 #include "./mged_dm.h"
 #include "./cmd.h"
 
-#include "../librt/debug.h"	/* XXX */
 
 void		cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy);
 void		drawH_part2(int dashflag, struct bu_list *vhead, struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp);

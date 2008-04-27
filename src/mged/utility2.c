@@ -47,7 +47,6 @@
 #include "./ged.h"
 #include "./sedit.h"
 #include "./cmd.h"
-#include "../librt/debug.h"	/* XXX */
 
 
 int
