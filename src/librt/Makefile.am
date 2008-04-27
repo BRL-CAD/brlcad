@@ -190,7 +190,6 @@ nurb_example_LDADD = \
 # XXX this should be noinst or moved to include
 include_HEADERS = \
 	bot.h \
-	debug.h \
 	fixpt.h \
 	qray.h
 
