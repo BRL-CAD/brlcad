@@ -13,7 +13,7 @@ noinst_PROGRAMS = \
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
 g_diff_SOURCES = g_diff.c
-g_diff_LDADD = ${RT}
+g_diff_LDADD = ${RT} ${GED}
 
 g_transfer_SOURCES = g_transfer.c
 g_transfer_LDADD = ${RT} ${PKG}
