@@ -38,14 +38,8 @@
 #define bneg(x, y)	NEGY, brt(x, y)
 #define dneg(x, y)	NEGY, drk(x, y)
 
-#if defined(mips)
-#  define TINY	int
-#else
-#  define TINY	char		/**< @brief  must be signed */
-#endif
-
-extern TINY	*tp_cindex[256];	/**< @brief  index to stroke tokens */
-extern TINY	tp_ctable[];		/**< @brief  table of strokes */
+extern int *tp_cindex[256];	/**< @brief  index to stroke tokens */
+extern int tp_ctable[];		/**< @brief  table of strokes */
 /** @} */
 /*
  * Local Variables:

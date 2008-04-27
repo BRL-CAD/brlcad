@@ -54,7 +54,7 @@
 
 #define NUM_SYMBOLS	8
 
-TINY		*tp_cindex[256];	/* index to stroke tokens */
+int *tp_cindex[256];	/* index to stroke tokens */
 
 /**
  * @brief
@@ -64,7 +64,7 @@ TINY		*tp_cindex[256];	/* index to stroke tokens */
 void
 tp_setup(void)
 {
-    register TINY	*p;	/* pointer to stroke table */
+    register int *p;	/* pointer to stroke table */
     register int i;
 
     p = tp_ctable;		/* pointer to stroke list */
@@ -84,7 +84,7 @@ tp_setup(void)
 
 /*	tables for markers	*/
 
-TINY	tp_ctable[] = {
+int tp_ctable[] = {
 
 /*	+	*/
     drk(0, 5),
