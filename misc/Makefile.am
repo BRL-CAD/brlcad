@@ -8,7 +8,6 @@ SUBDIRS = \
 	nsis \
 	pkgconfig \
 	win32-msvc \
-	win32-msvc7 \
 	win32-msvc8
 
 sample_applicationsdir = $(SAMPLE_APPLICATIONS_DIR)
