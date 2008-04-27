@@ -31,6 +31,7 @@ required_dirs = \
 	libbn \
 	libsysv \
 	librt \
+	libged \
 	external
 
 rts_dirs = librtserver
@@ -48,7 +49,6 @@ bench_dirs = \
 # anything not included from above
 kitchensink_dirs = \
 	libcursor \
-	libged \
 	libdm \
 	libfft \
 	libmultispectral \
