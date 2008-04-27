@@ -1,4 +1,4 @@
-/*                        G L O B A L . C
+/*                       G L O B A L S . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2008 United States Government as represented by
@@ -19,26 +19,25 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file global.c
+/** @file globals.c
  *
- *  All global state for the BRL-CAD Package ray-tracing library "librt".
+ * Global variables in LIBRT.
  *
- *  Author -
- *	Michael John Muuss
+ * New global variables are discouraged and refactoring in ways that
+ * eliminates existing global variables without reducing functionality
+ * is always encouraged.
  *
  */
 /** @} */
 
-#include "common.h"
-
-#include <stdio.h>
-#include <math.h>
-#include "bio.h"
-
-#include "vmath.h"
 #include "raytrace.h"
 
-struct rt_g	rt_g;			/* All global state */
+/**
+ * global ray-trace geometry state
+ */
+struct rt_g rt_g;
+
+
 
 /*
  * Local Variables:

@@ -89,7 +89,7 @@ librt_nil_la_SOURCES = \
 	g_tgc.c \
 	g_torus.c \
 	g_vol.c \
-	global.c \
+	globals.c \
 	htbl.c \
 	importFg4Section.c \
 	many.c \

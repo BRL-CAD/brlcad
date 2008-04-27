@@ -378,7 +378,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\global.c"
+				RelativePath="..\..\..\src\librt\globals.c"
 				>
 			</File>
 			<File
