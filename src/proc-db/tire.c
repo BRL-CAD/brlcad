@@ -43,6 +43,21 @@
 #define COLS 5
 #define F_PI 3.1415926535897932384626433832795029L 
 
+
+void PrintCADParams(fastf_t *cadparams, char *name){
+    bu_log("%s\n",name);
+    bu_log("x0 = %6.7f, y0 = %6.7f, Cx = %6.7f, Cy = %6.7f, D=%6.7f\n",cadparams[0],cadparams[1],cadparams[2],cadparams[3],cadparams[4]);
+}
+
+void PrintMatrix(fastf_t **matrix, char *name){
+    bu_log("%s\n",name);
+    bu_log("[%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f]\n",matrix[0][0],matrix[0][1],matrix[0][2],matrix[0][3],matrix[0][4],matrix[0][5]);
+    bu_log("[%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f]\n",matrix[1][0],matrix[1][1],matrix[1][2],matrix[1][3],matrix[1][4],matrix[1][5]);
+    bu_log("[%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f]\n",matrix[2][0],matrix[2][1],matrix[2][2],matrix[2][3],matrix[2][4],matrix[2][5]);
+    bu_log("[%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f]\n",matrix[3][0],matrix[3][1],matrix[3][2],matrix[3][3],matrix[3][4],matrix[3][5]);
+    bu_log("[%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f]\n",matrix[4][0],matrix[4][1],matrix[4][2],matrix[4][3],matrix[4][4],matrix[4][5]);
+}
+
 /* Help message printed when -h option is supplied */
 void show_help(const char *name) {
     printf("%s [-d <width>/<aspect>R<rim size>] [-a|-n <name>] [-t] [-h]\n", name);
@@ -167,7 +182,7 @@ fastf_t GetValueAtZPoint(fastf_t *inarray, fastf_t y)
     mat[4][5] = -1;
 }
  
-/* Create General Conic Matrix for Ellipse describing the tire side */
+/* Create General Conic Matrix for Ellipse describing the top part of the tire side */
 void Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dyside1, fastf_t zside1, fastf_t ztire, fastf_t dyhub, fastf_t zhub, fastf_t ell1partial) 
 {
     mat[0][0] = (dyside1 / 2) * (dyside1 / 2);
@@ -182,11 +197,11 @@ void Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dysi
     mat[1][3] = (dytred / 2);
     mat[1][4] = (ztire - dztred);
     mat[1][5] = -1;
-    mat[2][0] = (dyhub/2) * (dyhub/2);
-    mat[2][1] = (dyhub/2) * zhub;
-    mat[2][2] = zhub * zhub;
-    mat[2][3] = dyhub/2;
-    mat[2][4] = zhub;
+    mat[2][0] = (dytred/2) * (dytred/2);
+    mat[2][1] = (dytred/2) * (2*zside1-ztire+dztred);
+    mat[2][2] = (2*zside1-ztire+dztred)*(2*zside1-ztire+dztred);
+    mat[2][3] = (dytred/2);
+    mat[2][4] = (2*zside1-ztire+dztred);
     mat[2][5] = -1;
     mat[3][0] = 2 * (dytred / 2);
     mat[3][1] = (ztire - dztred) + (dytred / 2) * ell1partial;
@@ -194,12 +209,47 @@ void Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dysi
     mat[3][3] = 1;
     mat[3][4] = ell1partial;
     mat[3][5] = 0;
-    mat[4][0] = 2 * (dyhub / 2);
-    mat[4][1] = zhub + (dyhub / 2) * -ell1partial;
-    mat[4][2] = 2*zhub*-ell1partial;
+    mat[4][0] = 2 * (dytred / 2);
+    mat[4][1] = (2*zside1-ztire+dztred) + (dytred / 2) * -ell1partial;
+    mat[4][2] = 2*(2*zside1-ztire+dztred)*-ell1partial;
     mat[4][3] = 1;
     mat[4][4] = -ell1partial;
     mat[4][5] = 0;
+}
+
+/* Create General Conic Matrix for Ellipse describing the bottom part of the tire side */
+void Create_Ell3_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dyside1, fastf_t zside1, fastf_t ztire, fastf_t dyhub, fastf_t zhub, fastf_t ell1partial) 
+{
+    mat[0][0] = (dyside1 / 2) * (dyside1 / 2);
+    mat[0][1] = (zside1 * dyside1 / 2);
+    mat[0][2] = zside1 * zside1;
+    mat[0][3] = dyside1 / 2;
+    mat[0][4] = zside1;
+    mat[0][5] = -1;
+    mat[1][0] = (dyhub / 2) * (dyhub / 2);
+    mat[1][1] = (zhub) * (dyhub / 2);
+    mat[1][2] = (zhub) * (zhub);
+    mat[1][3] = (dyhub / 2);
+    mat[1][4] = (zhub);
+    mat[1][5] = -1;
+    mat[2][0] = (dyhub / 2) * (dyhub / 2);
+    mat[2][1] = (dyhub / 2) * (2*zside1-zhub);
+    mat[2][2] = (2 * zside1 - zhub) * (2 * zside1 - zhub);
+    mat[2][3] = (dyhub / 2);
+    mat[2][4] = (2 * zside1 - zhub);
+    mat[2][5] = -1;
+    mat[3][0] = -(dyside1 / 2) * -(dyside1 / 2);
+    mat[3][1] = (zside1 * -dyside1 / 2);
+    mat[3][2] = zside1 * zside1;
+    mat[3][3] = -dyside1 / 2;
+    mat[3][4] = zside1;
+    mat[3][5] = -1;
+    mat[4][0] = -(dyhub / 2) * -(dyhub / 2);
+    mat[4][1] = (zhub) * -(dyhub / 2);
+    mat[4][2] = (zhub) * (zhub);
+    mat[4][3] = -(dyhub / 2);
+    mat[4][4] = (zhub);
+    mat[4][5] = -1;
 }
 
 /**********************************************************************
@@ -1115,9 +1165,9 @@ void TreadPattern(struct rt_wdb (*file), char *suffix, fastf_t dwidth, fastf_t z
  **********************************************************************/
 
 
-void MakeTireSurface(struct rt_wdb (*file), char *suffix, fastf_t *ell1cadparams, fastf_t *ell2cadparams, fastf_t ztire, fastf_t dztred, fastf_t dytred, fastf_t dyhub, fastf_t zhub, fastf_t dyside1)
+void MakeTireSurface(struct rt_wdb (*file), char *suffix, fastf_t *ell1cadparams, fastf_t *ell2cadparams, fastf_t *ell3cadparams, fastf_t ztire, fastf_t dztred, fastf_t dytred, fastf_t dyhub, fastf_t zhub, fastf_t dyside1, fastf_t zside1)
 {
-    struct wmember tiresideoutercutright, tiresideoutercutleft, tiresideinnercutright, tiresideinnercutleft,tirecuttopcyl;
+    struct wmember tireslicktread,tireslicktopsides,tireslickbottomshapes,tireslickbottomsides;
     struct wmember tireslick, tiresides, tiresurface;
     struct wmember innersolid;
     struct wmember tire; 
@@ -1133,41 +1183,49 @@ void MakeTireSurface(struct rt_wdb (*file), char *suffix, fastf_t *ell1cadparams
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Ellipse1%s.s", suffix);	
     mk_eto(file, bu_vls_addr(&str), origin, normal, C, ell1cadparams[1], ell1cadparams[4]);
+
     VSET(origin, 0, ell2cadparams[0], 0);
-    VSET(normal, 0, ell2cadparams[2]/sqrt(ell2cadparams[2]*ell2cadparams[2]), 0);
+    VSET(normal, 0, 1, 0);
     VSET(C, 0, ell2cadparams[2],ell2cadparams[3]);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Ellipse2%s.s", suffix);	
     mk_eto(file, bu_vls_addr(&str), origin, normal, C, ell2cadparams[1], ell2cadparams[4]);
-    VSET(origin, 0, -ell2cadparams[0], 0);
-    VSET(normal, 0, -ell2cadparams[2]/sqrt(ell2cadparams[2]*ell2cadparams[2]), 0);
-    VSET(C, 0, -ell2cadparams[2],-ell2cadparams[3]);
+
+    VSET(origin, 0, ell3cadparams[0], 0);
+    VSET(normal, 0, 1, 0);
+    VSET(C, 0, ell3cadparams[2],ell3cadparams[3]);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Ellipse3%s.s", suffix);	
+    mk_eto(file, bu_vls_addr(&str), origin, normal, C, ell3cadparams[1], ell3cadparams[4]);
+
+    VSET(origin, 0, -ell2cadparams[0], 0);
+    VSET(normal, 0, -1, 0);
+    VSET(C, 0, -ell2cadparams[2],-ell2cadparams[3]);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "Ellipse4%s.s", suffix);	
     mk_eto(file, bu_vls_addr(&str), origin, normal, C, ell2cadparams[1], ell2cadparams[4]);
-    VSET(vertex, 0, 0, 0);
-    VSET(height, 0, ell1cadparams[2]+ell1cadparams[2]*.01, 0);
+
+
+
+
+    VSET(vertex, 0, -ell1cadparams[2]-ell1cadparams[2]*.01, 0);
+    VSET(height, 0, 2*(ell1cadparams[2]+ell1cadparams[2]*.01), 0);
     bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "TopClipR%s.s", suffix);	
+    bu_vls_printf(&str, "TopClip%s.s", suffix);	
     mk_rcc(file, bu_vls_addr(&str), vertex, height, ztire - dztred);
-    VSET(vertex, 0, 0, 0);
-    VSET(height, 0, -ell1cadparams[2]-ell1cadparams[2]*.01, 0);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "TopClipL%s.s", suffix);	
-    mk_rcc(file, bu_vls_addr(&str), vertex, height, ztire - dztred);
+
     VSET(vertex, 0, -dyside1/2-0.1*dyside1/2,0);
     VSET(height, 0, dyside1+0.1*dyside1, 0);
     bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "SideClipInner%s.s", suffix);	
+    bu_vls_printf(&str, "InnerClip%s.s", suffix);	
     mk_rcc(file, bu_vls_addr(&str), vertex, height, zhub);
-    VSET(vertex, 0, -dytred/2, 0);
-    VSET(height, 0, dytred, 0);
+
+    VSET(vertex, 0, -dyside1/2-0.1*dyside1/2,0);
+    VSET(height, 0, dyside1+0.1*dyside1, 0);
     bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "SideClipOuter1%s.s", suffix);	
-    mk_rcc(file, bu_vls_addr(&str), vertex, height, ztire - dztred);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "SideClipOuter2%s.s", suffix);	
-    mk_rcc(file, bu_vls_addr(&str), vertex, height, ztire);
+    bu_vls_printf(&str, "EllClip%s.s", suffix);	
+    mk_rcc(file, bu_vls_addr(&str), vertex, height, zside1);
+
  
     /* Insert primitives to ensure a solid interior - based
      * on dimensions, either add or subtract cones from the
@@ -1189,119 +1247,6 @@ void MakeTireSurface(struct rt_wdb (*file), char *suffix, fastf_t *ell1cadparams
     	bu_vls_printf(&str, "RightCone%s.s", suffix);	
     	mk_cone(file, bu_vls_addr(&str), vertex, normal, dytred/2 - dyhub/2, ztire-dztred,zhub);
     }	
-
-    /* Define the tire tread surface trimming volume */
-    BU_LIST_INIT(&tirecuttopcyl.l);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "SideClipOuter2%s.s", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tirecuttopcyl.l, NULL, WMOP_UNION);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "SideClipOuter1%s.s", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tirecuttopcyl.l, NULL, WMOP_SUBTRACT);
-    bu_vls_trunc(&str,0) ;
-    bu_vls_printf(&str, "tire-outer-sides-trim%s.c", suffix);	
-    mk_lcomb(file, bu_vls_addr(&str), &tirecuttopcyl, 0, NULL, NULL, NULL, 0);
-    
-    /* Define outer cut for right (positive y) side of tire */
-    BU_LIST_INIT(&tiresideoutercutright.l);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "Ellipse2%s.s", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tiresideoutercutright.l, NULL, WMOP_UNION);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "tire-outer-sides-trim%s.c", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tiresideoutercutright.l, NULL, WMOP_INTERSECT);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "tire-side-outer-cut-right%s.c", suffix);	
-    mk_lcomb(file, bu_vls_addr(&str), &tiresideoutercutright, 0, NULL, NULL, NULL, 0);
- 
-    /* Define outer cut for left (negative y) side of tire */
-    BU_LIST_INIT(&tiresideoutercutleft.l);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "Ellipse3%s.s", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tiresideoutercutleft.l, NULL, WMOP_UNION);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "tire-outer-sides-trim%s.c", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tiresideoutercutleft.l, NULL, WMOP_INTERSECT);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "tire-side-outer-cut-left%s.c", suffix);	
-    mk_lcomb(file, bu_vls_addr(&str), &tiresideoutercutleft, 0, NULL, NULL, NULL, 0);
-
-    /* Define inner cut for right (positive y) side of tire */
-    BU_LIST_INIT(&tiresideinnercutright.l);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "Ellipse2%s.s", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tiresideinnercutright.l, NULL, WMOP_UNION);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "SideClipInner%s.s", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tiresideinnercutright.l, NULL, WMOP_INTERSECT);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "tire-side-inner-cut-right%s.c", suffix);	
-    mk_lcomb(file, bu_vls_addr(&str), &tiresideinnercutright, 0, NULL, NULL, NULL, 0);
-
-    /* Define inner cut for left (negative y) side of tire */
-    BU_LIST_INIT(&tiresideinnercutleft.l);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "Ellipse3%s.s", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tiresideinnercutleft.l, NULL, WMOP_UNION);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "SideClipInner%s.s", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tiresideinnercutleft.l, NULL, WMOP_INTERSECT);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "tire-side-inner-cut-left%s.c", suffix);	
-    mk_lcomb(file, bu_vls_addr(&str), &tiresideinnercutleft, 0, NULL, NULL, NULL, 0);
-
-    /* Combine cuts and primitives to make final tire side surfaces */
-    BU_LIST_INIT(&tiresides.l);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "Ellipse2%s.s", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tiresides.l, NULL, WMOP_UNION);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "tire-side-inner-cut-right%s.c", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tiresides.l, NULL, WMOP_SUBTRACT);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "tire-side-outer-cut-right%s.c", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tiresides.l, NULL, WMOP_SUBTRACT);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "Ellipse3%s.s", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tiresides.l, NULL, WMOP_UNION);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "tire-side-inner-cut-left%s.c", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tiresides.l, NULL, WMOP_SUBTRACT);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "tire-side-outer-cut-left%s.c", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tiresides.l, NULL, WMOP_SUBTRACT);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "tire-sides%s.c", suffix);	
-    mk_lcomb(file, bu_vls_addr(&str), &tiresides, 0, NULL, NULL, NULL, 0);
-
-    /* Combine cuts and primitives to make final tire slick surface */
-    BU_LIST_INIT(&tireslick.l);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "Ellipse1%s.s", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tireslick.l, NULL, WMOP_UNION);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "TopClipR%s.s", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tireslick.l, NULL, WMOP_SUBTRACT);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "TopClipL%s.s", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tireslick.l, NULL, WMOP_SUBTRACT);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "tire-slick-surface%s.c", suffix);	
-    mk_lcomb(file, bu_vls_addr(&str), &tireslick, 0, NULL, NULL, NULL, 0);
-
-    /* Combine tire tread surface and tire side surfaces to make final
-     * tire surface.
-     */
-    BU_LIST_INIT(&tiresurface.l);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "tire-sides%s.c", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tiresurface.l, NULL, WMOP_UNION);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "tire-slick-surface%s.c", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tiresurface.l, NULL, WMOP_UNION);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "tire-surface%s.c", suffix);	
-    mk_lcomb(file, bu_vls_addr(&str), &tiresurface, 0, NULL, NULL, NULL, 0);
 
     /* Combine inner solid, cones, and cuts to ensure a filled inner volume. */
     BU_LIST_INIT(&innersolid.l);
@@ -1325,24 +1270,87 @@ void MakeTireSurface(struct rt_wdb (*file), char *suffix, fastf_t *ell1cadparams
 	(void)mk_addmember(bu_vls_addr(&str), &innersolid.l, NULL, WMOP_UNION);
     }
     bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "SideClipInner%s.s", suffix);	
+    bu_vls_printf(&str, "InnerClip%s.s", suffix);	
     (void)mk_addmember(bu_vls_addr(&str), &innersolid.l, NULL, WMOP_SUBTRACT);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "tire-solid%s.c", suffix);	
     mk_lcomb(file, bu_vls_addr(&str), &innersolid, 0, NULL, NULL, NULL, 0);
 
-    /* Assemble surfaces and interior fill to make final tire shape */
-    BU_LIST_INIT(&tire.l);
+
+
+    /* Define the tire slick tread */
+    BU_LIST_INIT(&tireslicktread.l);
     bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "tire-surface%s.c", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tire.l, NULL, WMOP_UNION);
+    bu_vls_printf(&str, "Ellipse1%s.s", suffix);	
+    (void)mk_addmember(bu_vls_addr(&str), &tireslicktread.l, NULL, WMOP_UNION);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "TopClip%s.s", suffix);	
+    (void)mk_addmember(bu_vls_addr(&str), &tireslicktread.l, NULL, WMOP_SUBTRACT);
+    bu_vls_trunc(&str,0) ;
+    bu_vls_printf(&str, "tire-slick-tread%s.c", suffix);	
+    mk_lcomb(file, bu_vls_addr(&str), &tireslicktread, 0, NULL, NULL, NULL, 0);
+    
+    /* Define upper sides */
+    BU_LIST_INIT(&tireslicktopsides.l);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "Ellipse2%s.s", suffix);	
+    (void)mk_addmember(bu_vls_addr(&str), &tireslicktopsides.l, NULL, WMOP_UNION);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "EllClip%s.s", suffix);	
+    (void)mk_addmember(bu_vls_addr(&str), &tireslicktopsides.l, NULL, WMOP_SUBTRACT);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "Ellipse4%s.s", suffix);	
+    (void)mk_addmember(bu_vls_addr(&str), &tireslicktopsides.l, NULL, WMOP_UNION);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "EllClip%s.s", suffix);	
+    (void)mk_addmember(bu_vls_addr(&str), &tireslicktopsides.l, NULL, WMOP_SUBTRACT);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "tire-upper-sides%s.c", suffix);	
+    mk_lcomb(file, bu_vls_addr(&str), &tireslicktopsides, 0, NULL, NULL, NULL, 0);
+ 
+    /* Define lower sides shapes */
+    BU_LIST_INIT(&tireslickbottomshapes.l);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "Ellipse3%s.s", suffix);	
+    (void)mk_addmember(bu_vls_addr(&str), &tireslickbottomshapes.l, NULL, WMOP_UNION);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "EllClip%s.s", suffix);	
+    (void)mk_addmember(bu_vls_addr(&str), &tireslickbottomshapes.l, NULL, WMOP_INTERSECT);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "tire-lower-sides-shapes%s.c", suffix);	
+    mk_lcomb(file, bu_vls_addr(&str), &tireslickbottomshapes, 0, NULL, NULL, NULL, 0);
+
+    /* Define lower sides */
+    BU_LIST_INIT(&tireslickbottomsides.l);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "tire-lower-sides-shapes%s.c", suffix);	
+    (void)mk_addmember(bu_vls_addr(&str), &tireslickbottomsides.l, NULL, WMOP_UNION);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "InnerClip%s.s", suffix);	
+    (void)mk_addmember(bu_vls_addr(&str), &tireslickbottomsides.l, NULL, WMOP_SUBTRACT);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "tire-lower-sides%s.c", suffix);	
+    mk_lcomb(file, bu_vls_addr(&str), &tireslickbottomsides, 0, NULL, NULL, NULL, 0);
+
+
+    /* Combine cuts and primitives to make final tire slick surface */
+    BU_LIST_INIT(&tireslick.l);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "tire-slick-tread%s.c", suffix);	
+    (void)mk_addmember(bu_vls_addr(&str), &tireslick.l, NULL, WMOP_UNION);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "tire-upper-sides%s.c", suffix);	
+    (void)mk_addmember(bu_vls_addr(&str), &tireslick.l, NULL, WMOP_UNION);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "tire-lower-sides%s.c", suffix);	
+    (void)mk_addmember(bu_vls_addr(&str), &tireslick.l, NULL, WMOP_UNION);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "tire-solid%s.c", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tire.l, NULL, WMOP_UNION);
+    (void)mk_addmember(bu_vls_addr(&str), &tireslick.l, NULL, WMOP_UNION);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "tire%s.c", suffix);	
-    mk_lcomb(file, bu_vls_addr(&str), &tire, 0, NULL, NULL, NULL, 0);
-  
+    mk_lcomb(file, bu_vls_addr(&str), &tireslick, 0, NULL, NULL, NULL, 0);
+ 
     bu_vls_free(&str);
 }
 
@@ -1355,48 +1363,101 @@ void MakeTireSurface(struct rt_wdb (*file), char *suffix, fastf_t *ell1cadparams
 
 void MakeTreadSolid(struct rt_wdb (*file), char *suffix, fastf_t *ell2coefficients, fastf_t ztire, fastf_t dztred, fastf_t d1, fastf_t dytred, fastf_t dyhub, fastf_t zhub, fastf_t dyside1, int number_of_tread_patterns, int pattern_type)
 {
-    fastf_t **matrixelltred1, **matrixelltred2;
-    fastf_t ell1tredcoefficients[5],ell2tredcoefficients[5];
-    fastf_t ell1tredcadparams[5],ell2tredcadparams[5];
+    fastf_t **matrixelltread1, **matrixelltread2;
+    fastf_t ell1treadcoefficients[5],ell2treadcoefficients[5];
+    fastf_t ell1treadcadparams[5],ell2treadcadparams[5];
     fastf_t d1_intercept;
-    fastf_t elltredpartial;
-    struct wmember tiretreadshape;
+    fastf_t elltreadpartial;
+    struct wmember premtreadshape,tiretreadshape;
+    vect_t vertex,height;
+    point_t origin,normal,C;
+
+
     int i;
     struct bu_vls str;
     bu_vls_init(&str);
  
-    matrixelltred1 = (fastf_t **)bu_malloc(5 * sizeof(fastf_t *),"matrixrows");
+    matrixelltread1 = (fastf_t **)bu_malloc(5 * sizeof(fastf_t *),"matrixrows");
     for (i = 0; i < 5; i++)
-	matrixelltred1[i] = (fastf_t *)bu_malloc(6 * sizeof(fastf_t),"matrixcols");
+	matrixelltread1[i] = (fastf_t *)bu_malloc(6 * sizeof(fastf_t),"matrixcols");
 
-    matrixelltred2 = (fastf_t **)bu_malloc(5 * sizeof(fastf_t *),"matrixrows");
+    matrixelltread2 = (fastf_t **)bu_malloc(5 * sizeof(fastf_t *),"matrixrows");
     for (i = 0; i < 5; i++)
-	matrixelltred2[i] = (fastf_t *)bu_malloc(6 * sizeof(fastf_t),"matrixcols");
+	matrixelltread2[i] = (fastf_t *)bu_malloc(6 * sizeof(fastf_t),"matrixcols");
 
 
     /* Find point on side where tread will start */
     d1_intercept = GetValueAtZPoint(ell2coefficients,ztire-d1);
 
-    Create_Ell1_Mat(matrixelltred1, dytred, dztred, d1, ztire);
-    Echelon(matrixelltred1);
-    SolveEchelon(matrixelltred1,ell1tredcoefficients);
-    if ((ztire-d1) < (dytred/2)){
-	CalcInputVals(ell1tredcoefficients,ell1tredcadparams,1);
-    }else{
-	CalcInputVals(ell1tredcoefficients,ell1tredcadparams,0);
-    }
-    elltredpartial = GetEllPartialAtPoint(ell1tredcoefficients,dytred/2,ztire-dztred);
-    Create_Ell2_Mat(matrixelltred2, dytred, dztred, d1_intercept*2, ztire-d1, ztire, dyhub, zhub, elltredpartial);
-    Echelon(matrixelltred2);
-    SolveEchelon(matrixelltred2,ell2tredcoefficients);
-    if ((ztire-dztred)-zhub > (dyside1/2-dytred/2)){
-	CalcInputVals(ell2tredcoefficients,ell2tredcadparams,1);
-    }else{
-	CalcInputVals(ell2tredcoefficients,ell2tredcadparams,0);
-    }
+    Create_Ell1_Mat(matrixelltread1, dytred, dztred, d1, ztire);
+    Echelon(matrixelltread1);
+    SolveEchelon(matrixelltread1,ell1treadcoefficients);
+    CalcInputVals(ell1treadcoefficients,ell1treadcadparams,0);
+    
+    elltreadpartial = GetEllPartialAtPoint(ell1treadcoefficients,dytred/2,ztire-dztred);
+    Create_Ell2_Mat(matrixelltread2, dytred, dztred, d1_intercept*2, ztire-d1, ztire, dyhub, zhub, elltreadpartial);
+    Echelon(matrixelltread2);
+    SolveEchelon(matrixelltread2,ell2treadcoefficients);
+    CalcInputVals(ell2treadcoefficients,ell2treadcadparams,1);
+    
+    /* Insert primitives */
+    VSET(origin, 0, ell1treadcadparams[0], 0);
+    VSET(normal, 0, 1, 0);
+    VSET(C, 0, ell1treadcadparams[2],ell1treadcadparams[3]);
     bu_vls_trunc(&str,0);
-    bu_vls_printf(&str,"-tread-outer%s",suffix);
-    MakeTireSurface(file,bu_vls_addr(&str),ell1tredcadparams,ell2tredcadparams,ztire,dztred,dytred,dyhub,zhub,d1_intercept*2);
+    bu_vls_printf(&str, "Ellipse1tread%s.s", suffix);	
+    mk_eto(file, bu_vls_addr(&str), origin, normal, C, ell1treadcadparams[1], ell1treadcadparams[4]);
+
+    VSET(origin, 0, ell2treadcadparams[0], 0);
+    VSET(normal, 0, 1, 0);
+    VSET(C, 0, ell2treadcadparams[2],ell2treadcadparams[3]);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "Ellipse2tread%s.s", suffix);	
+    mk_eto(file, bu_vls_addr(&str), origin, normal, C, ell2treadcadparams[1], ell2treadcadparams[4]);
+
+    VSET(origin, 0, -ell2treadcadparams[0], 0);
+    VSET(normal, 0, -1, 0);
+    VSET(C, 0, -ell2treadcadparams[2],-ell2treadcadparams[3]);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "Ellipse4tread%s.s", suffix);	
+    mk_eto(file, bu_vls_addr(&str), origin, normal, C, ell2treadcadparams[1], ell2treadcadparams[4]);
+
+    VSET(vertex, 0, -ell1treadcadparams[2]-ell1treadcadparams[2]*.01, 0);
+    VSET(height, 0, 2*(ell1treadcadparams[2]+ell1treadcadparams[2]*.01), 0);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "TopTreadClip%s.s", suffix);	
+    mk_rcc(file, bu_vls_addr(&str), vertex, height, ztire - dztred);
+
+    VSET(vertex, 0, -d1_intercept, 0);
+    VSET(height, 0, d1_intercept*2, 0);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "InnerTreadCut%s.s", suffix);	
+    mk_rcc(file, bu_vls_addr(&str), vertex, height, ztire-d1);
+	
+    /* Assemble the primitives into the preliminary tread shape */
+    BU_LIST_INIT(&premtreadshape.l);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str,"Ellipse1tread%s.s",suffix);
+    (void)mk_addmember(bu_vls_addr(&str), &premtreadshape.l, NULL, WMOP_UNION);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str,"TopTreadClip%s.s",suffix);
+    (void)mk_addmember(bu_vls_addr(&str), &premtreadshape.l, NULL, WMOP_SUBTRACT);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str,"Ellipse2tread%s.s",suffix);
+    (void)mk_addmember(bu_vls_addr(&str), &premtreadshape.l, NULL, WMOP_UNION);
+     bu_vls_trunc(&str,0);
+    bu_vls_printf(&str,"InnerTreadCut%s.s",suffix);
+    (void)mk_addmember(bu_vls_addr(&str), &premtreadshape.l, NULL, WMOP_SUBTRACT);
+   bu_vls_trunc(&str,0);
+    bu_vls_printf(&str,"Ellipse4tread%s.s",suffix);
+    (void)mk_addmember(bu_vls_addr(&str), &premtreadshape.l, NULL, WMOP_UNION);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str,"InnerTreadCut%s.s",suffix);
+    (void)mk_addmember(bu_vls_addr(&str), &premtreadshape.l, NULL, WMOP_SUBTRACT);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str,"tire-tread-prem%s.c",suffix);
+    mk_lcomb(file, bu_vls_addr(&str), &premtreadshape, 0, NULL, NULL, NULL, 0);
+
 	
 
     /* The tire tread shape needed is the subtraction of the slick surface from the tread shape,
@@ -1404,7 +1465,7 @@ void MakeTreadSolid(struct rt_wdb (*file), char *suffix, fastf_t *ell2coefficien
      */
     BU_LIST_INIT(&tiretreadshape.l);
     bu_vls_trunc(&str,0);
-    bu_vls_printf(&str,"tire-tread-outer%s.c",suffix);
+    bu_vls_printf(&str,"tire-tread-prem%s.c",suffix);
     (void)mk_addmember(bu_vls_addr(&str), &tiretreadshape.l, NULL, WMOP_UNION);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str,"tire-solid%s.c",suffix);
@@ -1420,11 +1481,11 @@ void MakeTreadSolid(struct rt_wdb (*file), char *suffix, fastf_t *ell2coefficien
     TreadPattern(file, bu_vls_addr(&str), d1_intercept*2, ztire-d1, ztire, number_of_tread_patterns,pattern_type);
 
     for (i = 0; i < 5; i++)
-    	bu_free((char *)matrixelltred1[i], "matrixell1 element");
-    bu_free((char *)matrixelltred1,"matrixell1");
+    	bu_free((char *)matrixelltread1[i], "matrixell1 element");
+    bu_free((char *)matrixelltread1,"matrixell1");
     for (i = 0; i < 5; i++)
-    	bu_free((char *)matrixelltred2[i], "matrixell2 element");
-    bu_free((char *)matrixelltred2,"matrixell2");
+    	bu_free((char *)matrixelltread2[i], "matrixell2 element");
+    bu_free((char *)matrixelltread2,"matrixell2");
 
 
 }
@@ -1541,16 +1602,15 @@ void MakeTreadSolid1(struct rt_wdb (*file), char *suffix, fastf_t *ell2coefficie
 void MakeTire(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t dztred, fastf_t d1, fastf_t dyside1, fastf_t zside1, fastf_t ztire, fastf_t dyhub, fastf_t zhub, fastf_t thickness, int tread_type, int number_of_tread_patterns, fastf_t tread_depth, fastf_t patterntype)
 {
     int i;
-    fastf_t ell1partial;
-    fastf_t ell1coefficients[5],ell2coefficients[5];
-    fastf_t ell1cadparams[5],ell2cadparams[5];
-    fastf_t **matrixell1,**matrixell2;
-    fastf_t cut_dytred,cut_dztred,cut_d1,cut_dyside1,cut_zside1,cut_ztire,cut_dyhub,cut_zhub;
-    fastf_t cut1partial;
-    fastf_t cut1coefficients[5],cut2coefficients[5];
-    fastf_t cut1cadparams[5],cut2cadparams[5];
-    fastf_t **matrixcut1,**matrixcut2;
+    fastf_t **matrixell1,**matrixell2, **matrixell3;
+    fastf_t ell1coefficients[5],ell2coefficients[5],ell3coefficients[5];
+    fastf_t ell1cadparams[5],ell2cadparams[5],ell3cadparams[5];
+    fastf_t **matrixcut1,**matrixcut2, **matrixcut3;
+    fastf_t cut1coefficients[5],cut2coefficients[5],cut3coefficients[5];
+    fastf_t cut1cadparams[5],cut2cadparams[5],cut3cadparams[5];
+    fastf_t ell1partial,cut1partial;
     fastf_t ztire_with_offset;
+    fastf_t cut_dytred,cut_dztred,cut_d1,cut_dyside1,cut_zside1,cut_ztire,cut_dyhub,cut_zhub;
     struct wmember tire;
     unsigned char rgb[3];
 
@@ -1578,6 +1638,9 @@ void MakeTire(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t dztre
     for (i = 0; i < 5; i++)
 	matrixell2[i] = (fastf_t *)bu_malloc(6 * sizeof(fastf_t),"matrixcols");
 
+    matrixell3 = (fastf_t **)bu_malloc(5 * sizeof(fastf_t *),"matrixrows");
+    for (i = 0; i < 5; i++)
+	matrixell3[i] = (fastf_t *)bu_malloc(6 * sizeof(fastf_t),"matrixcols");
 
  
 
@@ -1589,31 +1652,36 @@ void MakeTire(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t dztre
     for (i = 0; i < 5; i++)
 	matrixcut2[i] = (fastf_t *)bu_malloc(6 * sizeof(fastf_t),"matrixcols");
 
+    matrixcut3 = (fastf_t **)bu_malloc(5 * sizeof(fastf_t *),"matrixrows");
+    for (i = 0; i < 5; i++)
+	matrixcut3[i] = (fastf_t *)bu_malloc(6 * sizeof(fastf_t),"matrixcols");
+
     /* Find slick surface ellipse equation */
     Create_Ell1_Mat(matrixell1, dytred, dztred, d1, ztire_with_offset);
     Echelon(matrixell1);
     SolveEchelon(matrixell1,ell1coefficients);
     ell1partial = GetEllPartialAtPoint(ell1coefficients,dytred/2,ztire_with_offset-dztred);
-    /* Find outer side ellipse equation */
+    /* Find outer side top ellipse equation */
     Create_Ell2_Mat(matrixell2, dytred, dztred, dyside1, zside1, ztire_with_offset, dyhub, zhub, ell1partial);
     Echelon(matrixell2);
     SolveEchelon(matrixell2,ell2coefficients);
+    /* Find outer side bottom ellipse equation */
+    Create_Ell3_Mat(matrixell3, dytred, dztred, dyside1, zside1, ztire_with_offset, dyhub, zhub, ell1partial);
+    Echelon(matrixell3);
+    SolveEchelon(matrixell3,ell3coefficients);
+
+
     /* Calculate BRL-CAD input parameters for outer tread ellipse */
-    if ((ztire-d1) < (dytred/2)){
-	CalcInputVals(ell1coefficients,ell1cadparams,1);
-    }else{
-	CalcInputVals(ell1coefficients,ell1cadparams,0);
-    }
-    /* Calculate BRL-CAD input parameters for outer side ellipse */
-    if ((ztire-dztred)-zhub > (dyside1/2-dytred/2)){
-	CalcInputVals(ell2coefficients,ell2cadparams,1);
-    } else {
-	CalcInputVals(ell2coefficients,ell2cadparams,0);
-    }
+    CalcInputVals(ell1coefficients,ell1cadparams,0);
+    /* Calculate BRL-CAD input parameters for outer side top ellipse */
+    CalcInputVals(ell2coefficients,ell2cadparams,1);
+    /* Calculate BRL-CAD input parameters for outer side bottom ellipse */
+    CalcInputVals(ell3coefficients,ell3cadparams,0);
+
     /* Insert outer tire volume */
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str,"-solid%s",suffix);
-    MakeTireSurface(file,bu_vls_addr(&str),ell1cadparams,ell2cadparams,ztire_with_offset,dztred,dytred,dyhub,zhub,dyside1);
+    MakeTireSurface(file,bu_vls_addr(&str),ell1cadparams,ell2cadparams,ell3cadparams,ztire_with_offset,dztred,dytred,dyhub,zhub,dyside1,zside1);
 
 
     typedef void (*MakeTreadProfile) (struct rt_wdb (*file), char *suffix, fastf_t *ell2coefficients, fastf_t ztire, fastf_t dztred, fastf_t d1, fastf_t dytred, fastf_t dyhub, fastf_t zhub, fastf_t dyside1, int number_of_tread_patterns,int patterntype);
@@ -1622,12 +1690,14 @@ void MakeTire(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t dztre
     TreadProfile[0] = &MakeTreadSolid;
     TreadProfile[1] = &MakeTreadSolid1;
 
-    /* Make Tread solid and call routine to create tread */
+    /*Make Tread solid and call routine to create tread */
 
     if (tread_type != 0) {
 	(*TreadProfile[tread_type-1])(file,suffix,ell2coefficients,ztire,dztred,d1,dytred,dyhub,zhub,dyside1,number_of_tread_patterns,patterntype);
     }
-    
+  
+
+  
     /* Calculate input parameters for inner cut*/
     cut_ztire = ztire_with_offset-thickness;
     cut_dyside1 = dyside1-thickness*2;
@@ -1643,26 +1713,32 @@ void MakeTire(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t dztre
     Echelon(matrixcut1);
     SolveEchelon(matrixcut1,cut1coefficients);
     cut1partial = GetEllPartialAtPoint(cut1coefficients,cut_dytred/2,cut_ztire-cut_dztred);
-    /* Find inner cut side ellipse equation */
+    /* Find inner cut side top ellipse equation */
     Create_Ell2_Mat(matrixcut2, cut_dytred, cut_dztred, cut_dyside1, cut_zside1, cut_ztire, cut_dyhub, cut_zhub, cut1partial);
     Echelon(matrixcut2);
     SolveEchelon(matrixcut2,cut2coefficients);
+    PrintMatrix(matrixcut2,"test");
+    /* Find inner cut side bottom ellipse equation */
+    Create_Ell3_Mat(matrixcut3, cut_dytred, cut_dztred, cut_dyside1, cut_zside1, cut_ztire, cut_dyhub, cut_zhub, cut1partial);
+    Echelon(matrixcut3);
+    SolveEchelon(matrixcut3,cut3coefficients);
+
     /* Calculate BRL-CAD input parameters for inner cut tread ellipse */
-    if ((cut_ztire-cut_d1) < (cut_dytred/2)){
-	CalcInputVals(cut1coefficients,cut1cadparams,1);
-    }else{
-	CalcInputVals(cut1coefficients,cut1cadparams,0);
-    }
+    CalcInputVals(cut1coefficients,cut1cadparams,0);
+    
     /* Calculate BRL-CAD input parameters for inner cut side ellipse */
-    if ((cut_ztire-cut_dztred)-cut_zhub > (cut_dyside1/2-cut_dytred/2)){
-	CalcInputVals(cut2coefficients,cut2cadparams,1);
-    } else {
-	CalcInputVals(cut2coefficients,cut2cadparams,0);
-    }
+    CalcInputVals(cut2coefficients,cut2cadparams,1);
+    
+    /* Calculate BRL-CAD input parameters for inner cut side ellipse */
+    CalcInputVals(cut3coefficients,cut3cadparams,0);
+
+
+
+
     /* Insert inner tire cut volume */
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str,"-cut%s",suffix);
-    MakeTireSurface(file,bu_vls_addr(&str),cut1cadparams,cut2cadparams,cut_ztire,cut_dztred,cut_dytred,cut_dyhub,zhub,dyside1);
+    MakeTireSurface(file,bu_vls_addr(&str),cut1cadparams,cut2cadparams,cut3cadparams,cut_ztire,cut_dztred,cut_dytred,cut_dyhub,zhub,cut_dyside1,cut_zside1);
 
    /* Combine the tire solid, tire cut and tread into the
     * final tire region.
