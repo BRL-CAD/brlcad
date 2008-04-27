@@ -332,7 +332,7 @@ void CalcInputVals(fastf_t *inarray, fastf_t *outarray, int orientation)
     fastf_t x0,y0;
     fastf_t theta;
     fastf_t length1, length2;
-    fastf_t semimajor, semiminor;
+    fastf_t semiminor;
     fastf_t semimajorx,semimajory;
 
     A = inarray[0];
@@ -362,23 +362,13 @@ void CalcInputVals(fastf_t *inarray, fastf_t *outarray, int orientation)
 
     /* BRL-CAD's eto primitive requires that C is the semimajor */
     if (length1 > length2) {
-	semimajor = length1;
+	semimajorx = length1*cos(-theta);
+	semimajory = length1*sin(-theta);
 	semiminor = length2;
     } else {
-	semimajor = length2;
+	semimajorx = length2*sin(-theta);
+	semimajory = length2*cos(-theta);
 	semiminor = length1;
-    }
-
-    /* Based on orientation of Ellipse, largest component of C is either in the
-     * y direction (0) or z direction (1) - find the components.
-     */
-
-    if (orientation == 0){
-	semimajorx = semimajor*cos(-theta);
-	semimajory = semimajor*sin(-theta);
-    }else{
-	semimajorx = semimajor*sin(-theta);
-	semimajory = semimajor*cos(-theta);
     }
 
     /* Return final BRL-CAD input parameters */
@@ -1168,14 +1158,19 @@ void TreadPattern(struct rt_wdb (*file), char *suffix, fastf_t dwidth, fastf_t z
 void MakeTireSurface(struct rt_wdb (*file), char *suffix, fastf_t *ell1cadparams, fastf_t *ell2cadparams, fastf_t *ell3cadparams, fastf_t ztire, fastf_t dztred, fastf_t dytred, fastf_t dyhub, fastf_t zhub, fastf_t dyside1, fastf_t zside1)
 {
     struct wmember tireslicktread,tireslicktopsides,tireslickbottomshapes,tireslickbottomsides;
-    struct wmember tireslick, tiresides, tiresurface;
+    struct wmember tireslick;
     struct wmember innersolid;
-    struct wmember tire; 
     struct bu_vls str;
     bu_vls_init(&str);
     vect_t vertex,height;
     point_t origin,normal,C;
    
+
+    PrintCADParams(ell1cadparams,"ell1");
+    PrintCADParams(ell2cadparams,"ell2");
+    PrintCADParams(ell3cadparams,"ell3");
+
+
     /* Insert primitives */
     VSET(origin, 0, ell1cadparams[0], 0);
     VSET(normal, 0, 1, 0);
@@ -1676,6 +1671,9 @@ void MakeTire(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t dztre
     /* Calculate BRL-CAD input parameters for outer side top ellipse */
     CalcInputVals(ell2coefficients,ell2cadparams,1);
     /* Calculate BRL-CAD input parameters for outer side bottom ellipse */
+
+
+    /***********Figure out auto-orientation here!!!!!****************/
     CalcInputVals(ell3coefficients,ell3cadparams,0);
 
     /* Insert outer tire volume */
@@ -1717,7 +1715,6 @@ void MakeTire(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t dztre
     Create_Ell2_Mat(matrixcut2, cut_dytred, cut_dztred, cut_dyside1, cut_zside1, cut_ztire, cut_dyhub, cut_zhub, cut1partial);
     Echelon(matrixcut2);
     SolveEchelon(matrixcut2,cut2coefficients);
-    PrintMatrix(matrixcut2,"test");
     /* Find inner cut side bottom ellipse equation */
     Create_Ell3_Mat(matrixcut3, cut_dytred, cut_dztred, cut_dyside1, cut_zside1, cut_ztire, cut_dyhub, cut_zhub, cut1partial);
     Echelon(matrixcut3);
