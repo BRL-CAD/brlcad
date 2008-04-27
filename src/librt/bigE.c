@@ -23,12 +23,6 @@
  *
  * This module implements the 'E' command.
  *
- *  Author -
- *	John Anderson
- *
- *  Modifications -
- *	Bob Parker - modified to live in librt's drawable geometry object.
- *
  */
 /** @} */
 
@@ -130,16 +124,9 @@ Edrawtree(int dp)
 }
 
 HIDDEN union E_tree *
-#if 1
 add_solid(const struct directory	*dp,
 	  matp_t			mat,
 	  struct dg_client_data		*dgcdp)
-#else
-    add_solid(dp, mat, dgcdp)
-    struct directory *dp;
-    matp_t mat;
-    struct dg_client_data *dgcdp;
-#endif
 {
     union E_tree *eptr;
     struct nmgregion *r;
