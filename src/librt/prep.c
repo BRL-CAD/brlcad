@@ -21,8 +21,8 @@
 /** @{ */
 /** @file prep.c
  *
- *  Manage one-time preparations to be done before actual
- *  ray-tracing can commence.
+ * Manage one-time preparations to be done before actual ray-tracing
+ * can commence.
  *
  */
 /** @} */
@@ -40,8 +40,6 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "plot3.h"
-
-#include "./debug.h"
 
 
 BU_EXTERN(void		rt_ck, (struct rt_i	*rtip));

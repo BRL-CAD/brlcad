@@ -21,22 +21,22 @@
 /** @{ */
 /** @file g_half.c
  *
- *  Intersect a ray with a Halfspace.
+ * Intersect a ray with a Halfspace.
  *
- *  A HALFSPACE is defined by an outward pointing normal vector,
- *  and the distance from the origin to the plane, which is defined
- *  by N and d.
+ * A HALFSPACE is defined by an outward pointing normal vector, and
+ * the distance from the origin to the plane, which is defined by N
+ * and d.
  *
- *  With outward pointing normal vectors,
- *  the ray enters the half-space defined by a plane when D dot N < 0,
- *  is parallel to the plane when D dot N = 0, and exits otherwise.
+ * With outward pointing normal vectors, the ray enters the half-space
+ * defined by a plane when D dot N < 0, is parallel to the plane when
+ * D dot N = 0, and exits otherwise.
  *
- *  The inside of the halfspace bounded by the plane
- *  consists of all points P such that
+ * The inside of the halfspace bounded by the plane
+ * consists of all points P such that
  *	VDOT(P, N) - N[3] <= 0,
  *
- *  where N[3] stores the value d.
- *  See the remarks in h/vmath.h for more details.
+ * where N[3] stores the value d.
+ * See the remarks in h/vmath.h for more details.
  *
  */
 
@@ -52,7 +52,7 @@
 #include "nmg.h"
 #include "db.h"
 #include "rtgeom.h"
-#include "./debug.h"
+
 
 struct half_specific  {
     plane_t	half_eqn;		/* Plane equation, outward normal */

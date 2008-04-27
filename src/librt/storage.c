@@ -35,16 +35,16 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "bu.h"
-#include "./debug.h"
 
-/*
- *  			R T _ G E T _ S E G
+
+/**
+ * R T _ G E T _ S E G
  *
- *  This routine is called by the GET_SEG macro when the freelist
- *  is exhausted.  Rather than simply getting one additional structure,
- *  we get a whole batch, saving overhead.  When this routine is called,
- *  the seg resource must already be locked.
- *  malloc() locking is done in bu_malloc.
+ * This routine is called by the GET_SEG macro when the freelist is
+ * exhausted.  Rather than simply getting one additional structure, we
+ * get a whole batch, saving overhead.  When this routine is called,
+ * the seg resource must already be locked.  malloc() locking is done
+ * in bu_malloc.
  */
 void
 rt_get_seg(register struct resource *res)

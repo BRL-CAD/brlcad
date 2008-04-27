@@ -23,7 +23,7 @@
  *
  * Ray Tracing program, Boolean region evaluator.
  *
- *  Note to developers -
+ * Note to developers -
  *	Do not use the hit_point field in these routines, as
  *	for some solid types it has been filled in by the g_xxx_shot()
  *	routine, and for other solid types it may not have been.
@@ -44,7 +44,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "bu.h"
-#include "./debug.h"
+
 
 /* Boolean values.  Not easy to change, but defined symbolicly */
 #define FALSE	0

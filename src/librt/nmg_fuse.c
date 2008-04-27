@@ -21,9 +21,9 @@
 /** @{ */
 /** @file nmg_fuse.c
  *
- *  Routines to "fuse" entities together that are geometrically identical
- *  (within tolerance) into entities that share underlying geometry
- *  structures, so that the relationship is explicit.
+ * Routines to "fuse" entities together that are geometrically
+ * identical (within tolerance) into entities that share underlying
+ * geometry structures, so that the relationship is explicit.
  *
  */
 /** @} */
@@ -40,7 +40,7 @@
 #include "nmg.h"
 #include "raytrace.h"
 #include "nurb.h"
-#include "./debug.h"
+
 
 extern int debug_file_count;
 

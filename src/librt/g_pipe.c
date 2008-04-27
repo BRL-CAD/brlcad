@@ -47,7 +47,7 @@
 #include "raytrace.h"
 #include "wdb.h"
 #include "rtgeom.h"
-#include "./debug.h"
+
 
 struct id_pipe
 {

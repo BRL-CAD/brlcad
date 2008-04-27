@@ -21,138 +21,139 @@
 /** @{ */
 /** @file g_rpc.c
  *
- *	Intersect a ray with a Right Parabolic Cylinder.
+ * Intersect a ray with a Right Parabolic Cylinder.
  *
- *  Algorithm -
+ * Algorithm -
  *
- *  Given V, H, R, and B, there is a set of points on this rpc
+ * Given V, H, R, and B, there is a set of points on this rpc
  *
- *  { (x, y, z) | (x, y, z) is on rpc }
+ * { (x, y, z) | (x, y, z) is on rpc }
  *
- *  Through a series of Affine Transformations, this set of points will be
- *  transformed into a set of points on an rpc located at the origin
- *  with a rectangular halfwidth R of 1 along the Y axis, a height H of +1
- *  along the -X axis, a distance B of 1 along the -Z axis between the
- *  vertex V and the tip of the parabola.
+ * Through a series of Affine Transformations, this set of points will
+ * be transformed into a set of points on an rpc located at the origin
+ * with a rectangular halfwidth R of 1 along the Y axis, a height H of
+ * +1 along the -X axis, a distance B of 1 along the -Z axis between
+ * the vertex V and the tip of the parabola.
  *
  *
- *  { (x', y', z') | (x', y', z') is on rpc at origin }
+ * { (x', y', z') | (x', y', z') is on rpc at origin }
  *
- *  The transformation from X to X' is accomplished by:
+ * The transformation from X to X' is accomplished by:
  *
- *  X' = S(R( X - V ))
+ * X' = S(R( X - V ))
  *
- *  where R(X) =  ( H/(-|H|) )
- *  		 (  R/( |R|)  ) . X
- *  		  ( B/(-|B|) )
+ * where R(X) = ( H/(-|H|) )
+ *  		(  R/( |R|)  ) . X
+ *  		( B/(-|B|) )
  *
- *  and S(X) =	 (  1/|H|   0     0   )
- *  		(    0    1/|R|   0    ) . X
- *  		 (   0      0   1/|B| )
+ * and S(X) =	(  1/|H|   0     0   )
+ * 		(    0    1/|R|   0    ) . X
+ * 		(   0      0   1/|B| )
  *
- *  To find the intersection of a line with the surface of the rpc,
- *  consider the parametric line L:
+ * To find the intersection of a line with the surface of the rpc,
+ * consider the parametric line L:
  *
  *  	L : { P(n) | P + t(n) . D }
  *
- *  Call W the actual point of intersection between L and the rpc.
- *  Let W' be the point of intersection between L' and the unit rpc.
+ * Call W the actual point of intersection between L and the rpc.
+ * Let W' be the point of intersection between L' and the unit rpc.
  *
  *  	L' : { P'(n) | P' + t(n) . D' }
  *
- *  W = invR( invS( W' ) ) + V
+ * W = invR( invS( W' ) ) + V
  *
- *  Where W' = k D' + P'.
+ * Where W' = k D' + P'.
  *
- *  If Dy' and Dz' are both 0, then there is no hit on the rpc;
- *  but the end plates need checking.  If there is now only 1 hit
- *  point, the top plate needs to be checked as well.
+ * If Dy' and Dz' are both 0, then there is no hit on the rpc;
+ * but the end plates need checking.  If there is now only 1 hit
+ * point, the top plate needs to be checked as well.
  *
- *  Line L' hits the infinitely long canonical rpc at W' when
+ * Line L' hits the infinitely long canonical rpc at W' when
  *
  *	A * k**2 + B * k + C = 0
  *
- *  where
+ * where
  *
- *  A = Dy'**2
- *  B = (2 * Dy' * Py') - Dz'
- *  C = Py'**2 - Pz' - 1
- *  b = |Breadth| = 1.0
- *  h = |Height| = 1.0
- *  r = 1.0
+ * A = Dy'**2
+ * B = (2 * Dy' * Py') - Dz'
+ * C = Py'**2 - Pz' - 1
+ * b = |Breadth| = 1.0
+ * h = |Height| = 1.0
+ * r = 1.0
  *
- *  The quadratic formula yields k (which is constant):
+ * The quadratic formula yields k (which is constant):
  *
- *  k = [ -B +/- sqrt( B**2 - 4*A*C )] / (2*A)
+ * k = [ -B +/- sqrt( B**2 - 4*A*C )] / (2*A)
  *
- *  Now, D' = S( R( D ) )
- *  and  P' = S( R( P - V ) )
+ * Now, D' = S( R( D ) )
+ * and  P' = S( R( P - V ) )
  *
- *  Substituting,
+ * Substituting,
  *
- *  W = V + invR( invS[ k *( S( R( D ) ) ) + S( R( P - V ) ) ] )
- *    = V + invR( ( k * R( D ) ) + R( P - V ) )
- *    = V + k * D + P - V
- *    = k * D + P
+ * W = V + invR( invS[ k *( S( R( D ) ) ) + S( R( P - V ) ) ] )
+ *   = V + invR( ( k * R( D ) ) + R( P - V ) )
+ *   = V + k * D + P - V
+ *   = k * D + P
  *
- *  Note that ``k'' is constant, and is the same in the formulations
- *  for both W and W'.
+ * Note that ``k'' is constant, and is the same in the formulations
+ * for both W and W'.
  *
- *  The hit at ``k'' is a hit on the canonical rpc IFF
- *  -1 <= Wx' <= 0 and -1 <= Wz' <= 0.
+ * The hit at ``k'' is a hit on the canonical rpc IFF
+ * -1 <= Wx' <= 0 and -1 <= Wz' <= 0.
  *
- *  NORMALS.  Given the point W on the surface of the rpc,
- *  what is the vector normal to the tangent plane at that point?
+ * NORMALS.  Given the point W on the surface of the rpc, what is the
+ * vector normal to the tangent plane at that point?
  *
- *  Map W onto the unit rpc, ie:  W' = S( R( W - V ) ).
+ * Map W onto the unit rpc, ie:  W' = S( R( W - V ) ).
  *
- *  Plane on unit rpc at W' has a normal vector N' where
+ * Plane on unit rpc at W' has a normal vector N' where
  *
- *  N' = <0, Wy', -.5>.
+ * N' = <0, Wy', -.5>.
  *
- *  The plane transforms back to the tangent plane at W, and this
- *  new plane (on the original rpc) has a normal vector of N, viz:
+ * The plane transforms back to the tangent plane at W, and this new
+ * plane (on the original rpc) has a normal vector of N, viz:
  *
- *  N = inverse[ transpose( inverse[ S o R ] ) ] ( N' )
+ * N = inverse[ transpose( inverse[ S o R ] ) ] ( N' )
  *
- *  because if H is perpendicular to plane Q, and matrix M maps from
- *  Q to Q', then inverse[ transpose(M) ] (H) is perpendicular to Q'.
- *  Here, H and Q are in "prime space" with the unit sphere.
- *  [Somehow, the notation here is backwards].
- *  So, the mapping matrix M = inverse( S o R ), because
- *  S o R maps from normal space to the unit sphere.
+ * because if H is perpendicular to plane Q, and matrix M maps from Q
+ * to Q', then inverse[ transpose(M) ] (H) is perpendicular to Q'.
+ * Here, H and Q are in "prime space" with the unit sphere.  [Somehow,
+ * the notation here is backwards].  So, the mapping matrix M =
+ * inverse( S o R ), because S o R maps from normal space to the unit
+ * sphere.
  *
- *  N = inverse[ transpose( inverse[ S o R ] ) ] ( N' )
- *    = inverse[ transpose(invR o invS) ] ( N' )
- *    = inverse[ transpose(invS) o transpose(invR) ] ( N' )
- *    = inverse[ inverse(S) o R ] ( N' )
- *    = invR o S ( N' )
+ * N = inverse[ transpose( inverse[ S o R ] ) ] ( N' )
+ *   = inverse[ transpose(invR o invS) ] ( N' )
+ *   = inverse[ transpose(invS) o transpose(invR) ] ( N' )
+ *   = inverse[ inverse(S) o R ] ( N' )
+ *   = invR o S ( N' )
  *
- *  because inverse(R) = transpose(R), so R = transpose( invR ),
- *  and S = transpose( S ).
+ * because inverse(R) = transpose(R), so R = transpose( invR ),
+ * and S = transpose( S ).
  *
- *  Note that the normal vector produced above will not have unit length.
+ * Note that the normal vector produced above will not have unit
+ * length.
  *
- *  THE TOP AND END PLATES.
+ * THE TOP AND END PLATES.
  *
- *  If Dz' == 0, line L' is parallel to the top plate, so there is no
- *  hit on the top plate.  Otherwise, rays intersect the top plate
- *  with k = (0 - Pz')/Dz'.  The solution is within the top plate
- *  IFF  -1 <= Wx' <= 0 and -1 <= Wy' <= 1.
+ * If Dz' == 0, line L' is parallel to the top plate, so there is no
+ * hit on the top plate.  Otherwise, rays intersect the top plate
+ * with k = (0 - Pz')/Dz'.  The solution is within the top plate
+ * IFF  -1 <= Wx' <= 0 and -1 <= Wy' <= 1.
  *
- *  If Dx' == 0, line L' is parallel to the end plates, so there is no
- *  hit on the end plates.  Otherwise, rays intersect the front plate
- *  with k = (0 - Px') / Dx' and the back plate with k = (-1 - Px') / Dx'.
+ * If Dx' == 0, line L' is parallel to the end plates, so there is no
+ * hit on the end plates.  Otherwise, rays intersect the front plate
+ * with k = (0 - Px') / Dx' and the back plate with k = (-1 - Px') / Dx'.
  *
- *  The solution W' is within an end plate IFF
+ * The solution W' is within an end plate IFF
  *
  *	Wy'**2 + Wz' <= 1.0  and  Wz' <= 1.0
  *
- *  The normal for a hit on the top plate is -Bunit.
- *  The normal for a hit on the front plate is -Hunit, and
- *  the normal for a hit on the back plate is +Hunit.
+ * The normal for a hit on the top plate is -Bunit.
+ * The normal for a hit on the front plate is -Hunit, and
+ * the normal for a hit on the back plate is +Hunit.
  *
- *  Authors -
+ * Authors -
  *	Michael J. Markowski
  *
  */
@@ -172,7 +173,6 @@
 #include "nmg.h"
 #include "raytrace.h"
 #include "rtgeom.h"
-#include "./debug.h"
 
 
 struct rpc_specific {

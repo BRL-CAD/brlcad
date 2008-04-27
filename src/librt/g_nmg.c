@@ -21,10 +21,7 @@
 /** @{ */
 /** @file g_nmg.c
  *
- *	Intersect a ray with an NMG solid.
- *
- *  Authors -
- *
+ * Intersect a ray with an NMG solid.
  *
  */
 /** @} */
@@ -42,7 +39,6 @@
 #include "nmg.h"
 #include "raytrace.h"
 #include "nurb.h"
-#include "./debug.h"
 
 
 /* rt_nmg_internal is just "model", from nmg.h */

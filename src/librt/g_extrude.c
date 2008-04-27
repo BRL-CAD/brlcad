@@ -21,10 +21,10 @@
 /** @{ */
 /** @file g_extrude.c
  *
- *	Provide support for solids of extrusion.
+ * Provide support for solids of extrusion.
  *
- *  Authors -
- *  	John R. Anderson
+ * Authors -
+ * 	John R. Anderson
  *
  */
 
@@ -43,7 +43,7 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "nurb.h"
-#include "./debug.h"
+
 
 extern int seg_to_vlist( struct bu_list *vhead, const struct rt_tess_tol *ttol, point_t	V,
 			 vect_t	u_vec, vect_t v_vec, struct rt_sketch_internal *sketch_ip, genptr_t seg);

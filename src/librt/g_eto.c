@@ -21,7 +21,7 @@
 /** @{ */
 /** @file g_eto.c
  *
- *	Intersect a ray with an Elliptical Torus.
+ * Intersect a ray with an Elliptical Torus.
  *
  */
 
@@ -38,7 +38,7 @@
 #include "nmg.h"
 #include "raytrace.h"
 #include "rtgeom.h"
-#include "./debug.h"
+
 
 /*
  * The ETO has the following input fields:

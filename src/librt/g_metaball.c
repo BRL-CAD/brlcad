@@ -44,7 +44,7 @@
 #include "nurb.h"
 #include "rtgeom.h"
 #include "wdb.h"
-#include "./debug.h"
+
 
 /*
  *  Algorithm:

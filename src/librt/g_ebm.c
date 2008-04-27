@@ -21,8 +21,8 @@
 /** @{ */
 /** @file g_ebm.c
  *
- *	Intersect a ray with an Extruded Bitmap,
- *	where the bitmap is taken from a bw(5) file.
+ * Intersect a ray with an Extruded Bitmap, where the bitmap is taken
+ * from a bw(5) file.
  *
  */
 
@@ -43,8 +43,8 @@
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
-#include "./debug.h"
 #include "./fixpt.h"
+
 
 /*
   NOTES:

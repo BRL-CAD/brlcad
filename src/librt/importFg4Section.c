@@ -30,7 +30,6 @@
 
 #include "common.h"
 
-/* system headers */
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
@@ -38,7 +37,6 @@
 #include <errno.h>
 #include "bio.h"
 
-/* interface headers */
 #include "db.h"
 #include "vmath.h"
 #include "nmg.h"
@@ -46,9 +44,6 @@
 #include "raytrace.h"
 #include "wdb.h"
 #include "plot3.h"
-
-/* local headers */
-#include "../librt/debug.h"
 
 
 static int	grid_size;		/* Number of points that will fit in current grid_pts array */

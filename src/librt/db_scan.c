@@ -21,10 +21,8 @@
 /** @{ */
 /** @file db_scan.c
  *
- * Functions -
- *	db_scan		Sequentially read database, send objects to handler()
- *	db_ident	Update database IDENT record
- *      db_conversions  Update unit conversion factors
+ * Routines to sequentially read database, send objects to handlers,
+ * process ident records, and perform unit conversion.
  *
  */
 
@@ -38,7 +36,6 @@
 #include "db.h"
 #include "raytrace.h"
 
-#include "./debug.h"
 
 #define DEBUG_PR(aaa, rrr) 	{\
 	if (RT_G_DEBUG&DEBUG_DB) bu_log("db_scan x%x %c (0%o)\n", \

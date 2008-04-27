@@ -21,9 +21,8 @@
 /** @{ */
 /** @file g_pg.c
  *
- *	Intersect a ray with a Polygonal Object
- *	that has no explicit topology.
- *	It is assumed that the solid has no holes.
+ * Intersect a ray with a Polygonal Object that has no explicit
+ * topology.  It is assumed that the solid has no holes.
  *
  */
 /** @} */
@@ -40,7 +39,6 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 
-#include "./debug.h"
 
 #define TRI_NULL	((struct tri_specific *)0)
 

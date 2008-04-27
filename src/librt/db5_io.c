@@ -21,7 +21,7 @@
 /** @{ */
 /** @file db5_io.c
  *
- *  Handle import/export and IO of v5 database objects.
+ * Handle import/export and IO of v5 database objects.
  *
  */
 
@@ -38,7 +38,6 @@
 #include "raytrace.h"
 #include "mater.h"
 
-#include "./debug.h"
 
 /* Number of bytes used for each value of DB5HDR_WIDTHCODE_* */
 const int db5_enc_len[4] = {

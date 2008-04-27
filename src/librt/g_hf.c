@@ -21,10 +21,10 @@
 /** @{ */
 /** @file g_hf.c
  *
- *	Intersect a ray with a height field,
- *	where the heights are imported from an external data file,
- *	and where some (or all) of the parameters of that data file
- *	may be read in from an external control file.
+ * Intersect a ray with a height field, where the heights are imported
+ * from an external data file, and where some (or all) of the
+ * parameters of that data file may be read in from an external
+ * control file.
  *
  */
 
@@ -43,7 +43,6 @@
 #include "nmg.h"
 #include "raytrace.h"
 #include "rtgeom.h"
-#include "./debug.h"
 
 
 /*

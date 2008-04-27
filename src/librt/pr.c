@@ -21,7 +21,7 @@
 /** @{ */
 /** @file pr.c
  *
- *  Routines to print LIBRT data structures using bu_log().
+ * Routines to print LIBRT data structures using bu_log().
  *
  */
 /** @} */
@@ -36,11 +36,10 @@
 #include "vmath.h"
 #include "bu.h"
 #include "raytrace.h"
-#include "./debug.h"
 
 
-/*
- *			R T _ P R _ S O L T A B
+/**
+ * R T _ P R _ S O L T A B
  */
 void
 rt_pr_soltab(register const struct soltab *stp)
@@ -63,8 +62,8 @@ rt_pr_soltab(register const struct soltab *stp)
     rt_functab[id].ft_print( stp );
 }
 
-/*
- *			R T _ P R _ R E G I O N
+/**
+ * R T _ P R _ R E G I O N
  */
 void
 rt_pr_region(register const struct region *rp)
@@ -100,9 +99,8 @@ rt_pr_region(register const struct region *rp)
     bu_vls_free(&v);
 }
 
-/*
- *			R T _ P R _ P A R T I T I O N S
- *
+/**
+ * R T _ P R _ P A R T I T I O N S
  */
 void
 rt_pr_partitions(const struct rt_i *rtip, register const struct partition *phead, const char *title)
@@ -131,8 +129,8 @@ rt_pr_partitions(const struct rt_i *rtip, register const struct partition *phead
     bu_vls_free( &v );
 }
 
-/*
- *			R T _ P R _ P T _ V L S
+/**
+ * R T _ P R _ P T _ V L S
  */
 void
 rt_pr_pt_vls(struct bu_vls *v, const struct rt_i *rtip, register const struct partition *pp)
@@ -193,8 +191,8 @@ rt_pr_pt_vls(struct bu_vls *v, const struct rt_i *rtip, register const struct pa
     }
 }
 
-/*
- *			R T _ P R _ P T
+/**
+ * R T _ P R _ P T
  */
 void
 rt_pr_pt(const struct rt_i *rtip, register const struct partition *pp)
@@ -209,8 +207,8 @@ rt_pr_pt(const struct rt_i *rtip, register const struct partition *pp)
     bu_vls_free( &v );
 }
 
-/*
- *			R T _ P R _ S E G _ V L S
+/**
+ * R T _ P R _ S E G _ V L S
  */
 void
 rt_pr_seg_vls(struct bu_vls *v, register const struct seg *segp)
@@ -229,8 +227,8 @@ rt_pr_seg_vls(struct bu_vls *v, register const struct seg *segp)
 		  segp->seg_in.hit_rayp->index );
 }
 
-/*
- *			R T _ P R _ S E G
+/**
+ * R T _ P R _ S E G
  */
 void
 rt_pr_seg(register const struct seg *segp)
@@ -245,8 +243,8 @@ rt_pr_seg(register const struct seg *segp)
     bu_vls_free( &v );
 }
 
-/*
- *			R T _ P R _ H I T
+/**
+ * R T _ P R _ H I T
  */
 void
 rt_pr_hit(const char *str, register const struct hit *hitp)
@@ -261,8 +259,8 @@ rt_pr_hit(const char *str, register const struct hit *hitp)
     bu_vls_free( &v );
 }
 
-/*
- *			R T _ P R _ H I T _ V L S
+/**
+ * R T _ P R _ H I T _ V L S
  */
 void
 rt_pr_hit_vls(struct bu_vls *v, const char *str, register const struct hit *hitp)
@@ -277,8 +275,8 @@ rt_pr_hit_vls(struct bu_vls *v, const char *str, register const struct hit *hitp
 		  hitp->hit_dist, hitp->hit_surfno );
 }
 
-/*
- *			R T _ P R _ H I T A R R A Y _ V L S
+/**
+ * R T _ P R _ H I T A R R A Y _ V L S
  */
 void
 rt_pr_hitarray_vls(struct bu_vls *v, const char *str, register const struct hit *hitp, int count)
@@ -297,13 +295,13 @@ rt_pr_hitarray_vls(struct bu_vls *v, const char *str, register const struct hit 
     }
 }
 
-/*
- *			R T _ P R _ T R E E
+/**
+ * R T _ P R _ T R E E
  *
- *  Warning:  This function uses recursion rather than iteration and
- *  a stack, to preserve simplicity.
- *  On machines with limited stack space, such as the Gould,
- *  this subroutine may overwhelm the stack on complex expressions.
+ * Warning: This function uses recursion rather than iteration and a
+ * stack, to preserve simplicity.  On machines with limited stack
+ * space, such as the Gould, this subroutine may overwhelm the stack
+ * on complex expressions.
  */
 void
 rt_pr_tree(register const union tree *tp, int lvl)
@@ -385,13 +383,13 @@ rt_pr_tree(register const union tree *tp, int lvl)
     }
 }
 
-/*
- *			R T _ P R _ T R E E _ V L S
+/**
+ * R T _ P R _ T R E E _ V L S
  *
- *  Produce a compact representation of this tree.
- *  The destination vls must be initialized by the caller.
+ * Produce a compact representation of this tree.  The destination vls
+ * must be initialized by the caller.
  *
- *  Operations are responsible for generating white space.
+ * Operations are responsible for generating white space.
  */
 void
 rt_pr_tree_vls(struct bu_vls *vls, register const union tree *tp)
@@ -480,12 +478,12 @@ rt_pr_tree_vls(struct bu_vls *vls, register const union tree *tp)
     }
 }
 
-/*
- *			R T _ P R _ T R E E _ S T R
+/**
+ * R T _ P R _ T R E E _ S T R
  *
- *  JRA's tree pretty-printer.
- *  Formats the tree compactly into a dynamically allocated string.
- *  Uses recursion and lots of malloc/free activity.
+ * JRA's tree pretty-printer.  Formats the tree compactly into a
+ * dynamically allocated string.  Uses recursion and lots of
+ * malloc/free activity.
  */
 char *
 rt_pr_tree_str(const union tree *tree)
@@ -549,12 +547,12 @@ rt_pr_tree_str(const union tree *tree)
     return bu_strdup("Unknown:tr_op");
 }
 
-/*
- *  			R T _ P R _ T R E E _ V A L
+/**
+ * R T _ P R _ T R E E _ V A L
  *
- *  Print the actual values of the terms in a boolean expression.
+ * Print the actual values of the terms in a boolean expression.
  *
- *  The values for pr_name determine the printing action:
+ * The values for pr_name determine the printing action:
  *	0	bit value
  *	1	name
  *	2	bit number
@@ -659,8 +657,8 @@ rt_pr_tree_val(register const union tree *tp, const struct partition *partp, int
     if ( lvl == 0 )  bu_log("\n");
 }
 
-/*
- *			R T _ P R _ F A L L B A C K _ A N G L E
+/**
+ * R T _ P R _ F A L L B A C K _ A N G L E
  */
 void
 rt_pr_fallback_angle(struct bu_vls *str, const char *prefix, const double *angles)
@@ -674,10 +672,10 @@ rt_pr_fallback_angle(struct bu_vls *str, const char *prefix, const double *angle
 		  prefix, INTCLAMP(angles[3]), INTCLAMP(angles[4]) );
 }
 
-/*
- *			R T _ F I N D _ F A L L B A C K _ A N G L E
+/**
+ * R T _ F I N D _ F A L L B A C K _ A N G L E
  *
- *  In degrees.
+ * In degrees.
  */
 void
 rt_find_fallback_angle(double *angles, const fastf_t *vec)
@@ -744,10 +742,10 @@ rt_find_fallback_angle(double *angles, const fastf_t *vec)
     }
 }
 
-/*
- *			R T _ P R _ T O L
+/**
+ * R T _ P R _ T O L
  *
- *  Print a tolerance structure.
+ * Print a tolerance structure.
  */
 void
 rt_pr_tol(const struct bn_tol *tol)
@@ -759,8 +757,8 @@ rt_pr_tol(const struct bn_tol *tol)
 	   tol->perp, tol->para );
 }
 
-/*
- *			R T _ P R _ U V C O O R D
+/**
+ * R T _ P R _ U V C O O R D
  */
 void
 rt_pr_uvcoord(const struct uvcoord *uvp)

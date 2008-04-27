@@ -21,19 +21,19 @@
 /** @{ */
 /** @file g_grip.c
  *
- *  Intersect a ray with a "grip" and return nothing.
+ * Intersect a ray with a "grip" and return nothing.
  *
- *  A GRIP is defiend by a direction normal, a center and a
- *  height/magnitued vector.  The center is the control point used
- *  for all grip movements.
+ * A GRIP is defiend by a direction normal, a center and a
+ * height/magnitued vector.  The center is the control point used for
+ * all grip movements.
  *
- *  All Ray intersections return "missed"
+ * All Ray intersections return "missed"
  *
- *  The bounding box for a grip is emtpy.
+ * The bounding box for a grip is emtpy.
  *
- *  Authors -
+ * Authors -
  *	Christopher T. Johnson
- *      Geometric Solutions, Inc.
+ *	Geometric Solutions, Inc.
  */
 
 #include "common.h"
@@ -48,7 +48,7 @@
 #include "nmg.h"
 #include "db.h"
 #include "rtgeom.h"
-#include "./debug.h"
+
 
 struct grip_specific {
     long	grip_magic;

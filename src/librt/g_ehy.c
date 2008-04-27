@@ -21,130 +21,130 @@
 /** @{ */
 /** @file g_ehy.c
  *
- *	Intersect a ray with an Elliptical Hyperboloid.
+ * Intersect a ray with an Elliptical Hyperboloid.
  *
- *  Algorithm -
+ * Algorithm -
  *
- *  Given V, H, R, and B, there is a set of points on this ehy
+ * Given V, H, R, and B, there is a set of points on this ehy
  *
- *  { (x, y, z) | (x, y, z) is on ehy }
+ * { (x, y, z) | (x, y, z) is on ehy }
  *
- *  Through a series of Affine Transformations, this set of points will be
- *  transformed into a set of points on an ehy located at the origin
- *  with a semi-major axis R1 along the +Y axis, a semi-minor axis R2
- *  along the -X axis, a height H along the -Z axis, a vertex V at
- *  the origin, and a distance c between the tip of the hyperboloid and
- *  vertex of the asymptotic cone.
+ * Through a series of Affine Transformations, this set of points will be
+ * transformed into a set of points on an ehy located at the origin
+ * with a semi-major axis R1 along the +Y axis, a semi-minor axis R2
+ * along the -X axis, a height H along the -Z axis, a vertex V at
+ * the origin, and a distance c between the tip of the hyperboloid and
+ * vertex of the asymptotic cone.
  *
  *
- *  { (x', y', z') | (x', y', z') is on ehy at origin }
+ * { (x', y', z') | (x', y', z') is on ehy at origin }
  *
- *  The transformation from X to X' is accomplished by:
+ * The transformation from X to X' is accomplished by:
  *
- *  X' = S(R( X - V ))
+ * X' = S(R( X - V ))
  *
- *  where R(X) =  ( R2/(-|R2|) )
- *  		 (  R1/( |R1|)  ) . X
- *  		  ( H /(-|H |) )
+ * where R(X) =	( R2/(-|R2|) )
+ *  		(  R1/( |R1|)  ) . X
+ * 		( H /(-|H |) )
  *
- *  and S(X) =	 (  1/|R2|   0     0   )
- *  		(    0    1/|R1|   0    ) . X
- *  		 (   0      0   1/|H | )
+ * and S(X) =	(  1/|R2|   0     0   )
+ * 		(    0    1/|R1|   0    ) . X
+ * 		(   0      0   1/|H | )
  *
- *  To find the intersection of a line with the surface of the ehy,
- *  consider the parametric line L:
+ * To find the intersection of a line with the surface of the ehy,
+ * consider the parametric line L:
  *
- *  	L : { P(n) | P + t(n) . D }
+ * L : { P(n) | P + t(n) . D }
  *
- *  Call W the actual point of intersection between L and the ehy.
- *  Let W' be the point of intersection between L' and the unit ehy.
+ * Call W the actual point of intersection between L and the ehy.
+ * Let W' be the point of intersection between L' and the unit ehy.
  *
- *  	L' : { P'(n) | P' + t(n) . D' }
+ * L' : { P'(n) | P' + t(n) . D' }
  *
- *  W = invR( invS( W' ) ) + V
+ * W = invR( invS( W' ) ) + V
  *
- *  Where W' = k D' + P'.
+ * Where W' = k D' + P'.
  *
- *  If Dy' and Dz' are both 0, then there is no hit on the ehy;
- *  but the end plates need checking.  If there is now only 1 hit
- *  point, the top plate needs to be checked as well.
+ * If Dy' and Dz' are both 0, then there is no hit on the ehy;
+ * but the end plates need checking.  If there is now only 1 hit
+ * point, the top plate needs to be checked as well.
  *
- *  Line L' hits the infinitely long canonical ehy at W' when
+ * Line L' hits the infinitely long canonical ehy at W' when
  *
- *	A * k**2 + B * k + C = 0
+ * A * k**2 + B * k + C = 0
  *
- *  where
+ * where
  *
- *  A = Dz'**2 - (2*c' + 1)*(Dx'**2 + Dy'**2)
- *  B = 2*( (Pz' + c' + 1)*Dz' - (2*c' + 1)*(Dx'*Px' + Dy'Py') )
- *  C = Pz'**2 - (2*c' + 1)*(Px'**2 + Py'**2 - 1) + 2*(c' + 1)*Pz'
- *  b = |Breadth| = 1.0
- *  h = |Height| = 1.0
- *  r = 1.0
- *  c' = c / |Breadth|
+ * A = Dz'**2 - (2*c' + 1)*(Dx'**2 + Dy'**2)
+ * B = 2*( (Pz' + c' + 1)*Dz' - (2*c' + 1)*(Dx'*Px' + Dy'Py') )
+ * C = Pz'**2 - (2*c' + 1)*(Px'**2 + Py'**2 - 1) + 2*(c' + 1)*Pz'
+ * b = |Breadth| = 1.0
+ * h = |Height| = 1.0
+ * r = 1.0
+ * c' = c / |Breadth|
  *
- *  The quadratic formula yields k (which is constant):
+ * The quadratic formula yields k (which is constant):
  *
- *  k = [ -B +/- sqrt( B**2 - 4 * A * C )] / (2.0 * A)
+ * k = [ -B +/- sqrt( B**2 - 4 * A * C )] / (2.0 * A)
  *
- *  Now, D' = S( R( D ) )
- *  and  P' = S( R( P - V ) )
+ * Now, D' = S( R( D ) )
+ * and  P' = S( R( P - V ) )
  *
- *  Substituting,
+ * Substituting,
  *
- *  W = V + invR( invS[ k *( S( R( D ) ) ) + S( R( P - V ) ) ] )
- *    = V + invR( ( k * R( D ) ) + R( P - V ) )
- *    = V + k * D + P - V
- *    = k * D + P
+ * W = V + invR( invS[ k *( S( R( D ) ) ) + S( R( P - V ) ) ] )
+ *   = V + invR( ( k * R( D ) ) + R( P - V ) )
+ *   = V + k * D + P - V
+ *   = k * D + P
  *
- *  Note that ``k'' is constant, and is the same in the formulations
- *  for both W and W'.
+ * Note that ``k'' is constant, and is the same in the formulations
+ * for both W and W'.
  *
- *  The hit at ``k'' is a hit on the canonical ehy IFF
- *  -1 <= Wz' <= 0.
+ * The hit at ``k'' is a hit on the canonical ehy IFF
+ * -1 <= Wz' <= 0.
  *
- *  NORMALS.  Given the point W on the surface of the ehy,
- *  what is the vector normal to the tangent plane at that point?
+ * NORMALS.  Given the point W on the surface of the ehy,
+ * what is the vector normal to the tangent plane at that point?
  *
- *  Map W onto the unit ehy, ie:  W' = S( R( W - V ) ).
+ * Map W onto the unit ehy, ie:  W' = S( R( W - V ) ).
  *
- *  Plane on unit ehy at W' has a normal vector N' where
+ * Plane on unit ehy at W' has a normal vector N' where
  *
- *  N' = <Wx', Wy', -(z + c + 1) / (2*c + 1)>
+ * N' = <Wx', Wy', -(z + c + 1) / (2*c + 1)>
  *
- *  The plane transforms back to the tangent plane at W, and this
- *  new plane (on the original ehy) has a normal vector of N, viz:
+ * The plane transforms back to the tangent plane at W, and this
+ * new plane (on the original ehy) has a normal vector of N, viz:
  *
- *  N = inverse[ transpose( inverse[ S o R ] ) ] ( N' )
+ * N = inverse[ transpose( inverse[ S o R ] ) ] ( N' )
  *
- *  because if H is perpendicular to plane Q, and matrix M maps from
- *  Q to Q', then inverse[ transpose(M) ] (H) is perpendicular to Q'.
- *  Here, H and Q are in "prime space" with the unit sphere.
- *  [Somehow, the notation here is backwards].
- *  So, the mapping matrix M = inverse( S o R ), because
- *  S o R maps from normal space to the unit sphere.
+ * because if H is perpendicular to plane Q, and matrix M maps from
+ * Q to Q', then inverse[ transpose(M) ] (H) is perpendicular to Q'.
+ * Here, H and Q are in "prime space" with the unit sphere.
+ * [Somehow, the notation here is backwards].
+ * So, the mapping matrix M = inverse( S o R ), because
+ * S o R maps from normal space to the unit sphere.
  *
- *  N = inverse[ transpose( inverse[ S o R ] ) ] ( N' )
- *    = inverse[ transpose(invR o invS) ] ( N' )
- *    = inverse[ transpose(invS) o transpose(invR) ] ( N' )
- *    = inverse[ inverse(S) o R ] ( N' )
- *    = invR o S ( N' )
+ * N = inverse[ transpose( inverse[ S o R ] ) ] ( N' )
+ *   = inverse[ transpose(invR o invS) ] ( N' )
+ *   = inverse[ transpose(invS) o transpose(invR) ] ( N' )
+ *   = inverse[ inverse(S) o R ] ( N' )
+ *   = invR o S ( N' )
  *
- *  because inverse(R) = transpose(R), so R = transpose( invR ),
- *  and S = transpose( S ).
+ * because inverse(R) = transpose(R), so R = transpose( invR ),
+ * and S = transpose( S ).
  *
- *  Note that the normal vector produced above will not have unit length.
+ * Note that the normal vector produced above will not have unit length.
  *
- *  THE TOP PLATE.
+ * THE TOP PLATE.
  *
- *  If Dz' == 0, line L' is parallel to the top plate, so there is no
- *  hit on the top plate.  Otherwise, rays intersect the top plate
- *  with k = (0 - Pz')/Dz'.  The solution is within the top plate
- *  IFF Wx'**2 + Wy'**2 <= 1.
+ * If Dz' == 0, line L' is parallel to the top plate, so there is no
+ * hit on the top plate.  Otherwise, rays intersect the top plate
+ * with k = (0 - Pz')/Dz'.  The solution is within the top plate
+ * IFF Wx'**2 + Wy'**2 <= 1.
  *
- *  The normal for a hit on the top plate is -Hunit.
+ * The normal for a hit on the top plate is -Hunit.
  *
- *  Authors -
+ * Authors -
  *	Michael J. Markowski
  *
  */
@@ -162,7 +162,7 @@
 #include "nmg.h"
 #include "raytrace.h"
 #include "rtgeom.h"
-#include "./debug.h"
+
 
 struct ehy_specific {
     point_t	ehy_V;		/* vector to ehy origin */

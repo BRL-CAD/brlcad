@@ -21,128 +21,129 @@
 /** @{ */
 /** @file g_epa.c
  *
- *	Intersect a ray with an Elliptical Paraboloid.
+ * Intersect a ray with an Elliptical Paraboloid.
  *
- *  Algorithm -
+ * Algorithm -
  *
- *  Given V, H, R, and B, there is a set of points on this epa
+ * Given V, H, R, and B, there is a set of points on this epa
  *
- *  { (x, y, z) | (x, y, z) is on epa }
+ * { (x, y, z) | (x, y, z) is on epa }
  *
- *  Through a series of Affine Transformations, this set of points will be
- *  transformed into a set of points on an epa located at the origin
- *  with a semi-major axis R1 along the +Y axis, a semi-minor axis R2
- *  along the -X axis, a height H along the -Z axis, and a vertex V at
- *  the origin.
+ * Through a series of Affine Transformations, this set of points will
+ * be transformed into a set of points on an epa located at the origin
+ * with a semi-major axis R1 along the +Y axis, a semi-minor axis R2
+ * along the -X axis, a height H along the -Z axis, and a vertex V at
+ * the origin.
  *
  *
- *  { (x', y', z') | (x', y', z') is on epa at origin }
+ * { (x', y', z') | (x', y', z') is on epa at origin }
  *
- *  The transformation from X to X' is accomplished by:
+ * The transformation from X to X' is accomplished by:
  *
- *  X' = S(R( X - V ))
+ * X' = S(R( X - V ))
  *
- *  where R(X) =  ( R1/(-|R1|) )
- *  		 (  R2/( |R2|)  ) . X
- *  		  ( H /(-|H |) )
+ * where R(X) = ( R1/(-|R1|) )
+ *  		(  R2/( |R2|)  ) . X
+ * 		( H /(-|H |) )
  *
- *  and S(X) =	 (  1/|R1|   0     0   )
+ * and S(X) =	(  1/|R1|   0     0   )
  *  		(    0    1/|R2|   0    ) . X
- *  		 (   0      0   1/|H | )
+ * 		(   0      0   1/|H | )
  *
- *  To find the intersection of a line with the surface of the epa,
- *  consider the parametric line L:
+ * To find the intersection of a line with the surface of the epa,
+ * consider the parametric line L:
  *
- *  	L : { P(n) | P + t(n) . D }
+ * L : { P(n) | P + t(n) . D }
  *
- *  Call W the actual point of intersection between L and the epa.
- *  Let W' be the point of intersection between L' and the unit epa.
+ * Call W the actual point of intersection between L and the epa.  Let
+ * W' be the point of intersection between L' and the unit epa.
  *
- *  	L' : { P'(n) | P' + t(n) . D' }
+ * L' : { P'(n) | P' + t(n) . D' }
  *
- *  W = invR( invS( W' ) ) + V
+ * W = invR( invS( W' ) ) + V
  *
- *  Where W' = k D' + P'.
+ * Where W' = k D' + P'.
  *
- *  If Dy' and Dz' are both 0, then there is no hit on the epa;
- *  but the end plates need checking.  If there is now only 1 hit
- *  point, the top plate needs to be checked as well.
+ * If Dy' and Dz' are both 0, then there is no hit on the epa; but the
+ * end plates need checking.  If there is now only 1 hit point, the
+ * top plate needs to be checked as well.
  *
- *  Line L' hits the infinitely long epa at W' when
+ * Line L' hits the infinitely long epa at W' when
  *
- *	A * k**2 + B * k + C = 0
+ * A * k**2 + B * k + C = 0
  *
- *  where
+ * where
  *
- *  A = Dx'**2 + Dy'**2
- *  B = 2 * (Dx' * Px' + Dy' * Py') - Dz'
- *  C = Px'**2 + Py'**2 - Pz' - 1
- *  b = |Breadth| = 1.0
- *  h = |Height| = 1.0
- *  r = 1.0
+ * A = Dx'**2 + Dy'**2
+ * B = 2 * (Dx' * Px' + Dy' * Py') - Dz'
+ * C = Px'**2 + Py'**2 - Pz' - 1
+ * b = |Breadth| = 1.0
+ * h = |Height| = 1.0
+ * r = 1.0
  *
- *  The quadratic formula yields k (which is constant):
+ * The quadratic formula yields k (which is constant):
  *
- *  k = [ -B +/- sqrt( B**2 - 4 * A * C )] / (2.0 * A)
+ * k = [ -B +/- sqrt( B**2 - 4 * A * C )] / (2.0 * A)
  *
- *  Now, D' = S( R( D ) )
- *  and  P' = S( R( P - V ) )
+ * Now, D' = S( R( D ) )
+ * and  P' = S( R( P - V ) )
  *
- *  Substituting,
+ * Substituting,
  *
- *  W = V + invR( invS[ k *( S( R( D ) ) ) + S( R( P - V ) ) ] )
- *    = V + invR( ( k * R( D ) ) + R( P - V ) )
- *    = V + k * D + P - V
- *    = k * D + P
+ * W = V + invR( invS[ k *( S( R( D ) ) ) + S( R( P - V ) ) ] )
+ *   = V + invR( ( k * R( D ) ) + R( P - V ) )
+ *   = V + k * D + P - V
+ *   = k * D + P
  *
- *  Note that ``k'' is constant, and is the same in the formulations
- *  for both W and W'.
+ * Note that ``k'' is constant, and is the same in the formulations
+ * for both W and W'.
  *
- *  The hit at ``k'' is a hit on the canonical epa IFF
- *  Wz' <= 0.
+ * The hit at ``k'' is a hit on the canonical epa IFF
+ * Wz' <= 0.
  *
- *  NORMALS.  Given the point W on the surface of the epa,
- *  what is the vector normal to the tangent plane at that point?
+ * NORMALS.  Given the point W on the surface of the epa, what is the
+ * vector normal to the tangent plane at that point?
  *
- *  Map W onto the unit epa, ie:  W' = S( R( W - V ) ).
+ * Map W onto the unit epa, ie:  W' = S( R( W - V ) ).
  *
- *  Plane on unit epa at W' has a normal vector N' where
+ * Plane on unit epa at W' has a normal vector N' where
  *
- *  N' = <Wx', Wy', -.5>.
+ * N' = <Wx', Wy', -.5>.
  *
- *  The plane transforms back to the tangent plane at W, and this
- *  new plane (on the original epa) has a normal vector of N, viz:
+ * The plane transforms back to the tangent plane at W, and this new
+ * plane (on the original epa) has a normal vector of N, viz:
  *
- *  N = inverse[ transpose( inverse[ S o R ] ) ] ( N' )
+ * N = inverse[ transpose( inverse[ S o R ] ) ] ( N' )
  *
- *  because if H is perpendicular to plane Q, and matrix M maps from
- *  Q to Q', then inverse[ transpose(M) ] (H) is perpendicular to Q'.
- *  Here, H and Q are in "prime space" with the unit sphere.
- *  [Somehow, the notation here is backwards].
- *  So, the mapping matrix M = inverse( S o R ), because
- *  S o R maps from normal space to the unit sphere.
+ * because if H is perpendicular to plane Q, and matrix M maps from Q
+ * to Q', then inverse[ transpose(M) ] (H) is perpendicular to Q'.
+ * Here, H and Q are in "prime space" with the unit sphere.  [Somehow,
+ * the notation here is backwards].  So, the mapping matrix M =
+ * inverse( S o R ), because S o R maps from normal space to the unit
+ * sphere.
  *
- *  N = inverse[ transpose( inverse[ S o R ] ) ] ( N' )
- *    = inverse[ transpose(invR o invS) ] ( N' )
- *    = inverse[ transpose(invS) o transpose(invR) ] ( N' )
- *    = inverse[ inverse(S) o R ] ( N' )
- *    = invR o S ( N' )
+ * N = inverse[ transpose( inverse[ S o R ] ) ] ( N' )
+ *   = inverse[ transpose(invR o invS) ] ( N' )
+ *   = inverse[ transpose(invS) o transpose(invR) ] ( N' )
+ *   = inverse[ inverse(S) o R ] ( N' )
+ *   = invR o S ( N' )
  *
- *  because inverse(R) = transpose(R), so R = transpose( invR ),
- *  and S = transpose( S ).
+ * because inverse(R) = transpose(R), so R = transpose( invR ),
+ * and S = transpose( S ).
  *
- *  Note that the normal vector produced above will not have unit length.
+ * Note that the normal vector produced above will not have unit
+ * length.
  *
- *  THE TOP PLATE.
+ * THE TOP PLATE.
  *
- *  If Dz' == 0, line L' is parallel to the top plate, so there is no
- *  hit on the top plate.  Otherwise, rays intersect the top plate
- *  with k = (0 - Pz')/Dz'.  The solution is within the top plate
- *  IFF Wx'**2 + Wy'**2 <= 1.
+ * If Dz' == 0, line L' is parallel to the top plate, so there is no
+ * hit on the top plate.  Otherwise, rays intersect the top plate with
+ * k = (0 - Pz')/Dz'.  The solution is within the top plate IFF Wx'**2
+ * + Wy'**2 <= 1.
  *
- *  The normal for a hit on the top plate is -Hunit.
+ * The normal for a hit on the top plate is -Hunit.
  *
- *  Authors -
+ * Authors -
  *	Michael J. Markowski
  *
  */
@@ -160,7 +161,7 @@
 #include "nmg.h"
 #include "raytrace.h"
 #include "rtgeom.h"
-#include "./debug.h"
+
 
 struct epa_specific {
     point_t	epa_V;		/* vector to epa origin */

@@ -21,13 +21,12 @@
 /** @{ */
 /** @file ./librt/tcl.c
  *
- *  Tcl interfaces to LIBRT routines.
+ * Tcl interfaces to LIBRT routines.
  *
- *  LIBRT routines are not for casual command-line use;
- *  as a result, the Tcl name for the function should be exactly
- *  the same as the C name for the underlying function.
- *  Typing "rt_" is no hardship when writing Tcl procs, and
- *  clarifies the origin of the routine.
+ * LIBRT routines are not for casual command-line use; as a result,
+ * the Tcl name for the function should be exactly the same as the C
+ * name for the underlying function.  Typing "rt_" is no hardship when
+ * writing Tcl procs, and clarifies the origin of the routine.
  *
  */
 /** @} */
@@ -50,7 +49,6 @@
 #include "raytrace.h"
 
 /* private headers */
-#include "./debug.h"
 #include "brlcad_version.h"
 
 
@@ -74,12 +72,12 @@ struct dbcmdstruct {
     int (*cmdfunc)();
 };
 
-/*
- *			R T _ T C L _ P A R S E _ R A Y
+/**
+ * R T _ T C L _ P A R S E _ R A Y
  *
- *  Allow specification of a ray to trace, in two convenient formats.
+ * Allow specification of a ray to trace, in two convenient formats.
  *
- *  Examples -
+ * Examples -
  *	{0 0 0} dir {0 0 -1}
  *	{20 -13.5 20} at {10 .5 3}
  */
@@ -115,13 +113,13 @@ rt_tcl_parse_ray( Tcl_Interp *interp, struct xray *rp, const char *const*argv )
     return TCL_OK;
 }
 
-/*
- *			R T _ T C L _ P R _ C U T T E R
+/**
+ * R T _ T C L _ P R _ C U T T E R
  *
- *  Format a "union cutter" structure in a TCL-friendly format.
- *  Useful for debugging space partitioning
+ * Format a "union cutter" structure in a TCL-friendly format.  Useful
+ * for debugging space partitioning
  *
- *  Examples -
+ * Examples -
  *	type cutnode
  *	type boxnode
  *	type nugridnode
@@ -190,13 +188,13 @@ rt_tcl_pr_cutter( Tcl_Interp *interp, const union cutter *cutp )
     bu_vls_free( &str );
 }
 
-/*
- *			R T _ T C L _ C U T T E R
+/**
+ * R T _ T C L _ C U T T E R
  *
- *  Obtain the 'n'th space partitioning cell along the given ray,
- *  and return that to the user.
+ * Obtain the 'n'th space partitioning cell along the given ray, and
+ * return that to the user.
  *
- *  Example -
+ * Example -
  *	.rt cutter 7 {0 0 0} dir {0 0 -1}
  */
 int
@@ -232,17 +230,17 @@ rt_tcl_cutter( ClientData clientData, Tcl_Interp *interp, int argc, const char *
     return TCL_OK;
 }
 
-/*
- *			R T _ T C L _ P R _ H I T
+/**
+ * R T _ T C L _ P R _ H I T
  *
- *  Format a hit in a TCL-friendly format.
+ * Format a hit in a TCL-friendly format.
  *
- *  It is possible that a solid may have been removed from the
- *  directory after this database was prepped, so check pointers
- *  carefully.
+ * It is possible that a solid may have been removed from the
+ * directory after this database was prepped, so check pointers
+ * carefully.
  *
- *  It might be beneficial to use some format other than %g to
- *  give the user more precision.
+ * It might be beneficial to use some format other than %g to give the
+ * user more precision.
  */
 void
 rt_tcl_pr_hit( Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, const struct xray	*rayp, int flipflag )
@@ -284,8 +282,8 @@ rt_tcl_pr_hit( Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, con
     bu_vls_free( &str );
 }
 
-/*
- *			R T _ T C L _ A _ H I T
+/**
+ * R T _ T C L _ A _ H I T
  */
 int
 rt_tcl_a_hit( struct application *ap,
@@ -315,8 +313,8 @@ rt_tcl_a_hit( struct application *ap,
     return 1;
 }
 
-/*
- *			R T _ T C L _ A _ M I S S
+/**
+ * R T _ T C L _ A _ M I S S
  */
 int
 rt_tcl_a_miss( struct application *ap )
@@ -324,14 +322,14 @@ rt_tcl_a_miss( struct application *ap )
     return 0;
 }
 
-/*
- *			R T _ T C L _ S H O O T R A Y
+/**
+ * R T _ T C L _ S H O O T R A Y
  *
- *  Usage -
+ * Usage -
  *	procname shootray [-R] {P} dir|at {V}
  *		-R option specifries no overlap reporting
  *
- *  Example -
+ * Example -
  *	set glob_compat_mode 0
  *	.inmem rt_gettrees .rt all.g
  *	.rt shootray -R {0 0 0} dir {0 0 -1}
@@ -340,13 +338,14 @@ rt_tcl_a_miss( struct application *ap )
  *	.rt shootray {20 -13.5 20} at $tgt
  *
  *
- *  Returns -
- *	This "shootray" operation returns a nested set of lists. It returns
- *	a list of zero or more partitions. Inside each partition is a list
- *	containing an in, out, and region keyword, each with an associated
- *	value. The associated value for each "inhit" and "outhit" is itself
- *	a list containing a dist, point, normal, surfno, and solid keyword,
- *	each with an associated value.
+ * Returns -
+ *	This "shootray" operation returns a nested set of lists. It
+ *	returns a list of zero or more partitions. Inside each
+ *	partition is a list containing an in, out, and region keyword,
+ *	each with an associated value. The associated value for each
+ *	"inhit" and "outhit" is itself a list containing a dist,
+ *	point, normal, surfno, and solid keyword, each with an
+ *	associated value.
  */
 int
 rt_tcl_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv)
@@ -385,9 +384,10 @@ rt_tcl_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const ch
     return TCL_OK;
 }
 
-/*
- *			R T _ T C L _ R T _ O N E H I T
- *  Usage -
+/**
+ * R T _ T C L _ R T _ O N E H I T
+ *
+ * Usage -
  *	procname onehit
  *	procname onehit #
  */
@@ -418,9 +418,10 @@ rt_tcl_rt_onehit(ClientData clientData, Tcl_Interp *interp, int argc, const char
     return TCL_OK;
 }
 
-/*
- *			R T _ T C L _ R T _ N O _ B O O L
- *  Usage -
+/**
+ * R T _ T C L _ R T _ N O _ B O O L
+ *
+ * Usage -
  *	procname no_bool
  *	procname no_bool #
  */
@@ -451,12 +452,13 @@ rt_tcl_rt_no_bool(ClientData clientData, Tcl_Interp *interp, int argc, const cha
     return TCL_OK;
 }
 
-/*
- *			R T _ T C L _ R T _ C H E C K
+/**
+ * R T _ T C L _ R T _ C H E C K
  *
- *  Run some of the internal consistency checkers over the data structures.
+ * Run some of the internal consistency checkers over the data
+ * structures.
  *
- *  Usage -
+ * Usage -
  *	procname check
  */
 int
@@ -482,12 +484,12 @@ rt_tcl_rt_check(ClientData clientData, Tcl_Interp *interp, int argc, const char 
     return TCL_OK;
 }
 
-/*
- *			R T _ T C L _ R T _ P R E P
+/**
+ * R T _ T C L _ R T _ P R E P
  *
- *  When run with no args, just prints current status of prepping.
+ * When run with no args, just prints current status of prepping.
  *
- *  Usage -
+ * Usage -
  *	procname prep
  *	procname prep use_air [hasty_prep]
  */
@@ -562,16 +564,17 @@ static struct dbcmdstruct rt_tcl_rt_cmds[] = {
     {(char *)0,	(int (*)())0}
 };
 
-/*
- *			R T _ T C L _ R T
+/**
+ * R T _ T C L _ R T
  *
  * Generic interface for the LIBRT_class manipulation routines.
+ *
  * Usage:
  *        procname dbCmdName ?args?
  * Returns: result of cmdName LIBRT operation.
  *
- * Objects of type 'procname' must have been previously created by
- * the 'rt_gettrees' operation performed on a database object.
+ * Objects of type 'procname' must have been previously created by the
+ * 'rt_gettrees' operation performed on a database object.
  *
  * Example -
  *	.inmem rt_gettrees .rt all.g
@@ -613,13 +616,14 @@ rt_tcl_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv
  *									*
  ************************************************************************/
 
-/*
- *		D B _ T C L _ T R E E _ D E S C R I B E
+/**
+ * D B _ T C L _ T R E E _ D E S C R I B E
  *
- * Fills a Tcl_DString with a representation of the given tree appropriate
- * for processing by Tcl scripts.  The reason we use Tcl_DStrings instead
- * of bu_vlses is that Tcl_DStrings provide "start/end sublist" commands
- * and automatic escaping of Tcl-special characters.
+ * Fills a Tcl_DString with a representation of the given tree
+ * appropriate for processing by Tcl scripts.  The reason we use
+ * Tcl_DStrings instead of bu_vlses is that Tcl_DStrings provide
+ * "start/end sublist" commands and automatic escaping of Tcl-special
+ * characters.
  *
  * A tree 't' is represented in the following manner:
  *
@@ -709,12 +713,12 @@ db_tcl_tree_describe(Tcl_DString *dsp, const union tree *tp)
     }
 }
 
-/*
- *			D B _ T C L _ T R E E _ P A R S E
+/**
+ * D B _ T C L _ T R E E _ P A R S E
  *
- *  Take a TCL-style string description of a binary tree, as produced by
- *  db_tcl_tree_describe(), and reconstruct
- *  the in-memory form of that tree.
+ * Take a TCL-style string description of a binary tree, as produced
+ * by db_tcl_tree_describe(), and reconstruct the in-memory form of
+ * that tree.
  */
 union tree *
 db_tcl_tree_parse( Tcl_Interp *interp, const char *str, struct resource *resp )
@@ -875,11 +879,11 @@ db_tcl_tree_parse( Tcl_Interp *interp, const char *str, struct resource *resp )
     return tp;
 }
 
-/*
- *			R T _ C O M B _ T C L G E T
+/**
+ * R T _ C O M B _ T C L G E T
  *
- *  Sets the result string to a description of the given combination.
- *  Entered via rt_functab[].ft_tclget().
+ * Sets the result string to a description of the given combination.
+ * Entered via rt_functab[].ft_tclget().
  */
 int
 rt_comb_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *item)
@@ -1018,13 +1022,13 @@ rt_comb_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const ch
 }
 
 
-/*
- *			R T _ C O M B _ T C L A D J U S T
+/**
+ * R T _ C O M B _ T C L A D J U S T
  *
- *  Example -
+ * Example -
  *	rgb "1 2 3" ...
  *
- *  Invoked via rt_functab[ID_COMBINATION].ft_tcladjust()
+ * Invoked via rt_functab[ID_COMBINATION].ft_tcladjust()
  */
 int
 rt_comb_tcladjust(
@@ -1199,14 +1203,14 @@ rt_comb_tcladjust(
  *												*
  ************************************************************************************************/
 
-/*
- *			R T _ T C L _ I M P O R T _ F R O M _ P A T H
+/**
+ * R T _ T C L _ I M P O R T _ F R O M _ P A T H
  *
- *  Given the name of a database object or a full path to a leaf object,
- *  obtain the internal form of that leaf.
- *  Packaged separately mainly to make available nice Tcl error handling.
+ * Given the name of a database object or a full path to a leaf
+ * object, obtain the internal form of that leaf.  Packaged separately
+ * mainly to make available nice Tcl error handling.
  *
- *  Returns -
+ * Returns -
  *	TCL_OK
  *	TCL_ERROR
  */
@@ -1297,15 +1301,15 @@ rt_tcl_import_from_path(Tcl_Interp *interp, struct rt_db_internal *ip, const cha
     return TCL_OK;
 }
 
-/*
- *			R T _ P A R S E T A B _ T C L G E T
+/**
+ * R T _ P A R S E T A B _ T C L G E T
  *
- *  This is the generic routine to be listed in rt_functab[].ft_tclget
- *  for those solid types which are fully described by their ft_parsetab
- *  entry.
+ * This is the generic routine to be listed in rt_functab[].ft_tclget
+ * for those solid types which are fully described by their
+ * ft_parsetab entry.
  *
- *  'attr' is specified to retrieve only one attribute, rather than all.
- *  Example:  "db get ell.s B" to get only the B vector.
+ * 'attr' is specified to retrieve only one attribute, rather than
+ * all.  Example: "db get ell.s B" to get only the B vector.
  */
 int
 rt_parsetab_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr)
@@ -1363,8 +1367,8 @@ rt_parsetab_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, cons
     return status;
 }
 
-/*
- *			R T _ C O M B _ T C L F O R M
+/**
+ * R T _ C O M B _ T C L F O R M
  */
 int
 rt_comb_tclform(const struct rt_functab *ftp, Tcl_Interp *interp)
@@ -1377,12 +1381,11 @@ shader {%s} material {%s} inherit {%s} tree {%s}", (char *)NULL );
     return TCL_OK;
 }
 
-/*
- *			R T _ C O M B _ M A K E
+/**
+ * R T _ C O M B _ M A K E
  *
- *  Create a blank combination with appropriate values.
- *
- *  Called via rt_functab[ID_COMBINATION].ft_make().
+ * Create a blank combination with appropriate values.  Called via
+ * rt_functab[ID_COMBINATION].ft_make().
  */
 void
 rt_comb_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double diameter)
@@ -1411,12 +1414,12 @@ rt_comb_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double
     comb->inherit = 0;
 }
 
-/*
- *			R T _ G E N E R I C _ M A K E
+/**
+ * R T _ G E N E R I C _ M A K E
  *
- *  This one assumes that making all the parameters null is fine.
- *  (More generally, diameter == 0 means make 'em all zero, otherwise
- *  build something interesting to look at.)
+ * This one assumes that making all the parameters null is fine.
+ * (More generally, diameter == 0 means make 'em all zero, otherwise
+ * build something interesting to look at.)
  */
 void
 rt_generic_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double diameter)
@@ -1430,11 +1433,11 @@ rt_generic_make(const struct rt_functab *ftp, struct rt_db_internal *intern, dou
     *((long *)(intern->idb_ptr)) = ftp->ft_internal_magic;
 }
 
-/*
- *			R T _ P A R S E T A B _ T C L A D J U S T
+/**
+ * R T _ P A R S E T A B _ T C L A D J U S T
  *
- *  For those solids entirely defined by their parsetab.
- *  Invoked via rt_functab[].ft_tcladjust()
+ * For those solids entirely defined by their parsetab.  Invoked via
+ * rt_functab[].ft_tcladjust()
  */
 int
 rt_parsetab_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv)
@@ -1456,12 +1459,11 @@ rt_parsetab_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int arg
 			       (char *)intern->idb_ptr );
 }
 
-/*
- *			R T _ P A R S E T A B _ T C L F O R M
+/**
+ * R T _ P A R S E T A B _ T C L F O R M
  *
- *  Invoked via rt_functab[].ft_tclform()
- *  on solid types which are fully described by their bu_structparse table
- *  in ft_parsetab.
+ * Invoked via rt_functab[].ft_tclform() on solid types which are
+ * fully described by their bu_structparse table in ft_parsetab.
  */
 int
 rt_parsetab_tclform(const struct rt_functab *ftp, Tcl_Interp *interp)
@@ -1479,20 +1481,22 @@ rt_parsetab_tclform(const struct rt_functab *ftp, Tcl_Interp *interp)
 }
 
 
-/*
- *			R T _ T C L _ S E T U P
+/**
+ * R T _ T C L _ S E T U P
  *
- *  Add all the supported Tcl interfaces to LIBRT routines to
- *  the list of commands known by the given interpreter.
+ * Add all the supported Tcl interfaces to LIBRT routines to the list
+ * of commands known by the given interpreter.
  *
- *  wdb_open creates database "objects" which appear as Tcl procs,
- *  which respond to many operations.
- *  The "db rt_gettrees" operation in turn creates a ray-traceable object
- *  as yet another Tcl proc, which responds to additional operations.
+ * wdb_open creates database "objects" which appear as Tcl procs,
+ * which respond to many operations.
  *
- *  Note that the MGED mainline C code automatically runs
- *  "wdb_open db" and "wdb_open .inmem" on behalf of the MGED user,
- *  which exposes all of this power.
+ * The "db rt_gettrees" operation in turn creates a ray-traceable
+ * object as yet another Tcl proc, which responds to additional
+ * operations.
+ *
+ * Note that the MGED mainline C code automatically runs "wdb_open db"
+ * and "wdb_open .inmem" on behalf of the MGED user, which exposes all
+ * of this power.
  */
 void
 rt_tcl_setup(Tcl_Interp *interp)
@@ -1516,13 +1520,13 @@ rt_tcl_setup(Tcl_Interp *interp)
 }
 
 
-/*
- *			R T _ I N I T
+/**
+ * R T _ I N I T
  *
- *  Allows LIBRT to be dynamically loade to a vanilla tclsh/wish with
- *  "load /usr/brlcad/lib/libbu.so"
- *  "load /usr/brlcad/lib/libbn.so"
- *  "load /usr/brlcad/lib/librt.so"
+ * Allows LIBRT to be dynamically loade to a vanilla tclsh/wish with
+ * "load /usr/brlcad/lib/libbu.so"
+ * "load /usr/brlcad/lib/libbn.so"
+ * "load /usr/brlcad/lib/librt.so"
  */
 int
 #ifdef BRLCAD_DEBUG
@@ -1557,11 +1561,10 @@ Rt_d_Init(Tcl_Interp *interp)
 /* TCL-oriented C support for LIBRT */
 
 
-/*
- * (db_path.c)
- *			D B _ F U L L _ P A T H _ A P P E N D R E S U L T
+/**
+ * D B _ F U L L _ P A T H _ A P P E N D R E S U L T
  *
- *  Take a db_full_path and append it to the TCL result string.
+ * Take a db_full_path and append it to the TCL result string.
  */
 void
 db_full_path_appendresult( Tcl_Interp *interp, const struct db_full_path *pp )
@@ -1575,14 +1578,14 @@ db_full_path_appendresult( Tcl_Interp *interp, const struct db_full_path *pp )
     }
 }
 
-/*
- *		T C L _ O B J _ T O _ I N T _ A R R A Y
+/**
+ * T C L _ O B J _ T O _ I N T _ A R R A Y
  *
- *	Expects the Tcl_obj argument (list) to be a Tcl list and
- *	extracts list elements, converts them to int, and stores
- *	them in the passed in array. If the array_len argument is zero,
- *	a new array of approriate length is allocated. The return value
- *	is the number of elements converted.
+ * Expects the Tcl_obj argument (list) to be a Tcl list and extracts
+ * list elements, converts them to int, and stores them in the passed
+ * in array. If the array_len argument is zero, a new array of
+ * approriate length is allocated. The return value is the number of
+ * elements converted.
  */
 int
 tcl_obj_to_int_array(Tcl_Interp *interp, Tcl_Obj *list, int **array, int *array_len)
@@ -1610,14 +1613,14 @@ tcl_obj_to_int_array(Tcl_Interp *interp, Tcl_Obj *list, int **array, int *array_
     return( len < *array_len ? len : *array_len );
 }
 
-/*	T C L _ L I S T _ T O _ I N T _ A R R A Y
+/**
+ * T C L _ L I S T _ T O _ I N T _ A R R A Y
  *
- *	interface to above tcl_obj_to_int_array() routine. This routine
- *	expects a character string instead of a Tcl_Obj.
+ * interface to above tcl_obj_to_int_array() routine. This routine
+ * expects a character string instead of a Tcl_Obj.
  *
- *	Returns the number of elements converted.
+ * Returns the number of elements converted.
  */
-
 int
 tcl_list_to_int_array(Tcl_Interp *interp, char *char_list, int **array, int *array_len)
 {
@@ -1631,16 +1634,15 @@ tcl_list_to_int_array(Tcl_Interp *interp, char *char_list, int **array, int *arr
     return( ret );
 }
 
-/*
- *		T C L _ O B J _ T O _ F A S T F _ A R R A Y
+/**
+ * T C L _ O B J _ T O _ F A S T F _ A R R A Y
  *
- *	Expects the Tcl_obj argument (list) to be a Tcl list and
- *	extracts list elements, converts them to fastf_t, and stores
- *	them in the passed in array. If the array_len argument is zero,
- *	a new array of approriate length is allocated. The return value
- *	is the number of elements converted.
+ * Expects the Tcl_obj argument (list) to be a Tcl list and extracts
+ * list elements, converts them to fastf_t, and stores them in the
+ * passed in array. If the array_len argument is zero, a new array of
+ * approriate length is allocated. The return value is the number of
+ * elements converted.
  */
-
 int
 tcl_obj_to_fastf_array(Tcl_Interp *interp, Tcl_Obj *list, fastf_t **array, int *array_len)
 {
@@ -1668,14 +1670,14 @@ tcl_obj_to_fastf_array(Tcl_Interp *interp, Tcl_Obj *list, fastf_t **array, int *
     return( len < *array_len ? len : *array_len );
 }
 
-/*	T C L _ L I S T _ T O _ F A S T F _ A R R A Y
+/**
+ * T C L _ L I S T _ T O _ F A S T F _ A R R A Y
  *
- *	interface to above tcl_obj_to_fastf_array() routine. This routine
- *	expects a character string instead of a Tcl_Obj.
+ * interface to above tcl_obj_to_fastf_array() routine. This routine
+ * expects a character string instead of a Tcl_Obj.
  *
- *	Returns the number of elements converted.
+ * returns the number of elements converted.
  */
-
 int
 tcl_list_to_fastf_array(Tcl_Interp *interp, char *char_list, fastf_t **array, int *array_len)
 {

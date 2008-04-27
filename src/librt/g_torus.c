@@ -21,7 +21,7 @@
 /** @{ */
 /** @file g_torus.c
  *
- *	Intersect a ray with a Torus
+ * Intersect a ray with a Torus
  *
  */
 /** @} */
@@ -39,7 +39,7 @@
 #include "nmg.h"
 #include "raytrace.h"
 #include "rtgeom.h"
-#include "./debug.h"
+
 
 /*
  * The TORUS has the following input fields:

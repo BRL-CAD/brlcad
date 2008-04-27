@@ -20,10 +20,8 @@
 /** @addtogroup db5 */
 /** @{ */
 /** @file db5_bin.c
- *	Handle bulk binary objects
  *
- *  Author -
- *	Paul J. Tanenbaum
+ * Handle bulk binary objects
  *
  */
 /** @} */
@@ -44,7 +42,6 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "nurb.h"
-#include "./debug.h"
 
 
 /* this array depends on the values of the definitions of the DB5_MINORTYPE_BINU_... in db5.h */

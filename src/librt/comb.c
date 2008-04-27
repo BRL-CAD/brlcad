@@ -39,7 +39,6 @@
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
-#include "../librt/debug.h"
 
 
 /* --- Begin John's pretty-printer --- */

@@ -21,7 +21,7 @@
 /** @{ */
 /** @file g_bot.c
  *
- *	Intersect a ray with a bag o' triangles.
+ * Intersect a ray with a bag o' triangles.
  *
  *  Authors -
  *  	John R. Anderson
@@ -43,7 +43,6 @@
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
-#include "./debug.h"
 #include "./bot.h"
 
 #define GLUE(_a, _b)      _a ## _b

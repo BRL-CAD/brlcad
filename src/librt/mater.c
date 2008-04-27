@@ -21,13 +21,13 @@
 /** @{ */
 /** @file mater.c
  *
- *  Code to deal with establishing and maintaining the tables which
- *  map region ID codes into worthwhile material information
- *  (colors and outboard database "handles").
+ * Code to deal with establishing and maintaining the tables which map
+ * region ID codes into worthwhile material information (colors and
+ * outboard database "handles").
  *
- *  These really are "db_" routines, more fundamental than "rt_".
+ * These really are "db_" routines, more fundamental than "rt_".
  *
- *  Functions -
+ * Functions -
  *	color_addrec	Called by rt_dirbuild on startup
  *	color_map	Map one region reference to a material
  *
@@ -42,19 +42,19 @@
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"
-#include "./debug.h"
+
 
 /*
- *  It is expected that entries on this mater list will be sorted
- *  in strictly ascending order, with no overlaps (ie, monotonicly
+ * It is expected that entries on this mater list will be sorted in
+ * strictly ascending order, with no overlaps (ie, monotonicly
  * increasing).
  */
 struct mater *rt_material_head = MATER_NULL;
 
 void	rt_insert_color(struct mater *newp);
 
-/*
- *			R T _ P R _ M A T E R
+/**
+ * R T _ P R _ M A T E R
  */
 void
 rt_pr_mater(register struct mater *mp)
@@ -63,10 +63,10 @@ rt_pr_mater(register struct mater *mp)
     (void)bu_log( "%d,%d,%d\t", mp->mt_r, mp->mt_g, mp->mt_b);
 }
 
-/*
- *  			R T _ C O L O R _ A D D R E C
+/**
+ * R T _ C O L O R _ A D D R E C
  *
- *  Called from db_scan() when initially scanning database.
+ * Called from db_scan() when initially scanning database.
  */
 void
 rt_color_addrec( int low, int hi, int r, int g, int b, long addr )

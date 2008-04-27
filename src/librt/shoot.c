@@ -21,23 +21,23 @@
 /** @{ */
 /** @file shoot.c
  *
- *	Ray Tracing program shot coordinator.
+ * Ray Tracing program shot coordinator.
  *
- *  This is the heart of LIBRT's ray-tracing capability.
+ * This is the heart of LIBRT's ray-tracing capability.
  *
- *  Given a ray, shoot it at all the relevant parts of the model,
- *  (building the finished_segs chain), and then call rt_boolregions()
- *  to build and evaluate the partition chain.
- *  If the ray actually hit anything, call the application's
- *  a_hit() routine with a pointer to the partition chain,
- *  otherwise, call the application's a_miss() routine.
+ * Given a ray, shoot it at all the relevant parts of the model,
+ * (building the finished_segs chain), and then call rt_boolregions()
+ * to build and evaluate the partition chain.  If the ray actually hit
+ * anything, call the application's a_hit() routine with a pointer to
+ * the partition chain, otherwise, call the application's a_miss()
+ * routine.
  *
- *  It is important to note that rays extend infinitely only in the
- *  positive direction.  The ray is composed of all points P, where
+ * It is important to note that rays extend infinitely only in the
+ * positive direction.  The ray is composed of all points P, where
  *
- *	P = r_pt + K * r_dir
+ * P = r_pt + K * r_dir
  *
- *  for K ranging from 0 to +infinity.  There is no looking backwards.
+ * for K ranging from 0 to +infinity.  There is no looking backwards.
  *
  */
 
@@ -52,7 +52,7 @@
 #include "bu.h"
 #include "raytrace.h"
 #include "plot3.h"
-#include "./debug.h"
+
 
 struct resource rt_uniresource;		/* Resources for uniprocessor */
 
@@ -68,11 +68,11 @@ extern void	rt_plot_cell(const union cutter *cutp, const struct rt_shootray_stat
 		    ((_step)[Z] <= 0 && (_pz) < (_lo)[Z]) || \
 		    ((_step)[Z] >= 0 && (_pz) > (_hi)[Z])   )
 
-/*
- *			R T _ R E S _ P I E C E S _ I N I T
+/**
+ * R T _ R E S _ P I E C E S _ I N I T
  *
- *  Allocate the per-processor state variables needed
- *  to support rt_shootray()'s use of 'solid pieces'.
+ * Allocate the per-processor state variables needed to support
+ * rt_shootray()'s use of 'solid pieces'.
  */
 void
 rt_res_pieces_init(struct resource *resp, struct rt_i *rtip)
@@ -100,8 +100,8 @@ rt_res_pieces_init(struct resource *resp, struct rt_i *rtip)
     } RT_VISIT_ALL_SOLTABS_END
 	  }
 
-/*
- *			R T _ R E S _ P I E C E S _ C L E A N
+/**
+ * R T _ R E S _ P I E C E S _ C L E A N
  */
 void
 rt_res_pieces_clean(struct resource *resp, struct rt_i *rtip)
@@ -141,11 +141,11 @@ rt_res_pieces_clean(struct resource *resp, struct rt_i *rtip)
     rtip->rti_nsolids_with_pieces = 0;
 }
 
-/*
- *			R T _ F I N D _ N U G R I D
+/**
+ * R T _ F I N D _ N U G R I D
  *
- *  Along the given axis, find which NUgrid cell this value lies in.
- *  Use method of binary subdivision.
+ * Along the given axis, find which NUgrid cell this value lies in.
+ * Use method of binary subdivision.
  */
 int
 rt_find_nugrid(const struct nugridnode *nugnp, int axis, fastf_t val)
@@ -182,10 +182,9 @@ rt_find_nugrid(const struct nugridnode *nugnp, int axis, fastf_t val)
 }
 
 
-/*
- *			R T _ A D V A N C E _ T O _ N E X T _ C E L L
+/**
+ * R T _ A D V A N C E _ T O _ N E X T _ C E L L
  */
-
 const union cutter *
 rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 {
@@ -214,45 +213,47 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 
     for (;;) {
 	/* Set cutp to CUTTER_NULL.  If it fails to become set in the
-	   following switch statement, we know that we have exited the
-	   subnode.  If this subnode is the highest-level node, then
-	   we are done advancing the ray through the model. */
+	 * following switch statement, we know that we have exited the
+	 * subnode.  If this subnode is the highest-level node, then
+	 * we are done advancing the ray through the model.
+	 */
 	cutp = CUTTER_NULL;
 	push_flag = 0;
 
-	/*
-	 *  The point corresponding to the box_start distance
-	 *  may not be in the "right" place,
-	 *  due to the effects of floating point fuzz:
-	 *  1)  The point might lie just outside
-	 *	the model RPP, resulting in the point not
-	 *	falling within the RPP of the indicated cell,
-	 *	or
-	 *  2)	The poing might lie just a little bit on the
-	 *	wrong side of the cell wall, resulting in
-	 *	the ray getting "stuck", and needing rescuing
-	 *	all the time by the error recovery code below.
-	 *  Therefore, "nudge" the point just slightly into the
-	 *  next cell by adding OFFSET_DIST.
-	 *  XXX At present, a cell is never less than 1mm wide.
-	 *  XXX The value of OFFSET_DIST should be some
-	 *	percentage of the cell's smallest dimension,
-	 *	rather than an absolute distance in mm.
-	 *	This will prevent doing microscopic models.
+	/* The point corresponding to the box_start distance may not
+	 * be in the "right" place, due to the effects of floating
+	 * point fuzz:
+	 *
+	 * 1) The point might lie just outside the model RPP,
+	 * resulting in the point not falling within the RPP of the
+	 * indicated cell, or
+	 *
+	 * 2) The poing might lie just a little bit on the wrong side
+	 * of the cell wall, resulting in the ray getting "stuck", and
+	 * needing rescuing all the time by the error recovery code
+	 * below.
+	 *
+	 * Therefore, "nudge" the point just slightly into the next
+	 * cell by adding OFFSET_DIST.
+	 *
+	 * XXX At present, a cell is never less than 1mm wide.
+	 *
+	 * XXX The value of OFFSET_DIST should be some percentage of
+	 * the cell's smallest dimension, rather than an absolute
+	 * distance in mm.  This will prevent doing microscopic
+	 * models.
 	 */
 	t0 = ssp->box_start;
-	/* NB: can't compute px, py, pz here since t0 may advance
-	   in the following statement! */
+	/* NB: can't compute px, py, pz here since t0 may advance in
+	 * the following statement!
+	 */
 
     top:		switch ( curcut->cut_type ) {
 	case CUT_NUGRIDNODE: {
-	    /*
-****************************************************************************************
-*
-*  This portion implements Gigante's non-uniform 3-D space grid/mesh discretization.
-*
-****************************************************************************************
-*/
+	    /*********************************************************
+	     * NOTE: This portion implements Gigante's non-uniform 3-D
+	     * space grid/mesh discretization.
+	     *********************************************************/
 	    register int out_axis;
 	    register const struct nu_axis  **nu_axis =
 		(const struct nu_axis **)&curcut->nugn.nu_axis[0];
@@ -264,20 +265,22 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 		curcut->nugn.nu_grid;
 
 	    if ( ssp->lastcell == CUTTER_NULL ) {
-		/* We have just started into this NUgrid.  We
-		   must find our location and set up the
-		   NUgrid traversal state variables. */
+		/* We have just started into this NUgrid.  We must
+		 * find our location and set up the NUgrid traversal
+		 * state variables.
+		 */
 		register int x, y, z;
 
 		px = ap->a_ray.r_pt[X] + t0*ap->a_ray.r_dir[X];
 		py = ap->a_ray.r_pt[Y] + t0*ap->a_ray.r_dir[Y];
 		pz = ap->a_ray.r_pt[Z] + t0*ap->a_ray.r_dir[Z];
 
-		/* Must find cell that contains newray.r_pt.
-		   We do this by binary subdivision.
-		   If any are out of bounds, we have left the
-		   NUgrid and will pop a level off the stack
-		   in the outer loop (if applicable).  */
+		/* Must find cell that contains newray.r_pt.  We do
+		 * this by binary subdivision.  If any are out of
+		 * bounds, we have left the NUgrid and will pop a
+		 * level off the stack in the outer loop (if
+		 * applicable).
+		 */
 		x = rt_find_nugrid( &curcut->nugn, X, px );
 		if ( x<0 ) break;
 		y = rt_find_nugrid( &curcut->nugn, Y, py );
@@ -297,19 +300,19 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 		NUGRID_T_SETUP( Y, py, y );
 		NUGRID_T_SETUP( Z, pz, z );
 	    } else {
-		/* Advance from previous cell to next cell */
-		/* Take next step, finding ray entry distance*/
+		/* Advance from previous cell to next cell.  Take next
+		 * step, finding ray entry distance.
+		 */
 		cutp = ssp->lastcell;
 		out_axis = ssp->out_axis;
 
-		/* We may be simply advancing to the next box
-		   in the *same* NUgrid cell (if, for instance,
-		   the NUgrid cell is a cutnode with
-		   boxnode leaves).  So if t0 hasn't advanced
-		   past the end of the box, advance
-		   a tiny bit (less than rt_ct_optim makes
-		   boxnodes) and be handled by tree-traversing
-		   code below. */
+		/* We may be simply advancing to the next box in the
+		 * *same* NUgrid cell (if, for instance, the NUgrid
+		 * cell is a cutnode with boxnode leaves).  So if t0
+		 * hasn't advanced past the end of the box, advance a
+		 * tiny bit (less than rt_ct_optim makes boxnodes) and
+		 * be handled by tree-traversing code below.
+		 */
 
 		if ( cutp->cut_type == CUT_CUTNODE &&
 		     t0 + OFFSET_DIST < ssp->tv[out_axis] ) {
@@ -317,10 +320,10 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 		    break;
 		}
 
-		/* Advance to the next cell as appropriate,
-		   bailing out with cutp=CUTTER_NULL
-		   if we run past the end of the NUgrid
-		   array. */
+		/* Advance to the next cell as appropriate, bailing
+		 * out with cutp=CUTTER_NULL if we run past the end of
+		 * the NUgrid array.
+		 */
 
 	    again:				t0 = ssp->tv[out_axis];
 		if ( ssp->rstep[out_axis] > 0 ) {
@@ -383,13 +386,10 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 	case CUT_CUTNODE:
 	    /* fall through */
 	case CUT_BOXNODE:
-	    /*
-****************************************************************************************
-*
-*  This portion implements Muuss' non-uniform binary space partitioning tree.
-*
-****************************************************************************************
-*/
+	    /*********************************************************
+	     * NOTE: This portion implements Muuss' non-uniform binary
+	     * space partitioning tree.
+	     *********************************************************/
 	    t0 += OFFSET_DIST;
 	    cutp = curcut;
 	    break;
@@ -400,9 +400,9 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 	if ( cutp==CUTTER_NULL ) {
 	pop_space_stack:
 	    /*
-	     *  Pop the stack of nested space partitioning methods.
-	     *  Move up out of the current node, or return if there
-	     *  is nothing left to do.
+	     * Pop the stack of nested space partitioning methods.
+	     * Move up out of the current node, or return if there is
+	     * nothing left to do.
 	     */
 	    {
 		register struct rt_shootray_status *old = ssp->old_status;
@@ -416,12 +416,16 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 	    }
 	}
 
-	/* Compute position and bail if we're outside of the current level. */
+	/* Compute position and bail if we're outside of the current
+	 * level.
+	 */
 	px = ap->a_ray.r_pt[X] + t0*ap->a_ray.r_dir[X];
 	py = ap->a_ray.r_pt[Y] + t0*ap->a_ray.r_dir[Y];
 	pz = ap->a_ray.r_pt[Z] + t0*ap->a_ray.r_dir[Z];
 
-	/* Optimization: when it's a boxnode in a nugrid, just return. */
+	/* Optimization: when it's a boxnode in a nugrid, just
+	 * return.
+	 */
 	if ( cutp->cut_type == CUT_BOXNODE &&
 	     curcut->cut_type == CUT_NUGRIDNODE ) {
 	    ssp->newray.r_pt[X] = px;
@@ -432,8 +436,8 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 	    goto done_return_cutp;
 	}
 
-	/*  Given direction of travel, see if point is outside bound.
-	 *  This will be the model RPP for NUBSP.
+	/* Given direction of travel, see if point is outside bound.
+	 * This will be the model RPP for NUBSP.
 	 */
 	if ( PT_DEPARTING_RPP( ssp->rstep, ssp->curmin, ssp->curmax, px, py, pz ) )
 	    goto pop_space_stack;
@@ -644,9 +648,9 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
     /* NOTREACHED */
 
     /*
-     *  If ray has escaped from model RPP, and there are infinite solids
-     *  in the model, there is one more (special) BOXNODE for the
-     *  caller to process.
+     * If ray has escaped from model RPP, and there are infinite
+     * solids in the model, there is one more (special) BOXNODE for
+     * the caller to process.
      */
  escaped_from_model:
     curcut = &ssp->ap->a_rt_i->rti_inf_box;
@@ -656,16 +660,19 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
     return curcut;
 }
 
-/*		R T _ F I N D _ B A C K I N G _ D I S T
+/**
+ * R T _ F I N D _ B A C K I N G _ D I S T
  *
- *	This routine traces a ray from its start point to model exit through the space partitioning tree.
- *	The objective is to find all primitives that use "pieces" and also have a bounding box that
- *	extends behind the ray start point. The minimum (most negative) intersection with such a bounding
- *	box is returned. The "backbits" bit vector (provided by the caller) gets a bit set for every
- *	primitive that meets the above criteria.
- *	No primitive intersections are performed.
+ * This routine traces a ray from its start point to model exit
+ * through the space partitioning tree.  The objective is to find all
+ * primitives that use "pieces" and also have a bounding box that
+ * extends behind the ray start point. The minimum (most negative)
+ * intersection with such a bounding box is returned. The "backbits"
+ * bit vector (provided by the caller) gets a bit set for every
+ * primitive that meets the above criteria.  No primitive
+ * intersections are performed.
  *
- *	XXXX This routine does not work for NUGRID XXXX
+ * XXX This routine does not work for NUGRID XXX
  */
 fastf_t
 rt_find_backing_dist( struct rt_shootray_status *ss, struct bu_bitv *backbits ) {
@@ -682,19 +689,24 @@ rt_find_backing_dist( struct rt_shootray_status *ss, struct bu_bitv *backbits ) 
     resp = ss->ap->a_resource;
     rtip = ss->ap->a_rt_i;
 
-    /* get a bit vector of our own to avoid duplicate bounding box intersection calculations */
+    /* get a bit vector of our own to avoid duplicate bounding box
+     * intersection calculations
+     */
     solidbits = get_solidbitv( rtip->nsolids, resp );
     bu_bitv_clear(solidbits);
 
     ray = ss->ap->a_ray;	/* struct copy, don't mess with the original */
 
-    /* cur_dist keeps track of where we are along the ray */
-    /* stop when cur_dist reaches far intersection of ray and model bounding box */
+    /* cur_dist keeps track of where we are along the ray.  stop when
+     * cur_dist reaches far intersection of ray and model bounding box
+     */
     while ( cur_dist <= ss->ap->a_ray.r_max ) {
 	/* calculate the current point along the ray */
 	VJOIN1( cur_pt, ss->ap->a_ray.r_pt, cur_dist, ss->ap->a_ray.r_dir );
 
-	/* descend into the space partitioning tree based on this point */
+	/* descend into the space partitioning tree based on this
+	 * point.
+	 */
 	cutp = &ss->ap->a_rt_i->rti_CutHead;
 	while ( cutp->cut_type == CUT_CUTNODE ) {
 	    if ( cur_pt[cutp->cn.cn_axis] >= cutp->cn.cn_point )  {
@@ -752,34 +764,33 @@ rt_find_backing_dist( struct rt_shootray_status *ss, struct bu_bitv *backbits ) 
     return min_backing_dist;
 }
 
-/*
- *			R T _ S H O O T R A Y
+/**
+ * R T _ S H O O T R A Y
  *
- *  Note that the direction vector r_dir
- *  must have unit length;  this is mandatory, and is not ordinarily checked,
- *  in the name of efficiency.
+ * Note that the direction vector r_dir must have unit length; this is
+ * mandatory, and is not ordinarily checked, in the name of
+ * efficiency.
  *
- *  Input:  Pointer to an application structure, with these mandatory fields:
+ * Input:  Pointer to an application structure, with these mandatory fields:
  *	a_ray.r_pt	Starting point of ray to be fired
  *	a_ray.r_dir	UNIT VECTOR with direction to fire in (dir cosines)
  *	a_hit		Routine to call when something is hit
  *	a_miss		Routine to call when ray misses everything
  *
- *  Calls user's a_miss() or a_hit() routine as appropriate.
- *  Passes a_hit() routine list of partitions, with only hit_dist
- *  fields valid.  Normal computation deferred to user code,
- *  to avoid needless computation here.
+ * Calls user's a_miss() or a_hit() routine as appropriate.  Passes
+ * a_hit() routine list of partitions, with only hit_dist fields
+ * valid.  Normal computation deferred to user code, to avoid needless
+ * computation here.
  *
- *  Formal Return: whatever the application function returns (an int).
+ * Formal Return: whatever the application function returns (an int).
  *
- *  NOTE:  The appliction functions may call rt_shootray() recursively.
- *	Thus, none of the local variables may be static.
+ * NOTE:  The appliction functions may call rt_shootray() recursively.
+ * Thus, none of the local variables may be static.
  *
- *  To prevent having to lock the statistics variables in a PARALLEL
- *  environment, all the statistics variables have been moved into
- *  the 'resource' structure, which is allocated per-CPU.
+ * To prevent having to lock the statistics variables in a PARALLEL
+ * environment, all the statistics variables have been moved into the
+ * 'resource' structure, which is allocated per-CPU.
  */
-
 int
 rt_shootray(register struct application *ap)
 {
@@ -872,11 +883,11 @@ rt_shootray(register struct application *ap)
 	/* XXX This shouldn't happen any more */
 	bu_log("rt_shootray() resp=x%x uninitialized, fixing it\n", resp);
 	/*
-	 *  We've been handed a mostly un-initialized resource struct,
-	 *  with only a magic number and a cpu number filled in.
-	 *  Init it and add it to the table.
-	 *  This is how application-provided resource structures
-	 *  are remembered for later cleanup by the library.
+	 * We've been handed a mostly un-initialized resource struct,
+	 * with only a magic number and a cpu number filled in.  Init
+	 * it and add it to the table.  This is how
+	 * application-provided resource structures are remembered for
+	 * later cleanup by the library.
 	 */
 	rt_init_resource( resp, resp->re_cpu, rtip );
     }
@@ -923,7 +934,7 @@ rt_shootray(register struct application *ap)
     }
 
     /*
-     *  Record essential statistics in per-processor data structure.
+     * Record essential statistics in per-processor data structure.
      */
     resp->re_nshootray++;
 
@@ -964,8 +975,8 @@ rt_shootray(register struct application *ap)
     VMOVE( ap->a_inv_dir, ss.inv_dir );
 
     /*
-     *  If ray does not enter the model RPP, skip on.
-     *  If ray ends exactly at the model RPP, trace it.
+     * If ray does not enter the model RPP, skip on.  If ray ends
+     * exactly at the model RPP, trace it.
      */
     if ( !rt_in_rpp( &ap->a_ray, ss.inv_dir, rtip->mdl_min, rtip->mdl_max )  ||
 	 ap->a_ray.r_max < 0.0 )  {
@@ -994,63 +1005,78 @@ rt_shootray(register struct application *ap)
     }
 
     /*
-     *  The interesting part of the ray starts at distance 0.
-     *  If the ray enters the model at a negative distance,
-     *  (ie, the ray starts within the model RPP),
-     *  we only look at little bit behind (BACKING_DIST) to see if we are
-     *  just coming out of something, but never further back than
-     *  the intersection with the model RPP.
-     *  If the ray enters the model at a positive distance,
-     *  we always start there.
-     *  It is vital that we never pick a start point outside the
-     *  model RPP, or the space partitioning tree will pick the
-     *  wrong box and the ray will miss it.
+     * The interesting part of the ray starts at distance 0.  If the
+     * ray enters the model at a negative distance, (ie, the ray
+     * starts within the model RPP), we only look at little bit behind
+     * (BACKING_DIST) to see if we are just coming out of something,
+     * but never further back than the intersection with the model
+     * RPP.  If the ray enters the model at a positive distance, we
+     * always start there.  It is vital that we never pick a start
+     * point outside the model RPP, or the space partitioning tree
+     * will pick the wrong box and the ray will miss it.
      *
-     *  BACKING_DIST should probably be determined by floating point
-     *  noise factor due to model RPP size -vs- number of bits of
-     *  floating point mantissa significance, rather than a constant,
-     *  but that is too hideous to think about here.
-     *  Also note that applications that really depend on knowing
-     *  what region they are leaving from should probably back their
-     *  own start-point up, rather than depending on it here, but
-     *  it isn't much trouble here.
+     * BACKING_DIST should probably be determined by floating point
+     * noise factor due to model RPP size -vs- number of bits of
+     * floating point mantissa significance, rather than a constant,
+     * but that is too hideous to think about here.  Also note that
+     * applications that really depend on knowing what region they are
+     * leaving from should probably back their own start-point up,
+     * rather than depending on it here, but it isn't much trouble
+     * here.
      *
-     *  Modification by JRA for pieces methodology:
-     *	The original algorithm here assumed that if we encountered any primitive
-     *	along the positive direction of the ray, ALL its intersections would be calculated.
-     *	With pieces, we may see only an exit hit if the entrance piece is in a space partition cell
-     *	that is more than "BACKING_DIST" behind the ray start point (leading to incorrect results).
-     *	I have modified the setting of "ss.box_start" (when pieces are present and the ray start point is
-     *	inside the model bounding box) as follows (see rt_find_backing_dist()):
-     *		The ray is traced through the space partitioning tree
-     *		The ray is intersected with the bounding box of each primitive using pieces in each cell
-     *		The minimum of all these intersections is set as the initial "ss.box_start".
-     *		The "backbits" bit vector has a bit set for each of the primitives using pieces that have
-     *			bounding boxes that extend behind the ray start point
-     *	Further below (in the "pieces" loop), I have added code to ignore primitives that do not have a bit
-     *	set in the backbits vector when we are behind the ray start point.
+     * Modification by JRA for pieces methodology:
+     *
+     * The original algorithm here assumed that if we encountered any
+     * primitive along the positive direction of the ray, ALL its
+     * intersections would be calculated.  With pieces, we may see
+     * only an exit hit if the entrance piece is in a space partition
+     * cell that is more than "BACKING_DIST" behind the ray start
+     * point (leading to incorrect results).  I have modified the
+     * setting of "ss.box_start" (when pieces are present and the ray
+     * start point is inside the model bounding box) as follows (see
+     * rt_find_backing_dist()):
+     *
+     * - The ray is traced through the space partitioning tree.
+     *
+     * - The ray is intersected with the bounding box of each
+     * primitive using pieces in each cell
+     *
+     * - The minimum of all these intersections is set as the initial
+     * "ss.box_start".
+     *
+     * - The "backbits" bit vector has a bit set for each of the
+     * primitives using pieces that have bounding boxes that extend
+     * behind the ray start point
+     *
+     * Further below (in the "pieces" loop), I have added code to
+     * ignore primitives that do not have a bit set in the backbits
+     * vector when we are behind the ray start point.
      */
 
-    /* these two values set the point where the ray tracing actually begins and ends */
+    /* these two values set the point where the ray tracing actually
+     * begins and ends
+     */
     ss.box_start = ss.model_start = ap->a_ray.r_min;
     ss.box_end = ss.model_end = ap->a_ray.r_max;
 
     if ( ap->a_rt_i->rti_nsolids_with_pieces > 0 ) {
 	/* pieces are present */
 	if ( ss.box_start < BACKING_DIST ) {
-	    /* the first ray intersection with the model bounding box is more than BACKING_DIST
-	     * behind the ray start point
+	    /* the first ray intersection with the model bounding box
+	     * is more than BACKING_DIST behind the ray start point
 	     */
 
-	    /* get a bit vector to keep track of which primitives need to be intersected
-	     * behind the ray start point (those having bounding boxes extending behind the
-	     * ray start point and using pieces)
+	    /* get a bit vector to keep track of which primitives need
+	     * to be intersected behind the ray start point (those
+	     * having bounding boxes extending behind the ray start
+	     * point and using pieces)
 	     */
 	    backbits = get_solidbitv( rtip->nsolids, resp );
 	    bu_bitv_clear(backbits);
 
 	    /* call "rt_find_backing_dist()" to calculate the required
-	     * start point for calculation, and to fill in the "backbits" bit vector
+	     * start point for calculation, and to fill in the
+	     * "backbits" bit vector
 	     */
 	    ss.box_start = rt_find_backing_dist( &ss, backbits );
 	}
@@ -1085,11 +1111,11 @@ rt_shootray(register struct application *ap)
     ss.box_num = 0;
 
     /*
-     *  While the ray remains inside model space,
-     *  push from box to box until ray emerges from
-     *  model space again (or first hit is found, if user is impatient).
-     *  It is vitally important to always stay within the model RPP, or
-     *  the space partitoning tree will pick wrong boxes & miss them.
+     * While the ray remains inside model space, push from box to box
+     * until ray emerges from model space again (or first hit is
+     * found, if user is impatient).  It is vitally important to
+     * always stay within the model RPP, or the space partitoning tree
+     * will pick wrong boxes & miss them.
      */
     while ( (cutp = rt_advance_to_next_cell( &ss )) != CUTTER_NULL )  {
     start_cell:
@@ -1119,13 +1145,16 @@ rt_shootray(register struct application *ap)
 
 		RT_CK_PIECELIST(plp);
 
-		/* Consider all pieces of this one solid in this cell */
+		/* Consider all pieces of this one solid in this
+		 * cell.
+		 */
 		stp = plp->stp;
 		RT_CK_SOLTAB(stp);
 
 		if ( backbits && ss.box_end < BACKING_DIST && BU_BITTEST( backbits, stp->st_bit ) == 0 ) {
-		    /* we are behind the ray start point and this primitive is not one
-		     * that we need to intersect back here
+		    /* we are behind the ray start point and this
+		     * primitive is not one that we need to intersect
+		     * back here.
 		     */
 		    continue;
 		}
@@ -1138,7 +1167,9 @@ rt_shootray(register struct application *ap)
 		    psp->ray_seqno = resp->re_nshootray;
 		    rt_htbl_reset( &psp->htab );
 
-		    /* Compute ray entry and exit to entire solid's bounding box */
+		    /* Compute ray entry and exit to entire solid's
+		     * bounding box.
+		     */
 		    if ( !rt_in_rpp( &ss.newray, ss.inv_dir,
 				     stp->st_min, stp->st_max ) )  {
 			if (debug_shoot)bu_log("rpp miss %s (all pieces)\n", stp->st_name);
@@ -1160,13 +1191,12 @@ rt_shootray(register struct application *ap)
 		}
 
 		/*
-		 *  Allow this solid to shoot at all of its
-		 *  'pieces' in this cell, all at once.
-		 *  'newray' has been transformed to be near
-		 *  to this cell, and
-		 *  'dist_corr' is the additive correction
-		 *  factor that ft_piece_shot() must apply
-		 *  to hits calculated using 'newray'.
+		 * Allow this solid to shoot at all of its 'pieces' in
+		 * this cell, all at once.  'newray' has been
+		 * transformed to be near to this cell, and
+		 * 'dist_corr' is the additive correction factor that
+		 * ft_piece_shot() must apply to hits calculated using
+		 * 'newray'.
 		 */
 		resp->re_piece_shots++;
 		psp->cutp = cutp;
@@ -1179,9 +1209,10 @@ rt_shootray(register struct application *ap)
 		}
 		if (debug_shoot)bu_log("shooting %s pieces, nhit=%d\n", stp->st_name, ret);
 
-		/*  See if this solid has been fully processed yet.
-		 *  If ray has passed through bounding volume, we're done.
-		 *  ft_piece_hitsegs() will only be called once per ray.
+		/* See if this solid has been fully processed yet.  If
+		 * ray has passed through bounding volume, we're done.
+		 * ft_piece_hitsegs() will only be called once per
+		 * ray.
 		 */
 		if ( ss.box_end > psp->maxdist && psp->htab.end > 0 ) {
 		    /* Convert hits into segs */
@@ -1257,21 +1288,20 @@ rt_shootray(register struct application *ap)
 	    rt_plot_cell( cutp, &ss, &(waiting_segs.l), rtip);
 
 	/*
-	 *  If a_onehit == 0 and a_ray_length <= 0, then the ray
-	 *  is traced to +infinity.
+	 * If a_onehit == 0 and a_ray_length <= 0, then the ray is
+	 * traced to +infinity.
 	 *
-	 *  If a_onehit != 0, then it indicates how many hit points
-	 *  (which are greater than the ray start point of 0.0)
-	 *  the application requires, ie, partitions with inhit >= 0.
-	 *  (If negative, indicates number of non-air hits needed).
-	 *  If this box yielded additional segments,
-	 *  immediately weave them into the partition list,
-	 *  and perform final boolean evaluation.
-	 *  If this results in the required number of final
-	 *  partitions, then cease ray-tracing and hand the
-	 *  partitions over to the application.
-	 *  All partitions will have valid in and out distances.
-	 *  a_ray_length is treated similarly to a_onehit.
+	 * If a_onehit != 0, then it indicates how many hit points
+	 * (which are greater than the ray start point of 0.0) the
+	 * application requires, ie, partitions with inhit >= 0.  (If
+	 * negative, indicates number of non-air hits needed).  If
+	 * this box yielded additional segments, immediately weave
+	 * them into the partition list, and perform final boolean
+	 * evaluation.  If this results in the required number of
+	 * final partitions, then cease ray-tracing and hand the
+	 * partitions over to the application.  All partitions will
+	 * have valid in and out distances.  a_ray_length is treated
+	 * similarly to a_onehit.
 	 */
 	if ( BU_LIST_NON_EMPTY( &(waiting_segs.l) ) )  {
 	    if (debug_shoot)  {
@@ -1288,7 +1318,10 @@ rt_shootray(register struct application *ap)
 		rt_boolweave( &finished_segs, &waiting_segs, &InitialPart, ap );
 
 		if ( BU_PTBL_LEN( &resp->re_pieces_pending ) > 0 )  {
-		    /* Find the lowest pending mindist, that's as far as boolfinal can progress to */
+
+		    /* Find the lowest pending mindist, that's as far
+		     * as boolfinal can progress to.
+		     */
 		    struct rt_piecestate **psp;
 		    for ( BU_PTBL_FOR( psp, (struct rt_piecestate **), &resp->re_pieces_pending ) )  {
 			register fastf_t dist;
@@ -1323,8 +1356,8 @@ rt_shootray(register struct application *ap)
     }
 
     /*
-     *  Ray has finally left known space --
-     *  Weave any remaining segments into the partition list.
+     * Ray has finally left known space -- Weave any remaining
+     * segments into the partition list.
      */
  weave:
     if ( RT_G_DEBUG&DEBUG_ADVANCE )
@@ -1357,8 +1390,8 @@ rt_shootray(register struct application *ap)
     }
 
     /*
-     *  All intersections of the ray with the model have
-     *  been computed.  Evaluate the boolean trees over each partition.
+     * All intersections of the ray with the model have been computed.
+     * Evaluate the boolean trees over each partition.
      */
     (void)rt_boolfinal( &InitialPart, &FinalPart, BACKING_DIST,
 			INFINITY,
@@ -1373,30 +1406,30 @@ rt_shootray(register struct application *ap)
     }
 
     /*
-     *  Ray/model intersections exist.  Pass the list to the
-     *  user's a_hit() routine.  Note that only the hit_dist
-     *  elements of pt_inhit and pt_outhit have been computed yet.
-     *  To compute both hit_point and hit_normal, use the
+     * Ray/model intersections exist.  Pass the list to the user's
+     * a_hit() routine.  Note that only the hit_dist elements of
+     * pt_inhit and pt_outhit have been computed yet.  To compute both
+     * hit_point and hit_normal, use the
      *
-     *  	RT_HIT_NORM( hitp, stp, rayp )
+     * RT_HIT_NORM( hitp, stp, rayp )
      *
-     *  macro.  To compute just hit_point, use
+     * macro.  To compute just hit_point, use
      *
-     *  VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
+     * VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
      */
  hitit:
     if (debug_shoot)  rt_pr_partitions(rtip, &FinalPart, "a_hit()");
 
     /*
-     *  Before recursing, release storage for unused Initial partitions.
-     *  finished_segs can not be released yet, because FinalPart
-     *  partitions will point to hits in those segments.
+     * Before recursing, release storage for unused Initial
+     * partitions.  finished_segs can not be released yet, because
+     * FinalPart partitions will point to hits in those segments.
      */
     RT_FREE_PT_LIST( &InitialPart, resp );
 
     /*
-     *  finished_segs is only used by special hit routines
-     *  which don't follow the traditional solid modeling paradigm.
+     * finished_segs is only used by special hit routines which don't
+     * follow the traditional solid modeling paradigm.
      */
     if (RT_G_DEBUG&DEBUG_ALLHITS) rt_pr_partitions(rtip, &FinalPart, "Partition list passed to a_hit() routine");
     if (ap->a_hit) {
@@ -1447,13 +1480,12 @@ rt_shootray(register struct application *ap)
     return( ap->a_return );
 }
 
-/*
- *			R T _ C E L L _ N _ O N _ R A Y
+/**
+ * R T _ C E L L _ N _ O N _ R A Y
  *
- *  Return pointer to cell 'n' along a given ray.
- *  Used for debugging of how space partitioning interacts with shootray.
- *  Intended to mirror the operation of rt_shootray().
- *  The first cell is 0.
+ * Return pointer to cell 'n' along a given ray.  Used for debugging
+ * of how space partitioning interacts with shootray.  Intended to
+ * mirror the operation of rt_shootray().  The first cell is 0.
  */
 const union cutter *
 rt_cell_n_on_ray(register struct application *ap, int n)
@@ -1522,11 +1554,11 @@ rt_cell_n_on_ray(register struct application *ap, int n)
 	/* XXX This shouldn't happen any more */
 	bu_log("rt_cell_n_on_ray() resp=x%x uninitialized, fixing it\n", resp);
 	/*
-	 *  We've been handed a mostly un-initialized resource struct,
-	 *  with only a magic number and a cpu number filled in.
-	 *  Init it and add it to the table.
-	 *  This is how application-provided resource structures
-	 *  are remembered for later cleanup by the library.
+	 * We've been handed a mostly un-initialized resource struct,
+	 * with only a magic number and a cpu number filled in.
+	 * Init it and add it to the table.
+	 * This is how application-provided resource structures
+	 * are remembered for later cleanup by the library.
 	 */
 	rt_init_resource( resp, resp->re_cpu, rtip );
     }
@@ -1586,8 +1618,8 @@ rt_cell_n_on_ray(register struct application *ap, int n)
     }
 
     /*
-     *  If ray does not enter the model RPP, skip on.
-     *  If ray ends exactly at the model RPP, trace it.
+     * If ray does not enter the model RPP, skip on.
+     * If ray ends exactly at the model RPP, trace it.
      */
     if ( !rt_in_rpp( &ap->a_ray, ss.inv_dir, rtip->mdl_min, rtip->mdl_max )  ||
 	 ap->a_ray.r_max < 0.0 )  {
@@ -1599,26 +1631,24 @@ rt_cell_n_on_ray(register struct application *ap, int n)
     }
 
     /*
-     *  The interesting part of the ray starts at distance 0.
-     *  If the ray enters the model at a negative distance,
-     *  (ie, the ray starts within the model RPP),
-     *  we only look at little bit behind (BACKING_DIST) to see if we are
-     *  just coming out of something, but never further back than
-     *  the intersection with the model RPP.
-     *  If the ray enters the model at a positive distance,
-     *  we always start there.
-     *  It is vital that we never pick a start point outside the
-     *  model RPP, or the space partitioning tree will pick the
-     *  wrong box and the ray will miss it.
+     * The interesting part of the ray starts at distance 0.  If the
+     * ray enters the model at a negative distance, (ie, the ray
+     * starts within the model RPP), we only look at little bit behind
+     * (BACKING_DIST) to see if we are just coming out of something,
+     * but never further back than the intersection with the model
+     * RPP.  If the ray enters the model at a positive distance, we
+     * always start there.  It is vital that we never pick a start
+     * point outside the model RPP, or the space partitioning tree
+     * will pick the wrong box and the ray will miss it.
      *
-     *  BACKING_DIST should probably be determined by floating point
-     *  noise factor due to model RPP size -vs- number of bits of
-     *  floating point mantissa significance, rather than a constant,
-     *  but that is too hideous to think about here.
-     *  Also note that applications that really depend on knowing
-     *  what region they are leaving from should probably back their
-     *  own start-point up, rather than depending on it here, but
-     *  it isn't much trouble here.
+     * BACKING_DIST should probably be determined by floating point
+     * noise factor due to model RPP size -vs- number of bits of
+     * floating point mantissa significance, rather than a constant,
+     * but that is too hideous to think about here.  Also note that
+     * applications that really depend on knowing what region they are
+     * leaving from should probably back their own start-point up,
+     * rather than depending on it here, but it isn't much trouble
+     * here.
      */
     ss.box_start = ss.model_start = ap->a_ray.r_min;
     ss.box_end = ss.model_end = ap->a_ray.r_max;
@@ -1649,11 +1679,11 @@ rt_cell_n_on_ray(register struct application *ap, int n)
     ss.dist_corr = 0.0;
 
     /*
-     *  While the ray remains inside model space,
-     *  push from box to box until ray emerges from
-     *  model space again (or first hit is found, if user is impatient).
-     *  It is vitally important to always stay within the model RPP, or
-     *  the space partitoning tree will pick wrong boxes & miss them.
+     * While the ray remains inside model space, push from box to box
+     * until ray emerges from model space again (or first hit is
+     * found, if user is impatient).  It is vitally important to
+     * always stay within the model RPP, or the space partitoning tree
+     * will pick wrong boxes & miss them.
      */
     while ( (cutp = rt_advance_to_next_cell( &ss )) != CUTTER_NULL )  {
 	if (debug_shoot) {
@@ -1667,29 +1697,26 @@ rt_cell_n_on_ray(register struct application *ap, int n)
     return CUTTER_NULL;
 }
 
-/*
- *			R T _ I N _ R P P
+/**
+ * R T _ I N _ R P P
  *
- *  Compute the intersections of a ray with a rectangular parallelpiped (RPP)
- *  that has faces parallel to the coordinate planes
+ * Compute the intersections of a ray with a rectangular parallelpiped
+ * (RPP) that has faces parallel to the coordinate planes
  *
- *  The algorithm here was developed by Gary Kuehl for GIFT.
- *  A good description of the approach used can be found in
- *  "??" by XYZZY and Barsky,
- *  ACM Transactions on Graphics, Vol 3 No 1, January 1984.
+ * The algorithm here was developed by Gary Kuehl for GIFT.  A good
+ * description of the approach used can be found in "??" by XYZZY and
+ * Barsky, ACM Transactions on Graphics, Vol 3 No 1, January 1984.
  *
- * Note -
- *  The computation of entry and exit distance is mandatory, as the final
- *  test catches the majority of misses.
+ * Note: The computation of entry and exit distance is mandatory, as
+ * the final test catches the majority of misses.
  *
- * Note -
- *  A hit is returned if the intersect is behind the start point.
+ * Note: A hit is returned if the intersect is behind the start point.
  *
- *  Returns -
+ * Returns -
  *	 0  if ray does not hit RPP,
  *	!0  if ray hits RPP.
  *
- *  Implicit return -
+ * Implicit return -
  *	rp->r_min = dist from start of ray to point at which ray ENTERS solid
  *	rp->r_max = dist from start of ray to point at which ray LEAVES solid
  */
@@ -1822,9 +1849,9 @@ rt_DB_rpp(register struct xray *rp, register const fastf_t *invdir, register con
 	bu_log("r_min=%g, r_max=%g\n", rp->r_min, rp->r_max);
     }  else  {
 	/*
-	 *  Direction cosines along this axis is NEAR 0,
-	 *  which implies that the ray is perpendicular to the axis,
-	 *  so merely check position against the boundaries.
+	 * Direction cosines along this axis is NEAR 0, which implies
+	 * that the ray is perpendicular to the axis, so merely check
+	 * position against the boundaries.
 	 */
 	if ( (*min > *pt) || (*max < *pt) )
 	    goto miss;
@@ -1907,7 +1934,9 @@ rt_DB_rpp(register struct xray *rp, register const fastf_t *invdir, register con
 
 #define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
 
-/* Stub function which will "similate" a call to a vector shot routine */
+/**
+ * Stub function which will "similate" a call to a vector shot routine
+ */
 void
 rt_vstub(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
     /* An array of solid pointers */
@@ -1962,15 +1991,15 @@ rt_zero_res_stats( struct resource *resp )
     resp->re_piece_ndup = 0;
 }
 
-/*
- *			R T _ A D D _ R E S _ S T A T S
+/**
+ * R T _ A D D _ R E S _ S T A T S
  *
- *  To be called only in non-parallel mode, to tally up the statistics
- *  from the resource structure(s) into the rt instance structure.
+ * To be called only in non-parallel mode, to tally up the statistics
+ * from the resource structure(s) into the rt instance structure.
  *
- *  Non-parallel programs should call
+ * Non-parallel programs should call
  *	rt_add_res_stats( rtip, RESOURCE_NULL );
- *  to have the default resource results tallied in.
+ * to have the default resource results tallied in.
  */
 void
 rt_add_res_stats(register struct rt_i *rtip, register struct resource *resp)
@@ -1996,8 +2025,8 @@ rt_add_res_stats(register struct rt_i *rtip, register struct resource *resp)
     rt_zero_res_stats( resp );
 }
 
-/*
- *  Routines for plotting the progress of one ray through the model.  -Mike
+/**
+ * Routines for plotting the progress of one ray through the model.
  */
 void
 rt_3move_raydist(FILE *fp, struct xray *rayp, double dist)
@@ -2017,9 +2046,9 @@ rt_3cont_raydist(FILE *fp, struct xray *rayp, double dist)
     pdv_3cont( fp, p );
 }
 
-/*
-  rt_plot_cell( cutp, &ss, &(waiting_segs.l), rtip);
-*/
+/**
+ *
+ */
 void
 rt_plot_cell(const union cutter *cutp, const struct rt_shootray_status *ssp, struct bu_list *waiting_segs_hd, struct rt_i *rtip)
 {
@@ -2040,7 +2069,8 @@ rt_plot_cell(const union cutter *cutp, const struct rt_shootray_status *ssp, str
 	perror(buf);
     }
 
-    pl_color( fp, 0, 100, 0 );		/* green box for model RPP */
+    /* green box for model RPP */
+    pl_color( fp, 0, 100, 0 );
 
     /* Plot the model RPP, to provide some context */
     pdv_3space( fp, rtip->rti_pmin, rtip->rti_pmax );

@@ -21,12 +21,12 @@
 /** @{ */
 /** @file g_dsp.c
  *
- *  Intersect a ray with a displacement map.
+ * Intersect a ray with a displacement map.
  *
- *  The bounding box planes (in dsp coordinates) are numbered 0 .. 5
+ * The bounding box planes (in dsp coordinates) are numbered 0 .. 5
  *
- *  For purposes of the "struct hit" surface number, the "non-elevation"
- *  surfaces are numbered 0 .. 7 where:
+ * For purposes of the "struct hit" surface number, the
+ * "non-elevation" surfaces are numbered 0 .. 7 where:
  *
  *	     Plane #	Name  plane dist
  *	--------------------------------------------------
@@ -40,12 +40,12 @@
  *		6	ZMID (dsp_min)
  *		7	ZTOP (computed)
  *
- *  if the "struct hit" surfno surface is ZMAX, then
+ * if the "struct hit" surfno surface is ZMAX, then
  *  	hit_vpriv[X, Y] holds the cell that was hit.
  * 	hit_vpriv[Z] is 0 if this was an in-hit.  1 if an out-hit
  *
  *
- *  Authors -
+ * Authors -
  *  	Lee A. Butler
  *
  */
@@ -64,8 +64,8 @@
 #include "nmg.h"
 #include "raytrace.h"
 #include "rtgeom.h"
-#include "./debug.h"
 #include "plot3.h"
+
 
 #define FULL_DSP_DEBUGGING 1
 

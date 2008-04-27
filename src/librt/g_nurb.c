@@ -21,9 +21,9 @@
 /** @{ */
 /** @file g_nurb.c
  *
- *	Intersect a ray with a Non Uniform Rational B-Spline.
+ * Intersect a ray with a Non Uniform Rational B-Spline.
  *
- *  Authors -
+ * Authors -
  *	Paul R. Stay
  *
  */
@@ -43,7 +43,6 @@
 #include "nurb.h"		/* before nmg.h */
 #include "nmg.h"
 #include "rtgeom.h"
-#include "./debug.h"
 
 
 #ifndef M_SQRT1_2

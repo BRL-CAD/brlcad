@@ -21,7 +21,7 @@
 /** @{ */
 /** @file nmg_extrude.c
  *
- *	Routines for extruding nmg's.
+ * Routines for extruding nmg's.
  *
  */
 /** @} */
@@ -38,13 +38,12 @@
 #include "nmg.h"
 #include "raytrace.h"
 #include "rtgeom.h"
-#include "./debug.h"
 
 
 /**
- *	V e r t s _ i n _ N M G _ L o o p
+ * v e r t s _ i n _ n m g _ l o o p
  *
- *	Count number of vertices in an NMG loop.
+ * Count number of vertices in an NMG loop.
  */
 static int
 verts_in_nmg_loop(struct loopuse *lu)
@@ -74,9 +73,9 @@ verts_in_nmg_loop(struct loopuse *lu)
 }
 
 /**
- *	V e r t s _ i n _ N M G _ F a c e
+ * v e r t s _ i n _ n m g _ f a c e
  *
- *	Count number of vertices in an NMG face.
+ * Count number of vertices in an NMG face.
  */
 static int
 verts_in_nmg_face(struct faceuse *fu)
@@ -91,14 +90,14 @@ verts_in_nmg_face(struct faceuse *fu)
 }
 
 /**
- *	T r a n s l a t e _ N M G _ F a c e
+ * n m g _ t r a n s l a t e _ f a c e
  *
- *	Translate a face using a vector's magnitude and direction.
+ * Translate a face using a vector's magnitude and direction.
  */
 void
 nmg_translate_face(struct faceuse *fu, const fastf_t *Vec, const struct bn_tol *tol)
 {
-    int		cnt,		/* Number of vertices in face. */
+    int	cnt,		/* Number of vertices in face. */
 	cur,
 	i,
 	in_there;
@@ -180,10 +179,10 @@ nmg_translate_face(struct faceuse *fu, const fastf_t *Vec, const struct bn_tol *
 }
 
 /**
- *	N M G _ E x t r u d e _ F a c e
+ * n m g _ e x t r u d e _ f a c e
  *
- *	Duplicate a given NMG face, move it by specified vector,
- *	and create a solid bounded by these faces.
+ * Duplicate a given NMG face, move it by specified vector, and create
+ * a solid bounded by these faces.
  */
 int
 nmg_extrude_face(struct faceuse *fu, const fastf_t *Vec, const struct bn_tol *tol)
@@ -269,11 +268,11 @@ nmg_extrude_face(struct faceuse *fu, const fastf_t *Vec, const struct bn_tol *to
     return( 0 );
 }
 
-/**	N M G _ F I N D _ V E R T E X _ I N _ L U
+/**
+ * n m g _ f i n d _ v e r t e x _ i n _ l u
  *
  * find a use of vertex v in loopuse lu
  */
-
 struct vertexuse *
 nmg_find_vertex_in_lu(const struct vertex *v, const struct loopuse *lu)
 {
@@ -311,11 +310,13 @@ nmg_find_vertex_in_lu(const struct vertex *v, const struct loopuse *lu)
     return( ret_vu );
 }
 
-/**	N M G _ S T A R T _ N E W _ L O O P
+/**
+ * n m g _ s t a r t _ n e w _ l o o p
  *
- * recursive routine to build tables of edgeuse that may be used
- * to create new loopuses. lu1 and lu2 are overlapping edgeuses
- * from the same faceuse. This is a support routine for nmg_fix_overlapping loops
+ * recursive routine to build tables of edgeuse that may be used to
+ * create new loopuses. lu1 and lu2 are overlapping edgeuses from the
+ * same faceuse. This is a support routine for nmg_fix_overlapping
+ * loops
  */
 static void
 nmg_start_new_loop(struct edgeuse *start_eu, struct loopuse *lu1, struct loopuse *lu2, struct bu_ptbl *loops)
@@ -338,8 +339,8 @@ nmg_start_new_loop(struct edgeuse *start_eu, struct loopuse *lu1, struct loopuse
     /* add this table to the list of loops */
     bu_ptbl_ins( loops, (long *)new_lu_tab );
 
-    /* put edgeuses from lu1 into new_lu_tab until a vertex shared by lu1 and lu2 is encountered
-     * or until start_eu is encountered
+    /* put edgeuses from lu1 into new_lu_tab until a vertex shared by
+     * lu1 and lu2 is encountered or until start_eu is encountered
      */
 
     this_lu = lu1;
@@ -416,7 +417,8 @@ nmg_start_new_loop(struct edgeuse *start_eu, struct loopuse *lu1, struct loopuse
 
 }
 
-/**	N M G _ F I X _ O V E R L A P P I N G _ L O O P S
+/**
+ * n m g _ f i x _ o v e r l a p p i n g _ l o o p s
  *
  * Looks at each faceuse in the shell and checks if loopuses in that
  * faceuse overlap each other. This code can only handle faceuses that
@@ -426,11 +428,12 @@ nmg_start_new_loop(struct edgeuse *start_eu, struct loopuse *lu1, struct loopuse
  * Overlapping OT_SAME and OT_OPPOSITE loops are broken into some
  * number of OT_SAME loopuses. An edgeuse (from the OT_SAME loopuse)
  * departing from a point where the loops intersect and outside the
- * OT_OPPOSITE loopuse is found as a starting point. Edgeuses from this
- * loopuse are moved to a new loopuse until another intersect point is
- * encountered. At that point, another loop is started using the next edgeuse
- * and the current loopuse is continued by following the other loopuse.
- * this is continued until the original edgeuse is encountered.
+ * OT_OPPOSITE loopuse is found as a starting point. Edgeuses from
+ * this loopuse are moved to a new loopuse until another intersect
+ * point is encountered. At that point, another loop is started using
+ * the next edgeuse and the current loopuse is continued by following
+ * the other loopuse.  this is continued until the original edgeuse is
+ * encountered.
  *
  * If overlapping loops are found, new loopsuses are created and the
  * original loopuses are killed
@@ -472,8 +475,8 @@ nmg_fix_overlapping_loops(struct shell *s, const struct bn_tol *tol)
 	if ( fu->orientation != OT_SAME )
 	    continue;
 
-	/* This is pretty simple-minded right now, assuming that
-	 * there are only two loopuses
+	/* This is pretty simple-minded right now, assuming that there
+	 * are only two loopuses
 	 */
 	lu1 = BU_LIST_FIRST( loopuse, &fu->lu_hd );
 	NMG_CK_LOOPUSE( lu1 );
@@ -502,8 +505,9 @@ nmg_fix_overlapping_loops(struct shell *s, const struct bn_tol *tol)
 	    continue;
 	}
 
-	/* At this point we have an OT_SAME and an OT_OPPOSITE loopuses
-	 * for simplicity, force lu1 to be the OT_SAME loopuse */
+	/* At this point we have an OT_SAME and an OT_OPPOSITE
+	 * loopuses for simplicity, force lu1 to be the OT_SAME
+	 * loopuse */
 	if ( lu1->orientation == OT_OPPOSITE && lu2->orientation == OT_SAME )
 	{
 	    struct loopuse *lu_tmp;
@@ -618,8 +622,8 @@ nmg_fix_overlapping_loops(struct shell *s, const struct bn_tol *tol)
 	    }
 	}
 
-	/* find a vertex that lu1 and lu2 share, where eu1 is outside lu2
-	 * this will be a starting edgeuse for a new loopuse
+	/* find a vertex that lu1 and lu2 share, where eu1 is outside
+	 * lu2 this will be a starting edgeuse for a new loopuse
 	 */
 	start_eu = (struct edgeuse *)NULL;
 	for ( BU_LIST_FOR( eu1, edgeuse, &lu1->down_hd ) )
@@ -636,7 +640,9 @@ nmg_fix_overlapping_loops(struct shell *s, const struct bn_tol *tol)
 	    v2 = eu1->eumate_p->vu_p->v_p;
 	    NMG_CK_VERTEX( v2 );
 
-	    /* use midpoint to determine if edgeuse is in or out of lu2 */
+	    /* use midpoint to determine if edgeuse is in or out of
+	     * lu2
+	     */
 	    VBLEND2( mid_pt, 0.5, v1->vg_p->coord, 0.5, v2->vg_p->coord )
 
 		if ( nmg_classify_pt_loop( mid_pt, lu2, tol ) == NMG_CLASS_AoutB )
@@ -656,8 +662,8 @@ nmg_fix_overlapping_loops(struct shell *s, const struct bn_tol *tol)
 
 	bu_ptbl_reset( &loops );
 
-	/* start new loop
-	 * this routine will recurse, building as many tables as needed
+	/* start new loop.  this routine will recurse, building as
+	 * many tables as needed
 	 */
 	nmg_start_new_loop( start_eu, lu1, lu2, &loops );
 
@@ -669,10 +675,14 @@ nmg_fix_overlapping_loops(struct shell *s, const struct bn_tol *tol)
 	    struct bu_ptbl *loop_tab;
 	    int eu_no;
 
-	    /* each table represents a new loopuse to be constructed */
+	    /* each table represents a new loopuse to be
+	     * constructed
+	     */
 	    loop_tab = (struct bu_ptbl *)BU_PTBL_GET( &loops, i );
 
-	    /* if there are some entries in this table, make a new loopuse */
+	    /* if there are some entries in this table, make a new
+	     * loopuse
+	     */
 	    if ( BU_PTBL_END( loop_tab ) )
 	    {
 		/* create new loop */
@@ -730,11 +740,12 @@ nmg_fix_overlapping_loops(struct shell *s, const struct bn_tol *tol)
 	bu_log( "nmg_fix_overlapping_loops: done\n" );
 }
 
-/**	N M G _ B R E A K _ C R O S S E D _ L O O P S
+/**
+ * n m g _ b r e a k _ c r o s s e d _ l o o p s
  *
- *	Extrusion may create crossed loops within a face.
- *	This routine intersects each edge within a loop with every other edge
- *	in the loop
+ * Extrusion may create crossed loops within a face.  This routine
+ * intersects each edge within a loop with every other edge in the
+ * loop
  */
 void
 nmg_break_crossed_loops(struct shell *is, const struct bn_tol *tol)
@@ -832,14 +843,13 @@ nmg_break_crossed_loops(struct shell *is, const struct bn_tol *tol)
 }
 
 /**
- *	N M G _ E X T R U D E _ C L E A N U P
+ * n m g _ e x t r u d e _ c l e a n u p
  *
- *	Clean up after nmg_extrude_shell.
- *	intersects each face with every other face in the shell and
- *	makes new face boundaries at the intersections.
- *	decomposes the result into seperate shells.
- *	where faces have intersected, new shells will be created.
- *	These shells are detected and killed
+ * Clean up after nmg_extrude_shell.  intersects each face with every
+ * other face in the shell and makes new face boundaries at the
+ * intersections.  decomposes the result into seperate shells.  where
+ * faces have intersected, new shells will be created.  These shells
+ * are detected and killed
  */
 struct shell *
 nmg_extrude_cleanup(struct shell *is, const int is_void, const struct bn_tol *tol)
@@ -860,7 +870,9 @@ nmg_extrude_cleanup(struct shell *is, const int is_void, const struct bn_tol *to
 
     m = nmg_find_model( &is->l.magic );
 
-    /* intersect each face in the shell with every other face in the same shell */
+    /* intersect each face in the shell with every other face in the
+     * same shell
+     */
     nmg_isect_shell_self( is, tol );
 
     /* Extrusion may create loops that overlap */
@@ -881,13 +893,13 @@ nmg_extrude_cleanup(struct shell *is, const int is_void, const struct bn_tol *to
 	    /* check this loopuse */
 	    while ( (vu=(struct vertexuse *)nmg_loop_touches_self( lu ) ) != (struct vertexuse *)NULL )
 	    {
-		/* Split this touching loop, but give both resulting loops
-		 * the same orientation as the original. This will result
-		 * in the part of the loop that needs to be discarded having
-		 * an incorrect orientation with respect to the face.
-		 * This incorrect orientation will be discovered later by
-		 * "nmg_bad_face_normals" and will result in the undesirable
-		 * portion's demise
+		/* Split this touching loop, but give both resulting
+		 * loops the same orientation as the original. This
+		 * will result in the part of the loop that needs to
+		 * be discarded having an incorrect orientation with
+		 * respect to the face.  This incorrect orientation
+		 * will be discovered later by "nmg_bad_face_normals"
+		 * and will result in the undesirable portion's demise
 		 */
 
 		orientation = lu->orientation;
@@ -913,10 +925,9 @@ nmg_extrude_cleanup(struct shell *is, const int is_void, const struct bn_tol *to
     /* s_tmp is the shell just created */
     s_tmp = BU_LIST_FIRST( shell, &new_r->s_hd );
 
-    /* move our shell (is) to the new nmgregion
-     * in preparaion for nmg_decompose_shell.
-     * don't want to confuse pieces of this shell
-     * with other shells in "old_r"
+    /* move our shell (is) to the new nmgregion in preparaion for
+     * nmg_decompose_shell.  don't want to confuse pieces of this
+     * shell with other shells in "old_r"
      */
     (void)nmg_mv_shell_to_region( is, new_r );
 
@@ -1015,19 +1026,19 @@ nmg_extrude_cleanup(struct shell *is, const int is_void, const struct bn_tol *to
 }
 
 /**
- *	N M G _ H O L L O W _ S H E L L
+ * n m g _ h o l l o w _ s h e l l
  *
- *	Hollows out a shell producing a wall thickness of thickness "thick"
- *	by creating a new "inner" shell and combining the two shells.
+ * Hollows out a shell producing a wall thickness of thickness "thick"
+ * by creating a new "inner" shell and combining the two shells.
  *
- *	If the original shell is closed, the new shell is simply
- *	merged with the original shell.  If the original shell is open, then faces
- *	are constructed along the free edges of the two shells to make a closed shell.
+ * If the original shell is closed, the new shell is simply merged
+ * with the original shell.  If the original shell is open, then faces
+ * are constructed along the free edges of the two shells to make a
+ * closed shell.
  *
- *	if approximate is non-zero, new vertex geometry at vertices where more than
- *	three faces intersect may be approximated by a point of minimum distance from
- *	the intersecting faces.
- *
+ * if approximate is non-zero, new vertex geometry at vertices where
+ * more than three faces intersect may be approximated by a point of
+ * minimum distance from the intersecting faces.
  */
 void
 nmg_hollow_shell(struct shell *s, const fastf_t thick, const int approximate, const struct bn_tol *tol)
@@ -1125,8 +1136,8 @@ nmg_hollow_shell(struct shell *s, const fastf_t thick, const int approximate, co
 
 	is_void = nmg_shell_is_void( is );
 
-	/* now start adjusting the vertices
-	 * Use the original shell so that we can pass the original vertex to nmg_inside_vert
+	/* now start adjusting the vertices.  Use the original shell
+	 * so that we can pass the original vertex to nmg_inside_vert
 	 */
 	for ( BU_LIST_FOR( fu, faceuse, &s_tmp->fu_hd ) )
 	{
@@ -1138,9 +1149,10 @@ nmg_hollow_shell(struct shell *s, const fastf_t thick, const int approximate, co
 		NMG_CK_LOOPUSE( lu );
 		if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )
 		{
-		    /* the vertex in a loop of one vertex
-		     * must show up in an edgeuse somewhere,
-		     * so don't mess with it here */
+		    /* the vertex in a loop of one vertex must show up
+		     * in an edgeuse somewhere, so don't mess with it
+		     * here
+		     */
 		    continue;
 		}
 		else
@@ -1233,16 +1245,17 @@ nmg_hollow_shell(struct shell *s, const fastf_t thick, const int approximate, co
     nmg_kr( new_r );
 }
 
-/**	N M G _ E X T R U D E _ S H E L L
+/**
+ * n m g _ e x t r u d e _ s h e l l
  *
- * Extrudes a shell (s) by a distance (dist) in the direction
- * of the face normals if normal_ward, or the opposite direction
- * if !normal_ward.  The shell (s) is modified by adjusting the
- * plane equations for each face and calculating new vertex geometry.
- * if approximate is non-zero, new vertex geometry, for vertices
- * where more than three faces intersect, will be approximated
- * by a point with minimum distance from the intersecting faces.
- * if approximate is zero, additional faces and/or edges may be added to the shell.
+ * Extrudes a shell (s) by a distance (dist) in the direction of the
+ * face normals if normal_ward, or the opposite direction if
+ * !normal_ward.  The shell (s) is modified by adjusting the plane
+ * equations for each face and calculating new vertex geometry.  if
+ * approximate is non-zero, new vertex geometry, for vertices where
+ * more than three faces intersect, will be approximated by a point
+ * with minimum distance from the intersecting faces.  if approximate
+ * is zero, additional faces and/or edges may be added to the shell.
  *
  * returns:
  *	a pointer to the modified shell on success

@@ -21,7 +21,7 @@
 /** @{ */
 /** @file g_ars.c
  *
- *	Intersect a ray with an ARS (Arbitrary faceted solid).
+ * Intersect a ray with an ARS (Arbitrary faceted solid).
  *
  */
 
@@ -40,7 +40,6 @@
 #include "nmg.h"
 #include "raytrace.h"
 #include "rtgeom.h"
-#include "./debug.h"
 #include "./bot.h"
 
 

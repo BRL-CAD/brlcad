@@ -21,7 +21,7 @@
 /** @{ */
 /** @file g_sketch.c
  *
- *	Provide support for 2D sketches.
+ * Provide support for 2D sketches.
  *
  */
 /** @} */
@@ -42,7 +42,6 @@
 #include "raytrace.h"
 #include "nurb.h"
 #include "rtgeom.h"
-#include "./debug.h"
 
 
 fastf_t rt_cnurb_par_edge(const struct edge_g_cnurb *crv, fastf_t epsilon);

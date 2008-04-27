@@ -21,159 +21,159 @@
 /** @{ */
 /** @file g_part.c
  *
- *	Intersect a ray with a "particle" solid, which can have
- *	three main forms:  sphere, hemisphere-tipped cylinder (lozenge),
- *	and hemisphere-tipped cone.
- *	This code draws on the examples of g_rec (Davisson) & g_sph (Dykstra).
+ * Intersect a ray with a "particle" solid, which can have three main
+ * forms: sphere, hemisphere-tipped cylinder (lozenge), and
+ * hemisphere-tipped cone.  This code draws on the examples of g_rec
+ * (Davisson) & g_sph (Dykstra).
  *
- *  Authors -
- *	Michael John Muuss
- *	Paul Tanenbaum
+ * Algorithm for the hemisphere-tipped cylinder and cone cases -
  *
- *  Algorithm for the hemisphere-tipped cylinder and cone cases -
+ * Given V, H, vrad, and hrad, there is a set of points on this
+ * cylinder
  *
- *  Given V, H, vrad, and hrad, there is a set of points on this cylinder
+ * { (x, y, z) | (x, y, z) is on cylinder }
  *
- *  { (x, y, z) | (x, y, z) is on cylinder }
- *
- *  Through a series of Affine Transformations, this set of points will be
- *  transformed into a set of points on a unit cylinder (or cone)
- *  with the transformed base (V') located at the origin
- *  with a transformed radius of 1 (vrad').
- *  The height of the cylinder (or cone) along the +Z axis is +1
- *  (ie, H' = (0, 0, 1) ), with a transformed radius of hrad/vrad.
+ * Through a series of Affine Transformations, this set of points will
+ * be transformed into a set of points on a unit cylinder (or cone)
+ * with the transformed base (V') located at the origin with a
+ * transformed radius of 1 (vrad').  The height of the cylinder (or
+ * cone) along the +Z axis is +1 (ie, H' = (0, 0, 1) ), with a
+ * transformed radius of hrad/vrad.
  *
  *
- *  { (x', y', z') | (x', y', z') is on cylinder at origin }
+ * { (x', y', z') | (x', y', z') is on cylinder at origin }
  *
- *  The transformation from X to X' is accomplished by:
+ * The transformation from X to X' is accomplished by:
  *
- *  finding two unit vectors A and B mutually perpendicular, and perp. to H.
+ * finding two unit vectors A and B mutually perpendicular, and
+ * perp. to H.
  *
- *  X' = S(R( X - V ))
+ * X' = S(R( X - V ))
  *
- *  where R(X) rotates H to the +Z axis, and S(X) scales vrad' to 1
- *  and |H'| to 1.
+ * where R(X) rotates H to the +Z axis, and S(X) scales vrad' to 1 and
+ * |H'| to 1.
  *
- *  where R(X) =  ( A/(|A|) )
- *  		 (  B/(|B|)  ) . X
- *  		  ( H/(|H|) )
+ * where R(X) = ( A/(|A|) )
+ *  		(  B/(|B|)  ) . X
+ *  		( H/(|H|) )
  *
- *  and S(X) =	 (  1/|A|   0     0   )
- *  		(    0    1/|B|   0    ) . X
- *  		 (   0      0   1/|H| )
+ * and S(X) =	(  1/|A|   0     0   )
+ * 		(    0    1/|B|   0    ) . X
+ * 		(   0      0   1/|H| )
  *
- *  To find the intersection of a line with the surface of the cylinder,
- *  consider the parametric line L:
+ * To find the intersection of a line with the surface of the cylinder,
+ * consider the parametric line L:
  *
  *  	L : { P(n) | P + t(n) . D }
  *
- *  Call W the actual point of intersection between L and the cylinder.
- *  Let W' be the point of intersection between L' and the unit cylinder.
+ * Call W the actual point of intersection between L and the cylinder.
+ * Let W' be the point of intersection between L' and the unit cylinder.
  *
  *  	L' : { P'(n) | P' + t(n) . D' }
  *
- *  W = invR( invS( W' ) ) + V
+ * W = invR( invS( W' ) ) + V
  *
- *  Where W' = k D' + P'.
+ * Where W' = k D' + P'.
  *
- *  If Dx' and Dy' are both 0, then there is no hit on the cylinder;
- *  but the end spheres need checking.
+ * If Dx' and Dy' are both 0, then there is no hit on the cylinder;
+ * but the end spheres need checking.
  *
- *  The equation for the unit cylinder ranging along Z is
+ * The equation for the unit cylinder ranging along Z is
  *
  *	x**2 + y**2 - r**2 = 0
  *
- *  and the equation for a unit cone ranging along Z is
+ * and the equation for a unit cone ranging along Z is
  *
  *	x**2 + y**2 - f(z)**2 = 0
  *
- *  where in this case f(z) linearly interpolates the radius of the
- *  cylinder from vrad (r1) to hrad (r2) as z ranges from 0 to 1, i.e.:
+ * where in this case f(z) linearly interpolates the radius of the
+ * cylinder from vrad (r1) to hrad (r2) as z ranges from 0 to 1, i.e.:
  *
  *	f(z) = (r2-r1)/1 * z + r1
  *
- *  let m = (r2-r1)/1, and substitute:
+ * let m = (r2-r1)/1, and substitute:
  *
  *	x**2 + y**2 - (m*z+r1)**2 = 0 .
  *
- *  For the cylinder case, r1 == r2, so m == 0, and everything simplifies.
+ * For the cylinder case, r1 == r2, so m == 0, and everything
+ * simplifies.
  *
- *  The parametric formulation for line L' is P' + t * D', or
+ * The parametric formulation for line L' is P' + t * D', or
  *
  *	x = Px' + t * Dx'
  *	y = Py' + t * Dy'
  *	z = Pz' + t * Dz' .
  *
- *  Substituting these definitions into the formula for the unit cone gives
+ * Substituting these definitions into the formula for the unit cone gives
  *
  *	(Px'+t*Dx')**2 + (Py'+t*Dy')**2 + (m*(Pz'+t*Dz')+r1)**2 = 0
  *
- *  Expanding and regrouping terms gives a quadratic in "t"
- *  which has the form
+ * Expanding and regrouping terms gives a quadratic in "t" which has
+ * the form
  *
  *	a * t**2 + b * t + c = 0
  *
- *  where
+ * where
  *
  *	a = Dx'**2 + Dy'**2 - m**2 * Dz'**2
  *	b = 2 * (Px'*Dx' + Py'*Dy' - m**2 * Pz'*Dz' - m*r1*Dz')
  *	c = Px'**2 + Py'**2 - m**2 * Pz'**2 - 2*m*r1*Pz' - r1**2
  *
- *  Line L' hits the infinitely tall unit cone at point(s) W'
- *  which correspond to the roots of the quadratic.
- *  The quadratic formula yields values for "t"
+ * Line L' hits the infinitely tall unit cone at point(s) W' which
+ * correspond to the roots of the quadratic.  The quadratic formula
+ * yields values for "t"
  *
  *	t = [ -b +/- sqrt( b** - 4 * a * c ) ] / ( 2 * a )
  *
- *  This parameter "t" can be substituted into the formulas for either
- *  L' or L, because affine transformations preserve distances along lines.
+ * This parameter "t" can be substituted into the formulas for either
+ * L' or L, because affine transformations preserve distances along
+ * lines.
  *
- *  Now, D' = S( R( D ) )
- *  and  P' = S( R( P - V ) )
+ * Now, D' = S( R( D ) )
+ * and  P' = S( R( P - V ) )
  *
- *  Substituting,
+ * Substituting,
  *
- *  W = V + invR( invS[ k *( S( R( D ) ) ) + S( R( P - V ) ) ] )
- *    = V + invR( ( k * R( D ) ) + R( P - V ) )
- *    = V + k * D + P - V
- *    = k * D + P
+ * W = V + invR( invS[ k *( S( R( D ) ) ) + S( R( P - V ) ) ] )
+ *   = V + invR( ( k * R( D ) ) + R( P - V ) )
+ *   = V + k * D + P - V
+ *   = k * D + P
  *
- *  Note that ``t'' is constant, and is the same in the formulations
- *  for both W and W'.
+ * Note that ``t'' is constant, and is the same in the formulations
+ * for both W and W'.
  *
- *  The hit at ``t'' is a hit on the height=1 unit cylinder IFF
- *  0 <= Wz' <= 1.
+ * The hit at ``t'' is a hit on the height=1 unit cylinder IFF
+ * 0 <= Wz' <= 1.
  *
- *  NORMALS.  Given the point W on the surface of the cylinder,
- *  what is the vector normal to the tangent plane at that point?
+ * NORMALS.  Given the point W on the surface of the cylinder, what is
+ * the vector normal to the tangent plane at that point?
  *
- *  Map W onto the unit cylinder, ie:  W' = S( R( W - V ) ).
+ * Map W onto the unit cylinder, ie:  W' = S( R( W - V ) ).
  *
- *  Plane on unit cylinder at W' has a normal vector N' of the same value
- *  as W' in x and y, with z set to zero, ie, (Wx', Wy', 0)
+ * Plane on unit cylinder at W' has a normal vector N' of the same
+ * value as W' in x and y, with z set to zero, ie, (Wx', Wy', 0)
  *
- *  The plane transforms back to the tangent plane at W, and this
- *  new plane (on the original cylinder) has a normal vector of N, viz:
+ * The plane transforms back to the tangent plane at W, and this new
+ * plane (on the original cylinder) has a normal vector of N, viz:
  *
- *  N = inverse[ transpose(invR o invS) ] ( N' )
- *    = inverse[ transpose(invS) o transpose(invR) ] ( N' )
- *    = inverse[ inverse(S) o R ] ( N' )
- *    = invR o S ( N' )
+ * N = inverse[ transpose(invR o invS) ] ( N' )
+ *   = inverse[ transpose(invS) o transpose(invR) ] ( N' )
+ *   = inverse[ inverse(S) o R ] ( N' )
+ *   = invR o S ( N' )
  *
- *  Note that the normal vector produced above will not have unit length.
+ * Note that the normal vector produced above will not have unit length.
  *
- *  THE HEMISPHERES.
+ * THE HEMISPHERES.
  *
- *  THE "EQUIVALENT CONE":
+ * THE "EQUIVALENT CONE":
  *
- *  In order to have exact matching of the surface normals at the join
- *  between the conical body of the particle and the hemispherical end,
- *  it is necessary to alter the cone to form an "equivalent cone",
- *  where the end caps of the cone are both shifted away from the
- *  large hemisphere and towards the smaller one.
- *  This makes the cone end where it is tangent to the hemisphere.
- *  The calculation for theta come from a diagram drawn by PJT on 18-Nov-99.
+ * In order to have exact matching of the surface normals at the join
+ * between the conical body of the particle and the hemispherical end,
+ * it is necessary to alter the cone to form an "equivalent cone",
+ * where the end caps of the cone are both shifted away from the large
+ * hemisphere and towards the smaller one.  This makes the cone end
+ * where it is tangent to the hemisphere.  The calculation for theta
+ * come from a diagram drawn by PJT on 18-Nov-99.
  */
 /** @} */
 
@@ -190,7 +190,7 @@
 #include "raytrace.h"
 #include "nmg.h"
 #include "rtgeom.h"
-#include "./debug.h"
+
 
 struct part_specific {
     struct rt_part_internal	part_int;

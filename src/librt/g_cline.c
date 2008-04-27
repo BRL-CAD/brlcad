@@ -21,9 +21,9 @@
 /** @{ */
 /** @file g_cline.c
  *
- *	Intersect a ray with a FASTGEN4 CLINE element.
+ * Intersect a ray with a FASTGEN4 CLINE element.
  *
- *  Authors -
+ * Authors -
  *  	John Anderson
  *
  */
@@ -42,7 +42,7 @@
 #include "nmg.h"
 #include "raytrace.h"
 #include "rtgeom.h"
-#include "./debug.h"
+
 
 /* ray tracing form of solid, including precomputed terms */
 struct cline_specific {

@@ -21,6 +21,8 @@
 /** @{ */
 /** @file db_io.c
  *
+ * v4 database read/write I/O routines
+ *
  */
 
 #include "common.h"
@@ -35,7 +37,6 @@
 #include "db.h"
 #include "raytrace.h"
 
-#include "./debug.h"
 
 /**
  *			D B _ R E A D

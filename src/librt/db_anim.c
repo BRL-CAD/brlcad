@@ -20,10 +20,8 @@
 /** @addtogroup dbio */
 /** @{ */
 /** @file db_anim.c
- *  Routines to apply animation directives to geometry database.
  *
- *  Author -
- *	Michael John Muuss
+ * Routines to apply animation directives to geometry database.
  *
  */
 
@@ -38,7 +36,6 @@
 #include "vmath.h"
 #include "bu.h"
 #include "raytrace.h"
-#include "./debug.h"
 
 
 /**

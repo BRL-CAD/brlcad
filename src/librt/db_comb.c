@@ -21,16 +21,16 @@
 /** @{ */
 /** @file db_comb.c
  *
- *  This module contains the import/export routines for "Combinations",
- *  the non-leaf nodes in the directed acyclic graphs (DAGs) in the
- *  BRL-CAD ".g" database.
+ * This module contains the import/export routines for "Combinations",
+ * the non-leaf nodes in the directed acyclic graphs (DAGs) in the
+ * BRL-CAD ".g" database.
  *
- *  This parallels the function of the geometry (leaf-node) import/export
- *  routines found in the g_xxx.c routines.
+ * This parallels the function of the geometry (leaf-node)
+ * import/export routines found in the g_xxx.c routines.
  *
- *  As a reminder, some combinations are special, when marked with
- *  the "Region" flag, everything from that node down is considered to
- *  be made of uniform material.
+ * As a reminder, some combinations are special, when marked with the
+ * "Region" flag, everything from that node down is considered to be
+ * made of uniform material.
  *
  */
 
@@ -47,7 +47,6 @@
 #include "db.h"
 #include "raytrace.h"
 
-#include "./debug.h"
 
 #define STAT_ROT	1
 #define STAT_XLATE	2

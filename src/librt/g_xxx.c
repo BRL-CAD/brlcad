@@ -21,7 +21,7 @@
 /** @{ */
 /** @file g_xxx.c
  *
- *	Intersect a ray with a.
+ * Intersect a ray with a.
  *
  * Adding a new solid type:
  *	Design disk record
@@ -50,26 +50,19 @@
  *		also add the interface table and to rt_id_solid() in table.c
  *	go to src/mged and create the edit support
  *
- *  Authors -
- *
  */
 /** @} */
 
 #include "common.h"
 
-/* system headers */
 #include <stdio.h>
 #include <math.h>
 
-/* interface headers */
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
 #include "raytrace.h"
 #include "rtgeom.h"
-
-/* local headers */
-#include "./debug.h"
 
 
 #if 0

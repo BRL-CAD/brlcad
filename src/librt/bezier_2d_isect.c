@@ -21,16 +21,15 @@
 /** @{ */
 /** @file bezier_2d_isect.c
  *
- *	The following routines are for 2D Bezier curves
+ * The following routines are for 2D Bezier curves
  *
- *	The following routines are borrowed from Graphics Gems I,
- *	Academic Press, Inc, 1990, Andrew S. Glassner (editor),
- *	"A Bezier Curve-based Root-finder", Philip J. Schneider.
+ * The following routines are borrowed from Graphics Gems I, Academic
+ * Press, Inc, 1990, Andrew S. Glassner (editor), "A Bezier
+ * Curve-based Root-finder", Philip J. Schneider.
  *
- *	JRA 4/2001:
- *		Modifications have been made for inclusion in BRL-CAD and
- *		to generalize the codes for finding intersections with any 2D line
- *		rather than just the X-axis.
+ * Modifications have been made for inclusion in BRL-CAD and to
+ * generalize the codes for finding intersections with any 2D line
+ * rather than just the X-axis.
  */
 
 #include "common.h"
@@ -42,7 +41,7 @@
 #include "nmg.h"
 #include "raytrace.h"
 #include "nurb.h"
-#include "../librt/debug.h"
+
 
 #define SGN(_x) (((_x)<0) ? -1 : 1)
 #define MAXDEPTH	64

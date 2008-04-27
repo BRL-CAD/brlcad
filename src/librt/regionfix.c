@@ -21,11 +21,8 @@
 /** @{ */
 /** @file regionfix.c
  *
- *  Subroutines for adjusting old GIFT-style region-IDs,
- *  to take into account the presence of instancing.
- *
- *  Author -
- *	Michael John Muuss
+ * Subroutines for adjusting old GIFT-style region-IDs, to take into
+ * account the presence of instancing.
  *
  */
 /** @} */
@@ -49,18 +46,15 @@
 #include "vmath.h"
 #include "raytrace.h"
 
-#include "./debug.h"
 
-
-/*
- *			R T_ R E G I O N F I X
+/**
+ * R T_ R E G I O N F I X
  *
- *  Apply any deltas to reg_regionid values
- *  to allow old applications that use the reg_regionid number
- *  to distinguish between different instances of the same
- *  prototype region.
+ * Apply any deltas to reg_regionid values to allow old applications
+ * that use the reg_regionid number to distinguish between different
+ * instances of the same prototype region.
  *
- *  Called once, from rt_prep(), before raytracing begins.
+ * Called once, from rt_prep(), before raytracing begins.
  */
 void
 rt_regionfix(struct rt_i *rtip)
@@ -78,10 +72,9 @@ rt_regionfix(struct rt_i *rtip)
 
     RT_CK_RTI(rtip);
 
-    /*  If application has provided an alternative file name
-     *  before rt_prep() was called, then use that.
-     *  Otherwise, replace ".g" suffix on database name
-     *  with ".regexp".
+    /* If application has provided an alternative file name before
+     * rt_prep() was called, then use that.  Otherwise, replace ".g"
+     * suffix on database name with ".regexp".
      */
     bu_vls_init(&name);
     file = rtip->rti_region_fix_file;
@@ -106,13 +99,15 @@ rt_regionfix(struct rt_i *rtip)
     while ( (line = rt_read_cmd( fp )) != (char *) 0 )  {
 	regex_t	re_space;
 	linenum++;
-	/*  For now, establish a simple format:
-	 *  regexp TAB [more_white_space] formula SEMICOLON
+
+	/* For now, establish a simple format:
+	 * regexp TAB [more_white_space] formula SEMICOLON
 	 */
 	if ( (tabp = strchr( line, '\t' )) == (char *)0 )  {
 	    bu_log("%s: missing TAB on line %d:\n%s\n", file, linenum, line );
 	    continue;		/* just ignore it */
 	}
+
 	*tabp++ = '\0';
 	while ( *tabp && isspace( *tabp ) )  tabp++;
 	if ( (ret = regcomp(&re_space, line, 0)) != 0 )  {
@@ -133,15 +128,16 @@ rt_regionfix(struct rt_i *rtip)
 		bu_log("%s: line %d, invalid regular expression\n", file, linenum);
 		break;		/* on to next RE */
 	    }
+
 	    /*
-	     *  RE matched this name, perform indicated operation
-	     *  For now, choices are limited.  Later this might
-	     *  become an interpreted expression.  For now:
-	     *	99	replace old region id with "num"
-	     *	+99	increment old region id with "num"
-	     *		(which may itself be a negative number)
-	     *	+uses	increment old region id by the
-	     *		current instance (use) count.
+	     * RE matched this name, perform indicated operation
+	     * For now, choices are limited.  Later this might
+	     * become an interpreted expression.  For now:
+	     * 99	replace old region id with "num"
+	     * +99	increment old region id with "num"
+	     *          (which may itself be a negative number)
+	     * +uses	increment old region id by the
+	     *          current instance (use) count.
 	     */
 	    oldid = rp->reg_regionid;
 	    if ( strcmp( tabp, "+uses" ) == 0  )  {
@@ -159,9 +155,7 @@ rt_regionfix(struct rt_i *rtip)
 	    }
 	    rp->reg_regionid = newid;
 	}
-#if HAVE_REGFREE
 	regfree(&re_space);
-#endif
 	bu_free( line, "reg_expr line");
     }
     fclose( fp );

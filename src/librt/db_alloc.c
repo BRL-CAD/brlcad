@@ -21,15 +21,7 @@
 /** @{ */
 /** @file db_alloc.c
  *
- * Functions -
- *	- db_alloc	Find a contiguous block of database storage
- *	- db_delete	Delete storage associated w/entry, zap records
- *	- db_zapper	Zap region of file into ID_FREE records
- *
- *
- *  Authors -
- *	Michael John Muuss
- *	Robert Jon Reschly Jr.
+ * v4 granule allocation routines
  *
  */
 
@@ -42,8 +34,6 @@
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
-
-#include "./debug.h"
 
 
 /**

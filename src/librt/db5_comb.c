@@ -21,9 +21,9 @@
 /** @{ */
 /** @file db5_comb.c
  *
- *  Handle import/export of combinations (union tree) in v5 format.
+ * Handle import/export of combinations (union tree) in v5 format.
  *
- *  The on-disk record looks like this:
+ * The on-disk record looks like this:
  *	width byte
  *	n matricies (only non-identity matricies stored).
  *	n leaves
@@ -33,8 +33,8 @@
  *	Section 2:  leaves
  *	Section 3:  (Optional) RPN expression.
  *
- *  Encoding of a matrix is (ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE) bytes,
- *  in network order (big-Endian, IEEE double precision).
+ * Encoding of a matrix is (ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE)
+ * bytes, in network order (big-Endian, IEEE double precision).
  *
  */
 /** @} */
@@ -51,8 +51,6 @@
 #include "bn.h"
 #include "db5.h"
 #include "raytrace.h"
-
-#include "./debug.h"
 
 
 struct db_tree_counter_state {

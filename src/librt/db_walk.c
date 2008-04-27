@@ -21,12 +21,7 @@
 /** @{ */
 /** @file db_walk.c
  *
- * Functions -
- *	db_functree	No-frills tree-walk
- *
- *  Authors -
- *	Michael John Muuss
- *	John R. Anderson
+ * No-frills tree-walker.
  *
  */
 
@@ -40,12 +35,11 @@
 #include "db.h"
 #include "raytrace.h"
 
-#include "./debug.h"
 
 /*
- *          D B _ T R A V E R S E _ S U B T R E E
+ * D B _ T R A V E R S E _ S U B T R E E
  *
- *  A generic traversal function.
+ * A generic traversal function.
  *
  */
 void

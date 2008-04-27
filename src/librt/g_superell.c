@@ -44,7 +44,7 @@
 #include "raytrace.h"
 #include "nurb.h"
 #include "rtgeom.h"
-#include "./debug.h"
+
 
 const struct bu_structparse rt_superell_parse[] = {
     { "%f", 3, "V", bu_offsetof(struct rt_superell_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL },
@@ -58,96 +58,97 @@ const struct bu_structparse rt_superell_parse[] = {
 
 
 /*
- *  Algorithm:
+ * Algorithm:
  *
- *  Given V, A, B, and C, there is a set of points on this superellipsoid
+ * Given V, A, B, and C, there is a set of points on this superellipsoid
  *
- *  { (x, y, z) | (x, y, z) is on superellipsoid defined by V, A, B, C }
+ * { (x, y, z) | (x, y, z) is on superellipsoid defined by V, A, B, C }
  *
- *  Through a series of Affine Transformations, this set will be
- *  transformed into a set of points on a unit sphere at the origin
+ * Through a series of Affine Transformations, this set will be
+ * transformed into a set of points on a unit sphere at the origin
  *
- *  { (x', y', z') | (x', y', z') is on Sphere at origin }
+ * { (x', y', z') | (x', y', z') is on Sphere at origin }
  *
- *  The transformation from X to X' is accomplished by:
+ * The transformation from X to X' is accomplished by:
  *
- *  X' = S(R( X - V ))
+ * X' = S(R( X - V ))
  *
- *  where R(X) =  ( A/(|A|) )
- *  		 (  B/(|B|)  ) . X
- *  		  ( C/(|C|) )
+ * where R(X) = ( A/(|A|) )
+ * 		(  B/(|B|)  ) . X
+ * 		( C/(|C|) )
  *
- *  and S(X) =	 (  1/|A|   0     0   )
- *  		(    0    1/|B|   0    ) . X
- *  		 (   0      0   1/|C| )
+ * and S(X) =	(  1/|A|   0     0   )
+ * 		(    0    1/|B|   0    ) . X
+ * 		(   0      0   1/|C| )
  *
- *  To find the intersection of a line with the superellipsoid, consider
- *  the parametric line L:
+ * To find the intersection of a line with the superellipsoid, consider
+ * the parametric line L:
  *
- *  	L : { P(n) | P + t(n) . D }
+ * 	L : { P(n) | P + t(n) . D }
  *
- *  Call W the actual point of intersection between L and the superellipsoid.
- *  Let W' be the point of intersection between L' and the unit sphere.
+ * Call W the actual point of intersection between L and the superellipsoid.
+ * Let W' be the point of intersection between L' and the unit sphere.
  *
- *  	L' : { P'(n) | P' + t(n) . D' }
+ * 	L' : { P'(n) | P' + t(n) . D' }
  *
- *  W = invR( invS( W' ) ) + V
+ * W = invR( invS( W' ) ) + V
  *
- *  Where W' = k D' + P'.
+ * Where W' = k D' + P'.
  *
- *  Let dp = D' dot P'
- *  Let dd = D' dot D'
- *  Let pp = P' dot P'
+ * Let dp = D' dot P'
+ * Let dd = D' dot D'
+ * Let pp = P' dot P'
  *
- *  and k = [ -dp +/- sqrt( dp*dp - dd * (pp - 1) ) ] / dd
- *  which is constant.
+ * and k = [ -dp +/- sqrt( dp*dp - dd * (pp - 1) ) ] / dd
+ * which is constant.
  *
- *  Now, D' = S( R( D ) )
- *  and  P' = S( R( P - V ) )
+ * Now, D' = S( R( D ) )
+ * and  P' = S( R( P - V ) )
  *
- *  Substituting,
+ * Substituting,
  *
- *  W = V + invR( invS[ k *( S( R( D ) ) ) + S( R( P - V ) ) ] )
- *    = V + invR( ( k * R( D ) ) + R( P - V ) )
- *    = V + k * D + P - V
- *    = k * D + P
+ * W = V + invR( invS[ k *( S( R( D ) ) ) + S( R( P - V ) ) ] )
+ *   = V + invR( ( k * R( D ) ) + R( P - V ) )
+ *   = V + k * D + P - V
+ *   = k * D + P
  *
- *  Note that ``k'' is constant, and is the same in the formulations
- *  for both W and W'.
+ * Note that ``k'' is constant, and is the same in the formulations
+ * for both W and W'.
  *
- *  NORMALS.  Given the point W on the superellipsoid, what is the vector
- *  normal to the tangent plane at that point?
+ * NORMALS.  Given the point W on the superellipsoid, what is the
+ * vector normal to the tangent plane at that point?
  *
- *  Map W onto the unit sphere, ie:  W' = S( R( W - V ) ).
+ * Map W onto the unit sphere, ie:  W' = S( R( W - V ) ).
  *
- *  Plane on unit sphere at W' has a normal vector of the same value(!).
- *  N' = W'
+ * Plane on unit sphere at W' has a normal vector of the same value(!).
+ * N' = W'
  *
- *  The plane transforms back to the tangent plane at W, and this
- *  new plane (on the superellipsoid) has a normal vector of N, viz:
+ * The plane transforms back to the tangent plane at W, and this new
+ * plane (on the superellipsoid) has a normal vector of N, viz:
  *
- *  N = inverse[ transpose( inverse[ S o R ] ) ] ( N' )
+ * N = inverse[ transpose( inverse[ S o R ] ) ] ( N' )
  *
- *  because if H is perpendicular to plane Q, and matrix M maps from
- *  Q to Q', then inverse[ transpose(M) ] (H) is perpendicular to Q'.
- *  Here, H and Q are in "prime space" with the unit sphere.
- *  [Somehow, the notation here is backwards].
- *  So, the mapping matrix M = inverse( S o R ), because
- *  S o R maps from normal space to the unit sphere.
+ * because if H is perpendicular to plane Q, and matrix M maps from
+ * Q to Q', then inverse[ transpose(M) ] (H) is perpendicular to Q'.
+ * Here, H and Q are in "prime space" with the unit sphere.
+ * [Somehow, the notation here is backwards].
+ * So, the mapping matrix M = inverse( S o R ), because
+ * S o R maps from normal space to the unit sphere.
  *
- *  N = inverse[ transpose( inverse[ S o R ] ) ] ( N' )
- *    = inverse[ transpose(invR o invS) ] ( N' )
- *    = inverse[ transpose(invS) o transpose(invR) ] ( N' )
- *    = inverse[ inverse(S) o R ] ( N' )
- *    = invR o S ( N' )
+ * N = inverse[ transpose( inverse[ S o R ] ) ] ( N' )
+ *   = inverse[ transpose(invR o invS) ] ( N' )
+ *   = inverse[ transpose(invS) o transpose(invR) ] ( N' )
+ *   = inverse[ inverse(S) o R ] ( N' )
+ *   = invR o S ( N' )
  *
- *    = invR o S ( W' )
- *    = invR( S( S( R( W - V ) ) ) )
+ *   = invR o S ( W' )
+ *   = invR( S( S( R( W - V ) ) ) )
  *
- *  because inverse(R) = transpose(R), so R = transpose( invR ),
- *  and S = transpose( S ).
+ * because inverse(R) = transpose(R), so R = transpose( invR ),
+ * and S = transpose( S ).
  *
- *  Note that the normal vector N produced above will not have unit length.
+ * Note that the normal vector N produced above will not have unit
+ * length.
  */
 
 struct superell_specific {
@@ -168,19 +169,18 @@ struct superell_specific {
 #define SUPERELL_NULL	((struct superell_specific *)0)
 
 /**
- *  			R T _ S U P E R E L L _ P R E P
+ * R T _ S U P E R E L L _ P R E P
  *
- *  Given a pointer to a GED database record, and a transformation matrix,
- *  determine if this is a valid superellipsoid, and if so, precompute various
- *  terms of the formula.
+ * Given a pointer to a GED database record, and a transformation
+ * matrix, determine if this is a valid superellipsoid, and if so,
+ * precompute various terms of the formula.
  *
- *  Returns -
- *  	0	SUPERELL is OK
- *  	!0	Error in description
+ * Returns -
+ * 	0	SUPERELL is OK
+ * 	!0	Error in description
  *
- *  Implicit return -
- *  	A struct superell_specific is created, and it's address is stored in
- *  	stp->st_specific for use by rt_superell_shot().
+ * Implicit return - A struct superell_specific is created, and it's
+ * address is stored in stp->st_specific for use by rt_superell_shot()
  */
 int
 rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
@@ -328,7 +328,7 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 }
 
 /**
- *			R T _ S U P E R E L L _ P R I N T
+ * R T _ S U P E R E L L _ P R I N T
  */
 void
 rt_superell_print(register const struct soltab *stp)
@@ -344,16 +344,16 @@ rt_superell_print(register const struct soltab *stp)
  * f(x) = [ (x^(2/e2) + y^(2/e2))^(e2/e1) + z^(2/e1) ]^(e1/2) - 1
  */
 
-/*
- *  			R T _ S U P E R E L L _ S H O T
+/**
+ * R T _ S U P E R E L L _ S H O T
  *
- *  Intersect a ray with an superellipsoid, where all constant terms have
- *  been precomputed by rt_superell_prep().  If an intersection occurs,
- *  a struct seg will be acquired and filled in.
+ * Intersect a ray with an superellipsoid, where all constant terms
+ * have been precomputed by rt_superell_prep().  If an intersection
+ * occurs, a struct seg will be acquired and filled in.
  *
- *  Returns -
- *  	0	MISS
- *	>0	HIT
+ * Returns -
+ * 	0	MISS
+ * 	>0	HIT
  */
 int
 rt_superell_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
@@ -531,9 +531,9 @@ rt_superell_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 
 
 /**
- *			R T _ S U P E R E L L _ V S H O T
+ * R T _ S U P E R E L L _ V S H O T
  *
- *  This is the Becker vector version.
+ * This is the Becker vector version.
  */
 void
 rt_superell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
@@ -548,9 +548,9 @@ rt_superell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n
 
 
 /**
- *  			R T _ S U P E R E L L _ N O R M
+ * R T _ S U P E R E L L _ N O R M
  *
- *  Given ONE ray distance, return the normal and entry/exit point.
+ * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
 rt_superell_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
@@ -572,9 +572,9 @@ rt_superell_norm(register struct hit *hitp, struct soltab *stp, register struct 
 
 
 /**
- *			R T _ S U P E R E L L _ C U R V E
+ * R T _ S U P E R E L L _ C U R V E
  *
- *  Return the curvature of the superellipsoid.
+ * Return the curvature of the superellipsoid.
  */
 void
 rt_superell_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
@@ -585,12 +585,12 @@ rt_superell_curve(register struct curvature *cvp, register struct hit *hitp, str
 
 
 /**
- *  			R T _ S U P E R E L L _ U V
+ * R T _ S U P E R E L L _ U V
  *
- *  For a hit on the surface of an SUPERELL, return the (u, v) coordinates
- *  of the hit point, 0 <= u, v <= 1.
- *  u = azimuth
- *  v = elevation
+ * For a hit on the surface of an SUPERELL, return the (u, v) coordinates
+ * of the hit point, 0 <= u, v <= 1.
+ * u = azimuth
+ * v = elevation
  */
 void
 rt_superell_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
@@ -600,7 +600,7 @@ rt_superell_uv(struct application *ap, struct soltab *stp, register struct hit *
 }
 
 /**
- *			R T _ S U P E R E L L _ F R E E
+ * R T _ S U P E R E L L _ F R E E
  */
 void
 rt_superell_free(register struct soltab *stp)
@@ -620,7 +620,7 @@ rt_superell_class(void)
 
 
 /**
- *			R T _ S U P E R E L L _ 1 6 P T S
+ * R T _ S U P E R E L L _ 1 6 P T S
  *
  * Also used by the TGC code
  */
@@ -664,7 +664,7 @@ rt_superell_16pts(register fastf_t *ov,
 }
 
 /**
- *			R T _ S U P E R E L L _ P L O T
+ * R T _ S U P E R E L L _ P L O T
  */
 int
 rt_superell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
@@ -753,22 +753,20 @@ struct superell_vert_strip {
 };
 
 /**
- *			R T _ S U P E R E L L _ T E S S
+ * R T _ S U P E R E L L _ T E S S
  *
- *  Tesssuperellate an superellipsoid.
+ * Tesssuperellate an superellipsoid.
  *
- *  The strategy is based upon the approach of Jon Leech 3/24/89,
- *  from program "sphere", which generates a polygon mesh
- *  approximating a sphere by
- *  recursive subdivision. First approximation is an octahedron;
- *  each level of refinement increases the number of polygons by
- *  a factor of 4.
- *  Level 3 (128 polygons) is a good tradeoff if gouraud
- *  shading is used to render the database.
+ * The strategy is based upon the approach of Jon Leech 3/24/89, from
+ * program "sphere", which generates a polygon mesh approximating a
+ * sphere by recursive subdivision. First approximation is an
+ * octahedron; each level of refinement increases the number of
+ * polygons by a factor of 4.  Level 3 (128 polygons) is a good
+ * tradeoff if gouraud shading is used to render the database.
  *
- *  At the start, points ABC lie on surface of the unit sphere.
- *  Pick DEF as the midpoints of the three edges of ABC.
- *  Normalize the new points to lie on surface of the unit sphere.
+ * At the start, points ABC lie on surface of the unit sphere.  Pick
+ * DEF as the midpoints of the three edges of ABC.  Normalize the new
+ * points to lie on surface of the unit sphere.
  *
  *	  1
  *	  B
@@ -781,9 +779,9 @@ struct superell_vert_strip {
  * A      F     C
  * 0      5     2
  *
- *  Returns -
- *	-1	failure
- *	 0	OK.  *r points to nmgregion that holds this tesssuperellation.
+ * Returns -
+ * 	-1	failure
+ * 	 0	OK.  *r points to nmgregion that holds this tesssuperellation.
  */
 int
 rt_superell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
@@ -793,11 +791,10 @@ rt_superell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 }
 
 /**
- *			R T _ S U P E R E L L _ I M P O R T
+ * R T _ S U P E R E L L _ I M P O R T
  *
- *  Import an superellipsoid/sphere from the database format to
- *  the internal structure.
- *  Apply modeling transformations as wsuperell.
+ * Import an superellipsoid/sphere from the database format to the
+ * internal structure.  Apply modeling transformations as wsuperell.
  */
 int
 rt_superell_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
@@ -838,7 +835,7 @@ rt_superell_import(struct rt_db_internal *ip, const struct bu_external *ep, regi
 }
 
 /**
- *			R T _ S U P E R E L L _ E X P O R T
+ * R T _ S U P E R E L L _ E X P O R T
  */
 int
 rt_superell_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
@@ -874,11 +871,10 @@ rt_superell_export(struct bu_external *ep, const struct rt_db_internal *ip, doub
 }
 
 /**
- *			R T _ S U P E R E L L _ I M P O R T 5
+ * R T _ S U P E R E L L _ I M P O R T 5
  *
- *  Import an superellipsoid/sphere from the database format to
- *  the internal structure.
- *  Apply modeling transformations as wsuperell.
+ * Import an superellipsoid/sphere from the database format to the
+ * internal structure.  Apply modeling transformations as wsuperell.
  */
 int
 rt_superell_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
@@ -915,9 +911,9 @@ rt_superell_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
 }
 
 /**
- *			R T _ S U P E R E L L _ E X P O R T 5
+ * R T _ S U P E R E L L _ E X P O R T 5
  *
- *  The external format is:
+ * The external format is:
  *	V point
  *	A vector
  *	B vector
@@ -954,11 +950,11 @@ rt_superell_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 }
 
 /**
- *			R T _ S U P E R E L L _ D E S C R I B E
+ * R T _ S U P E R E L L _ D E S C R I B E
  *
- *  Make human-readable formatted presentation of this solid.
- *  First line describes type of solid.
- *  Additional lines are indented one tab, and give parameter values.
+ * Make human-readable formatted presentation of this solid.  First
+ * line describes type of solid.  Additional lines are indented one
+ * tab, and give parameter values.
  */
 int
 rt_superell_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
@@ -1025,9 +1021,10 @@ rt_superell_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
 }
 
 /**
- *			R T _ S U P E R E L L _ I F R E E
+ * R T _ S U P E R E L L _ I F R E E
  *
- *  Free the storage associated with the rt_db_internal version of this solid.
+ * Free the storage associated with the rt_db_internal version of this
+ * solid.
  */
 void
 rt_superell_ifree(struct rt_db_internal *ip)
@@ -1037,9 +1034,8 @@ rt_superell_ifree(struct rt_db_internal *ip)
     ip->idb_ptr = GENPTR_NULL;
 }
 
-/*  The U parameter runs south to north.
- *  In order to orient loop CCW, need to start with 0, 1-->0, 0 transition
- *  at the south pole.
+/* The U parameter runs south to north.  In order to orient loop CCW,
+ * need to start with 0, 1-->0, 0 transition at the south pole.
  */
 static const fastf_t rt_superell_uvw[5*ELEMENTS_PER_VECT] = {
     0, 1, 0,
@@ -1050,7 +1046,7 @@ static const fastf_t rt_superell_uvw[5*ELEMENTS_PER_VECT] = {
 };
 
 /**
- *			R T _ S U P E R E L L _ T N U R B
+ * R T _ S U P E R E L L _ T N U R B
  */
 int
 rt_superell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol)

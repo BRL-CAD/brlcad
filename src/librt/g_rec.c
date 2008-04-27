@@ -21,112 +21,115 @@
 /** @{ */
 /** @file g_rec.c
  *
- *	Intersect a ray with a Right Eliptical Cylinder.
- *	This is a special (but common) case of the TGC,
- *	which is handled separately.
+ * Intersect a ray with a Right Eliptical Cylinder.  This is a special
+ * (but common) case of the TGC, which is handled separately.
  *
- *  Algorithm -
+ * Algorithm -
  *
- *  Given V, H, A, and B, there is a set of points on this cylinder
+ * Given V, H, A, and B, there is a set of points on this cylinder
  *
- *  { (x, y, z) | (x, y, z) is on cylinder }
+ * { (x, y, z) | (x, y, z) is on cylinder }
  *
- *  Through a series of Affine Transformations, this set of points will be
- *  transformed into a set of points on a unit cylinder located at the origin
- *  with a radius of 1, and a height of +1 along the +Z axis.
+ * Through a series of Affine Transformations, this set of points will
+ * be transformed into a set of points on a unit cylinder located at
+ * the origin with a radius of 1, and a height of +1 along the +Z
+ * axis.
  *
- *  { (x', y', z') | (x', y', z') is on cylinder at origin }
+ * { (x', y', z') | (x', y', z') is on cylinder at origin }
  *
- *  The transformation from X to X' is accomplished by:
+ * The transformation from X to X' is accomplished by:
  *
- *  X' = S(R( X - V ))
+ * X' = S(R( X - V ))
  *
- *  where R(X) =  ( A/(|A|) )
- *  		 (  B/(|B|)  ) . X
- *  		  ( H/(|H|) )
+ * where R(X) = ( A/(|A|) )
+ *  		(  B/(|B|)  ) . X
+ *  		( H/(|H|) )
  *
- *  and S(X) =	 (  1/|A|   0     0   )
- *  		(    0    1/|B|   0    ) . X
- *  		 (   0      0   1/|H| )
+ * and S(X) =	(  1/|A|   0     0   )
+ * 		(    0    1/|B|   0    ) . X
+ * 		(   0      0   1/|H| )
  *
- *  To find the intersection of a line with the surface of the cylinder,
- *  consider the parametric line L:
+ * To find the intersection of a line with the surface of the
+ * cylinder, consider the parametric line L:
  *
  *  	L : { P(n) | P + t(n) . D }
  *
- *  Call W the actual point of intersection between L and the cylinder.
- *  Let W' be the point of intersection between L' and the unit cylinder.
+ * Call W the actual point of intersection between L and the cylinder.
+ * Let W' be the point of intersection between L' and the unit
+ * cylinder.
  *
  *  	L' : { P'(n) | P' + t(n) . D' }
  *
- *  W = invR( invS( W' ) ) + V
+ * W = invR( invS( W' ) ) + V
  *
- *  Where W' = k D' + P'.
+ * Where W' = k D' + P'.
  *
- *  If Dx' and Dy' are both 0, then there is no hit on the cylinder;
- *  but the end plates need checking.
+ * If Dx' and Dy' are both 0, then there is no hit on the cylinder;
+ * but the end plates need checking.
  *
- *  Line L' hits the infinitely tall unit cylinder at W' when
+ * Line L' hits the infinitely tall unit cylinder at W' when
  *
  *	k**2 + b * k + c = 0
  *
- *  where
+ * where
  *
- *  b = 2 * ( Dx' * Px' + Dy' * Py' ) / ( Dx'**2 + Dy'**2 )
- *  c = ( ( Px'**2 + Py'**2 ) - r**2 ) / ( Dx'**2 + Dy'**2 )
- *  r = 1.0
+ * b = 2 * ( Dx' * Px' + Dy' * Py' ) / ( Dx'**2 + Dy'**2 )
+ * c = ( ( Px'**2 + Py'**2 ) - r**2 ) / ( Dx'**2 + Dy'**2 )
+ * r = 1.0
  *
- *  The qudratic formula yields k (which is constant):
+ * The qudratic formula yields k (which is constant):
  *
- *  k = [ -b +/- sqrt( b**2 - 4 * c ] / 2.0
+ * k = [ -b +/- sqrt( b**2 - 4 * c ] / 2.0
  *
- *  Now, D' = S( R( D ) )
- *  and  P' = S( R( P - V ) )
+ * Now, D' = S( R( D ) )
+ * and  P' = S( R( P - V ) )
  *
- *  Substituting,
+ * Substituting,
  *
- *  W = V + invR( invS[ k *( S( R( D ) ) ) + S( R( P - V ) ) ] )
- *    = V + invR( ( k * R( D ) ) + R( P - V ) )
- *    = V + k * D + P - V
- *    = k * D + P
+ * W = V + invR( invS[ k *( S( R( D ) ) ) + S( R( P - V ) ) ] )
+ *   = V + invR( ( k * R( D ) ) + R( P - V ) )
+ *   = V + k * D + P - V
+ *   = k * D + P
  *
- *  Note that ``k'' is constant, and is the same in the formulations
- *  for both W and W'.
+ * Note that ``k'' is constant, and is the same in the formulations
+ * for both W and W'.
  *
- *  The hit at ``k'' is a hit on the height=1 unit cylinder IFF
- *  0 <= Wz' <= 1.
+ * The hit at ``k'' is a hit on the height=1 unit cylinder IFF
+ * 0 <= Wz' <= 1.
  *
- *  NORMALS.  Given the point W on the surface of the cylinder,
- *  what is the vector normal to the tangent plane at that point?
+ * NORMALS.  Given the point W on the surface of the cylinder, what is
+ * the vector normal to the tangent plane at that point?
  *
- *  Map W onto the unit cylinder, ie:  W' = S( R( W - V ) ).
+ * Map W onto the unit cylinder, ie:  W' = S( R( W - V ) ).
  *
- *  Plane on unit cylinder at W' has a normal vector N' of the same value
- *  as W' in x and y, with z set to zero, ie, (Wx', Wy', 0)
+ * Plane on unit cylinder at W' has a normal vector N' of the same
+ * value as W' in x and y, with z set to zero, ie, (Wx', Wy', 0)
  *
- *  The plane transforms back to the tangent plane at W, and this
- *  new plane (on the original cylinder) has a normal vector of N, viz:
+ * The plane transforms back to the tangent plane at W, and this new
+ * plane (on the original cylinder) has a normal vector of N, viz:
  *
- *  N = inverse[ transpose(invR o invS) ] ( N' )
- *    = inverse[ transpose(invS) o transpose(invR) ] ( N' )
- *    = inverse[ inverse(S) o R ] ( N' )
- *    = invR o S ( N' )
+ * N = inverse[ transpose(invR o invS) ] ( N' )
+ *   = inverse[ transpose(invS) o transpose(invR) ] ( N' )
+ *   = inverse[ inverse(S) o R ] ( N' )
+ *   = invR o S ( N' )
  *
- *  Note that the normal vector produced above will not have unit length.
+ * Note that the normal vector produced above will not have unit
+ * length.
  *
- *  THE END PLATES.
+ * THE END PLATES.
  *
- *  If Dz' == 0, line L' is parallel to the end plates, so there is no hit.
+ * If Dz' == 0, line L' is parallel to the end plates, so there is no
+ * hit.
  *
- *  Otherwise, the line L' hits the bottom plate with k = (0 - Pz') / Dz',
- *  and hits the top plate with k = (1 - Pz') / Dz'.
+ * Otherwise, the line L' hits the bottom plate with k = (0 - Pz') / Dz',
+ * and hits the top plate with k = (1 - Pz') / Dz'.
  *
- *  The solution W' is within the end plate IFF
+ * The solution W' is within the end plate IFF
  *
  *	Wx'**2 + Wy'**2 <= 1.0
  *
- *  The normal for a hit on the bottom plate is -Hunit, and
- *  the normal for a hit on the top plate is +Hunit.
+ * The normal for a hit on the bottom plate is -Hunit, and the normal
+ * for a hit on the top plate is +Hunit.
  *
  */
 
@@ -140,7 +143,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtgeom.h"
-#include "./debug.h"
+
 
 struct rec_specific {
     vect_t	rec_V;		/* Vector to center of base of cylinder  */

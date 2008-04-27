@@ -21,11 +21,8 @@
 /** @{ */
 /** @file g_arbn.c
  *
- *  Intersect a ray with an Arbitrary Regular Polyhedron with
- *	an arbitrary number of faces.
- *
- *  Author -
- *	Michael John Muuss
+ * Intersect a ray with an Arbitrary Regular Polyhedron with an
+ * arbitrary number of faces.
  *
  */
 
@@ -44,7 +41,6 @@
 #include "db.h"
 #include "raytrace.h"
 #include "rtgeom.h"
-#include "./debug.h"
 
 
 BU_EXTERN(void rt_arbn_print, (const struct soltab *stp) );

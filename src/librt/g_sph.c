@@ -21,8 +21,8 @@
 /** @{ */
 /** @file g_sph.c
  *
- *	Intersect a ray with a Sphere.
- *	Special case of the Generalized Ellipsoid
+ * Intersect a ray with a Sphere.
+ * Special case of the Generalized Ellipsoid
  *
  */
 /** @} */
@@ -37,26 +37,26 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtgeom.h"
-#include "./debug.h"
+
 
 /*
- *  Algorithm:
+ * Algorithm:
  *
- *  Given V, A, where |A| = Radius, there is a set of points on this sphere
+ * Given V, A, where |A| = Radius, there is a set of points on this sphere
  *
- *  { (x, y, z) | (x, y, z) is on sphere defined by V, A }
+ * { (x, y, z) | (x, y, z) is on sphere defined by V, A }
  *
- *  To find the intersection of a line with the sphere, consider
- *  the parametric line L:
+ * To find the intersection of a line with the sphere, consider
+ * the parametric line L:
  *
- *  	L : { P(n) | P + t(n) . D }
+ * 	L : { P(n) | P + t(n) . D }
  *
- *  Call W the actual point of intersection between L and the sphere.
+ * Call W the actual point of intersection between L and the sphere.
  *
- *  NORMALS.  Given the point W on the sphere, what is the vector
- *  normal to the tangent plane at that point?
+ * NORMALS.  Given the point W on the sphere, what is the vector
+ * normal to the tangent plane at that point?
  *
- *  N = (W - V) / |A|
+ * N = (W - V) / |A|
  */
 
 struct sph_specific {
@@ -68,20 +68,20 @@ struct sph_specific {
 };
 
 /**
- *  			R T _ S P H _ P R E P
+ * R T _ S P H _ P R E P
  *
- *  Given a pointer to a GED database record, and a transformation matrix,
- *  determine if this is a valid sphere, and if so, precompute various
- *  terms of the formula.
+ * Given a pointer to a GED database record, and a transformation matrix,
+ * determine if this is a valid sphere, and if so, precompute various
+ * terms of the formula.
  *
- *  Returns -
- *  	0	SPH is OK
- *  	!0	Error in description
+ * Returns -
+ * 	0	SPH is OK
+ * 	!0	Error in description
  *
- *  Implicit return -
- *  	A struct sph_specific is created, and it's address is stored in
- *  	stp->st_specific for use by rt_sph_shot().
- *	If the ELL is really a SPH, stp->st_id is modified to ID_SPH.
+ * Implicit return -
+ * 	A struct sph_specific is created, and it's address is stored in
+ * 	stp->st_specific for use by rt_sph_shot().
+ * 	If the ELL is really a SPH, stp->st_id is modified to ID_SPH.
  */
 int
 rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
@@ -184,7 +184,7 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 /**
- *			R T _ S P H _ P R I N T
+ * R T _ S P H _ P R I N T
  */
 void
 rt_sph_print(register const struct soltab *stp)
@@ -200,24 +200,25 @@ rt_sph_print(register const struct soltab *stp)
 }
 
 /**
- *  			R T _ S P H _ S H O T
+ * R T _ S P H _ S H O T
  *
- *  Intersect a ray with a sphere.
- *  If an intersection occurs, a struct seg will be acquired
- *  and filled in.
- *  Notes: In the quadratic equation,
- *   A is MAGSQ(r_dir) which is always equal to 1, so it does not appear.
- *   The sign of B is reversed (vector is reversed) to save negation.
- *   We have factored out the 2 and 4 constants.
- *  Claim: The straight quadratic formula leads to precision problems
- *   if either A or C are small.  In our case A is always 1.  C is a
- *   radial distance of the ray origin from the sphere surface.  Thus
- *   if we are shooting from near the surface we may have problems.
- *   XXX - investigate this.
+ * Intersect a ray with a sphere.  If an intersection occurs, a struct
+ * seg will be acquired and filled in.
  *
- *  Returns -
- *  	0	MISS
- *	>0	HIT
+ * Notes: In the quadratic equation, A is MAGSQ(r_dir) which is always
+ * equal to 1, so it does not appear.  The sign of B is reversed
+ * (vector is reversed) to save negation.  We have factored out the 2
+ * and 4 constants.
+ *
+ * Claim: The straight quadratic formula leads to precision problems
+ * if either A or C are small.  In our case A is always 1.  C is a
+ * radial distance of the ray origin from the sphere surface.  Thus if
+ * we are shooting from near the surface we may have problems.  XXX -
+ * investigate this.
+ *
+ * Returns -
+ * 	0	MISS
+ * 	>0	HIT
  */
 int
 rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
@@ -263,9 +264,9 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 #define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
 /**
- *			R T _ S P H _ V S H O T
+ * R T _ S P H _ V S H O T
  *
- *  This is the Becker vectorized version
+ * This is the Becker vectorized version
  */
 void
 rt_sph_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
@@ -319,9 +320,9 @@ rt_sph_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 }
 
 /**
- *  			R T _ S P H _ N O R M
+ * R T _ S P H _ N O R M
  *
- *  Given ONE ray distance, return the normal and entry/exit point.
+ * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
 rt_sph_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
@@ -335,9 +336,9 @@ rt_sph_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 }
 
 /**
- *			R T _ S P H _ C U R V E
+ * R T _ S P H _ C U R V E
  *
- *  Return the curvature of the sphere.
+ * Return the curvature of the sphere.
  */
 void
 rt_sph_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
@@ -352,12 +353,13 @@ rt_sph_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 }
 
 /**
- *  			R T _ S P H _ U V
+ * R T _ S P H _ U V
  *
- *  For a hit on the surface of an SPH, return the (u, v) coordinates
- *  of the hit point, 0 <= u, v <= 1.
- *  u = azimuth
- *  v = elevation
+ * For a hit on the surface of an SPH, return the (u, v) coordinates
+ * of the hit point, 0 <= u, v <= 1.
+ *
+ * u = azimuth
+ * v = elevation
  */
 void
 rt_sph_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
@@ -368,9 +370,8 @@ rt_sph_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
     vect_t work;
     vect_t pprime;
 
-    /* hit_point is on surface;  project back to unit sphere,
-     * creating a vector from vertex to hit point which always
-     * has length=1.0
+    /* hit_point is on surface; project back to unit sphere, creating
+     * a vector from vertex to hit point which always has length=1.0
      */
     VSUB2( work, hitp->hit_point, sph->sph_V );
     MAT4X3VEC( pprime, sph->sph_SoR, work );
@@ -381,8 +382,8 @@ rt_sph_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
     if ( uvp->uv_u < 0 )
 	uvp->uv_u += 1.0;
     /*
-     *  V is elevation, atan() range: -pi/2 to +pi/2,
-     *  because sqrt() ensures that X parameter is always >0
+     *  V is elevation, atan() range: -pi/2 to +pi/2, because sqrt()
+     *  ensures that X parameter is always >0
      */
     uvp->uv_v = bn_atan2( pprime[Z],
 			  sqrt( pprime[X] * pprime[X] + pprime[Y] * pprime[Y]) ) *
@@ -395,7 +396,7 @@ rt_sph_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 }
 
 /**
- *		R T _ S P H _ F R E E
+ * R T _ S P H _ F R E E
  */
 void
 rt_sph_free(register struct soltab *stp)
@@ -417,11 +418,10 @@ rt_sph_class(void)
 
 #if 0
 /**
- *			R T _ S P H _ I M P O R T 5
+ * R T _ S P H _ I M P O R T 5
  *
- *  Import a sphere from the v5 database format to
- *  the internal structure.
- *  Apply modeling transformations as well.
+ * Import a sphere from the v5 database format to the internal
+ * structure.  Apply modeling transformations as well.
  */
 int
 rt_sph_import5( ip, ep, mat, dbip )
@@ -455,7 +455,7 @@ rt_sph_import5( ip, ep, mat, dbip )
 }
 
 /**
- *			R T _ S P H _ E X P O R T 5
+ * R T _ S P H _ E X P O R T 5
  */
 int
 rt_sph_export5( ep, ip, local2mm, dbip )

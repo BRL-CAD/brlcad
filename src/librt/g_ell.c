@@ -21,7 +21,7 @@
 /** @{ */
 /** @file g_ell.c
  *
- *	Intersect a ray with a Generalized Ellipsoid.
+ * Intersect a ray with a Generalized Ellipsoid.
  *
  */
 
@@ -39,7 +39,7 @@
 #include "raytrace.h"
 #include "nurb.h"
 #include "rtgeom.h"
-#include "./debug.h"
+
 
 BU_EXTERN(int rt_sph_prep, (struct soltab *stp, struct rt_db_internal *ip,
 			    struct rt_i *rtip));
