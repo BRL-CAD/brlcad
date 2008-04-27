@@ -61,11 +61,11 @@ static int	rt_debug=0;		/* RT_G_DEBUG */
 static int	quiet=0;		/* flag to not blather */
 static int	comp_count=0;		/* Count of components in FASTGEN4 file */
 
-static int		*faces=NULL;	/* one triplet per face indexing three grid points */
-static fastf_t		*thickness;	/* thickness of each face */
-static char		*facemode;	/* mode for each face */
-static int		face_size=0;	/* actual length of above arrays */
-static int		face_count=0;	/* number of faces in above arrays */
+static int	*faces=NULL;	/* one triplet per face indexing three grid points */
+static fastf_t	*thickness;	/* thickness of each face */
+static char	*facemode;	/* mode for each face */
+static int	face_size=0;	/* actual length of above arrays */
+static int	face_count=0;	/* number of faces in above arrays */
 
 static int	*int_list;		/* Array of integers */
 static int	int_list_count=0;	/* Number of ints in above array */
@@ -95,7 +95,7 @@ static int	int_list_length=0;	/* Length of int_list array */
 #define		BOT		't'
 #define		COMPSPLT	'h'
 
-point_t *grid_pts;
+static point_t *grid_pts;
 
 void do_grid(char *line);
 void do_tri(char *line);
