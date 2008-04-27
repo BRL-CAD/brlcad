@@ -27,10 +27,6 @@
  *
  * These really are "db_" routines, more fundamental than "rt_".
  *
- * Functions -
- *	color_addrec	Called by rt_dirbuild on startup
- *	color_map	Map one region reference to a material
- *
  */
 /** @} */
 
@@ -49,46 +45,26 @@
  * strictly ascending order, with no overlaps (ie, monotonicly
  * increasing).
  */
-struct mater *rt_material_head = MATER_NULL;
+static struct mater *material_head = MATER_NULL;
 
-void	rt_insert_color(struct mater *newp);
 
 /**
  * R T _ P R _ M A T E R
  */
 void
-rt_pr_mater(register struct mater *mp)
+rt_pr_mater(register const struct mater *mp)
 {
     (void)bu_log( "%5d..%d\t", mp->mt_low, mp->mt_high );
     (void)bu_log( "%d,%d,%d\t", mp->mt_r, mp->mt_g, mp->mt_b);
 }
 
+
 /**
- * R T _ C O L O R _ A D D R E C
+ * R T _ I N S E R T _ C O L O R
  *
- * Called from db_scan() when initially scanning database.
- */
-void
-rt_color_addrec( int low, int hi, int r, int g, int b, long addr )
-{
-    register struct mater *mp;
-
-    BU_GETSTRUCT( mp, mater );
-    mp->mt_low = low;
-    mp->mt_high = hi;
-    mp->mt_r = r;
-    mp->mt_g = g;
-    mp->mt_b = b;
-/*	mp->mt_handle = bu_strdup( recp->md.md_material ); */
-    mp->mt_daddr = addr;
-    rt_insert_color( mp );
-}
-
-/*
- *  			R T _ I N S E R T _ C O L O R
- *
- *  While any additional database records are created and written here,
- *  it is the responsibility of the caller to color_putrec(newp) if needed.
+ * While any additional database records are created and written here,
+ * it is the responsibility of the caller to color_putrec(newp) if
+ * needed.
  */
 void
 rt_insert_color( struct mater *newp )
@@ -96,19 +72,19 @@ rt_insert_color( struct mater *newp )
     register struct mater *mp;
     register struct mater *zot;
 
-    if ( rt_material_head == MATER_NULL || newp->mt_high < rt_material_head->mt_low )  {
+    if ( material_head == MATER_NULL || newp->mt_high < material_head->mt_low )  {
 	/* Insert at head of list */
-	newp->mt_forw = rt_material_head;
-	rt_material_head = newp;
+	newp->mt_forw = material_head;
+	material_head = newp;
 	return;
     }
-    if ( newp->mt_low < rt_material_head->mt_low )  {
+    if ( newp->mt_low < material_head->mt_low )  {
 	/* Insert at head of list, check for redefinition */
-	newp->mt_forw = rt_material_head;
-	rt_material_head = newp;
+	newp->mt_forw = material_head;
+	material_head = newp;
 	goto check_overlap;
     }
-    for ( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
+    for ( mp = material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
 	if ( mp->mt_low == newp->mt_low  &&
 	     mp->mt_high <= newp->mt_high )  {
 	    bu_log("dropping overwritten region-id based material property entry:\n");
@@ -189,11 +165,34 @@ rt_insert_color( struct mater *newp )
     }
 }
 
-/*
- *  			R T _ R E G I O N _ C O L O R _ M A P
+
+/**
+ * R T _ C O L O R _ A D D R E C
  *
- *  If the GIFT regionid of this region falls into a mapped area
- *  of regionid-driven color override.
+ * Called from db_scan() when initially scanning database.
+ */
+void
+rt_color_addrec( int low, int hi, int r, int g, int b, long addr )
+{
+    register struct mater *mp;
+
+    BU_GETSTRUCT( mp, mater );
+    mp->mt_low = low;
+    mp->mt_high = hi;
+    mp->mt_r = r;
+    mp->mt_g = g;
+    mp->mt_b = b;
+/*	mp->mt_handle = bu_strdup( recp->md.md_material ); */
+    mp->mt_daddr = addr;
+    rt_insert_color( mp );
+}
+
+
+/**
+ * R T _ R E G I O N _ C O L O R _ M A P
+ *
+ * If the GIFT regionid of this region falls into a mapped area of
+ * regionid-driven color override.
  */
 void
 rt_region_color_map(register struct region *regp)
@@ -204,7 +203,7 @@ rt_region_color_map(register struct region *regp)
 	bu_log("color_map(NULL)\n");
 	return;
     }
-    for ( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
+    for ( mp = material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
 	if ( regp->reg_regionid <= mp->mt_high &&
 	     regp->reg_regionid >= mp->mt_low ) {
 	    regp->reg_mater.ma_color_valid = 1;
@@ -219,21 +218,101 @@ rt_region_color_map(register struct region *regp)
     }
 }
 
-/*
- *			R T _ C O L O R _ F R E E
+
+/**
+ * r t _ v l s _ c o l o r _ m a p
+ */
+void
+rt_vls_color_map( struct bu_vls *str )
+{
+    struct mater *mp;
+
+    BU_CK_VLS(str);
+
+    for ( mp = material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
+	bu_vls_printf(str,
+		      "{%d %d %d %d %d} ",
+		      mp->mt_low,
+		      mp->mt_high,
+		      mp->mt_r,
+		      mp->mt_g,
+		      mp->mt_b );
+    }
+}
+
+
+/**
+ * r t _ m a t e r i a l _ h e a d
  *
- *  Really should be db_color_free().
- *  Called from db_close().
+ * returns the material linked list head node
+ */
+struct mater *
+rt_material_head()
+{
+    return material_head;
+}
+
+
+/**
+ * r t _ n e w _ m a t e r i a l _ h e a d
+ *
+ * set the material linked list head node
+ */
+void
+rt_new_material_head(struct mater *newmat)
+{
+    material_head = newmat;
+}
+
+
+/**
+ * r t _ d u p _ m a t e r i a l _ h e a d
+ *
+ * returns a copy of the material linked list head node
+ */
+struct mater *
+rt_dup_material_head()
+{
+    register struct mater *mp = NULL;
+    register struct mater *newmp = NULL;
+    struct mater *newmater = NULL;
+    struct mater *dup = NULL;
+
+    mp = material_head;    
+    while (mp != MATER_NULL) {
+	BU_GETSTRUCT(newmater, mater);
+	*newmater = *mp; /* struct copy */
+	newmater->mt_forw = MATER_NULL;
+
+	if (dup == NULL) {
+	    dup = newmater;
+	} else {
+	    newmp->mt_forw = newmater;
+	}
+
+	newmp = newmater;
+	mp = mp->mt_forw;
+    }
+
+    return dup;
+}
+
+
+/**
+ * R T _ C O L O R _ F R E E
+ *
+ * Really should be db_color_free().  Called from db_close().
  */
 void
 rt_color_free(void)
 {
     register struct mater *mp;
 
-    while ( (mp = rt_material_head) != MATER_NULL )  {
-	rt_material_head = mp->mt_forw;	/* Dequeue 'mp' */
+    while ( (mp = material_head) != MATER_NULL )  {
+	material_head = mp->mt_forw;	/* Dequeue 'mp' */
 	/* mt_handle? */
 	bu_free( (char *)mp, "getstruct mater" );
+	mp = MATER_NULL;
     }
 }
 

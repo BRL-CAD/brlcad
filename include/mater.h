@@ -33,15 +33,15 @@
 #include "bu.h"
 
 #ifndef RT_EXPORT
-#if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#ifdef RT_EXPORT_DLL
-#define RT_EXPORT __declspec(dllexport)
-#else
-#define RT_EXPORT __declspec(dllimport)
-#endif
-#else
-#define RT_EXPORT
-#endif
+#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
+#    ifdef RT_EXPORT_DLL
+#      define RT_EXPORT __declspec(dllexport)
+#    else
+#      define RT_EXPORT __declspec(dllimport)
+#    endif
+#  else
+#    define RT_EXPORT
+#  endif
 #endif
 
 struct mater {
@@ -56,9 +56,31 @@ struct mater {
 #define MATER_NULL	((struct mater *)0)
 #define MATER_NO_ADDR	(-1L)		/**< @brief invalid mt_daddr */
 
-RT_EXPORT extern struct mater *rt_material_head; /**< @brief defined in mater.c */
+
+RT_EXPORT BU_EXTERN(void rt_region_color_map,
+		    (struct region *regp));
+
+/* process ID_MATERIAL record */
+RT_EXPORT BU_EXTERN(void rt_color_addrec,
+		    (int low,
+		     int hi,
+		     int r,
+		     int g,
+		     int b,
+		     long addr));
 RT_EXPORT BU_EXTERN(void rt_insert_color,
 		    (struct mater *newp));
+RT_EXPORT BU_EXTERN(void rt_vls_color_map,
+		    (struct bu_vls *str));
+RT_EXPORT BU_EXTERN(struct mater *rt_material_head,
+		    ());
+RT_EXPORT BU_EXTERN(void rt_new_material_head,
+		    (struct mater *));
+RT_EXPORT BU_EXTERN(struct mater *rt_dup_material_head,
+		    ());
+RT_EXPORT BU_EXTERN(void rt_color_free,
+		    ());
+
 /** @} */
 /*
  * Local Variables:

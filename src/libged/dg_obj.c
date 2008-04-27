@@ -111,13 +111,6 @@ static int dgo_shaded_mode_tcl();
 	return TCL_ERROR;						\
     }
 
-/*
- *  It is expected that entries on this mater list will be sorted
- *  in strictly ascending order, with no overlaps (ie, monotonicly
- *  increasing).
- */
-extern struct mater *rt_material_head;	/* now defined in librt/mater.c */
-
 /* declared in vdraw.c */
 extern struct bu_cmdtab vdraw_cmds[];
 
@@ -3747,7 +3740,7 @@ void
 dgo_color_soltab(struct solid *hsp)
 {
     register struct solid *sp;
-    register struct mater *mp;
+    register const struct mater *mp;
 
     FOR_ALL_SOLIDS(sp, &hsp->l) {
 	sp->s_cflag = 0;
@@ -3760,7 +3753,7 @@ dgo_color_soltab(struct solid *hsp)
 	    continue;
 	}
 
-	for (mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw) {
+	for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
 	    if (sp->s_regionid <= mp->mt_high &&
 		sp->s_regionid >= mp->mt_low) {
 		sp->s_color[0] = mp->mt_r;

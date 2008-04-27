@@ -2404,8 +2404,8 @@ f_opendb(
 
     save_dbip = dbip;
     dbip = DBI_NULL;
-    save_materp = rt_material_head;
-    rt_material_head = MATER_NULL;
+    save_materp = rt_material_head();
+    rt_new_material_head(MATER_NULL);
 
     /* Get input file */
     if ( ((dbip = db_open( argv[1], "r+w" )) == DBI_NULL ) &&
@@ -2466,7 +2466,7 @@ f_opendb(
 		if (argc == 2) {
 		    /* need to reset this before returning */
 		    dbip = save_dbip;
-		    rt_material_head = save_materp;
+		    rt_new_material_head(save_materp);
 		    Tcl_AppendResult(interp, MORE_ARGS_STR, "Create new database (y|n)[n]? ",
 				     (char *)NULL);
 		    bu_vls_printf(&curr_cmd_list->cl_more_default, "n");
@@ -2477,7 +2477,7 @@ f_opendb(
 
 		if ( *argv[2] != 'y' && *argv[2] != 'Y' ) {
 		    dbip = save_dbip; /* restore previous database */
-		    rt_material_head = save_materp;
+		    rt_new_material_head(save_materp);
 		    bu_vls_free(&vls);
 		    bu_vls_free(&msg);
 		    return TCL_OK;
@@ -2488,7 +2488,7 @@ f_opendb(
 	/* File does not exist, and should be created */
 	if ((dbip = db_create(argv[1], db_version)) == DBI_NULL) {
 	    dbip = save_dbip; /* restore previous database */
-	    rt_material_head = save_materp;
+	    rt_new_material_head(save_materp);
 	    bu_vls_free(&vls);
 	    bu_vls_free(&msg);
 
@@ -2524,18 +2524,18 @@ f_opendb(
 	struct mater *new_materp;
 
 	new_dbip = dbip;
-	new_materp = rt_material_head;
+	new_materp = rt_material_head();
 
 	/* activate the 'saved' values so we can cleanly close the previous db */
 	dbip = save_dbip;
-	rt_material_head = save_materp;
+	rt_new_material_head(save_materp);
 
 	/* bye bye db */
 	f_closedb(clientData, interp, 1, NULL);
 
 	/* restore to the new db just opened */
 	dbip = new_dbip;
-	rt_material_head = new_materp;
+	rt_new_material_head(new_materp);
     }
 
     {
@@ -2707,7 +2707,7 @@ f_closedb(
 
     /* wipe out the global pointers */
     dbip = DBI_NULL;
-    rt_material_head = MATER_NULL;
+    rt_new_material_head(MATER_NULL);
 
     return TCL_OK;
 }

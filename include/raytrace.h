@@ -2457,6 +2457,7 @@ RT_EXPORT BU_EXTERN(void rt_pr_cut,
 RT_EXPORT BU_EXTERN(void rt_fr_cut,
 		    (struct rt_i *rtip,
 		     union cutter *cutp));
+
 /* regionid-driven color override */
 
 /* bool.c */
@@ -2472,22 +2473,6 @@ RT_EXPORT BU_EXTERN(int	rt_defoverlap,
 		     struct region *reg1,
 		     struct region *reg2,
 		     struct partition *pheadp));
-
-
-/* mater.c */
-
-RT_EXPORT BU_EXTERN(void rt_region_color_map,
-		    (struct region *regp));
-/* process ID_MATERIAL record */
-RT_EXPORT BU_EXTERN(void rt_color_addrec,
-		    (int low,
-		     int hi,
-		     int r,
-		     int g,
-		     int b,
-		     long addr));
-RT_EXPORT BU_EXTERN(void rt_color_free,
-		    ());
 
 /* extend a cut box */
 

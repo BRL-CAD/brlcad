@@ -21,10 +21,10 @@
 /** @{ */
 /** @file wdb_obj.c
  *
- *  @brief a quasi-object-oriented database interface.
+ * a quasi-object-oriented database interface.
  *
- *  A database object contains the attributes and methods for
- *  controlling a BRL-CAD database.
+ * A database object contains the attributes and methods for
+ * controlling a BRL-CAD database.
  *
  */
 /** @} */
@@ -5298,8 +5298,8 @@ wdb_lt_cmd(struct rt_wdb	*wdbp,
 	   int			argc,
 	   char 		**argv)
 {
-    register struct directory	*dp;
-    struct bu_vls			vls;
+    register struct directory *dp;
+    struct bu_vls vls;
 
     if (argc != 2)
 	goto bad;
@@ -5342,7 +5342,7 @@ wdb_version_cmd(struct rt_wdb	*wdbp,
 		int		argc,
 		char 		**argv)
 {
-    struct bu_vls	vls;
+    struct bu_vls vls;
 
     bu_vls_init(&vls);
 
@@ -5617,7 +5617,9 @@ wdb_color_cmd(struct rt_wdb	*wdbp,
 	      int		argc,
 	      char 		**argv)
 {
-    register struct mater *newp, *next_mater;
+    register struct mater *newp;
+    register struct mater *mp;
+    register struct mater *next_mater;
 
     WDB_TCL_CHECK_READ_ONLY;
 
@@ -5633,11 +5635,11 @@ wdb_color_cmd(struct rt_wdb	*wdbp,
 
     if (wdbp->dbip->dbi_version < 5) {
 	/* Delete all color records from the database */
-	newp = rt_material_head;
-	while (newp != MATER_NULL) {
-	    next_mater = newp->mt_forw;
-	    wdb_color_zaprec(newp, interp, wdbp->dbip);
-	    newp = next_mater;
+	mp = rt_material_head();
+	while (mp != MATER_NULL) {
+	    next_mater = mp->mt_forw;
+	    wdb_color_zaprec(mp, interp, wdbp->dbip);
+	    mp = next_mater;
 	}
 
 	/* construct the new color record */
@@ -5653,11 +5655,11 @@ wdb_color_cmd(struct rt_wdb	*wdbp,
 	rt_insert_color(newp);
 
 	/* Write new color records for all colors in the list */
-	newp = rt_material_head;
-	while (newp != MATER_NULL) {
-	    next_mater = newp->mt_forw;
-	    wdb_color_putrec(newp, interp, wdbp->dbip);
-	    newp = next_mater;
+	mp = rt_material_head();
+	while (mp != MATER_NULL) {
+	    next_mater = mp->mt_forw;
+	    wdb_color_putrec(mp, interp, wdbp->dbip);
+	    mp = next_mater;
 	}
     } else {
 	struct bu_vls colors;
@@ -5678,14 +5680,8 @@ wdb_color_cmd(struct rt_wdb	*wdbp,
 	 * Gather color records from the in-memory list to build
 	 * the _GLOBAL objects regionid_colortable attribute.
 	 */
-	newp = rt_material_head;
 	bu_vls_init(&colors);
-	while (newp != MATER_NULL) {
-	    next_mater = newp->mt_forw;
-	    bu_vls_printf(&colors, "{%d %d %d %d %d} ", newp->mt_low, newp->mt_high,
-			  newp->mt_r, newp->mt_g, newp->mt_b);
-	    newp = next_mater;
-	}
+	rt_vls_color_map(&colors);
 
 	db5_update_attribute("_GLOBAL", "regionid_colortable", bu_vls_addr(&colors), wdbp->dbip);
 	bu_vls_free(&colors);
@@ -5714,7 +5710,7 @@ wdb_color_tcl(ClientData	clientData,
  *
  */
 static void
-wdb_pr_mater(register struct mater	*mp,
+wdb_pr_mater(register const struct mater *mp,
 	     Tcl_Interp			*interp,
 	     int			*ccp,
 	     int			*clp)
@@ -5744,7 +5740,7 @@ wdb_prcolor_cmd(struct rt_wdb	*wdbp,
 		int		argc,
 		char 		**argv)
 {
-    register struct mater *mp;
+    register const struct mater *mp;
     int col_count = 0;
     int col_len = 0;
 
@@ -5758,12 +5754,12 @@ wdb_prcolor_cmd(struct rt_wdb	*wdbp,
 	return TCL_ERROR;
     }
 
-    if (rt_material_head == MATER_NULL) {
+    if (rt_material_head() == MATER_NULL) {
 	Tcl_AppendResult(interp, "none", (char *)NULL);
 	return TCL_OK;
     }
 
-    for (mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw)
+    for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw)
 	wdb_pr_mater(mp, interp, &col_count, &col_len);
 
     return TCL_OK;

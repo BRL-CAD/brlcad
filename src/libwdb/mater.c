@@ -47,11 +47,11 @@ mk_write_color_table( struct rt_wdb *ofp )
 {
     RT_CK_WDB(ofp);
     if ( ofp->dbip->dbi_version <= 4 )  {
-	register struct mater *mp;
+	register const struct mater *mp;
 
 	BU_ASSERT_LONG( mk_version, ==, 4 );
 
-	for ( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
+	for ( mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw )  {
 #if 0
 	    union record	record;
 	    record.md.md_id = ID_MATERIAL;

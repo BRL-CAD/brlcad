@@ -49,10 +49,9 @@
 #include "mater.h"
 
 
-static struct mater *mater_hd1=MATER_NULL, *mater_hd2=MATER_NULL;
+static struct mater *mater_hd1 = MATER_NULL;
+static struct mater *mater_hd2 = MATER_NULL;
 
-extern int bu_optind;
-extern int optopt;
 
 #define HUMAN	1
 #define MGED	2
@@ -903,6 +902,7 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
     return has_diff;
 }
 
+
 int
 main(int argc, char **argv)
 {
@@ -941,73 +941,63 @@ main(int argc, char **argv)
     file2 = *argv;
 
     if (!bu_file_exists(file1)) {
-	fprintf( stderr, "Cannot stat file %s\n", file1 );
 	perror( file1 );
-	bu_exit( 1, NULL );
+	bu_exit( 1, "Cannot stat file %s\n", file1 );
     }
 
     if (!bu_file_exists(file2)) {
-	fprintf( stderr, "Cannot stat file %s\n", file2 );
 	perror( file2 );
-	bu_exit( 1, NULL );
+	bu_exit( 1, "Cannot stat file %s\n", file2 );
     }
 
     if (bu_same_file(file1, file2)) {
-	fprintf( stderr, "%s and %s are the same file\n", file1, file2 );
-	bu_exit( 1, NULL );
+	bu_exit( 1, "%s and %s are the same file\n", file1, file2 );
     }
 
     interp = Tcl_CreateInterp();
     if ( Tcl_Init(interp) == TCL_ERROR ) {
-	fprintf( stderr, "Tcl_Init error %s\n", Tcl_GetStringResult(interp));
-	bu_exit( 1, NULL );
+	bu_exit( 1, "Tcl_Init error %s\n", Tcl_GetStringResult(interp));
     }
 
     Rt_Init( interp );
 
     if ( (dbip1 = db_open( file1, "r" )) == DBI_NULL ) {
-	fprintf( stderr, "Cannot open %s\n", file1 );
 	perror( argv[0] );
-	bu_exit( 1, NULL );
+	bu_exit( 1, "Cannot open %s\n", file1 );
     }
 
     RT_CK_DBI(dbip1);
 
     if ( (wdb1 = wdb_dbopen( dbip1, RT_WDB_TYPE_DB_DISK )) == RT_WDB_NULL ) {
-	fprintf( stderr, "wdb_dbopen failed for %s\n", file1 );
-	bu_exit( 1, NULL );
+	bu_exit( 1, "wdb_dbopen failed for %s\n", file1 );
     }
 
     if ( db_dirbuild( dbip1 ) < 0 ) {
 	db_close( dbip1 );
-	fprintf( stderr, "db_dirbuild failed on %s\n", file1 );
-	bu_exit( 1, NULL );
+	bu_exit( 1, "db_dirbuild failed on %s\n", file1 );
     }
 
     if ( wdb_init_obj( interp, wdb1, "_db1") != TCL_OK ) {
 	wdb_close( wdb1 );
-	fprintf( stderr, "wdb_init_obj failed on %s\n", file1 );
-	bu_exit( 1, NULL );
+	bu_exit( 1, "wdb_init_obj failed on %s\n", file1 );
     }
 
     if ( wdb_create_cmd( interp, wdb1, "_db1" ) != TCL_OK ) {
 	wdb_close( wdb1 );
-	fprintf( stderr, "wdb_create_cmd failed on %s\n", file1 );
-	bu_exit( 1, NULL );
+	bu_exit( 1, "wdb_create_cmd failed on %s\n", file1 );
     }
 
     /* save regionid colortable */
-    mater_hd1 = rt_material_head;
-    rt_material_head = MATER_NULL;
+    mater_hd1 = rt_dup_material_head();
+    rt_color_free();
 
     if ( dbip1->dbi_version < 5 ) {
 	pre_5_vers++;
     }
 
     if ( (dbip2 = db_open( file2, "r" )) == DBI_NULL ) {
-	fprintf( stderr, "Cannot open %s\n", file2 );
 	perror( argv[0] );
-	bu_exit( 1, NULL );
+	bu_exit( 1, "Cannot open %s\n", file2 );
     }
 
     RT_CK_DBI(dbip2);
@@ -1015,33 +1005,29 @@ main(int argc, char **argv)
     if ( db_dirbuild( dbip2 ) < 0 ) {
 	db_close( dbip1 );
 	db_close( dbip2 );
-	fprintf( stderr, "db_dirbuild failed on %s\n", file2 );
-	bu_exit( 1, NULL );
+	bu_exit( 1, "db_dirbuild failed on %s\n", file2 );
     }
 
     if ( (wdb2 = wdb_dbopen( dbip2, RT_WDB_TYPE_DB_DISK )) == RT_WDB_NULL ) {
 	db_close( dbip2 );
 	wdb_close( wdb1 );
-	fprintf( stderr, "wdb_dbopen failed for %s\n", file2 );
-	bu_exit( 1, NULL );
+	bu_exit( 1, "wdb_dbopen failed for %s\n", file2 );
     }
 
     if ( wdb_init_obj( interp, wdb2, "_db2") != TCL_OK ) {
 	wdb_close( wdb1 );
 	wdb_close( wdb2 );
-	fprintf( stderr, "wdb_init_obj failed on %s\n", file2 );
-	bu_exit( 1, NULL );
+	bu_exit( 1, "wdb_init_obj failed on %s\n", file2 );
     }
 
     if ( wdb_create_cmd( interp, wdb2, "_db2" ) != TCL_OK ) {
 	wdb_close( wdb1 );
-	fprintf( stderr, "wdb_create_cmd failed on %s\n", file2 );
-	bu_exit( 1, NULL );
+	bu_exit( 1, "wdb_create_cmd failed on %s\n", file2 );
     }
 
     /* save regionid colortable */
-    mater_hd2 = rt_material_head;
-    rt_material_head = MATER_NULL;
+    mater_hd2 = rt_dup_material_head();
+    rt_color_free();
 
     if ( dbip2->dbi_version < 5 ) {
 	pre_5_vers++;

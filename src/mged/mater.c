@@ -87,7 +87,7 @@ f_edcolor(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
 
     fprintf( fp, "%s", hdr );
-    for (mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw) {
+    for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
 	(void)fprintf( fp, "%d\t%d\t%3d\t%3d\t%3d",
 		       mp->mt_low, mp->mt_high,
 		       mp->mt_r, mp->mt_g, mp->mt_b);
@@ -114,9 +114,9 @@ f_edcolor(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     if (dbip->dbi_version < 5) {
 	/* Zap all the current records, both in core and on disk */
-	while (rt_material_head != MATER_NULL) {
-	    zot = rt_material_head;
-	    rt_material_head = rt_material_head->mt_forw;
+	while (rt_material_head() != MATER_NULL) {
+	    zot = rt_material_head();
+	    rt_new_material_head(zot->mt_forw);
 	    color_zaprec(zot);
 	    bu_free((genptr_t)zot, "mater rec");
 	}
@@ -270,7 +270,7 @@ color_soltab(void)
 	    goto done;
 	}
 
-	for ( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
+	for ( mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw )  {
 	    if ( sp->s_regionid <= mp->mt_high &&
 		 sp->s_regionid >= mp->mt_low ) {
 		sp->s_color[0] = mp->mt_r;
