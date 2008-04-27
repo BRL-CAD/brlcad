@@ -14,7 +14,6 @@ brep_test_SOURCES = brep_test.cpp
 brep_test_CXXFLAGS = ${SSE}
 brep_test_LDADD = \
 	librt.la \
-	${GED} \
 	${RT_LIBS}
 
 # cannot set per-target CPPFLAGS until automake 1.7+
@@ -181,13 +180,11 @@ librt_la_LIBADD = \
 comb_SOURCES = comb.c
 comb_LDADD = \
 	librt.la \
-	${GED} \
 	${RT_LIBS}
 
 nurb_example_SOURCES = nurb_example.c
 nurb_example_LDADD = \
 	librt.la \
-	${GED} \
 	${RT_LIBS}
 
 # XXX this should be noinst or moved to include
