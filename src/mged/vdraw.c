@@ -120,6 +120,8 @@ Example Use -
 #include "./mged_dm.h"
 
 
+#if 0
+
 #define VDRW_PREFIX		"_VDRW"
 #define VDRW_PREFIX_LEN	6
 #define VDRW_MAXNAME	31
