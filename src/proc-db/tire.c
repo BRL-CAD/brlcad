@@ -1492,7 +1492,7 @@ void MakeTreadSolid1(struct rt_wdb (*file), char *suffix, fastf_t *ell2coefficie
     fastf_t ell1tredcoefficients[5];
     fastf_t ell1tredcadparams[5];
     fastf_t d1_intercept;
-    struct wmember tiretreadsolid, tiretreadshape;
+    struct wmember tiretreadintercept, tiretreadsolid, tiretreadshape;
     int i;
     struct bu_vls str;
     bu_vls_init(&str);
@@ -1522,24 +1522,50 @@ void MakeTreadSolid1(struct rt_wdb (*file), char *suffix, fastf_t *ell2coefficie
     bu_vls_printf(&str, "Ellipse-tread-outer%s.s", suffix);	
     mk_eto(file, bu_vls_addr(&str), origin, normal, C, ell1tredcadparams[1], ell1tredcadparams[4]);
     
-    VSET(vertex, 0, -d1_intercept, 0);
-    VSET(height, 0, d1_intercept*2, 0);
+    VSET(vertex, 0, -dytred/2, 0);
+    VSET(height, 0, dytred, 0);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Ellipse-constrain%s.s", suffix);	
     mk_rcc(file, bu_vls_addr(&str), vertex, height, ztire);
+
+    VSET(vertex, 0, -dytred/2, 0);
+    VSET(normal, 0, -1,0);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "Ellipse-trim1%s.s",suffix);
+    mk_cone(file, bu_vls_addr(&str), vertex, normal, d1_intercept-dytred/2, ztire, ztire-d1);
+
+    VSET(vertex, 0, dytred/2, 0);
+    VSET(normal, 0, 1, 0);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "Ellipse-trim2%s.s",suffix); 
+    mk_cone(file, bu_vls_addr(&str), vertex, normal, d1_intercept-dytred/2, ztire, ztire-d1);
 
     VSET(vertex, 0, -d1_intercept, 0);
     VSET(height, 0, d1_intercept*2, 0);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Ellipse-tread-inner-cut%s.s", suffix);	
     mk_rcc(file, bu_vls_addr(&str), vertex, height, d1);
-    
+   
+    BU_LIST_INIT(&tiretreadintercept.l);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str,"Ellipse-constrain%s.s", suffix);
+    (void)mk_addmember(bu_vls_addr(&str),&tiretreadintercept.l, NULL, WMOP_UNION);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str,"Ellipse-trim1%s.s",suffix);
+    (void)mk_addmember(bu_vls_addr(&str),&tiretreadintercept.l,NULL,WMOP_UNION);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str,"Ellipse-trim2%s.s",suffix);
+    (void)mk_addmember(bu_vls_addr(&str),&tiretreadintercept.l,NULL,WMOP_UNION);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str,"tread-constrain%s.c",suffix);
+    mk_lcomb(file, bu_vls_addr(&str),&tiretreadintercept,0,NULL,NULL,NULL,0);
+ 
     BU_LIST_INIT(&tiretreadsolid.l);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str,"Ellipse-tread-outer%s.s",suffix);
     (void)mk_addmember(bu_vls_addr(&str), &tiretreadsolid.l, NULL, WMOP_UNION);
     bu_vls_trunc(&str,0);
-    bu_vls_printf(&str,"Ellipse-constrain%s.s",suffix);
+    bu_vls_printf(&str,"tread-constrain%s.c",suffix);
     (void)mk_addmember(bu_vls_addr(&str), &tiretreadsolid.l, NULL, WMOP_INTERSECT);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str,"Ellipse-tread-inner-cut%s.s",suffix);
