@@ -8,6 +8,7 @@ libged_nil_la_SOURCES = \
 	globals.c \
 	nirt.c \
 	qray.c \
+	tcl.c \
 	vdraw.c \
 	view_obj.c \
 	wdb_obj.c

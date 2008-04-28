@@ -146,6 +146,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\tcl.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\vdraw.c"
 				>
 			</File>

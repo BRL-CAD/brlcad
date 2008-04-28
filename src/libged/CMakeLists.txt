@@ -5,6 +5,7 @@ set(LIBGED_SOURCES
     nirt.c
     qray.c
     qray.h
+    tcl.c
     vdraw.c
     view_obj.c
     wdb_obj.c
