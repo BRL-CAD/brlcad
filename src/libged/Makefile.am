@@ -5,6 +5,7 @@ noinst_LTLIBRARIES = libged_nil.la
 libged_nil_la_SOURCES = \
 	bigE.c \
 	dg_obj.c \
+	globals.c \
 	nirt.c \
 	qray.c \
 	vdraw.c \

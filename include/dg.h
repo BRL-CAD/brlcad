@@ -222,11 +222,6 @@ RT_EXPORT BU_EXTERN(int	dgo_rtcheck_cmd,
 		     struct view_obj *vop,
 		     Tcl_Interp *interp,
 		     int argc, char **argv));
-RT_EXPORT BU_EXTERN(int	dgo_vdraw_cmd,
-		    (struct dg_obj *dgop,
-		     Tcl_Interp *interp,
-		     int argc,
-		     char **argv));
 RT_EXPORT BU_EXTERN(int	dgo_who_cmd,
 		    (struct dg_obj *dgop,
 		     Tcl_Interp *interp,

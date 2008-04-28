@@ -103,9 +103,6 @@ static int dgo_shaded_mode_tcl();
 	return TCL_ERROR;						\
     }
 
-/* declared in vdraw.c */
-extern struct bu_cmdtab vdraw_cmds[];
-
 /* declared in qray.c */
 extern int	dgo_qray_cmd(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char **argv);
 extern void	dgo_init_qray(struct dg_obj *dgop);
@@ -125,7 +122,6 @@ static int dgo_erase_all_tcl(ClientData clientData, Tcl_Interp *interp, int argc
 static int dgo_who_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dgo_rt_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dgo_rtabort_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int dgo_vdraw_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dgo_overlay_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dgo_get_autoview_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dgo_get_eyemodel_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -139,6 +135,7 @@ extern int dgo_E_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *
 static int dgo_autoview_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dgo_qray_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dgo_nirt_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int dgo_vdraw_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dgo_vnirt_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dgo_tree_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
@@ -162,9 +159,7 @@ void dgo_pr_wait_status(Tcl_Interp *interp, int status);
 static void dgo_print_schain(struct dg_obj *dgop, Tcl_Interp *interp, int lvl);
 static void dgo_print_schain_vlcmds(struct dg_obj *dgop, Tcl_Interp *interp);
 
-struct dg_obj HeadDGObj;	/* head of drawable geometry object list */
 static struct solid FreeSolid;		/* head of free solid list */
-
 
 static struct bu_cmdtab dgo_cmds[] = {
     {"assoc",			dgo_assoc_tcl},
@@ -252,6 +247,24 @@ dgo_deleteProc(ClientData clientData)
 
     BU_LIST_DEQUEUE(&dgop->l);
     bu_free((genptr_t)dgop, "dgo_deleteProc: dgop");
+}
+
+
+/*
+ * Usage:
+ *        procname vdraw cmd arg(s)
+ */
+static int
+dgo_vdraw_tcl(ClientData	clientData,
+	      Tcl_Interp	*interp,
+	      int		argc,
+	      char		**argv)
+{
+    struct dg_obj *dgop = (struct dg_obj *)clientData;
+
+    DGO_CHECK_WDBP_NULL(dgop, interp);
+
+    return vdraw_cmd(dgop, interp, argc-1, argv+1);
 }
 
 
@@ -1398,31 +1411,6 @@ dgo_rt_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return dgo_rt_cmd(dgop, vop, interp, argc-2, argv+2);
 }
 
-int
-dgo_vdraw_cmd(struct dg_obj	*dgop,
-	      Tcl_Interp	*interp,
-	      int		argc,
-	      char 		**argv)
-{
-    return bu_cmd((ClientData)dgop, interp, argc-1, argv+1, vdraw_cmds, 0);
-}
-
-/*
- * Usage:
- *        procname vdraw cmd arg(s)
- */
-static int
-dgo_vdraw_tcl(ClientData	clientData,
-	      Tcl_Interp	*interp,
-	      int		argc,
-	      char		**argv)
-{
-    struct dg_obj *dgop = (struct dg_obj *)clientData;
-
-    DGO_CHECK_WDBP_NULL(dgop, interp);
-
-    return dgo_vdraw_cmd(dgop, interp, argc-1, argv+1);
-}
 
 void
 dgo_zap_cmd(struct dg_obj	*dgop,

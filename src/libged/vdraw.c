@@ -120,7 +120,6 @@
 	BU_LIST_NOT_HEAD(p, hp);		\
 	(p)=BU_LIST_PLAST(structure, p)
 
-
 static int vdraw_write_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int vdraw_insert_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int vdraw_delete_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -130,7 +129,10 @@ static int vdraw_params_tcl(ClientData clientData, Tcl_Interp *interp, int argc,
 static int vdraw_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int vdraw_vlist_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
-struct bu_cmdtab vdraw_cmds[] = {
+/**
+ * view draw command table
+ */
+static struct bu_cmdtab vdraw_cmds[] = {
     {"write",		vdraw_write_tcl},
     {"insert",		vdraw_insert_tcl},
     {"delete",		vdraw_delete_tcl},
@@ -141,6 +143,20 @@ struct bu_cmdtab vdraw_cmds[] = {
     {"vlist",		vdraw_vlist_tcl},
     {(char *)0,		(int (*)())0 }
 };
+
+
+/**
+ * figure out which vdraw command we're running, used by dg
+ */
+int
+vdraw_cmd(struct dg_obj	*dgop,
+	  Tcl_Interp	*interp,
+	  int		argc,
+	  char 		**argv)
+{
+    return bu_cmd((ClientData)dgop, interp, argc-1, argv+1, vdraw_cmds, 0);
+}
+
 
 /*
  * Usage:

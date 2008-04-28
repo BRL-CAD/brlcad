@@ -1,6 +1,7 @@
 set(LIBGED_SOURCES
     bigE.c
     dg_obj.c
+    globals.c
     nirt.c
     qray.c
     qray.h

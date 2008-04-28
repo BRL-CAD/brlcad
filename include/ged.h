@@ -583,6 +583,14 @@ RT_EXPORT BU_EXTERN(int	vo_dir2ae_cmd,
 		     int argc,
 		     char **argv));
 
+/* functions defined in vdraw.c */
+
+RT_EXPORT BU_EXTERN(int	vdraw_cmd,
+		    (struct dg_obj *dgop,
+		     Tcl_Interp *interp,
+		     int argc,
+		     char **argv));
+
 __END_DECLS
 
 #endif /* __GED_H__ */
