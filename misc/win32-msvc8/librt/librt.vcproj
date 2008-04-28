@@ -410,10 +410,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\nirt.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\librt\nmg_bool.c"
 				>
 			</File>

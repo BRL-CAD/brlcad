@@ -130,6 +130,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\nirt.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\view_obj.c"
 				>
 			</File>

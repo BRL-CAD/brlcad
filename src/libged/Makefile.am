@@ -4,6 +4,7 @@ noinst_LTLIBRARIES = libged_nil.la
 
 libged_nil_la_SOURCES = \
 	dg_obj.c \
+	nirt.c \
 	view_obj.c \
 	wdb_obj.c
 

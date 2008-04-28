@@ -97,7 +97,6 @@ librt_nil_la_SOURCES = \
 	memalloc.c \
 	mirror.c \
 	mkbundle.c \
-	nirt.c \
 	nmg_bool.c \
 	nmg_ck.c \
 	nmg_class.c \

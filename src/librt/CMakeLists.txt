@@ -71,7 +71,6 @@ set(LIBRT_SOURCES
     mirror.c
     mkbundle.c
     opennurbs_ext.cpp
-    nirt.c
     nmg_bool.c
     nmg_ck.c
     nmg_class.c
