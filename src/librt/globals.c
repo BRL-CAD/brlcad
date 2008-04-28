@@ -30,7 +30,11 @@
  */
 /** @} */
 
+#include "common.h"
+
 #include "raytrace.h"
+#include "db.h"
+
 
 /**
  * global ray-trace geometry state
@@ -219,6 +223,70 @@ int rt_bot_minpieces = RT_DEFAULT_MINPIECES;
  * minimum triangles per piece
  */
 int rt_bot_tri_per_piece = RT_DEFAULT_TRIS_PER_PIECE;
+
+/**
+ * rt vlist command descriptions
+ */
+const char *rt_vlist_cmd_descriptions[] = {
+    "line move ",
+    "line draw ",
+    "poly start",
+    "poly move ",
+    "poly draw ",
+    "poly end  ",
+    "poly vnorm",
+    "**unknown*"
+};
+
+/**
+ * initial tree start for db tree walkers.
+ *
+ * Also used by converters in conv/ directory.  Don't forget to
+ * initialize ts_dbip before use.
+ */
+const struct db_tree_state rt_initial_tree_state = {
+    RT_DBTS_MAGIC,		/* magic */
+    0,				/* ts_dbip */
+    0,				/* ts_sofar */
+    0, 0, 0, 0,			/* region, air, gmater, LOS */
+    {
+	/* struct mater_info ts_mater */
+	{
+	    1.0, 1.0, 1.0
+	}
+	,	/* color, RGB */
+	-1.0,			/* Temperature */
+	0,			/* ma_color_valid=0 --> use default */
+	DB_INH_LOWER,		/* color inherit */
+	DB_INH_LOWER,		/* mater inherit */
+	NULL			/* shader */
+    },
+    {
+	1.0, 0.0, 0.0, 0.0,
+	0.0, 1.0, 0.0, 0.0,
+	0.0, 0.0, 1.0, 0.0,
+	0.0, 0.0, 0.0, 1.0
+    },
+    REGION_NON_FASTGEN,		/* ts_is_fastgen */
+    {
+	/* attribute value set */
+	BU_AVS_MAGIC,
+	0,
+	0,
+	NULL,
+	NULL,
+	NULL
+    },
+    0,				/* ts_stop_at_regions */
+    NULL,			/* ts_region_start_func */
+    NULL,			/* ts_region_end_func */
+    NULL,			/* ts_leaf_func */
+    NULL,			/* ts_ttol */
+    NULL,			/* ts_tol */
+    NULL,			/* ts_m */
+    NULL,			/* ts_rtip */
+    NULL			/* ts_resp */
+};
 
 
 /*

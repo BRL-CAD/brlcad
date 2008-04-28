@@ -21,8 +21,6 @@
  *
  * version information about LIBRT
  *
- * Author -
- *   Christopher Sean Morrison
  */
 
 #include "common.h"

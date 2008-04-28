@@ -48,54 +48,6 @@ BU_EXTERN(void		rt_tree_kill_dead_solid_refs, (union tree *tp));
 HIDDEN struct region *rt_getregion(struct rt_i *rtip, register const char *reg_name);
 HIDDEN void	rt_tree_region_assign(register union tree *tp, register const struct region *regionp);
 
-/*
- * Also used by converters in conv/ directory.
- * Don't forget to initialize ts_dbip before use.
- */
-const struct db_tree_state	rt_initial_tree_state = {
-    RT_DBTS_MAGIC,		/* magic */
-    0,			/* ts_dbip */
-    0,			/* ts_sofar */
-    0, 0, 0, 0,		/* region, air, gmater, LOS */
-    {
-	/* struct mater_info ts_mater */
-	{
-	    1.0, 1.0, 1.0
-	}
-	,	/* color, RGB */
-	-1.0,			/* Temperature */
-	0,			/* ma_color_valid=0 --> use default */
-	DB_INH_LOWER,		/* color inherit */
-	DB_INH_LOWER,		/* mater inherit */
-	NULL			/* shader */
-    },
-    {
-	1.0, 0.0, 0.0, 0.0,
-	0.0, 1.0, 0.0, 0.0,
-	0.0, 0.0, 1.0, 0.0,
-	0.0, 0.0, 0.0, 1.0
-    },
-    REGION_NON_FASTGEN,		/* ts_is_fastgen */
-    {
-	/* attribute value set */
-	BU_AVS_MAGIC,
-	0,
-	0,
-	NULL,
-	NULL,
-	NULL
-    },
-    0,				/* ts_stop_at_regions */
-    NULL,				/* ts_region_start_func */
-    NULL,				/* ts_region_end_func */
-    NULL,				/* ts_leaf_func */
-    NULL,				/* ts_ttol */
-    NULL,				/* ts_tol */
-    NULL,				/* ts_m */
-    NULL,				/* ts_rtip */
-    NULL				/* ts_resp */
-};
-
 #define ACQUIRE_SEMAPHORE_TREE(_hash)	switch ((_hash)&03)  { \
 	case 0: \
 		bu_semaphore_acquire( RT_SEM_TREE0 ); \
@@ -126,6 +78,7 @@ const struct db_tree_state	rt_initial_tree_state = {
 		break; \
 	}
 
+
 /**
  * R T _ G E T T R E E _ R E G I O N _ S T A R T
  *
@@ -148,6 +101,7 @@ HIDDEN int rt_gettree_region_start(struct db_tree_state *tsp, struct db_full_pat
     }
     return(0);
 }
+
 
 /**
  * R T _ G E T T R E E _ R E G I O N _ E N D
@@ -278,6 +232,7 @@ HIDDEN union tree *rt_gettree_region_end(register struct db_tree_state *tsp, str
     /* Indicate that we have swiped 'curtree' */
     return(TREE_NULL);
 }
+
 
 /**
  * R T _ F I N D _ I D E N T I C A L _ S O L I D
@@ -624,6 +579,7 @@ HIDDEN union tree *rt_gettree_leaf(struct db_tree_state *tsp, struct db_full_pat
     return(curtree);
 }
 
+
 /**
  * R T _ F R E E _ S O L T A B
  *
@@ -680,6 +636,7 @@ rt_free_soltab(struct soltab *stp)
 
     bu_free( (char *)stp, "struct soltab" );
 }
+
 
 /**
  * R T _ G E T T R E E S _ M U V E S
@@ -874,6 +831,7 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
     return(0);	/* OK */
 }
 
+
 /**
  * R T _ G E T T R E E S _ A N D _ A T T R S
  *
@@ -899,6 +857,7 @@ rt_gettrees_and_attrs(struct rt_i *rtip, const char **attrs, int argc, const cha
 {
     return( rt_gettrees_muves( rtip, attrs, argc, argv, ncpus ) );
 }
+
 
 /**
  * R T _ G E T T R E E
@@ -949,6 +908,7 @@ rt_gettrees(struct rt_i *rtip, int argc, const char **argv, int ncpus)
 	return -1;
     }
 }
+
 
 /**
  * R T _ B O U N D _ T R E E
@@ -1029,6 +989,7 @@ rt_bound_tree(register const union tree *tp, fastf_t *tree_min, fastf_t *tree_ma
     return(0);
 }
 
+
 /**
  * R T _ T R E E _ K I L L _ D E A D _ S O L I D _ R E F S
  *
@@ -1083,6 +1044,7 @@ rt_tree_kill_dead_solid_refs(register union tree *tp)
     }
     return;
 }
+
 
 /**
  * R T _ T R E E _ E L I M _ N O P S
@@ -1217,6 +1179,7 @@ rt_getregion(struct rt_i *rtip, register const char *reg_name)
     return(REGION_NULL);
 }
 
+
 /**
  * R T _ R P P _ R E G I O N
  *
@@ -1239,6 +1202,7 @@ rt_rpp_region(struct rt_i *rtip, const char *reg_name, fastf_t *min_rpp, fastf_t
     return(1);
 }
 
+
 /**
  * R T _ F A S T F _ F L O A T
  *
@@ -1254,6 +1218,7 @@ rt_fastf_float(register fastf_t *ff, register const dbfloat_t *fp, register int 
 	ff += ELEMENTS_PER_VECT-3;
     }
 }
+
 
 /**
  * R T _ M A T _ D B M A T
@@ -1285,6 +1250,7 @@ rt_mat_dbmat(register fastf_t *ff, register const dbfloat_t *dbp)
     *ff++ = *dbp++;
 }
 
+
 /**
  * R T _ D B M A T _ M A T
  *
@@ -1314,6 +1280,7 @@ rt_dbmat_mat(register dbfloat_t *dbp, register const fastf_t *ff)
     *dbp++ = (dbfloat_t) *ff++;
     *dbp++ = (dbfloat_t) *ff++;
 }
+
 
 /**
  * R T _ F I N D _ S O L I D
@@ -1404,6 +1371,7 @@ rt_optim_tree(register union tree *tp, struct resource *resp)
 	}
     }
 }
+
 
 /**
  * R T _ T R E E _ R E G I O N _ A S S I G N
