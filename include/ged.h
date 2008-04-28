@@ -36,7 +36,19 @@
 
 __BEGIN_DECLS
 
+/* loadable Tcl interface routines */
+
+#ifdef BRLCAD_DEBUG
+RT_EXPORT BU_EXTERN(int Ged_d_Init,
+		    (Tcl_Interp *interp));
+#else
+RT_EXPORT BU_EXTERN(int Ged_Init,
+		    (Tcl_Interp *interp));
+#endif
+
+
 /* defined in wdb_obj.c */
+
 RT_EXPORT BU_EXTERN(int wdb_create_cmd,
 		    (Tcl_Interp	*interp,
 		     struct rt_wdb *wdbp,
@@ -364,7 +376,9 @@ RT_EXPORT BU_EXTERN(int	wdb_importFg4Section_cmd,
 		     int argc,
 		     char **argv));
 
+
 /* defined in view_obj.c */
+
 RT_EXPORT BU_EXTERN(struct view_obj *vo_open_cmd,
 		    (const char *oname));
 RT_EXPORT BU_EXTERN(void vo_center,
@@ -583,6 +597,7 @@ RT_EXPORT BU_EXTERN(int	vo_dir2ae_cmd,
 		     int argc,
 		     char **argv));
 
+
 /* functions defined in vdraw.c */
 
 RT_EXPORT BU_EXTERN(int	vdraw_cmd,
@@ -590,6 +605,7 @@ RT_EXPORT BU_EXTERN(int	vdraw_cmd,
 		     Tcl_Interp *interp,
 		     int argc,
 		     char **argv));
+
 
 __END_DECLS
 
