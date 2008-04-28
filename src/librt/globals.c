@@ -210,6 +210,16 @@ short earb4[5][18] = {
  */
 fastf_t rt_cline_radius = (fastf_t)-1.0;
 
+/**
+ * minimum number of bot pieces
+ */
+int rt_bot_minpieces = RT_DEFAULT_MINPIECES;
+
+/**
+ * minimum triangles per piece
+ */
+int rt_bot_tri_per_piece = RT_DEFAULT_TRIS_PER_PIECE;
+
 
 /*
  * Local Variables:
