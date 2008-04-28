@@ -17,6 +17,8 @@ http://sf.net/pm/?group_id=105292
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------
 
+* fix framebuffer refresh bug
+
 * verify/finish clone mirror support
 
 * address the TODO items in src/mged/clone.c
