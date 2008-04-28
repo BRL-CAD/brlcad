@@ -32,6 +32,8 @@
 
 #include "common.h"
 
+#include "dg.h"
+
 /**
  * head of drawable geometry object list
  */
