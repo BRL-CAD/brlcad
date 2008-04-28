@@ -134,32 +134,23 @@ const struct bu_structparse rt_arb_parse[] = {
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
 };
 
-/* face definitions for each arb type */
-const int rt_arb_faces[5][24] = {
-    {0,1,2,3, 0,1,4,5, 1,2,4,5, 0,2,4,5, -1,-1,-1,-1, -1,-1,-1,-1},	/* ARB4 */
-    {0,1,2,3, 4,0,1,5, 4,1,2,5, 4,2,3,5, 4,3,0,5, -1,-1,-1,-1},		/* ARB5 */
-    {0,1,2,3, 1,2,4,6, 0,4,6,3, 4,1,0,5, 6,2,3,7, -1,-1,-1,-1},		/* ARB6 */
-    {0,1,2,3, 4,5,6,7, 0,3,4,7, 1,2,6,5, 0,1,5,4, 3,2,6,4},		/* ARB7 */
-    {0,1,2,3, 4,5,6,7, 0,4,7,3, 1,2,6,5, 0,1,5,4, 3,2,6,7},		/* ARB8 */
-};
-
 /*  rt_arb_get_cgtype(), rt_arb_std_type(), and rt_arb_centroid()
  *  stolen from mged/arbs.c */
 #define NO	0
 #define YES	1
 
 /**
- *			R T _ A R B _ G E T _ C G T Y P E
+ * R T _ A R B _ G E T _ C G T Y P E
  *
  * C G A R B S :   determines COMGEOM arb types from GED general arbs
  *
- *  Inputs -
+ * Inputs -
  *
- *  Returns -
+ * Returns -
  *	#	Number of distinct edge vectors
  *		(Number of entries in uvec array)
  *
- *  Implicit returns -
+ * Implicit returns -
  *	*cgtype - Comgeom type (number range 4..8;  ARB4 .. ARB8).
  *	uvec[8] - indices of unique vertices (return value is the number of valid entries)
  *	svec[11] - Entries [0] and [1] are special (they are the counts of duplicates)
@@ -292,13 +283,13 @@ rt_arb_get_cgtype(
 }
 
 /**
- *			R T _ A R B _ S T D _ T Y P E
+ * R T _ A R B _ S T D _ T Y P E
  *
- *  Given an ARB in internal form, return it's specific ARB type.
+ * Given an ARB in internal form, return it's specific ARB type.
  *
- *  Set tol.dist = 0.0001 to obtain past behavior.
+ * Set tol.dist = 0.0001 to obtain past behavior.
  *
- *  Returns -
+ * Returns -
  *	0	Error in input ARB
  *	4	ARB4
  *	5	ARB5
@@ -306,7 +297,7 @@ rt_arb_get_cgtype(
  *	7	ARB7
  *	8	ARB8
  *
- *  Implicit return -
+ * Implicit return -
  *	rt_arb_internal pt[] array reorganized into GIFT "standard" order.
  */
 int
@@ -332,7 +323,7 @@ rt_arb_std_type( const struct rt_db_internal *ip, const struct bn_tol *tol )
 
 
 /**
- *			R T _ A R B _ C E N T R O I D
+ * R T _ A R B _ C E N T R O I D
  *
  * Find the center point for the arb whose values are in the s array,
  * with the given number of verticies.  Return the point in center_pt.
@@ -356,14 +347,14 @@ rt_arb_centroid( point_t center_pt, const struct rt_arb_internal *arb, int npoin
 }
 
 /**
- *			R T _ A R B _ A D D _ P T
+ * R T _ A R B _ A D D _ P T
  *
- *  Add another point to a struct arb_specific, checking for unique pts.
- *  The first two points are easy.  The third one triggers most of the
- *  plane calculations, and forth and subsequent ones are merely
- *  checked for validity.
+ * Add another point to a struct arb_specific, checking for unique
+ * pts.  The first two points are easy.  The third one triggers most
+ * of the plane calculations, and forth and subsequent ones are merely
+ * checked for validity.
  *
- *  Returns -
+ * Returns -
  *	 0	point was accepted
  *	-1	point was rejected
  */
@@ -500,12 +491,12 @@ rt_arb_add_pt(register pointp_t point, const char *title, struct prep_arb *pap, 
 }
 
 /**
- *			R T _ A R B _ M K _ P L A N E S
+ * R T _ A R B _ M K _ P L A N E S
  *
- *  Given an rt_arb_internal structure with 8 points in it,
- *  compute the face information.
+ * Given an rt_arb_internal structure with 8 points in it, compute the
+ * face information.
  *
- *  Returns -
+ * Returns -
  *	 0	OK
  *	<0	failure
  */
@@ -519,12 +510,13 @@ rt_arb_mk_planes(register struct prep_arb *pap, struct rt_arb_internal *aip, con
     int		equiv_pts[8];
 
     /*
-     *  Determine a point which is guaranteed to be within the solid.
-     *  This is done by averaging all the vertices.  This center is
-     *  needed for rt_arb_add_pt, which demands a point inside the solid.
-     *  The center of the enclosing RPP strategy used for the bounding
-     *  sphere can be tricked by thin plates which are non-axis aligned,
-     *  so this dual-strategy is required.  (What a bug hunt!).
+     * Determine a point which is guaranteed to be within the solid.
+     * This is done by averaging all the vertices.  This center is
+     * needed for rt_arb_add_pt, which demands a point inside the
+     * solid.  The center of the enclosing RPP strategy used for the
+     * bounding sphere can be tricked by thin plates which are
+     * non-axis aligned, so this dual-strategy is required.  (What a
+     * bug hunt!).
      */
     VSETALL( sum, 0 );
     for ( i=0; i<8; i++ )  {
@@ -533,10 +525,10 @@ rt_arb_mk_planes(register struct prep_arb *pap, struct rt_arb_internal *aip, con
     VSCALE( pap->pa_center, sum, 0.125 );	/* sum/8 */
 
     /*
-     *  Find all points that are equivalent, within the specified tol.
-     *  Build the array equiv_pts[] so that it is indexed by
-     *  vertex number, and returns the lowest numbered equivalent
-     *  vertex (or its own vertex number, if non-equivalent).
+     * Find all points that are equivalent, within the specified tol.
+     * Build the array equiv_pts[] so that it is indexed by vertex
+     * number, and returns the lowest numbered equivalent vertex (or
+     * its own vertex number, if non-equivalent).
      */
     equiv_pts[0] = 0;
     for ( i=1; i<8; i++ )  {
@@ -577,8 +569,8 @@ rt_arb_mk_planes(register struct prep_arb *pap, struct rt_arb_internal *aip, con
 	    }
 	    pt_index = equiv_pts[pt_index];
 
-	    /* Verify that this point is not the same
-	     * as an earlier point, by checking point indices
+	    /* Verify that this point is not the same as an earlier
+	     * point, by checking point indices
 	     */
 	    for ( k = npts-1; k >= 0; k-- )  {
 		if ( pap->pa_pindex[k][pap->pa_faces] == pt_index )  {
@@ -626,12 +618,12 @@ rt_arb_mk_planes(register struct prep_arb *pap, struct rt_arb_internal *aip, con
 }
 
 /**
- *			R T _ A R B _ S E T U P
+ * R T _ A R B _ S E T U P
  *
- *  This is packaged as a separate function, so that it can also be
- *  called "on the fly" from the UV mapper.
+ * This is packaged as a separate function, so that it can also be
+ * called "on the fly" from the UV mapper.
  *
- *  Returns -
+ * Returns -
  *	 0	OK
  *	!0	failure
  */
@@ -713,11 +705,11 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
 }
 
 /**
- *  			R T _ A R B _ P R E P
+ * R T _ A R B _ P R E P
  *
- *  This is the actual LIBRT "prep" interface.
+ * This is the actual LIBRT "prep" interface.
  *
- *  Returns -
+ * Returns -
  *	 0	OK
  *	!0	failure
  */
@@ -733,7 +725,7 @@ rt_arb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 /**
- *  			R T _ A R B _ P R I N T
+ * R T _ A R B _ P R I N T
  */
 void
 rt_arb_print(register const struct soltab *stp)
@@ -765,15 +757,15 @@ rt_arb_print(register const struct soltab *stp)
 }
 
 /**
- *			R T _ A R B _ S H O T
+ * R T _ A R B _ S H O T
  *
  * Function -
  *	Shoot a ray at an ARB8.
  *
  * Algorithm -
- * 	The intersection distance is computed for each face.
- *  The largest IN distance and the smallest OUT distance are
- *  used as the entry and exit points.
+ * The intersection distance is computed for each face.  The largest
+ * IN distance and the smallest OUT distance are used as the entry and
+ * exit points.
  *
  * Returns -
  *	0	MISS
@@ -863,10 +855,11 @@ rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 }
 
 #define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
+
 /**
- *			R T _ A R B _ V S H O T
+ * R T _ A R B _ V S H O T
  *
- *  This is the Becker vector version
+ * This is the Becker vector version
  */
 void
 rt_arb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
@@ -951,9 +944,9 @@ rt_arb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 }
 
 /**
- *  			R T _ A R B _ N O R M
+ * R T _ A R B _ N O R M
  *
- *  Given ONE ray distance, return the normal and entry/exit point.
+ * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
 rt_arb_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
@@ -968,11 +961,10 @@ rt_arb_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 }
 
 /**
- *			R T _ A R B _ C U R V E
+ * R T _ A R B _ C U R V E
  *
- *  Return the "curvature" of the ARB face.
- *  Pick a principle direction orthogonal to normal, and
- *  indicate no curvature.
+ * Return the "curvature" of the ARB face.  Pick a principle direction
+ * orthogonal to normal, and indicate no curvature.
  */
 void
 rt_arb_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
@@ -983,12 +975,13 @@ rt_arb_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 }
 
 /**
- *  			R T _ A R B _ U V
+ * R T _ A R B _ U V
  *
- *  For a hit on a face of an ARB, return the (u,v) coordinates
- *  of the hit point.  0 <= u,v <= 1.
- *  u extends along the arb_U direction defined by B-A,
- *  v extends along the arb_V direction defined by Nx(B-A).
+ * For a hit on a face of an ARB, return the (u,v) coordinates of the
+ * hit point.  0 <= u,v <= 1.
+ *
+ * u extends along the arb_U direction defined by B-A,
+ * v extends along the arb_V direction defined by Nx(B-A).
  */
 void
 rt_arb_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
@@ -1019,9 +1012,9 @@ rt_arb_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	RT_ARB_CK_MAGIC(aip);
 
 	/*
-	 *  The double check of arb_opt is to avoid the case
-	 *  where another processor did the UV setup while
-	 *  this processor was waiting in bu_semaphore_acquire().
+	 * The double check of arb_opt is to avoid the case where
+	 * another processor did the UV setup while this processor was
+	 * waiting in bu_semaphore_acquire().
 	 */
 	bu_semaphore_acquire( RT_SEM_MODEL );
 	if ( arbp->arb_opt == (struct oface *)0 )  {
@@ -1073,7 +1066,7 @@ rt_arb_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 }
 
 /**
- *			R T _ A R B _ F R E E
+ * R T _ A R B _ F R E E
  */
 void
 rt_arb_free(register struct soltab *stp)
@@ -1093,11 +1086,13 @@ rt_arb_free(register struct soltab *stp)
 	RT_ADD_VLIST( vhead, valp[d], BN_VLIST_LINE_DRAW );
 
 /**
- *  			R T _ A R B _ P L O T
+ * R T _ A R B _ P L O T
  *
- *  Plot an ARB by tracing out four "U" shaped contours
- *  This draws each edge only once.
- *  XXX No checking for degenerate faces is done, but probably should be.
+ * Plot an ARB by tracing out four "U" shaped contours This draws each
+ * edge only once.
+ *
+ * XXX No checking for degenerate faces is done, but probably should
+ * be.
  */
 int
 rt_arb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
@@ -1116,7 +1111,7 @@ rt_arb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 }
 
 /**
- *			R T _ A R B _ C L A S S
+ * R T _ A R B _ C L A S S
  */
 int
 rt_arb_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
@@ -1142,18 +1137,17 @@ rt_arb_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, c
 }
 
 /**
- *			R T _ A R B _ I M P O R T
+ * R T _ A R B _ I M P O R T
  *
- *  Import an ARB8 from the database format to the internal format.
- *  There are two parts to this:  First, the database is presently
- *  single precision binary floating point.
- *  Second, the ARB in the database is represented as a vector
- *  from the origin to the first point, and 7 vectors
- *  from the first point to the remaining points.  In 1979 it seemed
- *  like a good idea...
+ * Import an ARB8 from the database format to the internal format.
+ * There are two parts to this: First, the database is presently
+ * single precision binary floating point.  Second, the ARB in the
+ * database is represented as a vector from the origin to the first
+ * point, and 7 vectors from the first point to the remaining points.
+ * In 1979 it seemed like a good idea...
  *
- *  Convert from vector to point notation
- *  by rotating each vector and adding in the base vector.
+ * Convert from vector to point notation by rotating each vector and
+ * adding in the base vector.
  */
 int
 rt_arb_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
@@ -1197,7 +1191,7 @@ rt_arb_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
 }
 
 /**
- *			R T _ A R B _ E X P O R T
+ * R T _ A R B _ E X P O R T
  */
 int
 rt_arb_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
@@ -1229,10 +1223,11 @@ rt_arb_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 }
 
 /**
- *			R T _ A R B _ I M P O R T 5
+ * R T _ A R B _ I M P O R T 5
  *
- * Import an arb from the db5 format and convert to the internal structure.
- * Code duplicated from rt_arb_import() with db5 help from g_ell.c
+ * Import an arb from the db5 format and convert to the internal
+ * structure.  Code duplicated from rt_arb_import() with db5 help from
+ * g_ell.c
  */
 int
 rt_arb_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
@@ -1260,8 +1255,9 @@ rt_arb_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     }
     return 0;	/* OK */
 }
+
 /**
- *			R T _ A R B _ E X P O R T 5
+ * R T _ A R B _ E X P O R T 5
  */
 int
 rt_arb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
@@ -1284,12 +1280,13 @@ rt_arb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     htond( ep->ext_buf, (unsigned char *)vec, 8*3);
     return 0;
 }
+
 /**
- *			R T _ A R B _ D E S C R I B E
+ * R T _ A R B _ D E S C R I B E
  *
- *  Make human-readable formatted presentation of this solid.
- *  First line describes type of solid.
- *  Additional lines are indented one tab, and give parameter values.
+ * Make human-readable formatted presentation of this solid.  First
+ * line describes type of solid.  Additional lines are indented one
+ * tab, and give parameter values.
  */
 int
 rt_arb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
@@ -1395,9 +1392,10 @@ rt_arb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 }
 
 /**
- *			R T _ A R B _ I F R E E
+ * R T _ A R B _ I F R E E
  *
- *  Free the storage associated with the rt_db_internal version of this solid.
+ * Free the storage associated with the rt_db_internal version of this
+ * solid.
  */
 void
 rt_arb_ifree(struct rt_db_internal *ip)
@@ -1408,13 +1406,12 @@ rt_arb_ifree(struct rt_db_internal *ip)
 }
 
 /**
- *			R T _ A R B _ T E S S
+ * R T _ A R B _ T E S S
  *
- *  "Tessellate" an ARB into an NMG data structure.
- *  Purely a mechanical transformation of one faceted object
- *  into another.
+ * "Tessellate" an ARB into an NMG data structure.  Purely a
+ * mechanical transformation of one faceted object into another.
  *
- *  Returns -
+ * Returns -
  *	-1	failure
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
@@ -1512,18 +1509,18 @@ static const fastf_t rt_arb_uvw[5*3] = {
 };
 static const int rt_arb_vert_index_scramble[4] = { 0, 1, 3, 2 };
 
+
 /**
- *			R T _ A R B _ T N U R B
+ * R T _ A R B _ T N U R B
  *
- *  "Tessellate" an ARB into a trimmed-NURB-NMG data structure.
- *  Purely a mechanical transformation of one faceted object
- *  into another.
+ * "Tessellate" an ARB into a trimmed-NURB-NMG data structure.  Purely
+ * a mechanical transformation of one faceted object into another.
  *
- *  Depending on the application, it might be beneficial to keep ARBs
- *  as planar-NMG objects; there is no real benefit to using B-splines
- *  here, other than uniformity of the conversion for all solids.
+ * Depending on the application, it might be beneficial to keep ARBs
+ * as planar-NMG objects; there is no real benefit to using B-splines
+ * here, other than uniformity of the conversion for all solids.
  *
- *  Returns -
+ * Returns -
  *	-1	failure
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
@@ -1681,10 +1678,10 @@ rt_arb_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 /* --- General ARB8 utility routines --- */
 
 /**
- *			R T _ A R B _ C A L C _ P O I N T S
+ * R T _ A R B _ C A L C _ P O I N T S
  *
- * Takes the planes[] array and intersects the planes to find the vertices
- * of a GENARB8.  The vertices are stored into arb->pt[].
+ * Takes the planes[] array and intersects the planes to find the
+ * vertices of a GENARB8.  The vertices are stored into arb->pt[].
  * This is an analog of rt_arb_calc_planes().
  */
 int
@@ -1715,7 +1712,7 @@ rt_arb_calc_points(
 }
 
 /* planes to define ARB vertices */
-const int rt_arb_planes[5][24] = {
+static const int rt_arb_planes[5][24] = {
     {0,1,3, 0,1,2, 0,2,3, 0,1,3, 1,2,3, 1,2,3, 1,2,3, 1,2,3},	/* ARB4 */
     {0,1,4, 0,1,2, 0,2,3, 0,3,4, 1,2,4, 1,2,4, 1,2,4, 1,2,4},	/* ARB5 */
     {0,2,3, 0,1,3, 0,1,4, 0,2,4, 1,2,3, 1,2,3, 1,2,4, 1,2,4},	/* ARB6 */
@@ -1724,11 +1721,11 @@ const int rt_arb_planes[5][24] = {
 };
 
 /**
- *			R T _ A R B _ 3 F A C E _ I N T E R S E C T
+ * R T _ A R B _ 3 F A C E _ I N T E R S E C T
  *
- *	Finds the intersection point of three faces of an ARB.
+ * Finds the intersection point of three faces of an ARB.
  *
- *  Returns -
+ * Returns -
  *	  0	success, value is in 'point'
  *	 -1	failure
  */
@@ -1753,16 +1750,16 @@ rt_arb_3face_intersect(
 
 
 /**
- *			R T _ A R B _ C A L C _ P L A N E S
+ * R T _ A R B _ C A L C _ P L A N E S
  *
- *	Calculate the plane (face) equations for an arb
- *	output previously went to es_peqn[i].
+ * Calculate the plane (face) equations for an arb output previously
+ * went to es_peqn[i].
  *
- *  Returns -
+ * Returns -
  *	-1	Failure
  *	 0	OK
  *
- *  Note -
+ * Note -
  *	 This function migrated from mged/edsol.c.
  */
 int
@@ -1806,14 +1803,15 @@ rt_arb_calc_planes(Tcl_Interp			*interp,
 }
 
 
-/** MV_EDGE:
- *	Moves an arb edge (end1,end2) with bounding
- *	planes bp1 and bp2 through point "thru".
- *	The edge has (non-unit) slope "dir".
- *	Note that the fact that the normals here point in rather than
- *	out makes no difference for computing the correct intercepts.
- *	After the intercepts are found, they should be checked against
- *	the other faces to make sure that they are always "inside".
+/**
+ * R T _ A R B _ M O V E _ E D G E
+ *
+ * Moves an arb edge (end1,end2) with bounding planes bp1 and bp2
+ * through point "thru".  The edge has (non-unit) slope "dir".  Note
+ * that the fact that the normals here point in rather than out makes
+ * no difference for computing the correct intercepts.  After the
+ * intercepts are found, they should be checked against the other
+ * faces to make sure that they are always "inside".
  */
 int
 rt_arb_move_edge(Tcl_Interp		*interp,
@@ -1844,23 +1842,21 @@ rt_arb_move_edge(Tcl_Interp		*interp,
 }
 
 /**
- *  			E D I T A R B
+ * E D I T A R B
  *
- *  An ARB edge is moved by finding the direction of
- *  the line containing the edge and the 2 "bounding"
- *  planes.  The new edge is found by intersecting the
- *  new line location with the bounding planes.  The
- *  two "new" planes thus defined are calculated and the
- *  affected points are calculated by intersecting planes.
- *  This keeps ALL faces planar.
+ * An ARB edge is moved by finding the direction of the line
+ * containing the edge and the 2 "bounding" planes.  The new edge is
+ * found by intersecting the new line location with the bounding
+ * planes.  The two "new" planes thus defined are calculated and the
+ * affected points are calculated by intersecting planes.  This keeps
+ * ALL faces planar.
  *
- *  Note -
- *	 This code came from mged/edarb.c (written mostly by Keith Applin)
- *	 and was modified to live here.
+ * Note: This code came from mged/edarb.c (written mostly by Keith
+ * Applin) and was modified to live here.
  *
  */
 
-/*  The storage for the "specific" ARB types is :
+/* The storage for the "specific" ARB types is :
  *
  *	ARB4	0 1 2 0 3 3 3 3
  *	ARB5	0 1 2 3 4 4 4 4
@@ -1884,88 +1880,6 @@ rt_arb_move_edge(Tcl_Interp		*interp,
  *	ARB4	0,3	1	2	4,5,6,7
  */
 
-/* The following arb editing arrays generally contain the following:
- *
- *	location 	comments
- *------------------------------------------------------------------------
- *	0,1		edge end points
- * 	2,3		bounding planes 1 and 2
- *	4, 5,6,7	plane 1 to recalculate, using next 3 points
- *	8, 9,10,11	plane 2 to recalculate, using next 3 points
- *	12, 13,14,15	plane 3 to recalculate, using next 3 points
- *	16,17		points (vertices) to recalculate
- *
- *
- * Each line is repeated for each edge (or point) to move
- */
-
-/* edit array for arb8's */
-short earb8[12][18] = {
-    {0,1, 2,3, 0,0,1,2, 4,0,1,4, -1,0,0,0, 3,5},	/* edge 12 */
-    {1,2, 4,5, 0,0,1,2, 3,1,2,5, -1,0,0,0, 3,6},	/* edge 23 */
-    {2,3, 3,2, 0,0,2,3, 5,2,3,6, -1,0,0,0, 1,7},	/* edge 34 */
-    {0,3, 4,5, 0,0,1,3, 2,0,3,4, -1,0,0,0, 2,7},	/* edge 14 */
-    {0,4, 0,1, 2,0,4,3, 4,0,1,4, -1,0,0,0, 7,5},	/* edge 15 */
-    {1,5, 0,1, 4,0,1,5, 3,1,2,5, -1,0,0,0, 4,6},	/* edge 26 */
-    {4,5, 2,3, 4,0,5,4, 1,4,5,6, -1,0,0,0, 1,7},	/* edge 56 */
-    {5,6, 4,5, 3,1,5,6, 1,4,5,6, -1,0,0,0, 2,7},	/* edge 67 */
-    {6,7, 3,2, 5,2,7,6, 1,4,6,7, -1,0,0,0, 3,4},	/* edge 78 */
-    {4,7, 4,5, 2,0,7,4, 1,4,5,7, -1,0,0,0, 3,6},	/* edge 58 */
-    {2,6, 0,1, 3,1,2,6, 5,2,3,6, -1,0,0,0, 5,7},	/* edge 37 */
-    {3,7, 0,1, 2,0,3,7, 5,2,3,7, -1,0,0,0, 4,6},	/* edge 48 */
-};
-
-/* edit array for arb7's */
-short earb7[12][18] = {
-    {0,1, 2,3, 0,0,1,2, 4,0,1,4, -1,0,0,0, 3,5},	/* edge 12 */
-    {1,2, 4,5, 0,0,1,2, 3,1,2,5, -1,0,0,0, 3,6},	/* edge 23 */
-    {2,3, 3,2, 0,0,2,3, 5,2,3,6, -1,0,0,0, 1,4},	/* edge 34 */
-    {0,3, 4,5, 0,0,1,3, 2,0,3,4, -1,0,0,0, 2,-1},	/* edge 41 */
-    {0,4, 0,5, 4,0,5,4, 2,0,3,4, 1,4,5,6, 1,-1},	/* edge 15 */
-    {1,5, 0,1, 4,0,1,5, 3,1,2,5, -1,0,0,0, 4,6},	/* edge 26 */
-    {4,5, 5,3, 2,0,3,4, 4,0,5,4, 1,4,5,6, 1,-1},	/* edge 56 */
-    {5,6, 4,5, 3,1,6,5, 1,4,5,6, -1,0,0,0, 2, -1},	/* edge 67 */
-    {2,6, 0,1, 5,2,3,6, 3,1,2,6, -1,0,0,0, 4,5},	/* edge 37 */
-    {4,6, 4,3, 2,0,3,4, 5,3,4,6, 1,4,5,6, 2,-1},	/* edge 57 */
-    {3,4, 0,1, 4,0,1,4, 2,0,3,4, 5,2,3,4, 5,6},	/* edge 45 */
-    {-1,-1, -1,-1, 5,2,3,4, 4,0,1,4, 8,2,1,-1, 6,5},	/* point 5 */
-};
-
-/* edit array for arb6's */
-short earb6[10][18] = {
-    {0,1, 2,1, 3,0,1,4, 0,0,1,2, -1,0,0,0, 3,-1},	/* edge 12 */
-    {1,2, 3,4, 1,1,2,5, 0,0,1,2, -1,0,0,0, 3,4},	/* edge 23 */
-    {2,3, 1,2, 4,2,3,5, 0,0,2,3, -1,0,0,0, 1,-1},	/* edge 34 */
-    {0,3, 3,4, 2,0,3,5, 0,0,1,3, -1,0,0,0, 4,2},	/* edge 14 */
-    {0,4, 0,1, 3,0,1,4, 2,0,3,4, -1,0,0,0, 6,-1},	/* edge 15 */
-    {1,4, 0,2, 3,0,1,4, 1,1,2,4, -1,0,0,0, 6,-1},	/* edge 25 */
-    {2,6, 0,2, 4,6,2,3, 1,1,2,6, -1,0,0,0, 4,-1},	/* edge 36 */
-    {3,6, 0,1, 4,6,2,3, 2,0,3,6, -1,0,0,0, 4,-1},	/* edge 46 */
-    {-1,-1, -1,-1, 2,0,3,4, 1,1,2,4, 3,0,1,4, 6,-1},/* point 5 */
-    {-1,-1, -1,-1, 2,0,3,6, 1,1,2,6, 4,2,3,6, 4,-1},/* point 6 */
-};
-
-/* edit array for arb5's */
-short earb5[9][18] = {
-    {0,1, 4,2, 0,0,1,2, 1,0,1,4, -1,0,0,0, 3,-1},	/* edge 12 */
-    {1,2, 1,3, 0,0,1,2, 2,1,2,4, -1,0,0,0, 3,-1},	/* edge 23 */
-    {2,3, 2,4, 0,0,2,3, 3,2,3,4, -1,0,0,0, 1,-1},	/* edge 34 */
-    {0,3, 1,3, 0,0,1,3, 4,0,3,4, -1,0,0,0, 2,-1},	/* edge 14 */
-    {0,4, 0,2, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* edge 15 */
-    {1,4, 0,3, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* edge 25 */
-    {2,4, 0,4, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1}, 	/* edge 35 */
-    {3,4, 0,1, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* edge 45 */
-    {-1,-1, -1,-1, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* point 5 */
-};
-
-/* edit array for arb4's */
-short earb4[5][18] = {
-    {-1,-1, -1,-1, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* point 1 */
-    {-1,-1, -1,-1, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* point 2 */
-    {-1,-1, -1,-1, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* point 3 */
-    {-1,-1, -1,-1, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* dummy */
-    {-1,-1, -1,-1, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* point 4 */
-};
 
 #define RT_ARB_EDIT_EDGE 0
 #define RT_ARB_EDIT_POINT 1
