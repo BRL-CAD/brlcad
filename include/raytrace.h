@@ -5045,6 +5045,7 @@ RT_EXPORT BU_EXTERN(void nmg_cnurb_to_vlist,
 		     const struct edgeuse *eu,
 		     int n_interior,
 		     int cmd));
+
 RT_EXPORT extern void (*nmg_plot_anim_upcall)();
 RT_EXPORT extern void (*nmg_vlblock_anim_upcall)();
 RT_EXPORT extern void (*nmg_mged_debug_display_hack)();
