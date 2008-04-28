@@ -1,6 +1,5 @@
 set(LIBRT_SOURCES
     bezier_2d_isect.c
-    bigE.c
     binary_obj.c
     bomb.c
     bool.c
@@ -26,7 +25,6 @@ set(LIBRT_SOURCES
     db_scan.c
     db_tree.c
     db_walk.c
-    dg_obj.c
     dir.c
     dspline.c
     fortray.c
@@ -120,7 +118,6 @@ set(LIBRT_SOURCES
     oslo_map.c
     pr.c
     prep.c
-    qray.c
     regionfix.c
     roots.c
     shoot.c
@@ -131,13 +128,10 @@ set(LIBRT_SOURCES
     track.c
     transform.c
     tree.c
-    vdraw.c
     vers.c
-    view_obj.c
     vlist.c
     wdb.c
     wdb_comb_std.c
-    wdb_obj.c
 )
 
 if(MSVC)

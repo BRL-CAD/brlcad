@@ -3,10 +3,15 @@ lib_LTLIBRARIES = libged.la
 noinst_LTLIBRARIES = libged_nil.la
 
 libged_nil_la_SOURCES = \
+	bigE.c \
 	dg_obj.c \
 	nirt.c \
+	qray.c \
+	vdraw.c \
 	view_obj.c \
 	wdb_obj.c
+
+noinst_HEADERS = qray.h
 
 libged_la_SOURCES =
 libged_la_LDFLAGS = -version-info 19:1

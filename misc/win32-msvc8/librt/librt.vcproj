@@ -130,10 +130,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\bigE.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\librt\binary_obj.c"
 				>
 			</File>
@@ -610,10 +606,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\qray.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\librt\regionfix.c"
 				>
 			</File>
@@ -655,10 +647,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\librt\tree.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\librt\vdraw.c"
 				>
 			</File>
 			<File

@@ -1,5 +1,10 @@
 set(LIBGED_SOURCES
+    bigE.c
     dg_obj.c
+    nirt.c
+    qray.c
+    qray.h
+    vdraw.c
     view_obj.c
     wdb_obj.c
 )

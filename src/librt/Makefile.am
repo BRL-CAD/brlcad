@@ -29,7 +29,6 @@ noinst_PROGRAMS = \
 librt_nil_la_SOURCES = \
 	$(BREP_SRCS) \
 	bezier_2d_isect.c \
-	bigE.c \
 	binary_obj.c \
 	bomb.c \
 	bool.c \
@@ -146,7 +145,6 @@ librt_nil_la_SOURCES = \
 	oslo_map.c \
 	pr.c \
 	prep.c \
-	qray.c \
 	regionfix.c \
 	roots.c \
 	shoot.c \
@@ -158,7 +156,6 @@ librt_nil_la_SOURCES = \
 	track.c \
 	transform.c \
 	tree.c \
-	vdraw.c \
 	vers.c \
 	vlist.c \
 	wdb.c \
@@ -189,8 +186,7 @@ nurb_example_LDADD = \
 # XXX this should be noinst or moved to include
 include_HEADERS = \
 	bot.h \
-	fixpt.h \
-	qray.h
+	fixpt.h
 
 dist_man_MANS = librt.3
 
