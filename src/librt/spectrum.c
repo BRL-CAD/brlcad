@@ -21,16 +21,16 @@
 /** @{ */
 /** @file spectrum.c
  *
- *  An application of the 'tabdata' package to spectral data.
+ * An application of the 'tabdata' package to spectral data.
  *
- *  (Note that there is also a rttherm/spectrum.c)
+ * (Note that there is also a rttherm/spectrum.c)
  *
- *  Inspired by -
+ * Inspired by -
  *	Roy Hall and his book "Illumination and Color in Computer
  *	Generated Imagery", Springer Verlag, New York, 1989.
  *	ISBN 0-387-96774-5
  *
- *  With thanks to Russ Moulton Jr, EOSoft Inc. for his "rad.c" module.
+ * With thanks to Russ Moulton Jr, EOSoft Inc. for his "rad.c" module.
  */
 /** @} */
 
@@ -44,15 +44,14 @@
 #include "raytrace.h"
 #include "spectrum.h"
 
-/*
- *			R T _ C I E _ X Y Z
+/**
+ * R T _ C I E _ X Y Z
  *
- *  This is the data for the CIE_XYZ curves take from Judd and
- *  Wyszecki (1975), table 2.6, these are for the 1931 standard
- *  observer with a 2-degree visual field.
- *  From Roy Hall, pg 228.
+ * This is the data for the CIE_XYZ curves take from Judd and Wyszecki
+ * (1975), table 2.6, these are for the 1931 standard observer with a
+ * 2-degree visual field.  From Roy Hall, pg 228.
  */
-const double	rt_CIE_XYZ[81][4] = {
+static const double	rt_CIE_XYZ[81][4] = {
     {380, 0.0014, 0.0000, 0.0065}, {385, 0.0022, 0.0001, 0.0105},
     {390, 0.0042, 0.0001, 0.0201}, {395, 0.0076, 0.0002, 0.0362},
     {400, 0.0143, 0.0004, 0.0679}, {405, 0.0232, 0.0006, 0.1102},
@@ -96,19 +95,20 @@ const double	rt_CIE_XYZ[81][4] = {
     {780, 0.0000, 0.0000, 0.0000}
 };
 
-/*
- *			R T _ S P E C T _ M A K E _ C I E _ X Y Z
+
+/**
+ * R T _ S P E C T _ M A K E _ C I E _ X Y Z
  *
- *  Given as input a spectral sampling distribution,
- *  generate the 3 curves to match the human eye's response
- *  in CIE color parameters X, Y, and Z.
- *  XYZ space can be readily converted to RGB with a 3x3 matrix.
+ * Given as input a spectral sampling distribution, generate the 3
+ * curves to match the human eye's response in CIE color parameters X,
+ * Y, and Z.  XYZ space can be readily converted to RGB with a 3x3
+ * matrix.
  *
- *  The tabulated data is linearly interpolated.
+ * The tabulated data is linearly interpolated.
  *
- *  Pointers to the three spectral weighting functions are "returned",
- *  storage for the X, Y, and Z curves is allocated by this routine
- *  and must be freed by the caller.
+ * Pointers to the three spectral weighting functions are "returned",
+ * storage for the X, Y, and Z curves is allocated by this routine and
+ * must be freed by the caller.
  */
 void
 rt_spect_make_CIE_XYZ(struct bn_tabdata **x, struct bn_tabdata **y, struct bn_tabdata **z, const struct bn_table *tabp)
@@ -135,8 +135,8 @@ rt_spect_make_CIE_XYZ(struct bn_tabdata **x, struct bn_tabdata **y, struct bn_ta
 	a->y[j] = b->y[j] = c->y[j] = 0;
     }
 
-    /* Traverse the CIE table.  Produce as many output values as possible
-     * before advancing to next CIE table entry.
+    /* Traverse the CIE table.  Produce as many output values as
+     * possible before advancing to next CIE table entry.
      */
     for ( i = 0; i < 81-1; i++ )  {
 	fastf_t	fract;		/* fraction from [i] to [i+1] */
@@ -172,23 +172,25 @@ rt_spect_make_CIE_XYZ(struct bn_tabdata **x, struct bn_tabdata **y, struct bn_ta
     bn_tabdata_scale( c, c, xyz_scale );
 }
 
-/*
- *			R T _ S P E C T _ R E F L E C T A N C E _ R G B
+
+/**
+ * R T _ S P E C T _ R E F L E C T A N C E _ R G B
  *
- *  Given reflectance data (in range 0..1) in terms of RGB color,
- *  convert that to a spectral reflectance curve.
+ * Given reflectance data (in range 0..1) in terms of RGB color,
+ * convert that to a spectral reflectance curve.
  *
- *  The assumption here is that the spectrum is made up of exactly three
- *  non-overlapping bands, and the reflectance is constant over each:
+ * The assumption here is that the spectrum is made up of exactly
+ * three non-overlapping bands, and the reflectance is constant over
+ * each:
  *
  *	red	572nm to 1, 000, 000nm	(includes the full IR band)
  *	green	492nm to 572nm		(just green)
  *	blue	1nm to 492nm		(includes Ultraviolet)
  *
- *  As the caller may be doing a lot of this, the caller is expected
- *  to provide a pointer to a valid bn_tabdata structure which is
- *  to be filled in.  Allowing caller to re-cycle them rather than
- *  doing constant malloc/free cycle.
+ * As the caller may be doing a lot of this, the caller is expected to
+ * provide a pointer to a valid bn_tabdata structure which is to be
+ * filled in.  Allowing caller to re-cycle them rather than doing
+ * constant malloc/free cycle.
  */
 void
 rt_spect_reflectance_rgb(struct bn_tabdata *curve, const float *rgb)
@@ -228,15 +230,15 @@ rt_spect_reflectance_rgb(struct bn_tabdata *curve, const float *rgb)
 #define	PLANCK(_w, _tempK)	\
 	(PLANCK_C1/(_w*_w*_w*_w*_w*(exp(PLANCK_C2/(_w*_tempK))-1)))
 
-/*
- *			R T _ S P E C T _ B L A C K _ B O D Y
+/**
+ * R T _ S P E C T _ B L A C K _ B O D Y
  *
- *  Integrate Planck's Radiation Formula for a black body radiator
- *  across the given spectrum.
- *  Returns radiant emittance in W/cm**2 for each wavelength interval.
+ * Integrate Planck's Radiation Formula for a black body radiator
+ * across the given spectrum.  Returns radiant emittance in W/cm**2
+ * for each wavelength interval.
  *
- *  Based upon code kindly provided by Russ Moulton, Jr., EOSoft Inc.
- *  Compute at 'n-1' wavelengths evenly spaced between ax and bx.
+ * Based upon code kindly provided by Russ Moulton, Jr., EOSoft Inc.
+ * Compute at 'n-1' wavelengths evenly spaced between ax and bx.
  */
 void
 rt_spect_black_body(struct bn_tabdata *data, double temp, unsigned int n)
@@ -285,17 +287,18 @@ rt_spect_black_body(struct bn_tabdata *data, double temp, unsigned int n)
     }
 }
 
-/*
- *			R T _ S P E C T _ B L A C K _ B O D Y _ F A S T
+
+/**
+ * R T _ S P E C T _ B L A C K _ B O D Y _ F A S T
  *
- *  Returns radiant emittance for each spectral interval in the given
- *  spectrum in units of watts/cm**2.
- *  Integrate each wavelength interval of spectral radiant emittance,
- *  by fitting with a rectangle (approximating curve with a horizontal line).
- *  For narrow spacing in wavelength this is OK, but with large spacing
- *  this tends to over-predict the power by 20%, due to the sharp
- *  (exponential) slope of the curve.
- *  With coarse spacing, or when unsure, use rt_spect_black_body().
+ * Returns radiant emittance for each spectral interval in the given
+ * spectrum in units of watts/cm**2.  Integrate each wavelength
+ * interval of spectral radiant emittance, by fitting with a rectangle
+ * (approximating curve with a horizontal line).  For narrow spacing
+ * in wavelength this is OK, but with large spacing this tends to
+ * over-predict the power by 20%, due to the sharp (exponential) slope
+ * of the curve.  With coarse spacing, or when unsure, use
+ * rt_spect_black_body().
  */
 void
 rt_spect_black_body_fast(struct bn_tabdata *data, double temp)
@@ -320,12 +323,12 @@ rt_spect_black_body_fast(struct bn_tabdata *data, double temp)
     }
 }
 
-/*
- *			R T _ S P E C T _ B L A C K _ B O D Y _ P O I N T S
+/**
+ * R T _ S P E C T _ B L A C K _ B O D Y _ P O I N T S
  *
- *  Returns point-sampled values of spectral radiant emittance,
- *  in units of watts/cm**2/um,
- *  straight from Planck's black-body radiation formula.
+ * Returns point-sampled values of spectral radiant emittance, in
+ * units of watts/cm**2/um, straight from Planck's black-body
+ * radiation formula.
  */
 void
 rt_spect_black_body_points(struct bn_tabdata *data, double temp)
