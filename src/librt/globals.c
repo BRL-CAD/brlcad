@@ -121,7 +121,8 @@ const int rt_arb_faces[5][24] = {
  *	12, 13,14,15	plane 3 to recalculate, using next 3 points
  *	16,17		points (vertices) to recalculate
  *
- * Each line is repeated for each edge (or point) to move
+ * Each line is repeated for each edge (or point) to move.
+ * See g_arb.c for more details.
  */
 
 /**
@@ -201,6 +202,13 @@ short earb4[5][18] = {
     {-1,-1, -1,-1, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* dummy */
     {-1,-1, -1,-1, 9,0,0,0, 9,0,0,0, 9,0,0,0, -1,-1},	/* point 4 */
 };
+
+/**
+ * radius of a FASTGEN cline element.
+ *
+ * shared with rt/do.c
+ */
+fastf_t rt_cline_radius = (fastf_t)-1.0;
 
 
 /*
