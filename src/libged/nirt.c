@@ -17,15 +17,14 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup librt */
+/** @addtogroup libged */
 /** @{ */
 /** @file nirt.c
  *
- *  Routines to interface to nirt.
+ * Routines to interface to nirt.
  *
- *  Description -
- *	This code was imported from MGED's/rtif.c and modified to work as part
- * 	of the drawable geometry object.
+ * This code was imported from MGED's/rtif.c and modified to work as
+ * part of the drawable geometry object.
  *
  */
 /** @} */
@@ -42,17 +41,19 @@
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
-#include <sys/stat.h>
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
 #endif
 #include "bio.h"
 
 #include "tcl.h"
-#include "cmd.h"			/* includes bu.h */
+#include "bu.h"
+#include "bn.h"
+#include "cmd.h"
 #include "vmath.h"
-#include "dg.h"
 #include "solid.h"
+#include "dg.h"
+
 #include "./qray.h"
 
 

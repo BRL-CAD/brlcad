@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup librt */
+/** @addtogroup libged */
 /** @{ */
 /** @file dg_obj.c
  *
@@ -32,27 +32,19 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 #include <limits.h>
-#include <signal.h>
 #include <errno.h>
-#ifdef HAVE_SYS_TYPES_H
-#  include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_WAIT_H
-#  include <sys/wait.h>
-#endif
 #include "bio.h"
 
 #include "tcl.h"
-#include "cmd.h"			/* includes bu.h */
-#include "vmath.h"
+#include "bu.h"
 #include "bn.h"
+#include "cmd.h"
+#include "vmath.h"
 #include "mater.h"
-#include "dg.h"
-#include "rtgeom.h"
 #include "solid.h"
 #include "plot3.h"
+#include "dg.h"
 
 
 struct dg_client_data {
@@ -3311,10 +3303,12 @@ dgo_invent_solid(struct dg_obj	*dgop,
     return (0);		/* OK */
 }
 
-/*
- *  Compute the min, max, and center points of the solid.
- *  Also finds s_vlen;
- * XXX Should split out a separate bn_vlist_rpp() routine, for librt/vlist.c
+/**
+ * Compute the min, max, and center points of the solid.  Also finds
+ * s_vlen.
+ *
+ * XXX Should split out a separate bn_vlist_rpp() routine, for
+ * librt/vlist.c
  */
 static void
 dgo_bound_solid(Tcl_Interp *interp, register struct solid *sp)

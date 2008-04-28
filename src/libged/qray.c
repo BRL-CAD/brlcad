@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup librt */
+/** @addtogroup libged */
 /** @{ */
 /** @file qray.c
  *
@@ -27,14 +27,15 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <string.h>
 #include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"
 #include "dg.h"
+
 #include "./qray.h"
+
 
 static void qray_print_fmts(struct dg_obj *dgop, Tcl_Interp *interp);
 static void qray_print_vars(struct dg_obj *dgop, Tcl_Interp *interp);

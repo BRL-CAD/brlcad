@@ -17,13 +17,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup librt */
+/** @addtogroup libged */
 /** @{ */
 /** @file view_obj.c
  *
- * A view object contains the attributes and methods for
- * controlling viewing transformations. Much of this code
- * was extracted from MGED and modified to work herein.
+ * A view object contains the attributes and methods for controlling
+ * viewing transformations. Much of this code was extracted from MGED
+ * and modified to work herein.
  *
  */
 /** @} */
@@ -36,10 +36,11 @@
 
 #include "tcl.h"
 
-#include "cmd.h"		/* includes bu.h */
-#include "vmath.h"
+#include "bu.h"
 #include "bn.h"
-#include "raytrace.h"
+#include "cmd.h"
+#include "vmath.h"
+#include "ged.h"
 
 
 int Vo_Init(Tcl_Interp *interp);

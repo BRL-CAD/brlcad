@@ -30,10 +30,6 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <signal.h>
-#include <errno.h>
-#include <time.h>
-#include <ctype.h>
 #include <string.h>
 #include "bio.h"
 
@@ -41,8 +37,8 @@
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
-#include "dg.h"
 #include "solid.h"
+#include "dg.h"
 
 /* #define debug 1 */
 

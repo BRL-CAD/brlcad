@@ -17,11 +17,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup wdb */
+/** @addtogroup libged */
 /** @{ */
 /** @file wdb_obj.c
  *
- * a quasi-object-oriented database interface.
+ * A quasi-object-oriented database interface.
  *
  * A database object contains the attributes and methods for
  * controlling a BRL-CAD database.
@@ -40,15 +40,16 @@
 #include "bio.h"
 
 #include "tcl.h"
+
 #include "bu.h"
+#include "bn.h"
 #include "cmd.h"
 #include "vmath.h"
-#include "bn.h"
 #include "db.h"
 #include "mater.h"
 #include "rtgeom.h"
-#include "raytrace.h"
 #include "wdb.h"
+#include "ged.h"
 
 
 /*
