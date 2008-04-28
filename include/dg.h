@@ -21,8 +21,14 @@
 /** @{ */
 /** @file dg.h
  *
- * Brief description
+ * Functions provided by the LIBGED geometry editing library that are
+ * related to drawable geometry.
  *
+ * A drawable geometry object is associated with a database object and
+ * is used to maintain lists of geometry that are ready for display.
+ * This geometry can come from a BRL-CAD database or from vdraw
+ * commands.  The drawable geometry object is also capabable of
+ * indirectly raytracing geometry that comes from a BRL-CAD database.
  */
 
 #ifndef __DG_H__
@@ -70,15 +76,6 @@ struct run_rt {
     int aborted;
 };
 
-/*
- *			D G _ O B J
- *
- * A drawable geometry object is associated with a database object
- * and is used to maintain lists of geometry that are ready for display.
- * This geometry can come from a Brl-Cad database or from vdraw commands.
- * The drawable geometry object is also capabable of raytracing geometry
- * that comes from a Brl-Cad database.
- */
 struct dg_qray_color {
     unsigned char r;
     unsigned char g;
