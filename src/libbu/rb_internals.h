@@ -33,22 +33,25 @@
 #ifndef BU_RB_INTERNALS_H
 #define BU_RB_INTERNALS_H seen
 
-/**			B U _ R B _ C K M A G ( )
- *	    Check and validate a structure pointer
+/**
+ * B U _ R B _ C K M A G ( )
  *
- *	This macro has three parameters: a pointer, the magic number
- *	expected at that location, and a string describing the expected
- *	structure type.
+ * Check and validate a structure pointer
+ *
+ * This macro has three parameters: a pointer, the magic number
+ * expected at that location, and a string describing the expected
+ * structure type.
+ *
+ * magic numbers are defined in magic.h
  */
 #define	BU_RB_CKMAG		BU_CKMAG
-#define	BU_RB_NODE_MAGIC	0x72626e6f
-#define	BU_RB_PKG_MAGIC		0x7262706b
-#define	BU_RB_LIST_MAGIC	0x72626c73
 
-/**			B U _ R B _ C K O R D E R ( )
+
+/**
+ * B U _ R B _ C K O R D E R ( )
  *
- *	This macro has two parameters: a tree and an order number.
- *	It ensures that the order number is valid for the tree.
+ * This macro has two parameters: a tree and an order number.  It
+ * ensures that the order number is valid for the tree.
  */
 #define BU_RB_CKORDER(t, o)					\
     if (((o) < 0) || ((o) >= (t) -> rbt_nm_orders))		\
@@ -59,7 +62,7 @@
     }
 
 /*
- *	Access functions for fields of bu_rb_tree
+ * Access functions for fields of bu_rb_tree
  */
 #define	bu_rb_order_func(t, o)	(((t) -> rbt_order)[o])
 #define	bu_rb_print(t, p)	(((t) -> rbt_print)((p) -> rbp_data))
@@ -80,7 +83,7 @@
 }
 
 /*
- *	Access functions for fields of (struct bu_rb_node)
+ * Access functions for fields of (struct bu_rb_node)
  */
 #define	bu_rb_parent(n, o)	(((n) -> rbn_parent)[o])
 #define	bu_rb_left_child(n, o)	(((n) -> rbn_left)[o])
@@ -117,24 +120,30 @@
 #define	WALK_NODES		0
 #define	WALK_DATA		1
 
-/**		    B U _ R B _ R O T A T E ( )
- *			    and
- *		B U _ R B _ O T H E R _ R O T A T E ( )
+/**
+ * B U _ R B _ R O T A T E ( )
  *
- *	These macros have three parameters: the node about which
- *	to rotate, the order to be rotated, and the direction of
- *	rotation.  They allow indirection in the use of _rb_rot_left()
- *	and _rb_rot_right().
+ * This macro has three parameters: the node about which to rotate,
+ * the order to be rotated, and the direction of rotation.  They allow
+ * indirection in the use of _rb_rot_left() and _rb_rot_right().
  */
 #define	bu_rb_rotate(n, o, d)	(((d) == BU_RB_LEFT)		? 	\
 				    _rb_rot_left((n), (o))	:	\
 				    _rb_rot_right((n), (o)))
+
+/**
+ * B U _ R B _ O T H E R _ R O T A T E ( )
+ *
+ * This macro has three parameters: the node about which to rotate,
+ * the order to be rotated, and the direction of rotation.  They allow
+ * indirection in the use of _rb_rot_left() and _rb_rot_right().
+ */
 #define	bu_rb_other_rotate(n, o, d) (((d) == BU_RB_LEFT)	? 	\
 				    _rb_rot_right((n), (o))	:	\
 				    _rb_rot_left((n), (o)))
 
 /*
- *	Functions internal to LIBREDBLACK
+ * Functions internal to LIBREDBLACK
  */
 BU_EXTERN(struct bu_rb_node *_rb_neighbor, (struct bu_rb_node *node,
 					    int		order,
@@ -156,6 +165,7 @@ BU_EXTERN(void bu_rb_free_node,		(struct bu_rb_node *node));
 BU_EXTERN(void bu_rb_free_package,	(struct bu_rb_package *package));
 
 #endif /* BU_RB_INTERNALS_H */
+
 /** @} */
 
 /*
