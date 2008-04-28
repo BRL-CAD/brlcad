@@ -32,6 +32,8 @@
 #include "bu.h"
 #include "raytrace.h"
 
+__BEGIN_DECLS
+
 #ifndef RT_EXPORT
 #  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
 #    ifdef RT_EXPORT_DLL
@@ -80,6 +82,8 @@ RT_EXPORT BU_EXTERN(struct mater *rt_dup_material_head,
 		    ());
 RT_EXPORT BU_EXTERN(void rt_color_free,
 		    ());
+
+__END_DECLS
 
 #endif /* __MATER_H__ */
 
