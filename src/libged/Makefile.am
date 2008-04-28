@@ -13,6 +13,10 @@ libged_nil_la_SOURCES = \
 	view_obj.c \
 	wdb_obj.c
 
+# cannot set per-target CPPFLAGS until automake 1.7+
+AM_CPPFLAGS = \
+	${TCL_CPPFLAGS}
+
 noinst_HEADERS = qray.h
 
 libged_la_SOURCES =
