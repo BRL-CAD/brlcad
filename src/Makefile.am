@@ -19,9 +19,9 @@ libbrlcad_nil_la_SOURCES =
 libbrlcad_nil_la_LIBADD = \
 	$(top_builddir)/src/libbu/libbu_nil.la \
 	$(top_builddir)/src/libbn/libbn_nil.la \
-	$(top_builddir)/src/libged/libged_nil.la \
 	$(top_builddir)/src/librt/librt_nil.la \
 	$(top_builddir)/src/libwdb/libwdb_nil.la \
+	$(top_builddir)/src/libged/libged_nil.la \
 	${ON_NIL} \
 	${TCL}
 
@@ -31,7 +31,6 @@ required_dirs = \
 	libbn \
 	libsysv \
 	librt \
-	libged \
 	external
 
 rts_dirs = librtserver
@@ -40,6 +39,7 @@ bench_dirs = \
 	libpkg \
 	libfb \
 	libwdb \
+	libged \
 	liboptical \
 	liborle \
 	conv \
