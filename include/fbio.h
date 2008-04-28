@@ -86,7 +86,6 @@ typedef struct  {
 #define COLORMAP_NULL	(ColorMap *) 0
 #define FBIO_NULL	(FBIO *) 0
 
-#define FB_MAGIC	0xfbfb00fb
 #define FB_CK_FBIO(_p)	FB_CKMAG(_p, FB_MAGIC, "FBIO" )
 
 

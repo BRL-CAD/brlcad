@@ -112,33 +112,6 @@
 #define OT_UNSPEC   3    /**< @brief orientation unspecified */
 #define OT_BOOLPLACE 4   /**< @brief object is intermediate data for boolean ops */
 
-/*
- *  Magic Numbers.
- */
-#define NMG_MODEL_MAGIC 	0x12121212
-#define NMG_REGION_MAGIC	0x23232323
-#define NMG_REGION_A_MAGIC	0x696e6720
-#define NMG_SHELL_MAGIC 	0x71077345	/**< @brief shell oil */
-#define NMG_SHELL_A_MAGIC	0x65207761
-#define NMG_FACE_MAGIC		0x45454545
-#define NMG_FACE_G_PLANE_MAGIC	0x726b6e65
-#define NMG_FACE_G_SNURB_MAGIC	0x736e7262	/**< @brief was RT_SNURB_MAGIC */
-#define NMG_FACEUSE_MAGIC	0x56565656
-#define NMG_LOOP_MAGIC		0x67676767
-#define NMG_LOOP_G_MAGIC	0x6420224c
-#define NMG_LOOPUSE_MAGIC	0x78787878
-#define NMG_EDGE_MAGIC		0x33333333
-#define NMG_EDGE_G_LSEG_MAGIC	0x6c696768
-#define NMG_EDGE_G_CNURB_MAGIC	0x636e7262	/**< @brief was RT_CNURB_MAGIC */
-#define NMG_EDGEUSE_MAGIC	0x90909090
-#define NMG_EDGEUSE2_MAGIC	0x91919191	/**< @brief used in eu->l2.magic */
-#define NMG_VERTEX_MAGIC	0x00123123
-#define NMG_VERTEX_G_MAGIC	0x72737707
-#define NMG_VERTEXUSE_MAGIC	0x12341234
-#define NMG_VERTEXUSE_A_PLANE_MAGIC	0x69676874
-#define NMG_VERTEXUSE_A_CNURB_MAGIC	0x20416e64
-#define NMG_KNOT_VECTOR_MAGIC	0x6b6e6f74	/**< @brief aka RT_KNOT_VECTOR_MAGIC */
-
 /**
  * macros to check/validate a structure pointer
  */
@@ -202,7 +175,6 @@ struct knot_vector {
     int		k_size;		/**< @brief knot vector size */
     fastf_t		* knots;	/**< @brief pointer to knot vector  */
 };
-#define RT_KNOT_VECTOR_MAGIC	NMG_KNOT_VECTOR_MAGIC	/**< @brief nurb.h compat */
 
 /*
  *	N O T I C E !

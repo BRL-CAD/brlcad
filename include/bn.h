@@ -104,7 +104,6 @@ struct bn_tol {
     double		perp;			/**< @brief nearly 0 */
     double		para;			/**< @brief nearly 1 */
 };
-#define BN_TOL_MAGIC	0x98c734bb
 #define BN_CK_TOL(_p)	BU_CKMAG(_p, BN_TOL_MAGIC, "bn_tol")
 
 #define	BN_VECT_ARE_PARALLEL(_dot, _tol)		\
@@ -514,9 +513,6 @@ struct bn_unif {
     long	*msr_longs;
 };
 
-#define BN_UNIF_MAGIC	12481632
-#define BN_GAUSS_MAGIC 512256128
-
 #define BN_CK_UNIF(_p) BU_CKMAG(_p, BN_UNIF_MAGIC, "bn_unif")
 #define BN_CK_GAUSS(_p) BU_CKMAG(_p, BN_GAUSS_MAGIC, "bn_gauss")
 
@@ -855,7 +851,6 @@ typedef  struct bn_poly {
     int		dgr;
     double		cf[BN_MAX_POLY_DEGREE+1];
 }  bn_poly_t;
-#define BN_POLY_MAGIC	0x506f4c79	/* 'PoLy' */
 #define BN_CK_POLY(_p)	BU_CKMAG(_p, BN_POLY_MAGIC, "struct bn_poly")
 #define BN_POLY_NULL	((struct bn_poly *)NULL)
 
@@ -1354,7 +1349,6 @@ struct bn_table {
     int		nx;
     fastf_t		x[1];	/**< @brief array of nx+1 wavelengths, dynamically sized */
 };
-#define BN_TABLE_MAGIC	0x53706374
 #define BN_CK_TABLE(_p)	BU_CKMAG(_p, BN_TABLE_MAGIC, "bn_table")
 #define BN_TABLE_NULL	((struct bn_table *)NULL)
 
@@ -1382,7 +1376,6 @@ struct bn_tabdata {
     const struct bn_table *table;	/**< @brief Up pointer to definition of X axis */
     fastf_t		y[1];		/**< @brief array of ny samples, dynamically sized */
 };
-#define BN_TABDATA_MAGIC	0x53736d70
 #define BN_CK_TABDATA(_p)	BU_CKMAG(_p, BN_TABDATA_MAGIC, "bn_tabdata")
 #define BN_TABDATA_NULL		((struct bn_tabdata *)NULL)
 
@@ -1583,7 +1576,6 @@ struct bn_vlist  {
     point_t		pt[BN_VLIST_CHUNK];	/**< @brief  associated 3-point/vect */
 };
 #define BN_VLIST_NULL	((struct bn_vlist *)0)
-#define BN_VLIST_MAGIC	0x98237474
 #define BN_CK_VLIST(_p) BU_CKMAG((_p), BN_VLIST_MAGIC, "bn_vlist")
 #define BN_CK_VLIST_TCL(_interp, _p) BU_CKMAG_TCL(_interp, (_p), BN_VLIST_MAGIC, "bn_vlist")
 
@@ -1646,7 +1638,6 @@ struct bn_vlblock {
     struct bu_list	*head;		/**< @brief  head[max] variable size array */
     struct bu_list	*free_vlist_hd;	/**< @brief  where to get/put free vlists */
 };
-#define BN_VLBLOCK_MAGIC	0x981bd112
 #define BN_CK_VLBLOCK(_p)	BU_CKMAG((_p), BN_VLBLOCK_MAGIC, "bn_vlblock")
 
 BN_EXPORT BU_EXTERN(void bn_vlist_3string,
@@ -1689,7 +1680,6 @@ struct vert_root {
 
 #define VERT_BLOCK 512			/**< @brief  number of vertices to malloc per call when building the array */
 
-#define VERT_TREE_MAGIC	0x56455254	/**< @brief  "VERT" */
 #define BN_CK_VERT_TREE(_p)	BU_CKMAG(_p, VERT_TREE_MAGIC, "vert_tree")
 
 BN_EXPORT BU_EXTERN(struct vert_root *create_vert_tree,

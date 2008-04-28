@@ -184,7 +184,6 @@ struct rt_tess_tol  {
     double		rel;			/**< @brief rel dist tol */
     double		norm;			/**< @brief normal tol */
 };
-#define RT_TESS_TOL_MAGIC	0xb9090dab
 #define RT_CK_TESS_TOL(_p)	BU_CKMAG(_p, RT_TESS_TOL_MAGIC, "rt_tess_tol")
 
 
@@ -202,7 +201,6 @@ struct rt_db_internal  {
     struct bu_attribute_value_set idb_avs;
 };
 #define idb_type		idb_minor_type
-#define RT_DB_INTERNAL_MAGIC	0x0dbbd867
 #define RT_INIT_DB_INTERNAL(_p)	{(_p)->idb_magic = RT_DB_INTERNAL_MAGIC; \
 	(_p)->idb_type = -1; (_p)->idb_ptr = GENPTR_NULL;\
 	(_p)->idb_avs.magic = -1;}
@@ -222,7 +220,6 @@ struct db_full_path {
 #define DB_FULL_PATH_POP(_pp)	{(_pp)->fp_len--;}
 #define DB_FULL_PATH_CUR_DIR(_pp)	((_pp)->fp_names[(_pp)->fp_len-1])
 #define DB_FULL_PATH_GET(_pp, _i)	((_pp)->fp_names[(_i)])
-#define DB_FULL_PATH_MAGIC	0x64626670
 #define RT_CK_FULL_PATH(_p)	BU_CKMAG(_p, DB_FULL_PATH_MAGIC, "db_full_path")
 
 /**
@@ -240,7 +237,6 @@ struct xray {
     fastf_t		r_max;		/**< @brief exit dist from bounding sphere */
 };
 #define RAY_NULL	((struct xray *)0)
-#define RT_RAY_MAGIC	0x78726179	/**< @brief "xray" */
 #define RT_CK_RAY(_p)	BU_CKMAG(_p, RT_RAY_MAGIC, "struct xray");
 
 /**
@@ -267,7 +263,6 @@ struct hit {
     struct xray	*	hit_rayp;	/**< @brief pointer to defining ray */
 };
 #define HIT_NULL	((struct hit *)0)
-#define RT_HIT_MAGIC	0x20686974	/**< @brief " hit" */
 #define RT_CK_HIT(_p)	BU_CKMAG(_p, RT_HIT_MAGIC, "struct hit")
 
 /**
@@ -385,7 +380,6 @@ struct seg {
     struct soltab *	seg_stp;	/**< @brief pointer back to soltab */
 };
 #define RT_SEG_NULL	((struct seg *)0)
-#define RT_SEG_MAGIC	0x98bcdef1
 
 #define RT_CHECK_SEG(_p)	BU_CKMAG(_p, RT_SEG_MAGIC, "struct seg")
 #define RT_CK_SEG(_p)		BU_CKMAG(_p, RT_SEG_MAGIC, "struct seg")
@@ -457,8 +451,6 @@ struct soltab {
 #define st_name		st_dp->d_namep
 #define RT_SOLTAB_NULL	((struct soltab *)0)
 #define	SOLTAB_NULL	RT_SOLTAB_NULL		/**< @brief backwards compat */
-#define RT_SOLTAB_MAGIC		0x92bfcde0	/**< @brief l.magic */
-#define RT_SOLTAB2_MAGIC	0x92bfcde2	/**< @brief l2.magic */
 
 #define RT_CHECK_SOLTAB(_p)	BU_CKMAG( _p, RT_SOLTAB_MAGIC, "struct soltab")
 #define RT_CK_SOLTAB(_p)	BU_CKMAG( _p, RT_SOLTAB_MAGIC, "struct soltab")
@@ -559,7 +551,6 @@ struct region  {
 					 * attribute name passed to rt_gettrees_and_attrs() */
 };
 #define REGION_NULL	((struct region *)0)
-#define RT_REGION_MAGIC	0xdffb8001
 #define RT_CK_REGION(_p)	BU_CKMAG(_p, RT_REGION_MAGIC, "struct region")
 
 /**
@@ -590,8 +581,6 @@ struct partition {
     struct bu_ptbl	pt_seglist;	/**< @brief all segs in this partition */
 };
 #define PT_NULL		((struct partition *)0)
-#define PT_MAGIC	0x87687681
-#define PT_HD_MAGIC	0x87687680
 
 #define RT_CHECK_PT(_p)	RT_CK_PT(_p)	/**< @brief compat */
 #define RT_CK_PT(_p)	BU_CKMAG(_p, PT_MAGIC, "struct partition")
@@ -767,7 +756,6 @@ struct db_i  {
     struct rt_wdb *		dbi_wdbp;	/**< @brief ptr back to containing rt_wdb */
 };
 #define DBI_NULL	((struct db_i *)0)
-#define DBI_MAGIC	0x57204381
 
 #define RT_CHECK_DBI(_p)		BU_CKMAG(_p, DBI_MAGIC, "struct db_i")
 #define RT_CHECK_DBI_TCL(_interp, _p)	BU_CKMAG_TCL(_interp, _p, DBI_MAGIC, "struct db_i")
@@ -820,7 +808,6 @@ struct directory  {
     char		d_shortname[16];	/**< @brief Stash short names locally */
 };
 #define DIR_NULL	((struct directory *)0)
-#define RT_DIR_MAGIC	0x05551212		/**< @brief Directory assistance */
 #define RT_CK_DIR(_dp)	BU_CKMAG(_dp, RT_DIR_MAGIC, "(librt)directory")
 
 #define d_addr	d_un.file_offset
@@ -898,7 +885,6 @@ struct rt_comb_internal  {
     struct bu_vls	material;
     char		inherit;
 };
-#define RT_COMB_MAGIC	0x436f6d49	/**< @brief "ComI" */
 #define RT_CHECK_COMB(_p)		BU_CKMAG( _p, RT_COMB_MAGIC, "rt_comb_internal" )
 #define RT_CK_COMB(_p)			RT_CHECK_COMB(_p)
 #define RT_CHECK_COMB_TCL(_interp, _p)	BU_CKMAG_TCL(interp, _p, RT_COMB_MAGIC, "rt_comb_internal" )
@@ -927,7 +913,6 @@ struct rt_binunif_internal {
 	unsigned long	*uint64;
     } u;
 };
-#define RT_BINUNIF_INTERNAL_MAGIC	0x42696e55	/* "BinU" */
 #define RT_CHECK_BINUNIF(_p)		BU_CKMAG( _p, RT_BINUNIF_INTERNAL_MAGIC, "rt_binunif_internal" )
 #define RT_CK_BINUNIF(_p)		RT_CHECK_BINUNIF(_p)
 #define RT_CHECK_BINUNIF_TCL(_interp, _p)	BU_CKMAG_TCL(interp, _p, RT_BINUNIF_MAGIC, "rt_binunif_internal" )
@@ -981,7 +966,6 @@ struct db_tree_state {
 #define TS_SOFAR_INTER	2	/**< @brief  Intersection encountered above */
 #define TS_SOFAR_REGION	4	/**< @brief  Region encountered above */
 
-#define RT_DBTS_MAGIC	0x64627473	/**< @brief  "dbts" */
 #define RT_CK_DBTS(_p)	BU_CKMAG(_p, RT_DBTS_MAGIC, "db_tree_state")
 
 /**
@@ -1008,7 +992,6 @@ struct db_traverse
     struct resource *resp;
     genptr_t client_data;
 };
-#define RT_DBTR_MAGIC 0x64627472  /**< @brief  "dbtr" */
 #define RT_INIT_DBTR(_p) {(_p)->magic = RT_DBTR_MAGIC; \
 	(_p)->dbip = GENPTR_NULL; (_p)->comb_enter_func = GENPTR_NULL; \
 	(_p)->comb_exit_func = GENPTR_NULL; (_p)->leaf_func = GENPTR_NULL; \
@@ -1023,7 +1006,6 @@ struct combined_tree_state {
     struct db_tree_state	cts_s;
     struct db_full_path		cts_p;
 };
-#define RT_CTS_MAGIC	0x98989123
 #define RT_CK_CTS(_p)	BU_CKMAG(_p, RT_CTS_MAGIC, "combined_tree_state")
 
 /**
@@ -1089,7 +1071,6 @@ union tree {
 #define tr_regionp	tr_a.tu_regionp
 
 #define TREE_NULL	((union tree *)0)
-#define RT_TREE_MAGIC	0x91191191
 #define RT_CK_TREE(_p)	BU_CKMAG(_p, RT_TREE_MAGIC, "union tree")
 
 
@@ -1142,7 +1123,6 @@ struct rt_wdb  {
     Tcl_Interp *	wdb_interp;
 };
 
-#define	RT_WDB_MAGIC			0x5f576462
 #define RT_CHECK_WDB(_p)		BU_CKMAG(_p, RT_WDB_MAGIC, "rt_wdb")
 #define RT_CHECK_WDB_TCL(_interp, _p)	BU_CKMAG_TCL(_interp, _p, RT_WDB_MAGIC, "rt_wdb")
 #define RT_CK_WDB(_p)			RT_CHECK_WDB(_p)
@@ -1216,7 +1196,6 @@ struct rt_anim_property {
 };
 #define RT_ANP_REPLACE	1		/**< @brief  Replace shader string */
 #define RT_ANP_APPEND	2		/**< @brief  Append to shader string */
-#define RT_ANP_MAGIC	0x41507270	/**< @brief  'APrp' */
 #define RT_CK_ANP(_p)	BU_CKMAG((_p), RT_ANP_MAGIC, "rt_anim_property")
 
 struct rt_anim_color {
@@ -1242,7 +1221,6 @@ struct animate {
 #define RT_AN_TEMPERATURE 5		/**< @brief  Region temperature */
 
 #define ANIM_NULL	((struct animate *)0)
-#define ANIMATE_MAGIC	0x414e4963	/* 1095649635 */
 #define RT_CK_ANIMATE(_p)	BU_CKMAG((_p), ANIMATE_MAGIC, "animate")
 
 /**
@@ -1257,7 +1235,6 @@ struct rt_htbl {
     int			blen;	/**< @brief  # of struct's of storage at *hits */
     struct hit *	hits;	/**< @brief  hits[blen] data storage area */
 };
-#define RT_HTBL_MAGIC	0x6874626c		/**< @brief  "htbl" */
 #define RT_CK_HTBL(_p)	BU_CKMAG(_p, RT_HTBL_MAGIC, "rt_htbl")
 
 /**
@@ -1280,7 +1257,6 @@ struct rt_piecestate  {
     struct rt_htbl	htab;		/**< @brief  accumulating hits here */
     const union cutter *cutp;		/**< @brief  current bounding volume */
 };
-#define RT_PIECESTATE_MAGIC	0x70637374	/**< @brief  pcst */
 #define RT_CK_PIECESTATE(_p)	BU_CKMAG(_p, RT_PIECESTATE_MAGIC, "struct rt_piecestate")
 
 /**
@@ -1306,7 +1282,6 @@ struct rt_piecelist  {
     long		*pieces;	/**< @brief  pieces[npieces], piece indices */
     struct soltab	*stp;		/**< @brief  ref back to solid */
 };
-#define RT_PIECELIST_MAGIC	0x70636c73	/**< @brief  pcls */
 #define RT_CK_PIECELIST(_p)	BU_CKMAG(_p, RT_PIECELIST_MAGIC, "struct rt_piecelist")
 
 /* Used to set globals declared in g_bot.c */
@@ -1383,7 +1358,6 @@ struct resource {
 };
 RT_EXPORT extern struct resource rt_uniresource;	/**< @brief  default.  Defined in librt/shoot.c */
 #define RESOURCE_NULL	((struct resource *)0)
-#define RESOURCE_MAGIC	0x83651835
 #define RT_CK_RESOURCE(_p)	BU_CKMAG(_p, RESOURCE_MAGIC, "struct resource")
 
 /** More malloc-efficient replacement for BU_GETUNION(tp, tree) */
@@ -1447,7 +1421,6 @@ struct pixel_ext {
     struct xray	corner[CORNER_PTS];
 };
 /* This should have had an RT_ prefix */
-#define PIXEL_EXT_MAGIC 0x50787400	/* "Pxt" */
 #define BU_CK_PIXEL_EXT(_p)	BU_CKMAG(_p, PIXEL_EXT_MAGIC, "struct pixel_ext")
 
 /**
@@ -1552,7 +1525,6 @@ struct application  {
     int			a_zero2;	/**< @brief  must be zero (sanity check) */
 };
 #define RT_AFN_NULL	((int (*)())0)
-#define RT_AP_MAGIC	0x4170706c	/**< @brief  "Appl" */
 #define RT_CK_AP(_p)	BU_CKMAG(_p, RT_AP_MAGIC, "struct application")
 #define RT_CK_APPLICATION(_p)	BU_CKMAG(_p, RT_AP_MAGIC, "struct application")
 #define RT_CK_AP_TCL(_interp, _p)	BU_CKMAG_TCL(_interp, _p, RT_AP_MAGIC, "struct application")
@@ -1710,7 +1682,6 @@ struct rt_i {
 					    of this */
 
 #define RTI_NULL	((struct rt_i *)0)
-#define RTI_MAGIC	0x99101658	/**< @brief  magic # for integrity check */
 
 #define RT_CHECK_RTI(_p)		BU_CKMAG(_p, RTI_MAGIC, "struct rt_i")
 #define RT_CHECK_RTI_TCL(_interp, _p)	BU_CKMAG_TCL(_interp, _p, RTI_MAGIC, "struct rt_i")
@@ -1805,7 +1776,6 @@ struct line_seg		/**< @brief  line segment */
     unsigned long	magic;
     int			start, end;	/**< @brief  indices into sketch's array of vertices */
 };
-#define CURVE_LSEG_MAGIC     0x6c736567		/**< @brief  lseg */
 
 struct carc_seg		/**< @brief  circular arc segment */
 {
@@ -1819,7 +1789,6 @@ struct carc_seg		/**< @brief  circular arc segment */
     int			orientation;	/**< @brief  0 -> ccw, !0 -> cw */
     int			center;		/**< @brief  index of vertex at center of arc (only used by rt_extrude_prep and rt_extrude_shot) */
 };
-#define CURVE_CARC_MAGIC    0x63617263		/**< @brief  carc */
 
 struct nurb_seg		/**< @brief  NURB curve segment */
 {
@@ -1831,7 +1800,6 @@ struct nurb_seg		/**< @brief  NURB curve segment */
     int			*ctl_points;	/**< @brief  array of indicies for control points */
     fastf_t		*weights;	/**< @brief  array of weights for control points (NULL if non_rational) */
 };
-#define CURVE_NURB_MAGIC     0x6e757262		/**< @brief  nurb */
 
 struct bezier_seg	/**< @brief  Bezier curve segment */
 {
@@ -1839,7 +1807,6 @@ struct bezier_seg	/**< @brief  Bezier curve segment */
     int			degree;		/**< @brief  degree of curve (number of control points - 1) */
     int			*ctl_points;	/**< @brief  array of indices for control points */
 };
-#define CURVE_BEZIER_MAGIC	0x62657a69	/**< @brief  bezi */
 
 /**
  * R T _ F U N C T A B
@@ -1974,7 +1941,6 @@ struct rt_functab {
 
 RT_EXPORT extern const struct rt_functab rt_functab[];
 
-#define RT_FUNCTAB_MAGIC	0x46754e63	/* FuNc */
 #define RT_CK_FUNCTAB(_p)	BU_CKMAG(_p, RT_FUNCTAB_MAGIC, "functab" );
 
 #define RT_CLASSIFY_UNIMPLEMENTED	BN_CLASSIFY_UNIMPLEMENTED
@@ -2046,9 +2012,6 @@ struct rt_shootray_status {
 
 #define NMG_HIT_LIST	0
 #define NMG_MISS_LIST	1
-#define NMG_RT_HIT_MAGIC 0x48697400	/**< @brief  "Hit" */
-#define NMG_RT_HIT_SUB_MAGIC 0x48696d00	/**< @brief  "Him" */
-#define NMG_RT_MISS_MAGIC 0x4d697300	/**< @brief  "Mis" */
 
 
 /* These values are for the hitmiss "in_out" variable and indicate the
@@ -2199,7 +2162,6 @@ struct ray_data {
 #define NMG_PCA_EDGE	1
 #define NMG_PCA_EDGE_VERTEX 2
 #define NMG_PCA_VERTEX 3
-#define NMG_RAY_DATA_MAGIC 0x1651771
 #define NMG_CK_RD(_rd) NMG_CKMAG(_rd, NMG_RAY_DATA_MAGIC, "ray data");
 
 
@@ -2269,7 +2231,6 @@ struct nmg_radial {
     int			needs_flip;	/**< @brief  Insert eumate, not eu */
     fastf_t		ang;		/**< @brief  angle, in radians.  0 to 2pi */
 };
-#define NMG_RADIAL_MAGIC	0x52614421	/**< @brief  RaD! */
 #define NMG_CK_RADIAL(_p)	NMG_CKMAG(_p, NMG_RADIAL_MAGIC, "nmg_radial")
 
 struct nmg_inter_struct {
@@ -2295,7 +2256,6 @@ struct nmg_inter_struct {
     mat_t		proj;		/**< @brief  Matrix to project onto XY plane */
     const long 		*twod;		/**< @brief  ptr to face/edge of 2d projection */
 };
-#define NMG_INTER_STRUCT_MAGIC	0x99912120
 #define NMG_CK_INTER_STRUCT(_p)	NMG_CKMAG(_p, NMG_INTER_STRUCT_MAGIC, "nmg_inter_struct")
 
 /*****************************************************************

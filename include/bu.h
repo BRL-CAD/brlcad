@@ -52,7 +52,7 @@ __BEGIN_DECLS
 
 /* common interface headers */
 #include "tcl.h"	/* Included for Tcl_Interp definition */
-
+#include "magic.h"
 
 #ifndef BU_EXPORT
 #  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
@@ -529,7 +529,6 @@ struct bu_list {
     struct bu_list	*forw;		/**< @brief "forward", "next" */
     struct bu_list	*back;		/**< @brief "back", "last" */
 };
-#define BU_LIST_HEAD_MAGIC	0x01016580	/* Magic num for list head */
 #define BU_LIST_NULL	((struct bu_list *)0)
 
 typedef struct bu_list bu_list_t;
@@ -928,7 +927,6 @@ struct bu_bitv {
     bitv_t		bits[2];	/**< @brief variable size array  */
 };
 
-#define BU_BITV_MAGIC		0x62697476	/* 'bitv' */
 #define BU_CK_BITV(_vp)		BU_CKMAG(_vp, BU_BITV_MAGIC, "bu_bitv")
 
 /**
@@ -1060,7 +1058,6 @@ struct bu_hist  {
     long		hg_nbins;	/**< @brief # of bins in hg_bins[]  */
     long		*hg_bins;	/**< @brief array of counters  */
 };
-#define BU_HIST_MAGIC	0x48697374	/* Hist */
 #define BU_CK_HIST(_p)	BU_CKMAG(_p, BU_HIST_MAGIC, "struct bu_hist")
 
 #define BU_HIST_TALLY( _hp, _val )	{ \
@@ -1101,7 +1098,6 @@ struct bu_ptbl {
     int		blen;	/**< @brief # of (long *)'s worth of storage at *buffer  */
     long 		**buffer; /**< @brief data storage area  */
 };
-#define BU_PTBL_MAGIC		0x7074626c		/* "ptbl" */
 #define BU_CK_PTBL(_p)		BU_CKMAG(_p, BU_PTBL_MAGIC, "bu_ptbl")
 
 #define BU_PTBL_INIT	0	/**< @brief  initialize table pointer struct & get storage */
@@ -1182,7 +1178,6 @@ struct bu_mapped_file {
     int		uses;		/**< @brief # ptrs to this struct handed out  */
     int		dont_restat;	/**< @brief 1=on subsequent opens, don't re-stat()  */
 };
-#define BU_MAPPED_FILE_MAGIC	0x4d617066	/* Mapf */
 #define BU_CK_MAPPED_FILE(_p)	BU_CKMAG(_p, BU_MAPPED_FILE_MAGIC, "bu_mapped_file")
 
 /** @} */
@@ -1198,7 +1193,6 @@ struct bu_hook_list {
 };
 
 #define BUHOOK_NULL 0
-#define BUHOOK_LIST_MAGIC	0x90d5dead	/* Nietzsche? */
 #define BUHOOK_LIST_NULL	((struct bu_hook_list *) 0)
 
 /** list of callbacks to call during bu_bomb, used by mged. */
@@ -1247,7 +1241,6 @@ struct bu_attribute_value_set {
     genptr_t			readonly_max;
     struct bu_attribute_value_pair	*avp;	/**< @brief array[max]  */
 };
-#define BU_AVS_MAGIC		0x41765321	/* AvS! */
 #define BU_CK_AVS(_avp)		BU_CKMAG(_avp, BU_AVS_MAGIC, "bu_attribute_value_set")
 
 #define BU_AVS_FOR(_pp, _avp)	\
@@ -1278,7 +1271,6 @@ struct bu_vls  {
     int	vls_len;	/**< @brief Length, not counting the null  */
     int	vls_max;
 };
-#define BU_VLS_MAGIC		0x89333bbb
 #define BU_CK_VLS(_vp)		BU_CKMAG(_vp, BU_VLS_MAGIC, "bu_vls")
 #define BU_VLS_IS_INITIALIZED(_vp)	\
 	((_vp) && ((_vp)->vls_magic == BU_VLS_MAGIC))
@@ -1321,7 +1313,6 @@ struct bu_mro {
     double		double_rep;
 };
 
-#define BU_MRO_MAGIC	0x4D524F4F	/* MROO */
 #define BU_CK_MRO(_vp)		BU_CKMAG(_vp, BU_MRO_MAGIC, "bu_mro")
 
 #define BU_MRO_INVALIDATE(_p ) {\
@@ -1546,7 +1537,6 @@ struct bu_external  {
     long	ext_nbytes;
     genptr_t ext_buf;
 };
-#define BU_EXTERNAL_MAGIC	0x768dbbd0
 #define BU_INIT_EXTERNAL(_p)	{(_p)->ext_magic = BU_EXTERNAL_MAGIC; \
 	(_p)->ext_buf = (genptr_t)NULL; (_p)->ext_nbytes = 0;}
 #define BU_CK_EXTERNAL(_p)	BU_CKMAG(_p, BU_EXTERNAL_MAGIC, "bu_external")
@@ -1564,7 +1554,6 @@ struct bu_color
     unsigned long buc_magic;
     fastf_t buc_rgb[3];
 };
-#define	BU_COLOR_MAGIC		0x6275636c
 #define	BU_COLOR_NULL		((struct bu_color *) 0)
 #define BU_CK_COLOR(_bp)	BU_CKMAG(_bp, BU_COLOR_MAGIC, "bu_color")
 
@@ -1644,7 +1633,6 @@ typedef struct
     struct bu_rb_node	*rbt_empty_node;  /**< @brief  Sentinel representing nil */
 }	bu_rb_tree;
 #define	BU_RB_TREE_NULL	((bu_rb_tree *) 0)
-#define	BU_RB_TREE_MAGIC	0x72627472
 
 /*
  *	Debug bit flags for member rbt_debug
@@ -2814,9 +2802,6 @@ struct bu_hash_record {
     struct bu_hash_entry *hsh_entry;
 };
 
-#define BU_HASH_TBL_MAGIC	0x48415348	/* "HASH" */
-#define BU_HASH_RECORD_MAGIC	0x68617368	/* "hash" */
-#define BU_HASH_ENTRY_MAGIC	0x48454E54	/* "HENT" */
 #define BU_CK_HASH_TBL(_hp)	BU_CKMAG( _hp, BU_HASH_TBL_MAGIC, "bu_hash_tbl" )
 #define BU_CK_HASH_RECORD(_rp)	BU_CKMAG( _rp, BU_HASH_RECORD_MAGIC, "bu_hash_record" )
 #define BU_CK_HASH_ENTRY(_ep)	BU_CKMAG( _ep, BU_HASH_ENTRY_MAGIC, "bu_hash_entry" )
@@ -2875,8 +2860,6 @@ enum {
     BU_IMAGE_YUV
 };
 
-
-#define BU_IMAGE_FILE_MAGIC 0x6269666d /* bifm */
 
 struct bu_image_file {
     unsigned long magic;

@@ -200,7 +200,6 @@ struct db5_raw_internal {
     struct bu_external attributes;
     unsigned char	*buf;		/* if non-null needs to be bu_free()ed */
 };
-#define DB5_RAW_INTERNAL_MAGIC	0x64357269	/* "d5ri" */
 #define RT_CK_RIP(_ptr)		BU_CKMAG( _ptr, DB5_RAW_INTERNAL_MAGIC, "db5_raw_internal" )
 
 DB5_EXPORT extern const int db5_enc_len[4];	/* convert wid to nbytes */

@@ -60,7 +60,6 @@ struct rt_tor_internal {
     vect_t	b;		/**< @brief  r_b length */
     fastf_t	r_b;		/**< @brief  radius in B direction (typ == r_a) */
 };
-#define RT_TOR_INTERNAL_MAGIC	0x9bffed87
 #define RT_TOR_CK_MAGIC(_p)	BU_CKMAG(_p, RT_TOR_INTERNAL_MAGIC, "rt_tor_internal")
 
 /**
@@ -75,7 +74,6 @@ struct rt_tgc_internal {
     vect_t	c;
     vect_t	d;
 };
-#define RT_TGC_INTERNAL_MAGIC	0xaabbdd87
 #define RT_TGC_CK_MAGIC(_p)	BU_CKMAG(_p, RT_TGC_INTERNAL_MAGIC, "rt_tgc_internal")
 
 /*
@@ -88,7 +86,6 @@ struct rt_ell_internal  {
     vect_t	b;
     vect_t	c;
 };
-#define RT_ELL_INTERNAL_MAGIC	0x93bb23ff
 #define RT_ELL_CK_MAGIC(_p)	BU_CKMAG(_p, RT_ELL_INTERNAL_MAGIC, "rt_ell_internal")
 
 /*
@@ -103,7 +100,6 @@ struct rt_superell_internal {
     double n;
     double e;
 };
-#define RT_SUPERELL_INTERNAL_MAGIC      0xff93bb23
 #define RT_SUPERELL_CK_MAGIC(_p)        BU_CKMAG(_p, RT_SUPERELL_INTERNAL_MAGIC, "rt_superell_internal")
 
 /*
@@ -115,7 +111,6 @@ struct rt_metaball_internal {
     fastf_t	threshold;
     struct bu_list	metaball_ctrl_head;
 };
-#define RT_METABALL_INTERNAL_MAGIC      0x62616c6c	/* ball */
 #define RT_METABALL_CK_MAGIC(_p)        BU_CKMAG(_p, RT_METABALL_INTERNAL_MAGIC, "rt_metaball_internal")
 
 /*
@@ -128,7 +123,6 @@ struct rt_arb_internal {
     unsigned long magic;
     point_t	pt[8];
 };
-#define RT_ARB_INTERNAL_MAGIC	0x9befd010
 #define RT_ARB_CK_MAGIC(_p)	BU_CKMAG(_p, RT_ARB_INTERNAL_MAGIC, "rt_arb_internal")
 
 /*
@@ -140,7 +134,6 @@ struct rt_ars_internal {
     int	pts_per_curve;
     fastf_t	**curves;
 };
-#define RT_ARS_INTERNAL_MAGIC	0x77ddbbe3
 #define RT_ARS_CK_MAGIC(_p)	BU_CKMAG(_p, RT_ARS_INTERNAL_MAGIC, "rt_ars_internal")
 
 /*
@@ -150,7 +143,6 @@ struct rt_half_internal  {
     unsigned long magic;
     plane_t	eqn;
 };
-#define RT_HALF_INTERNAL_MAGIC	0xaa87bbdd
 #define RT_HALF_CK_MAGIC(_p)	BU_CKMAG(_p, RT_HALF_INTERNAL_MAGIC, "rt_half_internal")
 
 /*
@@ -163,7 +155,6 @@ struct rt_grip_internal {
     vect_t	normal;
     fastf_t	mag;
 };
-#define RT_GRIP_INTERNAL_MAGIC	0x31196205
 #define RT_GRIP_CK_MAGIC(_p)	BU_CKMAG(_p, RT_GRIP_INTERNAL_MAGIC, "rt_grip_internal")
 
 /**
@@ -180,7 +171,6 @@ struct rt_pg_internal {
     /* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
     int	max_npts;		/**< @brief  maximum value of npts in poly[] */
 };
-#define RT_PG_INTERNAL_MAGIC	0x9bfed887
 #define RT_PG_CK_MAGIC(_p)	BU_CKMAG(_p, RT_PG_INTERNAL_MAGIC, "rt_pg_internal")
 
 /* ID_BSPLINE */
@@ -190,7 +180,6 @@ struct rt_nurb_internal {
     struct face_g_snurb **srfs;	/**< @brief  The surfaces themselves */
 };
 
-#define RT_NURB_INTERNAL_MAGIC	0x002b2bdd
 #define RT_NURB_CK_MAGIC( _p) BU_CKMAG(_p, RT_NURB_INTERNAL_MAGIC, "rt_nurb_internal");
 #define RT_NURB_GET_CONTROL_POINT(_s, _u, _v)	((_s)->ctl_points[ \
 	((_v)*(_s)->s_size[0]+(_u))*RT_NURB_EXTRACT_COORDS((_s)->pt_type)])
@@ -205,7 +194,6 @@ struct rt_brep_internal {
     ON_Brep* brep; /**< @brief  An openNURBS brep object containing the solid */
 };
 
-#define RT_BREP_INTERNAL_MAGIC 0x42524550 /* BREP */
 #define RT_BREP_CK_MAGIC( _p) BU_CKMAG(_p, RT_BREP_INTERNAL_MAGIC, "rt_brep_internal");
 
 /*
@@ -231,7 +219,6 @@ struct rt_ebm_internal  {
     /* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
     struct bu_mapped_file	*mp;	/**< @brief  actual data */
 };
-#define RT_EBM_INTERNAL_MAGIC	0xf901b231
 #define RT_EBM_CK_MAGIC(_p)	BU_CKMAG(_p, RT_EBM_INTERNAL_MAGIC, "rt_ebm_internal")
 
 /*
@@ -251,7 +238,6 @@ struct rt_vol_internal  {
     /* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
     unsigned char	*map;
 };
-#define RT_VOL_INTERNAL_MAGIC	0x987ba1d0
 #define RT_VOL_CK_MAGIC(_p)	BU_CKMAG(_p, RT_VOL_INTERNAL_MAGIC, "rt_vol_internal")
 
 /*
@@ -276,7 +262,6 @@ struct rt_hf_internal {
     /* END USER SETABLE VARIABLES, BEGIN INTERNAL STUFF */
     struct bu_mapped_file	*mp;	/**< @brief  actual data */
 };
-#define RT_HF_INTERNAL_MAGIC	0x4846494d
 #define RT_HF_CK_MAGIC(_p)	BU_CKMAG(_p, RT_HF_INTERNAL_MAGIC, "rt_hf_internal")
 
 /*
@@ -287,7 +272,6 @@ struct rt_arbn_internal  {
     int	neqn;
     plane_t	*eqn;
 };
-#define RT_ARBN_INTERNAL_MAGIC	0x18236461
 #define RT_ARBN_CK_MAGIC(_p)	BU_CKMAG(_p, RT_ARBN_INTERNAL_MAGIC, "rt_arbn_internal")
 
 /*
@@ -299,7 +283,6 @@ struct rt_pipe_internal {
     /* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
     int		pipe_count;
 };
-#define RT_PIPE_INTERNAL_MAGIC	0x7dd7bb3e
 #define RT_PIPE_CK_MAGIC(_p)	BU_CKMAG(_p, RT_PIPE_INTERNAL_MAGIC, "rt_pipe_internal")
 
 /*
@@ -314,7 +297,6 @@ struct rt_part_internal {
     /* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
     int	part_type;		/**< @brief  sphere, cylinder, cone */
 };
-#define RT_PART_INTERNAL_MAGIC	0xaaccee87
 #define RT_PART_CK_MAGIC(_p)	BU_CKMAG(_p, RT_PART_INTERNAL_MAGIC, "rt_part_internal")
 
 #define RT_PARTICLE_TYPE_SPHERE		1
@@ -331,7 +313,6 @@ struct rt_rpc_internal {
     vect_t	rpc_B;	/**< @brief  breadth vector */
     fastf_t	rpc_r;	/**< @brief  scalar half-width of rectangular face */
 };
-#define RT_RPC_INTERNAL_MAGIC	0xaaccee88
 #define RT_RPC_CK_MAGIC(_p)	BU_CKMAG(_p, RT_RPC_INTERNAL_MAGIC, "rt_rpc_internal")
 
 /*
@@ -345,7 +326,6 @@ struct rt_rhc_internal {
     fastf_t	rhc_r;	/**< @brief  scalar half-width of rectangular face */
     fastf_t	rhc_c;	/**< @brief  dist from hyperbola to vertex of asymptotes */
 };
-#define RT_RHC_INTERNAL_MAGIC	0xaaccee89
 #define RT_RHC_CK_MAGIC(_p)	BU_CKMAG(_p, RT_RHC_INTERNAL_MAGIC, "rt_rhc_internal")
 
 /*
@@ -359,7 +339,6 @@ struct rt_epa_internal {
     fastf_t	epa_r1;	/**< @brief  scalar semi-major axis length */
     fastf_t	epa_r2;	/**< @brief  scalar semi-minor axis length */
 };
-#define RT_EPA_INTERNAL_MAGIC	0xaaccee90
 #define RT_EPA_CK_MAGIC(_p)	BU_CKMAG(_p, RT_EPA_INTERNAL_MAGIC, "rt_epa_internal")
 
 /*
@@ -374,7 +353,6 @@ struct rt_ehy_internal {
     fastf_t	ehy_r2;	/**< @brief  scalar semi-minor axis length */
     fastf_t	ehy_c;	/**< @brief  dist from hyperbola to vertex of asymptotes */
 };
-#define RT_EHY_INTERNAL_MAGIC	0xaaccee91
 #define RT_EHY_CK_MAGIC(_p)	BU_CKMAG(_p, RT_EHY_INTERNAL_MAGIC, "rt_ehy_internal")
 
 /*
@@ -388,7 +366,6 @@ struct rt_eto_internal {
     fastf_t	eto_r;	/**< @brief  scalar radius of rotation */
     fastf_t	eto_rd;	/**< @brief  scalar length of semi-minor of ellipse */
 };
-#define RT_ETO_INTERNAL_MAGIC	0xaaccee92
 #define RT_ETO_CK_MAGIC(_p)	BU_CKMAG(_p, RT_ETO_INTERNAL_MAGIC, "rt_eto_internal")
 
 /*
@@ -419,7 +396,6 @@ struct rt_dsp_internal{
 #define RT_DSP_SRC_OBJ	'o'
     char		dsp_datasrc;		/**< @brief  which type of data source */
 };
-#define RT_DSP_INTERNAL_MAGIC	0xde6
 #define RT_DSP_CK_MAGIC(_p)	BU_CKMAG(_p, RT_DSP_INTERNAL_MAGIC, "rt_dsp_internal")
 
 
@@ -444,7 +420,6 @@ struct rt_sketch_internal
 	genptr_t	*segments;	/**< @brief  array of pointers to segments in this curve */
     } skt_curve;				/**< @brief  the curve in this sketch */
 };
-#define RT_SKETCH_INTERNAL_MAGIC	0x736b6574	/* sket */
 #define RT_SKETCH_CK_MAGIC(_p)	BU_CKMAG(_p, RT_SKETCH_INTERNAL_MAGIC, "rt_sketch_internal")
 
 /*
@@ -460,7 +435,6 @@ struct rt_submodel_internal {
     mat_t		root2leaf;
     const struct db_i *dbip;
 };
-#define RT_SUBMODEL_INTERNAL_MAGIC	0x7375626d	/**< @brief  subm */
 #define RT_SUBMODEL_CK_MAGIC(_p)	BU_CKMAG(_p, RT_SUBMODEL_INTERNAL_MAGIC, "rt_submodel_internal")
 
 /*
@@ -483,7 +457,6 @@ struct rt_extrude_internal
 /*	Note that the u_vec and v_vec are not unit vectors, their magnitude and direction are
  *	used for scaling and rotation
  */
-#define RT_EXTRUDE_INTERNAL_MAGIC	0x65787472	/* extr */
 #define RT_EXTRUDE_CK_MAGIC(_p)	BU_CKMAG(_p, RT_EXTRUDE_INTERNAL_MAGIC, "rt_extrude_internal")
 
 /*
@@ -500,7 +473,6 @@ struct rt_cline_internal
     fastf_t		radius;
     fastf_t		thickness; 	/**< @brief  zero thickness means volume mode */
 };
-#define	RT_CLINE_INTERNAL_MAGIC		0x43767378	/* CLIN */
 #define RT_CLINE_CK_MAGIC(_p)	BU_CKMAG(_p, RT_CLINE_INTERNAL_MAGIC, "rt_cline_internal")
 
 /*
@@ -549,7 +521,6 @@ struct rt_bot_internal
 #define RT_BOT_USE_NORMALS	      0x2     /**< @brief  Use the surface normals if they exist */
 #define RT_BOT_USE_FLOATS	      0x4     /**< @brief  Use the single precision version of "tri_specific" during prep */
 
-#define	RT_BOT_INTERNAL_MAGIC		0x626F7472	/* botr */
 #define RT_BOT_CK_MAGIC(_p)	BU_CKMAG(_p, RT_BOT_INTERNAL_MAGIC, "rt_bot_internal")
 
 __END_DECLS

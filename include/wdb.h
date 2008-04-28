@@ -79,7 +79,6 @@ struct wmember  {
     char		*wm_name;
 };
 #define WMEMBER_NULL	((struct wmember *)0)
-#define WMEMBER_MAGIC	0x43128912
 #define WDB_CK_WMEMBER(_p)	BU_CKMAG(_p, WMEMBER_MAGIC, "wmember" );
 
 /*
@@ -96,7 +95,6 @@ struct wdb_pipept {
 };
 
 #define WDB_PIPESEG_NULL	((struct wdb_pipeseg *)0)
-#define WDB_PIPESEG_MAGIC	0x9723ffef
 
 struct wdb_metaballpt {
     struct bu_list	l;
@@ -109,7 +107,6 @@ struct wdb_metaballpt {
 #define WDB_METABALLPT_TYPE_POINT 0x0
 #define WDB_METABALLPT_TYPE_LINE 0x1
 #define WDB_METABALLPT_NULL	((struct wdb_metaballpt *)0)
-#define WDB_METABALLPT_MAGIC	0x6D627074	/**< @brief  mbpt */
 
 
 WDB_EXPORT WDB_EXTERN(int mk_id, (struct rt_wdb *fp, const char *title) );
