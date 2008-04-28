@@ -21,15 +21,15 @@
 /** @{ */
 /** @file solid.h
  *
- *	Solids structure definition
- *
- *  @author
- *	Michael John Muuss
+ * Solids structure definition
  *
  */
 
 #ifndef __SOLID_H__
 #define __SOLID_H__
+
+#include "bu.h"
+#include "raytrace.h"
 
 struct solid  {
     struct bu_list l;
