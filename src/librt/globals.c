@@ -95,6 +95,8 @@ const int db5_enc_len[4] = {
     8
 };
 
+/* see table.c for primitive function table definition */
+extern const struct rt_functab rt_functab[];
 
 
 /*
