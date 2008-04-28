@@ -23,6 +23,9 @@
  *
  * This file is part of LIBBU even though it provides magic numbers
  * for structures in other libraries.
+ *
+ * This header should be considered a PRIVATE header and should NEVER
+ * be referenced by value.
  */
 
 #ifndef HAVE_MAGIC_H
