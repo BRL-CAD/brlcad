@@ -21,19 +21,15 @@
 /** @{ */
 /** @file magic.c
  *
- *  @brief routines for looking up magic numbers
+ * Routines involved with handling "magic numbers" used to identify
+ * various in-memory data structures.
  *
- *  Routines involved with handling "magic numbers" used to identify
- *  various in-memory data structures.
+ * The one ugly thing about this strategy is that every BRL-CAD
+ * library needs to have it's magic numbers registered here.
  *
- *  The one ugly thing about this strategy is that every BRL-CAD
- *  library needs to have it's magic numbers registered here.
- *  XXX What is needed is an extension mechanism.
- *  It is a shame that C does not provide a wextern (weak extern) declaration.
+ * XXX What is needed is an extension mechanism.  It is a shame that C
+ * does not provide a wextern (weak extern) declaration.
  *
- *
- *  @author	Lee A. Butler
- *  @author	Michael John Muuss
  */
 
 #include "common.h"
@@ -41,29 +37,17 @@
 #include <stdio.h>
 #include "bio.h"
 
-/* ugh .. really shouldn't need to include the world for magic
- * numbers
- */
-#include "vmath.h"
-#include "nmg.h"
-#include "bu.h"
-#include "bn.h"
-#include "raytrace.h"
-#include "rtgeom.h"
-#include "wdb.h"
-#include "spm.h"
-
-#include "./rb_internals.h"
+#include "magic.h"
 
 
 /**
- *			B U _ I D E N T I F Y _ M A G I C
+ * B U _ I D E N T I F Y _ M A G I C
  *
- *  Given a number which has been found in the magic number field of
- *  a structure (which is typically the first entry),
- *  determine what kind of structure this magic number pertains to.
- *  This is called by the macro BU_CK_MAGIC() to provide a "hint"
- *  as to what sort of pointer error might have been made.
+ * Given a number which has been found in the magic number field of a
+ * structure (which is typically the first entry), determine what kind
+ * of structure this magic number pertains to.  This is called by the
+ * macro BU_CK_MAGIC() to provide a "hint" as to what sort of pointer
+ * error might have been made.
  */
 const char *
 bu_identify_magic(register unsigned long magic)
