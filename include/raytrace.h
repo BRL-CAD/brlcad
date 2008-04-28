@@ -3370,6 +3370,7 @@ RT_EXPORT BU_EXTERN(int rt_arb_edit,
 		     plane_t			planes[6],
 		     const struct bn_tol	*tol));
 #endif
+
 RT_EXPORT extern const int rt_arb_faces[5][24];
 RT_EXPORT extern short earb8[12][18];
 RT_EXPORT extern short earb7[12][18];
