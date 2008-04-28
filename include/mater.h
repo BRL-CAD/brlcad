@@ -21,16 +21,16 @@
 /** @{ */
 /** @file mater.h
  *
- * @brief
- *  Information about mapping between region IDs and material
- *  information (colors and outboard database "handles").
- *
- *  @author
- *	Michael John Muuss
+ * Information about mapping between region IDs and material settings
+ * (colors and outboard database "handles").
  *
  */
 
+#ifndef HAVE_MATER_H
+#define HAVE_MATER_H
+
 #include "bu.h"
+#include "raytrace.h"
 
 #ifndef RT_EXPORT
 #  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
@@ -80,6 +80,8 @@ RT_EXPORT BU_EXTERN(struct mater *rt_dup_material_head,
 		    ());
 RT_EXPORT BU_EXTERN(void rt_color_free,
 		    ());
+
+#endif /* HAVE_MATER_H */
 
 /** @} */
 /*
