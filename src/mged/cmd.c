@@ -3398,7 +3398,7 @@ cmd_vdraw(ClientData	clientData,
 {
     CHECK_DBI_NULL;
 
-    return dgo_vdraw_cmd(dgop, interp, argc, argv);
+    return vdraw_cmd(dgop, interp, argc, argv);
 }
 
 /**
