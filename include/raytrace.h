@@ -1142,7 +1142,6 @@ struct rt_wdb  {
 #define RT_WDB_TYPE_DB_INMEM			4
 #define RT_WDB_TYPE_DB_INMEM_APPEND_ONLY	5
 
-RT_EXPORT extern struct rt_wdb HeadWDB;		/**< @brief  head of BRL-CAD database object list */
 
 /**
  * V I E W _ O B J
@@ -1957,8 +1956,9 @@ struct rt_functab {
     void (*ft_make) BU_ARGS((const struct rt_functab *,
 			     struct rt_db_internal *, double /*diameter*/));
 };
+
 RT_EXPORT extern const struct rt_functab rt_functab[];
-RT_EXPORT extern const int rt_nfunctab;
+
 #define RT_FUNCTAB_MAGIC	0x46754e63	/* FuNc */
 #define RT_CK_FUNCTAB(_p)	BU_CKMAG(_p, RT_FUNCTAB_MAGIC, "functab" );
 

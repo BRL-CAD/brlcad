@@ -993,7 +993,7 @@ const struct rt_functab rt_functab[] = {
      rt_nul_make,
     }
 };
-const int rt_nfunctab = sizeof(rt_functab)/sizeof(struct rt_functab);
+
 
 /*
  *  Hooks for unimplemented routines

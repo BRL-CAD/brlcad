@@ -647,8 +647,9 @@ rt_free_soltab(struct soltab *stp)
     int	hash;
 
     RT_CK_SOLTAB(stp);
-    if ( stp->st_id < 0 || stp->st_id >= rt_nfunctab )
+    if ( stp->st_id < 0 )
 	bu_bomb("rt_free_soltab:  bad st_id");
+
     hash = db_dirhash(stp->st_dp->d_namep);
 
     ACQUIRE_SEMAPHORE_TREE(hash);		/* start critical section */
