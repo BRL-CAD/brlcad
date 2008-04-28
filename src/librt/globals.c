@@ -66,7 +66,7 @@ double nmg_eue_dist = 0.05;
  * this array depends on the values of the definitions of the
  * DB5_MINORTYPE_BINU_* in db5.h
  */
-const char *binu_types[]={
+const char *binu_types[] = {
     NULL,
     NULL,
     "binary(float)",
