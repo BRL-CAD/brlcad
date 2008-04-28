@@ -28,8 +28,8 @@
  * be referenced by value.
  */
 
-#ifndef HAVE_MAGIC_H
-#define HAVE_MAGIC_H
+#ifndef __MAGIC_H__
+#define __MAGIC_H__
 
 /* libbu */
 
@@ -180,7 +180,7 @@
 #define WDB_PIPESEG_MAGIC		0x9723ffef
 #define WMEMBER_MAGIC			0x43128912
 
-#endif /* HAVE_MAGIC_H */
+#endif /* __MAGIC_H__ */
 
 /*
  * Local Variables:

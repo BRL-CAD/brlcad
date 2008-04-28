@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef HAVE_MATER_H
-#define HAVE_MATER_H
+#ifndef __MATER_H__
+#define __MATER_H__
 
 #include "bu.h"
 #include "raytrace.h"
@@ -81,7 +81,7 @@ RT_EXPORT BU_EXTERN(struct mater *rt_dup_material_head,
 RT_EXPORT BU_EXTERN(void rt_color_free,
 		    ());
 
-#endif /* HAVE_MATER_H */
+#endif /* __MATER_H__ */
 
 /** @} */
 /*
