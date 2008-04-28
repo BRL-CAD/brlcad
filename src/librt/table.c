@@ -117,119 +117,119 @@ const struct bu_structparse rt_nul_parse[] = {
 			struct resource *resp)); \
 	extern const struct bu_structparse rt_##name##_parse[];
 
-/* Note:  no semi-colons at the end of these, please */
-RT_DECLARE_INTERFACE(nul)
+
+RT_DECLARE_INTERFACE(nul);
 
 #define rt_tor_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(tor)
+RT_DECLARE_INTERFACE(tor);
 
 #define rt_tgc_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(tgc)
+RT_DECLARE_INTERFACE(tgc);
 
 #define rt_ell_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(ell)
+RT_DECLARE_INTERFACE(ell);
 
 #define rt_arb_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(arb)
+RT_DECLARE_INTERFACE(arb);
 
 #define rt_ars_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(ars)
+RT_DECLARE_INTERFACE(ars);
 
-    RT_DECLARE_INTERFACE(hlf)
+RT_DECLARE_INTERFACE(hlf);
 
 #define rt_rec_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(rec)
+RT_DECLARE_INTERFACE(rec);
 
 #define rt_pg_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(pg)
+RT_DECLARE_INTERFACE(pg);
 
 #define rt_nurb_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(nurb)
+RT_DECLARE_INTERFACE(nurb);
 
 #define rt_sph_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(sph)
+RT_DECLARE_INTERFACE(sph);
 
 #define rt_ebm_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(ebm)
+RT_DECLARE_INTERFACE(ebm);
 
 #define rt_vol_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(vol)
+RT_DECLARE_INTERFACE(vol);
 
 #define rt_arbn_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(arbn)
+RT_DECLARE_INTERFACE(arbn);
 
 #define rt_pipe_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(pipe)
+RT_DECLARE_INTERFACE(pipe);
 
 #define rt_part_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(part)
+RT_DECLARE_INTERFACE(part);
 
 #define rt_nmg_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(nmg)
+RT_DECLARE_INTERFACE(nmg);
 
 #define rt_rpc_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(rpc)
+RT_DECLARE_INTERFACE(rpc);
 
 #define rt_rhc_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(rhc)
+RT_DECLARE_INTERFACE(rhc);
 
 #define rt_epa_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(epa)
+RT_DECLARE_INTERFACE(epa);
 
 #define rt_ehy_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(ehy)
+RT_DECLARE_INTERFACE(ehy);
 
 #define rt_eto_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(eto)
+RT_DECLARE_INTERFACE(eto);
 
 #define rt_grp_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(grp)
+RT_DECLARE_INTERFACE(grp);
 
 #define rt_hf_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(hf)
+RT_DECLARE_INTERFACE(hf);
 
 #define rt_dsp_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(dsp)
+RT_DECLARE_INTERFACE(dsp);
 
 #define rt_sketch_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(sketch)
+RT_DECLARE_INTERFACE(sketch);
 
-    RT_DECLARE_INTERFACE(extrude)
+RT_DECLARE_INTERFACE(extrude);
 
 #define rt_submodel_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(submodel)
+RT_DECLARE_INTERFACE(submodel);
 
 #define rt_cline_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(cline)
+RT_DECLARE_INTERFACE(cline);
 
-    RT_DECLARE_INTERFACE(bot)
+RT_DECLARE_INTERFACE(bot);
 
 #define rt_superell_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(superell)
+RT_DECLARE_INTERFACE(superell);
 
 #define rt_metaball_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(metaball)
+RT_DECLARE_INTERFACE(metaball);
 
 #if OBJ_BREP
 #define rt_brep_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(brep)
+RT_DECLARE_INTERFACE(brep);
 #endif
 
+
 /* from db5_comb.c */
-    int rt_comb_export5(
-	struct bu_external		*ep,
-	const struct rt_db_internal	*ip,
-	double				local2mm,
-	const struct db_i		*dbip,
-	struct resource			*resp,
-	const int			minor_type);
-int rt_comb_import5(
-    struct rt_db_internal	*ip,
-    const struct bu_external *ep,
-    const mat_t		mat,
-    const struct db_i	*dbip,
-    struct resource		*resp,
-    const int		minor_type);
+BU_EXTERN(int rt_comb_export5, (struct bu_external *ep,
+				const struct rt_db_internal *ip,
+				double			local2mm,
+				const struct db_i	*dbip,
+				struct resource		*resp,
+				const int		minor_type));
+
+BU_EXTERN(int rt_comb_import5, (struct rt_db_internal *ip,
+				const struct bu_external *ep,
+				const mat_t		mat,
+				const struct db_i	*dbip,
+				struct resource		*resp,
+				const int		minor_type));
 
 /* from db5_bin.c */
 BU_EXTERN(int rt_binexpm_import5, (struct rt_db_internal * ip,
