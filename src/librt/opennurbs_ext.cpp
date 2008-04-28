@@ -40,13 +40,12 @@
 #include "bu.h"
 #include "vector.h"
 
+
 #define RANGE_HI 0.55
 #define RANGE_LO 0.45
 #define UNIVERSAL_SAMPLE_COUNT 1001
 
 #define BBOX_GROW 1e-4
-
-using namespace std;
 
 
 namespace brlcad {
@@ -346,7 +345,7 @@ namespace brlcad {
 	    pt2dsub(out_uv, in_uv, tmp);
 	    return true;
 	} else {
-	    cerr << "inverse failed!" << endl; // XXX fix the error handling
+	    std::cerr << "inverse failed!" << std::endl; // XXX fix the error handling
 	    return false;
 	}
     }
