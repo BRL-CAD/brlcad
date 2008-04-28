@@ -81,7 +81,7 @@ struct bu_structparse rt_hit_parsetab[] = {
 	nmg_rt_segs_exit("Goodbye"); }
 #define DO_LONGJMP
 #ifdef DO_LONGJMP
-jmp_buf nmg_longjump_env;
+static jmp_buf nmg_longjump_env;
 #define nmg_rt_segs_exit(_s) {bu_log("%s\n", _s);longjmp(nmg_longjump_env, -1);}
 #else
 #define nmg_rt_segs_exit(_s) bu_bomb(_s)

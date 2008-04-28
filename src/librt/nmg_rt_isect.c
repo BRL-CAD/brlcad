@@ -41,7 +41,9 @@
 #include "plot3.h"
 
 
-static void 	vertex_neighborhood BU_ARGS((struct ray_data *rd, struct vertexuse *vu_p, struct hitmiss *myhit));
+/* Plot a faceuse and a line between pt and plane_pt */
+static int plot_file_number=0;
+
 
 const char *
 nmg_rt_inout_str(int code)
@@ -122,8 +124,6 @@ nmg_ck_hitmiss_list(const struct bu_list *hd)
     }
 }
 
-/* Plot a faceuse and a line between pt and plane_pt */
-static int plot_file_number=0;
 
 static void
 nmg_rt_isect_plfu(struct faceuse *fu, fastf_t *pt, fastf_t *plane_pt)

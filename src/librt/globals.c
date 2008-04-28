@@ -38,6 +38,31 @@
 struct rt_g rt_g;
 
 /**
+ * Resources for uniprocessor
+ */
+struct resource rt_uniresource;
+
+/**
+ * global nmg animation plot callback
+ */
+void (*nmg_plot_anim_upcall)();
+
+/**
+ * global nmg animation vblock callback
+ */
+void (*nmg_vlblock_anim_upcall)();
+
+/**
+ * global nmg mged display debug callback
+ */
+void (*nmg_mged_debug_display_hack)();
+
+/**
+ * edge use distance tolerance
+ */
+double nmg_eue_dist = 0.05;
+
+/**
  * this array depends on the values of the definitions of the
  * DB5_MINORTYPE_BINU_* in db5.h
  */

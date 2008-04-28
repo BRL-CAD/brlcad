@@ -54,8 +54,6 @@
 #include "plot3.h"
 
 
-struct resource rt_uniresource;		/* Resources for uniprocessor */
-
 extern void	rt_plot_cell(const union cutter *cutp, const struct rt_shootray_status *ssp, struct bu_list *waiting_segs_hd, struct rt_i *rtip);		/* at end of file */
 
 #define V3PT_DEPARTING_RPP(_step, _lo, _hi, _pt ) \

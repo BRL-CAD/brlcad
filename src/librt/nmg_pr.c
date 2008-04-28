@@ -40,6 +40,8 @@
 #include "raytrace.h"
 #include "nurb.h"
 
+static char nmg_pr_padstr[128];
+
 /**
  *			N M G _ O R I E N T A T I O N
  *
@@ -100,7 +102,6 @@ nmg_pr_m(const struct model *m)
 	nmg_pr_r(r, (char *)NULL);
     }
 }
-static char nmg_pr_padstr[128];
 
 /**
  *			M K P A D
