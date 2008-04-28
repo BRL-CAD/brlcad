@@ -60,13 +60,13 @@ __BEGIN_DECLS
 
 
 /**
- *				D E B U G
+ * D E B U G
  *
- *  Each type of debugging support is independently controled,
- *  by a separate bit in the word RT_G_DEBUG
+ * Each type of debugging support is independently controled, by a
+ * separate bit in the word RT_G_DEBUG
  *
- *  For programs based on the "RT" program, these flags follow
- *  the "-x" (lower case x) option.
+ * For programs based on the "RT" program, these flags follow the "-x"
+ * (lower case x) option.
  */
 #define DEBUG_OFF	0	/**< @brief No debugging */
 
@@ -122,10 +122,10 @@ __BEGIN_DECLS
 \4INSTANCE\3SHOOT\2ALLHITS\1ALLRAYS"
 
 /**
- *  It is necessary to have a representation of 1.0/0.0, or "infinity"
- *  that fits within the dynamic range of the machine being used.
- *  This constant places an upper bound on the size object which
- *  can be represented in the model.
+ * It is necessary to have a representation of 1.0/0.0, or "infinity"
+ * that fits within the dynamic range of the machine being used.  This
+ * constant places an upper bound on the size object which can be
+ * represented in the model.
  */
 #ifdef INFINITY
 #	undef INFINITY
@@ -141,31 +141,31 @@ __BEGIN_DECLS
 #define RT_BADVEC(v)	(RT_BADNUM((v)[X]) || RT_BADNUM((v)[Y]) || RT_BADNUM((v)[Z]))
 
 /*
- *  Unfortunately, to prevent divide-by-zero, some tolerancing
- *  needs to be introduced.
+ * Unfortunately, to prevent divide-by-zero, some tolerancing needs to
+ * be introduced.
  *
  *
- *  RT_LEN_TOL is the shortest length, in mm, that can be stood
- *  as the dimensions of a primitive.
- *  Can probably become at least SMALL.
+ * RT_LEN_TOL is the shortest length, in mm, that can be stood as the
+ * dimensions of a primitive.  Can probably become at least SMALL.
  *
- *  Dot products smaller than RT_DOT_TOL are considered to have
- *  a dot product of zero, i.e., the angle is effectively zero.
- *  This is used to check vectors that should be perpendicular.
- *  asin(0.1   ) = 5.73917 degrees
- *  asin(0.01  ) = 0.572967
- *  asin(0.001 ) = 0.0572958 degrees
- *  asin(0.0001) = 0.00572958 degrees
+ * Dot products smaller than RT_DOT_TOL are considered to have a dot
+ * product of zero, i.e., the angle is effectively zero.  This is used
+ * to check vectors that should be perpendicular.
  *
- *  sin(0.01 degrees) = sin(0.000174 radians) = 0.000174533
+ * asin(0.1   ) = 5.73917 degrees
+ * asin(0.01  ) = 0.572967
+ * asin(0.001 ) = 0.0572958 degrees
+ * asin(0.0001) = 0.00572958 degrees
  *
- *  Many TGCs at least, in existing databases, will fail the
- *  perpendicularity test if DOT_TOL is much smaller than 0.001,
- *  which establishes a 1/20th degree tolerance.
- *  The intent is to eliminate grossly bad primitives, not pick nits.
+ * sin(0.01 degrees) = sin(0.000174 radians) = 0.000174533
  *
- *  RT_PCOEF_TOL is a tolerance on polynomial coefficients to prevent
- *  the root finder from having heartburn.
+ * Many TGCs at least, in existing databases, will fail the
+ * perpendicularity test if DOT_TOL is much smaller than 0.001, which
+ * establishes a 1/20th degree tolerance.  The intent is to eliminate
+ * grossly bad primitives, not pick nits.
+ *
+ * RT_PCOEF_TOL is a tolerance on polynomial coefficients to prevent
+ * the root finder from having heartburn.
  */
 #define RT_LEN_TOL	(1.0e-8)
 #define RT_DOT_TOL	(0.001)
@@ -173,10 +173,10 @@ __BEGIN_DECLS
 
 
 /**
- *			R T _ T E S S _ T O L
+ * R T _ T E S S _ T O L
  *
- *  Tessellation (geometric) tolerances,
- *  different beasts than the calcuation tolerance in bn_tol.
+ * Tessellation (geometric) tolerances, different beasts than the
+ * calcuation tolerance in bn_tol.
  */
 struct rt_tess_tol  {
     unsigned long	magic;
@@ -189,9 +189,9 @@ struct rt_tess_tol  {
 
 
 /**
- *			R T _ D B _ I N T E R N A L
+ * R T _ D B _ I N T E R N A L
  *
- *  A handle on the internal format of an MGED database object.
+ * A handle on the internal format of an MGED database object.
  */
 struct rt_db_internal  {
     unsigned long	idb_magic;
@@ -209,9 +209,9 @@ struct rt_db_internal  {
 #define RT_CK_DB_INTERNAL(_p)	BU_CKMAG(_p, RT_DB_INTERNAL_MAGIC, "rt_db_internal")
 
 /**
- *			D B _ F U L L _ P A T H
+ * D B _ F U L L _ P A T H
  *
- *  For collecting paths through the database tree
+ * For collecting paths through the database tree
  */
 struct db_full_path {
     unsigned long	magic;
@@ -226,7 +226,7 @@ struct db_full_path {
 #define RT_CK_FULL_PATH(_p)	BU_CKMAG(_p, DB_FULL_PATH_MAGIC, "db_full_path")
 
 /**
- *			X R A Y
+ * X R A Y
  *
  * All necessary information about a ray.
  * Not called just "ray" to prevent conflicts with VLD stuff.
@@ -244,16 +244,17 @@ struct xray {
 #define RT_CK_RAY(_p)	BU_CKMAG(_p, RT_RAY_MAGIC, "struct xray");
 
 /**
- *			H I T
+ * H I T
  *
- *  Information about where a ray hits the surface
+ * Information about where a ray hits the surface
  *
  * Important Note:  Surface Normals always point OUT of a solid.
  *
- *  Statement of intent:
- *	The hit_point and hit_normal elements will be removed from this
- *	structure, so as to separate the concept of the solid's normal
- *	at the hit point from the post-boolean normal at the hit point.
+ * Statement of intent:
+ *
+ * The hit_point and hit_normal elements will be removed from this
+ * structure, so as to separate the concept of the solid's normal at
+ * the hit point from the post-boolean normal at the hit point.
  */
 struct hit {
     unsigned long	hit_magic;
@@ -271,10 +272,11 @@ struct hit {
 
 /**
  * Old macro:
- *  Only the hit_dist field of pt_inhit and pt_outhit are valid
- *  when a_hit() is called;  to compute both hit_point and hit_normal,
- *  use RT_HIT_NORM() macro;  to compute just hit_point, use
- *  VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
+ *
+ * Only the hit_dist field of pt_inhit and pt_outhit are valid when
+ * a_hit() is called; to compute both hit_point and hit_normal, use
+ * RT_HIT_NORM() macro; to compute just hit_point, use 
+ * VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
  */
 #define RT_HIT_NORM( _hitp, _stp, _unused )  { \
 	RT_CK_HIT(_hitp); \
@@ -282,11 +284,13 @@ struct hit {
 	(_stp)->st_meth->ft_norm(_hitp, _stp, (_hitp)->hit_rayp); }
 
 /**
- *  New macro:  Compute normal into (_hitp)->hit_normal, but leave
- *  it un-flipped, as one hit may be shared between multiple partitions
- *  with different flip status.
- *  (Example:  box.r = box.s - sph.s; sph.r = sph.s)
- *  Return the post-boolean normal into caller-provided _normal vector.
+ * New macro: Compute normal into (_hitp)->hit_normal, but leave it
+ * un-flipped, as one hit may be shared between multiple partitions
+ * with different flip status.
+ *
+ * Example: box.r = box.s - sph.s; sph.r = sph.s
+ *
+ * Return the post-boolean normal into caller-provided _normal vector.
  */
 #define RT_HIT_NORMAL( _normal, _hitp, _stp, _unused, _flipflag )  { \
 	RT_CK_HIT(_hitp); \
@@ -305,15 +309,15 @@ struct hit {
 
 
 /**
- *			C U R V A T U R E
+ * C U R V A T U R E
  *
- *  Information about curvature of the surface at a hit point.
- *  The principal direction pdir has unit length and principal curvature c1.
- *  |c1| <= |c2|, i.e. c1 is the most nearly flat principle curvature.
- *  A POSITIVE curvature indicates that the surface bends TOWARD the
- *  (outward pointing) normal vector at that point.
- *  c1 and c2 are the inverse radii of curvature.
- *  The other principle direction is implied: pdir2 = normal x pdir1.
+ * Information about curvature of the surface at a hit point.  The
+ * principal direction pdir has unit length and principal curvature
+ * c1.  |c1| <= |c2|, i.e. c1 is the most nearly flat principle
+ * curvature.  A POSITIVE curvature indicates that the surface bends
+ * TOWARD the (outward pointing) normal vector at that point.  c1 and
+ * c2 are the inverse radii of curvature.  The other principle
+ * direction is implied: pdir2 = normal x pdir1.
  */
 struct curvature {
     vect_t	crv_pdir;	/**< @brief Principle direction */
@@ -323,11 +327,11 @@ struct curvature {
 #define CURVE_NULL	((struct curvature *)0)
 
 /**
- *  Use this macro after having computed the normal, to
- *  compute the curvature at a hit point.
+ * Use this macro after having computed the normal, to compute the
+ * curvature at a hit point.
  *
- *  In Release 4.4 and earlier, this was called RT_CURVE().
- *  When the extra argument was added the name was changed.
+ * In Release 4.4 and earlier, this was called RT_CURVE().  When the
+ * extra argument was added the name was changed.
  */
 #define RT_CURVATURE( _curvp, _hitp, _flipflag, _stp )  { \
 	RT_CK_HIT(_hitp); \
@@ -344,9 +348,9 @@ struct curvature {
 /* RT_GET_CURVATURE(_curvp, _partition, inhit/outhit flag, ap) */
 
 /**
- *			U V C O O R D
+ * U V C O O R D
  *
- *  Mostly for texture mapping, information about parametric space.
+ * Mostly for texture mapping, information about parametric space.
  */
 struct uvcoord {
     fastf_t uv_u;	/**< @brief Range 0..1 */
@@ -365,14 +369,14 @@ struct uvcoord {
 
 
 /**
- *			S E G
+ * S E G
  *
  * Intersection segment.
  *
  * Includes information about both endpoints of intersection.
- * Contains forward link to additional intersection segments
- * if the intersection spans multiple segments (eg, shooting
- * a ray through a torus).
+ * Contains forward link to additional intersection segments if the
+ * intersection spans multiple segments (eg, shooting a ray through a
+ * torus).
  */
 struct seg {
     struct bu_list	l;
@@ -412,7 +416,7 @@ struct seg {
 	} }
 
 /**
- *  Macros to operate on Right Rectangular Parallelpipeds (RPPs).
+ * Macros to operate on Right Rectangular Parallelpipeds (RPPs).
  * XXX move to vmath.h?
  */
 struct bound_rpp {
@@ -422,9 +426,9 @@ struct bound_rpp {
 
 
 /**
- *			S O L T A B
+ * S O L T A B
  *
- * Internal information used to keep track of solids in the model
+ * Internal information used to keep track of solids in the model.
  * Leaf name and Xform matrix are unique identifier.
  */
 struct soltab {
@@ -460,7 +464,7 @@ struct soltab {
 #define RT_CK_SOLTAB(_p)	BU_CKMAG( _p, RT_SOLTAB_MAGIC, "struct soltab")
 
 /*
- *  Values for Solid ID.
+ * Values for Solid ID.
  */
 #define ID_NULL		0	/**< @brief Unused */
 #define ID_TOR		1	/**< @brief Toroid */
@@ -500,7 +504,7 @@ struct soltab {
 #define	ID_MAX_SOLID	38	/**< @brief Maximum defined ID_xxx for solids */
 
 /*
- *	Non-geometric objects
+ * Non-geometric objects
  */
 #define ID_COMBINATION	31	/**< @brief Combination Record */
 #define ID_BINEXPM	32	/**< @brief Experimental binary */
@@ -515,7 +519,7 @@ struct soltab {
 #define ID_MAXIMUM	38	/**< @brief Maximum defined ID_xxx value */
 
 /**
- *			M A T E R _ I N F O
+ * M A T E R _ I N F O
  */
 struct mater_info {
     float	ma_color[3];	/**< @brief explicit color:  0..1  */
@@ -527,9 +531,9 @@ struct mater_info {
 };
 
 /**
- *			R E G I O N
+ * R E G I O N
  *
- *  The region structure.
+ * The region structure.
  */
 struct region  {
     struct bu_list	l;		/**< @brief magic # and doubly linked list */
@@ -559,14 +563,15 @@ struct region  {
 #define RT_CK_REGION(_p)	BU_CKMAG(_p, RT_REGION_MAGIC, "struct region")
 
 /**
- *  			P A R T I T I O N
+ * P A R T I T I O N
  *
- *  Partitions of a ray.  Passed from rt_shootray() into user's
- *  a_hit() function.
+ * Partitions of a ray.  Passed from rt_shootray() into user's a_hit()
+ * function.
  *
- *  Not changed to a bu_list for backwards compatability, but
- *  you can iterate the whole list by writing:
- *	for ( BU_LIST_FOR( pp, partition, (struct bu_list *)PartHeadp ) )
+ * Not changed to a bu_list for backwards compatability, but you can
+ * iterate the whole list by writing:
+ *
+ * for ( BU_LIST_FOR( pp, partition, (struct bu_list *)PartHeadp ) )
  */
 
 struct partition {
@@ -651,15 +656,15 @@ struct partition {
 #define DEQUEUE_PT(_cur)	BU_LIST_DEQUEUE((struct bu_list *)_cur)
 
 /**
- *			C U T
+ * C U T
  *
- *  Structure for space subdivision.
+ * Structure for space subdivision.
  *
- *  cut_type is an integer for efficiency of access in rt_shootray()
- *  on non-word addressing machines.
+ * cut_type is an integer for efficiency of access in rt_shootray() on
+ * non-word addressing machines.
  *
- *  If a solid has 'pieces', it will be listed either in bn_list (initially),
- *  or in bn_piecelist, but not both.
+ * If a solid has 'pieces', it will be listed either in bn_list
+ * (initially), or in bn_piecelist, but not both.
  */
 union cutter  {
 #define CUT_CUTNODE	1
@@ -702,10 +707,10 @@ union cutter  {
 #define CUTTER_NULL	((union cutter *)0)
 
 /**
- *			M E M _ M A P
+ * M E M _ M A P
  *
- *  These structures are used to manage internal resource maps.
- *  Typically these maps describe some kind of memory or file space.
+ * These structures are used to manage internal resource maps.
+ * Typically these maps describe some kind of memory or file space.
  */
 struct mem_map {
     struct mem_map *m_nxtp;	/**< @brief Linking pointer to next element */
@@ -716,8 +721,8 @@ struct mem_map {
 
 
 /**
- *  The directory is organized as forward linked lists hanging off of
- *  one of RT_DBNHASH headers in the db_i structure.
+ * The directory is organized as forward linked lists hanging off of
+ * one of RT_DBNHASH headers in the db_i structure.
  */
 #define	RT_DBNHASH		1024	/**< @brief size of hash table */
 
@@ -728,14 +733,15 @@ struct mem_map {
 #endif
 
 /**
- *			D B _ I
+ * D B _ I
  *
- *  One of these structures is used to describe each separate instance
- *  of a BRL-CAD model database ".g" file.
+ * One of these structures is used to describe each separate instance
+ * of a BRL-CAD model database ".g" file.
  *
- *  dbi_filepath is a C-style argv array of places to search when
- *  opening related files (such as data files for EBM solids or
- *  texture-maps).  The array and strings are all dynamically allocated.
+ * dbi_filepath is a C-style argv array of places to search when
+ * opening related files (such as data files for EBM solids or
+ * texture-maps).  The array and strings are all dynamically
+ * allocated.
  */
 struct db_i  {
     unsigned long		dbi_magic;	/**< @brief magic number */
@@ -769,29 +775,31 @@ struct db_i  {
 #define RT_CK_DBI_TCL(_interp, _p)	RT_CHECK_DBI_TCL(_interp, _p)
 
 /**
- *			D I R E C T O R Y
+ * D I R E C T O R Y
  *
- *  One of these structures is allocated in memory to represent each
- *  named object in the database.
+ * One of these structures is allocated in memory to represent each
+ * named object in the database.
  *
- *  Note that a d_addr of RT_DIR_PHONY_ADDR (-1L) means that database
- *  storage has not been allocated yet.
+ * Note that a d_addr of RT_DIR_PHONY_ADDR (-1L) means that database
+ * storage has not been allocated yet.
  *
- *  Note that there is special handling for RT_DIR_INMEM "in memory" overrides.
+ * Note that there is special handling for RT_DIR_INMEM "in memory"
+ * overrides.
  *
- *  Construction should be done only by using RT_GET_DIRECTORY()
- *  Destruction should be done only by using db_dirdelete().
+ * Construction should be done only by using RT_GET_DIRECTORY()
+ * Destruction should be done only by using db_dirdelete().
  *
- *  Special note:  In order to reduce the overhead of calling bu_malloc()
- *  (really bu_strdup()) to stash the name in d_namep, we carry along
- *  enough storage for small names right in the structure itself (d_shortname).
- *  Thus, d_namep should never be assigned to directly, it should always
- *  be accessed using RT_DIR_SET_NAMEP() and RT_DIR_FREE_NAMEP().
+ * Special note: In order to reduce the overhead of calling
+ * bu_malloc() (really bu_strdup()) to stash the name in d_namep, we
+ * carry along enough storage for small names right in the structure
+ * itself (d_shortname).  Thus, d_namep should never be assigned to
+ * directly, it should always be accessed using RT_DIR_SET_NAMEP() and
+ * RT_DIR_FREE_NAMEP().
  *
- *  The in-memory name of an object should only be changed using db_rename(),
- *  so that it can be requeued on the correct linked list, based on new hash.
- *  This should be followed by rt_db_put_internal() on the object to
- *  modify the on-disk name.
+ * The in-memory name of an object should only be changed using
+ * db_rename(), so that it can be requeued on the correct linked list,
+ * based on new hash.  This should be followed by rt_db_put_internal()
+ * on the object to modify the on-disk name.
  */
 struct directory  {
     unsigned long	d_magic;		/**< @brief Magic number */
@@ -845,7 +853,9 @@ struct directory  {
 		(_dp)->d_namep = bu_strdup(_name); /* Calls bu_malloc() */ \
 	} }
 
-/** Use this macro to free the d_namep member, which is sometimes not dynamic. */
+/** Use this macro to free the d_namep member, which is sometimes not
+ * dynamic.
+ */
 #define RT_DIR_FREE_NAMEP(_dp)	{ \
 	if ( (_dp)->d_namep != (_dp)->d_shortname )  \
 		bu_free((_dp)->d_namep, "d_namep"); \
@@ -864,11 +874,11 @@ struct directory  {
 
 
 /**
- *			R T _ C O M B _ I N T E R N A L
+ * R T _ C O M B _ I N T E R N A L
  *
- *  In-memory format for database "combination" record (non-leaf node).
- *  (Regions and Groups are both a kind of Combination).
- *  Perhaps move to wdb.h or rtgeom.h?
+ * In-memory format for database "combination" record (non-leaf node).
+ * (Regions and Groups are both a kind of Combination).  Perhaps move
+ * to wdb.h or rtgeom.h?
  */
 struct rt_comb_internal  {
     unsigned long	magic;
@@ -895,10 +905,10 @@ struct rt_comb_internal  {
 #define RT_CK_COMB_TCL(_interp, _p)	RT_CHECK_COMB_TCL(_interp, _p)
 
 /**
- *			R T _ B I N U N I F _ I N T E R N A L
+ * R T _ B I N U N I F _ I N T E R N A L
  *
- *  In-memory format for database uniform-array binary object.
- *  Perhaps move to wdb.h or rtgeom.h?
+ * In-memory format for database uniform-array binary object.
+ * Perhaps move to wdb.h or rtgeom.h?
  */
 struct rt_binunif_internal {
     unsigned long	magic;
@@ -924,10 +934,10 @@ struct rt_binunif_internal {
 #define RT_CK_BINUNIF_TCL(_interp, _p)	RT_CHECK_BINUNIF_TCL(_interp, _p)
 
 /**
- *			D B _ T R E E _ S T A T E
+ * D B _ T R E E _ S T A T E
  *
- *  State for database tree walker db_walk_tree()
- *  and related user-provided handler routines.
+ * State for database tree walker db_walk_tree() and related
+ * user-provided handler routines.
  */
 struct db_tree_state {
     unsigned long	magic;
@@ -1016,10 +1026,10 @@ struct combined_tree_state {
 #define RT_CTS_MAGIC	0x98989123
 #define RT_CK_CTS(_p)	BU_CKMAG(_p, RT_CTS_MAGIC, "combined_tree_state")
 
-/*
- *			T R E E
+/**
+ * T R E E
  *
- *  Binary trees representing the Boolean operations between solids.
+ * Binary trees representing the Boolean operations between solids.
  */
 #define MKOP(x)		(x)
 
@@ -1083,9 +1093,10 @@ union tree {
 #define RT_CK_TREE(_p)	BU_CKMAG(_p, RT_TREE_MAGIC, "union tree")
 
 
-/**		R T _ T R E E _ A R R A Y
+/**
+ * R T _ T R E E _ A R R A Y
  *
- *	flattened version of the union tree
+ * flattened version of the union tree
  */
 struct rt_tree_array
 {
@@ -1100,11 +1111,11 @@ struct rt_tree_array
 #define RT_MAXLINE		10240
 
 /**
- *			R T _ W D B
+ * R T _ W D B
  *
- *  This data structure is at the core of the "LIBWDB" support for
- *  allowing application programs to read and write BRL-CAD databases.
- *  Many different access styles are supported.
+ * This data structure is at the core of the "LIBWDB" support for
+ * allowing application programs to read and write BRL-CAD databases.
+ * Many different access styles are supported.
  */
 
 struct rt_wdb  {
@@ -1418,16 +1429,17 @@ struct rt_reprep_obj_list {
 
 
 /**
- *			P I X E L _ E X T
+ * P I X E L _ E X T
  *
- *  This structure is intended to descrbe the area and/or volume represented
- *  by a ray.  In the case of the "rt" program it represents the extent in
- *  model coordinates of the prism behind the pixel being rendered.
+ * This structure is intended to descrbe the area and/or volume
+ * represented by a ray.  In the case of the "rt" program it
+ * represents the extent in model coordinates of the prism behind the
+ * pixel being rendered.
  *
- *  The r_pt values of the rays indicate the dimensions and location in model
- *  space of the ray origin (usually the pixel to be rendered).
- *  The r_dir vectors indicate the edges (and thus the shape) of the prism
- *  which is formed from the projection of the pixel into space.
+ * The r_pt values of the rays indicate the dimensions and location in
+ * model space of the ray origin (usually the pixel to be rendered).
+ * The r_dir vectors indicate the edges (and thus the shape) of the
+ * prism which is formed from the projection of the pixel into space.
  */
 #define CORNER_PTS 4
 struct pixel_ext {
@@ -1439,21 +1451,23 @@ struct pixel_ext {
 #define BU_CK_PIXEL_EXT(_p)	BU_CKMAG(_p, PIXEL_EXT_MAGIC, "struct pixel_ext")
 
 /**
- *			A P P L I C A T I O N
- *@brief
- *  This structure is the only parameter to rt_shootray().
- *  The entire structure should be zeroed (e.g. by memset) before it
- *  is used the first time.
+ * A P P L I C A T I O N
  *
- *  When calling rt_shootray(), these fields are mandatory:
+ * This structure is the only parameter to rt_shootray().  The entire
+ * structure should be zeroed (e.g. by memset) before it is used the
+ * first time.
+ *
+ * When calling rt_shootray(), these fields are mandatory:
+ *
  *	- a_ray.r_pt	Starting point of ray to be fired
  *	- a_ray.r_dir	UNIT VECTOR with direction to fire in (dir cosines)
  *	- a_hit()		Routine to call when something is hit
  *	- a_miss()	Routine to call when ray misses everything
  *	- a_rt_i		Must be set to the value returned by rt_dirbuild().
  *
- *  In addition, these fields are used by the library.  If they are
- *  set to zero, default behavior will be used.
+ * In addition, these fields are used by the library.  If they are set
+ * to zero, default behavior will be used.
+ *
  *	- a_resource	Pointer to CPU-specific resources.  Multi-CPU only.
  *	- a_overlap()	DEPRECATED, set a_multioverlap() instead.
  *			If non-null, this routine will be called to
@@ -1471,9 +1485,10 @@ struct pixel_ext {
  *	- a_rbeam		Used to compute beam coverage on geometry,
  *	- a_diverge	for spline subdivision & many UV mappings.
  *
- *  Note that rt_shootray() returns the (int) return of the a_hit()/a_miss()
- *  function called, as well as placing it in a_return.
- *  A future "multiple rays at a time" interface will only provide a_return.
+ *  Note that rt_shootray() returns the (int) return of the
+ *  a_hit()/a_miss() function called, as well as placing it in
+ *  a_return.  A future "multiple rays at a time" interface will only
+ *  provide a_return.
  *
  *  Note that the organization of this structure, and the details of
  *  the non-mandatory elements are subject to change in every release.
@@ -1706,11 +1721,11 @@ struct rt_i {
 #define RT_PART_NUGRID	1
 
 /**
- *  Macros to painlessly visit all the active solids.  Serving suggestion:
+ * Macros to painlessly visit all the active solids.  Serving suggestion:
  *
- *	RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
- *		rt_pr_soltab( stp );
- *	} RT_VISIT_ALL_SOLTABS_END
+ * RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
+ *	rt_pr_soltab( stp );
+ * } RT_VISIT_ALL_SOLTABS_END
  */
 #define RT_VISIT_ALL_SOLTABS_START(_s, _rti)	{ \
 	register struct bu_list	*_head = &((_rti)->rti_solidheads[0]); \
@@ -1720,9 +1735,10 @@ struct rt_i {
 #define RT_VISIT_ALL_SOLTABS_END	} }
 
 /**
- *  Applications that are going to use RT_ADD_VLIST and RT_GET_VLIST
- *  are required to execute this macro once, first:
- *		BU_LIST_INIT( &rt_g.rtg_vlfree );
+ * Applications that are going to use RT_ADD_VLIST and RT_GET_VLIST
+ * are required to execute this macro once, first:
+ *
+ * BU_LIST_INIT( &rt_g.rtg_vlfree );
  *
  * Note that RT_GET_VLIST and RT_FREE_VLIST are non-PARALLEL.
  */
@@ -1735,7 +1751,7 @@ struct rt_i {
 
 
 /*
- *  Replacements for definitions from vmath.h
+ * Replacements for definitions from vmath.h
  */
 #undef V2PRINT
 #undef VPRINT
@@ -1826,22 +1842,21 @@ struct bezier_seg	/**< @brief  Bezier curve segment */
 #define CURVE_BEZIER_MAGIC	0x62657a69	/**< @brief  bezi */
 
 /**
- *			R T _ F U N C T A B
+ * R T _ F U N C T A B
  *
- *  Object-oriented interface to BRL-CAD geometry.
+ * Object-oriented interface to BRL-CAD geometry.
  *
- *  These are the methods for a notional object class "brlcad_solid".
- *  The data for each instance is found separately in struct soltab.
- *  This table is indexed by ID_xxx value of particular solid
- *  found in st_id, or directly pointed at by st_meth.
+ * These are the methods for a notional object class "brlcad_solid".
+ * The data for each instance is found separately in struct soltab.
+ * This table is indexed by ID_xxx value of particular solid found in
+ * st_id, or directly pointed at by st_meth.
  *
- *  This needs to be at the end of the raytrace.h header file,
- *  so that all the structure names are known.
- *  The "union record" and "struct nmgregion" pointers are problematic,
- *  so generic pointers are used when those header files have not yet
- *  been seen.
+ * This needs to be at the end of the raytrace.h header file, so that
+ * all the structure names are known.  The "union record" and "struct
+ * nmgregion" pointers are problematic, so generic pointers are used
+ * when those header files have not yet been seen.
  *
- *  XXX On SGI, can not use identifiers in prototypes inside structure!
+ * XXX On SGI, can not use identifiers in prototypes inside structure!
  */
 struct rt_functab {
     unsigned long magic;
@@ -2024,8 +2039,9 @@ struct rt_shootray_status {
  *			N M G _ R T . H
  */
 
-/* defining the following flag will improve NMG raytrace speed by eliminating some checking
- * Use with CAUTION!!! */
+/* defining the following flag will improve NMG raytrace speed by
+ * eliminating some checking. Use with CAUTION!!!
+ */
 #define FAST_NMG	1
 
 #define NMG_HIT_LIST	0
@@ -2150,28 +2166,32 @@ struct ray_data {
 
 /* The following are to support isect_ray_face() */
 
-    /** plane_pt is the intercept point of the ray with the plane of the
-     * face.
+    /**
+     * plane_pt is the intercept point of the ray with the plane of
+     * the face.
      */
     point_t		plane_pt;	/**< @brief  ray/plane(face) intercept point */
 
-    /** ray_dist_to_plane is the parametric distance along the ray from
+    /**
+     * ray_dist_to_plane is the parametric distance along the ray from
      * the ray origin (rd->rp->r_pt) to the ray/plane intercept point
      */
     fastf_t		ray_dist_to_plane; /**< @brief  ray parametric dist to plane */
 
-    /** the "face_subhit" element is a boolean used by isect_ray_face
-     * and [e|v]u_touch_func to record the fact that the ray/(plane/face)
-     * intercept point was within tolerance of an edge/vertex of the face.
-     * In such instances, isect_ray_face does NOT need to generate a hit
-     * point for the face, as the hit point for the edge/vertex will
-     * suffice.
+    /**
+     * the "face_subhit" element is a boolean used by isect_ray_face
+     * and [e|v]u_touch_func to record the fact that the
+     * ray/(plane/face) intercept point was within tolerance of an
+     * edge/vertex of the face.  In such instances, isect_ray_face
+     * does NOT need to generate a hit point for the face, as the hit
+     * point for the edge/vertex will suffice.
      */
     int			face_subhit;
 
-    /** the "classifying_ray" flag indicates that this ray is being used to
-     * classify a point, so that the "eu_touch" and "vu_touch" functions
-     * should not be called.
+    /**
+     * the "classifying_ray" flag indicates that this ray is being
+     * used to classify a point, so that the "eu_touch" and "vu_touch"
+     * functions should not be called.
      */
     int			classifying_ray;
 };
