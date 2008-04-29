@@ -68,6 +68,7 @@ void show_help(const char *name) {
     printf("-j <width>\tSpecify rim width in inches.\n\n");
     printf("-n <name>\tSpecify custom top level root name\n\n");
     printf("-p <type>\tGenerate tread with tread pattern as specified\n\n");
+    printf("-s <radius>\tSpecify the radius of the maximum sidewall width\n\n");
     printf("-t <type>\tGenerate tread with tread type as specified\n\n");
     printf("-u <thickness>\tSpecify tire thickness in mm\n\n");
     printf("-h\t\tShow help\n\n");
@@ -1799,14 +1800,14 @@ void MakeAirRegion(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
 }
 
 /* Process command line arguments */
-int ReadArgs(int argc, char **argv, fastf_t *isoarray, struct bu_vls *name, struct bu_vls *dimens, int *gen_name, int *treadtype, int *number_of_tread_patterns, fastf_t *tread_depth, fastf_t *tire_thickness, fastf_t *hub_width, int *pattern_type)
+int ReadArgs(int argc, char **argv, fastf_t *isoarray, struct bu_vls *name, struct bu_vls *dimens, int *gen_name, int *treadtype, int *number_of_tread_patterns, fastf_t *tread_depth, fastf_t *tire_thickness, fastf_t *hub_width, int *pattern_type, fastf_t *zside1)
 {
     int c = 0;
-    char *options="d:n:c:g:j:p:t:u:ah";
+    char *options="d:n:c:g:j:p:s:t:u:ah";
     int d1, d2, d3;
     int count;
     int tdtype, ptype;
-    float hwidth, treadep, tthickness;
+    float hwidth, treadep, tthickness, zsideh;
     char spacer1,tiretype;
  
     bu_opterr = 0;
@@ -1831,6 +1832,10 @@ int ReadArgs(int argc, char **argv, fastf_t *isoarray, struct bu_vls *name, stru
 	    case 'g':
 		sscanf(bu_optarg,"%f",&treadep);
 		*tread_depth = treadep;
+		break;
+	    case 's':
+		sscanf(bu_optarg,"%f",&zsideh);
+		*zside1 = zsideh;
 		break;
 	    case 'j':
 		sscanf(bu_optarg,"%f",&hwidth);
@@ -1864,7 +1869,7 @@ int ReadArgs(int argc, char **argv, fastf_t *isoarray, struct bu_vls *name, stru
 int main(int ac, char *av[])
 {
     struct rt_wdb *db_fp;
-    fastf_t dytred,dztred,dyside1,zside1,ztire,dyhub,zhub,d1;
+    fastf_t dytred,dztred,dyside1,ztire,dyhub,zhub,d1;
     fastf_t width, ratio, wheeldiam;
     int bolts;
     fastf_t bolt_diam, bolt_circ_diam, spigot_diam, fixing_offset, bead_height, bead_width, rim_thickness;
@@ -1880,6 +1885,7 @@ int main(int ac, char *av[])
     fastf_t tire_thickness = 0;
     fastf_t hub_width = 0;
     int pattern_type = 0;
+    fastf_t zside1 = 0;
 
     bu_vls_init(&str);
     bu_vls_init(&name);
@@ -1893,7 +1899,7 @@ int main(int ac, char *av[])
     isoarray[2] = 17;
 
     /* Process arguments */
-    ReadArgs(ac, av, isoarray, &name, &dimen, &gen_name, &tread_type, &number_of_tread_patterns, &tread_depth,&tire_thickness, &hub_width, &pattern_type);
+    ReadArgs(ac, av, isoarray, &name, &dimen, &gen_name, &tread_type, &number_of_tread_patterns, &tread_depth,&tire_thickness, &hub_width, &pattern_type, &zside1);
 
     /* Calculate floating point value for tread depth */
     fastf_t tread_depth_float = tread_depth/32.0;
@@ -1937,7 +1943,6 @@ int main(int ac, char *av[])
     dyside1 = width;
     ztire = ((width*ratio/100)*2+wheeldiam)/2;
     zhub = ztire-width*ratio/100;
-    zside1 = ztire-((ztire-zhub)/2*1.2);
     dztred = .001*ratio*zside1;
     dytred = .8 * width;
     d1 = (ztire-zhub)/2.5;
@@ -1951,6 +1956,11 @@ int main(int ac, char *av[])
     }else{
 	dyhub = hub_width*bu_units_conversion("in");
     }
+
+    if(zside1 == 0)
+	zside1 = ztire-((ztire-zhub)/2*1.2);
+
+    bu_log("radius of sidewall max: %f\n",zside1);
 
     if (tread_type == 1 && pattern_type == 0) pattern_type = 1;
     if (tread_type == 2 && pattern_type == 0) pattern_type = 2;
