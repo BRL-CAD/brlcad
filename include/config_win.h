@@ -256,34 +256,10 @@ typedef unsigned short uint16_t;
 #define rint(_X) (floor((_X) + 0.5))
 #define sleep(_SECONDS) (Sleep(1000 * (_SECONDS)))
 
-#if defined(_MSC_VER) && (_MSC_VER <= 1200) /* MSVC 6.0 and before */
-#   define for if (0) {} else for           /* proper for-scope */
-#endif
-
-#ifdef __cplusplus
-#   if defined(_MSC_VER) && (_MSC_VER <= 1200) /* MSVC 6.0 and before */
-#       ifdef min
-#           undef min
-#       endif
-
-        template<class _Type> inline const _Type& min(const _Type& _value1,
-                                                  const _Type& _value2) {
-            return (_value2 < _value1 ? _value2 : _value1);
-        }
-
-#       ifdef max
-#           undef max
-#       endif
-
-        template<class Type> inline const Type& max(const Type& _value1,
-                                                const Type& _value2) {
-            return (_value1 < _value2 ? _value2 : _value1);
-        }
-#   endif
-#else
+#ifndef __cplusplus
 /*  Microsoft specific inline specifier */
 #   define inline __inline
-#endif /* __cplusplus */
+#endif /* not __cplusplus */
 
 #endif /* if defined(_WIN32) */
 #endif /* ifndef IGNORE_CONFIG_H */
