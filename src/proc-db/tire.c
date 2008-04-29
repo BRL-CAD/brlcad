@@ -500,8 +500,8 @@ void MakeWheelCenter(struct rt_wdb (*file), char *suffix, fastf_t fixing_start_m
 
 void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t zhub, int bolts, fastf_t bolt_diam, fastf_t bolt_circ_diam, fastf_t spigot_diam, fastf_t fixing_offset, fastf_t bead_height, fastf_t bead_width, fastf_t rim_thickness)
 {
-    struct wmember tireleftbead, tirerightbead, tireleftflat, tirerightflat, tirefixingface;
-    struct wmember tirebeadlefttrans, tirebeadrighttrans, wheelrim,  wheel;
+    struct wmember wheelrimsolid,wheelrimcut;
+    struct wmember wheelrim,  wheel;
     fastf_t inner_width, left_width, right_width, fixing_width, inner_width_left_start, inner_width_right_start;
     fastf_t fixing_width_left_trans, fixing_width_right_trans, fixing_width_middle;
     fastf_t fixing_start_left, fixing_start_right, fixing_start_middle;
@@ -605,125 +605,80 @@ void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
     mk_rcc(file, bu_vls_addr(&str), vertex, height, zhub - rim_thickness - 2*bead_height);
 
 
-    /*Make combination for Left bead*/ 
-    BU_LIST_INIT(&tireleftbead.l);
+    /*Make combination for solid*/ 
+    BU_LIST_INIT(&wheelrimsolid.l);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Left-Bead%s.s", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tireleftbead.l, NULL, WMOP_UNION);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "Left-Bead-Cut%s.s", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tireleftbead.l, NULL, WMOP_SUBTRACT);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "Left-Bead%s.c", suffix);	
-    mk_lcomb(file, bu_vls_addr(&str), &tireleftbead, 0, NULL, NULL, NULL, 0);
-
-    /*Make combination for Right bead*/ 
-    BU_LIST_INIT(&tirerightbead.l);
+    (void)mk_addmember(bu_vls_addr(&str), &wheelrimsolid.l, NULL, WMOP_UNION);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Right-Bead%s.s", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tirerightbead.l, NULL, WMOP_UNION);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "Right-Bead-Cut%s.s", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tirerightbead.l, NULL, WMOP_SUBTRACT);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "Right-Bead%s.c", suffix);	
-    mk_lcomb(file, bu_vls_addr(&str), &tirerightbead, 0, NULL, NULL, NULL, 0);
-
-    /*Make combination for Left bead transition*/ 
-    BU_LIST_INIT(&tirebeadlefttrans.l);
+    (void)mk_addmember(bu_vls_addr(&str), &wheelrimsolid.l, NULL, WMOP_UNION);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Left-Bead-Trans%s.s", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tirebeadlefttrans.l, NULL, WMOP_UNION);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "Left-Bead-Trans-cut%s.s", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tirebeadlefttrans.l, NULL, WMOP_SUBTRACT);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "Left-Bead-Trans%s.c", suffix);	
-    mk_lcomb(file, bu_vls_addr(&str), &tirebeadlefttrans, 0, NULL, NULL, NULL, 0);
-
-    /*Make combination for Right bead transition*/ 
-    BU_LIST_INIT(&tirebeadrighttrans.l);
+    (void)mk_addmember(bu_vls_addr(&str), &wheelrimsolid.l, NULL, WMOP_UNION);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Right-Bead-Trans%s.s", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tirebeadrighttrans.l, NULL, WMOP_UNION);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "Right-Bead-Trans-cut%s.s", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tirebeadrighttrans.l, NULL, WMOP_SUBTRACT);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "Right-Bead-Trans%s.c", suffix);	
-    mk_lcomb(file, bu_vls_addr(&str), &tirebeadrighttrans, 0, NULL, NULL, NULL, 0);
-
-    /*Make combination for Left Flat*/ 
-    BU_LIST_INIT(&tireleftflat.l);
+    (void)mk_addmember(bu_vls_addr(&str), &wheelrimsolid.l, NULL, WMOP_UNION);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "LeftInnerRim%s.s", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tireleftflat.l, NULL, WMOP_UNION);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "LeftInnerRim-cut%s.s", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tireleftflat.l, NULL, WMOP_SUBTRACT);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "Left-Inner-Rim%s.c", suffix);	
-    mk_lcomb(file, bu_vls_addr(&str), &tireleftflat, 0, NULL, NULL, NULL, 0);
-
-    /*Make combination for Right Flat*/ 
-    BU_LIST_INIT(&tirerightflat.l);
+    (void)mk_addmember(bu_vls_addr(&str), &wheelrimsolid.l, NULL, WMOP_UNION);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "RightInnerRim%s.s", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tirerightflat.l, NULL, WMOP_UNION);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "RightInnerRim-cut%s.s", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tirerightflat.l, NULL, WMOP_SUBTRACT);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "Right-Inner-Rim%s.c", suffix);	
-    mk_lcomb(file, bu_vls_addr(&str), &tirerightflat, 0, NULL, NULL, NULL, 0);
-
-    /*Make combination for Fixing */
-    BU_LIST_INIT(&tirefixingface.l);
+    (void)mk_addmember(bu_vls_addr(&str), &wheelrimsolid.l, NULL, WMOP_UNION);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Left-Fixing-Trans%s.s", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tirefixingface.l, NULL, WMOP_UNION);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "Left-Fixing-Trans-cut%s.s", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tirefixingface.l, NULL, WMOP_SUBTRACT);
+    (void)mk_addmember(bu_vls_addr(&str), &wheelrimsolid.l, NULL, WMOP_UNION);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Right-Fixing-Trans%s.s", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tirefixingface.l, NULL, WMOP_UNION);
-     bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "Right-Fixing-Trans-cut%s.s", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tirefixingface.l, NULL, WMOP_SUBTRACT);
+    (void)mk_addmember(bu_vls_addr(&str), &wheelrimsolid.l, NULL, WMOP_UNION);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Inner-Fixing%s.s", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tirefixingface.l, NULL, WMOP_UNION);
+    (void)mk_addmember(bu_vls_addr(&str), &wheelrimsolid.l, NULL, WMOP_UNION);
+     bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "wheel-rim-solid%s.c", suffix);	
+    mk_lcomb(file, bu_vls_addr(&str), &wheelrimsolid, 0, NULL, NULL, NULL, 0);
+
+    /*Make combination for cutout */
+    BU_LIST_INIT(&wheelrimcut.l);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "Left-Bead-Cut%s.s", suffix);	
+    (void)mk_addmember(bu_vls_addr(&str), &wheelrimcut.l, NULL, WMOP_UNION);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "Right-Bead-Cut%s.s", suffix);	
+    (void)mk_addmember(bu_vls_addr(&str), &wheelrimcut.l, NULL, WMOP_UNION);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "Left-Bead-Trans-cut%s.s", suffix);	
+    (void)mk_addmember(bu_vls_addr(&str), &wheelrimcut.l, NULL, WMOP_UNION);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "Right-Bead-Trans-cut%s.s", suffix);	
+    (void)mk_addmember(bu_vls_addr(&str), &wheelrimcut.l, NULL, WMOP_UNION);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "LeftInnerRim-cut%s.s", suffix);	
+    (void)mk_addmember(bu_vls_addr(&str), &wheelrimcut.l, NULL, WMOP_UNION);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "RightInnerRim-cut%s.s", suffix);	
+    (void)mk_addmember(bu_vls_addr(&str), &wheelrimcut.l, NULL, WMOP_UNION);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "Left-Fixing-Trans-cut%s.s", suffix);	
+    (void)mk_addmember(bu_vls_addr(&str), &wheelrimcut.l, NULL, WMOP_UNION);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "Right-Fixing-Trans-cut%s.s", suffix);	
+    (void)mk_addmember(bu_vls_addr(&str), &wheelrimcut.l, NULL, WMOP_UNION);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Inner-Fixing-cut%s.s", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &tirefixingface.l, NULL, WMOP_SUBTRACT);
+    (void)mk_addmember(bu_vls_addr(&str), &wheelrimcut.l, NULL, WMOP_UNION);
     bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "Fixing%s.c", suffix);	
-    mk_lcomb(file, bu_vls_addr(&str), &tirefixingface, 0, NULL, NULL, NULL, 0);
+    bu_vls_printf(&str, "wheel-rim-cut%s.c", suffix);	
+    mk_lcomb(file, bu_vls_addr(&str), &wheelrimcut, 0, NULL, NULL, NULL, 0);
 
     /*Make wheel rim combination*/
     BU_LIST_INIT(&wheelrim.l);
     bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "Left-Bead%s.c", suffix);	
+    bu_vls_printf(&str, "wheel-rim-solid%s.c", suffix);	
     (void)mk_addmember(bu_vls_addr(&str), &wheelrim.l, NULL, WMOP_UNION);
     bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "Right-Bead%s.c", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &wheelrim.l, NULL, WMOP_UNION);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "Left-Bead-Trans%s.c", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &wheelrim.l, NULL, WMOP_UNION);
-     bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "Right-Bead-Trans%s.c", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &wheelrim.l, NULL, WMOP_UNION);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "Left-Inner-Rim%s.c", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &wheelrim.l, NULL, WMOP_UNION);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "Right-Inner-Rim%s.c", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &wheelrim.l, NULL, WMOP_UNION);
-    bu_vls_trunc(&str,0);
-    bu_vls_printf(&str, "Fixing%s.c", suffix);	
-    (void)mk_addmember(bu_vls_addr(&str), &wheelrim.l, NULL, WMOP_UNION);
+    bu_vls_printf(&str, "wheel-rim-cut%s.c", suffix);	
+    (void)mk_addmember(bu_vls_addr(&str), &wheelrim.l, NULL, WMOP_SUBTRACT);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Wheel-Rim%s.c", suffix);	
     mk_lcomb(file, bu_vls_addr(&str), &wheelrim, 0, NULL, NULL, NULL, 0);
@@ -1803,8 +1758,45 @@ void MakeTire(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t dztre
 }
 
 
+void MakeAirRegion(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t zhub)
+{
+    struct wmember wheelair;
+    struct bu_list air;
+    struct bu_vls str;
+    bu_vls_init(&str);
+    point_t origin;
+    vect_t height;
+
+    VSET(origin, 0, -dyhub/2, 0);
+    VSET(height, 0, dyhub, 0);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "Air-Cyl%s.s", suffix);	
+    mk_rcc(file, bu_vls_addr(&str), origin, height, zhub);   
 
 
+    BU_LIST_INIT(&wheelair.l);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "Air-Cyl%s.s",suffix);
+    (void)mk_addmember(bu_vls_addr(&str), &wheelair.l, NULL, WMOP_UNION);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "wheel-rim-solid%s.c",suffix);
+    (void)mk_addmember(bu_vls_addr(&str), &wheelair.l, NULL, WMOP_SUBTRACT);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "wheel-air%s.c",suffix);
+    mk_lcomb(file, bu_vls_addr(&str), &wheelair, 0,  NULL, NULL, NULL, 0);
+
+    BU_LIST_INIT(&air);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "wheel-air%s.c",suffix);
+    (void)mk_addmember(bu_vls_addr(&str), &air, NULL, WMOP_UNION);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "tire-cut%s.c",suffix);
+    (void)mk_addmember(bu_vls_addr(&str), &air, NULL, WMOP_UNION);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "air%s.r",suffix);
+    mk_comb(file, bu_vls_addr(&str), &air, 1, "air", NULL, NULL, 0, 1,0,0,0,0,0);
+
+}
 
 /* Process command line arguments */
 int ReadArgs(int argc, char **argv, fastf_t *isoarray, struct bu_vls *name, struct bu_vls *dimens, int *gen_name, int *treadtype, int *number_of_tread_patterns, fastf_t *tread_depth, fastf_t *tire_thickness, fastf_t *hub_width, int *pattern_type)
@@ -1982,10 +1974,16 @@ int main(int ac, char *av[])
     /* Make the wheel region*/
     MakeWheelRims(db_fp, bu_vls_addr(&dimen), dyhub, zhub, bolts, bolt_diam, bolt_circ_diam, spigot_diam, fixing_offset, bead_height, bead_width, rim_thickness);
 
+    /* Make the air region*/
+    MakeAirRegion(db_fp, bu_vls_addr(&dimen), dyhub, zhub);
+
     /* Final top level providing a single name for tire+wheel */
     BU_LIST_INIT(&wheel_and_tire.l);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "tire%s.r",bu_vls_addr(&dimen));
+    (void)mk_addmember(bu_vls_addr(&str), &wheel_and_tire.l, NULL, WMOP_UNION);
+    bu_vls_trunc(&str,0);
+    bu_vls_printf(&str, "air%s.r",bu_vls_addr(&dimen));
     (void)mk_addmember(bu_vls_addr(&str), &wheel_and_tire.l, NULL, WMOP_UNION);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "wheel%s.r",bu_vls_addr(&dimen));
