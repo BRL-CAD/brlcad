@@ -4,7 +4,6 @@ set(LIBGED_SOURCES
     globals.c
     nirt.c
     qray.c
-    qray.h
     tcl.c
     vdraw.c
     view_obj.c
@@ -13,7 +12,6 @@ set(LIBGED_SOURCES
 
 include_directories(
     ../../include
-    ../other/libz
     ../other/tcl/generic
 )
 
