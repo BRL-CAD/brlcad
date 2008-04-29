@@ -59,13 +59,6 @@ and available as a user option with the
 .B \-t
 flag.
 .LP
-.B IMPORTANT 
--  The tire models produced by BRL-CAD with this procedure are only approximate
-in terms of tire width and shape - in particular the fitting routine used to generate
-primitives for that case does not guarantee a maximum width.  It should be
-.I close
-but it is unlikely to be exact.
-.TP
 .B \-a #
 instructs 
 .I tire
@@ -93,10 +86,10 @@ the common notation width/ratioRwheeldiam will work as-is.
 .TP
 .B \-g depth #
 Specify the tread depth in 32nds of an inch.  So, for example, -g 13 would
-create a tread depth of 13/32in.  Accepts only integer increments.
+create a tread depth of 13/32in.
 .TP
 .B \-j width #
-Specify the rim width in inches. Accepts only integer increments.
+Specify the rim width in inches.
 .TP
 .B \-n name #
 allows the user to specify a name other than 'tire' for the root name
@@ -113,10 +106,7 @@ Select tread shape to model.  Note: tread modeling can SIGNIFICANTLY
 lengthen raytracing times, depending on the tread.
 .TP
 .B \-u thickness#
-If this flag is supplied with a non-zero integer argument, the default
-thickness of the tire (outer surface to hollow interior) will be overridden.
-Note that this thickness is an approximation and is not guaranteed to be
-absolutely correct everywhere on the tire.
+Specify tire thickness in mm.
 
 .SH EXAMPLE
 The following will create a tire with width=185mm, ratio=65mm, and wheel

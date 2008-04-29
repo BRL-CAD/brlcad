@@ -64,12 +64,12 @@ void show_help(const char *name) {
     printf("-a\t\tAutomatically generate top level name \n\t\t(tire-<width>-<aspect>R<rim size>)\n\n");
     printf("-c <count>\tSpecify number of repeated tread patterns around tire\n\n");
     printf("-d <width>/<aspect>R<rim size>\n\t\tSpecify tire dimensions (American units)\n\n");
-    printf("-g <depth>\tSpecify tread depth in terms of integer 32nds of an inch.\n\n");
+    printf("-g <depth>\tSpecify tread depth in terms of 32nds of an inch.\n\n");
     printf("-j <width>\tSpecify rim width in inches.\n\n");
     printf("-n <name>\tSpecify custom top level root name\n\n");
     printf("-p <type>\tGenerate tread with tread pattern as specified\n\n");
     printf("-t <type>\tGenerate tread with tread type as specified\n\n");
-    printf("-u <thickness>\tSpecify tire thickness\n\n");
+    printf("-u <thickness>\tSpecify tire thickness in mm\n\n");
     printf("-h\t\tShow help\n\n");
     return;
 }
@@ -1807,13 +1807,14 @@ void MakeTire(struct rt_wdb (*file), char *suffix, fastf_t dytred, fastf_t dztre
 
 
 /* Process command line arguments */
-int ReadArgs(int argc, char **argv, fastf_t *isoarray, struct bu_vls *name, struct bu_vls *dimens, int *gen_name, int *treadtype, int *number_of_tread_patterns, int *tread_depth, int *tire_thickness, int *hub_width, int *pattern_type)
+int ReadArgs(int argc, char **argv, fastf_t *isoarray, struct bu_vls *name, struct bu_vls *dimens, int *gen_name, int *treadtype, int *number_of_tread_patterns, fastf_t *tread_depth, fastf_t *tire_thickness, fastf_t *hub_width, int *pattern_type)
 {
     int c = 0;
     char *options="d:n:c:g:j:p:t:u:ah";
     int d1, d2, d3;
     int count;
-    int treadep,tdtype,tthickness, hwidth, ptype;
+    int tdtype, ptype;
+    float hwidth, treadep, tthickness;
     char spacer1,tiretype;
  
     bu_opterr = 0;
@@ -1836,11 +1837,11 @@ int ReadArgs(int argc, char **argv, fastf_t *isoarray, struct bu_vls *name, stru
 		isoarray[2] = d3;
                 break;
 	    case 'g':
-		sscanf(bu_optarg,"%d",&treadep);
+		sscanf(bu_optarg,"%f",&treadep);
 		*tread_depth = treadep;
 		break;
 	    case 'j':
-		sscanf(bu_optarg,"%d",&hwidth);
+		sscanf(bu_optarg,"%f",&hwidth);
 		*hub_width = hwidth;
 		break;
 	    case 'n':
@@ -1856,7 +1857,7 @@ int ReadArgs(int argc, char **argv, fastf_t *isoarray, struct bu_vls *name, stru
 		*treadtype = tdtype;
 		break;
 	    case 'u':
-		sscanf(bu_optarg,"%d",&tthickness);
+		sscanf(bu_optarg,"%f",&tthickness);
 		*tire_thickness = tthickness;
 		break;
 	    case 'h':
@@ -1883,10 +1884,9 @@ int main(int ac, char *av[])
     int gen_name = 0;
     int tread_type = 0;
     int number_of_tread_patterns = 30;
-    int tread_depth = 11;
-    int tire_thickness = 0;
-    fastf_t f_tire_thickness = 0;
-    int hub_width = 0;
+    fastf_t tread_depth = 11;
+    fastf_t tire_thickness = 0;
+    fastf_t hub_width = 0;
     int pattern_type = 0;
 
     bu_vls_init(&str);
@@ -1950,11 +1950,9 @@ int main(int ac, char *av[])
     dytred = .8 * width;
     d1 = (ztire-zhub)/2.5;
    
-    if(tire_thickness == 0){
-	f_tire_thickness = dztred;
-    }else{
-	f_tire_thickness = tire_thickness;
-    }
+    if(tire_thickness == 0)
+	tire_thickness = dztred;
+
 
     if(hub_width == 0){
 	dyhub = dytred;
@@ -1969,7 +1967,7 @@ int main(int ac, char *av[])
 
 
     /* Make the tire region*/
-    MakeTire(db_fp, bu_vls_addr(&dimen), dytred, dztred, d1, dyside1, zside1, ztire, dyhub, zhub, f_tire_thickness, tread_type, number_of_tread_patterns, tread_depth_float, pattern_type);
+    MakeTire(db_fp, bu_vls_addr(&dimen), dytred, dztred, d1, dyside1, zside1, ztire, dyhub, zhub, tire_thickness, tread_type, number_of_tread_patterns, tread_depth_float, pattern_type);
      
 
     bolts = 5;
@@ -1979,7 +1977,7 @@ int main(int ac, char *av[])
     fixing_offset = 15;
     bead_height = 8;
     bead_width = 8;
-    rim_thickness = f_tire_thickness/2.0;
+    rim_thickness = tire_thickness/2.0;
 
     /* Make the wheel region*/
     MakeWheelRims(db_fp, bu_vls_addr(&dimen), dyhub, zhub, bolts, bolt_diam, bolt_circ_diam, spigot_diam, fixing_offset, bead_height, bead_width, rim_thickness);
