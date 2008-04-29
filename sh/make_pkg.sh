@@ -75,9 +75,9 @@ else
     fi
 fi
 
-MAJOR_VERSION="`echo $VERSION | cut -f1 -d.`""
-MINOR_VERSION="`echo $VERSION | cut -f2 -d.`""
-PATCH_VERSION="`echo $VERSION | cut -f3 -d.`""
+MAJOR_VERSION="`echo $VERSION | cut -f1 -d.`"
+MINOR_VERSION="`echo $VERSION | cut -f2 -d.`"
+PATCH_VERSION="`echo $VERSION | cut -f3 -d.`"
 if [ "x$MAJOR_VERSION" = "x" ] ; then
     echo "Usage: $0 title version archive_dir [resource_dir]"
     echo "ERROR: unable to get major version number from [$VERSION]"
