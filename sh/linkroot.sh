@@ -187,7 +187,11 @@ eval "$cmd"
 ###
 # create stable link
 ###
-cmd='ln -s "$STABLE"      "$BASE/stable"'
+if [ "$BASE/`basename $STABLE`" -ef "$STABLE" ] ; then
+    cmd='ln -s "`basename $STABLE`"      "$BASE/stable"'
+else
+    cmd='ln -s "$STABLE"      "$BASE/stable"'
+fi
 echo "$cmd"
 eval "$cmd"
 
