@@ -17,7 +17,6 @@ set(LIBWDB_SOURCES
     reg.c
     skt.c
     submodel.c
-    strsol.c
     units.c
     vol.c
     wdb.c

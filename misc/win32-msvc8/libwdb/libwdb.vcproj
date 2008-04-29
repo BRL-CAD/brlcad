@@ -184,10 +184,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\libwdb\strsol.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\libwdb\units.c"
 				>
 			</File>

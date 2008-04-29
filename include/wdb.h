@@ -152,7 +152,6 @@ WDB_EXPORT WDB_EXTERN(int mk_tgc, (struct rt_wdb *fp, const char *name, const po
 WDB_EXPORT WDB_EXTERN(int mk_cone, (struct rt_wdb *fp, const char *name, const point_t base,
 				    const vect_t dirv, fastf_t height, fastf_t rad1,
 				    fastf_t rad2) );
-#define mk_trc(wrong)	+++error_obsolete_libwdb_routine+++	/* This routine no longer exists */
 WDB_EXPORT WDB_EXTERN(int mk_trc_h, (struct rt_wdb *fp, const char *name, const point_t base,
 				     const vect_t height, fastf_t radbase, fastf_t radtop) );
 WDB_EXPORT WDB_EXTERN(int mk_trc_top, (struct rt_wdb *fp, const char *name, const point_t ibase,
@@ -245,9 +244,6 @@ typedef enum {
     WDB_BINUNIF_FILE_UINT64
 } wdb_binunif;
 WDB_EXPORT WDB_EXTERN(int mk_binunif, (struct rt_wdb *fp, const char *name, const genptr_t data, wdb_binunif data_type, long count) );
-
-#define mk_bsolid(fp, name, nsurf, res)	+++error_obsolete_libwdb_routine+++
-#define mk_bsurf(fp, srf)		+++error_obsolete_libwdb_routine+++
 
 /* bot.c */
 WDB_EXPORT int
@@ -348,17 +344,11 @@ WDB_EXPORT WDB_EXTERN(int mk_vol, (struct rt_wdb *fp, const char *name, const ch
 				   const vect_t cellsize, const matp_t mat));
 WDB_EXPORT WDB_EXTERN(int mk_submodel, (struct rt_wdb *fp, const char *name, const char *file,
 					const char *treetop, int meth));
-#define mk_strsol(fp, name, solid, arg)	+++error_obsolete_libwdb_routine+++
 
 
 /* mater.c */
 WDB_EXPORT int mk_write_color_table( struct rt_wdb *ofp );
 
-
-/* These routines have been replaced by the construction routines below */
-#define mk_rcomb(fp, name, len, reg, shadername, mparam, rgb, id, air, mater, los, flag)	+++error_obsolete_libwdb_routine+++
-#define mk_fcomb(fp, name, len, reg)				+++error_obsolete_libwdb_routine+++
-#define mk_memb(fp, name, map, op)					+++error_obsolete_libwdb_routine+++
 
 /*
  *  Combination (region&group) construction routines
@@ -383,9 +373,9 @@ WDB_EXPORT WDB_EXTERN (struct wmember *mk_addmember,
 		rgb, id, air, material, los, inherit_flag, 0, 0 )
 
 WDB_EXPORT int mk_comb(
-    struct rt_wdb		*wdbp,
+    struct rt_wdb	*wdbp,
     const char		*combname,
-    struct bu_list		*headp,		/**<  Made by mk_addmember() */
+    struct bu_list	*headp,		/**<  Made by mk_addmember() */
     int			region_kind,	/**<  1 => region.  'P' and 'V' for FASTGEN */
     const char		*shadername,	/**<  shader name, or NULL */
     const char		*shaderargs,	/**<  shader args, or NULL */
@@ -448,7 +438,6 @@ WDB_EXPORT extern int	mk_version;		/**< @brief  Which version database to write 
  */
 WDB_EXPORT void mk_freemembers( struct bu_list *headp );
 
-#define mk_fwrite_internal(fp, name, ip)		+++error_obsolete_libwdb_routine+++
 #define mk_export_fwrite(wdbp, name, gp, id)	wdb_export(wdbp, name, gp, id, mk_conv2mm)
 
 /*
