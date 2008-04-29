@@ -138,12 +138,14 @@ fi
 
 # calculate capacity required
 DMG_CAPACITY=50
+ARGS=""
 while [ ! "x$*" = "x" ] ; do
     ARG="$1"
     shift
     size="`du -ks $ARG | awk '{print $1}'`"
     size="`echo \"$size 1024 / p\" | dc`"
     DMG_CAPACITY="`expr $DMG_CAPACITY + $size`"
+    ARGS="$ARGS $ARG"
 done
 pkg_size="`du -ks $PKG | awk '{print $1}'`"
 DMG_CAPACITY="`expr $DMG_CAPACITY + $pkg_size`"
@@ -217,6 +219,7 @@ if [ -d "$PKG" ] ; then
 	exit 1
     fi
 
+    echo "Copying $PKG to $VOL_DIR"
     cp -pR "$PKG" "${VOL_DIR}/."
     if [ ! "x$?" = "x0" ] ; then
 	echo "ERROR: unable to successfully copy $PKG to $VOL_DIR"
@@ -226,9 +229,9 @@ if [ -d "$PKG" ] ; then
 fi
 
 found_background=no
-while [ ! "x$*" = "x" ] ; do
-    ARG="$1"
-    shift
+for ARG in $ARGS ; do
+
+    echo "Processing $ARG"
 
     if [ ! -r "$ARG" ] ; then
 	if [ ! -f "$ARG" ] ; then
@@ -249,6 +252,7 @@ while [ ! "x$*" = "x" ] ; do
     fi
 
     if [ -d "$ARG" ] ; then
+	echo "Recursively copying $ARG to $VOL_DIR"
 	cp -pR "$ARG" "${VOL_DIR}/."
 	if [ ! "x$?" = "x0" ] ; then
 	    echo "ERROR: unable to successfully copy $ARG to $VOL_DIR"
@@ -262,7 +266,7 @@ while [ ! "x$*" = "x" ] ; do
 	fi
 
     elif [ -f "$ARG" ] ; then
-
+	echo "Copying $ARG to $VOL_DIR"
 	cp -p "$ARG" "${VOL_DIR}/."
 	if [ ! "x$?" = "x0" ] ; then
 	    echo "ERROR: unable to successfully copy $ARG to $VOL_DIR"
@@ -306,9 +310,18 @@ while [ ! "x$*" = "x" ] ; do
     fi
 done
 
+echo "Directory listing of $VOL_DIR is:"
+ls -la $VOL_DIR/.
+
 if [ ! "x$found_background" = "xno" ] ; then
     echo "You now have 60 seconds to set the background on the disk image."
+else
+    echo "There is currently an assumption that there is a background file in the Applescript."
+    echo "Aborting."
+    hdiutil eject $hdidMountedDisk
+    exit 1
 fi
+
 osascript <<EOF
 set oldApp to (path to frontmost application as string)
 tell application "Finder"
@@ -316,21 +329,20 @@ tell application "Finder"
     make new Finder window
     set target of Finder window 1 to disk "$DMG_NAME"
 
---    set imageFile to file "$found_background" of disk "$DMG_NAME"
+    set imageFile to file "$found_background" of disk "$DMG_NAME"
 
     tell Finder window 1
 	set toolbar visible to false
 	set zoomed to false
-	set bounds to {0, 0, 512, 320}
-	set position to {10, 54}
+	set the bounds to {0, 0, 512, 320}
+	set the position to {10, 54}
 	set current view to icon view
 
 	tell its icon view options
 	    set icon size to 96
 	    set arrangement to arranged by kind
 	    try
--- only 10.4
---              set background picture to imageFile
+                set background picture to imageFile
 	    end try
 	end tell
     end tell
@@ -392,7 +404,7 @@ tell application "Finder"
     tell Finder window 1
 	set toolbar visible to false
 	set zoomed to false
-	set bounds to {0, 0, 512, 320}
+	set the bounds to {0, 0, 512, 320}
 	set position to {10, 54}
 	set current view to icon view
     end tell
