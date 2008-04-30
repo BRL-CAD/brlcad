@@ -64,6 +64,9 @@ void show_help(const char *name) {
     printf("-a\t\tAutomatically generate top level name \n\t\t(tire-<width>-<aspect>R<rim size>)\n\n");
     printf("-c <count>\tSpecify number of repeated tread patterns around tire\n\n");
     printf("-d <width>/<aspect>R<rim size>\n\t\tSpecify tire dimensions (American units)\n\n");
+    printf("-W <width>\tSpecify tire width in inches (overrides -d)\n\n");
+    printf("-R <aspect>\tSpecify tire aspect ration (#/100) (overrides -d)\n\n");
+    printf("-D <rim size>\tSpecify rim size in inches (overrides -d)\n\n");
     printf("-g <depth>\tSpecify tread depth in terms of 32nds of an inch.\n\n");
     printf("-j <width>\tSpecify rim width in inches.\n\n");
     printf("-n <name>\tSpecify custom top level root name\n\n");

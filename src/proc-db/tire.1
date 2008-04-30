@@ -84,6 +84,25 @@ those dimensions.  The '/' character will work but other options are
 also allowed provided they don't have numeric significance - for example
 the common notation width/ratioRwheeldiam will work as-is.
 .TP
+.B \-W width #
+Specify the maximum sidewall width of the tire in mm.  This option overrides
+the -d option if used together, or the default if used alone.  Can be used
+with the -R and -D flags.  Unlike the -d flag, this flag allows floating
+point input - use this flag if you need to specify width more precisely
+than 1mm.
+.TP
+.B \-R ratio #
+Specify the ratio of the sidewall height to the maximum tire width.  This
+option overrides the -d option if used together, or the default if used
+alone.  Can be used with the -W and -D flags.  Unlike the -d flag, allows 
+floating point input for more precise definition of ratio.
+.TP
+.B \-D rim diameter #
+Specify the diameter of the rim (a.k.a the steel wheel) in inches. This
+option overrides the -d option if used together, or the default if used
+alone.  Can be used with the -W and -R flags.  Unlike the -d flag, allows 
+floating point input for more precise definition of rim diameter.
+.TP
 .B \-g depth #
 Specify the tread depth in 32nds of an inch.  So, for example, -g 13 would
 create a tread depth of 13/32in.
