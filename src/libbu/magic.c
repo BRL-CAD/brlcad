@@ -81,6 +81,8 @@ bu_identify_magic(register unsigned long magic)
 	    return "bu_attribute_value_set";
 	case BU_VLS_MAGIC:
 	    return "bu_vls";
+        case BU_VLB_MAGIC:
+            return "bu_vlb";
 	case BU_EXTERNAL_MAGIC:
 	    return "bu_external";
 	case BU_COLOR_MAGIC:

@@ -51,6 +51,7 @@
 #define BU_RB_NODE_MAGIC		0x72626e6f
 #define BU_RB_PKG_MAGIC			0x7262706b
 #define BU_RB_TREE_MAGIC		0x72627472
+#define BU_VLB_MAGIC                    0x5F564C42 /**< _VLB */
 #define BU_VLS_MAGIC			0x89333bbb
 
 /* libbn */

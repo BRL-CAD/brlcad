@@ -1275,6 +1275,27 @@ struct bu_vls  {
 #define BU_VLS_IS_INITIALIZED(_vp)	\
 	((_vp) && ((_vp)->vls_magic == BU_VLS_MAGIC))
 
+/** @} */
+/*----------------------------------------------------------------------*/
+/* vlb.c */
+/** @addtogroup vlb */
+/** @{ */
+/*
+ *  Variable Length Buffer: bu_vlb support
+ */
+struct bu_vlb {
+    unsigned long magic;
+    unsigned char *buf;  /**< @brief Dynamic memory for the buffer */
+    int bufCapacity;     /**< @brief Current capacity of the buffer */
+    int nextByte;        /**< @brief Number of bytes currently used in the buffer */
+};
+#define BU_VLB_BLOCK_SIZE       512
+#define BU_CK_VLB(_vp)		BU_CKMAG(_vp, BU_VLB_MAGIC, "bu_vlb")
+#define BU_VLB_IS_INITIALIZED(_vp)	\
+	((_vp) && ((_vp)->magic == BU_VLB_MAGIC))
+/** @} */
+/*----------------------------------------------------------------------*/
+
 /*
  *  Section for manifest constants for bu_semaphore_acquire()
  */

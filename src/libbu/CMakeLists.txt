@@ -61,6 +61,7 @@ set(LIBBU_SOURCES
     units.c
     vers.c
     vfont.c
+    vlb.c
     vls.c
     whereis.c
     which.c
