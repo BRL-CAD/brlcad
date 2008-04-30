@@ -1800,14 +1800,15 @@ void MakeAirRegion(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
 }
 
 /* Process command line arguments */
-int ReadArgs(int argc, char **argv, fastf_t *isoarray, struct bu_vls *name, struct bu_vls *dimens, int *gen_name, int *treadtype, int *number_of_tread_patterns, fastf_t *tread_depth, fastf_t *tire_thickness, fastf_t *hub_width, int *pattern_type, fastf_t *zside1)
+int ReadArgs(int argc, char **argv, fastf_t *isoarray, fastf_t *overridearray, struct bu_vls *name, struct bu_vls *dimens, int *gen_name, int *treadtype, int *number_of_tread_patterns, fastf_t *tread_depth, fastf_t *tire_thickness, fastf_t *hub_width, int *pattern_type, fastf_t *zside1)
 {
     int c = 0;
-    char *options="d:n:c:g:j:p:s:t:u:ah";
+    char *options="d:n:c:g:j:p:s:t:u:W:R:D:ah";
     int d1, d2, d3;
     int count;
     int tdtype, ptype;
     float hwidth, treadep, tthickness, zsideh;
+    float fd1, fd2, fd3;
     char spacer1,tiretype;
  
     bu_opterr = 0;
@@ -1829,6 +1830,18 @@ int ReadArgs(int argc, char **argv, fastf_t *isoarray, struct bu_vls *name, stru
 		isoarray[1] = d2;
 		isoarray[2] = d3;
                 break;
+	    case 'W':
+		sscanf(bu_optarg,"%f",&fd1);
+		overridearray[0] = fd1;
+		break;
+	    case 'R':
+		sscanf(bu_optarg,"%f",&fd2);
+		overridearray[1] = fd2;
+		break;
+	    case 'D':
+		sscanf(bu_optarg,"%f",&fd3);
+		overridearray[2] = fd3;
+		break;
 	    case 'g':
 		sscanf(bu_optarg,"%f",&treadep);
 		*tread_depth = treadep;
@@ -1875,6 +1888,7 @@ int main(int ac, char *av[])
     fastf_t bolt_diam, bolt_circ_diam, spigot_diam, fixing_offset, bead_height, bead_width, rim_thickness;
     struct wmember wheel_and_tire;
     fastf_t isoarray[3];
+    fastf_t overridearray[3];
     struct bu_vls name;
     struct bu_vls dimen;
     struct bu_vls str;
@@ -1898,8 +1912,13 @@ int main(int ac, char *av[])
     isoarray[1] = 55;
     isoarray[2] = 17;
 
+    /* No overriding of the iso array by default */ 
+    overridearray[0] = 0;
+    overridearray[1] = 0;
+    overridearray[2] = 0;
+
     /* Process arguments */
-    ReadArgs(ac, av, isoarray, &name, &dimen, &gen_name, &tread_type, &number_of_tread_patterns, &tread_depth,&tire_thickness, &hub_width, &pattern_type, &zside1);
+    ReadArgs(ac, av, isoarray, overridearray, &name, &dimen, &gen_name, &tread_type, &number_of_tread_patterns, &tread_depth,&tire_thickness, &hub_width, &pattern_type, &zside1);
 
     /* Calculate floating point value for tread depth */
     fastf_t tread_depth_float = tread_depth/32.0;
@@ -1936,6 +1955,14 @@ int main(int ac, char *av[])
     }
 
 
+    if (overridearray[0] > 0) isoarray[0] = overridearray[0];
+    if (overridearray[1] > 0) isoarray[1] = overridearray[1];
+    if (overridearray[2] > 0) isoarray[2] = overridearray[2];
+
+    bu_log("width = %f\n",isoarray[0]);
+    bu_log("ratio = %f\n",isoarray[1]);
+    bu_log("radius = %f\n",isoarray[2]);
+
     /*Automatic conversion from std dimension info to geometry*/
     width = isoarray[0];
     ratio = isoarray[1];
@@ -1943,7 +1970,6 @@ int main(int ac, char *av[])
     dyside1 = width;
     ztire = ((width*ratio/100)*2+wheeldiam)/2;
     zhub = ztire-width*ratio/100;
-    dztred = .001*ratio*zside1;
     dytred = .8 * width;
     d1 = (ztire-zhub)/2.5;
    
@@ -1959,6 +1985,9 @@ int main(int ac, char *av[])
 
     if(zside1 == 0)
 	zside1 = ztire-((ztire-zhub)/2*1.2);
+
+    dztred = .001*ratio*zside1;
+
 
     bu_log("radius of sidewall max: %f\n",zside1);
 
