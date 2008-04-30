@@ -1973,10 +1973,6 @@ int main(int ac, char *av[])
     dytred = .8 * width;
     d1 = (ztire-zhub)/2.5;
    
-    if(tire_thickness == 0)
-	tire_thickness = dztred;
-
-
     if(hub_width == 0){
 	dyhub = dytred;
     }else{
@@ -1988,6 +1984,8 @@ int main(int ac, char *av[])
 
     dztred = .001*ratio*zside1;
 
+    if(tire_thickness == 0)
+	tire_thickness = dztred;
 
     bu_log("radius of sidewall max: %f\n",zside1);
 
