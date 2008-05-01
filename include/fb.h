@@ -182,11 +182,7 @@ FB_EXPORT extern int wgl_close_existing();
 /* tcl.c */
 /* The presence of Tcl_Interp as an arg prevents giving arg list */
 FB_EXPORT extern void fb_tcl_setup();
-#ifdef BRLCAD_DEBUG
-FB_EXPORT extern int Fb_d_Init();
-#else
 FB_EXPORT extern int Fb_Init();
-#endif
 FB_EXPORT extern int fb_refresh(FBIO *ifp, int x, int y, int w, int h);
 
 

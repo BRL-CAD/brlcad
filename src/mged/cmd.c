@@ -715,15 +715,10 @@ cmd_setup(void)
     Tcl_LinkVar(interp, "output_as_return", (char *)&output_as_return, TCL_LINK_BOOLEAN);
 
     /* Provide Tcl interfaces to the fundamental BRL-CAD libraries */
-#ifdef BRLCAD_DEBUG
-    Bu_d_Init(interp);
-    bn_tcl_setup( interp );
-    Rt_d_Init(interp);
-#else
     Bu_Init(interp);
-    bn_tcl_setup( interp );
+    Bn_Init(interp);
     Rt_Init(interp);
-#endif
+    Ged_Init(interp);
 
     tkwin = NULL;
 

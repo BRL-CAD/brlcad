@@ -38,13 +38,8 @@ __BEGIN_DECLS
 
 /* loadable Tcl interface routines */
 
-#ifdef BRLCAD_DEBUG
-RT_EXPORT BU_EXTERN(int Ged_d_Init,
-		    (Tcl_Interp *interp));
-#else
 RT_EXPORT BU_EXTERN(int Ged_Init,
 		    (Tcl_Interp *interp));
-#endif
 
 
 /* defined in wdb_obj.c */

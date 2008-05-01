@@ -1438,11 +1438,7 @@ bu_tcl_setup(Tcl_Interp *interp)
  *	@return TCL_OK if successful, otherwise, TCL_ERROR.
  */
 int
-#ifdef BRLCAD_DEBUG
-Bu_d_Init(Tcl_Interp *interp)
-#else
-    Bu_Init(Tcl_Interp *interp)
-#endif
+Bu_Init(Tcl_Interp *interp)
 {
     bu_tcl_setup(interp);
     return TCL_OK;

@@ -243,13 +243,8 @@ BN_EXPORT BU_EXTERN(void bn_encode_hvect,
 /* The presence of Tcl_Interp as an arg prevents giving arg list */
 BN_EXPORT BU_EXTERN(void bn_tcl_setup,
 		    ());
-#ifdef BRLCAD_DEBUG
-BN_EXPORT BU_EXTERN(int Bn_d_Init,
-		    ());
-#else
 BN_EXPORT BU_EXTERN(int Bn_Init,
 		    ());
-#endif
 BN_EXPORT BU_EXTERN(void bn_tcl_mat_print,
 		    ());
 /** @} */

@@ -57,11 +57,7 @@
  * "load /usr/brlcad/lib/libged.so"
  */
 int
-#ifdef BRLCAD_DEBUG
-Ged_d_Init(Tcl_Interp *interp)
-#else
-    Ged_Init(Tcl_Interp *interp)
-#endif
+Ged_Init(Tcl_Interp *interp)
 {
 
     /* initialize database objects */

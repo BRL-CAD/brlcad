@@ -136,31 +136,6 @@ mged_setup(void)
 	Tcl_ResetResult(interp);
     }
 
-#ifdef BRLCAD_DEBUG
-    /* Initialize libbu */
-    if (Bu_d_Init(interp) == TCL_ERROR) {
-	bu_log("Bu_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	Tcl_ResetResult(interp);
-    }
-
-    /* Initialize libbn */
-    if (Bn_d_Init(interp) == TCL_ERROR) {
-	bu_log("Bn_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	Tcl_ResetResult(interp);
-    }
-
-    /* Initialize librt */
-    if (Rt_d_Init(interp) == TCL_ERROR) {
-	bu_log("Rt_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	Tcl_ResetResult(interp);
-    }
-
-    /* Initialize libged */
-    if (Ged_d_Init(interp) == TCL_ERROR) {
-	bu_log("Ged_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	Tcl_ResetResult(interp);
-    }
-#else
     /* Initialize libbu */
     if (Bu_Init(interp) == TCL_ERROR) {
 	bu_log("Bu_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
@@ -184,7 +159,6 @@ mged_setup(void)
 	bu_log("Ged_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	Tcl_ResetResult(interp);
     }
-#endif
 
     /* initialize MGED's drawable geometry object */
     dgop = dgo_open_cmd("mged", wdbp);

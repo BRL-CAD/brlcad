@@ -4729,17 +4729,10 @@ RT_EXPORT BU_EXTERN(void rt_tcl_pr_hit,
 		     int flipflag));
 RT_EXPORT BU_EXTERN(void rt_tcl_setup,
 		    (Tcl_Interp *interp));
-#ifdef BRLCAD_DEBUG
-RT_EXPORT BU_EXTERN(int Sysv_d_Init,
-		    (Tcl_Interp *interp));
-RT_EXPORT BU_EXTERN(int Rt_d_Init,
-		    (Tcl_Interp *interp));
-#else
 RT_EXPORT BU_EXTERN(int Sysv_Init,
 		    (Tcl_Interp *interp));
 RT_EXPORT BU_EXTERN(int Rt_Init,
 		    (Tcl_Interp *interp));
-#endif
 RT_EXPORT BU_EXTERN(void db_full_path_appendresult,
 		    (Tcl_Interp *interp,
 		     const struct db_full_path *pp));

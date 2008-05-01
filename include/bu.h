@@ -2721,13 +2721,8 @@ BU_EXPORT BU_EXTERN(int bu_tcl_units_conversion,
 BU_EXPORT BU_EXTERN(void bu_tcl_setup,
 		    (Tcl_Interp *interp));
 
-#ifdef BRLCAD_DEBUG
-BU_EXPORT BU_EXTERN(int Bu_d_Init,
-		    (Tcl_Interp *interp));
-#else
 BU_EXPORT BU_EXTERN(int Bu_Init,
 		    (Tcl_Interp *interp));
-#endif
 
 
 /** @} */

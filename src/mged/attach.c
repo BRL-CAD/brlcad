@@ -406,19 +406,11 @@ gui_setup(char *dstr)
 	return TCL_ERROR;
     }
 
-#ifdef BRLCAD_DEBUG
-    /* Initialize libdm */
-    (void)Dm_d_Init(interp);
-
-    /* Initialize libfb */
-    (void)Fb_d_Init(interp);
-#else
     /* Initialize libdm */
     (void)Dm_Init(interp);
 
     /* Initialize libfb */
     (void)Fb_Init(interp);
-#endif
 
     if ((tkwin = Tk_MainWindow(interp)) == NULL) {
 	return TCL_ERROR;

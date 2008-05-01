@@ -1521,11 +1521,7 @@ rt_tcl_setup(Tcl_Interp *interp)
  * "load /usr/brlcad/lib/librt.so"
  */
 int
-#ifdef BRLCAD_DEBUG
-Rt_d_Init(Tcl_Interp *interp)
-#else
-    Rt_Init(Tcl_Interp *interp)
-#endif
+Rt_Init(Tcl_Interp *interp)
 {
     /*XXX how much will this break? */
     if (BU_LIST_UNINITIALIZED(&rt_g.rtg_vlfree)) {
