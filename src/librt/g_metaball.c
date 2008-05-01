@@ -267,7 +267,7 @@ rt_metaball_point_value_blob(point_t *p, struct bu_list *points)
     point_t v;
 
     for (BU_LIST_FOR(mbpt, wdb_metaballpt, points)) {
-	if(mbpt->sweat < 0.00000000001)
+	if(mbpt->sweat < SMALL_FASTF)
 	    bu_bomb("sweat == 0\n");
 	VSUB2(v, mbpt->coord, *p);
 	ret += 1.0 / exp((mbpt->sweat/(mbpt->fldstr*mbpt->fldstr)) * MAGSQ(v) - mbpt->sweat);
