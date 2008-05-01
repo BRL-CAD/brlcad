@@ -43,42 +43,56 @@
 #define COLS 5
 #define F_PI 3.1415926535897932384626433832795029L 
 
-
+/* Function for displaying eto input parameters when debugging */
 void PrintCADParams(fastf_t *cadparams, char *name){
     bu_log("%s\n",name);
-    bu_log("x0 = %6.7f, y0 = %6.7f, Cx = %6.7f, Cy = %6.7f, D=%6.7f\n",cadparams[0],cadparams[1],cadparams[2],cadparams[3],cadparams[4]);
+    bu_log("y0 = %6.7f, z0 = %6.7f, Cx = %6.7f, Cy = %6.7f, D=%6.7f\n",
+	   cadparams[0],cadparams[1],cadparams[2],cadparams[3],cadparams[4]);
 }
 
+/* Function for displaying 5x6 matricies when debugging */
 void PrintMatrix(fastf_t **matrix, char *name){
     bu_log("%s\n",name);
-    bu_log("[%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f]\n",matrix[0][0],matrix[0][1],matrix[0][2],matrix[0][3],matrix[0][4],matrix[0][5]);
-    bu_log("[%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f]\n",matrix[1][0],matrix[1][1],matrix[1][2],matrix[1][3],matrix[1][4],matrix[1][5]);
-    bu_log("[%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f]\n",matrix[2][0],matrix[2][1],matrix[2][2],matrix[2][3],matrix[2][4],matrix[2][5]);
-    bu_log("[%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f]\n",matrix[3][0],matrix[3][1],matrix[3][2],matrix[3][3],matrix[3][4],matrix[3][5]);
-    bu_log("[%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f]\n",matrix[4][0],matrix[4][1],matrix[4][2],matrix[4][3],matrix[4][4],matrix[4][5]);
+    bu_log("[%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f]\n",
+	   matrix[0][0],matrix[0][1],matrix[0][2],matrix[0][3],matrix[0][4],
+	   matrix[0][5]);
+    bu_log("[%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f]\n",
+	   matrix[1][0],matrix[1][1],matrix[1][2],matrix[1][3],matrix[1][4],
+	   matrix[1][5]);
+    bu_log("[%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f]\n",
+	   matrix[2][0],matrix[2][1],matrix[2][2],matrix[2][3],matrix[2][4],
+	   matrix[2][5]);
+    bu_log("[%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f]\n",
+	   matrix[3][0],matrix[3][1],matrix[3][2],matrix[3][3],matrix[3][4],
+	   matrix[3][5]);
+    bu_log("[%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f]\n",
+	   matrix[4][0],matrix[4][1],matrix[4][2],matrix[4][3],matrix[4][4],
+	   matrix[4][5]);
 }
 
 /* Help message printed when -h option is supplied */
 void show_help(const char *name) {
-    printf("%s [-d <width>/<aspect>R<rim size>] [-a|-n <name>] [-t] [-h]\n", name);
-    printf("-a\t\tAutomatically generate top level name \n\t\t(tire-<width>-<aspect>R<rim size>)\n\n");
-    printf("-c <count>\tSpecify number of repeated tread patterns around tire\n\n");
-    printf("-d <width>/<aspect>R<rim size>\n\t\tSpecify tire dimensions (American units)\n\n");
-    printf("-W <width>\tSpecify tire width in inches (overrides -d)\n\n");
-    printf("-R <aspect>\tSpecify tire aspect ration (#/100) (overrides -d)\n\n");
-    printf("-D <rim size>\tSpecify rim size in inches (overrides -d)\n\n");
-    printf("-g <depth>\tSpecify tread depth in terms of 32nds of an inch.\n\n");
-    printf("-j <width>\tSpecify rim width in inches.\n\n");
-    printf("-n <name>\tSpecify custom top level root name\n\n");
-    printf("-p <type>\tGenerate tread with tread pattern as specified\n\n");
-    printf("-s <radius>\tSpecify the radius of the maximum sidewall width\n\n");
-    printf("-t <type>\tGenerate tread with tread type as specified\n\n");
-    printf("-u <thickness>\tSpecify tire thickness in mm\n\n");
-    printf("-h\t\tShow help\n\n");
+    bu_log("%s options:", name);
+    bu_log("-a\t\tAut-generate top level name using\n\t\t(tire-<width>-<aspect>R<rim size>)\n\n");
+    bu_log("-c <count>\tSpecify number of tread patterns around tire\n\n");
+    bu_log("-d <width>/<aspect>R<rim size>\n\t\tSpecify tire dimensions (American units, integer values only)\n\n");
+    bu_log("-W <width>\tSpecify tire width in inches (overrides -d)\n\n");
+    bu_log("-R <aspect>\tSpecify tire aspect ratio (#/100) (overrides -d)\n\n");
+    bu_log("-D <rim size>\tSpecify rim size in inches (overrides -d)\n\n");
+    bu_log("-g <depth>\tSpecify tread depth in terms of 32nds of an inch.\n\n");
+    bu_log("-j <width>\tSpecify rim width in inches.\n\n");
+    bu_log("-n <name>\tSpecify custom top level root name\n\n");
+    bu_log("-p <type>\tGenerate tread with tread pattern as specified\n\n");
+    bu_log("-s <radius>\tSpecify the radius of the maximum sidewall width\n\n");
+    bu_log("-t <type>\tGenerate tread with tread type as specified\n\n");
+    bu_log("-u <thickness>\tSpecify tire thickness in mm\n\n");
+    bu_log("-h\t\tShow help\n\n");
     return;
 }
 
-/* Return matrix needed to rotate an object around the y axis by theta degrees*/
+/* Return matrix needed to rotate an object around the y axis by 
+ * theta degrees
+ */
 void getYRotMat(mat_t (*t), fastf_t theta)
 {
     fastf_t sin_ = sin(theta);
@@ -111,7 +125,7 @@ fastf_t GetEllPartialAtPoint(fastf_t *inarray, fastf_t x, fastf_t y)
     C = inarray[2];
     D = inarray[3];
     E = inarray[4];
-    partial = -(D+y*B+2*x*A)/(E+2*y*C+x*B);
+    partial = -(D + y * B + 2 * x * A) / (E + 2 * y * C + x * B);
     return partial;
 }
 
@@ -125,7 +139,8 @@ fastf_t GetValueAtZPoint(fastf_t *inarray, fastf_t y)
     D = inarray[3];
     E = inarray[4];
     F = 1;
-    z = (sqrt(-4*A*F-4*y*A*E+D*D+2*y*B*D-4*y*y*A*C+y*y*B*B)-D-y*B)/(2*A); 
+    z = (sqrt(-4 * A * F - 4 * y * A * E + D * D + 2 * y * B * D - 
+	      4 * y * y * A * C + y * y * B * B) - D - y * B) / (2 * A); 
     return z;
 }
 
@@ -138,56 +153,63 @@ fastf_t GetValueAtZPoint(fastf_t *inarray, fastf_t y)
  **********************************************************************/
 
 
-/* Create General Conic Matrix for Ellipse describing tire slick (non-tread) surfaces */
- void Create_Ell1_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t d1, fastf_t ztire) 
+/* Create General Conic Matrix for Ellipse describing tire slick (non-tread) 
+ * surfaces
+ */
+ void Create_Ell1_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t d1,
+		      fastf_t ztire) 
 {
     fastf_t y1,z1,y2,z2,y3,z3,y4,z4,y5,z5;
 
-    y1 = dytred/2;
-    z1 = ztire-dztred;
-    y2 = dytred/2;
-    z2 = ztire - (dztred+2*(d1-dztred));
+    y1 = dytred / 2;
+    z1 = ztire - dztred;
+    y2 = dytred / 2;
+    z2 = ztire - (dztred + 2 * (d1 - dztred));
     y3 = 0.0;
     z3 = ztire;
     y4 = 0.0;
-    z4 = ztire-2*d1;
-    y5 = -dytred/2;
-    z5 = ztire-dztred;
+    z4 = ztire - 2 * d1;
+    y5 = -dytred / 2;
+    z5 = ztire - dztred;
 
-    mat[0][0] = y1*y1;
-    mat[0][1] = y1*z1;
-    mat[0][2] = z1*z1;
+    mat[0][0] = y1 * y1;
+    mat[0][1] = y1 * z1;
+    mat[0][2] = z1 * z1;
     mat[0][3] = y1;
     mat[0][4] = z1;
     mat[0][5] = -1;
-    mat[1][0] = y2*y2;
-    mat[1][1] = y2*z2;
-    mat[1][2] = z2*z2;
+    mat[1][0] = y2 * y2;
+    mat[1][1] = y2 * z2;
+    mat[1][2] = z2 * z2;
     mat[1][3] = y2;
     mat[1][4] = z2;
     mat[1][5] = -1;
-    mat[2][0] = y3*y3;
-    mat[2][1] = y3*z3;
-    mat[2][2] = z3*z3;
+    mat[2][0] = y3 * y3;
+    mat[2][1] = y3 * z3;
+    mat[2][2] = z3 * z3;
     mat[2][3] = y3;
     mat[2][4] = z3;
     mat[2][5] = -1;
-    mat[3][0] = y4*y4;
-    mat[3][1] = y4*z4;
-    mat[3][2] = z4*z4;
+    mat[3][0] = y4 * y4;
+    mat[3][1] = y4 * z4;
+    mat[3][2] = z4 * z4;
     mat[3][3] = y4;
     mat[3][4] = z4;
     mat[3][5] = -1;
-    mat[4][0] = y5*y5;
-    mat[4][1] = y5*z5;
-    mat[4][2] = z5*z5;
+    mat[4][0] = y5 * y5;
+    mat[4][1] = y5 * z5;
+    mat[4][2] = z5 * z5;
     mat[4][3] = y5;
     mat[4][4] = z5;
     mat[4][5] = -1;
 }
  
-/* Create General Conic Matrix for Ellipse describing the top part of the tire side */
-void Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dyside1, fastf_t zside1, fastf_t ztire, fastf_t dyhub, fastf_t zhub, fastf_t ell1partial) 
+/* Create General Conic Matrix for Ellipse describing the top part of the 
+ * tire side
+ */
+void Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, 
+		     fastf_t dyside1, fastf_t zside1, fastf_t ztire, 
+		     fastf_t dyhub, fastf_t zhub, fastf_t ell1partial) 
 {
     mat[0][0] = (dyside1 / 2) * (dyside1 / 2);
     mat[0][1] = (zside1 * dyside1 / 2);
@@ -201,28 +223,31 @@ void Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dysi
     mat[1][3] = (dytred / 2);
     mat[1][4] = (ztire - dztred);
     mat[1][5] = -1;
-    mat[2][0] = (dytred/2) * (dytred/2);
-    mat[2][1] = (dytred/2) * (2*zside1-ztire+dztred);
-    mat[2][2] = (2*zside1-ztire+dztred)*(2*zside1-ztire+dztred);
-    mat[2][3] = (dytred/2);
-    mat[2][4] = (2*zside1-ztire+dztred);
+    mat[2][0] = (dytred / 2) * (dytred / 2);
+    mat[2][1] = (dytred / 2) * (2 * zside1 - ztire + dztred);
+    mat[2][2] = (2 * zside1 - ztire + dztred) * (2 * zside1 - ztire + dztred);
+    mat[2][3] = (dytred / 2);
+    mat[2][4] = (2 * zside1 - ztire + dztred);
     mat[2][5] = -1;
     mat[3][0] = 2 * (dytred / 2);
     mat[3][1] = (ztire - dztred) + (dytred / 2) * ell1partial;
-    mat[3][2] = 2*(ztire - dztred) * ell1partial;
+    mat[3][2] = 2 * (ztire - dztred) * ell1partial;
     mat[3][3] = 1;
     mat[3][4] = ell1partial;
     mat[3][5] = 0;
     mat[4][0] = 2 * (dytred / 2);
-    mat[4][1] = (2*zside1-ztire+dztred) + (dytred / 2) * -ell1partial;
-    mat[4][2] = 2*(2*zside1-ztire+dztred)*-ell1partial;
+    mat[4][1] = (2 * zside1 - ztire + dztred) + (dytred / 2) * -ell1partial;
+    mat[4][2] = 2 * (2 * zside1 - ztire + dztred) * -ell1partial;
     mat[4][3] = 1;
     mat[4][4] = -ell1partial;
     mat[4][5] = 0;
 }
 
-/* Create General Conic Matrix for Ellipse describing the bottom part of the tire side */
-void Create_Ell3_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dyside1, fastf_t zside1, fastf_t ztire, fastf_t dyhub, fastf_t zhub, fastf_t ell1partial) 
+/* Create General Conic Matrix for Ellipse describing the bottom part of the
+ * tire side */
+void Create_Ell3_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, 
+		     fastf_t dyside1, fastf_t zside1, fastf_t ztire, 
+		     fastf_t dyhub, fastf_t zhub, fastf_t ell1partial) 
 {
     mat[0][0] = (dyside1 / 2) * (dyside1 / 2);
     mat[0][1] = (zside1 * dyside1 / 2);
@@ -237,7 +262,7 @@ void Create_Ell3_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t dysi
     mat[1][4] = (zhub);
     mat[1][5] = -1;
     mat[2][0] = (dyhub / 2) * (dyhub / 2);
-    mat[2][1] = (dyhub / 2) * (2*zside1-zhub);
+    mat[2][1] = (dyhub / 2) * (2 * zside1 - zhub);
     mat[2][2] = (2 * zside1 - zhub) * (2 * zside1 - zhub);
     mat[2][3] = (dyhub / 2);
     mat[2][4] = (2 * zside1 - zhub);
@@ -297,7 +322,7 @@ void Echelon(fastf_t **mat)
 	for (k = i + 1; k < 5 ; k++){
 	    rowmult=mat[k][i];
 	    for (j = i; j < 6; j++){
-		mat[k][j] -= rowmult*mat[i][j];
+		mat[k][j] -= rowmult * mat[i][j];
 	    }
 	}
      }
@@ -313,7 +338,7 @@ void SolveEchelon(fastf_t **mat, fastf_t *result1)
     for(i = 4; i >= 0; i--){
 	inter = mat[i][5];
 	for(j = 4; j > i; j--){
-	    inter -= mat[i][j]*result1[j];
+	    inter -= mat[i][j] * result1[j];
 	}
 	result1[i]=inter;
     }
@@ -327,7 +352,6 @@ void SolveEchelon(fastf_t **mat, fastf_t *result1)
  *                 Parameters                                         *
  *                                                                    *
  **********************************************************************/
-
 
 void CalcInputVals(fastf_t *inarray, fastf_t *outarray)
 {
@@ -346,32 +370,35 @@ void CalcInputVals(fastf_t *inarray, fastf_t *outarray)
     E = inarray[4];
 
     /* Translation to Center of Ellipse */
-    x0 = -(B*E-2*C*D)/(4*A*C-B*B);
-    y0 = -(B*D-2*A*E)/(4*A*C-B*B);
+    x0 = -(B * E - 2 * C * D) / (4 * A * C - B * B);
+    y0 = -(B * D - 2 * A * E) / (4 * A * C - B * B);
 
     /* Translate to the Origin for Rotation */
-    Fp = 1-y0*E-x0*D+y0*y0*C+x0*y0*B+x0*x0*A;
+    Fp = 1 - y0 * E - x0 * D + y0 * y0 * C+x0 * y0 * B + x0 * x0 * A;
 
     /* Rotation Angle */
-    theta = .5*atan(1000*B/(1000*A-1000*C));
+    theta = .5 * atan(1000 * B / (1000 * A - 1000 * C));
     
     /* Calculate A'', B'' and C'' - B'' is zero with above theta choice */
-    App = A*cos(theta)*cos(theta)+B*cos(theta)*sin(theta)+C*sin(theta)*sin(theta);
-    Bpp = 2*(C-A)*cos(theta)*sin(theta)+B*cos(theta)*cos(theta)-B*sin(theta)*sin(theta);
-    Cpp = A*sin(theta)*sin(theta)-B*sin(theta)*cos(theta)+C*cos(theta)*cos(theta);
+    App = A * cos(theta) * cos(theta) + B * cos(theta) * sin(theta) + C * 
+	sin(theta) * sin(theta);
+    Bpp = 2 * (C - A) * cos(theta) * sin(theta) + B * cos(theta) * cos(theta) -
+	B * sin(theta) * sin(theta);
+    Cpp = A * sin(theta) * sin(theta) - B * sin(theta) * cos(theta) + C * 
+	cos(theta) * cos(theta);
 
     /* Solve for semimajor and semiminor lengths*/
-    length1 = sqrt(-Fp/App);
-    length2 = sqrt(-Fp/Cpp);
+    length1 = sqrt(-Fp / App);
+    length2 = sqrt(-Fp / Cpp);
 
     /* BRL-CAD's eto primitive requires that C is the semimajor */
     if (length1 > length2) {
-	semimajorx = length1*cos(-theta);
-	semimajory = length1*sin(-theta);
+	semimajorx = length1 * cos(-theta);
+	semimajory = length1 * sin(-theta);
 	semiminor = length2;
     } else {
-	semimajorx = length2*sin(-theta);
-	semimajory = length2*cos(-theta);
+	semimajorx = length2 * sin(-theta);
+	semimajory = length2 * cos(-theta);
 	semiminor = length1;
     }
 
@@ -383,6 +410,7 @@ void CalcInputVals(fastf_t *inarray, fastf_t *outarray)
     outarray[4] = semiminor;
 }
 
+
 /**********************************************************************
  *                                                                    *
  *                 Create Wheel Structure to fit                      *
@@ -390,11 +418,12 @@ void CalcInputVals(fastf_t *inarray, fastf_t *outarray)
  *                                                                    *
  **********************************************************************/
 
-
-
-void MakeWheelCenter(struct rt_wdb (*file), char *suffix, fastf_t fixing_start_middle, fastf_t fixing_width, fastf_t rim_thickness, fastf_t bead_height, fastf_t zhub, fastf_t dyhub, fastf_t spigot_diam, int bolts,fastf_t bolt_circ_diam, fastf_t bolt_diam) 
+void MakeWheelCenter(struct rt_wdb (*file), char *suffix, 
+		     fastf_t fixing_start_middle, fastf_t fixing_width, 
+		     fastf_t rim_thickness, fastf_t bead_height, fastf_t zhub,
+		     fastf_t dyhub, fastf_t spigot_diam, int bolts,
+		     fastf_t bolt_circ_diam, fastf_t bolt_diam) 
 {
-
     vect_t height, a, b, c;
     point_t origin, vertex;
     mat_t y;
@@ -405,42 +434,45 @@ void MakeWheelCenter(struct rt_wdb (*file), char *suffix, fastf_t fixing_start_m
 
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Inner-Hub%s.s", suffix);	
-    VSET(origin, 0, fixing_start_middle+fixing_width/4, 0);
-    VSET(a, (zhub-2*bead_height),0,0);
-    VSET(b, 0, -dyhub/3, 0);
-    VSET(c, 0, 0, (zhub-2*bead_height));
+    VSET(origin, 0, fixing_start_middle + fixing_width / 4, 0);
+    VSET(a, (zhub - 2 * bead_height),0,0);
+    VSET(b, 0, -dyhub / 3, 0);
+    VSET(c, 0, 0, (zhub - 2 * bead_height));
     mk_ell(file,bu_vls_addr(&str), origin, a, b, c);
    
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Inner-Hub-Cut1%s.s", suffix);
-    VSET(origin, 0, fixing_start_middle+fixing_width/4-rim_thickness*1.5, 0);
+    VSET(origin, 0, fixing_start_middle + fixing_width / 4 - rim_thickness 
+	 * 1.5, 0);
     mk_ell(file,bu_vls_addr(&str), origin, a, b, c);
 	
     VSET(origin, 0,0, 0);
-    VSET(height, 0, dyhub/2, 0);
+    VSET(height, 0, dyhub / 2, 0);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Inner-Hub-Cut2%s.s", suffix);	
-    mk_rcc(file, bu_vls_addr(&str), origin, height, spigot_diam/2);   
+    mk_rcc(file, bu_vls_addr(&str), origin, height, spigot_diam / 2);   
 
-    /* Make the circular pattern of holes in the hub - this involves the creation of
-     * one primitive, a series of transformed combinations which use that primitive,
-     * and a combination combining all of the previous combinations.  Since it requires
-     * both primitives and combinations it is placed between the two sections.
+    /* Make the circular pattern of holes in the hub - this involves the 
+     * creation of one primitive, a series of transformed combinations which
+     * use that primitive, and a combination combining all of the previous 
+     * combinations.  Since it requires both primitives and combinations it 
+     * is placed between the two sections.
      */
 
-    VSET(vertex, 0, 0, (zhub - (bolt_circ_diam/2+bolt_diam/2))/1.25);
-    VSET(height, 0, dyhub/2, 0);
+    VSET(vertex, 0, 0, (zhub - (bolt_circ_diam / 2 + bolt_diam / 2)) / 1.25);
+    VSET(height, 0, dyhub / 2, 0);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Hub-Hole%s.s", suffix); 
-    mk_rcc(file, bu_vls_addr(&str), vertex, height,(zhub - (bolt_circ_diam/2+bolt_diam/2))/6.5 );
+    mk_rcc(file, bu_vls_addr(&str), vertex, height,
+	   (zhub - (bolt_circ_diam / 2 + bolt_diam / 2)) / 6.5 );
 
 
     BU_LIST_INIT(&hubhole.l);
     BU_LIST_INIT(&hubholes.l);
-    for (i=1; i<=10; i++) {
+    for (i = 1; i <= 10; i++) {
 	bu_vls_trunc(&str,0);
 	bu_vls_printf(&str, "Hub-Hole%s.s",suffix);
-	getYRotMat(&y,D2R(i*360/10));
+	getYRotMat(&y,D2R(i * 360 / 10));
 	(void)mk_addmember(bu_vls_addr(&str), &hubhole.l, y, WMOP_UNION);
 	bu_vls_trunc(&str,0);
 	bu_vls_printf(&str, "Hub-Hole-%1.0d%s.c", i, suffix);
@@ -455,19 +487,19 @@ void MakeWheelCenter(struct rt_wdb (*file), char *suffix, fastf_t fixing_start_m
     /* Make the bolt holes in the hub 
      */
 
-    VSET(vertex, 0, 0, bolt_circ_diam/2);
-    VSET(height, 0, dyhub/2, 0);
+    VSET(vertex, 0, 0, bolt_circ_diam / 2);
+    VSET(height, 0, dyhub / 2, 0);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Bolt-Hole%s.s", suffix); 
-    mk_rcc(file, bu_vls_addr(&str), vertex, height, bolt_diam/2 );
+    mk_rcc(file, bu_vls_addr(&str), vertex, height, bolt_diam / 2 );
 
 
     BU_LIST_INIT(&bolthole.l);
     BU_LIST_INIT(&boltholes.l);
-    for (i=1; i<=bolts; i++) {
+    for (i = 1; i <= bolts; i++) {
 	bu_vls_trunc(&str,0);
 	bu_vls_printf(&str, "Bolt-Hole%s.s",suffix);
-	getYRotMat(&y,D2R(i*360/bolts));
+	getYRotMat(&y,D2R(i * 360 / bolts));
 	(void)mk_addmember(bu_vls_addr(&str), &bolthole.l, y, WMOP_UNION);
 	bu_vls_trunc(&str,0);
 	bu_vls_printf(&str, "Bolt-Hole-%1.0d%s.c", i, suffix);
@@ -502,12 +534,18 @@ void MakeWheelCenter(struct rt_wdb (*file), char *suffix, fastf_t fixing_start_m
 }
 
 
-void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t zhub, int bolts, fastf_t bolt_diam, fastf_t bolt_circ_diam, fastf_t spigot_diam, fastf_t fixing_offset, fastf_t bead_height, fastf_t bead_width, fastf_t rim_thickness)
+void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, 
+		   fastf_t zhub, int bolts, fastf_t bolt_diam, 
+		   fastf_t bolt_circ_diam, fastf_t spigot_diam, 
+		   fastf_t fixing_offset, fastf_t bead_height, 
+		   fastf_t bead_width, fastf_t rim_thickness)
 {
-    struct wmember wheelrimsolid,wheelrimcut;
+    struct wmember wheelrimsolid, wheelrimcut;
     struct wmember wheelrim,  wheel;
-    fastf_t inner_width, left_width, right_width, fixing_width, inner_width_left_start, inner_width_right_start;
-    fastf_t fixing_width_left_trans, fixing_width_right_trans, fixing_width_middle;
+    fastf_t inner_width, left_width, right_width, fixing_width, 
+	inner_width_left_start, inner_width_right_start;
+    fastf_t fixing_width_left_trans, fixing_width_right_trans, 
+	fixing_width_middle;
     fastf_t fixing_start_left, fixing_start_right, fixing_start_middle;
     unsigned char rgb[3];
     vect_t normal, height;
@@ -519,7 +557,7 @@ void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
     VSET(rgb, 217, 217, 217);
     
     /* Insert primitives */
-    VSET(vertex, 0, -dyhub/2, 0);
+    VSET(vertex, 0, -dyhub / 2, 0);
     VSET(height, 0, bead_width, 0);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Left-Bead%s.s", suffix);	
@@ -527,7 +565,7 @@ void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Left-Bead-Cut%s.s", suffix);	
     mk_rcc(file, bu_vls_addr(&str), vertex, height, zhub - rim_thickness);
-    VSET(vertex, 0, dyhub/2, 0);
+    VSET(vertex, 0, dyhub / 2, 0);
     VSET(height, 0, -bead_width, 0);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Right-Bead%s.s", suffix); 
@@ -535,33 +573,39 @@ void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Right-Bead-Cut%s.s", suffix);	
     mk_rcc(file, bu_vls_addr(&str), vertex, height, zhub - rim_thickness);
-    VSET(vertex, 0, -dyhub/2+bead_width, 0);
+    VSET(vertex, 0, -dyhub / 2 + bead_width, 0);
     VSET(normal, 0, 1, 0);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Left-Bead-Trans%s.s", suffix);	
-    mk_cone(file, bu_vls_addr(&str), vertex, normal, bead_width, zhub, zhub-bead_height);
+    mk_cone(file, bu_vls_addr(&str), vertex, normal, bead_width, zhub, 
+	    zhub-bead_height);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Left-Bead-Trans-cut%s.s", suffix);
-    mk_cone(file, bu_vls_addr(&str), vertex, normal, bead_width, zhub-rim_thickness, zhub-bead_height-rim_thickness);
-    VSET(vertex, 0, dyhub/2-bead_width, 0);
+    mk_cone(file, bu_vls_addr(&str), vertex, normal, bead_width, 
+	    zhub-rim_thickness, zhub-bead_height-rim_thickness);
+    VSET(vertex, 0, dyhub / 2 - bead_width, 0);
     VSET(normal, 0, -1, 0);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Right-Bead-Trans%s.s", suffix);	
-    mk_cone(file, bu_vls_addr(&str), vertex, normal, bead_width, zhub, zhub-bead_height);
+    mk_cone(file, bu_vls_addr(&str), vertex, normal, bead_width, zhub, 
+	    zhub-bead_height);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Right-Bead-Trans-cut%s.s", suffix);
-    mk_cone(file, bu_vls_addr(&str), vertex, normal, bead_width, zhub-rim_thickness, zhub-bead_height-rim_thickness);
+    mk_cone(file, bu_vls_addr(&str), vertex, normal, bead_width, 
+	    zhub-rim_thickness, zhub-bead_height-rim_thickness);
     
-    /* At this point, some intermediate values are calculated to ease the bookkeeping */
+    /* At this point, some intermediate values are calculated to ease the 
+     * bookkeeping 
+     */
 
-    inner_width = dyhub-4*bead_width;
-    inner_width_left_start = -dyhub/2 + 2*bead_width;
-    inner_width_right_start = dyhub/2 - 2*bead_width;
-    fixing_width = .25*inner_width;
-    fixing_width_left_trans = .25*fixing_width;
-    fixing_width_right_trans = .25*fixing_width;
-    fixing_width_middle = .5*fixing_width;
-    fixing_start_middle = fixing_offset - fixing_width_middle/2;
+    inner_width = dyhub - 4 * bead_width;
+    inner_width_left_start = -dyhub / 2 + 2 * bead_width;
+    inner_width_right_start = dyhub / 2 - 2 * bead_width;
+    fixing_width = .25 * inner_width;
+    fixing_width_left_trans = .25 * fixing_width;
+    fixing_width_right_trans = .25 * fixing_width;
+    fixing_width_middle = .5 * fixing_width;
+    fixing_start_middle = fixing_offset - fixing_width_middle / 2;
     fixing_start_left = fixing_start_middle - fixing_width_left_trans;
     fixing_start_right = fixing_offset + fixing_width_middle;
     right_width = inner_width_right_start - fixing_start_left - fixing_width;
@@ -574,7 +618,8 @@ void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
     mk_rcc(file, bu_vls_addr(&str), vertex, height, zhub - bead_height);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "LeftInnerRim-cut%s.s", suffix);	
-    mk_rcc(file, bu_vls_addr(&str), vertex, height, zhub - rim_thickness - bead_height);
+    mk_rcc(file, bu_vls_addr(&str), vertex, height, 
+	   zhub - rim_thickness - bead_height);
     VSET(vertex, 0, inner_width_right_start, 0);
     VSET(height, 0, -right_width, 0);
     bu_vls_trunc(&str,0);
@@ -582,31 +627,39 @@ void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
     mk_rcc(file, bu_vls_addr(&str), vertex, height, zhub - bead_height);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "RightInnerRim-cut%s.s", suffix);	
-    mk_rcc(file, bu_vls_addr(&str), vertex, height, zhub - rim_thickness - bead_height);
+    mk_rcc(file, bu_vls_addr(&str), vertex, height, 
+	   zhub - rim_thickness - bead_height);
     VSET(vertex, 0, fixing_start_left, 0);
     VSET(normal, 0, 1, 0);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Left-Fixing-Trans%s.s", suffix);	
-    mk_cone(file, bu_vls_addr(&str), vertex, normal, fixing_width_left_trans, zhub - bead_height, zhub-2*bead_height);
+    mk_cone(file, bu_vls_addr(&str), vertex, normal, fixing_width_left_trans, 
+	    zhub - bead_height, zhub - 2 * bead_height);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Left-Fixing-Trans-cut%s.s", suffix);
-    mk_cone(file, bu_vls_addr(&str), vertex, normal, fixing_width_left_trans, zhub- bead_height -rim_thickness, zhub-2*bead_height-rim_thickness);
+    mk_cone(file, bu_vls_addr(&str), vertex, normal, fixing_width_left_trans, 
+	    zhub- bead_height -rim_thickness, zhub - 2 * bead_height - 
+	    rim_thickness);
     VSET(vertex, 0, fixing_start_right, 0);
     VSET(normal, 0, -1, 0);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Right-Fixing-Trans%s.s", suffix);	
-    mk_cone(file, bu_vls_addr(&str), vertex, normal, fixing_width_right_trans, zhub - bead_height, zhub-2*bead_height);
+    mk_cone(file, bu_vls_addr(&str), vertex, normal, fixing_width_right_trans, 
+	    zhub - bead_height, zhub - 2 * bead_height);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Right-Fixing-Trans-cut%s.s", suffix);
-    mk_cone(file, bu_vls_addr(&str), vertex, normal, fixing_width_right_trans, zhub- bead_height -rim_thickness, zhub-2*bead_height-rim_thickness);
+    mk_cone(file, bu_vls_addr(&str), vertex, normal, fixing_width_right_trans, 
+	    zhub - bead_height - rim_thickness, zhub - 2 * bead_height - 
+	    rim_thickness);
     VSET(vertex, 0, fixing_start_middle, 0);
     VSET(height, 0, fixing_width_middle, 0);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Inner-Fixing%s.s", suffix);	
-    mk_rcc(file, bu_vls_addr(&str), vertex, height, zhub - 2*bead_height);
+    mk_rcc(file, bu_vls_addr(&str), vertex, height, zhub - 2 * bead_height);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Inner-Fixing-cut%s.s", suffix);	
-    mk_rcc(file, bu_vls_addr(&str), vertex, height, zhub - rim_thickness - 2*bead_height);
+    mk_rcc(file, bu_vls_addr(&str), vertex, height, 
+	   zhub - rim_thickness - 2 * bead_height);
 
 
     /*Make combination for solid*/ 
@@ -638,7 +691,7 @@ void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "Inner-Fixing%s.s", suffix);	
     (void)mk_addmember(bu_vls_addr(&str), &wheelrimsolid.l, NULL, WMOP_UNION);
-     bu_vls_trunc(&str,0);
+    bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "wheel-rim-solid%s.c", suffix);	
     mk_lcomb(file, bu_vls_addr(&str), &wheelrimsolid, 0, NULL, NULL, NULL, 0);
 
@@ -687,10 +740,9 @@ void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
     bu_vls_printf(&str, "Wheel-Rim%s.c", suffix);	
     mk_lcomb(file, bu_vls_addr(&str), &wheelrim, 0, NULL, NULL, NULL, 0);
 
-
-    MakeWheelCenter(file, suffix, fixing_start_middle, fixing_width, rim_thickness, bead_height, zhub, dyhub, spigot_diam, bolts, bolt_circ_diam, bolt_diam);
-
-
+    MakeWheelCenter(file, suffix, fixing_start_middle, fixing_width, 
+		    rim_thickness, bead_height, zhub, dyhub, spigot_diam, 
+		    bolts, bolt_circ_diam, bolt_diam);
 
     /*Make combination for Wheel*/ 
     BU_LIST_INIT(&wheel.l);
@@ -702,7 +754,8 @@ void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
     (void)mk_addmember(bu_vls_addr(&str), &wheel.l, NULL, WMOP_UNION);
     bu_vls_trunc(&str,0);
     bu_vls_printf(&str, "wheel%s.r", suffix);	
-    mk_lcomb(file, bu_vls_addr(&str), &wheel, 1, "plastic", "di=.8 sp=.2", rgb, 0);
+    mk_lcomb(file, bu_vls_addr(&str), &wheel, 1, "plastic", "di=.8 sp=.2", 
+	     rgb, 0);
 
 }
 
@@ -715,7 +768,9 @@ void MakeWheelRims(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
  *                                                                    *
  **********************************************************************/
 
-void MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts, int vertcount, fastf_t patternwidth1, fastf_t patternwidth2, fastf_t tirewidth, fastf_t zbase, fastf_t ztire)
+void MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts, 
+		 int vertcount, fastf_t patternwidth1, fastf_t patternwidth2,
+		 fastf_t tirewidth, fastf_t zbase, fastf_t ztire)
 {
     struct rt_sketch_internal *skt;
     struct line_seg *lsg;
@@ -729,7 +784,8 @@ void MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts, int vert
     point2d_t tmpvert[] = {{0,0}};
 
     /* Basic allocation of structure */
-    skt = (struct rt_sketch_internal *)bu_calloc( 1, sizeof( struct rt_sketch_internal ), "sketch" );
+    skt = (struct rt_sketch_internal *)bu_calloc( 1, sizeof( struct 
+               rt_sketch_internal ), "sketch" );
     skt->magic = RT_SKETCH_INTERNAL_MAGIC;
 
 
@@ -744,11 +800,12 @@ void MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts, int vert
 
 
     /* Define links between/order of vertices */
-    skt->vert_count = vertcount;/* this probably needs to be counted at input or included in pre-defineds */
-    skt->verts = (point2d_t *)bu_calloc( skt->vert_count, sizeof( point2d_t ), "verts" );
-    for ( i=0; i<skt->vert_count; i++ ) {
-	tmpvert[0][0] = verts[i][0]*patternwidth2-patternwidth2/2;
-	tmpvert[0][1] = verts[i][1]*tirewidth;
+    skt->vert_count = vertcount;
+    skt->verts = (point2d_t *)bu_calloc( skt->vert_count, 
+					 sizeof( point2d_t ), "verts" );
+    for (i = 0; i < skt->vert_count; i++ ) {
+	tmpvert[0][0] = verts[i][0] * patternwidth2 - patternwidth2 / 2;
+	tmpvert[0][1] = verts[i][1] * tirewidth;
 	V2MOVE( skt->verts[i], tmpvert[0] );
     }
 
