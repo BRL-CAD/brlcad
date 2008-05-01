@@ -181,6 +181,7 @@ rt_metaball_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     for (BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) {
 	nmbpt = (struct wdb_metaballpt *)bu_malloc(sizeof(struct wdb_metaballpt), "rt_metaball_prep: nmbpt");
 	nmbpt->fldstr = mbpt->fldstr;
+	nmbpt->sweat = mbpt->sweat;
 	VMOVE(nmbpt->coord, mbpt->coord);
 	BU_LIST_INSERT( &nmb->metaball_ctrl_head, &nmbpt->l );
     }
