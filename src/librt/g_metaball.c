@@ -141,7 +141,7 @@ fastf_t rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, stru
 		    additive = fabs(mbpt2->fldstr) * mbpt2->fldstr / mag;
 		    break;
 		case METABALL_BLOB:
-		    additive = exp(( mbpt2->sweat / mbpt2->fldstr ) * mag*mag - mbpt2->sweat);
+		    additive = 1.0/exp(( mbpt2->sweat / (mbpt2->fldstr * mbpt2->fldstr)) * mag * mag - mbpt2->sweat);
 		    break;
 		}
 
@@ -267,8 +267,10 @@ rt_metaball_point_value_blob(point_t *p, struct bu_list *points)
     point_t v;
 
     for (BU_LIST_FOR(mbpt, wdb_metaballpt, points)) {
+	if(mbpt->sweat < 0.00000000001)
+	    bu_bomb("sweat == 0\n");
 	VSUB2(v, mbpt->coord, *p);
-	ret += exp((mbpt->sweat/mbpt->fldstr) * MAGSQ(v) - mbpt->sweat);
+	ret += 1.0 / exp((mbpt->sweat/(mbpt->fldstr*mbpt->fldstr)) * MAGSQ(v) - mbpt->sweat);
     }
     return ret;
 }
@@ -280,7 +282,7 @@ rt_metaball_point_value(point_t *p, struct rt_metaball_internal *mb)
     RT_METABALL_CK_MAGIC(mb);
     switch ( mb->method ) {
 	case METABALL_METABALL:
-	    break;
+	    return rt_metaball_point_value_metaball( p, &mb->metaball_ctrl_head );
 	case METABALL_ISOPOTENTIAL:
 	    return rt_metaball_point_value_iso( p, &mb->metaball_ctrl_head );
 	case METABALL_BLOB:
