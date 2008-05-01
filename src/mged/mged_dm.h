@@ -569,9 +569,9 @@ struct dm_list {
 			(p) = DM_LIST_NULL; \
 	}
 
-extern double frametime;		/* defined in ged.c */
-extern int dm_pipe[];			/* defined in ged.c */
-extern int update_views;		/* defined in ged.c */
+extern double frametime;		/* defined in mged.c */
+extern int dm_pipe[];			/* defined in mged.c */
+extern int update_views;		/* defined in mged.c */
 extern struct dm_list head_dm_list;	/* defined in attach.c */
 extern struct dm_list *curr_dm_list;	/* defined in attach.c */
 

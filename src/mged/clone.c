@@ -72,7 +72,7 @@
 #include "db.h"
 #include "raytrace.h"
 
-#include "./ged.h"
+#include "./mged.h"
 #include "./cmd.h"
 
 

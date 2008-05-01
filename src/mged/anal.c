@@ -33,7 +33,7 @@
 #include "./sedit.h"
 #include "raytrace.h"
 #include "rtgeom.h"
-#include "./ged.h"
+#include "./mged.h"
 #include "./mged_solid.h"
 #include "./mged_dm.h"
 
@@ -41,8 +41,8 @@
 /* Conversion factor for Gallons to cubic millimeters */
 #define GALLONS_TO_MM3 3785411.784
 
-extern struct rt_db_internal	es_int;	/* from edsol.c */
-extern struct bn_tol		mged_tol;		/* from ged.c */
+extern struct rt_db_internal es_int;
+extern struct bn_tol mged_tol;
 
 static void	do_anal(struct bu_vls *vp, const struct rt_db_internal *ip);
 static void	arb_anal(struct bu_vls *vp, const struct rt_db_internal *ip);

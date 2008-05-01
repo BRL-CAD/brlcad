@@ -45,7 +45,7 @@
 #include "bn.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "./ged.h"
+#include "./mged.h"
 #include "./sedit.h"
 
 /*

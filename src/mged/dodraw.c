@@ -35,7 +35,7 @@
 #include "rtgeom.h"		/* for ID_POLY special support */
 #include "db.h"
 
-#include "./ged.h"
+#include "./mged.h"
 #include "./mged_solid.h"
 #include "./mged_dm.h"
 #include "./cmd.h"
@@ -109,8 +109,8 @@ int			mged_wireframe_color_override;
 int			mged_wireframe_color[3];
 static struct model	*mged_nmg_model;
 
-extern struct bn_tol		mged_tol;	/* from ged.c */
-extern struct rt_tess_tol	mged_ttol;	/* from ged.c */
+extern struct bn_tol		mged_tol;
+extern struct rt_tess_tol	mged_ttol;
 
 /*
  *		M G E D _ P L O T _ A N I M _ U P C A L L _ H A N D L E R

@@ -1,4 +1,4 @@
-/*                           G E D . H
+/*                           M G E D . H
  * BRL-CAD
  *
  * Copyright (c) 1985-2008 United States Government as represented by
@@ -17,10 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ged.h
+/** @file mged.h
  *
- * This file contains all of the definitions local to
- * the GED graphics editor.
+ * This file contains all of the definitions local to MGED
  *
  *	     V E R Y   I M P O R T A N T   N O T I C E ! ! !
  *
@@ -53,8 +52,8 @@
  *
  */
 
-#ifndef __GED_H__
-#define __GED_H__
+#ifndef __MGED_H__
+#define __MGED_H__
 
 #include "common.h"
 
@@ -96,10 +95,10 @@ extern double	degtorad, radtodeg;	/* Defined in usepen.c */
  * All GED files are stored in a fixed base unit (MM).
  * These factors convert database unit to local (or working) units.
  */
-extern struct db_i	*dbip;		       /* defined in ged.c */
-extern int		 dbih;		       /* defined in ged.c */
-extern struct rt_wdb	*wdbp;			/* defined in ged.c */
-extern struct dg_obj	*dgop;			/* defined in ged.c */
+extern struct db_i	*dbip;		       /* defined in mged.c */
+extern int		 dbih;		       /* defined in mged.c */
+extern struct rt_wdb	*wdbp;			/* defined in mged.c */
+extern struct dg_obj	*dgop;			/* defined in mged.c */
 #define	base2local	(dbip->dbi_base2local)
 #define local2base	(dbip->dbi_local2base)
 #define	cur_title	(dbip->dbi_title)      /* current model title */
@@ -184,7 +183,7 @@ extern int	no_memory;	/* flag indicating memory for drawing is used up */
 /* defined in menu.c */
 extern int	menuflag;	/* flag indicating if a menu item is selected */
 
-/* defined in ged.c */
+/* defined in mged.c */
 extern FILE *infile;
 extern FILE *outfile;
 extern jmp_buf jmp_env;
@@ -217,7 +216,7 @@ extern int              mged_cmd_arg_check(), release(char *name, int need_close
 extern struct directory	*combadd(), **dir_getspace();
 extern void		ellipse();
 
-/* ged.c */
+/* mged.c */
 extern void mged_view_obj_callback(genptr_t clientData, struct view_obj *vop);
 
 #if 0
@@ -691,7 +690,7 @@ void find_nearest_ars_pt(
 void find_nearest_ars_pt();
 #endif
 
-/* ged.c */
+/* mged.c */
 int event_check( int non_blocking );
 int f_opendb(
     ClientData clientData,

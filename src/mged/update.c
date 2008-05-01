@@ -37,7 +37,6 @@
 #include "./mgedtcl.h"
 
 
-/* defined in ged.c */
 extern void refresh();
 extern int event_check();
 

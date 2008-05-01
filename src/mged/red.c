@@ -38,7 +38,7 @@
 #include "raytrace.h"
 #include "db.h"
 
-#include "./ged.h"
+#include "./mged.h"
 #include "./sedit.h"
 
 extern int cmd_name(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);

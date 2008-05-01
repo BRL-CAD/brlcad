@@ -44,7 +44,7 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-#include "./ged.h"
+#include "./mged.h"
 #include "./sedit.h"
 #include "./cmd.h"
 

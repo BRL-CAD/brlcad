@@ -47,7 +47,7 @@
 #include "dm_xvars.h"
 #include "dm-ogl.h"
 
-#include "./ged.h"
+#include "./mged.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
 

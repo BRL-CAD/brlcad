@@ -49,7 +49,7 @@
 #include "raytrace.h"
 #include "solid.h"
 
-#include "./ged.h"
+#include "./mged.h"
 #include "./mged_dm.h"
 
 

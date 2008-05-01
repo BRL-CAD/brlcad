@@ -89,12 +89,12 @@ mged_SOURCES = \
 	edsol.c \
 	facedef.c \
 	fbserv.c \
-	ged.c \
 	grid.c \
 	history.c \
 	inside.c \
 	mater.c \
 	menu.c \
+	mged.c \
 	mover.c \
 	muves.c \
 	overlay.c \
@@ -167,12 +167,12 @@ noinst_HEADERS = \
 	comb_bool.h \
 	editobjGui.h \
 	fbserv.h \
-	ged.h \
 	htmlLibraryUi.h \
 	icreateGui.h \
 	joints.h \
 	menu.h \
 	mgdev.h \
+	mged.h \
 	mged_dm.h \
 	mged_solid.h \
 	mgedtcl.h \

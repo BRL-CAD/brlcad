@@ -23,7 +23,7 @@
 
 #include "common.h"
 
-#include "./ged.h"  /* for MGED_EXTERN */
+#include "./mged.h"  /* for MGED_EXTERN */
 
 
 /* Commands */

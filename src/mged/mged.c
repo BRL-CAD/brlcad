@@ -1,4 +1,4 @@
-/*                           G E D . C
+/*                           M G E D . C
  * BRL-CAD
  *
  * Copyright (c) 1993-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ged.c
+/** @file mged.c
  *
- * Mainline portion of the graphics editor
+ * Mainline portion of the Mutliple-display Graphics EDitor (MGED)
  *
  */
 
@@ -48,7 +48,7 @@
 #include "db.h"
 
 /* private */
-#include "./ged.h"
+#include "./mged.h"
 #include "./titles.h"
 #include "./mged_solid.h"
 #include "./sedit.h"

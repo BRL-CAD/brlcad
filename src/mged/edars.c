@@ -42,12 +42,12 @@
 #include "rtgeom.h"
 #include "wdb.h"
 
-#include "./ged.h"
+#include "./mged.h"
 #include "./mged_solid.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
 
-extern struct bn_tol		mged_tol;	/* from ged.c */
+extern struct bn_tol mged_tol;
 
 void
 find_nearest_ars_pt(

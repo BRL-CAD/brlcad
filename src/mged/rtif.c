@@ -49,7 +49,7 @@
 #include "dg.h"
 #include "mater.h"
 #include "./sedit.h"
-#include "./ged.h"
+#include "./mged.h"
 #include "./mged_solid.h"
 #include "./mged_dm.h"
 #include "./qray.h"
@@ -59,7 +59,7 @@
 extern int mged_svbase(void);
 extern void set_perspective(); /* from set.c */
 
-/* from ged.c -- used to open databases quietly */
+/* used to open databases quietly */
 extern int interactive;
 
 static void setup_rt(register char **vp, int printcmd);

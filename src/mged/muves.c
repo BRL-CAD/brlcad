@@ -38,7 +38,7 @@
 #include "nmg.h"
 #include "raytrace.h"
 #include "rtgeom.h"
-#include "./ged.h"
+#include "./mged.h"
 #include "./sedit.h"
 
 

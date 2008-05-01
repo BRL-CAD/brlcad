@@ -53,7 +53,7 @@
 #include "dg.h"
 #include "tclcad.h"
 
-#include "./ged.h"
+#include "./mged.h"
 #include "./cmd.h"
 #include "./mged_solid.h"
 #include "./mged_dm.h"
@@ -111,18 +111,18 @@ extern void set_localunit_TclVar(void);		/* in chgmodel.c */
 extern void init_qray(void);			/* in qray.c */
 extern int gui_setup(char *dstr);				/* in attach.c */
 extern int mged_default_dlist;			/* in attach.c */
-extern int classic_mged;			/* in ged.c */
+extern int classic_mged;
 extern int bot_vertex_fuse(), bot_condense();
 extern int cmd_bot_smooth();
 struct cmd_list head_cmd_list;
 struct cmd_list *curr_cmd_list;
 
-extern int db_warn;	/* defined in ged.c */
-extern int db_upgrade;	/* defined in ged.c */
-extern int db_version;	/* defined in ged.c */
+extern int db_warn;
+extern int db_upgrade;
+extern int db_version;
 
-extern struct rt_tess_tol     mged_ttol; /* ged.c */
-extern struct bn_tol	      mged_tol; /* ged.c */
+extern struct rt_tess_tol     mged_ttol;
+extern struct bn_tol	      mged_tol;
 
 int glob_compat_mode = 1;
 int output_as_return = 1;

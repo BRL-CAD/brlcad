@@ -34,7 +34,7 @@
 #include "bn.h"
 #include "dg.h"
 
-#include "./ged.h"
+#include "./mged.h"
 #include "./titles.h"
 #include "./mged_solid.h"
 #include "./mged_dm.h"

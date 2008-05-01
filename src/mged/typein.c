@@ -42,7 +42,7 @@
 #include "wdb.h"
 #include "db.h"
 
-#include "./ged.h"
+#include "./mged.h"
 #include "./mged_dm.h"
 #include "./cmd.h"
 

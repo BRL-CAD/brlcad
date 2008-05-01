@@ -50,7 +50,7 @@
 #include "raytrace.h"
 #include "dm_xvars.h"
 
-#include "./ged.h"
+#include "./mged.h"
 #include "./mged_dm.h"
 #include "./sedit.h"
 

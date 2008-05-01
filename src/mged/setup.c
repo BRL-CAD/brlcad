@@ -41,7 +41,7 @@
 #include "ged.h"
 
 /* local headers */
-#include "./ged.h"
+#include "./mged.h"
 
 
 extern void cmd_setup(void);

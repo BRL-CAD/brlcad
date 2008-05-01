@@ -37,7 +37,7 @@
 #include "dg.h"
 #include "nmg.h"
 #include "./sedit.h"
-#include "./ged.h"
+#include "./mged.h"
 #include "./mged_solid.h"
 #include "./mged_dm.h"
 #include "./cmd.h"
@@ -75,10 +75,10 @@ int mged_tran(fastf_t *tvec);
 #define M_SQRT2_DIV2       0.70710678118654752440
 #endif
 
-extern vect_t curr_e_axes_pos;  /* from edsol.c */
-extern long	nvectors;	/* from dodraw.c */
+extern vect_t curr_e_axes_pos;
+extern long	nvectors;
 
-extern struct bn_tol mged_tol;	/* from ged.c */
+extern struct bn_tol mged_tol;
 extern vect_t e_axes_pos;
 
 fastf_t ar_scale_factor = GED_MAX / ABS_ROT_FACTOR;

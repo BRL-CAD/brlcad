@@ -244,10 +244,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\mged\ged.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\mged\grid.c"
 				>
 			</File>
@@ -265,6 +261,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\mged\menu.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\mged\mged.c"
 				>
 			</File>
 			<File

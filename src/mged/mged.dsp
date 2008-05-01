@@ -215,7 +215,7 @@ SOURCE=.\fbserv_win32.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\ged.c
+SOURCE=.\mged.c
 # End Source File
 # Begin Source File
 
