@@ -38,6 +38,7 @@
 #include "dg.h"
 #include "vmath.h"
 #include "tclcad.h"
+#include "ged.h"
 
 /* local headers */
 #include "./ged.h"
@@ -153,7 +154,12 @@ mged_setup(void)
 	bu_log("Rt_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	Tcl_ResetResult(interp);
     }
-    Tcl_StaticPackage(interp, "Rt", Rt_d_Init, (Tcl_PackageInitProc *) NULL);
+
+    /* Initialize libged */
+    if (Ged_d_Init(interp) == TCL_ERROR) {
+	bu_log("Ged_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	Tcl_ResetResult(interp);
+    }
 #else
     /* Initialize libbu */
     if (Bu_Init(interp) == TCL_ERROR) {
@@ -172,7 +178,12 @@ mged_setup(void)
 	bu_log("Rt_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	Tcl_ResetResult(interp);
     }
-    Tcl_StaticPackage(interp, "Rt", Rt_Init, (Tcl_PackageInitProc *) NULL);
+
+    /* Initialize libged */
+    if (Ged_Init(interp) == TCL_ERROR) {
+	bu_log("Ged_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	Tcl_ResetResult(interp);
+    }
 #endif
 
     /* initialize MGED's drawable geometry object */
