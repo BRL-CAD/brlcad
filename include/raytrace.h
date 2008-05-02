@@ -3278,7 +3278,8 @@ RT_EXPORT BU_EXTERN(struct directory *rt_mirror,
 		    (struct db_i *dpip,
 		     const char	*from,
 		     const char *to,
-		     int axis,
+		     point_t mirror_origin,
+		     vect_t mirror_dir,
 		     fastf_t mirror_pt,
 		     struct resource *resp));
 
