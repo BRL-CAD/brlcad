@@ -1311,7 +1311,6 @@ See the doc/deprecation.txt file for a transcript of features that are
 deprecated or have already become obsolete.
 
 ---
-
 See doc/history.txt for more historic information on BRL-CAD.  There
 is contained information on releases that predate 1999 and the 5.0
 release.  The entire history of the project is available through
@@ -1321,3 +1320,8 @@ NEWS items should be formatted to column 70 (default M-q in Emacs),
 use no tabs, and include credits to all significant contributors.
 Multiple contributors may be listed on the following line but the
 summary description itself should never exceed column 70 or one line.
+
+// Local Variables:
+// mode: Text
+// fill-column: 70
+// End:
