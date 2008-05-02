@@ -46,6 +46,7 @@
 #include "wdb.h"
 
 
+#define SQ(a) ((a)*(a))
 /*
  *  Algorithm:
  *	completely punted at the moment :D
@@ -268,8 +269,8 @@ rt_metaball_point_value_blob(point_t *p, struct bu_list *points)
     point_t v;
 
     for (BU_LIST_FOR(mbpt, wdb_metaballpt, points)) {
-	if(mbpt->sweat < SMALL_FASTF)
-	    bu_bomb("sweat == 0\n");
+	/* TODO: test if sweat is sufficient enough that r=0 returns a positive value? */
+	/* TODO: test to see if negative contribution needs to be wiped out? */
 	VSUB2(v, mbpt->coord, *p);
 	ret += 1.0 / exp((mbpt->sweat/(mbpt->fldstr*mbpt->fldstr)) * MAGSQ(v) - mbpt->sweat);
     }
@@ -371,11 +372,15 @@ rt_metaball_norm(register struct hit *hitp, struct soltab *stp, register struct 
 	    for (BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) {
 		VSUB2(v, hitp->hit_point, mbpt->coord);
 		a = MAGSQ(v);
-		VJOIN1(hitp->hit_normal, hitp->hit_normal, fabs(mbpt->fldstr)*mbpt->fldstr / (a*a), v);	/* f/r^4 */
+		VJOIN1(hitp->hit_normal, hitp->hit_normal, fabs(mbpt->fldstr)*mbpt->fldstr / (SQ(a)), v);	/* f/r^4 */
 	    }
 	    break;
 	case METABALL_BLOB:
-	    VSET(hitp->hit_normal, 1, 0, 0);
+	    for (BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) {
+		VSUB2(v, hitp->hit_point, mbpt->coord);
+		a = MAGSQ(v);
+		VJOIN1(hitp->hit_normal, hitp->hit_normal, 2.0*mbpt->sweat/SQ(mbpt->fldstr)*exp(mbpt->sweat*(1-(a/SQ(mbpt->fldstr)))) , v);
+	    }
 	    break;
 	default: bu_log("unknown metaball method\n"); break;
     }
