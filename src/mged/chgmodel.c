@@ -683,37 +683,92 @@ f_shader(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 int
 f_mirror(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
+    register int k;
     char *av[3];
-    int k;
+    struct bu_vls vls;
+    point_t mirror_origin = {0.0, 0.0, 0.0};
+    vect_t mirror_dir = {1.0, 0.0, 0.0};
     fastf_t mirror_pt = 0.0;
 
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
 
-    if (argc < 4 || 5 < argc) {
-	struct bu_vls vls;
+    if (argc < 3) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help mirror");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
+
 	return TCL_ERROR;
     }
 
-    /* validate the axis */
-    k = -1;
-    if ( strcmp( argv[3], "x" ) == 0 )
-	k = 0;
-    if ( strcmp( argv[3], "y" ) == 0 )
-	k = 1;
-    if ( strcmp( argv[3], "z" ) == 0 )
-	k = 2;
-    if ( k < 0 ) {
-	Tcl_AppendResult(interp, "axis must be x, y or z\n", (char *)NULL);
-	return TCL_ERROR;
+    bu_optind = 1;
+
+    /* Process arguments */
+    while ((k = bu_getopt(argc, argv, "d:D:o:O:p::P:xXyYzZ")) != EOF) {
+	switch (k) {
+	case 'd':
+	case 'D':
+	    if (sscanf(bu_optarg, "%lf %lf %lf",
+		       &mirror_dir[X],
+		       &mirror_dir[Y],
+		       &mirror_dir[Z]) != 3) {
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "help mirror");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+
+		return TCL_ERROR;
+	    }
+	    break;
+	case 'p':
+	case 'P':
+	    mirror_pt = atof(bu_optarg);
+	    break;
+	case 'o':
+	case 'O':
+	    if (sscanf(bu_optarg, "%lf %lf %lf",
+		       &mirror_origin[X],
+		       &mirror_origin[Y],
+		       &mirror_origin[Z]) != 3) {
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "help mirror");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+
+		return TCL_ERROR;
+	    }
+	    break;
+	case 'x':
+	case 'X':
+	    VSET(mirror_dir, 1.0, 0.0, 0.0);
+	    break;
+	case 'y':
+	case 'Y':
+	    VSET(mirror_dir, 0.0, 1.0, 0.0);
+	    break;
+	case 'z':
+	case 'Z':
+	    VSET(mirror_dir, 0.0, 0.0, 1.0);
+	    break;
+	default:
+	    bu_vls_init(&vls);
+	    bu_vls_printf(&vls, "help mirror");
+	    Tcl_Eval(interp, bu_vls_addr(&vls));
+	    bu_vls_free(&vls);
+
+	    return TCL_ERROR;
+	}
     }
 
-    if (argc == 5 && sscanf(argv[4], "%lf", &mirror_pt) != 1) {
-	Tcl_AppendResult(interp, "p must be a float\n", (char *)NULL);
+    argc -= bu_optind;
+
+    if (argc < 2) {
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "help mirror");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+
 	return TCL_ERROR;
     }
 
@@ -721,14 +776,25 @@ f_mirror(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     (void)signal( SIGINT, SIG_IGN );
 
     /* mirror the object */
-    rt_mirror(dbip, argv[1], argv[2], k, mirror_pt, &rt_uniresource);
+    VUNITIZE(mirror_dir);
+
+    if (rt_mirror(dbip,
+		  argv[bu_optind],
+		  argv[bu_optind+1],
+		  mirror_origin,
+		  mirror_dir,
+		  mirror_pt,
+		  &rt_uniresource) == DIR_NULL) {
+	Tcl_AppendResult(interp, "mirror: not able to perform the mirror\n", (char *)NULL);
+	return TCL_ERROR;
+    }
 
     /* restore interrupts */
     (void)signal( SIGINT, SIG_DFL );
 
     /* draw the new mirrored object */
     av[0] = "e";
-    av[1] = argv[2]; /* depends on solid name being in argv[2] */
+    av[1] = argv[bu_optind+1]; /* depends on solid name being in argv[2] */
     av[2] = NULL;
     return cmd_draw( clientData, interp, 2, av );
 }
