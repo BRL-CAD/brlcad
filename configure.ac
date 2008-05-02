@@ -2233,14 +2233,17 @@ else
 fi
 AC_MSG_CHECKING(whether to build the included regular expression library)
 REGEX=""
+REGEX_CPPFLAGS=""
 if test "x$build_brlcad_regex" = "xyes" ; then
     REGEX='${top_builddir}/src/other/libregex/libregex.la'
+    REGEX_CPPFLAGS='-I${top_srcdir}/src/other/libregex'
     AC_MSG_RESULT(yes)
 else
     REGEX="$LIBREGEX"
     AC_MSG_RESULT(no)
 fi
 AC_SUBST(REGEX)
+AC_SUBST(REGEX_CPPFLAGS)
 
 
 dnl *** libz ***
@@ -2548,7 +2551,7 @@ if test "x$build_brlcad_tcl" = "xyes" ; then
 	     ;;
     esac
     TCLSTUB='-L${top_builddir}/src/other/tcl/unix'" -ltclstub${TCL_VERSION}"
-    TCL_CPPFLAGS='${CPPFLAGS} -I${top_srcdir}/src/other/tcl/generic -I${top_srcdir}/src/other/tcl/unix'
+    TCL_CPPFLAGS='${REGEX_CPPFLAGS} -I${top_srcdir}/src/other/tcl/generic -I${top_srcdir}/src/other/tcl/unix'
 else
     AC_MSG_RESULT(no)
 

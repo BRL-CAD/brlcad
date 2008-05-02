@@ -55,7 +55,6 @@ brlcadinclude_wanted = \
 	plastic.h \
 	plot3.h \
 	redblack.h \
-	regex.h \
 	shadefuncs.h \
 	shadework.h \
 	solid.h \
