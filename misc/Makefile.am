@@ -30,8 +30,7 @@ EXTRA_DIST = \
 	brlcad.spec.in \
 	doxygen_structure \
 	flawfinder \
-	libtool.m4 \
-	rcs2log
+	libtool.m4
 
 DISTCLEANFILES = \
 	brlcad-config \
