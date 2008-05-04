@@ -37,6 +37,7 @@
 AUTOMAKE_OPTIONS = 1.6 dist-zip dist-bzip2
 ACLOCAL_AMFLAGS = -I m4
 DISTCHECK_CONFIGURE_FLAGS = --enable-all
+AM_MAKEFLAGS = -w
 
 required_dirs = \
 	include \
