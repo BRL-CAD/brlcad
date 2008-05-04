@@ -1097,10 +1097,10 @@ AC_MSG_CHECKING([whether -framework CoreFoundation is available])
 framework_cf=no
 FRAMEWORK_COREFOUNDATION=""
 PRELIBS="$LIBS"
-LIBS="$LIBS -framework CoreFoundation"
+LIBS="$LIBS -Xlinker -framework -Xlinker CoreFoundation"
 AC_TRY_LINK([#include <CoreFoundation/CoreFoundation.h>], [
 CFBundleRef bref = CFBundleGetMainBundle();
-], [framework_cf=yes ; FRAMEWORK_COREFOUNDATION="-framework CoreFoundation"])
+], [framework_cf=yes ; FRAMEWORK_COREFOUNDATION="-Xlinker -framework -Xlinker CoreFoundation"])
 LIBS="$PRELIBS"
 AC_MSG_RESULT($framework_cf)
 AC_SUBST(FRAMEWORK_COREFOUNDATION)
@@ -1110,7 +1110,7 @@ AC_MSG_CHECKING([whether -framework Carbon is available])
 framework_carbon=no
 FRAMEWORK_CARBON=""
 PRELIBS="$LIBS"
-LIBS="$LIBS -framework Carbon"
+LIBS="$LIBS -Xlinker -framework -Xlinker Carbon"
 AC_TRY_LINK([#include <Carbon/Carbon.h>], [
 OSStatus status;
 ProcessSerialNumber psn = {kNoProcess, kNoProcess};
@@ -1120,7 +1120,7 @@ CopyProcessName(&psn, &processName);
 if (processName != NULL) {
    CFShow(processName);
 }
-], [framework_carbon=yes ; FRAMEWORK_CARBON="-framework Carbon"])
+], [framework_carbon=yes ; FRAMEWORK_CARBON="-Xlinker -framework -Xlinker Carbon"])
 LIBS="$PRELIBS"
 AC_MSG_RESULT($framework_carbon)
 AC_SUBST(FRAMEWORK_CARBON)
@@ -1787,6 +1787,10 @@ if test "xyes" = "xyes" ; then
     dnl linking against openNURBS in librt for some binaries, for
     dnl example rttherm (i.e. any -static binaries)
     BC_COMPILER_AND_LINKER_RECOGNIZES([-fexceptions], [fexceptions])
+    if test "x$bc_fexceptions_works" = "xyes" ; then
+       FEXCEPTIONS="-fexceptions"
+       AC_SUBST(FEXCEPTIONS)
+    fi
 
     dnl dynamic SSE optimizations for NURBS processing
     BC_COMPILER_AND_LINKER_RECOGNIZES([-msse], [msse], [nokeep])
@@ -3546,10 +3550,10 @@ RT_LIBS="${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${REGEX} ${LIBM} ${SYSV} ${OPENNURBS}
 GED_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 WDB_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 FB_LIBS="${BU} ${BU_LIBS} ${PKG} ${TCL} ${SOCKET} ${NSL}" # additional/optional FB_LIBS: ${TK} ${X_LIBS} ${LIBGL}
-TCLCAD_LIBS="${FB} ${FB_LIBS} ${TK} ${TCLSTUB} ${BLT}"
 OPTICAL_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${TCL}"
 MULTISPECTRAL_LIBS="${OPTICAL} ${OPTICAL_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 DM_LIBS="${GED} ${GED_LIBS} ${RT} ${RT_LIBS} ${FB} ${FB_LIBS} ${PNG} ${TK} ${X_LIBS} ${FRAMEWORK_CARBON}"
+TCLCAD_LIBS="${GED} ${GED_LIBS} ${DM} ${DM_LIBS} ${FB} ${FB_LIBS} ${ITK} ${ITCL} ${TK} ${TCLSTUB} ${BLT} ${TCL}"
 BRLCAD_LIBS="${GED} ${GED_LIBS} ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 
 AC_SUBST(BN)

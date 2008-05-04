@@ -49,7 +49,7 @@ libdm_la_SOURCES = \
 	tcl.c \
 	vers.c
 
-libdm_la_LDFLAGS = -version-info 19:1
+libdm_la_LDFLAGS = -version-info 19:1 -no-undefined
 
 # per-program CPPFLAGS wasn't added until automake 1.7
 libdm_la_CFLAGS = \

@@ -20,7 +20,7 @@ AM_CPPFLAGS = \
 noinst_HEADERS = qray.h
 
 libged_la_SOURCES =
-libged_la_LDFLAGS = -version-info 19:1
+libged_la_LDFLAGS = -version-info 19:1 -no-undefined
 libged_la_LIBADD = \
 	libged_nil.la \
 	${GED_LIBS}

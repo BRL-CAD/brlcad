@@ -16,7 +16,7 @@ libfft_la_SOURCES = \
 	$(SRCS) \
 	$(BUILT_SOURCES)
 
-libfft_la_LDFLAGS = -version-info 19:1
+libfft_la_LDFLAGS = -version-info 19:1 -no-undefined
 libfft_la_LIBADD = \
 	${FFT_LIBS}
 
