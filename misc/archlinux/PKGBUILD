@@ -42,25 +42,28 @@
 #
 ###
 pkgname=brlcad
+pkgdesc="An extensive Constructive Solid Geometry (CSG) modeling system."
 _major=$(cat ../../include/conf/MAJOR)
 _minor=$(cat ../../include/conf/MINOR)
 _patch=$(cat ../../include/conf/PATCH)
-
 pkgver=$_major.$_minor.$_patch
 pkgrel=1
-pkgdesc="An extensive Constructive Solid Geometry (CSG) modeling system."
 url="http://brlcad.org"
 license=('custom:BDL' 'BSD' 'LGPL')
 install=brlcad.install
-arch=('i686')
+arch=('i686' 'x86_64')
+makedepends=('bc')
 depends=('libpng' 'zlib' 'libgl' 'tk>=8.5')
 
 options=('!libtool')
 source=('brlcad.sh')
-md5sums=('eb537947981d71cd8f0e329127e3aa5c')
+md5sums=('451f65ed85b1364cc7a0bfa93192d93b')
 
 build() {
     cd $startdir/../../
+
+    # Uncomment the next line if building from SVN fetched sources.
+    #./autogen.sh
     ./configure --prefix=/opt/brlcad
     make || return 1
     make DESTDIR=$startdir/pkg install || return 1
@@ -69,7 +72,7 @@ build() {
     install -m755 $startdir/src/brlcad.sh $startdir/pkg/etc/profile.d
 
     mkdir -p $startdir/pkg/usr/share/licenses/$pkgname
-    cp $startdir/src/$pkgname-$pkgver/doc/legal/bdl.txt \
+    cp $startdir/../../doc/legal/bdl.txt \
         $startdir/pkg/usr/share/licenses/$pkgname
 
 }
