@@ -1192,8 +1192,8 @@ struct bu_hook_list {
     genptr_t 	clientdata; /**< @brief data for caller  */
 };
 
-#define BUHOOK_NULL 0
-#define BUHOOK_LIST_NULL	((struct bu_hook_list *) 0)
+#define BU_HOOK_NULL 0
+#define BU_HOOK_LIST_NULL	((struct bu_hook_list *) 0)
 
 /** list of callbacks to call during bu_bomb, used by mged. */
 BU_EXPORT extern struct bu_hook_list bu_bomb_hook_list;

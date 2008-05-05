@@ -108,7 +108,7 @@ bu_log_add_hook(bu_hook_t func, genptr_t clientdata)
     BU_GETSTRUCT(toadd, bu_hook_list);
     toadd->hookfunc = func;
     toadd->clientdata = clientdata;
-    toadd->l.magic = BUHOOK_LIST_MAGIC;
+    toadd->l.magic = BU_HOOK_LIST_MAGIC;
 
     BU_LIST_APPEND( &(bu_log_hook_list.l), &(toadd->l) );
 #else

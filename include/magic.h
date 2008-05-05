@@ -33,7 +33,6 @@
 
 /* libbu */
 
-#define BUHOOK_LIST_MAGIC		0x90d5dead /**< Nietzsche? */
 #define BU_AVS_MAGIC			0x41765321 /**< AvS! */
 #define BU_BITV_MAGIC			0x62697476 /**< bitv */
 #define BU_COLOR_MAGIC			0x6275636c
@@ -42,6 +41,7 @@
 #define BU_HASH_RECORD_MAGIC		0x68617368 /**< hash */
 #define BU_HASH_TBL_MAGIC		0x48415348 /**< HASH */
 #define BU_HIST_MAGIC			0x48697374 /**< Hist */
+#define BU_HOOK_LIST_MAGIC		0x90d5dead /**< Nietzsche? */
 #define BU_IMAGE_FILE_MAGIC		0x6269666d /**< bifm */
 #define BU_LIST_HEAD_MAGIC		0x01016580
 #define BU_MAPPED_FILE_MAGIC		0x4d617066 /**< Mapf */
