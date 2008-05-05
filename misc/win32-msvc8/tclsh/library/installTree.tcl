@@ -26,6 +26,10 @@
 #    Script for building the install tree on Windows.
 #
 
+set brlcadInstall [lindex $argv 0]
+if {$brlcadInstall == ""} {
+    set brlcadInstall brlcadInstall
+}
 
 set rootDir [file normalize ../../..]
 if {![file exists $rootDir]} {
@@ -33,7 +37,7 @@ if {![file exists $rootDir]} {
     return
 }
 
-set installDir [file join $rootDir brlcadInstall]
+set installDir [file join $rootDir $brlcadInstall]
 if {[file exists $installDir]} {
     puts "$installDir already exists."
     return
@@ -119,11 +123,12 @@ set shareDir [file join $installDir share brlcad $cadVersion]
 # Show tclsh where to find required tcl files
 lappend auto_path [file join $rootDir src other tcl library]
 lappend auto_path [file join $rootDir misc win32-msvc8 tclsh library]
-
 file copy -force [file join $rootDir src other incrTcl itcl library itcl.tcl] [file join $rootDir misc win32-msvc8 tclsh library]
 file copy -force [file join $rootDir src other incrTcl itcl library pkgIndex.tcl] [file join $rootDir misc win32-msvc8 tclsh library]
-source [file join $rootDir src tclscripts ami.tcl]
+set argv ""
+source "[file join $rootDir src tclscripts ami.tcl]"
 package require Itcl
+
 # End More initialization for tclsh
 
 

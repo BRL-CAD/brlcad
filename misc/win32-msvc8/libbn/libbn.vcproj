@@ -9,14 +9,17 @@
 		<Platform
 			Name="Win32"
 		/>
+		<Platform
+			Name="x64"
+		/>
 	</Platforms>
 	<ToolFiles>
 	</ToolFiles>
 	<Configurations>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory=".\Release"
-			IntermediateDirectory=".\Release"
+			OutputDirectory=".\$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory=".\$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
@@ -41,7 +44,7 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="1"
-				TypeLibraryName=".\Release/libbn.tlb"
+				TypeLibraryName=".\$(PlatformName)\$(ConfigurationName)/libbn.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -56,10 +59,10 @@
 				EnableFunctionLevelLinking="true"
 				TreatWChar_tAsBuiltInType="false"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\Release/libbn.pch"
-				AssemblerListingLocation=".\Release/"
-				ObjectFile=".\Release/"
-				ProgramDataBaseFileName=".\Release/"
+				PrecompiledHeaderFile=".\$(PlatformName)\$(ConfigurationName)/libbn.pch"
+				AssemblerListingLocation=".\$(PlatformName)\$(ConfigurationName)/"
+				ObjectFile=".\$(PlatformName)\$(ConfigurationName)/"
+				ProgramDataBaseFileName=".\$(PlatformName)\$(ConfigurationName)/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				Detect64BitPortabilityProblems="false"
@@ -80,13 +83,13 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="tcl85.lib libbu.lib"
-				OutputFile=".\Release/libbn.dll"
+				OutputFile=".\$(PlatformName)\$(ConfigurationName)/libbn.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../../../brlcadInstall/lib"
 				GenerateDebugInformation="false"
-				ProgramDatabaseFile=".\Release/libbn.pdb"
-				ImportLibrary=".\Release/libbn.lib"
+				ProgramDatabaseFile=".\$(PlatformName)\$(ConfigurationName)/libbn.pdb"
+				ImportLibrary=".\$(PlatformName)\$(ConfigurationName)/libbn.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -115,6 +118,108 @@
 				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;libbn.lib ..\..\..\brlcadInstall\lib&#x0D;&#x0A;"
 			/>
 		</Configuration>
+		<Configuration
+			Name="Release|x64"
+			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="2"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="NDEBUG"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
+				TargetEnvironment="3"
+				TypeLibraryName=".\$(PlatformName)\$(ConfigurationName)/libbn.tlb"
+				HeaderFileName=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="2"
+				InlineFunctionExpansion="1"
+				AdditionalIncludeDirectories="../../../include;../../../src/other/tcl/generic;../../../src/other/tcl/win"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;BN_EXPORT_DLL;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;_CRT_SECURE_NO_WARNINGS"
+				StringPooling="true"
+				BasicRuntimeChecks="0"
+				RuntimeLibrary="2"
+				EnableFunctionLevelLinking="true"
+				TreatWChar_tAsBuiltInType="false"
+				UsePrecompiledHeader="0"
+				PrecompiledHeaderFile=".\$(PlatformName)\$(ConfigurationName)/libbn.pch"
+				AssemblerListingLocation=".\$(PlatformName)\$(ConfigurationName)/"
+				ObjectFile=".\$(PlatformName)\$(ConfigurationName)/"
+				ProgramDataBaseFileName=".\$(PlatformName)\$(ConfigurationName)/"
+				WarningLevel="3"
+				SuppressStartupBanner="true"
+				Detect64BitPortabilityProblems="false"
+				DebugInformationFormat="0"
+				CompileAs="0"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="NDEBUG"
+				Culture="1033"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="tcl85.lib libbu.lib"
+				OutputFile=".\$(PlatformName)\$(ConfigurationName)/libbn.dll"
+				LinkIncremental="1"
+				SuppressStartupBanner="true"
+				AdditionalLibraryDirectories="../../../brlcadInstall$(PlatformName)/lib"
+				GenerateDebugInformation="false"
+				ProgramDatabaseFile=".\$(PlatformName)\$(ConfigurationName)/libbn.pdb"
+				ImportLibrary=".\$(PlatformName)\$(ConfigurationName)/libbn.lib"
+				TargetMachine="17"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall$(PlatformName)\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;libbn.lib ..\..\..\brlcadInstall$(PlatformName)\lib&#x0D;&#x0A;"
+			/>
+		</Configuration>
 	</Configurations>
 	<References>
 	</References>
@@ -127,7 +232,15 @@
 				RelativePath="..\..\..\src\libbn\anim.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -139,7 +252,15 @@
 				RelativePath="..\..\..\src\libbn\axis.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -151,7 +272,15 @@
 				RelativePath="..\..\..\src\libbn\bn_tcl.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -163,7 +292,15 @@
 				RelativePath="..\..\..\src\libbn\complex.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -175,7 +312,15 @@
 				RelativePath="..\..\..\src\libbn\font.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -187,7 +332,15 @@
 				RelativePath="..\..\..\src\libbn\fortran.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -198,20 +351,20 @@
 			<File
 				RelativePath="..\..\..\src\libbn\globals.c"
 				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libbn\list.c"
+				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
 						AdditionalIncludeDirectories=""
 					/>
 				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\..\src\libbn\list.c"
-				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -223,7 +376,15 @@
 				RelativePath="..\..\..\src\libbn\marker.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -235,7 +396,15 @@
 				RelativePath="..\..\..\src\libbn\mat.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -247,7 +416,15 @@
 				RelativePath="..\..\..\src\libbn\msr.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -259,7 +436,15 @@
 				RelativePath="..\..\..\src\libbn\noise.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -271,7 +456,15 @@
 				RelativePath="..\..\..\src\libbn\plane.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -283,7 +476,15 @@
 				RelativePath="..\..\..\src\libbn\plot3.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -295,7 +496,15 @@
 				RelativePath="..\..\..\src\libbn\poly.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -307,7 +516,15 @@
 				RelativePath="..\..\..\src\libbn\qmath.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -319,7 +536,15 @@
 				RelativePath="..\..\..\src\libbn\rand.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -331,7 +556,15 @@
 				RelativePath="..\..\..\src\libbn\scale.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -343,7 +576,15 @@
 				RelativePath="..\..\..\src\libbn\sphmap.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -355,7 +596,15 @@
 				RelativePath="..\..\..\src\libbn\symbol.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -367,7 +616,15 @@
 				RelativePath="..\..\..\src\libbn\tabdata.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -379,7 +636,15 @@
 				RelativePath="..\..\..\src\libbn\tplot.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -391,7 +656,15 @@
 				RelativePath="..\..\..\src\libbn\vectfont.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -403,7 +676,15 @@
 				RelativePath="..\..\..\src\libbn\vector.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -419,7 +700,15 @@
 				RelativePath="..\..\..\src\libbn\vert_tree.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -431,7 +720,15 @@
 				RelativePath="..\..\..\src\libbn\wavelet.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"

@@ -3,7 +3,7 @@
 	ProjectType="Visual C++"
 	Version="8.00"
 	Name="libged"
-	ProjectGUID="{EA0BB405-25E2-4B31-92D7-97316770F32B}"
+	ProjectGUID="{E1CBDBEE-887A-4CD8-9D3E-59A52CA2E45E}"
 	RootNamespace="libged"
 	>
 	<Platforms>
