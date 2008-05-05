@@ -36,6 +36,7 @@
 
 #include <stdio.h>
 #include "bio.h"
+#include "bu.h"
 
 #include "magic.h"
 
