@@ -39,6 +39,7 @@
 #include "rtgeom.h"
 #include "solid.h"
 #include "dg.h"
+#include "ged.h"
 
 /* #define debug 1 */
 

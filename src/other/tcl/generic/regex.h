@@ -112,7 +112,11 @@ extern "C" {
 #define	__REG_WIDE_EXEC		TclReExec
 #define	__REG_NOFRONT		/* don't want regcomp() and regexec() */
 #define	__REG_NOCHAR		/* or the char versions */
+#if 1
+#define	TclReFree	regfree
+#else
 #define	regfree		TclReFree
+#endif
 #define	regerror	TclReError
 /* --- end --- */
 

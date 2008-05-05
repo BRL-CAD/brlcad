@@ -41,8 +41,8 @@
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
-#include "raytrace.h"
 #include "rtgeom.h"
+#include "raytrace.h"
 
 
 /*

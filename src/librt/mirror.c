@@ -34,8 +34,8 @@
 #include <string.h>
 #include "bio.h"
 
-#include "raytrace.h"
 #include "rtgeom.h"
+#include "raytrace.h"
 #include "wdb.h"
 #include "bn.h"
 #include "bu.h"

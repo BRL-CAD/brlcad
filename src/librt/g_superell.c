@@ -41,9 +41,9 @@
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
+#include "rtgeom.h"
 #include "raytrace.h"
 #include "nurb.h"
-#include "rtgeom.h"
 
 
 const struct bu_structparse rt_superell_parse[] = {

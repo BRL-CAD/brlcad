@@ -39,8 +39,8 @@
 #include "vmath.h"
 #include "nmg.h"
 #include "db.h"
-#include "raytrace.h"
 #include "rtgeom.h"
+#include "raytrace.h"
 
 
 BU_EXTERN(void rt_arbn_print, (const struct soltab *stp) );

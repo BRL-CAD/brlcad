@@ -62,7 +62,6 @@ set(LIBRT_SOURCES
     g_vol.c
     globals.c
     htbl.c
-    importFg4Section.c
     many.c
     mater.c
     memalloc.c
@@ -125,13 +124,11 @@ set(LIBRT_SOURCES
     storage.c
     table.c
     tcl.c
-    track.c
     transform.c
     tree.c
     vers.c
     vlist.c
     wdb.c
-    wdb_comb_std.c
 )
 
 if(MSVC)

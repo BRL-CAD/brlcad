@@ -39,9 +39,9 @@
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
+#include "rtgeom.h"
 #include "raytrace.h"
 #include "nurb.h"
-#include "rtgeom.h"
 
 
 fastf_t rt_cnurb_par_edge(const struct edge_g_cnurb *crv, fastf_t epsilon);

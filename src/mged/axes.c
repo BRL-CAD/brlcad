@@ -30,7 +30,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "raytrace.h"
+#include "ged.h"
 
 #include "./mged.h"
 #include "./mged_dm.h"

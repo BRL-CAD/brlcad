@@ -43,8 +43,8 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "raytrace.h"
 #include "rtgeom.h"
+#include "raytrace.h"
 #include "wdb.h"
 
 /*XXX The following WDB_ defines need to go inside of a header file */

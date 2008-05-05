@@ -109,6 +109,7 @@
 #include "mater.h"
 #include "nmg.h"
 #include "dg.h"
+#include "ged.h"
 
 
 #ifndef M_SQRT2

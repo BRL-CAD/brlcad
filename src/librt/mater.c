@@ -36,8 +36,8 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "mater.h"
 #include "raytrace.h"
+#include "mater.h"
 
 
 /*

@@ -90,7 +90,6 @@ librt_nil_la_SOURCES = \
 	g_vol.c \
 	globals.c \
 	htbl.c \
-	importFg4Section.c \
 	many.c \
 	mater.c \
 	memalloc.c \
@@ -153,13 +152,11 @@ librt_nil_la_SOURCES = \
 	table.c \
 	tcl.c \
 	timer42.c \
-	track.c \
 	transform.c \
 	tree.c \
 	vers.c \
 	vlist.c \
-	wdb.c \
-	wdb_comb_std.c
+	wdb.c
 
 EXTRA_librt_nil_la_SOURCES = \
 	g_brep.cpp \

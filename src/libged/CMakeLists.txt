@@ -2,11 +2,14 @@ set(LIBGED_SOURCES
     bigE.c
     dg_obj.c
     globals.c
+    importFg4Section.c
     nirt.c
     qray.c
     tcl.c
+    track.c
     vdraw.c
     view_obj.c
+    wdb_comb_std.c
     wdb_obj.c
 )
 

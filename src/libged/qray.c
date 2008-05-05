@@ -33,6 +33,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "dg.h"
+#include "ged.h"
 
 #include "./qray.h"
 

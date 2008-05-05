@@ -40,9 +40,9 @@
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
+#include "rtgeom.h"
 #include "raytrace.h"
 #include "nurb.h"
-#include "rtgeom.h"
 #include "wdb.h"
 
 

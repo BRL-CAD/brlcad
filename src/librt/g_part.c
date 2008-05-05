@@ -187,9 +187,9 @@
 
 #include "vmath.h"
 #include "db.h"
+#include "rtgeom.h"
 #include "raytrace.h"
 #include "nmg.h"
-#include "rtgeom.h"
 
 
 struct part_specific {

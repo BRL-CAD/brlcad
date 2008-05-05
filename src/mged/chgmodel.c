@@ -38,8 +38,8 @@
 #include "bn.h"
 #include "nmg.h"
 #include "nurb.h"
-#include "raytrace.h"
 #include "rtgeom.h"
+#include "ged.h"
 #include "wdb.h"
 
 #include "./mged.h"

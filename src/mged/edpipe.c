@@ -37,9 +37,9 @@
 #include "bio.h"
 #include "vmath.h"
 #include "nmg.h"
-#include "raytrace.h"
-#include "nurb.h"
 #include "rtgeom.h"
+#include "ged.h"
+#include "nurb.h"
 #include "wdb.h"
 
 #include "./mged.h"

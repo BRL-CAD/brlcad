@@ -39,8 +39,8 @@
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
-#include "raytrace.h"
 #include "rtgeom.h"
+#include "raytrace.h"
 
 
 const struct bu_structparse rt_nul_parse[] = {

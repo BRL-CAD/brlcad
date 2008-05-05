@@ -41,7 +41,7 @@
 #include "vmath.h"
 #include "bn.h"
 #include "rtgeom.h"
-#include "raytrace.h"
+#include "ged.h"
 
 /* private headers */
 #include "brlcad_version.h"

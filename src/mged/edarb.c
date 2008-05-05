@@ -33,7 +33,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "rtgeom.h"
-#include "raytrace.h"
+#include "ged.h"
 #include "db.h"
 
 #include "./sedit.h"

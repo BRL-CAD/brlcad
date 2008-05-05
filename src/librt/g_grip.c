@@ -44,10 +44,10 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "rtgeom.h"
 #include "raytrace.h"
 #include "nmg.h"
 #include "db.h"
-#include "rtgeom.h"
 
 
 struct grip_specific {

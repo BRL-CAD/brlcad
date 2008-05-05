@@ -39,10 +39,10 @@
 
 #include "vmath.h"
 #include "db.h"
+#include "rtgeom.h"
 #include "raytrace.h"
 #include "nurb.h"		/* before nmg.h */
 #include "nmg.h"
-#include "rtgeom.h"
 
 
 #ifndef M_SQRT1_2

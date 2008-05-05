@@ -46,10 +46,10 @@
 #include "cmd.h"
 #include "vmath.h"
 #include "db.h"
-#include "mater.h"
 #include "rtgeom.h"
 #include "wdb.h"
 #include "ged.h"
+#include "mater.h"
 
 
 /*
@@ -58,9 +58,6 @@
  * rt_db_free_internal() should be used instead.
  */
 #define USE_RT_COMB_IFREE 0
-
-/* defined in mater.c */
-extern void rt_insert_color( struct mater *newp );
 
 #define WDB_TCL_READ_ERR { \
 	Tcl_AppendResult(interp, "Database read error, aborting.\n", (char *)NULL); \
@@ -188,21 +185,29 @@ struct concat_data {
 #define CUSTOM_SUFFIX	1<<4
 #define V4_MAXNAME	NAMESIZE
 
+/* Defined in wdb_cmd_std.c */
+BU_EXTERN(int wdb_comb_std_tcl,
+	  (ClientData	clientData,
+	   Tcl_Interp	*interp,
+	   int     	argc,
+	   char    	**argv));
 
-/* from librt/tcl.c */
-extern int rt_tcl_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv);
-extern int rt_tcl_import_from_path(Tcl_Interp *interp, struct rt_db_internal *ip, const char *path, struct rt_wdb *wdb);
-extern void rt_generic_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double diameter);
+/* Defined in dg_obj.c */
+BU_EXTERN(void dgo_impending_wdb_close,
+	  (struct rt_wdb	*wdbp,
+	   Tcl_Interp	*interp));
+BU_EXTERN(void dgo_zapall,
+	  (struct rt_wdb *wdbp,
+	   Tcl_Interp *interp));
+BU_EXTERN(void dgo_eraseobjall_callback,
+	  (struct db_i		*dbip,
+	   Tcl_Interp		*interp,
+	   struct directory	*dp,
+	   int			notify));
+BU_EXTERN(void dgo_notifyWdb,
+	  (struct rt_wdb *wdbp,
+	   Tcl_Interp    *interp));
 
-/* from librt/wdb_comb_std.c */
-extern int wdb_comb_std_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-
-/* from librt/g_bot.c */
-extern int rt_bot_sort_faces( struct rt_bot_internal *bot, int tris_per_piece );
-extern int rt_bot_decimate( struct rt_bot_internal *bot, fastf_t max_chord_error, fastf_t max_normal_error, fastf_t min_edge_length );
-
-/* from db5_scan.c */
-HIDDEN int db5_scan(struct db_i *dbip, void (*handler) (struct db_i *, const struct db5_raw_internal *, long int, genptr_t), genptr_t client_data);
 
 int wdb_init_obj(Tcl_Interp *interp, struct rt_wdb *wdbp, const char *oname);
 int wdb_get_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -307,6 +312,9 @@ static void wdb_dir_summary(struct db_i *dbip, Tcl_Interp *interp, int flag);
 static struct directory ** wdb_dir_getspace(struct db_i *dbip, register int num_entries);
 static union tree *wdb_pathlist_leaf_func(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data);
 HIDDEN union tree *facetize_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
+int wdb_dir_check(struct db_i *input_dbip, const char *name, long laddr, int len, int flags, genptr_t ptr);
+void wdb_dir_check5(struct db_i *input_dbip, const struct db5_raw_internal *rip, long addr, genptr_t ptr);
+
 static int pathListNoLeaf = 0;
 
 
@@ -3819,10 +3827,6 @@ wdb_copyeval_tcl(ClientData	clientData,
     return wdb_copyeval_cmd(wdbp, interp, argc-1, argv+1);
 }
 
-BU_EXTERN(int wdb_dir_check, ( struct
-			       db_i *input_dbip, const char *name, long laddr, int len, int flags,
-			       genptr_t ptr));
-
 /**
  *
  *
@@ -3832,8 +3836,6 @@ struct dir_check_stuff {
     struct rt_wdb	*wdbp;
     struct directory **dup_dirp;
 };
-
-BU_EXTERN(void wdb_dir_check5, ( struct db_i *input_dbip, const struct db5_raw_internal *rip, long addr, genptr_t ptr));
 
 /**
  *

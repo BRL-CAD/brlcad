@@ -141,8 +141,8 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "raytrace.h"
 #include "rtgeom.h"
+#include "raytrace.h"
 
 
 struct rec_specific {

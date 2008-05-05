@@ -34,8 +34,8 @@
 #include "tcl.h"
 #include "bu.h"
 #include "vmath.h"
-#include "raytrace.h"
 #include "rtgeom.h"
+#include "ged.h"
 
 
 #define	PRINT_USAGE Tcl_AppendResult(interp, "c: usage 'c [-cr] comb_name [bool_expr]'\n", \
