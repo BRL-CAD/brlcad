@@ -31,8 +31,8 @@
 
 #include <math.h>
 
-#include "bu.h"
 #include "vmath.h"
+#include "bn.h"
 
 
 /* see rand.c for random constant globals */
