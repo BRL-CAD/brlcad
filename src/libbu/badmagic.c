@@ -21,30 +21,25 @@
 /** @{ */
 /** @file badmagic.c
  *
- * @brief
- * Routines to check magic numbers
- *
- *  Routines involved with handling "magic numbers" used to identify
- *  various in-memory data structures.
+ * Routines involved with handling "magic numbers" used to identify
+ * various in-memory data structures.
  *
  */
 
 #include "common.h"
 
-#include <stdio.h>
-#include "bu.h"
+#include "bio.h"
+
+#include "magic.h"
+
 
 #define MAGICBUFSIZ 512
 
-/**
- *			B U _ B A D M A G I C
- *@brief
- *  Support routine for BU_CKMAG macro
- */
+
 void
 bu_badmagic(const unsigned long *ptr, unsigned long magic, const char *str, const char *file, int line)
 {
-    char	buf[MAGICBUFSIZ];
+    char buf[MAGICBUFSIZ];
 
     if ( !(ptr) )  {
 	snprintf(buf, MAGICBUFSIZ, "ERROR: NULL %s pointer, file %s, line %d\n",
@@ -65,6 +60,7 @@ bu_badmagic(const unsigned long *ptr, unsigned long magic, const char *str, cons
 	bu_bomb(buf);
     }
 }
+
 /** @} */
 /*
  * Local Variables:

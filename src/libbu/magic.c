@@ -22,42 +22,27 @@
 /** @file magic.c
  *
  * Routines involved with handling "magic numbers" used to identify
- * various in-memory data structures.
+ * various in-memory data structures.  Magic numbers provide a means
+ * to perform run-time sanity checks for memory corruption and
+ * uninitialized data.
  *
- * The one ugly thing about this strategy is that every BRL-CAD
- * library needs to have it's magic numbers registered here.
- *
- * XXX What is needed is an extension mechanism.  It is a shame that C
- * does not provide a wextern (weak extern) declaration.
+ * The one ugly thing about this implementation is that every BRL-CAD
+ * structure needs to have it's magic number registered here and in
+ * the header.
  *
  */
 
 #include "common.h"
 
-#include <stdio.h>
-#include "bio.h"
-#include "bu.h"
-
 #include "magic.h"
 
 
-/**
- * B U _ I D E N T I F Y _ M A G I C
- *
- * Given a number which has been found in the magic number field of a
- * structure (which is typically the first entry), determine what kind
- * of structure this magic number pertains to.  This is called by the
- * macro BU_CK_MAGIC() to provide a "hint" as to what sort of pointer
- * error might have been made.
- */
 const char *
 bu_identify_magic(register unsigned long magic)
 {
     switch (magic)  {
 	case 0:
 	    return "Zero_Magic_Number";
-	default:
-	    return "Unknown_Magic";
 
 	    /*
 	     * libbu
@@ -252,6 +237,8 @@ bu_identify_magic(register unsigned long magic)
 	    return("wdb.h wmember_magic");
 
     }
+
+    return "Unknown_Magic";
 }
 
 /** @} */

@@ -46,14 +46,6 @@
 
 __BEGIN_DECLS
 
-/* system interface headers */
-#include <setjmp.h> /* for bu_setjmp */
-#include <stddef.h> /* for size_t */
-
-/* common interface headers */
-#include "tcl.h"	/* Included for Tcl_Interp definition */
-#include "magic.h"
-
 #ifndef BU_EXPORT
 #  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
 #    ifdef BU_EXPORT_DLL
@@ -167,6 +159,18 @@ __BEGIN_DECLS
  */
 #define __BU_ATTR_NORETURN __attribute__ ((__noreturn__))
 
+/*
+ * I N T E R F A C E    H E A D E R S
+ */
+
+/* system interface headers */
+#include <setjmp.h> /* for bu_setjmp */
+#include <stddef.h> /* for size_t */
+
+/* common interface headers */
+#include "tcl.h"	/* Included for Tcl_Interp definition */
+#include "magic.h"
+
 
 /**
  * B U _ F O R T R A N
@@ -206,32 +210,6 @@ __BEGIN_DECLS
  */
 #define BU_GETTYPE(_p, _type) \
 	_p = (_type *)bu_calloc(1, sizeof(_type), #_type " (gettype)" )
-
-
-/**
- * B U _ C K M A G
- *
- * @def BU_CKMAG(ptr, magic, string)
- *
- * Macros to check and validate a structure pointer, given that the
- * first entry in the structure is a magic number.
- */
-#ifdef NO_BOMBING_MACROS
-#  define BU_CKMAG(_ptr, _magic, _str)
-#  define BU_CKMAG_TCL(_interp, _ptr, _magic, _str)
-#else
-#  define BU_CKMAG(_ptr, _magic, _str)	\
-	if ( !(_ptr) || ( ((unsigned long)(_ptr)) & (sizeof(unsigned long)-1) ) || \
-	    *((unsigned long *)(_ptr)) != (unsigned long)(_magic) )  { \
-		bu_badmagic( (unsigned long *)(_ptr), (unsigned long)_magic, _str, __FILE__, __LINE__ ); \
-	}
-#  define BU_CKMAG_TCL(_interp, _ptr, _magic, _str)	\
-	if ( !(_ptr) || ( ((unsigned long)(_ptr)) & (sizeof(unsigned long)-1) ) || \
-	     *((unsigned long *)(_ptr)) != (_magic) )  { \
-		bu_badmagic_tcl( (_interp), (unsigned long *)(_ptr), (unsigned long)_magic, _str, __FILE__, __LINE__ ); \
-		return TCL_ERROR; \
-	}
-#endif
 
 
 /**
@@ -1799,17 +1777,6 @@ BU_EXPORT BU_EXTERN(void bu_avs_add_nonunique,
 		     char *value));
 /** @} */
 
-/** @addtogroup magic */
-/** @{ */
-/* badmagic.c */
-BU_EXPORT BU_EXTERN(void bu_badmagic,
-		    (const unsigned long *ptr,
-		     unsigned long magic,
-		     const char *str,
-		     const char *file,
-		     int line));
-/** @} */
-
 /** @addtogroup bitv */
 /** @{ */
 /* bitv.c */
@@ -2061,14 +2028,7 @@ BU_EXPORT BU_EXTERN(void bu_log, (const char *, ... )) __BU_ATTR_FORMAT12;
 BU_EXPORT BU_EXTERN(void bu_flog, (FILE *, const char *, ... )) __BU_ATTR_FORMAT23;
 
 /** @} */
-/** @addtogroup magic */
-/** @{ */
 
-/* magic.c */
-BU_EXPORT BU_EXTERN(const char *bu_identify_magic,
-		    (unsigned long magic));
-
-/** @} */
 /** @addtogroup malloc */
 /** @{ */
 
@@ -2601,15 +2561,6 @@ BU_EXPORT BU_EXTERN(int bu_observer_cmd,
 BU_EXPORT BU_EXTERN(void bu_observer_notify,());
 BU_EXPORT BU_EXTERN(void bu_observer_free, (struct bu_observer *));
 
-/* bu_tcl.c */
-/* The presence of Tcl_Interp as an arg prevents giving arg list */
-BU_EXPORT BU_EXTERN(void bu_badmagic_tcl,
-		    (Tcl_Interp	*interp,
-		     const unsigned long *ptr,
-		     unsigned long magic,
-		     const char	*str,
-		     const char	*file,
-		     int line));
 
 BU_EXPORT BU_EXTERN(void bu_structparse_get_terse_form,
 		    (Tcl_Interp	*interp,

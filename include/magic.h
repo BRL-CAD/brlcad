@@ -17,6 +17,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/** @addtogroup magic */
+/** @{ */
 /** @file magic.h
  *
  * Global registry of recognized magic numbers.
@@ -24,12 +26,19 @@
  * This file is part of LIBBU even though it provides magic numbers
  * for structures in other libraries.
  *
- * This header should be considered a PRIVATE header and should NEVER
- * be referenced by value.
+ * The defines should be considered PRIVATE (even though they are not)
+ * and should NEVER be referenced by value.
  */
 
 #ifndef __MAGIC_H__
 #define __MAGIC_H__
+
+#include "common.h"
+
+#include "tcl.h"
+
+#include "bu.h"
+
 
 /* libbu */
 
@@ -181,7 +190,61 @@
 #define WDB_PIPESEG_MAGIC		0x9723ffef
 #define WMEMBER_MAGIC			0x43128912
 
+
+/**
+ * B U _ C K M A G
+ * B U _ C K M A G _ T C L
+ *
+ * Macros to check and validate a structure pointer, given that the
+ * first entry in the structure is a magic number.
+ */
+#ifdef NO_BOMBING_MACROS
+#  define BU_CKMAG(_ptr, _magic, _str)
+#  define BU_CKMAG_TCL(_interp, _ptr, _magic, _str)
+#else
+#  define BU_CKMAG(_ptr, _magic, _str)	\
+	if ( !(_ptr) || ( ((unsigned long)(_ptr)) & (sizeof(unsigned long)-1) ) || *((unsigned long *)(_ptr)) != (unsigned long)(_magic) )  { \
+		bu_badmagic( (unsigned long *)(_ptr), (unsigned long)_magic, _str, __FILE__, __LINE__ ); \
+	}
+#  define BU_CKMAG_TCL(_interp, _ptr, _magic, _str)	\
+	if ( !(_ptr) || ( ((unsigned long)(_ptr)) & (sizeof(unsigned long)-1) ) || *((unsigned long *)(_ptr)) != (_magic) )  { \
+		bu_badmagic_tcl( (_interp), (unsigned long *)(_ptr), (unsigned long)_magic, _str, __FILE__, __LINE__ ); \
+		return TCL_ERROR; \
+	}
+#endif
+
+
+/**
+ * b u _ b a d m a g i c
+ *
+ *  Support routine for BU_CKMAG macro.
+ */
+BU_EXPORT BU_EXTERN(void bu_badmagic, (const unsigned long *ptr, unsigned long magic, const char *str, const char *file, int line));
+
+/**
+ * b u _ b a d m a g i c _ t c l
+ *
+ * Bad magic checking for Tcl routines.  The presence of Tcl_Interp as
+ * an arg prevents giving arg list.
+ */
+BU_EXPORT BU_EXTERN(void bu_badmagic_tcl, (Tcl_Interp *interp, const unsigned long *ptr, unsigned long magic, const char *str, const char *file, int line));
+
+
+/**
+ * b u _ i d e n t i f y _ m a g i c
+ *
+ * Given a number which has been found in the magic number field of a
+ * structure (which is typically the first entry), determine what kind
+ * of structure this magic number pertains to.  This is called by the
+ * macro BU_CK_MAGIC() to provide a "hint" as to what sort of pointer
+ * error might have been made.
+ */
+BU_EXPORT BU_EXTERN(const char *bu_identify_magic, (unsigned long magic));
+
+
 #endif /* __MAGIC_H__ */
+
+/** @} */
 
 /*
  * Local Variables:
