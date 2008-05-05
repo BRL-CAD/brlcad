@@ -50,7 +50,7 @@
 				Optimization="2"
 				InlineFunctionExpansion="1"
 				AdditionalIncludeDirectories="../../../include;../../../src/libged;../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/libz;../../../src/other/opennurbs;../../../src/other/tnt"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;__win32;ON_DLL_IMPORTS;RT_EXPORT_DLL;DB5_EXPORT_DLL;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;NEW_TOPS_BEHAVIOR;OBJ_BREP=1;TCL_THREADS=1;_RT_DECL_IFREE;_CRT_SECURE_NO_WARNINGS"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;__win32;ON_DLL_IMPORTS;GED_EXPORT_DLL;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;NEW_TOPS_BEHAVIOR;OBJ_BREP=1;TCL_THREADS=1;_RT_DECL_IFREE;_CRT_SECURE_NO_WARNINGS"
 				StringPooling="true"
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="2"
@@ -81,7 +81,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="tcl85.lib libbu.lib libbn.lib libsysv.lib libregex.lib opennurbs.lib"
+				AdditionalDependencies="tcl85.lib libbu.lib libbn.lib libsysv.lib libregex.lib opennurbs.lib librt.lib"
 				OutputFile=".\Release/libged.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -138,6 +138,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\importFg4Section.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\nirt.c"
 				>
 			</File>
@@ -150,11 +154,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\track.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\vdraw.c"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\view_obj.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\wdb_comb_std.c"
 				>
 			</File>
 			<File

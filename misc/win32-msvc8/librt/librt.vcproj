@@ -484,10 +484,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\importFg4Section.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\librt\many.c"
 				>
 			</File>
@@ -740,10 +736,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\track.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\librt\transform.c"
 				>
 			</File>
@@ -761,10 +753,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\librt\wdb.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\librt\wdb_comb_std.c"
 				>
 			</File>
 		</Filter>

@@ -82,7 +82,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="opengl32.lib tcl85.lib tk85.lib libbu.lib libbn.lib libsysv.lib librt.lib libfb.lib"
+				AdditionalDependencies="opengl32.lib tcl85.lib tk85.lib libbu.lib libbn.lib libsysv.lib librt.lib libfb.lib libged.lib"
 				OutputFile=".\$(PlatformName)\$(ConfigurationName)/libdm.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
