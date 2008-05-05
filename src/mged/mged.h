@@ -21,34 +21,34 @@
  *
  * This file contains all of the definitions local to MGED
  *
- *	     V E R Y   I M P O R T A N T   N O T I C E ! ! !
+ * V E R Y   I M P O R T A N T   N O T I C E ! ! !
  *
- *  Many people in the computer graphics field use post-multiplication,
- *  (thanks to Newman and Sproull) with row vectors, ie:
+ * Many people in the computer graphics field use post-multiplication,
+ * (thanks to Newman and Sproull) with row vectors, ie:
  *
- *		view_vec = model_vec * T
+ *	view_vec = model_vec * T
  *
- *  However, in the GED system, the more traditional representation
- *  of column vectors is used (ref: Gwyn).  Therefore, when transforming
- *  a vector by a matrix, pre-multiplication is used, ie:
+ * However, in the GED system, the more traditional representation of
+ * column vectors is used (ref: Gwyn).  Therefore, when transforming a
+ * vector by a matrix, pre-multiplication is used, ie:
  *
- *		view_vec = model2view_mat * model_vec
+ *	view_vec = model2view_mat * model_vec
  *
- *  Furthermore, additional transformations are multiplied on the left, ie:
+ * Furthermore, additional transformations are multiplied on the left, ie:
  *
- *		vec'  =  T1 * vec
- *		vec'' =  T2 * T1 * vec  =  T2 * vec'
+ *	vec'  =  T1 * vec
+ *	vec'' =  T2 * T1 * vec  =  T2 * vec'
  *
- *  The most notable implication of this is the location of the
- *  "delta" (translation) values in the matrix, ie:
+ * The most notable implication of this is the location of the
+ * "delta" (translation) values in the matrix, ie:
  *
- *        x'     ( R0   R1   R2   Dx )      x
- *        y' =  (  R4   R5   R6   Dy  )  *  y
- *        z'    (  R8   R9   R10  Dz  )     z
- *        w'     (  0    0    0   1/s)      w
+ *       x'     ( R0   R1   R2   Dx )      x
+ *       y' =  (  R4   R5   R6   Dy  )  *  y
+ *       z'    (  R8   R9   R10  Dz  )     z
+ *       w'     (  0    0    0   1/s)      w
  *
- *  This of course requires that the rotation portion be computed
- *  using somewhat different formulas (see buildHrot for both kinds).
+ * This of course requires that the rotation portion be computed
+ * using somewhat different formulas (see buildHrot for both kinds).
  *
  */
 
@@ -65,14 +65,14 @@
 #include "tcl.h"
 #include "wdb.h"
 
-/* Needed to define struct menu_item - RFH */
+/* Needed to define struct menu_item */
 #include "./menu.h"
 
-/* Needed to define struct w_dm - RFH */
+/* Needed to define struct w_dm */
 #include "./mged_dm.h"
 
 #include "./mgedtcl.h"
-/* Needed to define struct solid - RFH */
+/* Needed to define struct solid */
 #include "solid.h"
 
 #define HIDE_MGEDS_ARB_ROUTINES 1
@@ -81,13 +81,7 @@
 #define MGED_INMEM_NAME ".inmem"
 #define MGED_DG_NAME "dg"
 
-#if USE_PROTOTYPES
-#	define	MGED_EXTERN(type_and_name, args)	extern type_and_name args
-#	define	MGED_ARGS(args)			args
-#else
-#	define	MGED_EXTERN(type_and_name, args)	extern type_and_name()
-#	define	MGED_ARGS(args)			()
-#endif
+#define	MGED_EXTERN(type_and_name, args) extern type_and_name args
 
 extern double	degtorad, radtodeg;	/* Defined in usepen.c */
 
@@ -102,6 +96,7 @@ extern struct dg_obj	*dgop;			/* defined in mged.c */
 #define	base2local	(dbip->dbi_base2local)
 #define local2base	(dbip->dbi_local2base)
 #define	cur_title	(dbip->dbi_title)      /* current model title */
+
 
 /* Some useful constants, if they haven't been defined elsewhere. */
 
@@ -132,34 +127,33 @@ extern int	air_default;
 extern int	mat_default;
 extern int	los_default;
 
-/*
- *  Definitions.
+/**
+ * Definitions.
  *
- *  Solids are defined in "model space".
- *  The screen is in "view space".
- *  The visible part of view space is -1.0 <= x, y, z <= +1.0
+ * Solids are defined in "model space".  The screen is in "view
+ * space".  The visible part of view space is -1.0 <= x, y, z <= +1.0
  *
- *  The transformation from the origin of model space to the
- *  origin of view space (the "view center") is contained
- *  in the matrix "toViewcenter".  The viewing rotation is
- *  contained in the "Viewrot" matrix.  The viewscale factor
- *  (for [15] use) is kept in the float "Viewscale".
+ * The transformation from the origin of model space to the origin of
+ * view space (the "view center") is contained in the matrix
+ * "toViewcenter".  The viewing rotation is contained in the "Viewrot"
+ * matrix.  The viewscale factor (for [15] use) is kept in the float
+ * "Viewscale".
  *
- *  model2view = Viewscale * Viewrot * toViewcenter;
+ * model2view = Viewscale * Viewrot * toViewcenter;
  *
- *  model2view is the matrix going from model space coordinates
- *  to the view coordinates, and view2model is the inverse.
- *  It is recomputed by new_mats() only.
+ * model2view is the matrix going from model space coordinates to the
+ * view coordinates, and view2model is the inverse.  It is recomputed
+ * by new_mats() only.
  *
  * CHANGE matrix.  Defines the change between the un-edited and the
  * present state in the edited solid or combination.
  *
  * model2objview = modelchanges * model2view
  *
- *  For object editing and solid edit, model2objview translates
- *  from model space to view space with all the modelchanges too.
+ * For object editing and solid edit, model2objview translates from
+ * model space to view space with all the modelchanges too.
  *
- *  These are allocated storage in dozoom.c
+ * These are allocated storage in dozoom.c
  */
 
 extern mat_t	modelchanges;		/* full changes this edit */
@@ -190,44 +184,35 @@ extern jmp_buf jmp_env;
 extern Tcl_Interp *interp;
 
 /*
- *	GED functions referenced in more than one source file:
+ * GED functions referenced in more than one source file:
  */
-extern int              tran(), irot();
-extern void             mged_setup(void);
-extern void		dir_build(), buildHrot(fastf_t *, double, double, double), dozoom(int which_eye),
+
+extern int tran(), irot();
+extern void mged_setup(void);
+extern void dir_build(), buildHrot(fastf_t *, double, double, double), dozoom(int which_eye),
     pr_schain(struct solid *startp, int lvl);
 #ifndef _WIN32
 extern void itoa(int n, char *s, int w);
 #endif
-extern void		eraseobj(register struct directory **dpp), eraseobjall(register struct directory **dpp), mged_finish(int exitcode), slewview(fastf_t *view_pos),
+extern void eraseobj(register struct directory **dpp), eraseobjall(register struct directory **dpp), mged_finish(int exitcode), slewview(fastf_t *view_pos),
     mmenu_init(void), moveHinstance(struct directory *cdp, struct directory *dp, matp_t xlate), moveHobj(register struct directory *dp, matp_t xlate),
     quit(void), refresh(void), rej_sedit(), sedit(void),
     setview(double a1, double a2, double a3),
     adcursor(void), mmenu_display(int y_top), mmenu_set(int index, struct menu_item *value), mmenu_set_all(int index, struct menu_item *value),
     col_item(), col_putchar(), col_eol(), col_pr4v();
-extern void		sedit_menu(void);
-extern void		attach(), get_attached(void);
-extern void		(*cur_sigint)();	/* Current SIGINT status */
-extern void		sig2(int), sig3(int);
+extern void sedit_menu(void);
+extern void attach(), get_attached(void);
+extern void (*cur_sigint)();	/* Current SIGINT status */
+extern void sig2(int), sig3(int);
 
-extern void		aexists(char *name);
-extern int		getname(), use_pen(), dir_print();
-extern int              mged_cmd_arg_check(), release(char *name, int need_close);
+extern void aexists(char *name);
+extern int getname(), use_pen(), dir_print();
+extern int mged_cmd_arg_check(), release(char *name, int need_close);
 extern struct directory	*combadd(), **dir_getspace();
-extern void		ellipse();
+extern void ellipse();
 
 /* mged.c */
 extern void mged_view_obj_callback(genptr_t clientData, struct view_obj *vop);
-
-#if 0
-/* rt_memalloc.c */
-MGED_EXTERN(unsigned long rt_memalloc, (struct mem_map **pp, unsigned size) );
-MGED_EXTERN(unsigned long rt_memget, (struct mem_map **pp, unsigned int size,
-				      unsigned int place) );
-MGED_EXTERN(void rt_memfree, (struct mem_map **pp, unsigned size, unsigned long addr) );
-MGED_EXTERN(void rt_mempurge, (struct mem_map **pp) );
-MGED_EXTERN(void rt_memprint, (struct mem_map **pp) );
-#endif
 
 /* buttons.c */
 MGED_EXTERN(void button, (int bnum) );
@@ -251,18 +236,20 @@ void history_setup(void);
 
 /* cmd.c */
 
-extern void start_catching_output(struct bu_vls *vp), stop_catching_output(struct bu_vls *vp);
+extern void start_catching_output(struct bu_vls *vp);
+extern void stop_catching_output(struct bu_vls *vp);
 
 
-/*
- * Pointer to solid in solid table to be illuminated. - defined in usepen.c
+/**
+ * Pointer to solid in solid table to be illuminated. - defined in
+ * usepen.c
  */
-extern struct solid	*illump;/* == 0 if none, else points to ill. solid */
-extern int	sedraw;		/* apply solid editing changes */
+extern struct solid *illump;/* == 0 if none, else points to ill. solid */
+extern int sedraw;		/* apply solid editing changes */
 
 /* defined in chgview.c */
-extern int	inpara;		/* parameter input from keyboard flag */
-extern int	newedge;	/* new edge for arb editing */
+extern int inpara;		/* parameter input from keyboard flag */
+extern int newedge;	/* new edge for arb editing */
 
 /* defined in usepen.c */
 extern int	ipathpos;	/* path index of illuminated element */
@@ -271,16 +258,17 @@ extern int	ipathpos;	/* path index of illuminated element */
 #define UARROW		002
 #define SARROW		004
 #define	ROTARROW	010	/* Object rotation enabled */
-extern int	movedir;	/* RARROW | UARROW | SARROW | ROTARROW */
+extern int movedir; /* RARROW | UARROW | SARROW | ROTARROW */
 
-extern int	edobj;		/* object editing options */
+extern int edobj; /* object editing options */
+
 
 /* Flags for line type decisions */
 #define ROOT	0
 #define INNER	1
 
-/*
- *  Editor States
+/**
+ * Editor States
  */
 extern int state;			/* (defined in titles.c) */
 extern char *state_str[];		/* identifying strings */
@@ -338,14 +326,14 @@ The in-memory table of contents may not match the status of the on-disk\n\
 database.  The on-disk database should still be intact.  For safety,\n\
 you should exit MGED now, and resolve the I/O problem, before continuing.\n", (char *)NULL)
 
-/*
- *  Helpful macros to inform the user of trouble encountered in
- *  library routines, and bail out.
- *  They are intended to be used mainly in top-level command processing
- *  routines, and therefore include a "return" statement and curley brackets.
- *  Thus, they should only be used in void functions.
- *  The word "return" is not in upper case in these macros,
- *  to enable editor searches for the word "return" to succeed.
+/**
+ * Helpful macros to inform the user of trouble encountered in library
+ * routines, and bail out.  They are intended to be used mainly in
+ * top-level command processing routines, and therefore include a
+ * "return" statement and curley brackets.  Thus, they should only be
+ * used in void functions.  The word "return" is not in upper case in
+ * these macros, to enable editor searches for the word "return" to
+ * succeed.
  */
 /* For errors from db_get() or db_getmrec() */
 #define READ_ERR { \
@@ -644,7 +632,7 @@ void drawH_part2(
     struct solid		*existing_sp);
 int drawtrees(
     int	argc,
-    char	**argv,
+    char **argv,
     int	kind);
 int invent_solid(
     const char	*name,
