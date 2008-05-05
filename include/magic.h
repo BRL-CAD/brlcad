@@ -43,7 +43,7 @@
 #define BU_HASH_TBL_MAGIC		0x48415348 /**< HASH */
 #define BU_HIST_MAGIC			0x48697374 /**< Hist */
 #define BU_IMAGE_FILE_MAGIC		0x6269666d /**< bifm */
-#define BU_LIST_HEAD_MAGIC		0x01016580 /**< Magic num for list head */
+#define BU_LIST_HEAD_MAGIC		0x01016580
 #define BU_MAPPED_FILE_MAGIC		0x4d617066 /**< Mapf */
 #define BU_MRO_MAGIC			0x4D524F4F /**< MROO */
 #define BU_PTBL_MAGIC			0x7074626c /**< ptbl */
@@ -65,38 +65,12 @@
 #define BN_VLBLOCK_MAGIC		0x981bd112
 #define BN_VLIST_MAGIC			0x98237474
 
-/* raytrace */
-
-#define RT_WDB_MAGIC		       	0x5f576462
-#define RT_ANP_MAGIC			0x41507270 /**< APrp */
-#define RT_AP_MAGIC			0x4170706c /**< Appl */
-#define RT_BINUNIF_INTERNAL_MAGIC	0x42696e55 /**< BinU */
-#define RT_CNURB_MAGIC			0x636e7262
-#define RT_COMB_MAGIC			0x436f6d49 /**< ComI */
-#define RT_CTS_MAGIC			0x98989123
-#define RT_DBTR_MAGIC			0x64627472 /**< dbtr */
-#define RT_DBTS_MAGIC			0x64627473 /**< dbts */
-#define RT_DB_INTERNAL_MAGIC		0x0dbbd867
-#define RT_DIR_MAGIC			0x05551212 /**< Directory assistance */
-#define RT_FUNCTAB_MAGIC		0x46754e63 /**< FuNc */
-#define RT_HIT_MAGIC			0x20686974 /**< hit  */
-#define RT_HTBL_MAGIC			0x6874626c /**< htbl */
-#define RT_PIECELIST_MAGIC		0x70636c73 /**< pcls */
-#define RT_PIECESTATE_MAGIC		0x70637374 /**< pcst */
-#define RT_RAY_MAGIC			0x78726179 /**< xray */
-#define RT_REGION_MAGIC			0xdffb8001
-#define RT_SEG_MAGIC			0x98bcdef1
-#define RT_SNURB_MAGIC			0x736e7262
-#define RT_SOLTAB2_MAGIC		0x92bfcde2 /**< l2.magic */
-#define RT_SOLTAB_MAGIC			0x92bfcde0 /**< l.magic */
-#define RT_TESS_TOL_MAGIC		0xb9090dab
-#define RT_TREE_MAGIC			0x91191191
-
 /* primitive internals */
 
 #define RT_ARBN_INTERNAL_MAGIC		0x18236461
 #define RT_ARB_INTERNAL_MAGIC		0x9befd010
 #define RT_ARS_INTERNAL_MAGIC		0x77ddbbe3
+#define RT_BINUNIF_INTERNAL_MAGIC	0x42696e55 /**< BinU */
 #define RT_BOT_INTERNAL_MAGIC		0x626F7472 /**< botr */
 #define RT_BREP_INTERNAL_MAGIC		0x42524550 /**< BREP */
 #define RT_CLINE_INTERNAL_MAGIC		0x43767378 /**< CLIN */
@@ -156,6 +130,32 @@
 #define NMG_VERTEX_G_MAGIC		0x72737707
 #define NMG_VERTEX_MAGIC		0x00123123
 
+/* raytrace */
+
+#define RT_ANP_MAGIC			0x41507270 /**< APrp */
+#define RT_AP_MAGIC			0x4170706c /**< Appl */
+#define RT_CNURB_MAGIC			0x636e7262
+#define RT_COMB_MAGIC			0x436f6d49 /**< ComI */
+#define RT_CTS_MAGIC			0x98989123
+#define RT_DBTR_MAGIC			0x64627472 /**< dbtr */
+#define RT_DBTS_MAGIC			0x64627473 /**< dbts */
+#define RT_DB_INTERNAL_MAGIC		0x0dbbd867
+#define RT_DIR_MAGIC			0x05551212 /**< Directory assistance */
+#define RT_FUNCTAB_MAGIC		0x46754e63 /**< FuNc */
+#define RT_HIT_MAGIC			0x20686974 /**< hit  */
+#define RT_HTBL_MAGIC			0x6874626c /**< htbl */
+#define RT_PIECELIST_MAGIC		0x70636c73 /**< pcls */
+#define RT_PIECESTATE_MAGIC		0x70637374 /**< pcst */
+#define RT_RAY_MAGIC			0x78726179 /**< xray */
+#define RT_REGION_MAGIC			0xdffb8001
+#define RT_SEG_MAGIC			0x98bcdef1
+#define RT_SNURB_MAGIC			0x736e7262
+#define RT_SOLTAB2_MAGIC		0x92bfcde2 /**< l2.magic */
+#define RT_SOLTAB_MAGIC			0x92bfcde0 /**< l.magic */
+#define RT_TESS_TOL_MAGIC		0xb9090dab
+#define RT_TREE_MAGIC			0x91191191
+#define RT_WDB_MAGIC		       	0x5f576462
+
 /* misc */
 
 #define ANIMATE_MAGIC			0x414e4963 /**< 1095649635 */
@@ -174,7 +174,7 @@
 #define PT_HD_MAGIC			0x87687680
 #define PT_MAGIC			0x87687681
 #define RESOURCE_MAGIC			0x83651835
-#define RTI_MAGIC			0x99101658 /**< magic # for integrity check */
+#define RTI_MAGIC			0x99101658
 #define SPM_MAGIC			0x41278678
 #define VERT_TREE_MAGIC			0x56455254 /**< VERT */
 #define WDB_METABALLPT_MAGIC		0x6D627074 /**< mbpt */
