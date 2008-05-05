@@ -19,19 +19,7 @@
  */
 /** @file clone.c
  *
- * Functions -
- *	f_clone		clones an object, optionally
- *			rotating or translating the copies
- *	f_tracker	clones an object, evenly
- *			spacing the copies along a spline
- *
- * Author -
- *	Adam Ross (v4)
- *      Christopher Sean Morrison (v5)
- *      Erik Greenwald (v5)
- *
- * Source -
- *      Geometric Solutions, Inc.
+ * routines related to performing deep object copies
  *
  * TODO:
  *   use bu_vls strings
@@ -964,7 +952,8 @@ get_args(Tcl_Interp *interp, int argc, char **argv, struct clone_state *state)
 }
 
 /**
- * master hook function for the 'clone' command.
+ * master hook function for the 'clone' command.  clones an object,
+ * optionally * rotating or translating the copies
  */
 int
 f_clone(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
