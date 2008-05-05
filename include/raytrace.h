@@ -5847,6 +5847,7 @@ RT_EXPORT extern fastf_t rt_cline_radius;
 /* defined in g_bot.c */
 RT_EXPORT extern int rt_bot_minpieces;
 RT_EXPORT extern int rt_bot_tri_per_piece;
+#ifdef __RTGEOM_H__
 RT_EXPORT BU_EXTERN(int rt_bot_sort_faces,
 		    (struct rt_bot_internal *bot,
 		     int tris_per_piece));
@@ -5855,7 +5856,7 @@ RT_EXPORT BU_EXTERN(int rt_bot_decimate,
 		     fastf_t max_chord_error,
 		     fastf_t max_normal_error,
 		     fastf_t min_edge_length));
-
+#endif
 
 
 /*
