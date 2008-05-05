@@ -1134,38 +1134,6 @@ struct rt_wdb  {
 #define RT_WDB_TYPE_DB_INMEM_APPEND_ONLY	5
 
 
-/**
- * V I E W _ O B J
- *
- * A view object maintains state for controlling a view.
- */
-struct view_obj {
-    struct bu_list 	l;
-    struct bu_vls	vo_name;		/**< @brief  view object name/cmd */
-    fastf_t		vo_scale;
-    fastf_t		vo_size;		/**< @brief  2.0 * scale */
-    fastf_t		vo_invSize;		/**< @brief  1.0 / size */
-    fastf_t		vo_perspective;		/**< @brief  perspective angle */
-    fastf_t		vo_local2base;		/**< @brief  scale local units to base units (i.e. mm) */
-    fastf_t		vo_base2local;		/**< @brief  scale base units (i.e. mm) to local units */
-    vect_t		vo_aet;
-    vect_t		vo_eye_pos;		/**< @brief  eye position */
-    vect_t		vo_keypoint;
-    char		vo_coord;		/**< @brief  coordinate system */
-    char		vo_rotate_about;	/**< @brief  indicates what point rotations are about */
-    mat_t		vo_rotation;
-    mat_t		vo_center;
-    mat_t		vo_model2view;
-    mat_t		vo_pmodel2view;
-    mat_t		vo_view2model;
-    mat_t		vo_pmat;		/**< @brief  perspective matrix */
-    struct bu_observer	vo_observers;
-    void 		(*vo_callback)();	/**< @brief  called in vo_update with vo_clientData and vop */
-    genptr_t		vo_clientData;		/**< @brief  passed to vo_callback */
-    int			vo_zclip;
-};
-RT_EXPORT extern struct view_obj HeadViewObj;		/**< @brief  head of view object list */
-#define RT_VIEW_OBJ_NULL ((struct view_obj *)NULL)
 #define RT_MINVIEWSIZE 0.0001
 #define RT_MINVIEWSCALE 0.00005
 
@@ -4343,9 +4311,6 @@ RT_EXPORT BU_EXTERN(void nmg_pr_fus_in_fg,
 		    (const unsigned long *fg_magic));
 
 /* From nmg_misc.c */
-RT_EXPORT BU_EXTERN(struct rt_bot_internal *nmg_bot,
-		    (struct shell *s,
-		     const struct bn_tol *tol));
 RT_EXPORT BU_EXTERN(int rt_dist_pt3_line3,
 		    (fastf_t		*dist,
 		     point_t		pca,
@@ -4728,6 +4693,20 @@ RT_EXPORT BU_EXTERN(void rt_tcl_pr_hit,
 		     const struct seg *segp,
 		     const struct xray *rayp,
 		     int flipflag));
+RT_EXPORT BU_EXTERN(int rt_tcl_rt,
+		    (ClientData clientData,
+		     Tcl_Interp *interp,
+		     int argc,
+		     const char **argv));
+RT_EXPORT BU_EXTERN(int rt_tcl_import_from_path,
+		    (Tcl_Interp *interp,
+		     struct rt_db_internal *ip,
+		     const char *path,
+		     struct rt_wdb *wdb));
+RT_EXPORT BU_EXTERN(void rt_generic_make,
+		    (const struct rt_functab *ftp,
+		     struct rt_db_internal *intern,
+		     double diameter));
 RT_EXPORT BU_EXTERN(void rt_tcl_setup,
 		    (Tcl_Interp *interp));
 RT_EXPORT BU_EXTERN(int Sysv_Init,
@@ -5868,6 +5847,15 @@ RT_EXPORT extern fastf_t rt_cline_radius;
 /* defined in g_bot.c */
 RT_EXPORT extern int rt_bot_minpieces;
 RT_EXPORT extern int rt_bot_tri_per_piece;
+RT_EXPORT BU_EXTERN(int rt_bot_sort_faces,
+		    (struct rt_bot_internal *bot,
+		     int tris_per_piece));
+RT_EXPORT BU_EXTERN(int rt_bot_decimate,
+		    (struct rt_bot_internal *bot,
+		     fastf_t max_chord_error,
+		     fastf_t max_normal_error,
+		     fastf_t min_edge_length));
+
 
 
 /*
