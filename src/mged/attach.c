@@ -42,6 +42,7 @@
 #include "vmath.h"
 #include "dg.h"
 #include "dm-Null.h"
+#include "ged.h"
 
 #include "./mged.h"
 #include "./titles.h"
