@@ -212,6 +212,18 @@ notify_parent_done(int parent) {
 }
 
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+void
+mgedInvalidParameterHandler(const wchar_t* expression,
+			    const wchar_t* function, 
+			    const wchar_t* file, 
+			    unsigned int line, 
+			    uintptr_t pReserved)
+{
+    /* Do nothing */
+}
+#endif
+
 /*
  *			M A I N
  */
@@ -235,6 +247,8 @@ main(int argc, char **argv)
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
     setmode(fileno(stderr), O_BINARY);
+
+    (void)_set_invalid_parameter_handler(mgedInvalidParameterHandler);
 #endif
 
     bu_setprogname(argv[0]);
