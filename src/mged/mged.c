@@ -220,7 +220,32 @@ mgedInvalidParameterHandler(const wchar_t* expression,
 			    unsigned int line, 
 			    uintptr_t pReserved)
 {
-    /* Do nothing */
+/*
+ *   Windows, I think you're number one!
+ *
+ *                   _____
+ *                  ||   ||
+ *                  |\___/|
+ *                  |     |
+ *                  |     |
+ *                  |     |
+ *                  |     |
+ *                  |     |
+ *                  |     |
+ *             _____|<--->|_____
+ *         ___/     |     |     \
+ *        /   |     |     |     | \
+ *        |   |     |     |     |  |
+ *        |   |     |     |     |  |
+ *        |                     |  |
+ *        |                     |  |
+ *        |                       /
+ *        |                      /
+ *         \                    /
+ *          \                  /
+ *           |                 |
+ *           |                 |
+ */
 }
 #endif
 
