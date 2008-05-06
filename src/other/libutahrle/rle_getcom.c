@@ -48,7 +48,7 @@
  */
 static char *
 match( n, v )
-register char *n;
+register CONST_DECL char *n;
 register char *v;
 {
     for ( ; *n != '\0' && *n != '=' && *n == *v; n++, v++ )
