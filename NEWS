@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2008-XX-XX  Release 7.12.3                                     ---
 ----------------------------------------------------------------------
 
+* ...
 * new mged mirror command options for arbitrary vectors - Bob Parker
 * fix -k rt option to work for surface normal lighting - Cliff Yapp
 * add tire proc-db for easy tire/wheel model creation - Cliff Yapp
