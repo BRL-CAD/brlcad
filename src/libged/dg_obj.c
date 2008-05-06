@@ -3971,7 +3971,6 @@ dgo_rt_output_handler(ClientData	clientData,
     if (Tcl_Eof(run_rtp->chan) ||
 	(!ReadFile(run_rtp->fd, line, 10240, &count, 0))) {
 	int aborted;
-	DWORD result;
 	int retcode;
 
 	Tcl_DeleteChannelHandler(run_rtp->chan,
@@ -4065,8 +4064,6 @@ dgo_rt_set_eye_model(struct dg_obj *dgop,
 	/* not doing zclipping, so back out of geometry */
 	register struct solid *sp;
 	register int i;
-	double  t;
-	double  t_in;
 	vect_t  direction;
 	vect_t  extremum[2];
 	vect_t  minus, plus;    /* vers of this solid's bounding box */
@@ -4090,7 +4087,6 @@ dgo_rt_set_eye_model(struct dg_obj *dgop,
 	    VMAX( extremum[1], plus );
 	}
 	VMOVEN(direction, vop->vo_rotation + 8, 3);
-	VSCALE(direction, direction, -1.0);
 	for (i = 0; i < 3; ++i)
 	    if (NEAR_ZERO(direction[i], 1e-10))
 		direction[i] = 0.0;
@@ -4100,15 +4096,11 @@ dgo_rt_set_eye_model(struct dg_obj *dgop,
 	    (eye_model[Y] <= extremum[1][Y]) &&
 	    (eye_model[Z] >= extremum[0][Z]) &&
 	    (eye_model[Z] <= extremum[1][Z])) {
-	    t_in = -INFINITY;
-	    for (i = 0; i < 6; ++i) {
-		if (direction[i%3] == 0)
-		    continue;
-		t = (extremum[i/3][i%3] - eye_model[i%3]) /
-		    direction[i%3];
-		if ((t < 0) && (t > t_in))
-		    t_in = t;
-	    }
+	    double  t_in;
+	    vect_t diag;
+
+	    VSUB2(diag, extremum[1], extremum[0]);
+	    t_in = MAGNITUDE(diag);
 	    VJOIN1(eye_model, eye_model, t_in, direction);
 	}
     }
