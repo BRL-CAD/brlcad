@@ -31,6 +31,7 @@
 #include "./scroll.h" /* struct scroll_item */
 #include "fb.h" /* FBIO */
 #include "pkg.h" /* struct pkg_conn */
+#include "ged.h"
 
 /* mgedtcl.h must come before the #define statements below (pathName
  * in particular as it's in the tk.h header)
