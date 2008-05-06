@@ -52,7 +52,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../include;../../../src/librt;../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/libz;../../../src/other/opennurbs;../../../src/other/tnt"
+				AdditionalIncludeDirectories="../../../include;../../../src/librt;../../../src/other/libregex;../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/libz;../../../src/other/opennurbs;../../../src/other/tnt"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;__win32;ON_DLL_IMPORTS;RT_EXPORT_DLL;DB5_EXPORT_DLL;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;NEW_TOPS_BEHAVIOR;OBJ_BREP=1;TCL_THREADS=1;_RT_DECL_IFREE;_CRT_SECURE_NO_WARNINGS"
 				StringPooling="true"
 				BasicRuntimeChecks="0"
