@@ -89,7 +89,7 @@ FunctionEnd
   !define MUI_WELCOMEPAGE_TEXT "This wizard will guide you through the installation of BRL-CAD ${VERSION}.\r\n\r\nBRL-CAD is a free open source multiplatform CAD software developed by the U.S. Army Research Laboratory (ARL).\r\n\r\nClick Next to continue."
 
   !insertmacro MUI_PAGE_WELCOME
-  !insertmacro MUI_PAGE_LICENSE "copying.txt"
+  !insertmacro MUI_PAGE_LICENSE "../../COPYING"
   !insertmacro MUI_PAGE_COMPONENTS
   !insertmacro MUI_PAGE_DIRECTORY
 
@@ -105,12 +105,12 @@ FunctionEnd
 
   ;Finished page configuration
   !define MUI_FINISHPAGE_NOAUTOCLOSE
-  !define MUI_FINISHPAGE_SHOWREADME "$INSTDIR\doc\html\manuals\index.html"
+  !define MUI_FINISHPAGE_SHOWREADME "../../README"
   !define MUI_FINISHPAGE_SHOWREADME_TEXT "View Readme"
   !define MUI_FINISHPAGE_SHOWREADME_NOTCHECKED
 
-  !define MUI_FINISHPAGE_LINK "BRL-CAD Home Page"
-  !define MUI_FINISHPAGE_LINK_LOCATION "http://www.brlcad.org/"
+  !define MUI_FINISHPAGE_LINK "BRL-CAD Website"
+  !define MUI_FINISHPAGE_LINK_LOCATION "http://brlcad.org/"
 
   !insertmacro MUI_PAGE_FINISH
   
