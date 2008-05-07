@@ -9147,7 +9147,7 @@ wdb_binary_cmd(struct rt_wdb	*wdbp,
 
     if ( input_mode + output_mode != 1 ) {
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib_alias wdb_binary %s", cname);
+	bu_vls_printf(&vls, "helplib_alias binary %s", cname);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -9158,7 +9158,7 @@ wdb_binary_cmd(struct rt_wdb	*wdbp,
 
     if ( (input_mode && argc != 4) || (output_mode && argc != 2) ) {
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib_alias wdb_binary %s", cname);
+	bu_vls_printf(&vls, "helplib_alias binary %s", cname);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -9228,7 +9228,7 @@ wdb_binary_cmd(struct rt_wdb	*wdbp,
 
 	if ( minor_type == 0 ) {
 	    bu_vls_init(&vls);
-	    bu_vls_printf(&vls, "helplib_alias wdb_binary %s", cname);
+	    bu_vls_printf(&vls, "helplib_alias binary %s", cname);
 	    Tcl_Eval(interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	    return TCL_ERROR;
@@ -9320,7 +9320,7 @@ wdb_binary_cmd(struct rt_wdb	*wdbp,
 	return TCL_OK;
     } else {
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib_alias wdb_binary %s", cname);
+	bu_vls_printf(&vls, "helplib_alias binary %s", cname);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;

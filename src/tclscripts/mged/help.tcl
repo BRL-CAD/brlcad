@@ -54,6 +54,24 @@ set mged_help_data(attr)        $helplib_data(wdb_attr)
 set mged_help_data(autoview)	{{}	{set view size and center so that all displayed solids are in view}}
 set mged_help_data(B)		$helplib_data(dgo_blast)
 set mged_help_data(bev)		{{"[-t] [-P#] new_obj obj1 op obj2 op obj3 op ..."}	{boolean evaluation of objects via NMG's}}
+set mged_help_data(binary)	{{{-i major_type minor_type | -o} dest source}
+    {manipulate opaque objects.
+	Must specify one of -i (for creating or adjusting objects (input))
+	or -o for extracting objects (output).
+	If the major type is "u" the minor type must be one of:
+	"f" -> float
+	"d" -> double
+	"c" -> char (8 bit)
+	"s" -> short (16 bit)
+	"i" -> int (32 bit)
+	"l" -> long (64 bit)
+	"C" -> unsigned char (8 bit)
+	"S" -> unsigned short (16 bit)
+	"I" -> unsigned int (32 bit)
+	"L" -> unsigned long (64 bit)
+	For input, source is a file name and dest is an object name.
+	For output source is an object name and dest is a file name.
+	Only uniform array binary objects (major_type=u) are currently supported}}
 set mged_help_data(bot_condense) {{new_bot_solid old_bot_solid} {remove unreferenced vertices in a BOT solid}}
 set mged_help_data(bot_decimate)  $helplib_data(wdb_bot_decimate)
 set mged_help_data(bot_face_fuse) {{new_bot_solid old_bot_solid} {eliminate duplicate faces in a BOT solid}}
@@ -277,7 +295,6 @@ set mged_help_data(vquery_ray)	{{x y}  	{trace a single ray from x y}}
 #set mged_help_data(vrmgr)	{{host {master|slave|overview}}	{link with Virtual Reality manager}}
 set mged_help_data(vrot)	$helplib_data(vo_vrot)
 set mged_help_data(wcodes)	{{filename object(s)}	{write region ident codes to filename}}
-set mged_help_data(wdb_binary)	$helplib_data(wdb_binary)
 set mged_help_data(whatid)	$helplib_data(wdb_whatid)
 set mged_help_data(whichair)	$helplib_data(wdb_whichair)
 set mged_help_data(whichid)	$helplib_data(wdb_whichid)
