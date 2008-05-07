@@ -375,6 +375,14 @@ shoot(char *buffer, int ctp)
 
     init_ovlp();
     (void) rt_shootray( &ap );
+
+    /* Restore pre-backout target values */
+    if (do_backout) {
+	for (i = 0; i < 3; ++i) {
+	    target(i) = target(i) - ( bov * -direct(i) );
+	}
+    }
+
 }
 
 void
@@ -587,7 +595,23 @@ cm_libdebug(char *buffer, com_table *ctp)
 void
 backout(char *buffer, com_table *ctp)
 {
-    do_backout = 1;
+    while (isspace(*buffer))
+        ++buffer;
+    if (*buffer == '\0') {
+        /* display current value of do_backout */
+        bu_log("backout = %d\n", do_backout);
+        return;
+    }
+    if (!isdigit(*buffer)) {
+        bu_log("backout must be set to 0 (off) or 1 (on)\n");
+        return;
+    } else {
+	if (*buffer == '0') {
+	    do_backout = 0;
+	} else {
+	    do_backout = 1;
+	}
+    }
     return;
 }
 

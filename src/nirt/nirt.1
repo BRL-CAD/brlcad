@@ -271,8 +271,9 @@ See the discussion of the
 .I -B
 option above for more details.
 .TP 12
-.B backout
-Backs the ray origination point out of the geometry:
+.B backout [" n "]"
+Command to set the backout flag.  With no option, prints the current value. 
+When activated, backs the ray origination point out of the geometry:
 .IR h " and " v
 retain their previous values and
 .I d
@@ -280,7 +281,7 @@ is set to
 .I Dmax,
 the largest value of
 .I d
-anywhere in the geometry.
+anywhere in the geometry.  Default is 0 (deactivated), 1 is active.
 .TP 12
 .BI "useair [" n "]"
 Sets the \fIuseair\fR member
