@@ -1150,6 +1150,9 @@ dnl check for java
 JAVA_CFLAGS="$FRAMEWORK_JAVAVM"
 JAVA_LDFLAGS="-shrext .jnilib $FRAMEWORK_JAVAVM"
 if test "x$bc_with_java" = "xyes" ; then
+    if test "x$bc_with_java_val" = "xyes" ; then
+	bc_with_java_val="/usr"
+    fi
     if test "x$bc_with_java_val" != "x" ; then
 	JAVA_CFLAGS="-I$bc_with_java_val/include -I$bc_with_java_val/include/`uname | tr [A-Z] [a-z]`"
 	JAVA_LDFLAGS="-shrext .jnilib -L$bc_with_java_val/lib64 -L$bc_with_java_val/lib"
