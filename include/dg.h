@@ -114,7 +114,7 @@ struct dg_obj {
     void			(*dgo_rtCmdNotify)();	/**< @brief  function called when rt command completes */
 };
 GED_EXPORT extern struct dg_obj HeadDGObj;		/**< @brief  head of drawable geometry object list */
-#define RT_DGO_NULL		((struct dg_obj *)NULL)
+#define GED_DGO_NULL		((struct dg_obj *)NULL)
 
 /* defined in dg_obj.c */
 GED_EXPORT BU_EXTERN(int Dgo_Init,
