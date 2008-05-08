@@ -323,7 +323,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 		if (step<=finalstep) {
 		    STEPIN(out);
 		    stat = 0;
-		    if (segsleft <= 0)
+		    if (ap->a_onehit != 0 && segsleft <= 0)
 			return retval;
 		} else
 		    STEPBACK
@@ -333,9 +333,9 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 				    RT_GET_SEG(segp, ap->a_resource);
 				    segp->seg_stp = stp;
 				    STEPIN(in);
-				    segp->seg_out.hit_dist = segp->seg_in.hit_dist + .1; /* cope with silliness */
+				    segp->seg_out.hit_dist = segp->seg_in.hit_dist + 1; /* cope with silliness */
 				    BU_LIST_INSERT( &(seghead->l), &(segp->l) );
-				    if (segsleft <= 0)	/* exit now if we're one-hit (like visual rendering) */
+				    if (segsleft == 0)	/* exit now if we're one-hit (like visual rendering) */
 					return retval;
 				    /* reset the ray-walk shtuff */
 				    stat = 1;
