@@ -59,11 +59,13 @@
 	method killtree {args}
 	method l {args}
 	method listeval {args}
+	method log {args}
 	method ls {args}
 	method lt {args}
 	method make_bb {name args}
 	method make_name {args}
 	method match {args}
+	method mirror {args}
 	method move_arb_edge {args}
 	method move_arb_face {args}
 	method mv {args}
@@ -239,6 +241,10 @@
     eval $db listeval $args
 }
 
+::itcl::body Db::log {args} {
+    eval $db log $args
+}
+
 ::itcl::body Db::ls {args} {
     eval $db ls $args
 }
@@ -277,6 +283,10 @@
 
 ::itcl::body Db::cp {args} {
     eval $db cp $args
+}
+
+::itcl::body Db::mirror {args} {
+    eval $db mirror $args
 }
 
 ::itcl::body Db::move_arb_edge {args} {
@@ -511,10 +521,12 @@
     $help add killtree	{{<object>} {kill complete tree[s] - BE CAREFUL}}
     $help add l		{{[-r] <object(s)>} {list attributes (verbose). Objects may be paths}}
     $help add listeval	{{} {lists 'evaluated' path solids}}
+    $help add log	{{get|start|stop} {used to control logging}}
     $help add ls	{{[-a -c -r -s]} {table of contents}}
     $help add lt	{{object} {return first level tree as list of operator/member pairs}}
     $help add match	{{exp} {returns all database objects matching the given expression}}
     $help add make_bb	{{bbname object(s)} {make a bounding box (rpp) around the specified objects}}
+    $help add mirror	{{[options] old new}	{mirror object along the specified axis}}
     $help add move_arb_edge	{{arb edge pt} {move an arb's edge through pt}}
     $help add move_arb_face	{{arb face pt} {move an arb's face through pt}}
     $help add mv	{{old new} {rename object}}
