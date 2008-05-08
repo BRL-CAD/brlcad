@@ -46,6 +46,20 @@ __BEGIN_DECLS
 #  endif
 #endif
 
+/* Check if database pointer is NULL */
+#define GED_CHECK_DBI_NULL(_dbip,_ret) \
+    if ((_dbip) == DBI_NULL) { \
+	bu_log("A database is not open!\n"); \
+	return (_ret); \
+    }
+
+/* Check if the database is read only, and if so return TCL_ERROR */
+#define	GED_CHECK_READ_ONLY(_dbip,_ret) \
+    if ((_dbip)->dbi_read_only) { \
+	bu_log("Sorry, this database is READ-ONLY\n"); \
+	return (_ret); \
+    }
+
 /**
  * V I E W _ O B J
  *
@@ -77,7 +91,11 @@ struct view_obj {
     int			vo_zclip;
 };
 
-#define RT_VIEW_OBJ_NULL ((struct view_obj *)NULL)
+#define GED_VIEW_OBJ_NULL ((struct view_obj *)0)
+#define GED_RESULT_NULL ((void *)0)
+#define GED_RESULT_FLAGS_HELP_BIT 0x1
+#define GED_OK 0
+#define GED_ERROR 1
 
 /* loadable Tcl interface routines */
 
@@ -647,6 +665,18 @@ GED_EXPORT BU_EXTERN(int	vo_dir2ae_cmd,
 		     int argc,
 		     char **argv));
 
+
+/* defined in mirror.c */
+GED_EXPORT BU_EXTERN(int		ged_mirror,
+		     (struct rt_wdb	*wdbp,
+		      int		argc,
+		      char		**argv));
+
+/* defined in log.c */
+GED_EXPORT BU_EXTERN(int		ged_log,
+		     (struct rt_wdb	*wdbp,
+		      int		argc,
+		      char		**argv));
 
 __END_DECLS
 
