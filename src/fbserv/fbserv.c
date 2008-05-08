@@ -61,8 +61,11 @@
 #include <errno.h>
 #include <string.h>
 #include <time.h>
-#if HAVE_SYSLOG_H
+#ifdef HAVE_SYSLOG_H
 #  include <syslog.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_SOCKET_H
 #  include <sys/socket.h>

@@ -21,18 +21,14 @@
 /** @{ */
 /** @file if_remote.c
  *
- *  Remote libfb interface.
+ * Remote libfb interface.
  *
- *  Duplicates the functions in libfb via communication
- *  with a remote server (fbserv).
+ * Duplicates the functions in libfb via communication with a remote
+ * server (fbserv).
  *
- *  Note that internal errors are returned as -2 and below, because
- *  most remote errors (unpacked by fbgetlong) will be -1
- *  (although they could be anything).
- *
- *  Authors -
- *	Phillip Dykstra
- *	Gary S. Moss
+ * Note that internal errors are returned as -2 and below, because
+ * most remote errors (unpacked by fbgetlong) will be -1 (although
+ * they could be anything).
  *
  */
 /** @} */
@@ -43,6 +39,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
 #ifdef HAVE_WRITEV
 #  include <sys/uio.h>		/* for struct iovec */
 #endif
