@@ -678,125 +678,41 @@ f_shader(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 }
 
 
-/* Mirror image */
-/* Format: mirror oldobject newobject axis */
+/* 
+ * Usage:
+ *     mirror [-d dir] [-o origin] [-p scalar_pt] [-x] [-y] [-z] old new
+ */
 int
 f_mirror(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    register int k;
-    char *av[3];
-    struct bu_vls vls;
-    point_t mirror_origin = {0.0, 0.0, 0.0};
-    vect_t mirror_dir = {1.0, 0.0, 0.0};
-    fastf_t mirror_pt = 0.0;
+    Tcl_DString ds;
+    int ret;
 
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
 
-    if (argc < 3) {
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "help mirror");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
+    ret = ged_mirror(wdbp, argc, argv);
 
-	return TCL_ERROR;
+    /* Convert to Tcl codes */
+    if (ret == GED_OK)
+	ret = TCL_OK;
+    else
+	ret = TCL_ERROR;
+
+    Tcl_DStringInit(&ds);
+    Tcl_DStringAppend(&ds, bu_vls_addr(&wdbp->wdb_result_str), -1);
+    Tcl_DStringResult(interp, &ds);
+
+    if (wdbp->wdb_result_flags == 0 && ret == TCL_OK) {
+	char *av[3];
+
+	av[0] = "draw";
+	av[1] = argv[argc-1];
+	av[2] = NULL;
+	cmd_draw(clientData, interp, 2, av);
     }
 
-    bu_optind = 1;
-
-    /* Process arguments */
-    while ((k = bu_getopt(argc, argv, "d:D:o:O:p::P:xXyYzZ")) != EOF) {
-	switch (k) {
-	case 'd':
-	case 'D':
-	    if (sscanf(bu_optarg, "%lf %lf %lf",
-		       &mirror_dir[X],
-		       &mirror_dir[Y],
-		       &mirror_dir[Z]) != 3) {
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "help mirror");
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-
-		return TCL_ERROR;
-	    }
-	    break;
-	case 'p':
-	case 'P':
-	    mirror_pt = atof(bu_optarg);
-	    break;
-	case 'o':
-	case 'O':
-	    if (sscanf(bu_optarg, "%lf %lf %lf",
-		       &mirror_origin[X],
-		       &mirror_origin[Y],
-		       &mirror_origin[Z]) != 3) {
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "help mirror");
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-
-		return TCL_ERROR;
-	    }
-	    break;
-	case 'x':
-	case 'X':
-	    VSET(mirror_dir, 1.0, 0.0, 0.0);
-	    break;
-	case 'y':
-	case 'Y':
-	    VSET(mirror_dir, 0.0, 1.0, 0.0);
-	    break;
-	case 'z':
-	case 'Z':
-	    VSET(mirror_dir, 0.0, 0.0, 1.0);
-	    break;
-	default:
-	    bu_vls_init(&vls);
-	    bu_vls_printf(&vls, "help mirror");
-	    Tcl_Eval(interp, bu_vls_addr(&vls));
-	    bu_vls_free(&vls);
-
-	    return TCL_ERROR;
-	}
-    }
-
-    argc -= bu_optind;
-
-    if (argc < 2) {
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "help mirror");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-
-	return TCL_ERROR;
-    }
-
-    /* no interrupts */
-    (void)signal( SIGINT, SIG_IGN );
-
-    /* mirror the object */
-    VUNITIZE(mirror_dir);
-
-    if (rt_mirror(dbip,
-		  argv[bu_optind],
-		  argv[bu_optind+1],
-		  mirror_origin,
-		  mirror_dir,
-		  mirror_pt,
-		  &rt_uniresource) == DIR_NULL) {
-	Tcl_AppendResult(interp, "mirror: not able to perform the mirror\n", (char *)NULL);
-	return TCL_ERROR;
-    }
-
-    /* restore interrupts */
-    (void)signal( SIGINT, SIG_DFL );
-
-    /* draw the new mirrored object */
-    av[0] = "e";
-    av[1] = argv[bu_optind+1]; /* depends on solid name being in argv[2] */
-    av[2] = NULL;
-    return cmd_draw( clientData, interp, 2, av );
+    return ret;
 }
 
 /* Modify Combination record information */
