@@ -88,6 +88,7 @@ option add *Mged.height 400 widgetDefault
 	method make_bb {name args}
 	method make_name {args}
 	method match {args}
+	method mirror {args}
 	method move_arb_edge {args}
 	method move_arb_face {args}
 	method mv {args}
@@ -294,6 +295,32 @@ option add *Mged.height 400 widgetDefault
 
 ::itcl::body Mged::cp {args} {
     eval $db cp $args
+}
+
+::itcl::body Mged::mirror {args} {
+    $db log start
+    set ret [catch {eval $db mirror $args} result]
+    set logMsg [$db log get]
+    $db log stop
+
+    if {$ret} {
+	if {$logMsg != ""} {
+	    error "$logMsg\n[lindex $result 1]"
+	} else {
+	    error [lindex $result 1]
+	}
+    } else {
+	set flags [lindex $result 0]
+	if {$flags == 0} {
+	    Mged::draw [lindex $args end]
+	}
+
+	if {$logMsg != ""} {
+	    error "$logMsg\n[lindex $result 1]"
+	} else {
+	    return [lindex $result 1]
+	}
+    }
 }
 
 ::itcl::body Mged::move_arb_edge {args} {
