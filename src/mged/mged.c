@@ -128,7 +128,7 @@ int pipe_out[2];
 int pipe_err[2];
 struct db_i *dbip = DBI_NULL;	/* database instance pointer */
 struct rt_wdb *wdbp = RT_WDB_NULL;
-struct dg_obj *dgop = RT_DGO_NULL;
+struct dg_obj *dgop = GED_DGO_NULL;
 int update_views = 0;
 int (*cmdline_hook)() = NULL;
 jmp_buf	jmp_env;		/* For non-local gotos */
