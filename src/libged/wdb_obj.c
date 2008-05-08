@@ -291,6 +291,8 @@ static int wdb_orotate_tcl(ClientData clientData, Tcl_Interp *interp, int argc, 
 static int wdb_oscale_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_otranslate_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_ocenter_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int wdb_log_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int wdb_mirror_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
 void wdb_deleteProc(ClientData clientData);
 static void wdb_deleteProc_rt(ClientData clientData);
@@ -350,11 +352,13 @@ static struct bu_cmdtab wdb_cmds[] = {
     {"killtree",	wdb_killtree_tcl},
     {"l",		wdb_list_tcl},
     {"listeval",	wdb_pathsum_tcl},
+    {"log",		wdb_log_tcl},
     {"ls",		wdb_ls_tcl},
     {"lt",		wdb_lt_tcl},
     {"make_bb",	wdb_make_bb_tcl},
     {"make_name",	wdb_make_name_tcl},
     {"match",	wdb_match_tcl},
+    {"mirror",		wdb_mirror_tcl},
     {"move_arb_edge",	wdb_move_arb_edge_tcl},
     {"move_arb_face",	wdb_move_arb_face_tcl},
     {"mv",		wdb_move_tcl},
@@ -456,6 +460,9 @@ wdb_deleteProc(ClientData clientData)
     RT_CK_WDB(wdbp);
     BU_LIST_DEQUEUE(&wdbp->l);
     bu_vls_free(&wdbp->wdb_name);
+    bu_vls_free(&wdbp->wdb_log);
+    bu_vls_free(&wdbp->wdb_result_str);
+    bu_vls_free(&wdbp->wdb_prestr);
     wdb_close(wdbp);
 }
 
@@ -503,6 +510,9 @@ wdb_init_obj(Tcl_Interp		*interp,
     /* initialize rt_wdb */
     bu_vls_init(&wdbp->wdb_name);
     bu_vls_strcpy(&wdbp->wdb_name, oname);
+    bu_vls_init(&wdbp->wdb_log);
+    bu_vls_init(&wdbp->wdb_result_str);
+    bu_vls_init(&wdbp->wdb_prestr);
 
 #if 0
     /*XXXX already initialize by wdb_dbopen */
@@ -11612,6 +11622,72 @@ wdb_ocenter_tcl(ClientData	clientData,
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
     return wdb_ocenter_cmd(wdbp, interp, argc-1, argv+1);
+}
+
+/*
+ * Set/get the center of the specified object.
+ *
+ * Usage:
+ *        procname log get|start|stop
+ */
+static int
+wdb_log_tcl(ClientData	clientData,
+	    Tcl_Interp	*interp,
+	    int		argc,
+	    char	**argv)
+{
+    struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+    Tcl_DString ds;
+    int ret;
+
+    ret = ged_log(wdbp, argc-1, argv+1);
+
+    Tcl_DStringInit(&ds);
+    Tcl_DStringAppend(&ds, bu_vls_addr(&wdbp->wdb_result_str), -1);
+    Tcl_DStringResult(interp, &ds);
+
+    if (ret == GED_ERROR)
+	return TCL_ERROR;
+
+    return TCL_OK;
+}
+
+/*
+ * Set/get the center of the specified object.
+ *
+ * Usage:
+ *        procname mirror [-d dir] [-o origin] [-p scalar_pt] [-x] [-y] [-z] old new
+ */
+static int
+wdb_mirror_tcl(ClientData	clientData,
+	       Tcl_Interp	*interp,
+	       int		argc,
+	       char		**argv)
+{
+    struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+    Tcl_DString ds;
+    int ret;
+    char flags[128];
+
+    ret = ged_mirror(wdbp, argc-1, argv+1);
+
+    Tcl_DStringInit(&ds);
+
+    Tcl_DStringStartSublist(&ds);
+    snprintf(flags, 127, "%u", wdbp->wdb_result_flags);
+    Tcl_DStringAppend(&ds, flags, -1);
+    Tcl_DStringEndSublist(&ds);
+
+    Tcl_DStringStartSublist(&ds);
+    Tcl_DStringAppend(&ds, bu_vls_addr(&wdbp->wdb_result_str), -1);
+    Tcl_DStringEndSublist(&ds);
+
+    Tcl_DStringResult(interp, &ds);
+
+    if (ret == GED_ERROR)
+	return TCL_ERROR;
+
+    return TCL_OK;
 }
 
 /*
