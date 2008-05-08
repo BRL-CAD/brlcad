@@ -300,11 +300,13 @@ option add *Mged.height 400 widgetDefault
 ::itcl::body Mged::mirror {args} {
     $db log start
     set ret [catch {eval $db mirror $args} result]
-    set logMsg [$db log get]
+    set logData [$db log get]
+    set logFlag [lindex $logData 0]
+    set logMsg [lindex $logData 1]
     $db log stop
 
     if {$ret} {
-	if {$logMsg != ""} {
+	if {$logMsg != {}} {
 	    error "$logMsg\n[lindex $result 1]"
 	} else {
 	    error [lindex $result 1]
