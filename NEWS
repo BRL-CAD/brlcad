@@ -14,7 +14,7 @@ changes made.  See document footer for additional details.
 --- 2008-XX-XX  Release 7.12.3                                     ---
 ----------------------------------------------------------------------
 
-* redo behavior of interactive nirt backout cmd - Cliff Yapp
+* improve behavior of interactive nirt backout command - Cliff Yapp
 * renamed mged dbbinary command to binary - Sean Morrison
 * fixed rt/rtedge clipping bug - Bob Parker
 * new mged mirror command options for arbitrary vectors - Bob Parker
