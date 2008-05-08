@@ -50,6 +50,9 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
+* remove hit_normal and hit_point from struct hit.  add RT_HIT_POINT
+  macro.  refactor all callers as needed.
+
 * add option to nirt for reporting the exit point (instead of LOS)
 
 * add option to nirt for reporting the gaps between geometry

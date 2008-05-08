@@ -246,17 +246,16 @@ struct xray {
  *
  * Important Note:  Surface Normals always point OUT of a solid.
  *
- * Statement of intent:
- *
- * The hit_point and hit_normal elements will be removed from this
- * structure, so as to separate the concept of the solid's normal at
- * the hit point from the post-boolean normal at the hit point.
+ * DEPRECATED: The hit_point and hit_normal elements will be removed
+ * from this structure, so as to separate the concept of the solid's
+ * normal at the hit point from the post-boolean normal at the hit
+ * point.
  */
 struct hit {
     unsigned long	hit_magic;
     fastf_t		hit_dist;	/**< @brief dist from r_pt to hit_point */
-    point_t		hit_point;	/**< @brief Intersection point */
-    vect_t		hit_normal;	/**< @brief Surface Normal at hit_point */
+    point_t		hit_point;	/**< @brief DEPRECATED: Intersection point, use VJOIN1 hit_dist */
+    vect_t		hit_normal;	/**< @brief DEPRECATED: Surface Normal at hit_point, use RT_HIT_NORMAL */
     vect_t		hit_vpriv;	/**< @brief PRIVATE vector for xxx_*() */
     genptr_t		hit_private;	/**< @brief PRIVATE handle for xxx_shot() */
     int			hit_surfno;	/**< @brief solid-specific surface indicator */
@@ -266,7 +265,7 @@ struct hit {
 #define RT_CK_HIT(_p)	BU_CKMAG(_p, RT_HIT_MAGIC, "struct hit")
 
 /**
- * Old macro:
+ * Old macro: DEPRECATED, use RT_HIT_NORMAL
  *
  * Only the hit_dist field of pt_inhit and pt_outhit are valid when
  * a_hit() is called; to compute both hit_point and hit_normal, use
