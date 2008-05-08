@@ -136,6 +136,7 @@ namespace eval ArcherCore {
 	method ls                  {args}
 	method make_bb             {args}
 	method make_name           {args}
+	method mirror              {args}
 	method move                {args}
 	method mv                  {args}
 	method mvall               {args}
@@ -355,7 +356,7 @@ namespace eval ArcherCore {
 				     bot2pipe \
 				     adjust attr blast c comb concat copyeval E erase_all \
 				     ev find hide killall killtree \
-				     make_bb make_name mvall push put r report track \
+				     make_bb make_name mirror mvall push put r report track \
 				     unhide vdraw
 	}
 	variable mDbSpecificCommands {}
@@ -3959,6 +3960,10 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::make_name {args} {
     eval mgedWrapper make_name 0 0 0 0 $args
+}
+
+::itcl::body ArcherCore::mirror {args} {
+    eval mgedWrapper mirror 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::move {args} {
