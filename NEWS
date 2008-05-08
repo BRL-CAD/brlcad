@@ -4,8 +4,134 @@ BRL-CAD Release Notes
 
 Included below is the latest news pertaining to BRL-CAD releases.  The
 history or BRL-CAD prior to release 5.0 is covered in doc/history.txt,
-see that file and the CVS log for more historic information.  The
-entire history of the project is available through CVS.
+see that file and the SVN log for more historic information.  The
+entire history of the project is available through SVN.
+
+----------------------------------------------------------------------
+--- 2008-04-22  Release 7.12.2                                     ---
+----------------------------------------------------------------------
+
+* new pinewood boxcar example geometry database - Cliff Yapp
+* add mk_arb5, mk_arb6 and mk_arb7 to libwdb - Cliff Yapp
+* added xclone command to mged for xpushed deep copies - Bob Parker
+* fixed clone infinite loop for combinations - Sean Morrison, C. Yapp
+* wrap mged resource paths with spaces - Bob Parker, Elena Bautu
+* new -k 'cutaway view' option added to rt - John Anderson
+* improved mged classic mode display manager selection - Sean Morrison
+* fixed mged crash when getting forms of sketch objects - Bob Parker
+* new -u units option added to rtarea - Sean Morrison
+* added uniform binary object creation to mged GUI - John Anderson
+* added e, l, o, i options to mged saveview command - Sean Morrison
+
+
+----------------------------------------------------------------------
+--- 2008-03-11  Release 7.12.0                                     ---
+----------------------------------------------------------------------
+
+Coalescing after just over a year of concentrated development efforts,
+this release unveils a plethora of Windows-specific enhancements, bug
+fixes, and additional tools ported.  Notably, the Windows improvements
+include fixing various issues with file management and porting many
+more ray tracers, geometry converters, framebuffer tools, and MGED
+classic mode support.
+
+This release also includes a new geometry converter for the United
+Kingdom's INTAVAL format from Her Majesty's Ministry of Defence.  The
+new importer was jointly developed by TNO PML and IABG mbH and is
+included in the BRL-CAD sources as a contributed module.
+
+Of the numerous bug fixes and feature enhancements in this release,
+one of the biggest productivity enhancements is the addition of the
+mged "clone" and "tracker" commands.  Clone is a very powerful yet
+simple command that provides an intuitive means for performing deep
+copies of objects.  Tracker provides an interface for replicating
+objects along a spline path.  These 'new' commands originate from
+modifications originally developed by the now defunct Geometric
+Solutions, Inc., and after receiving considerable updates and rewrites
+are now once again available to users.
+
+Finally, this release also marks a major change to the BRL-CAD source
+code repository with a move from CVS to Subversion recently completed.
+The conversion was successfully completed with the entire history of
+BRL-CAD development preserved, accounting for nearly 25 years of
+continuous active development.
+ 
+* automatic redraw updates after Geometry Browser edits - Bob Parker
+* improved Geometry Browser mouse behavior in mged - Bob Parker
+* make fast4-g use GIFT_material=1 and los=100 - Sean Morrison
+* fixed Mac OS X 'ogl' framebuffer crash - Sean Morrison, Bob Parker
+* removed ogl framebuffer multiple window 'm' option - Sean Morrison
+* tree -d option in MGED for limiting tree display depth - Cliff Yapp
+* added mouse color query support to OpenGL framebuffer - Bob Parker
+* fixed X11 framebuffer colormapping bug - Bob Parker 
+* libpng updated to 1.2.25 - Erik Greenwald
+* fixed several mged I/O bugs for stdin/stdout/stderr - Bob Parker
+* nirt now uses bounding sphere for -b backout option - Erik Greenwald
+* document the signals rt responds to for progress - Sean Morrison
+* libpng updated to 1.2.24 - Erik Greenwald
+* TCL/TK updated to 8.5.1 - Erik Greenwald
+* MGED now runs in the foreground by default - Erik Greenwald
+* fixed g-dxf bug where incorrect object name is assigned - Bob Parker
+* fixed browser-based mged help on Mac OS X - Sean Morrison
+* added rest of BRL-CAD's geometry converters for Windows - Bob Parker
+* added more missing framebuffer tools to Windows port - Bob Parker
+* rtwizard enhancments for ghosting and display - Bob Parker
+* mged reports failure if ray-tracer returns non-zero - Sean Morrison
+* improved mged corrupt geometry file handling - Sean Morrison
+* improved dbconcat object suffix and prefix options - Sean Morrison
+* Tcl/Tk updated to 8.5 final from 8.5b1 - Erik Greenwald
+* fixed PIX image file creation bug on Windows - Bob Parker
+* ported rtwizard to function properly on Windows - Bob Parker
+* fixed mged text-editing commands on Windows platform - Bob Parker
+* removed duplicate points text-editing ARBs in mged - John Anderson
+* improved mged ted line-ending support using wordpad - Bob Parker
+* fixed g_diff bug where some differences were missed - John Anderson
+* fixed bug evaluating metaball normals - Erik Greenwald, Ed Davisson
+* improved metaball primitive rendering - Erik Greenwald
+* fixed bug in mged rcc-cap command when using 't' option - Bob Parker
+* mged classic mode now works on Windows platform - Bob Parker
+* fixed Windows-specific raytrace framebuffer delay - Bob Parker
+* new tracker tool for extracting NEWS tracker data - Sean Morrison
+* converted source repository from CVS to Subversion - Sean Morrison
+* new 'dir2ae' mged command for getting az/el from dir - Sean Morrison
+* new 'ae2dir' mged command for getting dir from az/el - Bob Parker
+* fixed empty name crash when using mged 'lt' command  - Sean Morrison
+* Pro/E plugin allows spaces in part name mapping file - Sean Morrison
+* Pro/E plugin creates 'top.#' if 'top' already exists - Sean Morrison
+* fixed asc2g bug on Windows that caused a crash on exit - Bob Parker
+* fixed bugs in several Utah Raster Toolkit tools - Pedro Giffuni
+* fixed mged start-up initialization bug on Windows - Daniel Roßberg
+* graceful handling of mesh normal failures - Sean Morrison
+* fixed variety of g-iges and other exporter crashes - Sean Morrison
+* fixed crash-on-exit cleanup bug in g-off exporter - Sean Morrison
+* fixed crash when xpush was called on a primitive - Erik Greenwald
+* fixed Windows port 'opendb' command crash - Bob Parker
+* added configurable max_dist depth option to rtedge - Erik Greenwald
+* added rest of BRL-CAD's ray-tracers to the Windows port - Bob Parker
+* enabled embedded framebuffer support in Windows port - Bob Parker
+* fixed garbled output during parallel crash reports - Sean Morrison
+* fixed memory deallocation bug in the raytracers - Bob Parker
+* renamed 'hd' hexadecimal dump utility to 'hex' - Sean Morrison
+* renamed procedural 'wall' generator to 'masonry' - Sean Morrison 
+* mged 'tol' command now accepts multiple tolerances - Sean Morrison
+* TCL and TK updated to 8.5b1. itcl/itk to dev 3.4. - Erik Greenwald
+* fixed non-normalized vector bugs with ARBN objects - John Anderson
+* pix-png warns if PNG is smaller than the PIX input - Sean Morrison
+* new tgf-g INTAVAL importer - TNO PML, IABG mbH
+* removed longjmp warning message from applications - Sean Morrison
+* upgraded bundled incrTcl to version 3.3 - Erik Greenwald
+* fixed bug with -g/-G cell size options to rt - John Anderson
+* 'tree' command without args now shows e'd objects - Sean Morrison
+* new pix-fb -p option to pause before exiting - Karel Kulhavy
+* fixed mged 'B' command behavior with -A and no args - John Anderson
+* updated bundled libpng to version 1.2.21 - Erik Greenwald
+* removed raytrace image continuation code - Erik Greenwald
+* new mged 'clone' command for performing deep copies of objects
+	- Adam Ross, Sean Morrison, Erik Greenwald
+* new mged 'tracker' object routing command - Sean Morrison
+* fixed crash in mged ls -A attribute listing command - Sean Morrison
+* fixed dbconcat of empty combinations, crash in mged - John Anderson
+
 
 ----------------------------------------------------------------------
 --- 2007-10-24  Release 7.10.4                                     ---
@@ -39,7 +165,7 @@ now disabled in order to reduce confusion with clipped geometry.
 * BoT vertex selection in mged reports local units - Sean Morrison
 * improved photon map irradiance progress reporting - Erik Greenwald
 * tab-completion for mged - John Anderson
-* quelled various flawfinder security warnings - Erik Greenwald
+* quelled various flawfinder security issues - Erik Greenwald
 * fixed photon-mapping lighting model crash - Erik Greenwald
 * ADRT libtie bug fixes and performance enhancements - Justin Shumaker
 * mged now tests for vim before vi for text editing - Sean Morrison
@@ -1158,27 +1284,18 @@ Miscellaneous
 
 DEPRECATED FEATURES
 
-Some features of release 5.0, while brought forward from older
-releases for the sake of compatibility, represent outdated user
-interface, outgrown software technology, or similar unfortunate
-baggage. The list below enumerates some of the features that, while
-still available in release 5.0, are not guaranteed to be carried
-further, and thus may not be present in subsequent releases.
+As BRL-CAD continues to be developed and evolves, various application
+programming interfaces (APIs), headers, and data types necessarily
+change to fulfill development requirements and to not allow the APIs
+to become overly complicated with unnecessary or undesired complexity.
+As these changes are forseen, features will be sometimes marked as
+deprecated and will usually be made obsolete at some point in the
+future.  For those situations, developers using the BRL-CAD libraries
+may need to update to new API features in order to link with newer
+versions of BRL-CAD.
 
-* compat4.h
-
-  A C header file to provide compatibility in names and calling
-  sequences of library routines.  For instance, functions like
-  rt_malloc and rb_create have been moved from librt(3) and
-  libredblack(3), respectively, to libbu(3), and are renamed bu_malloc
-  and bu_rb_create, accordingly.
-
-* mged command names
-
-  Many of them are unfortunate and some have already been changed
-  Where command names have been changed, Tcl procs with the former
-  names are provided in 5.0 for compatibility.  For instance, the
-  enigmatic 'e' has been replaced with the much clearer 'draw'.
+See the doc/deprecation.txt file for a transcript of features that are
+deprecated or have already become obsolete.
 
 ---
 See doc/history.txt for more historic information on BRL-CAD.  There

@@ -19,9 +19,6 @@
  */
 /** @file component.c
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #include "component.h"

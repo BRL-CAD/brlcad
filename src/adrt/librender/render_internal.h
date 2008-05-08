@@ -19,9 +19,6 @@
  */
 /** @file render_internal.h
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #ifndef _RENDER_INTERNAL_H

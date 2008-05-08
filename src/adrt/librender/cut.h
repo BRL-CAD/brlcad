@@ -19,9 +19,6 @@
  */
 /** @file cut.h
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #ifndef _RENDER_CUT_H

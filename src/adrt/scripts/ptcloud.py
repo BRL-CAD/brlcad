@@ -18,11 +18,6 @@
 # information.
 #
 ###
-#
-# Author -
-#  Justin Shumaker
-#
-###
 
 import Blender
 import string

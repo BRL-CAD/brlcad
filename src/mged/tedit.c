@@ -154,11 +154,8 @@ writesolid(void)
 {
     register int i;
     FILE *fp;
-#if defined(_WIN32) && !defined(__CYGWIN__)
-    char *eol = "\r\n";
-#else
     char *eol = "\n";
-#endif
+
     CHECK_DBI_NULL;
 
     fp = fopen(tmpfil, "w");

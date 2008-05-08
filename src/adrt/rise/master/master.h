@@ -19,9 +19,6 @@
  */
 /** @file master.h
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #ifndef _RISE_MASTER_H

@@ -19,9 +19,6 @@
  */
 /** @file bench.h
  *
- * Author -
- *   Justin Shumaker
- *
  */
 
 #ifndef _BENCH_H

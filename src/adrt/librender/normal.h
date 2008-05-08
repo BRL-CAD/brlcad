@@ -19,9 +19,6 @@
  */
 /** @file normal.h
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #ifndef _RENDER_NORMAL_H

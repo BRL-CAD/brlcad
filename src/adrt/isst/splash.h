@@ -19,9 +19,6 @@
  */
 /** @file splash.h
  *
- * Author -
- *   Justin Shumaker
- *
  */
 
 static const struct {

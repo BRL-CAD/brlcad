@@ -55,10 +55,14 @@ static void finish(int sig) {
     bu_exit(EXIT_FAILURE, "Collected signal %d, aborting!\n", sig);
 }
 
+static void info(int sig) {
+	/* something to display info about clients, threads and port. */
+    return;
+}
 
 static void help() {
     printf("%s\n", ADRT_VER_DETAIL);
-    printf("%s", "usage: isst_slave [options] [host]\n\
+    printf("%s", "usage: adrt_slave [options] [host]\n\
   -v\t\tdisplay version\n\
   -h\t\tdisplay help\n\
   -p\t\tport number\n\
@@ -73,6 +77,12 @@ int main(int argc, char **argv) {
 
     /* Default Port */
     signal(SIGINT, finish);
+#ifdef SIGUSR1
+    signal(SIGUSR1, info);
+#endif
+#ifdef SIGINFO
+    signal(SIGINFO, info);
+#endif
 
     /* Initialize strings */
     host[0] = 0;
@@ -132,7 +142,7 @@ int main(int argc, char **argv) {
 	    port = TN_MASTER_PORT;
     }
 
-    isst_slave(port, host, threads);
+    adrt_slave(port, host, threads);
 
     return EXIT_SUCCESS;
 }

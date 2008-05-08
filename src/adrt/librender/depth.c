@@ -19,9 +19,6 @@
  */
 /** @file depth.c
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #include "depth.h"

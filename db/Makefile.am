@@ -59,6 +59,7 @@ MODELS = \
 	lgt-test.asc \
 	operators.asc \
 	pic.asc \
+	pinewood.asc \
 	prim.asc \
 	tank_car.asc \
 	terra.asc \

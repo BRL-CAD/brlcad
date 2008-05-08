@@ -19,9 +19,6 @@
  */
 /** @file observer.h
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #ifndef _RISE_OBSERVER_H

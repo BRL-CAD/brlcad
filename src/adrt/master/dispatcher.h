@@ -19,9 +19,6 @@
  */
 /** @file dispatcher.h
  *
- * Author -
- *   Justin Shumaker
- *
  */
 
 #ifndef _ISST_DISPATCHER_H

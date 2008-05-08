@@ -19,9 +19,6 @@
  */
 /** @file flat.c
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #include "flat.h"

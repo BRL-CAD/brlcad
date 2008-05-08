@@ -19,9 +19,6 @@
  */
 /** @file dispatcher.h
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #ifndef _RISE_DISPATCHER_H

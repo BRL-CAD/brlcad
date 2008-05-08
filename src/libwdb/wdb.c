@@ -198,6 +198,77 @@ mk_arb4(struct rt_wdb *wdbp, const char *name, const fastf_t *pts)
 }
 
 /*
+ *                      M K _ A R B 5
+ */
+int
+mk_arb5(struct rt_wdb *wdbp, const char *name, const fastf_t *pts)
+
+
+    /* [5*3] */
+{
+    point_t     pt8[8];
+
+    VMOVE( pt8[0], &pts[0*3] );
+    VMOVE( pt8[1], &pts[1*3] );
+    VMOVE( pt8[2], &pts[2*3] );
+    VMOVE( pt8[3], &pts[3*3] );
+    VMOVE( pt8[4], &pts[4*3] ); 
+    VMOVE( pt8[5], &pts[4*3] );
+    VMOVE( pt8[6], &pts[4*3] );
+    VMOVE( pt8[7], &pts[4*3] );
+
+    return( mk_arb8( wdbp, name, &pt8[0][X] ) );
+}
+
+
+
+/*
+ *                      M K _ A R B 6
+ */
+
+int
+mk_arb6(struct rt_wdb *wdbp, const char *name, const fastf_t *pts)
+
+    /* [6*3] */
+{
+    point_t      pt8[8];
+
+    VMOVE( pt8[0], &pts[0*3] );
+    VMOVE( pt8[1], &pts[1*3] );
+    VMOVE( pt8[2], &pts[2*3] );
+    VMOVE( pt8[3], &pts[3*3] );
+    VMOVE( pt8[4], &pts[4*3] );
+    VMOVE( pt8[5], &pts[4*3] );
+    VMOVE( pt8[6], &pts[5*3] );
+    VMOVE( pt8[7], &pts[5*3] );
+
+    return( mk_arb8( wdbp, name, &pt8[0][X] ));
+}
+
+/*
+ *                      M K _ A R B 7
+ */
+
+int
+mk_arb7(struct rt_wdb *wdbp, const char *name, const fastf_t *pts)
+
+    /* [7*3] */
+{
+    point_t      pt8[8];
+    
+    VMOVE( pt8[0], &pts[0*3] );
+    VMOVE( pt8[1], &pts[1*3] );
+    VMOVE( pt8[2], &pts[2*3] );
+    VMOVE( pt8[3], &pts[3*3] );
+    VMOVE( pt8[4], &pts[4*3] );
+    VMOVE( pt8[5], &pts[5*3] );
+    VMOVE( pt8[6], &pts[6*3] );
+    VMOVE( pt8[7], &pts[4*3] ); /* Shared with point 5, per g_arb.c*/
+
+    return( mk_arb8( wdbp, name, &pt8[0][X] ));
+}
+
+/*
  *			M K _ A R B 8
  *
  *  All plates with 4 points must be co-planar.

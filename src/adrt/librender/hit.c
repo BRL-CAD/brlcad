@@ -19,9 +19,6 @@
  */
 /** @file hit.c
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #include "hit.h"

@@ -18,11 +18,6 @@
 # License along with this file; see the file named COPYING for more
 # information.
 #
-###
-#
-# Author -
-#  Justin Shumaker
-#
 ############################################################
 # For use with mpeg2encode and ADRT to generate MPEG movies.
 # Usage: ./makemovie.pl movie.mpeg

@@ -137,6 +137,9 @@ WDB_EXPORT WDB_EXTERN(int mk_wedge, (struct rt_wdb *fp, const char *name, const 
 				     fastf_t xlen, fastf_t ylen, fastf_t zlen,
 				     fastf_t x_top_len) );
 WDB_EXPORT WDB_EXTERN(int mk_arb4, (struct rt_wdb *fp, const char *name, const fastf_t *pts4) );
+WDB_EXPORT WDB_EXTERN(int mk_arb5, (struct rt_wdb *fp, const char *name, const fastf_t *pts5) );
+WDB_EXPORT WDB_EXTERN(int mk_arb6, (struct rt_wdb *fp, const char *name, const fastf_t *pts6) );
+WDB_EXPORT WDB_EXTERN(int mk_arb7, (struct rt_wdb *fp, const char *name, const fastf_t *pts7) );
 WDB_EXPORT WDB_EXTERN(int mk_arb8, (struct rt_wdb *fp, const char *name, const fastf_t *pts8) );
 WDB_EXPORT WDB_EXTERN(int mk_sph, (struct rt_wdb *fp, const char *name, const point_t center,
 				   fastf_t radius) );

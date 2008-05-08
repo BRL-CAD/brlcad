@@ -19,9 +19,6 @@
  */
 /** @file render_util.h
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #ifndef _RENDER_UTIL_H

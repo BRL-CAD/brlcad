@@ -19,9 +19,6 @@
  */
 /** @file hit.h
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #ifndef _RENDER_HIT_H

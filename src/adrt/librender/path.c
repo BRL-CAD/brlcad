@@ -19,9 +19,6 @@
  */
 /** @file path.c
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #ifndef TIE_PRECISION

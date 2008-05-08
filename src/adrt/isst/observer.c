@@ -19,9 +19,6 @@
  */
 /** @file observer.c
  *
- * Author -
- *   Justin Shumaker
- *
  */
 
 #include "common.h"

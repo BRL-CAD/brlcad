@@ -19,9 +19,6 @@
  */
 /** @file phong.c
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #include "phong.h"

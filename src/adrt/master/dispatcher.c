@@ -19,9 +19,6 @@
  */
 /** @file dispatcher.c
  *
- * Author -
- *   Justin Shumaker
- *
  */
 
 #include "dispatcher.h"

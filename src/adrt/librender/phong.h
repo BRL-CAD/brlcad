@@ -19,9 +19,6 @@
  */
 /** @file phong.h
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #ifndef _RENDER_PHONG_H

@@ -19,9 +19,6 @@
  */
 /** @file cut.c
  *
- *  Author -
- *      Justin L. Shumaker
- *
  */
 
 #include "cut.h"
