@@ -41,7 +41,7 @@
 #include "vmath.h"
 #include "bn.h"
 #include "rtgeom.h"
-#include "ged.h"
+#include "dg.h"
 
 /* private headers */
 #include "brlcad_version.h"
