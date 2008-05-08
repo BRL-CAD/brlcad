@@ -142,6 +142,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\log.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\mirror.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\nirt.c"
 				>
 			</File>
