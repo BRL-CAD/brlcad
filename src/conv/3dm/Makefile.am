@@ -20,5 +20,5 @@ endif
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \
-	$(3dm-g_OBJECTS) \
+	$(3dm_g_OBJECTS) \
 	$(bin_PROGRAMS)
