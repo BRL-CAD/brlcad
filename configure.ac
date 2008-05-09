@@ -3653,6 +3653,8 @@ AC_CONFIG_FILES([
 	db/include/Makefile
 	doc/Makefile
 	doc/book/Makefile
+	doc/docbook/Makefile
+	doc/docbook/oed/Makefile
 	doc/html/Makefile
 	doc/html/ReleaseNotes/Makefile
 	doc/html/ReleaseNotes/Rel5.0/Makefile

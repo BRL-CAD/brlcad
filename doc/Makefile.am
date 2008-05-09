@@ -2,6 +2,7 @@
 
 SUBDIRS = \
 	book \
+	docbook \
 	html \
 	legal
 
