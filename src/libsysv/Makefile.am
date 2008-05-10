@@ -2,10 +2,12 @@
 
 lib_LTLIBRARIES = libsysv.la
 
+# XXX is this really needed?
+#	regex.c
+
 libsysv_la_SOURCES = \
 	memset.c \
 	redata.c \
-	regex.c \
 	strchr.c \
 	strdup.c \
 	strsep.c \
