@@ -12,7 +12,9 @@ libsysv_la_SOURCES = \
 	strtok.c \
 	tcl.c
 
-libsysv_la_CFLAGS = ${TCL_CPPFLAGS}
+libsysv_la_CFLAGS = \
+	${REGEX_CPPFLAGS} \
+	${TCL_CPPFLAGS}
 libsysv_la_LDFLAGS = -version-info 19:1 -no-undefined
 libsysv_la_LIBADD = ${SYSV_LIBS}
 
