@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2008-XX-XX  Release 7.12.3                                     ---
 ----------------------------------------------------------------------
 
+* added log and mirror commands to archer - Bob Parker
 * improve behavior of interactive nirt backout command - Cliff Yapp
 * renamed mged dbbinary command to binary - Sean Morrison
 * fixed rt/rtedge clipping bug - Bob Parker
