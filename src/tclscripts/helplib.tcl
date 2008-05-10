@@ -99,7 +99,7 @@ set helplib_data(wdb_lt)		{{object} {list object's tree as a tcl list of {operat
 set helplib_data(wdb_make_bb)		{{bbname object(s)} {make a bounding box (rpp) around the specified objects}}
 set helplib_data(wdb_make_name)		{{template | -s [num]}	{make an object name not occuring in the database}}
 set helplib_data(wdb_match)		{{expression}	{globs expression against database objects, does not return tokens that match nothing}}
-set helplibdata_data(wdb_mirror)	{{[-d dir] [-o origin] [-p scalar_pt] [-x] [-y] [-z] old new}	{mirror primitive or combination along the specified axis}}
+set helplib_data(wdb_mirror)		{{[-d dir] [-o origin] [-p scalar_pt] [-x] [-y] [-z] old new}	{mirror primitive or combination along the specified axis}}
 set helplib_data(wdb_move_arb_edge)	{{arb edge pt} {move an arb's edge through pt}}
 set helplib_data(wdb_move_arb_face)	{{arb face pt} {move an arb's face through pt}}
 set helplib_data(wdb_rotate_arb_face)	{{arb face pt} {rotate an arb's face through pt}}
