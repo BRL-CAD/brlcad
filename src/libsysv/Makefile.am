@@ -1,22 +1,20 @@
-# $Id$
 
 lib_LTLIBRARIES = libsysv.la
 
 # XXX is this really needed?
 #	regex.c
+#	redata.c
+#	${REGEX_CPPFLAGS}
 
 libsysv_la_SOURCES = \
 	memset.c \
-	redata.c \
 	strchr.c \
 	strdup.c \
 	strsep.c \
 	strtok.c \
 	tcl.c
 
-libsysv_la_CFLAGS = \
-	${REGEX_CPPFLAGS} \
-	${TCL_CPPFLAGS}
+libsysv_la_CFLAGS = ${TCL_CPPFLAGS}
 libsysv_la_LDFLAGS = -version-info 19:1 -no-undefined
 libsysv_la_LIBADD = ${SYSV_LIBS}
 
