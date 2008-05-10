@@ -2558,7 +2558,7 @@ if test "x$build_brlcad_tcl" = "xyes" ; then
 	     ;;
     esac
     TCLSTUB='-L${top_builddir}/src/other/tcl/unix'" -ltclstub${TCL_VERSION}"
-    TCL_CPPFLAGS='-I${top_srcdir}/src/other/tcl/generic -I${top_srcdir}/src/other/tcl/unix ${REGEX_CPPFLAGS}'
+    TCL_CPPFLAGS='-I${top_srcdir}/src/other/tcl/generic -I${top_srcdir}/src/other/tcl/unix'
 else
     AC_MSG_RESULT(no)
 

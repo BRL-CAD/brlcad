@@ -18,6 +18,7 @@ brep_test_LDADD = \
 
 # cannot set per-target CPPFLAGS until automake 1.7+
 AM_CPPFLAGS = \
+	${REGEX_CPPFLAGS} \
 	${TCL_CPPFLAGS} \
 	${BREP_CPPFLAGS}
 

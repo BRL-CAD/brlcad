@@ -31,17 +31,11 @@
 
 #include <stdlib.h>
 #include <sys/types.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <string.h>
-
-#if BUILD_REGEX
-#  include "regex.h"
-#elif defined(HAVE_REGEX_H)
-#  include <regex.h>
-#endif
-
 #include "bio.h"
+
+#include "regex.h"
 
 #include "vmath.h"
 #include "raytrace.h"
