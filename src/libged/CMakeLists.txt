@@ -7,12 +7,14 @@ set(LIBGED_SOURCES
     mirror.c
     nirt.c
     qray.c
+    rmater.c
     tcl.c
     track.c
     vdraw.c
     view_obj.c
     wdb_comb_std.c
     wdb_obj.c
+    wmater.c
 )
 
 include_directories(
