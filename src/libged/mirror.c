@@ -52,9 +52,9 @@ ged_mirror(struct rt_wdb	*wdbp,
     wdbp->wdb_result_flags = 0;
 
     /* must be wanting help */
-    if (argc < 3) {
+    if (argc == 1) {
 	wdbp->wdb_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
-	bu_vls_printf(&wdbp->wdb_result_str,"Usage: %s %s", argv[0], usage);
+	bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_OK;
     }
 
@@ -69,7 +69,7 @@ ged_mirror(struct rt_wdb	*wdbp,
 		       &mirror_dir[X],
 		       &mirror_dir[Y],
 		       &mirror_dir[Z]) != 3) {
-		bu_vls_printf(&wdbp->wdb_result_str,"Usage: %s %s", argv[0], usage);
+		bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
 		return GED_ERROR;
 	    }
 	    break;
@@ -83,7 +83,7 @@ ged_mirror(struct rt_wdb	*wdbp,
 		       &mirror_origin[X],
 		       &mirror_origin[Y],
 		       &mirror_origin[Z]) != 3) {
-		bu_vls_printf(&wdbp->wdb_result_str,"Usage: %s %s", argv[0], usage);
+		bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
 		return GED_ERROR;
 	    }
 	    break;
@@ -102,10 +102,10 @@ ged_mirror(struct rt_wdb	*wdbp,
 	case 'h':
 	case 'H':
 	    wdbp->wdb_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
-	    bu_vls_printf(&wdbp->wdb_result_str,"Usage: %s %s", argv[0], usage);
+	    bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
 	    return GED_OK;
 	default:
-	    bu_vls_printf(&wdbp->wdb_result_str,"Usage: %s %s", argv[0], usage);
+	    bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
 	    return GED_ERROR;
 	}
     }

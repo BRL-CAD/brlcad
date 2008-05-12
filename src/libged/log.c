@@ -69,7 +69,7 @@ ged_log(struct rt_wdb	*wdbp,
 	bu_vls_printf(&wdbp->wdb_result_str,"Usage: %s %s", argv[0], usage);
 
 	/* must be wanting help */
-	if (argc < 2) {
+	if (argc == 1) {
 	    wdbp->wdb_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	    return GED_OK;
 	}

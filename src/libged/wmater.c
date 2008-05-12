@@ -51,10 +51,15 @@ ged_wmater(struct rt_wdb *wdbp, int argc, char *argv[])
     wdbp->wdb_result_flags = 0;
 
     /* must be wanting help */
-    if (argc < 3) {
+    if (argc == 1) {
 	wdbp->wdb_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
-	bu_vls_printf(&wdbp->wdb_result_str,"Usage: %s %s", argv[0], usage);
+	bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_OK;
+    }
+
+    if (argc < 3) {
+	bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
     }
 
     if ((fp = fopen(argv[1], "a")) == NULL) {

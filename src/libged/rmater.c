@@ -105,19 +105,19 @@ ged_rmater(struct rt_wdb	*wdbp,
     wdbp->wdb_result_flags = 0;
 
     /* must be wanting help */
-    if (argc < 2) {
+    if (argc == 1) {
 	wdbp->wdb_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
-	bu_vls_printf(&wdbp->wdb_result_str,"Usage: %s %s", argv[0], usage);
+	bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_OK;
     }
 
-    if (2 < argc) {
-	bu_vls_printf(&wdbp->wdb_result_str,"Usage: %s %s", argv[0], usage);
+    if (argc != 2) {
+	bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     if ((fp = fopen(argv[1], "r")) == NULL) {
-	bu_vls_printf(&wdbp->wdb_result_str,"f_rcodes: Failed to read file - %s", argv[1]);
+	bu_vls_printf(&wdbp->wdb_result_str, "ged_rmater: Failed to read file - %s", argv[1]);
 	return GED_ERROR;
     }
 
