@@ -407,7 +407,7 @@ struct funtab {
 
 struct mged_hist {
     struct bu_list	l;
-    struct bu_vls		mh_command;
+    struct bu_vls	mh_command;
     struct timeval	mh_start;
     struct timeval	mh_finish;
     int			mh_status;
@@ -418,8 +418,8 @@ struct cmd_list {
     struct bu_list	l;
     struct dm_list	*cl_tie;        /* the drawing window that we're tied to */
     struct mged_hist	*cl_cur_hist;
-    struct bu_vls		cl_more_default;
-    struct bu_vls		cl_name;
+    struct bu_vls	cl_more_default;
+    struct bu_vls	cl_name;
     int			cl_quote_string;
 };
 #define CMD_LIST_NULL ((struct cmd_list *)NULL)
