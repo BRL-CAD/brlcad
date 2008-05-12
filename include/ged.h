@@ -691,6 +691,14 @@ GED_EXPORT BU_EXTERN(int ged_log, (struct rt_wdb *wdbp, int argc, char *argv[]))
  */
 GED_EXPORT BU_EXTERN(int ged_wmater, (struct rt_wdb *wdbp, int argc, char *argv[]));
 
+/**
+ * Read material properties from a file.
+ *
+ * Usage:
+ *     rmater file
+ */
+GED_EXPORT BU_EXTERN(int ged_rmater, (struct rt_wdb *wdbp, int argc, char *argv[]));
+
 
 
 __END_DECLS
