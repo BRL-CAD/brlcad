@@ -667,13 +667,12 @@ GED_EXPORT BU_EXTERN(int	vo_dir2ae_cmd,
 
 
 /**
- * Mirror the primitive or combination along the specified axis.
+ * Set region ident codes.
  *
  * Usage:
- *     mirror [-d dir] [-o origin] [-p scalar_pt] [-x] [-y] [-z] old new
- *
+ *     item region ident [air [material [los]]]
  */
-GED_EXPORT BU_EXTERN(int ged_mirror, (struct rt_wdb *wdbp, int argc, char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_item, (struct rt_wdb *wdbp, int argc, char *argv[]));
 
 /**
  * Used to control logging.
@@ -684,12 +683,13 @@ GED_EXPORT BU_EXTERN(int ged_mirror, (struct rt_wdb *wdbp, int argc, char *argv[
 GED_EXPORT BU_EXTERN(int ged_log, (struct rt_wdb *wdbp, int argc, char *argv[]));
 
 /**
- * Write material properties to a file for specified combination(s).
+ * Mirror the primitive or combination along the specified axis.
  *
  * Usage:
- *     wmater file combination1 [combination2 ...]
+ *     mirror [-d dir] [-o origin] [-p scalar_pt] [-x] [-y] [-z] old new
+ *
  */
-GED_EXPORT BU_EXTERN(int ged_wmater, (struct rt_wdb *wdbp, int argc, char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_mirror, (struct rt_wdb *wdbp, int argc, char *argv[]));
 
 /**
  * Read material properties from a file.
@@ -698,6 +698,15 @@ GED_EXPORT BU_EXTERN(int ged_wmater, (struct rt_wdb *wdbp, int argc, char *argv[
  *     rmater file
  */
 GED_EXPORT BU_EXTERN(int ged_rmater, (struct rt_wdb *wdbp, int argc, char *argv[]));
+
+/**
+ * Write material properties to a file for specified combination(s).
+ *
+ * Usage:
+ *     wmater file combination1 [combination2 ...]
+ */
+GED_EXPORT BU_EXTERN(int ged_wmater, (struct rt_wdb *wdbp, int argc, char *argv[]));
+
 
 
 

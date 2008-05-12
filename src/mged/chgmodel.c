@@ -63,74 +63,25 @@ int		newedge;		/* new edge for arb editing */
 int
 f_itemair(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    register struct directory *dp;
-    int			ident, air, GIFTmater=0, los=0;
-    int			GIFTmater_set, los_set;
-    struct rt_db_internal	intern;
-    struct rt_comb_internal	*comb;
-
+    Tcl_DString ds;
+    int ret;
+    
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
 
-    if (argc < 3 || 6 < argc) {
-	struct bu_vls vls;
+    ret = ged_item(wdbp, argc, argv);
 
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "help item");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
+    /* Convert to Tcl codes */
+    if (ret == GED_OK)
+	ret = TCL_OK;
+    else
+	ret = TCL_ERROR;
 
-    if ( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
-	return TCL_ERROR;
-    if ( (dp->d_flags & DIR_COMB) == 0 )  {
-	Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
-	return TCL_ERROR;
-    }
-    if ( (dp->d_flags & DIR_REGION) == 0 )  {
-	Tcl_AppendResult(interp, dp->d_namep, ": not a region\n", (char *)NULL);
-	return TCL_ERROR;
-    }
+    Tcl_DStringInit(&ds);
+    Tcl_DStringAppend(&ds, bu_vls_addr(&wdbp->wdb_result_str), -1);
+    Tcl_DStringResult(interp, &ds);
 
-    air = ident = 0;
-    GIFTmater_set = los_set = 0;
-    ident = atoi( argv[2] );
-
-    /*
-     * If <air> is not included, it is assumed to be zero.
-     * If, on the other hand, either of <GIFTmater> and <los>
-     * is not included, it is left unchanged.
-     */
-    if ( argc > 3 )  {
-	air = atoi( argv[3] );
-    }
-    if ( argc > 4 )  {
-	GIFTmater = atoi( argv[4] );
-	GIFTmater_set = 1;
-    }
-    if ( argc > 5 )  {
-	los = atoi( argv[5] );
-	los_set = 1;
-    }
-
-    if ( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
-	TCL_READ_ERR_return;
-    }
-    comb = (struct rt_comb_internal *)intern.idb_ptr;
-    RT_CK_COMB(comb);
-    comb->region_id = ident;
-    comb->aircode = air;
-    if ( GIFTmater_set )  {
-	comb->GIFTmater = GIFTmater;
-    }
-    if ( los_set )  {
-	comb->los = los;
-    }
-    if ( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )  {
-	TCL_WRITE_ERR_return;
-    }
-    return TCL_OK;
+    return ret;
 }
 
 /* Modify material information */

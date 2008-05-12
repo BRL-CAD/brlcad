@@ -142,6 +142,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\item.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\log.c"
 				>
 			</File>
