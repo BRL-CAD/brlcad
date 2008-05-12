@@ -27,23 +27,16 @@
 #include "ged.h"
 
 
-/**
- * Mirror the primitive or combination along the specified axis.
- *
- * Usage:
- *   mirror [-d dir] [-o origin] [-p scalar_pt] [-x] [-y] [-z] old new
- *
- */
 int
 ged_mirror(struct rt_wdb	*wdbp,
 	   int			argc,
-	   char			**argv)
+	   char			*argv[])
 {
     register int k;
     point_t mirror_origin = {0.0, 0.0, 0.0};
     vect_t mirror_dir = {1.0, 0.0, 0.0};
     fastf_t mirror_pt = 0.0;
-    static char *usage = "[-h] [-d dir] [-o origin] [-p scalar_pt] [-x] [-y] [-z] old new";
+    static const char *usage = "[-h] [-d dir] [-o origin] [-p scalar_pt] [-x] [-y] [-z] old new";
 
     if (wdbp == RT_WDB_NULL) {
 	bu_vls_printf(&wdbp->wdb_result_str, "%s: a database must be open to use this command.", argv[0]);

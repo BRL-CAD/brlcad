@@ -19,7 +19,7 @@
  */
 /** @file log.c
  *
- * Brief description
+ * The log command.
  *
  */
 
@@ -44,17 +44,11 @@ ged_logHook(genptr_t clientdata,
     return len;
 }
 
-/**
- * Synopsis:
- *     Used to control logging.
- *
- * Usage:
- *     log get|start|stop
- */
+
 int
 ged_log(struct rt_wdb	*wdbp,
 	int		argc,
-	char		**argv)
+	char		*argv[])
 {
     static char *usage = "get|start|stop";
 
