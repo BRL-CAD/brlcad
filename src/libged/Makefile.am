@@ -16,7 +16,8 @@ libged_nil_la_SOURCES = \
 	vdraw.c \
 	view_obj.c \
 	wdb_comb_std.c \
-	wdb_obj.c
+	wdb_obj.c \
+	wmater.c
 
 # cannot set per-target CPPFLAGS until automake 1.7+
 AM_CPPFLAGS = \

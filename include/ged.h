@@ -666,17 +666,32 @@ GED_EXPORT BU_EXTERN(int	vo_dir2ae_cmd,
 		     char **argv));
 
 
-/* defined in mirror.c */
-GED_EXPORT BU_EXTERN(int		ged_mirror,
-		     (struct rt_wdb	*wdbp,
-		      int		argc,
-		      char		**argv));
+/**
+ * Mirror the primitive or combination along the specified axis.
+ *
+ * Usage:
+ *     mirror [-d dir] [-o origin] [-p scalar_pt] [-x] [-y] [-z] old new
+ *
+ */
+GED_EXPORT BU_EXTERN(int ged_mirror, (struct rt_wdb *wdbp, int argc, char *argv[]));
 
-/* defined in log.c */
-GED_EXPORT BU_EXTERN(int		ged_log,
-		     (struct rt_wdb	*wdbp,
-		      int		argc,
-		      char		**argv));
+/**
+ * Used to control logging.
+ *
+ * Usage:
+ *     log {get|start|stop}
+ */
+GED_EXPORT BU_EXTERN(int ged_log, (struct rt_wdb *wdbp, int argc, char *argv[]));
+
+/**
+ * Write material properties to a file for specified combination(s).
+ *
+ * Usage:
+ *     wmater file combination1 [combination2 ...]
+ */
+GED_EXPORT BU_EXTERN(int ged_wmater, (struct rt_wdb *wdbp, int argc, char *argv[]));
+
+
 
 __END_DECLS
 

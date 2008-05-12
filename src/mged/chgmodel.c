@@ -367,65 +367,36 @@ f_edmater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 
 int
-f_wmater(
-    ClientData clientData,
-    Tcl_Interp *interp,
-    int     argc,
-    char    *argv[])
+f_wmater(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
-    int i;
-    int status = TCL_OK;
-    FILE *fp;
-    register struct directory *dp;
-    struct rt_db_internal	intern;
-    struct rt_comb_internal	*comb;
-
+    Tcl_DString ds;
+    int ret;
+    
     CHECK_DBI_NULL;
+    CHECK_READ_ONLY;
 
-    if (argc < 3) {
-	struct bu_vls vls;
+    ret = ged_mirror(wdbp, argc, argv);
 
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "help wmater");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
+    /* Convert to Tcl codes */
+    if (ret == GED_OK)
+	ret = TCL_OK;
+    else
+	ret = TCL_ERROR;
+
+    Tcl_DStringInit(&ds);
+    Tcl_DStringAppend(&ds, bu_vls_addr(&wdbp->wdb_result_str), -1);
+    Tcl_DStringResult(interp, &ds);
+
+    if (wdbp->wdb_result_flags == 0 && ret == TCL_OK) {
+	char *av[3];
+
+	av[0] = "draw";
+	av[1] = argv[argc-1];
+	av[2] = NULL;
+	cmd_draw(clientData, interp, 2, av);
     }
 
-    if ((fp = fopen(argv[1], "a")) == NULL) {
-	Tcl_AppendResult(interp, "f_wmater: Failed to open file - ", argv[1], (char *)NULL);
-	return TCL_ERROR;
-    }
-
-    for (i = 2; i < argc; ++i) {
-	if ( (dp = db_lookup( dbip,  argv[i], LOOKUP_NOISY )) == DIR_NULL ) {
-	    Tcl_AppendResult(interp, "f_wmater: Failed to find ", argv[i], "\n", (char *)NULL);
-	    status = TCL_ERROR;
-	    continue;
-	}
-	if ( (dp->d_flags & DIR_COMB) == 0 )  {
-	    Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
-	    status = TCL_ERROR;
-	    continue;
-	}
-	if ( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
-	    TCL_READ_ERR;
-	    status = TCL_ERROR;
-	    continue;
-	}
-	comb = (struct rt_comb_internal *)intern.idb_ptr;
-	RT_CK_COMB(comb);
-
-	fprintf(fp, "\"%s\"\t\"%s\"\t%d\t%d\t%d\t%d\t%d\n", argv[i],
-		bu_vls_strlen(&comb->shader) > 0 ?
-		bu_vls_addr(&comb->shader) : "-",
-		comb->rgb[0], comb->rgb[1], comb->rgb[2],
-		comb->rgb_valid, comb->inherit);
-	rt_db_free_internal( &intern, &rt_uniresource );
-    }
-
-    (void)fclose(fp);
-    return status;
+    return ret;
 }
 
 

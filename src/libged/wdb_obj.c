@@ -322,6 +322,7 @@ static int pathListNoLeaf = 0;
 static struct bu_cmdtab wdb_newcmds[] = {
     {"log",	ged_log},
     {"mirror",	ged_mirror},
+    {"wmater",	ged_wmater},
     {(char *)NULL,	(int (*)())0 }
 };
 
@@ -400,6 +401,7 @@ static struct bu_cmdtab wdb_cmds[] = {
     {"whatid",	wdb_whatid_tcl},
     {"whichair",	wdb_which_tcl},
     {"whichid",	wdb_which_tcl},
+    {"wmater",	wdb_newcmds_tcl},
     {"xpush",	wdb_xpush_tcl},
 #if 0
     /* Commands to be added */
@@ -411,7 +413,6 @@ static struct bu_cmdtab wdb_cmds[] = {
     {"rcodes",	wdb_rcodes_tcl},
     {"wcodes",	wdb_wcodes_tcl},
     {"rmater",	wdb_rmater_tcl},
-    {"wmater",	wdb_wmater_tcl},
     {"analyze",	wdb_analyze_tcl},
     {"inside",	wdb_inside_tcl},
 #endif
