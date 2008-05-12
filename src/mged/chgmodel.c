@@ -375,7 +375,7 @@ f_wmater(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
 
-    ret = ged_mirror(wdbp, argc, argv);
+    ret = ged_wmater(wdbp, argc, argv);
 
     /* Convert to Tcl codes */
     if (ret == GED_OK)
@@ -386,15 +386,6 @@ f_wmater(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
     Tcl_DStringInit(&ds);
     Tcl_DStringAppend(&ds, bu_vls_addr(&wdbp->wdb_result_str), -1);
     Tcl_DStringResult(interp, &ds);
-
-    if (wdbp->wdb_result_flags == 0 && ret == TCL_OK) {
-	char *av[3];
-
-	av[0] = "draw";
-	av[1] = argv[argc-1];
-	av[2] = NULL;
-	cmd_draw(clientData, interp, 2, av);
-    }
 
     return ret;
 }
@@ -407,125 +398,25 @@ f_rmater(
     int     argc,
     char    *argv[])
 {
-#ifndef LINELEN
-#define LINELEN 256
-#endif
-    int status = TCL_OK;
-    FILE *fp;
-    register struct directory *dp;
-    struct rt_db_internal	intern;
-    struct rt_comb_internal	*comb;
-    char line[LINELEN];
-    char name[128];
-    char shader[256];
-    int r, g, b;
-    int override;
-    int inherit;
-
+    Tcl_DString ds;
+    int ret;
+    
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
 
-    if (argc < 2 || 2 < argc) {
-	struct bu_vls vls;
+    ret = ged_rmater(wdbp, argc, argv);
 
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "help rmater");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
+    /* Convert to Tcl codes */
+    if (ret == GED_OK)
+	ret = TCL_OK;
+    else
+	ret = TCL_ERROR;
 
-    if ((fp = fopen(argv[1], "r")) == NULL) {
-	Tcl_AppendResult(interp, "f_rcodes: Failed to read file - ", argv[1], (char *)NULL);
-	return TCL_ERROR;
-    }
+    Tcl_DStringInit(&ds);
+    Tcl_DStringAppend(&ds, bu_vls_addr(&wdbp->wdb_result_str), -1);
+    Tcl_DStringResult(interp, &ds);
 
-    while (bu_fgets( line, LINELEN, fp ) != NULL) {
-	if ((extract_mater_from_line(line, name, shader,
-				     &r, &g, &b, &override, &inherit)) == TCL_ERROR)
-	    continue;
-
-	if ( (dp = db_lookup( dbip,  name, LOOKUP_NOISY )) == DIR_NULL ) {
-	    Tcl_AppendResult(interp, "f_rmater: Failed to find ", name, "\n", (char *)NULL);
-	    status = TCL_ERROR;
-	    continue;
-	}
-
-	if ( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
-	    TCL_READ_ERR;
-	    status = TCL_ERROR;
-	}
-	comb = (struct rt_comb_internal *)intern.idb_ptr;
-	RT_CK_COMB(comb);
-
-	/* Assign new values */
-	if (shader[0] == '-')
-	    bu_vls_free( &comb->shader );
-	else
-	    bu_vls_strcpy( &comb->shader, shader );
-
-	comb->rgb[0] = (unsigned char)r;
-	comb->rgb[1] = (unsigned char)g;
-	comb->rgb[2] = (unsigned char)b;
-	comb->rgb_valid = override;
-	comb->inherit = inherit;
-
-	/* Write new values to database */
-	if ( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )  {
-	    TCL_WRITE_ERR;
-	    status = TCL_ERROR;
-	}
-    }
-
-    (void)fclose(fp);
-    return status;
-}
-
-int
-extract_mater_from_line(
-    char *line,
-    char *name,
-    char *shader,
-    int *r, int *g, int *b,
-    int *override,
-    int *inherit)
-{
-    int i, j, k;
-    char *str[3];
-
-    str[0] = name;
-    str[1] = shader;
-
-    /* Extract first 2 strings. */
-    for (i=j=0; i < 2; ++i) {
-
-	/* skip white space */
-	while (line[j] == ' ' || line[j] == '\t')
-	    ++j;
-
-	if (line[j] == '\0')
-	    return TCL_ERROR;
-
-	/* We found a double quote, so use everything between the quotes */
-	if (line[j] == '"') {
-	    for (k = 0, ++j; line[j] != '"' && line[j] != '\0'; ++j, ++k)
-		str[i][k] = line[j];
-	} else {
-	    for (k = 0; line[j] != ' ' && line[j] != '\t' && line[j] != '\0'; ++j, ++k)
-		str[i][k] = line[j];
-	}
-
-	if (line[j] == '\0')
-	    return TCL_ERROR;
-
-	str[i][k] = '\0';
-	++j;
-    }
-
-    if ((sscanf(line + j, "%d%d%d%d%d", r, g, b, override, inherit)) != 5)
-	return TCL_ERROR;
-
-    return TCL_OK;
+    return ret;
 }
 
 
