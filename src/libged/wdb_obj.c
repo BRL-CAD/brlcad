@@ -320,8 +320,10 @@ static int pathListNoLeaf = 0;
 
 
 static struct bu_cmdtab wdb_newcmds[] = {
+    {"item",	ged_item},
     {"log",	ged_log},
     {"mirror",	ged_mirror},
+    {"rmater",	ged_rmater},
     {"wmater",	ged_wmater},
     {(char *)NULL,	(int (*)())0 }
 };
