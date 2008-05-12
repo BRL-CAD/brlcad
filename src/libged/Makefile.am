@@ -7,6 +7,7 @@ libged_nil_la_SOURCES = \
 	dg_obj.c \
 	globals.c \
 	importFg4Section.c \
+	item.c \
 	log.c \
 	mirror.c \
 	nirt.c \
