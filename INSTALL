@@ -26,8 +26,8 @@ TABLE OF CONTENTS
   Installing from Source
   Configuration Options
   Compilation Options
-  Testing Functionality
   Installation Options
+  Testing Functionality
   Post-Installation
   Reporting Problems
 
@@ -98,7 +98,7 @@ sudo mv usr/brlcad /usr/.
 
 Of course, there are other compression options possible including zip
 and bzip2.  By default, BRL-CAD expects to be installed into
-/usr/brlcad and MGED is not relocateable by default.  It's recommended
+/usr/brlcad and MGED is not relocatable by default.  It's recommended
 that you start from a source distribution if you would like to install
 into an alternate installation location.
 
@@ -677,9 +677,13 @@ After BRL-CAD is installed, simply running `rt' and/or `mged' are good
 tests of basic functionality.  Running `rt' without any options should
 display version information and a usage message.  Running `mged'
 without any options will start the GUI-based solid modeler
-applicaation.  Running "benchmark" should invoke the BRL-CAD Benchmark
+application.  Running "benchmark" should invoke the BRL-CAD Benchmark
 and test the performance of the binaries as installed on a given
 system.
+
+
+POST-INSTALLATION
+-----------------
 
 
 REPORTING PROBLEMS
