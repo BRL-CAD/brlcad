@@ -11,6 +11,7 @@ libged_nil_la_SOURCES = \
 	mirror.c \
 	nirt.c \
 	qray.c \
+	rmater.c \
 	tcl.c \
 	track.c \
 	vdraw.c \
