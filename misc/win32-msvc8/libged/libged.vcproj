@@ -158,6 +158,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\rmater.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\tcl.c"
 				>
 			</File>
@@ -179,6 +183,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\wdb_obj.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\wmater.c"
 				>
 			</File>
 		</Filter>
