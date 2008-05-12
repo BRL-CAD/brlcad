@@ -19,7 +19,7 @@
  */
 /** @file mirror.c
  *
- * Brief description
+ * The mirror command.
  *
  */
 
@@ -28,11 +28,10 @@
 
 
 /**
- * Synopsis:
- *     Mirror the primitive or combination along the specified axis.
+ * Mirror the primitive or combination along the specified axis.
  *
  * Usage:
- *     mirror [-d dir] [-o origin] [-p scalar_pt] [-x] [-y] [-z] old new
+ *   mirror [-d dir] [-o origin] [-p scalar_pt] [-x] [-y] [-z] old new
  *
  */
 int
