@@ -1,8 +1,7 @@
-# $Id$
 
-docbooksdir = $(BRLCAD_DATA)/docbook/oed
+docbookdir = $(BRLCAD_DATA)/docbook/oed
 
-docbooks_DATA = \
+docbook_DATA = \
 	README \
 	lollipop.png \
 	oed.xml \
@@ -21,6 +20,6 @@ docbooks_DATA = \
 	oed_examples.asc
 
 EXTRA_DIST = \
-	$(docbooks_DATA)
+	$(docbook_DATA)
 
 include $(top_srcdir)/misc/Makefile.defs
