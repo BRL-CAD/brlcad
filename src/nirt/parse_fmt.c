@@ -104,6 +104,11 @@ outval ValTab[] = {
     { "claimant_list", VTI_CLAIMANT_LIST, OIT_STRING },
     { "claimant_listn", VTI_CLAIMANT_LISTN, OIT_STRING },
     { "attributes", VTI_ATTRIBUTES, OIT_STRING },
+    { "x_prev_out", VTI_XPREV_OUT, OIT_FLOAT},
+    { "y_prev_out", VTI_YPREV_OUT, OIT_FLOAT},
+    { "z_prev_out", VTI_ZPREV_OUT, OIT_FLOAT},
+    { "d_prev_out", VTI_DPREV_OUT, OIT_FLOAT},
+    { "gap_los", VTI_GAP_LOS, OIT_FLOAT},
     { 0 }
 };
 

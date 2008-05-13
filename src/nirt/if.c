@@ -98,6 +98,11 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
 	 *		  in command.c as well
 	 */
 	for (i = 0; i < 3; ++i) {
+	    g_entry(i) = r_entry(i);
+	}
+	g_entry(D) = r_exit(D);
+	
+	for (i = 0; i < 3; ++i) {
 	    r_entry(i) = part-> pt_inhit->hit_point[i];
 	    r_exit(i) = part-> pt_outhit->hit_point[i];
 	    n_entry(i) = inormal[i];
@@ -134,6 +139,7 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
 	ValTab[VTI_LOS].value.fval = r_entry(D) - r_exit(D);
 	ValTab[VTI_SLOS].value.fval = 0.01 * ValTab[VTI_LOS].value.fval *
 	    part->pt_regionp->reg_los;
+	ValTab[VTI_GAP_LOS].value.fval = g_entry(D) - r_entry(D);
 	bu_strlcpy(regionPN, part->pt_regionp->reg_name, sizeof(regionPN));
 
 	ValTab[VTI_PATH_NAME].value.sval = part->pt_regionp->reg_name;
