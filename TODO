@@ -28,6 +28,8 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * implement/test the "Blinn blob" method in g_metaball.c
 
+* make closing both the command window and graphics window shut down
+  mged (i.e., fix unintentional behavior)
 
 THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------
