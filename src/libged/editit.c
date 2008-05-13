@@ -36,10 +36,7 @@
 #define	VI_EDITOR "/usr/bin/vi"
 #define	ED_EDITOR "/bin/ed"
 
-/*
- * Run $EDITOR on temp file, defaulting to various system-specific
- * editors otherwise if unset.
- */
+
 int
 ged_editit(const char *file)
 {

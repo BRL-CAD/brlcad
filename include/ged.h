@@ -669,16 +669,21 @@ GED_EXPORT BU_EXTERN(int	vo_dir2ae_cmd,
 /**
  * Launch an editor on file.
  *
+ * Runs $EDITOR on temp file, defaulting to various system-specific
+ * editors otherwise if unset.
+ *
  * Usage:
  *     editit file
  */
 GED_EXPORT BU_EXTERN(int ged_editit, (const char *file));
 
 /**
- * Edit combination materials
+ * Edit combination materials.
+ *
+ * Command relies on rmater, editit, and wmater commands.
  *
  * Usage:
- *     edmater comb(s)
+ *     edmater combination1 [combination2 ...]
  */
 GED_EXPORT BU_EXTERN(int ged_edmater, (struct rt_wdb *wdbp, int argc, char *argv[]));
 
