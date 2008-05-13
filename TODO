@@ -50,6 +50,10 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
+* convert the documentation to docbook
+
+* autogenerate docbook documentation in the build system
+
 * remove hit_normal and hit_point from struct hit.  add RT_HIT_POINT
   macro.  refactor all callers as needed.
 
@@ -263,9 +267,6 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * add dynamic geometry support. i.e. the ability to modify the parsed
   in-memory geometry tree on the fly via api calls (e.g. to add holes)
-
-* convert the documentation to docbook and integrate their generation
-  with the build system.
 
 * investigate why g-iges followed by iges-g on a single box results in
   permuted vertex lists
