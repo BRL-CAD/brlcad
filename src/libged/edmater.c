@@ -1,4 +1,4 @@
-/*                        W M A T E R . C
+/*                       E D M A T E R . C
  * BRL-CAD
  *
  * Copyright (c) 2008 United States Government as represented by
@@ -17,9 +17,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file wmater.c
+/** @file edmater.c
  *
- * The wmater command.
+ * The edmater command.
+ *
+ * Relies on: rmater, editit, wmater
  *
  */
 
