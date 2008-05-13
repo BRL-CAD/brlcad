@@ -150,6 +150,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\mater.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\mirror.c"
 				>
 			</File>

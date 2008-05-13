@@ -9,6 +9,7 @@ libged_nil_la_SOURCES = \
 	importFg4Section.c \
 	item.c \
 	log.c \
+	mater.c \
 	mirror.c \
 	nirt.c \
 	qray.c \

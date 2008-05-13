@@ -5,6 +5,7 @@ set(LIBGED_SOURCES
     importFg4Section.c
     item.c
     log.c
+    mater.c
     mirror.c
     nirt.c
     qray.c

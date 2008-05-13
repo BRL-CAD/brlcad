@@ -683,6 +683,14 @@ GED_EXPORT BU_EXTERN(int ged_item, (struct rt_wdb *wdbp, int argc, char *argv[])
 GED_EXPORT BU_EXTERN(int ged_log, (struct rt_wdb *wdbp, int argc, char *argv[]));
 
 /**
+ * Modify material information.
+ *
+ * Usage:
+ *     mater region_name shader r g b inherit
+ */
+GED_EXPORT BU_EXTERN(int ged_mater, (struct rt_wdb *wdbp, int argc, char *argv[]));
+
+/**
  * Mirror the primitive or combination along the specified axis.
  *
  * Usage:
