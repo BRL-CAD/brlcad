@@ -39,7 +39,7 @@ ged_mirror(struct rt_wdb	*wdbp,
     static const char *usage = "[-h] [-d dir] [-o origin] [-p scalar_pt] [-x] [-y] [-z] old new";
 
     if (wdbp == RT_WDB_NULL) {
-	bu_vls_printf(&wdbp->wdb_result_str, "%s: a database must be open to use this command.", argv[0]);
+	bu_log("%s: a database must be open to use this command.", argv[0]);
 	return GED_ERROR;
     }
 
