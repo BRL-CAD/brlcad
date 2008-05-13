@@ -88,7 +88,8 @@ extern FILE	*fopenrc(void);
 #define		FMT_FOOT	3	/* in dump_state()	 */
 #define		FMT_MISS	4
 #define		FMT_OVLP	5
-#define		FMT_NONE	6
+#define         FMT_GAP         6
+#define		FMT_NONE	7
 
 /* Indices into the table of output values
  *

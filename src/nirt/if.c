@@ -55,7 +55,6 @@ overlap			*find_ovlp(struct partition *pp);
 void			del_ovlp(overlap *op);
 void			init_ovlp(void);
 
-
 int
 if_hit(struct application *ap, struct partition *part_head, struct seg *finished_segs)
 {
@@ -84,7 +83,7 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
 
     for (part = part_head->pt_forw; part != part_head; part = part->pt_forw) {
 	++part_nm;
-
+	
 	RT_HIT_NORMAL( inormal, part->pt_inhit, part->pt_inseg->seg_stp,
 		       &ap->a_ray, part->pt_inflip );
 	RT_HIT_NORMAL( onormal, part->pt_outhit, part->pt_outseg->seg_stp,
@@ -97,11 +96,12 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
 	 *		  should be updated by the functions
 	 *		  in command.c as well
 	 */
-	for (i = 0; i < 3; ++i) {
-	    g_entry(i) = r_entry(i);
+	if (part_nm > 1) {
+	   for (i = 0; i < 3; ++i) {
+	       g_entry(i) = r_entry(i);
+	   }
+	   g_entry(D) = r_exit(D);
 	}
-	g_entry(D) = r_exit(D);
-	
 	for (i = 0; i < 3; ++i) {
 	    r_entry(i) = part-> pt_inhit->hit_point[i];
 	    r_exit(i) = part-> pt_outhit->hit_point[i];
@@ -139,7 +139,10 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
 	ValTab[VTI_LOS].value.fval = r_entry(D) - r_exit(D);
 	ValTab[VTI_SLOS].value.fval = 0.01 * ValTab[VTI_LOS].value.fval *
 	    part->pt_regionp->reg_los;
-	ValTab[VTI_GAP_LOS].value.fval = g_entry(D) - r_entry(D);
+	if (part_nm > 1) {
+	   ValTab[VTI_GAP_LOS].value.fval = g_entry(D) - r_entry(D);
+	   if (!NEAR_ZERO(g_entry(D) - r_entry(D), SMALL_FASTF)) report(FMT_GAP);
+	}
 	bu_strlcpy(regionPN, part->pt_regionp->reg_name, sizeof(regionPN));
 
 	ValTab[VTI_PATH_NAME].value.sval = part->pt_regionp->reg_name;

@@ -125,7 +125,8 @@ const char	*def_fmt[] = {
     "\"%-20s (%9.4f %9.4f %9.4f) %8.4f %8.4f %s\n\" reg_name x_in y_in z_in los obliq_in attributes",
     "\"\"",
     "\"You missed the target\n\"",
-    "\"OVERLAP: '%s' and '%s' xyz_in=(%g %g %g) los=%g\n\" ov_reg1_name ov_reg2_name ov_x_in ov_y_in ov_z_in ov_los"
+    "\"OVERLAP: '%s' and '%s' xyz_in=(%g %g %g) los=%g\n\" ov_reg1_name ov_reg2_name ov_x_in ov_y_in ov_z_in ov_los",
+    "\"Gap: xyz_in=(%.4f %.4f %.4f) xyz_out=(%.4f %.4f %.4f) los=%.4f \n\" x_prev_out y_prev_out z_prev_out x_in y_in z_in gap_los"
 };
 
 void				free_ospec(outitem *oil);
@@ -172,6 +173,8 @@ format_output (const char* buffer, com_table* ctp)
 	case 'o':
 	    fmt_type = FMT_OVLP;
 	    break;
+	case 'g':
+	    fmt_type = FMT_GAP;
 	default:
 	    --bp;
 	    break;
@@ -745,7 +748,7 @@ void
 dump_state(const char *buffer, com_table *ctp)
 {
     char	*c;
-    static const char	fmt_char[] = {'r', 'h', 'p', 'f', 'm', 'o'};
+    static const char	fmt_char[] = {'r', 'h', 'p', 'f', 'm', 'o', 'g'};
     FILE	*sfPtr;
     int		f;
     outitem	*oip;		/* Pointer into list of output items */
