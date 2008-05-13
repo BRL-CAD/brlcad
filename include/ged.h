@@ -667,6 +667,22 @@ GED_EXPORT BU_EXTERN(int	vo_dir2ae_cmd,
 
 
 /**
+ * Launch an editor on file.
+ *
+ * Usage:
+ *     editit file
+ */
+GED_EXPORT BU_EXTERN(int ged_editit, (const char *file));
+
+/**
+ * Edit combination materials
+ *
+ * Usage:
+ *     edmater comb(s)
+ */
+GED_EXPORT BU_EXTERN(int ged_edmater, (struct rt_wdb *wdbp, int argc, char *argv[]));
+
+/**
  * Set region ident codes.
  *
  * Usage:

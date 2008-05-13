@@ -1,6 +1,8 @@
 set(LIBGED_SOURCES
     bigE.c
     dg_obj.c
+    editit.c
+    edmater.c
     globals.c
     importFg4Section.c
     item.c

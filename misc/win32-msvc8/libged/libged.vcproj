@@ -134,6 +134,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\editit.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\edmater.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\globals.c"
 				>
 			</File>

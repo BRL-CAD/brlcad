@@ -54,8 +54,6 @@ extern struct bn_tol mged_tol;
 void set_tran();
 void	aexists(char *name);
 
-static char	tmpfil[MAXPATHLEN];
-
 int		newedge;		/* new edge for arb editing */
 
 /* Add/modify item and air codes of a region */
@@ -263,57 +261,25 @@ f_mater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 int
 f_edmater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    FILE *fp;
-    int i;
-    int status;
-
-    char **av;
-
+    Tcl_DString ds;
+    int ret;
+    
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
 
-    if (argc < 2) {
-	struct bu_vls vls;
+    ret = ged_edmater(wdbp, argc, argv);
 
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "help edmater");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
+    /* Convert to Tcl codes */
+    if (ret == GED_OK)
+	ret = TCL_OK;
+    else
+	ret = TCL_ERROR;
 
-    fp = bu_temp_file(tmpfil, MAXPATHLEN);
-    if (!fp)
-	return TCL_ERROR;
+    Tcl_DStringInit(&ds);
+    Tcl_DStringAppend(&ds, bu_vls_addr(&wdbp->wdb_result_str), -1);
+    Tcl_DStringResult(interp, &ds);
 
-    av = (char **)bu_malloc(sizeof(char *)*(argc + 2), "f_edmater: av");
-    av[0] = "wmater";
-    av[1] = tmpfil;
-    for(i = 2; i < argc + 1; ++i)
-	av[i] = argv[i-1];
-
-    av[i] = NULL;
-
-    if (f_wmater(clientData, interp, argc + 1, av) == TCL_ERROR) {
-	(void)unlink(tmpfil);
-	bu_free((genptr_t)av, "f_edmater: av");
-	return TCL_ERROR;
-    }
-
-    (void)fclose(fp);
-
-    if (editit(tmpfil)) {
-	av[0] = "rmater";
-	av[2] = NULL;
-	status = f_rmater(clientData, interp, 2, av);
-    } else {
-	status = TCL_ERROR;
-    }
-
-    (void)unlink(tmpfil);
-    bu_free((genptr_t)av, "f_edmater: av");
-
-    return status;
+    return ret;
 }
 
 
