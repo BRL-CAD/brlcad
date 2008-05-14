@@ -60,10 +60,10 @@
 #include "./sedit.h"
 
 
-extern void update_grids(fastf_t sf);			/* in grid.c */
+extern void update_grids(fastf_t sf);		/* in grid.c */
 extern void set_localunit_TclVar(void);		/* in chgmodel.c */
 extern void init_qray(void);			/* in qray.c */
-extern int gui_setup(char *dstr);				/* in attach.c */
+extern int gui_setup(char *dstr);		/* in attach.c */
 extern int mged_default_dlist;			/* in attach.c */
 extern int classic_mged;
 extern int bot_vertex_fuse(), bot_condense();
@@ -889,7 +889,6 @@ int
 f_comm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 
-#ifndef _WIN32
 
     register int pid, rpid;
     int retcode;
@@ -904,6 +903,7 @@ f_comm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
+#ifndef _WIN32
     (void)signal( SIGINT, SIG_IGN );
     if ( ( pid = fork()) == 0 )  {
 	(void)signal( SIGINT, SIG_DFL );
@@ -914,9 +914,9 @@ f_comm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     while ((rpid = wait(&retcode)) != pid && rpid != -1)
 	;
-
-    Tcl_AppendResult(interp, "!\n", (char *)NULL);
 #endif
+
+    Tcl_AppendResult(interp, "Returning to MGED\n", (char *)NULL);
 
     return TCL_OK;
 }
@@ -979,7 +979,7 @@ f_sync(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *
  *  Common code for help commands
  */
-static int
+HIDDEN int
 helpcomm(int argc, char **argv, struct funtab *functions)
 {
     register struct funtab *ftp;
