@@ -1,28 +1,34 @@
 include(generic/CMakeLists.txt)
 include(libtommath/CMakeLists.txt)
 
-if(MSVC)
-    set(TCL_WIN_SOURCES ${CMAKE_CURRENT_LIST_DIR})
-    include(win/CMakeLists.txt)
-
-    set(TCL_SOURCES
-        ${TCL_GENERIC_SOURCES}
-        ${TCL_LIBTOMMATH_SOURCES}
-        ${TCL_WIN_SOURCES}
-    )
-endif(MSVC)
+set(TCL_SOURCES
+    ${TCL_GENERIC_SOURCES}
+    ${TCL_LIBTOMMATH_SOURCES}
+)
 
 include_directories(
     generic
     libtommath
-    win
 )
+
+if(MSVC)
+    include(win/CMakeLists.txt)
+
+    set(TCL_SOURCES
+        ${TCL_SOURCES}
+        ${TCL_WIN_SOURCES}
+    )
+
+    include_directories(
+        win
+    )
+endif(MSVC)
 
 add_definitions(
     -Dinline=__inline
     -DBUILD_tcl
-    -DTCL_CFGVAL_ENCODING=\\"UTF-8\\"
-    -DTCL_PIPE_DLL=\\"tclpip85.dll\\"
+    -DTCL_CFGVAL_ENCODING="UTF-8"
+    -DTCL_PIPE_DLL="tclpip85.dll"
     -DCFG_RUNTIME_LIBDIR=0
     -DCFG_RUNTIME_BINDIR=0
     -DCFG_RUNTIME_SCRDIR=0
@@ -37,9 +43,13 @@ add_definitions(
 
 add_library(tcl85 SHARED ${TCL_SOURCES})
 
-target_link_libraries(tcl85
-	Ws2_32
-)
+if(MSVC)
+    target_link_libraries(tcl85
+            Ws2_32
+    )
+endif(MSVC)
+
+set_property(TARGET tcl85 PROPERTY LINK_INTERFACE_LIBRARIES "")
 
 if(MSVC)
     add_executable(tclpip85 win/stub16.c)
