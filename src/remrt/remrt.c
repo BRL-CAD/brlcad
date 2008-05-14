@@ -1141,7 +1141,7 @@ eat_script(FILE *fp)
 	}
 
 	/* buf[] has saved "start" line in it */
-	argc = rt_split_cmd( argv, 64, buf );
+	argc = bu_argv_from_string( argv, 64, buf );
 	if ( argc < 2 )  {
 	    bu_log("bad 'start' line\n");
 	    bu_free( buf, "bad start line" );

@@ -269,7 +269,7 @@ cm_file( int argc, char **argv )
 	    continue;
 	}
 
-	i = rt_split_cmd( iwords, nwords+1, bp );
+	i = bu_argv_from_string( iwords, nwords+1, bp );
 
 	if ( i != nwords )  {
 	    bu_log("File '%s', Line %d:  expected %d columns, got %d\n",
