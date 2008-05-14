@@ -7,8 +7,10 @@ bu_bitv_new
 bu_calloc
 bu_file_exists
 bu_free
+bu_getopt
 bu_jmpbuf
 bu_log
+bu_optarg
 bu_ptbl_free
 bu_ptbl_init
 bu_setjmp_valid
@@ -29,13 +31,16 @@ mk_add_pipe_pt
 mk_addmember
 mk_arb8
 mk_bot
+mk_brep
 mk_comb
 mk_freemembers
 mk_id
+bu_optind
 mk_pipe
 mk_pipe_free
 mk_pipe_init
 mk_rcc
+mk_region1
 mk_rpp
 mk_trc_h
 
