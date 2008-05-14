@@ -1666,14 +1666,15 @@ bu_key_eq_to_key_val(char *in, char **next, struct bu_vls *vls)
  *  @return	0	OK
  */
 int
-bu_shader_to_tcl_list(char *in, struct bu_vls *vls)
+bu_shader_to_tcl_list(const char *in, struct bu_vls *vls)
 {
-    char *iptr;
-    char *next=in;
-    char *shader;
-    int shader_name_len=0;
-    int is_stack=0;
     int len;
+    int is_stack=0;
+    int shader_name_len=0;
+    char *iptr;
+    char *shader;
+    char *copy = bu_strdup(in);
+    char *next = copy;
 
 
     BU_CK_VLS( vls );
@@ -1703,7 +1704,7 @@ bu_shader_to_tcl_list(char *in, struct bu_vls *vls)
 
 	    while ( !done )
 	    {
-		char *shade1;
+		const char *shade1;
 
 		while ( isspace( *iptr ) )
 		    iptr++;
@@ -1718,8 +1719,10 @@ bu_shader_to_tcl_list(char *in, struct bu_vls *vls)
 
 		bu_vls_putc( vls, '{' );
 
-		if ( bu_shader_to_tcl_list( shade1, vls ) )
+		if ( bu_shader_to_tcl_list( shade1, vls ) ) {
+		    bu_free(copy, BU_FLSTR);
 		    return( 1 );
+		}
 
 		bu_vls_strcat( vls, "} " );
 
@@ -1727,14 +1730,18 @@ bu_shader_to_tcl_list(char *in, struct bu_vls *vls)
 		    iptr++;
 	    }
 	    bu_vls_putc( vls, '}' );
+	    bu_free(copy, BU_FLSTR);
 	    return( 0 );
 	}
 	else if ( !strncmp( shader, "envmap", 6 ) )
 	{
 	    bu_vls_strcat( vls, "envmap {" );
-	    if ( bu_shader_to_tcl_list( iptr, vls ) )
+	    if ( bu_shader_to_tcl_list( iptr, vls ) ) {
+		bu_free(copy, BU_FLSTR);
 		return( 1 );
+	    }
 	    bu_vls_putc( vls, '}' );
+	    bu_free(copy, BU_FLSTR);
 	    return( 0 );
 	}
 
@@ -1752,8 +1759,10 @@ bu_shader_to_tcl_list(char *in, struct bu_vls *vls)
 	{
 	    bu_vls_strcat( vls, " {" );
 	    len = bu_vls_strlen( vls );
-	    if ( bu_key_eq_to_key_val( iptr, &next, vls ) )
+	    if ( bu_key_eq_to_key_val( iptr, &next, vls ) ) {
+		bu_free(copy, BU_FLSTR);
 		return( 1 );
+	    }
 	    if ( bu_vls_strlen( vls ) > len )
 		bu_vls_putc( vls, '}' );
 	    else
@@ -1771,6 +1780,7 @@ bu_shader_to_tcl_list(char *in, struct bu_vls *vls)
     if ( is_stack )
 	bu_vls_putc( vls, '}' );
 
+    bu_free(copy, BU_FLSTR);
     return( 0 );
 }
 

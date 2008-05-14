@@ -2169,7 +2169,7 @@ BU_EXPORT BU_EXTERN(int bu_key_eq_to_key_val,
 		     char **next,
 		     struct bu_vls *vls));
 BU_EXPORT BU_EXTERN(int bu_shader_to_tcl_list,
-		    (char *in,
+		    (const char *in,
 		     struct bu_vls *vls));
 BU_EXPORT BU_EXTERN(int bu_key_val_to_key_eq,
 		    (char *in));
