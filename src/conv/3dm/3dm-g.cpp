@@ -29,19 +29,12 @@
 /* without OBJ_BREP, this entire procedural example is disabled */
 #ifdef OBJ_BREP
 
-#include <unistd.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <string>
 
 #include "vmath.h"		/* BRL-CAD Vector macros */
 #include "wdb.h"
 using namespace std;
 
-#ifdef __cplusplus
-}
-#endif
 
 char * itoa(int num) {
 	static char	line[10];
