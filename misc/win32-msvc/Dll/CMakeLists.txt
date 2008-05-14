@@ -9,6 +9,7 @@ file(WRITE brlcadrc_defines.h
     "#define BRLCAD_DLL_RC_PATCH ${patchVersionNumber}"
 )
 
+
 # for all targets
 include_directories(
     ../../../include
@@ -37,17 +38,7 @@ target_link_libraries(brlcad
     openNURBS
 )
 
-add_dependencies(brlcad
-    libbn
-    libbu
-    libged
-    libregex
-    librt
-    libsysv
-    libwdb
-    libz
-    openNURBS
-)
+set_property(TARGET brlcad PROPERTY LINK_INTERFACE_LIBRARIES "")
 
 
 # build the BrlcadCore.dll
@@ -71,15 +62,4 @@ target_link_libraries(BrlcadCore
     tcl85
 )
 
-add_dependencies(BrlcadCore
-    libbn
-    libbu
-    libged
-    libregex
-    librt
-    libsysv
-    libwdb
-    libz
-    openNURBS
-    tcl85
-)
+set_property(TARGET BrlcadCore PROPERTY LINK_INTERFACE_LIBRARIES "")
