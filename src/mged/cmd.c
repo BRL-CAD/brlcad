@@ -60,11 +60,6 @@
 #include "./sedit.h"
 
 
-void mged_compat(struct bu_vls *dest, struct bu_vls *src, int use_first);
-void mged_print_result(int status);
-void mged_global_variable_setup(Tcl_Interp *interp);
-void mged_global_variable_teardown(Tcl_Interp *interp);
-
 extern void update_grids(fastf_t sf);			/* in grid.c */
 extern void set_localunit_TclVar(void);		/* in chgmodel.c */
 extern void init_qray(void);			/* in qray.c */
@@ -453,33 +448,6 @@ cmd_set_more_default(ClientData clientData, Tcl_Interp *interp, int argc, char *
 }
 
 
-int
-cmd_mged_glob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
-{
-    struct bu_vls dest, src;
-
-    if (argc != 2) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "help db_glob");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
-    bu_vls_init(&src);
-    bu_vls_init(&dest);
-    bu_vls_strcpy(&src, argv[1]);
-    mged_compat(&dest, &src, 0);
-    Tcl_AppendResult(interp, bu_vls_addr(&dest), (char *)NULL);
-    bu_vls_free(&src);
-    bu_vls_free(&dest);
-
-    return TCL_OK;
-}
-
-
 /**
  * debackslash, backslash_specials, mged_compat: routines for original
  *   mged emulation mode
@@ -498,6 +466,7 @@ debackslash(struct bu_vls *dest, struct bu_vls *src)
 	bu_vls_putc( dest, *ptr++ );
     }
 }
+
 
 void
 backslash_specials(struct bu_vls *dest, struct bu_vls *src)
@@ -616,6 +585,34 @@ mged_compat(struct bu_vls *dest, struct bu_vls *src, int use_first)
     bu_vls_free( &temp );
     bu_vls_free( &word );
 }
+
+
+int
+cmd_mged_glob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls dest, src;
+
+    if (argc != 2) {
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "help db_glob");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    bu_vls_init(&src);
+    bu_vls_init(&dest);
+    bu_vls_strcpy(&src, argv[1]);
+    mged_compat(&dest, &src, 0);
+    Tcl_AppendResult(interp, bu_vls_addr(&dest), (char *)NULL);
+    bu_vls_free(&src);
+    bu_vls_free(&dest);
+
+    return TCL_OK;
+}
+
 
 #ifdef _WIN32
 /* limited to seconds only */
