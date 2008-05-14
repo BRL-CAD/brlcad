@@ -49,6 +49,14 @@ proc dbfindtree {args} {
     set save $glob_compat_mode
     set glob_compat_mode 0
 
+    set a0 [lindex $args 0]
+    if {$a0 == "-l" || $a0 == "-L"} {
+	set args [lrange $args 1 end]
+	set lflag 1
+    } else {
+	set lflag 0
+    }
+
     set find_paths $args
 
 
@@ -80,10 +88,24 @@ proc dbfindtree {args} {
 	}
 	set find_paths $new_paths
     }
-    foreach i $new_paths { puts [string map {\  /} $i] }
+
+    set rlist {}
+    foreach i $new_paths {
+	set p [string map {\  /} $i]
+
+	if {$lflag} {
+	    lappend rlist $p
+	} else {
+	    puts $p
+	}
+    }
     set glob_compat_mode $save
     # prevent printing of value of $save
     set i {}
+
+    if {$lflag} {
+	return $rlist
+    }
 }
 # Local Variables:
 # mode: Tcl
