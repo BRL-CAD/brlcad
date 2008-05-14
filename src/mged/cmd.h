@@ -28,7 +28,6 @@
 
 /* Commands */
 
-/* MGED_EXTERN(int f_list, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv)); */
 MGED_EXTERN(int cmd_E, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_adjust, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_ae2dir, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
