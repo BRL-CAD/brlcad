@@ -1981,9 +1981,24 @@ cmd_make_name(ClientData	clientData,
 	      int		argc,
 	      char		**argv)
 {
+    Tcl_DString ds;
+    int ret;
+
     CHECK_DBI_NULL;
 
-    return wdb_make_name_cmd(wdbp, interp, argc, argv);
+    ret = ged_make_name(wdbp, argc, argv);
+
+    /* Convert to Tcl codes */
+    if (ret == GED_OK)
+	ret = TCL_OK;
+    else
+	ret = TCL_ERROR;
+
+    Tcl_DStringInit(&ds);
+    Tcl_DStringAppend(&ds, bu_vls_addr(&wdbp->wdb_result_str), -1);
+    Tcl_DStringResult(interp, &ds);
+
+    return ret;
 }
 
 int

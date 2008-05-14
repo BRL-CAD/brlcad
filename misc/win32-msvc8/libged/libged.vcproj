@@ -158,6 +158,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\make.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\make_name.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\mater.c"
 				>
 			</File>

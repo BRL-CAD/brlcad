@@ -7701,75 +7701,6 @@ wdb_make_bb_tcl(ClientData	clientData,
 }
 
 /**
- *
- *
- */
-int
-wdb_make_name_cmd(struct rt_wdb	*wdbp,
-		  Tcl_Interp	*interp,
-		  int		argc,
-		  char 		**argv)
-{
-    struct bu_vls	obj_name;
-    char		*cp, *tp;
-    static int	i = 0;
-    int		len;
-
-    switch (argc) {
-	case 2:
-	    if (strcmp(argv[1], "-s") != 0)
-		break;
-	    else {
-		i = 0;
-		return TCL_OK;
-	    }
-	case 3:
-	{
-	    int	new_i;
-
-	    if ((strcmp(argv[1], "-s") == 0)
-		&& (sscanf(argv[2], "%d", &new_i) == 1)) {
-		i = new_i;
-		return TCL_OK;
-	    }
-	}
-	default:
-	{
-	    struct bu_vls	vls;
-
-	    bu_vls_init(&vls);
-	    bu_vls_printf(&vls, "helplib_alias wdb_make_name %s", argv[0]);
-	    Tcl_Eval(interp, bu_vls_addr(&vls));
-	    bu_vls_free(&vls);
-	    return TCL_ERROR;
-	}
-    }
-
-    bu_vls_init(&obj_name);
-    for (cp = argv[1], len = 0; *cp != '\0'; ++cp, ++len) {
-	if (*cp == '@') {
-	    if (*(cp + 1) == '@')
-		++cp;
-	    else
-		break;
-	}
-	bu_vls_putc(&obj_name, *cp);
-    }
-    bu_vls_putc(&obj_name, '\0');
-    tp = (*cp == '\0') ? "" : cp + 1;
-
-    do {
-	bu_vls_trunc(&obj_name, len);
-	bu_vls_printf(&obj_name, "%d", i++);
-	bu_vls_strcat(&obj_name, tp);
-    }
-    while (db_lookup(wdbp->dbip, bu_vls_addr(&obj_name), LOOKUP_QUIET) != DIR_NULL);
-    Tcl_AppendResult(interp, bu_vls_addr(&obj_name), (char *) NULL);
-    bu_vls_free(&obj_name);
-    return TCL_OK;
-}
-
-/**
  *@brief
  * Generate an identifier that is guaranteed not to be the name
  * of any object currently in the database.
@@ -7786,8 +7717,22 @@ wdb_make_name_tcl(ClientData	clientData,
 
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+    Tcl_DString ds;
+    int ret;
 
-    return wdb_make_name_cmd(wdbp, interp, argc-1, argv+1);
+    ret = ged_make_name(wdbp, argc-1, argv+1);
+
+    /* Convert to Tcl codes */
+    if (ret == GED_OK)
+	ret = TCL_OK;
+    else
+	ret = TCL_ERROR;
+
+    Tcl_DStringInit(&ds);
+    Tcl_DStringAppend(&ds, bu_vls_addr(&wdbp->wdb_result_str), -1);
+    Tcl_DStringResult(interp, &ds);
+
+    return ret;
 }
 
 /**

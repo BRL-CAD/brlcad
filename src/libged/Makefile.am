@@ -11,6 +11,8 @@ libged_nil_la_SOURCES = \
 	importFg4Section.c \
 	item.c \
 	log.c \
+	make.c \
+	make_name.c \
 	mater.c \
 	mirror.c \
 	nirt.c \

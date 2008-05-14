@@ -350,11 +350,6 @@ GED_EXPORT BU_EXTERN(int	wdb_make_bb_cmd,
 		     Tcl_Interp *interp,
 		     int argc,
 		     char **argv));
-GED_EXPORT BU_EXTERN(int	wdb_make_name_cmd,
-		    (struct rt_wdb *wdbp,
-		     Tcl_Interp *interp,
-		     int argc,
-		     char **argv));
 GED_EXPORT BU_EXTERN(int	wdb_units_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
@@ -702,6 +697,22 @@ GED_EXPORT BU_EXTERN(int ged_item, (struct rt_wdb *wdbp, int argc, const char *a
  *     log {get|start|stop}
  */
 GED_EXPORT BU_EXTERN(int ged_log, (struct rt_wdb *wdbp, int argc, const char *argv[]));
+
+/**
+ * Make a new primitive.
+ *
+ * Usage:
+ *     make obj type
+ */
+GED_EXPORT BU_EXTERN(int ged_make, (struct rt_wdb *wdbp, int argc, char *argv[]));
+
+/**
+ * Make a unique object name.
+ *
+ * Usage:
+ *     make_name template | -s [num]
+ */
+GED_EXPORT BU_EXTERN(int ged_make_name, (struct rt_wdb *wdbp, int argc, char *argv[]));
 
 /**
  * Modify material information.
