@@ -160,8 +160,7 @@ extern FILE	*fopenrc(void);
 #define         VTI_XPREV_OUT 60
 #define         VTI_YPREV_OUT 61
 #define         VTI_ZPREV_OUT 62
-#define         VTI_DPREV_OUT 63
-#define         VTI_GAP_LOS 64
+#define         VTI_GAP_LOS 63
 
 #define		direct(i)	(ValTab[VTI_X_DIR + i].value.fval)
 #define		target(i)	(ValTab[VTI_X_ORIG + i].value.fval)
