@@ -2471,15 +2471,14 @@ RT_EXPORT BU_EXTERN(void rt_cut_clean,
 /* Read semi-colon terminated line */
 RT_EXPORT BU_EXTERN(char *rt_read_cmd,
 		    (FILE *fp));
-RT_EXPORT BU_EXTERN(int rt_split_cmd,
-		    (char **argv,
-		     int lim,
-		     char *lp));
 /* do cmd from string via cmd table */
 RT_EXPORT BU_EXTERN(int rt_do_cmd,
 		    (struct rt_i *rtip,
 		     const char *ilp,
 		     const struct command_tab *tp));
+
+/* rt_split_cmd is DEPRECATED, use bu_argv_from_string */
+RT_EXPORT BU_EXTERN(int rt_split_cmd, (char **argv, int lim, char *lp));
 
 
 /* The database library */

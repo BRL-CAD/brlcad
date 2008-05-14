@@ -21,10 +21,11 @@
 /** @{ */
 /** @file librt/cmd.c
  *
- *  Read and parse a viewpoint-control command stream.
- *  This module is intended to be common to all programs which
- *  read this type of command stream;  the routines to handle
- *  the various keywords should go in application-specific modules.
+ * Read and parse a viewpoint-control command stream.
+ *
+ * This module is intended to be common to all programs which read
+ * this type of command stream; the routines to handle the various
+ * keywords should go in application-specific modules.
  *
  */
 /** @} */
@@ -105,65 +106,18 @@ rt_read_cmd(register FILE *fp)
 
 #define MAXWORDS	4096	/* Max # of args per command */
 
-/*
- *			R T _ S P L I T _ C M D
+
+/**
+ * R T _ S P L I T _ C M D
  *
- *  Build argv[] array from input buffer, by splitting whitespace
- *  separated "words" into null terminated strings.
- *  The input buffer is altered by this process.
- *
- *  Returns -
- *	 0	no words in input
- *	nwords	number of words of input, now in argv[]
+ * DEPRECATED: use bu_argv_from_string() instead
  */
 int
-rt_split_cmd(char **argv, int lim, register char *lp)
+rt_split_cmd(char **argv, int lim, char *lp)
 {
-    register int	nwords;			/* number of words seen */
-    register char	*lp1;
-
-    argv[0] = "_NIL_";		/* sanity */
-
-    while ( *lp != '\0' && isspace( *lp ) )
-	lp++;
-
-    if ( *lp == '\0' )
-	return(0);		/* No words */
-
-#ifdef HAVE_SHELL_ESCAPE
-    /* Handle "!" shell escape char so the shell can parse the line */
-    if ( *lp == '!' )  {
-	int	ret;
-	ret = system( lp+1 );
-	if ( ret != 0 )  {
-	    perror("system(3)");
-	    bu_log("rt_split_cmd() FAILED: !%s\n", lp);
-	}
-	return(0);		/* No words */
-    }
-#endif
-
-    /* some non-space string has been seen, argv[0] is set */
-    nwords = 1;
-    argv[0] = lp;
-
-    for (; *lp != '\0'; lp++ )  {
-	if ( !isspace( *lp ) )
-	    continue;	/* skip over current word */
-
-	*lp = '\0';		/* terminate current word */
-	lp1 = lp + 1;
-	if ( *lp1 != '\0' && !isspace( *lp1 ) )  {
-	    /* Begin next word */
-	    if ( nwords >= lim-1 )
-		break;	/* argv[] full */
-
-	    argv[nwords++] = lp1;
-	}
-    }
-    argv[nwords] = (char *)0;	/* safety */
-    return( nwords );
+    return bu_argv_from_string(argv, lim, lp);
 }
+
 
 /*
  *			R T _ D O _ C M D
@@ -189,7 +143,7 @@ rt_do_cmd(struct rt_i *rtip, const char *ilp, register const struct command_tab 
 
     lp = bu_strdup(ilp);
 
-    nwords = rt_split_cmd( cmd_args, MAXWORDS, lp );
+    nwords = bu_argv_from_string( cmd_args, MAXWORDS, lp );
     if ( nwords <= 0 )
 	return(0);	/* No command to process */
 
