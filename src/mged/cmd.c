@@ -374,9 +374,6 @@ static struct cmdtab cmdtab[] = {
     {"rtweight", cmd_rt},
     {"save",		bv_vsave},
     {"solid_report", cmd_solid_report},
-#if 0
-    {"savedit", f_savedit},
-#endif
     {"savekey", f_savekey},
     {"saveview", f_saveview},
     {"sca", cmd_sca},
@@ -668,15 +665,6 @@ cmd_setup(void)
 
     bu_vls_init(&temp);
     for (ctp = cmdtab; ctp->ct_name != NULL; ctp++) {
-#if 0
-	bu_vls_strcpy(&temp, "info commands ");
-	bu_vls_strcat(&temp, ctp->ct_name);
-	if (Tcl_Eval(interp, bu_vls_addr(&temp)) != TCL_OK ||
-	    Tcl_GetStringResult(interp)[0] != '\0') {
-	    bu_log("WARNING:  '%s' name collision (%s)\n", ctp->ct_name,
-		   Tcl_GetStringResult(interp));
-	}
-#endif
 	bu_vls_strcpy(&temp, "_mged_");
 	bu_vls_strcat(&temp, ctp->ct_name);
 
@@ -856,66 +844,6 @@ cmd_cmd_win(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
 }
 
-#if 0
-cmd_get(clientData, interp, argc, argv)
-    ClientData clientData;
-    Tcl_Interp *interp;
-    int argc;
-    char **argv;
-{
-    struct dm_list *p;
-    struct cmd_list *save_clp;
-    struct bu_vls vls;
-    int first = 1;
-
-    if (argc != 1) {
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helpdevel cmd_get");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
-    save_clp = curr_cmd_list;
-    bu_vls_init(&vls);
-
-    if (!curr_cmd_list->cl_tie) {
-	if (curr_dm_list->dml_tie) {
-	    Tcl_AppendElement(interp, bu_vls_addr(&curr_dm_list->dml_tie->cl_name));
-	    curr_cmd_list = curr_dm_list->dml_tie;
-	    Tcl_AppendElement(interp, bu_vls_addr(&pathName));
-	} else {
-	    Tcl_AppendElement(interp, bu_vls_addr(&curr_cmd_list->cl_name));
-	    Tcl_AppendElement(interp, bu_vls_addr(&pathName));
-	    Tcl_AppendElement(interp, bu_vls_addr(&vls));
-	    bu_vls_free(&vls);
-	    return TCL_OK;
-	}
-    } else {
-	Tcl_AppendElement(interp, bu_vls_addr(&curr_cmd_list->cl_name));
-	Tcl_AppendElement(interp, bu_vls_addr(&curr_cmd_list->cl_tie->dml_dmp->dm_pathName));
-    }
-
-    /* return all ids associated with the current command window */
-    FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
-	/* The display manager tied to the current command window shares
-	   information with display manager p */
-	if (curr_cmd_list->cl_tie->dml_view_state == p->dml_view_state)
-	    /* This display manager is tied to a command window */
-	    if (p->dml_tie)
-		if (first) {
-		    bu_vls_printf(&vls, "%S", &p->dml_tie->cl_name);
-		    first = 0;
-		} else
-		    bu_vls_printf(&vls, " %S", &p->dml_tie->cl_name);
-    }
-
-    Tcl_AppendElement(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    curr_cmd_list = save_clp;
-    return TCL_OK;
-}
-#endif
 
 int
 cmd_get_more_default(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -1590,44 +1518,6 @@ cmd_echo(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
 }
 
-#if 0
-int
-f_savedit(argc, argv)
-    int	argc;
-    char	*argv[];
-{
-    struct bu_vls str;
-    char	line[35];
-    int o_ipathpos;
-    register struct solid *o_illump;
-
-    o_illump = illump;
-    bu_vls_init(&str);
-
-    if (state == ST_S_EDIT) {
-	bu_vls_strcpy( &str, "press accept\npress sill\n" );
-	cmdline(&str, 0);
-	illump = o_illump;
-	bu_vls_strcpy( &str, "M 1 0 0\n");
-	cmdline(&str, 0);
-	return CMD_OK;
-    } else if (state == ST_O_EDIT) {
-	o_ipathpos = ipathpos;
-	bu_vls_strcpy( &str, "press accept\npress oill\n" );
-	cmdline(&str, 0);
-	(void)chg_state( ST_O_PICK, ST_O_PATH, "savedit");
-	illump = o_illump;
-	ipathpos = o_ipathpos;
-	bu_vls_strcpy( &str, "M 1 0 0\n");
-	cmdline(&str, 0);
-	return CMD_OK;
-    }
-
-    bu_log( "Savedit will only work in an edit state\n");
-    bu_vls_free(&str);
-    return CMD_BAD;
-}
-#endif
 
 /**
  * SYNOPSIS
