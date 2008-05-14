@@ -685,7 +685,7 @@ GED_EXPORT BU_EXTERN(int ged_editit, (const char *file));
  * Usage:
  *     edmater combination1 [combination2 ...]
  */
-GED_EXPORT BU_EXTERN(int ged_edmater, (struct rt_wdb *wdbp, int argc, char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_edmater, (struct rt_wdb *wdbp, int argc, const char *argv[]));
 
 /**
  * Set region ident codes.
@@ -693,7 +693,7 @@ GED_EXPORT BU_EXTERN(int ged_edmater, (struct rt_wdb *wdbp, int argc, char *argv
  * Usage:
  *     item region ident [air [material [los]]]
  */
-GED_EXPORT BU_EXTERN(int ged_item, (struct rt_wdb *wdbp, int argc, char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_item, (struct rt_wdb *wdbp, int argc, const char *argv[]));
 
 /**
  * Used to control logging.
@@ -701,7 +701,7 @@ GED_EXPORT BU_EXTERN(int ged_item, (struct rt_wdb *wdbp, int argc, char *argv[])
  * Usage:
  *     log {get|start|stop}
  */
-GED_EXPORT BU_EXTERN(int ged_log, (struct rt_wdb *wdbp, int argc, char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_log, (struct rt_wdb *wdbp, int argc, const char *argv[]));
 
 /**
  * Modify material information.
@@ -709,7 +709,7 @@ GED_EXPORT BU_EXTERN(int ged_log, (struct rt_wdb *wdbp, int argc, char *argv[]))
  * Usage:
  *     mater region_name shader r g b inherit
  */
-GED_EXPORT BU_EXTERN(int ged_mater, (struct rt_wdb *wdbp, int argc, char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_mater, (struct rt_wdb *wdbp, int argc, const char *argv[]));
 
 /**
  * Mirror the primitive or combination along the specified axis.
@@ -718,7 +718,7 @@ GED_EXPORT BU_EXTERN(int ged_mater, (struct rt_wdb *wdbp, int argc, char *argv[]
  *     mirror [-d dir] [-o origin] [-p scalar_pt] [-x] [-y] [-z] old new
  *
  */
-GED_EXPORT BU_EXTERN(int ged_mirror, (struct rt_wdb *wdbp, int argc, char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_mirror, (struct rt_wdb *wdbp, int argc, const char *argv[]));
 
 /**
  * Read material properties from a file.
@@ -726,7 +726,7 @@ GED_EXPORT BU_EXTERN(int ged_mirror, (struct rt_wdb *wdbp, int argc, char *argv[
  * Usage:
  *     rmater file
  */
-GED_EXPORT BU_EXTERN(int ged_rmater, (struct rt_wdb *wdbp, int argc, char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_rmater, (struct rt_wdb *wdbp, int argc, const char *argv[]));
 
 /**
  * Write material properties to a file for specified combination(s).
@@ -734,7 +734,7 @@ GED_EXPORT BU_EXTERN(int ged_rmater, (struct rt_wdb *wdbp, int argc, char *argv[
  * Usage:
  *     wmater file combination1 [combination2 ...]
  */
-GED_EXPORT BU_EXTERN(int ged_wmater, (struct rt_wdb *wdbp, int argc, char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_wmater, (struct rt_wdb *wdbp, int argc, const char *argv[]));
 
 
 

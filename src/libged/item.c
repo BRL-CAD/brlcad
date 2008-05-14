@@ -27,9 +27,7 @@
 #include "ged.h"
 
 int
-ged_item(struct rt_wdb	*wdbp,
-	 int		argc,
-	 char		*argv[])
+ged_item(struct rt_wdb *wdbp, int argc, const char *argv[])
 {
     int status = GED_OK;
     register struct directory *dp;

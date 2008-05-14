@@ -28,15 +28,18 @@
 
 
 int
-ged_mirror(struct rt_wdb	*wdbp,
-	   int			argc,
-	   char			*argv[])
+ged_mirror(struct rt_wdb *wdbp, int argc, const char *argv[])
 {
     register int k;
     point_t mirror_origin = {0.0, 0.0, 0.0};
     vect_t mirror_dir = {1.0, 0.0, 0.0};
     fastf_t mirror_pt = 0.0;
     static const char *usage = "[-h] [-d dir] [-o origin] [-p scalar_pt] [-x] [-y] [-z] old new";
+
+    int early_out = 0;
+
+    char **nargv;
+    struct bu_vls vlsargv;
 
     if (wdbp == RT_WDB_NULL) {
 	bu_log("%s: a database must be open to use this command.", argv[0]);
@@ -58,10 +61,16 @@ ged_mirror(struct rt_wdb	*wdbp,
 	return GED_OK;
     }
 
+    /* get a writable copy of argv */
+    bu_vls_init(&vlsargv);
+    bu_vls_from_argv(&vlsargv, argc, argv);
+    nargv = bu_calloc(argc+1, sizeof(char *), "calloc f_ill nargv");
+    bu_argv_from_string(nargv, argc, bu_vls_addr(&vlsargv));
+
     bu_optind = 1;
 
     /* Process arguments */
-    while ((k = bu_getopt(argc, argv, "d:D:hHo:O:p::P:xXyYzZ")) != EOF) {
+    while ((k = bu_getopt(argc, nargv, "d:D:hHo:O:p::P:xXyYzZ")) != EOF) {
 	switch (k) {
 	case 'd':
 	case 'D':
@@ -70,7 +79,7 @@ ged_mirror(struct rt_wdb	*wdbp,
 		       &mirror_dir[Y],
 		       &mirror_dir[Z]) != 3) {
 		bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
-		return GED_ERROR;
+		early_out = 1;
 	    }
 	    break;
 	case 'p':
@@ -84,7 +93,7 @@ ged_mirror(struct rt_wdb	*wdbp,
 		       &mirror_origin[Y],
 		       &mirror_origin[Z]) != 3) {
 		bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
-		return GED_ERROR;
+		early_out = 1;
 	    }
 	    break;
 	case 'x':
@@ -103,11 +112,23 @@ ged_mirror(struct rt_wdb	*wdbp,
 	case 'H':
 	    wdbp->wdb_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	    bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
+
+	    bu_free(nargv, "free f_ill nargv");
+	    bu_vls_free(&vlsargv);
+
 	    return GED_OK;
 	default:
 	    bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
-	    return GED_ERROR;
+	    early_out = 1;
+	    break;
 	}
+    }
+
+    bu_free(nargv, "free f_ill nargv");
+    bu_vls_free(&vlsargv);
+
+    if (early_out) {
+	return GED_ERROR;
     }
 
     argc -= bu_optind;

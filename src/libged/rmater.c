@@ -76,9 +76,7 @@ extract_mater_from_line(char *line,
 
 
 int
-ged_rmater(struct rt_wdb	*wdbp,
-	   int			argc,
-	   char			*argv[])
+ged_rmater(struct rt_wdb *wdbp, int argc, const char *argv[])
 {
 #ifndef LINELEN
 #define LINELEN 256

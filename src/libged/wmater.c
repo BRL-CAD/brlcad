@@ -27,7 +27,7 @@
 
 
 int
-ged_wmater(struct rt_wdb *wdbp, int argc, char *argv[])
+ged_wmater(struct rt_wdb *wdbp, int argc, const char *argv[])
 {
     int i;
     int status = GED_OK;

@@ -27,9 +27,7 @@
 
 
 int
-ged_mater(struct rt_wdb	*wdbp,
-	  int		argc,
-	  char		*argv[])
+ged_mater(struct rt_wdb	*wdbp, int argc, const char *argv[])
 {
     int status = GED_OK;
     register struct directory *dp;

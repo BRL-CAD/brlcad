@@ -46,9 +46,7 @@ ged_logHook(genptr_t clientdata,
 
 
 int
-ged_log(struct rt_wdb	*wdbp,
-	int		argc,
-	char		*argv[])
+ged_log(struct rt_wdb *wdbp, int argc, const char *argv[])
 {
     static char *usage = "get|start|stop";
 

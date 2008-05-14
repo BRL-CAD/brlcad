@@ -29,12 +29,12 @@
 
 
 int
-ged_edmater(struct rt_wdb *wdbp, int argc, char *argv[])
+ged_edmater(struct rt_wdb *wdbp, int argc, const char *argv[])
 {
     FILE *fp;
     int i;
     int status;
-    char **av;
+    const char **av;
     static const char *usage = "comb(s)";
     char tmpfil[MAXPATHLEN];
 
@@ -52,7 +52,7 @@ ged_edmater(struct rt_wdb *wdbp, int argc, char *argv[])
     if (!fp)
 	return TCL_ERROR;
 
-    av = (char **)bu_malloc(sizeof(char *)*(argc + 2), "f_edmater: av");
+    av = (const char **)bu_malloc(sizeof(char *)*(argc + 2), "f_edmater: av");
     av[0] = "wmater";
     av[1] = tmpfil;
     for(i = 2; i < argc + 1; ++i)
