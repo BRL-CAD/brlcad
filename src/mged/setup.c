@@ -382,7 +382,7 @@ mged_rtCmdNotify()
  *
  * Register all MGED commands.
  */
-static void
+HIDDEN void
 cmd_setup(void)
 {
     register struct cmdtab *ctp;
