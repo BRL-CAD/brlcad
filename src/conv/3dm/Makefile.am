@@ -17,6 +17,9 @@ endif
 	${WDB_LIBS} \
 	${OPENNURBS}
 
+EXTRA_DIST = \
+        CMakeLists.txt
+
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \
