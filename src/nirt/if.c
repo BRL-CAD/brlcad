@@ -98,7 +98,7 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
 	 */
 	if (part_nm > 1) {
 	   for (i = 0; i < 3; ++i) {
-	       g_entry(i) = r_entry(i);
+	       g_entry(i) = r_exit(i);
 	   }
 	   g_entry(D) = r_exit(D);
 	}
