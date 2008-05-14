@@ -175,6 +175,7 @@ format_output (const char* buffer, com_table* ctp)
 	    break;
 	case 'g':
 	    fmt_type = FMT_GAP;
+	    break;
 	default:
 	    --bp;
 	    break;

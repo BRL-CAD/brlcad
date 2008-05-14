@@ -83,7 +83,7 @@ const com_table	ComTab[] = {
       "set/query overlap rebuilding/retention",
       "<0|1|2|3>" },
     { "fmt", format_output, "set/query output formats",
-      "{rhpfmo} format item item ..." },
+      "{rhpfmog} format item item ..." },
     { "dest", direct_output, "set/query output destination",
       "file/pipe" },
     { "statefile", state_file,
