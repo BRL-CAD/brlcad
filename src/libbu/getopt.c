@@ -54,12 +54,12 @@
 
 
 /**
- *			B U _ G E T O P T
+ * B U _ G E T O P T
  *
  * get option letter from argument vector
  */
 int
-bu_getopt(int nargc, char *const *nargv, const char *ostr)
+bu_getopt(int nargc, char * const nargv[], const char *ostr)
 {
     static char	*place = EMSG;	/* option letter processing */
     register char	*oli;		/* option letter list index */
