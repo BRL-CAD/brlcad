@@ -94,15 +94,33 @@ set(OPENNURBS_SOURCES
     opennurbs_zlib.cpp
 )
 
+set(OPENNURBS_LINKLIBRARIES
+    libz
+)
+
 include_directories(
     ../../../include
     ../libz
 )
 
+add_definitions(
+   -DON_COMPILING_OPENNURBS
+   -DON_DLL_EXPORTS
+)
+
 if(MSVC)
-	add_definitions(
-		-DUNICODE
-	)
+    add_definitions(
+        -DUNICODE
+    )
+
+    set(OPENNURBS_LINKLIBRARIES
+        ${OPENNURBS_LINKLIBRARIES}
+        Rpcrt4
+    )
 endif(MSVC)
 
-add_library(openNURBS ${OPENNURBS_SOURCES})
+add_library(openNURBS SHARED ${OPENNURBS_SOURCES})
+
+target_link_libraries(openNURBS ${OPENNURBS_LINKLIBRARIES})
+
+set_property(TARGET openNURBS PROPERTY LINK_INTERFACE_LIBRARIES "")

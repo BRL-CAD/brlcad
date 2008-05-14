@@ -32,6 +32,7 @@ include_directories(
 add_definitions(
     -DHAVE_CONFIG_H
     -DBRLCADBUILD
+    -DON_DLL_IMPORTS
 )
 
 add_library(libwdb ${LIBWDB_SOURCES})
