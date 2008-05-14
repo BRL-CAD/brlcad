@@ -635,7 +635,6 @@ bu_vls_from_argv(register struct bu_vls *vp, int argc, const char *argv[])
  *	 0	no words in input
  *	nwords	number of words of input, now in argv[]
  *
- * Built from rt_split_cmd(), but without the shell escape support.
  */
 int
 bu_argv_from_string(char **argv, int lim, register char *lp)
@@ -650,6 +649,19 @@ bu_argv_from_string(char **argv, int lim, register char *lp)
 
     if ( *lp == '\0' )
 	return 0; /* No words */
+
+#ifdef HAVE_SHELL_ESCAPE
+    /* Handle "!" shell escape char so the shell can parse the line */
+    if ( *lp == '!' )  {
+	int	ret;
+	ret = system( lp+1 );
+	if ( ret != 0 )  {
+	    perror("system(3)");
+	    bu_log("bu_argv_from_string() FAILED: %s\n", lp);
+	}
+	return(0);		/* No words */
+    }
+#endif
 
     /* some non-space string has been seen, argv[0] is set */
     nwords = 1;
