@@ -54,6 +54,7 @@ static struct dg_qray_fmt_data def_qray_fmt_data[] = {
     {'f', "\"\""},
     {'m', "\"You missed the target\\n\""},
     {'o', "\"OVERLAP: '%s' and '%s' xyz_in=(%g %g %g) los=%g\\n\" ov_reg1_name ov_reg2_name ov_x_in ov_y_in ov_z_in ov_los"},
+    {'g', "\"\""},
     {(char)0, (char *)NULL}
 };
 
@@ -66,7 +67,7 @@ static char qray_syntax[] = "\
  qray evencolor [r g b]		set or get color of even partitions\n\
  qray voidcolor [r g b]		set or get color of void areas\n\
  qray overlapcolor [r g b]	set or get color of overlap areas\n\
- qray fmt [r|h|p|f|m|o [str]]	set or get format string(s)\n\
+ qray fmt [r|h|p|f|m|o|g [str]]	set or get format string(s)\n\
  qray script [str]		set or get the nirt script string\n\
  qray [help]			print this help message\n\
 ";

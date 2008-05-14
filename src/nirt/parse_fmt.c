@@ -126,7 +126,7 @@ const char	*def_fmt[] = {
     "\"\"",
     "\"You missed the target\n\"",
     "\"OVERLAP: '%s' and '%s' xyz_in=(%g %g %g) los=%g\n\" ov_reg1_name ov_reg2_name ov_x_in ov_y_in ov_z_in ov_los",
-    "\"Gap: xyz_in=(%.4f %.4f %.4f) xyz_out=(%.4f %.4f %.4f) los=%.4f \n\" x_prev_out y_prev_out z_prev_out x_in y_in z_in gap_los"
+    "\"\""
 };
 
 void				free_ospec(outitem *oil);
