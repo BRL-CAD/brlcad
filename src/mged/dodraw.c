@@ -1783,7 +1783,7 @@ f_bev(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 
     {
-	char *av[3];
+	const char *av[3];
 
 	av[0] = "e";
 	av[1] = newname;

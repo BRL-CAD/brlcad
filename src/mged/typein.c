@@ -507,14 +507,15 @@ int
 f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     register struct directory *dp;
-    char			*name;
-    struct rt_db_internal	internal;
-    char			*new_cmd[3], **menu;
-    int			c;
-    int			do_solid_edit = 0;
-    int			dont_draw = 0;
-    int			nvals, (*fn_in)();
-    int			arb_in(char **cmd_argvs, struct rt_db_internal *intern), box_in(char **cmd_argvs, struct rt_db_internal *intern), ehy_in(char **cmd_argvs, struct rt_db_internal *intern), ell_in(char **cmd_argvs, struct rt_db_internal *intern),
+    char *name;
+    struct rt_db_internal internal;
+    const char *new_cmd[3];
+    char **menu;
+    int c;
+    int do_solid_edit = 0;
+    int dont_draw = 0;
+    int nvals, (*fn_in)();
+    int arb_in(char **cmd_argvs, struct rt_db_internal *intern), box_in(char **cmd_argvs, struct rt_db_internal *intern), ehy_in(char **cmd_argvs, struct rt_db_internal *intern), ell_in(char **cmd_argvs, struct rt_db_internal *intern),
 	epa_in(char **cmd_argvs, struct rt_db_internal *intern), eto_in(char **cmd_argvs, struct rt_db_internal *intern), half_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name), rec_in(char **cmd_argvs, struct rt_db_internal *intern),
 	rcc_in(char **cmd_argvs, struct rt_db_internal *intern), rhc_in(char **cmd_argvs, struct rt_db_internal *intern), rpc_in(char **cmd_argvs, struct rt_db_internal *intern), rpp_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name), orpp_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name),
 	sph_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name), tec_in(char **cmd_argvs, struct rt_db_internal *intern), tgc_in(char **cmd_argvs, struct rt_db_internal *intern), tor_in(char **cmd_argvs, struct rt_db_internal *intern), ars_in(int argc, char **argv, struct rt_db_internal *intern, char **promp),

@@ -523,7 +523,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     /* Draw the new solid */
     {
-	char	*arglist[3];
+	const char *arglist[3];
 	arglist[0] = "e";
 	arglist[1] = newname;
 	arglist[2] = NULL;

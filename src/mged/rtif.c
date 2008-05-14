@@ -2523,7 +2523,7 @@ cm_end(int argc, char **argv)
 
     /* If new treewalk is needed, get new objects into view. */
     if ( tree_walk_needed )  {
-	char *av[2];
+	const char *av[2];
 
 	av[0] = "Z";
 	av[1] = NULL;

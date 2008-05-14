@@ -603,7 +603,7 @@ f_arbdef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
 
     {
-	char *av[3];
+	const char *av[3];
 
 	av[0] = "e";
 	av[1] = argv[1]; /* depends on solid name being in argv[1] */

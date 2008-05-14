@@ -777,7 +777,7 @@ copy_object(struct db_i *_dbip, struct resource *resp, struct clone_state *state
 
     /* display the cloned object(s) */
     if (state->draw_obj) {
-	char *av[3] = {"e", NULL, NULL};
+	const char *av[3] = {"e", NULL, NULL};
 
 	idx = index_in_list(obj_list, state->src->d_namep);
 	for (i = 0; i < (state->n_copies > obj_list.name_size ? obj_list.name_size : state->n_copies); i++) {

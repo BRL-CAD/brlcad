@@ -2707,7 +2707,7 @@ f_closedb(
     int	argc,
     char	**argv)
 {
-    char *av[2];
+    const char *av[2];
 
     if ( argc != 1 )  {
 	Tcl_Eval(interp, "help closedb");

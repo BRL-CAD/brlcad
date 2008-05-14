@@ -34,8 +34,8 @@ MGED_EXTERN(int cmd_ae2dir, (ClientData clientData, Tcl_Interp *interp, int argc
 MGED_EXTERN(int cmd_aetview, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_arot, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_attr, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
-MGED_EXTERN(int cmd_autoview, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
-MGED_EXTERN(int cmd_blast, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+MGED_EXTERN(int cmd_autoview, (ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]));
+MGED_EXTERN(int cmd_blast, (ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]));
 MGED_EXTERN(int cmd_bot_decimate, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_bot_face_sort, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_bot_smooth, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
@@ -51,14 +51,14 @@ MGED_EXTERN(int cmd_copyeval, (ClientData clientData, Tcl_Interp *interp, int ar
 MGED_EXTERN(int cmd_dbip, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_dbversion, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_dir2ae, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
-MGED_EXTERN(int cmd_draw, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+MGED_EXTERN(int cmd_draw, (ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]));
 MGED_EXTERN(int cmd_dump, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_dup, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_echo, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_emuves, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_erase, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_erase_all, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
-MGED_EXTERN(int cmd_ev, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+MGED_EXTERN(int cmd_ev, (ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]));
 MGED_EXTERN(int cmd_expand, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_export_body, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_eye_pt, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
@@ -143,7 +143,7 @@ MGED_EXTERN(int cmd_whatid, (ClientData clientData, Tcl_Interp *interp, int argc
 MGED_EXTERN(int cmd_which, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_who, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_xpush, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
-MGED_EXTERN(int cmd_zap, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+MGED_EXTERN(int cmd_zap, (ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]));
 MGED_EXTERN(int cmd_zoom, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_3ptarb, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_adc, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
@@ -182,7 +182,7 @@ MGED_EXTERN(int f_edcodes, (ClientData clientData, Tcl_Interp *interp, int argc,
 MGED_EXTERN(int f_edcolor, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_edcomb, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_edgedir, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
-MGED_EXTERN(int f_edmater, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+MGED_EXTERN(int f_edmater, (ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]));
 MGED_EXTERN(int f_eqn, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_extrude, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_facedef, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
@@ -199,10 +199,10 @@ MGED_EXTERN(int f_grid2view_lu, (ClientData clientData, Tcl_Interp *interp, int 
 MGED_EXTERN(int f_help, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_hideline, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_history, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
-MGED_EXTERN(int f_ill, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+MGED_EXTERN(int f_ill, (ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]));
 MGED_EXTERN(int f_in, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_inside, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
-MGED_EXTERN(int f_itemair, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+MGED_EXTERN(int f_itemair, (ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]));
 MGED_EXTERN(int f_joint, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_journal, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_keypoint, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
@@ -215,7 +215,7 @@ MGED_EXTERN(int f_mater, (ClientData clientData, Tcl_Interp *interp, int argc, c
 MGED_EXTERN(int f_matpick, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_memprint, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_mirface, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
-MGED_EXTERN(int f_mirror, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+MGED_EXTERN(int f_mirror, (ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]));
 MGED_EXTERN(int f_model2grid_lu, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_model2view, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_model2view_lu, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
@@ -248,14 +248,14 @@ MGED_EXTERN(int f_regdebug, (ClientData clientData, Tcl_Interp *interp, int argc
 MGED_EXTERN(int f_regdef, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_release, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_rfarb, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
-MGED_EXTERN(int f_rmater, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+MGED_EXTERN(int f_rmater, (ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]));
 MGED_EXTERN(int f_rmats, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_rot_obj, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_rset, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_savekey, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_saveview, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_sc_obj, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
-MGED_EXTERN(int f_sed, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+MGED_EXTERN(int f_sed, (ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]));
 MGED_EXTERN(int f_sedit_apply, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_sedit_reset, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_set, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
@@ -287,7 +287,7 @@ MGED_EXTERN(int f_wait, (ClientData clientData, Tcl_Interp *interp, int argc, ch
 MGED_EXTERN(int f_wcodes, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_which_shader, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_winset, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
-MGED_EXTERN(int f_wmater, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+MGED_EXTERN(int f_wmater, (ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]));
 
 /*
  * Local Variables:

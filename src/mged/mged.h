@@ -495,17 +495,6 @@ int extract_mater_from_line(
     int *r, int *g, int *b,
     int *override,
     int *inherit);
-int f_rmater(
-    ClientData clientData,
-    Tcl_Interp *interpreter,
-    int     argc,
-    char    *argv[]);
-int
-f_wmater(
-    ClientData clientData,
-    Tcl_Interp *interpreter,
-    int     argc,
-    char    *argv[]);
 
 
 /* chgtree.c */
@@ -521,11 +510,6 @@ int cmd_name(
     char	**argv);
 
 /* chgview.c */
-int edit_com(
-    int	argc,
-    char	**argv,
-    int	kind,
-    int	catch_sigint);
 void eraseobjpath(
     Tcl_Interp	*interpreter,
     int	argc,
@@ -542,11 +526,6 @@ int f_erase_all(
     Tcl_Interp *interpreter,
     int     argc,
     char    **argv);
-int f_sed(
-    ClientData clientData,
-    Tcl_Interp *interpreter,
-    int	argc,
-    char	**argv);
 int f_zap(
     ClientData clientData,
     Tcl_Interp *interpreter,

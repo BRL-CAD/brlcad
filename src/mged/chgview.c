@@ -539,10 +539,7 @@ emuves_com( int argc, char **argv )
 }
 
 int
-cmd_autoview(ClientData clientData,
-	     Tcl_Interp *interp,
-	     int	argc,
-	     char	**argv)
+cmd_autoview(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     register struct dm_list *dmlp;
     register struct dm_list *save_dmlp;
@@ -861,10 +858,7 @@ mged_freemem(void)
 /* ZAP the display -- everything dropped */
 /* Format: Z	*/
 int
-cmd_zap(ClientData	clientData,
-	Tcl_Interp	*interp,
-	int		argc,
-	char		**argv)
+cmd_zap(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     CHECK_DBI_NULL;
 
@@ -1635,7 +1629,7 @@ static char ** path_parse (char *path);
 
 /* Illuminate the named object */
 int
-f_ill(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     register struct directory *dp;
     register struct solid *sp;
@@ -1650,6 +1644,11 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     char	*basename;
     char	*sname;
 
+    int early_out = 0;
+
+    char **nargv;
+    struct bu_vls vlsargv;
+
     CHECK_DBI_NULL;
 
     if (argc < 2 || 5 < argc) {
@@ -1662,8 +1661,13 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
+    bu_vls_init(&vlsargv);
+    bu_vls_from_argv(&vlsargv, argc, argv);
+    nargv = bu_calloc(argc+1, sizeof(char *), "calloc f_ill nargv");
+    bu_argv_from_string(nargv, argc, bu_vls_addr(&vlsargv));
+
     bu_optind = 1;
-    while ((c = bu_getopt(argc, argv, "i:n")) != EOF) {
+    while ((c = bu_getopt(argc, nargv, "i:n")) != EOF) {
 	switch (c) {
 	    case 'n':
 		illum_only = 1;
@@ -1674,7 +1678,9 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		    Tcl_AppendResult(interp,
 				     "the reference index must be greater than 0\n",
 				     (char *)NULL);
-		    return TCL_ERROR;
+
+		    early_out = 1;
+		    break;
 		}
 
 		break;
@@ -1687,9 +1693,15 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		bu_vls_printf(&vls, "help ill");
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
-		return TCL_ERROR;
+
+		early_out = 1;
+		break;
 	    }
 	}
+    }
+
+    if (early_out) {
+	return TCL_ERROR;
     }
 
     argc -= (bu_optind - 1);
@@ -1702,6 +1714,10 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	bu_vls_printf(&vls, "help ill");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
+
+	bu_free(nargv, "free f_ill nargv");
+	bu_vls_free(&vlsargv);
+
 	return TCL_ERROR;
     }
 
@@ -1710,7 +1726,7 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	goto bail_out;
     }
 
-    path_piece = path_parse(argv[1]);
+    path_piece = path_parse(nargv[1]);
     for (nm_pieces = 0; path_piece[nm_pieces] != 0; ++nm_pieces)
 	;
 
@@ -1793,6 +1809,10 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    bu_free((genptr_t)path_piece[i], "f_ill: char *");
 	bu_free((genptr_t) path_piece, "f_ill: char **");
     }
+
+    bu_free(nargv, "free f_ill nargv");
+    bu_vls_free(&vlsargv);
+
     return TCL_OK;
 
  bail_out:
@@ -1815,16 +1835,16 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    bu_free((genptr_t)path_piece[i], "f_ill: char *");
 	bu_free((genptr_t) path_piece, "f_ill: char **");
     }
+
+    bu_free(nargv, "free f_ill nargv");
+    bu_vls_free(&vlsargv);
+
     return TCL_ERROR;
 }
 
 /* Simulate pressing "Solid Edit" and doing an ILLuminate command */
 int
-f_sed(
-    ClientData clientData,
-    Tcl_Interp *interp,
-    int	argc,
-    char	**argv)
+f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;

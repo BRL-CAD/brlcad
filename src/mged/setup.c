@@ -46,12 +46,20 @@
 
 extern void init_qray(void);
 
+
+struct gedtab {
+    char *name;
+    int (*func)(int, const char *[]);
+};
+static struct gedtab newtab[] = {
+    {"edmater", ged_edmater},
+    {NULL, NULL}
+};
+
 struct cmdtab {
     char *ct_name;
     int (*ct_func)();
 };
-
-
 static struct cmdtab cmdtab[] = {
     {"%", f_comm},
     {"35, 25", bv_35_25},
@@ -367,7 +375,7 @@ static struct cmdtab cmdtab[] = {
     {"zoom", cmd_zoom},
     {"zoomin",	bv_zoomin},
     {"zoomout",	bv_zoomout},
-    {0, 0}
+    {NULL, NULL}
 };
 
 

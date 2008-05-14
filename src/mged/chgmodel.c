@@ -52,14 +52,15 @@
 extern struct bn_tol mged_tol;
 
 void set_tran();
-void	aexists(char *name);
+void aexists(char *name);
 
-int		newedge;		/* new edge for arb editing */
+int newedge;		/* new edge for arb editing */
+
 
 /* Add/modify item and air codes of a region */
 /* Format: item region item <air>	*/
 int
-f_itemair(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_itemair(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     Tcl_DString ds;
     int ret;
@@ -259,7 +260,7 @@ f_mater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 }
 
 int
-f_edmater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_edmater(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     Tcl_DString ds;
     int ret;
@@ -284,7 +285,7 @@ f_edmater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 
 int
-f_wmater(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+f_wmater(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     Tcl_DString ds;
     int ret;
@@ -309,11 +310,7 @@ f_wmater(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 
 
 int
-f_rmater(
-    ClientData clientData,
-    Tcl_Interp *interp,
-    int     argc,
-    char    *argv[])
+f_rmater(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     Tcl_DString ds;
     int ret;
@@ -462,7 +459,7 @@ f_shader(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *     mirror [-d dir] [-o origin] [-p scalar_pt] [-x] [-y] [-z] old new
  */
 int
-f_mirror(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_mirror(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     Tcl_DString ds;
     int ret;
@@ -483,7 +480,7 @@ f_mirror(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     Tcl_DStringResult(interp, &ds);
 
     if (wdbp->wdb_result_flags == 0 && ret == TCL_OK) {
-	char *av[3];
+	const char *av[3];
 
 	av[0] = "draw";
 	av[1] = argv[argc-1];
@@ -1325,7 +1322,7 @@ f_make(ClientData	clientData,
     }
 
     {
-	char *av[3];
+	const char *av[3];
 
 	av[0] = "e";
 	av[1] = argv[1]; /* depends on name being in argv[1] */

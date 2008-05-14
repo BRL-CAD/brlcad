@@ -167,6 +167,25 @@ gui_output(genptr_t clientData, genptr_t str)
     return strlen(str);
 }
 
+
+/**
+ * c m d _ g e d _ c m d
+ *
+ * command wrapper for all new libged commands
+ */
+int
+cmd_ged_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+{
+    Tcl_DString ds;
+    int ret;
+    
+    CHECK_DBI_NULL;
+    CHECK_READ_ONLY;
+
+    /* !!! */
+}
+
+
 /**
  *                     C M D _ T K
  *
@@ -1935,7 +1954,7 @@ cmd_comb_std(ClientData	clientData,
 int
 cmd_nmg_collapse(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    char *av[3];
+    const char *av[3];
 
     CHECK_DBI_NULL;
 
@@ -2484,7 +2503,7 @@ cmd_copy(ClientData	clientData,
 	 char		**argv)
 {
     int ret;
-    char *av[3];
+    const char *av[3];
 
     CHECK_DBI_NULL;
 
@@ -2776,19 +2795,16 @@ cmd_tol(ClientData	clientData,
 }
 
 /* defined in chgview.c */
-extern int edit_com(int argc, char **argv, int kind, int catch_sigint);
+extern int edit_com(int argc, const char *argv[], int kind, int catch_sigint);
 
 /**
  * ZAP the display -- then edit anew
  * Format: B object
  */
 int
-cmd_blast(ClientData	clientData,
-	  Tcl_Interp	*interp,
-	  int		argc,
-	  char		**argv)
+cmd_blast(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    char *av[2];
+    const char *av[2];
 
     av[0] = "Z";
     av[1] = (char *)0;
@@ -2807,10 +2823,7 @@ cmd_blast(ClientData	clientData,
  * Format: e object
  */
 int
-cmd_draw(ClientData	clientData,
-	 Tcl_Interp	*interp,
-	 int		argc,
-	 char		**argv)
+cmd_draw(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     return edit_com(argc, argv, 1, 1);
 }
@@ -2837,7 +2850,7 @@ int
 cmd_ev(ClientData	clientData,
        Tcl_Interp *interp,
        int	argc,
-       char	**argv)
+       const char *argv[])
 {
     return edit_com(argc, argv, 3, 1);
 }

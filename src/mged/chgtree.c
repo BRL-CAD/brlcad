@@ -212,7 +212,7 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
 
     {
-	char *av[3];
+	const char *av[3];
 
 	av[0] = "e";
 	av[1] = argv[2]; /* depends on solid name being in argv[2] */
@@ -223,7 +223,7 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
 
     if (state == ST_VIEW) {
-	char *av[3];
+	const char *av[3];
 
 	av[0] = "sed";
 	av[1] = argv[2];  /* new name in argv[2] */
