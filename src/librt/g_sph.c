@@ -258,6 +258,8 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     /* we know root is positive, so we know the smaller t */
     segp->seg_in.hit_dist = b - root;
     segp->seg_out.hit_dist = b + root;
+    segp->seg_in.hit_surfno = 0;
+    segp->seg_out.hit_surfno = 0;
     BU_LIST_INSERT( &(seghead->l), &(segp->l) );
     return(2);			/* HIT */
 }
@@ -316,6 +318,8 @@ rt_sph_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	/* we know root is positive, so we know the smaller t */
 	segp[i].seg_in.hit_dist = b - root;
 	segp[i].seg_out.hit_dist = b + root;
+        segp->seg_in.hit_surfno = 0;
+        segp->seg_out.hit_surfno = 0;
     }
 }
 
