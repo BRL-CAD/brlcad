@@ -199,14 +199,13 @@ attrib_add(char *a)
 }
 
 
-
 /**
  * string is a literal or a file name
  */
 static void enqueue_script (struct bu_list *qp, int type, char *string)
 {
     struct script_rec	*srp;
-    FILE *cfPtr;    
+    FILE *cfPtr;
     struct bu_vls str;
     bu_vls_init(&str);
 
@@ -216,21 +215,21 @@ static void enqueue_script (struct bu_list *qp, int type, char *string)
 	bu_malloc(sizeof(struct script_rec), "script record");
     srp->sr_magic = SCRIPT_REC_MAGIC;
     srp->sr_type = type;
-    
+
     /*Check if supplied file name is in brlcad's nirt data dir*/
     if (type == READING_FILE) {
-    	bu_vls_printf(&str,"%s/%s",bu_brlcad_data("nirt",0),string);
-   	cfPtr = fopen(bu_vls_addr(&str), "rb");
-    	if (cfPtr != NULL) {
-       	    fclose(cfPtr);
-    	} else {
-       	    bu_vls_trunc(&str,0);
-            bu_vls_printf(&str,"%s",string);
-    	}	
+	bu_vls_printf(&str,"%s/%s",bu_brlcad_data("nirt",0),string);
+	cfPtr = fopen(bu_vls_addr(&str), "rb");
+	if (cfPtr != NULL) {
+	    fclose(cfPtr);
+	} else {
+	    bu_vls_trunc(&str,0);
+	    bu_vls_printf(&str,"%s",string);
+	}
     } else {
-        bu_vls_trunc(&str,0);
-        bu_vls_printf(&str,"%s",string);
-    }	
+	bu_vls_trunc(&str,0);
+	bu_vls_printf(&str,"%s",string);
+    }
 
     bu_vls_init(&(srp->sr_script));
     bu_vls_printf(&(srp->sr_script),"%s",bu_vls_addr(&str));
