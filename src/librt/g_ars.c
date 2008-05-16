@@ -715,6 +715,7 @@ rt_ars_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	hp->hit_private = (char *)trip;
 	hp->hit_vpriv[X] = dn;
 	hp->hit_rayp = rp;
+	hp->hit_surfno = 0;
 
 	if (RT_G_DEBUG&DEBUG_ARB8) bu_log("ars: dist k=%g, ds=%g, dn=%g\n", k, ds, dn );
 
