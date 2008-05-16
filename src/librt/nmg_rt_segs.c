@@ -328,6 +328,8 @@ state0(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 {
     int ret_val = -1;
 
+    NMG_CK_HITMISS(a_hit);
+
     switch (a_hit->in_out) {
 	case HMG_HIT_OUT_IN:
 	case HMG_HIT_OUT_ON:
@@ -379,6 +381,8 @@ state1(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 {
     int ret_val = -1;
 
+    NMG_CK_HITMISS(a_hit);
+
     switch (a_hit->in_out) {
 	case HMG_HIT_OUT_ON:
 	case HMG_HIT_OUT_IN:
@@ -422,6 +426,8 @@ state2(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 {
     int ret_val = -1;
     double delta;
+
+    NMG_CK_HITMISS(a_hit);
 
     switch (a_hit->in_out) {
 	case HMG_HIT_OUT_ON:
@@ -516,6 +522,7 @@ state3(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
     int ret_val = -1;
     double delta;
 
+    NMG_CK_HITMISS(a_hit);
     CK_SEGP(seg_p);
     BN_CK_TOL(tol);
     delta = fabs((*seg_p)->seg_in.hit_dist - a_hit->hit.hit_dist);
@@ -617,6 +624,8 @@ state4(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
     int ret_val = -1;
     double delta;
 
+    NMG_CK_HITMISS(a_hit);
+
     switch (a_hit->in_out) {
 	case HMG_HIT_OUT_ON:
 	case HMG_HIT_OUT_IN:
@@ -701,6 +710,8 @@ state5(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 {
     int ret_val = -1;
     double delta;
+
+    NMG_CK_HITMISS(a_hit);
 
     switch (a_hit->in_out) {
 	case HMG_HIT_OUT_ON:
@@ -792,6 +803,8 @@ state6(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 {
     int ret_val = -1;
     double delta;
+
+    NMG_CK_HITMISS(a_hit);
 
     switch (a_hit->in_out) {
 	case HMG_HIT_OUT_ON:
