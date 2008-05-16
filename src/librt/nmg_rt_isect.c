@@ -2241,6 +2241,7 @@ isect_ray_planar_face(struct ray_data *rd, struct faceuse *fu_p, struct face_g_p
     GET_HITMISS(myhit, rd->ap);
     NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
     myhit->hit.hit_private = (genptr_t)fu_p->f_p;
+    myhit->hit.hit_surfno = fu_p->f_p->index;
     myhit->inbound_use = myhit->outbound_use = (long *)&fu_p->l.magic;
 
 
@@ -2361,6 +2362,7 @@ isect_ray_faceuse(struct ray_data *rd, struct faceuse *fu_p)
 	    GET_HITMISS(myhit, rd->ap);
 	    NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
 	    myhit->hit.hit_private = (genptr_t)fu_p->f_p;
+	    myhit->hit.hit_surfno = fu_p->f_p->index;
 	    BU_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
 	    BU_LIST_INSERT(&rd->rd_miss, &myhit->l);
 #ifndef FAST_NMG
@@ -2377,6 +2379,7 @@ isect_ray_faceuse(struct ray_data *rd, struct faceuse *fu_p)
 		GET_HITMISS(myhit, rd->ap);
 		NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
 		myhit->hit.hit_private = (genptr_t)fu_p->f_p;
+		myhit->hit.hit_surfno = fu_p->f_p->index;
 		BU_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
 		BU_LIST_INSERT(&rd->rd_miss, &myhit->l);
 #ifndef FAST_NMG
@@ -2396,6 +2399,7 @@ isect_ray_faceuse(struct ray_data *rd, struct faceuse *fu_p)
 	GET_HITMISS(myhit, rd->ap);
 	NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
 	myhit->hit.hit_private = (genptr_t)fu_p->f_p;
+	myhit->hit.hit_surfno = fu_p->f_p->index;
 	BU_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
 	BU_LIST_INSERT(&rd->rd_miss, &myhit->l);
 #ifndef FAST_NMG
