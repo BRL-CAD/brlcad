@@ -334,6 +334,8 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 				    segp->seg_stp = stp;
 				    STEPIN(in);
 				    segp->seg_out.hit_dist = segp->seg_in.hit_dist + 1; /* cope with silliness */
+                                    segp->seg_in.hit_surfno = 0;
+                                    segp->seg_out.hit_surfno = 0;
 				    BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 				    if (segsleft == 0)	/* exit now if we're one-hit (like visual rendering) */
 					return retval;

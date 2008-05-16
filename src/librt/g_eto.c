@@ -511,6 +511,8 @@ rt_eto_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     segp->seg_stp = stp;
     segp->seg_in.hit_dist = k[1];
     segp->seg_out.hit_dist = k[0];
+    segp->seg_in.hit_surfno = 0;
+    segp->seg_out.hit_surfno = 0;
     /* Set aside vector for rt_eto_norm() later */
     VJOIN1( segp->seg_in.hit_vpriv, pprime, k[1], dprime );
     VJOIN1( segp->seg_out.hit_vpriv, pprime, k[0], dprime );
@@ -525,6 +527,8 @@ rt_eto_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     segp->seg_stp = stp;
     segp->seg_in.hit_dist = k[3];
     segp->seg_out.hit_dist = k[2];
+    segp->seg_in.hit_surfno = 0;
+    segp->seg_out.hit_surfno = 0;
     VJOIN1( segp->seg_in.hit_vpriv, pprime, k[3], dprime );
     VJOIN1( segp->seg_out.hit_vpriv, pprime, k[2], dprime );
     BU_LIST_INSERT( &(seghead->l), &(segp->l) );

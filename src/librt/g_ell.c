@@ -374,6 +374,8 @@ rt_ell_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	segp->seg_in.hit_dist = k2;
 	segp->seg_out.hit_dist = k1;
     }
+    segp->seg_in.hit_surfno = 0;
+    segp->seg_out.hit_surfno = 0;
     BU_LIST_INSERT( &(seghead->l), &(segp->l) );
     return(2);			/* HIT */
 }
@@ -433,6 +435,8 @@ rt_ell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 		segp[i].seg_in.hit_dist = k2;
 		segp[i].seg_out.hit_dist = k1;
 	    }
+            segp[i].seg_in.hit_surfno = 0;
+            segp[i].seg_out.hit_surfno = 0;
 	}
     }
 }
