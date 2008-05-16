@@ -1,4 +1,4 @@
-/*                        C O M B _ C O L E R . C
+/*                        C O M B _ C O L O R . C
  * BRL-CAD
  *
  * Copyright (c) 2008 United States Government as represented by
