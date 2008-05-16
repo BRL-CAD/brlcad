@@ -673,6 +673,14 @@ GED_EXPORT BU_EXTERN(int	vo_dir2ae_cmd,
 GED_EXPORT BU_EXTERN(int ged_editit, (const char *file));
 
 /**
+ * Set combination color.
+ *
+ * Usage:
+ *     comb_color combination R G B
+ */
+GED_EXPORT BU_EXTERN(int ged_comb_color, (struct rt_wdb *wdbp, int argc, const char *argv[]));
+
+/**
  * Edit combination materials.
  *
  * Command relies on rmater, editit, and wmater commands.

@@ -130,6 +130,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\comb_color.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\dg_obj.c"
 				>
 			</File>

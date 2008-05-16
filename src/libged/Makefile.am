@@ -4,6 +4,7 @@ noinst_LTLIBRARIES = libged_nil.la
 
 libged_nil_la_SOURCES = \
 	bigE.c \
+	comb_color.c \
 	dg_obj.c \
 	editit.c \
 	edmater.c \
