@@ -63,8 +63,8 @@ ged_make(struct rt_wdb *wdbp, int argc, char *argv[])
     struct rt_metaball_internal	*metaball_ip;
     static const char *usage = "-h | -t | -o origin -s sf name <arb8|arb7|arb6|arb5|arb4|arbn|ars|bot|ehy|ell|ell1|epa|eto|extrude|grip|half|nmg|part|pipe|rcc|rec|rhc|rpc|rpp|sketch|sph|tec|tgc|tor|trc>";
 
-    GED_CHECK_DBI_NULL(wdbp->dbip, GED_ERROR);
-    GED_CHECK_READ_ONLY(wdbp->dbip, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(wdbp, GED_ERROR);
+    GED_CHECK_READ_ONLY(wdbp, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&wdbp->wdb_result_str, 0);

@@ -38,8 +38,8 @@ ged_edmater(struct rt_wdb *wdbp, int argc, const char *argv[])
     static const char *usage = "comb(s)";
     char tmpfil[MAXPATHLEN];
 
-    GED_CHECK_DBI_NULL(wdbp->dbip, GED_ERROR);
-    GED_CHECK_READ_ONLY(wdbp->dbip, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(wdbp, GED_ERROR);
+    GED_CHECK_READ_ONLY(wdbp, GED_ERROR);
 
     /* must be wanting help */
     if (argc == 1) {

@@ -41,13 +41,8 @@ ged_mirror(struct rt_wdb *wdbp, int argc, const char *argv[])
     char **nargv;
     struct bu_vls vlsargv;
 
-    if (wdbp == RT_WDB_NULL) {
-	bu_log("%s: a database must be open to use this command.", argv[0]);
-	return GED_ERROR;
-    }
-
-    GED_CHECK_DBI_NULL(wdbp->dbip, GED_ERROR);
-    GED_CHECK_READ_ONLY(wdbp->dbip, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(wdbp, GED_ERROR);
+    GED_CHECK_READ_ONLY(wdbp, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&wdbp->wdb_result_str, 0);

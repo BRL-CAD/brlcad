@@ -34,7 +34,7 @@ ged_shader(struct rt_wdb *wdbp, int argc, const char *argv[])
     struct rt_comb_internal	*comb;
     static const char *usage = "combination shader_material [shader_argument(s)]";
 
-    GED_DATABASE_OPEN(wdbp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(wdbp, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&wdbp->wdb_result_str, 0);

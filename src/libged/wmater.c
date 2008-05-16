@@ -38,12 +38,8 @@ ged_wmater(struct rt_wdb *wdbp, int argc, const char *argv[])
 
     static const char *usage = "filename comb1 [comb2 ...]";
 
-    if (wdbp == RT_WDB_NULL) {
-	bu_vls_printf(&wdbp->wdb_result_str, "%s: a database must be open to use this command.", argv[0]);
-	return GED_ERROR;
-    }
-    GED_CHECK_DBI_NULL(wdbp->dbip, GED_ERROR);
-    GED_CHECK_READ_ONLY(wdbp->dbip, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(wdbp, GED_ERROR);
+    GED_CHECK_READ_ONLY(wdbp, GED_ERROR);
     
     /* initialize result */
     bu_vls_trunc(&wdbp->wdb_result_str, 0);

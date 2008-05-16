@@ -47,23 +47,16 @@ __BEGIN_DECLS
 #endif
 
 /* Check if a database is open */
-#define GED_DATABASE_OPEN(_wdbp,_ret) \
-    if ((_wdbp) == RT_WDB_NULL || (_wdbp->dbip) == DBI_NULL) { \
-	bu_vls_printf(&wdbp->wdb_result_str, "A database is not open!"); \
-	return (_ret); \
-    }
-
-/* Check if database pointer is NULL */
-#define GED_CHECK_DBI_NULL(_dbip,_ret) \
-    if ((_dbip) == DBI_NULL) { \
-	bu_log("A database is not open!\n"); \
+#define GED_CHECK_DATABASE_OPEN(_wdbp,_ret) \
+    if ((_wdbp) == RT_WDB_NULL || (_wdbp)->dbip == DBI_NULL) { \
+	bu_vls_printf(&(_wdbp)->wdb_result_str, "A database is not open!"); \
 	return (_ret); \
     }
 
 /* Check if the database is read only */
-#define	GED_CHECK_READ_ONLY(_dbip,_ret) \
-    if ((_dbip)->dbi_read_only) { \
-	bu_log("Sorry, this database is READ-ONLY\n"); \
+#define	GED_CHECK_READ_ONLY(_wdbp,_ret) \
+    if ((_wdbp)->dbip->dbi_read_only) { \
+	bu_vls_printf(&(_wdbp)->wdb_result_str, "Sorry, this database is READ-ONLY"); \
 	return (_ret); \
     }
 

@@ -27,9 +27,7 @@
 
 
 int
-ged_make_name(struct rt_wdb	*wdbp,
-	      int		argc,
-	      char		*argv[])
+ged_make_name(struct rt_wdb *wdbp, int argc, char *argv[])
 {
     int status = GED_OK;
     struct bu_vls obj_name;
@@ -38,13 +36,8 @@ ged_make_name(struct rt_wdb	*wdbp,
     int	len;
     static const char *usage = "template | -s [num]";
 
-    if (wdbp == RT_WDB_NULL) {
-	bu_log("%s: a database must be open to use this command.", argv[0]);
-	return GED_ERROR;
-    }
-
-    GED_CHECK_DBI_NULL(wdbp->dbip, GED_ERROR);
-    GED_CHECK_READ_ONLY(wdbp->dbip, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(wdbp, GED_ERROR);
+    GED_CHECK_READ_ONLY(wdbp, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&wdbp->wdb_result_str, 0);

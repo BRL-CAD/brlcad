@@ -94,8 +94,8 @@ ged_rmater(struct rt_wdb *wdbp, int argc, const char *argv[])
     int inherit;
     static const char *usage = "filename";
 
-    GED_CHECK_DBI_NULL(wdbp->dbip, GED_ERROR);
-    GED_CHECK_READ_ONLY(wdbp->dbip, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(wdbp, GED_ERROR);
+    GED_CHECK_READ_ONLY(wdbp, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&wdbp->wdb_result_str, 0);
