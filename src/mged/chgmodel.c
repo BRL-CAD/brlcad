@@ -439,54 +439,25 @@ f_mirror(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 int
 f_edcomb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    register struct directory *dp;
-    int regionid, air, mat, los;
-    struct rt_db_internal	intern;
-    struct rt_comb_internal	*comb;
-
+    Tcl_DString ds;
+    int ret;
+    
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
 
-    if (argc < 6 || 7 < argc) {
-	struct bu_vls vls;
+    ret = ged_edcomb(wdbp, argc, argv);
 
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "help edcomb");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
-    if ( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
-	return TCL_ERROR;
-    if ( (dp->d_flags & DIR_COMB) == 0 )  {
-	Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
-	return TCL_ERROR;
-    }
-
-    regionid = atoi( argv[3] );
-    air = atoi( argv[4] );
-    los = atoi( argv[5] );
-    mat = atoi( argv[6] );
-
-    if ( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
-	TCL_READ_ERR_return;
-    }
-    comb = (struct rt_comb_internal *)intern.idb_ptr;
-    RT_CK_COMB(comb);
-
-    if ( argv[2][0] == 'R' )
-	comb->region_flag = 1;
+    /* Convert to Tcl codes */
+    if (ret == GED_OK)
+	ret = TCL_OK;
     else
-	comb->region_flag = 0;
-    comb->region_id = regionid;
-    comb->aircode = air;
-    comb->los = los;
-    comb->GIFTmater = mat;
-    if ( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )  {
-	TCL_WRITE_ERR_return;
-    }
-    return TCL_OK;
+	ret = TCL_ERROR;
+
+    Tcl_DStringInit(&ds);
+    Tcl_DStringAppend(&ds, bu_vls_addr(&wdbp->wdb_result_str), -1);
+    Tcl_DStringResult(interp, &ds);
+
+    return ret;
 }
 
 /* tell him it already exists */

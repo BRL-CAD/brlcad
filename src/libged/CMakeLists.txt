@@ -3,6 +3,7 @@ set(LIBGED_SOURCES
     comb_color.c
     dg_obj.c
     editit.c
+    edcomb.c
     edmater.c
     globals.c
     importFg4Section.c

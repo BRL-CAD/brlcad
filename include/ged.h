@@ -681,6 +681,14 @@ GED_EXPORT BU_EXTERN(int ged_editit, (const char *file));
 GED_EXPORT BU_EXTERN(int ged_comb_color, (struct rt_wdb *wdbp, int argc, const char *argv[]));
 
 /**
+ * Edit combination.
+ *
+ * Usage:
+ *     edcomb combname Regionflag regionid air los GIFTmater
+ */
+GED_EXPORT BU_EXTERN(int ged_edcomb, (struct rt_wdb *wdbp, int argc, const char *argv[]));
+
+/**
  * Edit combination materials.
  *
  * Command relies on rmater, editit, and wmater commands.

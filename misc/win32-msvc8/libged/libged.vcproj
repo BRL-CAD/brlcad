@@ -138,6 +138,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\edcomb.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\editit.c"
 				>
 			</File>
