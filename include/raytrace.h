@@ -1975,14 +1975,7 @@ struct rt_shootray_status {
  *	The following section is an exact copy of what was previously "nmg_rt.h" *
  *      (with minor changes to GET_HITMISS and NMG_FREE_HITLIST                  *
  *	moved here to use rt_g.rtg_nmgfree freelist for hitmiss structs.         *
- *********************************************************************************
- *			N M G _ R T . H
- */
-
-/* defining the following flag will improve NMG raytrace speed by
- * eliminating some checking. Use with CAUTION!!!
- */
-#define FAST_NMG	1
+ ******************************************************************************* */
 
 #define NMG_HIT_LIST	0
 #define NMG_MISS_LIST	1
@@ -2037,35 +2030,44 @@ struct hitmiss {
 					 */
 };
 
-#define NMG_CK_HITMISS(hm) {\
+#ifdef NO_BOMBING_MACROS
+#  define NMG_CK_HITMISS(hm)
+#else
+#  define NMG_CK_HITMISS(hm) \
+    {\
 	switch (hm->l.magic) { \
 	case NMG_RT_HIT_MAGIC: \
 	case NMG_RT_HIT_SUB_MAGIC: \
 	case NMG_RT_MISS_MAGIC: \
 		break; \
 	case NMG_MISS_LIST: \
-		bu_log("%s[%d]: struct hitmiss has  NMG_MISS_LIST magic #\n", \
-			__FILE__, __LINE__); \
+		bu_log(BU_FLSTR ": struct hitmiss has NMG_MISS_LIST magic #\n"); \
 		bu_bomb("NMG_CK_HITMISS: going down in flames\n"); \
 	case NMG_HIT_LIST: \
-		bu_log("%s[%d]: struct hitmiss has  NMG_MISS_LIST magic #\n", \
-			__FILE__, __LINE__); \
+		bu_log(BU_FLSTR ": struct hitmiss has NMG_MISS_LIST magic #\n"); \
 		bu_bomb("NMG_CK_HITMISS: going down in flames\n"); \
 	default: \
-		bu_log("%s[%d]: bad struct hitmiss magic: %u:(0x%08x)\n", \
-			__FILE__, __LINE__, hm->l.magic, hm->l.magic); \
+		bu_log(BU_FLSTR ": bad struct hitmiss magic: %u:(0x%08x)\n", \
+			hm->l.magic, hm->l.magic); \
 		bu_bomb("NMG_CK_HITMISS: going down in flames\n"); \
 	}\
 	if (!hm->hit.hit_private) { \
-		bu_log("%s[%d]: NULL hit_private in hitmiss struct\n", \
-			__FILE__, __LINE__); \
+		bu_log(BU_FLSTR ": NULL hit_private in hitmiss struct\n"); \
 		bu_bomb("NMG_CK_HITMISS: going down in flames\n"); \
 	} \
-}
+    }
+#endif
 
-#define NMG_CK_HITMISS_LISTS(a_hit, rd) { \
-    for (BU_LIST_FOR(a_hit, hitmiss, &rd->rd_hit)) {NMG_CK_HITMISS(a_hit);} \
-    for (BU_LIST_FOR(a_hit, hitmiss, &rd->rd_miss)) {NMG_CK_HITMISS(a_hit);} }
+#ifdef NO_BOMBING_MACROS
+#  define NMG_CK_HITMISS_LISTS(rd)
+#else
+#  define NMG_CK_HITMISS_LISTS(rd) \
+    { \
+        struct hitmiss *_a_hit; \
+	for (BU_LIST_FOR(_a_hit, hitmiss, &rd->rd_hit)) {NMG_CK_HITMISS(_a_hit);} \
+	for (BU_LIST_FOR(_a_hit, hitmiss, &rd->rd_miss)) {NMG_CK_HITMISS(_a_hit);} \
+    }
+#endif
 
 
 /**
@@ -2139,11 +2141,10 @@ struct ray_data {
 #define NMG_CK_RD(_rd) NMG_CKMAG(_rd, NMG_RAY_DATA_MAGIC, "ray data");
 
 
-#ifdef FAST_NMG
 #define GET_HITMISS(_p, _ap) { \
 	(_p) = BU_LIST_FIRST( hitmiss, &((_ap)->a_resource->re_nmgfree) ); \
 	if ( BU_LIST_IS_HEAD( (_p), &((_ap)->a_resource->re_nmgfree ) ) ) \
-		(_p) = (struct hitmiss *)bu_calloc(1, sizeof( struct hitmiss ), "hitmiss" ); \
+		(_p) = (struct hitmiss *)bu_calloc(1, sizeof( struct hitmiss ), "hitmiss "BU_FLSTR ); \
 	else \
 		BU_LIST_DEQUEUE( &((_p)->l) ); \
 	}
@@ -2152,28 +2153,6 @@ struct ray_data {
 	BU_CK_LIST_HEAD( (_p) ); \
 	BU_LIST_APPEND_LIST( &((_ap)->a_resource->re_nmgfree), (_p) ); \
 	}
-#else
-#define GET_HITMISS(_p) { \
-	char str[64]; \
-	(void)snprintf(str, 64, "GET_HITMISS %s %d", __FILE__, __LINE__); \
-	(_p) = (struct hitmiss *)bu_calloc(1, sizeof(struct hitmiss), str); \
-	}
-
-#define FREE_HITMISS(_p) { \
-	char str[64]; \
-	(void)snprintf(str, 64, "FREE_HITMISS %s %d", __FILE__, __LINE__); \
-	(void)bu_free( (char *)_p,  str); \
-	}
-
-#define NMG_FREE_HITLIST(_p) { \
-	struct hitmiss *_hit; \
-	while ( BU_LIST_WHILE(_hit, hitmiss, _p)) { \
-		NMG_CK_HITMISS(_hit); \
-		BU_LIST_DEQUEUE( &_hit->l ); \
-		FREE_HITMISS( _hit ); \
-	} }
-
-#endif
 
 #define HIT 1	/**< @brief  a hit on a face */
 #define MISS 0	/**< @brief  a miss on the face */

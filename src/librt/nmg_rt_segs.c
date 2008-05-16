@@ -21,10 +21,7 @@
 /** @{ */
 /** @file nmg_rt_segs.c
  *
- *	Support routines for raytracing an NMG.
- *
- *  Author -
- *	Lee A. Butler
+ * Support routines for raytracing an NMG.
  *
  */
 /** @} */
@@ -152,9 +149,7 @@ pl_ray(struct ray_data *rd)
     VMOVE(old_point, rd->rp->r_pt);
 
     for (BU_LIST_FOR(a_hit, hitmiss, &rd->rd_hit)) {
-#ifndef FAST_NMG
 	NMG_CK_HITMISS(a_hit);
-#endif
 
 	in_state = HMG_INBOUND_STATE(a_hit);
 	out_state = HMG_OUTBOUND_STATE(a_hit);
@@ -906,14 +901,8 @@ nmg_bsegs(struct ray_data *rd, struct application *ap, struct seg *seghead, stru
     struct seg *seg_p = (struct seg *)NULL;
     int seg_count = 0;
 
-#ifndef FAST_NMG
-    NMG_CK_HITMISS_LISTS(a_hit, rd);
-#endif
-
     for (BU_LIST_FOR(a_hit, hitmiss, &rd->rd_hit)) {
-#ifndef FAST_NMG
 	NMG_CK_HITMISS(a_hit);
-#endif
 
 	new_state = state_table[ray_state](seghead, &seg_p,
 					   &seg_count, a_hit,
@@ -1140,15 +1129,10 @@ check_hitstate(struct hitmiss *hd, struct ray_data *rd)
 
     BU_CK_LIST_HEAD(&hd->l);
 
-#ifndef FAST_NMG
-    NMG_CK_HITMISS_LISTS(a_hit, rd);
-#endif
-
     /* find that first "OUTSIDE" point */
     a_hit = BU_LIST_FIRST(hitmiss, &hd->l);
-#ifndef FAST_NMG
     NMG_CK_HITMISS(a_hit);
-#endif
+
     if (((a_hit->in_out & 0x0f0) >> 4) != NMG_RAY_STATE_OUTSIDE ||
 	rt_g.NMG_debug & DEBUG_RT_SEGS) {
 	bu_log("check_hitstate()\n");
@@ -1161,10 +1145,8 @@ check_hitstate(struct hitmiss *hd, struct ray_data *rd)
     while ( a_hit != hd &&
 	    ((a_hit->in_out & 0x0f0) >> 4) != NMG_RAY_STATE_OUTSIDE) {
 
-
-#ifndef FAST_NMG
 	NMG_CK_HITMISS(a_hit);
-#endif
+
 	/* this better be a 2-manifold face */
 	bu_log("%s[%d]: This better be a 2-manifold face\n",
 	       __FILE__, __LINE__);
@@ -1173,11 +1155,6 @@ check_hitstate(struct hitmiss *hd, struct ray_data *rd)
 	       rd->ap->a_x, rd->ap->a_y, rd->ap->a_level,
 	       rd->ap->a_purpose );
 	a_hit = BU_LIST_PNEXT(hitmiss, a_hit);
-	if (a_hit != hd) {
-#ifndef FAST_NMG
-	    NMG_CK_HITMISS(a_hit);
-#endif
-	}
     }
     if (a_hit == hd) return 1;
 
@@ -1192,9 +1169,8 @@ check_hitstate(struct hitmiss *hd, struct ray_data *rd)
 
     /* check the state transition on the rest of the hit points */
     while ((next_hit = BU_LIST_PNEXT(hitmiss, &a_hit->l)) != hd) {
-#ifndef FAST_NMG
 	NMG_CK_HITMISS(next_hit);
-#endif
+
 	ibs = HMG_INBOUND_STATE(next_hit);
 	obs = HMG_OUTBOUND_STATE(a_hit);
 	if (ibs != obs) {
@@ -1206,16 +1182,11 @@ check_hitstate(struct hitmiss *hd, struct ray_data *rd)
 	     */
 
 	    bu_ptbl_reset(a_tbl);
-
-#ifndef FAST_NMG
 	    NMG_CK_HITMISS(a_hit);
-#endif
 	    build_topo_list((unsigned long *)a_hit->outbound_use, a_tbl);
 
 	    bu_ptbl_reset(next_tbl);
-#ifndef FAST_NMG
 	    NMG_CK_HITMISS(next_hit);
-#endif
 	    build_topo_list((unsigned long *)next_hit->outbound_use, next_tbl);
 
 
@@ -1277,9 +1248,7 @@ nmg_ray_segs(struct ray_data *rd)
     }
 #endif
 
-#ifndef FAST_NMG
-    NMG_CK_HITMISS_LISTS(a_hit, rd);
-#endif
+    NMG_CK_HITMISS_LISTS(rd);
 
     if (BU_LIST_IS_EMPTY(&rd->rd_hit)) {
 
