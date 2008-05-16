@@ -2,7 +2,9 @@
 
 
 lib_LTLIBRARIES = librt.la
-noinst_LTLIBRARIES = librt_nil.la
+noinst_LTLIBRARIES = \
+	librt_nil.la \
+	librt_xxx.la
 
 BREP_SRCS = g_brep.cpp opennurbs_ext.cpp
 BREP_TEST = brep_test
@@ -26,6 +28,9 @@ noinst_PROGRAMS = \
 	comb \
 	nurb_example \
 	${BREP_TEST}
+
+# make sure the example compiles, but don't include it in librt
+librt_xxx_la_SOURCES = g_xxx.c
 
 librt_nil_la_SOURCES = \
 	$(BREP_SRCS) \
