@@ -81,6 +81,13 @@ include/raytrace.h
 * OBSOLETE *
 ************
 
+7.12.4
+------
+include/raytrace.h
+	removed iterator from NMG_CK_HITMISS_LIST
+include/bu.h
+	BU_QFLSTR -> BU_FLSTR
+
 7.12.0
 ------
 include/common.h
