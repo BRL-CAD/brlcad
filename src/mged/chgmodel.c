@@ -368,59 +368,32 @@ f_comb_color(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *			F _ S H A D E R
  *
  *  Simpler, command-line version of 'mater' command.
- *  Usage: shader combination shader_material [shader_argument(s)]
+ *
+ *  Usage:
+ *      shader combination shader_material [shader_argument(s)]
  */
 int
 f_shader(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    register struct directory *dp;
-    struct rt_db_internal	intern;
-    struct rt_comb_internal	*comb;
-
+    Tcl_DString ds;
+    int ret;
+    
     CHECK_DBI_NULL;
+    CHECK_READ_ONLY;
 
-    if (argc < 2) {
-	struct bu_vls vls;
+    ret = ged_shader(wdbp, argc, argv);
 
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "help shader");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
+    /* Convert to Tcl codes */
+    if (ret == GED_OK)
+	ret = TCL_OK;
+    else
+	ret = TCL_ERROR;
 
-    if ( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
-	return TCL_ERROR;
-    if ( (dp->d_flags & DIR_COMB) == 0 )  {
-	Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
-	return TCL_ERROR;
-    }
+    Tcl_DStringInit(&ds);
+    Tcl_DStringAppend(&ds, bu_vls_addr(&wdbp->wdb_result_str), -1);
+    Tcl_DStringResult(interp, &ds);
 
-    if ( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
-	TCL_READ_ERR_return;
-    }
-    comb = (struct rt_comb_internal *)intern.idb_ptr;
-    RT_CK_COMB(comb);
-
-    if (argc == 2)  {
-	/* Return the current shader string */
-	Tcl_AppendResult( interp, bu_vls_addr(&comb->shader), (char *)NULL);
-	rt_db_free_internal( &intern, &rt_uniresource );
-    } else {
-	CHECK_READ_ONLY;
-
-	/* Replace with new shader string from command line */
-	bu_vls_free( &comb->shader );
-
-	/* Bunch up the rest of the args, space separated */
-	bu_vls_from_argv( &comb->shader, argc-2, (const char **)argv+2 );
-
-	if ( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )  {
-	    TCL_WRITE_ERR_return;
-	}
-	/* Internal representation has been freed by rt_db_put_internal */
-    }
-    return TCL_OK;
+    return ret;
 }
 
 

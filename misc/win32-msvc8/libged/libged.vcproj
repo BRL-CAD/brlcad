@@ -190,6 +190,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\shader.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\tcl.c"
 				>
 			</File>

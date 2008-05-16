@@ -755,14 +755,20 @@ GED_EXPORT BU_EXTERN(int ged_mirror, (struct rt_wdb *wdbp, int argc, const char 
 GED_EXPORT BU_EXTERN(int ged_rmater, (struct rt_wdb *wdbp, int argc, const char *argv[]));
 
 /**
+ * Simpler, command-line version of 'mater' command.
+ *
+ * Usage:
+ *     shader combination shader_material [shader_argument(s)]
+ */
+GED_EXPORT BU_EXTERN(int ged_shader, (struct rt_wdb *wdbp, int argc, const char *argv[]));
+
+/**
  * Write material properties to a file for specified combination(s).
  *
  * Usage:
  *     wmater file combination1 [combination2 ...]
  */
 GED_EXPORT BU_EXTERN(int ged_wmater, (struct rt_wdb *wdbp, int argc, const char *argv[]));
-
-
 
 
 __END_DECLS

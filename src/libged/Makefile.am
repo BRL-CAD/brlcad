@@ -19,6 +19,7 @@ libged_nil_la_SOURCES = \
 	nirt.c \
 	qray.c \
 	rmater.c \
+	shader.c \
 	tcl.c \
 	track.c \
 	vdraw.c \
