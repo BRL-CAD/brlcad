@@ -262,6 +262,7 @@ rt_pg_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 	hp->hit_magic = RT_HIT_MAGIC;
 	hp->hit_dist = k;
 	VMOVE( hp->hit_normal, trip->tri_N );
+	hp->hit_surfno = trip->tri_surfno;
 	if ( ++nhits >= MAXHITS )  {
 	    bu_log("rt_pg_shot(%s): too many hits (%d)\n", stp->st_name, nhits);
 	    break;
