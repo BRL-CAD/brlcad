@@ -65,17 +65,25 @@
 #include "raytrace.h"
 
 
-#if 0
-/* parameters for solid, internal representation
- * This goes in rtgeom.h
+/* EXAMPLE_INTERNAL shows how one would store the values that describe
+ * or implement this primitive.  The internal structure should go into
+ * rtgeom.h, the magic number should go into magic.h, and of course
+ * the #if wrapper should go away.
  */
+#if defined(EXAMPLE_INTERNAL) || 1
+
 /* parameters for solid, internal representation */
 struct rt_xxx_internal {
     long	magic;
     vect_t	v;
 };
-#  define RT_XXX_INTERNAL_MAGIC	0xxx
+
+#  define RT_XXX_INTERNAL_MAGIC	0x78787878 /* 'xxxx' */
 #  define RT_XXX_CK_MAGIC(_p)	BU_CKMAG(_p, RT_XXX_INTERNAL_MAGIC, "rt_xxx_internal")
+
+/* should set in raytrace.h to ID_MAX_SOLID and increment the max */
+#  define ID_XXX 0
+
 #endif
 
 /* ray tracing form of solid, including precomputed terms */
@@ -281,81 +289,6 @@ rt_xxx_tess( struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     return(-1);
 }
 
-/**
- *			R T _ X X X _ I M P O R T
- *
- *  Import an XXX from the database format to the internal format.
- *  Apply modeling transformations as well.
- */
-int
-rt_xxx_import( struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip )
-{
-    struct rt_xxx_internal	*xxx_ip;
-    union record			*rp;
-
-    BU_CK_EXTERNAL( ep );
-    rp = (union record *)ep->ext_buf;
-    /* Check record type */
-    if ( rp->u_id != ID_SOLID )  {
-	bu_log("rt_xxx_import: defective record\n");
-	return(-1);
-    }
-
-    RT_CK_DB_INTERNAL( ip );
-    ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    ip->idb_type = ID_XXX;
-    ip->idb_meth = &rt_functab[ID_XXX];
-    ip->idb_ptr = bu_malloc( sizeof(struct rt_xxx_internal), "rt_xxx_internal");
-    xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
-    xxx_ip->magic = RT_XXX_INTERNAL_MAGIC;
-
-    if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT( xxx_ip->xxx_V, mat, &rp->s.s_values[0] );
-
-    return(0);			/* OK */
-}
-
-/**
- *			R T _ X X X _ E X P O R T
- *
- *  The name is added by the caller, in the usual place.
- */
-int
-rt_xxx_export( struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip )
-{
-    struct rt_xxx_internal	*xxx_ip;
-    union record		*rec;
-
-    RT_CK_DB_INTERNAL(ip);
-    if ( ip->idb_type != ID_XXX )  return(-1);
-    xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
-    RT_XXX_CK_MAGIC(xxx_ip);
-
-    BU_CK_EXTERNAL(ep);
-    ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "xxx external");
-    rec = (union record *)ep->ext_buf;
-
-    rec->s.s_id = ID_SOLID;
-    rec->s.s_type = XXX;	/* GED primitive type from db.h */
-
-    /* Since libwdb users may want to operate in units other
-     * than mm, we offer the opportunity to scale the solid
-     * (to get it into mm) on the way out.
-     */
-
-
-    /* convert from local editing units to mm and export
-     * to database record format
-     *
-     * Warning: type conversion: double to float
-     */
-    VSCALE( &rec->s.s_values[0], xxx_ip->xxx_V, local2mm );
-    rec->s.s_values[3] = xxx_ip->xxx_radius * local2mm;
-
-    return(0);
-}
-
 
 /**
  *			R T _ X X X _ I M P O R T 5
@@ -391,7 +324,7 @@ rt_xxx_import5( struct rt_db_internal  *ip, const struct bu_external *ep, const 
      * (Big Endian ints, IEEE double floating point) to host local data
      * representations.
      */
-    ntohd( (unsigned char *)&vv, (char *)ep->ext_buf, ELEMENTS_PER_VECT*1 );
+    ntohd( (unsigned char *)&vv, (unsigned char *)ep->ext_buf, ELEMENTS_PER_VECT*1 );
 
     /* Apply the modeling transformation */
     if (mat == NULL) mat = bn_mat_identity;
