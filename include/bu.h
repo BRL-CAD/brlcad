@@ -112,7 +112,6 @@ __BEGIN_DECLS
 #define bu_cpp_glue(a, b) a ## b
 #define bu_cpp_xglue(a, b) bu_cpp_glue(a, b)
 #define BU_FLSTR __FILE__ ":" bu_cpp_xstr(__LINE__)
-#define BU_QFLSTR bu_cpp_xstr(__FILE__ line __LINE__)
 
 /*
  *  Macros for providing function prototypes, regardless of whether
