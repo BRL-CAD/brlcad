@@ -31,9 +31,6 @@
  *
  * The bounding box for a grip is emtpy.
  *
- * Authors -
- *	Christopher T. Johnson
- *	Geometric Solutions, Inc.
  */
 
 #include "common.h"
@@ -65,8 +62,9 @@ const struct bu_structparse rt_grp_parse[] = {
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
 };
 
+
 /**
- *  			R T _ G R P _ P R E P
+ * R T _ G R P _ P R E P
  */
 int
 rt_grp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
@@ -93,8 +91,9 @@ rt_grp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     return 0;		/* OK */
 }
 
+
 /**
- *  			R T _ G R P _ P R I N T
+ * R T _ G R P _ P R I N T
  */
 void
 rt_grp_print(register const struct soltab *stp)
@@ -111,8 +110,9 @@ rt_grp_print(register const struct soltab *stp)
     bu_log( "mag = %f\n", gripp->grip_mag);
 }
 
+
 /**
- *			R T _ G R P _ S H O T
+ * R T _ G R P _ S H O T
  *
  * Function -
  *	Shoot a ray at a GRIP
@@ -127,16 +127,16 @@ rt_grp_print(register const struct soltab *stp)
 int
 rt_grp_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
-    return 0;	/* this has got to be the easiest */
-    /* RT routine I've written */
+    return 0;	/* this has got to be the easiest.. no hit, no surfno,
+		 * no nada.
+		 */
 }
 
-#define RT_HALF_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
 
 /**
- *			R T _ G R P _ V S H O T
+ * R T _ G R P _ V S H O T
  *
- *  Vectorizing version.
+ * Vectorizing version.
  */
 void
 rt_grp_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
@@ -149,21 +149,24 @@ rt_grp_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
     return;
 }
 
+
 /**
- *  			R T _ G R P _ N O R M
+ * R T _ G R P _ N O R M
  *
- *  Given ONE ray distance, return the normal and entry/exit point.
- *  The normal is already filled in.
+ * Given ONE ray distance, return the normal and entry/exit point.
+ * The normal is already filled in.
  */
 void
 rt_grp_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
     bu_bomb("rt_grp_norm: grips should never be hit.\n");
 }
+
+
 /**
- *			R T _ G R P _ C U R V E
+ * R T _ G R P _ C U R V E
  *
- *  Return the "curvature" of the grip.
+ * Return the "curvature" of the grip.
  */
 void
 rt_grp_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
@@ -171,15 +174,21 @@ rt_grp_curve(register struct curvature *cvp, register struct hit *hitp, struct s
     bu_bomb("rt_grp_curve: nobody should be asking for curve of a grip.\n");
 }
 
+
 /**
- *  			R T _ G R P _ U V
+ * init solid
+ */
+#define RT_HALF_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
+
+
+/**
+ * R T _ G R P _ U V
  *
- *  For a hit on a face of an HALF, return the (u, v) coordinates
- *  of the hit point.  0 <= u, v <= 1.
- *  u extends along the Xbase direction
- *  v extends along the "Ybase" direction
- *  Note that a "toroidal" map is established, varying each from
- *  0 up to 1 and then back down to 0 again.
+ * For a hit on a face of an HALF, return the (u, v) coordinates of
+ * the hit point.  0 <= u, v <= 1.  u extends along the Xbase
+ * direction.  v extends along the "Ybase" direction.  Note that a
+ * "toroidal" map is established, varying each from 0 up to 1 and then
+ * back down to 0 again.
  */
 void
 rt_grp_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
@@ -187,8 +196,9 @@ rt_grp_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
     bu_bomb("rt_grp_uv: nobody should be asking for UV of a grip.\n");
 }
 
+
 /**
- *			R T _ G R P _ F R E E
+ * R T _ G R P _ F R E E
  */
 void
 rt_grp_free(struct soltab *stp)
@@ -199,19 +209,24 @@ rt_grp_free(struct soltab *stp)
     bu_free( (char *)gripp, "grip_specific");
 }
 
+
+/**
+ * R T _ G R P _ C L A S S
+ */
 int
 rt_grp_class(void)
 {
     return(0);
 }
 
+
 /**
- *			R T _ G R P _ P L O T
+ * R T _ G R P _ P L O T
  *
- * We represent a GRIP as a pyramid.  The center describes where
- * the center of the base is.  The normal describes which direction
- * the tip of the pyramid is.  Mag describes the distence from the
- * center to the tip. 1/4 of the width is the length of a base side.
+ * We represent a GRIP as a pyramid.  The center describes where the
+ * center of the base is.  The normal describes which direction the
+ * tip of the pyramid is.  Mag describes the distence from the center
+ * to the tip. 1/4 of the width is the length of a base side.
  *
  */
 int
@@ -260,10 +275,11 @@ rt_grp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     return(0);
 }
 
+
 /**
- *			R T _ G R P _ I M P O R T
+ * R T _ G R P _ I M P O R T
  *
- *  Returns -
+ * Returns -
  *	-1	failure
  *	 0	success
  */
@@ -317,8 +333,9 @@ rt_grp_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     return 0;			/* OK */
 }
 
+
 /**
- *			R T _ G R P _ E X P O R T
+ * R T _ G R P _ E X P O R T
  */
 int
 rt_grp_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
@@ -392,9 +409,9 @@ rt_grp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     return 0;		/* OK */
 }
 
+
 /**
- *			R T _ G R I P _ E X P O R T 5
- *
+ * R T _ G R I P _ E X P O R T 5
  */
 int
 rt_grp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
@@ -421,12 +438,13 @@ rt_grp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return 0;
 }
 
+
 /**
- *			R T _ G R P _ D E S C R I B E
+ * R T _ G R P _ D E S C R I B E
  *
- *  Make human-readable formatted presentation of this solid.
- *  First line describes type of solid.
- *  Additional lines are indented one tab, and give parameter values.
+ * Make human-readable formatted presentation of this solid.  First
+ * line describes type of solid.  Additional lines are indented one
+ * tab, and give parameter values.
  */
 int
 rt_grp_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
@@ -453,10 +471,12 @@ rt_grp_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
     return(0);
 }
 
+
 /**
- *			R T _ G R P _ I F R E E
+ * R T _ G R P _ I F R E E
  *
- *  Free the storage associated with the rt_db_internal version of this solid.
+ * Free the storage associated with the rt_db_internal version of this
+ * solid.
  */
 void
 rt_grp_ifree(struct rt_db_internal *ip)
@@ -466,8 +486,9 @@ rt_grp_ifree(struct rt_db_internal *ip)
     ip->idb_ptr = GENPTR_NULL;
 }
 
+
 /**
- *			R T _ G R P _ T E S S
+ * R T _ G R P _ T E S S
  */
 int
 rt_grp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
