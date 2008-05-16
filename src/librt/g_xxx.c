@@ -140,6 +140,26 @@ rt_xxx_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct
     register struct seg *segp;
     const struct bn_tol	*tol = &ap->a_rt_i->rti_tol;
 
+/* the EXAMPLE_NEW_SEGMENT block shows how one might add a new result
+ * if the ray did hit the primitive.  the segment values would need to
+ * be adjusted accordingly to match real values instead of -1.
+ */
+#ifdef EXAMPLE_NEW_SEGMENT
+    /* allocate a segment */
+    RT_GET_SEG(segp, ap->a_resource);
+    segp->seg_stp = stp; /* stash a pointer to the primitive */
+
+    segp->seg_in.hit_dist = -1; /* XXX set to real distance to entry point */
+    segp->seg_out.hit_dist = -1; /* XXX set to real distance to exit point */
+    segp->seg_in.hit_surfno = -1; /* XXX set to a non-negative ID for entry surface */
+    segp->seg_out.hit_surfno = -1;  /* XXX set to a non-negative ID for exit surface */
+
+    /* add segment to list of those encountered for this primitive */
+    BU_LIST_INSERT( &(seghead->l), &(segp->l) );
+
+    return(2); /* num surface intersections == in + out == 2 */
+#endif
+
     return(0);			/* MISS */
 }
 
