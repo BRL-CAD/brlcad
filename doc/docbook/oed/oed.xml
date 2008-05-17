@@ -396,7 +396,7 @@ cube.s:  ARB8
     done, is difficult to undo.  Witness its effect on this example:
     
 
-    <literallayout class="monospaced">push comb1.c</literallayout>
+    <literallayout class="monospaced">push object1.c</literallayout>
     
     <literallayout class="monospaced">
 mged> l object1.c
