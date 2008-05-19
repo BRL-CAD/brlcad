@@ -130,11 +130,7 @@ ged_make(struct rt_wdb *wdbp, int argc, char *argv[])
 
     save_bu_optind = bu_optind;
 
-    if (db_lookup(wdbp->dbip, argv[bu_optind], LOOKUP_QUIET) != DIR_NULL) {
-	bu_vls_printf(&wdbp->wdb_result_str, "%s already exists", argv[bu_optind]);
-	return GED_ERROR;
-    }
-
+    GED_CHECK_EXISTS(wdbp, argv[bu_optind], LOOKUP_QUIET, GED_ERROR);
     RT_INIT_DB_INTERNAL(&internal);
 
     if (strcmp(argv[bu_optind+1], "arb8") == 0 ||
@@ -794,15 +790,8 @@ ged_make(struct rt_wdb *wdbp, int argc, char *argv[])
     /* no interrupts */
     (void)signal(SIGINT, SIG_IGN);
 
-    if ((dp = db_diradd(wdbp->dbip, argv[save_bu_optind], -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type)) == DIR_NULL) {
-	bu_vls_printf(&wdbp->wdb_result_str, "An error has occured while adding a new object to the database.");
-	return GED_ERROR;
-    }
-
-    if (rt_db_put_internal(dp, wdbp->dbip, &internal, &rt_uniresource) < 0) {
-	bu_vls_printf(&wdbp->wdb_result_str, "Database write error, aborting\n");
-	status = GED_ERROR;
-    }
+    GED_DB_DIRADD(wdbp, dp, argv[save_bu_optind], -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type, GED_ERROR);
+    GED_DB_PUT_INTERNAL(wdbp, dp, &internal, &rt_uniresource, GED_ERROR);
 
     return GED_OK;
 }

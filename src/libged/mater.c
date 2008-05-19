@@ -57,20 +57,10 @@ ged_mater(struct rt_wdb	*wdbp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if ((dp = db_lookup(wdbp->dbip,  argv[1], LOOKUP_NOISY)) == DIR_NULL) {
-	bu_vls_printf(&wdbp->wdb_result_str, "%s: not found", argv[1]);
-	return GED_ERROR;
-    }
+    GED_DB_LOOKUP(wdbp, dp, argv[1], LOOKUP_NOISY, GED_ERROR);
+    GED_CHECK_COMB(wdbp, dp, GED_ERROR);
+    GED_DB_GET_INTERNAL(wdbp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
 
-    if ((dp->d_flags & DIR_COMB) == 0) {
-	bu_vls_printf(&wdbp->wdb_result_str, "%s: not a combination", dp->d_namep);
-	return GED_ERROR;
-    }
-
-    if (rt_db_get_internal(&intern, dp, wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	bu_vls_printf(&wdbp->wdb_result_str, "Database read error, aborting");
-	return GED_ERROR;
-    }
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     RT_CK_COMB(comb);
 
@@ -121,10 +111,7 @@ ged_mater(struct rt_wdb	*wdbp, int argc, const char *argv[])
 	    return GED_ERROR;
     }
 
-    if (rt_db_put_internal(dp, wdbp->dbip, &intern, &rt_uniresource) < 0) {
-	bu_vls_printf(&wdbp->wdb_result_str, "Database write error, aborting\n");
-	return GED_ERROR;
-    }
+    GED_DB_PUT_INTERNAL(wdbp, dp, &intern, &rt_uniresource, GED_ERROR);
 
     return GED_OK;
 }
