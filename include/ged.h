@@ -49,7 +49,7 @@ __BEGIN_DECLS
 /* Check if the object is a combination */
 #define	GED_CHECK_COMB(_wdbp,_dp,_ret) \
     if (((_dp)->d_flags & DIR_COMB) == 0) { \
-	bu_vls_printf(&(_wdbp)->wdb_result_str,"%s: not a combination", (_dp)->d_namep); \
+	bu_vls_printf(&(_wdbp)->wdb_result_str, "%s: not a combination", (_dp)->d_namep); \
 	return (_ret); \
     }
 
@@ -63,6 +63,13 @@ __BEGIN_DECLS
 	return (_ret); \
     }
 
+/* Lookup database object */
+#define GED_CHECK_EXISTS(_wdbp,_name,_noisy,_ret) \
+    if (db_lookup((_wdbp)->dbip, (_name), (_noisy)) != DIR_NULL) { \
+	bu_vls_printf(&(_wdbp)->wdb_result_str, "%s already exists", (_name)); \
+	return (_ret); \
+    }
+
 /* Check if the database is read only */
 #define	GED_CHECK_READ_ONLY(_wdbp,_ret) \
     if ((_wdbp)->dbip->dbi_read_only) { \
@@ -70,24 +77,37 @@ __BEGIN_DECLS
 	return (_ret); \
     }
 
+/* Check if the object is a region */
+#define	GED_CHECK_REGION(_wdbp,_dp,_ret) \
+    if (((_dp)->d_flags & DIR_REGION) == 0) { \
+	bu_vls_printf(&(_wdbp)->wdb_result_str, "%s: not a region", (_dp)->d_namep); \
+	return (_ret); \
+    }
+
+#define GED_DB_DIRADD(_wdbp,_dp,_name,_laddr,_len,_flags,_ptr,_ret) \
+    if (((_dp) = db_diradd((_wdbp)->dbip, (_name), (_laddr), (_len), (_flags), (_ptr))) == DIR_NULL) { \
+	bu_vls_printf(&(_wdbp)->wdb_result_str, "An error has occured while adding a new object to the database."); \
+	return (_ret); \
+    }
+
 /* Lookup database object */
 #define GED_DB_LOOKUP(_wdbp,_dp,_name,_noisy,_ret) \
     if (((_dp) = db_lookup((_wdbp)->dbip, (_name), (_noisy))) == DIR_NULL) { \
-	bu_vls_printf(&(_wdbp)->wdb_result_str,"%s: not found", (_name)); \
+	bu_vls_printf(&(_wdbp)->wdb_result_str, "%s: not found", (_name)); \
 	return (_ret); \
     }
 
 /* Get internal representation */
 #define GED_DB_GET_INTERNAL(_wdbp,_intern,_dp,_mat,_resource,_ret) \
     if (rt_db_get_internal((_intern), (_dp), (_wdbp)->dbip, (_mat), (_resource)) < 0) { \
-	bu_vls_printf(&(_wdbp)->wdb_result_str,"Database read error, aborting"); \
+	bu_vls_printf(&(_wdbp)->wdb_result_str, "Database read error, aborting"); \
 	return (_ret); \
     }
 
 /* Put internal representation */
 #define GED_DB_PUT_INTERNAL(_wdbp,_dp,_intern,_resource,_ret) \
     if (rt_db_put_internal((_dp), (_wdbp)->dbip, (_intern), (_resource)) < 0) { \
-	bu_vls_printf(&(_wdbp)->wdb_result_str,"Database write error, aborting"); \
+	bu_vls_printf(&(_wdbp)->wdb_result_str, "Database write error, aborting"); \
 	return (_ret); \
     }
 
