@@ -1664,7 +1664,15 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     bu_vls_init(&vlsargv);
     bu_vls_from_argv(&vlsargv, argc, argv);
     nargv = bu_calloc(argc+1, sizeof(char *), "calloc f_ill nargv");
-    bu_argv_from_string(nargv, argc, bu_vls_addr(&vlsargv));
+    c = bu_argv_from_string(nargv, argc, bu_vls_addr(&vlsargv));
+    if (c != argc) {
+	Tcl_AppendResult(interp, "ERROR: unable to processes command arguments for f_ill()\n", (char*)NULL);
+	
+	bu_free(nargv, "free f_ill nargv");
+	bu_vls_free(&vlsargv);
+
+	return TCL_ERROR;
+    }
 
     bu_optind = 1;
     while ((c = bu_getopt(argc, nargv, "i:n")) != EOF) {
