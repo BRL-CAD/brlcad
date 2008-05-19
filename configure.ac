@@ -3782,6 +3782,7 @@ AC_CONFIG_FILES([
 	src/mged/points/Makefile
 	src/mk/Makefile
 	src/nirt/Makefile
+	src/nirt/sfiles/Makefile
 	src/other/Makefile
 	src/other/URToolkit/Makefile
 	src/other/URToolkit/cnv/Makefile
