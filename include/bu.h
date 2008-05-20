@@ -2493,8 +2493,8 @@ BU_EXPORT BU_EXTERN(const char *bu_nearest_units_string,
 BU_EXPORT BU_EXTERN(double bu_mm_value,
 		    (const char *s));
 BU_EXPORT BU_EXTERN(void bu_mm_cvt,
-		    (register const struct bu_structparse *sdp,
-		     register const char *name,
+		    (const struct bu_structparse *sdp,
+		     const char *name,
 		     char *base,
 		     const char *value));
 
@@ -2529,11 +2529,11 @@ BU_EXPORT BU_EXTERN(unsigned short bu_gshort,
 BU_EXPORT BU_EXTERN(unsigned long bu_glong,
 		    (const unsigned char *msgp));
 BU_EXPORT BU_EXTERN(unsigned char *bu_pshort,
-		    (register unsigned char *msgp,
-		     register int s));
+		    (unsigned char *msgp,
+		     int s));
 BU_EXPORT BU_EXTERN(unsigned char *bu_plong,
-		    (register unsigned char *msgp,
-		     register unsigned long l));
+		    (unsigned char *msgp,
+		     unsigned long l));
 
 /** @} */
 
