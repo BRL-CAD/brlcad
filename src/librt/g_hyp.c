@@ -302,7 +302,7 @@ rt_hyp_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct
     hitX = hitp->hit_vpriv[X];
     hitY = hitp->hit_vpriv[Y];
     /* check if hitpoint is on the top surface */
-    if ( hitX*hitX + hitY*hitY < hyp->hyp_Hmag * hyp->hyp_Hmag + 1.0 ) {
+    if ( (hitX*hitX + hitY*hitY) < (hyp->hyp_Hmag * hyp->hyp_Hmag + 1.0) ) {
 	hitp->hit_magic = RT_HIT_MAGIC;
 	hitp->hit_dist = k1;
 	hitp->hit_surfno = HYP_NORM_BODY;
@@ -313,7 +313,7 @@ rt_hyp_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct
     hitX = hitp->hit_vpriv[X];
     hitY = hitp->hit_vpriv[Y];
     /* check if hitpoint is on the bottom surface */
-    if ( hitX*hitX + hitY*hitY < hyp->hyp_Hmag * hyp->hyp_Hmag + 1.0 ) {
+    if ( (hitX*hitX + hitY*hitY) < (hyp->hyp_Hmag * hyp->hyp_Hmag + 1.0) ) {
 	hitp->hit_magic = RT_HIT_MAGIC;
 	hitp->hit_dist = k2;
 	hitp->hit_surfno = HYP_NORM_BODY;
@@ -435,12 +435,17 @@ rt_hyp_norm( struct hit *hitp, struct soltab *stp, struct xray *rp )
 	    x = hitp->hit_vpriv[X];
 	    y = hitp->hit_vpriv[Y];
 	    z = hitp->hit_vpriv[Z];
-	    dzdx = x / sqrt(x*x + y*y - 1.0);
-	    dzdy = y / sqrt(x*x + y*y - 1.0);
-	    if ( z > 0 ) {
-		VSET( n, -dzdx, -dzdy, -1.0);
+	    if ( NEAR_ZERO(z) ) {
+		/* near z==0, the norm is in the x-y plane */
+		VSET( n, x, y, 0 );
 	    } else {
-		VSET( n, -dzdx, -dzdy, 1.0);
+		dzdx = x / z;
+		dzdy = y / z;
+		if ( z > 0 ) {
+		    VSET( n, dzdx, dzdy, -1.0);
+		} else {
+		    VSET( n, -dzdx, -dzdy, 1.0);
+		}
 	    }
 	    MAT4X3VEC( nT, hyp->hyp_invRoS, n);
 	    VUNITIZE( nT );
