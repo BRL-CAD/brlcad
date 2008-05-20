@@ -210,6 +210,9 @@ RT_DECLARE_INTERFACE(superell);
 #define rt_metaball_xform rt_generic_xform
 RT_DECLARE_INTERFACE(metaball);
 
+#define rt_hyp_xform rt_generic_xform
+    RT_DECLARE_INTERFACE(hyp)
+
 #if OBJ_BREP
 #define rt_brep_xform rt_generic_xform
 RT_DECLARE_INTERFACE(brep);
@@ -978,6 +981,20 @@ const struct rt_functab rt_functab[] = {
      rt_nul_make,
     },
 #endif
+
+    {RT_FUNCTAB_MAGIC, "ID_HYP", "hyperboloid",
+     1,		/* 38 but "should" be 34 Hyperboloid  */
+     rt_hyp_prep,	rt_hyp_shot,	rt_hyp_print,	rt_hyp_norm,
+     rt_nul_piece_shot,	rt_nul_piece_hitsegs,
+     rt_hyp_uv,		rt_hyp_curve,	rt_hyp_class,	rt_hyp_free,
+     rt_hyp_plot,	rt_nul_vshot,	rt_hyp_tess,	rt_nul_tnurb,
+     rt_hyp_import5,	rt_hyp_export5,
+     rt_nul_import,	rt_nul_export,	rt_hyp_ifree,
+     rt_hyp_describe,	rt_nul_xform,	rt_nul_parse,
+     sizeof(struct rt_hyp_internal),		RT_HYP_INTERNAL_MAGIC,
+     rt_parsetab_tclget,	rt_parsetab_tcladjust,	rt_parsetab_tclform,
+     NULL,
+    },
 
     {0L, ">ID_MAXIMUM", ">id_max",
      0,		/* this entry for sanity only */

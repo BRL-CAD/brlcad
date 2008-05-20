@@ -360,12 +360,12 @@ rt_eto_shot(struct soltab *stp, register struct xray *rp, struct application *ap
      *
      *  The equation for the eto is:
      *
-     _______                           ________
-     / 2    2              2           / 2    2               2
+               _______                           ________
+              / 2    2              2           / 2    2               2
      [Eu(+- \/ x  + y   - R) + Ev z]  + [Fu(+-\/ x  + y   - R) + Fv z ]
      --------------------------------    -------------------------------  = 1
-     2                                      2
-     Rc                                     Rd
+                   2                                      2
+                 Rc                                     Rd
      *
      *                  ^   ^
      *       where Ev = C . N

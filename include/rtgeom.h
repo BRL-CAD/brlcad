@@ -356,6 +356,24 @@ struct rt_ehy_internal {
 #define RT_EHY_CK_MAGIC(_p)	BU_CKMAG(_p, RT_EHY_INTERNAL_MAGIC, "rt_ehy_internal")
 
 /*
+ *	ID_HYP
+ */
+struct rt_hyp_internal {
+    unsigned long hyp_magic;
+    point_t	hyp_V;	/**< @brief  hyp vertex */
+    vect_t	hyp_H;	/**< @brief  height vector */
+    vect_t	hyp_Au;	/**< @brief  unit vector along semi-major axis */
+    fastf_t	hyp_r1;	/**< @brief  scalar semi-major axis length */
+    fastf_t	hyp_r2;	/**< @brief  scalar semi-minor axis length */
+    fastf_t	hyp_c;	/**< @brief  slope of asymptote cone */
+/* added because g_xxx.c uses rt_xxx_internal.v in functions I haven't implemented yet */
+    vect_t	v;	
+};
+#define RT_HYP_INTERNAL_MAGIC	0x68797065
+#define RT_HYP_CK_MAGIC(_p)	BU_CKMAG(_p, RT_HYP_INTERNAL_MAGIC, "rt_hyp_internal")
+
+
+/*
  *	ID_ETO
  */
 struct rt_eto_internal {

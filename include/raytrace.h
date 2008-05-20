@@ -492,7 +492,7 @@ struct soltab {
 /* Add a new primitive id above here (this is will break v5 format)
  * XXX must update the non-geometric object id's below XXX
  */
-#define	ID_MAX_SOLID	38	/**< @brief Maximum defined ID_xxx for solids */
+#define	ID_MAX_SOLID	39	/**< @brief Maximum defined ID_xxx for solids */
 
 /*
  * Non-geometric objects
@@ -506,8 +506,9 @@ struct soltab {
 #define ID_SUPERELL	35	/**< @brief Superquadratic ellipsoid */
 #define ID_METABALL	36	/**< @brief Metaball */
 #define ID_BREP         37      /**< @brief B-rep object */
+#define ID_HYP		38	/**< @brief Hyperboloid of one sheet */
 
-#define ID_MAXIMUM	38	/**< @brief Maximum defined ID_xxx value */
+#define ID_MAXIMUM	39	/**< @brief Maximum defined ID_xxx value */
 
 /**
  * M A T E R _ I N F O
