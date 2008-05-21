@@ -1078,7 +1078,7 @@ eat_script(FILE *fp)
     char		*ebuf;
     char		*nsbuf;
     int		argc;
-    char		*argv[64];
+    char		*argv[64+1];
     struct bu_vls	prelude;
     struct bu_vls	body;
     struct bu_vls	finish;

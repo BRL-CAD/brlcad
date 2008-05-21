@@ -4623,7 +4623,7 @@ dgo_tree_cmd(struct dg_obj	*dgop,
     FILE				*fdout = NULL;
     char				*buffer = NULL;
 #define WHOARGVMAX 256
-    char				*whoargv[WHOARGVMAX] = {0};
+    char				*whoargv[WHOARGVMAX+1] = {0};
 
     if (!dgop || !dgop->dgo_wdbp || dgop->dgo_wdbp->dbip == DBI_NULL)
 	return TCL_ERROR;

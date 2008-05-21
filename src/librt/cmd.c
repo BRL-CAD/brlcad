@@ -115,7 +115,8 @@ rt_read_cmd(register FILE *fp)
 int
 rt_split_cmd(char **argv, int lim, char *lp)
 {
-    return bu_argv_from_string(argv, lim, lp);
+    /* bu_argv_from_string doesn't count the NULL */
+    return bu_argv_from_string(argv, lim-1, lp);
 }
 
 

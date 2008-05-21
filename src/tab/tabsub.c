@@ -167,7 +167,7 @@ do_lines(FILE *fp, char *buffer)
 	}
 
 	/* Here, there is no way to check for too many words */
-	nwords = bu_argv_from_string( chanwords, NCHANS+1, linebuf );
+	nwords = bu_argv_from_string( chanwords, NCHANS, linebuf );
 
 	for ( cp=buffer; *cp != '\0'; )  {
 	    if (debug) fputc( *cp, stderr );
@@ -223,7 +223,7 @@ do_lines(FILE *fp, char *buffer)
 	    }
 
 	    /* Check here for multi-word tokens */
-	    ntokenwords = bu_argv_from_string( tokenwords, NTOKENWORDS+1, token );
+	    ntokenwords = bu_argv_from_string( tokenwords, NTOKENWORDS, token );
 
 	    /*  If first character of a word is '@' or '%', that
 	     *  signifies substituting the value of the

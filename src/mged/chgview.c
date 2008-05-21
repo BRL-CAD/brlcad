@@ -423,10 +423,10 @@ edit_com(int	argc,
 	    bu_vls_strcat( &vls, dp->d_namep );
 	}
 
-	max_count = BU_PTBL_LEN( tbl ) + last_opt + 2;
+	max_count = BU_PTBL_LEN( tbl ) + last_opt + 1;
 	bu_ptbl_free( tbl );
 	bu_free( (char *)tbl, "edit_com ptbl" );
-	new_argv = (char **)bu_calloc( max_count, sizeof( char *), "edit_com new_argv" );
+	new_argv = (char **)bu_calloc( max_count+1, sizeof( char *), "edit_com new_argv" );
 	new_argc = bu_argv_from_string( new_argv, max_count, bu_vls_addr( &vls ) );
 
 	if ((ret = dgo_draw_cmd(dgop, interp, new_argc, new_argv, kind)) != TCL_OK) {

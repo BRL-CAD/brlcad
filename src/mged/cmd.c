@@ -2750,8 +2750,8 @@ cmd_lm(ClientData	clientData,
     bu_free( (char *)tbl, "cmd_lm ptbl" );
 
     /* create a new argc and argv to pass to the cmd_ls routine */
-    new_argv = (char **)bu_calloc( new_arg_count + 1, sizeof( char *), "cmd_lm new_argv" );
-    new_argc = bu_argv_from_string( new_argv, new_arg_count+1, bu_vls_addr( &vls ) );
+    new_argv = (char **)bu_calloc( new_arg_count+1, sizeof( char *), "cmd_lm new_argv" );
+    new_argc = bu_argv_from_string( new_argv, new_arg_count, bu_vls_addr( &vls ) );
 
     ret = cmd_ls( clientData, interp, new_argc, new_argv );
 

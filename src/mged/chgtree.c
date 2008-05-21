@@ -605,8 +605,7 @@ f_putmat (ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     newargv[2] = "matrix";
     newargv[3] = "rarc";
 
-    /* 16+1 allows space for final NULL entry in argv[] */
-    got = bu_argv_from_string( &newargv[4], 16+1, bu_vls_addr(avp) );
+    got = bu_argv_from_string( &newargv[4], 16, bu_vls_addr(avp) );
     if ( got != 16 )  {
 	struct bu_vls tmp_vls;
 
