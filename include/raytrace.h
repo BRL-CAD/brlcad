@@ -146,7 +146,8 @@ __BEGIN_DECLS
  *
  *
  * RT_LEN_TOL is the shortest length, in mm, that can be stood as the
- * dimensions of a primitive.  Can probably become at least SMALL.
+ * dimensions of a primitive.  Can probably become at least
+ * SQRT_SMALL_FASTF.
  *
  * Dot products smaller than RT_DOT_TOL are considered to have a dot
  * product of zero, i.e., the angle is effectively zero.  This is used
