@@ -3885,7 +3885,8 @@ AC_OUTPUT
 # plan accordingly and save them beforehand.
 ac_configure_args="$bc_configure_args"
 
-# patch libtool if it has the -all_load bug
+# patch libtool if it has one of several common bugs and/or busted
+# default configurations (e.g. Debian)
 BC_PATCH_LIBTOOL
 
 
