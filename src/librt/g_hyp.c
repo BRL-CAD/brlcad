@@ -435,7 +435,7 @@ rt_hyp_norm( struct hit *hitp, struct soltab *stp, struct xray *rp )
 	    x = hitp->hit_vpriv[X];
 	    y = hitp->hit_vpriv[Y];
 	    z = hitp->hit_vpriv[Z];
-	    if ( NEAR_ZERO(z, SMALL) ) {
+	    if ( NEAR_ZERO(z, SMALL_FASTF) ) {
 		/* near z==0, the norm is in the x-y plane */
 		VSET( n, x, y, 0 );
 	    } else {
