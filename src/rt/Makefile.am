@@ -165,6 +165,7 @@ rtxray_SOURCES = \
 
 noinst_HEADERS = \
 	ext.h \
+	mlt_def.h \
 	rad.h
 
 man_MANS = \
