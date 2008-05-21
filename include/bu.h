@@ -2424,7 +2424,7 @@ BU_EXPORT BU_EXTERN(void bu_vls_from_argv,
 		     int argc,
 		     const char *argv[]));
 BU_EXPORT BU_EXTERN(int bu_argv_from_string,
-		    (char **argv,
+		    (char *argv[],
 		     int lim,
 		     char *lp));
 BU_EXPORT BU_EXTERN(void bu_vls_fwrite,
