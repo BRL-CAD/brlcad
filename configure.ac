@@ -1220,6 +1220,19 @@ if test "x$bc_with_x11" != "xno" ; then
     AC_CHECK_LIB(Xi, XGetExtensionVersion, LIBXI="-lXi")
     X_LIBS="$LIBS $LIBXI"
 
+    # common for systems to not have Xi X11 input library .. warn
+    # verbosely about that being a problem since the build will
+    # probably fail in src/bwish with undefined references to
+    # XFreeDeviceList, XOpenDevice, XSelectExtensionEvent, and
+    # XListInputDevices.
+    if test "x$LIBXI" = "x" ; then
+	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	AC_MSG_WARN([X11 support is enabled but the Xi library was not found.])
+	AC_MSG_WARN([This will likely result in a build failure.])
+	AC_MSG_WARN([See config.log for details why (look for this comment)])
+	AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
+    fi
+
     CPPFLAGS="$PRECPPFLAGS"
     LIBS="$PRELIBS"
 fi
