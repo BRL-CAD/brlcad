@@ -77,18 +77,6 @@
 #define XMAXSCREEN	1279
 #define YMAXSCREEN	1023
 
-/* Internal callbacks etc.*/
-HIDDEN void		ogl_do_event(FBIO *ifp);
-HIDDEN void		expose_callback(FBIO *ifp, XEvent *eventPtr);
-void ogl_configureWindow FB_ARGS((FBIO *ifp, int width, int height));
-
-/* Other Internal routines */
-HIDDEN void		ogl_clipper(register FBIO *ifp);
-HIDDEN int		ogl_getmem(FBIO *ifp);
-HIDDEN void		backbuffer_to_screen(register FBIO *ifp, int one_y);
-HIDDEN void		ogl_cminit(register FBIO *ifp);
-HIDDEN XVisualInfo *	fb_ogl_choose_visual(FBIO *ifp);
-HIDDEN int		is_linear_cmap(register FBIO *ifp);
 
 HIDDEN int	ogl_nwindows = 0; 	/* number of open windows */
 HIDDEN	XColor	color_cell[256];		/* used to set colormap */
@@ -337,181 +325,6 @@ HIDDEN struct modeflags {
 };
 
 
-/************************************************************************/
-/************************************************************************/
-/************************************************************************/
-/******************* Shared Memory Support ******************************/
-/************************************************************************/
-/************************************************************************/
-/************************************************************************/
-
-/*
- *			O G L _ G E T M E M
- *
- *			not changed from
- *
- *			S G I _ G E T M E M
- *
- *  Because there is no hardware zoom or pan, we need to repaint the
- *  screen (with big pixels) to implement these operations.
- *  This means that the actual "contents" of the frame buffer need
- *  to be stored somewhere else.  If possible, we allocate a shared
- *  memory segment to contain that image.  This has several advantages,
- *  the most important being that when operating the display in 12-bit
- *  output mode, pixel-readbacks still give the full 24-bits of color.
- *  System V shared memory persists until explicitly killed, so this
- *  also means that in MEX mode, the previous contents of the frame
- *  buffer still exist, and can be again accessed, even though the
- *  MEX windows are transient, per-process.
- *
- *  There are a few oddities, however.  The worst is that System V will
- *  not allow the break (see sbrk(2)) to be set above a shared memory
- *  segment, and shmat(2) does not seem to allow the selection of any
- *  reasonable memory address (like 6 Mbytes up) for the shared memory.
- *  In the initial version of this routine, that prevented subsequent
- *  calls to malloc() from succeeding, quite a drawback.  The work-around
- *  used here is to increase the current break to a large value,
- *  attach to the shared memory, and then return the break to its
- *  original value.  This should allow most reasonable requests for
- *  memory to be satisfied.  In special cases, the values used here
- *  might need to be increased.
- */
-HIDDEN int
-ogl_getmem(FBIO *ifp)
-{
-#define SHMEM_KEY	42
-    int	pixsize;
-    int	size;
-    int	i;
-#if defined(IRIX) && IRIX < 5
-    char	*old_brk;
-    char	*new_brk;
-#endif
-    char	*sp;
-    int	new = 0;
-
-    errno = 0;
-
-    if ( (ifp->if_mode & MODE_1MASK) == MODE_1MALLOC )  {
-	/*
-	 *  In this mode, only malloc as much memory as is needed.
-	 */
-	SGI(ifp)->mi_memwidth = ifp->if_width;
-	pixsize = ifp->if_height * ifp->if_width * sizeof(struct ogl_pixel);
-	size = pixsize + sizeof(struct ogl_cmap);
-
-	sp = calloc( 1, size );
-	if ( sp == 0 )  {
-	    fb_log("ogl_getmem: frame buffer memory malloc failed\n");
-	    goto fail;
-	}
-	new = 1;
-	goto success;
-    }
-
-    /* The shared memory section never changes size */
-    SGI(ifp)->mi_memwidth = ifp->if_max_width;
-
-    /*
-     *  On Irix 5 with Indigo EXPRESS graphics,
-     *  lrectwrite() runs off the end!
-     *  So, provide a pad area of 2 scanlines.
-     *  (1 line is enough, but this avoids risk of damage to colormap table.)
-     */
-    pixsize = (ifp->if_max_height+2) * ifp->if_max_width *
-	sizeof(struct ogl_pixel);
-
-    size = pixsize + sizeof(struct ogl_cmap);
-    size = (size + getpagesize()-1) & ~(getpagesize()-1);
-
-    /* First try to attach to an existing one */
-    if ( (SGI(ifp)->mi_shmid = shmget( SHMEM_KEY, size, 0 )) < 0 )  {
-	/* No existing one, create a new one */
-	if ( (SGI(ifp)->mi_shmid = shmget(
-		  SHMEM_KEY, size, IPC_CREAT|0666 )) < 0 )  {
-	    fb_log("ogl_getmem: shmget failed, errno=%d\n", errno);
-	    goto fail;
-	}
-	new = 1;
-    }
-
-    /* WWW this is unnecessary in this version? */
-#if defined(IRIX) && IRIX < 5
-    /* Move up the existing break, to leave room for later malloc()s */
-    old_brk = sbrk(0);
-    new_brk = (char *)(6 * (XMAXSCREEN+1) * 1024L);
-    if ( new_brk <= old_brk )
-	new_brk = old_brk + (XMAXSCREEN+1) * 1024;
-    new_brk = (char *)((((long)new_brk) + getpagesize()-1) & ~(getpagesize()-1));
-    if ( brk( new_brk ) < 0 )  {
-	fb_log("ogl_getmem: new brk(x%x) failure, errno=%d\n", new_brk, errno);
-	goto fail;
-    }
-
-    /* Open the segment Read/Write, near the current break */
-    if ( (sp = shmat( SGI(ifp)->mi_shmid, 0, 0 )) == (char *)(-1L) )  {
-	fb_log("ogl_getmem: shmat returned x%x, errno=%d\n", sp, errno );
-	goto fail;
-    }
-
-    /* Restore the old break */
-    if ( brk( old_brk ) < 0 )  {
-	fb_log("ogl_getmem: restore brk(x%x) failure, errno=%d\n", old_brk, errno);
-	/* Take the memory and run */
-    }
-#else
-    /* Open the segment Read/Write */
-    /* On Irix 5, this gets mapped in at a high address, no problem. */
-    if ( (sp = shmat( SGI(ifp)->mi_shmid, 0, 0 )) == (char *)(-1L) )  {
-	fb_log("ogl_getmem: shmat returned x%x, errno=%d\n", sp, errno );
-	goto fail;
-    }
-#endif
-
- success:
-    ifp->if_mem = sp;
-    ifp->if_cmap = sp + pixsize;	/* cmap at end of area */
-    i = CMB(ifp)[255];		/* try to deref last word */
-    CMB(ifp)[255] = i;
-
-    /* Provide non-black colormap on creation of new shared mem */
-    if (new)
-	ogl_cminit( ifp );
-    return(0);
- fail:
-    fb_log("ogl_getmem:  Unable to attach to shared memory.\n");
-    if ( (sp = calloc( 1, size )) == NULL )  {
-	fb_log("ogl_getmem:  malloc failure\n");
-	return(-1);
-    }
-    new = 1;
-    goto success;
-}
-
-
-/*
- *			O G L _ Z A P M E M
- */
-void
-ogl_zapmem(void)
-{
-    int shmid;
-    int i;
-
-    if ( (shmid = shmget( SHMEM_KEY, 0, 0 )) < 0 )  {
-	fb_log("ogl_zapmem shmget failed, errno=%d\n", errno);
-	return;
-    }
-
-    i = shmctl( shmid, IPC_RMID, 0 );
-    if ( i < 0 )  {
-	fb_log("ogl_zapmem shmctl failed, errno=%d\n", errno);
-	return;
-    }
-    fb_log("if_ogl: shared memory released\n");
-}
-
-
 /*
  *			S I G K I D
  */
@@ -519,6 +332,81 @@ HIDDEN void
 sigkid(int pid)
 {
     exit(0);
+}
+
+
+/* BACKBUFFER_TO_SCREEN - copy pixels from copy on the backbuffer
+ * to the front buffer. Do one scanline specified by one_y, or whole
+ * screen if one_y equals -1.
+ */
+HIDDEN void
+backbuffer_to_screen(register FBIO *ifp, int one_y)
+{
+    struct ogl_clip *clp;
+
+    if (!(OGL(ifp)->front_flag)) {
+	OGL(ifp)->front_flag = 1;
+	glDrawBuffer(GL_FRONT);
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glPixelZoom((float) ifp->if_xzoom, (float) ifp->if_yzoom);
+    }
+
+    clp = &(OGL(ifp)->clip);
+
+    if (one_y > clp->ypixmax) {
+	return;
+    } else if (one_y < 0) {
+	/* do whole visible screen */
+
+	/* Blank out area left of image */
+	glColor3b( 0, 0, 0 );
+	if ( clp->xscrmin < 0 )  glRecti(clp->xscrmin - CLIP_XTRA,
+					 clp->yscrmin - CLIP_XTRA,
+					 CLIP_XTRA,
+					 clp->yscrmax + CLIP_XTRA);
+
+	/* Blank out area below image */
+	if ( clp->yscrmin < 0 )  glRecti(clp->xscrmin - CLIP_XTRA,
+					 clp->yscrmin - CLIP_XTRA,
+					 clp->xscrmax + CLIP_XTRA,
+					 CLIP_XTRA);
+
+	/* We are in copy mode, so we use vp_width rather
+	 * than if_width
+	 */
+	/* Blank out area right of image */
+	if ( clp->xscrmax >= OGL(ifp)->vp_width )  glRecti(ifp->if_width - CLIP_XTRA,
+							   clp->yscrmin - CLIP_XTRA,
+							   clp->xscrmax + CLIP_XTRA,
+							   clp->yscrmax + CLIP_XTRA);
+
+	/* Blank out area above image */
+	if ( clp->yscrmax >= OGL(ifp)->vp_height )  glRecti(clp->xscrmin - CLIP_XTRA,
+							    OGL(ifp)->vp_height - CLIP_XTRA,
+							    clp->xscrmax + CLIP_XTRA,
+							    clp->yscrmax + CLIP_XTRA);
+
+	/* copy image from backbuffer */
+	glRasterPos2i(clp->xpixmin, clp->ypixmin);
+	glCopyPixels(SGI(ifp)->mi_xoff + clp->xpixmin,
+		     SGI(ifp)->mi_yoff + clp->ypixmin,
+		     clp->xpixmax - clp->xpixmin +1,
+		     clp->ypixmax - clp->ypixmin +1,
+		     GL_COLOR);
+
+
+    } else if (one_y < clp->ypixmin) {
+	return;
+    } else {
+	/* draw one scanline */
+	glRasterPos2i(clp->xpixmin, one_y);
+	glCopyPixels(SGI(ifp)->mi_xoff + clp->xpixmin,
+		     SGI(ifp)->mi_yoff + one_y,
+		     clp->xpixmax - clp->xpixmin +1,
+		     1,
+		     GL_COLOR);
+    }
 }
 
 
@@ -646,6 +534,645 @@ ogl_xmit_scanlines(register FBIO *ifp, int ybase, int nlines, int xbase, int npi
 }
 
 
+/**
+ * O G L _ C M I N I T
+ */
+HIDDEN void
+ogl_cminit(register FBIO *ifp)
+{
+    register int	i;
+
+    for ( i = 0; i < 256; i++)  {
+	CMR(ifp)[i] = i;
+	CMG(ifp)[i] = i;
+	CMB(ifp)[i] = i;
+    }
+}
+
+
+/************************************************************************/
+/************************************************************************/
+/************************************************************************/
+/******************* Shared Memory Support ******************************/
+/************************************************************************/
+/************************************************************************/
+/************************************************************************/
+
+/**
+ * O G L _ G E T M E M
+ *
+ * not changed from sgi_getmem.
+ *
+ * Because there is no hardware zoom or pan, we need to repaint the
+ * screen (with big pixels) to implement these operations.  This means
+ * that the actual "contents" of the frame buffer need to be stored
+ * somewhere else.  If possible, we allocate a shared memory segment
+ * to contain that image.  This has several advantages, the most
+ * important being that when operating the display in 12-bit output
+ * mode, pixel-readbacks still give the full 24-bits of color.  System
+ * V shared memory persists until explicitly killed, so this also
+ * means that in MEX mode, the previous contents of the frame buffer
+ * still exist, and can be again accessed, even though the MEX windows
+ * are transient, per-process.
+ *
+ * There are a few oddities, however.  The worst is that System V will
+ * not allow the break (see sbrk(2)) to be set above a shared memory
+ * segment, and shmat(2) does not seem to allow the selection of any
+ * reasonable memory address (like 6 Mbytes up) for the shared memory.
+ * In the initial version of this routine, that prevented subsequent
+ * calls to malloc() from succeeding, quite a drawback.  The
+ * work-around used here is to increase the current break to a large
+ * value, attach to the shared memory, and then return the break to
+ * its original value.  This should allow most reasonable requests for
+ * memory to be satisfied.  In special cases, the values used here
+ * might need to be increased.
+ */
+HIDDEN int
+ogl_getmem(FBIO *ifp)
+{
+#define SHMEM_KEY	42
+    int	pixsize;
+    int	size;
+    int	i;
+#if defined(IRIX) && IRIX < 5
+    char	*old_brk;
+    char	*new_brk;
+#endif
+    char	*sp;
+    int	new = 0;
+
+    errno = 0;
+
+    if ( (ifp->if_mode & MODE_1MASK) == MODE_1MALLOC )  {
+	/*
+	 *  In this mode, only malloc as much memory as is needed.
+	 */
+	SGI(ifp)->mi_memwidth = ifp->if_width;
+	pixsize = ifp->if_height * ifp->if_width * sizeof(struct ogl_pixel);
+	size = pixsize + sizeof(struct ogl_cmap);
+
+	sp = calloc( 1, size );
+	if ( sp == 0 )  {
+	    fb_log("ogl_getmem: frame buffer memory malloc failed\n");
+	    goto fail;
+	}
+	new = 1;
+	goto success;
+    }
+
+    /* The shared memory section never changes size */
+    SGI(ifp)->mi_memwidth = ifp->if_max_width;
+
+    /*
+     *  On Irix 5 with Indigo EXPRESS graphics,
+     *  lrectwrite() runs off the end!
+     *  So, provide a pad area of 2 scanlines.
+     *  (1 line is enough, but this avoids risk of damage to colormap table.)
+     */
+    pixsize = (ifp->if_max_height+2) * ifp->if_max_width *
+	sizeof(struct ogl_pixel);
+
+    size = pixsize + sizeof(struct ogl_cmap);
+    size = (size + getpagesize()-1) & ~(getpagesize()-1);
+
+    /* First try to attach to an existing one */
+    if ( (SGI(ifp)->mi_shmid = shmget( SHMEM_KEY, size, 0 )) < 0 )  {
+	/* No existing one, create a new one */
+	if ( (SGI(ifp)->mi_shmid = shmget(
+		  SHMEM_KEY, size, IPC_CREAT|0666 )) < 0 )  {
+	    fb_log("ogl_getmem: shmget failed, errno=%d\n", errno);
+	    goto fail;
+	}
+	new = 1;
+    }
+
+    /* WWW this is unnecessary in this version? */
+#if defined(IRIX) && IRIX < 5
+    /* Move up the existing break, to leave room for later malloc()s */
+    old_brk = sbrk(0);
+    new_brk = (char *)(6 * (XMAXSCREEN+1) * 1024L);
+    if ( new_brk <= old_brk )
+	new_brk = old_brk + (XMAXSCREEN+1) * 1024;
+    new_brk = (char *)((((long)new_brk) + getpagesize()-1) & ~(getpagesize()-1));
+    if ( brk( new_brk ) < 0 )  {
+	fb_log("ogl_getmem: new brk(x%x) failure, errno=%d\n", new_brk, errno);
+	goto fail;
+    }
+
+    /* Open the segment Read/Write, near the current break */
+    if ( (sp = shmat( SGI(ifp)->mi_shmid, 0, 0 )) == (char *)(-1L) )  {
+	fb_log("ogl_getmem: shmat returned x%x, errno=%d\n", sp, errno );
+	goto fail;
+    }
+
+    /* Restore the old break */
+    if ( brk( old_brk ) < 0 )  {
+	fb_log("ogl_getmem: restore brk(x%x) failure, errno=%d\n", old_brk, errno);
+	/* Take the memory and run */
+    }
+#else
+    /* Open the segment Read/Write */
+    /* On Irix 5, this gets mapped in at a high address, no problem. */
+    if ( (sp = shmat( SGI(ifp)->mi_shmid, 0, 0 )) == (char *)(-1L) )  {
+	fb_log("ogl_getmem: shmat returned x%x, errno=%d\n", sp, errno );
+	goto fail;
+    }
+#endif
+
+ success:
+    ifp->if_mem = sp;
+    ifp->if_cmap = sp + pixsize;	/* cmap at end of area */
+    i = CMB(ifp)[255];		/* try to deref last word */
+    CMB(ifp)[255] = i;
+
+    /* Provide non-black colormap on creation of new shared mem */
+    if (new)
+	ogl_cminit( ifp );
+    return(0);
+ fail:
+    fb_log("ogl_getmem:  Unable to attach to shared memory.\n");
+    if ( (sp = calloc( 1, size )) == NULL )  {
+	fb_log("ogl_getmem:  malloc failure\n");
+	return(-1);
+    }
+    new = 1;
+    goto success;
+}
+
+
+/**
+ * O G L _ Z A P M E M
+ */
+void
+ogl_zapmem(void)
+{
+    int shmid;
+    int i;
+
+    if ( (shmid = shmget( SHMEM_KEY, 0, 0 )) < 0 )  {
+	fb_log("ogl_zapmem shmget failed, errno=%d\n", errno);
+	return;
+    }
+
+    i = shmctl( shmid, IPC_RMID, 0 );
+    if ( i < 0 )  {
+	fb_log("ogl_zapmem shmctl failed, errno=%d\n", errno);
+	return;
+    }
+    fb_log("if_ogl: shared memory released\n");
+}
+
+
+/**
+ * O G L _ C L I P P E R
+ *
+ * Given:- the size of the viewport in pixels (vp_width, vp_height)
+ *	 - the size of the framebuffer image (if_width, if_height)
+ *	 - the current view center (if_xcenter, if_ycenter)
+ * 	 - the current zoom (if_xzoom, if_yzoom)
+ * Calculate:
+ *	 - the position of the viewport in image space
+ *		(xscrmin, xscrmax, yscrmin, yscrmax)
+ *	 - the portion of the image which is visible in the viewport
+ *		(xpixmin, xpixmax, ypixmin, ypixmax)
+ */
+void
+ogl_clipper(register FBIO *ifp)
+{
+    register struct ogl_clip *clp;
+    register int	i;
+    double pixels;
+
+    clp = &(OGL(ifp)->clip);
+
+    i = OGL(ifp)->vp_width/(2*ifp->if_xzoom);
+    clp->xscrmin = ifp->if_xcenter - i;
+    i = OGL(ifp)->vp_width/ifp->if_xzoom;
+    clp->xscrmax = clp->xscrmin + i;
+    pixels = (double) i;
+    clp->oleft = ((double) clp->xscrmin) - 0.25*pixels/((double) OGL(ifp)->vp_width);
+    clp->oright = clp->oleft + pixels;
+
+    i = OGL(ifp)->vp_height/(2*ifp->if_yzoom);
+    clp->yscrmin = ifp->if_ycenter - i;
+    i = OGL(ifp)->vp_height/ifp->if_yzoom;
+    clp->yscrmax = clp->yscrmin + i;
+    pixels = (double) i;
+    clp->obottom = ((double) clp->yscrmin) - 0.25*pixels/((double) OGL(ifp)->vp_height);
+    clp->otop = clp->obottom + pixels;
+
+    clp->xpixmin = clp->xscrmin;
+    clp->xpixmax = clp->xscrmax;
+    clp->ypixmin = clp->yscrmin;
+    clp->ypixmax = clp->yscrmax;
+
+    if ( clp->xpixmin < 0 )  {
+	clp->xpixmin = 0;
+    }
+
+    if ( clp->ypixmin < 0 )  {
+	clp->ypixmin = 0;
+    }
+
+    /* In copy mode, the backbuffer copy image is limited
+     * to the viewport size; use that for clipping.
+     * Otherwise, use size of framebuffer memory segment
+     */
+    if (OGL(ifp)->copy_flag) {
+	if ( clp->xpixmax > OGL(ifp)->vp_width-1 )  {
+	    clp->xpixmax = OGL(ifp)->vp_width-1;
+	}
+	if ( clp->ypixmax > OGL(ifp)->vp_height-1 )  {
+	    clp->ypixmax = OGL(ifp)->vp_height-1;
+	}
+    } else {
+	if ( clp->xpixmax > ifp->if_width-1 )  {
+	    clp->xpixmax = ifp->if_width-1;
+	}
+	if ( clp->ypixmax > ifp->if_height-1 )  {
+	    clp->ypixmax = ifp->if_height-1;
+	}
+    }
+
+}
+
+
+HIDDEN void
+expose_callback(FBIO *ifp, XEvent *eventPtr)
+{
+    XWindowAttributes xwa;
+    struct ogl_clip *clp;
+
+    if ( CJDEBUG ) fb_log("entering expose_callback()\n");
+
+    if (glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->glxc)==False) {
+	fb_log("Warning, expose_callback: glXMakeCurrent unsuccessful.\n");
+    }
+
+    if ( OGL(ifp)->firstTime ) {
+
+	OGL(ifp)->firstTime = 0;
+
+	/* just in case the configuration is double buffered but
+	 * we want to pretend it's not
+	 */
+
+	if ( !SGI(ifp)->mi_doublebuffer ) {
+	    glDrawBuffer(GL_FRONT);
+	}
+
+	if ( (ifp->if_mode & MODE_4MASK) == MODE_4NODITH ) {
+	    glDisable(GL_DITHER);
+	}
+
+	/* set copy mode if possible and requested */
+	if ( SGI(ifp)->mi_doublebuffer &&
+	     ((ifp->if_mode & MODE_11MASK)==MODE_11COPY) ) {
+	    /* Copy mode only works if there are two
+	     * buffers to use. It conflicts with
+	     * double buffering
+	     */
+	    OGL(ifp)->copy_flag = 1;
+	    SGI(ifp)->mi_doublebuffer = 0;
+	    OGL(ifp)->front_flag = 1;
+	    glDrawBuffer(GL_FRONT);
+	} else {
+	    OGL(ifp)->copy_flag = 0;
+	}
+
+	XGetWindowAttributes(OGL(ifp)->dispp, OGL(ifp)->wind, &xwa);
+	OGL(ifp)->win_width = xwa.width;
+	OGL(ifp)->win_height = xwa.height;
+
+	/* clear entire window */
+	glViewport(0, 0, OGL(ifp)->win_width, OGL(ifp)->win_height);
+	glClearColor(0, 0, 0, 0);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	/* Set normal viewport size to minimum of actual window
+	 * size and requested framebuffer size
+	 */
+	OGL(ifp)->vp_width = (OGL(ifp)->win_width < ifp->if_width) ?
+	    OGL(ifp)->win_width : ifp->if_width;
+	OGL(ifp)->vp_height = (OGL(ifp)->win_height < ifp->if_height) ?
+	    OGL(ifp)->win_height : ifp->if_height;
+	ifp->if_xcenter = OGL(ifp)->vp_width/2;
+	ifp->if_ycenter = OGL(ifp)->vp_height/2;
+
+	/* center viewport in window */
+	SGI(ifp)->mi_xoff=(OGL(ifp)->win_width-OGL(ifp)->vp_width)/2;
+	SGI(ifp)->mi_yoff=(OGL(ifp)->win_height-OGL(ifp)->vp_height)/2;
+	glViewport(SGI(ifp)->mi_xoff,
+		   SGI(ifp)->mi_yoff,
+		   OGL(ifp)->vp_width,
+		   OGL(ifp)->vp_height);
+	/* initialize clipping planes and zoom */
+	ogl_clipper(ifp);
+	clp = &(OGL(ifp)->clip);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho( clp->oleft, clp->oright, clp->obottom, clp->otop,
+		 -1.0, 1.0);
+	glPixelZoom((float) ifp->if_xzoom, (float) ifp->if_yzoom);
+    } else if ( (OGL(ifp)->win_width > ifp->if_width) ||
+		(OGL(ifp)->win_height > ifp->if_height) ) {
+	/* clear whole buffer if window larger than framebuffer */
+	if ( OGL(ifp)->copy_flag && !OGL(ifp)->front_flag ) {
+	    glDrawBuffer(GL_FRONT);
+	    glViewport(0, 0, OGL(ifp)->win_width,
+		       OGL(ifp)->win_height);
+	    glClearColor(0, 0, 0, 0);
+	    glClear(GL_COLOR_BUFFER_BIT);
+	    glDrawBuffer(GL_BACK);
+	} else {
+	    glViewport(0, 0, OGL(ifp)->win_width,
+		       OGL(ifp)->win_height);
+	    glClearColor(0, 0, 0, 0);
+	    glClear(GL_COLOR_BUFFER_BIT);
+	}
+	/* center viewport */
+	glViewport(SGI(ifp)->mi_xoff,
+		   SGI(ifp)->mi_yoff,
+		   OGL(ifp)->vp_width,
+		   OGL(ifp)->vp_height);
+    }
+
+    /* repaint entire image */
+    ogl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
+    if ( SGI(ifp)->mi_doublebuffer ) {
+	glXSwapBuffers( OGL(ifp)->dispp, OGL(ifp)->wind);
+    } else if ( OGL(ifp)->copy_flag ) {
+	backbuffer_to_screen(ifp, -1);
+    }
+
+    if ( CJDEBUG ) {
+	int dbb, db, view[4], getster, getaux;
+	glGetIntegerv(GL_VIEWPORT, view);
+	glGetIntegerv(GL_DOUBLEBUFFER, &dbb);
+	glGetIntegerv(GL_DRAW_BUFFER, &db);
+	fb_log("Viewport: x %d y %d width %d height %d\n", view[0],
+	       view[1], view[2], view[3]);
+	fb_log("expose: double buffered: %d, draw buffer %d\n", dbb, db);
+	fb_log("front %d\tback%d\n", GL_FRONT, GL_BACK);
+	glGetIntegerv(GL_STEREO, &getster);
+	glGetIntegerv(GL_AUX_BUFFERS, &getaux);
+	fb_log("double %d, stereo %d, aux %d\n", dbb, getster, getaux);
+    }
+
+    /* unattach context for other threads to use */
+    glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
+}
+
+
+void
+ogl_configureWindow(FBIO *ifp, int width, int height)
+{
+    if (width == OGL(ifp)->win_width &&
+	height == OGL(ifp)->win_height)
+	return;
+
+    ifp->if_width = ifp->if_max_width = width;
+    ifp->if_height = ifp->if_max_height = height;
+
+    OGL(ifp)->win_width = OGL(ifp)->vp_width = width;
+    OGL(ifp)->win_height = OGL(ifp)->vp_height = height;
+
+    ifp->if_zoomflag = 0;
+    ifp->if_xzoom = 1;
+    ifp->if_yzoom = 1;
+    ifp->if_xcenter = width/2;
+    ifp->if_ycenter = height/2;
+
+    ogl_getmem(ifp);
+    ogl_clipper(ifp);
+}
+
+
+HIDDEN void
+ogl_do_event(FBIO *ifp)
+{
+    XEvent event;
+
+    while (XCheckWindowEvent(OGL(ifp)->dispp, OGL(ifp)->wind,
+			     OGL(ifp)->event_mask, &event)) {
+	switch (event.type) {
+	    case Expose:
+		if (!OGL(ifp)->use_ext_ctrl)
+		    expose_callback(ifp, &event);
+		break;
+	    case ButtonPress:
+	    {
+		int button = (int) event.xbutton.button;
+		if (button == Button1) {
+		    /* Check for single button mouse remap.
+		     * ctrl-1 => 2
+		     * meta-1 => 3
+		     */
+		    if (event.xbutton.state & ControlMask)
+			button = Button2;
+		    else if (event.xbutton.state & Mod1Mask)
+			button = Button3;
+		}
+
+		switch (button) {
+		    case Button1:
+			break;
+		    case Button2:
+		    {
+			int	x, y;
+			int	ix, iy;
+			register struct ogl_pixel *oglp;
+
+			x = event.xbutton.x;
+			y = ifp->if_height - event.xbutton.y - 1;
+
+			if (x < 0 || y < 0) {
+			    fb_log("No RGB (outside image viewport)\n");
+			    break;
+			}
+
+			oglp = (struct ogl_pixel *)&ifp->if_mem[
+			    (y*SGI(ifp)->mi_memwidth)*
+			    sizeof(struct ogl_pixel) ];
+
+			fb_log("At image (%d, %d), real RGB=(%3d %3d %3d)\n",
+			       x, y, (int)oglp[x].red, (int)oglp[x].green, (int)oglp[x].blue);
+
+			break;
+		    }
+		    case Button3:
+			OGL(ifp)->alive = 0;
+			break;
+		    default:
+			fb_log("unhandled mouse event\n");
+			break;
+		}
+		break;
+	    }
+	    case ConfigureNotify:
+	    {
+		XConfigureEvent *conf = (XConfigureEvent *)&event;
+
+		if (conf->width == OGL(ifp)->win_width &&
+		    conf->height == OGL(ifp)->win_height)
+		    return;
+
+		ogl_configureWindow(ifp, conf->width, conf->height);
+	    }
+	    default:
+		break;
+	}
+    }
+}
+
+
+/**
+ * O G L _ C H O O S E _ V I S U A L
+ *
+ * Select an appropriate visual, and set flags.
+ *
+ * The user requires support for:
+ *    	-OpenGL rendering in RGBA mode
+ *
+ * The user may desire support for:
+ *	-a single-buffered OpenGL context
+ *	-a double-buffered OpenGL context
+ *	-hardware colormapping (DirectColor)
+ *
+ * We first try to satisfy all requirements and desires. If that
+ * fails, we remove the desires one at a time until we succeed or
+ * until only requirements are left. If at any stage more than one
+ * visual meets the current criteria, the visual with the greatest
+ * depth is chosen.
+ *
+ * The following flags are set:
+ * 	SGI(ifp)->mi_doublebuffer
+ *	OGL(ifp)->soft_cmap_flag
+ *
+ * Return NULL on failure.
+ */
+HIDDEN XVisualInfo *
+fb_ogl_choose_visual(FBIO *ifp)
+{
+
+    XVisualInfo *vip, *vibase, *maxvip, template;
+#define NGOOD 200
+    int good[NGOOD];
+    int num, i, j;
+    int m_hard_cmap, m_sing_buf, m_doub_buf;
+    int use, rgba, dbfr;
+
+    m_hard_cmap = ((ifp->if_mode & MODE_7MASK)==MODE_7NORMAL);
+    m_sing_buf  = ((ifp->if_mode & MODE_9MASK)==MODE_9SINGLEBUF);
+    m_doub_buf =  !m_sing_buf;
+
+    memset((void *)&template, 0, sizeof(XVisualInfo));
+
+    /* get a list of all visuals on this display */
+    vibase = XGetVisualInfo(OGL(ifp)->dispp, 0, &template, &num);
+    while (1) {
+
+	/* search for all visuals matching current criteria */
+	for (i=0, j=0, vip=vibase; i<num; i++, vip++) {
+	    /* requirements */
+	    glXGetConfig(OGL(ifp)->dispp, vip, GLX_USE_GL, &use);
+	    if ( !use)
+		continue;
+	    glXGetConfig(OGL(ifp)->dispp, vip, GLX_RGBA, &rgba);
+	    if (!rgba)
+		continue;
+	    /* desires */
+	    /* X_CreateColormap needs a DirectColor visual */
+	    /* There should be some way of handling this with TrueColor,
+	     * for example:
+	     visual id:    0x50
+	     class:    TrueColor
+	     depth:    24 planes
+	     available colormap entries:    256 per subfield
+	     red, green, blue masks:    0xff0000, 0xff00, 0xff
+	     significant bits in color specification:    8 bits
+	    */
+	    if ( (m_hard_cmap) && (vip->class!=DirectColor))
+		continue;
+	    if ( (m_hard_cmap) && (vip->colormap_size<256))
+		continue;
+	    glXGetConfig(OGL(ifp)->dispp, vip, GLX_DOUBLEBUFFER, &dbfr);
+	    if ( (m_doub_buf) && (!dbfr) )
+		continue;
+	    if ( (m_sing_buf) && (dbfr) )
+		continue;
+
+	    /* this visual meets criteria */
+	    if ( j >= NGOOD-1 )  {
+		fb_log("fb_ogl_open:  More than %d candidate visuals!\n", NGOOD);
+		break;
+	    }
+	    good[j++] = i;
+	}
+
+	/* from list of acceptable visuals,
+	 * choose the visual with the greatest depth */
+	if (j>=1) {
+	    maxvip = vibase + good[0];
+	    for (i=1; i<j; i++) {
+		vip = vibase + good[i];
+		if (vip->depth > maxvip->depth) {
+		    maxvip = vip;
+		}
+	    }
+	    /* set flags and return choice */
+	    OGL(ifp)->soft_cmap_flag = !m_hard_cmap;
+	    SGI(ifp)->mi_doublebuffer = m_doub_buf;
+	    return (maxvip);
+	}
+
+	/* if no success at this point,
+	 * relax one of the criteria and try again.
+	 */
+	if (m_hard_cmap) {
+	    /* relax hardware colormap requirement */
+	    m_hard_cmap = 0;
+	    fb_log("fb_ogl_open: hardware colormapping not available. Using software colormap.\n");
+	} else if (m_sing_buf) {
+	    /* relax single buffering requirement.
+	     * no need for any warning - we'll just use
+	     * the front buffer
+	     */
+	    m_sing_buf = 0;
+	} else if (m_doub_buf) {
+	    /* relax double buffering requirement. */
+	    m_doub_buf = 0;
+	    fb_log("fb_ogl_open: double buffering not available. Using single buffer.\n");
+	} else {
+	    /* nothing else to relax */
+	    return(NULL);
+	}
+
+    }
+
+}
+
+
+/**
+ * I S _ L I N E A R _ C M A P
+ *
+ * Check for a color map being linear in R, G, and B.  Returns 1 for
+ * linear map, 0 for non-linear map (ie, non-identity map).
+ */
+HIDDEN int
+is_linear_cmap(register FBIO *ifp)
+{
+    register int i;
+
+    for ( i=0; i<256; i++ )  {
+	if ( CMR(ifp)[i] != i )  return(0);
+	if ( CMG(ifp)[i] != i )  return(0);
+	if ( CMB(ifp)[i] != i )  return(0);
+    }
+    return(1);
+}
+
+
 HIDDEN int
 fb_ogl_open(FBIO *ifp, char *file, int width, int height)
 {
@@ -733,15 +1260,14 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
 
     SGI(ifp)->mi_shmid = -1;	/* indicate no shared memory */
 
-    /* the Silicon Graphics Library Window management routines
-     * use shared memory. This causes lots of problems when you
-     * want to pass a window structure to a child process.
-     * One hack to get around this is to immediately fork
-     * and create a child process and sleep until the child
-     * sends a kill signal to the parent process. (in FBCLOSE)
-     * This allows us to use the traditional fb utility programs
-     * as well as allow the frame buffer window to remain around
-     * until killed by the menu subsystem.
+    /* the Silicon Graphics Library Window management routines use
+     * shared memory. This causes lots of problems when you want to
+     * pass a window structure to a child process.  One hack to get
+     * around this is to immediately fork and create a child process
+     * and sleep until the child sends a kill signal to the parent
+     * process. (in FBCLOSE) This allows us to use the traditional fb
+     * utility programs as well as allow the frame buffer window to
+     * remain around until killed by the menu subsystem.
      */
 
     if ( (ifp->if_mode & MODE_2MASK) == MODE_2LINGERING )  {
@@ -1742,40 +2268,6 @@ ogl_rmap(register FBIO *ifp, register ColorMap *cmp)
     return(0);
 }
 
-/*
- *			I S _ L I N E A R _ C M A P
- *
- *  Check for a color map being linear in R, G, and B.
- *  Returns 1 for linear map, 0 for non-linear map
- *  (ie, non-identity map).
- */
-HIDDEN int
-is_linear_cmap(register FBIO *ifp)
-{
-    register int i;
-
-    for ( i=0; i<256; i++ )  {
-	if ( CMR(ifp)[i] != i )  return(0);
-	if ( CMG(ifp)[i] != i )  return(0);
-	if ( CMB(ifp)[i] != i )  return(0);
-    }
-    return(1);
-}
-
-/*
- *			O G L _ C M I N I T
- */
-HIDDEN void
-ogl_cminit(register FBIO *ifp)
-{
-    register int	i;
-
-    for ( i = 0; i < 256; i++)  {
-	CMR(ifp)[i] = i;
-	CMG(ifp)[i] = i;
-	CMB(ifp)[i] = i;
-    }
-}
 
 /*
  *			 O G L _ W M A P
@@ -2003,510 +2495,6 @@ ogl_flush(FBIO *ifp)
     return(0);
 }
 
-
-/*
- * O G L _ C L I P P E R ( )
- *
- * Given:- the size of the viewport in pixels (vp_width, vp_height)
- *	 - the size of the framebuffer image (if_width, if_height)
- *	 - the current view center (if_xcenter, if_ycenter)
- * 	 - the current zoom (if_xzoom, if_yzoom)
- * Calculate:
- *	 - the position of the viewport in image space
- *		(xscrmin, xscrmax, yscrmin, yscrmax)
- *	 - the portion of the image which is visible in the viewport
- *		(xpixmin, xpixmax, ypixmin, ypixmax)
- */
-void
-ogl_clipper(register FBIO *ifp)
-{
-    register struct ogl_clip *clp;
-    register int	i;
-    double pixels;
-
-    clp = &(OGL(ifp)->clip);
-
-    i = OGL(ifp)->vp_width/(2*ifp->if_xzoom);
-    clp->xscrmin = ifp->if_xcenter - i;
-    i = OGL(ifp)->vp_width/ifp->if_xzoom;
-    clp->xscrmax = clp->xscrmin + i;
-    pixels = (double) i;
-    clp->oleft = ((double) clp->xscrmin) - 0.25*pixels/((double) OGL(ifp)->vp_width);
-    clp->oright = clp->oleft + pixels;
-
-    i = OGL(ifp)->vp_height/(2*ifp->if_yzoom);
-    clp->yscrmin = ifp->if_ycenter - i;
-    i = OGL(ifp)->vp_height/ifp->if_yzoom;
-    clp->yscrmax = clp->yscrmin + i;
-    pixels = (double) i;
-    clp->obottom = ((double) clp->yscrmin) - 0.25*pixels/((double) OGL(ifp)->vp_height);
-    clp->otop = clp->obottom + pixels;
-
-    clp->xpixmin = clp->xscrmin;
-    clp->xpixmax = clp->xscrmax;
-    clp->ypixmin = clp->yscrmin;
-    clp->ypixmax = clp->yscrmax;
-
-    if ( clp->xpixmin < 0 )  {
-	clp->xpixmin = 0;
-    }
-
-    if ( clp->ypixmin < 0 )  {
-	clp->ypixmin = 0;
-    }
-
-    /* In copy mode, the backbuffer copy image is limited
-     * to the viewport size; use that for clipping.
-     * Otherwise, use size of framebuffer memory segment
-     */
-    if (OGL(ifp)->copy_flag) {
-	if ( clp->xpixmax > OGL(ifp)->vp_width-1 )  {
-	    clp->xpixmax = OGL(ifp)->vp_width-1;
-	}
-	if ( clp->ypixmax > OGL(ifp)->vp_height-1 )  {
-	    clp->ypixmax = OGL(ifp)->vp_height-1;
-	}
-    } else {
-	if ( clp->xpixmax > ifp->if_width-1 )  {
-	    clp->xpixmax = ifp->if_width-1;
-	}
-	if ( clp->ypixmax > ifp->if_height-1 )  {
-	    clp->ypixmax = ifp->if_height-1;
-	}
-    }
-
-}
-
-
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- *	Call back routines and so on				   *
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- */
-
-HIDDEN void
-ogl_do_event(FBIO *ifp)
-{
-    XEvent event;
-
-    while (XCheckWindowEvent(OGL(ifp)->dispp, OGL(ifp)->wind,
-			     OGL(ifp)->event_mask, &event)) {
-	switch (event.type) {
-	    case Expose:
-		if (!OGL(ifp)->use_ext_ctrl)
-		    expose_callback(ifp, &event);
-		break;
-	    case ButtonPress:
-	    {
-		int button = (int) event.xbutton.button;
-		if (button == Button1) {
-		    /* Check for single button mouse remap.
-		     * ctrl-1 => 2
-		     * meta-1 => 3
-		     */
-		    if (event.xbutton.state & ControlMask)
-			button = Button2;
-		    else if (event.xbutton.state & Mod1Mask)
-			button = Button3;
-		}
-
-		switch (button) {
-		    case Button1:
-			break;
-		    case Button2:
-		    {
-			int	x, y;
-			int	ix, iy;
-			register struct ogl_pixel *oglp;
-
-			x = event.xbutton.x;
-			y = ifp->if_height - event.xbutton.y - 1;
-
-			if (x < 0 || y < 0) {
-			    fb_log("No RGB (outside image viewport)\n");
-			    break;
-			}
-
-			oglp = (struct ogl_pixel *)&ifp->if_mem[
-			    (y*SGI(ifp)->mi_memwidth)*
-			    sizeof(struct ogl_pixel) ];
-
-			fb_log("At image (%d, %d), real RGB=(%3d %3d %3d)\n",
-			       x, y, (int)oglp[x].red, (int)oglp[x].green, (int)oglp[x].blue);
-
-			break;
-		    }
-		    case Button3:
-			OGL(ifp)->alive = 0;
-			break;
-		    default:
-			fb_log("unhandled mouse event\n");
-			break;
-		}
-		break;
-	    }
-	    case ConfigureNotify:
-	    {
-		XConfigureEvent *conf = (XConfigureEvent *)&event;
-
-		if (conf->width == OGL(ifp)->win_width &&
-		    conf->height == OGL(ifp)->win_height)
-		    return;
-
-		ogl_configureWindow(ifp, conf->width, conf->height);
-	    }
-	    default:
-		break;
-	}
-    }
-}
-
-HIDDEN void
-expose_callback(FBIO *ifp, XEvent *eventPtr)
-{
-    XWindowAttributes xwa;
-    struct ogl_clip *clp;
-
-    if ( CJDEBUG ) fb_log("entering expose_callback()\n");
-
-    if (glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->glxc)==False) {
-	fb_log("Warning, expose_callback: glXMakeCurrent unsuccessful.\n");
-    }
-
-    if ( OGL(ifp)->firstTime ) {
-
-	OGL(ifp)->firstTime = 0;
-
-	/* just in case the configuration is double buffered but
-	 * we want to pretend it's not
-	 */
-
-	if ( !SGI(ifp)->mi_doublebuffer ) {
-	    glDrawBuffer(GL_FRONT);
-	}
-
-	if ( (ifp->if_mode & MODE_4MASK) == MODE_4NODITH ) {
-	    glDisable(GL_DITHER);
-	}
-
-	/* set copy mode if possible and requested */
-	if ( SGI(ifp)->mi_doublebuffer &&
-	     ((ifp->if_mode & MODE_11MASK)==MODE_11COPY) ) {
-	    /* Copy mode only works if there are two
-	     * buffers to use. It conflicts with
-	     * double buffering
-	     */
-	    OGL(ifp)->copy_flag = 1;
-	    SGI(ifp)->mi_doublebuffer = 0;
-	    OGL(ifp)->front_flag = 1;
-	    glDrawBuffer(GL_FRONT);
-	} else {
-	    OGL(ifp)->copy_flag = 0;
-	}
-
-	XGetWindowAttributes(OGL(ifp)->dispp, OGL(ifp)->wind, &xwa);
-	OGL(ifp)->win_width = xwa.width;
-	OGL(ifp)->win_height = xwa.height;
-
-	/* clear entire window */
-	glViewport(0, 0, OGL(ifp)->win_width, OGL(ifp)->win_height);
-	glClearColor(0, 0, 0, 0);
-	glClear(GL_COLOR_BUFFER_BIT);
-
-	/* Set normal viewport size to minimum of actual window
-	 * size and requested framebuffer size
-	 */
-	OGL(ifp)->vp_width = (OGL(ifp)->win_width < ifp->if_width) ?
-	    OGL(ifp)->win_width : ifp->if_width;
-	OGL(ifp)->vp_height = (OGL(ifp)->win_height < ifp->if_height) ?
-	    OGL(ifp)->win_height : ifp->if_height;
-	ifp->if_xcenter = OGL(ifp)->vp_width/2;
-	ifp->if_ycenter = OGL(ifp)->vp_height/2;
-
-	/* center viewport in window */
-	SGI(ifp)->mi_xoff=(OGL(ifp)->win_width-OGL(ifp)->vp_width)/2;
-	SGI(ifp)->mi_yoff=(OGL(ifp)->win_height-OGL(ifp)->vp_height)/2;
-	glViewport(SGI(ifp)->mi_xoff,
-		   SGI(ifp)->mi_yoff,
-		   OGL(ifp)->vp_width,
-		   OGL(ifp)->vp_height);
-	/* initialize clipping planes and zoom */
-	ogl_clipper(ifp);
-	clp = &(OGL(ifp)->clip);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho( clp->oleft, clp->oright, clp->obottom, clp->otop,
-		 -1.0, 1.0);
-	glPixelZoom((float) ifp->if_xzoom, (float) ifp->if_yzoom);
-    } else if ( (OGL(ifp)->win_width > ifp->if_width) ||
-		(OGL(ifp)->win_height > ifp->if_height) ) {
-	/* clear whole buffer if window larger than framebuffer */
-	if ( OGL(ifp)->copy_flag && !OGL(ifp)->front_flag ) {
-	    glDrawBuffer(GL_FRONT);
-	    glViewport(0, 0, OGL(ifp)->win_width,
-		       OGL(ifp)->win_height);
-	    glClearColor(0, 0, 0, 0);
-	    glClear(GL_COLOR_BUFFER_BIT);
-	    glDrawBuffer(GL_BACK);
-	} else {
-	    glViewport(0, 0, OGL(ifp)->win_width,
-		       OGL(ifp)->win_height);
-	    glClearColor(0, 0, 0, 0);
-	    glClear(GL_COLOR_BUFFER_BIT);
-	}
-	/* center viewport */
-	glViewport(SGI(ifp)->mi_xoff,
-		   SGI(ifp)->mi_yoff,
-		   OGL(ifp)->vp_width,
-		   OGL(ifp)->vp_height);
-    }
-
-    /* repaint entire image */
-    ogl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
-    if ( SGI(ifp)->mi_doublebuffer ) {
-	glXSwapBuffers( OGL(ifp)->dispp, OGL(ifp)->wind);
-    } else if ( OGL(ifp)->copy_flag ) {
-	backbuffer_to_screen(ifp, -1);
-    }
-
-    if ( CJDEBUG ) {
-	int dbb, db, view[4], getster, getaux;
-	glGetIntegerv(GL_VIEWPORT, view);
-	glGetIntegerv(GL_DOUBLEBUFFER, &dbb);
-	glGetIntegerv(GL_DRAW_BUFFER, &db);
-	fb_log("Viewport: x %d y %d width %d height %d\n", view[0],
-	       view[1], view[2], view[3]);
-	fb_log("expose: double buffered: %d, draw buffer %d\n", dbb, db);
-	fb_log("front %d\tback%d\n", GL_FRONT, GL_BACK);
-	glGetIntegerv(GL_STEREO, &getster);
-	glGetIntegerv(GL_AUX_BUFFERS, &getaux);
-	fb_log("double %d, stereo %d, aux %d\n", dbb, getster, getaux);
-    }
-
-    /* unattach context for other threads to use */
-    glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
-}
-
-void
-ogl_configureWindow(FBIO *ifp, int width, int height)
-{
-    if (width == OGL(ifp)->win_width &&
-	height == OGL(ifp)->win_height)
-	return;
-
-    ifp->if_width = ifp->if_max_width = width;
-    ifp->if_height = ifp->if_max_height = height;
-
-    OGL(ifp)->win_width = OGL(ifp)->vp_width = width;
-    OGL(ifp)->win_height = OGL(ifp)->vp_height = height;
-
-    ifp->if_zoomflag = 0;
-    ifp->if_xzoom = 1;
-    ifp->if_yzoom = 1;
-    ifp->if_xcenter = width/2;
-    ifp->if_ycenter = height/2;
-
-    ogl_getmem(ifp);
-    ogl_clipper(ifp);
-}
-
-
-/* BACKBUFFER_TO_SCREEN - copy pixels from copy on the backbuffer
- * to the front buffer. Do one scanline specified by one_y, or whole
- * screen if one_y equals -1.
- */
-HIDDEN void
-backbuffer_to_screen(register FBIO *ifp, int one_y)
-{
-    struct ogl_clip *clp;
-
-    if (!(OGL(ifp)->front_flag)) {
-	OGL(ifp)->front_flag = 1;
-	glDrawBuffer(GL_FRONT);
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-	glPixelZoom((float) ifp->if_xzoom, (float) ifp->if_yzoom);
-    }
-
-    clp = &(OGL(ifp)->clip);
-
-    if (one_y > clp->ypixmax) {
-	return;
-    } else if (one_y < 0) {
-	/* do whole visible screen */
-
-	/* Blank out area left of image */
-	glColor3b( 0, 0, 0 );
-	if ( clp->xscrmin < 0 )  glRecti(clp->xscrmin - CLIP_XTRA,
-					 clp->yscrmin - CLIP_XTRA,
-					 CLIP_XTRA,
-					 clp->yscrmax + CLIP_XTRA);
-
-	/* Blank out area below image */
-	if ( clp->yscrmin < 0 )  glRecti(clp->xscrmin - CLIP_XTRA,
-					 clp->yscrmin - CLIP_XTRA,
-					 clp->xscrmax + CLIP_XTRA,
-					 CLIP_XTRA);
-
-	/* We are in copy mode, so we use vp_width rather
-	 * than if_width
-	 */
-	/* Blank out area right of image */
-	if ( clp->xscrmax >= OGL(ifp)->vp_width )  glRecti(ifp->if_width - CLIP_XTRA,
-							   clp->yscrmin - CLIP_XTRA,
-							   clp->xscrmax + CLIP_XTRA,
-							   clp->yscrmax + CLIP_XTRA);
-
-	/* Blank out area above image */
-	if ( clp->yscrmax >= OGL(ifp)->vp_height )  glRecti(clp->xscrmin - CLIP_XTRA,
-							    OGL(ifp)->vp_height - CLIP_XTRA,
-							    clp->xscrmax + CLIP_XTRA,
-							    clp->yscrmax + CLIP_XTRA);
-
-	/* copy image from backbuffer */
-	glRasterPos2i(clp->xpixmin, clp->ypixmin);
-	glCopyPixels(SGI(ifp)->mi_xoff + clp->xpixmin,
-		     SGI(ifp)->mi_yoff + clp->ypixmin,
-		     clp->xpixmax - clp->xpixmin +1,
-		     clp->ypixmax - clp->ypixmin +1,
-		     GL_COLOR);
-
-
-    } else if (one_y < clp->ypixmin) {
-	return;
-    } else {
-	/* draw one scanline */
-	glRasterPos2i(clp->xpixmin, one_y);
-	glCopyPixels(SGI(ifp)->mi_xoff + clp->xpixmin,
-		     SGI(ifp)->mi_yoff + one_y,
-		     clp->xpixmax - clp->xpixmin +1,
-		     1,
-		     GL_COLOR);
-    }
-}
-
-/* 		O G L _ C H O O S E _ V I S U A L
- *
- * Select an appropriate visual, and set flags.
- *
- * The user requires support for:
- *    	-OpenGL rendering in RGBA mode
- *
- * The user may desire support for:
- *	-a single-buffered OpenGL context
- *	-a double-buffered OpenGL context
- *	-hardware colormapping (DirectColor)
- *
- * We first try to satisfy all requirements and desires. If that fails,
- * we remove the desires one at a time until we succeed or until only
- * requirements are left. If at any stage more than one visual meets the
- * current criteria, the visual with the greatest depth is chosen.
- *
- * The following flags are set:
- * 	SGI(ifp)->mi_doublebuffer
- *	OGL(ifp)->soft_cmap_flag
- *
- * Return NULL on failure.
- */
-HIDDEN XVisualInfo *
-fb_ogl_choose_visual(FBIO *ifp)
-{
-
-    XVisualInfo *vip, *vibase, *maxvip, template;
-#define NGOOD 200
-    int good[NGOOD];
-    int num, i, j;
-    int m_hard_cmap, m_sing_buf, m_doub_buf;
-    int use, rgba, dbfr;
-
-    m_hard_cmap = ((ifp->if_mode & MODE_7MASK)==MODE_7NORMAL);
-    m_sing_buf  = ((ifp->if_mode & MODE_9MASK)==MODE_9SINGLEBUF);
-    m_doub_buf =  !m_sing_buf;
-
-    memset((void *)&template, 0, sizeof(XVisualInfo));
-
-    /* get a list of all visuals on this display */
-    vibase = XGetVisualInfo(OGL(ifp)->dispp, 0, &template, &num);
-    while (1) {
-
-	/* search for all visuals matching current criteria */
-	for (i=0, j=0, vip=vibase; i<num; i++, vip++) {
-	    /* requirements */
-	    glXGetConfig(OGL(ifp)->dispp, vip, GLX_USE_GL, &use);
-	    if ( !use)
-		continue;
-	    glXGetConfig(OGL(ifp)->dispp, vip, GLX_RGBA, &rgba);
-	    if (!rgba)
-		continue;
-	    /* desires */
-	    /* X_CreateColormap needs a DirectColor visual */
-	    /* There should be some way of handling this with TrueColor,
-	     * for example:
-	     visual id:    0x50
-	     class:    TrueColor
-	     depth:    24 planes
-	     available colormap entries:    256 per subfield
-	     red, green, blue masks:    0xff0000, 0xff00, 0xff
-	     significant bits in color specification:    8 bits
-	    */
-	    if ( (m_hard_cmap) && (vip->class!=DirectColor))
-		continue;
-	    if ( (m_hard_cmap) && (vip->colormap_size<256))
-		continue;
-	    glXGetConfig(OGL(ifp)->dispp, vip, GLX_DOUBLEBUFFER, &dbfr);
-	    if ( (m_doub_buf) && (!dbfr) )
-		continue;
-	    if ( (m_sing_buf) && (dbfr) )
-		continue;
-
-	    /* this visual meets criteria */
-	    if ( j >= NGOOD-1 )  {
-		fb_log("fb_ogl_open:  More than %d candidate visuals!\n", NGOOD);
-		break;
-	    }
-	    good[j++] = i;
-	}
-
-	/* from list of acceptable visuals,
-	 * choose the visual with the greatest depth */
-	if (j>=1) {
-	    maxvip = vibase + good[0];
-	    for (i=1; i<j; i++) {
-		vip = vibase + good[i];
-		if (vip->depth > maxvip->depth) {
-		    maxvip = vip;
-		}
-	    }
-	    /* set flags and return choice */
-	    OGL(ifp)->soft_cmap_flag = !m_hard_cmap;
-	    SGI(ifp)->mi_doublebuffer = m_doub_buf;
-	    return (maxvip);
-	}
-
-	/* if no success at this point,
-	 * relax one of the criteria and try again.
-	 */
-	if (m_hard_cmap) {
-	    /* relax hardware colormap requirement */
-	    m_hard_cmap = 0;
-	    fb_log("fb_ogl_open: hardware colormapping not available. Using software colormap.\n");
-	} else if (m_sing_buf) {
-	    /* relax single buffering requirement.
-	     * no need for any warning - we'll just use
-	     * the front buffer
-	     */
-	    m_sing_buf = 0;
-	} else if (m_doub_buf) {
-	    /* relax double buffering requirement. */
-	    m_doub_buf = 0;
-	    fb_log("fb_ogl_open: double buffering not available. Using single buffer.\n");
-	} else {
-	    /* nothing else to relax */
-	    return(NULL);
-	}
-
-    }
-
-}
 
 int
 ogl_refresh(FBIO *ifp, int x, int y, int w, int h)
