@@ -1,11 +1,6 @@
 
 lib_LTLIBRARIES = libsysv.la
 
-# XXX is this really needed?
-#	regex.c
-#	redata.c
-#	${REGEX_CPPFLAGS}
-
 libsysv_la_SOURCES = \
 	memset.c \
 	strchr.c \
