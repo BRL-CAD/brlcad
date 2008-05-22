@@ -38,8 +38,10 @@ ged_mirror(struct rt_wdb *wdbp, int argc, const char *argv[])
 
     int early_out = 0;
 
+#if 0
     char **nargv;
     struct bu_vls vlsargv;
+#endif
 
     GED_CHECK_DATABASE_OPEN(wdbp, GED_ERROR);
     GED_CHECK_READ_ONLY(wdbp, GED_ERROR);
@@ -56,6 +58,9 @@ ged_mirror(struct rt_wdb *wdbp, int argc, const char *argv[])
 	return GED_OK;
     }
 
+#if 1
+    while ((k = bu_getopt(argc, argv, "d:D:hHo:O:p::P:xXyYzZ")) != EOF) {
+#else
     /* get a writable copy of argv */
     bu_vls_init(&vlsargv);
     bu_vls_from_argv(&vlsargv, argc, argv);
@@ -66,6 +71,7 @@ ged_mirror(struct rt_wdb *wdbp, int argc, const char *argv[])
 
     /* Process arguments */
     while ((k = bu_getopt(argc, nargv, "d:D:hHo:O:p::P:xXyYzZ")) != EOF) {
+#endif
 	switch (k) {
 	case 'd':
 	case 'D':
@@ -108,8 +114,10 @@ ged_mirror(struct rt_wdb *wdbp, int argc, const char *argv[])
 	    wdbp->wdb_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	    bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
 
+#if 0
 	    bu_free(nargv, "free f_ill nargv");
 	    bu_vls_free(&vlsargv);
+#endif
 
 	    return GED_OK;
 	default:
@@ -119,8 +127,10 @@ ged_mirror(struct rt_wdb *wdbp, int argc, const char *argv[])
 	}
     }
 
+#if 0
     bu_free(nargv, "free f_ill nargv");
     bu_vls_free(&vlsargv);
+#endif
 
     if (early_out) {
 	return GED_ERROR;
