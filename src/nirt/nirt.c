@@ -55,7 +55,7 @@ Options:\n\
  -f sfile  run script sfile before interacting\n\
  -M        read matrix, cmds on stdin\n\
  -O action handle overlap claims via action\n\
- -s        run in short (non-verbose) mode\n\
+ -s        run in silent (non-verbose) mode\n\
  -u n      set use_air=n (default 0)\n\
  -v        run in verbose mode\n\
  -x v      set librt(3) diagnostic flag=v\n\
