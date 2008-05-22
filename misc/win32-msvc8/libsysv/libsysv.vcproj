@@ -229,11 +229,23 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
-				RelativePath="..\..\..\src\libsysv\redata.c"
+				RelativePath="..\..\..\src\libsysv\memset.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\libsysv\regex.c"
+				RelativePath="..\..\..\src\libsysv\strchr.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libsysv\strdup.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libsysv\strsep.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libsysv\strtok.c"
 				>
 			</File>
 			<File
