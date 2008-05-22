@@ -64,8 +64,6 @@
 #endif
 #include "bio.h"
 
-#undef RED
-
 #include "bu.h"
 #include "fb.h"
 
