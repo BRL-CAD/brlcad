@@ -36,12 +36,15 @@
 	method cat {args}
 	method color {args}
 	method comb {args}
+	method comb_color {args}
 	method concat {args}
 	method copyeval {args}
 	method cp {args}
 	method dbip {args}
 	method dump {args}
 	method dup {args}
+	method edcomb {args}
+	method edmater {args}
 	method expand {args}
 	method facetize {args}
 	method find {args}
@@ -53,6 +56,7 @@
 	method hide {args}
 	method i {args}
 	method importFg4Section {args}
+	method item {args}
 	method keep {args}
 	method kill {args}
 	method killall {args}
@@ -62,9 +66,11 @@
 	method log {args}
 	method ls {args}
 	method lt {args}
+	method make {args}
 	method make_bb {name args}
 	method make_name {args}
 	method match {args}
+	method mater {args}
 	method mirror {args}
 	method move_arb_edge {args}
 	method move_arb_face {args}
@@ -86,8 +92,10 @@
 	method r {args}
 	method rm {args}
 	method rmap {args}
+	method rmater {args}
 	method rotate_arb_face {args}
 	method rt_gettrees {args}
+	method shader {args}
 	method shareDb {_db}
 	method shells {args}
 	method showmats {args}
@@ -103,6 +111,7 @@
 	method whatid {args}
 	method whichair {args}
 	method whichid {args}
+	method wmater {args}
 	method xpush {args}
 
 	method ? {}
@@ -200,6 +209,10 @@
     eval $db rt_gettrees $args
 }
 
+::itcl::body Db::shader {args} {
+    eval $db shader $args
+}
+
 ::itcl::body Db::shareDb {_db} {
     if {!$sharedDb} {
 	rename $db ""
@@ -285,26 +298,6 @@
     eval $db cp $args
 }
 
-::itcl::body Db::mirror {args} {
-    eval $db mirror $args
-}
-
-::itcl::body Db::move_arb_edge {args} {
-    eval $db move_arb_edge $args
-}
-
-::itcl::body Db::move_arb_face {args} {
-    eval $db move_arb_face $args
-}
-
-::itcl::body Db::mv {args} {
-    eval $db mv $args
-}
-
-::itcl::body Db::mvall {args} {
-    eval $db mvall $args
-}
-
 ::itcl::body Db::nmg_collapse {args} {
     eval $db nmg_collapse $args
 }
@@ -325,6 +318,14 @@
     eval $db dup $args
 }
 
+::itcl::body Db::edcomb {args} {
+    eval $db edcomb $args
+}
+
+::itcl::body Db::edmater {args} {
+    eval $db edmater $args
+}
+
 ::itcl::body Db::g {args} {
     eval $db g $args
 }
@@ -335,6 +336,10 @@
 
 ::itcl::body Db::rmap {args} {
     eval $db rmap $args
+}
+
+::itcl::body Db::rmater {args} {
+    eval $db rmater $args
 }
 
 ::itcl::body Db::rotate_arb_face {args} {
@@ -353,6 +358,10 @@
     eval $db comb $args
 }
 
+::itcl::body Db::comb_color {args} {
+    eval $db comb_color $args
+}
+
 ::itcl::body Db::find {args} {
     eval $db find $args
 }
@@ -363,6 +372,10 @@
 
 ::itcl::body Db::whichid {args} {
     eval $db whichid $args
+}
+
+::itcl::body Db::wmater {args} {
+    eval $db wmater $args
 }
 
 ::itcl::body Db::xpush {args} {
@@ -429,8 +442,16 @@
     eval $db importFg4Section $args
 }
 
+::itcl::body Db::item {args} {
+    eval $db item $args
+}
+
 ::itcl::body Db::get_dbname {} {
     return $db
+}
+
+::itcl::body Db::make {args} {
+    eval $db make $args
 }
 
 ::itcl::body Db::make_bb {name args} {
@@ -439,6 +460,30 @@
 
 ::itcl::body Db::make_name {args} {
     eval $db make_name $args
+}
+
+::itcl::body Db::mater {args} {
+    eval $db mater $args
+}
+
+::itcl::body Db::mirror {args} {
+    eval $db mirror $args
+}
+
+::itcl::body Db::move_arb_edge {args} {
+    eval $db move_arb_edge $args
+}
+
+::itcl::body Db::move_arb_face {args} {
+    eval $db move_arb_face $args
+}
+
+::itcl::body Db::mv {args} {
+    eval $db mv $args
+}
+
+::itcl::body Db::mvall {args} {
+    eval $db mvall $args
 }
 
 ::itcl::body Db::attr {args} {
@@ -502,12 +547,15 @@
     $help add cat	{{<objects>} {list attributes (brief)}}
     $help add color	{{low high r g b str} {make color entry}}
     $help add comb	{{comb_name <operation solid>} {create or extend combination w/booleans}}
+    $help add comb_color {{comb R G B} {set combination's color}}
     $help add concat	{{file [prefix]} {concatenate 'file' onto end of present database.  Run 'dup file' first.}}
     $help add copyeval	{{new_solid path_to_old_solid}	{copy an 'evaluated' path solid}}
     $help add cp	{{from to} {copy [duplicate] object}}
     $help add dbip	{{} {get dbip}}
     $help add dump	{{file} {write current state of database object to file}}
     $help add dup	{{file [prefix]} {check for dup names in 'file'}}
+    $help add edcomb	{{comb rflag rid air los mid} {modify combination record information}}
+    $help add edmater	{{comb1 [comb2 ...]} {edit combination materials}}
     $help add expand	{{expression} {globs expression against database objects}}
     $help add find	{{[-s] <objects>} {find all references to objects}}
     $help add form	{{objType} {returns form of objType}}
@@ -515,6 +563,7 @@
     $help add get	{{obj ?attr?} {get obj attributes}}
     $help add hide	{{[objects]} {set the "hidden" flag for the specified objects so they do not appear in a "t" or "ls" command output}}
     $help add i		{{obj combination [operation]} {add instance of obj to comb}}
+    $help add item	{{region ident [air [material [los]]]} {set region ident codes}}
     $help add keep	{{keep_file object(s)} {save named objects in specified file}}
     $help add kill	{{[-f] <objects>} {delete object[s] from file}}
     $help add killall	{{<objects>} {kill object[s] and all references}}
@@ -524,9 +573,11 @@
     $help add log	{{get|start|stop} {used to control logging}}
     $help add ls	{{[-a -c -r -s]} {table of contents}}
     $help add lt	{{object} {return first level tree as list of operator/member pairs}}
-    $help add match	{{exp} {returns all database objects matching the given expression}}
+    $help add make	{{-t | object type} {make an object/primitive of the specified type}}
     $help add make_bb	{{bbname object(s)} {make a bounding box (rpp) around the specified objects}}
-    $help add mirror	{{[options] old new}	{mirror object along the specified axis}}
+    $help add match	{{exp} {returns all database objects matching the given expression}}
+    $help add mater	{{region shader R G B inherit} {modify region's material information}}
+    $help add mirror	{{[-d dir] [-o origin] [-p scalar_pt] old new}	{mirror object along the specified axis}}
     $help add move_arb_edge	{{arb edge pt} {move an arb's edge through pt}}
     $help add move_arb_face	{{arb face pt} {move an arb's face through pt}}
     $help add mv	{{old new} {rename object}}
@@ -547,8 +598,10 @@
     $help add r		{{region <operation solid>} {create or extend a Region combination}}
     $help add rm	{{comb <members>} {remove members from comb}}
     $help add rmap	{{} {returns a region ids to region(s) mapping}}
+    $help add rmater	{{file} {read material properties from a file}}
     $help add rt_gettrees      {{} {}}
     $help add rotate_arb_face	{{arb face pt} {rotate an arb's face through pt}}
+    $help add shader	{{comb shader_material [shader_args]} {command line version of the mater command}}
     $help add shells	{{nmg_model}	{breaks model into seperate shells}}
     $help add showmats	{{path}	{show xform matrices along path}}
     $help add summary	{{[s r g]}	{count/list solid/reg/groups}}
@@ -563,6 +616,7 @@
     $help add whatid	{{region_name} {display ident number for region}}
     $help add whichair	{{air_codes(s)} {lists all regions with given air code}}
     $help add whichid	{{[-s] ident(s)} {lists all regions with given ident code}}
+    $help add wmater	{{file comb1 [comb2 ...]} {write material properties to a file for the specified combinations}}
     $help add xpush	{{object} {Experimental Push Command}}
 }
 

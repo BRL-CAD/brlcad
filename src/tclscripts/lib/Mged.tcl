@@ -52,6 +52,7 @@ option add *Mged.height 400 widgetDefault
 	method clear {args}
 	method color {args}
 	method comb {args}
+	method comb_color {args}
 	method concat {args}
 	method copyeval {args}
 	method cp {args}
@@ -60,6 +61,8 @@ option add *Mged.height 400 widgetDefault
 	method dump {args}
 	method dup {args}
 	method E {args}
+	method edcomb {args}
+	method edmater {args}
 	method erase {args}
 	method erase_all {args}
 	method ev {args}
@@ -76,6 +79,7 @@ option add *Mged.height 400 widgetDefault
 	method i {args}
 	method illum {obj}
 	method importFg4Section {args}
+	method item {args}
 	method keep {args}
 	method kill {args}
 	method killall {args}
@@ -85,9 +89,11 @@ option add *Mged.height 400 widgetDefault
 	method listeval {args}
 	method ls {args}
 	method lt {args}
+	method make {args}
 	method make_bb {name args}
 	method make_name {args}
 	method match {args}
+	method mater {args}
 	method mirror {args}
 	method move_arb_edge {args}
 	method move_arb_face {args}
@@ -110,11 +116,13 @@ option add *Mged.height 400 widgetDefault
 	method report {args}
 	method rm {args}
 	method rmap {args}
+	method rmater {args}
 	method rotate_arb_face {args}
 	method rt_gettrees {args}
 	method set_outputHandler {args}
 	method set_transparency {args}
 	method shaded_mode {args}
+	method shader {args}
 	method shareDb {_db}
 	method shells {args}
 	method showmats {args}
@@ -131,6 +139,7 @@ option add *Mged.height 400 widgetDefault
 	method whichair {args}
 	method whichid {args}
 	method who {args}
+	method wmater {args}
 	method xpush {args}
 	method zap {args}
 
@@ -141,6 +150,11 @@ option add *Mged.height 400 widgetDefault
 	method apropos {key}
 	method help {args}
 	method getUserCmds {}
+    }
+
+    protected {
+	method run_cmd {_cmd args}
+	method run_cmd_draw {_cmd _ilist args}
     }
 
     private {
@@ -237,6 +251,10 @@ option add *Mged.height 400 widgetDefault
     eval $db shaded_mode $args
 }
 
+::itcl::body Mged::shader {args} {
+    return [eval run_cmd shader $args]
+}
+
 ::itcl::body Mged::shareDb {_db} {
     $db shareDb $_db
 }
@@ -297,32 +315,12 @@ option add *Mged.height 400 widgetDefault
     eval $db cp $args
 }
 
+::itcl::body Mged::mater {args} {
+    return [eval run_cmd mater $args]
+}
+
 ::itcl::body Mged::mirror {args} {
-    $db log start
-    set ret [catch {eval $db mirror $args} result]
-    set logData [$db log get]
-    set logFlag [lindex $logData 0]
-    set logMsg [lindex $logData 1]
-    $db log stop
-
-    if {$ret} {
-	if {$logMsg != {}} {
-	    error "$logMsg\n[lindex $result 1]"
-	} else {
-	    error [lindex $result 1]
-	}
-    } else {
-	set flags [lindex $result 0]
-	if {$flags == 0} {
-	    Mged::draw [lindex $args end]
-	}
-
-	if {$logMsg != ""} {
-	    error "$logMsg\n[lindex $result 1]"
-	} else {
-	    return [lindex $result 1]
-	}
-    }
+    return [eval run_cmd_draw mirror end $args]
 }
 
 ::itcl::body Mged::move_arb_edge {args} {
@@ -388,6 +386,10 @@ option add *Mged.height 400 widgetDefault
     eval $db rmap $args
 }
 
+::itcl::body Mged::rmater {args} {
+    return [eval run_cmd rmater $args]
+}
+
 ::itcl::body Mged::rotate_arb_face {args} {
     eval $db rotate_arb_face $args
 }
@@ -398,6 +400,10 @@ option add *Mged.height 400 widgetDefault
 
 ::itcl::body Mged::comb {args} {
     eval $db comb $args
+}
+
+::itcl::body Mged::comb_color {args} {
+    return [eval run_cmd comb_color $args]
 }
 
 ::itcl::body Mged::find {args} {
@@ -470,6 +476,47 @@ option add *Mged.height 400 widgetDefault
 
 ::itcl::body Mged::importFg4Section {args} {
     eval $db importFg4Section $args
+}
+
+::itcl::body Mged::item {args} {
+    return [eval run_cmd item $args]
+}
+
+::itcl::body Mged::make {args} {
+    if {[llength $args] == 2} {
+	set targs $args
+	set args {}
+	lappend args -o [center] -s [size]
+	foreach arg $targs {
+	    lappend args $arg
+	}
+    }
+
+    $db log start
+    set ret [catch {eval $db make $args} result]
+    set logData [$db log get]
+    set logFlag [lindex $logData 0]
+    set logMsg [lindex $logData 1]
+    $db log stop
+
+    if {$ret} {
+	if {$logMsg != {}} {
+	    error "$logMsg\n[lindex $result 1]"
+	} else {
+	    error [lindex $result 1]
+	}
+    } else {
+	set flags [lindex $result 0]
+	if {$flags == 0} {
+	    Mged::draw [lindex $args end-1]
+	}
+
+	if {$logMsg != ""} {
+	    return "$logMsg\n[lindex $result 1]"
+	} else {
+	    return [lindex $result 1]
+	}
+    }
 }
 
 ::itcl::body Mged::make_bb {name args} {
@@ -575,12 +622,24 @@ option add *Mged.height 400 widgetDefault
     return $result
 }
 
+::itcl::body Mged::edcomb {args} {
+    return [eval run_cmd edcomb $args]
+}
+
+::itcl::body Mged::edmater {args} {
+    return [eval run_cmd edmater $args]
+}
+
 ::itcl::body Mged::erase {args} {
     eval $db erase $args
 }
 
 ::itcl::body Mged::who {args} {
     eval $db who $args
+}
+
+::itcl::body Mged::wmater {args} {
+    return [eval run_cmd wmater $args]
 }
 
 ::itcl::body Mged::xpush {args} {
@@ -668,6 +727,47 @@ option add *Mged.height 400 widgetDefault
 
 ::itcl::body Mged::getUserCmds {} {
     return "? apropos help [QuadDisplay::getUserCmds] [$db getUserCmds]"
+}
+
+::itcl::body Mged::run_cmd {_cmd args} {
+    set ret [catch {eval $db $_cmd $args} result]
+    if {$ret} {
+	error [lindex $result 1]
+    }
+
+    return [lindex $result 1]
+}
+
+::itcl::body Mged::run_cmd_draw {_cmd _ilist args} {
+    $db log start
+    set ret [catch {eval $db $_cmd $args} result]
+    set logData [$db log get]
+    set logFlag [lindex $logData 0]
+    set logMsg [lindex $logData 1]
+    $db log stop
+
+    if {$ret} {
+	if {$logMsg != {}} {
+	    error "$logMsg\n[lindex $result 1]"
+	} else {
+	    error [lindex $result 1]
+	}
+    } else {
+	set flags [lindex $result 0]
+	if {$flags == 0} {
+	    set olist {}
+	    foreach i $_ilist {
+		lappend olist [lindex $args $i]
+	    }
+	    eval Mged::draw $olist
+	}
+
+	if {$logMsg != ""} {
+	    return "$logMsg\n[lindex $result 1]"
+	} else {
+	    return [lindex $result 1]
+	}
+    }
 }
 
 # Local Variables:

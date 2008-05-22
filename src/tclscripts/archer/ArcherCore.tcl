@@ -112,6 +112,7 @@ namespace eval ArcherCore {
 	method cd                  {args}
 	method clear               {args}
 	method comb                {args}
+	method comb_color          {args}
 	method concat              {args}
 	method copy                {args}
 	method copyeval            {args}
@@ -120,6 +121,8 @@ namespace eval ArcherCore {
 	method delete              {args}
 	method draw                {args}
 	method E                   {args}
+	method edcomb              {args}
+	method edmater             {args}
 	method erase               {args}
 	method erase_all           {args}
 	method ev                  {args}
@@ -130,12 +133,15 @@ namespace eval ArcherCore {
 	method get                 {args}
 	method group               {args}
 	method i                   {args}
+	method item                {args}
 	method kill                {args}
 	method killall             {args}
 	method killtree            {args}
 	method ls                  {args}
+	method make		   {args}
 	method make_bb             {args}
 	method make_name           {args}
+	method mater               {args}
 	method mirror              {args}
 	method move                {args}
 	method mv                  {args}
@@ -150,12 +156,15 @@ namespace eval ArcherCore {
 	method r                   {args}
 	method report              {args}
 	method rm                  {args}
+	method rmater              {args}
+	method shader              {args}
 	method track               {args}
 	method unhide              {args}
 	method units               {args}
 	method vdraw               {args}
 	method whichid             {args}
 	method who                 {args}
+	method wmater              {args}
 	method Z                   {args}
 	method zap                 {args}
 
@@ -354,10 +363,10 @@ namespace eval ArcherCore {
 	}
 	variable mMgedCommands { \
 				     bot2pipe \
-				     adjust attr blast c comb concat copyeval E erase_all \
-				     ev find hide killall killtree \
-				     make_bb make_name mirror mvall push put r report track \
-				     unhide vdraw
+				     adjust attr blast c comb comb_color concat copyeval E edcomb \
+				     edmater erase_all ev find hide item killall killtree make \
+				     make_bb make_name mater mirror mvall push put r rmater report \
+				     shader track unhide vdraw wmater
 	}
 	variable mDbSpecificCommands {}
 	variable mUnwrappedDbCommands {}
@@ -3722,6 +3731,10 @@ Popup Menu    Right or Ctrl-Left
     eval mgedWrapper comb 0 1 1 1 $args
 }
 
+::itcl::body ArcherCore::comb_color {args} {
+    eval mgedWrapper comb_color 0 1 1 1 $args
+}
+
 ::itcl::body ArcherCore::concat {args} {
     eval mgedWrapper concat 0 0 1 1 $args
 }
@@ -3856,6 +3869,14 @@ Popup Menu    Right or Ctrl-Left
     eval mgedWrapper E 1 0 0 1 $args
 }
 
+::itcl::body ArcherCore::edcomb {args} {
+    eval mgedWrapper edcomb 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::edmater {args} {
+    eval mgedWrapper edmater 0 0 1 1 $args
+}
+
 ::itcl::body ArcherCore::erase {args} {
     if {[llength $args] == 0} {
 	return
@@ -3926,6 +3947,10 @@ Popup Menu    Right or Ctrl-Left
 }
 
 
+::itcl::body ArcherCore::item {args} {
+    eval mgedWrapper item 0 0 1 1 $args
+}
+
 ::itcl::body ArcherCore::kill {args} {
     eval cadWrapper kill 1 0 1 1 $args
 }
@@ -3954,12 +3979,20 @@ Popup Menu    Right or Ctrl-Left
     }
 }
 
+::itcl::body ArcherCore::make {args} {
+    eval mgedWrapper make 0 0 1 1 $args
+}
+
 ::itcl::body ArcherCore::make_bb {args} {
     eval mgedWrapper make_bb 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::make_name {args} {
     eval mgedWrapper make_name 0 0 0 0 $args
+}
+
+::itcl::body ArcherCore::mater {args} {
+    eval mgedWrapper mater 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::mirror {args} {
@@ -4028,6 +4061,14 @@ Popup Menu    Right or Ctrl-Left
     eval cadWrapper rm 1 0 1 1 $args
 }
 
+::itcl::body ArcherCore::rmater {args} {
+    eval mgedWrapper rmater 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::shader {args} {
+    eval mgedWrapper shader 0 0 1 1 $args
+}
+
 ::itcl::body ArcherCore::track {args} {
     eval mgedWrapper track 0 0 1 1 $args
 }
@@ -4038,6 +4079,10 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::units {args} {
     eval mgedWrapper units 0 0 1 0 $args
+}
+
+::itcl::body ArcherCore::wmater {args} {
+    eval mgedWrapper wmater 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::packTree {data} {
