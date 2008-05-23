@@ -47,7 +47,7 @@
 
 extern int	rpt_overlap;		/* report overlapping region names */
 int		use_air = 0;		/* Handling of air in librt */
-extern int	rt_text_mode;
+extern int	output_is_binary;
 
 
 /* Viewing module specific "set" variables */
@@ -236,8 +236,10 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
     if ( !minus_o)			/* Needs to be set to  stdout */
 	outfp = stdout;
 
-    if (rt_text_mode)
+    if (!output_is_binary) {
+	bu_log("Displaying plot data in TEXT mode\n");
 	pl_setOutputMode(PL_OUTPUT_MODE_TEXT);
+    }
 
     return	0;		/* No framebuffer needed */
 }
