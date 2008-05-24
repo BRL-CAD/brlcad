@@ -50,6 +50,8 @@ double		azimuth = 0.0, elevation = 0.0;
 int		lightmodel = 0;		/* Select lighting model */
 int		rpt_overlap = 1;	/* report overlapping region names */
 int		default_background = 1; /* Default is black */
+int		output_is_binary = 1;	/* !0 means output file is binary */
+
 /***** end of sharing with viewing model *****/
 
 /***** variables shared with worker() ******/

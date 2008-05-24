@@ -57,7 +57,6 @@ extern const char usage[];
 /***** Variables shared with viewing model *** */
 FBIO		*fbp = FBIO_NULL;	/* Framebuffer handle */
 FILE		*outfp = NULL;		/* optional pixel output file */
-int		output_is_binary = 1;	/* !0 means output file is binary */
 mat_t		view2model;
 mat_t		model2view;
 /***** end of sharing with viewing model *****/
