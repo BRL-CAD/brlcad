@@ -17,6 +17,8 @@ http://sf.net/pm/?group_id=105292
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------
 
+* fix nirt -e
+
 * fix framebuffer refresh bug.  problem was caused when the if_ogl
   framebuffer was changed (back) to request a direct rendering
   context.  presumably that is triggering other code that is failing
