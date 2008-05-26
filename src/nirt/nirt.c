@@ -215,7 +215,8 @@ static void enqueue_script (struct bu_list *qp, int type, char *string)
 	bu_malloc(sizeof(struct script_rec), "script record");
     srp->sr_magic = SCRIPT_REC_MAGIC;
     srp->sr_type = type;
-
+    bu_vls_init(&(srp->sr_script));
+   
     /*Check if supplied file name is local or in brlcad's nirt data dir*/
     if (type == READING_FILE) {
         bu_vls_trunc(&str,0);
@@ -234,10 +235,8 @@ static void enqueue_script (struct bu_list *qp, int type, char *string)
 	} else {
  	   fclose(cfPtr);
 	}
-     	bu_vls_init(&(srp->sr_script));
     	bu_vls_printf(&(srp->sr_script),"%s",bu_vls_addr(&str));
     } else {
-        bu_vls_init(&(srp->sr_script));
         bu_vls_strcat(&(srp->sr_script),string);
     }
     BU_LIST_INSERT(qp, &(srp->l));
