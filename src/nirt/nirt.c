@@ -234,10 +234,12 @@ static void enqueue_script (struct bu_list *qp, int type, char *string)
 	} else {
  	   fclose(cfPtr);
 	}
+     	bu_vls_init(&(srp->sr_script));
+    	bu_vls_printf(&(srp->sr_script),"%s",bu_vls_addr(&str));
+    } else {
+        bu_vls_init(&(srp->sr_script));
+        bu_vls_strcat(&(srp->sr_script),string);
     }
-    bu_vls_init(&(srp->sr_script));
-    bu_vls_printf(&(srp->sr_script),"%s",bu_vls_addr(&str));
-
     BU_LIST_INSERT(qp, &(srp->l));
     bu_vls_free(&str);
 }
