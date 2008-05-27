@@ -148,18 +148,42 @@ void printusage(void)
 void listformats(void)
 {
     int files,i;
-    struct bu_vls nirtfilespath;
+    struct bu_vls nirtfilespath, nirtpathtofile;
     char suffix[5]=".nrt";
+    FILE *cfPtr;
+    int fnddesc;
+    char fileline[256];
+
     bu_vls_init(&nirtfilespath);
     bu_vls_printf(&nirtfilespath,"%s",bu_brlcad_data("nirt",0));
+  
+    bu_vls_init(&nirtpathtofile);
+
     files = bu_count_path(bu_vls_addr(&nirtfilespath),suffix);
+
     char **filearray;
     filearray = (char **)bu_malloc(files*sizeof(char *),"filelist");
+
     bu_list_path(bu_vls_addr(&nirtfilespath),suffix,filearray);
+
     for (i = 0; i < files; i++) {
-	bu_log("Found format file %s\n",filearray[i]);
+        bu_vls_trunc(&nirtpathtofile,0);
+	bu_vls_printf(&nirtpathtofile,"%s/%s",bu_vls_addr(&nirtfilespath),filearray[i]);
+        cfPtr = fopen(bu_vls_addr(&nirtpathtofile), "rb");
+
+        fnddesc = 0;
+        while ( bu_fgets( fileline, 256, cfPtr) && fnddesc == 0) {
+	   if (strncmp(fileline, "# Description: ", 15) == 0) {
+	       fnddesc = 1;
+               bu_log("%s\n",fileline+15);
+	   }
+	} 
+        fclose(cfPtr);
     }
+
     bu_free(filearray,"filelist");
+    bu_free(nirtfilespath, "free filespath");
+    bu_free(nirtpathtofile, "free pathtofile");
 }
 
 void
