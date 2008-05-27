@@ -53,6 +53,7 @@ Options:\n\
  -B n      set rt_bot_minpieces=n\n\
  -e script run script before interacting\n\
  -f sfile  run script sfile before interacting\n\
+ -L        list output formatting options\n\
  -M        read matrix, cmds on stdin\n\
  -O action handle overlap claims via action\n\
  -s        run in silent (non-verbose) mode\n\
@@ -141,6 +142,25 @@ void printusage(void)
     bu_log("%s", usage);
 }
 
+/**
+ * List formats installed in global nirt data directory
+ */
+void listformats(void)
+{
+    int files,i;
+    struct bu_vls nirtfilespath;
+    char suffix[5]=".nrt";
+    bu_vls_init(&nirtfilespath);
+    bu_vls_printf(&nirtfilespath,"%s",bu_brlcad_data("nirt",0));
+    files = bu_count_path(bu_vls_addr(&nirtfilespath),suffix);
+    char **filearray;
+    filearray = (char **)bu_malloc(files*sizeof(char *),"filelist");
+    bu_list_path(bu_vls_addr(&nirtfilespath),suffix,filearray);
+    for (i = 0; i < files; i++) {
+	bu_log("Found format file %s\n",filearray[i]);
+    }
+    bu_free(filearray,"filelist");
+}
 
 void
 attrib_print(void)
@@ -411,6 +431,9 @@ main (int argc, char **argv)
 		if (nirt_debug & DEBUG_SCRIPTS)
 		    show_scripts(&script_list, "after enqueueing a file name");
 		break;
+	    case 'L':
+		listformats();
+	        bu_exit(EXIT_SUCCESS,NULL);
 	    case 'M':
 		mat_flag = 1;
 		break;
