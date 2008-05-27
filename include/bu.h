@@ -1866,6 +1866,12 @@ BU_EXPORT BU_EXTERN(int	bu_file_readable, (const char *path));
 BU_EXPORT BU_EXTERN(int	bu_file_writable, (const char *path));
 BU_EXPORT BU_EXTERN(int	bu_file_executable, (const char *path));
 
+
+/* dirent.c */
+BU_EXPORT BU_EXTERN(int bu_count_path, (char *path, char *substr));
+BU_EXPORT BU_EXTERN(void bu_list_path, (char *path, char *substr, char **filearray)); 
+
+
 /* brlcad_path.c */
 BU_EXPORT BU_EXTERN(const char *bu_argv0, (void));
 BU_EXPORT BU_EXTERN(const char *bu_argv0_full_path, (void));
