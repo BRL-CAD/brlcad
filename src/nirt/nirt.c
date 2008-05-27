@@ -182,8 +182,8 @@ void listformats(void)
     }
 
     bu_free(filearray,"filelist");
-    bu_free(nirtfilespath, "free filespath");
-    bu_free(nirtpathtofile, "free pathtofile");
+    bu_vls_free(&nirtfilespath);
+    bu_vls_free(&nirtpathtofile);
 }
 
 void
