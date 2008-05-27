@@ -296,7 +296,12 @@ db_parse_1anim(struct db_i *dbip, int argc, const char *argv[])
     struct animate		*anp;
     int	i;
 
-    BU_GETSTRUCT( anp, animate );
+    if (argc < 4) {
+	bu_log("db_parse_1anim:  not enough arguments\n");
+	return (struct animate *)NULL;
+    }
+
+    BU_GETSTRUCT(anp, animate);
     anp->magic = ANIMATE_MAGIC;
 
     db_init_db_tree_state( &ts, dbip, &rt_uniresource );
@@ -305,6 +310,11 @@ db_parse_1anim(struct db_i *dbip, int argc, const char *argv[])
 	goto bad;
 
     if ( strcmp( argv[2], "matrix" ) == 0 )  {
+	if (argc < 5) {
+	    bu_log("db_parse_1anim:  matrix does not have enough arguments\n");
+	    goto bad;
+	}
+
 	anp->an_type = RT_AN_MATRIX;
 	if ( strcmp( argv[3], "rstack" ) == 0 )
 	    anp->an_u.anu_m.anm_op = ANM_RSTACK;
@@ -321,12 +331,13 @@ db_parse_1anim(struct db_i *dbip, int argc, const char *argv[])
 		   argv[3]);
 	    goto bad;
 	}
+
 	/* Allow some shorthands for the matrix spec */
 	if ( strcmp( argv[4], "translate" ) == 0 ||
 	     strcmp( argv[4], "xlate" ) == 0 )  {
-	    if ( argc < 5+2 )  {
+	    if (argc < 5+3) {
 		bu_log("db_parse_1anim:  matrix %s translate does not have enough arguments, only %d\n",
-		       argv[3], argc );
+		       argv[3], argc);
 		goto bad;
 	    }
 	    MAT_IDN( anp->an_u.anu_m.anm_mat );
@@ -335,7 +346,7 @@ db_parse_1anim(struct db_i *dbip, int argc, const char *argv[])
 			atof( argv[5+1] ),
 			atof( argv[5+2] ) );
 	} else if ( strcmp( argv[4], "rot" ) == 0 )  {
-	    if ( argc < 5+2 )  {
+	    if (argc < 5+3) {
 		bu_log("db_parse_1anim:  matrix %s rot does not have enough arguments, only %d\n",
 		       argv[3], argc );
 		goto bad;
@@ -347,23 +358,23 @@ db_parse_1anim(struct db_i *dbip, int argc, const char *argv[])
 			   atof( argv[5+2] ) );
 	} else if ( strcmp( argv[4], "scale" ) == 0 )  {
 	    fastf_t	scale;
-	    if ( argc < 5+0 )  {
+	    if (argc < 6) {
 		bu_log("db_parse_1anim:  matrix %s scale does not have enough arguments, only %d\n",
-		       argv[3], argc );
+		       argv[3], argc);
 		goto bad;
 	    }
-	    scale = atof( argv[5+3] );
-	    if ( NEAR_ZERO( scale, SMALL ) )  {
+	    scale = atof(argv[5]);
+	    if (NEAR_ZERO(scale, SMALL)) {
 		bu_log("db_parse_1anim:  matrix %s scale factor is zero\n",
-		       argv[3] );
+		       argv[3]);
 		goto bad;
 	    }
-	    MAT_IDN( anp->an_u.anu_m.anm_mat );
+	    MAT_IDN(anp->an_u.anu_m.anm_mat);
 	    anp->an_u.anu_m.anm_mat[15] = 1/scale;
 	} else if ( strcmp( argv[4], "scale_about" ) == 0 )  {
 	    point_t	pt;
 	    fastf_t	scale;
-	    if ( argc < 5+3 )  {
+	    if (argc < 5+4) {
 		bu_log("db_parse_1anim:  matrix %s scale_about does not have enough arguments, only %d\n",
 		       argv[3], argc );
 		goto bad;
@@ -380,11 +391,22 @@ db_parse_1anim(struct db_i *dbip, int argc, const char *argv[])
 		goto bad;
 	    }
 	} else {
+	    if (argc < 20) {
+		bu_log("db_parse_1anim:  matrix %s does not have enough arguments, only %d\n",
+		       argv[3], argc);
+		goto bad;
+	    }
+
 	    /* No keyword, assume full 4x4 matrix */
 	    for ( i=0; i<16; i++ )
 		anp->an_u.anu_m.anm_mat[i] = atof( argv[i+4] );
 	}
     } else if ( strcmp( argv[2], "material" ) == 0 )  {
+	if (argc < 5) {
+	    bu_log("db_parse_1anim:  material does not have enough arguments, only %d\n", argc);
+	    goto bad;
+	}
+
 	anp->an_type = RT_AN_MATERIAL;
 	bu_vls_init( &anp->an_u.anu_p.anp_shader );
 	if ( (strcmp( argv[3], "replace" ) == 0) ||
@@ -402,6 +424,11 @@ db_parse_1anim(struct db_i *dbip, int argc, const char *argv[])
 	    goto bad;
 	}
     } else if ( strcmp( argv[2], "color" ) == 0 )  {
+	if (argc < 6) {
+	    bu_log("db_parse_1anim:  color does not have enough arguments, only %d\n", argc);
+	    goto bad;
+	}
+
 	anp->an_type = RT_AN_COLOR;
 	anp->an_u.anu_c.anc_rgb[0] = atoi( argv[3+0] );
 	anp->an_u.anu_c.anc_rgb[1] = atoi( argv[3+1] );
