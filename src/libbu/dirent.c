@@ -25,18 +25,19 @@
  *
  */
 
-/*#include "common.h"*/
+#include "common.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include <sys/types.h>
-/*#ifdef HAVE_DIRENT_H*/
-#include <dirent.h>
-/*#endif*/
 
-/* Count number of files in directory whose type matches substr */
-int bu_countpath(char *path, char *substr)
+#include "./uce-dirent.h"
+
+/**
+ * Count number of files in directory whose type matches substr 
+ */
+int bu_count_path(char *path, char *substr)
 {
     int filecount = 0;
     DIR *dir = opendir(path);
@@ -54,8 +55,10 @@ int bu_countpath(char *path, char *substr)
     return filecount;
 }
 
-/* Return array with filenames with suffix matching substr*/
-void bu_listpath(char *path, char *substr, char **filearray)
+/**
+ * Return array with filenames with suffix matching substr
+ */
+void bu_list_path(char *path, char *substr, char **filearray)
 {
    int filecount = -1;
    DIR *dir = opendir(path); 
@@ -73,22 +76,6 @@ void bu_listpath(char *path, char *substr, char **filearray)
    }
 }
 
-/* Testing code - will go away */ 
-main(int argc, char **argv)
-{
-int files,i;
-char testpath[56]="/Users/cyapp/brlcad-install/share/brlcad/7.12.3/nirt/";
-char suffix[5]=".nrt";
-files = bu_countpath(testpath,suffix);
-char **filearray;
-filearray  = (char **)malloc(files*sizeof(char *));
-
-bu_listpath(testpath,suffix,filearray);
-for (i = 0; i < files; i++){
-	printf("Found file %s\n", filearray[i]);
-}
-free(filearray);
-}
 
 /** @} */
 

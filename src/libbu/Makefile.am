@@ -21,6 +21,7 @@ libbu_nil_la_SOURCES = \
 	color.c \
 	convert.c \
 	crashreport.c \
+	dirent.c \
 	dirname.c \
 	endian.c \
 	fchmod.c \
@@ -85,7 +86,9 @@ htester_LDADD = \
 	libbu.la \
 	${BU_LIBS}
 
-include_HEADERS = rb_internals.h
+include_HEADERS = \
+	rb_internals.h \
+	uce-dirent.h
 
 man_MANS = \
 	htond.3 \
