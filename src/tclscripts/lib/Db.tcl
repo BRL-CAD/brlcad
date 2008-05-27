@@ -30,6 +30,7 @@
 	variable dbfile ""
 
 	method adjust {args}
+	method arced {args}
 	method attr {args}
 	method binary {args}
 	method c {args}
@@ -486,6 +487,10 @@
     eval $db mvall $args
 }
 
+::itcl::body Db::arced {args} {
+    eval $db arced $args
+}
+
 ::itcl::body Db::attr {args} {
     eval $db attr $args
 }
@@ -518,6 +523,7 @@
     set help [cadwidgets::Help \#auto]
 
     $help add adjust	{{} {adjust database object parameters}}
+    $help add arced     {{a/b anim_cmd ...} {edit the matrix, etc., along an arc}}
     $help add attr      {{ {set|get|rm|append} object [args]}
 	{set, get, remove or append to attribute values for the specified object.
 	    for the "set" subcommand, the arguments are attribute name/value pairs

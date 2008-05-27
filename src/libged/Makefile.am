@@ -3,6 +3,7 @@ lib_LTLIBRARIES = libged.la
 noinst_LTLIBRARIES = libged_nil.la
 
 libged_nil_la_SOURCES = \
+	arced.c \
 	bigE.c \
 	comb_color.c \
 	dg_obj.c \

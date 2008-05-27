@@ -44,6 +44,7 @@ option add *Mged.height 400 widgetDefault
     #
     public {
 	method adjust {args}
+	method arced {args}
 	method attr {args}
 	method binary {args}
 	method blast {args}
@@ -209,6 +210,10 @@ option add *Mged.height 400 widgetDefault
 
 ::itcl::body Mged::adjust {args} {
     eval $db adjust $args
+}
+
+::itcl::body Mged::arced {args} {
+    return [eval run_cmd arced $args]
 }
 
 ::itcl::body Mged::attr {args} {

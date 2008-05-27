@@ -725,6 +725,14 @@ GED_EXPORT BU_EXTERN(int	vo_dir2ae_cmd,
 GED_EXPORT BU_EXTERN(int ged_editit, (const char *file));
 
 /**
+ * Allow editing of the matrix, etc., along an arc.
+ *
+ * Usage:
+ *     arced a/b anim_cmd ...
+ */
+GED_EXPORT BU_EXTERN(int ged_arced, (struct rt_wdb *wdbp, int argc, const char *argv[]));
+
+/**
  * Set combination color.
  *
  * Usage:

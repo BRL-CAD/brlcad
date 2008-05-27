@@ -1,4 +1,5 @@
 set(LIBGED_SOURCES
+    arced.c
     bigE.c
     comb_color.c
     dg_obj.c

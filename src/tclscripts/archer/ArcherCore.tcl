@@ -106,6 +106,7 @@ namespace eval ArcherCore {
 	# Commands exposed to the user via the command line.
 	# More to be added later...
 	method adjust              {args}
+	method arced               {args}
 	method attr                {args}
 	method blast               {args}
 	method c                   {args}
@@ -363,7 +364,7 @@ namespace eval ArcherCore {
 	}
 	variable mMgedCommands { \
 				     bot2pipe \
-				     adjust attr blast c comb comb_color concat copyeval E edcomb \
+				     adjust arced attr blast c comb comb_color concat copyeval E edcomb \
 				     edmater erase_all ev find hide item killall killtree make \
 				     make_bb make_name mater mirror mvall push put r rmater report \
 				     shader track unhide vdraw wmater
@@ -3701,6 +3702,10 @@ Popup Menu    Right or Ctrl-Left
 ##################################### ArcherCore Commands #####################################
 ::itcl::body ArcherCore::adjust {args} {
     eval mgedWrapper adjust 0 1 1 1 $args
+}
+
+::itcl::body ArcherCore::arced {args} {
+    eval mgedWrapper arced 0 0 1 0 $args
 }
 
 ::itcl::body ArcherCore::attr {args} {

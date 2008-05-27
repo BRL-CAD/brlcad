@@ -252,110 +252,25 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 int
 f_arced(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    struct animate		*anp;
-    struct directory	*dp;
-    mat_t			stack;
-    struct rt_db_internal	intern;
-    struct rt_comb_internal	*comb;
-    union tree		*tp;
-
+    Tcl_DString ds;
+    int ret;
+    
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
 
-    if (argc < 3) {
-	struct bu_vls vls;
+    ret = ged_arced(wdbp, argc, argv);
 
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "help arced");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
+    /* Convert to Tcl codes */
+    if (ret == GED_OK)
+	ret = TCL_OK;
+    else
+	ret = TCL_ERROR;
 
-    if ( not_state( ST_VIEW, "Arc edit" ) )  return TCL_ERROR;
+    Tcl_DStringInit(&ds);
+    Tcl_DStringAppend(&ds, bu_vls_addr(&wdbp->wdb_result_str), -1);
+    Tcl_DStringResult(interp, &ds);
 
-    if ( !strchr( argv[1], '/' ) )  {
-	Tcl_AppendResult(interp, "arced: bad path specification '", argv[1],
-			 "'\n", (char *)NULL);
-	return TCL_ERROR;
-    }
-    if ( !(anp = db_parse_1anim( dbip, argc, (const char **)argv ) ) )  {
-	Tcl_AppendResult(interp, "arced: unable to parse command\n", (char *)NULL);
-	return TCL_ERROR;
-    }
-    if ( anp->an_path.fp_len < 2 )  {
-	Tcl_AppendResult(interp, "arced: path spec has insufficient elements\n", (char *)NULL);
-	return TCL_ERROR;
-    }
-#if 0
-    if ( anp->an_path.fp_len != 2 )  {
-	char	*thepath = db_path_to_string( &(anp->an_path) );
-	bu_log("arced: '%s' is not a 2-element path spec\n");
-	bu_free( thepath, "path" );
-	db_free_1anim( anp );
-	return TCL_ERROR;
-    }
-#endif
-
-#if 0
-    db_write_anim(stdout, anp);	/* XXX temp */
-#endif
-
-    /* Only the matrix rarc, lmul, and rmul directives are useful here */
-    MAT_IDN( stack );
-
-    /* Load the combination into memory */
-    dp = anp->an_path.fp_names[anp->an_path.fp_len-2];
-    RT_CK_DIR(dp);
-    if ( (dp->d_flags & DIR_COMB) == 0 )  {
-	Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
-	return TCL_ERROR;
-    }
-    if ( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
-	db_free_1anim( anp );
-	TCL_READ_ERR_return;
-    }
-    comb = (struct rt_comb_internal *)intern.idb_ptr;
-    RT_CK_COMB(comb);
-    if ( !comb->tree )  {
-	Tcl_AppendResult(interp, dp->d_namep, ": empty combination\n", (char *)NULL);
-	goto fail;
-    }
-
-    /* Search for first mention of arc */
-    if ( (tp = db_find_named_leaf( comb->tree, anp->an_path.fp_names[anp->an_path.fp_len-1]->d_namep )) == TREE_NULL )  {
-	Tcl_AppendResult(interp, "Unable to find instance of '",
-			 anp->an_path.fp_names[anp->an_path.fp_len-1]->d_namep,
-			 "' in combination '",
-			 anp->an_path.fp_names[anp->an_path.fp_len-2]->d_namep,
-			 "', error\n", (char *)NULL);
-	goto fail;
-    }
-
-    /* Found match.  Update tl_mat in place. */
-    if ( !tp->tr_l.tl_mat )
-	tp->tr_l.tl_mat = bn_mat_dup( bn_mat_identity );
-
-    if ( db_do_anim( anp, stack, tp->tr_l.tl_mat, NULL ) < 0 )  {
-	goto fail;
-    }
-
-    if ( bn_mat_is_identity( tp->tr_l.tl_mat ) )  {
-	bu_free( (genptr_t)tp->tr_l.tl_mat, "tl_mat" );
-	tp->tr_l.tl_mat = (matp_t)NULL;
-    }
-
-    if ( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )  {
-	TCL_WRITE_ERR;
-	goto fail;
-    }
-    db_free_1anim( anp );
-    return TCL_OK;
-
- fail:
-    rt_db_free_internal( &intern, &rt_uniresource );
-    db_free_1anim( anp );
-    return TCL_ERROR;
+    return ret;
 }
 
 /*
