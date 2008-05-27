@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2008-XX-XX  Release 7.12.3                                     ---
 ----------------------------------------------------------------------
 
+* added '-l' list option to mged dbfindtree command - Bob Parker
 * fixed minor memory leak during raytracing - Daniel Roßberg
 * added '-+ t' rtcheck option to produce text plot output - Bob Parker
 * added gap reporting option to nirt - Cliff Yapp
