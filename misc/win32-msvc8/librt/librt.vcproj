@@ -412,6 +412,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\g_hyp.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\g_metaball.c"
 				>
 			</File>
