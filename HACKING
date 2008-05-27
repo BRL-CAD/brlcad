@@ -302,6 +302,8 @@ sh/
 	Utility scripts, used primarily by the build system
 src/
 	Sources, see src/README for more details
+src/adrt
+	Advanced Distributed RayTracer
 src/conv/
 	Various geometry converters
 src/conv/iges/
@@ -320,6 +322,8 @@ src/libfb/
 	BRL-CAD Framebuffer library
 src/libfft/
 	Fast Fourier transform library
+src/libged/
+	Geometry editing library
 src/libpkg/
 	Network "package" library
 src/librt/
