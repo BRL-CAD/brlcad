@@ -237,8 +237,6 @@ rt_hyp_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct
     struct hit	hits[5];	/* 4 potential hits (top, bottom, 2 sides) */
     register struct hit *hitp;	/* pointer to hitpoint */
 
-    hitp = &hits[0];
-
     vect_t	dp;
     vect_t	pp;
     fastf_t	k1, k2;
@@ -247,6 +245,8 @@ rt_hyp_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct
     fastf_t	a, b, c;
     fastf_t	disc;
     fastf_t	hitX, hitY;
+
+    hitp = &hits[0];
 
     MAT4X3VEC( dp, hyp->hyp_SoR, rp->r_dir );
     VSUB2( xlated, rp->r_pt, hyp->hyp_V );
@@ -348,6 +348,9 @@ rt_hyp_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct
 	/* merge sort list to find segments */
 	struct hit sorted[4];
 	struct hit *temp;
+	int i = 0, j = 2, k = 0;
+	register struct seg *segp;
+
 	if ( hits[0].hit_dist > hits[1].hit_dist ) {
 	    *temp = hits[0];
 	    hits[0] = hits[1];
@@ -358,7 +361,7 @@ rt_hyp_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct
 	    hits[2] = hits[3];
 	    hits[3] = *temp;
 	}
-	int i = 0, j = 2, k = 0;
+
 	while ( i < 2 && j < 4 ) {
 	    if ( hits[i].hit_dist < hits[j].hit_dist )
 		sorted[k++] = hits[i++];
@@ -369,8 +372,6 @@ rt_hyp_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct
 	while ( j < 4 ) sorted[k++] = hits[j++];
 
 	/* hit segments are now (0,1) and (2,3) */
-	register struct seg *segp;
-
 	RT_GET_SEG(segp, ap->a_resource);
 	segp->seg_stp = stp;
 	segp->seg_in = sorted[0];	/* struct copy */
