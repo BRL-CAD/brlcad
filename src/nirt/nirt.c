@@ -156,7 +156,7 @@ void listformats(void)
 
     bu_vls_init(&nirtfilespath);
     bu_vls_printf(&nirtfilespath,"%s",bu_brlcad_data("nirt",0));
-  
+
     bu_vls_init(&nirtpathtofile);
 
     files = bu_count_path(bu_vls_addr(&nirtfilespath),suffix);
@@ -167,18 +167,18 @@ void listformats(void)
     bu_list_path(bu_vls_addr(&nirtfilespath),suffix,filearray);
 
     for (i = 0; i < files; i++) {
-        bu_vls_trunc(&nirtpathtofile,0);
+	bu_vls_trunc(&nirtpathtofile,0);
 	bu_vls_printf(&nirtpathtofile,"%s/%s",bu_vls_addr(&nirtfilespath),filearray[i]);
-        cfPtr = fopen(bu_vls_addr(&nirtpathtofile), "rb");
+	cfPtr = fopen(bu_vls_addr(&nirtpathtofile), "rb");
 
-        fnddesc = 0;
-        while ( bu_fgets( fileline, 256, cfPtr) && fnddesc == 0) {
+	fnddesc = 0;
+	while ( bu_fgets( fileline, 256, cfPtr) && fnddesc == 0) {
 	   if (strncmp(fileline, "# Description: ", 15) == 0) {
 	       fnddesc = 1;
-               bu_log("%s\n",fileline+15);
+	       bu_log("%s\n",fileline+15);
 	   }
-	} 
-        fclose(cfPtr);
+	}
+	fclose(cfPtr);
     }
 
     bu_free(filearray,"filelist");
@@ -260,14 +260,14 @@ static void enqueue_script (struct bu_list *qp, int type, char *string)
     srp->sr_magic = SCRIPT_REC_MAGIC;
     srp->sr_type = type;
     bu_vls_init(&(srp->sr_script));
-   
+
     /*Check if supplied file name is local or in brlcad's nirt data dir*/
     if (type == READING_FILE) {
-        bu_vls_trunc(&str,0);
-        bu_vls_printf(&str,"%s",string);
+	bu_vls_trunc(&str,0);
+	bu_vls_printf(&str,"%s",string);
 	cfPtr = fopen(bu_vls_addr(&str),"rb");
-        if (cfPtr == NULL) {
-           bu_vls_trunc(&str,0);
+	if (cfPtr == NULL) {
+	   bu_vls_trunc(&str,0);
 	   bu_vls_printf(&str,"%s/%s.nrt",bu_brlcad_data("nirt",0),string);
 	   cfPtr = fopen(bu_vls_addr(&str), "rb");
 	   if (cfPtr != NULL) {
@@ -277,11 +277,11 @@ static void enqueue_script (struct bu_list *qp, int type, char *string)
 	       bu_vls_printf(&str,"%s",string);
 	   }
 	} else {
- 	   fclose(cfPtr);
+	   fclose(cfPtr);
 	}
-    	bu_vls_printf(&(srp->sr_script),"%s",bu_vls_addr(&str));
+	bu_vls_printf(&(srp->sr_script),"%s",bu_vls_addr(&str));
     } else {
-        bu_vls_strcat(&(srp->sr_script),string);
+	bu_vls_strcat(&(srp->sr_script),string);
     }
     BU_LIST_INSERT(qp, &(srp->l));
     bu_vls_free(&str);
@@ -457,7 +457,7 @@ main (int argc, char **argv)
 		break;
 	    case 'L':
 		listformats();
-	        bu_exit(EXIT_SUCCESS,NULL);
+		bu_exit(EXIT_SUCCESS,NULL);
 	    case 'M':
 		mat_flag = 1;
 		break;

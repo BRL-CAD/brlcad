@@ -83,7 +83,7 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
 
     for (part = part_head->pt_forw; part != part_head; part = part->pt_forw) {
 	++part_nm;
-	
+
 	RT_HIT_NORMAL( inormal, part->pt_inhit, part->pt_inseg->seg_stp,
 		       &ap->a_ray, part->pt_inflip );
 	RT_HIT_NORMAL( onormal, part->pt_outhit, part->pt_outseg->seg_stp,

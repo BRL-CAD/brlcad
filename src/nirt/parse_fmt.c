@@ -181,7 +181,7 @@ format_output (const char* buffer, com_table* ctp)
     }
     while (isspace(*++bp))
 	;
-    
+
     switch (*bp) {
 	case '\0':     /* display current output specs */
 	    if (fmt_type == FMT_NONE)
@@ -276,7 +276,7 @@ parse_fmt(const char *uoutspec, int outcom_type)
 		if (*(uos + 1) == '"')
 		    ++uos;
 	}
-	
+
 	/* Allocate memory for and store the format.
 	 * The code_nm field will be used at this point
 	 * to record whether this format specification
@@ -315,7 +315,7 @@ parse_fmt(const char *uoutspec, int outcom_type)
 	    prev_oip->next = oip;
 	prev_oip = oip;
     }
-    
+
     /* Skip any garbage beyond the close quote */
     for (up = ++uos; (! isspace(*uos)) && (*uos != '\0'); ++uos)
 	;
@@ -331,7 +331,7 @@ parse_fmt(const char *uoutspec, int outcom_type)
     for (oip = oil; oip != OUTITEM_NULL; oip = oip->next) {
 	if (oip->code_nm == 0)
 	    continue;		/* outitem's format has no conversion spec */
-	
+
 	while (isspace(*uos))
 	    ++uos;
 	if (*uos == '\0') {

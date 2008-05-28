@@ -62,7 +62,7 @@ bot_minpieces(char *buffer, com_table *ctp )
 {
     int new_value;
     int i=0;
-    
+
     while (isspace(*(buffer+i)))
 	++i;
     if (*(buffer+i) == '\0') {
@@ -70,14 +70,14 @@ bot_minpieces(char *buffer, com_table *ctp )
 	bu_log( "rt_bot_minpieces = %d\n", rt_bot_minpieces );
 	return;
     }
-    
+
     new_value = atoi( buffer );
-    
+
     if ( new_value < 0 ) {
 	bu_log( "Error: rt_bot_minpieces cannot be less than 0\n" );
 	return;
     }
-    
+
     if ( new_value != rt_bot_minpieces ) {
 	rt_bot_minpieces = new_value;
 	need_prep = 1;
@@ -92,7 +92,7 @@ az_el(char *buffer, com_table *ctp)
     int		rc = 0;     /* the return code value from str_dbl()   */
     double		az;
     double  	el;
-    
+
     while (isspace(*(buffer+i)))
 	++i;
     if (*(buffer+i) == '\0') {
@@ -108,7 +108,7 @@ az_el(char *buffer, com_table *ctp)
     }
     if (fabs(az) > 360) {
 	/* check for valid az value */
-	
+
 	bu_log("Error:  |azimuth| <= 360\n");
 	return;
     }
@@ -141,11 +141,11 @@ sh_esc (char *buffer)
 {
     static char	*shell = "";
     static char	*last_cmd = "";
-    
+
     while (isspace(*buffer)) {
 	++buffer;
     }
-    
+
     if (*buffer == '!') {
 	(void) system(last_cmd);
     } else if (*buffer) {
@@ -170,7 +170,7 @@ grid_coor(char *buffer, com_table *ctp)
     int 		i = 0;
     int		rc = 0;    /* the return code value from str_dbl() */
     vect_t	        Gr;
-    
+
     while (isspace(*(buffer+i)))
 	++i;
     if (*(buffer+i) == '\0') {
@@ -228,7 +228,7 @@ target_coor(char *buffer, com_table *ctp)
     int 		i = 0;
     int		rc = 0;     /* the return code value from str_dbl() */
     vect_t		Tar;	    /* Target x, y and z          	    */
-    
+
     while (isspace(*(buffer+i)))
 	++i;
     if (*(buffer+i) == '\0') {
@@ -439,7 +439,7 @@ use_air(char *buffer, com_table *ctp)
 	rti_tab[new_use] = rtip;
 	rtip->useair = new_use;
 	rtip->rti_save_overlaps = (overlap_claims > 0);
-	
+
 	bu_log("Prepping the geometry...");
 	do_rt_gettrees(rtip, NULL, 0);
     }
@@ -505,7 +505,7 @@ do_overlap_claims (char *buffer, com_table *ctp)
     for (j = OVLP_RESOLVE; j <= OVLP_RETAIN; ++j) {
 	char	numeral[4];
 	int	k;
-	
+
 	sprintf(numeral, "%d", j);
 	if ((strcmp(buffer + i, ocname[j]) == 0)
 	    || (strcmp(buffer + i, numeral) == 0)) {
@@ -596,15 +596,15 @@ void
 backout(char *buffer, com_table *ctp)
 {
     while (isspace(*buffer))
-        ++buffer;
+	++buffer;
     if (*buffer == '\0') {
-        /* display current value of do_backout */
-        bu_log("backout = %d\n", do_backout);
-        return;
+	/* display current value of do_backout */
+	bu_log("backout = %d\n", do_backout);
+	return;
     }
     if (!isdigit(*buffer)) {
-        bu_log("backout must be set to 0 (off) or 1 (on)\n");
-        return;
+	bu_log("backout must be set to 0 (off) or 1 (on)\n");
+	return;
     } else {
 	if (*buffer == '0') {
 	    do_backout = 0;

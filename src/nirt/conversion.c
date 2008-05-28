@@ -60,7 +60,7 @@ grid2targ(void)
 {
     double	ar = azimuth() * DEG2RAD;
     double	er = elevation() * DEG2RAD;
-    
+
     target(X) = - grid(HORZ) * sin(ar)
 	- grid(VERT) * cos(ar) * sin(er)
 	+ grid(DIST) * cos(ar) * cos(er);
@@ -77,7 +77,7 @@ targ2grid(void)
 {
     double	ar = azimuth() * DEG2RAD;
     double	er = elevation() * DEG2RAD;
-    
+
     grid(HORZ) = - target(X) * sin(ar)
 	+ target(Y) * cos(ar);
     grid(VERT) = - target(X) * cos(ar) * sin(er)
@@ -94,7 +94,7 @@ ae2dir(void)
 {
     double	ar = azimuth() * DEG2RAD;
     double	er = elevation() * DEG2RAD;
-    
+
     int		i;
     vect_t	dir;
 
