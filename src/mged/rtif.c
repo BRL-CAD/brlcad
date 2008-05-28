@@ -786,7 +786,7 @@ cmd_rt(ClientData	clientData,
     }
 
     if (doRtcheck)
-	return dgo_rtcheck_cmd(dgop, view_state->vs_vop, interp, argc, argv);   
+	return dgo_rtcheck_cmd(dgop, view_state->vs_vop, interp, argc, argv);
 
     return dgo_rt_cmd(dgop, view_state->vs_vop, interp, argc, argv);
 }
@@ -1031,7 +1031,9 @@ f_saveview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	(void)fprintf(fp, "-p%g ", view_state->vs_vop->vo_perspective);
     for ( i=2; i < argc; i++ )
 	(void)fprintf(fp, "%s ", argv[i]);
-    (void)fprintf(fp, "\\\n -o %s\\\n $*\\\n", outpix);
+
+    if (strncmp(rtcmd,"nirt",4) != 0)
+	(void)fprintf(fp, "\\\n -o %s\\\n $*\\\n", outpix);
 
     if (inputg[0] == '\0') {
 	snprintf(inputg, 255, "%s", dbip->dbi_filename);
