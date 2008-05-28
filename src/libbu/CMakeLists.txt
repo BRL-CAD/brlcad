@@ -14,6 +14,7 @@ set(LIBBU_SOURCES
     color.c
     convert.c
     crashreport.c
+    dirent.c
     dirname.c
     endian.c
     fchmod.c
