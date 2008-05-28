@@ -57,6 +57,7 @@ struct rtserver_job {
     int sessionid;			/* index into sessions (rts_geometry array) */
     int rtjob_id;			/* identifying number, assigned by the rt server */
     int maxHits;			/* Max number of hits to consider along each ray (zero means take all of them) */
+    int useByteArray;                   /* flag, non-zero means create byte array version of the results */
     struct bu_ptbl rtjob_rays;	/* list of pointers to rays to be fired */
 };
 
@@ -74,6 +75,7 @@ struct ray_result {
     struct bu_list l;
     struct xray the_ray;		/* the originating ray */
     struct ray_hit hitHead;		/* the list of components hit along this ray */
+    struct bu_vlb *vlb;                  /* pointer to the byte array in the owning rtserver_result */
 };
 
 struct rtserver_result {
@@ -81,6 +83,8 @@ struct rtserver_result {
     int got_some_hits;		/* flag 0-> no hits in results */
     struct rtserver_job *the_job;	/* the originating job */
     struct ray_result resultHead;	/* the list of results, one for each ray */
+    struct bu_vlb *vlb;                  /* variable length byte array to contain the byte array
+                                          * return for Java (null if rtserver_job->useByteArray == 0) */
 };
 
 struct rtserver_rti {
@@ -90,6 +94,10 @@ struct rtserver_rti {
     char **rtrti_trees;		/* array of pointers to tree-top names trees[num_trees] (bu_malloc'd storage) */
     matp_t rtrti_xform;		/* transformation matrix from global coords to this rt instance (NULL -> identity) */
     matp_t rtrti_inv_xform;		/* inverse of above xform (NULL -> identity) */
+    Tcl_HashTable *rtrti_region_names; /* A Tcl hash table containing region names as keys and index numbers as values.
+                                           * The indices are used to reference region names in the Java return byte array
+                                           * rather than using the full name. */
+    int region_count;                  /* number of entries in above hash table */
 };
 
 struct rtserver_geometry {
