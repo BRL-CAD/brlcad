@@ -1,4 +1,4 @@
-'                         M A KE . V B S
+'                         M A K E . V B S
 ' BRL-CAD
 '
 ' Copyright (c) 2005-2008 United States Government as represented by
@@ -32,6 +32,7 @@
 ' NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ' SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 '
+'''
 '
 ' Update the version info files in include/conf/
 '
@@ -42,7 +43,7 @@
 ' Author -
 '   Daniel Rossberg
 '
-' @(#)$Header$ (BRL)
+'''
 
 Set fileSystem     = CreateObject("Scripting.FileSystemObject")
 Set wshNetwork     = Wscript.CreateObject("Wscript.Network")
