@@ -2474,6 +2474,33 @@ BU_EXPORT BU_EXTERN(void bu_vls_prepend,
 		    (struct bu_vls *vp,
 		     char *str));
 
+/** @} */
+/** @addtogroup vlb */
+/** @{ */
+
+/* vlb.c */
+BU_EXPORT BU_EXTERN(void bu_vlb_init,
+        (struct bu_vlb *vlb));
+
+BU_EXPORT BU_EXTERN(void bu_vlb_initialize,
+        (struct bu_vlb *vlb,
+        int initialSize));
+BU_EXPORT BU_EXTERN(void bu_vlb_write,
+        (struct bu_vlb *vlb,
+        unsigned char *start,
+        int len));
+BU_EXPORT BU_EXTERN(void bu_vlb_reset,
+        (struct bu_vlb *vlb));
+BU_EXPORT BU_EXTERN(unsigned char *bu_vlb_getBuffer,
+        (struct bu_vlb *vlb));
+BU_EXPORT BU_EXTERN(int bu_vlb_getBufferLength,
+        (struct bu_vlb *vlb));
+BU_EXPORT BU_EXTERN(void bu_vlb_free,
+        (struct bu_vlb *vlb));
+BU_EXPORT BU_EXTERN(void bu_vlb_print,
+        (struct bu_vlb *vlb,
+        FILE *fd));
+
 /* str.c */
 BU_EXPORT BU_EXTERN(size_t bu_strlcatm, (char *dst, const char *src, size_t size, const char *label));
 #define bu_strlcat(dst, src, size) bu_strlcatm(dst, src, size, BU_FLSTR)
