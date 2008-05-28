@@ -1560,7 +1560,6 @@ AC_CHECK_HEADERS( \
 	sys/times.h \
 	sys/types.h \
 	sys/un.h \
-	sys/unistd.h \
 	sys/wait.h \
 	syslog.h \
 	tcl.h \
@@ -2069,12 +2068,10 @@ AC_CHECK_FUNCS(\
 	getprogname \
 	kill \
 	lrand48 \
-	lseek \
 	memset \
 	mkstemp \
 	pipe \
 	random \
-	regcomp \
 	sbrk \
 	setenv \
 	setpgid \
