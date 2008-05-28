@@ -17,12 +17,14 @@ http://sf.net/pm/?group_id=105292
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------
 
-* fix incrTcl pathing issues when only using system tcl/tk
-  (get incrTcl subconfigure to work like was done for Tcl)
+* release!
 
 
 THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------
+
+* fix incrTcl pathing issues when only using system tcl/tk
+  (get incrTcl subconfigure to work like was done for Tcl)
 
 * fix framebuffer refresh bug.  problem was caused when the if_ogl
   framebuffer was changed (back) to request a direct rendering
