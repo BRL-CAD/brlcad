@@ -141,7 +141,7 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
 	    part->pt_regionp->reg_los;
 	if (part_nm > 1) {
 	   ValTab[VTI_GAP_LOS].value.fval = g_entry(D) - r_entry(D);
-	   if (!NEAR_ZERO(g_entry(D) - r_entry(D), SMALL_FASTF)) report(FMT_GAP);
+	   if (ValTab[VTI_GAP_LOS].value.fval > 0) report(FMT_GAP);
 	}
 	bu_strlcpy(regionPN, part->pt_regionp->reg_name, sizeof(regionPN));
 
