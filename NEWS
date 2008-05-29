@@ -11,8 +11,21 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
---- 2008-XX-XX  Release 7.12.3                                     ---
+--- 2008-05-29  Release 7.12.4                                     ---
 ----------------------------------------------------------------------
+
+This release contains numerous enhancements to MGED's mirror command,
+now with the ability to mirror an object across arbitrary vectors or
+points along a standard axis.  Additionally, nirt now has a new "gap"
+options for reporting the empty spaces between objects with additional
+formatting options under development.
+
+The release also has a new procedural database geometry tool called
+'tire'.  This new tool was developed by Cliff Yapp for the purpose of
+creating highly detailed tires based on user-provided specifications.
+Given standard tire dimension information, the program can generate a
+corresponding curved sidewall tire on a fitted wheel and that has
+detailed tread.  The results are impressively realistic tires.
 
 * added '-l' list option to mged dbfindtree command - Bob Parker
 * fixed minor memory leak during raytracing - Daniel Roßberg
