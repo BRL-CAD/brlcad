@@ -24,6 +24,7 @@
  */
 
 #include "ged.h"
+#include <string.h>
 
 
 int
