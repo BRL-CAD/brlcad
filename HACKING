@@ -930,8 +930,9 @@ that they build, run, and that the file permissions are correct.
 platform-specific builds.  Test the build:  make test && make bench
 
 12) Post the source and platform-specific binary distributions to
-SourceForge (i.e. upload them via ftp to upload.sf.net's incoming
-directory and select them on the sf.net File Release System).
+SourceForge and then select them on the sf.net File Release System:
+sftp sfusername@frs.sourceforge.net:uploads
+put brlcad-*
 
 13) Increment and commit the next BRL-CAD release numbers to SVN;
 update the include/conf/(MAJOR|MINOR|PATCH) version files, and NEWS
