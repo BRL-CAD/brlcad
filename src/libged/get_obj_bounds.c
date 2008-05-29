@@ -26,6 +26,7 @@
 #include "bio.h"
 #include "ged.h"
 
+#include <string.h>
 
 int
 ged_get_obj_bounds(struct rt_wdb	*wdbp,
@@ -221,7 +222,7 @@ ged_get_objpath_mat(struct rt_wdb		*wdbp,
 int
 ged_get_obj_bounds2(struct rt_wdb		*wdbp,
 		    int				argc,
-		    char			**argv,
+		    const char			**argv,
 		    struct wdb_trace_data	*wtdp,
 		    point_t			rpp_min,
 		    point_t			rpp_max)
