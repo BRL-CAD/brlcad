@@ -489,6 +489,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libbu\dirent.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libbu\dirname.c"
 				>
 				<FileConfiguration
