@@ -46,13 +46,6 @@ __BEGIN_DECLS
 #  endif
 #endif
 
-/*
- * rt_comb_ifree() should NOT be used here because
- * it doesn't know how to free attributes.
- * rt_db_free_internal() should be used instead.
- */
-#define USE_RT_COMB_IFREE 0
-
 /* Check if the object is a combination */
 #define	GED_CHECK_COMB(_wdbp,_dp,_ret) \
     if (((_dp)->d_flags & DIR_COMB) == 0) { \
@@ -118,12 +111,6 @@ __BEGIN_DECLS
 	return (_ret); \
     }
 
-
-#define WDB_MAX_LEVELS 12
-#define WDB_CPEVAL	0
-#define WDB_LISTPATH	1
-#define WDB_LISTEVAL	2
-#define WDB_EVAL_ONLY	3
 
 /**
  * V I E W _ O B J

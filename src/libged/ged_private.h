@@ -30,6 +30,19 @@
 
 __BEGIN_DECLS
 
+#define WDB_MAX_LEVELS 12
+#define WDB_CPEVAL	0
+#define WDB_LISTPATH	1
+#define WDB_LISTEVAL	2
+#define WDB_EVAL_ONLY	3
+
+/*
+ * rt_comb_ifree() should NOT be used here because
+ * it doesn't know how to free attributes.
+ * rt_db_free_internal() should be used instead.
+ */
+#define USE_RT_COMB_IFREE 0
+
 struct wdb_trace_data {
     struct rt_wdb	*wtd_wdbp;
     struct directory	*wtd_path[WDB_MAX_LEVELS];
