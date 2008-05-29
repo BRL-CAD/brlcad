@@ -49,7 +49,15 @@
  *		rt_solid_type_lookup[]
  *		also add the interface table and to rt_id_solid() in table.c
  *	go to src/mged and create the edit support
- *
+ *  
+ *  Hyperboloid of one sheet:
+ *  
+ *  	[ (x * x) / (r1 * r1) ] + [ (y * y) / (r2 * r2) ] - [ (z*z) * (c*c) / (a*a) ] = 1
+ *  
+ *  	r1:	semi-major axis, along Au
+ *  	r2:	semi-minor axis, along Au x H
+ *  	c:	slope of asymptotic cone in the Au-H plane
+ *  
  *  Authors - Timothy Van Ruitenbeek
  *
  */
@@ -588,13 +596,19 @@ rt_hyp_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     VADD2( &middle[6*3], hyp_ip->hyp_V, BN );
     VADD3( &middle[7*3], hyp_ip->hyp_V, A2, B2N );
 
-    /* compute offsets for top/bottom ellipses */
-    scale = MAGSQ( hyp_ip->hyp_H )*(hyp_ip->hyp_c * hyp_ip->hyp_c);
-    VSCALE( A, hyp_ip->hyp_Au, sqrt( (hyp_ip->hyp_r1 * hyp_ip->hyp_r1) + scale ) );
+    /*	compute offsets for top/bottom ellipses 
+	when y = 0; x = +-a * sqrt( (z*z)*(c*c)/(a*a) + 1 )
+	when x = 0; y = +-b * sqrt( (z*z)*(c*c)/(a*a) + 1 )
+	so scale = sqrt( (z*z)*(c*c)/(a*a) + 1 )
+	and x = +-a*scale; y = +-b*scale
+	giving the length of the major and minor axes for a give z height
+    */
+    scale = sqrt(MAGSQ( hyp_ip->hyp_H )*(hyp_ip->hyp_c * hyp_ip->hyp_c)/(hyp_ip->hyp_r1 * hyp_ip->hyp_r1) + 1 );
+    VSCALE( A, hyp_ip->hyp_Au, (hyp_ip->hyp_r1 * scale ) );
     VSCALE( A2, A, M_SQRT1_2 );
     VCROSS( B2, hyp_ip->hyp_H, hyp_ip->hyp_Au );  /* using B2 for temp storage */
     VUNITIZE( B2 );
-    VSCALE( B, B2, sqrt( (hyp_ip->hyp_r2 * hyp_ip->hyp_r2) + scale ) );
+    VSCALE( B, B2, (hyp_ip->hyp_r2 * scale ) );
     VSCALE( B2, B, M_SQRT1_2 );
 
     VREVERSE( AN, A );
@@ -614,17 +628,19 @@ rt_hyp_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     VREVERSE( HN, hyp_ip->hyp_H );
 
     for ( i=0; i<8; i++ ) {
-	VADD3( &top[i*3], &offset[i*3], hyp_ip->hyp_V, hyp_ip->hyp_H );
-	VADD3( &bottom[i*3], &offset[i*3], hyp_ip->hyp_V, HN );
+	VADD2( &top[i*3], &offset[i*3],  hyp_ip->hyp_H );
+	VADD2( &bottom[i*3], &offset[i*3], HN );
     }
 
-    /* compute offsets for mid-top/mid-bottom ellipses */
-    scale = 0.25 * MAGSQ( hyp_ip->hyp_H )*(hyp_ip->hyp_c * hyp_ip->hyp_c);
-    VSCALE( A, hyp_ip->hyp_Au, sqrt( (hyp_ip->hyp_r1 * hyp_ip->hyp_r1) + scale ) );
+    /*	compute offsets for mid-top/mid-bottom ellipses 
+	multiply H*H by 0.25 to get (H/2)^2 for intermediate ellipses
+    */
+    scale = sqrt( 0.25 * MAGSQ( hyp_ip->hyp_H )*(hyp_ip->hyp_c * hyp_ip->hyp_c)/(hyp_ip->hyp_r1 * hyp_ip->hyp_r1) + 1 );
+    VSCALE( A, hyp_ip->hyp_Au, (hyp_ip->hyp_r1 * scale ) );
     VSCALE( A2, A, M_SQRT1_2 );
     VCROSS( B2, hyp_ip->hyp_H, hyp_ip->hyp_Au );  /* using B2 for temp storage */
     VUNITIZE( B2 );
-    VSCALE( B, B2, sqrt( (hyp_ip->hyp_r2 * hyp_ip->hyp_r2) + scale ) );
+    VSCALE( B, B2, (hyp_ip->hyp_r2 * scale ) );
     VSCALE( B2, B, M_SQRT1_2 );
 
     VREVERSE( AN, A );
@@ -646,8 +662,8 @@ rt_hyp_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     VSCALE( H2, hyp_ip->hyp_H, 0.5 );
 
     for ( i=0; i<8; i++ ) {
-	VADD3( &topMid[i*3], &offset[i*3], hyp_ip->hyp_V, H2 );
-	VADD3( &botMid[i*3], &offset[i*3], hyp_ip->hyp_V, H2N );
+	VADD2( &topMid[i*3], &offset[i*3], H2 );
+	VADD2( &botMid[i*3], &offset[i*3], H2N );
     }
 
     /* draw elipses */
