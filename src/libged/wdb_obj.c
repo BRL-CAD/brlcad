@@ -48,7 +48,7 @@
 #include "db.h"
 #include "rtgeom.h"
 #include "wdb.h"
-#include "ged.h"
+#include "ged_private.h"
 #include "mater.h"
 
 
@@ -7184,7 +7184,7 @@ wdb_make_bb_cmd(struct rt_wdb	*wdbp,
 	return TCL_ERROR;
     }
 
-    if (ged_get_obj_bounds(wdbp, argc-2, (const)argv+2, use_air, rpp_min, rpp_max) == TCL_ERROR)
+    if (ged_get_obj_bounds(wdbp, argc-2, (const char *)argv+2, use_air, rpp_min, rpp_max) == TCL_ERROR)
 	return TCL_ERROR;
 
     /* build bounding RPP */

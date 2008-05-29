@@ -25,6 +25,7 @@
 
 #include "bio.h"
 #include "ged.h"
+#include "ged_private.h"
 
 #include <string.h>
 

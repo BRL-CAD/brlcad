@@ -125,16 +125,6 @@ __BEGIN_DECLS
 #define WDB_LISTEVAL	2
 #define WDB_EVAL_ONLY	3
 
-struct wdb_trace_data {
-    struct rt_wdb	*wtd_wdbp;
-    struct directory	*wtd_path[WDB_MAX_LEVELS];
-    struct directory	*wtd_obj[WDB_MAX_LEVELS];
-    mat_t		wtd_xform;
-    int			wtd_objpos;
-    int			wtd_prflag;
-    int			wtd_flag;
-};
-
 /**
  * V I E W _ O B J
  *
@@ -171,29 +161,6 @@ struct view_obj {
 #define GED_RESULT_FLAGS_HELP_BIT 0x1
 #define GED_OK 0
 #define GED_ERROR 1
-
-
-BU_EXTERN (int ged_get_obj_bounds,
-	   (struct rt_wdb	*wdbp,
-	    int			argc,
-	    const char		**argv,
-	    int			use_air,
-	    point_t		rpp_min,
-	    point_t		rpp_max));
-
-BU_EXTERN (int ged_get_obj_bounds2,
-	   (struct rt_wdb		*wdbp,
-	    int				argc,
-	    const char			**argv,
-	    struct wdb_trace_data	*wtdp,
-	    point_t			rpp_min,
-	    point_t			rpp_max));
-
-BU_EXTERN (void ged_trace,
-	   (register struct directory	*dp,
-	    int				pathpos,
-	    const mat_t			old_xlate,
-	    struct wdb_trace_data	*wtdp));
 
 
 /* loadable Tcl interface routines */

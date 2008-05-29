@@ -23,7 +23,7 @@
  *
  */
 
-#include "ged.h"
+#include "ged_private.h"
 
 /*
  * Scale obj about the keypoint by sf.
