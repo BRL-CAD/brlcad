@@ -148,9 +148,9 @@ namespace eval ArcherCore {
 	method mv                  {args}
 	method mvall               {args}
 	method ocenter		   {args}
-	method orotate		   {_obj _rx _ry _rz _kx _ky _kz}
-	method oscale		   {_obj _sf _kx _ky _kz}
-	method otranslate	   {_obj _dx _dy _dz}
+	method orotate		   {args}
+	method oscale		   {args}
+	method otranslate	   {args}
 	method push                {args}
 	method put                 {args}
 	method pwd                 {}
@@ -4027,19 +4027,35 @@ Popup Menu    Right or Ctrl-Left
     }
 }
 
-::itcl::body ArcherCore::orotate {obj rx ry rz kx ky kz} {
-    eval cadWrapper orotate 0 0 1 0 $obj $rx $ry $rz $kx $ky $kz
-    redrawObj $obj 0
+::itcl::body ArcherCore::orotate {args} {
+    set result [eval cadWrapper orotate 0 0 1 0 $args]
+
+    set len [llength $args]
+    if {$len == 4 || $len == 7} {
+	redrawObj [lindex $args 0] 0
+    }
+
+    return $result
 }
 
-::itcl::body ArcherCore::oscale {obj sf kx ky kz} {
-    eval cadWrapper oscale 0 0 1 0 $obj $sf $kx $ky $kz
-    redrawObj $obj 0
+::itcl::body ArcherCore::oscale {args} {
+    set result [eval cadWrapper oscale 0 0 1 0 $args]
+
+    if {[llength $args] == 5} {
+	redrawObj [lindex $args 0] 0
+    }
+
+    return $result
 }
 
-::itcl::body ArcherCore::otranslate {obj dx dy dz} {
-    eval cadWrapper otranslate 0 0 1 0 $obj $dx $dy $dz
-    redrawObj $obj 0
+::itcl::body ArcherCore::otranslate {args} {
+    set result [eval cadWrapper otranslate 0 0 1 0 $args]
+
+    if {[llength $args] == 4} {
+	redrawObj [lindex $args 0] 0
+    }
+
+    return $result
 }
 
 ::itcl::body ArcherCore::push {args} {

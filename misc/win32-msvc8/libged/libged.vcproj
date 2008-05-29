@@ -154,6 +154,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\get_obj_bounds.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\globals.c"
 				>
 			</File>
@@ -190,6 +194,22 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\ocenter.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\orotate.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\oscale.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\otranslate.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\qray.c"
 				>
 			</File>
@@ -203,6 +223,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\tcl.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\trace.c"
 				>
 			</File>
 			<File

@@ -46,6 +46,13 @@ __BEGIN_DECLS
 #  endif
 #endif
 
+/*
+ * rt_comb_ifree() should NOT be used here because
+ * it doesn't know how to free attributes.
+ * rt_db_free_internal() should be used instead.
+ */
+#define USE_RT_COMB_IFREE 0
+
 /* Check if the object is a combination */
 #define	GED_CHECK_COMB(_wdbp,_dp,_ret) \
     if (((_dp)->d_flags & DIR_COMB) == 0) { \
@@ -112,6 +119,22 @@ __BEGIN_DECLS
     }
 
 
+#define WDB_MAX_LEVELS 12
+#define WDB_CPEVAL	0
+#define WDB_LISTPATH	1
+#define WDB_LISTEVAL	2
+#define WDB_EVAL_ONLY	3
+
+struct wdb_trace_data {
+    struct rt_wdb	*wtd_wdbp;
+    struct directory	*wtd_path[WDB_MAX_LEVELS];
+    struct directory	*wtd_obj[WDB_MAX_LEVELS];
+    mat_t		wtd_xform;
+    int			wtd_objpos;
+    int			wtd_prflag;
+    int			wtd_flag;
+};
+
 /**
  * V I E W _ O B J
  *
@@ -148,6 +171,30 @@ struct view_obj {
 #define GED_RESULT_FLAGS_HELP_BIT 0x1
 #define GED_OK 0
 #define GED_ERROR 1
+
+
+BU_EXTERN (int ged_get_obj_bounds,
+	   (struct rt_wdb	*wdbp,
+	    int			argc,
+	    const char		**argv,
+	    int			use_air,
+	    point_t		rpp_min,
+	    point_t		rpp_max));
+
+BU_EXTERN (int ged_get_obj_bounds2,
+	   (struct rt_wdb		*wdbp,
+	    int				argc,
+	    const char			**argv,
+	    struct wdb_trace_data	*wtdp,
+	    point_t			rpp_min,
+	    point_t			rpp_max));
+
+BU_EXTERN (void ged_trace,
+	   (register struct directory	*dp,
+	    int				pathpos,
+	    const mat_t			old_xlate,
+	    struct wdb_trace_data	*wtdp));
+
 
 /* loadable Tcl interface routines */
 
@@ -814,6 +861,38 @@ GED_EXPORT BU_EXTERN(int ged_mirror, (struct rt_wdb *wdbp, int argc, const char 
  *     rmater file
  */
 GED_EXPORT BU_EXTERN(int ged_rmater, (struct rt_wdb *wdbp, int argc, const char *argv[]));
+
+/**
+ * Set/get object center.
+ *
+ * Usage:
+ *     ocenter obj [x y z]
+ */
+GED_EXPORT BU_EXTERN(int ged_ocenter, (struct rt_wdb *wdbp, int argc, const char *argv[]));
+
+/**
+ * Rotate obj about the keypoint by 
+ *
+ * Usage:
+ *     orotate obj rX rY rZ [kX kY kZ]
+ */
+GED_EXPORT BU_EXTERN(int ged_orotate, (struct rt_wdb *wdbp, int argc, const char *argv[]));
+
+/**
+ * Scale obj about the keypoint by sf.
+ *
+ * Usage:
+ *     oscale obj sf [kX kY kZ]
+ */
+GED_EXPORT BU_EXTERN(int ged_oscale, (struct rt_wdb *wdbp, int argc, const char *argv[]));
+
+/**
+ * Translate obj by dx dy dz.
+ *
+ * Usage:
+ *     otranslate obj dx dy dz
+ */
+GED_EXPORT BU_EXTERN(int ged_otranslate, (struct rt_wdb *wdbp, int argc, const char *argv[]));
 
 /**
  * Simpler, command-line version of 'mater' command.
