@@ -1,928 +1,1367 @@
-2008-03-07 23:41  brlcad
+2008-04-22 21:38  erikgreenwald
 
-	* src/other/tcl/unix/Makefile.in, src/other/tk/unix/Makefile.in:
-	  make sure the libraries have the exec bit set
+	* [r30789] src/proc-db/Makefile.am:
+	  chuck in a space to keep the file regular
 
-2008-03-11 05:22  brlcad
+2008-04-23 04:40  starseeker
 
-	* NEWS:
-	  bob improved the keybinding behavior of the geometry browser so
-	  that you no longer have to keep right-click depressed while
-	  left-clicking selections. now you keep right click depressed and
-	  when released on an option, that option is selected.
+	* [r30790] src/proc-db/tire.c:
+	  Add second test extrusion, tweak help command behavior (switch
+	  back to a plain tire command generating default tire in tire.g)
 
-2008-03-11 05:25  brlcad
+2008-04-23 08:24  brlcad
 
-	* NEWS:
-	  bob also made the Geometry Browser redraw any objects being
-	  displayed after edits are performed with a nice lil 'eval draw
-	  [who]'.
+	* [r30791] src/adrt/slave/main.c:
+	  make sure SIGUSR1 and SIGINFO are available first
 
-2008-03-11 07:24  brlcad
+2008-04-23 15:39  starseeker
 
-	* NEWS:
-	  include final release notes that mention the windows
-	  enhancements, clone/traker, intaval, and the mintration to
-	  subversion. sleeping on it, but should be last step to tag trunk
-	  as 7.12
+	* [r30793] src/proc-db/tire.c:
+	  Add more shapes for prototype tread.
 
-2008-03-11 14:39  brlcad
+2008-04-23 17:18  bob1961
 
-	* src/other/tcl/unix/Makefile.in, src/other/tk/unix/Makefile.in:
-	  stray @
+	* [r30794] src/libfb/if_ogl.c:
+	  Mods to have the image location be returned as values between 0
+	  and width or height minus 1. So if the width is 512, the range of
+	  values returned will be [0, 511].
 
-2008-03-11 15:21  bob1961
+2008-04-23 17:46  bob1961
 
-	* src/tclscripts/archer/Archer.tcl:
-	  Fixed a typo.
+	* [r30795] src/libfb/if_wgl.c:
+	  Mods to allow the user to query the pixel location and color.
+	  Also added code to constrain the queried pixel location to values
+	  between 0 and the width or height minus 1. For example, if the
+	  height is 512 the range of values for y would be 0-511.
 
-2008-03-11 15:44  starseeker
+2008-04-23 17:56  bob1961
 
-	* TODO:
-	  Add note from class - request for 'last chance' checking on
-	  killtree commands with wildcards
+	* [r30796] include/config_win.h, include/fb.h, src/libfb/fb_log.c:
+	  If _WIN32, use bu_log in place of fb_log. This can easily revert
+	  back if/when fb_log becomes as flexible as bu_log.
 
-2008-03-11 16:12  bob1961
+2008-04-23 18:49  brlcad
 
-	* src/tclscripts/archer/Archer.tcl:
-	  If in view-only mode, the primaryToolbar and cmd components do
-	  not exist.
+	* [r30797] NEWS, README, include/conf/PATCH:
+	  source tarballs are uploaded, bump patch revision
 
-2008-03-11 16:28  starseeker
+2008-04-23 18:51  brlcad
 
-	* TODO:
-	  Add note from class - more flexibility in obj.s[num1-num2]
-	  command line file matching would be nice
+	* [r30798] TODO:
+	  clone and incr on the docket
 
-2008-03-11 17:31  starseeker
+2008-04-23 20:23  brlcad
 
-	* BUGS:
-	  Add note about button_font not being found in Linux
+	* [r30799] AUTHORS:
+	  talked to applin for a while and got some additional history.
+	  it's not clear that earl actually wrote any code, but did
+	  contribute to algorithms and docs. likewise, applin coded around
+	  1982 (sometime before March 1983) before the code was under
+	  revision control and then stopped shortly after (circa 1984/1985)
+	  so he was BRL-only.
 
-2008-03-11 20:52  starseeker
+2008-04-23 20:28  brlcad
 
-	* TODO:
-	  Remove previous notes. Discussed with Sean - these behaviors are
-	  as expected given normal command line behavior.
+	* [r30800] AUTHORS:
+	  note that it first went into RCS in april 1984, but applin
+	  reminded me to check out the original GED tech report (GED: AN
+	  INTERACTIVE SOLID MODELING SYSTEM FOR VULNERABILITY ASSESSMENTS -
+	  ARBRL-TR-02480 - published March 1983) which indeed did have
+	  additional tidbits. It says development began in 1980 and that
+	  ged went into production use in January 1982.
 
-2008-03-11 22:03  brlcad
+2008-04-23 20:30  brlcad
 
-	* include/Makefile.am:
-	  ugh, dg.h is missing from the dist
+	* [r30801] AUTHORS:
+	  earl weaver was there at the beginning, mark 1980 as start year
 
-2008-03-12 00:28  brlcad
+2008-04-23 20:31  brlcad
 
-	* db/Makefile.am:
-	  yet one more stab at accounting for parallel make problems where
-	  the libtool wrapper script is invoked by too many threads before
-	  it has time to generate the lt-asc2g binary. this fixes the
-	  problem by creating a lockfile mechanism that invokes asc2g first
-	  on just the operators.asc file (cause it's so damn small) before
-	  running everyone else. seems to work like a charm though I bet
-	  there is still an exceptionally rare race condition possible if
-	  the operators.g dependency isn't handled first (it's listed as a
-	  dep so it should be first)
+	* [r30802] AUTHORS:
+	  gary kuehl was a BRLer
 
-2008-03-12 06:54  brlcad
+2008-04-23 20:39  starseeker
 
-	* db/Makefile.am:
-	  clear out the lockfile and any .g's we are scheduled to build
+	* [r30803] src/proc-db/tire.c:
+	  Misc. cleanup and comments, added tread pattern count and tread
+	  depth as options.
 
-2008-03-13 13:14  bob1961
+2008-04-24 01:09  brlcad
 
-	* src/librt/wdb_obj.c:
-	  Modified wdb_prep_dbip() to allow database creation if database
-	  doesn't exist.
+	* [r30805] NEWS:
+	  Bob added support to query pixels in the wgl framebuffer similar
+	  to what is available for the ogl and X framebuffers
 
-2008-03-13 13:25  bob1961
+2008-04-24 01:13  brlcad
 
-	* src/tclscripts/archer/ArcherCore.tcl:
-	  Modified the initDefaultBindings method to not always use
-	  itk_component(mged).
+	* [r30806] TODO:
+	  Bob implemented support to mirror across a distance along a given
+	  axis in mged. technically he implemented it in 7.12.2 but it was
+	  left out of the release notes so mentioning it here
 
-2008-03-14 13:55  erikgreenwald
+2008-04-24 01:14  brlcad
 
-	* src/librt/g_metaball.c:
-	  tweak bounding volume stuff to cope with different methods
+	* [r30807] TODO:
+	  -Wfloat-equal is covered by the other todo for obliterating
+	  verbose compilation warnings
 
-2008-03-14 16:40  bob1961
+2008-04-24 01:18  brlcad
 
-	* src/archer/archer, src/tclscripts/archer/Archer.tcl,
-	  src/tclscripts/archer/ArcherCore.tcl,
-	  src/tclscripts/archer/LoadArcherLibs.tcl:
-	  Remove SDB (SURVICE Database) related code.
+	* [r30808] NEWS:
+	  consistently refer to mged in lowercase on the individual news
+	  lines but uppercase in the english write-ups throughout the NEWS
+	  file.
 
-2008-03-14 17:10  bob1961
+2008-04-24 02:31  brlcad
 
-	* src/other/tk/library/panedwindow.tcl:
-	  Hack to get around the occassional complaining from the
-	  panedwindow about "identify" being a bad option.
+	* [r30809] NEWS:
+	  reword the intro header and footer for clarity
 
-2008-03-14 18:31  g2asc
+2008-04-24 15:20  bob1961
 
-	* AUTHORS:
-	  dpk worked for BRL.
+	* [r30810] src/librt/mirror.c:
+	  Apply mirror_pt to the particle primitive. Remove old line of
+	  code from the ELL/SPH section.
 
-2008-03-14 18:38  g2asc
+2008-04-24 15:38  starseeker
 
-	* AUTHORS:
-	  Mike worked for BRL first, then ARL.
+	* [r30811] src/proc-db/tire.1:
+	  Add man page description of new options
 
-2008-03-14 18:43  brlcad
+2008-04-24 15:39  starseeker
 
-	* AUTHORS:
-	  cliff now contributes as qri too .. probably need a way to
-	  indicate open source contributions separately
+	* [r30812] src/proc-db/tire.c:
+	  Break some things out into functions, put tire region creation
+	  inside tire function.
 
-2008-03-14 18:46  g2asc
+2008-04-24 15:49  starseeker
 
-	* AUTHORS:
-	  Added BRL affiliation to developers Moss, Dykstra, Applin,
-	  Kennedy, Gwynn, Stay, Hanes, Butler, A
-	  nderson, Tanenbaum.
+	* [r30813] NEWS:
+	  Add note about tire proc-db
 
-2008-03-14 19:33  starseeker
+2008-04-24 16:34  starseeker
 
-	* doc/book/VolumeII.xml:
-	  Continuing xml conversion - appendix contents have been largely
-	  removed and will be re-added later. Remainder is now valid
-	  according to nXML mode, but will need more formatting work.
+	* [r30814] src/proc-db/tire.c:
+	  Switch ell in instead of eto for center wheel curve - no
+	  advantage to the eto shape for this wheel design.
 
-2008-03-14 19:43  erikgreenwald
+2008-04-24 17:01  brlcad
 
-	* src/mged/typein.c:
-	  default sweat is 1 in a metaball, not 0 (0 is not viable for
-	  Blinn method blob)
+	* [r30815] configure.ac:
+	  this has happened several times now. make a note that
+	  -fno-strict-aliasing is REQUIRED if any level of optimization is
+	  enabled (and we're using GCC as we do use and rely on aliasing
+	  and type-punning.
 
-2008-03-14 20:28  brlcad
+2008-04-24 17:02  brlcad
 
-	* db/Makefile.am:
-	  fix a problem that bsd make made apparent where there were
-	  multiple rules for operators.g (direct and via .asc.g) causing a
-	  cyclic reference. Instead, use the same build approach but create
-	  an operators.asc2g file instead of operators.g; additionally make
-	  that file dependent upon asc2g so we're sure to keep updating the
-	  lt binary wrapper as needed.
+	* [r30816] configure.ac:
+	  leave it at that
 
-2008-03-14 20:58  erikgreenwald
+2008-04-24 17:54  brlcad
 
-	* src/librt/g_metaball.c:
-	  fix up output a little
+	* [r30817] include/conf/Makefile.am:
+	  make HOST, PATH, USER, and DATE depend on brlcad_config.h so that
+	  the values reset every time configure is run. this way the date
+	  stamp and build system should match whomever is performing the
+	  build for source dist builders instead of the maintainer that
+	  made the distribution tarball. the downside is more frequent
+	  rebuilds of everything for internal devs.
 
-2008-03-14 21:02  erikgreenwald
+2008-04-24 20:43  starseeker
 
-	* src/nirt/if.c:
-	  report value for obliquity if out of valid range.
+	* [r30818] src/proc-db/tire.c:
+	  Replace lots of individual commands by a single loop for tread
+	  extrusion.
 
-2008-03-14 22:00  brlcad
+2008-04-24 20:54  starseeker
 
-	* configure.ac:
-	  add protections and notification to users that installing into
-	  /usr is generally a pretty bad idea (particularly for those linux
-	  folks). require that they interactively confirm that they would
-	  like to continue (by having them type 'yes'/'no'). there is
-	  probably additional specific checks that could be added to make
-	  sure libdir and prefix aren't different, but it's a good first
-	  stab.
+	* [r30819] src/proc-db/tire.c:
+	  Oops - fix the conditional checking for tread insertion.
 
-2008-03-15 14:59  brlcad
+2008-04-25 01:53  brlcad
 
-	* AUTHORS:
-	  annotate all of the various individuals that have made
-	  non-affiliated contributions as open source contributors.
+	* [r30820] include/conf/Makefile.am:
+	  deja-vu -- try using the top_builddir instead of top_srcdir for
+	  out-of-dir builds
 
-2008-03-16 15:39  brlcad
+2008-04-25 16:22  starseeker
 
-	* include/raytrace.h:
-	  include common.h
+	* [r30821] src/rt/view.c:
+	  Enable -k flag with surface normal lighting
 
-2008-03-16 15:40  brlcad
+2008-04-25 16:29  starseeker
 
-	* include/brep.h:
-	  minor cleanup investigating the C++ linkage failure seen on
-	  Fedora.
+	* [r30822] BUGS, NEWS:
+	  update BUGS and NEWS files for -k surface normals fix
 
-2008-03-16 16:26  brlcad
+2008-04-25 16:33  erikgreenwald
 
-	* src/other/openNURBS/opennurbs_system.h:
-	  try to fix the fedora linkage error (blindly). these are C
-	  headers, so protect them with an extern C declaration if we're
-	  compiling in C++ mode.
+	* [r30823] TODO:
+	  add a couple things I plan on doing
 
-2008-03-17 03:19  brlcad
+2008-04-25 17:08  erikgreenwald
 
-	* src/other/tcl/unix/Makefile.in, src/other/tk/unix/Makefile.in:
-	  only install/chmod the lib files if they exist, hopefully
-	  bypassing an ubuntu install error where libtclstub.a doesn't
-	  exist for some (unknown) reason.
+	* [r30824] src/librt/g_metaball.c:
+	  Gort! Metaball Barata Nikto!
 
-2008-03-17 14:33  brlcad
+2008-04-25 19:57  starseeker
 
-	* src/other/Makefile.am, src/other/incrTcl/Makefile.am:
-	  if we don't have X11, then we should not be compiling tk, tkimg,
-	  blt, itk. turn them off.
+	* [r30825] src/proc-db/tire.1, src/proc-db/tire.c:
+	  Add first cut at different tire extrusion - use tire -t 1 and
+	  tire -t 2 to see the differences.
 
-2008-03-19 13:53  brlcad
+2008-04-26 01:56  starseeker
 
-	* m4/compiler.m4:
-	  allow BC_SANITY_CHECK to take an argument so we can customize the
-	  message being printed
+	* [r30826] src/proc-db/tire.c:
+	  Take a try at making tire shaping more robust
 
-2008-03-19 13:54  brlcad
+2008-04-26 12:52  starseeker
 
-	* configure.ac:
-	  add a sanity check for the C++ compiler to make sure one is
-	  installed and working since we need one now, otherwise we'll just
-	  end up with more bizaree errors later on.
+	* [r30827] src/proc-db/tire.1, src/proc-db/tire.c:
+	  Add size-related scaling for thicknesses and an option to
+	  override the tire thickness.
 
-2008-03-20 18:20  brlcad
+2008-04-26 14:02  starseeker
 
-	* include/conf/PATCH:
-	  that is pretty cool.. svn can tag without a checkout. bump patch
-	  version up to 1
+	* [r30828] src/proc-db/tire.1, src/proc-db/tire.c:
+	  Add option to specify rim width
 
-2008-03-20 19:15  dgodbey
+2008-04-26 14:40  starseeker
 
-	* configure.ac, src/conv/3dm, src/conv/3dm/3dm-g.cpp,
-	  src/conv/3dm/Makefile.am, src/conv/Makefile.am:
-	  Initial checkin of 3dm-g converter.
+	* [r30829] src/proc-db/tire.c:
+	  Change default tire size to something a little more common.
 
-2008-03-20 19:24  dgodbey
+2008-04-26 16:07  brlcad
 
-	* src/conv/3dm/3dm-g.cpp, src/conv/3dm/Makefile.am:
-	  Fix file properties
+	* [r30830] src/libbu/str.c:
+	  only warn about the string truncation if debug is turned as it is
+	  indeed entirely valid for the src string in strlcpy to be longer
+	  than size. this check was mainly added because there was a slew
+	  of strncpy code migrated over and the truncation by the new
+	  strlcpy wasn't intentional (or desirable). there are undoubtedly
+	  more callers that need to be weeded out.
 
-2008-03-20 22:06  brlcad
+2008-04-26 16:29  brlcad
 
-	* ChangeLog:
-	  it didn't make the rel-7-12-0 tag, but it needs to be in there
-	  anyways .. update the changelog (generated via svn2cl.sh
-	  --break-before-msg -r {2007-10-24}:{2008-03-11}
+	* [r30831] misc/win32-msvc8/libbu/libbu.vcproj,
+	  src/libbu/CMakeLists.txt, src/libbu/Makefile.am,
+	  src/libbu/globals.c, src/libbu/malloc.c:
+	  the start of consolidating and long-term efforts to eliminate
+	  library globals. add a globals.c source with the malloc.c globals
+	  for starters.
 
-2008-03-21 03:22  brlcad
+2008-04-26 16:34  brlcad
 
-	* NEWS:
-	  add new section for 7.12.1
+	* [r30832] src/libbu/globals.c, src/libbu/malloc.c,
+	  src/libbu/vls.c:
+	  move bu_vls_message and bu_strdup_message to globals.c
 
-2008-03-21 03:32  brlcad
+2008-04-26 16:40  brlcad
 
-	* HACKING:
-	  update from rcs2log to svn2cl
+	* [r30833] src/libbu/globals.c, src/libbu/ispar.c,
+	  src/libbu/parallel.c:
+	  move bu_pid_of_initiating_thread from ispar.c to globals.c
 
-2008-03-21 03:33  brlcad
+2008-04-26 16:46  brlcad
 
-	* README:
-	  bah, update to 7.12.2
+	* [r30834] src/libbu/bomb.c, src/libbu/globals.c:
+	  move bu_setjmp_valid and bu_jmpbuf from bomb.c to globals.c
 
-2008-03-21 03:33  brlcad
+2008-04-26 18:10  starseeker
 
-	* src/librt/g_brep.cpp:
+	* [r30835] src/proc-db/tire.1, src/proc-db/tire.c:
+	  Add second tread pattern, enable selection of pattern types at
+	  command line.
+
+2008-04-26 19:13  brlcad
+
+	* [r30836] src/mged/chgview.c:
+	  don't need to manually null-terminate with bu_strlcpy
+
+2008-04-26 19:16  brlcad
+
+	* [r30837] include/bu.h, src/libbu/bomb.c, src/libbu/bu_tcl.c,
+	  src/libbu/globals.c, src/libbu/log.c, src/libbu/vls.c:
+	  move over the bu_log_hook_list too to globals.c and fix some
+	  missing declarations. make the bu_log lists non-published since
+	  nobody is using it.
+
+2008-04-26 19:19  brlcad
+
+	* [r30838] BUGS:
+	  noticed that the graphics window in mged wasn't responding to key
+	  events properly. sends the keys to the command window even when
+	  the graphics window has focus.
+
+2008-04-26 19:33  brlcad
+
+	* [r30839] src/libbu/bomb.c:
+	  it was (re)published in bu.h so decl is not needed
+
+2008-04-26 19:48  brlcad
+
+	* [r30840] src/libbu/getopt.c, src/libbu/globals.c:
+	  move the bu_getopt globals over to globals.c
+
+2008-04-26 19:56  brlcad
+
+	* [r30841] src/libbu/magic.c:
 	  header cleanup
 
-2008-03-21 17:18  brlcad
+2008-04-26 20:19  starseeker
 
-	* configure.ac:
-	  ouch, someone had a copy-paste boo boo. don't set LIBITCL during
-	  the LIBITK tests...
+	* [r30842] src/proc-db/tire.c:
+	  Switch the naming on the two patterns for consistency - default
+	  now pairs smooth profile with auto tread.
 
-2008-03-23 05:12  brlcad
+2008-04-26 20:44  brlcad
 
-	* m4/compiler.m4:
-	  bah, need stdlib.h for exit().. C++ sanity check seems insistent
-	  on needing it.
+	* [r30843] include/bu.h, src/libbu/observer.c, src/libdm/dm_obj.c,
+	  src/librt/dg_obj.c, src/librt/view_obj.c, src/librt/wdb_obj.c:
+	  remove the bu_observer_cmds global by turning it into a static
+	  and wrapping it up in a new bu_observer_cmd() callback that the
+	  various callers use instead of bu_cmd.
 
-2008-03-23 05:14  brlcad
+2008-04-26 20:47  brlcad
 
-	* m4/compiler.m4:
-	  don't need stdio.h
+	* [r30844] src/libbu/parallel.c:
+	  non-global for cray
 
-2008-03-23 06:47  brlcad
+2008-04-26 21:34  starseeker
 
-	* HACKING:
-	  the dutch cad4linux site seems to be now defunct
+	* [r30845] src/proc-db/tire.c:
+	  Add a couple of default behavor tweaks for flags.
 
-2008-03-23 07:10  brlcad
+2008-04-26 21:55  brlcad
 
-	* HACKING:
-	  add devmaster to the notification list
+	* [r30846] AUTHORS:
+	  src/libbn/axis.c claims to have been started in august 1978 by
+	  mike, that pushes his first known actual development date back a
+	  bit
 
-2008-03-24 05:18  brlcad
+2008-04-27 02:17  brlcad
 
-	* src/conv/3dm/3dm-g.cpp:
-	  we're no longer including authorship in source files (put into
-	  docs instead), and don't use machine.h
+	* [r30847] src/libbn/fortran.c:
+	  doc update
 
-2008-03-24 05:23  brlcad
+2008-04-27 02:17  brlcad
 
-	* src/conv/Makefile.am:
-	  actually, there is no g-3dm. if there were, it'd probably be in
-	  the 3dm dir anyways. SUBDIRS should be sorted by alpha unless
-	  there is a dependency.
+	* [r30848] src/libbn/tplot.c:
+	  reorder to eliminate need for decls
 
-2008-03-24 13:07  dgodbey
+2008-04-27 02:34  brlcad
 
-	* src/conv/3dm/3dm-g.cpp:
-	  Add getopt loop and trap ON_Curve, ON_Surface, and ON_Mesh.
+	* [r30849] src/libbn/wavelet.c:
+	  add semicolons so indent-region works
 
-2008-03-25 20:05  brlcad
+2008-04-27 02:50  brlcad
 
-	* NEWS, src/mged/rtif.c, src/tclscripts/mged/help.tcl:
-	  added -e, -l, -o, and -i options to the mged saveview command so
-	  you can override the executable, logfile, outputfile, and
-	  inputfile respectively when generating a saveview script.
+	* [r30850] misc/win32-msvc8/libbn/libbn.vcproj,
+	  src/libbn/CMakeLists.txt, src/libbn/Makefile.am,
+	  src/libbn/globals.c:
+	  add a globals.c file to libbn to itemize all library global
+	  variables. since they're mostly all massive tables that warrant
+	  their own file, just reference the externs
 
-2008-03-26 12:15  johnranderson
+2008-04-27 02:56  brlcad
 
-	* include/rtserver.h, src/librtserver/rtserver.c,
-	  src/librtserver/rtserverTest.c:
-	  updates to librtserver
+	* [r30851] configure.ac, misc/Makefile.am, misc/win32-msvc7:
+	  remove the obsolete win32-msvc7 dir, replaced by the win32-msvc8
+	  dir
 
-2008-03-26 23:32  johnranderson
+2008-04-27 03:43  brlcad
 
-	* include/rtserver.h:
-	  Added a few more declarations
+	* [r30852] include/vectfont.h, src/libbn/font.c,
+	  src/libbn/symbol.c, src/libbn/vectfont.c:
+	  remove TINY, go for int
 
-2008-03-27 00:51  brlcad
+2008-04-27 03:46  starseeker
 
-	* include/rtserver.h:
-	  remove duplicate decls, sort lines
+	* [r30853] src/proc-db/tire.c:
+	  Need more clipping when hub width is manually specified - looks
+	  like dyside1 may be a poor approximation of a maximum as hub
+	  width is changed. This tweak is likely not general enough.
 
-2008-03-27 01:10  brlcad
+2008-04-27 03:59  brlcad
 
-	* TODO:
-	  dbconcat verified, seems to work like a charm with default, -s,
-	  -p with or without affix
+	* [r30854] misc/win32-msvc8/libbn/libbn.vcproj,
+	  src/libbn/CMakeLists.txt, src/libbn/Makefile.am,
+	  src/libbn/const.c, src/libbn/globals.c:
+	  move the math constants from const.c to globals.c
 
-2008-03-27 05:58  brlcad
+2008-04-27 07:51  brlcad
 
-	* BUGS:
-	  mged seems to be locking up at least on slackware, taking up full
-	  cpu and being non-responsive. works find with -c and X dm.
-	  reported by pacman87 (thx).
+	* [r30855] configure.ac, misc/win32-msvc/CMakeLists.txt,
+	  misc/win32-msvc8/libged, misc/win32-msvc8/libged/libged.vcproj,
+	  src/Makefile.am, src/libged, src/libged/dg_obj.c,
+	  src/libged/view_obj.c, src/libged/wdb_obj.c,
+	  src/librt/Makefile.am, src/librt/dg_obj.c, src/librt/view_obj.c,
+	  src/librt/wdb_obj.c:
+	  the start of libged. use dg_obj, view_obj, and wdb_obj routines
+	  as a beginning. the intent of the library is to hold most all
+	  geometric editing procedures.
 
-2008-03-28 02:56  johnranderson
+2008-04-27 14:18  brlcad
 
-	* src/librt/db5_bin.c:
-	  eliminated excess logging
+	* [r30856] src/libged/Makefile.am:
+	  oops, forgot to add the Makefile.am
 
-2008-03-28 03:03  johnranderson
+2008-04-27 14:46  starseeker
 
-	* src/tclscripts/mged/make_solid.tcl,
-	  src/tclscripts/mged/openw.tcl, src/tclscripts/mged/tclIndex:
-	  added binunif to create menu
+	* [r30857] src/proc-db/tire.c:
+	  Major change in the way ellipses are used to model sides. Instead
+	  of 1 rotated ellipse per side, use two non-rotated ellipses for
+	  the top of the sides and a single ellipse to take care of the
+	  bottom half of both sides. Mathematical solver code is unchanged
+	  since it is quite general, but additional ellipses are being
+	  solved for and inputs should constrain them to be non-rotated.
+	  This method should have the potential to guarantee a specific
+	  tire width and may (with some more work) be more flexible for
+	  unusual tire sizes.
 
-2008-03-28 04:52  brlcad
+2008-04-27 15:28  brlcad
 
-	* NEWS:
-	  john added support to mged for creating binunif objects via the
-	  Create menu
+	* [r30858] src/librt/bezier_2d_isect.c, src/librt/bool.c,
+	  src/librt/bundle.c, src/librt/comb.c, src/librt/cut.c,
+	  src/librt/db5_alloc.c, src/librt/db5_bin.c, src/librt/db5_comb.c,
+	  src/librt/db5_io.c, src/librt/db5_scan.c, src/librt/db_alloc.c,
+	  src/librt/db_anim.c, src/librt/db_comb.c, src/librt/db_io.c,
+	  src/librt/db_lookup.c, src/librt/db_match.c, src/librt/db_open.c,
+	  src/librt/db_path.c, src/librt/db_scan.c, src/librt/db_tree.c,
+	  src/librt/db_walk.c, src/librt/dir.c, src/librt/g_arb.c,
+	  src/librt/g_arbn.c, src/librt/g_ars.c, src/librt/g_bot.c,
+	  src/librt/g_cline.c, src/librt/g_dsp.c, src/librt/g_ebm.c,
+	  src/librt/g_ehy.c, src/librt/g_ell.c, src/librt/g_epa.c,
+	  src/librt/g_eto.c, src/librt/g_extrude.c, src/librt/g_grip.c,
+	  src/librt/g_half.c, src/librt/g_hf.c, src/librt/g_metaball.c,
+	  src/librt/g_nmg.c, src/librt/g_nurb.c, src/librt/g_part.c,
+	  src/librt/g_pg.c, src/librt/g_pipe.c, src/librt/g_rec.c,
+	  src/librt/g_rhc.c, src/librt/g_rpc.c, src/librt/g_sketch.c,
+	  src/librt/g_sph.c, src/librt/g_superell.c, src/librt/g_tgc.c,
+	  src/librt/g_torus.c, src/librt/g_vol.c, src/librt/g_xxx.c,
+	  src/librt/importFg4Section.c, src/librt/mater.c,
+	  src/librt/mkbundle.c, src/librt/nmg_bool.c,
+	  src/librt/nmg_class.c, src/librt/nmg_extrude.c,
+	  src/librt/nmg_fuse.c, src/librt/nmg_inter.c,
+	  src/librt/nurb_ray.c, src/librt/pr.c, src/librt/prep.c,
+	  src/librt/regionfix.c, src/librt/shoot.c, src/librt/storage.c,
+	  src/librt/table.c, src/librt/tcl.c, src/librt/tree.c,
+	  src/librt/vshoot.c:
+	  sweeping header/comment cleanups including removal of debug.h
 
-2008-03-28 05:03  brlcad
+2008-04-27 15:40  brlcad
 
-	* TODO:
-	  next release should be 'soon' so only promote rtarea, clone, and
-	  itcl build support
+	* [r30859] src/conv/iges/do_subfigs.c, src/conv/iges/g-iges.1,
+	  src/conv/iges/g-iges.c, src/conv/iges/iges-g.1,
+	  src/conv/iges/iges.c, src/conv/iges/main.c,
+	  src/conv/iges/trimsurf.c:
+	  remove use of private debug.h header
 
-2008-03-28 05:05  brlcad
+2008-04-27 15:47  brlcad
 
-	* src/librt/bundle.c, src/librt/cut.c, src/librt/prep.c,
-	  src/librt/qray.c, src/librt/shoot.c, src/mged/buttons.c,
-	  src/mged/inside.c, src/tclscripts/mged/edit_menu.tcl,
-	  src/tclscripts/mged/openw.tcl:
-	  consistently spell out all references to 'prims' as primitives to
-	  help usability. not documenting in news cause it's stupid..
+	* [r30860] src/conv/bot-bldxf.c, src/conv/enf-g.c,
+	  src/conv/euclid-g.c, src/conv/euclid_format.c,
+	  src/conv/euclid_unformat.c, src/conv/fast4-g.c,
+	  src/conv/g-acad.c, src/conv/g-dxf.c, src/conv/g-euclid.c,
+	  src/conv/g-euclid1.c, src/conv/g-nff.c, src/conv/g-nmg.1,
+	  src/conv/g-nmg.c, src/conv/g-obj.c, src/conv/g-stl.c,
+	  src/conv/g-tankill.c, src/conv/g-vrml.1, src/conv/g-vrml.c,
+	  src/conv/g-x3d.1, src/conv/g-x3d.c, src/conv/g-xxx.c,
+	  src/conv/g-xxx_facets.c, src/conv/jack/g-jack.c,
+	  src/conv/jack/jack-g.c, src/conv/nastran-g.c, src/conv/nmg-sgp.c,
+	  src/conv/poly-bot.c, src/conv/proe-g.1, src/conv/proe-g.c,
+	  src/conv/stl-g.1, src/conv/stl-g.c, src/conv/tankill-g.c,
+	  src/conv/viewpoint-g.c:
+	  more debug.h removal
 
-2008-03-28 05:15  brlcad
+2008-04-27 15:53  erikgreenwald
 
-	* src/conv/off/off-g.c, src/irprep/all_sf.c, src/libpkg/pkg.c:
-	  remove t parameter from open calls. it's not posix and not needed
-	  (text mode is default on windows).
+	* [r30861] src/conv/Makefile.am:
+	  add ${GED} to asc2g
 
-2008-03-28 05:29  brlcad
+2008-04-27 15:59  erikgreenwald
 
-	* src/libbu/log.c:
-	  cleanup, remove dead code
+	* [r30862] src/gtools/Makefile.am:
+	  add libged to g_diff
 
-2008-03-28 06:28  brlcad
+2008-04-27 16:00  brlcad
 
-	* src/util/pl-dm.c:
-	  make pl-dm compile once again, de knrify it, remove code not
-	  longer relevant
+	* [r30863] src/external/Cubit/g-sat.cxx, src/gtools/g_diff.c,
+	  src/gtools/solshoot.c, src/lgt/lgt.h, src/mged/chgview.c,
+	  src/mged/dodraw.c, src/mged/muves.c, src/mged/utility2.c,
+	  src/mged/vdraw.c, src/nirt/command.c, src/proc-db/tea_nmg.c,
+	  src/remrt/remrt.c, src/remrt/rtsrv.c, src/rt/main.c,
+	  src/rt/opt.c, src/rt/rt.1, src/rt/rtshot.c, src/rt/rtwalk.c,
+	  src/rt/view_bot_faces.c, src/rt/viewarea.c, src/rt/viewg3.c,
+	  src/tab/tabinterp.c, src/vdeck/vdeck.c:
+	  remaining removal of debug.h
 
-2008-03-28 06:33  brlcad
+2008-04-27 16:03  erikgreenwald
 
-	* src/util/pl-dm.c:
-	  rip out the ogl and wgl code. it's highly unlikely that wgl will
-	  work without modifications given X is required. also, it's just a
-	  horrible way to support N dm interfaces .. the point is supposed
-	  to be that the dm interface incapsulates against doing this kind
-	  of stuff.
+	* [r30864] src/mged/Makefile.am:
+	  add libged to mged
 
-2008-03-28 06:38  brlcad
+2008-04-27 16:04  brlcad
 
-	* src/util/Makefile.am:
-	  add pl-dm back to the build if X is available
+	* [r30865] src/mged/vdraw.c:
+	  restore the #if 0
 
-2008-03-28 06:39  brlcad
+2008-04-27 16:04  erikgreenwald
 
-	* src/util/Makefile.am:
+	* [r30866] src/rttherm/Makefile.am:
+	  added ${GED} to rttherm
+
+2008-04-27 16:10  brlcad
+
+	* [r30867] src/Makefile.am:
+	  make libged required if benchmark (asc2g) needs it
+
+2008-04-27 16:29  starseeker
+
+	* [r30868] src/librt/Makefile.am:
+	  Add libged to librt
+
+2008-04-27 16:59  starseeker
+
+	* [r30869] src/librt/Makefile.am:
+	  revert libged addition - librt shouldn't use libged
+
+2008-04-27 18:00  brlcad
+
+	* [r30870] src/librt/Makefile.am, src/librt/debug.h:
+	  remove debug.h
+
+2008-04-27 18:04  brlcad
+
+	* [r30871] misc/win32-msvc8/librt/librt.vcproj,
+	  src/librt/CMakeLists.txt, src/librt/Makefile.am,
+	  src/librt/global.c, src/librt/globals.c:
+	  renmae global.c to globals.c to match libbu/libbn
+
+2008-04-27 18:09  brlcad
+
+	* [r30872] src/librt/bigE.c:
+	  remove k&r dead code
+
+2008-04-27 18:23  brlcad
+
+	* [r30873] src/librt/bool.c:
+	  comment consistency cleanup
+
+2008-04-27 18:25  brlcad
+
+	* [r30874] src/librt/brep_test.cpp:
+	  remove using statement
+
+2008-04-27 19:03  brlcad
+
+	* [r30875] src/librt/db5_bin.c, src/librt/globals.c:
+	  move the binu_types global array from db5_bin.c to globals.c;
+	  make the binu_types array be static since nobody else uses it.
+	  libged needs binu_types.
+
+2008-04-27 19:07  brlcad
+
+	* [r30876] src/librt/db5_comb.c:
+	  comment cleanup
+
+2008-04-27 19:19  brlcad
+
+	* [r30877] include/db5.h:
+	  DB5_EXPORT label
+
+2008-04-27 19:25  brlcad
+
+	* [r30878] src/librt/db5_io.c, src/librt/globals.c:
+	  move the db5_enc_len global array from db5_io.c to globals.c
+
+2008-04-27 19:31  brlcad
+
+	* [r30879] src/librt/fortray.c:
+	  the struct partition fr_global_head doesn't need to be global,
+	  make it static; cleanup comments too
+
+2008-04-27 19:34  brlcad
+
+	* [r30880] src/librt/importFg4Section.c:
+	  make grid_pts static
+
+2008-04-27 20:38  starseeker
+
+	* [r30881] src/proc-db/tire.c:
+	  Remove some unneeded orientation hackery logic that was causing
+	  bugs in some cases.
+
+2008-04-27 20:40  starseeker
+
+	* [r30882] src/proc-db/tire.c:
+	  Remove the unneeded orientation option from CalcInputVals
+
+2008-04-27 23:20  brlcad
+
+	* [r30883] src/librt/many.c:
+	  general non-functionally-changing cleanup
+
+2008-04-27 23:25  brlcad
+
+	* [r30884] include/mater.h, include/raytrace.h,
+	  src/conv/dbupgrade.c, src/gtools/g_diff.c, src/libged/dg_obj.c,
+	  src/libged/wdb_obj.c, src/librt/db5_io.c, src/librt/mater.c,
+	  src/libwdb/mater.c, src/mged/ged.c, src/mged/mater.c:
+	  encapsulate the former rt_material_head global linked list behind
+	  a getter/setter along with new routines to fill in a vls and dup
+	  the material list. this makes the global conveniently go away.
+
+2008-04-28 00:15  brlcad
+
+	* [r30885] src/libged/CMakeLists.txt:
+	  add the missing CMakeLists.txt file for libged
+
+2008-04-28 00:17  brlcad
+
+	* [r30886] misc/win32-msvc8/libged/libged.vcproj,
+	  misc/win32-msvc8/librt/librt.vcproj, src/libged/Makefile.am,
+	  src/libged/nirt.c, src/librt/CMakeLists.txt,
+	  src/librt/Makefile.am, src/librt/nirt.c:
+	  move nirt.c to libged, it's a dgo ged command
+
+2008-04-28 00:32  brlcad
+
+	* [r30887] include/mater.h:
+	  add header reinclusion protections and include raytrace.h for
+	  struct region
+
+2008-04-28 00:49  brlcad
+
+	* [r30888] misc/win32-msvc8/libged/libged.vcproj,
+	  misc/win32-msvc8/librt/librt.vcproj, src/libged/CMakeLists.txt,
+	  src/libged/Makefile.am, src/libged/bigE.c, src/libged/qray.c,
+	  src/libged/qray.h, src/libged/vdraw.c, src/librt/CMakeLists.txt,
+	  src/librt/Makefile.am, src/librt/bigE.c, src/librt/qray.c,
+	  src/librt/qray.h, src/librt/vdraw.c:
+	  move vdraw.c, bigE.c, and qray.c from librt to libged too. that
+	  should be the remaining dgo functionality.
+
+2008-04-28 02:42  brlcad
+
+	* [r30889] include/raytrace.h:
 	  ws
 
-2008-03-28 13:12  brlcad
+2008-04-28 02:43  brlcad
 
-	* BUGS:
-	  the opengl framebuffer problem on mac os x where parallel
-	  rendering was causing it to fail was indeed fixed (by adding the
-	  necessary requests for each thread to acquire the context), but
-	  something since then has changed -- it's just giving a blank
-	  window at the moment
+	* [r30890] src/librt/opennurbs_ext.cpp:
+	  get rid of the using statement, make namespace use explicit
 
-2008-03-28 13:14  brlcad
+2008-04-28 03:01  brlcad
 
-	* BUGS:
-	  actually it is rendering, just not updating the window apparently
-	  until it gets expose events
+	* [r30891] src/librt/globals.c, src/librt/nmg_eval.c,
+	  src/librt/nmg_plot.c, src/librt/nmg_pr.c,
+	  src/librt/nmg_rt_isect.c, src/librt/nmg_rt_segs.c,
+	  src/librt/nurb_trim.c, src/librt/prep.c, src/librt/shoot.c:
+	  more migration of global vars to globals.c .. move
+	  rt_uniresource, nmg_eue_dist, and the three nmg callback globals:
+	  nmg_plot_anim_upcall, nmg_vblock_anim_upcall,
+	  nmg_mged_debug_display_hack. includes a periphery cleanup and
+	  conversion of some globals to static
 
-2008-03-28 21:16  starseeker
+2008-04-28 03:40  brlcad
 
-	* src/proc-db/tire.c:
-	  Add first exploratory coding efforts related to tire proc-db.
+	* [r30892] include/raytrace.h, src/liboptical/sh_gauss.c,
+	  src/librt/table.c, src/librt/tree.c:
+	  remove rt_nfunctab global, not really needed/useful as-is
 
-2008-03-28 21:17  starseeker
+2008-04-28 03:47  brlcad
 
-	* src/proc-db/Makefile.am:
-	  Add tire.c to proc-db Makefile.
+	* [r30893] src/librt/globals.c:
+	  rt_functab is too big to import, just reference it
 
-2008-03-28 22:27  brlcad
+2008-04-28 04:00  brlcad
 
-	* src/util/Makefile.am:
-	  need tk_cppflags
+	* [r30894] include/raytrace.h:
+	  comment cleanup
 
-2008-03-29 02:38  brlcad
+2008-04-28 04:17  brlcad
 
-	* include/dm.h:
-	  need the interp
+	* [r30895] src/librt/g_arb.c, src/librt/globals.c:
+	  move the arb8 globals over to globals.c including the edit arb
+	  arrays and rt_arb_faces; with cleanup
 
-2008-03-29 02:43  brlcad
+2008-04-28 04:33  brlcad
 
-	* src/util/Makefile.am:
-	  turn pl-dm off until I can get a full clean build to verify all
-	  flags are set
+	* [r30896] src/librt/g_cline.c, src/librt/globals.c:
+	  move rt_cline_radius to globals.c plus cleanup
 
-2008-03-29 03:09  brlcad
+2008-04-28 04:34  brlcad
 
-	* src/proc-db/tire.c:
-	  started in 2008, new header format
+	* [r30897] include/raytrace.h:
+	  ws
 
-2008-03-29 03:16  brlcad
+2008-04-28 04:51  brlcad
 
-	* src/util/pl-dm.c:
-	  don't need the glx headers and dm_configureWindowShape no longer
-	  exists
+	* [r30898] src/librt/g_bot.c, src/librt/globals.c:
+	  move rt_bot_minpieces and rt_bot_tri_per_piece over from g_bot.c
+	  to globals.c; with comment cleanup
 
-2008-03-29 03:44  brlcad
+2008-04-28 06:07  brlcad
 
-	* src/util/Makefile.am:
-	  try turning pl-dm back on.. works here clean-built
+	* [r30899] include/magic.h:
+	  consolidate all public magic numbers into a single 'registry' so
+	  that structures can be uniformly validated in libbu
 
-2008-03-29 22:55  brlcad
+2008-04-28 06:08  brlcad
 
-	* BUGS:
-	  resolved ogl crash, removed duplicate context invalidate bug
+	* [r30900] include/bn.h, include/bu.h, include/db5.h,
+	  include/fbio.h, include/light.h, include/nmg.h, include/nurb.h,
+	  include/plastic.h, include/raytrace.h, include/rtgeom.h,
+	  include/shadefuncs.h, include/spm.h, include/wdb.h:
+	  consolidate all public magic numbers into a single 'registry' in
+	  magic.h so that structures can be uniformly validated in libbu
 
-2008-03-30 04:53  starseeker
+2008-04-28 06:09  brlcad
 
-	* src/proc-db/tire.c:
-	  Equations now calculating something other than nan, and answers
-	  agree with Maxima's evaluation of the formula, but still not
-	  returning the original parameters
+	* [r30901] src/libbu/rb_internals.h:
+	  push bu_rb's magic numbers up into magic.h, clean up comments
 
-2008-04-01 03:18  brlcad
+2008-04-28 06:10  brlcad
 
-	* src/proc-db/masonry.c:
+	* [r30902] src/libbu/magic.c:
+	  no longer need all header numbers under the sun. this should help
+	  keep libbu decoupled properly. just include magic.h
+
+2008-04-28 06:16  brlcad
+
+	* [r30903] include/magic.h:
+	  leave a note that this header should be considered a PRIVATE
+	  header and should NEVER refer to the specific define values.
+
+2008-04-28 06:16  brlcad
+
+	* [r30904] include/Makefile.am:
+	  bu.h needs magic.h, install it
+
+2008-04-28 06:54  brlcad
+
+	* [r30905] src/librt/globals.c:
+	  ws
+
+2008-04-28 07:00  brlcad
+
+	* [r30906] TODO:
+	  seems to be pretty pervasive that the framebuffer isn't
+	  refreshing, at least linux and mac under X11 aren't behaving
+	  properly. they only refresh when the window is forcibly refreshed
+	  (dirty rect0
+
+2008-04-28 07:37  brlcad
+
+	* [r30907] src/librt/shoot.c:
+	  reorder functions so forward declaration of rt_plot_cell() isn't
+	  necessary
+
+2008-04-28 07:40  brlcad
+
+	* [r30908] src/librt/spectrum.c:
+	  make global a static along with some header cleanup
+
+2008-04-28 07:47  brlcad
+
+	* [r30909] src/librt/table.c:
+	  give them semicolons regardless so that they indent correctly by
+	  automatic .. might have been solaris complaining originally, but
+	  see if it's still a concern (gcc is fine with the '};')
+
+2008-04-28 07:49  brlcad
+
+	* [r30910] src/librt/transform.c:
 	  cleanup
 
-2008-04-01 03:25  brlcad
+2008-04-28 08:02  brlcad
 
-	* src/proc-db/masonry.c:
-	  lil more
+	* [r30911] src/librt/globals.c, src/librt/tree.c, src/librt/vers.c,
+	  src/librt/vlist.c:
+	  move (last?) two remaining straggler globals,
+	  rt_initial_tree_state and rt_vlist_cmd_descriptions, over to
+	  globals.c; tidy up while going along.
 
-2008-04-01 06:25  brlcad
+2008-04-28 14:00  brlcad
 
-	* src/libbu/units.c:
-	  implement a bu_nearest_units_string() function that returns the
-	  name of the unit closest to the input unit. also, enhance the
-	  units table with ALL of the SI units from yoctometers to
-	  yottameters along with other astronomical units of measurements,
-	  chains, furlongs, and leagues.
+	* [r30912] include/magic.h, include/mater.h:
+	  wtf was I smoking .. don't cross the streams ray
 
-2008-04-01 06:26  brlcad
+2008-04-28 14:16  brlcad
 
-	* include/bu.h:
-	  declare the new bu_nearest_units_string() function
+	* [r30913] include/mater.h:
+	  add DECL wrappers for C++ compilation
 
-2008-04-01 07:27  brlcad
+2008-04-28 14:18  brlcad
 
-	* src/rt/opt.c:
-	  add a -u option to all of the ray-tracers as a 'units' option for
-	  specifying the desired output units. default continues to be mm
-	  (istead of local). ray-tracers still have to be manually updated
-	  to take advantage of the option
+	* [r30914] include/dg.h:
+	  add proper file header docs for what this header is and is for
 
-2008-04-01 07:42  brlcad
+2008-04-28 14:20  brlcad
 
-	* NEWS, TODO, doc/deprecation.txt, src/rt/viewarea.c:
-	  add a new -u units option support to rtarea so that users can
-	  specify the desired output units. announce clearly that the
-	  output format of rtarea is subject to change soon as is the
-	  terminology being used. this is in preparation of addressing
-	  other user requests to fix the naming conventions, default units
-	  (using local units), and support for additional output formats
-	  (tables). this feature was requested by _many_ (most?) modelers
-	  and analysts.
+	* [r30915] include/Makefile.am, include/ged.h, include/raytrace.h:
+	  add ged.h to the header list for the new LIBGED. it provides the
+	  declarations for wdb_obj, view_obj, and indirectly for dg_obj
+	  (through dg.h)
 
-2008-04-01 07:44  brlcad
+2008-04-28 14:42  brlcad
 
-	* src/rt/viewarea.c:
-	  missing newlines
+	* [r30916] src/libged/bigE.c, src/libged/dg_obj.c,
+	  src/libged/nirt.c, src/libged/qray.c, src/libged/qray.h,
+	  src/libged/vdraw.c, src/libged/view_obj.c, src/libged/wdb_obj.c:
+	  header and identity cleanup, add them to a libged group for
+	  doxygen. removed unused headers and clean up some comments
 
-2008-04-01 15:22  bob1961
+2008-04-28 15:34  brlcad
 
-	* src/mged/ged.c:
-	  Not setting cbreak_mode to COMMAND_LINE_EDITING on windows.
+	* [r30917] include/solid.h:
+	  header needs bu.h and raytrace.h to be self-contained
 
-2008-04-01 15:25  brlcad
+2008-04-28 16:02  brlcad
 
-	* src/libbu/vls.c:
-	  make bu_vls_gets() behave regardless of the lines being \n, \r,
-	  or \r\n -- strip the EOL accordingly
+	* [r30918] include/dg.h, include/ged.h,
+	  misc/win32-msvc8/libged/libged.vcproj, src/libged/CMakeLists.txt,
+	  src/libged/Makefile.am, src/libged/dg_obj.c,
+	  src/libged/globals.c, src/libged/vdraw.c:
+	  add a globals.c to the build for libged with the single global it
+	  presently uses. removed one of the other vdraw globals by making
+	  the interface between vdraw and dg clean enough that the command
+	  table could be made static.
 
-2008-04-01 17:00  starseeker
+2008-04-28 16:20  brlcad
 
-	* src/proc-db/tire.c:
-	  New routine is able to return input parameters in test case -
-	  need more elaborate testing now.
+	* [r30919] configure.ac:
+	  generate POSIX 1003.1-1988 tarballs (256 char paths, allows empty
+	  dirs, pretty portable), not the default V7 tar format (which
+	  limits to 99 char paths and no empty dirs)
 
-2008-04-01 17:11  bob1961
+2008-04-28 16:22  brlcad
 
-	* misc/win32-msvc8/asc2g/asc2g.vcproj:
-	  Update version to 7.12.1
+	* [r30920] configure.ac:
+	  bah, tar-ustar is 1.9+
 
-2008-04-01 22:09  bob1961
+2008-04-28 18:19  starseeker
 
-	* src/librt/g_sketch.c:
-	  Tcl_AppendResult needs three parameters. This fixes a core dump
-	  when getting the form of a sketch.
+	* [r30921] src/proc-db/tire.c:
+	  Add extra trimming for 'truck' profile to avoid tread looking
+	  like it is flaring out.
 
-2008-04-02 00:34  brlcad
+2008-04-28 18:32  starseeker
 
-	* src/libbu/fgets.c:
-	  ws
+	* [r30922] src/proc-db/tire.c:
+	  Tweak truck tread to clear up cut artifacts.
 
-2008-04-02 01:36  brlcad
+2008-04-28 21:52  brlcad
 
-	* src/mged/attach.c:
-	  rework the initial classic console mode attach prompt to use
-	  bu_vls_gets so that we don't have to worry about end of line
-	  issues. also, trim whitespace so it matches more easily and
-	  inform the user which selection is being used to affirm their
-	  selection.
+	* [r30923] src/libged/globals.c:
+	  erm, lost the header. need dg.h to calculate the storage size of
+	  HeadDGObj.
 
-2008-04-02 01:36  brlcad
+2008-04-28 22:12  brlcad
 
-	* src/mged/attach.c:
-	  loopy
+	* [r30924] src/mged/cmd.c:
+	  needs to call vdraw_cmd(), was renamed from dgo_vdraw_cmd()
 
-2008-04-02 02:11  brlcad
+2008-04-28 22:12  brlcad
 
-	* NEWS:
-	  bob fixed a bug with the sketch primitive where it was crashing
-	  when someone requested the tcl form of the sketch. the
-	  Tcl_AppendResult didn't have a terminating null argument.
+	* [r30925] include/ged.h:
+	  declare a Ged_Init() Tcl interface for libged
 
-2008-04-02 02:13  brlcad
+2008-04-28 22:18  brlcad
 
-	* NEWS:
-	  improved mged's classic mode 'attach' display manager selection,
-	  particularly on windows where it was getting the carriage return
-	  in the input string and not getting a successful match. Now it
-	  drops the EOL character(s) and trims whitespace on comparison,
-	  and affirms to the user which option was selected.
+	* [r30926] src/librt/tcl.c:
+	  remove the calls to Wdb_Init, Dg_Init, Vo_Init from librt since
+	  they're no longer in librt ... they need to be provided by libged
+	  if needed so there's not a cyclic dependency. big ws cleanup too.
 
-2008-04-02 10:26  brlcad
+2008-04-28 22:20  brlcad
 
-	* bench, db/include, doc, doc/book, doc/html,
-	  doc/html/ReleaseNotes, doc/html/ReleaseNotes/Rel5.0,
-	  doc/html/ReleaseNotes/Rel5.0/Summary,
-	  doc/html/ReleaseNotes/Rel6.0, doc/html/manuals,
-	  doc/html/manuals/Anim_Tutorial, doc/html/manuals/archer,
-	  doc/html/manuals/cadwidgets, doc/html/manuals/libbu,
-	  doc/html/manuals/libdm, doc/html/manuals/librt,
-	  doc/html/manuals/mged, doc/html/manuals/mged/animmate,
-	  doc/html/manuals/shaders, doc/legal, include/conf, m4,
-	  misc/archlinux, misc/debian, misc/enigma, misc/macosx,
-	  misc/macosx/Resources, misc/macosx/Resources/ReadMe.rtfd,
-	  misc/macosx/Resources/Welcome.rtfd, misc/nsis, misc/pkgconfig,
-	  misc/win32-msvc, misc/win32-msvc/Dll, misc/win32-msvc/aPrep,
-	  misc/win32-msvc7, misc/win32-msvc8, pix, regress, sh, src,
-	  src/adrt, src/adrt/bench, src/adrt/doc, src/adrt/isst,
-	  src/adrt/libcommon, src/adrt/librender, src/adrt/libtexture,
-	  src/adrt/libtie, src/adrt/libtienet, src/adrt/libutil,
-	  src/adrt/master, src/adrt/misc, src/adrt/rise,
-	  src/adrt/rise/master, src/adrt/rise/observer,
-	  src/adrt/rise/slave, src/adrt/scripts, src/adrt/slave,
-	  src/archer, src/archer/plugins, src/archer/plugins/Commands,
-	  src/archer/plugins/Core, src/archer/plugins/Utility,
-	  src/archer/plugins/Wizards,
-	  src/archer/plugins/Wizards/tankwizardIA,
-	  src/archer/plugins/Wizards/tankwizardIA/images, src/brlman,
-	  src/burst, src/bwish, src/canon, src/conv/3dm, src/conv/comgeom,
-	  src/conv/jack, src/conv/off, src/conv/patch, src/external,
-	  src/external/Cubit, src/external/EndgameFramework,
-	  src/external/ProEngineer, src/external/Unigraphics, src/fbed,
-	  src/fbserv, src/gtools, src/gtools/beset, src/halftone, src/java,
-	  src/java/mil, src/java/mil/army, src/java/mil/army/arl,
-	  src/java/mil/army/arl/brlcad, src/lgt, src/libbn, src/libbu,
-	  src/libcursor, src/libdm, src/libfb, src/libmultispectral,
-	  src/liboptical, src/liborle, src/libpkg, src/librt,
-	  src/librtserver, src/libsysv, src/libtclcad, src/libtermio,
-	  src/libwdb, src/mged, src/mged/points, src/mk, src/nirt,
-	  src/other, src/other/URToolkit/cnv,
-	  src/other/URToolkit/cnv/rletoabA62,
-	  src/other/URToolkit/cnv/rletogif, src/other/URToolkit/man,
-	  src/other/URToolkit/tools, src/other/URToolkit/tools/clock,
-	  src/other/awf, src/other/blt, src/other/blt/cf,
-	  src/other/blt/demos, src/other/blt/demos/bitmaps,
-	  src/other/blt/examples, src/other/blt/html,
-	  src/other/blt/library, src/other/blt/library/dd_protocols,
-	  src/other/blt/man, src/other/blt/src, src/other/blt/win,
-	  src/other/incrTcl, src/other/incrTcl/doc, src/other/incrTcl/itcl,
-	  src/other/incrTcl/itcl/doc, src/other/incrTcl/itcl/generic,
-	  src/other/incrTcl/itcl/library, src/other/incrTcl/itk,
-	  src/other/incrTcl/itk/doc, src/other/incrTcl/itk/generic,
-	  src/other/incrTcl/itk/library, src/other/incrTcl/tools,
-	  src/other/intaval, src/other/iwidgets, src/other/iwidgets/doc,
-	  src/other/iwidgets/generic, src/other/jove, src/other/libpng,
-	  src/other/libregex, src/other/libtermlib, src/other/libutahrle,
-	  src/other/libutahrle/include, src/other/libz,
-	  src/other/openNURBS, src/other/tcl, src/other/tcl/unix,
-	  src/other/tcl/unix/dltest, src/other/tk, src/other/tk/unix,
-	  src/other/tkimg, src/other/tkimg/base, src/other/tkimg/png,
-	  src/other/tkimg/pngtcl, src/other/tkimg/zlibtcl, src/other/tnt,
-	  src/proc-db, src/remrt, src/rttherm, src/tab, src/tclscripts,
-	  src/tclscripts/archer, src/tclscripts/archer/images,
-	  src/tclscripts/archer/images/Themes,
-	  src/tclscripts/archer/images/Themes/Crystal,
-	  src/tclscripts/archer/images/Themes/Crystal_Large,
-	  src/tclscripts/archer/images/Themes/Windows,
-	  src/tclscripts/geometree, src/tclscripts/lib,
-	  src/tclscripts/mged, src/tclscripts/nirt, src/tclscripts/pl-dm,
-	  src/tclscripts/rtwizard, src/tclscripts/rtwizard/examples,
-	  src/tclscripts/rtwizard/examples/PictureTypeA,
-	  src/tclscripts/rtwizard/examples/PictureTypeB,
-	  src/tclscripts/rtwizard/examples/PictureTypeC,
-	  src/tclscripts/rtwizard/examples/PictureTypeD,
-	  src/tclscripts/rtwizard/examples/PictureTypeE,
-	  src/tclscripts/rtwizard/examples/PictureTypeF,
-	  src/tclscripts/rtwizard/lib, src/tclscripts/sdialogs,
-	  src/tclscripts/sdialogs/scripts, src/tclscripts/swidgets,
-	  src/tclscripts/swidgets/images, src/tclscripts/swidgets/scripts,
-	  src/tclscripts/util, src/vas4, src/vdeck, src/vfont:
-	  ignore generated Makefile.in and Makefile files
+	* [r30927] misc/win32-msvc8/libged/libged.vcproj,
+	  src/libged/CMakeLists.txt, src/libged/Makefile.am,
+	  src/libged/tcl.c:
+	  initial tcl interface to libged so we can call Wdb_Init,
+	  Dgo_Init, and Vo_Init and provide Ged_Init for dynamic loading
+	  from within tcl.
 
-2008-04-02 10:34  brlcad
+2008-04-28 22:48  brlcad
 
-	* bench, db/include, doc, doc/book, doc/html,
-	  doc/html/ReleaseNotes, doc/html/ReleaseNotes/Rel5.0,
-	  doc/html/ReleaseNotes/Rel5.0/Summary,
-	  doc/html/ReleaseNotes/Rel6.0, doc/html/manuals,
-	  doc/html/manuals/Anim_Tutorial, doc/html/manuals/archer,
-	  doc/html/manuals/cadwidgets, doc/html/manuals/libbu,
-	  doc/html/manuals/libdm, doc/html/manuals/librt,
-	  doc/html/manuals/mged, doc/html/manuals/mged/animmate,
-	  doc/html/manuals/shaders, doc/legal, include/conf, m4,
-	  misc/archlinux, misc/debian, misc/enigma, misc/macosx,
-	  misc/macosx/Resources, misc/macosx/Resources/ReadMe.rtfd,
-	  misc/macosx/Resources/Welcome.rtfd, misc/nsis, misc/pkgconfig,
-	  misc/win32-msvc, misc/win32-msvc/Dll, misc/win32-msvc/aPrep,
-	  misc/win32-msvc7, misc/win32-msvc8, pix, regress, sh, src,
-	  src/adrt, src/adrt/bench, src/adrt/doc, src/adrt/isst,
-	  src/adrt/libcommon, src/adrt/librender, src/adrt/libtexture,
-	  src/adrt/libtie, src/adrt/libtienet, src/adrt/libutil,
-	  src/adrt/master, src/adrt/misc, src/adrt/rise,
-	  src/adrt/rise/master, src/adrt/rise/observer,
-	  src/adrt/rise/slave, src/adrt/scripts, src/adrt/slave,
-	  src/archer, src/archer/plugins, src/archer/plugins/Commands,
-	  src/archer/plugins/Core, src/archer/plugins/Utility,
-	  src/archer/plugins/Wizards,
-	  src/archer/plugins/Wizards/tankwizardIA,
-	  src/archer/plugins/Wizards/tankwizardIA/images, src/brlman,
-	  src/burst, src/bwish, src/canon, src/conv/3dm, src/conv/comgeom,
-	  src/conv/jack, src/conv/off, src/conv/patch, src/external,
-	  src/external/Cubit, src/external/EndgameFramework,
-	  src/external/ProEngineer, src/external/Unigraphics, src/fbed,
-	  src/fbserv, src/gtools, src/gtools/beset, src/halftone, src/java,
-	  src/java/mil, src/java/mil/army, src/java/mil/army/arl,
-	  src/java/mil/army/arl/brlcad, src/lgt, src/libbn, src/libbu,
-	  src/libcursor, src/libdm, src/libfb, src/libmultispectral,
-	  src/liboptical, src/liborle, src/libpkg, src/librt,
-	  src/librtserver, src/libsysv, src/libtclcad, src/libtermio,
-	  src/libwdb, src/mged, src/mged/points, src/mk, src/nirt,
-	  src/other, src/other/URToolkit/cnv,
-	  src/other/URToolkit/cnv/rletoabA62,
-	  src/other/URToolkit/cnv/rletogif, src/other/URToolkit/man,
-	  src/other/URToolkit/tools, src/other/URToolkit/tools/clock,
-	  src/other/awf, src/other/blt, src/other/blt/cf,
-	  src/other/blt/demos, src/other/blt/demos/bitmaps,
-	  src/other/blt/examples, src/other/blt/html,
-	  src/other/blt/library, src/other/blt/library/dd_protocols,
-	  src/other/blt/man, src/other/blt/src, src/other/blt/win,
-	  src/other/incrTcl, src/other/incrTcl/doc, src/other/incrTcl/itcl,
-	  src/other/incrTcl/itcl/doc, src/other/incrTcl/itcl/generic,
-	  src/other/incrTcl/itcl/library, src/other/incrTcl/itk,
-	  src/other/incrTcl/itk/doc, src/other/incrTcl/itk/generic,
-	  src/other/incrTcl/itk/library, src/other/incrTcl/tools,
-	  src/other/intaval, src/other/iwidgets, src/other/iwidgets/doc,
-	  src/other/iwidgets/generic, src/other/jove, src/other/libpng,
-	  src/other/libregex, src/other/libtermlib, src/other/libutahrle,
-	  src/other/libutahrle/include, src/other/libz,
-	  src/other/openNURBS, src/other/tcl, src/other/tcl/unix,
-	  src/other/tcl/unix/dltest, src/other/tk, src/other/tk/unix,
-	  src/other/tkimg, src/other/tkimg/base, src/other/tkimg/png,
-	  src/other/tkimg/pngtcl, src/other/tkimg/zlibtcl, src/other/tnt,
-	  src/proc-db, src/remrt, src/rttherm, src/tab, src/tclscripts,
-	  src/tclscripts/archer, src/tclscripts/archer/images,
-	  src/tclscripts/archer/images/Themes,
-	  src/tclscripts/archer/images/Themes/Crystal,
-	  src/tclscripts/archer/images/Themes/Crystal_Large,
-	  src/tclscripts/archer/images/Themes/Windows,
-	  src/tclscripts/geometree, src/tclscripts/lib,
-	  src/tclscripts/mged, src/tclscripts/nirt, src/tclscripts/pl-dm,
-	  src/tclscripts/rtwizard, src/tclscripts/rtwizard/examples,
-	  src/tclscripts/rtwizard/examples/PictureTypeA,
-	  src/tclscripts/rtwizard/examples/PictureTypeB,
-	  src/tclscripts/rtwizard/examples/PictureTypeC,
-	  src/tclscripts/rtwizard/examples/PictureTypeD,
-	  src/tclscripts/rtwizard/examples/PictureTypeE,
-	  src/tclscripts/rtwizard/examples/PictureTypeF,
-	  src/tclscripts/rtwizard/lib, src/tclscripts/sdialogs,
-	  src/tclscripts/sdialogs/scripts, src/tclscripts/swidgets,
-	  src/tclscripts/swidgets/images, src/tclscripts/swidgets/scripts,
-	  src/tclscripts/util, src/vas4, src/vdeck, src/vfont:
-	  bah, revert previous propsetting .. need additive, not override
+	* [r30928] src/libged/Makefile.am:
+	  need TCL_CPPFLAGS now that there are tcl routines..
 
-2008-04-02 11:24  brlcad
+2008-04-28 22:49  brlcad
 
-	* bench, db/include, doc, doc/book, doc/html,
-	  doc/html/ReleaseNotes, doc/html/ReleaseNotes/Rel5.0,
-	  doc/html/ReleaseNotes/Rel5.0/Summary,
-	  doc/html/ReleaseNotes/Rel6.0, doc/html/manuals,
-	  doc/html/manuals/Anim_Tutorial, doc/html/manuals/archer,
-	  doc/html/manuals/cadwidgets, doc/html/manuals/libbu,
-	  doc/html/manuals/libdm, doc/html/manuals/librt,
-	  doc/html/manuals/mged, doc/html/manuals/mged/animmate,
-	  doc/html/manuals/shaders, doc/legal, include/conf, m4,
-	  misc/archlinux, misc/debian, misc/enigma, misc/macosx,
-	  misc/macosx/Resources, misc/macosx/Resources/ReadMe.rtfd,
-	  misc/macosx/Resources/Welcome.rtfd, misc/nsis, misc/pkgconfig,
-	  misc/win32-msvc, misc/win32-msvc/Dll, misc/win32-msvc/aPrep,
-	  misc/win32-msvc7, misc/win32-msvc8, pix, regress, sh, src,
-	  src/adrt, src/adrt/bench, src/adrt/doc, src/adrt/isst,
-	  src/adrt/libcommon, src/adrt/librender, src/adrt/libtexture,
-	  src/adrt/libtie, src/adrt/libtienet, src/adrt/libutil,
-	  src/adrt/master, src/adrt/misc, src/adrt/rise,
-	  src/adrt/rise/master, src/adrt/rise/observer,
-	  src/adrt/rise/slave, src/adrt/scripts, src/adrt/slave,
-	  src/archer, src/archer/plugins, src/archer/plugins/Commands,
-	  src/archer/plugins/Core, src/archer/plugins/Utility,
-	  src/archer/plugins/Wizards,
-	  src/archer/plugins/Wizards/tankwizardIA,
-	  src/archer/plugins/Wizards/tankwizardIA/images, src/brlman,
-	  src/burst, src/bwish, src/canon, src/conv/3dm, src/conv/comgeom,
-	  src/conv/jack, src/conv/off, src/conv/patch, src/external,
-	  src/external/Cubit, src/external/EndgameFramework,
-	  src/external/ProEngineer, src/external/Unigraphics, src/fbed,
-	  src/fbserv, src/gtools, src/gtools/beset, src/halftone, src/java,
-	  src/java/mil, src/java/mil/army, src/java/mil/army/arl,
-	  src/java/mil/army/arl/brlcad, src/lgt, src/libbn, src/libbu,
-	  src/libcursor, src/libdm, src/libfb, src/libmultispectral,
-	  src/liboptical, src/liborle, src/libpkg, src/librt,
-	  src/librtserver, src/libsysv, src/libtclcad, src/libtermio,
-	  src/libwdb, src/mged, src/mged/points, src/mk, src/nirt,
-	  src/other, src/other/URToolkit/cnv,
-	  src/other/URToolkit/cnv/rletoabA62,
-	  src/other/URToolkit/cnv/rletogif, src/other/URToolkit/man,
-	  src/other/URToolkit/tools, src/other/URToolkit/tools/clock,
-	  src/other/awf, src/other/blt, src/other/blt/cf,
-	  src/other/blt/demos, src/other/blt/demos/bitmaps,
-	  src/other/blt/examples, src/other/blt/html,
-	  src/other/blt/library, src/other/blt/library/dd_protocols,
-	  src/other/blt/man, src/other/blt/src, src/other/blt/win,
-	  src/other/incrTcl, src/other/incrTcl/doc, src/other/incrTcl/itcl,
-	  src/other/incrTcl/itcl/doc, src/other/incrTcl/itcl/generic,
-	  src/other/incrTcl/itcl/library, src/other/incrTcl/itk,
-	  src/other/incrTcl/itk/doc, src/other/incrTcl/itk/generic,
-	  src/other/incrTcl/itk/library, src/other/incrTcl/tools,
-	  src/other/intaval, src/other/iwidgets, src/other/iwidgets/doc,
-	  src/other/iwidgets/generic, src/other/jove, src/other/libpng,
-	  src/other/libregex, src/other/libtermlib, src/other/libutahrle,
-	  src/other/libutahrle/include, src/other/libz,
-	  src/other/openNURBS, src/other/tcl, src/other/tcl/unix,
-	  src/other/tcl/unix/dltest, src/other/tk, src/other/tk/unix,
-	  src/other/tkimg, src/other/tkimg/base, src/other/tkimg/png,
-	  src/other/tkimg/pngtcl, src/other/tkimg/zlibtcl, src/other/tnt,
-	  src/proc-db, src/remrt, src/rttherm, src/tab, src/tclscripts,
-	  src/tclscripts/archer, src/tclscripts/archer/images,
-	  src/tclscripts/archer/images/Themes,
-	  src/tclscripts/archer/images/Themes/Crystal,
-	  src/tclscripts/archer/images/Themes/Crystal_Large,
-	  src/tclscripts/archer/images/Themes/Windows,
-	  src/tclscripts/geometree, src/tclscripts/lib,
-	  src/tclscripts/mged, src/tclscripts/nirt, src/tclscripts/pl-dm,
-	  src/tclscripts/rtwizard, src/tclscripts/rtwizard/examples,
-	  src/tclscripts/rtwizard/examples/PictureTypeA,
-	  src/tclscripts/rtwizard/examples/PictureTypeB,
-	  src/tclscripts/rtwizard/examples/PictureTypeC,
-	  src/tclscripts/rtwizard/examples/PictureTypeD,
-	  src/tclscripts/rtwizard/examples/PictureTypeE,
-	  src/tclscripts/rtwizard/examples/PictureTypeF,
-	  src/tclscripts/rtwizard/lib, src/tclscripts/sdialogs,
-	  src/tclscripts/sdialogs/scripts, src/tclscripts/swidgets,
-	  src/tclscripts/swidgets/images, src/tclscripts/swidgets/scripts,
-	  src/tclscripts/util, src/util, src/vas4, src/vdeck, src/vfont:
-	  much better .. ignore all the generated Makefile, Makefile.in,
-	  .deps, and .libs stuff
+	* [r30929] configure.ac:
+	  GED_LIBS needs to come *after* RT_LIBS if w'ere going to use it.
 
-2008-04-02 13:35  bob1961
+2008-04-28 22:53  brlcad
 
-	* src/librt/wdb_comb_std.c:
-	  Found another case where Tcl_AppendResult was not being used
-	  correctly (i.e. last argument must be a null char *).
+	* [r30930] src/Makefile.am:
+	  librtserver doesn't need libged to move it to benchmark dirs
 
-2008-04-02 15:13  brlcad
+2008-04-28 23:34  brlcad
 
-	* include/dg.h, src/proc-db/tire.c:
-	  folks need to set up their subversion config file with auto-props
-	  entries. set the mime-types and eol-style
+	* [r30931] configure.ac:
+	  libdm uses HeadDGObj and drawable geometry now in libged
 
-2008-04-02 15:17  brlcad
+2008-04-29 02:39  starseeker
 
-	* include/dg.h:
-	  fix header
+	* [r30932] src/proc-db/tire.1, src/proc-db/tire.c:
+	  Tire thickness, hub width, and tread depth can now be floating
+	  point numbers.
 
-2008-04-02 16:11  starseeker
+2008-04-29 06:18  brlcad
 
-	* src/proc-db/tire.c:
-	  Appears to be a problem with rotation - added testing routines
-	  for equations at various points, easier generation of test cases.
+	* [r30933] sh/linkroot.sh:
+	  if the paths match up, just symlink to the basename of the
+	  provided installation dir instead of using the full path
 
-2008-04-03 16:18  starseeker
+2008-04-29 06:23  brlcad
 
-	* src/proc-db/tire.c:
-	  Solve derivative equations for zero, not -1.
+	* [r30934] sh/make_pkg.sh:
+	  yucky, icky quote typos make the dust bunnies angry
 
-2008-04-03 20:57  starseeker
+2008-04-29 06:30  brlcad
 
-	* src/proc-db/tire.c:
-	  Still some edge effects when testing parameters, but much closer.
+	* [r30935] misc/macosx/openUp.c:
+	  quell warnings
 
-2008-04-03 21:40  bob1961
+2008-04-29 07:06  brlcad
 
-	* src/archer/archer.bat, src/mged/mged.bat:
-	  Update version.
+	* [r30936] src/libged/bigE.c:
+	  libged doxygen group
 
-2008-04-03 21:41  bob1961
+2008-04-29 08:51  brlcad
 
-	* misc/nsis/brlcad.nsi:
-	  Added desktop icons for mged and archer. Minor cleanup.
+	* [r30937] sh/make_dmg.sh:
+	  fix the dmg creation, it wasn't copying the background file onto
+	  the dmg for a couple reasons. add a few printing statements to
+	  keep track of progress too.
 
-2008-04-03 21:43  bob1961
+2008-04-29 12:32  d_rossberg
 
-	* misc/win32-msvc8/tclsh/library/installTree.tcl:
-	  Added variables for keeping track of versions.
+	* [r30938] src/other/tcl/generic/tcl.h:
+	  take the dynamic C runtime macro _DLL into consideration for the
+	  dynamic TCL library too
+	  it is not sure that a dynamic TCL library should be compiled with
+	  a static CRT
+	  but this modification corrects the CRT declarations only, not the
+	  CRT to use
 
-2008-04-04 05:40  brlcad
+2008-04-29 14:38  d_rossberg
 
-	* src/other/tkimg/png/Makefile.am:
-	  missing LIBZ_CPPFLAGS
+	* [r30939] include/bio.h, include/config_win.h:
+	  removed MSVC 6.0 exceptions
+	  this version of the Microsoft compiler won't be supported any
+	  more
 
-2008-04-04 16:11  bob1961
+2008-04-29 14:57  d_rossberg
 
-	* src/util/rtwizard.bat:
-	  Update the version.
+	* [r30940] src/libged/globals.c:
+	  the MS Windows build needs the types from windows.h
 
-2008-04-04 19:08  brlcad
+2008-04-29 15:05  d_rossberg
 
-	* AUTHORS:
-	  add gillich to the contributors list for his g-sat importer
+	* [r30941] include/conf/CMakeLists.txt:
+	  escape backslash
 
-2008-04-04 20:23  bob1961
+2008-04-29 15:14  d_rossberg
 
-	* misc/win32-msvc8/rt/rt.vcproj,
+	* [r30942] src/other/tcl/CMakeLists.txt,
+	  src/other/tcl/generic/CMakeLists.txt,
+	  src/other/tcl/libtommath/CMakeLists.txt,
+	  src/other/tcl/win/CMakeLists.txt:
+	  CMake for tcl85.dll and tclpip85.dll
+	  (MS Windows only)
+
+2008-04-29 15:17  d_rossberg
+
+	* [r30943] misc/win32-msvc/CMakeLists.txt,
+	  misc/win32-msvc/Dll/BrlcadCore.rc,
+	  misc/win32-msvc/Dll/CMakeLists.txt, src/libged/CMakeLists.txt:
+	  created BrlcadCore.dll: a kind of brlcad.dll which can make use
+	  of TCL (i.e. no TclDummies.c)
+
+2008-04-29 22:30  starseeker
+
+	* [r30944] src/proc-db/tire.c:
+	  Add air region inside of tire.
+
+2008-04-29 22:38  brlcad
+
+	* [r30945] include/wdb.h, misc/win32-msvc8/libwdb/libwdb.vcproj,
+	  src/libwdb/CMakeLists.txt, src/libwdb/Makefile.am,
+	  src/libwdb/reg4.c, src/libwdb/spl.c, src/libwdb/strsol.c,
+	  src/libwdb/wdb.c:
+	  remove obsolete libwdb interfaces for strsol, reg4, and spl. this
+	  includes mk_trc(), mk_bsolid(), mk_bsurf(), mk_strsol(),
+	  mk_rcomb(), mk_fcomb(), mk_memb(), and mk_fwrite_internal().
+
+2008-04-29 22:56  starseeker
+
+	* [r30946] src/proc-db/tire.1, src/proc-db/tire.c:
+	  Add -s option to specify radius of maximum sidewall width point.
+
+2008-04-30 01:34  johnranderson
+
+	* [r30947] include/bu.h, include/magic.h, src/libbu/CMakeLists.txt,
+	  src/libbu/Makefile.am, src/libbu/magic.c, src/libbu/vlb.c:
+	  Added support for a variable length byte buffer (bu_vlb). Similar
+	  to bu_vls,
+	  but not string based (null byte is not special). Anticipated use
+	  in librtserver
+	  which is scheduled to change its Java return to a simple byte
+	  array.
+
+2008-04-30 02:42  starseeker
+
+	* [r30948] src/proc-db/tire.c:
+	  Add options to override the 'd' flag values, in order to have
+	  floating point dimensions as input.
+
+2008-04-30 13:05  starseeker
+
+	* [r30949] src/proc-db/tire.c:
+	  Whoopsie, tire thickness needs dztred to be calculated first.
+
+2008-04-30 13:19  starseeker
+
+	* [r30950] src/proc-db/tire.1, src/proc-db/tire.c:
+	  Add docs for options to specify just width, ratio, or wheel
+	  diameter.
+
+2008-05-01 18:58  starseeker
+
+	* [r30951] configure.ac:
+	  Make sure CPPFLAGS are listed before the TCL generic directory
+	  for out of source builds - otherwise regfree gets defined by TCL
+	  and points to TclReFree, which seems to be undefined.
+
+2008-05-01 19:23  brlcad
+
+	* [r30952] src/mged/setup.c:
+	  need to call the new Ged_Init() so that the HeadDGObj is
+	  initialized. it was initialized in Rt_Init(), but no longer with
+	  the new libged. unbreaks mged.
+
+2008-05-01 19:38  brlcad
+
+	* [r30953] misc/win32-msvc8/mged/mged.vcproj, src/mged/Makefile.am,
+	  src/mged/adc.c, src/mged/anal.c, src/mged/animedit.c,
+	  src/mged/arb.c, src/mged/arbs.c, src/mged/attach.c,
+	  src/mged/axes.c, src/mged/bodyio.c, src/mged/bool_rewrite.c,
+	  src/mged/buttons.c, src/mged/chgmodel.c, src/mged/chgtree.c,
+	  src/mged/chgview.c, src/mged/clone.c, src/mged/cmd.c,
+	  src/mged/cmd.h, src/mged/color_scheme.c, src/mged/columns.c,
+	  src/mged/concat.c, src/mged/dir.c, src/mged/dm-X.c,
+	  src/mged/dm-generic.c, src/mged/dm-ogl.c, src/mged/dm-plot.c,
+	  src/mged/dm-ps.c, src/mged/dm-tk.c, src/mged/dm-wgl.c,
+	  src/mged/dodraw.c, src/mged/doevent.c, src/mged/dozoom.c,
+	  src/mged/edarb.c, src/mged/edars.c, src/mged/edpipe.c,
+	  src/mged/edsol.c, src/mged/facedef.c, src/mged/fbserv.c,
+	  src/mged/fbserv_win32.c, src/mged/ged.c, src/mged/ged.h,
+	  src/mged/grid.c, src/mged/hideline.c, src/mged/history.c,
+	  src/mged/inside.c, src/mged/mater.c, src/mged/menu.c,
+	  src/mged/mged.c, src/mged/mged.dsp, src/mged/mged.h,
+	  src/mged/mged_dm.h, src/mged/mover.c, src/mged/muves.c,
+	  src/mged/overlay.c, src/mged/plot.c, src/mged/polyif.c,
+	  src/mged/predictor.c, src/mged/qray.c, src/mged/rect.c,
+	  src/mged/red.c, src/mged/rtif.c, src/mged/scroll.c,
+	  src/mged/set.c, src/mged/setup.c, src/mged/share.c,
+	  src/mged/solids_on_ray.c, src/mged/tedit.c, src/mged/titles.c,
+	  src/mged/track.c, src/mged/typein.c, src/mged/update.c,
+	  src/mged/usepen.c, src/mged/utility1.c, src/mged/utility2.c,
+	  src/mged/vdraw.c, src/mged/vparse.c, src/mged/vrlink.c:
+	  rename ged.c and ged.h to mged.c and mged.h so that the header
+	  doesn't conflict with the ged.h that was added for the new libged
+	  library
+
+2008-05-01 19:59  brlcad
+
+	* [r30954] include/bn.h, include/bu.h, include/dm.h, include/fb.h,
+	  include/ged.h, include/raytrace.h,
+	  misc/win32-msvc8/libbu/libbu.vcproj, src/libbn/bn_tcl.c,
+	  src/libbu/bu_tcl.c, src/libdm/tcl.c, src/libfb/tcl.c,
+	  src/libged/tcl.c, src/librt/tcl.c, src/libsysv/tcl.c,
+	  src/mged/attach.c, src/mged/cmd.c, src/mged/setup.c:
+	  remove BRLCAD_DEBUG from the build, Bob says it's no longer
+	  needed.
+
+2008-05-01 21:18  starseeker
+
+	* [r30955] src/proc-db/tire.c:
+	  Begin cleanup to make tire follow HACKING formatting conventions.
+
+2008-05-01 21:22  erikgreenwald
+
+	* [r30956] src/librt/g_metaball.c:
+	  adjust Blinn method evaluator to follow existing inside/outside
+	  convention
+
+2008-05-01 21:26  brlcad
+
+	* [r30957] src/librt/g_metaball.c:
+	  yay for magic numbers, changed constant to SMALL_FASTF for
+	  near-zero testing
+
+2008-05-01 21:32  erikgreenwald
+
+	* [r30958] src/librt/g_metaball.c:
+	  carry the goo value into prepared geometry.
+
+2008-05-02 03:55  brlcad
+
+	* [r30959] configure.ac, include/Makefile.am, include/regex.h,
+	  src/other/libregex/Makefile.am, src/other/libregex/regex.h:
+	  including all CPPFLAGS before the tcl includes could have some
+	  potentially undesirable side effects, just include the one we
+	  know is needed to find the right regex header. in related news,
+	  move the regex.h header out of our include dir to src/other where
+	  it belongs, updating the build as needed.
+
+2008-05-02 04:04  brlcad
+
+	* [r30960] db:
+	  ignore pinewood.g and lockfile
+
+2008-05-02 04:07  brlcad
+
+	* [r30961] db:
+	  hm try harder to ignore lockfile, somehow slipped off. also
+	  ignore the operators.asc2g temp file
+
+2008-05-02 14:45  erikgreenwald
+
+	* [r30962] src/librt/g_metaball.c:
+	  Blinn blob method normals added, thanks to Ed for the math fu.
+	  Lame assertion removed.
+
+2008-05-02 14:47  brlcad
+
+	* [r30963] BUGS, NEWS:
+	  add a local variables footer so the files enter text mode and
+	  fill to column 70
+
+2008-05-02 18:42  bob1961
+
+	* [r30964] include/raytrace.h:
+	  Add mirror_origin parameter. The axis parameter has been changed
+	  to mirror_dir.
+
+2008-05-02 18:45  bob1961
+
+	* [r30965] src/librt/mirror.c:
+	  This enhancement adds the ability to mirror using an arbitrary
+	  vector. The vector's origin can also be specified.
+
+2008-05-02 18:47  bob1961
+
+	* [r30966] src/mged/chgmodel.c:
+	  Modified the mirror command to make use of the more flexible
+	  rt_mirror. The command syntax has also changed.
+
+2008-05-02 18:59  bob1961
+
+	* [r30967] src/tclscripts/mged/help.tcl:
+	  Update mirror command's help string.
+
+2008-05-03 07:17  louipc
+
+	* [r30968] src/README:
+	  Add a line about libged in src/README
+
+2008-05-03 07:43  brlcad
+
+	* [r30969] NEWS:
+	  bob rewrote mirror with new options for mirroring about an
+	  arbitrary/given vector specified by a direction, origin point,
+	  scalar value the given vector and the traditional x/y/z axes.
+
+2008-05-04 03:12  louipc
+
+	* [r30970] INSTALL:
+	  Add line to INSTALL mentioning doc/README.Linux
+
+2008-05-04 03:13  louipc
+
+	* [r30971] doc/README.Linux:
+	  Add notes about building for Arch Linux to doc/README.Linux.
+
+2008-05-04 03:26  louipc
+
+	* [r30972] misc/archlinux/brlcad.sh:
+	  Remove comments from Arch Linux profile.d script.
+
+2008-05-04 03:31  louipc
+
+	* [r30973] misc/archlinux/PKGBUILD:
+	  Fix PKGBUILD:
+	  add bc as makedepends,
+	  add x86_64 to arch,
+	  update md5sum for profile.d script,
+	  properly install bdl license.
+
+2008-05-04 04:37  brlcad
+
+	* [r30974] misc/Makefile.am, misc/rcs2log:
+	  no longer need rcs2log
+
+2008-05-04 21:10  brlcad
+
+	* [r30976] configure.ac, src/libbn/Makefile.am,
+	  src/libbu/Makefile.am, src/libcursor/Makefile.am,
+	  src/libdm/Makefile.am, src/libfb/Makefile.am,
+	  src/libfft/Makefile.am, src/libged/Makefile.am,
+	  src/libmultispectral/Makefile.am, src/liboptical/Makefile.am,
+	  src/liborle/Makefile.am, src/libpkg/Makefile.am,
+	  src/librt/Makefile.am, src/librtserver/Makefile.am,
+	  src/libsysv/Makefile.am, src/libtclcad/Makefile.am,
+	  src/libtermio/Makefile.am, src/libwdb/Makefile.am:
+	  add the -no-undefined libtool LDFLAGS flag so that libtool will
+	  ensure that all symbols in each library are resolved properly.
+	  this helps preserve more obscure portability problems for systems
+	  like windows and aix. required a few mods for mac os x including
+	  providing -fexceptions as a libtool -Wc compilation flag (since
+	  1.5 strips -f options). also pass -framework options through with
+	  -Xlinker so that libtool similarly doesn't strip them from the
+	  linkage
+
+2008-05-04 21:25  brlcad
+
+	* [r30977] Makefile.am:
+	  add -w to the default make flags so that the path is included in
+	  the build logs for context
+
+2008-05-05 13:16  bob1961
+
+	* [r30978] misc/win32-msvc8/brlcad/brlcad.sln:
+	  Added libged and support for x64.
+
+2008-05-05 13:18  bob1961
+
+	* [r30979] misc/win32-msvc8/asc2g/asc2g.vcproj,
+	  misc/win32-msvc8/asc2nmg/asc2nmg.vcproj,
+	  misc/win32-msvc8/asc2pix/asc2pix.vcproj,
+	  misc/win32-msvc8/bot2bldxf/bot2bldxf.vcproj,
+	  misc/win32-msvc8/bot2raw/bot2raw.vcproj,
+	  misc/win32-msvc8/bot_shell2vtk/bot_shell2vtk.vcproj,
+	  misc/win32-msvc8/breplicator/breplicator.vcproj,
+	  misc/win32-msvc8/btclsh/btclsh.vcproj,
+	  misc/win32-msvc8/bw2fb/bw2fb.vcproj,
+	  misc/win32-msvc8/bw2pix/bw2pix.vcproj,
+	  misc/win32-msvc8/bwish/bwish.vcproj,
+	  misc/win32-msvc8/bwmod/bwmod.vcproj,
+	  misc/win32-msvc8/cat2fb/cat2fb.vcproj,
+	  misc/win32-msvc8/cell2fb/cell2fb.vcproj,
+	  misc/win32-msvc8/cmap2fb/cmap2fb.vcproj,
+	  misc/win32-msvc8/cy2g/cy2g.vcproj,
+	  misc/win32-msvc8/dbupgrade/dbupgrade.vcproj,
+	  misc/win32-msvc8/dxf2g/dxf2g.vcproj,
+	  misc/win32-msvc8/enf2g/enf2g.vcproj,
+	  misc/win32-msvc8/euclid2g/euclid2g.vcproj,
+	  misc/win32-msvc8/euclid_format/euclid_format.vcproj,
+	  misc/win32-msvc8/euclid_unformat/euclid_unformat.vcproj,
+	  misc/win32-msvc8/fast42g/fast42g.vcproj,
+	  misc/win32-msvc8/fb2bw/fb2bw.vcproj,
+	  misc/win32-msvc8/fb2cmap/fb2cmap.vcproj,
+	  misc/win32-msvc8/fb2fb/fb2fb.vcproj,
+	  misc/win32-msvc8/fb2orle/fb2orle.vcproj,
+	  misc/win32-msvc8/fb2pix/fb2pix.vcproj,
+	  misc/win32-msvc8/fb2png/fb2png.vcproj,
+	  misc/win32-msvc8/fb2rle/fb2rle.vcproj,
+	  misc/win32-msvc8/fbanim/fbanim.vcproj,
+	  misc/win32-msvc8/fbcbars/fbcbars.vcproj,
+	  misc/win32-msvc8/fbclear/fbclear.vcproj,
+	  misc/win32-msvc8/fbcmap/fbcmap.vcproj,
+	  misc/win32-msvc8/fbcmrot/fbcmrot.vcproj,
+	  misc/win32-msvc8/fbcolor/fbcolor.vcproj,
+	  misc/win32-msvc8/fbfade/fbfade.vcproj,
+	  misc/win32-msvc8/fbframe/fbframe.vcproj,
+	  misc/win32-msvc8/fbfree/fbfree.vcproj,
+	  misc/win32-msvc8/fbgamma/fbgamma.vcproj,
+	  misc/win32-msvc8/fbgammamod/fbgammamod.vcproj,
+	  misc/win32-msvc8/fbgrid/fbgrid.vcproj,
+	  misc/win32-msvc8/fbhelp/fbhelp.vcproj,
+	  misc/win32-msvc8/fblabel/fblabel.vcproj,
+	  misc/win32-msvc8/fbline/fbline.vcproj,
+	  misc/win32-msvc8/fbpoint/fbpoint.vcproj,
+	  misc/win32-msvc8/fbscanplot/fbscanplot.vcproj,
+	  misc/win32-msvc8/fbserv/fbserv.vcproj,
+	  misc/win32-msvc8/fbstretch/fbstretch.vcproj,
+	  misc/win32-msvc8/fbzoom/fbzoom.vcproj,
+	  misc/win32-msvc8/g2acad/g2acad.vcproj,
+	  misc/win32-msvc8/g2adrt/g2adrt.vcproj,
+	  misc/win32-msvc8/g2asc/g2asc.vcproj,
+	  misc/win32-msvc8/g2dxf/g2dxf.vcproj,
+	  misc/win32-msvc8/g2euclid/g2euclid.vcproj,
+	  misc/win32-msvc8/g2euclid1/g2euclid1.vcproj,
+	  misc/win32-msvc8/g2iges/g2iges.vcproj,
+	  misc/win32-msvc8/g2nff/g2nff.vcproj,
+	  misc/win32-msvc8/g2nmg/g2nmg.vcproj,
+	  misc/win32-msvc8/g2obj/g2obj.vcproj,
+	  misc/win32-msvc8/g2shellrect/g2shellrect.vcproj,
+	  misc/win32-msvc8/g2stl/g2stl.vcproj,
+	  misc/win32-msvc8/g2tankill/g2tankill.vcproj,
+	  misc/win32-msvc8/g2var/g2var.vcproj,
+	  misc/win32-msvc8/g2vrml/g2vrml.vcproj,
+	  misc/win32-msvc8/g2x3d/g2x3d.vcproj,
+	  misc/win32-msvc8/g42g5/g42g5.vcproj,
+	  misc/win32-msvc8/g52g4/g52g4.vcproj,
+	  misc/win32-msvc8/gif2fb/gif2fb.vcproj,
+	  misc/win32-msvc8/iges2g/iges2g.vcproj,
+	  misc/win32-msvc8/itclstub/itclstub.vcproj,
+	  misc/win32-msvc8/itkstub/itkstub.vcproj,
+	  misc/win32-msvc8/libBLT/libBLT.vcproj,
+	  misc/win32-msvc8/libItcl/libItcl.vcproj,
+	  misc/win32-msvc8/libItk/libItk.vcproj,
+	  misc/win32-msvc8/libbn/libbn.vcproj,
+	  misc/win32-msvc8/libbu/libbu.vcproj,
+	  misc/win32-msvc8/libdm/libdm.vcproj,
+	  misc/win32-msvc8/libfb/libfb.vcproj,
+	  misc/win32-msvc8/libged/libged.vcproj,
+	  misc/win32-msvc8/liboptical/liboptical.vcproj,
+	  misc/win32-msvc8/liborle/liborle.vcproj,
+	  misc/win32-msvc8/libpkg/libpkg.vcproj,
+	  misc/win32-msvc8/libpng/libpng.vcproj,
+	  misc/win32-msvc8/libregex/libregex.vcproj,
+	  misc/win32-msvc8/librt/librt.vcproj,
+	  misc/win32-msvc8/libsysv/libsysv.vcproj,
+	  misc/win32-msvc8/libtcl/libtcl.vcproj,
+	  misc/win32-msvc8/libtclcad/libtclcad.vcproj,
+	  misc/win32-msvc8/libtk/libtk.vcproj,
+	  misc/win32-msvc8/libutahrle/libutahrle.vcproj,
+	  misc/win32-msvc8/libwdb/libwdb.vcproj,
+	  misc/win32-msvc8/libz/libz.vcproj,
+	  misc/win32-msvc8/mged/mged.vcproj,
+	  misc/win32-msvc8/nastran2g/nastran2g.vcproj,
+	  misc/win32-msvc8/nirt/nirt.vcproj,
+	  misc/win32-msvc8/nmg2bot/nmg2bot.vcproj,
+	  misc/win32-msvc8/nmg2rib/nmg2rib.vcproj,
+	  misc/win32-msvc8/nmg2sgp/nmg2sgp.vcproj,
+	  misc/win32-msvc8/opennurbs/opennurbs.vcproj,
+	  misc/win32-msvc8/orle2fb/orle2fb.vcproj,
+	  misc/win32-msvc8/pix2asc/pix2asc.vcproj,
+	  misc/win32-msvc8/pix2bw/pix2bw.vcproj,
+	  misc/win32-msvc8/pix2fb/pix2fb.vcproj,
+	  misc/win32-msvc8/pixautosize/pixautosize.vcproj,
+	  misc/win32-msvc8/pixflip2fb/pixflip2fb.vcproj,
+	  misc/win32-msvc8/pixmatte/pixmatte.vcproj,
+	  misc/win32-msvc8/pl2fb/pl2fb.vcproj,
+	  misc/win32-msvc8/ply2g/ply2g.vcproj,
+	  misc/win32-msvc8/png2fb/png2fb.vcproj,
+	  misc/win32-msvc8/polar2fb/polar2fb.vcproj,
+	  misc/win32-msvc8/poly2bot/poly2bot.vcproj,
+	  misc/win32-msvc8/pp2fb/pp2fb.vcproj,
+	  misc/win32-msvc8/rle2fb/rle2fb.vcproj,
+	  misc/win32-msvc8/rt/rt.vcproj,
 	  misc/win32-msvc8/rt_bot_faces/rt_bot_faces.vcproj,
 	  misc/win32-msvc8/rtarea/rtarea.vcproj,
 	  misc/win32-msvc8/rtcell/rtcell.vcproj,
+	  misc/win32-msvc8/rtcheck/rtcheck.vcproj,
+	  misc/win32-msvc8/rtedge/rtedge.vcproj,
 	  misc/win32-msvc8/rtfrac/rtfrac.vcproj,
+	  misc/win32-msvc8/rtg3/rtg3.vcproj,
 	  misc/win32-msvc8/rthide/rthide.vcproj,
 	  misc/win32-msvc8/rtpp/rtpp.vcproj,
 	  misc/win32-msvc8/rtrad/rtrad.vcproj,
@@ -930,782 +1369,1479 @@
 	  misc/win32-msvc8/rtray/rtray.vcproj,
 	  misc/win32-msvc8/rtsil/rtsil.vcproj,
 	  misc/win32-msvc8/rtweight/rtweight.vcproj,
-	  misc/win32-msvc8/rtxray/rtxray.vcproj:
-	  Change _DEBUG to NDEBUG in preprocessor definitions.
+	  misc/win32-msvc8/rtxray/rtxray.vcproj,
+	  misc/win32-msvc8/spm2fb/spm2fb.vcproj,
+	  misc/win32-msvc8/stl2g/stl2g.vcproj,
+	  misc/win32-msvc8/tankill2g/tankill2g.vcproj,
+	  misc/win32-msvc8/tclpipe/tclpipe.vcproj,
+	  misc/win32-msvc8/tclsh/library/installTree.tcl,
+	  misc/win32-msvc8/tclsh/tclsh.vcproj,
+	  misc/win32-msvc8/tclstub/tclstub.vcproj,
+	  misc/win32-msvc8/tkimg/tkimg.vcproj,
+	  misc/win32-msvc8/tkimgpng/tkimgpng.vcproj,
+	  misc/win32-msvc8/tkstub/tkstub.vcproj,
+	  misc/win32-msvc8/vg2g/vg2g.vcproj,
+	  misc/win32-msvc8/viewpoint2g/viewpoint2g.vcproj,
+	  misc/win32-msvc8/wish/wish.vcproj:
+	  Added builds for x64.
 
-2008-04-04 20:26  bob1961
+2008-05-05 14:34  bob1961
 
-	* src/mged/mged.bat:
-	  Mods to get rid of complaints about nul.
+	* [r30980] src/libbu/magic.c:
+	  Include bu.h
 
-2008-04-04 20:29  bob1961
+2008-05-05 14:37  bob1961
 
-	* src/archer/archer.bat:
-	  Move "ECHO OFF" up in the file.
+	* [r30981] src/libbn/globals.c:
+	  Include bn.h
 
-2008-04-04 22:35  starseeker
+2008-05-05 15:04  brlcad
 
-	* src/proc-db/tire.c:
-	  Able to successfully generate reasonable shapes for the tire
-	  surface.
+	* [r30982] include/magic.h, src/libbu/magic.c:
+	  sort entries so they are alphabetical by group and consistent
+	  with the header (though noteworthy that not all in the header are
+	  listed here)
 
-2008-04-05 00:36  brlcad
+2008-05-05 15:27  brlcad
 
-	* TODO:
-	  bu_temp_file() _is_ a secure replacement to all of the various
-	  temp file routines. remote related todo entry.
+	* [r30983] include/bu.h, include/magic.h, src/libbu/hook.c,
+	  src/libbu/log.c:
+	  rename BUHOOK to BU_HOOK for consistency
 
-2008-04-05 03:07  starseeker
+2008-05-05 18:29  brlcad
 
-	* src/proc-db/tire.c:
-	  Got tire routine to the point where it can insert the surface
-	  shape and the trimming cuts are in place. Draw tire-surface.c for
-	  the current example.
+	* [r30984] src/libbu/globals.c:
+	  missed commit for BUHOOK
 
-2008-04-05 08:53  brlcad
+2008-05-05 18:52  brlcad
 
-	* AUTHORS:
-	  mike's contributions have been code -- his work on
-	  src/external/Cubit
+	* [r30985] include/bu.h, include/magic.h, src/libbu/badmagic.c,
+	  src/libbu/bu_tcl.c, src/libbu/magic.c:
+	  consolidate all of the magic functions, defines, and other logic
+	  for magic number checking over into magic.[ch]
 
-2008-04-05 08:55  brlcad
+2008-05-05 19:02  brlcad
 
-	* AUTHORS, src/conv/3dm/3dm-g.cpp, src/proc-db/brep_cube.cpp,
-	  src/proc-db/brep_simple.cpp, src/util/lowp.c:
-	  apply mafm's sf patch 1934710 that apply constness and string.h
-	  to a handful of files.
+	* [r30986] src/mged/clone.c:
+	  clean up comments
 
-2008-04-05 14:01  starseeker
+2008-05-05 19:33  brlcad
 
-	* src/proc-db/tire.c:
-	  Haul in the clipping cylinders for the top - don't need to go
-	  quite so far out. ymax derivative may not be doing what is
-	  intended.
+	* [r30987] src/mged/attach.c:
+	  need ged.h for vo funcs
 
-2008-04-05 15:02  brlcad
+2008-05-05 19:39  brlcad
 
-	* src/librt/cut.c:
-	  make sure we're not calling log(0) by pretending there is one
-	  more solid than there really is. there is something causing an
-	  illegal instruction in log(), so hopefully this accounts for that
-	  problem.
+	* [r30988] src/mged/mged.h:
+	  ws
 
-2008-04-07 06:35  starseeker
+2008-05-05 19:53  brlcad
 
-	* src/proc-db/tire.c:
-	  Switch from attempt at derivative fixing to additional point
-	  measurement.
+	* [r30989] src/mged/clone.c:
+	  fix some places in the v4 support where NAMESIZE needs to be used
+	  instead of CLONE_BUFSIZE, make tracker pair up bu_free with the
+	  bu_calloc calls
 
-2008-04-07 15:24  louipc
+2008-05-05 20:14  bob1961
 
-	* misc/archlinux/PKGBUILD:
-	  Remove extra options from build()
+	* [r30990] misc/win32-msvc8/asc2g/asc2g.vcproj,
+	  misc/win32-msvc8/brlcad/brlcad.sln,
+	  misc/win32-msvc8/libdm/libdm.vcproj,
+	  misc/win32-msvc8/libged/libged.vcproj,
+	  misc/win32-msvc8/librt/librt.vcproj,
+	  misc/win32-msvc8/mged/mged.vcproj:
+	  Mods to get things working with libged.
 
-2008-04-07 20:35  starseeker
+2008-05-05 20:17  bob1961
 
-	* src/proc-db/tire.c:
-	  Added inner solid fill for tire - next step is to provide proper
-	  'cut out' shape.
+	* [r30991] include/dg.h, include/ged.h, include/raytrace.h:
+	  Mods related to moving things from librt to libged.
 
-2008-04-07 21:45  bob1961
+2008-05-05 20:20  bob1961
 
-	* src/mged/mged.bat:
-	  For the moment, put back the old START command. Without the "2>&1
-	  nul" we lose the output from forked apps like rt.
+	* [r30992] misc/nsis/brlcad.nsi, src/archer/archer.bat,
+	  src/mged/mged.bat, src/util/rtwizard.bat:
+	  Update to 7.12.3
 
-2008-04-07 22:06  bob1961
+2008-05-05 20:21  bob1961
 
-	* misc/nsis/brlcad.nsi:
-	  Add shortcuts for RtWizard.
+	* [r30993] src/librt/track.c:
+	  This moved to libged.
 
-2008-04-07 23:16  brlcad
+2008-05-05 20:22  bob1961
 
-	* HACKING:
-	  not acceptable!
+	* [r30994] src/librt/importFg4Section.c, src/librt/wdb_comb_std.c:
+	  This moved to libged.
 
-2008-04-08 00:34  brlcad
+2008-05-05 20:26  bob1961
 
-	* HACKING:
-	  it's apparently an int pointer, thanks andrecastelo
+	* [r30995] src/conv/asc2g.c, src/libged/CMakeLists.txt,
+	  src/libged/bigE.c, src/libged/importFg4Section.c,
+	  src/libged/qray.c, src/libged/tcl.c, src/libged/track.c,
+	  src/libged/vdraw.c, src/libged/wdb_comb_std.c,
+	  src/libged/wdb_obj.c, src/librt/CMakeLists.txt,
+	  src/librt/Makefile.am, src/librt/db_match.c, src/librt/g_arbn.c,
+	  src/librt/g_ars.c, src/librt/g_cline.c, src/librt/g_dsp.c,
+	  src/librt/g_ehy.c, src/librt/g_ell.c, src/librt/g_epa.c,
+	  src/librt/g_eto.c, src/librt/g_grip.c, src/librt/g_half.c,
+	  src/librt/g_hf.c, src/librt/g_metaball.c, src/librt/g_nurb.c,
+	  src/librt/g_part.c, src/librt/g_pipe.c, src/librt/g_rec.c,
+	  src/librt/g_rhc.c, src/librt/g_rpc.c, src/librt/g_sketch.c,
+	  src/librt/g_sph.c, src/librt/g_submodel.c,
+	  src/librt/g_superell.c, src/librt/g_tgc.c, src/librt/g_torus.c,
+	  src/librt/g_xxx.c, src/librt/mater.c, src/librt/mirror.c,
+	  src/librt/nmg_extrude.c, src/librt/nmg_misc.c, src/librt/table.c,
+	  src/mged/adc.c, src/mged/axes.c, src/mged/chgmodel.c,
+	  src/mged/dm-generic.c, src/mged/dm-wgl.c, src/mged/doevent.c,
+	  src/mged/edarb.c, src/mged/edpipe.c, src/mged/grid.c,
+	  src/mged/predictor.c, src/mged/rect.c, src/mged/scroll.c,
+	  src/mged/titles.c, src/other/tcl/generic/regex.h:
+	  Mods related to moving things from librt to libged.
 
-2008-04-08 00:39  brlcad
+2008-05-05 20:38  bob1961
 
-	* misc/nsis/brlcad.nsi:
-	  apply sf patch 1936200 (Selecting the environmental variables in
-	  NSIS) so that PROGRAMFILES is properly set. kinda helps the
-	  windows installer work. thanks suryajith.
+	* [r30996] include/raytrace.h:
+	  Add ifdef __RTGEOM_H__ around rt_bot_sort_faces and
+	  rt_bot_decimate declarations.
 
-2008-04-08 03:49  starseeker
+2008-05-05 22:08  brlcad
 
-	* src/proc-db/tire.c:
-	  Change variable naming conventions to match new measurements
+	* [r30997] src/libged/Makefile.am:
+	  need importFg4Section.c track.c wdb_comb_std.c
 
-2008-04-08 05:50  starseeker
+2008-05-05 22:27  brlcad
+
+	* [r30998] src/other/tcl/generic/regex.h:
+	  revert 30995 as regfree does need to be defined to TclReFree else
+	  unresolved symbols on other platforms. the problem (presumably on
+	  windows) is probably the build finding the
+	  src/other/libregex/regex.h header before tcl's from
+	  src/other/tcl/generic/regex.h; the include paths should include
+	  tcl first in order for tcl to compile its regex interface.
 
-	* src/proc-db/tire.c:
-	  Add option to append text to all components of a tire shape -
-	  allows for multiple definitions in one g file, required for
-	  curved subtraction of tire solid.
+2008-05-06 12:07  bob1961
 
-2008-04-08 12:02  starseeker
+	* [r30999] src/librt/table.c:
+	  Revert back to previous revision.
 
-	* src/proc-db/tire.c:
-	  Truncate the string to reset it correctly.
+2008-05-06 12:10  bob1961
 
-2008-04-08 15:04  bob1961
+	* [r31000] src/mged/mged_dm.h:
+	  Needs ged.h
 
-	* src/mged/ged.c, src/mged/mged.bat:
-	  Removed hack that was used to have output from rt apps show up in
-	  mged's command window in gui mode.
+2008-05-06 12:49  bob1961
 
-2008-04-08 16:52  starseeker
+	* [r31001] misc/win32-msvc8/librt/librt.vcproj:
+	  Added include path to libregex.
 
-	* src/proc-db/tire.c:
-	  Redo the side subtractions, make tire input parameters variables
+2008-05-06 17:25  brlcad
 
-2008-04-09 04:44  starseeker
+	* [r31002] src/other/libutahrle/rle_getcom.c:
+	  quell const qualifier discardation warnings
 
-	* src/proc-db/tire.c:
-	  Fix subtractions for ell intersections so wireframe does not
-	  extend so far beyond actual tire surface.
+2008-05-06 17:28  brlcad
 
-2008-04-09 17:27  bob1961
+	* [r31003] src/other/URToolkit/cnv/cubitorle.c:
+	  quell decl warnings
 
-	* misc/nsis/brlcad.nsi:
-	  ReadEnvStr must be called within a function or a section. Also,
-	  PROGRAMFILES cannot be set (i.e. its a constant defined by nsis).
-	  Put the ReadEnvStr inside the .onInit callback function.
+2008-05-06 17:39  bob1961
 
-2008-04-10 01:03  johnranderson
+	* [r31004] src/libged/dg_obj.c:
+	  Modified dgo_rt_set_eye_model()'s eye_model calculation. It's now
+	  using the diagonal length of the bounding box to back out the eye
+	  point.
+
+2008-05-06 18:28  bob1961
 
-	* src/rt/opt.c, src/rt/rt.1, src/rt/view.c:
-	  Added a -k option to rt. Specifies a cutting plane to allow
-	  faster computation
-	  of cutaway images. Note that this produces an approximation of
-	  the image that
-	  would be produced by actually subtracting the equivalent
-	  halfspace. This may
-	  satisfy bug #1812560 Cutaway view 210x slower.
+	* [r31005] misc/win32-msvc8/btclsh/btclsh.vcproj,
+	  misc/win32-msvc8/bwish/bwish.vcproj, src/bwish/cadAppInit.c,
+	  src/bwish/main.c:
+	  More mods to get things working with libged.
 
-2008-04-10 02:16  brlcad
+2008-05-06 19:58  bob1961
 
-	* NEWS:
-	  john added a new -k 'kutaway view' option to rt that allows users
-	  to specify a cutting plane for fast(er) computation of cutaway
-	  images that approximates the image that would be produced by
-	  actually subtracting the equivalent halfspace and potentially
-	  satisfies clock's sf bug 1812560 (Cutaway view 210x slower) but
-	  still makes this an absurd-yet-fun run-on sentence.
+	* [r31006] src/mged/mged.c:
+	  If windows, set an invalid parameter handler.
 
-2008-04-10 02:21  starseeker
+2008-05-06 20:31  brlcad
 
-	* src/proc-db/tire.c:
-	  No functionality change - just adding some options for printing
-	  Maxima style equations for debugging. Committing for now so
-	  they're available if I have to throw out subsequent tests.
+	* [r31007] NEWS:
+	  testing
 
-2008-04-10 18:10  starseeker
+2008-05-06 20:35  bob1961
 
-	* src/proc-db/tire.c:
-	  Fix two bugs in matrix solver.
+	* [r31008] src/mged/mged.c:
+	  Modified the content of mgedInvalidParameterHandler().
 
-2008-04-10 19:34  starseeker
+2008-05-06 21:28  brlcad
 
-	* src/proc-db/tire.c:
-	  Testing new way of specifying top ellipse.
+	* [r31009] misc/nsis/Makefile.am, misc/nsis/brlcad.nsi,
+	  misc/nsis/copying.txt:
+	  gah, remove the incorrect copying.txt file that refers to the
+	  gpl. make the nsis build file refer to the top-level COPYING and
+	  README instead of the incorrect copying.txt and outdated html
+	  manual page
 
-2008-04-11 03:19  starseeker
+2008-05-06 23:30  brlcad
 
-	* src/proc-db/tire.c:
-	  New way of specifying the sides - hopefully somewhat more robust
-	  than previous method.
+	* [r31010] NEWS:
+	  Bob fixed a long-standing bug reported by Tom Browder where
+	  rt/rtedge were incorrectly clipping the render due to an invalid
+	  eye point calculation. The problem was traced down to code
+	  commited all the way back in 1997 where the longest dimension of
+	  the bounding box was used as the default eye point backout
+	  distance. This in turn could cause clipping if the diagonal
+	  distance was considerablly larger and when rendering from a
+	  non-orthogonal view. it does not seem to be intentional and only
+	  occurred when rt/rtedge was invoked from within mged (where the
+	  dgo interface gets called). this fixes sf bug 1525332 (Rt (and
+	  Rtedge) Clips Image).
 
-2008-04-11 13:49  starseeker
+2008-05-07 00:14  brlcad
 
-	* src/proc-db/tire.c:
-	  Clean up unused variables in new specification scheme.
+	* [r31011] NEWS, doc/html/manuals/mged/mged_cmd_index.html,
+	  regress/gqa.sh, src/gtools/g_qa.1, src/libged/wdb_obj.c,
+	  src/mged/cmd.c, src/tclscripts/helplib.tcl,
+	  src/tclscripts/mged/help.tcl, src/tclscripts/mged/make_solid.tcl,
+	  src/tclscripts/mged/openw.tcl:
+	  this renames the wdb_binary / dbbinary mged command to just
+	  'binary' .. this seems to be what it is actually used in archer
+	  already, what makes more sense, and is more consistent with other
+	  commands. happened to fix a mistake in the html docs in the
+	  process. also updated the command's help so that it's less brain
+	  dead wrong in response to tom browder's sf bug 1532699 (dbbinary
+	  -o help is misleading)
 
-2008-04-11 18:23  brlcad
+2008-05-07 01:44  brlcad
 
-	* src/libbu/htond.c:
-	  cleanup header
+	* [r31012] configure.ac:
+	  try to prevent -Lyes/lib64 -Iyes/include etc from happening if
+	  the user only provides --with-jdk or --with-java without a path.
 
-2008-04-11 18:55  starseeker
+2008-05-07 02:06  brlcad
 
-	* src/proc-db/tire.c:
-	  Experimenting with ways to make reasonable tire shapes from
-	  standard input data.
+	* [r31013] regress/solids.sh:
+	  don't need to refer to $1/regress, just use the files
 
-2008-04-11 19:39  starseeker
+2008-05-07 18:19  starseeker
 
-	* src/proc-db/tire.c:
-	  Whoops - set scale factor to one for this part.
+	* [r31014] src/nirt/command.c, src/nirt/nirt.1:
+	  Change behavior of backout command in interactive nirt - backout
+	  flag can now be activated and deactivated, and repeated
+	  invocations of backout will not increase the backout distance
+	  with each invocation. Also, change of origin due to backout use
+	  in shoot is now temporary - previous value is restored after shot
+	  is complete.
 
-2008-04-11 21:04  brlcad
+2008-05-07 18:23  starseeker
 
-	* regress/flawfinder.sh:
-	  fix test failure
+	* [r31015] NEWS:
+	  Add NEWS note for nirt change
 
-2008-04-13 15:51  starseeker
+2008-05-08 09:23  brlcad
 
-	* src/proc-db/tire.c:
-	  Add a little extra clipping to sides to eliminate hairline
-	  floating material.
+	* [r31016] NEWS:
+	  reword the nirt backout line just so that we can make the commit
+	  log more substantial. commit messages for NEWS lines need to be
+	  detailed as they're used during configuration reviews. To quote
+	  Cliff's original log message for this feature: Change behavior of
+	  backout command in interactive nirt - backout flag can now be
+	  activated and deactivated, and repeated invocations of backout
+	  will not increase the backout distance with each invocation.
+	  Also, change of origin due to backout use in shoot is now
+	  temporary - previous value is restored after shot is complete.
 
-2008-04-13 22:01  brlcad
+2008-05-08 11:12  brlcad
 
-	* src/libbu/image.c:
-	  duplicate headers
+	* [r31017] src/util/brlcad.1:
+	  rfbd was renamed to fbserv about a decade ago
 
-2008-04-13 22:02  brlcad
+2008-05-08 11:14  brlcad
 
-	* configure.ac, src/conv/3dm/Makefile.am,
-	  src/conv/comgeom/Makefile.am, src/conv/iges/Makefile.am,
-	  src/conv/jack/Makefile.am, src/conv/off/Makefile.am,
-	  src/conv/patch/Makefile.am, src/libbu/Makefile.am,
-	  src/libpkg/Makefile.am, src/librt/Makefile.am:
-	  recursive lib dependency fixes for the ubuntuneers. not done
+	* [r31018] src/fbserv/fbserv.c, src/libfb/if_remote.c:
+	  patch from pedro that reportedly helps the build on openbsd.
+	  basically need to include sys/types.h before other sys headers
+	  like sys/socket.h.
 
-2008-04-14 04:15  starseeker
+2008-05-08 15:21  brlcad
 
-	* src/proc-db/tire.c:
-	  Can now call one function and specify one set of dimensions to
-	  get the outer tire shape.
+	* [r31019] TODO, doc/deprecation.txt, include/raytrace.h:
+	  add to the todo about deprecating the hit_point and hit_normal
+	  members of a hit structure, the need for an RT_HIT_POINT macro
+	  and how the existing routines are/were deprecated a while ago.
 
-2008-04-14 10:09  brlcad
+2008-05-08 18:43  starseeker
 
-	* HACKING:
-	  wasn't explicit, but the intent is the same .. usually should use
-	  null-terminated instead of the strn family of funcs unless they
-	  are raw data buffers
+	* [r31021] src/proc-db/tire.c:
+	  More format tweaking.
 
-2008-04-14 10:28  brlcad
+2008-05-08 18:45  bob1961
 
-	* TODO:
-	  add options to nirt for reporting the exit points (instead of
-	  just LOS thickness) as well as the gaps between geometry
-	  (simulated air).
+	* [r31022] src/tclscripts/mged/help.tcl:
+	  Update the mirror entry.
 
-2008-04-14 15:10  starseeker
+2008-05-08 18:47  bob1961
 
-	* src/proc-db/tire.c:
-	  First cut at 'tire size spec' to geometry inputs logic.
+	* [r31023] src/tclscripts/lib/Db.tcl:
+	  Add log and mirror commands.
 
-2008-04-14 15:33  starseeker
+2008-05-08 18:48  bob1961
 
-	* src/proc-db/tire.c:
-	  Switch to bu_unit for converting input, minor cleanup of unused
-	  variables.
+	* [r31024] src/tclscripts/lib/Mged.tcl:
+	  Added the mirror command.
 
-2008-04-14 19:01  starseeker
+2008-05-08 18:49  bob1961
 
-	* src/proc-db/tire.c:
-	  Added basic command line specification behavior - tire size can
-	  now be specified - ex: 'tire -d 265/70R15 mytire.g'
+	* [r31025] src/tclscripts/archer/ArcherCore.tcl:
+	  Added the mirror command.
 
-2008-04-14 20:10  bob1961
+2008-05-08 18:50  bob1961
 
-	* src/mged/rtif.c:
-	  rtcheck needs to call the dgo_rtcheck_cmd (i.e. the handlers
-	  associated with rtcheck expect binary vector data on stdout and
-	  text on stderr).
+	* [r31026] src/tclscripts/helplib.tcl:
+	  Added help entry for mirror.
 
-2008-04-14 20:40  bob1961
+2008-05-08 18:53  bob1961
 
-	* src/tclscripts/mged/mgedrc.tcl:
-	  Double quote html_dir and web_browser values when dumping mged
-	  state to .mgedrc
+	* [r31027] misc/win32-msvc8/libged/libged.vcproj:
+	  Added log.c and mirror.c to build.
 
-2008-04-14 20:57  starseeker
+2008-05-08 19:01  bob1961
 
-	* src/proc-db/tire.c:
-	  Add comments, rename some things.
+	* [r31028] src/libged/tcl.c:
+	  Need dg.h for declaration of Dgo_Init().
 
-2008-04-15 15:20  brlcad
+2008-05-08 19:04  bob1961
 
-	* configure.ac:
-	  somehow Xi is not getting detected, seemingly from a failure to
-	  include the X11 include dirs. set up CPPFLAGS to see if they can
-	  be found.
+	* [r31029] include/raytrace.h:
+	  Added a few members to struct rt_wdb.
 
-2008-04-15 16:16  brlcad
+2008-05-08 19:07  bob1961
 
-	* TODO:
-	  push back to next release, time to start testing
+	* [r31030] include/ged.h:
+	  Added declarations for ged_mirror() and ged_log(). Added a few
+	  macros that are initially being used by ged_mirror() and
+	  ged_log().
 
-2008-04-15 16:48  starseeker
+2008-05-08 19:12  bob1961
 
-	* src/proc-db/tire.c:
-	  Exploratory work for rims.
+	* [r31031] src/mged/mged.c:
+	  RT_DGO_NULL changed to GED_DGO_NULL.
 
-2008-04-15 19:24  brlcad
+2008-05-08 19:22  bob1961
 
-	* src/tclscripts/mged/openw.tcl:
-	  apply a modified version of sf patch 1940958 (Fix for bad paths
-	  in .mgedrc on Windows) from Elena Bautu - ebautu.
+	* [r31032] src/mged/chgmodel.c:
+	  f_mirror() has been modified to use libged's ged_mirror().
 
-2008-04-15 19:24  starseeker
+2008-05-08 19:35  bob1961
 
-	* src/proc-db/tire.c:
-	  More rim experimentation. Dimensions are off somewhere in wheel -
-	  need to re-factor equations.
-
-2008-04-15 19:30  brlcad
-
-	* AUTHORS, NEWS:
-	  credit elena bautu for her patch to handle paths with spaces in
-	  the .mgedrc file. accepted sf patch 1940958 (Fix for bad paths in
-	  .mgedrc on Windows) which bob applied via proxy through dave. the
-	  patch also tests for internet exploder's existence for reading
-	  the html help files.
-
-2008-04-15 21:08  starseeker
-
-	* src/proc-db/tire.c:
-	  Add patterning for subtracting holes from the wheel.
-
-2008-04-16 03:40  starseeker
-
-	* src/proc-db/tire.c:
-	  Use some intermediate variable names to simplify rim creation
-	  logic a bit - seems to be working now for different sizes.
-
-2008-04-16 14:17  brlcad
-
-	* sh/make_dmg.sh:
-	  include the size of the package in the dmg autosize calcs
-
-2008-04-16 14:21  brlcad
-
-	* src/gtools/beset/beset.c, src/gtools/beset/beset.h:
-	  quellage
-
-2008-04-16 15:09  starseeker
-
-	* src/proc-db/tire.c:
-	  Add first stab at cuts for bolt holes and center.
-
-2008-04-16 15:26  brlcad
-
-	* AUTHORS:
-	  found a reference to mged contributions from Gary Kuehl in a
-	  branch. it's unclear if these changes ever made it in or if other
-	  code was related or if it was even code that was provided, but
-	  credit him with special thanks for now.
-
-2008-04-16 15:30  brlcad
-
-	* AUTHORS:
-	  dtrmenak is an open source contributor, bob has contributed as
-	  open source off-the-clock as well
-
-2008-04-16 15:35  brlcad
-
-	* AUTHORS:
-	  butler inactive for approx 17 months now (only two isolated
-	  events intaval script and manpage update), remove activity marker
-
-2008-04-16 15:40  brlcad
-
-	* AUTHORS:
-	  shumaker has been inactive for nearly two years, remove activity
-	  marker
-
-2008-04-16 15:42  brlcad
-
-	* AUTHORS:
-	  butler's away on sabattical/training/education so update POC to
-	  be davisson for ARL
-
-2008-04-16 15:46  brlcad
-
-	* AUTHORS:
-	  yapp moves up from special thanks for gentoo/doc work to
-	  significant code contributions for proc-db/tire, on his way to
-	  being new dev (woot)
-
-2008-04-16 16:45  bob1961
-
-	* src/librt/mirror.c, src/mged/chgmodel.c,
-	  src/tclscripts/mged/help.tcl:
-	  Added the mirror_pt parameter to rt_mirror. This is the point on
-	  the axis about which the mirror action will take place.
-
-2008-04-16 19:24  bob1961
-
-	* include/raytrace.h:
-	  Update signature of rt_mirror (i.e. added mirror_pt).
-
-2008-04-17 01:21  starseeker
-
-	* src/mged/clone.c:
-	  Sean fixed bug in clone where cloning combinations resulted in an
-	  infinite loop.
-
-2008-04-17 01:28  starseeker
-
-	* NEWS:
-	  Add clone fix
-
-2008-04-17 01:29  starseeker
-
-	* src/proc-db/tire.c:
-	  Add (very) preliminary support for tread on tires.
-
-2008-04-17 02:02  brlcad
-
-	* AUTHORS:
-	  fill in contribution details for when the individual first made a
-	  commit (per ohloh stats on head). also include the committer and
-	  common IRC nicknames for those known.
-
-2008-04-17 02:17  brlcad
-
-	* AUTHORS:
-	  add terry slatter to the special thanks section as he did commit
-	  at least one (minor) tweak to pix-rle to use LOGNAME in oct 89
-
-2008-04-17 02:25  brlcad
-
-	* AUTHORS:
-	  susan coates, BRLer per the contribution year
-
-2008-04-17 02:26  brlcad
-
-	* AUTHORS:
-	  susan was february 89 even
-
-2008-04-17 02:30  brlcad
-
-	* AUTHORS:
-	  damnits, keep getting those two mixed up. sue coates was '91 sep
-	  BRLer, sue muuss was 89' feb BRLer. also, natalie eberius and
-	  natalie barker are one in the same.
-
-2008-04-17 02:36  brlcad
-
-	* AUTHORS:
-	  special thanks to steven buckley for his '88 aug contributions
-	  (maybe as a BRL student, but unknown) .. they were a bunch (42)
-	  manpage updates
-
-2008-04-17 02:38  brlcad
-
-	* AUTHORS:
-	  special thanks to john grosh for a tabinterp tweak back in oct 93
-	  (incrased some buf size).
-
-2008-04-17 02:42  brlcad
-
-	* AUTHORS:
-	  add david godbey to the code contributors list for his work on
-	  the 3dm-g importer and brep testing. while we're at is, note that
-	  jra has also contributed as an altus guy in addition to his usual
-	  open sourceage goodness as things pertain to librtserver.
-
-2008-04-17 03:46  bharder
-
-	* AUTHORS:
-	  Update own record
-
-2008-04-17 05:15  brlcad
-
-	* BUGS, src/util/bwmod.c:
-	  dawn thomas noted that bwmod performing a divide-by-zero no
-	  longer occurs. turns out this bug was fixed about 3.5 years ago
-	  by butler in r23494 so poof it goes, thx dawn
-
-2008-04-17 05:22  brlcad
-
-	* src/util/bwmod.c:
-	  don't compare floating point with ==, use NEAR_ZERO tolerancing
-	  for portability
-
-2008-04-17 13:25  d_rossberg
-
-	* include/conf/CMakeLists.txt, include/conf/Makefile.am,
-	  misc/win32-msvc/CMakeLists.txt,
-	  misc/win32-msvc/Dll/CMakeLists.txt,
-	  misc/win32-msvc/Dll/Makefile.am, misc/win32-msvc/Dll/brlcad.dsp,
-	  misc/win32-msvc/Makefile.am, misc/win32-msvc/aPrep,
-	  misc/win32-msvc/brlcad.dsw, src/libbn/CMakeLists.txt,
-	  src/libbn/Makefile.am, src/libbn/libbn.dsp,
-	  src/libbu/CMakeLists.txt, src/libbu/Makefile.am,
-	  src/libbu/libbu.dsp, src/librt/CMakeLists.txt,
-	  src/librt/Makefile.am, src/librt/librt.dsp,
-	  src/libsysv/CMakeLists.txt, src/libsysv/Makefile.am,
-	  src/libsysv/libsysv.dsp, src/libwdb/CMakeLists.txt,
-	  src/libwdb/Makefile.am, src/libwdb/libwdb.dsp,
-	  src/other/libregex/CMakeLists.txt,
-	  src/other/libregex/Makefile.am, src/other/libregex/libregex.dsp,
-	  src/other/libz/CMakeLists.txt, src/other/libz/Makefile.am,
-	  src/other/libz/libz.dsp, src/other/openNURBS/CMakeLists.txt,
-	  src/other/openNURBS/Makefile.am,
-	  src/other/openNURBS/opennurbs.dsp:
-	  update of the brlcad.dll build environment for current MSVC
-	  versions
-	  because of differences in the .vcproj files for the different
-	  MSVS versions CMake is used here
-	  this does not mean that they are portable to UNIX (at least not
-	  at the moment)
-	  perhaps it could be a base to build on
-
-2008-04-17 13:40  dgodbey
-
-	* src/librt/g_brep.cpp, src/other/openNURBS/opennurbs_bezier.cpp:
-	  Changes support raytracing of simple Rhino converted geometries
-
-2008-04-17 14:29  brlcad
-
-	* src/tclscripts/mged/openw.tcl:
-	  this isn't C, use elseif
-
-2008-04-17 14:47  erikgreenwald
-
-	* AUTHORS:
-	  add missing nicknames
-
-2008-04-17 18:34  starseeker
-
-	* src/proc-db/tire.c:
-	  Try a slight tweak with the tread.
-
-2008-04-17 21:33  bob1961
-
-	* src/mged/clone.c:
-	  If necessary, modify the matrix to apply mirror effects to the
-	  incoming primitive.
-
-2008-04-17 22:03  starseeker
-
-	* src/proc-db/tire.c:
-	  Combine everything into single toplevel object, add options for
-	  naming that object.
-
-2008-04-18 03:44  starseeker
-
-	* src/proc-db/tire.c:
-	  Add input flag for tread - default is off, -t to activate it
-	  (currently only the default test tread is available.
-
-2008-04-18 03:45  brlcad
-
-	* configure.ac:
-	  there is no more aPrep dir
-
-2008-04-18 04:47  starseeker
-
-	* src/proc-db/Makefile.am, src/proc-db/tire.1:
-	  Add start of man page for tire, integrate it into autoconf.
-
-2008-04-18 05:03  brlcad
-
-	* src/proc-db/tire.c:
-	  don't need an array for single values, just pass in an address to
-	  that value then dereference the variable in the function
-
-2008-04-18 05:27  brlcad
-
-	* src/proc-db/tire.1:
-	  tire started in 2008
-
-2008-04-18 18:06  bob1961
-
-	* src/mged/clone.c:
-	  Modify f_clone() to return the name of the clone if one has been
-	  created.
-
-2008-04-18 18:37  starseeker
-
-	* src/proc-db/tire.c:
-	  Tweak the zig-zag tread generator.
-
-2008-04-18 19:14  bob1961
-
-	* src/tclscripts/mged/xclone.tcl:
+	* [r31033] src/libged/log.c, src/libged/mirror.c:
 	  Initial check-in.
 
-2008-04-18 19:15  bob1961
+2008-05-08 19:36  bob1961
 
-	* src/tclscripts/mged/tclIndex:
-	  Add entry for xclone.
+	* [r31034] src/libged/CMakeLists.txt, src/libged/Makefile.am:
+	  Added mirror.c and log.c
 
-2008-04-18 19:17  bob1961
+2008-05-08 19:37  bob1961
 
-	* src/tclscripts/mged/Makefile.am:
-	  Add entry for xclone.tcl.
+	* [r31035] src/libged/wdb_obj.c:
+	  Added mirror and log commands.
 
-2008-04-18 19:49  bob1961
+2008-05-08 19:40  bob1961
 
-	* src/mged/clone.c:
-	  Modified copy_v5_solid to use state->rpnt if specified.
+	* [r31036] include/dg.h:
+	  RT_DGO_NULL changed to GED_DGO_NULL.
 
-2008-04-18 21:40  brlcad
+2008-05-08 20:16  erikgreenwald
 
-	* src/tclscripts/mged/xclone.tcl:
-	  xclone started in 2008
+	* [r31037] src/librt/g_metaball.c:
+	  fix a_onehit handling
 
-2008-04-18 22:04  starseeker
+2008-05-08 22:07  bob1961
 
-	* src/proc-db/tire.c:
-	  Still have a bug in tread somewhere - not fixed yet - uploading
-	  for further study.
+	* [r31038] src/libged/wdb_obj.c, src/tclscripts/lib/Mged.tcl:
+	  Generalized the mirror and log commands.
 
-2008-04-19 02:43  starseeker
+2008-05-08 23:04  brlcad
 
-	* src/proc-db/tire.c:
-	  Rotation looks OK now, but primitives in tread pattern look off -
-	  may have sizing wrong.
+	* [r31040] src/proc-db/tire.c:
+	  more consistent use of ws. space after comma, space after
+	  reserved statements, curlie cleanup, and don't wrap for the sake
+	  of fitting to an arbitrary column. doxygenify comments.
 
-2008-04-19 03:43  brlcad
+2008-05-08 23:08  brlcad
 
-	* misc, misc/Makefile.am:
-	  ignore and clean up after ylwrap
+	* [r31041] src/proc-db/tire.c:
+	  remove mass quantities of trailing ws
 
-2008-04-19 04:00  brlcad
+2008-05-09 13:01  d_rossberg
 
-	* src/other/jove/jove.h:
-	  string.h needs to take priority, remove the HAVE_STRINGS_H check
+	* [r31042] src/librt/CMakeLists.txt:
+	  Added include path to libregex
+	  this include path has to be before tcl/generic
 
-2008-04-19 04:14  brlcad
+2008-05-09 18:07  erikgreenwald
 
-	* src/other/jove/jove.h:
-	  no longer need common.h with HAVE_STRINGS_H removed
+	* [r31043] src/other/intaval/regtab.cpp:
+	  quell warning about deprecated conversion (declare/define using
+	  ptr instead of array)
 
-2008-04-19 04:16  brlcad
+2008-05-09 18:09  erikgreenwald
 
-	* src/other/jove/jove.h:
-	  oops, revert .. we do still need it elsewhere
+	* [r31044] src/conv/3dm/Makefile.am, src/conv/Makefile.am:
+	  fix broken variable names in FAST_OBJECTS
 
-2008-04-19 14:49  brlcad
+2008-05-09 19:59  starseeker
 
-	* src/proc-db/Makefile.am:
-	  include wdb_deps for the debianeers. for whatever reason, it's
-	  still dropping the deps on the cxx target
+	* [r31045] doc/docbook:
+	  Add source for oed tutorial
 
-2008-04-19 15:08  brlcad
+2008-05-09 20:05  starseeker
 
-	* src/tab/Makefile.am:
-	  eep, make sure script.c isn't a BUILT_SOURCES files if we don't
-	  have a lexer
+	* [r31046] doc/docbook/oed, doc/docbook/oed/README,
+	  doc/docbook/oed/lollipop.png, doc/docbook/oed/oed.xml,
+	  doc/docbook/oed/oed_0001.png, doc/docbook/oed/oed_0002.png,
+	  doc/docbook/oed/oed_0003.png, doc/docbook/oed/oed_0004.png,
+	  doc/docbook/oed/oed_0005.png, doc/docbook/oed/oed_0006.png,
+	  doc/docbook/oed/oed_0007.png, doc/docbook/oed/oed_0008.png,
+	  doc/docbook/oed/oed_0009.png, doc/docbook/oed/oed_0010.png,
+	  doc/docbook/oed/oed_0011.png, doc/docbook/oed/oed_0012.png,
+	  doc/docbook/oed/oed_examples.asc:
+	  This time actually add the contents for oed tutorial.
 
-2008-04-19 19:56  brlcad
+2008-05-09 21:59  starseeker
 
-	* m4/patch.m4:
-	  This should finally (re)fix the Debian and Ubuntu builds. The
-	  problem boils down to the Debian devs insisting on modifying
-	  default upstream libtool linkage behavior. They
-	  do this for performance/relinkage reasons so that rebuilding and
-	  installing a base library (like libpng) doesn't necessarily
-	  require relinking all callers. They force
-	  *off* the addition of dependency libraries on the linker line by
-	  setting link_all_deplibs=no which in turn mucks havok with
-	  compilation. Their intent seems to assume that
-	  all libs are installed before a binary needs to link against them
-	  so that recursive linux dynamic link lookups will find everything
-	  needed via rpaths alone. So all of the
-	  dependencies listed on our (not-yet-installed) libtool archive
-	  libraries are stripped off when binaries are linked.
-	  
-	  This fix reverts the libtool script back to the default "unknown"
-	  value for link_all_deplibs. So libtool does properly keep track
-	  of the recursive dependency descriptions
-	  provided in the build files and allows binaries to link against
-	  libraries that aren't yet installed.
-	  
-	  References:
-	  http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=291641
-	  http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=297726
-	  http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=473415
+	* [r31047] configure.ac, doc/Makefile.am, doc/docbook/Makefile.am,
+	  doc/docbook/oed/Makefile.am:
+	  Add make files for new doc directories
 
-2008-04-19 21:13  brlcad
+2008-05-10 16:18  brlcad
 
-	* NEWS:
-	  Bob added xclone command to mged for xpushed deep copies.
-	  scripted implementation, performs xpush then clone.
+	* [r31048] configure.ac:
+	  REGEX_CPPFLAGS MUST COME AFTER TCL INCLUDE PATHS .. else you can
+	  end up with unresolved regex symbols due to tcl's double #define
+	  redirection of regex calls from their regex.h header. Symptom of
+	  this problem is unresolved TclReFree symbols during linking of
+	  libs that use tcl and/or unresolved regcomp, regerror, and
+	  regexec symbols in libraries that don't use tcl.
 
-2008-04-20 06:43  bharder
+2008-05-10 18:03  brlcad
 
-	* src/nirt/nirt.h:
-	  Add test, macro for c99 fmax(), missing in NetBSD.
+	* [r31049] configure.ac, src/librt/Makefile.am,
+	  src/librt/regionfix.c:
+	  yet another change to help with the TclReFree linkage errors.
+	  more details is that tcl doesn't need/want regex headers but all
+	  callers do need it (and need it before tcl's to find our regex
+	  headers), so the regex flags shouldn't be added to the
+	  tcl_cppflags at all really.
 
-2008-04-21 03:55  brlcad
+2008-05-10 18:09  brlcad
 
-	* sh/news2tracker.sh:
-	  need to be more exact on matching the revision number line. ran
-	  into a revision ID match in the body of one of the commit
-	  messages that referred to an sf tracker id.
+	* [r31050] src/libsysv/Makefile.am:
+	  oops, forgot to commit this one, another regex caller.
 
-2008-04-21 04:20  brlcad
+2008-05-10 18:38  brlcad
 
-	* sh/news2tracker.sh:
-	  properly quote the quotes
+	* [r31051] src/libsysv/Makefile.am:
+	  is regex.c really needed?
 
-2008-04-21 04:38  brlcad
+2008-05-10 18:47  brlcad
 
-	* sh/tracker.sh:
-	  sourceforge continues to change the format slightly. match the
-	  category link specifically to avoid catching the earlier new
-	  javascript
+	* [r31052] src/libsysv/Makefile.am:
+	  don't need redata.c if we're not compiling regex.c
 
-2008-04-21 06:43  brlcad
+2008-05-10 18:49  brlcad
 
-	* sh/tracker.sh:
-	  indent mishap, don't insert a tab before the csv line
+	* [r31053] NEWS:
+	  bob indirectly added the log and mirror commands to archer via
+	  adding them to the Db megawidget.
 
-2008-04-21 20:27  starseeker
+2008-05-10 18:52  brlcad
 
-	* src/libwdb/libwdb.3, src/libwdb/wdb.c:
-	  Add mk_arb6 command to libwdb.
+	* [r31054] NEWS:
+	  bob added the 'mirror' command to archer while refactoring it
+	  into libged
 
-2008-04-21 20:37  starseeker
+2008-05-10 18:55  brlcad
 
-	* src/libwdb/libwdb.3, src/libwdb/wdb.c:
-	  Add mk_arb5 and mk_arb7
+	* [r31055] src/tclscripts/helplib.tcl:
+	  fix helplibdata typo
 
-2008-04-21 20:42  starseeker
+2008-05-12 05:29  brlcad
 
-	* include/wdb.h:
-	  Add header entries for new mk_arb commands
+	* [r31056] src/libged/mirror.c:
+	  synopsis is implied first line with doxygen comments
 
-2008-04-21 21:21  starseeker
+2008-05-12 06:07  brlcad
 
-	* src/proc-db/tire.c:
-	  Eliminate invalid arb8 face creation in tread.
+	* [r31057] src/libged/log.c, src/libged/mirror.c:
+	  with the cleanup, move the doxygen comments into the public
+	  interface header where they belong instead of in the sources.
+	  make argv an array of pointers like main()
 
-2008-04-21 21:25  starseeker
+2008-05-12 06:09  brlcad
 
-	* NEWS:
-	  added more wdb arb functions
+	* [r31058] include/ged.h, src/libged/Makefile.am,
+	  src/libged/wdb_obj.c, src/libged/wmater.c, src/mged/chgmodel.c:
+	  convert the wmater command as another test case, moving it from
+	  mged up into libged as ged_wmater(). still lots of room for
+	  improvement.
 
-2008-04-21 21:29  bob1961
+2008-05-12 14:25  bob1961
 
-	* src/rt/view.c:
-	  Mods to set the byte offsets of view_parse at run time. Windows
-	  can't handle initializing this struct with variables that live in
-	  a library.
+	* [r31059] src/libged/rmater.c:
+	  Imported from MGED.
 
-2008-04-21 22:01  starseeker
+2008-05-12 15:22  bob1961
 
-	* db/Makefile.am, db/pinewood.asc:
-	  Add simple pinewood car example.
+	* [r31060] misc/win32-msvc8/libged/libged.vcproj:
+	  Added rmater.c and wmater.c
 
-2008-04-22 06:54  brlcad
+2008-05-12 15:24  bob1961
 
-	* NEWS:
-	  cliff added a new pinewood boxcar example geometry database,
-	  modeled during dwayne kregel's surviac/survice brl-cad training
-	  course.
+	* [r31061] include/ged.h:
+	  Added declaration for get_rmater.
 
-2008-04-22 11:01  brlcad
+2008-05-12 15:28  bob1961
 
-	* NEWS, include/conf/PATCH, misc/nsis/brlcad.nsi,
-	  misc/win32-msvc8/asc2g/asc2g.vcproj:
-	  update version to 7.12.2 and begin release, tagging from trunk
-	  since the merge isn't as well-tested
+	* [r31062] src/libged/CMakeLists.txt:
+	  Added rmater.c and wmater.c
 
-2008-04-22 11:12  bob1961
+2008-05-12 15:32  bob1961
 
-	* src/archer/archer.bat, src/mged/mged.bat, src/util/rtwizard.bat:
-	  Update the BRL-CAD version from 7.12.1 to 7.12.2
+	* [r31063] src/libged/Makefile.am:
+	  Added rmater.c
+
+2008-05-12 15:35  bob1961
+
+	* [r31064] src/mged/chgmodel.c:
+	  Moved the code for rmater to libged. Modified f_wmater and
+	  f_rmater to use ged_wmater and ged_rmater, respectively.
+
+2008-05-12 18:19  bob1961
+
+	* [r31065] src/libged/log.c, src/libged/mirror.c,
+	  src/libged/rmater.c, src/libged/wmater.c:
+	  Simplify the arg handling logic a bit.
+
+2008-05-12 18:21  bob1961
+
+	* [r31066] src/libged/item.c:
+	  Imported from MGED.
+
+2008-05-12 18:23  bob1961
+
+	* [r31067] include/ged.h, misc/win32-msvc8/libged/libged.vcproj,
+	  src/mged/chgmodel.c:
+	  MGED's item command moved to libged.
+
+2008-05-12 18:25  bob1961
+
+	* [r31068] src/libged/CMakeLists.txt, src/libged/Makefile.am:
+	  MGED's item command moved to libged.
+
+2008-05-12 19:07  louipc
+
+	* [r31069] INSTALL:
+	  Fix a couple of typos. Put TOC in correct order.
+	  Add header for Post-Installation section.
+
+2008-05-12 19:41  bob1961
+
+	* [r31070] src/libged/wdb_obj.c:
+	  Added entries for the item and rmater commands.
+
+2008-05-12 21:33  bob1961
+
+	* [r31071] src/mged/mged.h:
+	  Minor formatting.
+
+2008-05-13 14:40  bob1961
+
+	* [r31072] include/ged.h, misc/win32-msvc8/libged/libged.vcproj,
+	  src/libged/CMakeLists.txt, src/libged/Makefile.am,
+	  src/libged/mater.c:
+	  Added mater command to libged.
+
+2008-05-13 16:37  bob1961
+
+	* [r31073] include/ged.h, misc/win32-msvc8/libged/libged.vcproj,
+	  src/libged/CMakeLists.txt, src/libged/Makefile.am,
+	  src/mged/chgmodel.c:
+	  Added edmater command to libged.
+
+2008-05-13 16:44  bob1961
+
+	* [r31074] src/libged/editit.c, src/libged/edmater.c:
+	  Added edmater command to libged.
+
+2008-05-13 17:08  brlcad
+
+	* [r31075] src/libged/edmater.c:
+	  edmater relies on editit, rmater, and wmater
+
+2008-05-13 17:14  brlcad
+
+	* [r31076] include/ged.h, src/libged/editit.c:
+	  move the editit doc to the ged.h header
+
+2008-05-13 18:07  bob1961
+
+	* [r31077] src/libged/mirror.c:
+	  Need to use bu_log when wdbp is NULL.
+
+2008-05-13 19:04  brlcad
+
+	* [r31078] doc/Makefile.am, doc/docbook/Makefile.am,
+	  doc/docbook/oed/Makefile.am:
+	  remove the vars, cause more trouble than they're worth; simplify
+	  build vars to just what's needed
+
+2008-05-13 19:06  brlcad
+
+	* [r31079] TODO:
+	  move the docbook items up in the list, separate out
+	  autogeneration/integration with the build system
+
+2008-05-13 20:16  starseeker
+
+	* [r31080] src/nirt/if.c, src/nirt/parse_fmt.c, src/nirt/usrfmt.h:
+	  Some preliminary work in support of gap reporting - more pieces
+	  are needed
+
+2008-05-13 20:33  brlcad
+
+	* [r31081] TODO:
+	  make closing both the command window and graphics window shut
+	  down mged (i.e., fix unintentional behavior)
+
+2008-05-13 22:09  starseeker
+
+	* [r31082] src/nirt/if.c, src/nirt/parse_fmt.c, src/nirt/usrfmt.h:
+	  Reporting gaps now on command line nirt - mged version isn't
+	  happy yet
+
+2008-05-14 01:23  brlcad
+
+	* [r31083] src/mged/cmd.c:
+	  remove dead code related to savedit and get (which is in
+	  libged/wdb_obj)
+
+2008-05-14 01:25  brlcad
+
+	* [r31084] src/mged/cmd.h:
+	  remove comment for f_list
+
+2008-05-14 02:19  brlcad
+
+	* [r31085] src/mged/cmd.c, src/mged/cmd.h, src/mged/setup.c:
+	  move the command table to setup along with cmd_setup so that it
+	  may be static. made it obvious that there were a slew of
+	  unnecessary decls that could be removed too.
+
+2008-05-14 03:07  starseeker
+
+	* [r31086] src/nirt/if.c:
+	  Whoops - r_exit, not r_entry, should be preserved for gap
+
+2008-05-14 03:30  brlcad
+
+	* [r31087] src/mged/cmd.c:
+	  reorder to remove need for decls
+
+2008-05-14 03:45  brlcad
+
+	* [r31088] src/mged/setup.c:
+	  static -> HIDDEN
+
+2008-05-14 03:46  brlcad
+
+	* [r31089] src/mged/cmd.c:
+	  tighten the _WIN32 block on % so it'll at least provide help
+
+2008-05-14 05:40  brlcad
+
+	* [r31090] include/bu.h, src/libbu/parse.c:
+	  make the input string of bu_shader_to_tcl_list() be const, make a
+	  copy so it can still insert the nulls as a separator but just
+	  still don't modify the original
+
+2008-05-14 08:22  brlcad
+
+	* [r31091] src/libbu/vls.c:
+	  move the (unused) HAVE_SHELL_ESCAPE logic from rt_split_cmd() on
+	  over into bu_argv_from_string() so that rt_split_cmd() can be
+	  marked deprecated
+
+2008-05-14 08:24  brlcad
+
+	* [r31092] src/libbu/getopt.c:
+	  match the header prototype, char *[]
+
+2008-05-14 08:26  brlcad
+
+	* [r31093] src/remrt/remrt.c, src/remrt/rtsrv.c,
+	  src/tab/tabinterp.c, src/tab/tabsub.c:
+	  convert from rt_split_cmd to bu_argv_from_string
+
+2008-05-14 08:28  brlcad
+
+	* [r31094] doc/deprecation.txt, include/raytrace.h,
+	  src/librt/cmd.c:
+	  formally deprecate rt_split_cmd(), callers should now use
+	  bu_argv_from_string() instead
+
+2008-05-14 08:55  brlcad
+
+	* [r31095] include/ged.h, src/libged/edmater.c, src/libged/item.c,
+	  src/libged/log.c, src/libged/mater.c, src/libged/mirror.c,
+	  src/libged/rmater.c, src/libged/wmater.c:
+	  make the new ged functions all use const char **argv's so callers
+	  can be sure the library doesn't modify their data
+
+2008-05-14 09:00  brlcad
+
+	* [r31096] src/mged/arbs.c, src/mged/chgmodel.c,
+	  src/mged/chgtree.c, src/mged/chgview.c, src/mged/clone.c,
+	  src/mged/cmd.c, src/mged/cmd.h, src/mged/dodraw.c,
+	  src/mged/edarb.c, src/mged/inside.c, src/mged/mged.c,
+	  src/mged/mged.h, src/mged/rtif.c, src/mged/setup.c,
+	  src/mged/track.c, src/mged/typein.c, src/mged/utility2.c:
+	  major constification of all the converted commands as well as
+	  those they relate to or indirectly call. ended up needing to make
+	  a heck of a lot more const than expected. add the start of a new
+	  'generic' mged command parser for the new ged commands (unused
+	  but stubbed).
+
+2008-05-14 12:21  starseeker
+
+	* [r31097] src/nirt/nirt.c, src/nirt/parse_fmt.c:
+	  Add missing break, add g to fmt options. Reading state file now
+	  works, mged still not happy.
+
+2008-05-14 13:04  d_rossberg
+
+	* [r31098] src/conv/3dm/3dm-g.cpp:
+	  made the code portable (using the standard string header)
+
+2008-05-14 13:10  d_rossberg
+
+	* [r31099] src/conv/3dm/CMakeLists.txt, src/conv/3dm/Makefile.am:
+	  MS Windows port of 3dm-g with CMake build system generator
+
+2008-05-14 13:13  d_rossberg
+
+	* [r31100] src/libsysv/CMakeLists.txt:
+	  we do not need neither redata.c nor regex.c too for MS Windows
+
+2008-05-14 13:16  d_rossberg
+
+	* [r31101] src/other/tcl/CMakeLists.txt:
+	  revised, e.g. for CMake 2.6
+
+2008-05-14 13:20  d_rossberg
+
+	* [r31102] misc/win32-msvc/CMakeLists.txt:
+	  include 3dm-g and require at least CMake 2.6
+
+2008-05-14 13:22  d_rossberg
+
+	* [r31103] misc/win32-msvc/Dll/brlcad.def:
+	  added some additional functions to the list (e.g. mk_brep)
+
+2008-05-14 13:25  d_rossberg
+
+	* [r31104] misc/win32-msvc/Dll/CMakeLists.txt:
+	  fixed a problem with dependencies and linked libraries on MS
+	  Windows
+
+2008-05-14 13:29  d_rossberg
+
+	* [r31105] src/librt/CMakeLists.txt, src/libwdb/CMakeLists.txt,
+	  src/other/openNURBS/CMakeLists.txt:
+	  link and use openNURBS as a shared library
+
+2008-05-14 15:54  bob1961
+
+	* [r31106] src/tclscripts/mged/dbfindtree.tcl:
+	  Added a -l option to dbfindtree for returning the paths in a
+	  list.
+
+2008-05-14 17:21  starseeker
+
+	* [r31107] src/libged/qray.c, src/libged/qray.h, src/mged/qray.h,
+	  src/nirt/parse_fmt.c, src/tclscripts/mged/qray.tcl:
+	  Add mged support for new option, set default output for gap to
+	  nil to mimic old behavior by default.
+
+2008-05-14 19:49  starseeker
+
+	* [r31108] NEWS, src/nirt/nirt.1, src/nirt/parse_fmt.c,
+	  src/nirt/usrfmt.h:
+	  Add option to nirt that allows reporting of gaps, per request
+	  #1933724 - includes expansion of Query Ray panel in mged
+
+2008-05-14 19:53  starseeker
+
+	* [r31109] src/nirt/nirt.1:
+	  Add 'g' to man page for nirt
+
+2008-05-14 20:52  bob1961
+
+	* [r31110] include/ged.h, misc/win32-msvc8/libged/libged.vcproj,
+	  src/libged/CMakeLists.txt, src/libged/Makefile.am,
+	  src/libged/make.c, src/libged/make_name.c, src/libged/wdb_obj.c,
+	  src/mged/chgmodel.c, src/mged/cmd.c:
+	  Added make_name and make commands to libged.
+
+2008-05-14 21:00  starseeker
+
+	* [r31111] src/nirt/nirt.c:
+	  Add logic to check for scripts in brlcad data directory (which
+	  doesn't exist yet) - may want to change this so local file with
+	  same name overrides global file?
+
+2008-05-14 21:02  bob1961
+
+	* [r31112] src/mged/qray.h:
+	  Removed extra double-quote from QRAY_FORMAT_NULL.
+
+2008-05-15 01:53  johnranderson
+
+	* [r31113] src/librt/g_sph.c:
+	  shot routine was not setting surfno of hit
+
+2008-05-15 04:46  brlcad
+
+	* [r31114] src/nirt/nirt.c:
+	  ws cleanup
+
+2008-05-15 10:55  d_rossberg
+
+	* [r31115] src/librt/g_brep.cpp:
+	  corrected some programming errors in connection with list
+	  operations
+	  however breps are still of no use
+
+2008-05-16 01:53  johnranderson
+
+	* [r31116] src/librt/g_ell.c, src/librt/g_eto.c,
+	  src/librt/g_half.c, src/librt/g_metaball.c, src/librt/g_sph.c:
+	  shot routine was not setting surfno of hit (note that the hit
+	  structure is not zeroed on get)
+
+2008-05-16 02:34  brlcad
+
+	* [r31117] src/librt/g_ars.c:
+	  do as john does, initialize the hit surface number to zero
+
+2008-05-16 03:43  johnranderson
+
+	* [r31118] src/librt/g_ars.c:
+	  The surfno on the hit should be set to the triangle number :-)
+	  Actually, the ars shot routine is never called, since the ars
+	  prep routine turns it into a prepped bot.
+
+2008-05-16 05:38  brlcad
+
+	* [r31119] src/librt/nmg_rt_segs.c:
+	  add sanity check on the a_hit hitmiss struct before dereferencing
+	  it even though the list is supposed to be checked before it gets
+	  this far with a NMG_CK_HITMISS_LIST earlier on
+
+2008-05-16 06:04  brlcad
+
+	* [r31120] src/librt/g_nmg.c, src/librt/nmg_rt_isect.c:
+	  maybe I can get it wrong two-for-two .. try to properly set the
+	  surfno for g_nmg via nmg_rt_isect() by using the face 'index'.
+	  I'll be surprised if that's actually right..
+
+2008-05-16 06:22  brlcad
+
+	* [r31121] src/librt/g_xxx.c:
+	  provide an example for how to allocate and add a new segment if
+	  there was a hit.
+
+2008-05-16 06:40  brlcad
+
+	* [r31122] src/librt/g_xxx.c:
+	  make the example primitive actually compile so it can be kept in
+	  sync as API changes are made. remove the obsolte v4 import/export
+	  routines since new primitives shouldn't be implementing v4
+	  support.
+
+2008-05-16 06:50  brlcad
+
+	* [r31123] src/librt/Makefile.am, src/librt/g_xxx.c:
+	  clean up comments, add g_xxx to the build so that it can be kept
+	  in sync with the API
+
+2008-05-16 06:57  brlcad
+
+	* [r31124] src/librt/g_grip.c:
+	  comment consistency cleanup
+
+2008-05-16 07:17  brlcad
+
+	* [r31125] src/librt/g_nurb.c:
+	  add support for keeping track of a surface number for the nurbs
+	  surfaces of this primitive by simply keeping a counter over all
+	  surfaces. also make the damn curlies consistent with our style
+	  convention.
+
+2008-05-16 07:23  brlcad
+
+	* [r31126] src/librt/g_pg.c:
+	  learn from ars debachery, use the triangle we hit as the surface
+	  number
+
+2008-05-16 07:47  brlcad
+
+	* [r31127] src/librt/g_sketch.c:
+	  fix the curlie brace inconistency hell, match our style. this is
+	  the last of the prims that didn't reference a surfno (this one
+	  doesn't need to since it's not solid.
+
+2008-05-16 14:08  bob1961
+
+	* [r31128] include/ged.h, misc/win32-msvc8/libged/libged.vcproj,
+	  src/libged/CMakeLists.txt, src/libged/Makefile.am,
+	  src/libged/comb_color.c, src/mged/chgmodel.c:
+	  Added comb_color command to libged.
+
+2008-05-16 16:14  bob1961
+
+	* [r31129] include/ged.h:
+	  Added GED_DATABASE_OPEN.
+
+2008-05-16 16:48  bob1961
+
+	* [r31130] include/ged.h, misc/win32-msvc8/libged/libged.vcproj,
+	  src/libged/CMakeLists.txt, src/libged/Makefile.am,
+	  src/libged/shader.c, src/mged/chgmodel.c:
+	  Added the shader command to libged.
+
+2008-05-16 17:08  bob1961
+
+	* [r31131] src/libged/comb_color.c:
+	  Fixed typo.
+
+2008-05-16 17:43  bob1961
+
+	* [r31132] include/ged.h, src/libged/comb_color.c,
+	  src/libged/edmater.c, src/libged/item.c, src/libged/log.c,
+	  src/libged/make.c, src/libged/make_name.c, src/libged/mater.c,
+	  src/libged/mirror.c, src/libged/rmater.c, src/libged/shader.c,
+	  src/libged/wmater.c:
+	  GED_CHECK_DBI_NULL has been removed. GED_DATABASE_OPEN has been
+	  replaced by GED_CHECK_DATABASE_OPEN. GED_CHECK_READ_ONLY's first
+	  parameter has changed from a struct db_i to a struct rt_wdb.
+
+2008-05-16 18:49  bob1961
+
+	* [r31133] include/ged.h, misc/win32-msvc8/libged/libged.vcproj,
+	  src/libged/CMakeLists.txt, src/libged/Makefile.am,
+	  src/libged/edcomb.c, src/mged/chgmodel.c:
+	  Added the edcomb command to libged.
+
+2008-05-16 20:52  bob1961
+
+	* [r31134] include/ged.h:
+	  Added GED_CHECK_COMB, GED_DB_LOOKUP, GED_DB_GET_INTERNAL and
+	  GED_DB_PUT_INTERNAL.
+
+2008-05-16 20:56  bob1961
+
+	* [r31135] src/libged/shader.c:
+	  Modified to use new GED macros.
+
+2008-05-16 22:13  brlcad
+
+	* [r31136] include/raytrace.h, src/librt/nmg_rt_isect.c,
+	  src/librt/nmg_rt_segs.c:
+	  remove FAST_NMG, turning on the plethora of additional run-time
+	  NMG checks provided via NMG_CK_HITMISS and NMG_CK_HITMISS_LISTS.
+	  still wrap them in NO_BOMBING_MACROS though so that they can
+	  still be disabled at compile-time. modified NMG_CK_HITMISS_LISTS
+	  to not take the iterator and removed a slew of the checks that
+	  were rather .. gratuitous.
+
+2008-05-16 23:36  brlcad
+
+	* [r31137] include/bu.h:
+	  looks like nobody is using BU_QFLSTR, so buh-bye
+
+2008-05-16 23:38  brlcad
+
+	* [r31138] doc/deprecation.txt:
+	  comment on BU_QFLSTR and NMG_CK_HITMISS_LIST changes since
+	  they've been in the headers for a long while
+
+2008-05-17 17:38  starseeker
+
+	* [r31139] doc/docbook/oed/oed.xml:
+	  Fix incorrect object name in push command
+
+2008-05-19 15:30  starseeker
+
+	* [r31140] configure.ac, src/nirt/Makefile.am, src/nirt/sfiles,
+	  src/nirt/sfiles/Makefile.am, src/nirt/sfiles/csv-gap.nrt,
+	  src/nirt/sfiles/csv.nrt, src/nirt/sfiles/default.nrt,
+	  src/nirt/sfiles/gap1.nrt, src/nirt/sfiles/gap2.nrt:
+	  Add a few basic 'built-in' formatting files for nirt.
+
+2008-05-19 17:23  starseeker
+
+	* [r31141] src/nirt/sfiles/csv-gap.nrt, src/nirt/sfiles/csv.nrt:
+	  Add missing z_dir label.
+
+2008-05-19 17:36  starseeker
+
+	* [r31142] src/nirt/sfiles/csv-gap.nrt, src/nirt/sfiles/csv.nrt:
+	  Change formatting for csv to add headers for ray and results.
+
+2008-05-19 18:09  starseeker
+
+	* [r31143] src/nirt/sfiles/csv-gap.nrt, src/nirt/sfiles/csv.nrt:
+	  Add quotes in csv for strings.
+
+2008-05-19 18:38  starseeker
+
+	* [r31144] src/nirt/nirt.c:
+	  Check in local directory before checking system directory for
+	  sfile, in case local file is using conflicting name.
+
+2008-05-19 19:01  bob1961
+
+	* [r31145] include/ged.h:
+	  Added GED_CHECK_EXISTS, GED_CHECK_REGION and GED_DB_DIRADD.
+
+2008-05-19 19:04  bob1961
+
+	* [r31146] src/libged/comb_color.c, src/libged/edcomb.c,
+	  src/libged/item.c, src/libged/make.c, src/libged/mater.c:
+	  Mods to use the new GED macros.
+
+2008-05-19 22:30  starseeker
+
+	* [r31147] src/mged/chgview.c:
+	  Sean added sanity check in response to crash - more work needed
+
+2008-05-20 06:23  pacman87
+
+	* [r31148] include/raytrace.h, include/rtgeom.h,
+	  src/librt/Makefile.am, src/librt/g_eto.c, src/librt/g_hyp.c,
+	  src/librt/table.c:
+	  start of code to support hyperboloid of one sheet, finished
+	  prep(), print(), shot(), norm(), uv(), and free(); still need to
+	  check for div by zero cases
+
+2008-05-20 06:32  brlcad
+
+	* [r31149] include/bu.h:
+	  remove register keywords from public interface
+
+2008-05-20 22:21  pacman87
+
+	* [r31150] src/librt/g_hyp.c:
+	  fix div by zero in norm() for g_hyp.c
+
+2008-05-20 22:26  pacman87
+
+	* [r31151] src/librt/g_hyp.c:
+	  note to self: compile first, then check in
+
+2008-05-21 00:52  brlcad
+
+	* [r31152] include/raytrace.h:
+	  don't mention SMALL as it's deprecated, use SQRT_SMALL_FASTF
+	  instead
+
+2008-05-21 00:52  brlcad
+
+	* [r31153] src/librt/g_hyp.c:
+	  go even smaller, use SMALL_FASTF instead of the deprecated SMALL
+	  size
+
+2008-05-21 03:45  brlcad
+
+	* [r31154] src/libbu/temp.c:
+	  add a note that the routine is not thread-safe. there would
+	  minimally need to be some protections added when adding items to
+	  the auto-close list
+
+2008-05-21 04:56  brlcad
+
+	* [r31155] configure.ac:
+	  update comment to reflect that it does more than -all_load now
+
+2008-05-21 05:34  brlcad
+
+	* [r31156] include/bu.h:
+	  be more specific on the signature for bu_argv_from_string, it
+	  takes an array of argvs (already allocated), not just a double
+	  pointer.
+
+2008-05-21 05:56  brlcad
+
+	* [r31157] src/libbu/vls.c, src/libged/dg_obj.c, src/librt/cmd.c,
+	  src/mged/chgtree.c, src/mged/chgview.c, src/mged/cmd.c,
+	  src/mged/utility2.c, src/remrt/remrt.c, src/tab/tabinterp.c,
+	  src/tab/tabsub.c:
+	  rewrite and modify bu_argv_from_string to make it more consistent
+	  with other functions. the limit now corresponds to the number of
+	  non-NULL words being put into the argv array, not the size of the
+	  array (whose size includes the null). this requires refactoring
+	  the function to keep better track of where it is while parsing
+	  including now the ability to have arbitrary amounts of whitespace
+	  between words so that it will tokenize like the command line and
+	  aren't bad run-on sentances the shiznits. bu_argv_from_string
+	  still requires the caller to allocate enough space for the NULL
+	  in the argv array and to manage the memory associated with the
+	  input string; lim just doesn't include NULL in the count. the
+	  count returned is similarly the matching argc for the number of
+	  elements set in argv.
+
+2008-05-21 18:41  erikgreenwald
+
+	* [r31158] src/rt/Makefile.am, src/rt/mlt_def.h:
+	  Application of initial MLT patch from Andre. Changes include
+	  location of the header as well as an automake entry.
+	  Closes
+	  http://sourceforge.net/tracker/index.php?func=detail&aid=1961524&group_id=105292&atid=640804
+
+2008-05-22 02:36  brlcad
+
+	* [r31159] src/libsysv/Makefile.am, src/libsysv/redata.c,
+	  src/libsysv/regex.c:
+	  don't seem to need the old regex files
+
+2008-05-22 02:37  brlcad
+
+	* [r31160] misc/win32-msvc/Dll/Makefile.am,
+	  misc/win32-msvc8/Makefile.am, src/other/tcl/Makefile.am:
+	  few files missing from dist
+
+2008-05-22 02:47  brlcad
+
+	* [r31161] TODO:
+	  narrowing down the items attainable in order to make a (source)
+	  release by the end of the week, pushing the rest back one or more
+	  iterations
+
+2008-05-22 03:07  brlcad
+
+	* [r31162] src/libfb/if_ogl.c:
+	  restructure the file so there is no need to declare most of the
+	  the static routines
+
+2008-05-22 03:08  brlcad
+
+	* [r31163] src/libfb/if_ogl.c:
+	  is the undef RED still needed?
+
+2008-05-22 03:10  brlcad
+
+	* [r31164] TODO:
+	  add some notes on why the ogl framebuffer isn't refreshing
+
+2008-05-22 03:21  brlcad
+
+	* [r31165] src/rt/mlt_def.h:
+	  should use sh/template.sh when creating new files so that the
+	  correct header/footer are created, else take more care when
+	  copying an existing file (copyright indicates when the file
+	  started, not the project)
+
+2008-05-22 03:37  brlcad
+
+	* [r31166] configure.ac:
+	  warn about a frequent compilation problem. if the Xi library
+	  isn't found, the build is likely going to fail (on linux).
+
+2008-05-22 04:00  brlcad
+
+	* [r31167] configure.ac:
+	  pause at all warnings in a moment of reverence. allow override of
+	  the BRLCAD_ROOT verbose warning by setting BRLCAD_ROOT_OVERRIDE
+	  in the environment.
+
+2008-05-22 16:06  brlcad
+
+	* [r31168] doc/docbook, doc/docbook/oed, src/libged,
+	  src/nirt/sfiles:
+	  ignore generated Makefile and Makefile.in
+
+2008-05-22 16:31  bob1961
+
+	* [r31169] src/libged/wdb_obj.c,
+	  src/tclscripts/archer/ArcherCore.tcl, src/tclscripts/lib/Db.tcl,
+	  src/tclscripts/lib/Mged.tcl:
+	  Added commands for comb_color, edcomb, edmater, item, make,
+	  mater, rmater, shader and wmater.
+
+2008-05-22 17:43  bob1961
+
+	* [r31170] misc/win32-msvc8/libsysv/libsysv.vcproj:
+	  Update the list of source files.
+
+2008-05-22 18:35  starseeker
+
+	* [r31171] src/libbu/dirent.c:
+	  Add (very) early stages of dirent related libbu functionality.
+	  Not yet in library form, which is why it's not being added to
+	  make system just yet.
+
+2008-05-22 19:06  bob1961
+
+	* [r31172] src/libged/mirror.c:
+	  Temporarily comment out the use of bu_vls_from_argv and
+	  bu_argv_from_string. bu_vls_from_argv fails to handle arguments
+	  with white space (e.g. the argument for -d might be something
+	  like {2 3 4}). So if the argument to -d was {2 3 4}, bu_optarg's
+	  value was 2 when it should be "2 3 4".
+
+2008-05-22 21:45  brlcad
+
+	* [r31173] src/nirt/nirt.1, src/nirt/nirt.c:
+	  not short dammit. -s is silent mode.
+
+2008-05-23 21:29  brlcad
+
+	* [r31174] NEWS, src/rt/opt.c, src/rt/rtcheck.1,
+	  src/rt/viewcheck.c:
+	  bob added this option way back in 2005 ( 15 Aug 2005 21:43:07 to
+	  be exact ) but it was never documented. this option makes rtcheck
+	  write the plot file data in text format instead of the default
+	  binary format. binary should probably not be the default, so
+	  presumably this was a first step towards that direction; at least
+	  it lets you get text instead of binary so you can avoid the tty
+	  warning about binary output. reduce globals by one, the code is
+	  updated to reuse the exist output_is_binary global instead of
+	  using rt_text_output.
+
+2008-05-23 22:48  brlcad
+
+	* [r31175] TODO:
+	  it really just causes too much confusion. z-clipping should be
+	  off by default.
+
+2008-05-24 01:16  brlcad
+
+	* [r31176] TODO:
+	  this has come up so many times over the year, it needs to be
+	  documented so it can be eventually worked on. develop a low-level
+	  tool for investigating, reporting statistics on, and repairing
+	  geometry database files. the tool should nominally perform
+	  big/little endian conversions, report number and types of
+	  objects, allow deletion/undeletion/hiding/unhiding, provide some
+	  general means to manipulate the packed and unpacked .g file data
+	  for performing low-level modifications. this tool would directly
+	  benefit both developers and users alike (particularly for
+	  repairing catastrophic .g mistakes and for debugging).
+
+2008-05-24 06:59  brlcad
+
+	* [r31177] TODO:
+	  nirt -e seems to have been busted with r31097
+
+2008-05-24 08:37  brlcad
+
+	* [r31178] NEWS:
+	  rather belated thanks to Daniel for finding/fixing the bu_ptbl
+	  memory leak that was occuring during prep where delete_regs
+	  wasn't getting freed from an rtip. this change was made in 28 Oct
+	  2006 14:56:23 as CVS rev 14.17
+
+2008-05-24 17:09  brlcad
+
+	* [r31179] src/rt/main.c, src/rt/opt.c:
+	  move output_is_binary to opt so that remrt can resolve the
+	  reference
+
+2008-05-26 22:20  starseeker
+
+	* [r31180] src/nirt/nirt.c:
+	  -e option works again, but supplying -f AFTER -e ignores the -f
+	  flag - need to find out why. Works if -f is used before -e.
+
+2008-05-26 22:26  starseeker
+
+	* [r31181] src/nirt/nirt.c:
+	  Initialization happens regardless, so only need it in one place -
+	  before if.
+
+2008-05-27 01:48  brlcad
+
+	* [r31182] TODO:
+	  nirt -e works once again
+
+2008-05-27 02:02  brlcad
+
+	* [r31183] TODO, src/libfb/if_ogl.c:
+	  better to be slow and visible than vast without a refresh.
+	  haven't found why the buffer isn't refreshing yet, but it at
+	  least restores functionality. maybe bob can track it down...
+
+2008-05-27 02:06  brlcad
+
+	* [r31184] NEWS:
+	  annotate that bob added a -l option to the dbfindtree command so
+	  that it'll return the paths in a list instead of the default
+	  pretty-print tree. useful for scripting, presumably something
+	  dave loman needed.
+
+2008-05-27 14:13  erikgreenwald
+
+	* [r31185] misc/win32-msvc8/librt/librt.vcproj:
+	  let's see what we can break by adding g_hyp.c by hand...
+
+2008-05-27 14:16  erikgreenwald
+
+	* [r31186] HACKING:
+	  add a couple directories to the layout information
+
+2008-05-27 15:59  bob1961
+
+	* [r31187] src/librt/g_hyp.c:
+	  Moved variable declarations to beginning of their respective code
+	  blocks.
+
+2008-05-27 18:42  bob1961
+
+	* [r31188] src/librt/db_anim.c:
+	  Added better checking of argc/argv to db_parse_1anim().
+
+2008-05-27 20:43  starseeker
+
+	* [r31189] src/libbu/Makefile.am, src/libbu/dirent.c,
+	  src/libbu/uce-dirent.h:
+	  Use uce-dirent to provide cross platform dirent functionality.
+
+2008-05-27 20:44  starseeker
+
+	* [r31190] include/bu.h:
+	  Add dirent.c functions to bu.h
+
+2008-05-27 20:45  starseeker
+
+	* [r31191] src/nirt/nirt.c, src/nirt/nirt.h:
+	  Add preliminary code in support of -L option for listing
+	  available report formats.
+
+2008-05-27 20:49  bob1961
+
+	* [r31192] include/ged.h, misc/win32-msvc8/libged/libged.vcproj,
+	  src/libged/CMakeLists.txt, src/libged/Makefile.am,
+	  src/libged/arced.c, src/libged/wdb_obj.c, src/mged/chgtree.c,
+	  src/tclscripts/archer/ArcherCore.tcl, src/tclscripts/lib/Db.tcl,
+	  src/tclscripts/lib/Mged.tcl:
+	  Added arced to libged.
+
+2008-05-27 21:03  andrecastelo
+
+	* [r31193] AUTHORS:
+	  Added André Castelo to the Code Contributions list.
+
+2008-05-27 22:05  starseeker
+
+	* [r31194] src/nirt/sfiles/csv-gap.nrt, src/nirt/sfiles/csv.nrt,
+	  src/nirt/sfiles/default.nrt, src/nirt/sfiles/gap1.nrt,
+	  src/nirt/sfiles/gap2.nrt:
+	  Tweak sfiles for nirt
+
+2008-05-27 22:08  starseeker
+
+	* [r31195] src/nirt/nirt.c:
+	  Add very crude listing ability - shouldn't be using fixed
+	  numerical lengths...
+
+2008-05-27 22:11  starseeker
+
+	* [r31196] src/nirt/nirt.c:
+	  Whoops - use bu_vls_free for vls structs
+
+2008-05-28 05:05  brlcad
+
+	* [r31197] include/conf/make.vbs:
+	  ws
+
+2008-05-28 12:23  d_rossberg
+
+	* [r31198] src/libbu/CMakeLists.txt:
+	  Use uce-dirent to provide cross platform dirent functionality.
+
+2008-05-28 12:25  d_rossberg
+
+	* [r31199] src/librt/CMakeLists.txt:
+	  g_hyp.c: code to support hyperboloid of one sheet
+
+2008-05-28 17:15  brlcad
+
+	* [r31200] regress/Makefile.am, regress/flawfinder.sh,
+	  regress/repository.sh:
+	  break out the repository source consistency checks into their own
+	  test instead of keeping them bundled with the flawfinder test
+
+2008-05-28 17:31  starseeker
+
+	* [r31201] src/nirt/if.c:
+	  nirt should report a gap whenever the gap los is greater than
+	  zero
+
+2008-05-28 17:57  brlcad
+
+	* [r31202] src/nirt/command.c, src/nirt/conversion.c,
+	  src/nirt/if.c, src/nirt/nirt.c, src/nirt/parse_fmt.c,
+	  src/nirt/showshot.c:
+	  ws
+
+2008-05-28 18:04  starseeker
+
+	* [r31203] src/mged/rtif.c:
+	  Don't add pix output flag when nirt is the rtcmd - saveview
+	  should now provide a working nirt call
+
+2008-05-28 18:17  johnranderson
+
+	* [r31204] include/bu.h:
+	  added declarations for bu_vlb routines
+
+2008-05-28 18:18  johnranderson
+
+	* [r31205] include/rtserver.h:
+	  added fields required for use of bu_vlb
+
+2008-05-28 18:20  johnranderson
+
+	* [r31206] include/RtServerImpl.h:
+	  added declarations of getRegionNames() and shootList() methods
+
+2008-05-28 18:21  johnranderson
+
+	* [r31207] src/librtserver/rtserver.c:
+	  now uses byte array to return results rather than building Java
+	  objects in C code
+
+2008-05-28 19:18  brlcad
+
+	* [r31208] configure.ac:
+	  remove unused checks for sys/unistd.h, lseek(), and regcomp()
+
+2008-05-28 19:19  brlcad
+
+	* [r31209] TODO:
+	  once again, incrtcl gets incrshafted. we're good to go
+
+2008-05-29 06:08  brlcad
+
+	* [r31210] include/conf/Makefile.am:
+	  need to remove COUNT during distclean so distcheck will work
+
+2008-05-29 07:00  brlcad
+
+	* [r31211] NEWS:
+	  add detailed release notes about the mirror and nirt changes as
+	  well as special mention of the cool new tire proc-db. begin
+	  7.12.4 relese steps.
 
