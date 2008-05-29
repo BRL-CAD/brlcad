@@ -153,6 +153,7 @@ void listformats(void)
     FILE *cfPtr;
     int fnddesc;
     char fileline[256];
+    char **filearray;
 
     bu_vls_init(&nirtfilespath);
     bu_vls_printf(&nirtfilespath,"%s",bu_brlcad_data("nirt",0));
@@ -161,7 +162,6 @@ void listformats(void)
 
     files = bu_count_path(bu_vls_addr(&nirtfilespath),suffix);
 
-    char **filearray;
     filearray = (char **)bu_malloc(files*sizeof(char *),"filelist");
 
     bu_list_path(bu_vls_addr(&nirtfilespath),suffix,filearray);
