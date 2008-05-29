@@ -10,6 +10,7 @@ libged_nil_la_SOURCES = \
 	editit.c \
 	edcomb.c \
 	edmater.c \
+	get_obj_bounds.c \
 	globals.c \
 	importFg4Section.c \
 	item.c \
@@ -27,6 +28,7 @@ libged_nil_la_SOURCES = \
 	rmater.c \
 	shader.c \
 	tcl.c \
+	trace.c \
 	track.c \
 	vdraw.c \
 	view_obj.c \
