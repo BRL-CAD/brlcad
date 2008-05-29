@@ -19,6 +19,10 @@ libged_nil_la_SOURCES = \
 	mater.c \
 	mirror.c \
 	nirt.c \
+	ocenter.c \
+	orotate.c \
+	oscale.c \
+	otranslate.c \
 	qray.c \
 	rmater.c \
 	shader.c \
