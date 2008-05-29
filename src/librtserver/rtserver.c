@@ -117,7 +117,7 @@ static struct rts_resources rts_resource;
  */
 
 /* total number of MUVES component names */
-static int comp_count=0;
+static CLIENTDATA_INT comp_count=0;
 
 /* use air flag (0 -> ignore air regions) */
 static int use_air=0;
@@ -939,7 +939,7 @@ rts_load_geometry( char *filename, int use_articulation, int num_objs, char **ob
     for ( i=0; i<rts_geometry[sessionid]->rts_number_of_rtis; i++ ) {
 	struct rtserver_rti *rts_rtip;
 	struct rt_i *rtip;
-        int regno;
+        CLIENTDATA_INT regno;
 
 	/* cache the rtserver_rti pointer and its associated rt instance pointer */
 	rts_rtip = rts_geometry[sessionid]->rts_rtis[i];
@@ -1064,6 +1064,7 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *segs )
 	struct ray_hit *ahit;
 	struct region *rp;
 	Tcl_HashEntry *entry;
+        CLIENTDATA_INT code;
 
 	/* get one hit structure */
 	RTS_GET_RAY_HIT( ahit );
@@ -1084,9 +1085,11 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *segs )
 	/* find has table entry, if we have a table (to get MUVES_Component index) */
 	if ( hash_table_exists ) {
 	    if ( rp->reg_aircode ) {
-		entry = Tcl_FindHashEntry( &air_tbl, (ClientData)rp->reg_aircode );
+                code = rp->reg_aircode;
+		entry = Tcl_FindHashEntry( &air_tbl, (ClientData)code );
 	    } else {
-		entry = Tcl_FindHashEntry( &ident_tbl, (ClientData)rp->reg_regionid );
+                code = rp->reg_regionid;
+		entry = Tcl_FindHashEntry( &ident_tbl, (ClientData)code );
 	    }
 	} else {
 	    entry = NULL;
@@ -1096,7 +1099,7 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *segs )
 	if ( entry == NULL ) {
 	    ahit->comp_id = 0;
 	} else {
-	    ahit->comp_id = (int)Tcl_GetHashValue( entry );
+	    ahit->comp_id = (CLIENTDATA_INT)Tcl_GetHashValue( entry );
 	}
 
         if(ray_res->vlb != NULL) {
@@ -1143,7 +1146,7 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *segs )
             
             /* get the region index from the hash table */
             entry = Tcl_FindHashEntry( rts_geometry[sessionid]->rts_rtis[0]->rtrti_region_names, (ClientData)rp->reg_name );
-            regionIndex = (int)Tcl_GetHashValue( entry );
+            regionIndex = (CLIENTDATA_INT)Tcl_GetHashValue( entry );
             
             /* write region index to buffer */
             bu_plong(buffer, regionIndex);
@@ -1389,7 +1392,7 @@ rts_submit_job( struct rtserver_job *ajob, int queue )
 void
 rts_start_server_threads( int thread_count, int queue_count )
 {
-    int i;
+    CLIENTDATA_INT i;
 
     if ( queue_count > 0 ) {
 	int old_queue_count=num_queues;
@@ -1585,7 +1588,8 @@ get_muves_components()
 	    struct region *rp=rtip->Regions[j];
 	    struct bu_mro *attrs=rp->attr_values[0];
 	    int new;
-	    int index=0;
+	    CLIENTDATA_INT index=0;
+            CLIENTDATA_INT code;
 
 	    if ( !rp || BU_MRO_STRLEN(attrs) < 1 ) {
 		/* not a region, or does not have a MUVES_Component attribute */
@@ -1604,18 +1608,20 @@ get_muves_components()
 		Tcl_SetHashValue( name_entry, (ClientData)comp_count );
 		index = comp_count;
 	    } else {
-		index = (int )Tcl_GetHashValue( name_entry );
+		index = (CLIENTDATA_INT)Tcl_GetHashValue( name_entry );
 	    }
 
 	    if ( rp->reg_aircode > 0 ) {
 		/* this is an air region, create an air table entry */
-		air_entry = Tcl_CreateHashEntry( &air_tbl, (char *)rp->reg_aircode, &new );
+                code = rp->reg_aircode;
+		air_entry = Tcl_CreateHashEntry( &air_tbl, (ClientData)code, &new );
 		if ( new ) {
 		    Tcl_SetHashValue( air_entry, (ClientData)index );
 		}
 	    } else {
 		/* this is a solid region, create an ident table entry */
-		ident_entry = Tcl_CreateHashEntry( &ident_tbl, (char *)rp->reg_regionid, &new );
+                code = rp->reg_regionid;
+		ident_entry = Tcl_CreateHashEntry( &ident_tbl, (ClientData)code, &new );
 		if ( new ) {
 		    Tcl_SetHashValue( ident_entry, (ClientData)index );
 		}
@@ -1632,10 +1638,10 @@ get_muves_components()
     name_entry = Tcl_FirstHashEntry( &name_tbl, &search );
     while ( name_entry ) {
 	char *name;
-	long index;
+	CLIENTDATA_INT index;
 
 	name = Tcl_GetHashKey( &name_tbl, name_entry );
-	index = (int)Tcl_GetHashValue( name_entry );
+	index = (CLIENTDATA_INT)Tcl_GetHashValue( name_entry );
 	names[index] = bu_strdup( name );
 
 	name_entry = Tcl_NextHashEntry( &search );
@@ -2221,7 +2227,7 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_getRegionNames(JNIEnv *env
     int region_count;
     jobject jNameArray;
     jstring region_name;
-    int region_number;
+    CLIENTDATA_INT region_number;
     
     hashTbl = rts_geometry[sessionId]->rts_rtis[0]->rtrti_region_names;
     region_count = rts_geometry[sessionId]->rts_rtis[0]->region_count;
@@ -2230,7 +2236,7 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_getRegionNames(JNIEnv *env
     entry = Tcl_FirstHashEntry(hashTbl, &searchTbl);
 
     while( entry != NULL ) {
-        region_number = (int)Tcl_GetHashValue(entry);
+        region_number = (CLIENTDATA_INT)Tcl_GetHashValue(entry);
         region_name = (*env)->NewStringUTF(env, Tcl_GetHashKey(hashTbl, entry));
         (*env)->SetObjectArrayElement(env, jNameArray, region_number, region_name);
         entry = Tcl_NextHashEntry(&searchTbl);
