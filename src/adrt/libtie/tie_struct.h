@@ -61,7 +61,7 @@ typedef struct tie_kdtree_s {
 
 typedef struct tie_geom_s {
     tie_tri_t **tri_list;
-    int tri_num;
+    unsigned int tri_num;
 } tie_geom_t;
 
 typedef struct tie_stack_s {
@@ -73,12 +73,12 @@ typedef struct tie_stack_s {
 typedef struct tie_s {
     uint64_t rays_fired;
     tie_kdtree_t *kdtree;
-    int max_depth;	/* Maximum depth allowed for given geometry */
+    unsigned int max_depth;	/* Maximum depth allowed for given geometry */
     unsigned int tri_num;
     unsigned int tri_num_alloc;
     tie_tri_t *tri_list;
     int stat;		/* used for testing various statistics */
-    int kdmethod;		/* Optimal or Fast */
+    unsigned int kdmethod;		/* Optimal or Fast */
     /* all tfloat altered stuff should be at the end. */
     TIE_3 min, max;
 #if TIE_PRECISION == 0
