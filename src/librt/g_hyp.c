@@ -543,13 +543,150 @@ rt_hyp_class( const struct soltab *stp, const vect_t min, const vect_t max, cons
 int
 rt_hyp_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol )
 {
+    register int	i;
     struct rt_hyp_internal	*hyp_ip;
+
+    /*	A and B are vectors on semi-major and semi-minor axes 
+	AN and BN are the reverse of A and B
+	A2 and B2 are intermediate points for approximating octagon
+	A2N and B2N are the reverse of A2 and B2
+    */
+    vect_t A, B, A2, B2, AN, BN, A2N, B2N, HN, H2N, H2;
+    fastf_t top[8*3];
+    fastf_t topMid[8*3];
+    fastf_t middle[8*3];
+    fastf_t botMid[8*3];
+    fastf_t bottom[8*3];
+    fastf_t offset[8*3];	/* used for top/bottom */
+    fastf_t scale;		/* used to calculate semi-major/minor axes for top/bottom */
 
     RT_CK_DB_INTERNAL(ip);
     hyp_ip = (struct rt_hyp_internal *)ip->idb_ptr;
     RT_HYP_CK_MAGIC(hyp_ip);
 
-    return(-1);
+    /*
+    draw top, middle, and bottom ellipses for testing, no tolerance checks 
+    */
+    VSCALE( A, hyp_ip->hyp_Au, hyp_ip->hyp_r1 );
+    VSCALE( A2, A, M_SQRT1_2 );
+    VCROSS( B2, hyp_ip->hyp_H, hyp_ip->hyp_Au );  /* using B2 for temp storage */
+    VUNITIZE( B2 );
+    VSCALE( B, B2, hyp_ip->hyp_r2 );
+    VSCALE( B2, B, M_SQRT1_2 );
+
+    VREVERSE( AN, A );
+    VREVERSE( BN, B );
+    VREVERSE( A2N, A2 );
+    VREVERSE( B2N, B2 );
+
+    VADD2( &middle[0*3], hyp_ip->hyp_V, A );
+    VADD3( &middle[1*3], hyp_ip->hyp_V, A2, B2 );
+    VADD2( &middle[2*3], hyp_ip->hyp_V, B );
+    VADD3( &middle[3*3], hyp_ip->hyp_V, A2N, B2 );
+    VADD2( &middle[4*3], hyp_ip->hyp_V, AN );
+    VADD3( &middle[5*3], hyp_ip->hyp_V, A2N, B2N );
+    VADD2( &middle[6*3], hyp_ip->hyp_V, BN );
+    VADD3( &middle[7*3], hyp_ip->hyp_V, A2, B2N );
+
+    /* compute offsets for top/bottom ellipses */
+    scale = MAGSQ( hyp_ip->hyp_H )*(hyp_ip->hyp_c * hyp_ip->hyp_c);
+    VSCALE( A, hyp_ip->hyp_Au, sqrt( (hyp_ip->hyp_r1 * hyp_ip->hyp_r1) + scale ) );
+    VSCALE( A2, A, M_SQRT1_2 );
+    VCROSS( B2, hyp_ip->hyp_H, hyp_ip->hyp_Au );  /* using B2 for temp storage */
+    VUNITIZE( B2 );
+    VSCALE( B, B2, sqrt( (hyp_ip->hyp_r2 * hyp_ip->hyp_r2) + scale ) );
+    VSCALE( B2, B, M_SQRT1_2 );
+
+    VREVERSE( AN, A );
+    VREVERSE( BN, B );
+    VREVERSE( A2N, A2 );
+    VREVERSE( B2N, B2 );
+
+    VADD2( &offset[0*3], hyp_ip->hyp_V, A );
+    VADD3( &offset[1*3], hyp_ip->hyp_V, A2, B2 );
+    VADD2( &offset[2*3], hyp_ip->hyp_V, B );
+    VADD3( &offset[3*3], hyp_ip->hyp_V, A2N, B2 );
+    VADD2( &offset[4*3], hyp_ip->hyp_V, AN );
+    VADD3( &offset[5*3], hyp_ip->hyp_V, A2N, B2N );
+    VADD2( &offset[6*3], hyp_ip->hyp_V, BN );
+    VADD3( &offset[7*3], hyp_ip->hyp_V, A2, B2N );
+
+    VREVERSE( HN, hyp_ip->hyp_H );
+
+    for ( i=0; i<8; i++ ) {
+	VADD3( &top[i*3], &offset[i*3], hyp_ip->hyp_V, hyp_ip->hyp_H );
+	VADD3( &bottom[i*3], &offset[i*3], hyp_ip->hyp_V, HN );
+    }
+
+    /* compute offsets for mid-top/mid-bottom ellipses */
+    scale = 0.25 * MAGSQ( hyp_ip->hyp_H )*(hyp_ip->hyp_c * hyp_ip->hyp_c);
+    VSCALE( A, hyp_ip->hyp_Au, sqrt( (hyp_ip->hyp_r1 * hyp_ip->hyp_r1) + scale ) );
+    VSCALE( A2, A, M_SQRT1_2 );
+    VCROSS( B2, hyp_ip->hyp_H, hyp_ip->hyp_Au );  /* using B2 for temp storage */
+    VUNITIZE( B2 );
+    VSCALE( B, B2, sqrt( (hyp_ip->hyp_r2 * hyp_ip->hyp_r2) + scale ) );
+    VSCALE( B2, B, M_SQRT1_2 );
+
+    VREVERSE( AN, A );
+    VREVERSE( BN, B );
+    VREVERSE( A2N, A2 );
+    VREVERSE( B2N, B2 );
+
+    VADD2( &offset[0*3], hyp_ip->hyp_V, A );
+    VADD3( &offset[1*3], hyp_ip->hyp_V, A2, B2 );
+    VADD2( &offset[2*3], hyp_ip->hyp_V, B );
+    VADD3( &offset[3*3], hyp_ip->hyp_V, A2N, B2 );
+    VADD2( &offset[4*3], hyp_ip->hyp_V, AN );
+    VADD3( &offset[5*3], hyp_ip->hyp_V, A2N, B2N );
+    VADD2( &offset[6*3], hyp_ip->hyp_V, BN );
+    VADD3( &offset[7*3], hyp_ip->hyp_V, A2, B2N );
+
+    VREVERSE( HN, hyp_ip->hyp_H );
+    VSCALE( H2N, HN, 0.5 );
+    VSCALE( H2, hyp_ip->hyp_H, 0.5 );
+
+    for ( i=0; i<8; i++ ) {
+	VADD3( &topMid[i*3], &offset[i*3], hyp_ip->hyp_V, H2 );
+	VADD3( &botMid[i*3], &offset[i*3], hyp_ip->hyp_V, H2N );
+    }
+
+    /* draw elipses */
+    RT_ADD_VLIST( vhead, &top[7*3], BN_VLIST_LINE_MOVE );
+    for ( i=0; i<8; i++ )  {
+	RT_ADD_VLIST( vhead, &top[i*3], BN_VLIST_LINE_DRAW );
+    }
+
+    RT_ADD_VLIST( vhead, &topMid[7*3], BN_VLIST_LINE_MOVE );
+    for ( i=0; i<8; i++ )  {
+	RT_ADD_VLIST( vhead, &topMid[i*3], BN_VLIST_LINE_DRAW );
+    }
+
+    RT_ADD_VLIST( vhead, &middle[7*3], BN_VLIST_LINE_MOVE );
+    for ( i=0; i<8; i++ )  {
+	RT_ADD_VLIST( vhead, &middle[i*3], BN_VLIST_LINE_DRAW );
+    }
+
+    RT_ADD_VLIST( vhead, &botMid[7*3], BN_VLIST_LINE_MOVE );
+    for ( i=0; i<8; i++ )  {
+	RT_ADD_VLIST( vhead, &botMid[i*3], BN_VLIST_LINE_DRAW );
+    }
+
+    RT_ADD_VLIST( vhead, &bottom[7*3], BN_VLIST_LINE_MOVE );
+    for ( i=0; i<8; i++ )  {
+	RT_ADD_VLIST( vhead, &bottom[i*3], BN_VLIST_LINE_DRAW );
+    }
+
+    /* draw vertical lines */
+    for ( i=0; i<8; i++ )  {
+	RT_ADD_VLIST( vhead, &bottom[i*3], BN_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vhead, &botMid[i*3], BN_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, &middle[i*3], BN_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, &topMid[i*3], BN_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, &top[i*3], BN_VLIST_LINE_DRAW );
+    }
+
+
+    return(0);
 }
 
 /**
@@ -571,82 +708,6 @@ rt_hyp_tess( struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     return(-1);
 }
 
-/**
- *			R T _ H Y P _ I M P O R T
- *
- *  Import an HYP from the database format to the internal format.
- *  Apply modeling transformations as well.
- */
-int
-rt_hyp_import( struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip )
-{
-    struct rt_hyp_internal	*hyp_ip;
-    union record			*rp;
-
-    BU_CK_EXTERNAL( ep );
-    rp = (union record *)ep->ext_buf;
-    /* Check record type */
-    if ( rp->u_id != ID_SOLID )  {
-	bu_log("rt_hyp_import: defective record\n");
-	return(-1);
-    }
-
-    RT_CK_DB_INTERNAL( ip );
-    ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    ip->idb_type = ID_HYP;
-    ip->idb_meth = &rt_functab[ID_HYP];
-    ip->idb_ptr = bu_malloc( sizeof(struct rt_hyp_internal), "rt_hyp_internal");
-    hyp_ip = (struct rt_hyp_internal *)ip->idb_ptr;
-    hyp_ip->hyp_magic = RT_HYP_INTERNAL_MAGIC;
-
-    if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT( hyp_ip->hyp_V, mat, &rp->s.s_values[0] );
-
-    return(0);			/* OK */
-}
-
-/**
- *			R T _ H Y P _ E X P O R T
- *
- *  The name is added by the caller, in the usual place.
- */
-int
-rt_hyp_export( struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip )
-{
-    struct rt_hyp_internal	*hyp_ip;
-    union record		*rec;
-
-    RT_CK_DB_INTERNAL(ip);
-    if ( ip->idb_type != ID_HYP )  return(-1);
-    hyp_ip = (struct rt_hyp_internal *)ip->idb_ptr;
-    RT_HYP_CK_MAGIC(hyp_ip);
-
-    BU_CK_EXTERNAL(ep);
-    ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "hyp external");
-    rec = (union record *)ep->ext_buf;
-
-    rec->s.s_id = ID_SOLID;
-/* FIXME    rec->s.s_type = HYP;	/* GED primitive type from db.h */
-
-    /* Since libwdb users may want to operate in units other
-     * than mm, we offer the opportunity to scale the solid
-     * (to get it into mm) on the way out.
-     */
-
-
-    /* convert from local editing units to mm and export
-     * to database record format
-     *
-     * Warning: type conversion: double to float
-     */
-/* FIXME
-    VSCALE( &rec->s.s_values[0], hyp_ip->hyp_V, local2mm );
-    rec->s.s_values[3] = hyp_ip->hyp_radius * local2mm;
-*/
-    return(0);
-}
-
 
 /**
  *			R T _ H Y P _ I M P O R T 5
@@ -662,12 +723,12 @@ int
 rt_hyp_import5( struct rt_db_internal  *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip )
 {
     struct rt_hyp_internal	*hyp_ip;
-    fastf_t				vv[ELEMENTS_PER_VECT*1];
+    fastf_t			vv[ELEMENTS_PER_VECT*1];
 
     RT_CK_DB_INTERNAL(ip)
 	BU_CK_EXTERNAL( ep );
 
-    BU_ASSERT_LONG( ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 3*4 );
+    BU_ASSERT_LONG( ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 3 );
 
     /* set up the internal structure */
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;

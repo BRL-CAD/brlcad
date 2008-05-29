@@ -420,6 +420,20 @@ char *p_ehy[] = {
     "Enter apex-to-asymptotes distance, c: "
 };
 
+char *p_hyp[] = {
+    "Enter X, Y, Z of vertex: ",
+    "Enter Y: ",
+    "Enter Z: ",
+    "Enter X, Y, Z, of vector H: ",
+    "Enter Y: ",
+    "Enter Z: ",
+    "Enter X, Y, Z, of vector A: ",
+    "Enter Y: ",
+    "Enter Z: ",
+    "Enter magnitude of vector B: ",
+    "Enter tangent cone slope in H-A plane, c: "
+};
+
 char *p_eto[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
@@ -522,7 +536,7 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	trc_in(char **cmd_argvs, struct rt_db_internal *intern), ebm_in(char **cmd_argvs, struct rt_db_internal *intern), vol_in(char **cmd_argvs, struct rt_db_internal *intern), hf_in(char **cmd_argvs, struct rt_db_internal *intern), bot_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt),
 	dsp_in_v4(char **cmd_argvs, struct rt_db_internal *intern), dsp_in_v5(char **cmd_argvs, struct rt_db_internal *intern), submodel_in(char **cmd_argvs, struct rt_db_internal *intern), part_in(char **cmd_argvs, struct rt_db_internal *intern), pipe_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt),
 	binunif_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name), arbn_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt), extrude_in(char **cmd_argvs, struct rt_db_internal *intern), grip_in(char **cmd_argvs, struct rt_db_internal *intern), superell_in(char **cmd_argvs, struct rt_db_internal *intern),
-	metaball_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt);
+	metaball_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt), hyp_in(char **cmd_argvs, struct rt_db_internal *intern);
 
     CHECK_DBI_NULL;
 
@@ -596,7 +610,7 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     /*
      * Decide which solid to make and get the rest of the args
      * make name <half|arb[4-8]|sph|ell|ellg|ell1|tor|tgc|tec|
-     rec|trc|rcc|box|raw|rpp|rpc|rhc|epa|ehy|eto|superell>
+     rec|trc|rcc|box|raw|rpp|rpc|rhc|epa|ehy|hyp|eto|superell>
     */
     if ( strcmp( argv[2], "ebm" ) == 0 )  {
 	nvals = 4;
@@ -774,6 +788,10 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	nvals = 3*3 + 2;
 	menu = p_ehy;
 	fn_in = ehy_in;
+    } else if ( strcmp( argv[2], "hyp" ) == 0 ) {
+	nvals = 3*3 + 2;
+	menu = p_hyp;
+	fn_in = hyp_in;
     } else if ( strcmp( argv[2], "eto" ) == 0 )  {
 	nvals = 3*3 + 2;
 	menu = p_eto;
@@ -2420,6 +2438,52 @@ ehy_in(char **cmd_argvs, struct rt_db_internal *intern)
     }
 
     if (rip->ehy_r2 > rip->ehy_r1) {
+	Tcl_AppendResult(interp, "ERROR, |A| must be greater than |B|!\n", (char *)NULL);
+	return(1);	/* failure */
+    }
+
+    return(0);	/* success */
+}
+
+
+/*   H Y P _ I N ( ) :   	reads hyp parameters from keyboard
+ *				returns 0 if successful read
+ *					1 if unsuccessful read
+ */
+int
+hyp_in(char **cmd_argvs, struct rt_db_internal *intern)
+{
+    int			i;
+    struct rt_hyp_internal	*rip;
+
+    CHECK_DBI_NULL;
+
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_type = ID_HYP;
+    intern->idb_meth = &rt_functab[ID_HYP];
+    intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_hyp_internal),
+					   "rt_hyp_internal" );
+    rip = (struct rt_hyp_internal *)intern->idb_ptr;
+    rip->hyp_magic = RT_HYP_INTERNAL_MAGIC;
+
+    for (i = 0; i < ELEMENTS_PER_PT; i++) {
+	rip->hyp_V[i] = atof(cmd_argvs[3+i]) * local2base;
+	rip->hyp_H[i] = atof(cmd_argvs[6+i]) * local2base;
+	rip->hyp_Au[i] = atof(cmd_argvs[9+i]) * local2base;
+    }
+    rip->hyp_r1 = MAGNITUDE(rip->hyp_Au);
+    rip->hyp_r2 = atof(cmd_argvs[12]) * local2base;
+    rip->hyp_c = atof(cmd_argvs[13]) * local2base;
+    VUNITIZE(rip->hyp_Au);
+
+    if (MAGNITUDE(rip->hyp_H) < RT_LEN_TOL
+	|| rip->hyp_r1 <= RT_LEN_TOL || rip->hyp_r2 <= RT_LEN_TOL
+	|| rip->hyp_c <= RT_LEN_TOL) {
+	Tcl_AppendResult(interp, "ERROR, height, axes, and distance to asymptotes must be greater than zero!\n", (char *)NULL);
+	return(1);	/* failure */
+    }
+
+    if (rip->hyp_r2 > rip->hyp_r1) {
 	Tcl_AppendResult(interp, "ERROR, |A| must be greater than |B|!\n", (char *)NULL);
 	return(1);	/* failure */
     }
