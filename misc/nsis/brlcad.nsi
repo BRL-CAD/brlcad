@@ -3,15 +3,41 @@
 ;--------------------------------
 ;BRL-CAD Version Variables
 
-  !ifndef VERSION
-    !define VERSION '7.12.5'
-  !endif
+Var MAJOR
+Var MINOR
+Var PATCH
+Var VERSION
+ClearErrors
+
+FileOpen $0 ..\include\conf\MAJOR r
+IfErrors major
+FileRead $0 $MAJOR
+FileClose $0
+
+FileOpen $0 ..\include\conf\MINOR r
+IfErrors minor
+FileRead $0 $MINOR
+FileClose $0
+
+FileOpen $0 ..\include\conf\PATCH r
+IfErrors patch
+FileRead $0 $PATCH
+FileClose $0
+
+major:
+StrCpy MAJOR 'XX'
+minor:
+StrCpy MINOR 'XX'
+patch:
+StrCpy PATCH 'XX'
+
+StrCpy $VERSION "${MAJOR}.${MINOR}.${PATCH}"
 
 ;--------------------------------
 ;Include Modern UI
 
-  !include "MUI.nsh"
-  !include "FileFunc.nsh"
+!include "MUI.nsh"
+!include "FileFunc.nsh"
 
 !insertmacro GetFileName
 
@@ -89,7 +115,7 @@ FunctionEnd
   !define MUI_WELCOMEPAGE_TEXT "This wizard will guide you through the installation of BRL-CAD ${VERSION}.\r\n\r\nBRL-CAD is a free open source multiplatform CAD software developed by the U.S. Army Research Laboratory (ARL).\r\n\r\nClick Next to continue."
 
   !insertmacro MUI_PAGE_WELCOME
-  !insertmacro MUI_PAGE_LICENSE "../../COPYING"
+  !insertmacro MUI_PAGE_LICENSE "..\..\COPYING"
   !insertmacro MUI_PAGE_COMPONENTS
   !insertmacro MUI_PAGE_DIRECTORY
 
@@ -105,7 +131,7 @@ FunctionEnd
 
   ;Finished page configuration
   !define MUI_FINISHPAGE_NOAUTOCLOSE
-  !define MUI_FINISHPAGE_SHOWREADME "../../README"
+  !define MUI_FINISHPAGE_SHOWREADME "..\..\README"
   !define MUI_FINISHPAGE_SHOWREADME_TEXT "View Readme"
   !define MUI_FINISHPAGE_SHOWREADME_NOTCHECKED
 
