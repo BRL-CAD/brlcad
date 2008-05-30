@@ -24,7 +24,7 @@
  */
 
 #include "ged.h"
-#include "ged_private.h"
+#include "./ged_private.h"
 
 static void
 ged_do_trace(struct db_i		*dbip,

@@ -23,11 +23,15 @@
  *
  */
 
-#include "bio.h"
-#include "ged.h"
-#include "ged_private.h"
+#include "common.h"
 
 #include <string.h>
+#include "bio.h"
+
+#include "ged.h"
+
+#include "./ged_private.h"
+
 
 int
 ged_get_obj_bounds(struct rt_wdb	*wdbp,

@@ -1,4 +1,4 @@
-/*                          G E D _ P R I V A T E . C
+/*                   G E D _ P R I V A T E . H
  * BRL-CAD
  *
  * Copyright (c) 2008 United States Government as represented by

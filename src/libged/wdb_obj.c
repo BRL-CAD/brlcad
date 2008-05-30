@@ -48,8 +48,9 @@
 #include "db.h"
 #include "rtgeom.h"
 #include "wdb.h"
-#include "ged_private.h"
 #include "mater.h"
+
+#include "./ged_private.h"
 
 
 #define WDB_TCL_READ_ERR { \
