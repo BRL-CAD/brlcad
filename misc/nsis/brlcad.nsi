@@ -7,29 +7,48 @@ Var MAJOR
 Var MINOR
 Var PATCH
 Var VERSION
-ClearErrors
 
+ClearErrors
+IfFileExists ..\include\conf\MAJOR major_found
+  Messagebox MB_OK "Unable to find MAJOR version file in ..\include\conf"
+  Abort;
+major_found:
 FileOpen $0 ..\include\conf\MAJOR r
 IfErrors major
 FileRead $0 $MAJOR
 FileClose $0
+Goto major_done
+major:
+StrCpy MAJOR 'XX'
+major_done:
 
+ClearErrors
+IfFileExists ..\include\conf\MINOR minor_found
+  Messagebox MB_OK "Unable to find MINOR version file in ..\include\conf"
+  Abort;
+minor_found:
 FileOpen $0 ..\include\conf\MINOR r
 IfErrors minor
 FileRead $0 $MINOR
 FileClose $0
+Goto minor_done
+minor:
+StrCpy MINOR 'XX'
+minor_done:
 
+ClearErrors
+IfFileExists ..\include\conf\PATCH patch_found
+  Messagebox MB_OK "Unable to find PATCH version file in ..\include\conf"
+  Abort;
+patch_found:
 FileOpen $0 ..\include\conf\PATCH r
 IfErrors patch
 FileRead $0 $PATCH
 FileClose $0
-
-major:
-StrCpy MAJOR 'XX'
-minor:
-StrCpy MINOR 'XX'
+Goto patch_done
 patch:
 StrCpy PATCH 'XX'
+patch_done:
 
 StrCpy $VERSION "${MAJOR}.${MINOR}.${PATCH}"
 
