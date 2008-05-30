@@ -7185,7 +7185,7 @@ wdb_make_bb_cmd(struct rt_wdb	*wdbp,
 	return TCL_ERROR;
     }
 
-    if (ged_get_obj_bounds(wdbp, argc-2, (const char *)argv+2, use_air, rpp_min, rpp_max) == TCL_ERROR)
+    if (ged_get_obj_bounds(wdbp, argc-2, (const char **)argv+2, use_air, rpp_min, rpp_max) == TCL_ERROR)
 	return TCL_ERROR;
 
     /* build bounding RPP */
@@ -7418,10 +7418,10 @@ wdb_hide_cmd(struct rt_wdb	*wdbp,
 
 	    /* warn the user that this might be a bad idea */
 	    if ( isatty(fileno(stdin)) && isatty(fileno(stdout))) {
+#if 0
 		char line[80];
 
 /*XXX Ditto on the message below. Besides, it screws with the cadwidgets. */
-#if 0
 		/* classic interactive MGED */
 		while ( 1 ) {
 		    bu_log( "Hiding BRL-CAD geometry (%s) is generaly a bad idea.\n", dp->d_namep );
