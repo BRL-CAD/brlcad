@@ -4,7 +4,7 @@
 ;BRL-CAD Version Variables
 
   !ifndef VERSION
-    !define VERSION '7.12.3'
+    !define VERSION '7.12.5'
   !endif
 
 ;--------------------------------
