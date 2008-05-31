@@ -67,13 +67,6 @@ int mged_otran(const fastf_t *tvec);
 int mged_vtran(const fastf_t *tvec);
 int mged_tran(fastf_t *tvec);
 
-#ifndef M_SQRT2
-#define M_SQRT2		1.41421356237309504880
-#endif
-
-#ifndef M_SQRT2_DIV2
-#define M_SQRT2_DIV2       0.70710678118654752440
-#endif
 
 extern vect_t curr_e_axes_pos;
 extern long	nvectors;
