@@ -551,158 +551,96 @@ rt_hyp_class( const struct soltab *stp, const vect_t min, const vect_t max, cons
 int
 rt_hyp_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol )
 {
-    register int	i;
+    register int		i,j;	/* loop indices */
     struct rt_hyp_internal	*hyp_ip;
-
-    /*	A and B are vectors on semi-major and semi-minor axes 
-	AN and BN are the reverse of A and B
-	A2 and B2 are intermediate points for approximating octagon
-	A2N and B2N are the reverse of A2 and B2
-    */
-    vect_t A, B, A2, B2, AN, BN, A2N, B2N, HN, H2N, H2;
-    fastf_t top[8*3];
-    fastf_t topMid[8*3];
-    fastf_t middle[8*3];
-    fastf_t botMid[8*3];
-    fastf_t bottom[8*3];
-    fastf_t offset[8*3];	/* used for top/bottom */
-    fastf_t scale;		/* used to calculate semi-major/minor axes for top/bottom */
+    vect_t 	majorAxis[8],		/* vector offsets along major axis */
+		minorAxis[8],		/* vector offsets along minor axis */
+		heightAxis[7],		/* vector offsets for layers */
+		Bunit;		/* unit vector along semi-minor axis */
+    vect_t	ell[16];	/* stores 16 points to draw ellipses */
+    vect_t	ribs[16][7];	/* assume 7 layers for now */
+    fastf_t 	scale;		/* used to calculate semi-major/minor axes for top/bottom */
+    fastf_t	cos22_5 = 0.9238795325112867385,
+		cos67_5 = 0.3826834323650898373;
 
     RT_CK_DB_INTERNAL(ip);
     hyp_ip = (struct rt_hyp_internal *)ip->idb_ptr;
     RT_HYP_CK_MAGIC(hyp_ip);
 
-    /*
-    draw top, middle, and bottom ellipses for testing, no tolerance checks 
-    */
-    VSCALE( A, hyp_ip->hyp_Au, hyp_ip->hyp_r1 );
-    VSCALE( A2, A, M_SQRT1_2 );
-    VCROSS( B2, hyp_ip->hyp_H, hyp_ip->hyp_Au );  /* using B2 for temp storage */
-    VUNITIZE( B2 );
-    VSCALE( B, B2, hyp_ip->hyp_r2 );
-    VSCALE( B2, B, M_SQRT1_2 );
+    VCROSS( Bunit, hyp_ip->hyp_H, hyp_ip->hyp_Au );
+    VUNITIZE( Bunit );
 
-    VREVERSE( AN, A );
-    VREVERSE( BN, B );
-    VREVERSE( A2N, A2 );
-    VREVERSE( B2N, B2 );
+    VMOVE( heightAxis[0], hyp_ip->hyp_H );
+    VSCALE( heightAxis[1], heightAxis[0], 0.5 );
+    VSCALE( heightAxis[2], heightAxis[0], 0.25 );
+    VSETALL( heightAxis[3], 0 );
+    VREVERSE( heightAxis[4], heightAxis[2] );
+    VREVERSE( heightAxis[5], heightAxis[1] );
+    VREVERSE( heightAxis[6], heightAxis[0] );
 
-    VADD2( &middle[0*3], hyp_ip->hyp_V, A );
-    VADD3( &middle[1*3], hyp_ip->hyp_V, A2, B2 );
-    VADD2( &middle[2*3], hyp_ip->hyp_V, B );
-    VADD3( &middle[3*3], hyp_ip->hyp_V, A2N, B2 );
-    VADD2( &middle[4*3], hyp_ip->hyp_V, AN );
-    VADD3( &middle[5*3], hyp_ip->hyp_V, A2N, B2N );
-    VADD2( &middle[6*3], hyp_ip->hyp_V, BN );
-    VADD3( &middle[7*3], hyp_ip->hyp_V, A2, B2N );
+    for ( i = 0; i < 7; i++ ) {
+	/* determine Z height depending on i */
+	scale = sqrt(MAGSQ( heightAxis[i] )*(hyp_ip->hyp_c * hyp_ip->hyp_c)/(hyp_ip->hyp_r1 * hyp_ip->hyp_r1) + 1 );
 
-    /*	compute offsets for top/bottom ellipses 
-	when y = 0; x = +-a * sqrt( (z*z)*(c*c)/(a*a) + 1 )
-	when x = 0; y = +-b * sqrt( (z*z)*(c*c)/(a*a) + 1 )
-	so scale = sqrt( (z*z)*(c*c)/(a*a) + 1 )
-	and x = +-a*scale; y = +-b*scale
-	giving the length of the major and minor axes for a give z height
-    */
-    scale = sqrt(MAGSQ( hyp_ip->hyp_H )*(hyp_ip->hyp_c * hyp_ip->hyp_c)/(hyp_ip->hyp_r1 * hyp_ip->hyp_r1) + 1 );
-    VSCALE( A, hyp_ip->hyp_Au, (hyp_ip->hyp_r1 * scale ) );
-    VSCALE( A2, A, M_SQRT1_2 );
-    VCROSS( B2, hyp_ip->hyp_H, hyp_ip->hyp_Au );  /* using B2 for temp storage */
-    VUNITIZE( B2 );
-    VSCALE( B, B2, (hyp_ip->hyp_r2 * scale ) );
-    VSCALE( B2, B, M_SQRT1_2 );
+	/* calculate vectors for offset */
+	VSCALE( majorAxis[0], hyp_ip->hyp_Au, hyp_ip->hyp_r1 * scale );
+	VSCALE( majorAxis[1], majorAxis[0], cos22_5 );
+	VSCALE( majorAxis[2], majorAxis[0], M_SQRT1_2 );
+	VSCALE( majorAxis[3], majorAxis[0], cos67_5 );
+	VREVERSE( majorAxis[4], majorAxis[3] );
+	VREVERSE( majorAxis[5], majorAxis[2] );
+	VREVERSE( majorAxis[6], majorAxis[1] );
+	VREVERSE( majorAxis[7], majorAxis[0] );
 
-    VREVERSE( AN, A );
-    VREVERSE( BN, B );
-    VREVERSE( A2N, A2 );
-    VREVERSE( B2N, B2 );
+	VSCALE( minorAxis[0], Bunit, hyp_ip->hyp_r2 * scale );
+	VSCALE( minorAxis[1], minorAxis[0], cos22_5 );
+	VSCALE( minorAxis[2], minorAxis[0], M_SQRT1_2 );
+	VSCALE( minorAxis[3], minorAxis[0], cos67_5 );
+	VREVERSE( minorAxis[4], minorAxis[3] );
+	VREVERSE( minorAxis[5], minorAxis[2] );
+	VREVERSE( minorAxis[6], minorAxis[1] );
+	VREVERSE( minorAxis[7], minorAxis[0] );
 
-    VADD2( &offset[0*3], hyp_ip->hyp_V, A );
-    VADD3( &offset[1*3], hyp_ip->hyp_V, A2, B2 );
-    VADD2( &offset[2*3], hyp_ip->hyp_V, B );
-    VADD3( &offset[3*3], hyp_ip->hyp_V, A2N, B2 );
-    VADD2( &offset[4*3], hyp_ip->hyp_V, AN );
-    VADD3( &offset[5*3], hyp_ip->hyp_V, A2N, B2N );
-    VADD2( &offset[6*3], hyp_ip->hyp_V, BN );
-    VADD3( &offset[7*3], hyp_ip->hyp_V, A2, B2N );
+	/* calculate ellipse */
+	VADD3( ell[ 0], hyp_ip->hyp_V, heightAxis[i], majorAxis[0] );
+	VADD4( ell[ 1], hyp_ip->hyp_V, heightAxis[i], majorAxis[1], minorAxis[3] );
+	VADD4( ell[ 2], hyp_ip->hyp_V, heightAxis[i], majorAxis[2], minorAxis[2] );
+	VADD4( ell[ 3], hyp_ip->hyp_V, heightAxis[i], majorAxis[3], minorAxis[1] );
+	VADD3( ell[ 4], hyp_ip->hyp_V, heightAxis[i], minorAxis[0] );
+	VADD4( ell[ 5], hyp_ip->hyp_V, heightAxis[i], majorAxis[4], minorAxis[1] );
+	VADD4( ell[ 6], hyp_ip->hyp_V, heightAxis[i], majorAxis[5], minorAxis[2] );
+	VADD4( ell[ 7], hyp_ip->hyp_V, heightAxis[i], majorAxis[6], minorAxis[3] );
+	VADD3( ell[ 8], hyp_ip->hyp_V, heightAxis[i], majorAxis[7] );
+	VADD4( ell[ 9], hyp_ip->hyp_V, heightAxis[i], majorAxis[6], minorAxis[4] );
+	VADD4( ell[10], hyp_ip->hyp_V, heightAxis[i], majorAxis[5], minorAxis[5] );
+	VADD4( ell[11], hyp_ip->hyp_V, heightAxis[i], majorAxis[4], minorAxis[6] );
+	VADD3( ell[12], hyp_ip->hyp_V, heightAxis[i], minorAxis[7] );
+	VADD4( ell[13], hyp_ip->hyp_V, heightAxis[i], majorAxis[3], minorAxis[6] );
+	VADD4( ell[14], hyp_ip->hyp_V, heightAxis[i], majorAxis[2], minorAxis[5] );
+	VADD4( ell[15], hyp_ip->hyp_V, heightAxis[i], majorAxis[1], minorAxis[4] );
 
-    VREVERSE( HN, hyp_ip->hyp_H );
+	/* draw ellipse */
+	RT_ADD_VLIST( vhead, ell[15], BN_VLIST_LINE_MOVE );
+	for ( j=0; j<16; j++ )  {
+	    RT_ADD_VLIST( vhead, ell[j], BN_VLIST_LINE_DRAW );
+	}
 
-    for ( i=0; i<8; i++ ) {
-	VADD2( &top[i*3], &offset[i*3],  hyp_ip->hyp_H );
-	VADD2( &bottom[i*3], &offset[i*3], HN );
+	/* add ellipse's points to ribs */
+	for ( j=0; j<16; j++ ) {
+	    VMOVE( ribs[j][i], ell[j] );
+	}
     }
 
-    /*	compute offsets for mid-top/mid-bottom ellipses 
-	multiply H*H by 0.25 to get (H/2)^2 for intermediate ellipses
-    */
-    scale = sqrt( 0.25 * MAGSQ( hyp_ip->hyp_H )*(hyp_ip->hyp_c * hyp_ip->hyp_c)/(hyp_ip->hyp_r1 * hyp_ip->hyp_r1) + 1 );
-    VSCALE( A, hyp_ip->hyp_Au, (hyp_ip->hyp_r1 * scale ) );
-    VSCALE( A2, A, M_SQRT1_2 );
-    VCROSS( B2, hyp_ip->hyp_H, hyp_ip->hyp_Au );  /* using B2 for temp storage */
-    VUNITIZE( B2 );
-    VSCALE( B, B2, (hyp_ip->hyp_r2 * scale ) );
-    VSCALE( B2, B, M_SQRT1_2 );
+    /* draw ribs */
+    for ( i=0; i<16; i++ )  {
+	RT_ADD_VLIST( vhead, ribs[i][0], BN_VLIST_LINE_MOVE );
+	for ( j=1; j<7; j++ )  {
+	    RT_ADD_VLIST( vhead, ribs[i][j], BN_VLIST_LINE_DRAW );
+	}
 
-    VREVERSE( AN, A );
-    VREVERSE( BN, B );
-    VREVERSE( A2N, A2 );
-    VREVERSE( B2N, B2 );
-
-    VADD2( &offset[0*3], hyp_ip->hyp_V, A );
-    VADD3( &offset[1*3], hyp_ip->hyp_V, A2, B2 );
-    VADD2( &offset[2*3], hyp_ip->hyp_V, B );
-    VADD3( &offset[3*3], hyp_ip->hyp_V, A2N, B2 );
-    VADD2( &offset[4*3], hyp_ip->hyp_V, AN );
-    VADD3( &offset[5*3], hyp_ip->hyp_V, A2N, B2N );
-    VADD2( &offset[6*3], hyp_ip->hyp_V, BN );
-    VADD3( &offset[7*3], hyp_ip->hyp_V, A2, B2N );
-
-    VREVERSE( HN, hyp_ip->hyp_H );
-    VSCALE( H2N, HN, 0.5 );
-    VSCALE( H2, hyp_ip->hyp_H, 0.5 );
-
-    for ( i=0; i<8; i++ ) {
-	VADD2( &topMid[i*3], &offset[i*3], H2 );
-	VADD2( &botMid[i*3], &offset[i*3], H2N );
     }
 
-    /* draw elipses */
-    RT_ADD_VLIST( vhead, &top[7*3], BN_VLIST_LINE_MOVE );
-    for ( i=0; i<8; i++ )  {
-	RT_ADD_VLIST( vhead, &top[i*3], BN_VLIST_LINE_DRAW );
-    }
-
-    RT_ADD_VLIST( vhead, &topMid[7*3], BN_VLIST_LINE_MOVE );
-    for ( i=0; i<8; i++ )  {
-	RT_ADD_VLIST( vhead, &topMid[i*3], BN_VLIST_LINE_DRAW );
-    }
-
-    RT_ADD_VLIST( vhead, &middle[7*3], BN_VLIST_LINE_MOVE );
-    for ( i=0; i<8; i++ )  {
-	RT_ADD_VLIST( vhead, &middle[i*3], BN_VLIST_LINE_DRAW );
-    }
-
-    RT_ADD_VLIST( vhead, &botMid[7*3], BN_VLIST_LINE_MOVE );
-    for ( i=0; i<8; i++ )  {
-	RT_ADD_VLIST( vhead, &botMid[i*3], BN_VLIST_LINE_DRAW );
-    }
-
-    RT_ADD_VLIST( vhead, &bottom[7*3], BN_VLIST_LINE_MOVE );
-    for ( i=0; i<8; i++ )  {
-	RT_ADD_VLIST( vhead, &bottom[i*3], BN_VLIST_LINE_DRAW );
-    }
-
-    /* draw vertical lines */
-    for ( i=0; i<8; i++ )  {
-	RT_ADD_VLIST( vhead, &bottom[i*3], BN_VLIST_LINE_MOVE );
-	RT_ADD_VLIST( vhead, &botMid[i*3], BN_VLIST_LINE_DRAW );
-	RT_ADD_VLIST( vhead, &middle[i*3], BN_VLIST_LINE_DRAW );
-	RT_ADD_VLIST( vhead, &topMid[i*3], BN_VLIST_LINE_DRAW );
-	RT_ADD_VLIST( vhead, &top[i*3], BN_VLIST_LINE_DRAW );
-    }
-
-
-    return(0);
+    return 0;
 }
 
 /**
