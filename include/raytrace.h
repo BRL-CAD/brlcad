@@ -1804,7 +1804,7 @@ struct bezier_seg	/**< @brief  Bezier curve segment */
 struct rt_functab {
     unsigned long magic;
     char ft_name[16];
-    char ft_label[8];
+    char ft_label[16];
     int ft_use_rpp;
     int (*ft_prep) BU_ARGS((struct soltab * /**< @brief stp*/,
 			    struct rt_db_internal * /**< @brief ip*/,
