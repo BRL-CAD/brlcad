@@ -5,6 +5,8 @@ AM_LDFLAGS = \
 	${OPTICAL} \
 	${RT} ${FB}
 
+EXTRA_PROGRAMS = rtmlt
+
 if ONLY_BENCHMARK
 bin_PROGRAMS = \
 	rt
@@ -21,7 +23,6 @@ bin_PROGRAMS = \
 	rtfrac \
 	rtg3 \
 	rthide \
-	rtmlt \
 	rtpp \
 	rtrad \
 	rtrange \
