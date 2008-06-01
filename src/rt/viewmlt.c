@@ -1,4 +1,4 @@
-/*                      M L T _ M A I N . C
+/*                       V I E W M L T . C
  * BRL-CAD
  *
  * Copyright (c) 2008 United States Government as represented by
@@ -17,15 +17,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mlt_main.c
+/** @file viewmlt.c
  *
  * Brief description
  *
  */
 
-#include "mlt_def.h"
-
-int main() { };
 
 /*
  * Local Variables:
