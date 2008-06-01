@@ -21,6 +21,7 @@ bin_PROGRAMS = \
 	rtfrac \
 	rtg3 \
 	rthide \
+	rtmlt \
 	rtpp \
 	rtrad \
 	rtrange \
@@ -68,6 +69,7 @@ ALLSRCS = \
 	viewfrac.c \
 	viewg3.c \
 	viewhide.c \
+	viewmlt.c \
 	viewpp.c \
 	viewrad.c \
 	viewrange.c \
@@ -88,6 +90,10 @@ hurt_LDADD = \
 	${OPTICAL} \
 	${RT} \
 	${FB}
+
+rtmlt_SOURCES = \
+	$(COMMON) \
+	viewmlt.c
 
 rtregis_SOURCES = \
 	read-rtlog.c \
