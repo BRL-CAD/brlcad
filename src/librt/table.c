@@ -982,7 +982,7 @@ const struct rt_functab rt_functab[] = {
     },
 #endif
 
-    {RT_FUNCTAB_MAGIC, "ID_HYP", "hyperboloid",
+    {RT_FUNCTAB_MAGIC, "ID_HYP", "hyp",
      1,		/* 38 but "should" be 34 Hyperboloid  */
      rt_hyp_prep,	rt_hyp_shot,	rt_hyp_print,	rt_hyp_norm,
      rt_nul_piece_shot,	rt_nul_piece_hitsegs,
