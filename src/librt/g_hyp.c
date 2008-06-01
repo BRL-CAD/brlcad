@@ -697,7 +697,7 @@ rt_hyp_import5( struct rt_db_internal  *ip, const struct bu_external *ep, const 
      * (Big Endian ints, IEEE double floating point) to host local data
      * representations.
      */
-    ntohd( (unsigned char *)&vv, (char *)ep->ext_buf, ELEMENTS_PER_VECT*1 );
+    ntohd( (unsigned char *)&vv, (const unsigned char *)ep->ext_buf, ELEMENTS_PER_VECT*1 );
 
     /* Apply the modeling transformation */
     if (mat == NULL) mat = bn_mat_identity;
