@@ -1342,7 +1342,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libged", "..\libged\libged.
 		Release.AspNetCompiler.Debug = "False"
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mlt", "..\mlt\mlt.vcproj", "{51AF37DF-E031-4918-BE3B-AE6E5A1C516A}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rymlt", "..\rtmlt\rtmlt.vcproj", "{51AF37DF-E031-4918-BE3B-AE6E5A1C516A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

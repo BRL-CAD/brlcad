@@ -96,7 +96,6 @@ EXTRA_DIST= \
 	libwdb/libwdb.vcproj \
 	libz/libz.vcproj \
 	mged/mged.vcproj \
-	mlt/mlt.vcproj \
 	nastran2g/nastran2g.vcproj \
 	nirt/nirt.vcproj \
 	nmg2bot/nmg2bot.vcproj \
@@ -126,6 +125,7 @@ EXTRA_DIST= \
 	rtfrac/rtfrac.vcproj \
 	rtg3/rtg3.vcproj \
 	rthide/rthide.vcproj \
+	rtmlt/rtmlt.vcproj \
 	rtpp/rtpp.vcproj \
 	rtrad/rtrad.vcproj \
 	rtrange/rtrange.vcproj \
