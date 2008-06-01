@@ -125,6 +125,7 @@ EXTRA_DIST= \
 	rtfrac/rtfrac.vcproj \
 	rtg3/rtg3.vcproj \
 	rthide/rthide.vcproj \
+	rtmlt/rtmlt.vcproj \
 	rtpp/rtpp.vcproj \
 	rtrad/rtrad.vcproj \
 	rtrange/rtrange.vcproj \
