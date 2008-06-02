@@ -211,7 +211,7 @@ RT_DECLARE_INTERFACE(superell);
 RT_DECLARE_INTERFACE(metaball);
 
 #define rt_hyp_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(hyp)
+RT_DECLARE_INTERFACE(hyp);
 
 #if OBJ_BREP
 #define rt_brep_xform rt_generic_xform
