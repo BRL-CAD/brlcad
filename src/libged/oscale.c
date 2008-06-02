@@ -29,10 +29,10 @@
  * Scale obj about the keypoint by sf.
  */
 int
-ged_oscale(struct rt_wdb *wdbp, int argc, const char *argv[])
+ged_oscale(struct ged *gedp, int argc, const char *argv[])
 {
     register struct directory *dp;
-    struct wdb_trace_data wtd;
+    struct ged_trace_data gtd;
     struct rt_db_internal intern;
     mat_t smat;
     mat_t emat;
@@ -44,38 +44,38 @@ ged_oscale(struct rt_wdb *wdbp, int argc, const char *argv[])
     point_t keypoint;
     static const char *usage = "obj sf [kX kY kZ]";
 
-    GED_CHECK_DATABASE_OPEN(wdbp, GED_ERROR);
-    GED_CHECK_READ_ONLY(wdbp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&wdbp->wdb_result_str, 0);
-    wdbp->wdb_result = GED_RESULT_NULL;
-    wdbp->wdb_result_flags = 0;
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+    gedp->ged_result = GED_RESULT_NULL;
+    gedp->ged_result_flags = 0;
 
     /* must be wanting help */
     if (argc == 1) {
-	wdbp->wdb_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
-	bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
+	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_OK;
     }
 
     if (argc != 3 && argc != 6) {
-	bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[2], "%lf", &sf) != 1) {
-	bu_vls_printf(&wdbp->wdb_result_str, "%s: bad sf value - %s", argv[0], argv[2]);
+	bu_vls_printf(&gedp->ged_result_str, "%s: bad sf value - %s", argv[0], argv[2]);
 	return GED_ERROR;
     }
 
     if (argc == 3) {
-	if (ged_get_obj_bounds2(wdbp, 1, argv+1, &wtd, rpp_min, rpp_max) == TCL_ERROR)
+	if (ged_get_obj_bounds2(gedp, 1, argv+1, &gtd, rpp_min, rpp_max) == TCL_ERROR)
 	    return TCL_ERROR;
 
-	dp = wtd.wtd_obj[wtd.wtd_objpos-1];
+	dp = gtd.gtd_obj[gtd.gtd_objpos-1];
 	if (!(dp->d_flags & DIR_SOLID)) {
-	    if (ged_get_obj_bounds(wdbp, 1, argv+1, 1, rpp_min, rpp_max) == TCL_ERROR)
+	    if (ged_get_obj_bounds(gedp, 1, argv+1, 1, rpp_min, rpp_max) == TCL_ERROR)
 		return TCL_ERROR;
 	}
 
@@ -83,27 +83,27 @@ ged_oscale(struct rt_wdb *wdbp, int argc, const char *argv[])
 	VSCALE(keypoint, keypoint, 0.5);
     } else {
 	/* The user has provided the keypoint. */
-	MAT_IDN(wtd.wtd_xform);
+	MAT_IDN(gtd.gtd_xform);
 
 	if (sscanf(argv[3], "%lf", &keypoint[X]) != 1) {
-	    bu_vls_printf(&wdbp->wdb_result_str, "%s: bad kx value - %s", argv[0], argv[3]);
+	    bu_vls_printf(&gedp->ged_result_str, "%s: bad kx value - %s", argv[0], argv[3]);
 	    return GED_ERROR;
 	}
 
 	if (sscanf(argv[4], "%lf", &keypoint[Y]) != 1) {
-	    bu_vls_printf(&wdbp->wdb_result_str, "%s: bad ky value - %s", argv[0], argv[4]);
+	    bu_vls_printf(&gedp->ged_result_str, "%s: bad ky value - %s", argv[0], argv[4]);
 	    return GED_ERROR;
 	}
 
 	if (sscanf(argv[5], "%lf", &keypoint[Z]) != 1) {
-	    bu_vls_printf(&wdbp->wdb_result_str, "%s: bad kz value - %s", argv[0], argv[5]);
+	    bu_vls_printf(&gedp->ged_result_str, "%s: bad kz value - %s", argv[0], argv[5]);
 	    return GED_ERROR;
 	}
 
-	VSCALE(keypoint, keypoint, wdbp->dbip->dbi_local2base);
+	VSCALE(keypoint, keypoint, gedp->ged_dbip->dbi_local2base);
 
-	if ((dp = db_lookup(wdbp->dbip, argv[1], LOOKUP_QUIET)) == DIR_NULL) {
-	    bu_vls_printf(&wdbp->wdb_result_str, "%s: %s not found", argv[0], argv[1]);
+	if ((dp = db_lookup(gedp->ged_dbip, argv[1], LOOKUP_QUIET)) == DIR_NULL) {
+	    bu_vls_printf(&gedp->ged_result_str, "%s: %s not found", argv[0], argv[1]);
 	    return GED_ERROR;
 	}
     }
@@ -111,17 +111,17 @@ ged_oscale(struct rt_wdb *wdbp, int argc, const char *argv[])
     MAT_IDN(smat);
     bn_mat_scale_about_pt(smat, keypoint, sf);
 
-    bn_mat_inv(invXform, wtd.wtd_xform);
+    bn_mat_inv(invXform, gtd.gtd_xform);
     bn_mat_mul(tmpMat, invXform, smat);
-    bn_mat_mul(emat, tmpMat, wtd.wtd_xform);
+    bn_mat_mul(emat, tmpMat, gtd.gtd_xform);
 
-    GED_DB_GET_INTERNAL(wdbp, &intern, dp, emat, &rt_uniresource, GED_ERROR);
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, emat, &rt_uniresource, GED_ERROR);
     RT_CK_DB_INTERNAL(&intern);
-    GED_DB_PUT_INTERNAL(wdbp, dp, &intern, &rt_uniresource, GED_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
 
 #if 0
     /* notify observers */
-    bu_observer_notify(interp, &wdbp->wdb_observers, bu_vls_addr(&wdbp->wdb_name));
+    bu_observer_notify(interp, &gedp->wdb_observers, bu_vls_addr(&gedp->wdb_name));
 #endif
 
     return GED_OK;

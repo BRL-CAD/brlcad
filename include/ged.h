@@ -29,8 +29,11 @@
 #ifndef __GED_H__
 #define __GED_H__
 
+#if 0
+/* Seems to be needed on windows if using ged_run_rt */
+#include "bio.h"
+#endif
 #include "raytrace.h"
-
 
 __BEGIN_DECLS
 
@@ -46,70 +49,194 @@ __BEGIN_DECLS
 #  endif
 #endif
 
+#define GED_NULL (struct ged *)0
+
+/*XXX This macro is temporary */
+#define GED_INIT_FROM_WDBP(_gedp, _wdbp) { \
+    bu_vls_init(&(_gedp)->ged_name); \
+    bu_vls_init(&(_gedp)->ged_log); \
+    bu_vls_init(&(_gedp)->ged_result_str); \
+    bu_vls_init(&(_gedp)->ged_prestr); \
+\
+    (_gedp)->ged_type = (_wdbp)->type; \
+    (_gedp)->ged_dbip = (_wdbp)->dbip; \
+    bu_vls_vlscat(&(_gedp)->ged_name, &(_wdbp)->wdb_name); \
+    (_gedp)->ged_initial_tree_state = (_wdbp)->wdb_initial_tree_state; \
+    (_gedp)->ged_ttol = (_wdbp)->wdb_ttol; \
+    (_gedp)->ged_tol = (_wdbp)->wdb_tol; \
+    (_gedp)->ged_resp = (_wdbp)->wdb_resp; \
+    (_gedp)->ged_result_flags = 0; \
+    (_gedp)->ged_ncharadd = 0; \
+    (_gedp)->ged_num_dups = 0; \
+    (_gedp)->ged_item_default = (_wdbp)->wdb_item_default; \
+    (_gedp)->ged_air_default = (_wdbp)->wdb_air_default; \
+    (_gedp)->ged_mat_default = (_wdbp)->wdb_mat_default; \
+    (_gedp)->ged_los_default = (_wdbp)->wdb_los_default; \
+}
+
 /* Check if the object is a combination */
-#define	GED_CHECK_COMB(_wdbp,_dp,_ret) \
+#define	GED_CHECK_COMB(_gedp,_dp,_ret) \
     if (((_dp)->d_flags & DIR_COMB) == 0) { \
-	bu_vls_printf(&(_wdbp)->wdb_result_str, "%s: not a combination", (_dp)->d_namep); \
+	bu_vls_printf(&(_gedp)->ged_result_str, "%s: not a combination", (_dp)->d_namep); \
 	return (_ret); \
     }
 
 /* Check if a database is open */
-#define GED_CHECK_DATABASE_OPEN(_wdbp,_ret) \
-    if ((_wdbp) == RT_WDB_NULL || (_wdbp)->dbip == DBI_NULL) { \
-	if ((_wdbp) != RT_WDB_NULL) \
-	    bu_vls_printf(&(_wdbp)->wdb_result_str, "A database is not open!"); \
+#define GED_CHECK_DATABASE_OPEN(_gedp,_ret) \
+    if ((_gedp) == GED_NULL || (_gedp)->ged_dbip == DBI_NULL) { \
+	if ((_gedp) != GED_NULL) \
+	    bu_vls_printf(&(_gedp)->ged_result_str, "A database is not open!"); \
 	else \
 	    bu_log("A database is not open!"); \
 	return (_ret); \
     }
 
 /* Lookup database object */
-#define GED_CHECK_EXISTS(_wdbp,_name,_noisy,_ret) \
-    if (db_lookup((_wdbp)->dbip, (_name), (_noisy)) != DIR_NULL) { \
-	bu_vls_printf(&(_wdbp)->wdb_result_str, "%s already exists", (_name)); \
+#define GED_CHECK_EXISTS(_gedp,_name,_noisy,_ret) \
+    if (db_lookup((_gedp)->ged_dbip, (_name), (_noisy)) != DIR_NULL) { \
+	bu_vls_printf(&(_gedp)->ged_result_str, "%s already exists", (_name)); \
 	return (_ret); \
     }
 
 /* Check if the database is read only */
-#define	GED_CHECK_READ_ONLY(_wdbp,_ret) \
-    if ((_wdbp)->dbip->dbi_read_only) { \
-	bu_vls_printf(&(_wdbp)->wdb_result_str, "Sorry, this database is READ-ONLY"); \
+#define	GED_CHECK_READ_ONLY(_gedp,_ret) \
+    if ((_gedp)->ged_dbip->dbi_read_only) { \
+	bu_vls_printf(&(_gedp)->ged_result_str, "Sorry, this database is READ-ONLY"); \
 	return (_ret); \
     }
 
 /* Check if the object is a region */
-#define	GED_CHECK_REGION(_wdbp,_dp,_ret) \
+#define	GED_CHECK_REGION(_gedp,_dp,_ret) \
     if (((_dp)->d_flags & DIR_REGION) == 0) { \
-	bu_vls_printf(&(_wdbp)->wdb_result_str, "%s: not a region", (_dp)->d_namep); \
+	bu_vls_printf(&(_gedp)->ged_result_str, "%s: not a region", (_dp)->d_namep); \
 	return (_ret); \
     }
 
-#define GED_DB_DIRADD(_wdbp,_dp,_name,_laddr,_len,_flags,_ptr,_ret) \
-    if (((_dp) = db_diradd((_wdbp)->dbip, (_name), (_laddr), (_len), (_flags), (_ptr))) == DIR_NULL) { \
-	bu_vls_printf(&(_wdbp)->wdb_result_str, "An error has occured while adding a new object to the database."); \
+#define GED_DB_DIRADD(_gedp,_dp,_name,_laddr,_len,_flags,_ptr,_ret) \
+    if (((_dp) = db_diradd((_gedp)->ged_dbip, (_name), (_laddr), (_len), (_flags), (_ptr))) == DIR_NULL) { \
+	bu_vls_printf(&(_gedp)->ged_result_str, "An error has occured while adding a new object to the database."); \
 	return (_ret); \
     }
 
 /* Lookup database object */
-#define GED_DB_LOOKUP(_wdbp,_dp,_name,_noisy,_ret) \
-    if (((_dp) = db_lookup((_wdbp)->dbip, (_name), (_noisy))) == DIR_NULL) { \
-	bu_vls_printf(&(_wdbp)->wdb_result_str, "%s: not found", (_name)); \
+#define GED_DB_LOOKUP(_gedp,_dp,_name,_noisy,_ret) \
+    if (((_dp) = db_lookup((_gedp)->ged_dbip, (_name), (_noisy))) == DIR_NULL) { \
+	bu_vls_printf(&(_gedp)->ged_result_str, "%s: not found", (_name)); \
 	return (_ret); \
     }
 
 /* Get internal representation */
-#define GED_DB_GET_INTERNAL(_wdbp,_intern,_dp,_mat,_resource,_ret) \
-    if (rt_db_get_internal((_intern), (_dp), (_wdbp)->dbip, (_mat), (_resource)) < 0) { \
-	bu_vls_printf(&(_wdbp)->wdb_result_str, "Database read error, aborting"); \
+#define GED_DB_GET_INTERNAL(_gedp,_intern,_dp,_mat,_resource,_ret) \
+    if (rt_db_get_internal((_intern), (_dp), (_gedp)->ged_dbip, (_mat), (_resource)) < 0) { \
+	bu_vls_printf(&(_gedp)->ged_result_str, "Database read error, aborting"); \
 	return (_ret); \
     }
 
 /* Put internal representation */
-#define GED_DB_PUT_INTERNAL(_wdbp,_dp,_intern,_resource,_ret) \
-    if (rt_db_put_internal((_dp), (_wdbp)->dbip, (_intern), (_resource)) < 0) { \
-	bu_vls_printf(&(_wdbp)->wdb_result_str, "Database write error, aborting"); \
+#define GED_DB_PUT_INTERNAL(_gedp,_dp,_intern,_resource,_ret) \
+    if (rt_db_put_internal((_dp), (_gedp)->ged_dbip, (_intern), (_resource)) < 0) { \
+	bu_vls_printf(&(_gedp)->ged_result_str, "Database write error, aborting"); \
 	return (_ret); \
     }
+
+#if 0
+struct ged_run_rt {
+    struct bu_list l;
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    HANDLE fd;
+    HANDLE hProcess;
+    DWORD pid;
+
+#  ifdef TCL_OK
+    Tcl_Channel chan;
+#  else
+    genptr_t chan;
+#  endif
+#else
+    int fd;
+    int pid;
+#endif
+    int aborted;
+};
+#endif
+
+struct ged_qray_color {
+    unsigned char r;
+    unsigned char g;
+    unsigned char b;
+};
+
+struct ged_qray_fmt {
+    char type;
+    struct bu_vls fmt;
+};
+
+struct ged_drawable {
+    struct bu_list		l;
+    struct bu_list		gd_headSolid;		/**< @brief  head of solid list */
+    struct bu_list		gd_headVDraw;		/**< @brief  head of vdraw list */
+    struct vd_curve		*gd_currVHead;		/**< @brief  current vdraw head */
+    struct solid		*gd_freeSolids;		/**< @brief  ptr to head of free solid list */
+
+#if 0
+    char			*gd_rt_cmd[RT_MAXARGS];
+    int				gd_rt_cmd_len;
+    struct ged_run_rt		gd_headRunRt;		/**< @brief  head of forked rt processes */
+    void			(*gd_rtCmdNotify)();	/**< @brief  function called when rt command completes */
+#endif
+
+    char			*gd_outputHandler;	/**< @brief  tcl script for handling output */
+    int				gd_uplotOutputMode;	/**< @brief  output mode for unix plots */
+
+    /* qray state */
+    struct bu_vls		gd_qray_basename;	/**< @brief  basename of query ray vlist */
+    struct bu_vls		gd_qray_script;		/**< @brief  query ray script */
+    char			gd_qray_effects;	/**< @brief  t for text, g for graphics or b for both */
+    int				gd_qray_cmd_echo;	/**< @brief  0 - don't echo command, 1 - echo command */
+    struct ged_qray_fmt		*gd_qray_fmts;
+    struct ged_qray_color	gd_qray_odd_color;
+    struct ged_qray_color	gd_qray_even_color;
+    struct ged_qray_color	gd_qray_void_color;
+    struct ged_qray_color	gd_qray_overlap_color;
+    int				gd_shaded_mode;		/**< @brief  1 - draw bots shaded by default */
+    struct bu_observer		gd_observers;
+};
+
+
+struct ged {
+    struct bu_list		l;
+    int				ged_type;
+    struct db_i	*		ged_dbip;
+    struct bu_vls		ged_name;		/**< @brief  database object name */
+    struct db_tree_state	ged_initial_tree_state;
+    struct rt_tess_tol		ged_ttol;
+    struct bn_tol		ged_tol;
+    struct resource*		ged_resp;
+
+    /* for catching log messages */
+    struct bu_vls		ged_log;
+
+    void			*ged_result;
+    struct bu_vls		ged_result_str;
+    unsigned int		ged_result_flags;
+
+    /* variables for name prefixing */
+    struct bu_vls		ged_prestr;
+    int				ged_ncharadd;
+    int				ged_num_dups;
+
+    /* default region ident codes for this particular database. */
+    int				ged_item_default;	/**< @brief  GIFT region ID */
+    int				ged_air_default;
+    int				ged_mat_default;	/**< @brief  GIFT material code */
+    int				ged_los_default;	/**< @brief  Line-of-sight estimate */
+
+#if 1
+    struct ged_drawable		ged_drawable;
+#else
+    struct ged_drawable		*ged_head_drawables;
+#endif
+};
 
 
 /**
@@ -158,7 +285,7 @@ GED_EXPORT BU_EXTERN(int Ged_Init,
 
 /* defined in wdb_comb_std.c */
 GED_EXPORT BU_EXTERN(int wdb_comb_std_cmd,
-		     (struct rt_wdb	*wdbp,
+		     (struct rt_wdb	*gedp,
 		      Tcl_Interp	*interp,
 		      int		argc,
 		      char 		**argv));
@@ -731,7 +858,7 @@ GED_EXPORT BU_EXTERN(int ged_editit, (const char *file));
  * Usage:
  *     arced a/b anim_cmd ...
  */
-GED_EXPORT BU_EXTERN(int ged_arced, (struct rt_wdb *wdbp, int argc, const char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_arced, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Set combination color.
@@ -739,7 +866,7 @@ GED_EXPORT BU_EXTERN(int ged_arced, (struct rt_wdb *wdbp, int argc, const char *
  * Usage:
  *     comb_color combination R G B
  */
-GED_EXPORT BU_EXTERN(int ged_comb_color, (struct rt_wdb *wdbp, int argc, const char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_comb_color, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Edit combination.
@@ -747,7 +874,7 @@ GED_EXPORT BU_EXTERN(int ged_comb_color, (struct rt_wdb *wdbp, int argc, const c
  * Usage:
  *     edcomb combname Regionflag regionid air los GIFTmater
  */
-GED_EXPORT BU_EXTERN(int ged_edcomb, (struct rt_wdb *wdbp, int argc, const char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_edcomb, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Edit combination materials.
@@ -757,7 +884,7 @@ GED_EXPORT BU_EXTERN(int ged_edcomb, (struct rt_wdb *wdbp, int argc, const char 
  * Usage:
  *     edmater combination1 [combination2 ...]
  */
-GED_EXPORT BU_EXTERN(int ged_edmater, (struct rt_wdb *wdbp, int argc, const char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_edmater, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Set region ident codes.
@@ -765,7 +892,7 @@ GED_EXPORT BU_EXTERN(int ged_edmater, (struct rt_wdb *wdbp, int argc, const char
  * Usage:
  *     item region ident [air [material [los]]]
  */
-GED_EXPORT BU_EXTERN(int ged_item, (struct rt_wdb *wdbp, int argc, const char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_item, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Used to control logging.
@@ -773,7 +900,7 @@ GED_EXPORT BU_EXTERN(int ged_item, (struct rt_wdb *wdbp, int argc, const char *a
  * Usage:
  *     log {get|start|stop}
  */
-GED_EXPORT BU_EXTERN(int ged_log, (struct rt_wdb *wdbp, int argc, const char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_log, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Make a new primitive.
@@ -781,7 +908,7 @@ GED_EXPORT BU_EXTERN(int ged_log, (struct rt_wdb *wdbp, int argc, const char *ar
  * Usage:
  *     make obj type
  */
-GED_EXPORT BU_EXTERN(int ged_make, (struct rt_wdb *wdbp, int argc, char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_make, (struct ged *gedp, int argc, char *argv[]));
 
 /**
  * Make a unique object name.
@@ -789,7 +916,7 @@ GED_EXPORT BU_EXTERN(int ged_make, (struct rt_wdb *wdbp, int argc, char *argv[])
  * Usage:
  *     make_name template | -s [num]
  */
-GED_EXPORT BU_EXTERN(int ged_make_name, (struct rt_wdb *wdbp, int argc, char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_make_name, (struct ged *gedp, int argc, char *argv[]));
 
 /**
  * Modify material information.
@@ -797,7 +924,7 @@ GED_EXPORT BU_EXTERN(int ged_make_name, (struct rt_wdb *wdbp, int argc, char *ar
  * Usage:
  *     mater region_name shader r g b inherit
  */
-GED_EXPORT BU_EXTERN(int ged_mater, (struct rt_wdb *wdbp, int argc, const char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_mater, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Mirror the primitive or combination along the specified axis.
@@ -806,7 +933,7 @@ GED_EXPORT BU_EXTERN(int ged_mater, (struct rt_wdb *wdbp, int argc, const char *
  *     mirror [-d dir] [-o origin] [-p scalar_pt] [-x] [-y] [-z] old new
  *
  */
-GED_EXPORT BU_EXTERN(int ged_mirror, (struct rt_wdb *wdbp, int argc, const char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_mirror, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Read material properties from a file.
@@ -814,7 +941,7 @@ GED_EXPORT BU_EXTERN(int ged_mirror, (struct rt_wdb *wdbp, int argc, const char 
  * Usage:
  *     rmater file
  */
-GED_EXPORT BU_EXTERN(int ged_rmater, (struct rt_wdb *wdbp, int argc, const char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_rmater, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Set/get object center.
@@ -822,7 +949,7 @@ GED_EXPORT BU_EXTERN(int ged_rmater, (struct rt_wdb *wdbp, int argc, const char 
  * Usage:
  *     ocenter obj [x y z]
  */
-GED_EXPORT BU_EXTERN(int ged_ocenter, (struct rt_wdb *wdbp, int argc, const char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_ocenter, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Rotate obj about the keypoint by 
@@ -830,7 +957,7 @@ GED_EXPORT BU_EXTERN(int ged_ocenter, (struct rt_wdb *wdbp, int argc, const char
  * Usage:
  *     orotate obj rX rY rZ [kX kY kZ]
  */
-GED_EXPORT BU_EXTERN(int ged_orotate, (struct rt_wdb *wdbp, int argc, const char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_orotate, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Scale obj about the keypoint by sf.
@@ -838,7 +965,7 @@ GED_EXPORT BU_EXTERN(int ged_orotate, (struct rt_wdb *wdbp, int argc, const char
  * Usage:
  *     oscale obj sf [kX kY kZ]
  */
-GED_EXPORT BU_EXTERN(int ged_oscale, (struct rt_wdb *wdbp, int argc, const char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_oscale, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Translate obj by dx dy dz.
@@ -846,7 +973,7 @@ GED_EXPORT BU_EXTERN(int ged_oscale, (struct rt_wdb *wdbp, int argc, const char 
  * Usage:
  *     otranslate obj dx dy dz
  */
-GED_EXPORT BU_EXTERN(int ged_otranslate, (struct rt_wdb *wdbp, int argc, const char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_otranslate, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Simpler, command-line version of 'mater' command.
@@ -854,7 +981,7 @@ GED_EXPORT BU_EXTERN(int ged_otranslate, (struct rt_wdb *wdbp, int argc, const c
  * Usage:
  *     shader combination shader_material [shader_argument(s)]
  */
-GED_EXPORT BU_EXTERN(int ged_shader, (struct rt_wdb *wdbp, int argc, const char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_shader, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Write material properties to a file for specified combination(s).
@@ -862,7 +989,7 @@ GED_EXPORT BU_EXTERN(int ged_shader, (struct rt_wdb *wdbp, int argc, const char 
  * Usage:
  *     wmater file combination1 [combination2 ...]
  */
-GED_EXPORT BU_EXTERN(int ged_wmater, (struct rt_wdb *wdbp, int argc, const char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_wmater, (struct ged *gedp, int argc, const char *argv[]));
 
 
 __END_DECLS

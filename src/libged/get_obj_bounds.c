@@ -34,12 +34,12 @@
 
 
 int
-ged_get_obj_bounds(struct rt_wdb	*wdbp,
-		   int			argc,
-		   const char		**argv,
-		   int			use_air,
-		   point_t		rpp_min,
-		   point_t		rpp_max)
+ged_get_obj_bounds(struct ged	*gedp,
+		   int		argc,
+		   const char	**argv,
+		   int		use_air,
+		   point_t	rpp_min,
+		   point_t	rpp_max)
 {
     register int	i;
     struct rt_i		*rtip;
@@ -47,8 +47,8 @@ ged_get_obj_bounds(struct rt_wdb	*wdbp,
     struct region	*regp;
 
     /* Make a new rt_i instance from the existing db_i sructure */
-    if ((rtip=rt_new_rti(wdbp->dbip)) == RTI_NULL) {
-	bu_vls_printf(&wdbp->wdb_result_str, "rt_new_rti failure for ", wdbp->dbip->dbi_filename);
+    if ((rtip=rt_new_rti(gedp->ged_dbip)) == RTI_NULL) {
+	bu_vls_printf(&gedp->ged_result_str, "rt_new_rti failure for ", gedp->ged_dbip->dbi_filename);
 	return GED_ERROR;
     }
 
@@ -61,7 +61,7 @@ ged_get_obj_bounds(struct rt_wdb	*wdbp,
 	/* Get full_path structure for argument */
 	db_full_path_init(&path);
 	if (db_string_to_path(&path,  rtip->rti_dbip, argv[i])) {
-	    bu_vls_printf(&wdbp->wdb_result_str, "db_string_to_path failed for ", argv[i]);
+	    bu_vls_printf(&gedp->ged_result_str, "db_string_to_path failed for ", argv[i]);
 	    rt_free_rti(rtip);
 	    return GED_ERROR;
 	}
@@ -73,7 +73,7 @@ ged_get_obj_bounds(struct rt_wdb	*wdbp,
 
 	    db_full_path_init(&tmp_path);
 	    if (db_string_to_path(&tmp_path, rtip->rti_dbip, regp->reg_name)) {
-		bu_vls_printf(&wdbp->wdb_result_str, "db_string_to_path failed for ", regp->reg_name);
+		bu_vls_printf(&gedp->ged_result_str, "db_string_to_path failed for ", regp->reg_name);
 		rt_free_rti(rtip);
 		return GED_ERROR;
 	    }
@@ -86,7 +86,7 @@ ged_get_obj_bounds(struct rt_wdb	*wdbp,
 
 	/* if we don't already have it, get it */
 	if (!gottree && rt_gettree(rtip, path.fp_names[0]->d_namep)) {
-	    bu_vls_printf(&wdbp->wdb_result_str, "rt_gettree failed for ", argv[i]);
+	    bu_vls_printf(&gedp->ged_result_str, "rt_gettree failed for ", argv[i]);
 	    rt_free_rti(rtip);
 	    return GED_ERROR;
 	}
@@ -119,7 +119,7 @@ ged_get_obj_bounds(struct rt_wdb	*wdbp,
 	if (regp != REGION_NULL) {
 	    /* input name was a region  */
 	    if (rt_bound_tree(regp->reg_treetop, reg_min, reg_max)) {
-		bu_vls_printf(&wdbp->wdb_result_str, "rt_bound_tree failed for ", regp->reg_name);
+		bu_vls_printf(&gedp->ged_result_str, "rt_bound_tree failed for ", regp->reg_name);
 		rt_free_rti(rtip);
 		return TCL_ERROR;
 	    }
@@ -143,7 +143,7 @@ ged_get_obj_bounds(struct rt_wdb	*wdbp,
 
 		/* This is part of the group */
 		if (rt_bound_tree(regp->reg_treetop, reg_min, reg_max)) {
-		    bu_vls_printf(&wdbp->wdb_result_str, "rt_bound_tree failed for ", regp->reg_name);
+		    bu_vls_printf(&gedp->ged_result_str, "rt_bound_tree failed for ", regp->reg_name);
 		    rt_free_rti(rtip);
 		    return TCL_ERROR;
 		}
@@ -163,10 +163,10 @@ ged_get_obj_bounds(struct rt_wdb	*wdbp,
  *
  */
 static int
-ged_get_objpath_mat(struct rt_wdb		*wdbp,
+ged_get_objpath_mat(struct ged			*gedp,
 		    int				argc,
 		    const char			**argv,
-		    struct wdb_trace_data	*wtdp)
+		    struct ged_trace_data	*gtdp)
 {
     int i, pos_in;
 
@@ -175,24 +175,24 @@ ged_get_objpath_mat(struct rt_wdb		*wdbp,
      *      ANY path the same up to this point is considered as matching
      */
 
-    /* initialize wtd */
-    wtdp->wtd_wdbp = wdbp;
-    wtdp->wtd_flag = WDB_EVAL_ONLY;
-    wtdp->wtd_prflag = 0;
+    /* initialize gtd */
+    gtdp->gtd_gedp = gedp;
+    gtdp->gtd_flag = GED_EVAL_ONLY;
+    gtdp->gtd_prflag = 0;
 
     pos_in = 0;
 
     if (argc == 1 && strchr(argv[0], '/')) {
 	char *tok;
 	char *av0;
-	wtdp->wtd_objpos = 0;
+	gtdp->gtd_objpos = 0;
 
 	av0 = strdup(argv[0]);
 	tok = strtok(av0, "/");
 	while (tok) {
-	    if ((wtdp->wtd_obj[wtdp->wtd_objpos++] =
-		 db_lookup(wdbp->dbip, tok, LOOKUP_NOISY)) == DIR_NULL) {
-		bu_vls_printf(&wdbp->wdb_result_str, "ged_get_objpath_mat: Failed to find %s", tok);
+	    if ((gtdp->gtd_obj[gtdp->gtd_objpos++] =
+		 db_lookup(gedp->ged_dbip, tok, LOOKUP_NOISY)) == DIR_NULL) {
+		bu_vls_printf(&gedp->ged_result_str, "ged_get_objpath_mat: Failed to find %s", tok);
 		free(av0);
 		return GED_ERROR;
 	    }
@@ -202,20 +202,20 @@ ged_get_objpath_mat(struct rt_wdb		*wdbp,
 
 	free(av0);
     } else {
-	wtdp->wtd_objpos = argc;
+	gtdp->gtd_objpos = argc;
 
 	/* build directory pointer array for desired path */
-	for (i=0; i<wtdp->wtd_objpos; i++) {
-	    if ((wtdp->wtd_obj[i] =
-		 db_lookup(wdbp->dbip, argv[pos_in+i], LOOKUP_NOISY)) == DIR_NULL) {
-		bu_vls_printf(&wdbp->wdb_result_str, "ged_get_objpath_mat: Failed to find %s", argv[pos_in+i]);
+	for (i=0; i<gtdp->gtd_objpos; i++) {
+	    if ((gtdp->gtd_obj[i] =
+		 db_lookup(gedp->ged_dbip, argv[pos_in+i], LOOKUP_NOISY)) == DIR_NULL) {
+		bu_vls_printf(&gedp->ged_result_str, "ged_get_objpath_mat: Failed to find %s", argv[pos_in+i]);
 		return GED_ERROR;
 	    }
 	}
     }
 
-    MAT_IDN(wtdp->wtd_xform);
-    ged_trace(wtdp->wtd_obj[0], 0, bn_mat_identity, wtdp);
+    MAT_IDN(gtdp->gtd_xform);
+    ged_trace(gtdp->gtd_obj[0], 0, bn_mat_identity, gtdp);
 
     return GED_OK;
 }
@@ -225,10 +225,10 @@ ged_get_objpath_mat(struct rt_wdb		*wdbp,
  * This version works if the last member of the path is a primitive.
  */
 int
-ged_get_obj_bounds2(struct rt_wdb		*wdbp,
+ged_get_obj_bounds2(struct ged			*gedp,
 		    int				argc,
 		    const char			**argv,
-		    struct wdb_trace_data	*wtdp,
+		    struct ged_trace_data	*gtdp,
 		    point_t			rpp_min,
 		    point_t			rpp_max)
 {
@@ -242,15 +242,15 @@ ged_get_obj_bounds2(struct rt_wdb		*wdbp,
     VSETALL(rpp_min, MAX_FASTF);
     VREVERSE(rpp_max, rpp_min);
 
-    if (ged_get_objpath_mat(wdbp, argc, argv, wtdp) == TCL_ERROR)
+    if (ged_get_objpath_mat(gedp, argc, argv, gtdp) == TCL_ERROR)
 	return GED_ERROR;
 
-    dp = wtdp->wtd_obj[wtdp->wtd_objpos-1];
-    GED_DB_GET_INTERNAL(wdbp, &intern, dp, wtdp->wtd_xform, &rt_uniresource, GED_ERROR);
+    dp = gtdp->gtd_obj[gtdp->gtd_objpos-1];
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, gtdp->gtd_xform, &rt_uniresource, GED_ERROR);
 
     /* Make a new rt_i instance from the existing db_i structure */
-    if ((rtip=rt_new_rti(wdbp->dbip)) == RTI_NULL) {
-	bu_vls_printf(&wdbp->wdb_result_str, "rt_new_rti failure for %s", wdbp->dbip->dbi_filename);
+    if ((rtip=rt_new_rti(gedp->ged_dbip)) == RTI_NULL) {
+	bu_vls_printf(&gedp->ged_result_str, "rt_new_rti failure for %s", gedp->ged_dbip->dbi_filename);
 	return GED_ERROR;
     }
 

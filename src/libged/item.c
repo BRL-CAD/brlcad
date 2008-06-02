@@ -27,7 +27,7 @@
 #include "ged.h"
 
 int
-ged_item(struct rt_wdb *wdbp, int argc, const char *argv[])
+ged_item(struct ged *gedp, int argc, const char *argv[])
 {
     int status = GED_OK;
     register struct directory *dp;
@@ -37,29 +37,29 @@ ged_item(struct rt_wdb *wdbp, int argc, const char *argv[])
     struct rt_comb_internal	*comb;
     static const char *usage = "region ident [air [material [los]]]";
 
-    GED_CHECK_DATABASE_OPEN(wdbp, GED_ERROR);
-    GED_CHECK_READ_ONLY(wdbp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&wdbp->wdb_result_str, 0);
-    wdbp->wdb_result = GED_RESULT_NULL;
-    wdbp->wdb_result_flags = 0;
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+    gedp->ged_result = GED_RESULT_NULL;
+    gedp->ged_result_flags = 0;
 
     /* must be wanting help */
     if (argc == 1) {
-	wdbp->wdb_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
-	bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
+	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_OK;
     }
 
     if (argc < 3 || 6 < argc) {
-	bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
-    GED_DB_LOOKUP(wdbp, dp, argv[1], LOOKUP_NOISY, GED_ERROR);
-    GED_CHECK_COMB(wdbp, dp, GED_ERROR);
-    GED_CHECK_REGION(wdbp, dp, GED_ERROR);
+    GED_DB_LOOKUP(gedp, dp, argv[1], LOOKUP_NOISY, GED_ERROR);
+    GED_CHECK_COMB(gedp, dp, GED_ERROR);
+    GED_CHECK_REGION(gedp, dp, GED_ERROR);
 
     air = ident = 0;
     GIFTmater_set = los_set = 0;
@@ -84,7 +84,7 @@ ged_item(struct rt_wdb *wdbp, int argc, const char *argv[])
 	los_set = 1;
     }
 
-    GED_DB_GET_INTERNAL(wdbp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
 
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     RT_CK_COMB(comb);
@@ -99,7 +99,7 @@ ged_item(struct rt_wdb *wdbp, int argc, const char *argv[])
 	comb->los = los;
     }
 
-    GED_DB_PUT_INTERNAL(wdbp, dp, &intern, &rt_uniresource, GED_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
 
     return status;
 }

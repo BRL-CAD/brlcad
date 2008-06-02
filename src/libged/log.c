@@ -46,24 +46,24 @@ ged_logHook(genptr_t clientdata,
 
 
 int
-ged_log(struct rt_wdb *wdbp, int argc, const char *argv[])
+ged_log(struct ged *gedp, int argc, const char *argv[])
 {
     static char *usage = "get|start|stop";
 
-    GED_CHECK_DATABASE_OPEN(wdbp, GED_ERROR);
-    GED_CHECK_READ_ONLY(wdbp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&wdbp->wdb_result_str, 0);
-    wdbp->wdb_result = GED_RESULT_NULL;
-    wdbp->wdb_result_flags = 0;
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+    gedp->ged_result = GED_RESULT_NULL;
+    gedp->ged_result_flags = 0;
 
     if (argc != 2) {
-	bu_vls_printf(&wdbp->wdb_result_str,"Usage: %s %s", argv[0], usage);
+	bu_vls_printf(&gedp->ged_result_str,"Usage: %s %s", argv[0], usage);
 
 	/* must be wanting help */
 	if (argc == 1) {
-	    wdbp->wdb_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
+	    gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	    return GED_OK;
 	}
 
@@ -71,17 +71,17 @@ ged_log(struct rt_wdb *wdbp, int argc, const char *argv[])
     }
 
     if (argv[1][0] == 'g' && !strcmp(argv[1], "get")) {
-	bu_vls_vlscatzap(&wdbp->wdb_result_str, &wdbp->wdb_log);
+	bu_vls_vlscatzap(&gedp->ged_result_str, &gedp->ged_log);
 	return GED_OK;
     }
 
     if (argv[1][0] == 's' && !strcmp(argv[1], "start")) {
-	bu_log_add_hook(ged_logHook, (genptr_t)&wdbp->wdb_log);
+	bu_log_add_hook(ged_logHook, (genptr_t)&gedp->ged_log);
 	return GED_OK;
     }
 
     if (argv[1][0] == 's' && !strcmp(argv[1], "stop")) {
-	bu_log_delete_hook(ged_logHook, (genptr_t)&wdbp->wdb_log);
+	bu_log_delete_hook(ged_logHook, (genptr_t)&gedp->ged_log);
 	return GED_OK;
     }
 

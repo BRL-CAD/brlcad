@@ -23,6 +23,8 @@
  *
  */
 
+#include "common.h"
+
 #include <signal.h>
 #include <stdlib.h>
 
@@ -31,7 +33,7 @@
 #include "ged.h"
 
 int
-ged_make(struct rt_wdb *wdbp, int argc, char *argv[])
+ged_make(struct ged *gedp, int argc, char *argv[])
 {
     int status = GED_OK;
     int i;
@@ -63,18 +65,18 @@ ged_make(struct rt_wdb *wdbp, int argc, char *argv[])
     struct rt_metaball_internal	*metaball_ip;
     static const char *usage = "-h | -t | -o origin -s sf name <arb8|arb7|arb6|arb5|arb4|arbn|ars|bot|ehy|ell|ell1|epa|eto|extrude|grip|half|nmg|part|pipe|rcc|rec|rhc|rpc|rpp|sketch|sph|tec|tgc|tor|trc>";
 
-    GED_CHECK_DATABASE_OPEN(wdbp, GED_ERROR);
-    GED_CHECK_READ_ONLY(wdbp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&wdbp->wdb_result_str, 0);
-    wdbp->wdb_result = GED_RESULT_NULL;
-    wdbp->wdb_result_flags = 0;
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+    gedp->ged_result = GED_RESULT_NULL;
+    gedp->ged_result_flags = 0;
 
     /* must be wanting help */
     if (argc == 1) {
-	wdbp->wdb_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
-	bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
+	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_OK;
     }
 
@@ -89,34 +91,34 @@ ged_make(struct rt_wdb *wdbp, int argc, char *argv[])
 		       &origin[X],
 		       &origin[Y],
 		       &origin[Z]) != 3) {
-		bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
+		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		return GED_ERROR;
 	    }
 	    break;
 	case 's':
 	case 'S':
 	    if (sscanf(bu_optarg, "%lf", &scale) != 1) {
-		bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
+		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		return GED_ERROR;
 	    }
 	    break;
 	case 't':
 	case 'T':
 	    if (argc == 2) {
-		wdbp->wdb_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
-		bu_vls_printf(&wdbp->wdb_result_str, "arb8 arb7 arb6 arb5 arb4 arbn ars bot ehy ell ell1 epa eto extrude grip half nmg part pipe rcc rec rhc rpc rpp sketch sph tec tgc tor trc superell metaball");
+		gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
+		bu_vls_printf(&gedp->ged_result_str, "arb8 arb7 arb6 arb5 arb4 arbn ars bot ehy ell ell1 epa eto extrude grip half nmg part pipe rcc rec rhc rpc rpp sketch sph tec tgc tor trc superell metaball");
 		return GED_OK;
 	    }
 
-	    bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
+	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return GED_ERROR;
 	case 'h':
 	case 'H':
-	    wdbp->wdb_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
-	    bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
+	    gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
+	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return GED_OK;
 	default:
-	    bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
+	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return GED_ERROR;
 	}
     }
@@ -124,13 +126,13 @@ ged_make(struct rt_wdb *wdbp, int argc, char *argv[])
     argc -= bu_optind;
 
     if (argc != 2) {
-	bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     save_bu_optind = bu_optind;
 
-    GED_CHECK_EXISTS(wdbp, argv[bu_optind], LOOKUP_QUIET, GED_ERROR);
+    GED_CHECK_EXISTS(gedp, argv[bu_optind], LOOKUP_QUIET, GED_ERROR);
     RT_INIT_DB_INTERNAL(&internal);
 
     if (strcmp(argv[bu_optind+1], "arb8") == 0 ||
@@ -626,8 +628,8 @@ ged_make(struct rt_wdb *wdbp, int argc, char *argv[])
 	extrude_ip->keypoint = 0;
 	av[0] = "make_name";
 	av[1] = "skt_";
-	ged_make_name(wdbp, 2, av);
-	extrude_ip->sketch_name = bu_strdup(bu_vls_addr(&wdbp->wdb_result_str));
+	ged_make_name(gedp, 2, av);
+	extrude_ip->sketch_name = bu_strdup(bu_vls_addr(&gedp->ged_result_str));
 	extrude_ip->skt = (struct rt_sketch_internal *)NULL;
 
 	sprintf(center_str, "%lf %lf %lf", V3ARGS(origin));
@@ -640,7 +642,7 @@ ged_make(struct rt_wdb *wdbp, int argc, char *argv[])
 	av[5] = extrude_ip->sketch_name;
 	av[6] = "sketch";
 	av[7] = (char *)0;
-	ged_make(wdbp, 7, av);
+	ged_make(gedp, 7, av);
     } else if (strcmp(argv[bu_optind+1], "sketch") == 0) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_SKETCH;
@@ -741,11 +743,11 @@ ged_make(struct rt_wdb *wdbp, int argc, char *argv[])
 	fprintf(stdout, "superell being made with %f and %f\n", superell_ip->n, superell_ip->e);
 
     } else if (strcmp(argv[bu_optind+1], "hf") == 0) {
-	bu_vls_printf(&wdbp->wdb_result_str, "make: the height field is deprecated and not supported by this command.\nUse the dsp primitive.\n");
+	bu_vls_printf(&gedp->ged_result_str, "make: the height field is deprecated and not supported by this command.\nUse the dsp primitive.\n");
 	return GED_ERROR;
     } else if (strcmp(argv[bu_optind+1], "pg") == 0 ||
 	       strcmp(argv[bu_optind+1], "poly") == 0) {
-	bu_vls_printf(&wdbp->wdb_result_str, "make: the polysolid is deprecated and not supported by this command.\nUse the bot primitive.");
+	bu_vls_printf(&gedp->ged_result_str, "make: the polysolid is deprecated and not supported by this command.\nUse the bot primitive.");
 	return GED_ERROR;
     } else if (strcmp(argv[bu_optind+1], "cline") == 0 ||
 	       strcmp(argv[bu_optind+1], "dsp") == 0 ||
@@ -754,7 +756,7 @@ ged_make(struct rt_wdb *wdbp, int argc, char *argv[])
 	       strcmp(argv[bu_optind+1], "spline") == 0 ||
 	       strcmp(argv[bu_optind+1], "submodel") == 0 ||
 	       strcmp(argv[bu_optind+1], "vol") == 0) {
-	bu_vls_printf(&wdbp->wdb_result_str, "make: the %s primitive is not supported by this command", argv[bu_optind+1]);
+	bu_vls_printf(&gedp->ged_result_str, "make: the %s primitive is not supported by this command", argv[bu_optind+1]);
 	return GED_ERROR;
     } else if (strcmp(argv[bu_optind+1], "metaball") == 0) {
 	struct wdb_metaballpt *mbpt;
@@ -783,15 +785,15 @@ ged_make(struct rt_wdb *wdbp, int argc, char *argv[])
 	bu_log("metaball being made with %f threshold and two points using the %s rendering method\n", 
 	       metaball_ip->threshold, rt_metaball_lookup_type_name(metaball_ip->method));
     } else {
-	bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     /* no interrupts */
     (void)signal(SIGINT, SIG_IGN);
 
-    GED_DB_DIRADD(wdbp, dp, argv[save_bu_optind], -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type, GED_ERROR);
-    GED_DB_PUT_INTERNAL(wdbp, dp, &internal, &rt_uniresource, GED_ERROR);
+    GED_DB_DIRADD(gedp, dp, argv[save_bu_optind], -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type, GED_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
 
     return GED_OK;
 }

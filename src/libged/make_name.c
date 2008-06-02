@@ -27,7 +27,7 @@
 
 
 int
-ged_make_name(struct rt_wdb *wdbp, int argc, char *argv[])
+ged_make_name(struct ged *gedp, int argc, char *argv[])
 {
     int status = GED_OK;
     struct bu_vls obj_name;
@@ -36,18 +36,18 @@ ged_make_name(struct rt_wdb *wdbp, int argc, char *argv[])
     int	len;
     static const char *usage = "template | -s [num]";
 
-    GED_CHECK_DATABASE_OPEN(wdbp, GED_ERROR);
-    GED_CHECK_READ_ONLY(wdbp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&wdbp->wdb_result_str, 0);
-    wdbp->wdb_result = GED_RESULT_NULL;
-    wdbp->wdb_result_flags = 0;
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+    gedp->ged_result = GED_RESULT_NULL;
+    gedp->ged_result_flags = 0;
 
     /* must be wanting help */
     if (argc == 1) {
-	wdbp->wdb_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
-	bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
+	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_OK;
     }
 
@@ -70,7 +70,7 @@ ged_make_name(struct rt_wdb *wdbp, int argc, char *argv[])
 	}
     }
     default:
-	bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -92,9 +92,9 @@ ged_make_name(struct rt_wdb *wdbp, int argc, char *argv[])
 	bu_vls_printf(&obj_name, "%d", i++);
 	bu_vls_strcat(&obj_name, tp);
     }
-    while (db_lookup(wdbp->dbip, bu_vls_addr(&obj_name), LOOKUP_QUIET) != DIR_NULL);
+    while (db_lookup(gedp->ged_dbip, bu_vls_addr(&obj_name), LOOKUP_QUIET) != DIR_NULL);
 
-    bu_vls_printf(&wdbp->wdb_result_str, bu_vls_addr(&obj_name));
+    bu_vls_printf(&gedp->ged_result_str, bu_vls_addr(&obj_name));
     bu_vls_free(&obj_name);
 
     return GED_OK;

@@ -1983,10 +1983,14 @@ cmd_make_name(ClientData	clientData,
 {
     Tcl_DString ds;
     int ret;
+    struct ged ged;
 
     CHECK_DBI_NULL;
 
-    ret = ged_make_name(wdbp, argc, argv);
+    /*XXX Temporary */
+    GED_INIT_FROM_WDBP(&ged, wdbp);
+
+    ret = ged_make_name(&ged, argc, argv);
 
     /* Convert to Tcl codes */
     if (ret == GED_OK)
@@ -1995,7 +1999,7 @@ cmd_make_name(ClientData	clientData,
 	ret = TCL_ERROR;
 
     Tcl_DStringInit(&ds);
-    Tcl_DStringAppend(&ds, bu_vls_addr(&wdbp->wdb_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(&ged.ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     return ret;

@@ -27,7 +27,7 @@
 
 
 int
-ged_wmater(struct rt_wdb *wdbp, int argc, const char *argv[])
+ged_wmater(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
     int status = GED_OK;
@@ -38,44 +38,44 @@ ged_wmater(struct rt_wdb *wdbp, int argc, const char *argv[])
 
     static const char *usage = "filename comb1 [comb2 ...]";
 
-    GED_CHECK_DATABASE_OPEN(wdbp, GED_ERROR);
-    GED_CHECK_READ_ONLY(wdbp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
     
     /* initialize result */
-    bu_vls_trunc(&wdbp->wdb_result_str, 0);
-    wdbp->wdb_result = GED_RESULT_NULL;
-    wdbp->wdb_result_flags = 0;
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+    gedp->ged_result = GED_RESULT_NULL;
+    gedp->ged_result_flags = 0;
 
     /* must be wanting help */
     if (argc == 1) {
-	wdbp->wdb_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
-	bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
+	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_OK;
     }
 
     if (argc < 3) {
-	bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     if ((fp = fopen(argv[1], "a")) == NULL) {
-	bu_vls_printf(&wdbp->wdb_result_str, "%s: Failed to open file - %s", argv[0], argv[1]);
+	bu_vls_printf(&gedp->ged_result_str, "%s: Failed to open file - %s", argv[0], argv[1]);
 	return GED_ERROR;
     }
 
     for (i = 2; i < argc; ++i) {
-	if ( (dp = db_lookup( wdbp->dbip,  argv[i], LOOKUP_NOISY )) == DIR_NULL ) {
-	    bu_vls_printf(&wdbp->wdb_result_str, "%s: Failed to find %s", argv[0], argv[i]);
+	if ( (dp = db_lookup( gedp->ged_dbip,  argv[i], LOOKUP_NOISY )) == DIR_NULL ) {
+	    bu_vls_printf(&gedp->ged_result_str, "%s: Failed to find %s", argv[0], argv[i]);
 	    status = GED_ERROR;
 	    continue;
 	}
 	if ( (dp->d_flags & DIR_COMB) == 0 )  {
-	    bu_vls_printf(&wdbp->wdb_result_str, "%s: %s is not a combination", argv[0], dp->d_namep);
+	    bu_vls_printf(&gedp->ged_result_str, "%s: %s is not a combination", argv[0], dp->d_namep);
 	    status = GED_ERROR;
 	    continue;
 	}
-	if ( rt_db_get_internal( &intern, dp, wdbp->dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
-	    bu_vls_printf(&wdbp->wdb_result_str, "%s: Unable to read %s from database", argv[0], argv[i]);
+	if ( rt_db_get_internal( &intern, dp, gedp->ged_dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
+	    bu_vls_printf(&gedp->ged_result_str, "%s: Unable to read %s from database", argv[0], argv[i]);
 	    status = GED_ERROR;
 	    continue;
 	}

@@ -243,7 +243,6 @@ static int wdb_instance_tcl(ClientData clientData, Tcl_Interp *interp, int argc,
 static int wdb_observer_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_reopen_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_make_bb_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_make_name_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_units_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_hide_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_unhide_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -297,6 +296,7 @@ static struct bu_cmdtab wdb_newcmds[] = {
     {"item",		ged_item},
     {"log",		ged_log},
     {"make",		ged_make},
+    {"make_name",	ged_make_name},
     {"mater",		ged_mater},
     {"mirror",		ged_mirror},
     {"ocenter",		ged_ocenter},
@@ -306,7 +306,7 @@ static struct bu_cmdtab wdb_newcmds[] = {
     {"rmater",		ged_rmater},
     {"shader",		ged_shader},
     {"wmater",		ged_wmater},
-    {(char *)NULL,	(int (*)())0 }
+    {(char *)NULL,	(int (*)())0}
 };
 
 static struct bu_cmdtab wdb_cmds[] = {
@@ -351,7 +351,7 @@ static struct bu_cmdtab wdb_cmds[] = {
     {"lt",		wdb_lt_tcl},
     {"make",	wdb_newcmds_tcl},
     {"make_bb",	wdb_make_bb_tcl},
-    {"make_name",	wdb_make_name_tcl},
+    {"make_name",	wdb_newcmds_tcl},
     {"match",	wdb_match_tcl},
     {"mater",	wdb_newcmds_tcl},
     {"mirror",		wdb_newcmds_tcl},
@@ -2259,8 +2259,9 @@ wdb_pathsum_cmd(struct rt_wdb	*wdbp,
 		int		argc,
 		char 		**argv)
 {
-    int			i, pos_in;
-    struct wdb_trace_data	wtd;
+    int i, pos_in;
+    struct ged_trace_data gtd;
+    struct ged ged;
 
     if (argc < 2 || MAXARGS < argc) {
 	struct bu_vls vls;
@@ -2272,57 +2273,60 @@ wdb_pathsum_cmd(struct rt_wdb	*wdbp,
 	return TCL_ERROR;
     }
 
+    /*XXX Temporary */
+    GED_INIT_FROM_WDBP(&ged, wdbp);
+
     /*
      *	paths are matched up to last input member
      *      ANY path the same up to this point is considered as matching
      */
 
-    /* initialize wtd */
-    wtd.wtd_wdbp = wdbp;
-    wtd.wtd_flag = WDB_CPEVAL;
-    wtd.wtd_prflag = 0;
+    /* initialize gtd */
+    gtd.gtd_gedp = &ged;
+    gtd.gtd_flag = GED_CPEVAL;
+    gtd.gtd_prflag = 0;
 
     pos_in = 1;
 
     /* find out which command was entered */
     if (strcmp(argv[0], "paths") == 0) {
 	/* want to list all matching paths */
-	wtd.wtd_flag = WDB_LISTPATH;
+	gtd.gtd_flag = GED_LISTPATH;
     }
     if (strcmp(argv[0], "listeval") == 0) {
 	/* want to list evaluated solid[s] */
-	wtd.wtd_flag = WDB_LISTEVAL;
+	gtd.gtd_flag = GED_LISTEVAL;
     }
 
     if (argc == 2 && strchr(argv[1], '/')) {
 	char *tok;
-	wtd.wtd_objpos = 0;
+	gtd.gtd_objpos = 0;
 
 	tok = strtok(argv[1], "/");
 	while (tok) {
-	    if ((wtd.wtd_obj[wtd.wtd_objpos++] = db_lookup(wdbp->dbip, tok, LOOKUP_NOISY)) == DIR_NULL)
+	    if ((gtd.gtd_obj[gtd.gtd_objpos++] = db_lookup(wdbp->dbip, tok, LOOKUP_NOISY)) == DIR_NULL)
 		return TCL_ERROR;
 	    tok = strtok((char *)NULL, "/");
 	}
     } else {
-	wtd.wtd_objpos = argc-1;
+	gtd.gtd_objpos = argc-1;
 
 	/* build directory pointer array for desired path */
-	for (i=0; i<wtd.wtd_objpos; i++) {
-	    if ((wtd.wtd_obj[i] = db_lookup(wdbp->dbip, argv[pos_in+i], LOOKUP_NOISY)) == DIR_NULL)
+	for (i=0; i<gtd.gtd_objpos; i++) {
+	    if ((gtd.gtd_obj[i] = db_lookup(wdbp->dbip, argv[pos_in+i], LOOKUP_NOISY)) == DIR_NULL)
 		return TCL_ERROR;
 	}
     }
 
-    MAT_IDN(wtd.wtd_xform);
+    MAT_IDN(gtd.gtd_xform);
 
-    ged_trace(wtd.wtd_obj[0], 0, bn_mat_identity, &wtd);
+    ged_trace(gtd.gtd_obj[0], 0, bn_mat_identity, &gtd);
 
-    if (wtd.wtd_prflag == 0) {
+    if (gtd.gtd_prflag == 0) {
 	/* path not found */
 	Tcl_AppendResult(interp, "PATH:  ", (char *)NULL);
-	for (i=0; i<wtd.wtd_objpos; i++)
-	    Tcl_AppendResult(interp, "/", wtd.wtd_obj[i]->d_namep, (char *)NULL);
+	for (i=0; i<gtd.gtd_objpos; i++)
+	    Tcl_AppendResult(interp, "/", gtd.gtd_obj[i]->d_namep, (char *)NULL);
 
 	Tcl_AppendResult(interp, "  NOT FOUND\n", (char *)NULL);
     }
@@ -3541,7 +3545,8 @@ wdb_copyeval_cmd(struct rt_wdb	*wdbp,
     int			id;
     int			i;
     int			endpos;
-    struct wdb_trace_data	wtd;
+    struct ged_trace_data	gtd;
+    struct ged ged;
 
     WDB_TCL_CHECK_READ_ONLY;
 
@@ -3555,10 +3560,13 @@ wdb_copyeval_cmd(struct rt_wdb	*wdbp,
 	return TCL_ERROR;
     }
 
-    /* initialize wtd */
-    wtd.wtd_wdbp = wdbp;
-    wtd.wtd_flag = WDB_CPEVAL;
-    wtd.wtd_prflag = 0;
+    /*XXX Temporary */
+    GED_INIT_FROM_WDBP(&ged, wdbp);
+
+    /* initialize gtd */
+    gtd.gtd_gedp = &ged;
+    gtd.gtd_flag = GED_CPEVAL;
+    gtd.gtd_prflag = 0;
 
     /* check if new solid name already exists in description */
     if (db_lookup(wdbp->dbip, argv[1], LOOKUP_QUIET) != DIR_NULL) {
@@ -3576,22 +3584,22 @@ wdb_copyeval_cmd(struct rt_wdb	*wdbp,
 
 	tok = strtok(argv[2], "/");
 	while (tok) {
-	    if ((wtd.wtd_obj[endpos++] = db_lookup(wdbp->dbip, tok, LOOKUP_NOISY)) == DIR_NULL)
+	    if ((gtd.gtd_obj[endpos++] = db_lookup(wdbp->dbip, tok, LOOKUP_NOISY)) == DIR_NULL)
 		return TCL_ERROR;
 	    tok = strtok((char *)NULL, "/");
 	}
     } else {
 	for (i=2; i<argc; i++) {
-	    if ((wtd.wtd_obj[i-2] = db_lookup(wdbp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
+	    if ((gtd.gtd_obj[i-2] = db_lookup(wdbp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
 		return TCL_ERROR;
 	}
 	endpos = argc - 2;
     }
 
-    wtd.wtd_objpos = endpos - 1;
+    gtd.gtd_objpos = endpos - 1;
 
     /* Make sure that final component in path is a solid */
-    if ((id = rt_db_get_internal(&internal, wtd.wtd_obj[endpos - 1], wdbp->dbip, bn_mat_identity, &rt_uniresource)) < 0) {
+    if ((id = rt_db_get_internal(&internal, gtd.gtd_obj[endpos - 1], wdbp->dbip, bn_mat_identity, &rt_uniresource)) < 0) {
 	Tcl_AppendResult(interp, "import failure on ",
 			 argv[argc-1], "\n", (char *)NULL);
 	return TCL_ERROR;
@@ -3603,13 +3611,13 @@ wdb_copyeval_cmd(struct rt_wdb	*wdbp,
 	return TCL_ERROR;
     }
 
-    ged_trace(wtd.wtd_obj[0], 0, start_mat, &wtd);
+    ged_trace(gtd.gtd_obj[0], 0, start_mat, &gtd);
 
-    if (wtd.wtd_prflag == 0) {
+    if (gtd.gtd_prflag == 0) {
 	Tcl_AppendResult(interp, "PATH:  ", (char *)NULL);
 
-	for (i=0; i<wtd.wtd_objpos; i++)
-	    Tcl_AppendResult(interp, "/", wtd.wtd_obj[i]->d_namep, (char *)NULL);
+	for (i=0; i<gtd.gtd_objpos; i++)
+	    Tcl_AppendResult(interp, "/", gtd.gtd_obj[i]->d_namep, (char *)NULL);
 
 	Tcl_AppendResult(interp, "  NOT FOUND\n", (char *)NULL);
 	rt_db_free_internal(&internal, &rt_uniresource);
@@ -3621,7 +3629,7 @@ wdb_copyeval_cmd(struct rt_wdb	*wdbp,
 
     /* create the new solid */
     RT_INIT_DB_INTERNAL(&new_int);
-    if (rt_generic_xform(&new_int, wtd.wtd_xform,
+    if (rt_generic_xform(&new_int, gtd.gtd_xform,
 			 &internal, 0, wdbp->dbip, &rt_uniresource)) {
 	rt_db_free_internal(&internal, &rt_uniresource);
 	Tcl_AppendResult(interp, "wdb_copyeval_cmd: rt_generic_xform failed\n", (char *)NULL);
@@ -3629,7 +3637,7 @@ wdb_copyeval_cmd(struct rt_wdb	*wdbp,
     }
 
     if ((dp=db_diradd(wdbp->dbip, argv[1], -1L, 0,
-		      wtd.wtd_obj[endpos-1]->d_flags,
+		      gtd.gtd_obj[endpos-1]->d_flags,
 		      (genptr_t)&new_int.idb_type)) == DIR_NULL) {
 	rt_db_free_internal(&internal, &rt_uniresource);
 	rt_db_free_internal(&new_int, &rt_uniresource);
@@ -7152,6 +7160,7 @@ wdb_make_bb_cmd(struct rt_wdb	*wdbp,
     struct rt_db_internal	new_intern;
     char			*new_name;
     int			use_air = 0;
+    struct ged ged;
 
     WDB_TCL_CHECK_READ_ONLY;
 
@@ -7164,6 +7173,9 @@ wdb_make_bb_cmd(struct rt_wdb	*wdbp,
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
+
+    /*XXX Temporary */
+    GED_INIT_FROM_WDBP(&ged, wdbp);
 
     i = 1;
 
@@ -7185,7 +7197,7 @@ wdb_make_bb_cmd(struct rt_wdb	*wdbp,
 	return TCL_ERROR;
     }
 
-    if (ged_get_obj_bounds(wdbp, argc-2, (const char **)argv+2, use_air, rpp_min, rpp_max) == TCL_ERROR)
+    if (ged_get_obj_bounds(&ged, argc-2, (const char **)argv+2, use_air, rpp_min, rpp_max) == TCL_ERROR)
 	return TCL_ERROR;
 
     /* build bounding RPP */
@@ -7238,41 +7250,6 @@ wdb_make_bb_tcl(ClientData	clientData,
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
     return wdb_make_bb_cmd(wdbp, interp, argc-1, argv+1);
-}
-
-/**
- *@brief
- * Generate an identifier that is guaranteed not to be the name
- * of any object currently in the database.
- *
- * Usage:
- *	dbobjname make_name (template | -s [num])
- *
- */
-static int
-wdb_make_name_tcl(ClientData	clientData,
-		  Tcl_Interp	*interp,
-		  int		argc,
-		  char		**argv)
-
-{
-    struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
-    Tcl_DString ds;
-    int ret;
-
-    ret = ged_make_name(wdbp, argc-1, argv+1);
-
-    /* Convert to Tcl codes */
-    if (ret == GED_OK)
-	ret = TCL_OK;
-    else
-	ret = TCL_ERROR;
-
-    Tcl_DStringInit(&ds);
-    Tcl_DStringAppend(&ds, bu_vls_addr(&wdbp->wdb_result_str), -1);
-    Tcl_DStringResult(interp, &ds);
-
-    return ret;
 }
 
 /**
@@ -10498,31 +10475,37 @@ wdb_newcmds_tcl(ClientData	clientData,
 {
     register struct bu_cmdtab *ctp;
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+    struct ged ged;
     Tcl_DString ds;
     int ret;
     char flags[128];
 
+    /*XXXX Eventually the clientData will be a "struct ged".
+     *     In the meantime ...
+     */
+    GED_INIT_FROM_WDBP(&ged, wdbp);
+
     for (ctp = wdb_newcmds; ctp->ct_name != (char *)0; ctp++) {
 	if (ctp->ct_name[0] == argv[1][0] &&
 	    !strcmp(ctp->ct_name, argv[1])) {
-	    ret = (*ctp->ct_func)(wdbp, argc-1, argv+1);
+	    ret = (*ctp->ct_func)(&ged, argc-1, argv+1);
 	    break;
 	}
     }
 
     /* Command not found. */
     if (ctp->ct_name == (char *)0) {
-	bu_vls_trunc(&wdbp->wdb_result_str, 0);
-	bu_vls_printf(&wdbp->wdb_result_str, "%s not found", argv[1]);
-	wdbp->wdb_result = GED_RESULT_NULL;
-	wdbp->wdb_result_flags = 0;
+	bu_vls_trunc(&ged.ged_result_str, 0);
+	bu_vls_printf(&ged.ged_result_str, "%s not found", argv[1]);
+	ged.ged_result = GED_RESULT_NULL;
+	ged.ged_result_flags = 0;
 	ret = GED_ERROR;
     }
 
     Tcl_DStringInit(&ds);
-    snprintf(flags, 127, "%u", wdbp->wdb_result_flags);
+    snprintf(flags, 127, "%u", ged.ged_result_flags);
     Tcl_DStringAppendElement(&ds, flags);
-    Tcl_DStringAppendElement(&ds, bu_vls_addr(&wdbp->wdb_result_str));
+    Tcl_DStringAppendElement(&ds, bu_vls_addr(&ged.ged_result_str));
     Tcl_DStringResult(interp, &ds);
 
     if (ret == GED_ERROR)

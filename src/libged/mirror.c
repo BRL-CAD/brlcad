@@ -28,7 +28,7 @@
 
 
 int
-ged_mirror(struct rt_wdb *wdbp, int argc, const char *argv[])
+ged_mirror(struct ged *gedp, int argc, const char *argv[])
 {
     register int k;
     point_t mirror_origin = {0.0, 0.0, 0.0};
@@ -43,23 +43,24 @@ ged_mirror(struct rt_wdb *wdbp, int argc, const char *argv[])
     struct bu_vls vlsargv;
 #endif
 
-    GED_CHECK_DATABASE_OPEN(wdbp, GED_ERROR);
-    GED_CHECK_READ_ONLY(wdbp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&wdbp->wdb_result_str, 0);
-    wdbp->wdb_result = GED_RESULT_NULL;
-    wdbp->wdb_result_flags = 0;
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+    gedp->ged_result = GED_RESULT_NULL;
+    gedp->ged_result_flags = 0;
 
     /* must be wanting help */
     if (argc == 1) {
-	wdbp->wdb_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
-	bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
+	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_OK;
     }
 
 #if 1
-    while ((k = bu_getopt(argc, argv, "d:D:hHo:O:p::P:xXyYzZ")) != EOF) {
+    bu_optind = 1;
+    while ((k = bu_getopt(argc, (char * const *)argv, (const char *)"d:D:hHo:O:p::P:xXyYzZ")) != EOF) {
 #else
     /* get a writable copy of argv */
     bu_vls_init(&vlsargv);
@@ -79,7 +80,7 @@ ged_mirror(struct rt_wdb *wdbp, int argc, const char *argv[])
 		       &mirror_dir[X],
 		       &mirror_dir[Y],
 		       &mirror_dir[Z]) != 3) {
-		bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
+		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		early_out = 1;
 	    }
 	    break;
@@ -93,7 +94,7 @@ ged_mirror(struct rt_wdb *wdbp, int argc, const char *argv[])
 		       &mirror_origin[X],
 		       &mirror_origin[Y],
 		       &mirror_origin[Z]) != 3) {
-		bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
+		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		early_out = 1;
 	    }
 	    break;
@@ -111,8 +112,8 @@ ged_mirror(struct rt_wdb *wdbp, int argc, const char *argv[])
 	    break;
 	case 'h':
 	case 'H':
-	    wdbp->wdb_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
-	    bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
+	    gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
+	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 
 #if 0
 	    bu_free(nargv, "free f_ill nargv");
@@ -121,7 +122,7 @@ ged_mirror(struct rt_wdb *wdbp, int argc, const char *argv[])
 
 	    return GED_OK;
 	default:
-	    bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
+	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    early_out = 1;
 	    break;
 	}
@@ -139,21 +140,21 @@ ged_mirror(struct rt_wdb *wdbp, int argc, const char *argv[])
     argc -= bu_optind;
 
     if (argc < 2) {
-	bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     /* mirror the object */
     VUNITIZE(mirror_dir);
 
-    if (rt_mirror(wdbp->dbip,
+    if (rt_mirror(gedp->ged_dbip,
 		  argv[bu_optind],
 		  argv[bu_optind+1],
 		  mirror_origin,
 		  mirror_dir,
 		  mirror_pt,
 		  &rt_uniresource) == DIR_NULL) {
-	bu_vls_printf(&wdbp->wdb_result_str, "%s: not able to perform the mirror", argv[0]);
+	bu_vls_printf(&gedp->ged_result_str, "%s: not able to perform the mirror", argv[0]);
 	return GED_ERROR;
     }
 

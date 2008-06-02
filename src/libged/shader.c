@@ -27,41 +27,41 @@
 
 
 int
-ged_shader(struct rt_wdb *wdbp, int argc, const char *argv[])
+ged_shader(struct ged *gedp, int argc, const char *argv[])
 {
     register struct directory *dp;
     struct rt_db_internal	intern;
     struct rt_comb_internal	*comb;
     static const char *usage = "combination shader_material [shader_argument(s)]";
 
-    GED_CHECK_DATABASE_OPEN(wdbp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&wdbp->wdb_result_str, 0);
-    wdbp->wdb_result = GED_RESULT_NULL;
-    wdbp->wdb_result_flags = 0;
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+    gedp->ged_result = GED_RESULT_NULL;
+    gedp->ged_result_flags = 0;
 
     /* must be wanting help */
     if (argc == 1) {
-	wdbp->wdb_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
-	bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
+	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_OK;
     }
 
-    GED_DB_LOOKUP(wdbp, dp, argv[1], LOOKUP_NOISY, GED_ERROR);
-    GED_CHECK_COMB(wdbp, dp, GED_ERROR);
-    GED_DB_GET_INTERNAL(wdbp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
+    GED_DB_LOOKUP(gedp, dp, argv[1], LOOKUP_NOISY, GED_ERROR);
+    GED_CHECK_COMB(gedp, dp, GED_ERROR);
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
 
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     RT_CK_COMB(comb);
 
     if (argc == 2) {
 	/* Return the current shader string */
-	bu_vls_printf(&wdbp->wdb_result_str,"%s", bu_vls_addr(&comb->shader));
+	bu_vls_printf(&gedp->ged_result_str,"%s", bu_vls_addr(&comb->shader));
 	rt_db_free_internal(&intern, &rt_uniresource);
     } else {
-	if (wdbp->dbip->dbi_read_only) {
-	    bu_vls_printf(&wdbp->wdb_result_str,"Sorry, this database is READ-ONLY");
+	if (gedp->ged_dbip->dbi_read_only) {
+	    bu_vls_printf(&gedp->ged_result_str,"Sorry, this database is READ-ONLY");
 	    rt_db_free_internal(&intern, &rt_uniresource);
 
 	    return GED_ERROR;
@@ -73,7 +73,7 @@ ged_shader(struct rt_wdb *wdbp, int argc, const char *argv[])
 	/* Bunch up the rest of the args, space separated */
 	bu_vls_from_argv(&comb->shader, argc-2, (const char **)argv+2);
 
-	GED_DB_PUT_INTERNAL(wdbp, dp, &intern, &rt_uniresource, GED_ERROR);
+	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
 	/* Internal representation has been freed by rt_db_put_internal */
     }
 

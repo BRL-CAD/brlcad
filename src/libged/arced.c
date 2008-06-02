@@ -31,7 +31,7 @@
 
 
 int
-ged_arced(struct rt_wdb *wdbp, int argc, const char *argv[])
+ged_arced(struct ged *gedp, int argc, const char *argv[])
 {
     struct animate *anp;
     struct directory *dp;
@@ -41,37 +41,37 @@ ged_arced(struct rt_wdb *wdbp, int argc, const char *argv[])
     union tree *tp;
     static const char *usage = "a/b anim_cmd ...";
 
-    GED_CHECK_DATABASE_OPEN(wdbp, GED_ERROR);
-    GED_CHECK_READ_ONLY(wdbp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&wdbp->wdb_result_str, 0);
-    wdbp->wdb_result = GED_RESULT_NULL;
-    wdbp->wdb_result_flags = 0;
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+    gedp->ged_result = GED_RESULT_NULL;
+    gedp->ged_result_flags = 0;
 
     /* must be wanting help */
     if (argc == 1) {
-	wdbp->wdb_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
-	bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
+	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_OK;
     }
 
     if (argc < 3) {
-	bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     if (!strchr(argv[1], '/')) {
-	bu_vls_printf(&wdbp->wdb_result_str, "arced: bad path specification '%s'", argv[1]);
+	bu_vls_printf(&gedp->ged_result_str, "arced: bad path specification '%s'", argv[1]);
 	return GED_ERROR;
     }
-    if (!(anp = db_parse_1anim(wdbp->dbip, argc, (const char **)argv))) {
-	bu_vls_printf(&wdbp->wdb_result_str, "arced: unable to parse command");
+    if (!(anp = db_parse_1anim(gedp->ged_dbip, argc, (const char **)argv))) {
+	bu_vls_printf(&gedp->ged_result_str, "arced: unable to parse command");
 	return GED_ERROR;
     }
     if (anp->an_path.fp_len < 2) {
 	db_free_1anim(anp);
-	bu_vls_printf(&wdbp->wdb_result_str, "arced: path spec has insufficient elements\n");
+	bu_vls_printf(&gedp->ged_result_str, "arced: path spec has insufficient elements\n");
 	return GED_ERROR;
     }
 
@@ -83,24 +83,24 @@ ged_arced(struct rt_wdb *wdbp, int argc, const char *argv[])
     RT_CK_DIR(dp);
     if ((dp->d_flags & DIR_COMB) == 0) {
 	db_free_1anim(anp);
-	bu_vls_printf(&wdbp->wdb_result_str, "%s: not a combination", dp->d_namep);
+	bu_vls_printf(&gedp->ged_result_str, "%s: not a combination", dp->d_namep);
 	return GED_ERROR;
     }
-    if (rt_db_get_internal(&intern, dp, wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->ged_dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	db_free_1anim(anp);
-	bu_vls_printf(&(wdbp)->wdb_result_str, "Database read error, aborting");
+	bu_vls_printf(&(gedp)->ged_result_str, "Database read error, aborting");
 	return GED_ERROR;
     }
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     RT_CK_COMB(comb);
     if (!comb->tree) {
-	bu_vls_printf(&(wdbp)->wdb_result_str, "%s: empty combination", dp->d_namep);
+	bu_vls_printf(&(gedp)->ged_result_str, "%s: empty combination", dp->d_namep);
 	goto fail;
     }
 
     /* Search for first mention of arc */
     if ((tp = db_find_named_leaf(comb->tree, anp->an_path.fp_names[anp->an_path.fp_len-1]->d_namep)) == TREE_NULL) {
-	bu_vls_printf(&(wdbp)->wdb_result_str, "Unable to find instance of '%s' in combination '%s', error",
+	bu_vls_printf(&(gedp)->ged_result_str, "Unable to find instance of '%s' in combination '%s', error",
 		      anp->an_path.fp_names[anp->an_path.fp_len-1]->d_namep,
 		      anp->an_path.fp_names[anp->an_path.fp_len-2]->d_namep);
 	goto fail;
@@ -119,8 +119,8 @@ ged_arced(struct rt_wdb *wdbp, int argc, const char *argv[])
 	tp->tr_l.tl_mat = (matp_t)NULL;
     }
 
-    if (rt_db_put_internal(dp, wdbp->dbip, &intern, &rt_uniresource) < 0) {
-	bu_vls_printf(&(wdbp)->wdb_result_str, "Database write error, aborting");
+    if (rt_db_put_internal(dp, gedp->ged_dbip, &intern, &rt_uniresource) < 0) {
+	bu_vls_printf(&(gedp)->ged_result_str, "Database write error, aborting");
 	goto fail;
     }
     db_free_1anim(anp);

@@ -30,11 +30,11 @@
 
 __BEGIN_DECLS
 
-#define WDB_MAX_LEVELS 12
-#define WDB_CPEVAL	0
-#define WDB_LISTPATH	1
-#define WDB_LISTEVAL	2
-#define WDB_EVAL_ONLY	3
+#define GED_MAX_LEVELS 12
+#define GED_CPEVAL	0
+#define GED_LISTPATH	1
+#define GED_LISTEVAL	2
+#define GED_EVAL_ONLY	3
 
 /*
  * rt_comb_ifree() should NOT be used here because
@@ -43,18 +43,18 @@ __BEGIN_DECLS
  */
 #define USE_RT_COMB_IFREE 0
 
-struct wdb_trace_data {
-    struct rt_wdb	*wtd_wdbp;
-    struct directory	*wtd_path[WDB_MAX_LEVELS];
-    struct directory	*wtd_obj[WDB_MAX_LEVELS];
-    mat_t		wtd_xform;
-    int			wtd_objpos;
-    int			wtd_prflag;
-    int			wtd_flag;
+struct ged_trace_data {
+    struct ged	      *gtd_gedp;
+    struct directory  *gtd_path[GED_MAX_LEVELS];
+    struct directory  *gtd_obj[GED_MAX_LEVELS];
+    mat_t	      gtd_xform;
+    int		      gtd_objpos;
+    int		      gtd_prflag;
+    int		      gtd_flag;
 };
 
 BU_EXTERN (int ged_get_obj_bounds,
-	   (struct rt_wdb	*wdbp,
+	   (struct ged		*gedp,
 	    int			argc,
 	    const char		**argv,
 	    int			use_air,
@@ -62,10 +62,10 @@ BU_EXTERN (int ged_get_obj_bounds,
 	    point_t		rpp_max));
 
 BU_EXTERN (int ged_get_obj_bounds2,
-	   (struct rt_wdb		*wdbp,
+	   (struct ged			*gedp,
 	    int				argc,
 	    const char			**argv,
-	    struct wdb_trace_data	*wtdp,
+	    struct ged_trace_data	*gtdp,
 	    point_t			rpp_min,
 	    point_t			rpp_max));
 
@@ -73,7 +73,7 @@ BU_EXTERN (void ged_trace,
 	   (register struct directory	*dp,
 	    int				pathpos,
 	    const mat_t			old_xlate,
-	    struct wdb_trace_data	*wtdp));
+	    struct ged_trace_data	*gtdp));
 
 __END_DECLS
 
