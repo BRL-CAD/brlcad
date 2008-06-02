@@ -61,9 +61,7 @@
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
-
-/* local headers */
-#include "../librt/primitives/bot.h"
+#include "bot.h"
 
 
 static int debug=0;

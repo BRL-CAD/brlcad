@@ -185,7 +185,6 @@ nurb_example_LDADD = \
 
 # XXX this should be noinst or moved to include
 include_HEADERS = \
-	primitives/bot.h \
 	primitives/fixpt.h
 
 dist_man_MANS = librt.3
