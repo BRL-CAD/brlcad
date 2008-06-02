@@ -129,7 +129,7 @@ rt_hyp_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip )
     mat_t	R;	/* rotation matrix */
     mat_t	Rinv;	/* inverse rotation matrix */
     mat_t	S;	/* scale matrix ( c = 1, |a| = 1, |b| = 1 ) */
-    fastf_t	a, b, c;
+    fastf_t	a, b, c, sqH;
 
 
 #ifndef NO_MAGIC_CHECKING
@@ -172,6 +172,7 @@ rt_hyp_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip )
     a = hyp_ip->hyp_r1;
     b = hyp_ip->hyp_r2;
     c = hyp_ip->hyp_c;
+    sqH = MAGSQ( hyp_ip->hyp_H );
 
     MAT_IDN( S );
 
@@ -184,7 +185,7 @@ rt_hyp_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip )
 
     /* calculate bounding sphere */
     VMOVE( stp->st_center, hyp->hyp_V );
-    stp->st_aradius = hyp->hyp_Hmag * sqrt( ((a*a) / (c*c)) + 1 );
+    stp->st_aradius = sqrt((c*c)*sqH + (a*a) + sqH );
     stp->st_bradius = stp->st_aradius;
 
     /* cheat, make bounding RPP by enclosing bounding sphere (copied from g_ehy.c) */
@@ -237,6 +238,8 @@ rt_hyp_print( const struct soltab *stp )
 int
 rt_hyp_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead )
 {
+    register int numHits = 0;
+
     register struct hyp_specific *hyp =
 	(struct hyp_specific *)stp->st_specific;
     register struct seg *segp;
@@ -255,6 +258,7 @@ rt_hyp_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct
     fastf_t	hitX, hitY;
 
     hitp = &hits[0];
+
 
     MAT4X3VEC( dp, hyp->hyp_SoR, rp->r_dir );
     VSUB2( xlated, rp->r_pt, hyp->hyp_V );
@@ -279,6 +283,7 @@ rt_hyp_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct
 	    hitp->hit_dist = k1;
 	    hitp->hit_surfno = HYP_NORM_BODY;
 	    hitp++;
+	    numHits++;
 	}
 
 	VJOIN1( hitp->hit_vpriv, pp, k2, dp );
@@ -288,6 +293,7 @@ rt_hyp_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct
 	    hitp->hit_dist = k1;
 	    hitp->hit_surfno = HYP_NORM_BODY;
 	    hitp++;
+	    numHits++;
 	}
 
     } else if ( !NEAR_ZERO( b, RT_PCOEF_TOL ) ) {
@@ -299,6 +305,7 @@ rt_hyp_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct
 	    hitp->hit_dist = k1;
 	    hitp->hit_surfno = HYP_NORM_BODY;
 	    hitp++;
+	    numHits++;
 	}
     }
 
@@ -315,6 +322,7 @@ rt_hyp_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct
 	hitp->hit_dist = k1;
 	hitp->hit_surfno = HYP_NORM_BODY;
 	hitp++;
+	numHits++;
     }
 
     VJOIN1( hitp->hit_vpriv, pp, k2, dp );
@@ -326,10 +334,14 @@ rt_hyp_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct
 	hitp->hit_dist = k2;
 	hitp->hit_surfno = HYP_NORM_BODY;
 	hitp++;
+	numHits++;
     }
 
-    if ( hitp == &hits[0] )
+    /* bu_log("numHits: %d\n", numHits); */
+
+    if ( hitp == &hits[0] ) {
 	return(0);	/* MISS */
+    }
 
     if ( hitp == &hits[2] ) {	/* 2 hits */
 	if ( hits[0].hit_dist < hits[1].hit_dist )  {
@@ -394,8 +406,6 @@ rt_hyp_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct
 
 	return(4);
     }
-    return(0);	/* MISS */
-
 }
 
 #define RT_HYP_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
@@ -677,12 +687,12 @@ int
 rt_hyp_import5( struct rt_db_internal  *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip )
 {
     struct rt_hyp_internal	*hyp_ip;
-    fastf_t			vv[ELEMENTS_PER_VECT*1];
+    fastf_t			vec[ELEMENTS_PER_VECT*4];
 
     RT_CK_DB_INTERNAL(ip)
 	BU_CK_EXTERNAL( ep );
 
-    BU_ASSERT_LONG( ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 3 );
+    BU_ASSERT_LONG( ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 3 * 4 );
 
     /* set up the internal structure */
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -697,11 +707,18 @@ rt_hyp_import5( struct rt_db_internal  *ip, const struct bu_external *ep, const 
      * (Big Endian ints, IEEE double floating point) to host local data
      * representations.
      */
-    ntohd( (unsigned char *)&vv, (const unsigned char *)ep->ext_buf, ELEMENTS_PER_VECT*1 );
+    ntohd( (unsigned char *)&vec, (const unsigned char *)ep->ext_buf, ELEMENTS_PER_VECT*4 );
 
     /* Apply the modeling transformation */
     if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT( hyp_ip->v, mat, vv );
+    MAT4X3PNT( hyp_ip->hyp_V, mat, &vec[0*3] );
+    MAT4X3PNT( hyp_ip->hyp_H, mat, &vec[1*3] );
+    MAT4X3PNT( hyp_ip->hyp_Au, mat, &vec[2*3] );
+    VUNITIZE( hyp_ip->hyp_Au );
+
+    hyp_ip->hyp_r1 = vec[ 9] / mat[15];
+    hyp_ip->hyp_r2 = vec[10] / mat[15];
+    hyp_ip->hyp_c  = vec[11] / mat[15];
 
     return(0);			/* OK */
 }
@@ -719,7 +736,7 @@ int
 rt_hyp_export5( struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip )
 {
     struct rt_hyp_internal	*hyp_ip;
-    fastf_t			vec[ELEMENTS_PER_VECT];
+    fastf_t			vec[ELEMENTS_PER_VECT * 4];
 
     RT_CK_DB_INTERNAL(ip);
     if ( ip->idb_type != ID_HYP )  return(-1);
@@ -727,7 +744,7 @@ rt_hyp_export5( struct bu_external *ep, const struct rt_db_internal *ip, double 
     RT_HYP_CK_MAGIC(hyp_ip);
 
     BU_CK_EXTERNAL(ep);
-    ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
+    ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT * 4;
     ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "hyp external");
 
 
@@ -735,10 +752,15 @@ rt_hyp_export5( struct bu_external *ep, const struct rt_db_internal *ip, double 
      * than mm, we offer the opportunity to scale the solid
      * (to get it into mm) on the way out.
      */
-    VSCALE( vec, hyp_ip->v, local2mm );
+    VSCALE( &vec[0*3], hyp_ip->hyp_V, local2mm );
+    VSCALE( &vec[1*3], hyp_ip->hyp_H, local2mm );
+    VMOVE( &vec[2*3], hyp_ip->hyp_Au );
+    vec[ 9] = hyp_ip->hyp_r1 * local2mm;
+    vec[10] = hyp_ip->hyp_r2 * local2mm;
+    vec[11] = hyp_ip->hyp_c * local2mm;
 
     /* Convert from internal (host) to database (network) format */
-    htond( ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*1 );
+    htond( ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*4 );
 
     return 0;
 }
@@ -761,10 +783,27 @@ rt_hyp_describe( struct bu_vls *str, const struct rt_db_internal *ip, int verbos
     bu_vls_strcat( str, "truncated general hyp (HYP)\n");
 
     sprintf(buf, "\tV (%g, %g, %g)\n",
-	    INTCLAMP(hyp_ip->v[X] * mm2local),
-	    INTCLAMP(hyp_ip->v[Y] * mm2local),
-	    INTCLAMP(hyp_ip->v[Z] * mm2local) );
+	    INTCLAMP(hyp_ip->hyp_V[X] * mm2local),
+	    INTCLAMP(hyp_ip->hyp_V[Y] * mm2local),
+	    INTCLAMP(hyp_ip->hyp_V[Z] * mm2local) );
     bu_vls_strcat( str, buf );
+
+    sprintf(buf, "\tH (%g, %g, %g) mag=%g\n",
+	    INTCLAMP(hyp_ip->hyp_H[X] * mm2local),
+	    INTCLAMP(hyp_ip->hyp_H[Y] * mm2local),
+	    INTCLAMP(hyp_ip->hyp_H[Z] * mm2local),
+	    INTCLAMP(MAGNITUDE(hyp_ip->hyp_H) * mm2local) );
+    bu_vls_strcat( str, buf );
+
+    sprintf(buf, "\tA=%g\n", INTCLAMP(hyp_ip->hyp_r1 * mm2local));
+    bu_vls_strcat( str, buf );
+
+    sprintf(buf, "\tB=%g\n", INTCLAMP(hyp_ip->hyp_r2 * mm2local));
+    bu_vls_strcat( str, buf );
+
+    sprintf(buf, "\tc=%g\n", INTCLAMP(hyp_ip->hyp_c * mm2local));
+    bu_vls_strcat( str, buf );
+
 
     return(0);
 }
