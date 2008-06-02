@@ -1775,7 +1775,25 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
 
 
-    return dgo_nirt_cmd(dgop, view_state->vs_vop, interp, argc, argv);
+    if (mged_variables->mv_use_air) {
+	int ret;
+	int insertArgc = 2;
+	char *insertArgv[3];
+	int newArgc;
+	char **newArgv;
+
+	insertArgv[0] = "-u";
+	insertArgv[1] = "1";
+	insertArgv[2] = (char *)0;
+	newArgv = bu_copyinsert_argv(1, insertArgc, insertArgv, argc, argv);
+	newArgc = argc + insertArgc;
+	ret = dgo_nirt_cmd(dgop, view_state->vs_vop, interp, newArgc, newArgv);
+	bu_free_argv(newArgc, newArgv);
+
+	return ret;
+    } else {
+	return dgo_nirt_cmd(dgop, view_state->vs_vop, interp, argc, argv);
+    }
 #else
     register char **vp;
     FILE *fp_in;
