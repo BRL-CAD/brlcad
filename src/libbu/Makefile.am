@@ -6,6 +6,7 @@ noinst_LTLIBRARIES = libbu_nil.la
 noinst_PROGRAMS = htester
 
 libbu_nil_la_SOURCES = \
+	argv.c \
 	association.c \
 	avs.c \
 	backtrace.c \
