@@ -508,91 +508,91 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\nmg_bool.c"
+				RelativePath="..\..\..\src\librt\primitives\nmg\nmg_bool.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\nmg_ck.c"
+				RelativePath="..\..\..\src\librt\primitives\nmg\nmg_ck.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\nmg_class.c"
+				RelativePath="..\..\..\src\librt\primitives\nmg\nmg_class.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\nmg_eval.c"
+				RelativePath="..\..\..\src\librt\primitives\nmg\nmg_eval.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\nmg_extrude.c"
+				RelativePath="..\..\..\src\librt\primitives\nmg\nmg_extrude.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\nmg_fcut.c"
+				RelativePath="..\..\..\src\librt\primitives\nmg\nmg_fcut.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\nmg_fuse.c"
+				RelativePath="..\..\..\src\librt\primitives\nmg\nmg_fuse.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\nmg_index.c"
+				RelativePath="..\..\..\src\librt\primitives\nmg\nmg_index.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\nmg_info.c"
+				RelativePath="..\..\..\src\librt\primitives\nmg\nmg_info.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\nmg_inter.c"
+				RelativePath="..\..\..\src\librt\primitives\nmg\nmg_inter.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\nmg_manif.c"
+				RelativePath="..\..\..\src\librt\primitives\nmg\nmg_manif.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\nmg_mesh.c"
+				RelativePath="..\..\..\src\librt\primitives\nmg\nmg_mesh.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\nmg_misc.c"
+				RelativePath="..\..\..\src\librt\primitives\nmg\nmg_misc.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\nmg_mk.c"
+				RelativePath="..\..\..\src\librt\primitives\nmg\nmg_mk.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\nmg_mod.c"
+				RelativePath="..\..\..\src\librt\primitives\nmg\nmg_mod.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\nmg_plot.c"
+				RelativePath="..\..\..\src\librt\primitives\nmg\nmg_plot.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\nmg_pr.c"
+				RelativePath="..\..\..\src\librt\primitives\nmg\nmg_pr.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\nmg_pt_fu.c"
+				RelativePath="..\..\..\src\librt\primitives\nmg\nmg_pt_fu.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\nmg_rt_isect.c"
+				RelativePath="..\..\..\src\librt\primitives\nmg\nmg_rt_isect.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\nmg_rt_segs.c"
+				RelativePath="..\..\..\src\librt\primitives\nmg\nmg_rt_segs.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\nmg_tri.c"
+				RelativePath="..\..\..\src\librt\primitives\nmg\nmg_tri.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\nmg_visit.c"
+				RelativePath="..\..\..\src\librt\primitives\nmg\nmg_visit.c"
 				>
 			</File>
 			<File

@@ -35,28 +35,6 @@ set(LIBRT_SOURCES
     memalloc.c
     mirror.c
     mkbundle.c
-    nmg_bool.c
-    nmg_ck.c
-    nmg_class.c
-    nmg_eval.c
-    nmg_extrude.c
-    nmg_fcut.c
-    nmg_fuse.c
-    nmg_index.c
-    nmg_info.c
-    nmg_inter.c
-    nmg_manif.c
-    nmg_mesh.c
-    nmg_misc.c
-    nmg_mk.c
-    nmg_mod.c
-    nmg_plot.c
-    nmg_pr.c
-    nmg_pt_fu.c
-    nmg_rt_isect.c
-    nmg_rt_segs.c
-    nmg_tri.c
-    nmg_visit.c
     opennurbs_ext.cpp
     oslo_calc.c
     oslo_map.c
@@ -95,6 +73,28 @@ set(LIBRT_SOURCES
     primitives/g_tgc.c
     primitives/g_torus.c
     primitives/g_vol.c
+    primitives/nmg/nmg_bool.c
+    primitives/nmg/nmg_ck.c
+    primitives/nmg/nmg_class.c
+    primitives/nmg/nmg_eval.c
+    primitives/nmg/nmg_extrude.c
+    primitives/nmg/nmg_fcut.c
+    primitives/nmg/nmg_fuse.c
+    primitives/nmg/nmg_index.c
+    primitives/nmg/nmg_info.c
+    primitives/nmg/nmg_inter.c
+    primitives/nmg/nmg_manif.c
+    primitives/nmg/nmg_mesh.c
+    primitives/nmg/nmg_misc.c
+    primitives/nmg/nmg_mk.c
+    primitives/nmg/nmg_mod.c
+    primitives/nmg/nmg_plot.c
+    primitives/nmg/nmg_pr.c
+    primitives/nmg/nmg_pt_fu.c
+    primitives/nmg/nmg_rt_isect.c
+    primitives/nmg/nmg_rt_segs.c
+    primitives/nmg/nmg_tri.c
+    primitives/nmg/nmg_visit.c
     primitives/nurb/nurb_basis.c
     primitives/nurb/nurb_bezier.c
     primitives/nurb/nurb_bound.c
