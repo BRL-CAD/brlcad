@@ -63,7 +63,7 @@
 #include "raytrace.h"
 
 /* local headers */
-#include "../librt/bot.h"
+#include "../librt/primitives/bot.h"
 
 
 static int debug=0;

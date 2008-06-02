@@ -6,7 +6,6 @@ noinst_LTLIBRARIES = \
 	librt_nil.la \
 	librt_xxx.la
 
-BREP_SRCS = g_brep.cpp opennurbs_ext.cpp
 BREP_TEST = brep_test
 BREP_CPPFLAGS = @SSE@ -DOBJ_BREP=1 ${TNT_CPPFLAGS} ${OPENNURBS_CPPFLAGS}
 BREP_LIBADD = ${OPENNURBS}
@@ -30,10 +29,9 @@ noinst_PROGRAMS = \
 	${BREP_TEST}
 
 # make sure the example compiles, but don't include it in librt
-librt_xxx_la_SOURCES = g_xxx.c
+librt_xxx_la_SOURCES = primitives/g_xxx.c
 
 librt_nil_la_SOURCES = \
-	$(BREP_SRCS) \
 	bezier_2d_isect.c \
 	binary_obj.c \
 	bomb.c \
@@ -63,38 +61,6 @@ librt_nil_la_SOURCES = \
 	dir.c \
 	dspline.c \
 	fortray.c \
-	g_arb.c \
-	g_arbn.c \
-	g_ars.c \
-	g_bot.c \
-	g_cline.c \
-	g_dsp.c \
-	g_ebm.c \
-	g_ehy.c \
-	g_ell.c \
-	g_epa.c \
-	g_eto.c \
-	g_extrude.c \
-	g_grip.c \
-	g_half.c \
-	g_hf.c \
-	g_hyp.c \
-	g_metaball.c \
-	g_nmg.c \
-	g_nurb.c \
-	g_part.c \
-	g_pg.c \
-	g_pipe.c \
-	g_rec.c \
-	g_rhc.c \
-	g_rpc.c \
-	g_sketch.c \
-	g_sph.c \
-	g_submodel.c \
-	g_superell.c \
-	g_tgc.c \
-	g_torus.c \
-	g_vol.c \
 	globals.c \
 	htbl.c \
 	many.c \
@@ -147,10 +113,44 @@ librt_nil_la_SOURCES = \
 	nurb_trim_util.c \
 	nurb_util.c \
 	nurb_xsplit.c \
+	opennurbs_ext.cpp \
 	oslo_calc.c \
 	oslo_map.c \
 	pr.c \
 	prep.c \
+	primitives/g_arb.c \
+	primitives/g_arbn.c \
+	primitives/g_ars.c \
+	primitives/g_bot.c \
+	primitives/g_brep.cpp \
+	primitives/g_cline.c \
+	primitives/g_dsp.c \
+	primitives/g_ebm.c \
+	primitives/g_ehy.c \
+	primitives/g_ell.c \
+	primitives/g_epa.c \
+	primitives/g_eto.c \
+	primitives/g_extrude.c \
+	primitives/g_grip.c \
+	primitives/g_half.c \
+	primitives/g_hf.c \
+	primitives/g_hyp.c \
+	primitives/g_metaball.c \
+	primitives/g_nmg.c \
+	primitives/g_nurb.c \
+	primitives/g_part.c \
+	primitives/g_pg.c \
+	primitives/g_pipe.c \
+	primitives/g_rec.c \
+	primitives/g_rhc.c \
+	primitives/g_rpc.c \
+	primitives/g_sketch.c \
+	primitives/g_sph.c \
+	primitives/g_submodel.c \
+	primitives/g_superell.c \
+	primitives/g_tgc.c \
+	primitives/g_torus.c \
+	primitives/g_vol.c \
 	regionfix.c \
 	roots.c \
 	shoot.c \
@@ -164,10 +164,6 @@ librt_nil_la_SOURCES = \
 	vers.c \
 	vlist.c \
 	wdb.c
-
-EXTRA_librt_nil_la_SOURCES = \
-	g_brep.cpp \
-	opennurbs_ext.cpp
 
 librt_nil_la_LIBADD = ${BREP_LIBADD}
 
@@ -189,28 +185,27 @@ nurb_example_LDADD = \
 
 # XXX this should be noinst or moved to include
 include_HEADERS = \
-	bot.h \
-	fixpt.h
+	primitives/bot.h \
+	primitives/fixpt.h
 
 dist_man_MANS = librt.3
 
 sample_applicationsdir = $(SAMPLE_APPLICATIONS_DIR)
 
 sample_applications_DATA = \
-	g_xxx.c \
 	nurb_example.c \
+	primitives/g_xxx.c \
 	raydebug.tcl
 
 # XXX need to fix these so the timers are selected by configure.ac
 EXTRA_DIST = \
-	$(BREP_SRCS) \
 	$(sample_applications_DATA) \
         CMakeLists.txt \
 	brep_test.cpp \
-	g_bot_include.c \
 	nmg_junk.c \
 	parse.c \
 	pmalloc.c \
+	primitives/g_bot_include.c \
 	timer-nt.c \
 	timer52brl.c \
 	timerhep.c \
@@ -225,10 +220,10 @@ DEPENDS = src/libbn src/libsysv src/other/openNURBS ${DEPADD}
 
 include $(top_srcdir)/misc/Makefile.defs
 
-FAST_OBJECTS = \
-	$(librt_nil_la_OBJECTS) \
-	$(librt_la_OBJECTS) \
-	$(lib_LTLIBRARIES) \
-	$(comb_OBJECTS) \
-	$(nurb_example_OBJECTS) \
-	$(noinst_PROGRAMS)
+#FAST_OBJECTS = \
+#	$(librt_nil_la_OBJECTS) \
+#	$(librt_la_OBJECTS) \
+#	$(lib_LTLIBRARIES) \
+#	$(comb_OBJECTS) \
+#	$(nurb_example_OBJECTS) \
+#	$(noinst_PROGRAMS)

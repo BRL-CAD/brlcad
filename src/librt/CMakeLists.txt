@@ -28,39 +28,6 @@ set(LIBRT_SOURCES
     dir.c
     dspline.c
     fortray.c
-    g_arb.c
-    g_arbn.c
-    g_ars.c
-    g_bot.c
-    g_brep.cpp
-    g_cline.c
-    g_dsp.c
-    g_ebm.c
-    g_ehy.c
-    g_ell.c
-    g_epa.c
-    g_eto.c
-    g_extrude.c
-    g_grip.c
-    g_half.c
-    g_hf.c
-    g_hyp.c
-    g_metaball.c
-    g_nmg.c
-    g_nurb.c
-    g_part.c
-    g_pg.c
-    g_pipe.c
-    g_rec.c
-    g_rhc.c
-    g_rpc.c
-    g_sketch.c
-    g_sph.c
-    g_submodel.c
-    g_superell.c
-    g_tgc.c
-    g_torus.c
-    g_vol.c
     globals.c
     htbl.c
     many.c
@@ -68,7 +35,6 @@ set(LIBRT_SOURCES
     memalloc.c
     mirror.c
     mkbundle.c
-    opennurbs_ext.cpp
     nmg_bool.c
     nmg_ck.c
     nmg_class.c
@@ -114,10 +80,44 @@ set(LIBRT_SOURCES
     nurb_trim_util.c
     nurb_util.c
     nurb_xsplit.c
+    opennurbs_ext.cpp
     oslo_calc.c
     oslo_map.c
     pr.c
     prep.c
+    primitives/g_arb.c
+    primitives/g_arbn.c
+    primitives/g_ars.c
+    primitives/g_bot.c
+    primitives/g_brep.cpp
+    primitives/g_cline.c
+    primitives/g_dsp.c
+    primitives/g_ebm.c
+    primitives/g_ehy.c
+    primitives/g_ell.c
+    primitives/g_epa.c
+    primitives/g_eto.c
+    primitives/g_extrude.c
+    primitives/g_grip.c
+    primitives/g_half.c
+    primitives/g_hf.c
+    primitives/g_hyp.c
+    primitives/g_metaball.c
+    primitives/g_nmg.c
+    primitives/g_nurb.c
+    primitives/g_part.c
+    primitives/g_pg.c
+    primitives/g_pipe.c
+    primitives/g_rec.c
+    primitives/g_rhc.c
+    primitives/g_rpc.c
+    primitives/g_sketch.c
+    primitives/g_sph.c
+    primitives/g_submodel.c
+    primitives/g_superell.c
+    primitives/g_tgc.c
+    primitives/g_torus.c
+    primitives/g_vol.c
     regionfix.c
     roots.c
     shoot.c
