@@ -95,29 +95,29 @@ set(LIBRT_SOURCES
     primitives/nmg/nmg_rt_segs.c
     primitives/nmg/nmg_tri.c
     primitives/nmg/nmg_visit.c
-    primitives/nurb/nurb_basis.c
-    primitives/nurb/nurb_bezier.c
-    primitives/nurb/nurb_bound.c
-    primitives/nurb/nurb_c2.c
-    primitives/nurb/nurb_copy.c
-    primitives/nurb/nurb_diff.c
-    primitives/nurb/nurb_eval.c
-    primitives/nurb/nurb_flat.c
-    primitives/nurb/nurb_interp.c
-    primitives/nurb/nurb_knot.c
-    primitives/nurb/nurb_norm.c
-    primitives/nurb/nurb_plot.c
-    primitives/nurb/nurb_poly.c
-    primitives/nurb/nurb_ray.c
-    primitives/nurb/nurb_refine.c
-    primitives/nurb/nurb_reverse.c
-    primitives/nurb/nurb_solve.c
-    primitives/nurb/nurb_split.c
-    primitives/nurb/nurb_tess.c
-    primitives/nurb/nurb_trim.c
-    primitives/nurb/nurb_trim_util.c
-    primitives/nurb/nurb_util.c
-    primitives/nurb/nurb_xsplit.c
+    primitives/bspline/nurb_basis.c
+    primitives/bspline/nurb_bezier.c
+    primitives/bspline/nurb_bound.c
+    primitives/bspline/nurb_c2.c
+    primitives/bspline/nurb_copy.c
+    primitives/bspline/nurb_diff.c
+    primitives/bspline/nurb_eval.c
+    primitives/bspline/nurb_flat.c
+    primitives/bspline/nurb_interp.c
+    primitives/bspline/nurb_knot.c
+    primitives/bspline/nurb_norm.c
+    primitives/bspline/nurb_plot.c
+    primitives/bspline/nurb_poly.c
+    primitives/bspline/nurb_ray.c
+    primitives/bspline/nurb_refine.c
+    primitives/bspline/nurb_reverse.c
+    primitives/bspline/nurb_solve.c
+    primitives/bspline/nurb_split.c
+    primitives/bspline/nurb_tess.c
+    primitives/bspline/nurb_trim.c
+    primitives/bspline/nurb_trim_util.c
+    primitives/bspline/nurb_util.c
+    primitives/bspline/nurb_xsplit.c
     regionfix.c
     roots.c
     shoot.c

@@ -596,95 +596,95 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\nurb\nurb_basis.c"
+				RelativePath="..\..\..\src\librt\primitives\bspline\nurb_basis.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\nurb\nurb_bezier.c"
+				RelativePath="..\..\..\src\librt\primitives\bspline\nurb_bezier.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\nurb\nurb_bound.c"
+				RelativePath="..\..\..\src\librt\primitives\bspline\nurb_bound.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\nurb\nurb_c2.c"
+				RelativePath="..\..\..\src\librt\primitives\bspline\nurb_c2.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\nurb\nurb_copy.c"
+				RelativePath="..\..\..\src\librt\primitives\bspline\nurb_copy.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\nurb\nurb_diff.c"
+				RelativePath="..\..\..\src\librt\primitives\bspline\nurb_diff.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\nurb\nurb_eval.c"
+				RelativePath="..\..\..\src\librt\primitives\bspline\nurb_eval.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\nurb\nurb_flat.c"
+				RelativePath="..\..\..\src\librt\primitives\bspline\nurb_flat.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\nurb\nurb_interp.c"
+				RelativePath="..\..\..\src\librt\primitives\bspline\nurb_interp.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\nurb\nurb_knot.c"
+				RelativePath="..\..\..\src\librt\primitives\bspline\nurb_knot.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\nurb\nurb_norm.c"
+				RelativePath="..\..\..\src\librt\primitives\bspline\nurb_norm.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\nurb\nurb_plot.c"
+				RelativePath="..\..\..\src\librt\primitives\bspline\nurb_plot.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\nurb\nurb_poly.c"
+				RelativePath="..\..\..\src\librt\primitives\bspline\nurb_poly.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\nurb\nurb_ray.c"
+				RelativePath="..\..\..\src\librt\primitives\bspline\nurb_ray.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\nurb\nurb_refine.c"
+				RelativePath="..\..\..\src\librt\primitives\bspline\nurb_refine.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\nurb\nurb_reverse.c"
+				RelativePath="..\..\..\src\librt\primitives\bspline\nurb_reverse.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\nurb\nurb_solve.c"
+				RelativePath="..\..\..\src\librt\primitives\bspline\nurb_solve.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\nurb\nurb_split.c"
+				RelativePath="..\..\..\src\librt\primitives\bspline\nurb_split.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\nurb\nurb_tess.c"
+				RelativePath="..\..\..\src\librt\primitives\bspline\nurb_tess.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\nurb\nurb_trim.c"
+				RelativePath="..\..\..\src\librt\primitives\bspline\nurb_trim.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\nurb\nurb_trim_util.c"
+				RelativePath="..\..\..\src\librt\primitives\bspline\nurb_trim_util.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\nurb\nurb_util.c"
+				RelativePath="..\..\..\src\librt\primitives\bspline\nurb_util.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\nurb\nurb_xsplit.c"
+				RelativePath="..\..\..\src\librt\primitives\bspline\nurb_xsplit.c"
 				>
 			</File>
 			<File
