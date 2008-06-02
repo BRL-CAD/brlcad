@@ -90,29 +90,6 @@ librt_nil_la_SOURCES = \
 	nmg_rt_segs.c \
 	nmg_tri.c \
 	nmg_visit.c \
-	nurb_basis.c \
-	nurb_bezier.c \
-	nurb_bound.c \
-	nurb_c2.c \
-	nurb_copy.c \
-	nurb_diff.c \
-	nurb_eval.c \
-	nurb_flat.c \
-	nurb_interp.c \
-	nurb_knot.c \
-	nurb_norm.c \
-	nurb_plot.c \
-	nurb_poly.c \
-	nurb_ray.c \
-	nurb_refine.c \
-	nurb_reverse.c \
-	nurb_solve.c \
-	nurb_split.c \
-	nurb_tess.c \
-	nurb_trim.c \
-	nurb_trim_util.c \
-	nurb_util.c \
-	nurb_xsplit.c \
 	opennurbs_ext.cpp \
 	oslo_calc.c \
 	oslo_map.c \
@@ -151,6 +128,29 @@ librt_nil_la_SOURCES = \
 	primitives/g_tgc.c \
 	primitives/g_torus.c \
 	primitives/g_vol.c \
+	primitives/nurb/nurb_basis.c \
+	primitives/nurb/nurb_bezier.c \
+	primitives/nurb/nurb_bound.c \
+	primitives/nurb/nurb_c2.c \
+	primitives/nurb/nurb_copy.c \
+	primitives/nurb/nurb_diff.c \
+	primitives/nurb/nurb_eval.c \
+	primitives/nurb/nurb_flat.c \
+	primitives/nurb/nurb_interp.c \
+	primitives/nurb/nurb_knot.c \
+	primitives/nurb/nurb_norm.c \
+	primitives/nurb/nurb_plot.c \
+	primitives/nurb/nurb_poly.c \
+	primitives/nurb/nurb_ray.c \
+	primitives/nurb/nurb_refine.c \
+	primitives/nurb/nurb_reverse.c \
+	primitives/nurb/nurb_solve.c \
+	primitives/nurb/nurb_split.c \
+	primitives/nurb/nurb_tess.c \
+	primitives/nurb/nurb_trim.c \
+	primitives/nurb/nurb_trim_util.c \
+	primitives/nurb/nurb_util.c \
+	primitives/nurb/nurb_xsplit.c \
 	regionfix.c \
 	roots.c \
 	shoot.c \
@@ -219,10 +219,10 @@ DEPENDS = src/libbn src/libsysv src/other/openNURBS ${DEPADD}
 
 include $(top_srcdir)/misc/Makefile.defs
 
-#FAST_OBJECTS = \
-#	$(librt_nil_la_OBJECTS) \
-#	$(librt_la_OBJECTS) \
-#	$(lib_LTLIBRARIES) \
-#	$(comb_OBJECTS) \
-#	$(nurb_example_OBJECTS) \
-#	$(noinst_PROGRAMS)
+FAST_OBJECTS = \
+	$(librt_nil_la_OBJECTS) \
+	$(librt_la_OBJECTS) \
+	$(lib_LTLIBRARIES) \
+	$(comb_OBJECTS) \
+	$(nurb_example_OBJECTS) \
+	$(noinst_PROGRAMS)
