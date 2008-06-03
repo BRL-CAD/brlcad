@@ -1,7 +1,7 @@
-/*                           V L S . C
+/*                          A R G V . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2008 United States Government as represented by
+ * Copyright (c) 2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,16 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup vls */
-/** @{ */
-/** @file vls.c
+/** @file argv.c
  *
- * @brief The variable length string package.
- *
- * The variable length string package.
- *
- * Assumption:  libc-provided sprintf() function is safe to use in parallel,
- * on parallel systems.
+ * Functions related to argv processing.
  *
  */
 
