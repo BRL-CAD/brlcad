@@ -1106,6 +1106,7 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *segs )
             unsigned char buffer[SIZEOF_NETWORK_DOUBLE*3];
             vect_t reverse_ray_dir;
             double inObl, outObl;
+            double dot;
             int regionIndex;
             
             /* write partition info to the byte array */
@@ -1122,8 +1123,16 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *segs )
             htond(buffer, (unsigned char *)ahit->exit_normal, 3);
             bu_vlb_write(ray_res->vlb, buffer, SIZEOF_NETWORK_DOUBLE*3);
             
+            VREVERSE(reverse_ray_dir, ray_res->the_ray.r_dir);
+            
             /* calculate the entrance and exit obliquities */
-            inObl = acos( VDOT( reverse_ray_dir, ahit->enter_normal ) );
+            dot = VDOT( reverse_ray_dir, ahit->enter_normal );
+            if( dot < -1.0 ) {
+                dot = -1.0;
+            } else if( dot > 1.0 ) {
+                dot = 1.0;
+            }
+            inObl = acos(dot);
             if ( inObl < 0.0 ) {
                 inObl = -inObl;
             }
@@ -1131,7 +1140,13 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *segs )
                 inObl = M_PI_2;
             }
 
-            outObl = acos( VDOT( ray_res->the_ray.r_dir, ahit->exit_normal ) );
+            dot = VDOT( ray_res->the_ray.r_dir, ahit->exit_normal );
+            if( dot < -1.0 ) {
+                dot = -1.0;
+            } else if( dot > 1.0 ) {
+                dot = 1.0;
+            }
+            outObl = acos(dot);
             if ( outObl < 0.0 ) {
                 outObl = -outObl;
             }
