@@ -1342,8 +1342,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libged", "..\libged\libged.
 		{14E44CF2-49E1-4D8E-B23B-28B7824ED6FB} = {14E44CF2-49E1-4D8E-B23B-28B7824ED6FB}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rtmlt", "..\rtmlt\rtmlt.vcproj", "{51AF37DF-E031-4918-BE3B-AE6E5A1C516A}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Release|Win32 = Release|Win32
