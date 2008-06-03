@@ -73,61 +73,12 @@ librt_nil_la_SOURCES = \
 	oslo_map.c \
 	pr.c \
 	prep.c \
-	primitives/g_arb.c \
-	primitives/g_arbn.c \
-	primitives/g_ars.c \
-	primitives/g_bot.c \
-	primitives/g_brep.cpp \
-	primitives/g_cline.c \
-	primitives/g_dsp.c \
-	primitives/g_ebm.c \
-	primitives/g_ehy.c \
-	primitives/g_ell.c \
-	primitives/g_epa.c \
-	primitives/g_eto.c \
-	primitives/g_extrude.c \
-	primitives/g_grip.c \
-	primitives/g_half.c \
-	primitives/g_hf.c \
-	primitives/g_hyp.c \
-	primitives/g_metaball.c \
-	primitives/g_nmg.c \
-	primitives/g_nurb.c \
-	primitives/g_part.c \
-	primitives/g_pg.c \
-	primitives/g_pipe.c \
-	primitives/g_rec.c \
-	primitives/g_rhc.c \
-	primitives/g_rpc.c \
-	primitives/g_sketch.c \
-	primitives/g_sph.c \
-	primitives/g_submodel.c \
-	primitives/g_superell.c \
-	primitives/g_tgc.c \
-	primitives/g_torus.c \
-	primitives/g_vol.c \
-	primitives/nmg/nmg_bool.c \
-	primitives/nmg/nmg_ck.c \
-	primitives/nmg/nmg_class.c \
-	primitives/nmg/nmg_eval.c \
-	primitives/nmg/nmg_extrude.c \
-	primitives/nmg/nmg_fcut.c \
-	primitives/nmg/nmg_fuse.c \
-	primitives/nmg/nmg_index.c \
-	primitives/nmg/nmg_info.c \
-	primitives/nmg/nmg_inter.c \
-	primitives/nmg/nmg_manif.c \
-	primitives/nmg/nmg_mesh.c \
-	primitives/nmg/nmg_misc.c \
-	primitives/nmg/nmg_mk.c \
-	primitives/nmg/nmg_mod.c \
-	primitives/nmg/nmg_plot.c \
-	primitives/nmg/nmg_pr.c \
-	primitives/nmg/nmg_pt_fu.c \
-	primitives/nmg/nmg_rt_isect.c \
-	primitives/nmg/nmg_rt_segs.c \
-	primitives/nmg/nmg_tri.c \
-	primitives/nmg/nmg_visit.c \
+	primitives/arb8/arb8.c \
+	primitives/arbn/arbn.c \
+	primitives/ars/ars.c \
+	primitives/bot/bot.c \
+	primitives/brep/brep.cpp \
+	primitives/bspline/bspline.c \
 	primitives/bspline/nurb_basis.c \
 	primitives/bspline/nurb_bezier.c \
 	primitives/bspline/nurb_bound.c \
@@ -151,6 +102,55 @@ librt_nil_la_SOURCES = \
 	primitives/bspline/nurb_trim_util.c \
 	primitives/bspline/nurb_util.c \
 	primitives/bspline/nurb_xsplit.c \
+	primitives/cline/cline.c \
+	primitives/dsp/dsp.c \
+	primitives/ebm/ebm.c \
+	primitives/ehy/ehy.c \
+	primitives/ell/ell.c \
+	primitives/epa/epa.c \
+	primitives/eto/eto.c \
+	primitives/extrude/extrude.c \
+	primitives/grip/grip.c \
+	primitives/half/half.c \
+	primitives/hf/hf.c \
+	primitives/hyp/hyp.c \
+	primitives/metaball/metaball.c \
+	primitives/nmg/nmg.c \
+	primitives/nmg/nmg_bool.c \
+	primitives/nmg/nmg_ck.c \
+	primitives/nmg/nmg_class.c \
+	primitives/nmg/nmg_eval.c \
+	primitives/nmg/nmg_extrude.c \
+	primitives/nmg/nmg_fcut.c \
+	primitives/nmg/nmg_fuse.c \
+	primitives/nmg/nmg_index.c \
+	primitives/nmg/nmg_info.c \
+	primitives/nmg/nmg_inter.c \
+	primitives/nmg/nmg_manif.c \
+	primitives/nmg/nmg_mesh.c \
+	primitives/nmg/nmg_misc.c \
+	primitives/nmg/nmg_mk.c \
+	primitives/nmg/nmg_mod.c \
+	primitives/nmg/nmg_plot.c \
+	primitives/nmg/nmg_pr.c \
+	primitives/nmg/nmg_pt_fu.c \
+	primitives/nmg/nmg_rt_isect.c \
+	primitives/nmg/nmg_rt_segs.c \
+	primitives/nmg/nmg_tri.c \
+	primitives/nmg/nmg_visit.c \
+	primitives/part/part.c \
+	primitives/pipe/pipe.c \
+	primitives/poly/poly.c \
+	primitives/rec/rec.c \
+	primitives/rhc/rhc.c \
+	primitives/rpc/rpc.c \
+	primitives/sketch/sketch.c \
+	primitives/sph/sph.c \
+	primitives/submodel/submodel.c \
+	primitives/superell/superell.c \
+	primitives/tor/tor.c \
+	primitives/tgc/tgc.c \
+	primitives/vol/vol.c \
 	regionfix.c \
 	roots.c \
 	shoot.c \

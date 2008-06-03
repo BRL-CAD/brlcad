@@ -42,7 +42,7 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 
-#include "./fixpt.h"
+#include "../fixpt.h"
 
 
 /*

@@ -348,135 +348,135 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\g_arb.c"
+				RelativePath="..\..\..\src\librt\primitives\arb8\arb8.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\g_arbn.c"
+				RelativePath="..\..\..\src\librt\primitives\arbn\arbn.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\g_ars.c"
+				RelativePath="..\..\..\src\librt\primitives\ars\ars.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\g_bot.c"
+				RelativePath="..\..\..\src\librt\primitives\bot\bot.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\g_brep.cpp"
+				RelativePath="..\..\..\src\librt\primitives\brep\brep.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\g_cline.c"
+				RelativePath="..\..\..\src\librt\primitives\cline\cline.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\g_dsp.c"
+				RelativePath="..\..\..\src\librt\primitives\dsp\dsp.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\g_ebm.c"
+				RelativePath="..\..\..\src\librt\primitives\ebm\ebm.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\g_ehy.c"
+				RelativePath="..\..\..\src\librt\primitives\ehy\ehy.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\g_ell.c"
+				RelativePath="..\..\..\src\librt\primitives\ell\ell.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\g_epa.c"
+				RelativePath="..\..\..\src\librt\primitives\epa\epa.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\g_eto.c"
+				RelativePath="..\..\..\src\librt\primitives\eto\eto.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\g_extrude.c"
+				RelativePath="..\..\..\src\librt\primitives\extrude\extrude.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\g_grip.c"
+				RelativePath="..\..\..\src\librt\primitives\grip\grip.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\g_half.c"
+				RelativePath="..\..\..\src\librt\primitives\half\half.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\g_hf.c"
+				RelativePath="..\..\..\src\librt\primitives\hf\hf.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\g_hyp.c"
+				RelativePath="..\..\..\src\librt\primitives\hyp\hyp.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\g_metaball.c"
+				RelativePath="..\..\..\src\librt\primitives\metaball\metaball.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\g_nmg.c"
+				RelativePath="..\..\..\src\librt\primitives\nmg\nmg.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\g_nurb.c"
+				RelativePath="..\..\..\src\librt\primitives\bspline\bspline.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\g_part.c"
+				RelativePath="..\..\..\src\librt\primitives\part\part.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\g_pg.c"
+				RelativePath="..\..\..\src\librt\primitives\poly\poly.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\g_pipe.c"
+				RelativePath="..\..\..\src\librt\primitives\pipe\pipe.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\g_rec.c"
+				RelativePath="..\..\..\src\librt\primitives\rec\rec.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\g_rhc.c"
+				RelativePath="..\..\..\src\librt\primitives\rhc\rhc.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\g_rpc.c"
+				RelativePath="..\..\..\src\librt\primitives\rpc\rpc.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\g_sketch.c"
+				RelativePath="..\..\..\src\librt\primitives\sketch\sketch.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\g_sph.c"
+				RelativePath="..\..\..\src\librt\primitives\sph\sph.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\g_submodel.c"
+				RelativePath="..\..\..\src\librt\primitives\submodel\submodel.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\g_superell.c"
+				RelativePath="..\..\..\src\librt\primitives\superell\superell.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\g_tgc.c"
+				RelativePath="..\..\..\src\librt\primitives\tgc\tgc.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\g_torus.c"
+				RelativePath="..\..\..\src\librt\primitives\torus\torus.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\g_vol.c"
+				RelativePath="..\..\..\src\librt\primitives\vol\vol.c"
 				>
 			</File>
 			<File
