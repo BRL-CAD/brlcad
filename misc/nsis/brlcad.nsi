@@ -8,49 +8,51 @@ Var MINOR
 Var PATCH
 Var VERSION
 
+Section
 ClearErrors
-IfFileExists ..\include\conf\MAJOR major_found
-  Messagebox MB_OK "Unable to find MAJOR version file in ..\include\conf"
-  Abort;
+IfFileExists ..\..\..\include\conf\MAJOR major_found
+  Messagebox MB_OK "Unable to find MAJOR version file in ..\..\..\include\conf"
+  Abort
 major_found:
-FileOpen $0 ..\include\conf\MAJOR r
+FileOpen $0 ..\..\..\include\conf\MAJOR r
 IfErrors major
 FileRead $0 $MAJOR
 FileClose $0
 Goto major_done
 major:
-StrCpy MAJOR 'XX'
+StrCpy $MAJOR 'XX'
 major_done:
 
 ClearErrors
-IfFileExists ..\include\conf\MINOR minor_found
-  Messagebox MB_OK "Unable to find MINOR version file in ..\include\conf"
-  Abort;
+IfFileExists ..\..\..\include\conf\MINOR minor_found
+  Messagebox MB_OK "Unable to find MINOR version file in ..\..\..\include\conf"
+  Abort
 minor_found:
-FileOpen $0 ..\include\conf\MINOR r
+FileOpen $0 ..\..\..\include\conf\MINOR r
 IfErrors minor
 FileRead $0 $MINOR
 FileClose $0
 Goto minor_done
 minor:
-StrCpy MINOR 'XX'
+StrCpy $MINOR 'XX'
 minor_done:
 
 ClearErrors
-IfFileExists ..\include\conf\PATCH patch_found
-  Messagebox MB_OK "Unable to find PATCH version file in ..\include\conf"
-  Abort;
+IfFileExists ..\..\..\include\conf\PATCH patch_found
+  Messagebox MB_OK "Unable to find PATCH version file in ..\..\..\include\conf"
+  Abort
 patch_found:
-FileOpen $0 ..\include\conf\PATCH r
+FileOpen $0 ..\..\..\include\conf\PATCH r
 IfErrors patch
 FileRead $0 $PATCH
 FileClose $0
 Goto patch_done
 patch:
-StrCpy PATCH 'XX'
+StrCpy $PATCH 'XX'
 patch_done:
 
-StrCpy $VERSION "${MAJOR}.${MINOR}.${PATCH}"
+StrCpy $VERSION "$MAJOR.$MINOR.$PATCH"
+SectionEnd
 
 ;--------------------------------
 ;Include Modern UI
@@ -87,7 +89,7 @@ FunctionEnd
   Name "BRL-CAD"
 
   ; The file to write
-  OutFile "brlcad-${VERSION}.exe"
+  OutFile "brlcad-$VERSION.exe"
 
   ; The default installation directory
   ;InstallDir $PROGRAMFILES\BRL-CAD
@@ -131,7 +133,7 @@ FunctionEnd
 ; Pages
 
   ;Welcome page configuration
-  !define MUI_WELCOMEPAGE_TEXT "This wizard will guide you through the installation of BRL-CAD ${VERSION}.\r\n\r\nBRL-CAD is a free open source multiplatform CAD software developed by the U.S. Army Research Laboratory (ARL).\r\n\r\nClick Next to continue."
+  !define MUI_WELCOMEPAGE_TEXT "This wizard will guide you through the installation of BRL-CAD $VERSION.\r\n\r\nBRL-CAD is a free open source multiplatform CAD software developed by the U.S. Army Research Laboratory (ARL).\r\n\r\nClick Next to continue."
 
   !insertmacro MUI_PAGE_WELCOME
   !insertmacro MUI_PAGE_LICENSE "..\..\COPYING"
@@ -140,7 +142,7 @@ FunctionEnd
 
   ;Start Menu Folder Page Configuration
   !define MUI_STARTMENUPAGE_REGISTRY_ROOT "HKLM" 
-  !define MUI_STARTMENUPAGE_REGISTRY_KEY "Software\BRL-CAD${VERSION}" 
+  !define MUI_STARTMENUPAGE_REGISTRY_KEY "Software\BRL-CAD$VERSION" 
   !define MUI_STARTMENUPAGE_REGISTRY_VALUENAME "Start Menu Folder"
 
   !insertmacro MUI_PAGE_STARTMENU Application $STARTMENU_FOLDER
@@ -200,13 +202,13 @@ Section "BRL-CAD (required)" BRL-CAD
   WriteRegStr HKLM SOFTWARE\BRL-CAD "Install_Dir" "$INSTDIR"
 
   ; Write the uninstall keys for Windows
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD" "DisplayName" "BRL-CAD ${VERSION}"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD" "DisplayName" "BRL-CAD $VERSION"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD" "UninstallString" '"$INSTDIR\uninstall.exe"'
   ;Create uninstaller
   WriteUninstaller "uninstall.exe"
 
 
-  StrCpy $BRLCAD_DATA_DIR "$INSTDIR\share\brlcad\${VERSION}"
+  StrCpy $BRLCAD_DATA_DIR "$INSTDIR\share\brlcad\$VERSION"
 
   ; Create desktop icons
   SetOutPath $INSTDIR
