@@ -1,4 +1,4 @@
-/*                         G _ B O T . C
+/*                           B O T . C
  * BRL-CAD
  *
  * Copyright (c) 1999-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_  */
+/** @addtogroup primitives */
 /** @{ */
-/** @file g_bot.c
+/** @file bot.c
  *
  * Intersect a ray with a bag o' triangles.
  *

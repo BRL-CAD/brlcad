@@ -1,4 +1,4 @@
-/*                         G _ N M G . C
+/*                           N M G . C
  * BRL-CAD
  *
  * Copyright (c) 2005-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_  */
+/** @addtogroup primitives */
 /** @{ */
-/** @file g_nmg.c
+/** @file nmg.c
  *
  * Intersect a ray with an NMG solid.
  *

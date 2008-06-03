@@ -1,4 +1,4 @@
-/*                       G _ C L I N E . C
+/*                         C L I N E . C
  * BRL-CAD
  *
  * Copyright (c) 2000-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_  */
+/** @addtogroup primitives */
 /** @{ */
-/** @file g_cline.c
+/** @file cline.c
  *
  * Intersect a ray with a FASTGEN4 CLINE element.
  *

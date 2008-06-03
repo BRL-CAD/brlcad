@@ -1,4 +1,4 @@
-/*                         G _ D S P . C
+/*                           D S P . C
  * BRL-CAD
  *
  * Copyright (c) 1999-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_  */
+/** @addtogroup primitives */
 /** @{ */
-/** @file g_dsp.c
+/** @file dsp.c
  *
  * Intersect a ray with a displacement map.
  *

@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_  */
+/** @addtogroup primitives */
 /** @{ */
-/** @file g_metaball.c
+/** @file metaball.c
  *
  * Intersect a ray with a metaball implicit surface.
  *

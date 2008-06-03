@@ -1,4 +1,4 @@
-/*                         G _ V O L . C
+/*                           V O L . C
  * BRL-CAD
  *
  * Copyright (c) 1989-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_  */
+/** @addtogroup primitives */
 /** @{ */
-/** @file g_vol.c
+/** @file vol.c
  *
  * Intersect a ray with a 3-D volume.  The volume is described as a
  * concatenation of bw(5) files.

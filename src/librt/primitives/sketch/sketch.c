@@ -1,4 +1,4 @@
-/*                      G _ S K E T C H . C
+/*                        S K E T C H . C
  * BRL-CAD
  *
  * Copyright (c) 1990-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_  */
+/** @addtogroup primitives */
 /** @{ */
-/** @file g_sketch.c
+/** @file sketch.c
  *
  * Provide support for 2D sketches.
  *

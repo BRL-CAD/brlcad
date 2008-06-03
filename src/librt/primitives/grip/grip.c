@@ -1,4 +1,4 @@
-/*                        G _ G R I P . C
+/*                          G R I P . C
  * BRL-CAD
  *
  * Copyright (c) 1993-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_  */
+/** @addtogroup primitives */
 /** @{ */
-/** @file g_grip.c
+/** @file grip.c
  *
  * Intersect a ray with a "grip" and return nothing.
  *

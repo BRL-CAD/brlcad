@@ -1,4 +1,4 @@
-/*                 G _ B O T _ I N C L U D E . C
+/*                   B O T _ I N C L U D E . C
  * BRL-CAD
  *
  * Copyright (c) 1999-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_  */
+/** @addtogroup primitives */
 /** @{ */
-/** @file g_bot_include.c
+/** @file bot_include.c
  *
  *	This file contains all the routines for "g_bot.c" that contain references to
  *	"tri_specific" structs. This file is included in "g_bot.c" twice. Each time

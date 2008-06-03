@@ -1,4 +1,4 @@
-/*                         G _ R P C . C
+/*                           R P C . C
  * BRL-CAD
  *
  * Copyright (c) 1990-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_ */
+/** @addtogroup primitives */
 /** @{ */
-/** @file g_rpc.c
+/** @file rpc.c
  *
  * Intersect a ray with a Right Parabolic Cylinder.
  *

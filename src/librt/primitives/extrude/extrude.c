@@ -1,4 +1,4 @@
-/*                     G _ E X T R U D E . C
+/*                       E X T R U D E . C
  * BRL-CAD
  *
  * Copyright (c) 1990-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_  */
+/** @addtogroup primitives */
 /** @{ */
-/** @file g_extrude.c
+/** @file extrude.c
  *
  * Provide support for solids of extrusion.
  *

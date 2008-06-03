@@ -1,4 +1,4 @@
-/*                        G _ H A L F . C
+/*                          H A L F . C
  * BRL-CAD
  *
  * Copyright (c) 1985-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_  */
+/** @addtogroup primitives */
 /** @{ */
-/** @file g_half.c
+/** @file half.c
  *
  * Intersect a ray with a Halfspace.
  *

@@ -1,4 +1,4 @@
-/*                        G _ N U R B . C
+/*                          N U R B . C
  * BRL-CAD
  *
  * Copyright (c) 1991-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_  */
+/** @addtogroup primitives */
 /** @{ */
-/** @file g_nurb.c
+/** @file nurb.c
  *
  * Intersect a ray with a Non Uniform Rational B-Spline.
  *

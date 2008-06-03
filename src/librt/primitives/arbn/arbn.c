@@ -1,4 +1,4 @@
-/*                        G _ A R B N . C
+/*                          A R B N . C
  * BRL-CAD
  *
  * Copyright (c) 1989-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_  */
+/** @addtogroup primitives */
 /** @{ */
-/** @file g_arbn.c
+/** @file arbn.c
  *
  * Intersect a ray with an Arbitrary Regular Polyhedron with an
  * arbitrary number of faces.

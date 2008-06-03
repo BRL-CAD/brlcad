@@ -1,4 +1,4 @@
-/*                         G _ A R B . C
+/*                           A R B . C
  * BRL-CAD
  *
  * Copyright (c) 1985-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_  */
+/** @addtogroup primitives */
 /** @{ */
-/** @file g_arb.c
+/** @file arb.c
  *
  * Intersect a ray with an Arbitrary Regular Polyhedron with as many
  * as 8 vertices.

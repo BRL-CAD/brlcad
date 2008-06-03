@@ -1,4 +1,4 @@
-/*                         G _ E L L . C
+/*                           E L L . C
  * BRL-CAD
  *
  * Copyright (c) 1985-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_  */
+/** @addtogroup primitives */
 /** @{ */
-/** @file g_ell.c
+/** @file ell.c
  *
  * Intersect a ray with a Generalized Ellipsoid.
  *

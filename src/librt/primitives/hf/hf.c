@@ -1,4 +1,4 @@
-/*                          G _ H F . C
+/*                            H F . C
  * BRL-CAD
  *
  * Copyright (c) 1994-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_  */
+/** @addtogroup primitives */
 /** @{ */
-/** @file g_hf.c
+/** @file hf.c
  *
  * Intersect a ray with a height field, where the heights are imported
  * from an external data file, and where some (or all) of the

@@ -1,4 +1,4 @@
-/*                         G _ R E C . C
+/*                           R E C . C
  * BRL-CAD
  *
  * Copyright (c) 1985-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_  */
+/** @addtogroup primitives */
 /** @{ */
-/** @file g_rec.c
+/** @file rec.c
  *
  * Intersect a ray with a Right Eliptical Cylinder.  This is a special
  * (but common) case of the TGC, which is handled separately.

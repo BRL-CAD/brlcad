@@ -1,4 +1,4 @@
-/*                         G _ E T O . C
+/*                           E T O . C
  * BRL-CAD
  *
  * Copyright (c) 1992-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_  */
+/** @addtogroup primitives */
 /** @{ */
-/** @file g_eto.c
+/** @file eto.c
  *
  * Intersect a ray with an Elliptical Torus.
  *

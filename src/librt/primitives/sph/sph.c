@@ -1,4 +1,4 @@
-/*                         G _ S P H . C
+/*                           S P H . C
  * BRL-CAD
  *
  * Copyright (c) 1985-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_ */
+/** @addtogroup primitives */
 /** @{ */
-/** @file g_sph.c
+/** @file sph.c
  *
  * Intersect a ray with a Sphere.
  * Special case of the Generalized Ellipsoid

@@ -1,4 +1,4 @@
-/*                          G _ P G . C
+/*                            P G . C
  * BRL-CAD
  *
  * Copyright (c) 1985-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_  */
+/** @addtogroup primitives */
 /** @{ */
-/** @file g_pg.c
+/** @file pg.c
  *
  * Intersect a ray with a Polygonal Object that has no explicit
  * topology.  It is assumed that the solid has no holes.

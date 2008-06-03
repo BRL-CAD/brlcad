@@ -1,4 +1,4 @@
-/*                    G _ S U B M O D E L . C
+/*                      S U B M O D E L . C
  * BRL-CAD
  *
  * Copyright (c) 2000-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_  */
+/** @addtogroup primitives */
 /** @{ */
-/** @file g_submodel.c
+/** @file submodel.c
  *
  *	Intersect a ray with an entire subspace full of geometry,
  *	possibly included from another .g file, with a subordinate
