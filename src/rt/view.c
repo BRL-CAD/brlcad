@@ -75,6 +75,7 @@ Options:\n\
  -r		Report overlaps\n\
  -R		Do not report overlaps\n\
  -l #		Set the light model\n\
+ -U #		Use air if # is greater than 0\n\
 ";
 
 int		use_air = 0;		/* Handling of air in librt */
@@ -1181,7 +1182,6 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o, i
     if( do_kut_plane ) {
 	struct rt_functab *functab;
 	struct directory *dp;
-	char *name;
 
 	kut_soltab = bu_calloc( 1, sizeof( struct soltab ), "kut_soltab" );
 	kut_soltab->l.magic = RT_SOLTAB_MAGIC;
