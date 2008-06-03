@@ -29,7 +29,7 @@ noinst_PROGRAMS = \
 	${BREP_TEST}
 
 # make sure the example compiles, but don't include it in librt
-librt_xxx_la_SOURCES = primitives/g_xxx.c
+librt_xxx_la_SOURCES = primitives/xxx/xxx.c
 
 librt_nil_la_SOURCES = \
 	bezier_2d_isect.c \
@@ -193,7 +193,6 @@ sample_applicationsdir = $(SAMPLE_APPLICATIONS_DIR)
 
 sample_applications_DATA = \
 	nurb_example.c \
-	primitives/g_xxx.c \
 	raydebug.tcl
 
 # XXX need to fix these so the timers are selected by configure.ac
