@@ -990,7 +990,7 @@ const struct rt_functab rt_functab[] = {
      rt_hyp_plot,	rt_nul_vshot,	rt_hyp_tess,	rt_nul_tnurb,
      rt_hyp_import5,	rt_hyp_export5,
      rt_nul_import,	rt_nul_export,	rt_hyp_ifree,
-     rt_hyp_describe,	rt_nul_xform,	rt_nul_parse,
+     rt_hyp_describe,	rt_nul_xform,	rt_hyp_parse,
      sizeof(struct rt_hyp_internal),		RT_HYP_INTERNAL_MAGIC,
      rt_parsetab_tclget,	rt_parsetab_tcladjust,	rt_parsetab_tclform,
      NULL,
