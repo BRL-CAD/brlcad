@@ -149,14 +149,14 @@
  * @defgroup db4 Database4
  * @ingroup dbio
  *
- * @defgroup g_ Primitives
+ * @defgroup primitives Primitives
  * @ingroup librt
  *
  * @defgroup nmg N-Manifold Geometry
- * @ingroup g_
+ * @ingroup primitives
  *
  * @defgroup nurb NURBS
- * @ingroup g_
+ * @ingroup primitives
  *
  ** @defgroup ray Ray Tracing
  * @ingroup librt
