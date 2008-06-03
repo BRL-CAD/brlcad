@@ -202,7 +202,7 @@ EXTRA_DIST = \
 	brep_test.cpp \
 	parse.c \
 	pmalloc.c \
-	primitives/g_bot_include.c \
+	primitives/bot/g_bot_include.c \
 	primitives/nmg/nmg_junk.c \
 	timer-nt.c \
 	timer52brl.c \
