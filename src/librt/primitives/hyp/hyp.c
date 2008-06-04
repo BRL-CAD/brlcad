@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_  */
+/** @addtogroup primitives  */
 /** @{ */
-/** @file g_hpy.c
+/** @file hpy.c
  *
  *	Intersect a ray with an elliptical hyperboloid of one sheet.
  *
