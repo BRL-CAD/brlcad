@@ -72,7 +72,7 @@ struct mlt_app {
 };
 
 int
-mlt_hit(register struct application *ap, struct partition *PartHeadp);
+mlt_hit(register struct application *ap, struct partition *PartHeadp, struct seg *);
 
 int
 mlt_miss(register struct application * ap);
@@ -162,7 +162,7 @@ view_cleanup(struct rt_i *rtip)
  *  Called via a_hit linkage from rt_shootray() when ray hits.
  */
 int
-mlt_hit(register struct application *ap, struct partition *PartHeadp)
+mlt_hit(register struct application *ap, struct partition *PartHeadp, struct seg *segp)
 {
     bu_log("hit: 0x%x\n", ap->a_resource);
 
