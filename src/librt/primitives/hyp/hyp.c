@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives  */
 /** @{ */
-/** @file hpy.c
+/** @file hyp.c
  *
  *	Intersect a ray with an elliptical hyperboloid of one sheet.
  *
