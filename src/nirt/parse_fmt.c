@@ -682,7 +682,7 @@ direct_output(const char *buffer, com_table *ctp)
 
 	new_dest = bu_malloc(strlen(buffer + i)+1, "new_dest");
 
-	snprintf(new_dest, strlen(buffer+i), "%s", buffer + i);
+	snprintf(new_dest, strlen(buffer+i)+1, "%s", buffer + i);
 	if ((newf = (*openfunc)(new_dest, "w")) == NULL) {
 	    fprintf(stderr, "Cannot open %s '%s'\n",
 		    (openfunc == popen) ? "pipe" : "file", new_dest);
