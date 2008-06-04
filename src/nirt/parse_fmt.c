@@ -649,6 +649,7 @@ void
 direct_output(const char *buffer, com_table *ctp)
 {
     int 	i = 0;      /* current position on the *buffer        */
+    int         j = 0;      /* position of last non-whitespace char in the *buffer */
     FILE	*newf;
     static char	*new_dest;
     static FILE	*(*openfunc)() = 0;
@@ -679,10 +680,13 @@ direct_output(const char *buffer, com_table *ctp)
 	} else {
 	    openfunc=fopen;
 	}
+	/*Find last non-whitespace character*/
+	j = strlen(buffer);
+	while(isspace(*(buffer+j-1))) j--;
 
 	new_dest = bu_malloc(strlen(buffer + i)+1, "new_dest");
 
-	snprintf(new_dest, strlen(buffer+i)+1, "%s", buffer + i);
+	snprintf(new_dest, j-i+1, "%s", buffer + i);
 	if ((newf = (*openfunc)(new_dest, "w")) == NULL) {
 	    fprintf(stderr, "Cannot open %s '%s'\n",
 		    (openfunc == popen) ? "pipe" : "file", new_dest);
