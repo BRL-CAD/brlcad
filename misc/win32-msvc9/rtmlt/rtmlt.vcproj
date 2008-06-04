@@ -136,7 +136,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libbn.lib librt.lib"
+				AdditionalDependencies="tcl85.lib libbu.lib libbn.lib libsysv.lib librt.lib libfb.lib liboptical.lib libpkg.lib"
 				OutputFile=".\$(PlatformName)\$(ConfigurationName)/rtmlt.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -183,7 +183,23 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath="..\..\..\src\rt\do.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\rt\main.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\rt\opt.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\rt\viewmlt.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\rt\worker.c"
 				>
 			</File>
 		</Filter>
@@ -192,10 +208,6 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
-			<File
-				RelativePath="..\..\..\src\rt\mlt_def.h"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
