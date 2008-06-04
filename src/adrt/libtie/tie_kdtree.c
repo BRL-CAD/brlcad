@@ -37,6 +37,66 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 
+#define _MIN(a, b) (a)<(b)?(a):(b)
+#define _MAX(a, b) (a)>(b)?(a):(b)
+#define	MATH_MIN3(_a, _b, _c, _d) _a = _MIN((_b), _MIN((_c), (_d)))
+#define MATH_MAX3(_a, _b, _c, _d) _a = _MAX((_b), _MAX((_c), (_d)))
+#define MATH_VEC_MIN(_a, _b) VMIN(_a.v, _b.v)
+#define MATH_VEC_MAX(_a, _b) VMAX(_a.v, _b.v)
+
+#define MATH_BBOX(_a, _b, _c, _d, _e) { \
+	MATH_MIN3(_a.v[0], _c.v[0], _d.v[0], _e.v[0]); \
+	MATH_MIN3(_a.v[1], _c.v[1], _d.v[1], _e.v[1]); \
+	MATH_MIN3(_a.v[2], _c.v[2], _d.v[2], _e.v[2]); \
+	MATH_MAX3(_b.v[0], _c.v[0], _d.v[0], _e.v[0]); \
+	MATH_MAX3(_b.v[1], _c.v[1], _d.v[1], _e.v[1]); \
+	MATH_MAX3(_b.v[2], _c.v[2], _d.v[2], _e.v[2]); }
+
+/* ======================== X-tests ======================== */
+#define AXISTEST_X01(a, b, fa, fb) \
+	p.v[0] = a*v0.v[1] - b*v0.v[2]; \
+	p.v[2] = a*v2.v[1] - b*v2.v[2]; \
+        if (p.v[0] < p.v[2]) { min = p.v[0]; max = p.v[2]; } else { min = p.v[2]; max = p.v[0]; } \
+	rad = fa * half_size -> v[1] + fb * half_size -> v[2]; \
+	if (min > rad || max < -rad) return 0; \
+
+#define AXISTEST_X2(a, b, fa, fb) \
+	p.v[0] = a*v0.v[1] - b*v0.v[2]; \
+	p.v[1] = a*v1.v[1] - b*v1.v[2]; \
+        if (p.v[0] < p.v[1]) { min = p.v[0]; max = p.v[1]; } else { min = p.v[1]; max = p.v[0]; } \
+	rad = fa * half_size -> v[1] + fb * half_size -> v[2]; \
+	if (min > rad || max < -rad) return 0;
+
+/* ======================== Y-tests ======================== */
+#define AXISTEST_Y02(a, b, fa, fb) \
+	p.v[0] = -a*v0.v[0] + b*v0.v[2]; \
+	p.v[2] = -a*v2.v[0] + b*v2.v[2]; \
+        if (p.v[0] < p.v[2]) { min = p.v[0]; max = p.v[2]; } else { min = p.v[2]; max = p.v[0]; } \
+	rad = fa * half_size -> v[0] + fb * half_size -> v[2]; \
+	if (min > rad || max < -rad) return 0;
+
+#define AXISTEST_Y1(a, b, fa, fb) \
+	p.v[0] = -a*v0.v[0] + b*v0.v[2]; \
+	p.v[1] = -a*v1.v[0] + b*v1.v[2]; \
+        if (p.v[0] < p.v[1]) { min = p.v[0]; max = p.v[1]; } else { min = p.v[1]; max = p.v[0]; } \
+	rad = fa * half_size -> v[0] + fb * half_size -> v[2]; \
+	if (min > rad || max < -rad) return 0;
+
+/* ======================== Z-tests ======================== */
+#define AXISTEST_Z12(a, b, fa, fb) \
+	p.v[1] = a*v1.v[0] - b*v1.v[1]; \
+	p.v[2] = a*v2.v[0] - b*v2.v[1]; \
+        if (p.v[2] < p.v[1]) { min = p.v[2]; max = p.v[1]; } else { min = p.v[1]; max = p.v[2]; } \
+	rad = fa * half_size -> v[0] + fb * half_size -> v[1]; \
+	if (min > rad || max < -rad) return 0;
+
+#define AXISTEST_Z0(a, b, fa, fb) \
+	p.v[0] = a*v0.v[0] - b*v0.v[1]; \
+	p.v[1] = a*v1.v[0] - b*v1.v[1]; \
+        if (p.v[0] < p.v[1]) { min = p.v[0]; max = p.v[1]; } else { min = p.v[1]; max = p.v[0]; } \
+	rad = fa * half_size -> v[0] + fb * half_size -> v[1]; \
+	if (min > rad || max < -rad) return 0;
+
 
 tfloat TIE_PREC;
 
