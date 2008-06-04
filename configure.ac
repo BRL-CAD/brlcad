@@ -2573,6 +2573,7 @@ AC_MSG_CHECKING(whether to build Tcl)
 TCL=""
 TCLSTUB=""
 TCL_CPPFLAGS=""
+unset ac_cv_c_tclconfig
 if test "x$build_brlcad_tcl" = "xyes" ; then
     TCL_VERSION="8.5"
     AC_MSG_RESULT(yes)
@@ -2611,11 +2612,7 @@ else
 	sleep 1
     fi
 fi
-AC_SUBST(TCL)
-AC_SUBST(TCLSTUB)
-AC_SUBST(TCL_CPPFLAGS)
-AC_SUBST(TCL_VERSION)
-AC_SUBST(LIBTCL)
+dnl AC_SUBST values are below after itcl sanity check
 
 
 dnl *** Tk ***
@@ -2693,6 +2690,7 @@ AC_MSG_CHECKING(whether to build Tk)
 TK=""
 TKSTUB=""
 TK_CPPFLAGS=""
+unset ac_cv_c_tkconfig
 if test "x$build_brlcad_tk" = "xyes" ; then
     TK_VERSION="8.5"
     build_against_tk="yes"
@@ -2728,11 +2726,7 @@ else
 	sleep 1
     fi
 fi
-AC_SUBST(TK)
-AC_SUBST(TKSTUB)
-AC_SUBST(TK_CPPFLAGS)
-AC_SUBST(TK_VERSION)
-AC_SUBST(LIBTK)
+dnl AC_SUBST values are below after itcl sanity check
 
 
 dnl *** incrTcl ***
@@ -2829,6 +2823,54 @@ ITCL_LIB_FILE="libitcl${ITCL_VERSION}.a"
 ITK_LIB_FILE="libitk${ITCL_VERSION}.a"
 AC_SUBST(ITCL_LIB_FILE)
 AC_SUBST(ITK_LIB_FILE)
+
+
+dnl *** tcl+itcl sanity ***
+dnl See if the tcl we're using is compatible with the incrTcl we're using
+if test "x$TCL" = "x$LIBTCL" ; then
+    if test "x$ITCL" != "x$LIBITCL" ; then
+	# apparently want to use system tcl with non-system incrTcl
+	# is that sane?
+	if test "x$TCL_VERSION" = "x8.4" ; then
+	    AC_MSG_WARN([Unable to find a system incrTcl compatible with the available system Tcl])
+	    AC_MSG_WARN([Enabling compilation of both Tcl and incrTcl])
+	    # nope!
+	    build_brlcad_tcl="yes"
+	    build_brlcad_tk="yes"
+	    TCL_VERSION="8.5"
+	    TK_VERSION="8.5"
+
+	    case $host_os in
+		darwin*)
+		    TCL='-L${top_builddir}/src/other/tcl/unix'" -ltcl${TCL_VERSION} $FRAMEWORK_COREFOUNDATION"
+		    ;;
+		*)
+		    TCL='-L${top_builddir}/src/other/tcl/unix'" -ltcl${TCL_VERSION} ${LIBDL} ${LIBM}"
+		    ;;
+	    esac
+	    TCLSTUB='-L${top_builddir}/src/other/tcl/unix'" -ltclstub${TCL_VERSION}"
+	    TCL_CPPFLAGS='-I${top_srcdir}/src/other/tcl/generic -I${top_srcdir}/src/other/tcl/unix'
+
+	    TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TCL_VERSION}"
+	    TKSTUB='-L${top_builddir}/src/other/tk/unix'" -ltkstub${TK_VERSION}"
+	    TK_CPPFLAGS='-I${top_srcdir}/src/other/tk/generic -I${top_srcdir}/src/other/tk/unix -I${top_srcdir}/src/other/tk/win'
+	    if test "x$bc_build_aquatk" = "xyes" ; then
+		TK_CPPFLAGS="$TK_CPPFLAGS "'-I${top_srcdir}/src/other/tk/xlib'
+	    fi
+	fi
+    fi
+fi
+AC_SUBST(TCL)
+AC_SUBST(TCLSTUB)
+AC_SUBST(TCL_CPPFLAGS)
+AC_SUBST(TCL_VERSION)
+AC_SUBST(LIBTCL)
+AC_SUBST(TK)
+AC_SUBST(TKSTUB)
+AC_SUBST(TK_CPPFLAGS)
+AC_SUBST(TK_VERSION)
+AC_SUBST(LIBTK)
+
 
 dnl *** iwidgets ***
 dnl See if the iwidgets are available
