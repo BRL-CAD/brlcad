@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup primitives */
+/** @addtogroup g_  */
 /** @{ */
-/** @file hpy.c
+/** @file g_hpy.c
  *
  *	Intersect a ray with an elliptical hyperboloid of one sheet.
  *
@@ -52,7 +52,7 @@
  *  
  *  Hyperboloid of one sheet:
  *  
- *  	[ (x * x) / (r1 * r1) ] + [ (y * y) / (r2 * r2) ] - [ (z*z) * (c*c) / (a*a) ] = 1
+ *  	[ (x*x) / (r1*r1) ] + [ (y*y) / (r2*r2) ] - [ (z*z) * (c*c) / (r1*r1) ] = 1
  *  
  *  	r1:	semi-major axis, along Au
  *  	r2:	semi-minor axis, along Au x H
@@ -82,10 +82,18 @@ struct hyp_specific {
     point_t	hyp_V;		/* vector to hyp origin */
     vect_t	hyp_Hunit;	/* unit H vector */
     vect_t	hyp_Aunit;	/* unit vector along semi-major axis */
-    vect_t	hyp_Bunit;	/* unit vector, A x H, semi-minor axis */
+    vect_t	hyp_Bunit;	/* unit vector, H x A, semi-minor axis */
     mat_t	hyp_SoR;	/* Scale(Rot(vect)) */
     mat_t	hyp_invRoS;	/* invRot(Scale(vect)) */
     fastf_t	hyp_Hmag;	/* scaled height of hyperboloid */
+	/* new stuff */
+    vect_t	hyp_H;
+    vect_t	hyp_Au;
+    fastf_t	hyp_r1;
+    fastf_t	hyp_r2;
+    fastf_t	hyp_c;
+    mat_t	hyp_R;
+    mat_t	hyp_invR;
 };
 
 const struct bu_structparse rt_hyp_parse[] = {
@@ -145,29 +153,43 @@ rt_hyp_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip )
     stp->st_id = ID_HYP;
     stp->st_meth = &rt_functab[ID_HYP];
 
+    BU_GETSTRUCT( hyp, hyp_specific );
+    stp->st_specific = (genptr_t)hyp;
+
+/* COPY HYP_INTERNAL TO HYP_SPECIFIC */
+    VMOVE( hyp->hyp_H, hyp_ip->hyp_H );
+    VMOVE( hyp->hyp_Au, hyp_ip->hyp_Au );
+    hyp->hyp_r1 = hyp_ip->hyp_r1;
+    hyp->hyp_r2 = hyp_ip->hyp_r2;
+    hyp->hyp_c = hyp_ip->hyp_c;
+
     /* calculate scaled height to use for top/bottom intersection planes */
     hyp->hyp_Hmag = MAGNITUDE( hyp_ip->hyp_H ) / hyp_ip->hyp_c;
+
 
     /* setup unit vectors for hyp_specific */
     VMOVE( hyp->hyp_V, hyp_ip->hyp_V );
 
     VMOVE( unitH, hyp_ip->hyp_H );
+    VMOVE( unitA, hyp_ip->hyp_Au );
+    VCROSS( unitB, unitH, unitA );
+
+    VUNITIZE( unitA );
+    VUNITIZE( unitB );
     VUNITIZE( unitH );
+
+    VMOVE( hyp->hyp_Aunit, unitA );
+    VMOVE( hyp->hyp_Bunit, unitB );
     VMOVE( hyp->hyp_Hunit, unitH );
 
-    VMOVE( unitB, hyp_ip->hyp_Au );
-    VMOVE( hyp->hyp_Aunit, hyp_ip->hyp_Au );
-
-    VCROSS( unitB, unitA, unitH );
-    VMOVE( hyp->hyp_Bunit, unitB );
 
     /* calculate transformation matrix scale(rotate(vect)) */
 
-    MAT_IDN( R );
-    VMOVE( &R[0], hyp->hyp_Bunit );
-    VMOVE( &R[4], hyp->hyp_Aunit );
-    VMOVE( &R[8], hyp->hyp_Hunit );
-    bn_mat_trn( Rinv, R );
+    MAT_IDN( hyp->hyp_R );
+    VMOVE( &(hyp->hyp_R)[0], hyp->hyp_Aunit );
+    VMOVE( &(hyp->hyp_R)[4], hyp->hyp_Bunit );
+    VMOVE( &(hyp->hyp_R)[8], hyp->hyp_Hunit );
+    bn_mat_trn( hyp->hyp_invR, R );
 
     a = hyp_ip->hyp_r1;
     b = hyp_ip->hyp_r2;
@@ -176,12 +198,12 @@ rt_hyp_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip )
 
     MAT_IDN( S );
 
-    S[0] = 1.0 / b;
-    S[5] = 1.0 / a;
-    S[10] = 1.0 / c;
+    S[0] = 1.0 / a;
+    S[5] = 1.0 / b;
+    S[10] = c / a;
 
-    bn_mat_mul( hyp->hyp_SoR, S, R );
-    bn_mat_mul( hyp->hyp_invRoS, Rinv, S );
+    bn_mat_mul( hyp->hyp_SoR, S, hyp->hyp_R );
+    bn_mat_mul( hyp->hyp_invRoS, hyp->hyp_invR, S );
 
     /* calculate bounding sphere */
     VMOVE( stp->st_center, hyp->hyp_V );
@@ -254,20 +276,45 @@ rt_hyp_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct
     vect_t	xlated;
 
     fastf_t	a, b, c;
+    fastf_t	r1, r2, r3;
     fastf_t	disc;
     fastf_t	hitX, hitY;
 
+    fastf_t	height;
+    mat_t	R;
+
     hitp = &hits[0];
 
+    r1 = 1.0 / hyp->hyp_r1;
+    r2 = 1.0 / hyp->hyp_r2;
+    r3 = hyp->hyp_c / hyp->hyp_r1;
 
-    MAT4X3VEC( dp, hyp->hyp_SoR, rp->r_dir );
+    r1 = r1 * r1;
+    r2 = r2 * r2;
+    r3 = r3 * r3;
+
+    MAT_IDN( R );
+    VMOVE( &R[0], hyp->hyp_Aunit );
+    VMOVE( &R[4], hyp->hyp_Bunit );
+    VMOVE( &R[8], hyp->hyp_Hunit );
+
+    dp[X] = VDOT( hyp->hyp_Aunit, rp->r_dir );
+    dp[Y] = VDOT( hyp->hyp_Bunit, rp->r_dir );
+    dp[Z] = VDOT( hyp->hyp_Hunit, rp->r_dir );
+
     VSUB2( xlated, rp->r_pt, hyp->hyp_V );
-    MAT4X3VEC( pp, hyp->hyp_SoR, xlated );
+    pp[X] = VDOT( hyp->hyp_Aunit, xlated );
+    pp[Y] = VDOT( hyp->hyp_Bunit, xlated );
+    pp[Z] = VDOT( hyp->hyp_Hunit, xlated );
+/*
 
+    VMOVE( dp, rp->r_dir );
+    VSUB2( pp, rp->r_pt, hyp->hyp_V );
+*/
     /* find roots to quadratic (hitpoints) */
-    a = dp[X]*dp[X] + dp[Y]*dp[Y] - dp[Z]*dp[Z];
-    b = 2.0 * ( pp[X]*dp[X] + pp[Y]*dp[Y] - pp[Z]*dp[Z] );
-    c = pp[X]*pp[X] + pp[Y]*pp[Y] - pp[Z]*pp[Z] - 1.0;
+    a = r1*dp[X]*dp[X] + r2*dp[Y]*dp[Y] - r3*dp[Z]*dp[Z];
+    b = 2.0 * ( r1*pp[X]*dp[X] + r2*pp[Y]*dp[Y] - r3*pp[Z]*dp[Z] );
+    c = r1*pp[X]*pp[X] + r2*pp[Y]*pp[Y] - r3*pp[Z]*pp[Z] - 1.0;
 
     disc = b*b - ( 4.0 * a * c );
     if ( !NEAR_ZERO( a, RT_PCOEF_TOL ) && disc > 0 ) {
@@ -277,26 +324,30 @@ rt_hyp_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct
 	k2 = (-b - disc) / (2.0 * a);
 
 	VJOIN1( hitp->hit_vpriv, pp, k1, dp );
-	if ( hitp->hit_vpriv[Z] >= -hyp->hyp_Hmag
-	    && hitp->hit_vpriv[Z] <= hyp->hyp_Hmag ) {
+	height = hitp->hit_vpriv[Z];
+	if ( (height*height) <= MAGSQ( hyp->hyp_H ) ) {
 	    hitp->hit_magic = RT_HIT_MAGIC;
 	    hitp->hit_dist = k1;
 	    hitp->hit_surfno = HYP_NORM_BODY;
-	    hitp++;
+/*	    bu_log( "hit: (\t%2.3f,  \t%2.3f,  \t%2.3f ) \tbody  \t%2.3f\n",
+		hitp->hit_vpriv[X], hitp->hit_vpriv[Y], hitp->hit_vpriv[Z], k1 );
+*/	    hitp++;
 	    numHits++;
 	}
 
 	VJOIN1( hitp->hit_vpriv, pp, k2, dp );
-	if ( hitp->hit_vpriv[Z] >= -hyp->hyp_Hmag
-	    && hitp->hit_vpriv[Z] <= hyp->hyp_Hmag ) {
+	height = hitp->hit_vpriv[Z];
+	if ( (height*height) <= MAGSQ( hyp->hyp_H ) ) {
 	    hitp->hit_magic = RT_HIT_MAGIC;
-	    hitp->hit_dist = k1;
+	    hitp->hit_dist = k2;
 	    hitp->hit_surfno = HYP_NORM_BODY;
-	    hitp++;
+/*	    bu_log( "hit: (\t%2.3f,  \t%2.3f,  \t%2.3f ) \tbody  \t%2.3f\n",
+		hitp->hit_vpriv[X], hitp->hit_vpriv[Y], hitp->hit_vpriv[Z], k2 );
+*/	    hitp++;
 	    numHits++;
 	}
-
-    } else if ( !NEAR_ZERO( b, RT_PCOEF_TOL ) ) {
+    }
+/* else if ( !NEAR_ZERO( b, RT_PCOEF_TOL ) ) {
 	k1 = -c / b;
 	VJOIN1( hitp->hit_vpriv, pp, k1, dp );
 	if ( hitp->hit_vpriv[Z] >= -hyp->hyp_Hmag
@@ -308,6 +359,7 @@ rt_hyp_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct
 	    numHits++;
 	}
     }
+*/
 
     /* check top & bottom plates */
     k1 = (hyp->hyp_Hmag - pp[Z]) / dp[Z];
@@ -317,11 +369,13 @@ rt_hyp_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct
     hitX = hitp->hit_vpriv[X];
     hitY = hitp->hit_vpriv[Y];
     /* check if hitpoint is on the top surface */
-    if ( (hitX*hitX + hitY*hitY) < (hyp->hyp_Hmag * hyp->hyp_Hmag + 1.0) ) {
+    if ( (r1*hitX*hitX + r2*hitY*hitY) < (r3*hyp->hyp_Hmag * hyp->hyp_Hmag + 1.0) ) {
 	hitp->hit_magic = RT_HIT_MAGIC;
 	hitp->hit_dist = k1;
-	hitp->hit_surfno = HYP_NORM_BODY;
-	hitp++;
+	hitp->hit_surfno = HYP_NORM_TOP;
+/*	bu_log( "hit: (\t%2.3f,  \t%2.3f,  \t%2.3f ) \ttop   \t%2.3f\n",
+		hitp->hit_vpriv[X], hitp->hit_vpriv[Y], hitp->hit_vpriv[Z], k1 );
+*/	hitp++;
 	numHits++;
     }
 
@@ -329,17 +383,20 @@ rt_hyp_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct
     hitX = hitp->hit_vpriv[X];
     hitY = hitp->hit_vpriv[Y];
     /* check if hitpoint is on the bottom surface */
-    if ( (hitX*hitX + hitY*hitY) < (hyp->hyp_Hmag * hyp->hyp_Hmag + 1.0) ) {
+    if ( (r1*hitX*hitX + r2*hitY*hitY) < (r3*hyp->hyp_Hmag * hyp->hyp_Hmag + 1.0) ) {
 	hitp->hit_magic = RT_HIT_MAGIC;
 	hitp->hit_dist = k2;
-	hitp->hit_surfno = HYP_NORM_BODY;
-	hitp++;
+	hitp->hit_surfno = HYP_NORM_BOTTOM;
+/*	bu_log( "hit: (\t%2.3f,  \t%2.3f,  \t%2.3f ) \tbottom\t %2.3f\n",
+		hitp->hit_vpriv[X], hitp->hit_vpriv[Y], hitp->hit_vpriv[Z], k2 );
+*/	hitp++;
 	numHits++;
     }
 
-    /* bu_log("numHits: %d\n", numHits); */
-
-    if ( hitp == &hits[0] ) {
+/*    if (numHits) bu_log("numHits: %d\n", numHits);
+*/
+    if ( hitp == &hits[0] || hitp == &hits[1] || hitp == &hits[3]) {
+	if ( hitp == &hits[3] ) bu_log("three hits\n");
 	return(0);	/* MISS */
     }
 
@@ -364,32 +421,32 @@ rt_hyp_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct
 	    BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 	}
 	return(2);			/* HIT */
-    } else {	/* 4 hits */
-	/* merge sort list to find segments */
+    } else {	/* 4 hits:  0,1 are sides, 2,3 are top/bottom*/
 	struct hit sorted[4];
-	struct hit *temp;
-	int i = 0, j = 2, k = 0;
 	register struct seg *segp;
 
+	
+
 	if ( hits[0].hit_dist > hits[1].hit_dist ) {
-	    *temp = hits[0];
-	    hits[0] = hits[1];
-	    hits[1] = *temp;
+	    sorted[1] = hits[1];
+	    sorted[2] = hits[0];
+	} else {
+	    sorted[1] = hits[0];
+	    sorted[2] = hits[1];
 	}
 	if ( hits[2].hit_dist > hits[3].hit_dist ) {
-	    *temp = hits[2];
-	    hits[2] = hits[3];
-	    hits[3] = *temp;
+	    sorted[0] = hits[3];
+	    sorted[3] = hits[2];
+	} else {
+	    sorted[0] = hits[2];
+	    sorted[3] = hits[3];
 	}
 
-	while ( i < 2 && j < 4 ) {
-	    if ( hits[i].hit_dist < hits[j].hit_dist )
-		sorted[k++] = hits[i++];
-	    else
-		sorted[k++] = hits[j++];
+	if ( sorted[0].hit_dist > sorted[1].hit_dist 
+		|| sorted[1].hit_dist > sorted[2].hit_dist
+		|| sorted[2].hit_dist > sorted[3].hit_dist ) {
+	    bu_log( "sorting error\n" );
 	}
-	while ( i < 2 ) sorted[k++] = hits[i++];
-	while ( j < 4 ) sorted[k++] = hits[j++];
 
 	/* hit segments are now (0,1) and (2,3) */
 	RT_GET_SEG(segp, ap->a_resource);
@@ -439,8 +496,10 @@ rt_hyp_norm( struct hit *hitp, struct soltab *stp, struct xray *rp )
     fastf_t	dzdx, dzdy, x, y, z;
     /* normal from basic hyperboloid and transformed normal */
     vect_t	n, nT;
+    point_t	hit;
 
     VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
+    VMOVE( hit, hitp->hit_vpriv );
     switch ( hitp->hit_surfno ) {
 	case HYP_NORM_TOP:
 	    VMOVE( hitp->hit_normal, hyp->hyp_Hunit );
@@ -451,22 +510,34 @@ rt_hyp_norm( struct hit *hitp, struct soltab *stp, struct xray *rp )
 	case HYP_NORM_BODY:
 	    /* normal vector is VUNITIZE( -dz/dx, -dz/dy, +-1 ) */
 	    /* z = +- sqrt( x^2 + y^2 -1) */
-	    x = hitp->hit_vpriv[X];
-	    y = hitp->hit_vpriv[Y];
-	    z = hitp->hit_vpriv[Z];
+	    x = hit[X];
+	    y = hit[Y];
+	    z = hit[Z];
 	    if ( NEAR_ZERO(z, SMALL_FASTF) ) {
 		/* near z==0, the norm is in the x-y plane */
-		VSET( n, x, y, 0 );
+		VSET( n, hyp->hyp_r1*hyp->hyp_r1*y, hyp->hyp_r2*hyp->hyp_r2*x, 0 );
 	    } else {
-		dzdx = x / z;
-		dzdy = y / z;
+		dzdx = x / (z*hyp->hyp_c*hyp->hyp_c );
+		dzdy = (y*hyp->hyp_r1*hyp->hyp_r1) / (z*hyp->hyp_c*hyp->hyp_c*hyp->hyp_r2*hyp->hyp_r2);
 		if ( z > 0 ) {
 		    VSET( n, dzdx, dzdy, -1.0);
 		} else {
 		    VSET( n, -dzdx, -dzdy, 1.0);
 		}
 	    }
-	    MAT4X3VEC( nT, hyp->hyp_invRoS, n);
+/*
+	    MAT4X3VEC( nT, hyp->hyp_invR, n);
+*/
+	    nT[X] = ( hyp->hyp_Aunit[X] * n[X] )
+		+ ( hyp->hyp_Bunit[X] * n[Y] )
+		+ ( hyp->hyp_Hunit[X] * n[Z] );
+	    nT[Y] = ( hyp->hyp_Aunit[Y] * n[X] )
+		+ ( hyp->hyp_Bunit[Y] * n[Y] )
+		+ ( hyp->hyp_Hunit[Y] * n[Z] );
+	    nT[Z] = ( hyp->hyp_Aunit[Z] * n[X] )
+		+ ( hyp->hyp_Bunit[Z] * n[Y] )
+		+ ( hyp->hyp_Hunit[Z] * n[Z] );
+
 	    VUNITIZE( nT );
 	    VMOVE( hitp->hit_normal, nT );
 	    break;
@@ -779,6 +850,19 @@ rt_hyp_describe( struct bu_vls *str, const struct rt_db_internal *ip, int verbos
 	(struct rt_hyp_internal *)ip->idb_ptr;
     char	buf[256];
 
+    vect_t	unitH;	/* unit vector along axis of revolution */
+    vect_t	unitA;	/* unit vector along semi-major axis of elliptical cross section */
+    vect_t	unitB;	/* unit vector along semi-minor axis of elliptical cross section */
+
+    VMOVE( unitH, hyp_ip->hyp_H );
+    VMOVE( unitA, hyp_ip->hyp_Au );
+    VCROSS( unitB, unitH, unitA );
+
+    VUNITIZE( unitA );
+    VUNITIZE( unitB );
+    VUNITIZE( unitH );
+
+
     RT_HYP_CK_MAGIC(hyp_ip);
     bu_vls_strcat( str, "truncated general hyp (HYP)\n");
 
@@ -795,6 +879,12 @@ rt_hyp_describe( struct bu_vls *str, const struct rt_db_internal *ip, int verbos
 	    INTCLAMP(MAGNITUDE(hyp_ip->hyp_H) * mm2local) );
     bu_vls_strcat( str, buf );
 
+    sprintf(buf, "\tAu (%g, %g, %g)\n",
+	    INTCLAMP(hyp_ip->hyp_Au[X] * mm2local),
+	    INTCLAMP(hyp_ip->hyp_Au[Y] * mm2local),
+	    INTCLAMP(hyp_ip->hyp_Au[Z] * mm2local) );
+    bu_vls_strcat( str, buf );
+
     sprintf(buf, "\tA=%g\n", INTCLAMP(hyp_ip->hyp_r1 * mm2local));
     bu_vls_strcat( str, buf );
 
@@ -804,6 +894,23 @@ rt_hyp_describe( struct bu_vls *str, const struct rt_db_internal *ip, int verbos
     sprintf(buf, "\tc=%g\n", INTCLAMP(hyp_ip->hyp_c * mm2local));
     bu_vls_strcat( str, buf );
 
+    sprintf(buf, "\tunitA (%g, %g, %g)\n",
+	    INTCLAMP(unitA[X] * mm2local),
+	    INTCLAMP(unitA[Y] * mm2local),
+	    INTCLAMP(unitA[Z] * mm2local) );
+    bu_vls_strcat( str, buf );
+
+    sprintf(buf, "\tunitB (%g, %g, %g)\n",
+	    INTCLAMP(unitB[X] * mm2local),
+	    INTCLAMP(unitB[Y] * mm2local),
+	    INTCLAMP(unitB[Z] * mm2local) );
+    bu_vls_strcat( str, buf );
+
+    sprintf(buf, "\tunitH (%g, %g, %g)\n",
+	    INTCLAMP(unitH[X] * mm2local),
+	    INTCLAMP(unitH[Y] * mm2local),
+	    INTCLAMP(unitH[Z] * mm2local) );
+    bu_vls_strcat( str, buf );
 
     return(0);
 }
