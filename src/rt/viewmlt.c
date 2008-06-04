@@ -19,7 +19,7 @@
  */
 /** @file viewmlt.c
  *
- * Implementation of the Metropolis Light Transport algorithm. 
+ * Implementation of the Metropolis Light Transport algorithm.
  *
  */
 
