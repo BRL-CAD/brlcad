@@ -42,13 +42,16 @@ package provide ArcherCore 1.0
 
 namespace eval ArcherCore {
     if {![info exists parentClass]} {
-	if {$tcl_platform(platform) == "windows"} {
-	    set parentClass itk::Toplevel
-	    set inheritFromToplevel 1
-	} else {
-	    set parentClass TabWindow
-	    set inheritFromToplevel 0
-	}
+	set parentClass itk::Toplevel
+	set inheritFromToplevel 1
+
+#	if {$tcl_platform(platform) == "windows"} {
+#	    set parentClass itk::Toplevel
+#	    set inheritFromToplevel 1
+#	} else {
+#	    set parentClass TabWindow
+#	    set inheritFromToplevel 0
+#	}
     }
 }
 
