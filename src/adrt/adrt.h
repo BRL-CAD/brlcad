@@ -60,7 +60,7 @@ enum
 };
 
 #define ADRT_VER_KEY		0
-#define ADRT_VER_DETAIL		"ADRT - U.S. Army Research Lab (2003 - 2008)"
+#define ADRT_VER_DETAIL		"ADRT - Advanced Distributed Ray Tracer"
 
 #define ADRT_MESH_HIT	0x1
 #define ADRT_MESH_SELECT	0x2
