@@ -62,6 +62,14 @@ typedef struct adrt_mesh_s {
     struct texture_s *texture;
 } adrt_mesh_t;
 
+struct adrt_load_info {
+    unsigned char op;
+    unsigned int fmt;
+    unsigned int wid;
+    unsigned int pid;
+    char dbnam[64];	/* yes, that extra 'e' is too much typing. */
+};
+
 #define ADRT_MESH(_m) ((adrt_mesh_t *)_m)
 
 #endif
