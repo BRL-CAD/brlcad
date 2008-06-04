@@ -2078,6 +2078,7 @@ AC_CHECK_FUNCS(\
 	setpriority \
 	setprogname \
 	srand48 \
+	strcasecmp \
 	strchr \
 	strdup \
 	strlcat \
@@ -2090,6 +2091,7 @@ AC_CHECK_FUNCS(\
 	vfork \
 	writev \
 )
+# strcasecmp checked for BLT
 
 dnl *** check if basename() exists ***
 AC_MSG_CHECKING([for basename])
@@ -2858,7 +2860,11 @@ if test "x$TCL" = "x$LIBTCL" ; then
 		TK_CPPFLAGS="$TK_CPPFLAGS "'-I${top_srcdir}/src/other/tk/xlib'
 	    fi
 	fi
+    else
+	echo "ITCL:  $ITCL == $LIBITCL"
     fi
+else
+    echo "TCL: $TCL != $LIBTCL"
 fi
 AC_SUBST(TCL)
 AC_SUBST(TCLSTUB)
