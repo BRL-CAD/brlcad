@@ -421,7 +421,7 @@ view_2init( struct application *ap )
 
     /*
      * Set the hit distance difference necessary to trigger an edge.
-     * This algorythm was stolen from lgt, I may make it settable later.
+     * This algorithm was stolen from lgt, I may make it settable later.
      */
     if (max_dist < .00001)
 	max_dist = (cell_width*ARCTAN_87)+2;
