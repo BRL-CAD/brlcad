@@ -577,10 +577,10 @@ rt_hyp_uv( struct application *ap, struct soltab *stp, struct hit *hitp, struct 
     register struct hyp_specific *hyp =
 	(struct hyp_specific *)stp->st_specific;
 
-    fastf_t	x, y, rSq;
+    fastf_t	x, y, z, a, b, c;
 
     /* u = (angle from semi-major axis on basic hyperboloid) / (2*pi) */
-    uvp->uv_u = (atan2(hitp->hit_vpriv[X], hitp->hit_vpriv[Y]) + M_PI) * 0.5 * M_1_PI;
+    uvp->uv_u = (atan2(hitp->hit_vpriv[X], hitp->hit_vpriv[Y] * hyp->hyp_r1 / hyp->hyp_r2) + M_PI) * 0.5 * M_1_PI;
 
     /* (0,0.25) = bottom, (0.25,0.75) = side, (0.75,1.0) = top */
     switch( hitp->hit_surfno ) {
@@ -591,14 +591,20 @@ rt_hyp_uv( struct application *ap, struct soltab *stp, struct hit *hitp, struct 
 	case HYP_NORM_TOP:
 	    x = hitp->hit_vpriv[X];
 	    y = hitp->hit_vpriv[Y];
-	    rSq = 1.0 + (hyp->hyp_Hmag * hyp->hyp_Hmag);
-	    uvp->uv_v = 1.0 - 0.25 * sqrt( (x*x + y*y) / rSq );
+	    z = hitp->hit_vpriv[Z];
+	    a = hyp->hyp_r1;
+	    b = hyp->hyp_r2;
+	    c = hyp->hyp_c;
+	    uvp->uv_v = 1.0 - 0.25 * sqrt( ((x*x)/(a*a) + (y*y)/(b*b)) / ( 1 + (z*z)*(c*c)/(a*a) ) );
+	    if ( uvp->uv_v < 0.75 ) bu_log( "error: v < 0.75 (actually %5.3f)\n", uvp->uv_v );
 	    break;
 	case HYP_NORM_BOTTOM:
 	    x = hitp->hit_vpriv[X];
 	    y = hitp->hit_vpriv[Y];
-	    rSq = 1.0 + (hyp->hyp_Hmag * hyp->hyp_Hmag);
-	    uvp->uv_v = 0.25 * sqrt( (x*x + y*y) / rSq );
+	    a = hyp->hyp_r1;
+	    b = hyp->hyp_r2;
+	    uvp->uv_v = 0.25 * sqrt( ((x*x)/(a*a) + (y*y)/(b*b)) / ( 1 + (z*z)*(c*c)/(a*a) ) );
+	    if ( uvp->uv_v > 0.25 ) bu_log( "error: v > 0.25 (actually %5.3f)\n", uvp->uv_v );
 	    break;
     }
     /* copied from g_ehy.c */
