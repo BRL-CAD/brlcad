@@ -31,8 +31,6 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   context.  presumably that is triggering other code that is failing
   to redraw.
 
-* implement/test the "Blinn blob" method in g_metaball.c
-
 * verify/finish clone mirror support
 
 * address the TODO items in src/mged/clone.c
@@ -40,6 +38,8 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 * (re)verify rtarea results, fix naming convention
 
 * ADRT: remove MySQL code, fix ISST callbacks, re-enable RISE, cleanup
+
+* fix metaball "shelling" issue
 
 * extend metaball control info beyond simple points
 
