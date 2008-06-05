@@ -330,6 +330,8 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 * see doc/deprecation.txt for items that have been marked as
   deprecated or are available for deprecation.
 
+* make struct rt_functab's ft_label bigger and/or dynamic (e.g. vls)
+
 
 DOCUMENTATION
 -------------
