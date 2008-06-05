@@ -347,7 +347,7 @@ rt_hyp_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct
 	    numHits++;
 	}
     }
-/* else if ( !NEAR_ZERO( b, RT_PCOEF_TOL ) ) {
+    else if ( !NEAR_ZERO( b, RT_PCOEF_TOL ) ) {
 	k1 = -c / b;
 	VJOIN1( hitp->hit_vpriv, pp, k1, dp );
 	if ( hitp->hit_vpriv[Z] >= -hyp->hyp_Hmag
@@ -359,7 +359,7 @@ rt_hyp_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct
 	    numHits++;
 	}
     }
-*/
+
 
     /* check top & bottom plates */
     k1 = (hyp->hyp_Hmag - pp[Z]) / dp[Z];
@@ -396,8 +396,8 @@ rt_hyp_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct
 /*    if (numHits) bu_log("numHits: %d\n", numHits);
 */
     if ( hitp == &hits[0] || hitp == &hits[1] || hitp == &hits[3]) {
-	if ( hitp == &hits[3] ) bu_log("three hits\n");
-	return(0);	/* MISS */
+/*	if ( hitp != &hits[0] ) bu_log("hits: %d\tsurf: %d\n", numHits, hits[0].hit_surfno);
+*/	return(0);	/* MISS */
     }
 
     if ( hitp == &hits[2] ) {	/* 2 hits */
