@@ -306,48 +306,45 @@ rt_hyp_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct
     pp[X] = VDOT( hyp->hyp_Aunit, xlated );
     pp[Y] = VDOT( hyp->hyp_Bunit, xlated );
     pp[Z] = VDOT( hyp->hyp_Hunit, xlated );
-/*
 
-    VMOVE( dp, rp->r_dir );
-    VSUB2( pp, rp->r_pt, hyp->hyp_V );
-*/
     /* find roots to quadratic (hitpoints) */
     a = r1*dp[X]*dp[X] + r2*dp[Y]*dp[Y] - r3*dp[Z]*dp[Z];
     b = 2.0 * ( r1*pp[X]*dp[X] + r2*pp[Y]*dp[Y] - r3*pp[Z]*dp[Z] );
     c = r1*pp[X]*pp[X] + r2*pp[Y]*pp[Y] - r3*pp[Z]*pp[Z] - 1.0;
 
     disc = b*b - ( 4.0 * a * c );
-    if ( !NEAR_ZERO( a, RT_PCOEF_TOL ) && disc > 0 ) {
-	disc = sqrt(disc);
+    if ( !NEAR_ZERO( a, RT_PCOEF_TOL ) ) {
+	if ( disc > 0 ) {
+	    disc = sqrt(disc);
 
-	k1 = (-b + disc) / (2.0 * a);
-	k2 = (-b - disc) / (2.0 * a);
+	    k1 = (-b + disc) / (2.0 * a);
+	    k2 = (-b - disc) / (2.0 * a);
 
-	VJOIN1( hitp->hit_vpriv, pp, k1, dp );
-	height = hitp->hit_vpriv[Z];
-	if ( (height*height) <= MAGSQ( hyp->hyp_H ) ) {
-	    hitp->hit_magic = RT_HIT_MAGIC;
-	    hitp->hit_dist = k1;
-	    hitp->hit_surfno = HYP_NORM_BODY;
-/*	    bu_log( "hit: (\t%2.3f,  \t%2.3f,  \t%2.3f ) \tbody  \t%2.3f\n",
-		hitp->hit_vpriv[X], hitp->hit_vpriv[Y], hitp->hit_vpriv[Z], k1 );
-*/	    hitp++;
-	    numHits++;
+	    VJOIN1( hitp->hit_vpriv, pp, k1, dp );
+	    height = hitp->hit_vpriv[Z];
+	    if ( (height*height) <= MAGSQ( hyp->hyp_H ) ) {
+		hitp->hit_magic = RT_HIT_MAGIC;
+		hitp->hit_dist = k1;
+		hitp->hit_surfno = HYP_NORM_BODY;
+	/*	bu_log( "hit: (\t%2.3f,  \t%2.3f,  \t%2.3f ) \tbody  \t%2.3f\n",
+			hitp->hit_vpriv[X], hitp->hit_vpriv[Y], hitp->hit_vpriv[Z], k1 );
+	*/	hitp++;
+		numHits++;
+	    }
+	
+	    VJOIN1( hitp->hit_vpriv, pp, k2, dp );
+	    height = hitp->hit_vpriv[Z];
+	    if ( (height*height) <= MAGSQ( hyp->hyp_H ) ) {
+		hitp->hit_magic = RT_HIT_MAGIC;
+		hitp->hit_dist = k2;
+		hitp->hit_surfno = HYP_NORM_BODY;
+	/*	bu_log( "hit: (\t%2.3f,  \t%2.3f,  \t%2.3f ) \tbody  \t%2.3f\n",
+			hitp->hit_vpriv[X], hitp->hit_vpriv[Y], hitp->hit_vpriv[Z], k2 );
+	*/	hitp++;
+		numHits++;
+	    }
 	}
-
-	VJOIN1( hitp->hit_vpriv, pp, k2, dp );
-	height = hitp->hit_vpriv[Z];
-	if ( (height*height) <= MAGSQ( hyp->hyp_H ) ) {
-	    hitp->hit_magic = RT_HIT_MAGIC;
-	    hitp->hit_dist = k2;
-	    hitp->hit_surfno = HYP_NORM_BODY;
-/*	    bu_log( "hit: (\t%2.3f,  \t%2.3f,  \t%2.3f ) \tbody  \t%2.3f\n",
-		hitp->hit_vpriv[X], hitp->hit_vpriv[Y], hitp->hit_vpriv[Z], k2 );
-*/	    hitp++;
-	    numHits++;
-	}
-    }
-    else if ( !NEAR_ZERO( b, RT_PCOEF_TOL ) ) {
+    } else if ( !NEAR_ZERO( b, RT_PCOEF_TOL ) ) {
 	k1 = -c / b;
 	VJOIN1( hitp->hit_vpriv, pp, k1, dp );
 	if ( hitp->hit_vpriv[Z] >= -hyp->hyp_Hmag
@@ -359,7 +356,6 @@ rt_hyp_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct
 	    numHits++;
 	}
     }
-
 
     /* check top & bottom plates */
     k1 = (hyp->hyp_Hmag - pp[Z]) / dp[Z];
@@ -396,8 +392,14 @@ rt_hyp_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct
 /*    if (numHits) bu_log("numHits: %d\n", numHits);
 */
     if ( hitp == &hits[0] || hitp == &hits[1] || hitp == &hits[3]) {
-/*	if ( hitp != &hits[0] ) bu_log("hits: %d\tsurf: %d\n", numHits, hits[0].hit_surfno);
-*/	return(0);	/* MISS */
+/*	if ( hitp == &hits[1] ) {
+	    bu_log("hits: %d\tsurf: %d\n", numHits, hits[0].hit_surfno);
+	} else if ( hitp == &hits[3] ) {
+	    bu_log("hits: %d\tsurf: %d  %d  %d\n", 
+		numHits, hits[0].hit_surfno, hits[1].hit_surfno, hits[2].hit_surfno);
+	}
+*/
+	return(0);	/* MISS */
     }
 
     if ( hitp == &hits[2] ) {	/* 2 hits */
@@ -423,9 +425,6 @@ rt_hyp_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct
 	return(2);			/* HIT */
     } else {	/* 4 hits:  0,1 are sides, 2,3 are top/bottom*/
 	struct hit sorted[4];
-	register struct seg *segp;
-
-	
 
 	if ( hits[0].hit_dist > hits[1].hit_dist ) {
 	    sorted[1] = hits[1];
