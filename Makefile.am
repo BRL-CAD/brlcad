@@ -414,7 +414,7 @@ install-data-local:
 	    if test "x$USER" = "x" ; then \
 		USER="unknown" ; \
 	    fi ; \
-	    $(ECHO) "Installed BRL-CAD Release @BRLCAD_VERSION@ Build @CONFIG_DATE@ by ${USER} to $(DESTDIR)$(prefix) on `date`" >> install.$(host_triplet).log ; \
+	    $(ECHO) "Installed BRL-CAD Release ${BRLCAD_VERSION} Build ${CONFIG_DATE} by ${USER} to $(DESTDIR)$(prefix) on `date`" >> install.$(host_triplet).log ; \
 	    chmod ugo+rw install.$(host_triplet).log ; \
 	fi
 
@@ -430,13 +430,13 @@ install-data-local:
 all-local:
 	@$(ECHO) "Done."
 	@$(ECHO)
-	@$(ECHO) "BRL-CAD Release @BRLCAD_VERSION@, Build @CONFIG_DATE@"
+	@$(ECHO) "BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE}"
 	@$(ECHO)
 	@if test "x$(MAKECMDGOALS)" = "xall-am" -o "x$(.TARGETS)" = "xall-am" -o "x$(MAKECMDGOALS)" = "xfast" -o "x$(.TARGETS)" = "xfast" ; then \
 	  $(ECHO) $(ECHO_N) "Elapsed compilation time: " ;\
 	  sh $(top_srcdir)/sh/elapsed.sh `cat $(top_builddir)/include/conf/DATE` ;\
 	  $(ECHO) $(ECHO_N) "Elapsed time since configuration: " ;\
-	  sh $(top_srcdir)/sh/elapsed.sh @CONFIG_TIME@ ;\
+	  sh $(top_srcdir)/sh/elapsed.sh ${CONFIG_TIME} ;\
 	  $(ECHO) "---" ;\
 	  $(ECHO) "Run 'make install' to begin installation into $(prefix)" ;\
 	  $(ECHO) "Run 'make benchmark' to run the BRL-CAD Benchmark Suite" ;\
@@ -444,12 +444,12 @@ all-local:
 	  $(ECHO) $(ECHO_N) "Elapsed installation time: " ;\
 	  sh $(top_srcdir)/sh/elapsed.sh `cat $(top_builddir)/include/conf/DATE` ;\
 	  $(ECHO) $(ECHO_N) "Elapsed time since configuration: " ;\
-	  sh $(top_srcdir)/sh/elapsed.sh @CONFIG_TIME@ ;\
+	  sh $(top_srcdir)/sh/elapsed.sh ${CONFIG_TIME} ;\
 	  $(ECHO) "---" ;\
 	  $(ECHO) "Run 'make test' to run the BRL-CAD Test Suite" ;\
 	  $(ECHO) "Run 'make benchmark' to run the BRL-CAD Benchmark Suite" ;\
 	  $(ECHO) ;\
-	  line1="  BRL-CAD @BRLCAD_VERSION@ is now installed into $(prefix)" ;\
+	  line1="  BRL-CAD ${BRLCAD_VERSION} is now installed into $(prefix)" ;\
 	  line2="  Be sure to add $(prefix)/bin to your PATH" ;\
 	  separator="`$(ECHO) $$line1 | tr '[[:print:]]' '*'`" ;\
 	  $(ECHO) "$${separator}****" ;\
@@ -460,7 +460,7 @@ all-local:
 	  $(ECHO) $(ECHO_N) "Elapsed time: " ;\
 	  sh $(top_srcdir)/sh/elapsed.sh `cat $(top_builddir)/include/conf/DATE` ;\
 	  $(ECHO) $(ECHO_N) "Elapsed time since configuration: " ;\
-	  sh $(top_srcdir)/sh/elapsed.sh @CONFIG_TIME@ ;\
+	  sh $(top_srcdir)/sh/elapsed.sh ${CONFIG_TIME} ;\
 	  $(ECHO) "---" ;\
 	  $(ECHO) "Run 'make benchmark' to run the BRL-CAD Benchmark Suite" ;\
 	fi
