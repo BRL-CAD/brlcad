@@ -472,7 +472,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\torus\torus.c"
+				RelativePath="..\..\..\src\librt\primitives\tor\tor.c"
 				>
 			</File>
 			<File
