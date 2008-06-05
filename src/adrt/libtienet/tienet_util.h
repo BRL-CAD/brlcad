@@ -66,8 +66,8 @@ typedef struct tienet_sem_s {
 
 
 extern	void	tienet_flip(void* src, void* dest, size_t size);
-extern	int	tienet_send(int socket, void* data, size_t size, const int flip);
-extern	int	tienet_recv(int socket, void *data, int size, int flip);
+extern	int	tienet_send(int socket, void* data, size_t size);
+extern	int	tienet_recv(int socket, void *data, int size);
 
 extern	void	tienet_sem_init(tienet_sem_t *sem, int val);
 extern	void	tienet_sem_free(tienet_sem_t *sem);

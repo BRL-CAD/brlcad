@@ -170,7 +170,7 @@ void* isst_observer_networking(void *ptr) {
     /* send version and get endian info */
     op = ISST_NET_OP_INIT;
     tienet_send(isst_observer_master_socket, &op, 1, isst_observer_endian);
-    tienet_recv(isst_observer_master_socket, &isst_observer_endian, sizeof(short), 0);
+    tienet_recv(isst_observer_master_socket, &isst_observer_endian, sizeof(short));
     isst_observer_endian = isst_observer_endian == 1 ? 0 : 1;
     tienet_recv(isst_observer_master_socket, &screen_w, sizeof(int), isst_observer_endian);
     tienet_recv(isst_observer_master_socket, &screen_h, sizeof(int), isst_observer_endian);
@@ -226,9 +226,9 @@ void* isst_observer_networking(void *ptr) {
 	/* Send Event Queue to Master */
 	pthread_mutex_lock(&event_mut);
 
-	tienet_send(isst_observer_master_socket, &isst_observer_event_queue_size, sizeof(uint8_t), 0);
+	tienet_send(isst_observer_master_socket, &isst_observer_event_queue_size, sizeof(uint8_t));
 	if (isst_observer_event_queue_size)
-	    tienet_send(isst_observer_master_socket, isst_observer_event_queue, isst_observer_event_queue_size * sizeof(isst_event_t), 0);
+	    tienet_send(isst_observer_master_socket, isst_observer_event_queue, isst_observer_event_queue_size * sizeof(isst_event_t));
 	isst_observer_event_queue_size = 0;
 
 	pthread_mutex_unlock(&event_mut);
@@ -241,14 +241,14 @@ void* isst_observer_networking(void *ptr) {
 	    unsigned long dest_len;
 	    unsigned int comp_size;
 
-	    tienet_recv(isst_observer_master_socket, &comp_size, sizeof(unsigned int), 0);
-	    tienet_recv(isst_observer_master_socket, comp_buf, comp_size, 0);
+	    tienet_recv(isst_observer_master_socket, &comp_size, sizeof(unsigned int));
+	    tienet_recv(isst_observer_master_socket, comp_buf, comp_size);
 
 	    dest_len = screen_w*screen_h*3;
 	    uncompress(frame, &dest_len, comp_buf, (unsigned long)comp_size);
 	}
 #else
-	tienet_recv(isst_observer_master_socket, frame, 3*screen_w*screen_h, 0);
+	tienet_recv(isst_observer_master_socket, frame, 3*screen_w*screen_h);
 #endif
 
 	if (isst_observer_display_init) {
@@ -295,7 +295,7 @@ void* isst_observer_networking(void *ptr) {
 	    isst_overlay_data_t overlay;
 	    char string[ADRT_NAME_SIZE];
 
-	    tienet_recv(isst_observer_master_socket, &overlay, sizeof(isst_overlay_data_t), 0);
+	    tienet_recv(isst_observer_master_socket, &overlay, sizeof(isst_overlay_data_t));
 
 	    /* Wait for the console to unlock */
 	    pthread_mutex_lock(&isst_observer_console_mut);
@@ -349,20 +349,20 @@ void isst_observer_process(char *content, char *response) {
     char op;
 
     op = ISST_NET_OP_MESG;
-    tienet_send(isst_observer_master_socket, &op, 1, 0);
+    tienet_send(isst_observer_master_socket, &op, 1);
 
     /* length of content */
     op = strlen(content);
     if (strlen(content)) {
 	op += 1;
-	tienet_send(isst_observer_master_socket, &op, 1, 0);
+	tienet_send(isst_observer_master_socket, &op, 1);
 
 	/* content */
-	tienet_send(isst_observer_master_socket, content, op, 0);
+	tienet_send(isst_observer_master_socket, content, op);
 
 	/* get the response */
-	tienet_recv(isst_observer_master_socket, &op, 1, 0);
-	tienet_recv(isst_observer_master_socket, response, op, 0);
+	tienet_recv(isst_observer_master_socket, &op, 1);
+	tienet_recv(isst_observer_master_socket, response, op);
     }
 }
 

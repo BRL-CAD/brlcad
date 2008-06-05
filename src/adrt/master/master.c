@@ -399,11 +399,11 @@ master_networking (void *ptr)
 
 	    /* remove socket from pool if there's an error, i.e slave disconnected */
 	    op = 255;
-	    error = tienet_recv (sock->num, &op, 1, 0);
+	    error = tienet_recv (sock->num, &op, 1);
 	    if (error || op == ADRT_NETOP_QUIT || !sock->active)
 	    {
 		op = ADRT_NETOP_QUIT;
-		tienet_send (sock->num, &op, 1, 0);
+		tienet_send (sock->num, &op, 1);
 
 		tmp = sock;
 		if (sock->prev)
@@ -419,7 +419,6 @@ master_networking (void *ptr)
 		continue;
 	    }
 
-
 	    /* standard communication */
 	    switch (op)
 	    {
@@ -431,7 +430,7 @@ master_networking (void *ptr)
 		case ADRT_NETOP_INIT:
 		    /* send endian */
 		    endian = 1;
-		    tienet_send (sock->num, &endian, 2, 0);
+		    tienet_send (sock->num, &endian, 2);
 		    break;
 
 		case ADRT_NETOP_REQWID:
@@ -450,7 +449,7 @@ master_networking (void *ptr)
 		    master.wid_list[i] = 1;
 
 		    /* Send this WID to the client application. */
-		    tienet_send (sock->num, &i, 2, 0);
+		    tienet_send (sock->num, &i, 2);
 		}
 		break;
 
@@ -459,9 +458,9 @@ master_networking (void *ptr)
 		    uint32_t size;
 		    void *mesg;
 
-		    tienet_recv (sock->num, &size, 4, 0);
+		    tienet_recv (sock->num, &size, 4);
 		    mesg = bu_malloc (size, "message buffer");
-		    tienet_recv (sock->num, mesg, size, 0);
+		    tienet_recv (sock->num, mesg, size);
 		    tienet_master_broadcast(mesg, size);
 		    bu_free(mesg, "message");
 		}
@@ -472,8 +471,8 @@ master_networking (void *ptr)
 		    uint16_t wid;
 
 		    /* Size */
-		    tienet_recv (sock->num, &master.slave_data_len, 4, 0);
-		    tienet_recv (sock->num, master.slave_data, master.slave_data_len, 0);
+		    tienet_recv (sock->num, &master.slave_data_len, 4);
+		    tienet_recv (sock->num, master.slave_data, master.slave_data_len);
 
 		    op = master.slave_data[0];
 		    bcopy (&master.slave_data[1], &wid, 2);
@@ -521,13 +520,13 @@ master_networking (void *ptr)
 		    tienet_sem_wait(&(sock->frame_sem));
 
 		    /* Stamp the result with the work type */
-		    tienet_send (sock->num, &op, 1, 0);
+		    tienet_send (sock->num, &op, 1);
 
 		    /* Workspace ID */
-		    tienet_send (sock->num, &wid, 2, 0);
+		    tienet_send (sock->num, &wid, 2);
 
 		    /* Size of result data */
-		    tienet_send (sock->num, &master.buf.ind, 4, 0);
+		    tienet_send (sock->num, &master.buf.ind, 4);
 
 #if ADRT_USE_COMPRESSION
 		    {
@@ -544,11 +543,11 @@ master_networking (void *ptr)
 			TCOPY(uint32_t, &comp_size, 0, master.buf_comp.data, 0);
 
 			/* int compressed data size in bytes followed by actual rgb frame data */
-			tienet_send (sock->num, master.buf_comp.data, comp_size + sizeof(unsigned int), 0);
+			tienet_send (sock->num, master.buf_comp.data, comp_size + sizeof(unsigned int));
 		    }
 #else
 		    /* result data */
-		    tienet_send (sock->num, master.buf.data, master.buf.ind, 0);
+		    tienet_send (sock->num, master.buf.data, master.buf.ind);
 #endif
 		}
 		break;

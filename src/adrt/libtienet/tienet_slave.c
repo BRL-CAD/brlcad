@@ -44,7 +44,6 @@
 
 void	tienet_slave_worker(int port, char *host);
 
-short	tienet_endian;
 int	tienet_slave_ver_key;
 
 
@@ -138,31 +137,33 @@ void tienet_slave_worker(int port, char *host) {
 	exit(1);
     }
 
-    /* receive endian of master */
-    tienet_recv(slave_socket, &tienet_endian, sizeof(short), 0);
-    tienet_endian = tienet_endian == 1 ? 0 : 1;
+    /* receive endian of master (going away) */
+    {
+	short tienet_endian;
+	tienet_recv(slave_socket, &tienet_endian, sizeof(short));
+    }
 
     /* send version key, master will respond whether to continue or not */
-    tienet_send(slave_socket, &tienet_slave_ver_key, sizeof(int), tienet_endian);
+    tienet_send(slave_socket, &tienet_slave_ver_key, sizeof(int));
 
     /* If version mismatch then exit */
-    tienet_recv(slave_socket, &op, sizeof(short), tienet_endian);
+    tienet_recv(slave_socket, &op, sizeof(short));
     if (op == TN_OP_COMPLETE)
 	return;
 
     /* Request Work Unit */
 //  op = TN_OP_REQWORK;
-//  tienet_send(slave_socket, &op, sizeof(short), tienet_endian);
+//  tienet_send(slave_socket, &op, sizeof(short));
 
     while (1) {
-	tienet_recv(slave_socket, &op, sizeof(short), tienet_endian);
+	tienet_recv(slave_socket, &op, sizeof(short));
 	if (op == TN_OP_SHUTDOWN || op == TN_OP_COMPLETE) {
 	    close(slave_socket);
 	    exit(0);
 	} else {
-	    tienet_recv(slave_socket, &size, sizeof(uint32_t), tienet_endian);
+	    tienet_recv(slave_socket, &size, sizeof(uint32_t));
 	    TIENET_BUFFER_SIZE(buffer, size);
-	    tienet_recv(slave_socket, buffer.data, size, 0);
+	    tienet_recv(slave_socket, buffer.data, size);
 	    buffer.ind = size;
 
 	    /* Process work and Generate Results */
@@ -178,15 +179,11 @@ void tienet_slave_worker(int port, char *host) {
 
 	    /* Pack Operation Code */
 	    op = TN_OP_RESULT;
-	    if (tienet_endian) tienet_flip(&op, &op, sizeof(short));
 	    TCOPY(short, &op, 0, buffer.data, buffer.ind);
-	    if (tienet_endian) tienet_flip(&op, &op, sizeof(short));
 	    buffer.ind += sizeof(short);
 
 	    /* Pack Result Length */
-	    if (tienet_endian) tienet_flip(&result.ind, &result.ind, sizeof(uint32_t));
 	    TCOPY(uint32_t, &result.ind, 0, buffer.data, buffer.ind);
-	    if (tienet_endian) tienet_flip(&result.ind, &result.ind, sizeof(uint32_t));
 	    buffer.ind += sizeof(uint32_t);
 
 #if TN_COMPRESSION
@@ -198,9 +195,7 @@ void tienet_slave_worker(int port, char *host) {
 	    size = (uint32_t)dest_len;
     
 	    /* Pack Compressed Result Length */
-	    if (tienet_endian) tienet_flip(&size, &size, sizeof(uint32_t));
 	    TCOPY(uint32_t, &size, 0, buffer.data, buffer.ind);
-	    if (tienet_endian) tienet_flip(&size, &size, sizeof(uint32_t));
 	    buffer.ind += sizeof(uint32_t);
 
 	    /* Pack Compressed Result Data */
@@ -211,7 +206,7 @@ void tienet_slave_worker(int port, char *host) {
 	    memcpy(&((char *)buffer.data)[buffer.ind], result.data, result.ind);
 	    buffer.ind += result.ind;
 #endif
-	    tienet_send(slave_socket, buffer.data, buffer.ind, 0);
+	    tienet_send(slave_socket, buffer.data, buffer.ind);
 	}
     }
 
