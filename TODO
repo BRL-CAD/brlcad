@@ -54,8 +54,6 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
   general means to manipulate the packed and unpacked .g file data for
   performing low-level modifications.
 
-* make z-clipping off by default
-
 * fix the "(type)(size_t)val" hacks (using ints like ptrs, etc)
 
 * fix rt parallel crash
