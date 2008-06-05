@@ -4,7 +4,8 @@ SFILES = \
 	csv.nrt \
 	csv-gap.nrt \
 	default.nrt \
-  	gap1.nrt \
+  	entryexit.nrt \
+	gap1.nrt \
 	gap2.nrt
 
 EXTRA_DIST = \
