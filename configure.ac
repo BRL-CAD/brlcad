@@ -134,8 +134,8 @@ title="Configuring BRL-CAD Release $BRLCAD_VERSION, Build $CONFIG_DATE"
 length="`echo x${title}x | wc -c`"
 separator=""
 while test $length -gt 1 ; do
-separator="${separator}*"
-length="`expr $length - 1`"
+    separator="${separator}*"
+    length="`expr $length - 1`"
 done
 
 BC_BOLD
