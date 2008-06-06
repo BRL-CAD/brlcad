@@ -514,7 +514,7 @@ rt_hyp_norm( struct hit *hitp, struct soltab *stp, struct xray *rp )
 	    z = hit[Z];
 	    if ( NEAR_ZERO(z, SMALL_FASTF) ) {
 		/* near z==0, the norm is in the x-y plane */
-		VSET( n, hyp->hyp_r1*hyp->hyp_r1*y, hyp->hyp_r2*hyp->hyp_r2*x, 0 );
+		VSET( n, hyp->hyp_r2*hyp->hyp_r2*x, hyp->hyp_r1*hyp->hyp_r1*y, 0 );
 	    } else {
 		dzdx = x / (z*hyp->hyp_c*hyp->hyp_c );
 		dzdy = (y*hyp->hyp_r1*hyp->hyp_r1) / (z*hyp->hyp_c*hyp->hyp_c*hyp->hyp_r2*hyp->hyp_r2);
