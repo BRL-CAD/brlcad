@@ -2832,33 +2832,31 @@ dnl See if the tcl we're using is compatible with the incrTcl we're using
 if test "x$TCL" = "x$LIBTCL" ; then
     if test "x$ITCL" != "x$LIBITCL" ; then
 	# apparently want to use system tcl with non-system incrTcl
-	# is that sane?
-	if test "x$TCL_VERSION" = "x8.4" ; then
-	    AC_MSG_WARN([Unable to find a system incrTcl compatible with the available system Tcl])
-	    AC_MSG_WARN([Enabling compilation of both Tcl and incrTcl])
-	    # nope!
-	    build_brlcad_tcl="yes"
-	    build_brlcad_tk="yes"
-	    TCL_VERSION="8.5"
-	    TK_VERSION="8.5"
+	# is that sane? probably not until 8.5 is everywhere.
+	AC_MSG_WARN([Unable to find a system incrTcl compatible with the available system Tcl])
+	AC_MSG_WARN([Enabling compilation of both Tcl and incrTcl])
+	# nope!
+	build_brlcad_tcl="yes"
+	build_brlcad_tk="yes"
+	TCL_VERSION="8.5"
+	TK_VERSION="8.5"
 
-	    case $host_os in
-		darwin*)
-		    TCL='-L${top_builddir}/src/other/tcl/unix'" -ltcl${TCL_VERSION} $FRAMEWORK_COREFOUNDATION"
-		    ;;
-		*)
-		    TCL='-L${top_builddir}/src/other/tcl/unix'" -ltcl${TCL_VERSION} ${LIBDL} ${LIBM}"
-		    ;;
-	    esac
-	    TCLSTUB='-L${top_builddir}/src/other/tcl/unix'" -ltclstub${TCL_VERSION}"
-	    TCL_CPPFLAGS='-I${top_srcdir}/src/other/tcl/generic -I${top_srcdir}/src/other/tcl/unix'
+	case $host_os in
+	    darwin*)
+		TCL='-L${top_builddir}/src/other/tcl/unix'" -ltcl${TCL_VERSION} $FRAMEWORK_COREFOUNDATION"
+		;;
+	    *)
+		TCL='-L${top_builddir}/src/other/tcl/unix'" -ltcl${TCL_VERSION} ${LIBDL} ${LIBM}"
+		;;
+	esac
+	TCLSTUB='-L${top_builddir}/src/other/tcl/unix'" -ltclstub${TCL_VERSION}"
+	TCL_CPPFLAGS='-I${top_srcdir}/src/other/tcl/generic -I${top_srcdir}/src/other/tcl/unix'
 
-	    TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TCL_VERSION}"
-	    TKSTUB='-L${top_builddir}/src/other/tk/unix'" -ltkstub${TK_VERSION}"
-	    TK_CPPFLAGS='-I${top_srcdir}/src/other/tk/generic -I${top_srcdir}/src/other/tk/unix -I${top_srcdir}/src/other/tk/win'
-	    if test "x$bc_build_aquatk" = "xyes" ; then
-		TK_CPPFLAGS="$TK_CPPFLAGS "'-I${top_srcdir}/src/other/tk/xlib'
-	    fi
+	TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TCL_VERSION}"
+	TKSTUB='-L${top_builddir}/src/other/tk/unix'" -ltkstub${TK_VERSION}"
+	TK_CPPFLAGS='-I${top_srcdir}/src/other/tk/generic -I${top_srcdir}/src/other/tk/unix -I${top_srcdir}/src/other/tk/win'
+	if test "x$bc_build_aquatk" = "xyes" ; then
+	    TK_CPPFLAGS="$TK_CPPFLAGS "'-I${top_srcdir}/src/other/tk/xlib'
 	fi
     fi
 fi
