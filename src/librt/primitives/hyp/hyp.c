@@ -164,7 +164,7 @@ rt_hyp_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip )
     hyp->hyp_c = hyp_ip->hyp_c;
 
     /* calculate scaled height to use for top/bottom intersection planes */
-    hyp->hyp_Hmag = MAGNITUDE( hyp_ip->hyp_H ) / hyp_ip->hyp_c;
+    hyp->hyp_Hmag = MAGNITUDE( hyp_ip->hyp_H );
 
 
     /* setup unit vectors for hyp_specific */
@@ -596,7 +596,6 @@ rt_hyp_uv( struct application *ap, struct soltab *stp, struct hit *hitp, struct 
 	    b = hyp->hyp_r2;
 	    c = hyp->hyp_c;
 	    uvp->uv_v = 1.0 - 0.25 * sqrt( ((x*x)/(a*a) + (y*y)/(b*b)) / ( 1 + (z*z)*(c*c)/(a*a) ) );
-	    if ( uvp->uv_v < 0.75 ) bu_log( "error: v < 0.75 (actually %5.3f)\n", uvp->uv_v );
 	    break;
 	case HYP_NORM_BOTTOM:
 	    x = hitp->hit_vpriv[X];
@@ -604,7 +603,6 @@ rt_hyp_uv( struct application *ap, struct soltab *stp, struct hit *hitp, struct 
 	    a = hyp->hyp_r1;
 	    b = hyp->hyp_r2;
 	    uvp->uv_v = 0.25 * sqrt( ((x*x)/(a*a) + (y*y)/(b*b)) / ( 1 + (z*z)*(c*c)/(a*a) ) );
-	    if ( uvp->uv_v > 0.25 ) bu_log( "error: v > 0.25 (actually %5.3f)\n", uvp->uv_v );
 	    break;
     }
     /* copied from g_ehy.c */
