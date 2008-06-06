@@ -492,13 +492,10 @@ rt_hyp_norm( struct hit *hitp, struct soltab *stp, struct xray *rp )
     register struct hyp_specific *hyp =
 	(struct hyp_specific *)stp->st_specific;
 
-    fastf_t	dzdx, dzdy, x, y, z;
     /* normal from basic hyperboloid and transformed normal */
     vect_t	n, nT;
-    point_t	hit;
 
     VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
-    VMOVE( hit, hitp->hit_vpriv );
     switch ( hitp->hit_surfno ) {
 	case HYP_NORM_TOP:
 	    VMOVE( hitp->hit_normal, hyp->hyp_Hunit );
@@ -507,26 +504,12 @@ rt_hyp_norm( struct hit *hitp, struct soltab *stp, struct xray *rp )
 	    VREVERSE( hitp->hit_normal, hyp->hyp_Hunit );
 	    break;
 	case HYP_NORM_BODY:
-	    /* normal vector is VUNITIZE( -dz/dx, -dz/dy, +-1 ) */
-	    /* z = +- sqrt( x^2 + y^2 -1) */
-	    x = hit[X];
-	    y = hit[Y];
-	    z = hit[Z];
-	    if ( NEAR_ZERO(z, SMALL_FASTF) ) {
-		/* near z==0, the norm is in the x-y plane */
-		VSET( n, hyp->hyp_r2*hyp->hyp_r2*x, hyp->hyp_r1*hyp->hyp_r1*y, 0 );
-	    } else {
-		dzdx = x / (z*hyp->hyp_c*hyp->hyp_c );
-		dzdy = (y*hyp->hyp_r1*hyp->hyp_r1) / (z*hyp->hyp_c*hyp->hyp_c*hyp->hyp_r2*hyp->hyp_r2);
-		if ( z > 0 ) {
-		    VSET( n, dzdx, dzdy, -1.0);
-		} else {
-		    VSET( n, -dzdx, -dzdy, 1.0);
-		}
-	    }
-/*
-	    MAT4X3VEC( nT, hyp->hyp_invR, n);
-*/
+	    /* normal vector is VUNITIZE( z * dz/dx, z * dz/dy, -z ) */
+	    /* z = +- (c/a) * sqrt( x^2/a^2 + y^2/b^2 -1) */
+	    VSET( n, hyp->hyp_r2*hyp->hyp_r2*hitp->hit_vpriv[X],
+			 hyp->hyp_r1*hyp->hyp_r1*hitp->hit_vpriv[Y], 
+			-hitp->hit_vpriv[Z]*hyp->hyp_c*hyp->hyp_c*hyp->hyp_r2*hyp->hyp_r2 );
+
 	    nT[X] = ( hyp->hyp_Aunit[X] * n[X] )
 		+ ( hyp->hyp_Bunit[X] * n[Y] )
 		+ ( hyp->hyp_Hunit[X] * n[Z] );
