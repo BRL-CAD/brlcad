@@ -480,6 +480,39 @@ BU_EXPORT BU_EXTERN(inline bu_endian_t bu_byteorder, (void));
  *  or for the case of "old" it may also be in the list head, e.g.
  *	BU_LIST_INSERT( &(head.l), &((p)->l) );
  *
+ * --- BEGIN EXAMPLE ---
+
+    // make bu_list the first element in your structure
+    struct my_structure {
+	struct bu_list l;
+	int my_data;
+    };
+
+    // your actual list
+    struct my_structure *my_list = NULL;
+
+    // allocate and initialize your list head
+    BU_GETSTRUCT(my_list, my_structure);
+    BU_LIST_INIT(&(my_list->l));
+    my_list->my_data = -1;
+
+    // add a new element to your list
+    struct my_structure *new_entry;
+    BU_GETSTRUCT(new_entry, my_structure);
+    new_entry->my_data = rand();
+    BU_LIST_PUSH(&(my_list->l), &(new_entry->l));
+
+    // iterate over your list, remove all items
+    struct my_structure *entry;
+    while (BU_LIST_WHILE(entry, my_structure, &(my_list->l))) {
+	bu_log("Entry value is %d\n", entry->my_data);
+	BU_LIST_DEQUEUE(&(entry->l));
+	bu_free(entry, "free my_structure entry");
+    }
+    bu_free(my_list, "free my_structure list head");
+
+ * --- END EXAMPLE ---
+ *
  *  Dequeueing the head of a list is a valid and
  *  well defined operation which should be performed with caution.
  *  Unless a pointer to some other element of the list is retained
