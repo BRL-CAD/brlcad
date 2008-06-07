@@ -795,8 +795,13 @@ void application_init () {}
  *	This function receives a pointer to a point_list
  *	structure, the number of points to calculate, and
  *  the point address of where to record the information.
+ *
+ *  Since the structure of a vector and of a point is pretty
+ *  similar, some vector macros can be used to handle points.
+ *  The macros used in the calculation of the area center are
+ *  VSET and VSETALL. In the rayhit() function, VMOVE is also
+ *  used.
  */
-
 int
 area_center(struct point_list * ptlist, int number, point_t *center)
 {
@@ -806,8 +811,24 @@ area_center(struct point_list * ptlist, int number, point_t *center)
     if (BU_LIST_IS_EMPTY(&(ptlist->l))) {
         return 0;
     }
+
     VSETALL(temp_point, 0);
 
+    /*  This block of code could be replaced with a
+     *  BU_LIST_FOR(), but the first element of the list,
+     *  the one pointed by the exp_points and hit_points
+     *  point_lists (in struct area), are initialized with
+     *  no data, and using the BU_LIST_FOR macro would hurt
+     *  precision.
+     *
+     *  This for() iterates from the second element of the list
+     *  to the last one that is not head.
+     *
+     *  In order to use BU_LIST_FOR, the rayhit function must
+     *  be modified so that when the point lists are formed,
+     *  checks are made to ensure that the head element is not
+     *  empty.
+     */
     for ((point_it) = BU_LIST_PNEXT(point_list,
                     BU_LIST_FIRST(point_list, &(ptlist->l))); 
 	     (point_it) && BU_LIST_NOT_HEAD(point_it, &(ptlist->l)); 
