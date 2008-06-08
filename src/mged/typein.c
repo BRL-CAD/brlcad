@@ -2437,7 +2437,7 @@ ehy_in(char **cmd_argvs, struct rt_db_internal *intern)
 	return(1);	/* failure */
     }
 
-    if ( NEAR_ZERO( VDOT( rip->ehy_H, rip->ehy_Au ), RT_DOT_TOL ) ) {
+    if ( !NEAR_ZERO( VDOT( rip->ehy_H, rip->ehy_Au ), RT_DOT_TOL ) ) {
 	Tcl_AppendResult(interp, "ERROR, major axis must be perpendicular to height vector!\n", (char *)NULL);
 	return(1);	/* failure */
     }
@@ -2488,14 +2488,21 @@ hyp_in(char **cmd_argvs, struct rt_db_internal *intern)
 	return(1);	/* failure */
     }
 
-    if ( NEAR_ZERO( VDOT( rip->hyp_H, rip->hyp_Au ), RT_DOT_TOL ) ) {
+    if ( !NEAR_ZERO( VDOT( rip->hyp_H, rip->hyp_Au ), RT_DOT_TOL ) ) {
 	Tcl_AppendResult(interp, "ERROR, major axis must be perpendicular to height vector!\n", (char *)NULL);
 	return(1);	/* failure */
     }
 
     if (rip->hyp_r2 > rip->hyp_r1) {
-	Tcl_AppendResult(interp, "ERROR, |A| must be greater than |B|!\n", (char *)NULL);
-	return(1);	/* failure */
+	vect_t	majorAxis;
+	fastf_t	majorLen;
+
+	VCROSS( majorAxis, rip->hyp_H, rip->hyp_Au );
+	VUNITIZE( majorAxis );
+	VMOVE( rip->hyp_Au, majorAxis );
+	majorLen = rip->hyp_r2;
+	rip->hyp_r2 = rip->hyp_r1;
+	rip->hyp_r1 = majorLen;
     }
 
     return(0);	/* success */
