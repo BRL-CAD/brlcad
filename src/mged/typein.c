@@ -2437,6 +2437,11 @@ ehy_in(char **cmd_argvs, struct rt_db_internal *intern)
 	return(1);	/* failure */
     }
 
+    if ( NEAR_ZERO( VDOT( rip->ehy_H, rip->ehy_Au ), RT_DOT_TOL ) ) {
+	Tcl_AppendResult(interp, "ERROR, major axis must be perpendicular to height vector!\n", (char *)NULL);
+	return(1);	/* failure */
+    }
+
     if (rip->ehy_r2 > rip->ehy_r1) {
 	Tcl_AppendResult(interp, "ERROR, |A| must be greater than |B|!\n", (char *)NULL);
 	return(1);	/* failure */
@@ -2480,6 +2485,11 @@ hyp_in(char **cmd_argvs, struct rt_db_internal *intern)
 	|| rip->hyp_r1 <= RT_LEN_TOL || rip->hyp_r2 <= RT_LEN_TOL
 	|| rip->hyp_c <= RT_LEN_TOL) {
 	Tcl_AppendResult(interp, "ERROR, height, axes, and distance to asymptotes must be greater than zero!\n", (char *)NULL);
+	return(1);	/* failure */
+    }
+
+    if ( NEAR_ZERO( VDOT( rip->hyp_H, rip->hyp_Au ), RT_DOT_TOL ) ) {
+	Tcl_AppendResult(interp, "ERROR, major axis must be perpendicular to height vector!\n", (char *)NULL);
 	return(1);	/* failure */
     }
 
