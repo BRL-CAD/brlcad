@@ -431,7 +431,7 @@ char *p_hyp[] = {
     "Enter Y: ",
     "Enter Z: ",
     "Enter magnitude of vector B: ",
-    "Enter tangent cone slope in H-A plane, c: "
+    "Enter neck to base ratio, c (0,1): "
 };
 
 char *p_eto[] = {
@@ -2460,6 +2460,10 @@ hyp_in(char **cmd_argvs, struct rt_db_internal *intern)
 {
     int			i;
     struct rt_hyp_internal	*rip;
+    vect_t	inH, inAu;
+    point_t	inV;
+    fastf_t	inB, inC;
+
 
     CHECK_DBI_NULL;
 
@@ -2472,13 +2476,20 @@ hyp_in(char **cmd_argvs, struct rt_db_internal *intern)
     rip->hyp_magic = RT_HYP_INTERNAL_MAGIC;
 
     for (i = 0; i < ELEMENTS_PER_PT; i++) {
-	rip->hyp_V[i] = atof(cmd_argvs[3+i]) * local2base;
-	rip->hyp_H[i] = atof(cmd_argvs[6+i]) * local2base;
-	rip->hyp_Au[i] = atof(cmd_argvs[9+i]) * local2base;
+	inV[i] = atof(cmd_argvs[3+i]) * local2base;
+	inH[i] = atof(cmd_argvs[6+i]) * local2base;
+	inAu[i] = atof(cmd_argvs[9+i]) * local2base;
     }
-    rip->hyp_r1 = MAGNITUDE(rip->hyp_Au);
-    rip->hyp_r2 = atof(cmd_argvs[12]) * local2base;
-    rip->hyp_c = atof(cmd_argvs[13]) * local2base;
+    inB = atof(cmd_argvs[12]) * local2base;
+    inC = atof(cmd_argvs[13]) * local2base;
+
+    rip->hyp_r1 = inC * MAGNITUDE(inAu);
+    rip->hyp_r2 = inC * inB;
+    rip->hyp_c = sqrt( 4 * MAGSQ( inAu ) / MAGSQ( inH ) * ( 1 - inC*inC )  );
+
+    VSCALE( rip->hyp_H, inH, 0.5 );
+    VADD2( rip->hyp_V, inV, rip->hyp_H );
+    VMOVE( rip->hyp_Au, inAu );
     VUNITIZE(rip->hyp_Au);
 
     if (MAGNITUDE(rip->hyp_H) < RT_LEN_TOL
@@ -2490,6 +2501,11 @@ hyp_in(char **cmd_argvs, struct rt_db_internal *intern)
 
     if ( !NEAR_ZERO( VDOT( rip->hyp_H, rip->hyp_Au ), RT_DOT_TOL ) ) {
 	Tcl_AppendResult(interp, "ERROR, major axis must be perpendicular to height vector!\n", (char *)NULL);
+	return(1);	/* failure */
+    }
+
+    if ( inC >= 1 || inC <=0 ) {
+	Tcl_AppendResult(interp, "ERROR, neck to base ratio must be between 0 and 1!\n", (char *)NULL);
 	return(1);	/* failure */
     }
 
