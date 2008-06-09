@@ -590,6 +590,17 @@ rt_hyp_uv( struct application *ap, struct soltab *stp, struct hit *hitp, struct 
 	    uvp->uv_v = sqrt( ((x*x)/(a*a) + (y*y)/(b*b)) / ( 1 + (z*z)*(c*c)/(a*a) ) );
 	    break;
     }
+
+    /* sanity checks */
+    if ( uvp->uv_u < 0.0 )
+	uvp->uv_u = 0.0;
+    else if ( uvp->uv_u > 1.0 )
+	uvp->uv_u = 1.0;
+    if ( uvp->uv_v < 0.0 )
+	uvp->uv_v = 0.0;
+    else if ( uvp->uv_v > 1.0 )
+	uvp->uv_v = 1.0;
+
     /* copied from g_ehy.c */
     uvp->uv_du = uvp->uv_dv = 0;
 }
