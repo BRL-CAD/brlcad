@@ -1734,7 +1734,8 @@ struct rt_point_labels {
 /**
  * R T _ P T _ N O D E
  *
- * Used by g_rpc.c and others to contain forward-linked lists of points.
+ * Used by rpc.c, ehy.c, epa.c, eto.c and rhc.c
+ * to contain forward-linked lists of points.
  */
 struct rt_pt_node {
     point_t p;			/**< @brief  a point */
@@ -3334,7 +3335,7 @@ RT_EXPORT BU_EXTERN(int rt_metaball_lookup_type_id,
 RT_EXPORT BU_EXTERN(const char *rt_metaball_lookup_type_name,
 		    (const int id));
 
-/* g_rpc.c */
+/* rpc.c */
 RT_EXPORT BU_EXTERN(int rt_mk_parabola,
 		    (struct rt_pt_node *pts,
 		     fastf_t r,
@@ -4731,7 +4732,7 @@ RT_EXPORT BU_EXTERN(int tcl_list_to_fastf_array,
 		     int *array_len));
 
 
-/* g_rhc.c */
+/* rhc.c */
 RT_EXPORT BU_EXTERN(int rt_mk_hyperbola,
 		    (struct rt_pt_node *pts,
 		     fastf_t r,
