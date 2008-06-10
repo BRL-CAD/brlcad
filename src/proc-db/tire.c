@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <math.h>
 #include "bu.h"
 #include "vmath.h"
@@ -2101,12 +2102,23 @@ int main(int ac, char *av[])
     }
 
     /* Create file name if supplied, else use "tire.g" */
-    db_fp = wdb_fopen( av[bu_optind] );
-    if (db_fp == NULL) {
-	db_fp = wdb_fopen("tire.g");
-	mk_id(db_fp, "Tire");
+    struct stat sb;
+    char *defaultname = "tire.g";
+    if (av[bu_optind]) {
+	if (stat(av[bu_optind],&sb) != 0) {
+	    db_fp = wdb_fopen( av[bu_optind] );
+	} else {
+	    bu_exit(-1,"Error - refusing to overwrite pre-existing file %s",av[bu_optind]);
+	}
     }
-
+    if (!av[bu_optind]) {
+	if (stat(defaultname,&sb) != 0) {
+	    db_fp = wdb_fopen(defaultname);
+	} else {
+	    bu_exit(-1,"Error - no filename supplied and tire.g exists.");
+	}
+    }
+    mk_id(db_fp, "Tire");
 
     if (overridearray[0] > 0) isoarray[0] = overridearray[0];
     if (overridearray[1] > 0) isoarray[1] = overridearray[1];
