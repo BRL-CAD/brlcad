@@ -1,4 +1,15 @@
-/*                 S P H _ B R E P . C P P 
+/*                    S P H _ B R E P . C P P
+ * BRL-CAD
+ *
+ * Copyright (c) 2008 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
@@ -6,14 +17,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file breplicator.cpp
+/** @file sph_brep.cpp
  *
- * Breplicator is a tool for testing the new boundary representation
- * (BREP) primitive type in librt.  It creates primitives via
- * mk_brep() for testing purposes.
- *
- * Author -
- *	Ben Poole
+ * Convert sph to b-rep
+ * Author - Ben Poole
  */
 
 #include "common.h"
@@ -24,7 +31,6 @@
 #include "bn.h"
 #include "bu.h"
 
-#include "opennurbs_circle.h"
 #include "opennurbs_sphere.h"
 
 void
