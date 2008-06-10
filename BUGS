@@ -15,6 +15,10 @@ on-going issues.
 Recent Bugs
 -----------
 
+* rtweight prints incorrect units when units are set to ft.  Appears
+  to trace back to unit handling in view_end in viewweight.c.  This
+  logic should be replaced using the proper libbu functions.
+
 * the graphics window does not acquire keybinding focus in mged on
   ubuntu linux.  key events go to the command window even with the
   graphics window has focus.
