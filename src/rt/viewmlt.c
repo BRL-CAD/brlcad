@@ -27,6 +27,7 @@
 
 #include <stdio.h>
 
+#include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 
@@ -46,7 +47,7 @@ Options:\n\
  -x #		Set librt debug flags\n\
 ";
 
-int	rayhit(register struct application *ap, struct partition *PartHeadp);
+int	rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp);
 int	raymiss(register struct application *ap);
 
 struct bu_structparse view_parse[] = {
@@ -64,18 +65,11 @@ struct mlt_path {
 };
 
 struct mlt_app {
-    struct application * ap;
     struct mlt_path * path_list;
     point_t eye;
     point_t camera;
     /* ... */
 };
-
-int
-mlt_hit(register struct application *ap, struct partition *PartHeadp, struct seg *);
-
-int
-mlt_miss(register struct application * ap);
 
 /*
  *  			V I E W _ I N I T
@@ -97,9 +91,12 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 void
 view_2init(struct application *ap)
 {
-    ap->a_hit = mlt_hit;
-    ap->a_miss = mlt_miss;
+    struct mlt_app* mlt_application;
+    mlt_application = bu_malloc(sizeof(struct mlt_app), "mlt application");
+    ap->a_hit = rayhit;
+    ap->a_miss = raymiss;
     ap->a_onehit = 1;
+    ap->a_uptr = (genptr_t) mlt_application;
 }
 
 /*
@@ -112,16 +109,7 @@ view_pixel(register struct application *ap)
 {
 }
 
-/*
- *			V I E W _ E O L
- *
- *  Called by worker() at the end of each line.  Depricated.
- *  Any end-of-line processing should be done in view_pixel().
- */
-void
-view_eol(register struct application *ap)
-{
-}
+
 
 /*
  *			V I E W _ E N D
@@ -144,6 +132,7 @@ view_end(register struct application *ap)
 void
 view_setup(struct rt_i *rtip)
 {
+
 }
 
 /*
@@ -162,10 +151,26 @@ view_cleanup(struct rt_i *rtip)
  *  Called via a_hit linkage from rt_shootray() when ray hits.
  */
 int
-mlt_hit(register struct application *ap, struct partition *PartHeadp, struct seg *segp)
+rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp)
 {
+    register struct mlt_app* p_mlt; 
     bu_log("hit: 0x%x\n", ap->a_resource);
 
+    /* The application uses a generic pointer (genptr_t)
+     * to point to a struct mlt_app
+     */
+    p_mlt = (struct mlt_app*) ap->a_uptr;
+
+    /* This will be used find hit points:
+    VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
+       Once found, they will be stored in p_mlt->path_list.
+    */
+
+    
+    /* Use a BRDF function to set the new ap->r_dir;
+     * r_pt will be the same hitpoint found before;
+     * and call rt_shootray(ap)
+     */
     return(1);	/* report hit to main routine */
 }
 
@@ -175,7 +180,7 @@ mlt_hit(register struct application *ap, struct partition *PartHeadp, struct seg
  *  Called via a_miss linkage from rt_shootray() when ray misses.
  */
 int
-mlt_miss(register struct application *ap)
+raymiss(register struct application *ap)
 {
     bu_log("miss: 0x%x\n", ap->a_resource);
 
@@ -183,6 +188,17 @@ mlt_miss(register struct application *ap)
 }
 
 void application_init (void) {}
+
+/*
+ *			V I E W _ E O L
+ *
+ *  Called by worker() at the end of each line.  Depricated.
+ *  Any end-of-line processing should be done in view_pixel().
+ */
+void
+view_eol(register struct application *ap)
+{
+}
 
 /*
  * Local Variables:
