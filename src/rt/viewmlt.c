@@ -114,7 +114,20 @@ view_pixel(register struct application *ap) {}
  *  just after raytracing completes.
  */
 void
-view_end(register struct application *ap) {} 
+view_end(register struct application *ap) 
+{
+    struct mlt_app *p_mlt;
+    p_mlt = (struct mlt_app*) ap->a_uptr;
+    
+    
+    /* Freeing point list */
+    struct mlt_app *temp;
+    while (BU_LIST_WHILE(temp, mlt_app, &(p_mlt->path->l))) {
+	    BU_LIST_DEQUEUE(&(temp->l));
+	    bu_free(temp, "free mlt_app entry");
+    }
+    bu_free(p_mlt->path, "free mlt_app list head");
+} 
 
 /*
  *			V I E W _ S E T U P
