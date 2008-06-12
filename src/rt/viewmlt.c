@@ -155,7 +155,6 @@ int
 rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp)
 {
     register struct mlt_app* p_mlt;
-    point_t* hitpoint;
     bu_log("hit: 0x%x\n", ap->a_resource);
 
     /* The application uses a generic pointer (genptr_t)
@@ -164,26 +163,29 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
     p_mlt = (struct mlt_app*) ap->a_uptr;
 
     /* This will be used find the hit point: */
-    VJOIN1(segp->seg_in->hit_point, ap->r_pt, segp->seg_in->hit_dist, ap->r_dir);
+    VJOIN1(segp->seg_in.hit_point, ap->a_ray.r_pt,
+        segp->seg_in.hit_dist, ap->a_ray.r_dir);
 
     /*Once found, it will be stored in p_mlt->path_list. */
     if (!(p_mlt->path)) {
         BU_GETSTRUCT(p_mlt->path, point_list);
         BU_LIST_INIT(&(p_mlt->path->l));
-        VMOVE(p_mlt->path->pt_cell, segp->seg_in->hit_point);
+        VMOVE(p_mlt->path->pt_cell, segp->seg_in.hit_point);
     }
     else {
         struct point_list* new_point;
         BU_GETSTRUCT(new_point, point_list);
-        VMOVE(new_point->pt_cell, segp->seg_in->hit_point);
+        VMOVE(new_point->pt_cell, segp->seg_in.hit_point);
         BU_LIST_PUSH(&(p_mlt->path->l), &(new_point->l));
     }
 
     
-    /* Use a BRDF function to set the new ap->r_dir;
+    /* Use a BRDF function to set the new ap->a_ray->r_dir;
      * r_pt will be the same hitpoint found before;
      * and call rt_shootray(ap)
      */
+    VMOVE(ap->a_ray.r_pt, segp->seg_in.hit_point);
+
     return(1);	/* report hit to main routine */
 }
 
@@ -200,12 +202,13 @@ raymiss(register struct application *ap)
     return(0);
 }
 
-void application_init (void) {}
+void
+application_init(void) {}
 
 /*
  *			V I E W _ E O L
  *
- *  Called by worker() at the end of each line.  Depricated.
+ *  Called by worker() at the end of each line.  Deprecated.
  *  Any end-of-line processing should be done in view_pixel().
  */
 void
