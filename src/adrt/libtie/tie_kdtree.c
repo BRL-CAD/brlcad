@@ -915,7 +915,7 @@ TIE_FUNC(void tie_kdtree_prep, tie_t *tie)
 	if (((tie_geom_t *)(tie->kdtree->data))->tri_num)
 	    ((tie_geom_t *)(tie->kdtree->data))->tri_list = (tie_tri_t **)bu_realloc(((tie_geom_t *)(tie->kdtree->data))->tri_list, sizeof(tie_tri_t *) * ((tie_geom_t *)(tie->kdtree->data))->tri_num, "prep tri_list");
 	else
-	    bu_free (((tie->kdtree->data))->tri_list, "freeing tri list");
+	    bu_free (((tie_geom_t *)(tie->kdtree->data))->tri_list, "freeing tri list");
 
 /*
  * Compute Floating Fuzz Precision Value
