@@ -732,7 +732,15 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, unsigned int depth,
 	}
 
 /* Resize Tri List to actual ammount of memory used */
-	child[n]->tri_list = (tie_tri_t **)bu_realloc(child[n]->tri_list, sizeof(tie_tri_t *)*child[n]->tri_num, __FUNCTION__);
+	/* TODO: examine if this is correct. A 0 re-alloc is probably a very bad
+	 * thing. */
+	if( child[n]->tri_num == 0 )
+	    if( child[n]->tri_list ) {
+		bu_free( child[n]->tri_list, "child[n]->tri_list" );
+		child[n]->tri_list = NULL;
+	    }
+	else
+	    child[n]->tri_list = (tie_tri_t **)bu_realloc(child[n]->tri_list, sizeof(tie_tri_t *)*child[n]->tri_num, __FUNCTION__);
     }
 
 /*
@@ -784,7 +792,13 @@ TIE_FUNC(uint32_t tie_kdtree_cache_free, tie_t *tie, void **cache)
     tie_kdtree_cache_free_node(tie, tie->kdtree, cache, &size, &mem);
 
 /* Resize the array back to it's real value */
-    *cache = bu_realloc(*cache, size, "cache");
+	/* TODO: examine if this is correct. A 0 re-alloc is probably a very bad
+	 * thing. */
+    if( size == 0 ) {
+	bu_free (*cache, "freeing unused cache");
+	*cache = NULL;
+    } else
+	*cache = bu_realloc(*cache, size, "cache");
 
     bu_free(tie->kdtree, "kdtree");
     tie->kdtree = NULL;
@@ -895,8 +909,13 @@ TIE_FUNC(void tie_kdtree_prep, tie_t *tie)
 	return;
 
 /* Trim KDTREE to number of actual triangles if it's not that size already. */
+	/* TODO: examine if this is correct. A 0 re-alloc is probably a very bad
+	 * thing. */
     if (!already_built)
-	((tie_geom_t *)(tie->kdtree->data))->tri_list = (tie_tri_t **)bu_realloc(((tie_geom_t *)(tie->kdtree->data))->tri_list, sizeof(tie_tri_t *) * ((tie_geom_t *)(tie->kdtree->data))->tri_num, "prep tri_list");
+	if (((tie_geom_t *)(tie->kdtree->data))->tri_num)
+	    ((tie_geom_t *)(tie->kdtree->data))->tri_list = (tie_tri_t **)bu_realloc(((tie_geom_t *)(tie->kdtree->data))->tri_list, sizeof(tie_tri_t *) * ((tie_geom_t *)(tie->kdtree->data))->tri_num, "prep tri_list");
+	else
+	    bu_free (((tie->kdtree->data))->tri_list, "freeing tri list");
 
 /*
  * Compute Floating Fuzz Precision Value
