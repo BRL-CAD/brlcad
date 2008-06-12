@@ -58,6 +58,11 @@ struct point_list {
     point_t pt_cell;
 };
 
+struct path_list {
+    struct bu_list l;
+    struct point_list *pt_list;
+};
+
 struct mlt_app {
     struct point_list * path;   /** @brief Current path */
     point_t eye;    /** @brief Position of the camera */
@@ -105,7 +110,10 @@ view_2init(struct application *ap)
  *  Called by worker() after the end of proccessing for each pixel.
  */
 void
-view_pixel(register struct application *ap) {}
+view_pixel(register struct application *ap) 
+{
+
+}
 
 /*
  *			V I E W _ E N D
@@ -117,16 +125,17 @@ void
 view_end(register struct application *ap) 
 {
     struct mlt_app *p_mlt;
+    struct point_list *temp;
     p_mlt = (struct mlt_app*) ap->a_uptr;
     
     
     /* Freeing point list */
-    struct mlt_app *temp;
-    while (BU_LIST_WHILE(temp, mlt_app, &(p_mlt->path->l))) {
+
+    while (BU_LIST_WHILE(temp, point_list, &(p_mlt->path->l))) {
 	    BU_LIST_DEQUEUE(&(temp->l));
-	    bu_free(temp, "free mlt_app entry");
+	    bu_free(temp, "free point_list entry");
     }
-    bu_free(p_mlt->path, "free mlt_app list head");
+    bu_free(p_mlt->path, "free point_list head");
 } 
 
 /*
