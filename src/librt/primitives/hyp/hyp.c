@@ -733,11 +733,516 @@ rt_hyp_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 int
 rt_hyp_tess( struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol )
 {
-    struct rt_hyp_internal	*hyp_ip;
+    fastf_t	c, dtol, f, mag_a, mag_h, ntol, r1, r2, r3, cprime, swap;
+    fastf_t	**ellipses, theta_prev, theta_new;
+    fastf_t	rt_ell_ang(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol);
+    int		*pts_dbl, face, i, j, nseg;
+    int		jj, na, nb, nell, recalc_b;
+    mat_t	R;
+    mat_t	invR;
+    mat_t	invRoS;
+    mat_t	S;
+    mat_t	SoR;
+    struct rt_hyp_internal	*xip;
+    point_t		p1;
+    struct rt_pt_node	*pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc(void);
+    struct shell	*s;
+    struct faceuse	**outfaceuses = NULL;
+    struct faceuse	*fu_top;
+    struct loopuse	*lu;
+    struct edgeuse	*eu;
+    struct vertex	*vertp[3];
+    struct vertex	***vells = (struct vertex ***)NULL;
+    vect_t		A, Au, B, Bu, Hu, V;
+    struct bu_ptbl	vert_tab;
 
     RT_CK_DB_INTERNAL(ip);
-    hyp_ip = (struct rt_hyp_internal *)ip->idb_ptr;
-    RT_HYP_CK_MAGIC(hyp_ip);
+    xip = (struct rt_hyp_internal *)ip->idb_ptr;
+    RT_HYP_CK_MAGIC(xip);
+
+    /*
+     *	make sure hyp description is valid
+     */
+
+    /* compute |A| |H| */
+    mag_a = MAGSQ( xip->hyp_Au );	/* should already be unit vector */
+    mag_h = MAGNITUDE( xip->hyp_H );
+    c = xip->hyp_c;
+    cprime = c / mag_h;
+    r1 = xip->hyp_r1;
+    r2 = xip->hyp_r2;
+    r3 = r1 / c;
+    /* Check for |H| > 0, |A| == 1, r1 > 0, r2 > 0, c > 0 */
+    if ( NEAR_ZERO(mag_h, RT_LEN_TOL)
+	 || !NEAR_ZERO(mag_a - 1.0, RT_LEN_TOL)
+	 || r1 <= 0.0 || r2 <= 0.0 || c <= 0. )  {
+	return(1);		/* BAD */
+    }
+
+    /* Check for A.H == 0 */
+    f = VDOT( xip->hyp_Au, xip->hyp_H ) / mag_h;
+    if ( ! NEAR_ZERO(f, RT_DOT_TOL) )  {
+	return(1);		/* BAD */
+    }
+
+    /* make unit vectors in A, H, and HxA directions */
+    VMOVE(    Hu, xip->hyp_H );
+    VUNITIZE( Hu );
+    VMOVE(    Au, xip->hyp_Au );
+    VCROSS(   Bu, Hu, Au );
+
+    /* Compute R and Rinv matrices */
+    MAT_IDN( R );
+    VREVERSE( &R[0], Bu );
+    VMOVE(    &R[4], Au );
+    VREVERSE( &R[8], Hu );
+    bn_mat_trn( invR, R );			/* inv of rot mat is trn */
+
+    /* Compute S */
+    MAT_IDN( S );
+    S[ 0] = 1.0/r2;
+    S[ 5] = 1.0/r1;
+    S[10] = 1.0/mag_h;
+
+    /* Compute SoR and invRoS */
+    bn_mat_mul( SoR, S, R );
+    bn_mat_mul( invRoS, invR, S );
+
+    /*
+     *  Establish tolerances
+     */
+    if ( ttol->rel <= 0.0 || ttol->rel >= 1.0 )
+	dtol = 0.0;		/* none */
+    else
+	/* Convert rel to absolute by scaling by smallest side */
+	dtol = ttol->rel * 2 * r2;
+    if ( ttol->abs <= 0.0 )  {
+	if ( dtol <= 0.0 )
+	    /* No tolerance given, use a default */
+	    dtol = 2 * 0.10 * r2;	/* 10% */
+	else
+	    /* Use absolute-ized relative tolerance */
+	    ;
+    } else {
+	/* Absolute tolerance was given, pick smaller */
+	if ( ttol->rel <= 0.0 || dtol > ttol->abs )
+	    dtol = ttol->abs;
+    }
+
+    /* To ensure normal tolerance, remain below this angle */
+    if ( ttol->norm > 0.0 )
+	ntol = ttol->norm;
+    else
+	/* tolerate everything */
+	ntol = bn_pi;
+
+    /*
+     *	build hyp from 2 hyperbolas
+     */
+
+    /* calculate major axis hyperbola */
+    pts_a = rt_ptalloc();
+
+    /* set base, center, and top points */
+    pos_a = pts_a;
+    VSET( pos_a->p, sqrt( (mag_h*mag_h) * (c*c) + (r1*r1) ), 0, -mag_h );
+    pos_a->next = rt_ptalloc();
+    pos_a = pos_a->next;
+    VSET( pos_a->p, r1, 0, 0 );
+    pos_a->next = rt_ptalloc();
+    pos_a = pos_a->next;
+    VSET( pos_a->p, sqrt( (mag_h*mag_h) * (c*c) + (r1*r1) ), 0, mag_h );
+    pos_a->next = NULL;
+
+    /* refine hyp according to tolerances */
+    i = 1;
+    {
+	point_t	p0, p1, p2;
+	fastf_t	m, len, dist, ang0, ang2;
+	vect_t	v01, v02;		/* vectors from p0->p1 and p0->p2 */
+	vect_t	nLine, nHyp;
+	struct rt_pt_node *add, *rt_ptalloc(void);
+
+	while (i) {
+	    pos_a = pts_a;
+	    i = 0;
+	    while (pos_a->next) {
+
+		VMOVE( p0, pos_a->p );
+		VMOVE( p2, pos_a->next->p );
+		/* either X or Y will be zero; so adding handles either case */
+		m = (p2[Z] - p0[Z]) / ( (p2[X]+p2[Y]) - (p0[X]+p0[Y]) );
+		if (p0[X]) {
+		    p1[X] = fabs(m*c*r1) / sqrt( m*m*c*c - 1.0 );
+		    p1[Y] = 0.0;
+		    p1[Z] = sqrt( p1[X]*p1[X] - r1*r1 ) / c;
+		} else {
+		    p1[X] = 0.0;
+		    p1[Y] = fabs(m*r2*r2*c) / sqrt( m*m*r2*r2*c*c - r1*r1 );
+		    p1[Z] = (r3/r2) * sqrt( p1[Y]*p1[Y] - r2*r2 );
+		}
+		if (p0[Z] + p2[Z] < 0)  p1[Z] = -p1[Z];
+
+		VSUB2( v01, p1, p0 );
+		VSUB2( v02, p2, p0 );
+		VUNITIZE( v02 );
+		len = VDOT( v01, v02 );
+		VSCALE( v02, v02, len );
+		VSUB2( nLine, v01, v02 );
+		dist = MAGNITUDE( nLine );
+		VUNITIZE( nLine );
+
+		VSET( nHyp, p0[X] / (r1*r1), p0[Y] / (r2*r2), p0[Z] / (r3*r3) );
+		VUNITIZE( nHyp );
+		ang0 = fabs( acos( VDOT( nLine, nHyp )));	
+		VSET( nHyp, p2[X] / (r1*r1), p2[Y] / (r2*r2), p2[Z] / (r3*r3) );
+		VUNITIZE( nHyp );
+		ang2 = fabs( acos( VDOT( nLine, nHyp )));
+
+		if ( dist > dtol || ang0 > ntol || ang2 > ntol ) {
+		    /* split segment */
+		    add = rt_ptalloc();
+		    VMOVE( add->p, p1 );
+		    add->next = pos_a->next;
+		    pos_a->next = add;
+		    pos_a = pos_a->next;
+		    i = 1;
+		}
+		pos_a = pos_a->next;
+	    }
+	}
+
+    }
+
+    /* calculate minor axis hyperbola */
+    pts_b = rt_ptalloc();
+
+    pos_a = pts_a;
+    pos_b = pts_b;
+    i = 0;
+    while (pos_a) {
+	pos_b->p[Z] = pos_a->p[Z];
+	pos_b->p[X] = 0;
+	pos_b->p[Y] = r2 * sqrt( pos_b->p[Z] * pos_b->p[Z]/(r3*r3) + 1.0 );
+	pos_a = pos_a->next;
+	if (pos_a) {
+	    pos_b->next = rt_ptalloc();
+	    pos_b = pos_b->next;
+	} else {
+	    pos_b->next = NULL;
+	}
+	i++;
+    }
+
+    nell = i;
+    bu_log("num points: %d\n", i);
+
+    /* make array of ptrs to hyp ellipses */
+    ellipses = (fastf_t **)bu_malloc( nell * sizeof(fastf_t *), "fastf_t ell[]");
+
+    /* keep track of whether pts in each ellipse are doubled or not */
+    pts_dbl = (int *)bu_malloc( nell * sizeof(int), "dbl ints" );
+
+    /* make ellipses at each z level */
+    i = 0;
+    nseg = 0;
+    theta_prev = bn_twopi;
+    pos_a = pts_a;	/*->next;	/* skip over apex of hyp */
+    pos_b = pts_b;	/*->next; */
+    while (pos_a) {
+	VSCALE( A, Au, pos_a->p[X] );	/* semimajor axis */
+	VSCALE( B, Bu, pos_b->p[Y] );	/* semiminor axis */
+	VJOIN1( V, xip->hyp_V, -pos_a->p[Z], Hu );
+
+	VSET( p1, 0., pos_b->p[Y], 0. );
+	theta_new = rt_ell_ang(p1, pos_a->p[X], pos_b->p[Y], dtol, ntol);
+	if (nseg == 0) {
+	    nseg = (int)(bn_twopi / theta_new) + 1;
+	    if (nseg <= 0) nseg = 7;
+	    pts_dbl[i] = 0;
+	    /* maximum number of faces needed for hyp */
+	    face = nseg*(1 + 3*((1 << (nell-1)) - 1));
+	    /* array for each triangular face */
+	    outfaceuses = (struct faceuse **)
+		bu_malloc( (face+1) * sizeof(struct faceuse *), "hyp: *outfaceuses[]" );
+	    theta_prev = theta_new;
+	} else if (theta_new < theta_prev) {
+	    nseg *= 2;
+	    pts_dbl[i] = 1;
+	    theta_prev = theta_new;
+	} else {
+	    pts_dbl[i] = 0;
+	}
+
+	bu_log("nseg:\t%d\ntheta_prev:\t%f\ntheta_new:\t%f\n\n", nseg, theta_prev, theta_new);
+
+	ellipses[i] = (fastf_t *)bu_malloc( 3*(nseg+1)*sizeof(fastf_t), "pts ell" );
+	rt_ell( ellipses[i], V, A, B, nseg );
+
+	i++;
+	pos_a = pos_a->next;
+	pos_b = pos_b->next;
+    }
+
+    /*
+     *	put hyp geometry into nmg data structures
+     */
+
+    *r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
+    s = BU_LIST_FIRST(shell, &(*r)->s_hd);
+
+    /* vertices of ellipses of hyp */
+    vells = (struct vertex ***)
+	bu_malloc(nell*sizeof(struct vertex **), "vertex [][]");
+    j = nseg;
+    for (i = nell-1; i >= 0; i--) {
+	vells[i] = (struct vertex **)
+	    bu_malloc(j*sizeof(struct vertex *), "vertex []");
+	if (i && pts_dbl[i])
+	    j /= 2;
+    }
+
+    /* top face of hyp */
+    for (i = 0; i < nseg; i++)
+	vells[nell-1][i] = (struct vertex *)NULL;
+    face = 0;
+    BU_ASSERT_PTR( outfaceuses, !=, NULL );
+    if ( (outfaceuses[face++] = nmg_cface(s, vells[nell-1], nseg)) == 0) {
+	bu_log("rt_hyp_tess() failure, top face\n");
+	goto fail;
+    }
+    fu_top = outfaceuses[0];
+
+    /* Mark edges of this face as real, this is the only real edge */
+    for ( BU_LIST_FOR( lu, loopuse, &outfaceuses[0]->lu_hd ) ) {
+	NMG_CK_LOOPUSE( lu );
+
+	if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+	    continue;
+	for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) ) {
+	    struct edge *e;
+
+	    NMG_CK_EDGEUSE( eu );
+	    e = eu->e_p;
+	    NMG_CK_EDGE( e );
+	    e->is_real = 1;
+	}
+    }
+
+    for (i = 0; i < nseg; i++) {
+	NMG_CK_VERTEX( vells[nell-1][i] );
+	nmg_vertex_gv( vells[nell-1][i], &ellipses[nell-1][3*i] );
+    }
+
+    /* connect ellipses with triangles */
+
+    for (i = nell-2; i >= 0; i--) {
+ 	/* skip top ellipse */
+	int bottom, top;
+
+	top = i + 1;
+	bottom = i;
+	if (pts_dbl[top])
+	    nseg /= 2;	/* # segs in 'bottom' ellipse */
+	vertp[0] = (struct vertex *)0;
+
+	/* make triangular faces */
+	for (j = 0; j < nseg; j++) {
+	    jj = j + j;	/* top ellipse index */
+
+	    if (pts_dbl[top]) {
+		/* first triangle */
+		vertp[1] = vells[top][jj+1];
+		vertp[2] = vells[top][jj];
+		if ( (outfaceuses[face++] = nmg_cface(s, vertp, 3)) == 0) {
+		    bu_log("rt_hyp_tess() failure\n");
+		    goto fail;
+		}
+		if (j == 0)
+		    vells[bottom][j] = vertp[0];
+
+		/* second triangle */
+		vertp[2] = vertp[1];
+		if (j == nseg-1)
+		    vertp[1] = vells[bottom][0];
+		else
+		    vertp[1] = (struct vertex *)0;
+		if ( (outfaceuses[face++] = nmg_cface(s, vertp, 3)) == 0) {
+		    bu_log("rt_hyp_tess() failure\n");
+		    goto fail;
+		}
+		if (j != nseg-1)
+		    vells[bottom][j+1] = vertp[1];
+
+		/* third triangle */
+		vertp[0] = vertp[1];
+		if (j == nseg-1)
+		    vertp[1] = vells[top][0];
+		else
+		    vertp[1] = vells[top][jj+2];
+		if ( (outfaceuses[face++] = nmg_cface(s, vertp, 3)) == 0) {
+		    bu_log("rt_hyp_tess() failure\n");
+		    goto fail;
+		}
+	    } else {
+		/* first triangle */
+		if (j == nseg-1)
+		    vertp[1] = vells[top][0];
+		else
+		    vertp[1] = vells[top][j+1];
+		vertp[2] = vells[top][j];
+		if ( (outfaceuses[face++] = nmg_cface(s, vertp, 3)) == 0) {
+		    bu_log("rt_hyp_tess() failure\n");
+		    goto fail;
+		}
+		if (j == 0)
+		    vells[bottom][j] = vertp[0];
+
+		/* second triangle */
+		vertp[2] = vertp[0];
+		if (j == nseg-1)
+		    vertp[0] = vells[bottom][0];
+		else
+		    vertp[0] = (struct vertex *)0;
+		if ( (outfaceuses[face++] = nmg_cface(s, vertp, 3)) == 0) {
+		    bu_log("rt_hyp_tess() failure\n");
+		    goto fail;
+		}
+		if (j != nseg-1)
+		    vells[bottom][j+1] = vertp[0];
+	    }
+	}
+
+	/* associate geometry with each vertex */
+	for (j = 0; j < nseg; j++)
+	{
+	    NMG_CK_VERTEX( vells[bottom][j] );
+	    nmg_vertex_gv( vells[bottom][j],
+			   &ellipses[bottom][3*j] );
+	}
+    }
+
+
+    /* bottom face of hyp */
+    for (i = 0; i < nseg; i++)
+	vells[0][i] = (struct vertex *)NULL;
+
+    BU_ASSERT_PTR( outfaceuses, !=, NULL );
+    if ( (outfaceuses[face++] = nmg_cface(s, vells[0], nseg)) == 0) {
+	bu_log("rt_hyp_tess() failure, top face\n");
+	goto fail;
+    }
+    fu_top = outfaceuses[face-1];
+
+    /* Mark edges of this face as real, this is the only real edge */
+    for ( BU_LIST_FOR( lu, loopuse, &outfaceuses[face-1]->lu_hd ) ) {
+	NMG_CK_LOOPUSE( lu );
+
+	if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+	    continue;
+	for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) ) {
+	    struct edge *e;
+
+	    NMG_CK_EDGEUSE( eu );
+	    e = eu->e_p;
+	    NMG_CK_EDGE( e );
+	    e->is_real = 1;
+	}
+    }
+
+    for (i = 0; i < nseg; i++) {
+	NMG_CK_VERTEX( vells[0][i] );
+	nmg_vertex_gv( vells[0][i], &ellipses[0][3*i] );
+    }
+
+    /* Associate the face geometry */
+    for (i=0; i < face; i++) {
+	if ( nmg_fu_planeeqn( outfaceuses[i], tol ) < 0 ) {
+	    bu_log("planeeqn fail:\n\ti:\t%d\n\toutfaceuses:\n\tmin:\t%f\t%f\t%f\n\tmax:\t%f\t%f\t%f\n",
+		i, outfaceuses[i]->f_p->min_pt[0],
+		outfaceuses[i]->f_p->min_pt[1],
+		outfaceuses[i]->f_p->min_pt[2],
+		outfaceuses[i]->f_p->max_pt[0],
+		outfaceuses[i]->f_p->max_pt[1],
+		outfaceuses[i]->f_p->max_pt[2] );
+		
+	    goto fail;
+	}
+    }
+
+
+    /* Glue the edges of different outward pointing face uses together */
+    nmg_gluefaces( outfaceuses, face, tol );
+
+    /* Compute "geometry" for region and shell */
+    nmg_region_a( *r, tol );
+
+    /* XXX just for testing, to make up for loads of triangles ... */
+    nmg_shell_coplanar_face_merge( s, tol, 1 );
+
+    /* free mem */
+    bu_free( (char *)outfaceuses, "faceuse []");
+    for (i = 0; i < nell; i++) {
+	bu_free( (char *)ellipses[i], "pts ell");
+	bu_free( (char *)vells[i], "vertex []");
+    }
+    bu_free( (char *)ellipses, "fastf_t ell[]");
+    bu_free( (char *)vells, "vertex [][]");
+
+    /* Assign vertexuse normals */
+    nmg_vertex_tabulate( &vert_tab, &s->l.magic );
+    for ( i=0; i<BU_PTBL_END( &vert_tab ); i++ )
+    {
+	point_t pt_prime, tmp_pt;
+	vect_t norm, rev_norm, tmp_vect;
+	struct vertex_g *vg;
+	struct vertex *v;
+	struct vertexuse *vu;
+
+	v = (struct vertex *)BU_PTBL_GET( &vert_tab, i );
+	NMG_CK_VERTEX( v );
+	vg = v->vg_p;
+	NMG_CK_VERTEX_G( vg );
+
+	VSUB2( tmp_pt, vg->coord, xip->hyp_V );
+	MAT4X3VEC( pt_prime, SoR, tmp_pt );
+	VSET( tmp_vect, pt_prime[X]*(2*cprime+1), pt_prime[Y]*(2*cprime+1), -(pt_prime[Z]+cprime+1) );
+	MAT4X3VEC( norm, invRoS, tmp_vect );
+	VUNITIZE( norm );
+	VREVERSE( rev_norm, norm );
+
+	for ( BU_LIST_FOR( vu, vertexuse, &v->vu_hd ) )
+	{
+	    struct faceuse *fu;
+
+	    NMG_CK_VERTEXUSE( vu );
+	    fu = nmg_find_fu_of_vu( vu );
+
+	    /* don't assign vertexuse normals to top face (flat) */
+	    if ( fu == fu_top || fu->fumate_p == fu_top )
+		continue;
+
+	    NMG_CK_FACEUSE( fu );
+	    if ( fu->orientation == OT_SAME )
+		nmg_vertexuse_nv( vu, norm );
+	    else if ( fu->orientation == OT_OPPOSITE )
+		nmg_vertexuse_nv( vu, rev_norm );
+	}
+    }
+
+    bu_ptbl_free( &vert_tab );
+    return(0);
+
+ fail:
+    /* free mem */
+    bu_free( (char *)outfaceuses, "faceuse []");
+    for (i = 0; i < nell; i++) {
+	bu_free( (char *)ellipses[i], "pts ell");
+	bu_free( (char *)vells[i], "vertex []");
+    }
+    bu_free( (char *)ellipses, "fastf_t ell[]");
+    bu_free( (char *)vells, "vertex [][]");
+
 
     return(-1);
 }
