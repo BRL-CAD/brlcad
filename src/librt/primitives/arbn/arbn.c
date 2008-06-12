@@ -1251,6 +1251,16 @@ rt_arbn_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
     return( TCL_OK );
 }
 
+/**
+ * R T _ A R B N _ P A R A M S
+ *
+ */
+int
+rt_arbn_params(struct pc_param_set * ps, const struct rt_db_internal *ip)
+{
+    return(0);			/* OK */
+}
+
 /** @} */
 /*
  * Local Variables:

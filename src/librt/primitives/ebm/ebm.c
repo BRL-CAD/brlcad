@@ -2060,6 +2060,16 @@ rt_ebm_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double 
     ebm->tallness = 1.0;
 }
 
+/**
+ *		R T _ E B M _ P A R A M S
+ *
+ */
+int
+rt_ebm_params(struct pc_param_set * ps, const struct rt_db_internal *ip)
+{
+    return(0);			/* OK */
+}
+
 /** @} */
 /*
  * Local Variables:

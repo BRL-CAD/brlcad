@@ -1775,6 +1775,16 @@ rt_part_ifree(struct rt_db_internal *ip)
     ip->idb_ptr = GENPTR_NULL;
 }
 
+/**
+ *			R T _ P A R T _ P A R A M S
+ *
+ */
+int
+rt_part_params(struct pc_param_set * ps, const struct rt_db_internal *ip)
+{
+    return(0);			/* OK */
+}
+
 /*
  * Local Variables:
  * mode: C

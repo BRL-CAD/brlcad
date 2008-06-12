@@ -2476,6 +2476,16 @@ rt_bot_tclform( const struct rt_functab *ftp, Tcl_Interp *interp)
     return TCL_OK;
 }
 
+/**
+ * R T _B O T _ P A R A M S
+ *
+ */
+int
+rt_bot_params(struct pc_param_set * ps, const struct rt_db_internal *ip)
+{
+    return(0);			/* OK */
+}
+
 /*************************************************************************
  *
  *  BoT support routines used by MGED, converters, etc.

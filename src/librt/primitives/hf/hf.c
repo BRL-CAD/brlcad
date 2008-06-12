@@ -2199,6 +2199,15 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 			bu_free( (char *)xip, "hf ifree" );
 			ip->idb_ptr = GENPTR_NULL;	/* sanity */
 		    }
+/**
+ * R T _ H F _ P A R A M S
+ *
+ */
+int
+rt_hf_params(struct pc_param_set * ps, const struct rt_db_internal *ip)
+{
+    return(0);			/* OK */
+}
 
 /** @} */
 /*

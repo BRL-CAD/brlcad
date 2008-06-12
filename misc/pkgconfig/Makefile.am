@@ -10,6 +10,7 @@ pkgconfig_DATA = \
 	fft.pc \
 	multispectral.pc \
 	optical.pc \
+	pc.pc \
 	pkg.pc \
 	rt.pc \
 	wdb.pc
@@ -23,6 +24,7 @@ EXTRA_DIST = \
 	fft.pc.in \
 	multispectral.pc.in \
 	optical.pc.in \
+	pc.pc.in \
 	pkg.pc.in \
 	rt.pc.in \
 	wdb.pc.in

@@ -493,7 +493,7 @@ struct soltab {
 /* Add a new primitive id above here (this is will break v5 format)
  * XXX must update the non-geometric object id's below XXX
  */
-#define	ID_MAX_SOLID	39	/**< @brief Maximum defined ID_xxx for solids */
+#define	ID_MAX_SOLID	40	/**< @brief Maximum defined ID_xxx for solids */
 
 /*
  * Non-geometric objects
@@ -502,6 +502,7 @@ struct soltab {
 #define ID_BINEXPM	32	/**< @brief Experimental binary */
 #define ID_BINUNIF	33	/**< @brief Uniform-array binary */
 #define ID_BINMIME	34	/**< @brief MIME-typed binary */
+#define ID_CONSTRAINT   39      /**< @brief Constraint object */
 
 /* XXX - superellipsoid should be 31, but is not v5 compatible */
 #define ID_SUPERELL	35	/**< @brief Superquadratic ellipsoid */
@@ -509,7 +510,7 @@ struct soltab {
 #define ID_BREP         37      /**< @brief B-rep object */
 #define ID_HYP		38	/**< @brief Hyperboloid of one sheet */
 
-#define ID_MAXIMUM	39	/**< @brief Maximum defined ID_xxx value */
+#define ID_MAXIMUM	40	/**< @brief Maximum defined ID_xxx value */
 
 /**
  * M A T E R _ I N F O
@@ -1786,6 +1787,52 @@ struct bezier_seg	/**< @brief  Bezier curve segment */
 };
 
 /**
+ *  Structures required for describing Parameters, parameter sets
+ *
+ */
+
+/* To be removed */
+struct pc_parameter {
+char *name;
+int parametrized;
+fastf_t value;
+fastf_t min;
+fastf_t max;
+fastf_t step;
+};
+
+/* To be removed */
+struct pc_param_set {
+    long len;
+    struct pc_parameter * p;
+};
+
+/**
+ * A composite set of parameters constraints with respect to those 
+ * parameters. Used for declaration by each geometry object
+ */
+struct pc_p_set {
+    char pname[10];
+    enum ptype { pc_value,pc_point,pc_vector} ptype;
+    union {
+	fastf_t *valuep;
+	pointp_t pointp;
+	vectp_t vectorp;
+    };
+};
+struct pc_c_set {
+    char cname[10];
+    enum ctype {pc_inequality,pc_equation} ctype;
+    int n;
+};
+struct pc_pc_set {
+    int n_params;
+    int n_constraints;
+    struct pc_p_set * ps;
+    struct pc_c_set * cs;
+};
+
+/**
  * R T _ F U N C T A B
  *
  * Object-oriented interface to BRL-CAD geometry.
@@ -1917,6 +1964,7 @@ struct rt_functab {
 #endif
     void (*ft_make) BU_ARGS((const struct rt_functab *,
 			     struct rt_db_internal *, double /*diameter*/));
+    int (*ft_params) BU_ARGS((struct pc_pc_set *,const struct rt_db_internal */*ip*/));
 };
 
 RT_EXPORT extern const struct rt_functab rt_functab[];
@@ -5848,6 +5896,13 @@ RT_EXPORT BU_EXTERN(int rt_bot_decimate,
 		     fastf_t min_edge_length));
 #endif
 
+/* defined in pc_constraint.c */
+
+RT_EXPORT BU_EXTERN(int pc_constraint_export,(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm,\
+		    const struct db_i *dbip, struct resource *resp));
+RT_EXPORT BU_EXTERN(int pc_constraint_import,(struct rt_db_internal *ip, const struct bu_external *ep, \
+		    const mat_t mat, const struct db_i *dbip, struct resource *resp, const int minor_type));
+RT_EXPORT BU_EXTERN(void pc_constraint_ifree,(struct rt_db_internal *ip, struct resource *resp));
 
 /*
  *  Constants provided and used by the RT library.

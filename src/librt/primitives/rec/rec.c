@@ -824,6 +824,16 @@ rt_rec_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 }
 
 /**
+ * R T _ R E C _ P A R A M S
+ *
+ */
+int
+rt_rec_params(struct pc_param_set * ps, const struct rt_db_internal *ip)
+{
+    return(0);			/* OK */
+}
+
+/**
  *			R E C _ F R E E
  */
 void

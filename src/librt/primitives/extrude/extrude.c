@@ -2583,6 +2583,15 @@ rt_extrude_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc
     return( TCL_OK );
 }
 
+/**
+ * R T _ E X T R U D E _ P A R A M S
+ *
+ */
+int
+rt_extrude_params(struct pc_param_set * ps, const struct rt_db_internal *ip)
+{
+    return(0);			/* OK */
+}
 
 /** @} */
 

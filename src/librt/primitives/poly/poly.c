@@ -855,6 +855,15 @@ rt_pg_ifree(struct rt_db_internal *ip)
     bu_free( (char *)pgp, "pg ifree" );
     ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
+/**
+ *			R T _ P G _ P A R A M S
+ *
+ */
+int
+rt_pg_params(struct pc_param_set * ps, const struct rt_db_internal *ip)
+{
+    return(0);			/* OK */
+}
 
 /**
  *			R T _ P G _ T O _ B O T

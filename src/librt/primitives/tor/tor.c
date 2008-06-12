@@ -1601,6 +1601,16 @@ rt_tor_ifree(struct rt_db_internal *ip)
     ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
 
+/**
+ * R T _ T O R _ P A R A M S
+ *
+ */
+int
+rt_tor_params(struct pc_param_set * ps, const struct rt_db_internal *ip)
+{
+    return(0);			/* OK */
+}
+
 /*
  * Local Variables:
  * mode: C

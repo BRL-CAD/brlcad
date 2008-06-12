@@ -53,6 +53,7 @@ kitchensink_dirs = \
 	libfft \
 	libmultispectral \
 	libtclcad \
+	libpc \
 	libtermio \
 	adrt \
 	anim \

@@ -2110,6 +2110,17 @@ rt_arb_edit(Tcl_Interp			*interp,
 
     return(1);		/* BAD */
 }
+
+/**
+ * R T _ A R B _ P A R A M S
+ *
+ */
+int
+rt_arb_params(struct pc_param_set * ps, const struct rt_db_internal *ip)
+{
+    return(0);			/* OK */
+}
+
 /** @} */
 
 /*

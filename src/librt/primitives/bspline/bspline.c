@@ -1342,6 +1342,18 @@ rt_nurb_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
     return( TCL_OK );
 }
 
+
+/**
+ * R T _ N U R B _ P A R A M S
+ *
+ */
+int
+rt_nurb_params(struct pc_param_set * ps, const struct rt_db_internal *ip)
+{
+    return(0);			/* OK */
+}
+
+
 /*
  * Local Variables:
  * mode: C

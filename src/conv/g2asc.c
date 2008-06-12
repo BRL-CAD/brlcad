@@ -277,7 +277,7 @@ main(int argc, char **argv)
 			     Tcl_GetStringResult(interp) );
 		}
 	    } else {
-		if ( intern.idb_meth->ft_tclget( interp, &intern, NULL ) != TCL_OK )  {
+		if ( dp->d_minor_type!= ID_CONSTRAINT && intern.idb_meth->ft_tclget( interp, &intern, NULL ) != TCL_OK )  {
 		    rt_db_free_internal( &intern, &rt_uniresource );
 		    bu_log("Unable to export '%s', skipping\n", dp->d_namep );
 		    continue;

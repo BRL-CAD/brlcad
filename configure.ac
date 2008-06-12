@@ -3614,6 +3614,7 @@ GED='${top_builddir}/src/libged/libged.la'
 MULTISPECTRAL='${top_builddir}/src/libmultispectral/libmultispectral.la'
 OPTICAL='${top_builddir}/src/liboptical/liboptical.la'
 ORLE='${top_builddir}/src/liborle/liborle.la'
+PC='${top_builddir}/src/libpc/libpc.la'
 PKG='${top_builddir}/src/libpkg/libpkg.la'
 RT='${top_builddir}/src/librt/librt.la'
 SYSV='${top_builddir}/src/libsysv/libsysv.la'
@@ -3636,6 +3637,7 @@ WDB_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 FB_LIBS="${BU} ${BU_LIBS} ${PKG} ${TCL} ${SOCKET} ${NSL}" # additional/optional FB_LIBS: ${TK} ${X_LIBS} ${LIBGL}
 OPTICAL_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${TCL}"
 MULTISPECTRAL_LIBS="${OPTICAL} ${OPTICAL_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
+PC_LIBS=
 DM_LIBS="${GED} ${GED_LIBS} ${RT} ${RT_LIBS} ${FB} ${FB_LIBS} ${PNG} ${TK} ${X_LIBS} ${FRAMEWORK_CARBON}"
 TCLCAD_LIBS="${GED} ${GED_LIBS} ${DM} ${DM_LIBS} ${FB} ${FB_LIBS} ${ITK} ${ITCL} ${TK} ${TCLSTUB} ${BLT} ${TCL}"
 BRLCAD_LIBS="${GED} ${GED_LIBS} ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
@@ -3651,6 +3653,7 @@ AC_SUBST(MULTISPECTRAL)
 AC_SUBST(OPTICAL)
 AC_SUBST(ORLE)
 AC_SUBST(PKG)
+AC_SUBST(PC)
 AC_SUBST(RT)
 AC_SUBST(SYSV)
 AC_SUBST(TCLCAD)
@@ -3668,6 +3671,7 @@ AC_SUBST(GED_LIBS)
 AC_SUBST(MULTISPECTRAL_LIBS)
 AC_SUBST(OPTICAL_LIBS)
 AC_SUBST(ORLE_LIBS)
+AC_SUBST(PC_LIBS)
 AC_SUBST(PKG_LIBS)
 AC_SUBST(RT_LIBS)
 AC_SUBST(SYSV_LIBS)
@@ -3776,6 +3780,7 @@ AC_CONFIG_FILES([
 	misc/pkgconfig/fft.pc
 	misc/pkgconfig/multispectral.pc
 	misc/pkgconfig/optical.pc
+	misc/pkgconfig/pc.pc
 	misc/pkgconfig/pkg.pc
 	misc/pkgconfig/rt.pc
 	misc/pkgconfig/wdb.pc
@@ -3853,6 +3858,7 @@ AC_CONFIG_FILES([
 	src/libmultispectral/Makefile
 	src/liboptical/Makefile
 	src/liborle/Makefile
+	src/libpc/Makefile
 	src/libpkg/Makefile
 	src/librt/Makefile
 	src/librtserver/Makefile

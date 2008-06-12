@@ -221,6 +221,8 @@ bu_identify_magic(register unsigned long magic)
 	    return "librt db_full_path";
 	case FB_MAGIC:
 	    return("fb.h fb_magic");
+	case PC_CONSTRAINT_INTERNAL_MAGIC:
+	    return "librt pc_constraint_internal";
 	case PIXEL_EXT_MAGIC:
 	    return "librt pixel_ext";
 	case PT_MAGIC:

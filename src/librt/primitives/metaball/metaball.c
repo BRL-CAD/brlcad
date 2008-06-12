@@ -660,6 +660,16 @@ rt_metaball_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *
     return 0;
 }
 
+/**
+ * R T _ M E T A B A L L _ P A R A M S
+ *
+ */
+int
+rt_metaball_params(struct pc_param_set * ps, const struct rt_db_internal *ip)
+{
+    return(0);			/* OK */
+}
+
 /*
  * Local Variables:
  * mode: C

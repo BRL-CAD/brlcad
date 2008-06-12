@@ -2177,6 +2177,15 @@ rt_sketch_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc,
     return( TCL_OK );
 }
 
+/**
+ * R T _ S K E T C H _ P A R A M S
+ *
+ */
+int
+rt_sketch_params(struct pc_param_set * ps, const struct rt_db_internal *ip)
+{
+    return(0);			/* OK */
+}
 
 void
 rt_curve_reverse_segment( long *lng )

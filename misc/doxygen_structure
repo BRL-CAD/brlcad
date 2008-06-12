@@ -170,3 +170,9 @@
  * @defgroup wdb WriteDatabase
  * @ingroup dbio
  */
+/** @defgroup libpc libpc (Parametrics and Constraints)
+ *
+ * @defgroup soln Constraint Solution
+ * @ingroup libpc
+ *
+ */

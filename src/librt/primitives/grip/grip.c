@@ -503,6 +503,16 @@ rt_grp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     return(-1);
 }
 
+/**
+ * R T _ G R P _ P A R A M S
+ *
+ */
+int
+rt_grp_params(struct pc_param_set * ps, const struct rt_db_internal *ip)
+{
+    return(0);			/* OK */
+}
+
 /** @} */
 /*
  * Local Variables:

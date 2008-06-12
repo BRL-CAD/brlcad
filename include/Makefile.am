@@ -52,6 +52,7 @@ brlcadinclude_wanted = \
 	optical.h \
 	orle.h \
 	photonmap.h \
+	pc.h \
 	pkg.h \
 	plastic.h \
 	plot3.h \

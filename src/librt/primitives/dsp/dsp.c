@@ -4204,6 +4204,16 @@ rt_dsp_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double 
 
 }
 
+/**
+ * R T _ D S P _ P A R A M S
+ *
+ */
+int
+rt_dsp_params(struct pc_param_set * ps, const struct rt_db_internal *ip)
+{
+    return(0);			/* OK */
+}
+
 /**	S W A P _ C E L L _ P T S
  *
  */

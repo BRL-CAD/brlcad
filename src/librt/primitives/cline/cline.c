@@ -1132,6 +1132,16 @@ rt_cline_tclform( const struct rt_functab *ftp, Tcl_Interp *interp )
 
 }
 
+/**
+ * R T _ C L I N E _ P A R A M S
+ *
+ */
+int
+rt_cline_params(struct pc_param_set * ps, const struct rt_db_internal *ip)
+{
+    return(0);			/* OK */
+}
+
 /** @} */
 /*
  * Local Variables:

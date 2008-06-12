@@ -178,6 +178,7 @@
 #define FB_MAGIC			0xfbfb00fb
 #define LIGHT_MAGIC			0xdbddbdb7
 #define MF_MAGIC			0x55968058
+#define PC_CONSTRAINT_INTERNAL_MAGIC	0x51933258
 #define PIXEL_EXT_MAGIC 		0x50787400 /**< Pxt  */
 #define PL_MAGIC        		0x0beef00d
 #define PT_HD_MAGIC			0x87687680

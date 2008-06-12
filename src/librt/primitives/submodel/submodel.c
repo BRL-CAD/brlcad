@@ -1030,6 +1030,16 @@ rt_submodel_ifree(struct rt_db_internal *ip)
     ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
 
+/**
+ * R T _ S U B M O D E L _ P A R A M S
+ *
+ */
+int
+rt_submodel_params(struct pc_param_set * ps, const struct rt_db_internal *ip)
+{
+    return(0);			/* OK */
+}
+
 /*
  * Local Variables:
  * mode: C

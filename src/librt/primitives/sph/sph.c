@@ -417,6 +417,16 @@ rt_sph_class(void)
     return(0);
 }
 
+/**
+ * R T _ S P H _ P A R A M S
+ *
+ */
+int
+rt_sph_params(struct pc_param_set * ps, const struct rt_db_internal *ip)
+{
+    return(0);			/* OK */
+}
+
 /* ELL versions of the plot and tess functions are used */
 
 

@@ -71,6 +71,7 @@ librt_nil_la_SOURCES = \
 	opennurbs_ext.cpp \
 	oslo_calc.c \
 	oslo_map.c \
+	pc_constraint.c \
 	pr.c \
 	prep.c \
 	primitives/arb8/arb8.c \

@@ -3096,6 +3096,16 @@ nmg_tgc_nurb_cyl(struct faceuse *fu, fastf_t *top_mat, fastf_t *bot_mat)
     }
 }
 
+/**
+ * R T _ T G C _ P A R A M S
+ *
+ */
+int
+rt_tgc_params(struct pc_param_set * ps, const struct rt_db_internal *ip)
+{
+    return(0);			/* OK */
+}
+
 /*
  * Local Variables:
  * mode: C

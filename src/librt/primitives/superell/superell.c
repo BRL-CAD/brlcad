@@ -1055,6 +1055,15 @@ rt_superell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *
     return 0;
 }
 
+/**
+ * R T _ S U P E R E L L _ P A R A M S
+ *
+ */
+int
+rt_superell_params(struct pc_param_set * ps, const struct rt_db_internal *ip)
+{
+    return(0);			/* OK */
+}
 
 /*
  * Local Variables:

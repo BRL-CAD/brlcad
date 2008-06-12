@@ -1282,6 +1282,16 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     return( -1 );
 }
 
+/**
+ * R T _ V O L _ P A R A M S
+ *
+ */
+int
+rt_vol_params(struct pc_param_set * ps, const struct rt_db_internal *ip)
+{
+    return(0);			/* OK */
+}
+
 /*
  * Local Variables:
  * mode: C

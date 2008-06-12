@@ -1630,6 +1630,50 @@ nmg_sphere_face_snurb(struct faceuse *fu, const matp_t m)
     M(   0     ,   0     , 1.0     , 1.0     );
 }
 
+/**
+ *			R T _ E L L _ P A R A M S
+ *
+ *  @brief
+ *  Method for declaration of parameters so that it can be used
+ *  by Parametrics and Constraints library.
+ *
+ *  allocates space for PC set , User is expect to free after use
+ *
+ *  @return 0 on success
+ *  @return -1 on failure
+ */
+
+int
+rt_ell_params(struct pc_pc_set * pcs, const struct rt_db_internal *ip)
+{
+    struct rt_ell_internal *eip;
+    eip = (struct rt_ell_internal *)ip->idb_ptr;
+
+    pcs->n_params=4;
+    pcs->n_constraints=5;
+    pcs->ps = bu_calloc(pcs->n_params, sizeof ( struct pc_p_set),"pc_p_set");
+    pcs->cs = bu_calloc(pcs->n_constraints, sizeof ( struct pc_c_set),"pc_c_set");
+
+    
+    strcpy(pcs->ps[0].pname,"center");
+    pcs->ps[0].ptype = pc_point;
+    pcs->ps[0].pointp = (pointp_t) &(eip->v);
+    
+    strcpy(pcs->ps[1].pname,"vector-a");
+    pcs->ps[1].ptype = pc_vector;
+    pcs->ps[1].vectorp = (vectp_t) &(eip->a);
+
+    strcpy(pcs->ps[2].pname,"vector-b");
+    pcs->ps[2].ptype = pc_vector;
+    pcs->ps[2].vectorp = (vectp_t)  &(eip->b);
+
+    strcpy(pcs->ps[3].pname,"vector-c");
+    pcs->ps[3].ptype = pc_value;
+    pcs->ps[3].vectorp = (vectp_t) &(eip->c);
+
+    return(0);			/* OK */
+}
+
 /** @} */
 /*
  * Local Variables:

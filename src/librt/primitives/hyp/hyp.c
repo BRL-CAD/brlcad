@@ -946,6 +946,15 @@ rt_hyp_xform( struct rt_db_internal *op, const mat_t mat, struct rt_db_internal 
     return(0);
 }
 
+/**
+ * R T _ H Y P _ P A R A M S
+ *
+ */
+int
+rt_hyp_params(struct pc_param_set * ps, const struct rt_db_internal *ip)
+{
+    return(0);			/* OK */
+}
 
 /*
  * Local Variables:
