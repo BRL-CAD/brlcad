@@ -59,16 +59,10 @@ struct point_list {
     point_t pt_cell;
 };
 
-struct mlt_path {
-    struct bu_list l;
-    struct point_list * points;
-};
-
 struct mlt_app {
-    struct mlt_path * path_list;
-    point_t eye;
-    point_t camera;
-    /* ... */
+    struct point_list * path;   /** @brief Current path */
+    point_t eye;    /** @brief Position of the camera */
+    struct point_list * lightSources;   /** @brief List of lightsource points */
 };
 
 /*
@@ -91,8 +85,15 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 void
 view_2init(struct application *ap)
 {
+    /* Initialization of the mlt application structure */
     struct mlt_app* mlt_application;
-    mlt_application = bu_malloc(sizeof(struct mlt_app), "mlt application");
+    mlt_application = (struct mlt_app*) bu_malloc(sizeof(struct mlt_app), "mlt application");
+    mlt_application->lightSources = (struct point_list*) NULL;
+    mlt_application->path = (struct point_list*) NULL;
+
+    /* Setting application callback functions and
+     * linkage to the mlt application
+     */
     ap->a_hit = rayhit;
     ap->a_miss = raymiss;
     ap->a_onehit = 1;
@@ -153,7 +154,8 @@ view_cleanup(struct rt_i *rtip)
 int
 rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp)
 {
-    register struct mlt_app* p_mlt; 
+    register struct mlt_app* p_mlt;
+    point_t* hitpoint;
     bu_log("hit: 0x%x\n", ap->a_resource);
 
     /* The application uses a generic pointer (genptr_t)
@@ -161,10 +163,21 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
      */
     p_mlt = (struct mlt_app*) ap->a_uptr;
 
-    /* This will be used find hit points:
-    VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
-       Once found, they will be stored in p_mlt->path_list.
-    */
+    /* This will be used find the hit point: */
+    VJOIN1(segp->seg_in->hit_point, ap->r_pt, segp->seg_in->hit_dist, ap->r_dir);
+
+    /*Once found, it will be stored in p_mlt->path_list. */
+    if (!(p_mlt->path)) {
+        BU_GETSTRUCT(p_mlt->path, point_list);
+        BU_LIST_INIT(&(p_mlt->path->l));
+        VMOVE(p_mlt->path->pt_cell, segp->seg_in->hit_point);
+    }
+    else {
+        struct point_list* new_point;
+        BU_GETSTRUCT(new_point, point_list);
+        VMOVE(new_point->pt_cell, segp->seg_in->hit_point);
+        BU_LIST_PUSH(&(p_mlt->path->l), &(new_point->l));
+    }
 
     
     /* Use a BRDF function to set the new ap->r_dir;
