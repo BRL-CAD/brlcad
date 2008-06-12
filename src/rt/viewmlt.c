@@ -20,7 +20,6 @@
 /** @file viewmlt.c
  *
  * Implementation of the Metropolis Light Transport algorithm.
- *
  */
 
 #include "common.h"
@@ -73,7 +72,7 @@ struct mlt_app {
  */
 view_init(register struct application *ap, char *file, char *obj, int minus_o)
 {
-    return(0);		/* no framebuffer needed */
+    return 0;		/* no framebuffer needed */
 }
 
 /*
@@ -106,11 +105,7 @@ view_2init(struct application *ap)
  *  Called by worker() after the end of proccessing for each pixel.
  */
 void
-view_pixel(register struct application *ap)
-{
-}
-
-
+view_pixel(register struct application *ap) {}
 
 /*
  *			V I E W _ E N D
@@ -119,9 +114,7 @@ view_pixel(register struct application *ap)
  *  just after raytracing completes.
  */
 void
-view_end(register struct application *ap)
-{
-}
+view_end(register struct application *ap) {} 
 
 /*
  *			V I E W _ S E T U P
@@ -131,10 +124,7 @@ view_end(register struct application *ap)
  *  e.g., generate lights, associate materials routines, etc.
  */
 void
-view_setup(struct rt_i *rtip)
-{
-
-}
+view_setup(struct rt_i *rtip) {}
 
 /*
  *			V I E W _ C L E A N U P
@@ -142,9 +132,7 @@ view_setup(struct rt_i *rtip)
  *  Called by "clean" command, just before rt_clean() is called, in do.c
  */
 void
-view_cleanup(struct rt_i *rtip)
-{
-}
+view_cleanup(struct rt_i *rtip) {}
 
 /*
  *			R A Y H I T
@@ -166,19 +154,17 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
     VJOIN1(segp->seg_in.hit_point, ap->a_ray.r_pt,
         segp->seg_in.hit_dist, ap->a_ray.r_dir);
 
-    /*Once found, it will be stored in p_mlt->path_list. */
-    if (!(p_mlt->path)) {
-        BU_GETSTRUCT(p_mlt->path, point_list);
-        BU_LIST_INIT(&(p_mlt->path->l));
-        VMOVE(p_mlt->path->pt_cell, segp->seg_in.hit_point);
-    }
-    else {
+    /* Once found, it will be stored in p_mlt->path_list. */
+    if (p_mlt->path) {
         struct point_list* new_point;
         BU_GETSTRUCT(new_point, point_list);
         VMOVE(new_point->pt_cell, segp->seg_in.hit_point);
         BU_LIST_PUSH(&(p_mlt->path->l), &(new_point->l));
+    } else {
+        BU_GETSTRUCT(p_mlt->path, point_list);
+        BU_LIST_INIT(&(p_mlt->path->l));
+        VMOVE(p_mlt->path->pt_cell, segp->seg_in.hit_point);
     }
-
     
     /* Use a BRDF function to set the new ap->a_ray->r_dir;
      * r_pt will be the same hitpoint found before;
@@ -186,7 +172,7 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
      */
     VMOVE(ap->a_ray.r_pt, segp->seg_in.hit_point);
 
-    return(1);	/* report hit to main routine */
+    return 1;	/* report hit to main routine */
 }
 
 /*
@@ -198,8 +184,7 @@ int
 raymiss(register struct application *ap)
 {
     bu_log("miss: 0x%x\n", ap->a_resource);
-
-    return(0);
+    return 0;
 }
 
 void
@@ -212,9 +197,7 @@ application_init(void) {}
  *  Any end-of-line processing should be done in view_pixel().
  */
 void
-view_eol(register struct application *ap)
-{
-}
+view_eol(register struct application *ap) {}
 
 /*
  * Local Variables:
