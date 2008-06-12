@@ -693,7 +693,7 @@ bu_tcl_ck_malloc_ptr(ClientData		clientData,
  * @param argc		- number of elements in argv
  * @param argv		- command name and arguments
  *
- * @Return TCL_OK if successful, otherwise, TCL_ERROR.
+ * @return TCL_OK if successful, otherwise, TCL_ERROR.
  */
 int
 bu_tcl_malloc_len_roundup(ClientData	clientData,

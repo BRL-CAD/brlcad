@@ -188,22 +188,27 @@ namespace brlcad {
 	}
     }
 
+#define NE 1
+#define NW 2
+#define SW 3
+#define SE 4
+
     /**
      * Determine whether a given surface is flat enough, i.e. it falls
      * beneath our simple flatness constraints. The flatness constraint in
      * this case is a sampling of normals across the surface such that
      * the product of their combined dot products is close to 1.
      *
-     * \Product_{i=1}^{7} n_i \dot n_{i+1} = 1
+     * @f[ \prod_{i=1}^{7} n_i \dot n_{i+1} = 1 @f]
      *
      * Would be a perfectly flat surface. Generally something in the range
      * 0.8-0.9 should suffice (according to Abert, 2005).
      *
-     *   	 +-------------------------+
+     *   +-------------------------+
      *	 |           	           |
      *	 |            +            |
      *	 |                         |
-     *  V  |       +         +       |
+     *  V|       +         +       |
      *	 |                         |
      *	 |            +            |
      *	 |                         |
@@ -213,10 +218,6 @@ namespace brlcad {
      * The "+" indicates the normal sample.
      */
 
-#define NE 1
-#define NW 2
-#define SW 3
-#define SE 4
     bool
     SurfaceTree::isFlat(const ON_Surface* surf, const ON_Interval& u, const ON_Interval& v)
     {

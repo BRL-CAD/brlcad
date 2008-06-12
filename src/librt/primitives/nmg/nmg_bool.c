@@ -18,7 +18,7 @@
  * information.
  */
 
-/** @addgroup nmg */
+/** @addtogroup nmg */
 /** @{ */
 /** @file nmg_bool.c
  *

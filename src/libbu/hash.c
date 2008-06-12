@@ -115,7 +115,7 @@ bu_create_hash_tbl( unsigned long tbl_size )
  *
  * Output:
  * @param[out] prev - the previous hash table entry (non-null for entries that not the first in hash bin)
- * @param[out] index - the index of the hash bin for this key
+ * @param[out] idx - the index of the hash bin for this key
  *
  * @return
  *	the hash table entry corresponding to the provided key, or NULL if not found

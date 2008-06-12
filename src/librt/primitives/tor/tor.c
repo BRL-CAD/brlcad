@@ -1,4 +1,4 @@
-/*                         T O R U S . C
+/*                         T O R . C
  * BRL-CAD
  *
  * Copyright (c) 1985-2008 United States Government as represented by
@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file torus.c
+/** @file tor.c
  *
  * Intersect a ray with a Torus
  *

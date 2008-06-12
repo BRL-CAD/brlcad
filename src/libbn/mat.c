@@ -1089,8 +1089,8 @@ bn_mat_xform_about_pt(mat_t mat, const mat_t xform, const point_t pt)
  *			B N _ M A T _ I S _ E Q U A L
  *
  *
- *  @Return	0	When matrices are not equal
- *  @Return	1	When matricies are equal
+ *  @return	0	When matrices are not equal
+ *  @return	1	When matricies are equal
  */
 int
 bn_mat_is_equal(const mat_t a, const mat_t b, const struct bn_tol *tol)

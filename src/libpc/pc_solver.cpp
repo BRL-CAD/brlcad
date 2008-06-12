@@ -19,7 +19,7 @@
  */
 /** @addtogroup soln */
 /** @{ */
-/** @file pc_solver.c
+/** @file pc_solver.cpp
  *
  *  Library for writing MGED databases from arbitrary procedures.
  *  Assumes that some of the structure of such databases are known

@@ -102,7 +102,7 @@ struct brep_specific {
 __END_DECLS
 
 #endif  /* BREP_H */
-
+/** @} */
 /*
  * Local Variables:
  * mode: C

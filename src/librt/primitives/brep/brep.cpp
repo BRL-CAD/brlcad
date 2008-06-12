@@ -1,4 +1,4 @@
-/*                     G _ B R E P . C P P
+/*                     B R E P . C P P
  * BRL-CAD
  *
  * Copyright (c) 2007-2008 United States Government as represented by
@@ -19,7 +19,7 @@
  */
 /** @addtogroup g_  */
 /** @{ */
-/** @file g_brep.cpp
+/** @file brep.cpp
  *
  * Implementation of a generalized Boundary Representation (BREP)
  * primitive using the openNURBS library.

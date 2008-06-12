@@ -1,4 +1,4 @@
-/*                   B O T _ I N C L U D E . C
+/*                   G _ B O T _ I N C L U D E . C
  * BRL-CAD
  *
  * Copyright (c) 1999-2008 United States Government as represented by
@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file bot_include.c
+/** @file g_bot_include.c
  *
  *	This file contains all the routines for "g_bot.c" that contain references to
  *	"tri_specific" structs. This file is included in "g_bot.c" twice. Each time
@@ -29,8 +29,7 @@
  *		TRI_TYPE == float   -> use the "tri_float_specific" struct
  *		TRI_TYPE == double     -> use the original "tri_specific" struct
  *
- *  Authors -
- *  	John R. Anderson
+ *@author  	John R. Anderson
  *
  */
 

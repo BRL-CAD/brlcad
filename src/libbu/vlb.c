@@ -166,3 +166,13 @@ bu_vlb_print(struct bu_vlb *vlb, FILE *fd)
     BU_CKMAG(vlb, BU_VLB_MAGIC, "magic for bu_vlb");
     fwrite(vlb->buf, 1, vlb->nextByte, fd);
 }
+/** @} */
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */
