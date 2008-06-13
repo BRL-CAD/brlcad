@@ -1856,6 +1856,7 @@ cmd_dbip(ClientData	clientData,
     return wdb_dbip_cmd(wdbp, interp, argc, argv);
 }
 
+#if 0
 int
 cmd_dump(ClientData	clientData,
 	 Tcl_Interp	*interp,
@@ -1866,6 +1867,7 @@ cmd_dump(ClientData	clientData,
 
     return wdb_dump_cmd(wdbp, interp, argc, argv);
 }
+#endif
 
 int
 cmd_form(ClientData	clientData,
