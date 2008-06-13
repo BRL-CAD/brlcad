@@ -24,4 +24,13 @@ pc_test_LDADD = libpc.la
 solver_test_SOURCES = solver_test.c
 solver_test_LDADD =
 
+FAST_OBJECTS = \
+	$(libpc_nil_la_OBJECTS) \
+	$(libpc_la_OBJECTS) \
+	$(lib_LTLIBRARIES) \
+	$(noinst_LTLIBRARIS) \
+	$(pc_test_OBJECTS) \
+	$(solver_test_OBJECTS) \
+	$(noinst_PROGRAMS)
+
 include $(top_srcdir)/misc/Makefile.defs
