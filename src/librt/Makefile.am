@@ -223,6 +223,7 @@ FAST_OBJECTS = \
 	$(librt_nil_la_OBJECTS) \
 	$(librt_la_OBJECTS) \
 	$(lib_LTLIBRARIES) \
+	$(noinst_LTLIBRARIES) \
 	$(comb_OBJECTS) \
 	$(nurb_example_OBJECTS) \
 	$(noinst_PROGRAMS)
