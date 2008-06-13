@@ -1111,12 +1111,14 @@ struct rt_wdb  {
     struct bn_tol	wdb_tol;
     struct resource*	wdb_resp;
 
+#if 0
     /* for catching log messages */
     struct bu_vls	wdb_log;
 
     void		*wdb_result;
     struct bu_vls	wdb_result_str;
     unsigned int	wdb_result_flags;
+#endif
 
     /* variables for name prefixing */
     struct bu_vls	wdb_prestr;
