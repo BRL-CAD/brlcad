@@ -557,10 +557,6 @@ rt_ehy_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 	    break;
     }
 
-    cvp->crv_c1 = cvp->crv_c2 = 0;
-
-    /* any tangent direction */
-    bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 }
 
 /**
