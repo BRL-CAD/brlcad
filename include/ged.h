@@ -29,7 +29,9 @@
 #ifndef __GED_H__
 #define __GED_H__
 
-#if 0
+#define GED_USE_RUN_RT 0
+
+#if GED_USE_RUN_RT
 /* Seems to be needed on windows if using ged_run_rt */
 #include "bio.h"
 #endif
@@ -50,7 +52,10 @@ __BEGIN_DECLS
 #endif
 
 #define GED_NULL (struct ged *)0
+#define GED_DRAWABLE_NULL (struct ged_drawable *)0
+#define GED_VIEW_NULL (struct ged_view *)0
 
+#if 0
 /*XXX This macro is temporary */
 #define GED_INIT_FROM_WDBP(_gedp, _wdbp) { \
     bu_vls_init(&(_gedp)->ged_name); \
@@ -73,6 +78,7 @@ __BEGIN_DECLS
     (_gedp)->ged_mat_default = (_wdbp)->wdb_mat_default; \
     (_gedp)->ged_los_default = (_wdbp)->wdb_los_default; \
 }
+#endif
 
 /* Check if the object is a combination */
 #define	GED_CHECK_COMB(_gedp,_dp,_ret) \
@@ -83,7 +89,7 @@ __BEGIN_DECLS
 
 /* Check if a database is open */
 #define GED_CHECK_DATABASE_OPEN(_gedp,_ret) \
-    if ((_gedp) == GED_NULL || (_gedp)->ged_dbip == DBI_NULL) { \
+    if ((_gedp) == GED_NULL || (_gedp)->ged_wdbp == RT_WDB_NULL || (_gedp)->ged_wdbp->dbip == DBI_NULL) { \
 	if ((_gedp) != GED_NULL) \
 	    bu_vls_printf(&(_gedp)->ged_result_str, "A database is not open!"); \
 	else \
@@ -91,16 +97,30 @@ __BEGIN_DECLS
 	return (_ret); \
     }
 
+/* Check if a drawable exists */
+#define GED_CHECK_DRAWABLE(_gedp,_ret) \
+    if (_gedp->ged_gdp == GED_DRAWABLE_NULL) { \
+	bu_vls_printf(&(_gedp)->ged_result_str, "A drawable does not exist!"); \
+	return (_ret); \
+    }
+
+/* Check if a view exists */
+#define GED_CHECK_VIEW(_gedp,_ret) \
+    if (_gedp->ged_gvp == GED_VIEW_NULL) { \
+	bu_vls_printf(&(_gedp)->ged_result_str, "A view does not exist!"); \
+	return (_ret); \
+    }
+
 /* Lookup database object */
 #define GED_CHECK_EXISTS(_gedp,_name,_noisy,_ret) \
-    if (db_lookup((_gedp)->ged_dbip, (_name), (_noisy)) != DIR_NULL) { \
+    if (db_lookup((_gedp)->ged_wdbp->dbip, (_name), (_noisy)) != DIR_NULL) { \
 	bu_vls_printf(&(_gedp)->ged_result_str, "%s already exists", (_name)); \
 	return (_ret); \
     }
 
 /* Check if the database is read only */
 #define	GED_CHECK_READ_ONLY(_gedp,_ret) \
-    if ((_gedp)->ged_dbip->dbi_read_only) { \
+    if ((_gedp)->ged_wdbp->dbip->dbi_read_only) { \
 	bu_vls_printf(&(_gedp)->ged_result_str, "Sorry, this database is READ-ONLY"); \
 	return (_ret); \
     }
@@ -113,33 +133,33 @@ __BEGIN_DECLS
     }
 
 #define GED_DB_DIRADD(_gedp,_dp,_name,_laddr,_len,_flags,_ptr,_ret) \
-    if (((_dp) = db_diradd((_gedp)->ged_dbip, (_name), (_laddr), (_len), (_flags), (_ptr))) == DIR_NULL) { \
+    if (((_dp) = db_diradd((_gedp)->ged_wdbp->dbip, (_name), (_laddr), (_len), (_flags), (_ptr))) == DIR_NULL) { \
 	bu_vls_printf(&(_gedp)->ged_result_str, "An error has occured while adding a new object to the database."); \
 	return (_ret); \
     }
 
 /* Lookup database object */
 #define GED_DB_LOOKUP(_gedp,_dp,_name,_noisy,_ret) \
-    if (((_dp) = db_lookup((_gedp)->ged_dbip, (_name), (_noisy))) == DIR_NULL) { \
+    if (((_dp) = db_lookup((_gedp)->ged_wdbp->dbip, (_name), (_noisy))) == DIR_NULL) { \
 	bu_vls_printf(&(_gedp)->ged_result_str, "%s: not found", (_name)); \
 	return (_ret); \
     }
 
 /* Get internal representation */
 #define GED_DB_GET_INTERNAL(_gedp,_intern,_dp,_mat,_resource,_ret) \
-    if (rt_db_get_internal((_intern), (_dp), (_gedp)->ged_dbip, (_mat), (_resource)) < 0) { \
+    if (rt_db_get_internal((_intern), (_dp), (_gedp)->ged_wdbp->dbip, (_mat), (_resource)) < 0) { \
 	bu_vls_printf(&(_gedp)->ged_result_str, "Database read error, aborting"); \
 	return (_ret); \
     }
 
 /* Put internal representation */
 #define GED_DB_PUT_INTERNAL(_gedp,_dp,_intern,_resource,_ret) \
-    if (rt_db_put_internal((_dp), (_gedp)->ged_dbip, (_intern), (_resource)) < 0) { \
+    if (rt_db_put_internal((_dp), (_gedp)->ged_wdbp->dbip, (_intern), (_resource)) < 0) { \
 	bu_vls_printf(&(_gedp)->ged_result_str, "Database write error, aborting"); \
 	return (_ret); \
     }
 
-#if 0
+#if GED_USE_RUN_RT
 struct ged_run_rt {
     struct bu_list l;
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -178,12 +198,12 @@ struct ged_drawable {
     struct vd_curve		*gd_currVHead;		/**< @brief  current vdraw head */
     struct solid		*gd_freeSolids;		/**< @brief  ptr to head of free solid list */
 
-#if 0
     char			*gd_rt_cmd[RT_MAXARGS];
     int				gd_rt_cmd_len;
+#if GED_USE_RUN_RT
     struct ged_run_rt		gd_headRunRt;		/**< @brief  head of forked rt processes */
-    void			(*gd_rtCmdNotify)();	/**< @brief  function called when rt command completes */
 #endif
+    void			(*gd_rtCmdNotify)();	/**< @brief  function called when rt command completes */
 
     char			*gd_outputHandler;	/**< @brief  tcl script for handling output */
     int				gd_uplotOutputMode;	/**< @brief  output mode for unix plots */
@@ -199,12 +219,15 @@ struct ged_drawable {
     struct ged_qray_color	gd_qray_void_color;
     struct ged_qray_color	gd_qray_overlap_color;
     int				gd_shaded_mode;		/**< @brief  1 - draw bots shaded by default */
+#if 0
     struct bu_observer		gd_observers;
+#endif
 };
 
 
 struct ged {
     struct bu_list		l;
+#if 0
     int				ged_type;
     struct db_i	*		ged_dbip;
     struct bu_vls		ged_name;		/**< @brief  database object name */
@@ -230,14 +253,55 @@ struct ged {
     int				ged_air_default;
     int				ged_mat_default;	/**< @brief  GIFT material code */
     int				ged_los_default;	/**< @brief  Line-of-sight estimate */
+#else
+    struct rt_wdb		*ged_wdbp;
+    /* for catching log messages */
+    struct bu_vls		ged_log;
+
+    void			*ged_result;
+    struct bu_vls		ged_result_str;
+    unsigned int		ged_result_flags;
+#endif
 
 #if 1
-    struct ged_drawable		ged_drawable;
+    struct ged_drawable		*ged_gdp;
+    struct ged_view		*ged_gvp;
 #else
     struct ged_drawable		*ged_head_drawables;
+    struct ged_view		*ged_head_views;
+#endif
+#if 0
+    struct bu_observer		ged_observers;
 #endif
 };
 
+
+struct ged_view {
+    struct bu_list 	l;
+    fastf_t		gv_scale;
+    fastf_t		gv_size;		/**< @brief  2.0 * scale */
+    fastf_t		gv_invSize;		/**< @brief  1.0 / size */
+    fastf_t		gv_perspective;		/**< @brief  perspective angle */
+    fastf_t		gv_local2base;		/**< @brief  scale local units to base units (i.e. mm) */
+    fastf_t		gv_base2local;		/**< @brief  scale base units (i.e. mm) to local units */
+    vect_t		gv_aet;
+    vect_t		gv_eye_pos;		/**< @brief  eye position */
+    vect_t		gv_keypoint;
+    char		gv_coord;		/**< @brief  coordinate system */
+    char		gv_rotate_about;	/**< @brief  indicates what point rotations are about */
+    mat_t		gv_rotation;
+    mat_t		gv_center;
+    mat_t		gv_model2view;
+    mat_t		gv_pmodel2view;
+    mat_t		gv_view2model;
+    mat_t		gv_pmat;		/**< @brief  perspective matrix */
+#if 0
+    struct bu_observer	gv_observers;
+    void 		(*gv_callback)();	/**< @brief  called in vo_update with gv_clientData and gvp */
+    genptr_t		gv_clientData;		/**< @brief  passed to gv_callback */
+#endif
+    int			gv_zclip;
+};
 
 /**
  * V I E W _ O B J
@@ -869,6 +933,14 @@ GED_EXPORT BU_EXTERN(int ged_arced, (struct ged *gedp, int argc, const char *arg
 GED_EXPORT BU_EXTERN(int ged_comb_color, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Prepare object(s) for display
+ *
+ * Usage:
+ *     draw [-A -o -C#/#/# -s] <objects | attribute name/value pairs>
+ */
+GED_EXPORT BU_EXTERN(int ged_draw, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Edit combination.
  *
  * Usage:
@@ -936,6 +1008,14 @@ GED_EXPORT BU_EXTERN(int ged_mater, (struct ged *gedp, int argc, const char *arg
 GED_EXPORT BU_EXTERN(int ged_mirror, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Trace a single ray from the current view.
+ *
+ * Usage:
+ *     nirt options [x y z]
+ */
+GED_EXPORT BU_EXTERN(int ged_nirt, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Read material properties from a file.
  *
  * Usage:
@@ -974,6 +1054,14 @@ GED_EXPORT BU_EXTERN(int ged_oscale, (struct ged *gedp, int argc, const char *ar
  *     otranslate obj dx dy dz
  */
 GED_EXPORT BU_EXTERN(int ged_otranslate, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Get/set query_ray attributes
+ *
+ * Usage:
+ *     qray subcommand args
+ */
+GED_EXPORT BU_EXTERN(int ged_qray, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Simpler, command-line version of 'mater' command.
