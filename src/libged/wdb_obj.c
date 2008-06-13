@@ -207,7 +207,9 @@ static int wdb_form_tcl(ClientData clientData, Tcl_Interp *interp, int argc, cha
 static int wdb_tops_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_rt_gettrees_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_shells_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+#if 0
 static int wdb_dump_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+#endif
 static int wdb_dbip_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_ls_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_list_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -325,7 +327,9 @@ static struct bu_cmdtab wdb_cmds[] = {
     {"copyeval",	wdb_copyeval_tcl},
     {"cp",		wdb_copy_tcl},
     {"dbip",	wdb_dbip_tcl},
+#if 0
     {"dump",	wdb_dump_tcl},
+#endif
     {"dup",		wdb_dup_tcl},
     {"edcomb",	wdb_newcmds_tcl},
     {"edmater",	wdb_newcmds_tcl},
@@ -1847,6 +1851,7 @@ wdb_shells_tcl(ClientData	clientData,
     return wdb_shells_cmd(wdbp, interp, argc-1, argv+1);
 }
 
+#if 0
 /**
  *
  *
@@ -1909,6 +1914,7 @@ wdb_dump_tcl(ClientData	clientData,
 
     return wdb_dump_cmd(wdbp, interp, argc-1, argv+1);
 }
+#endif
 
 /**
  *
