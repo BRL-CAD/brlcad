@@ -8,6 +8,10 @@ noinst_PROGRAMS = \
 	pc_test \
 	solver_test
 
+noinst_HEADERS = \
+	pc_constraint.h \
+	pc_solver.h
+
 libpc_nil_la_SOURCES = \
 	pc_main.c \
 	pc_solver.cpp
