@@ -7,6 +7,7 @@ libged_nil_la_SOURCES = \
 	bigE.c \
 	comb_color.c \
 	dg_obj.c \
+	draw.c \
 	editit.c \
 	edcomb.c \
 	edmater.c \
