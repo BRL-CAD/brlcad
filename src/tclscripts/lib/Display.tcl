@@ -793,7 +793,7 @@
 	    Dm::drawCenterDot $itk_option(-centerDotColor)
 	}
 
-    } else {
+    } elseif {[info exists itk_option(-fb_active)] && $itk_option(-fb_active)} {
 	Dm::refreshfb
     }
 
