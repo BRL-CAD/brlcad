@@ -60,7 +60,7 @@ ged_shader(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str,"%s", bu_vls_addr(&comb->shader));
 	rt_db_free_internal(&intern, &rt_uniresource);
     } else {
-	if (gedp->ged_dbip->dbi_read_only) {
+	if (gedp->ged_wdbp->dbip->dbi_read_only) {
 	    bu_vls_printf(&gedp->ged_result_str,"Sorry, this database is READ-ONLY");
 	    rt_db_free_internal(&intern, &rt_uniresource);
 

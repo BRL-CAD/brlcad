@@ -101,7 +101,7 @@ ged_trace(register struct directory	*dp,
     }
 
     if (dp->d_flags & DIR_COMB) {
-	if (rt_db_get_internal(&intern, dp, gtdp->gtd_gedp->ged_dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&intern, dp, gtdp->gtd_gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	    bu_vls_printf(&gtdp->gtd_gedp->ged_result_str, "Database read error, aborting");
 	    return;
 	}
@@ -109,7 +109,7 @@ ged_trace(register struct directory	*dp,
 	gtdp->gtd_path[pathpos] = dp;
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	if (comb->tree)
-	    db_tree_funcleaf(gtdp->gtd_gedp->ged_dbip, comb, comb->tree, ged_do_trace,
+	    db_tree_funcleaf(gtdp->gtd_gedp->ged_wdbp->dbip, comb, comb->tree, ged_do_trace,
 			     (genptr_t)&pathpos, (genptr_t)old_xlate, (genptr_t)gtdp);
 #if USE_RT_COMB_IFREE
 	rt_comb_ifree(&intern, &rt_uniresource);
@@ -160,7 +160,7 @@ ged_trace(register struct directory	*dp,
 
     /* NOTE - only reach here if gtd_flag == GED_LISTEVAL */
     bu_vls_printf(&gtdp->gtd_gedp->ged_result_str, "/");
-    if ((id=rt_db_get_internal(&intern, dp, gtdp->gtd_gedp->ged_dbip, gtdp->gtd_xform, &rt_uniresource)) < 0) {
+    if ((id=rt_db_get_internal(&intern, dp, gtdp->gtd_gedp->ged_wdbp->dbip, gtdp->gtd_xform, &rt_uniresource)) < 0) {
 	bu_vls_printf(&gtdp->gtd_gedp->ged_result_str, "rt_db_get_internal(%s) failure", dp->d_namep);
 	return;
     }
@@ -168,9 +168,9 @@ ged_trace(register struct directory	*dp,
     if (rt_functab[id].ft_describe(&gtdp->gtd_gedp->ged_result_str,
 				   &intern,
 				   1,
-				   gtdp->gtd_gedp->ged_dbip->dbi_base2local,
+				   gtdp->gtd_gedp->ged_wdbp->dbip->dbi_base2local,
 				   &rt_uniresource,
-				   gtdp->gtd_gedp->ged_dbip) < 0)
+				   gtdp->gtd_gedp->ged_wdbp->dbip) < 0)
 	bu_vls_printf(&gtdp->gtd_gedp->ged_result_str, "%s: describe error\n", dp->d_namep);
     rt_db_free_internal(&intern, &rt_uniresource);
 }

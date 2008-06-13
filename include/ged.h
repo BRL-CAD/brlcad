@@ -1014,6 +1014,7 @@ GED_EXPORT BU_EXTERN(int ged_mirror, (struct ged *gedp, int argc, const char *ar
  *     nirt options [x y z]
  */
 GED_EXPORT BU_EXTERN(int ged_nirt, (struct ged *gedp, int argc, const char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_vnirt, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Read material properties from a file.
@@ -1063,6 +1064,9 @@ GED_EXPORT BU_EXTERN(int ged_otranslate, (struct ged *gedp, int argc, const char
  */
 GED_EXPORT BU_EXTERN(int ged_qray, (struct ged *gedp, int argc, const char *argv[]));
 
+
+GED_EXPORT BU_EXTERN(void ged_init_qray,
+		    (struct ged *gedp));
 /**
  * Simpler, command-line version of 'mater' command.
  *

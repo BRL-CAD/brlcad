@@ -259,8 +259,12 @@ f_arced(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
 
+#if 1
+    ged.ged_wdbp = wdbp;
+#else
     /*XXX Temporary */
     GED_INIT_FROM_WDBP(&ged, wdbp);
+#endif
 
     ret = ged_arced(&ged, argc, argv);
 

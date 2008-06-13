@@ -1759,6 +1759,10 @@ int
 f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 #if 1
+#if 1
+    /*XXX Temporalily not available */
+    return TCL_OK;
+#else
     const char *ptr;
     char buf[256];
 
@@ -1794,6 +1798,7 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     } else {
 	return dgo_nirt_cmd(dgop, view_state->vs_vop, interp, argc, argv);
     }
+#endif
 #else
     register char **vp;
     FILE *fp_in;
@@ -2310,8 +2315,12 @@ f_vnirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	argv[0] = buf;
     }
 
-
+#if 1
+    /*XXX Temporalily not available */
+    return TCL_OK;
+#else
     return dgo_vnirt_cmd(dgop, view_state->vs_vop, interp, argc, argv);
+#endif
 #else
     register int i;
     int status;

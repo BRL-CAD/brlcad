@@ -58,12 +58,14 @@
 
 
 /* defined in qray.c */
-extern void dgo_qray_data_to_vlist(struct dg_obj *dgop, struct bn_vlblock *vbp, struct dg_qray_dataList *headp, fastf_t *dir, int do_overlaps);
+extern void ged_qray_data_to_vlist(struct ged *gedp, struct bn_vlblock *vbp, struct ged_qray_dataList *headp, fastf_t *dir, int do_overlaps);
 
 /* defined in dg_obj.c */
-extern int dgo_build_tops(Tcl_Interp *interp, struct solid *hsp, char **start, register char **end);
-extern void dgo_cvt_vlblock_to_solids(struct dg_obj *dgop, Tcl_Interp *interp, struct bn_vlblock *vbp, char *name, int copy);
-extern void dgo_pr_wait_status(Tcl_Interp *interp, int status);
+extern int dgo_build_tops(struct bu_vls *result, struct solid *hsp, char **start, register char **end);
+extern void dgo_pr_wait_status(struct bu_vls *result, int status);
+
+/* defined in draw.c */
+extern void ged_cvt_vlblock_to_solids(struct ged *gedp, struct bn_vlblock *vbp, char *name, int copy);
 
 /*
  *			F _ N I R T
@@ -71,25 +73,21 @@ extern void dgo_pr_wait_status(Tcl_Interp *interp, int status);
  *  Invoke nirt with the current view & stuff
  */
 int
-dgo_nirt_cmd(struct dg_obj	*dgop,
-	     struct view_obj	*vop,
-	     Tcl_Interp		*interp,
-	     int		argc,
-	     char		**argv)
+ged_nirt(struct ged *gedp, int argc, const char *argv[])
 {
     register char **vp;
     FILE *fp_in;
     FILE *fp_out, *fp_err;
+#ifndef _WIN32
     int pid, rpid;
     int retcode;
-#ifndef _WIN32
     int pipe_in[2];
     int pipe_out[2];
     int pipe_err[2];
 #else
-    HANDLE pipe_in[2], hSaveStdin, pipe_inDup;
-    HANDLE pipe_out[2], hSaveStdout, pipe_outDup;
-    HANDLE pipe_err[2], hSaveStderr, pipe_errDup;
+    HANDLE pipe_in[2], pipe_inDup;
+    HANDLE pipe_out[2], pipe_outDup;
+    HANDLE pipe_err[2], pipe_errDup;
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
     SECURITY_ATTRIBUTES sa;
@@ -105,15 +103,23 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
     register struct solid *sp;
     char line[RT_MAXLINE];
     char *val;
-    struct bu_vls vls;
     struct bu_vls o_vls;
     struct bu_vls p_vls;
     struct bu_vls t_vls;
     struct bn_vlblock *vbp;
-    struct dg_qray_dataList *ndlp;
-    struct dg_qray_dataList HeadQRayData;
+    struct ged_qray_dataList *ndlp;
+    struct ged_qray_dataList HeadQRayData;
 
-    vp = &dgop->dgo_rt_cmd[0];
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
+    GED_CHECK_VIEW(gedp, GED_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+    gedp->ged_result = GED_RESULT_NULL;
+    gedp->ged_result_flags = 0;
+
+    vp = &gedp->ged_gdp->gd_rt_cmd[0];
     *vp++ = "nirt";
 
     /* swipe x, y, z off the end if present */
@@ -123,14 +129,14 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
 	    sscanf(argv[argc-1], "%lf", &center_model[Z]) == 1) {
 	    use_input_orig = 1;
 	    argc -= 3;
-	    VSCALE(center_model, center_model, dgop->dgo_wdbp->dbip->dbi_local2base);
+	    VSCALE(center_model, center_model, gedp->ged_wdbp->dbip->dbi_local2base);
 	}
     }
 
     /* Calculate point from which to fire ray */
     if (!use_input_orig) {
-	VSET(center_model, -vop->vo_center[MDX],
-	     -vop->vo_center[MDY], -vop->vo_center[MDZ]);
+	VSET(center_model, -gedp->ged_gvp->gv_center[MDX],
+	     -gedp->ged_gvp->gv_center[MDY], -gedp->ged_gvp->gv_center[MDZ]);
     }
 
 #if 0
@@ -139,7 +145,7 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
 
 	/* get eye point */
 	VSET(pt, 0.0, 0.0, 1.0);
-	MAT4X3PNT(eye, vop->vo_view2model, pt);
+	MAT4X3PNT(eye, gedp->ged_gvp->gv_view2model, pt);
 	VSCALE(eye, eye, base2local);
 
 	/* point passed in is actually the aim point */
@@ -151,12 +157,12 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
 	VMOVE(cml, eye);
     } else {
 	VSCALE(cml, center_model, base2local);
-	VMOVEN(dir, vop->vo_rotation + 8, 3);
+	VMOVEN(dir, gedp->ged_gvp->gv_rotation + 8, 3);
 	VSCALE(dir, dir, -1.0);
     }
 #else
-    VSCALE(cml, center_model, dgop->dgo_wdbp->dbip->dbi_base2local);
-    VMOVEN(dir, vop->vo_rotation + 8, 3);
+    VSCALE(cml, center_model, gedp->ged_wdbp->dbip->dbi_base2local);
+    VMOVEN(dir, gedp->ged_gvp->gv_rotation + 8, 3);
     VSCALE(dir, dir, -1.0);
 #endif
 
@@ -167,7 +173,7 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
 		  dir[X], dir[Y], dir[Z]);
 
     i = 0;
-    if (DG_QRAY_GRAPHICS(dgop)) {
+    if (DG_QRAY_GRAPHICS(gedp->ged_gdp)) {
 
 	*vp++ = "-e";
 	*vp++ = DG_QRAY_FORMAT_NULL;
@@ -188,14 +194,14 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
 	*vp++ = "-e";
 	*vp++ = bu_vls_addr(&p_vls);
 
-	if (DG_QRAY_TEXT(dgop)) {
+	if (DG_QRAY_TEXT(gedp->ged_gdp)) {
 	    char *cp;
 	    int count = 0;
 
 	    bu_vls_init(&o_vls);
 
 	    /* get 'r' format now; prepend its' format string with a newline */
-	    val = bu_vls_addr(&dgop->dgo_qray_fmts[0].fmt);
+	    val = bu_vls_addr(&gedp->ged_gdp->gd_qray_fmts[0].fmt);
 
 	    /* find first '"' */
 	    while (*val != '"' && *val != '\0')
@@ -230,15 +236,15 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
 	}
     }
 
-    if (DG_QRAY_TEXT(dgop)) {
+    if (DG_QRAY_TEXT(gedp->ged_gdp)) {
 
 	bu_vls_init(&t_vls);
 
 	/* load vp with formats for printing */
-	for (; dgop->dgo_qray_fmts[i].type != (char)0; ++i)
+	for (; gedp->ged_gdp->gd_qray_fmts[i].type != (char)0; ++i)
 	    bu_vls_printf(&t_vls, "fmt %c %s; ",
-			  dgop->dgo_qray_fmts[i].type,
-			  bu_vls_addr(&dgop->dgo_qray_fmts[i].fmt));
+			  gedp->ged_gdp->gd_qray_fmts[i].type,
+			  bu_vls_addr(&gedp->ged_gdp->gd_qray_fmts[i].fmt));
 
 	*vp++ = "-e";
 	*vp++ = bu_vls_addr(&t_vls);
@@ -248,43 +254,59 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
     }
 
     /* include nirt script string */
-    if (bu_vls_strlen(&dgop->dgo_qray_script)) {
+    if (bu_vls_strlen(&gedp->ged_gdp->gd_qray_script)) {
 	*vp++ = "-e";
-	*vp++ = bu_vls_addr(&dgop->dgo_qray_script);
+	*vp++ = bu_vls_addr(&gedp->ged_gdp->gd_qray_script);
     }
 
     *vp++ = "-e";
     *vp++ = bu_vls_addr(&p_vls);
 
     for (i=1; i < argc; i++)
-	*vp++ = argv[i];
-    *vp++ = dgop->dgo_wdbp->dbip->dbi_filename;
+	*vp++ = (char *)argv[i];
+    *vp++ = gedp->ged_wdbp->dbip->dbi_filename;
 
-    dgop->dgo_rt_cmd_len = vp - dgop->dgo_rt_cmd;
+    gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
 
-    /* Note - dgo_build_tops sets the last vp to (char *)0 */
-    dgop->dgo_rt_cmd_len += dgo_build_tops(interp,
-					   (struct solid *)&dgop->dgo_headSolid,
+    /* Note - gd_build_tops sets the last vp to (char *)0 */
+    gedp->ged_gdp->gd_rt_cmd_len += dgo_build_tops(&gedp->ged_result_str,
+					   (struct solid *)&gedp->ged_gdp->gd_headSolid,
 					   vp,
-					   &dgop->dgo_rt_cmd[RT_MAXARGS]);
+					   &gedp->ged_gdp->gd_rt_cmd[RT_MAXARGS]);
 
-    if (dgop->dgo_qray_cmd_echo) {
+    if (gedp->ged_gdp->gd_qray_cmd_echo) {
 	/* Print out the command we are about to run */
-	vp = &dgop->dgo_rt_cmd[0];
+	vp = &gedp->ged_gdp->gd_rt_cmd[0];
+#if 1
+	while (*vp)
+	    bu_vls_printf(&gedp->ged_result_str, "%s ", *vp++);
+
+	bu_vls_printf(&gedp->ged_result_str, "\n");
+#else
 	while (*vp)
 	    Tcl_AppendResult(interp, *vp++, " ", (char *)NULL);
 
 	Tcl_AppendResult(interp, "\n", (char *)NULL);
+#endif
     }
 
     if (use_input_orig) {
+#if 1
+	bu_vls_printf(&gedp->ged_result_str, "\nFiring from (%lf, %lf, %lf)...\n",
+		      center_model[X], center_model[Y], center_model[Z]);
+#else
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "\nFiring from (%lf, %lf, %lf)...\n",
 		      center_model[X], center_model[Y], center_model[Z]);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
+#endif
     } else
+#if 1
+	bu_vls_printf(&gedp->ged_result_str, "\nFiring from view center...\n");
+#else
 	Tcl_AppendResult(interp, "\nFiring from view center...\n", (char *)NULL);
+#endif
 
 #ifndef _WIN32
     (void)pipe(pipe_in);
@@ -310,8 +332,8 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
 	for (i=3; i < 20; i++)
 	    (void)close(i);
 	(void)signal(SIGINT, SIG_DFL);
-	(void)execvp(dgop->dgo_rt_cmd[0], dgop->dgo_rt_cmd);
-	perror (dgop->dgo_rt_cmd[0]);
+	(void)execvp(gedp->ged_gdp->gd_rt_cmd[0], gedp->ged_gdp->gd_rt_cmd);
+	perror (gedp->ged_gdp->gd_rt_cmd[0]);
 	exit(16);
     }
 
@@ -390,16 +412,16 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
     si.hStdError   = pipe_err[1];
     si.wShowWindow = SW_HIDE;
 
-    snprintf(line1, rem, "%s ", dgop->dgo_rt_cmd[0]);
+    snprintf(line1, rem, "%s ", gedp->ged_gdp->gd_rt_cmd[0]);
     rem -= strlen(line1) - 1;
 
-    for (i=1; i<dgop->dgo_rt_cmd_len; i++) {
+    for (i=1; i<gedp->ged_gdp->gd_rt_cmd_len; i++) {
 	/* skip commands */
-	if (strstr(dgop->dgo_rt_cmd[i], "-e") != NULL)
+	if (strstr(gedp->ged_gdp->gd_rt_cmd[i], "-e") != NULL)
 	    ++i;
 	else {
 	    /* append other arguments (i.e. options, file and obj(s)) */
-	    snprintf(name, 1024, "\"%s\" ", dgop->dgo_rt_cmd[i]);
+	    snprintf(name, 1024, "\"%s\" ", gedp->ged_gdp->gd_rt_cmd[i]);
 	    if (rem - strlen(name) < 1) {
 		bu_log("Ran out of buffer space!");
 		return TCL_ERROR;
@@ -419,9 +441,9 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
     setmode(fileno(fp_in), O_BINARY);
 
     /* send commands down the pipe */
-    for (i=1; i<dgop->dgo_rt_cmd_len-2; i++)
-	if (strstr(dgop->dgo_rt_cmd[i], "-e") != NULL)
-	    fprintf(fp_in, "%s\n", dgop->dgo_rt_cmd[++i]);
+    for (i=1; i<gedp->ged_gdp->gd_rt_cmd_len-2; i++)
+	if (strstr(gedp->ged_gdp->gd_rt_cmd[i], "-e") != NULL)
+	    fprintf(fp_in, "%s\n", gedp->ged_gdp->gd_rt_cmd[++i]);
 
     /* use fp_out to read back the result */
     CloseHandle(pipe_out[1]);
@@ -440,9 +462,9 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
 #endif
 
     bu_vls_free(&p_vls);   /* use to form "partition" part of nirt command above */
-    if (DG_QRAY_GRAPHICS(dgop)) {
+    if (DG_QRAY_GRAPHICS(gedp->ged_gdp)) {
 
-	if (DG_QRAY_TEXT(dgop))
+	if (DG_QRAY_TEXT(gedp->ged_gdp))
 	    bu_vls_free(&o_vls); /* used to form "overlap" part of nirt command above */
 
 	BU_LIST_INIT(&HeadQRayData.l);
@@ -450,11 +472,15 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
 	/* handle partitions */
 	while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL) {
 	    if (line[0] == '\n') {
+#if 1
+		bu_vls_printf(&gedp->ged_result_str, "%s", line+1);
+#else
 		Tcl_AppendResult(interp, line+1, (char *)NULL);
+#endif
 		break;
 	    }
 
-	    BU_GETSTRUCT(ndlp, dg_qray_dataList);
+	    BU_GETSTRUCT(ndlp, ged_qray_dataList);
 	    BU_LIST_APPEND(HeadQRayData.l.back, &ndlp->l);
 
 	    if (sscanf(line, "%le %le %le %le",
@@ -463,19 +489,23 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
 	}
 
 	vbp = rt_vlblock_init();
-	dgo_qray_data_to_vlist(dgop, vbp, &HeadQRayData, dir, 0);
+	ged_qray_data_to_vlist(gedp, vbp, &HeadQRayData, dir, 0);
 	bu_list_free(&HeadQRayData.l);
-	dgo_cvt_vlblock_to_solids(dgop, interp, vbp, bu_vls_addr(&dgop->dgo_qray_basename), 0);
+	ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_addr(&gedp->ged_gdp->gd_qray_basename), 0);
 	rt_vlblock_free(vbp);
 
 	/* handle overlaps */
 	while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL) {
 	    if (line[0] == '\n') {
+#if 1
+		bu_vls_printf(&gedp->ged_result_str, "%s", line+1);
+#else
 		Tcl_AppendResult(interp, line+1, (char *)NULL);
+#endif
 		break;
 	    }
 
-	    BU_GETSTRUCT(ndlp, dg_qray_dataList);
+	    BU_GETSTRUCT(ndlp, ged_qray_dataList);
 	    BU_LIST_APPEND(HeadQRayData.l.back, &ndlp->l);
 
 	    if (sscanf(line, "%le %le %le %le",
@@ -483,30 +513,40 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
 		break;
 	}
 	vbp = rt_vlblock_init();
-	dgo_qray_data_to_vlist(dgop, vbp, &HeadQRayData, dir, 1);
+	ged_qray_data_to_vlist(gedp, vbp, &HeadQRayData, dir, 1);
 	bu_list_free(&HeadQRayData.l);
-	dgo_cvt_vlblock_to_solids(dgop, interp, vbp, bu_vls_addr(&dgop->dgo_qray_basename), 0);
+	ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_addr(&gedp->ged_gdp->gd_qray_basename), 0);
 	rt_vlblock_free(vbp);
     }
 
+#if 0
     /*
      * Notify observers, if any, before generating textual output since
      * such an act (observer notification) wipes out whatever gets stuffed
      * into the result.
      */
-    dgo_notify(dgop, interp);
+    gd_notify(gedp->ged_gdp, interp);
+#endif
 
-    if (DG_QRAY_TEXT(dgop)) {
+    if (DG_QRAY_TEXT(gedp->ged_gdp)) {
 	bu_vls_free(&t_vls);
 
 	while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL)
+#if 1
+	    bu_vls_printf(&gedp->ged_result_str, "%s", line);
+#else
 	    Tcl_AppendResult(interp, line, (char *)NULL);
+#endif
     }
 
     (void)fclose(fp_out);
 
     while (bu_fgets(line, RT_MAXLINE, fp_err) != (char *)NULL)
+#if 1
+	bu_vls_printf(&gedp->ged_result_str, "%s", line);
+#else
 	Tcl_AppendResult(interp, line, (char *)NULL);
+#endif
     (void)fclose(fp_err);
 
 
@@ -516,26 +556,23 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
     while ((rpid = wait(&retcode)) != pid && rpid != -1)
 	;	/* NULL */
 
-    if ( retcode != 0 )
-	dgo_pr_wait_status(interp, retcode);
+    if (retcode != 0)
+	dgo_pr_wait_status(&gedp->ged_result_str, retcode);
 #else
     /* Wait for program to finish */
     WaitForSingleObject( pi.hProcess, INFINITE );
 
 #endif
 
-    FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)
+    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid)
 	sp->s_wflag = DOWN;
 
-    return TCL_OK;
+    return GED_OK;
 }
 
 int
-dgo_vnirt_cmd(struct dg_obj	*dgop,
-	      struct view_obj	*vop,
-	      Tcl_Interp	*interp,
-	      int		argc,
-	      char		**argv) {
+ged_vnirt(struct ged *gedp, int argc, const char *argv[])
+{
     register int i;
     int status;
     fastf_t sf = 1.0 * DG_INV_GED;
@@ -545,16 +582,20 @@ dgo_vnirt_cmd(struct dg_obj	*dgop,
     struct bu_vls y_vls;
     struct bu_vls z_vls;
     char **av;
+    static const char *usage = "vnirt options vX vY";
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
+    GED_CHECK_VIEW(gedp, GED_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+    gedp->ged_result = GED_RESULT_NULL;
+    gedp->ged_result_flags = 0;
 
     if (argc < 3 || MAXARGS < argc) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib_alias dgo_vnirt %s", argv[0]);
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-
-	return TCL_ERROR;
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
     }
 
     /*
@@ -566,17 +607,17 @@ dgo_vnirt_cmd(struct dg_obj	*dgop,
      */
     if (sscanf(argv[argc-2], "%lf", &view_ray_orig[X]) != 1 ||
 	sscanf(argv[argc-1], "%lf", &view_ray_orig[Y]) != 1) {
-	return TCL_ERROR;
+	return GED_ERROR;
     }
     view_ray_orig[Z] = DG_GED_MAX;
     argc -= 2;
 
-    av = (char **)bu_malloc(sizeof(char *) * (argc + 4), "dgo_vnirt_cmd: av");
+    av = (char **)bu_malloc(sizeof(char *) * (argc + 4), "gd_vnirt_cmd: av");
 
     /* Calculate point from which to fire ray */
     VSCALE(view_ray_orig, view_ray_orig, sf);
-    MAT4X3PNT(center_model, vop->vo_view2model, view_ray_orig);
-    VSCALE(center_model, center_model, dgop->dgo_wdbp->dbip->dbi_base2local);
+    MAT4X3PNT(center_model, gedp->ged_gvp->gv_view2model, view_ray_orig);
+    VSCALE(center_model, center_model, gedp->ged_wdbp->dbip->dbi_base2local);
 
     bu_vls_init(&x_vls);
     bu_vls_init(&y_vls);
@@ -588,7 +629,7 @@ dgo_vnirt_cmd(struct dg_obj	*dgop,
     /* pass remaining arguments to nirt */
     av[0] = "nirt";
     for (i = 1; i < argc; ++i)
-	av[i] = argv[i];
+	av[i] = (char *)argv[i];
 
     /* pass modified coordinates to nirt */
     av[i++] = bu_vls_addr(&x_vls);
@@ -596,12 +637,12 @@ dgo_vnirt_cmd(struct dg_obj	*dgop,
     av[i++] = bu_vls_addr(&z_vls);
     av[i] = (char *)NULL;
 
-    status = dgo_nirt_cmd(dgop, vop, interp, argc + 3, av);
+    status = ged_nirt(gedp, argc + 3, (const char **)av);
 
     bu_vls_free(&x_vls);
     bu_vls_free(&y_vls);
     bu_vls_free(&z_vls);
-    bu_free((genptr_t)av, "dgo_vnirt_cmd: av");
+    bu_free((genptr_t)av, "ged_vnirt: av");
 
     return status;
 }

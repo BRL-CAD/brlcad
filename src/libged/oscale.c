@@ -100,9 +100,9 @@ ged_oscale(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
 
-	VSCALE(keypoint, keypoint, gedp->ged_dbip->dbi_local2base);
+	VSCALE(keypoint, keypoint, gedp->ged_wdbp->dbip->dbi_local2base);
 
-	if ((dp = db_lookup(gedp->ged_dbip, argv[1], LOOKUP_QUIET)) == DIR_NULL) {
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET)) == DIR_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: %s not found", argv[0], argv[1]);
 	    return GED_ERROR;
 	}

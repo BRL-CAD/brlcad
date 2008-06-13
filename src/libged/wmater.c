@@ -64,7 +64,7 @@ ged_wmater(struct ged *gedp, int argc, const char *argv[])
     }
 
     for (i = 2; i < argc; ++i) {
-	if ( (dp = db_lookup( gedp->ged_dbip,  argv[i], LOOKUP_NOISY )) == DIR_NULL ) {
+	if ( (dp = db_lookup( gedp->ged_wdbp->dbip,  argv[i], LOOKUP_NOISY )) == DIR_NULL ) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: Failed to find %s", argv[0], argv[i]);
 	    status = GED_ERROR;
 	    continue;
@@ -74,7 +74,7 @@ ged_wmater(struct ged *gedp, int argc, const char *argv[])
 	    status = GED_ERROR;
 	    continue;
 	}
-	if ( rt_db_get_internal( &intern, dp, gedp->ged_dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
+	if ( rt_db_get_internal( &intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: Unable to read %s from database", argv[0], argv[i]);
 	    status = GED_ERROR;
 	    continue;

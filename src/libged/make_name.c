@@ -92,7 +92,7 @@ ged_make_name(struct ged *gedp, int argc, char *argv[])
 	bu_vls_printf(&obj_name, "%d", i++);
 	bu_vls_strcat(&obj_name, tp);
     }
-    while (db_lookup(gedp->ged_dbip, bu_vls_addr(&obj_name), LOOKUP_QUIET) != DIR_NULL);
+    while (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&obj_name), LOOKUP_QUIET) != DIR_NULL);
 
     bu_vls_printf(&gedp->ged_result_str, bu_vls_addr(&obj_name));
     bu_vls_free(&obj_name);

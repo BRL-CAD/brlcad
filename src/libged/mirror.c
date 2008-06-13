@@ -147,7 +147,7 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
     /* mirror the object */
     VUNITIZE(mirror_dir);
 
-    if (rt_mirror(gedp->ged_dbip,
+    if (rt_mirror(gedp->ged_wdbp->dbip,
 		  argv[bu_optind],
 		  argv[bu_optind+1],
 		  mirror_origin,

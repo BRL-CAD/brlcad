@@ -182,6 +182,8 @@ cmd_ged_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
 
+    return TCL_OK;
+
     /* !!! */
 }
 
@@ -1856,7 +1858,6 @@ cmd_dbip(ClientData	clientData,
     return wdb_dbip_cmd(wdbp, interp, argc, argv);
 }
 
-#if 0
 int
 cmd_dump(ClientData	clientData,
 	 Tcl_Interp	*interp,
@@ -1867,7 +1868,6 @@ cmd_dump(ClientData	clientData,
 
     return wdb_dump_cmd(wdbp, interp, argc, argv);
 }
-#endif
 
 int
 cmd_form(ClientData	clientData,
@@ -1989,8 +1989,12 @@ cmd_make_name(ClientData	clientData,
 
     CHECK_DBI_NULL;
 
+#if 1
+    ged.ged_wdbp = wdbp;
+#else
     /*XXX Temporary */
     GED_INIT_FROM_WDBP(&ged, wdbp);
+#endif
 
     ret = ged_make_name(&ged, argc, argv);
 

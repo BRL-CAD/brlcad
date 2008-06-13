@@ -207,9 +207,7 @@ static int wdb_form_tcl(ClientData clientData, Tcl_Interp *interp, int argc, cha
 static int wdb_tops_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_rt_gettrees_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_shells_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-#if 0
 static int wdb_dump_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-#endif
 static int wdb_dbip_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_ls_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_list_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -301,6 +299,9 @@ static struct bu_cmdtab wdb_newcmds[] = {
     {"make_name",	ged_make_name},
     {"mater",		ged_mater},
     {"mirror",		ged_mirror},
+#if GED_USE_RUN_RT
+    {"nirt",		ged_nirt},
+#endif
     {"ocenter",		ged_ocenter},
     {"orotate",		ged_orotate},
     {"oscale",		ged_oscale},
@@ -327,9 +328,7 @@ static struct bu_cmdtab wdb_cmds[] = {
     {"copyeval",	wdb_copyeval_tcl},
     {"cp",		wdb_copy_tcl},
     {"dbip",	wdb_dbip_tcl},
-#if 0
     {"dump",	wdb_dump_tcl},
-#endif
     {"dup",		wdb_dup_tcl},
     {"edcomb",	wdb_newcmds_tcl},
     {"edmater",	wdb_newcmds_tcl},
@@ -363,6 +362,9 @@ static struct bu_cmdtab wdb_cmds[] = {
     {"move_arb_face",	wdb_move_arb_face_tcl},
     {"mv",		wdb_move_tcl},
     {"mvall",	wdb_move_all_tcl},
+#if GED_USE_RUN_RT
+    {"nirt",	wdb_newcmds_tcl},
+#endif
     {"nmg_collapse", wdb_nmg_collapse_tcl},
     {"nmg_simplify", wdb_nmg_simplify_tcl},
     {"observer",	wdb_observer_tcl},
@@ -462,8 +464,10 @@ wdb_deleteProc(ClientData clientData)
     RT_CK_WDB(wdbp);
     BU_LIST_DEQUEUE(&wdbp->l);
     bu_vls_free(&wdbp->wdb_name);
+#if 0
     bu_vls_free(&wdbp->wdb_log);
     bu_vls_free(&wdbp->wdb_result_str);
+#endif
     bu_vls_free(&wdbp->wdb_prestr);
     wdb_close(wdbp);
 }
@@ -512,8 +516,10 @@ wdb_init_obj(Tcl_Interp		*interp,
     /* initialize rt_wdb */
     bu_vls_init(&wdbp->wdb_name);
     bu_vls_strcpy(&wdbp->wdb_name, oname);
+#if 0
     bu_vls_init(&wdbp->wdb_log);
     bu_vls_init(&wdbp->wdb_result_str);
+#endif
     bu_vls_init(&wdbp->wdb_prestr);
 
 #if 0
@@ -1851,7 +1857,6 @@ wdb_shells_tcl(ClientData	clientData,
     return wdb_shells_cmd(wdbp, interp, argc-1, argv+1);
 }
 
-#if 0
 /**
  *
  *
@@ -1914,7 +1919,6 @@ wdb_dump_tcl(ClientData	clientData,
 
     return wdb_dump_cmd(wdbp, interp, argc-1, argv+1);
 }
-#endif
 
 /**
  *
@@ -2279,8 +2283,12 @@ wdb_pathsum_cmd(struct rt_wdb	*wdbp,
 	return TCL_ERROR;
     }
 
+#if 1
+    ged.ged_wdbp = wdbp;
+#else
     /*XXX Temporary */
     GED_INIT_FROM_WDBP(&ged, wdbp);
+#endif
 
     /*
      *	paths are matched up to last input member
@@ -3566,8 +3574,12 @@ wdb_copyeval_cmd(struct rt_wdb	*wdbp,
 	return TCL_ERROR;
     }
 
+#if 1
+    ged.ged_wdbp = wdbp;
+#else
     /*XXX Temporary */
     GED_INIT_FROM_WDBP(&ged, wdbp);
+#endif
 
     /* initialize gtd */
     gtd.gtd_gedp = &ged;
@@ -7180,8 +7192,12 @@ wdb_make_bb_cmd(struct rt_wdb	*wdbp,
 	return TCL_ERROR;
     }
 
+#if 1
+    ged.ged_wdbp = wdbp;
+#else
     /*XXX Temporary */
     GED_INIT_FROM_WDBP(&ged, wdbp);
+#endif
 
     i = 1;
 
@@ -10486,10 +10502,14 @@ wdb_newcmds_tcl(ClientData	clientData,
     int ret;
     char flags[128];
 
+#if 1
+    ged.ged_wdbp = wdbp;
+#else
     /*XXXX Eventually the clientData will be a "struct ged".
      *     In the meantime ...
      */
     GED_INIT_FROM_WDBP(&ged, wdbp);
+#endif
 
     for (ctp = wdb_newcmds; ctp->ct_name != (char *)0; ctp++) {
 	if (ctp->ct_name[0] == argv[1][0] &&
