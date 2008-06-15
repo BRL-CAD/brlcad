@@ -126,6 +126,10 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat;f90;for;f;fpp"
 			>
 			<File
+				RelativePath="..\..\..\src\libged\arced.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\bigE.c"
 				>
 			</File>
@@ -138,6 +142,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\draw.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\edcomb.c"
 				>
 			</File>
@@ -147,6 +155,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\edmater.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\get_obj_bounds.c"
 				>
 			</File>
 			<File
@@ -186,6 +198,22 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\ocenter.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\orotate.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\oscale.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\otranslate.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\qray.c"
 				>
 			</File>
@@ -199,6 +227,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\tcl.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\trace.c"
 				>
 			</File>
 			<File
@@ -230,6 +262,10 @@
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;fi;fd"
 			>
+			<File
+				RelativePath="..\..\..\src\libged\ged_private.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
