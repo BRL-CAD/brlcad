@@ -62,13 +62,13 @@ Ged_Init(Tcl_Interp *interp)
 
     /* initialize database objects */
     Wdb_Init(interp);
-    
+
     /* initialize drawable geometry objects */
     Dgo_Init(interp);
 
     /* initialize view objects */
     Vo_Init(interp);
-    
+
     Tcl_PkgProvide(interp,  "Ged", brlcad_version());
 
     return TCL_OK;

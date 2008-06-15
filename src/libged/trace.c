@@ -154,7 +154,7 @@ ged_trace(register struct directory	*dp,
 	bu_vls_printf(&gtdp->gtd_gedp->ged_result_str, "/%s", gtdp->gtd_path[i]->d_namep);
 
     if (gtdp->gtd_flag == GED_LISTPATH) {
-	bu_vls_printf(&gtdp->gtd_gedp->ged_result_str, "/%s:\n", dp->d_namep); 
+	bu_vls_printf(&gtdp->gtd_gedp->ged_result_str, "/%s:\n", dp->d_namep);
 	return;
     }
 

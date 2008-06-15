@@ -716,7 +716,7 @@ wdb_prep_dbip(Tcl_Interp *interp, const char *filename)
 		Tcl_AppendResult(interp,
 				 "wdb_prep_dbip: no database is currently opened!", \
 				 (char *)NULL);
-		
+
 	    return DBI_NULL;
 	}
     } else
@@ -3260,7 +3260,7 @@ adjust_names(
     struct concat_data *cc_data )
 {
     char *new_name;
-        
+
     if ( trp == NULL ) {
 	return;
     }
@@ -3398,7 +3398,7 @@ wdb_concat_cmd(struct rt_wdb	*wdbp,
     WDB_TCL_CHECK_READ_ONLY;
 
     /* expecting either 3 or 4 args */
-    if ( (argc < 3) || 
+    if ( (argc < 3) ||
 	 (argc > 4) ||
 	 (argc > 1 && argv[1][0] == '-' && argc != 4) ) {
 	bu_vls_init(&vls);
@@ -3461,7 +3461,7 @@ wdb_concat_cmd(struct rt_wdb	*wdbp,
 	    (void)bu_vls_strcpy(&cc_data.affix, argv[2]);
 	    cc_data.copy_mode |= CUSTOM_PREFIX;
 	}
-	    
+
     }
 
     if ( wdbp->dbip->dbi_version < 5 ) {
@@ -5254,8 +5254,8 @@ wdb_print_node(struct rt_wdb		*wdbp,
 	       int			indentSize,
 	       char			prefix,
 	       int			cflag,
-               int                      displayDepth,
-               int                      currdisplayDepth)
+	       int                      displayDepth,
+	       int                      currdisplayDepth)
 {
     register int			i;
     register struct directory	*nextdp;
@@ -5774,7 +5774,7 @@ wdb_tol_cmd(struct rt_wdb	*wdbp,
 	    bu_vls_printf(&vls, "bad tolerance - %s", argv[1]);
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
-		
+
 	    return TCL_ERROR;
 	}
 
@@ -5783,7 +5783,7 @@ wdb_tol_cmd(struct rt_wdb	*wdbp,
 	    Tcl_AppendResult(interp, "negative tolerance clamped to 0.0\n", (char *)NULL);
 	    f = 0.0;
 	}
-	    
+
 	switch (argv[0][0]) {
 	    case 'a':
 		/* Absolute tol */
@@ -5837,7 +5837,7 @@ wdb_tol_cmd(struct rt_wdb	*wdbp,
 		bu_vls_printf(&vls, "unrecognized tolerance type - %s", argv[0]);
 		Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 		bu_vls_free(&vls);
-		
+
 		return TCL_ERROR;
 	}
 
@@ -8807,7 +8807,7 @@ wdb_binary_cmd(struct rt_wdb	*wdbp,
 	    rt_db_free_internal( &intern, &rt_uniresource );
 	    return TCL_ERROR;
 	}
-	
+
 	if ( fwrite( bip->u.int8, bip->count * db5_type_sizeof_h_binu( bip->type ),
 		     1, fp) != 1 ) {
 	    Tcl_AppendResult(interp, "Error writing contents to file",
@@ -8816,7 +8816,7 @@ wdb_binary_cmd(struct rt_wdb	*wdbp,
 	    rt_db_free_internal( &intern, &rt_uniresource );
 	    return TCL_ERROR;
 	}
-	
+
 	fclose( fp );
 	rt_db_free_internal( &intern, &rt_uniresource );
 	return TCL_OK;

@@ -782,7 +782,7 @@ ged_make(struct ged *gedp, int argc, char *argv[])
 	VSET(mbpt->coord, origin[X] + 1.0, origin[Y], origin[Z]);
 	BU_LIST_INSERT(&metaball_ip->metaball_ctrl_head, &mbpt->l);
 
-	bu_log("metaball being made with %f threshold and two points using the %s rendering method\n", 
+	bu_log("metaball being made with %f threshold and two points using the %s rendering method\n",
 	       metaball_ip->threshold, rt_metaball_lookup_type_name(metaball_ip->method));
     } else {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);

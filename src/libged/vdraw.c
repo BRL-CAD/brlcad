@@ -22,11 +22,11 @@
 /** @file vdraw.c
  *
  * Edit vector lists and display them as pseudosolids.
- * 
+ *
  * OPEN COMMAND
  * vdraw	open			- with no argument, asks if there is
  * an open vlist (1 yes, 0 no)
- * 
+ *
  * name		- opens the specified vlist
  * returns 1 if creating new vlist
  * 0 if opening an existing vlist
@@ -52,19 +52,19 @@
  * color	- return the current color in hex
  * length	- return number of vectors in list
  * name		- return name of current vlist
- * 
+ *
  * DISPLAY COMMAND -
  * vdraw send		- send the current vlist to the display
  * returns 0 on success, -1 if the name
  * conflicts with an existing true solid
- * 
+ *
  * CURVE COMMANDS
  * vdraw vlist list	- return list of all existing vlists
  * delete name		- delete the named vlist
- * 
+ *
  * All textual arguments can be replaced by their first letter.
  * (e.g. "vdraw d a" instead of "vdraw delete all"
- * 
+ *
  * In the above listing:
  * "i" refers to an integer
  * "c" is an integer representing one of the following bn_vlist commands:
@@ -80,7 +80,7 @@
  * "x y z" refer to floating point values which represent a point or
  * normal vector. For commands 0, 1, 3, 4, and 5, they represent a
  * point, while for commands 2 and 6 they represent normal vectors
- * 
+ *
  * Example Use -
  * vdraw open rays
  * vdraw delete all
@@ -90,7 +90,7 @@
  * vdraw write next 1 $outpt
  * }
  * vdraw send
- * 
+ *
  */
 /** @} */
 

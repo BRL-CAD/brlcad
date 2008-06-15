@@ -42,7 +42,6 @@
 struct dg_obj HeadDGObj;
 
 
-
 /*
  * Local Variables:
  * mode: C
