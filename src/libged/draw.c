@@ -23,8 +23,10 @@
  *
  */
 
-#include <stdlib.h>
 #include "common.h"
+
+#include <stdlib.h>
+#include <string.h>
 
 #include "ged.h"
 #include "mater.h"
@@ -62,14 +64,14 @@ struct dg_rt_client_data {
 
 static struct solid FreeSolid;		/* head of free solid list */
 
-void ged_eraseobjpath(struct ged *gedp, int argc, const char **argv, int noisy, int all);
+void ged_eraseobjpath(struct ged *gedp, int argc, const char *argv[], int noisy, int all);
 static void ged_eraseobjall(struct ged *gedp, register struct directory **dpp);
 static void ged_eraseobj(struct ged *gedp, register struct directory **dpp);
-int ged_drawtrees(struct ged *gedp, int argc, const char **argv, int kind, struct ged_client_data *_dgcdp);
+static int ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct ged_client_data *_dgcdp);
 void ged_color_soltab(struct solid *hsp);
 static union tree *ged_wireframe_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 static union tree *ged_wireframe_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data);
-int ged_nmg_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data);
+static int ged_nmg_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data);
 static union tree *ged_nmg_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 static union tree *ged_bot_check_region_end(register struct db_tree_state *tsp,
 					    struct db_full_path	*pathp,
@@ -123,7 +125,7 @@ ged_draw(struct ged *gedp, int argc, const char *argv[])
 void
 ged_eraseobjpath(struct ged	*gedp,
 		 int		argc,
-		 const char	**argv,
+		 const char	*argv[],
 		 int		noisy,
 		 int		all)
 {
@@ -220,7 +222,7 @@ ged_eraseobjpath(struct ged	*gedp,
  *	-1	On major error
  */
 static int
-ged_drawtrees(struct ged *gedp, int argc, const char **argv, int kind, struct ged_client_data *_dgcdp)
+ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct ged_client_data *_dgcdp)
 {
     int		ret = 0;
     register int	c;
@@ -992,7 +994,7 @@ ged_bot_check_leaf(struct db_tree_state		*tsp,
 {
     union tree *curtree;
     int  ac = 1;
-    char *av[2];
+    const char *av[2];
     struct ged_client_data *dgcdp = (struct ged_client_data *)client_data;
 
     av[0] = db_path_to_string(pathp);
