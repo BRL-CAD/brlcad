@@ -652,6 +652,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\pc_constraint.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\pipe\pipe.c"
 				>
 			</File>
