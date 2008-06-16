@@ -589,8 +589,10 @@ mged_setup(void)
     bu_vls_printf( &str, "%s(state)", MGED_DISPLAY_VAR );
     Tcl_SetVar(interp, bu_vls_addr(&str), state_str[state], TCL_GLOBAL_ONLY);
 
+#if 0
     /* initialize "Query Ray" variables */
     init_qray();
+#endif
 
     Tcl_ResetResult(interp);
 

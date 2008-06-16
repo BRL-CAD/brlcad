@@ -43,9 +43,14 @@ int
 f_qray(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 #if 1
+#if 1
+    /*XXX Temporarily do nothing while transitioning to libged */
+    return TCL_OK;
+#else
     struct ged ged;
     ged.ged_wdbp = wdbp;
     return ged_qray(&ged, argc, argv);
+#endif
 #else
     return dgo_qray_cmd(dgop, interp, argc, argv);
 #endif
