@@ -5,8 +5,6 @@ AM_LDFLAGS = \
 	${OPTICAL} \
 	${RT} ${FB}
 
-EXTRA_PROGRAMS = rtmlt
-
 if ONLY_BENCHMARK
 bin_PROGRAMS = \
 	rt
@@ -207,6 +205,7 @@ libremrt_a_CFLAGS = -DRTSRV
 libremrt_a_SOURCES = \
 	do.c \
 	opt.c \
+	scanline.c \
 	sh_tcl.c \
 	view.c \
 	worker.c
