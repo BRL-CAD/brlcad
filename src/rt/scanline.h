@@ -27,11 +27,11 @@
 
 struct scanline {
     int	sl_left;		/* # pixels left on this scanline */
-    char	*sl_buf;		/* ptr to buffer for scanline */
+    char *sl_buf;		/* ptr to buffer for scanline */
 };
 
 void free_scanlines(int, struct scanline*);
-void alloc_scanlines(int, struct scanline*);
+struct scanline* alloc_scanlines(int);
 
 /*
  * Local Variables:

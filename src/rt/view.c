@@ -106,8 +106,8 @@ extern int	srv_scanlen;		/* BUFMODE_RTSRV buffer length */
 extern char	*scanbuf;		/* scanline(s) buffer */
 #endif
 
-void		free_scanlines(int, struct scanline *);
-void        alloc_scanlines(int, struct scanline *);
+void		        free_scanlines(int, struct scanline *);
+struct scanline*    alloc_scanlines(int);
 
 static int	buf_mode=0;
 #define BUFMODE_UNBUF	1		/* No output buffering */
@@ -1363,8 +1363,11 @@ view_2init(register struct application *ap, char *framename)
     /* Always allocate the scanline[] array
      * (unless we already have one in incremental mode)
      */
-    if ( (!incr_mode || !scanline) && !fullfloat_mode )
-        alloc_scanlines(height, scanline);
+    if ( (!incr_mode || !scanline) && !fullfloat_mode ) {
+        if (scanline)
+            free_scanlines(height, scanline);
+        scanline = alloc_scanlines(height);
+    }
 
 #ifdef RTSRV
     buf_mode = BUFMODE_RTSRV;		/* multi-pixel buffering */
@@ -1623,6 +1626,8 @@ void application_init (void)
     view_parse[5].sp_offset = bu_byteoffset(overlay);
     view_parse[6].sp_offset = bu_byteoffset(overlay);
 }
+
+
 
 /*
  * Local Variables:

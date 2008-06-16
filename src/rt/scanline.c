@@ -26,30 +26,31 @@
 #include "scanline.h"
 
 void
-free_scanlines(int height, struct scanline * scanline)
+free_scanlines(int height, struct scanline* scanline)
 {
-    register int	y;
+    register int y;
 
-    for ( y=0; y<height; y++ )  {
-	if ( scanline[y].sl_buf )  {
-	    bu_free( scanline[y].sl_buf, "sl_buf scanline buffer" );
-	    scanline[y].sl_buf = (char *)0;
-	}
+    for (y = 0; y < height; y++)  {
+        if (scanline[y].sl_buf)  {
+            bu_free(scanline[y].sl_buf, "sl_buf scanline buffer");
+	        scanline[y].sl_buf = (char *) 0;
+    	}
     }
-    bu_free( (char *)scanline, "struct scanline[height]" );
-    scanline = (struct scanline *)0;
+    bu_free((char*) scanline, "struct scanline[height]");
+    scanline = (struct scanline*) 0;
 }
 
-void
-alloc_scanlines(int height, struct scanline* scanline)
+struct scanline *
+alloc_scanlines(int height)
 {
-    if (scanline)
-        free_scanlines(height, scanline);
+    struct scanline *temp;
 
-	scanline = (struct scanline *)bu_calloc(
+	temp = (struct scanline *)bu_calloc(
 	    height, sizeof(struct scanline),
 	    "struct scanline[height]" );
+    return temp;
 }
+
 
 /*
  * Local Variables:
