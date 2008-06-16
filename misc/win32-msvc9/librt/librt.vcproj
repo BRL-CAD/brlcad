@@ -232,6 +232,18 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat;f90;for;f;fpp"
 			>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\arb8\arb8.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\arbn\arbn.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\ars\ars.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\bezier_2d_isect.c"
 				>
 			</File>
@@ -248,7 +260,23 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\bot\bot.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\brep\brep.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\bspline\bspline.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\bundle.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\cline\cline.c"
 				>
 			</File>
 			<File
@@ -340,39 +368,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\dspline.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\librt\fortray.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\librt\primitives\arb8\arb8.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\librt\primitives\arbn\arbn.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\librt\primitives\ars\ars.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\librt\primitives\bot\bot.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\librt\primitives\brep\brep.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\librt\primitives\cline\cline.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\librt\primitives\dsp\dsp.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\dspline.c"
 				>
 			</File>
 			<File
@@ -400,6 +400,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\fortray.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\globals.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\grip\grip.c"
 				>
 			</File>
@@ -412,79 +420,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\hyp\hyp.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\librt\primitives\metaball\metaball.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\librt\primitives\nmg\nmg.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\librt\primitives\bspline\bspline.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\librt\primitives\part\part.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\librt\primitives\poly\poly.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\librt\primitives\pipe\pipe.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\librt\primitives\rec\rec.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\librt\primitives\rhc\rhc.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\librt\primitives\rpc\rpc.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\librt\primitives\sketch\sketch.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\librt\primitives\sph\sph.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\librt\primitives\submodel\submodel.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\librt\primitives\superell\superell.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\librt\primitives\tgc\tgc.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\librt\primitives\tor\tor.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\librt\primitives\vol\vol.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\librt\globals.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\librt\htbl.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\hyp\hyp.c"
 				>
 			</File>
 			<File
@@ -500,11 +440,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\metaball\metaball.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\mirror.c"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\src\librt\mkbundle.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\nmg\nmg.c"
 				>
 			</File>
 			<File
@@ -700,6 +648,22 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\part\part.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\pc_constraint.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\pipe\pipe.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\poly\poly.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\pr.c"
 				>
 			</File>
@@ -708,7 +672,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\rec\rec.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\regionfix.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\rhc\rhc.c"
 				>
 			</File>
 			<File
@@ -716,7 +688,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\rpc\rpc.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\shoot.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\sketch\sketch.c"
 				>
 			</File>
 			<File
@@ -724,7 +704,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\sph\sph.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\storage.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\submodel\submodel.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\superell\superell.c"
 				>
 			</File>
 			<File
@@ -736,7 +728,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\tgc\tgc.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\timer-nt.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\tor\tor.c"
 				>
 			</File>
 			<File
@@ -753,6 +753,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\librt\vlist.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\vol\vol.c"
 				>
 			</File>
 			<File
