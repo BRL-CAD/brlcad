@@ -39,7 +39,8 @@ int inonbackground[3] = {0};
 static short int pwidth;			/* Width of each pixel (in bytes) */
 static struct scanline* scanline;   /* From scanline.c */
 
-extern int height; /* from opt.c */
+extern int height;  /* from opt.c */
+extern int width;   /* from opt.c */
 
 const char title[] = "Metropolis Light Transport renderer";
 const char usage[] = "\
