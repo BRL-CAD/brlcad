@@ -36,7 +36,8 @@
 int use_air = 0;
 int ibackground[3] = {0};
 int inonbackground[3] = {0};
-static struct scanline* scanline;
+static short int pwidth;			/* Width of each pixel (in bytes) */
+static struct scanline* scanline;   /* From scanline.c */
 
 extern int height; /* from opt.c */
 
@@ -54,8 +55,9 @@ Options:\n\
 
 int	rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp);
 int	raymiss(register struct application *ap);
+/* From scanline.c */
 void free_scanlines(int, struct scanline*);
-void alloc_scanlines(int, struct scanline*);
+struct scanline* alloc_scanlines(int);
 
 struct bu_structparse view_parse[] = {
     "",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL
@@ -71,9 +73,12 @@ struct path_list {
     struct point_list *pt_list;
 };
 
+/* This structure will hold information relevant to the algorithm.
+ * It will be pointed by ap->a_user 
+ */
 struct mlt_app {
-    struct path_list * paths;   /** @brief Current path */
-    point_t eye;    /** @brief Position of the camera */
+    struct path_list * paths;           /** @brief Current path */
+    point_t eye;                        /** @brief Position of the camera */
     struct point_list * lightSources;   /** @brief List of lightsource points */
 };
 
@@ -110,7 +115,11 @@ view_2init(struct application *ap)
     ap->a_miss = raymiss;
     ap->a_onehit = 1;
     ap->a_uptr = (genptr_t) mlt_application;
-    alloc_scanlines(height, scanline);
+
+    /* Allocation of the scanline array */
+    if (scanline)
+        free_scanlines(height, scanline);
+    scanline = alloc_scanlines(height);
 }
 
 /*
@@ -168,6 +177,21 @@ view_pixel(register struct application *ap)
         }
     }
 
+    /* This is equivalent to rt's BUFMODE_SCANLINE
+     * Other options will be implemented later */
+	slp = &scanline[ap->a_y];
+	if (slp->sl_buf == ((char*) 0))  {
+		slp->sl_buf = bu_calloc(width, pwidth, "sl_buf scanline buffer");
+	}
+	pixelp = slp->sl_buf + (ap->a_x * pwidth);
+	*pixelp++ = r;
+	*pixelp++ = g;
+	*pixelp++ = b;
+
+    if (--(slp->sl_left) <= 0)
+        do_eol = 1;
+
+    if (!do_eol) return;
 
 
 }
