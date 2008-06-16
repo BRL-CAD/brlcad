@@ -115,6 +115,7 @@ EXTRA_DIST= \
 	poly2bot/poly2bot.vcproj \
 	png2fb/png2fb.vcproj \
 	pp2fb/pp2fb.vcproj \
+	remrt/remrt.vcproj \
 	rle2fb/rle2fb.vcproj \
 	rt/rt.vcproj \
 	rt_bot_faces/rt_bot_faces.vcproj \
