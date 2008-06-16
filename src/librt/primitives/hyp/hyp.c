@@ -539,11 +539,70 @@ rt_hyp_curve( struct curvature *cvp, struct hit *hitp, struct soltab *stp )
 {
     register struct hyp_specific *hyp =
 	(struct hyp_specific *)stp->st_specific;
+    vect_t	vert, horiz;
+    point_t	hp;
+    fastf_t	c, h, z, k1, k2, denom;
+    fastf_t	x, y, a, b;
 
-    cvp->crv_c1 = cvp->crv_c2 = 0;
+    switch ( hitp->hit_surfno ) {
+	case HYP_NORM_BODY:
+	    /* calculate principle curvature directions */
+	    VMOVE( hp, hitp->hit_vpriv );
 
-    /* any tangent direction */
-    bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
+	    VMOVE( vert, hitp->hit_normal );
+	    vert[Z] += 10;
+	    VCROSS( horiz, vert, hitp->hit_normal );
+	    VUNITIZE( horiz );
+	    VCROSS( vert, hitp->hit_normal, horiz );
+	    VUNITIZE( vert );
+
+	    /* vertical curvature */
+	    c = hyp->hyp_c;
+	    h = sqrt( hp[X]*hp[X] + hp[Y]*hp[Y] );
+	    z = hp[Z];
+
+	    denom = 1 + (c*c*c*c)*(z*z)/(h*h);
+	    denom = sqrt( denom*denom*denom );
+
+	    /* k1 is in the vert direction on the hyberbola */
+	    k1 = fabs( c*c/h - (c*c*c*c)*(z*z)/(h*h*h) ) / denom;
+
+	    /* horizontal curvature */
+	    if ( fabs( hp[Y] ) >= fabs( hp[X] ) ) {
+		a = hyp->hyp_r1;
+		b = hyp->hyp_r2;
+		x = hp[X];
+		y = hp[Y];
+	    } else {
+		/* flip x and y to avoid div by zero */
+		a = hyp->hyp_r2;
+		b = hyp->hyp_r1;
+		x = hp[Y];
+		y = hp[X];
+	    }
+
+	    denom = fabs( y*y*y + (b*b*b*b)*(x*x)*y/(a*a*a*a) );
+	    denom = sqrt( denom*denom*denom );
+
+	    /* k2 is in the horiz direction on the ellipse */
+	    k2 = -fabs( (b*b)*y/(a*a) + (b*b*b*b)*(x*x)/( (a*a*a*a)*y ) ) / denom;
+
+	    if ( k1 < fabs( k2 ) ) {
+		VMOVE( cvp->crv_pdir, vert );
+		cvp->crv_c1 = k1;
+		cvp->crv_c2 = k2;
+	    } else {
+		VMOVE( cvp->crv_pdir, horiz );
+		cvp->crv_c1 = k2;
+		cvp->crv_c2 = k1;
+	    }
+	    break;
+	case HYP_NORM_TOP:
+	case HYP_NORM_BOTTOM:
+	    cvp->crv_c1 = cvp->crv_c2 = 0;
+	    bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
+	    break;
+    }
 }
 
 /**
