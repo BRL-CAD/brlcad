@@ -38,6 +38,8 @@ int ibackground[3] = {0};
 int inonbackground[3] = {0};
 static struct scanline* scanline;
 
+extern int height; /* from opt.c */
+
 const char title[] = "Metropolis Light Transport renderer";
 const char usage[] = "\
 Usage:  rtmlt [options] model.g objects... > file.pix\n\
@@ -53,6 +55,7 @@ Options:\n\
 int	rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp);
 int	raymiss(register struct application *ap);
 void free_scanlines(int, struct scanline*);
+void alloc_scanlines(int, struct scanline*);
 
 struct bu_structparse view_parse[] = {
     "",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL
@@ -107,6 +110,7 @@ view_2init(struct application *ap)
     ap->a_miss = raymiss;
     ap->a_onehit = 1;
     ap->a_uptr = (genptr_t) mlt_application;
+    alloc_scanlines(height, scanline);
 }
 
 /*

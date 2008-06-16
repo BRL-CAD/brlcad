@@ -107,6 +107,7 @@ extern char	*scanbuf;		/* scanline(s) buffer */
 #endif
 
 void		free_scanlines(int, struct scanline *);
+void        alloc_scanlines(int, struct scanline *);
 
 static int	buf_mode=0;
 #define BUFMODE_UNBUF	1		/* No output buffering */
@@ -1364,10 +1365,12 @@ view_2init(register struct application *ap, char *framename)
      */
     if ( (!incr_mode || !scanline) && !fullfloat_mode )
     {
-	if ( scanline )  free_scanlines(height, scanline);
+/*	if ( scanline )  free_scanlines(height, scanline);
 	scanline = (struct scanline *)bu_calloc(
 	    height, sizeof(struct scanline),
 	    "struct scanline[height]" );
+        */
+        alloc_scanlines(height, scanline);
     }
 
 #ifdef RTSRV

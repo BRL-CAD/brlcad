@@ -40,6 +40,17 @@ free_scanlines(int height, struct scanline * scanline)
     scanline = (struct scanline *)0;
 }
 
+void
+alloc_scanlines(int height, struct scanline* scanline)
+{
+    if (scanline)
+        free_scanlines(height, scanline);
+
+	scanline = (struct scanline *)bu_calloc(
+	    height, sizeof(struct scanline),
+	    "struct scanline[height]" );
+}
+
 /*
  * Local Variables:
  * tab-width: 8

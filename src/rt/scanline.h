@@ -31,6 +31,7 @@ struct scanline {
 };
 
 void free_scanlines(int, struct scanline*);
+void alloc_scanlines(int, struct scanline*);
 
 /*
  * Local Variables:
