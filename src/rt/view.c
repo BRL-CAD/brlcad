@@ -1364,14 +1364,7 @@ view_2init(register struct application *ap, char *framename)
      * (unless we already have one in incremental mode)
      */
     if ( (!incr_mode || !scanline) && !fullfloat_mode )
-    {
-/*	if ( scanline )  free_scanlines(height, scanline);
-	scanline = (struct scanline *)bu_calloc(
-	    height, sizeof(struct scanline),
-	    "struct scanline[height]" );
-        */
         alloc_scanlines(height, scanline);
-    }
 
 #ifdef RTSRV
     buf_mode = BUFMODE_RTSRV;		/* multi-pixel buffering */
