@@ -54,6 +54,7 @@
 #include "./ext.h"
 #include "plot3.h"
 #include "photonmap.h"
+#include "scanline.h"
 
 const char title[] = "The BRL-CAD Raytracer RT";
 const char usage[] = "\
@@ -105,7 +106,7 @@ extern int	srv_scanlen;		/* BUFMODE_RTSRV buffer length */
 extern char	*scanbuf;		/* scanline(s) buffer */
 #endif
 
-void		free_scanlines(void);
+void		free_scanlines(int, struct scanline *);
 
 static int	buf_mode=0;
 #define BUFMODE_UNBUF	1		/* No output buffering */
@@ -115,10 +116,7 @@ static int	buf_mode=0;
 #define BUFMODE_FULLFLOAT 5		/* buffer entire frame as floats */
 #define BUFMODE_SCANLINE 6		/* Like _DYNAMIC, one scanline/cpu */
 
-static struct scanline {
-    int	sl_left;		/* # pixels left on this scanline */
-    char	*sl_buf;		/* ptr to buffer for scanline */
-} *scanline;
+static struct scanline* scanline;
 
 static short int	pwidth;			/* Width of each pixel (in bytes) */
 
@@ -539,7 +537,7 @@ view_end(struct application *ap)
 	}
     }
 
-    if ( scanline )  free_scanlines();
+    if ( scanline )  free_scanlines(height, scanline);
 }
 
 /*
@@ -1141,21 +1139,6 @@ int viewit(register struct application *ap,
 }
 
 void
-free_scanlines(void)
-{
-    register int	y;
-
-    for ( y=0; y<height; y++ )  {
-	if ( scanline[y].sl_buf )  {
-	    bu_free( scanline[y].sl_buf, "sl_buf scanline buffer" );
-	    scanline[y].sl_buf = (char *)0;
-	}
-    }
-    bu_free( (char *)scanline, "struct scanline[height]" );
-    scanline = (struct scanline *)0;
-}
-
-void
 kut_ft_norm( struct hit *hitp, struct soltab *stp, struct xray *ray )
 {
     VMOVE( hitp->hit_normal, kut_norm );
@@ -1381,7 +1364,7 @@ view_2init(register struct application *ap, char *framename)
      */
     if ( (!incr_mode || !scanline) && !fullfloat_mode )
     {
-	if ( scanline )  free_scanlines();
+	if ( scanline )  free_scanlines(height, scanline);
 	scanline = (struct scanline *)bu_calloc(
 	    height, sizeof(struct scanline),
 	    "struct scanline[height]" );

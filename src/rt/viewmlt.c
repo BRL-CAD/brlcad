@@ -31,8 +31,12 @@
 #include "raytrace.h"
 
 #include "rtprivate.h"
+#include "scanline.h"
 
 int use_air = 0;
+int ibackground[3] = {0};
+int inonbackground[3] = {0};
+static struct scanline* scanline;
 
 const char title[] = "Metropolis Light Transport renderer";
 const char usage[] = "\
@@ -48,6 +52,7 @@ Options:\n\
 
 int	rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp);
 int	raymiss(register struct application *ap);
+void free_scanlines(int, struct scanline*);
 
 struct bu_structparse view_parse[] = {
     "",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL
@@ -112,6 +117,54 @@ view_2init(struct application *ap)
 void
 view_pixel(register struct application *ap) 
 {
+    register int	r, g, b;
+    register char	*pixelp;
+    register struct scanline	*slp;
+    register int	do_eol = 0;
+    unsigned char	dist[8];	/* pixel distance (in IEEE format) */
+
+    /* This if-then-else block will set the values of r, g and b.
+     * In case of miss, set them to the background color;
+     * In case of hit, set them according to the values of ap->a_color;
+     */
+    /* Case of miss */
+    if (ap->a_user == 0) {
+        r = ibackground[0];
+        g = ibackground[1];
+        b = ibackground[2];
+
+        /* background flag */
+        VSETALL(ap->a_color, -1e-20); 
+    }
+    /* Case of hit */
+    else {
+        /* Setting r, g and b according to values found in rayhit()
+         * Gamma correction will be implemented here. */
+        r = ap->a_color[0]*255. + bn_rand0to1(ap->a_resource->re_randptr);
+        g = ap->a_color[1]*255. + bn_rand0to1(ap->a_resource->re_randptr);
+        b = ap->a_color[2]*255. + bn_rand0to1(ap->a_resource->re_randptr);
+
+        /* Restricting r, g and b values to 0..255 */
+        r = (r > 255) ? (255) : ((r < 0) ? (0) : (r));
+        g = (g > 255) ? (255) : ((g < 0) ? (0) : (g));
+        b = (b > 255) ? (255) : ((b < 0) ? (0) : (b));
+
+        if (r == ibackground[0] &&
+            g == ibackground[1] &&
+            b == ibackground[2]) {
+            
+            r = inonbackground[0];
+            g = inonbackground[1];
+            b = inonbackground[2];
+        }
+
+        /* Make sure that it's never perfect black */
+        if ((benchmark == 0) && (r == 0) && (g == 0) && (b == 0)) {
+            b = 1;
+        }
+    }
+
+
 
 }
 
@@ -174,6 +227,9 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
     register struct path_list* p_path;
     bu_log("hit: 0x%x\n", ap->a_resource);
 
+    /* This will be used by view_pixel() to verify if the ray hit or missed */
+    ap->a_user = 1;
+
     /* The application uses a generic pointer (genptr_t)
      * to point to a struct mlt_app
      */
@@ -233,6 +289,7 @@ int
 raymiss(register struct application *ap)
 {
     bu_log("miss: 0x%x\n", ap->a_resource);
+    ap->a_user = 0;
     return 0;
 }
 

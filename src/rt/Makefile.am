@@ -23,6 +23,7 @@ bin_PROGRAMS = \
 	rtfrac \
 	rtg3 \
 	rthide \
+	rtmlt \
 	rtpp \
 	rtrad \
 	rtrange \
@@ -59,6 +60,7 @@ ALLSRCS = \
 	rtscale.c \
 	rtshot.c \
 	rtwalk.c \
+	scanline.c \
 	sh_tcl.c \
 	view.c \
 	viewarea.c \
@@ -94,6 +96,7 @@ hurt_LDADD = \
 
 rtmlt_SOURCES = \
 	$(COMMON) \
+	scanline.c \
 	viewmlt.c
 
 rtregis_SOURCES = \
@@ -107,6 +110,7 @@ rtscale_SOURCES = \
 
 rt_SOURCES = \
 	$(COMMON) \
+	scanline.c \
 	view.c
 
 rt_bot_faces_SOURCES = 	\

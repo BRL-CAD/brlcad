@@ -234,6 +234,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\rt\scanline.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\rt\view.c"
 				>
 			</File>
