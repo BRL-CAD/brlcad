@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<article xmlns="http://docbook.org/ns/docbook" version="lillet">
+<info><title>Unit Test: table.006</title>
+
+<releaseinfo role="CVS">$Id$</releaseinfo>
+<author><personname><firstname>Norman</firstname><surname>Walsh</surname></personname><affiliation><address><email>ndw@nwalsh.com</email></address></affiliation></author>
+</info>
+
+<para>Tic Tac Toe (the perverse way, using colsep on colspec and rowsep on rows):</para>
+
+<informaltable frame="none">
+<tgroup cols="3">
+<colspec colnum="1" colsep="1"/>
+<colspec colnum="2" colsep="1"/>
+<tbody>
+<row rowsep="1">
+<entry>a foo</entry>
+<entry>a bar</entry>
+<entry>a baz</entry>
+</row>
+<row rowsep="1">
+<entry>b foo</entry>
+<entry>b bar</entry>
+<entry>b baz</entry>
+</row>
+<row>
+<entry>c foo</entry>
+<entry>c foo</entry>
+<entry>c baz</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</article>

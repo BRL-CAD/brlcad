@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article>
+<articleinfo>
+<title>Unit Test: figure.002</title>
+<releaseinfo role="CVS">$Id$</releaseinfo>
+<author><firstname>Norman</firstname><surname>Walsh</surname>
+        <affiliation><address><email>ndw@nwalsh.com</email></address></affiliation>
+</author>
+</articleinfo>
+
+<para>This paragraph precedes the first figure. The following figure has
+float="1".</para>
+
+<figure id="figduck1" float="1">
+  <title>The Duck</title>
+  <mediaobject>
+    <imageobject>
+      <imagedata
+        align="center"
+        fileref="graphics/duck-small.png"
+        format="PNG"
+        srccredit="O'Reilly &amp; Associates/Dover Archives"/>
+    </imageobject>
+    <textobject><phrase>The DocBook: TDG Duck</phrase></textobject>
+  </mediaobject>
+</figure>
+
+<para>This paragraph is between the figures. The following figure has
+float="right".</para>
+
+<figure id="figduck2" float="right">
+  <title>The Duck</title>
+  <mediaobject>
+    <imageobject>
+      <imagedata
+        align="center"
+        fileref="graphics/duck-small.png"
+        format="PNG"
+        srccredit="O'Reilly &amp; Associates/Dover Archives"/>
+    </imageobject>
+    <textobject><phrase>The DocBook: TDG Duck</phrase></textobject>
+  </mediaobject>
+</figure>
+
+<para>This paragraph follows the figures.</para>
+
+</article>

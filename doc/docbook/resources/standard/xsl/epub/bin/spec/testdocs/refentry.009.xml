@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article>
+  <articleinfo>
+    <title>Unit Test: refentry.009</title>
+    <subtitle>Refentry for a OO Class</subtitle>
+    <releaseinfo role="CVS"
+                 >$Id$</releaseinfo>
+    <corpauthor>DocBook Project Development Team</corpauthor>
+  </articleinfo>
+
+  <refentry id="Catalog_refentry">
+    <refnamediv>
+      <refname>Catalog</refname>
+      <refpurpose>do something with a catalog</refpurpose>
+    </refnamediv>
+    <refsynopsisdiv>
+      <para>@language='java'</para>
+      <classsynopsis language="java">
+        <ooclass>
+          <modifier>public</modifier>
+          <classname>Catalog</classname>
+        </ooclass>
+        <fieldsynopsis>
+          <modifier>public</modifier>
+          <modifier>static</modifier>
+          <modifier>final</modifier>
+          <type>int</type>
+          <varname>BASE</varname>
+          <initializer>CatalogEntry.addEntryType("BASE", 1)</initializer>
+        </fieldsynopsis>
+        <constructorsynopsis>
+          <modifier>public</modifier>
+          <methodname>Catalog</methodname>
+          <void/>
+        </constructorsynopsis>
+        <methodsynopsis>
+          <modifier>protected</modifier>
+          <void/>
+          <methodname>copyReaders</methodname>
+          <methodparam>
+            <type>Catalog</type>
+            <parameter>newCatalog</parameter>
+          </methodparam>
+        </methodsynopsis>
+      </classsynopsis>
+
+      <para>@language='cpp'</para>
+      <classsynopsis language="cpp">
+        <ooclass>
+          <modifier>public</modifier>
+          <classname>Catalog</classname>
+        </ooclass>
+        <fieldsynopsis>
+          <modifier>public</modifier>
+          <modifier>static</modifier>
+          <modifier>final</modifier>
+          <type>int</type>
+          <varname>BASE</varname>
+          <initializer>CatalogEntry.addEntryType("BASE", 1)</initializer>
+        </fieldsynopsis>
+        <constructorsynopsis>
+          <modifier>public</modifier>
+          <methodname>Catalog</methodname>
+          <void/>
+        </constructorsynopsis>
+        <methodsynopsis>
+          <modifier>protected</modifier>
+          <void/>
+          <methodname>copyReaders</methodname>
+          <methodparam>
+            <type>Catalog</type>
+            <parameter>newCatalog</parameter>
+          </methodparam>
+        </methodsynopsis>
+      </classsynopsis>
+
+      <para>@language='idl'</para>
+      <classsynopsis language="idl">
+        <ooclass>
+          <modifier>public</modifier>
+          <classname>Catalog</classname>
+        </ooclass>
+        <fieldsynopsis>
+          <modifier>public</modifier>
+          <modifier>static</modifier>
+          <modifier>final</modifier>
+          <type>int</type>
+          <varname>BASE</varname>
+          <initializer>CatalogEntry.addEntryType("BASE", 1)</initializer>
+        </fieldsynopsis>
+        <constructorsynopsis>
+          <modifier>public</modifier>
+          <methodname>Catalog</methodname>
+          <void/>
+        </constructorsynopsis>
+        <methodsynopsis>
+          <modifier>protected</modifier>
+          <void/>
+          <methodname>copyReaders</methodname>
+          <methodparam>
+            <type>Catalog</type>
+            <parameter>newCatalog</parameter>
+          </methodparam>
+        </methodsynopsis>
+      </classsynopsis>
+
+      <para>@language='perl'</para>
+      <classsynopsis language="perl">
+        <ooclass>
+          <modifier>public</modifier>
+          <classname>Catalog</classname>
+        </ooclass>
+        <fieldsynopsis>
+          <modifier>public</modifier>
+          <modifier>static</modifier>
+          <modifier>final</modifier>
+          <type>int</type>
+          <varname>BASE</varname>
+          <initializer>CatalogEntry.addEntryType("BASE", 1)</initializer>
+        </fieldsynopsis>
+        <constructorsynopsis>
+          <modifier>public</modifier>
+          <methodname>Catalog</methodname>
+          <void/>
+        </constructorsynopsis>
+        <methodsynopsis>
+          <modifier>protected</modifier>
+          <void/>
+          <methodname>copyReaders</methodname>
+          <methodparam>
+            <type>Catalog</type>
+            <parameter>newCatalog</parameter>
+          </methodparam>
+        </methodsynopsis>
+      </classsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+      <title>Dummy Refsect1</title>
+      <para>This is just a placeholder.</para>
+    </refsect1>
+
+  </refentry>
+
+</article>

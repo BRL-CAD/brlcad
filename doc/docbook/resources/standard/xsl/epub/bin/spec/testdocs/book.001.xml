@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+<!ENTITY blah "<para>Blah blah blah blah. Blah blah blah blah. Blah blah blah blah.
+</para>">
+]>
+<book id="book">
+<bookinfo>
+<title>Unit Test: book.001</title>
+<releaseinfo role="CVS">$Id$</releaseinfo>
+<authorgroup>
+<corpauthor>SomeCorp</corpauthor>
+<author><firstname>Norman</firstname><surname>Walsh</surname>
+        <affiliation><address><email>ndw@nwalsh.com</email></address></affiliation>
+</author>
+<editor><firstname>Jane</firstname><surname>Doe</surname></editor>
+</authorgroup>
+<legalnotice>
+<para>
+Some legal notice. Some legal notice. Some legal notice.
+Some legal notice. Some legal notice. Some legal notice.
+</para>
+</legalnotice>
+<copyright>
+<year>1998</year>
+<year>1999</year>
+<year>2000</year>
+<year>2001</year>
+<year>2002</year>
+<holder>Norman Walsh</holder>
+</copyright>
+<pubdate>18 January 2002</pubdate>
+<abstract>
+<para>Some abstract. Some abstract. Some abstract. Some abstract.
+</para>
+<para>Some abstract. Some abstract. Some abstract. Some abstract.
+Some abstract. Some abstract. Some abstract. Some abstract.
+</para>
+</abstract>
+<revhistory>
+<revision>
+<revnumber>1.1</revnumber>
+<date>18 Jan 2002</date>
+<authorinitials>ndw</authorinitials>
+<revremark>Reworked.</revremark>
+</revision>
+<revision>
+<revnumber>1.0</revnumber>
+<date>20 Nov 1998</date>
+<authorinitials>ndw</authorinitials>
+<revremark>Some remark about the revision</revremark>
+</revision>
+<revision>
+<revnumber>0.9</revnumber>
+<date>19 Nov 1998</date>
+<authorinitials>ndw</authorinitials>
+<revremark>Some remark about the revision</revremark>
+</revision>
+<revision>
+<revnumber>0.4</revnumber>
+<date>18 Nov 1998</date>
+<authorinitials>ndw</authorinitials>
+<revremark>Some remark about the revision</revremark>
+</revision>
+</revhistory>
+</bookinfo>
+
+<dedication id="ded1"><title>First Dedication</title>
+
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+
+</dedication>
+
+<dedication id="ded2">
+
+<para>A second dedication without a title.</para>
+
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+
+</dedication>
+
+<preface id="forward"><title>Foreword</title>
+
+<para>A preface.</para>
+
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+
+</preface>
+
+<preface id="preface"><title>Preface</title>
+
+<para>Another preface.</para>
+
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+
+</preface>
+
+<part id="partI">
+<title>Part One Title</title>
+<partintro id="pIpintro">
+<title>PartIntro Title</title>
+
+<para>Partintro content<footnote>
+<para>This is a footnote in a partintro.</para>
+</footnote>.</para>
+
+&blah; &blah; &blah; &blah; &blah;
+
+<sect1 id="pIpis1">
+<title>PartIntro Section</title>
+<para>PartIntros can actually have section content as well.</para>
+&blah; &blah; &blah; &blah; &blah;
+</sect1>
+</partintro>
+
+<chapter id="chap1">
+<title>First Chapter</title>
+<titleabbrev>F. Chap</titleabbrev>
+
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+
+<section id="c1s1"><title>First Section</title>
+<titleabbrev>F. Sect</titleabbrev>
+
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+
+</section>
+<section id="c1s2"><title>Second Section</title>
+
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+
+</section>
+<section id="c1s3"><title>Third Section</title>
+
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+
+</section>
+</chapter>
+
+<chapter id="chap2"><title>Second Chapter</title>
+
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+
+<section id="c2s1"><title>First Section</title>
+
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+
+</section>
+<section id="c2s2"><title>Second Section</title>
+
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+
+</section>
+<section id="c2s3"><title>Third Section</title>
+
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+
+</section>
+</chapter>
+
+<chapter id="chap3"><title>Third Chapter</title>
+
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+
+</chapter>
+
+</part>
+<part id="partII"><title>Appendixes</title>
+
+<appendix id="app1"><title>First Appendix</title>
+
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+
+<section id="a1s1"><title>First Section</title>
+
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+
+</section>
+<section id="a1s2"><title>Second Section</title>
+
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+
+</section>
+<section id="a1s3"><title>Third Section</title>
+
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+
+</section>
+</appendix>
+
+<appendix id="app2"><title>Second Appendix</title>
+
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+
+<section id="a2s1"><title>First Section</title>
+
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+
+</section>
+<section id="a2s2"><title>Second Section</title>
+
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+
+</section>
+<section id="a2s3"><title>Third Section</title>
+
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+
+</section>
+</appendix>
+
+</part>
+</book>

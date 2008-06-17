@@ -1,0 +1,2293 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN" "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<book>
+  <title>MxSQL xx x Nxxxxxxx</title>
+  <bookinfo xml:base="bookinfo.xml">
+    <isbn>ddddddddddddd</isbn>
+    <edition>d</edition>
+    <author>
+      <firstname>Rxxxxxx</firstname>
+      <surname>Dxxx</surname>
+      <authorblurb>
+        <para>Rxxxxxx Dxxx xx x xxxxxxxxx xxxxxx xxxxxxxxxxxx xx MxSQL xxxxxxxx xxxxxxxx xxx xx xxx xxxxxx xx xxx MxSQL Kxxxxxxxx Bxxx (xxxx://xxx.xxxxx.xxx/xxxxxxx/xxxxxxxxxxxxx.xxxx). Hx xx xxx xxxxxx xx MxSQL xx x Nxxxxxxx (xxxx://xxx.xxxxxxx.xxx/xxxxxxx/xxxxxxxx/) xxx xxx xxxxxx xxxxxxxx xxx xxxxxxx xxxxxxxxx: Dxx Zxxx (x MxSQL xxxxxxxxxxx), Lxxxx Jxxxxxx, ONxxxx.xxx, Txx Pxxx Jxxxxxx, Rxx Hxx Mxxxxxxx, SxxAxxxx Mxxxxxxx, Txxx Rxxxxxxx, Uxxx Rxxxxx, xxx XML.xxx. Hx xxx xxxx xxxxxxxx xxx xxxxx xxxxx, “Ix Sxxxxx xx Kxxxx”. Mxxx xxxxxxxxxxx xx Rxxxxxx, xxxxx xxxx x xxxx xx xxx xxxxxxxxx xxxxxxxx xxxx xxxxx xx xxxx, xxx xx xxxxx xx xxx xxx xxxx xx xxxx://xxxxxxx.xxxxxxxxx.xxx</para>
+      </authorblurb>
+    </author>
+    <editor>
+      <firstname>Axxx</firstname>
+      <surname>Oxxx</surname>
+    </editor>
+    <editor role="production">
+      <firstname/>
+      <surname/>
+    </editor>
+    <editor role="copy">
+      <firstname/>
+      <surname/>
+    </editor>
+    <othercredit role="proofreader">
+      <firstname>FIX</firstname>
+      <surname>ME!</surname>
+    </othercredit>
+    <othercredit role="indexer">
+      <firstname/>
+      <surname/>
+    </othercredit>
+    <othercredit role="coverdesigner">
+      <firstname/>
+      <surname/>
+    </othercredit>
+    <othercredit role="interiordesigner">
+      <firstname>FIX</firstname>
+      <surname>ME!</surname>
+    </othercredit>
+    <othercredit role="illustrator">
+      <firstname>Rxxxxx</firstname>
+      <surname>Rxxxxx</surname>
+    </othercredit>
+    <othercredit role="illustrator">
+      <firstname>Jxxxxxxx</firstname>
+      <surname>Rxxx</surname>
+    </othercredit>
+    <printhistory>
+      <formalpara>
+        <title>Sxxxxx Exxxxxx</title>
+        <para>Axxxx, dddd</para>
+      </formalpara>
+    </printhistory>
+    <copyright>
+      <year>dddd</year>
+      <holder>
+O’Rxxxxx Mxxxx    </holder>
+    </copyright>
+    <!-- All rights reserved. -->
+    <!-- Published by -->
+    <publisher>
+      <publishername>
+O’Rxxxxx Mxxxx, Ixx.    </publishername>
+      <address format="linespecific">
+        <street>dddd Gxxxxxxxxxx Hxxxxxx Nxxxx</street>
+        <city>Sxxxxxxxxx</city>
+        <state>CA</state>
+        <postcode>ddddd</postcode>
+      </address>
+    </publisher>
+    <legalnotice role="printlocation">
+      <para>Pxxxxxx xx xxx Uxxxxx Sxxxxx xx Axxxxxx.</para>
+    </legalnotice>
+    <legalnotice role="printer">
+      <para>[?]</para>
+    </legalnotice>
+    <legalnotice role="use">
+      <para>
+O’Rxxxxx xxxxx xxx xx xxxxxxxxx xxx xxxxxxxxxxx,
+          xxxxxxxx, xx xxxxx xxxxxxxxxxx xxx. Oxxxxx xxxxxxxx xxx xxxx xxxxxxxxx xxx xxxx 
+          xxxxxx (<ulink url="http://safari.oreilly.com"/>). Fxx xxxx xxxxxxxxxxx, xxxxxxx xxx xxxxxxxxx/xxxxxxxxxxxxx xxxxx xxxxxxxxxx:
+          (ddd) ddd-dddd xx <email>xxxxxxxxx@xxxxxxx.xxx</email>.    </para>
+    </legalnotice>
+    <legalnotice role="trademarks">
+      <para>
+Nxxxxxxx Hxxxxxxx, xxx Nxxxxxxx Hxxxxxxx xxxx, xxx xxx O’Rxxxxx xxxx
+          xxx xxxxxxxxxx xxxxxxxxxx xx O’Rxxxxx Mxxxx, Ixx. !!FILL THIS IN!!
+          xxx xxxxxxx xxxxx xxxxx xxx xxxxxxxxxx xx O’Rxxxxx Mxxxx, Ixx.    </para>
+      <para>
+Mxxx xx xxx xxxxxxxxxxxx xxxx xx xxxxxxxxxxxxx xxx xxxxxxx xx xxxxxxxxxxx
+          xxxxx xxxxxxxx xxx xxxxxxx xx xxxxxxxxxx. Wxxxx xxxxx xxxxxxxxxxxx xxxxxx
+          xx xxxx xxxx, xxx O’Rxxxxx Mxxxx, Ixx. xxx xxxxx xx x xxxxxxxxx xxxxx,
+          xxx xxxxxxxxxxxx xxxx xxxx xxxxxxx xx xxxx xx xxxxxxx xxxx    </para>
+    </legalnotice>
+    <legalnotice role="damages">
+      <para>Wxxxx xxxxx xxxxxxxxxx xxx xxxx xxxxx xx xxx xxxxxxxxxxx xx xxxx xxxx,
+        xxx xxxxxxxxx xxx xxxxxxx xxxxxx xx xxxxxxxxxxxxxx xxx xxxxxx xx xxxxxxxxx, 
+        xx xxx xxxxxxx xxxxxxxxx xxxx xxx xxx xx xxx xxxxxxxxxxx xxxxxxxxx xxxxxx.</para>
+    </legalnotice>
+    <mediaobject role="cover" id="coverd1e4">
+      <imageobject role="front" remap="s">
+        <imagedata format="GIF" fileref="covers/cvr_s.gif"/>
+      </imageobject>
+      <imageobject role="front-small" remap="xs">
+        <imagedata format="GIF" fileref="covers/cvr_xs.gif"/>
+      </imageobject>
+      <imageobject role="thumbnail" remap="cs">
+        <imagedata format="GIF" fileref="covers/cvr_cs.gif"/>
+      </imageobject>
+    </mediaobject>
+  </bookinfo>
+  <dedication xml:base="dedication.xml">
+    <blockquote>
+      <attribution>Rxxxxxx J.T. Dxxx</attribution>
+      <para>Tx xx xxxxxx Rxxxxxx Sxxxxxxx, xxx xxxxxxxxxxx xx xx xxxxxxxxxx, xxxxxxxxxx, xxx xxxxxxx, xxx xxx xxxxxxx xx 
+    xx xxxxxx xxx xxxxxx I xxx xxxxx xx xx.</para>
+    </blockquote>
+  </dedication>
+  <preface id="mysqlian-PREFACE-2" xml:base="ch00.xml">
+    <title>Pxxxxxx</title>
+    <para>MxSQL xx xxx xxxx xxxxxxx xxxx xxxxxx xxxxxxxx xxxxxx xxxxxxxxx. Axxxxxxx xx’x xxxx, xx’x xxxxx xxxx xxxxxxxxxx xxx xxxx, xxx xx xxxxx xxxxxxxx xxxxxxxxxxxx xx xxxxx xxxx xxxx xx xx xxx xxxxxxxx xx Oxxxxx xx MS SQL Sxxxxx. Txxxxx xx x xxxxxxx xx xxxxxxxxx xxxxxxxx xxxx MxSQL, xxxxxxxxxxxxxx xx xxxxxx xxxxxxxxxx. Wxxx xxx xxxxxxx xxxxxxxxxxx xxxxxxxxxxx xxxxxxxxxx (APIx), xx’x xxxx xx xxxxxxx xxxx xxx xxxxxxxx xx xxxxxxxxx xxxx MxSQL.</para>
+    <para>Txxx xxxx xxxxxxxx x xxxxx xxxxxxxxx xx MxSQL xxxxxxxxxx xxx xxxxxxxxx, xxx xxxxxxxxxxxxxx xxxxxxxxx, xxx xxx xxxx xxxxxxx APIx. Txx xxxxx xxx xxxxxxxx xxx xxxxxxxx xx xxxx xxx xx xxx xxxxxxx xxxx MxSQL. Exxx xxxxxxx xx xx API xxxx xxxxxx xxxx x xxxxxxxx.</para>
+    <para>Wxxx xxxx xxxx xxx xxxxxxx, xxxxxxx d.d xx MxSQL xxx xxxxxxxxx xxxxxxxxx, xxx xxxxx xxxxxxxx xx xxx xxxxxxxxxxx Vxxxxxx xx d.d xxx d.d xxxx xxxxxxxxx xxx xxx xxx xxxxxx. Ax x xxxxxx, xxx xxxx xxxx xxxxxx xxxxxxxx xxxx xxxxxxx d.d.<emphasis>x</emphasis> xx xxxx xxxx. Fxxxxxxx xxxx xxxxxx xxxx xx xxxxx xxxxxxxx xxx xxxxx xx xxxx.</para>
+    <sect1 id="mysqlian-PREFACE-2-SECT-1">
+      <title>Txx Pxxxxxx xx Txxx Bxxx</title>
+      <para>Txx xxxxxxx xx xxxx xxxx xx xx xxxxxxx x xxxxx xxxxxxxxx xx:</para>
+      <itemizedlist>
+        <listitem>
+          <para>MxSQL xxxxxxxxxx xxx xxxxxxxxx</para>
+        </listitem>
+        <listitem>
+          <para>Cxxxxxx-xxxx xxxxxxx xxx xxxxxxxxxxxxx xxxxxxxxxxx xxx xxx MxSQL xxxxxx xxx xxxxxxxxx</para>
+        </listitem>
+        <listitem>
+          <para>Txx xxxx xxxxxxx APIx xxxx xx xxxxxx MxSQL xxxxxxxxx</para>
+        </listitem>
+      </itemizedlist>
+      <para>Sxxxxxx xxxxxxxx xxxxx xxxx xxxxxxxxx, xxx xxx xxxxxxx xxxxxxx xx xxx xxxx xx xx xxxx xx xxx xxxx xxx xxxxxx xxx xxx xxxxxxx xxxxxxxxxxx xxxx xxxxxxxxxx xxxxxxxxx.</para>
+      <para>Txx xxxxxx xxxx I’xx xxxxxxxx xxx x xxxxxxxxxxx xx xxxx xxxxxxxxx xx xxxxxxxx xx xx xxxx xxxx xxxx xxxxxx-xxxxxxx xx xxxx xxxxxxxxx xxxxxxxxxxxx. Ix xxx xxxx xxx xxxxxxxx xxxx xxx’xx xxxxxxx xx, xxx xxx’x xxxxx xxxxxxxx xxx xxxxxx, xxx’xx xxxx xxxx xxxxx. Ix xxx xxxx x xxx xxxx xxxxxxxxxxx xx xxx xxxx xxxxxx xx xx xxxxxxx xxx xxxxxxxxxxxxx xxxxxxxxx xxxx xxx xxxxxxxx, xxx xxx xxxx xxxx xx xxx xxxxx xxxxxxxx xx xx xx xxx xxxxxxxxxxx. Ix xxx xxxxxxx xxxx xxxxxxxxxxxxx xxxxxxxxxx x xxxxxxxx’x xxx, xxx xxx xxxxxxxx xxxx xxx xxxxxx-xxxxx xxxxxxxx xxxx xxxx xxxxxx x xxxxxxxxx xx xxxxxxxx. Exxxxxxx xx xxxxx xxx xxxxxxxx xxx xxxxxx xxx xxxxxxxxxx xxx xxxxxxxxx.</para>
+      <para>Ix xxxxxxx, xxx xxxx xx xx xx xxxxx xxx xxxxxx xxxxxxxx, xxx xx xxxxxxxx xxx xxxxx xx xxxxxx xx xxx xxxx xx.</para>
+    </sect1>
+    <sect1 id="mysqlian-PREFACE-2-SECT-2">
+      <title>Hxx Txxx Bxxx Ix Oxxxxxxxx</title>
+      <para>Txxx xxxx xx xxxxxx xx xxxx xxxxxxxx xxxxxxxx xxx xxxxx xxxxxxxxxx, xx xxxxxxx:</para>
+      <sect2 id="mysqlian-PREFACE-2-SECT-2.1">
+        <title>Pxxx I, Ixxxxxxxxxxx &amp; Txxxxxxxx</title>
+        <para><xref linkend="mysqlian-CHP-1"/> xxxxxxxx xxx xxxxx xxxxxxxxxx xx MxSQL xxx xxxxxx xxxxxxxxxx xxx xxxxx xxxxxxxxxxx xx MxSQL.</para>
+        <para><xref linkend="mysqlian-CHP-2"/> xxxxxxxxx xxx xx xxx MxSQL xxxxxxx xx xxxxxx xxxxxxxxx xxxxxxx xxxxxxxxx xx MxSQL AB. Ix xx xxxxxxxxx xx xxxx xxxx xxxxxxx xxxx xx xxxx xxxxxx xxxx xxx xxxxxxx xxxx MxSQL xxxxxxxxx.</para>
+        <para> xxxxxxxxxx SQL (Sxxxxxxxxx Qxxxx Lxxxxx) xxx xxx xx xxx <emphasis>xxxxx</emphasis> xxxxxxx-xxxx xxxxxxxxx. Ix’x xxx x xxxxxxxxxxx xxx xxxxxxxx SQL xxx xxxxxxxxxx xxxxxxxx xxxxxx, xxx xx xxx xx xxxxxx xx xxxxxx xxx xx MxSQL.</para>
+      </sect2>
+      <sect2 id="mysqlian-PREFACE-2-SECT-2.2">
+        <title>Pxxx II, SQL Sxxxxxxxxx &amp; Fxxxxxxxx</title>
+        <para> xxxxxx SQL xxxxxxxxxx xxx xxxxxxxxx xxxxxxx xx xxx xxxxxxxxxx xx xxxx xxxxxxxx xxx xxxxxxxx.</para>
+        <para> xxxxx, xxxxxxxx, xxx xxxxxxxx xxxxxxxx xx SQL xxxxxxxxxx xxx xxxxxxxxx xxxxxxx xx xxx xxxxxxxx, xxxxxxxx, xxx xxxxxxxx xx xxxxxxxxx, xxxxxx, xxxxxxx, xxx xxxxx.</para>
+        <para> xx xxxxxxxxx xxx SQL xxxxxxxxxx xxx xxxxxxxxx xxxxxxxxx xxx xxxxxxxxxxxx xx xxxx—xxxxxxxxx, xxxxxxxx, xxxxxxxxx, xx xxxxxxxx.</para>
+        <para> xxxxxxxx xxxxxxx xxx xxxxxxxx xxxxxxx SQL xxxxxxxxxx xxx xxxxxxxxx xxxx xxxxx xx xxxx xx xxx xxxxxxxxxxxxxx xx xxxxxxxxx, xxxxxx, xx xxx xxxxxx.</para>
+        <para> xxxxxxxx SQL xxxxxxxxxx xxxxx xxxxxxxx xxxxxx xx xxxxxxxxxxx. Txx xxxxxxx xxxx xxxxxxxx x xxxxxxxx xxx xx xxxxxxxxxxx xx xxx xxxxxxxxxxx xxxxxxx. Ix xxxx xxxxxxxx xxx xxxxxxxxxxx xxxxxx xx xxxx xx xxxxxxx xxxxxxxx.</para>
+        <para> xxxxxxxx xxxxxxxxxx xxxxxxxxxxxx xxxxxxx xx xxxxxx, xxxxxx xxxxxxxxxx, xxxxxxxx, xxx xxxx xxxxxxx xxxxxxxxx.</para>
+        <para> xxxxxxxx xxxxxxxxx xxxxxxx (x.x., <literal moreinfo="none">GROUP BY</literal>) xxx xxxxxxxxx xxxx xxxxxxxxx xxx xxxx xxxx xxxx xx xxxxxxxxx xxxxxx. Ix xxxx xxxxxxxx x xxxxxxxx xx xxxxxxxxxx xx xxxx xxx xx xxxx xx xxxxxxxxx xxxx.</para>
+        <para> xxxxxx xxx xxxxxxxxx xxxx xxx xxxxxxx xx xxx xxxxxxxxxxxx xx xxxxxxx xx xxxx.</para>
+        <para> xxxxxx xxxx xxx xxxx xxxxxxx xxxxxxxxx.</para>
+        <para> xxxxxxxx xxx xxxxx xxxxxxxx xx xxxxxxxx xxxxxxxxxxxx xxxxxxx xxxxxxxx.</para>
+        <para> xxxxxx xxxx xxxxxxx xxxxxxxxx xxxx xx
+<literal moreinfo="none">CASE</literal> xxx <literal moreinfo="none">IF</literal>.</para>
+      </sect2>
+      <sect2 id="mysqlian-PREFACE-2-SECT-2.3">
+        <title>Pxxx III, MxSQL Sxxxxx xxx Cxxxxx Txxxx</title>
+        <para> xxxxxx xxx <literal moreinfo="none">xxxxxx</literal> xxxxxx xxx xxx <literal moreinfo="none">xxxxx</literal> xxxxxx xxx xxxxx xxxxxxx. Ix xxxx xxxxxxxx xxxxxxx xxxx xx xxxxx xxx xxxxxx (x.x., <literal moreinfo="none">xxxxxx_xxxx</literal>). 
+</para>
+        <para> xxxxxxxxx xxx xxxxxxxxx xxxx xxx xx xxxx xx xxxxxxxxxx xxx MxSQL xxxxxx xxx xxxx. Ix xxxx xxxxxxxx xxxxxxxxx xxxx xx <literal moreinfo="none">xxxxxxxxx</literal> xxxx xxx xxxx xxxxxxx.</para>
+      </sect2>
+      <sect2 id="mysqlian-PREFACE-2-SECT-2.4">
+        <title>Pxxx IV, MxSQL API</title>
+        <remark>[PROD: Ixxxxxxx xxxxx xxxxxxxx xx xxxx xxxxx xx xxxxx xxxxx; I’xx xxxxxxx xx xxxxx xx xxdd-xxdd, xxx xxxxxx xxxxxx.—DCPS]</remark>
+        <para> xxxxxx xxx xxxxxxxxx xxxxxxxx xx MxSQL’x xxxxx C xxxxxxx.</para>
+        <para> xxxxxxxx xxx Pxxx DBI xxxxxx, xxxx xx xxxxxx MxSQL xxxxxxxxx xxxx xxx xxxxxxxxxxx xxxxxxxxx Pxxx.</para>
+        <para> xxxxxxxx xxx PHP xxxxxxxxx xxxx xx xxxxx xxx xxxxxxxxxx MxSQL xxxxxxxxx.</para>
+      </sect2>
+      <sect2 id="mysqlian-PREFACE-2-SECT-2.5">
+        <title>Axxxxxxxxx</title>
+        <para><xref linkend="mysqlian-APP-A"/> xxxxx xxx xxx xxxx xxxxx xxxxxxxxx xx MxSQL.</para>
+        <para><xref linkend="mysqlian-APP-B"/> xxxxx xxx MxSQL xxxxxxxxx, xxxx xx xxxxxxxxxx xxxxx xxx xxx <literal moreinfo="none">LIKE</literal> xxx <literal moreinfo="none">IS NULL</literal> xxxxxxxxxx xxxxxxxxx.</para>
+        <para><xref linkend="mysqlian-APP-C"/> xxxxx xxx xxxxxxxxx xxxxxx’x xxxxxxxxxxx xxxxxxxxx xxxxxxxxx xx xxx MxSQL xxxxxx, xxxxxx, xxx xxxxx xxxxxxxxx.</para>
+      </sect2>
+    </sect1>
+    <sect1 id="mysqlian-PREFACE-2-SECT-3">
+      <title>Cxxxxxxxxxx Uxxx xx Txxx Bxxx</title>
+      <para>Txx xxxxxxxxx xxxxxxxxxxxxx xxxxxxxxxxx xxx xxxx xx xxxx xxxx:</para>
+      <variablelist>
+        <varlistentry>
+          <term>Pxxxx xxxx</term>
+          <listitem>
+            <para>Ixxxxxxxx xxxx xxxxxx, xxxx xxxxxxx, xxxx xxxxxxx, xxx xxxxxxxx xxxxxxxxxxxx (xxxx xx Axx xxx Cxxx).</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>Ixxxxx</term>
+          <listitem>
+            <para>Ixxxxxxxx xxx xxxxx, URLx, xxxxx xxxxxxxxx, xxxxxxxxx, xxxxxxxxx, xxxxxxxxx, xxxx xxxxxxxxxx, xxxxxxxxx, xxxxxxxxxxx, xxx xxxxxxxxx.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <literal moreinfo="none">Cxxxxxxx xxxxx</literal>
+          </term>
+          <listitem>
+            <para>Ixxxxxxxx xxxxxxxx xx xxxx, xxxxxxxxxxxxx xxxxxxx, xxxxxxxxx, xxxxxxxxx, xxxxxxx, xxx xxxxxxxx xx xxxxx, xx xxx xxxxxx xxxx xxxxxxxx.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <userinput moreinfo="none">Cxxxxxxx xxxxx xxxx</userinput>
+          </term>
+          <listitem>
+            <para>Sxxxx xxxxxxxx xx xxxxx xxxx xxxx xxxxxx xx xxxxx xxxxxxxxx xx xxx xxxx.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <replaceable>Cxxxxxxx xxxxx xxxxxx</replaceable>
+          </term>
+          <listitem>
+            <para>Sxxxx xxxx xxxx xxxxxx xx xxxxxxxx xxxx xxxx-xxxxxxxx xxxxxx.</para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+    </sect1>
+    <sect1 id="mysqlian-PREFACE-2-SECT-4">
+      <title>Uxxxx Cxxx Exxxxxxx</title>
+      <para>Txxx xxxx xx xxxx xx xxxx xxx xxx xxxx xxx xxxx. Ix xxxxxxx, xxx xxx xxx xxx xxxx xx xxxx xxxx xx xxxx xxxxxxxx xxx xxxxxxxxxxxxx. Yxx xx xxx xxxx xx xxxxxxx xx xxx xxxxxxxxxx xxxxxx xxx’xx xxxxxxxxxxx x xxxxxxxxxxx xxxxxxx xx xxx xxxx. Fxx xxxxxxx, xxxxxxx x xxxxxxx xxxx xxxx xxxxxxx xxxxxx xx xxxx xxxx xxxx xxxx xxxx xxx xxxxxxx xxxxxxxxxx. Sxxxxxx xx xxxxxxxxxxxx x CD-ROM xx xxxxxxxx xxxx O’Rxxxxx xxxxx xxxx xxxxxxx xxxxxxxxxx. Axxxxxxxx x xxxxxxxx xx xxxxxx xxxx xxxx xxx xxxxxxx xxxxxxx xxxx xxxx xxx xxxxxxx xxxxxxxxxx. Ixxxxxxxxxxxx x xxxxxxxxxxx xxxxxx xx xxxxxxx xxxx xxxx xxxx xxxx xxxx xxxx xxxxxxx’x xxxxxxxxxxxxx xxxx xxxxxxx xxxxxxxxxx.</para>
+      <para>Wx xxxxxxxxxx, xxx xx xxx xxxxxxx, xxxxxxxxxxx. Ax xxxxxxxxxxx xxxxxxx xxxxxxxx xxx xxxxx, xxxxxx, xxxxxxxxx, xxx ISBN. Fxx xxxxxxx: "<emphasis>MxSQL xx x Nxxxxxxx, dxx Exxxxxx</emphasis> xx Rxxxxxx J.T. Dxxx. Cxxxxxxxx dddd O’Rxxxxx Mxxxx, Ixx., d-ddd-ddddd-d.”</para>
+      <para>Ix xxx xxxx xxxx xxx xx xxxx xxxxxxxx xxxxx xxxxxxx xxxx xxx xx xxx xxxxxxxxxx xxxxx xxxxx, xxxx xxxx xx xxxxxxx xx xx <email>xxxxxxxxxxx@xxxxxxx.xxx</email>.</para>
+    </sect1>
+    <sect1 id="mysqlian-PREFACE-2-SECT-5">
+      <title>Rxxxxxx xxx Cxxxxxxx</title>
+      <para>Pxxxxx xxxxxxx xxxxxxxx xxx xxxxxxxxx xxxxxxxxxx xxxx xxxx xx xxx xxxxxxxxx:</para>
+      <simplelist type="vert">
+        <member>O’Rxxxxx Mxxxx, Ixx.</member>
+        <member>dddd Gxxxxxxxxxx Hxxxxxx Nxxxx</member>
+        <member>Sxxxxxxxxx, CA ddddd</member>
+        <member>(ddd) ddd-dddd (xx xxx Uxxxxx Sxxxxx xx Cxxxxx)</member>
+        <member>(ddd) ddd-dddd (xxxxxxxxxxxxx xx xxxxx)</member>
+        <member>(ddd) ddd-dddd (xxx)</member>
+      </simplelist>
+      <para>Txx xxxxxxxx xx xxxx xxxx xxx xxxxxxxxxxxxxx xxxxxxx xxx xxxx xxxx xxxxxx, xxx xxxx xxxx xxx xxxx xxxx xxxx xxx xxxxxxxxxx xx xx xxx-xxxx xx xx xxxx xxxxxxxxx xxxx xxxx xxxxxxx xxx xxxx xxxxxxxx’x xxxxxxxxxxxxxx xx MxSQL. Ix xxx xxxx xxxxxxxx, xxxx xxxx, xx xxxx xxxxxxxxxxx xxx xxxxxx xxxxxxxx, xxxxxx xxxxx xxxx xx:</para>
+      <simplelist type="vert">
+        <member>
+          <email>xxxxxxxxxxxxx@xxxxxxx.xxx</email>
+        </member>
+      </simplelist>
+      <para>Txxxx’x x xxx xxxx xxx xxxx xxxx xxxx xxxxx xxxxxx, xxxxxxxx, xxx xxx xxxxxxxxxx xxxxxxxxxxx. Yxx xxx xxxxxx xxxx xxxx xx:</para>
+      <simplelist type="vert">
+        <member>
+          <ulink url="http://www.oreilly.com/catalog/mysqlian"/>
+        </member>
+      </simplelist>
+      <para>Fxx xxxx xxxxxxxxxxx xxxxx xxxxx, xxxxxxxxxxx, Rxxxxxxx Cxxxxxx, xxx xxx O’Rxxxxx Nxxxxxx, xxx xxx O’Rxxxxx xxx xxxx xx:</para>
+      <simplelist type="vert">
+        <member>
+          <ulink url="http://www.oreilly.com"/>
+        </member>
+      </simplelist>
+      <para>Fxx xxxx xxxxxxxxxxx xxxxx xxx xxxxxx, xx xx xxx xxx xxxx xx:</para>
+      <simplelist type="vert">
+        <member>
+          <ulink url="http://russell.dyerhouse.com"/>
+        </member>
+      </simplelist>
+    </sect1>
+    <sect1 id="mysqlian-PREFACE-2-SECT-6">
+      <title>Sxxxxx® Exxxxxx</title>
+      <note role="safarienabled">
+        <para>Wxxx xxx xxx x Sxxxxx® Exxxxxx xxxx xx xxx xxxxx xx xxxx xxxxxxxx
+    xxxxxxxxxx xxxx, xxxx xxxxx xxx xxxx xx xxxxxxxxx xxxxxx xxxxxxx xxx
+    O’Rxxxxx Nxxxxxx Sxxxxx Bxxxxxxxx.</para>
+      </note>
+      <para>Sxxxxx xxxxxx x xxxxxxxx xxxx’x xxxxxx xxxx x-xxxxx. Ix’x x xxxxxxx
+  xxxxxxx xxxx xxxx xxx xxxxxx xxxxxx xxxxxxxxx xx xxx xxxx xxxxx, xxx xxx
+  xxxxx xxxx xxxxxxx, xxxxxxxx xxxxxxxx, xxx xxxx xxxxx xxxxxxx xxxx xxx
+  xxxx xxx xxxx xxxxxxxx, xxxxxxx xxxxxxxxxxx. Txx xx xxx xxxx xx <ulink url="http://safari.oreilly.com"/></para>
+    </sect1>
+    <sect1 id="mysqlian-PREFACE-2-SECT-7">
+      <title>Axxxxxxxxxxxxxx</title>
+      <para>Txxxxx xx Axxx Oxxx, xx xxxxxx, xxx xxx xxxxxxxx xxx xxxxxxx, xxx xxx xxxxxxx xx xx xx xxx xxxxxx xxxxxxxxx xxxxxx xx xxxxx xxxx xxxx xxx xxxxx.  I xxxx xxxx xxxx xx xxxxx xxx xxx xxx xxxxxx (xxx xxxx, Jxxx Lxxxx xxx xxxxx xxxxxxxx Sxxxx xxx Sxx) xxx xxxxxx xx xxxx xxxxx xxxx xxx xxx xxxxx xxxxx xx xxxx xxxx xx Nxx Oxxxxxx xxx xxxxxxxxxx xx Hxxxxxxxx Kxxxxxx. I xxxxx xxxxxx xxxxxxxxxx xxxxx xxxxxxxxxx.</para>
+      <para>Txxxxx xxxx xx Rxxx Rxxxxxx, Jxxxxx Mxxxxxx, Bxxxxx Kxxxxx, xxx xxxxxx xxx xxxxxxxxx xxx xxxxxxxxxx xxx xxxxxxxxx xxxxxxxx. Txxxx xxxxxxxxxx xxx xxxxxxx xxxxxxxxxxx. Txxxxx xxxx xx Ixxxxx Kxxxxx (xxx Axxxxxxxx Exxxxx xxx xxx xxxx) xxx xxx xxxx xx xxxxxxx xxxxxx xx xx xxx xxxxxxxx xxxxxxx xxx xxxxxx xx. Sxxxxxx xxxxxx xx Kxxxxxx Bxxxxxx (xxxxxxxxx xxx O’Rxxxxx) xxx xxx xxxxx xxxxxxx xxx xxxxxx xxxx xxx xxxx xxx xxxxx.</para>
+      <para>Fxx xxx xxxx xxxxx xxxxx I xxxx xxxx xxxxxxx xx MxSQL Ixx. xx xxx xxxxxx xx xxxxx Kxxxxxxxx Bxxx.  Ix xxxx xxxx I’xx xxxxxxx x xxxxx xxxx xxxx xxxxx MxSQL xxxxxxxx, xx xxxx xx xxxx xxxx xxxxxxx.  Ix’x x xxxxxxxx xxxxxxx xxx x xxxxxx xxxxxxxxx.  Wxxx xxx xxxxxxxxxx xxxxxx xx xxx xx Nxx Oxxxxxx xx xxx Sxxxxx xx dddd, xxxx xx xxx xxxxxx xx MxSQL xxxxxxxx xx xx xx xxxxxxxx xxxx xxxxx xxxx xxxxxxxxxx xxxxxxxxxxx, xx xxxx xx xxxxxxxxx xxx xxxxx xxxxxxx. Txxxx xxxxxxxxxx xxxxxx xx xx xxxxxxxxx x xxx xxxx xxx xxxxxx xxx xx xxxx xxxx xxx xxxxxxxx I xxxxxxxxxxx xxxxx xxx xxxx xx xx xxx xxxx xxx xxxxxxxxx. Axx, xx xxxxxx, xxxx xx xxxx xxxxxx xxxx xxxxxxxxxxx xxx xxxxxx xxxxxxx xx xxx xxxxxxx xx xxxx xxxx. Fxxx MxSQL, I’x xxxxxxxxxx xxxx xx xxxxx Uxx Sxxxxxxx (Sxxxxx Vxxx Pxxxxxxxx) xxx xxxxxx xxxxx xxxxxxxxxx xx xx, xxx Rxxxx Oxxxxxx (xx xxxxxx xx xxx xxxxx xxx xxxxxxxx xx xxx KB) xxx xxx xxxx xxx xxx xxxxxxxxxx xx xxxxxx xx xx xxxxxxx xx xxx.</para>
+    </sect1>
+  </preface>
+  <part id="mysqlian-PART-1" xml:base="part1.xml">
+    <title>Ixxxxxxxxxxx xxx Txxxxxxxx</title>
+    <partintro>
+      <para>
+
+Txxx xxxx xx xxx xxxx xxxxxxxx xxxxxxxxxxx xxxx xx xxxxxx xx xxxxxxx
+xxx xxxx xxxxx xxxxxxxxxxxx xxxxxxxxxxx xx MxSQL. Txxx xxxx xxxx
+xxxxxxxx xxx xx xxxxxxxxxx xxx xxxxxxx xxx xx xxxxxxx xxx xx xxxxxxxx
+xxxxxxxxxxx xxx xxxxxxxxxxxxxx; x xxxx xx xxxxx xxxxxxxxxxxx xxxxx
+xxxxx xxx xxxx xxxxxx. Hxxxxxx, xxxx xxxx xxx xxxxxxx xxx xxxxxxxxx
+xxxxxxxxxx xx xxxxxxx xxx xxx xxxx xxxxxxxxx xx xxxxx xxxxxxxxx xxx
+xxxxx xx xxxx xx MxSQL, xxx xxxx x MxSQL xxxxxxxx xx x xxxxxxx xxxxxxx
+xxx xxxxx xx xxxxxx x xxxxxxxxxx xxxxxx, xx xxx xxx xxxxx xxxx xx
+xxxxxxxxxxxx xxxxxxxxx. Ixxxxxxxxxxx, xxxxx xxxxxxxxxxxxx, xxx
+xxxxxxxxx SQL xxx xxxxxxxxx xx xxxx xxxx xx xxx xxxx.
+
+</para>
+    </partintro>
+    <chapter id="mysqlian-CHP-1" xml:base="ch01.xml">
+      <title>Ixxxxxxxxxxx xx MxSQL</title>
+      <para><indexterm id="mysqlian-CHP-1-ITERM-1904" significance="normal"><primary>MxSQL</primary><secondary>xxxxxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-1-ITERM-1905" significance="normal"><primary>GPL (GNU Pxxxxx Lxxxxxx)</primary></indexterm><indexterm id="mysqlian-CHP-1-ITERM-1906" significance="normal"><primary>GNU Pxxxxx Lxxxxxx (GPL)</primary></indexterm><indexterm id="mysqlian-CHP-1-ITERM-1907" significance="normal"><primary>MxSQL AB</primary><secondary>MxSQL xxxxxxxxx</secondary></indexterm>
+MxSQL xx xx xxxx xxxxxx, xxxxxxxxxxxxx, xxxxxxxxxx xxxxxxxx xxxxxxxxxx xxxxxx xxxxxxx xx Mxxxxxx “Mxxxx” Wxxxxxxx xx dddd. Ix dddd, MxSQL xxx xxxxxxxx xxxxx x xxxx-xxxxxxx xxxxx xxxx xxxxxxxxx xxx xxxxxx xx xxx xx xxx xxxx xxxxx xxx GNU Pxxxxx Lxxxxxx (GPL); xxxx xxxxxx xxx xxxxxxxxxx xx xxxx. Txx xxxxxxx xxxx xxxx xxx xxxxxxxx MxSQL xx MxSQL AB (xxx AB xxxxxx xxx <emphasis>xxxxxxxxxx</emphasis>, xx xxxxx xxxxxxx). Cxxxxxxxx, MxSQL AB xxxxxxxxx xxxx xxxxx xxx xxxx xxxx d xxxxxxx xxxxxxxxxxxxx xx MxSQL xxxxxxxxx, xxx xxxxxxx xx xxxxxxx xx dd,ddd xxxxxxxxx x xxx xx MxSQL xxxxxxxxxxxx xxxxxxxx xxxx xxx xxxx xxx xxxx xxxxxx xxxxx. Txx xxxxxxx xx MxSQL xx x xxxxxxx xxxxxxxx xx xxx xxx xxxx xx xxx xxxxx--xxxxx xxx, xxxxx xxxx-xxxx xxx xxxx xxxxxx xxxxxxxxx xxx xxxxxxxxx--xxx xxxx xxx xxxxxxxxxxx, xxxxxxxxxxx, xxx xxxxxxxx.
+</para>
+      <sect1 id="mysqlian-CHP-1-SECT-1">
+        <title>Txx Vxxxx xx MxSQL</title>
+        <para><indexterm id="mysqlian-CHP-1-ITERM-1908" significance="normal"><primary>MxSQL</primary><secondary>xxxxxxxxxxx</secondary></indexterm>
+Mxxx xxxxxxxx xxxxxxxxxx xx MxSQL’x xxxxxxxx xx x xxxxxx xxxxxxxx xxxxxx. Ixx xxxxx xx xxx xx xxx xxxx xxxxxxxxx xxxxxxxx. Ix x xxxxxxxxxx xx <emphasis>xWEEK</emphasis> xx xxxxxxx xxxxxxxxx--xxxxxxxxx MxSQL, Oxxxxx, MS SQL, IBM DBd, xxx Sxxxxx ASE--MxSQL xxx Oxxxxx xxxx xxx xxxx xxxxxxxxxxx xxx xxx xxxxxxxx xxxxxxxxxxx (xxx <ulink url="http://www.mysql.com/it-resources/benchmarks"/> xxx xxxx xxxxxxx). MxSQL xx xxxxxxxxxx xxxxxxxx, xxx xx xxxx xx xxxxxx xxxx xx xxxxxxxxx xx xxxxxx xxx xxxxxxxx xx xxxx xx xxxx. Pxxx, xx xxxxxxx xxxxx xxxxxxx xx xxxx xxxxxxx xxx xxxxxxxx.
+</para>
+        <para><indexterm id="mysqlian-CHP-1-ITERM-1909" significance="normal"><primary>xxxxxxx xxxxxxx</primary><secondary>MxSQLxxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-1-ITERM-1910" significance="normal"><primary>xxxxx xxxxx</primary><see>xxxxxxx xxxxxxx</see></indexterm>
+Txx xxxxxxx xxxxxx, xxxxx xxxxxxx xxxxxxx xxx xxxxxxxxxx xxxxxxx x xxxx’x SQL xxxxxxxxxx xxx xxx xxxxxxxx’x xxxxxxx xxxxxxx, xx xxx xxxxxxxx xxxxxxxx xx xxx xxxxxxxx xxxxxxxxxx xxxxxx. MxSQL xxxxxx xxxxxxx xxxxxxx xxxxxxx xxxx xxxxxxxxx xxxxxxxxxx. Sxxx xxx xxxxxxxxxxx-xxxx xxxxxxx xxxxxxx xxxx xxxxx xxx xxxxxxxx xx xxxx.  Axxxxxxxxxxx, MxSQL xxx x xxxxxxxxxx xxxxxx xx xxxxx-xx xxxxxxxxx xxxx xxx xxxxxxxx xx xxxxxxx xxxxxxxx xx xxxx xxxx.
+<indexterm id="mysqlian-CHP-1-ITERM-1911" significance="normal"><primary>MxSQL AB</primary><secondary>xxxxxxxxxxxx xxx</secondary></indexterm>
+<indexterm id="mysqlian-CHP-1-ITERM-1912" significance="normal"><primary>MxSQL</primary><secondary>xxxxxxx xxxxxxxxx</secondary></indexterm>
+MxSQL xx xxxx xxxx xxxx-xxxxx xxx xxxxx xxx xxxxxx xxxxxxxxxxxx. Exxx xxx xxxxxxx xxxxx xxxx xxxxx xxx xxxxxxxxx xxxxxxxxxxxx, xx xxxx xx xxx xxxxxxxx.
+</para>
+      </sect1>
+      <sect1 id="mysqlian-CHP-1-SECT-2">
+        <title>Txx MxSQL Pxxxxxx</title>
+        <para><indexterm id="mysqlian-CHP-1-ITERM-1913" significance="normal"><primary>xxxxxx xxxxxx</primary><secondary>xxxxxxxxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-1-ITERM-1914" significance="normal"><primary>xxxxx xxxxxx</primary><secondary>xxxxxxxxxxxxx</secondary></indexterm>
+Txx MxSQL xxxxxxx xxxxx xxxx xxxxxxx xxxxxxxx. Fxxxxxxx xx xxx MxSQL xxxxxx, xxxxxxxxxxx xx xxx <emphasis>xxxxxx</emphasis> xxxxxx. Txx xxxxxx xxxxxxx xxx xxxxxxxx xx x xxxxxxxxxx xxxx (dddd xx xxxxxxx) xx xxxxx xxxxxxx xxxxxx xxxxxxx. Txx xxxxxxxx MxSQL xxxxxx xxxxxxx xx xxxxxx xxxxxx <emphasis>xxxxx</emphasis>. Wxxx xxxx xxxx-xxxxx xxxxxxxxx, x xxxx xxx xxx xx xxx xxxxxxx SQL xxxxxxx. Txxx xxxxxx xxx xxxx xxxxxx xxxxxxx xxxx xxxx xxxxx xxxxxxxxxx xxxxxxx, xxx xxxxxxx xxxxxxx xxxx xx xxxxxx xx xxx xxxx xx xxxxx xxxxxxxx. Hxxxxxx, xxxx MxSQL xxxxxxxxxxx xx xxxx xx xxxxxxxx xxxxx x xxxxxxx xx xxxxxxxxx.  Txx xxxxxxxxxx xxx Pxxx, PHP, Jxxx, C, xxx C++ xxx xxxxxxxxx xx xxxx xxxx.
+</para>
+        <para><indexterm id="mysqlian-CHP-1-ITERM-1915" significance="normal"><primary>Wxxxxxx xxxxxxxxxxx</primary><secondary>xxxxxxx xxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-1-ITERM-1916" significance="normal"><primary>xxxxxx-xx xxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-1-ITERM-1917" significance="normal"><primary>xxxxxx_xxxxx xxxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-1-ITERM-1918" significance="normal"><primary>xxxxxx_xxxx xxxxxxx</primary><secondary>xxxxxxxxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-1-ITERM-1919" significance="normal"><primary>xxxxxxx xxxxxxx</primary></indexterm>
+A xxx xxxxxxx xxxxxxx xxx <emphasis>xxxxxx</emphasis> xxxx xxxx MxSQL. Txx <literal moreinfo="none">xxxxxx_xxxx</literal> xxxxxx xx xxx xxxx xxxxxx xxx xx xxxxx <emphasis>xxxxxx</emphasis>, xxxxxxx xxx xxxxxx xxx xxxxxxx xxx xxxxxx xx xx xxxxxxx. Txxx xxxxx xxxxxx xxxxxxx xxxxxxxx xxx xxxxxxxx xxxxxxxx. Txx xxxxxx <literal moreinfo="none">xxxxxx_xxxxx</literal> xx xxxx xx xxxxx xxxxxxxx xxxxxxxx xx <literal moreinfo="none">xxxxxx_xxxx</literal>, xxx xxxxxxx xxxxxxxx <emphasis>xxxxxx</emphasis> xxxxxxxxx, xxx xxxxxxxx xxxxxxxx xxxx xxxxxxxxx xxxxx, xxx xx xxxx xx xxxxxx xx xxxxx xxxxxxxxx xxxx xx xxxxxxxxx xx xx xxxx xxxxxxxxx xxxxxxxx xx MxSQL.
+</para>
+        <para><indexterm id="mysqlian-CHP-1-ITERM-1920" significance="normal"><primary>xxxxxxxxxxxx</primary><secondary>AxxxxxPxxx</secondary></indexterm><indexterm id="mysqlian-CHP-1-ITERM-1921" significance="normal"><primary>xxxxxxxxxxxx</primary><secondary>Pxxx</secondary></indexterm><indexterm id="mysqlian-CHP-1-ITERM-1922" significance="normal"><primary>AxxxxxPxxx</primary></indexterm><indexterm id="mysqlian-CHP-1-ITERM-1923" significance="normal"><primary>Pxxx xxxxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-1-ITERM-1924" significance="normal"><primary>xxxxxxxxx xxxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-1-ITERM-1925" significance="normal"><primary>xxxxxxxxxx xxxxxxx</primary><secondary>xxxxxxxxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-1-ITERM-1926" significance="normal"><primary>xxxxxxxxxxx xxxxxxx</primary></indexterm>
+MxSQL xxxx xxxxx xxxx x xxxxxxx xx xxxxxxxxx xxx xxxxxxxx x MxSQL xxxxxx.  <emphasis>xxxxxxxxxxx</emphasis> xx xxxx xxx xxxxxxxx xxxx xxxxxxxx xxx xxxxxxx xxxxx xxxxxxxxxx. <emphasis>xxxxxxxxxx</emphasis> xxx xx xxxx xx xxxxxx xxx MxSQL xxxxxx xxxxxx xxxx xxx xxxxxxx-xxxx. Txxx xxxxxxxxxxx xxxxxxxx xxxxxxxx x xxxxxx’x xxxxxx xxx xxxxx, xxx xxxxxxxx xxxx x xxxxxx. <emphasis>xxxxxxxxx</emphasis> xxx xx xxxx xx xxxxxxx x xxxxxx’x xxxxxx, xx xxxx xx xxxxxxxxxxx xxxxx xxxxxxxxx xxx xxxxxx. Sxxx xx xxxxx xxxxxxxxx xxxxxxx Pxxx, xx AxxxxxPxxx xxx Wxxxxxx, xx xx xxxxxxxxx xx xxx xxxxxx. Sxx <ulink url="http://www.perl.org"/> xx xxxxxxxx xxx xxxxxxx x xxxx xx Pxxx xx xxx-Wxxxxxx xxxxxxx, xxx <ulink url="http://www.activestate.com/Products/ActivePerl"/> xx xxxxxxxx xxx xxxxxxx x xxxx xx AxxxxxPxxx xx Wxxxxxx xxxxxxx.
+</para>
+        <para><indexterm id="mysqlian-CHP-1-ITERM-1927" significance="normal"><primary>xxxx</primary><secondary>xxxxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-1-ITERM-1928" significance="normal"><primary>xxxx</primary><secondary>xxxxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-1-ITERM-1929" significance="normal"><primary>xxxxxxxxxxx</primary><secondary>xxxx xxxxx xxx</secondary></indexterm><indexterm id="mysqlian-CHP-1-ITERM-1930" significance="normal"><primary>xxxxxxxxxxxxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-1-ITERM-1931" significance="normal"><primary>xxxxxxxxx</primary><secondary>xxxxxxxxx xxx</secondary></indexterm>
+MxSQL xxxx xxxxx xxxx x xxx xxxxxxxxx xxx xxxxxxxxx xxx xxxxxxxxx xxxx xxxx xxx xx MxSQL xxxxxxxxx. <emphasis>xxxxxxxxx</emphasis> xx xxx xxxx xxxxxxx xxx xxxxxxxxx xxxx xxx xxxxx xxxxxxxxxx xx x xxxxx-xxxx xxxx xxxxx xx x <emphasis>xxxx</emphasis> xxxx. Txxx xxx xx xxxx xxx xxxxxxx xx xxxx xx xxx xxxxxxxx xxxxxx xx xxxxxxx xxxxxxx. Txx <emphasis>xxxxx</emphasis> xxxxxx xxx xx xxxx xx xxxxxx xxx xxxx xxxx xx MxSQL xxxx x <emphasis>xxxx</emphasis> xxxx.  Sxx  xxx xxxx xx xxxxxxxxx.
+</para>
+      </sect1>
+      <sect1 id="mysqlian-CHP-1-SECT-3">
+        <title>Lxxxxxxxx</title>
+        <para><indexterm id="mysqlian-CHP-1-ITERM-1937" significance="normal"><primary>MxSQL AB</primary><secondary>xxxxxxxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-1-ITERM-1938" significance="normal"><primary>xxxxxxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-1-ITERM-1939" significance="normal"><primary>GPL(GNU Pxxxxx Lxxxxxx)</primary></indexterm><indexterm id="mysqlian-CHP-1-ITERM-1940" significance="normal"><primary>GNUPxxxxx Lxxxxxx (GPL)</primary></indexterm><indexterm id="mysqlian-CHP-1-ITERM-1941" significance="normal"><primary>MxSQL</primary><secondary>xxxxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-1-ITERM-1942" significance="normal"><primary>xxxxxxxxx,MxSQL</primary></indexterm>
+Axxxxxxx MxSQL xxx xx xxxx xxx xxxx xxx xx xxxx xxxxxx, MxSQL AB xxxxx xxx xxxxxxxxxx xx xxx xxxxxx xxxx. Txx xxxxxxx xxxxxx x xxxx-xxxxxxxxx xxxxxxx xxx xxx xxxxxxxx: xxx xxxxxx xxxx-xxxx xxx xxxxxxx xxx GPL xxxxx xxxxxxx xxxxxx xxxxxxxxxxxxx, xxx xxx xxxxx xx x xxxxxxxxxx xxxxxxx xxxxxxx x xxx. Txxx’xx xxxx xxx xxxx xxxxxxxx, xxx xxxx xxx x xxxxxxxxx xxxxxxx xxx xxxxxxxxx xxxxxxxxxx. Sxx <ulink url="http://www.fsf.org/licenses"/> xxx xxxx xxxxxxx xx xxx GPL.
+</para>
+        <para>MxSQL AB xxxxxx xxx xx xxx xxx xxxxxxxx xxxxx xxx GPL xx xxx xxx xx xxxxxxx xxxxxxxxxxxxxx xx, xx xx xxx xxxxxxxxxxxx xx xxxx xxxx xxxxxxxx xxxxxxxx xxxxx xxx GPL. Yxx xxx xxxx xxx xxx GPL xx xxx xxxxxxxxxxxx MxSQL xxxx xxxxxxxx xxxx xxx xxxxxxxxx, xx xxxx xx xxx xxxxxxxxxx xxxx xxxxxxxx xxxxx xxx GPL xx xxxx.</para>
+        <para>Hxxxxxx, xx xxx xxxx xxxxxxxxx xx xxxxxxxxxxx xxxx xxxxxxxx MxSQL xxx xxx xxxxxxxxxxxxx xxx xxx xxxx xx xxxx xxxx xxxxxxxx xxxx MxSQL xxxxx x xxx-xxxx xxxxxxx, xxx xxxx xxxxxxxx x xxxxxxxxxx xxxxxxx xxxx MxSQL AB. Txxxx xxx xxxxx xxxxxxxxx xx xxxxx x xxxxxxxxxx xxxxxxx xxx xx xxxxxxxx. Fxx xxxxxxx xx xxxx xxx xxxx xxxxxxxx x xxxxxxx, xxx <ulink url="http://www.mysql.com/company/legal/licensing"/>.</para>
+        <para><indexterm id="mysqlian-CHP-1-ITERM-1943" significance="normal"><primary>xxxxxxxxxx</primary></indexterm>
+Bxxxxxx xxxxxxx xxx xxxxxxxx xxxxxxxxxx, MxSQL AB xxxx xxxxx xxx MxSQL xxxxxxxxx. Ax x xxxxxx, xxx xxxxxx xxxxxxxxxx xxxxxxxx xxxx xxxxxxxx MxSQL xx xxx xxxx.
+</para>
+      </sect1>
+      <sect1 id="mysqlian-CHP-1-SECT-4">
+        <title>Mxxxxxx Lxxxx</title>
+        <para><indexterm id="mysqlian-CHP-1-ITERM-1944" significance="normal"><primary>MxSQL AB</primary><secondary>xxxxxxx xxxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-1-ITERM-1945" significance="normal"><primary>MxSQL</primary><secondary>xxxxxxxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-1-ITERM-1946" significance="normal"><primary>xxxxxxx xxxxx, MxSQLxxxxxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-1-ITERM-1947" significance="normal"><primary>xxxxxxxxx</primary><secondary>xxxxxxxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-1-ITERM-1948" significance="normal"><primary>Wxxxxxxxxxxxxxxxxx</primary><secondary>xxxxxxx xxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-1-ITERM-1949" significance="normal"><primary>Jxxx JDBCxxxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-1-ITERM-1950" significance="normal"><primary>PxxxDBI</primary><secondary>xxxxxxx xxxxx</secondary></indexterm>
+Yxx xxx xxxxxxx xxxx xxxxxxxxxx xxxx xxxxxxxx xxxx xxx xxx xxxx xxxx MxSQL xxxx xxx MxSQL xxxxxxxxx xx xx xxxxxx xxxxxxx xxxxxxx xxxxxxxx xxxxx xxxxxxx xxxxxx xx MxSQL AB. Txxxx xx x xxxx xxxxxxx xxxx xxx MxSQL (<emphasis>xxxxx</emphasis>) xxx xxxxxxx xxxxxxxxxxx xxxxxxx xxxxx xxxxx xxxxxx xxx xxxx x xxxxxxx xxx xxxx xx x xxxxxxxxxx xxxxx. Oxx xxxx xxxxxx xxxxxxxxx xxxxx xxxxxxxx xxxxxxxxxxx (<emphasis>xxxxxxxxxx</emphasis>). Axxxxxx xx xxx xxxxxxxxx xx xxx Wxxxxxx xxxxxxxx xx MxSQL (<emphasis>xxxdd</emphasis>). Txxxx xxx xxxx xxxxx xxx xxxxxxxx xxxxxxxxxx xxx Jxxx JDBC xxxxxxx (<emphasis>xxxx</emphasis>) xxx xxx xxx Pxxx DBI xxxxxx (<emphasis>xxxx</emphasis>).
+</para>
+        <para>Fxx x xxxxxxxx xxxxxxx xx xx xxxxxxxxx xx xxx xx xxxx xx xxxxx xxxxxxx xxxxx, xx xx <ulink url="http://lists.mysql.com"/>. Ox xxxx xxxxxxx xxxx xxxx, xxx xxxx xxxx xxxxx xxx xxxxxxxxxxx xx xxxx xxxx. Wxxx xxx xxxxx x xxxxxxxxxxxx xxxx, xxx xxxx xxx x xxxx xxxxxx xxxx xx xxxxx xx xxxxx xxxx xxxxx xxxxxxx. Sxxx xxxxxxxxxxx, xxxxxxxxxxxx, xxxx xx xxx x xxxxxxx xxxxx xxxxxxx xxx xxxx xxxxxxxxxxxx xxxxx xx-xxxx xxxxxxx. Ix xxxxxx xxx xxxxxxxxx xxx xxx xxxx xxxxxxx xxxxxx xxxxxx. Oxxxxx, xxxxxxx, xxxxxx xx xxx xxxxx xxxx xxxx xxx xxxxxxx xxxxxxxxxxx. Axxxx xxx xxxxx xxxx xxxxx xxxxxxx, xxx xxxx xxxxxxx xx xxxxxxxxx xxxxxxx xx xxxxxxx xxxx xxxxxxx. Txxx xxxxx xxxx xxxx x xxxx xx xxx MxSQL xxxx xxxx xxxx xxxxxxxxxx xxxxxxxxxxx xxxx xxxxxxx. Cxxxx xxx xxxx, xxx xx xxxx xxxx xxxx xxx xxxxxxx xxx xxxxxxx xxxx xxxxxxxxxxxx.</para>
+        <para><indexterm id="mysqlian-CHP-1-ITERM-1951" significance="normal"><primary>xxxxxxxxx</primary><secondary>xxxxxxx xxxxxxxxxxxx</secondary></indexterm>
+Txx xxxx xxxx xxxxx xxx xxx xxxxxxxxx xx x xxxx xxxx xxx xxxxx xxx xxxxxxxxxxxxx xxxx xxxxx, xx xxxx xx xxxxx xx xxxxxxxx xx xxxxxxxx xxxxxxxx xxxxxxxx xxx xxxx xxxx. Yxx xxx xxxxxx xxxxx xxxxxxxx xxx xxxxxxxx xxxx xxxxxx xxx xxx xxxxxxxxxx xxx xxxx xxxxxxx xxxx xxx xxx xxxxxx xx xxxxxxx. Ix’x xxxxxx x xxxx xxxx xx xxxxxx xxxxxxxx xxxxxx xxxxxxx xxxxxxxx xx xxxx xxx, xx xxxx xxx xxxxxxx xxxx xxxxx xxx xxxx xxxxxxxxx xxxxxx. Ix xxx xxx’x xxxx x xxxxxxxx xx xxx xxxxxxxxxxxxx xxxxxxxxx xx xxx xx xx xxx xxxxxxxx, xxx xxx xxxx x xxxxxxx xx x xxxxxxxxxx xxxxxxx xxxx xx xxxxxxx xx xxxxx xx xxxx xxxx xx <emphasis>xxxxx.xxxxx.xxx</emphasis>. Fxx xxxxxxx, xx xxx xxxx x xxxxxxx xxxx xxx Pxxx DBI xxxxxx xx xxxxxxxx xx MxSQL, xxx xxxxx xxxx x xxxxxxx xx <email>xxxx@xxxxx.xxxxx.xxx</email>. Jxxx xx xxxx xx xxxx xxx xxxxxxx xxxx xxx xxxxx xxxxxxx xxxx xx xxxxxxxxxx xxxx xxx xxxx xx xxxxx xxx’xx xxxxxxxxxx xxxx xxxxxxxx.
+<indexterm id="mysqlian-CHP-1-ITERM-1952" significance="normal"><primary>MxSQL</primary><secondary>xxxxxxxxxxxx</secondary></indexterm>
+<indexterm id="mysqlian-CHP-1-ITERM-1953" significance="normal"><primary>xxxxxxx xxxxx, MxSQLxxxxxxxxx</primary></indexterm>
+</para>
+      </sect1>
+      <sect1 id="mysqlian-CHP-1-SECT-5">
+        <title>Bxxxx xxx Oxxxx Pxxxxxxxxxxx</title>
+        <para><indexterm id="mysqlian-CHP-1-ITERM-1954" significance="normal"><primary>MxSQL</primary><secondary>xxxxxxxxxxxxxxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-1-ITERM-1955" significance="normal"><primary>xxxxxxxxxxxxx,xxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-1-ITERM-1956" significance="normal"><primary>MxSQLAB</primary><secondary>xxxxxx xxxxxxxxxxxxx</secondary></indexterm>
+Bxxxxxx xxx xxxxxxx xxxx xxxxxxxx xxxxxxxxx xx xxx xxxx xxxxxxx, MxSQL AB xxxxxxxx xxxxxxxxx xx-xxxx xxxxxxxxxxxxx xx xxx MxSQL xxxxxx xxx xxx xx xxx xxxxx xxxxxxxx xx xxxxxxxxxxx. Yxx xxx xxxx xxx xxxxxxxxxxxxx xx <ulink url="http://dev.mysql.com/doc"/>. Txx xxxxxxxxxxxxx xx xxx xxxxxxxxx xx xxxxxxx xx MxSQL. Yxx xxx xxxx xxx xxxxxxxx xxxxxx xx xxxxxxxx xx xx x xxx xxxxxxxxx xxxxxxx (x.x., HTML xx PDF). Ix xx xxxx xxxxxxxxx xx xxxxxxxx xxxxxx: <emphasis>MxSQL Lxxxxxxx Rxxxxxxxx</emphasis> xxx <emphasis>MxSQL Axxxxxxxxxxxx’x Gxxxx</emphasis>, xxxx xxxx MxSQL Pxxxx.
+</para>
+        <para>Ix xxxxxxxx xx xxxx xxxx, O’Rxxxxx Mxxxx xxxxxxxxx x xxx xxxxx xxxxx xx MxSQL xxxxx xxxxxx xxx xxxxxxx. O’Rxxxxx’x xxxxxxxx MxSQL xxxx xx <emphasis>Mxxxxxxx &amp; Uxxxx MxSQL</emphasis> (dxx xx., dddd) xx Gxxxxx Rxxxx, Rxxxx Jxx Yxxxxx, xxx Txx Kxxx (xxxx Hxxx E. Wxxxxxxx). Gxxxxx Rxxxx xxx xxxxxxxx x xxxxxxx xxxxxxx xxxxxx <emphasis>MxSQL Pxxxxx Rxxxxxxxx</emphasis> (dxx Exxxxxx, dddd). Fxx xxxxxx xxxxxxxxx xxxxxxx xxxxxxx, xxxxx’x <emphasis>MxSQL Cxxxxxxx</emphasis> (dxx xx., dddd) xx Pxxx DxBxxx. Fxx xxxxxx xx xxxxxxxxxx MxSQL xxx xxxxxxxxxx xxxxxxxxxxxxxx xxxxx, xxxx xx xxxxxxx xx xxxxxxxxx, O’Rxxxxx xxx xxxxxxxxx <emphasis>Hxxx Pxxxxxxxxxx MxSQL</emphasis> (dddd) xx Jxxxxx D. Zxxxxxx xxx Dxxxx J. Bxxxxxx.</para>
+        <para>O’Rxxxxx xxxx xxxxxxxxx xxxxxxx xxxxx xxxx xxxxxx xx xxx MxSQL xxxxxxxxxxx xxxxxxxxxxx xxxxxxxxxx (APIx). Fxx PHP xxxxxxxxxxx xxxx MxSQL, xxxxx’x <emphasis>Wxx Dxxxxxxx Axxxxxxxxxxx xxxx PHP xxx MxSQL</emphasis> (dddd) xx Hxxx E. Wxxxxxxx xxx Dxxxx Lxxx. Fxx xxxxxxxxxxx xxxx Pxxx xx MxSQL xxx xxxxx xxxxxxxx xxxxxxx, xxxxx’x <emphasis>Pxxxxxxxxxx xxx Pxxx DBI</emphasis> (dddd) xx Axxxxxxxx Dxxxxxxxx xxx Txx Bxxxx. Tx xxxxxxxxx xx MxSQL xxxx Jxxx, xxx xxx xxx xxx JDBC xxx JCxxxxxxxx xxxxxxx xxx Gxxxxx Rxxxx’x xxxx, <emphasis>Dxxxxxxx Pxxxxxxxxxx xxxx JDBC xxx Jxxx</emphasis> (dddd).</para>
+        <para><indexterm id="mysqlian-CHP-1-ITERM-1957" significance="normal"><primary>MxSQL</primary><secondary>xxxxxxxxxxx</secondary></indexterm>
+Ix xxxxxxxx xx xxxxxxxxx xxxxx xx MxSQL, x xxx xxx xxxxx xxxxx xxxxx xxxxxxxxx xx xxxxx MxSQL xxxxxx. Txx O’Rxxxxx Nxxxxxx xxxxx xxxxxxxxx xxxxxxxx xx MxSQL xxx xxx APIx xxx Pxxx, PHP, xxx Pxxxxx xx xxx xx-xxxx xxxxxxxxxxx ONLxxx.xxx (<ulink url="http://www.onlamp.com/onlamp/general/mysql.csp"/>). Ixxxxxxxxxxx, I’xx xxxxxxxxxxx x xxx xxxxxxxx xx xxxx xxxxxxxxxxx xxx xxxxxxx xxxxx xxxxxxxxxxxx xx MxSQL xxx xxxxxxx xxxxxx. MxSQL AB xxxx xxxxxxxx xxxx xx-xxxxx xxxxxxxx xx MxSQL. Yxx xxx xxxx xxxx xx <ulink url="http://dev.mysql.com/tech-resources/articles"/>. Mxxx xx xxxxx xxxxxxxx xxxx xxxx xxx xxxxxxxx xxx xxxxxxxx, xxxxxx xxxx xxxxx xx xxx xxxx xx xxxxx xxxxx xxxxx xxx xxxxxx xxxxxxxx xxxxxxxxx xxxx xxxxx xxxx’xx xxxxx xx xxx xxxxxxx xxxxxx. Dxxxxxxxx Sxxx (<ulink url="http://www.devarticles.com/c/b/MySQL"/>) xxx Wxx Mxxxxx (<ulink url="http://search.hotwired.com/webmonkey/?query=mysql"/>) xxx xxxxxxxxxx xxxxxxxxxxx xxxxxxxxx. Axx xx xxxxx xxxxxx xxxxxxxxxxxx xxx xxxxxxxxxxxx-xxxx.  Ix xxx xxx x MxSQL xxxxxxx xxxxxxxx, xxxxxx, xxx xxx xxx xxxxxxxxxxx xxxxx MxSQL xxxx xxxxx xxxxxxx Kxxxxxxxx Bxxx, xx xxxxx I xx xxxxxxxxx xxx xxxxxx.
+</para>
+      </sect1>
+    </chapter>
+    <chapter id="mysqlian-CHP-2" xml:base="ch02.xml">
+      <title>Ixxxxxxxxx MxSQL</title>
+      <para><indexterm id="mysqlian-CHP-2-ITERM-1958" significance="normal"><primary>MxSQL AB</primary><secondary>xxxxxxxxxxxx xxx</secondary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-1959" significance="normal"><primary>Mxx OS X xxxxxxxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-1960" significance="normal"><primary>Uxxx xxxxxxxxxxx</primary><secondary>MxSQL xxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-1961" significance="normal"><primary>FxxxBSD xxxxxxxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-1962" significance="normal"><primary>Lxxxx xxxxxxxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-1963" significance="normal"><primary>Wxxxxxx xxxxxxxxxxx</primary><secondary>MxSQL xxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-1964" significance="normal"><primary>Nxxxxx NxxWxxx xxxxxxxxxxx</primary></indexterm>
+Txx MxSQL xxxxxxxx xxxxxx xxx xxxxxx xxxxxxxx xxxx xx xxxxxxx xxxxxxxxx xxxxxxxxx xxxxxxx, xxxxxxx Lxxxx, FxxxBSD, xxx x xxxx xxxxx xx Uxxx xxxxxxx: Sxx Sxxxxxx, IBM AIX, HP-UX, xxx xx xx. MxSQL AB xxx xxxx xxxxxxxxx x Mxx OS X xxxxxxx, x Nxxxxx NxxWxxx xxxxxxx, xxx xxxxxxx MS Wxxxxxx xxxxxxxx. Yxx xxx xxxxxx x xxxx xx MxSQL xxxx MxSQL AB’x xxxx (<ulink url="http://dev.mysql.com/downloads"/>) xx xxxx xxx xx xxx xxxxxx xxxxx (<ulink url="http://dev.mysql.com/downloads/mirrors.html"/>).
+</para>
+      <para>Txxx xxxxxxx xxxxxxx xxxxxxxx xxx xxxxxxx xx xxxxxxxxxx MxSQL xx Uxxx, Lxxxx, Mxx OS X, NxxWxxx, xxx Wxxxxxx xxxxxxxxx xxxxxxx. Fxx xxxx xxxxxxxxx xxxxxxx xxxxx xxx xxxxxxxxxx xxxxxxxx xxx xxxxxxxxx xxxxxxxxxxxx xxxxxxx. Fxx xxx xxx xxxxxxxx, xxx xxx xxxxxxx MxSQL xx xxxxxxx xxxx xxxxx xxxxxxxx xx xxxx xxxxxxx: xxx xxxx xxxxxxx xx xxxxxxxx x xxxxxxxxxxxx; xxx xxxxxxx xxxx xxxxxxx xx xxx xxxxxxxxxxxx xxxx xxx xxxxxx; xxx xxx xxxxxxx xx <emphasis>Pxxx Ixxxxxxxxxxx</emphasis> xx xxx xxx xx xxx xxxxxxx.</para>
+      <sect1 id="mysqlian-CHP-2-SECT-1">
+        <title>Cxxxxxxx x Dxxxxxxxxxxx</title>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-1965" significance="normal"><primary>xxxxxxxxxxxx</primary><secondary>xxxxxxxx x xxxxxxxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-1966" significance="normal"><primary>xxxxxxxxxxxx</primary><secondary>xxxxxxxx</secondary></indexterm>
+Bxxxxx xxxxxxxxx xx xxxxxxxx xx xxxxxxxxxxxx xxxxxxx, xxx xxxx xxxxxx xxxxx xxxxxxx xx MxSQL xx xxxxxxx. Txx xxxx xxxxxx xx xxxxxxx xxx xxxxxx xxxxxx xxxxxxx xxxxxxxxxxx xx MxSQL AB xx xxx xxxx. Txxx xx xxx GA (Gxxxxxxxx Axxxxxxxx) xxxxxxx. Ix’x xxx xxxxxxxxxxx xxxx xxx xxxxxxx x xxxxx xxxxxxx xxxxxx xxx xxxx xxxx xxx xxxxxxx xxxx xx xxxxxxxxx xxxx xx x xxxxx xxxxxxx. Txxxx xxxxx xx xxx xxxx xxxxxxx xxx xxx RC (Rxxxxxx Cxxxxxxxx) xxxxxxx. Ix’x xxxx xxx xxxxxxxxxxx xxxx xxx xxxxxxx xx xxxxx xxxxxxx xxxxxx xxx xxxx xx xxxxxxxx xxxxxxxx xx xx API xxxxxxxxxxx xxxx xxx’x xxxxxxxx xxxx xxx xxxxxxx xxxxxxx.
+</para>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-1967" significance="normal"><primary>xxxxxx xxxxxxxxxxxx</primary><secondary>xxxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-1968" significance="normal"><primary>xxxxxx xxxxxxxxxxxx</primary></indexterm>
+Wxxx xxxxxxxxxx MxSQL, xxx xxxx xxxx xxx xxxxxx xx xxxxx xxxxxx x xxxxxx xxxxxxxxxxxx xx x xxxxxx xxxxxxxxxxxx. Ix’x xxxxxx, xxx xxxxxxxxxxx, xxx xxx xx xxxxxxx x xxxxxx xxxxxxxxxxxx. Hxxxxxx, xxx xxx xxxx xx xxx x xxxxxx xxxxxxxxxxxx xx xxx xxxx xxxxxxx xxxxxxxxxxxxx xxxxxxxxxxxx xxxx xxxx xxx xxxxxx xxx xxxxxxxxxxxx xx xx xxxxxxx xxxx. Yxx xxx xxxx xxxx xx xxx x xxxxxx xxxxxxxxxxxx xx x xxxxxx xxxxxxxxxxxx xxx’x xxxxxxxxx xxx xxxx xxxxxxxxx xxxxxx.
+</para>
+      </sect1>
+      <sect1 id="mysqlian-CHP-2-SECT-2">
+        <title>Uxxx Sxxxxx Dxxxxxxxxxxxx</title>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-1971" significance="normal"><primary>xxx xxxxxxx (GNU)</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-1972" significance="normal"><primary>xxx xxxxxxx (GNU)</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-1973" significance="normal"><primary>xxxxxx xxxxxxx (GNU)</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-1974" significance="normal"><primary>HP-UX xxxxxxxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-1975" significance="normal"><primary>IBM AIX xxxxxxxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-1976" significance="normal"><primary>FxxxBSD xxxxxxxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-1977" significance="normal"><primary>Sxxxxxx xxxxxxxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-1978" significance="normal"><primary>Sxx xxxxxxxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-1979" significance="normal"><primary>Lxxxx xxxxxxxxxxx</primary></indexterm><indexterm class="startofrange" id="mysqlian-CHP-2-ITERM-1980" significance="normal"><primary>xxxxxxxxxxxx</primary><secondary>Uxxx xxxxxx xxxxxxxxxxxx</secondary></indexterm><indexterm class="startofrange" id="mysqlian-CHP-2-ITERM-1981" significance="normal"><primary>Uxxx xxxxxxxxxxx</primary><secondary>xxxxxx xxxxxxxxxxxx</secondary></indexterm><indexterm class="startofrange" id="mysqlian-CHP-2-ITERM-1982" significance="normal"><primary>xxxxxx xxxxxxxxxxxx</primary></indexterm><indexterm class="startofrange" id="mysqlian-CHP-2-ITERM-1983" significance="normal"><primary>xxxxxxxxxxxx</primary><secondary>Uxxx xxxxxxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-1984" significance="normal"><primary>xxxxxx xxxxxxxxxxxx</primary><secondary>xxxxxxxxxxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-1985" significance="normal"><primary>xxxx xxxxxxx (GNU)</primary></indexterm>
+Txx xxxxx xxx xxxxxxxxxx MxSQL xx xxx Uxxx xxxxx xx xxxxxxxxx xxxxxxx xxx xxxxxxxxx xxx xxxx. Txxx xxxxxxxx Lxxxx, Sxx Sxxxxxx, FxxxBSD, IBM AIX, HP-UX, xxx. Ix’x xxxxxxxxxxx xxxx xxx xxxxxxx MxSQL xxxx x xxxxxx xxxxxxxxxxxx, xxx xx xxxxxxxxx xx xxx xxxxxxxx xxxxxxx, xxxxxxxxx xxx xxx xxxx xx xxx x xxxxxx xxxxxxxxxxxx. Tx xxxxxxx x xxxxxx xxxxxxxxxxxx, xxx xxxx xxxx xxxxxx xx GNU <literal moreinfo="none">xxxxxx</literal>, GNU <literal moreinfo="none">xxx</literal>, GNU <literal moreinfo="none">xxx</literal> (xx xxxxx Vxxxxxx d.dd.d), xxx GNU <literal moreinfo="none">xxxx</literal>. Txxxx xxxxx xxx xxxxxxx xxxxxxxx xx xxx Lxxxx xxxxxxx xxx xx xxxx Uxxx xxxxxxx. Ix xxxx xxxxxx xxxxx’x xxxx xxxx, xxx xxx xxxxxxxx xxxx xxxx xxx GNU Fxxxxxxxxx’x xxxx (<ulink url="http://www.gnu.org"/>).
+</para>
+        <para>Oxxx xxx’xx xxxxxx xxx xxxxxxxxxx xxx xxxxxx xxxxxxxxxxxx xxxxx xxx MxSQL, xxxxx xxx xxxxxxxxx xxxxxxxx xx <literal moreinfo="none">xxxx</literal> xxxx xxx xxxxxxxxx xxxxx xxx xxxx xxx xxxxxx xxxxx xxxxxx:</para>
+        <programlisting format="linespecific">xxxxxxxx xxxxx
+xxxxxxx -x xxxxx xxxxx
+xxx xxxx /xxx/xxxxx-<replaceable>xxxxxxx</replaceable>.xxx.xx
+xx xxxxx-<replaceable>xxxxxxx</replaceable></programlisting>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-1986" significance="normal"><primary>xxxxx xxxxxx xxxx</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-1987" significance="normal"><primary>xx xxxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-1988" significance="normal"><primary>xxxxxxx xxxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-1989" significance="normal"><primary>xxxxxxxx xxxxxxx</primary></indexterm>
+Txx xxxxx xxxxxxx xxxxxxx xxx xxxx xxxxx <literal moreinfo="none">xxxxx</literal>. Txx xxxxxx xxxxxxx xxx xxxxxx xxxx <literal moreinfo="none">xxxxx</literal> xxx xxxx xx xx xxx xxxxx <literal moreinfo="none">xxxxx</literal> xx xxx xxxx xxxx. Txx xxxx xxxxxxx xxxx xxx <literal moreinfo="none">xxx</literal> xxxxxxx (xxxxx xxxx <literal moreinfo="none">xxxxxx</literal> xxx xxx <literal moreinfo="none">x</literal> xxxxxx) xx xxxxx xxx xxxxxx xxx xxxxxx xxxxxxxxxxxx xxxx xxx xxxxxxxxxx. Yxx xxxxxx xxxxxxx xxx xxxx <replaceable>xxxxxxx</replaceable> xxxx xxx xxxxxxx xxxxxx--xxxx xx xx xxx, xxx xxxxxx xxx xxx xxxxxx xxxx xxx xxxxxxxx xx xxx xxxxxxxxxxxx xxxx xxxx xxx xxxxxxxxxx xxx xxx xxxxxx xxxxxxxx xx xxx <literal moreinfo="none">xxx</literal> xxxxxxx. Txx xxxx xxxxxxx xxxxxxx xx xxx xxxxxxxxx xxxxxxx xx <literal moreinfo="none">xxx</literal> xx xxx xxxxxxxx xxxx. Txxx xxxxxxxxx xxxxxxxx xxx xxxxx xxxxxx xx xxxxxxxxx MxSQL.
+</para>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-1990" significance="normal"><primary>xxxxxxxxxxxxx</primary><secondary>xxxxxxx xxx</secondary></indexterm>
+Txxx xxxxxx xxx xx xxx xxxx xxxx, xxxxx xx xx xxxxxxxxx xxx xxxxxx xxxxx xx xxxxxxx xxxx xxx xxxxxxxx xxx xxxxxx xxxxxxxx. Txxx xx xxxxx xxx xxx xxx xxx xxxxxxx xxxxx xxxxxxxxxxxx xxx xxx xxxx. Fxx xxxxxxxx, xx xxx xxxx xx xxxxxx xxx xxxxxxx xxxxxxxxx xxxx xxxxx MxSQL xx xxxxxxxxx, xxx xxx <literal moreinfo="none">--xxxxxx</literal> xxxxxx xxxx x xxxxx xxx xx xxxxx xxx xxxxxxx xxxxxxxxx. Tx xxx xxx Uxxx xxxxxx xxxx’x xxxx, xxx xxx xxx <literal moreinfo="none">--xxxx-xxxx-xxxxxx-xxxx</literal>. Ix xxx xxxxx xxxx xx xxx x xxxxxxxxx xxxxxxxxx xxx xxxx xxx xxxxxxx xx <emphasis>xxxxxd</emphasis>, xxx <literal moreinfo="none">--xxxx-xxxxxxx</literal>. Hxxx xx xx xxxxxxx xx xxx xxx xxxxx xxxxxxxxx MxSQL xxxx xxxxx xxxxxxxxxx xxxxxxx xxxxxx xxxxxxxx xxx xxxxxx xxxxx:
+</para>
+        <programlisting format="linespecific">./xxxxxxxxx --xxxxxx=/xxx/xxxxx/xxxxx \
+            --xxxx-xxxx-xxxxxx-xxxx=/xxx \
+            --xxxx-xxxxxxx=xxxxxd</programlisting>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-1991" significance="normal"><primary>xxxxxxxxx (\\\\)</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-1992" significance="normal"><primary>\\\\ (xxxxxxxxx)</primary></indexterm>
+Yxx xxx xxxx xxxxx xxxx xxxxxxx xx xxx xxxx xxxxxxx xxx xxxxxxxxxxx.
+</para>
+        <para>Sxxxxxx xxxxx xxxxxxxxxxxxx xxxxxxx xxx xxxxxxxxx. Tx xxx x xxxxxxxx xxx xxxxxxx xxxxxxx xx xxxxxxx xxxxxxxxx, xxxxx xxx xxxxxxxxx xxxx xxx xxxxxxx-xxxx:</para>
+        <programlisting format="linespecific">./xxxxxxxxx --xxxx</programlisting>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-1993" significance="normal"><primary>MxSQL</primary><secondary>xxxxxx xxxxxxxxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-1994" significance="normal"><primary>xxxxxxxxxxxxx, xxxxxx</primary></indexterm>
+Yxx xxx xxxx xxxx xx xxxx xx xxx xxxxxx xxxxxx xxxxxxxxxxxxx xxx xxxxxxxxx MxSQL xx <ulink url="http://dev.mysql.com/doc/mysql/en/Compilation_problems.html"/>.
+</para>
+        <para>Oxxx xxx’xx xxxxxxx xx xxx xxxxxxx xxxx xxx xxxx, xxx xxx <literal moreinfo="none">xxxxxxxxx</literal> xxxxxx xxxx xxxxx xxxxxxx. Ix xxxx xxxx xxxxx x xxxxx xx xxx, xxx xx xxxx xxxxxxx x xxxxx xxxx xx xxxxxxxxxxx, xxxxx xxx xxx xxxxxx xxxxxxx xx xx xxxx xxxxxxxxxxxx. Axxxx xxx <literal moreinfo="none">xxxxxxxxx</literal> xxxxxx xxxxxxxx, xxx xxxxxxxx xxxx xxxx xx xx xxxxx xxx MxSQL xxxxx xx xx xxxxxxxxxxx. Tx xx xxxx, xxxxx xxx xxxxxxxxx:</para>
+        <programlisting format="linespecific">xxxx
+xxxx xxxxxxx
+xx /xxx/xxxxx/xxxxx
+./xxxxxxx/xxxxx_xxxxxxx_xx</programlisting>
+        <para>Txx xxxxx xxxxxxx xxxxxx xxx xxxxxx xxxxxxxx. Ix xx’x xxxxxxxxxx, xxx xxxx xx xxxxx xxx xxxxxx xxxx xx xxxxxxx xxx xxxxxx xxxxxxxx xxx xxxxxxx xxxxx xx xxx xxxxxxxxxxx xxxxxxxxxxx. Ix xxx xxxx xxxx, xxx’xx xxxxxxxx xx xxx xxxxxxxxx xxxxx MxSQL xxx xxxxxxxxx. Ix xxx xxxxxxxxxx MxSQL xx xx xxxxxxxxx xx x xxxxxxxxx xxxxxxxxx, xxx’xx xxxx xx xxx xxxx xxx xxxxxxx. Txx xxxx xxxxxxx xxxx x xxxxxx xxxxxxxx xxxx xxx xxxxxxxxxxxx xx xxxxxxxx xxx xxxxxxx xxxxxxxxxx xx xxxxx xxxxxx.</para>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-1995" significance="normal"><primary>xxxxx xxxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-1996" significance="normal"><primary>xxxxx xxxxxxx</primary></indexterm>
+Axx xxxx xxxxxxx xxx xx xx xxxxxx xxx xxxxxxxxx xx xxx MxSQL xxxxxxxx xxx xxxxxxxxxxx. Yxx xxx xx xxxx xx xxxxxxxx xxx xxxxxxxxx:
+</para>
+        <programlisting format="linespecific">xxxxx -R xxxxx /xxx/xxxxx/xxxxx
+xxxxx -R xxxxx /xxx/xxxxx/xxxxx</programlisting>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-1997" significance="normal"><primary>xxxxx xxxxxx xxxx</primary></indexterm>
+Txx xxxxx xxxxxxx xxxxxxx xxxxxxxxx xx xxx MxSQL xxxxxxxxxxx xxx xxxxxxxx xx xxx <literal moreinfo="none">xxxxx</literal> xxxx. Txx xxxxxx xxxxxxx xxxxxxx xxx xxxxx xxxxx xx xxx xxxx xxxxxxxxx xxx xxxxx xx <literal moreinfo="none">xxxxx</literal>. Txxxx xxxx xxxxx xxx xx xxxxxxxxx xxxxxxxxx xx xxx xxxxxxx xx MxSQL xxx xxxxxxxxx xxx xxxxxxx xxx xxxxxxxxxx MxSQL xxx xxxxxxxxx xxxxx.
+</para>
+        <para>Wxxx xxx xxxxxxxx xxxxxxxxx xxx xxxxx xxxx xxxxxxxxxx xxxxxxxx xxx, xxx xxx xxxxx MxSQL. Yxx xxx xx xxxx xx xxxxxxx xxxx. Tx xxxx xxxx xxxx xxx xxxxxx xx xxxxxxxxx xx xxx xxxxx xxxx xx xxxxxxx, xxxxx xxx xxxxxxxxx xxxx xxx xxxxxxx-xxxx:</para>
+        <programlisting format="linespecific">/xxx/xxxxx/xxxxx/xxx/xxxxxx_xxxx &amp;</programlisting>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-1998" significance="normal"><primary>xxxxxxxxx (&amp;)</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-1999" significance="normal"><primary>&amp; (xxxxxxxxx)</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2000" significance="normal"><primary>xxxxxx_xxxx xxxxxxx</primary><secondary>xxxxxxxx xxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2001" significance="normal"><primary>xxxxxx xxxxxx</primary><secondary>xxxxxxxx</secondary></indexterm>
+Txxx xxxxxx xxx <literal moreinfo="none">xxxxxx_xxxx</literal> xxxxxx, xxxxx xxxx xx xxxx xxxxx xxx MxSQL xxxxxx <literal moreinfo="none">xxxxxx</literal>. Ix xxx <literal moreinfo="none">xxxxxx</literal> xxxxxx xxxxxxx, <literal moreinfo="none">xxxxxx_xxxx</literal> xxxx xxxxxxx xx. Txx xxxxxxxxx xx xxx xxx xx xxx xxxx xxxxxxxxx xxx xxxxx xx xxx xxx xxxxxx xx xxx xxxxxxxxxx.
+</para>
+        <para>Tx xxxx MxSQL xxxxxxx xx xxxx xxxx, xxxx xxx <literal moreinfo="none">xxxxx.xxxxxx</literal> xxxx, xxxxxxx xx xxx <literal moreinfo="none">xxxxxxx-xxxxx</literal> xxxxxxxxxxxx xx <literal moreinfo="none">/xxx/xxxxx/xxxxx</literal>, xx xxx <literal moreinfo="none">/xxx/xxxx.x</literal> xxxxxxxxx. Tx xx xxxx, xxxxx xxx xxxxxxxxx xxxx xxx xxxxxxx-xxxx:</para>
+        <programlisting format="linespecific">xx xxxxxxx-xxxxx/xxxxx.xxxxxx /xxx/xxxx.x/xxxxx
+xxxxx +x /xxx/xxxx.x/xxxxx
+xxxxxxxxx --xxx xxxxx</programlisting>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-2002" significance="normal"><primary>xx xxxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2003" significance="normal"><primary>xxxxxxxxx xxxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2004" significance="normal"><primary>xxxxx xxxxxxx</primary></indexterm>
+Txx xxxxx xxxx xxxxxxx x xxxxxxxxxx xx xxxxxxx xxx xxxxxxx xxxx xxx xxx xxxxxx xx xxx xxxxxx’x xxxxxxx xxxxxxx xxxxxxxxx xxxx xxx xxxx <literal moreinfo="none">xxxxx</literal>. Txx xxxxxx xxxxxxx xxxxx xxx xxxx xxxxxxxxxx. Txx xxxxx xxxx xxx xxx xxxxx xx xxx xxxxxxx xxx xxxxxxx xxx xxxxxxxx.
+</para>
+        <para>Nxx xxxx MxSQL xx xxxxxxxxx xxx xxxxxxx, xxx xxxx xx xxxx xxxx xxxxxxxxxxxxxxxx xxxxxxxxxxx xxxx xxx xxxxxxxxx xx xxx xxxx xxxxxxx xx xxxx xxxxxxx. <indexterm class="endofrange" startref="mysqlian-CHP-2-ITERM-1980" id="mysqlian-CHP-2-ITERM-2005" significance="normal"/><indexterm class="endofrange" startref="mysqlian-CHP-2-ITERM-1981" id="mysqlian-CHP-2-ITERM-2006" significance="normal"/><indexterm class="endofrange" startref="mysqlian-CHP-2-ITERM-1982" id="mysqlian-CHP-2-ITERM-2007" significance="normal"/>
+</para>
+      </sect1>
+      <sect1 id="mysqlian-CHP-2-SECT-3">
+        <title>Uxxx Bxxxxx Dxxxxxxxxxxxx</title>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-2008" significance="normal"><primary>Uxxx xxxxxxxxxxx</primary><secondary>xxxxxx xxxxxxxxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2009" significance="normal"><primary>xxxxxx xxxxxxxxxxxx</primary><secondary>Uxxx xxxxxxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2010" significance="normal"><primary>xxxxxxxxxxxx</primary><secondary>Uxxx xxxxxx xxxxxxxxxxxxx</secondary></indexterm>
+Ixxxxxxxxx MxSQL xxxx x xxxxxx xxxxxxxxxxxx xx xxxxxx xxxx xxxxx x xxxxxx xxxxxxxxxxxx xxx xx xxx xxxxxxxxxxx xxxxxx xx x xxxxxx xxxxxxxxxxxx xx xxxxxxxxx xxx xxxx xxxxxxxx. Txx xxxxx xxx xxxxxxxx xxxxxxxx xxxx xx xxxxxxx xxxx xxx xxxx xxxxxxxxxx xxxxxx xxxxx xxxxxx xx xxx Ixxxxxxx xxx xxxxxxxxxxx. Txxxxxxxx, xxx xxxx xxxx x xxxx xx GNU <literal moreinfo="none">xxx</literal> xxx GNU <literal moreinfo="none">xxxxxx</literal> xx xx xxxx xx xxxxxx xxx xxxxxxxxxxxx xxxxx. Txxxx xxxxx xxx xxxxxxx xxxxxxxx xx xxx Lxxxx xxxxxxx xxx xxxx Uxxx xxxxxxx. Ix xxxx xxxxxx xxxxx’x xxxx xxxx, xxxxxx, xxx xxx xxxxxxxx xxxx xxxx xxx GNU Fxxxxxxxxx’x xxxx (<ulink url="http://www.gnu.org"/>).
+</para>
+        <para>Oxxx xxx’xx xxxxxx xxx xxxxxxxxxx xxx xxxxxxxxxxxx xxxxxxx, xxxxx xxxxxxxxx xxxx xxx xxxxxxxxx xxxx xxx xxxxxxx-xxxx xx <literal moreinfo="none">xxxx</literal> xx xxxxx xxx MxSQL xxxxxxxxxxxx xxxxxxx:</para>
+        <programlisting format="linespecific">xxxxxxxx xxxxx
+xxxxxxx -x xxxxx xxxxx
+xx /xxx/xxxxx
+xxx xxxx /xxx/xxxxx-<replaceable>xxxxxxx</replaceable>.xxx.xx</programlisting>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-2011" significance="normal"><primary>xxxxx xxxxxx xxxx</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2012" significance="normal"><primary>Sxxxxxx xxxxxxxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2013" significance="normal"><primary>Sxx xxxxxxxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2014" significance="normal"><primary>xxxx xxxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2015" significance="normal"><primary>xxx xxxxxxx (GNU)</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2016" significance="normal"><primary>xx xxxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2017" significance="normal"><primary>xxxxxxx xxxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2018" significance="normal"><primary>xxxxxxxx xxxxxxx</primary></indexterm>
+Txx xxxxx xxxxxxx xxxxxxx xxx xxxx xxxxx <literal moreinfo="none">xxxxx</literal>. Txx xxxxxx xxxxxxx xxx xxxx <literal moreinfo="none">xxxxx</literal> xxx xxxx xx xx xxx xxxxx <literal moreinfo="none">xxxxx</literal> xx xxx xxxx xxxx. Txx xxxx xxxxxxx xxxxxxx xx xxx xxxxxxxxx xxxxx xxx MxSQL xxxxx xxx xxxxx xx xx xxxxxxxxx. Ix xxx xxxx xxxxxxx, xxx xxx xxx <literal moreinfo="none">xxx</literal> xxxxxxx (xxxxx xxxx <literal moreinfo="none">xxxxxx</literal> xxx xxx <literal moreinfo="none">x</literal> xxxxxx) xx xxxxx xxx xxxxxx xxx xxxxxx xxxxxxxxxxxx xxxx xxxx xxx xxxxxxxxxx. Txx xxxx <replaceable>xxxxxxx</replaceable> xx xxx xxxx xx xxx xxxxxxxxxxxx xxxx xx xxxxxxxx xxxx xxx xxxxxxx xxxxxx--xxxx xx xx xxx, xxx xxx xxxxxx xxxx xxx xxxx xx xxx xxxxxxxxxxxx xxxx xxxx xxx xxxxxxxxxx xx xxx xxxxxx xxxxxxxx xx xxx <literal moreinfo="none">xxx</literal> xxxxxxx. Fxx Sxx Sxxxxxx xxxxxxx, xxx xxxxxx xxx <literal moreinfo="none">xxxx</literal> xxxxxxx xx <literal moreinfo="none">xxx</literal>.
+</para>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-2019" significance="normal"><primary>xxxxxxxx xxxxx</primary></indexterm>
+Axxxx xxxxxxx xxx xxxxxxxx xxxxxxxx, xxx xxxx xx xxxxxx x xxxxxxxx xxxx xx xxx xxxxxxxxx xxxxxxx xx <literal moreinfo="none">xxx</literal> xx <literal moreinfo="none">/xxx/xxxxx</literal>:
+</para>
+        <programlisting format="linespecific">xx -x /xxx/xxxxx/xxxxx-<replaceable>xxxxxxx</replaceable> /xxx/xxxxx/xxxxx</programlisting>
+        <para>Txxx xxxxxxx <literal moreinfo="none">/xxx/xxxxx/xxxxx</literal> xx x xxxx xx <literal moreinfo="none">/xxx/xxxxx/xxxxx-xxxxxxx</literal>, xxxxx <literal moreinfo="none">xxxxx-xxxxxxx</literal> xx xxx xxxxxx xxxx xx xxx xxxxxxxxxxxx xxxx <literal moreinfo="none">xxx</literal> xxxxxxx xx <literal moreinfo="none">/xxx/xxxxx</literal>. Txx xxxx xx xxxxxxxxx, xxxxxxx MxSQL xx xxxxxxxxx xxx xxxxxxxx xx xx xxxxxxx xx <literal moreinfo="none">/xxx/xxxxx/xxxxx</literal> xxx xxx xxxx xx xx xx <literal moreinfo="none">/xxx/xxxxx/xxxxx/xxxx</literal> xx xxxxxxx.</para>
+        <para>Ax xxxx xxxxx, MxSQL xx xxxxxxxxx xxxxxxxxx. Nxx xxx xxxx xxxxxxxx xxx xxxxxxx xxxxxxxxxx xx xxxxx xxxxxx, xxx xxxxxx xxx xxxx xxxxxxxxx xx xxx MxSQL xxxxxxxx xxx xxxxxxxxx. Tx xx xxxxx xxxxx, xxxxx xxx xxxxxxxxx xxxx xxx xxxxxxx-xxxx:</para>
+        <programlisting format="linespecific">xx /xxx/xxxxx/xxxxx
+./xxxxxxx/xxxxx_xxxxxxx_xx
+
+xxxxx -R xxxxx /xxx/xxxxx/xxxxx
+xxxxx -R xxxxx /xxx/xxxxx/xxxxx</programlisting>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-2020" significance="normal"><primary>xxxxx xxxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2021" significance="normal"><primary>xxxxx xxxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2022" significance="normal"><primary>xx xxxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2023" significance="normal"><primary>xxxxx xxxxxx xxxx</primary></indexterm>
+Txx xxxxx xxxxxxx xxxxxxx xx xxx xxxxxxxxx xxxxxxxxxx MxSQL’x xxxxx. Txx xxxxxx xxxxxxx xxxx x xxxxxx xxxxxxxx xxxx xxx xxxxxxxxxxxx xx xxxxxxxx xxx xxxxxxx xxxxxxxxxx xx xxxxx xxxxxx, xxxxx xxxxxxx xx xxx <literal moreinfo="none">xxxxx</literal> xxxxxxxx xxxx MxSQL’x <literal moreinfo="none">xxxx</literal> xxxx. Txx xxxxx xxxxxxx xxxxxxx xxx xxxxxxxxx xx xxx MxSQL xxxxxxxxxxx xxx xxxxxxxx xx xxx <literal moreinfo="none">xxxxx</literal> xxxx. Txx xxxx xxxxxxx xxxxxxx xxx xxxxx xxxxx xx xxx xxxx xxxxxxxxx xxx xxxxx xx <literal moreinfo="none">xxxxx</literal>.
+</para>
+        <para>Wxxx xxx xxxxxxxx xxxxxxxxx xxx xxxxx xxxxxxxxxx xxxxxxxx xxx, xxx xxx xxxxx MxSQL. Txxx xxx xx xxxx xx xxxxxxx xxxx. Tx xxxx xxxx xxxx xxx xxxxxx xx xxxxxxxxx xx xxx xxxxx xxxx xx xxxxxxx, xxxxx xxx xxxxxxxxx xxxx xxx xxxxxxx-xxxx:</para>
+        <programlisting format="linespecific">/xxx/xxxxx/xxxxx/xxx/xxxxxx_xxxx &amp;</programlisting>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-2024" significance="normal"><primary>xxxxxx_xxxx xxxxxxx</primary><secondary>xxxxxxxx xxxxxx</secondary></indexterm>
+Txx <literal moreinfo="none">xxxxxx_xxxx</literal> xxxxxx, xxxxxxx xx xxxx xxxxxxx, xxxx xx xxxx xxxxx xxx MxSQL xxxxxx <literal moreinfo="none">xxxxxx</literal>. Ix xxx <literal moreinfo="none">xxxxxx</literal> xxxxxx xxxxxxx, <literal moreinfo="none">xxxxxx_xxxx</literal> xxxx xxxxxxx xx. Txx xxxxxxxxx xx xxx xxx xx xxx xxxx xxxxxxxxx xxx xxxxx xx xxx xxx xxxxxxx xx xxx xxxxxxxxxx.
+</para>
+        <para>Tx xxxx MxSQL xxxxxxx xx xxxx xxxx, xxxx xxx <literal moreinfo="none">xxxxx.xxxxxx</literal> xxxx xxxxxxx xx xxx <literal moreinfo="none">xxxxxxx-xxxxx</literal> xxxxxxxxxxxx xx <literal moreinfo="none">/xxx/xxxxx/xxxxx</literal>, xx xxx <literal moreinfo="none">/xxx/xxxx.x</literal> xxxxxxxxx. Tx xx xxxx, xxxxx xxx xxxxxxxxx xxxx xxx xxxxxxx-xxxx:</para>
+        <programlisting format="linespecific">xx xxxxxxx-xxxxx/xxxxx.xxxxxx /xxx/xxxx.x/xxxxx
+xxxxx +x /xxx/xxxx.x/xxxxx
+xxxxxxxxx --xxx xxxxx</programlisting>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-2025" significance="normal"><primary>xxxxxxxxx xxxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2026" significance="normal"><primary>xxxxx xxxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2027" significance="normal"><primary>xx xxxxxxx</primary></indexterm>
+Txx xxxxx xxxx xxxxxxx x xxxxxxxxxx xx xxxxxxx xxx xxxxxxx xxxx xxx xxx xxxxxx xx xxx xxxxxx’x xxxxxxx xxxxxxx xxxxxxxxx xxxx xxx xxxx <literal moreinfo="none">xxxxx</literal>. Txx xxxxxx xxxxxxx xxxxx xxx xxxx xxxxxxxxxx. Txx xxxxx xxxx xxx xxx xxxxx xx xxx xxxxxxx xxx xxxxxxx xxx xxxxxxxx.
+</para>
+        <para><indexterm class="endofrange" startref="mysqlian-CHP-2-ITERM-1983" id="mysqlian-CHP-2-ITERM-2028" significance="normal"/><indexterm id="mysqlian-CHP-2-ITERM-2029" significance="normal"><primary>Uxxx xxxxxxxxxxx</primary><secondary>xxxxxx xxxxxxxxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2030" significance="normal"><primary>xxxxxx xxxxxxxxxxxx</primary><secondary>Uxxx xxxxxxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2031" significance="normal"><primary>xxxxxxxxxxxx</primary><secondary>Uxxx xxxxxx xxxxxxxxxxxxx</secondary></indexterm>
+Nxx xxxx MxSQL xx xxxxxxxxx xxx xxxxxxx, xxx xxxx xx xxxx xxxx xxxxxxxxxxxxxxxx xxxxxxxxxxx xxxx xxx xxxxxxxxx xx xxx xxxx xxxxxxx xx xxxx xxxxxxx.
+</para>
+      </sect1>
+      <sect1 id="mysqlian-CHP-2-SECT-4">
+        <title>Lxxxx RPM Dxxxxxxxxxxxx</title>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-2032" significance="normal"><primary>xxxxxxxxxxxx</primary><secondary>Lxxxx RPM xxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2033" significance="normal"><primary>xxxxxxxxxxxx</primary><secondary>Lxxxx RPM xxxxxxxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2034" significance="normal"><primary>Lxxxx xxxxxxxxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2035" significance="normal"><primary>RPM xxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2036" significance="normal"><primary>PKG (xxxxxxx) xxxxx</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2037" significance="normal"><primary>xxxxxxx (PKG) xxxxx</primary></indexterm>
+Ix xxxx xxxxxx xx xxxxxxx xx x xxxxxxx xx Lxxxx xxxx xxxxxxxx xxxxxxxx xxxxxxx xxx RPM xxxxxxx xxxxxx (xxxxx RPM xxxxxxxxxx xxxxx xxx RxxHxx Pxxxxxx Mxxxxxx), xx xx xxxxxxxxxxx xxxx xxx xxx x xxxxxxx xxxxxxx xx x xxxxxx xxxxxxxxxxxx. Cxxxxxxxx, RPMx xxx xxxxxxxx xxxxx xx xxxx x xxxxxx xx xxxxxxxxx Lxxxx xxxxxxxxxxxxx: xxxxxxx xxxxxxxx xx Rxx Hxx Exxxxxxxxx xxx SxSE Lxxxx Exxxxxxxxx. Fxx xxx xxxxx xxxxxxxxxxxxx xx Lxxxx, MxSQL RPMx xxx xxxxx xx xxx Lxxxx xxxxxx xx xxx xxxx xx xxxxxxxxx xxxxxxxxx xx xxx xxxxxx. Fxx xxxx xxxxxxx xx MxSQL, xxxxx xxx x xxx RPM xxxxx xxxx xxx xxx xxxxxxxx. Txx xxxxxxx xxx xxxxxxx xxx xxxxxx xxx xxxxxx xxxxx. Txxxx xxxxxx xxxxxx xx <replaceable>MxSQL-xxxxxx-xxxxxxx.xxx</replaceable> xxx <replaceable>MxSQL-xxxxxx-xxxxxxx.xxx</replaceable>, xxxxx <replaceable>xxxxxxx</replaceable> xx xxx xxxxxx xxxxxxx xxxxxx. Ix xxxxxxxx xx xxxxx xxxx xxxxxxxx, xxx xxx xxxx xxxx xx xxxxxxx xxxx xx xxx xxxxx RPM xxxxx xxxx xxx xxxx xx x xxxxxxxxxxxx. Txxxx’x xx RPM xxx xxxxxx-xxxxxx xxxxxxxxx (<replaceable>MxSQL-xxxxxx-xxxxxxx.xxx</replaceable>), xxxxxxx xxx xxxxxxxxx xxx C API xxxxxxx xxxxx xxx xxxxxxx xxxxxxx (<replaceable>MxSQL-xxxxx-xxxxxxx.xxx</replaceable>), xxx xxxxxxx xxx xxxxxxxxxxxx xxx xxxxx MxSQL xxxxxxxxxxx xxxxx (<replaceable>MxSQL-xxxxx-xxxxxxx.xxx</replaceable>).
+</para>
+        <para>Tx xxxxxxx RPM xxxxx xxxxx xxxxxxxxxxx xxxx xx xxxx xxxxxx, xxxxx xxxxxxxxx xxxx xxx xxxxxxxxx xxxx xxx xxxxxxx-xxxx xx xxx xxxxxxxxx xxxxx xxxx’xx xxxxxxx:</para>
+        <programlisting format="linespecific">xxx -xxx MxSQL-xxxxxx-<replaceable>xxxxxxx</replaceable>.xxx \
+         MxSQL-xxxxxx-<replaceable>xxxxxxx</replaceable>.xxx</programlisting>
+        <para>Ix xx xxxxxxx xxxxxxx xx MxSQL xx xxxxxxx xxxxxxxxx xx xxx xxxxxx, xxx xxxx xxxxxxx xx xxxxx xxxxxxx xxxxxxx xxxx xxxxxxx, xxx xxx xxxxxxxxxxxx xxxx xx xxxxxxxx. Ix xxx xxxx xx xxxxxxx xx xxxxxxxx xxxxxxxxxxxx, xxx xxx xxxxxxx xxx <replaceable>x</replaceable> xxxxxx xx xxx xxxxxxx xxxx xx xxxxxxxxx <replaceable>U</replaceable>.</para>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-2038" significance="normal"><primary>xxxxxx xxxxxx</primary><secondary>RPM xxxxx xxx</secondary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2039" significance="normal"><primary>xxxxxxxxxxxx</primary><secondary>Lxxxx RPM xxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2040" significance="normal"><primary>xxxxxxxxxxxx</primary><secondary>Lxxxx RPM xxxxxxxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2041" significance="normal"><primary>Lxxxx xxxxxxxxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2042" significance="normal"><primary>RPM xxxxxx</primary></indexterm>
+Wxxx xxx RPM xxxxx xxx xxxxxxxxx, xxx <literal moreinfo="none">xxxxxx</literal> xxxxxx xxxx xx xxxxxxx xx xxxxxxxxx xxxxxxxxxxxxx. Oxxx MxSQL xx xxxxxxxxx xxx xxxxxxx, xxx xxxx xx xxxx xxxx xxxxxxxxxxxxxxxx xxxxxxxxxxx xxxx xxx xxxxxxxxx xx xxx xxxx xxxxxxx xx xxxx xxxxxxx.
+</para>
+      </sect1>
+      <sect1 id="mysqlian-CHP-2-SECT-5">
+        <title>Mxxxxxxxx OS X Dxxxxxxxxxxxx</title>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-2043" significance="normal"><primary>xxxxxxxxxxxx</primary><secondary>Mxx OS X xxxxxxxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2044" significance="normal"><primary>xxxxxxxxxxxx</primary><secondary>Mxx OS X xxxxxxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2045" significance="normal"><primary>Mxx OS X xxxxxxxxxxx</primary></indexterm>
+Ox xxxxxx xxxxxxxx xx Mxx OS X, MxSQL xx xxxxxxx xxxxxxxxx xxxxxxx. Hxxxxxx, xx xxxx xx xx xxx xxxxxxxxx xx xxxx xxxxxx xx xxx xxxx xx xxxxxxx xxxx xxxx xx MxSQL xx xxxxxxxxxx xxx xxxxxx xxxxxxx, xxxxxxxxxx xxx xxxxxxxx xxxx.</para>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-2046" significance="normal"><primary>xxxxxx xxxxxxxxxxxx</primary><secondary>MAC OS X xxx</secondary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2047" significance="normal"><primary>xxxxxx xxxxxxxxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2048" significance="normal"><primary>PKG (xxxxxxx) xxxxx</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2049" significance="normal"><primary>xxxxxxx (PKG) xxxxx</primary></indexterm>
+Ax xx Vxxxxxx dd.d xx Mxx OS X xxx Vxxxxxx d.d.dd xx MxSQL, xxxxxx xxxxxxx (PKG) xxxxx xxx xxxxxxxxx xxx xxxxxxxxxx MxSQL. Ix xxxx xxxxxx xx xxxxx xx xxxxx xxxxxxx xx Mxx OS X, xxx xxxx xx xxxxxxx MxSQL xxxxx x Uxxx xxxxxx xx xxxxxx xxxxxxxxxxxx, xxxxxxxxx xxx xxxxxxxxxx xxxxxxxxx xxxxxxx xx xxxx xxxxxxx xxx xxxxx xxxxxxxxxx xxxxxxxx. Ix xxxx xxxxxx xx xxx xxxxxxx x xxxxxxxxx xxxx xxxxxxxxx xx x xxxxxxx xxxxxxx, xxx xxx xxxxxxx xxxxxxx MxSQL xx x MxxIxxxxx xxxxxx xxxx x xxx xxxxxxx. Txxx xxx xx xxxxxxxxxx xxxx xxx xxxx xxxx xx MxSQL’x xxx xxxx. Exxxxxxxxxx xx xxxx xxxxxx xx xxxxxxxxxxxx xxx xxxxxxxx xxxx.</para>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-2050" significance="normal"><primary>MxSQL Mxxxxxx Axxxxxxxxxx</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2051" significance="normal"><primary>xxxxxxxx xxxxxx (xxxxxxxxxx)</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2052" significance="normal"><primary>xxxxxxxxxx xxxxxxx</primary><secondary>xxxxxxxx xxxxxx</secondary></indexterm>
+Ix xx xxxxx xxxxxxx xx MxSQL xx xxxxxxx xxxxxxxxx xx xxxx xxxxxx, xxx xxxx xxxx xx xxxx xxxx xxx MxSQL xxxxxxx xxxxxx xxxxxxxxxx xxx xxxxxxx xxx xxxxx xxxxxxx. Yxx xxx xx xxxx xxxx xxx <emphasis>MxSQL Mxxxxxx Axxxxxxxxxx</emphasis>, xxxxx xx x xxxxxxxxx xxxx xxxxxxxxx (GUI) xxxxxxxxxxx. Ix’x xxxxxxxxx xxxxxxxxx xx xxxxxx xxxxxxxx xx Mxx OS X xx xxxxxxx. Ix xxxx xxxxxx xxxxx’x xxxx xxx <emphasis>MxSQL Mxxxxxx Axxxxxxxxxx</emphasis>, xxxxx xxx xxxxxxxxx xxxx xxx xxxxxxx-xxxx xx xxxx xxxx xxx MxSQL xxxxxxx:
+</para>
+        <programlisting format="linespecific">xxxxxxxxxx -x xxxx xxxxxxxx</programlisting>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-2053" significance="normal"><primary>xxxxx xxxxxx xxxx</primary></indexterm>
+Ixxxxxxxxxxx, xx MxSQL xxx’x xxxxxxx xxxxxxxxx xx xxxx xxxxxx, xxx xxx xxxx xx xxxxxx xxx xxxxxx xxxx, <literal moreinfo="none">xxxxx</literal>, xxxxxx xxxxxxxxxx MxSQL.
+</para>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-2054" significance="normal"><primary>Fxxxxx xxxxxxx</primary></indexterm>
+Tx xxxxxxx xxx MxSQL xxxxxxx xxxx, xxxx xxx <emphasis>Fxxxxx</emphasis> xxxxxxx xxxxxxx, xxxxxx-xxxxx xx xxx xxxx xxxxx xxxx (xxx <literal moreinfo="none">.xxx</literal> xxxx) xxxx xxx xxxxxxxxxx. Txxx xxxx xxxxxx xxx xxxx xxxxx xxxx’x xxxxxxxx. Lxxx xxx xxx PKG xxxxx, xxxxx xxxx xx xx xxxxx xxx. Dxxxxx-xxxxx xx xxx xxx xxxx <emphasis>MxSQL</emphasis> xxxxxxxx xx xxx xxxxxxx xxxxxxx. Txxx xxxx xxxxx xxx xxxxxxxxxxxx xxxxxxx. Txx xxxxxxxxx xxxx xxxx xxx xxxxxxx xxx xxxxxxxxxxxx xxxxx xxxx xxxxx. Txx xxxxxxx xxxxxxxx xxx xxxxxxxxxxx xxx xxxx xxxxx xxx xxxxxxxxxx. Yxx xxxx xxxx xxxxxxxxxxxxx xxxx xxxx xxx xxxxxxxx. Tx xxxx MxSQL xxxxxxx xx xxxx xxxx, xxx x <emphasis>SxxxxxxIxxx</emphasis>. Wxxxxx xxx xxxx xxxxx xxxx xxxx xxx xxxxxxxxxx, xxx xxxxxx xxx xx xxxx xxxxxxx <emphasis>MxSQLSxxxxxxIxxx.xxx</emphasis>. Jxxx xxxxxx-xxxxx xx, xxx xx xxxx xxxxxx x <emphasis>SxxxxxxIxxx</emphasis> xxx MxSQL.</para>
+        <para>Tx xxxxxxx xxx xxx xxxxxxx xxxxxxx xx xxx PKG xxxxxxx, xxxxxxxx xxx xxx xxxx xxxx MxSQL’x xxxx xxx xxxx xx xx xxx <literal moreinfo="none">/xxx/xxxxx</literal> xxxxxxxxx, xxx xxxx xxxxxx xx xxxx xxxxxxxxx. Nxxx, xxxxx xxx xxxxx xxx xxxxxxxxxxxx xxxxxxx xxxx xx:</para>
+        <programlisting format="linespecific">xx /xxx/xxxxx
+xxx xxxx xxxxx-<replaceable>xxxxxxx</replaceable>.xxx.xx</programlisting>
+        <para>Ix xxx xxxxxxx xxxxx, xxxxxx <replaceable>xxxxxxx</replaceable> xx xxx xxxxxx xxxxxxx xxxxxx. Fxxx xxxx xxxxxx x xxxxxxxx xxxx xxx xxx xxxxxxxxxxxx xxxxxxxxx. Txxx xxx xxx xxxxxxxxxxxxx xxxxxxx:</para>
+        <programlisting format="linespecific">xx -x /xxx/xxxxx/xxxxx-<replaceable>xxxxxxx</replaceable> /xxx/xxxxx/xxxxx
+xx /xxx/xxxxx/xxxxx
+
+./xxxxxxxxx --xxxxxx=/xxx/xxxxx/xxxxx \
+   --xxxx-xxxx-xxxxxx-xxxx=/xxx/xxxxx/xxxxx/xxxxx_xxxxxx \
+   --xxxx-xxxxxx-xxxx=xxxxx</programlisting>
+        <para>Dxxxxxxxx xx xxxx xxxxx, xxx xxxxx xxxxxxx xxxxx xxxxxxx xxxx xxxx xxxxx xxx. Nxxx xxx xxxxxx xxx xxx xxxxxxxxx xxx xxxxx xxx xxx xxxxx xxx xxxxxxxxxxx xxxxxxx xx xxx <literal moreinfo="none">xxxxx</literal> xxxx xxx xxxxx, xxxxx xxxxxx xxxx xxxx xxxxxxx xx xxx xxxxxxxxxxxx xxxxxxx. Fxx xxxx xxxxxxx, xxx xxx xxxx xx xxxxxx xxxxxxxxxxx xxx xxx xxxx xxxxx xx xxxxxx xxxxx. Tx xx xxxx, xxx xxx <literal moreinfo="none">xxxxxxxx</literal> xxxxxxx. Ix xxx xxxx xx xxxxx xx xxxxxxxxxxx xxx xxxxxxx xx xxx xxxxxx xxxxx, xxx xxx <literal moreinfo="none">-x</literal> xxxxxx; xx xxxx xxxxxx xx, xxx <literal moreinfo="none">-x</literal> xxxxxx xxx <literal moreinfo="none">xxxxxxxx</literal>. Yxx xxxxxx xxxx xxxx x xxxx xx xxx <literal moreinfo="none">xxxxx</literal> xxxxxx xxx xx <literal moreinfo="none">xxxxxxxxxx</literal> xxxx xxx <literal moreinfo="none">/xxx/xxx</literal> xxxxxxxxx.</para>
+        <programlisting format="linespecific">xxxxxxxx -x /Vxxxxxx/Mxxxxxxxx\ HD/
+
+xxxx xxxxx -R xxxxx /xxx/xxxxx/xxxxx/.
+xxxx xxxxx -R xxxxx /xxx/xxxxx/xxxxx/.
+
+xx -x /xxx/xxxxx/xxxxx/xxx/xxxxx /xxx/xxx/xxxxx
+xx -x /xxx/xxxxx/xxxxx/xxx/xxxxxxxxxx /xxx/xxx/xxxxxxxxxx</programlisting>
+        <para>Ax xxxx xxxxx xxx xxxxxx xx xxxx xx xxxxx xxx xxxxxx xxx xxx xxxx MxSQL. Txxx xx xxx xxxx xxx xxxx xxx xxx xxx xxx PKG xxxxxx xx xxxxxxxxxxxx xx x MxxIxxxxx xxxxxx.</para>
+        <programlisting format="linespecific">xxxx /xxx/xxxxx/xxxxx/xxx/xxxxxx_xxxx &amp;
+
+xxxxx -x xxxx -x</programlisting>
+        <para>Dxxxxxxxx xx xxx xxxxxxx xx MxSQL, xxx xxxx xxxx xxx x PKG xxxxxxxxxxxx xxx xx xxxxxxxxx xxxx xxxxx xxxx. Ax xxxxxxxxx (&amp;) xxxxx xxx xxxxxxx xx xxx xxxxxxxxxx.</para>
+        <para>Oxxx MxSQL xx xxxxxxxxx xxx xxxxxxx, xxx xxxx xx xxxx xxxx xxxxxxxxxxxxxxxx xxxxxxxxxxx xxxx xxx xxxxxxxxx xx xxx xxxx xxxxxxx xx xxxx xxxxxxx.</para>
+      </sect1>
+      <sect1 id="mysqlian-CHP-2-SECT-6">
+        <title>Nxxxxx NxxWxxx Dxxxxxxxxxxxx</title>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-2055" significance="normal"><primary>xxxxxxxxxxxx</primary><secondary>Nxxxxx NxxWxxx xxxxxxxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2056" significance="normal"><primary>xxxxxxxxxxxx</primary><secondary>Nxxxxx NxxWxxx xxxxxxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2057" significance="normal"><primary>Nxxxxx NxxWxxx xxxxxxxxxxx</primary></indexterm>
+Ix xxxx xxxxxx xx xxxxx Nxxxxx NxxWxxx d.d xx xxxxx, xxx xxx xxxxxxxx Nxxxxx xxxxxxx xxxxx xxxx xxxx xxxxxxxxx, xxx xxx xxxxxxx MxSQL xx xx. Fxx Vxxxxxx d.d xx NxxWxxx, xxx xxxx xx xxxx Sxxxxxx Pxxx d xxxxxxxxx xxx xxxxxxx xxxxx xxxx xxx xxxxxxx xxxxxxx xx LxxC. Fxx Vxxxxxx d.d xx NxxWxxx, Sxxxxxx Pxxx d xxxxx xx xx xxxxxxxxx xxx xxxxxxx xxxxx xxxx xxx xxxxxxx xxxxxxx xx LxxC. Yxx xxx xxxxxx xxxxxxx xxxxx xxxx Nxxxxx’x xxxx (<ulink url="http://support.novell.com"/>). Yxx xxx xxxx xxx xxxxxx xxxxxxx xx LxxC xx <ulink url="http://developer.novell.com/wiki/index.php/Libraries_for_C_(LibC)"/>. Axxxxxx xxxxxxxxxxx xxx xxxxxxxxxx MxSQL xx xxxx xxx MxSQL xxxxxx xxx xxxx xx xxxxxxxxx xx xx NSS xxxxxx.
+</para>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-2058" significance="normal"><primary>xxxxxxxx xxxxxx (xxxxxxxxxx)</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2059" significance="normal"><primary>xxxxxxxxxx xxxxxxx</primary><secondary>xxxxxxxx xxxxxx</secondary></indexterm>
+Ix xx xxxxx xxxxxxx xx MxSQL xx xxxxxxx xxxxxxxxx xxx xxxxxxx xx xxxx xxxxxx, xxx xxxx xx xxxx xxxx xxx MxSQL xxxxxxx xxxxxx xxxxxxxxxx xxx xxxxxxx xxx xxxxx xxxxxxx. Yxx xxx xx xxxx xxxx xxx xxxxxx xxxxxxx xxxx xx:
+</para>
+        <programlisting format="linespecific">xxxxxxxxxx -x xxxx xxxxxxxx</programlisting>
+        <para>Nxxx xxx xxxx xx xxx xx xx xxx xxxxxx xxxx x xxxxxx xxxx xxx xxxxxx xx xxx xxxxxxxx (<literal moreinfo="none">SYS:MYSQL</literal>) xxxxx MxSQL xx xx xx xxxxxxxxx. Uxxxxx xxx xxxxxxxxxx xxxxxx xxxxxxx xx xxxx xxxxxxxx. Wxxx xxx xxx xxxx xxx xxxxxxxx xxxxxxxxx, xxx xxx xxxxxxxxx x xxxxxx xxxx xxx xxx xxxxxxxxx xxxx xxxxx xxx MxSQL NLM’x xx xxxxxxxx xxx xxxxxxxxx xxxx xxx xxxxxx xxxxxxx:</para>
+        <programlisting format="linespecific">SEARCH ADD SYS:MYSQL\BIN</programlisting>
+        <para>Ax xxxx xxxxx, MxSQL xx xxxxxxxxx xxxxxxxxx. Nxx xxx xxxx xx xxxxxxxx xxx xxxxxxx xxxxxxxxxx xx xxxxx xxxxxx. Yxx xxx xx xxxx xx xxxxxxxx xxx xxxxxxxxx xxxx xxx xxxxxx xxxxxxx:</para>
+        <programlisting format="linespecific">.\xxxxxxx\xxxxx_xxxxxxx_xx</programlisting>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-2060" significance="normal"><primary>xxxxx_xxxxxxx_xx xxxxxxx</primary></indexterm>
+Txx <literal moreinfo="none">xxxxx_xxxxxxx_xx</literal> xxxxxxx xx x xxxxxx xxxxxxxx xxxx xxx xxxxxxxxxxxx xx xxxxxxxx xxx xxxxxxx xxxxxxxxxx xx xxxxx xxxxxx (x.x., xxx <literal moreinfo="none">xxxxx</literal> xxxxxxxx). Oxxx xxxx xx xxxx, MxSQL xx xxxxx xx xx xxxxxxx. Tx xx xxxx, xxxx xxxxx xxx xxxxxxxxx xxxx xxx xxxxxx xxxxxxx:</para>
+        <programlisting format="linespecific">xxxxxx_xxxx</programlisting>
+        <para>Tx xxxx MxSQL xxxxxxx xx xxxx xxxx, xxx xxxx xxx xxx xxxxxxxxx xxxxx xx xxx xxxxxx’x <literal moreinfo="none">xxxxxxxx.xxx</literal> xxxx:</para>
+        <programlisting format="linespecific">SEARCH ADD SYS:MYSQL\BIN
+MYSQLD_SAFE --xxxxxxxxx --xxxx-xxxxxxxx-xxxxxxx</programlisting>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-2061" significance="normal"><primary>xxxxxx_xxxx xxxxxxx</primary><secondary>xxxxxxxx xxxxxx</secondary></indexterm>
+Txx xxxxx xxxx xxxxxxxxxxx xxx xxxxxx xxxx xxx MxSQL. Txx xxxxxx xxxx xxxxxx xxx <literal moreinfo="none">xxxxxx_xxxx</literal> xxxxxx xx xxxxxxx. Txx xxxxx xxxxxx xx xxxx xxxxxxx xxxxxxxxx xxx xxxxxx xx xxxxx MxSQL xxxxxxxxxxxxx xxxx xxx xxxxxx xxxxx xxxx. Txx xxxxxx xxxxxx xxxxxxxxx xxx xxxxxx xxx xx xxxxx xxxxxxxx xxxxx xxxxxxx. Exxxxxxx xxxxx xxx xxxxx xxxxxxxx xxxx NxxWxxx Vxxxxxx d.d. Bxxx xx xxxxx xxxxxxx xxx xxxxxxxxxxx.
+</para>
+        <para>Oxxx MxSQL xx xxxxxxxxx xxx xxxxxxx, xxx xxxx xxxx xx xxxx xxxx xxxxxxxxxxxxxxxx xxxxxxxxxxx xxxx xxx xxxxxxxxx xx xxx xxxx xxxxxxx xx xxxx xxxxxxx.</para>
+      </sect1>
+      <sect1 id="mysqlian-CHP-2-SECT-7">
+        <title>Wxxxxxx Dxxxxxxxxxxxx</title>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-2062" significance="normal"><primary>xxxxxxxxxxxx</primary><secondary>Wxxxxxx xxxxxxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2063" significance="normal"><primary>Wxxxxxx xxxxxxxxxxx</primary><secondary>MxSQL xxxxxxxxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2064" significance="normal"><primary>xxxxxxxxxxxx</primary><secondary>Wxxxxxx xxxxxxxxxxxxx</secondary></indexterm>
+Ixxxxxxxxx MxSQL xx x xxxxxx xxxxx Wxxxxxx xx xxxxxx xxxx. Ix MxSQL xx xxxxxxx xxxxxxxxx xxx xxxxxxx xx xxxx xxxxxx, xxx xxx xxxx xx xxxxxxx x xxxxx xxxxxxx, xxx xxxx xxxx xx xxxx xxxx xxx xxxxxxxx xxx xxxxx. Fxx xxxxxx xxxxxxxx xx MS Wxxxxxx (x.x., Wxxxxxx NT), MxSQL xx xxxxxxxxx xx x xxxxxxx. Ix xx’x xxxxxxxxx xx x xxxxxxx xx xxxx xxxxxx, xxx xxx xxxxx xxx xxxxxxxxx xxxx x DOS xxxxxxx xxxxxx xx xxxx xxxx xxx xxxxxxx xxx xxxxxx xx:
+</para>
+        <programlisting format="linespecific">xxxxxx -xxxxxx</programlisting>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-2065" significance="normal"><primary>xxxxxxxx xxxxxx (xxxxxxxxxx)</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2066" significance="normal"><primary>xxxxxxxxxx xxxxxxx</primary><secondary>xxxxxxxx xxxxxx</secondary></indexterm>
+Ix MxSQL xx xxxxxxx, xxx xxx xx x xxxxxxx, xxx xxx xxxxx xxx xxxxxxxxx xxxx x DOS xxxxxxx xxxxxx xx xxxx xx xxxx:
+</para>
+        <programlisting format="linespecific">xxxxxxxxxx -x xxxx xxxxxxxx</programlisting>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-2067" significance="normal"><primary>C API</primary><secondary>Wxxxxxx xxxxxxxxxxx xxx</secondary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2068" significance="normal"><primary>MxSQL Axxxxxxxxxxxx</primary></indexterm>
+MxSQL AB’x xxxx xxxxxxxx xxxxx xxxxxxxxxxxx xxxxxxxx: x Wxxxxxx Exxxxxxxx xxxxxxx, x xxxxxxxx Wxxxxxx xxxxxxx, xxx x xxxxxxxx Wxxxxxx xxxxxxx xxxxxxx xxx xxxxxxxxx. Txx Wxxxxxx Exxxxxxxx xxxxxxx xx xxx xxxxxxxxxxx xxxxxx. Ix xxxxxxxx xxxx xxx xxxxxxxxx xxxxx xxx xxxxxxx MxSQL. Txxx xxxxxxxx xxx xxxxx xxxxxxx-xxxx xxxxxxxxx xxx xxx xxxxxx xxxxx xxx xxx C API. Txx xxxxxxxx Wxxxxxx xxxxxxx xxxxxxxx xxx xxxxxxxxx xxxxx, xx xxxx xx xxxxxxxxxxxxx, xxx MxSQL Axxxxxxxxxxxx, xxx xxxxxxxx xxxxxx, xxx xxxxxxxxx xxxxx, xxx x xxx xxxxx xxxxxx xxxxxxx. Txx xxxxxxxx Wxxxxxx xxxxxxx xxxxxxx xxx xxxxxxxxx xxxxxxxx xxx xxxx xxxxxx xxxxx xxx xxxxx xxxxxxx xxxxx xxx MxSQL, xxx xxx xx xxxxxxxxx. Yxx’xx xxxx xx xxxxxxx xxx xxxx xxx xxxxx xxxx xxx <literal moreinfo="none">x:\xxxxx</literal> xxxxxxxxx. Txxx xxx xxxx xxxxxx x <literal moreinfo="none">xx.xxx</literal> xxxx xx xxx <literal moreinfo="none">x:\xxxxxxx</literal> xxxxxxxxx. Sxxxxxx xxxxxxxx xxxxxxx xxxxxxxxx xxxxxx xxxxx xxxx xxxx xxx xxxxxxxxxxxx xxxxxxx.
+</para>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-2069" significance="normal"><primary>MxSQL-xxxxxxx.xxx xxxx</primary></indexterm>
+Txx Wxxxxxx Exxxxxxxx xxxxxxx xx x xxxx xxxxxx <literal moreinfo="none">MxSQL-xxxxxxx.xxx</literal>. Fxxx xxx Wxxxxxx xxxxxxx, xxxx xxxxxx-xxxxx xxxx xxxx’x xxxx xxx xxx Wxxxxxx Ixxxxxxxx xxxxxxx xxxx xxxxx.
+</para>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-2070" significance="normal"><primary>WxxZxx xxxxxxx</primary></indexterm>Txx xxxxxxxx Wxxxxxx xxxxxxxxxxxx xxxxxxx xx x xxxxxxxxxx xxxx xxxx xxxxx xxx xxxx xx xxxxxxx xxx xxxxxxxxxxxx xxxxx. Tx xx xxxx, xxx xxxx x xxxxxxx xxxx xx WxxZxx (<ulink url="http://www.winzip.com"/>) xx xxxxxxxxxx xxx xxxxx. Oxx xx xxx xxxxx xx xxxxx <literal moreinfo="none">xxxxx.xxx</literal>. Dxxxxx-xxxxx xx xx xxxxx xxx xxxxxxxxx xxx xxxx xxxxxxx. Fxxx xxxx xxxxx, xxx xxxxxxxxxxxx xxxxxxx xx xxxxxx xxxx xxx xxxx xxx xxx xxxxxxxx xxxx xxx xxx xxxxxxxxx.</para>
+        <para>Oxxx xxx’xx xxxxxxx xxx xxxxxxxxx, x xxxxxx xxx xxxxxxx xxxx xxxxxx xxx xxxxx xxxxxxx xxxxxxx. Txx <emphasis>Txxxxxx</emphasis> xxxxxx xx xxx xxxxxxxxxxx xxx, xxx xx xxxx xxxx xxx xxxxxxxxxxxx xx C API xxxxxxx xxxxx xxx xxxxx xxxxxx xxxxxxxxx. Fxx xxx xxxxxxxx Wxxxxxx xxxxxxx, xxxx xxxxxx xxxx xxxx xxxx xxxxxxxxxxxx xx xxx xxxxxxxx xxxxxx, xxx xxxxxxxxx xxxxx, xxx xxxxxxx xxxxx xxxxxxx. Txx <emphasis>Cxxxxxxx</emphasis> xxxxxxxxxxxx xxxxxx xxxxxxxxx xxx xxxxxxxxx xx xxxxxxx xxxxxxxxxx xxxx’x xxxxxxxx xx xxx xxxxxxxxxxxx xxxxxxx xxxx xxx xxxxxxxxxx. Txx <emphasis>Cxxxxx</emphasis> xxxxxx xxxxxx xxx xx xxxxxx xxxx x xxxx xx xxxxxxxx xxx xxxxxxxxx xx xxxxxxx. Ox xxx xxxx xxxxxx xx x xxxxxx xxxxxxx <emphasis>Cxxxxx</emphasis> xxxx xxxx xxx xxxxxx xxx xxxxxxxxx xx xxxxx MxSQL xxxx xx xxxxxxxxx. Oxxxx xxxxxxxx xx MxSQL xxx <literal moreinfo="none">x:\xxxxx</literal> xx xxx xxxxxxx. Rxxxxx xxxxxxxx xxxxxxx MxSQL xx xxxxxxx xx xxxxxxxxxxx xxxx <literal moreinfo="none">x:\Pxxxxxx Fxxxx\MxSQL\MxSQL Sxxxxx xxxxxxx\</literal>, xxxxx xxx xxxx <replaceable>xxxxxxx</replaceable> xx xxxxxxxx xxxx xxx xxxxxxx xxxxxx.</para>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-2071" significance="normal"><primary>xxxxxxxxxxxxx</primary><secondary>MxSQL Sxxxxx Ixxxxxxx Cxxxxxxxxxxxx Wxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2072" significance="normal"><primary>MxSQL Sxxxxx Ixxxxxxx Cxxxxxxxxxxxx Wxxxxx</primary></indexterm>
+Axxxx xxx xxxxxx xxxx xx xxxxxxx xxx xxxxx, xxx xxxxx xxx xxxxxxxxx. Wxxx xxx xxxxxxxxx xx xxxxxxxx, xxx MxSQL Sxxxxx Ixxxxxxx Cxxxxxxxxxxxx Wxxxxx xx xxxxxxx. Ix xxxx xxx x xxxxxx xx xxxxxxxxx xx xxxxxx x xxxxxx xxxxxxxxxxxxx xxxx (<literal moreinfo="none">xx.xxx</literal>), xxxxx, xx xxxxxxx, xx xxxxxx xx <literal moreinfo="none">x:\xxxxxxx</literal>. Txx xxxxxxxxx xxx xxxxx xx xxx xxxxxxxx xxxxx xx xxx MxSQL xxxxxx, xxx xxxx xxxxxxx xxxxxxxxx xxx xxxxxxxx xx xxx xxxxxxxxxxxxx xxxx. Yxx xxxx xxxx xx xxxxxxx xx xxxxxx xxx xxxxxxx xxxxxxxx xx xxx xxxxxxxxx, xxx TCP/IP xxxx xxxx, xxx x xxxxxx xx xxxxx xxxxxxxx.
+</para>
+        <para>Tx xxxxxx xxx xxxxxxx-xxxx xxxxxxxxx xxxxxxx xxxxxx xx xxxxx xxx xxxx xxxx xx xxx xxxxxxxxx xxxxxxxxxx xxxx, xxxxx xxx xxxxxxxxx xxxx xxx xxxxxxx-xxxx:</para>
+        <programlisting format="linespecific">PATH=%PATH%;x:\Pxxxxxx Fxxxx\MxSQL\MxSQL Sxxxxx <replaceable>xxxxxxx</replaceable>\xxx</programlisting>
+        <para>Yxx xxxxxx xxxxxxx xxx xxxx <replaceable>xxxxxxx</replaceable> xxxx xxx xxxxxxx xxxxxx--xxxx xx xx xxx, xxx xxxxxx xxxxx xxx xxxx xx xxx MxSQL xxxxxxxxxxxx. Ix xxx xxxxxxx xxxxxxxx xxxx xxx xxxxxxxxx MxSQL, xxx xxxx xx xxx xxx xxxx xxxx xxx xxxxx. Oxxxx xxxxxxxx xx Wxxxxxx xxx xxx xxxxxx xxxx xxxxxxxxx xxxxx xx xxx xxxxxxx xxxx. Txxxxxxxx, xxx xxx xxxx xx xxxxxxxxxx xxx xxxx xxxxx xxxxxxxxxx xx xxxx xx xxxxx xxxxxxxxx xxxx xxxx:</para>
+        <programlisting format="linespecific">PATH=%PATH%;x:\Pxxxxxx~d\MxSQL\MxSQLS~d.d\xxx</programlisting>
+        <para>Txx xxxxxxxxxx <literal moreinfo="none">~d</literal> xxx xxxxxxxxxxx xxx xxx xxxxx xxxxxxxxxx xx x xxxxxxxxx xxxx xxxx xxxxxx xxx xxxxx xxxxx xxxxxxxxxx. Ax <literal moreinfo="none">S</literal> xx xxxxxxxxxxx xxx xxx xxxxx xxxx xxxxxx xx xxx xxxxx xxxxx xxxxxxxxxx xx x xxxxxxxxx xxxx. Ix xxx xxxxxxxxx xxxx xxxx xx x xxx xxx xxxx xxxxxxxxxx, xxx xxxx xxx xxx xxxxxxxxxx xxx xxxxx. Fxx xxxxxxx, x xxxxxxxxx xxxxx “MxSQL Sxxxxx d.d” xxxxx xx xxxxxxx xx “MxSQLS~d.d,” xx xxxxx xx xxx xxxxxxxx xxxxxxx. Tx xxxx xxxx xxx xxxx xxxxxxxxx xx xxxx xxxx, xxx xxx xxxx xx xxx xx xx xxx <literal moreinfo="none">x:\xxxxxxxx.xxx xxxx</literal>.</para>
+        <para>Oxxx xxx’xx xxxxxxxx xxxxxxxxxx MxSQL xxx xxx’xx xxx xx xxx xxxxxxxxxxxxx xxxx, xxx xxxxxxxxx xxxx xxxxx xxx MxSQL xxxxxx xxxxxxxxxxxxx. Ix xxx’xx xxxxxxxxx MxSQL xxxxxxxx xxxxxxx xx xxxxxxxxx, xxxxx xxxxxxxxx xxxx xxx xxxxxxxxx xxxx x DOS xxxxxxx xxxxxx:</para>
+        <programlisting format="linespecific">xxxxxx --xxxxxxx
+xxx xxxxx xxxxx</programlisting>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-2073" significance="normal"><primary>xxxxxxxxxxxx</primary><secondary>Wxxxxxx xxxxxxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2074" significance="normal"><primary>Wxxxxxx xxxxxxxxxxx</primary><secondary>MxSQL xxxxxxxxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2075" significance="normal"><primary>xxxxxxxxxxxx</primary><secondary>Wxxxxxx xxxxxxxxxxxxx</secondary></indexterm>
+Axx xxxx xxxxxxx xxx xxxx xxxxxxxxxxxxxxxx xxxxxxxxxxx xxxx xxx xxxxxxxxx xx xxx xxxx xxxxxxx.</para>
+      </sect1>
+      <sect1 id="mysqlian-CHP-2-SECT-8">
+        <title>Pxxx Ixxxxxxxxxxx</title>
+        <para><indexterm class="startofrange" id="mysqlian-CHP-2-ITERM-2076" significance="normal"><primary>xxxxxxxxxxxx</primary><secondary>xxxxxxxxxxx xxxxx</secondary></indexterm>
+Axxxx xxx’xx xxxxxxxx xxxxxxxxxx MxSQL xx xxxx xxxxxx, xxx xxxxxx xxxxxxx x xxx xxxxx xxxxxx xxxxxxxx xxxxxx xx xxxxx xxxxx xxx xxxxxxx. Yxx xxx xxxx xx xxxxxxxxx xxx xxxxxx xxxxxxxxxxx xx xxxxxx xxxxxxx xx xxx xxxxxxxxxxxxx xxxx. Ax x xxxxxxx, xxx xxxxxx xxxxxx xxx xxxxxxxx xxx xxx <literal moreinfo="none">xxxx</literal> xxxx xxx xxx xxxx xxxxxxxxxxxxxxxxx xxxxx. MxSQL xx xxxxxxxxx xxx xx xxxx xxxxxxxxx xxxxx. Yxx xxxxxx xxxxxx xxxx. Txxx xxxxxxx xxxx xxxxxxx xxxxxxx xxxxx xxxxx.
+</para>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-2077" significance="normal"><primary>xxxxxxxxxxxxx</primary><secondary>xxxxxxxxxxxxxxxx xxxxxxxxxxx</secondary></indexterm>
+Axxxxxxx xxx MxSQL xxxxxxxxxx xxxx xxx xxx xxxxxx xxxxxx xx xxx xxxxxxxxxxx xxxxxxxxxxxxx, xxx xxx xxxx xx xxx xxx xxxxxx xxxxxxxxxxx. Fxx xxxxxxxx, xxx xxx xxxx xx xxxx xx xxxxx xxxxxxx. Tx xx xxxx, xxx xxxx xxxx xx xxxx xxx xxxx xxxxxxxxxxxxx xxxx xxx MxSQL. Ox Uxxx xxxxxxx, xxxx xxxx xx <literal moreinfo="none">/xxx/xx.xxx</literal>. Ox Wxxxxxx xxxxxxx, xxx xxxx xxxxxxxxxxxxx xxxx xx xxxxxxx xxxxxx <literal moreinfo="none">x:\xxxxxxx\xx.xxx</literal> xx <literal moreinfo="none">x:\xx.xxx</literal>. Txx xxxxxxxxxxxxx xxxx xx x xxxxxx xxxx xxxx xxxx xxx xxx xxxx xxxx x xxxxx-xxxx xxxxxx, xxx x xxxx xxxxxxxxx. Txx xxxxxxxxxxxxx xxxx xx xxxxxxxxx xxxx xxxxxxxx xx xxxxxx xxxxx x xxxxxxx xxxx xxxxxxxxx xx xxxxxx xxxxxxxx. Fxx xxxxxxxx, xxxxxxxx xxx xxx xxxxxx xxxxxx <literal moreinfo="none">xxxxxx</literal> xxx xxxxxx xxxxx xxx xxxxx xxxxxxx <literal moreinfo="none">[xxxxxx]</literal>. Uxxxx xxxx xxxxxxx xxx xxxxx xxx xxxxxxxxx xxxx <literal moreinfo="none">xxx = /xxx/xxx/xxxxx</literal> xx xxxxxx xxxxxxx xxx xx xxx xxx xxxxxxxxx xxx xxx xxx xxxxx xx xxx xxx xxxxx. Yxx xxx xxxx xxxx xxxxxxx xx xxx xxxx xxx x xxxxxxxxxx xxxxx. Fxx x xxxxxxxx xxxxxxx xxx xxxxxxxxxxx xx xxxxx xxxxxxx, xxx .
+<indexterm id="mysqlian-CHP-2-ITERM-2078" significance="normal"><primary>xxxxxxxxxxxxx</primary><secondary>xxxxxxxxxxxxxxxx xxxxxxxxxxx</secondary></indexterm>
+</para>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-2079" significance="normal"><primary>xxxxxxxxx</primary><secondary>xxxxxxxxxxxxxxxx xxxxxxxxxxx</secondary></indexterm>
+Yxx xxx xxxxxx xxx xxxxxxxx xxx xxx <replaceable>xxxx</replaceable> xxxx xx MxSQL xx x xxx xxxx. Oxx xxxxxx xxx xx xx xxx xx xx MxSQL xxxxxxx xxx <literal moreinfo="none">xxxxx</literal> xxxxxx xx xxxxxxxx xxx xxxxxxxxx xxxx xxx xxxxxxx-xxxx:
+</para>
+        <programlisting format="linespecific">xxxxx -x xxxx -x</programlisting>
+        <para>Ox x Wxxxxxx xxxxxx, xxx xxx xxxx xx xxx xxx xxxx <literal moreinfo="none">x:\xxxxx\xxx\</literal> xx xxx xxxxxxxxx xx xxxx xxxx, xx xxx xxxxx’x xxxxx xx xx xxxx xxxxxxx xxxx. Axxxx xxxxxxxxxxxx xxxxxxxx xxx xxxxxxx, xxx xxxx xx xxxxxxxx xxx xxx <literal moreinfo="none">xxxx</literal> xxxx’x xxxxxxxx. Txxx xx xxx xxx xxxxxxxxx xxxxxx’x <literal moreinfo="none">xxxx</literal> xxxx, xxx xxx <literal moreinfo="none">xxxx</literal> xxxx xxx MxSQL. Ixxxxxxxx xxxxx xx xx xxxxxxxx, xx xxxxx Exxxx xx xxxxx xx xxxxx. Ix xxxxxxxxxx xxx xxxxxxxxx xxxxxxxx xxx xx xxx <literal moreinfo="none">xxxxxx</literal> xxxxxx xx xxxxxxx, xxx xxxxxx xxx x xxxxxx xxxx xxxx:</para>
+        <programlisting format="linespecific">xxxxx&gt;</programlisting>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-2080" significance="normal"><primary>xxxxx xxxxxx</primary><secondary>xxxxxxxxxxxxxxxx xxxxxxxxxxx</secondary></indexterm>
+Txxx xx xxx xxxxxx xxx xxx <literal moreinfo="none">xxxxx</literal> xxxxxx xxxxxxxxx xx MxSQL xxxxxxx. Yxx xxxxxx xxx xxx xxxxxxxx xxx xxx <literal moreinfo="none">xxxx</literal> xxxxx. Tx xxx x xxxx xx xxxxx xxx xxxxx xxxxx xxx xxx xxxxxx, xxxxxxx xxx xxxxxxxxx xxxxxxx xxxx xxx <literal moreinfo="none">xxxxx</literal> xxxxxx:</para>
+        <programlisting format="linespecific">SELECT Uxxx,Hxxx FROM xxxxx.xxxx;
+
++------+-----------------------+
+| Uxxx | Hxxx                  |
++------+-----------------------+
+| xxxx | ddd.d.d.d             | 
+| xxxx | xxxxxxx.xxxxxxxxx.xxx | 
+| xxxx | xxxxxxxxx             | 
++------+-----------------------+</programlisting>
+        <para>Txx xxxxxxx xxxx xx xxxxxx xxx xxxxx xxxx. Axxxx xxxxxxxxxx, I xxxx xxxxx xxxx xxx xxxx xxxxxxxxxxxx. Axxxxxxx, <literal moreinfo="none">ddd.d.d.d</literal> xxx <literal moreinfo="none">xxxxxxxxx</literal> xxxxxxxxx xx xxx xxxx xxxx, xxx xxxxxxxx xxxxxx xx xxxxxxx xxx xxxx xxxxx xxxx xxx xxx xxx xx xxxxxx. Tx xxxxxx xxx <literal moreinfo="none">xxxx</literal> xxxx’x xxxxxxxx, xxxxx xxx xxxxxxxxx xx xxxx xxxxxx:
+</para>
+        <programlisting format="linespecific">SET PASSWORD FOR xxxx@ddd.d.d.d=PASSWORD('<replaceable>xxxxxxxx</replaceable>');
+
+SET PASSWORD FOR xxxx@<replaceable>xxxxxxx.xxxxxxxxx.xxx</replaceable>=PASSWORD('<replaceable>xxxxxxxx</replaceable>');
+
+SET PASSWORD FOR xxxx@xxxxxxxxx=PASSWORD('<replaceable>xxxxxxxx</replaceable>'); 
+</programlisting>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-2081" significance="normal"><primary>xxxxxxx xxxx (%)</primary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2082" significance="normal"><primary>% (xxxxxxx xxxx)</primary><see>xxxxxxx xxxx</see></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2083" significance="normal"><primary>xxxxxxxxx</primary><secondary>xxxxxxx xxxx</secondary></indexterm>
+Rxxxxxx xxx xxxx <replaceable>xxxxxxxx</replaceable> xx xxxxxx xxxx xxx xxxxxxxx xxxx xxx xxxx xx xxx xxx <replaceable>xxxx</replaceable>. Ox xxxx xxxxxxx xxx xxxxxxxx <literal moreinfo="none">%</literal> xx xxxx xx xxxxx <literal moreinfo="none">xxxx</literal> xxxxx xxxx xxx xxxx. Axxxx xxx xxxxxx xxx xx xxx xxxx xxxxxxxxx, xxx xxx xx xxx <literal moreinfo="none">xxxxx</literal> xxxxxx xxx xxx xxxx xx xxxx xxx xxx xxxxxxxx.
+</para>
+        <para>Ox xxxx xxxxxxx xx xxxxxxxx xx MxSQL, xxxxx xxxx xxxxxxxxx xxxxx. Nxxxx xxxxxxxx xxx’x xxxx xxxx. Txxx xxxx xxxxxx xx xxx xxx xxxxxxx xx xxx <literal moreinfo="none">SELECT</literal> xxxxxxxxx xxxxx xxxx x xxxx xxxx xx x xxxxx xxxxx. Yxx xxxxxx xxxxxx xxxx xxx xxx xx xx xx xxxxxxxx xxx xxxxxxxxx xxxx xxx <literal moreinfo="none">xxxxx</literal> xxxxxx:</para>
+        <programlisting format="linespecific">DELETE FROM xxxxx.xxxx WHERE Uxxx='';
+DELETE FROM xxxxx.xx WHERE Uxxx='';
+FLUSH PRIVILEGES;</programlisting>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-2084" significance="normal"><primary>xxxxxxxxxx</primary><secondary>xxxxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2085" significance="normal"><primary>FLUSH PRIVILEGES xxxxxxxxx</primary><secondary>xxxxxxxx xxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2086" significance="normal"><primary>DELETE xxxxxxxxx</primary><secondary>xxxxxxxx xxxxx</secondary></indexterm>Txx xxxxx xxx xxxxxxxxxx xxxx xxxxxx xxx xxxxxxxxx xxxxx xxxx xxx <literal moreinfo="none">xxxx</literal> xxx <literal moreinfo="none">xx</literal> xxxxxx xx xxx xxxxxxxx xxxxxx <literal moreinfo="none">xxxxx</literal>—xxxx’x xxxxx xxx xxxxxxxxxx xx xxxxx xxxxxx xxx xxxxxx. Txx xxxx xxxx xxxxxx xxx xxxxxx xxxxxxxxxx xx xxxxxxx xxxxx xxxxxxx.</para>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-2087" significance="normal"><primary>GRANT xxxxxxxxx</primary><secondary>xxxxxxx xx xxxxx</secondary></indexterm>
+Txx xxxx xxxx xxxxxxxxx xxxxx xx xx xxx xx xx xxxxx xxx xxxx xxx xxxxxxx xxx. Ix’x xxxx xxx xx xxx xxx <literal moreinfo="none">xxxx</literal> xxxx xxx xxxxxxx xxxxxxxx xxxxxxxxxx. Wxxx xxx xxx xx x xxx xxxx, xxx xxxxxx xxxxxxxx xxxxx xxxxxxxxxx xx xxxxx xxx xxxx. Ix xxx xxxx xx xxx xx x xxxx xxxx xxx xxxx xxxx xxxx, xxx xxxxxx xxxxx xxxxxxxxx xxxx xxx xxxxxxxxx xxxx xxx <literal moreinfo="none">xxxxx</literal> xxxxxx:
+</para>
+        <programlisting format="linespecific">GRANT SELECT ON *.* TO <replaceable>xxxxx</replaceable> IDENTIFIED BY '<replaceable>xxxxddd</replaceable>';</programlisting>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-2088" significance="normal"><primary>xxxxx (,)</primary><secondary>SELECT xxxxxxxxx xxx</secondary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2089" significance="normal"><primary>SELECT xxxxxxxxx</primary><secondary>xxxxxx xxx</secondary></indexterm>
+Ix xxxx xxxx, xxx xxxx xx <emphasis>xxxxx</emphasis> xxx xxx xxxxxxxx xx <emphasis>xxxxddd</emphasis>. Ix xxx xxxx xx xxxx x xxxx xxxx xxxx xxxxxxx xxxxxxxxxx, xxx xxxxxx xxx xxxxxxxxxx xxxxxxxxxx xx xxx <literal moreinfo="none">SELECT</literal> xxxxxxx, xxxxxxxxx xx xxxxxx. Tx xxxx x xxxx xxx xxxxxxxxxx, xxxxxxx <literal moreinfo="none">SELECT</literal> xxxx <literal moreinfo="none">ALL</literal>. Hxxx’x xxxxxxx xxxxxxx xxxxx xxx <literal moreinfo="none">ALL</literal> xxxx:
+</para>
+        <programlisting format="linespecific">GRANT ALL ON xxd.* TO <replaceable>xxxxx</replaceable> IDENTIFIED BY '<replaceable>xxxxddd</replaceable>';</programlisting>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-2090" significance="normal"><primary>ALL xxxx</primary><secondary>GRANT xxxxxxxxx</secondary></indexterm><indexterm id="mysqlian-CHP-2-ITERM-2091" significance="normal"><primary>GRANT xxxxxxxxx</primary><secondary>ALL xxxx</secondary></indexterm>
+Ix xxxx xxxxxxx, xxx xxxx <replaceable>xxxxx</replaceable> xxx xxx xxxxx xxxxxxxxxx, xxx xxxx xxx xxx <emphasis>xxd</emphasis> xxxxxxxx. Txxx xxxxxxxxx xxxx xxx xxxx <replaceable>xxxxx</replaceable> xx xxx xxxxx <literal moreinfo="none">xxxx</literal> xx xxx <literal moreinfo="none">xxxxx</literal> xxxxxxxx, xx xxxxx xx xxxxxxx x xxx xxx xxx xx xx, xxx xxxx xx xxxxxxxxxx. Ix xxxx xxxx xxx x xxx xx xxx <literal moreinfo="none">xx</literal> xxxxx xx xxx <literal moreinfo="none">xxxxx</literal> xxxxxxxx xxxxxxxxxx xxxx <replaceable>xxxxx</replaceable> xxx xxx xxxxxxxxxx xxx xxx <replaceable>xxd</replaceable> xxxxxxxx. Sxx xxx xxxxxxxxxxx xx <literal moreinfo="none">GRANT</literal> xx  xxx xxxx xxxxxxx.
+</para>
+        <para><indexterm id="mysqlian-CHP-2-ITERM-2092" significance="normal"><primary>LOAD DATA INFILE xxxxxxxxx</primary><secondary>xxxxxxxxxx xxxx</secondary></indexterm>Ix xxx xxxx xxx xxxxxxxx MxSQL xxxxxxxxx xxxx xxxxxxx xxxxxx, xxx xxx xxxx xxx xxxxxx xxxxx xx xxx xxxxxxxxx xxxxx MxSQL xxxx xx xxxxxx xx xxxx xxxxxx—xxxx xx xxx x xxxxxxxxxxx xxxxxx, xxxxxx. Ix xxx xx, xxxxxx, xx xxxx xx xxxxxx xxx xxxxxxxxx xx xxx xxxxx xx xxx <literal moreinfo="none">xxxxx</literal> xxxx xxx <literal moreinfo="none">xxxxx</literal> xxxxx xxxx xxx <literal moreinfo="none">xxxxx</literal> xxxxxx xxxxxxx xxxxx xxx xxxx xxxx xx xxx xxxxxxxxxxx xxxxxxxxx. Ix xxxx xxxxxxxx xxxxxxxxx xxx xxxx xxxxx xxxxxxx xx xxx <literal moreinfo="none">xxxxxxxxx</literal> xxxxxxx, xxx xxx xxxxxxxxxxx xxxxxxxxx xxxx xxxxxxx xx . Ix xxxx xxxx xxxxx xx xx xxxxxxxxx xxxx x xxxx xxxx, xxx xxx xxxxxxxxxxx xx xxx <literal moreinfo="none">LOAD DATA INFILE</literal> xxxxxxxxx xx . Yxx xxxxxxxx xxxxxx xxxx xxxxx xxx xxxxxx xxxxxxxxxxxxx (<ulink url="http://dev.mysql.com/doc/mysql/en/Upgrade.html"/>) xx xxxxxxxxx xxxx x xxxxxxxx xxxxxxx xx x xxxxxxx xxx, xxxxxxxxxx xx xxx xxx xxxxxxxxx xxxxxx xxxxx xxxxxxxx. Ix xxx xxxx xxxxxxxx xxxx, xxxxxx xxxxxxx xxx xxxxxxx xx x xxxx. Dxx’x xxxx xxx xx xxx xxx xxxx xxxxxxxx xxxx xxxxxx, xxxxxxxx, xx xxx xxxxxxxxxxxx xxx’xx xxxxxxxxx.</para>
+        <para>
+Wxxx xxx MxSQL xxxxxxxxxxxx xxxxxxxx xxxxxxxxxx xxx xxxxxxxxx xxx xxx xx xxx xxxxxx xxxxx xxx xxxx xx xxxxx xxxxx xxx xxxxxxxx xxx, MxSQL xx xxx xxxxx xx xxx. Fxx xx xxxxxxxxxxxx xx xxxxx MxSQL, xxx xxx xxxx xxxxxxx.
+<indexterm class="endofrange" startref="mysqlian-CHP-2-ITERM-2076" id="mysqlian-CHP-2-ITERM-2093" significance="normal"/>
+</para>
+      </sect1>
+    </chapter>
+</part>
+
+    <appendix id="mysqlian-APP-A" xml:base="appa.xml">
+      <title>Dxxxxxxxx</title>
+      <para><indexterm id="mysqlian-APP-A-ITERM-4634" significance="normal"><primary>xxxxxxx</primary><secondary>xxxx xxxxx xxx</secondary></indexterm>
+Wxxx x xxxxx xx xxxxxxx xxxxx xxx <literal moreinfo="none">CREATE TABLE</literal> xxxxxxxxx, xxxxx xxxxxx xx x xxxxx xxxx xx xxxxxxxx xx xxx xx xxx xxxx xxxxx xxxxxxxxx xx MxSQL. A xxxxxx xx x xxxxx xxx xx xxxxx xx xxxxxxx xxxxx xxx <literal moreinfo="none">ALTER TABLE</literal> xxxxxxxxx. Dxxxxxxxx xxx xx xxxxxxxxx xxxx xxxxx xxxxx xxxxxx: xxxxxxx, xxxx xxx xxxx, xxx xxxxxx. Txxx xxxxxxxx xxxxxxxx x xxxxxxx xx xxxx xxxxx xxxxx xxxx xxxxx xxxxxxxxxxx.
+</para>
+      <sect1 id="mysqlian-APP-A-SECT-1">
+        <title>Nxxxxxx Dxxxxxxxx</title>
+        <para><indexterm class="startofrange" id="mysqlian-APP-A-ITERM-4635" significance="normal"><primary>xxxxxxx xxxx xxxxx</primary></indexterm><indexterm class="startofrange" id="mysqlian-APP-A-ITERM-4636" significance="normal"><primary>xxxx xxxxx</primary><secondary>xxxxxxx</secondary></indexterm><indexterm id="mysqlian-APP-A-ITERM-4637" significance="normal"><primary>TINYINT xxxx xxxx</primary></indexterm><indexterm id="mysqlian-APP-A-ITERM-4638" significance="normal"><primary>SMALLINT xxxx xxxx</primary></indexterm><indexterm id="mysqlian-APP-A-ITERM-4639" significance="normal"><primary>NUMERIC xxxx xxxx</primary></indexterm><indexterm id="mysqlian-APP-A-ITERM-4640" significance="normal"><primary>MEDIUMINT xxxx xxxx</primary></indexterm><indexterm id="mysqlian-APP-A-ITERM-4641" significance="normal"><primary>INTEGER xxxx xxxx</primary></indexterm><indexterm id="mysqlian-APP-A-ITERM-4642" significance="normal"><primary>DECIMAL xxxx xxxx</primary></indexterm><indexterm id="mysqlian-APP-A-ITERM-4643" significance="normal"><primary>BIGINT xxxx xxxx</primary></indexterm><indexterm id="mysqlian-APP-A-ITERM-4644" significance="normal"><primary>REAL xxxx xxxx</primary></indexterm><indexterm id="mysqlian-APP-A-ITERM-4645" significance="normal"><primary>FLOAT xxxx xxxx</primary></indexterm><indexterm id="mysqlian-APP-A-ITERM-4646" significance="normal"><primary>DOUBLE PRECISION xxxx xxxx</primary></indexterm>
+Sxxxxxxx SQL xxxxxxx xxxx xxxxx xxx xxxxxxx: xxxxxxxx xxxxxxx (x.x., <literal moreinfo="none">BIGINT</literal>, <literal moreinfo="none">DECIMAL</literal>, <literal moreinfo="none">INTEGER</literal>, <literal moreinfo="none">MEDIUMINT</literal>, <literal moreinfo="none">NUMERIC</literal>, <literal moreinfo="none">SMALLINT</literal>, xxx <literal moreinfo="none">TINYINT</literal>) xxx xxxxxxxxxxx xxxxxxx xxxx xxxxx (x.x., <literal moreinfo="none">DOUBLE</literal> xxx <literal moreinfo="none">FLOAT</literal>).
+<indexterm id="mysqlian-APP-A-ITERM-4647" significance="normal"><primary>SIGNED xxxx</primary></indexterm>
+<indexterm id="mysqlian-APP-A-ITERM-4649" significance="normal"><primary>UNSIGNED xxxx</primary></indexterm>
+Fxx xxx xxxxxxx xxxx xxxxx, xxx xxx xxx xxx <literal moreinfo="none">UNSIGNED</literal> xxx <literal moreinfo="none">ZEROFILL</literal> xxxxx xxxxxxxxx xx xxxx xxxxx. Ix <literal moreinfo="none">UNSIGNED</literal> xx xxxxxxx, <literal moreinfo="none">SIGNED</literal> xx xxxxxxx. A xxxxxxx xxxx xxxx xxx xxxxxxxxx xxxxxxxxx xxxxxx xxxxx xx xxxxxxx xx’x <literal moreinfo="none">SIGNED</literal> xx <literal moreinfo="none">UNSIGNED</literal>. Txx <literal moreinfo="none">ZEROFILL</literal> xxxx xxxxxxxxx MxSQL xx xxx xxx xxxxxx xxxxxx xx xxx xxxx xx x xxxxxx xxxx xxxxxx. Fxx xxxxxxx, x xxxxxx xxxx x xxxx xxxx xxx xx <literal moreinfo="none">INT(dd)</literal> xxxx xxxxxxx xxx xxxxxx d xx dddddddddd. Ix xxx <literal moreinfo="none">ZEROFILL</literal> xxxx xx xxxx, <literal moreinfo="none">UNSIGNED</literal> xx xxxxxxx xxx xxx xxxxxx. Wxxx xxxxxxxxxxx xxxxxx xxxxx xxx xx <literal moreinfo="none">UNSIGNED</literal>, xxx xxxxxxx xxxx xxxxxx <literal moreinfo="none">UNSIGNED</literal>.
+</para>
+        <para>Fxx xxxxxxx xx xxx xxxxxxx xxxx xxxxx, x xxxxx xxx xxxxxxxxxx xxx xx xxxxxxxxx. Txxx xxxxxx xxxxxx ddd. Txx xxxxxxx xxxxx xx x xxxxxx xxxx xxxx <literal moreinfo="none">ZEROFILL</literal> xx xxxx xxx xxx xxxxxx. Yxx xxx xxxx xxxxxxx xxx xxxxxx xx xxxxxx xxxxxxx xxx xxx xxxxxxxx, xxxxxxxxx xxx xxxxxxx xxxxx.
+<indexterm id="mysqlian-APP-A-ITERM-4648" significance="normal"><primary>ZEROFILL xxxx</primary></indexterm>
+</para>
+        <para>Axxxxxxxxxx xxxxxxx xxxx xxxxx xxxxx xxxxxxxx-xxxxx xxxxxxx xxxx xxxxxxxxx xxxxx xx xxxxxxxxxxxxx xxxx xx xxxx. Fxx xxxxxxxx, xx xxxxxxxx xxxxxx, xxx xx, xxxxxx xx xxxxxx xxx d/d, xxxxxxx xxx xxxxxxx xxxxx xxx d xxxxxxxxx xx xxxxxxxxx. MxSQL xxxxxxxx xxx xxxxxxxxxxx xxxxxxx xxxx xxxxx: <literal moreinfo="none">FLOAT</literal> xxx <literal moreinfo="none">DOUBLE</literal> xxxx xxxxx xxxxxxxx.</para>
+        <para>Bxxxx xx x xxxx xx xxxxxxx xxxx xxxxx, xxxx’xx xxx xxxxxxxxx xxxxxxxxxxxxxx. Ixxxxxx, xxxx’xx xxxxxxxxx xx xxxxxxxxx xxxxx xxxxx xx xxx xxxx xx xxxxxxx xxxxxx xxxx xxx xxxxxxx, xxxx xxx xxxxxx xxxx xxxxx xxxx xxx xx xxxx xxx xxxxxxxxxxx xxxxxxx xxxxxx xxxx.</para>
+        <refentry id="appa-77001">
+          <refmeta>
+            <refentrytitle>BIT</refentrytitle>
+          </refmeta>
+          <refnamediv>
+            <refname>BIT</refname>
+            <refpurpose/>
+          </refnamediv>
+          <refsynopsisdiv>
+            <synopsis format="linespecific">BIT[(<replaceable>xxxxx</replaceable>)]</synopsis>
+          </refsynopsisdiv>
+          <refsect1 id="appa-1-fm2xml">
+            <title/>
+            <para>A xxx-xxxxx xxxx xxxxxx xxxx. Wxxx xxxx xxxxxx xxx xxx xxxxxxx xxx xxxxxxx xxxxxx xx xxxx. Ix xxxxxxx xxxx d xx dd. Ix xx xxxxx xx xxxxx, d xxx xx xxxxxxx. Wxxx xxxx xxxxxx xxx xxxxx xxxxx xxxxxx xxxx (x.x., xxxx xxxxxxxx xx d’x xxx d’x). Yxx xxxxx xxx xxxx xxxxxx xx xxxxxxxxxxx xxxx xxxxxxxxx xxxx <literal moreinfo="none">BIN( )</literal>. Bxxxx xx xx xxxxxxx xx xxxx xxxx x xxxxxx xxxxx xxx x xxxx xxxx xx <literal moreinfo="none">BIT(d)</literal>:</para>
+            <programlisting format="linespecific">SELECT xxxxxx_xx 
+FROM xxxxxxx
+WHERE xxxxxx = BIT(d);</programlisting>
+            <para>Txxx xxxxxxxxx xxxx xxxxxx xxxx xxxxx xxx <replaceable>xxxxxx</replaceable> xxxxxx xxx x xxxxx xx <replaceable>dddddddd</replaceable>, xxxxx xx xxx xxxxxx xxxxxxxxxx xx d.</para>
+          </refsect1>
+        </refentry>
+        <refentry id="appa-77002">
+          <refmeta>
+            <refentrytitle>TINYINT</refentrytitle>
+          </refmeta>
+          <refnamediv>
+            <refname>TINYINT</refname>
+            <refpurpose/>
+          </refnamediv>
+          <refsynopsisdiv>
+            <synopsis format="linespecific">TINYINT[(<replaceable>xxxxx</replaceable>)] [UNSIGNED] [ZEROFILL]</synopsis>
+          </refsynopsisdiv>
+          <refsect1>
+            <title/>
+            <para><indexterm id="mysqlian-APP-A-ITERM-4658" significance="normal"><primary>ZEROFILL xxxx</primary></indexterm><indexterm id="mysqlian-APP-A-ITERM-4659" significance="normal"><primary>UNSIGNED xxxx</primary></indexterm><indexterm id="mysqlian-APP-A-ITERM-4660" significance="normal"><primary>TINYINT xxxx xxxx</primary></indexterm>
+Txxx xxxx xxxxxx xxxx xxx xx xxxx xxx xxxx xxxxxxxx. Txx xxxxxx xxxxx xxx xx xxxx -ddd xx ddd; xxxxxxxx xxx xx xxxx d xx ddd. Txx xxxxxxx xx xx xxxxx xx xxxxx xx d. Txxx xxxxxx xxxx xxx xx xxxxxx xxx x xxxxxx xxxxxxx xxxxxx.  Fxx xxxxxxx, <literal moreinfo="none">TINYINT(d)</literal> xxx xx xxxx xxx x xxxxxx xx xxxxx xxx xxxx xxxx x xxxxx xx d xx d, <replaceable>xxx</replaceable> xx <replaceable>xx</replaceable>. Yxx xxxxx xxxx xx xxxxxx xxx <literal moreinfo="none">BOOLEAN</literal>, xxxxxx.
+</para>
+          </refsect1>
+        </refentry>
+        <refentry id="appa-77003">
+          <refmeta>
+            <refentrytitle>BOOL, BOOLEAN</refentrytitle>
+          </refmeta>
+          <refnamediv>
+            <refname>BOOL, BOOLEAN</refname>
+            <refpurpose/>
+          </refnamediv>
+          <refsynopsisdiv>
+            <synopsis format="linespecific">BOOL</synopsis>
+          </refsynopsisdiv>
+          <refsect1>
+            <title/>
+            <para>Txxx xxxx xxxxxx xxxx, <literal moreinfo="none">BOOL</literal> xx xxxxxxxxxx xxxx <literal moreinfo="none">BOOLEAN</literal> xxx <literal moreinfo="none">TINYINT(d)</literal>. Ix xxxx, xx xxx xxx x xxxxxx xx xxxx xxxx xxx xxxx xxx xxx <literal moreinfo="none">DESCRIBE</literal> xxxxxxxxx xx xxx xxx xxxxxxxxxxx xx xxx xxxxxx, xx xxxx xxxx xx xx x <literal moreinfo="none">TINYINT(d)</literal>. Ix xxx xx xxxxxx xxx x xxxxxx xxxxxxx xxxxxx xx xxxxx xxx xxxx xxxx x xxxx xx xxxxx xxxxx.  Fxx xxxxxxx, xx x xxxxxx xxxxxxx <literal moreinfo="none">xxxxxx</literal> xxx x <literal moreinfo="none">BOOLEAN</literal> xxxx, xxx xxxxx xx xxxxxxxxx xxxx xxx xxxxxxxxx:</para>
+            <programlisting format="linespecific">SELECT xxxxxx_xxxx AS 'Cxxxxx', 
+IF(xxxxxx, 'Axxxxx', 'Ixxxxxxx') AS Sxxxxx
+FROM xxxxxxx;</programlisting>
+            <para>Txxx xxxxxxxxx xxxx xxxx xxxx xxxxxx xxxx xx xxx xxxxx xxxx xxx xxxxx <replaceable>Axxxxx</replaceable> xx <replaceable>Ixxxxxxx</replaceable> xxxx xx xxxx xxxx. Txxx xxxxx xxxxxxx xxx <literal moreinfo="none">IF( )</literal> xxxxxxxx xxxxxx xxx x xxxxx xx d xx d xxx xxx xxxxx xxxxx; xx xxxxxxx xxx xxxxxx xxxxxxxxx xxxxx xx d, xxx xxxxx xx d.</para>
+          </refsect1>
+        </refentry>
+        <refentry id="appa-77004">
+          <refmeta>
+            <refentrytitle>SMALLINT</refentrytitle>
+          </refmeta>
+          <refnamediv>
+            <refname>SMALLINT</refname>
+            <refpurpose/>
+          </refnamediv>
+          <refsynopsisdiv>
+            <synopsis format="linespecific">SMALLINT[(<replaceable>xxxxx</replaceable>)] [UNSIGNED] [ZEROFILL]</synopsis>
+          </refsynopsisdiv>
+          <refsect1>
+            <title/>
+            <para><indexterm id="mysqlian-APP-A-ITERM-4661" significance="normal"><primary>SMALLINT xxxx xxxx</primary></indexterm>
+Uxx xxxx xxxx xxxxxx xxxx xxx xxxxx xxxxxxx xxxxxx. Txx xxxxxx xxxxx xxx xx xxxx -ddddd xx ddddd; xxxxxxxx xxx xx xxxx d xx ddddd. Txx xxxxxxx xx xx xxxxx xx xxxxx xx d.
+</para>
+          </refsect1>
+        </refentry>
+        <refentry id="appa-77005">
+          <refmeta>
+            <refentrytitle>MEDIUMINT</refentrytitle>
+          </refmeta>
+          <refnamediv>
+            <refname>MEDIUMINT</refname>
+            <refpurpose/>
+          </refnamediv>
+          <refsynopsisdiv>
+            <synopsis format="linespecific">MEDIUMINT[(<replaceable>xxxxx</replaceable>)] [UNSIGNED] [ZEROFILL]</synopsis>
+          </refsynopsisdiv>
+          <refsect1>
+            <title/>
+            <para><indexterm id="mysqlian-APP-A-ITERM-4662" significance="normal"><primary>MEDIUMINT xxxx xxxx</primary></indexterm>
+Txxx xxxx xxxxxx xxxx xx xxx xxxxxxx xxxxxx xx xxxxxx xxxx. Txx xxxxxx xxxxx xxx xx xxxx -ddddddd xx ddddddd; xxxxxxxx xxx xx xxxx d xx dddddddd. Txx xxxxxxx xx xx xxxxx xx xxxxx xx d.
+</para>
+          </refsect1>
+        </refentry>
+        <refentry id="appa-77006">
+          <refmeta>
+            <refentrytitle>INT, INTEGER</refentrytitle>
+          </refmeta>
+          <refnamediv>
+            <refname>INT, INTEGER</refname>
+            <refpurpose/>
+          </refnamediv>
+          <refsynopsisdiv>
+            <synopsis format="linespecific">INT[(<replaceable>xxxxx</replaceable>)] [UNSIGNED] [ZEROFILL]</synopsis>
+          </refsynopsisdiv>
+          <refsect1>
+            <title/>
+            <para>
+Txxx xx xxxxxxxx xxx xxxx xxxxxx xxxxxxx xxxx xxxxxx xxxx xxxx. Txx xxxxxx xxxxx xxx xx xxxx -dddddddddd xx dddddddddd; xxxxxxxx xxx xx xxxx d xx dddddddddd. Txx xxxxxxx xx xx xxxxx xx xxxxx xx dd. <literal moreinfo="none">INTEGER</literal> xx x xxxxxxx xxx xxxx xxxx xxxx.
+<indexterm id="mysqlian-APP-A-ITERM-4663" significance="normal"><primary>INTEGER xxxx xxxx</primary></indexterm>
+</para>
+          </refsect1>
+        </refentry>
+        <refentry id="appa-77007">
+          <refmeta>
+            <refentrytitle>BIGINT, SERIAL</refentrytitle>
+          </refmeta>
+          <refnamediv>
+            <refname>BIGINT, SERIAL</refname>
+            <refpurpose/>
+          </refnamediv>
+          <refsynopsisdiv>
+            <synopsis format="linespecific">BIGINT[(<replaceable>xxxxx</replaceable>)] [UNSIGNED] [ZEROFILL]</synopsis>
+          </refsynopsisdiv>
+          <refsect1>
+            <title/>
+            <para><indexterm id="mysqlian-APP-A-ITERM-4664" significance="normal"><primary>BIGINT xxxx xxxx</primary></indexterm>
+Txxx xxxx xxxxxx xxxx xx xxx xxxxxxx xxxxxx xx x xxxxx xxxx. Txx xxxxxx xxxxx xxx xx xxxx -ddddddddddddddddddd xx ddddddddddddddddddd; xxxxxxxx xxx xx xxxx d xx dddddddddddddddddddd. Txx xxxxxxx xx xx xxxxx xx xxxxx xx dd. <literal moreinfo="none">SERIAL</literal> xx x xxxxxxx xxx xxxx xxxx xxxx, xxx xxxx xxxxxxxx xxxxxx xxxxxxx: <literal moreinfo="none">BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE</literal>.
+</para>
+          </refsect1>
+        </refentry>
+        <refentry id="appa-77008">
+          <refmeta>
+            <refentrytitle>FLOAT</refentrytitle>
+          </refmeta>
+          <refnamediv>
+            <refname>FLOAT</refname>
+            <refpurpose/>
+          </refnamediv>
+          <refsynopsisdiv>
+            <synopsis format="linespecific">FLOAT[(<replaceable>xxxxx</replaceable>, <replaceable>xxxxxxxx</replaceable>)|(<replaceable>xxx_xxxxxxxxx</replaceable>)] [UNSIGNED] [ZEROFILL]</synopsis>
+          </refsynopsisdiv>
+          <refsect1>
+            <title/>
+            <para><indexterm id="mysqlian-APP-A-ITERM-4676" significance="normal"><primary>FLOAT xxxx xxxx</primary></indexterm>
+Fxx <literal moreinfo="none">FLOAT</literal>, x xxxxx xx xxxxxxxxx xxx xx xxxxxxxxx. Ix xxx xx xxxx d xx dd xxx xxxxxx-xxxxxxxxx xxxxxxxx-xxxxx xxxxxxx xxx xxxx dd xx dd xxx xxxxxx-xxxxxxxxx xxxxxxxx-xxxxx xxxxxxx. Tx xx ODBC xxxxxxxxxx, xxx xxxxxx xxxxxx xx xxxx xxxxxxxxxx xxx xxxxxxxxx xx xxxx xxx xx xxxx. Ix x xxxxxxxxx xxx’x xxxxx xxxx <literal moreinfo="none">FLOAT</literal>, x xxxxxx-xxxxxxxxx xxxxxxxx xxxxx xx xxxxxxx. Ix xxx SQL xxxx xxx xxx xxxxxx xxx xxx <literal moreinfo="none">REAL_AS_FLOAT</literal> xxxxxx xxxxxxx, <literal moreinfo="none">REAL</literal> xx x xxxxxxx xxx <literal moreinfo="none">FLOAT</literal>. Txxx xx xxx xxxx xxx <literal moreinfo="none">--xxx-xxxx</literal> xxxxxx xxxx xxxxxxxx xxx xxxxxx.
+</para>
+          </refsect1>
+        </refentry>
+        <refentry id="appa-77009">
+          <refmeta>
+            <refentrytitle>DOUBLE, DOUBLE PRECISION</refentrytitle>
+          </refmeta>
+          <refnamediv>
+            <refname>DOUBLE, DOUBLE PRECISION</refname>
+            <refpurpose/>
+          </refnamediv>
+          <refsynopsisdiv>
+            <synopsis format="linespecific">DOUBLE[(<replaceable>xxxxx</replaceable>, <replaceable>xxxxxxxx</replaceable>)] [UNSIGNED] [ZEROFILL]</synopsis>
+          </refsynopsisdiv>
+          <refsect1>
+            <title/>
+            <para><indexterm id="mysqlian-APP-A-ITERM-4677" significance="normal"><primary>DOUBLE PRECISION xxxx xxxx</primary></indexterm>
+Uxx xxxx xxxxxx xxx xxxxxxxxxxx, xxxxxxxx xxxxx xxxxxxx. Txx xxxxx xxxxx xx xxx xxxxxxx xxxxx xx xxx xxxxx xxxxxx—xxx xxxx xxxxx xx xxx xxxxxxx xxxxx, xxx xxxxxxxxx xxx xxxxxxx xxxxx. Txx xxxxxxxx xxxxx xxx xxx xxxxxx xx xxxxxxxx xxxxxxx xxx xxx xxxxxx xxx xxxxx xx xxxx xxxxx. Fxx xxxxxxx, x xxxxxx xxxx xxxxxxx xx <literal moreinfo="none">DOUBLE(d,d)</literal> xxxx xx xxxxx x xxxxx xx ddd.d xxxx xxxxxx x xxxxxxx xxx xxxxx xxx xxxxx xx dd.dd, xxx xxxxxxx xxxxxx xxxxx xxx xxxxx. Ix xxx xxxx xxxxxx xx xxxxx x xxxxx xx dd.d, xx xxx’x xxxxxxxx xxx xxxxxxxx xxx xx xxxx xxxxx xxx xxxxx xx dd.dd.
+</para>
+            <para>Txx xxxxxx xxxxx xx xxxxxx xxx xx xxxx -d.ddddddddddddddddE+ddd xx -d.ddddddddddddddddE-ddd; xxxxxxxx xxxxx xxxx d.ddddddddddddddddE-ddd xx d.ddddddddddddddddE+ddd. Uxxxxxx xxxxx xxxxxx xxxx’x xxxxxxxx xxx xx xxx xxxxxxxx xxx xxxxxxxxx xxxxxx xxxxxx xx xxx xxxxxx. Txx xxxxxxxx xx xxxx xxxx xxxx xx xx xx xxxxx xxxxxxx xxxxxxx xxxxxx.</para>
+            <para>Wxxx xxxx xxxx xxxx, xx <literal moreinfo="none">UNSIGNED</literal> xx xxxxxxxxx, xxxxxxxx xxxxxx xxx xxx xxxxxxx. Ix xxx SQL xxxx xxx xxx xxxxxx xxxx xxx xxxx xxx <literal moreinfo="none">REAL_AS_FLOAT</literal> xxxxxx xxxxxxx, <literal moreinfo="none">REAL</literal> xx x xxxxxxx xxx <literal moreinfo="none">DOUBLE</literal>.</para>
+          </refsect1>
+        </refentry>
+        <refentry id="appa-77010">
+          <refmeta>
+            <refentrytitle>DEC, DECIMAL, FIXED, NUMERIC</refentrytitle>
+          </refmeta>
+          <refnamediv>
+            <refname>DEC, DECIMAL, FIXED, NUMERIC</refname>
+            <refpurpose/>
+          </refnamediv>
+          <refsynopsisdiv>
+            <synopsis format="linespecific">DECIMAL[(<replaceable>xxxxx</replaceable>[, <replaceable>xxxxxxxx</replaceable>])] [UNSIGNED] [ZEROFILL]</synopsis>
+          </refsynopsisdiv>
+          <refsect1>
+            <title/>
+            <para><indexterm id="mysqlian-APP-A-ITERM-4665" significance="normal"><primary>DECIMAL xxxx xxxx</primary></indexterm>
+Txxx xxxxxx xx xxxxxxx xx <literal moreinfo="none">FLOAT</literal>, xxx xx’x xxxx xxx xxxxxxxx, xxxxx xxxxx xxxxxxx. Wxxx xxxxxxxxxxx xxxx x <literal moreinfo="none">DECIMAL</literal> xxxxxx, xx xxx x dd xxxxx xxxxx xx xxxxxxxxx.
+Txx xxxxx xxxxx xx xxx xxxxxxx xxxxx xx xxx xxxxx xxxxxx—xxx xxxx xxxxx xx xxx xxxxxxx xxxxx, xxx xxxxxxxxx xxx xxxxxxx xxxxx xx xxx xxxxxxxx xxxx xx x xxxxxxxx xxxxxx. Txx xxxxxxxx xxxxx xxx xxx xxxxxx xx xxxxxxxx xxxxxxx xxx xxx xxxxxx xxx xxxxx xx xxxx xxxxx. 
+Fxx xxxxxxx, x xxxxxx xxxx xxxxxxx xx <literal moreinfo="none">DECIMAL(d,d)</literal> xxxx xx xxxxx x xxxxx xx ddd.d xxxx xxxxxx x xxxxxxx xxx xxxxx xxx xxxxx xx dd.dd, xxx xxxxxxx xxxxxx xxxxx xxx xxxxx. Ix xxx xxxx xxxxxx xx xxxxx x xxxxx xx dd.d, xx xxx’x xxxxxxxx xxx xxxxxxxx xxx xx xxxx xxxxx xxx xxxxx xx dd.dd.
+Ix <literal moreinfo="none">UNSIGNED</literal> xx xxxx xxxx <literal moreinfo="none">DECIMAL</literal>, xxxxxxxx xxxxxx xxx xxx xxxxxxx.
+</para>
+            <para>MxSQL xxxxxx xxxxxxx xx <literal moreinfo="none">DECIMAL</literal> xxxxxxx xx xxxxxxx. Txxxxxxxx, xxxxxxx xxxxxxx xxx xxxxxxx xxxxxxx xxxxx xxx xxxx xxxx xxxx xxx xx xxxxxx xx x <literal moreinfo="none">DECIMAL</literal> xxxxxx. Ix xxx xx xxxxxxxxx xxx xxxxxxxxx xx x xxxxxx, xxx xx x xxxxxxx xxxxxxx (x.x., xx xxxx xx x xxxxxxxxxxx), xx xxxxxx xxxxxx xxx xxxxxx xxxxx xx xxx xxxxx.</para>
+          </refsect1>
+        </refentry>
+      </sect1>
+      <sect1 id="mysqlian-APP-A-SECT-4">
+        <title>Dxxx xxx Txxx Dxxxxxxxx</title>
+        <para><indexterm id="mysqlian-APP-A-ITERM-4681" significance="normal"><primary>xxxx xxxxx</primary><secondary>xxxx/xxxx</secondary></indexterm><indexterm id="mysqlian-APP-A-ITERM-4682" significance="normal"><primary>TIME xxxx xxxx</primary><secondary>xxxxxxxx</secondary></indexterm><indexterm id="mysqlian-APP-A-ITERM-4683" significance="normal"><primary>DATE xxxx xxxx</primary><secondary>xxxxxxxx</secondary></indexterm>
+Txxxx xxx x xxx xxxxxx xxxx xxxxx xxx xxxxxxx xxxx xxx xxxx xxxxxx. Txxx xxx xxxxxx xx <xref linkend="mysqlian-APP-A-TABLE-1"/>. Txx xxxxx xxxx xxxxx xxx xxxxx xxxxxx xxx xxxx xxxx xxxx. Ix x xxxxx xx xxxxxxxx xxxx xx xxx xxxxxxxxx, xx xx xxxxxxx xx xxx xxxxxxxxxx xxxxx xxx xxx xxxx xxxx, xxxxx xxx xxxx xxxxxxx. Yxx xxx xxxxxxxx xxxx xx xxxxxxxx xxx xxxxxx xxxx <literal moreinfo="none">--xxx-xxxx='ALLOW_INVALID_DATES</literal>‘. Sxxxxxxx xx Vxxxxxx d.d.d xx MxSQL, xxxxxxxx xxxx xx xxxxxxxxx xxxx xxxxxxxxx xxxxxxx xxxxx xx xxxxx. Fxx xxxxx xxxx xxx xxxxxxxx xxxx xxxx xxx xxxxxx xxx xxx xxxx, xxxxxx xxxx dd xx dd xxx xxxxxxx xx xx xx xxx dd<superscript>xx</superscript> xxxxxxx. Fxx xxxxx xxxx dd xx dd, xxxx xxx xxxxxxx xx xx xx xxx dd<superscript>xx</superscript> xxxxxxx.
+</para>
+        <table id="mysqlian-APP-A-TABLE-1">
+          <title>Dxxx xxx Txxx xxxx xxxxx</title>
+          <tgroup cols="3">
+            <colspec colnum="1" colname="col1"/>
+            <colspec colnum="2" colname="col2"/>
+            <colspec colnum="3" colname="col3"/>
+            <thead>
+              <row>
+                <entry>
+                  <para>Dxxx xxxx</para>
+                </entry>
+                <entry>
+                  <para>Fxxxxx</para>
+                </entry>
+                <entry>
+                  <para>Rxxxx</para>
+                </entry>
+              </row>
+            </thead>
+            <tbody>
+              <row>
+                <entry>
+                  <para>
+                    <literal moreinfo="none">DATE</literal>
+                    <indexterm id="mysqlian-APP-A-ITERM-4684" significance="normal">
+                      <primary>DATE xxxx xxxx</primary>
+                      <secondary>xxxxxxxx</secondary>
+                    </indexterm>
+                  </para>
+                </entry>
+                <entry>
+                  <para>
+                    <literal moreinfo="none">xxxx-xx-xx</literal>
+                  </para>
+                </entry>
+                <entry>
+                  <para>dddd-dd-dd <emphasis>xx</emphasis> dddd-dd-dd</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>
+                    <literal moreinfo="none">DATETIME</literal>
+                    <indexterm id="mysqlian-APP-A-ITERM-4685" significance="normal">
+                      <primary>DATETIME xxxx xxxx</primary>
+                      <secondary>xxxxxxxx</secondary>
+                    </indexterm>
+                  </para>
+                </entry>
+                <entry>
+                  <para>
+                    <literal moreinfo="none">xxxx-xx-xx xx:xx:xx</literal>
+                  </para>
+                </entry>
+                <entry>
+                  <para>dddd-dd-dd dd:dd:dd <emphasis>xx</emphasis> dddd-dd-dd dd:dd:dd</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>
+                    <literal moreinfo="none">TIMESTAMP</literal>
+                    <indexterm id="mysqlian-APP-A-ITERM-4686" significance="normal">
+                      <primary>TIMESTAMP xxxx xxxx</primary>
+                      <secondary>xxxxxxxx</secondary>
+                    </indexterm>
+                  </para>
+                </entry>
+                <entry>
+                  <para>
+                    <literal moreinfo="none">xxxx-xx-xx xx:xx:xx</literal>
+                  </para>
+                </entry>
+                <entry>
+                  <para>dddd-dd-dd dd:dd:dd <emphasis>xx</emphasis> dddd-dd-dd dd:dd:dd</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>
+                    <literal moreinfo="none">TIME</literal>
+                    <indexterm id="mysqlian-APP-A-ITERM-4687" significance="normal">
+                      <primary>TIME xxxx xxxx</primary>
+                      <secondary>xxxxxxxx</secondary>
+                    </indexterm>
+                  </para>
+                </entry>
+                <entry>
+                  <para>
+                    <literal moreinfo="none">xx:xx:xx</literal>
+                  </para>
+                </entry>
+                <entry>
+                  <para>-ddd:dd:dd <emphasis>xx</emphasis> ddd:dd:dd</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>
+                    <literal moreinfo="none">YEAR[(d|d)]</literal>
+                    <indexterm id="mysqlian-APP-A-ITERM-4688" significance="normal">
+                      <primary>YEAR xxxx xxxx</primary>
+                    </indexterm>
+                  </para>
+                </entry>
+                <entry>
+                  <para>xx <replaceable>xx</replaceable> xxxx</para>
+                </entry>
+                <entry>
+                  <para>dddd <replaceable>xx</replaceable> dddd <emphasis>xx</emphasis> dddd
+<emphasis>xx</emphasis> dddd</para>
+                </entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+        <para>Txxxx xxxxxx xxx xx xxxxx xx xxxxxx x xxxxxx, xx xxxxxxxxxxx. Ax x xxxxxx, xxx xxx xxxxx x xxxxx xx <literal moreinfo="none">x xx:xx:xx.x</literal>. Ix xxxx xxxxxx, <literal moreinfo="none">x</literal> xxxxxx xxx xxx xxxxxx xx xxxx, xxxx xx xxxxxxxxx xxxxx xx d xx dd. Txx <literal moreinfo="none">x</literal> xxxxxx xxx x xxxxxxxxxx xxxxxx xx xxxxxxx. Txxx xxxxx xxxx xxx xx xxxxxx, xxxxxx. Sxxxxxx xxxxxxxxxx xxxxxxx xx xxxxxxxx xx xx xxxxx xx xxxxxx xxxxxxxx xx MxSQL. Yxx xxx’x xxxx xx xxxxxxx xxxxxx xxx xxx xxxxxxxx xx x xxxx. Ixxxxxx, xxx xxx xxxxx x xxxx xxxxx xxxxx xxx xx xxxxx xxxxxxx: <literal moreinfo="none">xx:xx:xx.x</literal>, xx <literal moreinfo="none">xx:xx:xx, xx:xx</literal>, xx xxxx <literal moreinfo="none">xx</literal>. Ix xxx xxxx xx xxxxxxx xxx xxxxxx xx xxxx xxx xxx xxx xxxxx xxxxxxx: <literal moreinfo="none">x xx:xx:xx</literal>, <literal moreinfo="none">x xx:xx</literal>, xx <literal moreinfo="none">x xx</literal>. Yxx xxx xxxx xxxx xxx xxxxxx xxx xxxx xxxxx <literal moreinfo="none">xxxxxx</literal>, xxx xxx xxx’x xxx xxxxxxx xxxx xxx xxx xx xxxx xxxxxx. Txx xxxx xxxx <literal moreinfo="none">TIMESTAMP</literal> xxxxxx xxx xxxx xxx xxxx xx xxx xxxxxx xx xxxxxxx xxxxx xxx xxxxx (xxx xxxxxxxx xxxx xxxxxxx), xxx xxxxxxxx xx xx xxx xxxx xxx xxxx xxxx xxx xxxxxx xx <literal moreinfo="none">xxxx-xx-xx xx:xx:xx</literal>. MxSQL xxxx xxxxxxxxxxxxx xxxxxxx x xxxx xx xxxx xx xxx xxxxxxx xxxx xxxxxxxxxx xxxx xx xx xxxx xx x xxxxxxx xxxxxxx, xxx xx xxxx xx xxx xxxxxxx xx xxxx. Ix xx xxx’x xxxxx x xxxx, x xxxxxxx xx xxx xxxxxxx xxxx xxxx xx xxxx—xxxx xx xxx xxxxxxx xxxxxxxxxx xxxxxxx xxxx xxxxxx xxxx xxxx xxx <literal moreinfo="none">DATETIME</literal>.</para>
+      </sect1>
+      <sect1 id="mysqlian-APP-A-SECT-5">
+        <title>Sxxxxx Dxxxxxxxx</title>
+        <para><indexterm id="mysqlian-APP-A-ITERM-4691" significance="normal"><primary>xxxx xxxxx</primary><secondary>xxxxxx</secondary></indexterm><indexterm id="mysqlian-APP-A-ITERM-4692" significance="normal"><primary>xxxxxx xxxx xxxxx</primary></indexterm><indexterm id="mysqlian-APP-A-ITERM-4693" significance="normal"><primary>xxxx xxxxxxxxxxx</primary><secondary>xxxxxx xxxx xxxxx</secondary></indexterm>
+Txxxx xxx x xxxxxxx xxxxxx xxxx xxxxx xxx xxxxxxx xxxxxxx. Sxxxxx xxxx xxxxx xxx xxxx-xxxxxxxxx. Sx xxxxxxxxx xxx xxxxxxxxx xxxxxxx xxxxxx xxxxxxxxx xxxx xxxxxx xx xxxxxxxxx. Fxx x xxx xx xxx xxxxxx xxxx xxxxx, x xxxxxxx xxxxxx xxxxx xxx xx xxxxxxxxx. Ix x xxxxxx xx xxxxxxx xx x xxxxxx xxxx xxxxxxx xxx xxxxx xxx xxx xxx xxxxxx, xxx xxxxxx xxxx xx xxxxx-xxxxxxxxx xxxx xxxxxx. Bxxxxx xxxxxxx xxx xxxx-xxxxxxxxx.
+</para>
+        <para>Bxxxx xx x xxxx xx xxxxxx xxxx xxxxx, xxxx’xx xxx xxxxxxxxx xxxxxxxxxxxxxx. Ixxxxxx, xxxx’xx xxxxxxxxx xx xxxxxxxxx xxxxx xxxxx xx xxx xxxx xx xxxxxx xxxxxx xxxx xxx xxxxxxx. Txx xxxx xxxx xxxxxxxx xxx xxxxx xx xxxxxxxxxx xx xxxxx xxx xxxx xxxx xxxx.</para>
+        <refentry id="appa-77011">
+          <refmeta>
+            <refentrytitle>CHAR</refentrytitle>
+          </refmeta>
+          <refnamediv>
+            <refname>CHAR</refname>
+            <refpurpose/>
+          </refnamediv>
+          <refsynopsisdiv>
+            <synopsis format="linespecific">CHAR(<replaceable>xxxxx</replaceable>) [BINARY|ASCII|UNICODE] [CHARACTER SET <replaceable>xxxxxxxxx_xxx</replaceable>] [COLLATE <replaceable>xxxxxxxxx</replaceable>]</synopsis>
+          </refsynopsisdiv>
+          <refsect1>
+            <title/>
+            <para>
+Txx <literal moreinfo="none">CHAR</literal> xxxx xxxx xx x xxxxx-xxxxx xxxxxx, xxxxxx xxxx xxxxxx xx xxx xxxxx xx xxxxxx. Txx xxxxxx xxx xxx xxxxxxxx xx xxx xxxxxxx xxxx xxxxxxx.  
+Ix xxx xx xxxx d xx ddd xxxxxxxxxx xxxx. Txx xxxxxxx xx xx xxxxx xx xxxxx xx d. 
+Ix’x xxxxxxxxxx xxxx <literal moreinfo="none">CHARACTER</literal>. Yxx xxx xxxx xxx <literal moreinfo="none">NATIONAL CHARACTER</literal> xx <literal moreinfo="none">NCHAR</literal> xx xxxxxxxx x xxxxxxxxxx xxxxxxxx xxxxxxxxx xxx xx xx xx xxxx. Cxxxxxx xxx xxxxx-xxxxxx xxxx xxxxxx xxxx xxxxxx. 
+<literal moreinfo="none">FULLTEXT</literal> xxxxxxxx xxx xxxxxxxxx xxx xx xxxxxxxxx xx x <literal moreinfo="none">CHAR</literal> xxxxxx xxxx x MxISAM xxxxx. 
+<indexterm id="mysqlian-APP-A-ITERM-4704" significance="normal"><primary>CHAR xxxx xxxx</primary></indexterm>
+<indexterm id="mysqlian-APP-A-ITERM-4705" significance="normal"><primary>UNICODE xxxxxxxxx</primary></indexterm>
+<indexterm id="mysqlian-APP-A-ITERM-4706" significance="normal"><primary>ASCII xxxxxxxxx</primary></indexterm>
+<indexterm id="mysqlian-APP-A-ITERM-4707" significance="normal"><primary>BINARY xxxx xxxx</primary></indexterm>
+</para>
+            <para><indexterm id="mysqlian-APP-A-ITERM-4694" significance="normal"><primary>UNICODE xxxxxxxxx</primary></indexterm><indexterm id="mysqlian-APP-A-ITERM-4695" significance="normal"><primary>ASCII xxxxxxxxx</primary></indexterm>
+Ax xx Vxxxxxx d.d xx MxSQL, xxx <literal moreinfo="none">ASCII</literal> xxxxxxxxx xxx xx xxxxxxxxx xxx xxx xxxx xxx <literal moreinfo="none">CHAR</literal> xxxx xxxx. Txxx xxxx xxx xxx xxxxxx xx xxx <literal moreinfo="none">xxxxxd</literal> xxxxxxxxx xxx. Ax xx Vxxxxxx d.d xx MxSQL, xxx <literal moreinfo="none">UNICODE</literal> xxxxxxxxx xxx xx xxxxxxxxx xxx xxx xxxx xxx <literal moreinfo="none">CHAR</literal> xxxx xxxx. Txxx xxxx xxx xxx xxxxxx xx xxx <literal moreinfo="none">xxxd</literal> xxxxxxxxx xxx.
+</para>
+          </refsect1>
+        </refentry>
+        <refentry id="appa-77012">
+          <refmeta>
+            <refentrytitle>VARCHAR</refentrytitle>
+          </refmeta>
+          <refnamediv>
+            <refname>VARCHAR</refname>
+            <refpurpose/>
+          </refnamediv>
+          <refsynopsisdiv>
+            <synopsis format="linespecific">VARCHAR(<replaceable>xxxxx</replaceable>) [BINARY]</synopsis>
+          </refsynopsisdiv>
+          <refsect1>
+            <title/>
+            <para>
+Txx <literal moreinfo="none">VARCHAR</literal> xxxx xxxx xxxxxxx xxx xxxxx xxx xxxx xxx xxx xxx xxxxxxx xxxxxx. Axx xxxxxxxx xxxxxx xxxxxxxxx xx x xxxxxx xxxx xx xxxxxx xxx xxxxxxx. 
+Ix xxx xx xxxx d xx ddddd xxxxxxxxxx xxxx. Txx xxxx xx xxxxxxxxx xxx xxxxx xxx xxxxxx xxx xxxxxx xx xxxxxxxxxx xxxxx xxxxx xxxx xxxxxxx xxxx xxxx xxx xxxx xxx xxxxxxxxx (x.x., UTFd). Txx xxxxxxx xx xx xxxxx xx xxxxx xx d.
+Ix’x xxxxxxxxxx xxxx <literal moreinfo="none">CHARACTER VARYING</literal>. 
+Yxx xxx xxxx xxx <literal moreinfo="none">NATIONAL VARCHAR</literal> xx xxxxxxxx x xxxxxxxxxx xxxxxxxx xxxxxxxxx xxx xx xx xx xxxx. 
+<literal moreinfo="none">FULLTEXT</literal> xxxxxxxx xxx xxxxxxxxx xxx xx xxxxxxxxx xx x <literal moreinfo="none">VARCHAR</literal> xxxxxx xxxx x MxISAM xxxxx. 
+<indexterm id="mysqlian-APP-A-ITERM-4708" significance="normal"><primary>VARCHAR xxxx xxxx</primary></indexterm>
+</para>
+          </refsect1>
+        </refentry>
+        <refentry id="appa-77013">
+          <refmeta>
+            <refentrytitle>BINARY</refentrytitle>
+          </refmeta>
+          <refnamediv>
+            <refname>BINARY</refname>
+            <refpurpose/>
+          </refnamediv>
+          <refsynopsisdiv>
+            <synopsis format="linespecific">BINARY(<replaceable>xxxxx</replaceable>)</synopsis>
+          </refsynopsisdiv>
+          <refsect1>
+            <title/>
+            <para>
+Txxx xxxx xxxx xxxxx xxxx xx xxxxxx xxxxxxx xxx xxx xxxxxxxxx xxxxxxx xxxx <literal moreinfo="none">CHAR</literal>.  Txx xxxxx xxxxx xxx xxx xxx xxxxxxx xxxxx xx xxxxx. A xxxxx xxxx xx xxxxxxxxx. 
+Txx xxxx xxxx xx <literal moreinfo="none">BINARY</literal> xxxxxxxx <literal moreinfo="none">CHAR BINARY</literal>. Bxxxxx Vxxxxxx d.d.d xx MxSQL, xxxxxx xxx <literal moreinfo="none">BINARY</literal> xxxx xxxxx <literal moreinfo="none">CHAR</literal> xxxxxxxxxx MxSQL xx xxxxx xxx xxxxxx xx xxxx xxxxxxx xxx xxxxxxx xxx xxxxxxxxxxx. Ix x <literal moreinfo="none">BINARY</literal> xxxxxx xx xxxx xx xx xxxxxxxxxx, xxx xxxxxxxx xx xxx xxxxxxxxxx xxx xxxxxxx xx x xxxxxx.
+<indexterm id="mysqlian-APP-A-ITERM-4709" significance="normal"><primary>BINARY xxxx xxxx</primary></indexterm>
+<indexterm id="mysqlian-APP-A-ITERM-4702" significance="normal"><primary>CHAR BINARY xxxx xxxx</primary></indexterm>
+</para>
+          </refsect1>
+        </refentry>
+        <refentry id="appa-77014">
+          <refmeta>
+            <refentrytitle>VARBINARY</refentrytitle>
+          </refmeta>
+          <refnamediv>
+            <refname>VARBINARY</refname>
+            <refpurpose/>
+          </refnamediv>
+          <refsynopsisdiv>
+            <synopsis format="linespecific">VARBINARY(<replaceable>xxxxx</replaceable>) [CHARACTER SET <replaceable>xxxxxxxxx_xxx</replaceable>] [COLLATE <replaceable>xxxxxxxxx</replaceable>]</synopsis>
+          </refsynopsisdiv>
+          <refsect1>
+            <title/>
+            <para>
+Txxx xxxx xxxx xxxxx xxxx xx xxxxxx xxxxxxx xxx xxx xxxxxxxxx xxxxxxx xxxx <literal moreinfo="none">VARCHAR</literal>. Txx xxxxx xxxxx xxx xxx xxx xxxxxxx xxxxx xx xxxxx. A xxxxx xxxx xx xxxxxxxxx. 
+Ix xxx xxxx xx xxx x xxxxxxxxx xxx xxx xxx xxxxxx xxxxx xxxx xxx xxxxxxx xxx xxx xxxxx, xxx xxx xx xxxxx xxx xxx xxxxxx. Vxxxxx xxx xxxxxx xxxxx xx xxx xxxxxxxxx xx xxx xxxxxxxxx xxx xxx xxx xxxxxx. 
+Txx xxxx xxxx xx <literal moreinfo="none">VARBINARY</literal> xxxxxxxx <literal moreinfo="none">VARCHAR BINARY</literal>. Bxxxxx Vxxxxxx d.d.d xx MxSQL, xxxxxx xxx <literal moreinfo="none">BINARY</literal> xxxx xxxxx <literal moreinfo="none">VARCHAR</literal> xxxxxxxxxx MxSQL xx xxxxx xxx xxxxxx xx xxxx xxxxxxx xxx xxxxxxx xxx xxxxxxxxxxx. Axx xxxxxxxx xx xxx xxxxxxxxxx xxx xxxx xxxxxxx xx x xxxxxx.
+<indexterm id="mysqlian-APP-A-ITERM-4710" significance="normal"><primary>VARBINARY xxxx xxxx</primary></indexterm>
+<indexterm id="mysqlian-APP-A-ITERM-4700" significance="normal"><primary>VARCHAR BINARY xxxx xxxx</primary></indexterm>
+</para>
+          </refsect1>
+        </refentry>
+        <refentry id="appa-77015">
+          <refmeta>
+            <refentrytitle>TINYBLOB</refentrytitle>
+          </refmeta>
+          <refnamediv>
+            <refname>TINYBLOB</refname>
+            <refpurpose/>
+          </refnamediv>
+          <refsynopsisdiv>
+            <synopsis format="linespecific">TINYBLOB</synopsis>
+          </refsynopsisdiv>
+          <refsect1>
+            <title/>
+            <para>
+Txxx xxxxxx xxxx xxxx xxxxxx xxx xxx xxxxxxx xx xxxxxx xxxx. Txx xxxxxxx xxxxx xx ddd xxxxx.
+<indexterm id="mysqlian-APP-A-ITERM-4711" significance="normal"><primary>TINYBLOB xxxx xxxx</primary></indexterm>
+</para>
+          </refsect1>
+        </refentry>
+        <refentry id="appa-77016">
+          <refmeta>
+            <refentrytitle>TINYTEXT</refentrytitle>
+          </refmeta>
+          <refnamediv>
+            <refname>TINYTEXT</refname>
+            <refpurpose/>
+          </refnamediv>
+          <refsynopsisdiv>
+            <synopsis format="linespecific">TINYTEXT [CHARACTER SET <replaceable>xxxxxxxxx_xxx</replaceable>] [COLLATE <replaceable>xxxxxxxxx</replaceable>]</synopsis>
+          </refsynopsisdiv>
+          <refsect1>
+            <title/>
+            <para>
+Txxx xxxxxx xxxx xxxx xxxxxx xxx xxx xxxxxxx xx xxxxxx xxxx. Txx xxxxxxx xxxxx xx ddd xxxxx. 
+Ix xxx xxxx xx xxx x xxxxxxxxx xxx xxx xxx xxxxxx xxxxx xxxx xxx xxxxxxx xxx xxx xxxxx, xxx xxx xx xxxxx xxx xxx xxxxxx. Vxxxxx xxx xxxxxx xxxxx xx xxx xxxxxxxxx xx xxx xxxxxxxxx xxx xxx xxx xxxxxx. 
+<indexterm id="mysqlian-APP-A-ITERM-4712" significance="normal"><primary>TINYTEXT xxxx xxxx</primary></indexterm>
+</para>
+          </refsect1>
+        </refentry>
+        <refentry id="appa-77017">
+          <refmeta>
+            <refentrytitle>BLOB</refentrytitle>
+          </refmeta>
+          <refnamediv>
+            <refname>BLOB</refname>
+            <refpurpose/>
+          </refnamediv>
+          <refsynopsisdiv>
+            <synopsis format="linespecific">BLOB[(<replaceable>xxxxx</replaceable>)]</synopsis>
+          </refsynopsisdiv>
+          <refsect1>
+            <title/>
+            <para>
+Txxx xxxxxx xxxx xxxx xxxxxx xxx xxx xxxxxxx xx x xxxxx xxxxxx xx xxxxxx xxxx. A xxxxx xxx xx xxxxx xxxx xxxx xxxx xxxx. Txx xxxxxxx xxxxx xx ddddd xxxxx. 
+Ix xxx xxxxxxx xx xxxxx x xxxxx xx x <literal moreinfo="none">BLOB</literal> xxxxxx xxxx xx xxxxxx xxxx xx’x xxxxx, xxxxxx xxx xxxxxx xx xxx xx SQL xxxxxx xxxx, xxx xxxx xxxx xx xxxxxxxxx xxx x xxxxxxx xxxxxxx xxxx xx xxxxxxxxx. Ix xxxxxx xxxx xx xx, xx xxxx xx xxxxxxxx xxx xx xxxxx xxxx xx xxxxxxxx. 
+A <literal moreinfo="none">BLOB</literal> xxxxxx xxxxxx xxxx x xxxxxxx xxxxx. Fxx xxxxxxx xxxx, xxx xxxxx xxxxx xxx xxx xxxxxx xxxxxxxx <literal moreinfo="none">xxx_xxxx_xxxxxx</literal> xxxx xx xxxx. Oxxx xxx xxxxxx xx xxxxx xxxxxxxxx xx xxxx xxxxxxxx xxx xxxx xxxxxx xxxx xx xxxxxxxx xx xxxxx.
+<indexterm id="mysqlian-APP-A-ITERM-4713" significance="normal"><primary>BLOB xxxx xxxx</primary></indexterm>
+</para>
+          </refsect1>
+        </refentry>
+        <refentry id="appa-77018">
+          <refmeta>
+            <refentrytitle>TEXT</refentrytitle>
+          </refmeta>
+          <refnamediv>
+            <refname>TEXT</refname>
+            <refpurpose/>
+          </refnamediv>
+          <refsynopsisdiv>
+            <synopsis format="linespecific">TEXT[(<replaceable>xxxxx</replaceable>)] [CHARACTER SET <replaceable>xxxxxxxxx_xxx</replaceable>] [COLLATE <replaceable>xxxxxxxxx</replaceable>]</synopsis>
+          </refsynopsisdiv>
+          <refsect1>
+            <title/>
+            <para>
+Txxx xxxxxx xxxx xxxx xxxxxx xxx xxx xxxxxxx xx x xxxxx xxxxxx xx xxxx xxxx. A xxxxx xxx xx xxxxx xxxx xxxx xxxx xxxx. Txx xxxxxxx xxxxx xx ddddd xxxxx. Ix xxx xxxxxxx xx xxxxx x xxxxx xx x <literal moreinfo="none">TEXT</literal> xxxxxx xxxx xx xxxxxx xxxx xx’x xxxxx, xxxxxx xxx xxxxxx xx xxx xx SQL xxxxxx xxxx, xxx xxxx xxxx xx xxxxxxxxx xxx x xxxxxxx xxxxxxx xxxx xx xxxxxxxxx. Ix xxxxxx xxxx xx xx, xx xxxx xx xxxxxxxx xxx xx xxxxx xxxx xx xxxxxxxx. 
+A <literal moreinfo="none">TEXT</literal> xxxxxx xxxxxx xxxx x xxxxxxx xxxxx. Fxx xxxxxxx xxxx, xxx xxxxx xxxxx xxx xxx xxxxxx xxxxxxxx <literal moreinfo="none">xxx_xxxx_xxxxxx</literal> xxxx xx xxxx. Oxxx xxx xxxxxx xx xxxxx xxxxxxxxx xx xxxx xxxxxxxx xxx xxxx xxxxxx xxxx xx xxxxxxxx xx xxxxx. 
+<literal moreinfo="none">FULLTEXT</literal> xxxxxxxx xxx xxxxxxxxx xxx xx xxxxxxxxx xx x <literal moreinfo="none">TEXT</literal> xxxxxx xxxx x MxISAM xxxxx, xxx xxx xx x <literal moreinfo="none">BLOB</literal> xxxxxx. 
+Ix xxx xxxx xx xxx x xxxxxxxxx xxx xxx xxx xxxxxx xxxxx xxxx xxx xxxxxxx xxx xxx xxxxx, xxx xxx xx xxxxx xxx xxx xxxxxx. Vxxxxx xxx xxxxxx xxxxx xx xxx xxxxxxxxx xx xxx xxxxxxxxx xxx xxx xxx xxxxxx. 
+<indexterm id="mysqlian-APP-A-ITERM-4714" significance="normal"><primary>TEXT xxxx xxxx</primary></indexterm>
+</para>
+          </refsect1>
+        </refentry>
+        <refentry id="appa-77019">
+          <refmeta>
+            <refentrytitle>MEDIUMBLOB</refentrytitle>
+          </refmeta>
+          <refnamediv>
+            <refname>MEDIUMBLOB</refname>
+            <refpurpose/>
+          </refnamediv>
+          <refsynopsisdiv>
+            <synopsis format="linespecific">MEDIUMBLOB</synopsis>
+          </refsynopsisdiv>
+          <refsect1>
+            <title/>
+            <para>
+Txxx xxxxxx xxxx xxxx xxxxxx xxx xxx xxxxxxx xx x xxxxx xxxxxx xx xxxxxx xxxx. Txx xxxxxxx xxxxx xx dddddddd xxxxx.
+<indexterm id="mysqlian-APP-A-ITERM-4715" significance="normal"><primary>MEDIUMBLOB xxxx xxxx</primary></indexterm>
+</para>
+          </refsect1>
+        </refentry>
+        <refentry id="appa-77020">
+          <refmeta>
+            <refentrytitle>MEDIUMTEXT</refentrytitle>
+          </refmeta>
+          <refnamediv>
+            <refname>MEDIUMTEXT</refname>
+            <refpurpose/>
+          </refnamediv>
+          <refsynopsisdiv>
+            <synopsis format="linespecific">MEDIUMTEXT [CHARACTER SET <replaceable>xxxxxxxxx_xxx</replaceable>] [COLLATE <replaceable>xxxxxxxxx</replaceable>]</synopsis>
+          </refsynopsisdiv>
+          <refsect1>
+            <title/>
+            <para>
+Txxx xxxxxx xxxx xxxx xxxxxx xxx xxx xxxxxxx xx x xxxxx xxxxxx xx xxxxxx xxxx. Txx xxxxxxx xxxxx xx dddddddd xxxxx. 
+Ix xxx xxxx xx xxx x xxxxxxxxx xxx xxx xxx xxxxxx xxxxx xxxx xxx xxxxxxx xxx xxx xxxxx, xxx xxx xx xxxxx xxx xxx xxxxxx. Vxxxxx xxx xxxxxx xxxxx xx xxx xxxxxxxxx xx xxx xxxxxxxxx xxx xxx xxx xxxxxx. 
+<indexterm id="mysqlian-APP-A-ITERM-4716" significance="normal"><primary>MEDIUMTEXT xxxx xxxx</primary></indexterm>
+</para>
+          </refsect1>
+        </refentry>
+        <refentry id="appa-77021">
+          <refmeta>
+            <refentrytitle>LONGBLOB</refentrytitle>
+          </refmeta>
+          <refnamediv>
+            <refname>LONGBLOB</refname>
+            <refpurpose/>
+          </refnamediv>
+          <refsynopsisdiv>
+            <synopsis format="linespecific">LONGBLOB</synopsis>
+          </refsynopsisdiv>
+          <refsect1>
+            <title/>
+            <para>
+Txxx xxxxxx xxxx xxxx xxxxxx xxx xxx xxxxxxx xx x xxxxx xxxxxx xx xxxxxx xxxx. Txx xxxxxxx xxxxx xx dGB.
+<indexterm id="mysqlian-APP-A-ITERM-4717" significance="normal"><primary>LONGBLOB xxxx xxxx</primary></indexterm>
+</para>
+          </refsect1>
+        </refentry>
+        <refentry id="appa-77022">
+          <refmeta>
+            <refentrytitle>LONGTEXT</refentrytitle>
+          </refmeta>
+          <refnamediv>
+            <refname>LONGTEXT</refname>
+            <refpurpose/>
+          </refnamediv>
+          <refsynopsisdiv>
+            <synopsis format="linespecific">LONGTEXT [CHARACTER SET <replaceable>xxxxxxxxx_xxx</replaceable>] [COLLATE <replaceable>xxxxxxxxx</replaceable>]</synopsis>
+          </refsynopsisdiv>
+          <refsect1>
+            <title/>
+            <para>
+Txxx xxxxxx xxxx xxxx xxxxxx xxx xxx xxxxxxx xx x xxxxx xxxxxx xx xxxxxx xxxx. Txx xxxxxxx xxxxx xx dGB. 
+Ix xxx xxxx xx xxx x xxxxxxxxx xxx xxx xxx xxxxxx xxxxx xxxx xxx xxxxxxx xxx xxx xxxxx, xxx xxx xx xxxxx xxx xxx xxxxxx. Vxxxxx xxx xxxxxx xxxxx xx xxx xxxxxxxxx xx xxx xxxxxxxxx xxx xxx xxx xxxxxx. 
+<indexterm id="mysqlian-APP-A-ITERM-4718" significance="normal"><primary>LONGTEXT xxxx xxxx</primary></indexterm>
+</para>
+          </refsect1>
+        </refentry>
+        <refentry id="appa-77023">
+          <refmeta>
+            <refentrytitle>ENUM</refentrytitle>
+          </refmeta>
+          <refnamediv>
+            <refname>ENUM</refname>
+            <refpurpose/>
+          </refnamediv>
+          <refsynopsisdiv>
+            <synopsis format="linespecific">ENUM('<replaceable>xxxxx</replaceable>', ...) [CHARACTER SET <replaceable>xxxxxxxxx_xxx</replaceable>] [COLLATE <replaceable>xxxxxxxxx</replaceable>]</synopsis>
+          </refsynopsisdiv>
+          <refsect1>
+            <title/>
+            <para>
+Ax <literal moreinfo="none">ENUM</literal> xxxxxx xx xxx xx xxxxx xxx xxxxxxxx xxxxxxx xxx xxxxxxxxxx (x.x., <literal moreinfo="none">ENUM('xxx', 'xx', 'xxxxx')</literal>). Ix’x xxxxxxxx xxx xx xx xxxxxxx x xxxxx xxxxx (x.x., “) xxx NULL. Ix xx <literal moreinfo="none">ENUM</literal> xxxxxx xx xxx xx xx xxxxx NULL xxxxxx, NULL xxxx xx xxx xxxxxxx xxxxx. Ix xx <literal moreinfo="none">ENUM</literal> xxxxxx xx xxx xx xxxx <literal moreinfo="none">NOT NULL</literal>, NULL xxx’x xxxxxxx xxx xxx xxxxxxx xxxxx xxxxxxx xxx xxxxx xxxxxxx xxxxx.</para>
+            <para>MxSQL xxxxxx x xxxxxxx xxxxx xx xxx xxxxxxxxxx xxxxxx xx xxx xxxxxx: d xxxxx xxx xxxxx xxxxx. Txx xxxxxx xxx xx xxxxxxxxx xxxx xxx xxxxxx xx xxxx xx x xxxxxxx xxxxxxx (x.x., <literal moreinfo="none">SELECT xxxd + d FROM xxxxxd;</literal>). Txx xxxxxxx xxx xx xxxxxxxxx xxxx xxxxxxxx xxxx xxxx x xxxxxx (x.x., <literal moreinfo="none">UPDATE xxxxxd SET xxxd = d;</literal> xx xxx xxx xxxxx xx xxx xxxxx xxxxxxx). Txx xxxxxx xxxxxx xxx xxxxxx xx xxxxxxxxx xxxxx xxxxx xx xxx xxxxxxx xxxxx, xxx xxxxx xxxxxxxxxxxxx xxxxxxxxxx xxxxxx. Ix xxx xxxx xx xxx x xxxxxxxxx xxx xxx xxx xxxxxx xxxxx xxxx xxx xxxxxxx xxx xxx xxxxx, xxx xxx xx xxxxx xxx xxx xxxxxx. Vxxxxx xxx xxxxxx xxxxx xx xxx xxxxxxxxx xx xxx xxxxxxxxx xxx xxx xxx xxxxxx. 
+<indexterm id="mysqlian-APP-A-ITERM-4719" significance="normal"><primary>ENUM xxxx xxxx</primary></indexterm>
+</para>
+          </refsect1>
+        </refentry>
+        <refentry id="appa-77024">
+          <refmeta>
+            <refentrytitle>SET</refentrytitle>
+          </refmeta>
+          <refnamediv>
+            <refname>SET</refname>
+            <refpurpose/>
+          </refnamediv>
+          <refsynopsisdiv>
+            <synopsis format="linespecific">SET('<replaceable>xxxxx</replaceable>', ...) [CHARACTER SET <replaceable>xxxxxxxxx_xxx</replaceable>] [COLLATE <replaceable>xxxxxxxxx</replaceable>]</synopsis>
+          </refsynopsisdiv>
+          <refsect1>
+            <title/>
+            <para>
+Txx <literal moreinfo="none">SET</literal> xxxx xxxx xx xxxxxxx xx <literal moreinfo="none">ENUM</literal>, xxxxxx xxxx x <literal moreinfo="none">SET</literal> xxxxxx xxx xxxx xxxxxxxx xxxxxx (x.x., <literal moreinfo="none">UPDATE xxxxxd SET xxxd = 'x, x';</literal>). Fxx xxx <literal moreinfo="none">SET</literal> xxxx xxxx, xxxxxx xxx xx xxxxxxxx xxxx xxx <literal moreinfo="none">FIND_IN_SET( )</literal> xxxxxxxx. Ix xxx xxxx xx xxx x xxxxxxxxx xxx xxx xxx xxxxxx xxxxx xxxx xxx xxxxxxx xxx xxx xxxxx, xxx xxx xx xxxxx xxx xxx xxxxxx. Vxxxxx xxx xxxxxx xxxxx xx xxx xxxxxxxxx xx xxx xxxxxxxxx xxx xxx xxx xxxxxx. 
+<indexterm id="mysqlian-APP-A-ITERM-4720" significance="normal"><primary>SET xxxx xxxx</primary></indexterm>
+<indexterm id="mysqlian-APP-A-ITERM-4723" significance="normal"><primary>FIND_IN_SET( ) xxxxxxxx</primary></indexterm>
+</para>
+          </refsect1>
+        </refentry>
+      </sect1>
+    </appendix>
+    <appendix id="mysqlian-APP-B" xml:base="appb.xml">
+      <title>Oxxxxxxxx</title>
+      <para>Oxxxxxxxx xxx xxxx xx xxxxxxxxxxxx xx xxxxxxx xxxxxxxxxx. Ax xxxxxxxx xx xxxxxxxxx xxxxxx xxxxxxx xxx xxxxxx (x.x., xxxxxxx, xxxxxxx, xxxxxxx, xx xxxxxxxxxxx) xxx xxxxxxxxx xx xxxxxxxxxx xxxx. Txxxx xxx xxxx xxxxx xx xxxxxxxxx: xxxxxxxxxx, xxxxxxxxxx, xxxxxxx, xxx xxxxxxx. Txxx xxxxxxxx xxxxxxxx x xxxxxxx xx xxxxxxxxx xxxxxxx xx xxxxx xxxx xxxxx. Axxxxxxxxxxx, xxxx xxxxxxxx xxxxxxxx x xxxx xx xxxxxxx xxxxxxx xxxxxxxx xxxxxxxxxx xxx xxxxxxxxxx xxx xxxxxxx xxxxxxxxxxx.</para>
+      <sect1 id="mysqlian-APP-B-SECT-1">
+        <title>Axxxxxxxxx Oxxxxxxxx</title>
+        <para><indexterm id="mysqlian-APP-B-ITERM-4725" significance="normal"><primary>xxxxxxxxxx xxxxxxxxx</primary></indexterm><indexterm id="mysqlian-APP-B-ITERM-4726" significance="normal"><primary>xxxxxxxxx</primary><secondary>xxxxxxxxxx</secondary></indexterm>
+Txx xxxxxxxxxx xxxxxxxxx xx MxSQL xxxx xxxx xx xxxxxxx, xxx xxx xx xxxxxxx. Hxxxxxx, MxSQL xxxx xxxxxxx x xxxxxx xx x xxxxxx xxxx xx x xxxxxxx xxxxxxx xx xx xxx. Ix xx xxx’x xxxxxxx x xxxxxxxxxx xxxxxx, xx xxxx xxxxxxx xx xx d. Txx xxxxxxxxxx xxxxxxxxx xxxxxxx xxx xxxxxx xx <xref linkend="mysqlian-APP-B-TABLE-1"/>.
+</para>
+        <para>Txx xxxxx xxxx xxx xx xxxx xxx xxxxxxxxxxx xxxxxxx xx xxx xxxxxxx x xxxxxx xx x xxxxxxxx. Txx <literal moreinfo="none">DIV</literal> xxxxxxxx xxxxxxxx xxxxxx xx xxxxxxxx xxx xxxxxxx xxxx xxxxxxxx. Ix xxxxx’x xxxxx xxxxxxxxx xxxx xxxxx xx xxxxxxxx, xxx xxxxxxxxx xxxx.</para>
+        <table id="mysqlian-APP-B-TABLE-1">
+          <title>Axxxxxxxxx xxxxxxxxx</title>
+          <tgroup cols="2">
+            <colspec colnum="1" colname="col1"/>
+            <colspec colnum="2" colname="col2"/>
+            <thead>
+              <row>
+                <entry>
+                  <para>Oxxxxxxx</para>
+                </entry>
+                <entry>
+                  <para>Uxx</para>
+                </entry>
+              </row>
+            </thead>
+            <tbody>
+              <row>
+                <entry>
+                  <para>+</para>
+                </entry>
+                <entry>
+                  <para>Axxxxxxx</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>-</para>
+                </entry>
+                <entry>
+                  <para>Sxxxxxxxxxx xxx xxxxxxxx</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>*</para>
+                </entry>
+                <entry>
+                  <para>Mxxxxxxxxxxxxx</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>/</para>
+                </entry>
+                <entry>
+                  <para>Dxxxxxxx</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para><indexterm id="mysqlian-APP-B-ITERM-4727" significance="normal"><primary>DIV xxxxxxxx</primary></indexterm> DIV</para>
+                </entry>
+                <entry>
+                  <para>Dxxxxxxx xx xxxxxxxx</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>%</para>
+                </entry>
+                <entry>
+                  <para>Mxxxxx xxxxxxxx</para>
+                </entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+      </sect1>
+      <sect1 id="mysqlian-APP-B-SECT-2">
+        <title>Rxxxxxxxxx Oxxxxxxxx</title>
+        <para><indexterm id="mysqlian-APP-B-ITERM-4728" significance="normal"><primary>xxxxxxxxxx xxxxxxxxx</primary></indexterm><indexterm id="mysqlian-APP-B-ITERM-4729" significance="normal"><primary>xxxxxxxxx</primary><secondary>xxxxxxxxxx</secondary></indexterm>
+Rxxxxxxxxx xxxxxxxxx xxx xxxx xxx xxxxxxxxx xxxxxxx xxx xxxxxxx. Ix x xxxxxx xx xxxxxxxx xx x xxxxxx, MxSQL xxxx xxx xx xxxxxxx xxx xxxxxx xx x xxxxxx. Ix x <literal moreinfo="none">TIMESTAMP</literal> xxxxxx xx xxxxxxxx xx x xxxxxx xx x xxxxxx, MxSQL xxxx xxxxxxx xx xxxxxxx xxx xxxxxx xx xxxxxx xx x xxxxxxxxx xxxxx. Ix xx’x xxxxxxxxxxxx xx xxxxxxxxxx xxx xxxxx xxxxx xx x xxxxxxxxx, xx xxxx xxxxxxx xxx <literal moreinfo="none">TIMESTAMP</literal> xxxxxx’x xxxxx xx x xxxxxx xx x xxxxxx. <literal moreinfo="none">TIME</literal> xxx <literal moreinfo="none">DATE</literal> xxxxxxx xxx xxxxxxxx xx xxxxx xxxxxx xx xxxxxxx. Txx xxxxxxx xxx xxxxxxxxxx xxxxxxxxx xxxxxxx xxx xxxxxx xx <xref linkend="mysqlian-APP-B-TABLE-2"/>.
+</para>
+        <para>Txx xxxxx xxxx xxx xx xxxx xxx xxxxxxxxxxx xxxxxxx xx xxx xxxxxxx x xxxxxx xx x xxxxxxxx. Txx xxxxxx xxxx xx xxxx xx xxxxxxx xxx xxxxxx. Ix xxx xx NULL, xxxxxx, NULL xxxx xx xxxxxxxx. Txx <literal moreinfo="none">&lt;=&gt;</literal> xxxxxxxx xx xxxx xx xxxxxxx xxx xxxxxxxx xxx xx’x NULL-xxxx. Fxx xxxxxxx, xx SQL xxxxxxxxx xxxxxxxxxx xxxxxxxxx xxxx <literal moreinfo="none">IF(xxxd</literal> <literal moreinfo="none">&lt;=&gt; xxxd)</literal> xxxxx xxx xxxxxx xx xxxx xxx NULL xxxx xxxxxx d xxx xxx NULL.</para>
+        <table id="mysqlian-APP-B-TABLE-2">
+          <title>Rxxxxxxxxx xxxxxxxxx</title>
+          <tgroup cols="2">
+            <colspec colnum="1" colname="col1"/>
+            <colspec colnum="2" colname="col2"/>
+            <thead>
+              <row>
+                <entry>
+                  <para>Oxxxxxxx</para>
+                </entry>
+                <entry>
+                  <para>Uxx</para>
+                </entry>
+              </row>
+            </thead>
+            <tbody>
+              <row>
+                <entry>
+                  <para>&lt;</para>
+                </entry>
+                <entry>
+                  <para>Lxxx xxxx</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>&gt;</para>
+                </entry>
+                <entry>
+                  <para>Gxxxxxx xxxx</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>&lt;=</para>
+                </entry>
+                <entry>
+                  <para>Lxxx xxxx xx xxxxx xx</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>&gt;=</para>
+                </entry>
+                <entry>
+                  <para>Gxxxxxx xxxx xx xxxxx xx</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para><emphasis>xxxxxxxxxx</emphasis><indexterm id="mysqlian-APP-B-ITERM-4730" significance="normal"><primary>BETWEEN xxxxxxxx</primary></indexterm> BETWEEN x AND x</para>
+                </entry>
+                <entry>
+                  <para>Bxxxxxx xxxxx xxx xxxxxx xxxxxx</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para><emphasis>xxxxxxxxxx</emphasis><indexterm id="mysqlian-APP-B-ITERM-4731" significance="normal"><primary>NOT BETWEEN xxxxxxxx</primary></indexterm> NOT BETWEEN x AND x</para>
+                </entry>
+                <entry>
+                  <para>Nxx xxxxxxx xxxxx xxx xxxxxx xxxxxx</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para><indexterm id="mysqlian-APP-B-ITERM-4732" significance="normal"><primary>IN xxxxxxxx</primary></indexterm> IN (...)</para>
+                </entry>
+                <entry>
+                  <para>Ix x xxx</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para><indexterm id="mysqlian-APP-B-ITERM-4733" significance="normal"><primary>NOT IN xxxxxxxx</primary></indexterm> NOT IN (...)</para>
+                </entry>
+                <entry>
+                  <para>Nxx xx x xxx</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>=</para>
+                </entry>
+                <entry>
+                  <para>Exxxx xx</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>&lt;=&gt;</para>
+                </entry>
+                <entry>
+                  <para>Exxxx xx (xxx xxxxxxxxx NULL xxxxxx)</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>LIKE
+<indexterm id="mysqlian-APP-B-ITERM-4734" significance="normal"><primary>LIKE xxxxxxxx</primary></indexterm>
+</para>
+                </entry>
+                <entry>
+                  <para>Mxxxxxx x xxxxxxx</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>SOUNDS LIKE
+</para>
+                </entry>
+                <entry>
+                  <para>Mxxxxxx x xxxxx xxxxxxx (Sxx <literal moreinfo="none">SOUNDEX( )</literal> xxxxxxxx xxxxxxxxx xx )</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>NOT LIKE
+<indexterm id="mysqlian-APP-B-ITERM-4735" significance="normal"><primary>NOT LIKE xxxxxxxx</primary></indexterm>
+</para>
+                </entry>
+                <entry>
+                  <para>Dxxxx’x xxxxx x xxxxxxx</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>REGEXP, RLIKE
+<indexterm id="mysqlian-APP-B-ITERM-4736" significance="normal"><primary>REGEXP xxxxxxxx</primary></indexterm>
+<indexterm id="mysqlian-APP-B-ITERM-4737" significance="normal"><primary>RLIKE xxxxxxxx</primary></indexterm>
+</para>
+                </entry>
+                <entry>
+                  <para>Mxxxxxx x xxxxxxx xxxxxxxxxx</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>NOT REGEXP</para>
+                </entry>
+                <entry>
+                  <para>Dxxxx’x xxxxx xxxxxxx xxxxxxxxxx</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>!=</para>
+                </entry>
+                <entry>
+                  <para>Nxx xxxxx xx</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>&lt;&gt;</para>
+                </entry>
+                <entry>
+                  <para>Nxx xxxxx xx</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>NOT, !</para>
+                </entry>
+                <entry>
+                  <para>Nxxxxxx</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para><indexterm id="mysqlian-APP-B-ITERM-4738" significance="normal"><primary>IS NULL xxxxxxxx</primary></indexterm> IS NULL</para>
+                </entry>
+                <entry>
+                  <para>NULL</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para><indexterm id="mysqlian-APP-B-ITERM-4739" significance="normal"><primary>IS NOT NULL xxxxxxxx</primary></indexterm> IS NOT NULL</para>
+                </entry>
+                <entry>
+                  <para>Nxx NULL</para>
+                </entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+      </sect1>
+      <sect1 id="mysqlian-APP-B-SECT-3">
+        <title>Lxxxxxx Oxxxxxxxx</title>
+        <para><indexterm id="mysqlian-APP-B-ITERM-4740" significance="normal"><primary>xxxxxxx xxxxxxxxx</primary></indexterm><indexterm id="mysqlian-APP-B-ITERM-4741" significance="normal"><primary>xxxxxxxxx</primary><secondary>xxxxxxx</secondary></indexterm>
+Lxxxxxx xxxxxxxxx xxx xxxx xxx xxxxxxxxxx xxxxxx xx xxxxxxxxxxx xxx xxxx, xxxxx, xx xxxxxxx. <xref linkend="mysqlian-APP-B-TABLE-3"/> xxxxx xxxxxxxxx xxxxxxx xxxxxxxxx.
+</para>
+        <para><indexterm id="mysqlian-APP-B-ITERM-4748" significance="normal"><primary>xxxxxxx xxxxxxxxx</primary></indexterm><indexterm id="mysqlian-APP-B-ITERM-4749" significance="normal"><primary>xxxxxxxxx</primary><secondary>xxxxxxx</secondary></indexterm>
+Txx xxxxxxxxx <literal moreinfo="none">IS</literal> xxx <literal moreinfo="none">IS NOT</literal> xxx xxxxx xxxxx xx Vxxxxxx d.d.d xx MxSQL. A xxxxxxx xxxxx xx <literal moreinfo="none">TRUE</literal>, <literal moreinfo="none">FALSE</literal>, xx <literal moreinfo="none">UNKNOWN</literal> xxxxxx xxxxxxxxxxx xxxxxx xxxxx xxxxxxxxx.
+</para>
+        <table id="mysqlian-APP-B-TABLE-3">
+          <title>Lxxxxxx xxxxxxxxx</title>
+          <tgroup cols="2">
+            <colspec colnum="1" colname="col1"/>
+            <colspec colnum="2" colname="col2"/>
+            <thead>
+              <row>
+                <entry>
+                  <para>Oxxxxxxx</para>
+                </entry>
+                <entry>
+                  <para>Uxx</para>
+                </entry>
+              </row>
+            </thead>
+            <tbody>
+              <row>
+                <entry>
+                  <para><indexterm id="mysqlian-APP-B-ITERM-4742" significance="normal"><primary>AND xxxxxxxx</primary></indexterm> AND</para>
+                </entry>
+                <entry>
+                  <para>Lxxxxxx <emphasis>AND</emphasis></para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>&amp;&amp;</para>
+                </entry>
+                <entry>
+                  <para>Lxxxxxx <emphasis>AND</emphasis></para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para><indexterm id="mysqlian-APP-B-ITERM-4743" significance="normal"><primary>IS xxxxxxxx</primary></indexterm> IS <emphasis>xxxxxxx</emphasis></para>
+                </entry>
+                <entry>
+                  <para>Lxxxxxx <emphasis>xxxxx</emphasis></para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para><indexterm id="mysqlian-APP-B-ITERM-4744" significance="normal"><primary>IS NOT xxxxxxxx</primary></indexterm> IS NOT <emphasis>xxxxxxx</emphasis></para>
+                </entry>
+                <entry>
+                  <para>Lxxxxxx <emphasis>xxxxx</emphasis></para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para><indexterm id="mysqlian-APP-B-ITERM-4745" significance="normal"><primary>OR xxxxxxxx</primary></indexterm> OR</para>
+                </entry>
+                <entry>
+                  <para>Lxxxxxx <emphasis>OR</emphasis></para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>||</para>
+                </entry>
+                <entry>
+                  <para>Lxxxxxx <emphasis>OR</emphasis></para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para><indexterm id="mysqlian-APP-B-ITERM-4746" significance="normal"><primary>NOT xxxxxxxx</primary></indexterm> NOT</para>
+                </entry>
+                <entry>
+                  <para>Lxxxxxx <emphasis>NOT</emphasis></para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>!</para>
+                </entry>
+                <entry>
+                  <para>Lxxxxxx <emphasis>NOT</emphasis></para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para><indexterm id="mysqlian-APP-B-ITERM-4747" significance="normal"><primary>XOR xxxxxxxx</primary></indexterm> XOR</para>
+                </entry>
+                <entry>
+                  <para>Lxxxxxx <emphasis>XOR</emphasis></para>
+                </entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+      </sect1>
+      <sect1 id="mysqlian-APP-B-SECT-4">
+        <title>Bxxxxxx Oxxxxxxxx</title>
+        <para><indexterm id="mysqlian-APP-B-ITERM-4750" significance="normal"><primary>xxxxxxx xxxxxxxxx</primary></indexterm><indexterm id="mysqlian-APP-B-ITERM-4751" significance="normal"><primary>xxxxxxxxx</primary><secondary>xxxxxxx</secondary></indexterm>
+Bxxxxxx xxxxxxxxx xxx xxxx xxx xxxxxxxxx xxxxxxx xxxxx xx xxxxx xxxxxx xxxxxx. Txxxx xxxxxxxxx xxx xxxxxx xx <xref linkend="mysqlian-APP-B-TABLE-4"/>.
+</para>
+        <para><indexterm id="mysqlian-APP-B-ITERM-4752" significance="normal"><primary>xxxxx (~)</primary></indexterm>
+Txx xxxxx (<literal moreinfo="none">~</literal>) xxx xx xxxx xx xxxxxx xxx xxxx xx x xxxxx.
+</para>
+        <table id="mysqlian-APP-B-TABLE-4">
+          <title>Bxxxxxx xxxxxxxxx</title>
+          <tgroup cols="2">
+            <colspec colnum="1" colname="col1"/>
+            <colspec colnum="2" colname="col2"/>
+            <thead>
+              <row>
+                <entry>
+                  <para>Oxxxxxxx</para>
+                </entry>
+                <entry>
+                  <para>Uxx</para>
+                </entry>
+              </row>
+            </thead>
+            <tbody>
+              <row>
+                <entry>
+                  <para>|</para>
+                </entry>
+                <entry>
+                  <para>OR</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>^</para>
+                </entry>
+                <entry>
+                  <para>XOR</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>&amp;</para>
+                </entry>
+                <entry>
+                  <para>AND</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>&lt;&lt;</para>
+                </entry>
+                <entry>
+                  <para>
+                    <emphasis>Sxxxx xxxx xx xxxx</emphasis>
+                  </para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>&gt;&gt;</para>
+                </entry>
+                <entry>
+                  <para>
+                    <emphasis>Sxxxx xxxx xx xxxxx</emphasis>
+                  </para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>~</para>
+                </entry>
+                <entry>
+                  <para>
+                    <emphasis>NOT xx xxxxxx xxxx</emphasis>
+                  </para>
+                </entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+      </sect1>
+      <sect1 id="mysqlian-APP-B-SECT-5">
+        <title>Rxxxxxx Exxxxxxxxx</title>
+        <para>Wxxx xxxxx xxx xxxxxxxxx <literal moreinfo="none">REGEXP</literal>, <literal moreinfo="none">RLIKE</literal>, xx xxxx xx <literal moreinfo="none">NOT REGEXP</literal>, xxxxx xxx xxxxxxx xxxxxxxxxx xxx xxxxxxxxxx xx xx xxxx xx xxxxxx xxx xxxx xxxxx xx xxxxxxx xxxxxxxxxxx. <link linkend="mysqlian-APP-B-TABLE-5">Txxxx B-d</link> xxxxx xxxxx xxx xxxxxxx xxxxxxxxxx xxx <link linkend="mysqlian-APP-B-TABLE-6">Txxxx B-d</link> xxxxx xxxxxxx xxxxxxxxxx xxxx xxx xx xxxx. Ix xxxxxxx xxxx xxxxxxxxxx, xxxxxxxx xx xxxxx xxx xxxxx xxxxxx xxxxxx. Ax xx xxxxxxx xx x xxxxxxx xxxxxxxxxx xxxx xxxx x <literal moreinfo="none">SELECT</literal> xxxxxxxxx, xxxxxxx xxxx xx x xxxxxxx’x xxxxxxxx xx xxxxxx xx xxxx xxx xxxx xx x xxxxxxxxxx xxxxxxx, xxx xxxxxx’x xxxxx xxxxxxxx xxxxx xxxx xxxx. Axx xx xxxxxxxx xx xxxx xx’x xxxxxxxxx xxxx <emphasis>Sxxxx</emphasis>, xxx xx xxxxx xx <emphasis>Sxxxxxxxxx</emphasis> xx xxxxx <emphasis>Sxxxx</emphasis>. Wx xxxxx xxx xx SQL xxxxxxxxx xxxx xxx xxxxxxxxx xx xxx x xxxx xx xxxxxxxxxxxxx:</para>
+        <programlisting format="linespecific">SELECT xxxxxxx_xx, 
+CONCAT(xxxx_xxxxx, SPACE(d), xxxx_xxxx) AS Sxxxxxx
+FROM xxxxxxxx
+WHERE xxxx_xxxx REGEXP 'Sxxxx.*|Sxxxx';</programlisting>
+        <para>Ax xx xxxxxxx xxxxx x xxxxxxx xxxxxxxx xxxxxxxxx, xxxxxxx xxxx xx xxxxxxx xxxx xxxxx xxx x xxx xxxxxxx xxxxxxx xx xxxxx xxx xxxx xxxxxxx xxxxxxx xxxxxxx xxxxxxxxxx. Sxxxxxx xxxx xxxx xxxxx xxx xxxx xxxxxxxx xxxxxxx xx xxxxx xxx <literal moreinfo="none">xxxxxx_xxxxxxxx</literal> xxxxxx xxxxxxxx xxxxxxxxxx xxxxx xxxx xxxxxxx xx xxxxxx. Wx xxxxx xxxxxx xxx xxxx xx xxxxxxxxx xx SQL xxxxxxxxx xxxx xxx xxxxxxxxx:</para>
+        <programlisting format="linespecific">SELECT xxxxxxx_xx, xxx_xxx, 
+CONCAT(xxxx_xxxxx, SPACE(d), xxxx_xxxx) AS Sxxxxxx
+FROM xxxxxxxx
+WHERE CONCAT(xxxx_xxxxx, xxxx_xxxx) REGEXP '[[:xxxxx:]]+'
+OR xxx_xxx REGEXP '[[:xxxxx:]]+';</programlisting>
+        <para>Tx xxxx xx xxxxxxx xx x xxxxxxxxx xxxxx x xxxxxxxxx xxxx, xxxxxxx xxxx xxx xxxxxx xxxxxxxxxx xxxxxx xxxxxxxx xxx xxxxxxxxxxxxxx xxxxxxx (x.x., <literal moreinfo="none">xxx_xxx</literal>) xxxxxxx’x xxxxxxx xxx xxxxx xxxxxx xxxxxxxxx (x.x., <replaceable>ddd-dd-dddd</replaceable>). Wx xxxxx xxxxx xx SQL xxxxxxxxx xxxx xxx xxxxxxxxx xx xxxx xxxxxxx xxxx xxxxxxx xx xxxx xxxxxx:</para>
+        <programlisting format="linespecific">SELECT xxxxxxx_xx, xxx_xxx, 
+CONCAT(xxxx_xxxxx, SPACE(d), xxxx_xxxx) AS Sxxxxxx
+FROM xxxxxxxx
+WHERE xxx_xxx REGEXP '[[.xxxxxx.]]+';</programlisting>
+        <para>Tx xx xxxx xx xxxx xxx xxxx xxxx xx xxx xxxxxxxxxxxx xxxx xxx xxxxxx xxx xxx xxxxxx xxxxxxxx xxxxxx (x.x., <emphasis>xxx-xx-xxxx</emphasis>), xx xxxxx xxx xxxx xxxxxx xxx xxxx xxxxxxxx xxxxxxx xxxxxxxxxx:</para>
+        <programlisting format="linespecific">SELECT xxxxxxx_xx, xxx_xxx, 
+CONCAT(xxxx_xxxxx, SPACE(d), xxxx_xxxx) AS Sxxxxxx 
+FROM xxxxxxxx 
+WHERE xxx_xxx NOT REGEXP 
+'[[:xxxxx:]]{d}[[.xxxxxx.]]{d}[[:xxxxx:]]{d}[[.xxxxxx.]]{d}[[:xxxxx:]]{d}';</programlisting>
+        <para>Nxxxxx xxxx xxxx xxxxxxxxx xx xxxxx xxx xxxxx-xxxxxx xxxxx xxxx xxxxxxxx xx xxxxxxx xxx xxxxx xxxxxx xx xxxxxxxxxx xx xxxxxx xxxxxxxxx.</para>
+        <table id="mysqlian-APP-B-TABLE-5">
+          <title>Pxxxxxx Mxxxxxxx Cxxxxxxxxx</title>
+          <tgroup cols="2">
+            <colspec colnum="1" colname="col1"/>
+            <colspec colnum="2" colname="col2"/>
+            <thead>
+              <row>
+                <entry>
+                  <para>Cxxxxxxxx</para>
+                </entry>
+                <entry>
+                  <para>Uxx</para>
+                </entry>
+              </row>
+            </thead>
+            <tbody>
+              <row>
+                <entry>
+                  <para>^</para>
+                </entry>
+                <entry>
+                  <para>Mxxxxxx xxxxxxxxx xx xxxxxx.</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>$</para>
+                </entry>
+                <entry>
+                  <para>Mxxxxxx xxxxxxxxx xx xxxxxx.</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>.</para>
+                </entry>
+                <entry>
+                  <para>Mxxxxxx xxx xxxxxxxxx, xxxxx, xx xxxx xxxxxx.</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>*</para>
+                </entry>
+                <entry>
+                  <para>Mxxxxxx xxxx xx xxxx xx xxx xxxxxxxxx xxxxxxxxxxx xxxxxxxxx.</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>+</para>
+                </entry>
+                <entry>
+                  <para>Mxxxxxx xxx xx xxxx xx xxx xxxxxxxxx xxxxxxxxxxx xxxxxxxxx.</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>?</para>
+                </entry>
+                <entry>
+                  <para>Mxxxxxx xxxx xx xxx xx xxx xxxxxxxxx xxxxxxxxxxx xxxxxxxxx.</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>|</para>
+                </entry>
+                <entry>
+                  <para>Ax <literal moreinfo="none">OR</literal> xxxxxxxx, xx xxxxxxx xxx xxxxxxxxxx xxxxxx xx xxxxx xx (x.x., <literal moreinfo="none">'Rxxxxxx|Rxxxx'</literal>).</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>(<replaceable>xxxxxxxxxx</replaceable>)*</para>
+                </entry>
+                <entry>
+                  <para>Mxxxxxx xxxx xx xxxx xxxxxxxxxxx xx xxx xxxxxxxx xx xxxxxxxxxx xxxxx xx xxxxxxxxxxx.</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>{<replaceable>xxxxxx</replaceable>}</para>
+                </entry>
+                <entry>
+                  <para>Sxxxxxxxx xxx xxxxxx xx xxxxxxxxxxx xx xxx xxxxxxxx xxxxxxx xxxxx.</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>{<replaceable>xxxxxx</replaceable>,<replaceable>xxxxxx</replaceable>}</para>
+                </entry>
+                <entry>
+                  <para>Sxxxxxxxx xxx xxxxx xxxxxx xx xxxxxxxxxxx xx xxx xxxxxxxx xxxxxxx xxxxx, xxxxxxxx xx xxx xxxxxxx xxxxxx xx xxxxxxxxxx. Ix xxxx xxx xxxxxxx xxxxxx xx xxxxxxx, d xx xxxxxxx. Ix xxxx xxx xxxxxxx xxxxxx xx xxxxxxx, xxxxxxxxx xx xxxxxxx xxx xx.</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>[<replaceable>x</replaceable>-<replaceable>x</replaceable>]</para>
+                </entry>
+                <entry>
+                  <para>Uxxx xx xxxxxxx x xxxxx xx xxxxxxxxxx xx xxxxxxxxxxxx xxxxx (x.x., <literal moreinfo="none">'[x-x]'</literal> xxx xxx xxxxx xxxxx xxxxxxxxx xxxxxxx), xx xxxxxxx xx xxxxxxx xxxxxxxx (x.x., <literal moreinfo="none">'[d-d]'</literal> xxx xxx xxxxxxx).</para>
+                </entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+        <table id="mysqlian-APP-B-TABLE-6">
+          <title>Pxxxxxx Mxxxxxxx Cxxxxxxxxx</title>
+          <tgroup cols="2">
+            <colspec colnum="1" colname="col1"/>
+            <colspec colnum="2" colname="col2"/>
+            <thead>
+              <row>
+                <entry>
+                  <para>Cxxxxxxxx</para>
+                </entry>
+                <entry>
+                  <para>Uxx</para>
+                </entry>
+              </row>
+            </thead>
+            <tbody>
+              <row>
+                <entry>
+                  <para>[.<replaceable>xxxxxxxxx</replaceable>.]</para>
+                </entry>
+                <entry>
+                  <para>Mxxxxxx xxx xxxxx xxxxxxxxx xx xxxxxxxxx xxxx (x.x., <literal moreinfo="none">xxxxxxxxx</literal>, <literal moreinfo="none">xxxxxxxx-xxxxxx</literal>, <literal moreinfo="none">xxx-xxxx</literal>, <literal moreinfo="none">xxx</literal>).</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>[=<replaceable>xxxxxxxxx</replaceable>=]</para>
+                </entry>
+                <entry>
+                  <para>Mxxxxxx xxxxxxxxxx xx xxx xxxx xxxxx xx xxx xxxxxxxxx xxxxx.</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>[[:&lt;:]]</para>
+                </entry>
+                <entry>
+                  <para>Mxxxxxx xxx xxxxxxxxx xx x xxxx.</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>[[:&gt;:]]</para>
+                </entry>
+                <entry>
+                  <para>Mxxxxxx xxx xxx xx x xxxx.</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>[:xxxxx:]</para>
+                </entry>
+                <entry>
+                  <para>Mxxxxxx xxxxxxxxxxxx xxxxxxxxxx.</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>[:xxxxx:]</para>
+                </entry>
+                <entry>
+                  <para>Mxxxxxx xxxxxxxxxxxx xxxxxxxxxx.</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>[:xxxxx:]</para>
+                </entry>
+                <entry>
+                  <para>Mxxxxxx x xxxxx xx xxxxx xxxxx xxxxxxxxxx.</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>[:xxxxx:]</para>
+                </entry>
+                <entry>
+                  <para>Mxxxxxx xxxxxxx xxxxxxxxxx.</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>[:xxxxx:]</para>
+                </entry>
+                <entry>
+                  <para>Mxxxxxx xxxxxx.</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>[:xxxxx:]</para>
+                </entry>
+                <entry>
+                  <para>Mxxxxxx xxxxxxxxx xxxxxxxxxxxx xxxxxxxxxx.</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>[:xxxxx:]</para>
+                </entry>
+                <entry>
+                  <para>Mxxxxxx xxxxxxx xxx xxxxx xxxxxxxxxx.</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>[:xxxxx:]</para>
+                </entry>
+                <entry>
+                  <para>Mxxxxxx xxxxxxxxxx xxxxxxxxxx.</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>[:xxxxx:]</para>
+                </entry>
+                <entry>
+                  <para>Mxxxxxx xxxxx, xxxxxxxx-xxxxxx, xxx-xxxx, xxx xxx xxxxxxxxxx.</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>[:xxxxx:]</para>
+                </entry>
+                <entry>
+                  <para>Mxxxxxx xxxxxxxxx xxxxxxxxxxxx xxxxxxxxxx.</para>
+                </entry>
+              </row>
+              <row>
+                <entry>
+                  <para>[:xxxxxx:]</para>
+                </entry>
+                <entry>
+                  <para>Mxxxxxx xxxxxxxxxxx xxxxxxxxxx.</para>
+                </entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+      </sect1>
+    </appendix>
+    <appendix id="mysqlian-APP-C" xml:base="appc.xml">
+      <title>Sxxxxx xxx Exxxxxxxxxx Vxxxxxxxx</title>
+      <para><indexterm id="mysqlian-APP-C-ITERM-4753" significance="normal"><primary>xxxxxxxxxxx xxxxxxxxx</primary></indexterm>
+Txx MxSQL xxxxxx, xxx xxxx xx xxx xxxxxxx xxx xxxxxxxxx, xxx xxxxxxx xxxxxxxxxxx xxxxxxxxx xxxxxxxx xx xxx xxxxxxxxx xxxxxx. Fxx xxxx xxxxxxxx, xxx xxxx xxx xxxxxxxx xxxx xx xxxxx xxxxxxxxx xx xxxxxxx-xxxx xxxxxxx xx xxxxxx xxx xx xx xxxxxx xxxx (x.x., <literal moreinfo="none">xx.xxx</literal> xx <literal moreinfo="none">xx.xxx</literal>, xxxxxxxxx xx xxxx xxxxxx). <link linkend="mysqlian-APP-C-TABLE-1">Txxxx C-d</link> xxxxx xxx xxxxxxxxx xxxx.
+</para>
+      <table id="mysqlian-APP-C-TABLE-1">
+        <title>Vxxxxxxxx xxx xxxxx xxxx</title>
+        <tgroup cols="2">
+          <colspec colnum="1" colname="col1"/>
+          <colspec colnum="2" colname="col2"/>
+          <thead>
+            <row>
+              <entry>
+                <para>Vxxxxxxx</para>
+              </entry>
+              <entry>
+                <para>Uxx</para>
+              </entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                <para><indexterm id="mysqlian-APP-C-ITERM-4754" significance="normal"><primary>CC xxxxxxxxxxx xxxxxxxx</primary></indexterm>
+CC
+</para>
+              </entry>
+              <entry>
+                <para>C xxxxxxxx</para>
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <para><indexterm id="mysqlian-APP-C-ITERM-4755" significance="normal"><primary>CXX xxxxxxxxxxx xxxxxxxx</primary></indexterm>
+CXX
+</para>
+              </entry>
+              <entry>
+                <para>C++ xxxxxxxx</para>
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <para><indexterm id="mysqlian-APP-C-ITERM-4756" significance="normal"><primary>CFLAGS xxxxxxxxxxx xxxxxxxx</primary></indexterm>
+CFLAGS
+</para>
+              </entry>
+              <entry>
+                <para>C xxxxxxxx xxxxx</para>
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <para><indexterm id="mysqlian-APP-C-ITERM-4757" significance="normal"><primary>CXXFLAGS xxxxxxxxxxx xxxxxxxx</primary></indexterm>
+CXXFLAGS
+</para>
+              </entry>
+              <entry>
+                <para>C++ xxxxxxxx xxxxx</para>
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <para><indexterm id="mysqlian-APP-C-ITERM-4758" significance="normal"><primary>DBI_USER xxxxxxxxxxx xxxxxxxx</primary></indexterm>
+DBI_USER
+</para>
+              </entry>
+              <entry>
+                <para>Dxxxxxx xxxxxxxx xxx Pxxx DBI xxxxxxxxxxxx</para>
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <para><indexterm id="mysqlian-APP-C-ITERM-4759" significance="normal"><primary>DBI_TRACE xxxxxxxxxxx xxxxxxxx</primary></indexterm>
+DBI_TRACE
+</para>
+              </entry>
+              <entry>
+                <para>Pxxx DBI xxxxx xxxxxxx</para>
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <para><indexterm id="mysqlian-APP-C-ITERM-4760" significance="normal"><primary>HOME xxxxxxxxxxx xxxxxxxx</primary></indexterm>
+HOME
+</para>
+              </entry>
+              <entry>
+                <para>Dxxxxxx xxxx xxx <literal moreinfo="none">xxxxx</literal> xxxxxx xxxxxxx xxxxxxx xxxx</para>
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <para><indexterm id="mysqlian-APP-C-ITERM-4761" significance="normal"><primary>LD_RUN_PATH xxxxxxxxxxx xxxxxxxx</primary></indexterm>
+LD_RUN_PATH
+</para>
+              </entry>
+              <entry>
+                <para>Pxxx xxx <literal moreinfo="none">xxxxxxxxxxxxxx.xx</literal> xxxx</para>
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <para><indexterm id="mysqlian-APP-C-ITERM-4762" significance="normal"><primary>MYSQL_DEBUG xxxxxxxxxxx xxxxxxxx</primary></indexterm>
+MYSQL_DEBUG
+</para>
+              </entry>
+              <entry>
+                <para>Dxxxx xxxxx xxxxxxx</para>
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <para>
+MYSQL_GROUP_SUFFIX
+</para>
+              </entry>
+              <entry>
+                <para>Rxxxxxx xx xxx xxxxx xxxxx xxxx xxx <literal moreinfo="none">--xxxxxxxx-xxxxx-xxxxxx</literal> xxxxxx xxx x xxxxxxx xxxx xxx <literal moreinfo="none">xxxxx</literal> xxxxxx.</para>
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <para><indexterm id="mysqlian-APP-C-ITERM-4763" significance="normal"><primary>MYSQL_HISTFILE xxxxxxxxxxx xxxxxxxx</primary></indexterm>
+MYSQL_HISTFILE
+</para>
+              </entry>
+              <entry>
+                <para>Dxxxxxx xxxx xxx <literal moreinfo="none">xxxxx</literal> xxxxxx xxxxxxx xxxxxxx xxxx</para>
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <para>
+MYSQL_HOME
+</para>
+              </entry>
+              <entry>
+                <para>Cxxxxxxx xxx xxxx xxx xxx xxxxxx’x xxxxxx xxxx (x.x., <literal moreinfo="none">xx.xxx</literal>). Axxxxxxxx xx xx xxxxxxx d.d.d xx MxSQL.</para>
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <para><indexterm id="mysqlian-APP-C-ITERM-4764" significance="normal"><primary>MYSQL_HOST xxxxxxxxxxx xxxxxxxx</primary></indexterm>
+MYSQL_HOST
+</para>
+              </entry>
+              <entry>
+                <para>Dxxxxxx xxxx xxx <literal moreinfo="none">xxxxx</literal> xxxxxx xxxxxxx</para>
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <para><indexterm id="mysqlian-APP-C-ITERM-4765" significance="normal"><primary>MYSQL_PSd xxxxxxxxxxx xxxxxxxx</primary></indexterm>
+MYSQL_PSd
+</para>
+              </entry>
+              <entry>
+                <para>Cxxxxxx-xxxx xxxxxx xxx xxxxx xxxx xx x xxxxxxxxx xxx <literal moreinfo="none">xxxxx</literal> xxxxxx xxxxxxx</para>
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <para><indexterm id="mysqlian-APP-C-ITERM-4766" significance="normal"><primary>MYSQL_PWD xxxxxxxxxxx xxxxxxxx</primary></indexterm>
+MYSQL_PWD
+</para>
+              </entry>
+              <entry>
+                <para>Dxxxxxx xxxxxxxx xxx xxxxxxxxxx xx xxxxxx</para>
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <para><indexterm id="mysqlian-APP-C-ITERM-4767" significance="normal"><primary>MYSQL_TCP_PORT xxxxxxxxxxx xxxxxxxx</primary></indexterm>
+MYSQL_TCP_PORT
+</para>
+              </entry>
+              <entry>
+                <para>Dxxxxxx TCP/IP xxxx xxxxxx</para>
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <para><indexterm id="mysqlian-APP-C-ITERM-4768" significance="normal"><primary>MYSQL_UNIX_PORT xxxxxxxxxxx xxxxxxxx</primary></indexterm>
+MYSQL_UNIX_PORT
+</para>
+              </entry>
+              <entry>
+                <para>Dxxxxxx Uxxx xxxxxx xxxxxxxx</para>
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <para><indexterm id="mysqlian-APP-C-ITERM-4769" significance="normal"><primary>PATH xxxxxxxxxxx xxxxxxxx</primary></indexterm>
+PATH
+</para>
+              </entry>
+              <entry>
+                <para>Pxxx xxx xxx MxSQL xxxxxxxx</para>
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <para><indexterm id="mysqlian-APP-C-ITERM-4770" significance="normal"><primary>TMPDIR xxxxxxxxxxx xxxxxxxx</primary></indexterm>
+TMPDIR
+</para>
+              </entry>
+              <entry>
+                <para>Pxxx xxx xxxxxxxxx xxxxxxxxx</para>
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <para><indexterm id="mysqlian-APP-C-ITERM-4771" significance="normal"><primary>TZ xxxxxxxxxxx xxxxxxxx</primary></indexterm>
+TZ
+</para>
+              </entry>
+              <entry>
+                <para>Txxx xxxx xx xxxxxx</para>
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <para><indexterm id="mysqlian-APP-C-ITERM-4772" significance="normal"><primary>UMASK_DIR xxxxxxxxxxx xxxxxxxx</primary></indexterm>
+UMASK_DIR
+</para>
+              </entry>
+              <entry>
+                <para>Pxxxxxxxxxx xxxxxxxx xxx xxxxxxxx xxxxxxxxxxx</para>
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <para><indexterm id="mysqlian-APP-C-ITERM-4773" significance="normal"><primary>UMASK xxxxxxxxxxx xxxxxxxx</primary></indexterm>
+UMASK
+</para>
+              </entry>
+              <entry>
+                <para>Pxxxxxxxxxx xxxxxxxx xxx xxxxxxxx xxxxx</para>
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <para><indexterm id="mysqlian-APP-C-ITERM-4774" significance="normal"><primary>xxxxxxxxxxx xxxxxxxxx</primary></indexterm><indexterm id="mysqlian-APP-C-ITERM-4775" significance="normal"><primary>USER xxxxxxxxxxx xxxxxxxx</primary></indexterm>
+USER
+</para>
+              </entry>
+              <entry>
+                <para>Dxxxxxx xxxxxxxx xxx xxxxxxxxxx xx xxxxxx xxxxxxx xx MS Wxxxxxx xx Nxxxxx NxxWxxx</para>
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table>
+    </appendix>
+  <index/>
+  <colophon id="colophon" xml:base="colo.xml">
+    <title>Cxxxxxxx</title>
+    <para>Oxx xxxx xx xxx xxxxxx xx xxxxxx xxxxxxxx, xxx xxx xxxxxxxxxxxxxxx,
+  xxx xxxxxxxx xxxx xxxxxxxxxxxx xxxxxxxx. Dxxxxxxxxxx xxxxxx xxxxxxxxxx xxx
+  xxxxxxxxxxx xxxxxxxx xx xxxxxxxxx xxxxxx, xxxxxxxxx xxxxxxxxxxx xxx xxxx
+  xxxx xxxxxxxxxxx xxx xxxxxxxx.</para>
+    <para>Txx xxxxxx xx xxx xxxxx xx <emphasis>FILL IN TITLE</emphasis>
+  xx FILL IN DESCRIPTION.
+  </para>
+    <para>Txx xxxxx xxxxx xx FILL IN CREDITS. Txx xxxxx xxxx xx Axxxx ITC
+  Gxxxxxxx. Txx xxxx xxxx xx Lxxxxxxx Bxxxx; xxx xxxxxxx xxxx xx Axxxx
+  Mxxxxx Cxxxxxxxx; xxx xxx xxxx xxxx xx LxxxxFxxx’x TxxSxxx Mxxx
+  Cxxxxxxxx.</para>
+  </colophon>
+</book>

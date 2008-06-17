@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<chapter>
+<chapterinfo>
+<releaseinfo role="CVS">$Id$</releaseinfo>
+</chapterinfo>
+<title>Unit Test: simplemsgentry</title>
+
+<msgset>
+<simplemsgentry level="user" origin="parser">
+  <msgtext>
+    <para>XML document structures must start and end within the same
+    entity.</para>
+  </msgtext>
+  <msgexplan>
+    <para>In XML, the end tag for an element must occur in the same
+entity as the start tag. You cannot include an external parsed entity
+that contains unbalanced tags, even if the result, after the content
+is included would be balanced.</para>
+  </msgexplan>
+</simplemsgentry>
+</msgset>
+
+</chapter>

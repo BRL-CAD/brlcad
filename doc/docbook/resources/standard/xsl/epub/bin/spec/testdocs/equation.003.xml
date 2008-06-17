@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article>
+<articleinfo>
+<title>Unit Test: equation.003</title>
+<releaseinfo role="CVS">$Id$</releaseinfo>
+<author><firstname>Norman</firstname><surname>Walsh</surname>
+        <affiliation><address><email>ndw@nwalsh.com</email></address></affiliation>
+</author>
+</articleinfo>
+
+<equation><title>Third Equation</title>
+<mediaobject>
+<imageobject>
+<imagedata fileref="emc2.png"/>
+</imageobject>
+<textobject>
+<phrase>e=mc^2</phrase>
+</textobject>
+</mediaobject>
+</equation>
+
+</article>

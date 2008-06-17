@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article id="article">
+<articleinfo>
+<title>Unit Test: xref.002.xml</title>
+<releaseinfo role="CVS">$Id$</releaseinfo>
+<author><firstname>Norman</firstname><surname>Walsh</surname>
+        <affiliation><address><email>ndw@nwalsh.com</email></address></affiliation>
+</author>
+<modespec id="xreftext">Xref Endterm</modespec>
+</articleinfo>
+
+<para>This is an xref test.</para>
+
+<para>Cross reference to section one: <xref linkend="s1"/>.</para>
+
+<para>Cross reference to section two: <xref linkend="s2"/>.</para>
+
+<para>Cross reference to section one with endterm:
+<xref linkend="s1" endterm="xreftext"/>.</para>
+
+<para>Cross reference to section two with endterm:
+<xref linkend="s2" endterm="xreftext"/>.</para>
+
+<section id="s1">
+<title>Section One Title</title>
+
+<para>This text is irrelevant.</para>
+
+</section>
+
+<section id="s2" xreflabel="Section Two XRefLabel">
+<title>Section Two Title</title>
+
+<para>This text is irrelevant.</para>
+
+</section>
+
+</article>

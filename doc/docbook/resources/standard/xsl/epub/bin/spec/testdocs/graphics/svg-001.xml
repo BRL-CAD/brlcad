@@ -1,0 +1,11 @@
+<svg:svg xmlns:svg="http://www.w3.org/2000/svg">
+  <svg:g transform="scale(0.5)">
+    <svg:polygon style="fill:red; stroke:blue; stroke-width:10"
+                 points="350, 75 379,161 469,161 397,215
+                         423,301 350,250 277,301 303,215
+                         231,161 321,161" />
+    <svg:polygon style="fill:lime; stroke:blue; stroke-width:10"
+                 points="850,75  958,137.5 958,262.5
+                         850,325 742,262.6 742,137.5"/>
+  </svg:g>
+</svg:svg>

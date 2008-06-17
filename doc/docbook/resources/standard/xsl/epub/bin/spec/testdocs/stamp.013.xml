@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                  "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<article>
+<articleinfo>
+<title>Unit Test: stamp.013</title>
+<subtitle>Test having both contentwidth="x%" and contentdepth="y%"</subtitle>
+<releaseinfo role="CVS">$Id$</releaseinfo>
+<corpauthor>DocBook Project Development team</corpauthor>
+</articleinfo>
+
+<para>The stamp image has a natural size of 200x128 pixels.</para>
+
+<para>The stamp image: width=7.12cm; depth=7.12cm; scale=125; align=center</para>
+
+<mediaobject>
+  <imageobject>
+    <?dbhtml background-color="blue"?>
+    <imagedata
+      width="7.12cm"
+      depth="7.12cm"
+      scale="125"
+      align="center"
+      fileref="graphics/duck-small"/>
+  </imageobject>
+  <textobject><phrase>The DocBook Stamp</phrase></textobject>
+</mediaobject>
+
+<para>The stamp image: width=512; depth=512; contentwidth=50%; contentdepth=30%; align=center</para>
+
+<mediaobject>
+  <imageobject>
+    <?dbhtml background-color="blue"?>
+    <imagedata
+      width="512"
+      depth="512"
+      contentwidth="50%"
+      contentdepth="30%"
+      align="center"
+      fileref="graphics/duck-small"/>
+  </imageobject>
+  <textobject><phrase>The DocBook Stamp</phrase></textobject>
+</mediaobject>
+
+<mediaobject>
+  <imageobject>
+    <?dbhtml background-color="blue"?>
+    <imagedata
+      width="512"
+      depth="400"
+      contentwidth="500"
+      contentdepth="300"
+      align="left"
+      valign="top"
+      fileref="graphics/duck-small"/>
+  </imageobject>
+  <textobject><phrase>The DocBook Stamp</phrase></textobject>
+</mediaobject>
+
+<mediaobject>
+  <imageobject>
+    <?dbhtml background-color="blue"?>
+    <imagedata
+      depth="400"
+      contentwidth="500"
+      contentdepth="300"
+      align="left"
+      valign="top"
+      fileref="graphics/duck-small"/>
+  </imageobject>
+  <textobject><phrase>The DocBook Stamp</phrase></textobject>
+</mediaobject>
+
+<mediaobject>
+  <imageobject>
+    <?dbhtml background-color="blue"?>
+    <imagedata
+      contentwidth="500"
+      contentdepth="300"
+      align="left"
+      valign="top"
+      fileref="graphics/duck-small"/>
+  </imageobject>
+  <textobject><phrase>The DocBook Stamp</phrase></textobject>
+</mediaobject>
+
+
+</article>

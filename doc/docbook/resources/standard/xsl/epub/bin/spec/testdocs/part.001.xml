@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE part PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<part>
+  <partinfo>
+    <releaseinfo role="CVS">$Id$</releaseinfo>
+  </partinfo>
+  <title>Unit Test: part.001</title>
+  <chapter>
+    <title>Chapter</title>
+    <para>Some test data
+    <indexterm>
+      <primary>First Part</primary>
+    </indexterm></para>
+    <para>Referencing <firstterm>gloss-1</firstterm>.</para>
+    <sect1>
+      <title>A sect1 in a chapter</title>
+      <para>With a little text.</para>
+    </sect1>
+  </chapter>
+
+  <glossary role="auto">
+    <remark>make sure <glossterm>gloss-2</glossterm> is referenced</remark>
+    <glossdiv>
+      <title>foo</title>
+      <glossentry><glossterm>irrelevant</glossterm>
+      <glossdef><para/></glossdef>
+      </glossentry>
+    </glossdiv>
+  </glossary>
+
+  <bibliography>
+    <bibliographyinfo>
+      <author><firstname>Norman</firstname><surname>Walsh</surname>
+      <affiliation><address><email>ndw@nwalsh.com</email></address></affiliation>
+      </author>
+    </bibliographyinfo>
+
+    <bibliodiv>
+      <title>Entries using biblioentry</title>
+
+      <biblioentry>
+	<abbrev>AhoSethiUllman96</abbrev>
+	<authorgroup>
+	  <author><firstname>Alfred V.</firstname><surname>Aho</surname></author>  
+	  <author><firstname>Ravi</firstname><surname>Sethi</surname></author>
+	  <author><firstname>Jeffrey D.</firstname><surname>Ullman</surname></author>
+	</authorgroup>
+	<title>Compilers, Principles, Techniques, and Tools</title>    
+	<publisher>
+	  <publishername>Addison-Wesley Publishing Company</publishername>
+	</publisher>
+	<copyright><year>1996</year>
+	<holder>Bell Telephone Laboratories, Inc.</holder></copyright>
+	<isbn>0-201-10088-6</isbn>    
+	<editor><firstname>James T.</firstname><surname>DeWolf</surname></editor>
+      </biblioentry>
+
+    </bibliodiv>
+  </bibliography>
+  <index/>
+</part>

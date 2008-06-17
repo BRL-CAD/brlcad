@@ -1,0 +1,59 @@
+<article xml:id="article" xmlns="http://docbook.org/ns/docbook">
+<info>
+<title>Unit Test: sidebar.001.xml</title>
+<releaseinfo role="CVS">$Id$</releaseinfo>
+<author>
+  <personname>
+    <firstname>Norman</firstname><surname>Walsh</surname>
+  </personname>
+  <email>ndw@nwalsh.com</email>
+</author>
+</info>
+
+<para>This is a sidebar test.</para>
+
+<para>Here is some content. This is content. This is content. This is content.
+This is content. This is content. This is content. This is content.
+This is content. This is content. This is content. This is content.
+This is content. This is content. This is content. This is content.
+</para>
+
+<para>This is content. This is content. This is content.
+This is content. This is content. This is content. This is content.
+This is content. This is content. This is content. This is content.
+This is content. This is content. This is content. This is content.
+</para>
+
+<sidebar>
+<title>Sidebar</title>
+<para>Here is some sidebar content. This is content. This is content. This is content.
+This is content. This is content. This is content. This is content.
+This is content. This is content. This is content. This is content.
+This is content. This is content. This is content. This is content.
+</para>
+
+<para>This is content. This is content. This is content.
+This is content. This is content. This is content. This is content.
+This is content. This is content. This is content. This is content.
+This is content. This is content. This is content. This is content.
+</para>
+</sidebar>
+
+<para>Back into the main flow. This is content. This is content. This is content.
+This is content. This is content. This is content. This is content.
+This is content. This is content. This is content. This is content.
+This is content. This is content. This is content. This is content.
+</para>
+
+<sidebar>
+  <info>
+    <title>Sidebar</title>
+  </info>
+<para>Here is some sidebar content. This is content. This is content. This is content.
+This is content. This is content. This is content. This is content.
+This is content. This is content. This is content. This is content.
+This is content. This is content. This is content. This is content.
+</para>
+</sidebar>
+
+</article>

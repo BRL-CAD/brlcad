@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+<!ENTITY index    SYSTEM '../indexterm.004.index.xml'>
+]>
+<article id="indexterm.004">
+<articleinfo>
+<title>Unit Test: indexterm.004</title>
+<releaseinfo role="CVS">$Id$</releaseinfo>
+<author><firstname>Adam</firstname><surname>Di Carlo</surname>
+        <affiliation><address><email>adam@onshored.com</email></address></affiliation>
+</author>
+</articleinfo>
+  <section id="sec1">
+    <title>First Section</title>
+    <para>
+      This is first test paragraph.
+      <indexterm>
+        <primary>foo</primary>
+        <seealso>bar</seealso>
+      </indexterm>
+      <indexterm>
+        <primary>bar</primary>
+      </indexterm>
+      <indexterm>
+        <primary>baz</primary>
+      </indexterm>
+    </para>
+  </section>
+
+  <section id="sec2">
+    <title>Second Section</title>
+    <para>
+      This is second test paragraph.  We're testing identical
+      <sgmltag>indexterm</sgmltag>s with two different
+      <sgmltag>seealso</sgmltag>s.
+
+      <indexterm>
+        <primary>foo</primary>
+        <seealso>baz</seealso>
+      </indexterm>
+    </para>
+  </section>
+
+  <index/>
+  <!-- * Note: To test DSSSL index support, comment out the <index/> above -->
+  <!-- * and uncomment the entity ref below -->
+  <!-- * --> 
+  <!-- * &index; -->
+  <!-- * -->
+</article>

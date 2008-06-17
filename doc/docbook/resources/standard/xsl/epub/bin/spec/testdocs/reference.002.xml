@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<reference>
+  <referenceinfo>
+    <title>Unit Test: reference.002</title>
+    <releaseinfo role="CVS">$Id$</releaseinfo>
+    <author><firstname>Michael</firstname><surname>Smith</surname>
+      <affiliation><address><email>smith@xml-doc.org</email></address></affiliation>
+    </author>
+  </referenceinfo>
+
+  <title>Unit Test: reference.002</title>
+
+  <refentry>
+    <refnamediv>
+      <refname>chown</refname>
+      <refpurpose>Change file owners and groups</refpurpose>
+    </refnamediv>
+
+    <refsect1>
+      <title>Description</title>
+      <para>[description of chown here]</para>
+    </refsect1>
+  </refentry>
+
+  <refentry>
+    <refmeta>
+      <refentrytitle>chgrp</refentrytitle>
+      <manvolnum>1</manvolnum>
+    </refmeta>
+    <refnamediv>
+      <refname>chgrp</refname>
+      <refpurpose>Change file groups</refpurpose>
+    </refnamediv>
+
+    <refsect1>
+      <title>Description</title>
+      <para>[description of chgrp here]</para>
+    </refsect1>
+  </refentry>
+
+  <refentry>
+    <refmeta>
+      <refentrytitle>chmod</refentrytitle>
+      <manvolnum>1</manvolnum>
+    </refmeta>
+    <refnamediv>
+      <refname>chmod</refname>
+      <refpurpose>Change access permissions</refpurpose>
+    </refnamediv>
+
+    <refsect1>
+      <title>Description</title>
+      <para>[description of chmod here]</para>
+    </refsect1>
+  </refentry>
+
+  <refentry>
+    <refnamediv>
+      <refname>mysql_convert_table_format</refname>
+      <refpurpose>MySQL table converter</refpurpose>
+    </refnamediv>
+
+    <refsect1>
+      <title>Description</title>
+      <para>[description of MySQL table converter here]</para>
+    </refsect1>
+  </refentry>
+
+  <refentry>
+    <refnamediv>
+      <refname>mysql_fix_privilege_tables</refname>
+      <refpurpose>Fixes MySQL privilege tables</refpurpose>
+    </refnamediv>
+
+    <refsect1>
+      <title>Description</title>
+      <para>[description of mysql_fix_privilege_tables table converter here]</para>
+    </refsect1>
+  </refentry>
+
+  <refentry>
+    <refnamediv>
+      <refname>Mail::SpamAssassin::PersistentAddrList</refname>
+      <refpurpose>persistent address list base class</refpurpose>
+    </refnamediv>
+
+    <refsect1>
+      <title>Description</title>
+      <para>[description here]</para>
+    </refsect1>
+  </refentry>
+</reference>

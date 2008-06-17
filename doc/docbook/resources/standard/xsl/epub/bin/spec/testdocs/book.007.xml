@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!ELEMENT xi:include (xi:fallback?) >
+<!ATTLIST xi:include
+    xmlns:xi   CDATA       #FIXED    "http://www.w3.org/2001/XInclude"
+    href       CDATA       #REQUIRED
+    parse      (xml|text)  "xml"
+    encoding   CDATA       #IMPLIED >
+
+<!ELEMENT xi:fallback ANY>
+<!ATTLIST xi:fallback
+    xmlns:xi   CDATA   #FIXED   "http://www.w3.org/2001/XInclude" >
+
+<!ENTITY % local.chapter.class "| xi:include">
+]>
+<book id="book">
+  <bookinfo>
+    <title>Unit Test: book.001</title>
+    <subtitle>A Part + several Chapters + a Glossary</subtitle>
+    <releaseinfo role="CVS">$Id$</releaseinfo>
+    <corpauthor>DocBook Project Development Team</corpauthor>
+  </bookinfo>
+  <xi:include href="part.001.xml"/>
+  <xi:include href="chapter.001.xml"/>
+  <xi:include href="chapter.002.xml"/>
+  <xi:include href="epigraph.001.xml"/>
+  <xi:include href="section.004.xml"/>
+  <xi:include href="simplesect.001.xml"/>
+  <xi:include href="xrefstyle.001.xml"/>
+  <xi:include href="glossary.002.data.xml"/>
+</book>

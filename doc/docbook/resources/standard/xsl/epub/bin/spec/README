@@ -1,0 +1,17 @@
+How to run the tests?
+
+1. Get RSpec http://rspec.info/
+2. Do this:
+
+  $ cd epub/bin
+  $ spec spec/epub_spec.rb 
+
+Or, prettier:
+
+  $ cd epub/bin
+  $ spec --format specdoc --color spec/epub_spec.rb 
+
+3. Repeat for other files in spec/*spec.rb
+
+How to make them more verbose?
+1. Set $DEBUG to true (near the top of each spec)

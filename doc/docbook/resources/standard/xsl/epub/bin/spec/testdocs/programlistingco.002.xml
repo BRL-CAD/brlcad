@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd"  [
+<!ENTITY codesample SYSTEM './codesample.txt' NDATA linespecific>
+]>
+
+<article>
+  <articleinfo>
+    <title>Unit Test: programlistingco.002</title>
+    <subtitle>Tests for inserting external text files, with callouts</subtitle>
+    <releaseinfo role="CVS">$Id$</releaseinfo>
+    <corpauthor>DocBook Project Development Team</corpauthor>
+  </articleinfo>
+
+  <section>
+    <title>imagedata/@fileref + numbering + sep.</title>
+    <programlistingco>
+      <areaspec>
+        <area coords="1" id="prologue1"/>
+        <area coords="4" id="skipeof1"/>
+        <areaset coords="" id="xreq1">
+          <area coords="9" id="require11"/>
+          <area coords="10" id="require1"/>
+        </areaset>
+        <area coords="11 12" id="use1"/>
+        <area coords="27" id="funccall1"/>
+      </areaspec>
+      <programlisting linenumbering="numbered"
+                      ><?dbhtml linenumbering.everyNth="2" linenumbering.separator=" >"
+                      ?><?dbfo linenumbering.everyNth="2" linenumbering.separator=" >"
+                      ?><inlinemediaobject>
+      <imageobject>
+        <imagedata format="linespecific" fileref="codesample.txt"/>
+      </imageobject>
+      </inlinemediaobject></programlisting>
+    </programlistingco>
+  </section>
+
+  <section>
+    <title>inlinegraphic/@fileref + numbering</title>
+    <programlistingco>
+      <areaspec>
+        <area coords="1" id="prologue2"/>
+        <area coords="4" id="skipeof2"/>
+        <areaset coords="" id="xreq2">
+          <area coords="9" id="require12"/>
+          <area coords="10" id="require22"/>
+        </areaset>
+        <area coords="11 12" id="use2"/>
+        <area coords="27" id="funccall2"/>
+      </areaspec>
+      <programlisting linenumbering="numbered"
+                      ><inlinegraphic
+                      format="linespecific"
+                      fileref="codesample.txt"/></programlisting>
+    </programlistingco>
+  </section>
+
+  <section>
+    <title>textdata/@fileref w/o numbering or sep</title>
+    <programlistingco>
+      <areaspec>
+        <area coords="1" id="prologue3"/>
+        <area coords="4" id="skipeof3"/>
+        <areaset coords="" id="xreq3">
+          <area coords="9" id="require13"/>
+          <area coords="10" id="require3"/>
+        </areaset>
+        <area coords="11 12" id="use3"/>
+        <area coords="27" id="funccall3"/>
+      </areaspec>
+      <programlisting><textobject><textdata
+                      format="linespecific"
+                      fileref="codesample.txt"/></textobject></programlisting>
+    </programlistingco>
+  </section>
+
+  <section>
+    <title>textdata/@entityref</title>
+    <programlistingco>
+      <areaspec>
+        <area coords="1" id="prologue4"/>
+        <area coords="4" id="skipeof4"/>
+        <areaset coords="" id="xreq4">
+          <area coords="9" id="require14"/>
+          <area coords="10" id="require4"/>
+        </areaset>
+        <area coords="11 12" id="use4"/>
+        <area coords="27" id="funccall4"/>
+      </areaspec>
+      <programlisting><textobject><textdata
+                      format="linespecific"
+                      entityref="codesample"/></textobject></programlisting>
+    </programlistingco>
+  </section>
+
+  <section>
+    <title>imagedata/@fileref, absolute path</title>
+    <para>The listing is an external file with an absolute path.</para>
+
+    <programlistingco>
+    <areaspec>
+      <area coords="1" id="a1"/>
+      <area coords="4" id="a2"/>
+      <area coords="5 50" id="a3"/>
+    </areaspec>
+    <programlisting linenumbering="numbered"
+      ><?dbhtml linenumbering.everyNth="2" linenumbering.separator=" >"
+      ?><?dbfo linenumbering.everyNth="2" linenumbering.separator=" >"
+      ?><inlinemediaobject>
+      <imageobject>
+      <imagedata format="linespecific" fileref="/etc/hosts"/>
+      </imageobject>
+      </inlinemediaobject></programlisting>
+    </programlistingco>
+
+    <para>The listing is an external file with an absolute path using the URI scheme
+    "file".</para>
+
+    <programlistingco>
+    <areaspec>
+      <area coords="1" id="b1"/>
+      <area coords="4" id="b2"/>
+      <area coords="5 50" id="b3"/>
+    </areaspec>
+    <programlisting linenumbering="numbered"
+      ><?dbhtml linenumbering.everyNth="2" linenumbering.separator=" >"
+      ?><?dbfo linenumbering.everyNth="2" linenumbering.separator=" >"
+      ?><inlinemediaobject>
+      <imageobject>
+      <imagedata format="linespecific" fileref="file:/etc/hosts"/>
+      </imageobject>
+      </inlinemediaobject></programlisting>
+    </programlistingco>
+  </section>
+
+</article>

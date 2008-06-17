@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article id="article">
+<articleinfo>
+<title>Unit Test: docbook-43.001.xml</title>
+<releaseinfo role="CVS">$Id$</releaseinfo>
+<author><firstname>Norman</firstname><surname>Walsh</surname>
+        <affiliation><address><email>ndw@nwalsh.com</email></address></affiliation>
+</author>
+</articleinfo>
+
+<glosslist>
+<title>Glossary List Title</title>
+<glossentry>
+<glossterm>Some Term</glossterm>
+<glossdef>
+<para>Some definition.</para>
+</glossdef>
+</glossentry>
+</glosslist>
+
+<blockquote>
+<blockinfo>
+<title>Block Quote Title</title>
+</blockinfo>
+<attribution>A. Nonymous</attribution>
+<para>Some memorable quotation.</para>
+</blockquote>
+
+<para>The assignment statement <code>x=1</code> is code.</para>
+
+<table>
+<caption>HTML Table caption</caption>
+<tbody>
+<tr>
+  <td>HTML</td>
+  <td>Table</td>
+</tr>
+</tbody>
+</table>
+
+<programlisting linenumbering="numbered">#!/usr/bin/perl -- # --*-Perl-*--
+
+use Getopt::Std;
+
+$usage = "Usage: $0 [-q] [-u|-p|-m] file [ file ... ]\n";
+
+die $usage if ! getopts('qupm');
+
+die $usage if ($opt_p + $opt_u + $opt_m) != 1;
+
+$file = shift @ARGV || die $usage;
+
+$opt = '-u' if $opt_u;
+$opt = '-p' if $opt_p;
+$opt = '-m' if $opt_m;</programlisting>
+
+
+<task>
+<title>A Task</title>
+<tasksummary>
+<para>This task doesn’t accomplish anything.</para>
+</tasksummary>
+<taskprerequisites>
+<para>Do something else first.</para>
+</taskprerequisites>
+<procedure>
+<step><para>Do This</para></step>
+<step><para>Do That</para></step>
+<step><para>Do one of these things:</para>
+<stepalternatives>
+<step><para>Do A</para></step>
+<step><para>Do B</para></step>
+<step><para>Do C</para></step>
+</stepalternatives>
+</step>
+<step><para>Do the other thing</para></step>
+</procedure>
+<taskrelated>
+<para>See some more interesting task after you’ve done this one.</para>
+</taskrelated>
+</task>
+
+<para>An <orgname>Organization Name</orgname> can now occur inline.</para>
+
+<para>The URI <uri>http://norman.walsh.name</uri> should really be a ulink.</para>
+
+<programlisting continuation="continues" linenumbering="numbered">while ($file) {
+    print "Converting $file to $opt linebreaks.\n" if !$opt_q;
+    open (F, "$file");
+    binmode F;
+    read (F, $_, -s $file);
+    close (F);
+    
+    s/\r\n/\n/sg;
+    s/\r/\n/sg;
+    
+    if ($opt eq '-p') {
+	s/\n/\r\n/sg;
+    } elsif ($opt eq '-m') {
+	s/\n/\r/sg;
+    }
+    
+    open (F, ">$file");
+    binmode F;
+    print F $_;
+    close (F);
+    
+    $file = shift @ARGV;
+}</programlisting>
+
+
+</article>

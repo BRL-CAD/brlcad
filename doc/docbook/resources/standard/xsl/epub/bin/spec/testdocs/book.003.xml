@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+<!ENTITY blah "<para>Blah blah blah blah. Blah blah blah blah. Blah blah blah blah.
+Blah blah blah blah blah blah blah blah. Blah blah blah blah.
+Blah. Blah blah blah blah. Blah blah. Blah blah blah blah.
+Blah blah blah blah blah blah blah blah. Blah blah blah blah.
+Blah. Blah blah blah blah. Blah blah. Blah blah blah blah.
+Blah blah blah blah blah blah blah blah. Blah blah blah blah.
+Blah. Blah blah blah blah. Blah blah. Blah blah blah blah.
+Blah blah blah blah blah blah blah blah. Blah blah blah blah.
+Blah. Blah blah blah blah. Blah blah. Blah blah blah blah.
+Blah blah blah blah blah blah blah blah. Blah blah blah blah.
+Blah. Blah blah blah blah. Blah blah. Blah blah blah blah.
+Blah blah blah blah blah blah blah blah. Blah blah blah blah.
+Blah. Blah blah blah blah. Blah blah. Blah blah blah blah.
+Blah blah blah blah blah blah blah blah. Blah blah blah blah.
+Blah. Blah blah blah blah. Blah blah. Blah blah blah blah.
+Blah blah blah blah blah blah blah blah. Blah blah blah blah.
+Blah. Blah blah blah blah. Blah blah. Blah blah blah blah.
+</para>">
+]>
+<book id="book">
+<bookinfo>
+<title>Unit Test: book.003</title>
+<releaseinfo role="CVS">$Id$</releaseinfo>
+<authorgroup>
+<corpauthor>SomeCorp</corpauthor>
+<author><firstname>Norman</firstname><surname>Walsh</surname>
+        <affiliation><address><email>ndw@nwalsh.com</email></address></affiliation>
+</author>
+<editor><firstname>Jane</firstname><surname>Doe</surname></editor>
+</authorgroup>
+<legalnotice>
+<para>
+Some legal notice. Some legal notice. Some legal notice.
+Some legal notice. Some legal notice. Some legal notice.
+Some legal notice. Some legal notice. Some legal notice.
+Some legal notice. Some legal notice. Some legal notice.
+Some legal notice. Some legal notice. Some legal notice.
+Some legal notice. Some legal notice. Some legal notice.
+Some legal notice. Some legal notice. Some legal notice.
+Some legal notice. Some legal notice. Some legal notice.
+Some legal notice. Some legal notice. Some legal notice.
+Some legal notice. Some legal notice. Some legal notice.
+</para>
+</legalnotice>
+<copyright>
+<year>1998</year>
+<year>1999</year>
+<year>2000</year>
+<year>2001</year>
+<year>2002</year>
+<holder>Norman Walsh</holder>
+</copyright>
+<pubdate>18 January 2002</pubdate>
+<abstract>
+<para>Some abstract. Some abstract. Some abstract. Some abstract.
+Some abstract. Some abstract. Some abstract. Some abstract.
+Some abstract. Some abstract. Some abstract. Some abstract.
+Some abstract. Some abstract. Some abstract. Some abstract.
+Some abstract. Some abstract. Some abstract. Some abstract.
+Some abstract. Some abstract. Some abstract. Some abstract.
+</para>
+<para>Some abstract. Some abstract. Some abstract. Some abstract.
+Some abstract. Some abstract. Some abstract. Some abstract.
+</para>
+</abstract>
+<revhistory>
+<revision>
+<revnumber>1.1</revnumber>
+<date>18 Jan 2002</date>
+<authorinitials>ndw</authorinitials>
+<revremark>Reworked.</revremark>
+</revision>
+<revision>
+<revnumber>1.0</revnumber>
+<date>20 Nov 1998</date>
+<authorinitials>ndw</authorinitials>
+<revremark>Some remark about the revision</revremark>
+</revision>
+<revision>
+<revnumber>0.9</revnumber>
+<date>19 Nov 1998</date>
+<authorinitials>ndw</authorinitials>
+<revremark>Some remark about the revision</revremark>
+</revision>
+<revision>
+<revnumber>0.4</revnumber>
+<date>18 Nov 1998</date>
+<authorinitials>ndw</authorinitials>
+<revremark>Some remark about the revision</revremark>
+</revision>
+</revhistory>
+</bookinfo>
+
+<chapter id="chap1">
+<chapterinfo>
+<abstract><para>bla in the first chapter</para>
+</abstract>
+</chapterinfo>
+<title>First Chapter</title>
+
+&blah;
+
+<figure id="figduck"><title>A Test Figure</title>
+<programlisting>
+A figure. Just to test the numeration.</programlisting>
+</figure>
+
+<section><title>First Section</title>
+
+<figure id="figduck2"><title>Another Test Figure</title>
+<programlisting>
+A figure. Just to test the numeration.</programlisting>
+</figure>
+
+ &blah;
+
+<example id="example"><title>Test Example</title>
+<programlisting>
+An example.</programlisting>
+</example>
+
+<section><title>First Subsection</title>
+
+&blah;
+
+</section>
+</section>
+
+<section><title>Second Section</title>
+
+&blah;
+
+</section>
+</chapter>
+</book>

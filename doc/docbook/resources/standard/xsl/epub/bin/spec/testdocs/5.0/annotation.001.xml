@@ -1,0 +1,58 @@
+<article xmlns="http://docbook.org/ns/docbook"
+	 xmlns:xlink="http://www.w3.org/1999/xlink">
+<info>
+<title>Unit Test: annotation.001</title>
+<releaseinfo role="CVS">$Id$</releaseinfo>
+<author><personname>
+<firstname>Norman</firstname><surname>Walsh</surname>
+</personname>
+<affiliation><address><email>ndw@nwalsh.com</email></address></affiliation>
+</author>
+</info>
+
+<para>Adapted from
+<uri>http://norman.walsh.name/2004/12/02/annotations.xml</uri>.</para>
+
+<annotation annotates="inlineannot">
+<title>Simple, Inline Annotations</title>
+<para xml:id='p18'>Inline annotations contain only text and other
+phrase-level markup. They are typically displayed as “tooltips” in a
+browser.</para>
+</annotation>
+
+<annotation xml:id="blockannot">
+<title>Block Annotations</title>
+<para xml:id='p19'>Block annotations, like this one, are more akin to
+footnotes. The browser presentation is a typically a pop-up
+window.</para>
+</annotation>
+
+<annotation xml:id="anotherannot">
+<title>Another Annotation</title>
+<para>This annotation is just a test of what happens when there is
+more than one.</para>
+</annotation>
+
+<para xml:id='p17'>The
+<link xlink:href="http://lists.oasis-open.org/archives/docbook/200410/msg00019.html">last time<alt>Minutes of the October, 2004 telcon</alt></link>
+the DocBook <abbrev>TC<alt>Technical Committee</alt></abbrev>
+discussed annotations,
+there seemed to be consensus on two points. First, that one of the principle
+motivations for simple, inline annotations is accessibility. Second, that
+authors will find it easier to use annotations if the distinction between
+<phrase xml:id="inlineannot">simple, inline annotations</phrase>
+and <phrase annotations="blockannot anotherannot">“block” annotations</phrase>
+is made on the basis
+of the element name.</para>
+
+<para xml:id='p20'>To that end, I've updated the customization layer used here so that
+the “<tag>alt</tag>” element is allowed in all inline context. The 
+<tag>alt</tag> element identifies a simple, inline annotation. The name
+“alt” has the advantage of being both short and suggestive of the accessibility
+aspect of this kind of annotation.</para>
+
+<para xml:id='p21'>The <tag>annotation</tag> element no longer has a
+<tag class="attribute">class</tag> attribute, it is now used only for
+block annotations.</para>
+
+</article>

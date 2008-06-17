@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<chapter id="chapter" dir="ltr">
+<chapterinfo>
+<releaseinfo role="CVS">$Id$</releaseinfo>
+<author><firstname>Norman</firstname><surname>Walsh</surname>
+        <affiliation><address><email>ndw@nwalsh.com</email></address></affiliation>
+</author>
+</chapterinfo>
+<title>Unit Test: chapter.001.xml</title>
+
+<para>This is a chapter test.</para>
+
+<para dir="ltr">This is a chapter written in English, a left-to-right
+language. It contains a phrase <phrase dir="rtl">putatively written
+in a right-to-left language</phrase>, though in fact the phrase is
+in English too.</para>
+
+</chapter>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE bibliography PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<bibliography>
+<bibliographyinfo>
+<title>Unit Test: bibliography.004</title>
+<releaseinfo role="CVS">$Id$</releaseinfo>
+</bibliographyinfo>
+
+ <bibliodiv><title>Normative References</title>
+
+ <biblioentry id="xml">
+   <abbrev>XML 1.0</abbrev>
+   <editor>
+      <firstname>Tim</firstname>
+      <surname>Bray</surname>
+   </editor>
+   <title>Extensible Markup Language (XML) 1.0</title>
+   <edition>2nd ed</edition>
+   <releaseinfo>W3C Recommendation</releaseinfo>
+   <date>6 October 2000</date>
+   <copyright>
+     <year>2000</year>
+     <holder>World Wide Web Consortium</holder>
+   </copyright>
+   <biblioid class="uri">
+     <ulink url="http://www.w3.org/TR/2000/REC-xml-20001006/"/>
+   </biblioid>
+ </biblioentry>
+
+</bibliodiv>
+
+<bibliodiv><title>Articles</title>
+
+ <biblioentry id="flynn-xml-faq">
+   <abbrev>Fl01</abbrev>
+   <author>
+     <firstname>Peter</firstname>
+     <surname>Flynn</surname>
+   </author>
+   <title>The XML FAQ</title>
+   <edition>2.1</edition>
+   <date>1 January 2002</date>
+   <biblioid class="uri">
+     <ulink url="http://www.ucc.ie/xml/faq.html"/>
+   </biblioid>
+ </biblioentry>
+
+</bibliodiv>
+
+</bibliography>

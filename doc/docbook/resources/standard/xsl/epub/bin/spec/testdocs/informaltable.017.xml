@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article id="informaltable.017">
+<articleinfo>
+<title>Unit Test: informaltable.017</title>
+<releaseinfo role="CVS">$Id$</releaseinfo>
+<author><firstname>Adam</firstname> <surname>Di Carlo</surname>
+        <affiliation><address><email>adam@onshored.com</email></address></affiliation>
+</author>
+</articleinfo>
+
+<para>Row valign test.</para>
+
+  <informaltable frame="all" id="informaltable">
+    <tgroup cols="2">
+      <tbody>
+        <row valign="top">
+          <entry>
+            <para>Para one.</para>
+            <para>Para two.</para>
+          </entry>
+          <entry>Top align me.</entry>
+        </row>
+        <row valign="middle">
+          <entry>
+            <para>Para one.</para>
+            <para>Para two.</para>
+          </entry>
+          <entry>Middle align me.</entry>
+        </row>
+        <row valign="bottom">
+          <entry>
+            <para>Para one.</para>
+            <para>Para two.</para>
+          </entry>
+          <entry>Bottom align me.</entry>
+        </row>
+      </tbody>
+    </tgroup>
+  </informaltable>
+
+  <para>This one should look the same, we use valign setting on the tbody.</para>
+
+  <informaltable frame="all">
+    <tgroup cols="2">
+      <tbody valign="top">
+        <row>
+          <entry>
+            <para>Para one.</para>
+            <para>Para two.</para>
+          </entry>
+          <entry>Top align me.</entry>
+        </row>
+        <row valign="middle">
+          <entry>
+            <para>Para one.</para>
+            <para>Para two.</para>
+          </entry>
+          <entry>Middle align me.</entry>
+        </row>
+        <row valign="bottom">
+          <entry>
+            <para>Para one.</para>
+            <para>Para two.</para>
+          </entry>
+          <entry>Bottom align me.</entry>
+        </row>
+      </tbody>
+    </tgroup>
+  </informaltable>
+</article>

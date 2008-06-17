@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<book id="book">
+<bookinfo>
+<title>Unit Test: equation.004</title>
+<releaseinfo role="CVS">$Id$</releaseinfo>
+<author><firstname>Norman</firstname><surname>Walsh</surname>
+        <affiliation><address><email>ndw@nwalsh.com</email></address></affiliation>
+</author>
+</bookinfo>
+
+<chapter>
+<title>Equations</title>
+
+<para>blah blah blah.</para>
+
+<equation><title>First Equation</title>
+<mediaobject>
+<imageobject>
+<imagedata fileref="emc2.png"/>
+</imageobject>
+<textobject>
+<phrase>e=mc^2</phrase>
+</textobject>
+</mediaobject>
+</equation>
+
+<para>blah blah blah.</para>
+
+<equation><!-- equation with no title: don't do this; use informalequation -->
+<mediaobject>
+<imageobject>
+<imagedata fileref="emc2.png"/>
+</imageobject>
+<textobject>
+<phrase>e=mc^2</phrase>
+</textobject>
+</mediaobject>
+</equation>
+
+<para>blah blah blah.</para>
+
+<equation id="eq2"><title>Second Equation</title>
+<mediaobject>
+<imageobject>
+<imagedata fileref="emc2.png"/>
+</imageobject>
+<textobject>
+<phrase>e=mc^2</phrase>
+</textobject>
+</mediaobject>
+</equation>
+
+<figure id="fig1"><title>A Figure</title>
+<mediaobject>
+<imageobject>
+<imagedata fileref="emc2.png"/>
+</imageobject>
+<textobject>
+<phrase>e=mc^2</phrase>
+</textobject>
+</mediaobject>
+</figure>
+
+</chapter>
+
+</book>

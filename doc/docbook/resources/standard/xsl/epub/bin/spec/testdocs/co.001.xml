@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article>
+<articleinfo>
+<title>Unit Test: co.001</title>
+<releaseinfo role="CVS">$Id$</releaseinfo>
+<author><firstname>John</firstname><surname>Himpel</surname>
+        <affiliation><address><email>jwhimpel@users.sourceforge.net</email></address></affiliation>
+</author>
+</articleinfo>
+
+<para>Callouts inside <sgmltag>userinput</sgmltag> elements.</para>
+
+<screen>
+<prompt>$</prompt><userinput>cp a b<co id='cp-co'
+linkends='cp'/></userinput>
+<prompt>$</prompt><userinput>mv a b<co id='mv-co'
+linkends='mv'/></userinput>
+</screen>
+<calloutlist>
+<callout arearefs='cp-co' id='cp'>
+<para>This is a copy.</para>
+</callout>
+<callout arearefs='mv-co' id='mv'>
+<para>This is a move.</para>
+</callout>
+</calloutlist>
+
+</article>

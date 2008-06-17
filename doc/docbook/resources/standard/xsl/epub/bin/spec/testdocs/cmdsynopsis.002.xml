@@ -1,0 +1,39 @@
+<?xml version='1.0'?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article>
+<articleinfo>
+<title>Unit test: cmdsynopsis.002</title>
+<releaseinfo role="CVS">$Id$</releaseinfo>
+<author><firstname>Adam</firstname><surname>Di Carlo</surname>
+        <affiliation><address><email>adam@onshored.com</email></address></affiliation>
+</author>
+</articleinfo>
+
+  <section>
+    <title>Cmdsynopsis Test</title>
+    
+    <para>Cmdsynopsis test in the context of glossentry follows.</para>
+
+    <glosslist>
+
+      <glossentry>
+        <glossterm>
+          <cmdsynopsis>
+            <command>command</command>
+            <arg choice="req">req</arg>
+            <arg choice="req" rep="repeat">repeatandreq</arg>
+            <arg rep="repeat">repeat</arg>
+            <arg>optional</arg>
+          </cmdsynopsis>
+        </glossterm>
+        <glossdef>
+          <para>Do black magic.</para>
+        </glossdef>
+      </glossentry>
+
+    </glosslist>
+
+  </section>
+
+</article>

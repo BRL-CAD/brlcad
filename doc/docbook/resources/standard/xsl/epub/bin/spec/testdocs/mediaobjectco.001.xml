@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article>
+<articleinfo>
+<title>Unit Test: mediaobjectco.001</title>
+<releaseinfo role="CVS">$Id$</releaseinfo>
+<author><firstname>Norman</firstname><surname>Walsh</surname>
+        <affiliation><address><email>ndw@nwalsh.com</email></address></affiliation>
+</author>
+</articleinfo>
+
+  <mediaobjectco>
+    <imageobjectco>
+      <areaspec>
+        <area id="a1" units="calspair" coords="50,50,50,50"/>
+        <areaset id="s1" coords="">
+          <area id="a2" units="calspair" coords="25,25,25,25"/>
+          <area id="a3" units="calspair" coords="75,75,75,75"/>
+        </areaset>
+      </areaspec>
+      <imageobject>
+        <imagedata
+          fileref="graphics/duck.png"
+          contentwidth="400px"
+          contentdepth="400px"
+          srccredit="O'Reilly &amp; Associates/Dover Archives"/>
+      </imageobject>
+    </imageobjectco>
+    <textobject><phrase>alt text</phrase></textobject>
+  </mediaobjectco>
+
+</article>

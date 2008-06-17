@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article>
+<articleinfo>
+<title>Unit Test: footnote.002</title>
+<releaseinfo role="CVS">$Id$</releaseinfo>
+<author><firstname>Norman</firstname><surname>Walsh</surname>
+        <affiliation><address><email>ndw@nwalsh.com</email></address></affiliation>
+</author>
+</articleinfo>
+
+<para>This paragraph contains a footnote<footnote>
+<para>This is a footnote.</para></footnote>.</para>
+
+<table><title>A table</title>
+<tgroup cols="3">
+<tbody>
+<row>
+  <entry>A Cell</entry>
+  <entry>A Cell<footnote><para>First footnote.</para></footnote></entry>
+  <entry>A Cell</entry>
+</row>
+<row>
+  <entry>A Cell<footnote><simpara>Second footnote.</simpara></footnote></entry>
+  <entry>A Cell</entry>
+  <entry>A Cell</entry>
+</row>
+<row>
+  <entry>A Cell</entry>
+  <entry>A Cell</entry>
+  <entry>A Cell<footnote><address>100 Any Street
+East Yahoo, XX</address></footnote></entry>
+</row>
+</tbody>
+</tgroup>
+</table>
+
+<para>This is a longer paragraph. It will eventually contain a footnote, but first
+it has enough text to make the footnote appear in the middle of the paragraph.
+This is so we can test the effect of changing the
+<property>line-height-shift-adjustment</property> property. This paragraph
+contains a footnote<footnote>
+<para>This is a footnote.</para></footnote> (see, I said it would).
+Now it has more text to make the footnote appear in the middle of the paragraph.
+Now it has more text to make the footnote appear in the middle of the paragraph.
+</para>
+
+</article>

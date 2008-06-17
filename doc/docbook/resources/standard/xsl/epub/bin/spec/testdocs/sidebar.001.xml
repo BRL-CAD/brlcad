@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article id="article">
+<articleinfo>
+<title>Unit Test: sidebar.001.xml</title>
+<releaseinfo role="CVS">$Id$</releaseinfo>
+<author><firstname>Norman</firstname><surname>Walsh</surname>
+        <affiliation><address><email>ndw@nwalsh.com</email></address></affiliation>
+</author>
+</articleinfo>
+
+<para>This is a sidebar test.</para>
+
+<para>Here is some content. This is content. This is content. This is content.
+This is content. This is content. This is content. This is content.
+This is content. This is content. This is content. This is content.
+This is content. This is content. This is content. This is content.
+</para>
+
+<para>This is content. This is content. This is content.
+This is content. This is content. This is content. This is content.
+This is content. This is content. This is content. This is content.
+This is content. This is content. This is content. This is content.
+</para>
+
+<sidebar>
+<title>Sidebar</title>
+<para>Here is some sidebar content. This is content. This is content. This is content.
+This is content. This is content. This is content. This is content.
+This is content. This is content. This is content. This is content.
+This is content. This is content. This is content. This is content.
+</para>
+
+<para>This is content. This is content. This is content.
+This is content. This is content. This is content. This is content.
+This is content. This is content. This is content. This is content.
+This is content. This is content. This is content. This is content.
+</para>
+</sidebar>
+
+<para>Back into the main flow. This is content. This is content. This is content.
+This is content. This is content. This is content. This is content.
+This is content. This is content. This is content. This is content.
+This is content. This is content. This is content. This is content.
+</para>
+
+</article>

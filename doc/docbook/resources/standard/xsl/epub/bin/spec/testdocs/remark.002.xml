@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article>
+<articleinfo>
+<title>Unit Test: remark.002</title>
+<releaseinfo role="CVS">$Id$</releaseinfo>
+<author><firstname>Adam</firstname><surname>Di Carlo</surname>
+        <affiliation><address><email>adam@onshored.com</email></address></affiliation>
+</author>
+</articleinfo>
+  <para>
+    Pre-remark text.
+    <remark>
+      Inline remark (inside a paragraph).  May require %show-comments% to be
+      turned on.
+    </remark>
+    Post-remark text.
+  </para>
+</article>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article>
+<articleinfo>
+<title>Unit Test: procedure.002</title>
+<releaseinfo role="CVS">$Id$</releaseinfo>
+<author><firstname>Norman</firstname><surname>Walsh</surname>
+        <affiliation><address><email>ndw@nwalsh.com</email></address></affiliation>
+</author>
+</articleinfo>
+
+<procedure>
+<step><para>Press MENUS.</para>
+</step>
+<step><para>Press MENUS.</para>
+</step>
+<step><para>Press MENUS.</para>
+</step>
+<step><para>Press MENUS.</para>
+</step>
+<step><title>Setup</title>
+<para>Select SETUP.</para>
+<substeps>
+<step><para>Should be an “a”</para>
+</step>
+<step><para>Should be a “b”</para>
+</step>
+<step><para>Should be a “c”</para>
+</step>
+<step><para>Should be a “d”</para>
+</step>
+<step><para>should be an “e”</para>
+<substeps>
+<step><para>should be an “i”</para>
+</step>
+<step><para>should be an “ii”</para>
+</step>
+</substeps>
+</step>
+</substeps>
+</step>
+</procedure>
+
+</article>

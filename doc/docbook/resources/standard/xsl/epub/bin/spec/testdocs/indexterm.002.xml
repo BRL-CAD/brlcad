@@ -1,0 +1,705 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<book>
+<bookinfo>
+<title>Unit Test: indexterm.001</title>
+<releaseinfo role="CVS">$Id$</releaseinfo>
+<author><firstname>Norman</firstname><surname>Walsh</surname>
+        <affiliation><address><email>ndw@nwalsh.com</email></address></affiliation>
+</author>
+</bookinfo>
+
+<chapter><title>First Chapter</title>
+
+<para>This is a test paragraph.
+<indexterm>
+<primary>ap1</primary>
+</indexterm>
+<indexterm>
+<primary>ap2</primary>
+</indexterm>
+<indexterm id="spanstart" class="startofrange">
+<primary>spanning</primary>
+</indexterm>
+
+<indexterm>
+<primary>bp1</primary>
+<secondary>bp1bs1</secondary>
+</indexterm>
+<indexterm>
+<primary>bp2</primary>
+</indexterm>
+
+<indexterm>
+<primary>cp1</primary>
+<secondary>cp1cs1</secondary>
+<tertiary>cp1cs1ct1</tertiary>
+</indexterm>
+
+<indexterm>
+<primary>cp2</primary>
+</indexterm>
+<indexterm>
+<primary>cp2see</primary><see>cp2</see>
+</indexterm>
+
+<indexterm>
+<primary>dp1</primary>
+<secondary>dp1ds1</secondary>
+</indexterm>
+<indexterm>
+<primary>dp1</primary>
+<secondary>dp1ds2</secondary>
+</indexterm>
+<indexterm>
+<primary>dp2</primary>
+</indexterm></para>
+
+</chapter>
+
+<appendix><title>First Appendix</title>
+
+<para>This is just a test.
+<indexterm>
+<primary>ap1</primary>
+</indexterm>
+<indexterm>
+<primary>ap2</primary>
+</indexterm>
+
+<indexterm>
+<primary>bp1</primary>
+<secondary>bp1bs1</secondary>
+</indexterm>
+<indexterm>
+<primary>bp2</primary>
+</indexterm>
+
+<indexterm>
+<primary>cp1</primary>
+<secondary>cp1cs1</secondary>
+<tertiary>cp1cs1ct1</tertiary>
+</indexterm>
+<indexterm>
+<primary>cp2</primary>
+</indexterm>
+
+<indexterm>
+<primary>dp1</primary>
+<secondary>dp1ds1</secondary>
+</indexterm>
+<indexterm>
+<primary>dp1</primary>
+<secondary>dp1ds2</secondary>
+</indexterm>
+<indexterm>
+<primary>dp2</primary>
+</indexterm></para>
+
+<para>This para contains a <emphasis>whole lotta</emphasis> index terms.
+<indexterm>
+  <primary>a</primary>
+</indexterm>
+<indexterm>
+  <primary>b</primary>
+</indexterm>
+<indexterm>
+  <primary>c</primary>
+</indexterm>
+<indexterm>
+  <primary>d</primary>
+</indexterm>
+<indexterm>
+  <primary>e</primary>
+</indexterm>
+<indexterm>
+  <primary>f</primary>
+</indexterm>
+<indexterm>
+  <primary>g</primary>
+</indexterm>
+<indexterm>
+  <primary>h</primary>
+</indexterm>
+<indexterm>
+  <primary>i</primary>
+</indexterm>
+<indexterm>
+  <primary>j</primary>
+</indexterm>
+<indexterm>
+  <primary>k</primary>
+</indexterm>
+<indexterm>
+  <primary>l</primary>
+</indexterm>
+<indexterm>
+  <primary>m</primary>
+</indexterm>
+<indexterm>
+  <primary>n</primary>
+</indexterm>
+<indexterm>
+  <primary>o</primary>
+</indexterm>
+<indexterm>
+  <primary>p</primary>
+</indexterm>
+<indexterm>
+  <primary>q</primary>
+</indexterm>
+<indexterm>
+  <primary>r</primary>
+</indexterm>
+<indexterm>
+  <primary>s</primary>
+</indexterm>
+<indexterm>
+  <primary>t</primary>
+</indexterm>
+<indexterm>
+  <primary>u</primary>
+</indexterm>
+<indexterm>
+  <primary>v</primary>
+</indexterm>
+<indexterm>
+  <primary>w</primary>
+</indexterm>
+<indexterm>
+  <primary>x</primary>
+</indexterm>
+<indexterm>
+  <primary>y</primary>
+</indexterm>
+<indexterm>
+  <primary>z</primary>
+</indexterm>
+<indexterm>
+  <primary>aa</primary>
+</indexterm>
+<indexterm>
+  <primary>ab</primary>
+</indexterm>
+<indexterm>
+  <primary>ac</primary>
+</indexterm>
+<indexterm>
+  <primary>ad</primary>
+</indexterm>
+<indexterm>
+  <primary>ae</primary>
+</indexterm>
+<indexterm>
+  <primary>af</primary>
+</indexterm>
+<indexterm>
+  <primary>ag</primary>
+</indexterm>
+<indexterm>
+  <primary>ah</primary>
+</indexterm>
+<indexterm>
+  <primary>ai</primary>
+</indexterm>
+<indexterm>
+  <primary>aj</primary>
+</indexterm>
+<indexterm>
+  <primary>ak</primary>
+</indexterm>
+<indexterm>
+  <primary>al</primary>
+</indexterm>
+<indexterm>
+  <primary>am</primary>
+</indexterm>
+<indexterm>
+  <primary>an</primary>
+</indexterm>
+<indexterm>
+  <primary>ao</primary>
+</indexterm>
+<indexterm>
+  <primary>ap</primary>
+</indexterm>
+<indexterm>
+  <primary>aq</primary>
+</indexterm>
+<indexterm>
+  <primary>ar</primary>
+</indexterm>
+<indexterm>
+  <primary>as</primary>
+</indexterm>
+<indexterm>
+  <primary>at</primary>
+</indexterm>
+<indexterm>
+  <primary>au</primary>
+</indexterm>
+<indexterm>
+  <primary>av</primary>
+</indexterm>
+<indexterm>
+  <primary>aw</primary>
+</indexterm>
+<indexterm>
+  <primary>ax</primary>
+</indexterm>
+<indexterm>
+  <primary>ay</primary>
+</indexterm>
+<indexterm>
+  <primary>az</primary>
+</indexterm>
+<indexterm>
+  <primary>ba</primary>
+</indexterm>
+<indexterm>
+  <primary>bb</primary>
+</indexterm>
+<indexterm>
+  <primary>bc</primary>
+</indexterm>
+<indexterm>
+  <primary>bd</primary>
+</indexterm>
+<indexterm>
+  <primary>be</primary>
+</indexterm>
+<indexterm>
+  <primary>bf</primary>
+</indexterm>
+<indexterm>
+  <primary>bg</primary>
+</indexterm>
+<indexterm>
+  <primary>bh</primary>
+</indexterm>
+<indexterm>
+  <primary>bi</primary>
+</indexterm>
+<indexterm>
+  <primary>bj</primary>
+</indexterm>
+<indexterm>
+  <primary>bk</primary>
+</indexterm>
+<indexterm>
+  <primary>bl</primary>
+</indexterm>
+<indexterm>
+  <primary>bm</primary>
+</indexterm>
+<indexterm>
+  <primary>bn</primary>
+</indexterm>
+<indexterm>
+  <primary>bo</primary>
+</indexterm>
+<indexterm>
+  <primary>bp</primary>
+</indexterm>
+<indexterm>
+  <primary>bq</primary>
+</indexterm>
+<indexterm>
+  <primary>br</primary>
+</indexterm>
+<indexterm>
+  <primary>bs</primary>
+</indexterm>
+<indexterm>
+  <primary>bt</primary>
+</indexterm>
+<indexterm>
+  <primary>bu</primary>
+</indexterm>
+<indexterm>
+  <primary>bv</primary>
+</indexterm>
+<indexterm>
+  <primary>bw</primary>
+</indexterm>
+<indexterm>
+  <primary>bx</primary>
+</indexterm>
+<indexterm>
+  <primary>by</primary>
+</indexterm>
+<indexterm>
+  <primary>bz</primary>
+</indexterm>
+<indexterm>
+  <primary>ca</primary>
+</indexterm>
+<indexterm>
+  <primary>cb</primary>
+</indexterm>
+<indexterm>
+  <primary>cc</primary>
+</indexterm>
+<indexterm>
+  <primary>cd</primary>
+</indexterm>
+<indexterm>
+  <primary>ce</primary>
+</indexterm>
+<indexterm>
+  <primary>cf</primary>
+</indexterm>
+<indexterm>
+  <primary>cg</primary>
+</indexterm>
+<indexterm>
+  <primary>ch</primary>
+</indexterm>
+<indexterm>
+  <primary>ci</primary>
+</indexterm>
+<indexterm>
+  <primary>cj</primary>
+</indexterm>
+<indexterm>
+  <primary>ck</primary>
+</indexterm>
+<indexterm>
+  <primary>cl</primary>
+</indexterm>
+<indexterm>
+  <primary>cm</primary>
+</indexterm>
+<indexterm>
+  <primary>cn</primary>
+</indexterm>
+<indexterm>
+  <primary>co</primary>
+</indexterm>
+<indexterm>
+  <primary>cp</primary>
+</indexterm>
+<indexterm>
+  <primary>cq</primary>
+</indexterm>
+<indexterm>
+  <primary>cr</primary>
+</indexterm>
+<indexterm>
+  <primary>cs</primary>
+</indexterm>
+<indexterm>
+  <primary>ct</primary>
+</indexterm>
+<indexterm>
+  <primary>cu</primary>
+</indexterm>
+<indexterm>
+  <primary>cv</primary>
+</indexterm>
+<indexterm>
+  <primary>cw</primary>
+</indexterm>
+<indexterm>
+  <primary>cx</primary>
+</indexterm>
+<indexterm>
+  <primary>cy</primary>
+</indexterm>
+<indexterm>
+  <primary>cz</primary>
+</indexterm>
+<indexterm>
+  <primary>da</primary>
+</indexterm>
+<indexterm>
+  <primary>db</primary>
+</indexterm>
+<indexterm>
+  <primary>dc</primary>
+</indexterm>
+<indexterm>
+  <primary>dd</primary>
+</indexterm>
+<indexterm>
+  <primary>de</primary>
+</indexterm>
+<indexterm>
+  <primary>df</primary>
+</indexterm>
+<indexterm>
+  <primary>dg</primary>
+</indexterm>
+<indexterm>
+  <primary>dh</primary>
+</indexterm>
+<indexterm>
+  <primary>di</primary>
+</indexterm>
+<indexterm>
+  <primary>dj</primary>
+</indexterm>
+<indexterm>
+  <primary>dk</primary>
+</indexterm>
+<indexterm>
+  <primary>dl</primary>
+</indexterm>
+<indexterm>
+  <primary>dm</primary>
+</indexterm>
+<indexterm>
+  <primary>dn</primary>
+</indexterm>
+<indexterm>
+  <primary>do</primary>
+</indexterm>
+<indexterm>
+  <primary>dp</primary>
+</indexterm>
+<indexterm>
+  <primary>dq</primary>
+</indexterm>
+<indexterm>
+  <primary>dr</primary>
+</indexterm>
+<indexterm>
+  <primary>ds</primary>
+</indexterm>
+<indexterm>
+  <primary>dt</primary>
+</indexterm>
+<indexterm>
+  <primary>du</primary>
+</indexterm>
+<indexterm>
+  <primary>dv</primary>
+</indexterm>
+<indexterm>
+  <primary>dw</primary>
+</indexterm>
+<indexterm>
+  <primary>dx</primary>
+</indexterm>
+<indexterm>
+  <primary>dy</primary>
+</indexterm>
+<indexterm>
+  <primary>dz</primary>
+</indexterm>
+<indexterm>
+  <primary>ea</primary>
+</indexterm>
+<indexterm>
+  <primary>eb</primary>
+</indexterm>
+<indexterm>
+  <primary>ec</primary>
+</indexterm>
+<indexterm>
+  <primary>ed</primary>
+</indexterm>
+<indexterm>
+  <primary>ee</primary>
+</indexterm>
+<indexterm>
+  <primary>ef</primary>
+</indexterm>
+<indexterm>
+  <primary>eg</primary>
+</indexterm>
+<indexterm>
+  <primary>eh</primary>
+</indexterm>
+<indexterm>
+  <primary>ei</primary>
+</indexterm>
+<indexterm>
+  <primary>ej</primary>
+</indexterm>
+<indexterm>
+  <primary>ek</primary>
+</indexterm>
+<indexterm>
+  <primary>el</primary>
+</indexterm>
+<indexterm>
+  <primary>em</primary>
+</indexterm>
+<indexterm>
+  <primary>en</primary>
+</indexterm>
+<indexterm>
+  <primary>eo</primary>
+</indexterm>
+<indexterm>
+  <primary>ep</primary>
+</indexterm>
+<indexterm>
+  <primary>eq</primary>
+</indexterm>
+<indexterm>
+  <primary>er</primary>
+</indexterm>
+<indexterm>
+  <primary>es</primary>
+</indexterm>
+<indexterm>
+  <primary>et</primary>
+</indexterm>
+<indexterm>
+  <primary>eu</primary>
+</indexterm>
+<indexterm>
+  <primary>ev</primary>
+</indexterm>
+<indexterm>
+  <primary>ew</primary>
+</indexterm>
+<indexterm>
+  <primary>ex</primary>
+</indexterm>
+<indexterm>
+  <primary>ey</primary>
+</indexterm>
+<indexterm>
+  <primary>ez</primary>
+</indexterm>
+<indexterm>
+  <primary>fa</primary>
+</indexterm>
+<indexterm>
+  <primary>fb</primary>
+</indexterm>
+<indexterm>
+  <primary>fc</primary>
+</indexterm>
+<indexterm>
+  <primary>fd</primary>
+</indexterm>
+<indexterm>
+  <primary>fe</primary>
+</indexterm>
+<indexterm>
+  <primary>ff</primary>
+</indexterm>
+<indexterm>
+  <primary>fg</primary>
+</indexterm>
+<indexterm>
+  <primary>fh</primary>
+</indexterm>
+<indexterm>
+  <primary>fi</primary>
+</indexterm>
+<indexterm>
+  <primary>fj</primary>
+</indexterm>
+<indexterm>
+  <primary>fk</primary>
+</indexterm>
+<indexterm>
+  <primary>fl</primary>
+</indexterm>
+<indexterm>
+  <primary>fm</primary>
+</indexterm>
+<indexterm>
+  <primary>fn</primary>
+</indexterm>
+<indexterm>
+  <primary>fo</primary>
+</indexterm>
+<indexterm>
+  <primary>fp</primary>
+</indexterm>
+<indexterm>
+  <primary>fq</primary>
+</indexterm>
+<indexterm>
+  <primary>fr</primary>
+</indexterm>
+<indexterm>
+  <primary>fs</primary>
+</indexterm>
+<indexterm>
+  <primary>ft</primary>
+</indexterm>
+<indexterm>
+  <primary>fu</primary>
+</indexterm>
+<indexterm>
+  <primary>fv</primary>
+</indexterm>
+<indexterm>
+  <primary>fw</primary>
+</indexterm>
+<indexterm>
+  <primary>fx</primary>
+</indexterm>
+<indexterm>
+  <primary>fy</primary>
+</indexterm>
+<indexterm>
+  <primary>fz</primary>
+</indexterm>
+<indexterm>
+  <primary>ga</primary>
+</indexterm>
+<indexterm>
+  <primary>gb</primary>
+</indexterm>
+<indexterm>
+  <primary>gc</primary>
+</indexterm>
+<indexterm>
+  <primary>gd</primary>
+</indexterm>
+<indexterm>
+  <primary>ge</primary>
+</indexterm>
+<indexterm>
+  <primary>gf</primary>
+</indexterm>
+<indexterm>
+  <primary>gg</primary>
+</indexterm>
+<indexterm>
+  <primary>gh</primary>
+</indexterm>
+<indexterm>
+  <primary>gi</primary>
+</indexterm>
+<indexterm>
+  <primary>gj</primary>
+</indexterm>
+<indexterm>
+  <primary>gk</primary>
+</indexterm>
+<indexterm>
+  <primary>gl</primary>
+</indexterm>
+<indexterm>
+  <primary>gm</primary>
+</indexterm>
+<indexterm>
+  <primary>gn</primary>
+</indexterm>
+<indexterm>
+  <primary>go</primary>
+</indexterm>
+<indexterm>
+  <primary>gp</primary>
+</indexterm>
+<indexterm>
+  <primary>gq</primary>
+</indexterm></para>
+
+<indexterm startref="spanstart" class="endofrange"/>
+
+</appendix>
+
+<index id="idx"/>
+
+</book>

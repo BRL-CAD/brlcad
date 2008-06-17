@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article id="article">
+<articleinfo>
+<title>Unit Test: revhistory.001.xml</title>
+<releaseinfo role="CVS">$Id$</releaseinfo>
+<author><firstname>Norman</firstname><surname>Walsh</surname>
+        <affiliation><address><email>ndw@nwalsh.com</email></address></affiliation>
+</author>
+<revhistory>
+<revision>
+<revnumber>1.0</revnumber>
+<date>13 Mar 2002</date>
+<authorinitials>ndw</authorinitials>
+<revremark>Some remark.</revremark>
+</revision>
+<revision>
+<revnumber>0.9</revnumber>
+<date>Nov 20, 1998</date>
+<authorinitials>ndw</authorinitials>
+<revremark>Some remark about the revision</revremark>
+</revision>
+<revision>
+<revnumber>0.8</revnumber>
+<date>19 November 1998</date>
+<authorinitials>ndw</authorinitials>
+<revremark>Some remark about the revision</revremark>
+</revision>
+<revision>
+<revnumber>0.7</revnumber>
+<date>November 18, 1998</date>
+<authorinitials>ndw</authorinitials>
+<revremark>Some remark about the revision</revremark>
+</revision>
+</revhistory>
+</articleinfo>
+
+<para>This article tests revhistory. It appears in the articleinfo.</para>
+
+<para>This paragraph also contains the revhistory.
+<revhistory>
+<revision>
+<revnumber>1.0</revnumber>
+<date>13 Mar 2002</date>
+<authorinitials>ndw</authorinitials>
+<revremark>Some remark.</revremark>
+</revision>
+<revision>
+<revnumber>0.9</revnumber>
+<date>20 Nov 1998</date>
+<authorinitials>ndw</authorinitials>
+<revremark>Some remark about the revision</revremark>
+</revision>
+<revision>
+<revnumber>0.8</revnumber>
+<date>19 Nov 1998</date>
+<authorinitials>ndw</authorinitials>
+<revremark>Some remark about the revision</revremark>
+</revision>
+<revision>
+<revnumber>0.7</revnumber>
+<date>18 Nov 1998</date>
+<authorinitials>ndw</authorinitials>
+<revremark>Some remark about the revision</revremark>
+</revision>
+</revhistory>
+</para>
+
+<para>And this paragraph contains a different one:
+<revhistory>
+  <revision>
+      <revnumber>1.1.1</revnumber>
+      <date>12.6.2002</date>
+      <authorinitials>ndw</authorinitials>
+      <revdescription>
+        <itemizedlist>
+          <listitem><para>Item 1</para></listitem> 
+          <listitem><para>Item 2</para></listitem> 
+        </itemizedlist>
+      </revdescription>
+  </revision>
+</revhistory>
+</para>
+
+</article>

@@ -1,0 +1,185 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article id="article">
+<articleinfo>
+<title>Unit Test: funcsynopsis.001.xml</title>
+<releaseinfo role="CVS">$Id$</releaseinfo>
+<author><firstname>Norman</firstname><surname>Walsh</surname>
+        <affiliation><address><email>ndw@nwalsh.com</email></address></affiliation>
+</author>
+</articleinfo>
+
+<section><title>"Default" rendering</title>
+
+<para>A funcsynopsis.</para>
+
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;varargs.h&gt;
+</funcsynopsisinfo>
+<funcprototype>
+  <funcdef><type>float</type> <function>rand</function></funcdef>
+  <void/>
+</funcprototype>
+
+<funcprototype>
+  <funcdef>int <function>max</function></funcdef>
+  <varargs/>
+</funcprototype>
+
+<funcprototype>
+  <funcdef>int <function>idiv</function></funcdef>
+    <paramdef><type>int</type> <parameter>n</parameter></paramdef>
+    <paramdef><type>int</type> <parameter>m</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+
+<para>Another.</para>
+
+<funcsynopsis>
+<funcprototype>
+  <funcdef>void <function>qsort</function></funcdef>
+    <paramdef>void *<parameter>dataptr</parameter>[]</paramdef>
+    <paramdef>int <parameter>left</parameter></paramdef>
+    <paramdef>int <parameter>right</parameter></paramdef>
+    <paramdef>int (*<parameter>comp</parameter>)
+      <funcparams>void *, void *</funcparams></paramdef>
+</funcprototype>
+</funcsynopsis>
+
+<para>Another.</para>
+
+<funcsynopsis>
+<funcprototype>
+  <funcdef>int <function>foo_frob_something</function></funcdef>
+    <paramdef>foo_sometype1 <parameter>foo_frob_parm1</parameter></paramdef>
+    <paramdef>foo_sometype1 <parameter>foo_frob_parm2</parameter></paramdef>
+    <paramdef>foo_sometype1 <parameter>foo_frob_parm3</parameter></paramdef>
+    <paramdef><type>int</type> (* <parameter>parm4</parameter> )
+      <funcparams>int a, int b, int c</funcparams>
+    </paramdef>
+    <paramdef>foo_sometype1 <parameter>foo_frob_parm5</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+  <funcdef>int <function>foo_frob_something</function></funcdef>
+    <paramdef>foo_sometype1 <parameter>foo_frob_parm1</parameter></paramdef>
+    <paramdef>foo_sometype1 <parameter>foo_frob_parm2</parameter></paramdef>
+    <paramdef>foo_sometype1 <parameter>foo_frob_parm3</parameter></paramdef>
+    <paramdef><type>int</type> (* <parameter>parm4</parameter> )
+      <funcparams>int a, int b, int c</funcparams>
+    </paramdef>
+    <paramdef>foo_sometype1 <parameter>foo_frob_parm5</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+
+</section>
+<section><title>ANSI Rendering</title>
+
+<para>Another.</para>
+
+<funcsynopsis><?dbhtml funcsynopsis-style="ansi"?>
+<funcsynopsisinfo>
+#include &lt;varargs.h&gt;
+</funcsynopsisinfo>
+<funcprototype>
+  <funcdef><type>float</type> <function>rand</function></funcdef>
+  <void/>
+</funcprototype>
+
+<funcprototype>
+  <funcdef>int <function>max</function></funcdef>
+  <varargs/>
+</funcprototype>
+
+<funcprototype>
+  <funcdef>int <function>idiv</function></funcdef>
+    <paramdef><type>int</type> <parameter>n</parameter></paramdef>
+    <paramdef><type>int</type> <parameter>m</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+
+<para>Another.</para>
+
+<funcsynopsis><?dbhtml funcsynopsis-style="ansi"?>
+<funcprototype>
+  <funcdef>void <function>qsort</function></funcdef>
+    <paramdef>void *<parameter>dataptr</parameter>[]</paramdef>
+    <paramdef>int <parameter>left</parameter></paramdef>
+    <paramdef>int <parameter>right</parameter></paramdef>
+    <paramdef><type>int</type> (*<parameter>comp</parameter>)
+      <funcparams>void *, void *</funcparams></paramdef>
+</funcprototype>
+</funcsynopsis>
+
+<para>Another.</para>
+
+<funcsynopsis><?dbhtml funcsynopsis-style="ansi"?>
+<funcprototype>
+  <funcdef>int <function>foo_frob_something</function></funcdef>
+    <paramdef>foo_sometype1 <parameter>foo_frob_parm1</parameter></paramdef>
+    <paramdef>foo_sometype1 <parameter>foo_frob_parm2</parameter></paramdef>
+    <paramdef>foo_sometype1 <parameter>foo_frob_parm3</parameter></paramdef>
+    <paramdef>int (* <parameter>parm4</parameter> )
+      <funcparams>int a, int b, int c</funcparams></paramdef>
+    <paramdef>foo_sometype1 <parameter>foo_frob_parm5</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+
+</section>
+<section><title>K&amp;R Rendering</title>
+
+<para>Another.</para>
+
+<funcsynopsis><?dbhtml funcsynopsis-style="kr"?>
+<funcsynopsisinfo>
+#include &lt;varargs.h&gt;
+</funcsynopsisinfo>
+<funcprototype>
+  <funcdef><type>float</type> <function>rand</function></funcdef>
+  <void/>
+</funcprototype>
+
+<funcprototype>
+  <funcdef>int <function>max</function></funcdef>
+  <varargs/>
+</funcprototype>
+
+<funcprototype>
+  <funcdef>int <function>idiv</function></funcdef>
+    <paramdef><type>int</type> <parameter>n</parameter></paramdef>
+    <paramdef><type>int</type> <parameter>m</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+
+<para>Another.</para>
+
+<funcsynopsis><?dbhtml funcsynopsis-style="kr"?>
+<funcprototype>
+  <funcdef>void <function>qsort</function></funcdef>
+    <paramdef>void *<parameter>dataptr</parameter>[]</paramdef>
+    <paramdef>int <parameter>left</parameter></paramdef>
+    <paramdef>int <parameter>right</parameter></paramdef>
+    <paramdef><type>int</type> (*<parameter>comp</parameter>)
+      <funcparams>void *, void *</funcparams></paramdef>
+</funcprototype>
+</funcsynopsis>
+
+<para>Another.</para>
+
+<funcsynopsis><?dbhtml funcsynopsis-style="kr"?>
+<funcprototype>
+  <funcdef>int <function>foo_frob_something</function></funcdef>
+    <paramdef>foo_sometype1 <parameter>foo_frob_parm1</parameter></paramdef>
+    <paramdef>foo_sometype1 <parameter>foo_frob_parm2</parameter></paramdef>
+    <paramdef>foo_sometype1 <parameter>foo_frob_parm3</parameter></paramdef>
+    <paramdef>int (* <parameter>parm4</parameter> )
+      <funcparams>int a, int b, int c</funcparams></paramdef>
+    <paramdef>foo_sometype1 <parameter>foo_frob_parm5</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+
+</section>
+
+</article>

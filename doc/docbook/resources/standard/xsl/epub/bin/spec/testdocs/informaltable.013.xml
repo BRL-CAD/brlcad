@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article>
+<articleinfo>
+<title>Unit Test: informaltable.013</title>
+<releaseinfo role="CVS">$Id$</releaseinfo>
+<author><firstname>Norman</firstname><surname>Walsh</surname>
+        <affiliation><address><email>ndw@nwalsh.com</email></address></affiliation>
+</author>
+</articleinfo>
+
+<!--
++........+........+........+........+........+
+|   A    |        |        |        |        |
++........+........+........+........+........+
+-->
+
+<informaltable frame="all">
+<tgroup cols="5">
+<tbody>
+<row>
+  <entry>A</entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+
+</article>

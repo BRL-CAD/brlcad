@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<book>
+<title>Unit Test: subtitle.001</title>
+<subtitle>Book Subtitle</subtitle>
+
+<part><title>Part Title</title><subtitle>Part Subtitle</subtitle>
+
+<chapter><title>Chapter Title</title><subtitle>Chapter Subtitle</subtitle>
+  <sect1><title>Sect1 Title</title><subtitle>Sect1 Subtitle</subtitle>
+    <sect2><title>Sect2 Title</title><subtitle>Sect2 Subtitle</subtitle>
+      <sect3><title>Sect3 Title</title><subtitle>Sect3 Subtitle</subtitle>
+        <para>Spoon!</para>
+      </sect3>
+    </sect2>
+  </sect1>
+</chapter>
+
+<chapter><title>Chapter Title</title><subtitle>Chapter Subtitle</subtitle>
+  <section><title>Section Title</title><subtitle>Section Subtitle</subtitle>
+    <section><title>Subsection Title</title><subtitle>Subsection Subtitle</subtitle>
+      <section><title>Subsubsection Title</title><subtitle>Subsubsection Subtitle</subtitle>
+        <para>Fork?</para>
+      </section>
+    </section>
+  </section>
+</chapter>
+
+</part>
+
+</book>

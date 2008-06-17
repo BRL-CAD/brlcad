@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article>
+<articleinfo>
+<title>Unit Test: personname.001</title>
+<releaseinfo role="CVS">$Id$</releaseinfo>
+<author><firstname>Adam</firstname><surname>Di Carlo</surname>
+        <affiliation><address><email>adam@onshored.com</email></address></affiliation>
+</author>
+</articleinfo>
+
+  <para>My name is <personname><firstname>Adam</firstname
+><othername>P.</othername><surname>Di Carlo</surname
+></personname>.  Please don't squish my name all together.</para>
+</article>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article>
+<articleinfo>
+<title>Unit Test: itemizedlist.001</title>
+<releaseinfo role="CVS">$Id$</releaseinfo>
+<author><firstname>Norman</firstname><surname>Walsh</surname>
+        <affiliation><address><email>ndw@nwalsh.com</email></address></affiliation>
+</author>
+</articleinfo>
+  <para>
+Testing page breaking, variablelist nested in itemizedlist</para>
+
+<itemizedlist><title>YE OLDE ITEMIZEDLIST</title>
+<listitem><para>Item 1</para></listitem>
+<listitem><para>Item 2</para></listitem>
+<listitem><para>Item 3</para>
+<variablelist termlength="3pc">
+<varlistentry>
+<term>A</term><listitem><para>xxxxx</para></listitem></varlistentry>
+<varlistentry>
+<term>B</term><listitem><para>xxxxx</para></listitem></varlistentry>
+</variablelist>
+</listitem>
+<listitem><para>Item 4</para></listitem>
+<listitem><para>Item 5</para></listitem>
+<listitem><para>Item 6</para></listitem>
+<listitem><para>Item 7</para></listitem>
+<listitem><para>another (trying to cause a page break)</para></listitem>
+<listitem><para>another</para></listitem>
+<listitem><para>another</para></listitem>
+<listitem><para>another</para></listitem>
+<listitem><para>another</para></listitem>
+<listitem><para>another</para></listitem>
+<listitem><para>another</para></listitem>
+<listitem><para>another</para></listitem>
+<listitem><para>another</para></listitem>
+<listitem><para>another</para></listitem>
+<listitem><para>another</para></listitem>
+<listitem><para>another</para></listitem>
+<listitem><para>another</para></listitem>
+<listitem><para>another</para></listitem>
+<listitem id="problem"><variablelist>
+<varlistentry>
+<term>C</term><listitem><para>xxxxx</para></listitem></varlistentry>
+<varlistentry>
+<term>D</term><listitem><para>xxxxx</para></listitem></varlistentry>
+</variablelist>
+</listitem>
+</itemizedlist>
+
+</article>

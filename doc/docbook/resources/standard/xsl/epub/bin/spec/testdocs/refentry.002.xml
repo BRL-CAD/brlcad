@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article>
+<articleinfo>
+<title>Unit Test: refentry.002</title>
+<releaseinfo role="CVS">$Id$</releaseinfo>
+<author>
+  <firstname>Norman</firstname>
+  <surname>Walsh</surname>
+  <affiliation>
+    <address><email>ndw@nwalsh.com</email></address>
+  </affiliation>
+</author>
+<editor>
+  <firstname>Michael (tm)</firstname>
+  <surname>Smith</surname>
+  <affiliation>
+    <orgname>The DocBook Project</orgname>
+  </affiliation>
+</editor>
+<othercredit>
+  <firstname>Michael (tm)</firstname>
+  <surname>Smith</surname>
+  <personblurb><para>Did other stuff.</para></personblurb>
+</othercredit>
+</articleinfo>
+
+<refentry id="lessminimal">
+<refmeta>
+<refentrytitle>Also Minimal Title</refentrytitle>
+<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+<refname>Also Minimal</refname>
+<refpurpose>Another test of a minimal RefEntry</refpurpose>
+</refnamediv>
+
+<refsection>
+<title>Description</title>
+<para>This is a minimal RefEntry.</para>
+
+<refsection>
+<title>Subsection</title>
+<para>This is a minimal RefEntry.</para>
+
+<refsection>
+<title>Sub-subsection</title>
+<para>This is a minimal RefEntry.</para>
+
+<refsection>
+  <title>Refsect4-level subsection</title>
+  <para>Check the indenting.</para>
+  <refsection>
+    <title>Refsect5-level subsection</title>
+    <para>Check the indenting.</para>
+  </refsection>
+</refsection>
+
+</refsection>
+</refsection>
+</refsection>
+
+<refsection>
+<title>More Description</title>
+<para>This is a not-so minimal RefEntry.</para>
+<formalpara>
+  <title>Ladjwqopnsfil</title>
+  <para>This is a formalpara. That is, a paragraph with a title. One
+  way to generate output for it is to take the title, “Ladjwqopnsfil”,
+  and use it as a “run in” heading that is rendered inline at the
+  start of the paragraph, followed by a period (or some other
+  punctuation mark).</para>
+</formalpara>
+</refsection>
+
+<refsection>
+<title>Even More Description</title>
+<para>The following two words, “foo” and “bar”, are both empasized,
+separately, with a space between them: <emphasis>foo</emphasis>
+<emphasis>bar</emphasis>. Here is the same pair of words in bold, with
+a space
+
+
+
+
+
+
+ between them: <emphasis role="strong">foo</emphasis> <emphasis role="strong">bar</emphasis></para>
+</refsection>
+
+</refentry>
+
+</article>

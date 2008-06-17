@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE glossary PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<glossary>
+
+<glossdiv><title>Terms-1</title>
+
+<glossentry>
+<glossterm>gloss-1</glossterm>
+<acronym>G1</acronym>
+<glossdef><para>A description.</para>
+<glossseealso>gloss-2</glossseealso>
+</glossdef>
+</glossentry>
+
+</glossdiv>
+
+<glossdiv><title>Terms-2</title>
+
+<glossentry>
+<glossterm>gloss-2</glossterm>
+<glossdef><para>A description.</para>
+</glossdef>
+</glossentry>
+
+</glossdiv>
+
+</glossary>

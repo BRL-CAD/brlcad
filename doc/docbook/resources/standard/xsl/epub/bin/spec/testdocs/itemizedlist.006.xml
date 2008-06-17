@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article id="itemizedlist.006">
+<articleinfo>
+<title>Unit Test: itemizedlist.006</title>
+<releaseinfo role="CVS">$Id$</releaseinfo>
+<author><firstname>Adam</firstname> <surname>Di Carlo</surname>
+        <affiliation><address><email>adam@onshored.com</email></address></affiliation>
+</author>
+</articleinfo>
+
+  <para>Itemized list mark styles.</para>
+
+  <itemizedlist mark="bullet">
+    <title>Bullet marks</title>
+    <listitem>
+      <para>One</para>
+    </listitem>
+    <listitem>
+      <para>Type</para>
+    </listitem>
+  </itemizedlist>
+
+  <itemizedlist mark="box">
+    <title>Box marks</title>
+    <listitem>
+      <para>One</para>
+    </listitem>
+    <listitem>
+      <para>Type</para>
+    </listitem>
+  </itemizedlist>
+
+  <para>
+    Are there more?  Check CSS spec.  DSSSL styling requires CSS for
+    this; is there a way to do it w/o CSS?
+  </para>
+</article>

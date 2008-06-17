@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<book>
+<bookinfo>
+<title>Unit Test: stamp.001</title>
+<releaseinfo role="CVS">$Id$</releaseinfo>
+<author><firstname>Norman</firstname><surname>Walsh</surname>
+        <affiliation><address><email>ndw@nwalsh.com</email></address></affiliation>
+</author>
+</bookinfo>
+<chapter>
+  <title>Chapter One</title>
+<sect1>
+  <title>The stamp image</title>
+
+<para>The stamp image has a natural size of 200x128 pixels.</para>
+
+<para>The stamp image.</para>
+
+<mediaobject>
+  <imageobject>
+    <imagedata format="PNG" fileref="graphics/stamp.png"/>
+  </imageobject>
+  <textobject><phrase>The DocBook Stamp</phrase></textobject>
+</mediaobject>
+
+</sect1>
+<sect1>
+  <title>The small duck</title>
+
+
+<para>The small duck.</para>
+
+<mediaobject>
+  <imageobject role="webhires">
+    <imagedata format="PNG" fileref="graphics/duck-small.png"/>
+  </imageobject>
+  <imageobject role="weblowres">
+    <imagedata format="GIF" fileref="graphics/duck-small.gif"/>
+  </imageobject>
+  <imageobject role="print">
+    <imagedata format="PDF" fileref="graphics/duck-small.pdf"/>
+  </imageobject>
+</mediaobject>
+
+</sect1>
+
+</chapter>
+</book>
+

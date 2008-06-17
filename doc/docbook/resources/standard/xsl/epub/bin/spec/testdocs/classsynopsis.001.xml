@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article>
+<articleinfo>
+<title>Unit Test: classsynopsis.001</title>
+<releaseinfo role="CVS">$Id$</releaseinfo>
+<author><firstname>Norman</firstname><surname>Walsh</surname>
+        <affiliation><address><email>ndw@nwalsh.com</email></address></affiliation>
+</author>
+</articleinfo>
+
+<classsynopsis>
+<ooclass>
+<modifier>public</modifier>
+<classname>Catalog</classname>
+</ooclass>
+<fieldsynopsis>
+<modifier>public</modifier>
+<modifier>static</modifier>
+<modifier>final</modifier>
+<type>int</type>
+<varname>BASE</varname>
+<initializer>CatalogEntry.addEntryType("BASE", 1)</initializer>
+</fieldsynopsis>
+<constructorsynopsis>
+<modifier>public</modifier>
+<methodname>Catalog</methodname>
+<void/>
+</constructorsynopsis>
+<methodsynopsis>
+<modifier>protected</modifier>
+<void/>
+<methodname>copyReaders</methodname>
+<methodparam>
+<type>Catalog</type>
+<parameter>newCatalog</parameter>
+</methodparam>
+</methodsynopsis>
+</classsynopsis>
+
+</article>

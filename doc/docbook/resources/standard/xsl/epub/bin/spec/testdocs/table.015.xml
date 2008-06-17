@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article>
+<articleinfo>
+<title>Unit Test: table.015</title>
+<releaseinfo role="CVS">$Id$</releaseinfo>
+<author><firstname>Norman</firstname><surname>Walsh</surname>
+        <affiliation><address><email>ndw@nwalsh.com</email></address></affiliation>
+</author>
+</articleinfo>
+
+<table frame="all">
+<title>Multi-page Table with THead and TFoot</title>
+<tgroup cols="2">
+<thead>
+<row>
+<entry>Head Left</entry>
+<entry>Head Right</entry>
+</row>
+</thead>
+<tfoot>
+<row>
+<entry>Foot Left</entry>
+<entry>Foot Right</entry>
+</row>
+</tfoot>
+<tbody>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+<row><entry>Body Left</entry><entry>Body Right</entry></row>
+</tbody>
+</tgroup>
+</table>
+
+</article>

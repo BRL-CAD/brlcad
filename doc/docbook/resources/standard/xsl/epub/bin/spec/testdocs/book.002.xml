@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+<!ENTITY blah "<para>Blah blah blah blah. Blah blah blah blah. Blah blah blah blah.
+Blah blah blah blah blah blah blah blah. Blah blah blah blah.
+Blah. Blah blah blah blah. Blah blah. Blah blah blah blah.
+Blah blah blah blah blah blah blah blah. Blah blah blah blah.
+Blah. Blah blah blah blah. Blah blah. Blah blah blah blah.
+Blah blah blah blah blah blah blah blah. Blah blah blah blah.
+Blah. Blah blah blah blah. Blah blah. Blah blah blah blah.
+Blah blah blah blah blah blah blah blah. Blah blah blah blah.
+Blah. Blah blah blah blah. Blah blah. Blah blah blah blah.
+Blah blah blah blah blah blah blah blah. Blah blah blah blah.
+Blah. Blah blah blah blah. Blah blah. Blah blah blah blah.
+Blah blah blah blah blah blah blah blah. Blah blah blah blah.
+Blah. Blah blah blah blah. Blah blah. Blah blah blah blah.
+Blah blah blah blah blah blah blah blah. Blah blah blah blah.
+Blah. Blah blah blah blah. Blah blah. Blah blah blah blah.
+Blah blah blah blah blah blah blah blah. Blah blah blah blah.
+Blah. Blah blah blah blah. Blah blah. Blah blah blah blah.
+</para>">
+]>
+<book>
+<bookinfo>
+<title>Unit Test: book.001</title>
+<releaseinfo role="CVS">$Id$</releaseinfo>
+<author><firstname>Norman</firstname><surname>Walsh</surname>
+        <affiliation><address><email>ndw@nwalsh.com</email></address></affiliation>
+</author>
+</bookinfo>
+
+<article><title>First Article</title>
+
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+
+</article>
+
+<article><title>Second Article</title>
+
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+
+</article>
+
+<article><title>Third Article</title>
+
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+&blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah; &blah;
+
+</article>
+
+</book>

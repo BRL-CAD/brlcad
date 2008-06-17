@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+          "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article id="article">
+<articleinfo>
+<title>Unit Test: sgmltag.001.xml</title>
+<releaseinfo role="CVS">$Id$</releaseinfo>
+<author><firstname>Norman</firstname><surname>Walsh</surname>
+<affiliation><address><email>ndw@nwalsh.com</email></address></affiliation>
+</author>
+</articleinfo>
+
+<para>There are several classes of “tag”:</para>
+
+<itemizedlist>
+<listitem><para><sgmltag class="attribute">attribute</sgmltag></para></listitem>
+<listitem><para><sgmltag class="attvalue">attvalue</sgmltag></para></listitem>
+<listitem><para><sgmltag class="element">element</sgmltag></para></listitem>
+<listitem><para><sgmltag class="emptytag">emptytag</sgmltag></para></listitem>
+<listitem><para><sgmltag class="endtag">endtag</sgmltag></para></listitem>
+<listitem><para><sgmltag class="genentity">genentity</sgmltag></para></listitem>
+<listitem><para><sgmltag class="numcharref">numcharref</sgmltag></para></listitem>
+<listitem><para><sgmltag class="paramentity">paramentity</sgmltag></para></listitem>
+<listitem><para><sgmltag class="pi">pi</sgmltag></para></listitem>
+<listitem><para><sgmltag class="sgmlcomment">sgmlcomment</sgmltag></para></listitem>
+<listitem><para><sgmltag class="starttag">starttag</sgmltag></para></listitem>
+<listitem><para><sgmltag class="xmlpi">xmlpi</sgmltag></para></listitem>
+</itemizedlist>
+
+</article>

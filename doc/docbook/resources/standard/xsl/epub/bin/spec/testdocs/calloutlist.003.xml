@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN" "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<article>
+  <articleinfo>
+    <title>Unit Test: calloutlist.003</title>
+    <releaseinfo role="CVS">$Id$</releaseinfo>
+    <author>
+      <firstname>Benoit</firstname>
+      <surname>Guillon</surname>
+    </author>
+  </articleinfo>
+  <section>
+    <title>Callouts</title>
+    <section>
+      <title>Embedded <sgmltag>Co</sgmltag>s</title>
+      <programlisting>
+  &lt;refentry&gt;
+    &lt;info&gt;
+      &lt;date&gt;2003-10-20&lt;/date&gt; <co id="V1690_date-co" linkends="V1690_date"/>
+    &lt;/info&gt;
+    &lt;refmeta&gt;
+      &lt;refentrytitle&gt;gtk-options&lt;/refentrytitle&gt; <co id="V1690_title-co" linkends="V1690_title"/>
+      &lt;manvolnum&gt;7&lt;/manvolnum&gt; <co id="V1690_manvolnum-co" linkends="V1690_manvolnum"/>
+      &lt;refmiscinfo class="source-name"&gt;GTK+&lt;/refmiscinfo&gt; <co id="V1690_source-name-co" linkends="V1690_source-name"/>
+      &lt;refmiscinfo class="version"&gt;1.2&lt;/refmiscinfo&gt; <co id="V1690_version-co" linkends="V1690_version"/>
+      &lt;refmiscinfo class="manual"&gt;GTK+ User's Manual&lt;/refmiscinfo&gt; <co id="V1690_manual-co" linkends="V1690_manual"/>
+    &lt;/refmeta&gt;
+    &lt;refnamediv&gt;
+      &lt;refname&gt;gtk-options&lt;/refname&gt;
+      &lt;refpurpose&gt;Standard Command Line Options for GTK+ Programs&lt;/refpurpose&gt;
+    &lt;/refnamediv&gt;
+    &lt;refsect1&gt;
+      &lt;title&gt;Description&lt;/title&gt;
+      &lt;para&gt;This manual page describes the command line options, which
+      are common to all GTK+ based applications.&lt;/para&gt;
+    &lt;/refsect1&gt;
+  &lt;/refentry&gt;
+</programlisting>
+      <calloutlist>
+        <callout arearefs="V1690_date-co" id="V1690_date">
+          <para>Sets the <quote>date</quote> part of the header/footer.</para>
+        </callout>
+        <callout arearefs="V1690_title-co" id="V1690_title">
+          <para>Sets the <quote>title</quote> part.</para>
+        </callout>
+        <callout arearefs="V1690_manvolnum-co" id="V1690_manvolnum">
+          <para>Sets the <quote>section</quote> part.</para>
+        </callout>
+        <callout arearefs="V1690_source-name-co" id="V1690_source-name">
+          <para>Sets the <quote>source name</quote> part.</para>
+        </callout>
+        <callout arearefs="V1690_version-co" id="V1690_version">
+          <para>Sets the <quote>version</quote> part.</para>
+        </callout>
+        <callout arearefs="V1690_manual-co" id="V1690_manual">
+          <para>Sets the <quote>manual</quote> part.</para>
+        </callout>
+      </calloutlist>
+      <para>
+Another <sgmltag>screen</sgmltag> including <sgmltag>coref</sgmltag> too. The
+first <sgmltag>coref</sgmltag> is not valid, the second one is valid. It checks
+also that several items in co/@linkends are correctly handled.
+</para>
+      <screen> Volume in drive C is SYSTEM         Serial number is 2350:717C
+ Directory of  C:\
+
+10/17/97   9:04         &lt;DIR&gt;    bin
+10/16/97  14:11         &lt;DIR&gt;    DOS <co id="dos" linkends=" firstco lastco  "/>
+10/16/97  14:40         &lt;DIR&gt;    Program Files
+10/16/97  14:46         &lt;DIR&gt;    TEMP <coref linkend="unknown"/>
+10/17/97   9:04         &lt;DIR&gt;    tmp <coref linkend="dos"/>
+10/16/97  14:37         &lt;DIR&gt;    WINNT
+10/16/97  14:25             119  AUTOEXEC.BAT <co linkends="startup" id="autoexec.bat"/>
+ 2/13/94   6:21          54,619  COMMAND.COM <co linkends="startup" id="command.com"/>
+10/16/97  14:25             115  CONFIG.SYS <co id="config.sys"/>
+11/16/97  17:17      61,865,984  pagefile.sys
+ 2/13/94   6:21           9,349  WINA20.386 <co id="wina20.386"/></screen>
+      <calloutlist>
+        <callout arearefs="dos" id="firstco">
+          <para>
+  This directory holds <trademark>MS-DOS</trademark>, the
+  operating system that was installed before <trademark>Windows
+  NT</trademark>.
+  </para>
+        </callout>
+        <callout id="startup" arearefs="  autoexec.bat command.com config.sys ">
+          <para>
+  System startup code for DOS.
+  </para>
+        </callout>
+        <callout arearefs="wina20.386" id="lastco">
+          <para>
+  Some sort of <trademark>Windows 3.1</trademark> hack for some 386 processors,
+  as I recall.
+  </para>
+        </callout>
+      </calloutlist>
+    </section>
+    <section>
+      <title>Programlistingco</title>
+      <para>This case checks that spaces are added to reach the expected
+column.</para>
+      <programlistingco>
+        <areaspec>
+          <area id="hermite1" coords="2 55"/>
+          <area id="hermite2" coords="4 55"/>
+        </areaspec>
+        <programlisting>
+This is a line
+This is another line
+This is a third lien
+
+
+...
+</programlisting>
+        <calloutlist>
+          <callout arearefs="hermite1 hermite2">
+            <para>
+here <function>HermiteNormalFormIntegerMat</function>
+is used
+</para>
+          </callout>
+        </calloutlist>
+      </programlistingco>
+      <para>This programlistingco checks that you can put several markups at different
+column positions into the same line, and that several markups with no column
+specification are both put at the end of the line. The special case of a markup at
+the end of the last line is checked too.</para>
+      <programlistingco>
+        <areaspec>
+          <area id="pos10" coords="2 10"/>
+          <area id="pos12" coords="2 12"/>
+          <area id="posend1" coords="2"/>
+          <area id="posend2" coords="2"/>
+          <area id="poslast" coords="8"/>
+        </areaspec>
+        <programlisting>
+This is a line
+This is another line
+This is a third lien
+
+
+...
+The very last line</programlisting>
+        <calloutlist>
+          <callout arearefs="pos10 pos12">
+            <para>
+here <function>HermiteNormalFormIntegerMat</function>
+is used
+</para>
+          </callout>
+        </calloutlist>
+      </programlistingco>
+    </section>
+  </section>
+</article>
