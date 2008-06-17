@@ -3739,7 +3739,8 @@ AC_CONFIG_FILES([
 	doc/Makefile
 	doc/book/Makefile
 	doc/docbook/Makefile
-	doc/docbook/oed/Makefile
+        doc/docbook/tutorials/Makefile
+	doc/docbook/tutorials/oed/Makefile
 	doc/html/Makefile
 	doc/html/ReleaseNotes/Makefile
 	doc/html/ReleaseNotes/Rel5.0/Makefile
