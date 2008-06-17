@@ -1,4 +1,4 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
 "/usr/share/sgml/docbook/xml-dtd-4.4/docbookx.dtd">
 <article>
   <articleinfo>
@@ -7,8 +7,14 @@
       <firstname>Clifford</firstname>
       <surname>Yapp</surname>
     </author>
+
+    <legalnotice>
+      <para>Approved for public release; distribution is unlimited.</para>
+      <para>Date approved:  05/09/2008</para> 
+    </legalnotice>
+
   </articleinfo>
-  
+
   <abstract>
     <para> The <command>oed</command> command in MGED is used to enter
     what is called "object edit mode"
@@ -170,10 +176,16 @@ lollipop/
     </footnote>
     <footnote>
       <para><emphasis>path_lhs</emphasis> will be set to "/" for these 
-      simple cases - this simply means we will be working with 
-      combinations that are not contained within any other combination 
-      or region.  "/" denotes the toplevel lhs path, or the "root of all
-      trees" in the database.</para>
+      simple cases - this means either we will be working with 
+      combinations that are not contained within any other combination/region
+      or the intent is to transform <emphasis>every</emphasis> instance of
+      the combination/region present regardless of where it appears in the
+      tree structure.  "/" denotes the toplevel lhs path, or the "root of all
+      trees" in the database.  Because every object in the database exists 
+      "on its own" at the top level as well as inside tree structures,
+      operating on any object with a "/" path_lhs will always edit the matrix
+      associated with that particular combination/region independently
+      of any other transformations applied within tree structures.</para>
     </footnote>
     </para>
 
@@ -216,10 +228,10 @@ lollipop/
     </para>
     
     <para> Before beginning the editing process, the 
-    <command>l</command> command can be used to view both the 
+    <command>l</command> command (a.k.a the "list" command) can be used to view both the 
     combination and its component primitives:
     <note>
-      <para>Note that this command is the lower case letter L (l) and 
+      <para>Note that the list command uses the lower case letter L (l) and 
       not the numeral one (1).</para>
     </note>
     
@@ -261,7 +273,9 @@ cube.s:  ARB8
     <literallayout class="monospaced">oed / object1.c/sphere.s</literallayout>
     
     <note>
-      <para> If in the course of editing an object you make a mistake, 
+      <para> Changes made during an object edit are not written to
+      the database file unless and until they are accepted.  So if in the course 
+      of editing an object you make a mistake, you can
       type <command>reject</command> to revert to the 
       pre-object-edit-mode values and exit object edit mode.
       </para>
@@ -431,9 +445,12 @@ cube.s:  ARB8
 
     Now the primitives have changed, and the combination is back to 
     being just a boolean operation on primitives.  These operations 
-    COULD be undone by more transformations and another push to return 
-    things to their original state, but anything much more complex would
-    become hard to undo - use <command>push</command> with care!</para>
+    COULD be undone, but there is no equivalent "pull" command to automatically undo
+    them.  By design, <command>push</command> replaces the stored transformations
+    by their results and removes the transformation information.  This means reversing
+    a <command>push</command> requires additional transformations and another push to 
+    return things to their original state.  Any complex sequence of transformations
+    becomes hard to undo - use <command>push</command> with care!</para>
     
   </sect1>
 
@@ -480,11 +497,12 @@ cube.s:  ARB8
     <para>Compare the results to the previous section. The model is 
     indeed shifted up the z axis, but the distance is somewhat different
     and the cube now has one edge lined up with the z axis.  This is 
-    because of how <command>translate</command> works - it moves a
-    <emphasis>point</emphasis> to an absolute position, rather than
-    shifting everything selected some delta in x, y and z (the
-    <command>tra</command> command uses relative position coordinates 
-    and its effects are indeed independent of primitive selected.)  In 
+    how <command>translate</command> works - it interprets its arguments
+    as a <emphasis>point</emphasis> at which the object should be positioned, rather than
+    as a vector along which it should be shifted.  (To translate the object using
+    a vector interpretation use the <command>tra</command> command
+    instead - its arguments  (dx, dy, dz) are treated as how far to move something 
+    relative to the current position.)   In 
     the previous section, the sphere's origin was the reference point. 
     Now, the cube's first coordinate is being moved to the same 
     absolute position - with different overall results for the model.
@@ -502,9 +520,9 @@ cube.s:  ARB8
     <literallayout class="monospaced">accept</literallayout>
     
     The first <command>rot</command> command rotated the model 
-    around the y axis using the first coordinate of cube.s.  The second 
-    rotation started from the results of the previous rotation and 
-    rotated again around the y axis, but this time using the origin of 
+    around a line parallel to the y axis using the first coordinate of cube.s.
+    The second rotation started from the results of the previous rotation and 
+    rotated again around a line parallel to the y axis, but this time using the origin of 
     sphere.s.
     </para>
     
@@ -531,15 +549,6 @@ object2.c:  --
     Combinations do not have control points of their own, and thus 
     cannot provide any basis for these operations - a primitive MUST be 
     supplied for every <command>oed</command> operation.
-    <footnote>
-      <para> It might be reasonable to expect the <command>oed</command>
-      command to use the center of the combination bounding box as a 
-      default if no primitive is supplied and/or take as an optional 
-      parameter an explicit keypoint setting, but this is not the 
-      current behavior of BRL-CAD as of version 7.12 - a primitive is 
-      required.
-      </para>
-    </footnote>
     </para>
 
   </sect1>
@@ -549,11 +558,18 @@ object2.c:  --
     <title>Flexible Manipulation with <emphasis>keypoint</emphasis>
     </title>
     
-    <para> As seen in the previous section, the <command>oed</command> 
-    requires a point from which translations/rotations/etc. are defined.
-    BRL-CAD's term for this point is the <emphasis>keypoint</emphasis>
-    and BRL-CAD does offer an option for explicit control of the 
-    keypoint when the default primitive options are not sufficient.
+    <para> It might be reasonable to expect the <command>oed</command>
+    command to use the center of the combination bounding box as a 
+    default if no primitive is supplied and/or take as an optional 
+    parameter an explicit keypoint setting, but this is not the 
+    current behavior of BRL-CAD as of version 7.12 - a primitive is 
+    required. As seen in the previous section, the <command>oed</command> 
+    uses the specified primitive to select a point from which 
+    translations/rotations/etc. are defined.
+    BRL-CAD's term for this point is the <emphasis>keypoint</emphasis>.
+    For cases where it is not practical to select a primitive that will
+    provide the correct keypoint, BRL-CAD does offer an option for explicitly
+    setting the keypoint.
     </para>
     
     <para> For example, to rotate object2.c around the z axis 
@@ -800,7 +816,7 @@ object1.c:  --
     </footnote>
     </para>
   </sect1>
-    
+
   <sect1>
     <title>Summary</title>  
     <para>
@@ -816,8 +832,8 @@ object1.c:  --
 	<listitem>
 	  <para>
 	    Object edit mode does not alter primitives directly but 
-	    instead works on a transformation matrix which is applied 
-	    to the primitive by BRL-CAD.
+	    instead works on a transformation matrix that BRL-CAD uses
+	    when interperting the primitive.
 	  </para>
 	</listitem>
 	<listitem>
@@ -830,9 +846,9 @@ object1.c:  --
       <listitem>
 	<para>
 	  <command>push</command> is used to force changes corresponding
-	  to the applicable changes down to the primitives, but the 
-	  operation is destructive as far as the original primitive 
-	  information is concerned.
+	  to the transformation down to the primitives, but the 
+	  operation is destructive in that it replaces the previous
+	  information defining the primitive.
 	</para>
       </listitem>
       <listitem>
@@ -841,7 +857,8 @@ object1.c:  --
 	  the point moved by <command>translate</command> operations and
 	  around with rotations occur - it is set from the primitive 
 	  supplied to <command>oed</command> but can also be set 
-	  manually when in object edit mode.
+	  manually when in object edit mode with the <command>keynote</command>
+	  command.
 	</para>
       </listitem>
       <listitem>
@@ -855,4 +872,9 @@ object1.c:  --
       </itemizedlist>
     </para>
   </sect1>
+
+  <ackno>
+    Thanks to Christopher Sean Morrison, Paul Tanenbaum and Ruth Foutz for proofreading, suggestions and corrections.
+  </ackno>
+
 </article>
