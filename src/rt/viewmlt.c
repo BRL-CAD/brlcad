@@ -25,11 +25,14 @@
 #include "common.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "fb.h"
 
+#include "ext.h"
 #include "rtprivate.h"
 #include "scanline.h"
 
@@ -39,8 +42,7 @@ int inonbackground[3] = {0};
 static short int pwidth;			/* Width of each pixel (in bytes) */
 static struct scanline* scanline;   /* From scanline.c */
 
-extern int height;  /* from opt.c */
-extern int width;   /* from opt.c */
+extern FBIO* fbp;
 
 const char title[] = "Metropolis Light Transport renderer";
 const char usage[] = "\
@@ -56,6 +58,7 @@ Options:\n\
 
 int	rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp);
 int	raymiss(register struct application *ap);
+
 /* From scanline.c */
 void free_scanlines(int, struct scanline*);
 struct scanline* alloc_scanlines(int);
@@ -194,8 +197,46 @@ view_pixel(register struct application *ap)
 
     if (!do_eol) return;
 
+    if (fbp != FBIO_NULL) {
+        int npix;
 
+        bu_semaphore_acquire(BU_SEM_SYSCALL);
+        if (sub_grid_mode) {
+            npix = fb_write(fbp, sub_xmin, ap->a_y,
+          (unsigned char *) scanline[ap->a_y].sl_buf + 3 * sub_xmin,
+                            sub_xmax - sub_xmin + 1);
+        } else {
+            npix = fb_write(fbp, 0, ap->a_y,
+          (unsigned char *) scanline[ap->a_y].sl_buf, width);
+        }
+        bu_semaphore_release(BU_SEM_SYSCALL);
+
+        if (sub_grid_mode) {
+            if (npix < sub_xmax - sub_xmin - 1)
+                bu_exit(EXIT_FAILURE, "scanline fb_write error");
+        } else {
+            if (npix < width)
+                bu_exit(EXIT_FAILURE, "scanline fb_write error");
+        }
+    }
+    if (outfp != NULL) {
+        int count;
+
+        bu_semaphore_acquire(BU_SEM_SYSCALL);
+        if (fseek(outfp, ap->a_y * width * pwidth, 0) != 0)
+                fprintf(stderr, "fseek error\n");
+        count = fwrite(scanline[ap->a_y].sl_buf,
+                       sizeof(char), width * pwidth, outfp);
+        bu_semaphore_release(BU_SEM_SYSCALL);
+
+        if (count != width * pwidth)
+                bu_exit(EXIT_FAILURE, "view_pixel:  fwrite failure\n");
+    }
+    bu_free(scanline[ap->a_y].sl_buf, "sl_buf scanline buffer");
+    scanline[ap->a_y].sl_buf = (char *) 0;
 }
+
+
 
 /*
  *			V I E W _ E N D
