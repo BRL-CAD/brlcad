@@ -1,0 +1,5 @@
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" "docbook.dtd"> 
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
+<title>The BRL-CAD Book</title>
+<xi:include href="../tutorials/oed/oed.xml" /> 
+</book>

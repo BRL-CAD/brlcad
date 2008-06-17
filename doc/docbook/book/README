@@ -1,0 +1,1 @@
+XML_CATALOG_FILES="../catalog.xml" xsltproc -nonet -xinclude -o test.xhtml docbook.xsl book.xml 
