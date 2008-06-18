@@ -46,19 +46,18 @@
 #define RTS_ADD_RAY_TO_JOB( _ajob, _aray ) bu_ptbl_ins( &(_ajob)->rtjob_rays, (long *)(_aray) )
 
 /* usage statement */
-static char *usage="Usage:\n\t%s [-t num_threads] [-q num_queues] [-a] [-s grid_size] [-p] [-v] [-o object] model.g\n";
+static char *usage="Usage:\n\t%s [-a] [-s grid_size] [-p] [-v] [-o object] model.g\n";
 
 
 int
 main( int argc, char *argv[] )
 {
+    struct application *ap;
     int ret;
     int c;
     extern char *bu_optarg;
     extern int bu_optind, bu_opterr, optopt;
-    struct rtserver_job *ajob;
-    struct rtserver_result *aresult;
-    struct xray *aray;
+    struct xray aray;
     int verbose = 0;
     char *name;
     int i, j;
@@ -70,8 +69,6 @@ main( int argc, char *argv[] )
     char **result_map;
     struct bu_ptbl objs;
     int my_session_id;
-    int queue_count=3;
-    int thread_count=2;
     int do_plot=0;
     int use_air=0;
     struct timeval startTime;
@@ -79,6 +76,7 @@ main( int argc, char *argv[] )
     double diff;
     point_t mdl_min;
     point_t mdl_max;
+    struct bu_vlb *vlb;
 
     /* Things like bu_malloc() must have these initialized for use with parallel processing */
     bu_semaphore_init( RT_SEM_LAST );
@@ -86,20 +84,11 @@ main( int argc, char *argv[] )
     /* initialize the list of BRL-CAD objects to be raytraced (this is used for the "-o" option) */
     bu_ptbl_init( &objs, 64, "objects" );
 
-    /* initialize the rtserver resources (cached structures) */
-    rts_resource_init();
-
     /* process command line args */
-    while ( (c=bu_getopt( argc, argv, "vps:t:q:ao:" ) ) != -1 ) {
+    while ( (c=bu_getopt( argc, argv, "vps:ao:" ) ) != -1 ) {
 	switch ( c ) {
 	    case 'p': /* do print plot */
 		do_plot = 1;
-		break;
-	    case 't':	/* number of server threads to start */
-		thread_count = atoi( bu_optarg );
-		break;
-	    case 'q':	/* number of request queues to create */
-		queue_count = atoi( bu_optarg );
 		break;
 	    case 'a':	/* set flag to use air regions in the BRL-CAD model */
 		use_air = 1;
@@ -127,13 +116,13 @@ main( int argc, char *argv[] )
 	for ( i=0; i<BU_PTBL_LEN( &objs ); i++ ) {
 	    objects[i] = (char *)BU_PTBL_GET( &objs, i );
 	}
-	my_session_id = rts_load_geometry( argv[bu_optind], 0, BU_PTBL_LEN( &objs ), objects, thread_count );
+	my_session_id = rts_load_geometry(argv[bu_optind], BU_PTBL_LEN( &objs ), objects);
     } else {
 	if ( bu_optind >= argc ) {
 	    fprintf( stderr, "No BRL-CAD model specified\n" );
 	    bu_exit(1, usage, argv[0]);
 	}
-	my_session_id = rts_load_geometry( argv[bu_optind], 0, 0, (char **)NULL, thread_count );
+	my_session_id = rts_load_geometry(argv[bu_optind], 0, (char **)NULL);
     }
 
     if ( my_session_id < 0 ) {
@@ -162,52 +151,30 @@ main( int argc, char *argv[] )
 	}
     }
 #endif
-    /* start the server threads */
-    rts_start_server_threads( thread_count, queue_count );
 
+/*
     fprintf( stderr, "sleeping for %d seconds while geometry loads\n", SLEEPYTIME );
     sleep( SLEEPYTIME );
+*/
 
     get_model_extents( my_session_id, mdl_min, mdl_max );
     VSET( xdir, 1, 0, 0 );
     VSET( zdir, 0, 0, 1 );
     VSUB2( model_size, mdl_max, mdl_min );
-    aray = rts_get_xray();
-    VJOIN2( aray->r_pt, mdl_min,
-	    model_size[Z]/2.0, zdir,
-	    model_size[X]/2.0, xdir );
-    VSET( aray->r_dir, 0, 1, 0 );
 
-    /* submit and wait for a job */
-    ajob = rts_get_rtserver_job();
-    RTS_ADD_RAY_TO_JOB( ajob, aray );
-
-    ajob->sessionid = my_session_id;
-    if( verbose ) {
-	fprintf( stderr, "submitting job and waaiting\n" );
+    for(i=0 ; i<10 ; i++) {
+        ap = NULL;
+        getApplication(&ap);
+        VJOIN2( ap->a_ray.r_pt, mdl_min,
+                model_size[Z]/2.0, zdir,
+                model_size[X]/2.0, xdir );
+        VSET( ap->a_ray.r_dir, 0, 1, 0 );
+        rts_shootray(ap);
+        vlb = (struct bu_vlb*)ap->a_uptr;
+        printHits(vlb);
+        freeApplication(ap);
     }
-    aresult = rts_submit_job_and_wait( ajob );
-    /* list results */
-    fprintf( stderr, "shot from (%g %g %g) in direction (%g %g %g):\n",
-	     V3ARGS( aray->r_pt ),
-	     V3ARGS( aray->r_dir ) );
-    if ( !aresult->got_some_hits ) {
-	fprintf( stderr, "\tMissed\n" );
-    } else {
-	struct ray_result *ray_res;
-	struct ray_hit *ahit;
-
-	ray_res = BU_LIST_FIRST( ray_result, &aresult->resultHead.l );
-	for ( BU_LIST_FOR( ahit, ray_hit, &ray_res->hitHead.l ) ) {
-	    fprintf( stderr, "\thit on region %s at dist = %g los = %g\n",
-		     ahit->regp->reg_name, ahit->hit_dist, ahit->los );
-	}
-    }
-
-    rts_free_rtserver_result( aresult );
-    fprintf( stderr, "resources after firing one ray:\n" );
-    rts_pr_resource_summary();
-
+#if 0
     /* submit some jobs */
     fprintf( stderr, "\nfiring a grid (%dx%d) of rays at",
 	     grid_size, grid_size );
@@ -292,7 +259,7 @@ main( int argc, char *argv[] )
 
     fprintf( stderr, "resources after firing %d rays:\n", grid_size*grid_size + 1 );
     rts_pr_resource_summary();
-
+#endif
     return 0;
 }
 
