@@ -2283,10 +2283,10 @@ wdb_pathsum_cmd(struct rt_wdb	*wdbp,
 	return TCL_ERROR;
     }
 
-#if 1
-    ged.ged_wdbp = wdbp;
-#else
     /*XXX Temporary */
+#if 1
+    GED_INIT(&ged, wdbp);
+#else
     GED_INIT_FROM_WDBP(&ged, wdbp);
 #endif
 
@@ -3574,10 +3574,10 @@ wdb_copyeval_cmd(struct rt_wdb	*wdbp,
 	return TCL_ERROR;
     }
 
-#if 1
-    ged.ged_wdbp = wdbp;
-#else
     /*XXX Temporary */
+#if 1
+    GED_INIT(&ged, wdbp);
+#else
     GED_INIT_FROM_WDBP(&ged, wdbp);
 #endif
 
@@ -7192,10 +7192,10 @@ wdb_make_bb_cmd(struct rt_wdb	*wdbp,
 	return TCL_ERROR;
     }
 
-#if 1
-    ged.ged_wdbp = wdbp;
-#else
     /*XXX Temporary */
+#if 1
+    GED_INIT(&ged, wdbp);
+#else
     GED_INIT_FROM_WDBP(&ged, wdbp);
 #endif
 
@@ -10502,12 +10502,12 @@ wdb_newcmds_tcl(ClientData	clientData,
     int ret;
     char flags[128];
 
-#if 1
-    ged.ged_wdbp = wdbp;
-#else
     /*XXXX Eventually the clientData will be a "struct ged".
      *     In the meantime ...
      */
+#if 1
+    GED_INIT(&ged, wdbp);
+#else
     GED_INIT_FROM_WDBP(&ged, wdbp);
 #endif
 
