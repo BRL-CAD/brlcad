@@ -1989,10 +1989,10 @@ cmd_make_name(ClientData	clientData,
 
     CHECK_DBI_NULL;
 
-#if 1
-    ged.ged_wdbp = wdbp;
-#else
     /*XXX Temporary */
+#if 1
+    GED_INIT(&ged, wdbp);
+#else
     GED_INIT_FROM_WDBP(&ged, wdbp);
 #endif
 
@@ -2894,6 +2894,8 @@ cmd_vdraw(ClientData	clientData,
     return vdraw_cmd(dgop, interp, argc, argv);
 }
 
+/*XXX Temporarily disabled */
+#if 0
 /**
  *			C M D _ E
  *
@@ -2949,6 +2951,7 @@ cmd_E(ClientData	clientData,
 
     return TCL_OK;
 }
+#endif
 
 int
 cmd_bot_face_sort( ClientData	clientData,

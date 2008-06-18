@@ -69,10 +69,10 @@ f_itemair(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
 
-#if 1
-    ged.ged_wdbp = wdbp;
-#else
     /*XXX Temporary */
+#if 1
+    GED_INIT(&ged, wdbp);
+#else
     GED_INIT_FROM_WDBP(&ged, wdbp);
 #endif
 
@@ -277,10 +277,10 @@ f_edmater(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
 
-#if 1
-    ged.ged_wdbp = wdbp;
-#else
     /*XXX Temporary */
+#if 1
+    GED_INIT(&ged, wdbp);
+#else
     GED_INIT_FROM_WDBP(&ged, wdbp);
 #endif
 
@@ -310,10 +310,10 @@ f_wmater(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
 
-#if 1
-    ged.ged_wdbp = wdbp;
-#else
     /*XXX Temporary */
+#if 1
+    GED_INIT(&ged, wdbp);
+#else
     GED_INIT_FROM_WDBP(&ged, wdbp);
 #endif
 
@@ -343,10 +343,10 @@ f_rmater(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
 
-#if 1
-    ged.ged_wdbp = wdbp;
-#else
     /*XXX Temporary */
+#if 1
+    GED_INIT(&ged, wdbp);
+#else
     GED_INIT_FROM_WDBP(&ged, wdbp);
 #endif
 
@@ -382,10 +382,10 @@ f_comb_color(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
 
-#if 1
-    ged.ged_wdbp = wdbp;
-#else
     /*XXX Temporary */
+#if 1
+    GED_INIT(&ged, wdbp);
+#else
     GED_INIT_FROM_WDBP(&ged, wdbp);
 #endif
 
@@ -422,10 +422,10 @@ f_shader(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
 
-#if 1
-    ged.ged_wdbp = wdbp;
-#else
     /*XXX Temporary */
+#if 1
+    GED_INIT(&ged, wdbp);
+#else
     GED_INIT_FROM_WDBP(&ged, wdbp);
 #endif
 
@@ -459,10 +459,10 @@ f_mirror(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
 
-#if 1
-    ged.ged_wdbp = wdbp;
-#else
     /*XXX Temporary */
+#if 1
+    GED_INIT(&ged, wdbp);
+#else
     GED_INIT_FROM_WDBP(&ged, wdbp);
 #endif
 
@@ -502,10 +502,10 @@ f_edcomb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
 
-#if 1
-    ged.ged_wdbp = wdbp;
-#else
     /*XXX Temporary */
+#if 1
+    GED_INIT(&ged, wdbp);
+#else
     GED_INIT_FROM_WDBP(&ged, wdbp);
 #endif
 
@@ -550,10 +550,10 @@ f_make(ClientData	clientData,
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
 
-#if 1
-    ged.ged_wdbp = wdbp;
-#else
     /*XXX Temporary */
+#if 1
+    GED_INIT(&ged, wdbp);
+#else
     GED_INIT_FROM_WDBP(&ged, wdbp);
 #endif
 
