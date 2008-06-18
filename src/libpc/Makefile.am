@@ -25,8 +25,8 @@ libpc_la_LIBADD = \
 pc_test_SOURCES = pc_test.c
 pc_test_LDADD = libpc.la
 
-solver_test_SOURCES = solver_test.c
-solver_test_LDADD =
+solver_test_SOURCES = solver_test.cpp
+solver_test_LDADD = libpc.la
 
 FAST_OBJECTS = \
 	$(libpc_nil_la_OBJECTS) \
