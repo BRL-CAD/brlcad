@@ -130,7 +130,9 @@ static struct cmdtab cmdtab[] = {
     {"dm", f_dm},
     {"draw", cmd_draw},
     {"dup", cmd_dup},
+#if 0
     {"E", cmd_E},
+#endif
     {"e", cmd_draw},
     {"eac", f_eac},
     {"echo", cmd_echo},
