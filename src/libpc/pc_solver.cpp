@@ -21,22 +21,21 @@
 /** @{ */
 /** @file pc_solver.cpp
  *
- *  Library for writing MGED databases from arbitrary procedures.
- *  Assumes that some of the structure of such databases are known
- *  by the calling routines.
+ * Library for writing MGED databases from arbitrary procedures.
+ * Assumes that some of the structure of such databases are known by
+ * the calling routines.
  *
- *  It is expected that this library will grow as experience is gained.
- *  Routines for writing every permissible solid do not yet exist.
+ * It is expected that this library will grow as experience is gained.
+ * Routines for writing every permissible solid do not yet exist.
  *
- *  Note that routines which are passed point_t or vect_t or mat_t
- *  parameters (which are call-by-address) must be VERY careful to
- *  leave those parameters unmodified (eg, by scaling), so that the
- *  calling routine is not surprised.
+ * Note that routines which are passed point_t or vect_t or mat_t
+ * parameters (which are call-by-address) must be VERY careful to
+ * leave those parameters unmodified (eg, by scaling), so that the
+ * calling routine is not surprised.
  *
- *  Return codes of 0 are OK, -1 signal an error.
+ * Return codes of 0 are OK, -1 signal an error.
  *
- *@author Dawn Thomas
- *	
+ * @author Dawn Thomas
  *
  */
 
