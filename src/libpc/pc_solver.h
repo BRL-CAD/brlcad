@@ -58,7 +58,7 @@ public:
 
 class Constraint {
 public:
-    
+
 private:
 };
 

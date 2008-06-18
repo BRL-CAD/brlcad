@@ -38,7 +38,7 @@
  *  TODO: clean up header includes
  *
  *@author	Dawn Thomas
- *	
+ *
  *
  */
 
@@ -69,14 +69,14 @@
  */
 int
 pc_write_param_set(struct pc_param_set ps, struct directory * dp,struct db_i * dbip ) {
-	register int i,r;
-	struct bu_attribute_value_set avs;
-	struct bu_vls v,w;
-	bu_avs_init_empty(&avs);
-	bu_vls_init(&v);
-	bu_vls_init(&w);
+    register int i,r;
+    struct bu_attribute_value_set avs;
+    struct bu_vls v,w;
+    bu_avs_init_empty(&avs);
+    bu_vls_init(&v);
+    bu_vls_init(&w);
 
-	for(i=ps.len-1;i>=0;i--) {
+    for(i=ps.len-1;i>=0;i--) {
 
 	bu_vls_printf(&v,"%g",ps.p[i].step);
 	bu_vls_strcat(&w,ps.p[i].name);
@@ -119,18 +119,18 @@ pc_write_param_set(struct pc_param_set ps, struct directory * dp,struct db_i * d
 	bu_vls_printf(&w,"name_%d",i);
 	bu_avs_add_nonunique(&avs,bu_vls_addr(&w),bu_vls_addr(&v));
 	//db5_export_attributes(&ext,&avs);
-	
+
 	bu_vls_free(&w);
 	bu_vls_free(&v);
-	}
-	db5_update_attributes(dp,&avs,dbip);
-	bu_avs_free(&avs);
-	return 0;
+    }
+    db5_update_attributes(dp,&avs,dbip);
+    bu_avs_free(&avs);
+    return 0;
 }
 /**
  *	    P C _  G E N E R A T E _ P A R A M E T E R S
  *
- *  Given a directory pointer, pc_generate_parameters generates the set of all 
+ *  Given a directory pointer, pc_generate_parameters generates the set of all
  *  parameters that the particular geometry element could have.
  *  All the parametrized flags corresponding to each parameter are still set to
  *  0. The user will have to use pc_parametrize to make any parameter
@@ -141,17 +141,17 @@ pc_write_param_set(struct pc_param_set ps, struct directory * dp,struct db_i * d
  */
 int
 pc_generate_parameters( struct pc_param_set * psp, struct directory * dp,struct db_i * dbip) {
-	register int id;
-        struct rt_db_internal ip;
-	rt_init_resource(&rt_uniresource,0,NULL);
-        id = rt_db_get_internal(&ip,dp,dbip,NULL,&rt_uniresource);
-	return 0;
+    register int id;
+    struct rt_db_internal ip;
+    rt_init_resource(&rt_uniresource,0,NULL);
+    id = rt_db_get_internal(&ip,dp,dbip,NULL,&rt_uniresource);
+    return 0;
 }
 /**
  *				P C _ P A R A M E T R I Z E
  *
- *  Taking parameter_table, parameter name, parameter value and directory pointer 
- *  as inputs pc_parametrize sets the parametrized flag of the corresponding 
+ *  Taking parameter_table, parameter name, parameter value and directory pointer
+ *  as inputs pc_parametrize sets the parametrized flag of the corresponding
  *  parameter and assigns the valueand writes it onto the directory pointed by dp
  *  in the database pointed to by fp.
  *  No Checking done presently.
@@ -219,24 +219,24 @@ pc_mk_constraint(
     RT_INIT_DB_INTERNAL(&intern);
 
     if ( append_ok &&
-         wdb_import( wdbp, &intern, constraintname, (matp_t)NULL ) >= 0 )  {
-        /* We retrieved an existing object, append to it */
-        constraint = (struct pc_constraint_internal *)intern.idb_ptr;
-        /*PC_CK_CONSTRAINT( constraint );*/
+	 wdb_import( wdbp, &intern, constraintname, (matp_t)NULL ) >= 0 )  {
+	/* We retrieved an existing object, append to it */
+	constraint = (struct pc_constraint_internal *)intern.idb_ptr;
+	/*PC_CK_CONSTRAINT( constraint );*/
 
-        new_constraint = 0;
+	new_constraint = 0;
     } else {
-        /* Create a fresh new object for export */
-        BU_GETSTRUCT( constraint, pc_constraint_internal );
-        constraint->magic = PC_CONSTRAINT_INTERNAL_MAGIC;
-        /* bu_vls_init( &constraint->shader );*/
+	/* Create a fresh new object for export */
+	BU_GETSTRUCT( constraint, pc_constraint_internal );
+	constraint->magic = PC_CONSTRAINT_INTERNAL_MAGIC;
+	/* bu_vls_init( &constraint->shader );*/
 
-        intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-        intern.idb_type = ID_CONSTRAINT;
-        intern.idb_ptr = (genptr_t)constraint;
-        intern.idb_meth = &rt_functab[ID_CONSTRAINT];
+	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	intern.idb_type = ID_CONSTRAINT;
+	intern.idb_ptr = (genptr_t)constraint;
+	intern.idb_meth = &rt_functab[ID_CONSTRAINT];
 
-        new_constraint = 1;
+	new_constraint = 1;
     }
 
     /* Don't change these things when appending to existing constraint */

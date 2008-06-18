@@ -18,29 +18,35 @@
  * information.
  */
 
-#include <stdio.h>
+#include "common.h"
+
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include "bio.h"
+
 #include "pc_constraint.h"
 #include "pc.h"
+
 
 int
 main(int argc, char **argv)
 {
-	int i,ret;
-	struct cn_node cnn;
-	struct cn_edge cne;
-	
-	cnn.solved_status=0;
-	cnn.n_relations=1;
-	cnn.edge[0] = (struct cn_edge *) &cne;
-	cne.solved_status=0;
-	cne.n_params=1;
+    int i,ret;
+    struct cn_node cnn;
+    struct cn_edge cne;
 
-	fprintf(stdout,"%d\n",cnn.edge[0]->n_params);
+    cnn.solved_status=0;
+    cnn.n_relations=1;
+    cnn.edge[0] = (struct cn_edge *) &cne;
+    cne.solved_status=0;
+    cne.n_params=1;
 
+    fprintf(stdout,"%d\n",cnn.edge[0]->n_params);
+
+    return 0;
 }
+
 /*
  * Local Variables:
  * mode: C

@@ -34,7 +34,7 @@
 
 /**
  *  Structures required for describing solution sets, parameter instantiation
- * 
+ *
  */
 
 struct parameter_domain {
@@ -46,7 +46,7 @@ struct parameter_solution {
     int n_domains;
     struct  parameter_domain * domain;
 };
-	
+
 struct constraint_solution {
     int n;
     struct parameter_solution * param;
@@ -55,7 +55,7 @@ struct constraint_solution {
 
 /**
  *  Structures required for describing constraint networks
- * 
+ *
  */
 
 struct cn_relation {
@@ -63,17 +63,17 @@ struct cn_relation {
 };
 
 struct cn_node {
-	struct parameter_domain pd;
-	struct directory * dp;
-	int solved_status;
-	int n_relations;
-	struct cn_edge * edge[];
+    struct parameter_domain pd;
+    struct directory * dp;
+    int solved_status;
+    int n_relations;
+    struct cn_edge * edge[];
 };
 
 struct cn_edge {
-	int solved_status;
-	int n_params;
-	struct cn_node * node[];
+    int solved_status;
+    int n_params;
+    struct cn_node * node[];
 };
 
 __END_DECLS
