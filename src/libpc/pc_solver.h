@@ -1,7 +1,7 @@
-/*              	     P C _ S O L V E R . H
+/*                     P C _ S O L V E R . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,11 +19,12 @@
  */
 /** @addtogroup soln */
 /** @{ */
-/** @file pc.h
+/** @file pc_solver.h
  *
- *  Structures required for solving constraint networks
+ * Structures required for solving constraint networks
  *
- *@author Dawn Thomas
+ * @author Dawn Thomas
+ *
  */
 #ifndef __PC_SOLVER_H__
 #define __PC_SOLVER_H__
@@ -36,30 +37,29 @@
 #include <stack>
 
 /*
-    To be replaced by boost based classes
-*/
+ * XXX - To be replaced by boost based classes
+ */
 
-using namespace std;
 
 class Relation {
-	public:
-	private:
+public:
+private:
 };
 
 template<class T>
-class Stack : public stack< T,list<T> > {
-	public:
-	    T pop() {
-		T tmp = stack<T>::top();
-	        stack<T>::pop();
-	        return tmp;
-	    }
+class Stack : public std::stack< T,std::list<T> > {
+public:
+    T pop() {
+	T tmp = std::stack<T>::top();
+	std::stack<T>::pop();
+	return tmp;
+    }
 };
 
 class Constraint {
-	public:
-
-	private:
+public:
+    
+private:
 };
 
 #endif
