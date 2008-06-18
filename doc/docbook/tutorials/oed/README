@@ -10,6 +10,9 @@ Conversion to pdf using xmlto and Apache FOP:
 
 xmlto fo oed.xml; fop oed.fo -pdf oed.pdf
 
+Converstion to html using xsltproc:
+XML_CATALOG_FILES="../../catalog.xml" xsltproc -nonet -o oed.xhtml docbook.xsl oed.xml 
+
 Common issues:
 
   Different systems tend to have different locations for
