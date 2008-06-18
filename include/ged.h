@@ -55,6 +55,13 @@ __BEGIN_DECLS
 #define GED_DRAWABLE_NULL (struct ged_drawable *)0
 #define GED_VIEW_NULL (struct ged_view *)0
 
+/*XXX This macro is temporary */
+#define GED_INIT(_gedp, _wdbp) { \
+    bu_vls_init(&(_gedp)->ged_log); \
+    bu_vls_init(&(_gedp)->ged_result_str); \
+    (_gedp)->ged_wdbp = (_wdbp); \
+}
+
 #if 0
 /*XXX This macro is temporary */
 #define GED_INIT_FROM_WDBP(_gedp, _wdbp) { \
