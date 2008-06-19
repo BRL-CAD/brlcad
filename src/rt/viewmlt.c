@@ -29,6 +29,8 @@
 
 #include "bu.h"
 #include "vmath.h"
+#include "mater.h"
+#include "light.h"
 #include "raytrace.h"
 #include "fb.h"
 
@@ -84,6 +86,9 @@ struct mlt_app {
     struct path_list * paths;           /** @brief Current path */
     point_t eye;                        /** @brief Position of the camera */
     struct point_list * lightSources;   /** @brief List of lightsource points */
+    struct point_list * nextPoint;      /** @brief Pointer used in rayhit() to alternate 
+                                          * between shooting from the camera and from
+                                          * the lightsource */
 };
 
 /*
@@ -106,6 +111,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 void
 view_2init(struct application *ap)
 {
+    int i;
     /* Initialization of the mlt application structure */
     struct mlt_app* mlt_application;
     mlt_application = (struct mlt_app*) bu_malloc(sizeof(struct mlt_app), "mlt application");
@@ -124,6 +130,26 @@ view_2init(struct application *ap)
     if (scanline)
         free_scanlines(height, scanline);
     scanline = alloc_scanlines(height);
+
+    /* BUFMODE_SCANLINE
+     * This will be expanded to handle multiple BUFMODES,
+     * as in view.c */
+    if (sub_grid_mode)  {
+	    for (i = sub_ymin; i <= sub_ymax; i++)
+		    scanline[i].sl_left = sub_xmax-sub_xmin+1;
+	}
+    else {
+		for (i = 0; i < height; i++)
+		    scanline[i].sl_left = width;
+    }
+
+    /* Setting Lights if the user did not specify */
+    if (BU_LIST_IS_EMPTY(&(LightHead.l)) ||
+       (BU_LIST_UNINITIALIZED(&(LightHead.l)))) {
+		if (R_DEBUG&RDEBUG_SHOWERR) bu_log("No explicit light\n");
+		light_maker(1, view2model);
+	}
+    ap->a_rt_i->rti_nlights = light_init(ap);
 }
 
 /*
@@ -138,7 +164,7 @@ view_pixel(register struct application *ap)
     register char	*pixelp;
     register struct scanline	*slp;
     register int	do_eol = 0;
-    unsigned char	dist[8];	/* pixel distance (in IEEE format) */
+    /*unsigned char	dist[8];*/	/* pixel distance (in IEEE format) */
 
     /* This if-then-else block will set the values of r, g and b.
      * In case of miss, set them to the background color;
@@ -265,6 +291,10 @@ view_end(register struct application *ap)
         bu_free(p_temp, "free path_list entry");
     }
     bu_free(p_path, "free path_list head");
+
+    /* Freeing scanlines */
+    if (scanline)
+        free_scanlines(height, scanline);
 } 
 
 /*
@@ -283,7 +313,22 @@ view_setup(struct rt_i *rtip) {}
  *  Called by "clean" command, just before rt_clean() is called, in do.c
  */
 void
-view_cleanup(struct rt_i *rtip) {}
+view_cleanup(struct rt_i *rtip) 
+{
+    struct region* regp;
+    RT_CHECK_RTI(rtip);
+
+    for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
+	    mlib_free( regp );
+    }
+    if (env_region.reg_mfuncs)  {
+	    bu_free( (char *)env_region.reg_name, "env_region.reg_name" );
+	    env_region.reg_name = (char *)0;
+	    mlib_free( &env_region );
+    }
+
+    light_cleanup();
+}
 
 /*
  *			R A Y H I T
@@ -346,6 +391,8 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
      * and call rt_shootray(ap)
      */
     VMOVE(ap->a_ray.r_pt, segp->seg_in.hit_point);
+
+
 
     return 1;	/* report hit to main routine */
 }
