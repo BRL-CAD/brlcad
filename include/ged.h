@@ -232,57 +232,6 @@ struct ged_drawable {
 };
 
 
-struct ged {
-    struct bu_list		l;
-#if 0
-    int				ged_type;
-    struct db_i	*		ged_dbip;
-    struct bu_vls		ged_name;		/**< @brief  database object name */
-    struct db_tree_state	ged_initial_tree_state;
-    struct rt_tess_tol		ged_ttol;
-    struct bn_tol		ged_tol;
-    struct resource*		ged_resp;
-
-    /* for catching log messages */
-    struct bu_vls		ged_log;
-
-    void			*ged_result;
-    struct bu_vls		ged_result_str;
-    unsigned int		ged_result_flags;
-
-    /* variables for name prefixing */
-    struct bu_vls		ged_prestr;
-    int				ged_ncharadd;
-    int				ged_num_dups;
-
-    /* default region ident codes for this particular database. */
-    int				ged_item_default;	/**< @brief  GIFT region ID */
-    int				ged_air_default;
-    int				ged_mat_default;	/**< @brief  GIFT material code */
-    int				ged_los_default;	/**< @brief  Line-of-sight estimate */
-#else
-    struct rt_wdb		*ged_wdbp;
-    /* for catching log messages */
-    struct bu_vls		ged_log;
-
-    void			*ged_result;
-    struct bu_vls		ged_result_str;
-    unsigned int		ged_result_flags;
-#endif
-
-#if 1
-    struct ged_drawable		*ged_gdp;
-    struct ged_view		*ged_gvp;
-#else
-    struct ged_drawable		*ged_head_drawables;
-    struct ged_view		*ged_head_views;
-#endif
-#if 0
-    struct bu_observer		ged_observers;
-#endif
-};
-
-
 struct ged_view {
     struct bu_list 	l;
     fastf_t		gv_scale;
@@ -309,6 +258,32 @@ struct ged_view {
 #endif
     int			gv_zclip;
 };
+
+
+struct ged {
+    struct bu_list		l;
+    struct rt_wdb		*ged_wdbp;
+
+    /* for catching log messages */
+    struct bu_vls		ged_log;
+
+    /* for setting results */
+    void			*ged_result;
+    struct bu_vls		ged_result_str;
+    unsigned int		ged_result_flags;
+
+#if 1
+    struct ged_drawable		*ged_gdp;
+    struct ged_view		*ged_gvp;
+#else
+    struct ged_drawable		*ged_head_drawables;
+    struct ged_view		*ged_head_views;
+#endif
+#if 0
+    struct bu_observer		ged_observers;
+#endif
+};
+
 
 /**
  * V I E W _ O B J
@@ -932,6 +907,22 @@ GED_EXPORT BU_EXTERN(int ged_editit, (const char *file));
 GED_EXPORT BU_EXTERN(int ged_arced, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Auto-adjust the view so that all displayed geometry is in view
+ *
+ * Usage:
+ *     autoview
+ */
+GED_EXPORT BU_EXTERN(int ged_autoview, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Erase all currently displayed geometry and draw the specified object(s)
+ *
+ * Usage:
+ *     blast object(s)
+ */
+GED_EXPORT BU_EXTERN(int ged_blast, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Set combination color.
  *
  * Usage:
@@ -946,6 +937,22 @@ GED_EXPORT BU_EXTERN(int ged_comb_color, (struct ged *gedp, int argc, const char
  *     draw [-A -o -C#/#/# -s] <objects | attribute name/value pairs>
  */
 GED_EXPORT BU_EXTERN(int ged_draw, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Evaluate objects via NMG tessellation
+ *
+ * Usage:
+ *     ev [-dfnstuvwT] [-P #] <objects>
+ */
+GED_EXPORT BU_EXTERN(int ged_ev, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Prepare object(s) for display
+ *
+ * Usage:
+ *     E [-C#/#/# -s] objects(s)
+ */
+GED_EXPORT BU_EXTERN(int ged_E, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Edit combination.
@@ -964,6 +971,46 @@ GED_EXPORT BU_EXTERN(int ged_edcomb, (struct ged *gedp, int argc, const char *ar
  *     edmater combination1 [combination2 ...]
  */
 GED_EXPORT BU_EXTERN(int ged_edmater, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Erase objects from the display.
+ *
+ * Usage:
+ *     erase objects(s)
+ */
+GED_EXPORT BU_EXTERN(int ged_erase, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Erase all occurrences of objects from the display.
+ *
+ * Usage:
+ *     erase_all objects(s)
+ */
+GED_EXPORT BU_EXTERN(int ged_erase_all, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Get view size and center such that all displayed solids would be in view
+ *
+ * Usage:
+ *     get_autoview
+ */
+GED_EXPORT BU_EXTERN(int ged_get_autoview, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Get the viewsize, orientation and eye point.
+ *
+ * Usage:
+ *     get_eyemodel
+ */
+GED_EXPORT BU_EXTERN(int ged_get_eyemodel, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Illuminate/highlight database object.
+ *
+ * Usage:
+ *     illum [-n] obj
+ */
+GED_EXPORT BU_EXTERN(int ged_illum, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Set region ident codes.
@@ -1064,6 +1111,14 @@ GED_EXPORT BU_EXTERN(int ged_oscale, (struct ged *gedp, int argc, const char *ar
 GED_EXPORT BU_EXTERN(int ged_otranslate, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Overlay the specified 2D/3D UNIX plot file
+ *
+ * Usage:
+ *     overlay file.pl [name]
+ */
+GED_EXPORT BU_EXTERN(int ged_overlay, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Get/set query_ray attributes
  *
  * Usage:
@@ -1071,9 +1126,33 @@ GED_EXPORT BU_EXTERN(int ged_otranslate, (struct ged *gedp, int argc, const char
  */
 GED_EXPORT BU_EXTERN(int ged_qray, (struct ged *gedp, int argc, const char *argv[]));
 
-
 GED_EXPORT BU_EXTERN(void ged_init_qray,
 		    (struct ged *gedp));
+
+/**
+ * Get/set the output handler script
+ *
+ * Usage:
+ *     set_outputHandler [script]
+ */
+GED_EXPORT BU_EXTERN(int ged_set_outputHandler, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Get/set the unix plot output mode
+ *
+ * Usage:
+ *     set_uplotOutputMode [binary|text]
+ */
+GED_EXPORT BU_EXTERN(int ged_set_uplotOutputMode, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Set the transparency of the specified object
+ *
+ * Usage:
+ *     set_transparency obj tr
+ */
+GED_EXPORT BU_EXTERN(int ged_set_transparency, (struct ged *gedp, int argc, const char *argv[]));
+
 /**
  * Simpler, command-line version of 'mater' command.
  *
@@ -1083,12 +1162,36 @@ GED_EXPORT BU_EXTERN(void ged_init_qray,
 GED_EXPORT BU_EXTERN(int ged_shader, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Return the object hierarchy for all object(s) specified or for all currently displayed
+ *
+ * Usage:
+ *     tree [-c] [-o outfile] [-i indentSize] [-d displayDepth] [object(s)]
+ */
+GED_EXPORT BU_EXTERN(int ged_tree, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * List the objects currently prepped for drawing
+ *
+ * Usage:
+ *     who [r(eal)|p(hony)|b(oth)]
+ */
+GED_EXPORT BU_EXTERN(int ged_who, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Write material properties to a file for specified combination(s).
  *
  * Usage:
  *     wmater file combination1 [combination2 ...]
  */
 GED_EXPORT BU_EXTERN(int ged_wmater, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Erase all currently displayed geometry
+ *
+ * Usage:
+ *     zap
+ */
+GED_EXPORT BU_EXTERN(int ged_zap, (struct ged *gedp, int argc, const char *argv[]));
 
 
 __END_DECLS
