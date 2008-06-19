@@ -173,7 +173,7 @@ set helplib_data(dgo_autoview)		{{view_obj} {calculate an appropriate view size 
 set helplib_data(dgo_blast)		{{"[-A -o -C#/#/# -s] <object(s) | attribute name/value pairs>"} {erase all currently displayed geometry and draw the specified object(s)}}
 set helplib_data(dgo_clear)		{{} {erase all objects from the display}}
 set helplib_data(dgo_draw)		{{"[-A -o -C#/#/# -s] <objects | attribute name/value pairs>"} {prepare object(s) for display}}
-set helplib_data(dgo_E)			{{[-s] <objects>} {evaluated display of objects}}
+set helplib_data(dgo_E)			{{[-C#/#/# -s] <objects>} {evaluated display of objects}}
 set helplib_data(dgo_erase)		{{<objects>} {erase objects from the display}}
 set helplib_data(dgo_erase_all)		{{<objects>} {erase all occurrences of objects from the display}}
 set helplib_data(dgo_ev)		{{"[-dfnstuvwT] [-P #] <objects>"}	{evaluate objects via NMG tessellation}}
