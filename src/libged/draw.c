@@ -28,42 +28,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ged.h"
+#include "ged_private.h"
 #include "mater.h"
 #include "solid.h"
-
-#define GED_WIREFRAME 0
-#define GED_SHADED_MODE_BOTS 1
-#define GED_SHADED_MODE_ALL 2
-#define GED_BOOL_EVAL 3
-
-struct ged_client_data {
-    struct ged	       	*gedp;
-    int			wireframe_color_override;
-    int			wireframe_color[3];
-    int			draw_nmg_only;
-    int			nmg_triangulate;
-    int			draw_wireframes;
-    int			draw_normals;
-    int			draw_solid_lines_only;
-    int			draw_no_surfaces;
-    int			shade_per_vertex_normals;
-    int			draw_edge_uses;
-    int			fastpath_count;			/* statistics */
-    int			do_not_draw_nmg_solids_during_debugging;
-    struct bn_vlblock	*draw_edge_uses_vbp;
-    int			shaded_mode_override;
-    fastf_t		transparency;
-    int			dmode;
-};
-
-struct dg_rt_client_data {
-    struct run_rt 	*rrtp;
-    struct ged	       	*gedp;
-};
-
-/* head of free solid list */
-static struct solid FreeSolid;
 
 /* declare our callbacks used by ged_drawtrees() */
 static union tree *ged_bot_check_region_end(register struct db_tree_state *tsp,
@@ -74,229 +41,15 @@ static union tree *ged_bot_check_leaf(struct db_tree_state *tsp,
 				      struct db_full_path *pathp,
 				      struct rt_db_internal *ip,
 				      genptr_t client_data);
+int
+ged_invent_solid(struct ged	*gedp,
+		 char		*name,
+		 struct bu_list	*vhead,
+		 long int	rgb,
+		 int		copy,
+		 fastf_t	transparency,
+		 int		dmode);
 
-
-/*
- *			E R A S E O B J A L L
- *
- * This routine goes through the solid table and deletes all solids
- * from the solid list which contain the specified object anywhere in their 'path'
- */
-static void
-ged_eraseobjall(struct ged			*gedp,
-		register struct directory	**dpp)
-{
-    register struct directory **tmp_dpp;
-    register struct solid *sp;
-    register struct solid *nsp;
-    struct db_full_path	subpath;
-
-    if (gedp->ged_wdbp->dbip == DBI_NULL)
-	return;
-
-    if (*dpp == DIR_NULL)
-	return;
-
-    db_full_path_init(&subpath);
-    for (tmp_dpp = dpp; *tmp_dpp != DIR_NULL; ++tmp_dpp)  {
-	RT_CK_DIR(*tmp_dpp);
-	db_add_node_to_full_path(&subpath, *tmp_dpp);
-    }
-
-    sp = BU_LIST_NEXT(solid, &gedp->ged_gdp->gd_headSolid);
-    while (BU_LIST_NOT_HEAD(sp, &gedp->ged_gdp->gd_headSolid)) {
-	nsp = BU_LIST_PNEXT(solid, sp);
-	if ( db_full_path_subset( &sp->s_fullpath, &subpath ) )  {
-	    BU_LIST_DEQUEUE(&sp->l);
-	    FREE_SOLID(sp, &FreeSolid.l);
-	}
-	sp = nsp;
-    }
-
-    if ((*dpp)->d_addr == RT_DIR_PHONY_ADDR) {
-	if (db_dirdelete(gedp->ged_wdbp->dbip, *dpp) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "ged_eraseobjall: db_dirdelete failed\n");
-	}
-    }
-    db_free_full_path(&subpath);
-}
-
-/*
- *			E R A S E O B J
- *
- * This routine goes through the solid table and deletes all solids
- * from the solid list which contain the specified object at the
- * beginning of their 'path'
- */
-static void
-ged_eraseobj(struct ged			*gedp,
-	     register struct directory	**dpp)
-{
-#if 1
-    /*XXX
-     * Temporarily put back the old behavior (as seen in Brlcad5.3),
-     * as the behavior after the #else is identical to ged_eraseobjall.
-     */
-    register struct directory **tmp_dpp;
-    register struct solid *sp;
-    register struct solid *nsp;
-    register int i;
-
-    if (gedp->ged_wdbp->dbip == DBI_NULL)
-	return;
-
-    if (*dpp == DIR_NULL)
-	return;
-
-    for (tmp_dpp = dpp; *tmp_dpp != DIR_NULL; ++tmp_dpp)
-	RT_CK_DIR(*tmp_dpp);
-
-    sp = BU_LIST_FIRST(solid, &gedp->ged_gdp->gd_headSolid);
-    while (BU_LIST_NOT_HEAD(sp, &gedp->ged_gdp->gd_headSolid)) {
-	nsp = BU_LIST_PNEXT(solid, sp);
-	for (i = 0, tmp_dpp = dpp;
-	     i < sp->s_fullpath.fp_len && *tmp_dpp != DIR_NULL;
-	     ++i, ++tmp_dpp)
-	    if (sp->s_fullpath.fp_names[i] != *tmp_dpp)
-		goto end;
-
-	if (*tmp_dpp != DIR_NULL)
-	    goto end;
-
-	BU_LIST_DEQUEUE(&sp->l);
-	FREE_SOLID(sp, &FreeSolid.l);
-    end:
-	sp = nsp;
-    }
-
-    if ((*dpp)->d_addr == RT_DIR_PHONY_ADDR ) {
-	if (db_dirdelete(gedp->ged_wdbp->dbip, *dpp) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "ged_eraseobj: db_dirdelete failed\n");
-	}
-    }
-#else
-    register struct directory **tmp_dpp;
-    register struct solid *sp;
-    register struct solid *nsp;
-    struct db_full_path	subpath;
-
-    if (gedp->ged_wdbp->dbip == DBI_NULL)
-	return;
-
-    if (*dpp == DIR_NULL)
-	return;
-
-    db_full_path_init(&subpath);
-    for (tmp_dpp = dpp; *tmp_dpp != DIR_NULL; ++tmp_dpp)  {
-	RT_CK_DIR(*tmp_dpp);
-	db_add_node_to_full_path(&subpath, *tmp_dpp);
-    }
-
-    sp = BU_LIST_FIRST(solid, &gedp->ged_gdp->gd_headSolid);
-    while (BU_LIST_NOT_HEAD(sp, &gedp->ged_gdp->gd_headSolid)) {
-	nsp = BU_LIST_PNEXT(solid, sp);
-	if ( db_full_path_subset( &sp->s_fullpath, &subpath ) )  {
-	    BU_LIST_DEQUEUE(&sp->l);
-	    FREE_SOLID(sp, &FreeSolid.l);
-	}
-	sp = nsp;
-    }
-
-    if ((*dpp)->d_addr == RT_DIR_PHONY_ADDR ) {
-	if (db_dirdelete(gedp->ged_wdbp->dbip, *dpp) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "ged_eraseobj: db_dirdelete failed\n");
-	}
-    }
-    db_free_full_path(&subpath);
-#endif
-}
-
-/*
- * Builds an array of directory pointers from argv and calls
- * either ged_eraseobj or ged_eraseobjall.
- */
-void
-ged_eraseobjpath(struct ged	*gedp,
-		 int		argc,
-		 const char	*argv[],
-		 int		noisy,
-		 int		all)
-{
-    register struct directory *dp;
-    register int i;
-
-    for (i = 0; i < argc; i++) {
-	int j;
-	int ac, ac_orig;
-	char **av, **av_orig;
-	struct directory **dpp = (struct directory **)0;
-
-	ac_orig = 1;
-
-	{
-	    char *begin;
-	    char *end;
-	    char *newstr = strdup(argv[i]);
-	    int n;
-
-	    /* First count the number of '/' */
-	    begin = newstr;
-	    while ((end = strchr(begin, '/')) != NULL) {
-		begin = end + 1;
-		++ac_orig;
-	    }
-	    av_orig = (char **)bu_calloc(ac_orig+1, sizeof(char *), "ged_eraseobjpath");
-
-	    begin = newstr;
-	    n = 0;
-	    while ((end = strchr(begin, '/')) != NULL) {
-		*end = '\0';
-		av_orig[n++] = bu_strdup(begin);
-		begin = end + 1;
-	    }
-	    av_orig[n++] = bu_strdup(begin);
-	    av_orig[n] = (char *)0;
-	    free((void *)newstr);
-	}
-
-	/* make sure we will not dereference null */
-	if ((ac_orig == 0) || (av_orig == 0) || (*av_orig == 0)) {
-	    bu_vls_printf(&gedp->ged_result_str, "WARNING: Asked to look up a null-named database object\n");
-	    goto end;
-	}
-
-	/* skip first element if empty */
-	ac = ac_orig;
-	av = av_orig;
-
-	if (*av[0] == '\0') {
-	    --ac;
-	    ++av;
-	}
-
-	/* ignore last element if empty */
-	if (*av[ac-1] == '\0')
-	    --ac;
-
-	dpp = bu_calloc(ac+1, sizeof(struct directory *), "ged_eraseobjpath: directory pointers");
-	for (j = 0; j < ac; ++j)
-	    if ((dp = db_lookup(gedp->ged_wdbp->dbip, av[j], noisy)) != DIR_NULL)
-		dpp[j] = dp;
-	    else
-		goto end;
-
-	dpp[j] = DIR_NULL;
-
-	if (all)
-	    ged_eraseobjall(gedp, dpp);
-	else
-	    ged_eraseobj(gedp, dpp);
-
-    end:
-	bu_free((genptr_t)dpp, "ged_eraseobjpath: directory pointers");
-	bu_free_argv(ac_orig, (char **)av_orig);
-    }
-}
 
 
 /**
@@ -1018,7 +771,7 @@ ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct g
 	    break;
 	case 2:		/* Big-E */
 	    bu_vls_printf(&gedp->ged_result_str, "drawtrees:  can't do big-E here\n");
-	    bu_free((genptr_t)dgcdp, "dgo_drawtrees: dgcdp");
+	    bu_free((genptr_t)dgcdp, "ged_drawtrees: dgcdp");
 	    return (-1);
 	case 3:
 	{
@@ -1318,12 +1071,12 @@ ged_color_soltab(struct solid *hsp)
 
 
 int
-ged_draw(struct ged *gedp, int argc, const char *argv[])
+ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 {
-    static int kind = 1;
     static const char *usage = "[-A -o -C#/#/# -s] <objects | attribute name/value pairs>";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -1347,6 +1100,18 @@ ged_draw(struct ged *gedp, int argc, const char *argv[])
     ged_color_soltab((struct solid *)&gedp->ged_gdp->gd_headSolid);
 
     return GED_OK;
+}
+
+int
+ged_draw(struct ged *gedp, int argc, const char *argv[])
+{
+    return ged_draw_guts(gedp, argc, argv, 1);
+}
+
+int
+ged_ev(struct ged *gedp, int argc, const char *argv[])
+{
+    return ged_draw_guts(gedp, argc, argv, 3);
 }
 
 
