@@ -308,4 +308,315 @@
    </para>
  </sect1>
  
+ <glossary>
+   <title>MGED User Command Glossary - Explanations and Examples</title>
+   <glossdiv>
+     <title>%-?</title>
+
+     <glossentry>
+       <glossterm><command>%</command></glossterm>
+       <glossdef>
+	 <para>
+	   Start a "/bin/sh" shell process for the user. The 
+	   <command>mged</command> prompt will be replaced by asystem prompt 
+	   for the shell, and the user may perform any legal shell commands. 
+	   The <command>mged</command>  process waits for
+	   the shell process to finish, which occurs when the user exits
+	   the shell. This only works in a command window associated with a tty 
+	   (i.e., the window used to start <command>mged</command> in classic mode).
+	 </para>
+	 <example>
+	   <title>Using <command>%</command></title>
+	   <screen>
+mged> <command>%</command>
+-- Start a new shell process.
+
+$ <command>ls -al</command>
+-- Issue any shell commands.
+
+$ <command>exit</command>
+-- Exit the shell.
+
+mged>
+-- Continue editing in mged.
+	   </screen>
+	 </example>
+       </glossdef>
+      </glossentry>
+
+     <glossentry>
+       <glossterm>
+	 <cmdsynopsis>
+	   <command>3ptarb</command>
+	   <arg>arb_name</arg>
+	   <arg>x1</arg>
+	   <arg>y1</arg>
+	   <arg>z1</arg>
+	   <arg>x2</arg>
+	   <arg>y2</arg>
+	   <arg>z2</arg>
+	   <arg>x3</arg>
+	   <arg>y3</arg>
+	   <arg>z3</arg>
+	   <group>
+	     <arg>x</arg>
+	     <arg>y</arg>
+	     <arg>z</arg>
+	   </group>
+	   <arg>coord1</arg>
+	   <arg>coord2</arg>
+	   <arg>thickness</arg>
+	 </cmdsynopsis>
+       </glossterm>
+       <glossdef>
+	 <para>
+	   Build an ARB8 shape by extruding a quadrilateral through a given thickness. The
+arguments may be provided on the command line; if they are not, they will be
+prompted for. The x1, y1, and z1 arguments are the coordinates of one corner of the
+quadrilateral. x2, y2, z2, and x3, y3, z3 are the coordinates of two other corners. Only
+two coordinates of the fourth point are specified, and the code calculates the third
+coordinate to ensure all four points are coplanar. The x|y|z parameter indicates which
+coordinate of the fourth point will be calculated by the code. The coord1 and coord2
+parameters supply the other two coordinates. The direction of extrusion for the
+quadrilateral is determined from the order of the four resulting points by the righthand
+rule; the quadrilateral is extruded toward a viewer for whom the points appear in
+counter-clockwise order.
+	 </para>
+	 <example>
+	   <title><command>3ptarb</command></title>
+	   <screen>
+mged> <command>3ptarb</command>
+-- Start the 3ptarb command.
+
+Enter name for this arb: <emphasis>thing</emphasis>
+-- The new ARB8 will be named thing.
+
+Enter X, Y, Z for point 1: <emphasis>0 0 0</emphasis>
+-- Point one is at the origin.
+
+Enter X, Y, Z for point 2: <emphasis>1 0 0</emphasis>
+-- Point two is at (1, 0, 0).
+
+Enter X, Y, Z for point 3: <emphasis>1 1 0</emphasis>
+-- Point three is at (1, 1, 0).
+
+Enter coordinate to solve for (x, y, or z): <emphasis>z</emphasis>
+-- The code will calculate the z coordinate of the fourth point.
+
+Enter the X, Y coordinate values: <emphasis>0 1</emphasis>
+-- The x and y coordinates of the fourth point are 0 and 1.
+
+Enter thickness for this arb: <emphasis>3</emphasis>
+-- The new ARB8 will be 3 units thick.
+
+mged> <command>3ptarb thing 0 0 0 1 0 0 1 1 0 z 0 1 3</command>
+-- Same as above example, but with all arguments supplied on the command line.
+	   </screen>
+	 </example>
+       </glossdef>
+      </glossentry>
+
+     <glossentry>
+       <glossterm></glossterm>
+       <glossdef>
+	 <para>
+	 </para>
+	 <example>
+	   <title><command></command></title>
+	   <screen>
+	   </screen>
+	 </example>
+       </glossdef>
+      </glossentry>
+
+     <glossentry>
+       <glossterm></glossterm>
+       <glossdef>
+	 <para>
+	 </para>
+	 <example>
+	   <title><command></command></title>
+	   <screen>
+	   </screen>
+	 </example>
+       </glossdef>
+      </glossentry>
+
+     <glossentry>
+       <glossterm></glossterm>
+       <glossdef>
+	 <para>
+	 </para>
+	 <example>
+	   <title><command></command></title>
+	   <screen>
+	   </screen>
+	 </example>
+       </glossdef>
+      </glossentry>
+
+
+   </glossdiv>
+
+   <glossdiv>
+     <title>A-Z</title>
+
+     <glossentry>
+       <glossterm>B</glossterm>
+       <glossdef>
+	 <para>
+	 </para>
+	 <example>
+	   <title><command>B</command></title>
+	   <screen>
+	   </screen>
+	 </example>
+       </glossdef>
+      </glossentry>
+
+     <glossentry>
+       <glossterm></glossterm>
+       <glossdef>
+	 <para>
+	 </para>
+	 <example>
+	   <title><command></command></title>
+	   <screen>
+	   </screen>
+	 </example>
+       </glossdef>
+      </glossentry>
+
+
+   </glossdiv>
+
+   <glossdiv>
+     <title>a-c</title>
+
+      <glossentry>
+       <glossterm>adc</glossterm>
+       <glossdef>
+	 <para>
+	 </para>
+	 <example>
+	   <title><command>adc</command></title>
+	   <screen>
+	   </screen>
+	 </example>
+       </glossdef>
+      </glossentry>
+
+   </glossdiv>
+
+   <glossdiv>
+     <title>d-e</title>
+
+     <glossentry>
+       <glossterm>d</glossterm>
+       <glossdef>
+	 <para>
+	 </para>
+	 <example>
+	   <title><command>d</command></title>
+	   <screen>
+	   </screen>
+	 </example>
+       </glossdef>
+      </glossentry>
+
+   </glossdiv>
+   <glossdiv>
+     <title>f-k</title>
+
+     <glossentry>
+       <glossterm>facedef</glossterm>
+       <glossdef>
+	 <para>
+	 </para>
+	 <example>
+	   <title><command>facedef</command></title>
+	   <screen>
+	   </screen>
+	 </example>
+       </glossdef>
+      </glossentry>
+
+   </glossdiv>
+   <glossdiv>
+     <title>l-o</title>
+
+      <glossentry>
+       <glossterm>l</glossterm>
+       <glossdef>
+	 <para>
+	 </para>
+	 <example>
+	   <title><command>l</command></title>
+	   <screen>
+	   </screen>
+	 </example>
+       </glossdef>
+      </glossentry>
+
+
+   </glossdiv>
+
+   <glossdiv>
+     <title>p-r</title>
+
+     <glossentry>
+       <glossterm>p</glossterm>
+       <glossdef>
+	 <para>
+	 </para>
+	 <example>
+	   <title><command>p</command></title>
+	   <screen>
+	   </screen>
+	 </example>
+       </glossdef>
+      </glossentry>
+
+   </glossdiv>
+
+
+   <glossdiv>
+     <title>s-t</title>
+
+     <glossentry>
+       <glossterm>savekey</glossterm>
+       <glossdef>
+	 <para>
+	 </para>
+	 <example>
+	   <title><command>savekey</command></title>
+	   <screen>
+	   </screen>
+	 </example>
+       </glossdef>
+      </glossentry>
+
+
+   </glossdiv>
+
+   <glossdiv>
+     <title>u-z</title>
+
+     <glossentry>
+       <glossterm>units</glossterm>
+       <glossdef>
+	 <para>
+	 </para>
+	 <example>
+	   <title><command>units</command></title>
+	   <screen>
+	   </screen>
+	 </example>
+       </glossdef>
+      </glossentry>
+
+   </glossdiv>
+
+ </glossary>
+
 </article>
