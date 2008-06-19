@@ -133,7 +133,9 @@ static int dgo_assoc_tcl(ClientData clientData, Tcl_Interp *interp, int argc, ch
 static int dgo_rtcheck_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dgo_observer_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dgo_report_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+#if 0
 extern int dgo_E_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+#endif
 static int dgo_autoview_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 #if 0
 static int dgo_qray_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -171,7 +173,9 @@ static struct bu_cmdtab dgo_cmds[] = {
     {"blast",			dgo_blast_tcl},
     {"clear",			dgo_zap_tcl},
     {"draw",			dgo_draw_tcl},
+#if 0
     {"E",			dgo_E_tcl},
+#endif
     {"erase",			dgo_erase_tcl},
     {"erase_all",		dgo_erase_all_tcl},
     {"ev",			dgo_ev_tcl},
@@ -580,6 +584,26 @@ dgo_draw_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     return ret;
 }
+
+#if 0
+/*
+ *
+ * Evaluated Edit something (add to visible display)
+ *
+ * Usage:
+ *  Usage: E object(s)
+ */
+int
+dgo_E_tcl(ClientData	clientData,
+	  Tcl_Interp	*interp,
+	  int		argc,
+	  char		**argv)
+{
+    struct dg_obj		*dgop = (struct dg_obj *)clientData;
+
+    return dgo_E_cmd(dgop, interp, argc-1, argv+1);
+}
+#endif
 
 /*
  * Prepare database objects for drawing.
