@@ -44,12 +44,14 @@
 #include "bn.h"
 #include "rtgeom.h"
 #include "raytrace.h"
-#include "ged.h"
-
-struct ged *ged_dbopen(struct db_i *dbip, int mode);
+#include "plot3.h"
+#include "ged_private.h"
 
 struct db_i *ged_open_dbip(const char *filename);
 int ged_decode_dbip(const char *dbip_string, struct db_i **dbipp);
+void ged_init(struct ged *gedp);
+void ged_drawable_init(struct ged_drawable *gdp);
+void ged_drawable_close(struct ged_drawable *gdp);
 
 struct ged *
 ged_open(const char *dbtype, const char *filename)
@@ -101,7 +103,7 @@ ged_init(struct ged *gedp)
 {
     bu_vls_init(&gedp->ged_log);
     bu_vls_init(&gedp->ged_result_str);
-    ged_drawable_init(gedp->gdp);
+    ged_drawable_init(gedp->ged_gdp);
 }
 
 void
@@ -110,7 +112,7 @@ ged_close(struct ged *gedp)
     wdb_close(gedp->ged_wdbp);
     ged_drawable_close(gedp->ged_gdp);
 
-    gedp->ged_wdbp = GED_NULL;
+    gedp->ged_wdbp = RT_WDB_NULL;
     gedp->ged_gdp = GED_DRAWABLE_NULL;
 
     bu_vls_free(&gedp->ged_log);
@@ -124,17 +126,21 @@ ged_drawable_init(struct ged_drawable *gdp)
 {
     BU_LIST_INIT(&gdp->gd_headSolid);
     BU_LIST_INIT(&gdp->gd_headVDraw);
+#if 0
     BU_LIST_INIT(&gdp->gd_observers.l);
+#endif
+#if GED_USE_RUN_RT
     BU_LIST_INIT(&gdp->gd_headRunRt.l);
+#endif
     gdp->gd_freeSolids = &FreeSolid;
     gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
-    ged_init_qray(gdp->gdp);
+    ged_init_qray(gdp);
 }
 
 void
 ged_drawable_close(struct ged_drawable *gdp)
 {
-    ged_free_qray(gdp->gdp);
+    ged_free_qray(gdp);
     bu_free((genptr_t)gdp, "struct ged_drawable");
 }
 
