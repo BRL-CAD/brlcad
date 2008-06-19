@@ -1789,7 +1789,7 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	insertArgv[0] = "-u";
 	insertArgv[1] = "1";
 	insertArgv[2] = (char *)0;
-	newArgv = bu_copyinsert_argv(1, insertArgc, insertArgv, argc, argv);
+	newArgv = bu_dupinsert_argv(1, insertArgc, insertArgv, argc, argv);
 	newArgc = argc + insertArgc;
 	ret = dgo_nirt_cmd(dgop, view_state->vs_vop, interp, newArgc, newArgv);
 	bu_free_argv(newArgc, newArgv);
