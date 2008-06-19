@@ -417,7 +417,29 @@ mged> <command>3ptarb thing 0 0 0 1 0 0 1 1 0 z 0 1 3</command>
       </glossentry>
 
      <glossentry>
-       <glossterm></glossterm>
+       <glossterm><command>?</command></glossterm>
+       <glossdef>
+	 <para>
+	   Provide a list of available MGED commands. 
+	 </para>
+	 <example>
+	   <title><command>?</command></title>
+	   <screen>
+mged> <command>?</command>
+-- Get a list of available commands.
+	   </screen>
+	 </example>
+	 <glossseealso>?devel</glossseealso>
+	 <glossseealso>?lib</glossseealso>
+	 <glossseealso>help</glossseealso>
+	 <glossseealso>helpdevel</glossseealso>
+	 <glossseealso>helplib</glossseealso>
+
+       </glossdef>
+      </glossentry>
+
+     <glossentry>
+       <glossterm><command>?devel</command></glossterm>
        <glossdef>
 	 <para>
 	 </para>
@@ -430,20 +452,7 @@ mged> <command>3ptarb thing 0 0 0 1 0 0 1 1 0 z 0 1 3</command>
       </glossentry>
 
      <glossentry>
-       <glossterm></glossterm>
-       <glossdef>
-	 <para>
-	 </para>
-	 <example>
-	   <title><command></command></title>
-	   <screen>
-	   </screen>
-	 </example>
-       </glossdef>
-      </glossentry>
-
-     <glossentry>
-       <glossterm></glossterm>
+       <glossterm><command>?lib</command></glossterm>
        <glossdef>
 	 <para>
 	 </para>
@@ -462,7 +471,7 @@ mged> <command>3ptarb thing 0 0 0 1 0 0 1 1 0 z 0 1 3</command>
      <title>A-Z</title>
 
      <glossentry>
-       <glossterm>B</glossterm>
+       <glossterm><command>B</command></glossterm>
        <glossdef>
 	 <para>
 	 </para>
@@ -475,7 +484,7 @@ mged> <command>3ptarb thing 0 0 0 1 0 0 1 1 0 z 0 1 3</command>
       </glossentry>
 
      <glossentry>
-       <glossterm></glossterm>
+       <glossterm><command></command></glossterm>
        <glossdef>
 	 <para>
 	 </para>
@@ -494,7 +503,7 @@ mged> <command>3ptarb thing 0 0 0 1 0 0 1 1 0 z 0 1 3</command>
      <title>a-c</title>
 
       <glossentry>
-       <glossterm>adc</glossterm>
+       <glossterm><command>adc</command></glossterm>
        <glossdef>
 	 <para>
 	 </para>
@@ -506,13 +515,27 @@ mged> <command>3ptarb thing 0 0 0 1 0 0 1 1 0 z 0 1 3</command>
        </glossdef>
       </glossentry>
 
+     <glossentry>
+       <glossterm><command></command></glossterm>
+       <glossdef>
+	 <para>
+	 </para>
+	 <example>
+	   <title><command></command></title>
+	   <screen>
+	   </screen>
+	 </example>
+       </glossdef>
+      </glossentry>
+
+
    </glossdiv>
 
    <glossdiv>
      <title>d-e</title>
 
      <glossentry>
-       <glossterm>d</glossterm>
+       <glossterm><command>d</command></glossterm>
        <glossdef>
 	 <para>
 	 </para>
@@ -524,12 +547,26 @@ mged> <command>3ptarb thing 0 0 0 1 0 0 1 1 0 z 0 1 3</command>
        </glossdef>
       </glossentry>
 
+     <glossentry>
+       <glossterm><command></command></glossterm>
+       <glossdef>
+	 <para>
+	 </para>
+	 <example>
+	   <title><command></command></title>
+	   <screen>
+	   </screen>
+	 </example>
+       </glossdef>
+      </glossentry>
+
    </glossdiv>
+
    <glossdiv>
      <title>f-k</title>
 
      <glossentry>
-       <glossterm>facedef</glossterm>
+       <glossterm><command>facedef</command></glossterm>
        <glossdef>
 	 <para>
 	 </para>
@@ -541,12 +578,26 @@ mged> <command>3ptarb thing 0 0 0 1 0 0 1 1 0 z 0 1 3</command>
        </glossdef>
       </glossentry>
 
+     <glossentry>
+       <glossterm><command></command></glossterm>
+       <glossdef>
+	 <para>
+	 </para>
+	 <example>
+	   <title><command></command></title>
+	   <screen>
+	   </screen>
+	 </example>
+       </glossdef>
+      </glossentry>
+
    </glossdiv>
+
    <glossdiv>
      <title>l-o</title>
 
       <glossentry>
-       <glossterm>l</glossterm>
+       <glossterm><command>l</command></glossterm>
        <glossdef>
 	 <para>
 	 </para>
@@ -558,6 +609,18 @@ mged> <command>3ptarb thing 0 0 0 1 0 0 1 1 0 z 0 1 3</command>
        </glossdef>
       </glossentry>
 
+     <glossentry>
+       <glossterm><command></command></glossterm>
+       <glossdef>
+	 <para>
+	 </para>
+	 <example>
+	   <title><command></command></title>
+	   <screen>
+	   </screen>
+	 </example>
+       </glossdef>
+      </glossentry>
 
    </glossdiv>
 
@@ -565,7 +628,7 @@ mged> <command>3ptarb thing 0 0 0 1 0 0 1 1 0 z 0 1 3</command>
      <title>p-r</title>
 
      <glossentry>
-       <glossterm>p</glossterm>
+       <glossterm><command>p</command></glossterm>
        <glossdef>
 	 <para>
 	 </para>
@@ -577,14 +640,26 @@ mged> <command>3ptarb thing 0 0 0 1 0 0 1 1 0 z 0 1 3</command>
        </glossdef>
       </glossentry>
 
-   </glossdiv>
+     <glossentry>
+       <glossterm><command></command></glossterm>
+       <glossdef>
+	 <para>
+	 </para>
+	 <example>
+	   <title><command></command></title>
+	   <screen>
+	   </screen>
+	 </example>
+       </glossdef>
+      </glossentry>
 
+   </glossdiv>
 
    <glossdiv>
      <title>s-t</title>
 
      <glossentry>
-       <glossterm>savekey</glossterm>
+       <glossterm><command>savekey</command></glossterm>
        <glossdef>
 	 <para>
 	 </para>
@@ -596,6 +671,18 @@ mged> <command>3ptarb thing 0 0 0 1 0 0 1 1 0 z 0 1 3</command>
        </glossdef>
       </glossentry>
 
+     <glossentry>
+       <glossterm><command></command></glossterm>
+       <glossdef>
+	 <para>
+	 </para>
+	 <example>
+	   <title><command></command></title>
+	   <screen>
+	   </screen>
+	 </example>
+       </glossdef>
+      </glossentry>
 
    </glossdiv>
 
@@ -603,12 +690,25 @@ mged> <command>3ptarb thing 0 0 0 1 0 0 1 1 0 z 0 1 3</command>
      <title>u-z</title>
 
      <glossentry>
-       <glossterm>units</glossterm>
+       <glossterm><command>units</command></glossterm>
        <glossdef>
 	 <para>
 	 </para>
 	 <example>
 	   <title><command>units</command></title>
+	   <screen>
+	   </screen>
+	 </example>
+       </glossdef>
+      </glossentry>
+
+     <glossentry>
+       <glossterm><command></command></glossterm>
+       <glossdef>
+	 <para>
+	 </para>
+	 <example>
+	   <title><command></command></title>
 	   <screen>
 	   </screen>
 	 </example>
