@@ -26,7 +26,10 @@
 #ifndef __GED_PRIVATE_H__
 #define __GED_PRIVATE_H__
 
+#include "common.h"
+
 #include <time.h>
+
 #include "ged.h"
 
 __BEGIN_DECLS
