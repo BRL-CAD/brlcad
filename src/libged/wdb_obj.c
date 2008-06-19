@@ -516,40 +516,6 @@ wdb_init_obj(Tcl_Interp		*interp,
     /* initialize rt_wdb */
     bu_vls_init(&wdbp->wdb_name);
     bu_vls_strcpy(&wdbp->wdb_name, oname);
-#if 0
-    bu_vls_init(&wdbp->wdb_log);
-    bu_vls_init(&wdbp->wdb_result_str);
-#endif
-    bu_vls_init(&wdbp->wdb_prestr);
-
-#if 0
-    /*XXXX already initialize by wdb_dbopen */
-    /* initilize tolerance structures */
-    wdbp->wdb_ttol.magic = RT_TESS_TOL_MAGIC;
-    wdbp->wdb_ttol.abs = 0.0;               /* disabled */
-    wdbp->wdb_ttol.rel = 0.01;
-    wdbp->wdb_ttol.norm = 0.0;              /* disabled */
-
-    wdbp->wdb_tol.magic = BN_TOL_MAGIC;
-    wdbp->wdb_tol.dist = 0.005;
-    wdbp->wdb_tol.dist_sq = wdbp->wdb_tol.dist * wdbp->wdb_tol.dist;
-    wdbp->wdb_tol.perp = 1e-6;
-    wdbp->wdb_tol.para = 1 - wdbp->wdb_tol.perp;
-#endif
-
-    /* initialize tree state */
-    wdbp->wdb_initial_tree_state = rt_initial_tree_state;  /* struct copy */
-    wdbp->wdb_initial_tree_state.ts_ttol = &wdbp->wdb_ttol;
-    wdbp->wdb_initial_tree_state.ts_tol = &wdbp->wdb_tol;
-
-    /* default region ident codes */
-    wdbp->wdb_item_default = 1000;
-    wdbp->wdb_air_default = 0;
-    wdbp->wdb_mat_default = 1;
-    wdbp->wdb_los_default = 100;
-
-    /* resource structure */
-    wdbp->wdb_resp = &rt_uniresource;
 
     BU_LIST_INIT(&wdbp->wdb_observers.l);
     wdbp->wdb_interp = interp;

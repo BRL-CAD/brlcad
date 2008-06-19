@@ -1111,15 +1111,6 @@ struct rt_wdb  {
     struct bn_tol	wdb_tol;
     struct resource*	wdb_resp;
 
-#if 0
-    /* for catching log messages */
-    struct bu_vls	wdb_log;
-
-    void		*wdb_result;
-    struct bu_vls	wdb_result_str;
-    unsigned int	wdb_result_flags;
-#endif
-
     /* variables for name prefixing */
     struct bu_vls	wdb_prestr;
     int			wdb_ncharadd;
@@ -2549,6 +2540,11 @@ RT_EXPORT BU_EXTERN(int wdb_export,
 		     genptr_t gp,
 		     int id,
 		     double local2mm));
+RT_EXPORT BU_EXTERN(void wdb_init,
+		    (struct rt_wdb *wdbp,
+		     struct db_i   *dbip,
+		     int           mode));
+		     
 RT_EXPORT BU_EXTERN(void wdb_close,
 		    (struct rt_wdb *wdbp));
 

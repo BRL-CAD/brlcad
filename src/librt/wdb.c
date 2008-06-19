@@ -112,23 +112,7 @@ wdb_dbopen( struct db_i *dbip, int mode )
 	rt_init_resource( &rt_uniresource, 0, NULL );
 
     BU_GETSTRUCT(wdbp, rt_wdb);
-    wdbp->l.magic = RT_WDB_MAGIC;
-    wdbp->type = mode;
-    wdbp->dbip = dbip;
-    wdbp->dbip->dbi_wdbp = wdbp;
-
-    /* Provide the same default tolerance that librt/prep.c does */
-    wdbp->wdb_tol.magic = BN_TOL_MAGIC;
-    wdbp->wdb_tol.dist = 0.005;
-    wdbp->wdb_tol.dist_sq = wdbp->wdb_tol.dist * wdbp->wdb_tol.dist;
-    wdbp->wdb_tol.perp = 1e-6;
-    wdbp->wdb_tol.para = 1 - wdbp->wdb_tol.perp;
-
-    wdbp->wdb_ttol.magic = RT_TESS_TOL_MAGIC;
-    wdbp->wdb_ttol.abs = 0.0;
-    wdbp->wdb_ttol.rel = 0.01;
-    wdbp->wdb_ttol.norm = 0;
-    bu_vls_init( &wdbp->wdb_prestr );
+    wdb_init(wdbp, dbip, mode);
 
     return wdbp;
 
@@ -383,25 +367,61 @@ wdb_export(
     return wdb_put_internal( wdbp, name, &intern, local2mm );
 }
 
+void
+wdb_init(struct rt_wdb *wdbp, struct db_i *dbip, int mode)
+{
+    wdbp->l.magic = RT_WDB_MAGIC;
+    wdbp->type = mode;
+    wdbp->dbip = dbip;
+    wdbp->dbip->dbi_wdbp = wdbp;
+
+    /* Provide the same default tolerance that librt/prep.c does */
+    wdbp->wdb_tol.magic = BN_TOL_MAGIC;
+    wdbp->wdb_tol.dist = 0.005;
+    wdbp->wdb_tol.dist_sq = wdbp->wdb_tol.dist * wdbp->wdb_tol.dist;
+    wdbp->wdb_tol.perp = 1e-6;
+    wdbp->wdb_tol.para = 1 - wdbp->wdb_tol.perp;
+
+    wdbp->wdb_ttol.magic = RT_TESS_TOL_MAGIC;
+    wdbp->wdb_ttol.abs = 0.0;
+    wdbp->wdb_ttol.rel = 0.01;
+    wdbp->wdb_ttol.norm = 0;
+    bu_vls_init(&wdbp->wdb_prestr);
+
+    /* initialize tree state */
+    wdbp->wdb_initial_tree_state = rt_initial_tree_state;  /* struct copy */
+    wdbp->wdb_initial_tree_state.ts_ttol = &wdbp->wdb_ttol;
+    wdbp->wdb_initial_tree_state.ts_tol = &wdbp->wdb_tol;
+
+    /* default region ident codes */
+    wdbp->wdb_item_default = 1000;
+    wdbp->wdb_air_default = 0;
+    wdbp->wdb_mat_default = 1;
+    wdbp->wdb_los_default = 100;
+
+    /* resource structure */
+    wdbp->wdb_resp = &rt_uniresource;
+}
+
 /**
  *			W D B _ C L O S E
  *
  *  Release from associated database "file", destroy dynamic data structure.
  */
 void
-wdb_close( struct rt_wdb *wdbp )
+wdb_close(struct rt_wdb *wdbp)
 {
 
     RT_CK_WDB(wdbp);
 
     /* XXX Flush any unwritten "struct matter" records here */
 
-    db_close( wdbp->dbip );
+    db_close(wdbp->dbip);
     wdbp->dbip = NULL;
 
-    bu_vls_free( &wdbp->wdb_prestr );
+    bu_vls_free(&wdbp->wdb_prestr);
 
-    bu_free( (genptr_t)wdbp, "struct rt_wdb");
+    bu_free((genptr_t)wdbp, "struct rt_wdb");
     wdbp = NULL;
 }
 
