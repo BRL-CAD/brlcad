@@ -58,7 +58,7 @@
 
 
 /* defined in qray.c */
-extern void ged_qray_data_to_vlist(struct ged *gedp, struct bn_vlblock *vbp, struct ged_qray_dataList *headp, fastf_t *dir, int do_overlaps);
+extern void ged_qray_data_to_vlist(struct ged_drawable *gdp, struct bn_vlblock *vbp, struct ged_qray_dataList *headp, fastf_t *dir, int do_overlaps);
 
 /* defined in dg_obj.c */
 extern int dgo_build_tops(struct bu_vls *result, struct solid *hsp, char **start, register char **end);
