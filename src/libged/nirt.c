@@ -58,7 +58,7 @@
 
 
 /* defined in qray.c */
-extern void ged_qray_data_to_vlist(struct ged_drawable *gdp, struct bn_vlblock *vbp, struct ged_qray_dataList *headp, fastf_t *dir, int do_overlaps);
+extern void ged_qray_data_to_vlist(struct ged *gedp, struct bn_vlblock *vbp, struct ged_qray_dataList *headp, fastf_t *dir, int do_overlaps);
 
 /* defined in dg_obj.c */
 extern int dgo_build_tops(struct bu_vls *result, struct solid *hsp, char **start, register char **end);
@@ -513,7 +513,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 		break;
 	}
 	vbp = rt_vlblock_init();
-	ged_qray_data_to_vlist(gedp->ged_gdp, vbp, &HeadQRayData, dir, 1);
+	ged_qray_data_to_vlist(gedp, vbp, &HeadQRayData, dir, 1);
 	bu_list_free(&HeadQRayData.l);
 	ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_addr(&gedp->ged_gdp->gd_qray_basename), 0);
 	rt_vlblock_free(vbp);

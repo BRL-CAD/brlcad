@@ -417,7 +417,7 @@ ged_qray(struct ged	*gedp,
 }
 
 void
-ged_init_qray(struct ged_drawble *gdp)
+ged_init_qray(struct ged_drawable *gdp)
 {
     register int i;
     register int n = 0;
@@ -450,7 +450,7 @@ ged_init_qray(struct ged_drawble *gdp)
 }
 
 void
-ged_free_qray(struct ged_drawble *gdp)
+ged_free_qray(struct ged_drawable *gdp)
 {
     register int i;
 
@@ -462,7 +462,7 @@ ged_free_qray(struct ged_drawble *gdp)
 }
 
 void
-ged_qray_data_to_vlist(struct ged_drawable	*gdp,
+ged_qray_data_to_vlist(struct ged		*gedp,
 		       struct bn_vlblock	*vbp,
 		       struct ged_qray_dataList	*headp,
 		       vect_t			dir,
@@ -477,19 +477,19 @@ ged_qray_data_to_vlist(struct ged_drawable	*gdp,
     for (BU_LIST_FOR(ndlp, ged_qray_dataList, &headp->l)) {
 	if (do_overlaps)
 	    vhead = rt_vlblock_find(vbp,
-				    gdp->gd_qray_overlap_color.r,
-				    gdp->gd_qray_overlap_color.g,
-				    gdp->gd_qray_overlap_color.b);
+				    gedp->ged_gdp->gd_qray_overlap_color.r,
+				    gedp->ged_gdp->gd_qray_overlap_color.g,
+				    gedp->ged_gdp->gd_qray_overlap_color.b);
 	else if (i % 2)
 	    vhead = rt_vlblock_find(vbp,
-				    gdp->gd_qray_odd_color.r,
-				    gdp->gd_qray_odd_color.g,
-				    gdp->gd_qray_odd_color.b);
+				    gedp->ged_gdp->gd_qray_odd_color.r,
+				    gedp->ged_gdp->gd_qray_odd_color.g,
+				    gedp->ged_gdp->gd_qray_odd_color.b);
 	else
 	    vhead = rt_vlblock_find(vbp,
-				    gdp->gd_qray_even_color.r,
-				    gdp->gd_qray_even_color.g,
-				    gdp->gd_qray_even_color.b);
+				    gedp->ged_gdp->gd_qray_even_color.r,
+				    gedp->ged_gdp->gd_qray_even_color.g,
+				    gedp->ged_gdp->gd_qray_even_color.b);
 
 	VSET(in_pt, ndlp->x_in, ndlp->y_in, ndlp->z_in);
 	VJOIN1(out_pt, in_pt, ndlp->los, dir);
@@ -500,9 +500,9 @@ ged_qray_data_to_vlist(struct ged_drawable	*gdp,
 
 	if (!do_overlaps && i > 1 && !VAPPROXEQUAL(last_out_pt, in_pt, SQRT_SMALL_FASTF)) {
 	    vhead = rt_vlblock_find(vbp,
-				    gdp->gd_qray_void_color.r,
-				    gdp->gd_qray_void_color.g,
-				    gdp->gd_qray_void_color.b);
+				    gedp->ged_gdp->gd_qray_void_color.r,
+				    gedp->ged_gdp->gd_qray_void_color.g,
+				    gedp->ged_gdp->gd_qray_void_color.b);
 	    RT_ADD_VLIST( vhead, last_out_pt, BN_VLIST_LINE_MOVE );
 	    RT_ADD_VLIST( vhead, in_pt, BN_VLIST_LINE_DRAW );
 	}
