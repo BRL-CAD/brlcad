@@ -1,15 +1,22 @@
 set(LIBGED_SOURCES
     arced.c
+    autoview.c
     bigE.c
+    blast.c
     comb_color.c
     dg_obj.c
     draw.c
+    erase.c
+    erase_all.c
     editit.c
     edcomb.c
     edmater.c
+    get_autoview.c
+    get_eyemodel.c
     get_obj_bounds.c
     globals.c
     importFg4Section.c
+    illum.c
     item.c
     log.c
     make.c
@@ -21,17 +28,23 @@ set(LIBGED_SOURCES
     orotate.c
     oscale.c
     otranslate.c
+    overlay.c
     qray.c
     rmater.c
+    rt.c
+    set_outputHandler.c
+    set_uplotOutputMode.c
     shader.c
     tcl.c
     trace.c
     track.c
     vdraw.c
     view_obj.c
+    vutil.c
     wdb_comb_std.c
     wdb_obj.c
     wmater.c
+    zap.c
 )
 
 include_directories(
