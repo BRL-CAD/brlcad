@@ -1127,7 +1127,9 @@ GED_EXPORT BU_EXTERN(int ged_overlay, (struct ged *gedp, int argc, const char *a
 GED_EXPORT BU_EXTERN(int ged_qray, (struct ged *gedp, int argc, const char *argv[]));
 
 GED_EXPORT BU_EXTERN(void ged_init_qray,
-		    (struct ged *gedp));
+		    (struct ged_drawable *gdp));
+GED_EXPORT BU_EXTERN(void ged_free_qray,
+		    (struct ged_drawable *gdp));
 
 /**
  * Get/set the output handler script

@@ -417,52 +417,52 @@ ged_qray(struct ged	*gedp,
 }
 
 void
-ged_init_qray(struct ged *gedp)
+ged_init_qray(struct ged_drawble *gdp)
 {
     register int i;
     register int n = 0;
     struct ged_qray_fmt_data *qfdp;
 
-    bu_vls_init(&gedp->ged_gdp->gd_qray_basename);
-    bu_vls_strcpy(&gedp->ged_gdp->gd_qray_basename, DG_QRAY_BASENAME);
-    bu_vls_init(&gedp->ged_gdp->gd_qray_script);
+    bu_vls_init(&gdp->gd_qray_basename);
+    bu_vls_strcpy(&gdp->gd_qray_basename, DG_QRAY_BASENAME);
+    bu_vls_init(&gdp->gd_qray_script);
 
-    gedp->ged_gdp->gd_qray_effects = 'b';
-    gedp->ged_gdp->gd_qray_cmd_echo = 0;
-    gedp->ged_gdp->gd_qray_odd_color = def_qray_odd_color;
-    gedp->ged_gdp->gd_qray_even_color = def_qray_even_color;
-    gedp->ged_gdp->gd_qray_void_color = def_qray_void_color;
-    gedp->ged_gdp->gd_qray_overlap_color = def_qray_overlap_color;
+    gdp->gd_qray_effects = 'b';
+    gdp->gd_qray_cmd_echo = 0;
+    gdp->gd_qray_odd_color = def_qray_odd_color;
+    gdp->gd_qray_even_color = def_qray_even_color;
+    gdp->gd_qray_void_color = def_qray_void_color;
+    gdp->gd_qray_overlap_color = def_qray_overlap_color;
 
     /* count the number of default format types */
     for (qfdp = def_qray_fmt_data; qfdp->fmt != (char *)NULL; ++qfdp)
 	++n;
 
-    gedp->ged_gdp->gd_qray_fmts = (struct ged_qray_fmt *)bu_malloc(sizeof(struct ged_qray_fmt) * n + 1, "qray_fmts");
+    gdp->gd_qray_fmts = (struct ged_qray_fmt *)bu_malloc(sizeof(struct ged_qray_fmt) * n + 1, "qray_fmts");
 
     for (i = 0; i < n; ++i) {
-	gedp->ged_gdp->gd_qray_fmts[i].type = def_qray_fmt_data[i].type;
-	bu_vls_init(&gedp->ged_gdp->gd_qray_fmts[i].fmt);
-	bu_vls_strcpy(&gedp->ged_gdp->gd_qray_fmts[i].fmt, def_qray_fmt_data[i].fmt);
+	gdp->gd_qray_fmts[i].type = def_qray_fmt_data[i].type;
+	bu_vls_init(&gdp->gd_qray_fmts[i].fmt);
+	bu_vls_strcpy(&gdp->gd_qray_fmts[i].fmt, def_qray_fmt_data[i].fmt);
     }
 
-    gedp->ged_gdp->gd_qray_fmts[i].type = (char)0;
+    gdp->gd_qray_fmts[i].type = (char)0;
 }
 
 void
-ged_free_qray(struct ged *gedp)
+ged_free_qray(struct ged_drawble *gdp)
 {
     register int i;
 
-    bu_vls_free(&gedp->ged_gdp->gd_qray_basename);
-    bu_vls_free(&gedp->ged_gdp->gd_qray_script);
-    for (i = 0; gedp->ged_gdp->gd_qray_fmts[i].type != (char)0; ++i)
-	bu_vls_free(&gedp->ged_gdp->gd_qray_fmts[i].fmt);
-    bu_free(gedp->ged_gdp->gd_qray_fmts, "dgo_free_qray");
+    bu_vls_free(&gdp->gd_qray_basename);
+    bu_vls_free(&gdp->gd_qray_script);
+    for (i = 0; gdp->gd_qray_fmts[i].type != (char)0; ++i)
+	bu_vls_free(&gdp->gd_qray_fmts[i].fmt);
+    bu_free(gdp->gd_qray_fmts, "dgo_free_qray");
 }
 
 void
-ged_qray_data_to_vlist(struct ged		*gedp,
+ged_qray_data_to_vlist(struct ged_drawable	*gdp,
 		       struct bn_vlblock	*vbp,
 		       struct ged_qray_dataList	*headp,
 		       vect_t			dir,
@@ -477,19 +477,19 @@ ged_qray_data_to_vlist(struct ged		*gedp,
     for (BU_LIST_FOR(ndlp, ged_qray_dataList, &headp->l)) {
 	if (do_overlaps)
 	    vhead = rt_vlblock_find(vbp,
-				    gedp->ged_gdp->gd_qray_overlap_color.r,
-				    gedp->ged_gdp->gd_qray_overlap_color.g,
-				    gedp->ged_gdp->gd_qray_overlap_color.b);
+				    gdp->gd_qray_overlap_color.r,
+				    gdp->gd_qray_overlap_color.g,
+				    gdp->gd_qray_overlap_color.b);
 	else if (i % 2)
 	    vhead = rt_vlblock_find(vbp,
-				    gedp->ged_gdp->gd_qray_odd_color.r,
-				    gedp->ged_gdp->gd_qray_odd_color.g,
-				    gedp->ged_gdp->gd_qray_odd_color.b);
+				    gdp->gd_qray_odd_color.r,
+				    gdp->gd_qray_odd_color.g,
+				    gdp->gd_qray_odd_color.b);
 	else
 	    vhead = rt_vlblock_find(vbp,
-				    gedp->ged_gdp->gd_qray_even_color.r,
-				    gedp->ged_gdp->gd_qray_even_color.g,
-				    gedp->ged_gdp->gd_qray_even_color.b);
+				    gdp->gd_qray_even_color.r,
+				    gdp->gd_qray_even_color.g,
+				    gdp->gd_qray_even_color.b);
 
 	VSET(in_pt, ndlp->x_in, ndlp->y_in, ndlp->z_in);
 	VJOIN1(out_pt, in_pt, ndlp->los, dir);
@@ -500,9 +500,9 @@ ged_qray_data_to_vlist(struct ged		*gedp,
 
 	if (!do_overlaps && i > 1 && !VAPPROXEQUAL(last_out_pt, in_pt, SQRT_SMALL_FASTF)) {
 	    vhead = rt_vlblock_find(vbp,
-				    gedp->ged_gdp->gd_qray_void_color.r,
-				    gedp->ged_gdp->gd_qray_void_color.g,
-				    gedp->ged_gdp->gd_qray_void_color.b);
+				    gdp->gd_qray_void_color.r,
+				    gdp->gd_qray_void_color.g,
+				    gdp->gd_qray_void_color.b);
 	    RT_ADD_VLIST( vhead, last_out_pt, BN_VLIST_LINE_MOVE );
 	    RT_ADD_VLIST( vhead, in_pt, BN_VLIST_LINE_DRAW );
 	}
