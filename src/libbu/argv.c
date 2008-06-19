@@ -41,7 +41,7 @@ bu_free_argv(int argc, char *argv[])
 }
 
 char **
-bu_copy_argv(int argc, const char *argv[])
+bu_dup_argv(int argc, const char *argv[])
 {
     register int i;
     char **av;
@@ -58,7 +58,7 @@ bu_copy_argv(int argc, const char *argv[])
 }
 
 char **
-bu_copyinsert_argv(int insert, int insertArgc, const char *insertArgv[], int argc, const char *argv[])
+bu_dupinsert_argv(int insert, int insertArgc, const char *insertArgv[], int argc, const char *argv[])
 {
     register int i, j;
     int ac = argc + insertArgc + 1;
@@ -66,7 +66,7 @@ bu_copyinsert_argv(int insert, int insertArgc, const char *insertArgv[], int arg
 
     /* Nothing to insert */
     if (insertArgc < 1)
-	return bu_copy_argv(argc, argv);
+	return bu_dup_argv(argc, argv);
 
     av = (char **)bu_calloc(ac, sizeof(char *), "bu_insert_argv");
 
@@ -94,6 +94,68 @@ bu_copyinsert_argv(int insert, int insertArgc, const char *insertArgv[], int arg
     }
 
     av[i] = (char *)0;
+
+    return av;
+}
+
+char **
+bu_argv_from_path(const char *path, int *ac)
+{
+    char **av;
+    char *begin;
+    char *end;
+    char *newstr;
+    char *headpath;
+    register int i;
+
+    if (path == (char *)0 || path[0] == '\0')
+	return (char **)0;
+
+    newstr = bu_strdup(path);
+
+    /* skip leading /'s */
+    i = 0;
+    while (newstr[i] == '/')
+	++i;
+
+    if (newstr[i] == '\0') {
+	bu_free((void *)newstr, "bu_argv_from_path");
+	return (char **)0;
+    }
+
+    /* If we get here, there is alteast one path element */
+    *ac = 1;
+    headpath = &newstr[i];
+
+    /* First count the number of '/' */
+    begin = headpath;
+    while ((end = strchr(begin, '/')) != (char *)0) {
+	if (begin != end)
+	    ++*ac;
+
+	begin = end + 1;
+    }
+    av = (char **)bu_calloc(*ac+1, sizeof(char *), "bu_argv_from_path");
+
+    begin = headpath;
+    i = 0;
+    while ((end = strchr(begin, '/')) != (char *)0) {
+	if (begin != end) {
+	    *end = '\0';
+	    av[i++] = bu_strdup(begin);
+	}
+
+	begin = end + 1;
+    }
+
+    if (begin[0] != '\0') {
+	av[i++] = bu_strdup(begin);
+	av[i] = (char *)0;
+    } else {
+	av[i] = (char *)0;
+	--*ac;
+    }
+    bu_free((void *)newstr, "bu_argv_from_path");
 
     return av;
 }

@@ -2962,16 +2962,18 @@ BU_EXPORT BU_EXTERN(int bu_fchmod,
 BU_EXPORT BU_EXTERN(void bu_free_argv,
 		    (int argc,
 		     char *argv[]));
-BU_EXPORT BU_EXTERN(char ** bu_copy_argv,
+BU_EXPORT BU_EXTERN(char ** bu_dup_argv,
 		    (int argc,
 		     const char *argv[]));
-BU_EXPORT BU_EXTERN(char ** bu_copyinsert_argv,
+BU_EXPORT BU_EXTERN(char ** bu_dupinsert_argv,
 		    (int insert,
 		     int insertArgc,
 		     const char *insertArgv[],
 		     int argc,
 		     const char *argv[]));
-
+BU_EXPORT BU_EXTERN(char ** bu_argv_from_path,
+		    (const char *path,
+		     int *ac));
 
 
 __END_DECLS
