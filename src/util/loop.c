@@ -167,7 +167,7 @@ main(int argc, char **argv)
 	    for (i = start; i >= finish; i += incr)
 		printf(fmt_string, i);
     } else {
-	/* print out integer output */
+	/* print out character output */
 	cstart = argv[2][0];
 	cfinish = argv[3][0];
 	

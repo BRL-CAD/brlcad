@@ -10,7 +10,8 @@ noinst_PROGRAMS = \
 
 noinst_HEADERS = \
 	pc_constraint.h \
-	pc_solver.h
+	pcInterval.h \
+	pcVariable.h
 
 libpc_nil_la_SOURCES = \
 	pc_main.c \

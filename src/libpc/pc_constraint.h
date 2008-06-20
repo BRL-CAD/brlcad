@@ -1,7 +1,7 @@
 /*              	     P C _ C O N S T R A I N T . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,8 +24,8 @@
  *  Structures required for implementing Constraint Solution
  *
  */
-#ifndef __PC_H__
-#define __PC_H__
+#ifndef __PC_CONSTRAINT_H__
+#define __PC_CONSTRAINT_H__
 
 #include "common.h"
 #include "bu.h"
@@ -82,7 +82,7 @@ __END_DECLS
 /** @} */
 /*
  * Local Variables:
- * mode: C
+ * mode: C++
  * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"

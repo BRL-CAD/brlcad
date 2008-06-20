@@ -1,7 +1,7 @@
 /*                   	S O L V E R _ T E S T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,16 +19,15 @@
  */
 /** @file solver_test.cpp
  *
- *@brief Simple Test cases for pc_solver
+ *@brief Simple Test cases for Constraint Solver
  *
  *@author Dawn Thomas
  *	
  *
  */
 
-#include "pc_solver.h"
+#include "pcVariable.h"
 
-using namespace std;
 int main()
 {
 Interval<int> I;
@@ -59,23 +58,23 @@ V.D.addInterval(K);
 K.assign(15.4,18.8,0.8);
 V.D.addInterval(K);
 V.setValue(8.1);
-cout<<"V value befor increment"<<V.getValue()<<endl;
-++V;cout<<"V value after increment"<<V.getValue()<<endl;
+std::cout<<"V value befor increment"<<V.getValue()<<std::endl;
+++V;std::cout<<"V value after increment"<<V.getValue()<<std::endl;
 
 /*try {
     K=D.getInterval(6.3);
 }
 catch(pcException E) {
-    cout<<"Exception: "<<E.Error()<<endl;
+    cout<<"Exception: "<<E.Error()<<std::endl;
     goto test_label;
 }
-    cout<<K.getLow()<<" "<<K.getHigh()<<" "<<K.getWidth()<<" "<<K.getStep()<<endl;
+    cout<<K.getLow()<<" "<<K.getHigh()<<" "<<K.getWidth()<<" "<<K.getStep()<<std::endl;
 
 test_label:*/
 V.D.display(); 
 I.assign(2,8,1);
-cout<<I.getLow()<<" "<<I.getHigh()<<" "<<I.getWidth()<<" "<<I.getStep()<<endl;
-cout<<J.getLow()<<" "<<J.getHigh()<<" "<<J.getWidth()<<" "<<J.getStep()<<endl;
+std::cout<<I.getLow()<<" "<<I.getHigh()<<" "<<I.getWidth()<<" "<<I.getStep()<<std::endl;
+std::cout<<J.getLow()<<" "<<J.getHigh()<<" "<<J.getWidth()<<" "<<J.getStep()<<std::endl;
 
 }
 
@@ -83,7 +82,7 @@ cout<<J.getLow()<<" "<<J.getHigh()<<" "<<J.getWidth()<<" "<<J.getStep()<<endl;
 /** @} */
 /*
  * Local Variables:
- * mode: C
+ * mode: C++
  * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"

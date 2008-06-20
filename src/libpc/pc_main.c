@@ -1,7 +1,7 @@
 /*                   	P C _ M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,20 +20,6 @@
 /** @addtogroup libpc */
 /** @{ */
 /** @file pc_main.c
- *
- *  Library for writing MGED databases from arbitrary procedures.
- *  Assumes that some of the structure of such databases are known
- *  by the calling routines.
- *
- *  It is expected that this library will grow as experience is gained.
- *  Routines for writing every permissible solid do not yet exist.
- *
- *  Note that routines which are passed point_t or vect_t or mat_t
- *  parameters (which are call-by-address) must be VERY careful to
- *  leave those parameters unmodified (eg, by scaling), so that the
- *  calling routine is not surprised.
- *
- *  Return codes of 0 are OK, -1 signal an error.
  *
  *  TODO: clean up header includes
  *

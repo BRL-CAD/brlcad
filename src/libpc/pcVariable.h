@@ -1,7 +1,7 @@
-/*              	     P C _ S O L V E R . H
+/*              	     P C V A R I A B L E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,72 +19,30 @@
  */
 /** @addtogroup soln */
 /** @{ */
-/** @file pc.h
+/** @file pcVariable.h
  *
- *  Structures required for solving constraint networks
+ *  Class definition of Variable & Domain
  *
  *@author Dawn Thomas
  */
-#ifndef __PC_SOLVER_H__
-#define __PC_SOLVER_H__
-
-#define PC_MAX_STACK_SIZE 1000
+#ifndef __PCVARIABLE_H__
+#define __PCVARIABLE_H__
 
 #include <iostream>
+#include <cstdlib>
 #include <string>
 #include <list>
 #include <stack>
-
-using namespace std;
-
-/* Basic Exception Handling classes */
-
-class pcException {
-    private:
-	string str;
-    public:
-	pcException() {};
-	pcException(const char *temp) {str=temp;};
-	~pcException() {};
-	string Error() const {
-	    return str;
-	}
-};
-
-/*
-    TODO: To be replaced by boost based classes ??
-*/
-
-template<class T>
-class Interval {
-	private:
-		T low;
-		T high;
-		T step;
-	public:
-		Interval();
-		Interval(const T l, const T h, const T s);
-		void assign(const T l, const T h,const T s);
-		void setLow(const T l);
-		void setHigh(const T h);
-		void setStep(const T s);
-		T getLow();
-		T getHigh();
-		T getStep();
-		T getWidth();
-		
-		bool inInterval(T);
-		bool operator<(Interval<T> &U) const;
-		bool operator>(Interval<T> &U) const;
-};
+#include "pcBasic.h"
+#include "pcInterval.h"
 
 template<class T>
 class Domain
 
 {
     private:
-	list<Interval<T> > Interv; /* TODO: Change to Inheritance rather than membership */
-	int mergeIntervals (typename list<Interval<T> >::iterator);
+	std::list<Interval<T> > Interv; /* TODO: Change to Inheritance rather than membership */
+	int mergeIntervals (typename std::list<Interval<T> >::iterator);
 	void packIntervals ();
     public:
 	/*class iterator
@@ -139,108 +97,6 @@ class SearchStructure {
 
 };
 
-/* Interval Class Functions */
-
-template<class T>
-Interval<T>::Interval()
-{
-
-}
-
-template<class T>
-Interval<T>::Interval(T l, T h, T s)
-{
-    low = l;
-    high = h;
-    step = s;
-}
-
-template<class T>
-void Interval<T>::assign(const T l, const T h, const T s)
-{
-	low = l;
-	high = h;
-	step = s;
-}
-
-template<class T>
-void Interval<T>::setLow(const T l)
-{
-	low = l;
-}
-
-template<class T>
-void Interval<T>::setHigh(const T h)
-{
-	high = h;
-}
-
-template<class T>
-void Interval<T>::setStep(const T s)
-{
-	step = s;
-}
-
-template<class T>
-T Interval<T>::getLow()
-{
-	return low;
-}
-
-template<class T>
-T Interval<T>::getHigh()
-{
-        return high;
-}
-
-template<class T>
-T Interval<T>::getStep()
-{
-        return step;
-}
-
-template<class T>
-T Interval<T>::getWidth()
-{
-        return high-low;
-}
-
-template<class T>
-bool Interval<T>::inInterval(T t)
-{
-    if (t>=low && t<=high)
-	return true;
-    else
-	return false;
-}
-
-template<class T>
-bool Interval<T>::operator<(Interval<T> &U) const
-{
-    /*  Ensure high<low etc. here?
-	if(low<U.getLow()) {
-	if(high<U.getLow())
-	    return true;
-	else {
-	    return false;
-	}
-    } else 
-    return false;*/
-	if(low<U.getLow())
-	    return true;
-	else
-	    return false;
-}
-
-template<class T>
-bool Interval<T>::operator>(Interval<T> &U) const
-{
-	if(low>U.getLow())
-	    return true;
-	else
-	    return false;
-}
-
 /* Domain Class Functions */
 template<class T>
 Domain<T>::Domain()
@@ -257,7 +113,7 @@ Domain<T>::~Domain()
 template<class T>
 void Domain<T>::addInterval(const Interval<T> t)
 {
-    typename list<Interval<T> >::iterator i = this->Interv.begin();
+    typename std::list<Interval<T> >::iterator i = this->Interv.begin();
     while( i != this->Interv.end() && t > *i ) i++;
 /*    if ( i == this->Interv.end()) this->Interv.push_back(t);
             else */this->Interv.insert(i,t);
@@ -267,7 +123,7 @@ void Domain<T>::addInterval(const Interval<T> t)
 template<class T>
 Interval<T> Domain<T>::getInterval(T t) throw(pcException)
 {
-    typename list<Interval<T> >::iterator i;
+    typename std::list<Interval<T> >::iterator i;
     for(i = this->Interv.begin(); i != this->Interv.end(); i++)
 	{
 	    if ( i->inInterval(t)) return *i;
@@ -278,7 +134,7 @@ Interval<T> Domain<T>::getInterval(T t) throw(pcException)
 template<class T>
 T Domain<T>::getNextLow (T value)
 {
-	typename list<Interval<T> >::iterator i = this->Interv.begin();
+	typename std::list<Interval<T> >::iterator i = this->Interv.begin();
 	while(i!=Interv.end() && i->getLow() < value) i++;
 	return i->getLow();
 }
@@ -286,19 +142,19 @@ T Domain<T>::getNextLow (T value)
 template<class T>
 void Domain<T>::display()
 {
-    typename list<Interval<T> >::iterator i;
+    typename std::list<Interval<T> >::iterator i;
     for(i = this->Interv.begin(); i != this->Interv.end(); i++)
 	{
-	    cout<<"!-- "<<i->getLow()<<" "<<i->getHigh()<<" "<<i->getWidth()<<" "<<i->getStep()<<endl;
+	    std::cout<<"!-- "<<i->getLow()<<" "<<i->getHigh()<<" "<<i->getWidth()<<" "<<i->getStep()<<std::endl;
 	}
 }
 
 
 template<class T>
-int Domain<T>::mergeIntervals (typename list<Interval<T> >::iterator i)
+int Domain<T>::mergeIntervals (typename std::list<Interval<T> >::iterator i)
 {
     if( i!=Interv.end() ) {
-	typename list<Interval<T> >::iterator j = i;j++;
+	typename std::list<Interval<T> >::iterator j = i;j++;
 	if(j->getStep() == i->getStep()) {
 	    if(j->getHigh() > i->getHigh()) /* If interval is not inside the present one */
 		    i->setHigh(j->getHigh());
@@ -316,15 +172,15 @@ template<class T>
 void  Domain<T>::packIntervals ()
 {
     if(Interv.size()>1) {
-	typename list<Interval<T> >::iterator i,j,temp;
+	typename std::list<Interval<T> >::iterator i,j,temp;
 	i=j=Interv.begin();j++;
 
 	do {
 
-/*	    display();cout<<"++++"<<i->getHigh() <<" "<< j->getLow()<<endl;*/
+/*	    display();std::cout<<"++++"<<i->getHigh() <<" "<< j->getLow()<<std::endl;*/
 	    if (i->getHigh() > j->getLow() ) {
 		if(mergeIntervals(i) !=0) {
-		    cout<<"Error: Incompatible stepsizes"<<endl;
+		    std::cout<<"Error: Incompatible stepsizes"<<std::endl;
 		    std::exit(-1);
 		} else {
 		    packIntervals();
@@ -335,8 +191,8 @@ void  Domain<T>::packIntervals ()
 		continue;
 	    }
 	} while(j != Interv.end());
-	/*cout<<"!!!!!"<<j->getHigh()<<" "<<j->getLow()<<endl;
-	cout<<"-----------------------------------"<<endl;*/
+	/*std::cout<<"!!!!!"<<j->getHigh()<<" "<<j->getLow()<<std::endl;
+	std::cout<<"-----------------------------------"<<std::endl;*/
 	return;
     }
 }
@@ -363,29 +219,6 @@ Variable<T>& Variable<T>::operator++()
 	return *this;
 	}
 }
-
-/* TO BE REMOVED */
-class Relation {
-	public:
-	private:
-};
-
-template<class T>
-class Stack : public stack< T,list<T> > {
-	public:
-	    T pop() {
-		T tmp = stack<T>::top();
-	        stack<T>::pop();
-	        return tmp;
-	    }
-};
-
-class Constraint {
-	public:
-	
-	private:
-};
-
 
 #endif
 /** @} */

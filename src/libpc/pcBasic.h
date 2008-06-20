@@ -1,4 +1,4 @@
-/*                   	P C _ S O L V E R . C P P
+/*              	     P C B A S I C . H
  * BRL-CAD
  *
  * Copyright (c) 2008 United States Government as represented by
@@ -19,16 +19,60 @@
  */
 /** @addtogroup soln */
 /** @{ */
-/** @file pc_solver.cpp
+/** @file pcBasic.h
  *
+ *  Basic classes for Parametrics and Constraints Library
  *
  *@author Dawn Thomas
- *	
- *
  */
+#ifndef __PCBASIC_H__
+#define __PCBASIC_H__
 
-#include "pcVariable.h"
+#define PC_MAX_STACK_SIZE 1000
 
+#include <iostream>
+#include <cstdlib>
+#include <string>
+#include <list>
+#include <stack>
+
+
+/* Basic Exception Handling classes */
+
+class pcException {
+    private:
+	std::string str;
+    public:
+	pcException() {};
+	pcException(const char *temp) {str=temp;};
+	~pcException() {};
+	std::string Error() const {
+	    return str;
+	}
+};
+
+/* TO BE REMOVED */
+class Relation {
+	public:
+	private:
+};
+
+template<class T>
+class Stack : public std::stack< T,std::list<T> > {
+public:
+    T pop() {
+	T tmp = std::stack<T>::top();
+        std::stack<T>::pop();
+        return tmp;
+    }
+};
+
+class Constraint {
+public:
+private:
+};
+
+#endif
 /** @} */
 /*
  * Local Variables:
