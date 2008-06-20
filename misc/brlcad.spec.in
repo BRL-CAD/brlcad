@@ -21,7 +21,7 @@
 # $Id$
 
 Summary: @PACKAGE_NAME@
-Name: @PACKAGE@
+Name: @PACKAGE_NAME@
 Version: @MAJOR_VERSION@.@MINOR_VERSION@
 Release: @PATCH_VERSION@
 Copyright: LGPL, BSD

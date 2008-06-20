@@ -48,7 +48,7 @@ if [ "x$PKG_NAME" = "x" ] ; then
     exit 1
 fi
 
-TAR_NAME="${PKG_NAME}.bin.tar"
+TAR_NAME="${PKG_NAME}.tar"
 if [ ! -f "${TAR_NAME}" ] ; then
     echo "ERROR: unable to locate tape archive $TAR_NAME"
     exit 1

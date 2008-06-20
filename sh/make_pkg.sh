@@ -112,7 +112,7 @@ if [ "x$TMPDIR" = "x" ] || [ ! -w $TMPDIR ] ; then
 fi
 
 PRE_PWD="`pwd`"
-PKG_NAME="${NAME}-${VERSION}"
+PKG_NAME="${NAME}_${VERSION}"
 PKG="${PKG_NAME}.pkg"
 
 if [ -f "$PKG" ] ; then
