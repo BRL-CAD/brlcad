@@ -48,6 +48,8 @@ TABLE OF CONTENTS
   Commit Access
   Contributor Responsibilities
   Version Numbers & Compatibility
+  Naming a Source Release
+  Naming a Binary Release
   Making a Release
   Getting Help
 
@@ -863,6 +865,91 @@ backwards incompatible in some manner should increment the patch
 version number.
 
 
+NAMING A SOURCE RELEASE
+-----------------------
+
+In order to achieve some consistency when preparing a source release,
+the following format should be used as the filename convention:
+
+brlcad-{VERSION}.{EXTENSION}
+
+VERSION is the usual version triplet described above under the section
+entitled VERSION NUMBERS & COMPATIBILITY.  Example: 7.12.4
+
+EXTENSION is the filename extension.  Compressed tar files should use
+the expanded form (i.e. not tgz, etc) unless otherwise dictated as
+necessary convention by a source package management system.  Examples:
+tar.gz
+tar.bz2
+dmg
+exe
+zip
+
+
+NAMING A BINARY RELEASE
+-----------------------
+
+In order to achieve some consistency when preparing a binary release,
+the following format should be used as the filename convention:
+
+BRL-CAD_{VERSION}[_{OS}][_{VENDOR}][_{CPU}][_{NOTE}].{EXTENSION}
+
+Notably, the filename should use 'BRL-CAD' instead of 'brlcad' for the
+name, it should delimit sections of the filename with underscores
+instead of spaces or dashes, and should always include the version
+number and an extension for the file type.  The optional
+_{OS}_{VENDOR}_{CPU} portion is a reverse (and simplified version) of
+the GNU autotools config.guess canonical host triplet identifier.
+
+VERSION is the usual version triplet described above under the section
+entitled VERSION NUMBERS & COMPATIBILITY.  Example: 7.12.4
+
+OS is an optional identifier for the target operating system for
+binary distributions.  It should only be used if the file extension is
+not already platform specific (e.g., .dmg already indicates Mac OS X,
+.exe indicates Windows, etc).  The OS name can be the same as the GNU
+autotools OS identifier without the version number.  If there are
+other platform considerations like the version of libc or the version
+of the OS that need to be called out, they can be included.  Examples:
+freebsd
+linux
+linux_glibc3
+solaris
+
+VENDOR is an optional operating system qualifier that isn't necessary
+for most platforms.  It's generally only useful for vendors that use
+customized versions of common operating systems.  An example would be
+something like SGI using a fairly customized variant of Linux on their
+Altix line.  In that case, it's useful to include the vendor: sgi
+
+CPU is the hardware architecture identifier.  It should be the first
+identifier in the config.guess triplet or the lowercase hardware
+identifier returned by uname -a (if any).  Examples:
+x86
+x86_64
+ia64
+sparc
+ppc
+power5
+mips
+mips_64
+
+NOTE can be just about anything but should only be used when
+absolutely necessary.  As an example, a note might be used to indicate
+that a binary distribution is a partial or custom release.  Examples:
+dll
+benchmark
+
+EXTENSION is the filename extension.  Compressed tar files should use
+the expanded form (i.e. not tgz, etc) unless otherwise dictated as
+necessary convention by a binary package management system.  Examples:
+tar.gz
+tar.bz2
+dmg
+exe
+zip
+
+
 MAKING A RELEASE
 ----------------
 
@@ -927,7 +1014,10 @@ distributable compressed source tarballs.
 that they build, run, and that the file permissions are correct.
 
 11) Use one of the source distribution tarballs to generate
-platform-specific builds.  Test the build:  make test && make bench
+platform-specific builds.  Use the NAMING A SOURCE RELEASE and the
+NAMING A BINARY RELEASE sections above for naming source and binary
+distribution files respectively.  Test the build: make test && make
+bench
 
 12) Post the source and platform-specific binary distributions to
 SourceForge and then select them on the sf.net File Release System:
