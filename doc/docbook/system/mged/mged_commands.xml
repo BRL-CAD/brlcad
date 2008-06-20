@@ -308,7 +308,7 @@
    </para>
  </sect1>
  
- <glossary>
+ <glossary id="glossary">
    <title>MGED User Command Glossary - Explanations and Examples</title>
    <glossdiv>
      <title>%-?</title>

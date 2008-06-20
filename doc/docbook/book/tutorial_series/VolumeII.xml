@@ -6334,6 +6334,7 @@ Move End H
 <appendix label="A">
   <title><application>MGED</application> Commands</title>
   <xi:include href="../../system/mged/mged_commands.xml" xpointer="mged_user_cmd_table"/>
+  <xi:include href="../../system/mged/mged_commands.xml" xpointer="glossary"/>
 </appendix>
 
 </book>
