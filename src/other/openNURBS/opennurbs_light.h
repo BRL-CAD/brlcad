@@ -97,11 +97,11 @@ public:
   void SetStyle(ON::light_style);
   ON::light_style Style() const;
 
-  BOOL IsPointLight() const;
-  BOOL IsDirectionalLight() const;
-  BOOL IsSpotLight() const;
-  BOOL IsLinearLight() const;
-  BOOL IsRectangularLight() const;
+  const BOOL IsPointLight() const;
+  const BOOL IsDirectionalLight() const;
+  const BOOL IsSpotLight() const;
+  const BOOL IsLinearLight() const;
+  const BOOL IsRectangularLight() const;
 
   ON::coordinate_system CoordinateSystem() const; // determined by style
 
