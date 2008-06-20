@@ -484,31 +484,31 @@
 	parameters or attributes of the first sphere you created is as follows:
 	
 	<literallayout>
-      <prompt>mged></prompt> <command>l sph1.s</command>
-      <computeroutput>
-      sph1.s: ellipsoid (ELL)
+<prompt>mged></prompt> <command>l sph1.s</command>
+<computeroutput>
+sph1.s: ellipsoid (ELL)
 
-      V (1, 1, 1)
+     V (1, 1, 1)
 
-      A (1, 0, 0) mag=1
+     A (1, 0, 0) mag=1
 
-      B (0, 1, 0) mag=1
+     B (0, 1, 0) mag=1
 
-      C (0, 0, 1) mag=1
+     C (0, 0, 1) mag=1
 
-      A direction cosines=(0, 90, 90)
+     A direction cosines=(0, 90, 90)
 
-      A rotation angle=0, fallback angle=0
+     A rotation angle=0, fallback angle=0
 
-      B direction cosines=(90, 0, 90)
+     B direction cosines=(90, 0, 90)
 
-      B rotation angle=90 fallback angle=0
+     B rotation angle=90 fallback angle=0
 
-      C direction cosines=(90, 90, 0)
+     C direction cosines=(90, 90, 0)
 
-      C rotation angle=0, fallback angle=90
-      </computeroutput>
-    </literallayout>
+     C rotation angle=0, fallback angle=90
+</computeroutput>
+	</literallayout>
       </para>
 
       <para>
