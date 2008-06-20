@@ -67,7 +67,7 @@ Function .onInit
   Var /GLOBAL PROG_FILES
 
   ReadEnvStr $PROG_FILES "PROGRAMFILES"
-  StrCpy $INSTDIR "$PROG_FILES\BRL-CAD"
+  StrCpy $INSTDIR "$PROG_FILES\BRL-CAD\$VERSION"
 FunctionEnd
 
 ; Tack on BRL-CAD if it's not already there
@@ -89,14 +89,14 @@ FunctionEnd
   Name "BRL-CAD"
 
   ; The file to write
-  OutFile "brlcad-$VERSION.exe"
+  OutFile "BRL-CAD_$VERSION.exe"
 
   ; The default installation directory
-  ;InstallDir $PROGRAMFILES\BRL-CAD
+  InstallDir $PROGRAMFILES\BRL-CAD\$VERSION
 
   ; Registry key to check for directory (so if you install again, it will 
   ; overwrite the old one automatically)
-  InstallDirRegKey HKLM "Software\BRL-CAD" "Install_Dir"
+  InstallDirRegKey HKLM "Software\BRL-CAD $VERSION" "Install_Dir"
 
   ; Make it look pretty in XP
   XPStyle on
@@ -133,7 +133,7 @@ FunctionEnd
 ; Pages
 
   ;Welcome page configuration
-  !define MUI_WELCOMEPAGE_TEXT "This wizard will guide you through the installation of BRL-CAD $VERSION.\r\n\r\nBRL-CAD is a free open source multiplatform CAD software developed by the U.S. Army Research Laboratory (ARL).\r\n\r\nClick Next to continue."
+  !define MUI_WELCOMEPAGE_TEXT "This wizard will guide you through the installation of BRL-CAD $VERSION.\r\n\r\nBRL-CAD is a powerful cross-platform open source solid modeling system.\r\n\r\nSelect Next to continue."
 
   !insertmacro MUI_PAGE_WELCOME
   !insertmacro MUI_PAGE_LICENSE "..\..\COPYING"
@@ -142,7 +142,7 @@ FunctionEnd
 
   ;Start Menu Folder Page Configuration
   !define MUI_STARTMENUPAGE_REGISTRY_ROOT "HKLM" 
-  !define MUI_STARTMENUPAGE_REGISTRY_KEY "Software\BRL-CAD$VERSION" 
+  !define MUI_STARTMENUPAGE_REGISTRY_KEY "Software\BRL-CAD\$VERSION" 
   !define MUI_STARTMENUPAGE_REGISTRY_VALUENAME "Start Menu Folder"
 
   !insertmacro MUI_PAGE_STARTMENU Application $STARTMENU_FOLDER
@@ -199,11 +199,19 @@ Section "BRL-CAD (required)" BRL-CAD
   File /r "..\..\brlcadInstall\share\*"
 
   ; Write the installation path into the registry
-  WriteRegStr HKLM SOFTWARE\BRL-CAD "Install_Dir" "$INSTDIR"
+  WriteRegStr HKLM "SOFTWARE\BRL-CAD $VERSION" "Install_Dir" "$INSTDIR"
 
   ; Write the uninstall keys for Windows
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD" "DisplayName" "BRL-CAD $VERSION"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD" "UninstallString" '"$INSTDIR\uninstall.exe"'
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD $VERSION" "DisplayName" "BRL-CAD $VERSION"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD $VERSION" "DisplayVersion" "$VERSION"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD $VERSION" "VersionMajor" "$MAJOR"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD $VERSION" "VersionMinor" "$MINOR"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD $VERSION" "InstallLocation" '"$INSTDIR"'
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD $VERSION" "URLInfoAbout" "http://brlcad.org"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD $VERSION" "URLUpdateInfo" "http://brlcad.org"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD $VERSION" "HelpLink" "http://irc.brlcad.org"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD $VERSION" "UninstallString" '"$INSTDIR\uninstall.exe"'
+
   ;Create uninstaller
   WriteUninstaller "uninstall.exe"
 
@@ -260,7 +268,7 @@ SectionEnd
   ;Language strings
   LangString DESC_BRL-CAD ${LANG_ENGLISH} "Installs the main application and the associated data files."
   LangString DESC_Documentation ${LANG_ENGLISH} "Installs documentation for BRL-CAD."
-  ;LangString DESC_Samples ${LANG_ENGLISH} "Installs optional learning samples."
+  ;LangString DESC_Samples ${LANG_ENGLISH} "Installs optional geometry samples."
   ;LangString DESC_Developer ${LANG_ENGLISH} "Installs programming headers for developers."
 
 
@@ -280,8 +288,8 @@ SectionEnd
 Section "Uninstall"
   
   ; Remove registry keys
-  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD"
-  DeleteRegKey HKLM SOFTWARE\BRL-CAD
+  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BRL-CAD $VERSION"
+  DeleteRegKey HKLM "SOFTWARE\BRL-CAD $VERSION"
 
   !insertmacro MUI_STARTMENU_GETFOLDER Application $MUI_TEMP
 
