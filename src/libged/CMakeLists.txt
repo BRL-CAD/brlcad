@@ -43,6 +43,7 @@ set(LIBGED_SOURCES
     vutil.c
     wdb_comb_std.c
     wdb_obj.c
+    who.c
     wmater.c
     zap.c
 )
