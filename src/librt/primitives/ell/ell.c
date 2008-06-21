@@ -1653,21 +1653,20 @@ rt_ell_params(struct pc_pc_set * pcs, const struct rt_db_internal *ip)
     pcs->n_constraints=5;
     pcs->ps = bu_calloc(pcs->n_params, sizeof ( struct pc_p_set),"pc_p_set");
     pcs->cs = bu_calloc(pcs->n_constraints, sizeof ( struct pc_c_set),"pc_c_set");
-
     
-    strcpy(pcs->ps[0].pname,"center");
+    strcpy(pcs->ps[0].pname,"V");
     pcs->ps[0].ptype = pc_point;
     pcs->ps[0].pointp = (pointp_t) &(eip->v);
     
-    strcpy(pcs->ps[1].pname,"vector-a");
+    strcpy(pcs->ps[1].pname,"A");
     pcs->ps[1].ptype = pc_vector;
     pcs->ps[1].vectorp = (vectp_t) &(eip->a);
 
-    strcpy(pcs->ps[2].pname,"vector-b");
+    strcpy(pcs->ps[2].pname,"B");
     pcs->ps[2].ptype = pc_vector;
     pcs->ps[2].vectorp = (vectp_t)  &(eip->b);
 
-    strcpy(pcs->ps[3].pname,"vector-c");
+    strcpy(pcs->ps[3].pname,"C");
     pcs->ps[3].ptype = pc_value;
     pcs->ps[3].vectorp = (vectp_t) &(eip->c);
 
