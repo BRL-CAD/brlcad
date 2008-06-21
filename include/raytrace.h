@@ -1786,12 +1786,12 @@ struct bezier_seg	/**< @brief  Bezier curve segment */
 
 /* To be removed */
 struct pc_parameter {
-char *name;
-int parametrized;
-fastf_t value;
-fastf_t min;
-fastf_t max;
-fastf_t step;
+    char *name;
+    int parametrized;
+    fastf_t value;
+    fastf_t min;
+    fastf_t max;
+    fastf_t step;
 };
 
 /* To be removed */
