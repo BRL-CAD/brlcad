@@ -85,7 +85,7 @@
    </legalnotice>
   </articleinfo>
 
-    <para id="overviewlist">
+    <para id="creating_primitive_shapes_overviewlist">
       In this lesson, you will:
       
       <itemizedlist mark='bullet'>
@@ -610,7 +610,7 @@ sph1.s: ellipsoid (ELL)
       </para>  
     </sect1>
     
-    <sect1 id="review">
+    <sect1 id="creating_primitive_shapes_review">
       <title>Review</title>
       
       <para>

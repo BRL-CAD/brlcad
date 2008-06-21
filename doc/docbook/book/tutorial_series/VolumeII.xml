@@ -193,7 +193,7 @@
 
   <chapter id="Lesson-1">
     <title>Creating Primitive Shapes</title>
-    <xi:include href="../../lessons/mged/creating_primitive_shapes.xml" xpointer="overviewlist"/>
+    <xi:include href="../../lessons/mged/creating_primitive_shapes.xml" xpointer="creating_primitive_shapes_overviewlist"/>
     <xi:include href="../../lessons/mged/creating_primitive_shapes.xml" xpointer="launching_mged"/> 
     <xi:include href="../../lessons/mged/creating_primitive_shapes.xml" xpointer="entering_commands"/> 
     <xi:include href="../../lessons/mged/creating_primitive_shapes.xml" xpointer="using_gui"/> 
@@ -212,12 +212,12 @@
     <xi:include href="../../lessons/mged/creating_primitive_shapes.xml" xpointer="kill_object"/> 
     <xi:include href="../../lessons/mged/creating_primitive_shapes.xml" xpointer="editing_commands"/> 
     <xi:include href="../../lessons/mged/creating_primitive_shapes.xml" xpointer="quitting"/> 
-    <xi:include href="../../lessons/mged/creating_primitive_shapes.xml" xpointer="review"/> 
+    <xi:include href="../../lessons/mged/creating_primitive_shapes.xml" xpointer="creating_primitive_shapes_review"/> 
   </chapter> 
 
   <chapter id="Lesson-2">
     <title>Learning the Viewing Options</title>
-    <xi:include href="../../lessons/mged/learning_viewing_options.xml" xpointer="overviewlist"/>
+    <xi:include href="../../lessons/mged/learning_viewing_options.xml" xpointer="learning_viewing_options_overviewlist"/>
     <xi:include href="../../lessons/mged/learning_viewing_options.xml" xpointer="intropara1"/>
     <xi:include href="../../lessons/mged/learning_viewing_options.xml" xpointer="intropara2"/>
     <xi:include href="../../lessons/mged/learning_viewing_options.xml" xpointer="creating_radio"/>
@@ -226,7 +226,7 @@
     <xi:include href="../../lessons/mged/learning_viewing_options.xml" xpointer="coord_sys_summary"/>
     <xi:include href="../../lessons/mged/learning_viewing_options.xml" xpointer="view_radio_angles"/>
     <xi:include href="../../lessons/mged/learning_viewing_options.xml" xpointer="shift_grips"/>
-    <xi:include href="../../lessons/mged/learning_viewing_options.xml" xpointer="review"/>
+    <xi:include href="../../lessons/mged/learning_viewing_options.xml" xpointer="learning_viewing_options_review"/>
   </chapter>
   
   <chapter id="Lesson-3">
