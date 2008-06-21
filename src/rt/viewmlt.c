@@ -30,6 +30,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "mater.h"
+#include "photonmap.h"
 #include "light.h"
 #include "raytrace.h"
 #include "fb.h"
