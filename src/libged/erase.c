@@ -26,6 +26,7 @@
 #include "common.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "ged_private.h"
 #include "solid.h"

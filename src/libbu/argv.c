@@ -25,6 +25,8 @@
 
 #include "common.h"
 
+#include <string.h>
+
 #include "bu.h"
 
 
