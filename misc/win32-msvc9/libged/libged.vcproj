@@ -126,11 +126,19 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat;f90;for;f;fpp"
 			>
 			<File
+				RelativePath="..\..\..\src\libged\E.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\arced.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\libged\bigE.c"
+				RelativePath="..\..\..\src\libged\autoview.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\blast.c"
 				>
 			</File>
 			<File
@@ -158,11 +166,35 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\erase.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\erase_all.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\ged.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\get_autoview.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\get_eyemodel.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\get_obj_bounds.c"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\globals.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\illum.c"
 				>
 			</File>
 			<File
@@ -214,11 +246,31 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\overlay.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\qray.c"
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\report.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\rmater.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\rt.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\set_outputHandler.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\set_uplotOutputMode.c"
 				>
 			</File>
 			<File
@@ -238,11 +290,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\tree.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\vdraw.c"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\view_obj.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\vutil.c"
 				>
 			</File>
 			<File
@@ -254,7 +314,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\who.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\wmater.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\zap.c"
 				>
 			</File>
 		</Filter>
