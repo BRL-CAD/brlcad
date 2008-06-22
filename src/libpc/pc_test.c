@@ -71,11 +71,11 @@ main(int argc, char **argv)
     solnam[8] = '\0';
 
     /*rt_init_resource(&rt_uniresource,0,NULL);*/
-    if(argc!=2) {
+    if (argc!=2) {
 	bu_exit(1,"Too few arguments, Please provide output filename\n");
     }
 
-    if((fp = wdb_fopen(argv[1])) == NULL) {
+    if ((fp = wdb_fopen(argv[1])) == NULL) {
 	perror(argv[2]);
 	return 1;
     }
@@ -110,7 +110,7 @@ main(int argc, char **argv)
     ps.p[1].name= "center-x";
     ps.p[2].name= "center-y";
     ps.p[3].name= "center-z";
-    for(i=0; i<4; i++) {
+    for (i=0; i<4; i++) {
 	ps.p[i].value=2.33 + i;
 	ps.p[i].min=-1.0 + i;
 	ps.p[i].max=1.0 + i;
@@ -139,6 +139,7 @@ main(int argc, char **argv)
 
     return ret;
 }
+
 /*
  * Local Variables:
  * mode: C

@@ -1,4 +1,4 @@
-/*              	     P C I N T E R V A L . H
+/*                    P C I N T E R V A L . H
  * BRL-CAD
  *
  * Copyright (c) 2008 United States Government as represented by
@@ -23,7 +23,7 @@
  *
  * Class definition of Interval for Constraint Solution
  *
- *@author Dawn Thomas
+ * @author Dawn Thomas
  */
 #ifndef __PCINTERVAL_H__
 #define __PCINTERVAL_H__
@@ -37,25 +37,25 @@
 
 template<class T>
 class Interval {
-	private:
-		T low;
-		T high;
-		T step;
-	public:
-		Interval();
-		Interval(const T l, const T h, const T s);
-		void assign(const T l, const T h,const T s);
-		void setLow(const T l);
-		void setHigh(const T h);
-		void setStep(const T s);
-		T getLow();
-		T getHigh();
-		T getStep();
-		T getWidth();
-		
-		bool inInterval(T);
-		bool operator<(Interval<T> &U) const;
-		bool operator>(Interval<T> &U) const;
+private:
+    T low;
+    T high;
+    T step;
+public:
+    Interval();
+    Interval(const T l, const T h, const T s);
+    void assign(const T l, const T h,const T s);
+    void setLow(const T l);
+    void setHigh(const T h);
+    void setStep(const T s);
+    T getLow();
+    T getHigh();
+    T getStep();
+    T getWidth();
+
+    bool inInterval(T);
+    bool operator<(Interval<T> &U) const;
+    bool operator>(Interval<T> &U) const;
 };
 
 /* Interval Class Functions */
@@ -77,51 +77,51 @@ Interval<T>::Interval(T l, T h, T s)
 template<class T>
 void Interval<T>::assign(const T l, const T h, const T s)
 {
-	low = l;
-	high = h;
-	step = s;
+    low = l;
+    high = h;
+    step = s;
 }
 
 template<class T>
 void Interval<T>::setLow(const T l)
 {
-	low = l;
+    low = l;
 }
 
 template<class T>
 void Interval<T>::setHigh(const T h)
 {
-	high = h;
+    high = h;
 }
 
 template<class T>
 void Interval<T>::setStep(const T s)
 {
-	step = s;
+    step = s;
 }
 
 template<class T>
 T Interval<T>::getLow()
 {
-	return low;
+    return low;
 }
 
 template<class T>
 T Interval<T>::getHigh()
 {
-        return high;
+    return high;
 }
 
 template<class T>
 T Interval<T>::getStep()
 {
-        return step;
+    return step;
 }
 
 template<class T>
 T Interval<T>::getWidth()
 {
-        return high-low;
+    return high-low;
 }
 
 template<class T>
@@ -139,25 +139,25 @@ bool Interval<T>::operator<(Interval<T> &U) const
     /*  Ensure high<low etc. here?
 	if(low<U.getLow()) {
 	if(high<U.getLow())
-	    return true;
+	return true;
 	else {
-	    return false;
+	return false;
 	}
-    } else 
-    return false;*/
-	if(low<U.getLow())
-	    return true;
-	else
-	    return false;
+	} else
+	return false;*/
+    if (low<U.getLow())
+	return true;
+    else
+	return false;
 }
 
 template<class T>
 bool Interval<T>::operator>(Interval<T> &U) const
 {
-	if(low>U.getLow())
-	    return true;
-	else
-	    return false;
+    if (low>U.getLow())
+	return true;
+    else
+	return false;
 }
 
 #endif

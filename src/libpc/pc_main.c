@@ -23,7 +23,7 @@
  *
  * TODO: clean up header includes
  *
- * @author	Dawn Thomas
+ * @author Dawn Thomas
  *
  *
  */
@@ -44,14 +44,14 @@
 
 
 /**
- *	    P C _  W R I T E _ P A R A M E T E R _ S E T
+ * P C _  W R I T E _ P A R A M E T E R _ S E T
  *
- *  Takes a parameter set as input and writes it onto the directory pointed by dp
- *  in the database pointed to by fp.
- *  No Checking done presently.
+ * Takes a parameter set as input and writes it onto the directory
+ * pointed by dp in the database pointed to by fp.
  *
- *  TODO: Remove: Redundant after rt_*_params() functions
+ * No Checking done presently.
  *
+ * TODO: Remove: Redundant after rt_*_params() functions
  */
 int
 pc_write_param_set(struct pc_param_set ps, struct directory * dp,struct db_i * dbip ) {
@@ -62,7 +62,7 @@ pc_write_param_set(struct pc_param_set ps, struct directory * dp,struct db_i * d
     bu_vls_init(&v);
     bu_vls_init(&w);
 
-    for(i=ps.len-1;i>=0;i--) {
+    for (i=ps.len-1;i>=0;i--) {
 
 	bu_vls_printf(&v,"%g",ps.p[i].step);
 	bu_vls_strcat(&w,ps.p[i].name);
@@ -112,17 +112,18 @@ pc_write_param_set(struct pc_param_set ps, struct directory * dp,struct db_i * d
     bu_avs_free(&avs);
     return 0;
 }
+
+
 /**
- *	    P C _  G E N E R A T E _ P A R A M E T E R S
+ * P C _  G E N E R A T E _ P A R A M E T E R S
  *
- *  Given a directory pointer, pc_generate_parameters generates the set of all
- *  parameters that the particular geometry element could have.
- *  All the parametrized flags corresponding to each parameter are still set to
- *  0. The user will have to use pc_parametrize to make any parameter
- *  non-explicit
+ * Given a directory pointer, pc_generate_parameters generates the set
+ * of all parameters that the particular geometry element could have.
+ * All the parametrized flags corresponding to each parameter are
+ * still set to 0. The user will have to use pc_parametrize to make
+ * any parameter non-explicit
  *
- *  TODO: Redundant after rt_*_params definition
- *
+ * TODO: Redundant after rt_*_params definition
  */
 int
 pc_generate_parameters( struct pc_param_set * psp, struct directory * dp,struct db_i * dbip) {
@@ -132,36 +133,42 @@ pc_generate_parameters( struct pc_param_set * psp, struct directory * dp,struct 
     id = rt_db_get_internal(&ip,dp,dbip,NULL,&rt_uniresource);
     return 0;
 }
+
+
 /**
- *				P C _ P A R A M E T R I Z E
+ * P C _ P A R A M E T R I Z E
  *
- *  Taking parameter_table, parameter name, parameter value and directory pointer
- *  as inputs pc_parametrize sets the parametrized flag of the corresponding
- *  parameter and assigns the valueand writes it onto the directory pointed by dp
- *  in the database pointed to by fp.
- *  No Checking done presently.
- *  TODO: Remove if redundant after implementation of rt_*_params
+ * Taking parameter_table, parameter name, parameter value and
+ * directory pointer as inputs pc_parametrize sets the parametrized
+ * flag of the corresponding parameter and assigns the valueand writes
+ * it onto the directory pointed by dp in the database pointed to by
+ * fp.
  *
+ * No Checking done presently.
+ *
+ * TODO: Remove if redundant after implementation of rt_*_params
  */
 int pc_parametrize() {
 }
+
+
 /**
- *				P C _ D E P A R A M E T R I Z E
+ * P C _ D E P A R A M E T R I Z E
  *
- *  Scans the parameter_set for the named parameter , sets parametrized flag to 0
- *  thereby implying that the value corresponding to it is datum / explicit
+ * Scans the parameter_set for the named parameter , sets parametrized
+ * flag to 0 thereby implying that the value corresponding to it is
+ * datum / explicit
  *
- *  TODO: Remove if redundant after implementation of rt_*_params
- *
+ * TODO: Remove if redundant after implementation of rt_*_params
  */
 int pc_deparametrize() {
 }
 /**
- *				P C _ M K _ C O N S T R A I N T
+ * P C _ M K _ C O N S T R A I N T
  *
- *  Given the appropriate parameters, makes the non-geometric constraint object
- *  and writes it to the database using wdb_put_internal
- *  Only supported on database version 5 or above
+ * Given the appropriate parameters, makes the non-geometric
+ * constraint object and writes it to the database using
+ * wdb_put_internal.  Only supported on database version 5 or above
  *
  *
  * Methodology for the new object type definition followed:
@@ -187,7 +194,6 @@ int pc_deparametrize() {
  *              rt_solid_type_lookup[]
  *              also add the interface table and to rt_id_solid() in table.c
  *      !! go to src/mged and create the edit support
- *
  */
 int
 pc_mk_constraint(
@@ -203,8 +209,8 @@ pc_mk_constraint(
 
     RT_INIT_DB_INTERNAL(&intern);
 
-    if ( append_ok &&
-	wdb_import( wdbp, &intern, constraintname, (matp_t)NULL ) >= 0 )  {
+    if (append_ok &&
+	wdb_import( wdbp, &intern, constraintname, (matp_t)NULL ) >= 0) {
 	/* We retrieved an existing object, append to it */
 	constraint = (struct pc_constraint_internal *)intern.idb_ptr;
 	/*PC_CK_CONSTRAINT( constraint );*/
@@ -224,8 +230,10 @@ pc_mk_constraint(
 	new_constraint = 1;
     }
 
-    /* Don't change these things when appending to existing constraint */
-    if ( new_constraint)  {
+    /* Don't change these things when appending to existing
+     * constraint.
+     */
+    if (new_constraint) {
 	constraint->id=1432;
 	constraint->type=323;
     }

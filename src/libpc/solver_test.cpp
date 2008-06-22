@@ -1,4 +1,4 @@
-/*                   	S O L V E R _ T E S T . C P P
+/*                 S O L V E R _ T E S T . C P P
  * BRL-CAD
  *
  * Copyright (c) 2008 United States Government as represented by
@@ -19,10 +19,9 @@
  */
 /** @file solver_test.cpp
  *
- *@brief Simple Test cases for Constraint Solver
+ * @brief Simple Test cases for Constraint Solver
  *
- *@author Dawn Thomas
- *	
+ * @author Dawn Thomas
  *
  */
 
@@ -30,56 +29,56 @@
 
 int main()
 {
-Interval<int> I;
-Interval<float> K;
-Interval<float> J;
-Domain<float> D,E;
-Variable<float> V;
-J.assign(3.4,8.3,0.6);
-//D.addInterval(J);
-V.D.addInterval(J);
-K.assign(10.4,20.3,0.8);
-//D.addInterval(K);
-V.D.addInterval(K);
-K.assign(1.2,2.3,0.8);
-V.D.addInterval(K);
-K.assign(-2.4,-1,0.8);
-V.D.addInterval(K);
-K.assign(0.4,1.6,0.8);
-V.D.addInterval(K);
-K.assign(0.2,0.6,0.8);
-V.D.addInterval(K);
-K.assign(20.1,30.6,0.8);
-V.D.addInterval(K);
-K.assign(30.8,40.4,0.8);
-V.D.addInterval(K);
-K.assign(-10.4,-5.6,0.8);
-V.D.addInterval(K);
-K.assign(15.4,18.8,0.8);
-V.D.addInterval(K);
-V.setValue(8.1);
-std::cout<<"V value befor increment"<<V.getValue()<<std::endl;
-++V;std::cout<<"V value after increment"<<V.getValue()<<std::endl;
+    Interval<int> I;
+    Interval<float> K;
+    Interval<float> J;
+    Domain<float> D,E;
+    Variable<float> V;
+    J.assign(3.4,8.3,0.6);
+    //D.addInterval(J);
+    V.D.addInterval(J);
+    K.assign(10.4,20.3,0.8);
+    //D.addInterval(K);
+    V.D.addInterval(K);
+    K.assign(1.2,2.3,0.8);
+    V.D.addInterval(K);
+    K.assign(-2.4,-1,0.8);
+    V.D.addInterval(K);
+    K.assign(0.4,1.6,0.8);
+    V.D.addInterval(K);
+    K.assign(0.2,0.6,0.8);
+    V.D.addInterval(K);
+    K.assign(20.1,30.6,0.8);
+    V.D.addInterval(K);
+    K.assign(30.8,40.4,0.8);
+    V.D.addInterval(K);
+    K.assign(-10.4,-5.6,0.8);
+    V.D.addInterval(K);
+    K.assign(15.4,18.8,0.8);
+    V.D.addInterval(K);
+    V.setValue(8.1);
+    std::cout<<"V value befor increment"<<V.getValue()<<std::endl;
+    ++V;std::cout<<"V value after increment"<<V.getValue()<<std::endl;
+    
+    /*try {
+      K=D.getInterval(6.3);
+      }
+      catch(pcException E) {
+      cout<<"Exception: "<<E.Error()<<std::endl;
+      goto test_label;
+      }
+      cout<<K.getLow()<<" "<<K.getHigh()<<" "<<K.getWidth()<<" "<<K.getStep()<<std::endl;
+      
+      test_label:*/
+    V.D.display(); 
+    I.assign(2,8,1);
+    std::cout<<I.getLow()<<" "<<I.getHigh()<<" "<<I.getWidth()<<" "<<I.getStep()<<std::endl;
+    std::cout<<J.getLow()<<" "<<J.getHigh()<<" "<<J.getWidth()<<" "<<J.getStep()<<std::endl;
 
-/*try {
-    K=D.getInterval(6.3);
+    return 0;
 }
-catch(pcException E) {
-    cout<<"Exception: "<<E.Error()<<std::endl;
-    goto test_label;
-}
-    cout<<K.getLow()<<" "<<K.getHigh()<<" "<<K.getWidth()<<" "<<K.getStep()<<std::endl;
-
-test_label:*/
-V.D.display(); 
-I.assign(2,8,1);
-std::cout<<I.getLow()<<" "<<I.getHigh()<<" "<<I.getWidth()<<" "<<I.getStep()<<std::endl;
-std::cout<<J.getLow()<<" "<<J.getHigh()<<" "<<J.getWidth()<<" "<<J.getStep()<<std::endl;
-
-}
 
 
-/** @} */
 /*
  * Local Variables:
  * mode: C++

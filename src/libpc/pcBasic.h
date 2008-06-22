@@ -1,4 +1,4 @@
-/*              	     P C B A S I C . H
+/*                       P C B A S I C . H
  * BRL-CAD
  *
  * Copyright (c) 2008 United States Government as represented by
@@ -40,21 +40,21 @@
 /* Basic Exception Handling classes */
 
 class pcException {
-    private:
-	std::string str;
-    public:
-	pcException() {};
-	pcException(const char *temp) {str=temp;};
-	~pcException() {};
-	std::string Error() const {
-	    return str;
-	}
+private:
+    std::string str;
+public:
+    pcException() {};
+    pcException(const char *temp) {str=temp;};
+    ~pcException() {};
+    std::string Error() const {
+	return str;
+    }
 };
 
 /* TO BE REMOVED */
 class Relation {
-	public:
-	private:
+public:
+private:
 };
 
 template<class T>
@@ -62,8 +62,8 @@ class Stack : public std::stack< T,std::list<T> > {
 public:
     T pop() {
 	T tmp = std::stack<T>::top();
-        std::stack<T>::pop();
-        return tmp;
+	std::stack<T>::pop();
+	return tmp;
     }
 };
 

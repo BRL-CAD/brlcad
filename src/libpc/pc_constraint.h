@@ -1,4 +1,4 @@
-/*              	     P C _ C O N S T R A I N T . H
+/*                 P C _ C O N S T R A I N T . H
  * BRL-CAD
  *
  * Copyright (c) 2008 United States Government as represented by
@@ -22,7 +22,7 @@
 /** @file pc_constraint.h
  *
  * Structures required for implementing Constraint Solution
- * 
+ *
  * @author Dawn Thomas
  */
 #ifndef __PC_CONSTRAINT_H__
@@ -34,8 +34,8 @@
 
 
 /**
- * Structures required for describing solution sets, parameter instantiation
- *
+ * Structures required for describing solution sets, parameter
+ * instantiation.
  */
 
 struct parameter_domain {
@@ -55,7 +55,6 @@ struct constraint_solution {
 
 /**
  * Structures required for describing constraint networks
- *
  */
 
 struct cn_relation {
