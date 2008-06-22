@@ -180,7 +180,7 @@ int
 wdb_track_cmd(struct rt_wdb	*wdbp,
 	      Tcl_Interp	*interp,
 	      int		argc,
-	      char 		**argv) {
+	      char 		*argv[]) {
     fastf_t fw[3], lw[3], iw[3], dw[3], tr[3];
     char *solname = NULL;
     char *regname = NULL;

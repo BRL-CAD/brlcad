@@ -349,7 +349,7 @@ GED_EXPORT BU_EXTERN(void wdb_deleteProc,
 GED_EXPORT BU_EXTERN(int	wdb_get_tcl,
 		    (ClientData clientData,
 		     Tcl_Interp *interp,
-		     int argc, char **argv));
+		     int argc, char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_init_obj,
 		    (Tcl_Interp *interp,
 		     struct rt_wdb *wdbp,
@@ -360,307 +360,307 @@ GED_EXPORT BU_EXTERN(struct db_i	*wdb_prep_dbip,
 GED_EXPORT BU_EXTERN(int	wdb_bot_face_sort_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
-		     int argc, char **argv));
+		     int argc, char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_bot_decimate_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_close_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_reopen_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_match_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_get_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_put_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_adjust_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_form_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_tops_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_rt_gettrees_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_dump_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_dbip_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_ls_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_list_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_lt_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_pathlist_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_pathsum_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_expand_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_kill_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_killall_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_killtree_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_copy_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_move_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_move_all_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_concat_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_dup_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_group_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_remove_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_region_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_comb_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_find_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_which_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_title_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_color_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_prcolor_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_tol_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_push_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_whatid_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_keep_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_cat_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_instance_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_observer_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_make_bb_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_units_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_hide_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_unhide_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_attr_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_summary_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_comb_std_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_nmg_collapse_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_nmg_simplify_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_shells_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_xpush_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_showmats_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_copyeval_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_version_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_binary_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_track_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int wdb_bot_smooth_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_importFg4Section_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 
 
 
@@ -678,7 +678,7 @@ GED_EXPORT BU_EXTERN(int	vo_center_cmd,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(void vo_size,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
@@ -687,12 +687,12 @@ GED_EXPORT BU_EXTERN(int	vo_size_cmd,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	vo_invSize_cmd,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(void vo_mat_aet,
 		    (struct view_obj *vop));
 GED_EXPORT BU_EXTERN(int	vo_zoom,
@@ -702,17 +702,17 @@ GED_EXPORT BU_EXTERN(int	vo_zoom,
 GED_EXPORT BU_EXTERN(int	vo_zoom_cmd,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
-		     int argc, char **argv));
+		     int argc, char *argv[]));
 GED_EXPORT BU_EXTERN(int	vo_orientation_cmd,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	vo_lookat_cmd,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(void vo_setview,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
@@ -721,27 +721,27 @@ GED_EXPORT BU_EXTERN(int	vo_setview_cmd,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	vo_eye_cmd,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	vo_eye_pos_cmd,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	vo_pmat_cmd,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	vo_perspective_cmd,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(void vo_update,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
@@ -750,47 +750,47 @@ GED_EXPORT BU_EXTERN(int	vo_aet_cmd,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	vo_rmat_cmd,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	vo_model2view_cmd,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	vo_pmodel2view_cmd,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	vo_view2model_cmd,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	vo_pov_cmd,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	vo_units_cmd,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	vo_base2local_cmd,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	vo_local2base_cmd,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	vo_rot,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
@@ -801,19 +801,19 @@ GED_EXPORT BU_EXTERN(int	vo_rot,
 GED_EXPORT BU_EXTERN(int	vo_rot_cmd,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
-		     int argc, char **argv,
+		     int argc, char *argv[],
 		     int (*func)()));
 GED_EXPORT BU_EXTERN(int	vo_arot_cmd,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv,
+		     char *argv[],
 		     int (*func)()));
 GED_EXPORT BU_EXTERN(int	vo_mrot_cmd,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv,
+		     char *argv[],
 		     int (*func)()));
 GED_EXPORT BU_EXTERN(int	vo_tra,
 		    (struct view_obj *vop,
@@ -824,7 +824,7 @@ GED_EXPORT BU_EXTERN(int	vo_tra,
 GED_EXPORT BU_EXTERN(int	vo_tra_cmd,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
-		     int argc, char **argv,
+		     int argc, char *argv[],
 		     int (*func)()));
 GED_EXPORT BU_EXTERN(int	vo_slew,
 		    (struct view_obj *vop,
@@ -833,32 +833,32 @@ GED_EXPORT BU_EXTERN(int	vo_slew,
 GED_EXPORT BU_EXTERN(int	vo_slew_cmd,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
-		     int argc, char **argv));
+		     int argc, char *argv[]));
 GED_EXPORT BU_EXTERN(int	vo_observer_cmd,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	vo_coord_cmd,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	vo_rotate_about_cmd,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	vo_keypoint_cmd,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	vo_vrot_cmd,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	vo_sca,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
@@ -868,23 +868,23 @@ GED_EXPORT BU_EXTERN(int	vo_sca_cmd,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv,
+		     char *argv[],
 		     int (*func)()));
 GED_EXPORT BU_EXTERN(int	vo_viewDir_cmd,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	vo_ae2dir_cmd,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	vo_dir2ae_cmd,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,
 		     int argc,
-		     char **argv));
+		     char *argv[]));
 
 
 /**

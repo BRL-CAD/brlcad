@@ -36,7 +36,7 @@
 int
 ged_get_obj_bounds(struct ged	*gedp,
 		   int		argc,
-		   const char	**argv,
+		   const char	*argv[],
 		   int		use_air,
 		   point_t	rpp_min,
 		   point_t	rpp_max)
@@ -165,7 +165,7 @@ ged_get_obj_bounds(struct ged	*gedp,
 static int
 ged_get_objpath_mat(struct ged			*gedp,
 		    int				argc,
-		    const char			**argv,
+		    const char			*argv[],
 		    struct ged_trace_data	*gtdp)
 {
     int i, pos_in;
@@ -227,7 +227,7 @@ ged_get_objpath_mat(struct ged			*gedp,
 int
 ged_get_obj_bounds2(struct ged			*gedp,
 		    int				argc,
-		    const char			**argv,
+		    const char			*argv[],
 		    struct ged_trace_data	*gtdp,
 		    point_t			rpp_min,
 		    point_t			rpp_max)

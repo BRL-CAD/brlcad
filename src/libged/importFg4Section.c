@@ -526,7 +526,7 @@ int
 wdb_importFg4Section_cmd(struct rt_wdb	*wdbp,
 			 Tcl_Interp	*interp,
 			 int		argc,
-			 char 		**argv)
+			 char 		*argv[])
 {
     char *cp;
     char *line;

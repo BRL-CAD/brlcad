@@ -167,7 +167,7 @@ BU_EXTERN(int wdb_comb_std_tcl,
 	  (ClientData	clientData,
 	   Tcl_Interp	*interp,
 	   int     	argc,
-	   char    	**argv));
+	   char    	*argv[]));
 
 /* Defined in dg_obj.c */
 BU_EXTERN(void dgo_impending_wdb_close,
@@ -187,83 +187,83 @@ BU_EXTERN(void dgo_notifyWdb,
 
 
 int wdb_init_obj(Tcl_Interp *interp, struct rt_wdb *wdbp, const char *oname);
-int wdb_get_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int wdb_get_type_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int wdb_attr_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int wdb_pathsum_cmd(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv);
+int wdb_get_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+int wdb_get_type_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+int wdb_attr_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+int wdb_pathsum_cmd(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char *argv[]);
 
-static int wdb_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv);
+static int wdb_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]);
 #if 0
 static int wdb_close_tcl();
 #endif
 static int wdb_decode_dbip(Tcl_Interp *interp, const char *dbip_string, struct db_i **dbipp);
 struct db_i *wdb_prep_dbip(Tcl_Interp *interp, const char *filename);
 
-static int wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_match_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_put_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_adjust_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_form_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_tops_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_rt_gettrees_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_shells_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_dump_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_dbip_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_ls_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_list_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_pathsum_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_expand_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_kill_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_killall_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_killtree_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_match_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_put_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_adjust_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_form_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_tops_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_rt_gettrees_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_shells_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_dump_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_dbip_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_ls_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_list_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_pathsum_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_expand_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_kill_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_killall_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_killtree_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
 static void wdb_killtree_callback(struct db_i *dbip, register struct directory *dp, genptr_t ptr);
-static int wdb_copy_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_move_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_move_all_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_concat_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_copyeval_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_dup_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_group_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_remove_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_region_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_comb_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_facetize_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_find_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_which_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_title_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_track_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_color_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_prcolor_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_tol_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_push_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_whatid_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_keep_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_cat_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_instance_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_observer_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_reopen_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_make_bb_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_units_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_hide_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_unhide_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_xpush_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_bot_smooth_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_showmats_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_nmg_collapse_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_nmg_simplify_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_summary_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_pathlist_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_lt_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_version_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_binary_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_bot_face_sort_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_bot_decimate_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_move_arb_edge_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_move_arb_face_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_rotate_arb_face_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_rmap_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_importFg4Section_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_newcmds_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int wdb_copy_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_move_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_move_all_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_concat_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_copyeval_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_dup_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_group_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_remove_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_region_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_comb_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_facetize_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_find_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_which_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_title_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_track_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_color_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_prcolor_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_tol_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_push_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_whatid_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_keep_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_cat_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_instance_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_observer_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_reopen_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_make_bb_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_units_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_hide_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_unhide_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_xpush_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_bot_smooth_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_showmats_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_nmg_collapse_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_nmg_simplify_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_summary_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_pathlist_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_lt_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_version_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_binary_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_bot_face_sort_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_bot_decimate_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_move_arb_edge_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_move_arb_face_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_rotate_arb_face_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_rmap_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_importFg4Section_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_newcmds_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
 
 void wdb_deleteProc(ClientData clientData);
 static void wdb_deleteProc_rt(ClientData clientData);
@@ -441,7 +441,7 @@ Wdb_Init(Tcl_Interp *interp)
  * @return result of wdb command.
  */
 static int
-wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
     return bu_cmd(clientData, interp, argc, argv, wdb_cmds, 1);
 }
@@ -552,7 +552,7 @@ static int
 wdb_open_tcl(ClientData	clientData,
 	     Tcl_Interp	*interp,
 	     int	argc,
-	     const char	**argv)
+	     const char	*argv[])
 {
     struct rt_wdb *wdbp;
     int ret;
@@ -703,7 +703,7 @@ int
 wdb_reopen_cmd(struct rt_wdb	*wdbp,
 	       Tcl_Interp	*interp,
 	       int		argc,
-	       char 		**argv)
+	       char 		*argv[])
 {
     struct db_i *dbip;
     struct bu_vls vls;
@@ -749,7 +749,7 @@ static int
 wdb_reopen_tcl(ClientData	clientData,
 	       Tcl_Interp	*interp,
 	       int		argc,
-	       char		**argv)
+	       char		*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -764,7 +764,7 @@ int
 wdb_match_cmd(struct rt_wdb	*wdbp,
 	      Tcl_Interp	*interp,
 	      int		argc,
-	      char 		**argv)
+	      char 		*argv[])
 {
     struct bu_vls	matches;
 
@@ -800,7 +800,7 @@ static int
 wdb_match_tcl(ClientData	clientData,
 	      Tcl_Interp	*interp,
 	      int		argc,
-	      char		**argv)
+	      char		*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -815,7 +815,7 @@ int
 wdb_get_cmd(struct rt_wdb	*wdbp,
 	    Tcl_Interp		*interp,
 	    int			argc,
-	    char 		**argv)
+	    char 		*argv[])
 {
     int			status;
     struct rt_db_internal	intern;
@@ -865,7 +865,7 @@ int
 wdb_get_tcl(ClientData	clientData,
 	    Tcl_Interp	*interp,
 	    int		argc,
-	    char	**argv)
+	    char	*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -880,7 +880,7 @@ int
 wdb_get_type_cmd(struct rt_wdb	*wdbp,
 		 Tcl_Interp	*interp,
 		 int		argc,
-		 char 		**argv)
+		 char 		*argv[])
 {
     struct rt_db_internal	intern;
     int type;
@@ -1046,7 +1046,7 @@ int
 wdb_get_type_tcl(ClientData	clientData,
 		 Tcl_Interp	*interp,
 		 int		argc,
-		 char		**argv)
+		 char		*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -1061,7 +1061,7 @@ int
 wdb_put_cmd(struct rt_wdb	*wdbp,
 	    Tcl_Interp		*interp,
 	    int			argc,
-	    char 		**argv)
+	    char 		*argv[])
 {
     struct rt_db_internal			intern;
     register const struct rt_functab	*ftp;
@@ -1149,7 +1149,7 @@ static int
 wdb_put_tcl(ClientData	clientData,
 	    Tcl_Interp	*interp,
 	    int		argc,
-	    char	**argv)
+	    char	*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -1164,7 +1164,7 @@ int
 wdb_adjust_cmd(struct rt_wdb	*wdbp,
 	       Tcl_Interp	*interp,
 	       int		argc,
-	       char 		**argv)
+	       char 		*argv[])
 {
     register struct directory	*dp;
     int				 status;
@@ -1236,7 +1236,7 @@ static int
 wdb_adjust_tcl(ClientData	clientData,
 	       Tcl_Interp	*interp,
 	       int		argc,
-	       char		**argv)
+	       char		*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -1251,7 +1251,7 @@ int
 wdb_form_cmd(struct rt_wdb	*wdbp,
 	     Tcl_Interp		*interp,
 	     int		argc,
-	     char 		**argv)
+	     char 		*argv[])
 {
     const struct rt_functab		*ftp;
 
@@ -1280,7 +1280,7 @@ static int
 wdb_form_tcl(ClientData clientData,
 	     Tcl_Interp *interp,
 	     int	argc,
-	     char	**argv)
+	     char	*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -1295,7 +1295,7 @@ int
 wdb_tops_cmd(struct rt_wdb	*wdbp,
 	     Tcl_Interp		*interp,
 	     int		argc,
-	     char 		**argv)
+	     char 		*argv[])
 {
     register struct directory	*dp;
     register int			i;
@@ -1417,7 +1417,7 @@ static int
 wdb_tops_tcl(ClientData	clientData,
 	     Tcl_Interp	*interp,
 	     int	argc,
-	     char	**argv)
+	     char	*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -1453,7 +1453,7 @@ int
 wdb_rt_gettrees_cmd(struct rt_wdb	*wdbp,
 		    Tcl_Interp		*interp,
 		    int			argc,
-		    char 		**argv)
+		    char 		*argv[])
 {
     struct rt_i		*rtip;
     struct application	*ap;
@@ -1553,7 +1553,7 @@ static int
 wdb_rt_gettrees_tcl(ClientData	clientData,
 		    Tcl_Interp     *interp,
 		    int		argc,
-		    char	      **argv)
+		    char	      *argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -1621,7 +1621,7 @@ int
 wdb_showmats_cmd(struct rt_wdb	*wdbp,
 		 Tcl_Interp	*interp,
 		 int		argc,
-		 char		**argv)
+		 char		*argv[])
 {
     struct showmats_data sm_data;
     char *parent;
@@ -1701,7 +1701,7 @@ static int
 wdb_showmats_tcl(ClientData	clientData,
 		 Tcl_Interp	*interp,
 		 int		argc,
-		 char		**argv)
+		 char		*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -1716,7 +1716,7 @@ int
 wdb_shells_cmd(struct rt_wdb	*wdbp,
 	       Tcl_Interp		*interp,
 	       int		argc,
-	       char		**argv)
+	       char		*argv[])
 {
     struct directory *old_dp, *new_dp;
     struct rt_db_internal old_intern, new_intern;
@@ -1816,7 +1816,7 @@ static int
 wdb_shells_tcl(ClientData	clientData,
 	       Tcl_Interp	*interp,
 	       int		argc,
-	       char		**argv)
+	       char		*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -1831,7 +1831,7 @@ int
 wdb_dump_cmd(struct rt_wdb	*wdbp,
 	     Tcl_Interp		*interp,
 	     int		argc,
-	     char		**argv)
+	     char		*argv[])
 {
     struct rt_wdb	*op;
     int		ret;
@@ -1879,7 +1879,7 @@ static int
 wdb_dump_tcl(ClientData	clientData,
 	     Tcl_Interp	*interp,
 	     int	argc,
-	     char	**argv)
+	     char	*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -1894,7 +1894,7 @@ int
 wdb_dbip_cmd(struct rt_wdb	*wdbp,
 	     Tcl_Interp		*interp,
 	     int		argc,
-	     char		**argv)
+	     char		*argv[])
 {
     struct bu_vls vls;
 
@@ -1924,7 +1924,7 @@ static int
 wdb_dbip_tcl(ClientData	clientData,
 	     Tcl_Interp	*interp,
 	     int	argc,
-	     char	**argv)
+	     char	*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -1939,7 +1939,7 @@ int
 wdb_ls_cmd(struct rt_wdb	*wdbp,
 	   Tcl_Interp		*interp,
 	   int			argc,
-	   char 		**argv)
+	   char 		*argv[])
 {
     struct bu_vls vls;
     register struct directory *dp;
@@ -2107,7 +2107,7 @@ static int
 wdb_ls_tcl(ClientData	clientData,
 	   Tcl_Interp	*interp,
 	   int		argc,
-	   char		**argv)
+	   char		*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -2122,7 +2122,7 @@ int
 wdb_list_cmd(struct rt_wdb	*wdbp,
 	     Tcl_Interp		*interp,
 	     int		argc,
-	     char 		**argv)
+	     char 		*argv[])
 {
     register struct directory	*dp;
     register int			arg;
@@ -2217,7 +2217,7 @@ wdb_list_cmd(struct rt_wdb	*wdbp,
  *  List object information, verbose.
  */
 static int
-wdb_list_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+wdb_list_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -2233,7 +2233,7 @@ int
 wdb_pathsum_cmd(struct rt_wdb	*wdbp,
 		Tcl_Interp	*interp,
 		int		argc,
-		char 		**argv)
+		char 		*argv[])
 {
     int i, pos_in;
     struct ged_trace_data gtd;
@@ -2334,7 +2334,7 @@ static int
 wdb_pathsum_tcl(ClientData	clientData,
 		Tcl_Interp	*interp,
 		int		argc,
-		char		**argv)
+		char		*argv[])
 {
     struct rt_wdb	*wdbp = (struct rt_wdb *)clientData;
 
@@ -2375,7 +2375,7 @@ int
 wdb_expand_cmd(struct rt_wdb	*wdbp,
 	       Tcl_Interp	*interp,
 	       int		argc,
-	       char 		**argv)
+	       char 		*argv[])
 {
     register char *pattern;
     register struct directory *dp;
@@ -2460,7 +2460,7 @@ wdb_expand_cmd(struct rt_wdb	*wdbp,
  *        procname expand [args]
  */
 static int
-wdb_expand_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+wdb_expand_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -2475,7 +2475,7 @@ int
 wdb_kill_cmd(struct rt_wdb	*wdbp,
 	     Tcl_Interp		*interp,
 	     int		argc,
-	     char		**argv)
+	     char		*argv[])
 {
     register struct directory *dp;
     register int i;
@@ -2539,7 +2539,7 @@ static int
 wdb_kill_tcl(ClientData	clientData,
 	     Tcl_Interp	*interp,
 	     int	argc,
-	     char	**argv)
+	     char	*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -2554,7 +2554,7 @@ int
 wdb_killall_cmd(struct rt_wdb	*wdbp,
 		Tcl_Interp	*interp,
 		int		argc,
-		char 		**argv)
+		char 		*argv[])
 {
     register int			i, k;
     register struct directory	*dp;
@@ -2645,7 +2645,7 @@ static int
 wdb_killall_tcl(ClientData	clientData,
 		Tcl_Interp	*interp,
 		int		argc,
-		char		**argv)
+		char		*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -2660,7 +2660,7 @@ int
 wdb_killtree_cmd(struct rt_wdb	*wdbp,
 		 Tcl_Interp	*interp,
 		 int		argc,
-		 char 		**argv)
+		 char 		*argv[])
 {
     register struct directory *dp;
     register int i;
@@ -2714,7 +2714,7 @@ static int
 wdb_killtree_tcl(ClientData	clientData,
 		 Tcl_Interp	*interp,
 		 int		argc,
-		 char		**argv)
+		 char		*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -2755,7 +2755,7 @@ int
 wdb_copy_cmd(struct rt_wdb	*wdbp,
 	     Tcl_Interp		*interp,
 	     int		argc,
-	     char 		**argv)
+	     char 		*argv[])
 {
     register struct directory *proto;
     register struct directory *dp;
@@ -2829,7 +2829,7 @@ static int
 wdb_copy_tcl(ClientData	clientData,
 	     Tcl_Interp	*interp,
 	     int	argc,
-	     char	**argv)
+	     char	*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -2844,7 +2844,7 @@ int
 wdb_move_cmd(struct rt_wdb	*wdbp,
 	     Tcl_Interp		*interp,
 	     int		argc,
-	     char 		**argv)
+	     char 		*argv[])
 {
     register struct directory	*dp;
     struct rt_db_internal		intern;
@@ -2902,7 +2902,7 @@ static int
 wdb_move_tcl(ClientData	clientData,
 	     Tcl_Interp	*interp,
 	     int	argc,
-	     char	**argv)
+	     char	*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -2916,7 +2916,7 @@ int
 wdb_move_all_cmd(struct rt_wdb	*wdbp,
 		 Tcl_Interp	*interp,
 		 int		argc,
-		 char 		**argv)
+		 char 		*argv[])
 {
     register int	i;
     register struct directory *dp;
@@ -3086,7 +3086,7 @@ wdb_move_all_cmd(struct rt_wdb	*wdbp,
  *        procname mvall from to
  */
 static int
-wdb_move_all_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+wdb_move_all_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -3348,7 +3348,7 @@ int
 wdb_concat_cmd(struct rt_wdb	*wdbp,
 	       Tcl_Interp	*interp,
 	       int		argc,
-	       char 		**argv)
+	       char 		*argv[])
 {
     struct db_i		*newdbp;
     int			bad = 0;
@@ -3502,7 +3502,7 @@ static int
 wdb_concat_tcl(ClientData	clientData,
 	       Tcl_Interp	*interp,
 	       int		argc,
-	       char		**argv)
+	       char		*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -3517,7 +3517,7 @@ int
 wdb_copyeval_cmd(struct rt_wdb	*wdbp,
 		 Tcl_Interp	*interp,
 		 int		argc,
-		 char 		**argv)
+		 char 		*argv[])
 {
     struct directory	*dp;
     struct rt_db_internal	internal, new_int;
@@ -3649,7 +3649,7 @@ static int
 wdb_copyeval_tcl(ClientData	clientData,
 		 Tcl_Interp	*interp,
 		 int		argc,
-		 char		**argv)
+		 char		*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -3784,7 +3784,7 @@ int
 wdb_dup_cmd(struct rt_wdb	*wdbp,
 	    Tcl_Interp		*interp,
 	    int			argc,
-	    char		**argv)
+	    char		*argv[])
 {
     struct db_i		*newdbp = DBI_NULL;
     struct directory	**dirp0 = (struct directory **)NULL;
@@ -3875,7 +3875,7 @@ wdb_dup_cmd(struct rt_wdb	*wdbp,
  *        procname dup file.g [prefix]
  */
 static int
-wdb_dup_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+wdb_dup_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -3890,7 +3890,7 @@ int
 wdb_group_cmd(struct rt_wdb	*wdbp,
 	      Tcl_Interp	*interp,
 	      int		argc,
-	      char 		**argv)
+	      char 		*argv[])
 {
     register struct directory *dp;
     register int i;
@@ -3927,7 +3927,7 @@ static int
 wdb_group_tcl(ClientData	clientData,
 	      Tcl_Interp	*interp,
 	      int		argc,
-	      char		**argv)
+	      char		*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -3942,7 +3942,7 @@ int
 wdb_remove_cmd(struct rt_wdb	*wdbp,
 	       Tcl_Interp	*interp,
 	       int		argc,
-	       char 		**argv)
+	       char 		*argv[])
 {
     register struct directory	*dp;
     register int			i;
@@ -4013,7 +4013,7 @@ wdb_remove_cmd(struct rt_wdb	*wdbp,
  *        procname remove comb object(s)
  */
 static int
-wdb_remove_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+wdb_remove_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -4028,7 +4028,7 @@ int
 wdb_region_cmd(struct rt_wdb	*wdbp,
 	       Tcl_Interp	*interp,
 	       int		argc,
-	       char 		**argv)
+	       char 		*argv[])
 {
     register struct directory	*dp;
     int				i;
@@ -4122,7 +4122,7 @@ wdb_region_cmd(struct rt_wdb	*wdbp,
  *        procname r rname object(s)
  */
 static int
-wdb_region_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+wdb_region_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -4137,7 +4137,7 @@ int
 wdb_comb_cmd(struct rt_wdb	*wdbp,
 	     Tcl_Interp		*interp,
 	     int		argc,
-	     char 		**argv)
+	     char 		*argv[])
 {
     register struct directory *dp;
     char	*comb_name;
@@ -4221,7 +4221,7 @@ wdb_comb_cmd(struct rt_wdb	*wdbp,
  *        procname comb comb_name opr1 sol1 opr2 sol2 ... oprN solN
  */
 static int
-wdb_comb_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+wdb_comb_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -4299,7 +4299,7 @@ int
 wdb_facetize_cmd(struct rt_wdb	*wdbp,
 		 Tcl_Interp		*interp,
 		 int		argc,
-		 char 		**argv)
+		 char 		*argv[])
 {
     int			i;
     register int		c;
@@ -4541,7 +4541,7 @@ int
 wdb_find_cmd(struct rt_wdb	*wdbp,
 	     Tcl_Interp		*interp,
 	     int		argc,
-	     char 		**argv)
+	     char 		*argv[])
 {
     register int				i, k;
     register struct directory		*dp;
@@ -4614,7 +4614,7 @@ wdb_find_cmd(struct rt_wdb	*wdbp,
  *
  */
 static int
-wdb_facetize_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+wdb_facetize_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -4627,7 +4627,7 @@ wdb_facetize_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
  *        procname find object(s)
  */
 static int
-wdb_find_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+wdb_find_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -4657,7 +4657,7 @@ int
 wdb_rmap_cmd(struct rt_wdb	*wdbp,
 	     Tcl_Interp		*interp,
 	     int		argc,
-	     char 		**argv)
+	     char 		*argv[])
 {
     register int i;
     register struct directory *dp;
@@ -4782,7 +4782,7 @@ wdb_rmap_cmd(struct rt_wdb	*wdbp,
  *        procname rmap
  */
 static int
-wdb_rmap_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+wdb_rmap_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
     struct rt_wdb	*wdbp = (struct rt_wdb *)clientData;
 
@@ -4797,7 +4797,7 @@ int
 wdb_which_cmd(struct rt_wdb	*wdbp,
 	      Tcl_Interp	*interp,
 	      int		argc,
-	      char 		**argv)
+	      char 		*argv[])
 {
     register int	i, j;
     register struct directory *dp;
@@ -4966,7 +4966,7 @@ wdb_which_cmd(struct rt_wdb	*wdbp,
  *        procname whichair/whichid [-s] id(s)
  */
 static int
-wdb_which_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+wdb_which_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
     struct rt_wdb	*wdbp = (struct rt_wdb *)clientData;
 
@@ -4981,7 +4981,7 @@ int
 wdb_title_cmd(struct rt_wdb	*wdbp,
 	      Tcl_Interp	*interp,
 	      int		argc,
-	      char 		**argv)
+	      char 		*argv[])
 {
     struct bu_vls	title;
     int		bad = 0;
@@ -5031,7 +5031,7 @@ static int
 wdb_title_tcl(ClientData	clientData,
 	      Tcl_Interp	*interp,
 	      int		argc,
-	      char		**argv)
+	      char		*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -5128,7 +5128,7 @@ int
 wdb_lt_cmd(struct rt_wdb	*wdbp,
 	   Tcl_Interp		*interp,
 	   int			argc,
-	   char 		**argv)
+	   char 		*argv[])
 {
     register struct directory *dp;
     struct bu_vls vls;
@@ -5157,7 +5157,7 @@ static int
 wdb_lt_tcl(ClientData	clientData,
 	   Tcl_Interp	*interp,
 	   int     	argc,
-	   char    	**argv)
+	   char    	*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -5172,7 +5172,7 @@ int
 wdb_version_cmd(struct rt_wdb	*wdbp,
 		Tcl_Interp	*interp,
 		int		argc,
-		char 		**argv)
+		char 		*argv[])
 {
     struct bu_vls vls;
 
@@ -5200,7 +5200,7 @@ static int
 wdb_version_tcl(ClientData	clientData,
 		Tcl_Interp	*interp,
 		int     	argc,
-		char    	**argv)
+		char    	*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -5351,7 +5351,7 @@ static int
 wdb_track_tcl(ClientData clientData,
 	      Tcl_Interp *interp,
 	      int        argc,
-	      char       **argv) {
+	      char       *argv[]) {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
     return wdb_track_cmd(wdbp, interp, argc-1, argv+1);
@@ -5447,7 +5447,7 @@ int
 wdb_color_cmd(struct rt_wdb	*wdbp,
 	      Tcl_Interp	*interp,
 	      int		argc,
-	      char 		**argv)
+	      char 		*argv[])
 {
     register struct mater *newp;
     register struct mater *mp;
@@ -5530,7 +5530,7 @@ static int
 wdb_color_tcl(ClientData	clientData,
 	      Tcl_Interp	*interp,
 	      int		argc,
-	      char		**argv)
+	      char		*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -5570,7 +5570,7 @@ int
 wdb_prcolor_cmd(struct rt_wdb	*wdbp,
 		Tcl_Interp	*interp,
 		int		argc,
-		char 		**argv)
+		char 		*argv[])
 {
     register const struct mater *mp;
     int col_count = 0;
@@ -5602,7 +5602,7 @@ wdb_prcolor_cmd(struct rt_wdb	*wdbp,
  *        procname prcolor
  */
 static int
-wdb_prcolor_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+wdb_prcolor_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -5617,7 +5617,7 @@ int
 wdb_tol_cmd(struct rt_wdb	*wdbp,
 	    Tcl_Interp		*interp,
 	    int			argc,
-	    char		**argv)
+	    char		*argv[])
 {
     struct bu_vls vls;
     double	f;
@@ -5829,7 +5829,7 @@ static int
 wdb_tol_tcl(ClientData	clientData,
 	    Tcl_Interp	*interp,
 	    int		argc,
-	    char	**argv)
+	    char	*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -5958,7 +5958,7 @@ int
 wdb_push_cmd(struct rt_wdb	*wdbp,
 	     Tcl_Interp		*interp,
 	     int		argc,
-	     char 		**argv)
+	     char 		*argv[])
 {
     struct wdb_push_data	*wpdp;
     struct wdb_push_id	*pip;
@@ -6120,7 +6120,7 @@ static int
 wdb_push_tcl(ClientData	clientData,
 	     Tcl_Interp	*interp,
 	     int	argc,
-	     char	**argv)
+	     char	*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -6560,7 +6560,7 @@ int
 wdb_xpush_cmd(struct rt_wdb	*wdbp,
 	      Tcl_Interp		*interp,
 	      int		argc,
-	      char 		**argv)
+	      char 		*argv[])
 {
     struct directory *old_dp;
     struct rt_db_internal intern;
@@ -6721,7 +6721,7 @@ static int
 wdb_xpush_tcl(ClientData	clientData,
 	      Tcl_Interp		*interp,
 	      int		argc,
-	      char		**argv)
+	      char		*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -6736,7 +6736,7 @@ int
 wdb_whatid_cmd(struct rt_wdb	*wdbp,
 	       Tcl_Interp	*interp,
 	       int		argc,
-	       char 		**argv)
+	       char 		*argv[])
 {
     struct directory	*dp;
     struct rt_db_internal	intern;
@@ -6784,7 +6784,7 @@ static int
 wdb_whatid_tcl(ClientData	clientData,
 	       Tcl_Interp	*interp,
 	       int		argc,
-	       char		**argv)
+	       char		*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -6861,7 +6861,7 @@ int
 wdb_keep_cmd(struct rt_wdb	*wdbp,
 	     Tcl_Interp		*interp,
 	     int		argc,
-	     char 		**argv)
+	     char 		*argv[])
 {
     struct rt_wdb		*keepfp;
     register struct directory *dp;
@@ -6955,7 +6955,7 @@ static int
 wdb_keep_tcl(ClientData	clientData,
 	     Tcl_Interp *interp,
 	     int	argc,
-	     char	**argv)
+	     char	*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -6970,7 +6970,7 @@ int
 wdb_cat_cmd(struct rt_wdb	*wdbp,
 	    Tcl_Interp		*interp,
 	    int			argc,
-	    char 		**argv)
+	    char 		*argv[])
 {
     register struct directory	*dp;
     register int			arg;
@@ -7008,7 +7008,7 @@ static int
 wdb_cat_tcl(ClientData	clientData,
 	    Tcl_Interp	*interp,
 	    int		argc,
-	    char	**argv)
+	    char	*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -7023,7 +7023,7 @@ int
 wdb_instance_cmd(struct rt_wdb	*wdbp,
 		 Tcl_Interp	*interp,
 		 int		argc,
-		 char 		**argv)
+		 char 		*argv[])
 {
     register struct directory	*dp;
     char				oper;
@@ -7076,7 +7076,7 @@ static int
 wdb_instance_tcl(ClientData	clientData,
 		 Tcl_Interp	*interp,
 		 int		argc,
-		 char		**argv)
+		 char		*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -7091,7 +7091,7 @@ int
 wdb_observer_cmd(struct rt_wdb	*wdbp,
 		 Tcl_Interp	*interp,
 		 int		argc,
-		 char 		**argv)
+		 char 		*argv[])
 {
     if (argc < 2) {
 	struct bu_vls vls;
@@ -7119,7 +7119,7 @@ static int
 wdb_observer_tcl(ClientData	clientData,
 		 Tcl_Interp	*interp,
 		 int		argc,
-		 char		**argv)
+		 char		*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -7135,7 +7135,7 @@ int
 wdb_make_bb_cmd(struct rt_wdb	*wdbp,
 		Tcl_Interp	*interp,
 		int		argc,
-		char 		**argv)
+		char 		*argv[])
 {
     register int		i;
     point_t			rpp_min, rpp_max;
@@ -7233,7 +7233,7 @@ static int
 wdb_make_bb_tcl(ClientData	clientData,
 		Tcl_Interp	*interp,
 		int		argc,
-		char		**argv)
+		char		*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -7248,7 +7248,7 @@ int
 wdb_units_cmd(struct rt_wdb	*wdbp,
 	      Tcl_Interp	*interp,
 	      int		argc,
-	      char 		**argv)
+	      char 		*argv[])
 {
     double		loc2mm;
     struct bu_vls 	vls;
@@ -7323,7 +7323,7 @@ static int
 wdb_units_tcl(ClientData	clientData,
 	      Tcl_Interp	*interp,
 	      int		argc,
-	      char		**argv)
+	      char		*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -7338,7 +7338,7 @@ int
 wdb_hide_cmd(struct rt_wdb	*wdbp,
 	     Tcl_Interp		*interp,
 	     int		argc,
-	     char 		**argv)
+	     char 		*argv[])
 {
     struct directory		*dp;
     struct db_i			*dbip;
@@ -7483,7 +7483,7 @@ static int
 wdb_hide_tcl(ClientData	clientData,
 	     Tcl_Interp	*interp,
 	     int	argc,
-	     char	**argv)
+	     char	*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -7498,7 +7498,7 @@ int
 wdb_unhide_cmd(struct rt_wdb	*wdbp,
 	       Tcl_Interp	*interp,
 	       int		argc,
-	       char 		**argv)
+	       char 		*argv[])
 {
     struct directory		*dp;
     struct db_i			*dbip;
@@ -7586,7 +7586,7 @@ static int
 wdb_unhide_tcl(ClientData	clientData,
 	       Tcl_Interp	*interp,
 	       int		argc,
-	       char		**argv)
+	       char		*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -7620,7 +7620,7 @@ int
 wdb_attr_cmd(struct rt_wdb	*wdbp,
 	     Tcl_Interp		*interp,
 	     int		argc,
-	     char 		**argv)
+	     char 		*argv[])
 {
     int			i;
     struct directory	*dp;
@@ -7927,7 +7927,7 @@ int
 wdb_attr_tcl(ClientData	clientData,
 	     Tcl_Interp     *interp,
 	     int		argc,
-	     char	      **argv)
+	     char	      *argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -7942,7 +7942,7 @@ int
 wdb_nmg_simplify_cmd(struct rt_wdb	*wdbp,
 		     Tcl_Interp		*interp,
 		     int		argc,
-		     char 		**argv)
+		     char 		*argv[])
 {
     struct directory *dp;
     struct rt_db_internal nmg_intern;
@@ -8176,7 +8176,7 @@ static int
 wdb_nmg_simplify_tcl(ClientData		clientData,
 		     Tcl_Interp		*interp,
 		     int		argc,
-		     char		**argv)
+		     char		*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -8191,7 +8191,7 @@ int
 wdb_nmg_collapse_cmd(struct rt_wdb	*wdbp,
 		     Tcl_Interp	*interp,
 		     int		argc,
-		     char 		**argv)
+		     char 		*argv[])
 {
     char *new_name;
     struct model *m;
@@ -8295,7 +8295,7 @@ static int
 wdb_nmg_collapse_tcl(ClientData	clientData,
 		     Tcl_Interp	*interp,
 		     int		argc,
-		     char		**argv)
+		     char		*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -8310,7 +8310,7 @@ int
 wdb_summary_cmd(struct rt_wdb	*wdbp,
 		Tcl_Interp	*interp,
 		int		argc,
-		char 		**argv)
+		char 		*argv[])
 {
     register char *cp;
     int flags = 0;
@@ -8361,7 +8361,7 @@ static int
 wdb_summary_tcl(ClientData	clientData,
 		Tcl_Interp	*interp,
 		int		argc,
-		char		**argv)
+		char		*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -8376,7 +8376,7 @@ int
 wdb_pathlist_cmd(struct rt_wdb	*wdbp,
 		 Tcl_Interp	*interp,
 		 int		argc,
-		 char 		**argv)
+		 char 		*argv[])
 {
     if (argc < 2 || 3 < argc) {
 	struct bu_vls vls;
@@ -8416,7 +8416,7 @@ static int
 wdb_pathlist_tcl(ClientData	clientData,
 		 Tcl_Interp	*interp,
 		 int		argc,
-		 char		**argv)
+		 char		*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -8431,7 +8431,7 @@ int
 wdb_bot_smooth_cmd(struct rt_wdb	*wdbp,
 		   Tcl_Interp	*interp,
 		   int		argc,
-		   char 		**argv)
+		   char 		*argv[])
 {
     char *new_bot_name, *old_bot_name;
     struct directory *dp_old, *dp_new;
@@ -8553,7 +8553,7 @@ static int
 wdb_bot_smooth_tcl(ClientData	clientData,
 		   Tcl_Interp	*interp,
 		   int		argc,
-		   char		**argv)
+		   char		*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -8568,7 +8568,7 @@ int
 wdb_binary_cmd(struct rt_wdb	*wdbp,
 	       Tcl_Interp	*interp,
 	       int		argc,
-	       char 		**argv)
+	       char 		*argv[])
 {
     int c;
     struct bu_vls	vls;
@@ -8806,7 +8806,7 @@ static int
 wdb_binary_tcl(ClientData	clientData,
 	       Tcl_Interp	*interp,
 	       int		argc,
-	       char		**argv)
+	       char		*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -8820,7 +8820,7 @@ wdb_binary_tcl(ClientData	clientData,
 int wdb_bot_face_sort_cmd(struct rt_wdb	*wdbp,
 			  Tcl_Interp		*interp,
 			  int		argc,
-			  char 		**argv)
+			  char 		*argv[])
 {
     int i;
     int tris_per_piece=0;
@@ -8919,7 +8919,7 @@ static int
 wdb_bot_face_sort_tcl(ClientData	clientData,
 		      Tcl_Interp	*interp,
 		      int		argc,
-		      char		**argv)
+		      char		*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -8935,7 +8935,7 @@ static int
 wdb_importFg4Section_tcl(ClientData	clientData,
 			 Tcl_Interp	*interp,
 			 int		argc,
-			 char		**argv)
+			 char		*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -8948,7 +8948,7 @@ int
 wdb__cmd(struct rt_wdb	*wdbp,
 	 Tcl_Interp		*interp,
 	 int		argc,
-	 char 		**argv)
+	 char 		*argv[])
 {
 }
 
@@ -8960,7 +8960,7 @@ static int
 wdb__tcl(ClientData	clientData,
 	 Tcl_Interp	*interp,
 	 int		argc,
-	 char		**argv)
+	 char		*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -9811,7 +9811,7 @@ int
 wdb_bot_decimate_cmd(struct rt_wdb	*wdbp,
 		     Tcl_Interp		*interp,
 		     int		argc,
-		     char 		**argv)
+		     char 		*argv[])
 {
     int c;
     struct rt_db_internal intern;
@@ -9940,7 +9940,7 @@ static int
 wdb_bot_decimate_tcl(ClientData	clientData,
 		     Tcl_Interp	*interp,
 		     int		argc,
-		     char		**argv)
+		     char		*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -9952,7 +9952,7 @@ int
 wdb_move_arb_edge_cmd(struct rt_wdb	*wdbp,
 		      Tcl_Interp	*interp,
 		      int		argc,
-		      char 		**argv)
+		      char 		*argv[])
 {
     struct rt_db_internal intern;
     struct rt_arb_internal *arb;
@@ -10108,7 +10108,7 @@ static int
 wdb_move_arb_edge_tcl(ClientData	clientData,
 		      Tcl_Interp	*interp,
 		      int		argc,
-		      char		**argv)
+		      char		*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -10119,7 +10119,7 @@ int
 wdb_move_arb_face_cmd(struct rt_wdb	*wdbp,
 		      Tcl_Interp	*interp,
 		      int		argc,
-		      char 		**argv)
+		      char 		*argv[])
 {
     struct rt_db_internal intern;
     struct rt_arb_internal *arb;
@@ -10245,7 +10245,7 @@ static int
 wdb_move_arb_face_tcl(ClientData	clientData,
 		      Tcl_Interp	*interp,
 		      int		argc,
-		      char		**argv)
+		      char		*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -10265,7 +10265,7 @@ int
 wdb_rotate_arb_face_cmd(struct rt_wdb	*wdbp,
 			Tcl_Interp	*interp,
 			int		argc,
-			char 		**argv)
+			char 		*argv[])
 {
     struct rt_db_internal intern;
     struct rt_arb_internal *arb;
@@ -10449,7 +10449,7 @@ static int
 wdb_rotate_arb_face_tcl(ClientData	clientData,
 			Tcl_Interp	*interp,
 			int		argc,
-			char		**argv)
+			char		*argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
@@ -10459,7 +10459,7 @@ wdb_rotate_arb_face_tcl(ClientData	clientData,
 wdb_newcmds_tcl(ClientData	clientData,
 		Tcl_Interp	*interp,
 		int		argc,
-		char		**argv)
+		char		*argv[])
 {
     register struct bu_cmdtab *ctp;
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;

@@ -116,7 +116,7 @@ qray_get_fmt_index(struct ged	*gedp,
 int
 ged_qray(struct ged	*gedp,
 	 int		argc,
-	 const char 	**argv)
+	 const char 	*argv[])
 {
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
 
