@@ -1780,8 +1780,7 @@ struct bezier_seg	/**< @brief  Bezier curve segment */
 };
 
 /**
- *  Structures required for describing Parameters, parameter sets
- *
+ * Structures required for describing Parameters, parameter sets
  */
 
 /* To be removed */

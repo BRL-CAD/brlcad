@@ -1,7 +1,7 @@
-/*              	     P C . H
+/*                            P C . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2012 United States Government as represented by
+ * Copyright (c) 2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,8 +21,7 @@
 /** @{ */
 /** @file pc.h
  *
- *  Structures required for implementing Parametrics
- *  and constraints
+ * Structures required for implementing Parametrics and constraints
  *
  */
 #ifndef __PC_H__
@@ -51,10 +50,9 @@ __BEGIN_DECLS
 #endif
 
 /*
- *  Macros for providing function prototypes, regardless of whether
- *  the compiler understands them or not.
- *  It is vital that the argument list given for "args" be enclosed
- *  in parens.
+ * Macros for providing function prototypes, regardless of whether the
+ * compiler understands them or not.  It is vital that the argument
+ * list given for "args" be enclosed in parens.
  */
 
 #if __STDC__ || USE_PROTOTYPES
@@ -68,16 +66,14 @@ __BEGIN_DECLS
 
 
 /**
- *  Structures required for describing constraints, relations
- *  constraint networks
- *
+ * Structures required for describing constraints, relations
+ * constraint networks
  */
 
 /**
- *  P C _ C O N S T R A I N T
+ * P C _ C O N S T R A I N T
  *  
- *  In-memory format for database "constraint" record
- *
+ * In-memory format for database "constraint" record
  */
 struct pc_constraint_internal {
     unsigned long magic;
