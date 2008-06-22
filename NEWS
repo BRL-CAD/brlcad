@@ -32,8 +32,8 @@ changes made.  See document footer for additional details.
 This release contains numerous enhancements to MGED's mirror command,
 now with the ability to mirror an object across arbitrary vectors or
 points along a standard axis.  Additionally, nirt now has a new "gap"
-options for reporting the empty spaces between objects with additional
-formatting options under development.
+option for reporting the empty spaces between objects on a given
+shotline with additional formatting options under development.
 
 The release also has a new procedural database geometry tool called
 'tire'.  This new tool was developed by Cliff Yapp for the purpose of
