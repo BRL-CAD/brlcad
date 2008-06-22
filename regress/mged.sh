@@ -126,7 +126,7 @@ EOF
     fi
 done
 
-if test $FAILED = 0 ; then
+if test $FAILED -eq 0 ; then
     echo "-> mged check succeeded"
 else
     echo "-> mged check FAILED"
