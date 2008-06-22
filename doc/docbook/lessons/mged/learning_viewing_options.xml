@@ -107,7 +107,7 @@
       </itemizedlist>
     </para>
 
-    <para id="intropara1">
+    <para id="learning_viewing_options_intropara1">
       Models in <application>BRL-CAD</application> are constructed in a single xyz coordinate system, which
       we sometimes refer to as model space. The Graphics Window of <application>MGED</application> displays
       a portion of this space. The xyz coordinate system is used for specifying
@@ -115,7 +115,7 @@
       Graphics Window.
     </para>
     
-    <para id="intropara2">
+    <para id="learning_viewing_options_intropara2">
       <application>MGED</application> offers a default view and a variety of optional views. You can switch
       back and forth between these views during and after model creation. This
       lesson is designed to help you understand the viewing process and options.
