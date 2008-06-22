@@ -21,8 +21,9 @@
 /** @{ */
 /** @file pc_constraint.h
  *
- *  Structures required for implementing Constraint Solution
- *
+ * Structures required for implementing Constraint Solution
+ * 
+ * @author Dawn Thomas
  */
 #ifndef __PC_CONSTRAINT_H__
 #define __PC_CONSTRAINT_H__
@@ -33,7 +34,7 @@
 
 
 /**
- *  Structures required for describing solution sets, parameter instantiation
+ * Structures required for describing solution sets, parameter instantiation
  *
  */
 
@@ -52,9 +53,8 @@ struct constraint_solution {
     struct parameter_solution * param;
 };
 
-
 /**
- *  Structures required for describing constraint networks
+ * Structures required for describing constraint networks
  *
  */
 

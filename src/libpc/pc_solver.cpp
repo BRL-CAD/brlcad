@@ -22,7 +22,7 @@
 /** @file pc_solver.cpp
  *
  *
- *@author Dawn Thomas
+ * @author Dawn Thomas
  *	
  *
  */

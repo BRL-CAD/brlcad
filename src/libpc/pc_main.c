@@ -21,9 +21,9 @@
 /** @{ */
 /** @file pc_main.c
  *
- *  TODO: clean up header includes
+ * TODO: clean up header includes
  *
- *@author	Dawn Thomas
+ * @author	Dawn Thomas
  *
  *
  */
@@ -77,7 +77,6 @@ pc_write_param_set(struct pc_param_set ps, struct directory * dp,struct db_i * d
 	bu_avs_add(&avs,bu_vls_addr(&w),bu_vls_addr(&v));
 	bu_vls_free(&v);
 	bu_vls_free(&w);
-
 
 	bu_vls_printf(&v,"%g",ps.p[i].min);
 	bu_vls_strcat(&w,ps.p[i].name);
@@ -205,7 +204,7 @@ pc_mk_constraint(
     RT_INIT_DB_INTERNAL(&intern);
 
     if ( append_ok &&
-	 wdb_import( wdbp, &intern, constraintname, (matp_t)NULL ) >= 0 )  {
+	wdb_import( wdbp, &intern, constraintname, (matp_t)NULL ) >= 0 )  {
 	/* We retrieved an existing object, append to it */
 	constraint = (struct pc_constraint_internal *)intern.idb_ptr;
 	/*PC_CK_CONSTRAINT( constraint );*/

@@ -55,7 +55,7 @@ main(int argc, char **argv)
     struct pc_pc_set pcs;
 
     ps.len=4;
-    ps.p = (genptr_t)bu_malloc(ps.len * sizeof(struct pc_parameter),"pc_parameter");
+    ps.p = (genptr_t)bu_malloc(ps.len * sizeof(struct pc_parameter), "pc_parameter");
     point_t cent;
     fastf_t rad;
     char solnam[9];
@@ -124,13 +124,15 @@ main(int argc, char **argv)
     if ((dp = db_lookup(fp->dbip,"Constraint",LOOKUP_QUIET)) == DIR_NULL)
 	return 3;
     /*pc_write_parameter_set(ps, dp, fp->dbip);*/
-    wdb_import(fp,&ip,solnam,(matp_t)NULL);
+    wdb_import(fp, &ip,solnam, (matp_t)NULL);
     ip.idb_meth->ft_params(&pcs,&ip);
-    fprintf(stdout,"%s = ( %f , %f , %f ) %s = (%f,%f,%f) %s = (%f,%f,%f) %s = (%f,%f,%f)\n",\
-	    pcs.ps[0].pname, pcs.ps[0].pointp[0],pcs.ps[0].pointp[1],pcs.ps[0].pointp[2], \
-	    pcs.ps[1].pname, pcs.ps[1].vectorp[0], pcs.ps[1].vectorp[1], pcs.ps[1].vectorp[2],\
-	    pcs.ps[2].pname, pcs.ps[2].vectorp[0], pcs.ps[2].vectorp[1], pcs.ps[2].vectorp[2],\
-	    pcs.ps[3].pname, pcs.ps[3].vectorp[0], pcs.ps[3].vectorp[1], pcs.ps[3].vectorp[2]);
+    fprintf(stdout, "%s = ( %f , %f , %f ) %s = (%f,%f,%f) %s = (%f,%f,%f) %s = (%f,%f,%f)\n",\
+	    pcs.ps[0].pname, pcs.ps[0].pointp[0],pcs.ps[0].pointp[1], \
+	    pcs.ps[0].pointp[2], pcs.ps[1].pname, pcs.ps[1].vectorp[0], \
+	    pcs.ps[1].vectorp[1], pcs.ps[1].vectorp[2], pcs.ps[2].pname, \
+	    pcs.ps[2].vectorp[0], pcs.ps[2].vectorp[1], pcs.ps[2].vectorp[2], \
+	    pcs.ps[3].pname, pcs.ps[3].vectorp[0], pcs.ps[3].vectorp[1], \
+	    pcs.ps[3].vectorp[2]);
     /* Todo: Free pcs parametric set */
 
     wdb_close(fp);

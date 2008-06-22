@@ -10,6 +10,7 @@ noinst_PROGRAMS = \
 
 noinst_HEADERS = \
 	pc_constraint.h \
+	pcBasic.h \
 	pcInterval.h \
 	pcVariable.h
 
