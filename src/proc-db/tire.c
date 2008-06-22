@@ -80,23 +80,38 @@ void PrintMatrix(fastf_t **matrix, char *name)
 /**
  * Help message printed when -h option is supplied
  */
-void show_help(const char *name)
+void show_help(const char *name, const char *optstr)
 {
-    bu_log("%s options:", name);
-    bu_log("-a\t\tAut-generate top level name using\n\t\t(tire-<width>-<aspect>R<rim size>)\n\n");
-    bu_log("-c <count>\tSpecify number of tread patterns around tire\n\n");
-    bu_log("-d <width>/<aspect>R<rim size>\n\t\tSpecify tire dimensions (American units, integer values only)\n\n");
-    bu_log("-W <width>\tSpecify tire width in inches (overrides -d)\n\n");
-    bu_log("-R <aspect>\tSpecify tire aspect ratio (#/100) (overrides -d)\n\n");
-    bu_log("-D <rim size>\tSpecify rim size in inches (overrides -d)\n\n");
-    bu_log("-g <depth>\tSpecify tread depth in terms of 32nds of an inch.\n\n");
-    bu_log("-j <width>\tSpecify rim width in inches.\n\n");
-    bu_log("-n <name>\tSpecify custom top level root name\n\n");
-    bu_log("-p <type>\tGenerate tread with tread pattern as specified\n\n");
-    bu_log("-s <radius>\tSpecify the radius of the maximum sidewall width\n\n");
-    bu_log("-t <type>\tGenerate tread with tread type as specified\n\n");
-    bu_log("-u <thickness>\tSpecify tire thickness in mm\n\n");
-    bu_log("-h\t\tShow help\n\n");
+    struct bu_vls str;
+    const char *cp = optstr;
+
+    bu_vls_init(&str);
+    while (cp && *cp != '\0') {
+	if (*cp == ':') {
+	    cp++;
+	    continue;
+	}
+	bu_vls_strncat(&str, cp, 1);
+	cp++;
+    }
+
+    bu_log("usage: %s [%s]\n", name, bu_vls_addr(&str));
+    bu_log("options:\n"
+	   "\t-a\n\t\tAuto-generate top level name using\n\t\t(tire-<width>-<aspect>R<rim size>)\n"
+	   "\t-c <count>\n\t\tSpecify number of tread patterns around tire\n"
+	   "\t-d <width>/<aspect>R<rim size>\n\t\tSpecify tire dimensions\n\t\t(U.S. customary units, integer values only)\n"
+	   "\t-W <width>\n\t\tSpecify tire width in inches (overrides -d)\n"
+	   "\t-R <aspect>\n\t\tSpecify tire aspect ratio (#/100) (overrides -d)\n"
+	   "\t-D <rim size>\n\t\tSpecify rim size in inches (overrides -d)\n"
+	   "\t-g <depth>\n\t\tSpecify tread depth in terms of 32nds of an inch.\n"
+	   "\t-j <width>\n\t\tSpecify rim width in inches.\n"
+	   "\t-n <name>\n\t\tSpecify custom top level root name\n"
+	   "\t-p <type>\n\t\tGenerate tread with tread pattern as specified\n"
+	   "\t-s <radius>\n\t\tSpecify the radius of the maximum sidewall width\n"
+	   "\t-t <type>\n\t\tGenerate tread with tread type as specified\n"
+	   "\t-u <thickness>\n\t\tSpecify tire thickness in mm\n"
+	   "\t-h\n\t\tShow help\n\n"
+	);
     return;
 }
 
@@ -1966,6 +1981,7 @@ int ReadArgs(int argc, char **argv, fastf_t *isoarray, fastf_t *overridearray, s
     float fd1, fd2, fd3;
     char spacer1, tiretype;
 
+    /* don't report errors */
     bu_opterr = 0;
 
     while ((c=bu_getopt(argc, argv, options)) != -1) {
@@ -2025,9 +2041,11 @@ int ReadArgs(int argc, char **argv, fastf_t *isoarray, fastf_t *overridearray, s
 		sscanf(bu_optarg, "%f", &tthickness);
 		*tire_thickness = tthickness;
 		break;
+	    default:
+		bu_log("%s: illegal option -- %c\n", bu_getprogname(), c);
 	    case 'h':
-		show_help(*argv);
-		bu_exit(EXIT_SUCCESS, "exiting after help");
+		show_help(*argv, options);
+		bu_exit(EXIT_SUCCESS, NULL);
 	}
     }
     return(bu_optind);
