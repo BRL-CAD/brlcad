@@ -264,7 +264,7 @@ proc helplib {args} {
 proc ?lib {} {
     global helplib_data
 
-    return [?_comm helplib_data 20 4]
+    return [?_comm helplib_data 25 4]
 }
 
 
