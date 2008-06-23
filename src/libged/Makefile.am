@@ -24,6 +24,7 @@ libged_nil_la_SOURCES = \
 	illum.c \
 	item.c \
 	log.c \
+	ls.c \
 	make.c \
 	make_name.c \
 	mater.c \

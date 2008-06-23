@@ -1030,6 +1030,14 @@ GED_EXPORT BU_EXTERN(int ged_item, (struct ged *gedp, int argc, const char *argv
 GED_EXPORT BU_EXTERN(int ged_log, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * List the objects in this database
+ *
+ * Usage:
+ *     ls [-A name/value pairs] OR [-acrslop] object(s)
+ */
+GED_EXPORT BU_EXTERN(int ged_ls, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Make a new primitive.
  *
  * Usage:

@@ -69,6 +69,7 @@ static struct bu_cmdtab ged_cmds[] = {
     {"edmater",		ged_edmater},
     {"item",		ged_item},
     {"log",		ged_log},
+    {"ls",		ged_ls},
     {"make",		ged_make},
     {"make_name",	ged_make_name},
     {"mater",		ged_mater},

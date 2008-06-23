@@ -210,6 +210,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\ls.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\make.c"
 				>
 			</File>
