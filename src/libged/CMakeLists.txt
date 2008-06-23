@@ -11,6 +11,9 @@ set(LIBGED_SOURCES
     editit.c
     edcomb.c
     edmater.c
+    erase.c
+    erase_all.c
+    ged.c
     get_autoview.c
     get_eyemodel.c
     get_obj_bounds.c

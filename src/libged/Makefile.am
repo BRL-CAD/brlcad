@@ -15,6 +15,7 @@ libged_nil_la_SOURCES = \
 	edmater.c \
 	erase.c \
 	erase_all.c \
+	ged.c \
 	get_autoview.c \
 	get_eyemodel.c \
 	get_obj_bounds.c \
