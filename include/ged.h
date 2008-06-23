@@ -323,11 +323,12 @@ struct view_obj {
 #define GED_ERROR 1
 
 
-/* loadable Tcl interface routines */
-
-/* defined in tcl.c */
-GED_EXPORT BU_EXTERN(int Ged_Init,
-		    (Tcl_Interp *interp));
+/* defined in ged.c */
+GED_EXPORT BU_EXTERN(struct ged *ged_open,
+		     (const char *dbtype,
+		      const char *filename));
+GED_EXPORT BU_EXTERN(void ged_close,
+		     (struct ged *gedp));
 
 /* defined in wdb_comb_std.c */
 GED_EXPORT BU_EXTERN(int wdb_comb_std_cmd,

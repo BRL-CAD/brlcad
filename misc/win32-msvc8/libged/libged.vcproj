@@ -278,10 +278,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\libged\tcl.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\libged\trace.c"
 				>
 			</File>

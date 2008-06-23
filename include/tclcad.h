@@ -33,8 +33,8 @@
 #define __TCLCAD_H__
 
 #include "common.h"
-
 #include "tcl.h"
+#include "ged.h"
 
 __BEGIN_DECLS
 
@@ -64,11 +64,26 @@ __BEGIN_DECLS
 #	define	TCLCAD_ARGS(args)			()
 #endif
 
+struct ged_obj {
+    struct bu_list	l;
+    struct ged		*go_gedp;
+    struct bu_vls	go_name;
+    struct bu_observer	go_observers;
+    Tcl_Interp		*go_interp;
+};
+
+#define GED_OBJ_NULL (struct ged_obj *)0
+
 
 TCLCAD_EXPORT TCLCAD_EXTERN(int tclcad_tk_setup, (Tcl_Interp *interp));
 TCLCAD_EXPORT TCLCAD_EXTERN(void tclcad_auto_path, (Tcl_Interp *interp));
 TCLCAD_EXPORT TCLCAD_EXTERN(void tclcad_tcl_library, (Tcl_Interp *interp));
 TCLCAD_EXPORT TCLCAD_EXTERN(int Tclcad_Init, (Tcl_Interp *interp));
+
+/* defined in tcl.c */
+TCLCAD_EXPORT BU_EXTERN(int Ged_Init,
+			(Tcl_Interp *interp));
+
 
 __END_DECLS
 

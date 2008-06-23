@@ -45,6 +45,7 @@
 #include "solid.h"
 #include "plot3.h"
 #include "dg.h"
+#include "ged_private.h"
 
 
 struct dg_client_data {
@@ -164,8 +165,6 @@ void dgo_pr_wait_status(Tcl_Interp *interp, int status);
 
 static void dgo_print_schain(struct dg_obj *dgop, Tcl_Interp *interp, int lvl);
 static void dgo_print_schain_vlcmds(struct dg_obj *dgop, Tcl_Interp *interp);
-
-static struct solid FreeSolid;		/* head of free solid list */
 
 static struct bu_cmdtab dgo_cmds[] = {
     {"assoc",			dgo_assoc_tcl},

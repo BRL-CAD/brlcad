@@ -6,7 +6,8 @@ libtclcad_la_SOURCES = \
 	tclcad.c \
 	tclcadAutoPath.c \
 	tclcadTkSetup.c \
-	tkImgFmtPIX.c
+	tkImgFmtPIX.c \
+	ged_obj.c
 
 libtclcad_la_CFLAGS = \
 	${X_CFLAGS} \

@@ -1105,7 +1105,6 @@ struct rt_wdb  {
     struct bu_list	l;
     int			type;
     struct db_i	*	dbip;
-    struct bu_vls	wdb_name;	/**< @brief  database object name */
     struct db_tree_state	wdb_initial_tree_state;
     struct rt_tess_tol	wdb_ttol;
     struct bn_tol	wdb_tol;
@@ -1121,8 +1120,12 @@ struct rt_wdb  {
     int			wdb_air_default;
     int			wdb_mat_default;/**< @brief  GIFT material code */
     int			wdb_los_default;/**< @brief  Line-of-sight estimate */
+
+    /* These members are marked for removal */
+    struct bu_vls	wdb_name;	/**< @brief  database object name */
     struct bu_observer	wdb_observers;
     Tcl_Interp *	wdb_interp;
+
 };
 
 #define RT_CHECK_WDB(_p)		BU_CKMAG(_p, RT_WDB_MAGIC, "rt_wdb")

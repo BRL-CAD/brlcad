@@ -26,8 +26,6 @@
 
 #include "common.h"
 
-#include "tclcad.h"
-
 #define RESOURCE_INCLUDED 1
 #include <tcl.h>
 #include <itcl.h>
@@ -41,6 +39,7 @@
 #include "bn.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "tclcad.h"
 
 /* Private headers */
 #include "brlcad_version.h"
@@ -112,6 +111,12 @@ Tclcad_Init(Tcl_Interp *interp)
     /* Initialize librt */
     if (Rt_Init(interp) == TCL_ERROR) {
 	bu_log("Rt_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
+
+    /* Initialize libged */
+    if (Ged_Init(interp) == TCL_ERROR) {
+	bu_log("Ged_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
 

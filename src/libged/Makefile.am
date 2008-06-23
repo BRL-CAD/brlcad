@@ -39,7 +39,6 @@ libged_nil_la_SOURCES = \
 	set_outputHandler.c \
 	set_uplotOutputMode.c \
 	shader.c \
-	tcl.c \
 	trace.c \
 	track.c \
 	vdraw.c \
