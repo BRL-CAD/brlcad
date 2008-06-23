@@ -3150,6 +3150,10 @@ fi
 AC_SUBST(TERMLIB)
 AC_SUBST(TERMLIB_CPPFLAGS)
 
+dnl *** Boost ***
+dnl Header only Library requiring no build
+BOOST_CPPFLAGS='-I${top_srcdir}/src/other/boost'
+AC_SUBST(BOOST_CPPFLAGS)
 
 dnl *** libm ***
 AC_MSG_CHECKING(whether to link with the system math library)
