@@ -153,12 +153,18 @@
 	  </tgroup>
 	</informaltable>
 	
-	<figure>
-	  <title>Wireframe Sphere</title>
-	  <screenshot>
-	    <graphic fileref="wireframesphere.png"/>
-	  </screenshot>
-	</figure>
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/mged/using_insert_command_images/wireframesphere.png" format="PNG"></imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	     Wireframe Sphere 
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
       </para>
       
       <para>
@@ -176,12 +182,18 @@
 	view of az35, el25, looks as if it intersects the sphere you previously
 	created.
 	
-	<figure>
-	  <title>Wireframe Sphere and Right Circular Cylinder</title>
-	  <screenshot>
-	    <graphic fileref="wireframespherecylinder.png"/>
-	  </screenshot>
-	</figure>
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/mged/using_insert_command_images/wireframespherecylinder.png" format="PNG"></imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	     Wireframe Sphere and Right Circular Cylinder
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
       </para>
       
       <para>
@@ -314,8 +326,8 @@
 	<tgroup cols='2'>
 	  <tbody>
 	    <row>
-	      <entry><graphic/></entry>
-	      <entry><graphic/></entry>
+	      <entry><inlinegraphic fileref="../../lessons/mged/using_insert_command_images/shapes_make_command.png" /></entry>
+	      <entry><inlinegraphic fileref="../../lessons/mged/using_insert_command_images/shapes_in_command.png" /></entry>
 	    </row>
 	    <row>
 	      <entry>Shapes Created with Make Command</entry>

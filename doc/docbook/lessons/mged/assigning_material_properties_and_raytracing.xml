@@ -239,13 +239,19 @@
 	look like the following example:
       </para>
       
-      <figure>
-	<title>The Command Window Screen</title>
-	<screenshot>
-	  <graphic fileref="commandwindow.png"/>
-	</screenshot>
-      </figure>
-      
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/mged/assigning_material_properties_and_raytracing_images/commandwindow.png" format="PNG"></imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	     The Command Window Screen 
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+ 
       <para>
 	The one-line version of this set of commands would be:
 	
@@ -347,12 +353,18 @@
 	as shown in the following example:
       </para>
       
-      <figure>
-	<title>Raytraced Shapes</title>
-	<screenshot>
-	  <graphic fileref="raytracedshapes.png"/>
-	</screenshot>
-      </figure>
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/mged/assigning_material_properties_and_raytracing_images/raytracedshapes.png" format="PNG"></imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	     Raytraced Shapes
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
       
       <para>
 	As we have seen, you can specify the background color for the raytraced
@@ -395,8 +407,8 @@
 	<tgroup cols='2'>
 	  <tbody>
 	    <row>
-	      <entry><graphic/></entry>
-	      <entry><graphic/></entry>
+	      <entry><inlinegraphic fileref="../../lessons/mged/assigning_material_properties_images/raytracedshapes.png" /></entry>
+	      <entry><inlinegraphic fileref="../../lessons/mged/assigning_material_properties_images/fb_overlay_mode.png" /></entry>
 	    </row>
 	    <row>
 	      <entry>Framebuffer in Underlay Mode</entry>
