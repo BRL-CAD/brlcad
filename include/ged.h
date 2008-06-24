@@ -1022,6 +1022,14 @@ GED_EXPORT BU_EXTERN(int ged_illum, (struct ged *gedp, int argc, const char *arg
 GED_EXPORT BU_EXTERN(int ged_item, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * List object information, verbose.
+ *
+ * Usage:
+ *     l [-r] <objects>
+ */
+GED_EXPORT BU_EXTERN(int ged_list, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Used to control logging.
  *
  * Usage:
@@ -1126,6 +1134,14 @@ GED_EXPORT BU_EXTERN(int ged_otranslate, (struct ged *gedp, int argc, const char
  *     overlay file.pl [name]
  */
 GED_EXPORT BU_EXTERN(int ged_overlay, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Lists all paths matching the input path
+ *
+ * Usage:
+ *     paths pattern
+ */
+GED_EXPORT BU_EXTERN(int ged_pathsum, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Get/set query_ray attributes

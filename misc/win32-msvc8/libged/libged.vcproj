@@ -206,6 +206,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\list.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\log.c"
 				>
 			</File>
@@ -251,6 +255,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\overlay.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\pathsum.c"
 				>
 			</File>
 			<File

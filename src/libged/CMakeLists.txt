@@ -19,6 +19,7 @@ set(LIBGED_SOURCES
     importFg4Section.c
     illum.c
     item.c
+    list.c
     log.c
     ls.c
     make.c
@@ -31,6 +32,7 @@ set(LIBGED_SOURCES
     oscale.c
     otranslate.c
     overlay.c
+    pathsum.c
     qray.c
     rmater.c
     rt.c

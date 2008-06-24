@@ -23,6 +23,7 @@ libged_nil_la_SOURCES = \
 	importFg4Section.c \
 	illum.c \
 	item.c \
+	list.c \
 	log.c \
 	ls.c \
 	make.c \
@@ -35,6 +36,7 @@ libged_nil_la_SOURCES = \
 	oscale.c \
 	otranslate.c \
 	overlay.c \
+	pathsum.c \
 	qray.c \
 	rmater.c \
 	rt.c \
