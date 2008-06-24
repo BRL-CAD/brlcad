@@ -86,7 +86,7 @@ ged_pathsum(struct ged *gedp, int argc, const char *argv[])
 	tok = strtok((char *)argv[1], "/");
 	while (tok) {
 	    if ((gtd.gtd_obj[gtd.gtd_objpos++] = db_lookup(gedp->ged_wdbp->dbip, tok, LOOKUP_NOISY)) == DIR_NULL)
-		return TCL_ERROR;
+		return GED_ERROR;
 	    tok = strtok((char *)NULL, "/");
 	}
     } else {
@@ -95,7 +95,7 @@ ged_pathsum(struct ged *gedp, int argc, const char *argv[])
 	/* build directory pointer array for desired path */
 	for (i=0; i<gtd.gtd_objpos; i++) {
 	    if ((gtd.gtd_obj[i] = db_lookup(gedp->ged_wdbp->dbip, argv[pos_in+i], LOOKUP_NOISY)) == DIR_NULL)
-		return TCL_ERROR;
+		return GED_ERROR;
 	}
     }
 
