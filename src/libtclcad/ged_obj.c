@@ -64,6 +64,7 @@ static int ged_open_tcl(ClientData	clientData,
 
 static struct bu_cmdtab ged_cmds[] = {
     {"arced",		ged_arced},
+    {"attr",		ged_attr},
     {"comb_color",	ged_comb_color},
     {"edcomb",		ged_edcomb},
     {"edmater",		ged_edmater},

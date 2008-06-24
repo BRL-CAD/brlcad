@@ -4,6 +4,7 @@ noinst_LTLIBRARIES = libged_nil.la
 
 libged_nil_la_SOURCES = \
 	arced.c \
+	attr.c \
 	autoview.c \
 	bigE.c \
 	blast.c \

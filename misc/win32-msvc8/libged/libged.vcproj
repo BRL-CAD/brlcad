@@ -130,6 +130,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\attr.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\autoview.c"
 				>
 			</File>

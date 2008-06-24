@@ -1,5 +1,6 @@
 set(LIBGED_SOURCES
     arced.c
+    attr.c
     autoview.c
     bigE.c
     blast.c

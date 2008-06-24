@@ -908,6 +908,22 @@ GED_EXPORT BU_EXTERN(int ged_editit, (const char *file));
 GED_EXPORT BU_EXTERN(int ged_arced, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Set, get, show, remove or append to attribute values for the specified object.
+ * The arguments for "set" and "append" subcommands are attribute name/value pairs.
+ * The arguments for "get", "rm", and "show" subcommands are attribute names.
+ * The "set" subcommand sets the specified attributes for the object.
+ * The "append" subcommand appends the provided value to an existing attribute,
+ * or creates a new attribute if it does not already exist.
+ * The "get" subcommand retrieves and displays the specified attributes.
+ * The "rm" subcommand deletes the specified attributes.
+ * The "show" subcommand does a "get" and displays the results in a user readable format.
+ *
+ * Usage:
+ *     attr set|get|show|rm|append} object [args]
+ */
+GED_EXPORT BU_EXTERN(int ged_attr, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Auto-adjust the view so that all displayed geometry is in view
  *
  * Usage:
