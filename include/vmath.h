@@ -86,7 +86,7 @@
 __BEGIN_DECLS
 
 #ifndef M_
-#  define M_	XXX /**< */
+#  define M_		XXX /**< */
 #endif
 
 #ifndef M_1_PI
@@ -145,20 +145,20 @@ __BEGIN_DECLS
 #endif
 
 #ifndef PI
-#  define PI M_PI /**< DEPRECATED - do not use */
+#  define PI 		M_PI /**< DEPRECATED - do not use */
 #endif
 #ifndef DEG2RAD
 #  define DEG2RAD       0.017453292519943295769236907684 /**< pi/180 */
 #endif
 #ifndef RAD2DEG
-#  define RAD2DEG      57.295779513082320876798154814105 /**< 180/pi */
+#  define RAD2DEG	57.295779513082320876798154814105 /**< 180/pi */
 #endif
 
 
 /* minimum computation tolerances */
 #ifdef vax
-#  define VDIVIDE_TOL	( 1.0e-10 )
-#  define VUNITIZE_TOL	( 1.0e-7 )
+#  define VDIVIDE_TOL		( 1.0e-10 )
+#  define VUNITIZE_TOL		( 1.0e-7 )
 #else
 #  ifdef DBL_EPSILON
 #    define VDIVIDE_TOL		( DBL_EPSILON )
@@ -172,23 +172,41 @@ __BEGIN_DECLS
 #  endif
 #endif
 
+/** @brief # of fastf_t's per vect2d_t */
+#define ELEMENTS_PER_VECT	2
+
+/** @brief # of fastf_t's per point2d_t */
+#define ELEMENTS_PER_PT         2
+
 /** @brief # of fastf_t's per vect_t */
 #define ELEMENTS_PER_VECT	3
+
+/** @brief # of fastf_t's per point_t */
 #define ELEMENTS_PER_PT         3
-/** @brief # of fastf_t's per hvect_t */
+
+/** @brief # of fastf_t's per hvect_t (homogeneous vector) */
 #define HVECT_LEN		4
+
+/** @brief # of fastf_t's per hpt_t (homogeneous point) */
 #define HPT_LEN			4
 
 /** @brief # of fastf_t's per plane_t */
 #define ELEMENTS_PER_PLANE	4
+
+/** @brief # of fastf_t's per mat_t */
 #define ELEMENTS_PER_MAT	(ELEMENTS_PER_PLANE*ELEMENTS_PER_PLANE)
 
 /*
  * Types for matrixes and vectors.
  */
-/** @brief 4x4 matrix */
-typedef	fastf_t	mat_t[ELEMENTS_PER_MAT];
-typedef	fastf_t	*matp_t;
+
+/** @brief 2-tuple vector */
+typedef fastf_t vect2d_t[ELEMENTS_PER_2D_VECT];
+typedef fastf_t *vect2dp_t;
+
+/** @brief 2-tuple point */
+typedef fastf_t point2d_t[ELEMENTS_PER_2D_PT];
+typedef fastf_t *point2dp_t;
 
 /** @brief 3-tuple vector */
 typedef	fastf_t	vect_t[ELEMENTS_PER_VECT];
@@ -198,8 +216,6 @@ typedef	fastf_t	*vectp_t;
 typedef fastf_t	point_t[ELEMENTS_PER_PT];
 typedef fastf_t	*pointp_t;
 
-typedef fastf_t point2d_t[2];
-
 /** @brief 4-tuple vector */
 typedef fastf_t hvect_t[HVECT_LEN];
 
@@ -208,6 +224,11 @@ typedef fastf_t hpoint_t[HPT_LEN];
 
 /** @brief 4-element quaternion */
 #define quat_t	hvect_t
+
+/** @brief 4x4 matrix */
+typedef	fastf_t	mat_t[ELEMENTS_PER_MAT];
+typedef	fastf_t	*matp_t;
+
 
 /**
  * return truthfully whether a value is within some epsilon from zero
@@ -1133,9 +1154,9 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
  */
 #define VADD2_2D(a, b, c)	V2ADD2(a, b, c)
 #define VSUB2_2D(a, b, c)	V2SUB2(a, b, c)
-#define MAGSQ_2D(a)	MAG2SQ(a)
-#define VDOT_2D(a, b)	V2DOT(a, b)
-#define VMOVE_2D(a, b)	V2MOVE(a, b)
+#define MAGSQ_2D(a)		MAG2SQ(a)
+#define VDOT_2D(a, b)		V2DOT(a, b)
+#define VMOVE_2D(a, b)		V2MOVE(a, b)
 #define VSCALE_2D(a, b, c)	V2SCALE(a, b, c)
 #define VJOIN1_2D(a, b, c, d) 	V2JOIN1(a, b, c, d)
 
