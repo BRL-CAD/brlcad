@@ -151,8 +151,6 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 * add an overlap depth reporting tolerance parameter to the
   ray-tracers (similar to -R).
 
-* script that checks a dist source tarball for missing files
-
 * Generate plain .zip files for Windows binary releases
 
 * fix the variety of ami.tcl and ampi.tcl tclscript warnings/errors
