@@ -52,6 +52,9 @@ new names should be listed for reference.
 include/raytrace.h
 	rt_functab size -> growing ft_label and new callbacks [deprecated 7.12]
 include/vmath.h
+	ELEMENTS_PER_PT -> ELEMENTS_PER_POINT
+	HVECT_LEN -> ELEMENTS_PER_HVECT
+	HPT_LEN -> ELEMENTS_PER_HPOINT
 	M_SQRT2_DIV2 -> M_SQRT1_2
 srt/librt/cmd.c
 	rt_split_cmd() -> bu_argv_from_string() [deprecated 7.12]

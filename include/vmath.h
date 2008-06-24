@@ -182,13 +182,16 @@ __BEGIN_DECLS
 #define ELEMENTS_PER_VECT	3
 
 /** @brief # of fastf_t's per point_t */
-#define ELEMENTS_PER_PT         3
+#define ELEMENTS_PER_POINT	3
+#define ELEMENTS_PER_PT		ELEMENTS_PER_POINT /**< DEPRECATED */
 
 /** @brief # of fastf_t's per hvect_t (homogeneous vector) */
-#define HVECT_LEN		4
+#define ELEMENTS_PER_HVECT	4
+#define HVECT_LEN		ELEMENTS_PER_HVECT /**< DEPRECATED */
 
 /** @brief # of fastf_t's per hpt_t (homogeneous point) */
-#define HPT_LEN			4
+#define ELEMENTS_PER_HPOINT	4
+#define HPT_LEN			ELEMENTS_PER_HPOINT /**< DEPRECATED */
 
 /** @brief # of fastf_t's per plane_t */
 #define ELEMENTS_PER_PLANE	4
@@ -213,14 +216,14 @@ typedef	fastf_t	vect_t[ELEMENTS_PER_VECT];
 typedef	fastf_t	*vectp_t;
 
 /** @brief 3-tuple point */
-typedef fastf_t	point_t[ELEMENTS_PER_PT];
+typedef fastf_t	point_t[ELEMENTS_PER_POINT];
 typedef fastf_t	*pointp_t;
 
 /** @brief 4-tuple vector */
-typedef fastf_t hvect_t[HVECT_LEN];
+typedef fastf_t hvect_t[ELEMENTS_PER_HVECT];
 
 /** @brief 4-tuple point */
-typedef fastf_t hpoint_t[HPT_LEN];
+typedef fastf_t hpoint_t[ELEMENTS_PER_HPOINT];
 
 /** @brief 4-element quaternion */
 #define quat_t	hvect_t
