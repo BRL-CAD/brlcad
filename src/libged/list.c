@@ -24,6 +24,9 @@
  */
 
 #include "common.h"
+
+#include <string.h>
+
 #include "bio.h"
 #include "cmd.h"
 #include "ged_private.h"
@@ -73,7 +76,7 @@ ged_list(struct ged *gedp, int argc, const char *argv[])
 	    tmp_argv[1] = (char *)argv[arg];
 	    tmp_argv[2] = (char *)NULL;
 
-	    ged_pathsum(gedp, 2, tmp_argv);
+	    ged_pathsum(gedp, 2, (const char **)tmp_argv);
 	} else if (strchr(argv[arg], '/')) {
 	    struct db_tree_state ts;
 	    struct db_full_path path;
