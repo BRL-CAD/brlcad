@@ -52,7 +52,7 @@ int main()
     {
 
     // declare a graph object
-    binaryNetwork<int > N;
+    BinaryNetwork<int > N;
 
     // Convenient naming for the vertices and Corrsponding Variables
     Variable<int> A,B,C,D;

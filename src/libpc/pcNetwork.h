@@ -46,7 +46,7 @@ public:
 
 using namespace boost;
 template<class T>
-class binaryNetwork 
+class BinaryNetwork 
 {
 private:
 
