@@ -3777,18 +3777,18 @@ AC_CONFIG_FILES([
 	misc/macosx/Resources/Welcome.rtfd/Makefile
 	misc/nsis/Makefile
 	misc/pkgconfig/Makefile
-	misc/pkgconfig/bn.pc
-	misc/pkgconfig/brlcad.pc
-	misc/pkgconfig/bu.pc
-	misc/pkgconfig/dm.pc
-	misc/pkgconfig/fb.pc
-	misc/pkgconfig/fft.pc
-	misc/pkgconfig/multispectral.pc
-	misc/pkgconfig/optical.pc
-	misc/pkgconfig/pc.pc
-	misc/pkgconfig/pkg.pc
-	misc/pkgconfig/rt.pc
-	misc/pkgconfig/wdb.pc
+	misc/pkgconfig/libbn.pc
+	misc/pkgconfig/libbrlcad.pc
+	misc/pkgconfig/libbu.pc
+	misc/pkgconfig/libdm.pc
+	misc/pkgconfig/libfb.pc
+	misc/pkgconfig/libfft.pc
+	misc/pkgconfig/libmultispectral.pc
+	misc/pkgconfig/liboptical.pc
+	misc/pkgconfig/libpc.pc
+	misc/pkgconfig/libpkg.pc
+	misc/pkgconfig/librt.pc
+	misc/pkgconfig/libwdb.pc
 	misc/win32-msvc/Dll/Makefile
 	misc/win32-msvc/Makefile
 	misc/win32-msvc8/Makefile

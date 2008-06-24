@@ -2,31 +2,31 @@
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = \
-	bn.pc \
-	brlcad.pc \
-	bu.pc \
-	dm.pc \
-	fb.pc \
-	fft.pc \
-	multispectral.pc \
-	optical.pc \
-	pc.pc \
-	pkg.pc \
-	rt.pc \
-	wdb.pc
+	libbn.pc \
+	libbrlcad.pc \
+	libbu.pc \
+	libdm.pc \
+	libfb.pc \
+	libfft.pc \
+	libmultispectral.pc \
+	liboptical.pc \
+	libpc.pc \
+	libpkg.pc \
+	librt.pc \
+	libwdb.pc
 
 EXTRA_DIST = \
-	bn.pc.in \
-	brlcad.pc.in \
-	bu.pc.in \
-	dm.pc.in \
-	fb.pc.in \
-	fft.pc.in \
-	multispectral.pc.in \
-	optical.pc.in \
-	pc.pc.in \
-	pkg.pc.in \
-	rt.pc.in \
-	wdb.pc.in
+	libbn.pc.in \
+	libbrlcad.pc.in \
+	libbu.pc.in \
+	libdm.pc.in \
+	libfb.pc.in \
+	libfft.pc.in \
+	libmultispectral.pc.in \
+	liboptical.pc.in \
+	libpc.pc.in \
+	libpkg.pc.in \
+	librt.pc.in \
+	liwdb.pc.in
 
 include $(top_srcdir)/misc/Makefile.defs
