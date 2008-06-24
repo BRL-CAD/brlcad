@@ -43,21 +43,19 @@
 #include "mater.h"
 
 
-#define BUFSIZE			(16*1024)	/* input line buffer size */
-#define TYPE_LEN			200
-#define NAME_LEN			200
+/* maximum input line buffer size */
+#define BUFSIZE (16*1024)
 
-void		identbld(void), polyhbld(void), pipebld(void), particlebld(void);
-void		solbld(void), arbnbld(void), clinebld(void), botbld(void), extrbld(void), sktbld(void);
-int		combbld(void);
-void		membbld(struct bu_list *headp), arsabld(void), arsbbld(void);
-void		materbld(void), bsplbld(void), bsurfbld(void), zap_nl(void);
-char		*nxt_spc(register char *cp);
-void		strsolbld(void), nmgbld(void);
+#define TYPE_LEN 200
+#define NAME_LEN 200
 
-static union record	record;			/* GED database record */
-char 		*buf = NULL;		/* Record input buffer */
-char		name[NAME_LEN + 2] = {0};
+
+/* GED database record */
+static union record record;
+
+/* Record input buffer */
+char *buf = NULL;
+char name[NAME_LEN + 2] = {0};
 
 FILE *ifp = NULL;
 struct rt_wdb *ofp = NULL;
@@ -87,6 +85,31 @@ char *aliases[] = {
     (char *)0
 };
 
+
+char *
+nxt_spc(register char *cp)
+{
+    while (*cp != ' ' && *cp != '\t' && *cp !='\0') {
+	cp++;
+    }
+    if (*cp != '\0') {
+	cp++;
+    }
+    return(cp);
+}
+
+
+int
+ngran(int nfloat)
+{
+    register int gran;
+    /* Round up */
+    gran = nfloat + ((sizeof(union record)-1) / sizeof(float));
+    gran = (gran * sizeof(float)) / sizeof(union record);
+    return(gran);
+}
+
+
 int
 incr_ars_pt(void)
 {
@@ -105,216 +128,37 @@ incr_ars_pt(void)
     return(ret);
 }
 
-/*
- *			M A I N
+
+/**
+ * Z A P _ N L
+ *
+ * This routine removes newline and carriage return characters from
+ * the buffer and substitutes in NULL.
  */
-int
-main(int argc, char *argv[])
+void
+zap_nl(void)
 {
-    char c1[3];
+    register char *bp;
 
-    bu_debug = BU_DEBUG_COREDUMP;
+    bp = &buf[0];
 
-    if (argc != 3)
-	bu_exit(1, "%s", usage);
-
-    Tcl_FindExecutable(argv[0]);
-
-    ifp = fopen(argv[1], "rb");
-    if (!ifp)  perror(argv[1]);
-
-    ofp = wdb_fopen(argv[2]);
-    if (!ofp)  perror(argv[2]);
-    if (ifp == NULL || ofp == NULL) {
-	bu_exit(1, "asc2g: can't open files.");
+    while (*bp != '\0') {
+	if ((*bp == '\n') || (*bp == '\r')) {
+	    *bp = '\0';
+	}
+	bp++;
     }
-
-    rt_init_resource(&rt_uniresource, 0, NULL);
-
-    if (bu_fgets(c1, 6, ifp) == NULL) {
-	fclose(ifp); ifp = NULL;
-	wdb_close(ofp); ofp = NULL;
-	bu_exit(1, "Unexpected EOF\n");
-    }
-
-    /* new style ascii database */
-    if (!strncmp(c1, "title", 5) || !strncmp(c1, "put ", 4)) {
-	Tcl_Interp     *interp;
-	Tcl_Interp     *safe_interp;
-
-	/* this is a Tcl script */
-
-
-	/* No longer need ifp */
-	fclose(ifp); ifp = NULL;
-
-	BU_LIST_INIT(&rt_g.rtg_headwdb.l);
-
-	interp = Tcl_CreateInterp();
-	if (wdb_init_obj(interp, ofp, db_name) != TCL_OK ||
-	    wdb_create_cmd(interp, ofp, db_name) != TCL_OK) {
-	    bu_exit(1, "Failed to initialize wdb_obj!\n");
-	}
-
-	/* Create the safe interpreter */
-	if ((safe_interp = Tcl_CreateSlave(interp, slave_name, 1)) == NULL) {
-	    bu_exit(1, "Failed to create safe interpreter");
-	}
-
-	/* Create aliases */
-	{
-	    int	i;
-	    int	ac = 1;
-	    const char	*av[2];
-
-	    av[1] = (char *)0;
-	    for (i = 0; aliases[i] != (char *)0; ++i) {
-		av[0] = aliases[i];
-		Tcl_CreateAlias(safe_interp, aliases[i], interp, db_name, ac, av);
-	    }
-	    /* add "dbfind" separately */
-	    av[0] = "find";
-	    Tcl_CreateAlias(safe_interp, "dbfind", interp, db_name, ac, av);
-	}
-
-	if (Tcl_EvalFile(safe_interp, argv[1]) != TCL_OK) {
-	    bu_log("Failed to process input file (%s)!\n", argv[1]);
-	    bu_log("%s\n", Tcl_GetStringResult(safe_interp));
-	    Tcl_Exit(1);
-	}
-
-	/* free up our resources */
-	mk_write_color_table(ofp);
-	wdb_close(ofp); ofp = NULL;
-
-	Tcl_Exit(0);
-    } else {
-	rewind(ifp);
-    }
-
-    /* allocate our input buffer */
-    buf = (char *)bu_calloc(sizeof(char), BUFSIZE, "input buffer");
-
-    /* Read ASCII input file, each record on a line */
-    while ((bu_fgets(buf, BUFSIZE, ifp)) != (char *)0) {
-
-    after_read:
-	/* Clear the output record -- vital! */
-	(void)memset((char *)&record, 0, sizeof(record));
-
-	/* Check record type */
-	switch (buf[0]) {
-	    case ID_SOLID:
-		solbld();
-		continue;
-
-	    case ID_COMB:
-		if (combbld() > 0)  goto after_read;
-		continue;
-
-	    case ID_MEMB:
-		bu_log("Warning: unattached Member record, ignored\n");
-		continue;
-
-	    case ID_ARS_A:
-		arsabld();
-		continue;
-
-	    case ID_ARS_B:
-		arsbbld();
-		continue;
-
-	    case ID_P_HEAD:
-		polyhbld();
-		continue;
-
-	    case ID_P_DATA:
-		bu_log("Unattached POLY-solid P_DATA (Q) record, skipping\n");
-		continue;
-
-	    case ID_IDENT:
-		identbld();
-		continue;
-
-	    case ID_MATERIAL:
-		materbld();
-		continue;
-
-	    case ID_BSOLID:
-		bsplbld();
-		continue;
-
-	    case ID_BSURF:
-		bsurfbld();
-		continue;
-
-	    case DBID_PIPE:
-		pipebld();
-		continue;
-
-	    case DBID_STRSOL:
-		strsolbld();
-		continue;
-
-	    case DBID_NMG:
-		nmgbld();
-		continue;
-
-	    case DBID_PARTICLE:
-		particlebld();
-		continue;
-
-	    case DBID_ARBN:
-		arbnbld();
-		continue;
-
-	    case DBID_CLINE:
-		clinebld();
-		continue;
-
-	    case DBID_BOT:
-		botbld();
-		continue;
-
-	    case DBID_EXTR:
-		extrbld();
-		continue;
-
-	    case DBID_SKETCH:
-		sktbld();
-		continue;
-
-	    default:
-		bu_log("asc2g: bad record type '%c' (0%o), skipping\n", buf[0], buf[0]);
-		bu_log("%s\n", buf);
-		continue;
-	}
-	memset(buf, 0, sizeof(char) * BUFSIZE);
-    }
-
-    /* Now, at the end of the database, dump out the entire
-     * region-id-based color table.
-     */
-    mk_write_color_table(ofp);
-
-    /* close up shop */
-    bu_free(buf, "input buffer");
-    buf = NULL; /* sanity */
-    fclose(ifp); ifp = NULL;
-    wdb_close(ofp); ofp = NULL;
-
-    Tcl_Exit(0);
-    return 0;
 }
 
-/*
- *			S T R S O L B L D
+
+/**
+ * S T R S O L B L D
  *
- *  Input format is:
+ * Input format is:
  *	s type name args...\n
  *
- *  Individual processing is needed for each 'type' of solid,
- *  to hand it off to the appropriate LIBWDB routine.
+ * Individual processing is needed for each 'type' of solid, to hand
+ * it off to the appropriate LIBWDB routine.
  */
 void
 strsolbld(void)
@@ -576,18 +420,15 @@ extrbld(void)
     (void)mk_extrusion(ofp, name, sketch_name, V, h, u_vec, v_vec, keypoint);
 }
 
-/*
- *			N M G B L D
+/**
+ * N M G B L D
  *
- *  For the time being, what we read in from the ascii form is
- *  a hex dump of the on-disk form of NMG.
- *  This is the same between v4 and v5.
- *  Reassemble it in v5 binary form here,
- *  then import it,
- *  then re-export it.
- *  This extra step is necessary because we don't know what version
- *  database the output it, LIBWDB is only interested in writing
- *  in-memory versions.
+ * For the time being, what we read in from the ascii form is a hex
+ * dump of the on-disk form of NMG.  This is the same between v4 and
+ * v5.  Reassemble it in v5 binary form here, then import it, then
+ * re-export it.  This extra step is necessary because we don't know
+ * what version database the output it, LIBWDB is only interested in
+ * writing in-memory versions.
  */
 void
 nmgbld(void)
@@ -664,12 +505,14 @@ nmgbld(void)
     bu_free(name, "name");
 }
 
-/*		S O L B L D
- *
- * This routine parses a solid record and determines which libwdb routine
- * to call to replicate this solid.  Simple primitives are expected.
- */
 
+/**
+ * S O L B L D
+ *
+ * This routine parses a solid record and determines which libwdb
+ * routine to call to replicate this solid.  Simple primitives are
+ * expected.
+ */
 void
 solbld(void)
 {
@@ -677,18 +520,18 @@ solbld(void)
     register char *np;
     register int i;
 
-    char	s_type;			/* id for the type of primitive */
-    fastf_t	val[24];		/* array of values/parameters for solid */
-    point_t	center;			/* center; used by many solids */
+    char	s_type;		/* id for the type of primitive */
+    fastf_t	val[24];	/* array of values/parameters for solid */
+    point_t	center;		/* center; used by many solids */
     point_t pnts[9];		/* array of points for the arbs */
     point_t	norm;
-    vect_t	a, b, c, d, n;		/* various vectors required */
-    vect_t	height;			/* height vector for tgc */
-    vect_t	breadth;		/* breadth vector for rpc */
+    vect_t	a, b, c, d, n;	/* various vectors required */
+    vect_t	height;		/* height vector for tgc */
+    vect_t	breadth;	/* breadth vector for rpc */
     double	dd, rad1, rad2;
 
     cp = buf;
-    cp++;				/* ident */
+    cp++;			/* ident */
     cp = nxt_spc(cp);		/* skip the space */
     s_type = atoi(cp);
 
@@ -836,16 +679,56 @@ solbld(void)
 }
 
 
-/*			C O M B B L D
+/**
+ * M E M B B L D
  *
- *  This routine builds combinations.
- *  It does so by processing the "C" combination input line,
- *  (which may be followed by optional material properties lines),
- *  and it then slurps up any following "M" member lines,
- *  building up a linked list of all members.
- *  Reading continues until a non-"M" record is encountered.
+ * This routine invokes libwdb to build a member of a combination.
+ * Called only from combbld()
+ */
+void
+membbld(struct bu_list *headp)
+{
+    register char 	*cp;
+    register char 	*np;
+    register int 	i;
+    char		relation;	/* boolean operation */
+    char		inst_name[NAME_LEN+2];
+    struct wmember	*memb;
+
+    cp = buf;
+    cp++;			/* ident */
+    cp = nxt_spc(cp);		/* skip the space */
+
+    relation = *cp++;
+    cp = nxt_spc(cp);
+
+    np = inst_name;
+    while (*cp != ' ') {
+	*np++ = *cp++;
+    }
+    *np = '\0';
+
+    cp = nxt_spc(cp);
+
+    memb = mk_addmember(inst_name, headp, NULL, relation);
+
+    for (i = 0; i < 16; i++) {
+	memb->wm_mat[i] = atof(cp);
+	cp = nxt_spc(cp);
+    }
+}
+
+
+/**
+ * C O M B B L D
  *
- *  Returns -
+ * This routine builds combinations.  It does so by processing the "C"
+ * combination input line, (which may be followed by optional material
+ * properties lines), and it then slurps up any following "M" member
+ * lines, building up a linked list of all members.  Reading continues
+ * until a non-"M" record is encountered.
+ *
+ * Returns -
  *	0	OK
  *	1	OK, another record exists in global input line buffer.
  */
@@ -876,7 +759,7 @@ combbld(void)
     temp_nflag = temp_pflag = 0;	/* indicators for optional fields */
 
     cp = buf;
-    cp++;				/* ID_COMB */
+    cp++;			/* ID_COMB */
     cp = nxt_spc(cp);		/* skip the space */
 
     reg_flags = *cp++;		/* Y, N, or new P, F */
@@ -975,50 +858,11 @@ combbld(void)
 }
 
 
-/*		M E M B B L D
- *
- *  This routine invokes libwdb to build a member of a combination.
- *  Called only from combbld()
- */
-void
-membbld(struct bu_list *headp)
-{
-    register char 	*cp;
-    register char 	*np;
-    register int 	i;
-    char		relation;	/* boolean operation */
-    char		inst_name[NAME_LEN+2];
-    struct wmember	*memb;
-
-    cp = buf;
-    cp++;				/* ident */
-    cp = nxt_spc(cp);		/* skip the space */
-
-    relation = *cp++;
-    cp = nxt_spc(cp);
-
-    np = inst_name;
-    while (*cp != ' ') {
-	*np++ = *cp++;
-    }
-    *np = '\0';
-
-    cp = nxt_spc(cp);
-
-    memb = mk_addmember(inst_name, headp, NULL, relation);
-
-    for (i = 0; i < 16; i++) {
-	memb->wm_mat[i] = atof(cp);
-	cp = nxt_spc(cp);
-    }
-}
-
-
-/*		A R S B L D
+/**
+ * A R S B L D
  *
  * This routine builds ARS's.
  */
-
 void
 arsabld(void)
 {
@@ -1050,11 +894,13 @@ arsabld(void)
     ars_curve = 0;
 }
 
-/*		A R S B L D
- *
- * This is the second half of the ARS-building.  It builds the ARS B record.
- */
 
+/**
+ * A R S B L D
+ *
+ * This is the second half of the ARS-building.  It builds the ARS B
+ * record.
+ */
 void
 arsbbld(void)
 {
@@ -1091,33 +937,11 @@ arsbbld(void)
 }
 
 
-/*		Z A P _ N L
- *
- * This routine removes newline and carriage return characters from
- * the buffer and substitutes in NULL.
- */
-
-void
-zap_nl(void)
-{
-    register char *bp;
-
-    bp = &buf[0];
-
-    while (*bp != '\0') {
-	if ((*bp == '\n') || (*bp == '\r')) {
-	    *bp = '\0';
-	}
-	bp++;
-    }
-}
-
-
-/*		I D E N T B L D
+/**
+ * I D E N T B L D
  *
  * This routine makes an ident record.  It calls libwdb to do this.
  */
-
 void
 identbld(void)
 {
@@ -1132,7 +956,7 @@ identbld(void)
     bu_strlcpy(unit_str, "none", sizeof(unit_str));
 
     cp = buf;
-    cp++;				/* ident */
+    cp++;			/* ident */
     cp = nxt_spc(cp);		/* skip the space */
 
     units = (char)atoi(cp);
@@ -1206,16 +1030,16 @@ identbld(void)
 }
 
 
-/*		P O L Y H B L D
+/**
+ * P O L Y H B L D
  *
- *  Collect up all the information for a POLY-solid.
- *  These are handled as BoT solids in v5, but we still have to read
- *  the data in the old format, and then convert it.
+ * Collect up all the information for a POLY-solid.  These are handled
+ * as BoT solids in v5, but we still have to read the data in the old
+ * format, and then convert it.
  *
- *  The poly header line is followed by an unknown number of
- *  poly data lines.
+ * The poly header line is followed by an unknown number of poly data
+ * lines.
  */
-
 void
 polyhbld(void)
 {
@@ -1286,8 +1110,8 @@ polyhbld(void)
     intern.idb_meth = &rt_functab[ID_POLY];
     intern.idb_ptr = pg;
 
-    /* this tolerance structure is only used for converting polysolids to BOT's
-     * use zero distance to avoid losing any polysolid facets
+    /* this tolerance structure is only used for converting polysolids
+     * to BOT's use zero distance to avoid losing any polysolid facets
      */
     tol.magic = BN_TOL_MAGIC;
     tol.dist = 0.0;
@@ -1299,20 +1123,20 @@ polyhbld(void)
 	bu_exit(1, "Failed to convert [%s] polysolid object to triangle mesh\n", name);
     /* The polysolid is freed by the converter */
 
-    /*
-     * Since we already have an internal form, this is much simpler than
-     * calling mk_bot().
+    /* Since we already have an internal form, this is much simpler
+     * than calling mk_bot().
      */
     if (wdb_put_internal(ofp, name, &intern, mk_conv2mm) < 0)
 	bu_exit(1, "Failed to create [%s] triangle mesh representation from polysolid object\n", name);
     /* BoT internal has been freed */
 }
 
-/*		M A T E R B L D
- *
- *  Add information to the region-id based coloring table.
- */
 
+/**
+ * M A T E R B L D
+ *
+ * Add information to the region-id based coloring table.
+ */
 void
 materbld(void)
 {
@@ -1321,7 +1145,7 @@ materbld(void)
     int	r, g, b;
 
     cp = buf;
-    cp++;				/* skip ID_MATERIAL */
+    cp++;			/* skip ID_MATERIAL */
     cp = nxt_spc(cp);		/* skip the space */
 
     /* flags = (char)atoi(cp); */
@@ -1340,11 +1164,12 @@ materbld(void)
     rt_color_addrec(low, hi, r, g, b, -1L);
 }
 
-/*		B S P L B L D
- *
- *  This routine builds B-splines using libwdb.
- */
 
+/**
+ * B S P L B L D
+ *
+ * This routine builds B-splines using libwdb.
+ */
 void
 bsplbld(void)
 {
@@ -1355,7 +1180,7 @@ bsplbld(void)
     fastf_t		resolution;	/* resolution of flatness */
 
     cp = buf;
-    cp++;				/* ident */
+    cp++;			/* ident */
     cp = nxt_spc(cp);		/* skip the space */
 
     np = name;
@@ -1375,11 +1200,12 @@ bsplbld(void)
 #endif
 }
 
-/* 		B S U R F B L D
+
+/**
+ * B S U R F B L D
  *
  * This routine builds d-spline surface descriptions using libwdb.
  */
-
 void
 bsurfbld(void)
 {
@@ -1426,17 +1252,17 @@ bsurfbld(void)
     (void)fwrite((char *)&record, sizeof record, 1, ofp);
 
     /*
-     * The b_surf_head record is followed by
-     * d_nknots granules of knot vectors (first u, then v),
-     * and then by d_nctls granules of control mesh information.
-     * Note that neither of these have an ID field!
+     * The b_surf_head record is followed by d_nknots granules of knot
+     * vectors (first u, then v), and then by d_nctls granules of
+     * control mesh information.  Note that neither of these have an
+     * ID field!
      *
      * B-spline surface record, followed by
-     *	d_kv_size[0] floats,
-     *	d_kv_size[1] floats,
-     *	padded to d_nknots granules, followed by
-     *	ctl_size[0]*ctl_size[1]*geom_type floats,
-     *	padded to d_nctls granules.
+     * d_kv_size[0] floats,
+     * d_kv_size[1] floats,
+     * padded to d_nknots granules, followed by
+     * ctl_size[0]*ctl_size[1]*geom_type floats,
+     * padded to d_nctls granules.
      *
      * IMPORTANT NOTE: granule == sizeof(union record)
      */
@@ -1480,7 +1306,9 @@ bsurfbld(void)
 #endif
 }
 
-/*		C L I N E B L D
+
+/**
+ * C L I N E B L D
  *
  */
 void
@@ -1523,7 +1351,9 @@ clinebld(void)
     mk_cline(ofp, my_name, V, height, radius, thickness);
 }
 
-/*		B O T B L D
+
+/**
+ * B O T B L D
  *
  */
 void
@@ -1604,12 +1434,14 @@ botbld(void)
     }
 }
 
-/*		P I P E B L D
- *
- *  This routine reads pipe data from standard in, constructs a doublely
- *  linked list of pipe points, and sends this list to mk_pipe().
- */
 
+/**
+ * P I P E B L D
+ *
+ * This routine reads pipe data from standard in, constructs a
+ * doublely linked list of pipe points, and sends this list to
+ * mk_pipe().
+ */
 void
 pipebld(void)
 {
@@ -1623,7 +1455,7 @@ pipebld(void)
     /* Process the first buffer */
 
     cp = buf;
-    cp++;				/* ident, not used later */
+    cp++;			/* ident, not used later */
     cp = nxt_spc(cp);		/* skip spaces */
 
     np = name;
@@ -1661,12 +1493,13 @@ pipebld(void)
     mk_pipe_free(&head);
 }
 
-/*			P A R T I C L E B L D
- *
- * This routine reads particle data from standard in, and constructs the
- * parameters required by mk_particle.
- */
 
+/**
+ * P A R T I C L E B L D
+ *
+ * This routine reads particle data from standard in, and constructs
+ * the parameters required by mk_particle.
+ */
 void
 particlebld(void)
 {
@@ -1697,12 +1530,12 @@ particlebld(void)
 }
 
 
-/*			A R B N B L D
+/**
+ * A R B N B L D
  *
- *  This routine reads arbn data from standard in and sendss it to
- *  mk_arbn().
+ * This routine reads arbn data from standard in and sendss it to
+ * mk_arbn().
  */
-
 void
 arbnbld(void)
 {
@@ -1711,14 +1544,14 @@ arbnbld(void)
     char		type[TYPE_LEN] = {0};
     int		i;
     int		neqn;			/* number of eqn expected */
-    plane_t		*eqn;			/* pointer to plane equations for faces */
+    plane_t		*eqn;		/* pointer to plane equations for faces */
     register char	*cp;
     register char	*np;
 
     /* Process the first buffer */
 
     cp = buf;
-    cp++;					/* ident */
+    cp++;				/* ident */
     cp = nxt_spc(cp);			/* skip spaces */
 
     np = name;
@@ -1757,27 +1590,209 @@ arbnbld(void)
     mk_arbn(ofp, name, neqn, eqn);
 }
 
-char *
-nxt_spc(register char *cp)
+
+/**
+ * M A I N
+ */
+int
+main(int argc, char *argv[])
 {
-    while (*cp != ' ' && *cp != '\t' && *cp !='\0') {
-	cp++;
+    char c1[3];
+
+    bu_debug = BU_DEBUG_COREDUMP;
+
+    if (argc != 3)
+	bu_exit(1, "%s", usage);
+
+    Tcl_FindExecutable(argv[0]);
+
+    ifp = fopen(argv[1], "rb");
+    if (!ifp)  perror(argv[1]);
+
+    ofp = wdb_fopen(argv[2]);
+    if (!ofp)  perror(argv[2]);
+    if (ifp == NULL || ofp == NULL) {
+	bu_exit(1, "asc2g: can't open files.");
     }
-    if (*cp != '\0') {
-	cp++;
+
+    rt_init_resource(&rt_uniresource, 0, NULL);
+
+    if (bu_fgets(c1, 6, ifp) == NULL) {
+	fclose(ifp); ifp = NULL;
+	wdb_close(ofp); ofp = NULL;
+	bu_exit(1, "Unexpected EOF\n");
     }
-    return(cp);
+
+    /* new style ascii database */
+    if (!strncmp(c1, "title", 5) || !strncmp(c1, "put ", 4)) {
+	Tcl_Interp     *interp;
+	Tcl_Interp     *safe_interp;
+
+	/* this is a Tcl script */
+
+
+	/* No longer need ifp */
+	fclose(ifp); ifp = NULL;
+
+	BU_LIST_INIT(&rt_g.rtg_headwdb.l);
+
+	interp = Tcl_CreateInterp();
+	if (wdb_init_obj(interp, ofp, db_name) != TCL_OK ||
+	    wdb_create_cmd(interp, ofp, db_name) != TCL_OK) {
+	    bu_exit(1, "Failed to initialize wdb_obj!\n");
+	}
+
+	/* Create the safe interpreter */
+	if ((safe_interp = Tcl_CreateSlave(interp, slave_name, 1)) == NULL) {
+	    bu_exit(1, "Failed to create safe interpreter");
+	}
+
+	/* Create aliases */
+	{
+	    int	i;
+	    int	ac = 1;
+	    const char	*av[2];
+
+	    av[1] = (char *)0;
+	    for (i = 0; aliases[i] != (char *)0; ++i) {
+		av[0] = aliases[i];
+		Tcl_CreateAlias(safe_interp, aliases[i], interp, db_name, ac, av);
+	    }
+	    /* add "dbfind" separately */
+	    av[0] = "find";
+	    Tcl_CreateAlias(safe_interp, "dbfind", interp, db_name, ac, av);
+	}
+
+	if (Tcl_EvalFile(safe_interp, argv[1]) != TCL_OK) {
+	    bu_log("Failed to process input file (%s)!\n", argv[1]);
+	    bu_log("%s\n", Tcl_GetStringResult(safe_interp));
+	    Tcl_Exit(1);
+	}
+
+	/* free up our resources */
+	mk_write_color_table(ofp);
+	wdb_close(ofp); ofp = NULL;
+
+	Tcl_Exit(0);
+    } else {
+	rewind(ifp);
+    }
+
+    /* allocate our input buffer */
+    buf = (char *)bu_calloc(sizeof(char), BUFSIZE, "input buffer");
+
+    /* Read ASCII input file, each record on a line */
+    while ((bu_fgets(buf, BUFSIZE, ifp)) != (char *)0) {
+
+    after_read:
+	/* Clear the output record -- vital! */
+	(void)memset((char *)&record, 0, sizeof(record));
+
+	/* Check record type */
+	switch (buf[0]) {
+	    case ID_SOLID:
+		solbld();
+		continue;
+
+	    case ID_COMB:
+		if (combbld() > 0)  goto after_read;
+		continue;
+
+	    case ID_MEMB:
+		bu_log("Warning: unattached Member record, ignored\n");
+		continue;
+
+	    case ID_ARS_A:
+		arsabld();
+		continue;
+
+	    case ID_ARS_B:
+		arsbbld();
+		continue;
+
+	    case ID_P_HEAD:
+		polyhbld();
+		continue;
+
+	    case ID_P_DATA:
+		bu_log("Unattached POLY-solid P_DATA (Q) record, skipping\n");
+		continue;
+
+	    case ID_IDENT:
+		identbld();
+		continue;
+
+	    case ID_MATERIAL:
+		materbld();
+		continue;
+
+	    case ID_BSOLID:
+		bsplbld();
+		continue;
+
+	    case ID_BSURF:
+		bsurfbld();
+		continue;
+
+	    case DBID_PIPE:
+		pipebld();
+		continue;
+
+	    case DBID_STRSOL:
+		strsolbld();
+		continue;
+
+	    case DBID_NMG:
+		nmgbld();
+		continue;
+
+	    case DBID_PARTICLE:
+		particlebld();
+		continue;
+
+	    case DBID_ARBN:
+		arbnbld();
+		continue;
+
+	    case DBID_CLINE:
+		clinebld();
+		continue;
+
+	    case DBID_BOT:
+		botbld();
+		continue;
+
+	    case DBID_EXTR:
+		extrbld();
+		continue;
+
+	    case DBID_SKETCH:
+		sktbld();
+		continue;
+
+	    default:
+		bu_log("asc2g: bad record type '%c' (0%o), skipping\n", buf[0], buf[0]);
+		bu_log("%s\n", buf);
+		continue;
+	}
+	memset(buf, 0, sizeof(char) * BUFSIZE);
+    }
+
+    /* Now, at the end of the database, dump out the entire
+     * region-id-based color table.
+     */
+    mk_write_color_table(ofp);
+
+    /* close up shop */
+    bu_free(buf, "input buffer");
+    buf = NULL; /* sanity */
+    fclose(ifp); ifp = NULL;
+    wdb_close(ofp); ofp = NULL;
+
+    Tcl_Exit(0);
+    return 0;
 }
 
-int
-ngran(int nfloat)
-{
-    register int gran;
-    /* Round up */
-    gran = nfloat + ((sizeof(union record)-1) / sizeof(float));
-    gran = (gran * sizeof(float)) / sizeof(union record);
-    return(gran);
-}
 
 /*
  * Local Variables:
