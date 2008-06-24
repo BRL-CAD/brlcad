@@ -1,0 +1,32 @@
+This directory contains (as of June 2008) an experimental conversion
+to docbook of Volume II of the BRL-CAD tutorial series, as well as
+the docbook for the OED tutorial.
+
+The default dtd and xsl stylesheets for docbook 4.5 are present
+in the resources directory, and it is these copies that are
+referenced in the docbook files.
+
+These documents make extensive use of the XInclude modular documentation
+specification, and as a consequence the contents of any one particular
+"document" may be scattered over many other documents.  This design
+direction is intended to allow re-use of standard definitions and
+descriptions in multiple documents serving multiple purposes.  When
+a definition is updated for one document, re-generation of other documents
+will incorporate the update as well without requiring redundant editing. 
+
+Notes:
+
+* When rendered to html output and placed on a server, there may arise
+  a problem where the server supplies the page as ISO-8859-1 encoded
+  despite them actually using UTF-8.  To combat this problem in the
+  case of the Apache web server, an .htaccess file in the directory 
+  with the line:
+
+  AddDefaultCharset UTF-8
+
+  should let Apache know to use UTF-8 encoding for these pages.
+
+* xsltproc command examples:
+
+  XML_CATALOG_FILES="../../catalog.xml" xsltproc -nonet -xinclude -o VolumeII.html chunk.xsl VolumeII.xml
+  XML_CATALOG_FILES="../../catalog.xml" xsltproc -nonet -xinclude -o creating_a_goblet.html docbook.xsl creating_a_goblet.xml
