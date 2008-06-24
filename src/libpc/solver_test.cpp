@@ -24,56 +24,59 @@
  * @author Dawn Thomas
  *
  */
+#include <iostream>
+#include <utility>                   // for std::pair
+#include <algorithm>                 // for std::for_each
+#include <boost/graph/graph_traits.hpp>
+#include <boost/graph/adjacency_list.hpp>
 
 #include "pcVariable.h"
+#include "pcNetwork.h"
 
 int main()
 {
-    Interval<int> I;
-    Interval<float> K;
-    Interval<float> J;
-    Domain<float> D,E;
-    Variable<float> V;
-    J.assign(3.4,8.3,0.6);
-    //D.addInterval(J);
-    V.D.addInterval(J);
-    K.assign(10.4,20.3,0.8);
-    //D.addInterval(K);
-    V.D.addInterval(K);
-    K.assign(1.2,2.3,0.8);
-    V.D.addInterval(K);
-    K.assign(-2.4,-1,0.8);
-    V.D.addInterval(K);
-    K.assign(0.4,1.6,0.8);
-    V.D.addInterval(K);
-    K.assign(0.2,0.6,0.8);
-    V.D.addInterval(K);
-    K.assign(20.1,30.6,0.8);
-    V.D.addInterval(K);
-    K.assign(30.8,40.4,0.8);
-    V.D.addInterval(K);
-    K.assign(-10.4,-5.6,0.8);
-    V.D.addInterval(K);
-    K.assign(15.4,18.8,0.8);
-    V.D.addInterval(K);
-    V.setValue(8.1);
-    std::cout<<"V value befor increment"<<V.getValue()<<std::endl;
-    ++V;std::cout<<"V value after increment"<<V.getValue()<<std::endl;
     
-    /*try {
-      K=D.getInterval(6.3);
-      }
-      catch(pcException E) {
-      cout<<"Exception: "<<E.Error()<<std::endl;
-      goto test_label;
-      }
-      cout<<K.getLow()<<" "<<K.getHigh()<<" "<<K.getWidth()<<" "<<K.getStep()<<std::endl;
-      
-      test_label:*/
-    V.D.display(); 
-    I.assign(2,8,1);
-    std::cout<<I.getLow()<<" "<<I.getHigh()<<" "<<I.getWidth()<<" "<<I.getStep()<<std::endl;
-    std::cout<<J.getLow()<<" "<<J.getHigh()<<" "<<J.getWidth()<<" "<<J.getStep()<<std::endl;
+    /* Stage I : Checking Constrained Classes */
+    std::cout<<"______________________________________________________________"<<std::endl<<std::endl;
+    std::cout<<"____________________Checking Network Classes__________________"<<std::endl;
+    using namespace boost;
+    {
+
+    }
+
+    /* Stage II : Checking Network Classes */
+    std::cout<<"______________________________________________________________"<<std::endl<<std::endl;
+    std::cout<<"____________________Checking Network Classes__________________"<<std::endl;
+    
+    using namespace boost;
+    {
+
+    // declare a graph object
+    binaryNetwork<int > N;
+
+    // Convenient naming for the vertices and Corrsponding Variables
+    Variable<int> A,B,C,D;
+
+    Interval<int> I;
+    I.assign(0,3,1);
+    A.addInterval(I);
+    B.addInterval(I);
+    C.addInterval(I);
+    D.addInterval(I);
+
+    enum { T, U, V, W};
+
+    // Establish the set of Edges
+    Edge edge_array[] = 
+    { Edge(T,U), Edge(T,V), Edge(T,W), Edge(V,W), Edge(V,U), Edge(U,W)};
+
+    // writing out the edges in the graph
+    const int num_edges = sizeof(edge_array)/sizeof(edge_array[0]);
+
+    // add the edges to the graph object
+    for (int i = 0; i < num_edges; ++i)
+	N.add_edge(edge_array[i].first, edge_array[i].second);
+    }
 
     return 0;
 }

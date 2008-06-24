@@ -12,7 +12,8 @@ noinst_HEADERS = \
 	pc_constraint.h \
 	pcBasic.h \
 	pcInterval.h \
-	pcVariable.h
+	pcVariable.h \
+	pcNetwork.h
 
 libpc_nil_la_SOURCES = \
 	pc_main.c \
@@ -29,6 +30,7 @@ pc_test_LDADD = libpc.la
 
 solver_test_SOURCES = solver_test.cpp
 solver_test_LDADD = libpc.la
+solver_test_CPPFLAGS = ${BOOST_CPPFLAGS}
 
 FAST_OBJECTS = \
 	$(libpc_nil_la_OBJECTS) \

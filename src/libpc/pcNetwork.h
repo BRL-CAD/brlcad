@@ -1,4 +1,4 @@
-/*                       P C B A S I C . H
+/*                    P C N E T W O R K . H
  * BRL-CAD
  *
  * Copyright (c) 2008 United States Government as represented by
@@ -19,66 +19,57 @@
  */
 /** @addtogroup soln */
 /** @{ */
-/** @file pcBasic.h
+/** @file pcNetwork.h
  *
- * Basic classes for Parametrics and Constraints Library
+ * Class definition of Constraint Network
  *
  * @author Dawn Thomas
  */
-#ifndef __PCBASIC_H__
-#define __PCBASIC_H__
-
-#define PC_MAX_STACK_SIZE 1000
+#ifndef __PCNETWORK_H__
+#define __PCNETWORK_H__
 
 #include <iostream>
 #include <cstdlib>
 #include <string>
 #include <list>
 #include <stack>
+#include "pcBasic.h"
+#include "pcVariable.h"
 
-
-/* Basic Exception Handling classes */
-
-class pcException {
+class Edge : public std::pair<int, int > 
+{
 private:
-    std::string str;
+
 public:
-    pcException() {};
-    pcException(const char *temp) {str=temp;};
-    ~pcException() {};
-    std::string Error() const {
-	return str;
-    }
+    Edge(int t,int u):std::pair<int, int>(t,u) {};
 };
 
-/* Structures for defining varios derived objects from
- * constrained_value templatein Boost
- */
-
-struct is_even {
-    bool operator () (int i) const
-    { return (i % 2) == 0; }
-};
-
-/* TO BE REMOVED */
-class Relation {
-public:
-private:
-};
-
+using namespace boost;
 template<class T>
-class Stack : public std::stack< T,std::list<T> > {
-public:
-    T pop() {
-	T tmp = std::stack<T>::top();
-	std::stack<T>::pop();
-	return tmp;
-    }
-};
-
-class Constraint {
-public:
+class binaryNetwork 
+{
 private:
+
+    typedef typename boost::adjacency_list<vecS, vecS, undirectedS, 
+	Variable<T>, Constraint > Graph;
+    Graph G;
+ 
+public:
+    void add_edge(int a,int b) {
+	boost::add_edge(a,b, G);
+    };
+
+    void setVariable(typename Graph::vertex_descriptor v, Variable<T>& var) {
+	G[v] = var;
+    };
+
+    Solution<T> solve()
+    {
+	typedef typename boost::adjacency_list<vecS, vecS, undirectedS, 
+	Variable<T>, Constraint > Graph;
+	typedef typename graph_traits<Graph>::vertex_descriptor Vertex;
+	Vertex u = *vertices(G).first;
+    }
 };
 
 #endif

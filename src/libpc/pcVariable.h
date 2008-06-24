@@ -74,22 +74,35 @@ public:
 template<class T>
 class Variable {
 private:
+    std::string  id;
     T value;
+    Domain<T> D;
 public:
 /* Implement functionality to search which domain the variable belongs to
    and increment according to the stepvalue of that domain */
-    Domain<T> D;
     Variable();
+    Variable(std::string , T );
     ~Variable();
+    void addInterval(const Interval<T>);
     void setValue(T t) { value = t; }
+    std::string getID() { return id; }
     T getValue() { return value; }
     Variable& operator++();
     /*Variable operator++(T) { value++; return this; }*/
 };
 
+
 template<class T>
 class Solution {
 
+typedef struct {
+    Variable<T>* V;
+    Domain<T> D;
+    } VarDomain;
+
+public:
+    std::list<VarDomain> VarDom;
+    void display();
 };
 
 template<class T>
@@ -202,10 +215,20 @@ void  Domain<T>::packIntervals ()
 }
 
 /* Variable Class Functions */
+
 template<class T>
 Variable<T>::Variable()
 {
+
 }
+
+template<class T>
+Variable<T>::Variable(std::string Vid, T Vvalue)
+{
+    value = Vvalue;
+    id = Vid;
+}
+
 template<class T>
 Variable<T>::~Variable()
 {
@@ -222,6 +245,24 @@ Variable<T>& Variable<T>::operator++()
     } else {
 	value = D.getNextLow(value);
 	return *this;
+    }
+};
+
+template<class T>
+void Variable<T>::addInterval(const Interval<T> t)
+{
+    D.addInterval(t);
+};
+
+/* Solution Class Functions */
+
+template<class T>
+void Solution<T>::display()
+{
+    typename std::list<VarDomain>::iterator i;
+    for (i = VarDom.begin(); i != VarDom.end(); i++) {
+	std::cout<<"!-- ID = "<<i->V.getID<<" Value = "<<i->V.getValue()<<" Domain =";
+	i->D.display();
     }
 }
 
