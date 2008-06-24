@@ -2652,11 +2652,11 @@ BU_EXPORT BU_EXTERN(void bu_observer_notify,());
 BU_EXPORT BU_EXTERN(void bu_observer_free, (struct bu_observer *));
 
 
-BU_EXPORT BU_EXTERN(void bu_structparse_get_terse_form,
+BU_EXPORT BU_EXTERN(void bu_tcl_structparse_get_terse_form,
 		    (Tcl_Interp	*interp,
 		     const struct bu_structparse *sp));
 
-BU_EXPORT BU_EXTERN(int bu_structparse_argv,
+BU_EXPORT BU_EXTERN(int bu_tcl_structparse_argv,
 		    (Tcl_Interp				*interp,
 		     int				argc,
 		     char				**argv,
@@ -2693,13 +2693,13 @@ BU_EXPORT BU_EXTERN(int bu_tcl_printb,
 		     int	argc,
 		     char	**argv));
 
-BU_EXPORT BU_EXTERN(int bu_get_value_by_keyword,
+BU_EXPORT BU_EXTERN(int bu_tcl_get_value_by_keyword,
 		    (ClientData	clientData,
 		     Tcl_Interp	*interp,
 		     int	argc,
 		     char	**argv));
 
-BU_EXPORT BU_EXTERN(int bu_get_all_keyword_values,
+BU_EXPORT BU_EXTERN(int bu_tcl_get_all_keyword_values,
 		    (ClientData	clientData,
 		     Tcl_Interp	*interp,
 		     int	argc,

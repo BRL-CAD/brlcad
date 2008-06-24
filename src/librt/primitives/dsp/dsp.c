@@ -4176,8 +4176,8 @@ rt_dsp_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, ch
 
     if (! sp) return TCL_ERROR;
 
-    return bu_structparse_argv(interp, argc, argv, sp,
-			       (char *)intern->idb_ptr );
+    return bu_tcl_structparse_argv(interp, argc, argv, sp,
+				   (char *)intern->idb_ptr);
 }
 
 void

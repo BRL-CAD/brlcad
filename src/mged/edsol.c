@@ -9642,8 +9642,8 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     save_magic = *((long *)es_int.idb_ptr);
     *((long *)es_int.idb_ptr) = ftp->ft_internal_magic;
-    if ( bu_structparse_argv(interp, argc-2, argv+2, ftp->ft_parsetab,
-			     (char *)es_int.idb_ptr )==TCL_ERROR ) {
+    if ( bu_tcl_structparse_argv(interp, argc-2, argv+2, ftp->ft_parsetab,
+				 (char *)es_int.idb_ptr )==TCL_ERROR ) {
 	return TCL_ERROR;
     }
     *((long *)es_int.idb_ptr) = save_magic;

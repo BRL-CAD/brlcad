@@ -58,8 +58,8 @@ static struct bu_cmdtab bu_cmds[] = {
     {"bu_malloc_len_roundup",		bu_tcl_malloc_len_roundup},
     {"bu_prmem",			bu_tcl_prmem},
     {"bu_printb",			bu_tcl_printb},
-    {"bu_get_all_keyword_values",	bu_get_all_keyword_values},
-    {"bu_get_value_by_keyword",		bu_get_value_by_keyword},
+    {"bu_get_all_keyword_values",	bu_tcl_get_all_keyword_values},
+    {"bu_get_value_by_keyword",		bu_tcl_get_value_by_keyword},
     {"bu_rgb_to_hsv",			bu_tcl_rgb_to_hsv},
     {"bu_hsv_to_rgb",			bu_tcl_hsv_to_rgb},
     {"bu_key_eq_to_key_val",		bu_tcl_key_eq_to_key_val},
@@ -118,7 +118,7 @@ bu_badmagic_tcl(Tcl_Interp	*interp,
 
 
 /**
- * b u _ s t r u c t p a r s e _ g e t _ t e r s e _ f o r m
+ * b u _ t c l _ s t r u c t p a r s e _ g e t _ t e r s e _ f o r m
  *
  * Convert the "form" of a bu_structparse table into a TCL result string,
  * with parameter-name data-type pairs:
@@ -135,8 +135,8 @@ bu_badmagic_tcl(Tcl_Interp	*interp,
  * 	void
  */
 void
-bu_structparse_get_terse_form(Tcl_Interp			*interp,
-			      const struct bu_structparse	*sp)
+bu_tcl_structparse_get_terse_form(Tcl_Interp			*interp,
+				  const struct bu_structparse	*sp)
 {
     struct bu_vls	str;
     int		i;
@@ -182,7 +182,7 @@ bu_structparse_get_terse_form(Tcl_Interp			*interp,
 
 
 /**
- * b u _ s t r u c t p a r s e _ a r g v
+ * b u _ t c l _ s t r u c t p a r s e _ a r g v
  *
  * Support routine for db adjust and db put.  Much like the bu_struct_parse routine
  * which takes its input as a bu_vls. This routine, however, takes the arguments
@@ -202,11 +202,11 @@ bu_structparse_get_terse_form(Tcl_Interp			*interp,
  * @retval TCL_ERROR on failure
  */
 int
-bu_structparse_argv(Tcl_Interp			*interp,
-		    int				argc,
-		    char			**argv,
-		    const struct bu_structparse	*desc,
-		    char			*base)
+bu_tcl_structparse_argv(Tcl_Interp			*interp,
+			int				argc,
+			char				**argv,
+			const struct bu_structparse	*desc,
+			char				*base)
 {
     register char				*cp, *loc;
     register const struct bu_structparse	*sdp;
@@ -784,7 +784,7 @@ bu_tcl_printb(ClientData	clientData,
 
 
 /**
- * b u _ g e t _ v a l u e _ b y _ k e y w o r d
+ * b u _ t c l _ g e t _ v a l u e _ b y _ k e y w o r d
  *
  * Given arguments of alternating keywords and values
  * and a specific keyword ("Iwant"),
@@ -810,10 +810,10 @@ bu_tcl_printb(ClientData	clientData,
  * @return TCL_OK if successful, otherwise, TCL_ERROR.
  */
 int
-bu_get_value_by_keyword(ClientData	clientData,
-			Tcl_Interp	*interp,
-			int		argc,
-			char		**argv)
+bu_tcl_get_value_by_keyword(ClientData	clientData,
+			    Tcl_Interp	*interp,
+			    int		argc,
+			    char	**argv)
 {
     int	listc;
     char	**listv;
@@ -892,7 +892,7 @@ bu_get_value_by_keyword(ClientData	clientData,
 
 
 /**
- * b u _ g e t _ a l l _ k e y w o r d _ v a l u e s
+ * b u _ t c l _ g e t _ a l l _ k e y w o r d _ v a l u e s
  *
  * Given arguments of alternating keywords and values,
  * establish local variables named after the keywords, with the
@@ -934,10 +934,10 @@ bu_get_value_by_keyword(ClientData	clientData,
  * @return TCL_OK if successful, otherwise, TCL_ERROR.
  */
 int
-bu_get_all_keyword_values(ClientData	clientData,
-			  Tcl_Interp	*interp,
-			  int		argc,
-			  char		**argv)
+bu_tcl_get_all_keyword_values(ClientData	clientData,
+			      Tcl_Interp	*interp,
+			      int		argc,
+			      char		**argv)
 {
     struct bu_vls	variable;
     int	listc;
