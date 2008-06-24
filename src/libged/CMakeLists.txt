@@ -6,8 +6,6 @@ set(LIBGED_SOURCES
     comb_color.c
     dg_obj.c
     draw.c
-    erase.c
-    erase_all.c
     editit.c
     edcomb.c
     edmater.c
