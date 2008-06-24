@@ -173,10 +173,10 @@ __BEGIN_DECLS
 #endif
 
 /** @brief # of fastf_t's per vect2d_t */
-#define ELEMENTS_PER_VECT	2
+#define ELEMENTS_PER_VECT2D	2
 
 /** @brief # of fastf_t's per point2d_t */
-#define ELEMENTS_PER_PT         2
+#define ELEMENTS_PER_POINT2D	2
 
 /** @brief # of fastf_t's per vect_t */
 #define ELEMENTS_PER_VECT	3
@@ -201,11 +201,11 @@ __BEGIN_DECLS
  */
 
 /** @brief 2-tuple vector */
-typedef fastf_t vect2d_t[ELEMENTS_PER_2D_VECT];
+typedef fastf_t vect2d_t[ELEMENTS_PER_VECT2D];
 typedef fastf_t *vect2dp_t;
 
 /** @brief 2-tuple point */
-typedef fastf_t point2d_t[ELEMENTS_PER_2D_PT];
+typedef fastf_t point2d_t[ELEMENTS_PER_POINT2D];
 typedef fastf_t *point2dp_t;
 
 /** @brief 3-tuple vector */
