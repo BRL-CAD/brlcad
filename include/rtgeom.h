@@ -366,10 +366,7 @@ struct rt_hyp_internal {
     fastf_t	hyp_r1;	/**< @brief  scalar semi-major axis length */
     fastf_t	hyp_r2;	/**< @brief  scalar semi-minor axis length */
     fastf_t	hyp_c;	/**< @brief  slope of asymptote cone */
-/* added because g_xxx.c uses rt_xxx_internal.v in functions I haven't implemented yet */
-    vect_t	v;	
 };
-#define RT_HYP_INTERNAL_MAGIC	0x68797065
 #define RT_HYP_CK_MAGIC(_p)	BU_CKMAG(_p, RT_HYP_INTERNAL_MAGIC, "rt_hyp_internal")
 
 
@@ -476,6 +473,26 @@ struct rt_extrude_internal
  *	used for scaling and rotation
  */
 #define RT_EXTRUDE_CK_MAGIC(_p)	BU_CKMAG(_p, RT_EXTRUDE_INTERNAL_MAGIC, "rt_extrude_internal")
+
+/*
+ *	ID_REVOLVE
+ */
+struct rt_revolve_internal {
+    unsigned long	magic;
+    point_t		v3d;	/**< @brief vertex in 3d space  */
+    vect_t		axis3d;	/**< @brief revolve axis in 3d space, y axis */
+
+    point2d_t		v2d;	/**< @brief vertex in 2d sketch */
+    vect2d_t		axis2d;	/**< @brief revolve axis in 2d sketch */
+
+    vect_t		r;	/**< @brief vector in start plane, x axis */
+    fastf_t		ang;	/**< @brief angle to revolve*/
+    char		*sketch_name;	/**< @brief name of sketch */
+    struct rt_sketch_internal *sk;	/**< @brief pointer to sketch */
+
+    vect_t	v;
+};
+#define RT_REVOLVE_CK_MAGIC(_p)	BU_CKMAG(_p, RT_REVOLVE_INTERNAL_MAGIC, "rt_revolve_internal")
 
 /*
  *	ID_CLINE
