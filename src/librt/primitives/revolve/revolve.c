@@ -76,6 +76,12 @@ rt_revolve_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
     RT_REVOLVE_CK_MAGIC(rip);
 
+    stp->st_id = ID_REVOLVE;
+    stp->st_meth = &rt_functab[ID_REVOLVE];
+
+    BU_GETSTRUCT( rev, revolve_specific );
+    stp->st_specific = (genptr_t)rev;
+
     VMOVE( rev->v3d, rip->v3d );
     VMOVE( rev->zUnit, rip->axis3d );
     VMOVE( rev->xUnit, rip->r );
@@ -90,6 +96,20 @@ rt_revolve_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     rev->sk = rip->sk;
 
 /* calculate end plane */
+
+
+/* FIXME: bounding volume */
+    VMOVE( stp->st_center, rev->v3d );
+    stp->st_aradius = 100.0;
+    stp->st_bradius = 100.0;
+
+    /* cheat, make bounding RPP by enclosing bounding sphere (copied from g_ehy.c) */
+    stp->st_min[X] = stp->st_center[X] - stp->st_bradius;
+    stp->st_max[X] = stp->st_center[X] + stp->st_bradius;
+    stp->st_min[Y] = stp->st_center[Y] - stp->st_bradius;
+    stp->st_max[Y] = stp->st_center[Y] + stp->st_bradius;
+    stp->st_min[Z] = stp->st_center[Z] - stp->st_bradius;
+    stp->st_max[Z] = stp->st_center[Z] + stp->st_bradius;
 
 }
 
@@ -133,6 +153,8 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 
     nhits = 0;
 
+    bu_log("rt_revolve_shot\n");
+
     vr[X] = VDOT( rev->xUnit, rp->r_dir );
     vr[Y] = VDOT( rev->yUnit, rp->r_dir );
     vr[Z] = VDOT( rev->zUnit, rp->r_dir ); 
@@ -165,7 +187,6 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 
 	x = aa cosh( t - k );
 	y = h + bb sinh( t - k );
-
 */
 
 /* find hyperbola intersection with each sketch segment */
@@ -387,7 +408,7 @@ rt_revolve_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct 
     revolve_ip = (struct rt_revolve_internal *)ip->idb_ptr;
     RT_REVOLVE_CK_MAGIC(revolve_ip);
 
-    return(-1);
+    return(0);
 }
 
 /**
@@ -420,33 +441,64 @@ rt_revolve_tess( struct nmgregion **r, struct model *m, struct rt_db_internal *i
  * Apply modeling transformations as well.
  */
 int
-rt_revolve_import5( struct rt_db_internal  *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip )
+rt_revolve_import5( struct rt_db_internal  *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp, const int minor_type )
 {
-    struct rt_revolve_internal	*revolve_ip;
-    fastf_t				vv[ELEMENTS_PER_VECT*1];
+    struct rt_revolve_internal	*rip;
+    fastf_t			vv[ELEMENTS_PER_VECT*3 + 1];
+
+    char			*sketch_name;
+    unsigned char		*ptr;
+    struct directory		*dp;
+    struct rt_db_internal	tmp_ip;
 
     RT_CK_DB_INTERNAL(ip)
-	BU_CK_EXTERNAL( ep );
-
-    BU_ASSERT_LONG( ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 3*4 );
+    BU_CK_EXTERNAL( ep );
 
     /* set up the internal structure */
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_REVOLVE;
     ip->idb_meth = &rt_functab[ID_REVOLVE];
     ip->idb_ptr = bu_malloc( sizeof(struct rt_revolve_internal), "rt_revolve_internal");
-    revolve_ip = (struct rt_revolve_internal *)ip->idb_ptr;
-    revolve_ip->magic = RT_REVOLVE_INTERNAL_MAGIC;
+    rip = (struct rt_revolve_internal *)ip->idb_ptr;
+    rip->magic = RT_REVOLVE_INTERNAL_MAGIC;
 
     /* Convert the data in ep->ext_buf into internal format.  Note the
      * conversion from network data (Big Endian ints, IEEE double
      * floating point) to host local data representations.
      */
-    ntohd( (unsigned char *)&vv, (unsigned char *)ep->ext_buf, ELEMENTS_PER_VECT*1 );
+
+    ptr = (unsigned char *)ep->ext_buf;
+    sketch_name = (char *)ptr + (ELEMENTS_PER_VECT*3 + 1)*SIZEOF_NETWORK_DOUBLE;
+    if ( !dbip )
+	rip->sk = (struct rt_sketch_internal *)NULL;
+    else if ( (dp=db_lookup( dbip, sketch_name, LOOKUP_NOISY)) == DIR_NULL )
+    {
+	bu_log( "rt_revolve_import: ERROR: Cannot find sketch (%s) for extrusion\n",
+		sketch_name );
+	rip->sk = (struct rt_sketch_internal *)NULL;
+    }
+    else
+    {
+	if ( rt_db_get_internal( &tmp_ip, dp, dbip, bn_mat_identity, resp ) != ID_SKETCH )
+	{
+	    bu_log( "rt_revolve_import: ERROR: Cannot import sketch (%s) for extrusion\n",
+		    sketch_name );
+	    bu_free( ip->idb_ptr, "extrusion" );
+	    return( -1 );
+	}
+	else
+	    rip->sk = (struct rt_sketch_internal *)tmp_ip.idb_ptr;
+    }
+
+    ntohd( (unsigned char *)&vv, (unsigned char *)ep->ext_buf, ELEMENTS_PER_VECT*3 + 1 );
 
     /* Apply the modeling transformation */
     if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT( revolve_ip->v, mat, vv );
+    MAT4X3PNT( rip->v3d, mat, &vv[0*3] );
+    MAT4X3PNT( rip->axis3d, mat, &vv[1*3] );
+    MAT4X3PNT( rip->r, mat, &vv[2*3] );
+    rip->ang = vv[9];
+    rip->sketch_name = bu_strdup( (unsigned char *)ep->ext_buf + (ELEMENTS_PER_VECT*3 + 1)*SIZEOF_NETWORK_DOUBLE );
 
     return(0);			/* OK */
 }
@@ -463,27 +515,34 @@ rt_revolve_import5( struct rt_db_internal  *ip, const struct bu_external *ep, co
 int
 rt_revolve_export5( struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip )
 {
-    struct rt_revolve_internal	*revolve_ip;
-    fastf_t			vec[ELEMENTS_PER_VECT];
+    struct rt_revolve_internal	*rip;
+    fastf_t			vec[ELEMENTS_PER_VECT*3 + 1];
+    unsigned char		*ptr;
 
     RT_CK_DB_INTERNAL(ip);
     if ( ip->idb_type != ID_REVOLVE )  return(-1);
-    revolve_ip = (struct rt_revolve_internal *)ip->idb_ptr;
-    RT_REVOLVE_CK_MAGIC(revolve_ip);
+    rip = (struct rt_revolve_internal *)ip->idb_ptr;
+    RT_REVOLVE_CK_MAGIC(rip);
 
     BU_CK_EXTERNAL(ep);
-    ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
+    ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * (ELEMENTS_PER_VECT*3 + 1) + strlen(rip->sketch_name) + 1;
     ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "revolve external");
 
+    ptr = (unsigned char *)ep->ext_buf;
 
     /* Since libwdb users may want to operate in units other than mm,
      * we offer the opportunity to scale the solid (to get it into mm)
      * on the way out.
      */
-    VSCALE( vec, revolve_ip->v, local2mm );
+    VSCALE( &vec[0*3], rip->v3d, local2mm );
+    VSCALE( &vec[1*3], rip->axis3d, local2mm );
+    VSCALE( &vec[2*3], rip->r, local2mm );
+    vec[9] = rip->ang;
 
-    /* Convert from internal (host) to database (network) format */
-    htond( ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*1 );
+    htond( ptr, (unsigned char *)vec, ELEMENTS_PER_VECT*3 + 1 );
+    ptr += (ELEMENTS_PER_VECT*3 + 1) * SIZEOF_NETWORK_DOUBLE;
+
+    bu_strlcpy( (char *)ptr, rip->sketch_name, strlen(rip->sketch_name)+1 );
 
     return 0;
 }
@@ -498,17 +557,35 @@ rt_revolve_export5( struct bu_external *ep, const struct rt_db_internal *ip, dou
 int
 rt_revolve_describe( struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local )
 {
-    register struct rt_revolve_internal	*revolve_ip =
+    register struct rt_revolve_internal	*rip =
 	(struct rt_revolve_internal *)ip->idb_ptr;
     char	buf[256];
 
-    RT_REVOLVE_CK_MAGIC(revolve_ip);
+    RT_REVOLVE_CK_MAGIC(rip);
     bu_vls_strcat( str, "truncated general revolve (REVOLVE)\n");
 
     sprintf(buf, "\tV (%g, %g, %g)\n",
-	    INTCLAMP(revolve_ip->v[X] * mm2local),
-	    INTCLAMP(revolve_ip->v[Y] * mm2local),
-	    INTCLAMP(revolve_ip->v[Z] * mm2local) );
+	    INTCLAMP(rip->v3d[X] * mm2local),
+	    INTCLAMP(rip->v3d[Y] * mm2local),
+	    INTCLAMP(rip->v3d[Z] * mm2local) );
+    bu_vls_strcat( str, buf );
+
+    sprintf(buf, "\tAxis (%g, %g, %g)\n",
+	    INTCLAMP(rip->axis3d[X] * mm2local),
+	    INTCLAMP(rip->axis3d[Y] * mm2local),
+	    INTCLAMP(rip->axis3d[Z] * mm2local) );
+    bu_vls_strcat( str, buf );
+
+    sprintf(buf, "\tR (%g, %g, %g)\n",
+	    INTCLAMP(rip->r[X] * mm2local),
+	    INTCLAMP(rip->r[Y] * mm2local),
+	    INTCLAMP(rip->r[Z] * mm2local) );
+    bu_vls_strcat( str, buf );
+
+    sprintf(buf, "\tAngle=%g\n", INTCLAMP(rip->ang * mm2local));
+    bu_vls_strcat( str, buf );
+
+    snprintf( buf, 256, "\tsketch name: %s\n", rip->sketch_name );
     bu_vls_strcat( str, buf );
 
     return(0);

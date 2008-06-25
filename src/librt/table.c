@@ -215,6 +215,9 @@ RT_DECLARE_INTERFACE(metaball);
 #define rt_hyp_xform rt_generic_xform
 RT_DECLARE_INTERFACE(hyp);
 
+#define rt_revolve_xform rt_generic_xform
+RT_DECLARE_INTERFACE(revolve);
+
 #if OBJ_BREP
 #define rt_brep_xform rt_generic_xform
 RT_DECLARE_INTERFACE(brep);
@@ -1010,6 +1013,20 @@ const struct rt_functab rt_functab[] = {
      0,		0,
      rt_nul_tclget,	rt_nul_tcladjust,	rt_nul_tclform,
      NULL, NULL
+    },
+
+    {RT_FUNCTAB_MAGIC, "ID_REVOLVE", "revolve",
+     1,
+     rt_revolve_prep,	rt_revolve_shot,	rt_revolve_print,	rt_revolve_norm,
+     rt_nul_piece_shot,	rt_nul_piece_hitsegs,
+     rt_revolve_uv,	rt_revolve_curve,	rt_revolve_class,	rt_revolve_free,
+     rt_revolve_plot,	rt_nul_vshot,	rt_revolve_tess,	rt_nul_tnurb,
+     rt_revolve_import5,	rt_revolve_export5,
+     rt_nul_import,	rt_nul_export,	rt_revolve_ifree,
+     rt_revolve_describe,	rt_nul_xform,	rt_revolve_parse,
+     sizeof(struct rt_revolve_internal),	RT_HYP_INTERNAL_MAGIC,
+     rt_parsetab_tclget,	rt_parsetab_tcladjust,	rt_parsetab_tclform,
+     NULL, rt_nul_params,
     },
 
     {0L, ">ID_MAXIMUM", ">id_max",

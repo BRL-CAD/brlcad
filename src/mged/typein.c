@@ -514,6 +514,20 @@ char *p_metaball[] = {
     "Enter field strength"
 };
 
+char *p_revolve[] = {
+    "Enter X, Y, Z of vertex: ",
+    "Enter Y: ",
+    "Enter Z: ",
+    "Enter X, Y, Z of revolve axis: ",
+    "Enter Y: ",
+    "Enter Z: ",
+    "Enter X, Y, Z of vector in start plane: ",
+    "Enter Y: ",
+    "Enter Z: ",
+    "Enter angle: ",
+    "Enter name of sketch: "
+};
+
 /*	F _ I N ( ) :  	decides which solid reader to call
  *			Used for manual entry of solids.
  */
@@ -529,14 +543,42 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     int do_solid_edit = 0;
     int dont_draw = 0;
     int nvals, (*fn_in)();
-    int arb_in(char **cmd_argvs, struct rt_db_internal *intern), box_in(char **cmd_argvs, struct rt_db_internal *intern), ehy_in(char **cmd_argvs, struct rt_db_internal *intern), ell_in(char **cmd_argvs, struct rt_db_internal *intern),
-	epa_in(char **cmd_argvs, struct rt_db_internal *intern), eto_in(char **cmd_argvs, struct rt_db_internal *intern), half_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name), rec_in(char **cmd_argvs, struct rt_db_internal *intern),
-	rcc_in(char **cmd_argvs, struct rt_db_internal *intern), rhc_in(char **cmd_argvs, struct rt_db_internal *intern), rpc_in(char **cmd_argvs, struct rt_db_internal *intern), rpp_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name), orpp_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name),
-	sph_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name), tec_in(char **cmd_argvs, struct rt_db_internal *intern), tgc_in(char **cmd_argvs, struct rt_db_internal *intern), tor_in(char **cmd_argvs, struct rt_db_internal *intern), ars_in(int argc, char **argv, struct rt_db_internal *intern, char **promp),
-	trc_in(char **cmd_argvs, struct rt_db_internal *intern), ebm_in(char **cmd_argvs, struct rt_db_internal *intern), vol_in(char **cmd_argvs, struct rt_db_internal *intern), hf_in(char **cmd_argvs, struct rt_db_internal *intern), bot_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt),
-	dsp_in_v4(char **cmd_argvs, struct rt_db_internal *intern), dsp_in_v5(char **cmd_argvs, struct rt_db_internal *intern), submodel_in(char **cmd_argvs, struct rt_db_internal *intern), part_in(char **cmd_argvs, struct rt_db_internal *intern), pipe_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt),
-	binunif_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name), arbn_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt), extrude_in(char **cmd_argvs, struct rt_db_internal *intern), grip_in(char **cmd_argvs, struct rt_db_internal *intern), superell_in(char **cmd_argvs, struct rt_db_internal *intern),
-	metaball_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt), hyp_in(char **cmd_argvs, struct rt_db_internal *intern);
+    int arb_in(char **cmd_argvs, struct rt_db_internal *intern),
+	box_in(char **cmd_argvs, struct rt_db_internal *intern),
+	ehy_in(char **cmd_argvs, struct rt_db_internal *intern),
+	ell_in(char **cmd_argvs, struct rt_db_internal *intern),
+	epa_in(char **cmd_argvs, struct rt_db_internal *intern),
+	eto_in(char **cmd_argvs, struct rt_db_internal *intern),
+	half_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name),
+	rec_in(char **cmd_argvs, struct rt_db_internal *intern),
+	rcc_in(char **cmd_argvs, struct rt_db_internal *intern),
+	rhc_in(char **cmd_argvs, struct rt_db_internal *intern),
+	rpc_in(char **cmd_argvs, struct rt_db_internal *intern),
+	rpp_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name),
+	orpp_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name),
+	sph_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name),
+	tec_in(char **cmd_argvs, struct rt_db_internal *intern),
+	tgc_in(char **cmd_argvs, struct rt_db_internal *intern),
+	tor_in(char **cmd_argvs, struct rt_db_internal *intern),
+	ars_in(int argc, char **argv, struct rt_db_internal *intern, char **promp),
+	trc_in(char **cmd_argvs, struct rt_db_internal *intern),
+	ebm_in(char **cmd_argvs, struct rt_db_internal *intern),
+	vol_in(char **cmd_argvs, struct rt_db_internal *intern),
+	hf_in(char **cmd_argvs, struct rt_db_internal *intern),
+	bot_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt),
+	dsp_in_v4(char **cmd_argvs, struct rt_db_internal *intern),
+	dsp_in_v5(char **cmd_argvs, struct rt_db_internal *intern),
+	submodel_in(char **cmd_argvs, struct rt_db_internal *intern),
+	part_in(char **cmd_argvs, struct rt_db_internal *intern),
+	pipe_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt),
+	binunif_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name),
+	arbn_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt),
+	extrude_in(char **cmd_argvs, struct rt_db_internal *intern),
+	grip_in(char **cmd_argvs, struct rt_db_internal *intern),
+	superell_in(char **cmd_argvs, struct rt_db_internal *intern),
+	metaball_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt),
+	hyp_in(char **cmd_argvs, struct rt_db_internal *intern),
+	revolve_in(char **cmd_argvs, struct rt_db_internal *intern);
 
     CHECK_DBI_NULL;
 
@@ -815,6 +857,10 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	nvals = 4*3 + 2;
 	menu = p_extrude;
 	fn_in = extrude_in;
+    } else if (strcmp(argv[2], "revolve") == 0) {
+	nvals = 3*3 + 2;
+	menu = p_revolve;
+	fn_in = revolve_in;
     } else if (strcmp(argv[2], "grip") == 0) {
 	nvals = 2*3 + 1;
 	menu = p_grip;
@@ -2614,6 +2660,54 @@ extrude_in(char **cmd_argvs, struct rt_db_internal *intern)
 	return 1;
     } else
 	eip->skt = (struct rt_sketch_internal *)tmp_ip.idb_ptr;
+
+    return 0;	/* success */
+}
+
+/*   R E V O L V E _ I N ( ) :   	reads extrude parameters from keyboard
+ *					returns 0 if successful read
+ *					1 if unsuccessful read
+ */
+int
+revolve_in(char **cmd_argvs, struct rt_db_internal *intern)
+{
+    int	i;
+    struct rt_revolve_internal	*rip;
+    struct rt_db_internal	tmp_ip;
+    struct directory		*dp;
+
+    CHECK_DBI_NULL;
+
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_type = ID_REVOLVE;
+    intern->idb_meth = &rt_functab[ID_REVOLVE];
+    intern->idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_revolve_internal),
+					  "rt_revolve_internal");
+    rip = (struct rt_revolve_internal *)intern->idb_ptr;
+    rip->magic = RT_REVOLVE_INTERNAL_MAGIC;
+
+    for (i = 0; i < ELEMENTS_PER_POINT; i++) {
+	rip->v3d[i] = atof(cmd_argvs[3+i]) * local2base;
+	rip->axis3d[i] = atof(cmd_argvs[6+i]) * local2base;
+	rip->r[i] = atof(cmd_argvs[9+i]) * local2base;
+    }
+    rip->ang = atof(cmd_argvs[12]) * DEG2RAD;
+    rip->sketch_name = bu_strdup(cmd_argvs[13]);
+
+    if ((dp=db_lookup(dbip, rip->sketch_name, LOOKUP_NOISY)) == DIR_NULL) {
+	Tcl_AppendResult(interp, "Cannot find sketch (", rip->sketch_name,
+			 ") for revolve (", cmd_argvs[1], ")\n", (char *)NULL);
+	rip->sk = (struct rt_sketch_internal *)NULL;
+	return 1;
+    }
+
+    if (rt_db_get_internal(&tmp_ip, dp, dbip, bn_mat_identity, &rt_uniresource) != ID_SKETCH) {
+	Tcl_AppendResult(interp, "Cannot import sketch (", rip->sketch_name,
+			 ") for revolve (", cmd_argvs[1], ")\n", (char *)NULL);
+	rip->sk = (struct rt_sketch_internal *)NULL;
+	return 1;
+    } else
+	rip->sk = (struct rt_sketch_internal *)tmp_ip.idb_ptr;
 
     return 0;	/* success */
 }
