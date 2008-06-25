@@ -66,6 +66,8 @@ public:
     ~Domain();
     int size() { return Interv.size(); }
     Interval<T> getInterval(T) throw(pcException);
+    T getFirst() { return Interv.begin()->getLow();} ;
+    T getLast();
     T getNextLow (T);
     void addInterval(const Interval<T>);
     void display();
@@ -81,12 +83,14 @@ public:
 /* Implement functionality to search which domain the variable belongs to
    and increment according to the stepvalue of that domain */
     Variable();
-    Variable(std::string , T );
+    Variable(std::string , T = T(0));
     ~Variable();
     void addInterval(const Interval<T>);
     void setValue(T t) { value = t; }
     std::string getID() { return id; }
     T getValue() { return value; }
+    void display();
+
     Variable& operator++();
     /*Variable operator++(T) { value++; return this; }*/
 };
@@ -254,6 +258,13 @@ void Variable<T>::addInterval(const Interval<T> t)
     D.addInterval(t);
 };
 
+template<class T>
+void Variable<T>::display()
+{
+	std::cout<<"!-- ID = "<<getID()<<" Value = "<<getValue()<<std::endl;
+	D.display();
+}
+
 /* Solution Class Functions */
 
 template<class T>
@@ -261,7 +272,7 @@ void Solution<T>::display()
 {
     typename std::list<VarDomain>::iterator i;
     for (i = VarDom.begin(); i != VarDom.end(); i++) {
-	std::cout<<"!-- ID = "<<i->V.getID<<" Value = "<<i->V.getValue()<<" Domain =";
+	i->V.display();
 	i->D.display();
     }
 }

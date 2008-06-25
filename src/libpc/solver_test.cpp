@@ -33,12 +33,27 @@
 #include "pcVariable.h"
 #include "pcNetwork.h"
 
+/* Constraint functions */
+bool f1(std::vector<int> V ) {
+    return (V[0]+V[1]-3 == 0);
+}
+bool f2(std::vector<int> V ) {
+    return (V[0]+V[1]-4 > 0);
+}
+bool f3(std::vector<int> V ) {
+    return (V[0]- V[1] -5 < 0);
+}
+bool f4(std::vector<int> V ) {
+    return (V[1]-V[0]-2 == 0);
+}
+
 int main()
 {
     
     /* Stage I : Checking Constrained Classes */
     std::cout<<"______________________________________________________________"<<std::endl<<std::endl;
     std::cout<<"____________________Checking Network Classes__________________"<<std::endl;
+
     using namespace boost;
     {
 
@@ -47,6 +62,16 @@ int main()
     /* Stage II : Checking Network Classes */
     std::cout<<"______________________________________________________________"<<std::endl<<std::endl;
     std::cout<<"____________________Checking Network Classes__________________"<<std::endl;
+
+
+    typedef Interval<float> Ifl;
+    Solution<float> Soln;
+    Variable<float> O =Variable<float>("On");
+    O.addInterval(Ifl(3.4,8.3,0.6));
+    O.addInterval(Ifl(-2.8,2.8,0.6));
+    O.addInterval(Ifl(-13.4,-5.3,0.6));
+    O.addInterval(Ifl(-14.4,-10.,0.6));
+    O.display();
     
     using namespace boost;
     {
@@ -58,24 +83,33 @@ int main()
     Variable<int> A,B,C,D;
 
     Interval<int> I;
-    I.assign(0,3,1);
+    I.assign(0,5,1);
     A.addInterval(I);
     B.addInterval(I);
     C.addInterval(I);
     D.addInterval(I);
 
-    enum { T, U, V, W};
+    Constraint<int> constraint_array[4];
+    constraint_array[0].function(f1);
+    constraint_array[1].function(f2);
+    constraint_array[2].function(f3);
+    constraint_array[3].function(f4);
 
     // Establish the set of Edges
+    typedef Edge<int> Ei;
+    Ei edge_array[] = 
+    { Ei(A,B), Ei(B,C), Ei(A,D), Ei(A,C)};
+/*
     Edge edge_array[] = 
-    { Edge(T,U), Edge(T,V), Edge(T,W), Edge(V,W), Edge(V,U), Edge(U,W)};
+    { Edge(U,V), Edge(V,W), Edge(U,X), Edge(U,W)};
 
     // writing out the edges in the graph
     const int num_edges = sizeof(edge_array)/sizeof(edge_array[0]);
 
     // add the edges to the graph object
     for (int i = 0; i < num_edges; ++i)
-	N.add_edge(edge_array[i].first, edge_array[i].second);
+    N.add_edge(edge_array[i].first, edge_array[i].second);
+*/
     }
 
     return 0;

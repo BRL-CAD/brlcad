@@ -4,6 +4,8 @@ noinst_LTLIBRARIES = libpc_nil.la
 
 # XXX - should not blindly include src/other, should be provided by
 # configure if there's no suitable system boost
+# TODO: check existing boost using AX_BOOST_BASE([MINIMUM-VERSION]) ? in configure.ac
+#       and remove blind Include
 AM_CPPFLAGS = \
 	${TCL_CPPFLAGS} \
 	-I${top_srcdir}/src/other
@@ -17,11 +19,12 @@ noinst_HEADERS = \
 	pcBasic.h \
 	pcInterval.h \
 	pcVariable.h \
+	pcConstraint.h \
 	pcNetwork.h
 
 libpc_nil_la_SOURCES = \
 	pc_main.c \
-	pc_solver.cpp
+	pc_solver.cpp 
 
 libpc_la_SOURCES =
 libpc_la_LDFLAGS = -version-info 19:1 -no-undefined
