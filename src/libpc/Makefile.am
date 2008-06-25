@@ -2,7 +2,11 @@
 lib_LTLIBRARIES = libpc.la
 noinst_LTLIBRARIES = libpc_nil.la
 
-AM_CPPFLAGS = ${TCL_CPPFLAGS}
+# XXX - should not blindly include src/other, should be provided by
+# configure if there's no suitable system boost
+AM_CPPFLAGS = \
+	${TCL_CPPFLAGS} \
+	-I${top_srcdir}/src/other
 
 noinst_PROGRAMS = \
 	pc_test \
