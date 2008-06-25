@@ -169,6 +169,7 @@ bu_tcl_structparse_get_terse_form(Tcl_Interp			*interp,
     bu_vls_free(&str);
 }
 
+#if 0
 /**
  * b u _ s p _ s k i p _ s e p
  *
@@ -179,6 +180,7 @@ bu_tcl_structparse_get_terse_form(Tcl_Interp			*interp,
 #define BU_SP_SKIP_SEP(_cp)	\
 	{ while ( *(_cp) && (*(_cp) == ' ' || *(_cp) == '\n' || \
 		*(_cp) == '\t' || *(_cp) == '{' ) )  ++(_cp); }
+#endif
 
 
 /**
@@ -208,6 +210,21 @@ bu_tcl_structparse_argv(Tcl_Interp			*interp,
 			const struct bu_structparse	*desc,
 			char				*base)
 {
+#if 1
+    struct bu_vls log;
+    int ret;
+
+    bu_vls_init(&log);
+    ret = bu_structparse_argv(&log, argc, argv, desc, base);
+    Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)NULL);
+    bu_vls_free(&log);
+
+    /* Convert to a Tcl return code */
+    if (ret != BRLCAD_OK)
+	return TCL_ERROR;
+
+    return TCL_OK;
+#else
     register char				*cp, *loc;
     register const struct bu_structparse	*sdp;
     register int				 j;
@@ -613,6 +630,7 @@ bu_tcl_structparse_argv(Tcl_Interp			*interp,
 	}
     }
     return TCL_OK;
+#endif
 }
 
 

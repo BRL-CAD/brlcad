@@ -2207,6 +2207,356 @@ bu_next_token( char *str )
 
     return( ret );
 }
+
+/**
+ * b u _ s p _ s k i p _ s e p
+ *
+ * Skip the separator(s) (i.e. whitespace and open-braces)
+ *
+ * @param _cp	- character pointer
+ */
+#define BU_SP_SKIP_SEP(_cp)	\
+	{ while ( *(_cp) && (*(_cp) == ' ' || *(_cp) == '\n' || \
+		*(_cp) == '\t' || *(_cp) == '{' ) )  ++(_cp); }
+
+/**
+ * b u _ s t r u c t p a r s e _ a r g v
+ *
+ * Support routine for db adjust and db put.  Much like the bu_struct_parse routine
+ * which takes its input as a bu_vls. This routine, however, takes the arguments
+ * as lists, a more Tcl-friendly method. There is a log vls for storing messages.
+ *
+ * Operates on argv[0] and argv[1], then on argv[2] and argv[3], ...
+ *
+ *
+ * @param vls	- vls for dumping info that might have gone to bu_log
+ * @param argc	- number of elements in argv
+ * @param argv	- contains the keyword-value pairs
+ * @param desc	- structure description
+ * @param base	- base addr of users struct
+ *
+ * 	@retval TCL_OK if successful,
+ * @retval TCL_ERROR on failure
+ */
+int
+bu_structparse_argv(struct bu_vls		*log,
+		    int				argc,
+		    char			**argv,
+		    const struct bu_structparse	*desc,
+		    char			*base)
+{
+    register char				*cp, *loc;
+    register const struct bu_structparse	*sdp;
+    register int				 j;
+    register int				ii;
+    struct bu_vls				 str;
+
+    if (desc == (struct bu_structparse *)NULL) {
+	bu_vls_printf(log, "bu_structparse_argv: NULL desc pointer\n");
+	return BRLCAD_ERROR;
+    }
+
+    /* Run through each of the attributes and their arguments. */
+
+    bu_vls_init(&str);
+    while (argc > 0) {
+	/* Find the attribute which matches this argument. */
+	for (sdp = desc; sdp->sp_name != NULL; sdp++) {
+	    if (strcmp(sdp->sp_name, *argv) != 0)
+		continue;
+
+	    /* if we get this far, we've got a name match
+	     * with a name in the structure description
+	     */
+	    loc = (char *)(base+((int)sdp->sp_offset));
+	    if (sdp->sp_fmt[0] != '%') {
+		bu_vls_printf(log, "bu_structparse_argv: unknown format\n");
+		return BRLCAD_ERROR;
+	    }
+
+	    --argc;
+	    ++argv;
+
+	    switch (sdp->sp_fmt[1]) {
+	    case 'c':
+	    case 's':
+		/* copy the string, converting escaped
+		 * double quotes to just double quotes
+		 */
+		if (argc < 1) {
+		    bu_vls_printf(log,
+				  "not enough values for \"%s\" argument: should be %ld",
+				  sdp->sp_name,
+				  sdp->sp_count);
+		    return BRLCAD_ERROR;
+		}
+		for (ii = j = 0;
+		     j < sdp->sp_count && argv[0][ii] != '\0';
+		     loc[j++] = argv[0][ii++])
+		    ;
+		if (ii < sdp->sp_count)
+		    loc[ii] = '\0';
+		if (sdp->sp_count > 1) {
+		    loc[sdp->sp_count-1] = '\0';
+		    bu_vls_printf(log, "%s %s ", sdp->sp_name, loc);
+		} else {
+		    bu_vls_printf(log, "%s %c ", sdp->sp_name, *loc);
+		}
+		break;
+	    case 'S': {
+#if 1
+		bu_vls_strcpy(log, *argv);
+#else
+		struct bu_vls *vls = (struct bu_vls *)loc;
+		bu_vls_init_if_uninit( vls );
+		bu_vls_strcpy(vls, *argv);
+#endif
+		break;
+	    }
+	    case 'i': {
+		register short *sh = (short *)loc;
+		register int tmpi;
+
+		if ( argc < 1 ) {
+		    bu_vls_printf(log,
+				  "not enough values for \"%s\" argument: should have %ld",
+				  sdp->sp_name,
+				  sdp->sp_count);
+		    return BRLCAD_ERROR;
+		}
+
+		bu_vls_printf(log, "%s ", sdp->sp_name);
+
+		/* Special case:  '=!' toggles a boolean */
+		if ( argv[0][0] == '!' ) {
+		    *sh = *sh ? 0 : 1;
+		    bu_vls_printf(log, "%hd ", *sh);
+		    break;
+		}
+		/* Normal case: an integer */
+		cp = *argv;
+		for ( ii = 0; ii < sdp->sp_count; ++ii ) {
+		    if ( *cp == '\0' ) {
+			bu_vls_printf(log,
+				      "not enough values for \"%s\" argument: should have %ld",
+				      sdp->sp_name,
+				      sdp->sp_count);
+			return BRLCAD_ERROR;
+		    }
+
+		    BU_SP_SKIP_SEP(cp);
+		    tmpi = atoi( cp );
+		    if ( *cp && (*cp == '+' || *cp == '-') )
+			cp++;
+		    while ( *cp && isdigit(*cp) )
+			cp++;
+		    /* make sure we actually had an
+		     * integer out there
+		     */
+
+		    if ( cp == *argv ||
+			 (cp == *argv+1 &&
+			  (argv[0][0] == '+' ||
+			   argv[0][0] == '-')) ) {
+			bu_vls_printf(log,
+				      "value \"%s\" to argument %s isn't an integer",
+				      argv[0],
+				      sdp->sp_name);
+			return BRLCAD_ERROR;
+		    } else {
+			*(sh++) = tmpi;
+		    }
+		    BU_SP_SKIP_SEP(cp);
+		}
+
+		if (sdp->sp_count > 1)
+		    bu_vls_printf(log, "{%s} ", argv[0]);
+		else
+		    bu_vls_printf(log, "%s ", argv[0]);
+		break;
+	    }
+	    case 'd': {
+		register int *ip = (int *)loc;
+		register int tmpi;
+
+		if ( argc < 1 ) {
+		    /* XXX - when was ii defined */
+		    bu_vls_printf(log,
+				  "not enough values for \"%s\" argument: should have %ld",
+				  sdp->sp_name,
+				  sdp->sp_count);
+		    return BRLCAD_ERROR;
+		}
+
+		bu_vls_printf(log, "%s ", sdp->sp_name);
+
+		/* Special case:  '=!' toggles a boolean */
+		if (argv[0][0] == '!') {
+		    *ip = *ip ? 0 : 1;
+		    bu_vls_printf(log, "%d ", *ip);
+		    break;
+		}
+		/* Normal case: an integer */
+		cp = *argv;
+		for (ii = 0; ii < sdp->sp_count; ++ii) {
+		    if (*cp == '\0') {
+			bu_vls_printf(log,
+				      "not enough values for \"%s\" argument: should have %ld",
+				      sdp->sp_name,
+				      sdp->sp_count );
+			return BRLCAD_ERROR;
+		    }
+
+		    BU_SP_SKIP_SEP(cp);
+		    tmpi = atoi(cp);
+		    if ( *cp && (*cp == '+' || *cp == '-') )
+			cp++;
+		    while ( *cp && isdigit(*cp) )
+			cp++;
+		    /* make sure we actually had an
+		     * integer out there
+		     */
+
+		    if ( cp == *argv ||
+			 (cp == *argv+1 &&
+			  (argv[0][0] == '+' ||
+			   argv[0][0] == '-')) ) {
+			bu_vls_printf(log,
+				      "value \"%s\" to argument %s isn't an integer",
+				      argv[0],
+				      sdp->sp_name );
+			return BRLCAD_ERROR;
+		    } else {
+			*(ip++) = tmpi;
+		    }
+		    BU_SP_SKIP_SEP(cp);
+		}
+		if (sdp->sp_count > 1)
+		    bu_vls_printf(log, "{%s} ", argv[0]);
+		else
+		    bu_vls_printf(log, "%s ", argv[0]);
+		break;
+	    }
+	    case 'f': {
+		int		dot_seen;
+		double		tmp_double;
+		register double *dp;
+		char		*numstart;
+
+		dp = (double *)loc;
+
+		if (argc < 1) {
+		    bu_vls_printf(&str,
+				  "not enough values for \"%s\" argument: should have %ld, only %d given",
+				  sdp->sp_name,
+				  sdp->sp_count, argc );
+		    return BRLCAD_ERROR;
+		}
+
+		bu_vls_printf(log, "%s ", sdp->sp_name);
+
+		cp = *argv;
+		for ( ii = 0; ii < sdp->sp_count; ii++ ) {
+		    if ( *cp == '\0' ) {
+			bu_vls_printf(log,
+				      "not enough values for \"%s\" argument: should have %ld, only %d given",
+				      sdp->sp_name,
+				      sdp->sp_count,
+				      ii);
+			return BRLCAD_ERROR;
+		    }
+
+		    BU_SP_SKIP_SEP(cp);
+		    numstart = cp;
+		    if ( *cp == '-' || *cp == '+' ) cp++;
+
+		    /* skip matissa */
+		    dot_seen = 0;
+		    for (; *cp; cp++ ) {
+			if ( *cp == '.' && !dot_seen ) {
+			    dot_seen = 1;
+			    continue;
+			}
+			if ( !isdigit(*cp) )
+			    break;
+		    }
+
+		    /* If no mantissa seen,
+		       then there is no float here */
+		    if ( cp == (numstart + dot_seen) ) {
+			bu_vls_printf(log,
+				      "value \"%s\" to argument %s isn't a float",
+				      argv[0],
+				      sdp->sp_name );
+			return BRLCAD_ERROR;
+		    }
+
+		    /* there was a mantissa,
+		       so we may have an exponent */
+		    if ( *cp == 'E' || *cp == 'e' ) {
+			cp++;
+
+			/* skip exponent sign */
+			if (*cp == '+' || *cp == '-')
+			    cp++;
+			while ( isdigit(*cp) )
+			    cp++;
+		    }
+
+		    bu_vls_trunc(&str, 0);
+		    bu_vls_strcpy(&str, numstart);
+		    bu_vls_trunc(&str, cp-numstart);
+		    if (sscanf(bu_vls_addr(&str), "%lf", &tmp_double) != 1) {
+			bu_vls_printf(log,
+				      "value \"%s\" to argument %s isn't a float",
+				      numstart,
+				      sdp->sp_name);
+			bu_vls_free(&str);
+			return BRLCAD_ERROR;
+		    }
+		    bu_vls_free(&str);
+
+		    *dp++ = tmp_double;
+
+		    BU_SP_SKIP_SEP(cp);
+		}
+		if (sdp->sp_count > 1)
+		    bu_vls_printf(log, "{%s} ", argv[0]);
+		else
+		    bu_vls_printf(log, "%s ", argv[0]);
+		break;
+	    }
+	    default: {
+		bu_vls_printf(log,
+			      "%s line:%d Parse error, unknown format: '%s' for element \"%s\"",
+			      __FILE__, __LINE__, sdp->sp_fmt,
+			      sdp->sp_name);
+
+		return BRLCAD_ERROR;
+	    }
+	    }
+
+	    if (sdp->sp_hook) {
+		sdp->sp_hook(sdp, sdp->sp_name, base, *argv);
+	    }
+	    --argc;
+	    ++argv;
+
+
+	    break;
+	}
+
+
+	if (sdp->sp_name == NULL) {
+	    bu_vls_printf(log, "invalid attribute %s\n", argv[0]);
+	    return BRLCAD_ERROR;
+	}
+    }
+
+    return BRLCAD_OK;
+}
+
+
 /** @} */
 /*
  * Local Variables:

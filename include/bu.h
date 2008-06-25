@@ -58,6 +58,9 @@ __BEGIN_DECLS
 #  endif
 #endif
 
+#define BRLCAD_OK 0
+#define BRLCAD_ERROR 1
+
 /** @def BU_DIR_SEPARATOR
  * define BU_DIR_SEPARATOR to the directory separator character
  */
@@ -2251,6 +2254,13 @@ BU_EXPORT BU_EXTERN(void bu_copy_external,
 		     const struct bu_external *ip));
 BU_EXPORT BU_EXTERN(char *bu_next_token,
 		    (char *str));
+BU_EXPORT BU_EXTERN(int bu_structparse_argv,
+		    (struct bu_vls *log,
+		     int argc,
+		     char **argv,
+		     const struct bu_structparse *desc,
+		     char *base));
+
 
 /** @} */
 /** @addtogroup bitv */
