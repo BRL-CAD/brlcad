@@ -187,6 +187,7 @@ nurb_example_LDADD = \
 
 noinst_HEADERS = \
 	primitives/fixpt.h \
+	primitives/revolve/revolve.h \
 	primitives/xxx/xxx.h
 
 dist_man_MANS = librt.3
