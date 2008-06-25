@@ -2243,19 +2243,19 @@ rt_extrude_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
  */
 int
 rt_extrude_import5(
-    struct rt_db_internal		*ip,
+    struct rt_db_internal	*ip,
     const struct bu_external	*ep,
-    register const mat_t		mat,
+    register const mat_t	mat,
     const struct db_i		*dbip,
-    struct resource			*resp,
+    struct resource		*resp,
     const int			minor_type )
 {
     struct rt_extrude_internal	*extrude_ip;
-    struct rt_db_internal			tmp_ip;
-    struct directory			*dp;
-    char					*sketch_name;
-    unsigned char				*ptr;
-    point_t					tmp_vec[4];
+    struct rt_db_internal	tmp_ip;
+    struct directory		*dp;
+    char			*sketch_name;
+    unsigned char		*ptr;
+    point_t			tmp_vec[4];
 
     BU_CK_EXTERNAL( ep );
 
