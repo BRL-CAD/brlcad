@@ -110,6 +110,7 @@ set(LIBRT_SOURCES
     primitives/pipe/pipe.c
     primitives/poly/poly.c
     primitives/rec/rec.c
+    primitives/revolve/revolve.c
     primitives/rhc/rhc.c
     primitives/rpc/rpc.c
     primitives/sketch/sketch.c
