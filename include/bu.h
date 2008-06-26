@@ -174,7 +174,7 @@ __BEGIN_DECLS
 #include "magic.h"
 
 /*XXX Temporary global interp */
-BU_EXPORT Tcl_Interp *brlcad_interp;
+BU_EXPORT extern Tcl_Interp *brlcad_interp;
 
 /**
  * B U _ F O R T R A N
