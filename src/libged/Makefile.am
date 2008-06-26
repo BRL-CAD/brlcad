@@ -8,7 +8,10 @@ libged_nil_la_SOURCES = \
 	attr.c \
 	autoview.c \
 	bigE.c \
+	binary.c \
 	blast.c \
+	bot_decimate.c \
+	bot_face_sort.c \
 	comb_color.c \
 	dg_obj.c \
 	draw.c \

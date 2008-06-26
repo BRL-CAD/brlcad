@@ -146,7 +146,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\binary.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\blast.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\bot_decimate.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\bot_face_sort.c"
 				>
 			</File>
 			<File

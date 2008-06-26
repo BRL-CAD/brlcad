@@ -940,12 +940,54 @@ GED_EXPORT BU_EXTERN(int ged_attr, (struct ged *gedp, int argc, const char *argv
 GED_EXPORT BU_EXTERN(int ged_autoview, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Manipulate opaque objects.
+ * Must specify one of -i (for creating or adjusting objects (input))
+ * or -o for extracting objects (output).
+ * If the major type is "u" the minor type must be one of:
+ *   "f" -> float
+ *   "d" -> double
+ *   "c" -> char (8 bit)
+ *   "s" -> short (16 bit)
+ *   "i" -> int (32 bit)
+ *   "l" -> long (64 bit)
+ *   "C" -> unsigned char (8 bit)
+ *   "S" -> unsigned short (16 bit)
+ *   "I" -> unsigned int (32 bit)
+ *   "L" -> unsigned long (64 bit)
+ * For input, source is a file name and dest is an object name.
+ * For output source is an object name and dest is a file name.
+ * Only uniform array binary objects (major_type=u) are currently supported}}
+ * 
+ * Usage:
+ *     binary {-i major_type minor_type | -o} dest source
+ */
+GED_EXPORT BU_EXTERN(int ged_binary, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Erase all currently displayed geometry and draw the specified object(s)
  *
  * Usage:
  *     blast object(s)
  */
 GED_EXPORT BU_EXTERN(int ged_blast, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Uses edge decimation to reduce the number of triangles in the
+ * specified BOT while keeping within the specified constraints.
+ *
+ * Usage:
+ *     bot_decimate -c maximum_chord_error -n maximum_normal_error -e minimum_edge_length new_bot_name current_bot_name
+ */
+GED_EXPORT BU_EXTERN(int ged_bot_decimate, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Sort the facelist of BOT solids to optimize ray trace performance
+ * for a particular number of triangles per raytrace piece.
+ *
+ * Usage:
+ *     bot_face_sort triangles_per_piece bot_solid1 [bot_solid2 bot_solid3 ...]
+ */
+GED_EXPORT BU_EXTERN(int ged_bot_face_sort, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Set combination color.
