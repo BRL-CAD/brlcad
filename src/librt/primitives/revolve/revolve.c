@@ -444,17 +444,12 @@ rt_revolve_norm( struct hit *hitp, struct soltab *stp, struct xray *rp )
 	(struct revolve_specific *)stp->st_specific;
     vect_t	n, nT;
 
-	/* currently only does normal component in x-y plane */
-/*    VJOIN1( n, rp->r_pt, hitp->hit_dist, rp->r_dir );
-    VSUB2( hitp->hit_normal, n, rev->v3d );
-    VUNITIZE( hitp->hit_normal ); 
-*/
- /*   bu_log("\t%5.2f\n", 
-	sqrt( hitp->hit_vpriv[X]*hitp->hit_vpriv[X] +
-		hitp->hit_vpriv[Y]*hitp->hit_vpriv[Y] ) );
-*/
     VSET( n, hitp->hit_vpriv[X], hitp->hit_vpriv[Y], 0 );
     n[Z] = MAGNITUDE( n ) * hitp->hit_vpriv[Z];
+
+    if ( NEAR_ZERO( 1.0/hitp->hit_vpriv[Z], SMALL_FASTF ) ) {
+	VSET( n, 0, 0, 1 );
+    }
 
     nT[X] = ( rev->xUnit[X] * n[X] )
 	  + ( rev->yUnit[X] * n[Y] )
@@ -466,10 +461,11 @@ rt_revolve_norm( struct hit *hitp, struct soltab *stp, struct xray *rp )
 	  + ( rev->yUnit[Z] * n[Y] )
 	  + ( rev->zUnit[Z] * n[Z] );
     VUNITIZE( nT );
-    VMOVE( hitp->hit_normal, nT );
-
-/*    VREVERSE( hitp->hit_normal, rp->r_dir );
-*/
+    if ( VDOT( nT, rp->r_dir) < 0 ) {
+	VMOVE( hitp->hit_normal, nT );
+    } else {
+	VREVERSE( hitp->hit_normal, nT );
+    }
 }
 
 /**
