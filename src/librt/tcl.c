@@ -1074,6 +1074,10 @@ rt_comb_adjust(
 	if (strcmp(buf, "region")==0) {
 	    if (strcmp(argv[1], "none") == 0) {
 		comb->region_flag = 0;
+	    } else if (strcmp(argv[1], "no") == 0) {
+		comb->region_flag = 0;
+	    } else if (strcmp(argv[1], "yes") == 0) {
+		comb->region_flag = 1;
 	    } else {
 		if (sscanf(argv[1], "%d", &i) != 1)
 		    return BRLCAD_ERROR;
@@ -1162,6 +1166,10 @@ rt_comb_adjust(
 	} else if (strcmp(buf, "inherit")==0) {
 	    if (strcmp(argv[1], "none") == 0) {
 		comb->inherit = 0;
+	    } else if (strcmp(argv[1], "no") == 0) {
+		comb->inherit = 0;
+	    } else if (strcmp(argv[1], "yes") == 0) {
+		comb->inherit = 1;
 	    } else {
 		if (sscanf(argv[1], "%d", &i) != 1)
 		    return BRLCAD_ERROR;
