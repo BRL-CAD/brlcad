@@ -111,6 +111,8 @@ rt_revolve_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     stp->st_min[Z] = stp->st_center[Z] - stp->st_bradius;
     stp->st_max[Z] = stp->st_center[Z] + stp->st_bradius;
 
+    bu_log("rt_revolve_prep\n");
+
 }
 
 /**
@@ -142,18 +144,18 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
     const struct bn_tol	*tol = &ap->a_rt_i->rti_tol;
 
     register struct hit *hitp;
-    struct hit		hits[MAX_HITS];
+    struct hit		*hits[MAX_HITS], hit[MAX_HITS];
 
-    int 	i, j, nseg, nhits;
+    int 	i, j, nseg, nhits, in, out;
 
-    fastf_t	k;
+    fastf_t	k, m;
     point_t	dp, pr, xlated;
     vect_t	vr, ua, ur, norm, temp;
     fastf_t	h, aa, bb;
 
     nhits = 0;
 
-    bu_log("rt_revolve_shot\n");
+    for ( i=0; i<MAX_HITS; i++ ) hits[i] = &hit[i];
 
     vr[X] = VDOT( rev->xUnit, rp->r_dir );
     vr[Y] = VDOT( rev->yUnit, rp->r_dir );
@@ -198,6 +200,7 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 	vect_t	dir;
 	point_t	pt, pt2, hit1, hit2;
 	fastf_t a, b, c, disc, k1, k2, t1, t2, x, y;
+	fastf_t xmin, xmax, ymin, ymax;
 
 	switch ( *lng ) {
 	    case CURVE_LSEG_MAGIC:
@@ -205,6 +208,67 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 		VMOVE( pt, rev->sk->verts[lsg->start] );
 		VMOVE( pt2, rev->sk->verts[lsg->end] );
 		VSUB2( dir, pt2, pt );
+		m = dir[Y] / dir[X];
+
+		a = dir[X]*dir[X]/(aa*aa) - dir[Y]*dir[Y]/(bb*bb);
+		b = 2*(dir[X]*pt[X]/(aa*aa) - dir[Y]*(pt[Y]-h)/(bb*bb));
+		c = pt[X]*pt[X]/(aa*aa) - (pt[Y]-h)*(pt[Y]-h)/(bb*bb) - 1;
+		disc = b*b - ( 4.0 * a * c );
+		if ( !NEAR_ZERO( a, RT_PCOEF_TOL ) ) {
+		    if ( disc > 0 ) {
+			disc = sqrt( disc );
+			t1 =  (-b + disc) / (2.0 * a);
+			t2 =  (-b - disc) / (2.0 * a);
+			k1 = (pt[Y]-pr[Z] + t1*dir[Y])/vr[Z];
+			k2 = (pt[Y]-pr[Z] + t2*dir[Y])/vr[Z];
+
+			if ( t1 > 0 && t1 < 1 ) {
+			    if ( nhits >= MAX_HITS ) return -1; /* too many hits */
+			    hitp = hits[nhits++];
+			    VJOIN1( hitp->hit_vpriv, pr, k1, vr );
+			    hitp->hit_vpriv[Z] = -1.0/m;
+			    hitp->hit_magic = RT_HIT_MAGIC;
+			    hitp->hit_dist = k1;
+			    hitp->hit_surfno = LINE_SEG;
+			}
+			if ( t2 > 0 && t2 < 1 ) {
+			    if ( nhits >= MAX_HITS ) return -1; /* too many hits */
+			    hitp = hits[nhits++];
+			    VJOIN1( hitp->hit_vpriv, pr, k2, vr );
+			    hitp->hit_vpriv[Z] = -1.0/m;
+			    hitp->hit_magic = RT_HIT_MAGIC;
+			    hitp->hit_dist = k2;
+			    hitp->hit_surfno = LINE_SEG;
+			}
+		    }
+		} else if ( !NEAR_ZERO( b, RT_PCOEF_TOL ) ) {
+		    t1 = -c / b;
+		    k1 = (pt[Y]-pr[Z] + t1*dir[Y])/vr[Z];
+		    if ( t1 > 0 && t1 < 1 ) {
+			if ( nhits >= MAX_HITS ) return -1; /* too many hits */
+			hitp = hits[nhits++];
+			VJOIN1( hitp->hit_vpriv, pr, k1, vr );
+			hitp->hit_vpriv[Z] = -1.0/m;
+			hitp->hit_magic = RT_HIT_MAGIC;
+			hitp->hit_dist = k1;
+			hitp->hit_surfno = LINE_SEG;
+		    }
+		}
+#if 0
+		if ( pt[X] > pt2[X] ) {
+		    xmax = pt[X];
+		    xmin = pt2[X];
+		} else {
+		    xmax = pt2[X];
+		    xmin = pt[X];
+		}
+		if ( pt[Y] > pt2[Y] ) {
+		    ymax = pt[Y];
+		    ymin = pt2[Y];
+		} else {
+		    ymax = pt2[Y];
+		    ymin = pt[Y];
+		}
 
 		a = 0.5 * (dir[X]*bb - dir[Y]*aa);
 		b = (dir[Y]*pt[X]) - dir[X]*(pt[Y] - h);
@@ -214,43 +278,66 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 		if ( !NEAR_ZERO( a, RT_PCOEF_TOL ) ) {
 		    if ( disc > 0 ) {
 			disc = sqrt( disc );
-			k1 = (-b + disc) / (2.0 * a);
-			k2 = (-b - disc) / (2.0 * a);
-			t1 = k + log(k1);
-			t2 = k + log(k2);
-			x = aa*cosh( t1 - k );
-			y = h + bb*sinh( t1 -k );
-			if ( (pt2[X]-x)*(pt[X]-x) <= 0 && (pt2[Y]-y)*(pt[Y]-y) <= 0 ) {
+			t1 = log( fabs( (-b + disc) / (2.0 * a) ) );
+			t2 = log( fabs( (-b - disc) / (2.0 * a) ) );
+			k1 = (h + bb*sinh(t1) - pr[Z]) / vr[Z];
+			k2 = (h + bb*sinh(t2) - pr[Z]) / vr[Z];
+			x = aa*cosh( t1 );
+			y = h + bb*sinh( t1 );
+			if ( x > xmin && x < xmax && y > ymin && y < ymax ) {
 			    if ( nhits >= MAX_HITS ) return -1; /* too many hits */
-			    hitp = &hits[nhits++];
+			    VJOIN1( temp, pr, k1, vr );
+			    if ( !NEAR_ZERO( x*x - temp[X]*temp[X] - temp[Y]*temp[Y], RT_LEN_TOL ) ||
+					!NEAR_ZERO( y - temp[Z], RT_LEN_TOL ) ) {
+			        bu_log( "2D point: \t\t%5.2f\t%5.2f\n3D point: \t%5.2f\t%5.2f\t%5.2f\n",
+					x, y, temp[X], temp[Y], temp[Z] );
+			    }
+			    hitp = hits[nhits++];
+			    VJOIN1( hitp->hit_vpriv, pr, k1, vr );
 			    hitp->hit_magic = RT_HIT_MAGIC;
 			    hitp->hit_dist = t1;
 			    hitp->hit_surfno = LINE_SEG;
 			}
-			x = aa*cosh( t2 - k );
-			y = h + bb*sinh( t2 -k );
-			if ( (pt2[X]-x)*(pt[X]-x) <= 0 && (pt2[Y]-y)*(pt[Y]-y) <= 0 ) {
+			x = aa*cosh( t2 );
+			y = h + bb*sinh( t2 );
+			if ( x > xmin && x < xmax && y > ymin && y < ymax ) {
 			    if ( nhits >= MAX_HITS ) return -1; /* too many hits */
-			    hitp = &hits[nhits++];
+			    VJOIN1( temp, pr, k2, vr );
+			    if ( !NEAR_ZERO( x*x - temp[X]*temp[X] - temp[Y]*temp[Y], RT_LEN_TOL ) ||
+					!NEAR_ZERO( y - temp[Z], RT_LEN_TOL ) ) {
+			        bu_log( "2D point: \t\t%5.2f\t%5.2f\n3D point: \t%5.2f\t%5.2f\t%5.2f\n",
+					x, y, temp[X], temp[Y], temp[Z] );
+			    }
+			    hitp = hits[nhits++];
+			    VJOIN1( hitp->hit_vpriv, pr, k2, vr );
 			    hitp->hit_magic = RT_HIT_MAGIC;
-			    hitp->hit_dist = t2;
+			    hitp->hit_dist = k2;
 			    hitp->hit_surfno = LINE_SEG;
 			}
 		    }
-		} else if ( !NEAR_ZERO( b, RT_PCOEF_TOL ) ) {
-		    k1 = -c / b;
-		    t1 = k + log(k1);
-		    x = aa*cosh( t1 - k );
-		    y = h + bb*sinh( t1 -k );
-		    if ( (pt2[X]-x)*(pt[X]-x) <= 0 && (pt2[Y]-y)*(pt[Y]-y) <= 0 ) {
+		} 
+
+else if ( !NEAR_ZERO( b, RT_PCOEF_TOL ) ) {
+		    t1 = log( -c / b );
+		    k1 = (h + bb*sinh(t1) - pr[Z]) / vr[Z];
+		    x = aa*cosh( t1 );
+		    y = h + bb*sinh( t1 );
+		    if ( x > xmin && x < xmax && y > ymin && y < ymax ) {
 			if ( nhits >= MAX_HITS ) return -1; /* too many hits */
-			hitp = &hits[nhits++];
+			VJOIN1( temp, pr, k1, vr );
+			if ( !NEAR_ZERO( x*x - temp[X]*temp[X] - temp[Y]*temp[Y], RT_LEN_TOL ) ||
+				!NEAR_ZERO( y - temp[Z], RT_LEN_TOL ) ) {
+			    bu_log( "2D point: \t\t%5.2f\t%5.2f\n3D point: \t%5.2f\t%5.2f\t%5.2f\n",
+				x, y, temp[X], temp[Y], temp[Z] );
+			}
+			hitp = hits[nhits++];
+			VJOIN1( hitp->hit_vpriv, pr, k1, vr );
 			hitp->hit_magic = RT_HIT_MAGIC;
-			hitp->hit_dist = t1;
+			hitp->hit_dist = k1;
 			hitp->hit_surfno = LINE_SEG;
 		    }
 		}
-
+#endif
 		break;
 	}
 
@@ -260,30 +347,46 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 	bu_log( "odd number of hits: %d\n", nhits );
 	return -1;
     }
+
+#if 0
+    if ( nhits > 1 ) {
+	hitp = hits[0];
+	for ( i=0; i<nhits; i++) {
+	    if ( hits[i]->hit_dist < hitp->hit_dist ) {
+		hitp = hits[i];
+	    }
+	}
+	bu_log("radius:\t%5.2f", 
+		sqrt( hitp->hit_vpriv[X]*hitp->hit_vpriv[X] +
+			hitp->hit_vpriv[Y]*hitp->hit_vpriv[Y] ) );
+	/*bu_log( "hits: %d\n", nhits );*/
+    }
+#endif
+
 /* sort hitpoints (an arbitrary number of hits depending on sketch) */
     /* horribly inefficient sort for now... */
     for ( i=0; i<nhits; i+=2 ) {
 	RT_GET_SEG(segp, ap->a_resource);
 	segp->seg_stp = stp;
-	segp->seg_in.hit_dist = FLT_MAX;
-	segp->seg_in.hit_surfno = -1;
-	segp->seg_out.hit_dist = FLT_MAX;
-	segp->seg_out.hit_surfno = -1;
+	in = out = -1;
 	for ( j=0; j<nhits; j++ ) {
-	    if ( hits[j].hit_dist == -1) continue;
+	    if ( hits[j] == NULL ) continue;
+	    if ( in == -1 ) {
+		in = j;
+		continue;
+	    }
 	    /* store shortest dist as 'in', second shortest as 'out' */
-	    if ( hits[j].hit_dist < segp->seg_in.hit_dist ) {
-		segp->seg_out.hit_dist = segp->seg_in.hit_dist;
-		segp->seg_out.hit_surfno = segp->seg_in.hit_surfno;
-		segp->seg_in.hit_surfno = hits[j].hit_surfno;
-		segp->seg_in.hit_dist = hits[j].hit_dist;
-		hits[j].hit_dist = -1;
-	    } else if ( hits[j].hit_dist < segp->seg_out.hit_dist ) {
-		segp->seg_out.hit_surfno = hits[j].hit_surfno;
-		segp->seg_out.hit_dist = hits[j].hit_dist;
-		hits[j].hit_dist = -1;
+	    if ( hits[j]->hit_dist <= hits[in]->hit_dist ) {
+		out = in;
+		in = j;
+	    } else if ( out == -1 || hits[j]->hit_dist <= hits[out]->hit_dist ) {
+		out = j;
 	    }
 	}
+	segp->seg_in = *hits[in];
+	hits[in] = NULL;
+	segp->seg_out = *hits[out];
+	hits[out] = NULL;
 	BU_LIST_INSERT( &(seghead->l), &(segp->l) );
     }
 
@@ -337,10 +440,36 @@ rt_revolve_vshot(struct soltab *stp[],	/* An array of solid pointers */
 void
 rt_revolve_norm( struct hit *hitp, struct soltab *stp, struct xray *rp )
 {
-    register struct revolve_specific *revolve =
+    register struct revolve_specific *rev =
 	(struct revolve_specific *)stp->st_specific;
+    vect_t	n, nT;
 
-    VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
+	/* currently only does normal component in x-y plane */
+/*    VJOIN1( n, rp->r_pt, hitp->hit_dist, rp->r_dir );
+    VSUB2( hitp->hit_normal, n, rev->v3d );
+    VUNITIZE( hitp->hit_normal ); 
+*/
+ /*   bu_log("\t%5.2f\n", 
+	sqrt( hitp->hit_vpriv[X]*hitp->hit_vpriv[X] +
+		hitp->hit_vpriv[Y]*hitp->hit_vpriv[Y] ) );
+*/
+    VSET( n, hitp->hit_vpriv[X], hitp->hit_vpriv[Y], 0 );
+    n[Z] = MAGNITUDE( n ) * hitp->hit_vpriv[Z];
+
+    nT[X] = ( rev->xUnit[X] * n[X] )
+	  + ( rev->yUnit[X] * n[Y] )
+	  + ( rev->zUnit[X] * n[Z] );
+    nT[Y] = ( rev->xUnit[Y] * n[X] )
+	  + ( rev->yUnit[Y] * n[Y] )
+	  + ( rev->zUnit[Y] * n[Z] );
+    nT[Z] = ( rev->xUnit[Z] * n[X] )
+	  + ( rev->yUnit[Z] * n[Y] )
+	  + ( rev->zUnit[Z] * n[Z] );
+    VUNITIZE( nT );
+    VMOVE( hitp->hit_normal, nT );
+
+/*    VREVERSE( hitp->hit_normal, rp->r_dir );
+*/
 }
 
 /**
