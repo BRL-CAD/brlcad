@@ -2440,68 +2440,54 @@ rt_extrude_xform(
 }
 
 int
-rt_extrude_tclform( const struct rt_functab *ftp, Tcl_Interp *interp )
+rt_extrude_form(struct bu_vls *log, const struct rt_functab *ftp)
 {
     RT_CK_FUNCTAB(ftp);
 
-    Tcl_AppendResult( interp,
-		      "V {%f %f %f} H {%f %f %f} A {%f %f %f} B {%f %f %f} S %s K %d", (char *)NULL );
+    bu_vls_printf(log,
+		  "V {%%f %%f %%f} H {%%f %%f %%f} A {%%f %%f %%f} B {%%f %%f %%f} S %%s K %%d");
 
-    return TCL_OK;
-
+    return BRLCAD_OK;
 }
 
 int
-rt_extrude_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr)
+rt_extrude_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *attr)
 {
     register struct rt_extrude_internal *extr=(struct rt_extrude_internal *) intern->idb_ptr;
-    Tcl_DString     ds;
-    struct bu_vls   vls;
-    int ret=TCL_OK;
 
     RT_EXTRUDE_CK_MAGIC( extr );
 
-    Tcl_DStringInit( &ds );
-    bu_vls_init( &vls );
-
-
-    if ( attr == (char *)NULL )
-    {
-	bu_vls_strcpy( &vls, "extrude" );
-	bu_vls_printf( &vls, " V {%.25g %.25g %.25g}", V3ARGS( extr->V ) );
-	bu_vls_printf( &vls, " H {%.25g %.25g %.25g}", V3ARGS( extr->h ) );
-	bu_vls_printf( &vls, " A {%.25g %.25g %.25g}", V3ARGS( extr->u_vec ) );
-	bu_vls_printf( &vls, " B {%.25g %.25g %.25g}", V3ARGS( extr->v_vec ) );
-	bu_vls_printf( &vls, " S %s", extr->sketch_name );
-	bu_vls_printf( &vls, " K %d", extr->keypoint );
+    if (attr == (char *)NULL) {
+	bu_vls_strcpy( log, "extrude" );
+	bu_vls_printf( log, " V {%.25g %.25g %.25g}", V3ARGS( extr->V ) );
+	bu_vls_printf( log, " H {%.25g %.25g %.25g}", V3ARGS( extr->h ) );
+	bu_vls_printf( log, " A {%.25g %.25g %.25g}", V3ARGS( extr->u_vec ) );
+	bu_vls_printf( log, " B {%.25g %.25g %.25g}", V3ARGS( extr->v_vec ) );
+	bu_vls_printf( log, " S %s", extr->sketch_name );
+	bu_vls_printf( log, " K %d", extr->keypoint );
     }
     else if ( *attr == 'V' )
-	bu_vls_printf( &vls, "%.25g %.25g %.25g", V3ARGS( extr->V ) );
+	bu_vls_printf( log, "%.25g %.25g %.25g", V3ARGS( extr->V ) );
     else if ( *attr == 'H' )
-	bu_vls_printf( &vls, "%.25g %.25g %.25g", V3ARGS( extr->h ) );
+	bu_vls_printf( log, "%.25g %.25g %.25g", V3ARGS( extr->h ) );
     else if ( *attr == 'A' )
-	bu_vls_printf( &vls, "%.25g %.25g %.25g", V3ARGS( extr->u_vec ) );
+	bu_vls_printf( log, "%.25g %.25g %.25g", V3ARGS( extr->u_vec ) );
     else if ( *attr == 'B' )
-	bu_vls_printf( &vls, "%.25g %.25g %.25g", V3ARGS( extr->v_vec ) );
+	bu_vls_printf( log, "%.25g %.25g %.25g", V3ARGS( extr->v_vec ) );
     else if ( *attr == 'S' )
-	bu_vls_printf( &vls, "%s", extr->sketch_name );
+	bu_vls_printf( log, "%s", extr->sketch_name );
     else if ( *attr == 'K' )
-	bu_vls_printf( &vls, "%d", extr->keypoint );
-    else
-    {
-	bu_vls_strcat( &vls, "ERROR: unrecognized attribute, must be V, H, A, B, S, or K!!!" );
-	ret = TCL_ERROR;
+	bu_vls_printf( log, "%d", extr->keypoint );
+    else {
+	bu_vls_strcat( log, "ERROR: unrecognized attribute, must be V, H, A, B, S, or K!!!" );
+	return BRLCAD_ERROR;
     }
 
-    Tcl_DStringAppend( &ds, bu_vls_addr( &vls ), -1 );
-    Tcl_DStringResult( interp, &ds );
-    Tcl_DStringFree( &ds );
-    bu_vls_free( &vls );
-    return( ret );
+    return BRLCAD_OK;
 }
 
 int
-rt_extrude_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv)
+rt_extrude_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv)
 {
     struct rt_extrude_internal *extr;
     fastf_t *new;
@@ -2518,34 +2504,28 @@ rt_extrude_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc
 	if ( *argv[0] == 'V' )
 	{
 	    new = extr->V;
-	    if ( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len ) !=
+	    if ( tcl_list_to_fastf_array( brlcad_interp, argv[1], &new, &array_len ) !=
 		 array_len ) {
-		Tcl_SetResult( interp,
-			       "ERROR: incorrect number of coordinates for vertex\n",
-			       TCL_STATIC );
-		return( TCL_ERROR );
+		bu_vls_printf(log, "ERROR: incorrect number of coordinates for vertex\n");
+		return BRLCAD_ERROR;
 	    }
 	}
 	else if ( *argv[0] == 'H' )
 	{
 	    new = extr->h;
-	    if ( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len ) !=
+	    if ( tcl_list_to_fastf_array( brlcad_interp, argv[1], &new, &array_len ) !=
 		 array_len ) {
-		Tcl_SetResult( interp,
-			       "ERROR: incorrect number of coordinates for vector\n",
-			       TCL_STATIC );
-		return( TCL_ERROR );
+		bu_vls_printf(log, "ERROR: incorrect number of coordinates for vector\n");
+		return BRLCAD_ERROR;
 	    }
 	}
 	else if ( *argv[0] == 'A' )
 	{
 	    new = extr->u_vec;
-	    if ( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len ) !=
+	    if ( tcl_list_to_fastf_array( brlcad_interp, argv[1], &new, &array_len ) !=
 		 array_len ) {
-		Tcl_SetResult( interp,
-			       "ERROR: incorrect number of coordinates for vector\n",
-			       TCL_STATIC );
-		return( TCL_ERROR );
+		bu_vls_printf(log, "ERROR: incorrect number of coordinates for vector\n");
+		return BRLCAD_ERROR;
 	    }
 
 	    /* insure that u_vec and v_vec are the same length */
@@ -2556,12 +2536,10 @@ rt_extrude_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc
 	else if ( *argv[0] == 'B' )
 	{
 	    new = extr->v_vec;
-	    if ( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len ) !=
+	    if ( tcl_list_to_fastf_array( brlcad_interp, argv[1], &new, &array_len ) !=
 		 array_len ) {
-		Tcl_SetResult( interp,
-			       "ERROR: incorrect number of coordinates for vector\n",
-			       TCL_STATIC );
-		return( TCL_ERROR );
+		bu_vls_printf(log, "ERROR: incorrect number of coordinates for vector\n");
+		return BRLCAD_ERROR;
 	    }
 	    /* insure that u_vec and v_vec are the same length */
 	    len = MAGNITUDE( extr->v_vec );
@@ -2580,7 +2558,7 @@ rt_extrude_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc
 	argv += 2;
     }
 
-    return( TCL_OK );
+    return BRLCAD_OK;
 }
 
 /**

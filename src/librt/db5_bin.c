@@ -624,72 +624,60 @@ rt_binunif_make(const struct rt_functab *ftp, struct rt_db_internal *intern, dou
 }
 
 int
-rt_binunif_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr )
+rt_binunif_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *attr)
 {
     register struct rt_binunif_internal *bip=(struct rt_binunif_internal *)intern->idb_ptr;
     struct bu_external	ext;
-    Tcl_DString		ds;
-    struct bu_vls		vls;
-    int			status=TCL_OK;
     int			i;
-    unsigned char		*c;
+    unsigned char	*c;
 
     RT_CHECK_BINUNIF( bip );
 
-    Tcl_DStringInit( &ds );
-    bu_vls_init( &vls );
-
-    if ( attr == (char *)NULL )
-    {
+    if (attr == (char *)NULL) {
 	/* export the object to get machine independent form */
 	if ( rt_binunif_export5( &ext, intern, 1.0, NULL, NULL, intern->idb_minor_type ) ) {
-	    bu_vls_strcpy( &vls, "Failed to export binary object!!\n" );
-	    status = TCL_ERROR;
+	    bu_vls_strcpy( log, "Failed to export binary object!!\n" );
+	    return BRLCAD_ERROR;
 	} else {
-	    bu_vls_strcpy( &vls, "binunif" );
-	    bu_vls_printf( &vls, " T %d D {", bip->type );
+	    bu_vls_strcpy( log, "binunif" );
+	    bu_vls_printf( log, " T %d D {", bip->type );
 	    c = ext.ext_buf;
 	    for ( i=0; i<ext.ext_nbytes; i++, c++ ) {
-		if ( i%40 == 0 ) bu_vls_strcat( &vls, "\n" );
-		bu_vls_printf( &vls, "%2.2x", *c );
+		if ( i%40 == 0 ) bu_vls_strcat( log, "\n" );
+		bu_vls_printf( log, "%2.2x", *c );
 	    }
-	    bu_vls_strcat( &vls, "}" );
+	    bu_vls_strcat( log, "}" );
 	    bu_free_external( &ext );
 	}
 
     } else {
 	if ( !strcmp( attr, "T" ) ) {
-	    bu_vls_printf( &vls, "%d", bip->type );
+	    bu_vls_printf( log, "%d", bip->type );
 	} else if ( !strcmp( attr, "D" ) ) {
 	    /* export the object to get machine independent form */
 	    if ( rt_binunif_export5( &ext, intern, 1.0, NULL, NULL,
 				     intern->idb_minor_type ) ) {
-		bu_vls_strcpy( &vls, "Failed to export binary object!!\n" );
-		status = TCL_ERROR;
+		bu_vls_strcpy( log, "Failed to export binary object!!\n" );
+		return BRLCAD_ERROR;
 	    } else {
 		c = ext.ext_buf;
 		for ( i=0; i<ext.ext_nbytes; i++, c++ ) {
-		    if ( i != 0 && i%40 == 0 ) bu_vls_strcat( &vls, "\n" );
-		    bu_vls_printf( &vls, "%2.2x", *c );
+		    if ( i != 0 && i%40 == 0 ) bu_vls_strcat( log, "\n" );
+		    bu_vls_printf( log, "%2.2x", *c );
 		}
 		bu_free_external( &ext );
 	    }
 	} else {
-	    bu_vls_printf( &vls, "Binary object has no attribute '%s'", attr );
-	    status = TCL_ERROR;
+	    bu_vls_printf( log, "Binary object has no attribute '%s'", attr );
+	    return BRLCAD_ERROR;
 	}
     }
 
-    Tcl_DStringAppend( &ds, bu_vls_addr( &vls ), -1 );
-    Tcl_DStringResult( interp, &ds );
-    Tcl_DStringFree( &ds );
-    bu_vls_free( &vls );
-
-    return( status );
+    return BRLCAD_OK;
 }
 
 int
-rt_binunif_tcladjust( Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv )
+rt_binunif_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv )
 {
     struct rt_binunif_internal *bip;
     int i;
@@ -717,11 +705,10 @@ rt_binunif_tcladjust( Tcl_Interp *interp, struct rt_db_internal *intern, int arg
 		new_type = atoi( argv[1] );
 	    } else {
 		if ( argv[1][1] != '\0' ) {
-		    Tcl_AppendResult( interp, "Illegal type: ",
-				      argv[1],
-				      ", must be 'f', 'd', 'c', 'i', 'l', 'C', 'S', 'I', or 'L'",
-				      (char *)NULL );
-		    return TCL_ERROR;
+		    bu_vls_printf(log,
+				  "Illegal type: %s, must be 'f', 'd', 'c', 'i', 'l', 'C', 'S', 'I', or 'L'",
+				  argv[1]);
+		    return BRLCAD_ERROR;
 		}
 		switch ( argv[1][0] ) {
 		    case 'f':
@@ -760,9 +747,8 @@ rt_binunif_tcladjust( Tcl_Interp *interp, struct rt_db_internal *intern, int arg
 		 new_type > DB5_MINORTYPE_BINU_64BITINT ||
 		 binu_types[new_type] == NULL ) {
 		/* Illegal value for type */
-		Tcl_AppendResult( interp, "Illegal value for binary type: ", argv[1],
-				  (char *)NULL );
-		return TCL_ERROR;
+		bu_vls_printf(log, "Illegal value for binary type: %s", argv[1]);
+		return BRLCAD_ERROR;
 	    } else {
 		if ( bip->u.uint8 ) {
 		    int new_count;
@@ -803,8 +789,8 @@ rt_binunif_tcladjust( Tcl_Interp *interp, struct rt_db_internal *intern, int arg
 
 	    obj = Tcl_NewStringObj( argv[1], -1 );
 	    list = Tcl_NewListObj( 0, NULL );
-	    Tcl_ListObjAppendList( interp, list, obj );
-	    (void)Tcl_ListObjGetElements( interp, list, &list_len, &obj_array );
+	    Tcl_ListObjAppendList( brlcad_interp, list, obj );
+	    (void)Tcl_ListObjGetElements( brlcad_interp, list, &list_len, &obj_array );
 
 	    hexlen = 0;
 	    for ( i=0; i<list_len; i++ ) {
@@ -812,10 +798,8 @@ rt_binunif_tcladjust( Tcl_Interp *interp, struct rt_db_internal *intern, int arg
 	    }
 
 	    if ( hexlen % 2 ) {
-		Tcl_AppendResult( interp,
-				  "Hex form of binary data must have an even number of hex digits",
-				  (char *)NULL );
-		return TCL_ERROR;
+		bu_vls_printf(log, "Hex form of binary data must have an even number of hex digits");
+		return BRLCAD_ERROR;
 	    }
 
 	    buf = (unsigned char *)bu_malloc( hexlen / 2, "tcladjust binary data" );

@@ -1891,7 +1891,7 @@ draw3seg( segp, pt, dir )
 #endif /* test driver */
 
 /**
- *		R T _ E B M _ T C L G E T
+ *		R T _ E B M _ G E T
  *
  *	Routine to format the parameters of an EBM for "db get"
  *
@@ -1905,56 +1905,45 @@ draw3seg( segp, pt, dir )
  *	no paramaters requested returns all
  */
 int
-rt_ebm_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr)
+rt_ebm_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *attr)
 {
     register struct rt_ebm_internal *ebm=(struct rt_ebm_internal *)intern->idb_ptr;
-    Tcl_DString	ds;
-    struct bu_vls	vls;
-    int		i;
+    int i;
 
     RT_EBM_CK_MAGIC( ebm );
 
-    Tcl_DStringInit( &ds );
-    bu_vls_init( &vls );
-
-    if ( attr == (char *)NULL ) {
-	bu_vls_strcpy( &vls, "ebm" );
-	bu_vls_printf( &vls, " F %s W %d N %d H %.25g",
+    if (attr == (char *)NULL) {
+	bu_vls_strcpy( log, "ebm" );
+	bu_vls_printf( log, " F %s W %d N %d H %.25g",
 		       ebm->file, ebm->xdim, ebm->ydim, ebm->tallness );
-	bu_vls_printf( &vls, " M {" );
+	bu_vls_printf( log, " M {" );
 	for ( i=0; i<16; i++ )
-	    bu_vls_printf( &vls, " %.25g", ebm->mat[i] );
-	bu_vls_printf( &vls, " }" );
+	    bu_vls_printf( log, " %.25g", ebm->mat[i] );
+	bu_vls_printf( log, " }" );
     }
     else if ( !strcmp( attr, "F" ) )
-	bu_vls_printf( &vls, "%s", ebm->file );
+	bu_vls_printf( log, "%s", ebm->file );
     else if ( !strcmp( attr, "W" ) )
-	bu_vls_printf( &vls, "%d", ebm->xdim );
+	bu_vls_printf( log, "%d", ebm->xdim );
     else if ( !strcmp( attr, "N" ) )
-	bu_vls_printf( &vls, "%d", ebm->ydim );
+	bu_vls_printf( log, "%d", ebm->ydim );
     else if ( !strcmp( attr, "H" ) )
-	bu_vls_printf( &vls, "%.25g", ebm->tallness );
+	bu_vls_printf( log, "%.25g", ebm->tallness );
     else if ( !strcmp( attr, "M" ) ) {
 	for ( i=0; i<16; i++ )
-	    bu_vls_printf( &vls, "%.25g ", ebm->mat[i] );
+	    bu_vls_printf( log, "%.25g ", ebm->mat[i] );
     }
     else {
-	Tcl_SetResult( interp, "ERROR: Unknown attribute, choices are F, W, N, or H\n",
-		       TCL_STATIC );
-	bu_vls_free( &vls );
-	return( TCL_ERROR );
+	bu_vls_printf(log, "ERROR: Unknown attribute, choices are F, W, N, or H\n");
+	return BRLCAD_ERROR;
     }
 
-    Tcl_DStringAppend( &ds, bu_vls_addr( &vls ), -1 );
-    Tcl_DStringResult( interp, &ds );
-    Tcl_DStringFree( &ds );
-    bu_vls_free( &vls );
-    return( TCL_OK );
+    return BRLCAD_OK;
 }
 
 
 /**
- *		R T _ E B M _ T C L A D J U S T
+ *		R T _ E B M _ A D J U S T
  *
  *	Routine to adjust the parameters of an EBM
  *
@@ -1967,69 +1956,64 @@ rt_ebm_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const cha
  */
 
 int
-rt_ebm_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv)
+rt_ebm_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv)
 {
     struct rt_ebm_internal *ebm;
 
-    RT_CK_DB_INTERNAL( intern );
+    RT_CK_DB_INTERNAL(intern);
 
     ebm = (struct rt_ebm_internal *)intern->idb_ptr;
-    RT_EBM_CK_MAGIC( ebm );
+    RT_EBM_CK_MAGIC(ebm);
 
-    while ( argc >= 2 ) {
-	if ( !strcmp( argv[0], "F" ) ) {
-	    if ( strlen( argv[1] ) >= RT_EBM_NAME_LEN ) {
-		Tcl_SetResult( interp,
-			       "ERROR: File name too long",
-			       TCL_STATIC );
-		return( TCL_ERROR );
+    while (argc >= 2) {
+	if (!strcmp( argv[0], "F")) {
+	    if (strlen(argv[1]) >= RT_EBM_NAME_LEN) {
+		bu_vls_printf(log, "ERROR: File name too long");
+		return BRLCAD_ERROR;
 	    }
-	    bu_strlcpy( ebm->file, argv[1], RT_EBM_NAME_LEN );
+	    bu_strlcpy(ebm->file, argv[1], RT_EBM_NAME_LEN);
 	}
-	else if ( !strcmp( argv[0], "W" ) ) {
-	    ebm->xdim = atoi( argv[1] );
+	else if (!strcmp( argv[0], "W")) {
+	    ebm->xdim = atoi(argv[1]);
 	}
-	else if ( !strcmp( argv[0], "N" ) ) {
-	    ebm->ydim = atoi( argv[1] );
+	else if (!strcmp(argv[0], "N")) {
+	    ebm->ydim = atoi(argv[1]);
 	}
-	else if ( !strcmp( argv[0], "H" ) ) {
-	    ebm->tallness = atof( argv[1] );
+	else if (!strcmp(argv[0], "H")) {
+	    ebm->tallness = atof(argv[1]);
 	}
-	else if ( !strcmp( argv[0], "M" ) ) {
+	else if (!strcmp(argv[0], "M")) {
 	    int len=16;
 	    fastf_t array[16];
 	    fastf_t *ar_ptr;
 
+	    /*XXX needs list_to_fastf_array function */
 	    ar_ptr = array;
 
-	    if ( tcl_list_to_fastf_array( interp, argv[1], &ar_ptr, &len) !=
-		 len ) {
-		Tcl_SetResult( interp,
-			       "ERROR: incorrect number of coefficents for matrix\n",
-			       TCL_STATIC );
-		return( TCL_ERROR );
+	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &ar_ptr, &len) !=
+		 len) {
+		bu_vls_printf(log, "ERROR: incorrect number of coefficents for matrix\n");
+		return BRLCAD_ERROR;
 	    }
-	    MAT_COPY( ebm->mat, array )
-		}
+	    MAT_COPY(ebm->mat, array)
+	}
 	else {
-	    Tcl_SetResult( interp,
-			   "ERROR: illegal argument, choices are F, W, N, or H\n",
-			   TCL_STATIC );
-	    return( TCL_ERROR );
+	    bu_vls_printf(log, "ERROR: illegal argument, choices are F, W, N, or H\n");
+	    return BRLCAD_ERROR;
 	}
 	argc -= 2;
 	argv += 2;
     }
-    return( TCL_OK );
+    return BRLCAD_OK;
 }
 
 int
-rt_ebm_tclform( const struct rt_functab *ftp, Tcl_Interp *interp )
+rt_ebm_form(struct bu_vls *log, const struct rt_functab *ftp)
 {
     RT_CK_FUNCTAB(ftp);
 
-    Tcl_AppendResult( interp,
-		      "F %s W %d N %d H %f M { %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f", (char *)NULL );
+    bu_vls_printf(log,
+		  "F %%s W %%d N %%d H %%f M { %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f }");
 
     return TCL_OK;
 

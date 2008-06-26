@@ -262,11 +262,18 @@ main(int argc, char **argv)
 		continue;
 	    }
 	    if ( dp->d_flags & DIR_COMB ) {
-		if ( intern.idb_meth->ft_tclget( interp, &intern, "tree" ) != TCL_OK )  {
+		struct bu_vls log;
+
+		bu_vls_init(&log);
+		if ( intern.idb_meth->ft_get(&log, &intern, "tree" ) != TCL_OK )  {
 		    rt_db_free_internal( &intern, &rt_uniresource );
-		    bu_log("Unable to export '%s', skipping\n", dp->d_namep );
+		    bu_log("Unable to export '%s', skipping\n", dp->d_namep);
+		    Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)0);
+		    bu_vls_free(&log);
 		    continue;
 		}
+		Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)0);
+		bu_vls_free(&log);
 		if ( dp->d_flags & DIR_REGION ) {
 		    fprintf( ofp, "put {%s} comb region yes tree {%s}\n",
 			     tclify_name( dp->d_namep ),
@@ -277,7 +284,7 @@ main(int argc, char **argv)
 			     Tcl_GetStringResult(interp) );
 		}
 	    } else {
-		if ( dp->d_minor_type!= ID_CONSTRAINT && intern.idb_meth->ft_tclget( interp, &intern, NULL ) != TCL_OK )  {
+		if ( dp->d_minor_type!= ID_CONSTRAINT && intern.idb_meth->ft_get( interp, &intern, NULL ) != TCL_OK )  {
 		    rt_db_free_internal( &intern, &rt_uniresource );
 		    bu_log("Unable to export '%s', skipping\n", dp->d_namep );
 		    continue;

@@ -132,7 +132,6 @@ rt_bend_pipe_prep(struct soltab *stp, struct bu_list *head, fastf_t *bend_center
     vect_t	to_start, to_end;
     mat_t	R;
     point_t	work;
-    vect_t	tmp_vec;
     fastf_t	f;
     fastf_t   max_od;
     fastf_t   max_or;
@@ -917,7 +916,6 @@ linear_pipe_shot(struct soltab *stp, register struct xray *rp, struct applicatio
     double	t_tmp;
     double	a, b, c;
     double	descrim;
-    vect_t    inv_dir;
 
     if ( pipe->pipe_is_bend )
     {
@@ -3951,7 +3949,7 @@ rt_pipe_ck( const struct bu_list *headp )
 
 
 /**
- *			R T _ P I P E _ T C L _ G E T
+ *			R T _ P I P E _ G E T
  *
  *  Examples -
  *	db get name V#			get coordinates for vertex #
@@ -3963,53 +3961,40 @@ rt_pipe_ck( const struct bu_list *headp )
  */
 
 int
-rt_pipe_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr)
+rt_pipe_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *attr)
 {
     register struct rt_pipe_internal *pipe=(struct rt_pipe_internal *)intern->idb_ptr;
     struct wdb_pipept *ptp;
-    Tcl_DString	ds;
-    struct bu_vls	vls;
-    int		status=TCL_OK;
     int		seg_no;
     int		num_segs=0;
 
     RT_PIPE_CK_MAGIC( pipe );
 
-    Tcl_DStringInit( &ds );
-    bu_vls_init( &vls );
-
     /* count segments */
     for ( BU_LIST_FOR( ptp, wdb_pipept, &pipe->pipe_segs_head ) )
 	num_segs++;
 
-    if ( attr == (char *)NULL )
-    {
-	bu_vls_strcat( &vls, "pipe");
+    if (attr == (char *)NULL) {
+	bu_vls_strcat( log, "pipe");
 
 	seg_no = 0;
 	for ( BU_LIST_FOR( ptp, wdb_pipept, &pipe->pipe_segs_head ) ) {
-	    bu_vls_printf( &vls, " V%d { %.25G %.25G %.25G } O%d %.25G I%d %.25G R%d %.25G",
+	    bu_vls_printf( log, " V%d { %.25G %.25G %.25G } O%d %.25G I%d %.25G R%d %.25G",
 			   seg_no, V3ARGS( ptp->pp_coord ),
 			   seg_no, ptp->pp_od,
 			   seg_no, ptp->pp_id,
 			   seg_no, ptp->pp_bendradius );
 	    seg_no++;
 	}
-    }
-    else if ( attr[0] == 'N' )
-    {
-	bu_vls_printf( &vls, "%d", num_segs );
-	goto out;
-    }
-    else
-    {
+    } else if (attr[0] == 'N') {
+	bu_vls_printf( log, "%d", num_segs );
+    } else {
 	int curr_seg=0;
 
 	seg_no = atoi( &attr[1] );
 	if ( seg_no < 0 || seg_no >= num_segs ) {
-	    bu_vls_printf( &vls, "segment number out of range (0 - %d)", num_segs-1 );
-	    status = TCL_ERROR;
-	    goto out;
+	    bu_vls_printf( log, "segment number out of range (0 - %d)", num_segs-1 );
+	    return BRLCAD_ERROR;
 	}
 
 	/* find the desired vertex */
@@ -4021,42 +4006,35 @@ rt_pipe_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const ch
 
 	switch ( attr[0] ) {
 	    case 'V':
-		bu_vls_printf( &vls, "%.25G %.25G %.25G", V3ARGS( ptp->pp_coord ) );
+		bu_vls_printf( log, "%.25G %.25G %.25G", V3ARGS( ptp->pp_coord ) );
 		break;
 	    case 'I':
-		bu_vls_printf( &vls, "%.25G", ptp->pp_id );
+		bu_vls_printf( log, "%.25G", ptp->pp_id );
 		break;
 	    case 'O':
-		bu_vls_printf( &vls, "%.25G", ptp->pp_od );
+		bu_vls_printf( log, "%.25G", ptp->pp_od );
 		break;
 	    case 'R':
-		bu_vls_printf( &vls, "%.25G", ptp->pp_bendradius );
+		bu_vls_printf( log, "%.25G", ptp->pp_bendradius );
 		break;
 	    case 'P':
-		bu_vls_printf( &vls, " V%d { %.25G %.25G %.25G } I%d %.25G O%d %.25G R%d %.25G",
+		bu_vls_printf( log, " V%d { %.25G %.25G %.25G } I%d %.25G O%d %.25G R%d %.25G",
 			       seg_no, V3ARGS( ptp->pp_coord ),
 			       seg_no, ptp->pp_id,
 			       seg_no, ptp->pp_od,
 			       seg_no, ptp->pp_bendradius );
 		break;
 	    default:
-		bu_vls_printf( &vls, "unrecognized attribute (%c), choices are V, I, O, R, or P", attr[0] );
-		status = TCL_ERROR;
-		break;
+		bu_vls_printf( log, "unrecognized attribute (%c), choices are V, I, O, R, or P", attr[0] );
+		return BRLCAD_ERROR;
 	}
     }
- out:
-    Tcl_DStringAppend( &ds, bu_vls_addr( &vls ), -1 );
-    Tcl_DStringResult( interp, &ds );
-    Tcl_DStringFree( &ds );
-    bu_vls_free( &vls );
 
-    return( status );
-
+    return BRLCAD_OK;
 }
 
 int
-rt_pipe_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv, struct resource *resp)
+rt_pipe_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv, struct resource *resp)
 {
     struct rt_pipe_internal		*pipe;
     struct wdb_pipept		*ptp;
@@ -4084,8 +4062,8 @@ rt_pipe_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
 	}
 
 	if ( !isdigit( argv[0][1] ) ) {
-	    Tcl_SetResult( interp, "no vertex number specified", TCL_STATIC );
-	    return( TCL_ERROR );
+	    bu_vls_printf(log, "no vertex number specified");
+	    return BRLCAD_ERROR;
 	}
 
 	seg_no = atoi( &argv[0][1] );
@@ -4109,8 +4087,8 @@ rt_pipe_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
 	    num_segs++;
 	}
 	if ( seg_no < 0 || seg_no >= num_segs ) {
-	    Tcl_SetResult( interp, "vertex number out of range", TCL_STATIC );
-	    return( TCL_ERROR );
+	    bu_vls_printf(log, "vertex number out of range");
+	    return BRLCAD_ERROR;
 	}
 
 	/* get the specified vertex */
@@ -4126,27 +4104,27 @@ rt_pipe_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
 	    case 'V':
 		obj = Tcl_NewStringObj( argv[1], -1 );
 		list = Tcl_NewListObj( 0, NULL );
-		Tcl_ListObjAppendList( interp, list, obj );
+		Tcl_ListObjAppendList( brlcad_interp, list, obj );
 		v_str = Tcl_GetStringFromObj( list, NULL );
 		while ( isspace( *v_str ) ) v_str++;
 		if ( *v_str == '\0' ) {
-		    Tcl_SetResult( interp, "incomplete vertex specification", TCL_STATIC );
+		    bu_vls_printf(log, "incomplete vertex specification");
 		    Tcl_DecrRefCount( list );
-		    return( TCL_ERROR );
+		    return BRLCAD_ERROR;
 		}
 		ptp->pp_coord[0] = atof( v_str );
 		v_str = bu_next_token( v_str );
 		if ( *v_str == '\0' ) {
-		    Tcl_SetResult( interp, "incomplete vertex specification", TCL_STATIC );
+		    bu_vls_printf(log, "incomplete vertex specification");
 		    Tcl_DecrRefCount( list );
-		    return( TCL_ERROR );
+		    return BRLCAD_ERROR;
 		}
 		ptp->pp_coord[1] = atof( v_str );
 		v_str = bu_next_token( v_str );
 		if ( *v_str == '\0' ) {
-		    Tcl_SetResult( interp, "incomplete vertex specification", TCL_STATIC );
+		    bu_vls_printf(log, "incomplete vertex specification");
 		    Tcl_DecrRefCount( list );
-		    return( TCL_ERROR );
+		    return BRLCAD_ERROR;
 		}
 		ptp->pp_coord[2] = atof( v_str );
 		Tcl_DecrRefCount( list );
@@ -4154,34 +4132,34 @@ rt_pipe_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, c
 	    case 'I':
 		tmp = atof( argv[1] );
 		if ( tmp >= ptp->pp_od ) {
-		    Tcl_SetResult( interp, "inner diameter must be less than outer diameter", TCL_STATIC );
-		    return( TCL_ERROR );
+		    bu_vls_printf(log, "inner diameter must be less than outer diameter");
+		    return BRLCAD_ERROR;
 		}
 		ptp->pp_id = tmp;
 		break;
 	    case 'O':
 		tmp = atof( argv[1] );
 		if ( tmp <= 0.0 ) {
-		    Tcl_SetResult( interp, "outer diameter cannot be 0.0 or less", TCL_STATIC );
-		    return( TCL_ERROR );
+		    bu_vls_printf(log, "outer diameter cannot be 0.0 or less");
+		    return BRLCAD_ERROR;
 		}
 		if ( tmp <= ptp->pp_id ) {
-		    Tcl_SetResult( interp, "outer diameter must be greater than inner diameter", TCL_STATIC );
-		    return( TCL_ERROR );
+		    bu_vls_printf(log, "outer diameter must be greater than inner diameter");
+		    return BRLCAD_ERROR;
 		}
 		ptp->pp_od = tmp;
 		break;
 	    case 'R':
 		tmp = atof( argv[1] );
 		if ( tmp < ptp->pp_od * 0.5 ) {
-		    Tcl_SetResult( interp, "cannot set bend radius to less than outer radius", TCL_STATIC );
-		    return( TCL_ERROR );
+		    bu_vls_printf(log, "cannot set bend radius to less than outer radius");
+		    return BRLCAD_ERROR;
 		}
 		ptp->pp_bendradius = tmp;
 		break;
 	    default:
-		Tcl_SetResult( interp, "unrecognized attribute, choices are V, I, O, or R", TCL_STATIC );
-		return( TCL_ERROR );
+		bu_vls_printf(log, "unrecognized attribute, choices are V, I, O, or R");
+		return BRLCAD_ERROR;
 	}
 
 	argc -= 2;

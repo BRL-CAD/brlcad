@@ -42,6 +42,8 @@
 #include "bn.h"
 #include "bu.h"
 
+/*XXX Temporary global interp */
+Tcl_Interp *brlcad_interp = (Tcl_Interp *)0;
 
 #define TINYBUFSIZ	32
 #define SMALLBUFSIZ	256
@@ -138,6 +140,14 @@ void
 bu_tcl_structparse_get_terse_form(Tcl_Interp			*interp,
 				  const struct bu_structparse	*sp)
 {
+#if 1
+    struct bu_vls log;
+
+    bu_vls_init(&log);
+    bu_structparse_get_terse_form(&log, sp);
+    Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)NULL);
+    bu_vls_free(&log);
+#else
     struct bu_vls	str;
     int		i;
 
@@ -167,6 +177,7 @@ bu_tcl_structparse_get_terse_form(Tcl_Interp			*interp,
 	++sp;
     }
     bu_vls_free(&str);
+#endif
 }
 
 #if 0
@@ -1434,6 +1445,8 @@ bu_tcl_units_conversion(ClientData	clientData,
 void
 bu_tcl_setup(Tcl_Interp *interp)
 {
+    /*XXX Use of brlcad_interp is temporary */
+    brlcad_interp = interp;
     bu_register_cmds(interp, bu_cmds);
 
     Tcl_SetVar(interp, "BU_DEBUG_FORMAT", BU_DEBUG_FORMAT, TCL_GLOBAL_ONLY);

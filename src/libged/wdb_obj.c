@@ -842,7 +842,15 @@ wdb_get_cmd(struct rt_wdb	*wdbp,
     if (rt_tcl_import_from_path(interp, &intern, argv[1], wdbp) == TCL_ERROR)
 	return TCL_ERROR;
 
-    status = intern.idb_meth->ft_tclget(interp, &intern, argv[2]);
+    {
+	struct bu_vls log;
+
+	bu_vls_init(&log);
+	status = intern.idb_meth->ft_get(&log, &intern, argv[2]);
+	Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)NULL);
+	bu_vls_free(&log);
+    }
+
     rt_db_free_internal(&intern, &rt_uniresource);
     return status;
 }
@@ -1121,19 +1129,30 @@ wdb_put_cmd(struct rt_wdb	*wdbp,
 	rt_generic_make(ftp, &intern, 0.0);
     }
 
-    if (ftp->ft_tcladjust(interp, &intern, argc-3, argv+3, &rt_uniresource) == TCL_ERROR) {
-	rt_db_free_internal(&intern, &rt_uniresource);
-	return TCL_ERROR;
+    {
+	struct bu_vls log;
+
+	bu_vls_init(&log);
+
+	if (ftp->ft_adjust(&log, &intern, argc-3, argv+3, &rt_uniresource) == BRLCAD_ERROR) {
+	    Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)NULL);
+	    bu_vls_free(&log);
+	    rt_db_free_internal(&intern, &rt_uniresource);
+	    return TCL_ERROR;
+	}
+
+	Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)NULL);
+	bu_vls_free(&log);
     }
 
-    if (wdb_put_internal(wdbp, name, &intern, 1.0) < 0)  {
+    if (wdb_put_internal(wdbp, name, &intern, 1.0) < 0) {
 	Tcl_AppendResult(interp, "wdb_put_internal(", argv[1],
 			 ") failure", (char *)NULL);
 	rt_db_free_internal(&intern, &rt_uniresource);
 	return TCL_ERROR;
     }
 
-    rt_db_free_internal( &intern, &rt_uniresource );
+    rt_db_free_internal(&intern, &rt_uniresource);
     return TCL_OK;
 }
 
@@ -1203,12 +1222,23 @@ wdb_adjust_cmd(struct rt_wdb	*wdbp,
     /* Find out what type of object we are dealing with and tweak it. */
     RT_CK_FUNCTAB(intern.idb_meth);
 
-    status = intern.idb_meth->ft_tcladjust(interp, &intern, argc-2, argv+2, &rt_uniresource);
-    if ( status == TCL_OK && wdb_put_internal(wdbp, name, &intern, 1.0) < 0)  {
-	Tcl_AppendResult(interp, "wdb_export(", name,
-			 ") failure", (char *)NULL);
-	rt_db_free_internal(&intern, &rt_uniresource);
-	return TCL_ERROR;
+    {
+	struct bu_vls log;
+
+	bu_vls_init(&log);
+	status = intern.idb_meth->ft_adjust(&log, &intern, argc-2, argv+2, &rt_uniresource);
+
+	if (status == BRLCAD_OK && wdb_put_internal(wdbp, name, &intern, 1.0) < 0) {
+	    Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)NULL);
+	    bu_vls_free(&log);
+	    Tcl_AppendResult(interp, "wdb_export(", name,
+			     ") failure", (char *)NULL);
+	    rt_db_free_internal(&intern, &rt_uniresource);
+	    return TCL_ERROR;
+	}
+
+	Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)NULL);
+	bu_vls_free(&log);
     }
 
     /* notify observers */
@@ -1270,7 +1300,18 @@ wdb_form_cmd(struct rt_wdb	*wdbp,
 			 argv[1], "\".", (char *)NULL);
 	return TCL_ERROR;
     }
-    return ftp->ft_tclform(ftp, interp);
+
+    {
+	int ret;
+	struct bu_vls log;
+
+	bu_vls_init(&log);
+	ret =  ftp->ft_form(&log, ftp);
+	Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)NULL);
+	bu_vls_free(&log);
+
+	return ret;
+    }
 }
 
 /**
@@ -9054,7 +9095,7 @@ wdb_vls_col_pr4v(struct bu_vls		*vls,
 
     qsort((genptr_t)list_of_names,
 	  (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
-	  (int (*)())wdb_cmpdirname);
+	  (int (*)(const void *, const void *))wdb_cmpdirname);
 
     /*
      * For the number of (full and partial) lines that will be needed,
@@ -9110,7 +9151,7 @@ wdb_vls_col_pr4v(struct bu_vls		*vls,
 
     qsort((genptr_t)list_of_names,
 	  (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
-	  (int (*)())wdb_cmpdirname);
+	  (int (*)(const void *, const void *))wdb_cmpdirname);
 
     /*
      * Traverse the list of names, find the longest name and set the
@@ -9205,7 +9246,7 @@ wdb_vls_long_dpp(struct bu_vls		*vls,
 
     qsort((genptr_t)list_of_names,
 	  (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
-	  (int (*)())wdb_cmpdirname);
+	  (int (*)(const void *, const void *))wdb_cmpdirname);
 
     for (i=0; i < num_in_list; i++) {
 	int len;
@@ -9323,7 +9364,7 @@ wdb_vls_line_dpp(struct bu_vls	*vls,
 
     qsort( (genptr_t)list_of_names,
 	   (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
-	   (int (*)())wdb_cmpdirname);
+	   (int (*)(const void *, const void *))wdb_cmpdirname);
 
     /*
      * i - tracks the list item

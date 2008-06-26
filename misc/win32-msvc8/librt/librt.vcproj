@@ -680,6 +680,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\revolve\revolve.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\rhc\rhc.c"
 				>
 			</File>

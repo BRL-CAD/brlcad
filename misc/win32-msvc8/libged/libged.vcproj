@@ -126,6 +126,10 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat;f90;for;f;fpp"
 			>
 			<File
+				RelativePath="..\..\..\src\libged\adjust.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\arced.c"
 				>
 			</File>
@@ -178,7 +182,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\form.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\ged.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\get.c"
 				>
 			</File>
 			<File
@@ -263,6 +275,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\pathsum.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\put.c"
 				>
 			</File>
 			<File

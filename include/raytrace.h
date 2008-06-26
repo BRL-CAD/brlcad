@@ -1939,25 +1939,15 @@ struct rt_functab {
     const struct bu_structparse *ft_parsetab;	/**< @brief  rt_xxx_parse */
     size_t ft_internal_size;	/**< @brief  sizeof(struct rt_xxx_internal) */
     unsigned long ft_internal_magic;	/**< @brief  RT_XXX_INTERNAL_MAGIC */
-#if defined(TCL_OK)
-    int	(*ft_tclget) BU_ARGS((Tcl_Interp *,
-			      const struct rt_db_internal *, const char *item));
-    int	(*ft_tcladjust) BU_ARGS((Tcl_Interp *,
-				 struct rt_db_internal *,
-				 int /*argc*/, char ** /*argv*/,
-				 struct resource * /*resp*/));
-    int	(*ft_tclform) BU_ARGS((const struct rt_functab *,
-			       Tcl_Interp *));
-#else
-    int	(*ft_tclget) BU_ARGS((genptr_t /*interp*/,
-			      const struct rt_db_internal *, const char *item));
-    int	(*ft_tcladjust) BU_ARGS((genptr_t /*interp*/,
-				 struct rt_db_internal *,
-				 int /*argc*/, char ** /*argv*/,
-				 struct resource * /*resp*/));
-    int	(*ft_tclform) BU_ARGS((const struct rt_functab *,
-			       genptr_t /*interp*/));
-#endif
+    int	(*ft_get) BU_ARGS((struct bu_vls *,
+			   const struct rt_db_internal *, const char *item));
+    int	(*ft_adjust) BU_ARGS((struct bu_vls *,
+			      struct rt_db_internal *,
+			      int /*argc*/, char ** /*argv*/,
+			      struct resource * /*resp*/));
+    int	(*ft_form) BU_ARGS((struct bu_vls *,
+			    const struct rt_functab *));
+			    
     void (*ft_make) BU_ARGS((const struct rt_functab *,
 			     struct rt_db_internal *, double /*diameter*/));
     int (*ft_params) BU_ARGS((struct pc_pc_set *,const struct rt_db_internal */*ip*/));
@@ -2547,9 +2537,14 @@ RT_EXPORT BU_EXTERN(void wdb_init,
 		    (struct rt_wdb *wdbp,
 		     struct db_i   *dbip,
 		     int           mode));
-		     
 RT_EXPORT BU_EXTERN(void wdb_close,
 		    (struct rt_wdb *wdbp));
+RT_EXPORT BU_EXTERN(int wdb_import_from_path,
+		    (struct bu_vls *log,
+		     struct rt_db_internal *ip,
+		     const char *path,
+		     struct rt_wdb *wdb));
+
 
 /* db_anim.c */
 RT_EXPORT BU_EXTERN(struct animate *db_parse_1anim,

@@ -900,6 +900,14 @@ GED_EXPORT BU_EXTERN(int	vo_dir2ae_cmd,
 GED_EXPORT BU_EXTERN(int ged_editit, (const char *file));
 
 /**
+ * Adjust object's attribute(s)
+ *
+ * Usage:
+ *     adjust object attr value ?attr value?
+ */
+GED_EXPORT BU_EXTERN(int ged_adjust, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Allow editing of the matrix, etc., along an arc.
  *
  * Usage:
@@ -1004,6 +1012,22 @@ GED_EXPORT BU_EXTERN(int ged_erase, (struct ged *gedp, int argc, const char *arg
  *     erase_all objects(s)
  */
 GED_EXPORT BU_EXTERN(int ged_erase_all, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * returns form for objects of type "type"
+ *
+ * Usage:
+ *     form type
+ */
+GED_EXPORT BU_EXTERN(int ged_form, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Get object attributes
+ *
+ * Usage:
+ *     get object ?attr? 
+ */
+GED_EXPORT BU_EXTERN(int ged_get, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Get view size and center such that all displayed solids would be in view
@@ -1158,6 +1182,14 @@ GED_EXPORT BU_EXTERN(int ged_overlay, (struct ged *gedp, int argc, const char *a
  *     paths pattern
  */
 GED_EXPORT BU_EXTERN(int ged_pathsum, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Create a database object
+ *
+ * Usage:
+ *     put object type attrs
+ */
+GED_EXPORT BU_EXTERN(int ged_put, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Get/set query_ray attributes

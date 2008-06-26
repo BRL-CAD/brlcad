@@ -64,10 +64,13 @@ static int ged_open_tcl(ClientData	clientData,
 
 static struct bu_cmdtab ged_cmds[] = {
     {"arced",		ged_arced},
+    {"adjust",		ged_adjust},
     {"attr",		ged_attr},
     {"comb_color",	ged_comb_color},
     {"edcomb",		ged_edcomb},
     {"edmater",		ged_edmater},
+    {"form",		ged_form},
+    {"get",		ged_get},
     {"item",		ged_item},
     {"l",		ged_list},
     {"listeval",	ged_pathsum},
@@ -85,6 +88,7 @@ static struct bu_cmdtab ged_cmds[] = {
     {"oscale",		ged_oscale},
     {"otranslate",	ged_otranslate},
     {"paths",		ged_pathsum},
+    {"put",		ged_put},
     {"rmater",		ged_rmater},
     {"shader",		ged_shader},
     {"wmater",		ged_wmater},
@@ -99,6 +103,9 @@ static struct bu_cmdtab ged_cmds[] = {
 int
 Ged_Init(Tcl_Interp *interp)
 {
+    /*XXX Use of brlcad_interp is temporary */
+    brlcad_interp = interp;
+
     BU_LIST_INIT(&HeadGedObj.l);
     (void)Tcl_CreateCommand(interp, (const char *)"ged_open", ged_open_tcl,
 			    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);

@@ -9543,11 +9543,18 @@ f_get_sedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
 
     if (argc == 1) {
+	struct bu_vls log;
+
+	bu_vls_init(&log);
+
 	/* get solid type and parameters */
 	RT_CK_DB_INTERNAL(&es_int);
 	RT_CK_FUNCTAB(es_int.idb_meth);
-	status = es_int.idb_meth->ft_tclget(interp, &es_int, (char *)0);
+	status = es_int.idb_meth->ft_get(&log, &es_int, (char *)0);
+	Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)0);
 	pto = Tcl_GetObjResult(interp);
+
+	bu_vls_free(&log);
 
 	pnto = Tcl_NewObj();
 	/* insert solid name, type and parameters */
@@ -9570,7 +9577,14 @@ f_get_sedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     /* get solid type and parameters */
     RT_CK_DB_INTERNAL(&ces_int);
     RT_CK_FUNCTAB(ces_int.idb_meth);
-    status = ces_int.idb_meth->ft_tclget(interp, &ces_int, (char *)0);
+    {
+	struct bu_vls log;
+
+	bu_vls_init(&log);
+	status = ces_int.idb_meth->ft_get(&log, &ces_int, (char *)0);
+	Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)0);
+	bu_vls_free(&log);
+    }
     pto = Tcl_GetObjResult(interp);
 
     pnto = Tcl_NewObj();

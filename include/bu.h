@@ -173,6 +173,8 @@ __BEGIN_DECLS
 #include "tcl.h"	/* Included for Tcl_Interp definition */
 #include "magic.h"
 
+/*XXX Temporary global interp */
+BU_EXPORT Tcl_Interp *brlcad_interp;
 
 /**
  * B U _ F O R T R A N
@@ -2254,6 +2256,9 @@ BU_EXPORT BU_EXTERN(void bu_copy_external,
 		     const struct bu_external *ip));
 BU_EXPORT BU_EXTERN(char *bu_next_token,
 		    (char *str));
+BU_EXPORT BU_EXTERN(void bu_structparse_get_terse_form,
+		    (struct bu_vls *log,
+		     const struct bu_structparse *sp));
 BU_EXPORT BU_EXTERN(int bu_structparse_argv,
 		    (struct bu_vls *log,
 		     int argc,
