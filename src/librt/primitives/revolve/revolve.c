@@ -528,11 +528,82 @@ rt_revolve_class( const struct soltab *stp, const vect_t min, const vect_t max, 
 int
 rt_revolve_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol )
 {
-    struct rt_revolve_internal	*revolve_ip;
+    struct rt_revolve_internal	*rip;
 
     RT_CK_DB_INTERNAL(ip);
-    revolve_ip = (struct rt_revolve_internal *)ip->idb_ptr;
-    RT_REVOLVE_CK_MAGIC(revolve_ip);
+    rip = (struct rt_revolve_internal *)ip->idb_ptr;
+    RT_REVOLVE_CK_MAGIC(rip);
+
+    int 		nvert, i, j;
+    point2d_t		*verts;
+    struct curve	*crv;
+
+    vect_t	ell[16], cir[16], ucir[16], height, xdir, ydir, ux, uy, uz;
+    fastf_t	cos22_5 = 0.9238795325112867385,
+		cos67_5 = 0.3826834323650898373;
+
+    nvert = rip->sk->vert_count;
+    verts = rip->sk->verts;
+    crv = &rip->sk->skt_curve;
+
+    VMOVE( uz, rip->axis3d );
+    VMOVE( ux, rip->r );
+    VCROSS( uy, uz, ux );
+
+    VUNITIZE( ux );
+    VUNITIZE( uy );
+    VUNITIZE( uz );
+
+    /* setup unit circle to be scaled */
+    VMOVE(	ucir[ 0], ux );
+    VREVERSE(	ucir[ 8], ucir[0] );
+
+    VSCALE( xdir, ux, cos22_5);
+    VSCALE( ydir, uy, cos67_5);
+    VADD2(	ucir[ 1], xdir, ydir );
+    VREVERSE(	ucir[ 9], ucir[1] );
+    VREVERSE( xdir, xdir );
+    VADD2(	ucir[ 7], xdir, ydir );
+    VREVERSE(	ucir[15], ucir[7] );
+
+    VSCALE( xdir, ux, M_SQRT1_2 );
+    VSCALE( ydir, uy, M_SQRT1_2 );
+    VADD2(	ucir[ 2], xdir, ydir );
+    VREVERSE(	ucir[10], ucir[2] );
+    VREVERSE( xdir, xdir );
+    VADD2(	ucir[ 6], xdir, ydir );
+    VREVERSE(	ucir[14], ucir[6] );
+
+
+    VSCALE( xdir, ux, cos67_5 );
+    VSCALE( ydir, uy, cos22_5 );
+    VADD2(	ucir[ 3], xdir, ydir );
+    VREVERSE(	ucir[11], ucir[3] );
+    VREVERSE( xdir, xdir );
+    VADD2(	ucir[ 5], xdir, ydir );
+    VREVERSE(	ucir[13], ucir[5] );
+
+    VMOVE(	ucir[ 4], uy );
+    VREVERSE(	ucir[12], ucir[4] );
+
+    /* draw circles */
+    for ( i=0; i<nvert; i++ ) {
+	VSCALE( height, uz, verts[i][Y] );
+	for ( j=0; j<16; j++ ) {
+	    VSCALE( cir[j], ucir[j], verts[i][X] );
+	    VADD3( ell[j], rip->v3d, cir[j], height );
+	}
+	RT_ADD_VLIST( vhead, ell[15], BN_VLIST_LINE_MOVE );
+	for ( j=0; j<16; j++ )  {
+	    RT_ADD_VLIST( vhead, ell[j], BN_VLIST_LINE_DRAW );
+	}
+
+    }
+
+    /* draw sketch outlines */
+    for ( i=0; i<16; i++ ) {
+	curve_to_vlist( vhead, ttol, rip->v3d, ucir[i], uz, rip->sk, crv );
+    }
 
     return(0);
 }
