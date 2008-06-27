@@ -60,6 +60,9 @@ struct is_even {
     { return (i % 2) == 0; }
 };
 
+/* Classes for Graph Visualization */
+
+
 /* TO BE REMOVED */
 class Relation {
 public:
@@ -75,6 +78,7 @@ public:
 	return tmp;
     }
 };
+
 
 #endif
 /** @} */

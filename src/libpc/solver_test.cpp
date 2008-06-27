@@ -51,8 +51,8 @@ int main()
 {
     
     /* Stage I : Checking Constrained Classes */
-    std::cout<<"______________________________________________________________"<<std::endl<<std::endl;
-    std::cout<<"____________________Checking Network Classes__________________"<<std::endl;
+    //std::cout<<"______________________________________________________________"<<std::endl<<std::endl;
+    //std::cout<<"____________________Checking Network Classes__________________"<<std::endl;
 
     using namespace boost;
     {
@@ -60,19 +60,15 @@ int main()
     }
 
     /* Stage II : Checking Network Classes */
-    std::cout<<"______________________________________________________________"<<std::endl<<std::endl;
-    std::cout<<"____________________Checking Network Classes__________________"<<std::endl;
+    //std::cout<<"_________________________________________________________"<<std::endl<<std::endl;
+    //std::cout<<"____________________Checking Network  Classes________" <<std::endl;
 
+    typedef boost::adjacency_list<vecS, vecS, undirectedS, 
+	Variable<int>, Constraint<int> > Graph;
+    typedef graph_traits<Graph> GraphTraits;
+    typedef GraphTraits::vertex_descriptor Vertex;
+    typedef GraphTraits::edge_descriptor Edge;
 
-    typedef Interval<float> Ifl;
-    Solution<float> Soln;
-    Variable<float> O =Variable<float>("On");
-    O.addInterval(Ifl(3.4,8.3,0.6));
-    O.addInterval(Ifl(-2.8,2.8,0.6));
-    O.addInterval(Ifl(-13.4,-5.3,0.6));
-    O.addInterval(Ifl(-14.4,-10.,0.6));
-    O.display();
-    
     using namespace boost;
     {
 
@@ -80,26 +76,59 @@ int main()
     BinaryNetwork<int > N;
 
     // Convenient naming for the vertices and Corrsponding Variables
-    Variable<int> A,B,C,D;
+    typedef Variable<int> Vi;
+    Vi A=Vi("A",1);
+    Vi B=Vi("B",2);
+    Vi C=Vi("C",3);
+    Vi D=Vi("D",4);
 
     Interval<int> I;
+    A.setValue(2);
+    B.setValue(2);
+    C.setValue(2);
+    D.setValue(2);
     I.assign(0,5,1);
     A.addInterval(I);
     B.addInterval(I);
     C.addInterval(I);
     D.addInterval(I);
 
-    Constraint<int> constraint_array[4];
+    typedef Constraint<int> Ci;
+    Ci constraint_array[4];
+    constraint_array[0] = Ci("0", "A+B=4");
+    constraint_array[1] = Ci("1", "B+C>4");
+    constraint_array[2] = Ci("2", "A-D<5");
+    constraint_array[3] = Ci("3", "C-A=4");
     constraint_array[0].function(f1);
+    constraint_array[0].Variables.push_back("B");
+    constraint_array[0].Variables.push_back("A");
     constraint_array[1].function(f2);
+    constraint_array[1].Variables.push_back("C");
+    constraint_array[1].Variables.push_back("B");
     constraint_array[2].function(f3);
+    constraint_array[2].Variables.push_back("D");
+    constraint_array[2].Variables.push_back("A");
     constraint_array[3].function(f4);
+    constraint_array[3].Variables.push_back("C");
+    constraint_array[3].Variables.push_back("A");
 
-    // Establish the set of Edges
-    typedef Edge<int> Ei;
-    Ei edge_array[] = 
-    { Ei(A,B), Ei(B,C), Ei(A,D), Ei(A,C)};
+    //std::cout<<constraint_array[0].getExp()<<"--------"<<std::endl;
+    /* Add the vertices */
+    N.add_vertex(A);
+    N.add_vertex(B);
+    N.add_vertex(C);
+    N.add_vertex(D);
+    /* Add the edges */
+    for(int i=0; i<4; i++) {
+	N.add_edge(constraint_array[i]);
+    }
+    //std::cout<<"___"<< boost::num_vertices(N.G)<<std::endl;
+
+    N.display();
 /*
+    for (int i = 0; i < num_edges; ++i)
+    N.add_edge(edge_array[i].first, edge_array[i].second);
+
     Edge edge_array[] = 
     { Edge(U,V), Edge(V,W), Edge(U,X), Edge(U,W)};
 

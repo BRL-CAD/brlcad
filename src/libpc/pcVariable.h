@@ -83,11 +83,11 @@ public:
 /* Implement functionality to search which domain the variable belongs to
    and increment according to the stepvalue of that domain */
     Variable();
-    Variable(std::string , T = T(0));
+    Variable(std::string , T = 0);
     ~Variable();
     void addInterval(const Interval<T>);
     void setValue(T t) { value = t; }
-    std::string getID() { return id; }
+    std::string getID() const { return id; }
     T getValue() { return value; }
     void display();
 
@@ -223,7 +223,8 @@ void  Domain<T>::packIntervals ()
 template<class T>
 Variable<T>::Variable()
 {
-
+    value = 0;
+    id ="";
 }
 
 template<class T>

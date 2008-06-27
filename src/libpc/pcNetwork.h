@@ -33,6 +33,10 @@
 #include <string>
 #include <list>
 #include <stack>
+#include <boost/graph/graph_traits.hpp>
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/graphviz.hpp>
+
 #include "pcBasic.h"
 #include "pcVariable.h"
 #include "pcConstraint.h"
@@ -48,8 +52,41 @@ public:
 
 using namespace boost;
 template<class T>
+class Vertexwriter {
+    typedef typename boost::adjacency_list<vecS, vecS, undirectedS, 
+	Variable<T>, Constraint<T> > Graph;
+    typedef graph_traits<Graph> GraphTraits;
+    typedef typename GraphTraits::vertex_descriptor Vertex;
+public:
+    Vertexwriter(const Graph& g):g(g) {};
+    void operator() (std::ostream& out,const Vertex& v) const {
+    out <<"[label=\""<<g[v].getID()<<"\"]";
+    }
+private:
+    const Graph& g;
+};
+
+using namespace boost;
+template<class T>
+class Edgewriter {
+    typedef typename boost::adjacency_list<vecS, vecS, undirectedS, 
+	Variable<T>, Constraint<T> > Graph;
+    typedef graph_traits<Graph> GraphTraits;
+    typedef typename GraphTraits::edge_descriptor Edge;
+public:
+    Edgewriter(const Graph& g):g(g) {};
+    void operator() (std::ostream& out,const Edge& e) const {
+    out <<"[label=\""<<g[e].getExp()<<"\"]";
+    }
+private:
+    const Graph& g;
+};
+
+using namespace boost;
+template<class T>
 class BinaryNetwork 
 {
+
 private:
     typedef typename boost::adjacency_list<vecS, vecS, undirectedS, 
 	Variable<T>, Constraint<T> > Graph;
@@ -57,23 +94,32 @@ private:
     typedef typename GraphTraits::vertex_descriptor Vertex;
     typedef typename GraphTraits::edge_descriptor Edge;
 
-    Graph G;
     typename GraphTraits::vertex_iterator v_i, v_end;
     typename GraphTraits::out_edge_iterator e_i, e_end; 
 
 public:
+    Graph G;
     BinaryNetwork();
     BinaryNetwork(std::vector<Variable<T> >, std::vector<Constraint<T> >);
-    void add_edge(int a,int b) {
-	boost::add_edge(a,b, G);
-    };
+    void add_vertex(Variable<T> V) {
+	boost::add_vertex(V,G);
+    }
+    void add_edge(Constraint<T> C) {
+	Vertex v1,v2;
+	getVertexbyID(C.Variables.front(), v1);
+	getVertexbyID(C.Variables.back(), v2);
+	//G[v1].display();
+	//G[v2].display();
+	boost::add_edge(v1,v2,C,G);
+    }
 
     void setVariable(Vertex v, Variable<T>& var) {
 	G[v] = var;
-    };
+    }
 
     Solution<T> solve();
-    void getVertexbyID(std::string Vid);
+    void getVertexbyID(std::string,Vertex&);
+
     void display();
 };
 
@@ -128,17 +174,34 @@ void BinaryNetwork<T>::display()
   graph_attr["rankdir"] = "LR";
   graph_attr["ratio"] = "fill";
   vertex_attr["shape"] = "circle";
+  
+  Vertexwriter<T> vw(G);
+  Edgewriter<T> ew(G);
+  boost::default_writer dw;
+  boost::default_writer gw;  
+  boost::write_graphviz(std::cout, G,vw,ew,make_graph_attributes_writer(graph_attr, vertex_attr, 
+                                                     edge_attr));
 
-  /* boost::write_graphviz(std::cout, G, 
-                        make_label_writer(),
-                        make_label_writer(),
-                        make_graph_attributes_writer(graph_attr, vertex_attr, 
-                                                     edge_attr));*/
 }
+
+
 template<class T>
-void BinaryNetwork<T>::getVertexbyID(std::string Vid)
+/*boost::graph_traits<boost::adjacency_list<vecS, vecS, undirectedS, Variable<T>, Constraint<T> > > ::vertex_descriptor*/
+void BinaryNetwork<T>::getVertexbyID(std::string Vid, Vertex& v)
 {
+    for(tie(v_i,v_end) = vertices(G); v_i != v_end; ++v_i) {
+	if ( G[*v_i].getID() == Vid ) {
+	    v = *v_i; 
+	    //G[v].display();
+	    //std::cout<< "<<<" << G[v].getID() << ">>>"<<std::endl;
+	    return ;
+	    break;
+	}
+    }
+    return ;
+    
 }
+
 #endif
 /** @} */
 /*

@@ -35,10 +35,18 @@ class Constraint {
 private:
     int status;
     std::string id;
-    typename std::list<Variable<T> > V;
+    std::string expression;
     bool (*funct) (std::vector<T>);
 public:
-    Constraint() { status = 0; } ;
+
+    typename std::list<std::string> Variables;
+
+    Constraint() { status = 0; } 
+    Constraint(std::string Cid, std::string Cexpression) { 
+	id = Cid;
+	expression = Cexpression;
+	status = 0;
+    } 
     void function(bool (*pf) (std::vector<T>)) { funct = pf; };
     bool solved() { 
 	if (status == 0) return false;
@@ -48,7 +56,9 @@ public:
     bool check(std::vector<T> V) {
 	return *funct(V);
     }
-    std::string getID() { return id; }
+    std::string getID() const { return id; }
+    std::string getExp() const { return expression; }
+
 };
 
 #endif
