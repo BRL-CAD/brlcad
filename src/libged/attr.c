@@ -23,8 +23,9 @@
  *
  */
 
-#include "ged.h"
+#include <string.h>
 
+#include "ged.h"
 
 int
 ged_attr(struct ged *gedp, int argc, const char *argv[])

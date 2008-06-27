@@ -24,6 +24,9 @@
  */
 
 #include "common.h"
+
+#include <string.h>
+
 #include "bio.h"
 #include "cmd.h"
 #include "ged.h"
