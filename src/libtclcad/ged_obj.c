@@ -64,6 +64,7 @@ static int ged_open_tcl(ClientData	clientData,
 
 static struct bu_cmdtab ged_cmds[] = {
     {"adjust",		ged_adjust},
+    {"aet",		ged_aet},
     {"arced",		ged_arced},
     {"attr",		ged_attr},
     {"autoview",	ged_autoview},
@@ -71,6 +72,7 @@ static struct bu_cmdtab ged_cmds[] = {
     {"blast",		ged_blast},
     {"bot_decimate",	ged_bot_decimate},
     {"bot_face_sort",	ged_bot_face_sort},
+    {"center",		ged_center},
     {"comb_color",	ged_comb_color},
     {"draw",		ged_draw},
     {"E",		ged_E},
@@ -118,6 +120,7 @@ static struct bu_cmdtab ged_cmds[] = {
     {"set_transparency",	ged_set_transparency},
     {"set_uplotOutputMode",	ged_set_uplotOutputMode},
     {"shader",		ged_shader},
+    {"size",		ged_size},
     {"tree",		ged_tree},
     {"who",		ged_who},
     {"wmater",		ged_wmater},

@@ -174,6 +174,9 @@ BU_EXTERN (ged_rt_set_eye_model,
 /* defined in vutil.c */
 BU_EXTERN (void ged_view_update,
 	   (struct ged_view *gvp));
+BU_EXTERN (void ged_mat_aet,
+	   (struct ged_view *gvp));
+
 
 
 __END_DECLS

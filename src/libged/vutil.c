@@ -71,6 +71,26 @@ ged_view_update(struct ged_view	*gvp)
 #endif
 }
 
+void
+ged_mat_aet(struct ged_view *gvp)
+{
+    mat_t tmat;
+    fastf_t twist;
+    fastf_t c_twist;
+    fastf_t s_twist;
+
+    bn_mat_angles(gvp->gv_rotation,
+		  270.0 + gvp->gv_aet[1],
+		  0.0,
+		  270.0 - gvp->gv_aet[0]);
+
+    twist = -gvp->gv_aet[2] * bn_degtorad;
+    c_twist = cos(twist);
+    s_twist = sin(twist);
+    bn_mat_zrot(tmat, s_twist, c_twist);
+    bn_mat_mul2(tmat, gvp->gv_rotation);
+}
+
 /*
  * Local Variables:
  * tab-width: 8

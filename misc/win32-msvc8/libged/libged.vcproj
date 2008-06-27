@@ -130,6 +130,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\aet.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\arced.c"
 				>
 			</File>
@@ -159,6 +163,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\bot_face_sort.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\center.c"
 				>
 			</File>
 			<File
@@ -327,6 +335,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\shader.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\size.c"
 				>
 			</File>
 			<File

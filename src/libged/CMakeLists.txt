@@ -1,5 +1,6 @@
 set(LIBGED_SOURCES
     adjust.c
+    aet.c
     arced.c
     attr.c
     autoview.c
@@ -8,6 +9,7 @@ set(LIBGED_SOURCES
     blast.c
     bot_decimate.c
     bot_face_sort.c
+    center.c
     comb_color.c
     dg_obj.c
     draw.c
@@ -50,6 +52,7 @@ set(LIBGED_SOURCES
     set_transparency.c
     set_uplotOutputMode.c
     shader.c
+    size.c
     trace.c
     track.c
     tree.c

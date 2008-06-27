@@ -238,8 +238,6 @@ struct ged_view {
     fastf_t		gv_size;		/**< @brief  2.0 * scale */
     fastf_t		gv_invSize;		/**< @brief  1.0 / size */
     fastf_t		gv_perspective;		/**< @brief  perspective angle */
-    fastf_t		gv_local2base;		/**< @brief  scale local units to base units (i.e. mm) */
-    fastf_t		gv_base2local;		/**< @brief  scale base units (i.e. mm) to local units */
     vect_t		gv_aet;
     vect_t		gv_eye_pos;		/**< @brief  eye position */
     vect_t		gv_keypoint;
@@ -900,6 +898,14 @@ GED_EXPORT BU_EXTERN(int	vo_dir2ae_cmd,
 GED_EXPORT BU_EXTERN(int ged_editit, (const char *file));
 
 /**
+ * Get or set the azimuth, elevation and twist.
+ *
+ * Usage:
+ *     ae [[-i] az el [tw]]
+ */
+GED_EXPORT BU_EXTERN(int ged_aet, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Adjust object's attribute(s)
  *
  * Usage:
@@ -988,6 +994,14 @@ GED_EXPORT BU_EXTERN(int ged_bot_decimate, (struct ged *gedp, int argc, const ch
  *     bot_face_sort triangles_per_piece bot_solid1 [bot_solid2 bot_solid3 ...]
  */
 GED_EXPORT BU_EXTERN(int ged_bot_face_sort, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Get or set the view center
+ *
+ * Usage:
+ *     center ["x y z"]
+ */
+GED_EXPORT BU_EXTERN(int ged_center, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Set combination color.
@@ -1293,6 +1307,14 @@ GED_EXPORT BU_EXTERN(int ged_set_transparency, (struct ged *gedp, int argc, cons
  *     shader combination shader_material [shader_argument(s)]
  */
 GED_EXPORT BU_EXTERN(int ged_shader, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Get or set the view size.
+ *
+ * Usage:
+ *     size [s]
+ */
+GED_EXPORT BU_EXTERN(int ged_size, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Return the object hierarchy for all object(s) specified or for all currently displayed
