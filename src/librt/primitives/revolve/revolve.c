@@ -29,6 +29,7 @@
 #include "common.h"
 
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 
 #include "vmath.h"
@@ -623,7 +624,7 @@ rt_revolve_import5( struct rt_db_internal  *ip, const struct bu_external *ep, co
     MAT4X3PNT( rip->axis3d, mat, &vv[1*3] );
     MAT4X3PNT( rip->r, mat, &vv[2*3] );
     rip->ang = vv[9];
-    rip->sketch_name = bu_strdup( (unsigned char *)ep->ext_buf + (ELEMENTS_PER_VECT*3 + 1)*SIZEOF_NETWORK_DOUBLE );
+    rip->sketch_name = bu_strdup( (char *)ep->ext_buf + (ELEMENTS_PER_VECT*3 + 1)*SIZEOF_NETWORK_DOUBLE );
 
     return(0);			/* OK */
 }
