@@ -23,6 +23,7 @@ set(LIBGED_SOURCES
     get_eyemodel.c
     get_obj_bounds.c
     globals.c
+    how.c
     importFg4Section.c
     illum.c
     item.c
@@ -42,13 +43,16 @@ set(LIBGED_SOURCES
     pathsum.c
     put.c
     qray.c
+    report.c
     rmater.c
     rt.c
     set_outputHandler.c
+    set_transparency.c
     set_uplotOutputMode.c
     shader.c
     trace.c
     track.c
+    tree.c
     vdraw.c
     view_obj.c
     vutil.c
