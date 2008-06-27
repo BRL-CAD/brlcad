@@ -1088,6 +1088,14 @@ GED_EXPORT BU_EXTERN(int ged_get_autoview, (struct ged *gedp, int argc, const ch
 GED_EXPORT BU_EXTERN(int ged_get_eyemodel, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Returns how an object is being displayed
+ *
+ * Usage:
+ *     how [-b] obj
+ */
+GED_EXPORT BU_EXTERN(int ged_how, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Illuminate/highlight database object.
  *
  * Usage:
@@ -1245,6 +1253,14 @@ GED_EXPORT BU_EXTERN(void ged_init_qray,
 		    (struct ged_drawable *gdp));
 GED_EXPORT BU_EXTERN(void ged_free_qray,
 		    (struct ged_drawable *gdp));
+
+/**
+ * Returns the solid table & vector list as a string
+ *
+ * Usage:
+ *     report [lvl]
+ */
+GED_EXPORT BU_EXTERN(int ged_report, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Get/set the output handler script

@@ -63,17 +63,30 @@ static int ged_open_tcl(ClientData	clientData,
 			const char	**argv);
 
 static struct bu_cmdtab ged_cmds[] = {
-    {"arced",		ged_arced},
     {"adjust",		ged_adjust},
+    {"arced",		ged_arced},
     {"attr",		ged_attr},
+    {"autoview",	ged_autoview},
     {"binary",		ged_binary},
+    {"blast",		ged_blast},
     {"bot_decimate",	ged_bot_decimate},
     {"bot_face_sort",	ged_bot_face_sort},
     {"comb_color",	ged_comb_color},
+    {"draw",		ged_draw},
+    {"E",		ged_E},
     {"edcomb",		ged_edcomb},
     {"edmater",		ged_edmater},
+    {"erase",		ged_erase},
+    {"erase_all",	ged_erase_all},
     {"form",		ged_form},
     {"get",		ged_get},
+    {"get_autoview",	ged_get_autoview},
+    {"get_eyemodel",	ged_get_eyemodel},
+    {"how",		ged_how},
+    {"illum",		ged_illum},
+#if 0
+    {"importFg4Section",	ged_importFg4Section},
+#endif
     {"item",		ged_item},
     {"l",		ged_list},
     {"listeval",	ged_pathsum},
@@ -90,11 +103,25 @@ static struct bu_cmdtab ged_cmds[] = {
     {"orotate",		ged_orotate},
     {"oscale",		ged_oscale},
     {"otranslate",	ged_otranslate},
+    {"overlay",		ged_overlay},
     {"paths",		ged_pathsum},
     {"put",		ged_put},
+    {"qray",		ged_qray},
+    {"report",		ged_report},
     {"rmater",		ged_rmater},
+#if GED_USE_RUN_RT
+    {"rt",		ged_rt},
+    {"rtabort",		ged_rtabort},
+    {"rtcheck",		ged_rtcheck},
+    {"rtedge",		ged_rtedge},
+#endif
+    {"set_transparency",	ged_set_transparency},
+    {"set_uplotOutputMode",	ged_set_uplotOutputMode},
     {"shader",		ged_shader},
+    {"tree",		ged_tree},
+    {"who",		ged_who},
     {"wmater",		ged_wmater},
+    {"zap",		ged_zap},
     {(char *)NULL,	(int (*)())0}
 };
 

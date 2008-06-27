@@ -23,7 +23,13 @@
  *
  */
 
-#include "ged.h"
+#include "common.h"
+
+#include <string.h>
+
+#include "bio.h"
+#include "cmd.h"
+#include "ged_private.h"
 #include "solid.h"
 
 
@@ -69,14 +75,14 @@ ged_how(struct ged *gedp, int argc, const char *argv[])
 	argv[1][1] == 'b') {
 	both = 1;
 
-	if ((dpp = ged_build_dpp(dgop, interp, argv[2])) == NULL)
+	if ((dpp = ged_build_dpp(gedp, argv[2])) == NULL)
 	    goto good;
     } else {
-	if ((dpp = ged_build_dpp(dgop, interp, argv[1])) == NULL)
+	if ((dpp = ged_build_dpp(gedp, argv[1])) == NULL)
 	    goto good;
     }
 
-    FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
+    FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid) {
 	for (i = 0, tmp_dpp = dpp;
 	     i < sp->s_fullpath.fp_len && *tmp_dpp != DIR_NULL;
 	     ++i, ++tmp_dpp) {
@@ -102,15 +108,15 @@ ged_how(struct ged *gedp, int argc, const char *argv[])
 
 good:
     if (dpp != (struct directory **)NULL)
-	bu_free((genptr_t)dpp, "dgo_how_cmd: directory pointers");
+	bu_free((genptr_t)dpp, "ged_how: directory pointers");
 
     return GED_OK;
 }
 
 
 struct directory **
-ged_build_dpp(struct ged	*gedp,
-	      char              *path) {
+ged_build_dpp(struct ged *gedp,
+	      const char *path) {
     register struct directory *dp;
     struct directory **dpp;
     int i;
@@ -141,8 +147,8 @@ ged_build_dpp(struct ged	*gedp,
 
     list = bu_vls_addr(&vls);
 
-    if (Tcl_SplitList((Tcl_Interp *)interp, list, &ac, &av_orig) != TCL_OK) {
-	Tcl_AppendResult(interp, "-1", (char *)NULL);
+    if (Tcl_SplitList((Tcl_Interp *)brlcad_interp, list, &ac, &av_orig) != TCL_OK) {
+	bu_vls_printf(&gedp->ged_result_str, "-1");
 	bu_vls_free(&vls);
 	return (struct directory **)NULL;
     }
@@ -162,15 +168,15 @@ ged_build_dpp(struct ged	*gedp,
      * Next, we build an array of directory pointers that
      * correspond to the object's path.
      */
-    dpp = bu_calloc(ac+1, sizeof(struct directory *), "dgo_build_dpp: directory pointers");
+    dpp = bu_calloc(ac+1, sizeof(struct directory *), "ged_build_dpp: directory pointers");
     for (i = 0; i < ac; ++i) {
-	if ((dp = db_lookup(dgop->dgo_wdbp->dbip, av[i], 0)) != DIR_NULL)
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip, av[i], 0)) != DIR_NULL)
 	    dpp[i] = dp;
 	else {
 	    /* object is not currently being displayed */
-	    Tcl_AppendResult(interp, "-1", (char *)NULL);
+	    bu_vls_printf(&gedp->ged_result_str, "-1");
 
-	    bu_free((genptr_t)dpp, "dgo_build_dpp: directory pointers");
+	    bu_free((genptr_t)dpp, "ged_build_dpp: directory pointers");
 	    Tcl_Free((char *)av_orig);
 	    bu_vls_free(&vls);
 	    return (struct directory **)NULL;

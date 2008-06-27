@@ -222,6 +222,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\how.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\illum.c"
 				>
 			</File>
@@ -311,6 +315,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\set_outputHandler.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\set_transparency.c"
 				>
 			</File>
 			<File

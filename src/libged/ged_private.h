@@ -110,6 +110,12 @@ BU_EXTERN (void ged_print_node,
 	    int                 displayDepth,
 	    int                 currdisplayDepth));
 
+/* defined in how.c */
+BU_EXTERN (struct directory **ged_build_dpp,
+	   (struct ged *gedp,
+	    const char *path));
+
+
 /* defined in draw.c */
 BU_EXTERN (void ged_color_soltab,
 	   (struct solid *hsp));

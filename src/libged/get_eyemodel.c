@@ -34,7 +34,7 @@
  *
  */
 int
-ged_eyemodel(struct ged *gedp, int argc, const char *argv[])
+ged_get_eyemodel(struct ged *gedp, int argc, const char *argv[])
 {
     quat_t		quat;
     vect_t		eye_model;
