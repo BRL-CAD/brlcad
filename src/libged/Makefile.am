@@ -83,6 +83,8 @@ libged_la_LIBADD = \
 EXTRA_DIST = \
         CMakeLists.txt
 
+DEPENDS = src/librt
+
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \
