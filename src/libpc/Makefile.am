@@ -8,7 +8,7 @@ noinst_LTLIBRARIES = libpc_nil.la
 #       and remove blind Include
 AM_CPPFLAGS = \
 	${TCL_CPPFLAGS} \
-	-I${top_srcdir}/src/other
+	${BOOST_CPPFLAGS}
 
 noinst_PROGRAMS = \
 	pc_test \
