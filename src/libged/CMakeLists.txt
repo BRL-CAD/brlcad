@@ -1,4 +1,5 @@
 set(LIBGED_SOURCES
+    adjust.c
     arced.c
     attr.c
     autoview.c
@@ -15,7 +16,9 @@ set(LIBGED_SOURCES
     edmater.c
     erase.c
     erase_all.c
+    form.c
     ged.c
+    get.c
     get_autoview.c
     get_eyemodel.c
     get_obj_bounds.c
@@ -37,6 +40,7 @@ set(LIBGED_SOURCES
     otranslate.c
     overlay.c
     pathsum.c
+    put.c
     qray.c
     rmater.c
     rt.c
