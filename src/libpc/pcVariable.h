@@ -38,7 +38,6 @@
 
 template<class T>
 class Domain
-
 {
 private:
     std::list<Interval<T> > Interv; /* TODO: Change to Inheritance rather than membership */
@@ -64,10 +63,11 @@ public:
     */
     Domain();
     ~Domain();
+    Domain(T low,T high,T step);
     int size() { return Interv.size(); }
     Interval<T> getInterval(T) throw(pcException);
-    T getFirst() { return Interv.begin()->getLow();} ;
-    T getLast();
+    T getFirst() { return Interv.front().getLow();}
+    T getLast() { return Interv.back().getHigh(); }
     T getNextLow (T);
     void addInterval(const Interval<T>);
     void display();
@@ -82,6 +82,7 @@ private:
 public:
 /* Implement functionality to search which domain the variable belongs to
    and increment according to the stepvalue of that domain */
+    int constrained;
     Variable();
     Variable(std::string , T = 0);
     ~Variable();
@@ -89,23 +90,29 @@ public:
     void setValue(T t) { value = t; }
     std::string getID() const { return id; }
     T getValue() { return value; }
+    T getFirst() { return D.getFirst(); }
+    T getLast() { return D.getLast(); }
     void display();
 
     Variable& operator++();
     /*Variable operator++(T) { value++; return this; }*/
 };
 
+template<class T>
+class VarDomain {
+public:
+    Variable<T> V;
+    Domain<T> D;
+    VarDomain() {};
+    ~VarDomain() {};
+    VarDomain(Variable<T> V,Domain<T> D);
+};
 
 template<class T>
 class Solution {
-
-typedef struct {
-    Variable<T>* V;
-    Domain<T> D;
-    } VarDomain;
-
+private:
 public:
-    std::list<VarDomain> VarDom;
+    std::list<VarDomain<T> > VarDom;
     void display();
 };
 
@@ -125,6 +132,11 @@ template<class T>
 Domain<T>::~Domain()
 {
 
+}
+
+template<class T>
+Domain<T>::Domain(T low,T high,T step) {
+    addInterval(Interval<T>(low, high, step) );
 }
 
 template<class T>
@@ -157,7 +169,10 @@ T Domain<T>::getNextLow (T value)
 {
     typename std::list<Interval<T> >::iterator i = this->Interv.begin();
     while (i!=Interv.end() && i->getLow() < value) i++;
-    return i->getLow();
+    if(  i == Interv.end() )
+	return Interv.begin()->getLow();
+    else
+	return i->getLow();
 }
 
 template<class T>
@@ -223,6 +238,7 @@ void  Domain<T>::packIntervals ()
 template<class T>
 Variable<T>::Variable()
 {
+    constrained = 0;
     value = 0;
     id ="";
 }
@@ -230,6 +246,7 @@ Variable<T>::Variable()
 template<class T>
 Variable<T>::Variable(std::string Vid, T Vvalue)
 {
+    constrained = 0;
     value = Vvalue;
     id = Vid;
 }
@@ -262,16 +279,21 @@ void Variable<T>::addInterval(const Interval<T> t)
 template<class T>
 void Variable<T>::display()
 {
-	std::cout<<"!-- ID = "<<getID()<<" Value = "<<getValue()<<std::endl;
-	D.display();
+	std::cout<<"!-- "<<getID()<<" = "<<getValue()<<std::endl;
+	//D.display();
 }
 
 /* Solution Class Functions */
+template <class T>
+VarDomain<T>::VarDomain(Variable<T> Variable,Domain<T> Domain) {
+    V = Variable;
+    D = Domain;
+}
 
 template<class T>
 void Solution<T>::display()
 {
-    typename std::list<VarDomain>::iterator i;
+    typename std::list<VarDomain<T> >::iterator i;
     for (i = VarDom.begin(); i != VarDom.end(); i++) {
 	i->V.display();
 	i->D.display();

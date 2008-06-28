@@ -53,13 +53,27 @@ public:
 	else return true;
 	}
     /* TODO: Take a functor as an argument? */
-    bool check(std::vector<T> V) {
-	return *funct(V);
-    }
+    bool check(std::vector<T> V);
     std::string getID() const { return id; }
     std::string getExp() const { return expression; }
+    void setStatus(int st) { status = st; }
 
 };
+
+template <class T>
+bool Constraint<T>::check(std::vector<T> V) {
+	typename std::vector<T>::iterator i;
+	std::cout<<"##Checking for Values";
+	for( i = V.begin(); i!= V.end(); i++) std::cout<<" "<< *i;
+	std::cout<<std::endl;
+	if (funct(V)) {
+	    status =1;
+	    return true; }
+	else {
+	    status = 0;
+	    return false;
+	}
+}
 
 #endif
 /** @} */

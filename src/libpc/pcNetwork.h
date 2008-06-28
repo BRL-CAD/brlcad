@@ -156,14 +156,57 @@ Solution<T> BinaryNetwork<T>::solve()
 {
     Vertex v;
     Edge e;
+    Solution<T> S;
+
+/* Initialize values for Variables 
+    for(tie(v_i,v_end) = vertices(G); v_i != v_end; ++v_i) {
+	v = *v_i;
+    }
+ */
+
     for(tie(v_i,v_end) = vertices(G); v_i != v_end; ++v_i) {
 	v = *v_i;
 	for(tie(e_i,e_end) = out_edges(v,G); e_i !=e_end; ++e_i) {
 	    e=*e_i;
-	    std::cout<<"Solved status: "<<G[e].solved()<<std::endl;
+	    if(! G[e].solved()) {
+		std::vector<T> Vars; 
+		Vertex v1 = target(e,G);
+solve_start:
+		Vars.push_back(G[v].getValue());
+		Vars.push_back(G[v1].getValue());
+		
+		/* Check if constraint is solved for a particular set of values */
+		while(G[v1].constrained == 0 && ! G[e].check(Vars) && G[v1].getValue() != G[v1].getLast() ) {
+		    Vars.pop_back();		    
+		    ++G[v1];
+		    Vars.push_back(G[v1].getValue());
+		}
+		if( G[e].solved()) { 
+		    G[v].constrained =1; G[v1].constrained = 1;
+		    std::cout<<"+--------------------------------------"<<std::endl;
+		    break;
+		}
+
+		if(G[v1].getValue() == G[v1].getLast() ) {
+		    G[v1].setValue(G[v1].getFirst());
+		    ++G[v];
+		    goto solve_start;
+		}
+		if(G[v].getValue() == G[v].getLast() ) {
+		    G[v1].setValue(G[v1].getFirst());
+		    ++G[v];
+		    goto solve_start;
+		}
+		std::cout<<"++--------------------------------------"<<std::endl;
 	    }
 	}
-
+    }
+    /* Store the values in the Solution */
+    for(tie(v_i,v_end) = vertices(G); v_i != v_end; ++v_i) {
+	v = *v_i;
+	if(G[v].constrained ==1) S.VarDom.push_back(VarDomain<int>(G[v],Domain<int>()));
+    }
+    return S;
 }
 
 template<class T>

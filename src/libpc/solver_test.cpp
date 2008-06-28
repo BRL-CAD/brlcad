@@ -74,6 +74,7 @@ int main()
 
     // declare a graph object
     BinaryNetwork<int > N;
+    Solution<int> S;
 
     // Convenient naming for the vertices and Corrsponding Variables
     typedef Variable<int> Vi;
@@ -83,10 +84,10 @@ int main()
     Vi D=Vi("D",4);
 
     Interval<int> I;
-    A.setValue(2);
-    B.setValue(2);
-    C.setValue(2);
-    D.setValue(2);
+    A.setValue(0);
+    B.setValue(0);
+    C.setValue(0);
+    D.setValue(0);
     I.assign(0,5,1);
     A.addInterval(I);
     B.addInterval(I);
@@ -95,9 +96,9 @@ int main()
 
     typedef Constraint<int> Ci;
     Ci constraint_array[4];
-    constraint_array[0] = Ci("0", "A+B=4");
+    constraint_array[0] = Ci("0", "A+B=3");
     constraint_array[1] = Ci("1", "B+C>4");
-    constraint_array[2] = Ci("2", "A-D<5");
+    constraint_array[2] = Ci("2", "D-A<5");
     constraint_array[3] = Ci("3", "C-A=4");
     constraint_array[0].function(f1);
     constraint_array[0].Variables.push_back("B");
@@ -125,6 +126,8 @@ int main()
     //std::cout<<"___"<< boost::num_vertices(N.G)<<std::endl;
 
     N.display();
+    S = N.solve();
+    S.display();
 /*
     for (int i = 0; i < num_edges; ++i)
     N.add_edge(edge_array[i].first, edge_array[i].second);
