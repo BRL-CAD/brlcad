@@ -44,7 +44,7 @@ bool f3(std::vector<int> V ) {
     return (V[0]- V[1] -5 < 0);
 }
 bool f4(std::vector<int> V ) {
-    return (V[1]-V[0]-2 == 0);
+    return (V[1]-V[0]-4 == 0);
 }
 
 int main()
@@ -96,22 +96,10 @@ int main()
 
     typedef Constraint<int> Ci;
     Ci constraint_array[4];
-    constraint_array[0] = Ci("0", "A+B=3");
-    constraint_array[1] = Ci("1", "B+C>4");
-    constraint_array[2] = Ci("2", "D-A<5");
-    constraint_array[3] = Ci("3", "C-A=4");
-    constraint_array[0].function(f1);
-    constraint_array[0].Variables.push_back("B");
-    constraint_array[0].Variables.push_back("A");
-    constraint_array[1].function(f2);
-    constraint_array[1].Variables.push_back("C");
-    constraint_array[1].Variables.push_back("B");
-    constraint_array[2].function(f3);
-    constraint_array[2].Variables.push_back("D");
-    constraint_array[2].Variables.push_back("A");
-    constraint_array[3].function(f4);
-    constraint_array[3].Variables.push_back("C");
-    constraint_array[3].Variables.push_back("A");
+    constraint_array[0] = Ci("0", "A+B=3",f1,2,"A","B");
+    constraint_array[1] = Ci("1", "B+C>4",f2,2,"B","C");
+    constraint_array[2] = Ci("2", "D-A<5",f3,2,"A","D");
+    constraint_array[3] = Ci("3", "C-A=4",f4,2,"A","C");
 
     //std::cout<<constraint_array[0].getExp()<<"--------"<<std::endl;
     /* Add the vertices */

@@ -28,6 +28,7 @@
 #ifndef __PCCONSTRAINT_H__
 #define __PCCONSTRAINT_H__
 
+#include <stdarg.h>
 #include "pcVariable.h"
 
 template<class T>
@@ -42,11 +43,8 @@ public:
     typename std::list<std::string> Variables;
 
     Constraint() { status = 0; } 
-    Constraint(std::string Cid, std::string Cexpression) { 
-	id = Cid;
-	expression = Cexpression;
-	status = 0;
-    } 
+    Constraint(std::string Cid, std::string Cexpression, bool (*pf) (std::vector<T>));
+    Constraint(std::string Cid, std::string Cexpression, bool (*pf) (std::vector<T>),int count,...);
     void function(bool (*pf) (std::vector<T>)) { funct = pf; };
     bool solved() { 
 	if (status == 0) return false;
@@ -59,6 +57,29 @@ public:
     void setStatus(int st) { status = st; }
 
 };
+
+template <class T>
+Constraint<T>::Constraint(std::string Cid, std::string Cexpression, bool (*pf) (std::vector<T>)) { 
+    status = 0;
+    id = Cid;
+    expression = Cexpression;
+    funct = pf;
+}
+
+template <class T>
+Constraint<T>::Constraint(std::string Cid, std::string Cexpression, bool (*pf) (std::vector<T>),int count,...) { 
+    status = 0;
+    id = Cid;
+    expression = Cexpression;
+    funct = pf;
+
+    va_list args;
+    va_start(args,count);
+    for( int i=0; i<count; i++) {
+	Variables.push_back(va_arg(args,char *));
+    }
+    va_end(args);
+}
 
 template <class T>
 bool Constraint<T>::check(std::vector<T> V) {
