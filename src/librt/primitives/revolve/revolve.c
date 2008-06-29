@@ -160,7 +160,7 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 
     vr[X] = VDOT( rev->xUnit, rp->r_dir );
     vr[Y] = VDOT( rev->yUnit, rp->r_dir );
-    vr[Z] = VDOT( rev->zUnit, rp->r_dir ); 
+    vr[Z] = VDOT( rev->zUnit, rp->r_dir );
 
     VSUB2( xlated, rp->r_pt, rev->v3d );
     pr[X] = VDOT( rev->xUnit, xlated );
@@ -185,11 +185,11 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
     aa = sqrt( (pr[X] + k*vr[X])*(pr[X] + k*vr[X]) + (pr[Y] + k*vr[Y])*(pr[Y] + k*vr[Y]) );
     bb = sqrt( aa*aa * ( 1.0/(1 - ur[Z]*ur[Z]) - 1.0 ) );
 
-/* 
-	[ (x*x) / aa^2 ] - [ (y-h)^2 / bb^2 ] = 1
+/*
+  [ (x*x) / aa^2 ] - [ (y-h)^2 / bb^2 ] = 1
 
-	x = aa cosh( t - k );
-	y = h + bb sinh( t - k );
+  x = aa cosh( t - k );
+  y = h + bb sinh( t - k );
 */
 
 /* find hyperbola intersection with each sketch segment */
@@ -289,8 +289,8 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 			    if ( nhits >= MAX_HITS ) return -1; /* too many hits */
 			    VJOIN1( temp, pr, k1, vr );
 			    if ( !NEAR_ZERO( x*x - temp[X]*temp[X] - temp[Y]*temp[Y], RT_LEN_TOL ) ||
-					!NEAR_ZERO( y - temp[Z], RT_LEN_TOL ) ) {
-			        bu_log( "2D point: \t\t%5.2f\t%5.2f\n3D point: \t%5.2f\t%5.2f\t%5.2f\n",
+				 !NEAR_ZERO( y - temp[Z], RT_LEN_TOL ) ) {
+				bu_log( "2D point: \t\t%5.2f\t%5.2f\n3D point: \t%5.2f\t%5.2f\t%5.2f\n",
 					x, y, temp[X], temp[Y], temp[Z] );
 			    }
 			    hitp = hits[nhits++];
@@ -305,8 +305,8 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 			    if ( nhits >= MAX_HITS ) return -1; /* too many hits */
 			    VJOIN1( temp, pr, k2, vr );
 			    if ( !NEAR_ZERO( x*x - temp[X]*temp[X] - temp[Y]*temp[Y], RT_LEN_TOL ) ||
-					!NEAR_ZERO( y - temp[Z], RT_LEN_TOL ) ) {
-			        bu_log( "2D point: \t\t%5.2f\t%5.2f\n3D point: \t%5.2f\t%5.2f\t%5.2f\n",
+				 !NEAR_ZERO( y - temp[Z], RT_LEN_TOL ) ) {
+				bu_log( "2D point: \t\t%5.2f\t%5.2f\n3D point: \t%5.2f\t%5.2f\t%5.2f\n",
 					x, y, temp[X], temp[Y], temp[Z] );
 			    }
 			    hitp = hits[nhits++];
@@ -316,9 +316,9 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 			    hitp->hit_surfno = LINE_SEG;
 			}
 		    }
-		} 
+		}
 
-else if ( !NEAR_ZERO( b, RT_PCOEF_TOL ) ) {
+		else if ( !NEAR_ZERO( b, RT_PCOEF_TOL ) ) {
 		    t1 = log( -c / b );
 		    k1 = (h + bb*sinh(t1) - pr[Z]) / vr[Z];
 		    x = aa*cosh( t1 );
@@ -327,9 +327,9 @@ else if ( !NEAR_ZERO( b, RT_PCOEF_TOL ) ) {
 			if ( nhits >= MAX_HITS ) return -1; /* too many hits */
 			VJOIN1( temp, pr, k1, vr );
 			if ( !NEAR_ZERO( x*x - temp[X]*temp[X] - temp[Y]*temp[Y], RT_LEN_TOL ) ||
-				!NEAR_ZERO( y - temp[Z], RT_LEN_TOL ) ) {
+			     !NEAR_ZERO( y - temp[Z], RT_LEN_TOL ) ) {
 			    bu_log( "2D point: \t\t%5.2f\t%5.2f\n3D point: \t%5.2f\t%5.2f\t%5.2f\n",
-				x, y, temp[X], temp[Y], temp[Z] );
+				    x, y, temp[X], temp[Y], temp[Z] );
 			}
 			hitp = hits[nhits++];
 			VJOIN1( hitp->hit_vpriv, pr, k1, vr );
@@ -357,9 +357,9 @@ else if ( !NEAR_ZERO( b, RT_PCOEF_TOL ) ) {
 		hitp = hits[i];
 	    }
 	}
-	bu_log("radius:\t%5.2f", 
-		sqrt( hitp->hit_vpriv[X]*hitp->hit_vpriv[X] +
-			hitp->hit_vpriv[Y]*hitp->hit_vpriv[Y] ) );
+	bu_log("radius:\t%5.2f",
+	       sqrt( hitp->hit_vpriv[X]*hitp->hit_vpriv[X] +
+		     hitp->hit_vpriv[Y]*hitp->hit_vpriv[Y] ) );
 	/*bu_log( "hits: %d\n", nhits );*/
     }
 #endif
@@ -425,10 +425,10 @@ else if ( !NEAR_ZERO( b, RT_PCOEF_TOL ) ) {
  */
 void
 rt_revolve_vshot(struct soltab *stp[],	/* An array of solid pointers */
-	     struct xray *rp[],		/* An array of ray pointers */
-	     struct seg segp[],		/* array of segs (results returned) */
-	     int n,			/* Number of ray/object pairs */
-	     struct application *ap)
+		 struct xray *rp[],		/* An array of ray pointers */
+		 struct seg segp[],		/* array of segs (results returned) */
+		 int n,			/* Number of ray/object pairs */
+		 struct application *ap)
 {
     rt_vstub( stp, rp, segp, n, ap );
 }
@@ -453,14 +453,14 @@ rt_revolve_norm( struct hit *hitp, struct soltab *stp, struct xray *rp )
     }
 
     nT[X] = ( rev->xUnit[X] * n[X] )
-	  + ( rev->yUnit[X] * n[Y] )
-	  + ( rev->zUnit[X] * n[Z] );
+	+ ( rev->yUnit[X] * n[Y] )
+	+ ( rev->zUnit[X] * n[Z] );
     nT[Y] = ( rev->xUnit[Y] * n[X] )
-	  + ( rev->yUnit[Y] * n[Y] )
-	  + ( rev->zUnit[Y] * n[Z] );
+	+ ( rev->yUnit[Y] * n[Y] )
+	+ ( rev->zUnit[Y] * n[Z] );
     nT[Z] = ( rev->xUnit[Z] * n[X] )
-	  + ( rev->yUnit[Z] * n[Y] )
-	  + ( rev->zUnit[Z] * n[Z] );
+	+ ( rev->yUnit[Z] * n[Y] )
+	+ ( rev->zUnit[Z] * n[Z] );
     VUNITIZE( nT );
     if ( VDOT( nT, rp->r_dir) < 0 ) {
 	VMOVE( hitp->hit_normal, nT );
@@ -540,7 +540,7 @@ rt_revolve_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 
     vect_t	ell[16], cir[16], ucir[16], height, xdir, ydir, ux, uy, uz;
     fastf_t	cos22_5 = 0.9238795325112867385,
-		cos67_5 = 0.3826834323650898373;
+	cos67_5 = 0.3826834323650898373;
 
     nvert = rip->sk->vert_count;
     verts = rip->sk->verts;
@@ -649,7 +649,7 @@ rt_revolve_import5( struct rt_db_internal  *ip, const struct bu_external *ep, co
     struct rt_db_internal	tmp_ip;
 
     RT_CK_DB_INTERNAL(ip)
-    BU_CK_EXTERNAL( ep );
+	BU_CK_EXTERNAL( ep );
 
     /* set up the internal structure */
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
