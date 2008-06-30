@@ -114,6 +114,7 @@ rt_revolve_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 
     bu_log("rt_revolve_prep\n");
 
+    return 0;			/* OK */
 }
 
 /**
@@ -530,10 +531,6 @@ rt_revolve_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 {
     struct rt_revolve_internal	*rip;
 
-    RT_CK_DB_INTERNAL(ip);
-    rip = (struct rt_revolve_internal *)ip->idb_ptr;
-    RT_REVOLVE_CK_MAGIC(rip);
-
     int 		nvert, i, j;
     point2d_t		*verts;
     struct curve	*crv;
@@ -541,6 +538,10 @@ rt_revolve_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct 
     vect_t	ell[16], cir[16], ucir[16], height, xdir, ydir, ux, uy, uz;
     fastf_t	cos22_5 = 0.9238795325112867385,
 	cos67_5 = 0.3826834323650898373;
+
+    RT_CK_DB_INTERNAL(ip);
+    rip = (struct rt_revolve_internal *)ip->idb_ptr;
+    RT_REVOLVE_CK_MAGIC(rip);
 
     nvert = rip->sk->vert_count;
     verts = rip->sk->verts;
