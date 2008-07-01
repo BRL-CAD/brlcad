@@ -101,7 +101,7 @@ rt_check_curve(struct curve *crv, struct rt_sketch_internal *skt, int noisy)
 	}
     }
     if ( ret && noisy )
-	bu_log( "sketch references non-existent vertices!!!\n" );
+	bu_log( "sketch references non-existent vertices!\n" );
     return( ret );
 }
 
@@ -616,7 +616,7 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 	    break;
 	}
 	default:
-	    bu_log( "seg_to_vlist: ERROR: unrecognized segment type!!!!\n" );
+	    bu_log( "seg_to_vlist: ERROR: unrecognized segment type!\n" );
 	    break;
     }
 
@@ -824,7 +824,7 @@ rt_sketch_import(struct rt_db_internal *ip, const struct bu_external *ep, regist
 		sketch_ip->skt_curve.segments[seg_no] = (genptr_t)bsg;
 		break;
 	    default:
-		bu_bomb( "rt_sketch_import: ERROR: unrecognized segment type!!!\n" );
+		bu_bomb( "rt_sketch_import: ERROR: unrecognized segment type!\n" );
 		break;
 	}
     }
@@ -1009,7 +1009,7 @@ rt_sketch_export(struct bu_external *ep, const struct rt_db_internal *ip, double
 		}
 		break;
 	    default:
-		bu_bomb( "rt_sketch_export: ERROR: unrecognized curve type!!!!\n" );
+		bu_bomb( "rt_sketch_export: ERROR: unrecognized curve type!\n" );
 		break;
 
 	}
@@ -1160,7 +1160,7 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, regis
 		sketch_ip->skt_curve.segments[seg_no] = (genptr_t)bsg;
 		break;
 	    default:
-		bu_bomb( "rt_sketch_import: ERROR: unrecognized segment type!!!\n" );
+		bu_bomb( "rt_sketch_import: ERROR: unrecognized segment type!\n" );
 		break;
 	}
     }
@@ -1349,7 +1349,7 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 		}
 		break;
 	    default:
-		bu_bomb( "rt_sketch_export: ERROR: unrecognized curve type!!!!\n" );
+		bu_bomb( "rt_sketch_export: ERROR: unrecognized curve type!\n" );
 		break;
 
 	}
@@ -1600,7 +1600,7 @@ rt_curve_free(struct curve *crv)
 		bu_free( (char *)lng, "curve segment" );
 		break;
 	    default:
-		bu_log( "ERROR: rt_curve_free: unrecognized curve segments type!!!!\n");
+		bu_log( "ERROR: rt_curve_free: unrecognized curve segments type!\n");
 		break;
 	}
     }
@@ -1717,7 +1717,7 @@ rt_copy_curve(struct curve *crv_out, const struct curve *crv_in)
 		}
 		break;
 	    default:
-		bu_bomb( "rt_copy_sketch: ERROR: unrecognized segment type!!!!\n" );
+		bu_bomb( "rt_copy_sketch: ERROR: unrecognized segment type!\n" );
 	}
     }
 
