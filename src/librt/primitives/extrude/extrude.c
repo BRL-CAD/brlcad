@@ -123,7 +123,7 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 
     /* make sure the sketch is valid */
     if ( rt_check_curve( &skt->skt_curve, skt, 1 ) )	{
-	bu_log( "ERROR: referenced sketch (%s) is bad!!!\n",
+	bu_log( "ERROR: referenced sketch (%s) is bad!\n",
 		eip->sketch_name );
 	return( -1 );
     }
@@ -284,7 +284,7 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 		if ( NEAR_ZERO( max_radius - csg_extr->radius, RT_LEN_TOL ) ) {
 		    csg_extr->radius = max_radius;
 		} else {
-		    bu_log( "Impossible radius for circular arc in extrusion (%s), is %g, cannot be more than %g!!!\n",
+		    bu_log( "Impossible radius for circular arc in extrusion (%s), is %g, cannot be more than %g!\n",
 			    stp->st_dp->d_namep, csg_extr->radius, sqrt(magsq_s2m)  );
 		    bu_log( "Difference is %g\n", max_radius - csg->radius );
 		    return( -1 );
@@ -376,7 +376,7 @@ isect_line2_ellipse(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t
     if ( ra_4 <= SMALL_FASTF || rb_4 <= SMALL_FASTF ) {
 	bu_log( "ray (%g %g %g) -> (%g %g %g), semi-axes  = (%g %g %g) and (%g %g %g), center = (%g %g %g)\n",
 		V3ARGS( ray_start ), V3ARGS( ray_dir ), V3ARGS( ra ), V3ARGS( rb ), V3ARGS( center ) );
-	bu_bomb( "ERROR: isect_line2_ellipse: semi-axis length is too small!!!\n" );
+	bu_bomb( "ERROR: isect_line2_ellipse: semi-axis length is too small!\n" );
     }
 
     dda = V2DOT( ray_dir, ra );
@@ -1018,7 +1018,7 @@ rt_extrude_norm(register struct hit *hitp, struct soltab *stp, register struct x
 	    VUNITIZE( hitp->hit_normal );
 	    break;
 	default:
-	    bu_bomb( "ERROR: rt_extrude_norm(): unrecognized surf_no in hit structure!!!\n" );
+	    bu_bomb( "ERROR: rt_extrude_norm(): unrecognized surf_no in hit structure!\n" );
 	    break;
     }
     if ( hitp->hit_surfno < 0 )
@@ -1789,7 +1789,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 
     if ( !extrude_ip->skt )
     {
-	bu_log( "rt_extrude_tess: ERROR: no sketch for extrusion!!!!\n" );
+	bu_log( "rt_extrude_tess: ERROR: no sketch for extrusion!\n" );
 	return( -1 );
     }
 
@@ -2479,7 +2479,7 @@ rt_extrude_get(struct bu_vls *log, const struct rt_db_internal *intern, const ch
     else if ( *attr == 'K' )
 	bu_vls_printf( log, "%d", extr->keypoint );
     else {
-	bu_vls_strcat( log, "ERROR: unrecognized attribute, must be V, H, A, B, S, or K!!!" );
+	bu_vls_strcat( log, "ERROR: unrecognized attribute, must be V, H, A, B, S, or K!" );
 	return BRLCAD_ERROR;
     }
 
