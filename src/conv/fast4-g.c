@@ -85,7 +85,7 @@
     if (!ptr)\
 	bu_log("ERROR: Null name_tree pointer, file=%s, line=%d\n", __FILE__, __LINE__);\
     else if (ptr->magic != NAME_TREE_MAGIC)\
-	bu_log("ERROR: bad name_tree pointer (x%x), file=%s, line=%d\n", ptr, __FILE__, __LINE__);\
+	bu_log("ERROR: bad name_tree pointer (x%x), file=%s, line=%d\n", (unsigned int)ptr, __FILE__, __LINE__);\
 }
 
 
@@ -222,9 +222,9 @@ static char	*facemode;	/* mode for each face */
 static int	face_size=0;	/* actual length of above arrays */
 static int	face_count=0;	/* number of faces in above arrays */
 
-static int	*int_list;		/* Array of integers */
-static int	int_list_count=0;	/* Number of ints in above array */
-static int	int_list_length=0;	/* Length of int_list array */
+/*static int	*int_list;*/		/* Array of integers */
+/*static int	int_list_count=0;*/	/* Number of ints in above array */
+/*static int	int_list_length=0;*/	/* Length of int_list array */
 
 static point_t *grid_points = NULL;
 
@@ -300,12 +300,16 @@ is_a_hole(int id)
     return(0);
 }
 
+
+/*
 static void
-add_to_holes(char *name, int reg_id)
+add_to_holes(char *name)
 {
     if (mk_addmember(name, &hole_head.l, NULL, WMOP_UNION) == (struct wmember *)NULL)
 	bu_log("add_to_holes: mk_addmember failed for region %s\n", name);
 }
+*/
+
 
 static void
 plot_tri(int pt1, int pt2, int pt3)
@@ -326,9 +330,9 @@ Check_names(void)
 
     bu_ptbl_reset(&stack);
 
-    CK_TREE_MAGIC(name_root)
-	/* ident order */
-	ptr = name_root;
+    CK_TREE_MAGIC(name_root);
+    /* ident order */
+    ptr = name_root;
     while (1) {
 	while (ptr) {
 	    PUSH(ptr);
@@ -339,8 +343,8 @@ Check_names(void)
 	    break;
 
 	/* visit node */
-	CK_TREE_MAGIC(ptr)
-	    ptr = ptr->rright;
+	CK_TREE_MAGIC(ptr);
+	ptr = ptr->rright;
     }
 
     /* alpabetical order */
@@ -355,8 +359,8 @@ Check_names(void)
 	    break;
 
 	/* visit node */
-	CK_TREE_MAGIC(ptr)
-	    ptr = ptr->nright;
+	CK_TREE_MAGIC(ptr);
+	ptr = ptr->nright;
     }
 }
 
@@ -700,6 +704,7 @@ make_solid_name(char type, int element_id, int c_id, int g_id, int inner)
 }
 
 
+/*
 static void
 insert_int(int in)
 {
@@ -724,8 +729,10 @@ insert_int(int in)
     if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
 	bu_log("ERROR: bu_mem_barriercheck failed in insert_int\n");
 }
+*/
 
 
+/*
 static void
 Subtract_holes(struct wmember *head, int comp_id, int group_id)
 {
@@ -785,6 +792,8 @@ Subtract_holes(struct wmember *head, int comp_id, int group_id)
     if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
 	bu_log("ERROR: bu_mem_barriercheck failed in subtract_holes\n");
 }
+*/
+
 
 static void
 f4_do_compsplt(void)
@@ -825,6 +834,7 @@ f4_do_compsplt(void)
     make_region_name(gr1, co1);
 }
 
+
 static void
 List_holes(void)
 {
@@ -845,6 +855,8 @@ List_holes(void)
 }
 
 
+#if 0
+/* unused??? */
 static void
 Delete_name(struct name_tree **root, char *name)
 {
@@ -1003,13 +1015,15 @@ Delete_name(struct name_tree **root, char *name)
 	bu_log("ERROR: bu_mem_barriercheck failed in Delete_name\n");
     Check_names();
 }
+#endif
 
 
+/*
 static void
 add_to_series(char *name, int reg_id)
 {
     if (group_id < 0 || group_id > 10) {
-	bu_log("add_to_series: region (%s) not added, illegal group number %d, region_id=$d\n",
+	bu_log("add_to_series: region (%s) not added, illegal group number %d, region_id=%d\n",
 		name, group_id, reg_id);
 	return;
     }
@@ -1017,8 +1031,10 @@ add_to_series(char *name, int reg_id)
     if (mk_addmember(name, &group_head[group_id].l, NULL, WMOP_UNION) == (struct wmember *)NULL)
 	bu_log("add_to_series: mk_addmember failed for region %s\n", name);
 }
+*/
 
 
+/*
 static void
 make_comp_group(void)
 {
@@ -1071,11 +1087,12 @@ make_comp_group(void)
 	if (!is_a_hole(region_id))
 	    add_to_series(name, region_id);
 	else
-	    add_to_holes(name, region_id);
+	    add_to_holes(name);
 
 	bu_free((char *)name, "str_dupped name");
     }
 }
+*/
 
 
 static void
@@ -1177,7 +1194,7 @@ f4_do_name(void)
 
     /* skip leading blanks */
     i = 56;
-    while (i < sizeof(comp_name) && isspace(line[i]))
+    while ((size_t)i < sizeof(comp_name) && isspace(line[i]))
 	i++;
 
     if (i == sizeof(comp_name))
@@ -2796,6 +2813,7 @@ Process_input(int pass_number)
 }
 
 
+#if 0
 /* This routine is called for each combination in the model (via db_functree).
  * It looks for regions that consist of only one member. If that one member
  * is a combination, then the tree from that combination is placed in the
@@ -2811,6 +2829,8 @@ fix_regions(struct db_i *dbip, struct directory *dp, genptr_t ptr)
     struct rt_comb_internal *comb2 = (struct rt_comb_internal *)NULL;
     union tree		*tree = (union tree *)NULL;
     union tree		*tree2 = (union tree *)NULL;
+
+    if (ptr) ptr=ptr; /* quell warning */
 
     /* only process regions */
     if (!(dp->d_flags & DIR_REGION))
@@ -2872,10 +2892,11 @@ fix_regions(struct db_i *dbip, struct directory *dp, genptr_t ptr)
     db_dirdelete(dbip, dp2);
 
     db_free_tree(tree, &rt_uniresource);
-
 }
+#endif
 
 
+/*
 static void
 Post_process(char *output_file)
 {
@@ -2911,6 +2932,7 @@ Post_process(char *output_file)
     if (debug)
 	bu_log("Post-processing complete\n");
 }
+*/
 
 
 static void
