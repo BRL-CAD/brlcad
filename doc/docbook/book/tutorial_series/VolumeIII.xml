@@ -1056,11 +1056,427 @@ mvall oldname newname
 	    is one of the first keys to developing effective geometry.
 	  </para>
 
+	  <table>
+	    <title>The four modeling levels in BRL-CAD</title>
+	    <tgroup cols='2' align='center'>
+	      <tbody>
+		<row>
+		  <entry>
+		    Modeling Level
+		  </entry>
+		  <entry>
+		    Description
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    Primitive level (.s)
+		  </entry>
+		  <entry>
+		    This level is where one performs three-dimensional (3-D) CAD “sculpting,” working with 
+		    the primitive shapes to represent the target geometry in coordinate space.  Objects at this 
+		    level are not recognized as having volume or material properties.
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    Combination level (.c)
+		  </entry>
+		  <entry>
+		    This level is an optional intermediate level between primitives and regions or regions 
+		    and assemblies.  It allows Booleaned objects to be subtracted and intersected.  All 
+		    nonprimitive objects are stored as combinations.
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    Region level (.r)
+		  </entry>
+		  <entry>
+		    This level is the lowest level at which geometry occupies 3-D space and can have material 
+		    properties. It is where one assembles primitives and defines positive volume using Boolean 
+		    logic.  A region must be composed of one material, should be interconnected, and should 
+		    perform the same function.  
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    Assembly level (.a or .g)
+		  </entry>
+		  <entry>
+		    This is the level at which subparts are organized into parts and parts are organized 
+		    into assemblies.  This is also where meaningful names and appropriate hierarchical structure 
+		    are applied.
+		  </entry>
+		</row>
+	      </tbody>
+	    </tgroup>
+	  </table>
+	</listitem>
+	<listitem>
+	  <para>
+	    <emphasis>Know the major primitives and their constraints:</emphasis> Another key to good
+	    model building is to understand the required inputs, editing options,
+	    geometric characteristics, and relative advantages/disadvantages of the
+	    package's basic "building blocks"--the primitive shapes. Although the
+	    package currently has more than 20 primary primitives (as well as another
+	    dozen developmental/special-use primitives), only a few of these
+	    primitives are used on a regular basis (see Table 5). That is not to say,
+	    of course, that less common shapes could not be used, but with some
+	    experience, users can begin to "see geometry" in a relatively small set of
+	    primitives and understand the data needed to produce accurate models.
+	  </para>
+
+	  <table>
+	    <title>The major BRL-CAD primitives and parameters.</title>
+	    <tgroup cols='2' align='center'>
+	      <tbody>
+		<row>
+		  <entry>
+		    Primitive Shape/BRL-CAD Abbreviation
+		  </entry>
+		  <entry>
+		    Input Parameters/Definitions<footnote><para>To maximize database efficiency, some shape 
+		    types are stored as other types (e.g., all arbs are stored as arb8's), but this behavior
+		    is invisible to the user.</para></footnote>
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    <para>
+		      <informalfigure>
+			<mediaobject>
+			  <imageobject>
+			    <imagedata align = "center" fileref="./volumeIII_images/primitive1.png" format="PNG"></imagedata>
+			  </imageobject>
+			  <caption>
+			    <para>
+			      Arbitrary convex polyhedron, 8 pts (arb8)
+			    </para>
+			  </caption>
+			</mediaobject>
+		      </informalfigure>
+		    </para>
+		  </entry>
+		  <entry>
+		    <itemizedlist mark="dash">
+		      <listitem>
+			<para>
+			  8 vertices, 6 faces, and 12 edges
+			</para>
+		      </listitem>
+		      <listitem>
+			<para>
+			  Each face must be a plane.
+			</para>
+		      </listitem>
+		      <listitem>
+			<para>
+			  Illegal variations include the following: 
+			</para>
+			<para>
+			  <inlinegraphic fileref="./volumeIII_images/invalidarb1.jpg" />
+			  <inlinegraphic fileref="./volumeIII_images/invalidarb2.jpg" />
+			</para>
+		      </listitem>
+		    </itemizedlist>
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    <para>
+		      <informalfigure>
+			<mediaobject>
+			  <imageobject>
+			    <imagedata align = "center" fileref="./volumeIII_images/primitive2.png" format="PNG"></imagedata>
+			  </imageobject>
+			  <caption>
+			    <para>
+			      Arbitrary convex polyhedron, 6 pts (arb6)
+			    </para>
+			  </caption>
+			</mediaobject>
+		      </informalfigure>
+		    </para>
+		  </entry>
+		  <entry>
+		    <itemizedlist mark="dash">
+		      <listitem>
+			<para>
+			  6 vertices, 5 faces, and 9 edges.
+			</para>
+		      </listitem>
+		      <listitem>
+			<para>
+			  Stored as an arb8, where point 8 is coincident with point 5 and point 7 is      
+			  coincident with point 6
+			</para>
+		      </listitem>
+		    </itemizedlist>
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    <para>
+		      <informalfigure>
+			<mediaobject>
+			  <imageobject>
+			    <imagedata align = "center" fileref="./volumeIII_images/primitive3.png" format="PNG"></imagedata>
+			  </imageobject>
+			  <caption>
+			    <para>
+			      Sphere (sph) 
+			    </para>
+			  </caption>
+			</mediaobject>
+		      </informalfigure>
+		    </para>
+		  </entry>
+		  <entry>
+		    <itemizedlist mark="dash">
+		      <listitem>
+			<para>
+			  Vertex, V.
+			</para>
+		      </listitem>
+		      <listitem>
+			<para>
+			  Radii, A, B, C.
+			</para>
+		      </listitem>
+		      <listitem>
+			<para>
+			  Stored as an ellipsoid (ell).  
+			</para>
+		      </listitem>
+		      <listitem>
+			<para>
+			   Vectors A, B, and C are mutually perpendicular.
+			</para>
+		      </listitem>
+		    </itemizedlist>
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    <para>
+		      <informalfigure>
+			<mediaobject>
+			  <imageobject>
+			    <imagedata align = "center" fileref="./volumeIII_images/primitive4.png" format="PNG"></imagedata>
+			  </imageobject>
+			  <caption>
+			    <para>
+			     Right circular cylinder (rcc) 
+			    </para>
+			  </caption>
+			</mediaobject>
+		      </informalfigure>
+		    </para>		    
+		  </entry>
+		  <entry>
+		    <itemizedlist mark="dash">
+		      <listitem>
+			<para>
+			  Vertex, V.
+			</para>
+		      </listitem>
+		      <listitem>
+			<para>
+			  Radii, A, B, C, D.
+			</para>
+		      </listitem>
+		      <listitem>
+			<para>
+			  Height vector, H (base-to-top distance).
+			</para>
+		      </listitem>
+		      <listitem>
+			<para>
+			  Stored as a truncated general cone (tgc).
+			</para>
+		      </listitem>
+		      <listitem>
+			<para>
+			  Vectors A and B have equal lengths, C and D have equal lengths, and all vectors are   
+			  perpendicular to H.
+			</para>
+		      </listitem>
+		    </itemizedlist>
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    <para>
+		      <informalfigure>
+			<mediaobject>
+			  <imageobject>
+			    <imagedata align = "center" fileref="./volumeIII_images/primitive5.png" format="PNG"></imagedata>
+			  </imageobject>
+			  <caption>
+			    <para>
+			      Torus (tor)
+			    </para>
+			  </caption>
+			</mediaobject>
+		      </informalfigure>
+		    </para>		    
+		  </entry>
+		  <entry>
+		    <itemizedlist mark="dash">
+		      <listitem>
+			<para>
+			  Vertex, V (center of hole).
+			</para>
+		      </listitem>
+		      <listitem>
+			<para>
+			  Normal direction for the plane of the ring.
+			</para>
+		      </listitem>
+		      <listitem>
+			<para>
+			  Radius 1 (radius from V to center of tube).
+			</para>
+		      </listitem>
+		      <listitem>
+			<para>
+			  Radius 2 (radius of tube).
+			</para>
+		      </listitem>
+		    </itemizedlist>
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    <para>
+		      <informalfigure>
+			<mediaobject>
+			  <imageobject>
+			    <imagedata align = "center" fileref="./volumeIII_images/primitive6.jpg"></imagedata>
+			  </imageobject>
+			  <caption>
+			    <para>
+			      Pipe (pipe)
+			    </para>
+			  </caption>
+			</mediaobject>
+		      </informalfigure>
+		    </para>		    
+		  </entry>
+		  <entry>
+		    <itemizedlist mark="dash">
+		      <listitem>
+			<para>
+			  Outer diameter (OD). 
+			</para>
+		      </listitem>
+		      <listitem>
+			<para>
+			  Inner diameter (ID). 
+			</para>
+		      </listitem>
+		      <listitem>
+			<para>
+			  Bend radius (equivalent to an r1 value of a torus). 
+			</para>
+		      </listitem>
+		      <listitem>
+			<para>
+			  Each point contains X, Y, Z coordinates, OD, ID, and bend radius data.
+			</para>
+		      </listitem>
+		      <listitem>
+			<para>
+			  Is effectively a subregion combination of cylinders and bounded tori whose path is    
+			  defined by a series of coordinates.
+			</para>
+		      </listitem>
+		    </itemizedlist>
+		  </entry>
+		</row>
+	      </tbody>
+	    </tgroup>
+	  </table>
+
+	  <note>
+	    <para>
+	      For a list of all the primary primitives and their shapes, see        
+	      Appendix C of BRL-CAD Tutorial Volume II (Butler et al., 2001) or     
+	      consult http://ftp.arl.army.mil/brlcad/ (U.S. ARL, 2003). For       
+	      detailed guidance on using the pipe and the extruded bitmap (ebm)     
+	      primitives, see Appendices A and C of this volume.
+	    </para>
+	  </note>
+	</listitem>
+	<listitem>
+	  <para>
+	    <emphasis>Use the best command to build primitives:</emphasis> In addition to understanding
+	    the package's basic building blocks and modeling levels, it is important
+	    to understand the behavior and advantages/disadvantages of its basic
+	    building "tools" (see Table 6). Using the right building command at the
+	    right time can maximize modeling efficiency by, in some cases, taking
+	    advantage of data from previously built geometry and saving measurement
+	    and/or input time.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    Build objects in the most convenient location: Although coordinate
+	    systems vary according to the type of situation (e.g., converted geometry
+	    or group modeling, where a particular orientation has been established),
+	    BRL-CAD models are generally centered at the origin (x y z = 0 0 0), where
+	    the +X axis is front, the +Y axis is left, and the +Z axis is up.
+	  </para>
+	  <para>
+	    For objects that are symmetrical in nature, this practice can take
+	    advantage of BRL-CAD's mirroring operations and can provide simpler
+	    reference numbers for objects that are more complex in composition and/or
+	    orientation. In some cases, however, the modeler will find it makes more
+	    sense to build objects in place in the model. These include cases in which
+	    previously created objects offer convenient reference numbers for the
+	    object's location/orientation and cases in which tangencies and other
+	    necessary calculations would be more difficult to derive with the object
+	    at the origin.
+	  </para>
+	  <para>
+	    Note that there are traditional coordinate system conventions that some
+	    organizations use for their target descriptions (Ellis, 1992; Robertson et
+	    al., 1996; Winner et al., 2002). For a turreted vehicle, the origin is
+	    traditionally located at the intersection of the axis of the turret
+	    rotation and the ground surface. The +X axis points to the front of the
+	    vehicle, the +Y axis points toward the vehicle's left, and the +Z points
+	    up (see Figure 6). For a nonturreted vehicle, the axes are the same, but
+	    there is no axis of rotation to provide a definitive reference point. So,
+	    the origin is located at the intersection of the ground surface and a
+	    convenient point along the left-right, mid-plane of the vehicle (see
+	    Figure 7). For fixed-wing and rotary-wing aircraft, the axes are the same,
+	    but the origin is located on the front nose of the airframe (see Figures 8
+	    and 9).
+	  </para>
 	  
 
 	</listitem>
 	<listitem>
 	  <para>
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	  </para>
+	</listitem>
+
+	<listitem>
+	  <para>
+
 	    <itemizedlist>
 	      <listitem>
 		<para>
