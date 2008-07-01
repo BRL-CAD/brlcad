@@ -147,6 +147,7 @@
 #define RT_AP_MAGIC			0x4170706c /**< Appl */
 #define RT_CNURB_MAGIC			0x636e7262
 #define RT_COMB_MAGIC			0x436f6d49 /**< ComI */
+#define RT_CONSTRAINT_MAGIC		0x7063696d /**< pcim */
 #define RT_CTS_MAGIC			0x98989123
 #define RT_DBTR_MAGIC			0x64627472 /**< dbtr */
 #define RT_DBTS_MAGIC			0x64627473 /**< dbts */
@@ -180,7 +181,6 @@
 #define FB_MAGIC			0xfbfb00fb
 #define LIGHT_MAGIC			0xdbddbdb7
 #define MF_MAGIC			0x55968058
-#define PC_CONSTRAINT_INTERNAL_MAGIC	0x7063696d /**< pcim */
 #define PIXEL_EXT_MAGIC 		0x50787400 /**< Pxt  */
 #define PL_MAGIC        		0x0beef00d
 #define PT_HD_MAGIC			0x87687680

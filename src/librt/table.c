@@ -218,6 +218,17 @@ RT_DECLARE_INTERFACE(hyp);
 #define rt_revolve_xform rt_generic_xform
 RT_DECLARE_INTERFACE(revolve);
 
+#define rt_constraint_xform rt_generic_xform
+RT_DECLARE_INTERFACE(constraint);
+
+/*
+#define rt_binunif_xform rt_generic_xform
+RT_DECLARE_INTERFACE(binunif);
+
+#define rt_binexpm_xform rt_generic_xform
+RT_DECLARE_INTERFACE(binexpm);
+*/
+
 #if OBJ_BREP
 #define rt_brep_xform rt_generic_xform
 RT_DECLARE_INTERFACE(brep);
@@ -1004,8 +1015,8 @@ const struct rt_functab rt_functab[] = {
      rt_nul_piece_shot,	rt_nul_piece_hitsegs,
      rt_nul_uv,		rt_nul_curve,	rt_nul_class,	rt_nul_free,
      rt_nul_plot,	rt_nul_vshot,	rt_nul_tess,	rt_nul_tnurb,
-     pc_constraint_import,	pc_constraint_export,
-     pc_constraint_import,	pc_constraint_export, pc_constraint_ifree,
+     rt_constraint_import5,	rt_constraint_export5,
+     rt_nul_import,	rt_nul_export, rt_constraint_ifree,
      rt_nul_describe,	rt_nul_xform,	rt_nul_parse,
      0,		0,
      rt_nul_get,	rt_nul_adjust,	rt_nul_form,

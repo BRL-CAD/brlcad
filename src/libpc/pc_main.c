@@ -179,7 +179,7 @@ int pc_deparametrize() {
  *      code import/export/describe/print/ifree/prep/
  *
  *      pc_constraint_internal defined in pc.h
- *      edit magic.h to add PC_CONSTRAINT_INTERNAL_MAGIC
+ *      edit magic.h to add RT_CONSTRAINT_MAGIC
  *      edit table.c:
  *              RT_DECLARE_INTERFACE()
  *              struct rt_functab entry
@@ -202,7 +202,7 @@ pc_mk_constraint(
     int                 append_ok)      /* 0 = obj must not exit */
 {
     struct rt_db_internal       intern;
-    struct pc_constraint_internal *constraint;
+    struct rt_constraint_internal *constraint;
     int new_constraint;
 
     RT_CK_WDB(wdbp);
@@ -212,14 +212,14 @@ pc_mk_constraint(
     if (append_ok &&
 	wdb_import( wdbp, &intern, constraintname, (matp_t)NULL ) >= 0) {
 	/* We retrieved an existing object, append to it */
-	constraint = (struct pc_constraint_internal *)intern.idb_ptr;
+	constraint = (struct rt_constraint_internal *)intern.idb_ptr;
 	/*PC_CK_CONSTRAINT( constraint );*/
 
 	new_constraint = 0;
     } else {
 	/* Create a fresh new object for export */
-	BU_GETSTRUCT( constraint, pc_constraint_internal );
-	constraint->magic = PC_CONSTRAINT_INTERNAL_MAGIC;
+	BU_GETSTRUCT( constraint, rt_constraint_internal );
+	constraint->magic = RT_CONSTRAINT_MAGIC;
 	/* bu_vls_init( &constraint->shader );*/
 
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;

@@ -843,7 +843,9 @@ struct directory  {
 		(_dp)->d_namep = bu_strdup(_name); /* Calls bu_malloc() */ \
 	} }
 
-/** Use this macro to free the d_namep member, which is sometimes not
+
+/**
+ * Use this macro to free the d_namep member, which is sometimes not
  * dynamic.
  */
 #define RT_DIR_FREE_NAMEP(_dp)	{ \
@@ -893,6 +895,7 @@ struct rt_comb_internal  {
 #define RT_CHECK_COMB_TCL(_interp, _p)	BU_CKMAG_TCL(interp, _p, RT_COMB_MAGIC, "rt_comb_internal" )
 #define RT_CK_COMB_TCL(_interp, _p)	RT_CHECK_COMB_TCL(_interp, _p)
 
+
 /**
  * R T _ B I N U N I F _ I N T E R N A L
  *
@@ -920,6 +923,22 @@ struct rt_binunif_internal {
 #define RT_CK_BINUNIF(_p)		RT_CHECK_BINUNIF(_p)
 #define RT_CHECK_BINUNIF_TCL(_interp, _p)	BU_CKMAG_TCL(interp, _p, RT_BINUNIF_MAGIC, "rt_binunif_internal" )
 #define RT_CK_BINUNIF_TCL(_interp, _p)	RT_CHECK_BINUNIF_TCL(_interp, _p)
+
+
+/**
+ * P C _ C O N S T R A I N T
+ *  
+ * In-memory format for database "constraint" record
+ */
+struct rt_constraint_internal {
+    unsigned long magic;
+    int id;
+    int type; 
+};
+
+#define RT_CHECK_CONSTRAINT(_p)		BU_CKMAG( _p, PC_CONSTRAINT_MAGIC, "pc_constraint_internal" )
+#define RT_CK_CONSTRAINT(_p)		PC_CHECK_CONSTRAINT(_p)
+
 
 /**
  * D B _ T R E E _ S T A T E
@@ -5899,13 +5918,6 @@ RT_EXPORT BU_EXTERN(int rt_bot_decimate,
 		     fastf_t min_edge_length));
 #endif
 
-/* defined in pc_constraint.c */
-
-RT_EXPORT BU_EXTERN(int pc_constraint_export,(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm,\
-		    const struct db_i *dbip, struct resource *resp));
-RT_EXPORT BU_EXTERN(int pc_constraint_import,(struct rt_db_internal *ip, const struct bu_external *ep, \
-		    const mat_t mat, const struct db_i *dbip, struct resource *resp, const int minor_type));
-RT_EXPORT BU_EXTERN(void pc_constraint_ifree,(struct rt_db_internal *ip, struct resource *resp));
 
 /*
  *  Constants provided and used by the RT library.

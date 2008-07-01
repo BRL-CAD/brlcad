@@ -65,30 +65,6 @@ __BEGIN_DECLS
 
 
 
-/**
- * Structures required for describing constraints, relations
- * constraint networks
- */
-
-/**
- * P C _ C O N S T R A I N T
- *  
- * In-memory format for database "constraint" record
- */
-struct pc_constraint_internal {
-    unsigned long magic;
-    int id;
-    int type; 
-/*    int index;
-    char s[PC_MAX_STACK_SIZE]; 
-*/
-};
-
-#define PC_CHECK_CONSTRAINT(_p)		BU_CKMAG( _p, PC_CONSTRAINT_MAGIC, "pc_constraint_internal" )
-#define PC_CK_CONSTRAINT(_p)		PC_CHECK_CONSTRAINT(_p)
-/*#define PC_CHECK_CONSTRAINT_TCL(_interp, _p)	BU_CKMAG_TCL(interp, _p, PC_CONSTRAINT_MAGIC, "pc_constraint_internal" )
-#define PC_CK_CONSTRAINT_TCL(_interp, _p)	PC_CHECK_CONSTRAINT_TCL(_interp, _p)*/
-
 PC_EXPORT PC_EXTERN(int pc_write_parameter_set,(struct pc_param_set ps, struct directory * dp, struct db_i * dbip ));
 
 PC_EXPORT PC_EXTERN(int pc_generate_parameters,(struct pc_param_set * psp, struct directory * dp, struct db_i * dbip));

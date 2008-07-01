@@ -38,6 +38,7 @@ librt_nil_la_SOURCES = \
 	bool.c \
 	bundle.c \
 	cmd.c \
+	constraint.c \
 	cut.c \
 	db5_alloc.c \
 	db5_bin.c \
@@ -71,7 +72,6 @@ librt_nil_la_SOURCES = \
 	opennurbs_ext.cpp \
 	oslo_calc.c \
 	oslo_map.c \
-	pc_constraint.c \
 	pr.c \
 	prep.c \
 	primitives/arb8/arb8.c \
