@@ -1,0 +1,1298 @@
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+"../../resources/standard/dtd/docbookx.dtd">
+
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
+  <bookinfo>
+    <title><application>BRL-CAD</application> Tutorial Series: Volume III - Principles of Effective Modeling</title>
+
+    <authorgroup>
+      <xi:include href="book_authors.xml" xpointer="lbutler"/>
+      <xi:include href="book_authors.xml" xpointer="eedwards"/>
+      <author>
+	<firstname>Dwayne</firstname>
+	<surname>Kregel</surname>
+	<othername role='mi'>L</othername>
+	<affiliation>
+	  <shortaffil>SURVICE Engineering Company</shortaffil>
+	  <address>
+	    <street>4695 Millennium Drive</street>
+	    <city>Belcamp</city>
+	    <state>MD</state> 
+	    <postcode>21017-1505</postcode>
+	  </address>
+	</affiliation>
+      </author>
+    </authorgroup>
+
+    <publishername>Army Research Laboratory</publishername>
+    <pubsnumber>ARL-SR-119</pubsnumber>
+    <pubdate>September 2003</pubdate>
+    
+    <legalnotice>
+      <para>Approved for public release; distribution is unlimited</para>
+      
+      <para>The findings in this report are not to be construed as an
+      official Department of the Army position unless so designated 
+      by other authorized documents.</para>
+      
+      <para>Citation of manufacturer's or trade names does not constitute
+      an official endorsement or approval of the use thereof.</para>
+      
+      <para>Destroy this report when it is no longer needed. Do not return
+      it to the originator.</para>
+
+      <para>Note that the name BRL-CAD and the BRL-CAD eagle logo are
+      trademarks of the U.S. Army.</para>
+    </legalnotice>      
+    
+    <abstract>
+      <para>
+	Since 1979, the U.S. Army Research Laboratory has been developing and
+	distributing the <application>BRL-CAD</application> constructive solid geometry (CSG) modeling
+	package for a wide range of military and industrial applications. The
+	package includes a large collection of tools and utilities including an
+	interactive geometry editor, ray-tracing and generic framebuffer
+	libraries, a network-distributed image-processing and signal-processing
+	capability, and an embedded scripting language.
+      </para>
+      
+      <para>
+	As part of this effort, a multivolume tutorial series is being developed
+	to assist users in the many features of the <application>BRL-CAD</application> package. 
+	"Principles of Effective Modeling," which is the third 
+	volume in the series, addresses the modeling process and suggests 
+	principles and techniques for maximizing <application>BRL-CAD</application>'s 
+	capabilities. Other volumes focus on package installation and specific 
+	features and utilities within the software package.
+      </para>
+    </abstract>
+  </bookinfo>
+
+  <preface>
+    <title>Acknowledgements</title>
+
+    <para>
+      The authors would like to acknowledge Mr. John Anderson, Mr. Sean
+      Morrison, Mr. Keith Applin, Mr. Charles Kennedy, Ms. TraNese Christy, and
+      Ms. Wendy Winner for reviewing this document at various stages in its
+      development and for providing many helpful suggestions for improving its
+      content and presentation.
+    </para>
+    <para>
+      In addition, the following individuals and organizations are thanked for
+      contributing various tables and figures throughout the report. They
+      include Ms. Wendy Winner, Mr. Michael Gillich, Dr. Paul Tanenbaum, the
+      Aberdeen office of the Science Applications International Corporation
+      (SAIC), and the SURVICE Engineering Company.
+    </para>
+    <para>
+      Finally, the authors would especially like to acknowledge Mr. Michael
+      Muuss, the original architect of BRL-CAD, who passed away in the fall of
+      2000. Without his vision, intellect, and diligence, this work would not
+      have been possible. The BRL-CAD Tutorial Series is dedicated to his
+      memory.
+    </para>
+  </preface>
+
+  <chapter id="volIIIintro">
+    <title>Introduction</title>
+    <para>
+      Since 1979, the U.S. Army Research Laboratory (ARL) has been developing
+      and distributing the U.S. Army Ballistic Research Laboratory -
+      Computer-Aided Design (BRL-CAD) constructive solid geometry (CSG) modeling
+      package for a wide range of military and industrial applications. The
+      package includes a large collection of tools and utilities including an
+      interactive geometry editor, raytracing and generic framebuffer libraries,
+      network-distributed image-processing/signal-processing capabilities, and
+      an embedded scripting language.
+    </para>
+    <para>
+      As part of this effort, a multivolume tutorial series is under development
+      to assist users with the many features of the BRL-CAD package. Volume I
+      provides an overview of the package contents and installation (Butler and
+      Edwards, 2002). Volume II addresses the basic features and functionality
+      of the package's Multi-Device Geometry Editor (MGED) and offers a
+      comprehensive list of the user commands available (Butler et al., 2001).
+      These documents are available for download at
+      http://ftp.arl.army.mil/brlcad/ (U.S. ARL, 2003).
+    </para>
+    <para>
+      The purpose of Volume III is to discuss the components of the modeling
+      process and suggest principles for maximizing the effectiveness of
+      BRL-CAD's capabilities. Because of the large diversity in modeling
+      projects, these principles have largely been kept to a general nature so
+      that they have the widest applicability possible. In addition, several
+      appendices have been included to offer detailed discussions on several
+      BRL-CAD tools and features, including the pipe primitive (Appendix A), the
+      projection shader (Appendix B), the extruded bitmap primitive (Appendix
+      C), the .mgedrc file (Appendix D), the Build Pattern tool (Appendix E),
+      and the build_region command (Appendix F).
+    </para>
+    <para>
+      Future volumes in the tutorial series are planned to discuss geometry
+      format conversion, advanced modeling features, and programming options.
+    </para>
+  </chapter> 
+
+  <chapter id="volIIImodelprocess">
+    <title>The Model Process</title>
+    <sect1>
+      <title>The Importance of the Model Mission</title>
+      <para>
+	The key to knowing how to build successful, effective models in BRL-CAD is
+	to know why you are building them. Thus, before any measurements are
+	taken, before any structures are laid out, and before any geometry is
+	built, the modeler should, if possible, meet with program sponsors,
+	participants, and/or end users to gain a clear understanding of the
+	model's intended purpose--that is, its mission.
+      </para>
+      <para>
+	Whether a model is intended for ballistic analyses, radar studies, or
+	something else, the model's mission should be the basis for determining
+	how all parts of the modeling process should be conducted. This includes
+	the level of detail that the modeler should achieve, the tree structure
+	the model should have, the amount of modeling time that should be
+	allotted, the types of validation and verification the model should have,
+	and even the way documentation should be created and logged. This point
+	may seem obvious, but failure to acknowledge the mission can result in
+	wasted time and resources and, ultimately, an ineffective model.
+      </para>
+      <para>
+	For example, if one is creating a geometric target description of a combat
+	vehicle to simulate a ballistic penetration event, accurately modeled
+	material thicknesses and densities of outside armor are crucial in
+	analyzing penetration damage. In addition, it is usually important to
+	include internal components such as fuel and electrical lines, ammunition,
+	and even crew members, which can greatly affect the vehicle's
+	functionality if they are impacted by a projectile (see Figure 1).
+      </para>
+      <para>
+	Radar signature studies, on the other hand, often call for a different
+	type of model. For the most part, the vehicle's outer shell--or "skin"--is
+	what is important, and the previously mentioned armor thicknesses and
+	internal components are usually unnecessary (see Figure 2).
+      </para>
+
+      <figure>
+	<title>Ballistic penetration model with transparent exterior.</title>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="./volumeIII_images/figure1.png" format="PNG"></imagedata>
+	  </imageobject>
+	</mediaobject>
+      </figure>
+
+      <figure>
+	<title>External detail commonly used in radar signature models.</title>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="./volumeIII_images/figure2.png" format="PNG"></imagedata>
+	  </imageobject>
+	</mediaobject>
+      </figure>
+
+      <para>
+	It is also important to note that some models will need to serve multiple
+	missions. If the modeler suspects that this will be the case with a model,
+	it should be built to the highest level of detail that any of the intended
+	users requires (and, of course, that time/resources permit).
+      </para>
+
+    </sect1>
+
+    <sect1>
+      <title>M-O-D-E-L: A Five-Step Approach to Creating Effective Models</title>
+      
+      <para>
+	After one has explicitly and unequivocally established the "why" of a
+	model, the "how" of a model can be addressed. Unfortunately, there is no
+	single, universally accepted method to creating models in BRL-CAD. In
+	fact, professional modelers are known to employ many unique techniques to
+	accomplish equivalent results. Nonetheless, there are several basic steps
+	or procedures that are commonly used by most modelers to create accurate,
+	realistic, and useful geometric representations in a timely and efficient
+	manner. These steps could be described in a variety of ways, but for
+	convenience, they can be generalized into the following five categories
+	and represented by the acronym M-O-D-E-L:
+      </para>
+
+      <itemizedlist>
+	<listitem>
+	  <para>
+	    M-easuring (or collecting/converting) data,
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    O-rganizing the structure,
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    D-eveloping (or building) geometry,
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    E-valuating (or checking) geometry for correctness, and
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    L-ogging (or creating) documentation.
+	  </para>
+	</listitem>
+      </itemizedlist>
+
+      <para>
+	The remaining sections of this document address each of these steps in
+	turn.
+      </para>
+
+      <para>
+	As shown in Figure 3, the modeling process can be thought of as a wagon
+	wheel with five spokes. Each spoke extends out from the inner hub--the
+	model's mission--and is equally important in giving the wheel its strength
+	and functionality. Also, although it is common to consider the steps in
+	the order in which they are listed (i.e., M then O then D then E then L),
+	the modeling process is dynamic, and it is not unusual for a particular
+	phase to occur in a different order, to repeat itself, or to be skipped
+	altogether as a project develops.
+      </para>
+
+      <figure>
+	<title>M-O-D-E-L: the five-stage modeling process.</title>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="./volumeIII_images/figure3.png" format="PNG"></imagedata>
+	  </imageobject>
+	</mediaobject>
+      </figure>
+      
+      <para>
+	For example, the organization phase is often the first step in large or
+	complex modeling projects because it helps the modeler establish a tree
+	structure that will guide him in collecting/measuring the right (or right
+	amount of) data. Also, the modeler often detects missing or inaccurate
+	data in the geometry development phase, which requires a return to the
+	measurement phase. Finally, in cases involving the conversion of geometry
+	from another source, the measurement and development phases might be
+	nonapplicable, and a modeler might skip directly to the evaluation phase.
+      </para>
+    </sect1>
+  </chapter>
+
+  <chapter id="volIIImeasuringdata">
+    <title>Measuring data</title>
+    
+    <para>
+      Unless a modeler is creating a conceptually new geometry, he must work
+      from a variety of information sources to build a model. In some cases,
+      blueprints or mechanical drawings exist. In others, a trip to the field is
+      required to physically measure objects and orientations. In still others,
+      geometry exists in another CAD format and needs to be converted to BRL-CAD
+      format. As shown in Table 1, each type of measurement source has its own
+      set of advantages and disadvantages, depending on the modeler's and/or
+      user's point of view.
+    </para>
+
+    <table>
+      <title>Various modeling data sources.</title>
+      <tgroup cols='3' align='center'>
+	<tbody>
+	  <row>
+	    <entry>
+	      Data Sources
+	    </entry>
+	    <entry>
+	      Advantages
+	    </entry>
+	    <entry>
+	      Disadvantages
+	    </entry>
+	  </row>
+	  <row>
+	    <entry>
+	      <para>
+		Blueprints/schematics/mechanical drawings/photographs
+	      </para>
+	      <para>
+		<inlinegraphic fileref="./volumeIII_images/inline1.jpg" />
+	      </para>
+	    </entry>
+	    <entry>
+	      Can save time/resources by providing precise measurements with minimal data collection 
+	      effort.  Can also suggest ways to structure the model (e.g., by providing wiring diagrams, 
+	      subsystem schematics, etc.).
+	    </entry>
+	    <entry>
+	      Can sometimes be difficult to read.  Do not always show all needed measurements or views.  
+	      Are not always consistent with the actual objects they represent (e.g., design changes 
+	      sometimes occur during development or manufacturing).
+	    </entry>
+	  </row>
+	  <row>
+	    <entry>
+	      <para>
+		Measurable objects
+	      </para>
+	      <para>
+		<inlinegraphic fileref="./volumeIII_images/inline2.jpg" />
+	      </para>
+	    </entry>
+	    <entry>
+	      Can arguably provide the best source of verifiable information by providing hands-on 
+	      access to the actual objects being modeled.
+	    </entry>
+	    <entry>
+	      Can be resource and labor intensive and can be limited by the objects’ availability, 
+	      accessibility, and measurability, resulting in missed measurements.
+	    </entry>
+	  </row>
+	  <row>
+	    <entry>
+	      <para>
+		Converted geometry
+	      </para>
+	      <para>
+		<inlinegraphic fileref="./volumeIII_images/inline3a.jpg" />
+		<inlinegraphic fileref="./volumeIII_images/inline3b.jpg" />
+		<inlinegraphic fileref="./volumeIII_images/inline3c.jpg" />
+	      </para>
+	    </entry>
+	    <entry>
+	      Can offer significant savings in data collection and/or measurement efforts.
+	    </entry>
+	    <entry>
+	      Can have missing data, unfamiliar naming schemes, and alternate/dissimilar geometry 
+	      formats (e.g., feature-based objects, splines, etc.).  Can also be unsuitable for a 
+	      given application because the original model was developed for a different purpose.
+	    </entry>
+	  </row>
+	</tbody>
+      </tgroup>
+    </table>
+
+    <para>
+      Regardless of the type information source used, there are several simple
+      keys to obtaining data. These keys often require a little extra time and
+      effort in the early stages of the modeling process, but they can save
+      significantly more time and effort later on (especially if multiple
+      modelers are involved in the project). Several of these keys are
+      identified as follows:
+    </para>
+
+      <itemizedlist>
+	<listitem>
+	  <para>
+	    <emphasis>Leverage all sources available:</emphasis> Although one of the previously
+	    mentioned sources may be the primary one from which a modeler will work,
+	    all available photographs, drawings, converted geometry, etc., should be
+	    used together to spot-check and verify the information given. Sometimes
+	    schematics are mislabeled, mistakes are made while measuring, or geometry
+	    from other CAD packages does not convert properly. The only way to catch
+	    some of these errors is to compare them against another source.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    <emphasis>Get information while it is available:</emphasis> With the many data points
+	    involved in building complex geometry, it is not uncommon to find during
+	    geometry development that not all required information was obtained during
+	    the data measurement/collection phase. Important components and/or
+	    dimensions can be overlooked, and it may be inconvenient or impossible
+	    (e.g., with a combat vehicle) to recollect, remeasure, or reconvert what
+	    is missing. Thus, a modeler should be as thorough as possible when
+	    obtaining data. Even if it is not clear whether a piece of geometry or
+	    measurement will be required, it can always be discarded later if not
+	    needed. Also, in the spirit of the carpenter's maxim, it is a good idea to
+	    "measure twice and cut once" and double-check measured or converted
+	    geometry before it is placed in a model.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    <emphasis>Get total lengths and total views:</emphasis> Modelers sometimes take relative
+	    measurements of objects across a face without measuring the entire
+	    length/width of the face. Unfortunately, at the end, the measurements do
+	    not always add up. It is much easier to "back out" missed or inaccurate
+	    measurements given total lengths/widths. Likewise, when photographing
+	    portions of a bigger object (e.g., a radiator on a truck), it is a good
+	    idea to also capture several "bird's eye" views of encompassing objects
+	    (e.g., the engine compartment or the entire truck) to help establish
+	    overall reference points.
+	  </para>
+	  <note>
+	    <para>
+	      For a series of uniformly spaced objects, it is good practice to      
+	      measure the total length of the series and divide by the number of    
+	      objects. This helps spread out any inaccuracies along the span and    
+	      prevents them from accumulating at the last object. For example, in a 
+	      row of 20 bolts at 50-mm intervals, a measurement error of just 2 mm  
+	      between bolts could result in the last bolt being nearly 40 mm out of 
+	      position.                                                             
+	    </para>
+	  </note>
+	</listitem>
+	<listitem>
+	  <para>
+	    <emphasis>Record measurements as clearly and consistently as possible:</emphasis> It is
+	    interesting how a "scribble" that is perfectly understandable to the
+	    measurement-taker who is still in front of the object can become
+	    indecipherable when it is later viewed back in the office (when the object
+	    is no longer accessible). Furthermore, despite the best laid plans,
+	    projects and personnel can change in midstream, and the person(s) taking
+	    measurements may wind up having little or no connection to the person(s)
+	    actually interpreting those measurements and building the model.
+	    Therefore, all drawings and notations should be sufficiently clear and
+	    consistent so that someone unfamiliar with the object could understand and
+	    work with the recorded measurements. A few recommendations are given as
+	    follows:
+	    <itemizedlist>
+	      <listitem>
+		<para>
+		  <emphasis>Include meaningful titles on drawings:</emphasis> Detailed drawings and data can
+		  be of little value if it is unclear what the overall geometry/view is and
+		  how the designated piece ties into the completed model.
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  <emphasis>In general, orient drawings in orthogonal views:</emphasis> This practice
+		  eliminates potential problems associated with perspective and makes
+		  drawings easier to read and use. If other angles are desired (and it is
+		  not a bad idea to include at least one off-angle view with a few
+		  measurements to help confirm reference points), be sure to include
+		  azimuth/elevation and information about the orientation relative to the
+		  eye point and to the actual vehicle coordinate system. In addition, note
+		  any atypical configurations and orientations (e.g., a tank turret rotated
+		  in an unusual fashion to allow access to certain components).
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  <emphasis>Include offsets from other objects:</emphasis> Although these measurements may not
+		  actually be primary data (i.e., required inputs for MGED commands), they
+		  may help the modeler resolve problems or derive other measurements needed
+		  later. For example, when modeling a field of objects on a flat surface
+		  (e.g., gauges and buttons on an instrument panel), it is good practice not
+		  only to collect the distances of the objects from, say, the edges of the
+		  panel but also the distances relative to other objects. This information
+		  can be valuable when trying to troubleshoot overlaps or other problems
+		  encountered during the evaluation phase.
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  <emphasis>Clearly record small details and symbols:</emphasis> When recording measurements,
+		  it is important to remember that even small details (such as arrows,
+		  edges, centers, thicknesses, numbers, and units) can lead to possible
+		  confusion. Arrows too long or too short can be mistaken for pointing to a
+		  shape's edge instead of its center, hastily written numbers can be
+		  mistaken for other numbers (e.g., "1" vs. "7"), unidentified inner
+		  diameters can be confused with outer diameters, unidentified units can be
+		  assumed to be other units, etc. Table 2 lists some standard symbols and
+		  abbreviations that are commonly used when recording measurements.
+		</para>
+		<table>
+		  <title>Commonly used measurement symbols and abbreviations.</title>
+		  <tgroup cols='2' align='center'>
+		    <tbody>
+		      <row>
+			<entry>
+			  Symbol
+			</entry>
+			<entry>
+			  Meaning
+			</entry>
+		      </row>
+		      <row>
+			<entry>
+			</entry>
+			<entry>
+			  Radius
+			</entry>
+		      </row>
+		      <row>
+			<entry>
+			</entry>
+			<entry>
+			  Diameter
+			</entry>
+		      </row>
+		      <row>
+			<entry>
+			</entry>
+			<entry>
+			  Inner diameter
+			</entry>
+		      </row>
+		      <row>
+			<entry>
+			</entry>
+			<entry>
+			  Outer diameter
+			</entry>
+		      </row>
+		      <row>
+			<entry>
+			</entry>
+			<entry>
+			  Center
+			</entry>
+		      </row>
+		      <row>
+			<entry>
+			</entry>
+			<entry>
+			  Centerline
+			</entry>
+		      </row>
+		      <row>
+			<entry>
+			</entry>
+			<entry>
+			  Angle
+			</entry>
+		      </row>
+		      <row>
+			<entry>
+			</entry>
+			<entry>
+			  Arc
+			</entry>
+		      </row>
+		      <row>
+			<entry>
+			</entry>
+			<entry>
+			  Distance between two edges
+			</entry>
+		      </row>
+		      <row>
+			<entry>
+			</entry>
+			<entry>
+			  Distance between two points
+			</entry>
+		      </row>
+		      <row>
+			<entry>
+			</entry>
+			<entry>
+			  Distance between two centers
+			</entry>
+		      </row>
+		      <row>
+			<entry>
+			</entry>
+			<entry>
+			  Parallel
+			</entry>
+		      </row>
+		      <row>
+			<entry>
+			</entry>
+			<entry>
+			  Perpendicular
+			</entry>
+		      </row>
+		      <row>
+			<entry>
+			</entry>
+			<entry>
+			  Intersection<footnote><para>Intersection and union symbols presented here
+			  should not be confused with the intersection (+) and union (u) symbols used
+			  to represent and execute Boolean operations in BRL-CAD.</para></footnote>
+			</entry>
+		      </row>
+		      <row>
+			<entry>
+			</entry>
+			<entry>
+			  Union
+			</entry>
+		      </row>
+		    </tbody>
+		  </tgroup>
+		</table>		
+	      </listitem>
+	    </itemizedlist>
+	  </para>
+	</listitem>
+      </itemizedlist>
+    </chapter>
+ 
+  <chapter id="volIIIorganizing">
+    <title>Organizing the Structure</title>
+     <para>
+       Taking the time to map out a tree structure of an object before building
+       it is another important step in the modeling process, especially if the
+       object being constructed is elaborate, if modeling time and resources are
+       limited, if the work is being performed as a team, or if the model will be
+       passed on to someone else later.
+     </para>
+     <para>
+       If we consider the construction of a house, we know that builders do not
+       actually build houses; they build pieces of a house until the completed
+       structure emerges. Furthermore, these pieces are not usually built in a
+       random order. Rather, a good builder (often as part of a team of
+       carpenters, masons, electricians, plumbers, etc.) follows blueprints or
+       drawings that group the pieces into categories based on their
+       functionality (e.g., framing, wiring, plumbing, etc.) or location (e.g.,
+       basement, bedroom no. 1, kitchen, etc.).
+     </para>
+     <para>
+       The modeling process can be thought of in much the same way. Before
+       anything is built, a modeler should take on the role of an architect and
+       lay out a logical way to break down a potentially complicated object into
+       smaller, more manageable pieces. Also, this step can often reveal a
+       logical building order (e.g., the drywall does not get installed until the
+       wiring inside the walls has been run) as well as identify important
+       interconnectivities among parts.
+     </para>
+     <para>
+       The following list provides some tips to achieve good model structuring:
+     </para>
+     
+     <itemizedlist>
+	<listitem>
+	  <para>
+	    <emphasis>Use a top-down approach:</emphasis>  It is a good idea to design the structure
+	    using a top-down approach, beginning with the largest, most encompassing,
+	    or most functionally significant parts/systems and working down from
+	    there. Once again, the model's mission is all-important here. If an
+	    armored tank is being modeled for a ballistic analysis, the model should
+	    probably be structured so that all the pieces connected to the turret are
+	    grouped together and, therefore, can move together when the turret is
+	    rotated.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    <emphasis>Take advantage of established organizational conventions:</emphasis> It is wise to
+	    follow any traditional or widely used conventions that might be available
+	    in, say, an owner's or operator's manual. If a mechanic or user would
+	    normally expect a particular component to be part of a suspension system,
+	    then it is wise for the modeler to structure his model accordingly unless
+	    there is a good reason to do otherwise.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    <emphasis>Use good naming practices:</emphasis> Closely associated with the idea of using
+	    good organizational conventions to structure geometry is the idea of using
+	    good naming conventions to name geometry. Although naming may appear to be
+	    a trivial matter, the fact is that it is not always easy to establish
+	    titles and schemes that are intuitive, robust, and useful in helping the
+	    end user know where he is in a potentially complex model.
+	  </para>
+	  <para>
+	    There are few limitations to how files and objects can be named in BRL-CAD
+	    (other than that each file/object name must be unique). However, new
+	    modelers soon find that random or haphazard naming schemes lead to
+	    inefficiency and frustration. Thus, the following general recommendations
+	    are provided to help modelers efficiently organize and track what they
+	    build.
+	    
+	    <itemizedlist>
+	      <listitem>
+		<para>
+		  Develop logical schemes, stick to them, and document them: If logical
+		  or obvious titling schemes (such as a manufacturer's part names or
+		  numbers) are already in place, the user should take advantage of them,
+		  especially at the highest assembly levels of "complete" or aggregated
+		  objects and especially when multiple modelers are involved. This practice
+		  helps establish a logical structure (e.g., all engine parts have a prefix
+		  of, say, eng), and many users may already know these names.
+		</para>
+		<para>
+		  Table 3 provides examples of a number of other logical naming conventions
+		  traditionally used in BRL-CAD. These conventions include (1) an initial
+		  nametag to designate shape/object type or function (i.e., sph for sphere,
+		  ant for antenna, and frf for front face); (2) a suffix (or prefix) to
+		  designate MGED object type (i.e., .s for primitive shapes [formerly
+		  referred to as "solids"], .r for regions, .c for shape combinations, and
+		  .a or .g for assembly combinations); and (3) some sort of sequential
+		  numbering scheme (i.e., 1, 2, 3, etc.). For more information on BRL-CAD
+		  shapes and modeling levels, see Section 5, as well as Lesson 5 and
+		  Appendix C of BRL-CAD Tutorial Volume II (Butler et al., 2001).
+		</para>
+		<table>
+		  <title>Examples of naming conventions.</title>
+		  <tgroup cols='2' align='center'>
+		    <tbody>
+		      <row>
+			<entry>
+			  Name
+			</entry>
+			<entry>
+			  Rationale
+			</entry>
+		      </row>
+		      <row>
+			<entry>
+			  <literallayout  class="monospaced">
+sph.s1,
+sph.r1,
+sph.c1
+			  </literallayout>
+			</entry>
+			<entry>
+			  Associates the name with primitive shape type (sphere), order of creation (1), 
+			  and MGED object type (shape [.s], region [.r], or combination [.c]).  Often used 
+			  for training or testing BRL-CAD functionality but not recommended for large, 
+			  complex models<footnote><para>Sometimes the primitive shape tags are used to name 
+			  temporary objects that the modeler knows will be replaced or discarded.  In this case, 
+			  a more intuitive, functional name, such as “temp,” is recommended.</para></footnote>
+			</entry>
+		      </row>
+		      <row>
+			<entry>
+			  <literallayout  class="monospaced">
+ant.s1,
+ant.r1, 
+ant.c1
+			  </literallayout>
+			</entry>
+			<entry>
+			  Associates the name with type of function (antenna), order of creation (1), and MGED 
+			  object type (shape [.s], region [.r], or shape combination [.c]).  
+			</entry>
+		      </row>
+		      <row>
+			<entry>
+			  <literallayout  class="monospaced">
+frf.s1-1,
+frf.s1+1,
+frf.s1
+			  </literallayout>
+			</entry>
+			<entry>
+			  Associates the name with function (front face), MGED object type and order of 
+			  creation (.s1), and type of Boolean operation performed (subtraction [−] and 
+			  intersection [+]).<footnote><para>Note that we have chosen not to associate a 
+			  suffix for objects that are unioned.  In this naming convention, objects without 
+			  a Boolean operation suffix are understood to be unioned.</para></footnote>  
+			  This is the notation currently used with the Build Pattern tool.
+			</entry>
+		      </row>
+		      <row>
+			<entry>
+			  <literallayout  class="monospaced">
+front_face.a, 
+right_antenna.a, 
+left_roadwheel.a
+			  </literallayout>
+			</entry>
+			<entry>
+			  Gives the assembly combination levels (.a) more descriptive titles to better
+			  designate overall model composition and/or functionality for the end user.
+			</entry>
+		      </row>
+		      <row>
+			<entry>
+			  <literallayout  class="monospaced">
+Driver  Main_Gun 
+M1A1
+			  </literallayout>
+			</entry>
+			<entry>
+			  Gives top-level assemblies human-readable descriptions of overall composition 
+			  and/or functionality.  Uses initial capitalization to show higher tree level 
+			  and disregards traditional MGED suffix.
+			</entry>
+		      </row>
+		    </tbody>
+		  </tgroup>
+		</table>
+
+		<para>
+		  Note that the suffix at the end of names is particularly useful for
+		  searching for similar items in large tree structures and for using MGED
+		  automation features such as the Build Pattern tool and the build_region
+		  command (see Appendices E and F).
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  <emphasis>Keep names short:</emphasis> Prior to BRL-CAD  release 6.0, all BRL-CAD names were
+		  limited to 16 characters. In some respects, this "limitation" was useful,
+		  compelling new modelers to resist the common urge to name primitives with
+		  as much detail as possible. Although the length restriction no longer
+		  applies, it is still a good idea, especially in large models (and with
+		  frequently used objects), to keep names of objects as short as possible so
+		  as to reduce the amount of typing the modeler must do and, thus, reduce
+		  the possibility for input errors. In addition, some vulnerability analysis
+		  codes do not support names longer than 16 characters.
+		</para>
+		<para>
+		  As shown in Table 3, an exception to the practice of keeping names short
+		  includes the names at the assembly combination level and above, where
+		  fewer names are used and more descriptive titles can be helpful in
+		  designating overall model composition and structure for the end user.
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  <emphasis>Establish "reserve" names:</emphasis> In projects that involve multiple modelers
+		  developing different pieces of the same geometry, it is helpful in some
+		  cases to reserve particular name designations to avoid possible confusion.
+		  For example, a team of modelers developing an armored vehicle might choose
+		  to reserve the letter "h" to denote the "nametag" for only those
+		  components associated with the hull (e.g., "h.s1," "h.s2," etc.). This
+		  would mean that those modelers building, say, headlight assemblies would
+		  have to choose another designation (e.g., "hlght.s1," "hlght.s2," etc.).
+		  This standardization can also be helpful in establishing common
+		  terminology for later projects with the same or similar components.
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  <emphasis>Avoid using certain letters and symbols:</emphasis> To avoid potential problems
+		  associated with common UNIX notation, searching schemes, and certain
+		  survivability, lethality, and vulnerability (SLV) analysis codes, the
+		  following recommendations (or, in some cases, requirements) are made
+		  regarding the use of keyboard characters in BRL-CAD names:
+		</para>
+		<itemizedlist>
+		  <listitem>
+		    <para>
+		      Use lowercase Arabic letters (except for the previously mentioned
+		      initial capitalization used for top-level assemblies).
+		    </para>
+		  </listitem> 
+		  <listitem>
+		    <para>
+		      Use numerals without internal commas (e.g., "5000" not "5,000").
+		    </para>
+		  </listitem> 
+		  <listitem>
+		    <para>
+		      Avoid using numerals to begin a name.
+		    </para>
+		  </listitem> 
+		  <listitem>
+		    <para>
+		      Do not use a space between words; use an underline or capitalize the
+		      first character of each word (i.e., Hungarian notation).
+		    </para>
+		  </listitem> 
+		  <listitem>
+		    <para>
+		      Avoid using special characters. Restrict the use of "+" and """
+		      symbols to the suffix of primitive shape combinations, and do not  use the
+		      "/".
+		    </para>
+		  </listitem> 
+		  <listitem>
+		    <para>
+		      Restrict the use of the period to the suffix of MGED object types.
+		      Avoid using other punctuation (e.g., "?," "!," etc.).
+		    </para>
+		  </listitem> 
+		  <listitem>
+		    <para>
+		      Avoid using the lowercase letter "l" by itself (to avoid possible
+		      confusion with the number "1").
+		    </para>
+		  </listitem> 
+		</itemizedlist>
+	      </listitem>
+	    </itemizedlist>
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    Include the right amount of detail: The structure should only be as
+	    deep as needed for the application. Obviously, every part, no matter how
+	    complex, could in theory be reduced down to the atomic or even subatomic
+	    level, but how cost efficient and useful would this be? More is not
+	    necessarily better. The modeler should use common sense and consult with
+	    the end user(s) when deciding how far to break down components and
+	    systems. Insufficient detail can diminish the model's usefulness and
+	    reduce user confidence, and yet too much detail can unnecessarily drain
+	    time and resources, slow down processing time of application codes, and
+	    frustrate users who have to wade through many parts that they do not need
+	    to get to what they do need.
+	  </para>
+	  <note>
+	    <para>
+	      Note that it is not unusual for a modeler to select relatively        
+	      arbitrary names when shapes and parts are first made and then go back 
+	      and rename them as the model develops. There are two commands to      
+	      rename database objects.
+	    </para>
+	    <para>                                                                           
+	      To rename only the database object, type the following:               
+	      <literallayout class="monospaced">
+mv  oldname newname                          
+	      </literallayout>
+	    </para>
+	    <para>
+	      Note that this command changes only the name of a particular object   
+	      and not any references to the object that may occur in combinations   
+	      throughout the database.                                              
+	    </para>
+	    <para>
+	      To change an object's name and all references to that object, the     
+	      mvall (move all) command can be used as follows:                      
+	      <literallayout class="monospaced">
+mvall oldname newname                       
+	      </literallayout>
+	    </para>
+	  </note>
+	</listitem>
+	<listitem>
+	  <para>
+	    Use location- and function-based groupings: Components should be
+	    grouped based on simple, logical categories such as location and/or
+	    functionality. For example, the structure of the simple radio that was
+	    built in Lesson 16 of Volume II of the BRL-CAD Tutorial Series (Butler et
+	    al., 2001) could be set up in several ways. Figure 4 shows a structure
+	    based on location, and Figure 5 shows a structure based on functionality.
+	  </para>
+	  <figure>
+	    <title>Location-based structure of the radio in Volume II.</title>
+	    <mediaobject>
+	      <imageobject>
+		<imagedata align = "center" fileref="./volumeIII_images/figure4.gif" format="GIF"></imagedata>
+	      </imageobject>
+	    </mediaobject>
+	  </figure>
+	  <figure>
+	    <title>Function-based structure of the radio in Volume II.</title>
+	    <mediaobject>
+	      <imageobject>
+		<imagedata align = "center" fileref="./volumeIII_images/figure5.gif" format="GIF"></imagedata>
+	      </imageobject>
+	    </mediaobject>
+	  </figure>
+	  <para>
+	    The structuring phase, of course, gets trickier and more subjective as the
+	    model gets more complex. Regardless of whether the structure is based on
+	    location, function, or something else, it is not always clear which parts
+	    belong to which structures. In fact, some parts are clearly designed to
+	    interface between parts or systems, and so the modeler must choose where
+	    he should place them in the tree structure. A consistent treatment of
+	    these parts within the model is an important part of the user's ability to
+	    understand and use the model.
+	  </para>
+	  <para>
+	    It is also important to remember that the tree structure in MGED is
+	    independent of the geometry created. The structure is simply a tool to
+	    help the user organize and work with the database. Accordingly, the tree
+	    structure can be manipulated to suit whatever needs the user(s) may have.
+	    Consider the example of a model of a room containing a table and a cup on
+	    top of the table. If one wanted to relocate the table (along with the cup)
+	    next to a wall, one could create a temporary combination containing the
+	    table and the cup. This combination could then be used to move the two
+	    objects together to their new location. After the objects are in position,
+	    the temporary combination could be "pushed" (see discussion of the push
+	    command in Section 5) and then deleted using the kill command (see
+	    Appendix A of Volume II [Butler et al., 2001]).
+	  </para>
+	</listitem>
+     </itemizedlist>
+
+  </chapter>
+
+  <chapter id="volIIIdevgeometry">
+    <title>Developing Geometry</title>
+    <para>
+      In the end, the heart of the modeling process is the actual construction
+      of the geometry. All the best measurement, organization, evaluation, and
+      documentation would be ineffective unless the geometric shapes that make
+      up a model are built and built correctly.
+    </para>
+    
+    <para>
+      Basically, there are two steps to geometry development: (1) <emphasis>creating
+      geometry</emphasis>, and (2) <emphasis>positioning geometry</emphasis>. Of course, as with all the other
+      phases in the modeling process, there are different schools of thought as
+      to how these steps should be accomplished, and each method has its own set
+      of advantages and disadvantages.
+    </para>
+
+    <para>
+      Factors that need to be considered when deciding which methods to use
+      include the convenience of building location and manner (e.g., building
+      geometry at the origin or in an order that leverages previously defined
+      measurements or mathematical calculations); the number of object
+      replications that will be needed in the model; the ease of editing one or
+      more of the replications; storage space; prep/rendering time; etc.
+    </para>
+
+    <para>
+      The following are some general tips regarding the efficient development of
+      geometry in BRL-CAD:
+    </para>
+
+     <itemizedlist>
+	<listitem>
+	  <para>
+	    <emphasis>Build the main structure first:</emphasis> As mentioned previously,  it is a good
+	    idea to start building with the "main" object of a model. This could be
+	    the largest piece, the piece most central to the rest of the model, or a
+	    piece whose location represents a prominent corner or point. Much like on
+	    the assembly line of an automobile manufacturer, building the main frame
+	    first provides an overall model coordinate system for the rest of the
+	    smaller, secondary parts to reference. Also, for projects in which
+	    multiple modelers work on separate pieces simultaneously, starting with
+	    the main structure allows other pieces to be built in place or put in
+	    position immediately upon completion. This practice is more efficient in
+	    that it eliminates having extra parts floating around waiting to be
+	    positioned, and it provides a better picture of model completion
+	    throughout the project.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    <emphasis>Know the four modeling levels and their differences:</emphasis> As shown in Table
+	    4 (and discussed in Volume II [Butler et al., 2001]), all models built in
+	    BRL-CAD are built within the confines of its four modeling levels: (1) the
+	    primitive level, (2) the combination level, (3) the region level, and (4)
+	    the assembly level. Knowing the characteristics of these modeling levels
+	    is one of the first keys to developing effective geometry.
+	  </para>
+
+	  
+
+	</listitem>
+	<listitem>
+	  <para>
+	    <itemizedlist>
+	      <listitem>
+		<para>
+		  
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  
+		</para>
+	      </listitem>
+	    </itemizedlist>
+	    
+	  </para>
+	</listitem>
+     </itemizedlist>
+
+
+  </chapter>
+
+  <chapter id="volIIIintro">
+    <title>Introduction</title>
+
+     <itemizedlist>
+	<listitem>
+	  <para>
+	    
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    <itemizedlist>
+	      <listitem>
+		<para>
+		  
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  
+		</para>
+	      </listitem>
+	    </itemizedlist>
+	    
+	  </para>
+	</listitem>
+     </itemizedlist>
+ 
+
+  </chapter>
+  <chapter id="volIIIintro">
+    <title>Introduction</title>
+ 
+     <itemizedlist>
+	<listitem>
+	  <para>
+	    
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    <itemizedlist>
+	      <listitem>
+		<para>
+		  
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  
+		</para>
+	      </listitem>
+	    </itemizedlist>
+	    
+	  </para>
+	</listitem>
+     </itemizedlist>
+
+
+  </chapter>
+  <chapter id="volIIIintro">
+    <title>Introduction</title>
+ 
+     <itemizedlist>
+	<listitem>
+	  <para>
+	    
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    <itemizedlist>
+	      <listitem>
+		<para>
+		  
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  
+		</para>
+	      </listitem>
+	    </itemizedlist>
+	    
+	  </para>
+	</listitem>
+     </itemizedlist>
+
+
+  </chapter>
+  <chapter id="volIIIintro">
+    <title>Introduction</title>
+ 
+     <itemizedlist>
+	<listitem>
+	  <para>
+	    
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    <itemizedlist>
+	      <listitem>
+		<para>
+		  
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  
+		</para>
+	      </listitem>
+	    </itemizedlist>
+	    
+	  </para>
+	</listitem>
+     </itemizedlist>
+
+
+  </chapter>
+  <chapter id="volIIIintro">
+    <title>Introduction</title>
+ 
+     <itemizedlist>
+	<listitem>
+	  <para>
+	    
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    <itemizedlist>
+	      <listitem>
+		<para>
+		  
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  
+		</para>
+	      </listitem>
+	    </itemizedlist>
+	    
+	  </para>
+	</listitem>
+     </itemizedlist>
+
+
+  </chapter>
+
+
+<appendix label="A">
+  <title><application>MGED</application> Commands</title>
+  <xi:include href="../../system/mged/mged_commands.xml" xpointer="mged_user_cmd_table"/>
+  <xi:include href="../../system/mged/mged_commands.xml" xpointer="glossary"/>
+</appendix>
+
+
+</book>

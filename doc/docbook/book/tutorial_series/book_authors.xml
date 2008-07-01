@@ -2,7 +2,7 @@
 "../../resources/standard/dtd/docbookx.dtd">
 
     <authorgroup id="Intro_MGED_Tutorial_Series_II_authors">
-      <author>
+      <author id="lbutler">
 	<firstname>Lee</firstname>
 	<surname>Butler</surname>
 	<othername role='mi'>A</othername>
@@ -16,7 +16,7 @@
 	  </address>
 	</affiliation>
       </author>
-      <author>
+      <author id="eedwards">
 	<firstname>Eric</firstname>
 	<surname>Edwards</surname>
 	<othername role='mi'>W</othername>
