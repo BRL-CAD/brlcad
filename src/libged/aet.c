@@ -53,12 +53,6 @@ ged_aet(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_OK;
     }
 
-    if (argc != 7) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
-    }
-
-
     /* Check for -i option */
     if (argv[1][0] == '-' && argv[1][1] == 'i') {
 	iflag = 1;  /* treat arguments as incremental values */
