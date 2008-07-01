@@ -1656,19 +1656,19 @@ rt_ell_params(struct pc_pc_set * pcs, const struct rt_db_internal *ip)
     
     strcpy(pcs->ps[0].pname,"V");
     pcs->ps[0].ptype = pc_point;
-    pcs->ps[0].pointp = (pointp_t) &(eip->v);
+    pcs->ps[0].pval.pointp = (pointp_t) &(eip->v);
     
     strcpy(pcs->ps[1].pname,"A");
     pcs->ps[1].ptype = pc_vector;
-    pcs->ps[1].vectorp = (vectp_t) &(eip->a);
+    pcs->ps[1].pval.vectorp = (vectp_t) &(eip->a);
 
     strcpy(pcs->ps[2].pname,"B");
     pcs->ps[2].ptype = pc_vector;
-    pcs->ps[2].vectorp = (vectp_t)  &(eip->b);
+    pcs->ps[2].pval.vectorp = (vectp_t)  &(eip->b);
 
     strcpy(pcs->ps[3].pname,"C");
     pcs->ps[3].ptype = pc_value;
-    pcs->ps[3].vectorp = (vectp_t) &(eip->c);
+    pcs->ps[3].pval.vectorp = (vectp_t) &(eip->c);
 
     return(0);			/* OK */
 }
