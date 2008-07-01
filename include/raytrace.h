@@ -1809,16 +1809,23 @@ struct pc_param_set {
  */
 struct pc_p_set {
     char pname[10];
-    enum ptype { pc_value,pc_point,pc_vector} ptype;
+    enum ptype {
+	pc_value,
+	pc_point,
+	pc_vector
+    } ptype;
     union {
 	fastf_t *valuep;
 	pointp_t pointp;
 	vectp_t vectorp;
-    };
+    } pval;
 };
 struct pc_c_set {
     char cname[10];
-    enum ctype {pc_inequality,pc_equation} ctype;
+    enum ctype {
+	pc_inequality,
+	pc_equation
+    } ctype;
     int n;
 };
 struct pc_pc_set {
