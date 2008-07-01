@@ -121,7 +121,7 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
     skt = eip->skt;
     RT_SKETCH_CK_MAGIC( skt );
 
-    /* make sure the curve is valid */
+    /* make sure the sketch is valid */
     if ( rt_check_curve( &skt->skt_curve, skt, 1 ) )	{
 	bu_log( "ERROR: referenced sketch (%s) is bad!!!\n",
 		eip->sketch_name );
@@ -140,8 +140,8 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
     extr->uv_scale = MAGNITUDE( eip->u_vec );
 
     /* build a transformation matrix to rotate extrusion vector to z-axis */
-    VSET( tmp, 0, 0, 1 )
-	bn_mat_fromto( extr->rot, eip->h, tmp );
+    VSET( tmp, 0, 0, 1 );
+    bn_mat_fromto( extr->rot, eip->h, tmp );
 
     /* and translate to origin */
     extr->rot[MDX] = -VDOT( eip->V, &extr->rot[0] );
@@ -153,8 +153,8 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 
     /* calculate plane equations of top and bottom planes */
     VCROSS( extr->pl1, eip->u_vec, eip->v_vec );
-    VUNITIZE( extr->pl1 )
-	extr->pl1[3] = VDOT( extr->pl1, eip->V );
+    VUNITIZE( extr->pl1 );
+    extr->pl1[3] = VDOT( extr->pl1, eip->V );
     VMOVE( extr->pl2, extr->pl1 );
     VADD2( tmp, eip->V, eip->h );
     extr->pl2[3] = VDOT( extr->pl2, tmp );
