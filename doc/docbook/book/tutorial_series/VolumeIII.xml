@@ -1455,12 +1455,376 @@ mvall oldname newname
 	    and 9).
 	  </para>
 	  
+	  <table>
+	    <title>Various ways to build primitives.</title>
+	    <tgroup cols='4' align='center'>
+	      <tbody>
+		<row>
+		  <entry>
+		    MGED Command
+		  </entry>
+		  <entry>
+		    Behavior
+		  </entry>
+		  <entry>
+		    Advantages/Disadvantages
+		  </entry>
+		  <entry>
+		    Method of Input
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    create
+		  </entry>
+		  <entry>
+		    Creates a “generic” primitive shape based on the user’s screen size and center.
+		  </entry>
+		  <entry>
+		    Creates shape without having to input parameter/location values; primitive usually 
+		    requires further editing; puts user into edit mode. 
+		  </entry>
+		  <entry>
+		    Graphical user interface (GUI)
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    make
+		  </entry>
+		  <entry>
+		    Creates a “generic” primitive shape based on the user’s screen size and center.
+		  </entry>
+		  <entry>
+		    Creates shape without having to input parameter/location values; primitive 
+		    requires further editing.
+		  </entry>
+		  <entry>
+		    Command line
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    in
+		  </entry>
+		  <entry>
+		    Creates a new primitive shape according to user-input parameter values and location.
+		  </entry>
+		  <entry>
+		    Allows user to create a shape in a specific size and location without having to further edit it.
+		  </entry>
+		  <entry>
+		    Command line
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    inside
+		  </entry>
+		  <entry>
+		    Creates a primitive shape by referencing a previously created shape and applying user-defined 
+		    positive/negative thicknesses to faces (e.g., making an interior wall).
+		  </entry>
+		  <entry>
+		    Allows user to create a shape based on a specified primitive by applying wall thicknesses 
+		    without having to further edit it.
+		  </entry>
+		  <entry>
+		    Command line
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    cp
+		  </entry>
+		  <entry>
+		    Creates a duplicate of a previously defined object.
+		  </entry>
+		  <entry>
+		    Copies the parameters of an object to a new object of the same type.  Takes advantage of 
+		    previously defined measurements and locations.
+		  </entry>
+		  <entry>
+		    Command line
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    cpi (copy index)
+		  </entry>
+		  <entry>
+		    Originally created to model wiring or piping runs; creates a duplicate cylinder whose 
+		    base vertex is coincident with the top of the original cylinder.
+		  </entry>
+		  <entry>
+		    Can only be used with cylinders; takes advantage of previously defined measurements 
+		    and locations; puts user into edit mode automatically.
+		  </entry>
+		  <entry>
+		    Command line
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    mirror
+		  </entry>
+		  <entry>
+		    Creates a duplicate primitive shape, region, or assembly and locates it across 
+		    the x, y, or z axis.
+		  </entry>
+		  <entry>
+		    Takes advantage of previously defined measurements and locations; can mirror across 
+		    only one axis at a time at the axis 0 point.
+		  </entry>
+		  <entry>
+		    Command line
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    pattern
+		  </entry>
+		  <entry>
+		    Creates a rectangular, spherical, or cylindrical pattern of primitive shapes, regions, 
+		    or assemblies by referencing a previously created object and applying user-defined offsets 
+		    and parameters.
+		  </entry>
+		  <entry>
+		    Takes advantage of previously defined measurements and locations; requires extra 
+		    positioning measurements.
+		  </entry>
+		  <entry>
+		    GUI or command line
+		  </entry>
+		</row>
+	      </tbody>
+	    </tgroup>
+	  </table>
+	  
+	  <note>
+	    <para>
+	      Note the in and inside commands are often the best ways to create a   
+	      primitive in the right size/location if the modeler knows the         
+	      parameters. Also, using the cp and mirror commands to create          
+	      primitives can often save time by taking advantage of previously      
+	      established measurements/positioning.
+	    </para>
+	  </note>
 
+
+	  <figure>
+	    <title>Coordinate axes of a turreted ground vehicle.</title>
+	    <mediaobject>
+	      <imageobject>
+		<imagedata align = "center" fileref="./volumeIII_images/figure6.png" format="PNG"></imagedata>
+	      </imageobject>
+	    </mediaobject>
+	  </figure>
+	  <figure>
+	    <title>Coordinate axes of a nonturreted ground vehicle.</title>
+	    <mediaobject>
+	      <imageobject>
+		<imagedata align = "center" fileref="./volumeIII_images/figure7.png" format="PNG"></imagedata>
+	      </imageobject>
+	    </mediaobject>
+	  </figure>
+	  <figure>
+	    <title>Coordinate axes of a fixed-wing aircraft.</title>
+	    <mediaobject>
+	      <imageobject>
+		<imagedata align = "center" fileref="./volumeIII_images/figure8.png" format="PNG"></imagedata>
+	      </imageobject>
+	    </mediaobject>
+	  </figure>
+	  <figure>
+	    <title>Coordinate axes of a rotary-wing aircraft.</title>
+	    <mediaobject>
+	      <imageobject>
+		<imagedata align = "center" fileref="./volumeIII_images/figure9.png" format="PNG"></imagedata>
+	      </imageobject>
+	    </mediaobject>
+	  </figure>
 	</listitem>
+
 	<listitem>
 	  <para>
+	    <emphasis>Build multiple occurrences of objects in the most advantageous manner:</emphasis>
+	    Sometimes a modeler will have to make several occurrences of an object.
+	    For example, imagine modeling a box of new, identical pencils. Wouldn't it
+	    be convenient to take advantage of the similarities involved? There are
+	    two basic techniques for constructing such collections. The first involves
+	    actually replicating geometry; the second involves referencing shared
+	    geometry.
 	  </para>
+	  <para>
+	    Regardless of the technique used, the modeler typically starts by creating
+	    a prototype of the object. In the first technique (illustrated in Figure
+	    10), the modeler creates complete copies of the object to be replicated.
+	    Each copy is then positioned within the model. In the second technique
+	    (illustrated in Figure 11), a "reference" combination that contains only
+	    the prototype is created. This combination is then positioned within the
+	    model.
+	  </para>
+	  <para>
+	    As shown in Table 7, there are tradeoffs to be considered when using each
+	    of these approaches. Construction effort is one of them. If the prototype
+	    consists of many objects or layers of structure, replication could be a
+	    tedious task. In the box of pencils, for example, all of the structure of
+	    the pencil would have to be duplicated, including the wood, eraser,
+	    barrel, and lead. On the other hand, if the referencing approach is used,
+	    then a relatively minor amount of work is needed to create the multiple
+	    occurrences.
+	  </para>
+
+	  <figure>
+	    <title>Building multiple occurrences through replication.</title>
+	    <mediaobject>
+	      <imageobject>
+		<imagedata align = "center" fileref="./volumeIII_images/figure10.png" format="PNG"></imagedata>
+	      </imageobject>
+	    </mediaobject>
+	  </figure>
+
+	  <figure>
+	    <title>Building multiple occurrences through referencing.</title>
+	    <mediaobject>
+	      <imageobject>
+		<imagedata align = "center" fileref="./volumeIII_images/figure11.png" format="PNG"></imagedata>
+	      </imageobject>
+	    </mediaobject>
+	  </figure>
+	  
+	  <table>
+	    <title>Advantages and disadvantages of replication vs. referencing.</title>
+	    <tgroup cols='3' align='center'>
+	      <tbody>
+		<row>
+		  <entry>
+		    Duplication Method
+		  </entry>
+		  <entry>
+		    Advantages
+		  </entry>
+		  <entry>
+		    Disadvantages
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		   Replication 
+		  </entry>
+		  <entry>
+		    <itemizedlist>
+		      <listitem>
+			<para>
+			  No matrices.
+			</para>
+		      </listitem>
+		      <listitem>
+			<para>
+			  Faster prep time for raytracing.
+			</para>
+		      </listitem>
+		    </itemizedlist>
+		  </entry>
+		  <entry>
+		    <itemizedlist>
+		      <listitem>
+			<para>
+			  More effort to construct.
+			</para>
+		      </listitem>
+		      <listitem>
+			<para>
+			  Loss of update relationship between occurrences.
+			</para>
+		      </listitem>
+		    </itemizedlist>
+		  </entry>
+		</row>
+		<row>
+		  <entry>
+		    Referencing
+		  </entry>
+		  <entry>
+		    <itemizedlist>
+		      <listitem>
+			<para>
+			  Easier to create.
+			</para>
+		      </listitem>
+		      <listitem>
+			<para>
+			  Changes to prototype propagate to all occurrences.
+			</para>
+		      </listitem>
+		      <listitem>
+			<para>
+			  Uses less disk space when creating many occurrences of complex objects.
+			</para>
+		      </listitem>
+		    </itemizedlist>
+		  </entry>
+		  <entry>
+		    <itemizedlist>
+		      <listitem>
+			<para>
+			  Does not provide a unique object, which is required by some analysis codes.
+			</para>
+		      </listitem>
+		      <listitem>
+			<para>
+			  Prototype parameters do not reflect location and orientation of an individual reference.
+			</para>
+		      </listitem>
+		    </itemizedlist>
+		  </entry>
+		</row>
+	      </tbody>
+	    </tgroup>
+	  </table>
+
+	  <para>
+	    Also, if the modeler wants to make a change to all of the objects (e.g.,
+	    sharpening the point of the pencil), then the referencing approach has
+	    definite advantages. The prototype object is edited to incorporate the
+	    change, and all occurrences automatically reflect that change. However, if
+	    only one object is to be modified, then a copy of the prototype must be
+	    made, and the reference for that item must now refer to the copy. Not
+	    surprisingly, when this type of operation is to be performed often, the
+	    replication approach has definite advantages over the referencing
+	    approach.
+	  </para>
+
+	  <para>
+	    Referencing also has the advantage that it can reduce the amount of disk
+	    space needed to store multiple copies of complex objects. The extra space
+	    needed to store each new occurrence on disk consists of the transformation
+	    matrix and the name of the object and reference combination. This can be
+	    significantly smaller than the replication of all the geometry that makes
+	    up the prototype.
+	  </para>
+
+	  <para>
+	    It should be noted, however, that because some analysis codes require a
+	    unique identifier for each object in the database, some agencies require
+	    that all occurrences be replicated to the primitive level without
+	    matrices.
+	  </para>
+	  
+	  <para>
+	    There are several other tools that can make the duplication process
+	    easier--namely, the Build Pattern tool and the keep and dbconcat commands.
+	    The Build Pattern tool, which is discussed in Appendix E, can help the
+	    modeler automatically generate multiple copies of geometry in rectangular,
+	    spherical, or cylindrical patterns. The keep  command can be used to save
+	    portions of geometry, and the dbconcat command can be used to concatenate
+	    (add) them to other geometries or reinsert them into the existing database
+	    as copies.
+	  </para>
+
 	</listitem>
+
 	<listitem>
 	  <para>
 	  </para>
