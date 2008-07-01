@@ -15,6 +15,11 @@ on-going issues.
 Recent Bugs
 -----------
 
+* pipe primitive has a BU_GETSTRUCT malloc getting called during
+  raytracing that kills performance by more than an order of magnitude
+  (especially when the light source is a pipe and there are a lot of
+  shadow rays)
+
 * bump shader seems to be busted.  only renders as flat by itself and
   stacked with phong it seems to ignore the uv settings.
 
