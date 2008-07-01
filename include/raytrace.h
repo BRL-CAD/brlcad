@@ -3702,7 +3702,7 @@ RT_EXPORT BU_EXTERN(int curve_to_vlist,
 RT_EXPORT BU_EXTERN(int rt_check_curve,
 		    (struct curve *crv,
 		     struct rt_sketch_internal *skt,
-		     int noisey));
+		     int noisy));
 
 RT_EXPORT BU_EXTERN(void rt_curve_reverse_segment,
 		    (long *lng));
@@ -3716,7 +3716,7 @@ RT_EXPORT BU_EXTERN(void rt_copy_curve,
 RT_EXPORT BU_EXTERN(int rt_check_curve,
 		    (struct curve *crv,
 		     struct rt_sketch_internal *skt,
-		     int noisey));
+		     int noisy));
 RT_EXPORT BU_EXTERN(void rt_curve_free,
 		    (struct curve *crv));
 RT_EXPORT BU_EXTERN(void rt_copy_curve,

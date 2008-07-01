@@ -48,7 +48,7 @@ fastf_t rt_cnurb_par_edge(const struct edge_g_cnurb *crv, fastf_t epsilon);
 extern void get_indices( genptr_t seg, int *start, int *end );	/* from g_extrude.c */
 
 int
-rt_check_curve(struct curve *crv, struct rt_sketch_internal *skt, int noisey)
+rt_check_curve(struct curve *crv, struct rt_sketch_internal *skt, int noisy)
 {
     int i, j;
     int ret=0;
@@ -95,12 +95,12 @@ rt_check_curve(struct curve *crv, struct rt_sketch_internal *skt, int noisey)
 		break;
 	    default:
 		ret++;
-		if ( noisey )
+		if ( noisy )
 		    bu_log( "Unrecognized segment type in sketch\n");
 		break;
 	}
     }
-    if ( ret && noisey )
+    if ( ret && noisy )
 	bu_log( "sketch references non-existent vertices!!!\n" );
     return( ret );
 }
