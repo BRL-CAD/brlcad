@@ -20,14 +20,13 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * stabilize and test mged
   (massive command restructuring in progress with libged)
 
-* verify fast4-g doesn't vomit warning messages about string
-  truncation (should be fixed already)
-
 * change rtarea output to have new cpa values in their own section
 
 
 THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------
+
+* make fast4-g not skip every other line if there are DOS line endings
 
 * implement make, ted, edsol, mirror, and analyze for hyp primitive
 
