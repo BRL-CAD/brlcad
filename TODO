@@ -49,6 +49,10 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 * integrate July 2007 openNURBS updates
 
+* convert the documentation to docbook
+
+* autogenerate docbook documentation in the build system
+
 
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
@@ -82,10 +86,6 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * make closing both the command window and graphics window shut down
   mged (i.e., fix unintentional behavior)
-
-* convert the documentation to docbook
-
-* autogenerate docbook documentation in the build system
 
 * remove hit_normal and hit_point from struct hit.  add RT_HIT_POINT
   macro.  refactor all callers as needed.
