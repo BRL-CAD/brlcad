@@ -450,7 +450,7 @@ cmd_setup(void)
     Bu_Init(interp);
     Bn_Init(interp);
     Rt_Init(interp);
-    Ged_Init(interp);
+    Go_Init(interp);
 
     tkwin = NULL;
 
@@ -560,7 +560,7 @@ mged_setup(void)
     }
 
     /* Initialize libged */
-    if (Ged_Init(interp) == TCL_ERROR) {
+    if (Go_Init(interp) == TCL_ERROR) {
 	bu_log("Ged_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	Tcl_ResetResult(interp);
     }

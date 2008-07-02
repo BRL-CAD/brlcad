@@ -43,20 +43,13 @@ static int ged_build_tops(struct ged	*gedp,
 			  register char	**end);
 
 
-/*
- * Erase database objects
- *
- * Usage:
- *        erase object(s)
- *
- */
 int
 ged_rt(struct ged *gedp, int argc, const char *argv[])
 {
     register char **vp;
     register int i;
     char pstring[32];
-    static const char *usage = "put options here";
+    static const char *usage = "options";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -67,20 +60,13 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
     gedp->ged_result = GED_RESULT_NULL;
     gedp->ged_result_flags = 0;
 
-    /* must be wanting help */
-    if (argc == 1) {
-	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_OK;
-    }
-
     if (argc < 1 || MAXARGS < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     vp = &gedp->ged_gdp->gd_rt_cmd[0];
-    *vp++ = argv[0];
+    *vp++ = (char *)argv[0];
     *vp++ = "-M";
 
     if (gedp->ged_gvp->gv_perspective > 0) {
@@ -94,7 +80,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
 	    ++i;
 	    break;
 	}
-	*vp++ = argv[i];
+	*vp++ = (char *)argv[i];
     }
     /* XXX why is this different for win32 only? */
 #ifdef _WIN32
@@ -121,7 +107,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
 						       &gedp->ged_gdp->gd_rt_cmd[MAXARGS]);
     } else {
 	while (i < argc)
-	    *vp++ = argv[i++];
+	    *vp++ = (char *)argv[i++];
 	*vp = 0;
 	vp = &gedp->ged_gdp->gd_rt_cmd[0];
 	while (*vp)
@@ -153,7 +139,7 @@ ged_run_rt(struct ged *gedp)
     char name[256];
 #endif
     vect_t eye_model;
-    struct run_rt *run_rtp;
+    struct ged_run_rt *run_rtp;
     struct ged_rt_client_data *drcdp;
 #ifndef _WIN32
     int pid;
@@ -195,7 +181,7 @@ ged_run_rt(struct ged *gedp)
     ged_rt_write(gedp, fp_in, eye_model);
     (void)fclose(fp_in);
 
-    BU_GETSTRUCT(run_rtp, run_rt);
+    BU_GETSTRUCT(run_rtp, ged_run_rt);
     BU_LIST_INIT(&run_rtp->l);
     BU_LIST_APPEND(&gedp->ged_gdp->gd_headRunRt.l, &run_rtp->l);
 
@@ -274,7 +260,7 @@ ged_run_rt(struct ged *gedp)
     ged_rt_write(gedp, fp_in, eye_model);
     (void)fclose(fp_in);
 
-    BU_GETSTRUCT(run_rtp, run_rt);
+    BU_GETSTRUCT(run_rtp, ged_run_rt);
     BU_LIST_INIT(&run_rtp->l);
     BU_LIST_APPEND(&gedp->ged_gdp->gd_headRunRt.l, &run_rtp->l);
 
@@ -349,14 +335,14 @@ ged_rt_output_handler(ClientData	clientData,
 		      int		mask)
 {
     struct ged_rt_client_data *drcdp = (struct ged_rt_client_data *)clientData;
-    struct run_rt *run_rtp;
+    struct ged_run_rt *run_rtp;
     int count;
     char line[RT_MAXLINE+1];
 
     if (drcdp == (struct ged_rt_client_data *)NULL ||
 	drcdp->gedp == (struct ged *)NULL ||
 	drcdp->rrtp == (struct ged_run_rt *)NULL ||
-	drcdp->interp == (Tcl_Interp *)NULL)
+	brlcad_interp == (Tcl_Interp *)NULL)
 	return;
 
     run_rtp = drcdp->rrtp;
@@ -429,7 +415,7 @@ ged_rt_output_handler(ClientData	clientData,
 
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "%s \"%s\"", drcdp->gedp->ged_gdp->gd_outputHandler, line);
-	Tcl_Eval(drcdp->interp, bu_vls_addr(&vls));
+	Tcl_Eval(brlcad_interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
     } else
 	bu_log("%s", line);
@@ -441,14 +427,14 @@ ged_rt_output_handler(ClientData	clientData,
 		      int		mask)
 {
     struct ged_rt_client_data *drcdp = (struct ged_rt_client_data *)clientData;
-    struct run_rt *run_rtp;
+    struct ged_run_rt *run_rtp;
     int count;
     char line[10240+1] = {0};
 
     if (drcdp == (struct ged_rt_client_data *)NULL ||
 	drcdp->gedp == (struct ged *)NULL ||
 	drcdp->rrtp == (struct ged_run_rt *)NULL ||
-	drcdp->interp == (Tcl_Interp *)NULL)
+	brlcad_interp == (Tcl_Interp *)NULL)
 	return;
 
     run_rtp = drcdp->rrtp;
@@ -462,7 +448,7 @@ ged_rt_output_handler(ClientData	clientData,
 	Tcl_DeleteChannelHandler(run_rtp->chan,
 				 ged_rt_output_handler,
 				 (ClientData)drcdp);
-	Tcl_Close(drcdp->interp, run_rtp->chan);
+	Tcl_Close(brlcad_interp, run_rtp->chan);
 
 	/* wait for the forked process
 	 * either EOF has been sent or there was a read error.
@@ -499,7 +485,7 @@ ged_rt_output_handler(ClientData	clientData,
 		bu_vls_printf(&vls, "%s \"Raytrace complete.\n\"",
 			      drcdp->gedp->ged_gdp->gd_outputHandler);
 
-	    Tcl_Eval(drcdp->interp, bu_vls_addr(&vls));
+	    Tcl_Eval(brlcad_interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	} else {
 	    if (aborted)
@@ -531,7 +517,7 @@ ged_rt_output_handler(ClientData	clientData,
 
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "%s \"%s\"", drcdp->gedp->ged_gdp->gd_outputHandler, line);
-	Tcl_Eval(drcdp->interp, bu_vls_addr(&vls));
+	Tcl_Eval(brlcad_interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
     } else
 	bu_log("%s", line);

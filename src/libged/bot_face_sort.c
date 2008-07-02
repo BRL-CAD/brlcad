@@ -24,6 +24,7 @@
  */
 
 #include "common.h"
+#include "bio.h"
 
 #include <stdlib.h>
 #include <ctype.h>

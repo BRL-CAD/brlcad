@@ -264,8 +264,8 @@ Cad_AppInit(Tcl_Interp *interp)
     }
     Tcl_StaticPackage(interp, "Rt", Rt_Init, (Tcl_PackageInitProc *) NULL);
 
-    /* Initialize libged */
-    if (Ged_Init(interp) == TCL_ERROR) {
+    /* Initialize libtclcad's GED Object */
+    if (Go_Init(interp) == TCL_ERROR) {
 	bu_log("Ged_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }

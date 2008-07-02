@@ -389,7 +389,7 @@ f_comb_color(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     GED_INIT_FROM_WDBP(&ged, wdbp);
 #endif
 
-    ret = ged_comb_color(&ged, argc, argv);
+    ret = ged_comb_color(&ged, argc, (const char **)argv);
 
     /* Convert to Tcl codes */
     if (ret == GED_OK)
@@ -429,7 +429,7 @@ f_shader(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     GED_INIT_FROM_WDBP(&ged, wdbp);
 #endif
 
-    ret = ged_shader(&ged, argc, argv);
+    ret = ged_shader(&ged, argc, (const char **)argv);
 
     /* Convert to Tcl codes */
     if (ret == GED_OK)
@@ -509,7 +509,7 @@ f_edcomb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     GED_INIT_FROM_WDBP(&ged, wdbp);
 #endif
 
-    ret = ged_edcomb(&ged, argc, argv);
+    ret = ged_edcomb(&ged, argc, (const char **)argv);
 
     /* Convert to Tcl codes */
     if (ret == GED_OK)

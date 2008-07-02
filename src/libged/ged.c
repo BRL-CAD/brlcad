@@ -144,6 +144,21 @@ ged_drawable_close(struct ged_drawable *gdp)
     bu_free((genptr_t)gdp, "struct ged_drawable");
 }
 
+void
+ged_view_init(struct ged_view *gvp)
+{
+    gvp->gv_scale = 1.0;
+    gvp->gv_size = 2.0 * gvp->gv_scale;
+    gvp->gv_invSize = 1.0 / gvp->gv_size;
+    VSET(gvp->gv_eye_pos, 0.0, 0.0, 1.0);
+    MAT_IDN(gvp->gv_rotation);
+    MAT_IDN(gvp->gv_center);
+    VSETALL(gvp->gv_keypoint, 0.0);
+    gvp->gv_coord = 'v';
+    gvp->gv_rotate_about = 'v';
+    ged_view_update(gvp);
+}
+
 /**
  * @brief
  * Open/Create the database and build the in memory directory.

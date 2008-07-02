@@ -36,6 +36,10 @@
 #include "tcl.h"
 #include "ged.h"
 
+#ifdef USE_FBSERV
+#  include "fbserv_obj.h"
+#endif
+
 __BEGIN_DECLS
 
 #ifndef TCLCAD_EXPORT
@@ -64,9 +68,29 @@ __BEGIN_DECLS
 #	define	TCLCAD_ARGS(args)			()
 #endif
 
+#define GED_OBJ_NUM_VIEWS 4
+
+struct ged_dm_view {
+    struct bu_list	l;
+    struct bu_vls	gdv_name;
+    struct ged_view	*gdv_view;
+    struct dm		*gdv_dmp;
+#ifdef USE_FBSERV
+    struct fbserv_obj	gdv_fbs;
+#endif
+    struct ged_obj	*gdv_gop;
+    int			*gdv_fb;
+};
+
 struct ged_obj {
     struct bu_list	l;
     struct ged		*go_gedp;
+#if 1
+    struct ged_dm_view	go_head_views;
+#else
+    struct ged_view	*go_views[GED_OBJ_NUM_VIEWS];
+    struct dm		*go_dmp;
+#endif
     struct bu_vls	go_name;
     struct bu_observer	go_observers;
     Tcl_Interp		*go_interp;
@@ -81,7 +105,7 @@ TCLCAD_EXPORT TCLCAD_EXTERN(void tclcad_tcl_library, (Tcl_Interp *interp));
 TCLCAD_EXPORT TCLCAD_EXTERN(int Tclcad_Init, (Tcl_Interp *interp));
 
 /* defined in tcl.c */
-TCLCAD_EXPORT BU_EXTERN(int Ged_Init,
+TCLCAD_EXPORT BU_EXTERN(int Go_Init,
 			(Tcl_Interp *interp));
 
 

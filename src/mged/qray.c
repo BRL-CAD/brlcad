@@ -62,7 +62,7 @@ init_qray(void)
 #if 1
     struct ged ged;
     ged.ged_wdbp = wdbp;
-    ged_init_qray(&ged);
+    ged_init_qray(ged.ged_gdp);
 #else
     dgo_init_qray(dgop);
 #endif

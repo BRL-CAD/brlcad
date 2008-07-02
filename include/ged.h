@@ -29,7 +29,7 @@
 #ifndef __GED_H__
 #define __GED_H__
 
-#define GED_USE_RUN_RT 0
+#define GED_USE_RUN_RT 1
 
 #if GED_USE_RUN_RT
 /* Seems to be needed on windows if using ged_run_rt */
@@ -327,6 +327,8 @@ GED_EXPORT BU_EXTERN(struct ged *ged_open,
 		      const char *filename));
 GED_EXPORT BU_EXTERN(void ged_close,
 		     (struct ged *gedp));
+GED_EXPORT BU_EXTERN(void ged_view_init,
+		     (struct ged_view *gvp));
 
 /* defined in wdb_comb_std.c */
 GED_EXPORT BU_EXTERN(int wdb_comb_std_cmd,
@@ -1275,6 +1277,14 @@ GED_EXPORT BU_EXTERN(void ged_free_qray,
  *     report [lvl]
  */
 GED_EXPORT BU_EXTERN(int ged_report, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Run the raytracing application.
+ *
+ * Usage:
+ *     rt [args]
+ */
+GED_EXPORT BU_EXTERN(int ged_rt, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Get/set the output handler script
