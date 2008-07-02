@@ -317,7 +317,7 @@
 		Blueprints/schematics/mechanical drawings/photographs
 	      </para>
 	      <para>
-		<inlinegraphic fileref="./volumeIII_images/inline1.jpg" />
+		<inlinegraphic fileref="./volumeIII_images/inline1.png" />
 	      </para>
 	    </entry>
 	    <entry>
@@ -337,7 +337,7 @@
 		Measurable objects
 	      </para>
 	      <para>
-		<inlinegraphic fileref="./volumeIII_images/inline2.jpg" />
+		<inlinegraphic fileref="./volumeIII_images/inline2.png" />
 	      </para>
 	    </entry>
 	    <entry>
@@ -355,9 +355,7 @@
 		Converted geometry
 	      </para>
 	      <para>
-		<inlinegraphic fileref="./volumeIII_images/inline3a.jpg" />
-		<inlinegraphic fileref="./volumeIII_images/inline3b.jpg" />
-		<inlinegraphic fileref="./volumeIII_images/inline3c.jpg" />
+		<inlinegraphic fileref="./volumeIII_images/inline3.png" />
 	      </para>
 	    </entry>
 	    <entry>
@@ -956,7 +954,7 @@ mvall oldname newname
 	    <title>Location-based structure of the radio in Volume II.</title>
 	    <mediaobject>
 	      <imageobject>
-		<imagedata align = "center" fileref="./volumeIII_images/figure4.gif" format="GIF"></imagedata>
+		<imagedata align = "center" fileref="./volumeIII_images/figure4.png" format="PNG"></imagedata>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
@@ -964,7 +962,7 @@ mvall oldname newname
 	    <title>Function-based structure of the radio in Volume II.</title>
 	    <mediaobject>
 	      <imageobject>
-		<imagedata align = "center" fileref="./volumeIII_images/figure5.gif" format="GIF"></imagedata>
+		<imagedata align = "center" fileref="./volumeIII_images/figure5.png" format="PNG"></imagedata>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
@@ -1175,8 +1173,7 @@ mvall oldname newname
 			  Illegal variations include the following: 
 			</para>
 			<para>
-			  <inlinegraphic fileref="./volumeIII_images/invalidarb1.jpg" />
-			  <inlinegraphic fileref="./volumeIII_images/invalidarb2.jpg" />
+			  <inlinegraphic fileref="./volumeIII_images/invalidarbs.png" />
 			</para>
 		      </listitem>
 		    </itemizedlist>
@@ -1353,7 +1350,7 @@ mvall oldname newname
 		      <informalfigure>
 			<mediaobject>
 			  <imageobject>
-			    <imagedata align = "center" fileref="./volumeIII_images/primitive6.jpg"></imagedata>
+			    <imagedata align = "center" fileref="./volumeIII_images/primitive6.png"></imagedata>
 			  </imageobject>
 			  <caption>
 			    <para>
@@ -1866,7 +1863,7 @@ mvall oldname newname
 
   </chapter>
 
-  <chapter id="volIIIintro">
+  <chapter>
     <title>Introduction</title>
 
      <itemizedlist>
@@ -1906,7 +1903,7 @@ mvall oldname newname
  
 
   </chapter>
-  <chapter id="volIIIintro">
+  <chapter>
     <title>Introduction</title>
  
      <itemizedlist>
@@ -1946,7 +1943,7 @@ mvall oldname newname
 
 
   </chapter>
-  <chapter id="volIIIintro">
+  <chapter>
     <title>Introduction</title>
  
      <itemizedlist>
@@ -1986,7 +1983,7 @@ mvall oldname newname
 
 
   </chapter>
-  <chapter id="volIIIintro">
+  <chapter>
     <title>Introduction</title>
  
      <itemizedlist>
@@ -2026,7 +2023,7 @@ mvall oldname newname
 
 
   </chapter>
-  <chapter id="volIIIintro">
+  <chapter>
     <title>Introduction</title>
  
      <itemizedlist>
