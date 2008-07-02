@@ -284,11 +284,18 @@ main(int argc, char **argv)
 			     Tcl_GetStringResult(interp) );
 		}
 	    } else {
-		if ( dp->d_minor_type!= ID_CONSTRAINT && intern.idb_meth->ft_get( interp, &intern, NULL ) != TCL_OK )  {
+		struct bu_vls log;
+
+		bu_vls_init(&log);
+		if ( dp->d_minor_type!= ID_CONSTRAINT && intern.idb_meth->ft_get( &log, &intern, NULL ) != TCL_OK )  {
 		    rt_db_free_internal( &intern, &rt_uniresource );
 		    bu_log("Unable to export '%s', skipping\n", dp->d_namep );
+		    Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)0);
+		    bu_vls_free(&log);
 		    continue;
 		}
+		Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)0);
+		bu_vls_free(&log);
 		fprintf( ofp, "put {%s} %s\n",
 			 tclify_name( dp->d_namep ),
 			 Tcl_GetStringResult(interp) );
