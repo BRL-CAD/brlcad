@@ -38,17 +38,11 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   context.  presumably that is triggering other code that is failing
   to redraw.
 
-* verify/finish clone mirror support
-
-* address the TODO items in src/mged/clone.c
-
 * (re)verify rtarea results, fix naming convention
 
 * ADRT: remove MySQL code, fix ISST callbacks, re-enable RISE, cleanup
 
 * fix metaball "shelling" issue
-
-* extend metaball control info beyond simple points
 
 * test homovulgaris' root solver patch that puts coefficients in the
   right order
@@ -60,6 +54,12 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
+
+* extend metaball control info beyond simple points
+
+* verify/finish clone mirror support
+
+* address the TODO items in src/mged/clone.c
 
 * investigate why solids.sh fails on three pixels on some 64-bit
   platforms. it grazingly hits/misses a tgc causing a regression
