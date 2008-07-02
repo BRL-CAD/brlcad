@@ -35,16 +35,16 @@
 
 /* Constraint functions */
 bool f1(std::vector<int> V ) {
-    return (V[0]+V[1]-3 == 0);
+    return (V[0]*V[1]-12 == 0);
 }
 bool f2(std::vector<int> V ) {
-    return (V[0]+V[1]-4 > 0);
+    return (V[0]+V[1]-5 < 0);
 }
 bool f3(std::vector<int> V ) {
-    return (V[0]- V[1] -5 < 0);
+    return (V[0]- V[1] -2 == 0);
 }
 bool f4(std::vector<int> V ) {
-    return (V[1]-V[0]-4 == 0);
+    return (V[1]*V[0]-4 == 0);
 }
 
 int main()
@@ -63,7 +63,7 @@ int main()
     //std::cout<<"_________________________________________________________"<<std::endl<<std::endl;
     //std::cout<<"____________________Checking Network  Classes________" <<std::endl;
 
-    typedef boost::adjacency_list<vecS, vecS, undirectedS, 
+    typedef boost::adjacency_list<vecS, vecS, bidirectionalS, 
 	Variable<int>, Constraint<int> > Graph;
     typedef graph_traits<Graph> GraphTraits;
     typedef GraphTraits::vertex_descriptor Vertex;
@@ -84,10 +84,6 @@ int main()
     Vi D=Vi("D",4);
 
     Interval<int> I;
-    A.setValue(0);
-    B.setValue(0);
-    C.setValue(0);
-    D.setValue(0);
     I.assign(0,5,1);
     A.addInterval(I);
     B.addInterval(I);
@@ -96,13 +92,14 @@ int main()
 
     typedef Constraint<int> Ci;
     Ci constraint_array[4];
-    constraint_array[0] = Ci("0", "A+B=3",f1,2,"A","B");
-    constraint_array[1] = Ci("1", "B+C>4",f2,2,"B","C");
-    constraint_array[2] = Ci("2", "D-A<5",f3,2,"A","D");
-    constraint_array[3] = Ci("3", "C-A=4",f4,2,"A","C");
+    constraint_array[0] = Ci("0", "A*B=12",f1,2,"A","B");
+    constraint_array[1] = Ci("1", "B+C<5",f2,2,"B","C");
+    constraint_array[2] = Ci("2", "A-D=2",f3,2,"A","D");
+    constraint_array[3] = Ci("3", "A*C=4",f4,2,"A","C");
 
     //std::cout<<constraint_array[0].getExp()<<"--------"<<std::endl;
     /* Add the vertices */
+
     N.add_vertex(A);
     N.add_vertex(B);
     N.add_vertex(C);
@@ -113,23 +110,30 @@ int main()
     }
     //std::cout<<"___"<< boost::num_vertices(N.G)<<std::endl;
 
-    N.display();
+    /*N.display();
     S = N.solve();
     S.display();
-/*
-    for (int i = 0; i < num_edges; ++i)
-    N.add_edge(edge_array[i].first, edge_array[i].second);
+    */
+    N.display();
+    std::cout<<"-----------------------------"<<std::endl;
+    GTSolver<int> GTS;
+    GTS.solve(&N,&S);
+    std::cout<<"Solution using Generate-Test"<<std::endl;
+    S.display();
 
-    Edge edge_array[] = 
-    { Edge(U,V), Edge(V,W), Edge(U,X), Edge(U,W)};
+    S.clear();
+    std::cout<<"-----------------------------"<<std::endl;
+    
+    BTSolver<int> BTS;
+    BTS.solve(&N,&S);
+    std::cout<<"Solution using BackTracking"<<std::endl;
 
-    // writing out the edges in the graph
-    const int num_edges = sizeof(edge_array)/sizeof(edge_array[0]);
+    S.display();
 
-    // add the edges to the graph object
-    for (int i = 0; i < num_edges; ++i)
-    N.add_edge(edge_array[i].first, edge_array[i].second);
-*/
+    std::cout<<"Number of Constraint checks performed"<<std::endl;
+    std::cout<<"Generate-Test Solution:"<< GTS.numChecks()<<std::endl;
+    std::cout<<"BackTracking based Solution:" <<BTS.numChecks()<<std::endl;
+
     }
 
     return 0;

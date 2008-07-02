@@ -20,7 +20,8 @@ noinst_HEADERS = \
 	pcInterval.h \
 	pcVariable.h \
 	pcConstraint.h \
-	pcNetwork.h
+	pcNetwork.h \
+	pcSolver.h
 
 libpc_nil_la_SOURCES = \
 	pc_main.c \

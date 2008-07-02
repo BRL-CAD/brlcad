@@ -114,6 +114,7 @@ private:
 public:
     std::list<VarDomain<T> > VarDom;
     void display();
+    void clear();
 };
 
 template<class T>
@@ -296,9 +297,16 @@ void Solution<T>::display()
     typename std::list<VarDomain<T> >::iterator i;
     for (i = VarDom.begin(); i != VarDom.end(); i++) {
 	i->V.display();
-	i->D.display();
+	//i->D.display();
     }
 }
+
+template<class T>
+void Solution<T>::clear()
+{
+	VarDom.clear();
+}
+
 
 #endif
 /** @} */

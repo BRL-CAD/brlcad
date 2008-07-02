@@ -40,6 +40,7 @@
 #include "pcBasic.h"
 #include "pcVariable.h"
 #include "pcConstraint.h"
+#include "pcSolver.h"
 
 template<class T>
 class Edge : public std::pair< std::string, std::string> 
@@ -53,7 +54,7 @@ public:
 using namespace boost;
 template<class T>
 class Vertexwriter {
-    typedef typename boost::adjacency_list<vecS, vecS, undirectedS, 
+    typedef typename boost::adjacency_list<vecS, vecS, bidirectionalS, 
 	Variable<T>, Constraint<T> > Graph;
     typedef graph_traits<Graph> GraphTraits;
     typedef typename GraphTraits::vertex_descriptor Vertex;
@@ -69,7 +70,7 @@ private:
 using namespace boost;
 template<class T>
 class Edgewriter {
-    typedef typename boost::adjacency_list<vecS, vecS, undirectedS, 
+    typedef typename boost::adjacency_list<vecS, vecS, bidirectionalS, 
 	Variable<T>, Constraint<T> > Graph;
     typedef graph_traits<Graph> GraphTraits;
     typedef typename GraphTraits::edge_descriptor Edge;
@@ -88,17 +89,29 @@ class BinaryNetwork
 {
 
 private:
-    typedef typename boost::adjacency_list<vecS, vecS, undirectedS, 
+    typedef typename boost::adjacency_list<vecS, vecS, bidirectionalS, 
 	Variable<T>, Constraint<T> > Graph;
     typedef graph_traits<Graph> GraphTraits;
     typedef typename GraphTraits::vertex_descriptor Vertex;
     typedef typename GraphTraits::edge_descriptor Edge;
 
     typename GraphTraits::vertex_iterator v_i, v_end;
-    typename GraphTraits::out_edge_iterator e_i, e_end; 
+    typename GraphTraits::out_edge_iterator e_i, e_end;
+
+    std::vector<Edge> precedents;
+    Solution<T> S;
+    Vertex v;
+    Edge e;
+    int checkEdge(Edge e);
+
+    void preprocess();
+    void propagate();
+    bool happy();
+    void atomic();
+    void split();
+    Graph G;
 
 public:
-    Graph G;
     BinaryNetwork();
     BinaryNetwork(std::vector<Variable<T> >, std::vector<Constraint<T> >);
     void add_vertex(Variable<T> V) {
@@ -119,8 +132,12 @@ public:
 
     Solution<T> solve();
     void getVertexbyID(std::string,Vertex&);
-
     void display();
+    bool check();
+
+    /* TODO: Implement Solver Hierarchy and Friendship Inheritance ? */
+    friend class GTSolver<T>;
+    friend class BTSolver<T>;
 };
 
 template<class T>
@@ -152,59 +169,71 @@ BinaryNetwork<T>::BinaryNetwork(std::vector<Variable<T> > V, std::vector<Constra
 };
 
 template<class T>
+int BinaryNetwork<T>::checkEdge(Edge e)
+{
+    precedents.push_back(e);
+    if(! G[e].solved()) {
+	std::vector<T> Vars;
+	Vertex v = source(e,G);
+	Vertex v1 = target(e,G);
+checkEdge_start:
+	Vars.push_back(G[v].getValue());
+	Vars.push_back(G[v1].getValue());
+	
+	/* Check if constraint is solved for a particular set of values */
+	while(! G[e].check(Vars)) {
+	    if(G[v1].getValue() == G[v1].getLast() && G[v].getValue() == G[v].getLast() ) {
+		G[v].setValue(G[v].getFirst());
+		G[v1].setValue(G[v1].getFirst());
+		precedents.pop_back();
+		e = precedents.back();
+		precedents.pop_back();
+		std::cout<<"++---------- End Reached calling previous edge"<<std::endl;
+		checkEdge(e);
+		break;
+	    } else if ( G[v1].getValue() == G[v1].getLast() ) {
+		typename GraphTraits::out_edge_iterator edge_i, edge_end;
+		G[v1].setValue(G[v1].getFirst());
+		++G[v];
+		precedents.pop_back();
+		for(tie(edge_i,edge_end) = out_edges(v,G); edge_i !=edge_end; ++edge_i) {
+			G[*edge_i].setStatus(0);
+		}
+		std::cout<<"++---------- Incrementing source"<<std::endl;
+		checkEdge(e);
+		break;
+	    }
+	    
+	    Vars.pop_back();
+	    ++G[v1];
+	    Vars.push_back(G[v1].getValue());
+	}
+    }
+    std::cout<<"++---------- Found ONE. return"<<std::endl;
+    return 0;
+}
+    
+template<class T>
 Solution<T> BinaryNetwork<T>::solve()
 {
-    Vertex v;
-    Edge e;
-    Solution<T> S;
-
-/* Initialize values for Variables 
+    /* Initialize values for Variables TODO: Define a function / better version*/
     for(tie(v_i,v_end) = vertices(G); v_i != v_end; ++v_i) {
-	v = *v_i;
+	G[*v_i].setValue(G[*v_i].getFirst());
     }
- */
 
+    /* Loop through all the vertices and all their incident edges */
     for(tie(v_i,v_end) = vertices(G); v_i != v_end; ++v_i) {
 	v = *v_i;
 	for(tie(e_i,e_end) = out_edges(v,G); e_i !=e_end; ++e_i) {
 	    e=*e_i;
-	    if(! G[e].solved()) {
-		std::vector<T> Vars; 
-		Vertex v1 = target(e,G);
-solve_start:
-		Vars.push_back(G[v].getValue());
-		Vars.push_back(G[v1].getValue());
-		
-		/* Check if constraint is solved for a particular set of values */
-		while(G[v1].constrained == 0 && ! G[e].check(Vars) && G[v1].getValue() != G[v1].getLast() ) {
-		    Vars.pop_back();		    
-		    ++G[v1];
-		    Vars.push_back(G[v1].getValue());
-		}
-		if( G[e].solved()) { 
-		    G[v].constrained =1; G[v1].constrained = 1;
-		    std::cout<<"+--------------------------------------"<<std::endl;
-		    break;
-		}
-
-		if(G[v1].getValue() == G[v1].getLast() ) {
-		    G[v1].setValue(G[v1].getFirst());
-		    ++G[v];
-		    goto solve_start;
-		}
-		if(G[v].getValue() == G[v].getLast() ) {
-		    G[v1].setValue(G[v1].getFirst());
-		    ++G[v];
-		    goto solve_start;
-		}
-		std::cout<<"++--------------------------------------"<<std::endl;
-	    }
+	    checkEdge(e);
 	}
     }
-    /* Store the values in the Solution */
+    
+    /* Push the state of Variables into the solution */
     for(tie(v_i,v_end) = vertices(G); v_i != v_end; ++v_i) {
 	v = *v_i;
-	if(G[v].constrained ==1) S.VarDom.push_back(VarDomain<int>(G[v],Domain<int>()));
+	S.VarDom.push_back(VarDomain<int>(G[v],Domain<int>(G[v].getValue(),G[v].getValue(),1)));
     }
     return S;
 }
@@ -245,6 +274,27 @@ void BinaryNetwork<T>::getVertexbyID(std::string Vid, Vertex& v)
     
 }
 
+template<class T>
+bool BinaryNetwork<T>::check()
+{
+
+    Vertex v,u;
+    typename GraphTraits::edge_iterator e_i, e_end;
+    std::vector<T> assignment;
+    for(tie(e_i,e_end) = edges(G); e_i != e_end; ++e_i) {
+	    e = *e_i;
+	    v = source(e,G);
+	    u = target(e,G);
+	    assignment.push_back(G[v].getValue());
+	    assignment.push_back(G[u].getValue());
+	    if (! G[e].check(assignment)) {
+		    assignment.clear();
+		    return false;
+	    }
+	    assignment.clear();
+    }
+    return true;
+}
 #endif
 /** @} */
 /*

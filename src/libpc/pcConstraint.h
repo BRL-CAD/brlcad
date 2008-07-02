@@ -84,12 +84,13 @@ Constraint<T>::Constraint(std::string Cid, std::string Cexpression, bool (*pf) (
 template <class T>
 bool Constraint<T>::check(std::vector<T> V) {
 	typename std::vector<T>::iterator i;
-	std::cout<<"##Checking for Values";
+	/*std::cout<<"##Checking for Values";
 	for( i = V.begin(); i!= V.end(); i++) std::cout<<" "<< *i;
-	std::cout<<std::endl;
+	std::cout<< " for the constraint " << getExp() <<std::endl;*/
 	if (funct(V)) {
 	    status =1;
-	    return true; }
+	    return true;
+	}
 	else {
 	    status = 0;
 	    return false;
