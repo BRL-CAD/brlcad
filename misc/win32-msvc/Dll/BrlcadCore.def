@@ -8,6 +8,7 @@ bu_badmagic
 bu_bitv_clear
 bu_bitv_free
 bu_bitv_new
+bu_bitv_shift
 bu_bitv_to_hex
 bu_bomb
 bu_calloc
@@ -23,11 +24,17 @@ bu_hex_to_bitv
 bu_jmpbuf
 bu_log
 bu_malloc
+bu_mem_barriercheck
 bu_optarg
 bu_optind
 bu_plong
+bu_printb
+bu_prmem
 bu_ptbl_free
 bu_ptbl_init
+bu_ptbl_ins
+bu_ptbl_reset
+bu_ptbl_rm
 bu_realloc
 bu_setjmp_valid
 bu_strdupm
@@ -38,7 +45,10 @@ bu_units_string
 bu_vls_addr
 bu_vls_free
 bu_vls_init
+bu_vls_printf
 bu_vls_strcpy
+bu_vls_strgrab
+bu_vls_trunc
 
 db_ck_v4gift_tree
 db_close
@@ -76,6 +86,7 @@ mk_grip
 mk_half
 mk_id
 mk_id_editunits
+mk_id_units
 mk_nmg
 mk_particle
 mk_pipe
@@ -87,12 +98,19 @@ mk_rhc
 mk_rpc
 mk_rpp
 mk_sketch
+mk_sph
 mk_tgc
 mk_tor
 mk_trc_h
 mk_write_color_table
 
+pdv_3cont
+pdv_3move
+
+rt_bot_condense
+rt_bot_face_fuse
 rt_bot_smooth
+rt_bot_vertex_fuse
 rt_clean
 rt_color_addrec
 rt_db_free_internal
