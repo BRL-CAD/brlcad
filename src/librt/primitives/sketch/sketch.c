@@ -1828,10 +1828,10 @@ curve_to_tcl_list(struct bu_vls *vls, struct curve *crv)
 
 int rt_sketch_form(struct bu_vls *log, const struct rt_functab *ftp)
 {
+    BU_CK_VLS(log);
     RT_CK_FUNCTAB(ftp);
 
-    bu_vls_printf(log,
-		  "V {%%f %%f %%f} A {%%f %%f %%f} B {%%f %%f %%f} VL {{%%f %%f} {%%f %%f} ...} SL {{segment_data} {segment_data}}");
+    bu_vls_printf(log, "V {%%f %%f %%f} A {%%f %%f %%f} B {%%f %%f %%f} VL {{%%f %%f} {%%f %%f} ...} SL {{segment_data} {segment_data}}");
 
     return BRLCAD_OK;
 }
@@ -1844,6 +1844,7 @@ rt_sketch_get(struct bu_vls *log, const struct rt_db_internal *intern, const cha
     int i;
     struct curve *crv;
 
+    BU_CK_VLS(log);
     RT_SKETCH_CK_MAGIC(skt);
 
     if (attr == (char *)NULL) {
@@ -1860,14 +1861,13 @@ rt_sketch_get(struct bu_vls *log, const struct rt_db_internal *intern, const cha
 	if (curve_to_tcl_list(log, crv)) {
 	    return BRLCAD_ERROR;
 	}
-    }
-    else if ( !strcmp( attr, "V" ) )
+    } else if ( !strcmp( attr, "V" ) ) {
 	bu_vls_printf( log, "%.25g %.25g %.25g", V3ARGS( skt->V ) );
-    else if ( !strcmp( attr, "A" ) )
+    } else if ( !strcmp( attr, "A" ) ) {
 	bu_vls_printf( log, "%.25g %.25g %.25g", V3ARGS( skt->u_vec ) );
-    else if ( !strcmp( attr, "B" ) )
+    } else if ( !strcmp( attr, "B" ) ) {
 	bu_vls_printf( log, "%.25g %.25g %.25g", V3ARGS( skt->v_vec ) );
-    else if ( !strcmp( attr, "VL" ) ) {
+    } else if ( !strcmp( attr, "VL" ) ) {
 	for ( i=0; i<skt->vert_count; i++ )
 	    bu_vls_printf( log, " {%.25g %.25g}", V2ARGS( skt->verts[i] ) );
     } else if ( !strcmp( attr, "SL" ) ) {
