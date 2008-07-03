@@ -79,7 +79,7 @@ f_itemair(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     ret = ged_item(&ged, argc, argv);
 
     /* Convert to Tcl codes */
-    if (ret == GED_OK)
+    if (ret == BRLCAD_OK)
 	ret = TCL_OK;
     else
 	ret = TCL_ERROR;
@@ -287,7 +287,7 @@ f_edmater(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     ret = ged_edmater(&ged, argc, argv);
 
     /* Convert to Tcl codes */
-    if (ret == GED_OK)
+    if (ret == BRLCAD_OK)
 	ret = TCL_OK;
     else
 	ret = TCL_ERROR;
@@ -320,7 +320,7 @@ f_wmater(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
     ret = ged_wmater(&ged, argc, argv);
 
     /* Convert to Tcl codes */
-    if (ret == GED_OK)
+    if (ret == BRLCAD_OK)
 	ret = TCL_OK;
     else
 	ret = TCL_ERROR;
@@ -353,7 +353,7 @@ f_rmater(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
     ret = ged_rmater(&ged, argc, argv);
 
     /* Convert to Tcl codes */
-    if (ret == GED_OK)
+    if (ret == BRLCAD_OK)
 	ret = TCL_OK;
     else
 	ret = TCL_ERROR;
@@ -392,7 +392,7 @@ f_comb_color(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     ret = ged_comb_color(&ged, argc, (const char **)argv);
 
     /* Convert to Tcl codes */
-    if (ret == GED_OK)
+    if (ret == BRLCAD_OK)
 	ret = TCL_OK;
     else
 	ret = TCL_ERROR;
@@ -432,7 +432,7 @@ f_shader(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     ret = ged_shader(&ged, argc, (const char **)argv);
 
     /* Convert to Tcl codes */
-    if (ret == GED_OK)
+    if (ret == BRLCAD_OK)
 	ret = TCL_OK;
     else
 	ret = TCL_ERROR;
@@ -469,7 +469,7 @@ f_mirror(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
     ret = ged_mirror(&ged, argc, argv);
 
     /* Convert to Tcl codes */
-    if (ret == GED_OK)
+    if (ret == BRLCAD_OK)
 	ret = TCL_OK;
     else
 	ret = TCL_ERROR;
@@ -512,7 +512,7 @@ f_edcomb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     ret = ged_edcomb(&ged, argc, (const char **)argv);
 
     /* Convert to Tcl codes */
-    if (ret == GED_OK)
+    if (ret == BRLCAD_OK)
 	ret = TCL_OK;
     else
 	ret = TCL_ERROR;
@@ -582,7 +582,7 @@ f_make(ClientData	clientData,
 	ret = ged_make(&ged, argc, argv);
 
     /* Convert to Tcl codes */
-    if (ret == GED_OK)
+    if (ret == BRLCAD_OK)
 	ret = TCL_OK;
     else
 	ret = TCL_ERROR;

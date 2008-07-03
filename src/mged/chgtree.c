@@ -269,7 +269,7 @@ f_arced(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     ret = ged_arced(&ged, argc, argv);
 
     /* Convert to Tcl codes */
-    if (ret == GED_OK)
+    if (ret == BRLCAD_OK)
 	ret = TCL_OK;
     else
 	ret = TCL_ERROR;

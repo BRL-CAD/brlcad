@@ -317,9 +317,6 @@ struct view_obj {
 #define GED_VIEW_OBJ_NULL ((struct view_obj *)0)
 #define GED_RESULT_NULL ((void *)0)
 #define GED_RESULT_FLAGS_HELP_BIT 0x1
-#define GED_OK 0
-#define GED_ERROR 1
-
 
 /* defined in ged.c */
 GED_EXPORT BU_EXTERN(struct ged *ged_open,

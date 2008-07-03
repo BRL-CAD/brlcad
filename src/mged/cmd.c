@@ -1999,7 +1999,7 @@ cmd_make_name(ClientData	clientData,
     ret = ged_make_name(&ged, argc, argv);
 
     /* Convert to Tcl codes */
-    if (ret == GED_OK)
+    if (ret == BRLCAD_OK)
 	ret = TCL_OK;
     else
 	ret = TCL_ERROR;
