@@ -126,7 +126,19 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat;f90;for;f;fpp"
 			>
 			<File
+				RelativePath="..\..\..\src\libged\adjust.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\aet.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\arced.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\attr.c"
 				>
 			</File>
 			<File
@@ -138,7 +150,23 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\binary.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\blast.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\bot_decimate.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\bot_face_sort.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\center.c"
 				>
 			</File>
 			<File
@@ -174,7 +202,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\form.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\ged.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\get.c"
 				>
 			</File>
 			<File
@@ -206,7 +242,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\list.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\log.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\ls.c"
 				>
 			</File>
 			<File
@@ -250,6 +294,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\pathsum.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\put.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\qray.c"
 				>
 			</File>
@@ -278,7 +330,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\libged\tcl.c"
+				RelativePath="..\..\..\src\libged\size.c"
 				>
 			</File>
 			<File
