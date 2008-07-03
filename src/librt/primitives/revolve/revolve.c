@@ -73,6 +73,8 @@ rt_revolve_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     register struct revolve_specific	*rev;
     const struct bn_tol		*tol = &rtip->rti_tol;
 
+    vect_t	xEnd, yEnd;
+
     RT_CK_DB_INTERNAL(ip);
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
     RT_REVOLVE_CK_MAGIC(rip);
@@ -97,7 +99,10 @@ rt_revolve_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     rev->sk = rip->sk;
 
 /* calculate end plane */
-
+    VSCALE( xEnd, rev->xUnit, cos(rev->ang) );
+    VSCALE( yEnd, rev->yUnit, sin(rev->ang) );
+    VADD2( rev->rEnd, xEnd, yEnd );
+    VUNITIZE( rev->rEnd );
 
 /* FIXME: bounding volume */
     VMOVE( stp->st_center, rev->v3d );
@@ -152,8 +157,10 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 
     fastf_t	k, m;
     point_t	dp, pr, xlated;
-    vect_t	vr, ua, ur, norm, temp;
+    vect_t	vr, ua, ur, norm, temp, normS, normE;
     fastf_t	h, aa, bb;
+
+    fastf_t	start, end, min, max, angle;
 
     nhits = 0;
 
@@ -172,7 +179,39 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
     VUNITIZE( ur );
 
 /* find two plane intersections if ang != 2pi */
-    /* assume ang == 2pi for now */
+    if ( rev->ang < 2*M_PI ) {
+	VREVERSE( normS, rev->yUnit );	/* start normal */
+	start = ( VDOT( normS, rev->v3d ) - VDOT( normS, rp->r_pt ) ) / VDOT( normS, rp->r_dir );
+
+	VCROSS( normE, rev->zUnit, rev->rEnd );	/* end normal */
+	end = ( VDOT( normE, rev->v3d ) - VDOT( normE, rp->r_pt ) ) / VDOT( normE, rp->r_dir );
+
+	/* calculate min/max limits */
+	if ( VDOT( normS, rp->r_dir ) < 0 && VDOT( normE, rp->r_dir ) < 0 ) {
+	    if ( rev->ang < M_PI ) {
+		min = (start>end)?start:end;	/* max of start, end */
+	    } else {
+		min = (end>start)?start:end;	/* min of start, end */
+	    }
+	    max = min + 1;	/* unused, but set to pass (max > min) test */
+	} else if ( VDOT( normS, rp->r_dir ) < 0 ) {
+	    min = start;
+	    max = end;
+	} else if ( VDOT( normE, rp->r_dir ) < 0 ) {
+	    min = end;
+	    max = start;
+	} else {
+	    if ( rev->ang < M_PI ) {
+		max = (end>start)?start:end;	/* min of start, end */
+	    } else {
+		max = (start>end)?start:end;	/* max of start, end */
+	    }
+	    min = max - 1;	/* unused, but set to pass (max > min) test */
+	}
+	if ( rev->ang < M_PI && max < min ) {
+	    return 0;
+	}
+    }
 
 /* calculate hyperbola parameters */
     VREVERSE( dp, pr);
@@ -256,90 +295,6 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 			hitp->hit_surfno = LINE_SEG;
 		    }
 		}
-#if 0
-		if ( pt[X] > pt2[X] ) {
-		    xmax = pt[X];
-		    xmin = pt2[X];
-		} else {
-		    xmax = pt2[X];
-		    xmin = pt[X];
-		}
-		if ( pt[Y] > pt2[Y] ) {
-		    ymax = pt[Y];
-		    ymin = pt2[Y];
-		} else {
-		    ymax = pt2[Y];
-		    ymin = pt[Y];
-		}
-
-		a = 0.5 * (dir[X]*bb - dir[Y]*aa);
-		b = (dir[Y]*pt[X]) - dir[X]*(pt[Y] - h);
-		c = -0.5 * (dir[X]*bb + dir[Y]*aa);
-		disc = b*b - ( 4.0 * a * c );
-
-		if ( !NEAR_ZERO( a, RT_PCOEF_TOL ) ) {
-		    if ( disc > 0 ) {
-			disc = sqrt( disc );
-			t1 = log( fabs( (-b + disc) / (2.0 * a) ) );
-			t2 = log( fabs( (-b - disc) / (2.0 * a) ) );
-			k1 = (h + bb*sinh(t1) - pr[Z]) / vr[Z];
-			k2 = (h + bb*sinh(t2) - pr[Z]) / vr[Z];
-			x = aa*cosh( t1 );
-			y = h + bb*sinh( t1 );
-			if ( x > xmin && x < xmax && y > ymin && y < ymax ) {
-			    if ( nhits >= MAX_HITS ) return -1; /* too many hits */
-			    VJOIN1( temp, pr, k1, vr );
-			    if ( !NEAR_ZERO( x*x - temp[X]*temp[X] - temp[Y]*temp[Y], RT_LEN_TOL ) ||
-				 !NEAR_ZERO( y - temp[Z], RT_LEN_TOL ) ) {
-				bu_log( "2D point: \t\t%5.2f\t%5.2f\n3D point: \t%5.2f\t%5.2f\t%5.2f\n",
-					x, y, temp[X], temp[Y], temp[Z] );
-			    }
-			    hitp = hits[nhits++];
-			    VJOIN1( hitp->hit_vpriv, pr, k1, vr );
-			    hitp->hit_magic = RT_HIT_MAGIC;
-			    hitp->hit_dist = t1;
-			    hitp->hit_surfno = LINE_SEG;
-			}
-			x = aa*cosh( t2 );
-			y = h + bb*sinh( t2 );
-			if ( x > xmin && x < xmax && y > ymin && y < ymax ) {
-			    if ( nhits >= MAX_HITS ) return -1; /* too many hits */
-			    VJOIN1( temp, pr, k2, vr );
-			    if ( !NEAR_ZERO( x*x - temp[X]*temp[X] - temp[Y]*temp[Y], RT_LEN_TOL ) ||
-				 !NEAR_ZERO( y - temp[Z], RT_LEN_TOL ) ) {
-				bu_log( "2D point: \t\t%5.2f\t%5.2f\n3D point: \t%5.2f\t%5.2f\t%5.2f\n",
-					x, y, temp[X], temp[Y], temp[Z] );
-			    }
-			    hitp = hits[nhits++];
-			    VJOIN1( hitp->hit_vpriv, pr, k2, vr );
-			    hitp->hit_magic = RT_HIT_MAGIC;
-			    hitp->hit_dist = k2;
-			    hitp->hit_surfno = LINE_SEG;
-			}
-		    }
-		}
-
-		else if ( !NEAR_ZERO( b, RT_PCOEF_TOL ) ) {
-		    t1 = log( -c / b );
-		    k1 = (h + bb*sinh(t1) - pr[Z]) / vr[Z];
-		    x = aa*cosh( t1 );
-		    y = h + bb*sinh( t1 );
-		    if ( x > xmin && x < xmax && y > ymin && y < ymax ) {
-			if ( nhits >= MAX_HITS ) return -1; /* too many hits */
-			VJOIN1( temp, pr, k1, vr );
-			if ( !NEAR_ZERO( x*x - temp[X]*temp[X] - temp[Y]*temp[Y], RT_LEN_TOL ) ||
-			     !NEAR_ZERO( y - temp[Z], RT_LEN_TOL ) ) {
-			    bu_log( "2D point: \t\t%5.2f\t%5.2f\n3D point: \t%5.2f\t%5.2f\t%5.2f\n",
-				    x, y, temp[X], temp[Y], temp[Z] );
-			}
-			hitp = hits[nhits++];
-			VJOIN1( hitp->hit_vpriv, pr, k1, vr );
-			hitp->hit_magic = RT_HIT_MAGIC;
-			hitp->hit_dist = k1;
-			hitp->hit_surfno = LINE_SEG;
-		    }
-		}
-#endif
 		break;
 	}
 
@@ -350,26 +305,17 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 	return -1;
     }
 
-#if 0
-    if ( nhits > 1 ) {
-	hitp = hits[0];
-	for ( i=0; i<nhits; i++) {
-	    if ( hits[i]->hit_dist < hitp->hit_dist ) {
-		hitp = hits[i];
-	    }
+    /* set surface for hits out of bounds to -1 */
+    if ( rev->ang < 2*M_PI ) {
+	for ( i=0; i<nseg; i++ ) {
+	    angle = atan2( hits[i]->hit_vpriv[Y], hits[i]->hit_vpriv[X] );
+	    if ( angle < 0 ) angle += 2*M_PI;
+	    if ( angle > rev->ang ) hits[i]->hit_surfno = -1;
 	}
-	bu_log("radius:\t%5.2f",
-	       sqrt( hitp->hit_vpriv[X]*hitp->hit_vpriv[X] +
-		     hitp->hit_vpriv[Y]*hitp->hit_vpriv[Y] ) );
-	/*bu_log( "hits: %d\n", nhits );*/
     }
-#endif
 
 /* sort hitpoints (an arbitrary number of hits depending on sketch) */
-    /* horribly inefficient sort for now... */
     for ( i=0; i<nhits; i+=2 ) {
-	RT_GET_SEG(segp, ap->a_resource);
-	segp->seg_stp = stp;
 	in = out = -1;
 	for ( j=0; j<nhits; j++ ) {
 	    if ( hits[j] == NULL ) continue;
@@ -385,6 +331,61 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 		out = j;
 	    }
 	}
+
+	/* trim segments as necessary */
+	if ( rev->ang < M_PI ) {
+	    if ( hits[in]->hit_surfno == -1 && hits[in]->hit_dist < min ) {
+		hits[in]->hit_dist = min;
+		hits[in]->hit_surfno = (min == start)?1:2;
+	    }
+	    if ( hits[out]->hit_surfno == -1 && hits[out]->hit_dist > max ) {
+		hits[out]->hit_dist = max;
+		hits[out]->hit_surfno = (max == start)?1:2;
+	    }
+	    if ( hits[in]->hit_surfno == -1 || hits[out]->hit_surfno == -1 ) {
+		hits[in] = NULL;
+		hits[out] = NULL;
+		continue;
+	    }
+	} else if ( rev->ang < 2*M_PI && min > max ) {
+	    if ( hits[in]->hit_surfno == -1 && hits[out]->hit_surfno == -1 ) {
+		hits[in] = NULL;
+		hits[out] = NULL;
+		continue;
+	    } else if ( hits[in]->hit_surfno == -1 ) {
+		hits[in]->hit_dist = min;
+		hits[in]->hit_surfno = (min == start)?1:2;
+	    } else if ( hits[out]->hit_surfno == -1 ) {
+		hits[out]->hit_dist = max;
+		hits[out]->hit_surfno = (max == start)?1:2;
+	    } else {
+		if ( nhits+2 >= MAX_HITS ) return -1;	/* too many hits */
+		/* get a new segment for (in, max) */
+		RT_GET_SEG(segp, ap->a_resource);
+		segp->seg_stp = stp;
+	
+		segp->seg_in = *hits[in];
+		hits[in] = NULL;
+
+		hits[nhits]->hit_dist = max;
+		hits[nhits]->hit_surfno = (max == start)?1:2;
+
+		segp->seg_out = *hits[nhits];
+		hits[nhits] = NULL;
+		BU_LIST_INSERT( &(seghead->l), &(segp->l) );
+
+		/* set next segment to be (min, out) */
+		in = nhits+1;
+		hits[in]->hit_dist = min;
+		hits[in]->hit_surfno = (min == start)?1:2;
+
+		nhits+=2;
+	    }
+	}
+
+	RT_GET_SEG(segp, ap->a_resource);
+	segp->seg_stp = stp;
+
 	segp->seg_in = *hits[in];
 	hits[in] = NULL;
 	segp->seg_out = *hits[out];
@@ -393,26 +394,6 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
     }
 
     return nhits;
-
-/* the EXAMPLE_NEW_SEGMENT block shows how one might add a new result
- * if the ray did hit the primitive.  the segment values would need to
- * be adjusted accordingly to match real values instead of -1.
- */
-#if 0
-    /* allocate a segment */
-    RT_GET_SEG(segp, ap->a_resource);
-    segp->seg_stp = stp; /* stash a pointer to the primitive */
-
-    segp->seg_in.hit_dist = -1; /* REVOLVE set to real distance to entry point */
-    segp->seg_out.hit_dist = -1; /* REVOLVE set to real distance to exit point */
-    segp->seg_in.hit_surfno = -1; /* REVOLVE set to a non-negative ID for entry surface */
-    segp->seg_out.hit_surfno = -1;  /* REVOLVE set to a non-negative ID for exit surface */
-
-    /* add segment to list of those encountered for this primitive */
-    BU_LIST_INSERT( &(seghead->l), &(segp->l) );
-
-    return(2); /* num surface intersections == in + out == 2 */
-#endif
 
 }
 
@@ -426,8 +407,8 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
  */
 void
 rt_revolve_vshot(struct soltab *stp[],	/* An array of solid pointers */
-		 struct xray *rp[],		/* An array of ray pointers */
-		 struct seg segp[],		/* array of segs (results returned) */
+		 struct xray *rp[],	/* An array of ray pointers */
+		 struct seg segp[],	/* array of segs (results returned) */
 		 int n,			/* Number of ray/object pairs */
 		 struct application *ap)
 {
@@ -444,29 +425,44 @@ rt_revolve_norm( struct hit *hitp, struct soltab *stp, struct xray *rp )
 {
     register struct revolve_specific *rev =
 	(struct revolve_specific *)stp->st_specific;
-    vect_t	n, nT;
+    vect_t	n, nT, xv, yv;
+    fastf_t	angle;
 
-    VSET( n, hitp->hit_vpriv[X], hitp->hit_vpriv[Y], 0 );
-    n[Z] = MAGNITUDE( n ) * hitp->hit_vpriv[Z];
+    switch ( hitp->hit_surfno ) {
+	case START_FACE:
+	    VREVERSE( hitp->hit_normal, rev->yUnit );
+	    break;
+	case END_FACE:
+	    VCROSS( hitp->hit_normal, rev->zUnit, rev->rEnd );
+	    VUNITIZE( hitp->hit_normal );
+	    break;
+	default:
+	    VSET( n, hitp->hit_vpriv[X], hitp->hit_vpriv[Y], 0 );
+	    n[Z] = MAGNITUDE( n ) * hitp->hit_vpriv[Z];
+	
+	    if ( NEAR_ZERO( 1.0/hitp->hit_vpriv[Z], SMALL_FASTF ) ) {
+		VSET( n, 0, 0, 1 );
+	    }
 
-    if ( NEAR_ZERO( 1.0/hitp->hit_vpriv[Z], SMALL_FASTF ) ) {
-	VSET( n, 0, 0, 1 );
-    }
-
-    nT[X] = ( rev->xUnit[X] * n[X] )
-	+ ( rev->yUnit[X] * n[Y] )
-	+ ( rev->zUnit[X] * n[Z] );
-    nT[Y] = ( rev->xUnit[Y] * n[X] )
-	+ ( rev->yUnit[Y] * n[Y] )
-	+ ( rev->zUnit[Y] * n[Z] );
-    nT[Z] = ( rev->xUnit[Z] * n[X] )
-	+ ( rev->yUnit[Z] * n[Y] )
-	+ ( rev->zUnit[Z] * n[Z] );
-    VUNITIZE( nT );
-    if ( VDOT( nT, rp->r_dir) < 0 ) {
-	VMOVE( hitp->hit_normal, nT );
-    } else {
-	VREVERSE( hitp->hit_normal, nT );
+	    nT[X] = ( rev->xUnit[X] * n[X] )
+		+ ( rev->yUnit[X] * n[Y] )
+		+ ( rev->zUnit[X] * n[Z] );
+	    nT[Y] = ( rev->xUnit[Y] * n[X] )
+		+ ( rev->yUnit[Y] * n[Y] )
+		+ ( rev->zUnit[Y] * n[Z] );
+	    nT[Z] = ( rev->xUnit[Z] * n[X] )
+		+ ( rev->yUnit[Z] * n[Y] )
+		+ ( rev->zUnit[Z] * n[Z] );
+	    VUNITIZE( nT );
+	    VMOVE( hitp->hit_normal, nT );
+	    if ( NEAR_ZERO( 1.0/hitp->hit_vpriv[Z], SMALL_FASTF ) ) {
+		if ( VDOT( nT, rp->r_dir) < 0 ) {
+			VMOVE( hitp->hit_normal, nT );
+		} else {
+			VREVERSE( hitp->hit_normal, nT );
+		}
+	    }
+	    break;
     }
 }
 
@@ -531,13 +527,13 @@ rt_revolve_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 {
     struct rt_revolve_internal	*rip;
 
-    int 		nvert, i, j;
+    int 		nvert, narc, i, j;
     point2d_t		*verts;
     struct curve	*crv;
 
-    vect_t	ell[16], cir[16], ucir[16], height, xdir, ydir, ux, uy, uz;
+    vect_t	ell[16], cir[16], ucir[16], height, xdir, ydir, ux, uy, uz, rEnd, xEnd, yEnd;
     fastf_t	cos22_5 = 0.9238795325112867385,
-	cos67_5 = 0.3826834323650898373;
+		cos67_5 = 0.3826834323650898373;
 
     RT_CK_DB_INTERNAL(ip);
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
@@ -546,6 +542,12 @@ rt_revolve_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct 
     nvert = rip->sk->vert_count;
     verts = rip->sk->verts;
     crv = &rip->sk->skt_curve;
+
+    narc = floor( rip->ang * 8 * M_1_PI );
+    VSCALE( xEnd, rip->r, cos(rip->ang) );
+    VCROSS( rEnd, rip->axis3d, rip->r );	/* using rEnd for temp storage */
+    VSCALE( yEnd, rEnd, sin(rip->ang) );
+    VADD2( rEnd, xEnd, yEnd );
 
     VMOVE( uz, rip->axis3d );
     VMOVE( ux, rip->r );
@@ -590,20 +592,29 @@ rt_revolve_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct 
     /* draw circles */
     for ( i=0; i<nvert; i++ ) {
 	VSCALE( height, uz, verts[i][Y] );
-	for ( j=0; j<16; j++ ) {
+	for ( j=0; j<narc; j++ ) {
 	    VSCALE( cir[j], ucir[j], verts[i][X] );
 	    VADD3( ell[j], rip->v3d, cir[j], height );
 	}
-	RT_ADD_VLIST( vhead, ell[15], BN_VLIST_LINE_MOVE );
-	for ( j=0; j<16; j++ )  {
+	RT_ADD_VLIST( vhead, ell[0], BN_VLIST_LINE_MOVE );
+	for ( j=1; j<narc; j++ )  {
 	    RT_ADD_VLIST( vhead, ell[j], BN_VLIST_LINE_DRAW );
 	}
-
+	if ( narc < 16 ) {
+	    VSCALE( cir[narc], rEnd, verts[i][X] );
+	    VADD3( ell[narc], rip->v3d, cir[narc], height );
+	    RT_ADD_VLIST( vhead, ell[narc], BN_VLIST_LINE_DRAW );
+	} else {
+	    RT_ADD_VLIST( vhead, ell[0], BN_VLIST_LINE_DRAW );
+	}
     }
 
     /* draw sketch outlines */
-    for ( i=0; i<16; i++ ) {
+    for ( i=0; i<narc; i++ ) {
 	curve_to_vlist( vhead, ttol, rip->v3d, ucir[i], uz, rip->sk, crv );
+    }
+    if ( narc < 16 ) {
+	curve_to_vlist( vhead, ttol, rip->v3d, rEnd, uz, rip->sk, crv );
     }
 
     return(0);
