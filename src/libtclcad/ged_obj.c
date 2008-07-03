@@ -92,6 +92,7 @@ static int go_autoview(struct ged *gedp, int argc, const char *argv[]);
 static int go_center(struct ged *gedp, int argc, const char *argv[]);
 static int go_configure(struct ged *gedp, int argc, const char *argv[]);
 static int go_delete_view(struct ged *gedp, int argc, const char *argv[]);
+static int go_draw(struct ged *gedp, int argc, const char *argv[]);
 #ifdef USE_FBSERV
 static int go_listen(struct ged *gedp, int argc, const char *argv[]);
 #endif
@@ -100,7 +101,9 @@ static int go_refresh(struct ged *gedp, int argc, const char *argv[]);
 #if GED_USE_RUN_RT
 static int go_rt(struct ged *gedp, int argc, const char *argv[]);
 #endif
+static int go_set_fb_mode(struct ged *gedp, int argc, const char *argv[]);
 static int go_size(struct ged *gedp, int argc, const char *argv[]);
+static int go_vmake(struct ged *gedp, int argc, const char *argv[]);
 static int go_zbuffer(struct ged *gedp, int argc, const char *argv[]);
 
 
@@ -133,7 +136,7 @@ static struct bu_cmdtab go_cmds[] = {
     {"comb_color",	ged_comb_color},
     {"configure",	go_configure},
     {"delete_view",	go_delete_view},
-    {"draw",		ged_draw},
+    {"draw",		go_draw},
     {"E",		ged_E},
     {"edcomb",		ged_edcomb},
     {"edmater",		ged_edmater},
@@ -185,11 +188,13 @@ static struct bu_cmdtab go_cmds[] = {
     {"rtedge",		go_rtedge},
 #endif
 #endif
+    {"set_fb_mode",	go_set_fb_mode},
     {"set_transparency",	ged_set_transparency},
     {"set_uplotOutputMode",	ged_set_uplotOutputMode},
     {"shader",		ged_shader},
     {"size",		go_size},
     {"tree",		ged_tree},
+    {"vmake",		go_vmake},
     {"who",		ged_who},
     {"wmater",		ged_wmater},
     {"zap",		ged_zap},
@@ -524,6 +529,7 @@ Usage: go_open\n\
 static int
 go_aet(struct ged *gedp, int argc, const char *argv[])
 {
+    int ret;
     int ac;
     char *av[6];
     struct ged_dm_view *gdvp;
@@ -538,7 +544,7 @@ go_aet(struct ged *gedp, int argc, const char *argv[])
     if (argc == 1) {
 	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (6 < argc) {
@@ -569,12 +575,19 @@ go_aet(struct ged *gedp, int argc, const char *argv[])
 	    av[i-1] = (char *)argv[i];
 	av[i-1] = (char *)0;
     }
-    return ged_aet(gedp, ac, (const char **)av);
+
+    ret = ged_aet(gedp, ac, (const char **)av);
+
+    if (ac != 1 && ret == BRLCAD_OK)
+	go_refresh_view(gdvp);
+
+    return ret;
 }
 
 static int
 go_autoview(struct ged *gedp, int argc, const char *argv[])
 {
+    int ret;
     int ac;
     char *av[2];
     struct ged_dm_view *gdvp;
@@ -604,12 +617,18 @@ go_autoview(struct ged *gedp, int argc, const char *argv[])
     ac = 1;
     av[0] = (char *)argv[0];
     av[1] = (char *)0;
-    return ged_autoview(gedp, ac, (const char **)av);
+    ret = ged_autoview(gedp, ac, (const char **)av);
+
+    if (ret == BRLCAD_OK)
+	go_refresh_view(gdvp);
+
+    return ret;
 }
 
 static int
 go_center(struct ged *gedp, int argc, const char *argv[])
 {
+    int ret;
     int ac;
     char *av[5];
     struct ged_dm_view *gdvp;
@@ -624,7 +643,7 @@ go_center(struct ged *gedp, int argc, const char *argv[])
     if (argc == 1) {
 	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (5 < argc) {
@@ -655,7 +674,12 @@ go_center(struct ged *gedp, int argc, const char *argv[])
 	    av[i-1] = (char *)argv[i];
 	av[i-1] = (char *)0;
     }
-    return ged_center(gedp, ac, (const char **)av);
+    ret = ged_center(gedp, ac, (const char **)av);
+
+    if (ac != 1 && ret == BRLCAD_OK)
+	go_refresh_view(gdvp);
+
+    return ret;
 }
 
 static int
@@ -696,10 +720,30 @@ go_configure(struct ged *gedp, int argc, const char *argv[])
 			   gdvp->gdv_dmp->dm_height);
 #endif
 
-    if (status == TCL_OK)
+    if (status == TCL_OK) {
+	go_refresh_view(gdvp);
 	return BRLCAD_OK;
+    }
 
     return BRLCAD_ERROR;
+}
+
+static int
+go_draw(struct ged *gedp, int argc, const char *argv[])
+{
+    struct ged_dm_view *gdvp;
+    int ret;
+
+    ret = ged_draw(gedp, argc, argv);
+
+    if (ret == BRLCAD_ERROR || gedp->ged_result_flags & GED_RESULT_FLAGS_HELP_BIT)
+	return ret;
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	go_refresh_view(gdvp);
+    }
+
+    return ret;
 }
 
 static int
@@ -748,9 +792,9 @@ static int
 go_new_view(struct ged *gedp, int argc, const char *argv[])
 {
     struct ged_dm_view *new_gdvp = BU_LIST_LAST(ged_dm_view, &go_current_gop->go_head_views.l);
-    int type;
     static const int name_index = 1;
     static const char *usage = "name type [args]";
+    int type = DM_TYPE_BAD;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
 
@@ -856,6 +900,27 @@ go_new_view(struct ged *gedp, int argc, const char *argv[])
     go_open_fbs(new_gdvp, go_current_gop->go_interp);
 #endif
 
+    /* Set default bindings */
+    {
+	struct bu_vls bindings;
+
+	bu_vls_init(&bindings);
+	bu_vls_printf(&bindings, "bind %S <Configure> {%S configure %S};",
+		      &new_gdvp->gdv_dmp->dm_pathName,
+		      &go_current_gop->go_name,
+		      &new_gdvp->gdv_name);
+	bu_vls_printf(&bindings, "bind %S <Expose> {%S refresh %S};",
+		      &new_gdvp->gdv_dmp->dm_pathName,
+		      &go_current_gop->go_name,
+		      &new_gdvp->gdv_name);
+	bu_vls_printf(&bindings, "wm protocol %S WM_DELETE_WINDOW {%S delete_view %S};",
+		      &new_gdvp->gdv_dmp->dm_pathName,
+		      &go_current_gop->go_name,
+		      &new_gdvp->gdv_name);
+	Tcl_Eval(go_current_gop->go_interp, bu_vls_addr(&bindings));
+	bu_vls_free(&bindings);
+    }
+
     return BRLCAD_OK;
 }
 
@@ -881,7 +946,7 @@ go_refresh(struct ged *gedp, int argc, const char *argv[])
     }
 
 #if 0
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
 #endif
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
@@ -918,10 +983,8 @@ go_rt(struct ged *gedp, int argc, const char *argv[])
     if (argc == 1) {
 	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_OK;
+	return BRLCAD_OK;
     }
-
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
 
     if (GO_MAX_RT_ARGS < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
@@ -956,8 +1019,66 @@ go_rt(struct ged *gedp, int argc, const char *argv[])
 #endif
 
 static int
+go_set_fb_mode(struct ged *gedp, int argc, const char *argv[])
+{
+    int mode;
+    struct ged_dm_view *gdvp;
+    static const char *usage = "name [mode]";
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+    gedp->ged_result = GED_RESULT_NULL;
+    gedp->ged_result_flags = 0;
+
+    /* must be wanting help */
+    if (argc == 1) {
+	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_OK;
+    }
+
+    if (3 < argc) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    /* Get fb mode */
+    if (argc == 2) {
+	bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_fbs.fbs_mode);
+	return BRLCAD_OK;
+    }
+
+    /* Set fb mode */
+    if (sscanf(argv[2], "%d", &mode) != 1) {
+	bu_vls_printf(&gedp->ged_result_str, "set_fb_mode: bad value - %s\n", argv[2]);
+	return BRLCAD_ERROR;
+    }
+
+    if (mode < 0)
+	mode = 0;
+    else if (GED_OBJ_FB_MODE_OVERLAY < mode)
+	mode = GED_OBJ_FB_MODE_OVERLAY;
+
+    gdvp->gdv_fbs.fbs_mode = mode;
+    go_refresh_view(gdvp);
+
+    return BRLCAD_OK;
+}
+
+static int
 go_size(struct ged *gedp, int argc, const char *argv[])
 {
+    int ret;
     int ac;
     char *av[3];
     struct ged_dm_view *gdvp;
@@ -972,7 +1093,7 @@ go_size(struct ged *gedp, int argc, const char *argv[])
     if (argc == 1) {
 	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (3 < argc) {
@@ -1000,9 +1121,14 @@ go_size(struct ged *gedp, int argc, const char *argv[])
 	av[1] = (char *)argv[2];
 	av[2] = (char *)0;
     }
-    return ged_size(gedp, ac, (const char **)av);
-}
 
+    ret = ged_size(gedp, ac, (const char **)av);
+
+    if (ac != 1 && ret == BRLCAD_OK)
+	go_refresh_view(gdvp);
+
+    return ret;
+}
 
 #ifdef USE_FBSERV
 static int
@@ -1020,7 +1146,7 @@ go_listen(struct ged *gedp, int argc, const char *argv[])
     if (argc == 1) {
 	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (3 < argc) {
@@ -1073,6 +1199,73 @@ go_listen(struct ged *gedp, int argc, const char *argv[])
 #endif
 
 static int
+go_vmake(struct ged *gedp, int argc, const char *argv[])
+{
+    struct ged_dm_view *gdvp;
+    static const char *usage = "vname pname ptype";
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+    gedp->ged_result = GED_RESULT_NULL;
+    gedp->ged_result_flags = 0;
+
+    /* must be wanting help */
+    if (argc == 1) {
+	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_OK;
+    }
+
+    if (argc != 4) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    {
+	int ret;
+	char *av[8];
+	char center[512];
+	char scale[128];
+
+	sprintf(center, "%lf %lf %lf",
+		-gdvp->gdv_view->gv_center[MDX],
+		-gdvp->gdv_view->gv_center[MDY],
+		-gdvp->gdv_view->gv_center[MDZ]);
+	sprintf(scale, "%lf", gdvp->gdv_view->gv_scale * 2.0);
+
+	av[0] = (char *)argv[0];
+	av[1] = "-o";
+	av[2] = center;
+	av[3] = "-s";
+	av[4] = scale;
+	av[5] = (char *)argv[2];
+	av[6] = (char *)argv[3];
+	av[7] = (char *)0;
+
+	ret = ged_make(gedp, 7, av);
+
+	if (ret == BRLCAD_OK) {
+	    av[0] = "draw";
+	    av[1] = (char *)argv[2];
+	    av[2] = (char *)0;
+	    go_draw(gedp, 2, (const char **)av);
+	}
+
+	return ret;
+    }
+}
+
+static int
 go_zbuffer(struct ged *gedp, int argc, const char *argv[])
 {
     int zbuffer;
@@ -1088,7 +1281,7 @@ go_zbuffer(struct ged *gedp, int argc, const char *argv[])
     if (argc == 1) {
 	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (3 < argc) {
@@ -1124,6 +1317,8 @@ go_zbuffer(struct ged *gedp, int argc, const char *argv[])
 	zbuffer = 1;
 
     DM_SET_ZBUFFER(gdvp->gdv_dmp, zbuffer);
+    go_refresh_view(gdvp);
+
     return BRLCAD_OK;
 }
 
@@ -1380,14 +1575,21 @@ go_refresh_view(struct ged_dm_view *gdvp)
     DM_DRAW_BEGIN(gdvp->gdv_dmp);
 
 #ifdef USE_FBSERV
-    /*XXX For now, always doing underlay */
-    fb_refresh(gdvp->gdv_fbs.fbs_fbp, 0, 0,
-	       gdvp->gdv_dmp->dm_width, gdvp->gdv_dmp->dm_height);
-#endif
+    if (gdvp->gdv_fbs.fbs_mode)
+	fb_refresh(gdvp->gdv_fbs.fbs_fbp, 0, 0,
+		   gdvp->gdv_dmp->dm_width, gdvp->gdv_dmp->dm_height);
 
+    if (gdvp->gdv_fbs.fbs_mode == GED_OBJ_FB_MODE_OVERLAY) {
+	DM_DRAW_END(gdvp->gdv_dmp);
+	return;
+    } else if (gdvp->gdv_fbs.fbs_mode < GED_OBJ_FB_MODE_INTERLAY) {
+	DM_LOADMATRIX(gdvp->gdv_dmp, gdvp->gdv_view->gv_model2view, 0);
+	go_drawSList(gdvp->gdv_dmp, &gdvp->gdv_gop->go_gedp->ged_gdp->gd_headSolid);
+    }
+#else
     DM_LOADMATRIX(gdvp->gdv_dmp, gdvp->gdv_view->gv_model2view, 0);
-
     go_drawSList(gdvp->gdv_dmp, &gdvp->gdv_gop->go_gedp->ged_gdp->gd_headSolid);
+#endif
 
     /* Restore to non-rotated, full brightness */
     DM_NORMAL(gdvp->gdv_dmp);

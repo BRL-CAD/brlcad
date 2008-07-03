@@ -69,6 +69,10 @@ __BEGIN_DECLS
 #endif
 
 #define GED_OBJ_NUM_VIEWS 4
+#define GED_OBJ_FB_MODE_OFF 0
+#define GED_OBJ_FB_MODE_UNDERLAY 1
+#define GED_OBJ_FB_MODE_INTERLAY 2
+#define GED_OBJ_FB_MODE_OVERLAY  3
 
 struct ged_dm_view {
     struct bu_list	l;
@@ -78,8 +82,7 @@ struct ged_dm_view {
 #ifdef USE_FBSERV
     struct fbserv_obj	gdv_fbs;
 #endif
-    struct ged_obj	*gdv_gop;
-    int			*gdv_fb;
+    struct ged_obj	*gdv_gop; /* Pointer back to its ged object */
 };
 
 struct ged_obj {

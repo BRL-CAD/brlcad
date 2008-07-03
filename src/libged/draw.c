@@ -1083,9 +1083,11 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
     gedp->ged_result = GED_RESULT_NULL;
     gedp->ged_result_flags = 0;
 
-    if (argc < 2) {
+    /* must be wanting help */
+    if (argc == 1) {
+	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_OK;
     }
 
     /* skip past cmd */
