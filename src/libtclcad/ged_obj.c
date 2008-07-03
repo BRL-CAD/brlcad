@@ -89,21 +89,32 @@ static int go_open_tcl(ClientData clientData,
 
 static int go_aet(struct ged *gedp, int argc, const char *argv[]);
 static int go_autoview(struct ged *gedp, int argc, const char *argv[]);
+static int go_blast(struct ged *gedp, int argc, const char *argv[]);
 static int go_center(struct ged *gedp, int argc, const char *argv[]);
 static int go_configure(struct ged *gedp, int argc, const char *argv[]);
 static int go_delete_view(struct ged *gedp, int argc, const char *argv[]);
 static int go_draw(struct ged *gedp, int argc, const char *argv[]);
+static int go_E(struct ged *gedp, int argc, const char *argv[]);
+static int go_erase(struct ged *gedp, int argc, const char *argv[]);
+static int go_erase_all(struct ged *gedp, int argc, const char *argv[]);
+static int go_illum(struct ged *gedp, int argc, const char *argv[]);
+static int go_list_views(struct ged *gedp, int argc, const char *argv[]);
 #ifdef USE_FBSERV
 static int go_listen(struct ged *gedp, int argc, const char *argv[]);
 #endif
+static int go_mirror(struct ged *gedp, int argc, const char *argv[]);
 static int go_new_view(struct ged *gedp, int argc, const char *argv[]);
+static int go_overlay(struct ged *gedp, int argc, const char *argv[]);
 static int go_refresh(struct ged *gedp, int argc, const char *argv[]);
+static int go_refresh_all(struct ged *gedp, int argc, const char *argv[]);
 #if GED_USE_RUN_RT
 static int go_rt(struct ged *gedp, int argc, const char *argv[]);
 #endif
 static int go_set_fb_mode(struct ged *gedp, int argc, const char *argv[]);
 static int go_size(struct ged *gedp, int argc, const char *argv[]);
+static int go_set_transparency(struct ged *gedp, int argc, const char *argv[]);
 static int go_vmake(struct ged *gedp, int argc, const char *argv[]);
+static int go_zap(struct ged *gedp, int argc, const char *argv[]);
 static int go_zbuffer(struct ged *gedp, int argc, const char *argv[]);
 
 
@@ -116,6 +127,7 @@ static void go_fbs_callback();
 static int go_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp);
 #endif
 static void go_refresh_view(struct ged_dm_view *gdvp);
+static void go_refresh_all_views(struct ged_obj *gop);
 
 
 
@@ -129,7 +141,7 @@ static struct bu_cmdtab go_cmds[] = {
     {"attr",		ged_attr},
     {"autoview",	go_autoview},
     {"binary",		ged_binary},
-    {"blast",		ged_blast},
+    {"blast",		go_blast},
     {"bot_decimate",	ged_bot_decimate},
     {"bot_face_sort",	ged_bot_face_sort},
     {"center",		go_center},
@@ -137,22 +149,23 @@ static struct bu_cmdtab go_cmds[] = {
     {"configure",	go_configure},
     {"delete_view",	go_delete_view},
     {"draw",		go_draw},
-    {"E",		ged_E},
+    {"E",		go_E},
     {"edcomb",		ged_edcomb},
     {"edmater",		ged_edmater},
-    {"erase",		ged_erase},
-    {"erase_all",	ged_erase_all},
+    {"erase",		go_erase},
+    {"erase_all",	go_erase_all},
     {"form",		ged_form},
     {"get",		ged_get},
     {"get_autoview",	ged_get_autoview},
     {"get_eyemodel",	ged_get_eyemodel},
     {"how",		ged_how},
-    {"illum",		ged_illum},
+    {"illum",		go_illum},
 #if 0
     {"importFg4Section",	ged_importFg4Section},
 #endif
     {"item",		ged_item},
     {"l",		ged_list},
+    {"list_views",	go_list_views},
 #ifdef USE_FBSERV
     {"listen",		go_listen},
 #endif
@@ -162,7 +175,7 @@ static struct bu_cmdtab go_cmds[] = {
     {"make",		ged_make},
     {"make_name",	ged_make_name},
     {"mater",		ged_mater},
-    {"mirror",		ged_mirror},
+    {"mirror",		go_mirror},
     {"new_view",	go_new_view},
 #if 0
 #if GED_USE_RUN_RT
@@ -173,11 +186,12 @@ static struct bu_cmdtab go_cmds[] = {
     {"orotate",		ged_orotate},
     {"oscale",		ged_oscale},
     {"otranslate",	ged_otranslate},
-    {"overlay",		ged_overlay},
+    {"overlay",		go_overlay},
     {"paths",		ged_pathsum},
     {"put",		ged_put},
     {"qray",		ged_qray},
     {"refresh",		go_refresh},
+    {"refresh_all",	go_refresh_all},
     {"report",		ged_report},
     {"rmater",		ged_rmater},
 #if GED_USE_RUN_RT
@@ -189,7 +203,7 @@ static struct bu_cmdtab go_cmds[] = {
 #endif
 #endif
     {"set_fb_mode",	go_set_fb_mode},
-    {"set_transparency",	ged_set_transparency},
+    {"set_transparency",	go_set_transparency},
     {"set_uplotOutputMode",	ged_set_uplotOutputMode},
     {"shader",		ged_shader},
     {"size",		go_size},
@@ -197,7 +211,7 @@ static struct bu_cmdtab go_cmds[] = {
     {"vmake",		go_vmake},
     {"who",		ged_who},
     {"wmater",		ged_wmater},
-    {"zap",		ged_zap},
+    {"zap",		go_zap},
     {"zbuffer",		go_zbuffer},
     {(char *)NULL,	(int (*)())0}
 };
@@ -626,6 +640,21 @@ go_autoview(struct ged *gedp, int argc, const char *argv[])
 }
 
 static int
+go_blast(struct ged *gedp, int argc, const char *argv[])
+{
+    int ret;
+
+    ret = ged_blast(gedp, argc, argv);
+
+    if (ret == BRLCAD_ERROR || gedp->ged_result_flags & GED_RESULT_FLAGS_HELP_BIT)
+	return ret;
+
+    go_refresh_all_views(go_current_gop);
+
+    return ret;
+}
+
+static int
 go_center(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
@@ -731,7 +760,6 @@ go_configure(struct ged *gedp, int argc, const char *argv[])
 static int
 go_draw(struct ged *gedp, int argc, const char *argv[])
 {
-    struct ged_dm_view *gdvp;
     int ret;
 
     ret = ged_draw(gedp, argc, argv);
@@ -739,9 +767,22 @@ go_draw(struct ged *gedp, int argc, const char *argv[])
     if (ret == BRLCAD_ERROR || gedp->ged_result_flags & GED_RESULT_FLAGS_HELP_BIT)
 	return ret;
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	go_refresh_view(gdvp);
-    }
+    go_refresh_all_views(go_current_gop);
+
+    return ret;
+}
+
+static int
+go_E(struct ged *gedp, int argc, const char *argv[])
+{
+    int ret;
+
+    ret = ged_E(gedp, argc, argv);
+
+    if (ret == BRLCAD_ERROR || gedp->ged_result_flags & GED_RESULT_FLAGS_HELP_BIT)
+	return ret;
+
+    go_refresh_all_views(go_current_gop);
 
     return ret;
 }
@@ -786,6 +827,160 @@ go_delete_view(struct ged *gedp, int argc, const char *argv[])
     bu_free((genptr_t)gdvp, "ged_dm_view");
 
     return BRLCAD_OK;
+}
+
+static int
+go_erase(struct ged *gedp, int argc, const char *argv[])
+{
+    int ret;
+
+    ret = ged_erase(gedp, argc, argv);
+
+    if (ret == BRLCAD_ERROR || gedp->ged_result_flags & GED_RESULT_FLAGS_HELP_BIT)
+	return ret;
+
+    go_refresh_all_views(go_current_gop);
+
+    return ret;
+}
+
+static int
+go_erase_all(struct ged *gedp, int argc, const char *argv[])
+{
+    int ret;
+
+    ret = ged_erase_all(gedp, argc, argv);
+
+    if (ret == BRLCAD_ERROR || gedp->ged_result_flags & GED_RESULT_FLAGS_HELP_BIT)
+	return ret;
+
+    go_refresh_all_views(go_current_gop);
+
+    return ret;
+}
+
+static int
+go_illum(struct ged *gedp, int argc, const char *argv[])
+{
+    int ret;
+
+    ret = ged_illum(gedp, argc, argv);
+
+    if (ret == BRLCAD_ERROR || gedp->ged_result_flags & GED_RESULT_FLAGS_HELP_BIT)
+	return ret;
+
+    go_refresh_all_views(go_current_gop);
+
+    return ret;
+}
+
+static int
+go_list_views(struct ged *gedp, int argc, const char *argv[])
+{
+    struct ged_dm_view *gdvp;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+    gedp->ged_result = GED_RESULT_NULL;
+    gedp->ged_result_flags = 0;
+
+    if (argc != 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
+	return BRLCAD_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l))
+	bu_vls_printf(&gedp->ged_result_str, "%S ", &gdvp->gdv_name);
+
+    return BRLCAD_OK;
+}
+
+#ifdef USE_FBSERV
+static int
+go_listen(struct ged *gedp, int argc, const char *argv[])
+{
+    struct ged_dm_view *gdvp;
+    static const char *usage = "name [port]";
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+    gedp->ged_result = GED_RESULT_NULL;
+    gedp->ged_result_flags = 0;
+
+    /* must be wanting help */
+    if (argc == 1) {
+	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_OK;
+    }
+
+    if (3 < argc) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    if (gdvp->gdv_fbs.fbs_fbp == FBIO_NULL) {
+	bu_vls_printf(&gedp->ged_result_str, "%s listen: framebuffer not open!\n", argv[0]);
+	return BRLCAD_ERROR;
+    }
+
+    /* return the port number */
+    if (argc == 2) {
+	bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_fbs.fbs_listener.fbsl_port);
+	return BRLCAD_OK;
+    }
+
+    if (argc == 3) {
+	int port;
+
+	if (sscanf(argv[2], "%d", &port) != 1) {
+	    bu_vls_printf(&gedp->ged_result_str, "listen: bad value - %s\n", argv[2]);
+	    return BRLCAD_ERROR;
+	}
+
+	if (port >= 0)
+	    fbs_open(&gdvp->gdv_fbs, port);
+	else {
+	    fbs_close(&gdvp->gdv_fbs);
+	}
+	bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_fbs.fbs_listener.fbsl_port);
+	return BRLCAD_OK;
+    }
+
+    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    return BRLCAD_ERROR;
+}
+
+#endif
+
+static int
+go_mirror(struct ged *gedp, int argc, const char *argv[])
+{
+    int ret;
+    char *av[3];
+    struct ged_dm_view *gdvp;
+
+    ret = ged_mirror(gedp, argc, argv);
+
+    if (ret == BRLCAD_ERROR || gedp->ged_result_flags & GED_RESULT_FLAGS_HELP_BIT)
+	return ret;
+
+    av[0] = "draw";
+    av[1] = (char *)argv[argc-1];
+    av[2] = (char *)0;
+    go_draw(gedp, 2, (const char **)av);
+
+    return ret;
 }
 
 static int
@@ -924,6 +1119,21 @@ go_new_view(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
+static int
+go_overlay(struct ged *gedp, int argc, const char *argv[])
+{
+    int ret;
+
+    ret = ged_overlay(gedp, argc, argv);
+
+    if (ret == BRLCAD_ERROR || gedp->ged_result_flags & GED_RESULT_FLAGS_HELP_BIT)
+	return ret;
+
+    go_refresh_all_views(go_current_gop);
+
+    return ret;
+}
+
 /*XXX For now, doing only simple refresh */
 static int
 go_refresh(struct ged *gedp, int argc, const char *argv[])
@@ -960,6 +1170,19 @@ go_refresh(struct ged *gedp, int argc, const char *argv[])
     }
 
     go_refresh_view(gdvp);
+
+    return BRLCAD_OK;
+}
+
+static int
+go_refresh_all(struct ged *gedp, int argc, const char *argv[])
+{
+    if (argc != 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
+	return BRLCAD_ERROR;
+    }
+
+    go_refresh_all_views(go_current_gop);
 
     return BRLCAD_OK;
 }
@@ -1130,73 +1353,20 @@ go_size(struct ged *gedp, int argc, const char *argv[])
     return ret;
 }
 
-#ifdef USE_FBSERV
 static int
-go_listen(struct ged *gedp, int argc, const char *argv[])
+go_set_transparency(struct ged *gedp, int argc, const char *argv[])
 {
-    struct ged_dm_view *gdvp;
-    static const char *usage = "name [port]";
+    int ret;
 
-    /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
-    gedp->ged_result_flags = 0;
+    ret = ged_set_transparency(gedp, argc, argv);
 
-    /* must be wanting help */
-    if (argc == 1) {
-	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_OK;
-    }
+    if (ret == BRLCAD_ERROR || gedp->ged_result_flags & GED_RESULT_FLAGS_HELP_BIT)
+	return ret;
 
-    if (3 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
-    }
+    go_refresh_all_views(go_current_gop);
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
-	return BRLCAD_ERROR;
-    }
-
-    if (gdvp->gdv_fbs.fbs_fbp == FBIO_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s listen: framebuffer not open!\n", argv[0]);
-	return BRLCAD_ERROR;
-    }
-
-    /* return the port number */
-    if (argc == 2) {
-	bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_fbs.fbs_listener.fbsl_port);
-	return BRLCAD_OK;
-    }
-
-    if (argc == 3) {
-	int port;
-
-	if (sscanf(argv[2], "%d", &port) != 1) {
-	    bu_vls_printf(&gedp->ged_result_str, "listen: bad value - %s\n", argv[2]);
-	    return BRLCAD_ERROR;
-	}
-
-	if (port >= 0)
-	    fbs_open(&gdvp->gdv_fbs, port);
-	else {
-	    fbs_close(&gdvp->gdv_fbs);
-	}
-	bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_fbs.fbs_listener.fbsl_port);
-	return BRLCAD_OK;
-    }
-
-    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-    return BRLCAD_ERROR;
+    return ret;
 }
-
-#endif
 
 static int
 go_vmake(struct ged *gedp, int argc, const char *argv[])
@@ -1263,6 +1433,18 @@ go_vmake(struct ged *gedp, int argc, const char *argv[])
 
 	return ret;
     }
+}
+
+static int
+go_zap(struct ged *gedp, int argc, const char *argv[])
+{
+    int ret = ged_zap(gedp, argc, argv);
+
+    if (ret == BRLCAD_OK) {
+	go_refresh_all_views(go_current_gop);
+    }
+
+    return ret;
 }
 
 static int
@@ -1608,6 +1790,16 @@ go_refresh_view(struct ged_dm_view *gdvp)
     DM_DRAW_POINT_2D(gdvp->gdv_dmp, 0.0, 0.0);
 
     DM_DRAW_END(gdvp->gdv_dmp);
+}
+
+static void
+go_refresh_all_views(struct ged_obj *gop)
+{
+    struct ged_dm_view *gdvp;
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &gop->go_head_views.l)) {
+	go_refresh_view(gdvp);
+    }
 }
 
 /****************** GED Object Methods ********************/
