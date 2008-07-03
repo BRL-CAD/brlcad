@@ -102,6 +102,7 @@ static int go_list_views(struct ged *gedp, int argc, const char *argv[]);
 #ifdef USE_FBSERV
 static int go_listen(struct ged *gedp, int argc, const char *argv[]);
 #endif
+static int go_make(struct ged *gedp, int argc, const char *argv[]);
 static int go_mirror(struct ged *gedp, int argc, const char *argv[]);
 static int go_new_view(struct ged *gedp, int argc, const char *argv[]);
 static int go_overlay(struct ged *gedp, int argc, const char *argv[]);
@@ -172,7 +173,7 @@ static struct bu_cmdtab go_cmds[] = {
     {"listeval",	ged_pathsum},
     {"log",		ged_log},
     {"ls",		ged_ls},
-    {"make",		ged_make},
+    {"make",		go_make},
     {"make_name",	ged_make_name},
     {"mater",		ged_mater},
     {"mirror",		go_mirror},
@@ -962,6 +963,26 @@ go_listen(struct ged *gedp, int argc, const char *argv[])
 }
 
 #endif
+
+static int
+go_make(struct ged *gedp, int argc, const char *argv[])
+{
+    int ret;
+    char *av[3];
+    struct ged_dm_view *gdvp;
+
+    ret = ged_make(gedp, argc, argv);
+
+    if (ret == BRLCAD_ERROR || gedp->ged_result_flags & GED_RESULT_FLAGS_HELP_BIT)
+	return ret;
+
+    av[0] = "draw";
+    av[1] = (char *)argv[argc-2];
+    av[2] = (char *)0;
+    go_draw(gedp, 2, (const char **)av);
+
+    return ret;
+}
 
 static int
 go_mirror(struct ged *gedp, int argc, const char *argv[])
