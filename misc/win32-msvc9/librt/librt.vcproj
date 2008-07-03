@@ -284,6 +284,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\constraint.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\cut.c"
 				>
 			</File>
@@ -649,10 +653,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\librt\primitives\part\part.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\librt\pc_constraint.c"
 				>
 			</File>
 			<File
