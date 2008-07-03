@@ -60,7 +60,7 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
 
 #if 1
     bu_optind = 1;
-    while ((k = bu_getopt(argc, (char * const *)argv, (const char *)"d:D:hHo:O:p::P:xXyYzZ")) != EOF) {
+    while ((k = bu_getopt(argc, (char * const *)argv, (const char *)"d:D:hHo:O:p:P:xXyYzZ")) != EOF) {
 #else
     /* get a writable copy of argv */
     bu_vls_init(&vlsargv);
@@ -71,7 +71,7 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
     bu_optind = 1;
 
     /* Process arguments */
-    while ((k = bu_getopt(argc, nargv, "d:D:hHo:O:p::P:xXyYzZ")) != EOF) {
+    while ((k = bu_getopt(argc, nargv, "d:D:hHo:O:p:P:xXyYzZ")) != EOF) {
 #endif
 	switch (k) {
 	case 'd':
@@ -86,7 +86,10 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
 	    break;
 	case 'p':
 	case 'P':
-	    mirror_pt = atof(bu_optarg);
+	    if (sscanf(bu_optarg, "%lf", &mirror_pt) != 1) {
+		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		early_out = 1;
+	    }
 	    break;
 	case 'o':
 	case 'O':
