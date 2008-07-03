@@ -36,7 +36,7 @@
 int
 ged_make(struct ged *gedp, int argc, char *argv[])
 {
-    int status = GED_OK;
+    int status = BRLCAD_OK;
     int i;
     int k;
     int save_bu_optind;
@@ -66,8 +66,8 @@ ged_make(struct ged *gedp, int argc, char *argv[])
     struct rt_metaball_internal	*metaball_ip;
     static const char *usage = "-h | -t | -o origin -s sf name <arb8|arb7|arb6|arb5|arb4|arbn|ars|bot|ehy|ell|ell1|epa|eto|extrude|grip|half|nmg|part|pipe|rcc|rec|rhc|rpc|rpp|sketch|sph|tec|tgc|tor|trc>";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -78,7 +78,7 @@ ged_make(struct ged *gedp, int argc, char *argv[])
     if (argc == 1) {
 	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     bu_optind = 1;
@@ -93,14 +93,14 @@ ged_make(struct ged *gedp, int argc, char *argv[])
 		       &origin[Y],
 		       &origin[Z]) != 3) {
 		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	    break;
 	case 's':
 	case 'S':
 	    if (sscanf(bu_optarg, "%lf", &scale) != 1) {
 		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	    break;
 	case 't':
@@ -108,19 +108,19 @@ ged_make(struct ged *gedp, int argc, char *argv[])
 	    if (argc == 2) {
 		gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 		bu_vls_printf(&gedp->ged_result_str, "arb8 arb7 arb6 arb5 arb4 arbn ars bot ehy ell ell1 epa eto extrude grip half nmg part pipe rcc rec rhc rpc rpp sketch sph tec tgc tor trc superell metaball");
-		return GED_OK;
+		return BRLCAD_OK;
 	    }
 
 	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	case 'h':
 	case 'H':
 	    gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	default:
 	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
@@ -128,12 +128,12 @@ ged_make(struct ged *gedp, int argc, char *argv[])
 
     if (argc != 2) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     save_bu_optind = bu_optind;
 
-    GED_CHECK_EXISTS(gedp, argv[bu_optind], LOOKUP_QUIET, GED_ERROR);
+    GED_CHECK_EXISTS(gedp, argv[bu_optind], LOOKUP_QUIET, BRLCAD_ERROR);
     RT_INIT_DB_INTERNAL(&internal);
 
     if (strcmp(argv[bu_optind+1], "arb8") == 0 ||
@@ -745,11 +745,11 @@ ged_make(struct ged *gedp, int argc, char *argv[])
 
     } else if (strcmp(argv[bu_optind+1], "hf") == 0) {
 	bu_vls_printf(&gedp->ged_result_str, "make: the height field is deprecated and not supported by this command.\nUse the dsp primitive.\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     } else if (strcmp(argv[bu_optind+1], "pg") == 0 ||
 	       strcmp(argv[bu_optind+1], "poly") == 0) {
 	bu_vls_printf(&gedp->ged_result_str, "make: the polysolid is deprecated and not supported by this command.\nUse the bot primitive.");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     } else if (strcmp(argv[bu_optind+1], "cline") == 0 ||
 	       strcmp(argv[bu_optind+1], "dsp") == 0 ||
 	       strcmp(argv[bu_optind+1], "ebm") == 0 ||
@@ -758,7 +758,7 @@ ged_make(struct ged *gedp, int argc, char *argv[])
 	       strcmp(argv[bu_optind+1], "submodel") == 0 ||
 	       strcmp(argv[bu_optind+1], "vol") == 0) {
 	bu_vls_printf(&gedp->ged_result_str, "make: the %s primitive is not supported by this command", argv[bu_optind+1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     } else if (strcmp(argv[bu_optind+1], "metaball") == 0) {
 	struct wdb_metaballpt *mbpt;
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -787,16 +787,16 @@ ged_make(struct ged *gedp, int argc, char *argv[])
 	       metaball_ip->threshold, rt_metaball_lookup_type_name(metaball_ip->method));
     } else {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* no interrupts */
     (void)signal(SIGINT, SIG_IGN);
 
-    GED_DB_DIRADD(gedp, dp, argv[save_bu_optind], -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type, GED_ERROR);
-    GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
+    GED_DB_DIRADD(gedp, dp, argv[save_bu_optind], -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type, BRLCAD_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, BRLCAD_ERROR);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

@@ -36,8 +36,8 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
     struct bu_attribute_value_pair	*avpp;
     static const char *usage = "set|get|show|rm|append} object [args]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -48,37 +48,37 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
     if (argc == 1) {
 	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc < 3) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
 
     /* this is only valid for v5 databases */
     if (gedp->ged_wdbp->dbip->dbi_version < 5) {
 	bu_vls_printf(&gedp->ged_result_str, "Attributes are not available for this database format.\nPlease upgrade your database format using \"dbupgrade\" to enable attributes.", (char *)NULL);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Verify that this wdb supports lookup operations
        (non-null dbip) */
     if (gedp->ged_wdbp->dbip == 0) {
 	bu_vls_printf(&gedp->ged_result_str, "db does not support lookup operations");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if ((dp=db_lookup(gedp->ged_wdbp->dbip, argv[2], LOOKUP_QUIET)) == DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s does not exist\n", argv[2]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_avs_init_empty(&avs);
     if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
 	bu_vls_printf(&gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (strcmp(argv[1], "get") == 0) {
@@ -100,7 +100,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 				  dp->d_namep,
 				  argv[i]);
 		    bu_avs_free(&avs);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 		if (do_separators) {
 		    bu_vls_printf(&gedp->ged_result_str, "{%s} ", val);
@@ -111,7 +111,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	bu_avs_free(&avs);
-	return GED_OK;
+	return BRLCAD_OK;
 
     } else if ( strcmp( argv[1], "set" ) == 0 ) {
 	/* setting attribute/value pairs */
@@ -119,7 +119,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(&gedp->ged_result_str,
 			  "Error: attribute names and values must be in pairs!!!\n");
 	    bu_avs_free(&avs);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	i = 3;
@@ -131,11 +131,11 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(&gedp->ged_result_str,
 			  "Error: failed to update attributes\n");
 	    bu_avs_free(&avs);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	/* avs is freed by db5_update_attributes() */
-	return GED_OK;
+	return BRLCAD_OK;
     } else if (strcmp(argv[1], "rm") == 0) {
 	i = 3;
 	while (i < argc) {
@@ -146,17 +146,17 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(&gedp->ged_result_str,
 			  "Error: failed to update attributes\n");
 	    bu_avs_free(&avs);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	/* avs is freed by db5_replace_attributes() */
-	return GED_OK;
+	return BRLCAD_OK;
     } else if ( strcmp( argv[1], "append" ) == 0 ) {
 	if ((argc-3)%2) {
 	    bu_vls_printf(&gedp->ged_result_str,
 			  "Error: attribute names and values must be in pairs!!!\n");
 	    bu_avs_free(&avs);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	i = 3;
 	while (i < argc) {
@@ -181,11 +181,11 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(&gedp->ged_result_str,
 			  "Error: failed to update attributes\n");
 	    bu_avs_free(&avs);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	/* avs is freed by db5_replace_attributes() */
-	return GED_OK;
+	return BRLCAD_OK;
     } else if ( strcmp( argv[1], "show" ) == 0 ) {
 	int max_attr_name_len=0;
 	int tabs1=0;
@@ -278,7 +278,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 				  dp->d_namep,
 				  argv[i]);
 		    bu_avs_free(&avs);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 		bu_vls_printf(&gedp->ged_result_str, "\t%s", argv[i]);
 		len = strlen(val);
@@ -300,17 +300,17 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	    }
 	}
 
-	return GED_OK;
+	return BRLCAD_OK;
     } else {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR: unrecognized attr subcommand %s\n", argv[1]);
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
 
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

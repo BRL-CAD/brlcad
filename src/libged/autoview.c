@@ -43,19 +43,19 @@ ged_autoview(struct ged *gedp, int argc, const char *argv[])
     vect_t		radial;
     vect_t		small;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
     gedp->ged_result_flags = 0;
 
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
 
     if (argc != 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     VSETALL(min,  INFINITY);
@@ -99,7 +99,7 @@ ged_autoview(struct ged *gedp, int argc, const char *argv[])
     gedp->ged_gvp->gv_invSize = 1.0 / gedp->ged_gvp->gv_size;
     ged_view_update(gedp->ged_gvp);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

@@ -38,7 +38,7 @@ ged_pathsum(struct ged *gedp, int argc, const char *argv[])
     struct ged_trace_data gtd;
     static const char *usage = "pattern";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -49,12 +49,12 @@ ged_pathsum(struct ged *gedp, int argc, const char *argv[])
     if (argc == 1) {
 	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc < 2 || MAXARGS < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /*
@@ -86,7 +86,7 @@ ged_pathsum(struct ged *gedp, int argc, const char *argv[])
 	tok = strtok((char *)argv[1], "/");
 	while (tok) {
 	    if ((gtd.gtd_obj[gtd.gtd_objpos++] = db_lookup(gedp->ged_wdbp->dbip, tok, LOOKUP_NOISY)) == DIR_NULL)
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    tok = strtok((char *)NULL, "/");
 	}
     } else {
@@ -95,7 +95,7 @@ ged_pathsum(struct ged *gedp, int argc, const char *argv[])
 	/* build directory pointer array for desired path */
 	for (i=0; i<gtd.gtd_objpos; i++) {
 	    if ((gtd.gtd_obj[i] = db_lookup(gedp->ged_wdbp->dbip, argv[pos_in+i], LOOKUP_NOISY)) == DIR_NULL)
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	}
     }
 
@@ -112,7 +112,7 @@ ged_pathsum(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "  NOT FOUND\n", (char *)NULL);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

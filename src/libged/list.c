@@ -44,7 +44,7 @@ ged_list(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal	intern;
     static const char *usage = "[-r] <objects>";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -53,7 +53,7 @@ ged_list(struct ged *gedp, int argc, const char *argv[])
 
     if (argc < 2 || MAXARGS < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (argc > 1 && strcmp(argv[1], "-r") == 0) {
@@ -113,7 +113,7 @@ ged_list(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

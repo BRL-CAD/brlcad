@@ -50,8 +50,8 @@ ged_log(struct ged *gedp, int argc, const char *argv[])
 {
     static char *usage = "get|start|stop";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -64,29 +64,29 @@ ged_log(struct ged *gedp, int argc, const char *argv[])
 	/* must be wanting help */
 	if (argc == 1) {
 	    gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (argv[1][0] == 'g' && !strcmp(argv[1], "get")) {
 	bu_vls_vlscatzap(&gedp->ged_result_str, &gedp->ged_log);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argv[1][0] == 's' && !strcmp(argv[1], "start")) {
 	bu_log_add_hook(ged_logHook, (genptr_t)&gedp->ged_log);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argv[1][0] == 's' && !strcmp(argv[1], "stop")) {
 	bu_log_delete_hook(ged_logHook, (genptr_t)&gedp->ged_log);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     bu_log("Usage: %s ", argv[0], usage);
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 /*

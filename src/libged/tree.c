@@ -56,8 +56,8 @@ ged_tree(struct ged *gedp, int argc, const char *argv[])
     char				*whoargv[WHOARGVMAX+1] = {0};
     static const char *usage = "[-c] [-o outfile] [-i indentSize] [-d displayDepth] [object(s)]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -66,7 +66,7 @@ ged_tree(struct ged *gedp, int argc, const char *argv[])
 
     if (argc < 1 || MAXARGS < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Parse options */
@@ -82,20 +82,20 @@ ged_tree(struct ged *gedp, int argc, const char *argv[])
 	    case 'o':
 		if ((fdout = fopen(bu_optarg, "w+b")) == NULL) {
 		    bu_vls_printf(&gedp->ged_result_str, "Failed to open output file, %d", errno);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 		break;
 	    case 'd':
 		displayDepth = atoi(bu_optarg);
 		if (displayDepth < 0) {
 		    bu_vls_printf(&gedp->ged_result_str, "Negative number supplied as depth - unsupported.");
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 		break;
 	    case '?':
 	    default:
 		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	}
     }
 
@@ -105,7 +105,7 @@ ged_tree(struct ged *gedp, int argc, const char *argv[])
     /* tree of all displayed objects */
     if (argc == 1) {
 	char *whocmd[2] = {"who", NULL};
-	if (ged_who(gedp, 1, whocmd) == GED_OK) {
+	if (ged_who(gedp, 1, whocmd) == BRLCAD_OK) {
 	    buffer = bu_strdup(bu_vls_addr(&gedp->ged_result_str));
 	    bu_vls_trunc(&gedp->ged_result_str, 0);
 
@@ -136,7 +136,7 @@ ged_tree(struct ged *gedp, int argc, const char *argv[])
 	fclose(fdout);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

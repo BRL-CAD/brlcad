@@ -73,7 +73,7 @@ ged_open(const char *dbtype, const char *filename)
     } else {
 	struct db_i	*dbip;
 
-	if (ged_decode_dbip(filename, &dbip) != GED_OK)
+	if (ged_decode_dbip(filename, &dbip) != BRLCAD_OK)
 	    return GED_NULL;
 
 	if (strcmp(dbtype, "disk" ) == 0)
@@ -204,7 +204,7 @@ ged_decode_dbip(const char *dbip_string, struct db_i **dbipp)
     /* Could core dump */
     RT_CK_DBI(*dbipp);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 void

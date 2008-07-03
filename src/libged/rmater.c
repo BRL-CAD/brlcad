@@ -81,7 +81,7 @@ ged_rmater(struct ged *gedp, int argc, const char *argv[])
 #ifndef LINELEN
 #define LINELEN 256
 #endif
-    int status = GED_OK;
+    int status = BRLCAD_OK;
     FILE *fp;
     register struct directory *dp;
     struct rt_db_internal	intern;
@@ -94,8 +94,8 @@ ged_rmater(struct ged *gedp, int argc, const char *argv[])
     int inherit;
     static const char *usage = "filename";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -106,33 +106,33 @@ ged_rmater(struct ged *gedp, int argc, const char *argv[])
     if (argc == 1) {
 	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc != 2) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if ((fp = fopen(argv[1], "r")) == NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "ged_rmater: Failed to read file - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     while (bu_fgets(line, LINELEN, fp) != NULL) {
 	if ((extract_mater_from_line(line, name, shader,
-				     &r, &g, &b, &override, &inherit)) == GED_ERROR)
+				     &r, &g, &b, &override, &inherit)) == BRLCAD_ERROR)
 	    continue;
 
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_NOISY)) == DIR_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "ged_rmater: Failed to find %s\n", name);
-	    status = GED_ERROR;
+	    status = BRLCAD_ERROR;
 	    continue;
 	}
 
 	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting\n");
-	    status = GED_ERROR;
+	    status = BRLCAD_ERROR;
 	}
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	RT_CK_COMB(comb);
@@ -152,7 +152,7 @@ ged_rmater(struct ged *gedp, int argc, const char *argv[])
 	/* Write new values to database */
 	if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting\n");
-	    status = GED_ERROR;
+	    status = BRLCAD_ERROR;
 	}
     }
 

@@ -38,14 +38,14 @@ ged_edmater(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "comb(s)";
     char tmpfil[MAXPATHLEN];
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     /* must be wanting help */
     if (argc == 1) {
 	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     fp = bu_temp_file(tmpfil, MAXPATHLEN);

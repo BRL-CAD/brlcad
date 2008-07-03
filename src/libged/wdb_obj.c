@@ -10532,7 +10532,7 @@ wdb_newcmds_tcl(ClientData	clientData,
 	bu_vls_printf(&ged.ged_result_str, "%s not found", argv[1]);
 	ged.ged_result = GED_RESULT_NULL;
 	ged.ged_result_flags = 0;
-	ret = GED_ERROR;
+	ret = BRLCAD_ERROR;
     }
 
     Tcl_DStringInit(&ds);
@@ -10541,7 +10541,7 @@ wdb_newcmds_tcl(ClientData	clientData,
     Tcl_DStringAppendElement(&ds, bu_vls_addr(&ged.ged_result_str));
     Tcl_DStringResult(interp, &ds);
 
-    if (ret == GED_ERROR)
+    if (ret == BRLCAD_ERROR)
 	return TCL_ERROR;
 
     return TCL_OK;

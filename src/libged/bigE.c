@@ -2219,14 +2219,14 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
     struct ged_client_data	*dgcdp;
     static const char *usage = "[-C#/#/# -s] objects(s)";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
 
     /* must be wanting help */
     if (argc == 1) {
 	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
@@ -2276,7 +2276,7 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
 	    default:
 	    {
 		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	}
     }
@@ -2317,7 +2317,7 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
 	bu_free(dgcdp, "dgcdp");
 
 	bu_vls_printf(&gedp->ged_result_str, "Failed to get objects\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     {
 	struct region *rp;
@@ -2358,7 +2358,7 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
     bu_vls_printf(&gedp->ged_result_str, "E: %ld vectors in %ld sec\n",
 	    dgcdp->nvectors, (long)(dgcdp->etime - dgcdp->start_time));
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 /*

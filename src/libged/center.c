@@ -40,7 +40,7 @@ ged_center(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "[\"x y z\"]";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);

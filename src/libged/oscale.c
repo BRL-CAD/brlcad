@@ -44,8 +44,8 @@ ged_oscale(struct ged *gedp, int argc, const char *argv[])
     point_t keypoint;
     static const char *usage = "obj sf [kX kY kZ]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -56,17 +56,17 @@ ged_oscale(struct ged *gedp, int argc, const char *argv[])
     if (argc == 1) {
 	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc != 3 && argc != 6) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (sscanf(argv[2], "%lf", &sf) != 1) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: bad sf value - %s", argv[0], argv[2]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (argc == 3) {
@@ -87,24 +87,24 @@ ged_oscale(struct ged *gedp, int argc, const char *argv[])
 
 	if (sscanf(argv[3], "%lf", &keypoint[X]) != 1) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: bad kx value - %s", argv[0], argv[3]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (sscanf(argv[4], "%lf", &keypoint[Y]) != 1) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: bad ky value - %s", argv[0], argv[4]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (sscanf(argv[5], "%lf", &keypoint[Z]) != 1) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: bad kz value - %s", argv[0], argv[5]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	VSCALE(keypoint, keypoint, gedp->ged_wdbp->dbip->dbi_local2base);
 
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET)) == DIR_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: %s not found", argv[0], argv[1]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
@@ -115,16 +115,16 @@ ged_oscale(struct ged *gedp, int argc, const char *argv[])
     bn_mat_mul(tmpMat, invXform, smat);
     bn_mat_mul(emat, tmpMat, gtd.gtd_xform);
 
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, emat, &rt_uniresource, GED_ERROR);
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, emat, &rt_uniresource, BRLCAD_ERROR);
     RT_CK_DB_INTERNAL(&intern);
-    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
 
 #if 0
     /* notify observers */
     bu_observer_notify(interp, &gedp->wdb_observers, bu_vls_addr(&gedp->wdb_name));
 #endif
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

@@ -49,7 +49,7 @@ ged_get_obj_bounds(struct ged	*gedp,
     /* Make a new rt_i instance from the existing db_i sructure */
     if ((rtip=rt_new_rti(gedp->ged_wdbp->dbip)) == RTI_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "rt_new_rti failure for ", gedp->ged_wdbp->dbip->dbi_filename);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     rtip->useair = use_air;
@@ -63,7 +63,7 @@ ged_get_obj_bounds(struct ged	*gedp,
 	if (db_string_to_path(&path,  rtip->rti_dbip, argv[i])) {
 	    bu_vls_printf(&gedp->ged_result_str, "db_string_to_path failed for ", argv[i]);
 	    rt_free_rti(rtip);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	/* check if we already got this tree */
@@ -75,7 +75,7 @@ ged_get_obj_bounds(struct ged	*gedp,
 	    if (db_string_to_path(&tmp_path, rtip->rti_dbip, regp->reg_name)) {
 		bu_vls_printf(&gedp->ged_result_str, "db_string_to_path failed for ", regp->reg_name);
 		rt_free_rti(rtip);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	    if (path.fp_names[0] == tmp_path.fp_names[0])
 		gottree = 1;
@@ -88,7 +88,7 @@ ged_get_obj_bounds(struct ged	*gedp,
 	if (!gottree && rt_gettree(rtip, path.fp_names[0]->d_namep)) {
 	    bu_vls_printf(&gedp->ged_result_str, "rt_gettree failed for ", argv[i]);
 	    rt_free_rti(rtip);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	db_free_full_path(&path);
     }
@@ -194,7 +194,7 @@ ged_get_objpath_mat(struct ged			*gedp,
 		 db_lookup(gedp->ged_wdbp->dbip, tok, LOOKUP_NOISY)) == DIR_NULL) {
 		bu_vls_printf(&gedp->ged_result_str, "ged_get_objpath_mat: Failed to find %s", tok);
 		free(av0);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 
 	    tok = strtok((char *)0, "/");
@@ -209,7 +209,7 @@ ged_get_objpath_mat(struct ged			*gedp,
 	    if ((gtdp->gtd_obj[i] =
 		 db_lookup(gedp->ged_wdbp->dbip, argv[pos_in+i], LOOKUP_NOISY)) == DIR_NULL) {
 		bu_vls_printf(&gedp->ged_result_str, "ged_get_objpath_mat: Failed to find %s", argv[pos_in+i]);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	}
     }
@@ -217,7 +217,7 @@ ged_get_objpath_mat(struct ged			*gedp,
     MAT_IDN(gtdp->gtd_xform);
     ged_trace(gtdp->gtd_obj[0], 0, bn_mat_identity, gtdp);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 /**
@@ -243,15 +243,15 @@ ged_get_obj_bounds2(struct ged			*gedp,
     VREVERSE(rpp_max, rpp_min);
 
     if (ged_get_objpath_mat(gedp, argc, argv, gtdp) == TCL_ERROR)
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 
     dp = gtdp->gtd_obj[gtdp->gtd_objpos-1];
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, gtdp->gtd_xform, &rt_uniresource, GED_ERROR);
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, gtdp->gtd_xform, &rt_uniresource, BRLCAD_ERROR);
 
     /* Make a new rt_i instance from the existing db_i structure */
     if ((rtip=rt_new_rti(gedp->ged_wdbp->dbip)) == RTI_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "rt_new_rti failure for %s", gedp->ged_wdbp->dbip->dbi_filename);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     BU_GETSTRUCT(stp, soltab);
@@ -272,7 +272,7 @@ ged_get_obj_bounds2(struct ged			*gedp,
     rt_db_free_internal(&intern, &rt_uniresource);
     bu_free( (char *)stp, "struct soltab" );
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 /*

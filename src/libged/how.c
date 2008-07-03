@@ -50,8 +50,8 @@ ged_how(struct ged *gedp, int argc, const char *argv[])
     int both = 0;
     static const char *usage = "[-b] object";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -62,12 +62,12 @@ ged_how(struct ged *gedp, int argc, const char *argv[])
     if (argc == 1) {
 	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc < 2 || 3 < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (argc == 3 &&
@@ -110,7 +110,7 @@ good:
     if (dpp != (struct directory **)NULL)
 	bu_free((genptr_t)dpp, "ged_how: directory pointers");
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
