@@ -155,10 +155,9 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 
     int 	i, j, nseg, nhits, in, out;
 
-    fastf_t	k, m;
+    fastf_t	k, m, h, aa, bb;
     point_t	dp, pr, xlated;
-    vect_t	vr, ua, ur, norm, temp, normS, normE;
-    fastf_t	h, aa, bb;
+    vect_t	vr, ur, norm, temp, normS, normE;
 
     fastf_t	start, end, min, max, angle;
 
@@ -190,10 +189,12 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 	if ( VDOT( normS, rp->r_dir ) < 0 && VDOT( normE, rp->r_dir ) < 0 ) {
 	    if ( rev->ang < M_PI ) {
 		min = (start>end)?start:end;	/* max of start, end */
+		max = min + 1;		/* unused, but set to pass (max > min) test */
 	    } else {
 		min = (end>start)?start:end;	/* min of start, end */
+		max = min - 1;		/* unused, but set to pass (min > max) test */
 	    }
-	    max = min + 1;	/* unused, but set to pass (max > min) test */
+
 	} else if ( VDOT( normS, rp->r_dir ) < 0 ) {
 	    min = start;
 	    max = end;
@@ -203,10 +204,11 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 	} else {
 	    if ( rev->ang < M_PI ) {
 		max = (end>start)?start:end;	/* min of start, end */
+		min = max - 1;		/* unused, but set to pass (max > min) test */
 	    } else {
 		max = (start>end)?start:end;	/* max of start, end */
+		min = max + 1;		/* unused, but set to pass (min > max) test */
 	    }
-	    min = max - 1;	/* unused, but set to pass (max > min) test */
 	}
 	if ( rev->ang < M_PI && max < min ) {
 	    return 0;
@@ -234,6 +236,7 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 
 /* find hyperbola intersection with each sketch segment */
     nseg = rev->sk->skt_curve.seg_count;
+    nseg = 5;
     for( i=0; i<nseg; i++ ) {
 	long *lng = (long *)rev->sk->skt_curve.segments[i];
 	struct line_seg *lsg;
@@ -331,6 +334,10 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 		out = j;
 	    }
 	}
+	if ( in == -1 || out == -1 ) {
+	    bu_log( "failed to find valid segment. nhits: %d\n", nhits );
+	    break;
+	}
 
 	/* trim segments as necessary */
 	if ( rev->ang < M_PI ) {
@@ -358,8 +365,10 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 	    } else if ( hits[out]->hit_surfno == -1 ) {
 		hits[out]->hit_dist = max;
 		hits[out]->hit_surfno = (max == start)?1:2;
-	    } else {
+	    } else if ( hits[in]->hit_dist < min && hits[out]->hit_dist > max ) {
 		if ( nhits+2 >= MAX_HITS ) return -1;	/* too many hits */
+		bu_log( "splitting segment (%d, %d), nhits: %d\n", in, out, nhits );
+
 		/* get a new segment for (in, max) */
 		RT_GET_SEG(segp, ap->a_resource);
 		segp->seg_stp = stp;
@@ -367,6 +376,7 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 		segp->seg_in = *hits[in];
 		hits[in] = NULL;
 
+		hits[nhits]->hit_magic = RT_HIT_MAGIC;
 		hits[nhits]->hit_dist = max;
 		hits[nhits]->hit_surfno = (max == start)?1:2;
 
@@ -376,10 +386,12 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 
 		/* set next segment to be (min, out) */
 		in = nhits+1;
+		hits[in]->hit_magic = RT_HIT_MAGIC;
 		hits[in]->hit_dist = min;
 		hits[in]->hit_surfno = (min == start)?1:2;
 
 		nhits+=2;
+		i+=2;
 	    }
 	}
 
@@ -392,7 +404,7 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 	hits[out] = NULL;
 	BU_LIST_INSERT( &(seghead->l), &(segp->l) );
     }
-
+/*    if ( nhits ) bu_log( "nhits: %d\n", nhits ); */
     return nhits;
 
 }
