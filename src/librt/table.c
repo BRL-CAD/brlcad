@@ -1010,7 +1010,7 @@ const struct rt_functab rt_functab[] = {
     },
 
     {RT_FUNCTAB_MAGIC, "ID_CONSTRAINT", "constrnt",
-     0,		
+     0,
      rt_nul_prep,	rt_nul_shot,	rt_nul_print,	rt_nul_norm,
      rt_nul_piece_shot,	rt_nul_piece_hitsegs,
      rt_nul_uv,		rt_nul_curve,	rt_nul_class,	rt_nul_free,
@@ -1032,7 +1032,7 @@ const struct rt_functab rt_functab[] = {
      rt_revolve_import5,	rt_revolve_export5,
      rt_nul_import,	rt_nul_export,	rt_revolve_ifree,
      rt_revolve_describe,	rt_nul_xform,	rt_revolve_parse,
-     sizeof(struct rt_revolve_internal),	RT_HYP_INTERNAL_MAGIC,
+     sizeof(struct rt_revolve_internal),	RT_REVOLVE_INTERNAL_MAGIC,
      rt_parsetab_get,	rt_parsetab_adjust,	rt_parsetab_form,
      NULL, rt_nul_params,
     },
