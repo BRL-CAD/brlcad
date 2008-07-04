@@ -44,6 +44,7 @@ int ibackground[3] = {0};
 int inonbackground[3] = {0};
 static short int pwidth;			/* Width of each pixel (in bytes) */
 static struct scanline* scanline;   /* From scanline.c */
+struct mfuncs *mfHead = MF_NULL;	/* Head of list of shaders */
 
 extern FBIO* fbp;
 
@@ -84,12 +85,17 @@ struct path_list {
  * It will be pointed by ap->a_user 
  */
 struct mlt_app {
-    struct path_list * paths;           /** @brief Current path */
-    point_t eye;                        /** @brief Position of the camera */
+    struct path_list * paths;       /** @brief Current path */
+    point_t eye;        /** @brief Position of the camera */
     struct point_list * lightSources;   /** @brief List of lightsource points */
-    struct point_list * nextPoint;      /** @brief Pointer used in rayhit() to alternate 
-                                          * between shooting from the camera and from
-                                          * the lightsource */
+    struct point_list * nextPoint;  /** @brief Pointer used in rayhit() to alternate 
+                                     * between shooting from the camera and from
+                                     * the lightsource */
+    genptr_t m_uptr;    /** @brief Generic pointer that will be used to hold useful
+                         * information that can't be stored in the application structure,
+                         * due to the application's pointer already being used to point
+                         * to the mlt structure.
+                         */
 };
 
 /*
@@ -306,7 +312,53 @@ view_end(register struct application *ap)
  *  e.g., generate lights, associate materials routines, etc.
  */
 void
-view_setup(struct rt_i *rtip) {}
+view_setup(struct rt_i *rtip)
+{
+    struct region *regp;
+
+    RT_CHECK_RTI(rtip);
+    /*
+     *  Initialize the material library for all regions.
+     *  As this may result in some regions being dropped,
+     *  (eg, light solids that become "implicit" -- non drawn),
+     *  this must be done before allowing the library to prep
+     *  itself.  This is a slight layering violation;  later it
+     *  may be clear how to repackage this operation.
+     */
+    regp = BU_LIST_FIRST(region, &rtip->HeadRegion);
+    while (BU_LIST_NOT_HEAD(regp, &rtip->HeadRegion))  {
+	switch (mlib_setup(&mfHead, regp, rtip)) {
+	    case -1:
+	    default:
+		    bu_log("mlib_setup failure on %s\n", regp->reg_name);
+		    break;
+	    case 0:
+		    if (R_DEBUG & RDEBUG_MATERIAL)
+		        bu_log("mlib_setup: drop region %s\n", regp->reg_name);
+		    {
+		    struct region *r = BU_LIST_NEXT(region, &regp->l);
+		    /* zap reg_udata? beware of light structs */
+		    rt_del_regtree( rtip, regp, &rt_uniresource );
+		    regp = r;
+		    continue;
+		}
+	    case 1:
+		/* Full success */
+		if (R_DEBUG&RDEBUG_MATERIAL &&
+		   ((struct mfuncs *)(regp->reg_mfuncs))->mf_print)  {
+		   ((struct mfuncs *)(regp->reg_mfuncs))->
+			mf_print( regp, regp->reg_udata );
+		}
+		break;
+	    case 2:
+		/* Full success, and this region should get dropped later */
+		/* Add to list of regions to drop */
+		bu_ptbl_ins( &rtip->delete_regs, (long *)regp );
+		break;
+	}
+	regp = BU_LIST_NEXT( region, &regp->l );
+    }
+}
 
 /*
  *			V I E W _ C L E A N U P
