@@ -128,8 +128,15 @@ rt_revolve_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 void
 rt_revolve_print( const struct soltab *stp )
 {
-    register const struct revolve_specific *revolve =
+    register const struct revolve_specific *rev =
 	(struct revolve_specific *)stp->st_specific;
+
+    VPRINT( "V", rev->v3d );
+    VPRINT( "Axis", rev->zUnit );
+    VPRINT( "Start", rev->xUnit );
+    VPRINT( "End", rev->rEnd );
+    fprintf( stderr, "angle = %g\n", rev->ang );
+    fprintf( stderr, "sketch = %s\n", rev->sketch_name );
 }
 
 /**
@@ -236,7 +243,6 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 
 /* find hyperbola intersection with each sketch segment */
     nseg = rev->sk->skt_curve.seg_count;
-    nseg = 5;
     for( i=0; i<nseg; i++ ) {
 	long *lng = (long *)rev->sk->skt_curve.segments[i];
 	struct line_seg *lsg;
@@ -803,7 +809,7 @@ rt_revolve_describe( struct bu_vls *str, const struct rt_db_internal *ip, int ve
 	    INTCLAMP(rip->r[Z] * mm2local) );
     bu_vls_strcat( str, buf );
 
-    sprintf(buf, "\tAngle=%g\n", INTCLAMP(rip->ang * mm2local));
+    sprintf(buf, "\tAngle=%g\n", INTCLAMP(rip->ang * RAD2DEG) );
     bu_vls_strcat( str, buf );
 
     snprintf( buf, 256, "\tsketch name: %s\n", rip->sketch_name );
