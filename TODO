@@ -26,6 +26,8 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------
 
+* optimize bitv counting
+
 * make fast4-g not skip every other line if there are DOS line endings
 
 * implement make, ted, edsol, mirror, and analyze for hyp primitive
