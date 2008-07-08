@@ -81,7 +81,7 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
   perform big/little endian conversions, report number and types of
   objects, allow deletion/undeletion/hiding/unhiding, provide some
   general means to manipulate the packed and unpacked .g file data for
-  performing low-level modifications.
+  performing low-level modifications
 
 * fix the "(type)(size_t)val" hacks (using ints like ptrs, etc)
 
