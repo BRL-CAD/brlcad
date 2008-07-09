@@ -177,62 +177,7 @@ view_2init(struct application *ap)
  *			V I E W _ P I X E L
  *
  *  Called by worker() after the end of proccessing for each pixel.
- *//*
-void
-view_pixel(register struct application* ap)
-{
-    int r, g, b, npix, do_eol;
-    struct scanline* slp;
-    char* pixelp;
-    width = pwidth = 512;
-
-    if (ap->a_user) {
-        r = g = b = 1;
-        VSETALL(ap->a_color, -1e-20); 
-    } else {
-        r = g = b = 200;
-    }
-
-    slp = &(scanline[ap->a_y]);
-	if (!(slp->sl_buf))  {
-		slp->sl_buf = bu_calloc(width, pwidth, "sl_buf scanline buffer");
-	}
-	pixelp = slp->sl_buf + (ap->a_x * pwidth);
-	*pixelp++ = r;
-	*pixelp++ = g;
-	*pixelp++ = b;
-
-    if (--(slp->sl_left) <= 0)
-        do_eol = 1;
-
-    if (!do_eol) return;
-
-    bu_semaphore_acquire(BU_SEM_SYSCALL);
-    if (sub_grid_mode) {
-        npix = fb_write(fbp, sub_xmin, ap->a_y,
-                (unsigned char *) scanline[ap->a_y].sl_buf + 3 * sub_xmin,
-                    sub_xmax - sub_xmin + 1);
-    } else {
-        npix = fb_write(fbp, 0, ap->a_y,
-          (unsigned char *) scanline[ap->a_y].sl_buf, width);
-    }
-    bu_semaphore_release(BU_SEM_SYSCALL);
-
-    if (sub_grid_mode) {
-        if (npix < sub_xmax - sub_xmin - 1)
-            bu_exit(EXIT_FAILURE, "scanline fb_write error");
-    } else {
-        if (npix < width)
-            bu_exit(EXIT_FAILURE, "scanline fb_write error");
-    }
-
-    bu_free(scanline[ap->a_y].sl_buf, "sl_buf scanline buffer");
-    scanline[ap->a_y].sl_buf = (char *) 0;
-    bu_log(".");
-
-}*/
-
-
+ */
 void
 view_pixel(register struct application *ap) 
 {
@@ -243,15 +188,36 @@ view_pixel(register struct application *ap)
     pwidth = 3;    
 
     if (ap->a_user == 0) {
-        r = 255;
-        g = 255;
-        b = 255;
+        r = ibackground[0];
+        g = ibackground[1];
+        b = ibackground[2];
         VSETALL(ap->a_color, -1e-20); 
     }
     else {
-        r = 0;
-        b = 0;
-        g = 0;
+        /* Setting r, g and b according to values found in rayhit()
+         * Gamma correction will be implemented here. */
+        r = ap->a_color[0]*255. + bn_rand0to1(ap->a_resource->re_randptr);
+        g = ap->a_color[1]*255. + bn_rand0to1(ap->a_resource->re_randptr);
+        b = ap->a_color[2]*255. + bn_rand0to1(ap->a_resource->re_randptr);
+
+        /* Restricting r, g and b values to 0..255 */
+        r = (r > 255) ? (255) : ((r < 0) ? (0) : (r));
+        g = (g > 255) ? (255) : ((g < 0) ? (0) : (g));
+        b = (b > 255) ? (255) : ((b < 0) ? (0) : (b));
+
+        if (r == ibackground[0] &&
+            g == ibackground[1] &&
+            b == ibackground[2]) {
+            
+            r = inonbackground[0];
+            g = inonbackground[1];
+            b = inonbackground[2];
+        }
+
+        /* Make sure that it's never perfect black */
+        if ((benchmark == 0) && (r == 0) && (g == 0) && (b == 0)) {
+            b = 1;
+        }
     }
 
 	slp = &scanline[ap->a_y];
@@ -306,24 +272,55 @@ void
 view_end(register struct application *ap) 
 {
     struct mlt_app *p_mlt;
-    struct path_list *p_path, *p_temp;
-    struct point_list *temp;
-    /* p_mlt = (struct mlt_app*) ap->a_uptr;
-    p_path = p_mlt->paths;
+    struct point_list *temp, *pt_list_head;
     
+    p_mlt = (struct mlt_app*) ap->a_uptr;
+    if ((p_mlt) && (p_mlt->paths)) {
+    pt_list_head = p_mlt->paths->pt_list;
     
-    /* Freeing path list */
-    /*while (BU_LIST_WHILE(p_temp, path_list, &(p_path->l))) {
-        while (BU_LIST_WHILE(temp, point_list, &(p_path->pt_list->l))) {
+    /* Not working - p_mlt->paths does not exist.
+
+    if (&(pt_list_head->l) != &(pt_list_head->l.forw)) {
+        for (BU_LIST_FOR(temp, point_list, &(pt_list_head->l))) {
+            bu_log("%f %f %f ;", temp->pt_cell[X], temp->pt_cell[Y], temp->pt_cell[Z]);
+        };
+    } */
+    } 
+
+    if (p_mlt) bu_free(p_mlt, "free mlt application");
+
+
+    /* Freeing path list *//*
+    while (BU_LIST_WHILE(temp, point_list, &(pt_list_head->l))) {
+        BU_LIST_DEQUEUE(&(temp->l));
+        bu_free(temp, "free point_list entry");
+    }
+    bu_free(pt_list_head, "free point_list head");
+    bu_free(p_mlt->paths, "free path list head");
+    bu_free(p_mlt, "free mlt app structure");
+
+    /* This block will be used once the multiple path lists are created.
+
+    bu_log("Started freeing path list... ");
+    while (BU_LIST_WHILE(p_temp, path_list, &(p_path->l))) {
+        struct point_list *pt_list_head, *temp;
+        pt_list_head = p_temp->pt_list;
+        bu_log("\nEntered while loop.. ");
+
+        bu_log("\nStarted freeing point list..");
+        while (BU_LIST_WHILE(temp, point_list, &(pt_list_head->l))) {
+            bu_log("\nEntered point list loop... ");
 	        BU_LIST_DEQUEUE(&(temp->l));
 	        bu_free(temp, "free point_list entry");
+            bu_log("\nPoint node fred.");
         }
-        bu_free(p_path->pt_list, "free point_list head");
+        bu_free(pt_list_head, "free point_list head");
 
         BU_LIST_DEQUEUE(&(p_temp->l));
         bu_free(p_temp, "free path_list entry");
     }
     bu_free(p_path, "free path_list head");
+    */
 
     /* Freeing scanlines */
     if (scanline)
@@ -428,11 +425,11 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
      * to point to a struct mlt_app
      */
     
-    /*
+    
     p_mlt = (struct mlt_app*) ap->a_uptr;
     p_path = p_mlt->paths;
 
-    /* This will be used find the hit point: *//*
+    /* This will be used find the hit point: */
     VJOIN1(segp->seg_in.hit_point, ap->a_ray.r_pt,
         segp->seg_in.hit_dist, ap->a_ray.r_dir);
 
@@ -445,7 +442,7 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
      * exists and allocates memory accordingly.
      */
 
-    /*
+    /* p_path is not being created, big memory leak here
 
     if (p_path) {
         if (p_path->pt_list) {
@@ -464,17 +461,24 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
     else {
         BU_GETSTRUCT(p_path, path_list);
         BU_LIST_INIT(&(p_path->l));
+        p_path->pt_list = (struct point_list *) NULL;
 
         BU_GETSTRUCT(p_path->pt_list, point_list);
         BU_LIST_INIT(&(p_path->pt_list->l));
         VMOVE(p_path->pt_list->pt_cell, segp->seg_in.hit_point);
+        
     }
+    */
 
     /* Use a BRDF function to set the new ap->a_ray->r_dir;
      * r_pt will be the same hitpoint found before;
      * and call rt_shootray(ap)
      */
     /*VMOVE(ap->a_ray.r_pt, segp->seg_in.hit_point);*/
+
+    ap->a_color[0] = 1;
+    ap->a_color[1] = 1;
+    ap->a_color[2] = 1;
 
     return 1;	/* report hit to main routine */
 }
