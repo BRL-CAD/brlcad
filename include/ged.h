@@ -1188,6 +1188,14 @@ GED_EXPORT BU_EXTERN(int ged_mater, (struct ged *gedp, int argc, const char *arg
 GED_EXPORT BU_EXTERN(int ged_mirror, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Rotate the view. Note - x, y and z are rotations in model coordinates.
+ *
+ * Usage:
+ *     mrot x y z
+ */
+GED_EXPORT BU_EXTERN(int ged_mrot, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Trace a single ray from the current view.
  *
  * Usage:
@@ -1195,14 +1203,6 @@ GED_EXPORT BU_EXTERN(int ged_mirror, (struct ged *gedp, int argc, const char *ar
  */
 GED_EXPORT BU_EXTERN(int ged_nirt, (struct ged *gedp, int argc, const char *argv[]));
 GED_EXPORT BU_EXTERN(int ged_vnirt, (struct ged *gedp, int argc, const char *argv[]));
-
-/**
- * Read material properties from a file.
- *
- * Usage:
- *     rmater file
- */
-GED_EXPORT BU_EXTERN(int ged_rmater, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Set/get object center.
@@ -1282,12 +1282,20 @@ GED_EXPORT BU_EXTERN(void ged_free_qray,
 GED_EXPORT BU_EXTERN(int ged_report, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Read material properties from a file.
+ *
+ * Usage:
+ *     rmater file
+ */
+GED_EXPORT BU_EXTERN(int ged_rmater, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Rotate the view.
  *
  * Usage:
  *     rot [-m|-v] x y z
  */
-GED_EXPORT BU_EXTERN(int ged_vrot, (struct ged *gedp, int argc, const char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_rot, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Run the raytracing application.
