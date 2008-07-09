@@ -33,12 +33,11 @@
 #include <string>
 #include <list>
 #include <stack>
-#include <boost/graph/graph_traits.hpp>
-#include <boost/graph/adjacency_list.hpp>
 
 #include "pcBasic.h"
 #include "pcVariable.h"
 #include "pcConstraint.h"
+#include "pcNetwork.h"
 
 template<class T>
 class BinaryNetwork;
