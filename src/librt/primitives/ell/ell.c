@@ -1651,8 +1651,8 @@ rt_ell_params(struct pc_pc_set * pcs, const struct rt_db_internal *ip)
 
     pcs->n_params=4;
     pcs->n_constraints=5;
-    pcs->ps = bu_calloc(pcs->n_params, sizeof ( struct pc_p_set),"pc_p_set");
-    pcs->cs = bu_calloc(pcs->n_constraints, sizeof ( struct pc_c_set),"pc_c_set");
+    pcs->ps = bu_calloc(pcs->n_params, sizeof ( struct pc_param),"pc_param");
+    pcs->cs = bu_calloc(pcs->n_constraints, sizeof ( struct pc_constrnt),"pc_constrnt");
     
     strcpy(pcs->ps[0].pname,"V");
     pcs->ps[0].ptype = pc_point;

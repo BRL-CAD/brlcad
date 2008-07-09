@@ -2566,7 +2566,7 @@ rt_extrude_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, c
  *
  */
 int
-rt_extrude_params(struct pc_param_set * ps, const struct rt_db_internal *ip)
+rt_extrude_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
 {
     return(0);			/* OK */
 }

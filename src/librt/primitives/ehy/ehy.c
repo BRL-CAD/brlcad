@@ -1674,7 +1674,7 @@ rt_ehy_ifree(struct rt_db_internal *ip)
  *
  */
 int
-rt_ehy_params(struct pc_param_set * ps, const struct rt_db_internal *ip)
+rt_ehy_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
 {
     return(0);			/* OK */
 }

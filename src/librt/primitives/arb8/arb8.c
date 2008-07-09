@@ -2116,7 +2116,7 @@ rt_arb_edit(Tcl_Interp			*interp,
  *
  */
 int
-rt_arb_params(struct pc_param_set * ps, const struct rt_db_internal *ip)
+rt_arb_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
 {
     return(0);			/* OK */
 }

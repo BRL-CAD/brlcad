@@ -1803,30 +1803,10 @@ struct bezier_seg	/**< @brief  Bezier curve segment */
 };
 
 /**
- * Structures required for describing Parameters, parameter sets
- */
-
-/* To be removed */
-struct pc_parameter {
-    char *name;
-    int parametrized;
-    fastf_t value;
-    fastf_t min;
-    fastf_t max;
-    fastf_t step;
-};
-
-/* To be removed */
-struct pc_param_set {
-    long len;
-    struct pc_parameter * p;
-};
-
-/**
  * A composite set of parameters constraints with respect to those 
  * parameters. Used for declaration by each geometry object
  */
-struct pc_p_set {
+struct pc_param {
     char pname[10];
     enum ptype {
 	pc_value,
@@ -1839,7 +1819,7 @@ struct pc_p_set {
 	vectp_t vectorp;
     } pval;
 };
-struct pc_c_set {
+struct pc_constrnt {
     char cname[10];
     enum ctype {
 	pc_inequality,
@@ -1850,8 +1830,8 @@ struct pc_c_set {
 struct pc_pc_set {
     int n_params;
     int n_constraints;
-    struct pc_p_set * ps;
-    struct pc_c_set * cs;
+    struct pc_param * ps;
+    struct pc_constrnt * cs;
 };
 
 /**

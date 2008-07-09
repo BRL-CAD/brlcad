@@ -860,7 +860,7 @@ rt_pg_ifree(struct rt_db_internal *ip)
  *
  */
 int
-rt_pg_params(struct pc_param_set * ps, const struct rt_db_internal *ip)
+rt_pg_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
 {
     return(0);			/* OK */
 }

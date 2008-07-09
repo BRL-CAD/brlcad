@@ -2049,7 +2049,7 @@ rt_ebm_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double 
  *
  */
 int
-rt_ebm_params(struct pc_param_set * ps, const struct rt_db_internal *ip)
+rt_ebm_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
 {
     return(0);			/* OK */
 }

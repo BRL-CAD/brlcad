@@ -1418,7 +1418,7 @@ rt_rpc_ifree(struct rt_db_internal *ip)
  *
  */
 int
-rt_rpc_params(struct pc_param_set * ps, const struct rt_db_internal *ip)
+rt_rpc_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
 {
     return(0);			/* OK */
 }

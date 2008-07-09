@@ -2471,7 +2471,7 @@ rt_bot_form(struct bu_vls *log, const struct rt_functab *ftp)
  *
  */
 int
-rt_bot_params(struct pc_param_set * ps, const struct rt_db_internal *ip)
+rt_bot_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
 {
     return(0);			/* OK */
 }

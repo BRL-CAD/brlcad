@@ -2204,7 +2204,7 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
  *
  */
 int
-rt_hf_params(struct pc_param_set * ps, const struct rt_db_internal *ip)
+rt_hf_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
 {
     return(0);			/* OK */
 }

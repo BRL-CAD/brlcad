@@ -1060,7 +1060,7 @@ rt_superell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *
  *
  */
 int
-rt_superell_params(struct pc_param_set * ps, const struct rt_db_internal *ip)
+rt_superell_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
 {
     return(0);			/* OK */
 }

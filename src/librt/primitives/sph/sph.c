@@ -422,7 +422,7 @@ rt_sph_class(void)
  *
  */
 int
-rt_sph_params(struct pc_param_set * ps, const struct rt_db_internal *ip)
+rt_sph_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
 {
     return(0);			/* OK */
 }

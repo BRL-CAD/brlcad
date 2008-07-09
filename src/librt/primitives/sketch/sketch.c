@@ -2171,7 +2171,7 @@ rt_sketch_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, ch
  *
  */
 int
-rt_sketch_params(struct pc_param_set * ps, const struct rt_db_internal *ip)
+rt_sketch_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
 {
     return(0);			/* OK */
 }

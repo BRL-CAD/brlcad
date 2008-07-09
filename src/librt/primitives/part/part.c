@@ -1780,7 +1780,7 @@ rt_part_ifree(struct rt_db_internal *ip)
  *
  */
 int
-rt_part_params(struct pc_param_set * ps, const struct rt_db_internal *ip)
+rt_part_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
 {
     return(0);			/* OK */
 }
