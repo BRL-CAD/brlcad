@@ -63,14 +63,7 @@ __BEGIN_DECLS
 #  define PC_ARGS(args)                        ()
 #endif
 
-
-
-PC_EXPORT PC_EXTERN(int pc_write_parameter_set,(struct pc_param_set ps, struct directory * dp, struct db_i * dbip ));
-
-PC_EXPORT PC_EXTERN(int pc_generate_parameters,(struct pc_param_set * psp, struct directory * dp, struct db_i * dbip));
-
 PC_EXPORT PC_EXTERN(int pc_mk_constraint,(struct rt_wdb *wdbp, const char *constraintname, int append_ok));
-
 
 __END_DECLS
 

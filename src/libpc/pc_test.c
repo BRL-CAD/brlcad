@@ -51,11 +51,8 @@ main(int argc, char **argv)
     struct directory *dp;
     struct rt_db_internal ip;
     struct rt_ell_internal *eip;
-    struct pc_param_set ps;
     struct pc_pc_set pcs;
 
-    ps.len=4;
-    ps.p = (genptr_t)bu_malloc(ps.len * sizeof(struct pc_parameter), "pc_parameter");
     point_t cent;
     fastf_t rad;
     char solnam[9];
@@ -106,24 +103,10 @@ main(int argc, char **argv)
 	return 2;
     /*rt_db_get_internal(&intern, dp, fp->dbip, NULL, &rt_uniresource);*/
 
-    ps.p[0].name= "radius";
-    ps.p[1].name= "center-x";
-    ps.p[2].name= "center-y";
-    ps.p[3].name= "center-z";
-    for (i=0; i<4; i++) {
-	ps.p[i].value=2.33 + i;
-	ps.p[i].min=-1.0 + i;
-	ps.p[i].max=1.0 + i;
-	ps.p[i].step=0.0001+ i;
-	ps.p[i].parametrized=1;
-    }
-    pc_write_param_set(ps, dp, fp->dbip);
-    /*	pc_generate_parameters(&ps, dp, fp->dbip);*/
 
     pc_mk_constraint(fp,"Constraint",0);
     if ((dp = db_lookup(fp->dbip,"Constraint",LOOKUP_QUIET)) == DIR_NULL)
 	return 3;
-    /*pc_write_parameter_set(ps, dp, fp->dbip);*/
     wdb_import(fp, &ip,solnam, (matp_t)NULL);
     ip.idb_meth->ft_params(&pcs,&ip);
     fprintf(stdout, "%s = ( %f , %f , %f ) %s = (%f,%f,%f) %s = (%f,%f,%f) %s = (%f,%f,%f)\n",\
