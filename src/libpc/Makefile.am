@@ -2,8 +2,6 @@
 lib_LTLIBRARIES = libpc.la
 noinst_LTLIBRARIES = libpc_nil.la
 
-# XXX - should not blindly include src/other, should be provided by
-# configure if there's no suitable system boost
 # TODO: check existing boost using AX_BOOST_BASE([MINIMUM-VERSION]) ? in configure.ac
 #       and remove blind Include
 AM_CPPFLAGS = \
@@ -21,6 +19,7 @@ noinst_HEADERS = \
 	pcVariable.h \
 	pcConstraint.h \
 	pcNetwork.h \
+	pcParser.h \
 	pcSolver.h
 
 libpc_nil_la_SOURCES = \

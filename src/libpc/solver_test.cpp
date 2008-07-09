@@ -30,6 +30,8 @@
 
 #include "pcVariable.h"
 #include "pcNetwork.h"
+#include "pcSolver.h"
+#include "pcParser.h"
 
 /* Constraint functions */
 bool f1(std::vector<int> V ) {
