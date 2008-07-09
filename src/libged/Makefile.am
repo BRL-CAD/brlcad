@@ -40,6 +40,7 @@ libged_nil_la_SOURCES = \
 	make_name.c \
 	mater.c \
 	mirror.c \
+	mrot.c \
 	nirt.c \
 	ocenter.c \
 	orotate.c \
@@ -51,6 +52,7 @@ libged_nil_la_SOURCES = \
 	qray.c \
 	report.c \
 	rmater.c \
+	rot.c \
 	rt.c \
 	set_outputHandler.c \
 	set_transparency.c \
