@@ -10,6 +10,7 @@
 #include <boost/thread/exceptions.hpp>
 #include <boost/thread/locks.hpp>
 #include <boost/thread/thread_time.hpp>
+#include <boost/thread/xtime.hpp>
 #include <boost/assert.hpp>
 #include <errno.h>
 #include "timespec.hpp"
@@ -112,6 +113,10 @@ namespace boost
         bool timed_lock(TimeDuration const & relative_time)
         {
             return timed_lock(get_system_time()+relative_time);
+        }
+        bool timed_lock(boost::xtime const & absolute_time)
+        {
+            return timed_lock(system_time(absolute_time));
         }
 
 #ifdef BOOST_PTHREAD_HAS_TIMEDLOCK

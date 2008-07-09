@@ -1,5 +1,5 @@
 /*=============================================================================
-    Copyright (c) 2006 João Abecasis
+    Copyright (c) 2006 Joao Abecasis
     http://spirit.sourceforge.net/
 
   Distributed under the Boost Software License, Version 1.0. (See accompanying
@@ -34,7 +34,7 @@ BOOST_SPIRIT_CLASSIC_NAMESPACE_BEGIN
     //  Requirements:
     //      T is default constructible
     //          (There's an alternate implementation that relaxes this
-    //              requirement -- João Abecasis)
+    //              requirement -- Joao Abecasis)
     //      T::T() MUST not throw!
     //          this is a requirement of boost::call_once.
     //

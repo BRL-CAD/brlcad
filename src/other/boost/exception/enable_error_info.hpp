@@ -32,6 +32,12 @@ boost
             ~error_info_injector() throw()
                 {
                 }
+
+            char const *
+            diagnostic_information() const throw()
+                {
+                return boost::exception::_diagnostic_information(T::what());
+                }
             };
 
         struct large_size { char c[256]; };
@@ -82,6 +88,7 @@ boost
         }
 
     template <class T>
+    inline
 #if !BOOST_WORKAROUND(__BORLANDC__,BOOST_TESTED_AT(0x582))
     typename
 #endif

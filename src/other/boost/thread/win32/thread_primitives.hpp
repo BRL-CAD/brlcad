@@ -64,7 +64,7 @@ namespace boost
 # ifdef UNDER_CE
 #  ifndef WINAPI
 #   ifndef _WIN32_WCE_EMULATION
-#    define WINAPI  __cdecl	// Note this doesn't match the desktop definition
+#    define WINAPI  __cdecl     // Note this doesn't match the desktop definition
 #   else
 #    define WINAPI  __stdcall
 #   endif
@@ -282,16 +282,6 @@ namespace boost
 }
 
 #if defined(BOOST_MSVC) && (_MSC_VER>=1400)  && !defined(UNDER_CE)
-#if _MSC_VER==1400
-extern "C" unsigned char _interlockedbittestandset(long *a,long b);
-extern "C" unsigned char _interlockedbittestandreset(long *a,long b);
-#else
-extern "C" unsigned char _interlockedbittestandset(volatile long *a,long b);
-extern "C" unsigned char _interlockedbittestandreset(volatile long *a,long b);
-#endif
-
-#pragma intrinsic(_interlockedbittestandset)
-#pragma intrinsic(_interlockedbittestandreset)
 
 namespace boost
 {
@@ -299,6 +289,17 @@ namespace boost
     {
         namespace win32
         {
+#if _MSC_VER==1400
+            extern "C" unsigned char _interlockedbittestandset(long *a,long b);
+            extern "C" unsigned char _interlockedbittestandreset(long *a,long b);
+#else
+            extern "C" unsigned char _interlockedbittestandset(volatile long *a,long b);
+            extern "C" unsigned char _interlockedbittestandreset(volatile long *a,long b);
+#endif
+
+#pragma intrinsic(_interlockedbittestandset)
+#pragma intrinsic(_interlockedbittestandreset)
+
             inline bool interlocked_bit_test_and_set(long* x,long bit)
             {
                 return _interlockedbittestandset(x,bit)!=0;
