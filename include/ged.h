@@ -1282,6 +1282,14 @@ GED_EXPORT BU_EXTERN(void ged_free_qray,
 GED_EXPORT BU_EXTERN(int ged_report, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Rotate the view.
+ *
+ * Usage:
+ *     rot [-m|-v] x y z
+ */
+GED_EXPORT BU_EXTERN(int ged_vrot, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Run the raytracing application.
  *
  * Usage:
