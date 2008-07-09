@@ -156,6 +156,10 @@ ged_view_init(struct ged_view *gvp)
     VSETALL(gvp->gv_keypoint, 0.0);
     gvp->gv_coord = 'v';
     gvp->gv_rotate_about = 'v';
+    gvp->gv_minMouseDelta = -20;
+    gvp->gv_maxMouseDelta = 20;
+    gvp->gv_rscale = 0.4;
+    gvp->gv_sscale = 2.0;
     ged_view_update(gvp);
 }
 

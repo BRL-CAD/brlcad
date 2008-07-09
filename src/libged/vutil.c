@@ -91,6 +91,129 @@ ged_mat_aet(struct ged_view *gvp)
     bn_mat_mul2(tmat, gvp->gv_rotation);
 }
 
+int
+ged_do_rot(struct ged	*gedp,
+	   char		coord,
+	   mat_t	rmat,
+	   int		(*func)())
+{
+    mat_t temp1, temp2;
+
+    if (func != (int (*)())0)
+	return (*func)(gedp, coord, gedp->ged_gvp->gv_rotate_about, rmat);
+
+    switch (coord) {
+	case 'm':
+	    /* transform model rotations into view rotations */
+	    bn_mat_inv(temp1, gedp->ged_gvp->gv_rotation);
+	    bn_mat_mul(temp2, gedp->ged_gvp->gv_rotation, rmat);
+	    bn_mat_mul(rmat, temp2, temp1);
+	    break;
+	case 'v':
+	default:
+	    break;
+    }
+
+    /* Calculate new view center */
+    if (gedp->ged_gvp->gv_rotate_about != 'v') {
+	point_t		rot_pt;
+	point_t		new_origin;
+	mat_t		viewchg, viewchginv;
+	point_t		new_cent_view;
+	point_t		new_cent_model;
+
+	switch (gedp->ged_gvp->gv_rotate_about) {
+	    case 'e':
+		VSET(rot_pt, 0.0, 0.0, 1.0);
+		break;
+	    case 'k':
+		MAT4X3PNT(rot_pt, gedp->ged_gvp->gv_model2view, gedp->ged_gvp->gv_keypoint);
+		break;
+	    case 'm':
+		/* rotate around model center (0, 0, 0) */
+		VSET(new_origin, 0.0, 0.0, 0.0);
+		MAT4X3PNT(rot_pt, gedp->ged_gvp->gv_model2view, new_origin);
+		break;
+	    default:
+		return BRLCAD_ERROR;
+	}
+
+	bn_mat_xform_about_pt(viewchg, rmat, rot_pt);
+	bn_mat_inv(viewchginv, viewchg);
+
+	/* Convert origin in new (viewchg) coords back to old view coords */
+	VSET(new_origin, 0.0, 0.0, 0.0);
+	MAT4X3PNT(new_cent_view, viewchginv, new_origin);
+	MAT4X3PNT(new_cent_model, gedp->ged_gvp->gv_view2model, new_cent_view);
+	MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, new_cent_model);
+    }
+
+    /* pure rotation */
+    bn_mat_mul2(rmat, gedp->ged_gvp->gv_rotation);
+    ged_view_update(gedp->ged_gvp);
+
+    return BRLCAD_OK;
+}
+
+int
+ged_do_slew(struct ged *gedp, vect_t svec)
+{
+    point_t model_center;
+
+    MAT4X3PNT(model_center, gedp->ged_gvp->gv_view2model, svec);
+    MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, model_center);
+    ged_view_update(gedp->ged_gvp);
+
+    return BRLCAD_OK;
+}
+
+int
+ged_do_tra(struct ged	*gedp,
+	   char		coord,
+	   vect_t	tvec,
+	   int		(*func)())
+{
+    point_t delta;
+    point_t work;
+    point_t vc, nvc;
+
+    if (func != (int (*)())0)
+	return (*func)(gedp, coord, tvec);
+
+    switch (coord) {
+	case 'm':
+	    VSCALE(delta, tvec, gedp->ged_wdbp->dbip->dbi_base2local);
+	    MAT_DELTAS_GET_NEG(vc, gedp->ged_gvp->gv_center);
+	    break;
+	case 'v':
+	default:
+	    VSCALE(tvec, tvec, -2.0*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_gvp->gv_invSize);
+	    MAT4X3PNT(work, gedp->ged_gvp->gv_view2model, tvec);
+	    MAT_DELTAS_GET_NEG(vc, gedp->ged_gvp->gv_center);
+	    VSUB2(delta, work, vc);
+	    break;
+    }
+
+    VSUB2(nvc, vc, delta);
+    MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, nvc);
+    ged_view_update(gedp->ged_gvp);
+
+    return BRLCAD_OK;
+}
+
+int
+ged_do_zoom(struct ged *gedp, fastf_t sf)
+{
+    gedp->ged_gvp->gv_scale /= sf;
+    if (gedp->ged_gvp->gv_scale < RT_MINVIEWSCALE)
+	gedp->ged_gvp->gv_scale = RT_MINVIEWSCALE;
+    gedp->ged_gvp->gv_size = 2.0 * gedp->ged_gvp->gv_scale;
+    gedp->ged_gvp->gv_invSize = 1.0 / gedp->ged_gvp->gv_size;
+    ged_view_update(gedp->ged_gvp);
+
+    return BRLCAD_OK;
+}
+
 /*
  * Local Variables:
  * tab-width: 8

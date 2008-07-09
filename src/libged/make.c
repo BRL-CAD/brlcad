@@ -34,7 +34,7 @@
 #include "ged_private.h"
 
 int
-ged_make(struct ged *gedp, int argc, char *argv[])
+ged_make(struct ged *gedp, int argc, const char *argv[])
 {
     int status = BRLCAD_OK;
     int i;
@@ -84,7 +84,7 @@ ged_make(struct ged *gedp, int argc, char *argv[])
     bu_optind = 1;
 
     /* Process arguments */
-    while ((k = bu_getopt(argc, argv, "hHo:O:s:S:tT")) != EOF) {
+    while ((k = bu_getopt(argc, (char * const *)argv, "hHo:O:s:S:tT")) != EOF) {
 	switch (k) {
 	case 'o':
 	case 'O':

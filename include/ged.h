@@ -255,6 +255,12 @@ struct ged_view {
     genptr_t		gv_clientData;		/**< @brief  passed to gv_callback */
 #endif
     int			gv_zclip;
+    fastf_t		gv_prevMouseX;
+    fastf_t		gv_prevMouseY;
+    fastf_t		gv_minMouseDelta;
+    fastf_t		gv_maxMouseDelta;
+    fastf_t		gv_rscale;
+    fastf_t		gv_sscale;
 };
 
 
@@ -1154,7 +1160,7 @@ GED_EXPORT BU_EXTERN(int ged_ls, (struct ged *gedp, int argc, const char *argv[]
  * Usage:
  *     make obj type
  */
-GED_EXPORT BU_EXTERN(int ged_make, (struct ged *gedp, int argc, char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_make, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Make a unique object name.
@@ -1162,7 +1168,7 @@ GED_EXPORT BU_EXTERN(int ged_make, (struct ged *gedp, int argc, char *argv[]));
  * Usage:
  *     make_name template | -s [num]
  */
-GED_EXPORT BU_EXTERN(int ged_make_name, (struct ged *gedp, int argc, char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_make_name, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Modify material information.
@@ -1324,12 +1330,36 @@ GED_EXPORT BU_EXTERN(int ged_shader, (struct ged *gedp, int argc, const char *ar
 GED_EXPORT BU_EXTERN(int ged_size, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Slew the view
+ *
+ * Usage:
+ *     slew x y z
+ */
+GED_EXPORT BU_EXTERN(int ged_slew, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Translate the view.
+ *
+ * Usage:
+ *     tra x y z
+ */
+GED_EXPORT BU_EXTERN(int ged_tra, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Return the object hierarchy for all object(s) specified or for all currently displayed
  *
  * Usage:
  *     tree [-c] [-o outfile] [-i indentSize] [-d displayDepth] [object(s)]
  */
 GED_EXPORT BU_EXTERN(int ged_tree, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Rotate the view. Note - x, y and z are rotations in view coordinates.
+ *
+ * Usage:
+ *     vrot x y z
+ */
+GED_EXPORT BU_EXTERN(int ged_vrot, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * List the objects currently prepped for drawing
@@ -1354,6 +1384,14 @@ GED_EXPORT BU_EXTERN(int ged_wmater, (struct ged *gedp, int argc, const char *ar
  *     zap
  */
 GED_EXPORT BU_EXTERN(int ged_zap, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Zoom the view in or out.
+ *
+ * Usage:
+ *     zoom sf
+ */
+GED_EXPORT BU_EXTERN(int ged_zoom, (struct ged *gedp, int argc, const char *argv[]));
 
 
 __END_DECLS

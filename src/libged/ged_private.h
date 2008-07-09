@@ -176,7 +176,22 @@ BU_EXTERN (void ged_view_update,
 	   (struct ged_view *gvp));
 BU_EXTERN (void ged_mat_aet,
 	   (struct ged_view *gvp));
-
+BU_EXTERN (int ged_do_rot,
+	   (struct ged	*gedp,
+	    char	coord,
+	    mat_t	rmat,
+	    int		(*func)()));
+BU_EXTERN (int ged_do_slew,
+	   (struct ged	*gedp,
+	    vect_t	svec));
+BU_EXTERN (int ged_do_tra,
+	   (struct ged	*gedp,
+	    char	coord,
+	    vect_t	tvec,
+	    int		(*func)()));
+BU_EXTERN (int ged_do_zoom,
+	   (struct ged	*gedp,
+	    fastf_t	sf));
 
 
 __END_DECLS

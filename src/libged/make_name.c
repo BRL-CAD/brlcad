@@ -27,7 +27,7 @@
 
 
 int
-ged_make_name(struct ged *gedp, int argc, char *argv[])
+ged_make_name(struct ged *gedp, int argc, const char *argv[])
 {
     int status = BRLCAD_OK;
     struct bu_vls obj_name;

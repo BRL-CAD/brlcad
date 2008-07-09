@@ -57,17 +57,21 @@ libged_nil_la_SOURCES = \
 	set_uplotOutputMode.c \
 	shader.c \
 	size.c \
+	slew.c \
+	tra.c \
 	trace.c \
 	track.c \
 	tree.c \
 	vdraw.c \
 	view_obj.c \
+	vrot.c \
 	vutil.c \
 	wdb_comb_std.c \
 	wdb_obj.c \
 	who.c \
 	wmater.c \
-	zap.c
+	zap.c \
+	zoom.c
 
 # cannot set per-target CPPFLAGS until automake 1.7+
 AM_CPPFLAGS = \
