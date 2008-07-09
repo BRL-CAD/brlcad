@@ -172,7 +172,13 @@
  */
 /** @defgroup libpc libpc (Parametrics and Constraints)
  *
- * @defgroup soln Constraint Solution
+ * @defgroup pcsolver Constraint Solution
+ * @ingroup libpc
+ *
+ * @defgroup pcparser EBNF Parser
+ * @ingroup libpc
+ *
+ * @defgroup pcdbio Database Input/Output/Updation
  * @ingroup libpc
  *
  */

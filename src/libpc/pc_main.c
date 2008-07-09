@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libpc */
+/** @addtogroup pcdbio */
 /** @{ */
 /** @file pc_main.c
  *
