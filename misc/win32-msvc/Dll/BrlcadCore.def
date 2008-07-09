@@ -1,6 +1,13 @@
 EXPORTS
 
+bn_3pts_collinear
+bn_3pts_distinct
+bn_mat_determinant
 bn_mat_identity
+bn_mat_inv
+bn_mk_plane_3pts
+bn_mkpoint_3planes
+bn_pt3_pt3_equal
 
 bu_avs_free
 bu_avs_get
@@ -16,8 +23,8 @@ bu_debug
 bu_exit
 bu_fgets
 bu_file_exists
-bu_free
 bu_free_external
+bu_free
 bu_getopt
 bu_glong
 bu_hex_to_bitv
@@ -34,12 +41,13 @@ bu_ptbl_free
 bu_ptbl_init
 bu_ptbl_ins
 bu_ptbl_reset
+bu_ptbl
 bu_ptbl_rm
 bu_realloc
-bu_setjmp_valid
-bu_strdupm
 bu_strlcpym
 bu_struct_parse
+bu_strdupm
+bu_setjmp_valid
 bu_units_conversion
 bu_units_string
 bu_vls_addr
@@ -50,6 +58,8 @@ bu_vls_strcpy
 bu_vls_strgrab
 bu_vls_trunc
 
+db5_get_attributes
+db5_header_is_valid
 db_ck_v4gift_tree
 db_close
 db_dirbuild
@@ -63,15 +73,13 @@ db_tree_nleaves
 db_update_nref
 db_walk_tree
 
-db5_get_attributes
-db5_header_is_valid
-
 mk_add_pipe_pt
 mk_addmember
 mk_arb8
 mk_arbn
 mk_ars
 mk_bot
+mk_bot_from_nmg
 mk_brep
 mk_cline
 mk_comb
@@ -89,9 +97,9 @@ mk_id_editunits
 mk_id_units
 mk_nmg
 mk_particle
-mk_pipe
-mk_pipe_free
 mk_pipe_init
+mk_pipe_free
+mk_pipe
 mk_rcc
 mk_region1
 mk_rhc
@@ -102,7 +110,41 @@ mk_sph
 mk_tgc
 mk_tor
 mk_trc_h
+mk_trc_top
 mk_write_color_table
+
+nmg_booltree_leaf_tess
+nmg_break_edges
+nmg_close_shell
+nmg_cmface
+nmg_dup_shell
+nmg_find_model
+nmg_fix_normals
+nmg_fu_planeeqn
+nmg_gluefaces
+nmg_in_vert
+nmg_jf
+nmg_km
+nmg_ks
+nmg_make_faces_within_tol
+nmg_mirror_model
+nmg_mm
+nmg_model_vertex_fuse
+nmg_mrsv
+nmg_open_shells_connect
+nmg_pr_fu_briefly
+nmg_propagate_normals
+nmg_region_a
+nmg_reverse_face
+nmg_reverse_face_and_radials
+nmg_shell_a
+nmg_shell_coplanar_face_merge
+nmg_simplify_loop
+nmg_simplify_shell
+nmg_triangulate_model
+nmg_vertex_gv
+nmg_vertex_tabulate
+nmg_vmodel
 
 pdv_3cont
 pdv_3move
@@ -121,8 +163,8 @@ rt_dsp_ifree
 rt_ebm_ifree
 rt_free_rti
 rt_functab
-rt_g
 rt_gettree
+rt_g
 rt_init_resource
 rt_initial_tree_state
 rt_pg_to_bot
@@ -130,13 +172,6 @@ rt_prep
 rt_shootray
 rt_uniresource
 rt_vol_ifree
-
-nmg_booltree_leaf_tess
-nmg_km
-nmg_mm
-nmg_triangulate_model
-nmg_vertex_tabulate
-nmg_vmodel
 
 wdb_close
 wdb_create_cmd
