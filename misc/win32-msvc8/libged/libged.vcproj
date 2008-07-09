@@ -274,6 +274,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\mrot.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\nirt.c"
 				>
 			</File>
@@ -318,6 +322,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\rot.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\rt.c"
 				>
 			</File>
@@ -342,6 +350,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\slew.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\tra.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\trace.c"
 				>
 			</File>
@@ -359,6 +375,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\view_obj.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\vrot.c"
 				>
 			</File>
 			<File
@@ -383,6 +403,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\zap.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\zoom.c"
 				>
 			</File>
 		</Filter>
