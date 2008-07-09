@@ -2321,7 +2321,7 @@ go_tra(struct ged *gedp, int argc, const char *argv[])
     register int i;
     int ret;
     int ac;
-    char *av[5];
+    char *av[6];
     struct ged_dm_view *gdvp;
     static const char *usage = "name [-m|-v] x y z";
 
