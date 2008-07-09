@@ -39,6 +39,7 @@
 #include "rtprivate.h"
 #include "scanline.h"
 
+
 int use_air = 0;
 int ibackground[3] = {0};
 int inonbackground[3] = {0};
@@ -74,6 +75,7 @@ struct bu_structparse view_parse[] = {
 struct point_list {
     struct bu_list l;
     point_t pt_cell;
+    int color[3];
 };
 
 struct path_list {
@@ -106,7 +108,13 @@ struct mlt_app {
  */
 view_init(register struct application *ap, char *file, char *obj, int minus_o)
 {
-    return 0;		/* no framebuffer needed */
+    ap->a_ray.r_dir[0] = 1;
+    ap->a_ray.r_dir[1] = 0;
+    ap->a_ray.r_dir[2] = 1;
+    VUNITIZE(ap->a_ray.r_dir);
+
+
+    return 1;		/* no framebuffer needed */
 }
 
 /*
@@ -138,9 +146,13 @@ view_2init(struct application *ap)
         free_scanlines(height, scanline);
     scanline = alloc_scanlines(height);
 
+    /* Setting the pixel size */
+    pwidth = 3 + ((rpt_dist) ? (8) : (0));
+
     /* BUFMODE_SCANLINE
      * This will be expanded to handle multiple BUFMODES,
      * as in view.c */
+
     if (sub_grid_mode)  {
 	    for (i = sub_ymin; i <= sub_ymax; i++)
 		    scanline[i].sl_left = sub_xmax-sub_xmin+1;
@@ -150,12 +162,14 @@ view_2init(struct application *ap)
 		    scanline[i].sl_left = width;
     }
 
+
     /* Setting Lights if the user did not specify */
     if (BU_LIST_IS_EMPTY(&(LightHead.l)) ||
        (BU_LIST_UNINITIALIZED(&(LightHead.l)))) {
 		if (R_DEBUG&RDEBUG_SHOWERR) bu_log("No explicit light\n");
 		light_maker(1, view2model);
 	}
+
     ap->a_rt_i->rti_nlights = light_init(ap);
 }
 
@@ -163,59 +177,83 @@ view_2init(struct application *ap)
  *			V I E W _ P I X E L
  *
  *  Called by worker() after the end of proccessing for each pixel.
- */
+ *//*
+void
+view_pixel(register struct application* ap)
+{
+    int r, g, b, npix, do_eol;
+    struct scanline* slp;
+    char* pixelp;
+    width = pwidth = 512;
+
+    if (ap->a_user) {
+        r = g = b = 1;
+        VSETALL(ap->a_color, -1e-20); 
+    } else {
+        r = g = b = 200;
+    }
+
+    slp = &(scanline[ap->a_y]);
+	if (!(slp->sl_buf))  {
+		slp->sl_buf = bu_calloc(width, pwidth, "sl_buf scanline buffer");
+	}
+	pixelp = slp->sl_buf + (ap->a_x * pwidth);
+	*pixelp++ = r;
+	*pixelp++ = g;
+	*pixelp++ = b;
+
+    if (--(slp->sl_left) <= 0)
+        do_eol = 1;
+
+    if (!do_eol) return;
+
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
+    if (sub_grid_mode) {
+        npix = fb_write(fbp, sub_xmin, ap->a_y,
+                (unsigned char *) scanline[ap->a_y].sl_buf + 3 * sub_xmin,
+                    sub_xmax - sub_xmin + 1);
+    } else {
+        npix = fb_write(fbp, 0, ap->a_y,
+          (unsigned char *) scanline[ap->a_y].sl_buf, width);
+    }
+    bu_semaphore_release(BU_SEM_SYSCALL);
+
+    if (sub_grid_mode) {
+        if (npix < sub_xmax - sub_xmin - 1)
+            bu_exit(EXIT_FAILURE, "scanline fb_write error");
+    } else {
+        if (npix < width)
+            bu_exit(EXIT_FAILURE, "scanline fb_write error");
+    }
+
+    bu_free(scanline[ap->a_y].sl_buf, "sl_buf scanline buffer");
+    scanline[ap->a_y].sl_buf = (char *) 0;
+    bu_log(".");
+
+}*/
+
+
 void
 view_pixel(register struct application *ap) 
 {
-    register int	r, g, b;
+    register int	r, g, b, do_eol = 0;
     register char	*pixelp;
     register struct scanline	*slp;
-    register int	do_eol = 0;
-    /*unsigned char	dist[8];*/	/* pixel distance (in IEEE format) */
+    width = 512;
+    pwidth = 3;    
 
-    /* This if-then-else block will set the values of r, g and b.
-     * In case of miss, set them to the background color;
-     * In case of hit, set them according to the values of ap->a_color;
-     */
-    /* Case of miss */
     if (ap->a_user == 0) {
-        r = ibackground[0];
-        g = ibackground[1];
-        b = ibackground[2];
-
-        /* background flag */
+        r = 255;
+        g = 255;
+        b = 255;
         VSETALL(ap->a_color, -1e-20); 
     }
-    /* Case of hit */
     else {
-        /* Setting r, g and b according to values found in rayhit()
-         * Gamma correction will be implemented here. */
-        r = ap->a_color[0]*255. + bn_rand0to1(ap->a_resource->re_randptr);
-        g = ap->a_color[1]*255. + bn_rand0to1(ap->a_resource->re_randptr);
-        b = ap->a_color[2]*255. + bn_rand0to1(ap->a_resource->re_randptr);
-
-        /* Restricting r, g and b values to 0..255 */
-        r = (r > 255) ? (255) : ((r < 0) ? (0) : (r));
-        g = (g > 255) ? (255) : ((g < 0) ? (0) : (g));
-        b = (b > 255) ? (255) : ((b < 0) ? (0) : (b));
-
-        if (r == ibackground[0] &&
-            g == ibackground[1] &&
-            b == ibackground[2]) {
-            
-            r = inonbackground[0];
-            g = inonbackground[1];
-            b = inonbackground[2];
-        }
-
-        /* Make sure that it's never perfect black */
-        if ((benchmark == 0) && (r == 0) && (g == 0) && (b == 0)) {
-            b = 1;
-        }
+        r = 0;
+        b = 0;
+        g = 0;
     }
 
-    /* This is equivalent to rt's BUFMODE_SCANLINE
-     * Other options will be implemented later */
 	slp = &scanline[ap->a_y];
 	if (slp->sl_buf == ((char*) 0))  {
 		slp->sl_buf = bu_calloc(width, pwidth, "sl_buf scanline buffer");
@@ -252,19 +290,6 @@ view_pixel(register struct application *ap)
                 bu_exit(EXIT_FAILURE, "scanline fb_write error");
         }
     }
-    if (outfp != NULL) {
-        int count;
-
-        bu_semaphore_acquire(BU_SEM_SYSCALL);
-        if (fseek(outfp, ap->a_y * width * pwidth, 0) != 0)
-                fprintf(stderr, "fseek error\n");
-        count = fwrite(scanline[ap->a_y].sl_buf,
-                       sizeof(char), width * pwidth, outfp);
-        bu_semaphore_release(BU_SEM_SYSCALL);
-
-        if (count != width * pwidth)
-                bu_exit(EXIT_FAILURE, "view_pixel:  fwrite failure\n");
-    }
     bu_free(scanline[ap->a_y].sl_buf, "sl_buf scanline buffer");
     scanline[ap->a_y].sl_buf = (char *) 0;
 }
@@ -283,11 +308,12 @@ view_end(register struct application *ap)
     struct mlt_app *p_mlt;
     struct path_list *p_path, *p_temp;
     struct point_list *temp;
-    p_mlt = (struct mlt_app*) ap->a_uptr;
+    /* p_mlt = (struct mlt_app*) ap->a_uptr;
     p_path = p_mlt->paths;
     
+    
     /* Freeing path list */
-    while (BU_LIST_WHILE(p_temp, path_list, &(p_path->l))) {
+    /*while (BU_LIST_WHILE(p_temp, path_list, &(p_path->l))) {
         while (BU_LIST_WHILE(temp, point_list, &(p_path->pt_list->l))) {
 	        BU_LIST_DEQUEUE(&(temp->l));
 	        bu_free(temp, "free point_list entry");
@@ -393,7 +419,7 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
 {
     register struct mlt_app* p_mlt;
     register struct path_list* p_path;
-    bu_log("hit: 0x%x\n", ap->a_resource);
+    /*bu_log("hit: 0x%x\n", ap->a_resource);*/
 
     /* This will be used by view_pixel() to verify if the ray hit or missed */
     ap->a_user = 1;
@@ -401,10 +427,12 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
     /* The application uses a generic pointer (genptr_t)
      * to point to a struct mlt_app
      */
+    
+    /*
     p_mlt = (struct mlt_app*) ap->a_uptr;
     p_path = p_mlt->paths;
 
-    /* This will be used find the hit point: */
+    /* This will be used find the hit point: *//*
     VJOIN1(segp->seg_in.hit_point, ap->a_ray.r_pt,
         segp->seg_in.hit_dist, ap->a_ray.r_dir);
 
@@ -416,6 +444,9 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
      * If it exists, this block verifies if the point list also
      * exists and allocates memory accordingly.
      */
+
+    /*
+
     if (p_path) {
         if (p_path->pt_list) {
             struct point_list* new_point;
@@ -423,7 +454,7 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
             VMOVE(new_point->pt_cell, segp->seg_in.hit_point);
             BU_LIST_PUSH(&(p_path->pt_list->l), &(new_point->l));
         }
-        /* block probably never used ? */
+        
         else {
             BU_GETSTRUCT(p_path->pt_list, point_list);
             BU_LIST_INIT(&(p_path->pt_list->l));
@@ -443,9 +474,7 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
      * r_pt will be the same hitpoint found before;
      * and call rt_shootray(ap)
      */
-    VMOVE(ap->a_ray.r_pt, segp->seg_in.hit_point);
-
-
+    /*VMOVE(ap->a_ray.r_pt, segp->seg_in.hit_point);*/
 
     return 1;	/* report hit to main routine */
 }
@@ -458,7 +487,7 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
 int
 raymiss(register struct application *ap)
 {
-    bu_log("miss: 0x%x\n", ap->a_resource);
+    /*bu_log("miss: 0x%x\n", ap->a_resource);*/
     ap->a_user = 0;
     return 0;
 }
