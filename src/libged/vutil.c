@@ -182,7 +182,7 @@ ged_do_tra(struct ged	*gedp,
 
     switch (coord) {
 	case 'm':
-	    VSCALE(delta, tvec, gedp->ged_wdbp->dbip->dbi_base2local);
+	    VSCALE(delta, tvec, -gedp->ged_wdbp->dbip->dbi_base2local);
 	    MAT_DELTAS_GET_NEG(vc, gedp->ged_gvp->gv_center);
 	    break;
 	case 'v':

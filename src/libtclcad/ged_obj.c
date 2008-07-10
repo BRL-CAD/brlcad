@@ -116,18 +116,19 @@ static int go_new_view(struct ged *gedp, int argc, const char *argv[]);
 static int go_overlay(struct ged *gedp, int argc, const char *argv[]);
 static int go_refresh(struct ged *gedp, int argc, const char *argv[]);
 static int go_refresh_all(struct ged *gedp, int argc, const char *argv[]);
+static int go_rot(struct ged *gedp, int argc, const char *argv[]);
 static int go_rotate_mode(struct ged *gedp, int argc, const char *argv[]);
 #if GED_USE_RUN_RT
 static int go_rt(struct ged *gedp, int argc, const char *argv[]);
 #endif
 static int go_scale_mode(struct ged *gedp, int argc, const char *argv[]);
+static int go_set_coord(struct ged *gedp, int argc, const char *argv[]);
 static int go_set_fb_mode(struct ged *gedp, int argc, const char *argv[]);
 static int go_set_transparency(struct ged *gedp, int argc, const char *argv[]);
 static int go_size(struct ged *gedp, int argc, const char *argv[]);
 static int go_tra(struct ged *gedp, int argc, const char *argv[]);
 static int go_translate_mode(struct ged *gedp, int argc, const char *argv[]);
 static int go_vmake(struct ged *gedp, int argc, const char *argv[]);
-static int go_vrot(struct ged *gedp, int argc, const char *argv[]);
 static int go_vslew(struct ged *gedp, int argc, const char *argv[]);
 static int go_zap(struct ged *gedp, int argc, const char *argv[]);
 static int go_zbuffer(struct ged *gedp, int argc, const char *argv[]);
@@ -144,7 +145,8 @@ static int go_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp);
 #endif
 static void go_refresh_view(struct ged_dm_view *gdvp);
 static void go_refresh_all_views(struct ged_obj *gop);
-
+static void go_autoview_view(struct ged_dm_view *gdvp);
+static void go_autoview_all_views(struct ged_obj *gop);
 
 
 static struct ged_obj HeadGedObj;
@@ -200,6 +202,8 @@ static struct bu_cmdtab go_cmds[] = {
     {"mouse_rot",	go_mouse_rot},
     {"mouse_trans",	go_mouse_trans},
     {"mouse_scale",	go_mouse_scale},
+    {"mrot",		go_rot},
+    {"mtra",		go_tra},
     {"new_view",	go_new_view},
 #if 0
 #if GED_USE_RUN_RT
@@ -218,6 +222,7 @@ static struct bu_cmdtab go_cmds[] = {
     {"refresh_all",	go_refresh_all},
     {"report",		ged_report},
     {"rmater",		ged_rmater},
+    {"rot",		go_rot},
     {"rotate_mode",	go_rotate_mode},
 #if GED_USE_RUN_RT
     {"rt",		go_rt},
@@ -228,6 +233,7 @@ static struct bu_cmdtab go_cmds[] = {
 #endif
 #endif
     {"scale_mode",	go_scale_mode},
+    {"set_coord",	go_set_coord},
     {"set_fb_mode",	go_set_fb_mode},
     {"set_transparency",	go_set_transparency},
     {"set_uplotOutputMode",	ged_set_uplotOutputMode},
@@ -237,7 +243,8 @@ static struct bu_cmdtab go_cmds[] = {
     {"translate_mode",	go_translate_mode},
     {"tree",		ged_tree},
     {"vmake",		go_vmake},
-    {"vrot",		go_vrot},
+    {"vrot",		go_rot},
+    {"vtra",		go_tra},
     {"vslew",		go_vslew},
     {"who",		ged_who},
     {"wmater",		ged_wmater},
@@ -632,9 +639,6 @@ go_aet(struct ged *gedp, int argc, const char *argv[])
 static int
 go_autoview(struct ged *gedp, int argc, const char *argv[])
 {
-    int ret;
-    int ac;
-    char *av[2];
     struct ged_dm_view *gdvp;
     static const char *usage = "name";
 
@@ -658,16 +662,9 @@ go_autoview(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    gedp->ged_gvp = gdvp->gdv_view;
-    ac = 1;
-    av[0] = (char *)argv[0];
-    av[1] = (char *)0;
-    ret = ged_autoview(gedp, ac, (const char **)av);
+    go_autoview_view(gdvp);
 
-    if (ret == BRLCAD_OK)
-	go_refresh_view(gdvp);
-
-    return ret;
+    return BRLCAD_OK;
 }
 
 static int
@@ -792,13 +789,28 @@ static int
 go_draw(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
+    int aflag = 0;
+
+    {
+	char *av[2];
+
+	av[0] = "who";
+	av[1] = (char *)0;
+	ret = ged_who(gedp, 1, (const char **)av);
+
+	if (ret == BRLCAD_OK && strlen(bu_vls_addr(&gedp->ged_result_str)) == 0)
+	    aflag = 1;
+    }
 
     ret = ged_draw(gedp, argc, argv);
 
     if (ret == BRLCAD_ERROR || gedp->ged_result_flags & GED_RESULT_FLAGS_HELP_BIT)
 	return ret;
 
-    go_refresh_all_views(go_current_gop);
+    if (aflag)
+	go_autoview_all_views(go_current_gop);
+    else
+	go_refresh_all_views(go_current_gop);
 
     return ret;
 }
@@ -1208,7 +1220,7 @@ go_mouse_constrain_rot(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
     int ac;
-    char *av[5];
+    char *av[3];
     fastf_t x, y;
     fastf_t dx, dy;
     fastf_t sf;
@@ -1290,11 +1302,11 @@ go_mouse_constrain_rot(struct ged *gedp, int argc, const char *argv[])
 
     gedp->ged_gvp = gdvp->gdv_view;
     ac = 2;
-    av[0] = "vrot";
+    av[0] = "rot";
     av[1] = bu_vls_addr(&rot_vls);
     av[2] = (char *)0;
 
-    ret = ged_vrot(gedp, ac, (const char **)av);
+    ret = ged_rot(gedp, ac, (const char **)av);
     bu_vls_free(&rot_vls);
 
     if (ret == BRLCAD_OK)
@@ -1308,7 +1320,7 @@ go_mouse_constrain_trans(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
     int ac;
-    char *av[5];
+    char *av[3];
     fastf_t x, y;
     fastf_t dx, dy;
     fastf_t sf;
@@ -1410,7 +1422,7 @@ go_mouse_rot(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
     int ac;
-    char *av[5];
+    char *av[4];
     fastf_t x, y;
     fastf_t dx, dy;
     struct bu_vls rot_vls;
@@ -1473,12 +1485,13 @@ go_mouse_rot(struct ged *gedp, int argc, const char *argv[])
     bu_vls_printf(&rot_vls, "%lf %lf 0", dx, dy);
 
     gedp->ged_gvp = gdvp->gdv_view;
-    ac = 2;
-    av[0] = "vrot";
-    av[1] = bu_vls_addr(&rot_vls);
-    av[2] = (char *)0;
+    ac = 3;
+    av[0] = "rot";
+    av[1] = "-v";
+    av[2] = bu_vls_addr(&rot_vls);
+    av[3] = (char *)0;
 
-    ret = ged_vrot(gedp, ac, (const char **)av);
+    ret = ged_rot(gedp, ac, (const char **)av);
     bu_vls_free(&rot_vls);
 
     if (ret == BRLCAD_OK)
@@ -1582,7 +1595,7 @@ go_mouse_trans(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
     int ac;
-    char *av[3];
+    char *av[4];
     fastf_t x, y;
     fastf_t dx, dy;
     fastf_t inv_width;
@@ -1647,10 +1660,11 @@ go_mouse_trans(struct ged *gedp, int argc, const char *argv[])
     bu_vls_printf(&trans_vls, "%lf %lf 0", dx, dy);
 
     gedp->ged_gvp = gdvp->gdv_view;
-    ac = 2;
+    ac = 3;
     av[0] = "tra";
-    av[1] = bu_vls_addr(&trans_vls);
-    av[2] = (char *)0;
+    av[1] = "-v";
+    av[2] = bu_vls_addr(&trans_vls);
+    av[3] = (char *)0;
 
     ret = ged_tra(gedp, ac, (const char **)av);
     bu_vls_free(&trans_vls);
@@ -1948,6 +1962,10 @@ go_new_view(struct ged *gedp, int argc, const char *argv[])
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
+	bu_vls_printf(&bindings, "event generate %S <Configure>; %S autoview %S",
+		      &new_gdvp->gdv_dmp->dm_pathName,
+		      &go_current_gop->go_name,
+		      &new_gdvp->gdv_name);
 
 	Tcl_Eval(go_current_gop->go_interp, bu_vls_addr(&bindings));
 	bu_vls_free(&bindings);
@@ -2020,6 +2038,89 @@ go_refresh_all(struct ged *gedp, int argc, const char *argv[])
     }
 
     go_refresh_all_views(go_current_gop);
+
+    return BRLCAD_OK;
+}
+
+static int
+go_rot(struct ged *gedp, int argc, const char *argv[])
+{
+    register int i;
+    int ret;
+    int ac;
+    int alt_flag;
+    char *coord;
+    char *av[6];
+    struct ged_dm_view *gdvp;
+    static const char *alt_usage = "name x y z";
+    static const char *usage = "name [-m|-v] x y z";
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+    gedp->ged_result = GED_RESULT_NULL;
+    gedp->ged_result_flags = 0;
+
+    /* must be wanting help */
+    if (argc == 1) {
+	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
+
+	if (argv[0][0] == 'm' || argv[0][0] == 'v')
+	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], alt_usage);
+	else
+	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+
+	return BRLCAD_OK;
+    }
+
+    if (argv[0][0] == 'm' || argv[0][0] == 'v') {
+	if (argc != 5) {
+	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], alt_usage);
+	    return BRLCAD_ERROR;
+	}
+
+	if (argv[0][0] == 'm')
+	    coord = "-m";
+	else
+	    coord = "-v";
+
+	alt_flag = 1;
+    } else {
+	if (argc != 5 && argc != 6) {
+	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    return BRLCAD_ERROR;
+	}
+
+	alt_flag = 0;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    gedp->ged_gvp = gdvp->gdv_view;
+    av[0] = (char *)argv[0];
+    if (alt_flag) {
+	ac = argc;
+	av[1] = coord;
+	for (i = 2; i < argc; ++i)
+	    av[i] = (char *)argv[i];
+	av[i] = (char *)0;
+    } else {
+	ac = argc-1;
+	for (i = 2; i < argc; ++i)
+	    av[i-1] = (char *)argv[i];
+	av[i-1] = (char *)0;
+    }
+    ret = ged_rot(gedp, ac, (const char **)av);
+
+    if (ret == BRLCAD_OK)
+	go_refresh_view(gdvp);
 
     return BRLCAD_OK;
 }
@@ -2189,6 +2290,57 @@ go_scale_mode(struct ged *gedp, int argc, const char *argv[])
 }
 
 static int
+go_set_coord(struct ged *gedp, int argc, const char *argv[])
+{
+    char coord;
+    struct ged_dm_view *gdvp;
+    static const char *usage = "name [v|m]";
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+    gedp->ged_result = GED_RESULT_NULL;
+    gedp->ged_result_flags = 0;
+
+    /* must be wanting help */
+    if (argc == 1) {
+	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_OK;
+    }
+
+    if (3 < argc) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    /* Get coord */
+    if (argc == 2) {
+	bu_vls_printf(&gedp->ged_result_str, "%c", gdvp->gdv_view->gv_coord);
+	return BRLCAD_OK;
+    }
+
+    /* Set coord */
+    if ((argv[2][0] != 'm' && argv[2][0] != 'v') || argv[2][1] != '\0') {
+	bu_vls_printf(&gedp->ged_result_str, "set_coord: bad value - %s\n", argv[2]);
+	return BRLCAD_ERROR;
+    }
+
+    gdvp->gdv_view->gv_coord = argv[2][0];
+
+    return BRLCAD_OK;
+}
+
+static int
 go_set_fb_mode(struct ged *gedp, int argc, const char *argv[])
 {
     int mode;
@@ -2321,8 +2473,11 @@ go_tra(struct ged *gedp, int argc, const char *argv[])
     register int i;
     int ret;
     int ac;
+    int alt_flag;
+    char *coord;
     char *av[6];
     struct ged_dm_view *gdvp;
+    static const char *alt_usage = "name x y z";
     static const char *usage = "name [-m|-v] x y z";
 
     /* initialize result */
@@ -2333,25 +2488,34 @@ go_tra(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+
+	if (argv[0][0] == 'm' || argv[0][0] == 'v')
+	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], alt_usage);
+	else
+	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+
 	return BRLCAD_OK;
     }
 
-    if (argc < 4 && 6 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
-    }
+    if (argv[0][0] == 'm' || argv[0][0] == 'v') {
+	if (argc != 5) {
+	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], alt_usage);
+	    return BRLCAD_ERROR;
+	}
 
-    /* found a coord flag */
-    if (argv[1][0] == '-' && (argv[1][1] == 'v' || argv[1][1] == 'm') &&
-	argv[1][2] == '\0') {
-	if (argc != 4 && argc != 6) {
+	if (argv[0][0] == 'm')
+	    coord = "-m";
+	else
+	    coord = "-v";
+
+	alt_flag = 1;
+    } else {
+	if (argc != 5 && argc != 6) {
 	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return BRLCAD_ERROR;
 	}
-    } else if (argc != 3 && argc != 5) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+
+	alt_flag = 0;
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
@@ -2366,16 +2530,24 @@ go_tra(struct ged *gedp, int argc, const char *argv[])
 
     gedp->ged_gvp = gdvp->gdv_view;
     av[0] = (char *)argv[0];
-    ac = argc-1;
-    for (i = 2; i < argc; ++i)
-	av[i-1] = (char *)argv[i];
-    av[i-1] = (char *)0;
+    if (alt_flag) {
+	ac = argc;
+	av[1] = coord;
+	for (i = 2; i < argc; ++i)
+	    av[i] = (char *)argv[i];
+	av[i] = (char *)0;
+    } else {
+	ac = argc-1;
+	for (i = 2; i < argc; ++i)
+	    av[i-1] = (char *)argv[i];
+	av[i-1] = (char *)0;
+    }
     ret = ged_tra(gedp, ac, (const char **)av);
 
     if (ret == BRLCAD_OK)
 	go_refresh_view(gdvp);
 
-    return ret;
+    return BRLCAD_OK;
 }
 
 static int
@@ -2498,56 +2670,6 @@ go_vmake(struct ged *gedp, int argc, const char *argv[])
 
 	return ret;
     }
-}
-
-static int
-go_vrot(struct ged *gedp, int argc, const char *argv[])
-{
-    int ret;
-    int ac;
-    char *av[5];
-    struct ged_dm_view *gdvp;
-    static const char *usage = "name x y z";
-
-    /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
-    gedp->ged_result_flags = 0;
-
-    /* must be wanting help */
-    if (argc == 1) {
-	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_OK;
-    }
-
-    if (argc != 5) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
-    }
-
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
-	return BRLCAD_ERROR;
-    }
-
-    gedp->ged_gvp = gdvp->gdv_view;
-    ac = 4;
-    av[0] = (char *)argv[0];
-    av[1] = (char *)argv[2];
-    av[2] = (char *)argv[3];
-    av[3] = (char *)argv[4];
-    av[4] = (char *)0;
-    ret = ged_vrot(gedp, ac, (const char **)av);
-    if (ret == BRLCAD_OK)
-	go_refresh_view(gdvp);
-
-    return BRLCAD_OK;
 }
 
 static int
@@ -3037,7 +3159,32 @@ go_refresh_all_views(struct ged_obj *gop)
     }
 }
 
-/****************** GED Object Methods ********************/
+static void
+go_autoview_view(struct ged_dm_view *gdvp)
+{
+    int ret;
+    char *av[2];
+
+    gdvp->gdv_gop->go_gedp->ged_gvp = gdvp->gdv_view;
+    av[0] = "autoview";
+    av[1] = (char *)0;
+    ret = ged_autoview(gdvp->gdv_gop->go_gedp, 1, (const char **)av);
+
+    if (ret == BRLCAD_OK)
+	go_refresh_view(gdvp);
+}
+
+static void
+go_autoview_all_views(struct ged_obj *gop)
+{
+    struct ged_dm_view *gdvp;
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &gop->go_head_views.l)) {
+	go_autoview_view(gdvp);
+    }
+}
+
+
 
 /*
  * Local Variables:
