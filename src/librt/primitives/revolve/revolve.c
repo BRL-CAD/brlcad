@@ -323,7 +323,11 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 	    hitp->hit_dist = (pt2[Y] - pr[Z]) / vr[Z];
 	    hitp->hit_surfno = LINE_SEG;
 	    VJOIN1( hitp->hit_vpriv, pr, hitp->hit_dist, vr );
+#if 1
+	    hitp->hit_vpriv[Z] = MAX_FASTF;
+#else
 	    hitp->hit_vpriv[Z] = 1.0/0.0;	/* slope = 0, so 1/slope = inf */
+#endif
 	}
     }
 
