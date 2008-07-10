@@ -43,9 +43,10 @@ struct revolve_specific {
     vect_t		xUnit;	/**< @brief vector in start plane, x axis */
     vect_t		yUnit;
     vect_t		rEnd;
-    fastf_t		ang;	/**< @brief angle to revolve*/
+    fastf_t		ang;	/**< @brief angle to revolve */
     char		*sketch_name;	/**< @brief name of sketch */
     struct rt_sketch_internal *sk;	/**< @brief pointer to sketch */
+    int			*ends;	/**< @brief indices of points at end of continuous path */
 };
 
 const struct bu_structparse rt_revolve_parse[] = {

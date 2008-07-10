@@ -75,6 +75,9 @@ rt_revolve_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 
     vect_t	xEnd, yEnd;
 
+    int		*endcount;
+    int 	nseg, degree, i, j, nends;
+
     RT_CK_DB_INTERNAL(ip);
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
     RT_REVOLVE_CK_MAGIC(rip);
@@ -103,6 +106,65 @@ rt_revolve_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     VSCALE( yEnd, rev->yUnit, sin(rev->ang) );
     VADD2( rev->rEnd, xEnd, yEnd );
     VUNITIZE( rev->rEnd );
+
+/* check the sketch - degree & closed/open */
+
+    /* count the number of times an endpoint is used:
+	if even, the point is ok
+	if odd, the point is at the end of a path
+     */
+    endcount = (int *)bu_calloc( rev->sk->vert_count, sizeof(int), "endcount" );
+    for ( i=0; i<rev->sk->vert_count; i++ ) endcount[i] = 0;
+    nseg = rev->sk->skt_curve.seg_count;
+    degree = 0;
+    for ( i=0; i<nseg; i++ ) {
+	long		*lng;
+	struct line_seg *lsg;
+	struct carc_seg *csg;
+	struct nurb_seg *nsg;
+	struct bezier_seg *bsg;
+
+	lng = (long *)rev->sk->skt_curve.segments[i];
+
+	switch ( *lng ) {
+	    case CURVE_LSEG_MAGIC:
+		if ( degree < 1 ) degree = 1;
+		lsg = (struct line_seg *)lng;
+		endcount[lsg->start]++;
+		endcount[lsg->end]++;
+		break;
+	    case CURVE_CARC_MAGIC:
+		if ( degree < 2 ) degree = 2;
+		csg = (struct carc_seg *)lng;
+		if ( csg->radius <= 0.0 ) break;
+		endcount[csg->start]++;
+		endcount[csg->end]++;
+		break;
+	    case CURVE_BEZIER_MAGIC:
+		bsg = (struct bezier_seg *)lng;
+		if ( degree < bsg->degree ) degree = bsg->degree;
+		endcount[bsg->ctl_points[0]]++;
+		endcount[bsg->ctl_points[bsg->degree]]++;
+		break;
+	    case CURVE_NURB_MAGIC:
+		nsg = (struct nurb_seg *)lng;
+		if ( degree < nsg->order+1 ) degree = nsg->order+1;
+		endcount[nsg->ctl_points[0]]++;
+		endcount[nsg->ctl_points[nsg->c_size-1]]++;
+		break;
+	    default:
+		bu_log( "rt_revolve_prep: ERROR: unrecognized segment type!\n" );
+		break;
+	}
+    }
+
+    /* convert endcounts to store which endpoints are odd */
+    for ( i=0, j=0; i<rev->sk->vert_count; i++ ) {
+	if ( endcount[i] % 2 != 0 ) endcount[j++] = i;
+    }
+    while ( j < rev->sk->vert_count ) endcount[j++] = -1;
+
+    rev->ends = endcount;
 
 /* FIXME: bounding volume */
     VMOVE( stp->st_center, rev->v3d );
@@ -168,6 +230,17 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 
     fastf_t	start, end, min, max, angle;
 
+    vect_t	dir;
+    point_t	hit1, hit2;
+    point2d_t	pt, pt2;
+    fastf_t	a, b, c, disc, k1, k2, t1, t2, x, y;
+    fastf_t	xmin, xmax, ymin, ymax;
+    long	*lng;
+    struct line_seg	*lsg;
+    struct carc_seg	*csg;
+    struct nurb_seg	*nsg;
+    struct bezier_seg	*bsg;
+
     nhits = 0;
 
     for ( i=0; i<MAX_HITS; i++ ) hits[i] = &hit[i];
@@ -224,16 +297,13 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 
 /* calculate hyperbola parameters */
     VREVERSE( dp, pr);
-
     VSET( norm, ur[X], ur[Y], 0 );
 
     k = VDOT( dp, norm ) / VDOT( ur, norm );
-
     h = pr[Z] + k*vr[Z];
 
     aa = sqrt( (pr[X] + k*vr[X])*(pr[X] + k*vr[X]) + (pr[Y] + k*vr[Y])*(pr[Y] + k*vr[Y]) );
     bb = sqrt( aa*aa * ( 1.0/(1 - ur[Z]*ur[Z]) - 1.0 ) );
-
 /*
   [ (x*x) / aa^2 ] - [ (y-h)^2 / bb^2 ] = 1
 
@@ -241,23 +311,33 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
   y = h + bb sinh( t - k );
 */
 
+/* handle open sketches */
+    for ( i=0; i<rev->sk->vert_count; i++ ) {
+	VMOVE( pt, rev->sk->verts[rev->ends[i]] );
+	pt2[Y] = pt[Y];
+	pt2[X] = aa*sqrt( (pt2[Y]-h)*(pt2[Y]-h)/(bb*bb) + 1 );
+	if ( pt2[X] < pt[X] ) {	/* valid hit */
+	    if ( nhits >= MAX_HITS ) return -1; /* too many hits */
+	    hitp = hits[nhits++];
+	    hitp->hit_magic = RT_HIT_MAGIC;
+	    hitp->hit_dist = (pt2[Y] - pr[Z]) / vr[Z];
+	    hitp->hit_surfno = LINE_SEG;
+	    VJOIN1( hitp->hit_vpriv, pr, hitp->hit_dist, vr );
+	    hitp->hit_vpriv[Z] = 1.0/0.0;	/* slope = 0, so 1/slope = inf */
+	}
+    }
+
 /* find hyperbola intersection with each sketch segment */
     nseg = rev->sk->skt_curve.seg_count;
-    for( i=0; i<nseg; i++ ) {
-	long *lng = (long *)rev->sk->skt_curve.segments[i];
-	struct line_seg *lsg;
-
-	vect_t	dir;
-	point_t	pt, pt2, hit1, hit2;
-	fastf_t a, b, c, disc, k1, k2, t1, t2, x, y;
-	fastf_t xmin, xmax, ymin, ymax;
+    for ( i=0; i<nseg; i++ ) {
+	lng = (long *)rev->sk->skt_curve.segments[i];
 
 	switch ( *lng ) {
 	    case CURVE_LSEG_MAGIC:
 		lsg = (struct line_seg *)lng;
-		VMOVE( pt, rev->sk->verts[lsg->start] );
-		VMOVE( pt2, rev->sk->verts[lsg->end] );
-		VSUB2( dir, pt2, pt );
+		V2MOVE( pt, rev->sk->verts[lsg->start] );
+		V2MOVE( pt2, rev->sk->verts[lsg->end] );
+		V2SUB2( dir, pt2, pt );
 		m = dir[Y] / dir[X];
 
 		a = dir[X]*dir[X]/(aa*aa) - dir[Y]*dir[Y]/(bb*bb);
@@ -399,6 +479,12 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 		nhits+=2;
 		i+=2;
 	    }
+	}
+
+	if ( NEAR_ZERO( hits[in]->hit_dist - hits[out]->hit_dist, SMALL_FASTF ) ) {
+	    hits[in] = NULL;
+	    hits[out] = NULL;
+	    continue;
 	}
 
 	RT_GET_SEG(segp, ap->a_resource);
