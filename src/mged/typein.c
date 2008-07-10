@@ -2694,6 +2694,9 @@ revolve_in(char **cmd_argvs, struct rt_db_internal *intern)
     rip->ang = atof(cmd_argvs[12]) * DEG2RAD;
     rip->sketch_name = bu_strdup(cmd_argvs[13]);
 
+    VUNITIZE( rip->r );
+    VUNITIZE( rip->axis3d );
+
     if ((dp=db_lookup(dbip, rip->sketch_name, LOOKUP_NOISY)) == DIR_NULL) {
 	Tcl_AppendResult(interp, "Cannot find sketch (", rip->sketch_name,
 			 ") for revolve (", cmd_argvs[1], ")\n", (char *)NULL);

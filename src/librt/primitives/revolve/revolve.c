@@ -312,11 +312,11 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 */
 
 /* handle open sketches */
-    for ( i=0; i<rev->sk->vert_count; i++ ) {
+    for ( i=0; i<rev->sk->vert_count && rev->ends[i] != -1; i++ ) {
 	VMOVE( pt, rev->sk->verts[rev->ends[i]] );
 	pt2[Y] = pt[Y];
 	pt2[X] = aa*sqrt( (pt2[Y]-h)*(pt2[Y]-h)/(bb*bb) + 1 );
-	if ( pt2[X] < pt[X] ) {	/* valid hit */
+	if ( fabs( pt2[X] ) < fabs( pt[X] ) ) {	/* valid hit */
 	    if ( nhits >= MAX_HITS ) return -1; /* too many hits */
 	    hitp = hits[nhits++];
 	    hitp->hit_magic = RT_HIT_MAGIC;
@@ -400,10 +400,12 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 
     /* set surface for hits out of bounds to -1 */
     if ( rev->ang < 2*M_PI ) {
-	for ( i=0; i<nseg; i++ ) {
+	for ( i=0; i<nhits; i++ ) {
 	    angle = atan2( hits[i]->hit_vpriv[Y], hits[i]->hit_vpriv[X] );
 	    if ( angle < 0 ) angle += 2*M_PI;
-	    if ( angle > rev->ang ) hits[i]->hit_surfno = -1;
+	    if ( angle > rev->ang ) {
+		hits[i]->hit_surfno = -1;
+	    }
 	}
     }
 
@@ -429,8 +431,23 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 	    break;
 	}
 
+	if ( NEAR_ZERO( hits[in]->hit_dist - hits[out]->hit_dist, SMALL_FASTF ) ) {
+	    hits[in] = NULL;
+	    hits[out] = NULL;
+	    continue;
+	}
+
+	hits[in]->hit_vpriv[Z] = fabs( hits[in]->hit_vpriv[Z] );
+	hits[out]->hit_vpriv[Z] = -fabs( hits[out]->hit_vpriv[Z] );
+
 	/* trim segments as necessary */
 	if ( rev->ang < M_PI ) {
+	    if ( hits[in]->hit_surfno == -1 && hits[out]->hit_surfno == -1 
+		&& (hits[in]->hit_dist > max || hits[out]->hit_dist < min) ) {
+		hits[in] = NULL;
+		hits[out] = NULL;
+		continue;
+	    }
 	    if ( hits[in]->hit_surfno == -1 && hits[in]->hit_dist < min ) {
 		hits[in]->hit_dist = min;
 		hits[in]->hit_surfno = (min == start)?1:2;
@@ -438,11 +455,6 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 	    if ( hits[out]->hit_surfno == -1 && hits[out]->hit_dist > max ) {
 		hits[out]->hit_dist = max;
 		hits[out]->hit_surfno = (max == start)?1:2;
-	    }
-	    if ( hits[in]->hit_surfno == -1 || hits[out]->hit_surfno == -1 ) {
-		hits[in] = NULL;
-		hits[out] = NULL;
-		continue;
 	    }
 	} else if ( rev->ang < 2*M_PI && min > max ) {
 	    if ( hits[in]->hit_surfno == -1 && hits[out]->hit_surfno == -1 ) {
@@ -485,7 +497,7 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 	    }
 	}
 
-	if ( NEAR_ZERO( hits[in]->hit_dist - hits[out]->hit_dist, SMALL_FASTF ) ) {
+	if ( hits[in]->hit_dist > hits[out]->hit_dist ) {
 	    hits[in] = NULL;
 	    hits[out] = NULL;
 	    continue;
@@ -544,6 +556,9 @@ rt_revolve_norm( struct hit *hitp, struct soltab *stp, struct xray *rp )
 	    VCROSS( hitp->hit_normal, rev->zUnit, rev->rEnd );
 	    VUNITIZE( hitp->hit_normal );
 	    break;
+	case -1:
+	    VREVERSE( hitp->hit_normal, rp->r_dir );
+	    break;
 	default:
 	    VSET( n, hitp->hit_vpriv[X], hitp->hit_vpriv[Y], 0 );
 	    n[Z] = MAGNITUDE( n ) * hitp->hit_vpriv[Z];
@@ -563,12 +578,15 @@ rt_revolve_norm( struct hit *hitp, struct soltab *stp, struct xray *rp )
 		+ ( rev->zUnit[Z] * n[Z] );
 	    VUNITIZE( nT );
 	    VMOVE( hitp->hit_normal, nT );
-	    if ( NEAR_ZERO( 1.0/hitp->hit_vpriv[Z], SMALL_FASTF ) ) {
-		if ( VDOT( nT, rp->r_dir) < 0 ) {
-			VMOVE( hitp->hit_normal, nT );
-		} else {
-			VREVERSE( hitp->hit_normal, nT );
-		}
+	    if ( VDOT( nT, rp->r_dir) < 0 ) {
+		VMOVE( n, nT );
+	    } else {
+		VREVERSE( n, nT );
+	    }
+	    if ( hitp->hit_vpriv[Z] > 0 ) {
+		VMOVE( hitp->hit_normal, n );
+	    } else {
+		VREVERSE( hitp->hit_normal, n );
 	    }
 	    break;
     }
@@ -651,7 +669,11 @@ rt_revolve_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct 
     verts = rip->sk->verts;
     crv = &rip->sk->skt_curve;
 
-    narc = floor( rip->ang * 8 * M_1_PI );
+    if ( rip->ang < 2*M_PI ) {
+	narc = ceil( rip->ang * 8 * M_1_PI );
+    } else {
+	narc = 16;
+    }
     VSCALE( xEnd, rip->r, cos(rip->ang) );
     VCROSS( rEnd, rip->axis3d, rip->r );	/* using rEnd for temp storage */
     VSCALE( yEnd, rEnd, sin(rip->ang) );
