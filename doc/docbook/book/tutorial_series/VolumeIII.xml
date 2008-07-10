@@ -2181,10 +2181,18 @@ comb comb_name u a - b + c
 	</listitem>
       </itemizedlist>
 
-      <table>
-	<title></title>
+      <table id="mgedcolors">
+	<title>Traditionally used MGED colors.</title>
 	<tgroup cols='2' align='center'>
 	  <tbody>
+	    <row>
+	      <entry>
+		Color
+	      </entry>
+	      <entry>
+		RGB Value
+	      </entry>
+	    </row>
 	    <row>
 	      <entry>
 		Aquamarine
@@ -2701,232 +2709,665 @@ comb comb_name u a - b + c
 	</tgroup>
       </table>
 
-      <table>
-	<title></title>
-	<tgroup cols='2' align='center'>
+      <table id="system-color-codes">
+	<title>Commonly used system-color codes.</title>
+	<tgroup cols='3' align='center'>
 	  <tbody>
 	    <row>
 	      <entry>
-		
+		System
 	      </entry>
 	      <entry>
-		
+		Color
+	      </entry>
+	      <entry>
+		RGB Value
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Crew/passenger
+	      </entry>
+	      <entry>
+		Tan
+	      </entry>
+	      <entry>
+		200 150 100
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Exterior armor<footnote id="armygreenrecommended"><para>Army green (RGB 42 98 48) is recommended for white backgrounds (e.g., printouts).</para></footnote>
+	      </entry>
+	      <entry>
+		Gray
+	      </entry>
+	      <entry>
+		80 80 80
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Fuel system
+	      </entry>
+	      <entry>
+		Yellow
+	      </entry>
+	      <entry>
+		255 255 0
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Armament (not ammunition)<footnoteref linkend="armygreenrecommended"/>
+	      </entry>
+	      <entry>
+		Gray
+	      </entry>
+	      <entry>
+		80 80 80
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Propellant
+	      </entry>
+	      <entry>
+		Magenta
+	      </entry>
+	      <entry>
+		255 0 255
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Projectiles
+	      </entry>
+	      <entry>
+		Red
+	      </entry>
+	      <entry>
+		255 0 0
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Engine/propulsion<footnoteref linkend="armygreenrecommended"/>
+	      </entry>
+	      <entry>
+		Blue
+	      </entry>
+	      <entry>
+		0 0 255
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Oil Lines/hoses
+	      </entry>
+	      <entry>
+		Light brown
+	      </entry>
+	      <entry>
+		159 159 95
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Coolant lines/hoses
+	      </entry>
+	      <entry>
+		Green
+	      </entry>
+	      <entry>
+		0 255 0
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Air lines/hoses
+	      </entry>
+	      <entry>
+		Blue
+	      </entry>
+	      <entry>
+		0 0 255
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Drivetrain
+	      </entry>
+	      <entry>
+		Cyan
+	      </entry>
+	      <entry>
+		0 255 255
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Driver/flight controls<footnoteref linkend="armygreenrecommended"/>
+	      </entry>
+	      <entry>
+		Dark blue
+	      </entry>
+	      <entry>
+		50 0 175
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Suspension/rotor blades<footnoteref linkend="armygreenrecommended"/>
+	      </entry>
+	      <entry>
+		Gray
+	      </entry>
+	      <entry>
+		80 80 80
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Tracks
+	      </entry>
+	      <entry>
+		Dark brown
+	      </entry>
+	      <entry>
+		104 56 30
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Tires/roadwheel rubber<footnote><para>Black (RGB 0 0 0) is recommended for white backgrounds (e.g., printouts).</para></footnote>
+	      </entry>
+	      <entry>
+		Gray
+	      </entry>
+	      <entry>
+		80 80 80
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Electrical
+	      </entry>
+	      <entry>
+		Forest green
+	      </entry>
+	      <entry>
+		50 145 20
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Hydraulics
+	      </entry>
+	      <entry>
+		Pink
+	      </entry>
+	      <entry>
+		255 145 145
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Communications/mission equipment package
+	      </entry>
+	      <entry>
+		Lime green
+	      </entry>
+	      <entry>
+		50 204 50
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Fire control
+	      </entry>
+	      <entry>
+		Peach
+	      </entry>
+	      <entry>
+		234 100 30
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Fire suppression
+	      </entry>
+	      <entry>
+		Dark red
+	      </entry>
+	      <entry>
+		79 47 47
 	      </entry>
 	    </row>
 	  </tbody>
 	</tgroup>
       </table>
 
+      <note>
+	<title>
+	  A Final Word About Modeling Ease vs. Modeling Precision 
+	</title>
+        <para>                                                                   
+	  Modelers can be tempted to use the "quickest" methods of creating and 
+	  aligning objects (e.g., using mouse clicks to size objects and the    
+	  shift/control grips and "eyeballing" to position them).               
+	</para>
+	<para>
+	  However, using precision MGED tools (e.g., the analyze and extrude    
+	  commands, the snap-to-grid feature, etc.), listing primitives, making 
+	  temporary assemblies, etc., is often more efficient. In addition, as  
+	  the user becomes more familiar with these tools and features, they    
+	  become easier to use. For more information on these specific          
+	  features, see the appropriate on-line help in MGED.  
+	</para>
+      </note>
 
   </chapter>
 
   <chapter>
-    <title>Introduction</title>
+    <title>Evaluating Geometry</title>
+    <para>
+      Evaluating geometry for correctness is an important companion to building
+      real-world models. In fact, without testing the validity of the geometry's
+      positioning and composition, the modeling process has not actually been
+      completed. Evaluation is performed at the following two times in the
+      modeling process: (1) after individual objects are built and organized
+      into regions and combinations, and (2) after the model is completely
+      built. In both cases, the primary evaluation goal is to identify any
+      errors in measurement, logic, or input that would make the model invalid
+      or unrealistic.
+    </para>
+    <para>
+      One common error that the evaluation process reveals is overlapping
+      geometry. Overlaps are the physical violation that occurs when two or more
+      objects (regions) occupy the same volume in space. While this condition is
+      occasionally acceptable (e.g., when modeling air volumes), it creates
+      inaccuracies when the geometry is later analyzed.
+    </para>
+    <note>
+      <para>
+	Because all of the volume within a region is considered to be one     
+	material, it is acceptable for primitives within a region to          
+	"overlap" without error (e.g., spheres rounding cylinder ends).       
+	However, it is good modeling practice to minimize this wherever       
+	practical to simplify Boolean logic and keep primitives as compact as 
+	possible.
+      </para>
+    </note>
+    <para>
+      Shotlining is the principal method of interrogation in BRL-CAD. Rays are
+      fired through geometry to report information about material properties,
+      thickness, orientation, etc., of objects encountered along each ray's path
+      (see Figure 18).
+    </para>
+
+    <figure>
+      <title>Shotline through a tank.</title>
+      <mediaobject>
+	<imageobject>
+	  <imagedata align = "center" fileref="./volumeIII_images/figure18.png" format="PNG"></imagedata>
+	</imageobject>
+      </mediaobject>
+    </figure>
+
+    <para>
+      There are several ways to evaluate BRL-CAD geometry. These include
+      (1) rendering the image using rt, (2) checking for overlaps using rtcheck
+      (or the lesser-known/used g_lint or MGED's overlap tool), and (3) checking
+      for faulty material composition (e.g., densities) using rtweight.
+    </para>
+    <para>
+      Generally, as soon as a region is completed, it is good practice to
+      raytrace it using rt. This allows the user to visually verify that all
+      Boolean logic is correct and that the geometry has no obvious problems. If
+      there is anything questionable, it can then be examined more closely with
+      a raytrace that highlights that particular area. Note that rendering is
+      also a good way to compare geometry with drawings, sketches, photographs,
+      or images from other CAD systems.
+    </para>
+    <para>
+      As subcomponents are organized into assemblies and the complexity of the
+      geometry increases, it is then a good practice to use rtcheck (or g_lint
+      or the overlap tool) to help find any errors in the geometry and isolate
+      any problems.
+    </para>
+    <para>
+      The rtcheck feature  is a program run from the MGED command line or shell
+      command line that fires a grid of rays through a list of objects in order
+      to check for overlapping geometry. It reports a total count of the
+      overlaps and a list of overlap pairs, a listing of the paths to the
+      regions, the number of overlaps between each pair, and the maximum depth
+      in millimeters. This is followed by a summary of the total number of
+      overlaps, the number of unique overlapping region pairs, and a listing of
+      all overlapping regions.
+    </para>
+    <para>
+      When run from within MGED, overlaps are displayed in the graphics display
+      as yellow lines (see Figure 19). These yellow lines are created as
+      temporary database objects and are stored in a combination called
+      OVERLAPSffff00 ("ffff00" is hexadecimal notation for yellow [255 255 0]).
+      Note that these temporary objects cannot be edited or saved and last only
+      as long as they are not erased from the MGED display or are not
+      overwritten by another set of overlaps.
+    </para>
+    <para>
+      After these lines have been created in the display, the user may use them
+      as a visual reference to analyze the overlaps. A good practice is to erase
+      geometry (e.g., the top-level item) and draw smaller subcomponents
+      (perhaps just a few of the overlapping regions) to see more clearly where
+      and what the problems are. When doing this, note that the zap (Z) and
+      blast (B) commands should not be used until the evaluator is finished with
+      the yellow lines as a visual reference. The user should also keep in mind
+      that the rays are difficult to see from the azimuth/elevation orientation
+      from which they were shot. To see them clearly, one should change the
+      azimuth/elevation to another orientation.
+    </para>
+    <para>
+      To get the output shown in Figure 20, the "all" assembly was displayed in
+      the graphics window and "rtcheck" was typed in the command window.
+    </para>
+    <para>
+      This command could also be run from outside of MGED. The command "rtcheck"
+      is typed at a shell prompt, followed by the file name and the list of
+      objects to be evaluated (in this case, "all"). Note that when running
+      rtcheck from outside MGED, the default parameters include a top view and a
+      grid size of 512 × 512 cells (which is the default size for all rt
+      operations). For more details, see the on-line man page on rt.
+    </para>
+
+    <figure>
+      <title>Example of overlaps in the graphics window.</title>
+      <mediaobject>
+	<imageobject>
+	  <imagedata align = "center" fileref="./volumeIII_images/figure19.png" format="PNG"></imagedata>
+	</imageobject>
+      </mediaobject>
+    </figure>
+    
+    <note>
+      <para>
+	When first checking larger assemblies, it is wise to use a relatively 
+	low-resolution rtcheck grid size--say, 128 × 128 pixels. Often,      
+	there are simple errors that produce large numbers of overlaps, and   
+	reporting them all takes a long time. Starting with low resolution,   
+	however, allows the user to quickly find and eliminate gross errors   
+	and proceed to the insidious small overlaps using a tighter grid and  
+	more specific view parameters.   
+      </para>
+    </note>
+
+    <figure>
+      <title>Example of an overlap report in the command window.</title>
+      <mediaobject>
+	<imageobject>
+	  <imagedata align = "center" fileref="./volumeIII_images/figure20.png" format="PNG"></imagedata>
+	</imageobject>
+      </mediaobject>
+    </figure>
+
+    <para>
+      Another tool that can be useful for evaluating geometry, especially target
+      descriptions, is rtweight. During or after model development, material
+      codes and effective percentages can be assigned to the appropriate
+      regions/ combinations based on the known materials and weights of actual
+      components, subsystems, and systems. The rtweight feature can then be used
+      to calculate volume and material densities and provide the overall weight
+      of the model. This information can, in turn, be compared with the weight
+      of the actual object to see if the two match. If they do not, chances are
+      that there is a problem in the model's material property assignments or
+      construction (e.g., a hollow component was modeled as solid). For a list
+      of standard material codes and air codes and their associated densities,
+      see Robertson et al. (1996) and Winner et al. (2002).
+    </para>
+
+    <para>
+      In addition, the following are some general tips regarding the evaluation
+   of geometry in BRL-CAD:
+    </para>
 
      <itemizedlist>
 	<listitem>
 	  <para>
-	    
+	    <emphasis>Evaluate early and often:</emphasis> As mentioned previously, evaluations should
+	    be performed both on individual objects as they are built and on sections
+	    of the model as they are assembled. In general, problems identified early
+	    are more easily isolated and fixed than if "buried" in a host of other
+	    problems. Early and continuous evaluation also reduces the amount of
+	    evaluation that needs to be done at the end. Final evaluation at the end
+	    helps ensure that the individual pieces are all working together in the
+	    model.
 	  </para>
 	</listitem>
 	<listitem>
 	  <para>
-	    
+	    <emphasis>Evaluate at low resolution before high resolution:</emphasis> Especially in large
+	    and complex models, running rtcheck at high resolution can be computation-
+	    and time-intensive. Therefore, it is recommended that the modeler
+	    initially set a lower number of rays to be fired, fix any significant
+	    overlaps, and then increase the number of rays and/or zoom in on
+	    particular areas as fewer overlaps are found.
 	  </para>
 	</listitem>
 	<listitem>
 	  <para>
-	    <itemizedlist>
-	      <listitem>
-		<para>
-		  
-		</para>
-	      </listitem>
-	      <listitem>
-		<para>
-		  
-		</para>
-	      </listitem>
-	      <listitem>
-		<para>
-		  
-		</para>
-	      </listitem>
-	    </itemizedlist>
-	    
+	    <emphasis>Use multiple views:</emphasis> Because rtcheck finds overlaps by firing individual
+	    rays at geometry, it can miss overlaps that occur between rays (e.g., when
+	    viewing a face edge-on or with low obliquity). Therefore, to ensure the
+	    highest evaluation accuracy possible, it is a good idea to use several of
+	    BRL-CAD's standard views (e.g., top; az 35, el 25; etc.) as well as at
+	    least one arbitrary or randomly selected view (e.g., az 72, el 23).
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    <emphasis>Set the proper eye point:</emphasis>  It is also possible for a user to miss
+	    detecting overlaps when the eye point is set in the middle or front of an
+	    object (e.g., when Z clipping is turned on). This does not mean that
+	    rtcheck is not catching them; it just means that they are not being
+	    displayed. So, before an evaluation is run, it is recommended that Z
+	    clipping be turned off and the eye point be sufficiently offset from the
+	    geometry so that the rays intersect the entire breadth of geometry or
+	    portion of geometry the modeler wants to evaluate and display.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    <emphasis>Chunk big problems into smaller problems:</emphasis> Experienced modelers in
+	    BRL-CAD know that "killing" overlaps is simply a part of the modeling
+	    process. However, dealing with large amounts of overlaps can be
+	    overwhelming, especially to a new modeler or a modeler who has carefully
+	    built each piece and expects rtcheck to find few, if any, problems.
+	    Fortunately, in many cases, what appears to be extensive overlapping might
+	    just be one section of geometry (e.g., a wall of buttons and switches)
+	    that is slightly out of position, and a simple translation or rotation can
+	    simultaneously fix many problems. In other cases, overlaps are the result
+	    of simple miscalculations (e.g., a 2-in vs. a 1.5-in radius) that are not
+	    likely to be noticed until positioned with surrounding geometry. Whatever
+	    the case, the best approach to extensive overlaps is not to try to fix
+	    them all at once but to divide the problem into smaller problems,
+	    concentrate on individual pieces, and use the display to help identify and
+	    fix errors. For example, rather than starting with "all," start with, say,
+	    "engine," and then add "chassis." One can then continue this process and
+	    work up to evaluating the entire model.
 	  </para>
 	</listitem>
      </itemizedlist>
- 
-
   </chapter>
+
   <chapter>
-    <title>Introduction</title>
+    <title>Logging Documentation</title>
  
+    <para>
+      The final step in the modeling process--documentation--is extremely
+      important and can mean the difference between models that are useful for a
+      week and models that are useful for years to come. Thorough, well-planned
+      documentation is key to the user/analyst being able to effectively use
+      what the modeler has spent many hours building. Sloppy or incomplete
+      documentation, on the other hand, is like finishing up an otherwise
+      well-built house with a bad paint job. It can serve to cover up all the
+      good work the modeler has done and give the end user the false impression
+      that bad documentation is an indicator of bad measurement, organization,
+      development, and/or evaluation.
+    </para>
+
+    <para>
+      Fortunately, when included in the planning process, good documentation is
+      easy to produce. Once again, the way one sets up and produces
+      documentation is highly dependent upon the purpose of the model. There are
+      several questions the modeler (who now takes on the role of technical
+      writer) must address to assist the end user(s):
+    </para>
+
      <itemizedlist>
 	<listitem>
 	  <para>
-	    
+	    Who will be using the model?
 	  </para>
 	</listitem>
 	<listitem>
 	  <para>
-	    
+	    What are the user(s) going to do with the model and why?
 	  </para>
 	</listitem>
 	<listitem>
 	  <para>
-	    <itemizedlist>
-	      <listitem>
-		<para>
-		  
-		</para>
-	      </listitem>
-	      <listitem>
-		<para>
-		  
-		</para>
-	      </listitem>
-	      <listitem>
-		<para>
-		  
-		</para>
-	      </listitem>
-	    </itemizedlist>
-	    
+	    What information can I give about the model that might save the user
+	    some time or frustration?
 	  </para>
 	</listitem>
      </itemizedlist>
 
+     <para>
+       Documentation can exist in several different forms. It can be a
+       comprehensive chronological or topical summary of the project as a whole.
+       It can be attribute tags (which are available in
+       BRL-CAD 6.0 and later releases) about individual shapes and regions. Or it
+       can be just some notes to help the user work with the model (e.g., to
+       explain how to show articulation).
+     </para>
 
-  </chapter>
-  <chapter>
-    <title>Introduction</title>
- 
+     <para>
+       Regardless of the type of setup, the following recommendations are made to
+       achieve effective model documentation:
+     </para>
+
      <itemizedlist>
 	<listitem>
 	  <para>
-	    
+	    <emphasis>Tell what it's got and what it's not:</emphasis> It is useful to record not only
+	    what components have been included in the model but also what
+	    components/details have not been included (and why). This will remove
+	    doubt as to what the end user does and does not have.
 	  </para>
 	</listitem>
 	<listitem>
 	  <para>
-	    
+	    <emphasis>Tell the purpose of the model:</emphasis> Although the primary end user may know
+	    exactly what the intended application of the model may be, the documenter
+	    should consider the possibility of other users becoming involved during a
+	    model's lifetime. Furthermore, these users may not know the model's
+	    original purpose and may try to use the model in a way in which it was not
+	    intended. The documentation should explain the choices the modeler made as
+	    well as identify, if applicable, ways in which the model has been designed
+	    for articulation and/or animation.
 	  </para>
 	</listitem>
 	<listitem>
 	  <para>
-	    <itemizedlist>
-	      <listitem>
-		<para>
-		  
-		</para>
-	      </listitem>
-	      <listitem>
-		<para>
-		  
-		</para>
-	      </listitem>
-	      <listitem>
-		<para>
-		  
-		</para>
-	      </listitem>
-	    </itemizedlist>
-	    
+	    <emphasis>Tell when it was built:</emphasis> This information identifies the time period
+	    during which the model was built. This information can be especially
+	    important when modeling developmental items with continuously changing
+	    design or model specifications. If a model undergoes a radical redesign
+	    during any stage of the development process, the period of performance can
+	    help identify why the model does or does not reflect given redesigned
+	    components as well as identify when changes were implemented.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    <emphasis>Tell from what sources it was built:</emphasis> It is important to note the type
+	    of data sources from which the model dimensions were collected (i.e.,
+	    field measurements, special tools, mechanical drawings, or converted
+	    geometry). If a modeler physically measures an object, it is also
+	    important to note any specific manufacturing information (e.g., make and
+	    model, year of production, factory, etc.), any special designators or
+	    insignias, and any damaged or missing items.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    <emphasis>Tell how it was built:</emphasis> This information records the significant
+	    techniques and configurations that were used to build the given geometry
+	    as well as any irregular or specialized constructions (e.g., for
+	    articulation, an intended ballistic impact scenario, etc.). Also included
+	    here are basic tree structures and any naming conventions used.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    <emphasis>Tell the level of detail to which it was built:</emphasis> This information
+	    documents the specific tolerances and level of accuracy used to construct
+	    the model, as well as ways in which accuracy was checked (e.g., rtcheck
+	    and rtweight).
 	  </para>
 	</listitem>
      </itemizedlist>
 
+     <para>
+       Documentation is often written at the end of the modeling project and
+       published as a formal technical or summary report. Another good method is
+       to document significant items as they are encountered throughout the
+       modeling process. This practice records important information while it is
+       fresh in the mind of the modeler as well as reduces the amount of writing
+       required at the end of the project (when energy and/or interest levels may
+       be low).
+     </para>
+
+     <para>
+       Finally, it is a good idea to imbed the documentation (e.g., as a text
+       file) directly into the database so that it always remains connected to
+       the geometry it addresses. For example, the command
+       <literallayout>
+dbbinary -i u c documentation /home/fred/doc.txt
+       </literallayout>
+       will create a BRL-CAD binary object named documentation, and the object
+       will contain the text from the file named /home/fred/doc.txt.
+     </para>
 
   </chapter>
-  <chapter>
-    <title>Introduction</title>
+
  
-     <itemizedlist>
-	<listitem>
-	  <para>
-	    
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-	    
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-	    <itemizedlist>
-	      <listitem>
-		<para>
-		  
-		</para>
-	      </listitem>
-	      <listitem>
-		<para>
-		  
-		</para>
-	      </listitem>
-	      <listitem>
-		<para>
-		  
-		</para>
-	      </listitem>
-	    </itemizedlist>
-	    
-	  </para>
-	</listitem>
-     </itemizedlist>
+  <bibliography>
+    <title>References</title>
+    
+    <biblioentry xreflabel="dummyentry1">
+      <authorgroup>
+	<author><firstname>John</firstname><surname>Smith</surname></author>
+      </authorgroup>
+      <copyright><year>1988</year>
+      </copyright>
+      <publisher>
+	<publishername>Somebody</publishername>
+      </publisher>
+      <title>Placeholder until xincludes from bibliography file are set up</title>
+      <subtitle>sometitle</subtitle>
+      <pagenums>000-999</pagenums>
+    </biblioentry>
 
 
-  </chapter>
-  <chapter>
-    <title>Introduction</title>
- 
-     <itemizedlist>
-	<listitem>
-	  <para>
-	    
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-	    
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-	    <itemizedlist>
-	      <listitem>
-		<para>
-		  
-		</para>
-	      </listitem>
-	      <listitem>
-		<para>
-		  
-		</para>
-	      </listitem>
-	      <listitem>
-		<para>
-		  
-		</para>
-	      </listitem>
-	    </itemizedlist>
-	    
-	  </para>
-	</listitem>
-     </itemizedlist>
+  </bibliography>
 
 
-  </chapter>
-
-
-<appendix label="A">
-  <title><application>MGED</application> Commands</title>
-  <xi:include href="../../system/mged/mged_commands.xml" xpointer="mged_user_cmd_table"/>
-  <xi:include href="../../system/mged/mged_commands.xml" xpointer="glossary"/>
-</appendix>
-
-
+  <appendix label="A">
+    <title><application>MGED</application> Commands</title>
+    <xi:include href="../../system/mged/mged_commands.xml" xpointer="mged_user_cmd_table"/>
+    <xi:include href="../../system/mged/mged_commands.xml" xpointer="glossary"/>
+  </appendix>
+  
+  
 </book>
