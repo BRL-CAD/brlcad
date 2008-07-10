@@ -1369,8 +1369,8 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
  * Convert a direction vector to azimuth/elevation (in radians)
  */
 #define AZEL_FROM_V3DIR(_a, _e, _d) { \
-	(_a) = (((_d)[X] == 0) && ((_d)[Y] == 0)) ? 0.0 : atan2( -((_d)[Y]), -((_d)[X]) ) * RAD2DEG; \
-	(_e) = atan2( -((_d)[Z]), sqrt((_d)[X]*(_d)[X] + (_d)[Y]*(_d)[Y]) ) * RAD2DEG; \
+	(_a) = (((_d)[X] == 0) && ((_d)[Y] == 0)) ? 0.0 : atan2( -((_d)[Y]), -((_d)[X]) ) * -RAD2DEG; \
+	(_e) = atan2( -((_d)[Z]), sqrt((_d)[X]*(_d)[X] + (_d)[Y]*(_d)[Y]) ) * -RAD2DEG; \
 }
 
 __END_DECLS

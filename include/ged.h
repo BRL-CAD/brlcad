@@ -903,6 +903,14 @@ GED_EXPORT BU_EXTERN(int	vo_dir2ae_cmd,
 GED_EXPORT BU_EXTERN(int ged_editit, (const char *file));
 
 /**
+ * Convert az/el to a direction vector.
+ *
+ * Usage:
+ *     ae2dir [-i] az el
+ */
+GED_EXPORT BU_EXTERN(int ged_ae2dir, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Get or set the azimuth, elevation and twist.
  *
  * Usage:
@@ -1015,6 +1023,14 @@ GED_EXPORT BU_EXTERN(int ged_center, (struct ged *gedp, int argc, const char *ar
  *     comb_color combination R G B
  */
 GED_EXPORT BU_EXTERN(int ged_comb_color, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Convert a direction vector to az/el.
+ *
+ * Usage:
+ *     dir2ae [-i] x y z
+ */
+GED_EXPORT BU_EXTERN(int ged_dir2ae, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Prepare object(s) for display

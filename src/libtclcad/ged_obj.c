@@ -154,6 +154,7 @@ static struct ged_obj *go_current_gop = GED_OBJ_NULL;
 
 static struct bu_cmdtab go_cmds[] = {
     {"adjust",		ged_adjust},
+    {"ae2dir",		ged_ae2dir},
     {"aet",		go_aet},
     {"arced",		ged_arced},
     {"attr",		ged_attr},
@@ -168,6 +169,7 @@ static struct bu_cmdtab go_cmds[] = {
     {"constrain_rmode",	go_constrain_rmode},
     {"constrain_tmode",	go_constrain_tmode},
     {"delete_view",	go_delete_view},
+    {"dir2ae",		ged_dir2ae},
     {"draw",		go_draw},
     {"E",		go_E},
     {"edcomb",		ged_edcomb},

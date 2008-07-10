@@ -4,6 +4,7 @@ noinst_LTLIBRARIES = libged_nil.la
 
 libged_nil_la_SOURCES = \
 	adjust.c \
+	ae2dir.c \
 	aet.c \
 	arced.c \
 	attr.c \
@@ -16,6 +17,7 @@ libged_nil_la_SOURCES = \
 	center.c \
 	comb_color.c \
 	dg_obj.c \
+	dir2ae.c \
 	draw.c \
 	editit.c \
 	edcomb.c \
