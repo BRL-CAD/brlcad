@@ -3180,14 +3180,6 @@ get_new_name(const char *name,
 	bu_vls_trunc( &new_name, 0 );
 
 	if (cc_data->copy_mode & NO_AFFIX) {
-#if 1
-	    /* Default to prefix */
-	    if (num > 0) {
-		/* auto-increment prefix */
-		bu_vls_printf( &new_name, "%ld_", num );
-	    }
-	    bu_vls_strcat( &new_name, name );
-#else
 	    if (num > 0 && cc_data->copy_mode & CUSTOM_PREFIX) {
 		/* auto-increment prefix */
 		bu_vls_printf( &new_name, "%ld_", num );
@@ -3197,7 +3189,6 @@ get_new_name(const char *name,
 		/* auto-increment suffix */
 		bu_vls_printf( &new_name, "_%ld", num );
 	    }
-#endif
 	} else if (cc_data->copy_mode & CUSTOM_SUFFIX) {
 	    /* use custom suffix */
 	    bu_vls_strcpy( &new_name, name );
@@ -3472,7 +3463,7 @@ wdb_concat_cmd(struct rt_wdb	*wdbp,
 	cc_data.copy_mode |= AUTO_PREFIX;
 
 	if (strcmp(argv[2], "/") == 0) {
-	    cc_data.copy_mode = NO_AFFIX;
+	    cc_data.copy_mode = NO_AFFIX | CUSTOM_PREFIX;
 	} else {
 	    (void)bu_vls_strcpy(&cc_data.affix, argv[2]);
 	    cc_data.copy_mode |= CUSTOM_PREFIX;
