@@ -1824,41 +1824,890 @@ mvall oldname newname
 
 	<listitem>
 	  <para>
+	    <emphasis>Use the  push command to eliminate matrices from replicated geometry:</emphasis>
+	    When the replication technique has been used to copy a particular piece of
+	    geometry, the <command>push</command> command is frequently used to walk the geometry tree
+	    from a specified top to the primitive level and collect the matrix
+	    transformations (i.e., any translations, rotations, or scales applied to
+	    the new assembly using matrix edits). The push command applies the matrix
+	    transformation to the parameters of the primitives, eliminating the need
+	    for storing the matrices. One disadvantage of this operation is that any
+	    local coordinate system used in constructing objects is lost.
+	  </para>
+	</listitem>
+	
+	<listitem>
+	  <para>
+	    <emphasis>Use the best method for exporting and importing pieces of a database:</emphasis>
+	    Sometimes a modeler will want to save a portion of a model to be added to
+	    another database, to be reinserted into the original database as a copy,
+	    to be saved for future use, or to be edited as a new database (e.g., using
+	    a crew member or engine from one database in a different database). There
+	    are two commonly used methods to export and import geometry in BRL-CAD:
+	    (1) using the keep and dbconcat commands from the command line, or
+	    (2) using the export and import commands from the GUI.
+	  </para>
+	  <para>
+	    For the first method, the keep command exports data either creating a new
+	    database file or appending objects to an existing database. The form of
+	    the command is as follows:
+	    <literallayout>
+mged>  keep filename.g object(s)
+	    </literallayout>
+	    The <command>dbconcat</command> command adds the contents of an existing database file to the
+	    database currently open. The user may import the database as is or choose
+	    to rename each element of the geometry by specifying a prefix. The user
+	    may alternatively use the -s or -p option to add a computer-generated
+	    suffix (-s) or prefix (-p). The form of the command is as follows:
+	    <literallayout>
+mged>  dbconcat [-s, -p] filename.g [prefix]
+	    </literallayout>
+	    As mentioned previously, every BRL-CAD object must have a unique name;
+	    however, when combining geometry from more than one database, there may be
+	    duplicate names (especially if a modeler uses standard naming conventions
+	    in all of his models). If there are name collisions, the package will
+	    automatically add computer-generated prefixes to the duplicate items in
+	    the concatenated geometry. The default prefix names are of the form A_,
+	    B_, C_, etc. Note that these prefixes will not be added to the member
+	    names in existing combinations in the database. This allows the user to
+	    edit or remove this geometry independently of existing data, preventing
+	    unintentional overwriting of the existing database items.
+	  </para>
+	  <para>
+	    Another way to move data  to and from separate databases is by using the
+	    export and import commands in MGED's GUI. Located under the File menu,
+	    these commands allow the user to choose either ASCII or binary objects.
+	    They perform the same functions as their command-line counterparts. (When
+	    exporting, if no objects are selected, the default objects will be any
+	    that are currently displayed in the graphics window.)
+	  </para>
+
+	  <para>
+	    It is good modeling practice to check for duplicate names before inserting
+	    new geometry into your database. To check for duplicates, use the dup
+	    command from the command line. This command compares external database
+	    file object names with current database file object names and reports
+	    duplicate names. The form of the dup command is as follows:
+	    <literallayout>
+mged>  dbconcat [-s, -p] filename.g [prefix]
+	    </literallayout>
+	    Note that there is currently no GUI equivalent to the dup command.
 	  </para>
 	</listitem>
 	<listitem>
 	  <para>
+	    <emphasis>Keep bounding primitives as small and compact as possible:</emphasis> Although it
+	    is possible to use large primitives to achieve intersected or subtracted
+	    shapes in BRL-CAD (e.g., using a large sphere to create the relatively
+	    flat curve of a radar dish), using bounding or subtraction primitives that
+	    extend significantly beyond the outer boundaries of the positive volume of
+	    the region is generally not recommended because it slows down raytracing
+	    applications and can make wireframe geometry more difficult to view,
+	    especially in a complex database.
 	  </para>
+	  <para>
+	    Imagine that a user wants half of a sphere for the target geometry (see
+	    Figure 12). In some cases, the user might want to use a large primitive
+	    that already exists in the database because it is in the proper
+	    location/orientation or because it requires no edits. The user should
+	    recognize, however, that whenever this object is rendered, any rays that
+	    pass through the large bounding primitive will have to do the extra
+	    calculation to determine whether or not the ray is in the positive volume
+	    for that region (see Figure 13). Therefore, whenever possible, the use of
+	    smaller, more compact bounding primitives is recommended (see Figure 14).
+	  </para>
+	  <figure>
+	    <title>Target geometry.</title>
+	    <mediaobject>
+	      <imageobject>
+		<imagedata align = "center" fileref="./volumeIII_images/figure12.png" format="PNG"></imagedata>
+	      </imageobject>
+	    </mediaobject>
+	  </figure>
+	  <figure>
+	    <title>Example of an Overly Large Bounding Primitive.</title>
+	    <mediaobject>
+	      <imageobject>
+		<imagedata align = "center" fileref="./volumeIII_images/figure13.png" format="PNG"></imagedata>
+	      </imageobject>
+	    </mediaobject>
+	  </figure>
+	  <figure>
+	    <title>Example of a compact bounding primitive.</title>
+	    <mediaobject>
+	      <imageobject>
+		<imagedata align = "center" fileref="./volumeIII_images/figure14.png" format="PNG"></imagedata>
+	      </imageobject>
+	    </mediaobject>
+	  </figure>
+
+	  <note>
+	    <para>
+	      The half space is a prime example of an overly large bounding         
+	      primitive. Because its extent is infinite, it is always larger than   
+	      needed. Therefore, whenever possible, the modeler should use an arb8  
+	      or other primitive that can be dimensioned to meet the modeling       
+	      needs.
+	    </para>
+	  </note>
 	</listitem>
+
 	<listitem>
 	  <para>
+	    <emphasis>Consider the possibility of articulations, animations, and
+	    presentations:</emphasis> Sometimes models need to be able to simulate movement in
+	    parts and personnel or to show unique views for presentation purposes.
+	    Unfortunately, the modeler (or even the user) cannot always predict all
+	    the possible uses at the outset of a project. Therefore, it is wise,
+	    especially in organizations that use many different types of model
+	    applications, to try to design and build models with the thought that they
+	    may need to be articulated, animated, or presented in different
+	    configurations at some point.
+	  </para>
+	  <para>
+	    For articulation and animation, this generally means that objects that
+	    normally move together (e.g., components on a helicopter rotor, tank
+	    turret, etc.) should be grouped together in assembly combinations (as
+	    shown in Figure 15).
+
+	    <figure>
+	      <title>Example of grouping objects for articulation.</title>
+	    <mediaobject>
+	      <imageobject>
+		<imagedata align = "center" fileref="./volumeIII_images/figure15.png" format="PNG"></imagedata>
+	      </imageobject>
+	    </mediaobject>
+	    </figure>
+	    In the example shown in Figure 15, we would want to create a turret_asy
+	    assembly with turret_armor, main_gun, and commanders_hatch in it.	    
+	  </para>
+	  <para>
+	    Also, as discussed in Lesson 16 of Volume II (Butler et al., 2001),
+	    specialty models or assemblies can be made to simulate changes in model
+	    configuration (e.g., personnel hatches opened/closed, crew compartments
+	    occupied/unoccupied, fuel tanks full/half full/empty, etc.) or to show
+	    views not normally seen (e.g., transparent skin or cross-sectional cutouts
+	    to show internal components, similarly colored components to show
+	    subsystem categorization, etc.). Specialty models usually involve copying
+	    the original model or assembly, altering the copy to achieve the special
+	    effect, and then substituting in the copy as needed.
 	  </para>
 	</listitem>
 
 	<listitem>
 	  <para>
+	    <emphasis>Understand and use Boolean operations properly:</emphasis> Because Boolean
+	    operations play such a vital role in building geometry, it is important
+	    that the modeler possesses a good understanding of them. As shown in Table
+	    4, a combination is the BRL-CAD database record that stores Boolean
+	    operations. It can take one of three forms:
+	  </para>
+	  
+	  <itemizedlist>
+	    <listitem>
+	      <para>
+		<emphasis>Primitive shape combination</emphasis>  - a combination that intersects,
+		subtracts, or unions primitive shapes. This combination does not actually
+		occupy 3-D space.
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		<emphasis>Region</emphasis> - the lowest-level combination that assigns material properties
+		to geometry and occupies 3-D space. Because it is impossible for two or
+		more objects to occupy the same physical space, it follows that one region
+		cannot be unioned into or intersected with another region (e.g., a wheel
+		cannot occupy the same space as the axle that connects to it). Conversely,
+		subtraction is valid (e.g., subtracting a wall-mounted radio from the wall
+		on which it hangs). For a reminder of how Boolean combinations work, see
+		Figure 16.
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		<emphasis>Assembly combination</emphasis> - a type of combination that associates two or
+		more regions or other combinations together.
+	      </para>
+	    </listitem>
+	  </itemizedlist>
+	  
+	  <figure>
+	    <title>Sample Boolean operations.</title>
+	    <mediaobject>
+	      <imageobject>
+		<imagedata align = "center" fileref="./volumeIII_images/figure16.png" format="PNG"></imagedata>
+	      </imageobject>
+	    </mediaobject>
+	  </figure>
+	  
+	  <para>
+	    Combinations can be created with a variety of commands, depending on the
+	    user's requirements. These commands include the following:
+	  </para>
+	  
+	  <itemizedlist>
+	    <listitem>
+	      <para>
+		<emphasis>comb</emphasis>b - creates a combination using Boolean expressions in GIFT
+		<footnote><para>Geometric information for targets (GIFT) is the single-level operator 
+		hierarchy format that is the traditional (and default)
+		notation used in BRL-CAD.</para></footnote> format.
+		Proceeding left to right, intersections (+) and subtractions (") are
+		performed before unions (u). For example, the command
+		<literallayout>
+comb comb_name u a - b + c
+		</literallayout>
+		is evaluated as
+		<literallayout>
+((a - b) + c).
+		</literallayout>
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		<emphasis>c</emphasis> - creates a combination using parenthetically ordered Boolean
+		expressions. Where no order is indicated, intersections are performed
+		before subtractions or unions, and then subtractions and unions, which
+		have equal precedence, are performed left to right.
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		  <emphasis>r</emphasis> - creates a region out of primitive shapes or assembly combinations
+		  using Boolean expressions in GIFT format. Unless the user specifies
+		  otherwise, default region ID, air code, line-of-sight density, and GIFT
+		  material values are assigned.
+	      </para>
+	    </listitem>
+	    <listitem>
+	      
+	      <para>
+		<emphasis>g</emphasis>creates a combination by automatically unioning all user-specified
+		elements together. Thus, this command does not accept any sort of Boolean
+		operators from the user.<footnote><para>The <command>g</command> command is derived from “group,” 
+		the term sometimes used for <emphasis>assembly combination</emphasis>.</para></footnote>
+	      </para>
+	    </listitem>
+	  </itemizedlist>		  
 
-	    <itemizedlist>
-	      <listitem>
-		<para>
-		  
-		</para>
-	      </listitem>
-	      <listitem>
-		<para>
-		  
-		</para>
-	      </listitem>
-	      <listitem>
-		<para>
-		  
-		</para>
-	      </listitem>
-	    </itemizedlist>
-	    
+	  <para>
+	    In addition, there are several general recommended practices when dealing
+	    with Boolean operations. They are as follows:
+	  </para>
+	  
+	  <itemizedlist>
+	    <listitem>
+	      <para>
+		<emphasis>Start with a positive volume:</emphasis> The modeler must start with a positive
+		volume before any subtraction or intersection operations are performed. If
+		you are using GIFT notation, this means that you must start with a union
+		operator. If you are using fully parenthesized standard notation, this
+		means that you must specify an object before specifying a subtraction or
+		intersection from it.
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		<emphasis>Be mindful of the order of Boolean operations:</emphasis> The modeler should make
+		sure unions, intersections, and subtractions are properly ordered in the
+		region structure to achieve the desired effect. For example, imagine that
+		a modeler wants to subtract a hole in a region named bolt.r. As shown in
+		Figure 17, if that region consists of two unioned primitives--head.s and
+		shaft.s--the subtraction in the region must follow the shaft primitive.
+		Alternatively, if the hole is subtracted from the head, the subtraction
+		will have no effect because head.s and hole.s do not share any volume.		  
+	      </para>
+	    </listitem>
+	  </itemizedlist>
+	  
+	  <figure>
+	    <title>Properly (top) and improperly (bottom) ordered regions.</title>
+	    <mediaobject>
+	      <imageobject>
+		<imagedata align = "center" fileref="./volumeIII_images/figure17.png" format="PNG"></imagedata>
+	      </imageobject>
+	    </mediaobject>
+	  </figure>
+	  
+	  <note>
+	    <para>
+	      Note that in BRL-CAD releases 6.0 and later, fully parenthesized      
+	      Boolean expressions are available for the c command. This allows the  
+	      user to designate operator precedence on the command line based on    
+	      standard parenthetical notation as opposed to the order-of-occurrence 
+	      and union-last methodology, which is the previously described         
+	      functionality in BRL-CAD.
+	    </para>
+	  </note>
+	  
+	</listitem>
+	
+	<listitem>
+	  <para>
+	    <emphasis>Follow or develop standardized conventions for colorizing objects:</emphasis>
+	    When displaying a complex model, it is sometimes difficult for the user to
+	    visually differentiate one system, subsystem, or component from another.
+	    Also, it is not always clear as to which components belong to which
+	    systems/subsystems. Therefore, if possible, it is good practice to follow
+	    a standardized RGB (red-green-blue) color scheme for commonly
+	    modeled/analyzed systems (e.g., engine, suspension, communications, etc.).
+	  </para>
+	  <para>
+	    Table 8 shows some RGB colors traditionally used in MGED (out of a
+	    possible 17 million color combinations between black [0 0 0] and white
+	    [255 255 255]) (Applin et al., 1988). Table 9 shows some commonly used
+	    system-color assignments for various ground and air target descriptions
+	    (as drawn in a graphics display window with a black background) (Robertson
+	    et al., 1996; Winner et al., 2002).
 	  </para>
 	</listitem>
-     </itemizedlist>
+
+	<listitem>
+	  <para>
+	    <emphasis>Take advantage of advanced/automation modeling tools:</emphasis> BRL-CAD offers
+	    many tools that can help users perform advanced functions or automate
+	    complex or tedious aspects of the geometry development process. Examples
+	    of some these tools, which are discussed in Appendices A-F, include the
+	    pipe primitive (which can automate the building of wiring or hydraulic
+	    lines), the projection shader (which can paste words or images onto
+	    geometry instead of having to build them), the extruded bitmap (which can
+	    turn two-dimensional objects [e.g., a building floor plan] into 3-D
+	    geometry [e.g., walls]), the .mgedrc file (which can create customized
+	    shortcuts for many MGED operations), the Build Pattern tool (which can
+	    automatically replicate objects in a specified pattern), and the
+	    build_region command (which can automatically build regions by grouping
+	    together similarly named objects).
+	  </para>
+	</listitem>
+      </itemizedlist>
+
+      <table>
+	<title></title>
+	<tgroup cols='2' align='center'>
+	  <tbody>
+	    <row>
+	      <entry>
+		Aquamarine
+	      </entry>
+	      <entry>
+		112 219 147
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Medium aquamarine
+	      </entry>
+	      <entry>
+		50 204 153
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Black
+	      </entry>
+	      <entry>
+		0 0 0
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Blue
+	      </entry>
+	      <entry>
+		0 0 255
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Cadet blue
+	      </entry>
+	      <entry>
+		95 159 159
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Corn flower blue
+	      </entry>
+	      <entry>
+		66 66 111
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Dark slate blue
+	      </entry>
+	      <entry>
+		107 35 142
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Light blue
+	      </entry>
+	      <entry>
+		191 216 216
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Light steel blue
+	      </entry>
+	      <entry>
+		143 143 188
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Medium blue
+	      </entry>
+	      <entry>
+		50 50 204
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Medium slate blue
+	      </entry>
+	      <entry>
+		127 0 255
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Midnight blue
+	      </entry>
+	      <entry>
+		47 47 79
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Navy blue
+	      </entry>
+	      <entry>
+		35 35 142
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Sky blue
+	      </entry>
+	      <entry>
+		50 153 204
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Slate blue
+	      </entry>
+	      <entry>
+		0 127 255
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Steel blue
+	      </entry>
+	      <entry>
+		35 107 142
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Coral
+	      </entry>
+	      <entry>
+		255 127 0
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Cyan
+	      </entry>
+	      <entry>
+		0 255 255
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Firebrick
+	      </entry>
+	      <entry>
+		142 35 35
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Gold
+	      </entry>
+	      <entry>
+		204 127 50
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Goldenrod
+	      </entry>
+	      <entry>
+		219 219 112
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Medium goldenrod
+	      </entry>
+	      <entry>
+		234 234 173
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Green
+	      </entry>
+	      <entry>
+		0 255 0
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Dark green
+	      </entry>
+	      <entry>
+		47 79 47
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Dark olive green
+	      </entry>
+	      <entry>
+		79 79 47
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Forest green
+	      </entry>
+	      <entry>
+		35 142 35
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Lime green	
+	      </entry>
+	      <entry>
+		50 204 50
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Medium forest green
+	      </entry>
+	      <entry>
+		107 142 50
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Medium sea green
+	      </entry>
+	      <entry>
+		66 111 66
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Medium spring green
+	      </entry>
+	      <entry>
+		127 255 0
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Pale green
+	      </entry>
+	      <entry>
+		143 188 143
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Sea green
+	      </entry>
+	      <entry>
+		35 142 107
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		
+	      </entry>
+	      <entry>
+		
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		
+	      </entry>
+	      <entry>
+		
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		
+	      </entry>
+	      <entry>
+		
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		
+	      </entry>
+	      <entry>
+		
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		
+	      </entry>
+	      <entry>
+		
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		
+	      </entry>
+	      <entry>
+		
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		
+	      </entry>
+	      <entry>
+		
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		
+	      </entry>
+	      <entry>
+		
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		
+	      </entry>
+	      <entry>
+		
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		
+	      </entry>
+	      <entry>
+		
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		
+	      </entry>
+	      <entry>
+		
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		
+	      </entry>
+	      <entry>
+		
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		
+	      </entry>
+	      <entry>
+		
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		
+	      </entry>
+	      <entry>
+		
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		
+	      </entry>
+	      <entry>
+		
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		
+	      </entry>
+	      <entry>
+		
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		
+	      </entry>
+	      <entry>
+		
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		
+	      </entry>
+	      <entry>
+		
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		
+	      </entry>
+	      <entry>
+		
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		
+	      </entry>
+	      <entry>
+		
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		
+	      </entry>
+	      <entry>
+		
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		
+	      </entry>
+	      <entry>
+		
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		
+	      </entry>
+	      <entry>
+		
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		
+	      </entry>
+	      <entry>
+		
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		
+	      </entry>
+	      <entry>
+		
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		
+	      </entry>
+	      <entry>
+		
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		
+	      </entry>
+	      <entry>
+		
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		
+	      </entry>
+	      <entry>
+		
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		
+	      </entry>
+	      <entry>
+		
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		
+	      </entry>
+	      <entry>
+		
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		
+	      </entry>
+	      <entry>
+		
+	      </entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </table>
+
+      <table>
+	<title></title>
+	<tgroup cols='2' align='center'>
+	  <tbody>
+	    <row>
+	      <entry>
+		
+	      </entry>
+	      <entry>
+		
+	      </entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </table>
 
 
   </chapter>
