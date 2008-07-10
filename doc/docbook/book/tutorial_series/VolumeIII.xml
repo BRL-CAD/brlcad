@@ -2443,250 +2443,258 @@ comb comb_name u a - b + c
 	    </row>
 	    <row>
 	      <entry>
-		
+		Spring green
 	      </entry>
 	      <entry>
-		
-	      </entry>
-	    </row>
-	    <row>
-	      <entry>
-		
-	      </entry>
-	      <entry>
-		
+		0 255 127
 	      </entry>
 	    </row>
 	    <row>
 	      <entry>
-		
+		Yellow green
 	      </entry>
 	      <entry>
-		
-	      </entry>
-	    </row>
-	    <row>
-	      <entry>
-		
-	      </entry>
-	      <entry>
-		
+		153 204 50
 	      </entry>
 	    </row>
 	    <row>
 	      <entry>
-		
+		Dark slate gray
 	      </entry>
 	      <entry>
-		
-	      </entry>
-	    </row>
-	    <row>
-	      <entry>
-		
-	      </entry>
-	      <entry>
-		
+		47 79 79
 	      </entry>
 	    </row>
 	    <row>
 	      <entry>
-		
+		Dim gray
 	      </entry>
 	      <entry>
-		
-	      </entry>
-	    </row>
-	    <row>
-	      <entry>
-		
-	      </entry>
-	      <entry>
-		
+		84 84 84
 	      </entry>
 	    </row>
 	    <row>
 	      <entry>
-		
+		Light gray
 	      </entry>
 	      <entry>
-		
-	      </entry>
-	    </row>
-	    <row>
-	      <entry>
-		
-	      </entry>
-	      <entry>
-		
+		168 168 168
 	      </entry>
 	    </row>
 	    <row>
 	      <entry>
-		
+		Khaki
 	      </entry>
 	      <entry>
-		
-	      </entry>
-	    </row>
-	    <row>
-	      <entry>
-		
-	      </entry>
-	      <entry>
-		
+		159 159 95
 	      </entry>
 	    </row>
 	    <row>
 	      <entry>
-		
+		Magenta
 	      </entry>
 	      <entry>
-		
-	      </entry>
-	    </row>
-	    <row>
-	      <entry>
-		
-	      </entry>
-	      <entry>
-		
+		255 0 255
 	      </entry>
 	    </row>
 	    <row>
 	      <entry>
-		
+		Maroon
 	      </entry>
 	      <entry>
-		
-	      </entry>
-	    </row>
-	    <row>
-	      <entry>
-		
-	      </entry>
-	      <entry>
-		
+		142 35 107
 	      </entry>
 	    </row>
 	    <row>
 	      <entry>
-		
+		Orange
 	      </entry>
 	      <entry>
-		
-	      </entry>
-	    </row>
-	    <row>
-	      <entry>
-		
-	      </entry>
-	      <entry>
-		
+		204 50 50
 	      </entry>
 	    </row>
 	    <row>
 	      <entry>
-		
+		Orchid
 	      </entry>
 	      <entry>
-		
-	      </entry>
-	    </row>
-	    <row>
-	      <entry>
-		
-	      </entry>
-	      <entry>
-		
+		219 112 219
 	      </entry>
 	    </row>
 	    <row>
 	      <entry>
-		
+		Dark orchid
 	      </entry>
 	      <entry>
-		
-	      </entry>
-	    </row>
-	    <row>
-	      <entry>
-		
-	      </entry>
-	      <entry>
-		
+		153 50 204
 	      </entry>
 	    </row>
 	    <row>
 	      <entry>
-		
+		Medium orchid
 	      </entry>
 	      <entry>
-		
-	      </entry>
-	    </row>
-	    <row>
-	      <entry>
-		
-	      </entry>
-	      <entry>
-		
+		147 112 219
 	      </entry>
 	    </row>
 	    <row>
 	      <entry>
-		
+		Pink
 	      </entry>
 	      <entry>
-		
-	      </entry>
-	    </row>
-	    <row>
-	      <entry>
-		
-	      </entry>
-	      <entry>
-		
+		188 143 143
 	      </entry>
 	    </row>
 	    <row>
 	      <entry>
-		
+		Plum
 	      </entry>
 	      <entry>
-		
-	      </entry>
-	    </row>
-	    <row>
-	      <entry>
-		
-	      </entry>
-	      <entry>
-		
+		234 173 234
 	      </entry>
 	    </row>
 	    <row>
 	      <entry>
-		
+		Red
 	      </entry>
 	      <entry>
-		
-	      </entry>
-	    </row>
-	    <row>
-	      <entry>
-		
-	      </entry>
-	      <entry>
-		
+		255 0 0
 	      </entry>
 	    </row>
 	    <row>
 	      <entry>
-		
+		Indian red
 	      </entry>
 	      <entry>
-		
+		79 47 47
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Medium violet
+	      </entry>
+	      <entry>
+		219 112 147
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Orange red
+	      </entry>
+	      <entry>
+		255 0 127
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Violet red
+	      </entry>
+	      <entry>
+		204 50 153
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Salmon
+	      </entry>
+	      <entry>
+		111 66 66
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Sienna
+	      </entry>
+	      <entry>
+		142 107 35
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Tan
+	      </entry>
+	      <entry>
+		219 147 112
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Thistle
+	      </entry>
+	      <entry>
+		216 191 216
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Turquoise
+	      </entry>
+	      <entry>
+		173 234 234
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Dark turquoise
+	      </entry>
+	      <entry>
+		112 147 219
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Medium turquoise
+	      </entry>
+	      <entry>
+		112 219 219
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Violet
+	      </entry>
+	      <entry>
+		79 47 79
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Blue violet
+	      </entry>
+	      <entry>
+		159 95 159
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Wheat
+	      </entry>
+	      <entry>
+		216 216 191
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		White
+	      </entry>
+	      <entry>
+		255 255 255
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Yellow
+	      </entry>
+	      <entry>
+		255 255 0
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>
+		Green yellow
+	      </entry>
+	      <entry>
+		147 219 112
 	      </entry>
 	    </row>
 	  </tbody>
