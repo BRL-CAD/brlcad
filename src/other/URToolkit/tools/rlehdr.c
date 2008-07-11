@@ -290,7 +290,7 @@ char **comment_names;
 		{
 		    if ( (cp = index( the_comment, '\n' )) )
 			printf( ", %s=%.*s", *comment_names,
-				*comment_names, cp - the_comment - 1, the_comment );
+				cp - the_comment - 1, the_comment );
 		    else
 			printf( ", %s=%s", *comment_names, the_comment );
 		    break;
