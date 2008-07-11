@@ -7,6 +7,7 @@ libged_nil_la_SOURCES = \
 	ae2dir.c \
 	aet.c \
 	arced.c \
+	arot.c \
 	attr.c \
 	autoview.c \
 	bigE.c \
@@ -24,6 +25,8 @@ libged_nil_la_SOURCES = \
 	edmater.c \
 	erase.c \
 	erase_all.c \
+	eye.c \
+	eye_pos.c \
 	form.c \
 	ged.c \
 	get.c \

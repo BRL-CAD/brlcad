@@ -215,6 +215,103 @@ ged_do_zoom(struct ged *gedp, fastf_t sf)
 }
 
 /*
+ *			P E R S P _ M A T
+ *
+ *  This code originally came from mged/dozoom.c.
+ *  Compute a perspective matrix for a right-handed coordinate system.
+ *  Reference: SGI Graphics Reference Appendix C
+ *  (Note:  SGI is left-handed, but the fix is done in the Display Manger).
+ */
+static void
+ged_persp_mat(mat_t	m,
+	      fastf_t	fovy,
+	      fastf_t	aspect,
+	      fastf_t	near1,
+	      fastf_t	far1,
+	      fastf_t	backoff)
+{
+    mat_t	m2, tran;
+
+    fovy *= 3.1415926535/180.0;
+
+    MAT_IDN(m2);
+    m2[5] = cos(fovy/2.0) / sin(fovy/2.0);
+    m2[0] = m2[5]/aspect;
+    m2[10] = (far1+near1) / (far1-near1);
+    m2[11] = 2*far1*near1 / (far1-near1);	/* This should be negative */
+
+    m2[14] = -1;		/* XXX This should be positive */
+    m2[15] = 0;
+
+    /* Move eye to origin, then apply perspective */
+    MAT_IDN(tran);
+    tran[11] = -backoff;
+    bn_mat_mul(m, m2, tran);
+}
+
+/*
+ *  This code originally came from mged/dozoom.c.
+ *  Create a perspective matrix that transforms the +/1 viewing cube,
+ *  with the acutal eye position (not at Z=+1) specified in viewing coords,
+ *  into a related space where the eye has been sheared onto the Z axis
+ *  and repositioned at Z=(0, 0, 1), with the same perspective field of view
+ *  as before.
+ *
+ *  The Zbuffer clips off stuff with negative Z values.
+ *
+ *  pmat = persp * xlate * shear
+ */
+void
+ged_mike_persp_mat(mat_t		pmat,
+		   const point_t	eye)
+{
+    mat_t	shear;
+    mat_t	persp;
+    mat_t	xlate;
+    mat_t	t1, t2;
+    point_t	sheared_eye;
+
+    if ( eye[Z] <= SMALL )  {
+	VPRINT("mike_persp_mat(): ERROR, z<0, eye", eye);
+	return;
+    }
+
+    /* Shear "eye" to +Z axis */
+    MAT_IDN(shear);
+    shear[2] = -eye[X]/eye[Z];
+    shear[6] = -eye[Y]/eye[Z];
+
+    MAT4X3VEC( sheared_eye, shear, eye );
+    if ( !NEAR_ZERO(sheared_eye[X], .01) || !NEAR_ZERO(sheared_eye[Y], .01) )  {
+	VPRINT("ERROR sheared_eye", sheared_eye);
+	return;
+    }
+
+    /* Translate along +Z axis to put sheared_eye at (0, 0, 1). */
+    MAT_IDN(xlate);
+    /* XXX should I use MAT_DELTAS_VEC_NEG()?  X and Y should be 0 now */
+    MAT_DELTAS( xlate, 0, 0, 1-sheared_eye[Z] );
+
+    /* Build perspective matrix inline, substituting fov=2*atan(1, Z) */
+    MAT_IDN( persp );
+    /* From page 492 of Graphics Gems */
+    persp[0] = sheared_eye[Z];	/* scaling: fov aspect term */
+    persp[5] = sheared_eye[Z];	/* scaling: determines fov */
+
+    /* From page 158 of Rogers Mathematical Elements */
+    /* Z center of projection at Z=+1, r=-1/1 */
+    persp[14] = -1;
+
+    bn_mat_mul( t1, xlate, shear );
+    bn_mat_mul( t2, persp, t1 );
+
+    /* Now, move eye from Z=1 to Z=0, for clipping purposes */
+    MAT_DELTAS( xlate, 0, 0, -1 );
+
+    bn_mat_mul( pmat, xlate, t2 );
+}
+
+/*
  * Local Variables:
  * tab-width: 8
  * mode: C

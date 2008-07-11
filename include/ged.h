@@ -951,6 +951,14 @@ GED_EXPORT BU_EXTERN(int ged_arced, (struct ged *gedp, int argc, const char *arg
 GED_EXPORT BU_EXTERN(int ged_attr, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Rotate angle degrees about the specified axis
+ *
+ * Usage:
+ *     arot x y z angle
+ */
+GED_EXPORT BU_EXTERN(int ged_arot, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Auto-adjust the view so that all displayed geometry is in view
  *
  * Usage:
@@ -1089,6 +1097,22 @@ GED_EXPORT BU_EXTERN(int ged_erase, (struct ged *gedp, int argc, const char *arg
  *     erase_all objects(s)
  */
 GED_EXPORT BU_EXTERN(int ged_erase_all, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Set/get the eye point
+ *
+ * Usage:
+ *     eye [x y z]
+ */
+GED_EXPORT BU_EXTERN(int ged_eye, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Set/get the eye position
+ *
+ * Usage:
+ *     eye_pos [x y z]
+ */
+GED_EXPORT BU_EXTERN(int ged_eye_pos, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * returns form for objects of type "type"

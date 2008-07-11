@@ -192,6 +192,16 @@ BU_EXTERN (int ged_do_tra,
 BU_EXTERN (int ged_do_zoom,
 	   (struct ged	*gedp,
 	    fastf_t	sf));
+BU_EXTERN (void ged_persp_mat,
+	   (fastf_t *m,
+	    fastf_t fovy,
+	    fastf_t aspect,
+	    fastf_t near1,
+	    fastf_t far1,
+	    fastf_t backoff));
+BU_EXTERN (void ged_mike_persp_mat,
+	   (fastf_t *pmat,
+	    const fastf_t *eye));
 
 
 __END_DECLS

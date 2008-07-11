@@ -629,7 +629,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	extrude_ip->keypoint = 0;
 	av[0] = "make_name";
 	av[1] = "skt_";
-	ged_make_name(gedp, 2, av);
+	ged_make_name(gedp, 2, (const char **)av);
 	extrude_ip->sketch_name = bu_strdup(bu_vls_addr(&gedp->ged_result_str));
 	extrude_ip->skt = (struct rt_sketch_internal *)NULL;
 
@@ -643,7 +643,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	av[5] = extrude_ip->sketch_name;
 	av[6] = "sketch";
 	av[7] = (char *)0;
-	ged_make(gedp, 7, av);
+	ged_make(gedp, 7, (const char **)av);
     } else if (strcmp(argv[bu_optind+1], "sketch") == 0) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_SKETCH;

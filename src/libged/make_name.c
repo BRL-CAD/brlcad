@@ -75,7 +75,7 @@ ged_make_name(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_vls_init(&obj_name);
-    for (cp = argv[1], len = 0; *cp != '\0'; ++cp, ++len) {
+    for (cp = (char *)argv[1], len = 0; *cp != '\0'; ++cp, ++len) {
 	if (*cp == '@') {
 	    if (*(cp + 1) == '@')
 		++cp;

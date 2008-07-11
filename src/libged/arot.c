@@ -1,4 +1,4 @@
-/*                         R O T . C
+/*                         A R O T . C
  * BRL-CAD
  *
  * Copyright (c) 2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rot.c
+/** @file arot.c
  *
- * The rot command.
+ * The arot command.
  *
  */
 
@@ -32,12 +32,13 @@
 #include "ged_private.h"
 
 int
-ged_rot(struct ged *gedp, int argc, const char *argv[])
+ged_arot(struct ged *gedp, int argc, const char *argv[])
 {
-    vect_t rvec;
     mat_t rmat;
-    char coord;
-    static const char *usage = "[-m|-v] x y z";
+    point_t pt;
+    vect_t axis;
+    fastf_t angle;
+    static const char *usage = "x y z angle";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
@@ -54,45 +55,37 @@ ged_rot(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_OK;
     }
 
-    /* process possible coord flag */
-    if (argv[1][0] == '-' && (argv[1][1] == 'v' || argv[1][1] == 'm') && argv[1][2] == '\0') {
-	coord = argv[1][1];
-	--argc;
-	++argv;
-    } else
-	coord = gedp->ged_gvp->gv_coord;
-
-    if (argc != 2 && argc != 4) {
+    if (argc != 5) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
 
-    if (argc == 2) {
-	if (bn_decode_vect(rvec, argv[1]) != 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return BRLCAD_ERROR;
-	}
-    } else {
-	if (sscanf(argv[1], "%lf", &rvec[X]) < 1) {
-	    bu_vls_printf(&gedp->ged_result_str, "ged_eye: bad X value %s\n", argv[1]);
-	    return BRLCAD_ERROR;
-	}
-
-	if (sscanf(argv[2], "%lf", &rvec[Y]) < 1) {
-	    bu_vls_printf(&gedp->ged_result_str, "ged_eye: bad Y value %s\n", argv[2]);
-	    return BRLCAD_ERROR;
-	}
-
-	if (sscanf(argv[3], "%lf", &rvec[Z]) < 1) {
-	    bu_vls_printf(&gedp->ged_result_str, "ged_eye: bad Z value %s\n", argv[3]);
-	    return BRLCAD_ERROR;
-	}
+    if (sscanf(argv[1], "%lf", &axis[X]) != 1) {
+	bu_vls_printf(&gedp->ged_result_str, "ged_arot: bad X value - %s\n", argv[1]);
+	return BRLCAD_ERROR;
     }
 
-    VSCALE(rvec, rvec, -1.0);
-    bn_mat_angles(rmat, rvec[X], rvec[Y], rvec[Z]);
+    if (sscanf(argv[2], "%lf", &axis[Y]) != 1) {
+	bu_vls_printf(&gedp->ged_result_str, "ged_arot: bad Y value - %s\n", argv[2]);
+	return BRLCAD_ERROR;
+    }
 
-    return ged_do_rot(gedp, coord, rmat, (int (*)())0);
+    if (sscanf(argv[3], "%lf", &axis[Z]) != 1) {
+	bu_vls_printf(&gedp->ged_result_str, "ged_arot: bad Z value - %s\n", argv[3]);
+	return BRLCAD_ERROR;
+    }
+
+    if (sscanf(argv[4], "%lf", &angle) != 1) {
+	bu_vls_printf(&gedp->ged_result_str, "ged_arot: bad angle - %s\n", argv[4]);
+	return BRLCAD_ERROR;
+    }
+
+    VSETALL(pt, 0.0);
+    VUNITIZE(axis);
+
+    bn_mat_arb_rot(rmat, pt, axis, angle*bn_degtorad);
+
+    return ged_do_rot(gedp, gedp->ged_gvp->gv_coord, rmat, (int (*)())0);
 }
 
 /*
