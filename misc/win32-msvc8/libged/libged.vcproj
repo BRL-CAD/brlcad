@@ -130,11 +130,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\ae2dir.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\aet.c"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\arced.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\arot.c"
 				>
 			</File>
 			<File
@@ -178,6 +186,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\dir2ae.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\draw.c"
 				>
 			</File>
@@ -199,6 +211,14 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\erase_all.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\eye.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\eye_pos.c"
 				>
 			</File>
 			<File
