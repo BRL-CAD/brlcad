@@ -1,8 +1,9 @@
-<!DOCTYPE authorgroup PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+<!DOCTYPE bookinfo PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
 "../../resources/standard/dtd/docbookx.dtd">
 
+<bookinfo>
     <authorgroup id="Intro_MGED_Tutorial_Series_II_authors">
-      <author id="lbutler">
+      <author>
 	<firstname>Lee</firstname>
 	<surname>Butler</surname>
 	<othername role='mi'>A</othername>
@@ -16,7 +17,7 @@
 	  </address>
 	</affiliation>
       </author>
-      <author id="eedwards">
+      <author>
 	<firstname>Eric</firstname>
 	<surname>Edwards</surname>
 	<othername role='mi'>W</othername>
@@ -73,3 +74,49 @@
 	</affiliation>
       </author>
     </authorgroup>
+
+    <authorgroup id="Intro_MGED_Tutorial_Series_III_authors">
+      <author>
+	<firstname>Lee</firstname>
+	<surname>Butler</surname>
+	<othername role='mi'>A</othername>
+	<affiliation>
+	  <shortaffil>Army Research Laboratory</shortaffil>
+	  <orgdiv>Survivability/Lethality Analysis Directorate</orgdiv>
+	  <address>
+	    Aberdeen Proving Ground
+	    <state>MD</state> 
+	    <postcode>21005-5068</postcode>
+	  </address>
+	</affiliation>
+      </author>
+      <author>
+	<firstname>Eric</firstname>
+	<surname>Edwards</surname>
+	<othername role='mi'>W</othername>
+	<affiliation>
+	  <shortaffil>SURVICE Engineering Company</shortaffil>
+	  <address>
+	    <street>4695 Millennium Drive</street>
+	    <city>Belcamp</city>
+	    <state>MD</state> 
+	    <postcode>21017-1505</postcode>
+	  </address>
+	</affiliation>
+      </author>
+      <author>
+        <firstname>Dwayne</firstname>
+        <surname>Kregel</surname>
+        <othername role='mi'>L</othername>
+        <affiliation>
+          <shortaffil>SURVICE Engineering Company</shortaffil>
+          <address>
+            <street>4695 Millennium Drive</street>
+            <city>Belcamp</city>
+            <state>MD</state> 
+            <postcode>21017-1505</postcode>
+          </address>
+        </affiliation>
+      </author>
+    </authorgroup>
+</bookinfo>

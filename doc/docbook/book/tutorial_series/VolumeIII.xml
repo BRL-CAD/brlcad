@@ -5,24 +5,7 @@
   <bookinfo>
     <title><application>BRL-CAD</application> Tutorial Series: Volume III - Principles of Effective Modeling</title>
 
-    <authorgroup>
-      <xi:include href="book_authors.xml" xpointer="lbutler"/>
-      <xi:include href="book_authors.xml" xpointer="eedwards"/>
-      <author>
-	<firstname>Dwayne</firstname>
-	<surname>Kregel</surname>
-	<othername role='mi'>L</othername>
-	<affiliation>
-	  <shortaffil>SURVICE Engineering Company</shortaffil>
-	  <address>
-	    <street>4695 Millennium Drive</street>
-	    <city>Belcamp</city>
-	    <state>MD</state> 
-	    <postcode>21017-1505</postcode>
-	  </address>
-	</affiliation>
-      </author>
-    </authorgroup>
+    <xi:include href="book_authors.xml" xpointer="Intro_MGED_Tutorial_Series_III_authors"/>
 
     <publishername>Army Research Laboratory</publishername>
     <pubsnumber>ARL-SR-119</pubsnumber>
@@ -3364,9 +3347,9 @@ dbbinary -i u c documentation /home/fred/doc.txt
 
 
   <appendix label="A">
-    <title><application>MGED</application> Commands</title>
-    <xi:include href="../../system/mged/mged_commands.xml" xpointer="mged_user_cmd_table"/>
-    <xi:include href="../../system/mged/mged_commands.xml" xpointer="glossary"/>
+    <title>Using the Pipe Primitive</title>
+    <xi:include href="../../tutorials/pipes/pipes.xml" xpointer="pipe_general_use"/>
+    <xi:include href="../../tutorials/pipes/pipes.xml" xpointer="pipe_make_coil"/>
   </appendix>
   
   
