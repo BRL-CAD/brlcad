@@ -3366,5 +3366,17 @@ dbbinary -i u c documentation /home/fred/doc.txt
     <xi:include href="../../tutorials/projection_shader/projection_shader.xml" xpointer="projshader_projectfront"/>
   </appendix>
     
-  
+  <appendix label="C">
+    <title>Using the Extruded Bitmap Primitive</title>
+    <xi:include href="../../tutorials/ebm_primitive/ebm_primitive.xml" xpointer="ebm1"/>
+    <xi:include href="../../tutorials/ebm_primitive/ebm_primitive.xml" xpointer="ebm2"/>
+    <xi:include href="../../tutorials/ebm_primitive/ebm_primitive.xml" xpointer="ebm3"/>
+    <xi:include href="../../tutorials/ebm_primitive/ebm_primitive.xml" xpointer="ebm4"/>
+    <xi:include href="../../tutorials/ebm_primitive/ebm_primitive.xml" xpointer="ebm5"/>
+    <xi:include href="../../tutorials/ebm_primitive/ebm_primitive.xml" xpointer="ebm6"/>
+    <xi:include href="../../tutorials/ebm_primitive/ebm_primitive.xml" xpointer="ebm7"/>
+    <xi:include href="../../tutorials/ebm_primitive/ebm_primitive.xml" xpointer="ebm8"/>
+    <xi:include href="../../tutorials/ebm_primitive/ebm_primitive.xml" xpointer="ebm9"/>
+  </appendix>
+
 </book>
