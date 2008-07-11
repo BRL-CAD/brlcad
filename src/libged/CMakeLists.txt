@@ -1,5 +1,6 @@
 set(LIBGED_SOURCES
     adjust.c
+    ae2dir.c
     aet.c
     arced.c
     attr.c
@@ -12,6 +13,7 @@ set(LIBGED_SOURCES
     center.c
     comb_color.c
     dg_obj.c
+    dir2ae.c
     draw.c
     editit.c
     edcomb.c
@@ -36,6 +38,7 @@ set(LIBGED_SOURCES
     make_name.c
     mater.c
     mirror.c
+    mrot.c
     nirt.c
     ocenter.c
     orotate.c
@@ -47,23 +50,28 @@ set(LIBGED_SOURCES
     qray.c
     report.c
     rmater.c
+    rot.c
     rt.c
     set_outputHandler.c
     set_transparency.c
     set_uplotOutputMode.c
     shader.c
     size.c
+    slew.c
+    tra.c
     trace.c
     track.c
     tree.c
     vdraw.c
     view_obj.c
+    vrot.c
     vutil.c
     wdb_comb_std.c
     wdb_obj.c
     who.c
     wmater.c
     zap.c
+    zoom.c
 )
 
 include_directories(
