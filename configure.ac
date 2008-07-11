@@ -120,7 +120,7 @@ CONFIG_MONTH=`date +%m`
 CONFIG_YEAR=`date +%Y`
 CONFIG_DATE="${CONFIG_YEAR}${CONFIG_MONTH}${CONFIG_DAY}"
 CONFIG_TIME="`date '+%H %M %S'`"
-CONFIG_TS="`date`"
+CONFIG_TS="`LANG=C date -R 2>/dev/null || date +'%a, %d %b %Y %H:%M:%S %z'`"
 AC_SUBST(CONFIG_DAY)
 AC_SUBST(CONFIG_MONTH)
 AC_SUBST(CONFIG_YEAR)
