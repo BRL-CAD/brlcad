@@ -83,6 +83,7 @@ struct path_list {
     struct point_list *pt_list;
 };
 
+
 /* This structure will hold information relevant to the algorithm.
  * It will be pointed by ap->a_user 
  */
@@ -108,13 +109,7 @@ struct mlt_app {
  */
 view_init(register struct application *ap, char *file, char *obj, int minus_o)
 {
-    ap->a_ray.r_dir[0] = 1;
-    ap->a_ray.r_dir[1] = 0;
-    ap->a_ray.r_dir[2] = 1;
-    VUNITIZE(ap->a_ray.r_dir);
-
-
-    return 1;		/* no framebuffer needed */
+     return 1;		/* framebuffer needed */
 }
 
 /*
@@ -127,15 +122,16 @@ void
 view_2init(struct application *ap)
 {
     int i;
-    /* Initialization of the mlt application structure */
     struct mlt_app* mlt_application;
+        
+    /* Initialization of the mlt application structure */
     mlt_application = (struct mlt_app*) bu_malloc(sizeof(struct mlt_app), "mlt application");
     mlt_application->lightSources = (struct point_list*) NULL;
     mlt_application->paths = (struct path_list*) NULL;
+    mlt_application->m_uptr = (genptr_t) NULL;
 
     /* Setting application callback functions and
-     * linkage to the mlt application
-     */
+     * linkage to the mlt application */
     ap->a_hit = rayhit;
     ap->a_miss = raymiss;
     ap->a_onehit = 1;
@@ -414,25 +410,62 @@ view_cleanup(struct rt_i *rtip)
 int
 rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp)
 {
-    register struct mlt_app* p_mlt;
-    register struct path_list* p_path;
-    /*bu_log("hit: 0x%x\n", ap->a_resource);*/
+    struct mlt_app* p_mlt;
+    struct path_list* p_path;
+    struct soltab *stp;
+    struct hit *hitp;
+    struct partition *pp;
+    struct light_specific *lp;
 
-    /* This will be used by view_pixel() to verify if the ray hit or missed */
-    ap->a_user = 1;
+    vect_t normal, work0, work1;
+    fastf_t	diffuse0 = 0;
+    fastf_t	cosI0 = 0;    
+  
+    /*bu_log("hit: 0x%x\n", ap->a_resource);*/
+    pp = PartHeadp->pt_forw;    
+
+    for (; pp != PartHeadp; pp = pp->pt_forw)
+	    if (pp->pt_outhit->hit_dist >= 0.0) break;
+
+    if (pp == PartHeadp) {
+        bu_log("rayhit: no hit out front?");
+        return 0;
+    }
+
+    stp = pp->pt_inseg->seg_stp;
+    hitp = pp->pt_inhit;
+
+    /* This will be used find the hit point: */
+    RT_HIT_NORMAL(normal, 
+        hitp,
+        stp,
+        &(ap->a_ray),
+        pp->pt_inflip);
+
+    /*
+     * Diffuse reflectance from each light source
+     */
+    /* Light from the "eye" (ray source).  Note sign change */
+	lp = BU_LIST_FIRST(light_specific, &(LightHead.l));
+	diffuse0 = 0;
+	if ((cosI0 = -VDOT(normal, ap->a_ray.r_dir)) >= 0.0)
+	diffuse0 = cosI0 * (1.0 - AmbientIntensity);
+	VSCALE(work0, lp->lt_color, diffuse0);
+
+	/* Add in contribution from ambient light */
+	
+    VMOVE(ap->a_color, work0);
+
+    /* Finds just the hit point. We want the normal vector too.
+    VJOIN1(segp->seg_in.hit_point, ap->a_ray.r_pt,
+        segp->seg_in.hit_dist, ap->a_ray.r_dir);
+        */
 
     /* The application uses a generic pointer (genptr_t)
      * to point to a struct mlt_app
-     */
-    
-    
+     */    
     p_mlt = (struct mlt_app*) ap->a_uptr;
     p_path = p_mlt->paths;
-
-    /* This will be used find the hit point: */
-    VJOIN1(segp->seg_in.hit_point, ap->a_ray.r_pt,
-        segp->seg_in.hit_dist, ap->a_ray.r_dir);
-
     /* Once found, it will be stored in p_mlt->path_list. */
     /* This block verifies if the path list already exists.
      * If not, it allocates memory and initializes a new point_list
@@ -476,9 +509,9 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
      */
     /*VMOVE(ap->a_ray.r_pt, segp->seg_in.hit_point);*/
 
-    ap->a_color[0] = 1;
-    ap->a_color[1] = 1;
-    ap->a_color[2] = 1;
+    
+    /* This will be used by view_pixel() to verify if the ray hit or missed */
+    ap->a_user = 1;
 
     return 1;	/* report hit to main routine */
 }
