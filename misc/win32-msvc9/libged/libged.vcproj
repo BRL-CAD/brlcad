@@ -130,6 +130,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\ae2dir.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\aet.c"
 				>
 			</File>
@@ -175,6 +179,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\dg_obj.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\dir2ae.c"
 				>
 			</File>
 			<File
@@ -230,6 +238,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\how.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\illum.c"
 				>
 			</File>
@@ -267,6 +279,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\mirror.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\mrot.c"
 				>
 			</File>
 			<File
@@ -314,11 +330,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\rot.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\rt.c"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\set_outputHandler.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\set_transparency.c"
 				>
 			</File>
 			<File
@@ -331,6 +355,14 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\size.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\slew.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\tra.c"
 				>
 			</File>
 			<File
@@ -351,6 +383,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\view_obj.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\vrot.c"
 				>
 			</File>
 			<File
@@ -375,6 +411,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\zap.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\zoom.c"
 				>
 			</File>
 		</Filter>
