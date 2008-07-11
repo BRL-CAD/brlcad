@@ -3351,6 +3351,20 @@ dbbinary -i u c documentation /home/fred/doc.txt
     <xi:include href="../../tutorials/pipes/pipes.xml" xpointer="pipe_general_use"/>
     <xi:include href="../../tutorials/pipes/pipes.xml" xpointer="pipe_make_coil"/>
   </appendix>
-  
+
+  <appendix label="B">
+    <title>Using the Projection Shader</title>
+    <xi:include href="../../tutorials/projection_shader/projection_shader.xml" xpointer="projshader_general"/>
+    <xi:include href="../../tutorials/projection_shader/projection_shader.xml" xpointer="projshader_getimage"/>
+    <xi:include href="../../tutorials/projection_shader/projection_shader.xml" xpointer="projshader_resize"/>
+    <xi:include href="../../tutorials/projection_shader/projection_shader.xml" xpointer="projshader_actframe"/>
+    <xi:include href="../../tutorials/projection_shader/projection_shader.xml" xpointer="projshader_dispimage"/>
+    <xi:include href="../../tutorials/projection_shader/projection_shader.xml" xpointer="projshader_overlayimage"/>
+    <xi:include href="../../tutorials/projection_shader/projection_shader.xml" xpointer="projshader_savesettingsfile"/>
+    <xi:include href="../../tutorials/projection_shader/projection_shader.xml" xpointer="projshader_applysettingsfile"/>
+    <xi:include href="../../tutorials/projection_shader/projection_shader.xml" xpointer="projshader_render"/>
+    <xi:include href="../../tutorials/projection_shader/projection_shader.xml" xpointer="projshader_projectfront"/>
+  </appendix>
+    
   
 </book>
