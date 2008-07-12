@@ -142,6 +142,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\arot.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\attr.c"
 				>
 			</File>
@@ -207,6 +211,14 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\erase_all.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\eye.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\eye_pos.c"
 				>
 			</File>
 			<File
