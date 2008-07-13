@@ -222,7 +222,7 @@ ged_do_zoom(struct ged *gedp, fastf_t sf)
  *  Reference: SGI Graphics Reference Appendix C
  *  (Note:  SGI is left-handed, but the fix is done in the Display Manger).
  */
-static void
+void
 ged_persp_mat(mat_t	m,
 	      fastf_t	fovy,
 	      fastf_t	aspect,
