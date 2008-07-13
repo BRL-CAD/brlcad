@@ -1648,9 +1648,7 @@ rt_ell_params(struct pc_pc_set * pcs, const struct rt_db_internal *ip)
 {
     struct rt_ell_internal *eip;
     eip = (struct rt_ell_internal *)ip->idb_ptr;
-
-    pcs->n_params=4;
-    pcs->n_constraints=5;
+/*
     pcs->ps = bu_calloc(pcs->n_params, sizeof ( struct pc_param),"pc_param");
     pcs->cs = bu_calloc(pcs->n_constraints, sizeof ( struct pc_constrnt),"pc_constrnt");
     
@@ -1669,7 +1667,7 @@ rt_ell_params(struct pc_pc_set * pcs, const struct rt_db_internal *ip)
     strcpy(pcs->ps[3].pname,"C");
     pcs->ps[3].ptype = pc_value;
     pcs->ps[3].pval.vectorp = (vectp_t) &(eip->c);
-
+*/
     return(0);			/* OK */
 }
 
