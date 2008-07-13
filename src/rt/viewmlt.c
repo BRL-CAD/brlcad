@@ -148,7 +148,6 @@ view_2init(struct application *ap)
     /* BUFMODE_SCANLINE
      * This will be expanded to handle multiple BUFMODES,
      * as in view.c */
-
     if (sub_grid_mode)  {
 	    for (i = sub_ymin; i <= sub_ymax; i++)
 		    scanline[i].sl_left = sub_xmax-sub_xmin+1;
@@ -180,8 +179,6 @@ view_pixel(register struct application *ap)
     register int	r, g, b, do_eol = 0;
     register char	*pixelp;
     register struct scanline	*slp;
-    width = 512;
-    pwidth = 3;    
 
     if (ap->a_user == 0) {
         r = ibackground[0];
@@ -268,55 +265,29 @@ void
 view_end(register struct application *ap) 
 {
     struct mlt_app *p_mlt;
-    struct point_list *temp, *pt_list_head;
+    struct point_list *temp_point;
+    struct path_list *p_path, *temp_path;
     
     p_mlt = (struct mlt_app*) ap->a_uptr;
-    if ((p_mlt) && (p_mlt->paths)) {
-    pt_list_head = p_mlt->paths->pt_list;
+    p_path = p_mlt->paths;
     
-    /* Not working - p_mlt->paths does not exist.
 
-    if (&(pt_list_head->l) != &(pt_list_head->l.forw)) {
-        for (BU_LIST_FOR(temp, point_list, &(pt_list_head->l))) {
-            bu_log("%f %f %f ;", temp->pt_cell[X], temp->pt_cell[Y], temp->pt_cell[Z]);
-        };
-    } */
-    } 
-
-    if (p_mlt) bu_free(p_mlt, "free mlt application");
-
-
-    /* Freeing path list *//*
-    while (BU_LIST_WHILE(temp, point_list, &(pt_list_head->l))) {
-        BU_LIST_DEQUEUE(&(temp->l));
-        bu_free(temp, "free point_list entry");
-    }
-    bu_free(pt_list_head, "free point_list head");
-    bu_free(p_mlt->paths, "free path list head");
-    bu_free(p_mlt, "free mlt app structure");
-
-    /* This block will be used once the multiple path lists are created.
-
-    bu_log("Started freeing path list... ");
-    while (BU_LIST_WHILE(p_temp, path_list, &(p_path->l))) {
-        struct point_list *pt_list_head, *temp;
-        pt_list_head = p_temp->pt_list;
-        bu_log("\nEntered while loop.. ");
-
-        bu_log("\nStarted freeing point list..");
-        while (BU_LIST_WHILE(temp, point_list, &(pt_list_head->l))) {
-            bu_log("\nEntered point list loop... ");
-	        BU_LIST_DEQUEUE(&(temp->l));
-	        bu_free(temp, "free point_list entry");
-            bu_log("\nPoint node fred.");
+    /* Iterating through the path lists, freeing every point list entry */
+    while (BU_LIST_WHILE(temp_path, path_list, &(p_path->l))) {
+        while (BU_LIST_WHILE(temp_point, point_list, &(temp_path->pt_list->l))) {
+	        BU_LIST_DEQUEUE(&(temp_point->l));
+	        bu_free(temp_point, "freeing point list entry");
         }
-        bu_free(pt_list_head, "free point_list head");
-
-        BU_LIST_DEQUEUE(&(p_temp->l));
-        bu_free(p_temp, "free path_list entry");
+        bu_free(p_path->pt_list, "freeing point list head");
+	    
+	    BU_LIST_DEQUEUE(&(temp_path->l));
+	    bu_free(temp_path, "free path list entry");
     }
-    bu_free(p_path, "free path_list head");
-    */
+    while (BU_LIST_WHILE(temp_point, point_list, &(p_path->pt_list->l))) {
+        BU_LIST_DEQUEUE(&(temp_point->l));
+        bu_free(temp_point, "free point list entry");
+    }
+    bu_free(p_path, "free path list head");
 
     /* Freeing scanlines */
     if (scanline)
@@ -412,12 +383,11 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
 {
     struct mlt_app* p_mlt;
     struct path_list* p_path;
-    struct soltab *stp;
     struct hit *hitp;
     struct partition *pp;
     struct light_specific *lp;
 
-    vect_t normal, work0, work1;
+    vect_t normal, work0;
     fastf_t	diffuse0 = 0;
     fastf_t	cosI0 = 0;    
   
@@ -432,13 +402,12 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
         return 0;
     }
 
-    stp = pp->pt_inseg->seg_stp;
     hitp = pp->pt_inhit;
 
     /* This will be used find the hit point: */
     RT_HIT_NORMAL(normal, 
         hitp,
-        stp,
+        pp->pt_inseg->seg_stp,
         &(ap->a_ray),
         pp->pt_inflip);
 
@@ -449,11 +418,9 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
 	lp = BU_LIST_FIRST(light_specific, &(LightHead.l));
 	diffuse0 = 0;
 	if ((cosI0 = -VDOT(normal, ap->a_ray.r_dir)) >= 0.0)
-	diffuse0 = cosI0 * (1.0 - AmbientIntensity);
+	    diffuse0 = cosI0 * (1.0 - AmbientIntensity);
 	VSCALE(work0, lp->lt_color, diffuse0);
 
-	/* Add in contribution from ambient light */
-	
     VMOVE(ap->a_color, work0);
 
     /* Finds just the hit point. We want the normal vector too.
@@ -475,12 +442,11 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
      * exists and allocates memory accordingly.
      */
 
-    /* p_path is not being created, big memory leak here
-
     if (p_path) {
         if (p_path->pt_list) {
             struct point_list* new_point;
             BU_GETSTRUCT(new_point, point_list);
+                        
             VMOVE(new_point->pt_cell, segp->seg_in.hit_point);
             BU_LIST_PUSH(&(p_path->pt_list->l), &(new_point->l));
         }
@@ -499,9 +465,11 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
         BU_GETSTRUCT(p_path->pt_list, point_list);
         BU_LIST_INIT(&(p_path->pt_list->l));
         VMOVE(p_path->pt_list->pt_cell, segp->seg_in.hit_point);
-        
     }
-    */
+
+    p_mlt->paths = p_path;
+    ap->a_uptr = (genptr_t) p_mlt;
+    
 
     /* Use a BRDF function to set the new ap->a_ray->r_dir;
      * r_pt will be the same hitpoint found before;
@@ -509,7 +477,6 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
      */
     /*VMOVE(ap->a_ray.r_pt, segp->seg_in.hit_point);*/
 
-    
     /* This will be used by view_pixel() to verify if the ray hit or missed */
     ap->a_user = 1;
 
