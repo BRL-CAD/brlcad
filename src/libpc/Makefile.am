@@ -4,9 +4,7 @@ noinst_LTLIBRARIES = libpc_nil.la
 
 # TODO: check existing boost using AX_BOOST_BASE([MINIMUM-VERSION]) ? in configure.ac
 #       and remove blind Include
-AM_CPPFLAGS = \
-	${TCL_CPPFLAGS} \
-	${BOOST_CPPFLAGS}
+AM_CPPFLAGS = ${TCL_CPPFLAGS} ${BOOST_CPPFLAGS}
 
 noinst_PROGRAMS = \
 	pc_test \
@@ -37,7 +35,7 @@ pc_test_LDADD = libpc.la
 
 solver_test_SOURCES = solver_test.cpp
 solver_test_LDADD = libpc.la
-solver_test_CPPFLAGS = ${BOOST_CPPFLAGS}
+solver_test_CPPFLAGS = ${BOOST_CPPFLAGS} ${TCL_CPPFLAGS}
 
 FAST_OBJECTS = \
 	$(libpc_nil_la_OBJECTS) \

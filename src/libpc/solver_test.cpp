@@ -50,8 +50,22 @@ bool f4(std::vector<int> V ) {
 int main()
 {
     
+    struct pc_pc_set pcs;
+    struct pc_param * par;
+    struct pc_constrnt * constrnt;
+    PC_INIT_PCSET(pcs);
+    PC_GETPARAMETER(par);
+    PC_GETCONSTRAINT(constrnt);
+    par->pname[0]='T';
+    constrnt->cname[0]='C';
+    PC_PCSET_PUSHP(pcs,par);
+    PC_PCSET_PUSHC(pcs,constrnt);
+    
+    Parser myparser;
+    myparser.parse(&pcs);
+
     /* Stage I : Checking Constrained Classes */
-    //std::cout<<"______________________________________________________________"<<std::endl<<std::endl;
+    //std::cout<<"______________________________________________________________"<<std::endl;
     //std::cout<<"____________________Checking Network Classes__________________"<<std::endl;
 
     using namespace boost;
@@ -60,7 +74,7 @@ int main()
     }
 
     /* Stage II : Checking Network Classes */
-    //std::cout<<"_________________________________________________________"<<std::endl<<std::endl;
+    //std::cout<<"_________________________________________________________"<<std::endl;
     //std::cout<<"____________________Checking Network  Classes________" <<std::endl;
 
     typedef boost::adjacency_list<vecS, vecS, bidirectionalS, 
@@ -110,13 +124,15 @@ int main()
     }
     //std::cout<<"___"<< boost::num_vertices(N.G)<<std::endl;
 
+    N.display();
     /*N.display();
     S = N.solve();
     S.display();
     */
-    N.display();
-    std::cout<<"-----------------------------"<<std::endl;
     GTSolver<int> GTS;
+    BTSolver<int> BTS;
+/*    
+    std::cout<<"-----------------------------"<<std::endl;
     GTS.solve(&N,&S);
     std::cout<<"Solution using Generate-Test"<<std::endl;
     S.display();
@@ -124,7 +140,6 @@ int main()
     S.clear();
     std::cout<<"-----------------------------"<<std::endl;
     
-    BTSolver<int> BTS;
     BTS.solve(&N,&S);
     std::cout<<"Solution using BackTracking"<<std::endl;
 
@@ -133,7 +148,7 @@ int main()
     std::cout<<"Number of Constraint checks performed"<<std::endl;
     std::cout<<"Generate-Test Solution:"<< GTS.numChecks()<<std::endl;
     std::cout<<"BackTracking based Solution:" <<BTS.numChecks()<<std::endl;
-
+*/
     }
 
     return 0;
