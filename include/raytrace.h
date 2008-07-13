@@ -1807,6 +1807,7 @@ struct bezier_seg	/**< @brief  Bezier curve segment */
  * parameters. Used for declaration by each geometry object
  */
 struct pc_param {
+    struct bu_list l;
     char pname[10];
     enum ptype {
 	pc_value,
@@ -1820,6 +1821,7 @@ struct pc_param {
     } pval;
 };
 struct pc_constrnt {
+    struct bu_list l;
     char cname[10];
     enum ctype {
 	pc_inequality,
@@ -1828,8 +1830,6 @@ struct pc_constrnt {
     int n;
 };
 struct pc_pc_set {
-    int n_params;
-    int n_constraints;
     struct pc_param * ps;
     struct pc_constrnt * cs;
 };
