@@ -29,13 +29,9 @@
 
 #define PC_MAX_STACK_SIZE 1000
 
-
 #include "bu.h"
 #include "bn.h"
 #include "raytrace.h"
-
-
-__BEGIN_DECLS
 
 #ifndef PC_EXPORT
 #  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
@@ -63,9 +59,32 @@ __BEGIN_DECLS
 #  define PC_ARGS(args)                        ()
 #endif
 
+#define PC_INIT_PCSET(_pcs) \
+	BU_GETSTRUCT(_pcs.ps,pc_param); \
+	BU_LIST_INIT(&(_pcs.ps->l)); \
+	BU_GETSTRUCT(_pcs.cs,pc_constrnt); \
+	BU_LIST_INIT(&(_pcs.cs->l));
+#define PC_GETPARAMETER(_par) \
+	BU_GETSTRUCT(_par,pc_param);
+#define PC_GETCONSTRAINT(_con) \
+	BU_GETSTRUCT(_con,pc_constrnt);
+#define PC_PCSET_PUSHP(_pcs,_par) \
+	BU_LIST_PUSH(&(_pcs.ps->l),&(_par->l));
+#define PC_PCSET_PUSHC(_pcs,_con) \
+	BU_LIST_PUSH(&(_pcs.cs->l),&(_con->l));
+#define PC_FREE_PCSET(_pcs) \
+	bu_free(_pcs.ps); \
+	bu_free(_pcs.cs);
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 PC_EXPORT PC_EXTERN(int pc_mk_constraint,(struct rt_wdb *wdbp, const char *constraintname, int append_ok));
 
-__END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 /** @} */
