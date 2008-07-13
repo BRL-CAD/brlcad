@@ -29,19 +29,41 @@
 #define __PCPARSER_H__
 
 #include <boost/spirit.hpp>
+
+extern "C" {
+#include "bu.h"
+#include "raytrace.h"
+#include "tcl.h"
+#include "pc.h"
+}
+
 using namespace boost::spirit;
 /**
  * Grammar for the expression used for representing the constraint
  *
  */
-struct pcexpression_grammar : public grammar<pcexpression_grammar>
+struct pcVariable_grammar : public grammar<pcVariable_grammar>
+{
+    template<typename ScannerT>
+    struct definition
+    {
+	rule<ScannerT> Variable;
+    	rule<ScannerT> Expression;
+	definition(pcVariable_grammar const &self) {
+	    Variable = '(' >> Expression >> ')';
+	}
+	rule<ScannerT> const& start() { return Variable;}
+    };
+};
+
+struct pcConstraint_grammar : public grammar<pcConstraint_grammar>
 {
     template<typename ScannerT>
     struct definition
     {
 	rule<ScannerT> expr;
     	rule<ScannerT> group;
-	definition(pcexpression_grammar const &self) {
+	definition(pcConstraint_grammar const &self) {
 	    group = '(' >> expr >> ')';
 	}
 	rule<ScannerT> const& start() { return group;}
@@ -68,7 +90,31 @@ struct is_equal
  *    according to the pcexpression_grammar
  * 3. Return the set of Variables and Constraints/ Call the Generator
  */
+class Parser {
+private:
+    int a;
+public:
+    void parse(struct pc_pc_set * pcs);
+};
 
+/* Parser method implementation */
+
+void Parser::parse(struct pc_pc_set * pcs)
+{
+    /*Iterate through the parameter set first*/
+    struct pc_param * par;
+    struct pc_constrnt * con;
+    while(BU_LIST_WHILE(par,pc_param,&(pcs->ps->l))) {
+	std::cout<<"Parameter: "<<par->pname<<std::endl;
+	BU_LIST_DEQUEUE(&(par->l));
+	bu_free(par,"free parameter");
+    }
+    while(BU_LIST_WHILE(con,pc_constrnt,&(pcs->cs->l))) {
+	std::cout<<"Constraint: "<<con->cname<<std::endl;
+	BU_LIST_DEQUEUE(&(con->l));
+	bu_free(con,"free constraint");
+    }
+}
 #endif
 /** @} */
 /*
