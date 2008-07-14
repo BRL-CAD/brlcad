@@ -313,7 +313,7 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 
 /* handle open sketches */
     for ( i=0; i<rev->sk->vert_count && rev->ends[i] != -1; i++ ) {
-	VMOVE( pt, rev->sk->verts[rev->ends[i]] );
+	V2MOVE( pt, rev->sk->verts[rev->ends[i]] );
 	pt2[Y] = pt[Y];
 	pt2[X] = aa*sqrt( (pt2[Y]-h)*(pt2[Y]-h)/(bb*bb) + 1 );
 	if ( fabs( pt2[X] ) < fabs( pt[X] ) ) {	/* valid hit */
@@ -442,7 +442,7 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 
 	/* trim segments as necessary */
 	if ( rev->ang < M_PI ) {
-	    if ( hits[in]->hit_surfno == -1 && hits[out]->hit_surfno == -1 
+	    if ( hits[in]->hit_surfno == -1 && hits[out]->hit_surfno == -1
 		&& (hits[in]->hit_dist > max || hits[out]->hit_dist < min) ) {
 		hits[in] = NULL;
 		hits[out] = NULL;
@@ -474,7 +474,7 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 		/* get a new segment for (in, max) */
 		RT_GET_SEG(segp, ap->a_resource);
 		segp->seg_stp = stp;
-	
+
 		segp->seg_in = *hits[in];
 		hits[in] = NULL;
 
@@ -562,7 +562,7 @@ rt_revolve_norm( struct hit *hitp, struct soltab *stp, struct xray *rp )
 	default:
 	    VSET( n, hitp->hit_vpriv[X], hitp->hit_vpriv[Y], 0 );
 	    n[Z] = MAGNITUDE( n ) * hitp->hit_vpriv[Z];
-	
+
 	    if ( NEAR_ZERO( 1.0/hitp->hit_vpriv[Z], SMALL_FASTF ) ) {
 		VSET( n, 0, 0, 1 );
 	    }
