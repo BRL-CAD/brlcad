@@ -3399,4 +3399,14 @@ dbbinary -i u c documentation /home/fred/doc.txt
     <xi:include href="../../tutorials/mgedrc/mgedrc.xml" xpointer="mgedrc16"/>
   </appendix>
 
+  <appendix label="E">
+    <title>Using the Build Pattern Tool</title>
+    <xi:include href="../../tutorials/build_pattern/build_pattern.xml" xpointer="build_pattern_generalinfo"/>
+    <xi:include href="../../tutorials/build_pattern/build_pattern.xml" xpointer="build_pattern_names"/>
+    <xi:include href="../../tutorials/build_pattern/build_pattern.xml" xpointer="build_pattern_fields"/>
+    <xi:include href="../../tutorials/build_pattern/build_pattern.xml" xpointer="build_pattern_stringsub"/>
+    <xi:include href="../../tutorials/build_pattern/build_pattern.xml" xpointer="build_pattern_recpatterns"/>
+    <xi:include href="../../tutorials/build_pattern/build_pattern.xml" xpointer="build_pattern_spherical"/>
+    <xi:include href="../../tutorials/build_pattern/build_pattern.xml" xpointer="build_pattern_cylind"/>
+  </appendix>
 </book>
