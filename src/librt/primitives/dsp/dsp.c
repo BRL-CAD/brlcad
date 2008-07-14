@@ -3135,9 +3135,9 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	    if (!dsp_ip->dsp_mp) {
 		bu_log("WARNING: Cannot find data file for displacement map (DSP)\n");
 		if (bu_vls_addr(&dsp_ip->dsp_name)) {
-		    bu_log("DSP data file [%s] not found or empty\n", bu_vls_addr(&dsp_ip->dsp_name)); 
+		    bu_log("         DSP data file [%s] not found or empty\n", bu_vls_addr(&dsp_ip->dsp_name)); 
 		} else {
-		    bu_log("DSP data file not found or not specified\n");
+		    bu_log("         DSP data file not found or not specified\n");
 		}
 		return 0;
 	    }
@@ -3147,9 +3147,9 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	    if (!dsp_ip->dsp_bip) {
 		bu_log("WARNING: Cannot find data object for displacement map (DSP)\n");
 		if (bu_vls_addr(&dsp_ip->dsp_name)) {
-		    bu_log("DSP data object [%s] not found or empty\n", bu_vls_addr(&dsp_ip->dsp_name));
+		    bu_log("         DSP data object [%s] not found or empty\n", bu_vls_addr(&dsp_ip->dsp_name));
 		} else {
-		    bu_log("DSP data object not found or not specified\n");
+		    bu_log("         DSP data object not found or not specified\n");
 		}
 		return 0;
 	    }
