@@ -3409,4 +3409,22 @@ dbbinary -i u c documentation /home/fred/doc.txt
     <xi:include href="../../tutorials/build_pattern/build_pattern.xml" xpointer="build_pattern_spherical"/>
     <xi:include href="../../tutorials/build_pattern/build_pattern.xml" xpointer="build_pattern_cylind"/>
   </appendix>
+
+  <appendix label="F">
+    <title>Using the build_region Command</title>
+    <xi:include href="../../tutorials/build_region/build_region.xml" xpointer="build_region1"/>
+    <xi:include href="../../tutorials/build_region/build_region.xml" xpointer="build_region2"/>
+    <xi:include href="../../tutorials/build_region/build_region.xml" xpointer="build_region3"/>
+    <xi:include href="../../tutorials/build_region/build_region.xml" xpointer="build_region4"/>
+    <xi:include href="../../tutorials/build_region/build_region.xml" xpointer="build_region5"/>
+    <xi:include href="../../tutorials/build_region/build_region.xml" xpointer="build_region6"/>
+    <xi:include href="../../tutorials/build_region/build_region.xml" xpointer="build_region7"/>
+    <xi:include href="../../tutorials/build_region/build_region.xml" xpointer="build_region8"/>
+    <xi:include href="../../tutorials/build_region/build_region.xml" xpointer="build_region9"/>
+    <xi:include href="../../tutorials/build_region/build_region.xml" xpointer="build_region10"/>
+    <xi:include href="../../tutorials/build_region/build_region.xml" xpointer="build_region11"/>
+    <xi:include href="../../tutorials/build_region/build_region.xml" xpointer="build_region12"/>
+    <xi:include href="../../tutorials/build_region/build_region.xml" xpointer="build_region13"/>
+  </appendix>
+
 </book>
