@@ -320,6 +320,9 @@ struct view_obj {
     int			vo_zclip;
 };
 
+typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);
+#define GED_FUNC_PTR_NULL (ged_func_ptr)0
+
 #define GED_VIEW_OBJ_NULL ((struct view_obj *)0)
 #define GED_RESULT_NULL ((void *)0)
 #define GED_RESULT_FLAGS_HELP_BIT 0x1
