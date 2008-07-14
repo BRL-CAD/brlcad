@@ -4,7 +4,7 @@ COUNT: DATE HOST PATH USER
 	test -f $@ && expr `cat COUNT` + 1 > $@ || echo "1" > $@
 
 DATE: HOST PATH USER $(top_builddir)/include/brlcad_config.h
-	echo "\"`date`\"" > $@
+	echo "\"`LANG=C date -R 2>/dev/null || date +'%a, %d %b %Y %H:%M:%S %z' 2>/dev/null || date`\"" > $@
 
 HOST: $(top_builddir)/include/brlcad_config.h
 	echo "\"`hostname`\"" > $@

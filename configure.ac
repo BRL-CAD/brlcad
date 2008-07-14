@@ -114,18 +114,17 @@ AC_SUBST(BRLCAD_VERSION)
 
 # force locale setting to C so things like date output as expected
 LC_ALL=C
+LANG=C
 
 CONFIG_DAY=`date +%d`
 CONFIG_MONTH=`date +%m`
 CONFIG_YEAR=`date +%Y`
 CONFIG_DATE="${CONFIG_YEAR}${CONFIG_MONTH}${CONFIG_DAY}"
-CONFIG_TIME="`date '+%H %M %S'`"
-CONFIG_TS="`LANG=C date -R 2>/dev/null || date +'%a, %d %b %Y %H:%M:%S %z'`"
+CONFIG_TS="`date -R 2>/dev/null || date +'%a, %d %b %Y %H:%M:%S %z 2>/dev/null || date'`" # try RFC 2822
 AC_SUBST(CONFIG_DAY)
 AC_SUBST(CONFIG_MONTH)
 AC_SUBST(CONFIG_YEAR)
 AC_SUBST(CONFIG_DATE)
-AC_SUBST(CONFIG_TIME)
 AC_SUBST(CONFIG_TS)
 
 
@@ -4001,7 +4000,7 @@ dnl
 dnl Compute configuration time elapsed
 dnl
 if test -x "${srcdir}/sh/elapsed.sh" ; then
-	time_elapsed="`${srcdir}/sh/elapsed.sh $CONFIG_TIME`"
+	time_elapsed="`${srcdir}/sh/elapsed.sh $CONFIG_TS`"
 else
 	time_elapsed="unknown"
 fi
