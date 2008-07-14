@@ -59,7 +59,7 @@ public:
 
 struct is_even {
     bool operator () (int i) const
-    { return (i % 2) == 0; }
+	{ return (i % 2) == 0; }
 };
 
 /* Classes for Graph Visualization */

@@ -48,7 +48,7 @@ class pcVariable_grammar : public boost::spirit::grammar<pcVariable_grammar>
     struct definition
     {
 	boost::spirit::rule<ScannerT> Variable;
-    	boost::spirit::rule<ScannerT> Expression;
+	boost::spirit::rule<ScannerT> Expression;
 	definition(pcVariable_grammar const &self) {
 	    Variable = '(' >> Expression >> ')';
 	}
@@ -62,7 +62,7 @@ class pcConstraint_grammar : public boost::spirit::grammar<pcConstraint_grammar>
     struct definition
     {
 	boost::spirit::rule<ScannerT> expr;
-    	boost::spirit::rule<ScannerT> group;
+	boost::spirit::rule<ScannerT> group;
 	definition(pcConstraint_grammar const &self) {
 	    group = '(' >> expr >> ')';
 	}
@@ -83,10 +83,10 @@ struct is_equal
 
 /**
  *
- * The Parser Object which takes the pc_pc_set as the input and performs 
+ * The Parser Object which takes the pc_pc_set as the input and performs
  * the following functions
  * 1. Generate Variables corresponding to pc_params
- * 2. Generate Constraint objects corresponding to pc_constrnt by parsing 
+ * 2. Generate Constraint objects corresponding to pc_constrnt by parsing
  *    according to the pcexpression_grammar
  * 3. Return the set of Variables and Constraints/ Call the Generator
  */
@@ -104,12 +104,12 @@ void Parser::parse(struct pc_pc_set * pcs)
     /*Iterate through the parameter set first*/
     struct pc_param * par;
     struct pc_constrnt * con;
-    while(BU_LIST_WHILE(par,pc_param,&(pcs->ps->l))) {
+    while (BU_LIST_WHILE(par,pc_param,&(pcs->ps->l))) {
 	std::cout<<"Parameter: "<<par->pname<<std::endl;
 	BU_LIST_DEQUEUE(&(par->l));
 	bu_free(par,"free parameter");
     }
-    while(BU_LIST_WHILE(con,pc_constrnt,&(pcs->cs->l))) {
+    while (BU_LIST_WHILE(con,pc_constrnt,&(pcs->cs->l))) {
 	std::cout<<"Constraint: "<<con->cname<<std::endl;
 	BU_LIST_DEQUEUE(&(con->l));
 	bu_free(con,"free constraint");

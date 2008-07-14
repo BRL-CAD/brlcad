@@ -185,7 +185,8 @@ void Domain<T>::display()
 {
     typename std::list<Interval<T> >::iterator i;
     for (i = this->Interv.begin(); i != this->Interv.end(); i++) {
-	std::cout<<"!-- "<<i->getLow()<<" "<<i->getHigh()<<" "<<i->getWidth()<<" "<<i->getStep()<<std::endl;
+	std::cout << "!-- " << i->getLow() << " " << i->getHigh() << " "
+		  << i->getWidth() << " " << i->getStep() << std::endl;
     }
 }
 
@@ -218,10 +219,10 @@ void  Domain<T>::packIntervals ()
 
 	do {
 
-/*	    display();std::cout<<"++++"<<i->getHigh() <<" "<< j->getLow()<<std::endl;*/
+/*	    display();std::cout << "++++" << i->getHigh() << " " << j->getLow() << std::endl;*/
 	    if (i->getHigh() > j->getLow() ) {
 		if (mergeIntervals(i) !=0) {
-		    std::cout<<"Error: Incompatible stepsizes"<<std::endl;
+		    std::cout << "Error: Incompatible stepsizes" << std::endl;
 		    std::exit(-1);
 		} else {
 		    packIntervals();
@@ -232,8 +233,8 @@ void  Domain<T>::packIntervals ()
 		continue;
 	    }
 	} while (j != Interv.end());
-	/*std::cout<<"!!!!!"<<j->getHigh()<<" "<<j->getLow()<<std::endl;
-	  std::cout<<"-----------------------------------"<<std::endl;*/
+	/*std::cout << "!!!!!" << j->getHigh() << " " << j->getLow() << std::endl;
+	  std::cout << "-----------------------------------" << std::endl;*/
 	return;
     }
 }
@@ -284,8 +285,8 @@ void Variable<T>::addInterval(const Interval<T> t)
 template<class T>
 void Variable<T>::display()
 {
-	std::cout<<"!-- "<<getID()<<" = "<<getValue()<<std::endl;
-	//D.display();
+    std::cout << "!-- " << getID() << " = " << getValue() << std::endl;
+    //D.display();
 }
 
 /* Solution Class Functions */
@@ -308,7 +309,7 @@ void Solution<T>::display()
 template<class T>
 void Solution<T>::clear()
 {
-	VarDom.clear();
+    VarDom.clear();
 }
 
 
