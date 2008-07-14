@@ -42,9 +42,10 @@
 #
 # sh elapsed.sh 12 03 24
 #   or
-# some_date=`date`
-# ..
-# sh elapsed.sh $some_date
+# sh elapsed.sh `date`
+#   or
+# some_date=`date -R` sh elapsed.sh $some_date
+#   etc.
 #
 # Alternatively, the script can be used as a utility function in
 # scripts.  With the --seconds argument, the number of seconds that
@@ -64,32 +65,60 @@
 # Author -
 #   Christopher Sean Morrison
 #
-# $(#)$Header$ (BRL)
+###
 
 ARGS="$*"
 ARG_1="$1"
 ARG_2="$2"
 ARG_4="$4"
+ARG_5="$5"
 CONFIG_TIME="$ARGS"
 
-ONLY_SECONDS=no
-case "x$ARG_1" in
-    x-[sS]) ONLY_SECONDS=yes ; shift ;;
-    x--[sS]) ONLY_SECONDS=yes ; shift ;;
-    x-[sS][eE][cC][oO][nN][dD][sS]) ONLY_SECONDS=yes ; shift ;;
-    x--[sS][eE][cC][oO][nN][dD][sS]) ONLY_SECONDS=yes ; shift ;;
-    x-*) usage="Usage: $0 time"
-    echo "$usage" 1>&2
-    echo "Unrecognized option [$1]"
-    exit 1
-    ;;
-esac
-if test "x$ONLY_SECONDS" = "xyes" ; then
-    ARGS="$*"
-    ARG_1="$1"
-    ARG_2="$2"
-    ARG_4="$4"
-    CONFIG_TIME="$ARGS"
+if test "x$ONLY_SECONDS" = "x" ; then
+    ONLY_SECONDS=
+fi
+if test "x$DEBUG" = "x" ; then
+    DEBUG=
+fi
+
+for arg in $ARGS ; do
+    case "x$arg" in
+	x-[sS]) ONLY_SECONDS=yes ; shift ;;
+	x--[sS]) ONLY_SECONDS=yes ; shift ;;
+	x-[sS][eE][cC][oO][nN][dD][sS]) ONLY_SECONDS=yes ; shift ;;
+	x--[sS][eE][cC][oO][nN][dD][sS]) ONLY_SECONDS=yes ; shift ;;
+	x-[dD]) DEBUG=yes ; shift ;;
+	x--[dD]) DEBUG=yes ; shift ;;
+	x-[dD][eE][bB][uU][gG]) DEBUG=yes ; shift ;;
+	x--[dD][eE][bB][uU][gG]) DEBUG=yes ; shift ;;
+	x-*)
+	    echo "Usage: $0 [-s|--seconds] [-d|--debug] {RFC 2822 DATE | UNIX DATE | HOUR MIN SEC | SECONDS}" 1>&2
+	    echo "Unrecognized option [$1]"
+	    exit 1
+	    ;;
+	x*)
+	    break
+	    ;;
+    esac
+done
+
+# done processing args, reset indices after shifting
+ARGS="$*"
+ARG_1="$1"
+ARG_2="$2"
+ARG_4="$4"
+ARG_5="$5"
+CONFIG_TIME="$ARGS"
+
+if test "x$DEBUG" = "xyes" ; then
+    echo "Debug output is enabled (DEBUG=[yes])"
+    echo "ARGS=[$ARGS]"
+    echo "ARG_1=[$ARG_1]"
+    echo "ARG_2=[$ARG_2]"
+    echo "ARG_4=[$ARG_4]"
+    echo "ARG_5=[$ARG_5]"
+    echo "CONFIG_TIME=[$CONFIG_TIME]"
+    echo "ONLY_SECONDS=[$ONLY_SECONDS]"
 fi
 
 # force locale setting to C so things like date output as expected
@@ -107,9 +136,23 @@ if test "x$ARG_2" = "x" ; then
     CONFIG_TIME="`echo $ARGS | tr : ' '`"
 fi
 
-# if there is a fourth, assume date format string
-if test ! "x$ARG_4" = "x" ; then
-    CONFIG_TIME="`echo $ARGS | awk '{print $4}' | tr : ' '`"
+# check if this is a standard unix or iso date string based on length
+if test `echo $ARGS | wc | awk '{print $2}'` -eq 6 ; then
+    if test `echo $ARGS | awk '{print $4}' | tr : ' ' | wc | awk '{print $2}'` -eq 3 ; then
+	if test "x$DEBUG" = "xyes" ; then
+	    echo "ARGS appears to be a UNIX date string"
+	fi
+	CONFIG_TIME="`echo $ARGS | awk '{print $4}' | tr : ' '`"
+    elif test `echo $ARGS | awk '{print $5}' | tr : ' ' | wc | awk '{print $2}'` -eq 3 ; then
+	if test "x$DEBUG" = "xyes" ; then
+	    echo "ARGS appears to be an RFC 2822 date string"
+	fi
+	CONFIG_TIME=`echo $ARGS | awk '{print $5}' | tr : ' '`
+    else
+	if test "x$DEBUG" = "xyes" ; then
+	    echo "ARGS was not recognized as an RFC 2822 or UNIX date string"
+	fi
+    fi
 fi
 
 # parse the end time and convert to a seconds count
@@ -150,10 +193,16 @@ if test "x$pre_sec" = "x" ; then
     pre_sec="$post_sec"
 fi
 
+if test "x$DEBUG" = "xyes" ; then
+    echo "Parsed CONFIG_TIME=[$CONFIG_TIME]"
+    echo "pre_hour=[$pre_hour]"
+    echo "pre_min=[$pre_min]"
+    echo "pre_sec=[$pre_sec]"
+fi
+
 hour_seconds_before="`expr $pre_hour \* 60 \* 60`"
 min_seconds_before="`expr $pre_min \* 60`"
 total_pre="`expr $hour_seconds_before + $min_seconds_before + $pre_sec`"
-
 
 # if the end time is smaller than the start time, we have gone back in
 # time so assume that the clock turned over a day.
@@ -164,6 +213,10 @@ fi
 # break out the elapsed time into seconds, minutes, and hours
 sec_elapsed="`expr $total_post - $total_pre`"
 # echo sec_elapsed is $total_post - $total_pre 1>&2
+
+if test "x$DEBUG" = "xyes" ; then
+    echo "Seconds elapsed is $sec_elapsed ($total_post - $total_pre)"
+fi
 
 # if we only need to report the number of seconds elapsed, then we're done
 if test "x$ONLY_SECONDS" = "xyes" ; then
