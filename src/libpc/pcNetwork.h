@@ -28,6 +28,8 @@
 #ifndef __PCNETWORK_H__
 #define __PCNETWORK_H__
 
+#include "common.h"
+
 #include <iostream>
 #include <cstdlib>
 #include <string>
@@ -41,6 +43,7 @@
 #include "pcVariable.h"
 #include "pcConstraint.h"
 #include "pcSolver.h"
+
 
 template<class T>
 class Edge : public std::pair< std::string, std::string> 

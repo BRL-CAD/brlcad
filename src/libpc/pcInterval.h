@@ -28,12 +28,16 @@
 #ifndef __PCINTERVAL_H__
 #define __PCINTERVAL_H__
 
+#include "common.h"
+
 #include <iostream>
 #include <cstdlib>
 #include <string>
 #include <list>
 #include <stack>
+
 #include "pcBasic.h"
+
 
 template<class T>
 class Interval {

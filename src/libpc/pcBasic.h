@@ -30,6 +30,8 @@
 
 #define PC_MAX_STACK_SIZE 1000
 
+#include "common.h"
+
 #include <iostream>
 #include <cstdlib>
 #include <string>

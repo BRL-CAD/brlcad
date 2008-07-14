@@ -28,8 +28,12 @@
 #ifndef __PCCONSTRAINT_H__
 #define __PCCONSTRAINT_H__
 
+#include "common.h"
+
 #include <stdarg.h>
+
 #include "pcVariable.h"
+
 
 template<class T>
 class Constraint {

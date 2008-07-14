@@ -28,45 +28,45 @@
 #ifndef __PCPARSER_H__
 #define __PCPARSER_H__
 
+#include "common.h"
+
 #include <boost/spirit.hpp>
 
-extern "C" {
 #include "bu.h"
 #include "raytrace.h"
 #include "tcl.h"
 #include "pc.h"
-}
 
-using namespace boost::spirit;
+
 /**
  * Grammar for the expression used for representing the constraint
  *
  */
-struct pcVariable_grammar : public grammar<pcVariable_grammar>
+class pcVariable_grammar : public boost::spirit::grammar<pcVariable_grammar>
 {
     template<typename ScannerT>
     struct definition
     {
-	rule<ScannerT> Variable;
-    	rule<ScannerT> Expression;
+	boost::spirit::rule<ScannerT> Variable;
+    	boost::spirit::rule<ScannerT> Expression;
 	definition(pcVariable_grammar const &self) {
 	    Variable = '(' >> Expression >> ')';
 	}
-	rule<ScannerT> const& start() { return Variable;}
+	boost::spirit::rule<ScannerT> const& start() { return Variable;}
     };
 };
 
-struct pcConstraint_grammar : public grammar<pcConstraint_grammar>
+class pcConstraint_grammar : public boost::spirit::grammar<pcConstraint_grammar>
 {
     template<typename ScannerT>
     struct definition
     {
-	rule<ScannerT> expr;
-    	rule<ScannerT> group;
+	boost::spirit::rule<ScannerT> expr;
+    	boost::spirit::rule<ScannerT> group;
 	definition(pcConstraint_grammar const &self) {
 	    group = '(' >> expr >> ')';
 	}
-	rule<ScannerT> const& start() { return group;}
+	boost::spirit::rule<ScannerT> const& start() { return group;}
     };
 };
 

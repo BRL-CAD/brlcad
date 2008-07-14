@@ -24,6 +24,9 @@
  * @author Dawn Thomas
  *
  */
+
+#include "common.h"
+
 #include <iostream>
 #include <utility>                   // for std::pair
 #include <algorithm>                 // for std::for_each
@@ -32,6 +35,7 @@
 #include "pcNetwork.h"
 #include "pcSolver.h"
 #include "pcParser.h"
+
 
 /* Constraint functions */
 bool f1(std::vector<int> V ) {

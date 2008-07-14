@@ -28,13 +28,17 @@
 #ifndef __PCVARIABLE_H__
 #define __PCVARIABLE_H__
 
+#include "common.h"
+
 #include <iostream>
 #include <cstdlib>
 #include <string>
 #include <list>
 #include <stack>
+
 #include "pcBasic.h"
 #include "pcInterval.h"
+
 
 template<class T>
 class Domain

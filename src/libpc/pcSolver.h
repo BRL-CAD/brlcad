@@ -28,6 +28,8 @@
 #ifndef __PCSOLVER_H__
 #define __PCSOLVER_H__
 
+#include "common.h"
+
 #include <iostream>
 #include <cstdlib>
 #include <string>
@@ -38,6 +40,7 @@
 #include "pcVariable.h"
 #include "pcConstraint.h"
 #include "pcNetwork.h"
+
 
 template<class T>
 class BinaryNetwork;
