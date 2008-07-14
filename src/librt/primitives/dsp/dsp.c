@@ -932,7 +932,7 @@ rt_dsp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	case RT_DSP_SRC_V4_FILE:
 	case RT_DSP_SRC_FILE:
 	    if (!dsp_ip->dsp_mp) {
-		bu_log("dsp(%s): no data file\n", dsp_ip->dsp_name);
+		bu_log("dsp(%s): no data file or data file empty\n", bu_vls_addr(&dsp_ip->dsp_name));
 		return 1; /* BAD */
 	    }
     	    BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
@@ -946,7 +946,7 @@ rt_dsp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	    break;
 	case RT_DSP_SRC_OBJ:
 	    if (!dsp_ip->dsp_bip) {
-		bu_log("dsp(%s): no data\n", dsp_ip->dsp_name);
+		bu_log("dsp(%s): no data\n", bu_vls_addr(&dsp_ip->dsp_name));
 		return 1; /* BAD */
 	    }
 	    RT_CK_DB_INTERNAL(dsp_ip->dsp_bip);
@@ -3133,10 +3133,11 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	case RT_DSP_SRC_V4_FILE:
 	case RT_DSP_SRC_FILE:
 	    if (!dsp_ip->dsp_mp) {
+		bu_log("WARNING: Cannot find data file for displacement map (DSP)\n");
 		if (bu_vls_addr(&dsp_ip->dsp_name)) {
-		    bu_log("Cannot find data for DSP, data file [%s] not found\n", bu_vls_addr(&dsp_ip->dsp_name));
+		    bu_log("DSP data file [%s] not found or empty\n", bu_vls_addr(&dsp_ip->dsp_name)); 
 		} else {
-		    bu_log("Cannot find data for DSP\n");
+		    bu_log("DSP data file not found or not specified\n");
 		}
 		return 0;
 	    }
@@ -3144,10 +3145,11 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	    break;
 	case RT_DSP_SRC_OBJ:
 	    if (!dsp_ip->dsp_bip) {
+		bu_log("WARNING: Cannot find data object for displacement map (DSP)\n");
 		if (bu_vls_addr(&dsp_ip->dsp_name)) {
-		    bu_log("Cannot find data for DSP, data object [%s] not found\n", bu_vls_addr(&dsp_ip->dsp_name));
+		    bu_log("DSP data object [%s] not found or empty\n", bu_vls_addr(&dsp_ip->dsp_name));
 		} else {
-		    bu_log("Cannot find data for DSP\n");
+		    bu_log("DSP data object not found or not specified\n");
 		}
 		return 0;
 	    }
