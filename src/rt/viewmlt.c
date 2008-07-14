@@ -249,6 +249,19 @@ view_pixel(register struct application *ap)
                 bu_exit(EXIT_FAILURE, "scanline fb_write error");
         }
     }
+    if (outfp != NULL) {
+        int count;
+
+        bu_semaphore_acquire(BU_SEM_SYSCALL);
+
+        if (fseek(outfp, ap->a_y * width * pwidth, 0) != 0)
+            fprintf(stderr, "fseek error\n");
+        count = fwrite(scanline[ap->a_y].sl_buf,
+            sizeof(char), width * pwidth, outfp);
+        bu_semaphore_release(BU_SEM_SYSCALL);
+        if (count != width * pwidth)
+            bu_exit(EXIT_FAILURE, "view_pixel:  fwrite failure\n");
+    }
     bu_free(scanline[ap->a_y].sl_buf, "sl_buf scanline buffer");
     scanline[ap->a_y].sl_buf = (char *) 0;
 }
