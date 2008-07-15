@@ -317,6 +317,45 @@ void rt_sketch_bounds( struct rt_sketch_internal *sk, fastf_t *bounds )
 
 }
 
+int rt_sketch_degree( struct rt_sketch_internal *sk )
+{
+
+    long		*lng;
+    struct nurb_seg	*nsg;
+    struct bezier_seg	*bsg;
+    int 		nseg;
+    int 		degree;
+    int 		i;
+
+    degree = 0;
+    nseg = sk->skt_curve.seg_count;
+
+    for ( i=0; i<nseg; i++ ) {
+	lng = (long *)sk->skt_curve.segments[i];
+
+	switch ( *lng ) {
+	    case CURVE_LSEG_MAGIC:
+		if ( degree < 1 ) degree = 1;
+		break;
+	    case CURVE_CARC_MAGIC:
+		if ( degree < 2 ) degree = 2;
+		break;
+	    case CURVE_BEZIER_MAGIC:
+		bsg = (struct bezier_seg *)lng;
+		if ( degree < bsg->degree ) degree = bsg->degree;
+		break;
+	    case CURVE_NURB_MAGIC:
+		nsg = (struct nurb_seg *)lng;
+		if ( degree < nsg->order+1 ) degree = nsg->order+1;
+		break;
+	    default:
+		bu_log( "rt_revolve_prep: ERROR: unrecognized segment type!\n" );
+		break;
+	}
+    }
+    return degree;
+}
+
 int
 seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, fastf_t *u_vec, fastf_t *v_vec, struct rt_sketch_internal *sketch_ip, genptr_t seg)
 {
