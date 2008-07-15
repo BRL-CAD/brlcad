@@ -86,6 +86,9 @@
 #  endif
 #endif
 
+#define FMAX(a, b)	(((a)>(b))?(a):(b))
+#define FMIN(a, b)	(((a)<(b))?(a):(b))
+
 #endif  /* __COMMON_H__ */
 /** @} */
 /*
