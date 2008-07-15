@@ -79,7 +79,6 @@ rt_revolve_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     int 	nseg, degree, i, j, nends;
 
     fastf_t	bounds[4];	/* { XMIN, XMAX, YMIN, YMAX } */
-    point2d_t	*verts;
 
     RT_CK_DB_INTERNAL(ip);
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
@@ -119,7 +118,6 @@ rt_revolve_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     endcount = (int *)bu_calloc( rev->sk->vert_count, sizeof(int), "endcount" );
     for ( i=0; i<rev->sk->vert_count; i++ ) endcount[i] = 0;
     nseg = rev->sk->skt_curve.seg_count;
-    verts = rev->sk->verts;
     degree = 0;
     for ( i=0; i<nseg; i++ ) {
 	long		*lng;
@@ -170,7 +168,7 @@ rt_revolve_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 
     rev->ends = endcount;
 
-/* FIXME: bounding volume */
+    /* bounding volume */
     rt_sketch_bounds( rev->sk, bounds );
     VJOIN1( stp->st_center, rev->v3d, 0.5*(bounds[2]+bounds[3]), rev->zUnit );
     stp->st_aradius = sqrt( 0.25*(bounds[3]-bounds[2])*(bounds[3]-bounds[2]) + FMAX( bounds[0]*bounds[0], bounds[1]*bounds[1] ) );
