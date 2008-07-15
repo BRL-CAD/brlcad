@@ -195,6 +195,20 @@ db_update_nref( struct db_i *dbip, struct resource *resp )
 			}
 		    }
 		    rt_db_free_internal( &intern, resp );
+		} else if ( dp->d_minor_type ==  DB5_MINORTYPE_BRLCAD_REVOLVE ) {
+		    struct rt_revolve_internal *revolve;
+
+		    if ( rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, resp) < 0 )
+			continue;
+		    revolve = (struct rt_revolve_internal *)intern.idb_ptr;
+		    RT_REVOLVE_CK_MAGIC( revolve );
+		    if ( revolve->sketch_name ) {
+			dp2 = db_lookup( dbip, revolve->sketch_name, LOOKUP_QUIET );
+			if ( dp2 != DIR_NULL ) {
+			    dp2->d_nref++;
+			}
+		    }
+		    rt_db_free_internal( &intern, resp );
 		} else if ( dp->d_minor_type ==  DB5_MINORTYPE_BRLCAD_DSP ) {
 		    struct rt_dsp_internal *dsp;
 
