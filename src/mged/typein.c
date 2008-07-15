@@ -2692,20 +2692,22 @@ revolve_in(char **cmd_argvs, struct rt_db_internal *intern)
 	rip->r[i] = atof(cmd_argvs[9+i]) * local2base;
     }
     rip->ang = atof(cmd_argvs[12]) * DEG2RAD;
-    rip->sketch_name = bu_strdup(cmd_argvs[13]);
+
+    bu_vls_init_if_uninit(&rip->sketch_name);
+    bu_vls_strcpy(&rip->sketch_name, cmd_argvs[13]);
 
     VUNITIZE( rip->r );
     VUNITIZE( rip->axis3d );
 
-    if ((dp=db_lookup(dbip, rip->sketch_name, LOOKUP_NOISY)) == DIR_NULL) {
-	Tcl_AppendResult(interp, "Cannot find sketch (", rip->sketch_name,
+    if ((dp=db_lookup(dbip, bu_vls_addr(&rip->sketch_name), LOOKUP_NOISY)) == DIR_NULL) {
+	Tcl_AppendResult(interp, "Cannot find sketch (", bu_vls_addr(&rip->sketch_name),
 			 ") for revolve (", cmd_argvs[1], ")\n", (char *)NULL);
 	rip->sk = (struct rt_sketch_internal *)NULL;
 	return 1;
     }
 
     if (rt_db_get_internal(&tmp_ip, dp, dbip, bn_mat_identity, &rt_uniresource) != ID_SKETCH) {
-	Tcl_AppendResult(interp, "Cannot import sketch (", rip->sketch_name,
+	Tcl_AppendResult(interp, "Cannot import sketch (", bu_vls_addr(&rip->sketch_name),
 			 ") for revolve (", cmd_argvs[1], ")\n", (char *)NULL);
 	rip->sk = (struct rt_sketch_internal *)NULL;
 	return 1;
