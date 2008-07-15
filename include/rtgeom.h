@@ -487,7 +487,7 @@ struct rt_revolve_internal {
 
     vect_t		r;	/**< @brief vector in start plane, x axis */
     fastf_t		ang;	/**< @brief angle to revolve*/
-    char		*sketch_name;	/**< @brief name of sketch */
+    struct bu_vls	sketch_name;	/**< @brief name of sketch */
     struct rt_sketch_internal *sk;	/**< @brief pointer to sketch */
 
     vect_t	v;

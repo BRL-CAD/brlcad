@@ -202,8 +202,8 @@ db_update_nref( struct db_i *dbip, struct resource *resp )
 			continue;
 		    revolve = (struct rt_revolve_internal *)intern.idb_ptr;
 		    RT_REVOLVE_CK_MAGIC( revolve );
-		    if ( revolve->sketch_name ) {
-			dp2 = db_lookup( dbip, revolve->sketch_name, LOOKUP_QUIET );
+		    if ( bu_vls_strlen(&revolve->sketch_name) > 0 ) {
+			dp2 = db_lookup( dbip, bu_vls_addr(&revolve->sketch_name), LOOKUP_QUIET );
 			if ( dp2 != DIR_NULL ) {
 			    dp2->d_nref++;
 			}

@@ -54,7 +54,7 @@ const struct bu_structparse rt_revolve_parse[] = {
     { "%f", 3, "axis",bu_offsetof(struct rt_revolve_internal, axis3d[X]),  BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "R",   bu_offsetof(struct rt_revolve_internal, r[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "ang", bu_offsetof(struct rt_revolve_internal, ang),    BU_STRUCTPARSE_FUNC_NULL },
-    { "%s", 1, "sk_name", bu_offsetof(struct rt_revolve_internal, sketch_name),  BU_STRUCTPARSE_FUNC_NULL },
+    { "%S", 1, "sk_name", bu_offsetof(struct rt_revolve_internal, sketch_name),  BU_STRUCTPARSE_FUNC_NULL },
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
 };
 

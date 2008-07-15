@@ -100,7 +100,7 @@ rt_revolve_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     VUNITIZE( rev->zUnit );
 
     rev->ang = rip->ang;
-    rev->sketch_name = rip->sketch_name;
+    rev->sketch_name = bu_vls_addr(&rip->sketch_name);
     rev->sk = rip->sk;
 
 /* calculate end plane */
@@ -840,7 +840,10 @@ rt_revolve_import5( struct rt_db_internal  *ip, const struct bu_external *ep, co
     MAT4X3PNT( rip->axis3d, mat, &vv[1*3] );
     MAT4X3PNT( rip->r, mat, &vv[2*3] );
     rip->ang = vv[9];
-    rip->sketch_name = bu_strdup( (char *)ep->ext_buf + (ELEMENTS_PER_VECT*3 + 1)*SIZEOF_NETWORK_DOUBLE );
+
+    /* convert name of data location */
+    bu_vls_init(&rip->sketch_name);
+    bu_vls_strcpy(&rip->sketch_name, (char *)ep->ext_buf + (ELEMENTS_PER_VECT * 3 + 1) * SIZEOF_NETWORK_DOUBLE);
 
     return(0);			/* OK */
 }
@@ -867,7 +870,7 @@ rt_revolve_export5( struct bu_external *ep, const struct rt_db_internal *ip, dou
     RT_REVOLVE_CK_MAGIC(rip);
 
     BU_CK_EXTERNAL(ep);
-    ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * (ELEMENTS_PER_VECT*3 + 1) + strlen(rip->sketch_name) + 1;
+    ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * (ELEMENTS_PER_VECT*3 + 1) + bu_vls_strlen(&rip->sketch_name) + 1;
     ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "revolve external");
 
     ptr = (unsigned char *)ep->ext_buf;
@@ -884,7 +887,7 @@ rt_revolve_export5( struct bu_external *ep, const struct rt_db_internal *ip, dou
     htond( ptr, (unsigned char *)vec, ELEMENTS_PER_VECT*3 + 1 );
     ptr += (ELEMENTS_PER_VECT*3 + 1) * SIZEOF_NETWORK_DOUBLE;
 
-    bu_strlcpy( (char *)ptr, rip->sketch_name, strlen(rip->sketch_name)+1 );
+    bu_strlcpy((char *)ptr, bu_vls_addr(&rip->sketch_name), bu_vls_strlen(&rip->sketch_name) + 1);
 
     return 0;
 }
@@ -948,6 +951,11 @@ rt_revolve_ifree( struct rt_db_internal *ip )
     revolve_ip = (struct rt_revolve_internal *)ip->idb_ptr;
     RT_REVOLVE_CK_MAGIC(revolve_ip);
     revolve_ip->magic = 0;			/* sanity */
+
+    if (BU_VLS_IS_INITIALIZED(&revolve_ip->sketch_name))
+	bu_vls_free( &revolve_ip->sketch_name);
+    else
+	bu_log("Freeing bogus revolve, VLS string not initialized\n");
 
     bu_free( (char *)revolve_ip, "revolve ifree" );
     ip->idb_ptr = GENPTR_NULL;	/* sanity */
