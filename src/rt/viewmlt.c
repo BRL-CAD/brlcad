@@ -47,6 +47,8 @@ static short int pwidth;			/* Width of each pixel (in bytes) */
 static struct scanline* scanline;   /* From scanline.c */
 struct mfuncs *mfHead = MF_NULL;	/* Head of list of shaders */
 
+static struct bu_image_file *bif = NULL;
+
 extern FBIO* fbp;
 
 const char title[] = "Metropolis Light Transport renderer";
@@ -124,6 +126,9 @@ view_2init(struct application *ap)
     int i;
     struct mlt_app* mlt_application;
         
+    if (outputfile)
+	bif = bu_image_save_open(outputfile, BU_IMAGE_AUTO, width, height, 3);
+
     /* Initialization of the mlt application structure */
     mlt_application = (struct mlt_app*) bu_malloc(sizeof(struct mlt_app), "mlt application");
     mlt_application->lightSources = (struct point_list*) NULL;
@@ -249,18 +254,10 @@ view_pixel(register struct application *ap)
                 bu_exit(EXIT_FAILURE, "scanline fb_write error");
         }
     }
-    if (outfp != NULL) {
-        int count;
-
-        bu_semaphore_acquire(BU_SEM_SYSCALL);
-
-        if (fseek(outfp, ap->a_y * width * pwidth, 0) != 0)
-            fprintf(stderr, "fseek error\n");
-        count = fwrite(scanline[ap->a_y].sl_buf,
-            sizeof(char), width * pwidth, outfp);
+    if (outputfile != NULL) {
+	bu_semaphore_acquire (BU_SEM_SYSCALL);
+	bu_image_save_writeline(bif, ap->a_y, scanline[ap->a_y].sl_buf);
         bu_semaphore_release(BU_SEM_SYSCALL);
-        if (count != width * pwidth)
-            bu_exit(EXIT_FAILURE, "view_pixel:  fwrite failure\n");
     }
     bu_free(scanline[ap->a_y].sl_buf, "sl_buf scanline buffer");
     scanline[ap->a_y].sl_buf = (char *) 0;
@@ -284,6 +281,10 @@ view_end(register struct application *ap)
     p_mlt = (struct mlt_app*) ap->a_uptr;
     p_path = p_mlt->paths;
     
+    /* save out the file */
+    if (bif)
+	bu_image_save_close(bif); 
+    bif = NULL;
 
     /* Iterating through the path lists, freeing every point list entry */
     while (BU_LIST_WHILE(temp_path, path_list, &(p_path->l))) {
