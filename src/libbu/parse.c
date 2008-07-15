@@ -2342,7 +2342,7 @@ bu_structparse_argv(struct bu_vls		*log,
 		break;
 	    case 'S': {
 #if 1
-		bu_vls_strcpy(log, *argv);
+		bu_vls_strcat(log, *argv);
 #else
 		struct bu_vls *vls = (struct bu_vls *)loc;
 		bu_vls_init_if_uninit( vls );
