@@ -246,6 +246,77 @@ rt_sketch_class(void)
 }
 
 
+/* sets bounds to { XMIN, XMAX, YMIN, YMAX } */
+void rt_sketch_bounds( struct rt_sketch_internal *sk, fastf_t *bounds )
+{
+    fastf_t		nseg, radius;
+    fastf_t		xmin, xmax, ymin, ymax;
+    int			i, j;
+
+    long		*lng;
+    struct line_seg	*lsg;
+    struct carc_seg	*csg;
+    struct nurb_seg	*nsg;
+    struct bezier_seg	*bsg;
+
+    nseg = sk->skt_curve.seg_count;
+    bounds[0] = bounds[2] = FLT_MAX;
+    bounds[1] = bounds[3] = -FLT_MAX;
+
+    for ( i=0; i<nseg; i++ ) {
+	lng = (long *)sk->skt_curve.segments[i];
+
+	switch ( *lng ) {
+	    case CURVE_LSEG_MAGIC:
+		lsg = (struct line_seg *)lng;
+		V_MIN( bounds[0], FMIN( sk->verts[lsg->start][X], sk->verts[lsg->end][X] ) );
+		V_MAX( bounds[1], FMAX( sk->verts[lsg->start][X], sk->verts[lsg->end][X] ) );
+		V_MIN( bounds[2], FMIN( sk->verts[lsg->start][Y], sk->verts[lsg->end][Y] ) );
+		V_MAX( bounds[3], FMAX( sk->verts[lsg->start][Y], sk->verts[lsg->end][Y] ) );
+		break;
+	    case CURVE_CARC_MAGIC:
+		csg = (struct carc_seg *)lng;
+		if ( csg->radius <= 0.0 ) {	/* full circle, use center +- radius */
+		    vect2d_t	r;
+		    V2SUB2( r, sk->verts[csg->end], sk->verts[csg->start] );
+		    radius = sqrt( MAG2SQ( r ) );
+		    V_MIN( bounds[0], sk->verts[csg->end][X] - radius );
+		    V_MAX( bounds[1], sk->verts[csg->end][X] + radius );
+		    V_MIN( bounds[2], sk->verts[csg->end][Y] - radius );
+		    V_MAX( bounds[3], sk->verts[csg->end][Y] + radius );
+		} else {	/* TODO: actually calculate values from carc center */
+		    V_MIN( bounds[0], FMIN( sk->verts[csg->start][X], sk->verts[csg->end][X] ) - 2*csg->radius );
+		    V_MAX( bounds[1], FMAX( sk->verts[csg->start][X], sk->verts[csg->end][X] ) + 2*csg->radius );
+		    V_MIN( bounds[2], FMIN( sk->verts[csg->start][Y], sk->verts[csg->end][Y] ) - 2*csg->radius );
+		    V_MAX( bounds[3], FMAX( sk->verts[csg->start][Y], sk->verts[csg->end][Y] ) + 2*csg->radius );
+		}
+		break;
+	    case CURVE_BEZIER_MAGIC:
+		bsg = (struct bezier_seg *)lng;
+		for ( j=0; j<=bsg->degree; j++ ) {
+		    V_MIN( bounds[0], sk->verts[bsg->ctl_points[j]][X] );
+		    V_MAX( bounds[1], sk->verts[bsg->ctl_points[j]][X] );
+		    V_MIN( bounds[2], sk->verts[bsg->ctl_points[j]][Y] );
+		    V_MAX( bounds[3], sk->verts[bsg->ctl_points[j]][Y] );
+		}
+		break;
+	    case CURVE_NURB_MAGIC:
+		nsg = (struct nurb_seg *)lng;
+		for ( j=0; j < nsg->c_size; j++ ) {
+		    V_MIN( bounds[0], sk->verts[nsg->ctl_points[j]][X] );
+		    V_MAX( bounds[1], sk->verts[nsg->ctl_points[j]][X] );
+		    V_MIN( bounds[2], sk->verts[nsg->ctl_points[j]][Y] );
+		    V_MAX( bounds[3], sk->verts[nsg->ctl_points[j]][Y] );
+		}
+		break;
+	    default:
+		bu_log( "rt_revolve_prep: ERROR: unrecognized segment type!\n" );
+		break;
+	}
+    }
+
+}
+
 int
 seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, fastf_t *u_vec, fastf_t *v_vec, struct rt_sketch_internal *sketch_ip, genptr_t seg)
 {
