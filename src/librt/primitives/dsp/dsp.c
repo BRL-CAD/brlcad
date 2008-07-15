@@ -4101,7 +4101,7 @@ rt_dsp_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *
 	}
 
 	while (sp && sp->sp_name != NULL) {
-	    bu_vls_printf(log, "%s", sp->sp_name);
+	    bu_vls_printf(log, " %s ", sp->sp_name);
 	    bu_vls_struct_item(log, sp, (char *)dsp_ip, ' ');
 	    ++sp;
 	}
