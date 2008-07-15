@@ -118,7 +118,7 @@ rt_revolve_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     endcount = (int *)bu_calloc( rev->sk->vert_count, sizeof(int), "endcount" );
     for ( i=0; i<rev->sk->vert_count; i++ ) endcount[i] = 0;
     nseg = rev->sk->skt_curve.seg_count;
-    degree = 0;
+
     for ( i=0; i<nseg; i++ ) {
 	long		*lng;
 	struct line_seg *lsg;
@@ -130,13 +130,11 @@ rt_revolve_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 
 	switch ( *lng ) {
 	    case CURVE_LSEG_MAGIC:
-		if ( degree < 1 ) degree = 1;
 		lsg = (struct line_seg *)lng;
 		endcount[lsg->start]++;
 		endcount[lsg->end]++;
 		break;
 	    case CURVE_CARC_MAGIC:
-		if ( degree < 2 ) degree = 2;
 		csg = (struct carc_seg *)lng;
 		if ( csg->radius <= 0.0 ) break;
 		endcount[csg->start]++;
@@ -144,13 +142,11 @@ rt_revolve_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 		break;
 	    case CURVE_BEZIER_MAGIC:
 		bsg = (struct bezier_seg *)lng;
-		if ( degree < bsg->degree ) degree = bsg->degree;
 		endcount[bsg->ctl_points[0]]++;
 		endcount[bsg->ctl_points[bsg->degree]]++;
 		break;
 	    case CURVE_NURB_MAGIC:
 		nsg = (struct nurb_seg *)lng;
-		if ( degree < nsg->order+1 ) degree = nsg->order+1;
 		endcount[nsg->ctl_points[0]]++;
 		endcount[nsg->ctl_points[nsg->c_size-1]]++;
 		break;
@@ -440,9 +436,6 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 	    continue;
 	}
 
-	hits[in]->hit_vpriv[Z] = fabs( hits[in]->hit_vpriv[Z] );
-	hits[out]->hit_vpriv[Z] = -fabs( hits[out]->hit_vpriv[Z] );
-
 	/* trim segments as necessary */
 	if ( rev->ang < M_PI ) {
 	    if ( hits[in]->hit_surfno == -1 && hits[out]->hit_surfno == -1
@@ -551,6 +544,7 @@ rt_revolve_norm( struct hit *hitp, struct soltab *stp, struct xray *rp )
     vect_t	n, nT, xv, yv;
     fastf_t	angle;
 
+    VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
     switch ( hitp->hit_surfno ) {
 	case START_FACE:
 	    VREVERSE( hitp->hit_normal, rev->yUnit );
@@ -580,16 +574,10 @@ rt_revolve_norm( struct hit *hitp, struct soltab *stp, struct xray *rp )
 		+ ( rev->yUnit[Z] * n[Y] )
 		+ ( rev->zUnit[Z] * n[Z] );
 	    VUNITIZE( nT );
-	    VMOVE( hitp->hit_normal, nT );
 	    if ( VDOT( nT, rp->r_dir) < 0 ) {
-		VMOVE( n, nT );
+		VMOVE( hitp->hit_normal, nT );
 	    } else {
-		VREVERSE( n, nT );
-	    }
-	    if ( hitp->hit_vpriv[Z] > 0 ) {
-		VMOVE( hitp->hit_normal, n );
-	    } else {
-		VREVERSE( hitp->hit_normal, n );
+		VREVERSE( hitp->hit_normal, nT );
 	    }
 	    break;
     }
@@ -656,13 +644,15 @@ rt_revolve_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 {
     struct rt_revolve_internal	*rip;
 
-    int 		nvert, narc, i, j;
+    int 		nvert, narc, nadd, nseg, i, j;
     point2d_t		*verts;
     struct curve	*crv;
 
     vect_t	ell[16], cir[16], ucir[16], height, xdir, ydir, ux, uy, uz, rEnd, xEnd, yEnd;
     fastf_t	cos22_5 = 0.9238795325112867385,
 		cos67_5 = 0.3826834323650898373;
+    int 	*endcount, *used;
+    point_t	add, add2;
 
     RT_CK_DB_INTERNAL(ip);
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
@@ -722,8 +712,64 @@ rt_revolve_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct 
     VMOVE(	ucir[ 4], uy );
     VREVERSE(	ucir[12], ucir[4] );
 
+    /* find open endpoints, and determine which points are used */
+    endcount = (int *)bu_calloc( rip->sk->vert_count, sizeof(int), "endcount" );
+    used = (int *)bu_calloc( rip->sk->vert_count, sizeof(int), "used" );
+    for ( i=0; i<rip->sk->vert_count; i++ ) {
+	endcount[i] = 0;
+	used[i] = 0;
+    }
+    nseg = rip->sk->skt_curve.seg_count;
+
+    for ( i=0; i<nseg; i++ ) {
+	long		*lng;
+	struct line_seg *lsg;
+	struct carc_seg *csg;
+	struct nurb_seg *nsg;
+	struct bezier_seg *bsg;
+
+	lng = (long *)rip->sk->skt_curve.segments[i];
+
+	switch ( *lng ) {
+	    case CURVE_LSEG_MAGIC:
+		lsg = (struct line_seg *)lng;
+		endcount[lsg->start]++;
+		endcount[lsg->end]++;
+		break;
+	    case CURVE_CARC_MAGIC:
+		csg = (struct carc_seg *)lng;
+		if ( csg->radius <= 0.0 ) break;
+		endcount[csg->start]++;
+		endcount[csg->end]++;
+		break;
+	    case CURVE_BEZIER_MAGIC:
+		bsg = (struct bezier_seg *)lng;
+		endcount[bsg->ctl_points[0]]++;
+		endcount[bsg->ctl_points[bsg->degree]]++;
+		break;
+	    case CURVE_NURB_MAGIC:
+		nsg = (struct nurb_seg *)lng;
+		endcount[nsg->ctl_points[0]]++;
+		endcount[nsg->ctl_points[nsg->c_size-1]]++;
+		break;
+	    default:
+		bu_log( "rt_revolve_prep: ERROR: unrecognized segment type!\n" );
+		break;
+	}
+    }
+
+    /* convert endcounts to store which endpoints are odd */
+    for ( i=0, j=0; i<rip->sk->vert_count; i++ ) {
+	if ( endcount[i] > 0 ) used[i] = 1;
+	if ( endcount[i] % 2 != 0 ) endcount[j++] = i;
+    }
+    nadd = j;
+    while ( j < rip->sk->vert_count ) endcount[j++] = -1;
+
+
     /* draw circles */
     for ( i=0; i<nvert; i++ ) {
+	if ( used[i] == 0 ) continue;
 	VSCALE( height, uz, verts[i][Y] );
 	for ( j=0; j<narc; j++ ) {
 	    VSCALE( cir[j], ucir[j], verts[i][X] );
@@ -745,9 +791,21 @@ rt_revolve_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct 
     /* draw sketch outlines */
     for ( i=0; i<narc; i++ ) {
 	curve_to_vlist( vhead, ttol, rip->v3d, ucir[i], uz, rip->sk, crv );
+	for ( j=0; j<nadd; j++ ) {
+	    VJOIN1( add, rip->v3d, verts[endcount[j]][Y], rip->axis3d );
+	    VJOIN1( add2, add, verts[endcount[j]][X], ucir[i] );
+	    RT_ADD_VLIST( vhead, add, BN_VLIST_LINE_MOVE );
+	    RT_ADD_VLIST( vhead, add2, BN_VLIST_LINE_DRAW );
+	}
     }
     if ( narc < 16 ) {
 	curve_to_vlist( vhead, ttol, rip->v3d, rEnd, uz, rip->sk, crv );
+	for ( j=0; j<nadd; j++ ) {
+	    VJOIN1( add, rip->v3d, verts[endcount[j]][Y], rip->axis3d );
+	    VJOIN1( add2, add, verts[endcount[j]][X], rEnd );
+	    RT_ADD_VLIST( vhead, add, BN_VLIST_LINE_MOVE );
+	    RT_ADD_VLIST( vhead, add2, BN_VLIST_LINE_DRAW );
+	}
     }
 
     return(0);
