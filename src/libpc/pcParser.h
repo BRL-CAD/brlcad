@@ -31,42 +31,104 @@
 #include "common.h"
 
 #include <boost/spirit.hpp>
+#include <boost/spirit/actor/assign_actor.hpp>
 
 #include "bu.h"
 #include "raytrace.h"
 #include "tcl.h"
 #include "pc.h"
 
+/**
+ * A class wrapper for a set of Variables and Constraints
+ * After a hypergraph representation, this might get deprecated.
+ * Parser Class outputs this as a result of parse() and Generator class uses
+ * it for generation of the Constraint Network (presently Binary Network)
+ *
+ */
+template <class T>
+class PCset
+{
+public:
+    std::list<Variable<T> > Vars;
+    std::list<Constraint<T> > Constraints;
+    void display();
+};
 
 /**
  * Grammar for the expression used for representing the constraint
  *
  */
-class pcVariable_grammar : public boost::spirit::grammar<pcVariable_grammar>
+class Variable_grammar : public boost::spirit::grammar<Variable_grammar>
 {
+public:
+    static std::string name;
+    double value;
+    struct test_functor
+    {
+        test_functor(std::string& str_) : str(str_) {}
+	void
+	operator () (char c) const {
+	    str.push_back(c);
+	}
+	std::string& str;
+    };	
     template<typename ScannerT>
     struct definition
     {
-	boost::spirit::rule<ScannerT> Variable;
-	boost::spirit::rule<ScannerT> Expression;
-	definition(pcVariable_grammar const &self) {
-	    Variable = '(' >> Expression >> ')';
+	boost::spirit::rule<ScannerT> variable;
+	boost::spirit::rule<ScannerT> expression;
+	definition(Variable_grammar const &self) {
+	    variable
+	        =    '('
+		     >> *boost::spirit::alnum_p/*[test_functor(Variable_grammar::name)]*/
+		     >> '='
+		     >> expression
+		     >> ')'
+		;
 	}
-	boost::spirit::rule<ScannerT> const& start() { return Variable;}
+	boost::spirit::rule<ScannerT> const& start() { return variable;}
     };
+    //void display() { std::cout<< "Parameter =" << name << std::endl;}
 };
 
-class pcConstraint_grammar : public boost::spirit::grammar<pcConstraint_grammar>
+class Constraint_grammar : public boost::spirit::grammar<Constraint_grammar>
 {
+public:
     template<typename ScannerT>
     struct definition
     {
-	boost::spirit::rule<ScannerT> expr;
-	boost::spirit::rule<ScannerT> group;
-	definition(pcConstraint_grammar const &self) {
-	    group = '(' >> expr >> ')';
+	boost::spirit::rule<ScannerT> variable;
+	boost::spirit::rule<ScannerT> term;
+	boost::spirit::rule<ScannerT> operat;
+	boost::spirit::rule<ScannerT> expression;
+	boost::spirit::rule<ScannerT> eq;
+	boost::spirit::rule<ScannerT> constraint;
+	definition(Constraint_grammar const &self) {
+	    variable
+	        =    boost::spirit::alnum_p
+		;
+	    term
+	        =    boost::spirit::real_p
+		|    variable
+		;
+	    eq
+	        =    '<'
+		|    '='
+		|    '>'
+		;
+            expression
+	        =    term
+		     >> *(operat >> term )
+		;
+	    constraint
+	        =    '('
+		     >> expression
+		     >> eq
+		     >> expression
+		     >> ')'
+		;
 	}
-	boost::spirit::rule<ScannerT> const& start() { return group;}
+	boost::spirit::rule<ScannerT> const& start() { return constraint;}
     };
 };
 
@@ -101,16 +163,21 @@ public:
 
 void Parser::parse(struct pc_pc_set * pcs)
 {
+
+    class Variable_grammar vg;
+    class Constraint_grammar cg;
     /*Iterate through the parameter set first*/
     struct pc_param * par;
     struct pc_constrnt * con;
     while (BU_LIST_WHILE(par,pc_param,&(pcs->ps->l))) {
-	std::cout<<"Parameter: "<<par->pname<<std::endl;
+	std::cout<<"Parameter: "<<(char *) bu_vls_addr(&(par->name))<<std::endl;
+        boost::spirit::parse((char *) bu_vls_addr(&(par->name)), vg, boost::spirit::space_p);
 	BU_LIST_DEQUEUE(&(par->l));
 	bu_free(par,"free parameter");
     }
+    /* Iterate through the constraint set */
     while (BU_LIST_WHILE(con,pc_constrnt,&(pcs->cs->l))) {
-	std::cout<<"Constraint: "<<con->cname<<std::endl;
+	std::cout<<"Constraint: "<<(char *) bu_vls_addr(&(con->name))<<std::endl;
 	BU_LIST_DEQUEUE(&(con->l));
 	bu_free(con,"free constraint");
     }
