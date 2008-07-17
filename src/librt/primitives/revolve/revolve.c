@@ -651,7 +651,7 @@ rt_revolve_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct 
     vect_t	ell[16], cir[16], ucir[16], height, xdir, ydir, ux, uy, uz, rEnd, xEnd, yEnd;
     fastf_t	cos22_5 = 0.9238795325112867385,
 		cos67_5 = 0.3826834323650898373;
-    int 	*endcount, *used;
+    int 	*endcount;
     point_t	add, add2;
 
     RT_CK_DB_INTERNAL(ip);
@@ -714,10 +714,8 @@ rt_revolve_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 
     /* find open endpoints, and determine which points are used */
     endcount = (int *)bu_calloc( rip->sk->vert_count, sizeof(int), "endcount" );
-    used = (int *)bu_calloc( rip->sk->vert_count, sizeof(int), "used" );
     for ( i=0; i<rip->sk->vert_count; i++ ) {
 	endcount[i] = 0;
-	used[i] = 0;
     }
     nseg = rip->sk->skt_curve.seg_count;
 
@@ -758,29 +756,9 @@ rt_revolve_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 	}
     }
 
-    /* convert endcounts to store which endpoints are odd */
-    for ( i=0, j=0; i<rip->sk->vert_count; i++ ) {
-	if ( endcount[i] > 0 ) used[i] = 1;
-	if ( endcount[i] % 2 != 0 ) {
-	    /* add 'i' to list, insertion sort by vert[i][Y] */
-	    for( k=j; k>0; k-- ) {
-		if ( verts[i][Y] < verts[endcount[k-1]][Y] ) {
-		    endcount[k] = endcount[k-1];
-		} else {
-		    break;
-		}
-	    }
-	    endcount[k] = i;
-	    j++;
-	}
-    }
-    nadd = j;
-    while ( j < rip->sk->vert_count ) endcount[j++] = -1;
-
-
     /* draw circles */
     for ( i=0; i<nvert; i++ ) {
-	if ( used[i] == 0 ) continue;
+	if ( endcount[i] == 0 ) continue;
 	VSCALE( height, uz, verts[i][Y] );
 	for ( j=0; j<narc; j++ ) {
 	    VSCALE( cir[j], ucir[j], verts[i][X] );
@@ -798,6 +776,24 @@ rt_revolve_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 	    RT_ADD_VLIST( vhead, ell[0], BN_VLIST_LINE_DRAW );
 	}
     }
+
+    /* convert endcounts to store which endpoints are odd */
+    for ( i=0, j=0; i<rip->sk->vert_count; i++ ) {
+	if ( endcount[i] % 2 != 0 ) {
+	    /* add 'i' to list, insertion sort by vert[i][Y] */
+	    for( k=j; k>0; k-- ) {
+		if ( verts[i][Y] < verts[endcount[k-1]][Y] ) {
+		    endcount[k] = endcount[k-1];
+		} else {
+		    break;
+		}
+	    }
+	    endcount[k] = i;
+	    j++;
+	}
+    }
+    nadd = j;
+    while ( j < rip->sk->vert_count ) endcount[j++] = -1;
 
     /* draw sketch outlines */
     for ( i=0; i<narc; i++ ) {
@@ -825,6 +821,8 @@ rt_revolve_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 	}
     }
 
+
+    bu_free( endcount, "endcount" );
     return(0);
 }
 
