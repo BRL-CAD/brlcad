@@ -652,7 +652,7 @@ rt_revolve_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct 
     fastf_t	cos22_5 = 0.9238795325112867385,
 		cos67_5 = 0.3826834323650898373;
     int 	*endcount;
-    point_t	add, add2;
+    point_t	add, add2, add3;
 
     RT_CK_DB_INTERNAL(ip);
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
@@ -782,7 +782,10 @@ rt_revolve_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 	if ( endcount[i] % 2 != 0 ) {
 	    /* add 'i' to list, insertion sort by vert[i][Y] */
 	    for( k=j; k>0; k-- ) {
-		if ( verts[i][Y] < verts[endcount[k-1]][Y] ) {
+		if ( ( NEAR_ZERO( verts[i][Y] - verts[endcount[k-1]][Y], SMALL_FASTF ) 
+			&& verts[i][X] > verts[endcount[k-1]][X] ) 
+			|| ( !NEAR_ZERO( verts[i][Y] - verts[endcount[k-1]][Y], SMALL_FASTF )
+			&& verts[i][Y] < verts[endcount[k-1]][Y] ) ) {
 		    endcount[k] = endcount[k-1];
 		} else {
 		    break;
@@ -799,28 +802,49 @@ rt_revolve_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct 
     for ( i=0; i<narc; i++ ) {
 	curve_to_vlist( vhead, ttol, rip->v3d, ucir[i], uz, rip->sk, crv );
 	for ( j=0; j<nadd; j++ ) {
-	    VJOIN1( add, rip->v3d, verts[endcount[j]][Y], rip->axis3d );
-	    VJOIN1( add2, add, verts[endcount[j]][X], ucir[i] );
-	    RT_ADD_VLIST( vhead, add, BN_VLIST_LINE_MOVE );
-	    RT_ADD_VLIST( vhead, add2, BN_VLIST_LINE_DRAW );
+	    if ( j+1 < nadd && 
+		NEAR_ZERO(verts[endcount[j]][Y] - verts[endcount[j+1]][Y], SMALL_FASTF) ) {
+		VJOIN1( add, rip->v3d, verts[endcount[j]][Y], rip->axis3d );
+		VJOIN1( add2, add, verts[endcount[j]][X], ucir[i] );
+		VJOIN1( add3, add, verts[endcount[j+1]][X], ucir[i] );
+		RT_ADD_VLIST( vhead, add2, BN_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead, add3, BN_VLIST_LINE_DRAW );
+		j++;
+	    } else {
+		VJOIN1( add, rip->v3d, verts[endcount[j]][Y], rip->axis3d );
+		VJOIN1( add2, add, verts[endcount[j]][X], ucir[i] );
+		RT_ADD_VLIST( vhead, add, BN_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead, add2, BN_VLIST_LINE_DRAW );
+	    }
 	}
     }
     if ( narc < 16 ) {
 	curve_to_vlist( vhead, ttol, rip->v3d, rEnd, uz, rip->sk, crv );
 	for ( j=0; j<nadd; j++ ) {
-	    VJOIN1( add, rip->v3d, verts[endcount[j]][Y], rip->axis3d );
-	    VJOIN1( add2, add, verts[endcount[j]][X], rEnd );
-	    RT_ADD_VLIST( vhead, add, BN_VLIST_LINE_MOVE );
-	    RT_ADD_VLIST( vhead, add2, BN_VLIST_LINE_DRAW );
+	    if ( j+1 < nadd && 
+		NEAR_ZERO(verts[endcount[j]][Y] - verts[endcount[j+1]][Y], SMALL_FASTF) ) {
+		VJOIN1( add, rip->v3d, verts[endcount[j]][Y], rip->axis3d );
+		VJOIN1( add2, add, verts[endcount[j]][X], rEnd );
+		VJOIN1( add3, add, verts[endcount[j+1]][X], rEnd );
+		RT_ADD_VLIST( vhead, add2, BN_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead, add3, BN_VLIST_LINE_DRAW );
+		j++;
+	    } else {
+		VJOIN1( add, rip->v3d, verts[endcount[j]][Y], rip->axis3d );
+		VJOIN1( add2, add, verts[endcount[j]][X], rEnd );
+		RT_ADD_VLIST( vhead, add, BN_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead, add2, BN_VLIST_LINE_DRAW );
+	    }
 	}
 	for ( j=0; j<nadd; j+=2 ) {
-	    VJOIN1( add, rip->v3d, verts[endcount[j]][Y], rip->axis3d );
-	    VJOIN1( add2, rip->v3d, verts[endcount[j+1]][Y], rip->axis3d );
-	    RT_ADD_VLIST( vhead, add, BN_VLIST_LINE_MOVE );
-	    RT_ADD_VLIST( vhead, add2, BN_VLIST_LINE_DRAW );
+	    if ( !NEAR_ZERO( verts[endcount[j]][Y] - verts[endcount[j+1]][Y], SMALL_FASTF ) ) {
+		VJOIN1( add, rip->v3d, verts[endcount[j]][Y], rip->axis3d );
+		VJOIN1( add2, rip->v3d, verts[endcount[j+1]][Y], rip->axis3d );
+		RT_ADD_VLIST( vhead, add, BN_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead, add2, BN_VLIST_LINE_DRAW );
+	    }
 	}
     }
-
 
     bu_free( endcount, "endcount" );
     return(0);
