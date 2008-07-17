@@ -1808,7 +1808,8 @@ struct bezier_seg	/**< @brief  Bezier curve segment */
  */
 struct pc_param {
     struct bu_list l;
-    char pname[10];
+    struct bu_vls name;
+    struct bu_vls expression;
     enum ptype {
 	pc_value,
 	pc_point,
@@ -1822,12 +1823,8 @@ struct pc_param {
 };
 struct pc_constrnt {
     struct bu_list l;
-    char cname[10];
-    enum ctype {
-	pc_inequality,
-	pc_equation
-    } ctype;
-    int n;
+    struct bu_vls name;
+    struct bu_vls expression;
 };
 struct pc_pc_set {
     struct pc_param * ps;

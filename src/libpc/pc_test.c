@@ -109,13 +109,13 @@ main(int argc, char **argv)
 	return 3;
     wdb_import(fp, &ip,solnam, (matp_t)NULL);
     ip.idb_meth->ft_params(&pcs,&ip);
-    fprintf(stdout, "%s = ( %f , %f , %f ) %s = (%f,%f,%f) %s = (%f,%f,%f) %s = (%f,%f,%f)\n",\
-	    pcs.ps[0].pname, pcs.ps[0].pval.pointp[0],pcs.ps[0].pval.pointp[1], \
-	    pcs.ps[0].pval.pointp[2], pcs.ps[1].pname, pcs.ps[1].pval.vectorp[0], \
-	    pcs.ps[1].pval.vectorp[1], pcs.ps[1].pval.vectorp[2], pcs.ps[2].pname, \
+    /*fprintf(stdout, "%s = ( %f , %f , %f ) %s = (%f,%f,%f) %s = (%f,%f,%f) %s = (%f,%f,%f)\n",\
+	    bu_vls_addr(pcs.ps[0].name), pcs.ps[0].pval.pointp[0],pcs.ps[0].pval.pointp[1], \
+	    pcs.ps[0].pval.pointp[2], bu_vls_addr(pcs.ps[1].name), pcs.ps[1].pval.vectorp[0], \
+	    pcs.ps[1].pval.vectorp[1], pcs.ps[1].pval.vectorp[2], bu_vls_addr(pcs.ps[2].name), \
 	    pcs.ps[2].pval.vectorp[0], pcs.ps[2].pval.vectorp[1], pcs.ps[2].pval.vectorp[2], \
-	    pcs.ps[3].pname, pcs.ps[3].pval.vectorp[0], pcs.ps[3].pval.vectorp[1], \
-	    pcs.ps[3].pval.vectorp[2]);
+	    bu_vls_addr(pcs.ps[3].name), pcs.ps[3].pval.vectorp[0], pcs.ps[3].pval.vectorp[1], \
+	    pcs.ps[3].pval.vectorp[2]);*/
     /* Todo: Free pcs parametric set */
 
     wdb_close(fp);
