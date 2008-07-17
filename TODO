@@ -27,6 +27,10 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * change rtarea output to have new cpa values in their own section
 
+* refactor all of the nmg processing (back) into its own library so
+  that external users can manage mesh geometry without needing to pull
+  in everything else in librt
+
 
 THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------
