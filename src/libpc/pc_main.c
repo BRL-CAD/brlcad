@@ -42,7 +42,66 @@
 #include "pc.h"
 
 /**
- * P C _ M K _ C O N S T R A I N T
+ * 			PC_PUSHPARAMETER
+ * pushes a given parameter expression into the parameter
+ * list in the pc set
+ *
+ */
+void
+pc_pushparameter(struct pc_pc_set * pcsp, const char * str)
+{
+    struct pc_param * par;
+    PC_GETPARAMETER(par);
+    bu_vls_strcat(&(par->name), str);
+    PC_PCSET_PUSHP(pcsp, par);
+}
+
+/**
+ * 			PC_PUSHCONSTRAINT
+ * pushes a given constraint expression into the constraint list
+ * in the pc set
+ *
+ */
+void
+pc_pushconstraint(struct pc_pc_set * pcsp, const char * str)
+{
+    struct pc_constrnt * con;
+    PC_GETCONSTRAINT(con);
+    bu_vls_strcat(&(con->name), str);
+    PC_PCSET_PUSHC(pcsp, con);
+}
+
+/**
+ * 			PC_FREE_PCSET
+ * frees the parameter&constraint set (pc_pc_set) pointed to by the
+ * pointer taken as an argument. It also frees the corresponding allocation
+ * for bu_vls structs used for the storage of name and expression of
+ * pc_param and pc_constrnt structures
+ *
+ */
+void
+pc_free_pcset(struct pc_pc_set * pcs) 
+{
+    struct pc_param * par;
+    struct pc_constrnt * con;
+    while (BU_LIST_WHILE(par,pc_param,&(pcs->ps->l))) { 
+        bu_vls_free(&(par->name));
+        bu_vls_free(&(par->expression));
+        BU_LIST_DEQUEUE(&(par->l));
+        bu_free(par, "free parameter");
+    }
+    bu_free(pcs->ps, "free parameter");
+    while (BU_LIST_WHILE(con,pc_constrnt,&(pcs->cs->l))) {
+        bu_vls_free(&(con->name));
+        bu_vls_free(&(con->expression));
+        BU_LIST_DEQUEUE(&(con->l));
+        bu_free(con, "free constraint");
+    }
+    bu_free(pcs->cs, "free constraint");
+}
+
+/**
+ * 			PC_MK_CONSTRAINT
  *
  * Given the appropriate parameters, makes the non-geometric
  * constraint object and writes it to the database using
