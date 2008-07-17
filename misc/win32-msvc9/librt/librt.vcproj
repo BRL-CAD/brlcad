@@ -456,6 +456,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\namegen.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\nmg\nmg.c"
 				>
 			</File>
