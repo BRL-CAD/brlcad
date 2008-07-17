@@ -35,6 +35,7 @@
 #include "pcNetwork.h"
 #include "pcSolver.h"
 #include "pcParser.h"
+#include "pc.h"
 
 
 /* Constraint functions */
@@ -55,31 +56,21 @@ int main()
 {
 
     struct pc_pc_set pcs;
-    struct pc_param * par;
-    struct pc_constrnt * constrnt;
     PC_INIT_PCSET(pcs);
-    PC_GETPARAMETER(par);
-    PC_GETCONSTRAINT(constrnt);
-    par->pname[0]='T';
-    constrnt->cname[0]='C';
-    PC_PCSET_PUSHP(pcs,par);
-    PC_PCSET_PUSHC(pcs,constrnt);
+    pc_pushparameter(&pcs,"Testpar123=325.0");
+    pc_pushconstraint(&pcs,"Constraint-test");
 
     Parser myparser;
     myparser.parse(&pcs);
 
-    /* Stage I : Checking Constrained Classes */
-    //std::cout << "______________________________________________________________" << std::endl;
-    //std::cout << "____________________Checking Network Classes__________________" << std::endl;
-
+    pc_free_pcset(&pcs);
 
     /* Stage II : Checking Network Classes */
     //std::cout << "_________________________________________________________" << std::endl;
     //std::cout << "____________________Checking Network  Classes________" <<std::endl;
-
     typedef boost::adjacency_list<vecS, vecS, bidirectionalS,
 	Variable<int>, Constraint<int> > Graph;
-    typedef graph_traits<Graph> GraphTraits;
+    typedef boost::graph_traits<Graph> GraphTraits;
     typedef GraphTraits::vertex_descriptor Vertex;
     typedef GraphTraits::edge_descriptor Edge;
 
@@ -130,12 +121,12 @@ int main()
 	*/
 	GTSolver<int> GTS;
 	BTSolver<int> BTS;
+
 /*
   std::cout << "-----------------------------" << std::endl;
   GTS.solve(&N,&S);
   std::cout << "Solution using Generate-Test" << std::endl;
   S.display();
-
   S.clear();
   std::cout << "-----------------------------" << std::endl;
 
@@ -149,7 +140,6 @@ int main()
   std::cout << "BackTracking based Solution:" << BTS.numChecks() << std::endl;
 */
     }
-
     return 0;
 }
 
