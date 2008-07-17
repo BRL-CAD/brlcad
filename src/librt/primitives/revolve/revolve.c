@@ -644,7 +644,7 @@ rt_revolve_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 {
     struct rt_revolve_internal	*rip;
 
-    int 		nvert, narc, nadd, nseg, i, j;
+    int 		nvert, narc, nadd, nseg, i, j, k;
     point2d_t		*verts;
     struct curve	*crv;
 
@@ -761,7 +761,18 @@ rt_revolve_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct 
     /* convert endcounts to store which endpoints are odd */
     for ( i=0, j=0; i<rip->sk->vert_count; i++ ) {
 	if ( endcount[i] > 0 ) used[i] = 1;
-	if ( endcount[i] % 2 != 0 ) endcount[j++] = i;
+	if ( endcount[i] % 2 != 0 ) {
+	    /* add 'i' to list, insertion sort by vert[i][Y] */
+	    for( k=j; k>0; k-- ) {
+		if ( verts[i][Y] < verts[endcount[k-1]][Y] ) {
+		    endcount[k] = endcount[k-1];
+		} else {
+		    break;
+		}
+	    }
+	    endcount[k] = i;
+	    j++;
+	}
     }
     nadd = j;
     while ( j < rip->sk->vert_count ) endcount[j++] = -1;
@@ -803,6 +814,12 @@ rt_revolve_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 	for ( j=0; j<nadd; j++ ) {
 	    VJOIN1( add, rip->v3d, verts[endcount[j]][Y], rip->axis3d );
 	    VJOIN1( add2, add, verts[endcount[j]][X], rEnd );
+	    RT_ADD_VLIST( vhead, add, BN_VLIST_LINE_MOVE );
+	    RT_ADD_VLIST( vhead, add2, BN_VLIST_LINE_DRAW );
+	}
+	for ( j=0; j<nadd; j+=2 ) {
+	    VJOIN1( add, rip->v3d, verts[endcount[j]][Y], rip->axis3d );
+	    VJOIN1( add2, rip->v3d, verts[endcount[j+1]][Y], rip->axis3d );
 	    RT_ADD_VLIST( vhead, add, BN_VLIST_LINE_MOVE );
 	    RT_ADD_VLIST( vhead, add2, BN_VLIST_LINE_DRAW );
 	}
