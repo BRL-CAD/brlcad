@@ -3599,8 +3599,6 @@ if test "x$bc_build_parallel" != "xno" ; then
 	AC_DEFINE(PARALLEL, 1, [Define to enable SMP architecture parallel computation support ])
 fi
 
-AC_DEFINE_UNQUOTED([USE_FBSERV], [1], [Required for libdm/mged to allow direct fbserv render connections])
-
 
 #
 # set up the BRL-CAD libraries

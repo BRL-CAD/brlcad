@@ -36,9 +36,7 @@
 #include "tcl.h"
 #include "ged.h"
 
-#ifdef USE_FBSERV
-#  include "fbserv_obj.h"
-#endif
+#include "fbserv_obj.h"
 
 __BEGIN_DECLS
 
@@ -79,9 +77,7 @@ struct ged_dm_view {
     struct bu_vls	gdv_name;
     struct ged_view	*gdv_view;
     struct dm		*gdv_dmp;
-#ifdef USE_FBSERV
     struct fbserv_obj	gdv_fbs;
-#endif
     struct ged_obj	*gdv_gop; /* Pointer back to its ged object */
 };
 
