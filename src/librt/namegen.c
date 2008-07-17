@@ -58,7 +58,7 @@
 
 #include "bu.h"
 
-#define ASSEM_EXT ''
+#define ASSEM_EXT ' '
 #define REGION_EXT 'r'
 #define COMB_EXT 'c'
 #define PRIM_EXT 's'
@@ -78,23 +78,33 @@ struct object_name_item {
 struct object_name_data *
 parse_obj_name(const char *fmt, const char *name)
 {
-    struct object_name_data *objcomponents;
-	struct object_name_item *objname;
-	char *stringholder;
-    int len = 0;
-	int i;
-
+    	struct object_name_data *objcomponents;
 	BU_GETSTRUCT(objcomponents, object_name_data);
 	BU_LIST_INIT(&(objcomponents->name_components));
 	BU_LIST_INIT(&(objcomponents->separators));
 	BU_LIST_INIT(&(objcomponents->incrementals));
 	bu_vls_init(&(objcomponents->extension));
 
+	struct object_name_item *objname;
+
+	char *stringholder;
+	int ignore_separator_flag = 0;
+	int len = 0;
+	int i;
+
 	if (!fmt || fmt[0] == '\0' || !name || name[0] == '\0') { 
             bu_log("ERROR: empty name or format string passed to parse_name\n");
 	    return;
         }
+
+	/*Need logic here to deterine what this object is
+	
+	* use db_count_subtree_regions to distinguish assemblies and combinations	
+
+	*/
+
   	for (i = 0; i < strlen(fmt); i++) {
+	     if (len <= strlen(name)) {
 		switch ( fmt[i] ) {
 			case 'n':
 			{
@@ -103,8 +113,7 @@ parse_obj_name(const char *fmt, const char *name)
 				bu_vls_init(&(objname->namestring));
 				bu_vls_trunc(&(objname->namestring),0);
 				if (fmt[i+1] == 'i' ) {
-					while (name[len] != '.' && name[len] != '_' && name[len] != '-' && name[len] != '\0' && !isdigit(name[len])){
-						bu_log("%c\n",name[len]);
+					while (name[len] != '\0' && !isdigit(name[len])){
 						bu_vls_putc(&(objname->namestring), name[len]);
 						len++;
 					}
@@ -132,31 +141,39 @@ parse_obj_name(const char *fmt, const char *name)
 			break;
 			case 's':
 			{
-				BU_GETSTRUCT(objname, object_name_item);
-				BU_LIST_INIT(&(objname->l));
-				bu_vls_init(&(objname->namestring));
-                                bu_vls_trunc(&(objname->namestring),0);
-				if (name[len] == '.' || name[len] == '_' || name[len] == '-'){
-                                       bu_vls_putc(&(objname->namestring), name[len]);
-                                       len++;
+				if (ignore_separator_flag == 0) {
+					BU_GETSTRUCT(objname, object_name_item);
+					BU_LIST_INIT(&(objname->l));
+					bu_vls_init(&(objname->namestring));
+                        	        bu_vls_trunc(&(objname->namestring),0);
+					if (name[len] == '.' || name[len] == '_' || name[len] == '-'){
+                      	                 bu_vls_putc(&(objname->namestring), name[len]);
+                       	                len++;
+					} else {
+                       	                bu_vls_putc(&(objname->namestring), '.');
+					       bu_log("Note: naming convention requires separator but none found at designated point in supplied object name - using '.'\n");
+					}
+					BU_LIST_INSERT(&(objcomponents->separators), &(objname->l));
 				} else {
-                                       bu_vls_putc(&(objname->namestring), '-');
-				       bu_log("Note: naming convention requires separator but none found at designated point in supplied object name - using '-'\n");
+					ignore_separator_flag = 0;
+					len++;
 				}
-				BU_LIST_INSERT(&(objcomponents->separators), &(objname->l));
 			}
 			break;
 			case 'e':
 			{
-				if (i != strlen(fmt) && name[len] != '\0') {
-					bu_log("Error - extension specified at position other than end of object name.\n");
+				/*objtype = dblookup...*/
+				/*if (objtype == assembly && ASSEM_EXT==' ' && fmt[i+1] == 's') {
+					ignore_separator_flag = 1;
+					len++;
 				} else {
-					if (name[len] == REGION_EXT || name[len] == COMB_EXT || name[len] == PRIM_EXT) {
-						bu_vls_printf(&(objcomponents->extension), "%s", name[len]);
+				*/	if (name[len] == REGION_EXT || name[len] == COMB_EXT || name[len] == PRIM_EXT) {
+						bu_vls_putc(&(objcomponents->extension), name[len]);
+						len++;
 					} else {
 					/*** add logic to check type of object named by supplied name and use default ***/
 					}
-				}
+				/*}*/
 			}
 			break;
 			default:
@@ -165,32 +182,53 @@ parse_obj_name(const char *fmt, const char *name)
 			}
 			break;
 		}
+	     }
 	}
 	return objcomponents;
 };		
 
 
+void test_obj_struct(const char *fmt, struct bu_vls *testvls){
+	
+	struct object_name_item *testitem;
+	struct object_name_data *test;
+	test = parse_obj_name(fmt, bu_vls_addr(testvls));
+	for ( BU_LIST_FOR( testitem, object_name_item, &(test->name_components) ) )  {
+		bu_log("%s ",bu_vls_addr(&(testitem->namestring)));
+	}
+        bu_log("\n");
+	for ( BU_LIST_FOR( testitem, object_name_item, &(test->separators) ) )  {
+     		bu_log("%s ",bu_vls_addr(&(testitem->namestring)));
+ 	};
+	bu_log("\n");
+	for ( BU_LIST_FOR( testitem, object_name_item, &(test->incrementals) ) )  {
+	    bu_log("%s ",bu_vls_addr(&(testitem->namestring)));
+	}
+	bu_log("\n");
+	bu_log("%s ",bu_vls_addr(&(test->extension)));
+	bu_log("\n\n");
+}
+
+
+
+struct bu_vls *
+assem_obj_name(const char *fmt, struct object_name_data *templatedata, int currentcount)
+{
+	struct bu_vls stringassembly;
+	bu_vls_init(&stringassembly);
+}
 
 main(int argc, char **argv)
 {
  struct bu_vls temp;
- struct object_name_item *testitem;
- char corename[12]="core-001a.s";
- struct object_name_data *test;
- register struct bn_vlist *vp;
- test = parse_obj_name("nsins",corename);
+ bu_vls_init(&temp);
+ 
+ bu_vls_trunc(&temp,0);
+ bu_vls_printf(&temp,"%s","core-001a.s");
+ test_obj_struct("nsinse", &temp);
 
- for ( BU_LIST_FOR( testitem, object_name_item, &(test->name_components) ) )  {
-     bu_log("%s ",bu_vls_addr(&(testitem->namestring)));
- };
- bu_log("\n");
- for ( BU_LIST_FOR( testitem, object_name_item, &(test->separators) ) )  {
-     bu_log("%s ",bu_vls_addr(&(testitem->namestring)));
- };
- bu_log("\n");
- for ( BU_LIST_FOR( testitem, object_name_item, &(test->incrementals) ) )  {
-     bu_log("%s ",bu_vls_addr(&(testitem->namestring)));
- };
- bu_log("\n");
+ bu_vls_trunc(&temp,0);
+ bu_vls_printf(&temp,"%s","s.bcore12.b3");
+ test_obj_struct("esnisni", &temp);
 
 };
