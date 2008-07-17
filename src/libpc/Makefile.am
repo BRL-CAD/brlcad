@@ -13,7 +13,6 @@ noinst_PROGRAMS = \
 	solver_test
 
 noinst_HEADERS = \
-	pc_constraint.h \
 	pcBasic.h \
 	pcInterval.h \
 	pcVariable.h \
@@ -23,8 +22,7 @@ noinst_HEADERS = \
 	pcSolver.h
 
 libpc_nil_la_SOURCES = \
-	pc_main.c \
-	pc_solver.cpp 
+	pc_main.c
 
 libpc_la_SOURCES =
 libpc_la_LDFLAGS = -version-info 19:1 -no-undefined
@@ -35,7 +33,7 @@ libpc_la_LIBADD = \
 pc_test_SOURCES = pc_test.c
 pc_test_LDADD = libpc.la
 
-solver_test_SOURCES = solver_test.cpp
+solver_test_SOURCES = solver_test.cpp 
 solver_test_LDADD = libpc.la
 
 FAST_OBJECTS = \
