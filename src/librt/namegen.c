@@ -78,19 +78,17 @@ struct object_name_item {
 struct object_name_data *
 parse_obj_name(const char *fmt, const char *name)
 {
-    	struct object_name_data *objcomponents;
+    struct object_name_data *objcomponents;
+	struct object_name_item *objname;
+	char *stringholder;
+    int len = 0;
+	int i;
+
 	BU_GETSTRUCT(objcomponents, object_name_data);
 	BU_LIST_INIT(&(objcomponents->name_components));
 	BU_LIST_INIT(&(objcomponents->separators));
 	BU_LIST_INIT(&(objcomponents->incrementals));
 	bu_vls_init(&(objcomponents->extension));
-
-	struct object_name_item *objname;
-
-	char *stringholder;
-	
-	int len = 0;
-	int i;
 
 	if (!fmt || fmt[0] == '\0' || !name || name[0] == '\0') { 
             bu_log("ERROR: empty name or format string passed to parse_name\n");
