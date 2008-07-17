@@ -149,7 +149,7 @@ ged_view_init(struct ged_view *gvp)
 {
     gvp->gv_scale = 1.0;
     gvp->gv_size = 2.0 * gvp->gv_scale;
-    gvp->gv_invSize = 1.0 / gvp->gv_size;
+    gvp->gv_isize = 1.0 / gvp->gv_size;
     VSET(gvp->gv_eye_pos, 0.0, 0.0, 1.0);
     MAT_IDN(gvp->gv_rotation);
     MAT_IDN(gvp->gv_center);

@@ -174,11 +174,23 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\cat.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\center.c"
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\color.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\comb_color.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\comb_std.c"
 				>
 			</File>
 			<File
@@ -262,7 +274,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\isize.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\item.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\keypoint.c"
 				>
 			</File>
 			<File
@@ -274,7 +294,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\lookat.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\ls.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\m2v_point.c"
 				>
 			</File>
 			<File
@@ -294,6 +322,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\model2view.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\mrot.c"
 				>
 			</File>
@@ -303,6 +335,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\ocenter.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\orient.c"
 				>
 			</File>
 			<File
@@ -326,6 +362,26 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\perspective.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\pmat.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\pmodel2view.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\pov.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\prcolor.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\put.c"
 				>
 			</File>
@@ -338,6 +394,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\rmat.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\rmater.c"
 				>
 			</File>
@@ -346,7 +406,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\rot_point.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\rotate_about.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\rt.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\scale.c"
 				>
 			</File>
 			<File
@@ -359,6 +431,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\set_uplotOutputMode.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\setview.c"
 				>
 			</File>
 			<File
@@ -390,11 +466,23 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\v2m_point.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\vdraw.c"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\view_obj.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\view2model.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\viewdir.c"
 				>
 			</File>
 			<File

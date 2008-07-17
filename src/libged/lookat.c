@@ -1,4 +1,4 @@
-/*                         C E N T E R . C
+/*                         L O O K A T . C
  * BRL-CAD
  *
  * Copyright (c) 2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file center.c
+/** @file lookat.c
  *
- * The center command.
+ * The lookat command.
  *
  */
 
@@ -33,10 +33,16 @@
 
 
 int
-ged_center(struct ged *gedp, int argc, const char *argv[])
+ged_lookat(struct ged *gedp, int argc, const char *argv[])
 {
-    point_t center;
-    static const char *usage = "[x y z]";
+    point_t look;
+    point_t eye;
+    point_t tmp;
+    point_t new_center;
+    vect_t dir;
+    fastf_t new_az, new_el;
+    struct bu_vls vls;
+    static const char *usage = "x y z";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
@@ -46,45 +52,48 @@ ged_center(struct ged *gedp, int argc, const char *argv[])
     gedp->ged_result = GED_RESULT_NULL;
     gedp->ged_result_flags = 0;
 
-    /* get view center */
-    if (argc == 1) {
-	MAT_DELTAS_GET_NEG(center, gedp->ged_gvp->gv_center);
-	VSCALE(center, center, gedp->ged_wdbp->dbip->dbi_base2local);
-	bn_encode_vect(&gedp->ged_result_str, center);
-
-	return BRLCAD_OK;
-    }
-
     if (argc != 2 && argc != 4) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
 
-    /* set view center */
     if (argc == 2) {
-	if (bn_decode_vect(center, argv[1]) != 3) {
+	if (bn_decode_vect(look, argv[1]) != 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return BRLCAD_ERROR;
 	}
     } else {
-	if (sscanf(argv[1], "%lf", &center[X]) != 1) {
-	    bu_vls_printf(&gedp->ged_result_str, "ged_center: bad X value - %s\n", argv[1]);
+	if (sscanf(argv[1], "%lf", &look[X]) != 1) {
+	    bu_vls_printf(&gedp->ged_result_str, "ged_lookat: bad X value - %s\n", argv[1]);
 	    return BRLCAD_ERROR;
 	}
 
-	if (sscanf(argv[2], "%lf", &center[Y]) != 1) {
-	    bu_vls_printf(&gedp->ged_result_str, "ged_center: bad Y value - %s\n", argv[2]);
+	if (sscanf(argv[2], "%lf", &look[Y]) != 1) {
+	    bu_vls_printf(&gedp->ged_result_str, "ged_lookat: bad Y value - %s\n", argv[2]);
 	    return BRLCAD_ERROR;
 	}
 
-	if (sscanf(argv[3], "%lf", &center[Z]) != 1) {
-	    bu_vls_printf(&gedp->ged_result_str, "ged_center: bad Z value - %s\n", argv[3]);
+	if (sscanf(argv[3], "%lf", &look[Z]) != 1) {
+	    bu_vls_printf(&gedp->ged_result_str, "ged_lookat: bad Z value - %s\n", argv[3]);
 	    return BRLCAD_ERROR;
 	}
     }
 
-    VSCALE(center, center, gedp->ged_wdbp->dbip->dbi_local2base);
-    MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, center);
+    VSCALE(look, look, gedp->ged_wdbp->dbip->dbi_local2base);
+
+    VSET(tmp, 0.0, 0.0, 1.0);
+    MAT4X3PNT(eye, gedp->ged_gvp->gv_view2model, tmp);
+
+    VSUB2(dir, eye, look);
+    VUNITIZE(dir);
+    bn_ae_vec(&new_az, &new_el, dir);
+
+    VSET(gedp->ged_gvp->gv_aet, new_az, new_el, gedp->ged_gvp->gv_aet[Z]);
+    ged_mat_aet(gedp->ged_gvp);
+
+    VJOIN1(new_center, eye, -gedp->ged_gvp->gv_scale, dir);
+    MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, new_center);
+
     ged_view_update(gedp->ged_gvp);
 
     return BRLCAD_OK;

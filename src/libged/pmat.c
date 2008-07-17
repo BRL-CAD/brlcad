@@ -1,4 +1,4 @@
-/*                         S I Z E . C
+/*                         P M A T . C
  * BRL-CAD
  *
  * Copyright (c) 2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file size.c
+/** @file pmat.c
  *
- * The size command.
+ * The pmat command.
  *
  */
 
@@ -33,10 +33,9 @@
 
 
 int
-ged_size(struct ged *gedp, int argc, const char *argv[])
+ged_pmat(struct ged *gedp, int argc, const char *argv[])
 {
-    fastf_t size;
-    static const char *usage = "[s]";
+    mat_t pmat;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
@@ -46,33 +45,22 @@ ged_size(struct ged *gedp, int argc, const char *argv[])
     gedp->ged_result = GED_RESULT_NULL;
     gedp->ged_result_flags = 0;
 
-    /* get view size */
+    /* get the perspective matrix */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "%g",
-		      gedp->ged_gvp->gv_size * gedp->ged_wdbp->dbip->dbi_base2local);
+	bn_encode_mat(&gedp->ged_result_str, gedp->ged_gvp->gv_pmat);
 	return BRLCAD_OK;
-    }
+    } else if (argc == 2) {
+	/* set perspective matrix */
+	if (bn_decode_mat(pmat, argv[1]) != 16)
+	    return TCL_ERROR;
 
-    /* set view size */
-    if (argc == 2) {
-	if (sscanf(argv[1], "%lf", &size) != 1 ||
-	    size <= 0 ||
-	    NEAR_ZERO(size, SMALL_FASTF)) {
-	    bu_vls_printf(&gedp->ged_result_str, "bad size - %s", argv[1]);
-	    return BRLCAD_ERROR;
-	}
-
-	gedp->ged_gvp->gv_size = gedp->ged_wdbp->dbip->dbi_local2base * size;
-	if (gedp->ged_gvp->gv_size < RT_MINVIEWSIZE)
-	    gedp->ged_gvp->gv_size = RT_MINVIEWSIZE;
-	gedp->ged_gvp->gv_isize = 1.0 / gedp->ged_gvp->gv_size;
-	gedp->ged_gvp->gv_scale = 0.5 * gedp->ged_gvp->gv_size;
+	MAT_COPY(gedp->ged_gvp->gv_pmat, pmat);
 	ged_view_update(gedp->ged_gvp);
 
-	return BRLCAD_OK;
+	return TCL_OK;
     }
 
-    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
     return BRLCAD_ERROR;
 }
 

@@ -15,8 +15,11 @@ libged_nil_la_SOURCES = \
 	blast.c \
 	bot_decimate.c \
 	bot_face_sort.c \
+	cat.c \
 	center.c \
+	color.c \
 	comb_color.c \
+	comb_std.c \
 	dg_obj.c \
 	dir2ae.c \
 	draw.c \
@@ -37,31 +40,47 @@ libged_nil_la_SOURCES = \
 	how.c \
 	importFg4Section.c \
 	illum.c \
+	isize.c \
 	item.c \
+	keypoint.c \
 	list.c \
 	log.c \
+	lookat.c \
 	ls.c \
+	m2v_point.c \
 	make.c \
 	make_name.c \
 	mater.c \
 	mirror.c \
+	model2view.c \
 	mrot.c \
 	nirt.c \
 	ocenter.c \
+	orient.c \
 	orotate.c \
 	oscale.c \
 	otranslate.c \
 	overlay.c \
 	pathsum.c \
+	perspective.c \
+	pmat.c \
+	pmodel2view.c \
+	pov.c \
+	prcolor.c \
 	put.c \
 	qray.c \
 	report.c \
+	rmat.c \
 	rmater.c \
 	rot.c \
+	rot_point.c \
+	rotate_about.c \
 	rt.c \
+	scale.c \
 	set_outputHandler.c \
 	set_transparency.c \
 	set_uplotOutputMode.c \
+	setview.c \
 	shader.c \
 	size.c \
 	slew.c \
@@ -69,8 +88,11 @@ libged_nil_la_SOURCES = \
 	trace.c \
 	track.c \
 	tree.c \
+	v2m_point.c \
 	vdraw.c \
 	view_obj.c \
+	view2model.c \
+	viewdir.c \
 	vrot.c \
 	vutil.c \
 	wdb_comb_std.c \

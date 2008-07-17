@@ -1,4 +1,4 @@
-/*                         S I Z E . C
+/*                         K E Y P O I N T . C
  * BRL-CAD
  *
  * Copyright (c) 2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file size.c
+/** @file keypoint.c
  *
- * The size command.
+ * The keypoint command.
  *
  */
 
@@ -33,10 +33,10 @@
 
 
 int
-ged_size(struct ged *gedp, int argc, const char *argv[])
+ged_keypoint(struct ged *gedp, int argc, const char *argv[])
 {
-    fastf_t size;
-    static const char *usage = "[s]";
+    point_t keypoint;
+    static const char *usage = "[x y z]";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
@@ -46,34 +46,45 @@ ged_size(struct ged *gedp, int argc, const char *argv[])
     gedp->ged_result = GED_RESULT_NULL;
     gedp->ged_result_flags = 0;
 
-    /* get view size */
+    /* get keypoint */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "%g",
-		      gedp->ged_gvp->gv_size * gedp->ged_wdbp->dbip->dbi_base2local);
+	VSCALE(keypoint, gedp->ged_gvp->gv_keypoint, gedp->ged_wdbp->dbip->dbi_base2local);
+	bn_encode_vect(&gedp->ged_result_str, keypoint);
+
 	return BRLCAD_OK;
     }
 
-    /* set view size */
+    if (argc != 2 && argc != 4) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    /* set view keypoint */
     if (argc == 2) {
-	if (sscanf(argv[1], "%lf", &size) != 1 ||
-	    size <= 0 ||
-	    NEAR_ZERO(size, SMALL_FASTF)) {
-	    bu_vls_printf(&gedp->ged_result_str, "bad size - %s", argv[1]);
+	if (bn_decode_vect(keypoint, argv[1]) != 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    return BRLCAD_ERROR;
+	}
+    } else {
+	if (sscanf(argv[1], "%lf", &keypoint[X]) != 1) {
+	    bu_vls_printf(&gedp->ged_result_str, "ged_keypoint: bad X value - %s\n", argv[1]);
 	    return BRLCAD_ERROR;
 	}
 
-	gedp->ged_gvp->gv_size = gedp->ged_wdbp->dbip->dbi_local2base * size;
-	if (gedp->ged_gvp->gv_size < RT_MINVIEWSIZE)
-	    gedp->ged_gvp->gv_size = RT_MINVIEWSIZE;
-	gedp->ged_gvp->gv_isize = 1.0 / gedp->ged_gvp->gv_size;
-	gedp->ged_gvp->gv_scale = 0.5 * gedp->ged_gvp->gv_size;
-	ged_view_update(gedp->ged_gvp);
+	if (sscanf(argv[2], "%lf", &keypoint[Y]) != 1) {
+	    bu_vls_printf(&gedp->ged_result_str, "ged_keypoint: bad Y value - %s\n", argv[2]);
+	    return BRLCAD_ERROR;
+	}
 
-	return BRLCAD_OK;
+	if (sscanf(argv[3], "%lf", &keypoint[Z]) != 1) {
+	    bu_vls_printf(&gedp->ged_result_str, "ged_keypoint: bad Z value - %s\n", argv[3]);
+	    return BRLCAD_ERROR;
+	}
     }
 
-    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-    return BRLCAD_ERROR;
+    VSCALE(gedp->ged_gvp->gv_keypoint, keypoint, gedp->ged_wdbp->dbip->dbi_local2base);
+
+    return BRLCAD_OK;
 }
 
 

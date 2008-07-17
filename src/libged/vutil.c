@@ -187,7 +187,7 @@ ged_do_tra(struct ged	*gedp,
 	    break;
 	case 'v':
 	default:
-	    VSCALE(tvec, tvec, -2.0*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_gvp->gv_invSize);
+	    VSCALE(tvec, tvec, -2.0*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_gvp->gv_isize);
 	    MAT4X3PNT(work, gedp->ged_gvp->gv_view2model, tvec);
 	    MAT_DELTAS_GET_NEG(vc, gedp->ged_gvp->gv_center);
 	    VSUB2(delta, work, vc);
@@ -208,7 +208,7 @@ ged_do_zoom(struct ged *gedp, fastf_t sf)
     if (gedp->ged_gvp->gv_scale < RT_MINVIEWSCALE)
 	gedp->ged_gvp->gv_scale = RT_MINVIEWSCALE;
     gedp->ged_gvp->gv_size = 2.0 * gedp->ged_gvp->gv_scale;
-    gedp->ged_gvp->gv_invSize = 1.0 / gedp->ged_gvp->gv_size;
+    gedp->ged_gvp->gv_isize = 1.0 / gedp->ged_gvp->gv_size;
     ged_view_update(gedp->ged_gvp);
 
     return BRLCAD_OK;

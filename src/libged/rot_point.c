@@ -1,4 +1,4 @@
-/*                         S I Z E . C
+/*                         R O T _ P O I N T . C
  * BRL-CAD
  *
  * Copyright (c) 2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file size.c
+/** @file rot_point.c
  *
- * The size command.
+ * The rot_point command.
  *
  */
 
@@ -33,10 +33,12 @@
 
 
 int
-ged_size(struct ged *gedp, int argc, const char *argv[])
+ged_rot_point(struct ged *gedp, int argc, const char *argv[])
 {
-    fastf_t size;
-    static const char *usage = "[s]";
+    mat_t invRot;
+    point_t point;
+    point_t rpoint;
+    static const char *usage = "x y z";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
@@ -46,34 +48,39 @@ ged_size(struct ged *gedp, int argc, const char *argv[])
     gedp->ged_result = GED_RESULT_NULL;
     gedp->ged_result_flags = 0;
 
-    /* get view size */
-    if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "%g",
-		      gedp->ged_gvp->gv_size * gedp->ged_wdbp->dbip->dbi_base2local);
-	return BRLCAD_OK;
+    if (argc != 2 && argc != 4) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
     }
 
-    /* set view size */
     if (argc == 2) {
-	if (sscanf(argv[1], "%lf", &size) != 1 ||
-	    size <= 0 ||
-	    NEAR_ZERO(size, SMALL_FASTF)) {
-	    bu_vls_printf(&gedp->ged_result_str, "bad size - %s", argv[1]);
+	if (bn_decode_vect(point, argv[1]) != 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    return BRLCAD_ERROR;
+	}
+    } else {
+	if (sscanf(argv[1], "%lf", &point[X]) != 1) {
+	    bu_vls_printf(&gedp->ged_result_str, "ged_m2v_point: bad X value - %s\n", argv[1]);
 	    return BRLCAD_ERROR;
 	}
 
-	gedp->ged_gvp->gv_size = gedp->ged_wdbp->dbip->dbi_local2base * size;
-	if (gedp->ged_gvp->gv_size < RT_MINVIEWSIZE)
-	    gedp->ged_gvp->gv_size = RT_MINVIEWSIZE;
-	gedp->ged_gvp->gv_isize = 1.0 / gedp->ged_gvp->gv_size;
-	gedp->ged_gvp->gv_scale = 0.5 * gedp->ged_gvp->gv_size;
-	ged_view_update(gedp->ged_gvp);
+	if (sscanf(argv[2], "%lf", &point[Y]) != 1) {
+	    bu_vls_printf(&gedp->ged_result_str, "ged_m2v_point: bad Y value - %s\n", argv[2]);
+	    return BRLCAD_ERROR;
+	}
 
-	return BRLCAD_OK;
+	if (sscanf(argv[3], "%lf", &point[Z]) != 1) {
+	    bu_vls_printf(&gedp->ged_result_str, "ged_m2v_point: bad Z value - %s\n", argv[3]);
+	    return BRLCAD_ERROR;
+	}
     }
 
-    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-    return BRLCAD_ERROR;
+    /* Rotate the incoming point */
+    bn_mat_inv(invRot, gedp->ged_gvp->gv_rotation);
+    MAT4X3PNT(rpoint, invRot, point);
+    bn_encode_vect(&gedp->ged_result_str, rpoint);
+
+    return BRLCAD_OK;
 }
 
 

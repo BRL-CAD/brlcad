@@ -236,7 +236,7 @@ struct ged_view {
     struct bu_list 	l;
     fastf_t		gv_scale;
     fastf_t		gv_size;		/**< @brief  2.0 * scale */
-    fastf_t		gv_invSize;		/**< @brief  1.0 / size */
+    fastf_t		gv_isize;		/**< @brief  1.0 / size */
     fastf_t		gv_perspective;		/**< @brief  perspective angle */
     vect_t		gv_aet;
     vect_t		gv_eye_pos;		/**< @brief  eye position */
@@ -1020,12 +1020,28 @@ GED_EXPORT BU_EXTERN(int ged_bot_decimate, (struct ged *gedp, int argc, const ch
 GED_EXPORT BU_EXTERN(int ged_bot_face_sort, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
- * Get or set the view center
+ * List attributes (brief).
+ *
+ * Usage:
+ *     cat <objects>
+ */
+GED_EXPORT BU_EXTERN(int ged_cat, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Get or set the view center.
  *
  * Usage:
  *     center ["x y z"]
  */
 GED_EXPORT BU_EXTERN(int ged_center, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Make color entry.
+ *
+ * Usage:
+ *     color low high r g b
+ */
+GED_EXPORT BU_EXTERN(int ged_color, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Set combination color.
@@ -1034,6 +1050,14 @@ GED_EXPORT BU_EXTERN(int ged_center, (struct ged *gedp, int argc, const char *ar
  *     comb_color combination R G B
  */
 GED_EXPORT BU_EXTERN(int ged_comb_color, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Create or extend a combination using standard notation.
+ *
+ * Usage:
+ *     c [-cr] comb_name <boolean_expr>
+ */
+GED_EXPORT BU_EXTERN(int ged_comb_std, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Convert a direction vector to az/el.
@@ -1166,12 +1190,28 @@ GED_EXPORT BU_EXTERN(int ged_how, (struct ged *gedp, int argc, const char *argv[
 GED_EXPORT BU_EXTERN(int ged_illum, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Returns the inverse view size.
+ *
+ * Usage:
+ *     isize
+ */
+GED_EXPORT BU_EXTERN(int ged_isize, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Set region ident codes.
  *
  * Usage:
  *     item region ident [air [material [los]]]
  */
 GED_EXPORT BU_EXTERN(int ged_item, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Set/get the keypoint
+ *
+ * Usage:
+ *     keypoint [x y z]
+ */
+GED_EXPORT BU_EXTERN(int ged_keypoint, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * List object information, verbose.
@@ -1190,12 +1230,28 @@ GED_EXPORT BU_EXTERN(int ged_list, (struct ged *gedp, int argc, const char *argv
 GED_EXPORT BU_EXTERN(int ged_log, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Set the look-at point
+ *
+ * Usage:
+ *     lookat x y z
+ */
+GED_EXPORT BU_EXTERN(int ged_lookat, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * List the objects in this database
  *
  * Usage:
  *     ls [-A name/value pairs] OR [-acrslop] object(s)
  */
 GED_EXPORT BU_EXTERN(int ged_ls, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Convert the specified model point to a view point.
+ *
+ * Usage:
+ *     m2v_point x y z
+ */
+GED_EXPORT BU_EXTERN(int ged_m2v_point, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Make a new primitive.
@@ -1231,6 +1287,14 @@ GED_EXPORT BU_EXTERN(int ged_mater, (struct ged *gedp, int argc, const char *arg
 GED_EXPORT BU_EXTERN(int ged_mirror, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Get the model to view matrix
+ *
+ * Usage:
+ *     model2view
+ */
+GED_EXPORT BU_EXTERN(int ged_model2view, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Rotate the view. Note - x, y and z are rotations in model coordinates.
  *
  * Usage:
@@ -1254,6 +1318,14 @@ GED_EXPORT BU_EXTERN(int ged_vnirt, (struct ged *gedp, int argc, const char *arg
  *     ocenter obj [x y z]
  */
 GED_EXPORT BU_EXTERN(int ged_ocenter, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Set the view orientation using a quaternion.
+ *
+ * Usage:
+ *     orient quat
+ */
+GED_EXPORT BU_EXTERN(int ged_orient, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Rotate obj about the keypoint by 
@@ -1296,6 +1368,46 @@ GED_EXPORT BU_EXTERN(int ged_overlay, (struct ged *gedp, int argc, const char *a
 GED_EXPORT BU_EXTERN(int ged_pathsum, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Set/get the perspective angle.
+ *
+ * Usage:
+ *     perspective [angle]
+ */
+GED_EXPORT BU_EXTERN(int ged_perspective, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Set/get the perspective matrix.
+ *
+ * Usage:
+ *     pmat [mat]
+ */
+GED_EXPORT BU_EXTERN(int ged_pmat, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Get the pmodel2view matrix.
+ *
+ * Usage:
+ *     pmodel2view
+ */
+GED_EXPORT BU_EXTERN(int ged_pmodel2view, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Set point of view
+ *
+ * Usage:
+ *     pov center quat scale eye_pos perspective
+ */
+GED_EXPORT BU_EXTERN(int ged_pov, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Print color table
+ *
+ * Usage:
+ *     prcolor
+ */
+GED_EXPORT BU_EXTERN(int ged_prcolor, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Create a database object
  *
  * Usage:
@@ -1325,6 +1437,14 @@ GED_EXPORT BU_EXTERN(void ged_free_qray,
 GED_EXPORT BU_EXTERN(int ged_report, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Set/get the rotation matrix.
+ *
+ * Usage:
+ *     rmat [mat]
+ */
+GED_EXPORT BU_EXTERN(int ged_rmat, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Read material properties from a file.
  *
  * Usage:
@@ -1341,12 +1461,36 @@ GED_EXPORT BU_EXTERN(int ged_rmater, (struct ged *gedp, int argc, const char *ar
 GED_EXPORT BU_EXTERN(int ged_rot, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Set/get the rotate_about point.
+ *
+ * Usage:
+ *     rotate_about [e|k|m|v]
+ */
+GED_EXPORT BU_EXTERN(int ged_rotate_about, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Rotate the point.
+ *
+ * Usage:
+ *     rot_point x y z
+ */
+GED_EXPORT BU_EXTERN(int ged_rot_point, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Run the raytracing application.
  *
  * Usage:
  *     rt [args]
  */
 GED_EXPORT BU_EXTERN(int ged_rt, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Scale the view.
+ *
+ * Usage:
+ *     sca sf
+ */
+GED_EXPORT BU_EXTERN(int ged_scale, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Get/set the output handler script
@@ -1373,6 +1517,14 @@ GED_EXPORT BU_EXTERN(int ged_set_uplotOutputMode, (struct ged *gedp, int argc, c
 GED_EXPORT BU_EXTERN(int ged_set_transparency, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Set the view orientation given the angles x, y and z in degrees.
+ *
+ * Usage:
+ *     setview x y z
+ */
+GED_EXPORT BU_EXTERN(int ged_setview, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Simpler, command-line version of 'mater' command.
  *
  * Usage:
@@ -1392,7 +1544,7 @@ GED_EXPORT BU_EXTERN(int ged_size, (struct ged *gedp, int argc, const char *argv
  * Slew the view
  *
  * Usage:
- *     slew x y z
+ *     slew x y [z]
  */
 GED_EXPORT BU_EXTERN(int ged_slew, (struct ged *gedp, int argc, const char *argv[]));
 
@@ -1413,12 +1565,36 @@ GED_EXPORT BU_EXTERN(int ged_tra, (struct ged *gedp, int argc, const char *argv[
 GED_EXPORT BU_EXTERN(int ged_tree, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Convert the specified view point to a model point.
+ *
+ * Usage:
+ *     v2m_point x y z
+ */
+GED_EXPORT BU_EXTERN(int ged_v2m_point, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Get the view2model matrix.
+ *
+ * Usage:
+ *     view2model
+ */
+GED_EXPORT BU_EXTERN(int ged_view2model, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Rotate the view. Note - x, y and z are rotations in view coordinates.
  *
  * Usage:
  *     vrot x y z
  */
 GED_EXPORT BU_EXTERN(int ged_vrot, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Return the view direction.
+ *
+ * Usage:
+ *     viewdir [-i]
+ */
+GED_EXPORT BU_EXTERN(int ged_viewdir, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * List the objects currently prepped for drawing
