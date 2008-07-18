@@ -31,7 +31,7 @@
 #include "common.h"
 
 #include <boost/spirit.hpp>
-#include <boost/spirit/actor/assign_actor.hpp>
+/* #include <boost/spirit/actor/assign_actor.hpp> */
 
 #include "bu.h"
 #include "raytrace.h"
