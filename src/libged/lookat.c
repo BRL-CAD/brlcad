@@ -41,7 +41,6 @@ ged_lookat(struct ged *gedp, int argc, const char *argv[])
     point_t new_center;
     vect_t dir;
     fastf_t new_az, new_el;
-    struct bu_vls vls;
     static const char *usage = "x y z";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);

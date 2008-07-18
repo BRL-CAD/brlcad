@@ -35,8 +35,6 @@ int
 ged_eye_pos(struct ged *gedp, int argc, const char *argv[])
 {
     point_t		eye_pos;
-    vect_t		xlate;
-    vect_t		new_cent;
     static const char *usage = "x y z";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);

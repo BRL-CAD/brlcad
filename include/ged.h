@@ -1020,6 +1020,14 @@ GED_EXPORT BU_EXTERN(int ged_bot_decimate, (struct ged *gedp, int argc, const ch
 GED_EXPORT BU_EXTERN(int ged_bot_face_sort, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Calculate vertex normals for the BOT primitive
+ *
+ * Usage:
+ *     bot_smoooth [-t ntol] new_bot old_bot
+ */
+GED_EXPORT BU_EXTERN(int ged_bot_smooth, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * List attributes (brief).
  *
  * Usage:
@@ -1052,12 +1060,52 @@ GED_EXPORT BU_EXTERN(int ged_color, (struct ged *gedp, int argc, const char *arg
 GED_EXPORT BU_EXTERN(int ged_comb_color, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Create or extend combination w/booleans.
+ *
+ * Usage:
+ *     comb comb_name <operation primitive>
+ */
+GED_EXPORT BU_EXTERN(int ged_comb, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Create or extend a combination using standard notation.
  *
  * Usage:
  *     c [-cr] comb_name <boolean_expr>
  */
 GED_EXPORT BU_EXTERN(int ged_comb_std, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Import a database into the current database using an auto-incrementing or custom affix
+ *
+ * Usage:
+ *     concat [-s|-p] file.g [suffix|prefix]
+ */
+GED_EXPORT BU_EXTERN(int ged_concat, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Copy a database object
+ *
+ * Usage:
+ *     copy from to
+ */
+GED_EXPORT BU_EXTERN(int ged_copy, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Copy an 'evaluated' path solid
+ *
+ * Usage:
+ *     copyeval new_prim path_to_old_prim
+ */
+GED_EXPORT BU_EXTERN(int ged_copyeval, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Get dbip
+ *
+ * Usage:
+ *     dbip
+ */
+GED_EXPORT BU_EXTERN(int ged_dbip, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Convert a direction vector to az/el.
@@ -1076,12 +1124,20 @@ GED_EXPORT BU_EXTERN(int ged_dir2ae, (struct ged *gedp, int argc, const char *ar
 GED_EXPORT BU_EXTERN(int ged_draw, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
- * Evaluate objects via NMG tessellation
+ * Dump a full copy of the database into file.g
  *
  * Usage:
- *     ev [-dfnstuvwT] [-P #] <objects>
+ *     dump file.g
  */
-GED_EXPORT BU_EXTERN(int ged_ev, (struct ged *gedp, int argc, const char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_dump, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Check for duplicate names in file
+ *
+ * Usage:
+ *     dup file.g prefix
+ */
+GED_EXPORT BU_EXTERN(int ged_dup, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Prepare object(s) for display
@@ -1126,6 +1182,14 @@ GED_EXPORT BU_EXTERN(int ged_erase, (struct ged *gedp, int argc, const char *arg
 GED_EXPORT BU_EXTERN(int ged_erase_all, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Evaluate objects via NMG tessellation
+ *
+ * Usage:
+ *     ev [-dfnstuvwT] [-P #] <objects>
+ */
+GED_EXPORT BU_EXTERN(int ged_ev, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Set/get the eye point
  *
  * Usage:
@@ -1140,6 +1204,30 @@ GED_EXPORT BU_EXTERN(int ged_eye, (struct ged *gedp, int argc, const char *argv[
  *     eye_pos [x y z]
  */
 GED_EXPORT BU_EXTERN(int ged_eye_pos, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Globs expression against database objects
+ *
+ * Usage:
+ *     expand expression
+ */
+GED_EXPORT BU_EXTERN(int ged_expand, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Facetize the specified objects
+ *
+ * Usage:
+ *     facetize new_obj old_obj [old_obj2 old_obj3 ...]
+ */
+GED_EXPORT BU_EXTERN(int ged_facetize, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Find combinations that reference object
+ *
+ * Usage:
+ *     find <objects>
+ */
+GED_EXPORT BU_EXTERN(int ged_find, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * returns form for objects of type "type"
@@ -1174,6 +1262,30 @@ GED_EXPORT BU_EXTERN(int ged_get_autoview, (struct ged *gedp, int argc, const ch
 GED_EXPORT BU_EXTERN(int ged_get_eyemodel, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Get the object's type
+ *
+ * Usage:
+ *     get_type object
+ */
+GED_EXPORT BU_EXTERN(int ged_get_type, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Create or append objects to a group
+ *
+ * Usage:
+ *     group object(s)
+ */
+GED_EXPORT BU_EXTERN(int ged_group, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Set the "hidden" flag for the specified objects so they do not appear in an "ls" command output
+ *
+ * Usage:
+ *     hide <objects>
+ */
+GED_EXPORT BU_EXTERN(int ged_hide, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Returns how an object is being displayed
  *
  * Usage:
@@ -1188,6 +1300,14 @@ GED_EXPORT BU_EXTERN(int ged_how, (struct ged *gedp, int argc, const char *argv[
  *     illum [-n] obj
  */
 GED_EXPORT BU_EXTERN(int ged_illum, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Add instance of obj to comb
+ *
+ * Usage:
+ *     instance obj comb [op]
+ */
+GED_EXPORT BU_EXTERN(int ged_instance, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Returns the inverse view size.
@@ -1206,12 +1326,44 @@ GED_EXPORT BU_EXTERN(int ged_isize, (struct ged *gedp, int argc, const char *arg
 GED_EXPORT BU_EXTERN(int ged_item, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Save/keep the specified objects in the specified file
+ *
+ * Usage:
+ *     keep file.g object(s)
+ */
+GED_EXPORT BU_EXTERN(int ged_keep, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Set/get the keypoint
  *
  * Usage:
  *     keypoint [x y z]
  */
 GED_EXPORT BU_EXTERN(int ged_keypoint, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Kill/delete the specified objects from the database
+ *
+ * Usage:
+ *     kill object(s)
+ */
+GED_EXPORT BU_EXTERN(int ged_kill, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Kill/delete the specified objects from the database, removing all references
+ *
+ * Usage:
+ *     killall object(s)
+ */
+GED_EXPORT BU_EXTERN(int ged_killall, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Kill all paths belonging to objects
+ *
+ * Usage:
+ *     killtree object(s)
+ */
+GED_EXPORT BU_EXTERN(int ged_killtree, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * List object information, verbose.
@@ -1246,6 +1398,14 @@ GED_EXPORT BU_EXTERN(int ged_lookat, (struct ged *gedp, int argc, const char *ar
 GED_EXPORT BU_EXTERN(int ged_ls, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * List object's tree as a tcl list of {operator object} pairs
+ *
+ * Usage:
+ *     lt object
+ */
+GED_EXPORT BU_EXTERN(int ged_lt, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Convert the specified model point to a view point.
  *
  * Usage:
@@ -1262,12 +1422,28 @@ GED_EXPORT BU_EXTERN(int ged_m2v_point, (struct ged *gedp, int argc, const char 
 GED_EXPORT BU_EXTERN(int ged_make, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Make a bounding box (rpp) around the specified objects
+ *
+ * Usage:
+ *     make_bb bbname object(s)
+ */
+GED_EXPORT BU_EXTERN(int ged_make_bb, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Make a unique object name.
  *
  * Usage:
  *     make_name template | -s [num]
  */
 GED_EXPORT BU_EXTERN(int ged_make_name, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Globs expression against database objects, does not return tokens that match nothing
+ *
+ * Usage:
+ *     match expression
+ */
+GED_EXPORT BU_EXTERN(int ged_match, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Modify material information.
@@ -1295,6 +1471,38 @@ GED_EXPORT BU_EXTERN(int ged_mirror, (struct ged *gedp, int argc, const char *ar
 GED_EXPORT BU_EXTERN(int ged_model2view, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Move an arb's edge through point
+ *
+ * Usage:
+ *     move_arb_edge arb edge pt
+ */
+GED_EXPORT BU_EXTERN(int ged_move_arb_edge, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Move/rename a database object
+ *
+ * Usage:
+ *     mv from to
+ */
+GED_EXPORT BU_EXTERN(int ged_move, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Move/rename all occurrences object
+ *
+ * Usage:
+ *     mvall from to
+ */
+GED_EXPORT BU_EXTERN(int ged_move_all, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Move an arb's face through point
+ *
+ * Usage:
+ *     move_arb_face arb face pt
+ */
+GED_EXPORT BU_EXTERN(int ged_move_arb_face, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Rotate the view. Note - x, y and z are rotations in model coordinates.
  *
  * Usage:
@@ -1312,12 +1520,36 @@ GED_EXPORT BU_EXTERN(int ged_nirt, (struct ged *gedp, int argc, const char *argv
 GED_EXPORT BU_EXTERN(int ged_vnirt, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Decimate NMG primitive via edge collapse
+ *
+ * Usage:
+ *     nmg_collapse nmg_prim new_prim max_err_dist [min_angle]
+ */
+GED_EXPORT BU_EXTERN(int ged_nmg_collapse, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Simplify the NMG primitive, if possible
+ *
+ * Usage:
+ *     nmg_simplify [arb|tgc|ell|poly] new_prim nmg_prim
+ */
+GED_EXPORT BU_EXTERN(int ged_nmg_simplify, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Set/get object center.
  *
  * Usage:
  *     ocenter obj [x y z]
  */
 GED_EXPORT BU_EXTERN(int ged_ocenter, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Open a database
+ *
+ * Usage:
+ *     open [filename]
+ */
+GED_EXPORT BU_EXTERN(int ged_reopen, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Set the view orientation using a quaternion.
@@ -1358,6 +1590,14 @@ GED_EXPORT BU_EXTERN(int ged_otranslate, (struct ged *gedp, int argc, const char
  *     overlay file.pl [name]
  */
 GED_EXPORT BU_EXTERN(int ged_overlay, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * List all paths from name(s) to leaves
+ *
+ * Usage:
+ *     pathlist name(s)
+ */
+GED_EXPORT BU_EXTERN(int ged_pathlist, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Lists all paths matching the input path
@@ -1408,6 +1648,14 @@ GED_EXPORT BU_EXTERN(int ged_pov, (struct ged *gedp, int argc, const char *argv[
 GED_EXPORT BU_EXTERN(int ged_prcolor, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Push objects' path transformations to  primitives
+ *
+ * Usage:
+ *     push object(s)
+ */
+GED_EXPORT BU_EXTERN(int ged_push, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Create a database object
  *
  * Usage:
@@ -1427,6 +1675,30 @@ GED_EXPORT BU_EXTERN(void ged_init_qray,
 		    (struct ged_drawable *gdp));
 GED_EXPORT BU_EXTERN(void ged_free_qray,
 		    (struct ged_drawable *gdp));
+
+/**
+ * Create or append objects to a region
+ *
+ * Usage:
+ *     region object(s)
+ */
+GED_EXPORT BU_EXTERN(int ged_region, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Returns a list of id to region name mappings for the entire database.
+ *
+ * Usage:
+ *     rmap
+ */
+GED_EXPORT BU_EXTERN(int ged_rmap, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Remove members from a combination
+ *
+ * Usage:
+ *     remove object(s)
+ */
+GED_EXPORT BU_EXTERN(int ged_remove, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Returns the solid table & vector list as a string
@@ -1469,6 +1741,14 @@ GED_EXPORT BU_EXTERN(int ged_rot, (struct ged *gedp, int argc, const char *argv[
 GED_EXPORT BU_EXTERN(int ged_rotate_about, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Rotate an arb's face through point
+ *
+ * Usage:
+ *     rotate_arb_face arb face pt
+ */
+GED_EXPORT BU_EXTERN(int ged_rotate_arb_face, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Rotate the point.
  *
  * Usage:
@@ -1483,6 +1763,14 @@ GED_EXPORT BU_EXTERN(int ged_rot_point, (struct ged *gedp, int argc, const char 
  *     rt [args]
  */
 GED_EXPORT BU_EXTERN(int ged_rt, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Create an RT instance object
+ *
+ * Usage:
+ *     rt_gettrees procname [-i] [-u] treetops
+ */
+GED_EXPORT BU_EXTERN(int ged_rt_gettrees, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Scale the view.
@@ -1533,6 +1821,22 @@ GED_EXPORT BU_EXTERN(int ged_setview, (struct ged *gedp, int argc, const char *a
 GED_EXPORT BU_EXTERN(int ged_shader, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Breaks the NMG model into seperate shells
+ *
+ * Usage:
+ *     shells nmg_model
+ */
+GED_EXPORT BU_EXTERN(int ged_shells, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Show the matrix transformations along path
+ *
+ * Usage:
+ *     showmats path
+ */
+GED_EXPORT BU_EXTERN(int ged_showmats, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Get or set the view size.
  *
  * Usage:
@@ -1549,6 +1853,39 @@ GED_EXPORT BU_EXTERN(int ged_size, (struct ged *gedp, int argc, const char *argv
 GED_EXPORT BU_EXTERN(int ged_slew, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Count/list primitives/regions/groups
+ *
+ * Usage:
+ *     summary [p r g]
+ */
+GED_EXPORT BU_EXTERN(int ged_summary, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Set/get the database title
+ *
+ * Usage:
+ *     title description
+ */
+GED_EXPORT BU_EXTERN(int ged_title, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Set/get tessellation and calculation tolerances
+ *
+ * Usage:
+ *     tol ([abs|rel|norm|dist|perp] [tolerance]) ...
+ */
+GED_EXPORT BU_EXTERN(int ged_tol, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Find all top level objects
+ *
+ * Usage:
+ *     tops [-a] [-h] [-n] [-p], if NEW_TOPS_BEHAVIOR
+ *     tops [-g] [-n] [-u]
+ */
+GED_EXPORT BU_EXTERN(int ged_tops, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Translate the view.
  *
  * Usage:
@@ -1563,6 +1900,30 @@ GED_EXPORT BU_EXTERN(int ged_tra, (struct ged *gedp, int argc, const char *argv[
  *     tree [-c] [-o outfile] [-i indentSize] [-d displayDepth] [object(s)]
  */
 GED_EXPORT BU_EXTERN(int ged_tree, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Unset the "hidden" flag for the specified objects so they will appear in a "t" or "ls" command output
+ *
+ * Usage:
+ *     unhide object(s)
+ */
+GED_EXPORT BU_EXTERN(int ged_unhide, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Set/get the database units
+ *
+ * Usage:
+ *     units [mm|cm|m|in|ft|...]
+ */
+GED_EXPORT BU_EXTERN(int ged_units, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Returns the database verson
+ *
+ * Usage:
+ *     version
+ */
+GED_EXPORT BU_EXTERN(int ged_version, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Convert the specified view point to a model point.
@@ -1597,6 +1958,30 @@ GED_EXPORT BU_EXTERN(int ged_vrot, (struct ged *gedp, int argc, const char *argv
 GED_EXPORT BU_EXTERN(int ged_viewdir, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Return the specified region's id
+ *
+ * Usage:
+ *     whatid region
+ */
+GED_EXPORT BU_EXTERN(int ged_whatid, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Find the regions with the specified air codes
+ *
+ * Usage:
+ *     whichair codes(s)
+ */
+GED_EXPORT BU_EXTERN(int ged_whichair, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Find the regions with the specified region ids
+ *
+ * Usage:
+ *     whichid [-s] id(s)
+ */
+GED_EXPORT BU_EXTERN(int ged_whichid, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * List the objects currently prepped for drawing
  *
  * Usage:
@@ -1611,6 +1996,14 @@ GED_EXPORT BU_EXTERN(int ged_who, (struct ged *gedp, int argc, const char *argv[
  *     wmater file combination1 [combination2 ...]
  */
 GED_EXPORT BU_EXTERN(int ged_wmater, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Push object path transformations to solids, creating primitives if necessary
+ *
+ * Usage:
+ *     xpush object
+ */
+GED_EXPORT BU_EXTERN(int ged_xpush, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Erase all currently displayed geometry

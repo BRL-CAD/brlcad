@@ -1,4 +1,4 @@
-/*                         R O T A T E _ A B O U T . C
+/*                         K I L L A L L . C
  * BRL-CAD
  *
  * Copyright (c) 2008 United States Government as represented by
@@ -17,54 +17,45 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rotate_about.c
+/** @file killall.c
  *
- * The rotate_about command.
+ * The killall command.
  *
  */
 
 #include "common.h"
 
-#include <stdlib.h>
-#include <ctype.h>
 #include <string.h>
 
+#include "bio.h"
+#include "cmd.h"
 #include "ged_private.h"
 
-
 int
-ged_rotate_about(struct ged *gedp, int argc, const char *argv[])
+ged_killall(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char *usage = "[e|k|m|v]";
+    static const char *usage = "object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
     gedp->ged_result_flags = 0;
 
-    /* get "rotate about" point */
+    /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "%c", gedp->ged_gvp->gv_rotate_about);
+	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_OK;
     }
 
-    /* Set rotate_about */
-    if (argc == 2 && argv[1][1] == '\0') {
-	switch (argv[1][0]) {
-	    case 'e':
-	    case 'k':
-	    case 'm':
-	    case 'v':
-		gedp->ged_gvp->gv_rotate_about = argv[1][0];
-		return BRLCAD_OK;
-	}
+    if (argc < 2 || MAXARGS < argc) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
     }
 
-    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-    return BRLCAD_ERROR;
+    return BRLCAD_OK;
 }
 
 

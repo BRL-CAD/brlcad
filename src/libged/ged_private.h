@@ -31,8 +31,13 @@
 #include <time.h>
 
 #include "ged.h"
+#include "db.h"
 
 __BEGIN_DECLS
+
+#define GED_V4_MAXNAME	NAMESIZE
+#define GED_TERMINAL_WIDTH 80
+#define GED_COLUMNS ((GED_TERMINAL_WIDTH + GED_V4_MAXNAME - 1) / GED_V4_MAXNAME)
 
 #define GED_MAX_LEVELS 12
 #define GED_CPEVAL	0
@@ -110,11 +115,15 @@ BU_EXTERN (void ged_print_node,
 	    int                 displayDepth,
 	    int                 currdisplayDepth));
 
-/* defined in how.c */
-BU_EXTERN (struct directory **ged_build_dpp,
-	   (struct ged *gedp,
-	    const char *path));
-
+/* defined in comb.c */
+BU_EXTERN (struct directory *ged_combadd,
+	   (struct ged			*gedp,
+	    register struct directory	*objp,
+	    char			*combname,
+	    int				region_flag,
+	    int				relation,
+	    int				ident,
+	    int				air));
 
 /* defined in draw.c */
 BU_EXTERN (void ged_color_soltab,
@@ -126,6 +135,19 @@ BU_EXTERN (void ged_cvt_vlblock_to_solids,
 	    char *name,
 	    int copy));
 
+/* defined in erase.c */
+BU_EXTERN (void ged_eraseobjpath,
+	   (struct ged	*gedp,
+	    int		argc,
+	    const char	*argv[],
+	    int		noisy,
+	    int		all));
+BU_EXTERN (void ged_eraseobjall,
+	   (struct ged			*gedp,
+	    register struct directory	**dpp));
+BU_EXTERN (void ged_eraseobj,
+	   (struct ged			*gedp,
+	    register struct directory	**dpp));
 
 /* defined in get_obj_bounds.c */
 BU_EXTERN (int ged_get_obj_bounds,
@@ -144,32 +166,52 @@ BU_EXTERN (int ged_get_obj_bounds2,
 	    point_t			rpp_min,
 	    point_t			rpp_max));
 
-/* defined in trace.c */
-BU_EXTERN (void ged_trace,
-	   (register struct directory	*dp,
-	    int				pathpos,
-	    const mat_t			old_xlate,
-	    struct ged_trace_data	*gtdp));
+/* defined in how.c */
+BU_EXTERN (struct directory **ged_build_dpp,
+	   (struct ged *gedp,
+	    const char *path));
 
-/* defined in erase.c */
-BU_EXTERN (void ged_eraseobjpath,
-	   (struct ged	*gedp,
-	    int		argc,
-	    const char	*argv[],
-	    int		noisy,
-	    int		all));
-BU_EXTERN (void ged_eraseobjall,
-	   (struct ged			*gedp,
-	    register struct directory	**dpp));
-BU_EXTERN (void ged_eraseobj,
-	   (struct ged			*gedp,
-	    register struct directory	**dpp));
+/* defined in list.c */
+BU_EXTERN(void ged_do_list,
+	  (struct ged			*gedp,
+	   register struct directory	*dp,
+	   int				verbose));
+
+/* defined in ls.c */
+BU_EXTERN(void ged_vls_col_pr4v,
+	  (struct bu_vls	*vls,
+	   struct directory	**list_of_names,
+	   int			num_in_list,
+	   int			no_decorate));
+BU_EXTERN(void ged_vls_long_dpp,
+	  (struct bu_vls	*vls,
+	   struct directory	**list_of_names,
+	   int			num_in_list,
+	   int			aflag,		/* print all objects */
+	   int			cflag,		/* print combinations */
+	   int			rflag,		/* print regions */
+	   int			sflag));	/* print solids */
+BU_EXTERN(void ged_vls_line_dpp,
+	  (struct bu_vls	*vls,
+	   struct directory	**list_of_names,
+	   int			num_in_list,
+	   int			aflag,	/* print all objects */
+	   int			cflag,	/* print combinations */
+	   int			rflag,	/* print regions */
+	   int			sflag));	/* print solids */
 
 /* defined in rt.c */
 void
 BU_EXTERN (ged_rt_set_eye_model,
 	   (struct ged *gedp,
 	    vect_t eye_model));
+
+/* defined in trace.c */
+BU_EXTERN (void ged_trace,
+	   (register struct directory	*dp,
+	    int				pathpos,
+	    const mat_t			old_xlate,
+	    struct ged_trace_data	*gtdp));
 
 /* defined in vutil.c */
 BU_EXTERN (void ged_view_update,

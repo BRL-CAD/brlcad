@@ -174,6 +174,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\bot_smooth.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\cat.c"
 				>
 			</File>
@@ -186,11 +190,31 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\comb.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\comb_color.c"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\comb_std.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\concat.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\copy.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\copyeval.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\dbip.c"
 				>
 			</File>
 			<File
@@ -203,6 +227,14 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\draw.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\dump.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\dup.c"
 				>
 			</File>
 			<File
@@ -226,11 +258,23 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\expand.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\eye.c"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\eye_pos.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\facetize.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\find.c"
 				>
 			</File>
 			<File
@@ -258,7 +302,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\get_type.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\globals.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\group.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\hide.c"
 				>
 			</File>
 			<File
@@ -274,11 +330,31 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\instance.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\isize.c"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\item.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\keep.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\kill.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\killall.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\killtree.c"
 				>
 			</File>
 			<File
@@ -302,6 +378,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\lt.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\m2v_point.c"
 				>
 			</File>
@@ -310,7 +390,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\make_bb.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\make_name.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\match.c"
 				>
 			</File>
 			<File
@@ -326,6 +414,22 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\move.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\move_all.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\move_arb_edge.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\move_arb_face.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\mrot.c"
 				>
 			</File>
@@ -334,7 +438,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\nmg_collapse.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\nmg_simplify.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\ocenter.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\open.c"
 				>
 			</File>
 			<File
@@ -355,6 +471,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\overlay.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\pathlist.c"
 				>
 			</File>
 			<File
@@ -382,6 +502,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\push.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\put.c"
 				>
 			</File>
@@ -390,7 +514,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\region.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\remove.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\report.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\rmap.c"
 				>
 			</File>
 			<File
@@ -414,7 +550,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\rotate_arb_face.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\rt.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\rt_gettrees.c"
 				>
 			</File>
 			<File
@@ -442,11 +586,35 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\shells.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\showmats.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\size.c"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\slew.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\summary.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\title.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\tol.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\tops.c"
 				>
 			</File>
 			<File
@@ -463,6 +631,18 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\tree.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\unhide.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\units.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\version.c"
 				>
 			</File>
 			<File
@@ -502,11 +682,27 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\whatid.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\whichair.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\whichid.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\who.c"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\wmater.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\xpush.c"
 				>
 			</File>
 			<File
