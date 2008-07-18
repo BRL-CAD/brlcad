@@ -21,3 +21,6 @@ target_link_libraries(fast4-g BrlcadCore)
 
 add_executable(g2asc g2asc.c)
 target_link_libraries(g2asc BrlcadCore tcl85)
+
+add_executable(proe-g proe-g.c)
+target_link_libraries(proe-g BrlcadCore)
