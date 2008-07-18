@@ -55,7 +55,9 @@
 #include <string.h>
 #include <stdarg.h>
 #include "bio.h"
-
+#include "bn.h"
+#include "db.h"
+#include "raytrace.h"
 #include "bu.h"
 
 #define ASSEM_EXT ' '
@@ -86,9 +88,20 @@ parse_obj_name(const char *fmt, const char *name)
 	bu_vls_init(&(objcomponents->extension));
 
 	struct object_name_item *objname;
+	
+	struct db_i *dbip = DBI_NULL;
+	struct directory *dp = (struct directory *)NULL;
+	union tree *ckregtree;
+	struct db_full_path  path;
+	struct resource *resp = &rt_uniresource;
+	struct db_tree_state ts = rt_initial_tree_state;	
+	struct combined_tree_state *region_start_statep;
+	int rcount = 0;
 
 	char *stringholder;
 	int ignore_separator_flag = 0;
+	int object_type; /* 0 = unknown, 1 = solid, 2 = comb, 3 = region, 4 = assembly*/
+
 	int len = 0;
 	int i;
 
@@ -102,6 +115,42 @@ parse_obj_name(const char *fmt, const char *name)
 	* use db_count_subtree_regions to distinguish assemblies and combinations	
 
 	*/
+	dbip = db_open( "./test.g", "r" );
+	db_dirbuild(dbip);
+	dp = db_lookup(dbip, name, LOOKUP_NOISY);
+	
+	if (!(dp->d_flags & DIR_SOLID)) {
+		region_start_statep = (struct combined_tree_state *)0;
+		db_full_path_init( &path );
+		ts.ts_dbip = dbip;
+		ts.ts_resp = resp;
+		db_follow_path_for_state(&ts, &path, name, LOOKUP_NOISY);
+		ckregtree = db_recurse(&ts, &path, &region_start_statep, NULL );
+		rcount = db_count_subtree_regions(ckregtree);
+	}
+
+	bu_log("rcount is %d\n",rcount);	
+
+       	if (!dp) {
+		object_type = 0;
+		bu_log("Object %s not found in database.\n",name);
+	}
+	if (dp->d_flags & DIR_SOLID) {
+		object_type = 1;
+	}
+	if (dp->d_flags & DIR_REGION) {
+		object_type = 3;
+	}
+	if ((dp->d_flags & DIR_COMB) && !(dp->d_flags & DIR_REGION)) {
+		if (rcount > 0) {
+			object_type = 4;
+		} else {
+			object_type = 2;
+		}
+	}
+
+	bu_log("Object type is %d\n",object_type);
+
 
   	for (i = 0; i < strlen(fmt); i++) {
 	     if (len <= strlen(name)) {
@@ -184,6 +233,7 @@ parse_obj_name(const char *fmt, const char *name)
 		}
 	     }
 	}
+	db_close(dbip);
 	return objcomponents;
 };		
 
@@ -230,5 +280,22 @@ main(int argc, char **argv)
  bu_vls_trunc(&temp,0);
  bu_vls_printf(&temp,"%s","s.bcore12.b3");
  test_obj_struct("esnisni", &temp);
+
+ bu_vls_trunc(&temp,0);
+ bu_vls_printf(&temp,"%s","comb1.c");
+ test_obj_struct("nise", &temp);
+
+ bu_vls_trunc(&temp,0);
+ bu_vls_printf(&temp,"%s","comb2.r");
+ test_obj_struct("nise", &temp);
+
+ bu_vls_trunc(&temp,0);
+ bu_vls_printf(&temp,"%s","comb3.r");
+ test_obj_struct("nise", &temp);
+
+ bu_vls_trunc(&temp,0);
+ bu_vls_printf(&temp,"%s","assem1");
+ test_obj_struct("ni", &temp);
+
 
 };
