@@ -32,6 +32,7 @@
 #include <algorithm>                 // for std::for_each
 
 #include "pcVariable.h"
+#include "pcPCSet.h"
 #include "pcNetwork.h"
 #include "pcSolver.h"
 #include "pcParser.h"
@@ -56,12 +57,20 @@ int main()
 {
 
     struct pc_pc_set pcs;
+    PCSet<double> pc_set;
     PC_INIT_PCSET(pcs);
     pc_pushparameter(&pcs,"Testpar123=325.0");
+    pc_pushparameter(&pcs,"Testpar234 = 1289.36243");
+    pc_pushparameter(&pcs,"Testpar452 =1325.043");
     pc_pushconstraint(&pcs,"Constraint-test");
-
-    Parser myparser;
+    
+    Parser myparser(pc_set);
     myparser.parse(&pcs);
+    
+    /* display the set of variables and constraints generated as a
+     * result of parsing
+     */
+    pc_set.display();
 
     pc_free_pcset(&pcs);
 
@@ -114,7 +123,6 @@ int main()
 	}
 	//std::cout << "___" << boost::num_vertices(N.G) << std::endl;
 
-	N.display();
 	/*N.display();
 	  S = N.solve();
 	  S.display();

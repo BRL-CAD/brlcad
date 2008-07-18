@@ -31,7 +31,7 @@
 #include "common.h"
 
 #include <stdarg.h>
-
+#include <vector>
 #include "pcVariable.h"
 
 

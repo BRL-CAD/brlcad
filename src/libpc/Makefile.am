@@ -17,12 +17,14 @@ noinst_HEADERS = \
 	pcInterval.h \
 	pcVariable.h \
 	pcConstraint.h \
+	pcPCSet.h \
 	pcNetwork.h \
 	pcParser.h \
 	pcSolver.h
 
 libpc_nil_la_SOURCES = \
-	pc_main.c
+	pc_main.c \
+	pcParser.cpp
 
 libpc_la_SOURCES =
 libpc_la_LDFLAGS = -version-info 19:1 -no-undefined

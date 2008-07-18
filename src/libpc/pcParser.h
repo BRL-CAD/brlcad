@@ -30,28 +30,33 @@
 
 #include "common.h"
 
+#include "pcPCSet.h"
 #include <boost/spirit.hpp>
-/* #include <boost/spirit/actor/assign_actor.hpp> */
 
 #include "bu.h"
 #include "raytrace.h"
 #include "tcl.h"
 #include "pc.h"
 
-/**
- * A class wrapper for a set of Variables and Constraints
- * After a hypergraph representation, this might get deprecated.
- * Parser Class outputs this as a result of parse() and Generator class uses
- * it for generation of the Constraint Network (presently Binary Network)
- *
- */
-template <class T>
-class PCset
+class Parser;
+
+/* Functors associated with the generation of Variables */
+struct varname
 {
 public:
-    std::list<Variable<T> > Vars;
-    std::list<Constraint<T> > Constraints;
-    void display();
+    varname(Parser &pars) : pcparser(pars) {}
+    void operator () (char c) const;
+private:
+    Parser &pcparser;
+};
+
+struct varvalue
+{
+public:
+    varvalue(Parser &pars) : pcparser(pars) {}
+    void operator () (double v) const;
+private:
+    Parser &pcparser;
 };
 
 /**
@@ -60,44 +65,42 @@ public:
  */
 class Variable_grammar : public boost::spirit::grammar<Variable_grammar>
 {
+private:
+    Parser &pcparser;
 public:
-    static std::string name;
-    double value;
-    struct test_functor
-    {
-        test_functor(std::string& str_) : str(str_) {}
-	void
-	operator () (char c) const {
-	    str.push_back(c);
-	}
-	std::string& str;
-    };	
+    Variable_grammar(Parser &parser);
+    virtual ~Variable_grammar();
     template<typename ScannerT>
     struct definition
     {
-	boost::spirit::rule<ScannerT> variable;
-	boost::spirit::rule<ScannerT> expression;
+        boost::spirit::rule<ScannerT> variable;
+	/*boost::spirit::rule<ScannerT> expression;*/
 	definition(Variable_grammar const &self) {
+	    /*expression
+	        =    boost::spirit::real_p[varvalue(self.pcparser)]
+		;*/
 	    variable
-	        =    '('
-		     >> *boost::spirit::alnum_p/*[test_functor(Variable_grammar::name)]*/
+	        =    *(boost::spirit::alnum_p)[varname(self.pcparser)]
 		     >> '='
-		     >> expression
-		     >> ')'
+	             >>boost::spirit::real_p[varvalue(self.pcparser)]
+		     /* expression*/
 		;
 	}
 	boost::spirit::rule<ScannerT> const& start() { return variable;}
     };
-    //void display() { std::cout<< "Parameter =" << name << std::endl;}
 };
 
 class Constraint_grammar : public boost::spirit::grammar<Constraint_grammar>
 {
+private:
+    Parser &pcparser;
 public:
+    Constraint_grammar(Parser &parser);
+    virtual ~Constraint_grammar();
     template<typename ScannerT>
     struct definition
     {
-	boost::spirit::rule<ScannerT> variable;
+        boost::spirit::rule<ScannerT> variable;
 	boost::spirit::rule<ScannerT> term;
 	boost::spirit::rule<ScannerT> operat;
 	boost::spirit::rule<ScannerT> expression;
@@ -140,7 +143,7 @@ public:
 struct is_equal
 {
     template<typename IteratorT>
-    void operator() (IteratorT first,IteratorT last) const;
+    void operator() (IteratorT first, IteratorT last) const;
 };
 
 /**
@@ -154,33 +157,27 @@ struct is_equal
  */
 class Parser {
 private:
-    int a;
+    typedef PCSet<double> PC_Set;/* TODO: parametrize the hardcoded double */
+    std::string name;
+    double value;
+    PC_Set &pcset;
+    Variable_grammar *var_gram;
+    Constraint_grammar *con_gram;
 public:
+    Parser(PC_Set &pcs);
+    virtual ~Parser();
     void parse(struct pc_pc_set * pcs);
+    void pushChar(char c) { name.push_back(c); }
+    void setValue(double v) { value = v; } 
+    void display() { std::cout<< "Result of Parsing:" << name << " = " <<  value << std::endl; }
 };
 
-/* Parser method implementation */
+void varname::operator () (char c) const {
+    pcparser.pushChar(c);
+}
 
-void Parser::parse(struct pc_pc_set * pcs)
-{
-
-    class Variable_grammar vg;
-    class Constraint_grammar cg;
-    /*Iterate through the parameter set first*/
-    struct pc_param * par;
-    struct pc_constrnt * con;
-    while (BU_LIST_WHILE(par,pc_param,&(pcs->ps->l))) {
-	std::cout<<"Parameter: "<<(char *) bu_vls_addr(&(par->name))<<std::endl;
-        boost::spirit::parse((char *) bu_vls_addr(&(par->name)), vg, boost::spirit::space_p);
-	BU_LIST_DEQUEUE(&(par->l));
-	bu_free(par,"free parameter");
-    }
-    /* Iterate through the constraint set */
-    while (BU_LIST_WHILE(con,pc_constrnt,&(pcs->cs->l))) {
-	std::cout<<"Constraint: "<<(char *) bu_vls_addr(&(con->name))<<std::endl;
-	BU_LIST_DEQUEUE(&(con->l));
-	bu_free(con,"free constraint");
-    }
+void varvalue::operator () (double v) const {
+    pcparser.setValue(v);
 }
 #endif
 /** @} */
