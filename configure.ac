@@ -1041,8 +1041,6 @@ int main() { return 0; }
 	fi
 fi
 
-AC_DEFINE(EXTERN_STDOUT,,[Stdout is extern])
-
 AC_FUNC_ALLOCA
 
 dnl if building jove wasn't specifically requested and wasn't
