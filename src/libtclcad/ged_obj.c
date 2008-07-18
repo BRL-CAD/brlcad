@@ -136,14 +136,14 @@ static int go_list_views(struct ged	*gedp,
 			 ged_func_ptr	func,
 			 const char	*usage,
 			 int		maxargs);
-#ifdef USE_FBSERV
+
 static int go_listen(struct ged		*gedp,
 		     int		argc,
 		     const char		*argv[],
 		     ged_func_ptr	func,
 		     const char		*usage,
 		     int		maxargs);
-#endif
+
 static int go_make(struct ged	*gedp,
 		   int		argc,
 		   const char	*argv[],
@@ -282,11 +282,11 @@ static int go_view_func(struct ged	*gedp,
 /* Utility Functions */
 static void go_drawSolid(struct dm *dmp, struct solid *sp);
 static int go_drawSList(struct dm *dmp, struct bu_list *hsp);
-#ifdef USE_FBSERV
+
 static int go_close_fbs(struct ged_dm_view *gdvp);
 static void go_fbs_callback();
 static int go_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp);
-#endif
+
 static void go_refresh_view(struct ged_dm_view *gdvp);
 static void go_refresh_all_views(struct ged_obj *gop);
 static void go_autoview_view(struct ged_dm_view *gdvp);
@@ -356,9 +356,7 @@ static struct go_cmdtab go_cmds[] = {
     {"keypoint",	"vname [x y z]", 5, go_view_func, ged_keypoint},
     {"l",	(char *)0, MAXARGS, go_pass_through_func, ged_list},
     {"list_views",	(char *)0, MAXARGS, go_list_views, GED_FUNC_PTR_NULL},
-#ifdef USE_FBSERV
     {"listen",	"vname [port]", MAXARGS, go_listen, GED_FUNC_PTR_NULL},
-#endif
     {"listeval",	(char *)0, MAXARGS, go_pass_through_func, ged_pathsum},
     {"log",	(char *)0, MAXARGS, go_pass_through_func, ged_log},
     {"lookat",	"vname x y z", 5, go_view_func, ged_lookat},
@@ -566,9 +564,9 @@ go_deleteProc(ClientData clientData)
 	bu_vls_free(&gdvp->gdv_name);
 	DM_CLOSE(gdvp->gdv_dmp);
 	bu_free((genptr_t)gdvp->gdv_view, "ged_view");
-#ifdef USE_FBSERV
+
 	go_close_fbs(gdvp);
-#endif
+
 	bu_free((genptr_t)gdvp, "ged_dm_view");
     }
 #else
@@ -844,13 +842,11 @@ go_configure(struct ged		*gedp,
     /* configure the display manager window */
     status = DM_CONFIGURE_WIN(gdvp->gdv_dmp);
 
-#ifdef USE_FBSERV
     /* configure the framebuffer window */
     if (gdvp->gdv_fbs.fbs_fbp != FBIO_NULL)
 	fb_configureWindow(gdvp->gdv_fbs.fbs_fbp,
 			   gdvp->gdv_dmp->dm_width,
 			   gdvp->gdv_dmp->dm_height);
-#endif
 
     if (status == TCL_OK) {
 	go_refresh_view(gdvp);
@@ -1113,7 +1109,6 @@ go_list_views(struct ged	*gedp,
     return BRLCAD_OK;
 }
 
-#ifdef USE_FBSERV
 static int
 go_listen(struct ged	*gedp,
 	  int		argc,
@@ -1182,7 +1177,6 @@ go_listen(struct ged	*gedp,
     bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return BRLCAD_ERROR;
 }
-#endif
 
 static int
 go_make(struct ged	*gedp,
@@ -1815,7 +1809,6 @@ go_new_view(struct ged		*gedp,
 
     bu_vls_printf(&gedp->ged_result_str, "%s", argv[name_index]);
 
-#ifdef USE_FBSERV
     new_gdvp->gdv_fbs.fbs_listener.fbsl_fbsp = &new_gdvp->gdv_fbs;
     new_gdvp->gdv_fbs.fbs_listener.fbsl_fd = -1;
     new_gdvp->gdv_fbs.fbs_listener.fbsl_port = -1;
@@ -1826,7 +1819,6 @@ go_new_view(struct ged		*gedp,
 
     /* open the framebuffer */
     go_open_fbs(new_gdvp, go_current_gop->go_interp);
-#endif
 
     /* Set default bindings */
     {
@@ -2762,7 +2754,6 @@ go_drawSList(struct dm *dmp, struct bu_list *hsp)
     return BRLCAD_OK;
 }
 
-#ifdef USE_FBSERV
 static void
 go_fbs_callback(genptr_t clientData)
 {
@@ -2936,14 +2927,12 @@ go_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 
     return TCL_OK;
 }
-#endif
 
 static void
 go_refresh_view(struct ged_dm_view *gdvp)
 {
     DM_DRAW_BEGIN(gdvp->gdv_dmp);
 
-#ifdef USE_FBSERV
     if (gdvp->gdv_fbs.fbs_mode)
 	fb_refresh(gdvp->gdv_fbs.fbs_fbp, 0, 0,
 		   gdvp->gdv_dmp->dm_width, gdvp->gdv_dmp->dm_height);
@@ -2955,7 +2944,8 @@ go_refresh_view(struct ged_dm_view *gdvp)
 	DM_LOADMATRIX(gdvp->gdv_dmp, gdvp->gdv_view->gv_model2view, 0);
 	go_drawSList(gdvp->gdv_dmp, &gdvp->gdv_gop->go_gedp->ged_gdp->gd_headSolid);
     }
-#else
+
+#if 0
     DM_LOADMATRIX(gdvp->gdv_dmp, gdvp->gdv_view->gv_model2view, 0);
     go_drawSList(gdvp->gdv_dmp, &gdvp->gdv_gop->go_gedp->ged_gdp->gd_headSolid);
 #endif
