@@ -27,7 +27,7 @@ libpc_nil_la_SOURCES = \
 	pcParser.cpp
 
 libpc_la_SOURCES =
-libpc_la_LDFLAGS = -version-info 19:1 -no-undefined
+libpc_la_LDFLAGS = -version-info 19:1 -no-undefined -Wc,${FEXCEPTIONS}
 libpc_la_LIBADD = \
 	libpc_nil.la \
 	${PC_LIBS}
