@@ -65,6 +65,14 @@
 #define COMB_EXT 'c'
 #define PRIM_EXT 's'
 
+void count_if_region(struct db_i *dbip, struct directory *dp, genptr_t rcount)
+{
+    int *counter = (int*)rcount;
+    if (dp->d_flags & DIR_REGION) {
+	(*counter)++;
+    }
+}
+
 struct object_name_data {
     struct bu_list name_components;
     struct bu_list separators;
@@ -91,11 +99,7 @@ parse_obj_name(const char *fmt, const char *name)
 	
 	struct db_i *dbip = DBI_NULL;
 	struct directory *dp = (struct directory *)NULL;
-	union tree *ckregtree;
-	struct db_full_path  path;
 	struct resource *resp = &rt_uniresource;
-	struct db_tree_state ts = rt_initial_tree_state;	
-	struct combined_tree_state *region_start_statep;
 	int rcount = 0;
 
 	char *stringholder;
@@ -109,26 +113,12 @@ parse_obj_name(const char *fmt, const char *name)
             bu_log("ERROR: empty name or format string passed to parse_name\n");
 	    return;
         }
-
-	/*Need logic here to deterine what this object is
 	
-	* use db_count_subtree_regions to distinguish assemblies and combinations	
-
-	*/
 	dbip = db_open( "./test.g", "r" );
 	db_dirbuild(dbip);
 	dp = db_lookup(dbip, name, LOOKUP_NOISY);
+        db_functree(dbip, dp, count_if_region, NULL, resp, &rcount);
 	
-	if (!(dp->d_flags & DIR_SOLID)) {
-		region_start_statep = (struct combined_tree_state *)0;
-		db_full_path_init( &path );
-		ts.ts_dbip = dbip;
-		ts.ts_resp = resp;
-		db_follow_path_for_state(&ts, &path, name, LOOKUP_NOISY);
-		ckregtree = db_recurse(&ts, &path, &region_start_statep, NULL );
-		rcount = db_count_subtree_regions(ckregtree);
-	}
-
 	bu_log("rcount is %d\n",rcount);	
 
        	if (!dp) {
@@ -139,7 +129,12 @@ parse_obj_name(const char *fmt, const char *name)
 		object_type = 1;
 	}
 	if (dp->d_flags & DIR_REGION) {
-		object_type = 3;
+		if (rcount > 1) {
+			bu_log("WARNING - detected region flag set in subtree of region.  Returning type as region - if assembly type is intended re-structure model to eliminate nested regions.\n");
+			object_type = 3;
+		} else {
+			object_type = 3;
+		}
 	}
 	if ((dp->d_flags & DIR_COMB) && !(dp->d_flags & DIR_REGION)) {
 		if (rcount > 0) {
