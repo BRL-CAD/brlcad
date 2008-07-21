@@ -73,6 +73,42 @@ void count_if_region(struct db_i *dbip, struct directory *dp, genptr_t rcount)
     }
 }
 
+int determine_object_type(struct db_i *dbip, const char *name) {
+	struct directory *dp = (struct directory *)NULL;
+	struct resource *resp = &rt_uniresource;
+	int rcount = 0;
+	int object_type;
+	dp = db_lookup(dbip, name, LOOKUP_NOISY);
+	db_functree(dbip, dp, count_if_region, NULL, resp, &rcount);
+
+	bu_log("rcount is %d\n",rcount);	
+
+       	if (!dp) {
+		object_type = 0;
+		bu_log("Object %s not found in database.\n",name);
+	}
+	if (dp->d_flags & DIR_SOLID) {
+		object_type = 1;
+	}
+	if (dp->d_flags & DIR_REGION) {
+		if (rcount > 1) {
+			bu_log("WARNING - detected region flag set in subtree of region.  Returning type as region - if assembly type is intended re-structure model to eliminate nested regions.\n");
+			object_type = 3;
+		} else {
+			object_type = 3;
+		}
+	}
+	if ((dp->d_flags & DIR_COMB) && !(dp->d_flags & DIR_REGION)) {
+		if (rcount > 0) {
+			object_type = 4;
+		} else {
+			object_type = 2;
+		}
+	}
+	return object_type;
+}
+
+
 struct object_name_data {
     struct bu_list name_components;
     struct bu_list separators;
@@ -116,34 +152,8 @@ parse_obj_name(const char *fmt, const char *name)
 	
 	dbip = db_open( "./test.g", "r" );
 	db_dirbuild(dbip);
-	dp = db_lookup(dbip, name, LOOKUP_NOISY);
-        db_functree(dbip, dp, count_if_region, NULL, resp, &rcount);
-	
-	bu_log("rcount is %d\n",rcount);	
 
-       	if (!dp) {
-		object_type = 0;
-		bu_log("Object %s not found in database.\n",name);
-	}
-	if (dp->d_flags & DIR_SOLID) {
-		object_type = 1;
-	}
-	if (dp->d_flags & DIR_REGION) {
-		if (rcount > 1) {
-			bu_log("WARNING - detected region flag set in subtree of region.  Returning type as region - if assembly type is intended re-structure model to eliminate nested regions.\n");
-			object_type = 3;
-		} else {
-			object_type = 3;
-		}
-	}
-	if ((dp->d_flags & DIR_COMB) && !(dp->d_flags & DIR_REGION)) {
-		if (rcount > 0) {
-			object_type = 4;
-		} else {
-			object_type = 2;
-		}
-	}
-
+	object_type = determine_object_type(dbip, name);	
 	bu_log("Object type is %d\n",object_type);
 
 
