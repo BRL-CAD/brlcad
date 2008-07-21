@@ -157,7 +157,6 @@ parse_obj_name(struct db_i *dbip, char *fmt, char *name)
 	object_type = determine_object_type(dbip, dp);	
 	bu_log("Object type is %d\n",object_type);
 
-
   	for (i = 0; i < strlen(fmt); i++) {
 	     if (len <= strlen(name)) {
 		switch ( fmt[i] ) {
@@ -239,6 +238,7 @@ parse_obj_name(struct db_i *dbip, char *fmt, char *name)
 		}
 	     }
 	}
+
 	return objcomponents;
 };		
 
@@ -277,15 +277,86 @@ void test_obj_struct(struct db_i *dbip, char *fmt, char *testname){
 	
 	bu_vls_free(&(test->extension));
 	bu_free(test, "free name structure");
+};
+
+struct object_name_list {
+	struct bu_list object_names;
+	int number_of_names;
+};
+
+/* Possibility of a high performance option where a list of names  is generated and returned to a routine, which then uses
+ * a loop over the list to get and assign all the names.  Not sure if savings are significant.
+ */
+struct object_name_list *
+get_sequenced_names(struct db_i *dbip, const char *fmt, const char *basename , int namecount, int pos_iterator, int inc_iterator)
+{
 }
 
-
-
-struct bu_vls *
-assem_obj_name(const char *fmt, struct object_name_data *templatedata, int currentcount)
+/* Have two options here - either supply a pre-parsed object_name_data structure and generate straight from that, or accept a name
+ * and parse it out.
+ */
+struct object_name_item *
+get_next_name(struct db_i *dbip, const char *fmt, const char *basename, struct object_name_data *basename_data, int *namecount, int *pos_iterator, int *inc_iterator, int *countval)
 {
 	struct bu_vls stringassembly;
 	bu_vls_init(&stringassembly);
+
+	struct object_name_item *name_components;
+	struct object_name_item *separators;
+	struct object_name_item *incrementals;
+	int i;
+	int iterator_count = 0;
+
+	bu_vls_trunc(&stringassembly, 0);
+
+	for (i = 0; i < strlen(fmt); i++) {
+		switch ( fmt[i] ) {
+			case 'n':
+			{
+				bu_vls_printf(&stringassembly, "%s", BU_LIST_NEXT(&(objcomponents->name_components), &(objname->l)));
+			}
+			break;
+			case 'i':
+			{
+				iterator_count++;
+				if (iterator_count == pos_iterator) {
+					countval += inc_iterator;
+					bu_vls_printf(&stringassembly, "%d", countval);					
+				}
+			}
+			break;
+			case 's':
+			{
+				if (ignore_separator_flag == 0) {
+					bu_vls_printf(&stringassembly, "%s", BU_LIST_NEXT(&(objcomponents->separators), &(objname->l)));
+				} else {
+					ignore_separator_flag = 0;
+				}
+			}
+			break;
+			case 'e':
+			{
+				/*if (objtype == assembly && ASSEM_EXT==' ' && fmt[i+1] == 's') {
+					ignore_separator_flag = 1;
+					len++;
+				} else {
+				*/	if (name[len] == REGION_EXT || name[len] == COMB_EXT || name[len] == PRIM_EXT) {
+						bu_vls_putc(&(objcomponents->extension), name[len]);
+						len++;
+					} else {
+					/*** add logic to check type of object named by supplied name and use default ***/
+					}
+				/*}*/
+			}
+			break;
+			default:
+			{
+				bu_log("Error - invalid character in object formatting string\n");
+			}
+			break;
+		}
+	}
+
 }
 
 main(int argc, char **argv)
