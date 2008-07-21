@@ -73,20 +73,16 @@ void count_if_region(struct db_i *dbip, struct directory *dp, genptr_t rcount)
     }
 }
 
-int determine_object_type(struct db_i *dbip, const char *name) {
-	struct directory *dp = (struct directory *)NULL;
+int determine_object_type(struct db_i *dbip, struct directory *dp) {
 	struct resource *resp = &rt_uniresource;
 	int rcount = 0;
 	int object_type;
-	dp = db_lookup(dbip, name, LOOKUP_NOISY);
+	if (!dp) {
+		bu_log("Null directory pointer passed to determine_object_type - returning object type 0\n");
+		return 0;
+	}
 	db_functree(dbip, dp, count_if_region, NULL, resp, &rcount);
 
-	bu_log("rcount is %d\n",rcount);	
-
-       	if (!dp) {
-		object_type = 0;
-		bu_log("Object %s not found in database.\n",name);
-	}
 	if (dp->d_flags & DIR_SOLID) {
 		object_type = 1;
 	}
@@ -122,7 +118,7 @@ struct object_name_item {
 };
 
 struct object_name_data *
-parse_obj_name(const char *fmt, const char *name)
+parse_obj_name(struct db_i *dbip, char *fmt, char *name)
 {
     	struct object_name_data *objcomponents;
 	BU_GETSTRUCT(objcomponents, object_name_data);
@@ -133,7 +129,6 @@ parse_obj_name(const char *fmt, const char *name)
 
 	struct object_name_item *objname;
 	
-	struct db_i *dbip = DBI_NULL;
 	struct directory *dp = (struct directory *)NULL;
 	struct resource *resp = &rt_uniresource;
 	int rcount = 0;
@@ -149,11 +144,17 @@ parse_obj_name(const char *fmt, const char *name)
             bu_log("ERROR: empty name or format string passed to parse_name\n");
 	    return;
         }
-	
-	dbip = db_open( "./test.g", "r" );
-	db_dirbuild(dbip);
 
-	object_type = determine_object_type(dbip, name);	
+
+
+	dp = db_lookup(dbip, name, LOOKUP_QUIET);
+	if (!dp) {
+             bu_log("ERROR:  No object named %s found in database.\n", name);
+             return;
+	}
+	
+
+	object_type = determine_object_type(dbip, dp);	
 	bu_log("Object type is %d\n",object_type);
 
 
@@ -238,16 +239,15 @@ parse_obj_name(const char *fmt, const char *name)
 		}
 	     }
 	}
-	db_close(dbip);
 	return objcomponents;
 };		
 
 
-void test_obj_struct(const char *fmt, struct bu_vls *testvls){
+void test_obj_struct(struct db_i *dbip, char *fmt, char *testname){
 	
 	struct object_name_item *testitem;
 	struct object_name_data *test;
-	test = parse_obj_name(fmt, bu_vls_addr(testvls));
+	test = parse_obj_name(dbip, fmt, testname);
 	for ( BU_LIST_FOR( testitem, object_name_item, &(test->name_components) ) )  {
 		bu_log("%s ",bu_vls_addr(&(testitem->namestring)));
 	}
@@ -259,9 +259,24 @@ void test_obj_struct(const char *fmt, struct bu_vls *testvls){
 	for ( BU_LIST_FOR( testitem, object_name_item, &(test->incrementals) ) )  {
 	    bu_log("%s ",bu_vls_addr(&(testitem->namestring)));
 	}
+
 	bu_log("\n");
 	bu_log("%s ",bu_vls_addr(&(test->extension)));
 	bu_log("\n\n");
+	
+	for ( BU_LIST_FOR( testitem, object_name_item,  &(test->name_components) ) ) {
+		bu_free(testitem, "free names");
+	}	
+
+	for ( BU_LIST_FOR( testitem, object_name_item, &(test->separators) ) )  {
+		bu_free(testitem, "free separators");
+	}
+	for ( BU_LIST_FOR( testitem, object_name_item, &(test->incrementals) ) )  {
+		bu_free(testitem, "free incrementals");
+	}
+	
+	bu_vls_free(&(test->extension));
+	bu_free(test, "free name structure");
 }
 
 
@@ -275,32 +290,37 @@ assem_obj_name(const char *fmt, struct object_name_data *templatedata, int curre
 
 main(int argc, char **argv)
 {
- struct bu_vls temp;
- bu_vls_init(&temp);
- 
- bu_vls_trunc(&temp,0);
- bu_vls_printf(&temp,"%s","core-001a.s");
- test_obj_struct("nsinse", &temp);
+ 	struct db_i *dbip;
+	dbip = db_open( "./test.g", "r" );
+	db_dirbuild(dbip);
 
- bu_vls_trunc(&temp,0);
- bu_vls_printf(&temp,"%s","s.bcore12.b3");
- test_obj_struct("esnisni", &temp);
+	struct bu_vls temp;
 
- bu_vls_trunc(&temp,0);
- bu_vls_printf(&temp,"%s","comb1.c");
- test_obj_struct("nise", &temp);
+	bu_vls_init(&temp);
 
- bu_vls_trunc(&temp,0);
- bu_vls_printf(&temp,"%s","comb2.r");
- test_obj_struct("nise", &temp);
+	bu_vls_trunc(&temp,0);
+	bu_vls_printf(&temp,"%s","core-001a.s");
+	test_obj_struct(dbip, "nsinse", bu_vls_addr(&temp));
+	
+	bu_vls_trunc(&temp,0);
+	bu_vls_printf(&temp,"%s","s.bcore12.b3");
+	test_obj_struct(dbip, "esnisni", bu_vls_addr(&temp));
 
- bu_vls_trunc(&temp,0);
- bu_vls_printf(&temp,"%s","comb3.r");
- test_obj_struct("nise", &temp);
+	bu_vls_trunc(&temp,0);
+	bu_vls_printf(&temp,"%s","comb1.c");
+	test_obj_struct(dbip, "nise", bu_vls_addr(&temp));
 
- bu_vls_trunc(&temp,0);
- bu_vls_printf(&temp,"%s","assem1");
- test_obj_struct("ni", &temp);
+	bu_vls_trunc(&temp,0);
+	bu_vls_printf(&temp,"%s","comb2.r");
+	test_obj_struct(dbip, "nise", bu_vls_addr(&temp));
 
+	bu_vls_trunc(&temp,0);
+	bu_vls_printf(&temp,"%s","comb3.r");
+	test_obj_struct(dbip, "nise", bu_vls_addr(&temp));
 
+	bu_vls_trunc(&temp,0);
+	bu_vls_printf(&temp,"%s","assem1");
+	test_obj_struct(dbip, "ni", bu_vls_addr(&temp));
+
+	db_close(dbip);
 };
