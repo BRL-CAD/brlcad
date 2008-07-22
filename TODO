@@ -135,6 +135,10 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 * review and integrate David Loman's bot-processing and object label
   scripts, add libdm interface for textual overlay support
 
+* develop a tool that applies a text overlay to a given rendered image
+  (e.g., as an rt option) for things like adding an image title, the
+  az/el, and objects displayed.
+
 * eliminate vararg.h and non-ansi cray-specific support code
 
 * implement a lighting model for rt that visualizes how expensive each
