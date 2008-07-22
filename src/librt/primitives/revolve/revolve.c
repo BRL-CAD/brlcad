@@ -256,6 +256,10 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
     VMOVE( ur, vr );
     VUNITIZE( ur );
 
+
+#if 0
+this is replaced by using rt_sketch_contains()
+
 /* find two plane intersections if ang != 2pi */
     if ( rev->ang < 2*M_PI ) {
 	VREVERSE( normS, rev->yUnit );	/* start normal */
@@ -293,6 +297,51 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 	    return 0;
 	}
     }
+#endif
+
+    VREVERSE( normS, rev->yUnit );	/* start normal */
+    start = ( VDOT( normS, rev->v3d ) - VDOT( normS, rp->r_pt ) ) / VDOT( normS, rp->r_dir );
+
+    VCROSS( normE, rev->zUnit, rev->rEnd );	/* end normal */
+    end = ( VDOT( normE, rev->v3d ) - VDOT( normE, rp->r_pt ) ) / VDOT( normE, rp->r_dir );
+
+    VJOIN1( hit1, pr, start, vr );
+    pt[Y] = hit1[Z];
+    pt[X] = sqrt( hit1[X]*hit1[X] + hit1[Y]*hit1[Y] );
+
+    if ( VDOT( rev->xUnit, hit1 ) < 0 ) {
+	/* set the sign of the 2D point's x coord */
+	pt[X] = -pt[X];
+    }
+
+    if ( rt_sketch_contains( rev->sk, pt ) ) {
+	if ( nhits >= MAX_HITS ) return -1; /* too many hits */
+	hitp = hits[nhits++];
+	hitp->hit_magic = RT_HIT_MAGIC;
+	hitp->hit_dist = start;
+	hitp->hit_surfno = START_FACE;
+	VJOIN1( hitp->hit_vpriv, pr, hitp->hit_dist, vr );
+    }
+
+    VJOIN1( hit1, pr, end, vr );
+    pt[Y] = hit1[Z];
+    pt[X] = sqrt( hit1[X]*hit1[X] + hit1[Y]*hit1[Y] );
+
+    if ( VDOT( rev->rEnd, hit1 ) < 0 ) {
+	/* set the sign of the 2D point's x coord */
+	pt[X] = -pt[X];
+    }
+
+    if ( rt_sketch_contains( rev->sk, pt ) ) {
+	if ( nhits >= MAX_HITS ) return -1; /* too many hits */
+	hitp = hits[nhits++];
+	hitp->hit_magic = RT_HIT_MAGIC;
+	hitp->hit_dist = end;
+	hitp->hit_surfno = END_FACE;
+	VJOIN1( hitp->hit_vpriv, pr, hitp->hit_dist, vr );
+    }
+
+/* end of rt_sketch_contains() replacement code */
 
 /* calculate hyperbola parameters */
     VREVERSE( dp, pr);
@@ -322,6 +371,15 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 	    hitp->hit_dist = (pt2[Y] - pr[Z]) / vr[Z];
 	    hitp->hit_surfno = LINE_SEG;
 	    VJOIN1( hitp->hit_vpriv, pr, hitp->hit_dist, vr );
+
+	    angle = atan2( hitp->hit_vpriv[Y], hitp->hit_vpriv[X] );
+	    if ( pt[X] < 0 ) {
+		angle += M_PI;
+	    } else if ( angle < 0 ) {
+		angle += 2*M_PI;
+	    }
+	    if ( angle > rev->ang ) nhits--;
+
 #if 1
 	    hitp->hit_vpriv[Z] = MAX_FASTF;
 #else
@@ -357,21 +415,41 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 
 			if ( t1 > 0 && t1 < 1 ) {
 			    if ( nhits >= MAX_HITS ) return -1; /* too many hits */
-			    hitp = hits[nhits++];
-			    VJOIN1( hitp->hit_vpriv, pr, k1, vr );
-			    hitp->hit_vpriv[Z] = -1.0/m;
-			    hitp->hit_magic = RT_HIT_MAGIC;
-			    hitp->hit_dist = k1;
-			    hitp->hit_surfno = LINE_SEG;
+			    VJOIN1( hit1, pr, k1, vr );
+			    angle = atan2( hit1[Y], hit1[X] );
+			    V2JOIN1( pt2, pt, t1, dir );
+			    if ( pt2[X] < 0 ) {
+				angle += M_PI;
+			    } else if ( angle < 0 ) {
+				angle += 2*M_PI;
+			    }
+			    if ( angle < rev->ang ) {
+				hitp = hits[nhits++];
+				VMOVE( hitp->hit_vpriv, hit1 );
+				hitp->hit_vpriv[Z] = (pt2[X]<0)?1.0/m:-1.0/m;
+				hitp->hit_magic = RT_HIT_MAGIC;
+				hitp->hit_dist = k1;
+				hitp->hit_surfno = LINE_SEG;
+			    }
 			}
 			if ( t2 > 0 && t2 < 1 ) {
 			    if ( nhits >= MAX_HITS ) return -1; /* too many hits */
-			    hitp = hits[nhits++];
-			    VJOIN1( hitp->hit_vpriv, pr, k2, vr );
-			    hitp->hit_vpriv[Z] = -1.0/m;
-			    hitp->hit_magic = RT_HIT_MAGIC;
-			    hitp->hit_dist = k2;
-			    hitp->hit_surfno = LINE_SEG;
+			    VJOIN1( hit2, pr, k2, vr );
+			    angle = atan2( hit2[Y], hit2[X] );
+			    V2JOIN1( pt2, pt, t2, dir );
+			    if ( pt2[X] < 0 ) {
+				angle += M_PI;
+			    } else if ( angle < 0 ) {
+				angle += 2*M_PI;
+			    }
+			    if ( angle < rev->ang ) {
+				hitp = hits[nhits++];
+				VMOVE( hitp->hit_vpriv, hit2 );
+				hitp->hit_vpriv[Z] = (pt2[X]<0)?1.0/m:-1.0/m;
+				hitp->hit_magic = RT_HIT_MAGIC;
+				hitp->hit_dist = k2;
+				hitp->hit_surfno = LINE_SEG;
+			    }
 			}
 		    }
 		} else if ( !NEAR_ZERO( b, RT_PCOEF_TOL ) ) {
@@ -379,14 +457,34 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 		    k1 = (pt[Y]-pr[Z] + t1*dir[Y])/vr[Z];
 		    if ( t1 > 0 && t1 < 1 ) {
 			if ( nhits >= MAX_HITS ) return -1; /* too many hits */
-			hitp = hits[nhits++];
-			VJOIN1( hitp->hit_vpriv, pr, k1, vr );
-			hitp->hit_vpriv[Z] = -1.0/m;
-			hitp->hit_magic = RT_HIT_MAGIC;
-			hitp->hit_dist = k1;
-			hitp->hit_surfno = LINE_SEG;
+
+			VJOIN1( hit1, pr, k1, vr );
+			angle = atan2( hit1[Y], hit1[X] );
+			V2JOIN1( pt2, pt, t1, dir );
+			if ( pt2[X] < 0 ) {
+			    angle += M_PI;
+			} else if ( angle < 0 ) {
+			    angle += 2*M_PI;
+			}
+			if ( angle < rev->ang ) {
+			    hitp = hits[nhits++];
+			    VMOVE( hitp->hit_vpriv, hit1 );
+			    hitp->hit_vpriv[Z] = (pt2[X]<0)?1.0/m:-1.0/m;;
+			    hitp->hit_magic = RT_HIT_MAGIC;
+			    hitp->hit_dist = k1;
+			    hitp->hit_surfno = LINE_SEG;
+			}
 		    }
 		}
+		break;
+	    case CURVE_CARC_MAGIC:
+		break;
+	    case CURVE_BEZIER_MAGIC:
+		break;
+	    case CURVE_NURB_MAGIC:
+		break;
+	    default:
+		bu_log( "rt_revolve_prep: ERROR: unrecognized segment type!\n" );
 		break;
 	}
 
@@ -394,8 +492,20 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 
     if ( nhits%2 != 0 ) {
 	bu_log( "odd number of hits: %d\n", nhits );
+	for ( i=0; i<nhits; i++ ) {
+	    angle = atan2( hits[i]->hit_vpriv[Y], hits[i]->hit_vpriv[X] );
+	    if ( pt[X] < 0 ) {
+		angle += M_PI;
+	    } else if ( angle < 0 ) {
+		angle += 2*M_PI;
+	    }
+	    bu_log("\tangle:\t%5.2f\n", angle*RAD2DEG);
+	}
 	return -1;
     }
+
+#if 0
+more code replaced by using rt_sketch_contains()
 
     /* set surface for hits out of bounds to -1 */
     if ( rev->ang < 2*M_PI ) {
@@ -407,6 +517,7 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 	    }
 	}
     }
+#endif
 
 /* sort hitpoints (an arbitrary number of hits depending on sketch) */
     for ( i=0; i<nhits; i+=2 ) {
@@ -435,6 +546,9 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 	    hits[out] = NULL;
 	    continue;
 	}
+
+#if 0
+more code replaced by using rt_sketch_contains()
 
 	/* trim segments as necessary */
 	if ( rev->ang < M_PI ) {
@@ -498,6 +612,7 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 	    hits[out] = NULL;
 	    continue;
 	}
+#endif
 
 	RT_GET_SEG(segp, ap->a_resource);
 	segp->seg_stp = stp;
@@ -623,7 +738,7 @@ rt_revolve_free( struct soltab *stp )
 {
     register struct revolve_specific *revolve =
 	(struct revolve_specific *)stp->st_specific;
-
+    bu_free( revolve->ends, "endcount" );
     bu_free( (char *)revolve, "revolve_specific" );
 }
 

@@ -47,6 +47,7 @@ struct revolve_specific {
     char		*sketch_name;	/**< @brief name of sketch */
     struct rt_sketch_internal *sk;	/**< @brief pointer to sketch */
     int			*ends;	/**< @brief indices of points at end of continuous path */
+    fastf_t		bounds[4];	/**< @brief 2D sketch bounds  */
 };
 
 const struct bu_structparse rt_revolve_parse[] = {
