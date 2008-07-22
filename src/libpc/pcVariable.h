@@ -32,6 +32,7 @@
 
 #include <iostream>
 #include <cstdlib>
+#include <limits>
 #include <string>
 #include <list>
 #include <stack>
@@ -44,27 +45,10 @@ template<class T>
 class Domain
 {
 private:
-    std::list<Interval<T> > Interv; /* TODO: Change to Inheritance rather than membership */
+    std::list<Interval<T> > Interv;
     int mergeIntervals (typename std::list<Interval<T> >::iterator);
     void packIntervals ();
 public:
-    /*class iterator
-      : public std::iterator<std::bidirectional_iterator_tag,T> {
-      public:
-      iterator();
-      ~iterator();
-      iterator begin() { return this->begin(); }
-      iterator end()  { return this->end(); }
-      bool operator==(const iterator&);
-      bool operator!=(const iterator&);
-      };
-      class const_iterator
-      : public std::iterator<std::bidirectional_iterator_tag,T> {
-      public:
-      const_iterator();
-      ~const_iterator();
-      };
-    */
     Domain();
     ~Domain();
     Domain(T low,T high,T step);
@@ -87,8 +71,7 @@ public:
 /* Implement functionality to search which domain the variable belongs to
    and increment according to the stepvalue of that domain */
     int constrained;
-    Variable();
-    Variable(std::string , T = 0);
+    Variable(std::string id = "" , T value = 0);
     ~Variable();
     void addInterval(const Interval<T>);
     void setValue(T t) { value = t; }
@@ -239,22 +222,27 @@ void  Domain<T>::packIntervals ()
     }
 }
 
-/* Variable Class Functions */
+/**
+ * Variable Class Functions
+ *
+ */
 
 template<class T>
-Variable<T>::Variable()
+Variable<T>::Variable(std::string vid, T vvalue) :
+    constrained(0),
+    value(vvalue),
+    id(vid)
 {
-    constrained = 0;
-    value = 0;
-    id ="";
 }
 
-template<class T>
-Variable<T>::Variable(std::string Vid, T Vvalue)
+/* Constructor specialization for double */
+template<>
+Variable<double>::Variable(std::string vid, double vvalue) :
+    constrained(0),
+    value(vvalue),
+    id(vid)
 {
-    constrained = 0;
-    value = Vvalue;
-    id = Vid;
+    addInterval(Interval<double>( -std::numeric_limits<double>::max(), std::numeric_limits<double>::max(), .00001));
 }
 
 template<class T>
@@ -286,7 +274,7 @@ template<class T>
 void Variable<T>::display()
 {
     std::cout << "!-- " << getID() << " = " << getValue() << std::endl;
-    //D.display();
+    D.display();
 }
 
 /* Solution Class Functions */
@@ -311,7 +299,6 @@ void Solution<T>::clear()
 {
     VarDom.clear();
 }
-
 
 #endif
 /** @} */
