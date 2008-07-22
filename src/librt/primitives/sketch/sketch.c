@@ -246,8 +246,68 @@ rt_sketch_class(void)
 }
 
 
+/*
+determine whether the 2D point 'pt' is within the bounds of the sketch
+by counting the number of intersections between the curve and a line
+starting at the given point pointing horizontally away from the y-axis.
+
+if the number of intersections is odd, the point is within the sketch,
+and if it's even, the point is outside the sketch.
+
+return 1 if point 'pt' is within the sketch, 0 if not.
+*/
+int
+rt_sketch_contains( struct rt_sketch_internal *sk, point2d_t pt )
+{
+    fastf_t		nseg, radius;
+    int			i, j, hits;
+
+    long		*lng;
+    struct line_seg	*lsg;
+    struct carc_seg	*csg;
+    struct nurb_seg	*nsg;
+    struct bezier_seg	*bsg;
+
+    point2d_t		pt1, pt2, isec;
+    vect2d_t		one, two;
+
+    nseg = sk->skt_curve.seg_count;
+    hits = 0;
+    isec[Y] = pt[Y];
+
+    for ( i=0; i<nseg; i++ ) {
+	lng = (long *)sk->skt_curve.segments[i];
+
+	switch ( *lng ) {
+	    case CURVE_LSEG_MAGIC:
+		lsg = (struct line_seg *)lng;
+		V2MOVE( pt1, sk->verts[lsg->start] );
+		V2MOVE( pt2, sk->verts[lsg->end] );
+		if ( pt[Y] > FMAX( pt1[Y], pt2[Y] ) || pt[Y] <= FMIN( pt1[Y], pt2[Y] ) ) {
+		    continue;
+		}
+		isec[X] = pt1[X] + (isec[Y] - pt1[Y]) * ( (pt1[X] - pt2[X]) / (pt1[Y] - pt2[Y]) );
+		if ( (pt[X] >= 0 && pt[X] < isec[X]) || (pt[X] < 0 && pt[X] > isec[X] ) ) {
+		    hits++;
+		}
+		break;
+	    case CURVE_CARC_MAGIC:
+		break;
+	    case CURVE_BEZIER_MAGIC:
+		break;
+	    case CURVE_NURB_MAGIC:
+		break;
+	    default:
+		bu_log( "rt_revolve_prep: ERROR: unrecognized segment type!\n" );
+		break;
+	}
+    }
+    return (hits%2);
+}
+
 /* sets bounds to { XMIN, XMAX, YMIN, YMAX } */
-void rt_sketch_bounds( struct rt_sketch_internal *sk, fastf_t *bounds )
+void
+rt_sketch_bounds( struct rt_sketch_internal *sk, fastf_t *bounds )
 {
     fastf_t		nseg, radius;
     fastf_t		xmin, xmax, ymin, ymax;
@@ -317,7 +377,8 @@ void rt_sketch_bounds( struct rt_sketch_internal *sk, fastf_t *bounds )
 
 }
 
-int rt_sketch_degree( struct rt_sketch_internal *sk )
+int
+rt_sketch_degree( struct rt_sketch_internal *sk )
 {
 
     long		*lng;
