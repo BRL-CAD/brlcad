@@ -68,6 +68,13 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
+* come up with a new tool that automatically generates "inside"
+  regions for a given model as a way to automatically model air.
+  particularly useful for bot models where the inside air compartment
+  is predominantly (but not entirely) a complex bot structure in
+  itself.  idea is to use some sort of marching cubes/tets to find
+  those volumes, perhaps use a libified g_qa.
+
 * include tcl and zlib headers in the Windows install
 
 * make including the main headers work for 3rd party apps including
