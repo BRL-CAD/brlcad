@@ -330,20 +330,23 @@ void test_obj_struct(struct db_i *dbip, char *fmt, char *testname){
 	struct object_name_item *testitem;
         struct increment_data *inctest;
 	struct object_name_data *test;
+
+	bu_log("\n***Example: %s ***\n\n",testname);
 	test = parse_obj_name(dbip, fmt, testname);
+	bu_log("\nParsing Results:\nName strings: ");
 	for ( BU_LIST_FOR( testitem, object_name_item, &(test->name_components) ) )  {
 		bu_log("%s ",bu_vls_addr(&(testitem->namestring)));
 	}
-        bu_log("\n");
+        bu_log("\nSeparators:   ");
 	for ( BU_LIST_FOR( testitem, object_name_item, &(test->separators) ) )  {
      		bu_log("%s ",bu_vls_addr(&(testitem->namestring)));
  	};
-	bu_log("\n");
+	bu_log("\nIncrementals: ");
 	for ( BU_LIST_FOR( inctest, increment_data, &(test->incrementals) ) )  {
 	    bu_log("%s, %d ",bu_vls_addr(&(inctest->namestring)),inctest->numerval);
 	}
 
-	bu_log("\n");
+	bu_log("\nExtension:    ");
 	bu_log("%s ",bu_vls_addr(&(test->extension)));
 	bu_log("\n\n");
 	
@@ -364,61 +367,70 @@ void test_obj_struct(struct db_i *dbip, char *fmt, char *testname){
 
 /* Per discussion with Sean - use argc, argv pair for actual requesting, generation and return of names.
  */
-
-/* Have two options here - either supply a pre-parsed object_name_data structure and generate straight from that, or accept a name
- * and parse it out.
  
-struct object_name_item *
-get_next_name(struct db_i *dbip, char *fmt, char *basename, int *pos_iterator, int *inc_iterator, int argc, char *argv[])
+void
+get_next_name(struct db_i *dbip, char *fmt, char *basename, int pos_iterator, int inc_iterator/*, int argc, char *argv[]*/)
 {
 	struct bu_vls stringassembly;
 	bu_vls_init(&stringassembly);
 
 	struct object_name_data *parsed_name;
+	struct object_name_item *objname;
+        struct increment_data *incdata;
+	struct object_name_item *objsep;
 	int i;
-	int iterator_count = 0;
+	int iterator_pos = 0;
+	int iterator_count = 1;
+	int ignore_separator_flag = 0;
 
 	parsed_name = parse_obj_name(dbip, fmt, basename);
 
 	bu_vls_trunc(&stringassembly, 0);
 
+
+	objname = BU_LIST_NEXT(object_name_item,  &(parsed_name->name_components));
+	incdata = BU_LIST_NEXT(increment_data, &(parsed_name->incrementals));
+        objsep = BU_LIST_NEXT(object_name_item, &(parsed_name->separators));
+	bu_log("fmt = %s, str = %s\n", fmt, basename);	
 	for (i = 0; i < strlen(fmt); i++) {
 		switch ( fmt[i] ) {
 			case 'n':
 			{
-				bu_vls_printf(&stringassembly, "%s", BU_LIST_NEXT(&(parsed_name->name_components), &(objname->l)));
+				bu_vls_printf(&stringassembly, "%s", bu_vls_addr(&(objname->namestring)));
+				if (!(BU_LIST_NEXT_IS_HEAD(objname,  &(parsed_name->name_components)))){
+					objname = BU_LIST_PNEXT(object_name_item, objname);
+				}
 			}
 			break;
 			case 'i':
 			{
-				iterator_count++;
-				if (iterator_count == pos_iterator) {
-					countval += inc_iterator;
-					bu_vls_printf(&stringassembly, "%d", countval);					
+				iterator_pos++;
+				if (iterator_pos == pos_iterator) {
+					bu_vls_printf(&stringassembly, "%d", incdata->numerval + iterator_count*inc_iterator);					
+				} else {
+					bu_vls_printf(&stringassembly, "%d", incdata->numerval);
+				}
+				if (!(BU_LIST_NEXT_IS_HEAD(incdata, &(parsed_name->incrementals)))){
+					incdata = BU_LIST_PNEXT(increment_data, incdata);
 				}
 			}
 			break;
 			case 's':
 			{
 				if (ignore_separator_flag == 0) {
-					bu_vls_printf(&stringassembly, "%s", BU_LIST_NEXT(&(parsed_name->separators), &(objname->l)));
+					bu_vls_printf(&stringassembly, "%s", bu_vls_addr(&(objsep->namestring)));
 				} else {
 					ignore_separator_flag = 0;
 				}
+				objsep = BU_LIST_NEXT(object_name_item, &(parsed_name->separators));
 			}
 			break;
 			case 'e':
 			{
-				if (objtype == assembly && ASSEM_EXT==' ' && fmt[i+1] == 's') {
+				if (parsed_name->object_type == 4 && ASSEM_EXT==' ' && fmt[i+1] == 's') {
 					ignore_separator_flag = 1;
-					len++;
 				} else {
-					if (name[len] == REGION_EXT || name[len] == COMB_EXT || name[len] == PRIM_EXT) {
-						bu_vls_putc(&(objcomponents->extension), name[len]);
-						len++;
-					} else {
-					 add logic to check type of object named by supplied name and use default 
-					}
+					bu_vls_printf(&stringassembly, "%s", bu_vls_addr(&(parsed_name->extension)));
 				}
 			}
 			break;
@@ -428,10 +440,12 @@ get_next_name(struct db_i *dbip, char *fmt, char *basename, int *pos_iterator, i
 			}
 			break;
 		}
+		bu_log("Assembled string:  %s\n",bu_vls_addr(&stringassembly));
 	}
+	bu_log("\n\n");
 
 }
-*/
+
 main(int argc, char **argv)
 {
  	struct db_i *dbip;
@@ -445,30 +459,37 @@ main(int argc, char **argv)
 	bu_vls_trunc(&temp,0);
 	bu_vls_printf(&temp,"%s","core-001a.s");
 	test_obj_struct(dbip, "nsinse", bu_vls_addr(&temp));
+ 	get_next_name(dbip, "nsinse", bu_vls_addr(&temp), 1, 3);	
 	
 	bu_vls_trunc(&temp,0);
 	bu_vls_printf(&temp,"%s","s.bcore12.b3");
 	test_obj_struct(dbip, "esnisni", bu_vls_addr(&temp));
+ 	get_next_name(dbip, "esnisni", bu_vls_addr(&temp), 1, 3);	
 
 	bu_vls_trunc(&temp,0);
 	bu_vls_printf(&temp,"%s","comb1.c");
 	test_obj_struct(dbip, "nise", bu_vls_addr(&temp));
+ 	get_next_name(dbip, "nise", bu_vls_addr(&temp), 1, 3);	
 
 	bu_vls_trunc(&temp,0);
 	bu_vls_printf(&temp,"%s","comb2.r");
 	test_obj_struct(dbip, "nise", bu_vls_addr(&temp));
+ 	get_next_name(dbip, "nise", bu_vls_addr(&temp), 1, 3);	
 
 	bu_vls_trunc(&temp,0);
 	bu_vls_printf(&temp,"%s","comb3.r");
 	test_obj_struct(dbip, "nise", bu_vls_addr(&temp));
+ 	get_next_name(dbip, "nise", bu_vls_addr(&temp), 1, 3);	
 
 	bu_vls_trunc(&temp,0);
 	bu_vls_printf(&temp,"%s","assem1");
 	test_obj_struct(dbip, "ni", bu_vls_addr(&temp));
+ 	get_next_name(dbip, "ni", bu_vls_addr(&temp), 1, 3);	
 
 	bu_vls_trunc(&temp,0);
 	bu_vls_printf(&temp,"%s","test.q");
 	test_obj_struct(dbip, "nise", bu_vls_addr(&temp));
+ 	get_next_name(dbip, "nise", bu_vls_addr(&temp), 1, 3);	
 
 	db_close(dbip);
 };
