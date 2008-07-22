@@ -102,14 +102,20 @@ int determine_object_type(struct db_i *dbip, struct directory *dp) {
 		}
 	}
 	return object_type;
-}
+};
 
+struct increment_data {
+   struct bu_list l;
+   struct bu_vls namestring;
+   int numerval;
+};
 
 struct object_name_data {
     struct bu_list name_components;
     struct bu_list separators;
     struct bu_list incrementals;
     struct bu_vls extension;
+    int object_type; /* 0 = unknown, 1 = solid, 2 = comb, 3 = region, 4 = assembly*/
 };
 
 struct object_name_item {
@@ -128,6 +134,7 @@ parse_obj_name(struct db_i *dbip, char *fmt, char *name)
 	bu_vls_init(&(objcomponents->extension));
 
 	struct object_name_item *objname;
+        struct increment_data *incdata;
 	
 	struct directory *dp = (struct directory *)NULL;
 	struct resource *resp = &rt_uniresource;
@@ -135,7 +142,6 @@ parse_obj_name(struct db_i *dbip, char *fmt, char *name)
 
 	char *stringholder;
 	int ignore_separator_flag = 0;
-	int object_type; /* 0 = unknown, 1 = solid, 2 = comb, 3 = region, 4 = assembly*/
 
 	int len = 0;
 	int i;
@@ -154,8 +160,8 @@ parse_obj_name(struct db_i *dbip, char *fmt, char *name)
 	}
 	
 
-	object_type = determine_object_type(dbip, dp);	
-	bu_log("Object type is %d\n",object_type);
+	objcomponents->object_type = determine_object_type(dbip, dp);	
+	bu_log("Object type is %d\n",objcomponents->object_type);
 
   	for (i = 0; i < strlen(fmt); i++) {
 	     if (len <= strlen(name)) {
@@ -182,15 +188,17 @@ parse_obj_name(struct db_i *dbip, char *fmt, char *name)
 			break;
 			case 'i':
 			{
-				BU_GETSTRUCT(objname, object_name_item);
-				BU_LIST_INIT(&(objname->l));
-				bu_vls_init(&(objname->namestring));
-				bu_vls_trunc(&(objname->namestring),0);
+				BU_GETSTRUCT(incdata, increment_data);
+				BU_LIST_INIT(&(incdata->l));
+				bu_vls_init(&(incdata->namestring));
+				bu_vls_trunc(&(incdata->namestring),0);
                                 while (isdigit(name[len])) {
-                                       bu_vls_putc(&(objname->namestring), name[len]);
+                                       bu_vls_putc(&(incdata->namestring), name[len]);
                                        len++;
 				}
-				BU_LIST_INSERT(&(objcomponents->incrementals), &(objname->l));
+				incdata->numerval = atoi(bu_vls_addr(&(incdata->namestring)));
+				BU_LIST_INSERT(&(objcomponents->incrementals), &(incdata->l));
+				
 			}
 			break;
 			case 's':
@@ -216,18 +224,44 @@ parse_obj_name(struct db_i *dbip, char *fmt, char *name)
 			break;
 			case 'e':
 			{
-				/*objtype = dblookup...*/
-				/*if (objtype == assembly && ASSEM_EXT==' ' && fmt[i+1] == 's') {
+				if (objcomponents->object_type == 4  && ASSEM_EXT==' ' && fmt[i+1] == 's') {
 					ignore_separator_flag = 1;
 					len++;
 				} else {
-				*/	if (name[len] == REGION_EXT || name[len] == COMB_EXT || name[len] == PRIM_EXT) {
+					if (name[len] == REGION_EXT || name[len] == COMB_EXT || name[len] == PRIM_EXT) {
 						bu_vls_putc(&(objcomponents->extension), name[len]);
 						len++;
 					} else {
-					/*** add logic to check type of object named by supplied name and use default ***/
+						switch (objcomponents->object_type) {
+							case 1:
+							{
+								bu_vls_putc(&(objcomponents->extension), PRIM_EXT);
+							}
+							break;
+							case 2:
+							{
+								bu_vls_putc(&(objcomponents->extension), COMB_EXT);
+							}
+							break;
+							case 3:
+							{
+								bu_vls_putc(&(objcomponents->extension), REGION_EXT);
+							}
+							break;
+							case 4:
+							{
+								bu_vls_putc(&(objcomponents->extension), ASSEM_EXT);
+							}
+							break;
+							default:
+							{
+								bu_log("Error - invalid object type returned by determine_object_type\n");
+							}
+							break;	
+						}
+						bu_log("Note: naming convention requres extension here, but char at designated point is not a valid extension.  Selecting extension char %s based on object type.\n", bu_vls_addr(&(objcomponents->extension)));
 					}
-				/*}*/
+				}
 			}
 			break;
 			default:
@@ -246,6 +280,7 @@ parse_obj_name(struct db_i *dbip, char *fmt, char *name)
 void test_obj_struct(struct db_i *dbip, char *fmt, char *testname){
 	
 	struct object_name_item *testitem;
+        struct increment_data *inctest;
 	struct object_name_data *test;
 	test = parse_obj_name(dbip, fmt, testname);
 	for ( BU_LIST_FOR( testitem, object_name_item, &(test->name_components) ) )  {
@@ -256,8 +291,8 @@ void test_obj_struct(struct db_i *dbip, char *fmt, char *testname){
      		bu_log("%s ",bu_vls_addr(&(testitem->namestring)));
  	};
 	bu_log("\n");
-	for ( BU_LIST_FOR( testitem, object_name_item, &(test->incrementals) ) )  {
-	    bu_log("%s ",bu_vls_addr(&(testitem->namestring)));
+	for ( BU_LIST_FOR( inctest, increment_data, &(test->incrementals) ) )  {
+	    bu_log("%s, %d ",bu_vls_addr(&(inctest->namestring)),inctest->numerval);
 	}
 
 	bu_log("\n");
@@ -271,41 +306,31 @@ void test_obj_struct(struct db_i *dbip, char *fmt, char *testname){
 	for ( BU_LIST_FOR( testitem, object_name_item, &(test->separators) ) )  {
 		bu_free(testitem, "free separators");
 	}
-	for ( BU_LIST_FOR( testitem, object_name_item, &(test->incrementals) ) )  {
-		bu_free(testitem, "free incrementals");
+	for ( BU_LIST_FOR( inctest, increment_data, &(test->incrementals) ) )  {
+		bu_free(inctest, "free incrementals");
 	}
 	
 	bu_vls_free(&(test->extension));
 	bu_free(test, "free name structure");
 };
 
-struct object_name_list {
-	struct bu_list object_names;
-	int number_of_names;
-};
-
-/* Possibility of a high performance option where a list of names  is generated and returned to a routine, which then uses
- * a loop over the list to get and assign all the names.  Not sure if savings are significant.
+/* Per discussion with Sean - use argc, argv pair for actual requesting, generation and return of names.
  */
-struct object_name_list *
-get_sequenced_names(struct db_i *dbip, const char *fmt, const char *basename , int namecount, int pos_iterator, int inc_iterator)
-{
-}
 
 /* Have two options here - either supply a pre-parsed object_name_data structure and generate straight from that, or accept a name
  * and parse it out.
- */
+ 
 struct object_name_item *
-get_next_name(struct db_i *dbip, const char *fmt, const char *basename, struct object_name_data *basename_data, int *namecount, int *pos_iterator, int *inc_iterator, int *countval)
+get_next_name(struct db_i *dbip, char *fmt, char *basename, int *pos_iterator, int *inc_iterator, int argc, char *argv[])
 {
 	struct bu_vls stringassembly;
 	bu_vls_init(&stringassembly);
 
-	struct object_name_item *name_components;
-	struct object_name_item *separators;
-	struct object_name_item *incrementals;
+	struct object_name_data *parsed_name;
 	int i;
 	int iterator_count = 0;
+
+	parsed_name = parse_obj_name(dbip, fmt, basename);
 
 	bu_vls_trunc(&stringassembly, 0);
 
@@ -313,7 +338,7 @@ get_next_name(struct db_i *dbip, const char *fmt, const char *basename, struct o
 		switch ( fmt[i] ) {
 			case 'n':
 			{
-				bu_vls_printf(&stringassembly, "%s", BU_LIST_NEXT(&(objcomponents->name_components), &(objname->l)));
+				bu_vls_printf(&stringassembly, "%s", BU_LIST_NEXT(&(parsed_name->name_components), &(objname->l)));
 			}
 			break;
 			case 'i':
@@ -328,7 +353,7 @@ get_next_name(struct db_i *dbip, const char *fmt, const char *basename, struct o
 			case 's':
 			{
 				if (ignore_separator_flag == 0) {
-					bu_vls_printf(&stringassembly, "%s", BU_LIST_NEXT(&(objcomponents->separators), &(objname->l)));
+					bu_vls_printf(&stringassembly, "%s", BU_LIST_NEXT(&(parsed_name->separators), &(objname->l)));
 				} else {
 					ignore_separator_flag = 0;
 				}
@@ -336,17 +361,17 @@ get_next_name(struct db_i *dbip, const char *fmt, const char *basename, struct o
 			break;
 			case 'e':
 			{
-				/*if (objtype == assembly && ASSEM_EXT==' ' && fmt[i+1] == 's') {
+				if (objtype == assembly && ASSEM_EXT==' ' && fmt[i+1] == 's') {
 					ignore_separator_flag = 1;
 					len++;
 				} else {
-				*/	if (name[len] == REGION_EXT || name[len] == COMB_EXT || name[len] == PRIM_EXT) {
+					if (name[len] == REGION_EXT || name[len] == COMB_EXT || name[len] == PRIM_EXT) {
 						bu_vls_putc(&(objcomponents->extension), name[len]);
 						len++;
 					} else {
-					/*** add logic to check type of object named by supplied name and use default ***/
+					 add logic to check type of object named by supplied name and use default 
 					}
-				/*}*/
+				}
 			}
 			break;
 			default:
@@ -358,7 +383,7 @@ get_next_name(struct db_i *dbip, const char *fmt, const char *basename, struct o
 	}
 
 }
-
+*/
 main(int argc, char **argv)
 {
  	struct db_i *dbip;
@@ -392,6 +417,10 @@ main(int argc, char **argv)
 	bu_vls_trunc(&temp,0);
 	bu_vls_printf(&temp,"%s","assem1");
 	test_obj_struct(dbip, "ni", bu_vls_addr(&temp));
+
+	bu_vls_trunc(&temp,0);
+	bu_vls_printf(&temp,"%s","test.q");
+	test_obj_struct(dbip, "nise", bu_vls_addr(&temp));
 
 	db_close(dbip);
 };
