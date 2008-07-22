@@ -223,8 +223,7 @@ void  Domain<T>::packIntervals ()
 }
 
 /**
- * Variable Class Functions
- *
+ * Variable Class methods
  */
 
 template<class T>
@@ -233,16 +232,6 @@ Variable<T>::Variable(std::string vid, T vvalue) :
     value(vvalue),
     id(vid)
 {
-}
-
-/* Constructor specialization for double */
-template<>
-Variable<double>::Variable(std::string vid, double vvalue) :
-    constrained(0),
-    value(vvalue),
-    id(vid)
-{
-    addInterval(Interval<double>( -std::numeric_limits<double>::max(), std::numeric_limits<double>::max(), .00001));
 }
 
 template<class T>
@@ -276,7 +265,6 @@ void Variable<T>::display()
     std::cout << "!-- " << getID() << " = " << getValue() << std::endl;
     D.display();
 }
-
 /* Solution Class Functions */
 template <class T>
 VarDomain<T>::VarDomain(Variable<T> Variable,Domain<T> Domain) {

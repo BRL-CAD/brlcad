@@ -19,11 +19,14 @@ noinst_HEADERS = \
 	pcConstraint.h \
 	pcPCSet.h \
 	pcNetwork.h \
+	pcGenerator.h \
 	pcParser.h \
 	pcSolver.h
 
 libpc_nil_la_SOURCES = \
 	pc_main.c \
+	pcVariable.cpp \
+	pcGenerator.cpp \
 	pcParser.cpp
 
 libpc_la_SOURCES =
@@ -35,7 +38,7 @@ libpc_la_LIBADD = \
 pc_test_SOURCES = pc_test.c
 pc_test_LDADD = libpc.la
 
-solver_test_SOURCES = solver_test.cpp 
+solver_test_SOURCES = solver_test.cpp
 solver_test_LDADD = libpc.la
 
 FAST_OBJECTS = \

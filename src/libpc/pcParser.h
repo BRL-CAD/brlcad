@@ -31,6 +31,7 @@
 #include "common.h"
 
 #include "pcPCSet.h"
+#include "pcGenerator.h"
 #include <boost/spirit.hpp>
 
 #include "bu.h"
@@ -38,26 +39,7 @@
 #include "tcl.h"
 #include "pc.h"
 
-class Parser;
-
-/* Functors associated with the generation of Variables */
-struct varname
-{
-public:
-    varname(Parser &pars) : pcparser(pars) {}
-    void operator () (char c) const;
-private:
-    Parser &pcparser;
-};
-
-struct varvalue
-{
-public:
-    varvalue(Parser &pars) : pcparser(pars) {}
-    void operator () (double v) const;
-private:
-    Parser &pcparser;
-};
+typedef PCSet<double> PCSetd;
 
 /**
  * Grammar for the expression used for representing the constraint
@@ -66,9 +48,9 @@ private:
 class Variable_grammar : public boost::spirit::grammar<Variable_grammar>
 {
 private:
-    Parser &pcparser;
+    PCSetd &pcset;
 public:
-    Variable_grammar(Parser &parser);
+    Variable_grammar(PCSet<double> &pcset);
     virtual ~Variable_grammar();
     template<typename ScannerT>
     struct definition
@@ -80,9 +62,9 @@ public:
 	        =    boost::spirit::real_p[varvalue(self.pcparser)]
 		;*/
 	    variable
-	        =    *(boost::spirit::alnum_p)[varname(self.pcparser)]
+	        =    *(boost::spirit::alnum_p)[Generators::varname(self.pcset)]
 		     >> '='
-	             >>boost::spirit::real_p[varvalue(self.pcparser)]
+	             >>boost::spirit::real_p[Generators::varvalue(self.pcset)]
 		     /* expression*/
 		;
 	}
@@ -93,9 +75,9 @@ public:
 class Constraint_grammar : public boost::spirit::grammar<Constraint_grammar>
 {
 private:
-    Parser &pcparser;
+    PCSetd &pcset;
 public:
-    Constraint_grammar(Parser &parser);
+    Constraint_grammar(PCSet<double> &pcset);
     virtual ~Constraint_grammar();
     template<typename ScannerT>
     struct definition
@@ -136,17 +118,6 @@ public:
 };
 
 /**
- *  Various precompiled functors which are called during parsing depending
- *  on the constraint represented in the expression
- */
-
-struct is_equal
-{
-    template<typename IteratorT>
-    void operator() (IteratorT first, IteratorT last) const;
-};
-
-/**
  *
  * The Parser Object which takes the pc_pc_set as the input and performs
  * the following functions
@@ -167,18 +138,11 @@ public:
     Parser(PC_Set &pcs);
     virtual ~Parser();
     void parse(struct pc_pc_set * pcs);
-    void pushChar(char c) { name.push_back(c); }
-    void setValue(double v) { value = v; } 
+    //void pushChar(char c) { name.push_back(c); }
+    //void setValue(double v) { value = v; } 
     void display() { std::cout<< "Result of Parsing:" << name << " = " <<  value << std::endl; }
 };
 
-void varname::operator () (char c) const {
-    pcparser.pushChar(c);
-}
-
-void varvalue::operator () (double v) const {
-    pcparser.setValue(v);
-}
 #endif
 /** @} */
 /*

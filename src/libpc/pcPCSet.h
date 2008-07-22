@@ -42,9 +42,15 @@
 template <typename T>
 class PCSet
 {
+private:
+    std::string name;
+    double value;
 public:
     std::list<Variable<T> > Vars;
     std::list<Constraint<T> > Constraints;
+    void pushChar(char c) { name.push_back(c); }
+    void setValue(double v) { value = v; } 
+    void pushVar();
     void display();
 };
     
@@ -56,6 +62,10 @@ void PCSet<T>::display() {
         i->display();
 }
 
+template <typename T>
+void PCSet<T>::pushVar() {
+    Vars.push_back(Variable<T>(name,value));
+}
 #endif
 /** @} */
 /*
