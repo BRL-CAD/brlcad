@@ -173,7 +173,7 @@ parse_obj_name(struct db_i *dbip, char *fmt, char *name)
 				bu_vls_init(&(objname->namestring));
 				bu_vls_trunc(&(objname->namestring),0);
 				if (fmt[i+1] == 'i' ) {
-					while (name[len] != '\0' && !isdigit(name[len])){
+					while (name[len] != '.' && name[len] != '_' && name[len] != '-' && name[len] != '\0' && !isdigit(name[len])){
 						bu_vls_putc(&(objname->namestring), name[len]);
 						len++;
 					}
@@ -192,9 +192,14 @@ parse_obj_name(struct db_i *dbip, char *fmt, char *name)
 				BU_LIST_INIT(&(incdata->l));
 				bu_vls_init(&(incdata->namestring));
 				bu_vls_trunc(&(incdata->namestring),0);
-                                while (isdigit(name[len])) {
-                                       bu_vls_putc(&(incdata->namestring), name[len]);
-                                       len++;
+                                if (isdigit(name[len])) {
+					while (isdigit(name[len])) {
+        	                               bu_vls_putc(&(incdata->namestring), name[len]);
+                	                       len++;
+					}
+				} else {
+					bu_log("Note: naming convention requres incrementor here, but no digit found - setting a default value of 1\n");
+					bu_vls_putc(&(incdata->namestring), '1');
 				}
 				incdata->numerval = atoi(bu_vls_addr(&(incdata->namestring)));
 				BU_LIST_INSERT(&(objcomponents->incrementals), &(incdata->l));
@@ -228,39 +233,82 @@ parse_obj_name(struct db_i *dbip, char *fmt, char *name)
 					ignore_separator_flag = 1;
 					len++;
 				} else {
-					if (name[len] == REGION_EXT || name[len] == COMB_EXT || name[len] == PRIM_EXT) {
-						bu_vls_putc(&(objcomponents->extension), name[len]);
-						len++;
-					} else {
-						switch (objcomponents->object_type) {
-							case 1:
-							{
-								bu_vls_putc(&(objcomponents->extension), PRIM_EXT);
+					switch (name[len]) {
+						case PRIM_EXT:
+						{
+							if (objcomponents->object_type == 1) {
+								bu_vls_putc(&(objcomponents->extension), name[len]);
+							} else {
+								bu_vls_putc(&(objcomponents->extension), name[len]);
+								bu_log("Warning: primitive found with extension other than %c\n", PRIM_EXT);
 							}
-							break;
-							case 2:
-							{
-								bu_vls_putc(&(objcomponents->extension), COMB_EXT);
-							}
-							break;
-							case 3:
-							{
-								bu_vls_putc(&(objcomponents->extension), REGION_EXT);
-							}
-							break;
-							case 4:
-							{
-								bu_vls_putc(&(objcomponents->extension), ASSEM_EXT);
-							}
-							break;
-							default:
-							{
-								bu_log("Error - invalid object type returned by determine_object_type\n");
-							}
-							break;	
 						}
-						bu_log("Note: naming convention requres extension here, but char at designated point is not a valid extension.  Selecting extension char %s based on object type.\n", bu_vls_addr(&(objcomponents->extension)));
+						break;
+						case COMB_EXT:
+						{
+							if (objcomponents->object_type == 2) {
+                                                                bu_vls_putc(&(objcomponents->extension), name[len]);
+                                                        } else {
+                                                                bu_vls_putc(&(objcomponents->extension), name[len]);
+                                                                bu_log("Warning: combination found with extension other than %c\n", COMB_EXT);
+                                                        }
+						}
+						break;
+
+						case REGION_EXT:
+						{
+							if (objcomponents->object_type == 3) {
+                                                                bu_vls_putc(&(objcomponents->extension), name[len]);
+                                                        } else {
+                                                                bu_vls_putc(&(objcomponents->extension), name[len]);
+                                                                bu_log("Warning: region found with extension other than %c\n", REGION_EXT);
+                                                        }
+						}
+						break;
+
+						case ASSEM_EXT:
+						{
+							if (objcomponents->object_type == 1) {
+                                                                bu_vls_putc(&(objcomponents->extension), name[len]);
+                                                        } else {
+                                                                bu_vls_putc(&(objcomponents->extension), name[len]);
+                                                                bu_log("Warning: assembly found with extension other than %c\n", ASSEM_EXT);
+                                                        }
+						}
+						break;
+						default:
+						{
+							switch (objcomponents->object_type) {
+								case 1:
+								{
+									bu_vls_putc(&(objcomponents->extension), PRIM_EXT);
+								}
+								break;
+								case 2:
+								{
+									bu_vls_putc(&(objcomponents->extension), COMB_EXT);
+								}
+								break;
+								case 3:
+								{
+									bu_vls_putc(&(objcomponents->extension), REGION_EXT);
+								}
+								break;
+								case 4:
+								{
+									bu_vls_putc(&(objcomponents->extension), ASSEM_EXT);
+								}
+								break;
+								default:
+								{
+									bu_log("Error - invalid object type returned by determine_object_type\n");
+								}
+								break;	
+							}
+							bu_log("Note: naming convention requres extension here, but char at designated point is not a valid extension.  Selecting extension char %s based on object type.\n", bu_vls_addr(&(objcomponents->extension)));
+						}
 					}
+					len++;
 				}
 			}
 			break;
