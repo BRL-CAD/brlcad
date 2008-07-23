@@ -71,7 +71,7 @@ void Parser::parse(struct pc_pc_set * pcs)
     while (BU_LIST_WHILE(par, pc_param, &(pcs->ps->l))) {
 	name.clear();
 	std::cout<<"Parameter expression Input: "<<(char *) bu_vls_addr(&(par->name))<<std::endl;
-        boost::spirit::parse_info<> p_info = boost::spirit::parse((char *) bu_vls_addr(&(par->name)), *var_gram, boost::spirit::space_p);
+        boost::spirit::classic::parse_info<> p_info = boost::spirit::classic::parse((char *) bu_vls_addr(&(par->name)), *var_gram, boost::spirit::classic::space_p);
 	if (p_info.full) {
             pcset.pushVar();
 	    //Vars.push_back(Variable<double>(name, value));
