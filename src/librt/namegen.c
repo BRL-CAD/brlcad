@@ -161,7 +161,6 @@ parse_obj_name(struct db_i *dbip, char *fmt, char *name)
 	
 
 	objcomponents->object_type = determine_object_type(dbip, dp);	
-	bu_log("Object type is %d\n",objcomponents->object_type);
 
   	for (i = 0; i < strlen(fmt); i++) {
 	     if (len <= strlen(name)) {
@@ -445,14 +444,9 @@ get_next_name(struct db_i *dbip, char *fmt, char *basename, int pos_iterator, in
 				}
 				break;
 			}
-			bu_log("Assembled string:  %s\n",bu_vls_addr(&stringassembly));
 		}
-		bu_log("\n\n");
 		finishedname = (char *)bu_malloc(sizeof(char) * strlen(bu_vls_addr(&stringassembly)), "memory for returned name");
 		argv[j] = strcpy(finishedname, bu_vls_addr(&stringassembly));
-	}
-	for (j=0; j < argc; j++){
-		bu_log("%s\n",argv[j]);
 	}
 }
 
@@ -460,6 +454,7 @@ main(int argc, char **argv)
 {
 
 	int num_of_copies = 10;
+	int j;
 	char **av;
  	struct db_i *dbip;
 	dbip = db_open( "./test.g", "r" );
@@ -474,37 +469,71 @@ main(int argc, char **argv)
 	bu_vls_trunc(&temp,0);
 	bu_vls_printf(&temp,"%s","core-001a.s");
 	test_obj_struct(dbip, "nsinse", bu_vls_addr(&temp));
- 	get_next_name(dbip, "nsinse", bu_vls_addr(&temp), 1, 3, num_of_copies, (char **)av);	
-/*	
+ 	get_next_name(dbip, "nsinse", bu_vls_addr(&temp), 1, 3, num_of_copies, (char **)av);
+	for (j=0; j < num_of_copies; j++){
+		bu_log("%s\n",av[j]);
+	}
+	bu_free(av, "done with name strings, free memory");
+
+	av = (char **)bu_malloc(sizeof(char *) * num_of_copies, "array to hold answers from get_next_name");
 	bu_vls_trunc(&temp,0);
 	bu_vls_printf(&temp,"%s","s.bcore12.b3");
 	test_obj_struct(dbip, "esnisni", bu_vls_addr(&temp));
- 	get_next_name(dbip, "esnisni", bu_vls_addr(&temp), 1, 3);	
+ 	get_next_name(dbip, "esnisni", bu_vls_addr(&temp), 1, 3, num_of_copies, (char **)av);	
+	for (j=0; j < num_of_copies; j++){
+		bu_log("%s\n",av[j]);
+	}
+	bu_free(av, "done with name strings, free memory");
 
+	av = (char **)bu_malloc(sizeof(char *) * num_of_copies, "array to hold answers from get_next_name");
 	bu_vls_trunc(&temp,0);
 	bu_vls_printf(&temp,"%s","comb1.c");
 	test_obj_struct(dbip, "nise", bu_vls_addr(&temp));
- 	get_next_name(dbip, "nise", bu_vls_addr(&temp), 1, 3);	
+ 	get_next_name(dbip, "nise", bu_vls_addr(&temp), 1, 3, num_of_copies, (char **)av);	
+	for (j=0; j < num_of_copies; j++){
+		bu_log("%s\n",av[j]);
+	}
+	bu_free(av, "done with name strings, free memory");
 
+	av = (char **)bu_malloc(sizeof(char *) * num_of_copies, "array to hold answers from get_next_name");
 	bu_vls_trunc(&temp,0);
 	bu_vls_printf(&temp,"%s","comb2.r");
 	test_obj_struct(dbip, "nise", bu_vls_addr(&temp));
- 	get_next_name(dbip, "nise", bu_vls_addr(&temp), 1, 3);	
+ 	get_next_name(dbip, "nise", bu_vls_addr(&temp), 1, 3, num_of_copies, (char **)av);	
+	for (j=0; j < num_of_copies; j++){
+		bu_log("%s\n",av[j]);
+	}
+	bu_free(av, "done with name strings, free memory");
 
+	av = (char **)bu_malloc(sizeof(char *) * num_of_copies, "array to hold answers from get_next_name");
 	bu_vls_trunc(&temp,0);
 	bu_vls_printf(&temp,"%s","comb3.r");
 	test_obj_struct(dbip, "nise", bu_vls_addr(&temp));
- 	get_next_name(dbip, "nise", bu_vls_addr(&temp), 1, 3);	
+ 	get_next_name(dbip, "nise", bu_vls_addr(&temp), 1, 3, num_of_copies, (char **)av);	
+	for (j=0; j < num_of_copies; j++){
+		bu_log("%s\n",av[j]);
+	}
+	bu_free(av, "done with name strings, free memory");
 
+	av = (char **)bu_malloc(sizeof(char *) * num_of_copies, "array to hold answers from get_next_name");
 	bu_vls_trunc(&temp,0);
 	bu_vls_printf(&temp,"%s","assem1");
 	test_obj_struct(dbip, "ni", bu_vls_addr(&temp));
- 	get_next_name(dbip, "ni", bu_vls_addr(&temp), 1, 3);	
+ 	get_next_name(dbip, "ni", bu_vls_addr(&temp), 1, 3, num_of_copies, (char **)av);
+	for (j=0; j < num_of_copies; j++){
+		bu_log("%s\n",av[j]);
+	}
+	bu_free(av, "done with name strings, free memory");
 
+	av = (char **)bu_malloc(sizeof(char *) * num_of_copies, "array to hold answers from get_next_name");
 	bu_vls_trunc(&temp,0);
 	bu_vls_printf(&temp,"%s","test.q");
 	test_obj_struct(dbip, "nise", bu_vls_addr(&temp));
- 	get_next_name(dbip, "nise", bu_vls_addr(&temp), 1, 3);	
-*/
+ 	get_next_name(dbip, "nise", bu_vls_addr(&temp), 1, 3, num_of_copies, (char **)av);	
+	for (j=0; j < num_of_copies; j++){
+		bu_log("%s\n",av[j]);
+	}
+	bu_free(av, "done with name strings, free memory");
+	
 	db_close(dbip);
 };
