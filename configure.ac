@@ -2827,7 +2827,7 @@ dnl *** tcl+itcl sanity ***
 dnl See if the tcl we're using is compatible with the incrTcl we're using.
 dnl Our incrTcl is latest sources that make it only work with 8.5+
 if test "x$TCL" = "x$LIBTCL" ; then
-    if test "x$ITCL" != "x$LIBITCL" && test "x$TCL_VERSION != "x8.5" ; then
+    if test "x$ITCL" != "x$LIBITCL" && test "x$TCL_VERSION" != "x8.5" ; then
 	# apparently want to use system tcl with non-system incrTcl
 	# is that sane? probably not until 8.5 is everywhere.
 	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
