@@ -58,7 +58,7 @@ public:
 template<class T>
 class Vertexwriter {
     typedef typename boost::adjacency_list<vecS, vecS, bidirectionalS,
-					   Variable<T>, Constraint<T> > Graph;
+					   Variable<T>, Constraint > Graph;
     typedef boost::graph_traits<Graph> GraphTraits;
     typedef typename GraphTraits::vertex_descriptor Vertex;
 public:
@@ -74,7 +74,7 @@ private:
 template<class T>
 class Edgewriter {
     typedef typename boost::adjacency_list<vecS, vecS, bidirectionalS,
-					   Variable<T>, Constraint<T> > Graph;
+					   Variable<T>, Constraint > Graph;
     typedef boost::graph_traits<Graph> GraphTraits;
     typedef typename GraphTraits::edge_descriptor Edge;
 public:
@@ -93,7 +93,7 @@ class BinaryNetwork
 
 private:
     typedef typename boost::adjacency_list<vecS, vecS, bidirectionalS,
-					   Variable<T>, Constraint<T> > Graph;
+					   Variable<T>, Constraint > Graph;
     typedef boost::graph_traits<Graph> GraphTraits;
     typedef typename GraphTraits::vertex_descriptor Vertex;
     typedef typename GraphTraits::edge_descriptor Edge;
@@ -116,11 +116,11 @@ private:
 
 public:
     BinaryNetwork();
-    BinaryNetwork(std::vector<Variable<T> >, std::vector<Constraint<T> >);
+    BinaryNetwork(std::vector<Variable<T> >, std::vector<Constraint>);
     void add_vertex(Variable<T> V) {
 	boost::add_vertex(V, G);
     }
-    void add_edge(Constraint<T> C) {
+    void add_edge(Constraint C) {
 	Vertex v1, v2;
 	getVertexbyID(C.Variables.front(), v1);
 	getVertexbyID(C.Variables.back(), v2);
@@ -149,10 +149,10 @@ BinaryNetwork<T>::BinaryNetwork()
 };
 
 template<class T>
-BinaryNetwork<T>::BinaryNetwork(std::vector<Variable<T> > V, std::vector<Constraint<T> > C) {
+BinaryNetwork<T>::BinaryNetwork(std::vector<Variable<T> > V, std::vector<Constraint> C) {
 
     typename std::vector<Variable<T> >::iterator i = V.begin();
-    typename std::vector<Constraint<T> >::iterator j = C.begin();
+    typename std::vector<Constraint>::iterator j = C.begin();
 
     while (i!=V.end()) {
 	add_vertex(*i, G);
@@ -261,7 +261,7 @@ void BinaryNetwork<T>::display()
 
 
 template<class T>
-/*boost::graph_traits<boost::adjacency_list<vecS, vecS, undirectedS, Variable<T>, Constraint<T> > > ::vertex_descriptor*/
+/*boost::graph_traits<boost::adjacency_list<vecS, vecS, undirectedS, Variable<T>, Constraint> > ::vertex_descriptor*/
 void BinaryNetwork<T>::getVertexbyID(std::string Vid, Vertex& v)
 {
     for (tie(v_i, v_end) = vertices(G); v_i != v_end; ++v_i) {
@@ -283,13 +283,13 @@ bool BinaryNetwork<T>::check()
 
     Vertex v, u;
     typename GraphTraits::edge_iterator e_i, e_end;
-    std::vector<T> assignment;
+    std::vector<VariableAbstract *> assignment;
     for (tie(e_i, e_end) = edges(G); e_i != e_end; ++e_i) {
 	e = *e_i;
 	v = source(e, G);
 	u = target(e, G);
-	assignment.push_back(G[v].getValue());
-	assignment.push_back(G[u].getValue());
+	assignment.push_back(&G[v]);
+	assignment.push_back(&G[u]);
 	if (! G[e].check(assignment)) {
 	    assignment.clear();
 	    return false;

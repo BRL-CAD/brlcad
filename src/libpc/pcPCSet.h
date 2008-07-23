@@ -47,7 +47,7 @@ private:
     double value;
 public:
     std::list<Variable<T> > Vars;
-    std::list<Constraint<T> > Constraints;
+    std::list<Constraint> Constraints;
     void pushChar(char c) { name.push_back(c); }
     void setValue(double v) { value = v; } 
     void pushVar();

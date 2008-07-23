@@ -32,24 +32,27 @@
 
 #include <stdarg.h>
 #include <vector>
+#include <boost/function.hpp>
 #include "pcVariable.h"
 
 
-template<class T>
+//template<class T>
 class Constraint {
 private:
     int status;
     std::string id;
     std::string expression;
-    bool (*funct) (std::vector<T>);
+    boost::function1< bool, std::vector<VariableAbstract *> > funct; 
+    //bool (*funct) (std::vector<VariableAbstract *>);
+    //boost::
 public:
 
-    typename std::list<std::string> Variables;
+    std::list<std::string> Variables;
 
-    Constraint() { status = 0; }
-    Constraint(std::string Cid, std::string Cexpression, bool (*pf) (std::vector<T>));
-    Constraint(std::string Cid, std::string Cexpression, bool (*pf) (std::vector<T>),int count,...);
-    void function(bool (*pf) (std::vector<T>)) { funct = pf; };
+    Constraint() : status(0) { }
+    Constraint(std::string Cid, std::string Cexpression, bool (*pf) (std::vector<VariableAbstract *>));
+    Constraint(std::string Cid, std::string Cexpression, bool (*pf) (std::vector<VariableAbstract *>),int count,...);
+    void function(bool (*pf) (std::vector<VariableAbstract *>)) { funct = pf; };
     bool solved() {
 	if (status == 0)
 	    return false;
@@ -57,51 +60,12 @@ public:
 	    return true;
     }
     /* TODO: Take a functor as an argument? */
-    bool check(std::vector<T> V);
+    bool check(std::vector<VariableAbstract *> V);
     std::string getID() const { return id; }
     std::string getExp() const { return expression; }
     void setStatus(int st) { status = st; }
 
 };
-
-template <class T>
-Constraint<T>::Constraint(std::string Cid, std::string Cexpression, bool (*pf) (std::vector<T>)) {
-    status = 0;
-    id = Cid;
-    expression = Cexpression;
-    funct = pf;
-}
-
-template <class T>
-Constraint<T>::Constraint(std::string Cid, std::string Cexpression, bool (*pf) (std::vector<T>),int count,...) {
-    status = 0;
-    id = Cid;
-    expression = Cexpression;
-    funct = pf;
-
-    va_list args;
-    va_start(args,count);
-    for (int i=0; i<count; i++) {
-	Variables.push_back(va_arg(args,char *));
-    }
-    va_end(args);
-}
-
-template <class T>
-bool Constraint<T>::check(std::vector<T> V) {
-    typename std::vector<T>::iterator i;
-    /*std::cout<<"##Checking for Values";
-      for (i = V.begin(); i!= V.end(); i++) std::cout << " " << *i;
-      std::cout << " for the constraint " << getExp() << std::endl;*/
-    if (funct(V)) {
-	status =1;
-	return true;
-    } else {
-	status = 0;
-	return false;
-    }
-}
-
 #endif
 /** @} */
 /*

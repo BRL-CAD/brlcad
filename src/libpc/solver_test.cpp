@@ -38,19 +38,20 @@
 #include "pcParser.h"
 #include "pc.h"
 
-
+typedef Variable<int> * Vip;
 /* Constraint functions */
-bool f1(std::vector<int> V ) {
-    return (V[0]*V[1]-12 == 0);
+bool f1(std::vector<VariableAbstract *> V ) {
+    
+    return ((Vip (V[0]))->getValue()*(Vip (V[1]))->getValue()-12 == 0);
 }
-bool f2(std::vector<int> V ) {
-    return (V[0]+V[1]-5 < 0);
+bool f2(std::vector<VariableAbstract *> V ) {
+    return ((Vip (V[0]))->getValue()+(Vip (V[1]))->getValue()-5 < 0);
 }
-bool f3(std::vector<int> V ) {
-    return (V[0]- V[1] -2 == 0);
+bool f3(std::vector<VariableAbstract *> V ) {
+    return ((Vip (V[0]))->getValue()- (Vip (V[1]))->getValue() - 2 == 0);
 }
-bool f4(std::vector<int> V ) {
-    return (V[1]*V[0]-4 == 0);
+bool f4(std::vector<VariableAbstract *> V ) {
+    return ((Vip (V[1]))->getValue()* (Vip (V[0]))->getValue() - 4 == 0);
 }
 
 int main()
@@ -78,7 +79,7 @@ int main()
     //std::cout << "_________________________________________________________" << std::endl;
     //std::cout << "____________________Checking Network  Classes________" <<std::endl;
     typedef boost::adjacency_list<vecS, vecS, bidirectionalS,
-	Variable<int>, Constraint<int> > Graph;
+	Variable<int>, Constraint > Graph;
     typedef boost::graph_traits<Graph> GraphTraits;
     typedef GraphTraits::vertex_descriptor Vertex;
     typedef GraphTraits::edge_descriptor Edge;
@@ -103,7 +104,7 @@ int main()
 	C.addInterval(I);
 	D.addInterval(I);
 
-	typedef Constraint<int> Ci;
+	typedef Constraint Ci;
 	Ci constraint_array[4];
 	constraint_array[0] = Ci("0", "A*B=12",f1,2,"A","B");
 	constraint_array[1] = Ci("1", "B+C<5",f2,2,"B","C");
@@ -130,7 +131,7 @@ int main()
 	GTSolver<int> GTS;
 	BTSolver<int> BTS;
 
-/*
+
   std::cout << "-----------------------------" << std::endl;
   GTS.solve(&N,&S);
   std::cout << "Solution using Generate-Test" << std::endl;
@@ -146,7 +147,7 @@ int main()
   std::cout << "Number of Constraint checks performed" << std::endl;
   std::cout << "Generate-Test Solution:" << GTS.numChecks() << std::endl;
   std::cout << "BackTracking based Solution:" << BTS.numChecks() << std::endl;
-*/
+
     }
     return 0;
 }

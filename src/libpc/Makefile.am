@@ -26,6 +26,7 @@ noinst_HEADERS = \
 libpc_nil_la_SOURCES = \
 	pc_main.c \
 	pcVariable.cpp \
+	pcConstraint.cpp \
 	pcGenerator.cpp \
 	pcParser.cpp
 

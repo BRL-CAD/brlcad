@@ -52,7 +52,7 @@ class GTSolver
 {
 private:
     typedef typename boost::adjacency_list<vecS, vecS, bidirectionalS,
-					   Variable<T>, Constraint<T> > Graph;
+					   Variable<T>, Constraint> Graph;
     typedef graph_traits<Graph> GraphTraits;
     typedef typename GraphTraits::vertex_descriptor Vertex;
     typedef typename GraphTraits::edge_descriptor Edge;
@@ -136,7 +136,7 @@ class BTSolver
 {
 private:
     typedef typename boost::adjacency_list<vecS, vecS, bidirectionalS,
-					   Variable<T>, Constraint<T> > Graph;
+					   Variable<T>, Constraint> Graph;
     typedef graph_traits<Graph> GraphTraits;
     typedef typename GraphTraits::vertex_descriptor Vertex;
     typedef typename GraphTraits::edge_descriptor Edge;
@@ -208,14 +208,14 @@ bool BTSolver<T>::backtrack()
 template<class T>
 bool BTSolver<T>::check()
 {
-    std::vector<T> assignment;
+    std::vector<VariableAbstract *> assignment;
     for (tie(e_i,e_end) = edges(N->G); e_i != e_end; ++e_i) {
 	v = source(*e_i,N->G);
 	u = target(*e_i,N->G);
 	if (labels[v] && labels[u] ) {
 	    //std::cout<<"---"<<N->G[*e_i].getExp()<<"  "<<N->G[v].getValue()<<","<<N->G[u].getValue()<<std::endl;
-	    assignment.push_back(N->G[v].getValue());
-	    assignment.push_back(N->G[u].getValue());
+	    assignment.push_back(&(N->G[v]));
+	    assignment.push_back(&(N->G[u]));
 	    ++num_checks;
 	    if (!N->G[*e_i].check(assignment)) {
 		assignment.clear();

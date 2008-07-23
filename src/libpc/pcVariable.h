@@ -35,7 +35,6 @@
 #include <limits>
 #include <string>
 #include <list>
-#include <stack>
 
 #include "pcBasic.h"
 #include "pcInterval.h"
@@ -61,8 +60,11 @@ public:
     void display();
 };
 
+class VariableAbstract {
+};
+
 template<class T>
-class Variable {
+class Variable : public VariableAbstract {
 private:
     std::string  id;
     T value;
