@@ -54,6 +54,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdarg.h>
+#include <regex.h>
 #include "bio.h"
 #include "bn.h"
 #include "db.h"
@@ -65,7 +66,7 @@
 #define COMB_EXT 'c'
 #define PRIM_EXT 's'
 
-void count_if_region(struct db_i *dbip, struct directory *dp, genptr_t rcount)
+static void count_if_region(struct db_i *dbip, struct directory *dp, genptr_t rcount)
 {
     int *counter = (int*)rcount;
     if (dp->d_flags & DIR_REGION) {
@@ -123,6 +124,8 @@ struct object_name_item {
    struct bu_vls namestring;
 };
 
+
+/*NOTE - this needs to be redone to use regex instead of the custom parse!!!*/
 struct object_name_data *
 parse_obj_name(struct db_i *dbip, char *fmt, char *name)
 {
