@@ -2824,13 +2824,16 @@ AC_SUBST(ITK_LIB_FILE)
 
 
 dnl *** tcl+itcl sanity ***
-dnl See if the tcl we're using is compatible with the incrTcl we're using
+dnl See if the tcl we're using is compatible with the incrTcl we're using.
+dnl Our incrTcl is latest sources that make it only work with 8.5+
 if test "x$TCL" = "x$LIBTCL" ; then
-    if test "x$ITCL" != "x$LIBITCL" ; then
+    if test "x$ITCL" != "x$LIBITCL" && test "x$TCL_VERSION != "x8.5" ; then
 	# apparently want to use system tcl with non-system incrTcl
 	# is that sane? probably not until 8.5 is everywhere.
+	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 	AC_MSG_WARN([Unable to find a system incrTcl compatible with the available system Tcl])
 	AC_MSG_WARN([Enabling compilation of both Tcl and incrTcl])
+	AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
 	# nope!
 	build_brlcad_tcl="yes"
 	build_brlcad_tk="yes"
@@ -2848,7 +2851,7 @@ if test "x$TCL" = "x$LIBTCL" ; then
 	TCLSTUB='-L${top_builddir}/src/other/tcl/unix'" -ltclstub${TCL_VERSION}"
 	TCL_CPPFLAGS='-I${top_srcdir}/src/other/tcl/generic -I${top_srcdir}/src/other/tcl/unix'
 
-	TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TCL_VERSION}"
+	TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TK_VERSION}"
 	TKSTUB='-L${top_builddir}/src/other/tk/unix'" -ltkstub${TK_VERSION}"
 	TK_CPPFLAGS='-I${top_srcdir}/src/other/tk/generic -I${top_srcdir}/src/other/tk/unix -I${top_srcdir}/src/other/tk/win'
 	if test "x$bc_build_aquatk" = "xyes" ; then
