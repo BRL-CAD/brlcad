@@ -1963,6 +1963,30 @@ JNIEXPORT jobjectArray JNICALL Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWra
 
 JNIEXPORT void JNICALL Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_shutdownNative(JNIEnv *env, jobject obj)
 {
+    struct application *ap;
+    
     bu_log( "Shutting down...");
-    exit(0);
+    for(BU_PTBL_FOR(ap, (struct application *), &apps)) {
+        bu_free(ap, "struct application");
+    }
+    bu_ptbl_free(&apps);
+    rts_clean(0);
+    
+    if ( hash_table_exists ) {
+	Tcl_DeleteHashTable( &name_tbl );
+#if 0
+	Tcl_DeleteHashTable( &ident_tbl);
+	Tcl_DeleteHashTable( &air_tbl );
+#endif
+	hash_table_exists = 0;
+    }
+    
+    num_geometries = 0;
+    bu_free( (char *)rts_geometry, "rts_geometry" );
+    rts_geometry = NULL;
+    
+    if(title != NULL) {
+        bu_free(title, "title");
+        title = NULL;
+    }
 }
