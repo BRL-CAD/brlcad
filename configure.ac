@@ -1984,7 +1984,7 @@ BC_COMPLIANT_DOUBLE
 if test "x$bc_compliant_float" = "xno" || test "x$bc_compliant_double" = "xno" ; then
     AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
     AC_MSG_WARN([The floating point implementation does not seem to be IEEE 754])
-    AC_MSG_WARN([compliant.  The behavior or htond and htonf may be incorrect.])
+    AC_MSG_WARN([compliant.  The behavior of htond and htonf may be incorrect.])
     AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
     sleep 1
 fi
