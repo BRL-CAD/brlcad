@@ -292,6 +292,58 @@ rt_sketch_contains( struct rt_sketch_internal *sk, point2d_t pt )
 		}
 		break;
 	    case CURVE_CARC_MAGIC:
+		csg = (struct carc_seg *)lng;
+		V2MOVE( pt1, sk->verts[csg->start] );
+		V2MOVE( pt2, sk->verts[csg->end] );
+		if ( csg->radius <=0.0 ) {
+		    vect2d_t	r, dist;
+		    V2SUB2( r, pt2, pt1 );
+		    V2SUB2( dist, r, pt );
+		    if ( MAG2SQ(dist) < MAG2SQ(r) ) hits++;
+		} else {
+		    vect2d_t	r, dist, center;
+		    V2SUB2( dist, pt2, pt1 );
+		    if ( csg->center_is_left ) {
+			r[X] = -dist[Y];
+			r[Y] = dist[X];
+		    } else {
+			r[X] = dist[Y];
+			r[Y] = -dist[X];
+		    }
+		    V2SCALE( dist, dist, 0.5 );
+		    V2SCALE( r, r, sqrt( (csg->radius*csg->radius - MAG2SQ(dist) )/( MAG2SQ(r)) ) );
+		    V2ADD3( center, sk->verts[csg->start], dist, r );
+		    V2SUB2( dist, center, pt );
+		    if ( MAG2SQ(dist) > (csg->radius*csg->radius) ) {
+			/* outside the circle - if it passes between the endpoints, count it as a hit */
+			/* otherwise, it will hit either twice or not at all, and can be ignored */
+			if ( pt[Y] > FMIN(pt1[Y], pt2[Y]) && pt[Y] <= FMAX(pt1[Y], pt2[Y]) ) {
+			    if ( (pt[X] >= 0 && pt[X] < FMIN(pt1[X], pt2[X])) 
+			    	|| (pt[X] < 0 && pt[X] > FMAX(pt1[X], pt2[X]) ) ) hits++;
+			}
+		    } else {
+			fastf_t angMin, angMax, angle;
+			V2SUB2( one, pt1, center );
+			V2SUB2( two, pt2, center );
+			if ( csg->orientation == 0 ) {	/* ccw arc */
+			    angMin = atan2( one[Y], one[X] );
+			    angMax = atan2( two[Y], two[X] );
+			} else {
+			    angMax = atan2( one[Y], one[X] );
+			    angMin = atan2( two[Y], two[X] );
+			}
+			if ( pt[X] >= 0 ) {
+			    angle = atan2( dist[Y], sqrt( csg->radius*csg->radius - dist[Y]*dist[Y] ) );
+			} else {
+			    angle = atan2( dist[Y], -sqrt( csg->radius*csg->radius - dist[Y]*dist[Y] ) );
+			}
+			angMax -= angMin;
+			angle -= angMin;
+			if ( angMax < 0 ) angMax += 2*M_PI;
+			if ( angle < 0 ) angle += 2*M_PI;
+			if ( angle < angMax ) hits++;
+		    }
+		}
 		break;
 	    case CURVE_BEZIER_MAGIC:
 		break;
