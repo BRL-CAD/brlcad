@@ -28,12 +28,18 @@
 
 
 #include "pcVariable.h"
+/*Abstract Variable Class methods */
+VariableAbstract::VariableAbstract(std::string vid) :
+    id(vid),
+    constrained(0)
+{
+}
+
 /* Constructor specialization for double */
 template<>
 Variable<double>::Variable(std::string vid, double vvalue) :
-    constrained(0),
-    value(vvalue),
-    id(vid)
+    VariableAbstract(vid),
+    value(vvalue)
 {
     addInterval(Interval<double>( -std::numeric_limits<double>::max(), std::numeric_limits<double>::max(), .00001));
 }

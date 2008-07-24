@@ -61,23 +61,26 @@ public:
 };
 
 class VariableAbstract {
+private:
+    std::string  id;    
+    int constrained;
+public:
+    VariableAbstract(std::string vid ="");
+    std::string getID() const { return id; }
 };
 
 template<class T>
 class Variable : public VariableAbstract {
 private:
-    std::string  id;
     T value;
     Domain<T> D;
 public:
-/* Implement functionality to search which domain the variable belongs to
+/* TODO: Implement functionality to search which domain the variable belongs to
    and increment according to the stepvalue of that domain */
-    int constrained;
-    Variable(std::string id = "" , T value = 0);
+    Variable(std::string vid = "" , T vvalue = 0);
     ~Variable();
     void addInterval(const Interval<T>);
     void setValue(T t) { value = t; }
-    std::string getID() const { return id; }
     T getValue() { return value; }
     T getFirst() { return D.getFirst(); }
     T getLast() { return D.getLast(); }
@@ -230,9 +233,8 @@ void  Domain<T>::packIntervals ()
 
 template<class T>
 Variable<T>::Variable(std::string vid, T vvalue) :
-    constrained(0),
-    value(vvalue),
-    id(vid)
+    VariableAbstract(vid),
+    value(vvalue)
 {
 }
 
