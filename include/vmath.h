@@ -587,6 +587,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 		(a)[_vadd3] = (b)[_vadd3] + (c)[_vadd3] + (d)[_vadd3]; \
 	}
 
+#define V2ADD3(a, b, c, d)	{ \
+			(a)[X] = (b)[X] + (c)[X] + (d)[X];\
+			(a)[Y] = (b)[Y] + (c)[Y] + (d)[Y];}
+
 /** @brief Add 4 vectors at `b', `c', `d', and `e', store result at `a' */
 #ifdef SHORT_VECTORS
 #define VADD4(a, b, c, d, e) VADD4N(a, b, c, d, e, 3)
