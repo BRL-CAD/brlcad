@@ -64,6 +64,7 @@ Options:\n\
 ";
 
 int	rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp);
+int	secondary_hit(register struct application *ap, struct partition *PartHeadp, struct seg *segp);
 int	raymiss(register struct application *ap);
 
 /* From scanline.c */
@@ -400,6 +401,7 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
     struct hit *hitp;
     struct partition *pp;
     struct light_specific *lp;
+    struct application sub_ap;
 
     vect_t normal, work0;
     fastf_t	diffuse0 = 0;
@@ -435,7 +437,18 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
 	    diffuse0 = cosI0 * (1.0 - AmbientIntensity);
 	VSCALE(work0, lp->lt_color, diffuse0);
 
-    VMOVE(ap->a_color, work0);
+	sub_ap = *ap;	/* struct copy */
+	sub_ap.a_level = ap->a_level+1;
+    sub_ap.a_hit = secondary_hit;
+    sub_ap.a_miss = ap->a_miss;
+    VSET(sub_ap.a_ray.r_pt, 0.0, 0.0, 10000.0);
+    VSET(sub_ap.a_ray.r_dir, 0.0, 0.0, -1.0);
+
+	sub_ap.a_purpose = "Secondary Hit, shadows treatment";
+	(void) rt_shootray(&sub_ap);
+
+    VADD2(ap->a_color, work0, sub_ap.a_color);
+    VSCALE(ap->a_color, ap->a_color, 0.50);
 
     /* Finds just the hit point. We want the normal vector too.
     VJOIN1(segp->seg_in.hit_point, ap->a_ray.r_pt,
@@ -495,6 +508,59 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
     ap->a_user = 1;
 
     return 1;	/* report hit to main routine */
+}
+
+/*
+ *      S E C O N D A R Y _ H I T
+ *
+ *  Called by rayhit() to handle shadows
+ */
+int
+secondary_hit(register struct application *ap, struct partition *PartHeadp, struct seg *segp)
+{
+    struct mlt_app* p_mlt;
+    struct path_list* p_path;
+    struct hit *hitp;
+    struct partition *pp;
+    struct light_specific *lp;
+
+    vect_t normal, work0;
+    fastf_t	diffuse0 = 0;
+    fastf_t	cosI0 = 0;    
+  
+    /*bu_log("hit: 0x%x\n", ap->a_resource);*/
+    pp = PartHeadp->pt_forw;    
+
+    for (; pp != PartHeadp; pp = pp->pt_forw)
+	    if (pp->pt_outhit->hit_dist >= 0.0) break;
+
+    if (pp == PartHeadp) {
+        bu_log("rayhit: no hit out front?");
+        return 0;
+    }
+
+    hitp = pp->pt_inhit;
+
+    /* This will be used find the hit point: */
+    RT_HIT_NORMAL(normal, 
+        hitp,
+        pp->pt_inseg->seg_stp,
+        &(ap->a_ray),
+        pp->pt_inflip);
+
+    /*
+     * Diffuse reflectance from each light source
+     */
+    /* Light from the "eye" (ray source).  Note sign change */
+	lp = BU_LIST_FIRST(light_specific, &(LightHead.l));
+	diffuse0 = 0;
+	if ((cosI0 = -VDOT(normal, ap->a_ray.r_dir)) >= 0.0)
+	    diffuse0 = cosI0 * (1.0 - AmbientIntensity);
+	VSCALE(work0, lp->lt_color, diffuse0);
+
+    VMOVE(ap->a_color, work0);
+
+    return 1;
 }
 
 /*
