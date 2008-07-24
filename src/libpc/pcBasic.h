@@ -62,26 +62,6 @@ struct is_even {
 	{ return (i % 2) == 0; }
 };
 
-/* Classes for Graph Visualization */
-
-
-/* TO BE REMOVED */
-class Relation {
-public:
-private:
-};
-
-template<class T>
-class Stack : public std::stack< T,std::list<T> > {
-public:
-    T pop() {
-	T tmp = std::stack<T>::top();
-	std::stack<T>::pop();
-	return tmp;
-    }
-};
-
-
 #endif
 /** @} */
 /*
