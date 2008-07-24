@@ -299,46 +299,48 @@ this is replaced by using rt_sketch_contains()
     }
 #endif
 
-    VREVERSE( normS, rev->yUnit );	/* start normal */
-    start = ( VDOT( normS, rev->v3d ) - VDOT( normS, rp->r_pt ) ) / VDOT( normS, rp->r_dir );
-
-    VCROSS( normE, rev->zUnit, rev->rEnd );	/* end normal */
-    end = ( VDOT( normE, rev->v3d ) - VDOT( normE, rp->r_pt ) ) / VDOT( normE, rp->r_dir );
-
-    VJOIN1( hit1, pr, start, vr );
-    pt[Y] = hit1[Z];
-    pt[X] = sqrt( hit1[X]*hit1[X] + hit1[Y]*hit1[Y] );
-
-    if ( VDOT( rev->xUnit, hit1 ) < 0 ) {
-	/* set the sign of the 2D point's x coord */
-	pt[X] = -pt[X];
-    }
-
-    if ( rt_sketch_contains( rev->sk, pt ) ) {
-	if ( nhits >= MAX_HITS ) return -1; /* too many hits */
-	hitp = hits[nhits++];
-	hitp->hit_magic = RT_HIT_MAGIC;
-	hitp->hit_dist = start;
-	hitp->hit_surfno = START_FACE;
-	VJOIN1( hitp->hit_vpriv, pr, hitp->hit_dist, vr );
-    }
-
-    VJOIN1( hit1, pr, end, vr );
-    pt[Y] = hit1[Z];
-    pt[X] = sqrt( hit1[X]*hit1[X] + hit1[Y]*hit1[Y] );
-
-    if ( VDOT( rev->rEnd, hit1 ) < 0 ) {
-	/* set the sign of the 2D point's x coord */
-	pt[X] = -pt[X];
-    }
-
-    if ( rt_sketch_contains( rev->sk, pt ) ) {
-	if ( nhits >= MAX_HITS ) return -1; /* too many hits */
-	hitp = hits[nhits++];
-	hitp->hit_magic = RT_HIT_MAGIC;
-	hitp->hit_dist = end;
-	hitp->hit_surfno = END_FACE;
-	VJOIN1( hitp->hit_vpriv, pr, hitp->hit_dist, vr );
+    if ( rev->ang < 2*M_PI ) {
+	VREVERSE( normS, rev->yUnit );	/* start normal */
+	start = ( VDOT( normS, rev->v3d ) - VDOT( normS, rp->r_pt ) ) / VDOT( normS, rp->r_dir );
+	
+	VCROSS( normE, rev->zUnit, rev->rEnd );	/* end normal */
+	end = ( VDOT( normE, rev->v3d ) - VDOT( normE, rp->r_pt ) ) / VDOT( normE, rp->r_dir );
+	
+	VJOIN1( hit1, pr, start, vr );
+	pt[Y] = hit1[Z];
+	pt[X] = sqrt( hit1[X]*hit1[X] + hit1[Y]*hit1[Y] );
+	
+	if ( VDOT( rev->xUnit, hit1 ) < 0 ) {
+	    /* set the sign of the 2D point's x coord */
+	    pt[X] = -pt[X];
+	}
+	
+	if ( rt_sketch_contains( rev->sk, pt ) ) {
+	    if ( nhits >= MAX_HITS ) return -1; /* too many hits */
+	    hitp = hits[nhits++];
+	    hitp->hit_magic = RT_HIT_MAGIC;
+	    hitp->hit_dist = start;
+	    hitp->hit_surfno = START_FACE;
+	    VJOIN1( hitp->hit_vpriv, pr, hitp->hit_dist, vr );
+	}
+	
+	VJOIN1( hit1, pr, end, vr );
+	pt[Y] = hit1[Z];
+	pt[X] = sqrt( hit1[X]*hit1[X] + hit1[Y]*hit1[Y] );
+	
+	if ( VDOT( rev->rEnd, hit1 ) < 0 ) {
+	    /* set the sign of the 2D point's x coord */
+	    pt[X] = -pt[X];
+	}
+	
+	if ( rt_sketch_contains( rev->sk, pt ) ) {
+	    if ( nhits >= MAX_HITS ) return -1; /* too many hits */
+	    hitp = hits[nhits++];
+	    hitp->hit_magic = RT_HIT_MAGIC;
+	    hitp->hit_dist = end;
+	    hitp->hit_surfno = END_FACE;
+	    VJOIN1( hitp->hit_vpriv, pr, hitp->hit_dist, vr );
+	}
     }
 
 /* end of rt_sketch_contains() replacement code */
@@ -1142,8 +1144,9 @@ rt_revolve_describe( struct bu_vls *str, const struct rt_db_internal *ip, int ve
     sprintf(buf, "\tAngle=%g\n", INTCLAMP(rip->ang * RAD2DEG) );
     bu_vls_strcat( str, buf );
 
-    snprintf( buf, 256, "\tsketch name: %s\n", rip->sketch_name );
+    sprintf( buf, "\tsketch name: " );
     bu_vls_strcat( str, buf );
+    bu_vls_vlscat( str, &rip->sketch_name );
 
     return(0);
 }
