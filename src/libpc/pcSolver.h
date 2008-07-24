@@ -30,11 +30,7 @@
 
 #include "common.h"
 
-#include <iostream>
-#include <cstdlib>
-#include <string>
-#include <list>
-#include <stack>
+#include <vector>
 
 #include "pcBasic.h"
 #include "pcVariable.h"

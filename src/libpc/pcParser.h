@@ -30,14 +30,17 @@
 
 #include "common.h"
 
+#include <string>
+#include <iostream>
+#include <boost/spirit/include/classic.hpp>
+
 #include "pcPCSet.h"
 #include "pcGenerator.h"
-#include <boost/spirit/include/classic.hpp>
 
 #include "bu.h"
 #include "raytrace.h"
-#include "tcl.h"
 #include "pc.h"
+
 
 typedef PCSet<double> PCSetd;
 

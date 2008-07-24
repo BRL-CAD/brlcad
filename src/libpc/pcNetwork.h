@@ -31,10 +31,8 @@
 #include "common.h"
 
 #include <iostream>
-#include <cstdlib>
 #include <string>
-#include <list>
-#include <stack>
+#include <vector>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graphviz.hpp>

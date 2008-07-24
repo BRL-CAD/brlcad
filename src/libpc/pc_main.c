@@ -21,7 +21,7 @@
 /** @{ */
 /** @file pc_main.c
  *
- * TODO: clean up header includes
+ * @brief External C Routines of Parametrics and Constraints API
  *
  * @author Dawn Thomas
  *
@@ -31,12 +31,7 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <math.h>
-#include <string.h>
-#include "bio.h"
 
-#include "vmath.h"
-#include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
 #include "pc.h"

@@ -30,14 +30,7 @@
 
 #include "common.h"
 
-#include <iostream>
-#include <cstdlib>
-#include <string>
-#include <list>
-#include <stack>
-
 #include "pcBasic.h"
-
 
 template<class T>
 class Interval {
@@ -71,11 +64,11 @@ Interval<T>::Interval()
 }
 
 template<class T>
-Interval<T>::Interval(T l, T h, T s)
+Interval<T>::Interval(T l, T h, T s) : 
+    low(l),
+    high(h),
+    step(s)
 {
-    low = l;
-    high = h;
-    step = s;
 }
 
 template<class T>

@@ -28,16 +28,9 @@
 #ifndef __PCBASIC_H__
 #define __PCBASIC_H__
 
-#define PC_MAX_STACK_SIZE 1000
-
 #include "common.h"
 
-#include <iostream>
-#include <cstdlib>
 #include <string>
-#include <list>
-#include <stack>
-
 
 /* Basic Exception Handling classes */
 
@@ -54,7 +47,7 @@ public:
 };
 
 /* Structures for defining varios derived objects from
- * constrained_value templatein Boost
+ * constrained_value template in Boost
  */
 
 struct is_even {

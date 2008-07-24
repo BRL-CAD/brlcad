@@ -30,13 +30,13 @@
 
 #include "common.h"
 
+#include <string>
 #include <stdarg.h>
 #include <vector>
+#include <list>
 #include <boost/function.hpp>
 #include "pcVariable.h"
 
-
-//template<class T>
 class Constraint {
 private:
     int status;
@@ -44,7 +44,6 @@ private:
     std::string expression;
     boost::function1< bool, std::vector<VariableAbstract *> > funct; 
     //bool (*funct) (std::vector<VariableAbstract *>);
-    //boost::
 public:
 
     std::list<std::string> Variables;

@@ -28,6 +28,10 @@
 #ifndef __PCPCSET_H__
 #define __PCPCSET_H__
 
+#include "common.h"
+
+#include <string>
+#include <iostream>
 #include <list>
 #include "pcVariable.h"
 #include "pcConstraint.h"
