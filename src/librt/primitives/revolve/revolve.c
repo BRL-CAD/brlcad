@@ -310,7 +310,8 @@ this is replaced by using rt_sketch_contains()
 	pt[Y] = hit1[Z];
 	pt[X] = sqrt( hit1[X]*hit1[X] + hit1[Y]*hit1[Y] );
 	
-	if ( VDOT( rev->xUnit, hit1 ) < 0 ) {
+	VJOIN1( hit2, xlated, start, rp->r_dir );
+	if ( VDOT( rev->xUnit, hit2 ) < 0 ) {
 	    /* set the sign of the 2D point's x coord */
 	    pt[X] = -pt[X];
 	}
@@ -328,7 +329,8 @@ this is replaced by using rt_sketch_contains()
 	pt[Y] = hit1[Z];
 	pt[X] = sqrt( hit1[X]*hit1[X] + hit1[Y]*hit1[Y] );
 	
-	if ( VDOT( rev->rEnd, hit1 ) < 0 ) {
+	VJOIN1( hit2, xlated, end, rp->r_dir );
+	if ( VDOT( rev->rEnd, hit2) < 0 ) {
 	    /* set the sign of the 2D point's x coord */
 	    pt[X] = -pt[X];
 	}
