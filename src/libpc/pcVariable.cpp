@@ -44,8 +44,6 @@ Variable<double>::Variable(std::string vid, double vvalue) :
     addInterval(Interval<double>( -std::numeric_limits<double>::max(), std::numeric_limits<double>::max(), .00001));
 }
 
-
-
 /** @} */
 /*
  * Local Variables:

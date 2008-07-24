@@ -75,80 +75,84 @@ int main()
 
     pc_free_pcset(&pcs);
 
-    /* Stage II : Checking Network Classes */
-    //std::cout << "_________________________________________________________" << std::endl;
-    //std::cout << "____________________Checking Network  Classes________" <<std::endl;
     typedef boost::adjacency_list<vecS, vecS, bidirectionalS,
 	Variable<int>, Constraint > Graph;
     typedef boost::graph_traits<Graph> GraphTraits;
     typedef GraphTraits::vertex_descriptor Vertex;
     typedef GraphTraits::edge_descriptor Edge;
 
-    {
+    // declare a graph object
+    BinaryNetwork<int > N;
+    Solution<int> S;
+    
+    // Convenient naming for the vertices and Corrsponding Variables
+    typedef Variable<int> Vi;
+    Vi A=Vi("A", 1);
+    Vi B=Vi("B", 2);
+    Vi C=Vi("C", 3);
+    Vi D=Vi("D", 4);
+    Vi E=Vi("E", 6);
 
-	// declare a graph object
-	BinaryNetwork<int > N;
-	Solution<int> S;
+    Interval<int> I;
+    I.assign(0, 5, 1);
+    A.addInterval(I);
+    B.addInterval(I);
+    C.addInterval(I);
+    D.addInterval(I);
+    E.addInterval(-16, -10, 1);
+    E.addInterval(-6, -4, 1);
+    E.addInterval(0, 7, 1);
+    E.addInterval(8, 10, 1);
+    E.addInterval(16, 18, 1);
+    E.addInterval(32, 46, 1);
+    E.addInterval(64, 68, 1);
+    std::cout<< std::endl << "Testing Interval Intersection" << std::endl;
+    E.display();
+    E.intersectInterval(Interval<int>(3,40,1));
+    E.display();
+    typedef Constraint Ci;
+    Ci constraint_array[4];
+    constraint_array[0] = Ci("0", "A*B=12",f1,2,"A","B");
+    constraint_array[1] = Ci("1", "B+C<5",f2,2,"B","C");
+    constraint_array[2] = Ci("2", "A-D=2",f3,2,"A","D");
+    constraint_array[3] = Ci("3", "A*C=4",f4,2,"A","C");
 
-	// Convenient naming for the vertices and Corrsponding Variables
-	typedef Variable<int> Vi;
-	Vi A=Vi("A",1);
-	Vi B=Vi("B",2);
-	Vi C=Vi("C",3);
-	Vi D=Vi("D",4);
+    //std::cout << constraint_array[0].getExp() << "--------" << std::endl;
+    /* Add the vertices */
 
-	Interval<int> I;
-	I.assign(0,5,1);
-	A.addInterval(I);
-	B.addInterval(I);
-	C.addInterval(I);
-	D.addInterval(I);
-
-	typedef Constraint Ci;
-	Ci constraint_array[4];
-	constraint_array[0] = Ci("0", "A*B=12",f1,2,"A","B");
-	constraint_array[1] = Ci("1", "B+C<5",f2,2,"B","C");
-	constraint_array[2] = Ci("2", "A-D=2",f3,2,"A","D");
-	constraint_array[3] = Ci("3", "A*C=4",f4,2,"A","C");
-
-	//std::cout << constraint_array[0].getExp() << "--------" << std::endl;
-	/* Add the vertices */
-
-	N.add_vertex(A);
-	N.add_vertex(B);
-	N.add_vertex(C);
-	N.add_vertex(D);
-	/* Add the edges */
-	for (int i=0; i<4; i++) {
-	    N.add_edge(constraint_array[i]);
-	}
-	//std::cout << "___" << boost::num_vertices(N.G) << std::endl;
-
-	/*N.display();
-	  S = N.solve();
-	  S.display();
-	*/
-	GTSolver<int> GTS;
-	BTSolver<int> BTS;
-
-
-  std::cout << "-----------------------------" << std::endl;
-  GTS.solve(&N,&S);
-  std::cout << "Solution using Generate-Test" << std::endl;
-  S.display();
-  S.clear();
-  std::cout << "-----------------------------" << std::endl;
-
-  BTS.solve(&N,&S);
-  std::cout << "Solution using BackTracking" << std::endl;
-
-  S.display();
-
-  std::cout << "Number of Constraint checks performed" << std::endl;
-  std::cout << "Generate-Test Solution:" << GTS.numChecks() << std::endl;
-  std::cout << "BackTracking based Solution:" << BTS.numChecks() << std::endl;
-
+    N.add_vertex(A);
+    N.add_vertex(B);
+    N.add_vertex(C);
+    N.add_vertex(D);
+    /* Add the edges */
+    for (int i=0; i<4; i++) {
+        N.add_edge(constraint_array[i]);
     }
+    //std::cout << "___" << boost::num_vertices(N.G) << std::endl;
+
+    /*N.display();
+      S = N.solve();
+      S.display();
+    */
+    GTSolver<int> GTS;
+    BTSolver<int> BTS;
+
+
+    std::cout << "-----------------------------" << std::endl;
+    GTS.solve(&N,&S);
+    std::cout << "Solution using Generate-Test" << std::endl;
+    S.display();
+    S.clear();
+    std::cout << "-----------------------------" << std::endl;
+    
+    BTS.solve(&N,&S);
+    std::cout << "Solution using BackTracking" << std::endl;
+    
+    S.display();
+    std::cout << "Number of Constraint checks performed" << std::endl;
+    std::cout << "Generate-Test Solution:" << GTS.numChecks() << std::endl;
+    std::cout << "BackTracking based Solution:" << BTS.numChecks() << std::endl;
+
     return 0;
 }
 

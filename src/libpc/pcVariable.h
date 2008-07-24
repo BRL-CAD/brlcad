@@ -57,6 +57,8 @@ public:
     T getLast() { return Interv.back().getHigh(); }
     T getNextLow (T);
     void addInterval(const Interval<T>);
+    void addInterval(T, T, T);
+    void intersectInterval(Interval<T>);
     void display();
 };
 
@@ -77,13 +79,23 @@ private:
 public:
 /* TODO: Implement functionality to search which domain the variable belongs to
    and increment according to the stepvalue of that domain */
+    
+    /* Constructor and Destructor */
     Variable(std::string vid = "" , T vvalue = 0);
     ~Variable();
-    void addInterval(const Interval<T>);
-    void setValue(T t) { value = t; }
+    
+    /* Data Access methods */
     T getValue() { return value; }
     T getFirst() { return D.getFirst(); }
     T getLast() { return D.getLast(); }
+    void setValue(T t) { value = t; }
+
+    /* Domain Modification methods */
+    void addInterval(const Interval<T>);
+    void addInterval(T low, T high, T step);
+    void intersectInterval(Interval<T> t) { D.intersectInterval(t); }
+    
+    /* Variable display method */
     void display();
 
     Variable& operator++();
@@ -145,6 +157,25 @@ void Domain<T>::addInterval(const Interval<T> t)
 */
     this->Interv.insert(i,t);
     packIntervals();
+}
+
+template<class T>
+void Domain<T>::addInterval(T low, T high, T step) {
+    addInterval(Interval<T>(low,high,step));
+}
+
+template<class T>
+void Domain<T>::intersectInterval(Interval<T> t)
+{
+    typename std::list<Interval<T> >::iterator i = this->Interv.begin();
+    while (i != Interv.end() && i->getHigh() < t.getLow() )
+        Interv.erase(i++);
+    i->setLow(t.getLow());
+    i = Interv.end();
+    i--;
+    while (i != Interv.begin() && i->getLow() > t.getHigh() )
+        Interv.erase(i--);
+    i->setHigh(t.getHigh());	
 }
 
 template<class T>
@@ -261,6 +292,12 @@ template<class T>
 void Variable<T>::addInterval(const Interval<T> t)
 {
     D.addInterval(t);
+};
+
+template<class T>
+void Variable<T>::addInterval(T low, T high, T step)
+{
+    D.addInterval(low, high, step);
 };
 
 template<class T>
