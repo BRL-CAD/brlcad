@@ -25,9 +25,6 @@
  *	Define surface and curve structures for
  * 	Non Rational Uniform B-Spline (NURBS)
  *	curves and surfaces. Uses openNURBS library.
- *
- * @author	Jason Owens
- *
  */
 
 #ifndef BREP_H
@@ -47,6 +44,14 @@ extern "C++" {
 #include "opennurbs_ext.h"
 #include <iostream>
 #include <fstream>
+/* XXX ack. fix the hack. */
+#ifdef __VMATH_H__
+#define X 0
+#define Y 1
+#define Z 2
+#define W 3
+#define H W
+#endif
 }
 
 __BEGIN_DECLS
