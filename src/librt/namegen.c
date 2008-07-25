@@ -105,6 +105,88 @@ int determine_object_type(struct db_i *dbip, struct directory *dp) {
 	return object_type;
 };
 
+
+struct formatting_style {
+	struct bu_vls regex_spec;
+	int pos_of_type_id_char;
+};
+
+int count_format_blocks(char *formatstring)
+{
+	int i;
+	int components = 0;
+	for (i=0; i<strlen(formatstring); i++){
+		if (formatstring[i] == '(') {
+			components++;
+		}
+	}
+	return components;
+};
+
+void test_regex(char *name, int style){
+
+
+        struct formatting_style *standard1;
+        BU_GETSTRUCT(standard1, formatting_style);
+        bu_vls_init(&(standard1->regex_spec));
+        bu_vls_printf(&(standard1->regex_spec), "([rcs][.])([^0-9]*)([0-9]*)([.][oicb])([0-9]*)");
+        standard1->pos_of_type_id_char = 1;
+
+
+
+	struct formatting_style *standard2;
+	BU_GETSTRUCT(standard2, formatting_style);
+	bu_vls_init(&(standard2->regex_spec));
+	bu_vls_printf(&(standard2->regex_spec), "([^0-9]*)([0-9]*)([^.]*)([.])([rcs]?)");
+	standard2->pos_of_type_id_char = 5;
+	
+	regex_t compiled_regex;
+	regmatch_t *result_locations;
+	int i, ret, components;
+	struct bu_vls testresult;
+	bu_vls_init(&testresult);
+
+	if (style == 1) {
+		ret=regcomp(&compiled_regex, bu_vls_addr(&(standard1->regex_spec)), REG_EXTENDED);
+                components = count_format_blocks(bu_vls_addr(&(standard1->regex_spec)));
+	}
+
+	if (style == 2) {
+		ret=regcomp(&compiled_regex, bu_vls_addr(&(standard2->regex_spec)), REG_EXTENDED);
+		components = count_format_blocks(bu_vls_addr(&(standard2->regex_spec)));
+	}
+
+
+	result_locations = (regmatch_t *)bu_calloc(components + 1, sizeof(regmatch_t), "array to hold answers from regex");
+
+	bu_log("components: %d\n",components);	
+
+
+	ret=regexec(&compiled_regex, name, components+1, result_locations, 0);
+	
+	for (i=1; i<=components; i++) {
+		bu_vls_trunc(&testresult,0);
+		bu_vls_strncpy(&testresult, name+result_locations[i].rm_so, result_locations[i].rm_eo - result_locations[i].rm_so);
+		bu_log("%s\n",bu_vls_addr(&testresult));
+	}
+	
+	bu_free(result_locations, "free regex results");
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 struct increment_data {
    struct bu_list l;
    struct bu_vls namestring;
@@ -467,11 +549,14 @@ main(int argc, char **argv)
 
 	bu_vls_init(&temp);
 
-	av = (char **)bu_malloc(sizeof(char *) * num_of_copies, "array to hold answers from get_next_name");
 
+/*	av = (char **)bu_malloc(sizeof(char *) * num_of_copies, "array to hold answers from get_next_name");
+*/
 	bu_vls_trunc(&temp,0);
 	bu_vls_printf(&temp,"%s","core-001a.s");
-	test_obj_struct(dbip, "nsinse", bu_vls_addr(&temp));
+	test_regex(bu_vls_addr(&temp),2);
+
+/*	test_obj_struct(dbip, "nsinse", bu_vls_addr(&temp));
  	get_next_name(dbip, "nsinse", bu_vls_addr(&temp), 1, 3, num_of_copies, (char **)av);
 	for (j=0; j < num_of_copies; j++){
 		bu_log("%s\n",av[j]);
@@ -479,9 +564,12 @@ main(int argc, char **argv)
 	bu_free(av, "done with name strings, free memory");
 
 	av = (char **)bu_malloc(sizeof(char *) * num_of_copies, "array to hold answers from get_next_name");
+*/
 	bu_vls_trunc(&temp,0);
 	bu_vls_printf(&temp,"%s","s.bcore12.b3");
-	test_obj_struct(dbip, "esnisni", bu_vls_addr(&temp));
+	test_regex(bu_vls_addr(&temp),1);
+
+/*	test_obj_struct(dbip, "esnisni", bu_vls_addr(&temp));
  	get_next_name(dbip, "esnisni", bu_vls_addr(&temp), 1, 3, num_of_copies, (char **)av);	
 	for (j=0; j < num_of_copies; j++){
 		bu_log("%s\n",av[j]);
@@ -537,6 +625,6 @@ main(int argc, char **argv)
 		bu_log("%s\n",av[j]);
 	}
 	bu_free(av, "done with name strings, free memory");
-	
+*/	
 	db_close(dbip);
 };
