@@ -135,13 +135,26 @@ int count_format_blocks(char *formatstring)
     return components;
 }
 
+int is_number(char *substring)
+{
+    int ret = -1;
+    regex_t compiled_regex;
+    ret=regcomp(&compiled_regex, "^[0-9]+$", REG_EXTENDED);
+    ret=regexec(&compiled_regex, substring, 0, 0, 0);
+    if (ret == 0) {
+	return 1;
+    } else {
+	return -1;
+    }
+}
+
 void test_regex(char *name, int style){
 
 
     struct formatting_style *standard1;
     BU_GETSTRUCT(standard1, formatting_style);
     bu_vls_init(&(standard1->regex_spec));
-    bu_vls_strcat(&(standard1->regex_spec), "([rcs][.])([^0-9]*)([0-9]*)([.][oicb])([0-9]*)");
+    bu_vls_strcat(&(standard1->regex_spec), "([rcs][.])?([^0-9^.]*)?([0-9]*)?([.][oicb])?([0-9]*)?([+u-])?([0-9]*)?");
     standard1->pos_of_type_id_char = 1;
 
 
@@ -149,7 +162,7 @@ void test_regex(char *name, int style){
     struct formatting_style *standard2;
     BU_GETSTRUCT(standard2, formatting_style);
     bu_vls_init(&(standard2->regex_spec));
-    bu_vls_strcat(&(standard2->regex_spec), "([^0-9]*)([0-9]*)([^.]*)([.])([rcs]?)");
+    bu_vls_strcat(&(standard2->regex_spec), "([^0-9^.]*)?([0-9]*)?([^.]*)?([.][rcs])?([0-9]*)?([+u-])?([0-9]*)?");
     standard2->pos_of_type_id_char = 5;
 	
     regex_t compiled_regex;
@@ -173,15 +186,24 @@ void test_regex(char *name, int style){
 
     bu_log("components: %d\n",components);	
 
-
+    int *iterators;
+   
+    iterators = (int *)bu_calloc(components, sizeof(int), "array for iterator status of results");
+    
     ret=regexec(&compiled_regex, name, components+1, result_locations, 0);
 	
     for (i=1; i<=components; i++) {
 	bu_vls_trunc(&testresult,0);
 	bu_vls_strncpy(&testresult, name+result_locations[i].rm_so, result_locations[i].rm_eo - result_locations[i].rm_so);
+	if (is_number(bu_vls_addr(&testresult)) == 1) iterators[i-1] = 1;
 	bu_log("%s\n",bu_vls_addr(&testresult));
     }
-	
+
+    for (i=0; i<components; i++) {
+	bu_log("%d ", iterators[i]);
+    }
+    bu_log("\n");
+    
     bu_free(result_locations, "free regex results");
 }
 
@@ -566,7 +588,6 @@ main(int argc, char **argv)
      */
     bu_vls_trunc(&temp,0);
     bu_vls_printf(&temp,"%s","core-001a.s");
-    test_regex(bu_vls_addr(&temp),2);
 
     /*	test_obj_struct(dbip, "nsinse", bu_vls_addr(&temp));
  	get_next_name(dbip, "nsinse", bu_vls_addr(&temp), 1, 3, num_of_copies, (char **)av);
@@ -579,8 +600,21 @@ main(int argc, char **argv)
     */
     bu_vls_trunc(&temp,0);
     bu_vls_printf(&temp,"%s","s.bcore12.b3");
-    test_regex(bu_vls_addr(&temp),1);
 
+    test_regex("core-001a1b.s1+1",1);
+    test_regex("s.bcore12.b3",1);
+    test_regex("comb1.c",1);
+    test_regex("comb2.r",1);
+    test_regex("comb3.r",1);
+    test_regex("assem1",1);
+    test_regex("test.q",1);
+    test_regex("core-001a1b.s1+1",2);
+    test_regex("s.bcore12.b3",2);
+    test_regex("comb1.c",2);
+    test_regex("comb2.r",2);
+    test_regex("assem1",2);
+    test_regex("test.q",2);
+    
     /*	test_obj_struct(dbip, "esnisni", bu_vls_addr(&temp));
  	get_next_name(dbip, "esnisni", bu_vls_addr(&temp), 1, 3, num_of_copies, (char **)av);	
 	for (j=0; j < num_of_copies; j++){
