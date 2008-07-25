@@ -148,6 +148,21 @@ int is_number(char *substring)
     }
 }
 
+int contains_number(char *substring)
+{
+    int ret = -1;
+    regex_t compiled_regex;
+    ret=regcomp(&compiled_regex, "[0-9]+", REG_EXTENDED);
+    ret=regexec(&compiled_regex, substring, 0, 0, 0);
+    if (ret == 0) {
+	return 1;
+    } else {
+	return -1;
+    }
+}
+
+
+
 void test_regex(char *name, int style){
 
 
@@ -195,7 +210,13 @@ void test_regex(char *name, int style){
     for (i=1; i<=components; i++) {
 	bu_vls_trunc(&testresult,0);
 	bu_vls_strncpy(&testresult, name+result_locations[i].rm_so, result_locations[i].rm_eo - result_locations[i].rm_so);
-	if (is_number(bu_vls_addr(&testresult)) == 1) iterators[i-1] = 1;
+	if (is_number(bu_vls_addr(&testresult)) == 1) {
+	    iterators[i-1] = 1;
+	} else {
+	    if  (contains_number(bu_vls_addr(&testresult)) == 1) {
+		iterators[i-1] = 2;
+	    }
+	}
 	bu_log("%s\n",bu_vls_addr(&testresult));
     }
 
