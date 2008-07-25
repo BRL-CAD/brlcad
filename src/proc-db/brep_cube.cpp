@@ -67,6 +67,16 @@ extern "C" {
 }
 #endif
 
+#undef A
+#undef B
+#undef C
+#undef D
+#undef E
+#undef F
+#undef G
+#undef H
+
+
 enum {
     A, B, C, D, E, F, G, H
 };
