@@ -281,6 +281,8 @@ vo_size(struct view_obj	*vop,
 	fastf_t		size)
 {
     vop->vo_size = vop->vo_local2base * size;
+    if (vop->vo_size < SQRT_SMALL_FASTF)
+	vop->vo_size = SQRT_SMALL_FASTF;
     if (vop->vo_size < RT_MINVIEWSIZE)
 	vop->vo_size = RT_MINVIEWSIZE;
     vop->vo_invSize = 1.0 / vop->vo_size;
@@ -309,11 +311,8 @@ vo_size_cmd(struct view_obj	*vop,
 
     /* set view size */
     if (argc == 2) {
-	if (sscanf(argv[1], "%lf", &size) != 1 ||
-	    size <= 0 ||
-	    NEAR_ZERO(size, SMALL_FASTF)) {
-	    Tcl_AppendResult(interp, "bad size - ",
-			     argv[1], (char *)NULL);
+	if (sscanf(argv[1], "%lf", &size) != 1 || size < SMALL_FASTF)
+	    Tcl_AppendResult(interp, "bad size - ", argv[1], (char *)NULL);
 	    return TCL_ERROR;
 	}
 
