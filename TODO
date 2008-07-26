@@ -17,8 +17,6 @@ http://sf.net/pm/?group_id=105292
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------
 
-* fix primitive selection gui in mged (see BUGS)
-
 * stabilize and test mged
   (massive command restructuring in progress with libged)
 
