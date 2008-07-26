@@ -271,9 +271,9 @@ bn_mat_inv(register mat_t output, const mat_t input)
  * The matrix pointed at by "input" is inverted and stored in the area
  * pointed at by "output".
  *
- * Invert a 4-by-4 matrix using Algorithm 120 from ACM.
- * This is a modified Gauss-Jordan alogorithm
- * Note:  Inversion is done in place, with 3 work vectors
+ * Invert a 4-by-4 matrix using Algorithm 120 from ACM.  This is a
+ * modified Gauss-Jordan alogorithm Note: Inversion is done in place,
+ * with 3 work vectors
  *
  *
  *  @return	 1	if OK.
@@ -361,21 +361,22 @@ bn_mat_inverse(register mat_t output, const mat_t input)
     return 1;
 }
 
-/*
- *			B N _ V T O H _ M O V E
+
+/**
+ * B N _ V T O H _ M O V E
  *
- * Takes a pointer to a [x, y, z] vector, and a pointer
- * to space for a homogeneous vector [x, y, z, w],
- * and builds [x, y, z, 1].
- void
- bn_vtoh_move(register vert_t h2, register const vert_t v2)
- {
- h2[X] = v2[X];
- h2[Y] = v2[Y];
- h2[Z] = v2[Z];
- h2[W] = 1.0;
- }
-*/
+ * Takes a pointer to a [x, y, z] vector, and a pointer to space for a
+ * homogeneous vector [x, y, z, w], and builds [x, y, z, 1].
+ */
+void
+bn_vtoh_move(register vect_t h, register const vect_t v)
+{
+    h[X] = v[X];
+    h[Y] = v[Y];
+    h[Z] = v[Z];
+    h[W] = 1.0;
+}
+
 
 /**
  *			B N _ H T O V _ M O V E
