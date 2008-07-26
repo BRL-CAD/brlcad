@@ -965,26 +965,30 @@ rt_num_circular_segments(double	maxerr, double	radius)
     register fastf_t	half_theta;
     int			n;
 
-    if (radius <= 0.0 || maxerr <= 0.0 || maxerr >= radius) {
+    if (radius <= SMALL_FASTF || maxerr <= SMALL_FASTF || maxerr >= radius) {
 	/* Return a default number of segments */
 	return(6);
     }
     cos_half_theta = 1.0 - maxerr / radius;
+
     /* There does not seem to be any reasonable way to express the
-     * acos in terms of an atan2(), so extra checking is done.
+     * acos in terms of an atan2(), so extra checking is done.  only
+     * proceed if the cosine is between 0 and 1.
      */
-    if (cos_half_theta <= 0.0 || cos_half_theta >= 1.0) {
+    if (cos_half_theta <= SMALL_FASTF || cos_half_theta-1.0 >= -SMALL_FASTF) {
 	/* Return a default number of segments */
 	return(6);
     }
+    
     half_theta = acos(cos_half_theta);
-    if (half_theta <= SMALL) {
+
+    if (half_theta <= SMALL_FASTF) {
 	/* A very large number of segments will be needed.  Impose an
 	 * upper bound here
 	 */
 	return(360*10);
     }
-    n = bn_pi / half_theta + 0.99;
+    n = (bn_pi / half_theta) + 0.99;
 
     /* Impose the limits again */
     if (n <= 6)  return(6);
@@ -1335,7 +1339,7 @@ rt_tor_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
     tip->r_a = MAGNITUDE(tip->a);
     tip->r_b = MAGNITUDE(tip->b);
     tip->r_h = MAGNITUDE(tip->h);
-    if (tip->r_a <= SMALL || tip->r_b <= SMALL || tip->r_h <= SMALL) {
+    if (tip->r_a <= SMALL_FASTF || tip->r_b <= SMALL_FASTF || tip->r_h <= SMALL_FASTF) {
 	bu_log("rt_tor_import:  zero length A, B, or H vector\n");
 	return(-1);
     }
