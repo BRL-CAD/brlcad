@@ -2832,10 +2832,13 @@ vo_update(struct view_obj	*vop,
     vect_t work, work1;
     vect_t temp, temp1;
 
-    bn_mat_mul(vop->vo_model2view,
-	       vop->vo_rotation,
-	       vop->vo_center);
+    /* set up the view matrix */
+    bn_mat_mul(vop->vo_model2view, vop->vo_rotation, vop->vo_center);
     vop->vo_model2view[15] = vop->vo_scale;
+
+    /* XXX validation needs to occur before here to make sure we're
+     * not attempting to invert a singular matrix.
+     */
     bn_mat_inv(vop->vo_view2model, vop->vo_model2view);
 
     /* Find current azimuth, elevation, and twist angles */
