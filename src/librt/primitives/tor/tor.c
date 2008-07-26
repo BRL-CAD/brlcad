@@ -23,6 +23,88 @@
  *
  * Intersect a ray with a Torus
  *
+ * Algorithm:
+ *
+ * Given V, H, A, and B, there is a set of points on this torus
+ *
+ * { (x, y, z) | (x, y, z) is on torus defined by V, H, A, B }
+ *
+ * Through a series of Transformations, this set will be transformed
+ * into a set of points on a unit torus (R1==1) centered at the origin
+ * which lies on the X-Y plane (ie, H is on the Z axis).
+ *
+ * { (x', y', z') | (x', y', z') is on unit torus at origin }
+ *
+ * The transformation from X to X' is accomplished by:
+ *
+ * X' = S(R( X - V ))
+ *
+ * where R(X) = ( A/(|A|) )
+ *		(  B/(|B|)  ) . X
+ *		( H/(|H|) )
+ *
+ * and S(X) =	(  1/|A|   0     0   )
+ *		(    0    1/|A|   0    ) . X
+ *		(   0      0   1/|A| )
+ * where |A| = R1
+ *
+ * To find the intersection of a line with the torus, consider the
+ * parametric line L:
+ *
+ * L : { P(n) | P + t(n) . D }
+ *
+ * Call W the actual point of intersection between L and the torus.
+ * Let W' be the point of intersection between L' and the unit torus.
+ *
+ * L' : { P'(n) | P' + t(n) . D' }
+ *
+ * W = invR( invS( W' ) ) + V
+ *
+ * Where W' = k D' + P'.
+ *
+ * Given a line and a ratio, alpha, finds the equation of the unit
+ * torus in terms of the variable 't'.
+ *
+ * The equation for the torus is:
+ *
+ * [ X**2 + Y**2 + Z**2 + (1 - alpha**2) ]**2 - 4*( X**2 + Y**2 )  =  0
+ *
+ * First, find X, Y, and Z in terms of 't' for this line, then
+ * substitute them into the equation above.
+ *
+ * Wx = Dx*t + Px
+ *
+ * Wx**2 = Dx**2 * t**2  +  2 * Dx * Px  +  Px**2
+ *
+ * The real roots of the equation in 't' are the intersect points
+ * along the parameteric line.
+ *
+ * NORMALS.  Given the point W on the torus, what is the vector normal
+ * to the tangent plane at that point?
+ *
+ * Map W onto the unit torus, ie: W' = S( R( W - V ) ).  In this case,
+ * we find W' by solving the parameteric line given k.
+ *
+ * The gradient of the torus at W' is in fact the normal vector.
+ *
+ * Given that the equation for the unit torus is:
+ *
+ * [ X**2 + Y**2 + Z**2 + (1 - alpha**2) ]**2 - 4*( X**2 + Y**2 )  =  0
+ *
+ * let w = X**2 + Y**2 + Z**2 + (1 - alpha**2), then the equation becomes:
+ *
+ * w**2 - 4*( X**2 + Y**2 )  =  0
+ *
+ * For f(x, y, z) = 0, the gradient of f() is ( df/dx, df/dy, df/dz ).
+ *
+ *	df/dx = 2 * w * 2 * x - 8 * x	= (4 * w - 8) * x
+ *	df/dy = 2 * w * 2 * y - 8 * y	= (4 * w - 8) * y
+ *	df/dz = 2 * w * 2 * z		= 4 * w * z
+ *
+ * Note that the normal vector produced above will not have unit
+ * length.  Also, to make this useful for the original torus, it will
+ * have to be rotated back to the orientation of the original torus.
+ *
  */
 /** @} */
 
@@ -59,92 +141,6 @@ const struct bu_structparse rt_tor_parse[] = {
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
 };
 
-/*
- *  Algorithm:
- *
- *  Given V, H, A, and B, there is a set of points on this torus
- *
- *  { (x, y, z) | (x, y, z) is on torus defined by V, H, A, B }
- *
- *  Through a series of  Transformations, this set will be
- *  transformed into a set of points on a unit torus (R1==1)
- *  centered at the origin
- *  which lies on the X-Y plane (ie, H is on the Z axis).
- *
- *  { (x', y', z') | (x', y', z') is on unit torus at origin }
- *
- *  The transformation from X to X' is accomplished by:
- *
- *  X' = S(R( X - V ))
- *
- *  where R(X) =  ( A/(|A|) )
- *  		 (  B/(|B|)  ) . X
- *  		  ( H/(|H|) )
- *
- *  and S(X) =	 (  1/|A|   0     0   )
- *  		(    0    1/|A|   0    ) . X
- *  		 (   0      0   1/|A| )
- *  where |A| = R1
- *
- *  To find the intersection of a line with the torus, consider
- *  the parametric line L:
- *
- *  	L : { P(n) | P + t(n) . D }
- *
- *  Call W the actual point of intersection between L and the torus.
- *  Let W' be the point of intersection between L' and the unit torus.
- *
- *  	L' : { P'(n) | P' + t(n) . D' }
- *
- *  W = invR( invS( W' ) ) + V
- *
- *  Where W' = k D' + P'.
- *
- *
- *  Given a line and a ratio, alpha, finds the equation of the
- *  unit torus in terms of the variable 't'.
- *
- *  The equation for the torus is:
- *
- *      [ X**2 + Y**2 + Z**2 + (1 - alpha**2) ]**2 - 4*( X**2 + Y**2 )  =  0
- *
- *  First, find X, Y, and Z in terms of 't' for this line, then
- *  substitute them into the equation above.
- *
- *  	Wx = Dx*t + Px
- *
- *  	Wx**2 = Dx**2 * t**2  +  2 * Dx * Px  +  Px**2
- *
- *  The real roots of the equation in 't' are the intersect points
- *  along the parameteric line.
- *
- *  NORMALS.  Given the point W on the torus, what is the vector
- *  normal to the tangent plane at that point?
- *
- *  Map W onto the unit torus, ie:  W' = S( R( W - V ) ).
- *  In this case, we find W' by solving the parameteric line given k.
- *
- *  The gradient of the torus at W' is in fact the
- *  normal vector.
- *
- *  Given that the equation for the unit torus is:
- *
- *	[ X**2 + Y**2 + Z**2 + (1 - alpha**2) ]**2 - 4*( X**2 + Y**2 )  =  0
- *
- *  let w = X**2 + Y**2 + Z**2 + (1 - alpha**2), then the equation becomes:
- *
- *	w**2 - 4*( X**2 + Y**2 )  =  0
- *
- *  For f(x, y, z) = 0, the gradient of f() is ( df/dx, df/dy, df/dz ).
- *
- *	df/dx = 2 * w * 2 * x - 8 * x	= (4 * w - 8) * x
- *	df/dy = 2 * w * 2 * y - 8 * y	= (4 * w - 8) * y
- *	df/dz = 2 * w * 2 * z		= 4 * w * z
- *
- *  Note that the normal vector produced above will not have unit length.
- *  Also, to make this useful for the original torus, it will have
- *  to be rotated back to the orientation of the original torus.
- */
 
 struct tor_specific {
     fastf_t	tor_alpha;	/* 0 < (R2/R1) <= 1 */
@@ -156,20 +152,21 @@ struct tor_specific {
     mat_t	tor_invR;	/* invRot(vect') */
 };
 
+
 /**
- *  			R T _ T O R _ P R E P
+ * R T _ T O R _ P R E P
  *
- *  Given a pointer to a GED database record, and a transformation matrix,
- *  determine if this is a valid torus, and if so, precompute various
- *  terms of the formula.
+ * Given a pointer to a GED database record, and a transformation
+ * matrix, determine if this is a valid torus, and if so, precompute
+ * various terms of the formula.
  *
- *  Returns -
- *  	0	TOR is OK
- *  	!0	Error in description
+ * Returns -
+ *	0	TOR is OK
+ *	!0	Error in description
  *
- *  Implicit return -
- *  	A struct tor_specific is created, and it's address is stored in
- *  	stp->st_specific for use by rt_tor_shot().
+ * Implicit return -
+ *	A struct tor_specific is created, and it's address is stored in
+ *	stp->st_specific for use by rt_tor_shot().
  */
 int
 rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
@@ -246,12 +243,13 @@ rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_aradius = stp->st_bradius = tor->tor_r1 + tip->r_h;
 
     /*
-     *  Compute the bounding RPP planes for a circular torus.
+     * Compute the bounding RPP planes for a circular torus.
      *
-     *  Given a circular torus with vertex V, vector N, and
-     *  radii r1 and r2.  A bounding plane with direction
-     *  vector P will touch the surface of the torus at the
-     *  points:  V +/- [r2 + r1 * |N x P|] P
+     * Given a circular torus with vertex V, vector N, and radii r1
+     * and r2.  A bounding plane with direction vector P will touch
+     * the surface of the torus at the points:
+     *
+     * V +/- [r2 + r1 * |N x P|] P
      */
     /* X */
     VSET( P, 1.0, 0, 0 );		/* bounding plane normal */
@@ -283,8 +281,9 @@ rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     return(0);			/* OK */
 }
 
+
 /**
- *			R T _ T O R _ P R I N T
+ * R T _ T O R _ P R I N T
  */
 void
 rt_tor_print(register const struct soltab *stp)
@@ -301,35 +300,34 @@ rt_tor_print(register const struct soltab *stp)
     bn_mat_print("invR", tor->tor_invR );
 }
 
+
 /**
- *  			R T _ T O R _ S H O T
+ * R T _ T O R _ S H O T
  *
- *  Intersect a ray with an torus, where all constant terms have
- *  been precomputed by rt_tor_prep().  If an intersection occurs,
- *  one or two struct seg(s) will be acquired and filled in.
+ * Intersect a ray with an torus, where all constant terms have been
+ * precomputed by rt_tor_prep().  If an intersection occurs, one or
+ * two struct seg(s) will be acquired and filled in.
  *
- *  NOTE:  All lines in this function are represented parametrically
- *  by a point,  P( x0, y0, z0 ) and a direction normal,
- *  D = ax + by + cz.  Any point on a line can be expressed
- *  by one variable 't', where
+ * NOTE: All lines in this function are represented parametrically by
+ * a point, P( x0, y0, z0 ) and a direction normal, D = ax + by + cz.
+ * Any point on a line can be expressed by one variable 't', where
  *
  *	X = a*t + x0,	eg,  X = Dx*t + Px
  *	Y = b*t + y0,
  *	Z = c*t + z0.
  *
- *  First, convert the line to the coordinate system of a "stan-
- *  dard" torus.  This is a torus which lies in the X-Y plane,
- *  circles the origin, and whose primary radius is one.  The
- *  secondary radius is  alpha = ( R2/R1 )  of the original torus
- *  where  ( 0 < alpha <= 1 ).
+ * First, convert the line to the coordinate system of a "stan- dard"
+ * torus.  This is a torus which lies in the X-Y plane, circles the
+ * origin, and whose primary radius is one.  The secondary radius is
+ * alpha = ( R2/R1 ) of the original torus where ( 0 < alpha <= 1 ).
  *
- *  Then find the equation of that line and the standard torus,
- *  which turns out to be a quartic equation in 't'.  Solve the
- *  equation using a general polynomial root finder.  Use those
- *  values of 't' to compute the points of intersection in the
- *  original coordinate system.
+ * Then find the equation of that line and the standard torus, which
+ * turns out to be a quartic equation in 't'.  Solve the equation
+ * using a general polynomial root finder.  Use those values of 't' to
+ * compute the points of intersection in the original coordinate
+ * system.
  *
- *  Returns -
+ * Returns -
  *  	0	MISS
  *	>0	HIT
  */
@@ -359,32 +357,30 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     VSUB2( work, rp->r_pt, tor->tor_V );
     MAT4X3VEC( pprime, tor->tor_SoR, work );
 
-    /* normalize distance from torus.  substitute
-     * corrected pprime which contains a translation along ray
-     * direction to closest approach to vertex of torus.
-     * Translating ray origin along direction of ray to closest pt. to
-     * origin of solid's coordinate system, new ray origin is
-     * 'cor_pprime'.
+    /* normalize distance from torus.  substitute corrected pprime
+     * which contains a translation along ray direction to closest
+     * approach to vertex of torus.  Translating ray origin along
+     * direction of ray to closest pt. to origin of solid's coordinate
+     * system, new ray origin is 'cor_pprime'.
      */
     cor_proj = VDOT( pprime, dprime );
     VSCALE( cor_pprime, dprime, cor_proj );
     VSUB2( cor_pprime, pprime, cor_pprime );
 
-    /*
-     *  Given a line and a ratio, alpha, finds the equation of the
-     *  unit torus in terms of the variable 't'.
+    /* Given a line and a ratio, alpha, finds the equation of the unit
+     * torus in terms of the variable 't'.
      *
-     *  The equation for the torus is:
+     * The equation for the torus is:
      *
      * [ X**2 + Y**2 + Z**2 + (1 - alpha**2) ]**2 - 4*( X**2 + Y**2 ) = 0
      *
-     *  First, find X, Y, and Z in terms of 't' for this line, then
-     *  substitute them into the equation above.
+     * First, find X, Y, and Z in terms of 't' for this line, then
+     * substitute them into the equation above.
      *
-     *  	Wx = Dx*t + Px
+     * Wx = Dx*t + Px
      *
-     *  	Wx**2 = Dx**2 * t**2  +  2 * Dx * Px  +  Px**2
-     *  		[0]                [1]           [2]    dgr=2
+     * Wx**2 = Dx**2 * t**2  +  2 * Dx * Px  +  Px**2
+     *		[0]                [1]           [2]    dgr=2
      */
     X2_Y2.dgr = 2;
     X2_Y2.cf[0] = dprime[X] * dprime[X] + dprime[Y] * dprime[Y];
@@ -419,8 +415,8 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     C.cf[3] = Asqr.cf[3] - X2_Y2.cf[1] * 4.0;
     C.cf[4] = Asqr.cf[4] - X2_Y2.cf[2] * 4.0;
 
-    /*  It is known that the equation is 4th order.  Therefore,
-     *  if the root finder returns other than 4 roots, error.
+    /* It is known that the equation is 4th order.  Therefore, if the
+     * root finder returns other than 4 roots, error.
      */
     if ( (i = rt_poly_roots( &C, val, stp->st_dp->d_namep )) != 4 ) {
 	if ( i > 0 )  {
@@ -439,18 +435,19 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	return(0);		/* MISS */
     }
 
-    /*  Only real roots indicate an intersection in real space.
+    /* Only real roots indicate an intersection in real space.
      *
-     *  Look at each root returned; if the imaginary part is zero
-     *  or sufficiently close, then use the real part as one value
-     *  of 't' for the intersections
+     * Look at each root returned; if the imaginary part is zero or
+     * sufficiently close, then use the real part as one value of 't'
+     * for the intersections
      */
     for ( j=0, i=0; j < 4; j++ ) {
 	if ( NEAR_ZERO( val[j].im, ap->a_rt_i->rti_tol.dist ) )
 	    k[i++] = val[j].re;
     }
 
-    /* reverse above translation by adding distance to all 'k' values. */
+    /* reverse above translation by adding distance to all 'k' values.
+     */
     for ( j = 0; j < i; ++j )
 	k[j] -= cor_proj;
 
@@ -524,10 +521,12 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 }
 
 #define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
-/***
- *			R T _ T O R _ V S H O T
+
+
+/**
+ * R T _ T O R _ V S H O T
  *
- *  This is the Becker vector version
+ * This is the Becker vector version
  */
 void
 rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
@@ -578,32 +577,31 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	/* Use segp[i].seg_out.hit_normal as tmp to hold pprime */
 	VMOVE( segp[i].seg_out.hit_normal, pprime );
 
-	/* normalize distance from torus.  substitute
-	 * corrected pprime which contains a translation along ray
-	 * direction to closest approach to vertex of torus.
-	 * Translating ray origin along direction of ray to closest
-	 * pt. to origin of solid's coordinate system, new ray origin is
-	 * 'cor_pprime'.
+	/* normalize distance from torus.  substitute corrected pprime
+	 * which contains a translation along ray direction to closest
+	 * approach to vertex of torus.  Translating ray origin along
+	 * direction of ray to closest pt. to origin of solid's
+	 * coordinate system, new ray origin is 'cor_pprime'.
 	 */
 	cor_proj[i] = VDOT( pprime, dprime );
 	VSCALE( cor_pprime, dprime, cor_proj[i] );
 	VSUB2( cor_pprime, pprime, cor_pprime );
 
 	/*
-	 *  Given a line and a ratio, alpha, finds the equation of the
-	 *  unit torus in terms of the variable 't'.
+	 * Given a line and a ratio, alpha, finds the equation of the
+	 * unit torus in terms of the variable 't'.
 	 *
-	 *  The equation for the torus is:
+	 * The equation for the torus is:
 	 *
 	 * [X**2 + Y**2 + Z**2 + (1 - alpha**2)]**2 - 4*(X**2 + Y**2) =0
 	 *
-	 *  First, find X, Y, and Z in terms of 't' for this line, then
-	 *  substitute them into the equation above.
+	 * First, find X, Y, and Z in terms of 't' for this line, then
+	 * substitute them into the equation above.
 	 *
-	 *  	Wx = Dx*t + Px
+	 * Wx = Dx*t + Px
 	 *
-	 *  	Wx**2 = Dx**2 * t**2  +  2 * Dx * Px  +  Px**2
-	 *  		[0]                [1]           [2]    dgr=2
+	 * Wx**2 = Dx**2 * t**2  +  2 * Dx * Px  +  Px**2
+	 *		[0]             [1]           [2]    dgr=2
 	 */
 	X2_Y2.dgr = 2;
 	X2_Y2.cf[0] = dprime[X] * dprime[X] + dprime[Y] * dprime[Y];
@@ -647,12 +645,14 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	C[i].cf[4] = Asqr.cf[4] - X2_Y2.cf[2];
     }
 
-    /* Unfortunately finding the 4th order roots are too ugly to inline */
+    /* Unfortunately finding the 4th order roots are too ugly to
+     * inline.
+     */
     for (i = 0; i < n; i++) {
 	if ( segp[i].seg_stp == 0) continue;	/* Skip */
 
-	/*  It is known that the equation is 4th order.  Therefore,
-	 *  if the root finder returns other than 4 roots, error.
+	/* It is known that the equation is 4th order.  Therefore, if
+	 * the root finder returns other than 4 roots, error.
 	 */
 	if ( (num_roots = rt_poly_roots( &(C[i]), &(val[i][0]), (*stp)->st_dp->d_namep )) != 4 ) {
 	    if ( num_roots > 0 )  {
@@ -676,11 +676,11 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
     for (i = 0; i < n; i++) {
 	if ( segp[i].seg_stp == 0) continue; /* Skip */
 
-	/*  Only real roots indicate an intersection in real space.
+	/* Only real roots indicate an intersection in real space.
 	 *
-	 *  Look at each root returned; if the imaginary part is zero
-	 *  or sufficiently close, then use the real part as one value
-	 *  of 't' for the intersections
+	 * Look at each root returned; if the imaginary part is zero
+	 * or sufficiently close, then use the real part as one value
+	 * of 't' for the intersections
 	 */
 	/* Also reverse translation by adding distance to all 'k' values. */
 	/* Reuse C to hold k values */
@@ -789,32 +789,33 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
     bu_free( (char *)cor_proj, "tor cor_proj");
 }
 
+
 /**
- *			R T _ T O R _ N O R M
+ * R T _ T O R _ N O R M
  *
- *  Compute the normal to the torus,
- *  given a point on the UNIT TORUS centered at the origin on the X-Y plane.
- *  The gradient of the torus at that point is in fact the
- *  normal vector, which will have to be given unit length.
- *  To make this useful for the original torus, it will have
- *  to be rotated back to the orientation of the original torus.
+ * Compute the normal to the torus, given a point on the UNIT TORUS
+ * centered at the origin on the X-Y plane.  The gradient of the torus
+ * at that point is in fact the normal vector, which will have to be
+ * given unit length.  To make this useful for the original torus, it
+ * will have to be rotated back to the orientation of the original
+ * torus.
  *
- *  Given that the equation for the unit torus is:
+ * Given that the equation for the unit torus is:
  *
  *	[ X**2 + Y**2 + Z**2 + (1 - alpha**2) ]**2 - 4*( X**2 + Y**2 )  =  0
  *
- *  let w = X**2 + Y**2 + Z**2 + (1 - alpha**2), then the equation becomes:
+ * let w = X**2 + Y**2 + Z**2 + (1 - alpha**2), then the equation becomes:
  *
  *	w**2 - 4*( X**2 + Y**2 )  =  0
  *
- *  For f(x, y, z) = 0, the gradient of f() is ( df/dx, df/dy, df/dz ).
+ * For f(x, y, z) = 0, the gradient of f() is ( df/dx, df/dy, df/dz ).
  *
  *	df/dx = 2 * w * 2 * x - 8 * x	= (4 * w - 8) * x
  *	df/dy = 2 * w * 2 * y - 8 * y	= (4 * w - 8) * y
  *	df/dz = 2 * w * 2 * z		= 4 * w * z
  *
- *  Since we rescale the gradient (normal) to unity, we divide the
- *  above equations by four here.
+ * Since we rescale the gradient (normal) to unity, we divide the
+ * above equations by four here.
  */
 void
 rt_tor_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
@@ -839,10 +840,11 @@ rt_tor_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
     MAT3X3VEC( hitp->hit_normal, tor->tor_invR, work );
 }
 
+
 /**
- *			R T _ T O R _ C U R V E
+ * R T _ T O R _ C U R V E
  *
- *  Return the curvature of the torus.
+ * Return the curvature of the torus.
  */
 void
 rt_tor_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
@@ -887,7 +889,7 @@ rt_tor_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 }
 
 /**
- *			R T _ T O R _ U V
+ * R T _ T O R _ U V
  */
 void
 rt_tor_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
@@ -914,8 +916,9 @@ rt_tor_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
     uvp -> uv_v = atan2(pprime2[Z], costheta) * bn_inv2pi + 0.5;
 }
 
+
 /**
- *			R T _ T O R _ F R E E
+ * R T _ T O R _ F R E E
  */
 void
 rt_tor_free(struct soltab *stp)
@@ -932,27 +935,28 @@ rt_tor_class(void)
     return(0);
 }
 
+
 /**
- *			R T _ N U M _ C I R C U L A R _ S E G M E N T S
+ * R T _ N U M _ C I R C U L A R _ S E G M E N T S
  *
- *  Given a circle with a specified radius, determine the minimum number
- *  of straight line segments that the circle can be approximated with,
- *  while still meeting the given maximum permissible error distance.
- *  Form a chord (straight line) by
- *  connecting the start and end points found when
- *  sweeping a 'radius' arc through angle 'theta'.
+ * Given a circle with a specified radius, determine the minimum
+ * number of straight line segments that the circle can be
+ * approximated with, while still meeting the given maximum
+ * permissible error distance.  Form a chord (straight line) by
+ * connecting the start and end points found when sweeping a 'radius'
+ * arc through angle 'theta'.
  *
- *  The error distance is the distance between where a radius line
- *  at angle theta/2 hits the chord, and where it hits the circle
- *  (at 'radius' distance).
+ * The error distance is the distance between where a radius line at
+ * angle theta/2 hits the chord, and where it hits the circle (at
+ * 'radius' distance).
  *
  *	error_distance = radius * ( 1 - cos( theta/2 ) )
  *
- *  or
+ * or
  *
  *	theta = 2 * acos( 1 - error_distance / radius )
  *
- *  Returns -
+ * Returns -
  *	number of segments.  Always at least 6.
  */
 int
@@ -976,8 +980,8 @@ rt_num_circular_segments(double	maxerr, double	radius)
     }
     half_theta = acos( cos_half_theta );
     if ( half_theta <= SMALL )  {
-	/* A very large number of segments will be needed.
-	 * Impose an upper bound here
+	/* A very large number of segments will be needed.  Impose an
+	 * upper bound here
 	 */
 	return( 360*10 );
     }
@@ -988,14 +992,15 @@ rt_num_circular_segments(double	maxerr, double	radius)
     if ( n >= 360*10 )  return( 360*10 );
     return(n);
 }
+
+
 /**
- *			R T _ T O R _ P L O T
+ * R T _ T O R _ P L O T
  *
  * The TORUS has the following input fields:
  *	ti.v	V from origin to center
  *	ti.h	Radius Vector, Normal to plane of torus
  *	ti.a, ti.b	perpindicular, to CENTER of torus (for top, bottom)
- *
  */
 int
 rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
@@ -1048,12 +1053,13 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	nw = rt_num_circular_segments( rel, tip->r_h );
     }
 
-    /*
-     *  Implement surface-normal tolerance, if given
-     *	nseg = (2 * pi) / (2 * tol)
-     *  For a facet which subtends angle theta, surface normal
-     *  is exact in the center, and off by theta/2 at the edges.
-     *  Note:  1 degree tolerance requires 180*180 tessellation!
+    /* Implement surface-normal tolerance, if given:
+     *
+     * nseg = (2 * pi) / (2 * tol)
+     *
+     * For a facet which subtends angle theta, surface normal is exact
+     * in the center, and off by theta/2 at the edges.  Note: 1 degree
+     * tolerance requires 180*180 tessellation!
      */
     if ( ttol->norm > 0.0 )  {
 	register int	nseg;
@@ -1109,8 +1115,9 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     return(0);
 }
 
+
 /**
- *			R T _ T O R _ T E S S
+ * R T _ T O R _ T E S S
  */
 int
 rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
@@ -1145,8 +1152,8 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     if ( ttol->rel <= 0.0 || ttol->rel >= 1.0 )  {
 	rel = 0.0;		/* none */
     } else {
-	/* Convert relative tolerance to absolute tolerance
-	 * by scaling w.r.t. the torus diameter.
+	/* Convert relative tolerance to absolute tolerance by scaling
+	 * w.r.t. the torus diameter.
 	 */
 	rel = ttol->rel * 2 * (tip->r_a+tip->r_h);
     }
@@ -1170,12 +1177,13 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	nw = rt_num_circular_segments( rel, tip->r_h );
     }
 
-    /*
-     *  Implement surface-normal tolerance, if given
-     *	nseg = (2 * pi) / (2 * tol)
-     *  For a facet which subtends angle theta, surface normal
-     *  is exact in the center, and off by theta/2 at the edges.
-     *  Note:  1 degree tolerance requires 180*180 tessellation!
+    /* Implement surface-normal tolerance, if given
+     *
+     * nseg = (2 * pi) / (2 * tol)
+     *
+     * For a facet which subtends angle theta, surface normal is exact
+     * in the center, and off by theta/2 at the edges.  Note: 1 degree
+     * tolerance requires 180*180 tessellation!
      */
     if ( ttol->norm > 0.0 )  {
 	register int	nseg;
@@ -1287,10 +1295,10 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 
 /**
- *			R T _ T O R _ I M P O R T
+ * R T _ T O R _ I M P O R T
  *
- *  Import a torus from the database format to the internal format.
- *  Apply modeling transformations at the same time.
+ * Import a torus from the database format to the internal format.
+ * Apply modeling transformations at the same time.
  */
 int
 rt_tor_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
@@ -1349,8 +1357,9 @@ rt_tor_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
     return(0);		/* OK */
 }
 
+
 /**
- *			R T _ T O R _ E X P O R T 5
+ * R T _ T O R _ E X P O R T 5
  */
 int
 rt_tor_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
@@ -1378,10 +1387,12 @@ rt_tor_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     return 0;
 }
+
+
 /**
- *			R T _ T O R _ E X P O R T
+ * R T _ T O R _ E X P O R T
  *
- *  The name will be added by the caller.
+ * The name will be added by the caller.
  */
 int
 rt_tor_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
@@ -1463,19 +1474,20 @@ rt_tor_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
     return(0);
 }
 
+
 /**
- *			R T _ T O R _ I M P O R T 5
+ * R T _ T O R _ I M P O R T 5
  *
- *	Taken from the database record:
- *		v	vertex (point) of center of torus.
- *		h	unit vector in the normal direction of the torus
- *		major	radius of ring from 'v' to center of ring
- *		minor	radius of the ring
+ * Taken from the database record:
+ *	v	vertex (point) of center of torus.
+ *	h	unit vector in the normal direction of the torus
+ *	major	radius of ring from 'v' to center of ring
+ *	minor	radius of the ring
  *
- *	Calculate:
- *		2nd radius of ring (==1st radius)
- *		ring unit vector 1
- *		ring unit vector 2
+ * Calculate:
+ *	2nd radius of ring (==1st radius)
+ *	ring unit vector 1
+ *	ring unit vector 2
  */
 int
 rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
@@ -1527,12 +1539,14 @@ rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     VSCALE(tip->b, tip->b, tip->r_b);
     return 0;
 }
+
+
 /**
- *			R T _ T O R _ D E S C R I B E
+ * R T _ T O R _ D E S C R I B E
  *
- *  Make human-readable formatted presentation of this solid.
- *  First line describes type of solid.
- *  Additional lines are indented one tab, and give parameter values.
+ * Make human-readable formatted presentation of this solid.  First
+ * line describes type of solid.  Additional lines are indented one
+ * tab, and give parameter values.
  */
 int
 rt_tor_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
@@ -1583,10 +1597,12 @@ rt_tor_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
     return(0);
 }
 
+
 /**
- *			R T _ T O R _ I F R E E
+ * R T _ T O R _ I F R E E
  *
- *  Free the storage associated with the rt_db_internal version of this solid.
+ * Free the storage associated with the rt_db_internal version of this
+ * solid.
  */
 void
 rt_tor_ifree(struct rt_db_internal *ip)
@@ -1600,6 +1616,7 @@ rt_tor_ifree(struct rt_db_internal *ip)
     bu_free( (char *)tip, "rt_tor_internal" );
     ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
+
 
 /**
  * R T _ T O R _ P A R A M S
