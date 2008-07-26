@@ -120,7 +120,7 @@ CONFIG_DAY=`date +%d`
 CONFIG_MONTH=`date +%m`
 CONFIG_YEAR=`date +%Y`
 CONFIG_DATE="${CONFIG_YEAR}${CONFIG_MONTH}${CONFIG_DAY}"
-CONFIG_TS="`date -R 2>/dev/null || date +'%a, %d %b %Y %H:%M:%S %z 2>/dev/null || date'`" # try RFC 2822
+CONFIG_TS="`date -R 2>/dev/null || date +'%a, %d %b %Y %H:%M:%S %z' 2>/dev/null || date`" # try RFC 2822
 AC_SUBST(CONFIG_DAY)
 AC_SUBST(CONFIG_MONTH)
 AC_SUBST(CONFIG_YEAR)
