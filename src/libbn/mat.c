@@ -24,54 +24,36 @@
  * @brief
  * 4 x 4 Matrix manipulation functions...
  *
- * @li bn_atan2()			Wrapper for library atan2()
- * @li bn_mat_mul( &o, &i1, &i2 )	Multiply i1 by i2 and store in o
- * @li bn_mat_mul2( &i, &o )
- * @li bn_matXvec( &ov, &m, &iv )	Multiply m by vector iv, store in ov
- * @li bn_mat_inv( &om, &im )		Invert matrix im, store result in om
- * @li bn_mat_print( &title, &m )	Print matrix (with title) on stderr.
- * @li bn_mat_trn( &o, &i )		Transpose matrix i into matrix o
- * @li bn_mat_ae( &o, azimuth, elev)	Make rot matrix from azimuth+elevation
- * @li bn_ae_vec( &az, &el, v )	Find az/elev from dir vector
- * @li bn_aet_vec( &az, &el, &twist, v1, v2 ) Find az, el, twist from two vectors
- * @li bn_mat_angles( &o, alpha, beta, gama )	Make rot matrix from angles
- * @li bn_eigen2x2()			Eigen values and vectors
- * @li bn_mat_lookat			Make rot mat:  xform from D to -Z
- * @li bn_mat_fromto			Make rot mat:  xform from A to
- * @li bn_mat_arb_rot( &m, pt, dir, ang)	Make rot mat about axis (pt, dir), through ang
- * @li bn_mat_is_equal()		Is mat a equal to mat b?
- *
- *
  * Matrix array elements have the following positions in the matrix:
  @code
- |  0  1  2  3 |		| 0 |
- [ 0 1 2 3 ]		|  4  5  6  7 |		| 1 |
- |  8  9 10 11 |		| 2 |
- | 12 13 14 15 |		| 3 |
+ *			|  0  1  2  3 |		| 0 |
+ *	[ 0 1 2 3 ]	|  4  5  6  7 |		| 1 |
+ *			|  8  9 10 11 |		| 2 |
+ *			| 12 13 14 15 |		| 3 |
+ *
+ * preVector (vect_t)	Matrix (mat_t)		postVector (vect_t)
  @endcode
- *
- *     preVector (vect_t)	 Matrix (mat_t)    postVector (vect_t)
- *
  */
-
 /** @} */
 
 #include "common.h"
 
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
+#include "bio.h"
 
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 
-const mat_t	bn_mat_identity = {
+
+const mat_t bn_mat_identity = {
     1.0, 0.0, 0.0, 0.0,
     0.0, 1.0, 0.0, 0.0,
     0.0, 0.0, 1.0, 0.0,
     0.0, 0.0, 0.0, 1.0
 };
+
 
 /**
  *
@@ -90,7 +72,7 @@ bn_mat_print_guts(const char	*title,
     if (!m) {
 	bu_strlcat(obuf, "(Identity)", len);
     } else {
-	for (i=0; i<16; i++)  {
+	for (i=0; i<16; i++) {
 	    snprintf(cp, len-(cp-obuf), " %8.3f", m[i]);
 	    cp += strlen(cp);
 	    if (i == 15) {
@@ -105,8 +87,9 @@ bn_mat_print_guts(const char	*title,
     }
 }
 
+
 /**
- *			B N _ M A T _ P R I N T
+ * B N _ M A T _ P R I N T
  */
 void
 bn_mat_print(const char		*title,
@@ -118,32 +101,35 @@ bn_mat_print(const char		*title,
     bu_log("%s\n", obuf);
 }
 
+
 /**
- *			B N _ A T A N 2
- * @brief
- *  A wrapper for the system atan2().  On the Silicon Graphics,
- *  and perhaps on others, x==0 incorrectly returns infinity.
+ * B N _ A T A N 2
+ *
+ * A wrapper for the system atan2().  On the Silicon Graphics, and
+ * perhaps on others, x==0 incorrectly returns infinity.
  */
 double
 bn_atan2(double y, double x)
 {
-    if ( x > -1.0e-20 && x < 1.0e-20 )  {
+    if (x > -1.0e-20 && x < 1.0e-20) {
 	/* X is equal to zero, check Y */
-	if ( y < -1.0e-20 )  return( -3.14159265358979323/2 );
-	if ( y >  1.0e-20 )  return(  3.14159265358979323/2 );
+	if (y < -1.0e-20)
+	    return(-3.14159265358979323/2);
+	if (y > 1.0e-20)
+	    return( 3.14159265358979323/2);
 	return(0.0);
     }
-    return( atan2( y, x ) );
+    return(atan2(y, x));
 }
 
 
 /**
- *			B N _ M A T _ M U L
- *@brief
+ * B N _ M A T _ M U L
+ *
  * Multiply matrix "a" by "b" and store the result in "o".
- * NOTE:  This is different from multiplying "b" by "a"
- * (most of the time!)
- * NOTE: "o" must not be the same as either of the inputs.
+ *
+ * This is different from multiplying "b" by "a" (most of the time!)
+ * Also, "o" must not be the same as either of the inputs.
  */
 void
 bn_mat_mul(register mat_t o, register const mat_t a, register const mat_t b)
@@ -169,69 +155,73 @@ bn_mat_mul(register mat_t o, register const mat_t a, register const mat_t b)
     o[15] = a[12]*b[ 3] + a[13]*b[ 7] + a[14]*b[11] + a[15]*b[15];
 }
 
+
 /**
- *			B N _ M A T _ M U L 2
+ * B N _ M A T _ M U L 2
  *
- *  o = i * o
+ * o = i * o
  *
- *@brief
- *  A convenience wrapper for bn_mat_mul() to update a matrix in place.
- *  The arugment ordering is confusing either way.
+ * A convenience wrapper for bn_mat_mul() to update a matrix in place.
+ * The arugment ordering is confusing either way.
  */
 void
 bn_mat_mul2(register const mat_t i, register mat_t o)
 {
     mat_t	temp;
 
-    bn_mat_mul( temp, i, o );
-    MAT_COPY( o, temp );
+    bn_mat_mul(temp, i, o);
+    MAT_COPY(o, temp);
 }
 
+
 /**
- *			B N _ M A T _ M U L 3
+ * B N _ M A T _ M U L 3
  *
- *  o = a * b * c
+ * o = a * b * c
  *
- *  The output matrix may be the same as 'b' or 'c', but may not be 'a'.
+ * The output matrix may be the same as 'b' or 'c', but may not be
+ * 'a'.
  */
 void
 bn_mat_mul3(mat_t o, const mat_t a, const mat_t b, const mat_t c)
 {
     mat_t	t;
 
-    bn_mat_mul( t, b, c );
-    bn_mat_mul( o, a, t );
+    bn_mat_mul(t, b, c);
+    bn_mat_mul(o, a, t);
 }
 
+
 /**
- *			B N _ M A T _ M U L 4
+ * B N _ M A T _ M U L 4
  *
- *  o = a * b * c * d
+ * o = a * b * c * d
  *
- *  The output matrix may be the same as any input matrix.
+ * The output matrix may be the same as any input matrix.
  */
 void
 bn_mat_mul4(mat_t ao, const mat_t a, const mat_t b, const mat_t c, const mat_t d)
 {
     mat_t	t, u;
 
-    bn_mat_mul( u, c, d );
-    bn_mat_mul( t, a, b );
-    bn_mat_mul( ao, t, u );
+    bn_mat_mul(u, c, d);
+    bn_mat_mul(t, a, b);
+    bn_mat_mul(ao, t, u);
 }
 
+
 /**
- *			B N _ M A T X V E C
- *@brief
- * Multiply the matrix "im" by the vector "iv" and store the result
- * in the vector "ov".  Note this is post-multiply, and
- * operates on 4-tuples.  Use MAT4X3VEC() to operate on 3-tuples.
+ * B N _ M A T X V E C
+ *
+ * Multiply the matrix "im" by the vector "iv" and store the result in
+ * the vector "ov".  Note this is post-multiply, and operates on
+ * 4-tuples.  Use MAT4X3VEC() to operate on 3-tuples.
  */
 void
 bn_matXvec(register vect_t ov, register const mat_t im, register const vect_t iv)
 {
-    register int eo = 0;		/* Position in output vector */
-    register int em = 0;		/* Position in input matrix */
+    register int eo = 0;	/* Position in output vector */
+    register int em = 0;	/* Position in input matrix */
     register int ei;		/* Position in input vector */
 
     /* For each element in the output array... */
@@ -246,7 +236,7 @@ bn_matXvec(register vect_t ov, register const mat_t im, register const vect_t iv
 
 
 /**
- *			B N _ M A T _ I N V
+ * B N _ M A T _ I N V
  *
  * The matrix pointed at by "input" is inverted and stored in the area
  * pointed at by "output".
@@ -256,7 +246,7 @@ bn_matXvec(register vect_t ov, register const mat_t im, register const vect_t iv
 void
 bn_mat_inv(register mat_t output, const mat_t input)
 {
-    if (bn_mat_inverse(output, input) == 0)  {
+    if (bn_mat_inverse(output, input) == 0) {
 	bu_log("bn_mat_inv:  error!");
 	bn_mat_print("singular matrix", input);
 	bu_bomb("bn_mat_inv: singular matrix\n");
@@ -266,7 +256,7 @@ bn_mat_inv(register mat_t output, const mat_t input)
 
 
 /**
- *			B N _ M A T _ I N V E R S E
+ * B N _ M A T _ I N V E R S E
  *
  * The matrix pointed at by "input" is inverted and stored in the area
  * pointed at by "output".
@@ -276,48 +266,48 @@ bn_mat_inv(register mat_t output, const mat_t input)
  * with 3 work vectors
  *
  *
- *  @return	 1	if OK.
- *  @return	 0	if matrix is singular.
+ * @return	 1	if OK.
+ * @return	 0	if matrix is singular.
  */
 int
 bn_mat_inverse(register mat_t output, const mat_t input)
 {
-    register int i, j;			/* Indices */
-    int k;				/* Indices */
-    int	z[4];			/* Temporary */
-    fastf_t	b[4];			/* Temporary */
-    fastf_t	c[4];			/* Temporary */
+    register int i, j;	/* Indices */
+    int k;		/* Indices */
+    int	z[4];		/* Temporary */
+    fastf_t	b[4];	/* Temporary */
+    fastf_t	c[4];	/* Temporary */
 
-    MAT_COPY( output, input );	/* Duplicate */
+    MAT_COPY(output, input);	/* Duplicate */
 
     /* Initialization */
-    for ( j = 0; j < 4; j++ )
+    for (j = 0; j < 4; j++)
 	z[j] = j;
 
     /* Main Loop */
-    for ( i = 0; i < 4; i++ )  {
-	register fastf_t y;				/* local temporary */
+    for (i = 0; i < 4; i++) {
+	register fastf_t y;		/* local temporary */
 
 	k = i;
 	y = output[i*4+i];
-	for ( j = i+1; j < 4; j++ )  {
-	    register fastf_t w;			/* local temporary */
+	for (j = i+1; j < 4; j++) {
+	    register fastf_t w;		/* local temporary */
 
 	    w = output[i*4+j];
-	    if ( fabs(w) > fabs(y) )  {
+	    if (fabs(w) > fabs(y)) {
 		k = j;
 		y = w;
 	    }
 	}
 
-	if ( fabs(y) < SQRT_SMALL_FASTF )  {
+	if (fabs(y) < SQRT_SMALL_FASTF) {
 	    return 0;
 	    /* NOTREACHED */
 	}
 	y = 1.0 / y;
 
-	for ( j = 0; j < 4; j++ )  {
-	    register fastf_t temp;		/* Local */
+	for (j = 0; j < 4; j++) {
+	    register fastf_t temp;	/* Local */
 
 	    c[j] = output[j*4+k];
 	    output[j*4+k] = output[j*4+i];
@@ -331,22 +321,24 @@ bn_mat_inverse(register mat_t output, const mat_t input)
 	j = z[i];
 	z[i] = z[k];
 	z[k] = j;
-	for ( k = 0; k < 4; k++ )  {
-	    if ( k == i )  continue;
-	    for ( j = 0; j < 4; j++ )  {
-		if ( j == i )  continue;
+	for (k = 0; k < 4; k++) {
+	    if (k == i)
+		continue;
+	    for (j = 0; j < 4; j++) {
+		if (j == i)
+		    continue;
 		output[k*4+j] = output[k*4+j] - b[j] * c[k];
 	    }
 	}
     }
 
-    /*  Second Loop */
-    for ( i = 0; i < 4; i++ )  {
-	while ( (k = z[i]) != i )  {
+    /* Second Loop */
+    for (i = 0; i < 4; i++) {
+	while ((k = z[i]) != i) {
 	    int p;			/* Local temp */
 
-	    for ( j = 0; j < 4; j++ )  {
-		register fastf_t w;		/* Local temp */
+	    for (j = 0; j < 4; j++) {
+		register fastf_t w;	/* Local temp */
 
 		w = output[i*4+j];
 		output[i*4+j] = output[k*4+j];
@@ -379,23 +371,23 @@ bn_vtoh_move(register vect_t h, register const vect_t v)
 
 
 /**
- *			B N _ H T O V _ M O V E
+ * B N _ H T O V _ M O V E
  *
- * Takes a pointer to [x, y, z, w], and converts it to
- * an ordinary vector [x/w, y/w, z/w].
- * Optimization for the case of w==1 is performed.
+ * Takes a pointer to [x, y, z, w], and converts it to an ordinary
+ * vector [x/w, y/w, z/w].  Optimization for the case of w==1 is
+ * performed.
  */
 void
 bn_htov_move(register vect_t v, register const vect_t h)
 {
     register fastf_t inv;
 
-    if ( h[3] == 1.0 )  {
+    if (h[3] == 1.0) {
 	v[X] = h[X];
 	v[Y] = h[Y];
 	v[Z] = h[Z];
-    }  else  {
-	if ( h[W] == SMALL_FASTF )  {
+    } else {
+	if (h[W] == SMALL_FASTF) {
 	    bu_log("bn_htov_move: divide by %f!\n", h[W]);
 	    return;
 	}
@@ -408,7 +400,7 @@ bn_htov_move(register vect_t v, register const vect_t h)
 
 
 /**
- *			B N _ M A T _ T R N
+ * B N _ M A T _ T R N
  */
 void
 bn_mat_trn(mat_t om, register const mat_t im)
@@ -437,13 +429,13 @@ bn_mat_trn(mat_t om, register const mat_t im)
 }
 
 /**
- *			B N _ M A T _ A E
+ * B N _ M A T _ A E
  *
- *  Compute a 4x4 rotation matrix given Azimuth and Elevation.
+ * Compute a 4x4 rotation matrix given Azimuth and Elevation.
  *
- *  Azimuth is +X, Elevation is +Z, both in degrees.
+ * Azimuth is +X, Elevation is +Z, both in degrees.
  *
- *  Formula due to Doug Gwyn, BRL.
+ * Formula due to Doug Gwyn, BRL.
  */
 void
 bn_mat_ae(register fastf_t *m, double azimuth, double elev)
@@ -478,35 +470,37 @@ bn_mat_ae(register fastf_t *m, double azimuth, double elev)
     m[15] = 1.0;
 }
 
+
 /**
- *			B N _ A E _ V E C
+ * B N _ A E _ V E C
  *
- *  Find the azimuth and elevation angles that correspond to the
- *  direction (not including twist) given by a direction vector.
+ * Find the azimuth and elevation angles that correspond to the
+ * direction (not including twist) given by a direction vector.
  */
 void
 bn_ae_vec(fastf_t *azp, fastf_t *elp, const vect_t v)
 {
     register fastf_t	az;
 
-    if ( (az = bn_atan2( v[Y], v[X] ) * bn_radtodeg) < 0 )  {
+    if ((az = bn_atan2(v[Y], v[X]) * bn_radtodeg) < 0) {
 	*azp = 360 + az;
-    } else if ( az >= 360 ) {
+    } else if (az >= 360) {
 	*azp = az - 360;
     } else {
 	*azp = az;
     }
-    *elp = bn_atan2( v[Z], hypot( v[X], v[Y] ) ) * bn_radtodeg;
+    *elp = bn_atan2(v[Z], hypot(v[X], v[Y])) * bn_radtodeg;
 }
 
-/**			B N _ A E T _ V E C
- *@brief
- * Find the azimuth, elevation, and twist from two vectors.
- * Vec_ae is in the direction of view (+z in mged view)
- * and vec_twist points to the viewers right (+x in mged view).
- * Accuracy (degrees) is used to stabilze flutter between
- * equivalent extremes of atan2(), and to snap twist to zero
- * when elevation is near +/- 90
+
+/**
+ * B N _ A E T _ V E C
+ *
+ * Find the azimuth, elevation, and twist from two vectors.  Vec_ae is
+ * in the direction of view (+z in mged view) and vec_twist points to
+ * the viewers right (+x in mged view).  Accuracy (degrees) is used to
+ * stabilze flutter between equivalent extremes of atan2(), and to
+ * snap twist to zero when elevation is near +/- 90
  */
 void
 bn_aet_vec(fastf_t *az, fastf_t *el, fastf_t *twist, fastf_t *vec_ae, fastf_t *vec_twist, fastf_t accuracy)
@@ -515,42 +509,39 @@ bn_aet_vec(fastf_t *az, fastf_t *el, fastf_t *twist, fastf_t *vec_ae, fastf_t *v
     vect_t z_dir;
 
     /* Get az and el as usual */
-    bn_ae_vec( az, el, vec_ae );
+    bn_ae_vec(az, el, vec_ae);
 
     /* stabilize fluctuation bewteen 0 and 360
      * change azimuth near 360 to 0 */
-    if ( NEAR_ZERO( *az - 360.0, accuracy ) )
+    if (NEAR_ZERO(*az - 360.0, accuracy))
 	*az = 0.0;
 
     /* if elevation is +/-90 set twist to zero and calculate azimuth */
-    if ( NEAR_ZERO( *el - 90.0, accuracy ) || NEAR_ZERO( *el + 90.0, accuracy ) )
-    {
+    if (NEAR_ZERO(*el - 90.0, accuracy) || NEAR_ZERO(*el + 90.0, accuracy)) {
 	*twist = 0.0;
-	*az = bn_atan2( -vec_twist[X], vec_twist[Y] ) * bn_radtodeg;
-    }
-    else
-    {
+	*az = bn_atan2(-vec_twist[X], vec_twist[Y]) * bn_radtodeg;
+    } else {
 	/* Calculate twist from vec_twist */
-	VSET( z_dir, 0, 0, 1 );
-	VCROSS( zero_twist, z_dir, vec_ae );
-	VUNITIZE( zero_twist );
-	VCROSS( ninety_twist, vec_ae, zero_twist );
-	VUNITIZE( ninety_twist );
+	VSET(z_dir, 0, 0, 1);
+	VCROSS(zero_twist, z_dir, vec_ae);
+	VUNITIZE(zero_twist);
+	VCROSS(ninety_twist, vec_ae, zero_twist);
+	VUNITIZE(ninety_twist);
 
-	*twist = bn_atan2( VDOT( vec_twist, ninety_twist ), VDOT( vec_twist, zero_twist ) ) * bn_radtodeg;
+	*twist = bn_atan2(VDOT(vec_twist, ninety_twist), VDOT(vec_twist, zero_twist)) * bn_radtodeg;
 
 	/* stabilize flutter between +/- 180 */
-	if ( NEAR_ZERO( *twist + 180.0, accuracy ) )
+	if (NEAR_ZERO(*twist + 180.0, accuracy))
 	    *twist = 180.0;
     }
 }
 
 
 /**
- *			B N _ M A T _ A N G L E S
+ * B N _ M A T _ A N G L E S
  *
- * This routine builds a Homogeneous rotation matrix, given
- * alpha, beta, and gamma as angles of rotation, in degrees.
+ * This routine builds a Homogeneous rotation matrix, given alpha,
+ * beta, and gamma as angles of rotation, in degrees.
  *
  * Alpha is angle of rotation about the X axis, and is done third.
  * Beta is angle of rotation about the Y axis, and is done second.
@@ -563,8 +554,8 @@ bn_mat_angles(register fastf_t *mat, double alpha_in, double beta_in, double gga
     double calpha, cbeta, cgamma;
     double salpha, sbeta, sgamma;
 
-    if ( alpha_in == 0.0 && beta_in == 0.0 && ggamma_in == 0.0 )  {
-	MAT_IDN( mat );
+    if (alpha_in == 0.0 && beta_in == 0.0 && ggamma_in == 0.0) {
+	MAT_IDN(mat);
 	return;
     }
 
@@ -572,29 +563,28 @@ bn_mat_angles(register fastf_t *mat, double alpha_in, double beta_in, double gga
     beta = beta_in * bn_degtorad;
     ggamma = ggamma_in * bn_degtorad;
 
-    calpha = cos( alpha );
-    cbeta = cos( beta );
-    cgamma = cos( ggamma );
+    calpha = cos(alpha);
+    cbeta = cos(beta);
+    cgamma = cos(ggamma);
 
-    /* sine of "180*bn_degtorad" will not be exactly zero
-     * and will result in errors when some codes try to
-     * convert this back to azimuth and elevation.
-     * do_frame() uses this technique!!!
+    /* sine of "180*bn_degtorad" will not be exactly zero and will
+     * result in errors when some codes try to convert this back to
+     * azimuth and elevation.  do_frame() uses this technique!!!
      */
-    if ( alpha_in == 180.0 )
+    if (alpha_in == 180.0)
 	salpha = 0.0;
     else
-	salpha = sin( alpha );
+	salpha = sin(alpha);
 
-    if ( beta_in == 180.0 )
+    if (beta_in == 180.0)
 	sbeta = 0.0;
     else
-	sbeta = sin( beta );
+	sbeta = sin(beta);
 
-    if ( ggamma_in == 180.0 )
+    if (ggamma_in == 180.0)
 	sgamma = 0.0;
     else
-	sgamma = sin( ggamma );
+	sgamma = sin(ggamma);
 
     mat[0] = cbeta * cgamma;
     mat[1] = -cbeta * sgamma;
@@ -614,11 +604,12 @@ bn_mat_angles(register fastf_t *mat, double alpha_in, double beta_in, double gga
     mat[15] = 1.0;
 }
 
+
 /**
- *			B N _ M A T _ A N G L E S _ R A D
- *@brief
- * This routine builds a Homogeneous rotation matrix, given
- * alpha, beta, and gamma as angles of rotation, in radians.
+ * B N _ M A T _ A N G L E S _ R A D
+ *
+ * This routine builds a Homogeneous rotation matrix, given alpha,
+ * beta, and gamma as angles of rotation, in radians.
  *
  * Alpha is angle of rotation about the X axis, and is done third.
  * Beta is angle of rotation about the Y axis, and is done second.
@@ -634,17 +625,17 @@ bn_mat_angles_rad(register mat_t	mat,
     double salpha, sbeta, sgamma;
 
     if (alpha == 0.0 && beta == 0.0 && ggamma == 0.0) {
-	MAT_IDN( mat );
+	MAT_IDN(mat);
 	return;
     }
 
-    calpha = cos( alpha );
-    cbeta = cos( beta );
-    cgamma = cos( ggamma );
+    calpha = cos(alpha);
+    cbeta = cos(beta);
+    cgamma = cos(ggamma);
 
-    salpha = sin( alpha );
-    sbeta = sin( beta );
-    sgamma = sin( ggamma );
+    salpha = sin(alpha);
+    sbeta = sin(beta);
+    sgamma = sin(ggamma);
 
     mat[0] = cbeta * cgamma;
     mat[1] = -cbeta * sgamma;
@@ -664,16 +655,16 @@ bn_mat_angles_rad(register mat_t	mat,
     mat[15] = 1.0;
 }
 
+
 /**
- *			B N _ E I G E N 2 X 2
+ * B N _ E I G E N 2 X 2
  *
- *  Find the eigenvalues and eigenvectors of a
- *  symmetric 2x2 matrix.
- *	( a b )
- *	( b c )
+ * Find the eigenvalues and eigenvectors of a symmetric 2x2 matrix.
+ *	(a b)
+ *	(b c)
  *
- *  The eigenvalue with the smallest absolute value is
- *  returned in val1, with its eigenvector in vec1.
+ * The eigenvalue with the smallest absolute value is returned in
+ * val1, with its eigenvector in vec1.
  */
 void
 bn_eigen2x2(fastf_t *val1, fastf_t *val2, fastf_t *vec1, fastf_t *vec2, fastf_t a, fastf_t b, fastf_t c)
@@ -684,45 +675,47 @@ bn_eigen2x2(fastf_t *val1, fastf_t *val2, fastf_t *vec1, fastf_t *vec2, fastf_t 
     d = 0.5 * (c - a);
 
     /* Check for diagonal matrix */
-    if ( NEAR_ZERO(b, 1.0e-10) ) {
+    if (NEAR_ZERO(b, 1.0e-10)) {
 	/* smaller mag first */
-	if ( fabs(c) < fabs(a) ) {
+	if (fabs(c) < fabs(a)) {
 	    *val1 = c;
-	    VSET( vec1, 0.0, 1.0, 0.0 );
+	    VSET(vec1, 0.0, 1.0, 0.0);
 	    *val2 = a;
-	    VSET( vec2, -1.0, 0.0, 0.0 );
+	    VSET(vec2, -1.0, 0.0, 0.0);
 	} else {
 	    *val1 = a;
-	    VSET( vec1, 1.0, 0.0, 0.0 );
+	    VSET(vec1, 1.0, 0.0, 0.0);
 	    *val2 = c;
-	    VSET( vec2, 0.0, 1.0, 0.0 );
+	    VSET(vec2, 0.0, 1.0, 0.0);
 	}
 	return;
     }
 
-    root = sqrt( d*d + b*b );
+    root = sqrt(d*d + b*b);
     v1 = 0.5 * (c + a) - root;
     v2 = 0.5 * (c + a) + root;
 
     /* smaller mag first */
-    if ( fabs(v1) < fabs(v2) ) {
+    if (fabs(v1) < fabs(v2)) {
 	*val1 = v1;
 	*val2 = v2;
-	VSET( vec1, b, d - root, 0.0 );
+	VSET(vec1, b, d - root, 0.0);
     } else {
 	*val1 = v2;
 	*val2 = v1;
-	VSET( vec1, root - d, b, 0.0 );
+	VSET(vec1, root - d, b, 0.0);
     }
-    VUNITIZE( vec1 );
-    VSET( vec2, -vec1[Y], vec1[X], 0.0 );	/* vec1 X vec2 = +Z */
+    VUNITIZE(vec1);
+    VSET(vec2, -vec1[Y], vec1[X], 0.0);	/* vec1 X vec2 = +Z */
 }
 
+
 /**
- *			B N _ V E C _ P E R P
- *@brief
- *  Given a vector, create another vector which is perpendicular to it.
- *  The output vector will have unit length only if the input vector did.
+ * B N _ V E C _ P E R P
+ *
+ * Given a vector, create another vector which is perpendicular to it.
+ * The output vector will have unit length only if the input vector
+ * did.
  */
 void
 bn_vec_perp(vect_t new, const vect_t old)
@@ -731,26 +724,26 @@ bn_vec_perp(vect_t new, const vect_t old)
     vect_t another;	/* Another vector, different */
 
     i = X;
-    if ( fabs(old[Y])<fabs(old[i]) )  i=Y;
-    if ( fabs(old[Z])<fabs(old[i]) )  i=Z;
-    VSETALL( another, 0 );
+    if (fabs(old[Y])<fabs(old[i])) i=Y;
+    if (fabs(old[Z])<fabs(old[i])) i=Z;
+    VSETALL(another, 0);
     another[i] = 1.0;
-    if ( old[X] == 0 && old[Y] == 0 && old[Z] == 0 )  {
-	VMOVE( new, another );
+    if (old[X] == 0 && old[Y] == 0 && old[Z] == 0) {
+	VMOVE(new, another);
     } else {
-	VCROSS( new, another, old );
+	VCROSS(new, another, old);
     }
 }
 
 /**
- *			B N _ M A T _ F R O M T O
- *@brief
- *  Given two vectors, compute a rotation matrix that will transform
- *  space by the angle between the two.  There are many
- *  candidate matricies.
+ * B N _ M A T _ F R O M T O
  *
- *  The input 'from' and 'to' vectors need not be unit length.
- *  MAT4X3VEC( to, m, from ) is the identity that is created.
+ * Given two vectors, compute a rotation matrix that will transform
+ * space by the angle between the two.  There are many candidate
+ * matricies.
+ *
+ * The input 'from' and 'to' vectors need not be unit length.
+ * MAT4X3VEC(to, m, from) is the identity that is created.
  */
 void
 bn_mat_fromto(mat_t m, const vect_t from, const vect_t to)
@@ -759,10 +752,10 @@ bn_mat_fromto(mat_t m, const vect_t from, const vect_t to)
     vect_t	unit_from, unit_to;
     fastf_t	dot;
 
-    /*
-     *  The method used here is from Graphics Gems, A. Glasner, ed.
-     *  page 531, "The Use of Coordinate Frames in Computer Graphics",
-     *  by Ken Turkowski, Example 6.
+    /**
+     * The method used here is from Graphics Gems, A. Glasner, ed.
+     * page 531, "The Use of Coordinate Frames in Computer Graphics",
+     * by Ken Turkowski, Example 6.
      */
     mat_t	Q, Qt;
     mat_t	R;
@@ -771,65 +764,67 @@ bn_mat_fromto(mat_t m, const vect_t from, const vect_t to)
     vect_t	N, M;
     vect_t	w_prime;		/* image of "to" ("w") in Qt */
 
-    VMOVE( unit_from, from );
-    VUNITIZE( unit_from );		/* aka "v" */
-    VMOVE( unit_to, to );
-    VUNITIZE( unit_to );		/* aka "w" */
+    VMOVE(unit_from, from);
+    VUNITIZE(unit_from);		/* aka "v" */
+    VMOVE(unit_to, to);
+    VUNITIZE(unit_to);		/* aka "w" */
 
-    /*  If from and to are the same or opposite, special handling
-     *  is needed, because the cross product isn't defined.
-     *  asin(0.00001) = 0.0005729 degrees (1/2000 degree)
+    /* If from and to are the same or opposite, special handling is
+     * needed, because the cross product isn't defined.  asin(0.00001)
+     * = 0.0005729 degrees (1/2000 degree)
      */
     dot = VDOT(unit_from, unit_to);
-    if ( dot > 1.0-0.00001 )  {
+    if (dot > 1.0-0.00001) {
 	/* dot == 1, return identity matrix */
 	MAT_IDN(m);
 	return;
     }
-    if ( dot < -1.0+0.00001 )  {
+    if (dot < -1.0+0.00001) {
 	/* dot == -1, select random perpendicular N vector */
-	bn_vec_perp( N, unit_from );
+	bn_vec_perp(N, unit_from);
     } else {
-	VCROSS( N, unit_from, unit_to );
-	VUNITIZE( N );			/* should be unnecessary */
+	VCROSS(N, unit_from, unit_to);
+	VUNITIZE(N);			/* should be unnecessary */
     }
-    VCROSS( M, N, unit_from );
-    VUNITIZE( M );			/* should be unnecessary */
+    VCROSS(M, N, unit_from);
+    VUNITIZE(M);			/* should be unnecessary */
 
     /* Almost everything here is done with pre-multiplys:  vector * mat */
-    MAT_IDN( Q );
-    VMOVE( &Q[0], unit_from );
-    VMOVE( &Q[4], M );
-    VMOVE( &Q[8], N );
-    bn_mat_trn( Qt, Q );
+    MAT_IDN(Q);
+    VMOVE(&Q[0], unit_from);
+    VMOVE(&Q[4], M);
+    VMOVE(&Q[8], N);
+    bn_mat_trn(Qt, Q);
 
     /* w_prime = w * Qt */
-    MAT4X3VEC( w_prime, Q, unit_to );	/* post-multiply by transpose */
+    MAT4X3VEC(w_prime, Q, unit_to);	/* post-multiply by transpose */
 
-    MAT_IDN( R );
-    VMOVE( &R[0], w_prime );
-    VSET( &R[4], -w_prime[Y], w_prime[X], w_prime[Z] );
-    VSET( &R[8], 0, 0, 1 );		/* is unnecessary */
+    MAT_IDN(R);
+    VMOVE(&R[0], w_prime);
+    VSET(&R[4], -w_prime[Y], w_prime[X], w_prime[Z]);
+    VSET(&R[8], 0, 0, 1);		/* is unnecessary */
 
-    bn_mat_mul( temp, R, Q );
-    bn_mat_mul( A, Qt, temp );
-    bn_mat_trn( m, A );		/* back to post-multiply style */
+    bn_mat_mul(temp, R, Q);
+    bn_mat_mul(A, Qt, temp);
+    bn_mat_trn(m, A);		/* back to post-multiply style */
 
     /* Verify that it worked */
-    MAT4X3VEC( test_to, m, unit_from );
-    dot = VDOT( unit_to, test_to );
-    if ( dot < 0.98 || dot > 1.02 )  {
+    MAT4X3VEC(test_to, m, unit_from);
+    dot = VDOT(unit_to, test_to);
+    if (dot < 0.98 || dot > 1.02) {
 	bu_log("bn_mat_fromto() ERROR!  from (%g,%g,%g) to (%g,%g,%g) went to (%g,%g,%g), dot=%g?\n",
 	       V3ARGS(from),
 	       V3ARGS(to),
-	       V3ARGS( test_to ), dot );
+	       V3ARGS(test_to), dot);
     }
 }
 
+
 /**
- *			B N _ M A T _ X R O T
+ * B N _ M A T _ X R O T
  *
- *  Given the sin and cos of an X rotation angle, produce the rotation matrix.
+ * Given the sin and cos of an X rotation angle, produce the rotation
+ * matrix.
  */
 void
 bn_mat_xrot(fastf_t *m, double sinx, double cosx)
@@ -853,10 +848,12 @@ bn_mat_xrot(fastf_t *m, double sinx, double cosx)
     m[15] = 1.0;
 }
 
+
 /**
- *			B N _ M A T _ Y R O T
- *@brief
- *  Given the sin and cos of a Y rotation angle, produce the rotation matrix.
+ * B N _ M A T _ Y R O T
+ *
+ * Given the sin and cos of a Y rotation angle, produce the rotation
+ * matrix.
  */
 void
 bn_mat_yrot(fastf_t *m, double siny, double cosy)
@@ -880,10 +877,12 @@ bn_mat_yrot(fastf_t *m, double siny, double cosy)
     m[15] = 1.0;
 }
 
+
 /**
- *			B N _ M A T _ Z R O T
- *@brief
- *  Given the sin and cos of a Z rotation angle, produce the rotation matrix.
+ * B N _ M A T _ Z R O T
+ *
+ * Given the sin and cos of a Z rotation angle, produce the rotation
+ * matrix.
  */
 void
 bn_mat_zrot(fastf_t *m, double sinz, double cosz)
@@ -909,16 +908,17 @@ bn_mat_zrot(fastf_t *m, double sinz, double cosz)
 
 
 /**
- *			B N _ M A T _ L O O K A T
+ * B N _ M A T _ L O O K A T
  *
- *  Given a direction vector D of unit length,
- *  product a matrix which rotates that vector D onto the -Z axis.
- *  This matrix will be suitable for use as a "model2view" matrix.
+ * Given a direction vector D of unit length, product a matrix which
+ * rotates that vector D onto the -Z axis.  This matrix will be
+ * suitable for use as a "model2view" matrix.
  *
- *  XXX This routine will fail if the vector is already more or less aligned
- *  with the Z axis.
+ * XXX This routine will fail if the vector is already more or less
+ * aligned with the Z axis.
  *
- *  This is done in several steps.
+ * This is done in several steps.
+ *
  @code
  1)  Rotate D about Z to match +X axis.  Azimuth adjustment.
  2)  Rotate D about Y to match -Y axis.  Elevation adjustment.
@@ -944,51 +944,52 @@ bn_mat_lookat(mat_t rot, const vect_t dir, int yflip)
     vect_t	zproj;
 
     /* First, rotate D around Z axis to match +X axis (azimuth) */
-    hypot_xy = hypot( dir[X], dir[Y] );
-    bn_mat_zrot( first, -dir[Y] / hypot_xy, dir[X] / hypot_xy );
+    hypot_xy = hypot(dir[X], dir[Y]);
+    bn_mat_zrot(first, -dir[Y] / hypot_xy, dir[X] / hypot_xy);
 
     /* Next, rotate D around Y axis to match -Z axis (elevation) */
-    bn_mat_yrot( second, -hypot_xy, -dir[Z] );
-    bn_mat_mul( prod12, second, first );
+    bn_mat_yrot(second, -hypot_xy, -dir[Z]);
+    bn_mat_mul(prod12, second, first);
 
     /* Produce twist correction, by re-orienting projection of X axis */
-    VSET( x, 1, 0, 0 );
-    MAT4X3VEC( xproj, prod12, x );
-    hypot_xy = hypot( xproj[X], xproj[Y] );
-    if ( hypot_xy < 1.0e-10 )  {
+    VSET(x, 1, 0, 0);
+    MAT4X3VEC(xproj, prod12, x);
+    hypot_xy = hypot(xproj[X], xproj[Y]);
+    if (hypot_xy < 1.0e-10) {
 	bu_log("Warning: bn_mat_lookat:  unable to twist correct, hypot=%g\n", hypot_xy);
-	VPRINT( "xproj", xproj );
-	MAT_COPY( rot, prod12 );
+	VPRINT("xproj", xproj);
+	MAT_COPY(rot, prod12);
 	return;
     }
-    bn_mat_zrot( third, -xproj[Y] / hypot_xy, xproj[X] / hypot_xy );
-    bn_mat_mul( rot, third, prod12 );
+    bn_mat_zrot(third, -xproj[Y] / hypot_xy, xproj[X] / hypot_xy);
+    bn_mat_mul(rot, third, prod12);
 
-    if ( yflip )  {
-	VSET( z, 0, 0, 1 );
-	MAT4X3VEC( zproj, rot, z );
+    if (yflip) {
+	VSET(z, 0, 0, 1);
+	MAT4X3VEC(zproj, rot, z);
 	/* If original Z inverts sign, flip sign on resulting Y */
-	if ( zproj[Y] < 0.0 )  {
-	    MAT_COPY( prod12, rot );
-	    MAT_IDN( third );
+	if (zproj[Y] < 0.0) {
+	    MAT_COPY(prod12, rot);
+	    MAT_IDN(third);
 	    third[5] = -1;
-	    bn_mat_mul( rot, third, prod12 );
+	    bn_mat_mul(rot, third, prod12);
 	}
     }
 
     /* Check the final results */
-    MAT4X3VEC( t1, rot, dir );
-    if ( t1[Z] > -0.98 )  {
-	bu_log("Error:  bn_mat_lookat final= (%g, %g, %g)\n", t1[X], t1[Y], t1[Z] );
+    MAT4X3VEC(t1, rot, dir);
+    if (t1[Z] > -0.98) {
+	bu_log("Error:  bn_mat_lookat final= (%g, %g, %g)\n", t1[X], t1[Y], t1[Z]);
     }
 }
 
+
 /**
- *			B N _ V E C _ O R T H O
- *@brief
- *  Given a vector, create another vector which is perpendicular to it,
- *  and with unit length.  This algorithm taken from Gift's arvec.f;
- *  a faster algorithm may be possible.
+ * B N _ V E C _ O R T H O
+ *
+ * Given a vector, create another vector which is perpendicular to it,
+ * and with unit length.  This algorithm taken from Gift's arvec.f; a
+ * faster algorithm may be possible.
  */
 void
 bn_vec_ortho(register vect_t out, register const vect_t in)
@@ -997,9 +998,9 @@ bn_vec_ortho(register vect_t out, register const vect_t in)
     register fastf_t f;
     register int i;
 
-    if ( NEAR_ZERO(in[X], 0.0001) && NEAR_ZERO(in[Y], 0.0001) &&
-	 NEAR_ZERO(in[Z], 0.0001) )  {
-	VSETALL( out, 0 );
+    if (NEAR_ZERO(in[X], 0.0001) && NEAR_ZERO(in[Y], 0.0001) &&
+	NEAR_ZERO(in[Z], 0.0001)) {
+	VSETALL(out, 0);
 	VPRINT("bn_vec_ortho: zero-length input", in);
 	return;
     }
@@ -1009,21 +1010,21 @@ bn_vec_ortho(register vect_t out, register const vect_t in)
     i = X;
     j = Y;
     k = Z;
-    if ( fabs(in[Y]) < f )  {
+    if (fabs(in[Y]) < f) {
 	f = fabs(in[Y]);
 	i = Y;
 	j = Z;
 	k = X;
     }
-    if ( fabs(in[Z]) < f )  {
+    if (fabs(in[Z]) < f) {
 	i = Z;
 	j = X;
 	k = Y;
     }
-    f = hypot( in[j], in[k] );
-    if ( NEAR_ZERO( f, SMALL ) ) {
+    f = hypot(in[j], in[k]);
+    if (NEAR_ZERO(f, SMALL)) {
 	VPRINT("bn_vec_ortho: zero hypot on", in);
-	VSETALL( out, 0 );
+	VSETALL(out, 0);
 	return;
     }
     f = 1.0/f;
@@ -1034,13 +1035,12 @@ bn_vec_ortho(register vect_t out, register const vect_t in)
 
 
 /**
- *			B N _ M A T _ S C A L E _ A B O U T _ P T
- *@brief
- *  Build a matrix to scale uniformly around a given point.
+ * B N _ M A T _ S C A L E _ A B O U T _ P T
  *
+ * Build a matrix to scale uniformly around a given point.
  *
- *  @return	-1	if scale is too small.
- *  @return	 0	if OK.
+ * @return	-1	if scale is too small.
+ * @return	 0	if OK.
  */
 int
 bn_mat_scale_about_pt(mat_t mat, const point_t pt, const double scale)
@@ -1049,27 +1049,29 @@ bn_mat_scale_about_pt(mat_t mat, const point_t pt, const double scale)
     mat_t	s;
     mat_t	tmp;
 
-    MAT_IDN( xlate );
-    MAT_DELTAS_VEC_NEG( xlate, pt );
+    MAT_IDN(xlate);
+    MAT_DELTAS_VEC_NEG(xlate, pt);
 
-    MAT_IDN( s );
-    if ( NEAR_ZERO( scale, SMALL ) )  {
-	MAT_ZERO( mat );
+    MAT_IDN(s);
+    if (NEAR_ZERO(scale, SMALL)) {
+	MAT_ZERO(mat);
 	return -1;			/* ERROR */
     }
     s[15] = 1/scale;
 
-    bn_mat_mul( tmp, s, xlate );
+    bn_mat_mul(tmp, s, xlate);
 
-    MAT_DELTAS_VEC( xlate, pt );
-    bn_mat_mul( mat, xlate, tmp );
+    MAT_DELTAS_VEC(xlate, pt);
+    bn_mat_mul(mat, xlate, tmp);
     return 0;				/* OK */
 }
 
+
 /**
- *			B N _ M A T _ X F O R M _ A B O U T _ P T
- *@brief
- *  Build a matrix to apply arbitary 4x4 transformation around a given point.
+ * B N _ M A T _ X F O R M _ A B O U T _ P T
+ *
+ * Build a matrix to apply arbitary 4x4 transformation around a given
+ * point.
  */
 void
 bn_mat_xform_about_pt(mat_t mat, const mat_t xform, const point_t pt)
@@ -1077,21 +1079,21 @@ bn_mat_xform_about_pt(mat_t mat, const mat_t xform, const point_t pt)
     mat_t	xlate;
     mat_t	tmp;
 
-    MAT_IDN( xlate );
-    MAT_DELTAS_VEC_NEG( xlate, pt );
+    MAT_IDN(xlate);
+    MAT_DELTAS_VEC_NEG(xlate, pt);
 
-    bn_mat_mul( tmp, xform, xlate );
+    bn_mat_mul(tmp, xform, xlate);
 
-    MAT_DELTAS_VEC( xlate, pt );
-    bn_mat_mul( mat, xlate, tmp );
+    MAT_DELTAS_VEC(xlate, pt);
+    bn_mat_mul(mat, xlate, tmp);
 }
 
+
 /**
- *			B N _ M A T _ I S _ E Q U A L
+ * B N _ M A T _ I S _ E Q U A L
  *
- *
- *  @return	0	When matrices are not equal
- *  @return	1	When matricies are equal
+ * @return	0	When matrices are not equal
+ * @return	1	When matricies are equal
  */
 int
 bn_mat_is_equal(const mat_t a, const mat_t b, const struct bn_tol *tol)
@@ -1105,53 +1107,51 @@ bn_mat_is_equal(const mat_t a, const mat_t b, const struct bn_tol *tol)
     tdist = tol->dist;
     tperp = tol->perp;
 
-    /*
-     * First, check that the translation part of the matrix (dist) are
-     * within the distance tolerance.
-     * Because most instancing involves translation and no rotation,
-     * doing this first should detect most non-equal cases rapidly.
+    /* First, check that the translation part of the matrix (dist) are
+     * within the distance tolerance.  Because most instancing
+     * involves translation and no rotation, doing this first should
+     * detect most non-equal cases rapidly.
      */
     for (i=3; i<12; i+=4) {
 	f = a[i] - b[i];
-	if ( !NEAR_ZERO(f, tdist)) return 0;
+	if (!NEAR_ZERO(f, tdist)) return 0;
     }
 
-    /*
-     * Check that the rotation part of the matrix (cosines) are within
+    /* Check that the rotation part of the matrix (cosines) are within
      * the perpendicular tolerance.
      */
     for (i = 0; i < 16; i+=4) {
 	f = a[i] - b[i];
-	if ( !NEAR_ZERO(f, tperp)) return 0;
+	if (!NEAR_ZERO(f, tperp)) return 0;
 	f = a[i+1] - b[i+1];
-	if ( !NEAR_ZERO(f, tperp)) return 0;
+	if (!NEAR_ZERO(f, tperp)) return 0;
 	f = a[i+2] - b[i+2];
-	if ( !NEAR_ZERO(f, tperp)) return 0;
+	if (!NEAR_ZERO(f, tperp)) return 0;
     }
-    /*
-     * Check that the scale part of the matrix (ratio) is within the
+
+    /* Check that the scale part of the matrix (ratio) is within the
      * perpendicular tolerance.  There is no ratio tolerance so we use
      * the tighter of dist or perp.
      */
     f = a[15] - b[15];
-    if ( !NEAR_ZERO(f, tperp)) return 0;
+    if (!NEAR_ZERO(f, tperp)) return 0;
 
     return 1;
 }
 
 
 /**
- *			B N _ M A T _ I S _ I D E N T I T Y
+ * B N _ M A T _ I S _ I D E N T I T Y
  *
- *  This routine is intended for detecting identity matricies read in
- *  from ascii or binary files, where the numbers are pure ones or zeros.
- *  This routine is *not* intended for tolerance-based "near-zero"
- *  comparisons; as such, it shouldn't be used on matrices which are
- *  the result of calculation.
+ * This routine is intended for detecting identity matricies read in
+ * from ascii or binary files, where the numbers are pure ones or
+ * zeros.  This routine is *not* intended for tolerance-based
+ * "near-zero" comparisons; as such, it shouldn't be used on matrices
+ * which are the result of calculation.
  *
  *
- *  @return	0	non-identity
- *  @return	1	a perfect identity matrix
+ * @return	0	non-identity
+ * @return	1	a perfect identity matrix
  */
 int
 bn_mat_is_identity(const mat_t m)
@@ -1159,13 +1159,13 @@ bn_mat_is_identity(const mat_t m)
     return (! memcmp(m, bn_mat_identity, sizeof(mat_t)));
 }
 
-/**	B N _ M A T _ A R B _ R O T
+
+/**
+ * B N _ M A T _ A R B _ R O T
  *
- *@brief
- * Construct a transformation matrix for rotation about an arbitrary axis
- *
- *	The axis is defined by a point (pt) and a unit direction vector (dir).
- *	The angle of rotation is "ang"
+ * Construct a transformation matrix for rotation about an arbitrary
+ * axis.  The axis is defined by a point (pt) and a unit direction
+ * vector (dir).  The angle of rotation is "ang"
  */
 void
 bn_mat_arb_rot(mat_t m, const point_t pt, const vect_t dir, const fastf_t ang)
@@ -1175,14 +1175,13 @@ bn_mat_arb_rot(mat_t m, const point_t pt, const vect_t dir, const fastf_t ang)
     double n1_sq, n2_sq, n3_sq;
     double n1_n2, n1_n3, n2_n3;
 
-    if ( ang == 0.0 )
-    {
-	MAT_IDN( m );
+    if (ang == 0.0) {
+	MAT_IDN(m);
 	return;
     }
 
-    MAT_IDN( tran1 );
-    MAT_IDN( tran2 );
+    MAT_IDN(tran1);
+    MAT_IDN(tran2);
 
     /* construct translation matrix to pt */
     tran1[MDX] = (-pt[X]);
@@ -1195,8 +1194,8 @@ bn_mat_arb_rot(mat_t m, const point_t pt, const vect_t dir, const fastf_t ang)
     tran2[MDZ] = pt[Z];
 
     /* construct rotation matrix */
-    cos_ang = cos( ang );
-    sin_ang = sin( ang );
+    cos_ang = cos(ang);
+    sin_ang = sin(ang);
     one_m_cosang = 1.0 - cos_ang;
     n1_sq = dir[X]*dir[X];
     n2_sq = dir[Y]*dir[Y];
@@ -1205,7 +1204,7 @@ bn_mat_arb_rot(mat_t m, const point_t pt, const vect_t dir, const fastf_t ang)
     n1_n3 = dir[X]*dir[Z];
     n2_n3 = dir[Y]*dir[Z];
 
-    MAT_IDN( rot );
+    MAT_IDN(rot);
     rot[0] = n1_sq + (1.0 - n1_sq)*cos_ang;
     rot[1] = n1_n2 * one_m_cosang - dir[Z]*sin_ang;
     rot[2] = n1_n3 * one_m_cosang + dir[Y]*sin_ang;
@@ -1218,35 +1217,37 @@ bn_mat_arb_rot(mat_t m, const point_t pt, const vect_t dir, const fastf_t ang)
     rot[9] = n2_n3 * one_m_cosang + dir[X]*sin_ang;
     rot[10] = n3_sq + (1.0 - n3_sq) * cos_ang;
 
-    bn_mat_mul( m, rot, tran1 );
-    bn_mat_mul2( tran2, m );
+    bn_mat_mul(m, rot, tran1);
+    bn_mat_mul2(tran2, m);
 }
 
 
 /**
- *			B N _ M A T _ D U P
+ * B N _ M A T _ D U P
  *
- *  Return a pointer to a copy of the matrix in dynamically allocated memory.
+ * Return a pointer to a copy of the matrix in dynamically allocated
+ * memory.
  */
 matp_t
 bn_mat_dup(const mat_t in)
 {
     matp_t	out;
 
-    out = (matp_t) bu_malloc( sizeof(mat_t), "bn_mat_dup" );
+    out = (matp_t) bu_malloc(sizeof(mat_t), "bn_mat_dup");
     memcpy((char *)out, (const char *)in, sizeof(mat_t));
     return out;
 }
 
 /**
- *			B N _ M A T _ C K
+ * B N _ M A T _ C K
  *
- *  Check to ensure that a rotation matrix preserves axis perpendicularily.
- *  Note that not all matricies are rotation matricies.
+ * Check to ensure that a rotation matrix preserves axis
+ * perpendicularily.  Note that not all matricies are rotation
+ * matricies.
  *
  *
- *  @return	-1	FAIL
- *  @return	 0	OK
+ * @return	-1	FAIL
+ * @return	 0	OK
  */
 int
 bn_mat_ck(const char *title, const mat_t m)
@@ -1254,35 +1255,33 @@ bn_mat_ck(const char *title, const mat_t m)
     vect_t	A, B, C;
     fastf_t	fx, fy, fz;
 
-    if ( !m )  return 0;		/* implies identity matrix */
+    if (!m) return 0;		/* implies identity matrix */
 
-    /*
-     * Validate that matrix preserves perpendicularity of axis
-     * by checking that A.B == 0, B.C == 0, A.C == 0
-     * XXX these vectors should just be grabbed out of the matrix
+    /* Validate that matrix preserves perpendicularity of axis by
+     * checking that A.B == 0, B.C == 0, A.C == 0 XXX these vectors
+     * should just be grabbed out of the matrix
      */
 #if 0
-    MAT4X3VEC( A, m, xaxis );
-    MAT4X3VEC( B, m, yaxis );
-    MAT4X3VEC( C, m, zaxis );
+    MAT4X3VEC(A, m, xaxis);
+    MAT4X3VEC(B, m, yaxis);
+    MAT4X3VEC(C, m, zaxis);
 #else
-    VMOVE( A, &m[0] );
-    VMOVE( B, &m[4] );
-    VMOVE( C, &m[8] );
+    VMOVE(A, &m[0]);
+    VMOVE(B, &m[4]);
+    VMOVE(C, &m[8]);
 #endif
-    fx = VDOT( A, B );
-    fy = VDOT( B, C );
-    fz = VDOT( A, C );
-    if ( ! NEAR_ZERO(fx, 0.0001) ||
-	 ! NEAR_ZERO(fy, 0.0001) ||
-	 ! NEAR_ZERO(fz, 0.0001) ||
-	 NEAR_ZERO( m[15], VDIVIDE_TOL )
-	)  {
+    fx = VDOT(A, B);
+    fy = VDOT(B, C);
+    fz = VDOT(A, C);
+    if (!NEAR_ZERO(fx, 0.0001) ||
+	!NEAR_ZERO(fy, 0.0001) ||
+	!NEAR_ZERO(fz, 0.0001) ||
+	NEAR_ZERO(m[15], VDIVIDE_TOL)) {
 	bu_log("bn_mat_ck(%s):  bad matrix, does not preserve axis perpendicularity.\n  X.Y=%g, Y.Z=%g, X.Z=%g, s=%g\n",
-	       title, fx, fy, fz, m[15] );
+	       title, fx, fy, fz, m[15]);
 	bn_mat_print("bn_mat_ck() bad matrix", m);
 
-	if ( bu_debug & (BU_DEBUG_MATH | BU_DEBUG_COREDUMP) )  {
+	if (bu_debug & (BU_DEBUG_MATH | BU_DEBUG_COREDUMP)) {
 	    bu_debug |= BU_DEBUG_COREDUMP;
 	    bu_bomb("bn_mat_ck() bad matrix\n");
 	}
@@ -1291,29 +1290,30 @@ bn_mat_ck(const char *title, const mat_t m)
     return 0;		/* OK */
 }
 
+
 /**
- *		B N _ M A T _ D E T 3
+ * B N _ M A T _ D E T 3
  *
- *	Calculates the determinant of the 3X3 "rotation"
- *	part of the passed matrix
+ * Calculates the determinant of the 3X3 "rotation" part of the passed
+ * matrix.
  */
 fastf_t
 bn_mat_det3(const mat_t m)
 {
     register fastf_t sum;
 
-    sum = m[0] * ( m[5]*m[10] - m[6]*m[9] )
-	-m[1] * ( m[4]*m[10] - m[6]*m[8] )
-	+m[2] * ( m[4]*m[9] - m[5]*m[8] );
+    sum = m[0] * (m[5]*m[10] - m[6]*m[9])
+	-m[1] * (m[4]*m[10] - m[6]*m[8])
+	+m[2] * (m[4]*m[9] - m[5]*m[8]);
 
-    return( sum );
+    return(sum);
 }
 
 
 /**
- *		B N _ M A T _ D E T E R M I N A N T
+ * B N _ M A T _ D E T E R M I N A N T
  *
- *	Calculates the determinant of the 4X4 matrix
+ * Calculates the determinant of the 4X4 matrix
  */
 fastf_t
 bn_mat_determinant(const mat_t m)
@@ -1339,9 +1339,10 @@ bn_mat_determinant(const mat_t m)
 
     sum = m[0]*det[0] - m[1]*det[1] + m[2]*det[2] - m[3]*det[3];
 
-    return( sum );
+    return(sum);
 
 }
+
 
 /**
  *
@@ -1366,6 +1367,7 @@ bn_mat_is_non_unif(const mat_t m)
 
     return 0;
 }
+
 /** @} */
 /*
  * Local Variables:
