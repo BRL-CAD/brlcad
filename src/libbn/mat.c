@@ -265,7 +265,6 @@ bn_mat_inv(register mat_t output, const mat_t input)
  * modified Gauss-Jordan alogorithm Note: Inversion is done in place,
  * with 3 work vectors
  *
- *
  * @return	 1	if OK.
  * @return	 0	if matrix is singular.
  */
@@ -300,9 +299,9 @@ bn_mat_inverse(register mat_t output, const mat_t input)
 	    }
 	}
 
-	if (fabs(y) < SQRT_SMALL_FASTF) {
+	if (NEAR_ZERO(y, SQRT_SMALL_FASTF)) {
+	    /* SINGULAR */
 	    return 0;
-	    /* NOTREACHED */
 	}
 	y = 1.0 / y;
 
