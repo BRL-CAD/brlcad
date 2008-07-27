@@ -605,13 +605,13 @@ rt_init_resource(struct resource *resp,
     } else {
 	BU_ASSERT_PTR( resp, !=, NULL );
 	BU_ASSERT_LONG( cpu_num, >=, 0 );
-	if ( rtip->rti_treetop ) {
+	if ( rtip != NULL && rtip->rti_treetop ) {
 	    /* this is a submodel */
 	    BU_ASSERT_LONG( cpu_num, <, rtip->rti_resources.blen );
 	} else {
 	    BU_ASSERT_LONG( cpu_num, <, MAX_PSW );
 	}
-	RT_CK_RTI(rtip);		/* mandatory */
+	if (rtip) RT_CK_RTI(rtip);		/* mandatory */
     }
 
     resp->re_magic = RESOURCE_MAGIC;
@@ -622,8 +622,8 @@ rt_init_resource(struct resource *resp,
     if ( BU_LIST_UNINITIALIZED( &resp->re_seg ) )
 	BU_LIST_INIT( &resp->re_seg )
 
-	    if ( BU_LIST_UNINITIALIZED( &resp->re_seg_blocks.l ) )
-		bu_ptbl_init( &resp->re_seg_blocks, 64, "re_seg_blocks ptbl" );
+    if ( BU_LIST_UNINITIALIZED( &resp->re_seg_blocks.l ) )
+        bu_ptbl_init( &resp->re_seg_blocks, 64, "re_seg_blocks ptbl" );
 
     if ( BU_LIST_UNINITIALIZED( &resp->re_directory_blocks.l ) )
 	bu_ptbl_init( &resp->re_directory_blocks, 64, "re_directory_blocks ptbl" );
@@ -631,16 +631,16 @@ rt_init_resource(struct resource *resp,
     if ( BU_LIST_UNINITIALIZED( &resp->re_parthead ) )
 	BU_LIST_INIT( &resp->re_parthead )
 
-	    if ( BU_LIST_UNINITIALIZED( &resp->re_solid_bitv ) )
-		BU_LIST_INIT( &resp->re_solid_bitv )
+    if ( BU_LIST_UNINITIALIZED( &resp->re_solid_bitv ) )
+        BU_LIST_INIT( &resp->re_solid_bitv )
 
-		    if ( BU_LIST_UNINITIALIZED( &resp->re_region_ptbl ) )
-			BU_LIST_INIT( &resp->re_region_ptbl )
+    if ( BU_LIST_UNINITIALIZED( &resp->re_region_ptbl ) )
+        BU_LIST_INIT( &resp->re_region_ptbl )
 
-			    if ( BU_LIST_UNINITIALIZED( &resp->re_nmgfree ) )
-				BU_LIST_INIT( &resp->re_nmgfree )
+    if ( BU_LIST_UNINITIALIZED( &resp->re_nmgfree ) )
+        BU_LIST_INIT( &resp->re_nmgfree )
 
-				    resp->re_boolstack = NULL;
+    resp->re_boolstack = NULL;
     resp->re_boolslen = 0;
 
     if ( rtip == NULL )  return;	/* only in rt_uniresource case */
