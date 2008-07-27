@@ -103,17 +103,17 @@ rt_revolve_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     rev->sketch_name = bu_vls_addr(&rip->sketch_name);
     rev->sk = rip->sk;
 
-/* calculate end plane */
+    /* calculate end plane */
     VSCALE( xEnd, rev->xUnit, cos(rev->ang) );
     VSCALE( yEnd, rev->yUnit, sin(rev->ang) );
     VADD2( rev->rEnd, xEnd, yEnd );
     VUNITIZE( rev->rEnd );
 
-/* check the sketch - degree & closed/open */
+    /* check the sketch - degree & closed/open */
 
     /* count the number of times an endpoint is used:
-	if even, the point is ok
-	if odd, the point is at the end of a path
+     *   if even, the point is ok
+     *   if odd, the point is at the end of a path
      */
     endcount = (int *)bu_calloc( rev->sk->vert_count, sizeof(int), "endcount" );
     for ( i=0; i<rev->sk->vert_count; i++ ) endcount[i] = 0;
@@ -257,47 +257,6 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
     VUNITIZE( ur );
 
 
-#if 0
-this is replaced by using rt_sketch_contains()
-
-/* find two plane intersections if ang != 2pi */
-    if ( rev->ang < 2*M_PI ) {
-	VREVERSE( normS, rev->yUnit );	/* start normal */
-	start = ( VDOT( normS, rev->v3d ) - VDOT( normS, rp->r_pt ) ) / VDOT( normS, rp->r_dir );
-
-	VCROSS( normE, rev->zUnit, rev->rEnd );	/* end normal */
-	end = ( VDOT( normE, rev->v3d ) - VDOT( normE, rp->r_pt ) ) / VDOT( normE, rp->r_dir );
-
-	/* calculate min/max limits */
-	if ( VDOT( normS, rp->r_dir ) < 0 && VDOT( normE, rp->r_dir ) < 0 ) {
-	    if ( rev->ang < M_PI ) {
-		min = (start>end)?start:end;	/* max of start, end */
-		max = min + 1;		/* unused, but set to pass (max > min) test */
-	    } else {
-		min = (end>start)?start:end;	/* min of start, end */
-		max = min - 1;		/* unused, but set to pass (min > max) test */
-	    }
-
-	} else if ( VDOT( normS, rp->r_dir ) < 0 ) {
-	    min = start;
-	    max = end;
-	} else if ( VDOT( normE, rp->r_dir ) < 0 ) {
-	    min = end;
-	    max = start;
-	} else {
-	    if ( rev->ang < M_PI ) {
-		max = (end>start)?start:end;	/* min of start, end */
-		min = max - 1;		/* unused, but set to pass (max > min) test */
-	    } else {
-		max = (start>end)?start:end;	/* max of start, end */
-		min = max + 1;		/* unused, but set to pass (min > max) test */
-	    }
-	}
-	if ( rev->ang < M_PI && max < min ) {
-	    return 0;
-	}
-    }
-#endif
 
     if ( rev->ang < 2*M_PI ) {
 	VREVERSE( normS, rev->yUnit );	/* start normal */
@@ -345,9 +304,7 @@ this is replaced by using rt_sketch_contains()
 	}
     }
 
-/* end of rt_sketch_contains() replacement code */
-
-/* calculate hyperbola parameters */
+    /* calculate hyperbola parameters */
     VREVERSE( dp, pr);
     VSET( norm, ur[X], ur[Y], 0 );
 
@@ -356,14 +313,8 @@ this is replaced by using rt_sketch_contains()
 
     aa = sqrt( (pr[X] + k*vr[X])*(pr[X] + k*vr[X]) + (pr[Y] + k*vr[Y])*(pr[Y] + k*vr[Y]) );
     bb = sqrt( aa*aa * ( 1.0/(1 - ur[Z]*ur[Z]) - 1.0 ) );
-/*
-  [ (x*x) / aa^2 ] - [ (y-h)^2 / bb^2 ] = 1
 
-  x = aa cosh( t - k );
-  y = h + bb sinh( t - k );
-*/
-
-/* handle open sketches */
+    /* handle open sketches */
     for ( i=0; i<rev->sk->vert_count && rev->ends[i] != -1; i++ ) {
 	V2MOVE( pt, rev->sk->verts[rev->ends[i]] );
 	pt2[Y] = pt[Y];
@@ -388,7 +339,7 @@ this is replaced by using rt_sketch_contains()
 	}
     }
 
-/* find hyperbola intersection with each sketch segment */
+    /* find hyperbola intersection with each sketch segment */
     nseg = rev->sk->skt_curve.seg_count;
     for ( i=0; i<nseg; i++ ) {
 	lng = (long *)rev->sk->skt_curve.segments[i];
@@ -504,22 +455,7 @@ this is replaced by using rt_sketch_contains()
 	return -1;
     }
 
-#if 0
-more code replaced by using rt_sketch_contains()
-
-    /* set surface for hits out of bounds to -1 */
-    if ( rev->ang < 2*M_PI ) {
-	for ( i=0; i<nhits; i++ ) {
-	    angle = atan2( hits[i]->hit_vpriv[Y], hits[i]->hit_vpriv[X] );
-	    if ( angle < 0 ) angle += 2*M_PI;
-	    if ( angle > rev->ang ) {
-		hits[i]->hit_surfno = -1;
-	    }
-	}
-    }
-#endif
-
-/* sort hitpoints (an arbitrary number of hits depending on sketch) */
+    /* sort hitpoints (an arbitrary number of hits depending on sketch) */
     for ( i=0; i<nhits; i+=2 ) {
 	in = out = -1;
 	for ( j=0; j<nhits; j++ ) {
@@ -546,73 +482,6 @@ more code replaced by using rt_sketch_contains()
 	    hits[out] = NULL;
 	    continue;
 	}
-
-#if 0
-more code replaced by using rt_sketch_contains()
-
-	/* trim segments as necessary */
-	if ( rev->ang < M_PI ) {
-	    if ( hits[in]->hit_surfno == -1 && hits[out]->hit_surfno == -1
-		&& (hits[in]->hit_dist > max || hits[out]->hit_dist < min) ) {
-		hits[in] = NULL;
-		hits[out] = NULL;
-		continue;
-	    }
-	    if ( hits[in]->hit_surfno == -1 && hits[in]->hit_dist < min ) {
-		hits[in]->hit_dist = min;
-		hits[in]->hit_surfno = (min == start)?1:2;
-	    }
-	    if ( hits[out]->hit_surfno == -1 && hits[out]->hit_dist > max ) {
-		hits[out]->hit_dist = max;
-		hits[out]->hit_surfno = (max == start)?1:2;
-	    }
-	} else if ( rev->ang < 2*M_PI && min > max ) {
-	    if ( hits[in]->hit_surfno == -1 && hits[out]->hit_surfno == -1 ) {
-		hits[in] = NULL;
-		hits[out] = NULL;
-		continue;
-	    } else if ( hits[in]->hit_surfno == -1 ) {
-		hits[in]->hit_dist = min;
-		hits[in]->hit_surfno = (min == start)?1:2;
-	    } else if ( hits[out]->hit_surfno == -1 ) {
-		hits[out]->hit_dist = max;
-		hits[out]->hit_surfno = (max == start)?1:2;
-	    } else if ( hits[in]->hit_dist < min && hits[out]->hit_dist > max ) {
-		if ( nhits+2 >= MAX_HITS ) return -1;	/* too many hits */
-		bu_log( "splitting segment (%d, %d), nhits: %d\n", in, out, nhits );
-
-		/* get a new segment for (in, max) */
-		RT_GET_SEG(segp, ap->a_resource);
-		segp->seg_stp = stp;
-
-		segp->seg_in = *hits[in];
-		hits[in] = NULL;
-
-		hits[nhits]->hit_magic = RT_HIT_MAGIC;
-		hits[nhits]->hit_dist = max;
-		hits[nhits]->hit_surfno = (max == start)?1:2;
-
-		segp->seg_out = *hits[nhits];
-		hits[nhits] = NULL;
-		BU_LIST_INSERT( &(seghead->l), &(segp->l) );
-
-		/* set next segment to be (min, out) */
-		in = nhits+1;
-		hits[in]->hit_magic = RT_HIT_MAGIC;
-		hits[in]->hit_dist = min;
-		hits[in]->hit_surfno = (min == start)?1:2;
-
-		nhits+=2;
-		i+=2;
-	    }
-	}
-
-	if ( hits[in]->hit_dist > hits[out]->hit_dist ) {
-	    hits[in] = NULL;
-	    hits[out] = NULL;
-	    continue;
-	}
-#endif
 
 	RT_GET_SEG(segp, ap->a_resource);
 	segp->seg_stp = stp;
@@ -765,7 +634,7 @@ rt_revolve_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 
     vect_t	ell[16], cir[16], ucir[16], height, xdir, ydir, ux, uy, uz, rEnd, xEnd, yEnd;
     fastf_t	cos22_5 = 0.9238795325112867385,
-		cos67_5 = 0.3826834323650898373;
+	cos67_5 = 0.3826834323650898373;
     int 	*endcount;
     point_t	add, add2, add3;
 
@@ -898,9 +767,9 @@ rt_revolve_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 	    /* add 'i' to list, insertion sort by vert[i][Y] */
 	    for( k=j; k>0; k-- ) {
 		if ( ( NEAR_ZERO( verts[i][Y] - verts[endcount[k-1]][Y], SMALL_FASTF ) 
-			&& verts[i][X] > verts[endcount[k-1]][X] ) 
-			|| ( !NEAR_ZERO( verts[i][Y] - verts[endcount[k-1]][Y], SMALL_FASTF )
-			&& verts[i][Y] < verts[endcount[k-1]][Y] ) ) {
+		       && verts[i][X] > verts[endcount[k-1]][X] ) 
+		     || ( !NEAR_ZERO( verts[i][Y] - verts[endcount[k-1]][Y], SMALL_FASTF )
+			  && verts[i][Y] < verts[endcount[k-1]][Y] ) ) {
 		    endcount[k] = endcount[k-1];
 		} else {
 		    break;
@@ -918,7 +787,7 @@ rt_revolve_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 	curve_to_vlist( vhead, ttol, rip->v3d, ucir[i], uz, rip->sk, crv );
 	for ( j=0; j<nadd; j++ ) {
 	    if ( j+1 < nadd && 
-		NEAR_ZERO(verts[endcount[j]][Y] - verts[endcount[j+1]][Y], SMALL_FASTF) ) {
+		 NEAR_ZERO(verts[endcount[j]][Y] - verts[endcount[j+1]][Y], SMALL_FASTF) ) {
 		VJOIN1( add, rip->v3d, verts[endcount[j]][Y], rip->axis3d );
 		VJOIN1( add2, add, verts[endcount[j]][X], ucir[i] );
 		VJOIN1( add3, add, verts[endcount[j+1]][X], ucir[i] );
@@ -937,7 +806,7 @@ rt_revolve_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 	curve_to_vlist( vhead, ttol, rip->v3d, rEnd, uz, rip->sk, crv );
 	for ( j=0; j<nadd; j++ ) {
 	    if ( j+1 < nadd && 
-		NEAR_ZERO(verts[endcount[j]][Y] - verts[endcount[j+1]][Y], SMALL_FASTF) ) {
+		 NEAR_ZERO(verts[endcount[j]][Y] - verts[endcount[j+1]][Y], SMALL_FASTF) ) {
 		VJOIN1( add, rip->v3d, verts[endcount[j]][Y], rip->axis3d );
 		VJOIN1( add2, add, verts[endcount[j]][X], rEnd );
 		VJOIN1( add3, add, verts[endcount[j+1]][X], rEnd );
