@@ -2356,7 +2356,7 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
     bu_ptbl_free(&dgcdp->leaf_list);
 
     bu_vls_printf(&gedp->ged_result_str, "E: %ld vectors in %ld sec\n",
-	    dgcdp->nvectors, (long)(dgcdp->etime - dgcdp->start_time));
+		  dgcdp->nvectors, (long)(dgcdp->etime - dgcdp->start_time));
 
     return BRLCAD_OK;
 }

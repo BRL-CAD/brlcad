@@ -51,7 +51,6 @@ ged_invent_solid(struct ged	*gedp,
 		 int		dmode);
 
 
-
 /**
  * Compute the min, max, and center points of the solid.  Also finds
  * s_vlen.
@@ -384,7 +383,7 @@ ged_nmg_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, cons
     rt_db_free_internal(&intern, tsp->ts_resp);
     return 0;
 
-out:
+ out:
     /* Successful fastpath drawing of this solid */
     db_add_node_to_full_path(pathp, dp);
     ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);

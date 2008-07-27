@@ -417,7 +417,7 @@ ged_copy_object(struct ged		*gedp,
 		if ( dsp->dsp_datasrc == RT_DSP_SRC_OBJ ) {
 		    /* This dsp references a database object, may need to change its name */
 		    new_name = ged_get_new_name( bu_vls_addr( &dsp->dsp_name ), curr_dbip,
-					     name_tbl, used_names_tbl, cc_data );
+						 name_tbl, used_names_tbl, cc_data );
 		    if ( new_name ) {
 			bu_vls_free( &dsp->dsp_name );
 			bu_vls_strcpy( &dsp->dsp_name, new_name );

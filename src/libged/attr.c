@@ -309,7 +309,6 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-
     return BRLCAD_OK;
 }
 

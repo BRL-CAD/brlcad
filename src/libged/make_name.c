@@ -52,26 +52,26 @@ ged_make_name(struct ged *gedp, int argc, const char *argv[])
     }
 
     switch (argc) {
-    case 2:
-	if (strcmp(argv[1], "-s") != 0)
-	    break;
-	else {
-	    i = 0;
-	    return BRLCAD_OK;
-	}
-    case 3:
-    {
-	int	new_i;
+	case 2:
+	    if (strcmp(argv[1], "-s") != 0)
+		break;
+	    else {
+		i = 0;
+		return BRLCAD_OK;
+	    }
+	case 3:
+	{
+	    int	new_i;
 
-	if ((strcmp(argv[1], "-s") == 0)
-	    && (sscanf(argv[2], "%d", &new_i) == 1)) {
-	    i = new_i;
-	    return BRLCAD_OK;
+	    if ((strcmp(argv[1], "-s") == 0)
+		&& (sscanf(argv[2], "%d", &new_i) == 1)) {
+		i = new_i;
+		return BRLCAD_OK;
+	    }
 	}
-    }
-    default:
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
+	default:
+	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    return BRLCAD_ERROR;
     }
 
     bu_vls_init(&obj_name);

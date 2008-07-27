@@ -33,7 +33,7 @@
 #include "rtgeom.h"
 #include "ged.h"
 
- 
+
 int
 ged_bot_decimate(struct ged *gedp, int argc, const char *argv[])
 {

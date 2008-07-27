@@ -270,9 +270,9 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
     /* Note - gd_build_tops sets the last vp to (char *)0 */
     gedp->ged_gdp->gd_rt_cmd_len += dgo_build_tops(&gedp->ged_result_str,
-					   (struct solid *)&gedp->ged_gdp->gd_headSolid,
-					   vp,
-					   &gedp->ged_gdp->gd_rt_cmd[RT_MAXARGS]);
+						   (struct solid *)&gedp->ged_gdp->gd_headSolid,
+						   vp,
+						   &gedp->ged_gdp->gd_rt_cmd[RT_MAXARGS]);
 
     if (gedp->ged_gdp->gd_qray_cmd_echo) {
 	/* Print out the command we are about to run */
@@ -305,7 +305,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 #if 1
 	bu_vls_printf(&gedp->ged_result_str, "\nFiring from view center...\n");
 #else
-	Tcl_AppendResult(interp, "\nFiring from view center...\n", (char *)NULL);
+    Tcl_AppendResult(interp, "\nFiring from view center...\n", (char *)NULL);
 #endif
 
 #ifndef _WIN32
@@ -535,7 +535,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 #if 1
 	    bu_vls_printf(&gedp->ged_result_str, "%s", line);
 #else
-	    Tcl_AppendResult(interp, line, (char *)NULL);
+	Tcl_AppendResult(interp, line, (char *)NULL);
 #endif
     }
 
@@ -545,7 +545,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 #if 1
 	bu_vls_printf(&gedp->ged_result_str, "%s", line);
 #else
-	Tcl_AppendResult(interp, line, (char *)NULL);
+    Tcl_AppendResult(interp, line, (char *)NULL);
 #endif
     (void)fclose(fp_err);
 

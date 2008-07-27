@@ -25,16 +25,20 @@
 
 #include "common.h"
 
+#include <stdlib.h>
 #include "bio.h"
-#include "ged_private.h"
+
 #include "cmd.h"
 #include "solid.h"
+
+#include "ged_private.h"
+
 
 #if GED_USE_RUN_RT
 static int ged_run_rt(struct ged *gdp);
 static void ged_rt_write(struct ged *gedp,
-		  FILE *fp,
-		  vect_t eye_model);
+			 FILE *fp,
+			 vect_t eye_model);
 static void ged_rt_output_handler(ClientData clientData,
 				  int	 mask);
 static int ged_build_tops(struct ged	*gedp,

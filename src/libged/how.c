@@ -106,7 +106,7 @@ ged_how(struct ged *gedp, int argc, const char *argv[])
     /* match NOT found */
     bu_vls_printf(&gedp->ged_result_str, "-1");
 
-good:
+ good:
     if (dpp != (struct directory **)NULL)
 	bu_free((genptr_t)dpp, "ged_how: directory pointers");
 

@@ -38,7 +38,6 @@ struct directory ** ged_getspace(struct db_i	*dbip,
 				 register int	num_entries);
 
 
-
 /*
  * List objects in this database
  */

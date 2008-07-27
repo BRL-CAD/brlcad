@@ -86,41 +86,41 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
     /* Process arguments */
     while ((k = bu_getopt(argc, (char * const *)argv, "hHo:O:s:S:tT")) != EOF) {
 	switch (k) {
-	case 'o':
-	case 'O':
-	    if (sscanf(bu_optarg, "%lf %lf %lf",
-		       &origin[X],
-		       &origin[Y],
-		       &origin[Z]) != 3) {
-		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		return BRLCAD_ERROR;
-	    }
-	    break;
-	case 's':
-	case 'S':
-	    if (sscanf(bu_optarg, "%lf", &scale) != 1) {
-		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		return BRLCAD_ERROR;
-	    }
-	    break;
-	case 't':
-	case 'T':
-	    if (argc == 2) {
-		gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
-		bu_vls_printf(&gedp->ged_result_str, "arb8 arb7 arb6 arb5 arb4 arbn ars bot ehy ell ell1 epa eto extrude grip half nmg part pipe rcc rec rhc rpc rpp sketch sph tec tgc tor trc superell metaball");
-		return BRLCAD_OK;
-	    }
+	    case 'o':
+	    case 'O':
+		if (sscanf(bu_optarg, "%lf %lf %lf",
+			   &origin[X],
+			   &origin[Y],
+			   &origin[Z]) != 3) {
+		    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		    return BRLCAD_ERROR;
+		}
+		break;
+	    case 's':
+	    case 'S':
+		if (sscanf(bu_optarg, "%lf", &scale) != 1) {
+		    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		    return BRLCAD_ERROR;
+		}
+		break;
+	    case 't':
+	    case 'T':
+		if (argc == 2) {
+		    gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
+		    bu_vls_printf(&gedp->ged_result_str, "arb8 arb7 arb6 arb5 arb4 arbn ars bot ehy ell ell1 epa eto extrude grip half nmg part pipe rcc rec rhc rpc rpp sketch sph tec tgc tor trc superell metaball");
+		    return BRLCAD_OK;
+		}
 
-	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return BRLCAD_ERROR;
-	case 'h':
-	case 'H':
-	    gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
-	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return BRLCAD_OK;
-	default:
-	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return BRLCAD_ERROR;
+		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		return BRLCAD_ERROR;
+	    case 'h':
+	    case 'H':
+		gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
+		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		return BRLCAD_OK;
+	    default:
+		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		return BRLCAD_ERROR;
 	}
     }
 
@@ -145,9 +145,9 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	arb_ip = (struct rt_arb_internal *)internal.idb_ptr;
 	arb_ip->magic = RT_ARB_INTERNAL_MAGIC;
 	VSET(arb_ip->pt[0] ,
-	      origin[X] +scale,
-	      origin[Y] -scale,
-	      origin[Z] -scale);
+	     origin[X] +scale,
+	     origin[Y] -scale,
+	     origin[Z] -scale);
 	for (i=1; i<8; i++)
 	    VMOVE(arb_ip->pt[i], arb_ip->pt[0]);
 	arb_ip->pt[1][Y] += scale;
@@ -168,9 +168,9 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	arb_ip = (struct rt_arb_internal *)internal.idb_ptr;
 	arb_ip->magic = RT_ARB_INTERNAL_MAGIC;
 	VSET(arb_ip->pt[0] ,
-	      origin[X] + scale,
-	      origin[Y] - scale,
-	      origin[Z] - 0.5*scale);
+	     origin[X] + scale,
+	     origin[Y] - scale,
+	     origin[Z] - 0.5*scale);
 	for (i=1; i<8; i++)
 	    VMOVE(arb_ip->pt[i], arb_ip->pt[0]);
 	arb_ip->pt[1][Y] += scale;
@@ -190,9 +190,9 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	arb_ip = (struct rt_arb_internal *)internal.idb_ptr;
 	arb_ip->magic = RT_ARB_INTERNAL_MAGIC;
 	VSET(arb_ip->pt[0],
-	      origin[X] +scale,
-	      origin[Y] -scale,
-	      origin[Z] -scale);
+	     origin[X] +scale,
+	     origin[Y] -scale,
+	     origin[Z] -scale);
 	for (i=1; i<8; i++)
 	    VMOVE(arb_ip->pt[i], arb_ip->pt[0]);
 	arb_ip->pt[1][Y] += scale;
@@ -215,9 +215,9 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	arb_ip = (struct rt_arb_internal *)internal.idb_ptr;
 	arb_ip->magic = RT_ARB_INTERNAL_MAGIC;
 	VSET(arb_ip->pt[0] ,
-	      origin[X] + scale,
-	      origin[Y] - scale,
-	      origin[Z] - scale);
+	     origin[X] + scale,
+	     origin[Y] - scale,
+	     origin[Z] - scale);
 	for (i=1; i<8; i++)
 	    VMOVE(arb_ip->pt[i], arb_ip->pt[0]);
 	arb_ip->pt[1][Y] += scale;
@@ -238,9 +238,9 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	arb_ip = (struct rt_arb_internal *)internal.idb_ptr;
 	arb_ip->magic = RT_ARB_INTERNAL_MAGIC;
 	VSET(arb_ip->pt[0] ,
-	      origin[X] +scale,
-	      origin[Y] -scale,
-	      origin[Z] -scale);
+	     origin[X] +scale,
+	     origin[Y] -scale,
+	     origin[Z] -scale);
 	for (i=1; i<8; i++)
 	    VMOVE(arb_ip->pt[i], arb_ip->pt[0]);
 	arb_ip->pt[1][Y] += scale;
@@ -264,7 +264,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	arbn_ip->magic = RT_ARBN_INTERNAL_MAGIC;
 	arbn_ip->neqn = 8;
 	arbn_ip->eqn = (plane_t *)bu_calloc(arbn_ip->neqn,
-					     sizeof(plane_t), "arbn plane eqns");
+					    sizeof(plane_t), "arbn plane eqns");
 	VSET(arbn_ip->eqn[0], 1, 0, 0);
 	arbn_ip->eqn[0][3] = 0.5*scale;
 	VSET(arbn_ip->eqn[1], -1, 0, 0);
@@ -282,9 +282,9 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	VSET(arbn_ip->eqn[7], -0.57735, -0.57735, -0.57735);
 	arbn_ip->eqn[7][3] = 0.5*scale;
 	VSET(view_center,
-	      origin[X],
-	      origin[Y],
-	      origin[Z]);
+	     origin[X],
+	     origin[Y],
+	     origin[Z]);
 	for (i=0; i<arbn_ip->neqn; i++) {
 	    arbn_ip->eqn[i][3] +=
 		VDOT(view_center, arbn_ip->eqn[i]);
@@ -308,16 +308,16 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 
 	    if (curve == 0) {
 		VSET(&(ars_ip->curves[0][0]),
-		      origin[X],
-		      origin[Y],
-		      origin[Z]);
+		     origin[X],
+		     origin[Y],
+		     origin[Z]);
 		VMOVE(&(ars_ip->curves[curve][3]), &(ars_ip->curves[curve][0]));
 		VMOVE(&(ars_ip->curves[curve][6]), &(ars_ip->curves[curve][0]));
 	    } else if (curve == (ars_ip->ncurves - 1)) {
 		VSET(&(ars_ip->curves[curve][0]),
-		      origin[X],
-		      origin[Y],
-		      origin[Z]+curve*0.5*scale);
+		     origin[X],
+		     origin[Y],
+		     origin[Z]+curve*0.5*scale);
 		VMOVE(&(ars_ip->curves[curve][3]), &(ars_ip->curves[curve][0]));
 		VMOVE(&(ars_ip->curves[curve][6]), &(ars_ip->curves[curve][0]));
 
@@ -360,7 +360,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	grp_ip = (struct rt_grip_internal *) internal.idb_ptr;
 	grp_ip->magic = RT_GRIP_INTERNAL_MAGIC;
 	VSET(grp_ip->center, origin[X], origin[Y],
-	      origin[Z]);
+	     origin[Z]);
 	VSET(grp_ip->normal, 1.0, 0.0, 0.0);
 	grp_ip->mag = scale;
     } else if (strcmp(argv[bu_optind+1], "ell1") == 0) {

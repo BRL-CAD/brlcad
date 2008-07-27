@@ -456,7 +456,7 @@ dgo_illum_cmd(struct dg_obj	*dgop,
 
     return TCL_OK;
 
-bad:
+ bad:
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias dgo_illum %s", argv[0]);
     Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -845,7 +845,7 @@ dgo_how_cmd(struct dg_obj	*dgop,
     /* match NOT found */
     Tcl_AppendResult(interp, "-1", (char *)NULL);
 
-good:
+ good:
     if (dpp != (struct directory **)NULL)
 	bu_free((genptr_t)dpp, "dgo_how_cmd: directory pointers");
     bu_vls_free(&vls);
@@ -2577,7 +2577,7 @@ dgo_shaded_mode_cmd(struct dg_obj	*dgop,
 	return TCL_OK;
     }
 
-bad:
+ bad:
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias dgo_shaded_mode %s", argv[0]);
     Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -2807,7 +2807,7 @@ dgo_nmg_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, cons
     rt_db_free_internal(&intern, tsp->ts_resp);
     return 0;
 
-out:
+ out:
     /* Successful fastpath drawing of this solid */
     db_add_node_to_full_path(pathp, dp);
     dgo_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
