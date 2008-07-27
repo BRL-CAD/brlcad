@@ -384,11 +384,7 @@ this is replaced by using rt_sketch_contains()
 	    }
 	    if ( angle > rev->ang ) nhits--;
 
-#if 1
-	    hitp->hit_vpriv[Z] = MAX_FASTF;
-#else
-	    hitp->hit_vpriv[Z] = 1.0/0.0;	/* slope = 0, so 1/slope = inf */
-#endif
+	    hitp->hit_vpriv[Z] = MAX_FASTF; /* slope = 0, so 1/slope => inf */
 	}
     }
 
@@ -430,7 +426,7 @@ this is replaced by using rt_sketch_contains()
 			    if ( angle < rev->ang ) {
 				hitp = hits[nhits++];
 				VMOVE( hitp->hit_vpriv, hit1 );
-				hitp->hit_vpriv[Z] = (pt2[X]<0)?1.0/m:-1.0/m;
+				hitp->hit_vpriv[Z] = (pt2[X]<0) ? 1.0/m : -1.0/m;
 				hitp->hit_magic = RT_HIT_MAGIC;
 				hitp->hit_dist = k1;
 				hitp->hit_surfno = LINE_SEG;
@@ -449,7 +445,7 @@ this is replaced by using rt_sketch_contains()
 			    if ( angle < rev->ang ) {
 				hitp = hits[nhits++];
 				VMOVE( hitp->hit_vpriv, hit2 );
-				hitp->hit_vpriv[Z] = (pt2[X]<0)?1.0/m:-1.0/m;
+				hitp->hit_vpriv[Z] = (pt2[X]<0) ? 1.0/m : -1.0/m;
 				hitp->hit_magic = RT_HIT_MAGIC;
 				hitp->hit_dist = k2;
 				hitp->hit_surfno = LINE_SEG;
@@ -473,7 +469,7 @@ this is replaced by using rt_sketch_contains()
 			if ( angle < rev->ang ) {
 			    hitp = hits[nhits++];
 			    VMOVE( hitp->hit_vpriv, hit1 );
-			    hitp->hit_vpriv[Z] = (pt2[X]<0)?1.0/m:-1.0/m;;
+			    hitp->hit_vpriv[Z] = (pt2[X]<0) ? 1.0/m : -1.0/m;
 			    hitp->hit_magic = RT_HIT_MAGIC;
 			    hitp->hit_dist = k1;
 			    hitp->hit_surfno = LINE_SEG;
