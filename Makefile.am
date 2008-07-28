@@ -317,6 +317,7 @@ dist-hook:
 		echo "TOO MANY EMPTY PKGINDEX.TCL/TCLINDEX FILES" ; \
 		exit 1 ; \
 	fi
+	${SH} $(top_srcdir)/sh/cmakecheck.sh
 	find $(distdir) -type f \( -name '.cvsignore' -or -name 'brlcad_config.h' \) -exec rm -f {} \;
 	find $(distdir) -type d \( -name 'CVS' -or -name '.svn' \) -prune -exec rm -rf {} \;
 
@@ -434,17 +435,17 @@ all-local:
 	@$(ECHO)
 	@if test "x$(MAKECMDGOALS)" = "xall-am" -o "x$(.TARGETS)" = "xall-am" -o "x$(MAKECMDGOALS)" = "xfast" -o "x$(.TARGETS)" = "xfast" ; then \
 	  $(ECHO) $(ECHO_N) "Elapsed compilation time: " ;\
-	  sh $(top_srcdir)/sh/elapsed.sh `cat $(top_builddir)/include/conf/TS` ;\
+	  ${SH}$(top_srcdir)/sh/elapsed.sh `cat $(top_builddir)/include/conf/TS` ;\
 	  $(ECHO) $(ECHO_N) "Elapsed time since configuration: " ;\
-	  sh $(top_srcdir)/sh/elapsed.sh ${CONFIG_TS} ;\
+	  ${SH}$(top_srcdir)/sh/elapsed.sh ${CONFIG_TS} ;\
 	  $(ECHO) "---" ;\
 	  $(ECHO) "Run 'make install' to begin installation into $(prefix)" ;\
 	  $(ECHO) "Run 'make benchmark' to run the BRL-CAD Benchmark Suite" ;\
 	elif test "x$(MAKECMDGOALS)" = "xinstall-am" -o "x$(.TARGETS)" = "xinstall-am" ; then \
 	  $(ECHO) $(ECHO_N) "Elapsed installation time: " ;\
-	  sh $(top_srcdir)/sh/elapsed.sh `cat $(top_builddir)/include/conf/TS` ;\
+	  ${SH}$(top_srcdir)/sh/elapsed.sh `cat $(top_builddir)/include/conf/TS` ;\
 	  $(ECHO) $(ECHO_N) "Elapsed time since configuration: " ;\
-	  sh $(top_srcdir)/sh/elapsed.sh ${CONFIG_TS} ;\
+	  ${SH}$(top_srcdir)/sh/elapsed.sh ${CONFIG_TS} ;\
 	  $(ECHO) "---" ;\
 	  $(ECHO) "Run 'make test' to run the BRL-CAD Test Suite" ;\
 	  $(ECHO) "Run 'make benchmark' to run the BRL-CAD Benchmark Suite" ;\
@@ -458,9 +459,9 @@ all-local:
 	  $(ECHO) "$${separator}****" ;\
 	elif test "x$(MAKECMDGOALS)" = "x" -a "x$(.TARGETS)" = "x" ; then \
 	  $(ECHO) $(ECHO_N) "Elapsed time: " ;\
-	  sh $(top_srcdir)/sh/elapsed.sh `cat $(top_builddir)/include/conf/TS` ;\
+	  ${SH}$(top_srcdir)/sh/elapsed.sh `cat $(top_builddir)/include/conf/TS` ;\
 	  $(ECHO) $(ECHO_N) "Elapsed time since configuration: " ;\
-	  sh $(top_srcdir)/sh/elapsed.sh ${CONFIG_TS} ;\
+	  ${SH}$(top_srcdir)/sh/elapsed.sh ${CONFIG_TS} ;\
 	  $(ECHO) "---" ;\
 	  $(ECHO) "Run 'make benchmark' to run the BRL-CAD Benchmark Suite" ;\
 	fi
