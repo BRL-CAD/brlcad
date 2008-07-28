@@ -56,21 +56,21 @@ private:
 
     long num_checks;
     bool initiated;
-    class BinaryNetwork<T>* N;
+    class BinaryNetwork<T>& N;
     bool generator();
     void initiate();
 
 public:
-    GTSolver() { initiated = false; }
-    bool solve(class BinaryNetwork<T>* , Solution<T>* );
+    GTSolver(BinaryNetwork<T> & BN) : initiated(false), N(BN) { }
+    bool solve(Solution<T> * );
     long numChecks () { return num_checks; }
 };
 
 
 template<class T>
 void GTSolver<T>::initiate() {
-    for (tie(v_i,v_end) = vertices(N->G); v_i != v_end; ++v_i)
-	N->G[*v_i].setValue(N->G[*v_i].getFirst());
+    for (tie(v_i,v_end) = vertices(N.G); v_i != v_end; ++v_i)
+	N.G[*v_i].setValue(N.G[*v_i].getFirst());
 }
 
 template<class T>
@@ -80,25 +80,26 @@ bool GTSolver<T>::generator() {
 	initiated = true;
     } else {
 	typename GraphTraits::vertex_iterator vertex_v, vertex_u,vertex_end;
-	tie(vertex_u,vertex_v) = vertices(N->G);
+	tie(vertex_u,vertex_v) = vertices(N.G);
 	vertex_end = vertex_v;
 	--vertex_v;
 	while (vertex_v != vertex_u) {
-	    //std::cout << N->G[*vertex_v].getValue() << " ???" << N->G[*vertex_v].getLast() << std::endl;
-	    if (N->G[*vertex_v].getValue() == N->G[*vertex_v].getLast())
+	    //std::cout << N.G[*vertex_v].getValue() << " ???" << N.G[*vertex_v].getLast() << std::endl;
+	    if (N.G[*vertex_v].getValue() == N.G[*vertex_v].getLast())
 		--vertex_v;
 	    else
 		break;
 	}
 
-	if (N->G[*vertex_u].getValue() == N->G[*vertex_v].getLast())
+	if (N.G[*vertex_u].getValue() == N.G[*vertex_v].getLast())
 	    return false;
 	/* Increment one variable and set the other variables to the first value */
-	++(N->G[*vertex_v]);
+	++(N.G[*vertex_v]);
 	if (true ||vertex_v != vertex_u) {
+	    ++vertex_v;
 	    while (vertex_v != vertex_end) {
+		N.G[*vertex_v].setValue(N.G[*vertex_v].getFirst());
 		++vertex_v;
-		N->G[*vertex_v].setValue(N->G[*vertex_v].getFirst());
 	    }
 	}
     }
@@ -106,18 +107,17 @@ bool GTSolver<T>::generator() {
 }
 
 template<class T>
-bool GTSolver<T>::solve(class BinaryNetwork<T>* BN,Solution<T>* S) {
-    N = BN;
+bool GTSolver<T>::solve(Solution<T> * S) {
     num_checks = 0;
     while (generator()) {
-	/*for (tie(v_i,v_end) = vertices(N->G); v_i != v_end; ++v_i)
-	  std::cout << N->G[*v_i].getValue();
+    /*for (tie(v_i,v_end) = vertices(N.G); v_i != v_end; ++v_i)
+	  std::cout << N.G[*v_i].getValue();
 	  std::cout << std::endl;*/
 	++num_checks;
-	if (N->check()) {
-	    for (tie(v_i,v_end) = vertices(N->G); v_i != v_end; ++v_i) {
-		S->VarDom.push_back(VarDomain<T>(N->G[*v_i],\
-						 Domain<T>(N->G[*v_i].getValue(),N->G[*v_i].getValue(),1)));
+	if (N.check()) {
+	    for (tie(v_i,v_end) = vertices(N.G); v_i != v_end; ++v_i) {
+		S->VarDom.push_back(VarDomain<T>(N.G[*v_i],\
+						 Domain<T>(N.G[*v_i].getValue(),N.G[*v_i].getValue(),1)));
 	    }
 	    return true;
 	}

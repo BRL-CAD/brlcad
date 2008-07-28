@@ -134,12 +134,11 @@ int main()
       S = N.solve();
       S.display();
     */
-    GTSolver<int> GTS;
+    GTSolver<int> GTS(N);
     BTSolver<int> BTS;
 
-
     std::cout << "-----------------------------" << std::endl;
-    GTS.solve(&N,&S);
+    GTS.solve(&S);
     std::cout << "Solution using Generate-Test" << std::endl;
     S.display();
     S.clear();
