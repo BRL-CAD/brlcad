@@ -300,6 +300,8 @@ isLastUseOfRti( struct rt_i *rtip, int sessionid )
 void
 rts_clean( int sessionid)
 {
+    struct application *ap;
+    struct resource *resp;
     int i, j;
 
     if ( sessionid >= 0 && sessionid < num_geometries && rts_geometry[sessionid] ) {
@@ -352,6 +354,48 @@ rts_clean( int sessionid)
 	bu_free( rts_geometry[sessionid], "rts_geometry" );
 	rts_geometry[sessionid] = NULL;
     }
+    
+    if ( hash_table_exists ) {
+	Tcl_DeleteHashTable( &name_tbl );
+#if 0
+	Tcl_DeleteHashTable( &ident_tbl);
+	Tcl_DeleteHashTable( &air_tbl );
+#endif
+	hash_table_exists = 0;
+    }
+    
+    num_geometries = 0;
+    bu_free( (char *)rts_geometry, "rts_geometry" );
+    rts_geometry = NULL;
+    
+    if(title != NULL) {
+        bu_free(title, "title");
+        title = NULL;
+    }
+    
+    for( i=0 ; i<BU_PTBL_LEN(&apps) ; i++ ) {
+        struct bu_vlb *vlb;
+        
+        ap = (struct application *)BU_PTBL_GET( &apps, i);
+        
+        vlb = (struct bu_vlb *)ap->a_uptr;
+        if(vlb != NULL) {
+            bu_vlb_free(vlb);
+            bu_free(vlb, "vlb");
+        }
+
+        if( ap->a_resource != NULL ) {
+            rt_clean_resource_complete(NULL, ap->a_resource);
+            bu_free(ap->a_resource, "resource");
+        }
+
+        bu_free(ap, "struct application");
+    }
+    bu_ptbl_free(&apps);
+    memset(&apps, 0, sizeof( struct bu_ptbl));
+    
+    resp = &rt_uniresource;
+    rt_clean_resource_complete(NULL, resp);
 }
 
 /* routine to close a session
@@ -1952,69 +1996,8 @@ JNIEXPORT jobjectArray JNICALL Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWra
     return jNameArray;
 }
 
-void rts_shutdown()
-{
-    struct application *ap;
-    struct resource *resp;
-    int i;
-    
-    bu_log( "Shutting down...");
-    rts_clean(0);
-    
-    if ( hash_table_exists ) {
-	Tcl_DeleteHashTable( &name_tbl );
-#if 0
-	Tcl_DeleteHashTable( &ident_tbl);
-	Tcl_DeleteHashTable( &air_tbl );
-#endif
-	hash_table_exists = 0;
-    }
-    
-    num_geometries = 0;
-    bu_free( (char *)rts_geometry, "rts_geometry" );
-    rts_geometry = NULL;
-    
-    if(title != NULL) {
-        bu_free(title, "title");
-        title = NULL;
-    }
-    
-    for( i=0 ; i<BU_PTBL_LEN(&apps) ; i++ ) {
-        struct bu_vlb *vlb;
-        
-        ap = (struct application *)BU_PTBL_GET( &apps, i);
-        
-        vlb = (struct bu_vlb *)ap->a_uptr;
-        if(vlb != NULL) {
-            bu_vlb_free(vlb);
-            bu_free(vlb, "vlb");
-        }
-
-        if( ap->a_resource != NULL ) {
-            rt_clean_resource(NULL, ap->a_resource);
-            bu_free(ap->a_resource, "resource");
-        }
-
-        bu_free(ap, "struct application");
-    }
-    bu_ptbl_free(&apps);
-    memset(&apps, 0, sizeof( struct bu_ptbl));
-    
-    resp = &rt_uniresource;
-    rt_clean_resource(NULL, resp);
-    if ( BU_LIST_IS_INITIALIZED( &resp->re_directory_blocks.l ) )  {
-        struct directory **dpp;
-        BU_CK_PTBL( &resp->re_directory_blocks );
-        for ( BU_PTBL_FOR( dpp, (struct directory **), &resp->re_directory_blocks ) )  {
-            RT_CK_DIR(*dpp);	/* Head of block will be a valid seg */
-            bu_free( (genptr_t)(*dpp), "struct directory block" );
-        }
-        bu_ptbl_free( &resp->re_directory_blocks );
-    }
-
-}
-
 JNIEXPORT void JNICALL Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_shutdownNative(JNIEnv *env, jobject obj)
 {
-    rts_shutdown();
+    bu_log( "Shutting down...");
+    rts_clean(0);
 }
