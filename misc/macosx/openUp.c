@@ -40,6 +40,7 @@
  * DiskCopy, such as those often used for application installation.
  */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/attr.h>
