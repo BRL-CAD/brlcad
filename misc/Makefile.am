@@ -1,4 +1,4 @@
-# $Id$
+# $Id: Makefile.am 30974 2008-05-04 04:37:42Z brlcad $
 
 SUBDIRS = \
 	archlinux \
@@ -8,7 +8,6 @@ SUBDIRS = \
 	nsis \
 	pkgconfig \
 	win32-msvc \
-	win32-msvc7 \
 	win32-msvc8
 
 sample_applicationsdir = $(SAMPLE_APPLICATIONS_DIR)
@@ -31,8 +30,7 @@ EXTRA_DIST = \
 	brlcad.spec.in \
 	doxygen_structure \
 	flawfinder \
-	libtool.m4 \
-	rcs2log
+	libtool.m4
 
 DISTCLEANFILES = \
 	brlcad-config \
