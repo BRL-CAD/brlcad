@@ -12,8 +12,8 @@
 	<Configurations>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory=".\Release"
-			IntermediateDirectory=".\Release"
+			OutputDirectory=".\$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory=".\$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="FALSE"
@@ -28,10 +28,10 @@
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="TRUE"
 				UsePrecompiledHeader="2"
-				PrecompiledHeaderFile=".\Release/tkimgpng.pch"
-				AssemblerListingLocation=".\Release/"
-				ObjectFile=".\Release/"
-				ProgramDataBaseFileName=".\Release/"
+				PrecompiledHeaderFile=".\$(PlatformName)\$(ConfigurationName)/tkimgpng.pch"
+				AssemblerListingLocation=".\$(PlatformName)\$(ConfigurationName)/"
+				ObjectFile=".\$(PlatformName)\$(ConfigurationName)/"
+				ProgramDataBaseFileName=".\$(PlatformName)\$(ConfigurationName)/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
 				CompileAs="0"/>
@@ -40,12 +40,12 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="tcl84.lib tk84.lib libz.lib libpng.lib tkimg.lib"
-				OutputFile=".\Release/tkimgpng.dll"
+				OutputFile=".\$(PlatformName)\$(ConfigurationName)/tkimgpng.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				AdditionalLibraryDirectories="../../../brlcadInstall/lib"
-				ProgramDatabaseFile=".\Release/tkimgpng.pdb"
-				ImportLibrary=".\Release/tkimgpng.lib"
+				ProgramDatabaseFile=".\$(PlatformName)\$(ConfigurationName)/tkimgpng.pdb"
+				ImportLibrary=".\$(PlatformName)\$(ConfigurationName)/tkimgpng.lib"
 				TargetMachine="1"/>
 			<Tool
 				Name="VCMIDLTool"
@@ -53,7 +53,7 @@
 				MkTypLibCompatible="TRUE"
 				SuppressStartupBanner="TRUE"
 				TargetEnvironment="1"
-				TypeLibraryName=".\Release/tkimgpng.tlb"
+				TypeLibraryName=".\$(PlatformName)\$(ConfigurationName)/tkimgpng.tlb"
 				HeaderFileName=""/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -89,7 +89,7 @@ copy &quot;$(TargetDir)&quot;tkimgpng.lib ..\..\..\brlcadInstall\lib
 			<File
 				RelativePath="..\..\..\src\other\tkimg\png\png.c">
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="$(PlatformName)\$(ConfigurationName)|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
 						Optimization="2"

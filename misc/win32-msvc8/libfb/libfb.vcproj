@@ -9,14 +9,17 @@
 		<Platform
 			Name="Win32"
 		/>
+		<Platform
+			Name="x64"
+		/>
 	</Platforms>
 	<ToolFiles>
 	</ToolFiles>
 	<Configurations>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory=".\Release"
-			IntermediateDirectory=".\Release"
+			OutputDirectory=".\$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory=".\$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
@@ -41,7 +44,7 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="1"
-				TypeLibraryName=".\Release/libfb.tlb"
+				TypeLibraryName=".\$(PlatformName)\$(ConfigurationName)/libfb.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -56,10 +59,10 @@
 				EnableFunctionLevelLinking="true"
 				TreatWChar_tAsBuiltInType="false"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\Release/libfb.pch"
-				AssemblerListingLocation=".\Release/"
-				ObjectFile=".\Release/"
-				ProgramDataBaseFileName=".\Release/"
+				PrecompiledHeaderFile=".\$(PlatformName)\$(ConfigurationName)/libfb.pch"
+				AssemblerListingLocation=".\$(PlatformName)\$(ConfigurationName)/"
+				ObjectFile=".\$(PlatformName)\$(ConfigurationName)/"
+				ProgramDataBaseFileName=".\$(PlatformName)\$(ConfigurationName)/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				Detect64BitPortabilityProblems="false"
@@ -80,13 +83,13 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="ws2_32.lib opengl32.lib tcl85.lib tk85.lib libbu.lib libpkg.lib"
-				OutputFile=".\Release/libfb.dll"
+				OutputFile=".\$(PlatformName)\$(ConfigurationName)/libfb.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../../../brlcadInstall/lib"
 				GenerateDebugInformation="false"
-				ProgramDatabaseFile=".\Release/libfb.pdb"
-				ImportLibrary=".\Release/libfb.lib"
+				ProgramDatabaseFile=".\$(PlatformName)\$(ConfigurationName)/libfb.pdb"
+				ImportLibrary=".\$(PlatformName)\$(ConfigurationName)/libfb.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -115,6 +118,108 @@
 				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;libfb.lib ..\..\..\brlcadInstall\lib&#x0D;&#x0A;"
 			/>
 		</Configuration>
+		<Configuration
+			Name="Release|x64"
+			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="2"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="NDEBUG"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
+				TargetEnvironment="3"
+				TypeLibraryName=".\$(PlatformName)\$(ConfigurationName)/libfb.tlb"
+				HeaderFileName=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="2"
+				InlineFunctionExpansion="1"
+				AdditionalIncludeDirectories="../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/tk/generic;../../../src/other/tk/win;../../../src/other/tk/xlib;../../../include"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;FB_EXPORT_DLL;TCL_THREADS=1;__win32;IF_WGL;IF_REMOTE;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;_CRT_SECURE_NO_WARNINGS"
+				StringPooling="true"
+				BasicRuntimeChecks="0"
+				RuntimeLibrary="2"
+				EnableFunctionLevelLinking="true"
+				TreatWChar_tAsBuiltInType="false"
+				UsePrecompiledHeader="0"
+				PrecompiledHeaderFile=".\$(PlatformName)\$(ConfigurationName)/libfb.pch"
+				AssemblerListingLocation=".\$(PlatformName)\$(ConfigurationName)/"
+				ObjectFile=".\$(PlatformName)\$(ConfigurationName)/"
+				ProgramDataBaseFileName=".\$(PlatformName)\$(ConfigurationName)/"
+				WarningLevel="3"
+				SuppressStartupBanner="true"
+				Detect64BitPortabilityProblems="false"
+				DebugInformationFormat="0"
+				CompileAs="0"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="NDEBUG"
+				Culture="1033"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="ws2_32.lib opengl32.lib tcl85.lib tk85.lib libbu.lib libpkg.lib"
+				OutputFile=".\$(PlatformName)\$(ConfigurationName)/libfb.dll"
+				LinkIncremental="1"
+				SuppressStartupBanner="true"
+				AdditionalLibraryDirectories="../../../brlcadInstall$(PlatformName)/lib"
+				GenerateDebugInformation="false"
+				ProgramDatabaseFile=".\$(PlatformName)\$(ConfigurationName)/libfb.pdb"
+				ImportLibrary=".\$(PlatformName)\$(ConfigurationName)/libfb.lib"
+				TargetMachine="17"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall$(PlatformName)\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;libfb.lib ..\..\..\brlcadInstall$(PlatformName)\lib&#x0D;&#x0A;"
+			/>
+		</Configuration>
 	</Configurations>
 	<References>
 	</References>
@@ -127,7 +232,15 @@
 				RelativePath="..\..\..\src\libfb\asize.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -139,7 +252,15 @@
 				RelativePath="..\..\..\src\libfb\fb_generic.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -151,7 +272,15 @@
 				RelativePath="..\..\..\src\libfb\fb_log.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -163,7 +292,15 @@
 				RelativePath="..\..\..\src\libfb\fb_obj.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -175,7 +312,15 @@
 				RelativePath="..\..\..\src\libfb\fb_paged_io.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -187,7 +332,15 @@
 				RelativePath="..\..\..\src\libfb\fb_rect.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -199,7 +352,15 @@
 				RelativePath="..\..\..\src\libfb\fb_util.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -215,7 +376,15 @@
 				RelativePath="..\..\..\src\libfb\getput.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -227,7 +396,15 @@
 				RelativePath="..\..\..\src\libfb\if_debug.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -239,7 +416,15 @@
 				RelativePath="..\..\..\src\libfb\if_disk.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -251,7 +436,15 @@
 				RelativePath="..\..\..\src\libfb\if_mem.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -263,7 +456,15 @@
 				RelativePath="..\..\..\src\libfb\if_null.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -275,7 +476,15 @@
 				RelativePath="..\..\..\src\libfb\if_remote.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -287,7 +496,15 @@
 				RelativePath="..\..\..\src\libfb\if_stack.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -299,7 +516,15 @@
 				RelativePath="..\..\..\src\libfb\if_wgl.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -311,7 +536,15 @@
 				RelativePath="..\..\..\src\libfb\tcl.c"
 				>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"

@@ -81,6 +81,7 @@ EXTRA_DIST= \
 	libbu/libbu.vcproj \
 	libdm/libdm.vcproj \
 	libfb/libfb.vcproj \
+	libged/libged.vcproj \
 	liboptical/liboptical.vcproj \
 	liborle/liborle.vcproj \
 	libpkg/libpkg.vcproj \
