@@ -23,7 +23,9 @@ file(WRITE HOST "\"$ENV{COMPUTERNAME}\"")
 
 
 # update PATH
-file(WRITE PATH "\"$ENV{ProgramFiles}\\BRL-CAD\"")
+set(programPath "\"$ENV{ProgramFiles}\\BRL-CAD\"")
+string(REPLACE "\\" "\\\\" programPathForC ${programPath})
+file(WRITE PATH ${programPathForC})
 
 
 # update USER

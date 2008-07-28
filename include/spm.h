@@ -54,8 +54,6 @@ typedef	struct	{
 
 #define	SPM_NULL (spm_map_t *)0
 
-#define SPM_MAGIC	0x41278678
-
 #define RT_CK_SPM(smp)		BU_CKMAG(smp, SPM_MAGIC, "spm_map_t" )
 #define BN_CK_SPM(smp)		BU_CKMAG(smp, SPM_MAGIC, "spm_map_t" )
 

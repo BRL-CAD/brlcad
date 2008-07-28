@@ -54,7 +54,6 @@ struct mfuncs {
     void		(*mf_print)();	/**< @brief  Routine for printing */
     void		(*mf_free)();	/**< @brief  Routine for releasing storage */
 };
-#define MF_MAGIC	0x55968058
 #define MF_NULL		((struct mfuncs *)0)
 #define RT_CK_MF(_p)	BU_CKMAG(_p, MF_MAGIC, "mfuncs")
 

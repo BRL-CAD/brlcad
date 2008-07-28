@@ -11,6 +11,8 @@ brlcadinclude_required = \
 	bu.h \
 	common.h \
 	config_win.h \
+	ged.h \
+	magic.h \
 	raytrace.h \
 	rtgeom.h \
 	rtprivate.h \
@@ -53,7 +55,6 @@ brlcadinclude_wanted = \
 	plastic.h \
 	plot3.h \
 	redblack.h \
-	regex.h \
 	shadefuncs.h \
 	shadework.h \
 	solid.h \

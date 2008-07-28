@@ -283,13 +283,8 @@ struct dm_obj {
 
 DM_EXPORT extern struct dm dm_Null;
 
-#ifdef BRLCAD_DEBUG
-DM_EXPORT BU_EXTERN(int Dm_d_Init,
-		    ());
-#else
 DM_EXPORT BU_EXTERN(int Dm_Init,
 		    ());
-#endif
 DM_EXPORT BU_EXTERN(struct dm *dm_open,
 		    (Tcl_Interp *interp,
 		     int type,

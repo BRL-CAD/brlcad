@@ -82,6 +82,22 @@ JNIEXPORT jobject JNICALL Java_mil_army_arl_services_RtService_getItemTree
 (JNIEnv *, jobject, jint);
 
 /*
+ * Class:     mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper
+ * Method:    getRegionNames
+ * Signature: (I)[Ljava/lang/String;
+ */
+JNIEXPORT jobjectArray JNICALL Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_getRegionNames
+  (JNIEnv *, jobject, jint);
+
+/*
+ * Class:     mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper
+ * Method:    shootList
+ * Signature: ([Lmil/army/arl/math/Ray;II)[B
+ */
+JNIEXPORT jbyteArray JNICALL Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_shootList
+  (JNIEnv *, jobject, jobjectArray, jint, jint);
+
+/*
  * Class:     mil_army_arl_services_RtService
  * Method:    getBoundingBox
  * Signature: (I)Lmil/army/arl/muves/math/BoundingBox;

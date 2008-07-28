@@ -51,16 +51,6 @@
 #   undef IN
 #   undef OUT
 
-#   ifdef __cplusplus
-#       if defined(_MSC_VER) && (_MSC_VER <= 1200) /* MSVC 6.0 and before */
-#           ifdef min
-#               undef min
-#           endif
-#           ifdef max
-#               undef max
-#           endif
-#       endif
-#   endif
 #else
 #  include <unistd.h>
 #endif

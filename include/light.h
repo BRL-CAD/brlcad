@@ -89,7 +89,6 @@ struct light_specific {
     fastf_t lt_parse_pt[6];
 };
 #define LIGHT_NULL	((struct light_specific *)0)
-#define LIGHT_MAGIC	0xdbddbdb7
 #define RT_CK_LIGHT(_p)	BU_CKMAG((_p), LIGHT_MAGIC, "light_specific")
 
 /* defined in sh_light.c */

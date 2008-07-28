@@ -92,9 +92,6 @@
 	/* NMG_INCR_INDEX(p, m); */ \
 	BU_LIST_INIT( &(p)->l ); (p)->l.magic = NMG_FACE_G_SNURB_MAGIC; }
 
-#define RT_CNURB_MAGIC	0x636e7262
-
-#define RT_SNURB_MAGIC	0x736e7262
 
 /* ----- Internal structures ----- */
 
