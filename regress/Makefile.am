@@ -44,6 +44,10 @@ flawfinder: $(top_srcdir)/regress/flawfinder.sh
 	-${SH} $(top_srcdir)/regress/flawfinder.sh $(top_srcdir)
 	@${ECHO} +++ $@ test complete.
 
+repository: $(top_srcdir)/regress/repository.sh
+	-${SH} $(top_srcdir)/regress/repository.sh $(top_srcdir)
+	@${ECHO} +++ $@ test complete.
+
 # these are here because they go in the distribution but are not installed
 EXTRA_DIST = \
 	flawfinder.sh \
@@ -57,6 +61,7 @@ EXTRA_DIST = \
 	moss.sh \
 	mosspix.asc \
 	nightly.sh \
+	repository.sh \
 	shaders.sh \
 	shaderspix.asc \
 	slave_build.sh \
@@ -103,6 +108,7 @@ CLEANFILES = \
 	moss_png.diff \
 	moss_ref.pix \
 	overlaps.pl \
+	repository.log \
 	shaders.dat \
 	shaders.g \
 	shaders.log \

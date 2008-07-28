@@ -898,11 +898,11 @@ if [ ! -f solids.rt.pix ] ; then
 	echo raytrace failed
 	exit 1
 fi
-if [ ! -f $1/regress/solidspix.asc ] ; then
+if [ ! -f solidspix.asc ] ; then
 	echo No reference file for solids.rt.pix
 	exit 1
 fi
-../src/conv/asc2pix < $1/regress/solidspix.asc > solids_ref.pix
+../src/conv/asc2pix < solidspix.asc > solids_ref.pix
 ../src/util/pixdiff solids.rt.pix solids_ref.pix > solids.pix.diff \
     2> solids-diff.log
 
