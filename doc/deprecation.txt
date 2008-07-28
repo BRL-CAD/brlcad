@@ -49,6 +49,8 @@ new names should be listed for reference.
 **************
 7.12
 ----
+srt/librt/cmd.c
+	rt_split_cmd() -> bu_argv_from_string() [deprecated 7.12]
 src/rt/viewarea.c
 	terminology and output format [deprecated 7.12]
 include/wdb.h
@@ -57,6 +59,8 @@ src/libbu/parallel.c
 	bu_get_load_average(), remove [deprecated 7.12]
 src/vas4
 	vas4, remove [deprecated 7.12]
+include/raytrace.h
+	RT_HIT_NORM -> RT_HIT_NORMAL [deprecated 7.12]
 
 7.10
 ----
@@ -65,10 +69,24 @@ include/machine.h
 src/librt/bomb.c
 	rt_bomb() -> bu_bomb() [deprecated 7.10]
 
+pre 7.0
+-------
+include/raytrace.h
+	RT_HIT_NORM -> RT_HIT_NORMAL [deprecated pre-7.0]
+	struct hit.hit_point -> RT_HIT_POINT [deprecated pre-7.0]
+	struct hit.hit_normal -> RT_HIT_NORMAL [deprecated pre-7.0]
+
 
 ************
 * OBSOLETE *
 ************
+
+7.12.4
+------
+include/raytrace.h
+	removed iterator from NMG_CK_HITMISS_LIST
+include/bu.h
+	BU_QFLSTR -> BU_FLSTR
 
 7.12.0
 ------
