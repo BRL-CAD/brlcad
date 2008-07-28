@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* g2asc of a v4 is apparently writing out the wrong s_cgtypes and
+  otherwise parsing v4 .g files incorrectly
+
 * fast4-g skips lines while processing if there are DOS line endings
 
 * pipe primitive has a BU_GETSTRUCT malloc getting called during
