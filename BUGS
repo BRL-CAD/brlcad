@@ -15,7 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
-* -k option on rt does not work for surface normal lighting
+* the graphics window does not acquire keybinding focus in mged on
+  ubuntu linux.  key events go to the command window even with the
+  graphics window has focus.
 
 * /dev/ogl framebuffer is not refreshing/updating on mac os x,
   resulting in the window remaining blank until you give expose events
@@ -262,3 +264,8 @@ Bugs should be reported to the bug tracker on the project website at
 http://sourceforge.net/tracker/?atid=640802&group_id=105292
 
 BUGS should be formatted to column 70 (M-q in emacs), no tabs.
+
+// Local Variables:
+// mode: Text
+// fill-column: 70
+// End:

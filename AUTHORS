@@ -1,4 +1,4 @@
-						 -*- coding: utf-8 -*-
+﻿						 -*- coding: utf-8 -*-
 BRL-CAD Contributors
 ====================
 
@@ -59,11 +59,12 @@ DEVELOPERS
 
 Muuss, Michael John
 nicknames mike
-1984 April
+1978 August (RCS: 1984 April)
 U.S. Army Ballistic Research Laboratory
 U.S. Army Research Laboratory
 
-Weaver, Earl P.
+Applin, Keith A.
+1982
 U.S. Army Ballistic Research Laboratory
 
 Gwyn, Douglas A.
@@ -81,10 +82,6 @@ U.S. Army Research Laboratory
 Moss, Gary S.
 nicknames moss
 1986 September
-U.S. Army Ballistic Research Laboratory
-U.S. Army Research Laboratory
-
-Applin, Keith A.
 U.S. Army Ballistic Research Laboratory
 U.S. Army Research Laboratory
 
@@ -192,6 +189,10 @@ Open Source
 MATHEMATICAL, ALGORITHMIC, AND GEOMETRIC SUPPORT
 ------------------------------------------------
 
+Weaver, Earl P.
+1980
+U.S. Army Ballistic Research Laboratory
+
 Davisson, Edwin O. **
 U.S. Army Research Laboratory
 
@@ -211,6 +212,10 @@ SURVICE Engineering, Inc.
 
 DOCUMENTATION WRITERS
 ---------------------
+
+Weaver, Earl P.
+1980
+U.S. Army Ballistic Research Laboratory
 
 Schueler, Betty J.
 
@@ -399,9 +404,18 @@ nicknames dgodbey
 2008 March
 Altus Engineering, Inc.
 
+Castelo, André
+nicknames andrecastelo
+2008 May
+Open Source
+
 
 SPECIAL THANKS
 --------------
+
+Weaver, Earl P.
+1980
+U.S. Army Ballistic Research Laboratory
 
 Henrikson, Bruce
 U.S. Army Ballistic Research Laboratory
@@ -416,6 +430,7 @@ Deitz, Paul
 U.S. Army Ballistic Research Laboratory
 
 Kuehl, Gary
+U.S. Army Ballistic Research Laboratory
 
 Martin, Glenn E.
 Northrup Research and Technology Center

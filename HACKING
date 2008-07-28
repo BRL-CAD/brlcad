@@ -302,6 +302,8 @@ sh/
 	Utility scripts, used primarily by the build system
 src/
 	Sources, see src/README for more details
+src/adrt
+	Advanced Distributed RayTracer
 src/conv/
 	Various geometry converters
 src/conv/iges/
@@ -320,6 +322,8 @@ src/libfb/
 	BRL-CAD Framebuffer library
 src/libfft/
 	Fast Fourier transform library
+src/libged/
+	Geometry editing library
 src/libpkg/
 	Network "package" library
 src/librt/
@@ -891,15 +895,15 @@ significant items added since the previous release.
 2) All existing manual pages and the TODO file are updated with the
 latest changes.
 
-3) Update or verify the version numbers minimally in the include/conf
-version files, NEWS, and README.  See the above VERSION NUMBERS &
-COMPATIBILITY section.  Commit the changes to the source repository.
-
-4) Update the ChangeLog with entries since the last release; commit
+3) Update the ChangeLog with entries since the last release; commit
 the updated ChangeLog.  Use the YYYY-MM-DD of the previous release.
 Get the date from the NEWS file.
 
     svn2cl.sh --break-before-msg -r {YYYY-MM-DD}:HEAD
+
+4) Update or verify the version numbers minimally in the include/conf
+version files, NEWS, and README.  See the above VERSION NUMBERS &
+COMPATIBILITY section.  Commit the changes to the source repository.
 
 5) A "./configure && make" completes successfully on all platforms.
 
@@ -926,8 +930,9 @@ that they build, run, and that the file permissions are correct.
 platform-specific builds.  Test the build:  make test && make bench
 
 12) Post the source and platform-specific binary distributions to
-SourceForge (i.e. upload them via ftp to upload.sf.net's incoming
-directory and select them on the sf.net File Release System).
+SourceForge and then select them on the sf.net File Release System:
+sftp sfusername@frs.sourceforge.net:uploads
+put brlcad-*
 
 13) Increment and commit the next BRL-CAD release numbers to SVN;
 update the include/conf/(MAJOR|MINOR|PATCH) version files, and NEWS

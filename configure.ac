@@ -169,6 +169,7 @@ AC_SUBST(YFLAGS)
 # cannot override LD directly, so warn about that (configure sets it)
 if test "x$LD" != "x" ; then
 	AC_MSG_WARN([LD cannot be set directly yet it seems to be set ($LD)])
+	sleep 1
 fi
 
 # classify this machine
@@ -212,6 +213,7 @@ if test ! "x$BRLCAD_ROOT" = "x" ; then
 	else
 		AC_MSG_ERROR([*** Environment variable BRLCAD_ROOT conflicts with --prefix ***])
 	fi
+	sleep 1
 else
 	# compensate for autoconf inconsistencies
 	BRLCAD_ROOT="$bc_prefix"
@@ -220,37 +222,39 @@ AC_SUBST(BRLCAD_ROOT)
 
 # make sure the user doesn't try to set /usr as the prefix
 if test "x$BRLCAD_ROOT" = "x/usr" ; then
-    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-    AC_MSG_WARN([It is STRONGLY recommended that you DO NOT install BRL-CAD into /usr])
-    AC_MSG_WARN([as BRL-CAD provides several libraries that may conflict with other])
-    AC_MSG_WARN([libraries (e.g. librt, libbu, libbn) on certain system configurations.])
-    AC_MSG_WARN([])
-    AC_MSG_WARN([Since our libraries predate all those that we're known to conflict with])
-    AC_MSG_WARN([and are at the very core of our geometry services and project heritage,])
-    AC_MSG_WARN([we have no plans to change the names of our libraries at this time.])
-    AC_MSG_WARN([])
-    AC_MSG_WARN([If you choose to continue installing into /usr, you do so entirely at])
-    AC_MSG_WARN([your own risk.  You have been warned.])
-    AC_MSG_NOTICE([])
-    AC_MSG_NOTICE([Consider using a different --prefix value.])
-    while true ; do
+    if test "x$BRLCAD_ROOT_OVERRIDE" = "x" ; then
+	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	AC_MSG_WARN([It is STRONGLY recommended that you DO NOT install BRL-CAD into /usr])
+	AC_MSG_WARN([as BRL-CAD provides several libraries that may conflict with other])
+	AC_MSG_WARN([libraries (e.g. librt, libbu, libbn) on certain system configurations.])
+	AC_MSG_WARN([])
+	AC_MSG_WARN([Since our libraries predate all those that we're known to conflict with])
+	AC_MSG_WARN([and are at the very core of our geometry services and project heritage,])
+	AC_MSG_WARN([we have no plans to change the names of our libraries at this time.])
+	AC_MSG_WARN([])
+	AC_MSG_WARN([If you choose to continue installing into /usr, you do so entirely at])
+	AC_MSG_WARN([your own risk.  You have been warned.])
 	AC_MSG_NOTICE([])
-	AC_MSG_NOTICE([Would you like to continue with /usr as the install prefix? [[yes/no]]])
-	read bc_answer
-	case "x$bc_answer" in
-	    x*[[yY]][[eE]][[sS]]*)
-		bc_answer=yes
-		break ;;
-	    x*[[nN]][[oO]]*)
-		bc_answer=no
-		break ;;
-	    x*)
-		AC_MSG_NOTICE([Please answer 'yes' or 'no'])
-		;;
-	esac
-    done
-    if test "x$bc_answer" = "xno" ; then
-	AC_MSG_ERROR([*** Aborting due to --prefix=/usr ***])
+	AC_MSG_NOTICE([Consider using a different --prefix value.])
+	while true ; do
+	    AC_MSG_NOTICE([])
+	    AC_MSG_NOTICE([Would you like to continue with /usr as the install prefix? [[yes/no]]])
+	    read bc_answer
+	    case "x$bc_answer" in
+		x*[[yY]][[eE]][[sS]]*)
+		    bc_answer=yes
+		    break ;;
+		x*[[nN]][[oO]]*)
+		    bc_answer=no
+		    break ;;
+		x*)
+		    AC_MSG_NOTICE([Please answer 'yes' or 'no'])
+		    ;;
+	    esac
+	done
+	if test "x$bc_answer" = "xno" ; then
+	    AC_MSG_ERROR([*** Aborting due to --prefix=/usr ***])
+	fi
     fi
 fi
 
@@ -281,6 +285,7 @@ if test ! "x$BRLCAD_DATA" = "x" ; then
 	else
 		AC_MSG_ERROR([*** Environment variable BRLCAD_DATA conflicts with --prefix or --datadir ***])
 	fi
+	sleep 1
 else
 	# compensate for autoconf inconsistencies
 	BRLCAD_DATA="$bc_data_dir"
@@ -764,6 +769,7 @@ if test "x$bc_only_benchmark" != "xno" ; then
 		AC_MSG_WARN([Requesting BOTH benchmark and librtserver "only"?])
 		AC_MSG_WARN([Building both benchmark and librtserver])
 		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
+		sleep 1
 	fi
 	if test "x$bc_everything" = "xyes" ; then
 		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
@@ -771,6 +777,7 @@ if test "x$bc_only_benchmark" != "xno" ; then
 		AC_MSG_WARN([Building everything])
 		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
 		bc_only_benchmark=no
+		sleep 1
 	fi
 fi
 
@@ -782,6 +789,7 @@ if test "x$bc_with_opengl" = "xyes" ; then
 		AC_MSG_WARN([Presuming X11 availability for the OpenGL interface])
 		AC_MSG_WARN([The X11 interface will not be built])
 		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
+		sleep 1
 	fi
 fi
 
@@ -1097,10 +1105,10 @@ AC_MSG_CHECKING([whether -framework CoreFoundation is available])
 framework_cf=no
 FRAMEWORK_COREFOUNDATION=""
 PRELIBS="$LIBS"
-LIBS="$LIBS -framework CoreFoundation"
+LIBS="$LIBS -Xlinker -framework -Xlinker CoreFoundation"
 AC_TRY_LINK([#include <CoreFoundation/CoreFoundation.h>], [
 CFBundleRef bref = CFBundleGetMainBundle();
-], [framework_cf=yes ; FRAMEWORK_COREFOUNDATION="-framework CoreFoundation"])
+], [framework_cf=yes ; FRAMEWORK_COREFOUNDATION="-Xlinker -framework -Xlinker CoreFoundation"])
 LIBS="$PRELIBS"
 AC_MSG_RESULT($framework_cf)
 AC_SUBST(FRAMEWORK_COREFOUNDATION)
@@ -1110,7 +1118,7 @@ AC_MSG_CHECKING([whether -framework Carbon is available])
 framework_carbon=no
 FRAMEWORK_CARBON=""
 PRELIBS="$LIBS"
-LIBS="$LIBS -framework Carbon"
+LIBS="$LIBS -Xlinker -framework -Xlinker Carbon"
 AC_TRY_LINK([#include <Carbon/Carbon.h>], [
 OSStatus status;
 ProcessSerialNumber psn = {kNoProcess, kNoProcess};
@@ -1120,7 +1128,7 @@ CopyProcessName(&psn, &processName);
 if (processName != NULL) {
    CFShow(processName);
 }
-], [framework_carbon=yes ; FRAMEWORK_CARBON="-framework Carbon"])
+], [framework_carbon=yes ; FRAMEWORK_CARBON="-Xlinker -framework -Xlinker Carbon"])
 LIBS="$PRELIBS"
 AC_MSG_RESULT($framework_carbon)
 AC_SUBST(FRAMEWORK_CARBON)
@@ -1150,6 +1158,9 @@ dnl check for java
 JAVA_CFLAGS="$FRAMEWORK_JAVAVM"
 JAVA_LDFLAGS="-shrext .jnilib $FRAMEWORK_JAVAVM"
 if test "x$bc_with_java" = "xyes" ; then
+    if test "x$bc_with_java_val" = "xyes" ; then
+	bc_with_java_val="/usr"
+    fi
     if test "x$bc_with_java_val" != "x" ; then
 	JAVA_CFLAGS="-I$bc_with_java_val/include -I$bc_with_java_val/include/`uname | tr [A-Z] [a-z]`"
 	JAVA_LDFLAGS="-shrext .jnilib -L$bc_with_java_val/lib64 -L$bc_with_java_val/lib"
@@ -1216,6 +1227,20 @@ if test "x$bc_with_x11" != "xno" ; then
     LIBS="$LIBS $LIBXEXT"
     AC_CHECK_LIB(Xi, XGetExtensionVersion, LIBXI="-lXi")
     X_LIBS="$LIBS $LIBXI"
+
+    # common for systems to not have Xi X11 input library .. warn
+    # verbosely about that being a problem since the build will
+    # probably fail in src/bwish with undefined references to
+    # XFreeDeviceList, XOpenDevice, XSelectExtensionEvent, and
+    # XListInputDevices.
+    if test "x$LIBXI" = "x" ; then
+	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	AC_MSG_WARN([X11 support is enabled but the Xi library was not found.])
+	AC_MSG_WARN([This will likely result in a build failure.])
+	AC_MSG_WARN([See config.log for details why (look for this comment)])
+	AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
+	sleep 1
+    fi
 
     CPPFLAGS="$PRECPPFLAGS"
     LIBS="$PRELIBS"
@@ -1535,7 +1560,6 @@ AC_CHECK_HEADERS( \
 	sys/times.h \
 	sys/types.h \
 	sys/un.h \
-	sys/unistd.h \
 	sys/wait.h \
 	syslog.h \
 	tcl.h \
@@ -1689,6 +1713,7 @@ if test "x$bc_with_java " != "xno" ; then
 	    AC_MSG_WARN([Build will try to use what it found, but you should update])
 	    AC_MSG_NOTICE([See http://developer.apple.com/java/ for updates])
 	    AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
+	    sleep 1
 	fi
     fi # search_for_jni_h_more
     CPPFLAGS="$PRECPPFLAGS"
@@ -1773,7 +1798,10 @@ if test "xyes" = "xyes" ; then
     dnl try to use -pipe to speed up the compiles
     BC_COMPILER_AND_LINKER_RECOGNIZES([-pipe])
 
+
     dnl check for -fno-strict-aliasing
+    dnl XXX - THIS FLAG IS REQUIRED if any level of optimization is
+    dnl enabled with GCC as we do use aliasing and type-punning.
     BC_COMPILER_AND_LINKER_RECOGNIZES([-fno-strict-aliasing])
 
     dnl check for -fno-common (libtcl needs it on darwin)
@@ -1784,6 +1812,10 @@ if test "xyes" = "xyes" ; then
     dnl linking against openNURBS in librt for some binaries, for
     dnl example rttherm (i.e. any -static binaries)
     BC_COMPILER_AND_LINKER_RECOGNIZES([-fexceptions], [fexceptions])
+    if test "x$bc_fexceptions_works" = "xyes" ; then
+       FEXCEPTIONS="-fexceptions"
+       AC_SUBST(FEXCEPTIONS)
+    fi
 
     dnl dynamic SSE optimizations for NURBS processing
     BC_COMPILER_AND_LINKER_RECOGNIZES([-msse], [msse], [nokeep])
@@ -1867,6 +1899,7 @@ if test "x$bc_use_profiling" != "xno" ; then
 			AC_MSG_ERROR([*** Don't know how to profile with this compiler ***])
 		fi
 		AC_MSG_WARN([Don't know how to profile with this compiler])
+		sleep 1
 	else
 		# convert 'auto' to 'no' even though it works
 		bc_use_profiling=no
@@ -1884,6 +1917,7 @@ if test "x$bc_use_debug" != "xno" ; then
 			AC_MSG_ERROR([*** Don't know how to debug with this compiler ***])
 		fi
 		AC_MSG_WARN([Do not know how to debug with this compiler])
+		sleep 1
 	else
 		# convert 'auto' to 'yes'
 		bc_use_debug="yes"
@@ -1895,6 +1929,7 @@ if test "x$bc_use_optimized" != "xno" ; then
 	BC_COMPILER_AND_LINKER_RECOGNIZES([-O3], [o3_flag])
 	if test "x$bc_o3_flag_works" = "xno" ; then
 		AC_MSG_WARN([Don't know how to compile optimized with this compiler])
+		sleep 1
 	fi
 
 
@@ -1926,6 +1961,7 @@ if test "x$bc_build_warnings" != "xno" ; then
 
 	if test "x$bc_warning_flag_works" = "xno" ; then
 		AC_MSG_WARN([Don't know how to output verbose warnings with this compiler])
+		sleep 1
 	fi
 fi
 
@@ -1953,6 +1989,7 @@ if test "x$bc_compliant_float" = "xno" || test "x$bc_compliant_double" = "xno" ;
     AC_MSG_WARN([The floating point implementation does not seem to be IEEE 754])
     AC_MSG_WARN([compliant.  The behavior or htond and htonf may be incorrect.])
     AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
+    sleep 1
 fi
 
 dnl AC_C_PROTOTYPES
@@ -2031,12 +2068,10 @@ AC_CHECK_FUNCS(\
 	getprogname \
 	kill \
 	lrand48 \
-	lseek \
 	memset \
 	mkstemp \
 	pipe \
 	random \
-	regcomp \
 	sbrk \
 	setenv \
 	setpgid \
@@ -2114,6 +2149,7 @@ if test "x$ac_cv_prog_LEX" != "x" ; then
 	AC_MSG_WARN([of the package (various MGED commands) will be disabled.])
 	AC_MSG_NOTICE([Installation of GNU Bison or Yacc before continuing is recommended.])
 	AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
+	sleep 1
     fi
 else
     AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
@@ -2127,6 +2163,7 @@ else
 	AC_MSG_NOTICE([Installation of Bison/Yacc and Flex/Lex before continuing is recommended.])
     fi
     AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
+    sleep 1
 fi
 AC_MSG_CHECKING([whether we have the essentials to make parsers])
 if test "x$build_parsers" = "xyes" ; then
@@ -2230,14 +2267,17 @@ else
 fi
 AC_MSG_CHECKING(whether to build the included regular expression library)
 REGEX=""
+REGEX_CPPFLAGS=""
 if test "x$build_brlcad_regex" = "xyes" ; then
     REGEX='${top_builddir}/src/other/libregex/libregex.la'
+    REGEX_CPPFLAGS='-I${top_srcdir}/src/other/libregex'
     AC_MSG_RESULT(yes)
 else
     REGEX="$LIBREGEX"
     AC_MSG_RESULT(no)
 fi
 AC_SUBST(REGEX)
+AC_SUBST(REGEX_CPPFLAGS)
 
 
 dnl *** libz ***
@@ -2562,11 +2602,13 @@ else
 	TCL="$LIBTCL"
     else
 	AC_MSG_WARN([Unable to link against a system Tcl library])
+	sleep 1
     fi
     if test "x$tclstub_link_works" = "xyes" ; then
 	TCLSTUB="$LIBTCLSTUB"
     else
 	AC_MSG_WARN([Unable to link against a system Tclstub library])
+	sleep 1
     fi
 fi
 AC_SUBST(TCL)
@@ -2677,11 +2719,13 @@ else
 	TK="$LIBTK"
     else
 	AC_MSG_WARN([Unable to link against a system Tk library])
+	sleep 1
     fi
     if test "x$tkstub_link_works" = "xyes" ; then
 	TKSTUB="$LIBTKSTUB"
     else
 	AC_MSG_WARN([Unable to link against a system Tkstub library])
+	sleep 1
     fi
 fi
 AC_SUBST(TK)
@@ -3188,6 +3232,7 @@ else
 	build_brlcad_64bit="no (8-bit)"
     else
 	AC_MSG_WARN([Unknown pointer size: $pointer_size])
+	sleep 1
     fi
 fi
 
@@ -3230,6 +3275,7 @@ if test "x$bc_with_java" != "xno" ; then
 	    AC_MSG_WARN([Unable to locate a functioning Java])
 	    AC_MSG_WARN([Compilation of librtserver will be disabled])
 	    AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
+	    sleep 1
 	fi
 	AC_MSG_RESULT(no)
     else # found_jni_h
@@ -3246,32 +3292,37 @@ fi # bc_with_java
 dnl *** Pro/ENGINEER installation / plugin compilation ***
 build_against_proe=no
 if test "x$bc_with_proe" != "xno" ; then
-   if test "x$pointer_size" != "x4" ; then
-      AC_MSG_RESULT(no)
-      AC_MSG_WARN([The Pro/E plugin must be built as a 32-bit library. Please disable 64-bit builds and set appropriate C/CXXFLAGS])
-   else
-      AC_MSG_CHECKING(for Pro/ENGINEER installation)
-      if test "x$found_protk_h" = "xno" ; then
-	 AC_MSG_RESULT(no)
-	 if test "x$bc_with_proe" = "xyes" ; then
-	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-	    AC_MSG_WARN([Unable to locate ProToolkit.h. Make sure your installation of Pro/E also has Pro/TOOLKIT])
-	 fi
-         if test "x$bc_with_proe" = "xauto" ; then
-	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-	    AC_MSG_WARN([Pro/E was not installed in the standard place (/usr/local/ptc/proeWildfire3.0).])
-	    AC_MSG_WARN([Try adding --with-proe=/path/to/proe to find the ProToolkit.h])
-	    AC_MSG_WARN([Compilation of Pro/ENGINEER plugin will be disabled])
-	 fi
-      else
-         if test "x$bc_with_proe" = "xauto" ; then
-	    build_against_proe=yes
-	 else
-	    build_against_proe="yes ($bc_with_proe_val)"
-	 fi
-         AC_MSG_RESULT(yes)
-      fi
-   fi
+    if test "x$pointer_size" != "x4" ; then
+	AC_MSG_RESULT(no)
+	AC_MSG_WARN([The Pro/E plugin must be built as a 32-bit library. Please disable 64-bit builds and set appropriate C/CXXFLAGS])
+	sleep 1
+    else
+	AC_MSG_CHECKING(for Pro/ENGINEER installation)
+	if test "x$found_protk_h" = "xno" ; then
+	    AC_MSG_RESULT(no)
+	    if test "x$bc_with_proe" = "xyes" ; then
+		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+		AC_MSG_WARN([Unable to locate ProToolkit.h. Make sure your installation of Pro/E also has Pro/TOOLKIT])
+		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
+		sleep 1
+	    fi
+	    if test "x$bc_with_proe" = "xauto" ; then
+		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+		AC_MSG_WARN([Pro/E was not installed in the standard place (/usr/local/ptc/proeWildfire3.0).])
+		AC_MSG_WARN([Try adding --with-proe=/path/to/proe to find the ProToolkit.h])
+		AC_MSG_WARN([Compilation of Pro/ENGINEER plugin will be disabled])
+		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
+		sleep 1
+	    fi
+	else
+	    if test "x$bc_with_proe" = "xauto" ; then
+		build_against_proe=yes
+	    else
+		build_against_proe="yes ($bc_with_proe_val)"
+	    fi
+	    AC_MSG_RESULT(yes)
+	fi
+    fi
 fi
 
 
@@ -3485,6 +3536,7 @@ if test "x$bc_build_runtime_debug" = "xno" ; then
 	AC_MSG_WARN([in the inevitable event of a user encountering a bug.])
 	AC_MSG_WARN([You have been warned.  Proceed at your own risk.])
 	AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
+	sleep 1
 	AC_DEFINE(NO_BOMBING_MACROS, 1, [Define to not do anything for macros that only bomb on a fatal error])
 	AC_DEFINE(NO_MAGIC_CHECKING, 1, [Define to not perform magic number checking])
 	AC_DEFINE(NO_BADRAY_CHECKING, 1, [Define to not check for divide by zero during ray shots])
@@ -3516,6 +3568,7 @@ CURSOR='${top_builddir}/src/libcursor/libcursor.la'
 DM='${top_builddir}/src/libdm/libdm.la'
 FB='${top_builddir}/src/libfb/libfb.la'
 FFT='${top_builddir}/src/libfft/libfft.la'
+GED='${top_builddir}/src/libged/libged.la'
 MULTISPECTRAL='${top_builddir}/src/libmultispectral/libmultispectral.la'
 OPTICAL='${top_builddir}/src/liboptical/liboptical.la'
 ORLE='${top_builddir}/src/liborle/liborle.la'
@@ -3535,14 +3588,15 @@ CURSOR_LIBS="${TERMLIB}"
 FFT_LIBS="${LIBM}"
 BU_LIBS="${TCL} ${PNG} ${LIBM} ${LIBMALLOC} ${LIBTHREAD}"
 BN_LIBS="${BU} ${BU_LIBS} ${TCL} ${LIBM}"
+RT_LIBS="${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${REGEX} ${LIBM} ${SYSV} ${OPENNURBS}"
+GED_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
+WDB_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 FB_LIBS="${BU} ${BU_LIBS} ${PKG} ${TCL} ${SOCKET} ${NSL}" # additional/optional FB_LIBS: ${TK} ${X_LIBS} ${LIBGL}
-TCLCAD_LIBS="${FB} ${FB_LIBS} ${TK} ${TCLSTUB} ${BLT}"
 OPTICAL_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${TCL}"
 MULTISPECTRAL_LIBS="${OPTICAL} ${OPTICAL_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
-RT_LIBS="${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${REGEX} ${LIBM} ${SYSV} ${OPENNURBS}"
-WDB_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
-DM_LIBS="${RT} ${RT_LIBS} ${FB} ${FB_LIBS} ${PNG} ${TK} ${X_LIBS} ${FRAMEWORK_CARBON}"
-BRLCAD_LIBS="${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
+DM_LIBS="${GED} ${GED_LIBS} ${RT} ${RT_LIBS} ${FB} ${FB_LIBS} ${PNG} ${TK} ${X_LIBS} ${FRAMEWORK_CARBON}"
+TCLCAD_LIBS="${GED} ${GED_LIBS} ${DM} ${DM_LIBS} ${FB} ${FB_LIBS} ${ITK} ${ITCL} ${TK} ${TCLSTUB} ${BLT} ${TCL}"
+BRLCAD_LIBS="${GED} ${GED_LIBS} ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 
 AC_SUBST(BN)
 AC_SUBST(BU)
@@ -3550,6 +3604,7 @@ AC_SUBST(CURSOR)
 AC_SUBST(DM)
 AC_SUBST(FB)
 AC_SUBST(FFT)
+AC_SUBST(GED)
 AC_SUBST(MULTISPECTRAL)
 AC_SUBST(OPTICAL)
 AC_SUBST(ORLE)
@@ -3567,6 +3622,7 @@ AC_SUBST(CURSOR_LIBS)
 AC_SUBST(DM_LIBS)
 AC_SUBST(FB_LIBS)
 AC_SUBST(FFT_LIBS)
+AC_SUBST(GED_LIBS)
 AC_SUBST(MULTISPECTRAL_LIBS)
 AC_SUBST(OPTICAL_LIBS)
 AC_SUBST(ORLE_LIBS)
@@ -3636,6 +3692,8 @@ AC_CONFIG_FILES([
 	db/include/Makefile
 	doc/Makefile
 	doc/book/Makefile
+	doc/docbook/Makefile
+	doc/docbook/oed/Makefile
 	doc/html/Makefile
 	doc/html/ReleaseNotes/Makefile
 	doc/html/ReleaseNotes/Rel5.0/Makefile
@@ -3681,7 +3739,6 @@ AC_CONFIG_FILES([
 	misc/pkgconfig/wdb.pc
 	misc/win32-msvc/Dll/Makefile
 	misc/win32-msvc/Makefile
-	misc/win32-msvc7/Makefile
 	misc/win32-msvc8/Makefile
 	pix/Makefile
 	sh/Makefile
@@ -3749,6 +3806,7 @@ AC_CONFIG_FILES([
 	src/libdm/Makefile
 	src/libfb/Makefile
 	src/libfft/Makefile
+	src/libged/Makefile
 	src/libmultispectral/Makefile
 	src/liboptical/Makefile
 	src/liborle/Makefile
@@ -3763,6 +3821,7 @@ AC_CONFIG_FILES([
 	src/mged/points/Makefile
 	src/mk/Makefile
 	src/nirt/Makefile
+	src/nirt/sfiles/Makefile
 	src/other/Makefile
 	src/other/URToolkit/Makefile
 	src/other/URToolkit/cnv/Makefile
@@ -3865,7 +3924,8 @@ AC_OUTPUT
 # plan accordingly and save them beforehand.
 ac_configure_args="$bc_configure_args"
 
-# patch libtool if it has the -all_load bug
+# patch libtool if it has one of several common bugs and/or busted
+# default configurations (e.g. Debian)
 BC_PATCH_LIBTOOL
 
 
