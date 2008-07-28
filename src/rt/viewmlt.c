@@ -143,6 +143,7 @@ view_2init(struct application *ap)
     ap->a_onehit = 1;
     ap->a_uptr = (genptr_t) mlt_application;
 
+
     /* Allocation of the scanline array */
     if (scanline)
         free_scanlines(height, scanline);
@@ -403,7 +404,7 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
     struct light_specific *lp;
     struct application sub_ap;
 
-    vect_t normal, work0;
+    vect_t normal, work0, new_dir;
     fastf_t	diffuse0 = 0;
     fastf_t	cosI0 = 0;    
   
@@ -437,36 +438,59 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
 	    diffuse0 = cosI0 * (1.0 - AmbientIntensity);
 	VSCALE(work0, lp->lt_color, diffuse0);
 
+    /* Preparing the direction of the new ray */
+    if (BU_LIST_NOT_HEAD((&LightHead), &(LightHead.l))) {
+        VSUB2(new_dir, lp->lt_pos, pp->pt_inhit->hit_point);
+    }
+    else {
+        VSET(new_dir, 1.0, 1.0, 1.0);   /* Placeholder value
+                                         * What is the vector to the
+                                         * Default light?
+                                         */
+    }
+    VUNITIZE(new_dir);
+
+
 	sub_ap = *ap;	/* struct copy */
 	sub_ap.a_level = ap->a_level+1;
     sub_ap.a_hit = secondary_hit;
     sub_ap.a_miss = ap->a_miss;
-    VSET(sub_ap.a_ray.r_pt, 0.0, 0.0, 10000.0);
-    VSET(sub_ap.a_ray.r_dir, 0.0, 0.0, -1.0);
+    
+    /* Setting up new ray */
+    VMOVE(sub_ap.a_ray.r_pt, segp->seg_in.hit_point);
+    VMOVE(sub_ap.a_ray.r_dir, new_dir);
 
 	sub_ap.a_purpose = "Secondary Hit, shadows treatment";
-	(void) rt_shootray(&sub_ap);
+    
+    (void) rt_shootray(&sub_ap);
 
-    VADD2(ap->a_color, work0, sub_ap.a_color);
-    VSCALE(ap->a_color, ap->a_color, 0.50);
+    /* Checks whether the secondary ray hit and acts accordingly */
+    if (sub_ap.a_user) {
+        work0[2] = work0[2] * 2;  /* Just to note the shadowed part */
+        VSCALE(ap->a_color, work0, 0.50);   /* 20% of work0 value.
+                                             * Placeholder constant
+                                             */
+    }
+    else {
+        VMOVE(ap->a_color, work0);
+    };    
 
-    /* Finds just the hit point. We want the normal vector too.
-    VJOIN1(segp->seg_in.hit_point, ap->a_ray.r_pt,
-        segp->seg_in.hit_dist, ap->a_ray.r_dir);
-        */
-
-    /* The application uses a generic pointer (genptr_t)
-     * to point to a struct mlt_app
+    /*  The application uses a generic pointer (genptr_t)
+     *  to point to a struct mlt_app
+     *
+     *  In view.c, this generic pointer is used to store visited regions
+     *  information. If it proves needed here, mlt_app has a generic pointer
+     *  that can handle that.
      */    
     p_mlt = (struct mlt_app*) ap->a_uptr;
     p_path = p_mlt->paths;
-    /* Once found, it will be stored in p_mlt->path_list. */
-    /* This block verifies if the path list already exists.
-     * If not, it allocates memory and initializes a new point_list
-     * and adds the hit point found to that list.
+    /*  Once found, it will be stored in p_mlt->path_list. */
+    /*  This block verifies if the path list already exists.
+     *  If not, it allocates memory and initializes a new point_list
+     *  and adds the hit point found to that list.
      *
-     * If it exists, this block verifies if the point list also
-     * exists and allocates memory accordingly.
+     *  If it exists, this block verifies if the point list also
+     *  exists and allocates memory accordingly.
      */
 
     if (p_path) {
@@ -513,22 +537,28 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
 /*
  *      S E C O N D A R Y _ H I T
  *
- *  Called by rayhit() to handle shadows
+ *  Called by rayhit() to handle shadows. The idea is, primarily,
+ *  to shoot new rays in the direction of the light source. Then,
+ *  this function is associated with the new ray. If this hits,
+ *  we have a shadow (because something is obstructing the light's
+ *  path). 
+ *
+ *  This will be changed and will do something else when path
+ *  tracing development starts. For now, it should just say when
+ *  it hit or not.
  */
 int
 secondary_hit(register struct application *ap, struct partition *PartHeadp, struct seg *segp)
 {
-    struct mlt_app* p_mlt;
-    struct path_list* p_path;
     struct hit *hitp;
     struct partition *pp;
-    struct light_specific *lp;
 
-    vect_t normal, work0;
+    vect_t normal;
     fastf_t	diffuse0 = 0;
     fastf_t	cosI0 = 0;    
   
     /*bu_log("hit: 0x%x\n", ap->a_resource);*/
+
     pp = PartHeadp->pt_forw;    
 
     for (; pp != PartHeadp; pp = pp->pt_forw)
@@ -541,24 +571,14 @@ secondary_hit(register struct application *ap, struct partition *PartHeadp, stru
 
     hitp = pp->pt_inhit;
 
-    /* This will be used find the hit point: */
+    /* This is used find the hit point: */
     RT_HIT_NORMAL(normal, 
         hitp,
         pp->pt_inseg->seg_stp,
         &(ap->a_ray),
         pp->pt_inflip);
 
-    /*
-     * Diffuse reflectance from each light source
-     */
-    /* Light from the "eye" (ray source).  Note sign change */
-	lp = BU_LIST_FIRST(light_specific, &(LightHead.l));
-	diffuse0 = 0;
-	if ((cosI0 = -VDOT(normal, ap->a_ray.r_dir)) >= 0.0)
-	    diffuse0 = cosI0 * (1.0 - AmbientIntensity);
-	VSCALE(work0, lp->lt_color, diffuse0);
-
-    VMOVE(ap->a_color, work0);
+    ap->a_user = 1;
 
     return 1;
 }
