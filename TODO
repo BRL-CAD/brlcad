@@ -17,20 +17,46 @@ http://sf.net/pm/?group_id=105292
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------
 
-* test and release
+* release!
 
 
 THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------
 
-* verify/finish clone mirror support
-
 * fix incrTcl pathing issues when only using system tcl/tk
   (get incrTcl subconfigure to work like was done for Tcl)
 
+* fix framebuffer refresh bug.  problem was caused when the if_ogl
+  framebuffer was changed (back) to request a direct rendering
+  context.  presumably that is triggering other code that is failing
+  to redraw.
+
+* implement/test the "Blinn blob" method in g_metaball.c
+
+* verify/finish clone mirror support
+
+* address the TODO items in src/mged/clone.c
+
 * (re)verify rtarea results, fix naming convention
 
-* test configure/build on stripped down box (Erik, fresh FBSD install)
+* ADRT: remove MySQL code, fix ISST callbacks, re-enable RISE, cleanup
+
+* extend metaball control info beyond simple points
+
+
+THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
+-----------------------------------------------
+
+* develop a low-level tool for investigating, reporting statistics on,
+  and repairing geometry database files.  the tool should nominally
+  perform big/little endian conversions, report number and types of
+  objects, allow deletion/undeletion/hiding/unhiding, provide some
+  general means to manipulate the packed and unpacked .g file data for
+  performing low-level modifications.
+
+* make z-clipping off by default
+
+* fix the "(type)(size_t)val" hacks (using ints like ptrs, etc)
 
 * fix rt parallel crash
   (true ; while [ $? -eq 0 ] ; do rt -o /dev/null moss.g all.g ; done)
@@ -38,13 +64,15 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 * fix parallel crash report generation (multiple BU_MAPPED_FILE's
   getting acquired)
 
-* fix the "(type)(size_t)val" hacks (using ints like ptrs, etc)
+* make closing both the command window and graphics window shut down
+  mged (i.e., fix unintentional behavior)
 
-* address the TODO items in src/mged/clone.c
+* convert the documentation to docbook
 
+* autogenerate docbook documentation in the build system
 
-THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
------------------------------------------------
+* remove hit_normal and hit_point from struct hit.  add RT_HIT_POINT
+  macro.  refactor all callers as needed.
 
 * add option to nirt for reporting the exit point (instead of LOS)
 
@@ -222,15 +250,11 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 * getexecname, "/proc/self/cmdline", program_invocation_short_name.
   separate out into new file.
 
-* test out -Wfloat-equal
-
 * geometry viewing commands/visualizations of exploded levels
 
 * add command line help options to 'benchmark' tool
 
 * mirror around an arbitrary plane (maybe point+vector) in mged
-
-* mirror around point/distance along axis operation in mged
 
 * librt-based path tracer
 
@@ -260,9 +284,6 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * add dynamic geometry support. i.e. the ability to modify the parsed
   in-memory geometry tree on the fly via api calls (e.g. to add holes)
-
-* convert the documentation to docbook and integrate their generation
-  with the build system.
 
 * investigate why g-iges followed by iges-g on a single box results in
   permuted vertex lists
