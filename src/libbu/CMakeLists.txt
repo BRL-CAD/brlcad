@@ -83,3 +83,10 @@ add_definitions(
 )
 
 add_library(libbu ${LIBBU_SOURCES})
+
+set(HTESTER_SOURCES
+    htester.c
+)
+
+add_executable(htester ${HTESTER_SOURCES})
+target_link_libraries(htester libbu)
