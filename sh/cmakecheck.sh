@@ -49,7 +49,7 @@ for dir in src/libbn src/libbu src/libged src/librt src/libsysv src/libwdb ; do
     fi
 
     # get a list of all the source files listed in CMakeLists.txt
-    cmfiles="`cat $dir/CMakeLists.txt | sed '/set([A-Z_]*SOURCES/,/)/{/^set/,/.*/d;/)/,/.*/d;s/[[:space:]]*\(.*\)[[:space:]]*/:\1/;};/^[^:]/,/.*/d;/:/s/^://;/{/,/.*/d' | sort | uniq`"
+    cmfiles="`cat $dir/CMakeLists.txt | sed '/set([A-Z_]*SOURCES/,/)/{s/[[:space:]]*\(.*\)[[:space:]]*/::\1/;}' | grep -v ')' | grep -v '(' | grep '::' | sed 's/:://' | sort | uniq`"
 
     if test ! -f $dir/Makefile.am ; then
 	echo "ERROR: cannot find $dir/Makefile.am"
