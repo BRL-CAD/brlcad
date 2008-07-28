@@ -950,8 +950,8 @@ void MakeTreadPattern2(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
     point2d_t verts3[] = {
 	{ .5, .45 },
 	{ -.5, .4 },
-	{ -.7, .5 },
-	{ .3, .55 }
+	{ -.6, .5 },
+	{ .5, .55 }
     };
 
     verts[2] = verts3;

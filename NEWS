@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2008-06-XX  Release 7.13.0                                     ---
 ----------------------------------------------------------------------
 
+* tweak tread 2 in tire tool; avoid artifacts on tread wall - C. Yapp
 * fixed mged 'dbconcat' hang when not specifying an affix - Bob Parker
 * fixed primitive selection solid_illum bug in mged - Bob Parker
 * fix bug in tire tool's geometry causing 'nicks' in tread - C. Yapp
