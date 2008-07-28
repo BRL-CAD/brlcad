@@ -848,7 +848,7 @@ drawH_part2(
 
     if ( !existing_sp )  {
 	/* Handling a new solid */
-	GET_SOLID(sp, &FreeSolid.l);
+	GET_SOLID(sp, &MGED_FreeSolid.l);
 	/* NOTICE:  The structure is dirty & not initialized for you! */
 
 	sp->s_dlist = BU_LIST_LAST(solid, &dgop->dgo_headSolid)->s_dlist + 1;
@@ -1196,7 +1196,7 @@ invent_solid(
 #else
 
     /* Obtain a fresh solid structure, and fill it in */
-    GET_SOLID(sp, &FreeSolid.l);
+    GET_SOLID(sp, &MGED_FreeSolid.l);
 
     if ( copy )  {
 	BU_LIST_INIT( &(sp->s_vlist) );

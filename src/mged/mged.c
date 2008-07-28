@@ -130,6 +130,8 @@ int (*cmdline_hook)() = NULL;
 jmp_buf	jmp_env;		/* For non-local gotos */
 double frametime;		/* time needed to draw last frame */
 
+struct solid   MGED_FreeSolid;      /* Head of freelist */
+
 int             cmd_stuff_str(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 void		(*cur_sigint)();	/* Current SIGINT status */
 void		sig2(int);
@@ -402,8 +404,7 @@ main(int argc, char **argv)
     }
 
     /* Set up linked lists */
-    BU_LIST_INIT(&HeadSolid.l);
-    BU_LIST_INIT(&FreeSolid.l);
+    BU_LIST_INIT(&MGED_FreeSolid.l);
     BU_LIST_INIT(&rt_g.rtg_vlfree);
     BU_LIST_INIT(&rt_g.rtg_headwdb.l);
     BU_LIST_INIT(&head_run_rt.l);
