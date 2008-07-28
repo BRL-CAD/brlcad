@@ -35,8 +35,6 @@
 /* Basic Exception Handling classes */
 
 class pcException {
-private:
-    std::string str;
 public:
     pcException() {};
     pcException(const char *temp) {str=temp;};
@@ -44,6 +42,8 @@ public:
     std::string Error() const {
 	return str;
     }
+private:
+    std::string str;
 };
 
 /* Structures for defining varios derived objects from

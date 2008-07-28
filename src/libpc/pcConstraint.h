@@ -36,34 +36,27 @@
 #include <list>
 #include <boost/function.hpp>
 #include "pcVariable.h"
+#include "pcHSet.h"
 
 class Constraint {
+    typedef boost::function1< bool, HSet > functor;
+public:
+    std::list<std::string> Variables;
+
+    Constraint() : status(0) { }
+    Constraint(std::string Cid, std::string Cexpr, functor);
+    Constraint(std::string Cid, std::string Cexpr, functor, int count,...);
+    bool solved();
+    bool check(std::vector<VariableAbstract *> V);
+    void function(functor pf) { funct = pf; };
+    std::string getID() const { return id; }
+    std::string getExp() const { return expression; }
+    void setStatus(int st) { status = st; }
 private:
     int status;
     std::string id;
     std::string expression;
-    boost::function1< bool, std::vector<VariableAbstract *> > funct; 
-    //bool (*funct) (std::vector<VariableAbstract *>);
-public:
-
-    std::list<std::string> Variables;
-
-    Constraint() : status(0) { }
-    Constraint(std::string Cid, std::string Cexpression, bool (*pf) (std::vector<VariableAbstract *>));
-    Constraint(std::string Cid, std::string Cexpression, bool (*pf) (std::vector<VariableAbstract *>),int count,...);
-    void function(bool (*pf) (std::vector<VariableAbstract *>)) { funct = pf; };
-    bool solved() {
-	if (status == 0)
-	    return false;
-	else
-	    return true;
-    }
-    /* TODO: Take a functor as an argument? */
-    bool check(std::vector<VariableAbstract *> V);
-    std::string getID() const { return id; }
-    std::string getExp() const { return expression; }
-    void setStatus(int st) { status = st; }
-
+    functor funct; 
 };
 #endif
 /** @} */

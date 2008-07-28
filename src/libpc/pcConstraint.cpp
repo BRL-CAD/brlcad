@@ -27,7 +27,7 @@
  */
 #include "pcConstraint.h"
 
-Constraint::Constraint(std::string Cid, std::string Cexpression, bool (*pf) (std::vector<VariableAbstract *>)) :
+Constraint::Constraint(std::string Cid, std::string Cexpression, functor pf) :
     status(0),
     id(Cid),
     expression(Cexpression),
@@ -35,7 +35,7 @@ Constraint::Constraint(std::string Cid, std::string Cexpression, bool (*pf) (std
 {
 }
 
-Constraint::Constraint(std::string Cid, std::string Cexpression, bool (*pf) (std::vector<VariableAbstract *>),int count,...) :
+Constraint::Constraint(std::string Cid, std::string Cexpression, functor pf, int count,...) :
     status(0),
     id(Cid),
     expression(Cexpression),
@@ -49,8 +49,16 @@ Constraint::Constraint(std::string Cid, std::string Cexpression, bool (*pf) (std
     va_end(args);
 }
 
-//template <class T>
-bool Constraint::check(std::vector<VariableAbstract *> V) {
+bool Constraint::solved()
+{
+    if (status == 0)
+        return false;
+    else
+        return true;
+}
+
+bool Constraint::check(std::vector<VariableAbstract *> V)
+{
     /*typename std::vector<T>::iterator i;
     std::cout<<"##Checking for Values";
       for (i = V.begin(); i!= V.end(); i++) std::cout << " " << *i;
