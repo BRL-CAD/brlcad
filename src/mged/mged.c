@@ -56,11 +56,9 @@
 #include "./cmd.h"
 #include "brlcad_version.h"
 
-char MGEDCopyRight_Notice[] = "@(#) \
-BRL-CAD is Open Source software. \
-This software is Copyright (c) 1985-2008 by the United States Government \
-as represented by the U.S. Army Research Laboratory.  All rights reserved.";
-
+#ifndef COMMAND_LINE_EDITING
+#  define COMMAND_LINE_EDITING 1
+#endif
 
 #ifdef DEBUG
 #  ifndef _WIN32
@@ -78,9 +76,7 @@ as represented by the U.S. Army Research Laboratory.  All rights reserved.";
 
 #define SPACES "                                                                                                                                                                                                                                                                                                           "
 
-extern void mged_setup(void); /* setup.c */
 extern void mged_global_variable_setup(Tcl_Interp *interp); /* cmd.c */
-
 extern void view_ring_init(struct _view_state *vsp1, struct _view_state *vsp2); /* defined in chgview.c */
 
 extern void draw_e_axes(void);
@@ -324,9 +320,6 @@ main(int argc, char **argv)
 	    fflush(stdout);
 
 	    if (isatty(fileno(stdin)) && isatty(fileno(stdout))) {
-#ifndef COMMAND_LINE_EDITING
-#  define COMMAND_LINE_EDITING 1
-#endif
 #if !defined(_WIN32) || defined(__CYGWIN__)
 		/* Set up for character-at-a-time terminal IO. */
 		cbreak_mode = COMMAND_LINE_EDITING;
