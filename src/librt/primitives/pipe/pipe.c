@@ -597,6 +597,9 @@ bend_pipe_shot(struct soltab *stp, register struct xray *rp, struct application 
     struct id_pipe  *prev;
     struct id_pipe  *next;
     
+    or_sq = pipe->bend_or * pipe->bend_or;
+    ir_sq = pipe->bend_ir * pipe->bend_ir;
+    
     tmp = VDOT( rp->r_dir, pipe->bend_N );
     if ( NEAR_ZERO(tmp, 0.0000005) ) {
         /* ray is parallel to plane of bend */
@@ -611,9 +614,6 @@ bend_pipe_shot(struct soltab *stp, register struct xray *rp, struct application 
     } else {
         parallel = 0;
     }
-    
-    or_sq = pipe->bend_or * pipe->bend_or;
-    ir_sq = pipe->bend_ir * pipe->bend_ir;
     
     /* Convert vector into the space of the unit torus */
     MAT4X3VEC( dprime, pipe->bend_SoR, rp->r_dir );
