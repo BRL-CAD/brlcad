@@ -661,30 +661,13 @@ rt_init_resource(struct resource *resp,
 }
 
 /*
- *			R T _ C L E A N _ R E S O U R C E
+ *		R T _ C L E A N _ R E S O U R C E _ B A S I C
  *
- *  Deallocate the per-cpu "private" memory resources.
- *	segment freelist
- *	hitmiss freelist for NMG raytracer
- *	partition freelist
- *	solid_bitv freelist
- *	region_ptbl freelist
- *	re_boolstack
- *
- *  Some care is required, as rt_uniresource may not be fully initialized
- *  before it gets freed.
- *
- *  Note that the resource struct's storage is not freed (it may be static
- *  or otherwise allocated by a LIBRT application) but any dynamic
- *  memory pointed to by it is freed.
- *
- *  One exception to this is that the re_directory_hd and
- *  re_directory_blocks are not touched unless there is no raytrace
- *  instance, because the "directory" structures (which are really
- *  part of the db_i) continue to be in use.
+ * This method contains all the code that was formerly in rt_clean_resource, except for
+ * the call to rt_init_resource().
  */
 void
-rt_clean_resource(struct rt_i *rtip, struct resource *resp)
+rt_clean_resource_basic(struct rt_i *rtip, struct resource *resp)
 {
     if (rtip) {
 	RT_CK_RTI(rtip);
@@ -788,8 +771,62 @@ rt_clean_resource(struct rt_i *rtip, struct resource *resp)
 
     /* Release the state variables for 'solid pieces' */
     rt_res_pieces_clean( resp, rtip );
+    
+}
+
+/*
+ *		R T _ C L E A N _ R E S O U R C E _ C O M P L E T E
+ *
+ * This method performs the basic resource clean, and also frees all the
+ * directory entry blocks. The resource structure is not re-initialized.
+ * DO NOT CALL THIS METHOD IF YOU ARE STILL USING THE RT_I OR DB_I INSTANCES.
+ */
+void
+rt_clean_resource_complete(struct rt_i *rtip, struct resource *resp)
+{
+    rt_clean_resource_basic(rtip, resp);
+    
+    if ( BU_LIST_IS_INITIALIZED( &resp->re_directory_blocks.l ) )  {
+        struct directory **dpp;
+        BU_CK_PTBL( &resp->re_directory_blocks );
+        for ( BU_PTBL_FOR( dpp, (struct directory **), &resp->re_directory_blocks ) )  {
+            RT_CK_DIR(*dpp);	/* Head of block will be a valid seg */
+            bu_free( (genptr_t)(*dpp), "struct directory block" );
+        }
+        bu_ptbl_free( &resp->re_directory_blocks );
+    }
+}
+
+/*
+ *			R T _ C L E A N _ R E S O U R C E
+ *
+ *  Deallocate the per-cpu "private" memory resources.
+ *	segment freelist
+ *	hitmiss freelist for NMG raytracer
+ *	partition freelist
+ *	solid_bitv freelist
+ *	region_ptbl freelist
+ *	re_boolstack
+ *
+ *  Some care is required, as rt_uniresource may not be fully initialized
+ *  before it gets freed.
+ *
+ *  Note that the resource struct's storage is not freed (it may be static
+ *  or otherwise allocated by a LIBRT application) but any dynamic
+ *  memory pointed to by it is freed.
+ *
+ *  One exception to this is that the re_directory_hd and
+ *  re_directory_blocks are not touched unless there is no raytrace
+ *  instance, because the "directory" structures (which are really
+ *  part of the db_i) continue to be in use.
+ */
+void
+rt_clean_resource(struct rt_i *rtip, struct resource *resp)
+{
+    rt_clean_resource_basic(rtip, resp);
 
     /* Reinitialize pointers, to be tidy.  No storage is allocated. */
+    /* actually, some storage is allocated in the calls to bu_ptbl_init - JRA */
     rt_init_resource( resp, resp->re_cpu, rtip );
 }
 
