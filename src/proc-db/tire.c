@@ -42,6 +42,7 @@
 #define ROWS 5
 #define COLS 5
 #define F_PI 3.1415926535897932384626433832795029L
+#define DEFAULT_TIRE_FILENAME "tire.g"
 
 /**
  * Display eto input parameters when debugging
@@ -2101,12 +2102,21 @@ int main(int ac, char *av[])
     }
 
     /* Create file name if supplied, else use "tire.g" */
-    db_fp = wdb_fopen( av[bu_optind] );
-    if (db_fp == NULL) {
-	db_fp = wdb_fopen("tire.g");
-	mk_id(db_fp, "Tire");
+    if (av[bu_optind]) {
+	if (!bu_file_exists(av[bu_optind])) {
+	    db_fp = wdb_fopen( av[bu_optind] );
+	} else {
+	    bu_exit(-1,"Error - refusing to overwrite pre-existing file %s",av[bu_optind]);
+	}
     }
-
+    if (!av[bu_optind]) {
+	if (!bu_file_exists(DEFAULT_TIRE_FILENAME)) {
+	    db_fp = wdb_fopen(DEFAULT_TIRE_FILENAME);
+	} else {
+	    bu_exit(-1,"Error - no filename supplied and tire.g exists.");
+	}
+    }
+    mk_id(db_fp, "Tire");
 
     if (overridearray[0] > 0) isoarray[0] = overridearray[0];
     if (overridearray[1] > 0) isoarray[1] = overridearray[1];
