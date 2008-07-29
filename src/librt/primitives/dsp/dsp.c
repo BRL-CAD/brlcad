@@ -1,4 +1,4 @@
-/*                         G _ D S P . C
+/*                           D S P . C
  * BRL-CAD
  *
  * Copyright (c) 1999-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_  */
+/** @addtogroup primitives */
 /** @{ */
-/** @file g_dsp.c
+/** @file dsp.c
  *
  * Intersect a ray with a displacement map.
  *
@@ -4063,9 +4063,9 @@ const struct bu_structparse fake_dsp_printab[] = {
 
 
 /**
- *			R T _ P A R S E T A B _ T C L G E T
+ *			R T _ D S P _ G E T
  *
- *  This is the generic routine to be listed in rt_functab[].ft_tclget
+ *  This is the generic routine to be listed in rt_functab[].ft_get
  *  for those solid types which are fully described by their ft_parsetab
  *  entry.
  *
@@ -4073,14 +4073,10 @@ const struct bu_structparse fake_dsp_printab[] = {
  *  Example:  "db get ell.s B" to get only the B vector.
  */
 int
-rt_dsp_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr)
+rt_dsp_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *attr)
 {
     register const struct bu_structparse	*sp = NULL;
     const struct rt_dsp_internal *dsp_ip;
-    int                     status;
-    Tcl_DString             ds;
-    struct bu_vls           str;
-
 
     /* XXX if dsp_datasrc == RT_DSP_SRC_V4_FILE we have a V4 dsp
      * otherwise, a V5 dsp.  Take advantage of this.
@@ -4089,14 +4085,10 @@ rt_dsp_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const cha
     RT_CK_DB_INTERNAL( intern );
     dsp_ip = (struct rt_dsp_internal *)intern->idb_ptr;
 
-    bu_vls_init( &str );
-    Tcl_DStringInit( &ds );
-
-    if ( attr == (char *)0 ) {
+    if (attr == (char *)0) {
 	/* Print out solid type and all attributes */
 
-	Tcl_DStringAppendElement( &ds, "dsp" );
-
+	bu_vls_printf(log, "dsp");
 
 	switch (dsp_ip->dsp_datasrc) {
 	    case RT_DSP_SRC_V4_FILE:
@@ -4108,15 +4100,13 @@ rt_dsp_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const cha
 		break;
 	}
 
-	while ( sp && sp->sp_name != NULL ) {
-	    Tcl_DStringAppendElement( &ds, sp->sp_name );
-	    bu_vls_trunc( &str, 0 );
-	    bu_vls_struct_item(&str, sp, (char *)dsp_ip, ' ');
-	    Tcl_DStringAppendElement( &ds, bu_vls_addr(&str) );
+	while (sp && sp->sp_name != NULL) {
+	    bu_vls_printf(log, " %s ", sp->sp_name);
+	    bu_vls_struct_item(log, sp, (char *)dsp_ip, ' ');
 	    ++sp;
 	}
-	status = TCL_OK;
 
+	return BRLCAD_OK;
     } else {
 	switch (dsp_ip->dsp_datasrc) {
 	    case RT_DSP_SRC_V4_FILE:
@@ -4127,37 +4117,31 @@ rt_dsp_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const cha
 		break;
 	}
 
-	if ( bu_vls_struct_item_named( &str, sp, attr,
-				       (char *)dsp_ip, ' ') < 0 ) {
-	    bu_vls_printf(&str,
+	if (bu_vls_struct_item_named(log, sp, attr,
+				     (char *)dsp_ip, ' ') < 0) {
+	    bu_vls_printf(log,
 			  "Objects of type %s do not have a %s attribute.",
 			  "dsp", attr);
-	    status = TCL_ERROR;
+	    return BRLCAD_ERROR;
 	} else {
-	    status = TCL_OK;
+	    return BRLCAD_OK;
 	}
-	Tcl_DStringAppendElement( &ds, bu_vls_addr(&str) );
     }
 
-    Tcl_DStringResult( interp, &ds );
-    Tcl_DStringFree( &ds );
-    bu_vls_free( &str );
-
-    return status;
+    return BRLCAD_OK;
 }
 
 /**
  *			R T _ P A R S E T A B _ T C L A D J U S T
  *
  *  For those solids entirely defined by their parsetab.
- *  Invoked via rt_functab[].ft_tcladjust()
+ *  Invoked via rt_functab[].ft_adjust()
  */
 int
-rt_dsp_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv)
+rt_dsp_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv)
 {
     register const struct bu_structparse	*sp = NULL;
     const struct rt_dsp_internal *dsp_ip;
-
 
     RT_CK_DB_INTERNAL(intern);
     dsp_ip = (struct rt_dsp_internal *)intern->idb_ptr;
@@ -4173,10 +4157,10 @@ rt_dsp_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, ch
 	    break;
     }
 
-    if (! sp) return TCL_ERROR;
+    if (! sp) return BRLCAD_ERROR;
 
-    return bu_structparse_argv(interp, argc, argv, sp,
-			       (char *)intern->idb_ptr );
+    return bu_structparse_argv(log, argc, argv, sp,
+			       (char *)intern->idb_ptr);
 }
 
 void
@@ -4201,6 +4185,16 @@ rt_dsp_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double 
     MAT_IDN( dsp->dsp_stom );
     dsp->dsp_datasrc = RT_DSP_SRC_FILE;
 
+}
+
+/**
+ * R T _ D S P _ P A R A M S
+ *
+ */
+int
+rt_dsp_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+{
+    return(0);			/* OK */
 }
 
 /**	S W A P _ C E L L _ P T S
