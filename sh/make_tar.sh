@@ -65,8 +65,8 @@ if [ ! -d "$ARCHIVE" ] ; then
     exit 1
 fi
 
-PKG_NAME="${NAME}-${VERSION}"
-TAR_NAME="${PKG_NAME}.bin.tar"
+PKG_NAME="${NAME}_${VERSION}"
+TAR_NAME="${PKG_NAME}.tar"
 
 # check for gnu tar
 tar --version > /dev/null 2>&1

@@ -25,6 +25,8 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * fix the windows installer/uninstaller paths (see sf bug 1998145)
 
+* change rtarea output to have new cpa values in their own section
+
 
 THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------
