@@ -98,8 +98,6 @@ lollipop/
                 u outer-candy-cyl.c/
                         u outer-candy-cyl.s
                         - outer-candy-sphere.s
-                        - core.s
-                        - stick.s
         u stick.r/R
                 u stick.s
         u core.r/R
