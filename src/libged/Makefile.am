@@ -31,14 +31,14 @@ libged_nil_la_SOURCES = \
 	draw.c \
 	dump.c \
 	dup.c \
-	editit.c \
 	edcomb.c \
+	editit.c \
 	edmater.c \
 	erase.c \
 	erase_all.c \
+	expand.c \
 	eye.c \
 	eye_pos.c \
-	expand.c \
 	facetize.c \
 	find.c \
 	form.c \
@@ -52,8 +52,8 @@ libged_nil_la_SOURCES = \
 	group.c \
 	hide.c \
 	how.c \
-	importFg4Section.c \
 	illum.c \
+	importFg4Section.c \
 	instance.c \
 	isize.c \
 	item.c \
@@ -72,8 +72,8 @@ libged_nil_la_SOURCES = \
 	make.c \
 	make_bb.c \
 	make_name.c \
-	mater.c \
 	match.c \
+	mater.c \
 	mirror.c \
 	model2view.c \
 	move.c \
@@ -135,14 +135,14 @@ libged_nil_la_SOURCES = \
 	v2m_point.c \
 	vdraw.c \
 	version.c \
-	view_obj.c \
 	view2model.c \
+	view_obj.c \
 	viewdir.c \
 	vrot.c \
 	vutil.c \
 	wdb_comb_std.c \
-	wdb_obj.c \
 	wdb_importFg4Section.c \
+	wdb_obj.c \
 	wdb_track.c \
 	whatid.c \
 	which.c \
