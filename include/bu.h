@@ -2900,6 +2900,22 @@ BU_EXPORT BU_EXTERN(int bu_fchmod,
 		    (FILE *fp,
 		     unsigned long pmode));
 
+/* argv.c */
+BU_EXPORT BU_EXTERN(void bu_free_argv,
+		    (int argc,
+		     char *argv[]));
+BU_EXPORT BU_EXTERN(char ** bu_copy_argv,
+		    (int argc,
+		     const char *argv[]));
+BU_EXPORT BU_EXTERN(char ** bu_copyinsert_argv,
+		    (int insert,
+		     int insertArgc,
+		     const char *insertArgv[],
+		     int argc,
+		     const char *argv[]));
+
+
+
 __END_DECLS
 
 #endif  /* __BU_H__ */
