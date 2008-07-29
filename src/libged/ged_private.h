@@ -114,6 +114,9 @@ BU_EXTERN (void ged_print_node,
 	    int			cflag,
 	    int                 displayDepth,
 	    int                 currdisplayDepth));
+BU_EXTERN (struct db_i *ged_open_dbip,
+	   (const char *filename));
+
 
 /* defined in comb.c */
 BU_EXTERN (struct directory *ged_combadd,
