@@ -96,8 +96,8 @@ static void* bench_ipc(void *ptr) {
 
     /* send the application data */
     printf("ipc connection established, sending data: %d bytes\n", app_size);
-    tienet_send(client_socket, &app_size, sizeof(int), 0);
-    tienet_send(client_socket, app_data, app_size, 0);
+    tienet_send(client_socket, &app_size, sizeof(int));
+    tienet_send(client_socket, app_data, app_size);
 
     close(client_socket);
     close(server_socket);

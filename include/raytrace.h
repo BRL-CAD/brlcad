@@ -1800,6 +1800,9 @@ struct bezier_seg	/**< @brief  Bezier curve segment */
  * when those header files have not yet been seen.
  *
  * XXX On SGI, can not use identifiers in prototypes inside structure!
+ *
+ * DEPRECATED: the size of this structure will likely change with new
+ * size for ft_label and new object callbacks.
  */
 struct rt_functab {
     unsigned long magic;

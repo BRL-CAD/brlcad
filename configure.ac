@@ -2860,11 +2860,7 @@ if test "x$TCL" = "x$LIBTCL" ; then
 		TK_CPPFLAGS="$TK_CPPFLAGS "'-I${top_srcdir}/src/other/tk/xlib'
 	    fi
 	fi
-    else
-	echo "ITCL:  $ITCL == $LIBITCL"
     fi
-else
-    echo "TCL: $TCL != $LIBTCL"
 fi
 AC_SUBST(TCL)
 AC_SUBST(TCLSTUB)

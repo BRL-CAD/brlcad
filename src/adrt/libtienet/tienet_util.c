@@ -30,26 +30,12 @@
 
 #include "bio.h"
 
-void tienet_flip(void* src, void* dest, size_t size) {
-    size_t i;
-    char  b;
-    for (i = 0; i < size/2; i++) {
-	b = ((char*)src)[i];
-	((char*)dest)[i] = ((char*)src)[size-i-1];
-	((char*)dest)[size-i-1] = b;
-    }
-}
-
-
-int tienet_send(int socket, void* data, size_t size, const int flip) {
+int tienet_send(int socket, void* data, size_t size) {
     fd_set	set;
     int		ind = 0, r;
 
     FD_ZERO(&set);
     FD_SET(socket, &set);
-
-    if (flip)
-	tienet_flip(data, data, size);
 
     do {
 	select(socket+1, NULL, &set, NULL, NULL);
@@ -60,8 +46,7 @@ int tienet_send(int socket, void* data, size_t size, const int flip) {
     return(0);
 }
 
-
-int tienet_recv(int socket, void *data, int size, int flip) {
+int tienet_recv(int socket, void *data, int size) {
     fd_set	set;
     int		ind = 0, r;
 
@@ -74,12 +59,8 @@ int tienet_recv(int socket, void *data, int size, int flip) {
 	if (r <= 0) return(1);	/* Error, socket is probably dead */
     } while (ind < size);
 
-    if (flip)
-	tienet_flip(data, data, size);
-
     return(0);
 }
-
 
 void tienet_sem_init(tienet_sem_t *sem, int val) {
     pthread_mutex_init(&sem->mut, 0);
@@ -87,12 +68,10 @@ void tienet_sem_init(tienet_sem_t *sem, int val) {
     sem->val = val;
 }
 
-
 void tienet_sem_free(tienet_sem_t *sem) {
     pthread_mutex_destroy(&sem->mut);
     pthread_cond_destroy(&sem->cond);
 }
-
 
 void tienet_sem_post(tienet_sem_t *sem) {
     pthread_mutex_lock(&sem->mut);
@@ -100,7 +79,6 @@ void tienet_sem_post(tienet_sem_t *sem) {
     pthread_cond_signal(&sem->cond);
     pthread_mutex_unlock(&sem->mut);
 }
-
 
 void tienet_sem_wait(tienet_sem_t *sem) {
     pthread_mutex_lock(&sem->mut);

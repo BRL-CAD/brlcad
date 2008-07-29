@@ -74,7 +74,7 @@ void common_unpack(common_db_t *db, tie_t *tie, util_camera_t *camera, int sockn
     common_unpack_def_prop.ior = 1.0;
 
     /* Read in the size of the application data */
-    tienet_recv(socknum, &size, sizeof(int), 0);
+    tienet_recv(socknum, &size, sizeof(int));
 
     /* Version */
     tienet_recv(socknum, &ver, sizeof(short), tienet_endian);
@@ -116,7 +116,7 @@ void common_unpack_env(common_db_t *db, int socknum) {
     short block;
 
     /* size of environment data */
-    tienet_recv(socknum, &size, sizeof(int), 0);
+    tienet_recv(socknum, &size, sizeof(int));
 
     ind = 0;
     do {
@@ -197,7 +197,7 @@ void common_unpack_camera(util_camera_t *camera, int socknum) {
     int size;
 
     /* size of camera data */
-    tienet_recv(socknum, &size, sizeof(int), 0);
+    tienet_recv(socknum, &size, sizeof(int));
 
     /* POSITION */
     tienet_recv(socknum, &camera->pos.v[0], sizeof(tfloat), tienet_endian);
@@ -225,7 +225,7 @@ void common_unpack_prop(int socknum) {
     char c;
 
     /* size of property data */
-    tienet_recv(socknum, &size, sizeof(int), 0);
+    tienet_recv(socknum, &size, sizeof(int));
 
     ind = 0;
     while (ind < size) {
@@ -233,8 +233,8 @@ void common_unpack_prop(int socknum) {
 	prop_list = (common_unpack_prop_node_t*)realloc(prop_list, sizeof(common_unpack_prop_node_t)*prop_num);
 
 	/* property name */
-	tienet_recv(socknum, &c, sizeof(char), 0);
-	tienet_recv(socknum, prop_list[prop_num-1].name, c, 0);
+	tienet_recv(socknum, &c, sizeof(char));
+	tienet_recv(socknum, prop_list[prop_num-1].name, c);
 	ind += c + 1;
 
 	/* property data */
@@ -257,7 +257,7 @@ void common_unpack_texture(int socknum) {
     unsigned char c;
 
     /* size of texture data */
-    tienet_recv(socknum, &size, sizeof(int), 0);
+    tienet_recv(socknum, &size, sizeof(int));
 
 
     ind = 0;
@@ -277,8 +277,8 @@ void common_unpack_texture(int socknum) {
 		}
 		texture_stack_init(stack);
 
-		tienet_recv(socknum, &c, sizeof(char), 0);
-		tienet_recv(socknum, texture_list[texture_num-1].name, c, 0);
+		tienet_recv(socknum, &c, sizeof(char));
+		tienet_recv(socknum, texture_list[texture_num-1].name, c);
 		ind += c + 1;
 		break;
 
@@ -295,14 +295,14 @@ void common_unpack_texture(int socknum) {
 		    perror("texture_list[texture_num-1].texture");
 		    exit(1);
 		}
-		tienet_recv(socknum, &c, sizeof(char), 0);
-		tienet_recv(socknum, texture_list[texture_num-1].name, c, 0);
+		tienet_recv(socknum, &c, sizeof(char));
+		tienet_recv(socknum, texture_list[texture_num-1].name, c);
 		ind += c + c+1;
-		tienet_recv(socknum, &c, sizeof(char), 0);
-		tienet_recv(socknum, s1, c, 0);
+		tienet_recv(socknum, &c, sizeof(char));
+		tienet_recv(socknum, s1, c);
 		ind += c + c+1;
-		tienet_recv(socknum, &c, sizeof(char), 0);
-		tienet_recv(socknum, s2, c, 0);
+		tienet_recv(socknum, &c, sizeof(char));
+		tienet_recv(socknum, s2, c);
 		ind += c + c+1;
 		tienet_recv(socknum, &coef, sizeof(tfloat), tienet_endian);
 		ind += sizeof(tfloat);
@@ -443,7 +443,7 @@ void common_unpack_texture(int socknum) {
 		    perror("image");
 		    exit(1);
 		}
-		tienet_recv(socknum, image, 3*w*h, 0);
+		tienet_recv(socknum, image, 3*w*h);
 		ind += 3*w*h;
 		texture_image_init(texture, w, h, image);
 		texture_stack_push(stack, texture);
@@ -490,7 +490,7 @@ void common_unpack_mesh(common_db_t *db, int socknum, tie_t *tie) {
     fmax = 0;
 
     /* size of mesh data */
-    tienet_recv(socknum, &size, sizeof(int), 0);
+    tienet_recv(socknum, &size, sizeof(int));
     ind = 0;
 
     /* initialize tie with triangle number */
@@ -512,8 +512,8 @@ void common_unpack_mesh(common_db_t *db, int socknum, tie_t *tie) {
 	db->mesh_list[db->mesh_num-1]->tri_list = NULL;
 
 	/* Mesh Name */
-	tienet_recv(socknum, &c, sizeof(char), 0);
-	tienet_recv(socknum, db->mesh_list[db->mesh_num-1]->name, c, 0);
+	tienet_recv(socknum, &c, sizeof(char));
+	tienet_recv(socknum, db->mesh_list[db->mesh_num-1]->name, c);
 	ind += c + 1;
 
 	/* Vertices */
@@ -523,12 +523,12 @@ void common_unpack_mesh(common_db_t *db, int socknum, tie_t *tie) {
 	    vmax = vnum;
 	    vlist = (TIE_3 *)realloc(vlist, vmax * sizeof(TIE_3));
 	}
-	tienet_recv(socknum, vlist, vnum * sizeof(TIE_3), 0);
+	tienet_recv(socknum, vlist, vnum * sizeof(TIE_3));
 	ind += vnum * sizeof(TIE_3);
 
 	/* Faces */
 	/* Determine short or int based indices */
-	tienet_recv(socknum, &c, 1, 0);
+	tienet_recv(socknum, &c, 1);
 	ind += 1;
 
 	if (c) {
@@ -540,7 +540,7 @@ void common_unpack_mesh(common_db_t *db, int socknum, tie_t *tie) {
 		flist = (int *)realloc(flist, fmax * 3 * sizeof(int));
 		tlist = (TIE_3 *)realloc(tlist, fmax * 3 * sizeof(TIE_3));
 	    }
-	    tienet_recv(socknum, flist, fnum * 3 * sizeof(int), 0);
+	    tienet_recv(socknum, flist, fnum * 3 * sizeof(int));
 	    ind += fnum * 3 * sizeof(int);
 	} else {
 	    unsigned short sfnum, sind[144];
@@ -559,7 +559,7 @@ void common_unpack_mesh(common_db_t *db, int socknum, tie_t *tie) {
 	    i = 0;
 	    while (i < fnum) {
 		n = fnum - i > 48 ? 48 : fnum - i;
-		tienet_recv(socknum, &sind, 3 * n * sizeof(unsigned short), 0);
+		tienet_recv(socknum, &sind, 3 * n * sizeof(unsigned short));
 
 		for (j = 0; j < n; j++) {
 		    flist[3*(i+j) + 0] = sind[3*j + 0];
@@ -627,7 +627,7 @@ void common_unpack_kdtree_cache(int socknum, tie_t *tie) {
     void *kdcache;
 
     /* size of kdtree cache data */
-    tienet_recv(socknum, &size, sizeof(int), 0);
+    tienet_recv(socknum, &size, sizeof(int));
 
     /* retreive the data */
     if (size > 0) {
@@ -636,7 +636,7 @@ void common_unpack_kdtree_cache(int socknum, tie_t *tie) {
 	    perror("kdcache");
 	    exit(1);
 	}
-	tienet_recv(socknum, kdcache, size, 0);
+	tienet_recv(socknum, kdcache, size);
 
 	/* feed the kd-tree into libtie */
 	tie_kdtree_cache_load(tie, kdcache, size);
@@ -652,16 +652,16 @@ void common_unpack_mesh_map(common_db_t *db, int socknum) {
     char mesh_name[256], prop_name[256];
 
     /* size of mesh data */
-    tienet_recv(socknum, &size, sizeof(unsigned int), 0);
+    tienet_recv(socknum, &size, sizeof(unsigned int));
     ind = 0;
 
     while (ind < size) {
-	tienet_recv(socknum, &c, 1, 0);
-	tienet_recv(socknum, mesh_name, c, 0);
+	tienet_recv(socknum, &c, 1);
+	tienet_recv(socknum, mesh_name, c);
 	ind += 1 + c;
 
-	tienet_recv(socknum, &c, 1, 0);
-	tienet_recv(socknum, prop_name, c, 0);
+	tienet_recv(socknum, &c, 1);
+	tienet_recv(socknum, prop_name, c);
 	ind += 1 + c;
 
 	/* Link a property and texture to a mesh */

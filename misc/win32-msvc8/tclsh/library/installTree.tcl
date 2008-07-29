@@ -241,8 +241,8 @@ puts "copy [file join $rootDir src gtools g_transfer.c] [file join $shareDir sam
 file copy [file join $rootDir src gtools g_transfer.c] [file join $shareDir sample_applications]
 puts "copy [file join $rootDir src libpkg tpkg.c] [file join $shareDir sample_applications]"
 file copy [file join $rootDir src libpkg tpkg.c] [file join $shareDir sample_applications]
-puts "copy [file join $rootDir src librt primitives g_xxx.c] [file join $shareDir sample_applications]"
-file copy [file join $rootDir src librt primitives g_xxx.c] [file join $shareDir sample_applications]
+puts "copy [file join $rootDir src librt primitives xxx xxx.c] [file join $shareDir sample_applications]"
+file copy [file join $rootDir src librt primitives xxx xxx.c] [file join $shareDir sample_applications]
 puts "copy [file join $rootDir src librt raydebug.tcl] [file join $shareDir sample_applications]"
 file copy [file join $rootDir src librt raydebug.tcl] [file join $shareDir sample_applications]
 puts "copy [file join $rootDir src librt nurb_example.c] [file join $shareDir sample_applications]"

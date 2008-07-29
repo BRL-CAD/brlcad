@@ -183,9 +183,9 @@ nurb_example_LDADD = \
 	librt.la \
 	${RT_LIBS}
 
-# XXX this should be noinst or moved to include
-include_HEADERS = \
-	primitives/fixpt.h
+noinst_HEADERS = \
+	primitives/fixpt.h \
+	primitives/xxx/xxx.h
 
 dist_man_MANS = librt.3
 
