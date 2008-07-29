@@ -32,7 +32,7 @@ documentation_DATA = \
 	irprep.tr \
 	mater.txt \
 	matrix.txt \
-	mged.tr \
+	mged.sh \
 	mk.tr \
 	movie.txt \
 	old-mged.tr \
