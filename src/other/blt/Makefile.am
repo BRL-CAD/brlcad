@@ -109,4 +109,12 @@ libBLT@BLT_SUFFIX@_la_SOURCES = $(libBLT_la_SOURCES)
 libBLT@BLT_SUFFIX@_la_LDFLAGS = $(libBLT_la_LDFLAGS)
 libBLT@BLT_SUFFIX@_la_LIBADD = $(libBLT_la_LIBADD)
 
+if BUILD_TK
+TKDEP = src/other/tk
+else
+TKDEP =
+endif
+
+DEPENDS = $(TKDEP)
+
 include $(top_srcdir)/misc/Makefile.defs
