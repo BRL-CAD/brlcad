@@ -232,14 +232,14 @@ slave_load_MySQL (uint32_t pid, tie_t *tie, const char *hostname)
 #endif
 
 int
-slave_load (tie_t *tie, void *data, uint32_t dlen)
+slave_load (tie_t *tie, struct adrt_load_info *li, uint32_t dlen)
 {
     TIE_VAL(tie_check_degenerate) = 0;
 
-    switch(*(char *)data) {
+    switch(li->fmt) {
 #if HAVE_MYSQL
 	case 0x0:	/* mysql float */
-	    return slave_load_MySQL ( *(uint32_t *)((int)data + 2 + *((char *)data+1)), tie, (char *)data + 2);
+		return slave_load_MySQL ( li->pid, tie, li->dbnam );
 #endif
 	default:
 	    fprintf(stderr, "Unknown load format\n");
