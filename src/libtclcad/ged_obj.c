@@ -210,6 +210,12 @@ static int go_rotate_mode(struct ged	*gedp,
 			  ged_func_ptr	func,
 			  const char	*usage,
 			  int		maxargs);
+static int go_rt_gettrees(struct ged	*gedp,
+			  int		argc,
+			  const char	*argv[],
+			  ged_func_ptr	func,
+			  const char	*usage,
+			  int		maxargs);
 static int go_scale_mode(struct ged	*gedp,
 			 int		argc,
 			 const char	*argv[],
@@ -433,7 +439,7 @@ static struct go_cmdtab go_cmds[] = {
     {"rotate_mode",	"vname x y", MAXARGS, go_rotate_mode, GED_FUNC_PTR_NULL},
 #if GED_USE_RUN_RT
     {"rt",	"vname [args]", GO_MAX_RT_ARGS, go_view_func, ged_rt},
-    {"rt_gettrees",	(char *)0, MAXARGS, go_pass_through_func, ged_rt_gettrees},
+    {"rt_gettrees",	(char *)0, MAXARGS, go_pass_through_func, go_rt_gettrees},
 #if 0
     {"rtabort",	"vname [args]", GO_MAX_RT_ARGS, go_view_func, ged_rtabort},
     {"rtcheck",	"vname [args]", GO_MAX_RT_ARGS, go_view_func, ged_rtcheck},

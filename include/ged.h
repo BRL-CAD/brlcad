@@ -1773,14 +1773,6 @@ GED_EXPORT BU_EXTERN(int ged_rot_point, (struct ged *gedp, int argc, const char 
 GED_EXPORT BU_EXTERN(int ged_rt, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
- * Create an RT instance object
- *
- * Usage:
- *     rt_gettrees procname [-i] [-u] treetops
- */
-GED_EXPORT BU_EXTERN(int ged_rt_gettrees, (struct ged *gedp, int argc, const char *argv[]));
-
-/**
  * Scale the view.
  *
  * Usage:
