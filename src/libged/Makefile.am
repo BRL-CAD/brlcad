@@ -61,6 +61,7 @@ libged_nil_la_SOURCES = \
 	keypoint.c \
 	kill.c \
 	killall.c \
+	killrefs.c \
 	killtree.c \
 	list.c \
 	log.c \
