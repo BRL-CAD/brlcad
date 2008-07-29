@@ -395,7 +395,7 @@ rts_clean( int sessionid)
     memset(&apps, 0, sizeof( struct bu_ptbl));
     
     resp = &rt_uniresource;
-    rt_clean_resource(NULL, resp);
+    rt_clean_resource_complete(NULL, resp);
 }
 
 /* routine to close a session
