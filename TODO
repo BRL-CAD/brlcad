@@ -17,7 +17,13 @@ http://sf.net/pm/?group_id=105292
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------
 
-* release!
+* stabilize and test mged
+  (massive command restructuring in progress with libged)
+
+* verify fast4-g doesn't vomit warning messages about string
+  truncation (should be fixed already)
+
+* fix the windows installer/uninstaller paths (see sf bug 1998145)
 
 
 THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
