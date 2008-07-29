@@ -48,6 +48,82 @@
 /* usage statement */
 static char *usage="Usage:\n\t%s [-a] [-s grid_size] [-p] [-v] [-o object] model.g\n";
 
+int
+loadGeometry( char *fileName, struct bu_ptbl *objs) {
+    int sess_id = -1;
+    
+    if ( BU_PTBL_LEN( objs ) > 0 ) {
+	char **objects;
+        int i;
+
+	objects = (char **)bu_malloc( BU_PTBL_LEN( objs ) * sizeof( char *), "objects" );
+	for ( i=0; i<BU_PTBL_LEN( objs ); i++ ) {
+	    objects[i] = (char *)BU_PTBL_GET( objs, i );
+	}
+	sess_id = rts_load_geometry(fileName, BU_PTBL_LEN( objs ), objects);
+        bu_free( objects, "objects");
+    } else {
+        fprintf( stderr, "No BRL-CAD model objects specified\n" );
+        bu_exit(1, usage, "rtserverTest");
+    }
+    return sess_id;
+}
+
+int
+countHits(struct bu_vlb *vlb)
+{
+    unsigned char *c;
+    int numRays = 0;
+    int rayNum;
+    int hitCount = 0;
+    
+    c = bu_vlb_getBuffer(vlb);
+    numRays = BU_GLONG(c);
+    
+    c += SIZEOF_NETWORK_LONG;
+    
+    for(rayNum=0 ; rayNum<numRays ; rayNum++) {
+        int numPartitions = 0;
+        int partNo;
+        
+        numPartitions = BU_GLONG(c);
+        c += SIZEOF_NETWORK_LONG;
+        
+        for(partNo=0 ; partNo<numPartitions ; partNo++) {
+            point_t enterPt;
+            point_t exitPt;
+            vect_t enterNorm;
+            vect_t exitNorm;
+            double inObl;
+            double outObl;
+            int regionIndex;
+            
+            ntohd((unsigned char *)enterPt, c, 3);
+            c += SIZEOF_NETWORK_DOUBLE * 3;
+            
+            ntohd((unsigned char *)exitPt, c, 3);
+            c += SIZEOF_NETWORK_DOUBLE * 3;
+            
+            ntohd((unsigned char *)enterNorm, c, 3);
+            c += SIZEOF_NETWORK_DOUBLE * 3;
+            
+            ntohd((unsigned char *)exitNorm, c, 3);
+            c += SIZEOF_NETWORK_DOUBLE * 3;
+            
+            ntohd((unsigned char*)&inObl, c, 1);
+            c += SIZEOF_NETWORK_DOUBLE;
+            
+            ntohd((unsigned char*)&outObl, c, 1);
+            c += SIZEOF_NETWORK_DOUBLE;
+            
+            regionIndex = BU_GLONG(c);
+            c += SIZEOF_NETWORK_LONG;
+            
+            hitCount++;
+        }
+    }
+    return hitCount;
+}
 
 int
 main( int argc, char *argv[] )
@@ -77,6 +153,8 @@ main( int argc, char *argv[] )
     point_t mdl_min;
     point_t mdl_max;
     struct bu_vlb *vlb;
+    
+//    bu_debug = BU_DEBUG_MEM_CHECK;
 
     /* Things like bu_malloc() must have these initialized for use with parallel processing */
     bu_semaphore_init( RT_SEM_LAST );
@@ -107,38 +185,12 @@ main( int argc, char *argv[] )
 		bu_exit(1, usage, argv[0]);
 	}
     }
-
-    /* load geometry */
-    if ( BU_PTBL_LEN( &objs ) > 0 ) {
-	char **objects;
-
-	objects = (char **)bu_malloc( BU_PTBL_LEN( &objs ) * sizeof( char *), "objects" );
-	for ( i=0; i<BU_PTBL_LEN( &objs ); i++ ) {
-	    objects[i] = (char *)BU_PTBL_GET( &objs, i );
-	}
-	my_session_id = rts_load_geometry(argv[bu_optind], BU_PTBL_LEN( &objs ), objects);
-    } else {
-	if ( bu_optind >= argc ) {
-	    fprintf( stderr, "No BRL-CAD model specified\n" );
-	    bu_exit(1, usage, argv[0]);
-	}
-	my_session_id = rts_load_geometry(argv[bu_optind], 0, (char **)NULL);
+    
+    if (bu_debug & BU_DEBUG_MEM_CHECK) {
+        bu_prmem("initial memory map");
+        bu_mem_barriercheck();
     }
 
-    if ( my_session_id < 0 ) {
-	bu_exit(2, "Failed to load geometry from file (%s)\n", argv[bu_optind] );
-    }
-
-    /* exercise the open session capability */
-    my_session_id = rts_open_session();
-    my_session_id = rts_open_session();
-    rts_close_session( my_session_id );
-    my_session_id = rts_open_session();
-    if ( my_session_id < 0 ) {
-	bu_exit(2, "Failed to open session\n" );
-    } else {
-	fprintf( stderr, "Using session id %d\n", my_session_id );
-    }
 #if 0
     get_muves_components();
 
@@ -152,17 +204,22 @@ main( int argc, char *argv[] )
     }
 #endif
 
-/*
-    fprintf( stderr, "sleeping for %d seconds while geometry loads\n", SLEEPYTIME );
-    sleep( SLEEPYTIME );
-*/
 
-    get_model_extents( my_session_id, mdl_min, mdl_max );
-    VSET( xdir, 1, 0, 0 );
-    VSET( zdir, 0, 0, 1 );
-    VSUB2( model_size, mdl_max, mdl_min );
-
+    /* shoot a ray ten times, cleaning and loading geometry each time */
     for(i=0 ; i<10 ; i++) {
+        /* load geometry */
+        my_session_id = loadGeometry( argv[bu_optind], &objs );
+
+
+        if ( my_session_id < 0 ) {
+            bu_exit(2, "Failed to load geometry from file (%s)\n", argv[bu_optind] );
+        }
+
+        get_model_extents( my_session_id, mdl_min, mdl_max );
+        VSET( xdir, 1, 0, 0 );
+        VSET( zdir, 0, 0, 1 );
+        VSUB2( model_size, mdl_max, mdl_min );
+        
         ap = NULL;
         getApplication(&ap);
         VJOIN2( ap->a_ray.r_pt, mdl_min,
@@ -170,11 +227,20 @@ main( int argc, char *argv[] )
                 model_size[X]/2.0, xdir );
         VSET( ap->a_ray.r_dir, 0, 1, 0 );
         rts_shootray(ap);
+
         vlb = (struct bu_vlb*)ap->a_uptr;
         printHits(vlb);
+
         freeApplication(ap);
+        rts_clean( my_session_id );
+        bu_log( "\n\n********* %d\n", i);
+        if (bu_debug & BU_DEBUG_MEM_CHECK) {
+            bu_prmem("memory after shutdown");
+        }
     }
-#if 0
+
+    my_session_id = loadGeometry( argv[bu_optind], &objs );
+    
     /* submit some jobs */
     fprintf( stderr, "\nfiring a grid (%dx%d) of rays at",
 	     grid_size, grid_size );
@@ -183,6 +249,13 @@ main( int argc, char *argv[] )
     }
     fprintf( stderr, "...\n" );
 
+    if( do_plot ) {
+	result_map = (char **)bu_calloc( grid_size, sizeof( char *), "result_map" );
+	for ( i=0; i<grid_size; i++ ) {
+	    result_map[i] = (char *)bu_calloc( (grid_size+1), sizeof( char ), "result_map[i]" );
+	}
+    }
+
     cell_size = model_size[X] / grid_size;
     gettimeofday( &startTime, NULL );
     for ( i=0; i<grid_size; i++ ) {
@@ -190,76 +263,42 @@ main( int argc, char *argv[] )
 	    fprintf( stderr, "shooting row %d\n", i );
 	}
 	for ( j=0; j<grid_size; j++ ) {
-	    ajob = rts_get_rtserver_job();
-	    ajob->rtjob_id = (grid_size - i - 1)*grid_size*10 + j;
-	    ajob->sessionid = my_session_id;
-	    aray = rts_get_xray();
-	    VJOIN2( aray->r_pt,
+            int hitCount;
+            
+            getApplication(&ap);
+	    ap->a_user = my_session_id;
+	    VJOIN2( ap->a_ray.r_pt,
 		    mdl_min,
 		    i*cell_size,
 		    zdir,
 		    j*cell_size,
 		    xdir );
-	    aray->index = ajob->rtjob_id;
-	    VSET( aray->r_dir, 0, 1, 0 );
-
-	    RTS_ADD_RAY_TO_JOB( ajob, aray );
-	    if( do_plot ) {
-		rts_submit_job( ajob, j%queue_count );
-	    } else {
-		aresult = rts_submit_job_to_queue_and_wait( ajob, j%queue_count );
-		rts_free_rtserver_result( aresult );
-	    }
+	    ap->a_ray.index = ap->a_user;
+	    VSET( ap->a_ray.r_dir, 0, 1, 0 );
+            rts_shootray(ap);
+            if( do_plot ) {
+                hitCount = countHits(ap->a_uptr);
+                if ( hitCount == 0 ) {
+                    result_map[i][j] = ' ';
+                } else if ( hitCount <= 9 ) {
+                    result_map[i][j] = '0' + hitCount;
+                } else {
+                    result_map[i][j] = '*';
+                }
+            }
+            freeApplication(ap);
 	    job_count++;
-
 	}
     }
     gettimeofday( &endTime, NULL );
     diff = endTime.tv_sec - startTime.tv_sec + (endTime.tv_usec - startTime.tv_usec) / 1000000.0;
     fprintf( stderr, "time for %d individual rays: %g second\n", job_count, diff );
 
-    if( do_plot ) {
-	result_map = (char **)bu_calloc( grid_size, sizeof( char *), "result_map" );
-	for ( i=0; i<grid_size; i++ ) {
-	    result_map[i] = (char *)bu_calloc( (grid_size+1), sizeof( char ), "result_map[i]" );
-	}
-	while ( job_count ) {
-	    aresult = rts_get_any_waiting_result( my_session_id );
-	    if ( aresult ) {
-		i = aresult->the_job->rtjob_id/(grid_size*10);
-		j = aresult->the_job->rtjob_id%(grid_size*10);
-		if ( aresult->got_some_hits ) {
-		    struct ray_hit *ahit;
-		    struct ray_result *ray_res;
-		    int hit_count=0;
-
-		    ray_res = BU_LIST_FIRST( ray_result, &aresult->resultHead.l );
-		    for ( BU_LIST_FOR( ahit, ray_hit, &ray_res->hitHead.l ) ) {
-			hit_count++;
-		    }
-		    if ( hit_count <= 9 ) {
-			result_map[i][j] = '0' + hit_count;
-		    } else {
-			result_map[i][j] = '*';
-		    }
-		} else {
-		    result_map[i][j] = ' ';
-		}
-		job_count--;
-
-		rts_free_rtserver_result( aresult );
-	    }
-	}
-
-
-	for ( i=0; i<grid_size; i++ ) {
+    if(do_plot) {
+	for ( i=grid_size-1; i>=0; i-- ) {
 	    fprintf( stderr, "%s\n", result_map[i] );
 	}
     }
-
-    fprintf( stderr, "resources after firing %d rays:\n", grid_size*grid_size + 1 );
-    rts_pr_resource_summary();
-#endif
     return 0;
 }
 
