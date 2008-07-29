@@ -56,11 +56,7 @@ HIDDEN struct bu_cmdtab cmdtab[] = {
 };
 
 int
-#ifdef BRLCAD_DEBUG
-Dm_d_Init(Tcl_Interp *interp)
-#else
-    Dm_Init(Tcl_Interp *interp)
-#endif
+Dm_Init(Tcl_Interp *interp)
 {
     struct bu_vls	vls;
 

@@ -60,10 +60,6 @@
  *  This name space leaves the door open for a double-precision
  *  family of routines, D, D2, and D3.
  *
- *
- *  @author
- *	Mike Muuss
- *
  */
 
 #include "common.h"
@@ -71,14 +67,15 @@
 #include <stdio.h>
 
 #include "plot3.h"
+
 /**
- *			P L _ S T R N C P Y
+ * P L _ S T R N C P Y
  *
- *  Make null-terminated copy of a string in output buffer,
- *  being careful not to exceed indicated buffer size
- *  Accept "$" as alternate string-terminator for FORTRAN Holerith constants,
- *  because getting FORTRAN to null-terminate strings is to painful
- *  (and non-portable) to contemplate.
+ * Make null-terminated copy of a string in output buffer,
+ * being careful not to exceed indicated buffer size
+ * Accept "$" as alternate string-terminator for FORTRAN Holerith constants,
+ * because getting FORTRAN to null-terminate strings is to painful
+ * (and non-portable) to contemplate.
  */
 void
 pl_strncpy(register char *out, register char *in, register int sz)

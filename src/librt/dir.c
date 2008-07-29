@@ -23,9 +23,6 @@
  *
  * Ray Tracing program, GED database directory manager.
  *
- *  Functions -
- *	rt_dirbuild	Read GED database, build directory
- *
  */
 
 #include "common.h"
@@ -36,15 +33,15 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "./debug.h"
+
 
 /*
- *			R T _ D I R B U I L D
+ * R T _ D I R B U I L D
  *
- *  Builds a directory of the object names.
+ * Builds a directory of the object names.
  *
- *  Allocate and initialize information for this
- *  instance of an RT model database.
+ * Allocate and initialize information for this
+ * instance of an RT model database.
  *
  * Returns -
  *	(struct rt_i *)	Success

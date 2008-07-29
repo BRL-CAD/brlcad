@@ -35,12 +35,11 @@
 #include "rtgeom.h"		/* for ID_POLY special support */
 #include "db.h"
 
-#include "./ged.h"
+#include "./mged.h"
 #include "./mged_solid.h"
 #include "./mged_dm.h"
 #include "./cmd.h"
 
-#include "../librt/debug.h"	/* XXX */
 
 void		cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy);
 void		drawH_part2(int dashflag, struct bu_list *vhead, struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp);
@@ -110,8 +109,8 @@ int			mged_wireframe_color_override;
 int			mged_wireframe_color[3];
 static struct model	*mged_nmg_model;
 
-extern struct bn_tol		mged_tol;	/* from ged.c */
-extern struct rt_tess_tol	mged_ttol;	/* from ged.c */
+extern struct bn_tol		mged_tol;
+extern struct rt_tess_tol	mged_ttol;
 
 /*
  *		M G E D _ P L O T _ A N I M _ U P C A L L _ H A N D L E R
@@ -1784,7 +1783,7 @@ f_bev(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 
     {
-	char *av[3];
+	const char *av[3];
 
 	av[0] = "e";
 	av[1] = newname;

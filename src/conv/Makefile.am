@@ -98,7 +98,7 @@ asc2g_LDFLAGS =
 endif
 
 asc2g_SOURCES = asc2g.c
-asc2g_LDADD = ${WDB}
+asc2g_LDADD = ${WDB} ${GED}
 
 asc2pix_SOURCES = asc2pix.c
 
@@ -317,7 +317,7 @@ FAST_OBJECTS = \
 	$(g_nff_OBJECTS) \
 	$(g_nmg_OBJECTS) \
 	$(g_obj_OBJECTS) \
-	$(g_shell.rect_OBJECTS) \
+	$(g_shell_rect_OBJECTS) \
 	$(g_stl_OBJECTS) \
 	$(g_tankill_OBJECTS) \
 	$(g_var_OBJECTS) \

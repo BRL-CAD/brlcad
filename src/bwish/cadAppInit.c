@@ -43,7 +43,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "raytrace.h"
+#include "ged.h"
 #include "tclcad.h"
 
 /* XXX -- it's probably a bad idea to import itcl/itk/iwidgets into
@@ -165,6 +165,12 @@ Cad_AppInit(Tcl_Interp *interp)
 /* Initialize librt */
     if (Rt_Init(interp) == TCL_ERROR) {
 	bu_log("Rt_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
+
+    /* Initialize libged */
+    if (Ged_Init(interp) == TCL_ERROR) {
+	bu_log("Ged_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
 

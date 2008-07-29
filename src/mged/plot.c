@@ -40,7 +40,7 @@
 #include "dg.h"
 #include "plot3.h"
 
-#include "./ged.h"
+#include "./mged.h"
 #include "./mged_solid.h"
 #include "./mged_dm.h"
 

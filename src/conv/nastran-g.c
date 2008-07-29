@@ -39,7 +39,6 @@
 #include "raytrace.h"
 #include "wdb.h"
 #include "bu.h"
-#include "../librt/debug.h"
 
 
 struct coord_sys

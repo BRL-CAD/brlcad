@@ -39,7 +39,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "./ged.h"
+#include "./mged.h"
 #include "./mgedtcl.h"
 
 struct mged_hist mged_hist_head;

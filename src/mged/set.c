@@ -18,10 +18,6 @@
  * information.
  */
 /** @file set.c
- *  Authors -
- *	Lee A. Butler
- *      Glenn Durfee
- *	Robert G. Parker
  *
  */
 
@@ -33,13 +29,13 @@
 #include "vmath.h"
 #include "dg.h"
 #include "./sedit.h"
-#include "./ged.h"
+#include "./mged.h"
 #include "./mged_solid.h"
 #include "./mged_dm.h"
 
 #include "tcl.h"
 
-extern void predictor_hook(void);		/* in ged.c */
+extern void predictor_hook(void);
 
 extern void set_port(void);
 

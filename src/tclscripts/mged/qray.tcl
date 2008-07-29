@@ -479,6 +479,19 @@ entry widget supports some emacs style
 bindings." }
 	    { see_also "nirt" } }
 
+    label $top.gapL -text "Gap" -anchor e
+    hoc_register_data $top.gapL "Gap Format String"\
+        { { summary "Enter/edit the gap format string." }
+            { see_also "nirt" } }
+    entry $top.gapE -relief sunken -bd 2 -width 80 -textvar qray_control($id,fmt_gap)
+    hoc_register_data $top.gapE "Gap Format String"\
+        { { summary "Enter/edit the gap format string. Note that the
+middle mouse button can be used to scroll
+the entry widget. Also, by default, the
+entry widget supports some emacs style
+bindings." }
+            { see_also "nirt" } }
+
     label $top.scriptL -text "Script" -anchor e
     hoc_register_data $top.scriptL "Script String"\
 	{ { summary "Enter/edit the nirt script string." }
@@ -521,6 +534,7 @@ panel according to MGED's internal state." } }
     grid $top.footL $top.footE -sticky "nsew" -in $top.gridFF1
     grid $top.missL $top.missE -sticky "nsew" -in $top.gridFF1
     grid $top.overlapL $top.overlapE -sticky "nsew" -in $top.gridFF1
+    grid $top.gapL $top.gapE -sticky "nsew" -in $top.gridFF1
     grid $top.scriptL $top.scriptE -sticky "nsew" -in $top.gridFF1
     grid columnconfigure $top.gridFF1 1 -weight 1
     grid rowconfigure $top.gridFF1 1 -weight 1
@@ -567,6 +581,7 @@ proc qray_apply_fmt { id } {
     qray fmt f $qray_control($id,fmt_foot)
     qray fmt m $qray_control($id,fmt_miss)
     qray fmt o $qray_control($id,fmt_overlap)
+    qray fmt g $qray_control($id,fmt_gap)
     qray script $qray_control($id,script)
 }
 
@@ -581,6 +596,7 @@ proc qray_reset_fmt { id } {
     set qray_control($id,fmt_foot) [_mged_qray fmt f]
     set qray_control($id,fmt_miss) [_mged_qray fmt m]
     set qray_control($id,fmt_overlap) [_mged_qray fmt o]
+    set qray_control($id,fmt_gap) [_mged_qray fmt g]
     set qray_control($id,script) [_mged_qray script]
 }
 

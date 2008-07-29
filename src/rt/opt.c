@@ -19,7 +19,7 @@
  */
 /** @file opt.c
  *
- *  Option handling for Ray Tracing main program.
+ * Option handling for Ray Tracing main program.
  *
  */
 
@@ -37,7 +37,7 @@
 #include "./ext.h"
 
 #include "rtprivate.h"
-#include "../librt/debug.h"
+
 
 int		rpt_dist = 0;		/* report distance to each pixel */
 int		width = 0;		/* # of pixels in X */
@@ -50,7 +50,8 @@ double		azimuth = 0.0, elevation = 0.0;
 int		lightmodel = 0;		/* Select lighting model */
 int		rpt_overlap = 1;	/* report overlapping region names */
 int		default_background = 1; /* Default is black */
-int		rt_text_mode = 0;       /* Currently used by rtcheck and nirt */
+int		output_is_binary = 1;	/* !0 means output file is binary */
+
 /***** end of sharing with viewing model *****/
 
 /***** variables shared with worker() ******/
@@ -563,7 +564,7 @@ int get_args( int argc, register char **argv )
 		register char	*cp = bu_optarg;
 		switch (*cp) {
 		    case 't':
-			rt_text_mode = 1;
+			output_is_binary = 0;
 			break;
 		    default:
 			fprintf(stderr, "ERROR: unknown option %c\n", *cp);

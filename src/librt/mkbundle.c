@@ -34,24 +34,23 @@
 #include "bu.h"
 #include "bn.h"
 #include "raytrace.h"
-#include "./debug.h"
 
-/*
- *			R T _ R A Y B U N D L E _ M A K E R
+
+/**
+ * R T _ R A Y B U N D L E _ M A K E R
  *
- *  Make a bundle of rays around a main ray, with a circular exterior,
- *  and spiral filling of the interior.
- *  The outer periphery is sampled with rays_per_ring additional rays,
- *  preferably at least 3.
+ * Make a bundle of rays around a main ray, with a circular exterior,
+ * and spiral filling of the interior.  The outer periphery is sampled
+ * with rays_per_ring additional rays, preferably at least 3.
  *
- *  rp[] must be of size (rays_per_ring*nring)+1.
- *  Entry 0 is the main ray, and must be provided by the caller.
- *  The remaining entries will be filled in with extra rays.
- *  The radius of the bundle is given in mm.
+ * rp[] must be of size (rays_per_ring*nring)+1.  Entry 0 is the main
+ * ray, and must be provided by the caller.  The remaining entries
+ * will be filled in with extra rays.  The radius of the bundle is
+ * given in mm.
  *
- *  rp[0].r_dir must have unit length.
+ * rp[0].r_dir must have unit length.
  *
- *  XXX Should we require a and b as inputs, for efficiency?
+ * XXX Should we require a and b as inputs, for efficiency?
  */
 void
 rt_raybundle_maker(struct xray *rp, double radius, const fastf_t *avec, const fastf_t *bvec, int rays_per_ring, int nring)

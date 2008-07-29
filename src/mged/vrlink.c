@@ -37,7 +37,7 @@
 #include "bu.h"
 #include "raytrace.h"
 #include "pkg.h"
-#include "./ged.h"
+#include "./mged.h"
 #include "./mged_dm.h"
 
 extern int		(*cmdline_hook)();	/* cmd.c */
@@ -134,7 +134,7 @@ vr_input_hook(void)
 }
 
 /*
- *  Called from ged.c refresh().
+ *  Called from refresh().
  */
 void
 vr_viewpoint_hook(void)

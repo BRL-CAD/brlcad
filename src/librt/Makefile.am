@@ -2,7 +2,9 @@
 
 
 lib_LTLIBRARIES = librt.la
-noinst_LTLIBRARIES = librt_nil.la
+noinst_LTLIBRARIES = \
+	librt_nil.la \
+	librt_xxx.la
 
 BREP_SRCS = g_brep.cpp opennurbs_ext.cpp
 BREP_TEST = brep_test
@@ -18,6 +20,7 @@ brep_test_LDADD = \
 
 # cannot set per-target CPPFLAGS until automake 1.7+
 AM_CPPFLAGS = \
+	${REGEX_CPPFLAGS} \
 	${TCL_CPPFLAGS} \
 	${BREP_CPPFLAGS}
 
@@ -26,10 +29,12 @@ noinst_PROGRAMS = \
 	nurb_example \
 	${BREP_TEST}
 
+# make sure the example compiles, but don't include it in librt
+librt_xxx_la_SOURCES = g_xxx.c
+
 librt_nil_la_SOURCES = \
 	$(BREP_SRCS) \
 	bezier_2d_isect.c \
-	bigE.c \
 	binary_obj.c \
 	bomb.c \
 	bool.c \
@@ -55,7 +60,6 @@ librt_nil_la_SOURCES = \
 	db_scan.c \
 	db_tree.c \
 	db_walk.c \
-	dg_obj.c \
 	dir.c \
 	dspline.c \
 	fortray.c \
@@ -74,6 +78,7 @@ librt_nil_la_SOURCES = \
 	g_grip.c \
 	g_half.c \
 	g_hf.c \
+	g_hyp.c \
 	g_metaball.c \
 	g_nmg.c \
 	g_nurb.c \
@@ -90,15 +95,13 @@ librt_nil_la_SOURCES = \
 	g_tgc.c \
 	g_torus.c \
 	g_vol.c \
-	global.c \
+	globals.c \
 	htbl.c \
-	importFg4Section.c \
 	many.c \
 	mater.c \
 	memalloc.c \
 	mirror.c \
 	mkbundle.c \
-	nirt.c \
 	nmg_bool.c \
 	nmg_ck.c \
 	nmg_class.c \
@@ -148,7 +151,6 @@ librt_nil_la_SOURCES = \
 	oslo_map.c \
 	pr.c \
 	prep.c \
-	qray.c \
 	regionfix.c \
 	roots.c \
 	shoot.c \
@@ -157,16 +159,11 @@ librt_nil_la_SOURCES = \
 	table.c \
 	tcl.c \
 	timer42.c \
-	track.c \
 	transform.c \
 	tree.c \
-	vdraw.c \
 	vers.c \
-	view_obj.c \
 	vlist.c \
-	wdb.c \
-	wdb_comb_std.c \
-	wdb_obj.c
+	wdb.c
 
 EXTRA_librt_nil_la_SOURCES = \
 	g_brep.cpp \
@@ -175,7 +172,7 @@ EXTRA_librt_nil_la_SOURCES = \
 librt_nil_la_LIBADD = ${BREP_LIBADD}
 
 librt_la_SOURCES =
-librt_la_LDFLAGS = -version-info 19:1
+librt_la_LDFLAGS = -version-info 19:1 -no-undefined -Wc,${FEXCEPTIONS}
 librt_la_LIBADD = \
 	librt_nil.la \
 	${RT_LIBS}
@@ -193,9 +190,7 @@ nurb_example_LDADD = \
 # XXX this should be noinst or moved to include
 include_HEADERS = \
 	bot.h \
-	debug.h \
-	fixpt.h \
-	qray.h
+	fixpt.h
 
 dist_man_MANS = librt.3
 

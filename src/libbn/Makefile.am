@@ -10,9 +10,9 @@ libbn_nil_la_SOURCES = \
 	axis.c \
 	bn_tcl.c \
 	complex.c \
-	const.c \
 	font.c \
 	fortran.c \
+	globals.c \
 	list.c \
 	marker.c \
 	mat.c \
@@ -35,7 +35,7 @@ libbn_nil_la_SOURCES = \
 	wavelet.c
 
 libbn_la_SOURCES =
-libbn_la_LDFLAGS = -version-info 19:1
+libbn_la_LDFLAGS = -version-info 19:1 -no-undefined
 libbn_la_LIBADD = \
 	libbn_nil.la \
 	${BN_LIBS}

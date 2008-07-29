@@ -39,7 +39,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "raytrace.h"
+#include "ged.h"
 #ifdef BWISH
 #  include "dm.h"
 #endif
@@ -263,6 +263,12 @@ Cad_AppInit(Tcl_Interp *interp)
 	return TCL_ERROR;
     }
     Tcl_StaticPackage(interp, "Rt", Rt_Init, (Tcl_PackageInitProc *) NULL);
+
+    /* Initialize libged */
+    if (Ged_Init(interp) == TCL_ERROR) {
+	bu_log("Ged_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
 
 #ifdef BWISH
     if ((tkwin = Tk_MainWindow(interp)) == NULL)

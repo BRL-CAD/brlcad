@@ -55,7 +55,6 @@ overlap			*find_ovlp(struct partition *pp);
 void			del_ovlp(overlap *op);
 void			init_ovlp(void);
 
-
 int
 if_hit(struct application *ap, struct partition *part_head, struct seg *finished_segs)
 {
@@ -97,6 +96,12 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
 	 *		  should be updated by the functions
 	 *		  in command.c as well
 	 */
+	if (part_nm > 1) {
+	   for (i = 0; i < 3; ++i) {
+	       g_entry(i) = r_exit(i);
+	   }
+	   g_entry(D) = r_exit(D);
+	}
 	for (i = 0; i < 3; ++i) {
 	    r_entry(i) = part-> pt_inhit->hit_point[i];
 	    r_exit(i) = part-> pt_outhit->hit_point[i];
@@ -134,6 +139,10 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
 	ValTab[VTI_LOS].value.fval = r_entry(D) - r_exit(D);
 	ValTab[VTI_SLOS].value.fval = 0.01 * ValTab[VTI_LOS].value.fval *
 	    part->pt_regionp->reg_los;
+	if (part_nm > 1) {
+	   ValTab[VTI_GAP_LOS].value.fval = g_entry(D) - r_entry(D);
+	   if (ValTab[VTI_GAP_LOS].value.fval > 0) report(FMT_GAP);
+	}
 	bu_strlcpy(regionPN, part->pt_regionp->reg_name, sizeof(regionPN));
 
 	ValTab[VTI_PATH_NAME].value.sval = part->pt_regionp->reg_name;

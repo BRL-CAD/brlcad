@@ -22,11 +22,12 @@
 /** @{ */
 /** @file nmg_bool.c
  *
- *	Support for boolean operations on NMG objects.  Most of the routines
- *	in here are static/local to this file.  The interfaces here are the
- *	functions "nmg_do_bool" and "nmg_mesh_faces".  The former does boolean
- *	operations on a pair of shells.  The latter is a function to make
- *	edges shared between two faces whenever possible.
+ * Support for boolean operations on NMG objects.  Most of the
+ * routines in here are static/local to this file.  The interfaces
+ * here are the functions "nmg_do_bool" and "nmg_mesh_faces".  The
+ * former does boolean operations on a pair of shells.  The latter is
+ * a function to make edges shared between two faces whenever
+ * possible.
  *
  */
 
@@ -41,7 +42,7 @@
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "./debug.h"
+
 
 extern int nmg_class_nothing_broken;
 
@@ -72,11 +73,12 @@ nmg_dangling_handler(long int *longp, genptr_t state, int first)
 }
 
 /**
- *			N M G _ H A S _ D A N G L I N G _ F A C E S
+ * N M G _ H A S _ D A N G L I N G _ F A C E S
  *
- *  Argument is expected to be model, region, shell, or faceuse pointer.
+ * Argument is expected to be model, region, shell, or faceuse
+ * pointer.
  *
- *  Returns -
+ * Returns -
  *	0	No dangling faces
  *	!0	Has dangling faces
  */
@@ -85,11 +87,11 @@ nmg_has_dangling_faces(unsigned long *magic_p, const char *manifolds)
 {
     struct model			*m;
     struct dangling_faceuse_state	st;
-    static const struct nmg_visit_handlers	handlers = {NULL, NULL, NULL, NULL, NULL,
-							    NULL, NULL, NULL, nmg_dangling_handler, NULL,
-							    NULL, NULL, NULL, NULL, NULL,
-							    NULL, NULL, NULL, NULL, NULL,
-							    NULL, NULL, NULL, NULL, NULL};
+    static const struct nmg_visit_handlers handlers = {NULL, NULL, NULL, NULL, NULL,
+						       NULL, NULL, NULL, nmg_dangling_handler, NULL,
+						       NULL, NULL, NULL, NULL, NULL,
+						       NULL, NULL, NULL, NULL, NULL,
+						       NULL, NULL, NULL, NULL, NULL};
     /* handlers.bef_faceuse = nmg_dangling_handler; */
 
     m = nmg_find_model( magic_p );
@@ -105,12 +107,13 @@ nmg_has_dangling_faces(unsigned long *magic_p, const char *manifolds)
 }
 
 /**
- *			N M G _ S H O W _ E A C H _ L O O P
+ * N M G _ S H O W _ E A C H _ L O O P
  *
- *  Within a shell, show each loop as a separate display.
- *  Pause after displaying each one.
+ * Within a shell, show each loop as a separate display.  Pause after
+ * displaying each one.
  *
- *  Note that in "non-fancy" mode, show_broken_eu() draws just the edge.
+ * Note that in "non-fancy" mode, show_broken_eu() draws just the
+ * edge.
  */
 void
 nmg_show_each_loop(struct shell *s, long int **classlist, int new, int fancy, const char *str)
@@ -343,10 +346,11 @@ nmg_kill_non_common_cracks(struct shell *sA, struct shell *sB)
     }
 }
 
-/**			N M G _ C L A S S I F Y _ S H A R E D _ E D G E S _ V E R T S
+/**
+ * N M G _ C L A S S I F Y _ S H A R E D _ E D G E S _ V E R T S
  *
- *	Preprocessor routine for classifier to get all the easy shared edges and
- *	vertices marked as shared.
+ * Preprocessor routine for classifier to get all the easy shared
+ * edges and vertices marked as shared.
  */
 
 static void
@@ -425,10 +429,10 @@ nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, long int **c
     bu_ptbl_free( &edges);
 }
 
-/**		N M G _ K I L L _ A N T I _ L O O P S
+/**
+ * N M G _ K I L L _ A N T I _ L O O P S
  *
- *	Look for same loop in opposite direction in shell "s",
- *	Kill them.
+ * Look for same loop in opposite direction in shell "s", Kill them.
  */
 
 void
@@ -560,14 +564,13 @@ nmg_kill_wire_edges(struct shell *s)
 }
 
 /**
- *			N M G _ B O O L
+ * N M G _ B O O L
  *
- *	Perform boolean operations on a pair of shells.
+ * Perform boolean operations on a pair of shells.
  *
- *  The return is an updated version of shell A.
- *  Shell B is destroyed.
+ * The return is an updated version of shell A.  Shell B is destroyed.
  *
- *  XXX this probably should operate on regions, not shells.
+ * XXX this probably should operate on regions, not shells.
  */
 static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int oper, const struct bn_tol *tol)
 {
@@ -715,14 +718,14 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     nmg_m_reindex( m, 0 );
 
     /*
-     *  Allocate storage for classlist[].
-     *  Get all 8 lists at once, and just build pointers for the rest.
-     *  XXX In some cases, number of items may grow
-     *  XXX (e.g. added vu's, loops) as things are demoted, etc.
-     *  XXX Try to accomodate here by reserving some extra table space.
+     * Allocate storage for classlist[].
+     * Get all 8 lists at once, and just build pointers for the rest.
+     * XXX In some cases, number of items may grow
+     * XXX (e.g. added vu's, loops) as things are demoted, etc.
+     * XXX Try to accomodate here by reserving some extra table space.
      *
-     *  XXX The classlist really only needs to be an unsigned char,
-     *  XXX not a long*.
+     * XXX The classlist really only needs to be an unsigned char,
+     * XXX not a long*.
      */
     nelem = (m->maxindex)*4+1;		/* includes extra space */
     classlist[0] = (long *)bu_calloc( 8 * nelem + 1,
@@ -814,9 +817,9 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 #endif
 
     /*
-     *  Before splitting, join up small loop fragments into large
-     *  ones, so that maximal splits will be possible.
-     *  This is essential for cutting holes in faces, e.g. Test3.r
+     * Before splitting, join up small loop fragments into large
+     * ones, so that maximal splits will be possible.
+     * This is essential for cutting holes in faces, e.g. Test3.r
      */
     if (rt_g.NMG_debug & DEBUG_BOOL)
     {
@@ -901,14 +904,14 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     nmg_m_reindex( m, 0 );
 
     /*
-     *  Allocate storage for classlist[].
-     *  Get all 8 lists at once, and just build pointers for the rest.
-     *  XXX In some cases, number of items may grow
-     *  XXX (e.g. added vu's, loops) as things are demoted, etc.
-     *  XXX Try to accomodate here by reserving some extra table space.
+     * Allocate storage for classlist[].
+     * Get all 8 lists at once, and just build pointers for the rest.
+     * XXX In some cases, number of items may grow
+     * XXX (e.g. added vu's, loops) as things are demoted, etc.
+     * XXX Try to accomodate here by reserving some extra table space.
      *
-     *  XXX The classlist really only needs to be an unsigned char,
-     *  XXX not a long*.
+     * XXX The classlist really only needs to be an unsigned char,
+     * XXX not a long*.
      */
     nelem = (m->maxindex)*4+1;		/* includes extra space */
     classlist[0] = (long *)bu_calloc( 8 * nelem + 1,
@@ -925,10 +928,10 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     }
 
     /*
-     *  Classify A -vs- B, then B -vs- A.
-     *  Carry onAonBshared and onAonBanti classifications forward
-     *  from first step to second step.
-     *  A -vs- B live in classlist[0..3], B -vs- A live in classlist[4..7].
+     * Classify A -vs- B, then B -vs- A.
+     * Carry onAonBshared and onAonBanti classifications forward
+     * from first step to second step.
+     * A -vs- B live in classlist[0..3], B -vs- A live in classlist[4..7].
      */
     nmg_class_shells(sA, sB, &classlist[0], tol);
     memcpy( (char *)classlist[4+NMG_CLASS_AonBshared],
@@ -983,11 +986,10 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     }
 
     /*
-     *  nmg_evaluate_boolean() may return an invalid shell,
-     *  i.e., one that has absolutely nothing in it.
-     *  This is an indication that the shell should be deleted
-     *  from the region, an operation which can not be accomplished
-     *  this far down in the subroutine tree.
+     * nmg_evaluate_boolean() may return an invalid shell, i.e., one
+     * that has absolutely nothing in it.  This is an indication that
+     * the shell should be deleted from the region, an operation which
+     * can not be accomplished this far down in the subroutine tree.
      */
     if ( !nmg_shell_is_empty(sA) )  {
 	nmg_s_radial_check( sA, tol );
@@ -1010,9 +1012,8 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	    nmg_show_broken_classifier_stuff((unsigned long *)sA, &classlist[0], 1, 0, "sA result");
 	}
 
-	/*  Go back and combine loops
-	 *  of faces together wherever possible
-	 *  to reduce the loop/edge count.
+	/* Go back and combine loops of faces together wherever
+	 * possible to reduce the loop/edge count.
 	 */
 	nmg_simplify_shell(sA);
 	if ( rt_g.NMG_debug & DEBUG_VERIFY )
@@ -1069,10 +1070,10 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     return(sA);
 }
 
-/*
- *			N M G _ D O _ B O O L
+/**
+ * N M G _ D O _ B O O L
  *
- *	BUG: we assume only one shell per region
+ * BUG: we assume only one shell per region
  */
 struct nmgregion *
 nmg_do_bool(struct nmgregion *rA, struct nmgregion *rB, const int oper, const struct bn_tol *tol)
@@ -1118,22 +1119,22 @@ nmg_do_bool(struct nmgregion *rA, struct nmgregion *rB, const int oper, const st
 
 
 /**
- *			N M G _ B O O L T R E E _ L E A F _ T E S S
+ * N M G _ B O O L T R E E _ L E A F _ T E S S
  *
- *  Called from db_walk_tree() each time a tree leaf is encountered.
- *  The primitive solid, in external format, is provided in 'ep',
- *  and the type of that solid (e.g. ID_ELL) is in 'id'.
- *  The full tree state including the accumulated transformation matrix
- *  and the current tolerancing is in 'tsp',
- *  and the full path from root to leaf is in 'pathp'.
+ * Called from db_walk_tree() each time a tree leaf is encountered.
+ * The primitive solid, in external format, is provided in 'ep', and
+ * the type of that solid (e.g. ID_ELL) is in 'id'.  The full tree
+ * state including the accumulated transformation matrix and the
+ * current tolerancing is in 'tsp', and the full path from root to
+ * leaf is in 'pathp'.
  *
- *  Import the solid, tessellate it into an NMG, stash a pointer to
- *  the tessellation in a new tree structure (union), and return a
- *  pointer to that.
+ * Import the solid, tessellate it into an NMG, stash a pointer to the
+ * tessellation in a new tree structure (union), and return a pointer
+ * to that.
  *
- *  Usually given as an argument to, and called from db_walk_tree().
+ * Usually given as an argument to, and called from db_walk_tree().
  *
- *  This routine must be prepared to run in parallel.
+ * This routine must be prepared to run in parallel.
  */
 union tree *
 nmg_booltree_leaf_tess(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
@@ -1179,22 +1180,22 @@ nmg_booltree_leaf_tess(struct db_tree_state *tsp, struct db_full_path *pathp, st
 }
 
 /**
- *			N M G _ B O O L T R E E _ L E A F _ T N U R B
+ * N M G _ B O O L T R E E _ L E A F _ T N U R B
  *
- *  Called from db_walk_tree() each time a tree leaf is encountered.
- *  The primitive solid, in external format, is provided in 'ep',
- *  and the type of that solid (e.g. ID_ELL) is in 'id'.
- *  The full tree state including the accumulated transformation matrix
- *  and the current tolerancing is in 'tsp',
- *  and the full path from root to leaf is in 'pathp'.
+ * Called from db_walk_tree() each time a tree leaf is encountered.
+ * The primitive solid, in external format, is provided in 'ep', and
+ * the type of that solid (e.g. ID_ELL) is in 'id'.  The full tree
+ * state including the accumulated transformation matrix and the
+ * current tolerancing is in 'tsp', and the full path from root to
+ * leaf is in 'pathp'.
  *
- *  Import the solid, convert it into an NMG using t-NURBS,
- *  stash a pointer in a new tree structure (union), and return a
- *  pointer to that.
+ * Import the solid, convert it into an NMG using t-NURBS, stash a
+ * pointer in a new tree structure (union), and return a pointer to
+ * that.
  *
- *  Usually given as an argument to, and called from db_walk_tree().
+ * Usually given as an argument to, and called from db_walk_tree().
  *
- *  This routine must be prepared to run in parallel.
+ * This routine must be prepared to run in parallel.
  */
 union tree *
 nmg_booltree_leaf_tnurb(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
@@ -1238,28 +1239,29 @@ nmg_booltree_leaf_tnurb(struct db_tree_state *tsp, struct db_full_path *pathp, s
 
 /* quell the output of nmg_booltree_evaluate() to bu_log. */
 int nmg_bool_eval_silent=0;
+
 /**
- *			N M G _ B O O L T R E E _ E V A L U A T E
+ * N M G _ B O O L T R E E _ E V A L U A T E
  *
- *  Given a tree of leaf nodes tesselated earlier by nmg_booltree_leaf_tess(),
- *  use recursion to do a depth-first traversal of the tree,
- *  evaluating each pair of boolean operations
- *  and reducing that result to a single nmgregion.
+ * Given a tree of leaf nodes tesselated earlier by
+ * nmg_booltree_leaf_tess(), use recursion to do a depth-first
+ * traversal of the tree, evaluating each pair of boolean operations
+ * and reducing that result to a single nmgregion.
  *
- *  Usually called from a do_region_end() handler from db_walk_tree().
- *  For an example of several, see mged/dodraw.c.
+ * Usually called from a do_region_end() handler from db_walk_tree().
+ * For an example of several, see mged/dodraw.c.
  *
- *  Returns an OP_NMG_TESS union tree node, which will contain the
- *  resulting region and it's name, as a dynamic string.
- *  The caller is responsible for releasing the string, and the node,
- *  by calling db_free_tree() on the node.
+ * Returns an OP_NMG_TESS union tree node, which will contain the
+ * resulting region and it's name, as a dynamic string.  The caller is
+ * responsible for releasing the string, and the node, by calling
+ * db_free_tree() on the node.
  *
- *  It is *essential* that the caller call nmg_model_fuse() before
- *  calling this subroutine.
+ * It is *essential* that the caller call nmg_model_fuse() before
+ * calling this subroutine.
  *
- *  Returns NULL if there is no geometry to return.
+ * Returns NULL if there is no geometry to return.
  *
- *  Typical calls will be of this form:
+ * Typical calls will be of this form:
  *	(void)nmg_model_fuse( m, tol );
  *	curtree = nmg_booltree_evaluate( curtree, tol );
  */
@@ -1388,19 +1390,20 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
 }
 
 /**
- *			N M G _ B O O L E A N
+ * N M G _ B O O L E A N
  *
- *  This is the main application interface to the NMG Boolean Evaluator.
+ * This is the main application interface to the NMG Boolean
+ * Evaluator.
  *
- *  This routine has the opportunity to do "once only" operations
- *  before and after the boolean tree is walked.
+ * This routine has the opportunity to do "once only" operations
+ * before and after the boolean tree is walked.
  *
- *  Returns -
+ * Returns -
  *	0	Boolean went OK.  Result region is in tp->tr_d.td_r
  *	!0	Boolean produced null result.
  *
- *  The caller is responsible for freeing 'tp' in either case,
- *  typically with db_free_tree(tp);
+ * The caller is responsible for freeing 'tp' in either case,
+ * typically with db_free_tree(tp);
  */
 int
 nmg_boolean( union tree *tp, struct model *m, const struct bn_tol *tol, struct resource *resp )
@@ -1419,16 +1422,16 @@ nmg_boolean( union tree *tp, struct model *m, const struct bn_tol *tol, struct r
     }
 
     /*
-     *  Find all entities within geometric tolerance of each other
-     *  and "fuse" them, establishing topological sharing.
-     *  Also breaks all edges on all vertices that are within tolerance.
-     *  Operate on the entire model at once.
+     * Find all entities within geometric tolerance of each other and
+     * "fuse" them, establishing topological sharing.  Also breaks all
+     * edges on all vertices that are within tolerance.  Operate on
+     * the entire model at once.
      */
     (void)nmg_model_fuse( m, tol );
 
     /*
-     *  Evaluate the nodes of the boolean tree one at a time,
-     *  until only a single region remains.
+     * Evaluate the nodes of the boolean tree one at a time, until
+     * only a single region remains.
      */
     result = nmg_booltree_evaluate( tp, tol, resp );
     RT_CK_TREE( result );

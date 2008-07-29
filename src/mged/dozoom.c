@@ -31,7 +31,7 @@
 #include "bn.h"
 #include "dg.h"
 
-#include "./ged.h"
+#include "./mged.h"
 #include "./mged_solid.h"
 #include "./sedit.h"
 #include "./mged_dm.h"

@@ -42,8 +42,9 @@
 #include "vmath.h"
 #include "dg.h"
 #include "dm-Null.h"
+#include "ged.h"
 
-#include "./ged.h"
+#include "./mged.h"
 #include "./titles.h"
 #include "./sedit.h"
 #include "./mged_solid.h"
@@ -406,19 +407,11 @@ gui_setup(char *dstr)
 	return TCL_ERROR;
     }
 
-#ifdef BRLCAD_DEBUG
-    /* Initialize libdm */
-    (void)Dm_d_Init(interp);
-
-    /* Initialize libfb */
-    (void)Fb_d_Init(interp);
-#else
     /* Initialize libdm */
     (void)Dm_Init(interp);
 
     /* Initialize libfb */
     (void)Fb_Init(interp);
-#endif
 
     if ((tkwin = Tk_MainWindow(interp)) == NULL) {
 	return TCL_ERROR;

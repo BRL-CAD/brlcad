@@ -25,9 +25,6 @@
  *  permit any FORTRAN program to use LIBRT, the ray-tracing library
  *  of the BRL-CAD Package.
  *
- *  Author -
- *	Michael John Muuss
- *
  */
 
 #include "common.h"
@@ -40,16 +37,17 @@
 #include "raytrace.h"
 
 
-extern struct resource rt_uniresource;	/* From librt/shoot.c */
+int fr_hit(struct application *ap, struct partition *headp, struct seg *segp);
+int fr_miss(struct application *ap);
 
-int			fr_hit(struct application *ap, struct partition *headp, struct seg *segp), fr_miss(struct application *ap);
-struct partition	fr_global_head;
+static struct partition fr_global_head;
 
-/*
- *			F R _ S T R I N G _ C 2 F
+
+/**
+ * F R _ S T R I N G _ C 2 F
  *
- *  Take a null-terminated C string, and place it with space padding
- *  on the right into a FORTRAN string of given length.
+ * Take a null-terminated C string, and place it with space padding on
+ * the right into a FORTRAN string of given length.
  */
 void
 fr_string_c2f(register char *fstr, register char *cstr, register int flen)
@@ -63,11 +61,12 @@ fr_string_c2f(register char *fstr, register char *cstr, register int flen)
 	fstr[i] = ' ';
 }
 
-/*
- *			F R _ S T R I N G _ F 2 C
+
+/**
+ * F R _ S T R I N G _ F 2 C
  *
- *  Take a FORTRAN string with a length, and return a pointer to
- *  null terminated copy of that string in a STATIC buffer.
+ * Take a FORTRAN string with a length, and return a pointer to null
+ * terminated copy of that string in a STATIC buffer.
  */
 static char *
 fr_string_f2c(char *str, int maxlen)
@@ -90,16 +89,17 @@ fr_string_f2c(char *str, int maxlen)
     return(buf);
 }
 
-/*
- *			F R D I R
+
+/**
+ * F R D I R
  *
- *  FORTRAN to RT interface for rt_dirbuild()
+ * FORTRAN to RT interface for rt_dirbuild()
  *
- *  XXX NOTE Apollo FORTRAN passes string length as extra (invisible)
- *  argument, by value.  Other systems probably are different.
+ * XXX NOTE Apollo FORTRAN passes string length as extra (invisible)
+ * argument, by value.  Other systems probably are different.
  *
- *  XXX On some systems, the C standard I/O library may need to be
- *  initialized here (eg, Cray).
+ * XXX On some systems, the C standard I/O library may need to be
+ * initialized here (eg, Cray).
  */
 void
 BU_FORTRAN(frdir, FRDIR)(struct rt_i **rtip, char *filename, int *filelen)
@@ -110,10 +110,11 @@ BU_FORTRAN(frdir, FRDIR)(struct rt_i **rtip, char *filename, int *filelen)
     *rtip = rt_dirbuild( file, (char *)0, 0 );
 }
 
-/*
- *			F R T R E E
+
+/**
+ * F R T R E E
  *
- *  Add another top-level tree to the in-core geometry.
+ * Add another top-level tree to the in-core geometry.
  */
 void
 BU_FORTRAN(frtree, FRTREE)(int		*fail,
@@ -129,9 +130,9 @@ BU_FORTRAN(frtree, FRTREE)(int		*fail,
     *fail = rt_gettree( *rtip, obj );
 }
 
-/*
- *	F R P R E P
- *
+
+/**
+ * F R P R E P
  */
 void
 BU_FORTRAN(frprep, FRPREP)(struct rt_i	**rtip)
@@ -149,8 +150,9 @@ struct context {
     int		co_inflip;
 };
 
-/*
- *			F R S H O T
+
+/**
+ * F R S H O T
  *
  * NOTE that the [0] element here corresponds with the caller's (1) element.
  */
@@ -195,16 +197,14 @@ BU_FORTRAN(frshot, FRSHOT)(int			*nloc,		/* input & output */
     ap.a_rt_i = *rtip;
 
     /*
-     *  Actually fire the ray
-     *  The list of results will be linked to fr_global_head
-     *  by fr_hit(), for further use below.
+     * Actually fire the ray.  The list of results will be linked to
+     * fr_global_head by fr_hit(), for further use below.
      *
-     *  It is a bit risky to rely on the segment structures
-     *  pointed to by the partition list to still be valid,
-     *  because rt_shootray has already put them back on the
-     *  free segment queue.  However, they will remain unchanged
-     *  until the next call to rt_shootray(), so copying out the
-     *  data here will work fine.
+     * It is a bit risky to rely on the segment structures pointed to
+     * by the partition list to still be valid, because rt_shootray
+     * has already put them back on the free segment queue.  However,
+     * they will remain unchanged until the next call to
+     * rt_shootray(), so copying out the data here will work fine.
      */
     ret = rt_shootray( &ap );
 
@@ -267,15 +267,17 @@ fr_miss(struct application *ap)
     fr_global_head.pt_forw = fr_global_head.pt_back = &fr_global_head;
     return(0);
 }
-/*
- *			F R N O R M
+
+
+/**
+ * F R N O R M
  *
- *  Given the data returned by a previous call to frshot(),
- *  compute the surface normal at the entry point to the indicated solid.
+ * Given the data returned by a previous call to frshot(), compute the
+ * surface normal at the entry point to the indicated solid.
  *
- *  In order to save storage, and copying time, frshot() saved only
- *  the minimum amount of data required.  Here, the hit and xray
- *  structures are reconstructed, suitable for passing to RT_HIT_NORM.
+ * In order to save storage, and copying time, frshot() saved only the
+ * minimum amount of data required.  Here, the hit and xray structures
+ * are reconstructed, suitable for passing to RT_HIT_NORM.
  */
 void
 BU_FORTRAN(frnorm, FRNORM)(double		*normal,	/* output only */
@@ -321,10 +323,11 @@ BU_FORTRAN(frnorm, FRNORM)(double		*normal,	/* output only */
 #endif
 }
 
-/*
- *			F R N R E G
+
+/**
+ * F R N R E G
  *
- *  Return the number of regions that exist in the model
+ * Return the number of regions that exist in the model
  */
 void
 BU_FORTRAN(frnreg, FRNREG)(int *nreg, struct rt_i **rtip)
@@ -332,13 +335,14 @@ BU_FORTRAN(frnreg, FRNREG)(int *nreg, struct rt_i **rtip)
     *nreg = (*rtip)->nregions;
 }
 
-/*
- *			F R N A M E
+
+/**
+ * F R N A M E
  *
- *  Given a region number (range 1..nregions), return the
- *  right-hand portion of the name in the provided buffer.
+ * Given a region number (range 1..nregions), return the right-hand
+ * portion of the name in the provided buffer.
  *
- *  XXX buflen is provided "automaticly" on the Apollo.
+ * XXX buflen is provided "automaticly" on the Apollo.
  */
 void
 BU_FORTRAN(frname, FRNAME)(char		*fbuf,

@@ -35,12 +35,13 @@
 #include "vmath.h"
 #include "rtgeom.h"
 #include "raytrace.h"
-#include "./ged.h"
+#include "./mged.h"
 #include "./sedit.h"
 #include "./mged_solid.h"
 
-extern struct rt_db_internal	es_int;	/* from edsol.c */
-extern struct bn_tol		mged_tol;		/* from ged.c */
+extern struct rt_db_internal es_int;
+extern struct bn_tol mged_tol;
+
 
 char *p_rotfb[] = {
     "Enter rot, fb angles: ",

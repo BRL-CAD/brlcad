@@ -55,11 +55,10 @@
 #include "pkg.h"
 #include "fb.h"
 
-#include "../librt/debug.h"
 #include "../rt/ext.h"
+#include "./protocol.h"
 #include "rtprivate.h"
 
-#include "./protocol.h"
 
 
 struct bu_list	WorkHead;
@@ -437,7 +436,7 @@ ph_dirbuild(register struct pkg_conn *pc, char *buf)
 
     if ( debug )  fprintf(stderr, "ph_dirbuild: %s\n", buf );
 
-    if ( (rt_split_cmd( argv, MAXARGS, buf )) <= 0 )  {
+    if ( (bu_argv_from_string( argv, MAXARGS, buf )) <= 0 )  {
 	/* No words in input */
 	(void)free(buf);
 	return;
@@ -499,7 +498,7 @@ ph_gettrees(register struct pkg_conn *pc, char *buf)
 	rtip->rti_tol.para = 1 - rt_perp_tol;
     }
 
-    if ( (argc = rt_split_cmd( argv, MAXARGS, buf )) <= 0 )  {
+    if ( (argc = bu_argv_from_string( argv, MAXARGS, buf )) <= 0 )  {
 	/* No words in input */
 	(void)free(buf);
 	return;

@@ -21,9 +21,8 @@
 /** @{ */
 /** @file g_vol.c
  *
- *	Intersect a ray with a 3-D volume.
- *	The volume is described as a concatenation of
- *	bw(5) files.
+ * Intersect a ray with a 3-D volume.  The volume is described as a
+ * concatenation of bw(5) files.
  *
  */
 /** @} */
@@ -42,8 +41,9 @@
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
-#include "./debug.h"
+
 #include "./fixpt.h"
+
 
 /*
   NOTES:

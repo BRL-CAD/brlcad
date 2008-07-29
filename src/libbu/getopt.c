@@ -39,27 +39,27 @@
 
 #include "bu.h"
 
-
-int	bu_opterr = 1;		/**< set to zero to suppress errors */
-int	bu_optind = 1;		/**< index into parent argv vector */
-int	bu_optopt = 0;		/**< character checked for validity */
-char	*bu_optarg = NULL;	/**< argument associated with option */
+/* globals available: bu_opterr, bu_optind, bu_optopt, bu_optarg
+ * see globals.c for details
+ */
 
 #define BADCH	(int)'?'
 #define EMSG	""
 #define tell(s)	if (bu_opterr)  { \
-		fputs(*nargv, stderr);fputs(s, stderr); \
-		fputc(bu_optopt, stderr);fputc('\n', stderr); \
-	} return(BADCH);
+    fputs(*nargv, stderr); \
+    fputs(s, stderr); \
+    fputc(bu_optopt, stderr); \
+    fputc('\n', stderr); \
+} return(BADCH);
 
 
 /**
- *			B U _ G E T O P T
+ * B U _ G E T O P T
  *
  * get option letter from argument vector
  */
 int
-bu_getopt(int nargc, char *const *nargv, const char *ostr)
+bu_getopt(int nargc, char * const nargv[], const char *ostr)
 {
     static char	*place = EMSG;	/* option letter processing */
     register char	*oli;		/* option letter list index */

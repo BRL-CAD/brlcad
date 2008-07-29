@@ -179,10 +179,10 @@ brep_pt_trimmed(pt2d_t pt, const ON_BrepFace& face) {
 	}
     }
 // If we base trimming on the number of intersections with, rhino generated curves won't raytrace.
-// In fact, we need to ignore trimming for the time being, just return false. 
+// In fact, we need to ignore trimming for the time being, just return false.
 // To do: figure out what this code does, and fix it for rhino generated geometries. djg 4/16/08
     // the point is trimmed if the # of intersections is even and non-zero
-    retVal= (intersections > 0 && (intersections % 2) == 0); 
+    retVal= (intersections > 0 && (intersections % 2) == 0);
 
     return retVal;
 }
@@ -747,7 +747,11 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		TRACE("\toob u: " << i->uv[0] << ", " << IVAL(i->sbv->m_u));
 		TRACE("\toob v: " << i->uv[1] << ", " << IVAL(i->sbv->m_v));
 	    }
-	    i = hits.erase(i); --i;
+	    i = hits.erase(i);
+
+	    if (i != hits.begin())
+		--i;
+
 	    continue;
 	}
 	TRACE("hit " << num << ": " << PT(i->point) << " [" << VDOT(i->normal,rp->r_dir) << "]");
@@ -769,7 +773,9 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		    i = hits.erase(last);
 		    i = hits.erase(i);
 		    last = i;
-		    ++i;
+
+		    if (i != hits.end())
+			++i;
 		} else {
 		    // just delete the second
 		    i = hits.erase(i);
@@ -845,7 +851,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	    // 	    }
 
 	    TRACE("hit " << num << ": " << ON_PRINT3(i->point) << " [" << dot << "]");
-	    while (m->first == num) {
+	    while ((m != misses.end()) && (m->first == num)) {
 		TRACE("miss " << num << ": " << BREP_INTERSECT_GET_REASON(m->second));
 		++m;
 	    }
@@ -1339,7 +1345,7 @@ rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
 
     ON_wString wonstr;
     ON_TextLog log(wonstr);
-    
+
     struct rt_brep_internal* bi;
     bi = (struct rt_brep_internal*)ip->idb_ptr;
     RT_BREP_CK_MAGIC(bi);

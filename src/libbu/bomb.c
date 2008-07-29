@@ -45,26 +45,6 @@
 #include "bu.h"
 
 
-struct bu_hook_list bu_bomb_hook_list = {
-    {
-    	BU_LIST_HEAD_MAGIC,
-	&bu_bomb_hook_list.l,
-	&bu_bomb_hook_list.l
-    },
-    BUHOOK_NULL,
-    GENPTR_NULL
-};
-
-
-/*
- * These variables are global because BU_SETJUMP() *must* be a macro.
- * If you replace this version of bu_bomb() with one of your own,
- * you must also provide these variables, even if you don't use them.
- */
-int		bu_setjmp_valid = 0;	/**< @brief !0 = bu_jmpbuf is valid */
-jmp_buf		bu_jmpbuf;		/**< @brief for BU_SETJMP() */
-
-
 /** failsafe storage to help ensure graceful shutdown */
 static char *_bu_bomb_failsafe = NULL;
 

@@ -19,11 +19,11 @@
  */
 /** @file viewarea.c
  *
- *  Computes the exposed and presented surface area projections of
- *  specified geometry.  Exposed area is the occluded 2D projection,
- *  presented is the unoccluded 2D projection.  That is to say that if
- *  there is an object in front, it will reduce the exposed area, but
- *  not the presented area.
+ * Computes the exposed and presented surface area projections of
+ * specified geometry.  Exposed area is the occluded 2D projection,
+ * presented is the unoccluded 2D projection.  That is to say that if
+ * there is an object in front, it will reduce the exposed area, but
+ * not the presented area.
  *
  */
 
@@ -36,7 +36,6 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "./ext.h"
-#include "../librt/debug.h"
 #include "plot3.h"
 #include "rtprivate.h"
 

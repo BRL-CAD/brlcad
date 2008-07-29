@@ -30,7 +30,6 @@
 #include "brep.h"
 #include "vector.h"
 
-using namespace std;
 
 const int COUNT = 100000000;
 

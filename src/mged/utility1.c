@@ -50,12 +50,12 @@
 #include "raytrace.h"
 #include "db.h"
 
-#include "./ged.h"
+#include "./mged.h"
 #include "./sedit.h"
 #include "./cmd.h"
 
 
-extern struct bn_tol    mged_tol;       /* from ged.c */
+extern struct bn_tol mged_tol;
 
 int readcodes(), writecodes();
 int loadcodes(), printcodes(FILE *fp, struct directory *dp, int pathpos);

@@ -38,7 +38,6 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "../librt/debug.h"
 
 
 #define POLY_BLOCK	512

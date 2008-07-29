@@ -41,7 +41,7 @@
 #include "dm-X.h"
 #include "fb.h"
 
-#include "./ged.h"
+#include "./mged.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
 

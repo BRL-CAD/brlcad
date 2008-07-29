@@ -301,6 +301,11 @@ fillItemTree( jobject parent_node,
 		if ( (_p)->l.forw != NULL && BU_LIST_NON_EMPTY( &((_p)->l) ) ) { \
 			BU_LIST_DEQUEUE( &((_p)->l) ); \
 		} \
+                if(_p->vlb != NULL) { \
+                    bu_vlb_free(_p->vlb); \
+                    bu_free(_p->vlb, "bu_vlb"); \
+                    _p->vlb = NULL; \
+                } \
 		pthread_mutex_lock( &resource_mutex ); \
 		BU_LIST_INSERT( &rts_resource.rtserver_results, &((_p)->l) ); \
 		pthread_mutex_unlock( &resource_mutex ); \
@@ -523,9 +528,14 @@ rts_clean( int sessionid)
 		    rtsrtip->rtrti_rtip = NULL;
 		}
 	    }
+            if ( rtsrtip->rtrti_region_names ) {
+                Tcl_DeleteHashTable( rtsrtip->rtrti_region_names );
+                bu_free(rtsrtip->rtrti_region_names, "region names hash table");
+            }
 	}
 	if ( rts_geometry[sessionid]->rts_comp_names ) {
 	    Tcl_DeleteHashTable( rts_geometry[sessionid]->rts_comp_names );
+            bu_free(rts_geometry[sessionid]->rts_comp_names, "component names hash table");
 	}
 	bu_free( rts_geometry[sessionid], "rts_geometry" );
 	rts_geometry[sessionid] = NULL;
@@ -673,32 +683,8 @@ rts_close_session( int sessionid )
 
     /* free the xforms */
     reset_xforms( sessionid );
-
-    /* free everything else */
-    for ( i=0; i<rts_geometry[sessionid]->rts_number_of_rtis; i++ ) {
-	struct rtserver_rti *rts_rtip = rts_geometry[sessionid]->rts_rtis[i];
-
-	rts_rtip->rtrti_rtip = NULL;
-	if ( rts_rtip->rtrti_name ) {
-	    bu_free( rts_rtip->rtrti_name, "name" );
-	    rts_rtip->rtrti_name = NULL;
-	}
-	for ( j=0; j<rts_rtip->rtrti_num_trees; j++ ) {
-	    bu_free( rts_rtip->rtrti_trees[j], "tree" );
-	}
-	bu_free( (char *)rts_rtip->rtrti_trees, "rtrti_trees" );
-	rts_rtip->rtrti_trees = NULL;
-
-	bu_free( (char *)rts_rtip, "rts_rtip" );
-	rts_geometry[sessionid]->rts_rtis[i] = NULL;
-    }
-
-    bu_free( (char *)rts_geometry[sessionid]->rts_rtis, "rtrtis" );
-
-    bu_free( (char*)rts_geometry[sessionid], "session" );
-
-    /* mark this slot as unused */
-    rts_geometry[sessionid] = NULL;
+    
+    rts_clean( sessionid );
 
     pthread_mutex_unlock( &session_mutex );
 }
@@ -953,6 +939,7 @@ rts_load_geometry( char *filename, int use_articulation, int num_objs, char **ob
     for ( i=0; i<rts_geometry[sessionid]->rts_number_of_rtis; i++ ) {
 	struct rtserver_rti *rts_rtip;
 	struct rt_i *rtip;
+        int regno;
 
 	/* cache the rtserver_rti pointer and its associated rt instance pointer */
 	rts_rtip = rts_geometry[sessionid]->rts_rtis[i];
@@ -984,6 +971,21 @@ rts_load_geometry( char *filename, int use_articulation, int num_objs, char **ob
 
 	/* prep the geometry for raytracing */
 	rt_prep_parallel( rtip, ncpus );
+        
+        /* create the hash table of region names */
+        rts_rtip->rtrti_region_names = (Tcl_HashTable *)bu_calloc(1, sizeof(Tcl_HashTable), "region names hash table");
+        Tcl_InitHashTable(rts_rtip->rtrti_region_names, TCL_STRING_KEYS);
+        for( regno=0 ; regno<rtip->nregions ; regno++ ) {
+            int newPtr = 0;
+            Tcl_HashEntry *entry = Tcl_CreateHashEntry(rts_rtip->rtrti_region_names, rtip->Regions[regno]->reg_name, &newPtr);
+            if( !newPtr ) {
+                bu_log( "Already have an entry for region %s\n", rtip->Regions[regno]->reg_name);
+                continue;
+            }
+            bu_log( "Setting hash table for key %s to %d\n", rtip->Regions[regno]->reg_name, regno);
+            Tcl_SetHashValue(entry, (ClientData)regno );
+        }
+        rts_rtip->region_count = rtip->nregions;
 
 	/* update our overall bounding box */
 	VMINMAX( rts_geometry[sessionid]->rts_mdl_min, rts_geometry[sessionid]->rts_mdl_max, rtip->mdl_min );
@@ -1005,6 +1007,17 @@ rts_load_geometry( char *filename, int use_articulation, int num_objs, char **ob
 int
 rts_miss( struct application *ap )
 {
+    struct ray_result *ray_res;
+    int numPartitions;
+    
+    /* get the results pointer from the application structure */
+    ray_res = (struct ray_result *)ap->a_uptr;
+    if(ray_res->vlb != NULL) {
+        unsigned char buffer[SIZEOF_NETWORK_LONG];
+        numPartitions = 0;
+        bu_plong(buffer, numPartitions);
+        bu_vlb_write(ray_res->vlb, buffer, SIZEOF_NETWORK_LONG);
+    }
     if ( verbose ) {
 	fprintf( stderr, "Missed!!!\n" );
     }
@@ -1018,8 +1031,10 @@ rts_miss( struct application *ap )
 int
 rts_hit( struct application *ap, struct partition *partHeadp, struct seg *segs )
 {
+    int sessionid = ap->a_user;
     struct partition *pp;
     struct ray_result *ray_res;
+    int numPartitions;
 
     if ( verbose ) {
 	fprintf( stderr, "Got a hit!!!\n" );
@@ -1030,6 +1045,19 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *segs )
 
     /* save a copy of the fired ray */
     ray_res->the_ray = ap->a_ray;
+    
+    if(ray_res->vlb != NULL) {
+        unsigned char buffer[SIZEOF_NETWORK_LONG];
+        /* count the number of partitions */
+        numPartitions = 0;
+        for ( BU_LIST_FOR( pp, partition, (struct bu_list *)partHeadp ) ) {
+            numPartitions++;
+        };
+        bu_plong(buffer, numPartitions);
+        bu_vlb_write(ray_res->vlb, buffer, SIZEOF_NETWORK_LONG);
+    }
+    
+    /* write the number of partitiions to the byte array */
 
     /* build a list of hits */
     for ( BU_LIST_FOR( pp, partition, (struct bu_list *)partHeadp ) ) {
@@ -1050,6 +1078,9 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *segs )
 
 	rp = pp->pt_regionp;
 
+	/* stash a pointer to the region structure (used by JAVA code to get region name) */
+	ahit->regp = rp;
+
 	/* find has table entry, if we have a table (to get MUVES_Component index) */
 	if ( hash_table_exists ) {
 	    if ( rp->reg_aircode ) {
@@ -1068,11 +1099,59 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *segs )
 	    ahit->comp_id = (int)Tcl_GetHashValue( entry );
 	}
 
-	/* stash a pointer to the region structure (used by JAVA code to get region name) */
-	ahit->regp = rp;
+        if(ray_res->vlb != NULL) {
+            unsigned char buffer[SIZEOF_NETWORK_DOUBLE*3];
+            vect_t reverse_ray_dir;
+            double inObl, outObl;
+            int regionIndex;
+            
+            /* write partition info to the byte array */
+            /* start with entrance point */
+            htond(buffer, (unsigned char *)pp->pt_inhit->hit_point, 3);
+            bu_vlb_write(ray_res->vlb, buffer, SIZEOF_NETWORK_DOUBLE*3);
+            /* next exit point */
+            htond(buffer, (unsigned char *)pp->pt_outhit->hit_point, 3);
+            bu_vlb_write(ray_res->vlb, buffer, SIZEOF_NETWORK_DOUBLE*3);
+            /* next entrance surface normal vector */
+            htond(buffer, (unsigned char *)ahit->enter_normal, 3);
+            bu_vlb_write(ray_res->vlb, buffer, SIZEOF_NETWORK_DOUBLE*3);
+            /* next entrance surface normal vector */
+            htond(buffer, (unsigned char *)ahit->exit_normal, 3);
+            bu_vlb_write(ray_res->vlb, buffer, SIZEOF_NETWORK_DOUBLE*3);
+            
+            /* calculate the entrance and exit obliquities */
+            inObl = acos( VDOT( reverse_ray_dir, ahit->enter_normal ) );
+            if ( inObl < 0.0 ) {
+                inObl = -inObl;
+            }
+            if ( inObl > M_PI_2 ) {
+                inObl = M_PI_2;
+            }
 
-	/* add this to our list of hits */
-	BU_LIST_INSERT( &ray_res->hitHead.l, &ahit->l );
+            outObl = acos( VDOT( ray_res->the_ray.r_dir, ahit->exit_normal ) );
+            if ( outObl < 0.0 ) {
+                outObl = -outObl;
+            }
+            if ( outObl > M_PI_2 ) {
+                outObl = M_PI_2;
+            }
+            
+            /* write obliquities to the buffer */
+            htond( buffer, (unsigned char *)&inObl, 1 );
+            htond( &buffer[SIZEOF_NETWORK_DOUBLE], (unsigned char *)&outObl, 1);
+            bu_vlb_write(ray_res->vlb, buffer, SIZEOF_NETWORK_DOUBLE*2);
+            
+            /* get the region index from the hash table */
+            entry = Tcl_FindHashEntry( rts_geometry[sessionid]->rts_rtis[0]->rtrti_region_names, (ClientData)rp->reg_name );
+            regionIndex = (int)Tcl_GetHashValue( entry );
+            
+            /* write region index to buffer */
+            bu_plong(buffer, regionIndex);
+            bu_vlb_write(ray_res->vlb, buffer, SIZEOF_NETWORK_LONG);
+        } else {
+            /* add this to our list of hits */
+            BU_LIST_INSERT( &ray_res->hitHead.l, &ahit->l );
+        }
 
 	if ( verbose ) {
 	    fprintf( stderr, "\tentrance at dist=%g, hit region %s (id = %d)\n",
@@ -1168,9 +1247,23 @@ rtserver_thread( void *num )
 	
 	/* initialize hit count */
 	aresult->got_some_hits = 0;
+        
+        if( ajob->useByteArray ) {
+            unsigned char buffer[SIZEOF_NETWORK_LONG];
+            /* create the vlb structure to hold the byte array of results */
+            aresult->vlb = bu_calloc(1, sizeof( struct bu_vlb ), "bu_vlb");
+            bu_vlb_init(aresult->vlb);
+            
+            /* write the number of rays to the byte array */
+            bu_plong(buffer, BU_PTBL_LEN( &ajob->rtjob_rays ));
+            bu_vlb_write(aresult->vlb, buffer, SIZEOF_NETWORK_LONG);
+        }
 
 	/* set the desired onehit flag */
 	ap.a_onehit = ajob->maxHits;
+        
+        /* make session id available for the hit routine */
+        ap.a_user = sessionid;
 
 	/* do some work
 	 * we may have a bunch of rays for this job
@@ -1190,11 +1283,24 @@ rtserver_thread( void *num )
 
 	    /* add this ray result structure to the overall result structure */
 	    BU_LIST_INSERT( &aresult->resultHead.l, &ray_res->l );
+            
+            /* all the results get stashed in a byte array that is common to the job */
+            ray_res->vlb = aresult->vlb;
 
 	    /* stash a pointer to the ray result structure in the application
 	     * structure (so the hit routine can find it)
 	     */
 	    ap.a_uptr = (genptr_t)ray_res;
+            if( ajob->useByteArray ) {
+                unsigned char buffer[SIZEOF_NETWORK_DOUBLE * 3];
+                /* write the ray to the byte buffer */
+                /* first the start point */
+                htond(buffer, (unsigned char *)aray->r_pt, 3);
+                bu_vlb_write(aresult->vlb, buffer, SIZEOF_NETWORK_DOUBLE * 3);
+                /* then the direction */
+                htond(buffer, (unsigned char *)aray->r_dir, 3);
+                bu_vlb_write(aresult->vlb, buffer, SIZEOF_NETWORK_DOUBLE * 3);
+            }
 
 	    if ( verbose ) {
 		fprintf( stderr, "thread x%lx (%ld) got job %d\n",
@@ -2106,6 +2212,33 @@ fillItemTree( jobject parent_node,
 
 /* JAVA JNI bindings */
 
+JNIEXPORT jobjectArray JNICALL
+Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_getRegionNames(JNIEnv *env, jobject obj, jint sessionId )
+{
+    Tcl_HashTable *hashTbl;
+    Tcl_HashEntry *entry;
+    Tcl_HashSearch searchTbl;
+    int region_count;
+    jobject jNameArray;
+    jstring region_name;
+    int region_number;
+    
+    hashTbl = rts_geometry[sessionId]->rts_rtis[0]->rtrti_region_names;
+    region_count = rts_geometry[sessionId]->rts_rtis[0]->region_count;
+    
+    jNameArray = (*env)->NewObjectArray( env, region_count, (*env)->FindClass(env, "java/lang/String"), (jobject)NULL);
+    entry = Tcl_FirstHashEntry(hashTbl, &searchTbl);
+
+    while( entry != NULL ) {
+        region_number = (int)Tcl_GetHashValue(entry);
+        region_name = (*env)->NewStringUTF(env, Tcl_GetHashKey(hashTbl, entry));
+        (*env)->SetObjectArrayElement(env, jNameArray, region_number, region_name);
+        entry = Tcl_NextHashEntry(&searchTbl);
+    }
+    
+    return jNameArray;
+}
+        
 
 /*
  *				G E T I T E M T R E E
@@ -2364,6 +2497,221 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_getLibraryVersion(JNIEnv *
     return( (*env)->NewStringUTF(env, rt_version()) );
 }
 
+
+JNIEXPORT jobject JNICALL
+Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_shootList( JNIEnv *env, jobject jobj,
+								  jobjectArray aRays, jint oneHit, jint sessionId )
+{
+    struct rtserver_job *ajob;
+    struct rtserver_result *aresult;
+    jsize rayCount;
+    jsize len; /* length of byte array */
+    jbyteArray array;
+    jsize rayIndex;
+    jclass rayClass;
+    jclass pointClass;
+    jclass vector3Class;
+    jmethodID getStart, getDirection;
+    jfieldID fidvx, fidvy, fidvz;
+    jfieldID fidpx, fidpy, fidpz;
+    jfieldID fidStart, fidDirection;
+
+    if ( (rayClass=(*env)->FindClass( env, "mil/army/arl/math/Ray" ) ) == NULL ) {
+	fprintf( stderr, "Failed to find Ray class\n" );
+	(*env)->ExceptionDescribe(env);
+	return( (jobject)NULL );
+    }
+    
+    fidStart = (*env)->GetFieldID( env, rayClass, "start", "Lmil/army/arl/math/Point;" );
+    if ( fidStart == 0 && (*env)->ExceptionOccurred(env) ) {
+	fprintf( stderr, "Exception thrown while getting fid of ray start point\n" );
+	(*env)->ExceptionDescribe(env);
+	return( (jobject)NULL );
+    }
+    
+    fidDirection = (*env)->GetFieldID( env, rayClass, "direction", "Lmil/army/arl/math/Vector3;" );
+    if ( fidDirection == 0 && (*env)->ExceptionOccurred(env) ) {
+	fprintf( stderr, "Exception thrown while getting fid of ray direction vector\n" );
+	(*env)->ExceptionDescribe(env);
+	return( (jobject)NULL );
+    }
+    
+    if ( (pointClass=(*env)->FindClass( env, "mil/army/arl/math/Point" ) ) == NULL ) {
+	fprintf( stderr, "Failed to find Point class\n" );
+	(*env)->ExceptionDescribe(env);
+	return( (jobject)NULL );
+    }
+    
+    if ( (vector3Class=(*env)->FindClass( env, "mil/army/arl/math/Vector3" ) ) == NULL ) {
+	fprintf( stderr, "Failed to find Vector3 class\n" );
+	(*env)->ExceptionDescribe(env);
+	return( (jobject)NULL );
+    }
+
+    fidpx = (*env)->GetFieldID( env, pointClass, "x", "D" );
+    if ( fidpx == 0 && (*env)->ExceptionOccurred(env) ) {
+	fprintf( stderr, "Exception thrown while getting x-fid of ray start point\n" );
+	(*env)->ExceptionDescribe(env);
+	return( (jobject)NULL );
+    }
+
+    fidpy = (*env)->GetFieldID( env, pointClass, "y", "D" );
+    if ( fidpx == 0 && (*env)->ExceptionOccurred(env) ) {
+	fprintf( stderr, "Exception thrown while getting y-fid of ray start point\n" );
+	(*env)->ExceptionDescribe(env);
+	return( (jobject)NULL );
+    }
+
+    fidpz = (*env)->GetFieldID( env, pointClass, "z", "D" );
+    if ( fidpx == 0 && (*env)->ExceptionOccurred(env) ) {
+	fprintf( stderr, "Exception thrown while getting z-fid of ray start point\n" );
+	(*env)->ExceptionDescribe(env);
+	return( (jobject)NULL );
+    }
+
+    fidvx = (*env)->GetFieldID( env, vector3Class, "x", "D" );
+    if ( fidpx == 0 && (*env)->ExceptionOccurred(env) ) {
+	fprintf( stderr, "Exception thrown while getting x-fid of ray start vector3\n" );
+	(*env)->ExceptionDescribe(env);
+	return( (jobject)NULL );
+    }
+
+    fidvy = (*env)->GetFieldID( env, vector3Class, "y", "D" );
+    if ( fidpx == 0 && (*env)->ExceptionOccurred(env) ) {
+	fprintf( stderr, "Exception thrown while getting y-fid of ray start vector3\n" );
+	(*env)->ExceptionDescribe(env);
+	return( (jobject)NULL );
+    }
+
+    fidvz = (*env)->GetFieldID( env, vector3Class, "z", "D" );
+    if ( fidpx == 0 && (*env)->ExceptionOccurred(env) ) {
+	fprintf( stderr, "Exception thrown while getting z-fid of ray start vector3\n" );
+	(*env)->ExceptionDescribe(env);
+	return( (jobject)NULL );
+    }
+
+
+    /* get a job structure */
+    RTS_GET_RTSERVER_JOB( ajob );
+
+    /* assign a unique ID to this job */
+    ajob->rtjob_id = get_unique_jobid();
+    ajob->sessionid = sessionId;
+    ajob->maxHits = oneHit;
+    ajob->useByteArray = 1;
+    
+    rayCount = (*env)->GetArrayLength(env, aRays);
+    
+    for(rayIndex=0 ; rayIndex<rayCount ; rayIndex++) {
+        jobject ray, start, direction;
+        point_t startPoint;
+        vect_t dirVector;
+        struct xray *aray;
+        
+        ray = (*env)->GetObjectArrayElement(env, aRays, rayIndex);
+        if ( (*env)->ExceptionOccurred(env) ) {
+            fprintf( stderr, "Exception thrown while getting ray #%d from array\n", rayIndex );
+            (*env)->ExceptionDescribe(env);
+            return( (jobject)NULL );
+        }
+        
+        start = (*env)->GetObjectField(env, ray, fidStart);
+        if ( (*env)->ExceptionOccurred(env) ) {
+            fprintf( stderr, "Exception thrown while getting ray start point\n" );
+            (*env)->ExceptionDescribe(env);
+            return( (jobject)NULL );
+        }
+        
+        direction = (*env)->GetObjectField(env, ray, fidDirection);
+        if ( (*env)->ExceptionOccurred(env) ) {
+            fprintf( stderr, "Exception thrown while getting ray direction vector\n" );
+            (*env)->ExceptionDescribe(env);
+            return( (jobject)NULL );
+        }
+        
+        startPoint[X] = (jdouble)(*env)->GetDoubleField( env, start, fidpx );
+        if ( (*env)->ExceptionOccurred(env) ) {
+            fprintf( stderr, "Exception thrown while getting x coord of ray start point\n" );
+            (*env)->ExceptionDescribe(env);
+            return( (jobject)NULL );
+        }
+        
+        startPoint[Y] = (jdouble)(*env)->GetDoubleField( env, start, fidpy );
+        if ( (*env)->ExceptionOccurred(env) ) {
+            fprintf( stderr, "Exception thrown while getting y coord of ray start point\n" );
+            (*env)->ExceptionDescribe(env);
+            return( (jobject)NULL );
+        }
+        
+        startPoint[Z] = (jdouble)(*env)->GetDoubleField( env, start, fidpz );
+        if ( (*env)->ExceptionOccurred(env) ) {
+            fprintf( stderr, "Exception thrown while getting z coord of ray start point\n" );
+            (*env)->ExceptionDescribe(env);
+            return( (jobject)NULL );
+        }
+        
+        dirVector[X] = (jdouble)(*env)->GetDoubleField( env, direction, fidvx );
+        if ( (*env)->ExceptionOccurred(env) ) {
+            fprintf( stderr, "Exception thrown while getting x coord of ray direction\n" );
+            (*env)->ExceptionDescribe(env);
+            return( (jobject)NULL );
+        }
+        
+        dirVector[Y] = (jdouble)(*env)->GetDoubleField( env, direction, fidvy );
+        if ( (*env)->ExceptionOccurred(env) ) {
+            fprintf( stderr, "Exception thrown while getting y coord of ray direction\n" );
+            (*env)->ExceptionDescribe(env);
+            return( (jobject)NULL );
+        }
+        
+        dirVector[Z] = (jdouble)(*env)->GetDoubleField( env, direction, fidvz );
+        if ( (*env)->ExceptionOccurred(env) ) {
+            fprintf( stderr, "Exception thrown while getting z coord of ray direction\n" );
+            (*env)->ExceptionDescribe(env);
+            return( (jobject)NULL );
+        }
+        
+        /* get a ray structure */
+        RTS_GET_XRAY( aray );
+        aray->index = rayIndex;
+        VMOVE( aray->r_pt, startPoint );
+        VMOVE( aray->r_dir, dirVector);
+
+        /* add the requested ray to this job */
+        RTS_ADD_RAY_TO_JOB( ajob, aray );
+    }
+
+    /* run this job */
+    if ( verbose ) {
+	fprintf( stderr, "Submitting a job\n" );
+    }
+    aresult = rts_submit_job_to_queue_and_wait( ajob, 1 );
+    if ( verbose ) {
+	fprintf( stderr, "Got C result\n" );
+    }
+
+    
+    /* jrayResult = build_Java_RayResult( env, ray_res, jstart_pt, jdir, point_class, vect_class ); */
+    len = bu_vlb_getBufferLength(aresult->vlb);
+    array = (*env)->NewByteArray( env, len );
+    if ( (*env)->ExceptionOccurred(env) ) {
+	fprintf( stderr, "Exception thrown while creating byte array\n" );
+	(*env)->ExceptionDescribe(env);
+	return( (jobject)NULL );
+    }
+    (*env)->SetByteArrayRegion(env, array, 0, len, (jbyte *)bu_vlb_getBuffer(aresult->vlb) );
+    if ( (*env)->ExceptionOccurred(env) ) {
+	fprintf( stderr, "Exception thrown while setting byte array contents\n" );
+	(*env)->ExceptionDescribe(env);
+	return( (jobject)NULL );
+    }
+
+    RTS_FREE_RTSERVER_RESULT( aresult );
+
+    /* return JAVA result */
+    return( array );
+}
+
 /* JAVA shootArray method
  *
  * env - the JNI environment object
@@ -2387,6 +2735,8 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_shootArray( JNIEnv *env, j
     jfieldID fidvx, fidvy, fidvz;
     jfieldID fidpx, fidpy, fidpz;
     jobject jrayResult, jray_start_pt;
+    jsize len; /* length of byte array */
+    jbyteArray array;
     point_t base_pt;
     vect_t row_dir, col_dir, ray_dir;
     struct rtserver_job *ajob;
@@ -2556,6 +2906,7 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_shootArray( JNIEnv *env, j
     ajob->rtjob_id = get_unique_jobid();
     ajob->sessionid = sessionId;
     ajob->maxHits = oneHit;
+    ajob->useByteArray = 1;
 
     /* add all the requested rays to this job */
     for ( row=0; row < num_rows; row++ ) {
@@ -2580,69 +2931,26 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_shootArray( JNIEnv *env, j
 	fprintf( stderr, "Got C result\n" );
     }
 
-    /* create Java array to hold results */
-    if ( (rayResult_class = (*env)->FindClass( env, "mil/army/arl/geometryservice/datatypes/RayResult" )) == NULL ) {
-	fprintf( stderr, "Failed to find RayResult class\n" );
+    
+    /* jrayResult = build_Java_RayResult( env, ray_res, jstart_pt, jdir, point_class, vect_class ); */
+    len = bu_vlb_getBufferLength(aresult->vlb);
+    array = (*env)->NewByteArray( env, len );
+    if ( (*env)->ExceptionOccurred(env) ) {
+	fprintf( stderr, "Exception thrown while creating byte array\n" );
 	(*env)->ExceptionDescribe(env);
 	return( (jobject)NULL );
     }
-    if ( (resultsArray = (*env)->NewObjectArray( env, num_rows * num_cols, rayResult_class, (jobject)NULL )) == NULL ) {
-	fprintf( stderr, "Failed to create array of RayResults\n" );
+    (*env)->SetByteArrayRegion(env, array, 0, len, (jbyte *)bu_vlb_getBuffer(aresult->vlb) );
+    if ( (*env)->ExceptionOccurred(env) ) {
+	fprintf( stderr, "Exception thrown while setting byte array contents\n" );
 	(*env)->ExceptionDescribe(env);
 	return( (jobject)NULL );
-    }
-
-    if ( (arrayClass = (*env)->FindClass( env, "java/lang/reflect/Array" ) ) == NULL ) {
-	fprintf( stderr, "Failed to find Array class\n" );
-	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
-    }
-
-    /* Get the method to set an element of an array */
-    if ( (arraySetID = (*env)->GetStaticMethodID( env, arrayClass, "set", "(Ljava/lang/Object;ILjava/lang/Object;)V" )) == NULL ) {
-	fprintf( stderr, "Failed to find \"set\" method of Array\n" );
-	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
-    }
-
-    /* Get the constructor for a Point */
-    point_constructorID = (*env)->GetMethodID( env, point_class, "<init>", "(DDD)V" );
-    if ( point_constructorID == NULL ) {
-	fprintf( stderr, "Failed to find constructor for Point class\n" );
-	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
-    }
-
-    /* build result to return */
-    for ( BU_LIST_FOR( ray_res, ray_result, &aresult->resultHead.l ) ) {
-	struct xray *theRay = &ray_res->the_ray;
-
-	if ( BU_LIST_NON_EMPTY( &ray_res->hitHead.l ) ) {
-	    /* build a start Point for this ray */
-	    jray_start_pt = (*env)->NewObject( env, point_class, point_constructorID, theRay->r_pt[X], theRay->r_pt[Y], theRay->r_pt[Z] );
-
-	    /* build a Java RayResult object for this ray */
-	    jrayResult = build_Java_RayResult( env, ray_res, jray_start_pt, jdir, point_class, vect_class );
-	}
-	else {
-	    jrayResult = (jobject)NULL;
-	}
-
-	/* set the element in the result array to this RayResult
-	 * note that the ray "index" indicates where in the array it belongs
-	 */
-	(*env)->CallStaticVoidMethod( env, arrayClass, arraySetID, resultsArray, theRay->index, jrayResult );
-	if ( (*env)->ExceptionOccurred(env) ) {
-	    fprintf( stderr, "Exception thrown while adding result to results array\n" );
-	    (*env)->ExceptionDescribe(env);
-	    return( (jobject)NULL );
-	}
     }
 
     RTS_FREE_RTSERVER_RESULT( aresult );
 
     /* return JAVA result */
-    return( resultsArray );
+    return( array );
 }
 
 /* JAVA shootRay method
@@ -2660,10 +2968,13 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_shootRay( JNIEnv *env, job
     jclass point_class, vect_class;
     jfieldID fid;
     jobject jrayResult;
+    jsize len; /* length of byte array */
+    jbyteArray array;
     struct rtserver_job *ajob;
     struct xray *aray;
     struct rtserver_result *aresult;
     struct ray_result *ray_res;
+    int i;
 
     /* get a ray structure */
     RTS_GET_XRAY( aray );
@@ -2773,6 +3084,7 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_shootRay( JNIEnv *env, job
     /* assign a unique ID to this job */
     ajob->rtjob_id = get_unique_jobid();
     ajob->sessionid = sessionId;
+    ajob->useByteArray = 1;
 
     /* add the requested ray to this job */
     RTS_ADD_RAY_TO_JOB( ajob, aray );
@@ -2788,12 +3100,24 @@ Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_shootRay( JNIEnv *env, job
 
     /* build result to return */
     ray_res = BU_LIST_FIRST( ray_result, &aresult->resultHead.l );
-    jrayResult = build_Java_RayResult( env, ray_res, jstart_pt, jdir, point_class, vect_class );
-
+    /* jrayResult = build_Java_RayResult( env, ray_res, jstart_pt, jdir, point_class, vect_class ); */
+    len = bu_vlb_getBufferLength(ray_res->vlb);
+    array = (*env)->NewByteArray( env, len );
+    if ( (*env)->ExceptionOccurred(env) ) {
+	fprintf( stderr, "Exception thrown while creating byte array\n" );
+	(*env)->ExceptionDescribe(env);
+	return( (jobject)NULL );
+    }
+    (*env)->SetByteArrayRegion(env, array, 0, len, (jbyte *)bu_vlb_getBuffer(ray_res->vlb) );
+    if ( (*env)->ExceptionOccurred(env) ) {
+	fprintf( stderr, "Exception thrown while setting byte array contents\n" );
+	(*env)->ExceptionDescribe(env);
+	return( (jobject)NULL );
+    }
     RTS_FREE_RTSERVER_RESULT( aresult );
 
     /* return JAVA result */
-    return( jrayResult );
+    return( array );
 }
 
 JNIEXPORT void JNICALL

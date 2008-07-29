@@ -21,13 +21,8 @@
 /** @{ */
 /** @file db_tree.c
  *
- * Functions -
- *	db_walk_tree		Parallel tree walker
- *	db_path_to_mat		Given a path, return a matrix.
- *	db_region_mat		Given a name, return a matrix
- *
- *  Author -
- *	Michael John Muuss
+ * Includes parallel tree walker routine.  Also includes routines to
+ * return a matrix givne a name or path.
  *
  */
 
@@ -44,10 +39,6 @@
 #include "nmg.h"
 #include "raytrace.h"
 
-#include "./debug.h"
-
-
-BU_EXTERN(void db_ck_tree, (const union tree *tp));
 
 /**
  *			D B _ D U P _ D B _ T R E E _ S T A T E

@@ -31,7 +31,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "./comb_bool.h"
-#include "./ged.h"
+#include "./mged.h"
 
 
 /*

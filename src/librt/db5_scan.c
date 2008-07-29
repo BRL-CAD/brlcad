@@ -21,7 +21,7 @@
 /** @{ */
 /** @file db5_scan.c
  *
- *  Scan a v5 database, sending each object off to a handler.
+ * Scan a v5 database, sending each object off to a handler.
  *
  */
 
@@ -36,8 +36,6 @@
 #include "bn.h"
 #include "db5.h"
 #include "raytrace.h"
-
-#include "./debug.h"
 
 
 /**

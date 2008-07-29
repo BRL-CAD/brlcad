@@ -21,7 +21,7 @@
 /** @{ */
 /** @file table.c
  *
- *  Tables for the BRL-CAD Package ray-tracing library "librt".
+ * Tables for the BRL-CAD Package ray-tracing library "librt".
  *
  */
 /** @} */
@@ -41,7 +41,6 @@
 #include "nmg.h"
 #include "raytrace.h"
 #include "rtgeom.h"
-#include "./debug.h"
 
 
 const struct bu_structparse rt_nul_parse[] = {
@@ -118,119 +117,122 @@ const struct bu_structparse rt_nul_parse[] = {
 			struct resource *resp)); \
 	extern const struct bu_structparse rt_##name##_parse[];
 
-/* Note:  no semi-colons at the end of these, please */
-RT_DECLARE_INTERFACE(nul)
+
+RT_DECLARE_INTERFACE(nul);
 
 #define rt_tor_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(tor)
+RT_DECLARE_INTERFACE(tor);
 
 #define rt_tgc_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(tgc)
+RT_DECLARE_INTERFACE(tgc);
 
 #define rt_ell_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(ell)
+RT_DECLARE_INTERFACE(ell);
 
 #define rt_arb_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(arb)
+RT_DECLARE_INTERFACE(arb);
 
 #define rt_ars_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(ars)
+RT_DECLARE_INTERFACE(ars);
 
-    RT_DECLARE_INTERFACE(hlf)
+RT_DECLARE_INTERFACE(hlf);
 
 #define rt_rec_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(rec)
+RT_DECLARE_INTERFACE(rec);
 
 #define rt_pg_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(pg)
+RT_DECLARE_INTERFACE(pg);
 
 #define rt_nurb_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(nurb)
+RT_DECLARE_INTERFACE(nurb);
 
 #define rt_sph_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(sph)
+RT_DECLARE_INTERFACE(sph);
 
 #define rt_ebm_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(ebm)
+RT_DECLARE_INTERFACE(ebm);
 
 #define rt_vol_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(vol)
+RT_DECLARE_INTERFACE(vol);
 
 #define rt_arbn_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(arbn)
+RT_DECLARE_INTERFACE(arbn);
 
 #define rt_pipe_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(pipe)
+RT_DECLARE_INTERFACE(pipe);
 
 #define rt_part_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(part)
+RT_DECLARE_INTERFACE(part);
 
 #define rt_nmg_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(nmg)
+RT_DECLARE_INTERFACE(nmg);
 
 #define rt_rpc_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(rpc)
+RT_DECLARE_INTERFACE(rpc);
 
 #define rt_rhc_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(rhc)
+RT_DECLARE_INTERFACE(rhc);
 
 #define rt_epa_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(epa)
+RT_DECLARE_INTERFACE(epa);
 
 #define rt_ehy_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(ehy)
+RT_DECLARE_INTERFACE(ehy);
 
 #define rt_eto_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(eto)
+RT_DECLARE_INTERFACE(eto);
 
 #define rt_grp_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(grp)
+RT_DECLARE_INTERFACE(grp);
 
 #define rt_hf_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(hf)
+RT_DECLARE_INTERFACE(hf);
 
 #define rt_dsp_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(dsp)
+RT_DECLARE_INTERFACE(dsp);
 
 #define rt_sketch_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(sketch)
+RT_DECLARE_INTERFACE(sketch);
 
-    RT_DECLARE_INTERFACE(extrude)
+RT_DECLARE_INTERFACE(extrude);
 
 #define rt_submodel_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(submodel)
+RT_DECLARE_INTERFACE(submodel);
 
 #define rt_cline_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(cline)
+RT_DECLARE_INTERFACE(cline);
 
-    RT_DECLARE_INTERFACE(bot)
+RT_DECLARE_INTERFACE(bot);
 
 #define rt_superell_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(superell)
+RT_DECLARE_INTERFACE(superell);
 
 #define rt_metaball_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(metaball)
+RT_DECLARE_INTERFACE(metaball);
+
+#define rt_hyp_xform rt_generic_xform
+    RT_DECLARE_INTERFACE(hyp)
 
 #if OBJ_BREP
 #define rt_brep_xform rt_generic_xform
-    RT_DECLARE_INTERFACE(brep)
+RT_DECLARE_INTERFACE(brep);
 #endif
 
+
 /* from db5_comb.c */
-    int rt_comb_export5(
-	struct bu_external		*ep,
-	const struct rt_db_internal	*ip,
-	double				local2mm,
-	const struct db_i		*dbip,
-	struct resource			*resp,
-	const int			minor_type);
-int rt_comb_import5(
-    struct rt_db_internal	*ip,
-    const struct bu_external *ep,
-    const mat_t		mat,
-    const struct db_i	*dbip,
-    struct resource		*resp,
-    const int		minor_type);
+BU_EXTERN(int rt_comb_export5, (struct bu_external *ep,
+				const struct rt_db_internal *ip,
+				double			local2mm,
+				const struct db_i	*dbip,
+				struct resource		*resp,
+				const int		minor_type));
+
+BU_EXTERN(int rt_comb_import5, (struct rt_db_internal *ip,
+				const struct bu_external *ep,
+				const mat_t		mat,
+				const struct db_i	*dbip,
+				struct resource		*resp,
+				const int		minor_type));
 
 /* from db5_bin.c */
 BU_EXTERN(int rt_binexpm_import5, (struct rt_db_internal * ip,
@@ -980,6 +982,20 @@ const struct rt_functab rt_functab[] = {
     },
 #endif
 
+    {RT_FUNCTAB_MAGIC, "ID_HYP", "hyperboloid",
+     1,		/* 38 but "should" be 34 Hyperboloid  */
+     rt_hyp_prep,	rt_hyp_shot,	rt_hyp_print,	rt_hyp_norm,
+     rt_nul_piece_shot,	rt_nul_piece_hitsegs,
+     rt_hyp_uv,		rt_hyp_curve,	rt_hyp_class,	rt_hyp_free,
+     rt_hyp_plot,	rt_nul_vshot,	rt_hyp_tess,	rt_nul_tnurb,
+     rt_hyp_import5,	rt_hyp_export5,
+     rt_nul_import,	rt_nul_export,	rt_hyp_ifree,
+     rt_hyp_describe,	rt_nul_xform,	rt_nul_parse,
+     sizeof(struct rt_hyp_internal),		RT_HYP_INTERNAL_MAGIC,
+     rt_parsetab_tclget,	rt_parsetab_tcladjust,	rt_parsetab_tclform,
+     NULL,
+    },
+
     {0L, ">ID_MAXIMUM", ">id_max",
      0,		/* this entry for sanity only */
      rt_nul_prep,	rt_nul_shot,	rt_nul_print,	rt_nul_norm,
@@ -994,7 +1010,7 @@ const struct rt_functab rt_functab[] = {
      rt_nul_make,
     }
 };
-const int rt_nfunctab = sizeof(rt_functab)/sizeof(struct rt_functab);
+
 
 /*
  *  Hooks for unimplemented routines
@@ -1008,121 +1024,121 @@ const int rt_nfunctab = sizeof(rt_functab)/sizeof(struct rt_functab);
 
 int IDEF(rt_nul_prep, (struct soltab *stp,
 		       struct rt_db_internal *ip,
-		       struct rt_i *rtip))
-    int IDEF(rt_nul_shot, (struct soltab *stp,
-			   struct xray *rp,
-			   struct application *ap,
-			   struct seg *seghead))
-    int IDEF(rt_nul_piece_shot, (struct rt_piecestate *psp,
-				 struct rt_piecelist *plp,
-				 double dist_corr,
-				 struct xray *rp,
-				 struct application *ap,
-				 struct seg *seghead))
-    void DEF(rt_nul_piece_hitsegs, (struct rt_piecestate *psp,
-				    struct seg *seghead,
-				    struct application *ap))
-    void DEF(rt_nul_print, (const struct soltab *stp))
-    void DEF(rt_nul_norm, (struct hit *hitp,
-			   struct soltab *stp,
-			   struct xray *rp))
-    void DEF(rt_nul_uv, (struct application *ap,
-			 struct soltab *stp,
-			 struct hit *hitp,
-			 struct uvcoord *uvp))
-    void DEF(rt_nul_curve, (struct curvature *cvp,
-			    struct hit *hitp,
-			    struct soltab *stp))
-    int IDEF(rt_nul_class, ())
-    void DEF(rt_nul_free, (struct soltab *stp))
-    int NDEF(rt_nul_plot, (struct bu_list *vhead,
-			   struct rt_db_internal *ip,
-			   const struct rt_tess_tol *ttol,
-			   const struct bn_tol *tol))
-    void DEF(rt_nul_vshot, (struct soltab *stp[],
-			    struct xray *rp[],
-			    struct seg segp[], int n,
-			    struct application *ap))
-    int NDEF(rt_nul_tess, (struct nmgregion **r,
-			   struct model *m,
-			   struct rt_db_internal *ip,
-			   const struct rt_tess_tol *ttol,
-			   const struct bn_tol *tol))
-    int NDEF(rt_nul_tnurb, (struct nmgregion **r,
-			    struct model *m,
-			    struct rt_db_internal *ip,
-			    const struct bn_tol *tol))
-    int NDEF(rt_nul_import5, (struct rt_db_internal *ip,
-			      const struct bu_external *ep,
-			      const mat_t mat, const struct db_i *dbip,
-			      struct resource *resp,
-			      const int minot_type))
-    int NDEF(rt_nul_export5, (struct bu_external *ep,
-			      const struct rt_db_internal *ip,
-			      double local2mm, const struct db_i *dbip,
-			      struct resource *resp,
-			      const int minor_type ))
-    int NDEF(rt_nul_import, (struct rt_db_internal *ip,
-			     const struct bu_external *ep,
-			     const mat_t mat, const struct db_i *dbip,
-			     struct resource *resp ))
-    int NDEF(rt_nul_export, (struct bu_external *ep,
-			     const struct rt_db_internal *ip,
-			     double local2mm, const struct db_i *dbip,
-			     struct resource *resp ))
-    void DEF(rt_nul_ifree, (struct rt_db_internal *ip, struct resource *resp))
-    int NDEF(rt_nul_describe, (struct bu_vls *str,
-			       const struct rt_db_internal *ip,
-			       int verbose, double mm2local, struct resource *resp,
-			       struct db_i *db_i))
-    int NDEF(rt_nul_xform, (struct rt_db_internal *op,
-			    const mat_t mat, struct rt_db_internal *ip,
-			    int free, struct db_i *dbip, struct resource *resp))
+		       struct rt_i *rtip));
+int IDEF(rt_nul_shot, (struct soltab *stp,
+		       struct xray *rp,
+		       struct application *ap,
+		       struct seg *seghead));
+int IDEF(rt_nul_piece_shot, (struct rt_piecestate *psp,
+			     struct rt_piecelist *plp,
+			     double dist_corr,
+			     struct xray *rp,
+			     struct application *ap,
+			     struct seg *seghead));
+void DEF(rt_nul_piece_hitsegs, (struct rt_piecestate *psp,
+				struct seg *seghead,
+				struct application *ap));
+void DEF(rt_nul_print, (const struct soltab *stp));
+void DEF(rt_nul_norm, (struct hit *hitp,
+		       struct soltab *stp,
+		       struct xray *rp));
+void DEF(rt_nul_uv, (struct application *ap,
+		     struct soltab *stp,
+		     struct hit *hitp,
+		     struct uvcoord *uvp));
+void DEF(rt_nul_curve, (struct curvature *cvp,
+			struct hit *hitp,
+			struct soltab *stp));
+int IDEF(rt_nul_class, ());
+void DEF(rt_nul_free, (struct soltab *stp));
+int NDEF(rt_nul_plot, (struct bu_list *vhead,
+		       struct rt_db_internal *ip,
+		       const struct rt_tess_tol *ttol,
+		       const struct bn_tol *tol));
+void DEF(rt_nul_vshot, (struct soltab *stp[],
+			struct xray *rp[],
+			struct seg segp[], int n,
+			struct application *ap));
+int NDEF(rt_nul_tess, (struct nmgregion **r,
+		       struct model *m,
+		       struct rt_db_internal *ip,
+		       const struct rt_tess_tol *ttol,
+		       const struct bn_tol *tol));
+int NDEF(rt_nul_tnurb, (struct nmgregion **r,
+			struct model *m,
+			struct rt_db_internal *ip,
+			const struct bn_tol *tol));
+int NDEF(rt_nul_import5, (struct rt_db_internal *ip,
+			  const struct bu_external *ep,
+			  const mat_t mat, const struct db_i *dbip,
+			  struct resource *resp,
+			  const int minot_type));
+int NDEF(rt_nul_export5, (struct bu_external *ep,
+			  const struct rt_db_internal *ip,
+			  double local2mm, const struct db_i *dbip,
+			  struct resource *resp,
+			  const int minor_type ));
+int NDEF(rt_nul_import, (struct rt_db_internal *ip,
+			 const struct bu_external *ep,
+			 const mat_t mat, const struct db_i *dbip,
+			 struct resource *resp ));
+int NDEF(rt_nul_export, (struct bu_external *ep,
+			 const struct rt_db_internal *ip,
+			 double local2mm, const struct db_i *dbip,
+			 struct resource *resp ));
+void DEF(rt_nul_ifree, (struct rt_db_internal *ip, struct resource *resp));
+int NDEF(rt_nul_describe, (struct bu_vls *str,
+			   const struct rt_db_internal *ip,
+			   int verbose, double mm2local, struct resource *resp,
+			   struct db_i *db_i));
+int NDEF(rt_nul_xform, (struct rt_db_internal *op,
+			const mat_t mat, struct rt_db_internal *ip,
+			int free, struct db_i *dbip, struct resource *resp));
 
 /* Map for database solidrec objects to internal objects */
-    static char idmap[] = {
-	ID_NULL,	/* undefined, 0 */
-	ID_NULL,	/* RPP	1 axis-aligned rectangular parallelopiped */
-	ID_NULL,	/* BOX	2 arbitrary rectangular parallelopiped */
-	ID_NULL,	/* RAW	3 right-angle wedge */
-	ID_NULL,	/* ARB4	4 tetrahedron */
-	ID_NULL,	/* ARB5	5 pyramid */
-	ID_NULL,	/* ARB6	6 extruded triangle */
-	ID_NULL,	/* ARB7	7 weird 7-vertex shape */
-	ID_NULL,	/* ARB8	8 hexahedron */
-	ID_NULL,	/* ELL	9 ellipsoid */
-	ID_NULL,	/* ELL1	10 another ellipsoid ? */
-	ID_NULL,	/* SPH	11 sphere */
-	ID_NULL,	/* RCC	12 right circular cylinder */
-	ID_NULL,	/* REC	13 right elliptic cylinder */
-	ID_NULL,	/* TRC	14 truncated regular cone */
-	ID_NULL,	/* TEC	15 truncated elliptic cone */
-	ID_TOR,		/* TOR	16 toroid */
-	ID_NULL,	/* TGC	17 truncated general cone */
-	ID_TGC,		/* GENTGC 18 supergeneralized TGC; internal form */
-	ID_ELL,		/* GENELL 19: V, A, B, C */
-	ID_ARB8,	/* GENARB8 20:  V, and 7 other vectors */
-	ID_NULL,	/* HACK: ARS 21: arbitrary triangular-surfaced polyhedron */
-	ID_NULL,	/* HACK: ARSCONT 22: extension record type for ARS solid */
-	ID_NULL,	/* ELLG 23:  gift-only */
-	ID_HALF,	/* HALFSPACE 24:  halfspace */
-	ID_NULL,	/* HACK: SPLINE 25 */
-	ID_RPC,		/* HACK: RPC 26: right parabolic cylinder */
-	ID_RHC,		/* HACK: RHC 27: right hyperbolic cylinder */
-	ID_EPA,		/* HACK: EPA 28: elliptical paraboloid */
-	ID_EHY,		/* HACK: EHY 29: elliptical hyperboloid */
-	ID_ETO,		/* HACK: ETO 29: elliptical torus */
-	ID_GRIP,	/* HACK: GRP 30: grip pseudo solid */
-	ID_NULL		/* n+1 */
-    };
+static char idmap[] = {
+    ID_NULL,	/* undefined, 0 */
+    ID_NULL,	/* RPP	1 axis-aligned rectangular parallelopiped */
+    ID_NULL,	/* BOX	2 arbitrary rectangular parallelopiped */
+    ID_NULL,	/* RAW	3 right-angle wedge */
+    ID_NULL,	/* ARB4	4 tetrahedron */
+    ID_NULL,	/* ARB5	5 pyramid */
+    ID_NULL,	/* ARB6	6 extruded triangle */
+    ID_NULL,	/* ARB7	7 weird 7-vertex shape */
+    ID_NULL,	/* ARB8	8 hexahedron */
+    ID_NULL,	/* ELL	9 ellipsoid */
+    ID_NULL,	/* ELL1	10 another ellipsoid ? */
+    ID_NULL,	/* SPH	11 sphere */
+    ID_NULL,	/* RCC	12 right circular cylinder */
+    ID_NULL,	/* REC	13 right elliptic cylinder */
+    ID_NULL,	/* TRC	14 truncated regular cone */
+    ID_NULL,	/* TEC	15 truncated elliptic cone */
+    ID_TOR,	/* TOR	16 toroid */
+    ID_NULL,	/* TGC	17 truncated general cone */
+    ID_TGC,	/* GENTGC 18 supergeneralized TGC; internal form */
+    ID_ELL,	/* GENELL 19: V, A, B, C */
+    ID_ARB8,	/* GENARB8 20:  V, and 7 other vectors */
+    ID_NULL,	/* HACK: ARS 21: arbitrary triangular-surfaced polyhedron */
+    ID_NULL,	/* HACK: ARSCONT 22: extension record type for ARS solid */
+    ID_NULL,	/* ELLG 23:  gift-only */
+    ID_HALF,	/* HALFSPACE 24:  halfspace */
+    ID_NULL,	/* HACK: SPLINE 25 */
+    ID_RPC,	/* HACK: RPC 26: right parabolic cylinder */
+    ID_RHC,	/* HACK: RHC 27: right hyperbolic cylinder */
+    ID_EPA,	/* HACK: EPA 28: elliptical paraboloid */
+    ID_EHY,	/* HACK: EHY 29: elliptical hyperboloid */
+    ID_ETO,	/* HACK: ETO 29: elliptical torus */
+    ID_GRIP,	/* HACK: GRP 30: grip pseudo solid */
+    ID_NULL	/* n+1 */
+};
 
-/*
- *			R T _ I D _ S O L I D
+/**
+ * R T _ I D _ S O L I D
  *
- *  Given a database record, determine the proper rt_functab subscript.
- *  Used by MGED as well as internally to librt.
+ * Given a database record, determine the proper rt_functab subscript.
+ * Used by MGED as well as internally to librt.
  *
- *  Returns ID_xxx if successful, or ID_NULL upon failure.
+ * Returns ID_xxx if successful, or ID_NULL upon failure.
  */
 int
 rt_id_solid(struct bu_external *ep)
@@ -1204,11 +1220,11 @@ rt_id_solid(struct bu_external *ep)
     return(id);
 }
 
-/*
- *		R T _ G E T _ F U N C T A B _ B Y _ L A B E L
+/**
+ * R T _ G E T _ F U N C T A B _ B Y _ L A B E L
  *
- *  Given the Tcl 'label' for a given solid type,
- *  find the appropriate entry in rt_functab[].
+ * Given the Tcl 'label' for a given solid type, find the appropriate
+ * entry in rt_functab[].
  */
 const struct rt_functab *
 rt_get_functab_by_label(const char *label)
@@ -1222,17 +1238,17 @@ rt_get_functab_by_label(const char *label)
     return NULL;
 }
 
-/*
- *			R T _ G E N E R I C _ X F O R M
+/**
+ * R T _ G E N E R I C _ X F O R M
  *
- *  Apply a 4x4 transformation matrix to the internal form of a solid.
+ * Apply a 4x4 transformation matrix to the internal form of a solid.
  *
- *  If "free" flag is non-zero, storage for the original solid is released.
- *  If "os" is same as "is", storage for the original solid is
- *  overwritten with the new, transformed solid.
+ * If "free" flag is non-zero, storage for the original solid is
+ * released.  If "os" is same as "is", storage for the original solid
+ * is overwritten with the new, transformed solid.
  *
  *
- *  Returns -
+ * Returns -
  *	-1	FAIL
  *	 0	OK
  */

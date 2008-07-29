@@ -45,9 +45,6 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-/* local headers */
-#include "../librt/debug.h"
-
 
 /* #define MEMORY_LEAK_CHECKING 1 */
 

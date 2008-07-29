@@ -20,7 +20,8 @@
  */
 /** @file nmg-sgp.c
  *
- *  Program to convert an NMG BRL-CAD model (in a .g file) to a SGP facetted model
+ * Program to convert an NMG BRL-CAD model (in a .g file) to a SGP
+ * facetted model
  *
  */
 
@@ -37,7 +38,7 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "../librt/debug.h"
+
 
 static int debug=0;
 static int verbose=0;

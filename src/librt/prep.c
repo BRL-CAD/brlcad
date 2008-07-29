@@ -21,8 +21,8 @@
 /** @{ */
 /** @file prep.c
  *
- *  Manage one-time preparations to be done before actual
- *  ray-tracing can commence.
+ * Manage one-time preparations to be done before actual ray-tracing
+ * can commence.
  *
  */
 /** @} */
@@ -41,14 +41,11 @@
 #include "raytrace.h"
 #include "plot3.h"
 
-#include "./debug.h"
-
 
 BU_EXTERN(void		rt_ck, (struct rt_i	*rtip));
 
 HIDDEN void	rt_solid_bitfinder(register union tree *treep, struct region *regp, struct resource *resp);
 
-extern struct resource	rt_uniresource;		/* from shoot.c */
 
 /* XXX Need rt_init_rtg(), rt_clean_rtg() */
 

@@ -33,9 +33,9 @@
 #include "bio.h"
 #include "bu.h"
 #include "vmath.h"
-#include "raytrace.h"
+#include "ged.h"
 #include "fb.h"
-#include "./ged.h"
+#include "./mged.h"
 #include "./mged_dm.h"
 
 extern void mged_center(fastf_t *center); /* from chgview.c */

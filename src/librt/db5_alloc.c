@@ -21,7 +21,7 @@
 /** @{ */
 /** @file db5_alloc.c
  *
- *  Handle disk space allocation in the BRL-CAD v5 database.
+ * Handle disk space allocation in the BRL-CAD v5 database.
  *
  */
 
@@ -36,7 +36,6 @@
 #include "db5.h"
 #include "raytrace.h"
 
-#include "./debug.h"
 
 /**
  *			D B 5 _ W R I T E _ F R E E

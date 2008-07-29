@@ -49,7 +49,7 @@
 #include "dg.h"
 #include "mater.h"
 #include "./sedit.h"
-#include "./ged.h"
+#include "./mged.h"
 #include "./mged_solid.h"
 #include "./mged_dm.h"
 #include "./qray.h"
@@ -59,7 +59,7 @@
 extern int mged_svbase(void);
 extern void set_perspective(); /* from set.c */
 
-/* from ged.c -- used to open databases quietly */
+/* used to open databases quietly */
 extern int interactive;
 
 static void setup_rt(register char **vp, int printcmd);
@@ -786,7 +786,7 @@ cmd_rt(ClientData	clientData,
     }
 
     if (doRtcheck)
-	return dgo_rtcheck_cmd(dgop, view_state->vs_vop, interp, argc, argv);   
+	return dgo_rtcheck_cmd(dgop, view_state->vs_vop, interp, argc, argv);
 
     return dgo_rt_cmd(dgop, view_state->vs_vop, interp, argc, argv);
 }
@@ -1031,7 +1031,9 @@ f_saveview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	(void)fprintf(fp, "-p%g ", view_state->vs_vop->vo_perspective);
     for ( i=2; i < argc; i++ )
 	(void)fprintf(fp, "%s ", argv[i]);
-    (void)fprintf(fp, "\\\n -o %s\\\n $*\\\n", outpix);
+
+    if (strncmp(rtcmd,"nirt",4) != 0)
+	(void)fprintf(fp, "\\\n -o %s\\\n $*\\\n", outpix);
 
     if (inputg[0] == '\0') {
 	snprintf(inputg, 255, "%s", dbip->dbi_filename);
@@ -2523,7 +2525,7 @@ cm_end(int argc, char **argv)
 
     /* If new treewalk is needed, get new objects into view. */
     if ( tree_walk_needed )  {
-	char *av[2];
+	const char *av[2];
 
 	av[0] = "Z";
 	av[1] = NULL;

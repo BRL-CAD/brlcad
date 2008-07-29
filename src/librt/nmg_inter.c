@@ -21,32 +21,33 @@
 /** @{ */
 /** @file nmg_inter.c
  *
- *  Routines to intersect two NMG regions.  When complete, all loops
- *  in each region have a single classification w.r.t. the other region,
- *  i.e. all geometric intersections of the two regions have explicit
- *  topological representations.
+ * Routines to intersect two NMG regions.  When complete, all loops in
+ * each region have a single classification w.r.t. the other region,
+ * i.e. all geometric intersections of the two regions have explicit
+ * topological representations.
  *
- *  The intersector makes sure that all geometric intersections gets
- *  recorded with explicit geometry and topology that is shared between both
- *  regions. Primary examples of this are (a) the line of intersection
- *  between two planes (faces), and (b) the point of intersection where two
- *  edges cross.
+ * The intersector makes sure that all geometric intersections gets
+ * recorded with explicit geometry and topology that is shared between
+ * both regions. Primary examples of this are (a) the line of
+ * intersection between two planes (faces), and (b) the point of
+ * intersection where two edges cross.
  *
- *  Entities of one region that are INSIDE, but not ON the other region
- *  do not become shared during the intersection process.
+ * Entities of one region that are INSIDE, but not ON the other region
+ * do not become shared during the intersection process.
  *
- *  All point -vs- point comparisons should be done in 3D, for consistency.
+ * All point -vs- point comparisons should be done in 3D, for
+ * consistency.
  *
- *  Method -
+ * Method -
  *
- *	Find all the points of intersection between the two regions, and
- *	insert vertices at those points, breaking edges on those new
- *	vertices as appropriate.
+ * Find all the points of intersection between the two regions, and
+ * insert vertices at those points, breaking edges on those new
+ * vertices as appropriate.
  *
- *	Call the face cutter to construct and delete edges and loops
- *	along the line of intersection, as appropriate.
+ * Call the face cutter to construct and delete edges and loops along
+ * the line of intersection, as appropriate.
  *
- *	There are no "user interface" routines in here.
+ * There are no "user interface" routines in here.
  *
  */
 /** @} */
@@ -62,8 +63,8 @@
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "./debug.h"
 #include "plot3.h"
+
 
 #define ISECT_NONE	0
 #define ISECT_SHARED_V	1

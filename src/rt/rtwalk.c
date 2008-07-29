@@ -19,9 +19,9 @@
  */
 /** @file rtwalk.c
  *
- *  Demonstration Ray Tracing main program, using RT library.
- *  Walk a path *without running into any geometry*,
- *  given the start and goal points.
+ * Demonstration Ray Tracing main program, using RT library.  Walk a
+ * path *without running into any geometry*, given the start and goal
+ * points.
  *
  */
 
@@ -36,7 +36,6 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtprivate.h"
-#include "../librt/debug.h"
 #include "plot3.h"
 
 

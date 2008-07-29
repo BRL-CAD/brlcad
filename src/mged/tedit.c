@@ -40,7 +40,7 @@
 #include "nurb.h"
 #include "rtgeom.h"
 
-#include "./ged.h"
+#include "./mged.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
 
@@ -61,7 +61,7 @@
 
 extern struct rt_db_internal	es_int;
 extern struct rt_db_internal	es_int_orig;
-extern struct bn_tol		mged_tol;	/* from ged.c */
+extern struct bn_tol		mged_tol;
 
 static char	tmpfil[MAXPATHLEN] = {0};
 

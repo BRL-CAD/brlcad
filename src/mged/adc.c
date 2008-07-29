@@ -31,8 +31,8 @@
 #include "bio.h"
 #include "bu.h"
 #include "vmath.h"
-#include "raytrace.h"
-#include "./ged.h"
+#include "ged.h"
+#include "./mged.h"
 #include "./mged_dm.h"
 
 #ifndef M_SQRT2

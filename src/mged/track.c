@@ -41,7 +41,7 @@
 #include "wdb.h"
 #include "db.h"
 
-#include "./ged.h"
+#include "./mged.h"
 #include "./mged_dm.h"
 #include "./cmd.h"
 
@@ -533,7 +533,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     Tcl_AppendResult(interp, "The track regions are in group ", grpname,
 		     "\n", (char *)NULL);
     {
-	char	*arglist[3];
+	const char *arglist[3];
 	arglist[0] = "e";
 	arglist[1] = grpname;
 	arglist[2] = NULL;

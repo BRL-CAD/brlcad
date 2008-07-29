@@ -1,6 +1,5 @@
 set(LIBRT_SOURCES
     bezier_2d_isect.c
-    bigE.c
     binary_obj.c
     bomb.c
     bool.c
@@ -26,7 +25,6 @@ set(LIBRT_SOURCES
     db_scan.c
     db_tree.c
     db_walk.c
-    dg_obj.c
     dir.c
     dspline.c
     fortray.c
@@ -46,6 +44,7 @@ set(LIBRT_SOURCES
     g_grip.c
     g_half.c
     g_hf.c
+    g_hyp.c
     g_metaball.c
     g_nmg.c
     g_nurb.c
@@ -62,16 +61,14 @@ set(LIBRT_SOURCES
     g_tgc.c
     g_torus.c
     g_vol.c
-    global.c
+    globals.c
     htbl.c
-    importFg4Section.c
     many.c
     mater.c
     memalloc.c
     mirror.c
     mkbundle.c
     opennurbs_ext.cpp
-    nirt.c
     nmg_bool.c
     nmg_ck.c
     nmg_class.c
@@ -121,7 +118,6 @@ set(LIBRT_SOURCES
     oslo_map.c
     pr.c
     prep.c
-    qray.c
     regionfix.c
     roots.c
     shoot.c
@@ -129,16 +125,11 @@ set(LIBRT_SOURCES
     storage.c
     table.c
     tcl.c
-    track.c
     transform.c
     tree.c
-    vdraw.c
     vers.c
-    view_obj.c
     vlist.c
     wdb.c
-    wdb_comb_std.c
-    wdb_obj.c
 )
 
 if(MSVC)
@@ -152,6 +143,7 @@ include_directories(
     ../../include
     ../other/libz
     ../other/openNURBS
+    ../other/libregex
     ../other/tcl/generic
     ../other/tnt
 )
@@ -159,6 +151,7 @@ include_directories(
 add_definitions(
     -DHAVE_CONFIG_H
     -DBRLCADBUILD
+    -DON_DLL_IMPORTS
 )
 
 add_library(librt ${LIBRT_SOURCES})

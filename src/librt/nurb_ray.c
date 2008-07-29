@@ -21,8 +21,7 @@
 /** @{ */
 /** @file nurb_ray.c
  *
- *  	Functions which support the ray intersection
- *	for surfaces.
+ * Functions which support the ray intersection for surfaces.
  *
  */
 /** @} */
@@ -36,7 +35,6 @@
 #include "nmg.h"
 #include "raytrace.h"
 #include "nurb.h"
-#include "../librt/debug.h"
 
 
 void rt_nurb_pbound(struct face_g_snurb *srf, fastf_t *vmin, fastf_t *vmax);

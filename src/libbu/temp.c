@@ -180,6 +180,8 @@ mkstemp(char *file_template)
  * (filepath) buffer if it is a non-NULL pointer and of a sufficient
  * (len) length to contain the filename.
  *
+ * This routine is NOT thread-safe.
+ *
  * Typical Use:
  @code
  *	FILE *fp;

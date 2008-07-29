@@ -21,9 +21,9 @@
 /** @{ */
 /** @file cut.c
  *
- *  Cut space into lots of small boxes (RPPs actually).
+ * Cut space into lots of small boxes (RPPs actually).
  *
- *  Call tree for default path through the code:
+ * Call tree for default path through the code:
  *	rt_cut_it()
  *		rt_cut_extend() for all solids in model
  *		rt_ct_optim()
@@ -31,9 +31,6 @@
  *			rt_ct_box()
  *				rt_ct_populate_box()
  *					rt_ck_overlap()
- *
- *  Author -
- *	Michael John Muuss
  *
  */
 /** @} */
@@ -50,7 +47,6 @@
 #include "raytrace.h"
 #include "nmg.h"
 #include "plot3.h"
-#include "./debug.h"
 
 
 HIDDEN int		rt_ck_overlap BU_ARGS((const vect_t min,

@@ -855,7 +855,7 @@ against MGED database objects."\
 	hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     }
 
-#separate weak prims from dbbinary
+# separate weak primitives from non-geometric 'binary' objects
 .$id.menubar.create add separator
 
 # binary object

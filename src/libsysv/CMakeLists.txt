@@ -1,6 +1,4 @@
 set(LIBSYSV_SOURCES
-    redata.c
-    regex.c
     strsep.c
     tcl.c
 )

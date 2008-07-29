@@ -21,9 +21,8 @@
 /** @{ */
 /** @file g_pg.c
  *
- *	Intersect a ray with a Polygonal Object
- *	that has no explicit topology.
- *	It is assumed that the solid has no holes.
+ * Intersect a ray with a Polygonal Object that has no explicit
+ * topology.  It is assumed that the solid has no holes.
  *
  */
 /** @} */
@@ -40,7 +39,6 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 
-#include "./debug.h"
 
 #define TRI_NULL	((struct tri_specific *)0)
 
@@ -264,6 +262,7 @@ rt_pg_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 	hp->hit_magic = RT_HIT_MAGIC;
 	hp->hit_dist = k;
 	VMOVE( hp->hit_normal, trip->tri_N );
+	hp->hit_surfno = trip->tri_surfno;
 	if ( ++nhits >= MAXHITS )  {
 	    bu_log("rt_pg_shot(%s): too many hits (%d)\n", stp->st_name, nhits);
 	    break;

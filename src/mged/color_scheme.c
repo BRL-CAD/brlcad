@@ -29,7 +29,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "./ged.h"
+#include "./mged.h"
 #include "./mged_dm.h"
 
 struct _color_scheme default_color_scheme = {

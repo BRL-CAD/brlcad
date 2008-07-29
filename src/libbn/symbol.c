@@ -88,8 +88,8 @@ tp_3symbol(FILE *fp, char *string, fastf_t *origin, fastf_t *rot, double scale)
     /* Draw each character in the input string */
     offset = 0;
     for ( cp = (unsigned char *)string; *cp; cp++, offset += scale )  {
-	register TINY	*p;	/* pointer to stroke table */
-	register int	stroke;
+	register int *p;	/* pointer to stroke table */
+	register int stroke;
 
 	VSET( temp, offset, 0, 0 );
 	MAT4X3PNT( loc, mat, temp );

@@ -21,7 +21,7 @@
 /** @{ */
 /** @file g_xxx.c
  *
- *	Intersect a ray with a.
+ * Intersect a ray with an 'xxx' primitive object.
  *
  * Adding a new solid type:
  *	Design disk record
@@ -34,6 +34,7 @@
  *
  *	edit db.h add solidrec s_type define
  *	edit rtgeom.h to add rt_xxx_internal
+ *      edit magic.h to add RT_XXX_INTERNAL_MAGIC
  *	edit table.c:
  *		RT_DECLARE_INTERFACE()
  *		struct rt_functab entry
@@ -50,39 +51,40 @@
  *		also add the interface table and to rt_id_solid() in table.c
  *	go to src/mged and create the edit support
  *
- *  Authors -
- *
  */
 /** @} */
 
 #include "common.h"
 
-/* system headers */
 #include <stdio.h>
 #include <math.h>
 
-/* interface headers */
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
-#include "raytrace.h"
 #include "rtgeom.h"
-
-/* local headers */
-#include "./debug.h"
+#include "raytrace.h"
 
 
-#if 0
-/* parameters for solid, internal representation
- * This goes in rtgeom.h
+/* EXAMPLE_INTERNAL shows how one would store the values that describe
+ * or implement this primitive.  The internal structure should go into
+ * rtgeom.h, the magic number should go into magic.h, and of course
+ * the #if wrapper should go away.
  */
+#if defined(EXAMPLE_INTERNAL) || 1
+
 /* parameters for solid, internal representation */
 struct rt_xxx_internal {
     long	magic;
     vect_t	v;
 };
-#  define RT_XXX_INTERNAL_MAGIC	0xxx
+
+#  define RT_XXX_INTERNAL_MAGIC	0x78787878 /* 'xxxx' */
 #  define RT_XXX_CK_MAGIC(_p)	BU_CKMAG(_p, RT_XXX_INTERNAL_MAGIC, "rt_xxx_internal")
+
+/* should set in raytrace.h to ID_MAX_SOLID and increment the max */
+#  define ID_XXX 0
+
 #endif
 
 /* ray tracing form of solid, including precomputed terms */
@@ -92,19 +94,19 @@ struct xxx_specific {
 
 
 /**
- *  			R T _ X X X _ P R E P
+ * R T _ X X X _ P R E P
  *
- *  Given a pointer to a GED database record, and a transformation matrix,
- *  determine if this is a valid XXX, and if so, precompute various
- *  terms of the formula.
+ * Given a pointer to a GED database record, and a transformation
+ * matrix, determine if this is a valid XXX, and if so, precompute
+ * various terms of the formula.
  *
- *  Returns -
- *  	0	XXX is OK
- *  	!0	Error in description
+ * Returns -
+ *	0	XXX is OK
+ *	!0	Error in description
  *
- *  Implicit return -
- *  	A struct xxx_specific is created, and it's address is stored in
- *  	stp->st_specific for use by xxx_shot().
+ * Implicit return -
+ *	A struct xxx_specific is created, and it's address is stored
+ *	in stp->st_specific for use by xxx_shot().
  */
 int
 rt_xxx_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip )
@@ -119,7 +121,7 @@ rt_xxx_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip )
 }
 
 /**
- *			R T _ X X X _ P R I N T
+ * R T _ X X X _ P R I N T
  */
 void
 rt_xxx_print( const struct soltab *stp )
@@ -129,14 +131,13 @@ rt_xxx_print( const struct soltab *stp )
 }
 
 /**
- *  			R T _ X X X _ S H O T
+ * R T _ X X X _ S H O T
  *
- *  Intersect a ray with a xxx.
- *  If an intersection occurs, a struct seg will be acquired
- *  and filled in.
+ * Intersect a ray with a xxx.  If an intersection occurs, a struct
+ * seg will be acquired and filled in.
  *
- *  Returns -
- *  	0	MISS
+ * Returns -
+ *	0	MISS
  *	>0	HIT
  */
 int
@@ -147,15 +148,36 @@ rt_xxx_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct
     register struct seg *segp;
     const struct bn_tol	*tol = &ap->a_rt_i->rti_tol;
 
+/* the EXAMPLE_NEW_SEGMENT block shows how one might add a new result
+ * if the ray did hit the primitive.  the segment values would need to
+ * be adjusted accordingly to match real values instead of -1.
+ */
+#ifdef EXAMPLE_NEW_SEGMENT
+    /* allocate a segment */
+    RT_GET_SEG(segp, ap->a_resource);
+    segp->seg_stp = stp; /* stash a pointer to the primitive */
+
+    segp->seg_in.hit_dist = -1; /* XXX set to real distance to entry point */
+    segp->seg_out.hit_dist = -1; /* XXX set to real distance to exit point */
+    segp->seg_in.hit_surfno = -1; /* XXX set to a non-negative ID for entry surface */
+    segp->seg_out.hit_surfno = -1;  /* XXX set to a non-negative ID for exit surface */
+
+    /* add segment to list of those encountered for this primitive */
+    BU_LIST_INSERT( &(seghead->l), &(segp->l) );
+
+    return(2); /* num surface intersections == in + out == 2 */
+#endif
+
     return(0);			/* MISS */
 }
 
 #define RT_XXX_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
 
+
 /**
- *			R T _ X X X _ V S H O T
+ * R T _ X X X _ V S H O T
  *
- *  Vectorized version.
+ * Vectorized version.
  */
 void
 rt_xxx_vshot(struct soltab *stp[],	/* An array of solid pointers */
@@ -168,9 +190,9 @@ rt_xxx_vshot(struct soltab *stp[],	/* An array of solid pointers */
 }
 
 /**
- *  			R T _ X X X _ N O R M
+ * R T _ X X X _ N O R M
  *
- *  Given ONE ray distance, return the normal and entry/exit point.
+ * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
 rt_xxx_norm( struct hit *hitp, struct soltab *stp, struct xray *rp )
@@ -182,9 +204,9 @@ rt_xxx_norm( struct hit *hitp, struct soltab *stp, struct xray *rp )
 }
 
 /**
- *			R T _ X X X _ C U R V E
+ * R T _ X X X _ C U R V E
  *
- *  Return the curvature of the xxx.
+ * Return the curvature of the xxx.
  */
 void
 rt_xxx_curve( struct curvature *cvp, struct hit *hitp, struct soltab *stp )
@@ -199,12 +221,12 @@ rt_xxx_curve( struct curvature *cvp, struct hit *hitp, struct soltab *stp )
 }
 
 /**
- *  			R T _ X X X _ U V
+ * R T _ X X X _ U V
  *
- *  For a hit on the surface of an xxx, return the (u, v) coordinates
- *  of the hit point, 0 <= u, v <= 1.
- *  u = azimuth
- *  v = elevation
+ * For a hit on the surface of an xxx, return the (u, v) coordinates
+ * of the hit point, 0 <= u, v <= 1.
+
+ * u = azimuth,  v = elevation
  */
 void
 rt_xxx_uv( struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp )
@@ -214,7 +236,7 @@ rt_xxx_uv( struct application *ap, struct soltab *stp, struct hit *hitp, struct 
 }
 
 /**
- *		R T _ X X X _ F R E E
+ * R T _ X X X _ F R E E
  */
 void
 rt_xxx_free( struct soltab *stp )
@@ -226,7 +248,7 @@ rt_xxx_free( struct soltab *stp )
 }
 
 /**
- *			R T _ X X X _ C L A S S
+ * R T _ X X X _ C L A S S
  */
 int
 rt_xxx_class( const struct soltab *stp, const vect_t min, const vect_t max, const struct bn_tol *tol )
@@ -235,7 +257,7 @@ rt_xxx_class( const struct soltab *stp, const vect_t min, const vect_t max, cons
 }
 
 /**
- *			R T _ X X X _ P L O T
+ * R T _ X X X _ P L O T
  */
 int
 rt_xxx_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol )
@@ -250,9 +272,9 @@ rt_xxx_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 }
 
 /**
- *			R T _ X X X _ T E S S
+ * R T _ X X X _ T E S S
  *
- *  Returns -
+ * Returns -
  *	-1	failure
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
@@ -268,91 +290,15 @@ rt_xxx_tess( struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     return(-1);
 }
 
-/**
- *			R T _ X X X _ I M P O R T
- *
- *  Import an XXX from the database format to the internal format.
- *  Apply modeling transformations as well.
- */
-int
-rt_xxx_import( struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip )
-{
-    struct rt_xxx_internal	*xxx_ip;
-    union record			*rp;
-
-    BU_CK_EXTERNAL( ep );
-    rp = (union record *)ep->ext_buf;
-    /* Check record type */
-    if ( rp->u_id != ID_SOLID )  {
-	bu_log("rt_xxx_import: defective record\n");
-	return(-1);
-    }
-
-    RT_CK_DB_INTERNAL( ip );
-    ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    ip->idb_type = ID_XXX;
-    ip->idb_meth = &rt_functab[ID_XXX];
-    ip->idb_ptr = bu_malloc( sizeof(struct rt_xxx_internal), "rt_xxx_internal");
-    xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
-    xxx_ip->magic = RT_XXX_INTERNAL_MAGIC;
-
-    if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT( xxx_ip->xxx_V, mat, &rp->s.s_values[0] );
-
-    return(0);			/* OK */
-}
 
 /**
- *			R T _ X X X _ E X P O R T
+ * R T _ X X X _ I M P O R T 5
  *
- *  The name is added by the caller, in the usual place.
- */
-int
-rt_xxx_export( struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip )
-{
-    struct rt_xxx_internal	*xxx_ip;
-    union record		*rec;
-
-    RT_CK_DB_INTERNAL(ip);
-    if ( ip->idb_type != ID_XXX )  return(-1);
-    xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
-    RT_XXX_CK_MAGIC(xxx_ip);
-
-    BU_CK_EXTERNAL(ep);
-    ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "xxx external");
-    rec = (union record *)ep->ext_buf;
-
-    rec->s.s_id = ID_SOLID;
-    rec->s.s_type = XXX;	/* GED primitive type from db.h */
-
-    /* Since libwdb users may want to operate in units other
-     * than mm, we offer the opportunity to scale the solid
-     * (to get it into mm) on the way out.
-     */
-
-
-    /* convert from local editing units to mm and export
-     * to database record format
-     *
-     * Warning: type conversion: double to float
-     */
-    VSCALE( &rec->s.s_values[0], xxx_ip->xxx_V, local2mm );
-    rec->s.s_values[3] = xxx_ip->xxx_radius * local2mm;
-
-    return(0);
-}
-
-
-/**
- *			R T _ X X X _ I M P O R T 5
+ * Import an XXX from the database format to the internal format.
+ * Note that the data read will be in network order.  This means
+ * Big-Endian integers and IEEE doubles for floating point.
  *
- *  Import an XXX from the database format to the internal format.
- *  Note that the data read will be in network order.  This means
- *  Big-Endian integers and IEEE doubles for floating point.
- *
- *  Apply modeling transformations as well.
- *
+ * Apply modeling transformations as well.
  */
 int
 rt_xxx_import5( struct rt_db_internal  *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip )
@@ -373,12 +319,11 @@ rt_xxx_import5( struct rt_db_internal  *ip, const struct bu_external *ep, const 
     xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
     xxx_ip->magic = RT_XXX_INTERNAL_MAGIC;
 
-    /* Convert the data in ep->ext_buf into internal format.
-     * Note the conversion from network data
-     * (Big Endian ints, IEEE double floating point) to host local data
-     * representations.
+    /* Convert the data in ep->ext_buf into internal format.  Note the
+     * conversion from network data (Big Endian ints, IEEE double
+     * floating point) to host local data representations.
      */
-    ntohd( (unsigned char *)&vv, (char *)ep->ext_buf, ELEMENTS_PER_VECT*1 );
+    ntohd( (unsigned char *)&vv, (unsigned char *)ep->ext_buf, ELEMENTS_PER_VECT*1 );
 
     /* Apply the modeling transformation */
     if (mat == NULL) mat = bn_mat_identity;
@@ -388,13 +333,13 @@ rt_xxx_import5( struct rt_db_internal  *ip, const struct bu_external *ep, const 
 }
 
 /**
- *			R T _ X X X _ E X P O R T 5
+ * R T _ X X X _ E X P O R T 5
  *
- *  Export an XXX from internal form to external format.
- *  Note that this means converting all integers to Big-Endian format
- *  and floating point data to IEEE double.
+ * Export an XXX from internal form to external format.  Note that
+ * this means converting all integers to Big-Endian format and
+ * floating point data to IEEE double.
  *
- *  Apply the transformation to mm units as well.
+ * Apply the transformation to mm units as well.
  */
 int
 rt_xxx_export5( struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip )
@@ -412,9 +357,9 @@ rt_xxx_export5( struct bu_external *ep, const struct rt_db_internal *ip, double 
     ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "xxx external");
 
 
-    /* Since libwdb users may want to operate in units other
-     * than mm, we offer the opportunity to scale the solid
-     * (to get it into mm) on the way out.
+    /* Since libwdb users may want to operate in units other than mm,
+     * we offer the opportunity to scale the solid (to get it into mm)
+     * on the way out.
      */
     VSCALE( vec, xxx_ip->v, local2mm );
 
@@ -425,11 +370,11 @@ rt_xxx_export5( struct bu_external *ep, const struct rt_db_internal *ip, double 
 }
 
 /**
- *			R T _ X X X _ D E S C R I B E
+ * R T _ X X X _ D E S C R I B E
  *
- *  Make human-readable formatted presentation of this solid.
- *  First line describes type of solid.
- *  Additional lines are indented one tab, and give parameter values.
+ * Make human-readable formatted presentation of this solid.  First
+ * line describes type of solid.  Additional lines are indented one
+ * tab, and give parameter values.
  */
 int
 rt_xxx_describe( struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local )
@@ -451,9 +396,10 @@ rt_xxx_describe( struct bu_vls *str, const struct rt_db_internal *ip, int verbos
 }
 
 /**
- *			R T _ X X X _ I F R E E
+ * R T _ X X X _ I F R E E
  *
- *  Free the storage associated with the rt_db_internal version of this solid.
+ * Free the storage associated with the rt_db_internal version of this
+ * solid.
  */
 void
 rt_xxx_ifree( struct rt_db_internal *ip )
@@ -470,10 +416,11 @@ rt_xxx_ifree( struct rt_db_internal *ip )
 }
 
 /**
- *			R T _ X X X _ X F O R M
+ * R T _ X X X _ X F O R M
  *
- *  Create transformed version of internal form.  Free *ip if requested.
- *  Implement this if it's faster than doing an export/import cycle.
+ * Create transformed version of internal form.  Free *ip if
+ * requested.  Implement this if it's faster than doing an
+ * export/import cycle.
  */
 int
 rt_xxx_xform( struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int free )

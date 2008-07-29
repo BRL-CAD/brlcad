@@ -19,8 +19,9 @@
  */
 /** @file tea_nmg.c
  *
- * Convert the Utah Teapot description from the IEEE CG&A database to the
- * BRL-CAD t-NURBS NMG format. (Note that this has the closed bottom)
+ * Convert the Utah Teapot description from the IEEE CG&A database to
+ * the BRL-CAD t-NURBS NMG format. (Note that this has the closed
+ * bottom)
  *
  */
 
@@ -34,7 +35,6 @@
 #include "nurb.h"		/* BRL-CAD Spline data structures */
 #include "raytrace.h"
 #include "wdb.h"
-#include "../librt/debug.h"	/* RT_G_DEBUG flag settings */
 
 #include "./tea.h"		/* IEEE Data Structures */
 #include "./ducks.h"		/* Teapot Vertex data */

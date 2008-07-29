@@ -21,7 +21,7 @@
 /** @{ */
 /** @file g_ars.c
  *
- *	Intersect a ray with an ARS (Arbitrary faceted solid).
+ * Intersect a ray with an ARS (Arbitrary faceted solid).
  *
  */
 
@@ -38,9 +38,8 @@
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
-#include "raytrace.h"
 #include "rtgeom.h"
-#include "./debug.h"
+#include "raytrace.h"
 #include "./bot.h"
 
 
@@ -716,6 +715,7 @@ rt_ars_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	hp->hit_private = (char *)trip;
 	hp->hit_vpriv[X] = dn;
 	hp->hit_rayp = rp;
+	hp->hit_surfno = trip->tri_surfno;
 
 	if (RT_G_DEBUG&DEBUG_ARB8) bu_log("ars: dist k=%g, ds=%g, dn=%g\n", k, ds, dn );
 

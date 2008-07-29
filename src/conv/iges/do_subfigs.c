@@ -23,7 +23,7 @@
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
-#include "../../librt/debug.h"
+
 
 void
 Do_subfigs()

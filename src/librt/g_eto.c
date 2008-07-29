@@ -21,7 +21,7 @@
 /** @{ */
 /** @file g_eto.c
  *
- *	Intersect a ray with an Elliptical Torus.
+ * Intersect a ray with an Elliptical Torus.
  *
  */
 
@@ -36,9 +36,9 @@
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
-#include "raytrace.h"
 #include "rtgeom.h"
-#include "./debug.h"
+#include "raytrace.h"
+
 
 /*
  * The ETO has the following input fields:
@@ -360,12 +360,12 @@ rt_eto_shot(struct soltab *stp, register struct xray *rp, struct application *ap
      *
      *  The equation for the eto is:
      *
-     _______                           ________
-     / 2    2              2           / 2    2               2
+               _______                           ________
+              / 2    2              2           / 2    2               2
      [Eu(+- \/ x  + y   - R) + Ev z]  + [Fu(+-\/ x  + y   - R) + Fv z ]
      --------------------------------    -------------------------------  = 1
-     2                                      2
-     Rc                                     Rd
+                   2                                      2
+                 Rc                                     Rd
      *
      *                  ^   ^
      *       where Ev = C . N
@@ -511,6 +511,8 @@ rt_eto_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     segp->seg_stp = stp;
     segp->seg_in.hit_dist = k[1];
     segp->seg_out.hit_dist = k[0];
+    segp->seg_in.hit_surfno = 0;
+    segp->seg_out.hit_surfno = 0;
     /* Set aside vector for rt_eto_norm() later */
     VJOIN1( segp->seg_in.hit_vpriv, pprime, k[1], dprime );
     VJOIN1( segp->seg_out.hit_vpriv, pprime, k[0], dprime );
@@ -525,6 +527,8 @@ rt_eto_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     segp->seg_stp = stp;
     segp->seg_in.hit_dist = k[3];
     segp->seg_out.hit_dist = k[2];
+    segp->seg_in.hit_surfno = 0;
+    segp->seg_out.hit_surfno = 0;
     VJOIN1( segp->seg_in.hit_vpriv, pprime, k[3], dprime );
     VJOIN1( segp->seg_out.hit_vpriv, pprime, k[2], dprime );
     BU_LIST_INSERT( &(seghead->l), &(segp->l) );

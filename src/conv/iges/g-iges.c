@@ -19,10 +19,10 @@
  */
 /** @file g-iges.c
  *
- *  Program to convert a BRL-CAD model (in a .g file) to an IGES BREP file
- *  or an IGES CSG file
+ * Program to convert a BRL-CAD model (in a .g file) to an IGES BREP
+ * file or an IGES CSG file
  *
- *  Some stupid secret codes:
+ * Some stupid secret codes:
  *	dp->d_uses - contains the negative of the DE number for the object
  *		     non-negative means it hasn't been written to the IGES file
  *	dp->d_nref - contains a one if the object is written to the IGES file as a BREP,
@@ -45,8 +45,8 @@
 
 /* private */
 #include "./iges.h"
-#include "../../librt/debug.h"
 #include "brlcad_version.h"
+
 
 #define	CP_BUF_SIZE	4096	/* size of buffer for file copy */
 #define SUFFIX_LEN	10	/* max size of suffix for 'part' files (-m option) */

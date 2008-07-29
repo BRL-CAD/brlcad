@@ -40,9 +40,6 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 
-/* local headers */
-#include "../librt/debug.h"
-
 
 #define V3ARGSIN(a)       (a)[X]/25.4, (a)[Y]/25.4, (a)[Z]/25.4
 

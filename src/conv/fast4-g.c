@@ -20,7 +20,7 @@
  */
 /** @file fast4-g.c
  *
- *  Program to convert the FASTGEN4 format to BRL-CAD.
+ * Program to convert the FASTGEN4 format to BRL-CAD.
  *
  */
 
@@ -43,9 +43,6 @@
 #include "raytrace.h"
 #include "wdb.h"
 #include "plot3.h"
-
-/* local headers */
-#include "../librt/debug.h"
 
 
 /* convenient macro for building regions */

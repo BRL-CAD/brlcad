@@ -41,14 +41,14 @@
 #include "raytrace.h"
 #include "db.h"
 
-#include "./ged.h"
+#include "./mged.h"
 #include "./sedit.h"
 #include "./mged_solid.h"
 #include "./mged_dm.h"
 #include "./cmd.h"
 
-extern struct rt_db_internal	es_int;	/* from edsol.c */
-extern struct bn_tol		mged_tol;	/* from ged.c */
+extern struct rt_db_internal es_int;
+extern struct bn_tol mged_tol;
 
 extern char	**promp;	/* pointer to a pointer to a char */
 
@@ -523,7 +523,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     /* Draw the new solid */
     {
-	char	*arglist[3];
+	const char *arglist[3];
 	arglist[0] = "e";
 	arglist[1] = newname;
 	arglist[2] = NULL;

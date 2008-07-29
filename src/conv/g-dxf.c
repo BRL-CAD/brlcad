@@ -20,8 +20,8 @@
  */
 /** @file g-dxf.c
  *
- *  Program to convert a BRL-CAD model (in a .g file) to a DXF file
- *  by calling on the NMG booleans.  Based on g-acad.c.
+ * Program to convert a BRL-CAD model (in a .g file) to a DXF file by
+ * calling on the NMG booleans.  Based on g-acad.c.
  *
  */
 
@@ -41,9 +41,6 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "brlcad_version.h"
-
-/* local headers */
-#include "../librt/debug.h"
 
 
 #define V3ARGSIN(a)       (a)[X]/25.4, (a)[Y]/25.4, (a)[Z]/25.4

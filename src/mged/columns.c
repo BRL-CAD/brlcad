@@ -35,7 +35,7 @@
 #include "raytrace.h"
 #include "db.h"
 
-#include "./ged.h"
+#include "./mged.h"
 
 static int	col_count;		/* names listed on current line */
 static int	col_len;		/* length of previous name */

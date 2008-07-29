@@ -184,7 +184,7 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 
 	    sol_id = dbint->ip.idb_type;
 
-	    if (sol_id < 0 || sol_id > rt_nfunctab ) {
+	    if (sol_id < 0 ) {
 		bu_log("Primitive ID %ld out of bounds\n", sol_id);
 		bu_bomb("");
 	    }

@@ -448,7 +448,6 @@ mk_cone(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_
 /*
  *		M K _ T R C _ H
  *
- *  mk_trc( name, base, height, radius1, radius2 )
  *  Make a truncated right cylinder, with base and height.
  *  Not just called mk_trc() to avoid conflict with a previous routine
  *  of that name with different calling sequence.

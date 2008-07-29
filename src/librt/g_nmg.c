@@ -21,10 +21,7 @@
 /** @{ */
 /** @file g_nmg.c
  *
- *	Intersect a ray with an NMG solid.
- *
- *  Authors -
- *
+ * Intersect a ray with an NMG solid.
  *
  */
 /** @} */
@@ -42,7 +39,6 @@
 #include "nmg.h"
 #include "raytrace.h"
 #include "nurb.h"
-#include "./debug.h"
 
 
 /* rt_nmg_internal is just "model", from nmg.h */
@@ -223,7 +219,7 @@ rt_nmg_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     BU_LIST_INIT(&rd.rd_miss);
     rd.magic = NMG_RAY_DATA_MAGIC;
 
-    /* intersect the ray with the geometry */
+    /* intersect the ray with the geometry (sets surfno) */
     nmg_isect_ray_model(&rd);
 
     /* build the segment lists */

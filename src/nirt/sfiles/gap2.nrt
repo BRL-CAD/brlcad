@@ -1,0 +1,9 @@
+# gap2.nrt
+# Description: gap2  -  Reporting with Gap input point, output point and LOS
+fmt r "Origin (x y z) = (%.8f %.8f %.8f)  (h v d) = (%.4f %.4f %.4f)\nDirection (x y z) = (%.8f %.8f %.8f)  (az el) = (%.8f %.8f)\n" x_orig y_orig z_orig h v d_orig x_dir y_dir z_dir a e
+fmt h "    Region Name               Entry (x y z)              LOS  Obliq_in Attrib\n"
+fmt p "%-20s (%9.4f %9.4f %9.4f) %8.4f %8.4f %s\n" reg_name x_in y_in z_in los obliq_in attributes
+fmt f ""
+fmt m "You missed the target\n"
+fmt o "OVERLAP: '%s' and '%s' xyz_in=(%g %g %g) los=%g\n" ov_reg1_name ov_reg2_name ov_x_in ov_y_in ov_z_in ov_los
+fmt g "GAP: xyz_in=(%g %g %g) xyz_out=(%g %g %g) los=%g\n" x_gap_in y_gap_in z_gap_in x_in y_in z_in gap_los

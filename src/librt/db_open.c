@@ -45,7 +45,6 @@
 #include "db.h"
 #include "wdb.h"
 
-#include "./debug.h"
 
 #ifndef SEEK_SET
 #  define SEEK_SET	0

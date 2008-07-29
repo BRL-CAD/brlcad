@@ -19,21 +19,17 @@
  */
 /** @file iges.c
  *
- *  Code to support the g-iges converter
+ * Code to support the g-iges converter
  *
- *  Author -
- *	John R. Anderson
+ * Yet to do:
  *
- *	Yet to do:
+ * Utilize the IGES Right Angle Wedge entity (may not be worth the effort):
+ *	1. arb_is_raw()
+ *	2. raw_to_iges()
+ *	3. modify arb_to_iges to use above
  *
- *		Utilize the IGES Right Angle Wedge entity (may not be worth the effort):
- *			1. arb_is_raw()
- *			2. raw_to_iges()
- *			3. modify arb_to_iges to use above
- *
- *		How to handle half-space solids????
- *
- *		How to handle xforms with scale factors?????
+ * How to handle half-space solids????
+ * How to handle xforms with scale factors?????
  */
 
 #include "common.h"
@@ -53,7 +49,6 @@
 #include "raytrace.h"
 
 #include "./iges.h"
-#include "../../librt/debug.h"
 
 
 /* define defaulted entry for directory entry array */

@@ -14,12 +14,14 @@ set(LIBBU_SOURCES
     color.c
     convert.c
     crashreport.c
+    dirent.c
     dirname.c
     endian.c
     fchmod.c
     fgets.c
     fopen_uniq.c
     getopt.c
+    globals.c
     hash.c
     hist.c
     hook.c
@@ -60,6 +62,7 @@ set(LIBBU_SOURCES
     units.c
     vers.c
     vfont.c
+    vlb.c
     vls.c
     whereis.c
     which.c

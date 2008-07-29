@@ -36,8 +36,6 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-#include "../librt/debug.h"
-
 
 /* declarations to support use of bu_getopt() */
 char *options = "hd:";

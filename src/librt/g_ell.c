@@ -21,7 +21,7 @@
 /** @{ */
 /** @file g_ell.c
  *
- *	Intersect a ray with a Generalized Ellipsoid.
+ * Intersect a ray with a Generalized Ellipsoid.
  *
  */
 
@@ -36,10 +36,10 @@
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
+#include "rtgeom.h"
 #include "raytrace.h"
 #include "nurb.h"
-#include "rtgeom.h"
-#include "./debug.h"
+
 
 BU_EXTERN(int rt_sph_prep, (struct soltab *stp, struct rt_db_internal *ip,
 			    struct rt_i *rtip));
@@ -374,6 +374,8 @@ rt_ell_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	segp->seg_in.hit_dist = k2;
 	segp->seg_out.hit_dist = k1;
     }
+    segp->seg_in.hit_surfno = 0;
+    segp->seg_out.hit_surfno = 0;
     BU_LIST_INSERT( &(seghead->l), &(segp->l) );
     return(2);			/* HIT */
 }
@@ -433,6 +435,8 @@ rt_ell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 		segp[i].seg_in.hit_dist = k2;
 		segp[i].seg_out.hit_dist = k1;
 	    }
+            segp[i].seg_in.hit_surfno = 0;
+            segp[i].seg_out.hit_surfno = 0;
 	}
     }
 }

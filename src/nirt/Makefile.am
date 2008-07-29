@@ -1,5 +1,8 @@
 # $Id$
 
+SUBDIRS = \
+        sfiles
+
 bin_PROGRAMS = \
 	nirt \
 	showshot

@@ -46,8 +46,8 @@
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
-#include "raytrace.h"
 #include "rtgeom.h"
+#include "raytrace.h"
 
 #define RT_SUBMODEL_O(m)	bu_offsetof(struct rt_submodel_internal, m)
 

@@ -104,6 +104,10 @@ outval ValTab[] = {
     { "claimant_list", VTI_CLAIMANT_LIST, OIT_STRING },
     { "claimant_listn", VTI_CLAIMANT_LISTN, OIT_STRING },
     { "attributes", VTI_ATTRIBUTES, OIT_STRING },
+    { "x_gap_in", VTI_XPREV_OUT, OIT_FLOAT},
+    { "y_gap_in", VTI_YPREV_OUT, OIT_FLOAT},
+    { "z_gap_in", VTI_ZPREV_OUT, OIT_FLOAT},
+    { "gap_los", VTI_GAP_LOS, OIT_FLOAT},
     { 0 }
 };
 
@@ -120,7 +124,8 @@ const char	*def_fmt[] = {
     "\"%-20s (%9.4f %9.4f %9.4f) %8.4f %8.4f %s\n\" reg_name x_in y_in z_in los obliq_in attributes",
     "\"\"",
     "\"You missed the target\n\"",
-    "\"OVERLAP: '%s' and '%s' xyz_in=(%g %g %g) los=%g\n\" ov_reg1_name ov_reg2_name ov_x_in ov_y_in ov_z_in ov_los"
+    "\"OVERLAP: '%s' and '%s' xyz_in=(%g %g %g) los=%g\n\" ov_reg1_name ov_reg2_name ov_x_in ov_y_in ov_z_in ov_los",
+    "\"\""
 };
 
 void				free_ospec(outitem *oil);
@@ -167,13 +172,16 @@ format_output (const char* buffer, com_table* ctp)
 	case 'o':
 	    fmt_type = FMT_OVLP;
 	    break;
+	case 'g':
+	    fmt_type = FMT_GAP;
+	    break;
 	default:
 	    --bp;
 	    break;
     }
     while (isspace(*++bp))
 	;
-    
+
     switch (*bp) {
 	case '\0':     /* display current output specs */
 	    if (fmt_type == FMT_NONE)
@@ -268,7 +276,7 @@ parse_fmt(const char *uoutspec, int outcom_type)
 		if (*(uos + 1) == '"')
 		    ++uos;
 	}
-	
+
 	/* Allocate memory for and store the format.
 	 * The code_nm field will be used at this point
 	 * to record whether this format specification
@@ -307,7 +315,7 @@ parse_fmt(const char *uoutspec, int outcom_type)
 	    prev_oip->next = oip;
 	prev_oip = oip;
     }
-    
+
     /* Skip any garbage beyond the close quote */
     for (up = ++uos; (! isspace(*uos)) && (*uos != '\0'); ++uos)
 	;
@@ -323,7 +331,7 @@ parse_fmt(const char *uoutspec, int outcom_type)
     for (oip = oil; oip != OUTITEM_NULL; oip = oip->next) {
 	if (oip->code_nm == 0)
 	    continue;		/* outitem's format has no conversion spec */
-	
+
 	while (isspace(*uos))
 	    ++uos;
 	if (*uos == '\0') {
@@ -740,7 +748,7 @@ void
 dump_state(const char *buffer, com_table *ctp)
 {
     char	*c;
-    static const char	fmt_char[] = {'r', 'h', 'p', 'f', 'm', 'o'};
+    static const char	fmt_char[] = {'r', 'h', 'p', 'f', 'm', 'o', 'g'};
     FILE	*sfPtr;
     int		f;
     outitem	*oip;		/* Pointer into list of output items */

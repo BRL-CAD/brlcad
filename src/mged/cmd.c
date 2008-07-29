@@ -53,76 +53,29 @@
 #include "dg.h"
 #include "tclcad.h"
 
-#include "./ged.h"
+#include "./mged.h"
 #include "./cmd.h"
 #include "./mged_solid.h"
 #include "./mged_dm.h"
 #include "./sedit.h"
 
 
-int bv_zoomin(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int bv_zoomout(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int bv_rate_toggle(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int bv_top(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int bv_bottom(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int bv_right(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int bv_left(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int bv_front(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int bv_rear(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int bv_vrestore(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int bv_vsave(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int bv_adcursor(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int bv_reset(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int bv_45_45(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int bv_35_25(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int be_o_illuminate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int be_s_illuminate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int be_o_scale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int be_o_x(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int be_o_y(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int be_o_xy(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int be_o_rotate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int be_accept(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int be_reject(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int be_s_edit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int be_s_rotate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int be_s_trans(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int be_s_scale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int be_o_xscale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int be_o_yscale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int be_o_zscale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-
-void cmd_setup(void);
-void mged_compat(struct bu_vls *dest, struct bu_vls *src, int use_first);
-void mged_print_result(int status);
-void mged_global_variable_setup(Tcl_Interp *interp);
-void mged_global_variable_teardown(Tcl_Interp *interp);
-int f_bot_fuse(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int f_bot_condense(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int f_bot_face_fuse(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int f_bot_merge(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-int f_bot_split(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-
-extern int f_hide();
-extern int f_unhide();
-
-extern void update_grids(fastf_t sf);			/* in grid.c */
+extern void update_grids(fastf_t sf);		/* in grid.c */
 extern void set_localunit_TclVar(void);		/* in chgmodel.c */
 extern void init_qray(void);			/* in qray.c */
-extern int gui_setup(char *dstr);				/* in attach.c */
+extern int gui_setup(char *dstr);		/* in attach.c */
 extern int mged_default_dlist;			/* in attach.c */
-extern int classic_mged;			/* in ged.c */
+extern int classic_mged;
 extern int bot_vertex_fuse(), bot_condense();
-extern int cmd_bot_smooth();
 struct cmd_list head_cmd_list;
 struct cmd_list *curr_cmd_list;
 
-extern int db_warn;	/* defined in ged.c */
-extern int db_upgrade;	/* defined in ged.c */
-extern int db_version;	/* defined in ged.c */
+extern int db_warn;
+extern int db_upgrade;
+extern int db_version;
 
-extern struct rt_tess_tol     mged_ttol; /* ged.c */
-extern struct bn_tol	      mged_tol; /* ged.c */
+extern struct rt_tess_tol     mged_ttol;
+extern struct bn_tol	      mged_tol;
 
 int glob_compat_mode = 1;
 int output_as_return = 1;
@@ -133,332 +86,6 @@ Tk_Window tkwin = NULL;
  */
 static struct bu_vls tcl_output_hook;
 
-struct cmdtab {
-    char *ct_name;
-    int (*ct_func)();
-};
-
-
-static struct cmdtab cmdtab[] = {
-    {"%", f_comm},
-    {"35, 25",	bv_35_25},
-    {"3ptarb", f_3ptarb},
-    {"45, 45",	bv_45_45},
-    {"accept",	be_accept},
-    {"adc", f_adc},
-    {"adjust",	cmd_adjust},
-    {"ae", cmd_aetview},
-    {"ae2dir", cmd_ae2dir},
-    {"aip", f_aip},
-    {"analyze", f_analyze},
-    {"arb", f_arbdef},
-    {"arced", f_arced},
-    {"area", f_area},
-    {"arot", cmd_arot},
-    {"attach", f_attach},
-    {"attr",	cmd_attr},
-    {"autoview", cmd_autoview},
-    {"B", cmd_blast},
-    {"bev", f_bev},
-#if 0
-    {"import_body", cmd_import_body},
-    {"export_body", cmd_export_body},
-#endif
-    {"bomb", f_bomb},
-    {"bot_condense", f_bot_condense},
-    {"bot_decimate", cmd_bot_decimate},
-    {"bot_face_fuse", f_bot_face_fuse},
-    {"bot_face_sort", cmd_bot_face_sort},
-    {"bot_merge", f_bot_merge},
-    {"bot_smooth", cmd_bot_smooth },
-    {"bot_split", f_bot_split},
-    {"bot_vertex_fuse", f_bot_fuse},
-    {"bottom",	bv_bottom},
-    {"c", cmd_comb_std},
-    {"cat", cmd_cat},
-    {"center", cmd_center},
-    {"clone", f_clone},
-    {"closedb", f_closedb},
-    {"cmd_win", cmd_cmd_win},
-    {"color", cmd_color},
-    {"comb", cmd_comb},
-    {"comb_color", f_comb_color},
-    {"copyeval", cmd_copyeval},
-    {"copymat", f_copymat},
-    {"cp", cmd_copy},
-    {"cpi", f_copy_inv},
-    {"d", cmd_erase},
-    {"dall", cmd_erase_all},
-    {"db_glob", cmd_mged_glob},
-    {"dbbinary", f_binary},
-    {"dbconcat", cmd_concat},
-    {"dbfind", cmd_find},
-    {"dbip",	cmd_dbip},
-    {"dbversion", cmd_dbversion},
-    {"debugbu", f_debugbu},
-    {"debugdir", f_debugdir},
-    {"debuglib", f_debuglib},
-    {"debugmem", f_debugmem},
-    {"debugnmg", f_debugnmg},
-    {"decompose", f_decompose},
-    {"delay", f_delay},
-    {"dir2ae", cmd_dir2ae},
-    {"dump",	cmd_dump},
-    {"dm", f_dm},
-    {"draw", cmd_draw},
-    {"dup", cmd_dup},
-    {"E", cmd_E},
-    {"e", cmd_draw},
-    {"eac", f_eac},
-    {"echo", cmd_echo},
-    {"edcodes", f_edcodes},
-    {"edcolor", f_edcolor},
-    {"edcomb", f_edcomb},
-    {"edgedir", f_edgedir},
-    {"edmater", f_edmater},
-    {"em", cmd_emuves},
-    {"erase", cmd_erase},
-    {"erase_all", cmd_erase_all},
-    {"ev", cmd_ev},
-    {"e_muves", f_e_muves},
-    {"eqn", f_eqn},
-    {"exit", f_quit},
-    {"expand", cmd_expand},
-    {"extrude", f_extrude},
-    {"eye_pt", cmd_eye_pt},
-    {"facedef", f_facedef},
-    {"facetize", f_facetize},
-    {"form",	cmd_form},
-    {"fracture", f_fracture},
-    {"front",	bv_front},
-    {"g", cmd_group},
-    {"get",		cmd_get},
-    {"get_autoview", cmd_get_autoview},
-    {"get_comb", cmd_get_comb},
-    {"get_dbip", cmd_get_ptr},
-    {"get_dm_list", f_get_dm_list},
-    {"get_more_default", cmd_get_more_default},
-    {"get_sed", f_get_sedit},
-    {"get_sed_menus", f_get_sedit_menus},
-    {"get_solid_keypoint", f_get_solid_keypoint},
-    {"grid2model_lu", f_grid2model_lu},
-    {"grid2view_lu", f_grid2view_lu},
-#ifdef HIDELINE
-    {"H", f_hideline},
-#endif
-    {"has_embedded_fb", cmd_has_embedded_fb},
-    {"hide", cmd_hide },
-    {"hist", cmd_hist},
-    {"history", f_history},
-    {"i", cmd_instance},
-    {"idents", f_tables},
-    {"ill", f_ill},
-    {"in", f_in},
-    {"inside", f_inside},
-    {"item", f_itemair},
-    {"joint", f_joint},
-    {"journal", f_journal},
-    {"keep", cmd_keep},
-    {"keypoint", f_keypoint},
-    {"kill", cmd_kill},
-    {"killall", cmd_killall},
-    {"killtree", cmd_killtree},
-    {"knob", f_knob},
-    {"l", cmd_list},
-    {"l_muves", f_l_muves},
-    {"labelvert", f_labelvert},
-    {"left",		bv_left},
-    {"lm", cmd_lm},
-    {"lt", cmd_lt},
-    {"loadtk", cmd_tk},
-    {"listeval", cmd_pathsum},
-    {"loadview", f_loadview},
-    {"lookat", cmd_lookat},
-    {"ls", cmd_ls},
-    {"M", f_mouse},
-    {"make", f_make},
-    {"make_bb", cmd_make_bb},
-    {"make_name", cmd_make_name},
-    {"match",	cmd_match},
-    {"mater", f_mater},
-    {"matpick", f_matpick},
-    {"memprint", f_memprint},
-    {"mged_update", f_update},
-    {"mged_wait", f_wait},
-    {"mirface", f_mirface},
-    {"mirror", f_mirror},
-    {"mmenu_get", cmd_mmenu_get},
-    {"mmenu_set", cmd_nop},
-    {"model2grid_lu", f_model2grid_lu},
-    {"model2view", f_model2view},
-    {"model2view_lu", f_model2view_lu},
-    {"mrot", cmd_mrot},
-    {"mv", cmd_name},
-    {"mvall", cmd_mvall},
-    {"nirt", f_nirt},
-    {"nmg_collapse", cmd_nmg_collapse},
-    {"nmg_simplify", cmd_nmg_simplify},
-    {"o_rotate",		be_o_rotate},
-    {"o_scale",	be_o_scale},
-    {"oed", cmd_oed},
-    {"oed_apply", f_oedit_apply},
-    {"oed_reset", f_oedit_reset},
-    {"oill",		be_o_illuminate},
-    {"opendb", f_opendb},
-    {"orientation", cmd_orientation},
-    {"orot", f_rot_obj},
-    {"oscale", f_sc_obj},
-    {"output_hook", cmd_output_hook},
-    {"overlay", cmd_overlay},
-    {"ox",		be_o_x},
-    {"oxscale",	be_o_xscale},
-    {"oxy",		be_o_xy},
-    {"oy",		be_o_y},
-    {"oyscale",	be_o_yscale},
-    {"ozscale",	be_o_zscale},
-    {"p", f_param},
-    {"parse_points", cmd_parse_points},
-    {"pathlist", cmd_pathlist},
-    {"paths", cmd_pathsum},
-    {"permute", f_permute},
-    {"pl", f_pl},
-    {"plot", f_plot},
-    {"polybinout", f_polybinout},
-    {"pov", cmd_pov},
-    {"prcolor", cmd_prcolor},
-    {"prefix", f_prefix},
-    {"press", f_press},
-    {"preview", f_preview},
-    {"ps", f_ps},
-    {"push", cmd_push},
-    {"put",		cmd_put},
-    {"put_comb", cmd_put_comb},
-    {"put_sed", f_put_sedit},
-    {"putmat", f_putmat},
-    {"q", f_quit},
-    {"qorot", f_qorot},
-    {"qray", f_qray},
-    {"query_ray", f_nirt},
-    {"quit", f_quit},
-    {"qvrot", f_qvrot},
-    {"r", cmd_region},
-    {"rate",		bv_rate_toggle},
-    {"rcodes", f_rcodes},
-    {"read_muves", f_read_muves},
-    {"rear",	bv_rear},
-    {"red", f_red},
-    {"redraw_vlist", cmd_redraw_vlist},
-    {"refresh", f_refresh},
-    {"regdebug", f_regdebug},
-    {"regdef", f_regdef},
-    {"regions", f_tables},
-    {"reject",	be_reject},
-    {"release", f_release},
-    {"reset",	bv_reset},
-    {"restore",	bv_vrestore},
-    {"rfarb", f_rfarb},
-    {"right",	bv_right},
-    {"rm", cmd_remove},
-    {"rmater", f_rmater},
-    {"rmats", f_rmats},
-    {"rot", cmd_rot},
-    {"rotobj", f_rot_obj},
-    {"rrt", cmd_rrt},
-    {"rset", f_rset},
-    {"rt", cmd_rt},
-    {"rt_gettrees", cmd_rt_gettrees},
-    {"rtabort", cmd_rtabort},
-    {"rtarea", cmd_rt},
-    {"rtcheck", cmd_rt},
-    {"rtedge", cmd_rt},
-    {"rtweight", cmd_rt},
-    {"save",		bv_vsave},
-    {"solid_report", cmd_solid_report},
-#if 0
-    {"savedit", f_savedit},
-#endif
-    {"savekey", f_savekey},
-    {"saveview", f_saveview},
-    {"sca", cmd_sca},
-    {"sed", f_sed},
-    {"sed_apply", f_sedit_apply},
-    {"sed_reset", f_sedit_reset},
-    {"sedit",	be_s_edit},
-    {"set_more_default", cmd_set_more_default},
-    {"setview", cmd_setview},
-    {"shaded_mode", cmd_shaded_mode},
-    {"shader", f_shader},
-    {"share", f_share},
-    {"shells", cmd_shells},
-    {"showmats", cmd_showmats},
-    {"sill",		be_s_illuminate},
-    {"size", cmd_size},
-    {"solid_report", cmd_solid_report},
-    {"solids", f_tables},
-    {"solids_on_ray", cmd_solids_on_ray},
-    {"srot",		be_s_rotate},
-    {"sscale",	be_s_scale},
-    {"status", f_status},
-    {"stuff_str", cmd_stuff_str},
-    {"summary", cmd_summary},
-    {"sv", f_slewview},
-    {"svb", f_svbase},
-    {"sxy",		be_s_trans},
-    {"sync", f_sync},
-    {"t", cmd_ls},
-    {"t_muves", f_t_muves},
-    {"ted", f_tedit},
-    {"tie", f_tie},
-    {"title", cmd_title},
-    {"tol", cmd_tol},
-    {"top",		bv_top},
-    {"tops", cmd_tops},
-    {"tra", cmd_tra},
-    {"track", f_amtrack},
-    {"tracker", f_tracker},
-    {"translate", f_tr_obj},
-    {"tree", cmd_tree},
-    {"unhide", cmd_unhide},
-    {"units", cmd_units},
-    {"vars", f_set},
-    {"vdraw", cmd_vdraw},
-    {"view", f_view},
-    {"view_ring", f_view_ring},
-#if 0
-    {"viewget", cmd_viewget},
-    {"viewset", cmd_viewset},
-#endif
-    {"view2grid_lu", f_view2grid_lu},
-    {"view2model", f_view2model},
-    {"view2model_lu", f_view2model_lu},
-    {"view2model_vec", f_view2model_vec},
-    {"viewdir", cmd_viewdir},
-    {"viewsize", cmd_size},		/* alias "size" for saveview scripts */
-    {"vnirt", f_vnirt},
-    {"vquery_ray", f_vnirt},
-#if 0
-    {"vrmgr", f_vrmgr},
-#endif
-    {"vrot", cmd_vrot},
-#if 0
-    {"vrot_center", f_vrot_center},
-#endif
-    {"wcodes", f_wcodes},
-    {"whatid", cmd_whatid},
-    {"which_shader", f_which_shader},
-    {"whichair", cmd_which},
-    {"whichid", cmd_which},
-    {"who", cmd_who},
-    {"winset", f_winset},
-    {"wmater", f_wmater},
-    {"x", cmd_solid_report},
-    {"xpush", cmd_xpush},
-    {"Z", cmd_zap},
-    {"zoom", cmd_zoom},
-    {"zoomin",	bv_zoomin},
-    {"zoomout",	bv_zoomout},
-    {0, 0}
-};
 
 
 /**
@@ -539,6 +166,25 @@ gui_output(genptr_t clientData, genptr_t str)
     Tcl_DStringFree(&tclcommand);
     return strlen(str);
 }
+
+
+/**
+ * c m d _ g e d _ c m d
+ *
+ * command wrapper for all new libged commands
+ */
+int
+cmd_ged_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+{
+    Tcl_DString ds;
+    int ret;
+    
+    CHECK_DBI_NULL;
+    CHECK_READ_ONLY;
+
+    /* !!! */
+}
+
 
 /**
  *                     C M D _ T K
@@ -653,82 +299,6 @@ cmd_get_ptr(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
 }
 
-/**
- * 			C M D _ S E T U P
- * Register all the MGED commands.
- */
-void
-cmd_setup(void)
-{
-    register struct cmdtab *ctp;
-    struct bu_vls temp;
-    struct bu_vls	vls;
-    const char *pathname;
-    char buffer[1024];
-
-    bu_vls_init(&temp);
-    for (ctp = cmdtab; ctp->ct_name != NULL; ctp++) {
-#if 0
-	bu_vls_strcpy(&temp, "info commands ");
-	bu_vls_strcat(&temp, ctp->ct_name);
-	if (Tcl_Eval(interp, bu_vls_addr(&temp)) != TCL_OK ||
-	    Tcl_GetStringResult(interp)[0] != '\0') {
-	    bu_log("WARNING:  '%s' name collision (%s)\n", ctp->ct_name,
-		   Tcl_GetStringResult(interp));
-	}
-#endif
-	bu_vls_strcpy(&temp, "_mged_");
-	bu_vls_strcat(&temp, ctp->ct_name);
-
-	(void)Tcl_CreateCommand(interp, ctp->ct_name, ctp->ct_func,
-				(ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
-	(void)Tcl_CreateCommand(interp, bu_vls_addr(&temp), ctp->ct_func,
-				(ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
-    }
-
-    /* overrides/wraps the built-in tree command */
-
-    /* Locate the BRL-CAD-specific Tcl scripts */
-    pathname = bu_brlcad_data("tclscripts", 1);
-    snprintf(buffer, sizeof(buffer), "%s", pathname);
-
-#ifdef _WIN32
-    if (pathname) {
-	/* XXXXXXXXXXXXXXX UGLY XXXXXXXXXXXXXXXXXX*/
-	int i;
-
-	bu_strlcat(buffer, "/", MAXPATHLEN);
-
-	for (i=0;i<strlen(buffer);i++) {
-	    if (buffer[i]=='\\')
-		buffer[i]='/'; }
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "source %s/mged/tree.tcl", buffer);
-	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-    }
-#endif
-
-    /* link some tcl variables to these corresponding globals */
-    Tcl_LinkVar(interp, "glob_compat_mode", (char *)&glob_compat_mode, TCL_LINK_BOOLEAN);
-    Tcl_LinkVar(interp, "output_as_return", (char *)&output_as_return, TCL_LINK_BOOLEAN);
-
-    /* Provide Tcl interfaces to the fundamental BRL-CAD libraries */
-#ifdef BRLCAD_DEBUG
-    Bu_d_Init(interp);
-    bn_tcl_setup( interp );
-    Rt_d_Init(interp);
-#else
-    Bu_Init(interp);
-    bn_tcl_setup( interp );
-    Rt_Init(interp);
-#endif
-
-    tkwin = NULL;
-
-    bu_vls_free(&temp);
-}
 
 int
 cmd_cmd_win(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -861,66 +431,6 @@ cmd_cmd_win(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
 }
 
-#if 0
-cmd_get(clientData, interp, argc, argv)
-    ClientData clientData;
-    Tcl_Interp *interp;
-    int argc;
-    char **argv;
-{
-    struct dm_list *p;
-    struct cmd_list *save_clp;
-    struct bu_vls vls;
-    int first = 1;
-
-    if (argc != 1) {
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helpdevel cmd_get");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
-    save_clp = curr_cmd_list;
-    bu_vls_init(&vls);
-
-    if (!curr_cmd_list->cl_tie) {
-	if (curr_dm_list->dml_tie) {
-	    Tcl_AppendElement(interp, bu_vls_addr(&curr_dm_list->dml_tie->cl_name));
-	    curr_cmd_list = curr_dm_list->dml_tie;
-	    Tcl_AppendElement(interp, bu_vls_addr(&pathName));
-	} else {
-	    Tcl_AppendElement(interp, bu_vls_addr(&curr_cmd_list->cl_name));
-	    Tcl_AppendElement(interp, bu_vls_addr(&pathName));
-	    Tcl_AppendElement(interp, bu_vls_addr(&vls));
-	    bu_vls_free(&vls);
-	    return TCL_OK;
-	}
-    } else {
-	Tcl_AppendElement(interp, bu_vls_addr(&curr_cmd_list->cl_name));
-	Tcl_AppendElement(interp, bu_vls_addr(&curr_cmd_list->cl_tie->dml_dmp->dm_pathName));
-    }
-
-    /* return all ids associated with the current command window */
-    FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
-	/* The display manager tied to the current command window shares
-	   information with display manager p */
-	if (curr_cmd_list->cl_tie->dml_view_state == p->dml_view_state)
-	    /* This display manager is tied to a command window */
-	    if (p->dml_tie)
-		if (first) {
-		    bu_vls_printf(&vls, "%S", &p->dml_tie->cl_name);
-		    first = 0;
-		} else
-		    bu_vls_printf(&vls, " %S", &p->dml_tie->cl_name);
-    }
-
-    Tcl_AppendElement(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    curr_cmd_list = save_clp;
-    return TCL_OK;
-}
-#endif
 
 int
 cmd_get_more_default(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -957,33 +467,6 @@ cmd_set_more_default(ClientData clientData, Tcl_Interp *interp, int argc, char *
 }
 
 
-int
-cmd_mged_glob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
-{
-    struct bu_vls dest, src;
-
-    if (argc != 2) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "help db_glob");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
-    bu_vls_init(&src);
-    bu_vls_init(&dest);
-    bu_vls_strcpy(&src, argv[1]);
-    mged_compat(&dest, &src, 0);
-    Tcl_AppendResult(interp, bu_vls_addr(&dest), (char *)NULL);
-    bu_vls_free(&src);
-    bu_vls_free(&dest);
-
-    return TCL_OK;
-}
-
-
 /**
  * debackslash, backslash_specials, mged_compat: routines for original
  *   mged emulation mode
@@ -1002,6 +485,7 @@ debackslash(struct bu_vls *dest, struct bu_vls *src)
 	bu_vls_putc( dest, *ptr++ );
     }
 }
+
 
 void
 backslash_specials(struct bu_vls *dest, struct bu_vls *src)
@@ -1120,6 +604,34 @@ mged_compat(struct bu_vls *dest, struct bu_vls *src, int use_first)
     bu_vls_free( &temp );
     bu_vls_free( &word );
 }
+
+
+int
+cmd_mged_glob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+{
+    struct bu_vls dest, src;
+
+    if (argc != 2) {
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "help db_glob");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    bu_vls_init(&src);
+    bu_vls_init(&dest);
+    bu_vls_strcpy(&src, argv[1]);
+    mged_compat(&dest, &src, 0);
+    Tcl_AppendResult(interp, bu_vls_addr(&dest), (char *)NULL);
+    bu_vls_free(&src);
+    bu_vls_free(&dest);
+
+    return TCL_OK;
+}
+
 
 #ifdef _WIN32
 /* limited to seconds only */
@@ -1396,7 +908,6 @@ int
 f_comm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 
-#ifndef _WIN32
 
     register int pid, rpid;
     int retcode;
@@ -1411,6 +922,7 @@ f_comm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
+#ifndef _WIN32
     (void)signal( SIGINT, SIG_IGN );
     if ( ( pid = fork()) == 0 )  {
 	(void)signal( SIGINT, SIG_DFL );
@@ -1421,9 +933,9 @@ f_comm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     while ((rpid = wait(&retcode)) != pid && rpid != -1)
 	;
-
-    Tcl_AppendResult(interp, "!\n", (char *)NULL);
 #endif
+
+    Tcl_AppendResult(interp, "Returning to MGED\n", (char *)NULL);
 
     return TCL_OK;
 }
@@ -1486,7 +998,7 @@ f_sync(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *
  *  Common code for help commands
  */
-static int
+HIDDEN int
 helpcomm(int argc, char **argv, struct funtab *functions)
 {
     register struct funtab *ftp;
@@ -1595,44 +1107,6 @@ cmd_echo(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
 }
 
-#if 0
-int
-f_savedit(argc, argv)
-    int	argc;
-    char	*argv[];
-{
-    struct bu_vls str;
-    char	line[35];
-    int o_ipathpos;
-    register struct solid *o_illump;
-
-    o_illump = illump;
-    bu_vls_init(&str);
-
-    if (state == ST_S_EDIT) {
-	bu_vls_strcpy( &str, "press accept\npress sill\n" );
-	cmdline(&str, 0);
-	illump = o_illump;
-	bu_vls_strcpy( &str, "M 1 0 0\n");
-	cmdline(&str, 0);
-	return CMD_OK;
-    } else if (state == ST_O_EDIT) {
-	o_ipathpos = ipathpos;
-	bu_vls_strcpy( &str, "press accept\npress oill\n" );
-	cmdline(&str, 0);
-	(void)chg_state( ST_O_PICK, ST_O_PATH, "savedit");
-	illump = o_illump;
-	ipathpos = o_ipathpos;
-	bu_vls_strcpy( &str, "M 1 0 0\n");
-	cmdline(&str, 0);
-	return CMD_OK;
-    }
-
-    bu_log( "Savedit will only work in an edit state\n");
-    bu_vls_free(&str);
-    return CMD_BAD;
-}
-#endif
 
 /**
  * SYNOPSIS
@@ -2480,7 +1954,7 @@ cmd_comb_std(ClientData	clientData,
 int
 cmd_nmg_collapse(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    char *av[3];
+    const char *av[3];
 
     CHECK_DBI_NULL;
 
@@ -2507,9 +1981,24 @@ cmd_make_name(ClientData	clientData,
 	      int		argc,
 	      char		**argv)
 {
+    Tcl_DString ds;
+    int ret;
+
     CHECK_DBI_NULL;
 
-    return wdb_make_name_cmd(wdbp, interp, argc, argv);
+    ret = ged_make_name(wdbp, argc, argv);
+
+    /* Convert to Tcl codes */
+    if (ret == GED_OK)
+	ret = TCL_OK;
+    else
+	ret = TCL_ERROR;
+
+    Tcl_DStringInit(&ds);
+    Tcl_DStringAppend(&ds, bu_vls_addr(&wdbp->wdb_result_str), -1);
+    Tcl_DStringResult(interp, &ds);
+
+    return ret;
 }
 
 int
@@ -3029,7 +2518,7 @@ cmd_copy(ClientData	clientData,
 	 char		**argv)
 {
     int ret;
-    char *av[3];
+    const char *av[3];
 
     CHECK_DBI_NULL;
 
@@ -3261,8 +2750,8 @@ cmd_lm(ClientData	clientData,
     bu_free( (char *)tbl, "cmd_lm ptbl" );
 
     /* create a new argc and argv to pass to the cmd_ls routine */
-    new_argv = (char **)bu_calloc( new_arg_count + 1, sizeof( char *), "cmd_lm new_argv" );
-    new_argc = bu_argv_from_string( new_argv, new_arg_count+1, bu_vls_addr( &vls ) );
+    new_argv = (char **)bu_calloc( new_arg_count+1, sizeof( char *), "cmd_lm new_argv" );
+    new_argc = bu_argv_from_string( new_argv, new_arg_count, bu_vls_addr( &vls ) );
 
     ret = cmd_ls( clientData, interp, new_argc, new_argv );
 
@@ -3321,19 +2810,16 @@ cmd_tol(ClientData	clientData,
 }
 
 /* defined in chgview.c */
-extern int edit_com(int argc, char **argv, int kind, int catch_sigint);
+extern int edit_com(int argc, const char *argv[], int kind, int catch_sigint);
 
 /**
  * ZAP the display -- then edit anew
  * Format: B object
  */
 int
-cmd_blast(ClientData	clientData,
-	  Tcl_Interp	*interp,
-	  int		argc,
-	  char		**argv)
+cmd_blast(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    char *av[2];
+    const char *av[2];
 
     av[0] = "Z";
     av[1] = (char *)0;
@@ -3352,10 +2838,7 @@ cmd_blast(ClientData	clientData,
  * Format: e object
  */
 int
-cmd_draw(ClientData	clientData,
-	 Tcl_Interp	*interp,
-	 int		argc,
-	 char		**argv)
+cmd_draw(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     return edit_com(argc, argv, 1, 1);
 }
@@ -3382,7 +2865,7 @@ int
 cmd_ev(ClientData	clientData,
        Tcl_Interp *interp,
        int	argc,
-       char	**argv)
+       const char *argv[])
 {
     return edit_com(argc, argv, 3, 1);
 }
@@ -3398,7 +2881,7 @@ cmd_vdraw(ClientData	clientData,
 {
     CHECK_DBI_NULL;
 
-    return dgo_vdraw_cmd(dgop, interp, argc, argv);
+    return vdraw_cmd(dgop, interp, argc, argv);
 }
 
 /**

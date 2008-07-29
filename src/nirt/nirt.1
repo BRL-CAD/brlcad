@@ -150,7 +150,7 @@ on the command line.
 .B -s
 causes
 .I nirt
-to run in short (that is, non-verbose) mode.
+to run in silent (that is, non-verbose) mode.
 In this mode,
 which is useful in a pipeline,
 .I nirt
@@ -162,7 +162,7 @@ causes
 to run in verbose mode.
 The default is verbose mode,
 except if standard input has been redirected,
-in which case the default is short mode.
+in which case the default is silent mode.
 .TP
 .BI -u " n"
 sets the \fIuseair\fR member
@@ -271,8 +271,9 @@ See the discussion of the
 .I -B
 option above for more details.
 .TP 12
-.B backout
-Backs the ray origination point out of the geometry:
+.B backout [" n "]"
+Command to set the backout flag.  With no option, prints the current value. 
+When activated, backs the ray origination point out of the geometry:
 .IR h " and " v
 retain their previous values and
 .I d
@@ -280,7 +281,7 @@ is set to
 .I Dmax,
 the largest value of
 .I d
-anywhere in the geometry.
+anywhere in the geometry.  Default is 0 (deactivated), 1 is active.
 .TP 12
 .BI "useair [" n "]"
 Sets the \fIuseair\fR member
@@ -500,6 +501,11 @@ if the ray hits nothing.
 Overlap.
 Executed once for each overlap along the ray
 if the ray hits anything.
+.TP
+.B g
+Gap.
+Executed once for each gap along the ray if the
+ray encounters any gaps.
 .P
 The action associated with each output statement type is essentially a
 .IR printf (3)
@@ -665,6 +671,21 @@ entry-surface ID of entry solid.
 .TP 18
 .B surf_num_out
 exit-surface ID of exit solid.
+
+.ce
+Gap Information
+.TP 18
+.B x_gap_in
+\fIx\fR coordinate of entry into gap.
+.TP 18
+.B y_gap_in
+\fIy\fR coordinate of entry into gap.
+.TP 18
+.B z_gap_in
+\fIz\fR coordinate of entry into gap.
+.TP 18
+.B gap_los
+line-of-sight distance through gap.
 
 .ce
 Overlap Information

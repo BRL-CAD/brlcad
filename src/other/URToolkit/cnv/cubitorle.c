@@ -30,7 +30,93 @@
 #include <stdio.h>
 #include "rle.h"
 
-void read_cubi_hdr(), read_cubi_row(), read_cubi_chan(), bit_read();
+void
+read_cubi_hdr(cubifiles, xlen, ylen)
+FILE *cubifiles[];
+short *xlen, *ylen;
+{
+    char junk[128];
+    short xmin, ymin, xmax, ymax;
+
+    fread(junk, sizeof(char), 12, cubifiles[0]);
+    fread(xlen, sizeof(short), 1, cubifiles[0]);
+    fread(ylen, sizeof(short), 1, cubifiles[0]);
+    fread(&xmin, sizeof(short), 1, cubifiles[0]);
+    fread(&ymin, sizeof(short), 1, cubifiles[0]);
+    fread(&xmax, sizeof(short), 1, cubifiles[0]);
+    fread(&ymax, sizeof(short), 1, cubifiles[0]);
+    fread(junk, sizeof(char), 104, cubifiles[0]);
+
+    fread(junk, sizeof(char), 128, cubifiles[1]);
+    fread(junk, sizeof(char), 128, cubifiles[2]);
+}
+
+void
+bit_read(infile, headchar, bit, rows, chan, xpos)
+FILE * infile;
+char headchar;
+int bit, chan, *xpos;
+rle_pixel **rows;
+{
+    unsigned char runlength, rundata, bytedata;
+    int i;
+
+    if (headchar & (1 << bit))
+    {
+	/* bit set, run data */
+	rundata = fgetc(infile);
+	runlength = fgetc(infile);
+	for (i=(*xpos); i < runlength+(*xpos); i++)
+	    rows[chan][i] = rundata;
+	*xpos += (int) runlength;
+    }
+    else
+    {
+	/* bit not set, byte data */
+	bytedata = fgetc(infile);
+	rows[chan][*xpos] = bytedata;
+	(*xpos)++;
+    }
+}
+
+void
+read_cubi_chan(infile, rows, chan)
+FILE * infile;
+rle_pixel **rows;
+int chan;
+{
+    static char headchar[3];
+    static int scanfull[3] = {-1, -1, -1};
+    int xpos = 0, bit;
+
+    while (xpos < 512)
+    {
+	if (scanfull[chan] == -1)
+	    headchar[chan] = fgetc(infile);
+
+	for (bit = 0; bit < 8; bit++)
+	    if (scanfull[chan] <= bit)
+	    {
+		bit_read(infile, headchar[chan], bit, rows, chan, &xpos);
+		if (xpos >= 512)
+		{
+		    scanfull[chan] = bit + 1;
+		    break;
+		}
+	    }
+	if (bit >= 7) scanfull[chan] = -1;
+    }
+}
+
+void
+read_cubi_row(cubifiles, rows)
+FILE *cubifiles[];
+rle_pixel ** rows;
+{
+    read_cubi_chan(cubifiles[0],rows,0);
+    read_cubi_chan(cubifiles[1],rows,1);
+    read_cubi_chan(cubifiles[2],rows,2);
+}
 
 int
 main(argc, argv)
@@ -89,90 +175,3 @@ char	*argv[];
 
 }
 
-void
-read_cubi_hdr(cubifiles, xlen, ylen)
-FILE *cubifiles[];
-short *xlen, *ylen;
-{
-    char junk[128];
-    short xmin, ymin, xmax, ymax;
-
-    fread(junk, sizeof(char), 12, cubifiles[0]);
-    fread(xlen, sizeof(short), 1, cubifiles[0]);
-    fread(ylen, sizeof(short), 1, cubifiles[0]);
-    fread(&xmin, sizeof(short), 1, cubifiles[0]);
-    fread(&ymin, sizeof(short), 1, cubifiles[0]);
-    fread(&xmax, sizeof(short), 1, cubifiles[0]);
-    fread(&ymax, sizeof(short), 1, cubifiles[0]);
-    fread(junk, sizeof(char), 104, cubifiles[0]);
-
-    fread(junk, sizeof(char), 128, cubifiles[1]);
-    fread(junk, sizeof(char), 128, cubifiles[2]);
-}
-
-void
-read_cubi_row(cubifiles, rows)
-FILE *cubifiles[];
-rle_pixel ** rows;
-{
-    read_cubi_chan(cubifiles[0],rows,0);
-    read_cubi_chan(cubifiles[1],rows,1);
-    read_cubi_chan(cubifiles[2],rows,2);
-}
-
-void
-read_cubi_chan(infile, rows, chan)
-FILE * infile;
-rle_pixel **rows;
-int chan;
-{
-    static char headchar[3];
-    static int scanfull[3] = {-1, -1, -1};
-    int xpos = 0, bit;
-
-    while (xpos < 512)
-    {
-	if (scanfull[chan] == -1)
-	    headchar[chan] = fgetc(infile);
-
-	for (bit = 0; bit < 8; bit++)
-	    if (scanfull[chan] <= bit)
-	    {
-		bit_read(infile, headchar[chan], bit, rows, chan, &xpos);
-		if (xpos >= 512)
-		{
-		    scanfull[chan] = bit + 1;
-		    break;
-		}
-	    }
-	if (bit >= 7) scanfull[chan] = -1;
-    }
-}
-
-void
-bit_read(infile, headchar, bit, rows, chan, xpos)
-FILE * infile;
-char headchar;
-int bit, chan, *xpos;
-rle_pixel **rows;
-{
-    unsigned char runlength, rundata, bytedata;
-    int i;
-
-    if (headchar & (1 << bit))
-    {
-	/* bit set, run data */
-	rundata = fgetc(infile);
-	runlength = fgetc(infile);
-	for (i=(*xpos); i < runlength+(*xpos); i++)
-	    rows[chan][i] = rundata;
-	*xpos += (int) runlength;
-    }
-    else
-    {
-	/* bit not set, byte data */
-	bytedata = fgetc(infile);
-	rows[chan][*xpos] = bytedata;
-	(*xpos)++;
-    }
-}

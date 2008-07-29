@@ -44,10 +44,9 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-#include "./ged.h"
+#include "./mged.h"
 #include "./sedit.h"
 #include "./cmd.h"
-#include "../librt/debug.h"	/* XXX */
 
 
 int
@@ -117,10 +116,10 @@ f_eac(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     if ( lim > 1 )
     {
 	int retval;
-	char **new_argv;
+	const char **new_argv;
 
 	new_argv = (char **)bu_calloc( lim+1, sizeof( char *), "f_eac: new_argv" );
-	new_argc = rt_split_cmd( new_argv, lim+1, bu_vls_addr( &v ) );
+	new_argc = bu_argv_from_string( new_argv, lim, bu_vls_addr( &v ) );
 	retval = cmd_draw( clientData, interp, new_argc, new_argv );
 	bu_free( (genptr_t)new_argv, "f_eac: new_argv" );
 	bu_vls_free( &v );

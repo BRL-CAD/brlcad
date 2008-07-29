@@ -42,8 +42,9 @@
 
 #include "bu.h"
 
+/* non-published global */
+extern int bu_pid_of_initiating_thread;
 
-int bu_pid_of_initiating_thread = 0; /**< don't declare in include/bu.h */
 
 /**
  *			B U _ I S _ P A R A L L E L

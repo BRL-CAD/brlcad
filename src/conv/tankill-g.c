@@ -40,9 +40,6 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-/* local headers */
-#include "../librt/debug.h"
-
 
 static int keep_1001=0;		/* flag to indicate that components with id 1001 should not be ignored */
 static int verbose=0;		/* verbosity flag */

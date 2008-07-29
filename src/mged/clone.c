@@ -19,19 +19,7 @@
  */
 /** @file clone.c
  *
- * Functions -
- *	f_clone		clones an object, optionally
- *			rotating or translating the copies
- *	f_tracker	clones an object, evenly
- *			spacing the copies along a spline
- *
- * Author -
- *	Adam Ross (v4)
- *      Christopher Sean Morrison (v5)
- *      Erik Greenwald (v5)
- *
- * Source -
- *      Geometric Solutions, Inc.
+ * routines related to performing deep object copies
  *
  * TODO:
  *   use bu_vls strings
@@ -72,7 +60,7 @@
 #include "db.h"
 #include "raytrace.h"
 
-#include "./ged.h"
+#include "./mged.h"
 #include "./cmd.h"
 
 
@@ -314,7 +302,7 @@ copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	}
 
 	if (rp->u_id == ID_SOLID) {
-	    bu_strlcpy(rp->s.s_name, dp->d_namep, CLONE_BUFSIZE);
+	    bu_strlcpy(rp->s.s_name, dp->d_namep, NAMESIZE);
 
 	    /* mirror */
 	    if (state->miraxis != W) {
@@ -519,7 +507,7 @@ copy_v4_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 	    bu_vls_strcpy(&obj_list.names[idx].dest[i], bu_vls_addr(name));
 	    bu_vls_free(name);
 	}
-	bu_strlcpy(rp[0].c.c_name, bu_vls_addr(&obj_list.names[idx].dest[i]), CLONE_BUFSIZE);
+	bu_strlcpy(rp[0].c.c_name, bu_vls_addr(&obj_list.names[idx].dest[i]), NAMESIZE);
 
 	/* add the object to the directory */
 	dp = db_diradd(_dbip, rp->c.c_name, RT_DIR_PHONY_ADDR, proto->d_len, proto->d_flags, &proto->d_minor_type);
@@ -533,7 +521,7 @@ copy_v4_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 		bu_log("ERROR: clone internal error looking up %s\n", rp[j].M.m_instname);
 		return NULL;
 	    }
-	    snprintf(rp[j].M.m_instname, CLONE_BUFSIZE, "%s", obj_list.names[index_in_list(obj_list, rp[j].M.m_instname)].dest[i]);
+	    snprintf(rp[j].M.m_instname, NAMESIZE, "%s", obj_list.names[index_in_list(obj_list, rp[j].M.m_instname)].dest[i]);
 	}
 
 	/* write the object to disk */
@@ -789,7 +777,7 @@ copy_object(struct db_i *_dbip, struct resource *resp, struct clone_state *state
 
     /* display the cloned object(s) */
     if (state->draw_obj) {
-	char *av[3] = {"e", NULL, NULL};
+	const char *av[3] = {"e", NULL, NULL};
 
 	idx = index_in_list(obj_list, state->src->d_namep);
 	for (i = 0; i < (state->n_copies > obj_list.name_size ? obj_list.name_size : state->n_copies); i++) {
@@ -964,7 +952,8 @@ get_args(Tcl_Interp *interp, int argc, char **argv, struct clone_state *state)
 }
 
 /**
- * master hook function for the 'clone' command.
+ * master hook function for the 'clone' command.  clones an object,
+ * optionally * rotating or translating the copies
  */
 int
 f_clone(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -1221,11 +1210,8 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	vect_t *rots;
 
 	for (i = 0; i < 2; i++)
-	    vargs[i] = (char *)bu_malloc(sizeof(char)*CLONE_BUFSIZE, "alloc vargs1");
-
-	bu_strlcpy(vargs[0], "e", sizeof(vargs[0]));
-	bu_strlcpy(vargs[1], bu_vls_addr(&links[j].name), CLONE_BUFSIZE);
-	vargs[2] = NULL;
+	    vargs[i] = (char *)bu_calloc(CLONE_BUFSIZE, sizeof(char), "alloc vargs[i]");
+	vargs[0][0] = 'e';
 
 	state.interp = interp;
 	state.incr = inc;
@@ -1233,7 +1219,7 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	state.draw_obj = 0;
 	state.miraxis = W;
 
-	dps = (struct directory **)bu_malloc(sizeof(struct directory *)*n_links, "alloc dps");
+	dps = (struct directory **)bu_calloc(n_links, sizeof(struct directory *), "alloc dps array");
 	/* rots = (vect_t *)bu_malloc(sizeof(vect_t)*n_links, "alloc rots");*/
 	for (i = 0; i < n_links; i++) {
 	    /* global dbip */
@@ -1241,7 +1227,7 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    /* VSET(rots[i], 0, 0, 0);*/
 	}
 
-	for (i = 0; i < n_verts-1; i++)
+	for (i = 0; i < n_verts-1; i++) {
 	    for (j = 0; j < n_links; j++) {
 		if (i == 0) {
 		    VSCALE(state.trans, verts[n_links*i+j], local2base);
@@ -1262,7 +1248,6 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		/* global dbip */
 		dps[j] = copy_object(dbip, &rt_uniresource, &state);
 		bu_strlcpy(vargs[1], dps[j]->d_namep, CLONE_BUFSIZE);
-		/* bu_strlcpy(vargs[1], obj_list.names[index_in_list(obj_list, links[j].name)].dest[0], sizeof(vargs[1]));*/
 
 		if (!no_draw || !is_dm_null()) {
 		    drawtrees(2, vargs, 1);
@@ -1274,10 +1259,12 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		fprintf(stdout, ".");
 		fflush(stdout);
 	    }
+	}
 	fprintf(stdout, "\n");
+	bu_free(dps, "free dps array");
+
 	for (i = 0; i < 2; i++)
-	    bu_free((char *)vargs[i], "free vargs[i]");
-	free(dps);
+	    bu_free(vargs[i], "free vargs[i]");
     }
 
     free(s.t);

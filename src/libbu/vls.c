@@ -41,8 +41,9 @@
 #include "bu.h"
 
 
-const char bu_vls_message[] = "bu_vls_str";
-const char bu_strdup_message[] = "bu_strdup string";
+/* non-published globals */
+extern const char bu_vls_message[];
+extern const char bu_strdup_message[];
 
 
 /**
@@ -624,56 +625,100 @@ bu_vls_from_argv(register struct bu_vls *vp, int argc, const char *argv[])
  * Build argv[] array from input buffer, by splitting whitespace
  * separated "words" into null terminated strings.
  *
- * The input buffer is altered by this process.  The argv[] array
- * points into the input buffer.  The input buffer should not be freed
- * until argv has been freed or passes out of scope.
+ * 'lim' indicates the maximum number of elements that can be stored
+ * in the argv[] array not including a terminating NULL.
  *
- * 'lim' indicates the number of elements in the argv[] array.
+ * The input buffer is altered by this process.  The argv[] array
+ * points into the input buffer.  The argv[] array needs to have at
+ * least lim+1 pointers allocated for lim items plus a terminating
+ * pointer to NULL.  The input buffer should not be freed until argv
+ * has been freed or passes out of scope.
  *
  * Returns -
- *	 0	no words in input
- *	nwords	number of words of input, now in argv[]
- *
- * Built from rt_split_cmd(), but without the shell escape support.
+ *	0	no words in input
+ *	argc	number of words of input, now in argv[]
  */
 int
-bu_argv_from_string(char **argv, int lim, register char *lp)
+bu_argv_from_string(char *argv[], int lim, char *lp)
 {
-    register int	nwords;			/* number of words seen */
-    register char	*lp1;
+    register int argc = 0; /* number of words seen */
+    register int skip = 0;
 
-    argv[0] = "_NIL_"; /* sanity */
+    if (!argv) {
+	/* do this instead of crashing */
+	bu_bomb("bu_argv_from_string received a null argv\n");
+    }
+    argv[0] = (char *)NULL;
 
-    while ( *lp != '\0' && isspace( *lp ) )
-	lp++;
-
-    if ( *lp == '\0' )
-	return 0; /* No words */
-
-    /* some non-space string has been seen, argv[0] is set */
-    nwords = 1;
-    argv[0] = lp;
-
-    for (; *lp != '\0'; lp++ )  {
-	if ( !isspace( *lp ) ) {
-	    /* skip over current word */
-	    continue;
-	}
-
-	*lp = '\0'; /* terminate current word */
-	lp1 = lp + 1;
-
-	if ( *lp1 != '\0' && !isspace( *lp1 ) )  {
-	    /* Begin next word */
-	    if ( nwords >= lim-1 )
-		break;	/* argv[] full */
-
-	    argv[nwords++] = lp1;
-	}
+    if (lim <= 0 || !lp) {
+	/* nothing to do, only return NULL */
+	return 0;
     }
 
-    argv[nwords] = (char *)NULL; /* sanity */
-    return nwords;
+    /* skip leading whitespace */
+    while (*lp != '\0' && isspace(*lp))
+	lp++;
+
+    if (*lp == '\0') {
+	/* no words, only return NULL */
+	return 0;
+    }
+
+#ifdef HAVE_SHELL_ESCAPE
+    /* Handle "!" shell escape char so the shell can parse the line */
+    if (*lp == '!') {
+	int ret;
+
+	ret = system(lp+1);
+	if (ret != 0)  {
+	    perror("system(3)");
+	    bu_log("bu_argv_from_string() FAILED: %s\n", lp);
+	}
+
+	/* No words, return NULL */
+	return 0;
+    }
+#endif
+
+    /* some non-space string has been seen, set argv[0] */
+    argc = 0;
+    argv[argc] = lp;
+
+    for (; *lp != '\0'; lp++) {
+
+	/* skip over current word */
+	if (!isspace(*lp))
+	    continue;
+
+	skip = 0;
+
+	/* terminate current word, skip space until we find the start
+	 * of the next word nulling out the spaces as we go along.
+	 */
+	while (*(lp+skip) != '\0' && isspace(*(lp+skip))) {
+	    lp[skip] = '\0';
+	    skip++;
+	}
+
+	if (*(lp + skip) == '\0')
+	    break;
+
+	/* make sure argv[] isn't full, need room for NULL */
+	if (argc >= lim-1)
+	    break;
+
+	/* start of next word */
+	argc++;
+	argv[argc] = lp + skip;
+
+	/* jump over the spaces, remember the loop's lp++ */
+	lp += skip - 1;
+    }
+
+    /* always NULL-terminate the array */
+    argc++;
+    argv[argc] = (char *)NULL;
+    return argc;
 }
 
 

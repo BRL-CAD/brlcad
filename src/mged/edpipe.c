@@ -37,17 +37,17 @@
 #include "bio.h"
 #include "vmath.h"
 #include "nmg.h"
-#include "raytrace.h"
-#include "nurb.h"
 #include "rtgeom.h"
+#include "ged.h"
+#include "nurb.h"
 #include "wdb.h"
 
-#include "./ged.h"
+#include "./mged.h"
 #include "./mged_solid.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
 
-extern struct bn_tol		mged_tol;	/* from ged.c */
+extern struct bn_tol mged_tol;
 
 void
 split_pipept(struct bu_list *pipe_hd, struct wdb_pipept *ps, fastf_t *new_pt)

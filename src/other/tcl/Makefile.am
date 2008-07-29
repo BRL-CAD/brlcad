@@ -304,6 +304,7 @@ fast: all-am
 depends: all-am
 
 EXTRA_DIST = \
+	CMakeLists.txt \
 	ChangeLog \
 	ChangeLog.1999 \
 	ChangeLog.2000 \

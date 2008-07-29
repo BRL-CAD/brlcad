@@ -21,7 +21,7 @@
 /** @{ */
 /** @file g_tgc.c
  *
- *	Intersect a ray with a Truncated General Cone.
+ * Intersect a ray with a Truncated General Cone.
  *
  * Method -
  *	TGC:  solve quartic equation of cone and line
@@ -40,10 +40,10 @@
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
-#include "raytrace.h"
 #include "rtgeom.h"
-#include "./debug.h"
+#include "raytrace.h"
 #include "nurb.h"
+
 
 BU_EXTERN(int rt_rec_prep, (struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip));
 

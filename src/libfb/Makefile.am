@@ -57,7 +57,7 @@ libfb_la_SOURCES = \
 	tcl.c \
 	vers.c
 
-libfb_la_LDFLAGS = -version-info 19:1
+libfb_la_LDFLAGS = -version-info 19:1 -no-undefined
 libfb_la_CFLAGS = \
 	-DIF_REMOTE \
 	-DIF_AB \

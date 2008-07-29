@@ -20,12 +20,12 @@
  */
 /** @file g-acad.c
  *
- *  Program to convert a BRL-CAD model (in a .g file) to the Lockheed
- *  Martin "Advanced Computer-Aided Design" (ACAD) file format by
- *  calling on the NMG booleans (formerly from General Dynamics).
+ * Program to convert a BRL-CAD model (in a .g file) to the Lockheed
+ * Martin "Advanced Computer-Aided Design" (ACAD) file format by
+ * calling on the NMG booleans (formerly from General Dynamics).
  *
- *  Note that this converter has nothing to do with the Autodesk
- *  AutoCAD software.
+ * Note that this converter has nothing to do with the Autodesk
+ * AutoCAD software.
  *
  */
 
@@ -42,9 +42,6 @@
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
-
-/* local headers */
-#include "../librt/debug.h"
 
 
 #define V3ARGSIN(a)       (a)[X]/25.4, (a)[Y]/25.4, (a)[Z]/25.4

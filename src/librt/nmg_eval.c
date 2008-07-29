@@ -637,7 +637,6 @@ nmg_eval_plot(struct nmg_bool_state *bs, int num, int delay)
     }
 
     if ( do_anim )  {
-	extern void (*nmg_vlblock_anim_upcall)();
 	struct bn_vlblock	*vbp;
 
 	vbp = rt_vlblock_init();

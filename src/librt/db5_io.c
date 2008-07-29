@@ -21,7 +21,7 @@
 /** @{ */
 /** @file db5_io.c
  *
- *  Handle import/export and IO of v5 database objects.
+ * Handle import/export and IO of v5 database objects.
  *
  */
 
@@ -38,15 +38,6 @@
 #include "raytrace.h"
 #include "mater.h"
 
-#include "./debug.h"
-
-/* Number of bytes used for each value of DB5HDR_WIDTHCODE_* */
-const int db5_enc_len[4] = {
-    1,
-    2,
-    4,
-    8
-};
 
 /**
  *			D B 5 _ H E A D E R _ I S _ V A L I D
@@ -1588,27 +1579,18 @@ rt_db_get_internal5(
     return ret;
 }
 
-/*
- *  XXX The material head should be attached to the db_i, not global.
+
+/**
+ *
  */
 void
 db5_export_color_table( struct bu_vls *ostr, struct db_i *dbip )
 {
-    struct mater *mp;
-
     BU_CK_VLS(ostr);
     RT_CK_DBI(dbip);
-
-    for ( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
-	bu_vls_printf(ostr,
-		      "{%d %d %d %d %d} ",
-		      mp->mt_low,
-		      mp->mt_high,
-		      mp->mt_r,
-		      mp->mt_g,
-		      mp->mt_b );
-    }
+    rt_vls_color_map(ostr);
 }
+
 
 /**
  *			D B 5 _ I M P O R T _ C O L O R _ T A B L E

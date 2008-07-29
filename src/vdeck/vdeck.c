@@ -19,7 +19,7 @@
  */
 /** @file vdeck.c
  *
- *	Derived from KARDS, written by Keith Applin.
+ * Derived from KARDS, written by Keith Applin.
  *
  * Generate a COM-GEOM card images suitable for input to gift5 (also
  * gift(1V)) from an mged(1V) target description.
@@ -71,7 +71,6 @@
 #include "rtgeom.h"
 
 #include "./vextern.h"
-#include "../librt/debug.h"
 
 
 int	debug = 0;

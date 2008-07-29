@@ -932,11 +932,7 @@ bn_tcl_setup(Tcl_Interp *interp)
  *  The name of this function is specified by TCL.
  */
 int
-#ifdef BRLCAD_DEBUG
-Bn_d_Init(Tcl_Interp *interp)
-#else
-    Bn_Init(Tcl_Interp *interp)
-#endif
+Bn_Init(Tcl_Interp *interp)
 {
     bn_tcl_setup(interp);
     return TCL_OK;

@@ -80,7 +80,7 @@ main (int argc, char **argv)
 	    case '?':
 		print_usage();
 	}
-    
+
     /* Ensure proper command-line syntax */
     if (bu_optind != argc) {
 	print_usage();

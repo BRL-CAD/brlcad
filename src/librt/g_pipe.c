@@ -44,10 +44,10 @@
 #include "bn.h"
 #include "db.h"
 #include "nmg.h"
+#include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "rtgeom.h"
-#include "./debug.h"
+
 
 struct id_pipe
 {

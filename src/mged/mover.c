@@ -33,7 +33,7 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "./ged.h"
+#include "./mged.h"
 #include "./mged_solid.h"
 
 /* default region ident codes */

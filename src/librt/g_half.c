@@ -21,22 +21,22 @@
 /** @{ */
 /** @file g_half.c
  *
- *  Intersect a ray with a Halfspace.
+ * Intersect a ray with a Halfspace.
  *
- *  A HALFSPACE is defined by an outward pointing normal vector,
- *  and the distance from the origin to the plane, which is defined
- *  by N and d.
+ * A HALFSPACE is defined by an outward pointing normal vector, and
+ * the distance from the origin to the plane, which is defined by N
+ * and d.
  *
- *  With outward pointing normal vectors,
- *  the ray enters the half-space defined by a plane when D dot N < 0,
- *  is parallel to the plane when D dot N = 0, and exits otherwise.
+ * With outward pointing normal vectors, the ray enters the half-space
+ * defined by a plane when D dot N < 0, is parallel to the plane when
+ * D dot N = 0, and exits otherwise.
  *
- *  The inside of the halfspace bounded by the plane
- *  consists of all points P such that
+ * The inside of the halfspace bounded by the plane
+ * consists of all points P such that
  *	VDOT(P, N) - N[3] <= 0,
  *
- *  where N[3] stores the value d.
- *  See the remarks in h/vmath.h for more details.
+ * where N[3] stores the value d.
+ * See the remarks in h/vmath.h for more details.
  *
  */
 
@@ -48,11 +48,11 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "rtgeom.h"
 #include "raytrace.h"
 #include "nmg.h"
 #include "db.h"
-#include "rtgeom.h"
-#include "./debug.h"
+
 
 struct half_specific  {
     plane_t	half_eqn;		/* Plane equation, outward normal */
@@ -180,6 +180,8 @@ rt_hlf_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	segp->seg_stp = stp;
 	segp->seg_in.hit_dist = in;
 	segp->seg_out.hit_dist = out;
+        segp->seg_in.hit_surfno = 0;
+        segp->seg_out.hit_surfno = 0;
 	BU_LIST_INSERT( &(seghead->l), &(segp->l) );
     }
     return(2);			/* HIT */
@@ -238,6 +240,8 @@ rt_hlf_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	segp[i].seg_stp = stp[i];
 	segp[i].seg_in.hit_dist = in;
 	segp[i].seg_out.hit_dist = out;
+        segp[i].seg_in.hit_surfno = 0;
+        segp[i].seg_out.hit_surfno = 0;
     }
 }
 

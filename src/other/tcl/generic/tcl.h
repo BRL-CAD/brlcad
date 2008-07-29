@@ -186,7 +186,11 @@ extern "C" {
 #   if HAVE_DECLSPEC
 #	define DLLIMPORT __declspec(dllimport)
 #	define DLLEXPORT __declspec(dllexport)
-#	define CRTIMPORT __declspec(dllimport)
+#	if HAVE_DECLSPEC && defined(_DLL)
+#	    define CRTIMPORT __declspec(dllimport)
+#	else
+#	    define CRTIMPORT
+#	endif
 #   else
 #	define DLLIMPORT
 #	define DLLEXPORT

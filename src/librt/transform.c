@@ -19,16 +19,18 @@
  */
 /** @file transform.c
  *
+ * apply a matrix transform to a given object
+ *
  */
 
 #include "common.h"
 
-#include "bio.h"
-
+#include "vmath.h"
 #include "raytrace.h"
 
 
-/** r t _ m a t r i x _ t r a n s f o r m
+/**
+ * r t _ m a t r i x _ t r a n s f o r m
  *
  * apply a matrix transformation to a given input object, setting the
  * resultant transformed object as the output solid.  if free is set,

@@ -42,7 +42,7 @@
 #include "wdb.h"
 #include "db.h"
 
-#include "./ged.h"
+#include "./mged.h"
 #include "./mged_solid.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
@@ -52,7 +52,7 @@
 #define TRY_EDIT_NEW_WAY
 #endif
 
-extern struct bn_tol		mged_tol;	/* from ged.c */
+extern struct bn_tol mged_tol;
 
 static void	arb8_edge(int arg), ars_ed(int arg), ell_ed(int arg), tgc_ed(int arg), tor_ed(int arg), spline_ed(int arg);
 static void	nmg_ed(int arg), pipe_ed(int arg), vol_ed(int arg), ebm_ed(int arg), dsp_ed(int arg), cline_ed(int arg), bot_ed(int arg), extr_ed(int arg);

@@ -30,7 +30,7 @@
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
-#include "./ged.h"
+#include "./mged.h"
 
 void
 dbpr_arb(struct solidrec *sp, register struct directory *dp)

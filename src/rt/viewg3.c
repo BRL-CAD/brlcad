@@ -19,12 +19,13 @@
  */
 /** @file viewg3.c
  *
- *  Ray Tracing program RTG3 bottom half.
+ * Ray Tracing program RTG3 bottom half.
  *
- *  This module turns RT library partition lists into
- *  the old GIFT type shotlines with three components per card,
- *  and with both the entrance and exit obliquity angles.
- *  The output format is:
+ * This module turns RT library partition lists into the old GIFT type
+ * shotlines with three components per card, and with both the
+ * entrance and exit obliquity angles.
+ *
+ * The output format is:
  *	overall header card
  *		view header card
  *			ray (shotline) header card
@@ -33,8 +34,8 @@
  *			 :
  *			 :
  *
- *  At present, the main use for this format ray file is
- *  to drive the JTCG-approved COVART2 and COVART3 applications.
+ * At present, the main use for this format ray file is to drive the
+ * JTCG-approved COVART2 and COVART3 applications.
  *
  */
 
@@ -48,7 +49,6 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "./ext.h"
-#include "../librt/debug.h"
 #include "plot3.h"
 #include "rtprivate.h"
 

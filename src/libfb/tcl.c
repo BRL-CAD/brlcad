@@ -501,11 +501,7 @@ fb_cmd_common_file_size(ClientData clientData, Tcl_Interp *interp, int argc, cha
  *  The name of this function is specified by TCL.
  */
 int
-#ifdef BRLCAD_DEBUG
-Fb_d_Init(Tcl_Interp *interp)
-#else
-    Fb_Init(Tcl_Interp *interp)
-#endif
+Fb_Init(Tcl_Interp *interp)
 {
     /* register commands */
     bu_register_cmds(interp, cmdtab);

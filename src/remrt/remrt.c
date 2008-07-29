@@ -64,7 +64,6 @@
 #include "rtprivate.h"
 
 /* private */
-#include "../librt/debug.h"
 #include "./protocol.h"
 #include "./ihost.h"
 #include "brlcad_version.h"
@@ -1079,7 +1078,7 @@ eat_script(FILE *fp)
     char		*ebuf;
     char		*nsbuf;
     int		argc;
-    char		*argv[64];
+    char		*argv[64+1];
     struct bu_vls	prelude;
     struct bu_vls	body;
     struct bu_vls	finish;
@@ -1142,7 +1141,7 @@ eat_script(FILE *fp)
 	}
 
 	/* buf[] has saved "start" line in it */
-	argc = rt_split_cmd( argv, 64, buf );
+	argc = bu_argv_from_string( argv, 64, buf );
 	if ( argc < 2 )  {
 	    bu_log("bad 'start' line\n");
 	    bu_free( buf, "bad start line" );

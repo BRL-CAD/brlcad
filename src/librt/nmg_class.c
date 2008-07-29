@@ -21,21 +21,21 @@
 /** @{ */
 /** @file nmg_class.c
  *
- *  Subroutines to classify one object with respect to another.
- *  Possible classifications are AinB, AoutB, AinBshared, AinBanti.
+ * Subroutines to classify one object with respect to another.
+ * Possible classifications are AinB, AoutB, AinBshared, AinBanti.
  *
- *  The first set of routines (nmg_class_pt_xxx) are used to classify
- *  an arbitrary point specified by it's Cartesian coordinates,
- *  against various kinds of NMG elements.
- *  nmg_class_pt_f() and nmg_class_pt_s() are available to
- *  applications programmers for direct use, and have no side effects.
+ * The first set of routines (nmg_class_pt_xxx) are used to classify
+ * an arbitrary point specified by it's Cartesian coordinates, against
+ * various kinds of NMG elements.  nmg_class_pt_f() and
+ * nmg_class_pt_s() are available to applications programmers for
+ * direct use, and have no side effects.
  *
- *  The second set of routines (class_xxx_vs_s) are used only to support
- *  the routine nmg_class_shells() mid-way through the NMG Boolean
- *  algorithm.  These routines operate with special knowledge about
- *  the state of the data structures after the intersector has been called,
- *  and depends on all geometric equivalences to have been converted into
- *  shared topology.
+ * The second set of routines (class_xxx_vs_s) are used only to
+ * support the routine nmg_class_shells() mid-way through the NMG
+ * Boolean algorithm.  These routines operate with special knowledge
+ * about the state of the data structures after the intersector has
+ * been called, and depends on all geometric equivalences to have been
+ * converted into shared topology.
  *
  */
 /** @} */
@@ -49,8 +49,8 @@
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "./debug.h"
 #include "plot3.h"
+
 
 extern int nmg_class_nothing_broken;
 

@@ -19,12 +19,13 @@
  */
 /** @file main.c
  *
- *  Ray Tracing User Interface (RTUIF) main program, using LIBRT library.
+ * Ray Tracing User Interface (RTUIF) main program, using LIBRT
+ * library.
  *
- *  Invoked by MGED for quick pictures.
- *  Is linked with each of several "back ends":
+ * Invoked by MGED for quick pictures.
+ * Is linked with each of several "back ends":
  *	view.c, viewpp.c, viewray.c, viewcheck.c, etc
- *  to produce different executable programs:
+ * to produce different executable programs:
  *	rt, rtpp, rtray, rtcheck, etc.
  *
  */
@@ -45,7 +46,6 @@
 
 /* private */
 #include "./ext.h"
-#include "../librt/debug.h"
 #include "rtprivate.h"
 #include "brlcad_version.h"
 
@@ -57,7 +57,6 @@ extern const char usage[];
 /***** Variables shared with viewing model *** */
 FBIO		*fbp = FBIO_NULL;	/* Framebuffer handle */
 FILE		*outfp = NULL;		/* optional pixel output file */
-int		output_is_binary = 1;	/* !0 means output file is binary */
 mat_t		view2model;
 mat_t		model2view;
 /***** end of sharing with viewing model *****/

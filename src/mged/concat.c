@@ -46,7 +46,7 @@
 #include "raytrace.h"
 #include "db.h"
 
-#include "./ged.h"
+#include "./mged.h"
 #include "./sedit.h"
 
 char	new_name[NAMESIZE+1];

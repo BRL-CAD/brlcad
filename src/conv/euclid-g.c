@@ -40,9 +40,6 @@
 #include "rtgeom.h"
 #include "wdb.h"
 
-/* local headers */
-#include "../librt/debug.h"
-
 
 #define BRLCAD_TITLE_LENGTH	72
 #define MAX_FACES_PER_REGION	8192

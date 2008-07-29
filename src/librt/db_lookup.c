@@ -21,17 +21,7 @@
 /** @{ */
 /** @file db_lookup.c
  *
- * Functions -
- *	db_dirhash	Compute hashing function
- *	db_lookup	Convert an object name into directory pointer
- *	db_diradd	Add entry to the directory
- *	db_dirdelete	Delete entry from directory
- *	db_rename	Change name string of a directory entry
- *	db_pr_dir	Print contents of database directory
- *
- *
- *  Authors -
- *	Michael John Muuss
+ * v4/v5 database directory routines
  *
  */
 
@@ -44,8 +34,6 @@
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
-
-#include "./debug.h"
 
 
 /**

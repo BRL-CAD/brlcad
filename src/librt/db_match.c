@@ -21,12 +21,7 @@
 /** @{ */
 /** @file db_match.c
  *
- * Functions -
- *	db_regexp_match		Determine if a string matches a regexp pattern
- *	db_regexp_match_all	Return a vls filled with all names matching
- *				the given pattern
- *	db_update_nref		Updates the d_nref fields of each member of
- *				the directory in the given database.
+ * Routines to dtermine if a string matches a given pattern.
  *
  */
 
@@ -37,10 +32,9 @@
 
 #include "vmath.h"
 #include "db.h"
-#include "raytrace.h"
 #include "rtgeom.h"
+#include "raytrace.h"
 
-#include "./debug.h"
 
 /**
  *			D B _ R E G E X P _ M A T C H

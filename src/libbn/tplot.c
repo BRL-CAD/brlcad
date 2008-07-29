@@ -73,10 +73,153 @@
 #define NUM_DISTANCE	250
 #define LAB_LNGTH	860
 
-void tp_ftoa(float x, char *s);
-void tp_fixsc(float *x, int npts, float size, float *xs, float *xmin, float *xmax, float *dx);
-void tp_sep(float x, float *coef, int *ex);
-double tp_ipow(double x, int n);
+
+/**			T P _ S E P
+ *@brief
+ *  tp_sep() divides a floating point number into a coefficient
+ *  and an exponent. works in base ten.
+ */
+void
+tp_sep(float x, float *coef, int *ex)
+{
+    int i, isv;
+    float xx;
+
+    isv = 1;
+    if (x < 0.0 ) {
+	isv = -1;
+	x = -x;
+    }
+
+    if ( x > 1.0 ) {
+	xx = x;
+	*ex = 0;
+	*coef = 0.0;
+
+	if ( xx < 10.0) {
+	    *coef = xx*isv;
+	    return;
+	}
+
+	for ( i=1; i < 39; ++i) {
+	    *ex += 1;
+	    xx = xx/10.0;
+	    if ( xx < 10.0 )
+		break;
+	}
+	*coef = xx*isv;
+	return;
+    } else {
+	xx = x;
+	*ex = 0;
+	*coef = 0.0;
+	for ( i=1; i<39; ++i) {
+	    *ex -= 1;
+	    xx *= 10.0;
+	    if ( xx >= 1.0 )
+		break;
+	}
+	*coef = xx*isv;
+	return;
+    }
+}
+
+
+/**			T P _ I P O W
+ *@brief
+ *  tp_ipow() raises a floating point number to a positve integer
+ *  power.
+ *  XXX Horribly inefficient!
+ */
+double tp_ipow (double x, int n)
+{
+    return(n>0?x*tp_ipow(x, n-1):1);
+}
+
+
+/**			T P _ F I X S C
+ *
+ *   tp_fixsc is a scaling routine intended to be used in conjunction
+ *   with plotting routines. What tp_fixsc does is scale the user supplied
+ *   data so that it fits on a specified axis and has 'nice' numbers
+ *   for labels.
+ *
+ *   Calling sequence
+ *
+ *   tp_fixsc(x, npts, size, xs, xmin, xmax, dx)
+ *   where
+ *
+ * @param	x[]	the data array to be scaled
+ * @param	npts	the number of elements in x[]
+ * @param	size	the length into which x[] is supposed to be fitted
+ * 			(in inches)
+ * @param	xs	the returned scale facter to integer space
+ * @param	xmin	the new minimum value for the data array (a returned
+ *			value)
+ * @param	xmax	the new maximum value for the data array (a returned
+ *			value)
+ * @param	dx	the value in data units between tic marks (a returned
+ *			value)
+ *
+ */
+void
+tp_fixsc(float *x,
+	 int npts,
+	 float size,
+	 float *xs,
+	 float *xmin,
+	 float *xmax,
+	 float *dx)
+{
+    float txmi, txma, coef, delta, diff;
+    int i, ex;
+
+    txmi=txma=x[0];
+    i = 0;
+    while ( i <= npts ) {
+	if ( x[i] < txmi)
+	    txmi = x[i];
+	if ( x[i] > txma)
+	    txma = x[i];
+	i++;
+    }
+
+    diff = txma - txmi;
+    if ( diff < .000001 )
+	diff = .000001;
+
+    tp_sep (diff, &coef, &ex);
+    if ( coef < 2.0 )
+	delta = .1;
+    else if ( coef < 4.0 )
+	delta = .2;
+    else
+	delta = .5;
+
+    i = 0;
+    if (ex < 0 ) {
+	ex = -ex;
+	i=12;
+    }
+
+    delta *= tp_ipow(10.0, ex);
+    if (i == 12)
+	delta = 1.0/delta;
+    *dx = delta;
+
+    i = (fabs(txmi)/delta);
+    *xmin = i*delta;
+    if ( txmi < 0.0 )
+	*xmin = -(*xmin+delta);
+
+    i = (fabs(txma)/delta);
+    *xmax = i*delta;
+    if ( txma < 0.0)
+	*xmax = - *xmax;
+    else
+	*xmax = *xmax+delta;
+    *xs = 1000.*size/(*xmax - *xmin);
+}
 
 
 /**
@@ -294,154 +437,6 @@ tp_ftoa(float x, char *s)
     }
     /* add a null byte terminator */
     *s = 0;
-}
-
-
-/**			T P _ F I X S C
- *
- *   tp_fixsc is a scaling routine intended to be used in conjunction
- *   with plotting routines. What tp_fixsc does is scale the user supplied
- *   data so that it fits on a specified axis and has 'nice' numbers
- *   for labels.
- *
- *   Calling sequence
- *
- *   tp_fixsc(x, npts, size, xs, xmin, xmax, dx)
- *   where
- *
- * @param	x[]	the data array to be scaled
- * @param	npts	the number of elements in x[]
- * @param	size	the length into which x[] is supposed to be fitted
- * 			(in inches)
- * @param	xs	the returned scale facter to integer space
- * @param	xmin	the new minimum value for the data array (a returned
- *			value)
- * @param	xmax	the new maximum value for the data array (a returned
- *			value)
- * @param	dx	the value in data units between tic marks (a returned
- *			value)
- *
- */
-void
-tp_fixsc(float *x,
-	 int npts,
-	 float size,
-	 float *xs,
-	 float *xmin,
-	 float *xmax,
-	 float *dx)
-{
-    float txmi, txma, coef, delta, diff;
-    int i, ex;
-
-    txmi=txma=x[0];
-    i = 0;
-    while ( i <= npts ) {
-	if ( x[i] < txmi)
-	    txmi = x[i];
-	if ( x[i] > txma)
-	    txma = x[i];
-	i++;
-    }
-
-    diff = txma - txmi;
-    if ( diff < .000001 )
-	diff = .000001;
-
-    tp_sep (diff, &coef, &ex);
-    if ( coef < 2.0 )
-	delta = .1;
-    else if ( coef < 4.0 )
-	delta = .2;
-    else
-	delta = .5;
-
-    i = 0;
-    if (ex < 0 ) {
-	ex = -ex;
-	i=12;
-    }
-
-    delta *= tp_ipow(10.0, ex);
-    if (i == 12)
-	delta = 1.0/delta;
-    *dx = delta;
-
-    i = (fabs(txmi)/delta);
-    *xmin = i*delta;
-    if ( txmi < 0.0 )
-	*xmin = -(*xmin+delta);
-
-    i = (fabs(txma)/delta);
-    *xmax = i*delta;
-    if ( txma < 0.0)
-	*xmax = - *xmax;
-    else
-	*xmax = *xmax+delta;
-    *xs = 1000.*size/(*xmax - *xmin);
-}
-
-
-/**			T P _ S E P
- *@brief
- *  tp_sep() divides a floating point number into a coefficient
- *  and an exponent. works in base ten.
- */
-void
-tp_sep(float x, float *coef, int *ex)
-{
-    int i, isv;
-    float xx;
-
-    isv = 1;
-    if (x < 0.0 ) {
-	isv = -1;
-	x = -x;
-    }
-
-    if ( x > 1.0 ) {
-	xx = x;
-	*ex = 0;
-	*coef = 0.0;
-
-	if ( xx < 10.0) {
-	    *coef = xx*isv;
-	    return;
-	}
-
-	for ( i=1; i < 39; ++i) {
-	    *ex += 1;
-	    xx = xx/10.0;
-	    if ( xx < 10.0 )
-		break;
-	}
-	*coef = xx*isv;
-	return;
-    } else {
-	xx = x;
-	*ex = 0;
-	*coef = 0.0;
-	for ( i=1; i<39; ++i) {
-	    *ex -= 1;
-	    xx *= 10.0;
-	    if ( xx >= 1.0 )
-		break;
-	}
-	*coef = xx*isv;
-	return;
-    }
-}
-
-
-/**			T P _ I P O W
- *@brief
- *  tp_ipow() raises a floating point number to a positve integer
- *  power.
- *  XXX Horribly inefficient!
- */
-double tp_ipow (double x, int n)
-{
-    return(n>0?x*tp_ipow(x, n-1):1);
 }
 
 

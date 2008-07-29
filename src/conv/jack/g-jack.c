@@ -19,8 +19,8 @@
  */
 /** @file g-jack.c
  *
- *  Program to convert a BRL-CAD model (in a .g file) to a JACK Psurf file,
- *  by calling on the NMG booleans.
+ * Program to convert a BRL-CAD model (in a .g file) to a JACK Psurf
+ * file, by calling on the NMG booleans.
  *
  */
 
@@ -37,7 +37,6 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "plot3.h"
-#include "../../librt/debug.h"
 
 
 BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));

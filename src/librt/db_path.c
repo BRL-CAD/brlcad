@@ -23,12 +23,6 @@
  *
  * Routines to manipulate "db_full_path" structures
  *
- * Functions -
- *
- *
- *  Authors -
- *	Michael John Muuss
- *
  */
 
 #include "common.h"
@@ -41,7 +35,6 @@
 #include "vmath.h"
 #include "raytrace.h"
 
-#include "./debug.h"
 
 /**
  *			D B _ F U L L _ P A T H _ I N I T

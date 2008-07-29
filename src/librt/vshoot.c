@@ -21,8 +21,8 @@
 /** @{ */
 /** @file vshoot.c
  *
- *  EXPERIMENTAL vector version of the
- * Ray Tracing program shot coordinator.
+ * EXPERIMENTAL vector version of the Ray Tracing program shot
+ * coordinator.
  *
  */
 
@@ -32,49 +32,49 @@
 #include <math.h>
 #include "vmath.h"
 #include "raytrace.h"
-#include "./debug.h"
+
 
 struct resource rt_uniresource;		/* Resources for uniprocessor */
 
-/*
- *			R T _ S H O O T R A Y
+/**
+ * R T _ S H O O T R A Y
  *
- *  Given a ray, shoot it at all the relevant parts of the model,
- *  (building the HeadSeg chain), and then call rt_boolregions()
- *  to build and evaluate the partition chain.
- *  If the ray actually hit anything, call the application's
- *  a_hit() routine with a pointer to the partition chain,
- *  otherwise, call the application's a_miss() routine.
+ * Given a ray, shoot it at all the relevant parts of the model,
+ * (building the HeadSeg chain), and then call rt_boolregions() to
+ * build and evaluate the partition chain.  If the ray actually hit
+ * anything, call the application's a_hit() routine with a pointer to
+ * the partition chain, otherwise, call the application's a_miss()
+ * routine.
  *
- *  It is important to note that rays extend infinitely only in the
- *  positive direction.  The ray is composed of all points P, where
+ * It is important to note that rays extend infinitely only in the
+ * positive direction.  The ray is composed of all points P, where
  *
  *	P = r_pt + K * r_dir
  *
- *  for K ranging from 0 to +infinity.  There is no looking backwards.
+ * for K ranging from 0 to +infinity.  There is no looking backwards.
  *
- *  It is also important to note that the direction vector r_dir
- *  must have unit length;  this is mandatory, and is not ordinarily checked,
- *  in the name of efficiency.
+ * It is also important to note that the direction vector r_dir must
+ * have unit length; this is mandatory, and is not ordinarily checked,
+ * in the name of efficiency.
  *
- *  Input:  Pointer to an application structure, with these mandatory fields:
+ * Input:  Pointer to an application structure, with these mandatory fields:
  *	a_ray.r_pt	Starting point of ray to be fired
  *	a_ray.r_dir	UNIT VECTOR with direction to fire in (dir cosines)
  *	a_hit		Routine to call when something is hit
  *	a_miss		Routine to call when ray misses everything
  *
- *  Calls user's a_miss() or a_hit() routine as appropriate.
- *  Passes a_hit() routine list of partitions, with only hit_dist
- *  fields valid.  Normal computation deferred to user code,
- *  to avoid needless computation here.
+ * Calls user's a_miss() or a_hit() routine as appropriate.  Passes
+ * a_hit() routine list of partitions, with only hit_dist fields
+ * valid.  Normal computation deferred to user code, to avoid needless
+ * computation here.
  *
- *  Returns: whatever the application function returns (an int).
+ * Returns: whatever the application function returns (an int).
  *
- *  NOTE:  The appliction functions may call rt_shootray() recursively.
- *	Thus, none of the local variables may be static.
+ * NOTE: The appliction functions may call rt_shootray() recursively.
+ * Thus, none of the local variables may be static.
  *
- *  An open issue for execution in a PARALLEL environment is locking
- *  of the statistics variables.
+ * An open issue for execution in a PARALLEL environment is locking of
+ * the statistics variables.
  */
 int
 rt_shootray( struct application *ap )
@@ -162,12 +162,12 @@ rt_shootray( struct application *ap )
     }
 
     /*
-     *  XXX handle infinite solids here, later.
+     * XXX handle infinite solids here, later.
      */
 
     /*
-     *  If ray does not enter the model RPP, skip on.
-     *  If ray ends exactly at the model RPP, trace it.
+     * If ray does not enter the model RPP, skip on.
+     * If ray ends exactly at the model RPP, trace it.
      */
     if ( !rt_in_rpp( &ap->a_ray, inv_dir, rtip->mdl_min, rtip->mdl_max )  ||
 	 ap->a_ray.r_max < 0.0 )  {
@@ -240,7 +240,7 @@ rt_shootray( struct application *ap )
     }
 
     /*
-     *  Ray has finally left known space.
+     * Ray has finally left known space.
      */
     if ( InitialPart.pt_forw == &InitialPart )  {
 	ret = ap->a_miss( ap );
@@ -249,8 +249,8 @@ rt_shootray( struct application *ap )
     }
 
     /*
-     *  All intersections of the ray with the model have
-     *  been computed.  Evaluate the boolean trees over each partition.
+     * All intersections of the ray with the model have been computed.
+     * Evaluate the boolean trees over each partition.
      */
     rt_boolfinal( &InitialPart, &FinalPart, BACKING_DIST,
 		  INFINITY,
@@ -263,16 +263,16 @@ rt_shootray( struct application *ap )
     }
 
     /*
-     *  Ray/model intersections exist.  Pass the list to the
-     *  user's a_hit() routine.  Note that only the hit_dist
-     *  elements of pt_inhit and pt_outhit have been computed yet.
-     *  To compute both hit_point and hit_normal, use the
+     * Ray/model intersections exist.  Pass the list to the user's
+     * a_hit() routine.  Note that only the hit_dist elements of
+     * pt_inhit and pt_outhit have been computed yet.  To compute both
+     * hit_point and hit_normal, use the
      *
-     *  	RT_HIT_NORM( hitp, stp, rayp )
+     * RT_HIT_NORM( hitp, stp, rayp )
      *
-     *  macro.  To compute just hit_point, use
+     * macro.  To compute just hit_point, use
      *
-     *  VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
+     * VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
      */
  hitit:
     if (RT_G_DEBUG&DEBUG_SHOOT)  rt_pr_partitions(rtip, &FinalPart, "a_hit()");
@@ -338,8 +338,10 @@ rt_shootray( struct application *ap )
 
 #define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
 
-/* Stub function which will "similate" a call to a vector shot routine */
-/*void*/
+/**
+ * Stub function which will "similate" a call to a vector shot routine
+ */
+void
 rt_vstub(struct soltab *stp[],	/* An array of solid pointers */
 	 struct xray *rp[],	/* An array of ray pointers */
 	 struct seg segp[],	/* array of segs (results returned) */
@@ -369,28 +371,27 @@ rt_vstub(struct soltab *stp[],	/* An array of solid pointers */
     }
 }
 
-/*
- *			R T _ I N _ R P P
+/**
+ * R T _ I N _ R P P
  *
- *  Compute the intersections of a ray with a rectangular parallelpiped (RPP)
- *  that has faces parallel to the coordinate planes
+ * Compute the intersections of a ray with a rectangular parallelpiped
+ * (RPP) that has faces parallel to the coordinate planes
  *
- *  The algorithm here was developed by Gary Kuehl for GIFT.
- *  A good description of the approach used can be found in
- *  "??" by XYZZY and Barsky,
- *  ACM Transactions on Graphics, Vol 3 No 1, January 1984.
+ * The algorithm here was developed by Gary Kuehl for GIFT.  A good
+ * description of the approach used can be found in "??" by XYZZY and
+ * Barsky, ACM Transactions on Graphics, Vol 3 No 1, January 1984.
  *
  * Note -
  *  The computation of entry and exit distance is mandatory, as the final
  *  test catches the majority of misses.
  *
- *  Returns -
+ * Returns -
  *	 0  if ray does not hit RPP,
  *	!0  if ray hits RPP.
  *
- *  invdir is the inverses of rp->r_dir[]
+ * invdir is the inverses of rp->r_dir[]
  *
- *  Implicit return -
+ * Implicit return -
  *	rp->r_min = dist from start of ray to point at which ray ENTERS solid
  *	rp->r_max = dist from start of ray to point at which ray LEAVES solid
  */
@@ -425,9 +426,9 @@ rt_in_rpp( struct xray *rp, fastf_t *invdir, fastf_t *min, fastf_t *max )
 	    rp->r_min = sv;
     }  else  {
 	/*
-	 *  Direction cosines along this axis is NEAR 0,
-	 *  which implies that the ray is perpendicular to the axis,
-	 *  so merely check position against the boundaries.
+	 * Direction cosines along this axis is NEAR 0, which implies
+	 * that the ray is perpendicular to the axis, so merely check
+	 * position against the boundaries.
 	 */
 	if ( (*min > *pt) || (*max < *pt) )
 	    return(0);	/* MISS */
@@ -481,8 +482,8 @@ rt_in_rpp( struct xray *rp, fastf_t *invdir, fastf_t *min, fastf_t *max )
     return(1);		/* HIT */
 }
 
-/*
- *			R T _ B I T V _ O R
+/**
+ * R T _ B I T V _ O R
  */
 void
 rt_bitv_or( bitv_t *out, bitv_t *in, int nbits )
@@ -499,17 +500,17 @@ rt_bitv_or( bitv_t *out, bitv_t *in, int nbits )
 #endif
 }
 
-/*
- *  			R T _ G E T _ B I T V
+/**
+ * R T _ G E T _ B I T V
  *
- *  This routine is called by the GET_BITV macro when the freelist
- *  is exhausted.  Rather than simply getting one additional structure,
- *  we get a whole batch, saving overhead.  When this routine is called,
- *  the bitv resource must already be locked.
- *  malloc() locking is done in bu_malloc.
+ * This routine is called by the GET_BITV macro when the freelist is
+ * exhausted.  Rather than simply getting one additional structure, we
+ * get a whole batch, saving overhead.  When this routine is called,
+ * the bitv resource must already be locked.  malloc() locking is done
+ * in bu_malloc.
  *
- *  Also note that there is a bit of trickery going on here:
- *  the *real* size of be_v[] array is determined at runtime, here.
+ * Also note that there is a bit of trickery going on here: the *real*
+ * size of be_v[] array is determined at runtime, here.
  */
 void
 rt_get_bitv(struct rt_i *rtip, struct resource *res)

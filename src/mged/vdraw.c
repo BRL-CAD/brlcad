@@ -115,17 +115,12 @@ Example Use -
 #include "nmg.h"
 #include "raytrace.h"
 #include "./sedit.h"
-#include "./ged.h"
+#include "./mged.h"
 #include "./mged_solid.h"
 #include "./mged_dm.h"
 
-#include "../librt/debug.h"	/* XXX */
 
 #if 0
-#ifndef M_SQRT2
-#define M_SQRT2		1.41421356237309504880
-#endif
-
 
 #define VDRW_PREFIX		"_VDRW"
 #define VDRW_PREFIX_LEN	6

@@ -53,9 +53,10 @@ Options:\n\
  -B n      set rt_bot_minpieces=n\n\
  -e script run script before interacting\n\
  -f sfile  run script sfile before interacting\n\
+ -L        list output formatting options\n\
  -M        read matrix, cmds on stdin\n\
  -O action handle overlap claims via action\n\
- -s        run in short (non-verbose) mode\n\
+ -s        run in silent (non-verbose) mode\n\
  -u n      set use_air=n (default 0)\n\
  -v        run in verbose mode\n\
  -x v      set librt(3) diagnostic flag=v\n\
@@ -83,7 +84,7 @@ const com_table	ComTab[] = {
       "set/query overlap rebuilding/retention",
       "<0|1|2|3>" },
     { "fmt", format_output, "set/query output formats",
-      "{rhpfmo} format item item ..." },
+      "{rhpfmog} format item item ..." },
     { "dest", direct_output, "set/query output destination",
       "file/pipe" },
     { "statefile", state_file,
@@ -141,6 +142,49 @@ void printusage(void)
     bu_log("%s", usage);
 }
 
+/**
+ * List formats installed in global nirt data directory
+ */
+void listformats(void)
+{
+    int files,i;
+    struct bu_vls nirtfilespath, nirtpathtofile;
+    char suffix[5]=".nrt";
+    FILE *cfPtr;
+    int fnddesc;
+    char fileline[256];
+
+    bu_vls_init(&nirtfilespath);
+    bu_vls_printf(&nirtfilespath,"%s",bu_brlcad_data("nirt",0));
+
+    bu_vls_init(&nirtpathtofile);
+
+    files = bu_count_path(bu_vls_addr(&nirtfilespath),suffix);
+
+    char **filearray;
+    filearray = (char **)bu_malloc(files*sizeof(char *),"filelist");
+
+    bu_list_path(bu_vls_addr(&nirtfilespath),suffix,filearray);
+
+    for (i = 0; i < files; i++) {
+	bu_vls_trunc(&nirtpathtofile,0);
+	bu_vls_printf(&nirtpathtofile,"%s/%s",bu_vls_addr(&nirtfilespath),filearray[i]);
+	cfPtr = fopen(bu_vls_addr(&nirtpathtofile), "rb");
+
+	fnddesc = 0;
+	while ( bu_fgets( fileline, 256, cfPtr) && fnddesc == 0) {
+	   if (strncmp(fileline, "# Description: ", 15) == 0) {
+	       fnddesc = 1;
+	       bu_log("%s\n",fileline+15);
+	   }
+	}
+	fclose(cfPtr);
+    }
+
+    bu_free(filearray,"filelist");
+    bu_vls_free(&nirtfilespath);
+    bu_vls_free(&nirtpathtofile);
+}
 
 void
 attrib_print(void)
@@ -199,13 +243,15 @@ attrib_add(char *a)
 }
 
 
-
 /**
  * string is a literal or a file name
  */
 static void enqueue_script (struct bu_list *qp, int type, char *string)
 {
     struct script_rec	*srp;
+    FILE *cfPtr;
+    struct bu_vls str;
+    bu_vls_init(&str);
 
     BU_CK_LIST_HEAD(qp);
 
@@ -214,9 +260,31 @@ static void enqueue_script (struct bu_list *qp, int type, char *string)
     srp->sr_magic = SCRIPT_REC_MAGIC;
     srp->sr_type = type;
     bu_vls_init(&(srp->sr_script));
-    bu_vls_strcat(&(srp->sr_script), string);
 
+    /*Check if supplied file name is local or in brlcad's nirt data dir*/
+    if (type == READING_FILE) {
+	bu_vls_trunc(&str,0);
+	bu_vls_printf(&str,"%s",string);
+	cfPtr = fopen(bu_vls_addr(&str),"rb");
+	if (cfPtr == NULL) {
+	   bu_vls_trunc(&str,0);
+	   bu_vls_printf(&str,"%s/%s.nrt",bu_brlcad_data("nirt",0),string);
+	   cfPtr = fopen(bu_vls_addr(&str), "rb");
+	   if (cfPtr != NULL) {
+	       fclose(cfPtr);
+	   } else {
+	       bu_vls_trunc(&str,0);
+	       bu_vls_printf(&str,"%s",string);
+	   }
+	} else {
+	   fclose(cfPtr);
+	}
+	bu_vls_printf(&(srp->sr_script),"%s",bu_vls_addr(&str));
+    } else {
+	bu_vls_strcat(&(srp->sr_script),string);
+    }
     BU_LIST_INSERT(qp, &(srp->l));
+    bu_vls_free(&str);
 }
 
 
@@ -387,6 +455,9 @@ main (int argc, char **argv)
 		if (nirt_debug & DEBUG_SCRIPTS)
 		    show_scripts(&script_list, "after enqueueing a file name");
 		break;
+	    case 'L':
+		listformats();
+		bu_exit(EXIT_SUCCESS,NULL);
 	    case 'M':
 		mat_flag = 1;
 		break;

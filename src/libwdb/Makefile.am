@@ -29,13 +29,12 @@ libwdb_nil_la_SOURCES = \
 	reg.c \
 	skt.c \
 	submodel.c \
-	strsol.c \
 	units.c \
 	vol.c \
 	wdb.c
 
 libwdb_la_SOURCES =
-libwdb_la_LDFLAGS = -version-info 19:1
+libwdb_la_LDFLAGS = -version-info 19:1 -no-undefined -Wc,${FEXCEPTIONS}
 libwdb_la_LIBADD = \
 	libwdb_nil.la \
 	${WDB_LIBS}
@@ -46,9 +45,7 @@ man_MANS = libwdb.3
 EXTRA_DIST = \
 	$(man_MANS) \
 	$(BREP_EXTRA) \
-	CMakeLists.txt \
-	reg4.c \
-	spl.c
+	CMakeLists.txt
 
 DEPS = src/librt
 

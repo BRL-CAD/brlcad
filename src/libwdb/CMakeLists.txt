@@ -17,7 +17,6 @@ set(LIBWDB_SOURCES
     reg.c
     skt.c
     submodel.c
-    strsol.c
     units.c
     vol.c
     wdb.c
@@ -33,6 +32,7 @@ include_directories(
 add_definitions(
     -DHAVE_CONFIG_H
     -DBRLCADBUILD
+    -DON_DLL_IMPORTS
 )
 
 add_library(libwdb ${LIBWDB_SOURCES})
