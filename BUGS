@@ -129,8 +129,8 @@ Recent Bugs
   off-by-many on the edge of the middle ARB8 when using an optimized
   -O3 compile (-fno-unsafe-math-optimizations makes no difference)
 
-* tessellation of some pipe in toyjeep.g fails (rather reliably) on
-  some given bend
+* triangulation of some pipe in toyjeep.g fails (rather reliably) on
+  some given bend.  fails in nmg_triangulate model().
 
 * tgc reports one hit errors though hit point has 0,0,0 direction
   implying that maybe the point was supposedly deleted.
