@@ -48,17 +48,24 @@ fastf_t rt_cnurb_par_edge(const struct edge_g_cnurb *crv, fastf_t epsilon);
 extern void get_indices( genptr_t seg, int *start, int *end );	/* from g_extrude.c */
 
 int
-rt_check_curve(struct curve *crv, struct rt_sketch_internal *skt, int noisy)
+rt_check_curve(const struct curve *crv, const struct rt_sketch_internal *skt, int noisy)
 {
     int i, j;
     int ret=0;
 
+    /* empty sketches are invalid */
+    if (crv->seg_count == 0) {
+	if (noisy)
+	    bu_log( "sketch is empty\n" );
+	return 1;
+    }
+
     for ( i=0; i<crv->seg_count; i++ ) {
-	struct line_seg *lsg;
-	struct carc_seg *csg;
-	struct nurb_seg *nsg;
-	struct bezier_seg *bsg;
-	long *lng;
+	const struct line_seg *lsg;
+	const struct carc_seg *csg;
+	const struct nurb_seg *nsg;
+	const struct bezier_seg *bsg;
+	const long *lng;
 
 	lng = (long *)crv->segments[i];
 
@@ -100,9 +107,10 @@ rt_check_curve(struct curve *crv, struct rt_sketch_internal *skt, int noisy)
 		break;
 	}
     }
+
     if ( ret && noisy )
 	bu_log( "sketch references non-existent vertices!\n" );
-    return( ret );
+    return ret;
 }
 
 
