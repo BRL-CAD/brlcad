@@ -55,7 +55,7 @@ arch=('i686' 'x86_64')
 makedepends=('bc')
 depends=('libpng' 'zlib' 'libgl' 'tk>=8.5')
 
-options=('!libtool')
+options=('!libtool' '!strip' 'docs')
 source=('brlcad.sh')
 md5sums=('451f65ed85b1364cc7a0bfa93192d93b')
 
