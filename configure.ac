@@ -1993,7 +1993,6 @@ fi
 
 dnl AC_C_PROTOTYPES
 AM_C_PROTOTYPES
-AC_DEFINE(USE_PROTOTYPES,1,heh)
 
 AC_C_CONST
 AC_C_INLINE
@@ -3599,8 +3598,6 @@ dnl SMP-aware (i.e. PARALLEL) build
 if test "x$bc_build_parallel" != "xno" ; then
 	AC_DEFINE(PARALLEL, 1, [Define to enable SMP architecture parallel computation support ])
 fi
-
-AC_DEFINE_UNQUOTED([USE_FBSERV], [1], [Required for libdm/mged to allow direct fbserv render connections])
 
 
 #

@@ -49,6 +49,11 @@
 #  endif
 #endif  /* _WIN32 */
 
+/* support ANSI function declarations */
+#ifndef USE_PROTOTYPES
+#  define USE_PROTOTYPES 1
+#endif
+
 /* provide declaration markers for header externals */
 #ifdef __cplusplus
 #  define __BEGIN_DECLS   extern "C" {
