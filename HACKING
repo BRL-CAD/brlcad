@@ -899,7 +899,7 @@ latest changes.
 the updated ChangeLog.  Use the YYYY-MM-DD of the previous release.
 Get the date from the NEWS file.
 
-    svn2cl.sh --break-before-msg -r {YYYY-MM-DD}:HEAD
+    svn2cl --break-before-msg --include-rev --stdout -r {YYYY-MM-DD}:HEAD > ChangeLog
 
 4) Update or verify the version numbers minimally in the include/conf
 version files, NEWS, and README.  See the above VERSION NUMBERS &
