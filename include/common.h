@@ -79,6 +79,13 @@
 #  endif
 #endif
 
+/* ansi c89 does not allow the 'inline' keyword */
+#ifdef __STRICT_ANSI__
+#  ifndef inline
+#    define inline /***/
+#  endif
+#endif
+
 #endif  /* __COMMON_H__ */
 /** @} */
 /*

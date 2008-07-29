@@ -493,7 +493,7 @@ struct soltab {
 /* Add a new primitive id above here (this is will break v5 format)
  * XXX must update the non-geometric object id's below XXX
  */
-#define	ID_MAX_SOLID	39	/**< @brief Maximum defined ID_xxx for solids */
+#define	ID_MAX_SOLID	41	/**< @brief Maximum defined ID_xxx for solids */
 
 /*
  * Non-geometric objects
@@ -502,14 +502,16 @@ struct soltab {
 #define ID_BINEXPM	32	/**< @brief Experimental binary */
 #define ID_BINUNIF	33	/**< @brief Uniform-array binary */
 #define ID_BINMIME	34	/**< @brief MIME-typed binary */
+#define ID_CONSTRAINT   39      /**< @brief Constraint object */
 
 /* XXX - superellipsoid should be 31, but is not v5 compatible */
 #define ID_SUPERELL	35	/**< @brief Superquadratic ellipsoid */
 #define ID_METABALL	36	/**< @brief Metaball */
 #define ID_BREP         37      /**< @brief B-rep object */
 #define ID_HYP		38	/**< @brief Hyperboloid of one sheet */
+#define ID_REVOLVE	40	/**< @brief Solid of Revolutin */
 
-#define ID_MAXIMUM	39	/**< @brief Maximum defined ID_xxx value */
+#define ID_MAXIMUM	41	/**< @brief Maximum defined ID_xxx value */
 
 /**
  * M A T E R _ I N F O
@@ -1104,18 +1106,10 @@ struct rt_wdb  {
     struct bu_list	l;
     int			type;
     struct db_i	*	dbip;
-    struct bu_vls	wdb_name;	/**< @brief  database object name */
     struct db_tree_state	wdb_initial_tree_state;
     struct rt_tess_tol	wdb_ttol;
     struct bn_tol	wdb_tol;
     struct resource*	wdb_resp;
-
-    /* for catching log messages */
-    struct bu_vls	wdb_log;
-
-    void		*wdb_result;
-    struct bu_vls	wdb_result_str;
-    unsigned int	wdb_result_flags;
 
     /* variables for name prefixing */
     struct bu_vls	wdb_prestr;
@@ -1127,8 +1121,12 @@ struct rt_wdb  {
     int			wdb_air_default;
     int			wdb_mat_default;/**< @brief  GIFT material code */
     int			wdb_los_default;/**< @brief  Line-of-sight estimate */
+
+    /* These members are marked for removal */
+    struct bu_vls	wdb_name;	/**< @brief  database object name */
     struct bu_observer	wdb_observers;
     Tcl_Interp *	wdb_interp;
+
 };
 
 #define RT_CHECK_WDB(_p)		BU_CKMAG(_p, RT_WDB_MAGIC, "rt_wdb")
@@ -1734,7 +1732,8 @@ struct rt_point_labels {
 /**
  * R T _ P T _ N O D E
  *
- * Used by g_rpc.c and others to contain forward-linked lists of points.
+ * Used by rpc.c, ehy.c, epa.c, eto.c and rhc.c
+ * to contain forward-linked lists of points.
  */
 struct rt_pt_node {
     point_t p;			/**< @brief  a point */
@@ -1782,6 +1781,58 @@ struct bezier_seg	/**< @brief  Bezier curve segment */
     unsigned long	magic;
     int			degree;		/**< @brief  degree of curve (number of control points - 1) */
     int			*ctl_points;	/**< @brief  array of indices for control points */
+};
+
+/**
+ * Structures required for describing Parameters, parameter sets
+ */
+
+/* To be removed */
+struct pc_parameter {
+    char *name;
+    int parametrized;
+    fastf_t value;
+    fastf_t min;
+    fastf_t max;
+    fastf_t step;
+};
+
+/* To be removed */
+struct pc_param_set {
+    long len;
+    struct pc_parameter * p;
+};
+
+/**
+ * A composite set of parameters constraints with respect to those 
+ * parameters. Used for declaration by each geometry object
+ */
+struct pc_p_set {
+    char pname[10];
+    enum ptype {
+	pc_value,
+	pc_point,
+	pc_vector
+    } ptype;
+    union {
+	fastf_t *valuep;
+	pointp_t pointp;
+	vectp_t vectorp;
+    } pval;
+};
+struct pc_c_set {
+    char cname[10];
+    enum ctype {
+	pc_inequality,
+	pc_equation
+    } ctype;
+    int n;
+};
+struct pc_pc_set {
+    int n_params;
+    int n_constraints;
+    struct pc_p_set * ps;
+    struct pc_c_set * cs;
 };
 
 /**
@@ -1895,27 +1946,18 @@ struct rt_functab {
     const struct bu_structparse *ft_parsetab;	/**< @brief  rt_xxx_parse */
     size_t ft_internal_size;	/**< @brief  sizeof(struct rt_xxx_internal) */
     unsigned long ft_internal_magic;	/**< @brief  RT_XXX_INTERNAL_MAGIC */
-#if defined(TCL_OK)
-    int	(*ft_tclget) BU_ARGS((Tcl_Interp *,
-			      const struct rt_db_internal *, const char *item));
-    int	(*ft_tcladjust) BU_ARGS((Tcl_Interp *,
-				 struct rt_db_internal *,
-				 int /*argc*/, char ** /*argv*/,
-				 struct resource * /*resp*/));
-    int	(*ft_tclform) BU_ARGS((const struct rt_functab *,
-			       Tcl_Interp *));
-#else
-    int	(*ft_tclget) BU_ARGS((genptr_t /*interp*/,
-			      const struct rt_db_internal *, const char *item));
-    int	(*ft_tcladjust) BU_ARGS((genptr_t /*interp*/,
-				 struct rt_db_internal *,
-				 int /*argc*/, char ** /*argv*/,
-				 struct resource * /*resp*/));
-    int	(*ft_tclform) BU_ARGS((const struct rt_functab *,
-			       genptr_t /*interp*/));
-#endif
+    int	(*ft_get) BU_ARGS((struct bu_vls *,
+			   const struct rt_db_internal *, const char *item));
+    int	(*ft_adjust) BU_ARGS((struct bu_vls *,
+			      struct rt_db_internal *,
+			      int /*argc*/, char ** /*argv*/,
+			      struct resource * /*resp*/));
+    int	(*ft_form) BU_ARGS((struct bu_vls *,
+			    const struct rt_functab *));
+			    
     void (*ft_make) BU_ARGS((const struct rt_functab *,
 			     struct rt_db_internal *, double /*diameter*/));
+    int (*ft_params) BU_ARGS((struct pc_pc_set *,const struct rt_db_internal */*ip*/));
 };
 
 RT_EXPORT extern const struct rt_functab rt_functab[];
@@ -2498,8 +2540,18 @@ RT_EXPORT BU_EXTERN(int wdb_export,
 		     genptr_t gp,
 		     int id,
 		     double local2mm));
+RT_EXPORT BU_EXTERN(void wdb_init,
+		    (struct rt_wdb *wdbp,
+		     struct db_i   *dbip,
+		     int           mode));
 RT_EXPORT BU_EXTERN(void wdb_close,
 		    (struct rt_wdb *wdbp));
+RT_EXPORT BU_EXTERN(int wdb_import_from_path,
+		    (struct bu_vls *log,
+		     struct rt_db_internal *ip,
+		     const char *path,
+		     struct rt_wdb *wdb));
+
 
 /* db_anim.c */
 RT_EXPORT BU_EXTERN(struct animate *db_parse_1anim,
@@ -3334,7 +3386,7 @@ RT_EXPORT BU_EXTERN(int rt_metaball_lookup_type_id,
 RT_EXPORT BU_EXTERN(const char *rt_metaball_lookup_type_name,
 		    (const int id));
 
-/* g_rpc.c */
+/* rpc.c */
 RT_EXPORT BU_EXTERN(int rt_mk_parabola,
 		    (struct rt_pt_node *pts,
 		     fastf_t r,
@@ -4731,7 +4783,7 @@ RT_EXPORT BU_EXTERN(int tcl_list_to_fastf_array,
 		     int *array_len));
 
 
-/* g_rhc.c */
+/* rhc.c */
 RT_EXPORT BU_EXTERN(int rt_mk_hyperbola,
 		    (struct rt_pt_node *pts,
 		     fastf_t r,
@@ -5847,6 +5899,13 @@ RT_EXPORT BU_EXTERN(int rt_bot_decimate,
 		     fastf_t min_edge_length));
 #endif
 
+/* defined in pc_constraint.c */
+
+RT_EXPORT BU_EXTERN(int pc_constraint_export,(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm,\
+		    const struct db_i *dbip, struct resource *resp));
+RT_EXPORT BU_EXTERN(int pc_constraint_import,(struct rt_db_internal *ip, const struct bu_external *ep, \
+		    const mat_t mat, const struct db_i *dbip, struct resource *resp, const int minor_type));
+RT_EXPORT BU_EXTERN(void pc_constraint_ifree,(struct rt_db_internal *ip, struct resource *resp));
 
 /*
  *  Constants provided and used by the RT library.
