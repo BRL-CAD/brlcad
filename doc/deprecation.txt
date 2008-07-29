@@ -49,6 +49,8 @@ new names should be listed for reference.
 **************
 7.12
 ----
+include/vmath.h
+	M_SQRT2_DIV2 -> M_SQRT1_2
 srt/librt/cmd.c
 	rt_split_cmd() -> bu_argv_from_string() [deprecated 7.12]
 src/rt/viewarea.c
