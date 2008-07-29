@@ -148,17 +148,16 @@ void printusage(void)
 void listformats(void)
 {
     int files,i;
-    struct bu_vls nirtfilespath, nirtpathtofile;
+    char **filearray;
+    struct bu_vls nirtfilespath, nirtpathtofile, vlsfileline;
     char suffix[5]=".nrt";
     FILE *cfPtr;
     int fnddesc;
-    char fileline[256];
-    char **filearray;
 
+    bu_vls_init(&vlsfileline);
     bu_vls_init(&nirtfilespath);
-    bu_vls_printf(&nirtfilespath,"%s",bu_brlcad_data("nirt",0));
-
     bu_vls_init(&nirtpathtofile);
+    bu_vls_printf(&nirtfilespath,"%s",bu_brlcad_data("nirt",0));
 
     files = bu_count_path(bu_vls_addr(&nirtfilespath),suffix);
 
@@ -168,20 +167,22 @@ void listformats(void)
 
     for (i = 0; i < files; i++) {
 	bu_vls_trunc(&nirtpathtofile,0);
+	bu_vls_trunc(&vlsfileline,0);
 	bu_vls_printf(&nirtpathtofile,"%s/%s",bu_vls_addr(&nirtfilespath),filearray[i]);
 	cfPtr = fopen(bu_vls_addr(&nirtpathtofile), "rb");
-
 	fnddesc = 0;
-	while ( bu_fgets( fileline, 256, cfPtr) && fnddesc == 0) {
-	   if (strncmp(fileline, "# Description: ", 15) == 0) {
+	while ( bu_vls_gets(&vlsfileline, cfPtr) && fnddesc == 0) {
+	   if (strncmp(bu_vls_addr(&vlsfileline), "# Description: ", 15) == 0) {
 	       fnddesc = 1;
-	       bu_log("%s\n",fileline+15);
+	       bu_log("%s\n",bu_vls_addr(&vlsfileline)+15);
 	   }
+	   bu_vls_trunc(&vlsfileline,0);
 	}
 	fclose(cfPtr);
     }
 
     bu_free(filearray,"filelist");
+    bu_vls_free(&vlsfileline);
     bu_vls_free(&nirtfilespath);
     bu_vls_free(&nirtpathtofile);
 }
