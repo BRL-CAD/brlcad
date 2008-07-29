@@ -1310,6 +1310,14 @@ GED_EXPORT BU_EXTERN(int ged_illum, (struct ged *gedp, int argc, const char *arg
 GED_EXPORT BU_EXTERN(int ged_instance, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Makes a bot object out of the specified section.
+ *
+ * Usage:
+ *     importFg4Section obj section
+ */
+GED_EXPORT BU_EXTERN(int ged_importFg4Section, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Returns the inverse view size.
  *
  * Usage:

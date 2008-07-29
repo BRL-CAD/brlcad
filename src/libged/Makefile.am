@@ -142,6 +142,7 @@ libged_nil_la_SOURCES = \
 	vutil.c \
 	wdb_comb_std.c \
 	wdb_obj.c \
+	wdb_importFg4Section.c \
 	wdb_track.c \
 	whatid.c \
 	which.c \

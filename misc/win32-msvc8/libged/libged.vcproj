@@ -678,6 +678,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\wdb_importFg4Section.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\wdb_obj.c"
 				>
 			</File>
