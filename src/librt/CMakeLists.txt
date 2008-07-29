@@ -28,39 +28,6 @@ set(LIBRT_SOURCES
     dir.c
     dspline.c
     fortray.c
-    g_arb.c
-    g_arbn.c
-    g_ars.c
-    g_bot.c
-    g_brep.cpp
-    g_cline.c
-    g_dsp.c
-    g_ebm.c
-    g_ehy.c
-    g_ell.c
-    g_epa.c
-    g_eto.c
-    g_extrude.c
-    g_grip.c
-    g_half.c
-    g_hf.c
-    g_hyp.c
-    g_metaball.c
-    g_nmg.c
-    g_nurb.c
-    g_part.c
-    g_pg.c
-    g_pipe.c
-    g_rec.c
-    g_rhc.c
-    g_rpc.c
-    g_sketch.c
-    g_sph.c
-    g_submodel.c
-    g_superell.c
-    g_tgc.c
-    g_torus.c
-    g_vol.c
     globals.c
     htbl.c
     many.c
@@ -69,55 +36,88 @@ set(LIBRT_SOURCES
     mirror.c
     mkbundle.c
     opennurbs_ext.cpp
-    nmg_bool.c
-    nmg_ck.c
-    nmg_class.c
-    nmg_eval.c
-    nmg_extrude.c
-    nmg_fcut.c
-    nmg_fuse.c
-    nmg_index.c
-    nmg_info.c
-    nmg_inter.c
-    nmg_manif.c
-    nmg_mesh.c
-    nmg_misc.c
-    nmg_mk.c
-    nmg_mod.c
-    nmg_plot.c
-    nmg_pr.c
-    nmg_pt_fu.c
-    nmg_rt_isect.c
-    nmg_rt_segs.c
-    nmg_tri.c
-    nmg_visit.c
-    nurb_basis.c
-    nurb_bezier.c
-    nurb_bound.c
-    nurb_c2.c
-    nurb_copy.c
-    nurb_diff.c
-    nurb_eval.c
-    nurb_flat.c
-    nurb_interp.c
-    nurb_knot.c
-    nurb_norm.c
-    nurb_plot.c
-    nurb_poly.c
-    nurb_ray.c
-    nurb_refine.c
-    nurb_reverse.c
-    nurb_solve.c
-    nurb_split.c
-    nurb_tess.c
-    nurb_trim.c
-    nurb_trim_util.c
-    nurb_util.c
-    nurb_xsplit.c
     oslo_calc.c
     oslo_map.c
     pr.c
     prep.c
+    primitives/arb8/arb8.c
+    primitives/arbn/arbn.c
+    primitives/ars/ars.c
+    primitives/bot/bot.c
+    primitives/brep/brep.cpp
+    primitives/bspline/bspline.c
+    primitives/bspline/nurb_basis.c
+    primitives/bspline/nurb_bezier.c
+    primitives/bspline/nurb_bound.c
+    primitives/bspline/nurb_c2.c
+    primitives/bspline/nurb_copy.c
+    primitives/bspline/nurb_diff.c
+    primitives/bspline/nurb_eval.c
+    primitives/bspline/nurb_flat.c
+    primitives/bspline/nurb_interp.c
+    primitives/bspline/nurb_knot.c
+    primitives/bspline/nurb_norm.c
+    primitives/bspline/nurb_plot.c
+    primitives/bspline/nurb_poly.c
+    primitives/bspline/nurb_ray.c
+    primitives/bspline/nurb_refine.c
+    primitives/bspline/nurb_reverse.c
+    primitives/bspline/nurb_solve.c
+    primitives/bspline/nurb_split.c
+    primitives/bspline/nurb_tess.c
+    primitives/bspline/nurb_trim.c
+    primitives/bspline/nurb_trim_util.c
+    primitives/bspline/nurb_util.c
+    primitives/bspline/nurb_xsplit.c
+    primitives/cline/cline.c
+    primitives/dsp/dsp.c
+    primitives/ebm/ebm.c
+    primitives/ehy/ehy.c
+    primitives/ell/ell.c
+    primitives/epa/epa.c
+    primitives/eto/eto.c
+    primitives/extrude/extrude.c
+    primitives/grip/grip.c
+    primitives/half/half.c
+    primitives/hf/hf.c
+    primitives/hyp/hyp.c
+    primitives/metaball/metaball.c
+    primitives/nmg/nmg.c
+    primitives/nmg/nmg_bool.c
+    primitives/nmg/nmg_ck.c
+    primitives/nmg/nmg_class.c
+    primitives/nmg/nmg_eval.c
+    primitives/nmg/nmg_extrude.c
+    primitives/nmg/nmg_fcut.c
+    primitives/nmg/nmg_fuse.c
+    primitives/nmg/nmg_index.c
+    primitives/nmg/nmg_info.c
+    primitives/nmg/nmg_inter.c
+    primitives/nmg/nmg_manif.c
+    primitives/nmg/nmg_mesh.c
+    primitives/nmg/nmg_misc.c
+    primitives/nmg/nmg_mk.c
+    primitives/nmg/nmg_mod.c
+    primitives/nmg/nmg_plot.c
+    primitives/nmg/nmg_pr.c
+    primitives/nmg/nmg_pt_fu.c
+    primitives/nmg/nmg_rt_isect.c
+    primitives/nmg/nmg_rt_segs.c
+    primitives/nmg/nmg_tri.c
+    primitives/nmg/nmg_visit.c
+    primitives/part/part.c
+    primitives/pipe/pipe.c
+    primitives/poly/poly.c
+    primitives/rec/rec.c
+    primitives/rhc/rhc.c
+    primitives/rpc/rpc.c
+    primitives/sketch/sketch.c
+    primitives/sph/sph.c
+    primitives/submodel/submodel.c
+    primitives/superell/superell.c
+    primitives/tgc/tgc.c
+    primitives/tor/tor.c
+    primitives/vol/vol.c
     regionfix.c
     roots.c
     shoot.c

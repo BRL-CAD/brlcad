@@ -21,6 +21,7 @@ brlcadinclude_required = \
 
 brlcadinclude_wanted = \
 	anim.h \
+	bot.h \
 	brep.h \
 	brlcad.h \
 	cmd.h \

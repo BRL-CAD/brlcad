@@ -43,7 +43,7 @@
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
-#include "./bot.h"
+#include "bot.h"
 
 #define GLUE(_a, _b)      _a ## _b
 #define XGLUE(_a, _b)      GLUE(_a, _b)
