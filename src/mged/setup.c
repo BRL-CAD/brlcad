@@ -187,6 +187,7 @@ static struct cmdtab cmdtab[] = {
     {"keypoint", f_keypoint},
     {"kill", cmd_kill},
     {"killall", cmd_killall},
+    {"killrefs", cmd_killrefs},
     {"killtree", cmd_killtree},
     {"knob", f_knob},
     {"l", cmd_list},

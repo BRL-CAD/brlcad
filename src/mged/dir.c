@@ -334,15 +334,6 @@ cmd_killall(ClientData	clientData,
 	    int		argc,
 	    char	**argv)
 {
-#if 0
-    CHECK_DBI_NULL;
-
-    return wdb_killall_cmd(wdbp, interp, argc, argv);
-#else
-    register int	i, k;
-    register struct directory *dp;
-    struct rt_db_internal	intern;
-    struct rt_comb_internal	*comb;
     int			ret;
 
     CHECK_DBI_NULL;
@@ -365,7 +356,37 @@ cmd_killall(ClientData	clientData,
 	return TCL_OK;
     }
 
-    ret = TCL_OK;
+    ret = cmd_killrefs(clientData, interp, argc, argv);
+
+    if ( ret != TCL_OK )  {
+	Tcl_AppendResult(interp, "KILL skipped because of earlier errors.\n", (char *)NULL);
+	return ret;
+    }
+
+    /* ALL references removed...now KILL the object[s] */
+    /* reuse argv[] */
+    argv[0] = "kill";
+    (void)signal( SIGINT, SIG_IGN );
+    return cmd_kill( clientData, interp, argc, argv );
+}
+
+
+int
+cmd_killrefs(ClientData	clientData,
+	    Tcl_Interp	*interp,
+	    int		argc,
+	    char	**argv)
+{
+    register int	k;
+    register struct directory *dp;
+    struct rt_db_internal	intern;
+    struct rt_comb_internal	*comb;
+    int			ret;
+
+    if (argc < 2) {
+	Tcl_AppendResult(interp, "Usage: killrefs object(s)", (char *)0);
+	return TCL_ERROR;
+    }
 
     /* Examine all COMB nodes */
     FOR_ALL_DIRECTORY_START(dp, dbip) {
@@ -406,19 +427,15 @@ cmd_killall(ClientData	clientData,
 	}
     } FOR_ALL_DIRECTORY_END;
 
-    if ( ret != TCL_OK )  {
-	Tcl_AppendResult(interp, "KILL skipped because of earlier errors.\n", (char *)NULL);
-	return ret;
-    }
-
-    /* ALL references removed...now KILL the object[s] */
-    /* reuse argv[] */
-    argv[0] = "kill";
-    (void)signal( SIGINT, SIG_IGN );
-    return cmd_kill( clientData, interp, argc, argv );
-#endif
+    return TCL_OK;
 }
 
+struct mged_killtree_data {
+    Tcl_Interp *interp;
+    int killrefs;
+    int ac;
+    char *av[MAXARGS];
+};
 
 /*		F _ K I L L T R E E ( )
  *
@@ -436,6 +453,7 @@ cmd_killtree(ClientData	clientData,
 
     return wdb_kill_cmd(wdbp, interp, argc, argv);
 #else
+    struct mged_killtree_data mktd;
     register struct directory *dp;
     register int i;
 
@@ -457,10 +475,30 @@ cmd_killtree(ClientData	clientData,
     else
 	return TCL_OK;
 
+    mktd.interp = interp;
+    mktd.ac = 1;
+    mktd.av[0] = "killrefs";
+    mktd.av[1] = (char *)0;
+
+    if (argv[1][0] == '-' && argv[1][1] == 'a' && argv[1][2] == '\0') {
+	mktd.killrefs = 1;
+	--argc;
+	++argv;
+    } else
+	mktd.killrefs = 0;
+
     for (i=1; i<argc; i++) {
 	if ( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY) ) == DIR_NULL )
 	    continue;
-	db_functree( dbip, dp, killtree, killtree, &rt_uniresource, (genptr_t)interp );
+	db_functree( dbip, dp, killtree, killtree, &rt_uniresource, (genptr_t)&mktd );
+    }
+
+    if (mktd.killrefs && mktd.ac > 1) {
+	(void)cmd_killrefs(clientData, interp, mktd.ac, mktd.av);
+
+	for (i=1; i<mktd.ac; i++) {
+	    bu_free((genptr_t)mktd.av[i], "ged_killtree_data");
+	}
     }
 
     (void)signal( SIGINT, SIG_IGN );
@@ -475,20 +513,41 @@ cmd_killtree(ClientData	clientData,
 void
 killtree(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 {
-    Tcl_Interp		*interp = (Tcl_Interp *)ptr;
+    struct mged_killtree_data *mktdp = (struct mged_killtree_data *)ptr;
     struct directory	*dpp[2] = {DIR_NULL, DIR_NULL};
 
     if (dbip == DBI_NULL)
 	return;
 
-    Tcl_AppendResult(interp, "KILL ", (dp->d_flags & DIR_COMB) ? "COMB" : "Solid",
+    Tcl_AppendResult(mktdp->interp, "KILL ", (dp->d_flags & DIR_COMB) ? "COMB" : "Solid",
 		     ":  ", dp->d_namep, "\n", (char *)NULL);
 
     dpp[0] = dp;
     eraseobjall(dpp);
 
-    if (db_delete(dbip, dp) < 0 || db_dirdelete(dbip, dp) < 0) {
-	TCL_DELETE_ERR("");
+    if (!mktdp->killrefs) {
+	if (db_delete(dbip, dp) < 0 || db_dirdelete(dbip, dp) < 0) {
+	    Tcl_AppendResult(mktdp->interp, "an error occurred while deleting ", dp->d_namep, "\n", (char *)0);
+	}
+    } else {
+	if (mktdp->ac < MAXARGS-1) {
+	    mktdp->av[mktdp->ac++] = bu_strdup(dp->d_namep);
+	    mktdp->av[mktdp->ac] = (char *)0;
+
+	    if (db_delete(dbip, dp) < 0 || db_dirdelete(dbip, dp) < 0) {
+		Tcl_AppendResult(mktdp->interp, "an error occurred while deleting ", dp->d_namep, "\n", (char *)0);
+
+		/* Remove from list */
+		bu_free((genptr_t)mktdp->av[--mktdp->ac], "ged_killtree_callback");
+		mktdp->av[mktdp->ac] = (char *)0;
+	    }
+	} else {
+	    Tcl_AppendResult(mktdp->interp, "MAXARGS exceeded while scheduling ", dp->d_namep, " for a killrefs\n", (char *)0);
+
+	    if (db_delete(dbip, dp) < 0 || db_dirdelete(dbip, dp) < 0) {
+		Tcl_AppendResult(mktdp->interp, "an error occurred while deleting ", dp->d_namep, "\n", (char *)0);
+	    }
+	}
     }
 }
 
