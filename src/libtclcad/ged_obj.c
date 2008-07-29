@@ -369,9 +369,7 @@ static struct go_cmdtab go_cmds[] = {
     {"i",	(char *)0, MAXARGS, go_pass_through_func, ged_instance},
     {"idle_mode",	"vname", MAXARGS, go_idle_mode, GED_FUNC_PTR_NULL},
     {"illum",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_illum},
-#if 0
     {"importFg4Section",	(char *)0, MAXARGS, go_pass_through_func, ged_importFg4Section},
-#endif
     {"isize",	"vname", 2, go_view_func, ged_isize},
     {"item",	(char *)0, MAXARGS, go_pass_through_func, ged_item},
     {"keep",	(char *)0, MAXARGS, go_pass_through_func, ged_keep},

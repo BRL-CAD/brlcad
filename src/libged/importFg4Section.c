@@ -44,6 +44,7 @@
 #include "raytrace.h"
 #include "wdb.h"
 #include "plot3.h"
+#include "ged_private.h"
 
 
 static int	grid_size;		/* Number of points that will fit in current grid_pts array */
@@ -97,11 +98,11 @@ static int	int_list_length=0;	/* Length of int_list array */
 
 static point_t *grid_pts;
 
-void do_grid(char *line);
-void do_tri(char *line);
-void do_quad(char *line);
-void make_bot_object(char		*name,
-		     struct rt_wdb	*wdbp);
+static void do_grid(char *line);
+static void do_tri(char *line);
+static void do_quad(char *line);
+static void make_bot_object(char		*name,
+			    struct rt_wdb	*wdbp);
 
 /*************************** code from libwdb/bot.c ***************************/
 
@@ -204,7 +205,7 @@ rt_mk_bot(
 
 /*************************** code from conv/fast4-g.c ***************************/
 
-void
+static void
 do_grid(char *line)
 {
     int grid_no;
@@ -245,7 +246,7 @@ do_grid(char *line)
 	bu_log( "ERROR: bu_mem_barriercheck failed at end of do_grid\n" );
 }
 
-void
+static void
 Add_bot_face(int pt1, int pt2, int pt3, fastf_t thick, int pos)
 {
 
@@ -300,7 +301,7 @@ Add_bot_face(int pt1, int pt2, int pt3, fastf_t thick, int pos)
 	bu_log( "memory corrupted at end of Add_bot_face()\n" );
 }
 
-void
+static void
 do_tri(char *line)
 {
     int element_id;
@@ -366,7 +367,7 @@ do_tri(char *line)
 	bu_log( "memory corrupted after call to Add_bot_face()\n" );
 }
 
-void
+static void
 do_quad(char *line)
 {
     int element_id;
@@ -427,7 +428,7 @@ do_quad(char *line)
     Add_bot_face( pt1, pt3, pt4, thick, pos );
 }
 
-void
+static void
 make_bot_object(char		*name,
 		struct rt_wdb	*wdbp)
 {
@@ -523,24 +524,32 @@ make_bot_object(char		*name,
 	*(_cp) = '\0';
 
 int
-wdb_importFg4Section_cmd(struct rt_wdb	*wdbp,
-			 Tcl_Interp	*interp,
-			 int		argc,
-			 char 		*argv[])
+ged_importFg4Section(struct ged *gedp, int argc, const char *argv[])
 {
     char *cp;
     char *line;
     char *lines;
     int eosFlag = 0;
+    static const char *usage = "obj section";
+
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+    gedp->ged_result = GED_RESULT_NULL;
+    gedp->ged_result_flags = 0;
+
+    /* must be wanting help */
+    if (argc == 1) {
+	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_OK;
+    }
 
     if (argc != 3) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib_alias wdb_importFg4Section %s", argv[0]);
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
     }
 
     grid_size = GRID_BLOCK;
@@ -586,7 +595,7 @@ wdb_importFg4Section_cmd(struct rt_wdb	*wdbp,
 	    do_quad(line);
     }
 
-    make_bot_object(argv[1], wdbp);
+    make_bot_object(argv[1], gedp->ged_wdbp);
     free((void *)lines);
     bu_free((void *)grid_pts, "importFg4Section: grid_pts");
 
