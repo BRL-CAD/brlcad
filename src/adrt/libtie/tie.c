@@ -52,7 +52,7 @@ TIE_VAL(int tie_check_degenerate) = 1;
 static void tie_tri_prep(tie_t *tie)
 {
     TIE_3 v1, v2, u, v;
-    int i, i1, i2;
+    unsigned int i, i1, i2;
     tie_tri_t *tri;
 
     for (i = 0; i < tie->tri_num; i++) {
@@ -114,7 +114,7 @@ static void tie_tri_prep(tie_t *tie)
  * @param tie pointer to a struct tie_t
  * @return void
  */
-TIE_FUNC(void tie_init, tie_t *tie, unsigned int tri_num, int kdmethod)
+TIE_FUNC(void tie_init, tie_t *tie, unsigned int tri_num, unsigned int kdmethod)
 {
     tie->kdtree = NULL;
     tie->kdmethod = kdmethod;
@@ -136,7 +136,7 @@ TIE_FUNC(void tie_init, tie_t *tie, unsigned int tri_num, int kdmethod)
  */
 TIE_FUNC(void tie_free, tie_t *tie)
 {
-    int i;
+    unsigned int i;
 
 /* Free Triangle Data */
     for (i = 0; i < tie->tri_num; i++)
@@ -399,9 +399,9 @@ TIE_FUNC(void* tie_work, tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfu
  * address of plist.
  * @return void
  */
-TIE_FUNC(void tie_push, tie_t *tie, TIE_3 **tlist, int tnum, void *plist, int pstride)
+TIE_FUNC(void tie_push, tie_t *tie, TIE_3 **tlist, unsigned int tnum, void *plist, unsigned int pstride)
 {
-    int i;
+    unsigned int i;
 
 /* expand the tri buffer if needed */
     if (tnum + tie->tri_num > tie->tri_num_alloc) {

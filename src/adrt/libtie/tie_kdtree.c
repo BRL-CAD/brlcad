@@ -128,11 +128,11 @@ static void tie_kdtree_cache_free_node(tie_t *tie, tie_kdtree_t *node, void **ca
     }
 }
 
-static void tie_kdtree_prep_head(tie_t *tie, tie_tri_t *tri_list, int tri_num)
+static void tie_kdtree_prep_head(tie_t *tie, tie_tri_t *tri_list, unsigned int tri_num)
 {
     tie_geom_t *g;
     TIE_3 min, max;
-    uint32_t i;
+    unsigned int i;
 
 
     if (!tri_num)
@@ -255,11 +255,11 @@ static int tie_kdtree_tri_box_overlap(TIE_3 *center, TIE_3 *half_size, TIE_3 tri
     return t >= d ? 1 : 0;
 }
 
-static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min, TIE_3 max, int node_a, int node_b) 
+static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, unsigned int depth, TIE_3 min, TIE_3 max, unsigned int node_a, unsigned int node_b) 
 {
     tie_geom_t *child[2], *node_gd = (tie_geom_t *)(node->data);
     TIE_3 cmin[2], cmax[2], center[2], half_size[2];
-    uint32_t i, j, n, split, cnt[2];
+    unsigned int i, j, n, split, cnt[2];
 
 #if 0
 /*  if (depth >= 26) */
@@ -329,8 +329,8 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
 /****************************************
  * Justin's Aggressive KD-Tree Algorithm *
  *****************************************/
-	int slice[3][MAX_SLICES+MIN_SLICES], gap[3][2], active, split_slice;
-	int side[3][MAX_SLICES+MIN_SLICES][2], d, s, k, smax[3], smin, slice_num;
+	unsigned int slice[3][MAX_SLICES+MIN_SLICES], gap[3][2], active, split_slice;
+	unsigned int side[3][MAX_SLICES+MIN_SLICES][2], d, s, k, smax[3], smin, slice_num;
 	tfloat coef[3][MAX_SLICES+MIN_SLICES], split_coef, beg, end, d_min, d_max;
 	tie_tri_t *tri;
 

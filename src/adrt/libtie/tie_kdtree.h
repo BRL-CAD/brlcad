@@ -35,7 +35,7 @@ extern "C" {
 
     TIE_FUNC(void tie_kdtree_free, tie_t *tie);
     TIE_FUNC(uint32_t tie_kdtree_cache_free, tie_t *tie, void **cache);
-    TIE_FUNC(void tie_kdtree_cache_load, tie_t *tie, void *cache, uint32_t size);
+    TIE_FUNC(void tie_kdtree_cache_load, tie_t *tie, void *cache, unsigned int size);
     TIE_FUNC(void tie_kdtree_prep, tie_t *tie);
     TIE_VAL(extern tfloat TIE_PREC);
 

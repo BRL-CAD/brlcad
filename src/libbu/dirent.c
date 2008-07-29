@@ -32,6 +32,7 @@
 #include <string.h>
 #include <sys/types.h>
 
+#include "bu.h"
 #include "./uce-dirent.h"
 
 /**
