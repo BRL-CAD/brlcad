@@ -29,7 +29,6 @@
 #include "dg.h"
 #include "rtgeom.h"
 #include "./mged.h"
-#include "./mged_solid.h"
 #include "./joints.h"
 
 extern struct db_i	*dbip;	/* database instance pointer */

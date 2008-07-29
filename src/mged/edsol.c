@@ -43,7 +43,6 @@
 #include "db.h"
 
 #include "./mged.h"
-#include "./mged_solid.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
 

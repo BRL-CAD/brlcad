@@ -32,8 +32,8 @@
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
 #endif
-
 #include "bio.h"
+
 #include "bu.h"
 #include "vmath.h"
 #include "mater.h"
@@ -41,7 +41,6 @@
 #include "plot3.h"
 
 #include "./mged.h"
-#include "./mged_solid.h"
 #include "./mged_dm.h"
 
 

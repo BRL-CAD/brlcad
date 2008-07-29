@@ -23,14 +23,14 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include "bio.h"
+
 #include "bu.h"
 #include "vmath.h"
 #include "dg.h"
+
 #include "./sedit.h"
 #include "./mged.h"
-#include "./mged_solid.h"
 #include "./mged_dm.h"
 
 #include "tcl.h"

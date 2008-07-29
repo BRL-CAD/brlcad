@@ -48,9 +48,9 @@
 #include "vmath.h"
 #include "dg.h"
 #include "mater.h"
+
 #include "./sedit.h"
 #include "./mged.h"
-#include "./mged_solid.h"
 #include "./mged_dm.h"
 #include "./qray.h"
 #include "./cmd.h"

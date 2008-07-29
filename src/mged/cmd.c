@@ -55,7 +55,6 @@
 
 #include "./mged.h"
 #include "./cmd.h"
-#include "./mged_solid.h"
 #include "./mged_dm.h"
 #include "./sedit.h"
 

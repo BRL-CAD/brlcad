@@ -26,18 +26,17 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <signal.h>
 #include <string.h>
-
 #include "bio.h"
+
 #include "tcl.h"
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
+
 #include "./mged.h"
-#include "./mged_solid.h"
 #include "./mged_dm.h"
 
 

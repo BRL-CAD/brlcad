@@ -26,15 +26,15 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
-
 #include "bio.h"
+
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "wdb.h"
+
 #include "./mged.h"
-#include "./mged_solid.h"
 
 /* default region ident codes */
 int	item_default = 1000;	/* GIFT region ID */
