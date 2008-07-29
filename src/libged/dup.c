@@ -36,7 +36,7 @@ ged_dir_check5(register struct db_i		*input_dbip,
 	       const struct db5_raw_internal	*rip,
 	       long				addr,
 	       genptr_t				ptr);
-int
+static int
 ged_dir_check(register struct db_i *input_dbip,
 	      register const char *name,
 	      long int laddr,
