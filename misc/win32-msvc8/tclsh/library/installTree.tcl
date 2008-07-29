@@ -241,8 +241,8 @@ puts "copy [file join $rootDir src gtools g_transfer.c] [file join $shareDir sam
 file copy [file join $rootDir src gtools g_transfer.c] [file join $shareDir sample_applications]
 puts "copy [file join $rootDir src libpkg tpkg.c] [file join $shareDir sample_applications]"
 file copy [file join $rootDir src libpkg tpkg.c] [file join $shareDir sample_applications]
-puts "copy [file join $rootDir src librt g_xxx.c] [file join $shareDir sample_applications]"
-file copy [file join $rootDir src librt g_xxx.c] [file join $shareDir sample_applications]
+puts "copy [file join $rootDir src librt primitives g_xxx.c] [file join $shareDir sample_applications]"
+file copy [file join $rootDir src librt primitives g_xxx.c] [file join $shareDir sample_applications]
 puts "copy [file join $rootDir src librt raydebug.tcl] [file join $shareDir sample_applications]"
 file copy [file join $rootDir src librt raydebug.tcl] [file join $shareDir sample_applications]
 puts "copy [file join $rootDir src librt nurb_example.c] [file join $shareDir sample_applications]"
@@ -253,6 +253,8 @@ puts "copy [file join $rootDir src util pl-dm.c] [file join $shareDir sample_app
 file copy [file join $rootDir src util pl-dm.c] [file join $shareDir sample_applications]
 puts "copy [file join $rootDir src util roots_example.c] [file join $shareDir sample_applications]"
 file copy [file join $rootDir src util roots_example.c] [file join $shareDir sample_applications]
+puts "copy [file join $rootDir src nirt sfiles] [file join $shareDir nirt]"
+file copy [file join $rootDir src nirt sfiles] [file join $shareDir nirt]
 # End Copy files to the share directories
 
 
@@ -323,6 +325,7 @@ file delete -force [file join $shareDir tclscripts swidgets scripts Makefile.am]
 file delete -force [file join $shareDir tclscripts util Makefile.am]
 file delete -force [file join $shareDir tclscripts Makefile.am]
 file delete -force [file join $shareDir vfont Makefile.am]
+file delete -force [file join $shareDir nirt Makefile.am]
 # End Remove undesired directories/files as a result of wholesale copies
 
 
