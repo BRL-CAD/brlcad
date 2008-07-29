@@ -46,7 +46,7 @@ ged_reopen(struct ged *gedp, int argc, const char *argv[])
 
     /* get database filename */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "%s", wdbp->dbip->dbi_filename);
+	bu_vls_printf(&gedp->ged_result_str, "%s", gedp->ged_wdbp->dbip->dbi_filename);
 	return BRLCAD_OK;
     }
 
@@ -66,9 +66,9 @@ ged_reopen(struct ged *gedp, int argc, const char *argv[])
 	/* close current database */
 	db_close(gedp->ged_wdbp->dbip);
 
-	ged->ged_wdbp->dbip = dbip;
+	gedp->ged_wdbp->dbip = dbip;
 
-	bu_vls_printf(&gedp->ged_result_str, "%s", wdbp->dbip->dbi_filename);
+	bu_vls_printf(&gedp->ged_result_str, "%s", gedp->ged_wdbp->dbip->dbi_filename);
 	return BRLCAD_OK;
     }
 
