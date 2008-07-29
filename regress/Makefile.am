@@ -1,12 +1,16 @@
 .PHONY : regression regress test moss lights solids shaders spdi iges weight gqa
 
-regression: clean solids shaders spdi moss lights Makefile iges weight gqa flawfinder
+regression: clean mged solids shaders spdi moss lights Makefile iges weight gqa flawfinder
 	@${ECHO} ---
 	@${ECHO} Regression testing completed.
 
 regress: regression
 
 test: regression
+
+mged: $(top_srcdir)/regress/mged.sh
+	-${SH} $(top_srcdir)/regress/mged.sh $(top_srcdir)
+	@${ECHO} +++ $@ test complete.
 
 moss: $(top_srcdir)/regress/moss.sh
 	-${SH} $(top_srcdir)/regress/moss.sh $(top_srcdir)
@@ -58,6 +62,7 @@ EXTRA_DIST = \
 	main.sh \
 	master_fetch.sh \
 	master_prep.sh \
+	mged.sh \
 	moss.sh \
 	mosspix.asc \
 	nightly.sh \
@@ -96,6 +101,8 @@ CLEANFILES = \
 	lights.pix \
 	lights_diff.pix \
 	lights_ref.pix \
+	mged.g \
+	mged.log \
 	moss-diff.log \
 	moss-png.log \
 	moss.asc \

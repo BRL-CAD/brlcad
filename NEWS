@@ -14,6 +14,8 @@ changes made.  See document footer for additional details.
 --- 2008-06-XX  Release 7.12.5                                     ---
 ----------------------------------------------------------------------
 
+* platform installers use consistent naming conventions- Sean Morrison
+* added -C color option to the mged 'E' command - Bob Parker
 * added new -c character option to the loop command - Dawn Thomas
 * tire now checks for files instead of overwriting - Cliff Yapp
 * add new nirt formatting options, -L listing option - C. Yapp
@@ -27,8 +29,8 @@ changes made.  See document footer for additional details.
 This release contains numerous enhancements to MGED's mirror command,
 now with the ability to mirror an object across arbitrary vectors or
 points along a standard axis.  Additionally, nirt now has a new "gap"
-options for reporting the empty spaces between objects with additional
-formatting options under development.
+option for reporting the empty spaces between objects on a given
+shotline with additional formatting options under development.
 
 The release also has a new procedural database geometry tool called
 'tire'.  This new tool was developed by Cliff Yapp for the purpose of
