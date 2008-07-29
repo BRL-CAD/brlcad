@@ -912,8 +912,8 @@ proper source distribution tarball may be generated and that a build
 should compile properly regardless of the existence of the GNU Build
 System tools (autoconf, automake, etc).
 
-7) Tag the release using "rel-MAJOR-MINOR-PATCH" format.  See the
-doc/cvspolicy.txt file for details.  e.g. svn cp trunk tags/rel-7-2-4
+7) Tag the release using "rel-MAJOR-MINOR-PATCH" format:
+svn cp https://brlcad.svn.sf.net/svnroot/brlcad/brlcad/trunk https://brlcad.svn.sf.net/svnroot/brlcad/brlcad/tags/rel-MAJOR-MINOR-PATCH
 
 8) Checkout a tagged version of the sources (required so that the
 source distribution is correct):
