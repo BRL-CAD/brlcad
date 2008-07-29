@@ -33,9 +33,8 @@
 #include <sys/types.h>
 #include <ctype.h>
 #include <string.h>
+#include <regex.h>
 #include "bio.h"
-
-#include "regex.h"
 
 #include "vmath.h"
 #include "raytrace.h"

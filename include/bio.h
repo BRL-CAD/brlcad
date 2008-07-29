@@ -57,6 +57,11 @@
 
 #include <fcntl.h>
 
+/* account for badness in Tcl regex header */
+#ifdef regfree
+#  undef regfree
+#endif
+
 #endif /* __BIO_H__ */
 
 /*
