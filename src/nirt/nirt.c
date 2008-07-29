@@ -300,7 +300,7 @@ static void show_scripts (struct bu_list *sl, char *text)
     BU_CK_LIST_HEAD(sl);
 
     i = 0;
-    bu_log("- - - - - - - The command-line scripts %s\n");
+    bu_log("- - - - - - - The command-line scripts - - - - - - -\n");
     for (BU_LIST_FOR(srp, script_rec, sl)) {
 	BU_CKMAG(srp, SCRIPT_REC_MAGIC, "script record");
 

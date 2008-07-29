@@ -1,4 +1,5 @@
 set(LIBBU_SOURCES
+    argv.c
     association.c
     avs.c
     backtrace.c
