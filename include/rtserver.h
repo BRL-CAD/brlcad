@@ -50,6 +50,15 @@
  *
  */
 
+#if SIZEOF_VOID_P == SIZEOF_INT
+typedef int CLIENTDATA_INT;
+#elif SIZEOF_VOID_P == SIZEOF_LONG
+typedef long CLIENTDATA_INT;
+#elif SIZEOF_VOID_P == SIZEOF_LONG_LONG
+typedef long long CLIENTDATA_INT;
+#else
+#define CLIENTDATA_INT "ERROR: could not determine size of void*";
+#endif
 
 struct rtserver_job {
     struct bu_list l;		/* for linking */
