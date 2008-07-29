@@ -1,7 +1,7 @@
 #!/bin/sh
 
-LD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$$LD_LIBRARY_PATH
-DYLD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$$DYLD_LIBRARY_PATH
+LD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$LD_LIBRARY_PATH
+DYLD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$DYLD_LIBRARY_PATH
 export LD_LIBRARY_PATH DYLD_LIBRARY_PATH
 
 rm -f spdi.g spdi.log spdi spdi.pix spdi_mged.log spdi.mged
