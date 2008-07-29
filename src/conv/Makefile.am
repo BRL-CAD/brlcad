@@ -18,6 +18,7 @@ bin_PROGRAMS = \
 
 EXTRA_DIST =
 	$(COMMON_EXTRA) \
+	CMakeLists.txt \
 	g-xxx.c \
 	g-xxx_facets.c \
 	g4-g5.c \
