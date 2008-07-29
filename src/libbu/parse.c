@@ -45,6 +45,7 @@
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
+#include <assert.h>
 
 #include "bu.h"
 
@@ -1281,9 +1282,9 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		vls->vls_len += strlen(cp);
 		break;
 	    case 'S':
-	    {	
+	    {
 		register struct bu_vls *vls_p = (struct bu_vls *)loc;
-			    
+
 		increase =  bu_vls_strlen(vls_p) + 5 + strlen(sdp->sp_name);
 		bu_vls_extend(vls, increase);
 
@@ -1303,7 +1304,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 
 		increase = 64 * i + strlen(sdp->sp_name) + 3;
 		bu_vls_extend(vls, increase);
-					
+
 
 		cp = vls->vls_str + vls->vls_offset + vls->vls_len;
 		snprintf(cp, increase, "%s%s=%d",
@@ -1328,7 +1329,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 
 		increase = 64 * i + strlen(sdp->sp_name) + 3;
 		bu_vls_extend(vls, increase);
-					
+
 		cp = vls->vls_str + vls->vls_offset + vls->vls_len;
 		snprintf(cp, increase, "%s%s=%d",
 			 (vls->vls_len?" ":""),
@@ -2317,7 +2318,8 @@ bu_structparse_argv(struct bu_vls		*log,
 	    switch (sdp->sp_fmt[1]) {
 	    case 'c':
 	    case 's':
-		/* copy the string, converting escaped
+		/* copy the string to an array of
+		 * length sdp->sp_count, converting escaped
 		 * double quotes to just double quotes
 		 */
 		if (argc < 1) {
@@ -2341,13 +2343,30 @@ bu_structparse_argv(struct bu_vls		*log,
 		}
 		break;
 	    case 'S': {
-#if 1
-		bu_vls_strcat(log, *argv);
-#else
+		/* copy the string to a bu_vls
+		 * (string of variable length provided by libbu)
+		 */
 		struct bu_vls *vls = (struct bu_vls *)loc;
-		bu_vls_init_if_uninit( vls );
-		bu_vls_strcpy(vls, *argv);
-#endif
+
+		/* argv[0] contains the string
+		 * i.e. we have exactly one value
+		 */
+		assert(sdp->sp_count == 1);
+
+		if (argc < 1) {
+		    bu_vls_printf(log,
+				  "not enough values for \"%S\" argument: should be %ld",
+				  sdp->sp_name,
+				  sdp->sp_count);
+		    return BRLCAD_ERROR;
+		}
+
+		bu_vls_printf(log, "%s ", sdp->sp_name);
+
+		bu_vls_init_if_uninit(vls);
+		bu_vls_strcpy(vls, argv[0]);
+
+		bu_vls_printf(log, "%s ", argv[0]);
 		break;
 	    }
 	    case 'i': {
