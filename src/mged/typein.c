@@ -420,6 +420,20 @@ char *p_ehy[] = {
     "Enter apex-to-asymptotes distance, c: "
 };
 
+char *p_hyp[] = {
+    "Enter X, Y, Z of vertex: ",
+    "Enter Y: ",
+    "Enter Z: ",
+    "Enter X, Y, Z, of vector H: ",
+    "Enter Y: ",
+    "Enter Z: ",
+    "Enter X, Y, Z, of vector A: ",
+    "Enter Y: ",
+    "Enter Z: ",
+    "Enter magnitude of vector B: ",
+    "Enter neck to base ratio, c (0,1): "
+};
+
 char *p_eto[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
@@ -522,7 +536,7 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	trc_in(char **cmd_argvs, struct rt_db_internal *intern), ebm_in(char **cmd_argvs, struct rt_db_internal *intern), vol_in(char **cmd_argvs, struct rt_db_internal *intern), hf_in(char **cmd_argvs, struct rt_db_internal *intern), bot_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt),
 	dsp_in_v4(char **cmd_argvs, struct rt_db_internal *intern), dsp_in_v5(char **cmd_argvs, struct rt_db_internal *intern), submodel_in(char **cmd_argvs, struct rt_db_internal *intern), part_in(char **cmd_argvs, struct rt_db_internal *intern), pipe_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt),
 	binunif_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name), arbn_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt), extrude_in(char **cmd_argvs, struct rt_db_internal *intern), grip_in(char **cmd_argvs, struct rt_db_internal *intern), superell_in(char **cmd_argvs, struct rt_db_internal *intern),
-	metaball_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt);
+	metaball_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt), hyp_in(char **cmd_argvs, struct rt_db_internal *intern);
 
     CHECK_DBI_NULL;
 
@@ -596,7 +610,7 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     /*
      * Decide which solid to make and get the rest of the args
      * make name <half|arb[4-8]|sph|ell|ellg|ell1|tor|tgc|tec|
-     rec|trc|rcc|box|raw|rpp|rpc|rhc|epa|ehy|eto|superell>
+     rec|trc|rcc|box|raw|rpp|rpc|rhc|epa|ehy|hyp|eto|superell>
     */
     if ( strcmp( argv[2], "ebm" ) == 0 )  {
 	nvals = 4;
@@ -774,6 +788,10 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	nvals = 3*3 + 2;
 	menu = p_ehy;
 	fn_in = ehy_in;
+    } else if ( strcmp( argv[2], "hyp" ) == 0 ) {
+	nvals = 3*3 + 2;
+	menu = p_hyp;
+	fn_in = hyp_in;
     } else if ( strcmp( argv[2], "eto" ) == 0 )  {
 	nvals = 3*3 + 2;
 	menu = p_eto;
@@ -1499,10 +1517,10 @@ ars_in(int argc, char **argv, struct rt_db_internal *intern, char **promp)
     }
 
     total_vals_needed = 2 +		/* #rows, #pts/row */
-	(ELEMENTS_PER_PT * 2) +	/* the first point, and very last */
-	(num_pts * ELEMENTS_PER_PT * (num_curves-2)); /* the curves */
+	(ELEMENTS_PER_POINT * 2) +	/* the first point, and very last */
+	(num_pts * ELEMENTS_PER_POINT * (num_curves-2)); /* the curves */
 
-    if (vals_present < (total_vals_needed - ELEMENTS_PER_PT)) {
+    if (vals_present < (total_vals_needed - ELEMENTS_PER_POINT)) {
 	/* if we're looking for points on the curves, and not
 	 * the last point which makes up the last curve, we
 	 * have to format up a prompt string
@@ -1604,9 +1622,9 @@ ars_in(int argc, char **argv, struct rt_db_internal *intern, char **promp)
     cv = 1;
     axis = 0;
     /* scan each of the other points we've already got */
-    for (i=8; i < argc && i < total_points * ELEMENTS_PER_PT; ++i) {
+    for (i=8; i < argc && i < total_points * ELEMENTS_PER_POINT; ++i) {
 	arip->curves[cv][axis] = atof(argv[i]) * local2base;
-	if (++axis >= arip->pts_per_curve * ELEMENTS_PER_PT) {
+	if (++axis >= arip->pts_per_curve * ELEMENTS_PER_POINT) {
 	    axis = 0;
 	    cv++;
 	}
@@ -1673,7 +1691,7 @@ arb_in(char **cmd_argvs, struct rt_db_internal *intern)
 
     n = atoi(&cmd_argvs[2][3]);	/* get # from "arb#" */
     for (j = 0; j < n; j++)
-	for (i = 0; i < ELEMENTS_PER_PT; i++)
+	for (i = 0; i < ELEMENTS_PER_POINT; i++)
 	    aip->pt[j][i] = atof(cmd_argvs[3+i+3*j]) * local2base;
 
     if (!strcmp("arb4", cmd_argvs[2])) {
@@ -1712,7 +1730,7 @@ sph_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name)
 
     intern->idb_ptr = NULL;
 
-    for (i = 0; i < ELEMENTS_PER_PT; i++) {
+    for (i = 0; i < ELEMENTS_PER_POINT; i++) {
 	center[i] = atof(cmd_argvs[3+i]) * local2base;
     }
     r = atof(cmd_argvs[6]) * local2base;
@@ -1826,7 +1844,7 @@ tor_in(char **cmd_argvs, struct rt_db_internal *intern)
     tip = (struct rt_tor_internal *)intern->idb_ptr;
     tip->magic = RT_TOR_INTERNAL_MAGIC;
 
-    for (i = 0; i < ELEMENTS_PER_PT; i++) {
+    for (i = 0; i < ELEMENTS_PER_POINT; i++) {
 	tip->v[i] = atof(cmd_argvs[3+i]) * local2base;
 	tip->h[i] = atof(cmd_argvs[6+i]) * local2base;
     }
@@ -1867,7 +1885,7 @@ tgc_in(char **cmd_argvs, struct rt_db_internal *intern)
     tip = (struct rt_tgc_internal *)intern->idb_ptr;
     tip->magic = RT_TGC_INTERNAL_MAGIC;
 
-    for (i = 0; i < ELEMENTS_PER_PT; i++) {
+    for (i = 0; i < ELEMENTS_PER_POINT; i++) {
 	tip->v[i] = atof(cmd_argvs[3+i]) * local2base;
 	tip->h[i] = atof(cmd_argvs[6+i]) * local2base;
 	tip->a[i] = atof(cmd_argvs[9+i]) * local2base;
@@ -1919,7 +1937,7 @@ rcc_in(char **cmd_argvs, struct rt_db_internal *intern)
     tip = (struct rt_tgc_internal *)intern->idb_ptr;
     tip->magic = RT_TGC_INTERNAL_MAGIC;
 
-    for (i = 0; i < ELEMENTS_PER_PT; i++) {
+    for (i = 0; i < ELEMENTS_PER_POINT; i++) {
 	tip->v[i] = atof(cmd_argvs[3+i]) * local2base;
 	tip->h[i] = atof(cmd_argvs[6+i]) * local2base;
     }
@@ -1965,7 +1983,7 @@ tec_in(char **cmd_argvs, struct rt_db_internal *intern)
     tip = (struct rt_tgc_internal *)intern->idb_ptr;
     tip->magic = RT_TGC_INTERNAL_MAGIC;
 
-    for (i = 0; i < ELEMENTS_PER_PT; i++) {
+    for (i = 0; i < ELEMENTS_PER_POINT; i++) {
 	tip->v[i] = atof(cmd_argvs[3+i]) * local2base;
 	tip->h[i] = atof(cmd_argvs[6+i]) * local2base;
 	tip->a[i] = atof(cmd_argvs[9+i]) * local2base;
@@ -2007,7 +2025,7 @@ rec_in(char **cmd_argvs, struct rt_db_internal *intern)
     tip = (struct rt_tgc_internal *)intern->idb_ptr;
     tip->magic = RT_TGC_INTERNAL_MAGIC;
 
-    for (i = 0; i < ELEMENTS_PER_PT; i++) {
+    for (i = 0; i < ELEMENTS_PER_POINT; i++) {
 	tip->v[i] = atof(cmd_argvs[3+i]) * local2base;
 	tip->h[i] = atof(cmd_argvs[6+i]) * local2base;
 	tip->a[i] = atof(cmd_argvs[9+i]) * local2base;
@@ -2049,7 +2067,7 @@ trc_in(char **cmd_argvs, struct rt_db_internal *intern)
     tip = (struct rt_tgc_internal *)intern->idb_ptr;
     tip->magic = RT_TGC_INTERNAL_MAGIC;
 
-    for (i = 0; i < ELEMENTS_PER_PT; i++) {
+    for (i = 0; i < ELEMENTS_PER_POINT; i++) {
 	tip->v[i] = atof(cmd_argvs[3+i]) * local2base;
 	tip->h[i] = atof(cmd_argvs[6+i]) * local2base;
     }
@@ -2099,7 +2117,7 @@ box_in(char **cmd_argvs, struct rt_db_internal *intern)
     aip = (struct rt_arb_internal *)intern->idb_ptr;
     aip->magic = RT_ARB_INTERNAL_MAGIC;
 
-    for (i = 0; i < ELEMENTS_PER_PT; i++) {
+    for (i = 0; i < ELEMENTS_PER_POINT; i++) {
 	Vrtx[i] = atof(cmd_argvs[3+i]) * local2base;
 	Hgt[i] = atof(cmd_argvs[6+i]) * local2base;
 	Wdth[i] = atof(cmd_argvs[9+i]) * local2base;
@@ -2240,7 +2258,7 @@ part_in(char **cmd_argvs, struct rt_db_internal *intern)
     part_ip = (struct rt_part_internal *)intern->idb_ptr;
     part_ip->part_magic = RT_PART_INTERNAL_MAGIC;
 
-    for (i = 0; i < ELEMENTS_PER_PT; i++) {
+    for (i = 0; i < ELEMENTS_PER_POINT; i++) {
 	part_ip->part_V[i] = atof(cmd_argvs[3+i]) * local2base;
 	part_ip->part_H[i] = atof(cmd_argvs[6+i]) * local2base;
     }
@@ -2279,7 +2297,7 @@ rpc_in(char **cmd_argvs, struct rt_db_internal *intern)
     rip = (struct rt_rpc_internal *)intern->idb_ptr;
     rip->rpc_magic = RT_RPC_INTERNAL_MAGIC;
 
-    for (i = 0; i < ELEMENTS_PER_PT; i++) {
+    for (i = 0; i < ELEMENTS_PER_POINT; i++) {
 	rip->rpc_V[i] = atof(cmd_argvs[3+i]) * local2base;
 	rip->rpc_H[i] = atof(cmd_argvs[6+i]) * local2base;
 	rip->rpc_B[i] = atof(cmd_argvs[9+i]) * local2base;
@@ -2318,7 +2336,7 @@ rhc_in(char **cmd_argvs, struct rt_db_internal *intern)
     rip = (struct rt_rhc_internal *)intern->idb_ptr;
     rip->rhc_magic = RT_RHC_INTERNAL_MAGIC;
 
-    for (i = 0; i < ELEMENTS_PER_PT; i++) {
+    for (i = 0; i < ELEMENTS_PER_POINT; i++) {
 	rip->rhc_V[i] = atof(cmd_argvs[3+i]) * local2base;
 	rip->rhc_H[i] = atof(cmd_argvs[6+i]) * local2base;
 	rip->rhc_B[i] = atof(cmd_argvs[9+i]) * local2base;
@@ -2358,7 +2376,7 @@ epa_in(char **cmd_argvs, struct rt_db_internal *intern)
     rip = (struct rt_epa_internal *)intern->idb_ptr;
     rip->epa_magic = RT_EPA_INTERNAL_MAGIC;
 
-    for (i = 0; i < ELEMENTS_PER_PT; i++) {
+    for (i = 0; i < ELEMENTS_PER_POINT; i++) {
 	rip->epa_V[i] = atof(cmd_argvs[3+i]) * local2base;
 	rip->epa_H[i] = atof(cmd_argvs[6+i]) * local2base;
 	rip->epa_Au[i] = atof(cmd_argvs[9+i]) * local2base;
@@ -2402,7 +2420,7 @@ ehy_in(char **cmd_argvs, struct rt_db_internal *intern)
     rip = (struct rt_ehy_internal *)intern->idb_ptr;
     rip->ehy_magic = RT_EHY_INTERNAL_MAGIC;
 
-    for (i = 0; i < ELEMENTS_PER_PT; i++) {
+    for (i = 0; i < ELEMENTS_PER_POINT; i++) {
 	rip->ehy_V[i] = atof(cmd_argvs[3+i]) * local2base;
 	rip->ehy_H[i] = atof(cmd_argvs[6+i]) * local2base;
 	rip->ehy_Au[i] = atof(cmd_argvs[9+i]) * local2base;
@@ -2419,9 +2437,88 @@ ehy_in(char **cmd_argvs, struct rt_db_internal *intern)
 	return(1);	/* failure */
     }
 
+    if ( !NEAR_ZERO( VDOT( rip->ehy_H, rip->ehy_Au ), RT_DOT_TOL ) ) {
+	Tcl_AppendResult(interp, "ERROR, major axis must be perpendicular to height vector!\n", (char *)NULL);
+	return(1);	/* failure */
+    }
+
     if (rip->ehy_r2 > rip->ehy_r1) {
 	Tcl_AppendResult(interp, "ERROR, |A| must be greater than |B|!\n", (char *)NULL);
 	return(1);	/* failure */
+    }
+
+    return(0);	/* success */
+}
+
+
+/*   H Y P _ I N ( ) :   	reads hyp parameters from keyboard
+ *				returns 0 if successful read
+ *					1 if unsuccessful read
+ */
+int
+hyp_in(char **cmd_argvs, struct rt_db_internal *intern)
+{
+    int			i;
+    struct rt_hyp_internal	*rip;
+    vect_t	inH, inAu;
+    point_t	inV;
+    fastf_t	inB, inC;
+
+
+    CHECK_DBI_NULL;
+
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_type = ID_HYP;
+    intern->idb_meth = &rt_functab[ID_HYP];
+    intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_hyp_internal),
+					   "rt_hyp_internal" );
+    rip = (struct rt_hyp_internal *)intern->idb_ptr;
+    rip->hyp_magic = RT_HYP_INTERNAL_MAGIC;
+
+    for (i = 0; i < ELEMENTS_PER_POINT; i++) {
+	inV[i] = atof(cmd_argvs[3+i]) * local2base;
+	inH[i] = atof(cmd_argvs[6+i]) * local2base;
+	inAu[i] = atof(cmd_argvs[9+i]) * local2base;
+    }
+    inB = atof(cmd_argvs[12]) * local2base;
+    inC = atof(cmd_argvs[13]) * local2base;
+
+    rip->hyp_r1 = inC * MAGNITUDE(inAu);
+    rip->hyp_r2 = inC * inB;
+    rip->hyp_c = sqrt( 4 * MAGSQ( inAu ) / MAGSQ( inH ) * ( 1 - inC*inC )  );
+
+    VSCALE( rip->hyp_H, inH, 0.5 );
+    VADD2( rip->hyp_V, inV, rip->hyp_H );
+    VMOVE( rip->hyp_Au, inAu );
+    VUNITIZE(rip->hyp_Au);
+
+    if (MAGNITUDE(rip->hyp_H) < RT_LEN_TOL
+	|| rip->hyp_r1 <= RT_LEN_TOL || rip->hyp_r2 <= RT_LEN_TOL
+	|| rip->hyp_c <= RT_LEN_TOL) {
+	Tcl_AppendResult(interp, "ERROR, height, axes, and distance to asymptotes must be greater than zero!\n", (char *)NULL);
+	return(1);	/* failure */
+    }
+
+    if ( !NEAR_ZERO( VDOT( rip->hyp_H, rip->hyp_Au ), RT_DOT_TOL ) ) {
+	Tcl_AppendResult(interp, "ERROR, major axis must be perpendicular to height vector!\n", (char *)NULL);
+	return(1);	/* failure */
+    }
+
+    if ( inC >= 1 || inC <=0 ) {
+	Tcl_AppendResult(interp, "ERROR, neck to base ratio must be between 0 and 1!\n", (char *)NULL);
+	return(1);	/* failure */
+    }
+
+    if (rip->hyp_r2 > rip->hyp_r1) {
+	vect_t	majorAxis;
+	fastf_t	majorLen;
+
+	VCROSS( majorAxis, rip->hyp_H, rip->hyp_Au );
+	VUNITIZE( majorAxis );
+	VMOVE( rip->hyp_Au, majorAxis );
+	majorLen = rip->hyp_r2;
+	rip->hyp_r2 = rip->hyp_r1;
+	rip->hyp_r1 = majorLen;
     }
 
     return(0);	/* success */
@@ -2447,7 +2544,7 @@ eto_in(char **cmd_argvs, struct rt_db_internal *intern)
     eip = (struct rt_eto_internal *)intern->idb_ptr;
     eip->eto_magic = RT_ETO_INTERNAL_MAGIC;
 
-    for (i = 0; i < ELEMENTS_PER_PT; i++) {
+    for (i = 0; i < ELEMENTS_PER_POINT; i++) {
 	eip->eto_V[i] = atof(cmd_argvs[3+i]) * local2base;
 	eip->eto_N[i] = atof(cmd_argvs[6+i]) * local2base;
 	eip->eto_C[i] = atof(cmd_argvs[10+i]) * local2base;
@@ -2494,7 +2591,7 @@ extrude_in(char **cmd_argvs, struct rt_db_internal *intern)
     eip = (struct rt_extrude_internal *)intern->idb_ptr;
     eip->magic = RT_EXTRUDE_INTERNAL_MAGIC;
 
-    for (i = 0; i < ELEMENTS_PER_PT; i++) {
+    for (i = 0; i < ELEMENTS_PER_POINT; i++) {
 	eip->V[i] = atof(cmd_argvs[3+i]) * local2base;
 	eip->h[i] = atof(cmd_argvs[6+i]) * local2base;
 	eip->u_vec[i] = atof(cmd_argvs[9+i]) * local2base;
@@ -2541,7 +2638,7 @@ grip_in(char **cmd_argvs, struct rt_db_internal *intern)
     gip = (struct rt_grip_internal *)intern->idb_ptr;
     gip->magic = RT_GRIP_INTERNAL_MAGIC;
 
-    for (i = 0; i < ELEMENTS_PER_PT; i++) {
+    for (i = 0; i < ELEMENTS_PER_POINT; i++) {
 	gip->center[i] = atof(cmd_argvs[3+i]) * local2base;
 	gip->normal[i] = atof(cmd_argvs[6+i]) * local2base;
     }
