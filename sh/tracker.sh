@@ -87,16 +87,16 @@ identify ( ) {
 usage ( ) {
     identify
     printf "Usage: $SELF [-? | -h | --help] [-V | --version] [-v | --verbose] [-o | --output {file}] [-c | --closed {days}] [-d | --deleted] [project]\n\n"
-    printf "\-h      \tthis usage help\n"
-    printf "\-V      \tdisplay version information"
-    printf "\-v      \tbasic progress output to console\n"
-    printf "\-v -v   \tadds output of commands to console\n"
-    printf "\-v -v -v\tadds output of tracker html content to files\n"
-    printf "\-v -v -v -v\tadds output of tracker html content to console\n"
-    printf "\-o file \tfile name to output comma-separate values (default: $OUTPUT)\n"
-    printf "\-c days \toutput items closed within specified number of days (default: $CLOSED)\n"
-    printf "\-d      \tinclude deleted items in the output\n"
-    printf "project  \tSourceforge project to extract data from (default: $PROJECT)\n\n"
+    printf "  -h      \tthis usage help\n"
+    printf "  -V      \tdisplay version information"
+    printf "  -v      \tbasic progress output to console\n"
+    printf "  -v -v   \tadds output of commands to console\n"
+    printf "  -v -v -v\tadds output of tracker html content to files\n"
+    printf "  -v -v -v -v\tadds output of tracker html content to console\n"
+    printf "  -o file \tfile name to output comma-separate values (default: $OUTPUT)\n"
+    printf "  -c days \toutput items closed within specified number of days (default: $CLOSED)\n"
+    printf "  -d      \tinclude deleted items in the output\n"
+    printf "  project  \tSourceforge project to extract data from (default: $PROJECT)\n\n"
     printf "Example: $SELF -v -o $OUTPUT -c 365 $PROJECT\n\n"
     exit 1
 }

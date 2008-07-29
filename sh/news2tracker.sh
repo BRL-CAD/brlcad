@@ -82,14 +82,14 @@ identify ( ) {
 usage ( ) {
     identify
     printf "Usage: $SELF [-? | -h | --help] [-V | --version] [-v | --verbose] [-o | --output {file}] [-c | --closed {days}] [project]\n\n"
-    printf "\-h      \tthis usage help\n"
-    printf "\-V      \tdisplay version information"
-    printf "\-v      \tbasic progress output to console\n"
-    printf "\-v -v   \tadds output of commands to console\n"
-    printf "\-v -v -v\tadds output of svn commands to console\n"
-    printf "\-o file \tfile name to output comma-separate values (default: $OUTPUT)\n"
-    printf "\-c days \toutput items added within specified number of days (default: $CLOSED)\n"
-    printf "project  \tName of the project to extract data for (default: $PROJECT)\n\n"
+    printf "  -h      \tthis usage help\n"
+    printf "  -V      \tdisplay version information"
+    printf "  -v      \tbasic progress output to console\n"
+    printf "  -v -v   \tadds output of commands to console\n"
+    printf "  -v -v -v\tadds output of svn commands to console\n"
+    printf "  -o file \tfile name to output comma-separate values (default: $OUTPUT)\n"
+    printf "  -c days \toutput items added within specified number of days (default: $CLOSED)\n"
+    printf "  project  \tName of the project to extract data for (default: $PROJECT)\n\n"
     printf "Example: $SELF -v -o $OUTPUT -c 365 $PROJECT\n\n"
     exit 1
 }
