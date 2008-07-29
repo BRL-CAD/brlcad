@@ -1340,6 +1340,7 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(rtcntrl) update_fb_mode
     bind $itk_component(rtcntrl) <Visibility> "raise $itk_component(rtcntrl)"
     bind $itk_component(rtcntrl) <FocusOut> "raise $itk_component(rtcntrl)"
+    wm protocol $itk_component(rtcntrl) WM_DELETE_WINDOW "$itk_component(rtcntrl) deactivate"
 
     # create view axes control panel
     #    itk_component add vac {
