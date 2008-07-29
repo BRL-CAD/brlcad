@@ -31,9 +31,15 @@
 #include "cmd.h"
 #include "ged_private.h"
 
+static void
+ged_dir_summary(struct ged	*gedp,
+		int		flag);
+
 int
 ged_summary(struct ged *gedp, int argc, const char *argv[])
 {
+    register char *cp;
+    int flags = 0;
     static const char *usage = "[p r g]";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -43,19 +49,92 @@ ged_summary(struct ged *gedp, int argc, const char *argv[])
     gedp->ged_result = GED_RESULT_NULL;
     gedp->ged_result_flags = 0;
 
-    /* must be wanting help */
     if (argc == 1) {
-	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	ged_dir_summary(gedp, 0);
 	return BRLCAD_OK;
     }
 
-    if (argc < 2 || MAXARGS < argc) {
+    if (argc < 1 || 2 < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
 
+    cp = (char *)argv[1];
+    while (*cp)  switch (*cp++) {
+	case 'p':
+	    flags |= DIR_SOLID;
+	    break;
+	case 'r':
+	    flags |= DIR_REGION;
+	    break;
+	case 'g':
+	    flags |= DIR_COMB;
+	    break;
+	default:
+	    bu_vls_printf(&gedp->ged_result_str, "summary:  P R or G are only valid parmaters\n");
+	    return BRLCAD_ERROR;
+    }
+
+    ged_dir_summary(gedp, flags);
     return BRLCAD_OK;
+}
+
+
+/*
+ *  			G E D _ D I R _ S U M M A R Y
+ *
+ * Summarize the contents of the directory by categories
+ * (solid, comb, region).  If flag is != 0, it is interpreted
+ * as a request to print all the names in that category (eg, DIR_SOLID).
+ */
+static void
+ged_dir_summary(struct ged	*gedp,
+		int		flag)
+{
+    register struct directory *dp;
+    register int i;
+    static int sol, comb, reg;
+    struct directory **dirp;
+    struct directory **dirp0 = (struct directory **)NULL;
+
+    sol = comb = reg = 0;
+    for (i = 0; i < RT_DBNHASH; i++)  {
+	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
+	    if (dp->d_flags & DIR_SOLID)
+		sol++;
+	    if (dp->d_flags & DIR_COMB) {
+		if (dp->d_flags & DIR_REGION)
+		    reg++;
+		else
+		    comb++;
+	    }
+	}
+    }
+
+    bu_vls_printf(&gedp->ged_result_str, "Summary:\n");
+    bu_vls_printf(&gedp->ged_result_str, "  %5d primitives\n", sol);
+    bu_vls_printf(&gedp->ged_result_str, "  %5d region; %d non-region combinations\n", reg, comb);
+    bu_vls_printf(&gedp->ged_result_str, "  %5d total objects\n\n", sol+reg+comb );
+
+    if (flag == 0)
+	return;
+
+    /* Print all names matching the flags parameter */
+    /* THIS MIGHT WANT TO BE SEPARATED OUT BY CATEGORY */
+
+    dirp = ged_dir_getspace(gedp->ged_wdbp->dbip, 0);
+    dirp0 = dirp;
+    /*
+     * Walk the directory list adding pointers (to the directory entries
+     * of interest) to the array
+     */
+    for (i = 0; i < RT_DBNHASH; i++)
+	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw)
+	    if (dp->d_flags & flag)
+		*dirp++ = dp;
+
+    ged_vls_col_pr4v(&gedp->ged_result_str, dirp0, (int)(dirp - dirp0), 0);
+    bu_free((genptr_t)dirp0, "dir_getspace");
 }
 
 

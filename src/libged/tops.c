@@ -31,9 +31,6 @@
 #include "cmd.h"
 #include "ged_private.h"
 
-static struct directory **
-ged_dir_getspace(struct db_i	*dbip,
-		 register int	num_entries);
 
 int
 ged_tops(struct ged *gedp, int argc, const char *argv[])
@@ -162,7 +159,7 @@ ged_tops(struct ged *gedp, int argc, const char *argv[])
  *  a) all of the entries if called with an argument of 0, or
  *  b) the number of entries specified by the argument if > 0.
  */
-static struct directory **
+struct directory **
 ged_dir_getspace(struct db_i	*dbip,
 		 register int	num_entries)
 {

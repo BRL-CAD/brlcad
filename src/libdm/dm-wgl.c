@@ -144,7 +144,7 @@ struct dm dm_wgl = {
     1,				/* depth buffer is writable */
     1,				/* zbuffer */
     0,				/* no zclipping */
-    0,                            /* clear back buffer after drawing and swap */
+    0,                          /* clear back buffer after drawing and swap */
     0				/* Tcl interpreter */
 };
 

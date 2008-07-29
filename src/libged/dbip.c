@@ -41,17 +41,16 @@ ged_dbip(struct ged *gedp, int argc, const char *argv[])
     gedp->ged_result = GED_RESULT_NULL;
     gedp->ged_result_flags = 0;
 
-    /* must be wanting help */
-    if (argc == 1) {
-	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
-	return BRLCAD_OK;
-    }
-
-    if (argc < 2 || MAXARGS < argc) {
+    if (argc != 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
 	return BRLCAD_ERROR;
     }
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    bu_vls_printf(&gedp->ged_result_str, "%llu", (_int64)gedp->ged_wdbp->dbip);
+#else
+    bu_vls_printf(&gedp->ged_result_str, "%llu", (unsigned long long)gedp->ged_wdbp->dbip);
+#endif
 
     return BRLCAD_OK;
 }

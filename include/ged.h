@@ -1358,6 +1358,14 @@ GED_EXPORT BU_EXTERN(int ged_kill, (struct ged *gedp, int argc, const char *argv
 GED_EXPORT BU_EXTERN(int ged_killall, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Kill all references to the specified object(s).
+ *
+ * Usage:
+ *     killrefs object(s)
+ */
+GED_EXPORT BU_EXTERN(int ged_killrefs, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Kill all paths belonging to objects
  *
  * Usage:
@@ -1894,6 +1902,14 @@ GED_EXPORT BU_EXTERN(int ged_tops, (struct ged *gedp, int argc, const char *argv
 GED_EXPORT BU_EXTERN(int ged_tra, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Create a track
+ *
+ * Usage:
+ *     track args
+ */
+GED_EXPORT BU_EXTERN(int ged_track, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Return the object hierarchy for all object(s) specified or for all currently displayed
  *
  * Usage:
@@ -1966,20 +1982,21 @@ GED_EXPORT BU_EXTERN(int ged_viewdir, (struct ged *gedp, int argc, const char *a
 GED_EXPORT BU_EXTERN(int ged_whatid, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * The ged_which() function serves both whichair and whichid.
+ *
  * Find the regions with the specified air codes
  *
  * Usage:
  *     whichair codes(s)
- */
-GED_EXPORT BU_EXTERN(int ged_whichair, (struct ged *gedp, int argc, const char *argv[]));
-
-/**
+ *
+ *
  * Find the regions with the specified region ids
  *
  * Usage:
  *     whichid [-s] id(s)
+ *
  */
-GED_EXPORT BU_EXTERN(int ged_whichid, (struct ged *gedp, int argc, const char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_which, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * List the objects currently prepped for drawing

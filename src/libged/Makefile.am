@@ -111,7 +111,6 @@ libged_nil_la_SOURCES = \
 	rotate_about.c \
 	rotate_arb_face.c \
 	rt.c \
-	rt_gettrees.c \
 	scale.c \
 	set_outputHandler.c \
 	set_transparency.c \
@@ -143,8 +142,7 @@ libged_nil_la_SOURCES = \
 	wdb_comb_std.c \
 	wdb_obj.c \
 	whatid.c \
-	whichair.c \
-	whichid.c \
+	which.c \
 	who.c \
 	wmater.c \
 	xpush.c \

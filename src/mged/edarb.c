@@ -162,9 +162,17 @@ editarb( vect_t pos_model )
     /* redo plane eqns that changed */
     newp = *edptr++; 	/* plane to redo */
 
-    if ( newp == 9 )	/* special flag --> redo all the planes */
-	if (rt_arb_calc_planes(interp, arb, es_type, es_peqn, &mged_tol))
+    if (newp == 9) {	/* special flag --> redo all the planes */
+	struct bu_vls error_msg;
+
+	bu_vls_init(&error_msg);
+	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &mged_tol)) {
+	    Tcl_AppendResult( interp, bu_vls_addr(&error_msg), (char *)0);
+	    bu_vls_free(&error_msg);
 	    goto err;
+	}
+	bu_vls_free(&error_msg);
+    }
 
     if (newp >= 0 && newp < 6) {
 	for (i=0; i<3; i++) {
@@ -316,6 +324,7 @@ f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     static int prod;
     static fastf_t dist;
     struct rt_arb_internal larb;	/* local copy of arb for new way */
+    struct bu_vls error_msg;
 
     CHECK_DBI_NULL;
 
@@ -495,12 +504,16 @@ f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
 
     /* redo the plane equations */
-    if (rt_arb_calc_planes(interp, &larb, es_type, es_peqn, &mged_tol))
+    bu_vls_init(&error_msg);
+    if (rt_arb_calc_planes(&error_msg, &larb, es_type, es_peqn, &mged_tol))
     {
-	Tcl_AppendResult(interp, "Cannot calculate new plane equations for faces\n",
+	Tcl_AppendResult(interp, bu_vls_addr(&error_msg),
+			 "Cannot calculate new plane equations for faces\n",
 			 (char *)NULL);
+	bu_vls_free(&error_msg);
 	return TCL_ERROR;
     }
+    bu_vls_free(&error_msg);
 
     /* copy local copy back to original */
     memcpy((char *)es_int.idb_ptr, (char *)&larb, sizeof( struct rt_arb_internal ));
@@ -625,6 +638,7 @@ f_mirface(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     static vect_t work;
     struct rt_arb_internal *arb;
     struct rt_arb_internal larb;	/* local copy of solid */
+    struct bu_vls error_msg;
 
     if (argc < 3 || 3 < argc) {
 	struct bu_vls vls;
@@ -784,8 +798,13 @@ f_mirface(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
 
     /* redo the plane equations */
-    if (rt_arb_calc_planes(interp, &larb, es_type, es_peqn, &mged_tol))
+    bu_vls_init(&error_msg);
+    if (rt_arb_calc_planes(&error_msg, &larb, es_type, es_peqn, &mged_tol)) {
+	Tcl_AppendResult( interp, bu_vls_addr(&error_msg), (char *)0);
+	bu_vls_free(&error_msg);
 	return TCL_ERROR;
+    }
+    bu_vls_free(&error_msg);
 
     /* copy to original */
     memcpy((char *)arb, (char *)&larb, sizeof( struct rt_arb_internal ));

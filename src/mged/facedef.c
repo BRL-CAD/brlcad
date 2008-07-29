@@ -89,6 +89,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     struct rt_arb_internal	*arbo;
     plane_t		planes[6];
     int status = TCL_OK;
+    struct bu_vls error_msg;
 
     RT_INIT_DB_INTERNAL(&intern);
 
@@ -125,11 +126,15 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     RT_ARB_CK_MAGIC(arb);
 
     /* find new planes to account for any editing */
-    if (rt_arb_calc_planes(interp, arb, es_type, planes, &mged_tol)) {
-	Tcl_AppendResult(interp, "Unable to determine plane equations\n", (char *)NULL);
+    bu_vls_init(&error_msg);
+    if (rt_arb_calc_planes(&error_msg, arb, es_type, planes, &mged_tol)) {
+	Tcl_AppendResult(interp, bu_vls_addr(&error_msg),
+			 "Unable to determine plane equations\n", (char *)NULL);
 	status = TCL_ERROR;
+	bu_vls_free(&error_msg);
 	goto end;
     }
+    bu_vls_free(&error_msg);
 
     /* get face, initialize args and argcnt */
     face = atoi( argv[1] );

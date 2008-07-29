@@ -34,9 +34,13 @@
 int
 ged_copy(struct ged *gedp, int argc, const char *argv[])
 {
+    register struct directory *proto;
+    register struct directory *dp;
+    struct bu_external external;
     static const char *usage = "from to";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -50,10 +54,36 @@ ged_copy(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_OK;
     }
 
-    if (argc < 2 || MAXARGS < argc) {
+    if (argc != 3) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
+
+
+    if ((proto = db_lookup(gedp->ged_wdbp->dbip,  argv[1], LOOKUP_NOISY)) == DIR_NULL)
+	return BRLCAD_ERROR;
+
+    if (db_lookup(gedp->ged_wdbp->dbip, argv[2], LOOKUP_QUIET) != DIR_NULL) {
+	bu_vls_printf(&gedp->ged_result_str, "%s: already exists", argv[2]);
+	return BRLCAD_ERROR;
+    }
+
+    if (db_get_external(&external, proto, gedp->ged_wdbp->dbip)) {
+	bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting\n");
+	return BRLCAD_ERROR;
+    }
+
+    if ((dp=db_diradd(gedp->ged_wdbp->dbip, argv[2], -1, 0, proto->d_flags, (genptr_t)&proto->d_minor_type)) == DIR_NULL ) {
+	bu_vls_printf(&gedp->ged_result_str, "An error has occured while adding a new object to the database.");
+	return BRLCAD_ERROR;
+    }
+
+    if (db_put_external(&external, dp, gedp->ged_wdbp->dbip) < 0) {
+	bu_free_external(&external);
+	bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting\n");
+	return BRLCAD_ERROR;
+    }
+    bu_free_external(&external);
 
     return BRLCAD_OK;
 }

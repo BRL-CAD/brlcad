@@ -2461,6 +2461,7 @@ init_sedit(void)
     if ( id == ID_ARB8 )
     {
 	struct rt_arb_internal *arb;
+	struct bu_vls error_msg;
 
 	arb = (struct rt_arb_internal *)es_int.idb_ptr;
 	RT_ARB_CK_MAGIC( arb );
@@ -2468,13 +2469,17 @@ init_sedit(void)
 	type = rt_arb_std_type( &es_int, &mged_tol );
 	es_type = type;
 
-	if (rt_arb_calc_planes(interp, arb, es_type, es_peqn, &mged_tol))
+	bu_vls_init(&error_msg);
+	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &mged_tol))
 	{
-	    Tcl_AppendResult(interp, "Cannot calculate plane equations for ARB8\n",
+	    Tcl_AppendResult(interp, bu_vls_addr(&error_msg),
+			     "\nCannot calculate plane equations for ARB8\n",
 			     (char *)NULL);
 	    rt_db_free_internal( &es_int, &rt_uniresource );
+	    bu_vls_free(&error_msg);
 	    return;
 	}
+	bu_vls_free(&error_msg);
     }
     else if ( id == ID_BSPLINE )
     {
@@ -5865,10 +5870,15 @@ sedit(void)
     /* must re-calculate the face plane equations for arbs */
     if ( es_int.idb_type == ID_ARB8 )
     {
+	struct bu_vls error_msg;
+
 	arb = (struct rt_arb_internal *)es_int.idb_ptr;
 	RT_ARB_CK_MAGIC( arb );
 
-	(void)rt_arb_calc_planes(interp, arb, es_type, es_peqn, &mged_tol);
+	bu_vls_init(&error_msg);
+	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &mged_tol < 0))
+	    Tcl_AppendResult( interp, bu_vls_addr(&error_msg), (char *)0);
+	bu_vls_free(&error_msg);
     }
 
     /* If the keypoint changed location, find about it here */
@@ -9664,11 +9674,15 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     /* must re-calculate the face plane equations for arbs */
     if ( es_int.idb_type == ID_ARB8 ) {
 	struct rt_arb_internal *arb;
+	struct bu_vls error_msg;
 
 	arb = (struct rt_arb_internal *)es_int.idb_ptr;
 	RT_ARB_CK_MAGIC( arb );
 
-	(void)rt_arb_calc_planes(interp, arb, es_type, es_peqn, &mged_tol);
+	bu_vls_init(&error_msg);
+	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &mged_tol) < 0)
+	    Tcl_AppendResult(interp, bu_vls_addr(&error_msg), (char *)0);
+	bu_vls_free(&error_msg);
     }
 
     if (!es_keyfixed)

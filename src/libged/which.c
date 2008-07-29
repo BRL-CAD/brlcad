@@ -1,0 +1,228 @@
+/*                         W H I C H . C
+ * BRL-CAD
+ *
+ * Copyright (c) 2008 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file which.c
+ *
+ * The whichair and whichid commands.
+ *
+ */
+
+#include "common.h"
+
+#include <string.h>
+
+#include "bio.h"
+#include "cmd.h"
+#include "ged_private.h"
+
+struct ged_id_names {
+    struct bu_list l;
+    struct bu_vls name;		/**< name associated with region id */
+};
+
+struct ged_id_to_names {
+    struct bu_list l;
+    int id;				/**< starting id (i.e. region id or air code) */
+    struct ged_id_names headName;	/**< head of list of names */
+};
+
+int
+ged_which(struct ged *gedp, int argc, const char *argv[])
+{
+    register int	i, j;
+    register struct directory *dp;
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb;
+    struct ged_id_to_names headIdName;
+    struct ged_id_to_names *itnp;
+    struct ged_id_names *inp;
+    int isAir;
+    int sflag;
+    static const char *usageAir = "code(s)";
+    static const char *usageIds = "region_id(s)";
+
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+    gedp->ged_result = GED_RESULT_NULL;
+    gedp->ged_result_flags = 0;
+
+    if (!strcmp(argv[0], "whichair"))
+	isAir = 1;
+    else
+	isAir = 0;
+
+    /* must be wanting help */
+    if (argc == 1) {
+	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
+	if (isAir) 
+	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usageAir);
+	else
+	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usageIds);
+	return BRLCAD_OK;
+    }
+
+    if (MAXARGS < argc) {
+	if (isAir) 
+	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usageAir);
+	else
+	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usageIds);
+	return BRLCAD_ERROR;
+    }
+
+    if (strcmp(argv[1], "-s") == 0) {
+	--argc;
+	++argv;
+
+	if (argc < 2) {
+	    if (isAir) 
+		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usageAir);
+	    else
+		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usageIds);
+
+	    return BRLCAD_ERROR;
+	}
+
+	sflag = 1;
+    } else {
+	sflag = 0;
+    }
+
+    BU_LIST_INIT(&headIdName.l);
+
+    /* Build list of id_to_names */
+    for (j=1; j<argc; j++) {
+	int n;
+	int start, end;
+	int range;
+	int k;
+
+	n = sscanf(argv[j], "%d%*[:-]%d", &start, &end);
+	switch (n) {
+	    case 1:
+		for (BU_LIST_FOR(itnp, ged_id_to_names, &headIdName.l))
+		    if (itnp->id == start)
+			break;
+
+		/* id not found */
+		if (BU_LIST_IS_HEAD(itnp, &headIdName.l)) {
+		    BU_GETSTRUCT(itnp, ged_id_to_names);
+		    itnp->id = start;
+		    BU_LIST_INSERT(&headIdName.l, &itnp->l);
+		    BU_LIST_INIT(&itnp->headName.l);
+		}
+
+		break;
+	    case 2:
+		if (start < end)
+		    range = end - start + 1;
+		else if (end < start) {
+		    range = start - end + 1;
+		    start = end;
+		} else
+		    range = 1;
+
+		for (k = 0; k < range; ++k) {
+		    int id = start + k;
+
+		    for (BU_LIST_FOR(itnp, ged_id_to_names, &headIdName.l))
+			if (itnp->id == id)
+			    break;
+
+		    /* id not found */
+		    if (BU_LIST_IS_HEAD(itnp, &headIdName.l)) {
+			BU_GETSTRUCT(itnp, ged_id_to_names);
+			itnp->id = id;
+			BU_LIST_INSERT(&headIdName.l, &itnp->l);
+			BU_LIST_INIT(&itnp->headName.l);
+		    }
+		}
+
+		break;
+	}
+    }
+
+    /* Examine all COMB nodes */
+    for (i = 0; i < RT_DBNHASH; i++) {
+	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
+	    if (!(dp->d_flags & DIR_REGION))
+		continue;
+
+	    if (rt_db_get_internal( &intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource ) < 0) {
+		bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting");
+		return BRLCAD_ERROR;
+	    }
+	    comb = (struct rt_comb_internal *)intern.idb_ptr;
+	    /* check to see if the region id or air code matches one in our list */
+	    for (BU_LIST_FOR(itnp, ged_id_to_names, &headIdName.l)) {
+		if ((!isAir && comb->region_id == itnp->id) ||
+		    (isAir && comb->aircode == itnp->id)) {
+		    /* add region name to our name list for this region */
+		    BU_GETSTRUCT(inp, ged_id_names);
+		    bu_vls_init(&inp->name);
+		    bu_vls_strcpy(&inp->name, dp->d_namep);
+		    BU_LIST_INSERT(&itnp->headName.l, &inp->l);
+		    break;
+		}
+	    }
+
+#if USE_RT_COMB_IFREE
+	    rt_comb_ifree( &intern, &rt_uniresource );
+#else
+	    rt_db_free_internal(&intern, &rt_uniresource);
+#endif
+	}
+    }
+
+    /* place data in interp and free memory */
+    while (BU_LIST_WHILE(itnp, ged_id_to_names, &headIdName.l)) {
+	if (!sflag) {
+	    bu_vls_printf(&gedp->ged_result_str, "Region[s] with %s %d:\n",
+			  isAir ? "air code" : "ident", itnp->id);
+	}
+
+	while (BU_LIST_WHILE(inp, ged_id_names, &itnp->headName.l)) {
+	    if (sflag)
+		bu_vls_printf(&gedp->ged_result_str, " %S", &inp->name);
+	    else
+		bu_vls_printf(&gedp->ged_result_str, "   %S\n", &inp->name);
+
+	    BU_LIST_DEQUEUE(&inp->l);
+	    bu_vls_free(&inp->name);
+	    bu_free((genptr_t)inp, "which: inp");
+	}
+
+	BU_LIST_DEQUEUE(&itnp->l);
+	bu_free((genptr_t)itnp, "which: itnp");
+    }
+
+    return BRLCAD_OK;
+}
+
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

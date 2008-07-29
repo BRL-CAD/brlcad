@@ -10018,6 +10018,7 @@ wdb_move_arb_edge_cmd(struct rt_wdb	*wdbp,
     int edge;
     int bad_edge_id = 0;
     point_t pt;
+    struct bu_vls error_msg;
 
     if (argc != 4) {
 	struct bu_vls vls;
@@ -10120,17 +10121,23 @@ wdb_move_arb_edge_cmd(struct rt_wdb	*wdbp,
 	return TCL_ERROR;
     }
 
-    if (rt_arb_calc_planes(interp, arb, arb_type, planes, &wdbp->wdb_tol)) {
+    bu_vls_init(&error_msg);
+    if (rt_arb_calc_planes(&error_msg, arb, arb_type, planes, &wdbp->wdb_tol)) {
+	Tcl_AppendResult( interp, bu_vls_addr(&error_msg), (char *)0);
 	rt_db_free_internal(&intern, &rt_uniresource);
+	bu_vls_free(&error_msg);
 
 	return TCL_ERROR;
     }
 
-    if (rt_arb_edit(interp, arb, arb_type, edge, pt, planes, &wdbp->wdb_tol)) {
+    if (rt_arb_edit(&error_msg, arb, arb_type, edge, pt, planes, &wdbp->wdb_tol)) {
+	Tcl_AppendResult( interp, bu_vls_addr(&error_msg), (char *)0);
 	rt_db_free_internal(&intern, &rt_uniresource);
+	bu_vls_free(&error_msg);
 
 	return TCL_ERROR;
     }
+    bu_vls_free(&error_msg);
 
     {
 	register int i;
@@ -10184,6 +10191,7 @@ wdb_move_arb_face_cmd(struct rt_wdb	*wdbp,
     int arb_type;
     int face;
     point_t pt;
+    struct bu_vls error_msg;
 
     if (argc != 4) {
 	struct bu_vls vls;
@@ -10257,11 +10265,15 @@ wdb_move_arb_face_cmd(struct rt_wdb	*wdbp,
 
     arb_type = rt_arb_std_type(&intern, &wdbp->wdb_tol);
 
-    if (rt_arb_calc_planes(interp, arb, arb_type, planes, &wdbp->wdb_tol)) {
+    bu_vls_init(&error_msg);
+    if (rt_arb_calc_planes(&error_msg, arb, arb_type, planes, &wdbp->wdb_tol)) {
+	Tcl_AppendResult( interp, bu_vls_addr(&error_msg), (char *)0);
 	rt_db_free_internal(&intern, &rt_uniresource);
+	bu_vls_free(&error_msg);
 
 	return TCL_ERROR;
     }
+    bu_vls_free(&error_msg);
 
     /* change D of planar equation */
     planes[face][3] = VDOT(&planes[face][0], pt);
@@ -10333,6 +10345,7 @@ wdb_rotate_arb_face_cmd(struct rt_wdb	*wdbp,
     point_t pt;
     register int i;
     int pnt5;		/* special arb7 case */
+    struct bu_vls error_msg;
 
     if (argc != 5) {
 	struct bu_vls vls;
@@ -10433,11 +10446,15 @@ wdb_rotate_arb_face_cmd(struct rt_wdb	*wdbp,
 
     arb_type = rt_arb_std_type(&intern, &wdbp->wdb_tol);
 
-    if (rt_arb_calc_planes(interp, arb, arb_type, planes, &wdbp->wdb_tol)) {
+    bu_vls_init(&error_msg);
+    if (rt_arb_calc_planes(&error_msg, arb, arb_type, planes, &wdbp->wdb_tol)) {
+	Tcl_AppendResult(interp, bu_vls_addr(&error_msg), (char *)0);
 	rt_db_free_internal(&intern, &rt_uniresource);
+	bu_vls_free(&error_msg);
 
 	return TCL_ERROR;
     }
+    bu_vls_free(&error_msg);
 
     /* check if point 5 is in the face */
     pnt5 = 0;

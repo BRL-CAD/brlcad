@@ -1763,7 +1763,7 @@ rt_arb_3face_intersect(
  *	 This function migrated from mged/edsol.c.
  */
 int
-rt_arb_calc_planes(Tcl_Interp			*interp,
+rt_arb_calc_planes(struct bu_vls		*error_msg_ret,
 		   struct rt_arb_internal	*arb,
 		   int				type,
 		   plane_t			planes[6],
@@ -1789,12 +1789,8 @@ rt_arb_calc_planes(Tcl_Interp			*interp,
 			     arb->pt[p2],
 			     arb->pt[p3],
 			     tol) < 0) {
-	    struct bu_vls tmp_vls;
-
-	    bu_vls_init(&tmp_vls);
-	    bu_vls_printf(&tmp_vls, "%d %d%d%d%d (bad face)\n",
+	    bu_vls_printf(error_msg_ret, "%d %d%d%d%d (bad face)\n",
 			  i+1, p1+1, p2+1, p3+1, rt_arb_faces[type][i*4+3]+1);
-	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	    return -1;
 	}
     }
@@ -1814,7 +1810,7 @@ rt_arb_calc_planes(Tcl_Interp			*interp,
  * faces to make sure that they are always "inside".
  */
 int
-rt_arb_move_edge(Tcl_Interp		*interp,
+rt_arb_move_edge(struct bu_vls		*error_msg_ret,
 		 struct rt_arb_internal	*arb,
 		 vect_t			thru,
 		 int			bp1,
@@ -1829,7 +1825,7 @@ rt_arb_move_edge(Tcl_Interp		*interp,
 
     if (bn_isect_line3_plane(&t1, thru, dir, planes[bp1], tol) < 0 ||
 	bn_isect_line3_plane(&t2, thru, dir, planes[bp2], tol) < 0) {
-	Tcl_AppendResult(interp, "edge (direction) parallel to face normal\n", (char *)NULL);
+	bu_vls_printf(error_msg_ret, "edge (direction) parallel to face normal\n");
 	return (1);
     }
 
@@ -1890,7 +1886,7 @@ rt_arb_move_edge(Tcl_Interp		*interp,
 #define RT_ARB4_MOVE_POINT_4 3
 
 int
-rt_arb_edit(Tcl_Interp			*interp,
+rt_arb_edit(struct bu_vls		*error_msg_ret,
 	    struct rt_arb_internal	*arb,
 	    int				arb_type,
 	    int				edit_type,
@@ -1976,7 +1972,7 @@ rt_arb_edit(Tcl_Interp			*interp,
 
 	    break;
 	default:
-	    Tcl_AppendResult(interp, "rt_arb_edit: unknown ARB type\n", (char *)NULL);
+	    bu_vls_printf(error_msg_ret, "rt_arb_edit: unknown ARB type\n");
 
 	    return(1);
     }
@@ -2004,7 +2000,7 @@ rt_arb_edit(Tcl_Interp			*interp,
 	bp2 = *edptr++;
 
 	/* move the edge */
-	if (rt_arb_move_edge(interp, arb, pos_model, bp1, bp2, pt1, pt2,
+	if (rt_arb_move_edge(error_msg_ret, arb, pos_model, bp1, bp2, pt1, pt2,
 			     edge_dir, planes, tol))
 	    goto err;
     }
@@ -2014,7 +2010,7 @@ rt_arb_edit(Tcl_Interp			*interp,
     newp = *edptr++; 	/* plane to redo */
 
     if (newp == 9)	/* special flag --> redo all the planes */
-	if (rt_arb_calc_planes(interp, arb, arb_type, planes, tol))
+	if (rt_arb_calc_planes(error_msg_ret, arb, arb_type, planes, tol))
 	    goto err;
 
     if (newp >= 0 && newp < 6) {
@@ -2099,15 +2095,7 @@ rt_arb_edit(Tcl_Interp			*interp,
 
  err:
     /* Error handling */
-    {
-	struct bu_vls tmp_vls;
-
-	bu_vls_init(&tmp_vls);
-	bu_vls_printf(&tmp_vls, "cannot move edge: %d%d\n", pt1+1,pt2+1);
-	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-	bu_vls_free(&tmp_vls);
-    }
-
+    bu_vls_printf(error_msg_ret, "cannot move edge: %d%d\n", pt1+1,pt2+1);
     return(1);		/* BAD */
 }
 

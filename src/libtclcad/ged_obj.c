@@ -340,6 +340,7 @@ static struct go_cmdtab go_cmds[] = {
     {"delete_view",	"vname", MAXARGS, go_delete_view, GED_FUNC_PTR_NULL},
     {"dir2ae",	(char *)0, MAXARGS, go_pass_through_func, ged_dir2ae},
     {"draw",	(char *)0, MAXARGS, go_autoview_func, ged_draw},
+    {"dump",	(char *)0, MAXARGS, go_pass_through_func, ged_dump},
     {"dup",	(char *)0, MAXARGS, go_pass_through_func, ged_dup},
     {"E",	(char *)0, MAXARGS, go_autoview_func, ged_E},
     {"edcomb",	(char *)0, MAXARGS, go_pass_through_func, ged_edcomb},
@@ -369,9 +370,10 @@ static struct go_cmdtab go_cmds[] = {
     {"item",	(char *)0, MAXARGS, go_pass_through_func, ged_item},
     {"keep",	(char *)0, MAXARGS, go_pass_through_func, ged_keep},
     {"keypoint",	"vname [x y z]", 5, go_view_func, ged_keypoint},
-    {"kill",	(char *)0, MAXARGS, go_pass_through_func, ged_kill},
-    {"killall",	(char *)0, MAXARGS, go_pass_through_func, ged_killall},
-    {"killtree",	(char *)0, MAXARGS, go_pass_through_func, ged_killtree},
+    {"kill",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_kill},
+    {"killall",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_killall},
+    {"killrefs",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_killrefs},
+    {"killtree",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_killtree},
     {"l",	(char *)0, MAXARGS, go_pass_through_func, ged_list},
     {"list_views",	(char *)0, MAXARGS, go_list_views, GED_FUNC_PTR_NULL},
     {"listen",	"vname [port]", MAXARGS, go_listen, GED_FUNC_PTR_NULL},
@@ -466,8 +468,8 @@ static struct go_cmdtab go_cmds[] = {
     {"vmake",	"vname pname ptype", MAXARGS, go_vmake, GED_FUNC_PTR_NULL},
     {"vslew",	"vname x y", MAXARGS, go_vslew, GED_FUNC_PTR_NULL},
     {"whatid",	(char *)0, MAXARGS, go_pass_through_func, ged_whatid},
-    {"whichair",	(char *)0, MAXARGS, go_pass_through_func, ged_whichair},
-    {"whichid",	(char *)0, MAXARGS, go_pass_through_func, ged_whichid},
+    {"whichair",	(char *)0, MAXARGS, go_pass_through_func, ged_which},
+    {"whichid",	(char *)0, MAXARGS, go_pass_through_func, ged_which},
     {"who",	(char *)0, MAXARGS, go_pass_through_func, ged_who},
     {"wmater",	(char *)0, MAXARGS, go_pass_through_func, ged_wmater},
     {"xpush",	(char *)0, MAXARGS, go_pass_through_func, ged_xpush},
@@ -2169,6 +2171,132 @@ go_rotate_mode(struct ged	*gedp,
     bu_vls_free(&bindings);
 
     return BRLCAD_OK;
+}
+
+/**
+ *			GO _ D E L E T E P R O C _ R T
+ *@brief
+ *  Called when the named proc created by rt_gettrees() is destroyed.
+ */
+static void
+go_deleteProc_rt(ClientData clientData)
+{
+    struct application	*ap = (struct application *)clientData;
+    struct rt_i		*rtip;
+
+    RT_AP_CHECK(ap);
+    rtip = ap->a_rt_i;
+    RT_CK_RTI(rtip);
+
+    rt_free_rti(rtip);
+    ap->a_rt_i = (struct rt_i *)NULL;
+
+    bu_free( (genptr_t)ap, "struct application" );
+}
+
+/**
+ *			G O _ R T _ G E T T R E E S
+ *@brief
+ *  Given an instance of a database and the name of some treetops,
+ *  create a named "ray-tracing" object (proc) which will respond to
+ *  subsequent operations.
+ *  Returns new proc name as result.
+ *
+ * @par Example:
+ *	.inmem rt_gettrees .rt all.g light.r
+ */
+int
+go_rt_gettrees(struct ged	*gedp,
+	       int		argc,
+	       const char	*argv[],
+	       ged_func_ptr	func,
+	       const char	*usage,
+	       int		maxargs)
+{
+    struct rt_i		*rtip;
+    struct application	*ap;
+    struct resource	*resp;
+    char		*newprocname;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+    gedp->ged_result = GED_RESULT_NULL;
+    gedp->ged_result_flags = 0;
+
+    /* must be wanting help */
+    if (argc == 1) {
+	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_OK;
+    }
+
+    if (argc < 3) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    rtip = rt_new_rti(gedp->ged_wdbp->dbip);
+    newprocname = argv[1];
+
+    /* Delete previous proc (if any) to release all that memory, first */
+    (void)Tcl_DeleteCommand(go_current_gop->go_interp, newprocname);
+
+    while (argv[2][0] == '-') {
+	if (strcmp( argv[2], "-i") == 0) {
+	    rtip->rti_dont_instance = 1;
+	    argc--;
+	    argv++;
+	    continue;
+	}
+	if (strcmp(argv[2], "-u") == 0) {
+	    rtip->useair = 1;
+	    argc--;
+	    argv++;
+	    continue;
+	}
+	break;
+    }
+
+    if (rt_gettrees(rtip, argc-2, (const char **)&argv[2], 1) < 0) {
+	bu_vls_printf(&gedp->ged_result_str, "rt_gettrees() returned error");
+	rt_free_rti(rtip);
+	return TCL_ERROR;
+    }
+
+    /* Establish defaults for this rt_i */
+    rtip->rti_hasty_prep = 1;	/* Tcl isn't going to fire many rays */
+
+    /*
+     *  In case of multiple instances of the library, make sure that
+     *  each instance has a separate resource structure,
+     *  because the bit vector lengths depend on # of solids.
+     *  And the "overwrite" sequence in Tcl is to create the new
+     *  proc before running the Tcl_CmdDeleteProc on the old one,
+     *  which in this case would trash rt_uniresource.
+     *  Once on the rti_resources list, rt_clean() will clean 'em up.
+     */
+    BU_GETSTRUCT(resp, resource);
+    rt_init_resource(resp, 0, rtip);
+    BU_ASSERT_PTR( BU_PTBL_GET(&rtip->rti_resources, 0), !=, NULL );
+
+    ap = (struct application *)bu_malloc(sizeof(struct application), "wdb_rt_gettrees_cmd: ap");
+    RT_APPLICATION_INIT(ap);
+    ap->a_magic = RT_AP_MAGIC;
+    ap->a_resource = resp;
+    ap->a_rt_i = rtip;
+    ap->a_purpose = "Conquest!";
+
+    rt_ck(rtip);
+
+    /* Instantiate the proc, with clientData of wdb */
+    /* Beware, returns a "token", not TCL_OK. */
+    (void)Tcl_CreateCommand(go_current_gop->go_interp, newprocname, rt_tcl_rt,
+			    (ClientData)ap, go_deleteProc_rt);
+
+    /* Return new function name as result */
+    bu_vls_printf(&gedp->ged_result_str, "%s", newprocname);
+
+    return TCL_OK;
 }
 
 static int

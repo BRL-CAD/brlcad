@@ -34,8 +34,6 @@
 #define RT_TERMINAL_WIDTH 80
 #define RT_COLUMNS ((RT_TERMINAL_WIDTH + V4_MAXNAME - 1) / V4_MAXNAME)
 
-struct directory ** ged_getspace(struct db_i	*dbip,
-				 register int	num_entries);
 
 
 /*

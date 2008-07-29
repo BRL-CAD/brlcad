@@ -31,10 +31,18 @@
 #include "cmd.h"
 #include "ged_private.h"
 
+static union tree *
+ged_pathlist_leaf_func(struct db_tree_state	*tsp,
+		       struct db_full_path	*pathp,
+		       struct rt_db_internal	*ip,
+		       genptr_t			client_data);
+
+static int pathListNoLeaf = 0;
+
 int
 ged_pathlist(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char *usage = "name(s)";
+    static const char *usage = "name";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
 
@@ -50,12 +58,57 @@ ged_pathlist(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_OK;
     }
 
-    if (argc < 2 || MAXARGS < argc) {
+    if (argc < 2 || 3 < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
 
+    pathListNoLeaf = 0;
+
+    if (argc == 3) {
+	if (!strcmp(argv[1], "-noleaf"))
+	    pathListNoLeaf = 1;
+
+	++argv;
+	--argc;
+    }
+
+    if (db_walk_tree(gedp->ged_wdbp->dbip, argc-1, (const char **)argv+1, 1,
+		     &gedp->ged_wdbp->wdb_initial_tree_state,
+		     0, 0, ged_pathlist_leaf_func, (genptr_t)gedp) < 0) {
+	bu_vls_printf(&gedp->ged_result_str, "ged_pathlist: db_walk_tree() error");
+	return BRLCAD_ERROR;
+    }
+
     return BRLCAD_OK;
+}
+
+/*
+ *			P A T H L I S T _ L E A F _ F U N C
+ */
+static union tree *
+ged_pathlist_leaf_func(struct db_tree_state	*tsp,
+		       struct db_full_path	*pathp,
+		       struct rt_db_internal	*ip,
+		       genptr_t			client_data)
+{
+    struct ged *gedp = (struct ged *)client_data;
+    char *str;
+
+    RT_CK_FULL_PATH(pathp);
+    RT_CK_DB_INTERNAL(ip);
+
+    if (pathListNoLeaf) {
+	--pathp->fp_len;
+	str = db_path_to_string(pathp);
+	++pathp->fp_len;
+    } else
+	str = db_path_to_string(pathp);
+
+    bu_vls_printf(&gedp->ged_result_str, " %s", str);
+
+    bu_free((genptr_t)str, "path string");
+    return TREE_NULL;
 }
 
 

@@ -29,14 +29,18 @@
 
 #include "bio.h"
 #include "cmd.h"
+#include "wdb.h"
 #include "ged_private.h"
 
 int
 ged_instance(struct ged *gedp, int argc, const char *argv[])
 {
+    register struct directory *dp;
+    char oper;
     static const char *usage = "obj comb [op]";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -50,10 +54,27 @@ ged_instance(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_OK;
     }
 
-    if (argc < 2 || MAXARGS < argc) {
+    if (argc < 3 || 4 < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
+
+    if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[1], LOOKUP_NOISY)) == DIR_NULL)
+	return BRLCAD_ERROR;
+
+    oper = WMOP_UNION;
+    if (argc == 4)
+	oper = argv[3][0];
+
+    if (oper != WMOP_UNION &&
+	oper != WMOP_SUBTRACT &&
+	oper != WMOP_INTERSECT) {
+	bu_vls_printf(&gedp->ged_result_str, "bad operation: %c\n", oper);
+	return BRLCAD_ERROR;
+    }
+
+    if (ged_combadd(gedp, dp, (char *)argv[2], 0, oper, 0, 0) == DIR_NULL)
+	return BRLCAD_ERROR;
 
     return BRLCAD_OK;
 }

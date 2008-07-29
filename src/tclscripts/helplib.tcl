@@ -91,7 +91,7 @@ set helplib_data(wdb_instance)		{{obj comb [op]} {add instance of obj to comb}}
 set helplib_data(wdb_keep)		{{file object(s)} {save named objects in the specified file}}
 set helplib_data(wdb_kill)		{{<objects>} {kill/delete database objects}}
 set helplib_data(wdb_killall)		{{<objects>} {kill/delete database objects, removing all references}}
-set helplib_data(wdb_killtree)		{{<objects>} {kill all paths belonging to objects}}
+set helplib_data(wdb_killtree)		{{[-a] <objects>} {kill all paths belonging to objects}}
 set helplib_data(wdb_list)		{{[-r] <objects>} {list object information, verbose}}
 set helplib_data(wdb_listeval)		{{}	{lists 'evaluated' path solids}}
 set helplib_data(wdb_ls)		{{[-A name/value pairs] OR [-acrslop] object(s)} {list objects in this database}}

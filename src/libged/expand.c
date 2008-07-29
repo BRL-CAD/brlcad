@@ -31,9 +31,17 @@
 #include "cmd.h"
 #include "ged_private.h"
 
+static void
+ged_scrape_escapes_AppendResult(struct bu_vls	*result,
+				char		*str);
+
 int
 ged_expand(struct ged *gedp, int argc, const char *argv[])
 {
+    register char *pattern;
+    register struct directory *dp;
+    register int i, whicharg;
+    int regexp, nummatch, thismatch, backslashed;
     static const char *usage = "expression";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -50,12 +58,89 @@ ged_expand(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_OK;
     }
 
-    if (argc < 2 || MAXARGS < argc) {
+    if (argc < 1 || MAXARGS < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
 
+    nummatch = 0;
+    backslashed = 0;
+    for (whicharg = 1; whicharg < argc; whicharg++) {
+	/* If * ? or [ are present, this is a regular expression */
+	pattern = (char *)argv[whicharg];
+	regexp = 0;
+	do {
+	    if ((*pattern == '*' || *pattern == '?' || *pattern == '[') &&
+		!backslashed) {
+		regexp = 1;
+		break;
+	    }
+	    if (*pattern == '\\' && !backslashed)
+		backslashed = 1;
+	    else
+		backslashed = 0;
+	} while (*pattern++);
+
+	/* If it isn't a regexp, copy directly and continue */
+	if (regexp == 0) {
+	    if (nummatch > 0)
+		bu_vls_printf(&gedp->ged_result_str, " ");
+	    ged_scrape_escapes_AppendResult(&gedp->ged_result_str, (char *)argv[whicharg]);
+	    ++nummatch;
+	    continue;
+	}
+
+	/* Search for pattern matches.
+	 * If any matches are found, we do not have to worry about
+	 * '\' escapes since the match coming from dp->d_namep will be
+	 * clean. In the case of no matches, just copy the argument
+	 * directly.
+	 */
+
+	pattern = (char *)argv[whicharg];
+	thismatch = 0;
+	for (i = 0; i < RT_DBNHASH; i++) {
+	    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
+		if (!db_regexp_match(pattern, dp->d_namep))
+		    continue;
+		/* Successful match */
+		if (nummatch == 0)
+		    bu_vls_printf(&gedp->ged_result_str, "%s", dp->d_namep);
+		else
+		    bu_vls_printf(&gedp->ged_result_str, " %s", dp->d_namep);
+		++nummatch;
+		++thismatch;
+	    }
+	}
+	if (thismatch == 0) {
+	    if (nummatch > 0)
+		bu_vls_printf(&gedp->ged_result_str, " ");
+	    ged_scrape_escapes_AppendResult(&gedp->ged_result_str, (char *)argv[whicharg]);
+	}
+    }
+
     return BRLCAD_OK;
+}
+
+static void
+ged_scrape_escapes_AppendResult(struct bu_vls	*result,
+				char		*str)
+{
+    char buf[2];
+    buf[1] = '\0';
+
+    while (*str) {
+	buf[0] = *str;
+	if (*str != '\\') {
+	    bu_vls_printf(result, "%s", buf);
+	} else if (*(str+1) == '\\') {
+	    bu_vls_printf(result, "%s", buf);
+	    ++str;
+	}
+	if (*str == '\0')
+	    break;
+	++str;
+    }
 }
 
 

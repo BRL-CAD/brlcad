@@ -199,12 +199,20 @@ BU_EXTERN(void ged_vls_line_dpp,
 	   int			cflag,	/* print combinations */
 	   int			rflag,	/* print regions */
 	   int			sflag));	/* print solids */
+BU_EXTERN(struct directory ** ged_getspace,
+	  (struct db_i	*dbip,
+	   register int	num_entries));
 
 /* defined in rt.c */
 void
 BU_EXTERN (ged_rt_set_eye_model,
 	   (struct ged *gedp,
 	    vect_t eye_model));
+
+/* defined in tops.c */
+struct directory **
+ged_dir_getspace(struct db_i	*dbip,
+		 register int	num_entries);
 
 /* defined in trace.c */
 BU_EXTERN (void ged_trace,

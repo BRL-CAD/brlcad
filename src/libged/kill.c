@@ -34,9 +34,14 @@
 int
 ged_kill(struct ged *gedp, int argc, const char *argv[])
 {
+    register struct directory *dp;
+    register int i;
+    int	is_phony;
+    int	verbose = LOOKUP_NOISY;
     static const char *usage = "object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -53,6 +58,36 @@ ged_kill(struct ged *gedp, int argc, const char *argv[])
     if (argc < 2 || MAXARGS < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
+    }
+
+    /* skip past "-f" */
+    if (argc > 1 && strcmp(argv[1], "-f") == 0) {
+	verbose = LOOKUP_QUIET;
+	argc--;
+	argv++;
+    }
+
+    for (i = 1; i < argc; i++) {
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[i], verbose)) != DIR_NULL) {
+	    struct directory *dpp[2];
+
+	    is_phony = (dp->d_addr == RT_DIR_PHONY_ADDR);
+
+	    /* don't worry about phony objects */
+	    if (is_phony)
+		continue;
+
+	    dpp[0] = dp;
+	    dpp [1] = DIR_NULL;
+	    ged_eraseobjall(gedp, dpp);
+
+	    if (db_delete(gedp->ged_wdbp->dbip, dp) < 0 ||
+		db_dirdelete(gedp->ged_wdbp->dbip, dp) < 0) {
+		/* Abort kill processing on first error */
+		bu_vls_printf(&gedp->ged_result_str, "an error occurred while deleting %s", argv[i]);
+		return BRLCAD_ERROR;
+	    }
+	}
     }
 
     return BRLCAD_OK;

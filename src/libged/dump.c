@@ -34,6 +34,8 @@
 int
 ged_dump(struct ged *gedp, int argc, const char *argv[])
 {
+    struct rt_wdb *op;
+    int ret;
     static const char *usage = "file.g";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -50,8 +52,21 @@ ged_dump(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_OK;
     }
 
-    if (argc < 2 || MAXARGS < argc) {
+    if (argc != 2) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    if ((op = wdb_fopen(argv[1])) == RT_WDB_NULL) {
+	bu_vls_printf(&gedp->ged_result_str, "dump: %s: cannot create", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    ret = db_dump(op, gedp->ged_wdbp->dbip);
+    wdb_close(op);
+
+    if (ret < 0) {
+	bu_vls_printf(&gedp->ged_result_str, "dump: %s: db_dump() error", argv[1]);
 	return BRLCAD_ERROR;
     }
 

@@ -229,6 +229,7 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     if ( intern.idb_type == ID_ARB8 )  {
 	/* find the comgeom arb type, & reorganize */
 	int uvec[8], svec[11];
+	struct bu_vls error_msg;
 
 	if ( rt_arb_get_cgtype( &cgtype, intern.idb_ptr, &mged_tol, uvec, svec ) == 0 ) {
 	    Tcl_AppendResult(interp, outdp->d_namep, ": BAD ARB\n", (char *)NULL);
@@ -239,12 +240,16 @@ f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	/* must find new plane equations to account for
 	 * any editing in the es_mat matrix or path to this solid.
 	 */
+	bu_vls_init(&error_msg);
 	if (rt_arb_calc_planes(interp, intern.idb_ptr, cgtype, planes, &mged_tol) < 0)  {
-	    Tcl_AppendResult(interp, "rt_arb_calc_planes(", outdp->d_namep,
+	    Tcl_AppendResult(interp, bu_vls_addr(&error_msg),
+			     "\nrt_arb_calc_planes(", outdp->d_namep,
 			     "): failed\n", (char *)NULL);
 	    status = TCL_ERROR;
+	    bu_vls_free(&error_msg);
 	    goto end;
 	}
+	bu_vls_free(&error_msg);
     }
     /* "intern" is now loaded with the outside solid data */
 

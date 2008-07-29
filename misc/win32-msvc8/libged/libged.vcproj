@@ -346,6 +346,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\keypoint.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\kill.c"
 				>
 			</File>
@@ -354,11 +358,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\libged\killtree.c"
+				RelativePath="..\..\..\src\libged\killrefs.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\libged\keypoint.c"
+				RelativePath="..\..\..\src\libged\killtree.c"
 				>
 			</File>
 			<File
@@ -558,10 +562,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\libged\rt_gettrees.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\libged\scale.c"
 				>
 			</File>
@@ -642,10 +642,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\libged\version.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\libged\v2m_point.c"
 				>
 			</File>
@@ -654,11 +650,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\libged\view_obj.c"
+				RelativePath="..\..\..\src\libged\version.c"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\view2model.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\view_obj.c"
 				>
 			</File>
 			<File
@@ -682,15 +682,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\wdb_track.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\whatid.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\libged\whichair.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\libged\whichid.c"
+				RelativePath="..\..\..\src\libged\which.c"
 				>
 			</File>
 			<File

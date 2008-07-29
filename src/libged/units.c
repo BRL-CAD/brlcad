@@ -34,7 +34,10 @@
 int
 ged_units(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char *usage = "[mm|cm|m|in|ft|...]";
+    double loc2mm;
+    const char *str;
+    int sflag = 0;
+    static const char *usage = "[-s] [mm|cm|m|in|ft|...]";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
 
@@ -43,17 +46,52 @@ ged_units(struct ged *gedp, int argc, const char *argv[])
     gedp->ged_result = GED_RESULT_NULL;
     gedp->ged_result_flags = 0;
 
-    /* must be wanting help */
-    if (argc == 1) {
-	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_OK;
-    }
-
-    if (argc < 2 || MAXARGS < argc) {
+    if (argc < 1 || 2 < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
+
+    if (argc == 2 && strcmp(argv[1], "-s") == 0) {
+	--argc;
+	++argv;
+
+	sflag = 1;
+    }
+
+    /* Get units */
+    if (argc == 1) {
+	str = bu_units_string(gedp->ged_wdbp->dbip->dbi_local2base);
+	if (!str) str = "Unknown_unit";
+
+	if (sflag)
+	    bu_vls_printf(&gedp->ged_result_str, "%s", str);
+	else
+	    bu_vls_printf(&gedp->ged_result_str, "You are editing in '%s'.  1 %s = %g mm \n",
+			  str, str, gedp->ged_wdbp->dbip->dbi_local2base);
+
+	return BRLCAD_OK;
+    }
+
+    /* Set units */
+    /* Allow inputs of the form "25cm" or "3ft" */
+    if ((loc2mm = bu_mm_value(argv[1]) ) <= 0) {
+	bu_vls_printf(&gedp->ged_result_str,
+		      "%s: unrecognized unit\nvalid units: <um|mm|cm|m|km|in|ft|yd|mi>\n",
+		      argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    if (db_update_ident(gedp->ged_wdbp->dbip, gedp->ged_wdbp->dbip->dbi_title, loc2mm) < 0) {
+	bu_vls_printf(&gedp->ged_result_str, "Warning: unable to stash working units into database\n");
+    }
+
+    gedp->ged_wdbp->dbip->dbi_local2base = loc2mm;
+    gedp->ged_wdbp->dbip->dbi_base2local = 1.0 / loc2mm;
+
+    str = bu_units_string(gedp->ged_wdbp->dbip->dbi_local2base);
+    if (!str) str = "Unknown_unit";
+    bu_vls_printf(&gedp->ged_result_str, "You are now editing in '%s'.  1 %s = %g mm \n",
+		  str, str, gedp->ged_wdbp->dbip->dbi_local2base);
 
     return BRLCAD_OK;
 }

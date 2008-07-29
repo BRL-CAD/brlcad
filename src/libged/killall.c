@@ -34,9 +34,11 @@
 int
 ged_killall(struct ged *gedp, int argc, const char *argv[])
 {
+    int ret;
     static const char *usage = "object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -55,7 +57,15 @@ ged_killall(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    return BRLCAD_OK;
+    if ((ret = ged_killrefs(gedp, argc, argv)) != BRLCAD_OK) {
+	bu_vls_printf(&gedp->ged_result_str, "KILL skipped because of earlier errors.\n");
+	return ret;
+    }
+
+    /* ALL references removed...now KILL the object[s] */
+    /* reuse argv[] */
+    argv[0] = "kill";
+    return ged_kill(gedp, argc, argv);
 }
 
 

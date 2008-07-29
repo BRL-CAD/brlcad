@@ -41,17 +41,12 @@ ged_version(struct ged *gedp, int argc, const char *argv[])
     gedp->ged_result = GED_RESULT_NULL;
     gedp->ged_result_flags = 0;
 
-    /* must be wanting help */
-    if (argc == 1) {
-	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
-	return BRLCAD_OK;
-    }
-
-    if (argc < 2 || MAXARGS < argc) {
+    if (argc != 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
 	return BRLCAD_ERROR;
     }
+
+    bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_wdbp->dbip->dbi_version);
 
     return BRLCAD_OK;
 }

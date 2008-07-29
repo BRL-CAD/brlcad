@@ -594,6 +594,11 @@ int cmd_killall(
     Tcl_Interp *interpreter,
     int	argc,
     char	**argv);
+int cmd_killrefs(
+    ClientData clientData,
+    Tcl_Interp *interpreter,
+    int	argc,
+    char	**argv);
 int cmd_killtree(
     ClientData clientData,
     Tcl_Interp *interpreter,
