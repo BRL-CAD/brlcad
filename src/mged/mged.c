@@ -228,7 +228,7 @@ mgedInvalidParameterHandler(const wchar_t* expression,
 			    const wchar_t* function, 
 			    const wchar_t* file, 
 			    unsigned int line, 
-			    uintptr_t pReserved)
+			    unsigned int *pReserved)
 {
 /*
  *   Windows, I think you're number one!
@@ -279,8 +279,6 @@ pr_beep(void)
 #if !defined(_WIN32) || defined(__CYGWIN__)
 #  define setmode(a,b) /* poof */
 void _set_invalid_parameter_handler(void *callback) { return; }
-#else
-typedef pid_t int;
 #endif
 
 /*
