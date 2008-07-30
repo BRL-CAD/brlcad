@@ -3617,7 +3617,6 @@ GED='${top_builddir}/src/libged/libged.la'
 MULTISPECTRAL='${top_builddir}/src/libmultispectral/libmultispectral.la'
 OPTICAL='${top_builddir}/src/liboptical/liboptical.la'
 ORLE='${top_builddir}/src/liborle/liborle.la'
-PC='${top_builddir}/src/libpc/libpc.la'
 PKG='${top_builddir}/src/libpkg/libpkg.la'
 RT='${top_builddir}/src/librt/librt.la'
 SYSV='${top_builddir}/src/libsysv/libsysv.la'
@@ -3640,7 +3639,6 @@ WDB_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 FB_LIBS="${BU} ${BU_LIBS} ${PKG} ${TCL} ${SOCKET} ${NSL}" # additional/optional FB_LIBS: ${TK} ${X_LIBS} ${LIBGL}
 OPTICAL_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${TCL}"
 MULTISPECTRAL_LIBS="${OPTICAL} ${OPTICAL_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
-PC_LIBS="${WDB} ${WDB_LIBS}"
 DM_LIBS="${GED} ${GED_LIBS} ${RT} ${RT_LIBS} ${FB} ${FB_LIBS} ${PNG} ${TK} ${X_LIBS} ${FRAMEWORK_CARBON}"
 TCLCAD_LIBS="${GED} ${GED_LIBS} ${DM} ${DM_LIBS} ${FB} ${FB_LIBS} ${ITK} ${ITCL} ${TK} ${TCLSTUB} ${BLT} ${TCL}"
 BRLCAD_LIBS="${GED} ${GED_LIBS} ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
@@ -3656,7 +3654,6 @@ AC_SUBST(MULTISPECTRAL)
 AC_SUBST(OPTICAL)
 AC_SUBST(ORLE)
 AC_SUBST(PKG)
-AC_SUBST(PC)
 AC_SUBST(RT)
 AC_SUBST(SYSV)
 AC_SUBST(TCLCAD)
@@ -3674,7 +3671,6 @@ AC_SUBST(GED_LIBS)
 AC_SUBST(MULTISPECTRAL_LIBS)
 AC_SUBST(OPTICAL_LIBS)
 AC_SUBST(ORLE_LIBS)
-AC_SUBST(PC_LIBS)
 AC_SUBST(PKG_LIBS)
 AC_SUBST(RT_LIBS)
 AC_SUBST(SYSV_LIBS)
@@ -3742,8 +3738,7 @@ AC_CONFIG_FILES([
 	doc/Makefile
 	doc/book/Makefile
 	doc/docbook/Makefile
-        doc/docbook/tutorials/Makefile
-	doc/docbook/tutorials/oed/Makefile
+	doc/docbook/oed/Makefile
 	doc/html/Makefile
 	doc/html/ReleaseNotes/Makefile
 	doc/html/ReleaseNotes/Rel5.0/Makefile
@@ -3784,14 +3779,12 @@ AC_CONFIG_FILES([
 	misc/pkgconfig/libfft.pc
 	misc/pkgconfig/libmultispectral.pc
 	misc/pkgconfig/liboptical.pc
-	misc/pkgconfig/libpc.pc
 	misc/pkgconfig/libpkg.pc
 	misc/pkgconfig/librt.pc
 	misc/pkgconfig/libwdb.pc
 	misc/win32-msvc/Dll/Makefile
 	misc/win32-msvc/Makefile
 	misc/win32-msvc8/Makefile
-	misc/win32-msvc9/Makefile
 	pix/Makefile
 	sh/Makefile
 	src/Makefile
@@ -3862,7 +3855,6 @@ AC_CONFIG_FILES([
 	src/libmultispectral/Makefile
 	src/liboptical/Makefile
 	src/liborle/Makefile
-	src/libpc/Makefile
 	src/libpkg/Makefile
 	src/librt/Makefile
 	src/librtserver/Makefile
