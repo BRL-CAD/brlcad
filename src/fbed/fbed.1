@@ -38,6 +38,15 @@
 .\" SUCH DAMAGE.
 .\"
 .\".\".\"
+.\"
+.\" File name macro to make listing files easier
+.\"
+.de FN
+\fI\|\\$1\|\fP
+..
+.\"
+.\" Begin actual content
+.\"
 .SH NAME
 fbed \- frame buffer editor
 .SH SYNOPSIS
@@ -408,12 +417,12 @@ The first time using the program you should start out by listing the menu
 and finding the command for saving your image and use it if you don't
 already have a copy.
 .SH FILES
-.TS
-;
-l c l.
-/usr/lib/vfont/*	-	Berkeley font files
-$HOME/.fbed_macros	- 	Startup file
-.TE
+.TP
+.FN /usr/lib/vfont/*
+Berkeley font files
+.TP
+.FN $HOME/.fbed_macros
+Startup configuration file
 .SH "SEE ALSO"
 fb-rle(1), rle-fb(1), libfb(3)
 .SH KNOWN BUGS
