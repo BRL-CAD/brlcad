@@ -47,6 +47,11 @@ new names should be listed for reference.
 **************
 * DEPRECATED *
 **************
+7.14
+----
+src/mged/mged.c
+	-n option -> -c option [deprecated 7.14]
+
 7.12
 ----
 include/raytrace.h

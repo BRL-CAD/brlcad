@@ -321,6 +321,8 @@ main(int argc, char **argv)
 		read_only_flag = 1;
 		break;
 	    case 'n':		/* "not new" == "classic" */
+		bu_log("WARNING: -n is deprecated.  used -c instead.\n");
+		/* fall through */
 	    case 'c':
 		classic_mged = 1;
 		break;

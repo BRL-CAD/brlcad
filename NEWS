@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2008-06-XX  Release 7.13.0                                     ---
 ----------------------------------------------------------------------
 
+* deprecated the mged '-n' option, use '-c' instead - Sean Morrison
 * added the ability to invoke mged through icons/menus - Sean Morrison
 * new -a option to mged 'killtree' for killing references - Bob Parker
 * added new 'killrefs' command to mged - Bob Parker
