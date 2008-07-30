@@ -38,6 +38,15 @@
 .\" SUCH DAMAGE.
 .\"
 .\".\".\"
+.\"
+.\" File name macro to make listing files easier
+.\"
+.de FN
+\fI\|\\$1\|\fP
+..
+.\"
+.\" Begin actual content
+.\"
 .SH NAME
 cat\(hyfb \(em display a troff C/A/T document on a framebuffer
 .SH SYNOPSIS
@@ -156,8 +165,9 @@ the C/A/T code from stdin.
 An attempt was made to typeset the character ``X'' beyond the right
 edge of the screen/file.
 .SH FILES
- .railmag
- /usr/lib/vfont/railmag
+.TP
+.FN .railmag
+/usr/lib/vfont/railmag
 .SH "BUG REPORTS"
 Reports of bugs or problems should be submitted via electronic
 mail to <devs@brlcad.org>.

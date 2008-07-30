@@ -38,8 +38,15 @@
 .\" SUCH DAMAGE.
 .\"
 .\".\".\"
-'\"	last edit:	86/03/26	D A Gwyn
-'\"	SCCS ID:	@(#)vdeck.1	2.4
+.\"
+.\" File name macro to make listing files easier
+.\"
+.de FN
+\fI\|\\$1\|\fP
+..
+.\"
+.\" Begin actual content
+.\"
 .SH NAME
 vdeck \- generate COM-GEOM decks from a GED file
 .SH SYNOPSIS
@@ -78,35 +85,34 @@ Files produced by older versions of GED
 may be incompatible with
 .IR vdeck\^ .
 .SH FILES
-.PD 0
-.TP "\w'/tmp/reg???   'u"
-solids
+.TP
+.FN solids
 default solid table output
 .TP
-regions
+.FN regions
 default region table output
 .TP
-region_ids
+.FN region_ids
 default region
 .SM ID
 table output
 .TP
-*.st
+.FN *.st
 unique solid table output
 .TP
-*.rt
+.FN *.rt
 unique region table output
 .TP
-*.id
+.FN *.id
 unique region
 .SM ID
 table output
 .TP
-/tmp/dis???
-temporary
+.FN /tmp/dis???
+temporary file used during processing
 .TP
-/tmp/reg???
-temporary
+.FN /tmp/reg???
+temporary file used during processing
 .SH "SEE ALSO"
 cat(1), gedplot(1V), mged(1B).
 .SH AUTHORS
