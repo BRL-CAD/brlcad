@@ -231,7 +231,7 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 
     vect_t	dir;
     point_t	hit1, hit2;
-    point2d_t	pt, pt2;
+    point2d_t	pt, pt2, dist;
     fastf_t	a, b, c, disc, k1, k2, t1, t2, x, y;
     fastf_t	xmin, xmax, ymin, ymax;
     long	*lng;
@@ -256,8 +256,6 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
     VMOVE( ur, vr );
     VUNITIZE( ur );
 
-
-
     if ( rev->ang < 2*M_PI ) {
 	VREVERSE( normS, rev->yUnit );	/* start normal */
 	start = ( VDOT( normS, rev->v3d ) - VDOT( normS, rp->r_pt ) ) / VDOT( normS, rp->r_dir );
@@ -276,12 +274,18 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 	}
 	
 	if ( rt_sketch_contains( rev->sk, pt ) ) {
-	    if ( nhits >= MAX_HITS ) return -1; /* too many hits */
-	    hitp = hits[nhits++];
-	    hitp->hit_magic = RT_HIT_MAGIC;
-	    hitp->hit_dist = start;
-	    hitp->hit_surfno = START_FACE;
-	    VJOIN1( hitp->hit_vpriv, pr, hitp->hit_dist, vr );
+	    pt[X] = -pt[X];
+	    if ( ( angle + M_PI < rev->ang || angle - M_PI > 0 ) 
+			&& rt_sketch_contains( rev->sk, pt ) ) {
+		/* skip it */
+	    } else {
+		if ( nhits >= MAX_HITS ) return -1; /* too many hits */
+		hitp = hits[nhits++];
+		hitp->hit_magic = RT_HIT_MAGIC;
+		hitp->hit_dist = start;
+		hitp->hit_surfno = (pt[X]>0) ? -START_FACE : START_FACE;
+		VJOIN1( hitp->hit_vpriv, pr, hitp->hit_dist, vr );
+	    }
 	}
 	
 	VJOIN1( hit1, pr, end, vr );
@@ -295,16 +299,23 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 	}
 	
 	if ( rt_sketch_contains( rev->sk, pt ) ) {
-	    if ( nhits >= MAX_HITS ) return -1; /* too many hits */
-	    hitp = hits[nhits++];
-	    hitp->hit_magic = RT_HIT_MAGIC;
-	    hitp->hit_dist = end;
-	    hitp->hit_surfno = END_FACE;
-	    VJOIN1( hitp->hit_vpriv, pr, hitp->hit_dist, vr );
+	    pt[X] = -pt[X];
+	    if ( ( angle + M_PI < rev->ang || angle - M_PI > 0 ) 
+			&& rt_sketch_contains( rev->sk, pt ) ) {
+		/* skip it */
+	    } else {
+		if ( nhits >= MAX_HITS ) return -1; /* too many hits */
+		hitp = hits[nhits++];
+		hitp->hit_magic = RT_HIT_MAGIC;
+		hitp->hit_dist = end;
+		hitp->hit_surfno = (pt[X]>0) ? -END_FACE : END_FACE;
+		VJOIN1( hitp->hit_vpriv, pr, hitp->hit_dist, vr );
+	    }
 	}
     }
 
     /* calculate hyperbola parameters */
+    /*  [ (x*x) / aa^2 ] - [ (y-h)^2 / bb^2 ] = 1  */
     VREVERSE( dp, pr);
     VSET( norm, ur[X], ur[Y], 0 );
 
@@ -319,6 +330,7 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 	V2MOVE( pt, rev->sk->verts[rev->ends[i]] );
 	pt2[Y] = pt[Y];
 	pt2[X] = aa*sqrt( (pt2[Y]-h)*(pt2[Y]-h)/(bb*bb) + 1 );
+	if ( pt[X] < 0 ) pt2[X] = -fabs(pt2[X]);
 	if ( fabs( pt2[X] ) < fabs( pt[X] ) ) {	/* valid hit */
 	    if ( nhits >= MAX_HITS ) return -1; /* too many hits */
 	    hitp = hits[nhits++];
@@ -326,6 +338,9 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 	    hitp->hit_dist = (pt2[Y] - pr[Z]) / vr[Z];
 	    hitp->hit_surfno = LINE_SEG;
 	    VJOIN1( hitp->hit_vpriv, pr, hitp->hit_dist, vr );
+	    hitp->hit_point[X] = pt2[X];
+	    hitp->hit_point[Y] = pt2[Y];
+	    hitp->hit_point[Z] = 0;
 
 	    angle = atan2( hitp->hit_vpriv[Y], hitp->hit_vpriv[X] );
 	    if ( pt[X] < 0 ) {
@@ -333,9 +348,14 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 	    } else if ( angle < 0 ) {
 		angle += 2*M_PI;
 	    }
+	    pt2[X] = -pt2[X];
 	    if ( angle > rev->ang ) nhits--;
-
-	    hitp->hit_vpriv[Z] = MAX_FASTF; /* slope = 0, so 1/slope => inf */
+	    else if ( ( angle + M_PI < rev->ang || angle - M_PI > 0 ) 
+			&& rt_sketch_contains( rev->sk, pt2 )
+			&& pt2[X] > 0 ) {
+		nhits--;
+	    }
+	    hitp->hit_vpriv[Z] = MAX_FASTF;	/* slope = 0, so 1/slope = inf */
 	}
     }
 
@@ -374,13 +394,22 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 			    } else if ( angle < 0 ) {
 				angle += 2*M_PI;
 			    }
+			    pt2[X] = -pt2[X];
 			    if ( angle < rev->ang ) {
-				hitp = hits[nhits++];
-				VMOVE( hitp->hit_vpriv, hit1 );
-				hitp->hit_vpriv[Z] = (pt2[X]<0) ? 1.0/m : -1.0/m;
-				hitp->hit_magic = RT_HIT_MAGIC;
-				hitp->hit_dist = k1;
-				hitp->hit_surfno = LINE_SEG;
+				if ( ( angle + M_PI < rev->ang || angle - M_PI > 0 ) 
+					&& rt_sketch_contains( rev->sk, pt2 ) ) {
+				    /* overlap, so ignore it */
+				} else {
+				    hitp = hits[nhits++];
+				    hitp->hit_point[X] = -pt2[X];
+				    hitp->hit_point[Y] = pt2[Y];
+				    hitp->hit_point[Z] = 0;
+				    VMOVE( hitp->hit_vpriv, hit1 );
+				    hitp->hit_vpriv[Z] = (pt2[X]>0) ? 1.0/m : -1.0/m;
+				    hitp->hit_magic = RT_HIT_MAGIC;
+				    hitp->hit_dist = k1;
+				    hitp->hit_surfno = LINE_SEG;
+				}
 			    }
 			}
 			if ( t2 > 0 && t2 < 1 ) {
@@ -393,13 +422,22 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 			    } else if ( angle < 0 ) {
 				angle += 2*M_PI;
 			    }
+			    pt2[X] = -pt2[X];
 			    if ( angle < rev->ang ) {
-				hitp = hits[nhits++];
-				VMOVE( hitp->hit_vpriv, hit2 );
-				hitp->hit_vpriv[Z] = (pt2[X]<0) ? 1.0/m : -1.0/m;
-				hitp->hit_magic = RT_HIT_MAGIC;
-				hitp->hit_dist = k2;
-				hitp->hit_surfno = LINE_SEG;
+				if ( ( angle + M_PI < rev->ang || angle - M_PI > 0 ) 
+					&& rt_sketch_contains( rev->sk, pt2 ) ) {
+				    /* overlap, so ignore it */
+				} else {
+				    hitp = hits[nhits++];
+				    hitp->hit_point[X] = -pt2[X];
+				    hitp->hit_point[Y] = pt2[Y];
+				    hitp->hit_point[Z] = 0;
+				    VMOVE( hitp->hit_vpriv, hit2 );
+				    hitp->hit_vpriv[Z] = (pt2[X]>0) ? 1.0/m : -1.0/m;
+				    hitp->hit_magic = RT_HIT_MAGIC;
+				    hitp->hit_dist = k2;
+				    hitp->hit_surfno = LINE_SEG;
+				}
 			    }
 			}
 		    }
@@ -417,13 +455,22 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 			} else if ( angle < 0 ) {
 			    angle += 2*M_PI;
 			}
+			pt2[X] = -pt2[X];
 			if ( angle < rev->ang ) {
-			    hitp = hits[nhits++];
-			    VMOVE( hitp->hit_vpriv, hit1 );
-			    hitp->hit_vpriv[Z] = (pt2[X]<0) ? 1.0/m : -1.0/m;
-			    hitp->hit_magic = RT_HIT_MAGIC;
-			    hitp->hit_dist = k1;
-			    hitp->hit_surfno = LINE_SEG;
+			    if ( ( angle + M_PI < rev->ang || angle - M_PI > 0 ) 
+					&& rt_sketch_contains( rev->sk, pt2 ) ) {
+				/* overlap, so ignore it */
+			    } else {
+				hitp = hits[nhits++];
+				hitp->hit_point[X] = -pt2[X];
+				hitp->hit_point[Y] = pt2[Y];
+				hitp->hit_point[Z] = 0;
+				VMOVE( hitp->hit_vpriv, hit1 );
+				hitp->hit_vpriv[Z] = (pt2[X]>0) ? 1.0/m : -1.0/m;;
+				hitp->hit_magic = RT_HIT_MAGIC;
+				hitp->hit_dist = k1;
+				hitp->hit_surfno = LINE_SEG;
+			    }
 			}
 		    }
 		}
@@ -450,7 +497,8 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 	    } else if ( angle < 0 ) {
 		angle += 2*M_PI;
 	    }
-	    bu_log("\tangle:\t%5.2f\n", angle*RAD2DEG);
+	    bu_log("\tangle:\t%5.2f\t ( %6.2f, %6.2f )\t%6.2f\t%2d\n", angle*RAD2DEG, 
+		hits[i]->hit_point[X], hits[i]->hit_point[Y], hits[i]->hit_dist, hits[i]->hit_surfno );
 	}
 	return -1;
     }
@@ -492,7 +540,6 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 	hits[out] = NULL;
 	BU_LIST_INSERT( &(seghead->l), &(segp->l) );
     }
-/*    if ( nhits ) bu_log( "nhits: %d\n", nhits ); */
     return nhits;
 
 }
@@ -533,12 +580,16 @@ rt_revolve_norm( struct hit *hitp, struct soltab *stp, struct xray *rp )
 	case START_FACE:
 	    VREVERSE( hitp->hit_normal, rev->yUnit );
 	    break;
+	case -START_FACE:
+	    VMOVE( hitp->hit_normal, rev->yUnit );
+	    break;
 	case END_FACE:
 	    VCROSS( hitp->hit_normal, rev->zUnit, rev->rEnd );
 	    VUNITIZE( hitp->hit_normal );
 	    break;
-	case -1:
-	    VREVERSE( hitp->hit_normal, rp->r_dir );
+	case -END_FACE:
+	    VCROSS( hitp->hit_normal, rev->rEnd, rev->zUnit );
+	    VUNITIZE( hitp->hit_normal );
 	    break;
 	default:
 	    VSET( n, hitp->hit_vpriv[X], hitp->hit_vpriv[Y], 0 );
@@ -634,7 +685,7 @@ rt_revolve_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 
     vect_t	ell[16], cir[16], ucir[16], height, xdir, ydir, ux, uy, uz, rEnd, xEnd, yEnd;
     fastf_t	cos22_5 = 0.9238795325112867385,
-	cos67_5 = 0.3826834323650898373;
+		cos67_5 = 0.3826834323650898373;
     int 	*endcount;
     point_t	add, add2, add3;
 

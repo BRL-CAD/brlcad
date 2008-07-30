@@ -283,7 +283,7 @@ rt_sketch_contains( struct rt_sketch_internal *sk, point2d_t pt )
 		lsg = (struct line_seg *)lng;
 		V2MOVE( pt1, sk->verts[lsg->start] );
 		V2MOVE( pt2, sk->verts[lsg->end] );
-		if ( pt[Y] > FMAX( pt1[Y], pt2[Y] ) || pt[Y] <= FMIN( pt1[Y], pt2[Y] ) ) {
+		if ( pt[Y] > FMAX( pt1[Y], pt2[Y] ) || pt[Y] < FMIN( pt1[Y], pt2[Y] ) ) {
 		    continue;
 		}
 		isec[X] = pt1[X] + (isec[Y] - pt1[Y]) * ( (pt1[X] - pt2[X]) / (pt1[Y] - pt2[Y]) );
