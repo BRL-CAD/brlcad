@@ -27,14 +27,14 @@ set(LIBGED_SOURCES
     draw.c
     dump.c
     dup.c
-    editit.c
     edcomb.c
+    editit.c
     edmater.c
     erase.c
     erase_all.c
+    expand.c
     eye.c
     eye_pos.c
-    expand.c
     facetize.c
     find.c
     form.c
@@ -48,8 +48,8 @@ set(LIBGED_SOURCES
     group.c
     hide.c
     how.c
-    importFg4Section.c
     illum.c
+    importFg4Section.c
     instance.c
     isize.c
     item.c
@@ -57,6 +57,7 @@ set(LIBGED_SOURCES
     keypoint.c
     kill.c
     killall.c
+    killrefs.c
     killtree.c
     list.c
     log.c
@@ -67,8 +68,8 @@ set(LIBGED_SOURCES
     make.c
     make_bb.c
     make_name.c
-    mater.c
     match.c
+    mater.c
     mirror.c
     model2view.c
     move.c
@@ -107,7 +108,6 @@ set(LIBGED_SOURCES
     rotate_about.c
     rotate_arb_face.c
     rt.c
-    rt_gettrees.c
     scale.c
     set_outputHandler.c
     set_transparency.c
@@ -131,16 +131,17 @@ set(LIBGED_SOURCES
     v2m_point.c
     vdraw.c
     version.c
-    view_obj.c
     view2model.c
+    view_obj.c
     viewdir.c
     vrot.c
     vutil.c
     wdb_comb_std.c
+    wdb_importFg4Section.c
     wdb_obj.c
+    wdb_track.c
     whatid.c
-    whichair.c
-    whichid.c
+    which
     who.c
     wmater.c
     xpush.c
