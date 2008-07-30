@@ -74,7 +74,6 @@ int main()
     pc_set.display();
     pc_free_pcset(&pcs);
 
-#if 0    
     typedef boost::adjacency_list<vecS, vecS, bidirectionalS,
 	Variable<int>, Constraint > Graph;
     typedef boost::graph_traits<Graph> GraphTraits;
@@ -82,6 +81,7 @@ int main()
     typedef GraphTraits::edge_descriptor Edge;
 
     // declare a graph object
+    PCSet pcset;
     BinaryNetwork<int > N;
     Solution<int> S;
     
@@ -111,11 +111,7 @@ int main()
     E.intersectInterval(Interval<int>(3,40,1));
     E.display();
     typedef Constraint Ci;
-    Ci constraint_array[4];
-    constraint_array[0] = Ci("0", "A*B=12",f1,2,"A","B");
-    constraint_array[1] = Ci("1", "B+C<5",f2,2,"B","C");
-    constraint_array[2] = Ci("2", "A-D=2",f3,2,"A","D");
-    constraint_array[3] = Ci("3", "A*C=4",f4,2,"A","C");
+    Ci constraint_array[4] = { Ci(pcset,"0", "A*B=12",f1,2,"A","B"), Ci(pcset,"1", "B+C<5",f2,2,"B","C"), Ci(pcset,"2", "A-D=2",f3,2,"A","D"), Ci(pcset,"3", "A*C=4",f4,2,"A","C") };
 
     //std::cout << constraint_array[0].getExp() << "--------" << std::endl;
     /* Add the vertices */
@@ -151,7 +147,7 @@ int main()
     std::cout << "Number of Constraint checks performed" << std::endl;
     std::cout << "Generate-Test Solution:" << GTS.numChecks() << std::endl;
     std::cout << "BackTracking based Solution:" << BTS.numChecks() << std::endl;
-#endif
+    
     return 0;
 }
 

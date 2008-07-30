@@ -27,7 +27,14 @@
  */
 #include "pcConstraint.h"
 
-Constraint::Constraint(std::string Cid, std::string Cexpression, functor pf) :
+Constraint::Constraint(PCSet &pcs) :
+    pcset(pcs),
+    status(0)
+{
+}
+
+Constraint::Constraint(PCSet &pcs, std::string Cid, std::string Cexpression, functor pf) :
+    pcset(pcs),
     status(0),
     id(Cid),
     expression(Cexpression),
@@ -35,7 +42,8 @@ Constraint::Constraint(std::string Cid, std::string Cexpression, functor pf) :
 {
 }
 
-Constraint::Constraint(std::string Cid, std::string Cexpression, functor pf, int count,...) :
+Constraint::Constraint(PCSet &pcs, std::string Cid, std::string Cexpression, functor pf, int count,...) :
+    pcset(pcs),
     status(0),
     id(Cid),
     expression(Cexpression),
