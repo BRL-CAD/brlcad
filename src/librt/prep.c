@@ -686,6 +686,7 @@ rt_clean_resource_basic(struct rt_i *rtip, struct resource *resp)
 	    bu_free( (genptr_t)(*spp), "struct seg block" );
 	}
 	bu_ptbl_free( &resp->re_seg_blocks );
+        resp->re_seg_blocks.l.forw = BU_LIST_NULL;
     }
 
     /*
@@ -703,6 +704,7 @@ rt_clean_resource_basic(struct rt_i *rtip, struct resource *resp)
 		bu_free( (genptr_t)(*dpp), "struct directory block" );
 	    }
 	    bu_ptbl_free( &resp->re_directory_blocks );
+            resp->re_directory_blocks.l.forw = BU_LIST_NULL;
 	}
     }
 #endif
@@ -715,6 +717,7 @@ rt_clean_resource_basic(struct rt_i *rtip, struct resource *resp)
 	    BU_LIST_DEQUEUE( (struct bu_list *)hitp );
 	    bu_free( (genptr_t)hitp, "struct hitmiss" );
 	}
+        resp->re_nmgfree.forw = BU_LIST_NULL;
     }
 
     /* The 'struct partition' guys are individually malloc()ed */
@@ -726,6 +729,7 @@ rt_clean_resource_basic(struct rt_i *rtip, struct resource *resp)
 	    bu_ptbl_free( &pp->pt_seglist );
 	    bu_free( (genptr_t)pp, "struct partition" );
 	}
+        resp->re_parthead.forw = BU_LIST_NULL;
     }
 
     /* The 'struct bu_bitv' guys on re_solid_bitv are individually malloc()ed */
@@ -737,6 +741,7 @@ rt_clean_resource_basic(struct rt_i *rtip, struct resource *resp)
 	    bvp->nbits = 0;		/* sanity */
 	    bu_free( (genptr_t)bvp, "struct bu_bitv" );
 	}
+        resp->re_solid_bitv.forw = BU_LIST_NULL;
     }
 
     /* The 'struct bu_ptbl' guys on re_region_ptbl are individually malloc()ed */
@@ -748,6 +753,7 @@ rt_clean_resource_basic(struct rt_i *rtip, struct resource *resp)
 	    bu_ptbl_free( tabp );
 	    bu_free( (genptr_t)tabp, "struct bu_ptbl" );
 	}
+        resp->re_region_ptbl.forw = BU_LIST_NULL;
     }
 
     /* The 're_tree' guys are individually malloc()ed and linked using the 'tb_left' field */
@@ -772,6 +778,8 @@ rt_clean_resource_basic(struct rt_i *rtip, struct resource *resp)
     /* Release the state variables for 'solid pieces' */
     rt_res_pieces_clean( resp, rtip );
     
+    resp->re_magic = 0;
+    
 }
 
 /*
@@ -794,6 +802,8 @@ rt_clean_resource_complete(struct rt_i *rtip, struct resource *resp)
             bu_free( (genptr_t)(*dpp), "struct directory block" );
         }
         bu_ptbl_free( &resp->re_directory_blocks );
+        resp->re_directory_blocks.l.forw = BU_LIST_NULL;
+        resp->re_directory_hd = NULL;
     }
 }
 
