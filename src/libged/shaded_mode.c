@@ -1,4 +1,4 @@
-/*                         S E T _ O U T P U T _ S C R I P T . C
+/*                         S H A D E D _ M O D E . C
  * BRL-CAD
  *
  * Copyright (c) 2008 United States Government as represented by
@@ -17,27 +17,34 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file set_output_script.c
+/** @file shaded_mode.c
  *
- * The set_output_script command.
+ * The shaded_mode command.
  *
  */
 
-#include "ged.h"
+#include "common.h"
+
+#include <stdlib.h>
+#include <ctype.h>
+#include <string.h>
+
+#include "ged_private.h"
 
 /*
- * Get/set the output handler script
+ * Set/get the shaded mode.
  *
  * Usage:
- *        set_output_script [script]
+ *        shaded_mode [0|1|2]
  *
  */
 int
-ged_set_output_script(struct ged *gedp, int argc, const char *argv[])
+ged_shaded_mode(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char *usage = "[script]";
+    static const char *usage = "[0|1|2]";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -49,23 +56,29 @@ ged_set_output_script(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    /* Get the output handler script */
+    /* get shaded mode */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "%s", gedp->ged_output_script);
+	bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gdp->gd_shaded_mode);
 	return BRLCAD_OK;
     }
 
-    /* We're now going to set the output handler script */
-    /* First, we zap any previous script */
-    if (gedp->ged_output_script != NULL) {
-	bu_free((genptr_t)gedp->ged_output_script, "ged_set_output_script: zap");
-	gedp->ged_output_script = NULL;
+    /* set shaded mode */
+    if (argc == 2) {
+	int shaded_mode;
+
+	if (sscanf(argv[1], "%d", &shaded_mode) != 1)
+	    goto bad;
+
+	if (shaded_mode < 0 || 2 < shaded_mode)
+	    goto bad;
+
+	gedp->ged_gdp->gd_shaded_mode = shaded_mode;
+	return BRLCAD_OK;
     }
 
-    if (argv[1] != NULL && argv[1][0] != '\0')
-	gedp->ged_output_script = bu_strdup(argv[1]);
-
-    return BRLCAD_OK;
+ bad:
+    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    return BRLCAD_ERROR;
 }
 
 

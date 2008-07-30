@@ -68,7 +68,7 @@ ged_nmg_collapse(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    new_name = argv[2];
+    new_name = (char *)argv[2];
 
     if (db_lookup(gedp->ged_wdbp->dbip, new_name, LOOKUP_QUIET) != DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s already exists\n", new_name);

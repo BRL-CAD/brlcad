@@ -137,6 +137,15 @@ BU_EXTERN (void ged_cvt_vlblock_to_solids,
 	    struct bn_vlblock *vbp,
 	    char *name,
 	    int copy));
+BU_EXTERN (int ged_invent_solid,
+	   (struct ged		*gedp,
+	    char		*name,
+	    struct bu_list	*vhead,
+	    long int		rgb,
+	    int			copy,
+	    fastf_t		transparency,
+	    int			dmode));
+
 
 /* defined in erase.c */
 BU_EXTERN (void ged_eraseobjpath,
@@ -207,10 +216,31 @@ BU_EXTERN(struct directory ** ged_getspace,
 	   register int	num_entries));
 
 /* defined in rt.c */
-void
-BU_EXTERN (ged_rt_set_eye_model,
+BU_EXTERN (void ged_rt_set_eye_model,
 	   (struct ged *gedp,
 	    vect_t eye_model));
+#if GED_USE_RUN_RT
+BU_EXTERN (int ged_run_rt,
+	   (struct ged *gdp));
+BU_EXTERN (void ged_rt_write,
+	   (struct ged *gedp,
+	    FILE *fp,
+	    vect_t eye_model));
+BU_EXTERN (void ged_rt_output_handler,
+	   (ClientData clientData,
+	    int	 mask));
+BU_EXTERN (int ged_build_tops,
+	   (struct ged	*gedp,
+	    struct solid	*hsp,
+	    char		**start,
+	    register char	**end));
+#endif
+
+/* defined in rtcheck.c */
+BU_EXTERN (void ged_wait_status,
+	   (struct bu_vls *log,
+	    int status));
+
 
 /* defined in tops.c */
 struct directory **

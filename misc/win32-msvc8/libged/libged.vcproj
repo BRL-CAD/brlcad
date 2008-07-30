@@ -366,6 +366,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\label.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\list.c"
 				>
 			</File>
@@ -562,11 +566,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\rtabort.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\rtcheck.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\scale.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\libged\set_outputHandler.c"
+				RelativePath="..\..\..\src\libged\set_output_script.c"
 				>
 			</File>
 			<File
@@ -579,6 +591,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\setview.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\shaded_mode.c"
 				>
 			</File>
 			<File
@@ -687,6 +703,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\wdb_track.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\wdb_vdraw.c"
 				>
 			</File>
 			<File

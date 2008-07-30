@@ -41,14 +41,6 @@ static union tree *ged_bot_check_leaf(struct db_tree_state *tsp,
 				      struct db_full_path *pathp,
 				      struct rt_db_internal *ip,
 				      genptr_t client_data);
-int
-ged_invent_solid(struct ged	*gedp,
-		 char		*name,
-		 struct bu_list	*vhead,
-		 long int	rgb,
-		 int		copy,
-		 fastf_t	transparency,
-		 int		dmode);
 
 
 /**

@@ -63,6 +63,7 @@ libged_nil_la_SOURCES = \
 	killall.c \
 	killrefs.c \
 	killtree.c \
+	label.c \
 	list.c \
 	log.c \
 	lookat.c \
@@ -112,11 +113,14 @@ libged_nil_la_SOURCES = \
 	rotate_about.c \
 	rotate_arb_face.c \
 	rt.c \
+	rtabort.c \
+	rtcheck.c \
 	scale.c \
-	set_outputHandler.c \
+	set_output_script.c \
 	set_transparency.c \
 	set_uplotOutputMode.c \
 	setview.c \
+	shaded_mode.c \
 	shader.c \
 	shells.c \
 	showmats.c \
@@ -144,6 +148,7 @@ libged_nil_la_SOURCES = \
 	wdb_importFg4Section.c \
 	wdb_obj.c \
 	wdb_track.c \
+	wdb_vdraw.c \
 	whatid.c \
 	which.c \
 	who.c \

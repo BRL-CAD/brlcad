@@ -212,7 +212,6 @@ struct ged_drawable {
 #endif
     void			(*gd_rtCmdNotify)();	/**< @brief  function called when rt command completes */
 
-    char			*gd_outputHandler;	/**< @brief  tcl script for handling output */
     int				gd_uplotOutputMode;	/**< @brief  output mode for unix plots */
 
     /* qray state */
@@ -283,6 +282,8 @@ struct ged {
     struct ged_drawable		*ged_head_drawables;
     struct ged_view		*ged_head_views;
 #endif
+    void			(*ged_output_handler)();	/**< @brief  function for handling output */
+    char			*ged_output_script;		/**< @brief  script for use by the outputHandler */
 #if 0
     struct bu_observer		ged_observers;
 #endif
@@ -1781,6 +1782,22 @@ GED_EXPORT BU_EXTERN(int ged_rot_point, (struct ged *gedp, int argc, const char 
 GED_EXPORT BU_EXTERN(int ged_rt, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Abort the current raytracing processes.
+ *
+ * Usage:
+ *     rtabort
+ */
+GED_EXPORT BU_EXTERN(int ged_rtabort, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Check for overlaps in the current view.
+ *
+ * Usage:
+ *     rtcheck [args]
+ */
+GED_EXPORT BU_EXTERN(int ged_rtcheck, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Scale the view.
  *
  * Usage:
@@ -1792,9 +1809,9 @@ GED_EXPORT BU_EXTERN(int ged_scale, (struct ged *gedp, int argc, const char *arg
  * Get/set the output handler script
  *
  * Usage:
- *     set_outputHandler [script]
+ *     set_output_script [script]
  */
-GED_EXPORT BU_EXTERN(int ged_set_outputHandler, (struct ged *gedp, int argc, const char *argv[]));
+GED_EXPORT BU_EXTERN(int ged_set_output_script, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Get/set the unix plot output mode
@@ -1819,6 +1836,14 @@ GED_EXPORT BU_EXTERN(int ged_set_transparency, (struct ged *gedp, int argc, cons
  *     setview x y z
  */
 GED_EXPORT BU_EXTERN(int ged_setview, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Set/get the shaded mode.
+ *
+ * Usage:
+ *     shaded_mode [0|1|2]
+ */
+GED_EXPORT BU_EXTERN(int ged_shaded_mode, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Simpler, command-line version of 'mater' command.
@@ -1934,20 +1959,28 @@ GED_EXPORT BU_EXTERN(int ged_unhide, (struct ged *gedp, int argc, const char *ar
 GED_EXPORT BU_EXTERN(int ged_units, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
- * Returns the database verson
- *
- * Usage:
- *     version
- */
-GED_EXPORT BU_EXTERN(int ged_version, (struct ged *gedp, int argc, const char *argv[]));
-
-/**
  * Convert the specified view point to a model point.
  *
  * Usage:
  *     v2m_point x y z
  */
 GED_EXPORT BU_EXTERN(int ged_v2m_point, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Vector drawing utility.
+ *
+ * Usage:
+ *     vdraw write|insert|delete|read|send|params|open|vlist [args]
+ */
+GED_EXPORT BU_EXTERN(int ged_vdraw, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Returns the database version.
+ *
+ * Usage:
+ *     version
+ */
+GED_EXPORT BU_EXTERN(int ged_version, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Get the view2model matrix.

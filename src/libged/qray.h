@@ -55,6 +55,9 @@ struct ged_qray_dataList {
     fastf_t los;
 };
 
+/* defined in qray.c */
+extern void ged_qray_data_to_vlist(struct ged *gedp, struct bn_vlblock *vbp, struct ged_qray_dataList *headp, fastf_t *dir, int do_overlaps);
+
 #endif
 
 /*

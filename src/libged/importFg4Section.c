@@ -595,7 +595,7 @@ ged_importFg4Section(struct ged *gedp, int argc, const char *argv[])
 	    do_quad(line);
     }
 
-    make_bot_object(argv[1], gedp->ged_wdbp);
+    make_bot_object((char *)argv[1], gedp->ged_wdbp);
     free((void *)lines);
     bu_free((void *)grid_pts, "importFg4Section: grid_pts");
 

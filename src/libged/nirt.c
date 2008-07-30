@@ -55,17 +55,12 @@
 #include "dg.h"
 
 #include "./qray.h"
+#include "ged_private.h"
 
-
-/* defined in qray.c */
-extern void ged_qray_data_to_vlist(struct ged *gedp, struct bn_vlblock *vbp, struct ged_qray_dataList *headp, fastf_t *dir, int do_overlaps);
-
-/* defined in dg_obj.c */
-extern int dgo_build_tops(struct bu_vls *result, struct solid *hsp, char **start, register char **end);
-extern void dgo_pr_wait_status(struct bu_vls *result, int status);
 
 /* defined in draw.c */
 extern void ged_cvt_vlblock_to_solids(struct ged *gedp, struct bn_vlblock *vbp, char *name, int copy);
+
 
 /*
  *			F _ N I R T
@@ -268,8 +263,8 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
     gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
 
-    /* Note - gd_build_tops sets the last vp to (char *)0 */
-    gedp->ged_gdp->gd_rt_cmd_len += dgo_build_tops(&gedp->ged_result_str,
+    /* Note - ged_build_tops sets the last vp to (char *)0 */
+    gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp,
 						   (struct solid *)&gedp->ged_gdp->gd_headSolid,
 						   vp,
 						   &gedp->ged_gdp->gd_rt_cmd[RT_MAXARGS]);
@@ -557,7 +552,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	;	/* NULL */
 
     if (retcode != 0)
-	dgo_pr_wait_status(&gedp->ged_result_str, retcode);
+	ged_wait_status(&gedp->ged_result_str, retcode);
 #else
     /* Wait for program to finish */
     WaitForSingleObject( pi.hProcess, INFINITE );
@@ -646,6 +641,8 @@ ged_vnirt(struct ged *gedp, int argc, const char *argv[])
 
     return status;
 }
+
+
 
 /*
  * Local Variables:

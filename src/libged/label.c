@@ -1,4 +1,4 @@
-/*                         S E T _ O U T P U T _ S C R I P T . C
+/*                         L A B E L . C
  * BRL-CAD
  *
  * Copyright (c) 2008 United States Government as represented by
@@ -17,54 +17,35 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file set_output_script.c
+/** @file label.c
  *
- * The set_output_script command.
+ * The label command.
  *
  */
 
 #include "ged.h"
 
 /*
- * Get/set the output handler script
+ * Arrange for objects' label(s) to be drawn.
  *
  * Usage:
- *        set_output_script [script]
+ *        label object(s)
  *
  */
 int
-ged_set_output_script(struct ged *gedp, int argc, const char *argv[])
+ged_label(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char *usage = "[script]";
+    static const char *usage = "object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
     gedp->ged_result_flags = 0;
 
-    if (argc < 1 || 2 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_ERROR;
-    }
-
-    /* Get the output handler script */
-    if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "%s", gedp->ged_output_script);
-	return BRLCAD_OK;
-    }
-
-    /* We're now going to set the output handler script */
-    /* First, we zap any previous script */
-    if (gedp->ged_output_script != NULL) {
-	bu_free((genptr_t)gedp->ged_output_script, "ged_set_output_script: zap");
-	gedp->ged_output_script = NULL;
-    }
-
-    if (argv[1] != NULL && argv[1][0] != '\0')
-	gedp->ged_output_script = bu_strdup(argv[1]);
-
+    bu_vls_printf(&gedp->ged_result_str, "Not yet implemented!", argv[0], usage);
     return BRLCAD_OK;
 }
 

@@ -298,6 +298,8 @@ static void go_refresh_all_views(struct ged_obj *gop);
 static void go_autoview_view(struct ged_dm_view *gdvp);
 static void go_autoview_all_views(struct ged_obj *gop);
 
+static void go_output_handler(struct ged *gedp, char *line);
+
 typedef int (*go_wrapper_func_ptr)(struct ged *, int, const char *[], ged_func_ptr, const char *, int);
 #define GO_WRAPPER_FUNC_PTR_NULL (go_wrapper_func_ptr)0
 
@@ -333,6 +335,7 @@ static struct go_cmdtab go_cmds[] = {
     {"c",	(char *)0, MAXARGS, go_pass_through_func, ged_comb_std},
     {"cat",	(char *)0, MAXARGS, go_pass_through_func, ged_cat},
     {"center",	"vname [x y z]", 5, go_view_func, ged_center},
+    {"clear",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_zap},
     {"color",	(char *)0, MAXARGS, go_pass_through_func, ged_color},
     {"comb",	(char *)0, MAXARGS, go_pass_through_func, ged_comb},
     {"comb_color",	(char *)0, MAXARGS, go_pass_through_func, ged_comb_color},
@@ -353,6 +356,7 @@ static struct go_cmdtab go_cmds[] = {
     {"edmater",	(char *)0, MAXARGS, go_pass_through_func, ged_edmater},
     {"erase",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_erase},
     {"erase_all",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_erase_all},
+    {"ev",	(char *)0, MAXARGS, go_autoview_func, ged_ev},
     {"expand",	(char *)0, MAXARGS, go_pass_through_func, ged_expand},
     {"eye",	"vname [x y z]", 5, go_view_func, ged_eye},
     {"eye_pos",	"vname [x y z]", 5, go_view_func, ged_eye_pos},
@@ -404,10 +408,11 @@ static struct go_cmdtab go_cmds[] = {
     {"mv",	(char *)0, MAXARGS, go_pass_through_func, ged_move},
     {"mvall",	(char *)0, MAXARGS, go_pass_through_func, ged_move_all},
     {"new_view",	"vname type [args]", MAXARGS, go_new_view, GED_FUNC_PTR_NULL},
+    {"nirt",	"vname [args]", GO_MAX_RT_ARGS, go_view_func, ged_nirt},
     {"nmg_collapse",	(char *)0, MAXARGS, go_pass_through_func, ged_nmg_collapse},
     {"nmg_simplify",	(char *)0, MAXARGS, go_pass_through_func, ged_nmg_simplify},
     {"ocenter",	(char *)0, MAXARGS, go_pass_through_func, ged_ocenter},
-    {"open",	(char *)0, MAXARGS, go_pass_through_func, ged_reopen},
+    {"open",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_reopen},
     {"orient",	"vname quat", 6, go_view_func, ged_orient},
     {"orotate",	(char *)0, MAXARGS, go_pass_through_func, ged_orotate},
     {"oscale",	(char *)0, MAXARGS, go_pass_through_func, ged_oscale},
@@ -437,20 +442,20 @@ static struct go_cmdtab go_cmds[] = {
     {"rotate_mode",	"vname x y", MAXARGS, go_rotate_mode, GED_FUNC_PTR_NULL},
 #if GED_USE_RUN_RT
     {"rt",	"vname [args]", GO_MAX_RT_ARGS, go_view_func, ged_rt},
-    {"rt_gettrees",	(char *)0, MAXARGS, go_pass_through_func, go_rt_gettrees},
-#if 0
-    {"rtabort",	"vname [args]", GO_MAX_RT_ARGS, go_view_func, ged_rtabort},
+    {"rt_gettrees",	(char *)0, MAXARGS, go_rt_gettrees, GED_FUNC_PTR_NULL},
+    {"rtabort",	(char *)0, GO_MAX_RT_ARGS, go_pass_through_func, ged_rtabort},
+    {"rtedge",	"vname [args]", GO_MAX_RT_ARGS, go_view_func, ged_rt},
     {"rtcheck",	"vname [args]", GO_MAX_RT_ARGS, go_view_func, ged_rtcheck},
-    {"rtedge",	"vname [args]", GO_MAX_RT_ARGS, go_view_func, ged_rtedge},
-#endif
 #endif
     {"sca",	"vname sf", 3, go_view_func, ged_scale},
     {"scale_mode",	"vname x y", MAXARGS, go_scale_mode, GED_FUNC_PTR_NULL},
     {"set_coord",	"vname [m|v]", MAXARGS, go_set_coord, GED_FUNC_PTR_NULL},
     {"set_fb_mode",	"vname [mode]", MAXARGS, go_set_fb_mode, GED_FUNC_PTR_NULL},
+    {"set_output_script",	"[script]", MAXARGS, go_pass_through_func, ged_set_output_script},
     {"set_transparency",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_set_transparency},
     {"set_uplotOutputMode",	(char *)0, MAXARGS, go_pass_through_func, ged_set_uplotOutputMode},
     {"setview",	"vname x y z", 5, go_view_func, ged_setview},
+    {"shaded_mode",	(char *)0, MAXARGS, go_pass_through_func, ged_shaded_mode},
     {"shader",	(char *)0, MAXARGS, go_pass_through_func, ged_shader},
     {"shells",	(char *)0, MAXARGS, go_pass_through_func, ged_shells},
     {"showmats",	(char *)0, MAXARGS, go_pass_through_func, ged_showmats},
@@ -466,10 +471,12 @@ static struct go_cmdtab go_cmds[] = {
     {"unhide",	(char *)0, MAXARGS, go_pass_through_func, ged_unhide},
     {"units",	(char *)0, MAXARGS, go_pass_through_func, ged_units},
     {"v2m_point",	"vname x y z", 5, go_view_func, ged_v2m_point},
+    {"vdraw",	(char *)0, MAXARGS, go_autoview_func, ged_vdraw},
     {"version",	(char *)0, MAXARGS, go_pass_through_func, ged_version},
     {"view2model",	"vname", 2, go_view_func, ged_view2model},
     {"viewdir",	"vname [-i]", 3, go_view_func, ged_viewdir},
     {"vmake",	"vname pname ptype", MAXARGS, go_vmake, GED_FUNC_PTR_NULL},
+    {"vnirt",	"vname [args]", GO_MAX_RT_ARGS, go_view_func, ged_vnirt},
     {"vslew",	"vname x y", MAXARGS, go_vslew, GED_FUNC_PTR_NULL},
     {"whatid",	(char *)0, MAXARGS, go_pass_through_func, ged_whatid},
     {"whichair",	(char *)0, MAXARGS, go_pass_through_func, ged_which},
@@ -755,6 +762,7 @@ Usage: go_open\n\
     /* initialize ged_obj */
     BU_GETSTRUCT(gop, ged_obj);
     gop->go_gedp = gedp;
+    gop->go_gedp->ged_output_handler = go_output_handler;
     bu_vls_init(&gop->go_name);
     bu_vls_strcpy(&gop->go_name, argv[1]);
     BU_LIST_INIT(&gop->go_observers.l);
@@ -2240,7 +2248,7 @@ go_rt_gettrees(struct ged	*gedp,
     }
 
     rtip = rt_new_rti(gedp->ged_wdbp->dbip);
-    newprocname = argv[1];
+    newprocname = (char *)argv[1];
 
     /* Delete previous proc (if any) to release all that memory, first */
     (void)Tcl_DeleteCommand(go_current_gop->go_interp, newprocname);
@@ -2283,7 +2291,7 @@ go_rt_gettrees(struct ged	*gedp,
     rt_init_resource(resp, 0, rtip);
     BU_ASSERT_PTR( BU_PTBL_GET(&rtip->rti_resources, 0), !=, NULL );
 
-    ap = (struct application *)bu_malloc(sizeof(struct application), "wdb_rt_gettrees_cmd: ap");
+    ap = (struct application *)bu_malloc(sizeof(struct application), "go_rt_gettrees: ap");
     RT_APPLICATION_INIT(ap);
     ap->a_magic = RT_AP_MAGIC;
     ap->a_resource = resp;
@@ -3178,6 +3186,26 @@ go_autoview_all_views(struct ged_obj *gop)
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &gop->go_head_views.l)) {
 	go_autoview_view(gdvp);
+    }
+}
+
+static void
+go_output_handler(struct ged *gedp, char *line)
+{
+    if (gedp->ged_output_script != (char *)0) {
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "%s \"%s\"", gedp->ged_output_script, line);
+	Tcl_Eval(go_current_gop->go_interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+    } else {
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "puts \"%s\"", line);
+	Tcl_Eval(go_current_gop->go_interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
     }
 }
 

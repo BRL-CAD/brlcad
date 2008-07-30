@@ -35,18 +35,6 @@
 
 
 #if GED_USE_RUN_RT
-static int ged_run_rt(struct ged *gdp);
-static void ged_rt_write(struct ged *gedp,
-			 FILE *fp,
-			 vect_t eye_model);
-static void ged_rt_output_handler(ClientData clientData,
-				  int	 mask);
-static int ged_build_tops(struct ged	*gedp,
-			  struct solid	*hsp,
-			  char		**start,
-			  register char	**end);
-
-
 int
 ged_rt(struct ged *gedp, int argc, const char *argv[])
 {
@@ -125,7 +113,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-static int
+int
 ged_run_rt(struct ged *gedp)
 {
     register int i;
@@ -196,15 +184,10 @@ ged_run_rt(struct ged *gedp)
     drcdp->gedp = gedp;
     drcdp->rrtp = run_rtp;
 
-#if 0
-    /*XXX We still need some way to handle output from rt */
-    drcdp->interp = gedp->ged_wdbp->wdb_interp;
-
     Tcl_CreateFileHandler(run_rtp->fd,
 			  TCL_READABLE,
 			  ged_rt_output_handler,
 			  (ClientData)drcdp);
-#endif
 
     return 0;
 
@@ -277,21 +260,17 @@ ged_run_rt(struct ged *gedp)
     BU_GETSTRUCT(drcdp, ged_rt_client_data);
     drcdp->gedp = gedp;
     drcdp->rrtp = run_rtp;
-#if 0
-    /*XXX We still need some way to handle output from rt */
-    drcdp->interp = gedp->ged_wdbp->wdb_interp;
 
     Tcl_CreateChannelHandler(run_rtp->chan,
 			     TCL_READABLE,
 			     ged_rt_output_handler,
 			     (ClientData)drcdp);
-#endif
 
     return 0;
 #endif
 }
 
-static void
+void
 ged_rt_write(struct ged *gedp,
 	     FILE	*fp,
 	     vect_t	eye_model)
@@ -334,7 +313,7 @@ ged_rt_write(struct ged *gedp,
 }
 
 #ifndef _WIN32
-static void
+void
 ged_rt_output_handler(ClientData	clientData,
 		      int		mask)
 {
@@ -414,19 +393,14 @@ ged_rt_output_handler(ClientData	clientData,
     line[count] = '\0';
 
     /*XXX For now just blather to stderr */
-    if (drcdp->gedp->ged_gdp->gd_outputHandler != NULL) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "%s \"%s\"", drcdp->gedp->ged_gdp->gd_outputHandler, line);
-	Tcl_Eval(brlcad_interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-    } else
-	bu_log("%s", line);
+    if (drcdp->gedp->ged_output_handler != (void (*)())0)
+	drcdp->gedp->ged_output_handler(drcdp->gedp, line);
+    else
+	bu_vls_printf(&drcdp->gedp->ged_result_str, "%s", line);
 }
 
 #else
-static void
+void
 ged_rt_output_handler(ClientData	clientData,
 		      int		mask)
 {
@@ -516,15 +490,10 @@ ged_rt_output_handler(ClientData	clientData,
     line[count] = '\0';
 
     /*XXX For now just blather to stderr */
-    if (drcdp->gedp->ged_gdp->gd_outputHandler != NULL) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "%s \"%s\"", drcdp->gedp->ged_gdp->gd_outputHandler, line);
-	Tcl_Eval(brlcad_interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-    } else
-	bu_log("%s", line);
+    if (drcdp->gedp->ged_output_handler != (void (*)())0)
+	drcdp->gedp->ged_output_handler(drcdp->gedp, line);
+    else
+	bu_vls_printf(&drcdp->gedp->ged_result_str, "%s", line);
 }
 
 #endif
@@ -534,7 +503,7 @@ ged_rt_output_handler(ClientData	clientData,
  *
  *  Build a command line vector of the tops of all objects in view.
  */
-static int
+int
 ged_build_tops(struct ged	*gedp,
 	       struct solid	*hsp,
 	       char		**start,
