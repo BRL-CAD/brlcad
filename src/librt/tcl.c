@@ -1455,8 +1455,8 @@ rt_parsetab_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int arg
 	return TCL_ERROR;
     }
 
-    return bu_structparse_argv(interp, argc, argv, ftp->ft_parsetab,
-			       (char *)intern->idb_ptr);
+    return bu_tcl_structparse_argv(interp, argc, argv, ftp->ft_parsetab,
+				   (char *)intern->idb_ptr);
 }
 
 
@@ -1472,7 +1472,7 @@ rt_parsetab_tclform(const struct rt_functab *ftp, Tcl_Interp *interp)
     RT_CK_FUNCTAB(ftp);
 
     if (ftp->ft_parsetab) {
-	bu_structparse_get_terse_form(interp, ftp->ft_parsetab);
+	bu_tcl_structparse_get_terse_form(interp, ftp->ft_parsetab);
 	return TCL_OK;
     }
     Tcl_AppendResult(interp, ftp->ft_label,

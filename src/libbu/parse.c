@@ -45,7 +45,6 @@
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
-#include <assert.h>
 
 #include "bu.h"
 
@@ -1282,9 +1281,9 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		vls->vls_len += strlen(cp);
 		break;
 	    case 'S':
-	    {
+	    {	
 		register struct bu_vls *vls_p = (struct bu_vls *)loc;
-
+			    
 		increase =  bu_vls_strlen(vls_p) + 5 + strlen(sdp->sp_name);
 		bu_vls_extend(vls, increase);
 
@@ -1304,7 +1303,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 
 		increase = 64 * i + strlen(sdp->sp_name) + 3;
 		bu_vls_extend(vls, increase);
-
+					
 
 		cp = vls->vls_str + vls->vls_offset + vls->vls_len;
 		snprintf(cp, increase, "%s%s=%d",
@@ -1329,7 +1328,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 
 		increase = 64 * i + strlen(sdp->sp_name) + 3;
 		bu_vls_extend(vls, increase);
-
+					
 		cp = vls->vls_str + vls->vls_offset + vls->vls_len;
 		snprintf(cp, increase, "%s%s=%d",
 			 (vls->vls_len?" ":""),
@@ -2209,43 +2208,6 @@ bu_next_token( char *str )
     return( ret );
 }
 
-void
-bu_structparse_get_terse_form(struct bu_vls *log, const struct bu_structparse *sp)
-{
-    struct bu_vls	str;
-    int		i;
-
-    bu_vls_init(&str);
-
-    while (sp->sp_name != NULL) {
-	bu_vls_printf(log, "%s ", sp->sp_name);
-	/* These types are specified by lengths, e.g. %80s */
-	if (strcmp(sp->sp_fmt, "%c") == 0 ||
-	    strcmp(sp->sp_fmt, "%s") == 0 ||
-	    strcmp(sp->sp_fmt, "%S") == 0) {
-	    if (sp->sp_count > 1) {
-		/* Make them all look like %###s */
-		bu_vls_printf(log, "%%%lds", sp->sp_count);
-	    } else {
-		/* Singletons are specified by their actual character */
-		bu_vls_printf(log, "%%c");
-	    }
-	} else {
-	    if (sp->sp_count < 2) {
-		bu_vls_printf(log, "%s ", sp->sp_fmt);
-	    } else {
-		/* Vectors are specified by repetition, e.g. {%f %f %f} */
-		bu_vls_printf(log, "{%s", sp->sp_fmt);
-		for (i = 1; i < sp->sp_count; i++)
-		    bu_vls_printf(log, " %s", sp->sp_fmt);
-		bu_vls_printf(log, "} ", sp->sp_fmt);
-	    }
-	}
-	++sp;
-    }
-    bu_vls_free(&str);
-}
-
 /**
  * b u _ s p _ s k i p _ s e p
  *
@@ -2318,8 +2280,7 @@ bu_structparse_argv(struct bu_vls		*log,
 	    switch (sdp->sp_fmt[1]) {
 	    case 'c':
 	    case 's':
-		/* copy the string to an array of
-		 * length sdp->sp_count, converting escaped
+		/* copy the string, converting escaped
 		 * double quotes to just double quotes
 		 */
 		if (argc < 1) {
@@ -2343,30 +2304,13 @@ bu_structparse_argv(struct bu_vls		*log,
 		}
 		break;
 	    case 'S': {
-		/* copy the string to a bu_vls
-		 * (string of variable length provided by libbu)
-		 */
+#if 1
+		bu_vls_strcpy(log, *argv);
+#else
 		struct bu_vls *vls = (struct bu_vls *)loc;
-
-		/* argv[0] contains the string
-		 * i.e. we have exactly one value
-		 */
-		assert(sdp->sp_count == 1);
-
-		if (argc < 1) {
-		    bu_vls_printf(log,
-				  "not enough values for \"%S\" argument: should be %ld",
-				  sdp->sp_name,
-				  sdp->sp_count);
-		    return BRLCAD_ERROR;
-		}
-
-		bu_vls_printf(log, "%s ", sdp->sp_name);
-
-		bu_vls_init_if_uninit(vls);
-		bu_vls_strcpy(vls, argv[0]);
-
-		bu_vls_printf(log, "%s ", argv[0]);
+		bu_vls_init_if_uninit( vls );
+		bu_vls_strcpy(vls, *argv);
+#endif
 		break;
 	    }
 	    case 'i': {

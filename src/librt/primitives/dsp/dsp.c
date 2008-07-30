@@ -4159,8 +4159,8 @@ rt_dsp_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 
     if (! sp) return BRLCAD_ERROR;
 
-    return bu_structparse_argv(log, argc, argv, sp,
-			       (char *)intern->idb_ptr);
+    return bu_tcl_structparse_argv(interp, argc, argv, sp,
+				   (char *)intern->idb_ptr);
 }
 
 void
