@@ -25,3 +25,4 @@ add_subdirectory(Dll .)
 # buld tools
 add_subdirectory(../../src/conv .)
 add_subdirectory(../../src/conv/3dm .)
+add_subdirectory(../../src/conv/patch .)
