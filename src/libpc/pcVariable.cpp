@@ -35,6 +35,9 @@ VariableAbstract::VariableAbstract(std::string vid) :
 {
 }
 
+void VariableAbstract::display()
+{
+}
 /* Constructor specialization for double */
 template<>
 Variable<double>::Variable(std::string vid, double vvalue) :

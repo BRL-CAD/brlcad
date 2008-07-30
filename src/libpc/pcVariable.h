@@ -69,6 +69,7 @@ private:
 public:
     VariableAbstract(std::string vid ="");
     std::string getID() const { return id; }
+    virtual void display();
 };
 
 template<class T>

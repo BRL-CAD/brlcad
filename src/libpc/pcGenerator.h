@@ -33,27 +33,25 @@
 
 #include "pcPCSet.h"
 
-typedef PCSet<double> PCSetd;
-
 /* Functors associated with the generation of Variables */
 namespace Generators {
 
     struct varname
     {
         public:
-	varname(PCSetd &pcs) : pcset(pcs) {}
+	varname(PCSet &pcs) : pcset(pcs) {}
 	void operator () (char c) const;
 	private:
-	PCSetd &pcset;
+	PCSet &pcset;
     };
 
     struct varvalue
     {
         public:
-	varvalue(PCSetd &pcs) : pcset(pcs) {}
+	varvalue(PCSet &pcs) : pcset(pcs) {}
 	void operator () (double v) const;
 	private:
-	PCSetd &pcset;
+	PCSet &pcset;
     };
 /**
  *  Various precompiled functors which are called during parsing depending

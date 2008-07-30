@@ -1,4 +1,4 @@
-/*                    P C P C S E T . H
+/*                    P C P C S E T . C P P
  * BRL-CAD
  *
  * Copyright (c) 2008 United States Government as represented by
@@ -21,43 +21,34 @@
 /** @{ */
 /** @file pcPCSet.h
  *
- * PCSet Class definition : A Set of Variables and Constraints
- *
+ * PCSet Class Methods
+ * 
  * @author Dawn Thomas
  */
-#ifndef __PCPCSET_H__
-#define __PCPCSET_H__
+#include "pcPCSet.h"
 
-#include "common.h"
-
-#include <string>
-#include <iostream>
-#include <list>
-#include "pcVariable.h"
-#include "pcConstraint.h"
-
-/**
- * A wrapper class for a set of Variables and Constraints
- * After a hypergraph representation, this might get deprecated.
- * Parser Class outputs this as a result of parse() and Generator class uses
- * it for generation of the Constraint Network (presently Binary Network)
- *
- */
-class PCSet
+PCSet::~PCSet()
 {
-private:
-    std::string name;
-    double value;
-public:
-    std::list<VariableAbstract *> Vars;
-    std::list<Constraint> Constraints;
-    virtual ~PCSet();
-    void pushChar(char c) { name.push_back(c); }
-    void setValue(double v) { value = v; } 
-    void pushVar();
-    void display();
-};
-#endif
+    std::list<VariableAbstract *>::iterator i;
+    for (i = Vars.begin(); i != Vars.end(); i++) {
+	delete (Variable<double> *) *i;
+	//delete *i;
+    }
+}
+
+void PCSet::display() {
+    std::list<VariableAbstract *>::iterator i;
+    std::cout<< "Variables:" << std::endl;
+    for (i = Vars.begin(); i != Vars.end(); i++)
+        //((Variable<double> *) i)->display();
+        (**i).display();
+}
+
+void PCSet::pushVar() {
+    Variable<double> *V = new Variable<double>(name,value);
+    Vars.push_back(V);
+}
+
 /** @} */
 /*
  * Local Variables:

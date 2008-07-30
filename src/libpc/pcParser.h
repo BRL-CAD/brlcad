@@ -42,8 +42,6 @@
 #include "pc.h"
 
 
-typedef PCSet<double> PCSetd;
-
 /**
  * Grammar for the expression used for representing the constraint
  *
@@ -51,9 +49,9 @@ typedef PCSet<double> PCSetd;
 class Variable_grammar : public boost::spirit::classic::grammar<Variable_grammar>
 {
 private:
-    PCSetd &pcset;
+    PCSet &pcset;
 public:
-    Variable_grammar(PCSet<double> &pcset);
+    Variable_grammar(PCSet &pcset);
     virtual ~Variable_grammar();
     template<typename ScannerT>
     struct definition
@@ -78,9 +76,9 @@ public:
 class Constraint_grammar : public boost::spirit::classic::grammar<Constraint_grammar>
 {
 private:
-    PCSetd &pcset;
+    PCSet &pcset;
 public:
-    Constraint_grammar(PCSet<double> &pcset);
+    Constraint_grammar(PCSet &pcset);
     virtual ~Constraint_grammar();
     template<typename ScannerT>
     struct definition
@@ -131,14 +129,13 @@ public:
  */
 class Parser {
 private:
-    typedef PCSet<double> PC_Set;/* TODO: parametrize the hardcoded double */
     std::string name;
     double value;
-    PC_Set &pcset;
+    PCSet &pcset;
     Variable_grammar *var_gram;
     Constraint_grammar *con_gram;
 public:
-    Parser(PC_Set &pcs);
+    Parser(PCSet &pcs);
     virtual ~Parser();
     void parse(struct pc_pc_set * pcs);
     //void pushChar(char c) { name.push_back(c); }

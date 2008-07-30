@@ -58,7 +58,7 @@ int main()
 {
 
     struct pc_pc_set pcs;
-    PCSet<double> pc_set;
+    PCSet pc_set;
     PC_INIT_PCSET(pcs);
     pc_pushparameter(&pcs,"Testpar123=325.0");
     pc_pushparameter(&pcs,"Testpar234 = 1289.36243");
@@ -72,9 +72,9 @@ int main()
      * result of parsing
      */
     pc_set.display();
-
     pc_free_pcset(&pcs);
 
+#if 0    
     typedef boost::adjacency_list<vecS, vecS, bidirectionalS,
 	Variable<int>, Constraint > Graph;
     typedef boost::graph_traits<Graph> GraphTraits;
@@ -151,7 +151,7 @@ int main()
     std::cout << "Number of Constraint checks performed" << std::endl;
     std::cout << "Generate-Test Solution:" << GTS.numChecks() << std::endl;
     std::cout << "BackTracking based Solution:" << BTS.numChecks() << std::endl;
-
+#endif
     return 0;
 }
 

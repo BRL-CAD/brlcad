@@ -30,7 +30,7 @@
 
 /* Grammar Classes */
 
-Variable_grammar::Variable_grammar(PCSet<double> &pcs) :
+Variable_grammar::Variable_grammar(PCSet &pcs) :
 pcset(pcs)
 {
 }
@@ -39,7 +39,7 @@ Variable_grammar::~Variable_grammar()
 {
 }
 
-Constraint_grammar::Constraint_grammar(PCSet<double> &pcs) :
+Constraint_grammar::Constraint_grammar(PCSet &pcs) :
 pcset(pcs)
 {
 }
@@ -49,7 +49,7 @@ Constraint_grammar::~Constraint_grammar()
 
 /* Parser Class */
 
-Parser::Parser(PC_Set &pcs): pcset(pcs), var_gram(NULL), con_gram(NULL)
+Parser::Parser(PCSet &pcs): pcset(pcs), var_gram(NULL), con_gram(NULL)
 {
     var_gram = new Variable_grammar(pcset);
     con_gram = new Constraint_grammar(pcset);
