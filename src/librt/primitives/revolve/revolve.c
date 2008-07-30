@@ -314,8 +314,15 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 	}
     }
 
-    /* calculate hyperbola parameters */
-    /*  [ (x*x) / aa^2 ] - [ (y-h)^2 / bb^2 ] = 1  */
+    /**
+     * calculate hyperbola parameters
+     *
+     * [ (x*x) / aa^2 ] - [ (y-h)^2 / bb^2 ] = 1
+     *
+     * x = aa cosh( t - k );
+     * y = h + bb sinh( t - k );
+     */
+
     VREVERSE( dp, pr);
     VSET( norm, ur[X], ur[Y], 0 );
 
