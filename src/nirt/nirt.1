@@ -40,6 +40,9 @@
 .\".\".\"
 .\" Set the interparagraph spacing to 1 (default is 0.4)
 .PD 1v
+.de FN
+\fI\|\\$1\|\fP
+..
 .\"
 .\" The man page begins...
 .\"
@@ -782,7 +785,9 @@ from the \fIxz\fR plane to \fBm\fR.
 Elevation is the angle measured toward \fBk\fR
 from the \fIxy\fR plane to \fBm\fR.
 .SH FILES
- .nirtrc \h12m run-time configuration file
+.TP
+.FN ~/.nirtrc
+run-time configuration file
 .SH SEE ALSO
 mged(1), librt(3), printf(3)
 .SH BUGS
