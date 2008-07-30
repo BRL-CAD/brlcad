@@ -34,7 +34,6 @@
 #include <iostream>
 #include <list>
 #include "pcVariable.h"
-#include "pcConstraint.h"
 
 /**
  * A wrapper class for a set of Variables and Constraints
@@ -43,6 +42,8 @@
  * it for generation of the Constraint Network (presently Binary Network)
  *
  */
+class Constraint;
+
 class PCSet
 {
 private:
@@ -50,11 +51,14 @@ private:
     double value;
 public:
     std::list<VariableAbstract *> Vars;
-    std::list<Constraint> Constraints;
+    std::list<Constraint *> Constraints;
     virtual ~PCSet();
+    
     void pushChar(char c) { name.push_back(c); }
     void setValue(double v) { value = v; } 
+    
     void pushVar();
+    VariableAbstract * getVariablebyID(std::string vid);
     void display();
 };
 #endif

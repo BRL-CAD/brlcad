@@ -49,6 +49,16 @@ void PCSet::pushVar() {
     Vars.push_back(V);
 }
 
+VariableAbstract * PCSet::getVariablebyID(std::string vid)
+{
+    std::list<VariableAbstract *>::iterator i;
+    for (i = Vars.begin(); i != Vars.end(); i++) {
+	if (vid.compare((**i).getID()) == 0)
+	    return *i;
+    }
+    return NULL;
+}
+
 /** @} */
 /*
  * Local Variables:
