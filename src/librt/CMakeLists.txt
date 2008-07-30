@@ -134,10 +134,21 @@ set(LIBRT_SOURCES
     wdb.c
 )
 
+set(IGNORED_SOURCES
+    brep_test.cpp
+    nurb_example.c
+    primitives/xxx/xxx.c
+)
+
 if(MSVC)
     set(LIBRT_SOURCES
         ${LIBRT_SOURCES}
         timer-nt.c
+    )
+else(MSVC)
+    set(LIBRT_SOURCES
+        ${LIBRT_SOURCES}
+        timer42.c
     )
 endif(MSVC)
 
