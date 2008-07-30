@@ -11,7 +11,7 @@ add_subdirectory(../../src/other/libz .)
 add_subdirectory(../../src/other/openNURBS .)
 add_subdirectory(../../src/other/tcl .)
 
-add_subdirectory(../../include .)
+add_subdirectory(../../include/conf .)
 add_subdirectory(../../src/libbn .)
 add_subdirectory(../../src/libbu .)
 add_subdirectory(../../src/librt .)
