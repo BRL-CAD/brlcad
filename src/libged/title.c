@@ -47,7 +47,7 @@ ged_title(struct ged *gedp, int argc, const char *argv[])
 
     /* get title */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "%S", gedp->ged_wdbp->dbip->dbi_title);
+	bu_vls_printf(&gedp->ged_result_str, "%s", gedp->ged_wdbp->dbip->dbi_title);
 	return BRLCAD_OK;
     }
 
