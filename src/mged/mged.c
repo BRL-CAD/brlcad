@@ -31,11 +31,24 @@
 #include <ctype.h>
 #include <signal.h>
 #include <time.h>
+#ifdef HAVE_SYS_TYPES_H
+   /* for select */
+#  include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
+   /* for select */
+#  include <sys/time.h>
+#endif
+#ifdef HAVE_UNISTD_H
+   /* for select */
+#  include <unistd.h>
+#endif
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
-#ifdef HAVE_SYS_SOCKET_H
-#  include <sys/socket.h> /* for MSG_OOB */
+#ifdef HAVE_SYS_SELECT_H
+   /* for select */
+#  include <sys/select.h>
 #endif
 #include "bio.h"
 
@@ -78,7 +91,7 @@
 
 #define SPACES "                                                                                                                                                                                                                                                                                                           "
 
-extern void mged_global_variable_setup(Tcl_Interp *interp); /* cmd.c */
+extern void mged_global_variable_teardown(Tcl_Interp *interp); /* cmd.c */
 extern void view_ring_init(struct _view_state *vsp1, struct _view_state *vsp2); /* defined in chgview.c */
 
 extern void draw_e_axes(void);
@@ -134,7 +147,6 @@ double frametime;		/* time needed to draw last frame */
 
 struct solid   MGED_FreeSolid;      /* Head of freelist */
 
-int             cmd_stuff_str(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 void		(*cur_sigint)();	/* Current SIGINT status */
 void		sig2(int);
 void		sig3(int);
@@ -964,8 +976,6 @@ static void
 do_tab_expansion()
 {
     int ret;
-    char *obj;
-    char *cmd;
     Tcl_Obj *result;
     Tcl_Obj *newCommand;
     Tcl_Obj *matches;
@@ -1483,7 +1493,10 @@ mged_insert_char(char ch)
 }
 
 
-/* Stuff a string to stdout while leaving the current command-line alone */
+/**
+ * Stuff a string to stdout while leaving the current command-line
+ * alone
+ */
 int
 cmd_stuff_str(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
@@ -1557,15 +1570,14 @@ std_out_or_err(ClientData clientData, int mask)
     Tcl_DecrRefCount(save_result);
 }
 
-/*
- *			E V E N T _ C H E C K
+/**
+ * E V E N T _ C H E C K
  *
- *  Check for events, and dispatch them.
- *  Eventually, this will be done entirely by generating commands
+ * Check for events, and dispatch them.  Eventually, this will be done
+ * entirely by generating commands
  *
- *  Returns - recommended new value for non_blocking
+ * Returns - recommended new value for non_blocking
  */
-
 int
 event_check( int non_blocking )
 {
@@ -2764,9 +2776,10 @@ f_closedb(
 
 
 int
-mged_bomb_hook(genptr_t clientData, genptr_t str)
+mged_bomb_hook(genptr_t clientData, genptr_t data)
 {
     struct bu_vls vls;
+    char *str = (char *)data;
 
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "set mbh_dialog [Dialog .#auto -modality application];");
