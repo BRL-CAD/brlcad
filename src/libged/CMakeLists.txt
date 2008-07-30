@@ -141,7 +141,7 @@ set(LIBGED_SOURCES
     wdb_obj.c
     wdb_track.c
     whatid.c
-    which
+    which.c
     who.c
     wmater.c
     xpush.c
