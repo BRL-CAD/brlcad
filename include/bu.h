@@ -58,9 +58,6 @@ __BEGIN_DECLS
 #  endif
 #endif
 
-#define BRLCAD_OK 0
-#define BRLCAD_ERROR 1
-
 /** @def BU_DIR_SEPARATOR
  * define BU_DIR_SEPARATOR to the directory separator character
  */
@@ -1013,10 +1010,6 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 	((_bv)->bits[(bit)>>BU_BITV_SHIFT] |= (((bitv_t)1)<<((bit)&BU_BITV_MASK)))
 #define BU_BITCLR(_bv, bit)	\
 	((_bv)->bits[(bit)>>BU_BITV_SHIFT] &= ~(((bitv_t)1)<<((bit)&BU_BITV_MASK)))
-
-/**
- * requires #include <string.h>
- */
 #define BU_BITV_ZEROALL(_bv)	\
 	{ memset((char *)((_bv)->bits), 0, BU_BITS2BYTES( (_bv)->nbits )); }
 
@@ -2258,13 +2251,6 @@ BU_EXPORT BU_EXTERN(void bu_copy_external,
 		     const struct bu_external *ip));
 BU_EXPORT BU_EXTERN(char *bu_next_token,
 		    (char *str));
-BU_EXPORT BU_EXTERN(int bu_structparse_argv,
-		    (struct bu_vls *log,
-		     int argc,
-		     char **argv,
-		     const struct bu_structparse *desc,
-		     char *base));
-
 
 /** @} */
 /** @addtogroup bitv */
@@ -2666,11 +2652,11 @@ BU_EXPORT BU_EXTERN(void bu_observer_notify,());
 BU_EXPORT BU_EXTERN(void bu_observer_free, (struct bu_observer *));
 
 
-BU_EXPORT BU_EXTERN(void bu_tcl_structparse_get_terse_form,
+BU_EXPORT BU_EXTERN(void bu_structparse_get_terse_form,
 		    (Tcl_Interp	*interp,
 		     const struct bu_structparse *sp));
 
-BU_EXPORT BU_EXTERN(int bu_tcl_structparse_argv,
+BU_EXPORT BU_EXTERN(int bu_structparse_argv,
 		    (Tcl_Interp				*interp,
 		     int				argc,
 		     char				**argv,
@@ -2707,13 +2693,13 @@ BU_EXPORT BU_EXTERN(int bu_tcl_printb,
 		     int	argc,
 		     char	**argv));
 
-BU_EXPORT BU_EXTERN(int bu_tcl_get_value_by_keyword,
+BU_EXPORT BU_EXTERN(int bu_get_value_by_keyword,
 		    (ClientData	clientData,
 		     Tcl_Interp	*interp,
 		     int	argc,
 		     char	**argv));
 
-BU_EXPORT BU_EXTERN(int bu_tcl_get_all_keyword_values,
+BU_EXPORT BU_EXTERN(int bu_get_all_keyword_values,
 		    (ClientData	clientData,
 		     Tcl_Interp	*interp,
 		     int	argc,

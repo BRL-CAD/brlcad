@@ -605,13 +605,13 @@ rt_init_resource(struct resource *resp,
     } else {
 	BU_ASSERT_PTR( resp, !=, NULL );
 	BU_ASSERT_LONG( cpu_num, >=, 0 );
-	if ( rtip != NULL && rtip->rti_treetop ) {
+	if ( rtip->rti_treetop ) {
 	    /* this is a submodel */
 	    BU_ASSERT_LONG( cpu_num, <, rtip->rti_resources.blen );
 	} else {
 	    BU_ASSERT_LONG( cpu_num, <, MAX_PSW );
 	}
-	if (rtip) RT_CK_RTI(rtip);		/* mandatory */
+	RT_CK_RTI(rtip);		/* mandatory */
     }
 
     resp->re_magic = RESOURCE_MAGIC;
@@ -622,8 +622,8 @@ rt_init_resource(struct resource *resp,
     if ( BU_LIST_UNINITIALIZED( &resp->re_seg ) )
 	BU_LIST_INIT( &resp->re_seg )
 
-    if ( BU_LIST_UNINITIALIZED( &resp->re_seg_blocks.l ) )
-        bu_ptbl_init( &resp->re_seg_blocks, 64, "re_seg_blocks ptbl" );
+	    if ( BU_LIST_UNINITIALIZED( &resp->re_seg_blocks.l ) )
+		bu_ptbl_init( &resp->re_seg_blocks, 64, "re_seg_blocks ptbl" );
 
     if ( BU_LIST_UNINITIALIZED( &resp->re_directory_blocks.l ) )
 	bu_ptbl_init( &resp->re_directory_blocks, 64, "re_directory_blocks ptbl" );
@@ -631,16 +631,16 @@ rt_init_resource(struct resource *resp,
     if ( BU_LIST_UNINITIALIZED( &resp->re_parthead ) )
 	BU_LIST_INIT( &resp->re_parthead )
 
-    if ( BU_LIST_UNINITIALIZED( &resp->re_solid_bitv ) )
-        BU_LIST_INIT( &resp->re_solid_bitv )
+	    if ( BU_LIST_UNINITIALIZED( &resp->re_solid_bitv ) )
+		BU_LIST_INIT( &resp->re_solid_bitv )
 
-    if ( BU_LIST_UNINITIALIZED( &resp->re_region_ptbl ) )
-        BU_LIST_INIT( &resp->re_region_ptbl )
+		    if ( BU_LIST_UNINITIALIZED( &resp->re_region_ptbl ) )
+			BU_LIST_INIT( &resp->re_region_ptbl )
 
-    if ( BU_LIST_UNINITIALIZED( &resp->re_nmgfree ) )
-        BU_LIST_INIT( &resp->re_nmgfree )
+			    if ( BU_LIST_UNINITIALIZED( &resp->re_nmgfree ) )
+				BU_LIST_INIT( &resp->re_nmgfree )
 
-    resp->re_boolstack = NULL;
+				    resp->re_boolstack = NULL;
     resp->re_boolslen = 0;
 
     if ( rtip == NULL )  return;	/* only in rt_uniresource case */
@@ -657,153 +657,6 @@ rt_init_resource(struct resource *resp,
 		    resp );
 	}
 	BU_PTBL_SET(&rtip->rti_resources, cpu_num, resp);
-    }
-}
-
-/*
- *		R T _ C L E A N _ R E S O U R C E _ B A S I C
- *
- * This method contains all the code that was formerly in rt_clean_resource, except for
- * the call to rt_init_resource().
- */
-void
-rt_clean_resource_basic(struct rt_i *rtip, struct resource *resp)
-{
-    if (rtip) {
-	RT_CK_RTI(rtip);
-    }
-    RT_CK_RESOURCE(resp);
-
-    /*  The 'struct seg' guys are malloc()ed in blocks, not individually,
-     *  so they're kept track of two different ways.
-     */
-    BU_LIST_INIT( &resp->re_seg );	/* abandon the list of individuals */
-    if ( BU_LIST_IS_INITIALIZED( &resp->re_seg_blocks.l ) )  {
-	struct seg **spp;
-	BU_CK_PTBL( &resp->re_seg_blocks );
-	for ( BU_PTBL_FOR( spp, (struct seg **), &resp->re_seg_blocks ) )  {
-	    RT_CK_SEG(*spp);	/* Head of block will be a valid seg */
-	    bu_free( (genptr_t)(*spp), "struct seg block" );
-	}
-	bu_ptbl_free( &resp->re_seg_blocks );
-        resp->re_seg_blocks.l.forw = BU_LIST_NULL;
-    }
-
-    /*
-     *  The 'struct directory' guys are malloc()ed in big blocks,
-     *  but CAN'T BE FREED HERE unless there is no rt instance!
-     *  We are not done with the db_i yet if there is an rtip.
-     */
-#if 0
-    if (!rtip) {
-	if ( BU_LIST_IS_INITIALIZED( &resp->re_directory_blocks.l ) )  {
-	    struct directory **dpp;
-	    BU_CK_PTBL( &resp->re_directory_blocks );
-	    for ( BU_PTBL_FOR( dpp, (struct directory **), &resp->re_directory_blocks ) )  {
-		RT_CK_DIR(*dpp);	/* Head of block will be a valid seg */
-		bu_free( (genptr_t)(*dpp), "struct directory block" );
-	    }
-	    bu_ptbl_free( &resp->re_directory_blocks );
-            resp->re_directory_blocks.l.forw = BU_LIST_NULL;
-	}
-    }
-#endif
-
-    /* The "struct hitmiss' guys are individually malloc()ed */
-    if ( BU_LIST_IS_INITIALIZED( &resp->re_nmgfree ) )  {
-	struct hitmiss *hitp;
-	while ( BU_LIST_WHILE( hitp, hitmiss, &resp->re_nmgfree ) )  {
-	    NMG_CK_HITMISS(hitp);
-	    BU_LIST_DEQUEUE( (struct bu_list *)hitp );
-	    bu_free( (genptr_t)hitp, "struct hitmiss" );
-	}
-        resp->re_nmgfree.forw = BU_LIST_NULL;
-    }
-
-    /* The 'struct partition' guys are individually malloc()ed */
-    if ( BU_LIST_IS_INITIALIZED( &resp->re_parthead ) )  {
-	struct partition *pp;
-	while ( BU_LIST_WHILE( pp, partition, &resp->re_parthead ) )  {
-	    RT_CK_PT(pp);
-	    BU_LIST_DEQUEUE( (struct bu_list *)pp );
-	    bu_ptbl_free( &pp->pt_seglist );
-	    bu_free( (genptr_t)pp, "struct partition" );
-	}
-        resp->re_parthead.forw = BU_LIST_NULL;
-    }
-
-    /* The 'struct bu_bitv' guys on re_solid_bitv are individually malloc()ed */
-    if ( BU_LIST_IS_INITIALIZED( &resp->re_solid_bitv ) )  {
-	struct bu_bitv	*bvp;
-	while ( BU_LIST_WHILE( bvp, bu_bitv, &resp->re_solid_bitv ) )  {
-	    BU_CK_BITV( bvp );
-	    BU_LIST_DEQUEUE( &bvp->l );
-	    bvp->nbits = 0;		/* sanity */
-	    bu_free( (genptr_t)bvp, "struct bu_bitv" );
-	}
-        resp->re_solid_bitv.forw = BU_LIST_NULL;
-    }
-
-    /* The 'struct bu_ptbl' guys on re_region_ptbl are individually malloc()ed */
-    if ( BU_LIST_IS_INITIALIZED( &resp->re_region_ptbl ) )  {
-	struct bu_ptbl	*tabp;
-	while ( BU_LIST_WHILE( tabp, bu_ptbl, &resp->re_region_ptbl ) )  {
-	    BU_CK_PTBL(tabp);
-	    BU_LIST_DEQUEUE( &tabp->l );
-	    bu_ptbl_free( tabp );
-	    bu_free( (genptr_t)tabp, "struct bu_ptbl" );
-	}
-        resp->re_region_ptbl.forw = BU_LIST_NULL;
-    }
-
-    /* The 're_tree' guys are individually malloc()ed and linked using the 'tb_left' field */
-    if ( resp->re_tree_hd != TREE_NULL ) {
-	union tree *tp;
-
-	tp = resp->re_tree_hd;
-	while ( tp != TREE_NULL ) {
-	    resp->re_tree_hd = tp->tr_b.tb_left;
-	    bu_free( (char *)tp, "union tree in resource struct" );
-	    tp = resp->re_tree_hd;
-	}
-    }
-
-    /* 're_boolstack' is a simple pointer */
-    if ( resp->re_boolstack )  {
-	bu_free( (genptr_t)resp->re_boolstack, "boolstack" );
-	resp->re_boolstack = NULL;
-	resp->re_boolslen = 0;
-    }
-
-    /* Release the state variables for 'solid pieces' */
-    rt_res_pieces_clean( resp, rtip );
-    
-    resp->re_magic = 0;
-    
-}
-
-/*
- *		R T _ C L E A N _ R E S O U R C E _ C O M P L E T E
- *
- * This method performs the basic resource clean, and also frees all the
- * directory entry blocks. The resource structure is not re-initialized.
- * DO NOT CALL THIS METHOD IF YOU ARE STILL USING THE RT_I OR DB_I INSTANCES.
- */
-void
-rt_clean_resource_complete(struct rt_i *rtip, struct resource *resp)
-{
-    rt_clean_resource_basic(rtip, resp);
-    
-    if ( BU_LIST_IS_INITIALIZED( &resp->re_directory_blocks.l ) )  {
-        struct directory **dpp;
-        BU_CK_PTBL( &resp->re_directory_blocks );
-        for ( BU_PTBL_FOR( dpp, (struct directory **), &resp->re_directory_blocks ) )  {
-            RT_CK_DIR(*dpp);	/* Head of block will be a valid seg */
-            bu_free( (genptr_t)(*dpp), "struct directory block" );
-        }
-        bu_ptbl_free( &resp->re_directory_blocks );
-        resp->re_directory_blocks.l.forw = BU_LIST_NULL;
-        resp->re_directory_hd = NULL;
     }
 }
 
@@ -833,10 +686,110 @@ rt_clean_resource_complete(struct rt_i *rtip, struct resource *resp)
 void
 rt_clean_resource(struct rt_i *rtip, struct resource *resp)
 {
-    rt_clean_resource_basic(rtip, resp);
+    if (rtip) {
+	RT_CK_RTI(rtip);
+    }
+    RT_CK_RESOURCE(resp);
+
+    /*  The 'struct seg' guys are malloc()ed in blocks, not individually,
+     *  so they're kept track of two different ways.
+     */
+    BU_LIST_INIT( &resp->re_seg );	/* abandon the list of individuals */
+    if ( BU_LIST_IS_INITIALIZED( &resp->re_seg_blocks.l ) )  {
+	struct seg **spp;
+	BU_CK_PTBL( &resp->re_seg_blocks );
+	for ( BU_PTBL_FOR( spp, (struct seg **), &resp->re_seg_blocks ) )  {
+	    RT_CK_SEG(*spp);	/* Head of block will be a valid seg */
+	    bu_free( (genptr_t)(*spp), "struct seg block" );
+	}
+	bu_ptbl_free( &resp->re_seg_blocks );
+    }
+
+    /*
+     *  The 'struct directory' guys are malloc()ed in big blocks,
+     *  but CAN'T BE FREED HERE unless there is no rt instance!
+     *  We are not done with the db_i yet if there is an rtip.
+     */
+#if 0
+    if (!rtip) {
+	if ( BU_LIST_IS_INITIALIZED( &resp->re_directory_blocks.l ) )  {
+	    struct directory **dpp;
+	    BU_CK_PTBL( &resp->re_directory_blocks );
+	    for ( BU_PTBL_FOR( dpp, (struct directory **), &resp->re_directory_blocks ) )  {
+		RT_CK_DIR(*dpp);	/* Head of block will be a valid seg */
+		bu_free( (genptr_t)(*dpp), "struct directory block" );
+	    }
+	    bu_ptbl_free( &resp->re_directory_blocks );
+	}
+    }
+#endif
+
+    /* The "struct hitmiss' guys are individually malloc()ed */
+    if ( BU_LIST_IS_INITIALIZED( &resp->re_nmgfree ) )  {
+	struct hitmiss *hitp;
+	while ( BU_LIST_WHILE( hitp, hitmiss, &resp->re_nmgfree ) )  {
+	    NMG_CK_HITMISS(hitp);
+	    BU_LIST_DEQUEUE( (struct bu_list *)hitp );
+	    bu_free( (genptr_t)hitp, "struct hitmiss" );
+	}
+    }
+
+    /* The 'struct partition' guys are individually malloc()ed */
+    if ( BU_LIST_IS_INITIALIZED( &resp->re_parthead ) )  {
+	struct partition *pp;
+	while ( BU_LIST_WHILE( pp, partition, &resp->re_parthead ) )  {
+	    RT_CK_PT(pp);
+	    BU_LIST_DEQUEUE( (struct bu_list *)pp );
+	    bu_ptbl_free( &pp->pt_seglist );
+	    bu_free( (genptr_t)pp, "struct partition" );
+	}
+    }
+
+    /* The 'struct bu_bitv' guys on re_solid_bitv are individually malloc()ed */
+    if ( BU_LIST_IS_INITIALIZED( &resp->re_solid_bitv ) )  {
+	struct bu_bitv	*bvp;
+	while ( BU_LIST_WHILE( bvp, bu_bitv, &resp->re_solid_bitv ) )  {
+	    BU_CK_BITV( bvp );
+	    BU_LIST_DEQUEUE( &bvp->l );
+	    bvp->nbits = 0;		/* sanity */
+	    bu_free( (genptr_t)bvp, "struct bu_bitv" );
+	}
+    }
+
+    /* The 'struct bu_ptbl' guys on re_region_ptbl are individually malloc()ed */
+    if ( BU_LIST_IS_INITIALIZED( &resp->re_region_ptbl ) )  {
+	struct bu_ptbl	*tabp;
+	while ( BU_LIST_WHILE( tabp, bu_ptbl, &resp->re_region_ptbl ) )  {
+	    BU_CK_PTBL(tabp);
+	    BU_LIST_DEQUEUE( &tabp->l );
+	    bu_ptbl_free( tabp );
+	    bu_free( (genptr_t)tabp, "struct bu_ptbl" );
+	}
+    }
+
+    /* The 're_tree' guys are individually malloc()ed and linked using the 'tb_left' field */
+    if ( resp->re_tree_hd != TREE_NULL ) {
+	union tree *tp;
+
+	tp = resp->re_tree_hd;
+	while ( tp != TREE_NULL ) {
+	    resp->re_tree_hd = tp->tr_b.tb_left;
+	    bu_free( (char *)tp, "union tree in resource struct" );
+	    tp = resp->re_tree_hd;
+	}
+    }
+
+    /* 're_boolstack' is a simple pointer */
+    if ( resp->re_boolstack )  {
+	bu_free( (genptr_t)resp->re_boolstack, "boolstack" );
+	resp->re_boolstack = NULL;
+	resp->re_boolslen = 0;
+    }
+
+    /* Release the state variables for 'solid pieces' */
+    rt_res_pieces_clean( resp, rtip );
 
     /* Reinitialize pointers, to be tidy.  No storage is allocated. */
-    /* actually, some storage is allocated in the calls to bu_ptbl_init - JRA */
     rt_init_resource( resp, resp->re_cpu, rtip );
 }
 

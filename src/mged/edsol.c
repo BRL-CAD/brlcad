@@ -2086,10 +2086,13 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 		(struct rt_extrude_internal *)ip->idb_ptr;
 	    RT_EXTRUDE_CK_MAGIC( extr );
 
-	    if ( extr->skt && extr->skt->verts ) {
+	    if ( extr->skt )
+	    {
 		VJOIN2( mpt, extr->V, extr->skt->verts[0][0], extr->u_vec, extr->skt->verts[0][2], extr->v_vec );
 		*strp = "V1";
-	    } else {
+	    }
+	    else
+	    {
 		VMOVE( mpt, extr->V );
 		*strp = "V";
 	    }
@@ -9639,8 +9642,8 @@ f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     save_magic = *((long *)es_int.idb_ptr);
     *((long *)es_int.idb_ptr) = ftp->ft_internal_magic;
-    if ( bu_tcl_structparse_argv(interp, argc-2, argv+2, ftp->ft_parsetab,
-				 (char *)es_int.idb_ptr )==TCL_ERROR ) {
+    if ( bu_structparse_argv(interp, argc-2, argv+2, ftp->ft_parsetab,
+			     (char *)es_int.idb_ptr )==TCL_ERROR ) {
 	return TCL_ERROR;
     }
     *((long *)es_int.idb_ptr) = save_magic;

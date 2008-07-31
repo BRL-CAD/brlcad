@@ -157,10 +157,8 @@ view_2init( struct application *ap )
 	cell->assembly = assembly;
     cell->num_exp_points = cell->num_hit_points = 0;
 
-    BU_GETSTRUCT(cell->hit_points, point_list);
-    BU_LIST_INIT(&(cell->hit_points->l));
-    BU_GETSTRUCT(cell->exp_points, point_list);
-    BU_LIST_INIT(&(cell->exp_points->l));
+    cell->hit_points = (struct point_list*) NULL;
+    cell->exp_points = (struct point_list*) NULL;
 
     rp->reg_udata = (genptr_t)cell;
     } 
@@ -348,8 +346,15 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp
         /* record the exposed points in the area */
         temp_point_list = (struct point_list *) bu_malloc(sizeof(struct point_list), "Point list allocation");
         VMOVE(temp_point_list->pt_cell, pp->pt_inhit->hit_point);
-
-        BU_LIST_INSERT(&(cell->exp_points->l), &(temp_point_list->l));
+        
+        if (cell->exp_points) {
+            BU_LIST_INSERT(&(cell->exp_points->l), &(temp_point_list->l));
+        }
+        else {
+            BU_GETSTRUCT(cell->exp_points, point_list);
+            BU_LIST_INIT(&(cell->exp_points->l));
+            VMOVE(cell->exp_points->pt_cell, temp_point_list->pt_cell);
+        }
 
         cell->num_exp_points++;
 	    cell->exposures++;
@@ -391,7 +396,14 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp
 	temp_point_list = (struct point_list *) bu_malloc(sizeof(struct point_list), "Point list allocation");
     VMOVE(temp_point_list->pt_cell, pp->pt_inhit->hit_point);
 
-    BU_LIST_INSERT(&(cell->hit_points->l), &(temp_point_list->l));
+    if (cell->hit_points) {
+        BU_LIST_INSERT(&(cell->hit_points->l), &(temp_point_list->l));
+    }
+    else {
+        BU_GETSTRUCT(cell->hit_points, point_list);
+        BU_LIST_INIT(&(cell->hit_points->l));
+        VMOVE(cell->hit_points->pt_cell, temp_point_list->pt_cell);
+    }
 
 	if (!cell->name) {
 	    /* get the region name */
@@ -814,25 +826,7 @@ area_center(struct point_list * ptlist, int number, point_t *center)
 
     VSETALL(temp_point, 0);
 
-    /*  This block of code could be replaced with a
-     *  BU_LIST_FOR(), but the first element of the list,
-     *  the one pointed by the exp_points and hit_points
-     *  point_lists (in struct area), are initialized with
-     *  no data, and using the BU_LIST_FOR macro would hurt
-     *  precision.
-     *
-     *  This for() iterates from the second element of the list
-     *  to the last one that is not head.
-     *
-     *  In order to use BU_LIST_FOR, the rayhit function must
-     *  be modified so that when the point lists are formed,
-     *  checks are made to ensure that the head element is not
-     *  empty.
-     */
-    for ((point_it) = BU_LIST_PNEXT(point_list,
-                    BU_LIST_FIRST(point_list, &(ptlist->l))); 
-	     (point_it) && BU_LIST_NOT_HEAD(point_it, &(ptlist->l)); 
-         (point_it) = BU_LIST_PNEXT(point_list, point_it)) {
+    for (BU_LIST_FOR(point_it, point_list, &(ptlist->l))) {
 
         VSET(temp_point,
             temp_point[X] + point_it->pt_cell[X],

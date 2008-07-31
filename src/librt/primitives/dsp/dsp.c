@@ -1,4 +1,4 @@
-/*                           D S P . C
+/*                         G _ D S P . C
  * BRL-CAD
  *
  * Copyright (c) 1999-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup primitives */
+/** @addtogroup g_  */
 /** @{ */
-/** @file dsp.c
+/** @file g_dsp.c
  *
  * Intersect a ray with a displacement map.
  *
@@ -931,11 +931,7 @@ rt_dsp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     switch (dsp_ip->dsp_datasrc) {
 	case RT_DSP_SRC_V4_FILE:
 	case RT_DSP_SRC_FILE:
-	    if (!dsp_ip->dsp_mp) {
-		bu_log("dsp(%s): no data file or data file empty\n", bu_vls_addr(&dsp_ip->dsp_name));
-		return 1; /* BAD */
-	    }
-    	    BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
+	    BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
 
 	    /* we do this here and now because we will need it for the
 	     * dsp_specific structure in a few lines
@@ -945,10 +941,6 @@ rt_dsp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	    bu_semaphore_release( RT_SEM_MODEL);
 	    break;
 	case RT_DSP_SRC_OBJ:
-	    if (!dsp_ip->dsp_bip) {
-		bu_log("dsp(%s): no data\n", bu_vls_addr(&dsp_ip->dsp_name));
-		return 1; /* BAD */
-	    }
 	    RT_CK_DB_INTERNAL(dsp_ip->dsp_bip);
 	    RT_CK_BINUNIF(dsp_ip->dsp_bip->idb_ptr);
 	    break;
@@ -992,14 +984,14 @@ rt_dsp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	MAT4X3PNT(bbpt, dsp_ip->dsp_stom, pt); \
 	VMINMAX( stp->st_min, stp->st_max, bbpt)
 
-    BBOX_PT(-.1,		 -.1,		      -.1);
-    BBOX_PT(dsp_ip->dsp_xcnt+.1, -.1,		      -.1);
+    BBOX_PT(-.1,		    -.1,		        -.1);
+    BBOX_PT(dsp_ip->dsp_xcnt+.1, -.1,		        -.1);
     BBOX_PT(dsp_ip->dsp_xcnt+.1, dsp_ip->dsp_ycnt+.1, -1);
-    BBOX_PT(-.1,		 dsp_ip->dsp_ycnt+.1, -1);
-    BBOX_PT(-.1,		 -.1,		      dsp_max+.1);
-    BBOX_PT(dsp_ip->dsp_xcnt+.1, -.1,		      dsp_max+.1);
+    BBOX_PT(-.1,		    dsp_ip->dsp_ycnt+.1, -1);
+    BBOX_PT(-.1,		    -.1,		        dsp_max+.1);
+    BBOX_PT(dsp_ip->dsp_xcnt+.1, -.1,		        dsp_max+.1);
     BBOX_PT(dsp_ip->dsp_xcnt+.1, dsp_ip->dsp_ycnt+.1, dsp_max+.1);
-    BBOX_PT(-.1,		 dsp_ip->dsp_ycnt+.1, dsp_max+.1);
+    BBOX_PT(-.1,		    dsp_ip->dsp_ycnt+.1, dsp_max+.1);
 
 #undef BBOX_PT
 
@@ -1018,9 +1010,20 @@ rt_dsp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	       V3ARGS(stp->st_max));
     }
 
+
+    switch (dsp_ip->dsp_datasrc) {
+	case RT_DSP_SRC_V4_FILE:
+	case RT_DSP_SRC_FILE:
+	    BU_CK_MAPPED_FILE(dsp->dsp_i.dsp_mp);
+	    break;
+	case RT_DSP_SRC_OBJ:
+	    RT_CK_DB_INTERNAL(dsp->dsp_i.dsp_bip);
+	    RT_CK_BINUNIF(dsp->dsp_i.dsp_bip->idb_ptr);
+	    break;
+    }
+
     return 0;
 }
-
 
 static void
 plot_seg(struct isect_stuff *isect,
@@ -3133,11 +3136,10 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	case RT_DSP_SRC_V4_FILE:
 	case RT_DSP_SRC_FILE:
 	    if (!dsp_ip->dsp_mp) {
-		bu_log("WARNING: Cannot find data file for displacement map (DSP)\n");
 		if (bu_vls_addr(&dsp_ip->dsp_name)) {
-		    bu_log("         DSP data file [%s] not found or empty\n", bu_vls_addr(&dsp_ip->dsp_name)); 
+		    bu_log("Cannot find data for DSP, data file [%s] not found\n", bu_vls_addr(&dsp_ip->dsp_name));
 		} else {
-		    bu_log("         DSP data file not found or not specified\n");
+		    bu_log("Cannot find data for DSP\n");
 		}
 		return 0;
 	    }
@@ -3145,11 +3147,10 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	    break;
 	case RT_DSP_SRC_OBJ:
 	    if (!dsp_ip->dsp_bip) {
-		bu_log("WARNING: Cannot find data object for displacement map (DSP)\n");
 		if (bu_vls_addr(&dsp_ip->dsp_name)) {
-		    bu_log("         DSP data object [%s] not found or empty\n", bu_vls_addr(&dsp_ip->dsp_name));
+		    bu_log("Cannot find data for DSP, data object [%s] not found\n", bu_vls_addr(&dsp_ip->dsp_name));
 		} else {
-		    bu_log("         DSP data object not found or not specified\n");
+		    bu_log("Cannot find data for DSP\n");
 		}
 		return 0;
 	    }
@@ -4063,9 +4064,9 @@ const struct bu_structparse fake_dsp_printab[] = {
 
 
 /**
- *			R T _ D S P _ G E T
+ *			R T _ P A R S E T A B _ T C L G E T
  *
- *  This is the generic routine to be listed in rt_functab[].ft_get
+ *  This is the generic routine to be listed in rt_functab[].ft_tclget
  *  for those solid types which are fully described by their ft_parsetab
  *  entry.
  *
@@ -4073,10 +4074,14 @@ const struct bu_structparse fake_dsp_printab[] = {
  *  Example:  "db get ell.s B" to get only the B vector.
  */
 int
-rt_dsp_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *attr)
+rt_dsp_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr)
 {
     register const struct bu_structparse	*sp = NULL;
     const struct rt_dsp_internal *dsp_ip;
+    int                     status;
+    Tcl_DString             ds;
+    struct bu_vls           str;
+
 
     /* XXX if dsp_datasrc == RT_DSP_SRC_V4_FILE we have a V4 dsp
      * otherwise, a V5 dsp.  Take advantage of this.
@@ -4085,10 +4090,14 @@ rt_dsp_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *
     RT_CK_DB_INTERNAL( intern );
     dsp_ip = (struct rt_dsp_internal *)intern->idb_ptr;
 
-    if (attr == (char *)0) {
+    bu_vls_init( &str );
+    Tcl_DStringInit( &ds );
+
+    if ( attr == (char *)0 ) {
 	/* Print out solid type and all attributes */
 
-	bu_vls_printf(log, "dsp");
+	Tcl_DStringAppendElement( &ds, "dsp" );
+
 
 	switch (dsp_ip->dsp_datasrc) {
 	    case RT_DSP_SRC_V4_FILE:
@@ -4100,13 +4109,15 @@ rt_dsp_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *
 		break;
 	}
 
-	while (sp && sp->sp_name != NULL) {
-	    bu_vls_printf(log, " %s ", sp->sp_name);
-	    bu_vls_struct_item(log, sp, (char *)dsp_ip, ' ');
+	while ( sp && sp->sp_name != NULL ) {
+	    Tcl_DStringAppendElement( &ds, sp->sp_name );
+	    bu_vls_trunc( &str, 0 );
+	    bu_vls_struct_item(&str, sp, (char *)dsp_ip, ' ');
+	    Tcl_DStringAppendElement( &ds, bu_vls_addr(&str) );
 	    ++sp;
 	}
+	status = TCL_OK;
 
-	return BRLCAD_OK;
     } else {
 	switch (dsp_ip->dsp_datasrc) {
 	    case RT_DSP_SRC_V4_FILE:
@@ -4117,31 +4128,37 @@ rt_dsp_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *
 		break;
 	}
 
-	if (bu_vls_struct_item_named(log, sp, attr,
-				     (char *)dsp_ip, ' ') < 0) {
-	    bu_vls_printf(log,
+	if ( bu_vls_struct_item_named( &str, sp, attr,
+				       (char *)dsp_ip, ' ') < 0 ) {
+	    bu_vls_printf(&str,
 			  "Objects of type %s do not have a %s attribute.",
 			  "dsp", attr);
-	    return BRLCAD_ERROR;
+	    status = TCL_ERROR;
 	} else {
-	    return BRLCAD_OK;
+	    status = TCL_OK;
 	}
+	Tcl_DStringAppendElement( &ds, bu_vls_addr(&str) );
     }
 
-    return BRLCAD_OK;
+    Tcl_DStringResult( interp, &ds );
+    Tcl_DStringFree( &ds );
+    bu_vls_free( &str );
+
+    return status;
 }
 
 /**
  *			R T _ P A R S E T A B _ T C L A D J U S T
  *
  *  For those solids entirely defined by their parsetab.
- *  Invoked via rt_functab[].ft_adjust()
+ *  Invoked via rt_functab[].ft_tcladjust()
  */
 int
-rt_dsp_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv)
+rt_dsp_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv)
 {
     register const struct bu_structparse	*sp = NULL;
     const struct rt_dsp_internal *dsp_ip;
+
 
     RT_CK_DB_INTERNAL(intern);
     dsp_ip = (struct rt_dsp_internal *)intern->idb_ptr;
@@ -4157,10 +4174,10 @@ rt_dsp_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 	    break;
     }
 
-    if (! sp) return BRLCAD_ERROR;
+    if (! sp) return TCL_ERROR;
 
-    return bu_tcl_structparse_argv(interp, argc, argv, sp,
-				   (char *)intern->idb_ptr);
+    return bu_structparse_argv(interp, argc, argv, sp,
+			       (char *)intern->idb_ptr );
 }
 
 void
@@ -4185,16 +4202,6 @@ rt_dsp_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double 
     MAT_IDN( dsp->dsp_stom );
     dsp->dsp_datasrc = RT_DSP_SRC_FILE;
 
-}
-
-/**
- * R T _ D S P _ P A R A M S
- *
- */
-int
-rt_dsp_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
-{
-    return(0);			/* OK */
 }
 
 /**	S W A P _ C E L L _ P T S

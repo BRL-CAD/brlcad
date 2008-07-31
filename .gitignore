@@ -1,8 +1,7 @@
 /COUNT
 /DATE
 /HOST
+/PATH
+/USER
 /Makefile
 /Makefile.in
-/PATH
-/TS
-/USER

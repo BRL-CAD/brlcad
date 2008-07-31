@@ -1,4 +1,4 @@
-/*                        S K E T C H . C
+/*                      G _ S K E T C H . C
  * BRL-CAD
  *
  * Copyright (c) 1990-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup primitives */
+/** @addtogroup g_  */
 /** @{ */
-/** @file sketch.c
+/** @file g_sketch.c
  *
  * Provide support for 2D sketches.
  *
@@ -48,24 +48,17 @@ fastf_t rt_cnurb_par_edge(const struct edge_g_cnurb *crv, fastf_t epsilon);
 extern void get_indices( genptr_t seg, int *start, int *end );	/* from g_extrude.c */
 
 int
-rt_check_curve(const struct curve *crv, const struct rt_sketch_internal *skt, int noisy)
+rt_check_curve(struct curve *crv, struct rt_sketch_internal *skt, int noisey)
 {
     int i, j;
     int ret=0;
 
-    /* empty sketches are invalid */
-    if (crv->seg_count == 0) {
-	if (noisy)
-	    bu_log( "sketch is empty\n" );
-	return 1;
-    }
-
     for ( i=0; i<crv->seg_count; i++ ) {
-	const struct line_seg *lsg;
-	const struct carc_seg *csg;
-	const struct nurb_seg *nsg;
-	const struct bezier_seg *bsg;
-	const long *lng;
+	struct line_seg *lsg;
+	struct carc_seg *csg;
+	struct nurb_seg *nsg;
+	struct bezier_seg *bsg;
+	long *lng;
 
 	lng = (long *)crv->segments[i];
 
@@ -102,15 +95,14 @@ rt_check_curve(const struct curve *crv, const struct rt_sketch_internal *skt, in
 		break;
 	    default:
 		ret++;
-		if ( noisy )
+		if ( noisey )
 		    bu_log( "Unrecognized segment type in sketch\n");
 		break;
 	}
     }
-
-    if ( ret && noisy )
-	bu_log( "sketch references non-existent vertices!\n" );
-    return ret;
+    if ( ret && noisey )
+	bu_log( "sketch references non-existent vertices!!!\n" );
+    return( ret );
 }
 
 
@@ -624,7 +616,7 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 	    break;
 	}
 	default:
-	    bu_log( "seg_to_vlist: ERROR: unrecognized segment type!\n" );
+	    bu_log( "seg_to_vlist: ERROR: unrecognized segment type!!!!\n" );
 	    break;
     }
 
@@ -832,15 +824,14 @@ rt_sketch_import(struct rt_db_internal *ip, const struct bu_external *ep, regist
 		sketch_ip->skt_curve.segments[seg_no] = (genptr_t)bsg;
 		break;
 	    default:
-		bu_bomb( "rt_sketch_import: ERROR: unrecognized segment type!\n" );
+		bu_bomb( "rt_sketch_import: ERROR: unrecognized segment type!!!\n" );
 		break;
 	}
     }
 
     crv = &sketch_ip->skt_curve;
 
-    if (crv->seg_count)
-	crv->reverse = (int *)bu_calloc( crv->seg_count, sizeof(int), "crv->reverse" );
+    crv->reverse = (int *)bu_calloc( crv->seg_count, sizeof(int), "crv->reverse" );
     for ( i=0; i<crv->seg_count; i++ ) {
 	crv->reverse[i] = bu_glong( ptr );
 	ptr += 4;
@@ -1017,7 +1008,7 @@ rt_sketch_export(struct bu_external *ep, const struct rt_db_internal *ip, double
 		}
 		break;
 	    default:
-		bu_bomb( "rt_sketch_export: ERROR: unrecognized curve type!\n" );
+		bu_bomb( "rt_sketch_export: ERROR: unrecognized curve type!!!!\n" );
 		break;
 
 	}
@@ -1168,7 +1159,7 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, regis
 		sketch_ip->skt_curve.segments[seg_no] = (genptr_t)bsg;
 		break;
 	    default:
-		bu_bomb( "rt_sketch_import: ERROR: unrecognized segment type!\n" );
+		bu_bomb( "rt_sketch_import: ERROR: unrecognized segment type!!!\n" );
 		break;
 	}
     }
@@ -1357,7 +1348,7 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 		}
 		break;
 	    default:
-		bu_bomb( "rt_sketch_export: ERROR: unrecognized curve type!\n" );
+		bu_bomb( "rt_sketch_export: ERROR: unrecognized curve type!!!!\n" );
 		break;
 
 	}
@@ -1608,7 +1599,7 @@ rt_curve_free(struct curve *crv)
 		bu_free( (char *)lng, "curve segment" );
 		break;
 	    default:
-		bu_log( "ERROR: rt_curve_free: unrecognized curve segments type!\n");
+		bu_log( "ERROR: rt_curve_free: unrecognized curve segments type!!!!\n");
 		break;
 	}
     }
@@ -1667,11 +1658,8 @@ rt_copy_curve(struct curve *crv_out, const struct curve *crv_in)
     int i, j;
 
     crv_out->seg_count = crv_in->seg_count;
-    if (crv_out->seg_count) {
-	crv_out->reverse = (int *)bu_calloc( crv_out->seg_count, sizeof( int ), "crv->reverse" );
-	crv_out->segments = (genptr_t *)bu_calloc( crv_out->seg_count, sizeof( genptr_t ), "crv->segments" );
-    }
-
+    crv_out->reverse = (int *)bu_calloc( crv_out->seg_count, sizeof( int ), "crv->reverse" );
+    crv_out->segments = (genptr_t *)bu_calloc( crv_out->seg_count, sizeof( genptr_t ), "crv->segments" );
     for ( j=0; j<crv_out->seg_count; j++ ) {
 	long *lng;
 	struct line_seg *lsg_out, *lsg_in;
@@ -1725,7 +1713,7 @@ rt_copy_curve(struct curve *crv_out, const struct curve *crv_in)
 		}
 		break;
 	    default:
-		bu_bomb( "rt_copy_sketch: ERROR: unrecognized segment type!\n" );
+		bu_bomb( "rt_copy_sketch: ERROR: unrecognized segment type!!!!\n" );
 	}
     }
 
@@ -1749,14 +1737,12 @@ rt_copy_sketch(const struct rt_sketch_internal *sketch_ip)
     out = (struct rt_sketch_internal *) bu_malloc( sizeof( struct rt_sketch_internal ), "rt_sketch_internal" );
     *out = *sketch_ip;	/* struct copy */
 
-    if (out->vert_count)
-	out->verts = (point2d_t *)bu_calloc( out->vert_count, sizeof( point2d_t ), "out->verts" );
+    out->verts = (point2d_t *)bu_calloc( out->vert_count, sizeof( point2d_t ), "out->verts" );
     for ( i=0; i<out->vert_count; i++ )
 	V2MOVE( out->verts[i], sketch_ip->verts[i] );
 
     crv_out = &out->skt_curve;
-    if (crv_out)
-	rt_copy_curve( crv_out, &sketch_ip->skt_curve );
+    rt_copy_curve( crv_out, &sketch_ip->skt_curve );
 
     if ( bu_debug&BU_DEBUG_MEM_CHECK ) {
 	bu_log( "Barrier check at end of rt_copy_sketch():\n" );
@@ -1826,70 +1812,84 @@ curve_to_tcl_list(struct bu_vls *vls, struct curve *crv)
 }
 
 
-int rt_sketch_form(struct bu_vls *log, const struct rt_functab *ftp)
+int rt_sketch_tclform( const struct rt_functab *ftp, Tcl_Interp *interp)
 {
-    BU_CK_VLS(log);
     RT_CK_FUNCTAB(ftp);
 
-    bu_vls_printf(log, "V {%%f %%f %%f} A {%%f %%f %%f} B {%%f %%f %%f} VL {{%%f %%f} {%%f %%f} ...} SL {{segment_data} {segment_data}}");
+    Tcl_AppendResult(interp,
+		     "V {%f %f %f} A {%f %f %f} B {%f %f %f} VL {{%f %f} {%f %f} ...} SL {{segment_data} {segment_data}}",
+		     (char *)0);
 
-    return BRLCAD_OK;
+    return TCL_OK;
 }
 
 
 int
-rt_sketch_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *attr)
+rt_sketch_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr)
 {
     register struct rt_sketch_internal *skt=(struct rt_sketch_internal *)intern->idb_ptr;
+    Tcl_DString     ds;
+    struct bu_vls   vls;
     int i;
-    struct curve *crv;
+    struct curve	*crv;
 
-    BU_CK_VLS(log);
-    RT_SKETCH_CK_MAGIC(skt);
+    RT_SKETCH_CK_MAGIC( skt );
 
-    if (attr == (char *)NULL) {
-	bu_vls_strcpy( log, "sketch" );
-	bu_vls_printf( log, " V {%.25g %.25g %.25g}", V3ARGS( skt->V ) );
-	bu_vls_printf( log, " A {%.25g %.25g %.25g}", V3ARGS( skt->u_vec ) );
-	bu_vls_printf( log, " B {%.25g %.25g %.25g}", V3ARGS( skt->v_vec ) );
-	bu_vls_strcat( log, " VL {" );
+    Tcl_DStringInit( &ds );
+    bu_vls_init( &vls );
+
+    if ( attr == (char *)NULL ) {
+	bu_vls_strcpy( &vls, "sketch" );
+	bu_vls_printf( &vls, " V {%.25g %.25g %.25g}", V3ARGS( skt->V ) );
+	bu_vls_printf( &vls, " A {%.25g %.25g %.25g}", V3ARGS( skt->u_vec ) );
+	bu_vls_printf( &vls, " B {%.25g %.25g %.25g}", V3ARGS( skt->v_vec ) );
+	bu_vls_strcat( &vls, " VL {" );
 	for ( i=0; i<skt->vert_count; i++ )
-	    bu_vls_printf( log, " {%.25g %.25g}", V2ARGS( skt->verts[i] ) );
-	bu_vls_strcat( log, " }" );
+	    bu_vls_printf( &vls, " {%.25g %.25g}", V2ARGS( skt->verts[i] ) );
+	bu_vls_strcat( &vls, " }" );
 
 	crv = &skt->skt_curve;
-	if (curve_to_tcl_list(log, crv)) {
-	    return BRLCAD_ERROR;
+	if ( curve_to_tcl_list( &vls, crv ) ) {
+	    bu_vls_free( &vls );
+	    return( TCL_ERROR );
 	}
-    } else if ( !strcmp( attr, "V" ) ) {
-	bu_vls_printf( log, "%.25g %.25g %.25g", V3ARGS( skt->V ) );
-    } else if ( !strcmp( attr, "A" ) ) {
-	bu_vls_printf( log, "%.25g %.25g %.25g", V3ARGS( skt->u_vec ) );
-    } else if ( !strcmp( attr, "B" ) ) {
-	bu_vls_printf( log, "%.25g %.25g %.25g", V3ARGS( skt->v_vec ) );
-    } else if ( !strcmp( attr, "VL" ) ) {
+    }
+    else if ( !strcmp( attr, "V" ) )
+	bu_vls_printf( &vls, "%.25g %.25g %.25g", V3ARGS( skt->V ) );
+    else if ( !strcmp( attr, "A" ) )
+	bu_vls_printf( &vls, "%.25g %.25g %.25g", V3ARGS( skt->u_vec ) );
+    else if ( !strcmp( attr, "B" ) )
+	bu_vls_printf( &vls, "%.25g %.25g %.25g", V3ARGS( skt->v_vec ) );
+    else if ( !strcmp( attr, "VL" ) ) {
 	for ( i=0; i<skt->vert_count; i++ )
-	    bu_vls_printf( log, " {%.25g %.25g}", V2ARGS( skt->verts[i] ) );
+	    bu_vls_printf( &vls, " {%.25g %.25g}", V2ARGS( skt->verts[i] ) );
     } else if ( !strcmp( attr, "SL" ) ) {
 	crv = &skt->skt_curve;
-	if (curve_to_tcl_list(log, crv)) {
-	    return BRLCAD_ERROR;
+	if ( curve_to_tcl_list( &vls, crv ) ) {
+	    bu_vls_free( &vls );
+	    return( TCL_ERROR );
 	}
     } else if ( *attr == 'V' ) {
 	i = atoi( (attr+1) );
 	if ( i < 0 || i >= skt->vert_count ) {
-	    bu_vls_printf( log, "ERROR: Illegal vertex number\n");
-	    return BRLCAD_ERROR;
+	    Tcl_SetResult( interp, "ERROR: Illegal vertex number\n", TCL_STATIC );
+	    bu_vls_free( &vls );
+	    return( TCL_ERROR );
 	}
 
-	bu_vls_printf( log, "%.25g %.25g", V2ARGS( skt->verts[i] ) );
+	bu_vls_printf( &vls, "%.25g %.25g", V2ARGS( skt->verts[i] ) );
     } else {
 	/* unrecognized attribute */
-	bu_vls_printf( log, "ERROR: Unknown attribute, choices are V, A, B, VL, SL, or V#\n");
-	return BRLCAD_ERROR;
+	Tcl_SetResult( interp, "ERROR: Unknown attribute, choices are V, A, B, VL, SL, or V#\n", TCL_STATIC );
+	bu_vls_free( &vls );
+	return( TCL_ERROR );
     }
 
-    return BRLCAD_OK;
+    Tcl_DStringAppend( &ds, bu_vls_addr( &vls ), -1 );
+    Tcl_DStringResult( interp, &ds );
+    Tcl_DStringFree( &ds );
+    bu_vls_free( &vls );
+    return( TCL_OK );
 }
 
 
@@ -2065,7 +2065,7 @@ get_tcl_curve(Tcl_Interp *interp, struct curve *crv, Tcl_Obj *seg_list)
 
 
 int
-rt_sketch_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv)
+rt_sketch_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv)
 {
     struct rt_sketch_internal *skt;
     int ret, array_len;
@@ -2079,26 +2079,32 @@ rt_sketch_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, ch
 	if ( !strcmp( argv[0], "V" ) ) {
 	    new = skt->V;
 	    array_len = 3;
-	    if ( tcl_list_to_fastf_array( brlcad_interp, argv[1], &new, &array_len) !=
+	    if ( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len) !=
 		 array_len ) {
-		bu_vls_printf(log, "ERROR: Incorrect number of coordinates for vertex\n");
-		return BRLCAD_ERROR;
+		Tcl_SetResult( interp,
+			       "ERROR: Incorrect number of coordinates for vertex\n",
+			       TCL_STATIC );
+		return( TCL_ERROR );
 	    }
 	} else if ( !strcmp( argv[0], "A" ) ) {
 	    new = skt->u_vec;
 	    array_len = 3;
-	    if ( tcl_list_to_fastf_array( brlcad_interp, argv[1], &new, &array_len) !=
+	    if ( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len) !=
 		 array_len ) {
-		bu_vls_printf(log, "ERROR: Incorrect number of coordinates for vertex\n");
-		return BRLCAD_ERROR;
+		Tcl_SetResult( interp,
+			       "ERROR: Incorrect number of coordinates for vertex\n",
+			       TCL_STATIC );
+		return( TCL_ERROR );
 	    }
 	} else if ( !strcmp( argv[0], "B" ) ) {
 	    new = skt->v_vec;
 	    array_len = 3;
-	    if ( tcl_list_to_fastf_array( brlcad_interp, argv[1], &new, &array_len) !=
+	    if ( tcl_list_to_fastf_array( interp, argv[1], &new, &array_len) !=
 		 array_len ) {
-		bu_vls_printf(log, "ERROR: Incorrect number of coordinates for vertex\n");
-		return BRLCAD_ERROR;
+		Tcl_SetResult( interp,
+			       "ERROR: Incorrect number of coordinates for vertex\n",
+			       TCL_STATIC );
+		return( TCL_ERROR );
 	    }
 	} else if ( !strcmp( argv[0], "VL" ) ) {
 	    fastf_t *new_verts=(fastf_t *)NULL;
@@ -2116,10 +2122,12 @@ rt_sketch_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, ch
 	    }
 
 	    len = 0;
-	    (void)tcl_list_to_fastf_array( brlcad_interp, argv[1], &new_verts, &len );
+	    (void)tcl_list_to_fastf_array( interp, argv[1], &new_verts, &len );
 	    if ( len%2 ) {
-		bu_vls_printf(log, "ERROR: Incorrect number of coordinates for vertices\n");
-		return BRLCAD_ERROR;
+		Tcl_SetResult( interp,
+			       "ERROR: Incorrect number of coordinates for vertices\n",
+			       TCL_STATIC );
+		return( TCL_ERROR );
 	    }
 
 	    if ( skt->verts )
@@ -2139,7 +2147,7 @@ rt_sketch_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, ch
 	    crv->reverse = (int *)NULL;
 	    crv->segments = (genptr_t)NULL;
 
-	    if ( (ret=get_tcl_curve( brlcad_interp, crv, tmp )) != TCL_OK )
+	    if ( (ret=get_tcl_curve( interp, crv, tmp )) != TCL_OK )
 		return( ret );
 	} else if ( *argv[0] == 'V' && isdigit( *(argv[0]+1) ) ) {
 	    /* changing a specific vertex */
@@ -2149,13 +2157,16 @@ rt_sketch_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, ch
 	    vert_no = atoi( argv[0] + 1 );
 	    new_vert = skt->verts[vert_no];
 	    if ( vert_no < 0 || vert_no > skt->vert_count ) {
-		bu_vls_printf(log, "ERROR: Illegal vertex number\n");
-		return BRLCAD_ERROR;
+		Tcl_SetResult( interp, "ERROR: Illegal vertex number\n",
+			       TCL_STATIC );
+		return( TCL_ERROR );
 	    }
 	    array_len = 2;
-	    if (tcl_list_to_fastf_array( brlcad_interp, argv[1], &new_vert, &array_len) != array_len ) {
-		bu_vls_printf(log, "ERROR: Incorrect number of coordinates for vertex\n");
-		return BRLCAD_ERROR;
+	    if (tcl_list_to_fastf_array( interp, argv[1], &new_vert, &array_len) != array_len ) {
+		Tcl_SetResult( interp,
+			       "ERROR: Incorrect number of coordinates for vertex\n",
+			       TCL_STATIC );
+		return( TCL_ERROR );
 	    }
 	}
 
@@ -2163,18 +2174,9 @@ rt_sketch_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, ch
 	argv += 2;
     }
 
-    return BRLCAD_OK;
+    return( TCL_OK );
 }
 
-/**
- * R T _ S K E T C H _ P A R A M S
- *
- */
-int
-rt_sketch_params(struct pc_param_set * ps, const struct rt_db_internal *ip)
-{
-    return(0);			/* OK */
-}
 
 void
 rt_curve_reverse_segment( long *lng )

@@ -43,7 +43,7 @@ set_property(TARGET brlcad PROPERTY LINK_INTERFACE_LIBRARIES "")
 
 # build the BrlcadCore.dll
 set(BRLCADCORE_SOURCES
-    BrlcadCore.def
+    brlcad.def
     BrlcadCore.rc
 )
 

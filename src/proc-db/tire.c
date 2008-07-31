@@ -950,8 +950,8 @@ void MakeTreadPattern2(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
     point2d_t verts3[] = {
 	{ .5, .45 },
 	{ -.5, .4 },
-	{ -.6, .5 },
-	{ .5, .55 }
+	{ -.7, .5 },
+	{ .3, .55 }
     };
 
     verts[2] = verts3;
@@ -1237,6 +1237,11 @@ void MakeTireSurface(struct rt_wdb (*file), char *suffix,
     point_t origin, normal, C;
 
 
+    PrintCADParams(ell1cadparams, "ell1");
+    PrintCADParams(ell2cadparams, "ell2");
+    PrintCADParams(ell3cadparams, "ell3");
+
+
     /* Insert primitives */
     VSET(origin, 0, ell1cadparams[0], 0);
     VSET(normal, 0, 1, 0);
@@ -1501,15 +1506,9 @@ void MakeTreadSolid(struct rt_wdb (*file), char *suffix,
     mk_eto(file, bu_vls_addr(&str), origin, normal, C, ell2treadcadparams[1], ell2treadcadparams[4]);
 
     VSET(vertex, 0, -ell1treadcadparams[2] - ell1treadcadparams[2] * .01, 0);
-    VSET(height, 0, ell2treadcadparams[3] + ell1treadcadparams[2] * .01 , 0);
+    VSET(height, 0, 2 * (ell1treadcadparams[2] + ell1treadcadparams[2]  * .01), 0);
     bu_vls_trunc(&str, 0);
-    bu_vls_printf(&str, "TopTreadClipL%s.s", suffix);
-    mk_rcc(file, bu_vls_addr(&str), vertex, height, ztire - dztred);
-
-    VSET(vertex, 0, ell1treadcadparams[2] + ell1treadcadparams[2] * .01, 0);
-    VSET(height, 0, -ell2treadcadparams[3] - ell1treadcadparams[2] * .01, 0);
-    bu_vls_trunc(&str, 0);
-    bu_vls_printf(&str, "TopTreadClipR%s.s", suffix);
+    bu_vls_printf(&str, "TopTreadClip%s.s", suffix);
     mk_rcc(file, bu_vls_addr(&str), vertex, height, ztire - dztred);
 
     VSET(vertex, 0, -d1_intercept, 0);
@@ -1524,11 +1523,8 @@ void MakeTreadSolid(struct rt_wdb (*file), char *suffix,
     bu_vls_printf(&str, "Ellipse1tread%s.s", suffix);
     (void)mk_addmember(bu_vls_addr(&str), &premtreadshape.l, NULL, WMOP_UNION);
     bu_vls_trunc(&str, 0);
-    bu_vls_printf(&str, "TopTreadClipL%s.s", suffix);
+    bu_vls_printf(&str, "TopTreadClip%s.s", suffix);
     (void)mk_addmember(bu_vls_addr(&str), &premtreadshape.l, NULL, WMOP_SUBTRACT);
-    bu_vls_trunc(&str, 0);
-    bu_vls_printf(&str, "TopTreadClipR%s.s", suffix);
-   (void)mk_addmember(bu_vls_addr(&str), &premtreadshape.l, NULL, WMOP_SUBTRACT);
     bu_vls_trunc(&str, 0);
     bu_vls_printf(&str, "Ellipse2tread%s.s", suffix);
     (void)mk_addmember(bu_vls_addr(&str), &premtreadshape.l, NULL, WMOP_UNION);

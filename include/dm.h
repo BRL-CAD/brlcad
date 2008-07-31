@@ -30,9 +30,6 @@
 
 #include "bu.h"
 #include "vmath.h"
-
-#define USE_FBSERV 1
-
 #ifdef USE_FBSERV
 #  include "fbserv_obj.h"
 #endif

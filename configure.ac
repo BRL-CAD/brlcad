@@ -114,17 +114,18 @@ AC_SUBST(BRLCAD_VERSION)
 
 # force locale setting to C so things like date output as expected
 LC_ALL=C
-LANG=C
 
 CONFIG_DAY=`date +%d`
 CONFIG_MONTH=`date +%m`
 CONFIG_YEAR=`date +%Y`
 CONFIG_DATE="${CONFIG_YEAR}${CONFIG_MONTH}${CONFIG_DAY}"
-CONFIG_TS="`date -R 2>/dev/null || date +'%a, %d %b %Y %H:%M:%S %z' 2>/dev/null || date`" # try RFC 2822
+CONFIG_TIME="`date '+%H %M %S'`"
+CONFIG_TS="`date`"
 AC_SUBST(CONFIG_DAY)
 AC_SUBST(CONFIG_MONTH)
 AC_SUBST(CONFIG_YEAR)
 AC_SUBST(CONFIG_DATE)
+AC_SUBST(CONFIG_TIME)
 AC_SUBST(CONFIG_TS)
 
 
@@ -1986,13 +1987,14 @@ BC_COMPLIANT_DOUBLE
 if test "x$bc_compliant_float" = "xno" || test "x$bc_compliant_double" = "xno" ; then
     AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
     AC_MSG_WARN([The floating point implementation does not seem to be IEEE 754])
-    AC_MSG_WARN([compliant.  The behavior of htond and htonf may be incorrect.])
+    AC_MSG_WARN([compliant.  The behavior or htond and htonf may be incorrect.])
     AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
     sleep 1
 fi
 
 dnl AC_C_PROTOTYPES
 AM_C_PROTOTYPES
+AC_DEFINE(USE_PROTOTYPES,1,heh)
 
 AC_C_CONST
 AC_C_INLINE
@@ -2826,16 +2828,13 @@ AC_SUBST(ITK_LIB_FILE)
 
 
 dnl *** tcl+itcl sanity ***
-dnl See if the tcl we're using is compatible with the incrTcl we're using.
-dnl Our incrTcl is latest sources that make it only work with 8.5+
+dnl See if the tcl we're using is compatible with the incrTcl we're using
 if test "x$TCL" = "x$LIBTCL" ; then
-    if test "x$ITCL" != "x$LIBITCL" && test "x$TCL_VERSION" != "x8.5" ; then
+    if test "x$ITCL" != "x$LIBITCL" ; then
 	# apparently want to use system tcl with non-system incrTcl
 	# is that sane? probably not until 8.5 is everywhere.
-	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 	AC_MSG_WARN([Unable to find a system incrTcl compatible with the available system Tcl])
 	AC_MSG_WARN([Enabling compilation of both Tcl and incrTcl])
-	AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
 	# nope!
 	build_brlcad_tcl="yes"
 	build_brlcad_tk="yes"
@@ -2853,7 +2852,7 @@ if test "x$TCL" = "x$LIBTCL" ; then
 	TCLSTUB='-L${top_builddir}/src/other/tcl/unix'" -ltclstub${TCL_VERSION}"
 	TCL_CPPFLAGS='-I${top_srcdir}/src/other/tcl/generic -I${top_srcdir}/src/other/tcl/unix'
 
-	TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TK_VERSION}"
+	TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TCL_VERSION}"
 	TKSTUB='-L${top_builddir}/src/other/tk/unix'" -ltkstub${TK_VERSION}"
 	TK_CPPFLAGS='-I${top_srcdir}/src/other/tk/generic -I${top_srcdir}/src/other/tk/unix -I${top_srcdir}/src/other/tk/win'
 	if test "x$bc_build_aquatk" = "xyes" ; then
@@ -3153,7 +3152,7 @@ AC_SUBST(TERMLIB_CPPFLAGS)
 
 dnl *** Boost ***
 dnl Header only Library requiring no build
-BOOST_CPPFLAGS='-I${top_srcdir}/src/other'
+BOOST_CPPFLAGS='-I${top_srcdir}/src/other/boost'
 AC_SUBST(BOOST_CPPFLAGS)
 
 dnl *** libm ***
@@ -3602,6 +3601,8 @@ if test "x$bc_build_parallel" != "xno" ; then
 	AC_DEFINE(PARALLEL, 1, [Define to enable SMP architecture parallel computation support ])
 fi
 
+AC_DEFINE_UNQUOTED([USE_FBSERV], [1], [Required for libdm/mged to allow direct fbserv render connections])
+
 
 #
 # set up the BRL-CAD libraries
@@ -3617,6 +3618,7 @@ GED='${top_builddir}/src/libged/libged.la'
 MULTISPECTRAL='${top_builddir}/src/libmultispectral/libmultispectral.la'
 OPTICAL='${top_builddir}/src/liboptical/liboptical.la'
 ORLE='${top_builddir}/src/liborle/liborle.la'
+PC='${top_builddir}/src/libpc/libpc.la'
 PKG='${top_builddir}/src/libpkg/libpkg.la'
 RT='${top_builddir}/src/librt/librt.la'
 SYSV='${top_builddir}/src/libsysv/libsysv.la'
@@ -3639,6 +3641,7 @@ WDB_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 FB_LIBS="${BU} ${BU_LIBS} ${PKG} ${TCL} ${SOCKET} ${NSL}" # additional/optional FB_LIBS: ${TK} ${X_LIBS} ${LIBGL}
 OPTICAL_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${TCL}"
 MULTISPECTRAL_LIBS="${OPTICAL} ${OPTICAL_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
+PC_LIBS="${WDB} ${WDB_LIBS}"
 DM_LIBS="${GED} ${GED_LIBS} ${RT} ${RT_LIBS} ${FB} ${FB_LIBS} ${PNG} ${TK} ${X_LIBS} ${FRAMEWORK_CARBON}"
 TCLCAD_LIBS="${GED} ${GED_LIBS} ${DM} ${DM_LIBS} ${FB} ${FB_LIBS} ${ITK} ${ITCL} ${TK} ${TCLSTUB} ${BLT} ${TCL}"
 BRLCAD_LIBS="${GED} ${GED_LIBS} ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
@@ -3654,6 +3657,7 @@ AC_SUBST(MULTISPECTRAL)
 AC_SUBST(OPTICAL)
 AC_SUBST(ORLE)
 AC_SUBST(PKG)
+AC_SUBST(PC)
 AC_SUBST(RT)
 AC_SUBST(SYSV)
 AC_SUBST(TCLCAD)
@@ -3671,6 +3675,7 @@ AC_SUBST(GED_LIBS)
 AC_SUBST(MULTISPECTRAL_LIBS)
 AC_SUBST(OPTICAL_LIBS)
 AC_SUBST(ORLE_LIBS)
+AC_SUBST(PC_LIBS)
 AC_SUBST(PKG_LIBS)
 AC_SUBST(RT_LIBS)
 AC_SUBST(SYSV_LIBS)
@@ -3738,7 +3743,8 @@ AC_CONFIG_FILES([
 	doc/Makefile
 	doc/book/Makefile
 	doc/docbook/Makefile
-	doc/docbook/oed/Makefile
+        doc/docbook/tutorials/Makefile
+	doc/docbook/tutorials/oed/Makefile
 	doc/html/Makefile
 	doc/html/ReleaseNotes/Makefile
 	doc/html/ReleaseNotes/Rel5.0/Makefile
@@ -3779,12 +3785,14 @@ AC_CONFIG_FILES([
 	misc/pkgconfig/libfft.pc
 	misc/pkgconfig/libmultispectral.pc
 	misc/pkgconfig/liboptical.pc
+	misc/pkgconfig/libpc.pc
 	misc/pkgconfig/libpkg.pc
 	misc/pkgconfig/librt.pc
 	misc/pkgconfig/libwdb.pc
 	misc/win32-msvc/Dll/Makefile
 	misc/win32-msvc/Makefile
 	misc/win32-msvc8/Makefile
+	misc/win32-msvc9/Makefile
 	pix/Makefile
 	sh/Makefile
 	src/Makefile
@@ -3855,6 +3863,7 @@ AC_CONFIG_FILES([
 	src/libmultispectral/Makefile
 	src/liboptical/Makefile
 	src/liborle/Makefile
+	src/libpc/Makefile
 	src/libpkg/Makefile
 	src/librt/Makefile
 	src/librtserver/Makefile
@@ -3992,7 +4001,7 @@ dnl
 dnl Compute configuration time elapsed
 dnl
 if test -x "${srcdir}/sh/elapsed.sh" ; then
-	time_elapsed="`${srcdir}/sh/elapsed.sh $CONFIG_TS`"
+	time_elapsed="`${srcdir}/sh/elapsed.sh $CONFIG_TIME`"
 else
 	time_elapsed="unknown"
 fi

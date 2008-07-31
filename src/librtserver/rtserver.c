@@ -90,10 +90,10 @@ static pthread_mutex_t apps_mutex = PTHREAD_MUTEX_INITIALIZER;
         } else { \
                 int app_no = app_count++; \
                 pthread_mutex_unlock( &apps_mutex ); \
-                _p = (struct application *)bu_malloc( sizeof(struct application), "struct application"); \
+                _p = (struct application *)bu_malloc( sizeof(struct application), "apps"); \
                 RT_APPLICATION_INIT(_p); \
                 _p->a_rt_i = myrtip; \
-                _p->a_uptr = (struct bu_vlb *)bu_calloc( sizeof(struct bu_vlb), 1, "bu_vlb GET_APPLICATION"); \
+                _p->a_uptr = (struct bu_vlb *)bu_calloc( sizeof(struct bu_vlb), 1, "bu_vlb"); \
                 bu_vlb_init(_p->a_uptr); \
                 _p->a_resource = (struct resource *)bu_calloc( sizeof(struct resource), 1, "resource"); \
                 rt_init_resource( _p->a_resource, app_no, _p->a_rt_i ); \
@@ -299,8 +299,6 @@ isLastUseOfRti( struct rt_i *rtip, int sessionid )
 void
 rts_clean( int sessionid)
 {
-    struct application *ap;
-    struct resource *resp;
     int i, j;
 
     if ( sessionid >= 0 && sessionid < num_geometries && rts_geometry[sessionid] ) {
@@ -334,7 +332,7 @@ rts_clean( int sessionid)
 
 	    if ( rtsrtip->rtrti_rtip ) {
 		if ( isLastUseOfRti( rtsrtip->rtrti_rtip, i ) ) {
-		    rt_free_rti( rtsrtip->rtrti_rtip );
+		    rt_clean( rtsrtip->rtrti_rtip );
 		    rtsrtip->rtrti_rtip = NULL;
 		}
 	    }
@@ -342,10 +340,7 @@ rts_clean( int sessionid)
                 Tcl_DeleteHashTable( rtsrtip->rtrti_region_names );
                 bu_free(rtsrtip->rtrti_region_names, "region names hash table");
             }
-            
-            bu_free(rtsrtip, "rtserver_rti");
 	}
-        bu_free(rts_geometry[sessionid]->rts_rtis, "rtserver_rti *");
 	if ( rts_geometry[sessionid]->rts_comp_names ) {
 	    Tcl_DeleteHashTable( rts_geometry[sessionid]->rts_comp_names );
             bu_free(rts_geometry[sessionid]->rts_comp_names, "component names hash table");
@@ -353,48 +348,6 @@ rts_clean( int sessionid)
 	bu_free( rts_geometry[sessionid], "rts_geometry" );
 	rts_geometry[sessionid] = NULL;
     }
-    
-    if ( hash_table_exists ) {
-	Tcl_DeleteHashTable( &name_tbl );
-#if 0
-	Tcl_DeleteHashTable( &ident_tbl);
-	Tcl_DeleteHashTable( &air_tbl );
-#endif
-	hash_table_exists = 0;
-    }
-    
-    num_geometries = 0;
-    bu_free( (char *)rts_geometry, "rts_geometry" );
-    rts_geometry = NULL;
-    
-    if(title != NULL) {
-        bu_free(title, "title");
-        title = NULL;
-    }
-    
-    for( i=0 ; i<BU_PTBL_LEN(&apps) ; i++ ) {
-        struct bu_vlb *vlb;
-        
-        ap = (struct application *)BU_PTBL_GET( &apps, i);
-        
-        vlb = (struct bu_vlb *)ap->a_uptr;
-        if(vlb != NULL) {
-            bu_vlb_free(vlb);
-            bu_free(vlb, "vlb");
-        }
-
-        if( ap->a_resource != NULL ) {
-            rt_clean_resource_complete(NULL, ap->a_resource);
-            bu_free(ap->a_resource, "resource");
-        }
-
-        bu_free(ap, "struct application");
-    }
-    bu_ptbl_free(&apps);
-    memset(&apps, 0, sizeof( struct bu_ptbl));
-    
-    resp = &rt_uniresource;
-    rt_clean_resource_complete(NULL, resp);
 }
 
 /* routine to close a session
@@ -462,9 +415,7 @@ rts_load_geometry( char *filename, int num_trees, char **objects )
 	rts_geometry = NULL;
     }
     
-    if( !BU_PTBL_TEST(&apps) ) {
-        bu_ptbl_init( &apps, 8, "application structure list" );
-    }
+    bu_ptbl_init( &apps, 8, "application structure list" );
 
     if ( hash_table_exists ) {
 	Tcl_DeleteHashTable( &name_tbl );
@@ -481,7 +432,7 @@ rts_load_geometry( char *filename, int num_trees, char **objects )
 	sessionid = 0;
 	rts_geometry = (struct rtserver_geometry **)bu_calloc( num_geometries,
 							       sizeof( struct rts_geometry *),
-							       "rts_geometry *" );
+							       "rts_geometry" );
     }
 
     /* open the BRL-CAD model */
@@ -511,7 +462,7 @@ rts_load_geometry( char *filename, int num_trees, char **objects )
     /* just one RT instance */
     rts_geometry[sessionid]->rts_number_of_rtis = 1;
     rts_geometry[sessionid]->rts_rtis = (struct rtserver_rti **)bu_malloc( sizeof( struct rtserver_rti *),
-            "rtserver_rti *" );
+            "rtserver_rti" );
     rts_geometry[sessionid]->rts_rtis[0] = (struct rtserver_rti *)bu_calloc( 1,
             sizeof( struct rtserver_rti ),
             "rtserver_rti" );
@@ -520,6 +471,20 @@ rts_load_geometry( char *filename, int num_trees, char **objects )
     if ( verbose ) {
         fprintf( stderr, "num_trees = %d\n", num_trees );
     }
+
+    /* malloc some memory for the rtserver geometry structure (bu_calloc zeros the memory) */
+    rts_geometry[sessionid] = (struct rtserver_geometry *)bu_calloc( 1,
+            sizeof( struct rtserver_geometry ),
+            "rtserver geometry" );
+
+    /* just one RT instance */
+    rts_geometry[sessionid]->rts_number_of_rtis = 1;
+    rts_geometry[sessionid]->rts_rtis = (struct rtserver_rti **)bu_malloc( sizeof( struct rtserver_rti *),
+            "rtserver_rti" );
+    rts_geometry[sessionid]->rts_rtis[0] = (struct rtserver_rti *)bu_calloc( 1,
+            sizeof( struct rtserver_rti ),
+            "rtserver_rti" );
+    rts_geometry[sessionid]->rts_rtis[0]->rtrti_rtip = rtip;
 
     /* initialize our overall bounding box */
     VSETALL( rts_geometry[sessionid]->rts_mdl_min, MAX_FASTF );
@@ -1998,5 +1963,5 @@ JNIEXPORT jobjectArray JNICALL Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWra
 JNIEXPORT void JNICALL Java_mil_army_arl_brlcadservice_impl_BrlcadJNIWrapper_shutdownNative(JNIEnv *env, jobject obj)
 {
     bu_log( "Shutting down...");
-    rts_clean(0);
+    exit(0);
 }

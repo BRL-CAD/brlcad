@@ -49,11 +49,6 @@
 #  endif
 #endif  /* _WIN32 */
 
-/* support ANSI function declarations */
-#ifndef USE_PROTOTYPES
-#  define USE_PROTOTYPES 1
-#endif
-
 /* provide declaration markers for header externals */
 #ifdef __cplusplus
 #  define __BEGIN_DECLS   extern "C" {
@@ -81,13 +76,6 @@
 #    define HIDDEN	static
 #  else
 #    define HIDDEN	/***/
-#  endif
-#endif
-
-/* ansi c89 does not allow the 'inline' keyword */
-#ifdef __STRICT_ANSI__
-#  ifndef inline
-#    define inline /***/
 #  endif
 #endif
 

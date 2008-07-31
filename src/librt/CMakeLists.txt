@@ -5,7 +5,6 @@ set(LIBRT_SOURCES
     bool.c
     bundle.c
     cmd.c
-    constraint.c
     cut.c
     db5_alloc.c
     db5_bin.c
@@ -110,7 +109,6 @@ set(LIBRT_SOURCES
     primitives/pipe/pipe.c
     primitives/poly/poly.c
     primitives/rec/rec.c
-    primitives/revolve/revolve.c
     primitives/rhc/rhc.c
     primitives/rpc/rpc.c
     primitives/sketch/sketch.c
@@ -134,21 +132,10 @@ set(LIBRT_SOURCES
     wdb.c
 )
 
-set(IGNORED_SOURCES
-    brep_test.cpp
-    nurb_example.c
-    primitives/xxx/xxx.c
-)
-
 if(MSVC)
     set(LIBRT_SOURCES
         ${LIBRT_SOURCES}
         timer-nt.c
-    )
-else(MSVC)
-    set(LIBRT_SOURCES
-        ${LIBRT_SOURCES}
-        timer42.c
     )
 endif(MSVC)
 

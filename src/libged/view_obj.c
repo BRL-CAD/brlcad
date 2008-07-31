@@ -45,47 +45,47 @@
 
 int Vo_Init(Tcl_Interp *interp);
 
-static int vo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]);
-static int vo_size_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_invSize_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_aet_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_rmat_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_center_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_model2view_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_pmodel2view_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_view2model_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_perspective_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_pmat_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_rot_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_tra_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_sca_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_slew_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int vo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv);
+static int vo_size_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_invSize_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_aet_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_rmat_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_center_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_model2view_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_pmodel2view_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_view2model_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_perspective_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_pmat_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_rot_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_tra_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_sca_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_slew_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
-static int vo_eye_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_eye_pos_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_lookat_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_orientation_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_pov_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_units_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_zoom_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_local2base_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_base2local_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_observer_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_coord_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_rotate_about_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_keypoint_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_setview_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_arot_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_vrot_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_mrot_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_mrotPoint_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_m2vPoint_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_v2mPoint_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_viewDir_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_ae2dir_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int vo_dir2ae_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int vo_eye_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_eye_pos_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_lookat_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_orientation_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_pov_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_units_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_zoom_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_local2base_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_base2local_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_observer_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_coord_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_rotate_about_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_keypoint_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_setview_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_arot_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_vrot_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_mrot_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_mrotPoint_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_m2vPoint_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_v2mPoint_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_viewDir_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_ae2dir_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_dir2ae_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
-static int vo_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int vo_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 void vo_update(struct view_obj *vop, Tcl_Interp *interp, int oflag);
 void vo_mat_aet(struct view_obj *vop);
 static void vo_persp_mat(fastf_t *m, fastf_t fovy, fastf_t aspect, fastf_t near1, fastf_t far1, fastf_t backoff);
@@ -146,7 +146,7 @@ static int
 vo_cmd(ClientData	clientData,
        Tcl_Interp	*interp,
        int		argc,
-       char		*argv[])
+       char		**argv)
 {
     return bu_cmd(clientData, interp, argc, argv, vo_cmds, 1);
 }
@@ -218,7 +218,7 @@ static int
 vo_open_tcl(ClientData	clientData,
 	    Tcl_Interp	*interp,
 	    int		argc,
-	    const char	*argv[])
+	    const char	**argv)
 {
     struct view_obj *vop;
 
@@ -255,7 +255,7 @@ int
 vo__cmd(struct view_obj	*vop,
 	Tcl_Interp	*interp,
 	int		argc,
-	char 		*argv[])
+	char 		**argv)
 {
 }
 
@@ -267,7 +267,7 @@ static int
 vo__tcl(ClientData	clientData,
 	Tcl_Interp	*interp,
 	int		argc,
-	char		*argv[])
+	char		**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -281,8 +281,6 @@ vo_size(struct view_obj	*vop,
 	fastf_t		size)
 {
     vop->vo_size = vop->vo_local2base * size;
-    if (vop->vo_size < SQRT_SMALL_FASTF)
-	vop->vo_size = SQRT_SMALL_FASTF;
     if (vop->vo_size < RT_MINVIEWSIZE)
 	vop->vo_size = RT_MINVIEWSIZE;
     vop->vo_invSize = 1.0 / vop->vo_size;
@@ -294,7 +292,7 @@ int
 vo_size_cmd(struct view_obj	*vop,
 	    Tcl_Interp		*interp,
 	    int			argc,
-	    char 		*argv[])
+	    char 		**argv)
 {
     struct bu_vls vls;
     fastf_t size;
@@ -311,8 +309,11 @@ vo_size_cmd(struct view_obj	*vop,
 
     /* set view size */
     if (argc == 2) {
-	if (sscanf(argv[1], "%lf", &size) != 1 || size < SMALL_FASTF) {
-	    Tcl_AppendResult(interp, "bad size - ", argv[1], (char *)NULL);
+	if (sscanf(argv[1], "%lf", &size) != 1 ||
+	    size <= 0 ||
+	    NEAR_ZERO(size, SMALL_FASTF)) {
+	    Tcl_AppendResult(interp, "bad size - ",
+			     argv[1], (char *)NULL);
 	    return TCL_ERROR;
 	}
 
@@ -339,7 +340,7 @@ static int
 vo_size_tcl(ClientData	clientData,
 	    Tcl_Interp	*interp,
 	    int	argc,
-	    char	*argv[])
+	    char	**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -350,7 +351,7 @@ int
 vo_invSize_cmd(struct view_obj	*vop,
 	       Tcl_Interp	*interp,
 	       int		argc,
-	       char 		*argv[])
+	       char 		**argv)
 {
     struct bu_vls vls;
 
@@ -382,7 +383,7 @@ static int
 vo_invSize_tcl(ClientData	clientData,
 	       Tcl_Interp	*interp,
 	       int		argc,
-	       char		*argv[])
+	       char		**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -393,7 +394,7 @@ int
 vo_aet_cmd(struct view_obj	*vop,
 	   Tcl_Interp		*interp,
 	   int			argc,
-	   char 		*argv[])
+	   char 		**argv)
 {
     struct bu_vls	vls;
     vect_t		aet;
@@ -486,7 +487,7 @@ static int
 vo_aet_tcl(ClientData	clientData,
 	   Tcl_Interp	*interp,
 	   int		argc,
-	   char		*argv[])
+	   char		**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -497,7 +498,7 @@ int
 vo_rmat_cmd(struct view_obj	*vop,
 	    Tcl_Interp		*interp,
 	    int			argc,
-	    char 		*argv[])
+	    char 		**argv)
 {
     struct bu_vls vls;
     mat_t rotation;
@@ -540,7 +541,7 @@ static int
 vo_rmat_tcl(ClientData	clientData,
 	    Tcl_Interp	*interp,
 	    int		argc,
-	    char	*argv[])
+	    char	**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -561,7 +562,7 @@ int
 vo_center_cmd(struct view_obj	*vop,
 	      Tcl_Interp	*interp,
 	      int		argc,
-	      char 		*argv[])
+	      char 		**argv)
 {
     point_t		center;
     struct bu_vls	vls;
@@ -625,7 +626,7 @@ static int
 vo_center_tcl(ClientData	clientData,
 	      Tcl_Interp	*interp,
 	      int		argc,
-	      char		*argv[])
+	      char		**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -636,7 +637,7 @@ int
 vo_model2view_cmd(struct view_obj	*vop,
 		  Tcl_Interp		*interp,
 		  int			argc,
-		  char 			*argv[])
+		  char 			**argv)
 {
     struct bu_vls vls;
 
@@ -668,7 +669,7 @@ static int
 vo_model2view_tcl(ClientData	clientData,
 		  Tcl_Interp	*interp,
 		  int		argc,
-		  char		*argv[])
+		  char		**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -679,7 +680,7 @@ int
 vo_pmodel2view_cmd(struct view_obj	*vop,
 		   Tcl_Interp		*interp,
 		   int			argc,
-		   char 		*argv[])
+		   char 		**argv)
 {
     struct bu_vls vls;
 
@@ -711,7 +712,7 @@ static int
 vo_pmodel2view_tcl(ClientData	clientData,
 		   Tcl_Interp	*interp,
 		   int		argc,
-		   char		*argv[])
+		   char		**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -722,7 +723,7 @@ int
 vo_view2model_cmd(struct view_obj	*vop,
 		  Tcl_Interp		*interp,
 		  int			argc,
-		  char 			*argv[])
+		  char 			**argv)
 {
     struct bu_vls vls;
 
@@ -752,7 +753,7 @@ static int
 vo_view2model_tcl(ClientData	clientData,
 		  Tcl_Interp	*interp,
 		  int		argc,
-		  char		*argv[])
+		  char		**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -763,7 +764,7 @@ int
 vo_perspective_cmd(struct view_obj	*vop,
 		   Tcl_Interp		*interp,
 		   int			argc,
-		   char 		*argv[])
+		   char 		**argv)
 {
     struct bu_vls vls;
     fastf_t perspective;
@@ -819,7 +820,7 @@ static int
 vo_perspective_tcl(ClientData	clientData,
 		   Tcl_Interp	*interp,
 		   int		argc,
-		   char		*argv[])
+		   char		**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -830,7 +831,7 @@ int
 vo_pmat_cmd(struct view_obj	*vop,
 	    Tcl_Interp		*interp,
 	    int			argc,
-	    char 		*argv[])
+	    char 		**argv)
 {
     struct bu_vls vls;
 
@@ -862,7 +863,7 @@ static int
 vo_pmat_tcl(ClientData	clientData,
 	    Tcl_Interp	*interp,
 	    int		argc,
-	    char	*argv[])
+	    char	**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -873,7 +874,7 @@ int
 vo_eye_cmd(struct view_obj	*vop,
 	   Tcl_Interp		*interp,
 	   int			argc,
-	   char 		*argv[])
+	   char 		**argv)
 {
     point_t		eye_model;
     vect_t		xlate;
@@ -954,7 +955,7 @@ static int
 vo_eye_tcl(ClientData	clientData,
 	   Tcl_Interp	*interp,
 	   int		argc,
-	   char		*argv[])
+	   char		**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -965,7 +966,7 @@ int
 vo_eye_pos_cmd(struct view_obj	*vop,
 	       Tcl_Interp	*interp,
 	       int		argc,
-	       char 		*argv[])
+	       char 		**argv)
 {
     vect_t		eye_pos;
     struct bu_vls	vls;
@@ -1022,7 +1023,7 @@ static int
 vo_eye_pos_tcl(ClientData	clientData,
 	       Tcl_Interp	*interp,
 	       int		argc,
-	       char		*argv[])
+	       char		**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -1033,7 +1034,7 @@ int
 vo_lookat_cmd(struct view_obj	*vop,
 	      Tcl_Interp	*interp,
 	      int		argc,
-	      char 		*argv[])
+	      char 		**argv)
 {
     point_t look;
     point_t eye;
@@ -1103,7 +1104,7 @@ static int
 vo_lookat_tcl(ClientData	clientData,
 	      Tcl_Interp	*interp,
 	      int		argc,
-	      char		*argv[])
+	      char		**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -1114,7 +1115,7 @@ int
 vo_orientation_cmd(struct view_obj	*vop,
 		   Tcl_Interp		*interp,
 		   int			argc,
-		   char 		*argv[])
+		   char 		**argv)
 {
     quat_t		quat;
     struct bu_vls	vls;
@@ -1154,7 +1155,7 @@ static int
 vo_orientation_tcl(ClientData	clientData,
 		   Tcl_Interp	*interp,
 		   int		argc,
-		   char		*argv[])
+		   char		**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -1165,7 +1166,7 @@ int
 vo_pov_cmd(struct view_obj	*vop,
 	   Tcl_Interp		*interp,
 	   int			argc,
-	   char 		*argv[])
+	   char 		**argv)
 {
     vect_t		center;
     quat_t		quat;
@@ -1233,7 +1234,7 @@ static int
 vo_pov_tcl(ClientData	clientData,
 	   Tcl_Interp	*interp,
 	   int		argc,
-	   char		*argv[])
+	   char		**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -1264,7 +1265,7 @@ int
 vo_zoom_cmd(struct view_obj	*vop,
 	    Tcl_Interp		*interp,
 	    int			argc,
-	    char 		*argv[])
+	    char 		**argv)
 {
     fastf_t sf;
 
@@ -1295,7 +1296,7 @@ static int
 vo_zoom_tcl(ClientData	clientData,
 	    Tcl_Interp	*interp,
 	    int		argc,
-	    char	*argv[])
+	    char	**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -1306,7 +1307,7 @@ int
 vo_units_cmd(struct view_obj	*vop,
 	     Tcl_Interp		*interp,
 	     int		argc,
-	     char 		*argv[])
+	     char 		**argv)
 {
     struct bu_vls vls;
 
@@ -1357,7 +1358,7 @@ static int
 vo_units_tcl(ClientData	clientData,
 	     Tcl_Interp	*interp,
 	     int	argc,
-	     char	*argv[])
+	     char	**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -1368,7 +1369,7 @@ int
 vo_base2local_cmd(struct view_obj	*vop,
 		  Tcl_Interp		*interp,
 		  int			argc,
-		  char 			*argv[])
+		  char 			**argv)
 {
     struct bu_vls vls;
 
@@ -1399,7 +1400,7 @@ static int
 vo_base2local_tcl(ClientData	clientData,
 		  Tcl_Interp	*interp,
 		  int		argc,
-		  char		*argv[])
+		  char		**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -1410,7 +1411,7 @@ int
 vo_local2base_cmd(struct view_obj	*vop,
 		  Tcl_Interp		*interp,
 		  int			argc,
-		  char 			*argv[])
+		  char 			**argv)
 {
     struct bu_vls vls;
 
@@ -1441,7 +1442,7 @@ static int
 vo_local2base_tcl(ClientData	clientData,
 		  Tcl_Interp	*interp,
 		  int		argc,
-		  char		*argv[])
+		  char		**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -1526,7 +1527,7 @@ int
 vo_rot_cmd(struct view_obj	*vop,
 	   Tcl_Interp		*interp,
 	   int			argc,
-	   char 		*argv[],
+	   char 		**argv,
 	   int			(*func)())
 {
     vect_t		rvec;
@@ -1591,7 +1592,7 @@ static int
 vo_rot_tcl(ClientData	clientData,
 	   Tcl_Interp	*interp,
 	   int		argc,
-	   char		*argv[])
+	   char		**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -1637,7 +1638,7 @@ int
 vo_tra_cmd(struct view_obj	*vop,
 	   Tcl_Interp		*interp,
 	   int			argc,
-	   char 		*argv[],
+	   char 		**argv,
 	   int			(*func)())
 {
     vect_t		tvec;
@@ -1698,7 +1699,7 @@ static int
 vo_tra_tcl(ClientData	clientData,
 	   Tcl_Interp	*interp,
 	   int		argc,
-	   char		*argv[])
+	   char		**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -1723,7 +1724,7 @@ int
 vo_slew_cmd(struct view_obj	*vop,
 	    Tcl_Interp		*interp,
 	    int			argc,
-	    char 		*argv[])
+	    char 		**argv)
 {
     struct bu_vls	vls;
     vect_t		svec;
@@ -1782,7 +1783,7 @@ static int
 vo_slew_tcl(ClientData	clientData,
 	    Tcl_Interp	*interp,
 	    int		argc,
-	    char		*argv[])
+	    char		**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -1793,7 +1794,7 @@ int
 vo_observer_cmd(struct view_obj	*vop,
 		Tcl_Interp	*interp,
 		int		argc,
-		char 		*argv[])
+		char 		**argv)
 {
     if (argc < 2) {
 	struct bu_vls vls;
@@ -1819,7 +1820,7 @@ static int
 vo_observer_tcl(ClientData	clientData,
 		Tcl_Interp	*interp,
 		int		argc,
-		char		*argv[])
+		char		**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -1830,7 +1831,7 @@ int
 vo_coord_cmd(struct view_obj	*vop,
 	     Tcl_Interp		*interp,
 	     int		argc,
-	     char 		*argv[])
+	     char 		**argv)
 {
     struct bu_vls vls;
 
@@ -1871,7 +1872,7 @@ static int
 vo_coord_tcl(ClientData	clientData,
 	     Tcl_Interp	*interp,
 	     int	argc,
-	     char	*argv[])
+	     char	**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -1882,7 +1883,7 @@ int
 vo_rotate_about_cmd(struct view_obj	*vop,
 		    Tcl_Interp		*interp,
 		    int			argc,
-		    char 		*argv[])
+		    char 		**argv)
 {
     struct bu_vls vls;
 
@@ -1925,7 +1926,7 @@ static int
 vo_rotate_about_tcl(ClientData	clientData,
 		    Tcl_Interp	*interp,
 		    int		argc,
-		    char		*argv[])
+		    char		**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -1936,7 +1937,7 @@ int
 vo_keypoint_cmd(struct view_obj	*vop,
 		Tcl_Interp	*interp,
 		int		argc,
-		char 		*argv[])
+		char 		**argv)
 {
     struct bu_vls	vls;
     vect_t		tvec;
@@ -1993,7 +1994,7 @@ static int
 vo_keypoint_tcl(ClientData	clientData,
 		Tcl_Interp	*interp,
 		int		argc,
-		char		*argv[])
+		char		**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -2022,7 +2023,7 @@ int
 vo_setview_cmd(struct view_obj	*vop,
 	       Tcl_Interp	*interp,
 	       int		argc,
-	       char 		*argv[])
+	       char 		**argv)
 {
     vect_t		rvec;
     struct bu_vls	vls;
@@ -2069,7 +2070,7 @@ static int
 vo_setview_tcl(ClientData	clientData,
 	       Tcl_Interp	*interp,
 	       int		argc,
-	       char		*argv[])
+	       char		**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -2080,7 +2081,7 @@ int
 vo_arot_cmd(struct view_obj	*vop,
 	    Tcl_Interp		*interp,
 	    int			argc,
-	    char 		*argv[],
+	    char 		**argv,
 	    int			(*func)())
 {
     mat_t newrot;
@@ -2134,7 +2135,7 @@ static int
 vo_arot_tcl(ClientData	clientData,
 	    Tcl_Interp	*interp,
 	    int		argc,
-	    char	*argv[])
+	    char	**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -2145,7 +2146,7 @@ int
 vo_vrot_cmd(struct view_obj	*vop,
 	    Tcl_Interp		*interp,
 	    int			argc,
-	    char 		*argv[])
+	    char 		**argv)
 {
     vect_t		rvec;
     mat_t		rmat;
@@ -2195,7 +2196,7 @@ static int
 vo_vrot_tcl(ClientData	clientData,
 	    Tcl_Interp	*interp,
 	    int		argc,
-	    char	*argv[])
+	    char	**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -2206,7 +2207,7 @@ int
 vo_mrot_cmd(struct view_obj	*vop,
 	    Tcl_Interp		*interp,
 	    int			argc,
-	    char 		*argv[],
+	    char 		**argv,
 	    int			(*func)())
 {
     vect_t		rvec;
@@ -2257,7 +2258,7 @@ static int
 vo_mrot_tcl(ClientData	clientData,
 	    Tcl_Interp	*interp,
 	    int		argc,
-	    char	*argv[])
+	    char	**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -2268,7 +2269,7 @@ int
 vo_mrotPoint_cmd(struct view_obj	*vop,
 		 Tcl_Interp	*interp,
 		 int		argc,
-		 char 		*argv[])
+		 char 		**argv)
 {
     struct bu_vls	vls;
 
@@ -2340,7 +2341,7 @@ static int
 vo_mrotPoint_tcl(ClientData	clientData,
 		 Tcl_Interp	*interp,
 		 int	argc,
-		 char	*argv[])
+		 char	**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -2351,7 +2352,7 @@ int
 vo_m2vPoint_cmd(struct view_obj	*vop,
 		Tcl_Interp	*interp,
 		int		argc,
-		char 		*argv[])
+		char 		**argv)
 {
     struct bu_vls	vls;
 
@@ -2421,7 +2422,7 @@ static int
 vo_m2vPoint_tcl(ClientData	clientData,
 		Tcl_Interp	*interp,
 		int		argc,
-		char		*argv[])
+		char		**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -2432,7 +2433,7 @@ int
 vo_v2mPoint_cmd(struct view_obj	*vop,
 		Tcl_Interp	*interp,
 		int		argc,
-		char 		*argv[])
+		char 		**argv)
 {
     struct bu_vls	vls;
 
@@ -2502,7 +2503,7 @@ static int
 vo_v2mPoint_tcl(ClientData	clientData,
 		Tcl_Interp	*interp,
 		int		argc,
-		char		*argv[])
+		char		**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -2534,7 +2535,7 @@ int
 vo_sca_cmd(struct view_obj	*vop,
 	   Tcl_Interp		*interp,
 	   int			argc,
-	   char 		*argv[],
+	   char 		**argv,
 	   int			(*func)())
 {
     fastf_t sf;
@@ -2565,7 +2566,7 @@ static int
 vo_sca_tcl(ClientData	clientData,
 	   Tcl_Interp	*interp,
 	   int		argc,
-	   char		*argv[])
+	   char		**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -2576,7 +2577,7 @@ int
 vo_viewDir_cmd(struct view_obj	*vop,
 	       Tcl_Interp	*interp,
 	       int		argc,
-	       char 		*argv[])
+	       char 		**argv)
 {
     vect_t view;
     vect_t model;
@@ -2626,7 +2627,7 @@ static int
 vo_viewDir_tcl(ClientData	clientData,
 	       Tcl_Interp	*interp,
 	       int		argc,
-	       char		*argv[])
+	       char		**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -2638,7 +2639,7 @@ int
 vo_ae2dir_cmd(struct view_obj	*vop,
 	      Tcl_Interp	*interp,
 	      int		argc,
-	      char 		*argv[])
+	      char 		**argv)
 {
     fastf_t az, el;
     vect_t dir;
@@ -2712,7 +2713,7 @@ static int
 vo_ae2dir_tcl(ClientData	clientData,
 	      Tcl_Interp	*interp,
 	      int		argc,
-	      char		*argv[])
+	      char		**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -2727,7 +2728,7 @@ int
 vo_dir2ae_cmd(struct view_obj	*vop,
 	      Tcl_Interp	*interp,
 	      int		argc,
-	      char 		*argv[])
+	      char 		**argv)
 {
     fastf_t az, el;
     vect_t dir;
@@ -2789,7 +2790,7 @@ static int
 vo_dir2ae_tcl(ClientData	clientData,
 	      Tcl_Interp	*interp,
 	      int		argc,
-	      char		*argv[])
+	      char		**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -2803,7 +2804,7 @@ int
 vo__cmd(struct view_obj	*vop,
 	Tcl_Interp	*interp,
 	int		argc,
-	char 		*argv[])
+	char 		**argv)
 {
 }
 
@@ -2815,7 +2816,7 @@ static int
 vo__tcl(ClientData	clientData,
 	Tcl_Interp	*interp,
 	int		argc,
-	char		*argv[])
+	char		**argv)
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -2832,13 +2833,10 @@ vo_update(struct view_obj	*vop,
     vect_t work, work1;
     vect_t temp, temp1;
 
-    /* set up the view matrix */
-    bn_mat_mul(vop->vo_model2view, vop->vo_rotation, vop->vo_center);
+    bn_mat_mul(vop->vo_model2view,
+	       vop->vo_rotation,
+	       vop->vo_center);
     vop->vo_model2view[15] = vop->vo_scale;
-
-    /* XXX validation needs to occur before here to make sure we're
-     * not attempting to invert a singular matrix.
-     */
     bn_mat_inv(vop->vo_view2model, vop->vo_model2view);
 
     /* Find current azimuth, elevation, and twist angles */

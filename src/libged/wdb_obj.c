@@ -3318,13 +3318,11 @@ get_new_name(const char *name,
 	     struct concat_data *cc_data)
 {
     struct bu_vls new_name;
-    struct bu_vls prev_name;
     Tcl_HashEntry *ptr = NULL;
     char *aname = NULL;
     char *ret_name = NULL;
-    int new_entry = 0;
-    long num = 0;
-    long repeat = 0;
+    int new=0;
+    long num=0;
 
     RT_CK_DBI(dbip);
     BU_ASSERT(name_tbl);
@@ -3336,14 +3334,13 @@ get_new_name(const char *name,
 	name = "UNKNOWN";
     }
 
-    ptr = Tcl_CreateHashEntry( name_tbl, name, &new_entry );
+    ptr = Tcl_CreateHashEntry( name_tbl, name, &new );
 
-    if ( !new_entry ) {
+    if ( !new ) {
 	return( (char *)Tcl_GetHashValue( ptr ) );
     }
 
-    bu_vls_init(&new_name);
-    bu_vls_init(&prev_name);
+    bu_vls_init( &new_name );
 
     do {
 	/* iterate until we find an object name that is not in
@@ -3386,7 +3383,7 @@ get_new_name(const char *name,
 	    bu_vls_printf( &new_name, "%ld_", num );
 	    bu_vls_strcat( &new_name, name );
 	} else {
-	    /* no custom suffix/prefix specified, use suffix */
+	    /* no custom suffix/prefix specified, use prefix */
 	    if (num > 0) {
 		bu_vls_printf( &new_name, "_%ld", num );
 	    }
@@ -3403,18 +3400,6 @@ get_new_name(const char *name,
 	aname = bu_vls_addr( &new_name );
 
 	num++;
-
-	/* basic infinite loop sanity check */
-	if (bu_vls_strcmp(&new_name, &prev_name) == 0) {
-	    if (repeat > 100) {
-		bu_log("ERROR: we seem to be stuck in an infinite loop generating a new name (%s)\n", bu_vls_addr(&new_name));
-		return NULL;
-	    }
-	    repeat++;
-	} else {
-	    bu_vls_trunc(&prev_name, 0);
-	    bu_vls_vlscat(&prev_name, &new_name);
-	}
 
     } while (db_lookup( dbip, aname, LOOKUP_QUIET ) != DIR_NULL ||
 	     Tcl_FindHashEntry( used_names_tbl, aname ) != NULL);
@@ -3433,7 +3418,7 @@ get_new_name(const char *name,
     /* we should now have a unique name.  store it in the hash */
     ret_name = bu_vls_strgrab( &new_name );
     Tcl_SetHashValue( ptr, (ClientData)ret_name );
-    (void)Tcl_CreateHashEntry( used_names_tbl, ret_name, &new_entry );
+    (void)Tcl_CreateHashEntry( used_names_tbl, ret_name, &new );
     bu_vls_free( &new_name );
 
     return( ret_name );
@@ -3601,7 +3586,6 @@ wdb_concat_cmd(struct rt_wdb	*wdbp,
 	return TCL_ERROR;
     }
 
-    memset(&cc_data, 0, sizeof(struct concat_data));
     bu_vls_init( &cc_data.affix );
     cc_data.copy_mode = 0;
 
@@ -3650,7 +3634,7 @@ wdb_concat_cmd(struct rt_wdb	*wdbp,
 	cc_data.copy_mode |= AUTO_PREFIX;
 
 	if (strcmp(argv[2], "/") == 0) {
-	    cc_data.copy_mode = NO_AFFIX | CUSTOM_PREFIX;
+	    cc_data.copy_mode = NO_AFFIX;
 	} else {
 	    (void)bu_vls_strcpy(&cc_data.affix, argv[2]);
 	    cc_data.copy_mode |= CUSTOM_PREFIX;
