@@ -45,7 +45,8 @@ Variable<int>::Variable(std::string vid, int vvalue) :
     VariableAbstract(vid),
     value(vvalue)
 {
-    Variable::type = VAR_INT;
+    VariableAbstract::type = VAR_INT;
+    std::cout<<"Washere"<<std::endl;
     addInterval(Interval<int>( -std::numeric_limits<int>::max(), std::numeric_limits<int>::max(), 1));
 }
 
@@ -54,7 +55,7 @@ Variable<double>::Variable(std::string vid, double vvalue) :
     VariableAbstract(vid),
     value(vvalue)
 {
-    Variable::type = VAR_DBL;
+    VariableAbstract::type = VAR_DBL;
     addInterval(Interval<double>( -std::numeric_limits<double>::max(), std::numeric_limits<double>::max(), .00001));
 }
 
