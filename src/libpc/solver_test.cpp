@@ -81,12 +81,16 @@ int main()
     typedef GraphTraits::edge_descriptor Edge;
 
     // declare a graph object
-    PCSet pcset;
+    PCSet mypcset;
     BinaryNetwork<int > N;
     Solution<int> S;
     
     // Convenient naming for the vertices and Corrsponding Variables
     typedef Variable<int> Vi;
+    mypcset.addVariable("A",(int)1, (int)0, (int) 5,(int) 1);
+    /*mypcset.addVariable("B",double (2.4) ,double (-3.3) ,double (10.7), double (0.2) );*/
+    mypcset.display();
+
     Vi A=Vi("A", 1);
     Vi B=Vi("B", 2);
     Vi C=Vi("C", 3);
@@ -111,7 +115,7 @@ int main()
     E.intersectInterval(Interval<int>(3,40,1));
     E.display();
     typedef Constraint Ci;
-    Ci constraint_array[4] = { Ci(pcset,"0", "A*B=12",f1,2,"A","B"), Ci(pcset,"1", "B+C<5",f2,2,"B","C"), Ci(pcset,"2", "A-D=2",f3,2,"A","D"), Ci(pcset,"3", "A*C=4",f4,2,"A","C") };
+    Ci constraint_array[4] = { Ci(mypcset,"0", "A*B=12",f1,2,"A","B"), Ci(mypcset,"1", "B+C<5",f2,2,"B","C"), Ci(mypcset,"2", "A-D=2",f3,2,"A","D"), Ci(mypcset,"3", "A*C=4",f4,2,"A","C") };
 
     //std::cout << constraint_array[0].getExp() << "--------" << std::endl;
     /* Add the vertices */

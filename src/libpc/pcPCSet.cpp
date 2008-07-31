@@ -43,6 +43,10 @@ PCSet::~PCSet()
 		delete *i;
 	}
     }
+    std::list<Constraint *>::iterator j;
+    for (j = Constraints.begin(); j != Constraints.end(); j++) {
+	delete *j;
+    }
 }
 
 void PCSet::display()
@@ -56,12 +60,7 @@ void PCSet::display()
 
 void PCSet::pushVar()
 {
-    Variable<double> *V = new Variable<double>(name,value);
-    Vars.push_back(V);
-}
-
-void PCSet::addVariable(VariableAbstract * v)
-{
+    Variable<double> *v = new Variable<double>(name,value);
     Vars.push_back(v);
 }
 

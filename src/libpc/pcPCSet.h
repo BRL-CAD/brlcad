@@ -34,6 +34,7 @@
 #include <iostream>
 #include <list>
 #include "pcVariable.h"
+#include "pcConstraint.h"
 
 /**
  * A wrapper class for a set of Variables and Constraints
@@ -59,12 +60,22 @@ public:
     
     /** Element addition methods */
     void pushVar();
-    void addVariable(VariableAbstract * v);
+    template<typename T>
+    void addVariable(std::string vid , T vvalue,T vlow, T vhigh, T vstep);
     void addConstraint(Constraint * c);
 
     VariableAbstract * getVariablebyID(std::string vid);
     void display();
 };
+
+template<typename T>
+void PCSet::addVariable(std::string vid, T vvalue, T vlow, T vhigh, T vstep)
+{
+    Variable<T> *v = new Variable<T>(vid,vvalue);
+    v->addInterval(Interval<T>(vlow,vhigh,vstep));
+    //v->intersectInterval(Interval<T>(vlow,vhigh,vstep));
+    Vars.push_back(v);
+}
 #endif
 /** @} */
 /*
