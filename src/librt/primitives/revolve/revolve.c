@@ -275,8 +275,7 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 	
 	if ( rt_sketch_contains( rev->sk, pt ) ) {
 	    pt[X] = -pt[X];
-	    if ( ( angle + M_PI < rev->ang || angle - M_PI > 0 ) 
-			&& rt_sketch_contains( rev->sk, pt ) ) {
+	    if ( rev->ang > M_PI && rt_sketch_contains( rev->sk, pt ) ) {
 		/* skip it */
 	    } else {
 		if ( nhits >= MAX_HITS ) return -1; /* too many hits */
@@ -300,8 +299,7 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 	
 	if ( rt_sketch_contains( rev->sk, pt ) ) {
 	    pt[X] = -pt[X];
-	    if ( ( angle + M_PI < rev->ang || angle - M_PI > 0 ) 
-			&& rt_sketch_contains( rev->sk, pt ) ) {
+	    if ( rev->ang > M_PI && rt_sketch_contains( rev->sk, pt ) ) {
 		/* skip it */
 	    } else {
 		if ( nhits >= MAX_HITS ) return -1; /* too many hits */
