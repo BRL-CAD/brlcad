@@ -31,12 +31,22 @@ PCSet::~PCSet()
 {
     std::list<VariableAbstract *>::iterator i;
     for (i = Vars.begin(); i != Vars.end(); i++) {
-	delete (Variable<double> *) *i;
-	//delete *i;
+	switch ((**i).getType()) {
+	    case VAR_INT:
+		delete (Variable<int> *) *i;
+		break;
+	    case VAR_DBL:
+		delete (Variable<double> *) *i;
+		break;
+	    case VAR_ABS:
+	    default:
+		delete *i;
+	}
     }
 }
 
-void PCSet::display() {
+void PCSet::display()
+{
     std::list<VariableAbstract *>::iterator i;
     std::cout<< "Variables:" << std::endl;
     for (i = Vars.begin(); i != Vars.end(); i++)
@@ -44,9 +54,20 @@ void PCSet::display() {
         (**i).display();
 }
 
-void PCSet::pushVar() {
+void PCSet::pushVar()
+{
     Variable<double> *V = new Variable<double>(name,value);
     Vars.push_back(V);
+}
+
+void PCSet::addVariable(VariableAbstract * v)
+{
+    Vars.push_back(v);
+}
+
+void PCSet::addConstraint(Constraint * c)
+{
+    Constraints.push_back(c);
 }
 
 VariableAbstract * PCSet::getVariablebyID(std::string vid)

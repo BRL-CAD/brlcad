@@ -57,7 +57,11 @@ public:
     void pushChar(char c) { name.push_back(c); }
     void setValue(double v) { value = v; } 
     
+    /** Element addition methods */
     void pushVar();
+    void addVariable(VariableAbstract * v);
+    void addConstraint(Constraint * c);
+
     VariableAbstract * getVariablebyID(std::string vid);
     void display();
 };
