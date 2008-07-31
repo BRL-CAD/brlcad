@@ -10,7 +10,6 @@ pkgconfig_DATA = \
 	libfft.pc \
 	libmultispectral.pc \
 	liboptical.pc \
-	libpc.pc \
 	libpkg.pc \
 	librt.pc \
 	libwdb.pc
@@ -24,7 +23,6 @@ EXTRA_DIST = \
 	libfft.pc.in \
 	libmultispectral.pc.in \
 	liboptical.pc.in \
-	libpc.pc.in \
 	libpkg.pc.in \
 	librt.pc.in \
 	liwdb.pc.in

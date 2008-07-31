@@ -34,9 +34,7 @@ libged_nil_la_SOURCES = \
 AM_CPPFLAGS = \
 	${TCL_CPPFLAGS}
 
-noinst_HEADERS = \
-	ged_private.h \
-	qray.h
+noinst_HEADERS = qray.h
 
 libged_la_SOURCES =
 libged_la_LDFLAGS = -version-info 19:1 -no-undefined
