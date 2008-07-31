@@ -1,1 +1,13 @@
-32068, sans change to libged/Makefile.am from 31282 that somehow got incorporated in 32048.
+32075, sans:
+	 change to libged/Makefile.am from 31282 that somehow got incorporated in 32048.
+svn merge -r 32048:32047 on that one file
+
+32082, sans:
+	changes to configure.ac in 32082 that incorporated the new tutorials directory without it being present and misc/win32-msvc9 without it being included, src/libpc ditto - may want to revert that configure inclusion and do a more selective commit of its contents.
+
+32085,86 - incorporated change from 31629 somewhere in here that breaks things in extrude.c
+      Sync up to this point, then redo the merge and commit of this stage from trunk while taking more care about what gets in extrude.c
+      Same deal with pipe.c, sketch.c
+      raytrace.h change is a problem here too.
+
+
