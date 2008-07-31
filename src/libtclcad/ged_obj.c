@@ -782,47 +782,10 @@ Usage: go_open\n\
     BU_LIST_INIT(&gop->go_observers.l);
     gop->go_interp = interp;
 
-#if 1
     BU_LIST_INIT(&gop->go_head_views.l);
-#else
-    for (i = 0; i < GED_OBJ_NUM_VIEWS; ++i) {
-	BU_GETSTRUCT(gop->go_views[i], ged_view);
-	ged_view_init(gop->go_views[i]);
-    }
-
-    /*XXX
-     *   Temporarily acquiring a single display manager window
-     *   on Windows because its #1 :-)
-     */
-    {
-	int type = DM_TYPE_WGL;
-	int ac = 5;
-	char *av[6];
-
-	av[0] = argv[0];
-	av[1] = "-s";
-	av[2] = "700";
-	av[3] = "-n";
-	av[4] = ".bob";
-	av[5] = (char *)0;
-	if ((gop->go_dmp = dm_open(interp, type, ac, av)) == DM_NULL) {
-	    Tcl_AppendResult(interp,
-			     bu_vls_addr(&gop->go_name), " failed to create display manager",
-			     (char *)NULL);
-	}
-    }
-
-    /* Initialize using first view */
-    gop->go_gedp->ged_gvp = gop->go_views[0];
-#endif
 
     /* append to list of ged_obj */
     BU_LIST_APPEND(&HeadGedObj.l, &gop->l);
-
-#if 0
-    if ((ret = ged_init_obj(interp, gop, argv[1])) != TCL_OK)
-	return ret;
-#endif
 
     return go_create_cmd(interp, gop, argv[1]);
 }
