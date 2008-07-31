@@ -26,6 +26,7 @@
  * @author Dawn Thomas
  */
 #include "pcConstraint.h"
+#include "pcPCSet.h"
 
 Constraint::Constraint(PCSet &pcs) :
     pcset(pcs),

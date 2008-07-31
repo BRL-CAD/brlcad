@@ -36,7 +36,8 @@
 #include <list>
 #include <boost/function.hpp>
 #include "pcVariable.h"
-#include "pcPCSet.h"
+
+class PCSet;
 
 class Constraint {
     typedef boost::function1< bool, std::vector<VariableAbstract *> > functor;
