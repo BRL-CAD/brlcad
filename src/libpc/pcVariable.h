@@ -28,6 +28,10 @@
 #ifndef __PCVARIABLE_H__
 #define __PCVARIABLE_H__
 
+#define VAR_ABS 0
+#define VAR_INT 1
+#define VAR_DBL 2
+
 #include "common.h"
 
 #include <iostream>
@@ -64,12 +68,15 @@ public:
 
 class VariableAbstract {
 private:
-    std::string  id;    
+    std::string  id;
     int constrained;
 public:
     VariableAbstract(std::string vid ="");
+    int getType() const { return type; }
     std::string getID() const { return id; }
     virtual void display();
+protected:
+    int type;
 };
 
 template<class T>

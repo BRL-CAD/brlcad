@@ -30,6 +30,7 @@
 #include "pcVariable.h"
 /*Abstract Variable Class methods */
 VariableAbstract::VariableAbstract(std::string vid) :
+    type(VAR_ABS),
     id(vid),
     constrained(0)
 {
@@ -38,12 +39,22 @@ VariableAbstract::VariableAbstract(std::string vid) :
 void VariableAbstract::display()
 {
 }
-/* Constructor specialization for double */
+/* Constructor specialization for specific variable types */
+template<>
+Variable<int>::Variable(std::string vid, int vvalue) :
+    VariableAbstract(vid),
+    value(vvalue)
+{
+    Variable::type = VAR_INT;
+    addInterval(Interval<int>( -std::numeric_limits<int>::max(), std::numeric_limits<int>::max(), 1));
+}
+
 template<>
 Variable<double>::Variable(std::string vid, double vvalue) :
     VariableAbstract(vid),
     value(vvalue)
 {
+    Variable::type = VAR_DBL;
     addInterval(Interval<double>( -std::numeric_limits<double>::max(), std::numeric_limits<double>::max(), .00001));
 }
 
