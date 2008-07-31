@@ -17,8 +17,7 @@ noinst_HEADERS = glob.h \
 	regtab.h \
 	write_brl.h
 
-EXTRA_DIST = readme.txt \
-	tgf2g.dsp
+EXTRA_DIST = readme.txt
 
 DEPS=src/libwdb src/librt
 
