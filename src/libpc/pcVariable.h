@@ -175,17 +175,20 @@ void Domain<T>::addInterval(T low, T high, T step) {
 template<class T>
 void Domain<T>::intersectInterval(Interval<T> t)
 {
-    typename std::list<Interval<T> >::iterator i = this->Interv.begin();
-    while (i != Interv.end() && i->getHigh() < t.getLow() )
-        Interv.erase(i++);
-    i->setLow(t.getLow());
-    i = Interv.end();
-    i--;
-    while (i != Interv.begin() && i->getLow() > t.getHigh() )
-        Interv.erase(i--);
-    i->setHigh(t.getHigh());	
+    if (Interv.empty()) {
+	addInterval(t);
+    } else {
+	typename std::list<Interval<T> >::iterator i = this->Interv.begin();
+	while (i != Interv.end() && i->getHigh() < t.getLow() )
+	    Interv.erase(i++);
+	i->setLow(t.getLow());
+	i = Interv.end();
+	i--;
+	while (i != Interv.begin() && i->getLow() > t.getHigh() )
+	    Interv.erase(i--);
+	i->setHigh(t.getHigh());	
+    }
 }
-
 template<class T>
 Interval<T> Domain<T>::getInterval(T t) throw(pcException)
 {
@@ -311,7 +314,7 @@ void Variable<T>::addInterval(T low, T high, T step)
 template<class T>
 void Variable<T>::display()
 {
-    std::cout << "!-- " << getID() << " = " << getValue() << std::endl;
+    std::cout << "!-- " << getID() << " = " << getValue() << "\tType value = "<< VariableAbstract::type << std::endl;
     D.display();
 }
 /* Solution Class Functions */
