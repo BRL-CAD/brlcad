@@ -1,0 +1,30 @@
+Minor libpc Tasks
+-----------------
+
+For Major TODO please see the LIBPC section in the TODO in root folder.
+
+FIXING REQUIRED
+
+1. Memory Leaks
+	a. pc_pc_set macro system 40 bytes per push
+	b. addVariable() in PCSet 36 bytes per Variable due to specialized constructor not being called?
+
+2. STL Modifications
+	a. convert std::string arguments to const char *
+	b. clean up stl::list<T> passing in the interface / public API
+
+CODING PLAN
+
+* Add Variables to PCSet
+* Add Constraints to PCSet
+* Add BinaryNetowrk(PCSet &) constructor
+* Test BinaryNetwork generation from PCSet
+* Rename "funct" functor in Constraint to more meaningful eval()
+* Using PCSet methods make the above functor argumentless
+* Create a math_expression_eval functor for the constraints
+	* Use Stack<Boost::any> ?
+* Create a math_expression_eval_generate functor for the Parser
+* Generate math expressions and the *_eval/*_eval_generate from strings via parser
+* Test Constraint Evaluation
+* Test Network Solution
+
