@@ -46,7 +46,6 @@ Variable<int>::Variable(std::string vid, int vvalue) :
     value(vvalue)
 {
     VariableAbstract::type = VAR_INT;
-    std::cout<<"Washere"<<std::endl;
     addInterval(Interval<int>( -std::numeric_limits<int>::max(), std::numeric_limits<int>::max(), 1));
 }
 

@@ -74,8 +74,6 @@ void Parser::parse(struct pc_pc_set * pcs)
         boost::spirit::classic::parse_info<> p_info = boost::spirit::classic::parse((char *) bu_vls_addr(&(par->name)), *var_gram, boost::spirit::classic::space_p);
 	if (p_info.full) {
             pcset.pushVar();
-	    //Vars.push_back(Variable<double>(name, value));
-	    //display();
 	} else {
 	    std::cout << "Error during Variable expression parsing" << std::endl;
 	}
