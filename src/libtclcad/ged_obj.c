@@ -130,6 +130,12 @@ static int go_idle_mode(struct ged	*gedp,
 			ged_func_ptr	func,
 			const char	*usage,
 			int		maxargs);
+static int go_light(struct ged		*gedp,
+		    int			argc,
+		    const char		*argv[],
+		    ged_func_ptr	func,
+		    const char		*usage,
+		    int			maxargs);
 static int go_list_views(struct ged	*gedp,
 			 int		argc,
 			 const char	*argv[],
@@ -258,6 +264,12 @@ static int go_zbuffer(struct ged	*gedp,
 		      ged_func_ptr	func,
 		      const char	*usage,
 		      int		maxargs);
+static int go_zclip(struct ged		*gedp,
+		    int			argc,
+		    const char		*argv[],
+		    ged_func_ptr	func,
+		    const char		*usage,
+		    int			maxargs);
 
 /* Wrapper Functions */
 static int go_autoview_func(struct ged	*gedp,
@@ -383,6 +395,7 @@ static struct go_cmdtab go_cmds[] = {
     {"killrefs",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_killrefs},
     {"killtree",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_killtree},
     {"l",	(char *)0, MAXARGS, go_pass_through_func, ged_list},
+    {"light",	"vname [0|1]", MAXARGS, go_light, GED_FUNC_PTR_NULL},
     {"list_views",	(char *)0, MAXARGS, go_list_views, GED_FUNC_PTR_NULL},
     {"listen",	"vname [port]", MAXARGS, go_listen, GED_FUNC_PTR_NULL},
     {"listeval",	(char *)0, MAXARGS, go_pass_through_func, ged_pathsum},
@@ -486,6 +499,7 @@ static struct go_cmdtab go_cmds[] = {
     {"xpush",	(char *)0, MAXARGS, go_pass_through_func, ged_xpush},
     {"zap",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_zap},
     {"zbuffer",	"vname [0|1]", MAXARGS, go_zbuffer, GED_FUNC_PTR_NULL},
+    {"zclip",	"vname [0|1]", MAXARGS, go_zclip, GED_FUNC_PTR_NULL},
     {"zoom",	"vname sf", 3, go_view_func, ged_zoom},
     {(char *)0,	(char *)0, 0, GO_WRAPPER_FUNC_PTR_NULL, GED_FUNC_PTR_NULL}
 };
@@ -1141,6 +1155,67 @@ go_idle_mode(struct ged		*gedp,
 		  &gdvp->gdv_dmp->dm_pathName);
     Tcl_Eval(go_current_gop->go_interp, bu_vls_addr(&bindings));
     bu_vls_free(&bindings);
+
+    return BRLCAD_OK;
+}
+
+static int
+go_light(struct ged	*gedp,
+	 int		argc,
+	 const char	*argv[],
+	 ged_func_ptr	func,
+	 const char	*usage,
+	 int		maxargs)
+{
+    int light;
+    struct ged_dm_view *gdvp;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+    gedp->ged_result = GED_RESULT_NULL;
+    gedp->ged_result_flags = 0;
+
+    /* must be wanting help */
+    if (argc == 1) {
+	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_OK;
+    }
+
+    if (3 < argc) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    /* get light flag */
+    if (argc == 2) {
+	bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_dmp->dm_light);
+	return BRLCAD_OK;
+    }
+
+    /* set light flag */
+    if (sscanf(argv[2], "%d", &light) != 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    if (light < 0)
+	light = 0;
+    else if (1 < light)
+	light = 1;
+
+    DM_SET_LIGHT(gdvp->gdv_dmp, light);
+    go_refresh_view(gdvp);
 
     return BRLCAD_OK;
 }
@@ -2743,6 +2818,67 @@ go_zbuffer(struct ged	*gedp,
 	zbuffer = 1;
 
     DM_SET_ZBUFFER(gdvp->gdv_dmp, zbuffer);
+    go_refresh_view(gdvp);
+
+    return BRLCAD_OK;
+}
+
+static int
+go_zclip(struct ged	*gedp,
+	   int		argc,
+	   const char	*argv[],
+	   ged_func_ptr	func,
+	   const char	*usage,
+	   int		maxargs)
+{
+    int zclip;
+    struct ged_dm_view *gdvp;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+    gedp->ged_result = GED_RESULT_NULL;
+    gedp->ged_result_flags = 0;
+
+    /* must be wanting help */
+    if (argc == 1) {
+	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_OK;
+    }
+
+    if (3 < argc) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    /* get zclip flag */
+    if (argc == 2) {
+	bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_dmp->dm_zclip);
+	return BRLCAD_OK;
+    }
+
+    /* set zclip flag */
+    if (sscanf(argv[2], "%d", &zclip) != 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    if (zclip < 0)
+	zclip = 0;
+    else if (1 < zclip)
+	zclip = 1;
+
+    gdvp->gdv_dmp->dm_zclip = zclip;
     go_refresh_view(gdvp);
 
     return BRLCAD_OK;
