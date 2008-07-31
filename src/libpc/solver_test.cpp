@@ -87,33 +87,15 @@ int main()
     
     // Convenient naming for the vertices and Corrsponding Variables
     typedef Variable<int> Vi;
-    mypcset.addVariable("A",(int)1, (int)0, (int) 5,(int) 1);
-    /*mypcset.addVariable("B",double (2.4) ,double (-3.3) ,double (10.7), double (0.2) );*/
+    //test with template specification
+    mypcset.addVariable<int>("A", 1, 0, 5, 1);
+    mypcset.addVariable<double>("B", 2.4, -3.3, 10.7, 0.2);
+    
+    //test without template specification
+    mypcset.addVariable("C", 2, 0, 10, 1);
+    mypcset.addVariable("D", 4, -20, 30, 1);
     mypcset.display();
-
-    Vi A=Vi("A", 1);
-    Vi B=Vi("B", 2);
-    Vi C=Vi("C", 3);
-    Vi D=Vi("D", 4);
-    Vi E=Vi("E", 6);
-
-    Interval<int> I;
-    I.assign(0, 5, 1);
-    A.addInterval(I);
-    B.addInterval(I);
-    C.addInterval(I);
-    D.addInterval(I);
-    E.addInterval(-16, -10, 1);
-    E.addInterval(-6, -4, 1);
-    E.addInterval(0, 7, 1);
-    E.addInterval(8, 10, 1);
-    E.addInterval(16, 18, 1);
-    E.addInterval(32, 46, 1);
-    E.addInterval(64, 68, 1);
-    std::cout<< std::endl << "Testing Interval Intersection" << std::endl;
-    E.display();
-    E.intersectInterval(Interval<int>(3,40,1));
-    E.display();
+#if 0
     typedef Constraint Ci;
     Ci constraint_array[4] = { Ci(mypcset,"0", "A*B=12",f1,2,"A","B"), Ci(mypcset,"1", "B+C<5",f2,2,"B","C"), Ci(mypcset,"2", "A-D=2",f3,2,"A","D"), Ci(mypcset,"3", "A*C=4",f4,2,"A","C") };
 
@@ -151,7 +133,7 @@ int main()
     std::cout << "Number of Constraint checks performed" << std::endl;
     std::cout << "Generate-Test Solution:" << GTS.numChecks() << std::endl;
     std::cout << "BackTracking based Solution:" << BTS.numChecks() << std::endl;
-    
+#endif    
     return 0;
 }
 

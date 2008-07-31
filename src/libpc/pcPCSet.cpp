@@ -61,7 +61,10 @@ void PCSet::display()
 void PCSet::pushVar()
 {
     Variable<double> *v = new Variable<double>(name,value);
+    v->addInterval(Interval<double>( -std::numeric_limits<double>::max(), std::numeric_limits<double>::max(), 0.00001));
     Vars.push_back(v);
+    /*addVariable<double>(name, value);*/
+    name.clear();
 }
 
 void PCSet::addConstraint(Constraint * c)

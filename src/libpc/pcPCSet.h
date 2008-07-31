@@ -61,7 +61,9 @@ public:
     /** Element addition methods */
     void pushVar();
     template<typename T>
-    void addVariable(std::string vid , T vvalue,T vlow, T vhigh, T vstep);
+    void addVariable(std::string vid, T vvalue);
+    template<typename T>
+    void addVariable(std::string vid, T vvalue, T vlow, T vhigh, T vstep);
     void addConstraint(Constraint * c);
 
     VariableAbstract * getVariablebyID(std::string vid);
@@ -69,11 +71,17 @@ public:
 };
 
 template<typename T>
+void PCSet::addVariable(std::string vid, T vvalue)
+{
+    Variable<T> *v = new Variable<T>(vid,vvalue);
+    Vars.push_back(v);
+}
+
+template<typename T>
 void PCSet::addVariable(std::string vid, T vvalue, T vlow, T vhigh, T vstep)
 {
     Variable<T> *v = new Variable<T>(vid,vvalue);
-    v->addInterval(Interval<T>(vlow,vhigh,vstep));
-    //v->intersectInterval(Interval<T>(vlow,vhigh,vstep));
+    v->intersectInterval(Interval<T>(vlow,vhigh,vstep));
     Vars.push_back(v);
 }
 #endif
