@@ -25,6 +25,6 @@ EXTRA_DIST = \
 	liboptical.pc.in \
 	libpkg.pc.in \
 	librt.pc.in \
-	liwdb.pc.in
+	libwdb.pc.in
 
 include $(top_srcdir)/misc/Makefile.defs
