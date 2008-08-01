@@ -80,24 +80,25 @@ int main()
     typedef GraphTraits::vertex_descriptor Vertex;
     typedef GraphTraits::edge_descriptor Edge;
 
-    // declare a graph object
+    /* declare a graph object */
     PCSet mypcset;
     BinaryNetwork<int > N;
     Solution<int> S;
-    
-    // Convenient naming for the vertices and Corrsponding Variables
-    typedef Variable<int> Vi;
-    //test with template specification
+
+    /* add Variables to PCSet */
     mypcset.addVariable<int>("A", 1, 0, 5, 1);
-    mypcset.addVariable<double>("B", 2.4, -3.3, 10.7, 0.2);
+    mypcset.addVariable<int>("B", 3, 0, 5, 1);
+    mypcset.addVariable<int>("C", 2, 0, 5, 1);
+    mypcset.addVariable<int>("D", 0, 0, 5, 1);
     
-    //test without template specification
-    mypcset.addVariable("C", 2, 0, 10, 1);
-    mypcset.addVariable("D", 4, -20, 30, 1);
+    /* add Constraints to PCSet */
+    mypcset.addConstraint("0", "A * B = 12", f1, 2, "A", "B");
+    mypcset.addConstraint("1", "B + C < 5", f2, 2, "B", "C");
+    mypcset.addConstraint("2", "A - D = 2", f3, 2, "A", "D");
+    mypcset.addConstraint("3", "A * C = 4", f4, 2, "A", "C");
     mypcset.display();
+
 #if 0
-    typedef Constraint Ci;
-    Ci constraint_array[4] = { Ci(mypcset,"0", "A*B=12",f1,2,"A","B"), Ci(mypcset,"1", "B+C<5",f2,2,"B","C"), Ci(mypcset,"2", "A-D=2",f3,2,"A","D"), Ci(mypcset,"3", "A*C=4",f4,2,"A","C") };
 
     //std::cout << constraint_array[0].getExp() << "--------" << std::endl;
     /* Add the vertices */

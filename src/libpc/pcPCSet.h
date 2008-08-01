@@ -31,6 +31,7 @@
 #include "common.h"
 
 #include <string>
+#include <stdarg.h>
 #include <iostream>
 #include <list>
 #include "pcVariable.h"
@@ -47,14 +48,17 @@ class Constraint;
 
 class PCSet
 {
+    typedef boost::function1< bool, std::vector<VariableAbstract *> > functor;
 private:
     std::string name;
     double value;
 public:
     std::list<VariableAbstract *> Vars;
     std::list<Constraint *> Constraints;
+    
     virtual ~PCSet();
     
+    /** Private Data modification methods */
     void pushChar(char c) { name.push_back(c); }
     void setValue(double v) { value = v; } 
     
@@ -64,9 +68,12 @@ public:
     void addVariable(std::string vid, T vvalue);
     template<typename T>
     void addVariable(std::string vid, T vvalue, T vlow, T vhigh, T vstep);
-    void addConstraint(Constraint * c);
-
+    void addConstraint(std::string cid, std::string cexpr, functor f,int count,...);
+    
+    /** Variable access method */
     VariableAbstract * getVariablebyID(std::string vid);
+    
+    /** Display methods */
     void display();
 };
 
@@ -84,6 +91,7 @@ void PCSet::addVariable(std::string vid, T vvalue, T vlow, T vhigh, T vstep)
     v->intersectInterval(Interval<T>(vlow,vhigh,vstep));
     Vars.push_back(v);
 }
+
 #endif
 /** @} */
 /*

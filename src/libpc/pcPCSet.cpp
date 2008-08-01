@@ -49,15 +49,6 @@ PCSet::~PCSet()
     }
 }
 
-void PCSet::display()
-{
-    std::list<VariableAbstract *>::iterator i;
-    std::cout<< "Variables:" << std::endl;
-    for (i = Vars.begin(); i != Vars.end(); i++)
-        //((Variable<double> *) i)->display();
-        (**i).display();
-}
-
 void PCSet::pushVar()
 {
     Variable<double> *v = new Variable<double>(name,value);
@@ -67,8 +58,12 @@ void PCSet::pushVar()
     name.clear();
 }
 
-void PCSet::addConstraint(Constraint * c)
+void PCSet::addConstraint(std::string cid, std::string cexpr, functor f,int count,...)
 {
+    va_list args;
+    va_start(args,count);
+    Constraint *c = new Constraint(*this, cid, cexpr, f, count, &args);
+    va_end(args);
     Constraints.push_back(c);
 }
 
@@ -80,6 +75,26 @@ VariableAbstract * PCSet::getVariablebyID(std::string vid)
 	    return *i;
     }
     return NULL;
+}
+
+
+void PCSet::display()
+{
+    using std::endl;
+    std::list<VariableAbstract *>::iterator i;
+    std::list<Constraint *>::iterator j;
+    std::cout << "----------------------------------------------" << endl;
+    std::cout << "-----------Parameter-Constraint Set-----------" << endl;
+    if (!Vars.empty()) {
+	std::cout<< endl << "Variables:" << endl << endl;
+	for (i = Vars.begin(); i != Vars.end(); i++)
+	    (**i).display();
+    }	    
+    if (!Constraints.empty()) {
+	std::cout<< endl << "Constraints:" << endl << endl;
+	for (j = Constraints.begin(); j != Constraints.end(); j++)
+	    (**j).display();
+    }
 }
 
 /** @} */
