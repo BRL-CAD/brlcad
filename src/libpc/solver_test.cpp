@@ -96,23 +96,9 @@ int main()
     mypcset.addConstraint("2", "A - D = 2", f3, 2, "A", "D");
     mypcset.addConstraint("3", "A * C = 4", f4, 2, "A", "C");
     mypcset.display();
-
-   BinaryNetwork<int > N(mypcset);
-   N.display();
-#if 0
-
-    //std::cout << constraint_array[0].getExp() << "--------" << std::endl;
-    /* Add the vertices */
-
-    N.add_vertex(A);
-    N.add_vertex(B);
-    N.add_vertex(C);
-    N.add_vertex(D);
-    /* Add the edges */
-    for (int i=0; i<4; i++) {
-        N.add_edge(constraint_array[i]);
-    }
-    //std::cout << "___" << boost::num_vertices(N.G) << std::endl;
+    
+    BinaryNetwork<int > N(mypcset);
+    N.display();
 
     /*N.display();
       S = N.solve();
@@ -135,7 +121,7 @@ int main()
     std::cout << "Number of Constraint checks performed" << std::endl;
     std::cout << "Generate-Test Solution:" << GTS.numChecks() << std::endl;
     std::cout << "BackTracking based Solution:" << BTS.numChecks() << std::endl;
-#endif    
+    
     return 0;
 }
 

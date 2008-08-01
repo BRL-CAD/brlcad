@@ -162,14 +162,15 @@ BinaryNetwork<T>::BinaryNetwork(PCSet & pcset)
 {
     std::list<VariableAbstract *>::iterator i;
     std::list<Constraint *>::iterator j;
-/*
+
     for ( i = pcset.Vars.begin(); i != pcset.Vars.end(); ++i) {
-	//add_vertex(*(Variable<T>*(*i)));
+	typedef Variable<T>* Vp;
+	add_vertex(*(Vp (*i)));
     }
     for ( j = pcset.Constraints.begin(); j != pcset.Constraints.end(); ++j) {
 	add_edge(**j);
     }
-*/
+
 }
 
 template<class T>
