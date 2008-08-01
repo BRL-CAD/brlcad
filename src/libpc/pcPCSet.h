@@ -48,10 +48,8 @@ class Constraint;
 
 class PCSet
 {
+
     typedef boost::function1< bool, std::vector<VariableAbstract *> > functor;
-private:
-    std::string name;
-    double value;
 public:
     std::list<VariableAbstract *> Vars;
     std::list<Constraint *> Constraints;
@@ -75,6 +73,9 @@ public:
     
     /** Display methods */
     void display();
+private:
+    std::string name;
+    double value;
 };
 
 template<typename T>

@@ -82,7 +82,6 @@ int main()
 
     /* declare a graph object */
     PCSet mypcset;
-    BinaryNetwork<int > N;
     Solution<int> S;
 
     /* add Variables to PCSet */
@@ -98,6 +97,8 @@ int main()
     mypcset.addConstraint("3", "A * C = 4", f4, 2, "A", "C");
     mypcset.display();
 
+   BinaryNetwork<int > N(mypcset);
+   N.display();
 #if 0
 
     //std::cout << constraint_array[0].getExp() << "--------" << std::endl;

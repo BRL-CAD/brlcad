@@ -40,6 +40,7 @@
 #include "pcBasic.h"
 #include "pcVariable.h"
 #include "pcConstraint.h"
+#include "pcPCSet.h"
 #include "pcSolver.h"
 
 
@@ -88,8 +89,6 @@ private:
 template<class T>
 class BinaryNetwork
 {
-
-private:
     typedef typename boost::adjacency_list<vecS, vecS, bidirectionalS,
 					   Variable<T>, Constraint > Graph;
     typedef boost::graph_traits<Graph> GraphTraits;
@@ -98,7 +97,23 @@ private:
 
     typename GraphTraits::vertex_iterator v_i, v_end;
     typename GraphTraits::out_edge_iterator e_i, e_end;
+public:
+    /** Constructors and Destructors */
+    BinaryNetwork();
+    BinaryNetwork(std::vector<Variable<T> >, std::vector<Constraint>);
+    BinaryNetwork(PCSet & pcset);
+    void add_vertex(Variable<T> V);
+    void add_edge(Constraint C);
+    void setVariable(Vertex v, Variable<T>& var);
 
+    Solution<T> solve();
+    void getVertexbyID(std::string, Vertex&);
+    void display();
+    bool check();
+    /* TODO: Implement Solver Hierarchy and Friendship Inheritance ? */
+    friend class GTSolver<T>;
+    friend class BTSolver<T>;
+private:
     std::vector<Edge> precedents;
     Solution<T> S;
     Vertex v;
@@ -112,33 +127,6 @@ private:
     void split();
     Graph G;
 
-public:
-    BinaryNetwork();
-    BinaryNetwork(std::vector<Variable<T> >, std::vector<Constraint>);
-    void add_vertex(Variable<T> V) {
-	boost::add_vertex(V, G);
-    }
-    void add_edge(Constraint C) {
-	Vertex v1, v2;
-	getVertexbyID(C.Variables.front(), v1);
-	getVertexbyID(C.Variables.back(), v2);
-	//G[v1].display();
-	//G[v2].display();
-	boost::add_edge(v1, v2, C, G);
-    }
-
-    void setVariable(Vertex v, Variable<T>& var) {
-	G[v] = var;
-    }
-
-    Solution<T> solve();
-    void getVertexbyID(std::string, Vertex&);
-    void display();
-    bool check();
-
-    /* TODO: Implement Solver Hierarchy and Friendship Inheritance ? */
-    friend class GTSolver<T>;
-    friend class BTSolver<T>;
 };
 
 template<class T>
@@ -168,6 +156,42 @@ BinaryNetwork<T>::BinaryNetwork(std::vector<Variable<T> > V, std::vector<Constra
       G[*e_i]=*j;
       }*/
 };
+
+template<class T>
+BinaryNetwork<T>::BinaryNetwork(PCSet & pcset)
+{
+    std::list<VariableAbstract *>::iterator i;
+    std::list<Constraint *>::iterator j;
+/*
+    for ( i = pcset.Vars.begin(); i != pcset.Vars.end(); ++i) {
+	//add_vertex(*(Variable<T>*(*i)));
+    }
+    for ( j = pcset.Constraints.begin(); j != pcset.Constraints.end(); ++j) {
+	add_edge(**j);
+    }
+*/
+}
+
+template<class T>
+void BinaryNetwork<T>::add_vertex(Variable<T> V)
+{
+    boost::add_vertex(V, G);
+}
+
+template<class T>
+void BinaryNetwork<T>::add_edge(Constraint C)
+{
+    Vertex v1, v2;
+    getVertexbyID(C.Variables.front(), v1);
+    getVertexbyID(C.Variables.back(), v2);
+    boost::add_edge(v1, v2, C, G);
+}
+
+template<class T>
+void BinaryNetwork<T>::setVariable(Vertex v, Variable<T>& var)
+{
+    G[v] = var;
+}
 
 template<class T>
 int BinaryNetwork<T>::checkEdge(Edge e)
