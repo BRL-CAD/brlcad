@@ -20,9 +20,6 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * stabilize and test mged
   (massive command restructuring in progress with libged)
 
-* verify fast4-g doesn't vomit warning messages about string
-  truncation (should be fixed already)
-
 * change rtarea output to have new cpa values in their own section
 
 

@@ -1260,7 +1260,7 @@ struct rt_piecelist  {
 };
 #define RT_CK_PIECELIST(_p)	BU_CKMAG(_p, RT_PIECELIST_MAGIC, "struct rt_piecelist")
 
-/* Used to set globals declared in g_bot.c */
+/* Used to set globals declared in bot.c */
 #define RT_DEFAULT_MINPIECES		32
 #define RT_DEFAULT_TRIS_PER_PIECE	4
 
@@ -1734,7 +1734,8 @@ struct rt_point_labels {
 /**
  * R T _ P T _ N O D E
  *
- * Used by g_rpc.c and others to contain forward-linked lists of points.
+ * Used by rpc.c, ehy.c, epa.c, eto.c and rhc.c
+ * to contain forward-linked lists of points.
  */
 struct rt_pt_node {
     point_t p;			/**< @brief  a point */
@@ -2794,12 +2795,12 @@ RT_EXPORT BU_EXTERN(union tree *db_mkgift_tree,
 		     int			subtreecount,
 		     struct resource		*resp));
 
-/* g_tgc.c */
+/* tgc.c */
 RT_EXPORT BU_EXTERN(void rt_pt_sort,
 		    (register fastf_t t[],
 		     int npts));
 
-/* g_ell.c */
+/* ell.c */
 RT_EXPORT BU_EXTERN(void rt_ell_16pts,
 		    (register fastf_t *ov,
 		     register fastf_t *V,
@@ -2909,7 +2910,7 @@ RT_EXPORT BU_EXTERN(int rt_comb_import5,
 		     struct resource         *resp,
 		     const int		minor_type));
 
-/* g_extrude.c */
+/* extrude.c */
 RT_EXPORT BU_EXTERN(int rt_extrude_import5,
 		    (struct rt_db_internal	*ip,
 		     const struct bu_external	*ep,
@@ -3246,7 +3247,7 @@ RT_EXPORT BU_EXTERN(struct directory *rt_mirror,
   struct db_traverse *dtp));
 */
 
-/* g_arb.c */
+/* arb.c */
 RT_EXPORT BU_EXTERN(int rt_arb_get_cgtype,
 		    ());		/* needs rt_arb_internal for arg list */
 RT_EXPORT BU_EXTERN(int rt_arb_std_type,
@@ -3296,7 +3297,7 @@ RT_EXPORT extern short earb6[10][18];
 RT_EXPORT extern short earb5[9][18];
 RT_EXPORT extern short earb4[5][18];
 
-/* g_epa.c */
+/* epa.c */
 RT_EXPORT BU_EXTERN(void rt_ell,
 		    (fastf_t *ov,
 		     const fastf_t *V,
@@ -3304,7 +3305,7 @@ RT_EXPORT BU_EXTERN(void rt_ell,
 		     const fastf_t *B,
 		     int sides));
 
-/* g_pipe.c */
+/* pipe.c */
 RT_EXPORT BU_EXTERN(void rt_vls_pipept,
 		    (struct bu_vls *vp,
 		     int seg_no,
@@ -3315,7 +3316,7 @@ RT_EXPORT BU_EXTERN(void rt_pipept_print,
 RT_EXPORT BU_EXTERN(int rt_pipe_ck,
 		    (const struct bu_list *headp));
 
-/* g_metaball.c */
+/* metaball.c */
 struct rt_metaball_internal;
 RT_EXPORT BU_EXTERN(void rt_vls_metaballpt,
 		    (struct bu_vls *vp,
@@ -3334,7 +3335,7 @@ RT_EXPORT BU_EXTERN(int rt_metaball_lookup_type_id,
 RT_EXPORT BU_EXTERN(const char *rt_metaball_lookup_type_name,
 		    (const int id));
 
-/* g_rpc.c */
+/* rpc.c */
 RT_EXPORT BU_EXTERN(int rt_mk_parabola,
 		    (struct rt_pt_node *pts,
 		     fastf_t r,
@@ -3376,12 +3377,12 @@ RT_EXPORT BU_EXTERN(struct bu_list *rt_vlblock_find,
 		     int g,
 		     int b));
 
-/* g_ars.c */
+/* ars.c */
 RT_EXPORT BU_EXTERN(void rt_hitsort,
 		    (struct hit h[],
 		     int nh));
 
-/* g_pg.c */
+/* pg.c */
 RT_EXPORT BU_EXTERN(int rt_pg_to_bot,
 		    (struct rt_db_internal *ip,
 		     const struct bn_tol *tol,
@@ -3397,12 +3398,12 @@ RT_EXPORT BU_EXTERN(int rt_pg_plot_poly,
 		     const struct rt_tess_tol	*ttol,
 		     const struct bn_tol	*tol));
 
-/* g_hf.c */
+/* hf.c */
 RT_EXPORT BU_EXTERN(int rt_hf_to_dsp,
 		    (struct rt_db_internal *db_intern,
 		     struct resource *resp));
 
-/* g_dsp.c */
+/* dsp.c */
 RT_EXPORT BU_EXTERN(int dsp_pos,
 		    (point_t out,
 		     struct soltab *stp,
@@ -3616,7 +3617,7 @@ RT_EXPORT BU_EXTERN(void rt_label_vlist_verts,
 		     double mm2local));
 
 #ifdef __RTGEOM_H__
-/* g_sketch.c */
+/* sketch.c */
 RT_EXPORT BU_EXTERN(void rt_sketch_ifree,
 		    (struct rt_db_internal	*ip));
 RT_EXPORT BU_EXTERN(int curve_to_vlist,
@@ -3629,9 +3630,9 @@ RT_EXPORT BU_EXTERN(int curve_to_vlist,
 		     struct curve		*crv));
 
 RT_EXPORT BU_EXTERN(int rt_check_curve,
-		    (struct curve *crv,
-		     struct rt_sketch_internal *skt,
-		     int noisey));
+		    (const struct curve *crv,
+		     const struct rt_sketch_internal *skt,
+		     int noisy));
 
 RT_EXPORT BU_EXTERN(void rt_curve_reverse_segment,
 		    (long *lng));
@@ -3642,10 +3643,6 @@ RT_EXPORT BU_EXTERN(void rt_copy_curve,
 		    (struct curve *crv_out,
 		     const struct curve *crv_in));
 
-RT_EXPORT BU_EXTERN(int rt_check_curve,
-		    (struct curve *crv,
-		     struct rt_sketch_internal *skt,
-		     int noisey));
 RT_EXPORT BU_EXTERN(void rt_curve_free,
 		    (struct curve *crv));
 RT_EXPORT BU_EXTERN(void rt_copy_curve,
@@ -4583,7 +4580,7 @@ RT_EXPORT BU_EXTERN(int nmg_edge_collapse,
 		     const fastf_t tol_coll,
 		     const fastf_t min_angle));
 
-/* g_bot.c */
+/* bot.c */
 RT_EXPORT BU_EXTERN(int rt_bot_edge_in_list,
 		    (const int v1,
 		     const int v2,
@@ -4654,11 +4651,11 @@ RT_EXPORT BU_EXTERN(char *nmg_shell_manifolds,
 RT_EXPORT BU_EXTERN(char *nmg_manifolds,
 		    (struct model *m));
 
-/* g_nmg.c */
+/* nmg.c */
 RT_EXPORT BU_EXTERN(int nmg_ray_segs,
 		    (struct ray_data	*rd));
 
-/* g_torus.c */
+/* torus.c */
 RT_EXPORT BU_EXTERN(int rt_num_circular_segments,
 		    (double maxerr,
 		     double radius));
@@ -4731,7 +4728,7 @@ RT_EXPORT BU_EXTERN(int tcl_list_to_fastf_array,
 		     int *array_len));
 
 
-/* g_rhc.c */
+/* rhc.c */
 RT_EXPORT BU_EXTERN(int rt_mk_hyperbola,
 		    (struct rt_pt_node *pts,
 		     fastf_t r,
@@ -5811,15 +5808,15 @@ RT_EXPORT BU_EXTERN(int rt_mk_binunif,
 
 /* XXX do not rely on *_ifree() functions, why are these needed? */
 #ifdef _RT_DECL_IFREE
-/* defined in g_dsp.c */
+/* defined in dsp.c */
 RT_EXPORT BU_EXTERN(void rt_dsp_ifree,
 		    (struct rt_db_internal *ip));
 
-/* defined in g_ebm.c */
+/* defined in ebm.c */
 RT_EXPORT BU_EXTERN(void rt_ebm_ifree,
 		    (struct rt_db_internal *ip));
 
-/* defined in g_vol.c */
+/* defined in vol.c */
 RT_EXPORT BU_EXTERN(void rt_vol_ifree,
 		    (struct rt_db_internal *ip));
 #endif
@@ -5830,10 +5827,10 @@ RT_EXPORT BU_EXTERN(void rt_binunif_free,
 RT_EXPORT BU_EXTERN(void rt_binunif_dump,
 		    (struct rt_binunif_internal *bip));
 
-/* defined in g_cline.c */
+/* defined in cline.c */
 RT_EXPORT extern fastf_t rt_cline_radius;
 
-/* defined in g_bot.c */
+/* defined in bot.c */
 RT_EXPORT extern int rt_bot_minpieces;
 RT_EXPORT extern int rt_bot_tri_per_piece;
 #ifdef __RTGEOM_H__

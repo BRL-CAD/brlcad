@@ -15,6 +15,16 @@ on-going issues.
 Recent Bugs
 -----------
 
+* fast4-g skips lines while processing if there are DOS line endings
+
+* pipe primitive has a BU_GETSTRUCT malloc getting called during
+  raytracing that kills performance by more than an order of magnitude
+  (especially when the light source is a pipe and there are a lot of
+  shadow rays)
+
+* bump shader seems to be busted.  only renders as flat by itself and
+  stacked with phong it seems to ignore the uv settings.
+
 * rtweight prints incorrect units when units are set to ft.  Appears
   to trace back to unit handling in view_end in viewweight.c.  This
   logic should be replaced using the proper libbu functions.

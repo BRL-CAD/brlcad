@@ -1,4 +1,4 @@
-/*                      G _ S K E T C H . C
+/*                        S K E T C H . C
  * BRL-CAD
  *
  * Copyright (c) 1990-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_  */
+/** @addtogroup primitives */
 /** @{ */
-/** @file g_sketch.c
+/** @file sketch.c
  *
  * Provide support for 2D sketches.
  *
@@ -48,17 +48,24 @@ fastf_t rt_cnurb_par_edge(const struct edge_g_cnurb *crv, fastf_t epsilon);
 extern void get_indices( genptr_t seg, int *start, int *end );	/* from g_extrude.c */
 
 int
-rt_check_curve(struct curve *crv, struct rt_sketch_internal *skt, int noisey)
+rt_check_curve(const struct curve *crv, const struct rt_sketch_internal *skt, int noisy)
 {
     int i, j;
     int ret=0;
 
+    /* empty sketches are invalid */
+    if (crv->seg_count == 0) {
+	if (noisy)
+	    bu_log( "sketch is empty\n" );
+	return 1;
+    }
+
     for ( i=0; i<crv->seg_count; i++ ) {
-	struct line_seg *lsg;
-	struct carc_seg *csg;
-	struct nurb_seg *nsg;
-	struct bezier_seg *bsg;
-	long *lng;
+	const struct line_seg *lsg;
+	const struct carc_seg *csg;
+	const struct nurb_seg *nsg;
+	const struct bezier_seg *bsg;
+	const long *lng;
 
 	lng = (long *)crv->segments[i];
 
@@ -95,14 +102,15 @@ rt_check_curve(struct curve *crv, struct rt_sketch_internal *skt, int noisey)
 		break;
 	    default:
 		ret++;
-		if ( noisey )
+		if ( noisy )
 		    bu_log( "Unrecognized segment type in sketch\n");
 		break;
 	}
     }
-    if ( ret && noisey )
-	bu_log( "sketch references non-existent vertices!!!\n" );
-    return( ret );
+
+    if ( ret && noisy )
+	bu_log( "sketch references non-existent vertices!\n" );
+    return ret;
 }
 
 
@@ -616,7 +624,7 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 	    break;
 	}
 	default:
-	    bu_log( "seg_to_vlist: ERROR: unrecognized segment type!!!!\n" );
+	    bu_log( "seg_to_vlist: ERROR: unrecognized segment type!\n" );
 	    break;
     }
 
@@ -824,14 +832,15 @@ rt_sketch_import(struct rt_db_internal *ip, const struct bu_external *ep, regist
 		sketch_ip->skt_curve.segments[seg_no] = (genptr_t)bsg;
 		break;
 	    default:
-		bu_bomb( "rt_sketch_import: ERROR: unrecognized segment type!!!\n" );
+		bu_bomb( "rt_sketch_import: ERROR: unrecognized segment type!\n" );
 		break;
 	}
     }
 
     crv = &sketch_ip->skt_curve;
 
-    crv->reverse = (int *)bu_calloc( crv->seg_count, sizeof(int), "crv->reverse" );
+    if (crv->seg_count)
+	crv->reverse = (int *)bu_calloc( crv->seg_count, sizeof(int), "crv->reverse" );
     for ( i=0; i<crv->seg_count; i++ ) {
 	crv->reverse[i] = bu_glong( ptr );
 	ptr += 4;
@@ -1008,7 +1017,7 @@ rt_sketch_export(struct bu_external *ep, const struct rt_db_internal *ip, double
 		}
 		break;
 	    default:
-		bu_bomb( "rt_sketch_export: ERROR: unrecognized curve type!!!!\n" );
+		bu_bomb( "rt_sketch_export: ERROR: unrecognized curve type!\n" );
 		break;
 
 	}
@@ -1159,7 +1168,7 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, regis
 		sketch_ip->skt_curve.segments[seg_no] = (genptr_t)bsg;
 		break;
 	    default:
-		bu_bomb( "rt_sketch_import: ERROR: unrecognized segment type!!!\n" );
+		bu_bomb( "rt_sketch_import: ERROR: unrecognized segment type!\n" );
 		break;
 	}
     }
@@ -1348,7 +1357,7 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 		}
 		break;
 	    default:
-		bu_bomb( "rt_sketch_export: ERROR: unrecognized curve type!!!!\n" );
+		bu_bomb( "rt_sketch_export: ERROR: unrecognized curve type!\n" );
 		break;
 
 	}
@@ -1599,7 +1608,7 @@ rt_curve_free(struct curve *crv)
 		bu_free( (char *)lng, "curve segment" );
 		break;
 	    default:
-		bu_log( "ERROR: rt_curve_free: unrecognized curve segments type!!!!\n");
+		bu_log( "ERROR: rt_curve_free: unrecognized curve segments type!\n");
 		break;
 	}
     }
@@ -1658,8 +1667,11 @@ rt_copy_curve(struct curve *crv_out, const struct curve *crv_in)
     int i, j;
 
     crv_out->seg_count = crv_in->seg_count;
-    crv_out->reverse = (int *)bu_calloc( crv_out->seg_count, sizeof( int ), "crv->reverse" );
-    crv_out->segments = (genptr_t *)bu_calloc( crv_out->seg_count, sizeof( genptr_t ), "crv->segments" );
+    if (crv_out->seg_count) {
+	crv_out->reverse = (int *)bu_calloc( crv_out->seg_count, sizeof( int ), "crv->reverse" );
+	crv_out->segments = (genptr_t *)bu_calloc( crv_out->seg_count, sizeof( genptr_t ), "crv->segments" );
+    }
+
     for ( j=0; j<crv_out->seg_count; j++ ) {
 	long *lng;
 	struct line_seg *lsg_out, *lsg_in;
@@ -1713,7 +1725,7 @@ rt_copy_curve(struct curve *crv_out, const struct curve *crv_in)
 		}
 		break;
 	    default:
-		bu_bomb( "rt_copy_sketch: ERROR: unrecognized segment type!!!!\n" );
+		bu_bomb( "rt_copy_sketch: ERROR: unrecognized segment type!\n" );
 	}
     }
 
@@ -1737,12 +1749,14 @@ rt_copy_sketch(const struct rt_sketch_internal *sketch_ip)
     out = (struct rt_sketch_internal *) bu_malloc( sizeof( struct rt_sketch_internal ), "rt_sketch_internal" );
     *out = *sketch_ip;	/* struct copy */
 
-    out->verts = (point2d_t *)bu_calloc( out->vert_count, sizeof( point2d_t ), "out->verts" );
+    if (out->vert_count)
+	out->verts = (point2d_t *)bu_calloc( out->vert_count, sizeof( point2d_t ), "out->verts" );
     for ( i=0; i<out->vert_count; i++ )
 	V2MOVE( out->verts[i], sketch_ip->verts[i] );
 
     crv_out = &out->skt_curve;
-    rt_copy_curve( crv_out, &sketch_ip->skt_curve );
+    if (crv_out)
+	rt_copy_curve( crv_out, &sketch_ip->skt_curve );
 
     if ( bu_debug&BU_DEBUG_MEM_CHECK ) {
 	bu_log( "Barrier check at end of rt_copy_sketch():\n" );
