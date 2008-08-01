@@ -1237,11 +1237,6 @@ void MakeTireSurface(struct rt_wdb (*file), char *suffix,
     point_t origin, normal, C;
 
 
-    PrintCADParams(ell1cadparams, "ell1");
-    PrintCADParams(ell2cadparams, "ell2");
-    PrintCADParams(ell3cadparams, "ell3");
-
-
     /* Insert primitives */
     VSET(origin, 0, ell1cadparams[0], 0);
     VSET(normal, 0, 1, 0);
