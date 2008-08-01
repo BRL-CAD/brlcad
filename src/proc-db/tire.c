@@ -1934,7 +1934,7 @@ void MakeTire(struct rt_wdb (*file), char *suffix, fastf_t dytred,
 }
 
 
-void MakeAirRegion(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t zhub)
+void MakeAirRegion(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t zhub, int usewheel)
 {
     struct wmember wheelair;
     struct bu_list air;
@@ -1949,21 +1949,26 @@ void MakeAirRegion(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
     bu_vls_printf(&str, "Air-Cyl%s.s", suffix);
     mk_rcc(file, bu_vls_addr(&str), origin, height, zhub);
 
-    BU_LIST_INIT(&wheelair.l);
-    bu_vls_trunc(&str, 0);
-    bu_vls_printf(&str, "Air-Cyl%s.s", suffix);
-    (void)mk_addmember(bu_vls_addr(&str), &wheelair.l, NULL, WMOP_UNION);
-    bu_vls_trunc(&str, 0);
-    bu_vls_printf(&str, "wheel-rim-solid%s.c", suffix);
-    (void)mk_addmember(bu_vls_addr(&str), &wheelair.l, NULL, WMOP_SUBTRACT);
-    bu_vls_trunc(&str, 0);
-    bu_vls_printf(&str, "wheel-air%s.c", suffix);
-    mk_lcomb(file, bu_vls_addr(&str), &wheelair, 0,  NULL, NULL, NULL, 0);
-
+    if (usewheel != 0) {
+        BU_LIST_INIT(&wheelair.l);
+        bu_vls_trunc(&str, 0);
+        bu_vls_printf(&str, "Air-Cyl%s.s", suffix);
+        (void)mk_addmember(bu_vls_addr(&str), &wheelair.l, NULL, WMOP_UNION);
+        bu_vls_trunc(&str, 0);
+        bu_vls_printf(&str, "wheel-rim-solid%s.c", suffix);
+        (void)mk_addmember(bu_vls_addr(&str), &wheelair.l, NULL, WMOP_SUBTRACT);
+        bu_vls_trunc(&str, 0);
+        bu_vls_printf(&str, "wheel-air%s.c", suffix);
+        mk_lcomb(file, bu_vls_addr(&str), &wheelair, 0,  NULL, NULL, NULL, 0);
+    }
+    
     BU_LIST_INIT(&air);
-    bu_vls_trunc(&str, 0);
-    bu_vls_printf(&str, "wheel-air%s.c", suffix);
-    (void)mk_addmember(bu_vls_addr(&str), &air, NULL, WMOP_UNION);
+    
+    if (usewheel != 0) {
+        bu_vls_trunc(&str, 0);
+        bu_vls_printf(&str, "wheel-air%s.c", suffix);
+        (void)mk_addmember(bu_vls_addr(&str), &air, NULL, WMOP_UNION);
+    }
     bu_vls_trunc(&str, 0);
     bu_vls_printf(&str, "tire-cut%s.c", suffix);
     (void)mk_addmember(bu_vls_addr(&str), &air, NULL, WMOP_UNION);
@@ -1974,13 +1979,13 @@ void MakeAirRegion(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
 }
 
 /* Process command line arguments */
-int ReadArgs(int argc, char **argv, fastf_t *isoarray, fastf_t *overridearray, struct bu_vls *name, struct bu_vls *dimens, int *gen_name, int *treadtype, int *number_of_tread_patterns, fastf_t *tread_depth, fastf_t *tire_thickness, fastf_t *hub_width, int *pattern_type, fastf_t *zside1)
+int ReadArgs(int argc, char **argv, fastf_t *isoarray, fastf_t *overridearray, struct bu_vls *name, struct bu_vls *dimens, int *gen_name, int *treadtype, int *number_of_tread_patterns, fastf_t *tread_depth, fastf_t *tire_thickness, fastf_t *hub_width, int *pattern_type, fastf_t *zside1, int *usewheel)
 {
     int c = 0;
-    char *options="d:n:c:g:j:p:s:t:u:W:R:D:ah";
+    char *options="d:n:c:g:j:p:s:t:u:w:W:R:D:ah";
     int d1, d2, d3;
     int count;
-    int tdtype, ptype;
+    int tdtype, ptype, usewheelc;
     float hwidth, treadep, tthickness, zsideh;
     float fd1, fd2, fd3;
     char spacer1, tiretype;
@@ -2045,6 +2050,10 @@ int ReadArgs(int argc, char **argv, fastf_t *isoarray, fastf_t *overridearray, s
 		sscanf(bu_optarg, "%f", &tthickness);
 		*tire_thickness = tthickness;
 		break;
+	    case 'w':
+	        sscanf(bu_optarg, "%d", &usewheelc);
+		*usewheel = usewheelc;
+		break;
 	    default:
 		bu_log("%s: illegal option -- %c\n", bu_getprogname(), c);
 	    case 'h':
@@ -2071,6 +2080,7 @@ int main(int ac, char *av[])
     struct bu_vls str;
     int gen_name = 0;
     int tread_type = 0;
+    int usewheel = 1;
     int number_of_tread_patterns = 30;
     fastf_t tread_depth = 11;
     fastf_t tire_thickness = 0;
@@ -2095,7 +2105,7 @@ int main(int ac, char *av[])
     overridearray[2] = 0;
 
     /* Process arguments */
-    ReadArgs(ac, av, isoarray, overridearray, &name, &dimen, &gen_name, &tread_type, &number_of_tread_patterns, &tread_depth, &tire_thickness, &hub_width, &pattern_type, &zside1);
+    ReadArgs(ac, av, isoarray, overridearray, &name, &dimen, &gen_name, &tread_type, &number_of_tread_patterns, &tread_depth, &tire_thickness, &hub_width, &pattern_type, &zside1, &usewheel);
 
     /* Calculate floating point value for tread depth */
     fastf_t tread_depth_float = tread_depth/32.0;
@@ -2194,10 +2204,11 @@ int main(int ac, char *av[])
     rim_thickness = tire_thickness/2.0;
 
     /* Make the wheel region*/
-    MakeWheelRims(db_fp, bu_vls_addr(&dimen), dyhub, zhub, bolts, bolt_diam, bolt_circ_diam, spigot_diam, fixing_offset, bead_height, bead_width, rim_thickness);
-
+    if (usewheel != 0) {
+        MakeWheelRims(db_fp, bu_vls_addr(&dimen), dyhub, zhub, bolts, bolt_diam, bolt_circ_diam, spigot_diam, fixing_offset, bead_height, bead_width, rim_thickness);
+    }
     /* Make the air region*/
-    MakeAirRegion(db_fp, bu_vls_addr(&dimen), dyhub, zhub);
+    MakeAirRegion(db_fp, bu_vls_addr(&dimen), dyhub, zhub, usewheel);
 
     /* Final top level providing a single name for tire+wheel */
     BU_LIST_INIT(&wheel_and_tire.l);
@@ -2207,9 +2218,11 @@ int main(int ac, char *av[])
     bu_vls_trunc(&str, 0);
     bu_vls_printf(&str, "air%s.r", bu_vls_addr(&dimen));
     (void)mk_addmember(bu_vls_addr(&str), &wheel_and_tire.l, NULL, WMOP_UNION);
-    bu_vls_trunc(&str, 0);
-    bu_vls_printf(&str, "wheel%s.r",bu_vls_addr(&dimen));
-    (void)mk_addmember(bu_vls_addr(&str), &wheel_and_tire.l, NULL, WMOP_UNION);
+    if (usewheel != 0) {
+        bu_vls_trunc(&str, 0);
+        bu_vls_printf(&str, "wheel%s.r",bu_vls_addr(&dimen));
+        (void)mk_addmember(bu_vls_addr(&str), &wheel_and_tire.l, NULL, WMOP_UNION);
+    }
     mk_lcomb(db_fp, bu_vls_addr(&name), &wheel_and_tire, 0,  NULL, NULL, NULL, 0);
 
 
