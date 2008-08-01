@@ -587,6 +587,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 		(a)[_vadd3] = (b)[_vadd3] + (c)[_vadd3] + (d)[_vadd3]; \
 	}
 
+#define V2ADD3(a, b, c, d)	{ \
+			(a)[X] = (b)[X] + (c)[X] + (d)[X];\
+			(a)[Y] = (b)[Y] + (c)[Y] + (d)[Y];}
+
 /** @brief Add 4 vectors at `b', `c', `d', and `e', store result at `a' */
 #ifdef SHORT_VECTORS
 #define VADD4(a, b, c, d, e) VADD4N(a, b, c, d, e, 3)
@@ -1369,8 +1373,8 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
  * Convert a direction vector to azimuth/elevation (in radians)
  */
 #define AZEL_FROM_V3DIR(_a, _e, _d) { \
-	(_a) = (((_d)[X] == 0) && ((_d)[Y] == 0)) ? 0.0 : atan2( -((_d)[Y]), -((_d)[X]) ) * RAD2DEG; \
-	(_e) = atan2( -((_d)[Z]), sqrt((_d)[X]*(_d)[X] + (_d)[Y]*(_d)[Y]) ) * RAD2DEG; \
+	(_a) = (((_d)[X] == 0) && ((_d)[Y] == 0)) ? 0.0 : atan2( -((_d)[Y]), -((_d)[X]) ) * -RAD2DEG; \
+	(_e) = atan2( -((_d)[Z]), sqrt((_d)[X]*(_d)[X] + (_d)[Y]*(_d)[Y]) ) * -RAD2DEG; \
 }
 
 __END_DECLS

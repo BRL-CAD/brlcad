@@ -309,11 +309,8 @@ vo_size_cmd(struct view_obj	*vop,
 
     /* set view size */
     if (argc == 2) {
-	if (sscanf(argv[1], "%lf", &size) != 1 ||
-	    size <= 0 ||
-	    NEAR_ZERO(size, SMALL_FASTF)) {
-	    Tcl_AppendResult(interp, "bad size - ",
-			     argv[1], (char *)NULL);
+	if (sscanf(argv[1], "%lf", &size) != 1 || size < SMALL_FASTF) {
+	    Tcl_AppendResult(interp, "bad size - ", argv[1], (char *)NULL);
 	    return TCL_ERROR;
 	}
 
@@ -2833,10 +2830,13 @@ vo_update(struct view_obj	*vop,
     vect_t work, work1;
     vect_t temp, temp1;
 
-    bn_mat_mul(vop->vo_model2view,
-	       vop->vo_rotation,
-	       vop->vo_center);
+    /* set up the view matrix */
+    bn_mat_mul(vop->vo_model2view, vop->vo_rotation, vop->vo_center);
     vop->vo_model2view[15] = vop->vo_scale;
+
+    /* XXX validation needs to occur before here to make sure we're
+     * not attempting to invert a singular matrix.
+     */
     bn_mat_inv(vop->vo_view2model, vop->vo_model2view);
 
     /* Find current azimuth, elevation, and twist angles */

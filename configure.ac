@@ -120,7 +120,7 @@ CONFIG_DAY=`date +%d`
 CONFIG_MONTH=`date +%m`
 CONFIG_YEAR=`date +%Y`
 CONFIG_DATE="${CONFIG_YEAR}${CONFIG_MONTH}${CONFIG_DAY}"
-CONFIG_TS="`date -R 2>/dev/null || date +'%a, %d %b %Y %H:%M:%S %z 2>/dev/null || date'`" # try RFC 2822
+CONFIG_TS="`date -R 2>/dev/null || date +'%a, %d %b %Y %H:%M:%S %z' 2>/dev/null || date`" # try RFC 2822
 AC_SUBST(CONFIG_DAY)
 AC_SUBST(CONFIG_MONTH)
 AC_SUBST(CONFIG_YEAR)
@@ -1986,14 +1986,13 @@ BC_COMPLIANT_DOUBLE
 if test "x$bc_compliant_float" = "xno" || test "x$bc_compliant_double" = "xno" ; then
     AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
     AC_MSG_WARN([The floating point implementation does not seem to be IEEE 754])
-    AC_MSG_WARN([compliant.  The behavior or htond and htonf may be incorrect.])
+    AC_MSG_WARN([compliant.  The behavior of htond and htonf may be incorrect.])
     AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
     sleep 1
 fi
 
 dnl AC_C_PROTOTYPES
 AM_C_PROTOTYPES
-AC_DEFINE(USE_PROTOTYPES,1,heh)
 
 AC_C_CONST
 AC_C_INLINE
@@ -2827,13 +2826,16 @@ AC_SUBST(ITK_LIB_FILE)
 
 
 dnl *** tcl+itcl sanity ***
-dnl See if the tcl we're using is compatible with the incrTcl we're using
+dnl See if the tcl we're using is compatible with the incrTcl we're using.
+dnl Our incrTcl is latest sources that make it only work with 8.5+
 if test "x$TCL" = "x$LIBTCL" ; then
-    if test "x$ITCL" != "x$LIBITCL" ; then
+    if test "x$ITCL" != "x$LIBITCL" && test "x$TCL_VERSION" != "x8.5" ; then
 	# apparently want to use system tcl with non-system incrTcl
 	# is that sane? probably not until 8.5 is everywhere.
+	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 	AC_MSG_WARN([Unable to find a system incrTcl compatible with the available system Tcl])
 	AC_MSG_WARN([Enabling compilation of both Tcl and incrTcl])
+	AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
 	# nope!
 	build_brlcad_tcl="yes"
 	build_brlcad_tk="yes"
@@ -2851,7 +2853,7 @@ if test "x$TCL" = "x$LIBTCL" ; then
 	TCLSTUB='-L${top_builddir}/src/other/tcl/unix'" -ltclstub${TCL_VERSION}"
 	TCL_CPPFLAGS='-I${top_srcdir}/src/other/tcl/generic -I${top_srcdir}/src/other/tcl/unix'
 
-	TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TCL_VERSION}"
+	TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TK_VERSION}"
 	TKSTUB='-L${top_builddir}/src/other/tk/unix'" -ltkstub${TK_VERSION}"
 	TK_CPPFLAGS='-I${top_srcdir}/src/other/tk/generic -I${top_srcdir}/src/other/tk/unix -I${top_srcdir}/src/other/tk/win'
 	if test "x$bc_build_aquatk" = "xyes" ; then
@@ -3599,8 +3601,6 @@ dnl SMP-aware (i.e. PARALLEL) build
 if test "x$bc_build_parallel" != "xno" ; then
 	AC_DEFINE(PARALLEL, 1, [Define to enable SMP architecture parallel computation support ])
 fi
-
-AC_DEFINE_UNQUOTED([USE_FBSERV], [1], [Required for libdm/mged to allow direct fbserv render connections])
 
 
 #

@@ -1281,9 +1281,9 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		vls->vls_len += strlen(cp);
 		break;
 	    case 'S':
-	    {	
+	    {
 		register struct bu_vls *vls_p = (struct bu_vls *)loc;
-			    
+
 		increase =  bu_vls_strlen(vls_p) + 5 + strlen(sdp->sp_name);
 		bu_vls_extend(vls, increase);
 
@@ -1303,7 +1303,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 
 		increase = 64 * i + strlen(sdp->sp_name) + 3;
 		bu_vls_extend(vls, increase);
-					
+
 
 		cp = vls->vls_str + vls->vls_offset + vls->vls_len;
 		snprintf(cp, increase, "%s%s=%d",
@@ -1328,7 +1328,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 
 		increase = 64 * i + strlen(sdp->sp_name) + 3;
 		bu_vls_extend(vls, increase);
-					
+
 		cp = vls->vls_str + vls->vls_offset + vls->vls_len;
 		snprintf(cp, increase, "%s%s=%d",
 			 (vls->vls_len?" ":""),

@@ -1363,24 +1363,24 @@ sgi_close( ifp )
 	return sgi_final_close( ifp );
 
     /*
-     *  LINGER mode.  Don't return to caller until user mouses "close"
-     *  menu item.  This may delay final processing in the calling
-     *  function for some time, but the assumption is that the user
-     *  wishes to compare this image with others.
+     * LINGER mode.  Don't return to caller until user mouses "close"
+     * menu item.  This may delay final processing in the calling
+     * function for some time, but the assumption is that the user
+     * wishes to compare this image with others.
      *
-     *  Since we plan to linger here, long after our invoker
-     *  expected us to be gone, be certain that no file descriptors
-     *  remain open to associate us with pipelines, network
-     *  connections, etc., that were ALREADY ESTABLISHED before
-     *  the point that fb_open() was called.
+     * Since we plan to linger here, long after our invoker expected
+     * us to be gone, be certain that no file descriptors remain open
+     * to associate us with pipelines, network connections, etc., that
+     * were ALREADY ESTABLISHED before the point that fb_open() was
+     * called.
      *
-     *  The simple for i=0..20 loop will not work, because that
-     *  smashes some window-manager files.  Therefore, we content
-     *  ourselves with eliminating stdin, stdout, and stderr,
-     *  (fd 0, 1, 2), in the hopes that this will successfully
-     *  terminate any pipes or network connections.  In the case
-     *  of calls from rfbd, in normal (non -d) mode, it gets the
-     *  network connection on stdin/stdout, so this is adequate.
+     * The simple for i=0..20 loop will not work, because that smashes
+     * some window-manager files.  Therefore, we content ourselves
+     * with eliminating stdin, stdout, and stderr, (fd 0, 1, 2), in
+     * the hopes that this will successfully terminate any pipes or
+     * network connections.  In the case of calls from fbserv, in
+     * normal (non -d) mode, it gets the network connection on
+     * stdin/stdout, so this is adequate.
      */
     fclose( stdin );
     fclose( stdout );

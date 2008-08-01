@@ -142,9 +142,9 @@ ged_make(struct rt_wdb *wdbp, int argc, char *argv[])
 	arb_ip = (struct rt_arb_internal *)internal.idb_ptr;
 	arb_ip->magic = RT_ARB_INTERNAL_MAGIC;
 	VSET(arb_ip->pt[0] ,
-	      origin[X] +scale,
-	      origin[Y] -scale,
-	      origin[Z] -scale);
+	     origin[X] +scale,
+	     origin[Y] -scale,
+	     origin[Z] -scale);
 	for (i=1; i<8; i++)
 	    VMOVE(arb_ip->pt[i], arb_ip->pt[0]);
 	arb_ip->pt[1][Y] += scale;
@@ -165,9 +165,9 @@ ged_make(struct rt_wdb *wdbp, int argc, char *argv[])
 	arb_ip = (struct rt_arb_internal *)internal.idb_ptr;
 	arb_ip->magic = RT_ARB_INTERNAL_MAGIC;
 	VSET(arb_ip->pt[0] ,
-	      origin[X] + scale,
-	      origin[Y] - scale,
-	      origin[Z] - 0.5*scale);
+	     origin[X] + scale,
+	     origin[Y] - scale,
+	     origin[Z] - 0.5*scale);
 	for (i=1; i<8; i++)
 	    VMOVE(arb_ip->pt[i], arb_ip->pt[0]);
 	arb_ip->pt[1][Y] += scale;
@@ -187,9 +187,9 @@ ged_make(struct rt_wdb *wdbp, int argc, char *argv[])
 	arb_ip = (struct rt_arb_internal *)internal.idb_ptr;
 	arb_ip->magic = RT_ARB_INTERNAL_MAGIC;
 	VSET(arb_ip->pt[0],
-	      origin[X] +scale,
-	      origin[Y] -scale,
-	      origin[Z] -scale);
+	     origin[X] +scale,
+	     origin[Y] -scale,
+	     origin[Z] -scale);
 	for (i=1; i<8; i++)
 	    VMOVE(arb_ip->pt[i], arb_ip->pt[0]);
 	arb_ip->pt[1][Y] += scale;
@@ -212,9 +212,9 @@ ged_make(struct rt_wdb *wdbp, int argc, char *argv[])
 	arb_ip = (struct rt_arb_internal *)internal.idb_ptr;
 	arb_ip->magic = RT_ARB_INTERNAL_MAGIC;
 	VSET(arb_ip->pt[0] ,
-	      origin[X] + scale,
-	      origin[Y] - scale,
-	      origin[Z] - scale);
+	     origin[X] + scale,
+	     origin[Y] - scale,
+	     origin[Z] - scale);
 	for (i=1; i<8; i++)
 	    VMOVE(arb_ip->pt[i], arb_ip->pt[0]);
 	arb_ip->pt[1][Y] += scale;
@@ -235,9 +235,9 @@ ged_make(struct rt_wdb *wdbp, int argc, char *argv[])
 	arb_ip = (struct rt_arb_internal *)internal.idb_ptr;
 	arb_ip->magic = RT_ARB_INTERNAL_MAGIC;
 	VSET(arb_ip->pt[0] ,
-	      origin[X] +scale,
-	      origin[Y] -scale,
-	      origin[Z] -scale);
+	     origin[X] +scale,
+	     origin[Y] -scale,
+	     origin[Z] -scale);
 	for (i=1; i<8; i++)
 	    VMOVE(arb_ip->pt[i], arb_ip->pt[0]);
 	arb_ip->pt[1][Y] += scale;
@@ -261,7 +261,7 @@ ged_make(struct rt_wdb *wdbp, int argc, char *argv[])
 	arbn_ip->magic = RT_ARBN_INTERNAL_MAGIC;
 	arbn_ip->neqn = 8;
 	arbn_ip->eqn = (plane_t *)bu_calloc(arbn_ip->neqn,
-					     sizeof(plane_t), "arbn plane eqns");
+					    sizeof(plane_t), "arbn plane eqns");
 	VSET(arbn_ip->eqn[0], 1, 0, 0);
 	arbn_ip->eqn[0][3] = 0.5*scale;
 	VSET(arbn_ip->eqn[1], -1, 0, 0);
@@ -279,9 +279,9 @@ ged_make(struct rt_wdb *wdbp, int argc, char *argv[])
 	VSET(arbn_ip->eqn[7], -0.57735, -0.57735, -0.57735);
 	arbn_ip->eqn[7][3] = 0.5*scale;
 	VSET(view_center,
-	      origin[X],
-	      origin[Y],
-	      origin[Z]);
+	     origin[X],
+	     origin[Y],
+	     origin[Z]);
 	for (i=0; i<arbn_ip->neqn; i++) {
 	    arbn_ip->eqn[i][3] +=
 		VDOT(view_center, arbn_ip->eqn[i]);
@@ -305,16 +305,16 @@ ged_make(struct rt_wdb *wdbp, int argc, char *argv[])
 
 	    if (curve == 0) {
 		VSET(&(ars_ip->curves[0][0]),
-		      origin[X],
-		      origin[Y],
-		      origin[Z]);
+		     origin[X],
+		     origin[Y],
+		     origin[Z]);
 		VMOVE(&(ars_ip->curves[curve][3]), &(ars_ip->curves[curve][0]));
 		VMOVE(&(ars_ip->curves[curve][6]), &(ars_ip->curves[curve][0]));
 	    } else if (curve == (ars_ip->ncurves - 1)) {
 		VSET(&(ars_ip->curves[curve][0]),
-		      origin[X],
-		      origin[Y],
-		      origin[Z]+curve*0.5*scale);
+		     origin[X],
+		     origin[Y],
+		     origin[Z]+curve*0.5*scale);
 		VMOVE(&(ars_ip->curves[curve][3]), &(ars_ip->curves[curve][0]));
 		VMOVE(&(ars_ip->curves[curve][6]), &(ars_ip->curves[curve][0]));
 
@@ -357,7 +357,7 @@ ged_make(struct rt_wdb *wdbp, int argc, char *argv[])
 	grp_ip = (struct rt_grip_internal *) internal.idb_ptr;
 	grp_ip->magic = RT_GRIP_INTERNAL_MAGIC;
 	VSET(grp_ip->center, origin[X], origin[Y],
-	      origin[Z]);
+	     origin[Z]);
 	VSET(grp_ip->normal, 1.0, 0.0, 0.0);
 	grp_ip->mag = scale;
     } else if (strcmp(argv[bu_optind+1], "ell1") == 0) {
