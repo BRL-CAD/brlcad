@@ -1,7 +1,25 @@
 #!/bin/sh
 
-LD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$LD_LIBRARY_PATH
-DYLD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$DYLD_LIBRARY_PATH
+# Ensure /bin/sh
+export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
+
+# save the precious args
+ARGS="$*"
+NAME_OF_THIS=`basename $0`
+PATH_TO_THIS=`dirname $0`
+THIS="$PATH_TO_THIS/$NAME_OF_THIS"
+
+MGED="$1/src/mged/mged"
+if test ! -f "$MGED" ; then
+    MGED="$PATH_TO_THIS/../src/mged/mged"
+    if test ! -f "$MGED" ; then
+	echo "Unable to find mged, aborting"
+	exit 1
+    fi
+fi
+
+LD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$1/src/other/tcl/unix:$1/src/other/tk/unix:$LD_LIBRARY_PATH
+DYLD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$1/src/other/tcl/unix:$1/src/other/tk/unix:$DYLD_LIBRARY_PATH
 export LD_LIBRARY_PATH DYLD_LIBRARY_PATH
 
 rm -f spdi.g spdi.log spdi spdi.pix spdi_mged.log spdi.mged
@@ -44,7 +62,7 @@ g all.g light1.r
 q
 EOF
 
-../src/mged/mged -c spdi.g << EOF > spdi_mged.log 2>&1
+$MGED -c spdi.g << EOF > spdi_mged.log 2>&1
 `cat spdi.mged`
 EOF
 
