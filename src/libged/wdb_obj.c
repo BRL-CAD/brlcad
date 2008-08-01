@@ -3634,7 +3634,7 @@ wdb_concat_cmd(struct rt_wdb	*wdbp,
 	cc_data.copy_mode |= AUTO_PREFIX;
 
 	if (strcmp(argv[2], "/") == 0) {
-	    cc_data.copy_mode = NO_AFFIX;
+	    cc_data.copy_mode = NO_AFFIX | CUSTOM_PREFIX;
 	} else {
 	    (void)bu_vls_strcpy(&cc_data.affix, argv[2]);
 	    cc_data.copy_mode |= CUSTOM_PREFIX;

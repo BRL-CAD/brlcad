@@ -1,4 +1,4 @@
-/*                         G _ D S P . C
+/*                           D S P . C
  * BRL-CAD
  *
  * Copyright (c) 1999-2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_  */
+/** @addtogroup primitives */
 /** @{ */
-/** @file g_dsp.c
+/** @file dsp.c
  *
  * Intersect a ray with a displacement map.
  *
@@ -931,7 +931,11 @@ rt_dsp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     switch (dsp_ip->dsp_datasrc) {
 	case RT_DSP_SRC_V4_FILE:
 	case RT_DSP_SRC_FILE:
-	    BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
+	    if (!dsp_ip->dsp_mp) {
+		bu_log("dsp(%s): no data file or data file empty\n", bu_vls_addr(&dsp_ip->dsp_name));
+		return 1; /* BAD */
+	    }
+    	    BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
 
 	    /* we do this here and now because we will need it for the
 	     * dsp_specific structure in a few lines
@@ -941,6 +945,10 @@ rt_dsp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	    bu_semaphore_release( RT_SEM_MODEL);
 	    break;
 	case RT_DSP_SRC_OBJ:
+	    if (!dsp_ip->dsp_bip) {
+		bu_log("dsp(%s): no data\n", bu_vls_addr(&dsp_ip->dsp_name));
+		return 1; /* BAD */
+	    }
 	    RT_CK_DB_INTERNAL(dsp_ip->dsp_bip);
 	    RT_CK_BINUNIF(dsp_ip->dsp_bip->idb_ptr);
 	    break;
@@ -984,14 +992,14 @@ rt_dsp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	MAT4X3PNT(bbpt, dsp_ip->dsp_stom, pt); \
 	VMINMAX( stp->st_min, stp->st_max, bbpt)
 
-    BBOX_PT(-.1,		    -.1,		        -.1);
-    BBOX_PT(dsp_ip->dsp_xcnt+.1, -.1,		        -.1);
+    BBOX_PT(-.1,		 -.1,		      -.1);
+    BBOX_PT(dsp_ip->dsp_xcnt+.1, -.1,		      -.1);
     BBOX_PT(dsp_ip->dsp_xcnt+.1, dsp_ip->dsp_ycnt+.1, -1);
-    BBOX_PT(-.1,		    dsp_ip->dsp_ycnt+.1, -1);
-    BBOX_PT(-.1,		    -.1,		        dsp_max+.1);
-    BBOX_PT(dsp_ip->dsp_xcnt+.1, -.1,		        dsp_max+.1);
+    BBOX_PT(-.1,		 dsp_ip->dsp_ycnt+.1, -1);
+    BBOX_PT(-.1,		 -.1,		      dsp_max+.1);
+    BBOX_PT(dsp_ip->dsp_xcnt+.1, -.1,		      dsp_max+.1);
     BBOX_PT(dsp_ip->dsp_xcnt+.1, dsp_ip->dsp_ycnt+.1, dsp_max+.1);
-    BBOX_PT(-.1,		    dsp_ip->dsp_ycnt+.1, dsp_max+.1);
+    BBOX_PT(-.1,		 dsp_ip->dsp_ycnt+.1, dsp_max+.1);
 
 #undef BBOX_PT
 
@@ -1010,20 +1018,9 @@ rt_dsp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	       V3ARGS(stp->st_max));
     }
 
-
-    switch (dsp_ip->dsp_datasrc) {
-	case RT_DSP_SRC_V4_FILE:
-	case RT_DSP_SRC_FILE:
-	    BU_CK_MAPPED_FILE(dsp->dsp_i.dsp_mp);
-	    break;
-	case RT_DSP_SRC_OBJ:
-	    RT_CK_DB_INTERNAL(dsp->dsp_i.dsp_bip);
-	    RT_CK_BINUNIF(dsp->dsp_i.dsp_bip->idb_ptr);
-	    break;
-    }
-
     return 0;
 }
+
 
 static void
 plot_seg(struct isect_stuff *isect,
@@ -3136,10 +3133,11 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	case RT_DSP_SRC_V4_FILE:
 	case RT_DSP_SRC_FILE:
 	    if (!dsp_ip->dsp_mp) {
+		bu_log("WARNING: Cannot find data file for displacement map (DSP)\n");
 		if (bu_vls_addr(&dsp_ip->dsp_name)) {
-		    bu_log("Cannot find data for DSP, data file [%s] not found\n", bu_vls_addr(&dsp_ip->dsp_name));
+		    bu_log("         DSP data file [%s] not found or empty\n", bu_vls_addr(&dsp_ip->dsp_name)); 
 		} else {
-		    bu_log("Cannot find data for DSP\n");
+		    bu_log("         DSP data file not found or not specified\n");
 		}
 		return 0;
 	    }
@@ -3147,10 +3145,11 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	    break;
 	case RT_DSP_SRC_OBJ:
 	    if (!dsp_ip->dsp_bip) {
+		bu_log("WARNING: Cannot find data object for displacement map (DSP)\n");
 		if (bu_vls_addr(&dsp_ip->dsp_name)) {
-		    bu_log("Cannot find data for DSP, data object [%s] not found\n", bu_vls_addr(&dsp_ip->dsp_name));
+		    bu_log("         DSP data object [%s] not found or empty\n", bu_vls_addr(&dsp_ip->dsp_name));
 		} else {
-		    bu_log("Cannot find data for DSP\n");
+		    bu_log("         DSP data object not found or not specified\n");
 		}
 		return 0;
 	    }

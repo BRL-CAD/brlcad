@@ -15,6 +15,10 @@ on-going issues.
 Recent Bugs
 -----------
 
+* primitive selection in mged is busted, dies with a an error in
+  solid_illum (src/tclscripts/mged/illum.tcl) with _mged_ill returning
+  a db_lookup failure on "-n".
+
 * fast4-g skips lines while processing if there are DOS line endings
 
 * pipe primitive has a BU_GETSTRUCT malloc getting called during
