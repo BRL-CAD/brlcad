@@ -42,7 +42,6 @@ class PCSet;
 class Constraint {
     typedef boost::function1< bool, std::vector<VariableAbstract *> > functor;
 public:
-    std::list<std::string> Variables;
 
     /** constructors & Destructors */
     Constraint(PCSet &pcs);
@@ -51,11 +50,12 @@ public:
     
     bool solved();
     bool check(std::vector<VariableAbstract *> V);
-    void function(functor pf) { funct = pf; };
+    void evalfunction(functor pf) { eval = pf; };
     
     /** Data access/modification methods */
     std::string getID() const { return id; }
     std::string getExp() const { return expression; }
+    std::list<std::string> getVariableList() { return Variables; }
     void setStatus(int st) { status = st; }
 
     /** Display methods */
@@ -65,7 +65,8 @@ private:
     PCSet &pcset;
     std::string id;
     std::string expression;
-    functor funct; 
+    std::list<std::string> Variables;
+    functor eval; 
 };
 #endif
 /** @} */

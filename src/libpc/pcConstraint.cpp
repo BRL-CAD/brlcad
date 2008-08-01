@@ -39,7 +39,7 @@ Constraint::Constraint(PCSet &pcs, std::string Cid, std::string Cexpression, fun
     status(0),
     id(Cid),
     expression(Cexpression),
-    funct(pf)
+    eval(pf)
 {
 }
 
@@ -48,7 +48,7 @@ Constraint::Constraint(PCSet &pcs, std::string Cid, std::string Cexpression, fun
     status(0),
     id(Cid),
     expression(Cexpression),
-    funct(pf)
+    eval(pf)
 {
     for (int i=0; i<count; i++) {
 	Variables.push_back(va_arg(*args,char *));
@@ -69,7 +69,7 @@ bool Constraint::check(std::vector<VariableAbstract *> V)
     std::cout<<"##Checking for Values";
       for (i = V.begin(); i!= V.end(); i++) std::cout << " " << *i;
       std::cout << " for the constraint " << getExp() << std::endl;*/
-    if (funct(V)) {
+    if (eval(V)) {
 	status =1;
 	return true;
     } else {
@@ -80,7 +80,7 @@ bool Constraint::check(std::vector<VariableAbstract *> V)
 
 void Constraint::display()
 {
-    std::cout<< "Constraine id = " << id << "\t Expression = " << expression \
+    std::cout<< "Constraint id = " << id << "\t Expression = " << expression \
 	    << "\tSolved status = " << status << std::endl;
 }
 

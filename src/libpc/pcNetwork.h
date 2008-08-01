@@ -183,8 +183,9 @@ template<class T>
 void BinaryNetwork<T>::add_edge(Constraint C)
 {
     Vertex v1, v2;
-    getVertexbyID(C.Variables.front(), v1);
-    getVertexbyID(C.Variables.back(), v2);
+    std::list<std::string>  vl = C.getVariableList();
+    getVertexbyID(vl.front(), v1);
+    getVertexbyID(vl.back(), v2);
     boost::add_edge(v1, v2, C, G);
 }
 
