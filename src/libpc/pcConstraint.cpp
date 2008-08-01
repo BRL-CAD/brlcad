@@ -43,19 +43,16 @@ Constraint::Constraint(PCSet &pcs, std::string Cid, std::string Cexpression, fun
 {
 }
 
-Constraint::Constraint(PCSet &pcs, std::string Cid, std::string Cexpression, functor pf, int count,...) :
+Constraint::Constraint(PCSet &pcs, std::string Cid, std::string Cexpression, functor pf, int count, va_list * args) :
     pcset(pcs),
     status(0),
     id(Cid),
     expression(Cexpression),
     funct(pf)
 {
-    va_list args;
-    va_start(args,count);
     for (int i=0; i<count; i++) {
-	Variables.push_back(va_arg(args,char *));
+	Variables.push_back(va_arg(*args,char *));
     }
-    va_end(args);
 }
 
 bool Constraint::solved()
@@ -80,6 +77,13 @@ bool Constraint::check(std::vector<VariableAbstract *> V)
 	return false;
     }
 }
+
+void Constraint::display()
+{
+    std::cout<< "Constraine id = " << id << "\t Expression = " << expression \
+	    << "\tSolved status = " << status << std::endl;
+}
+
 /** @} */
 /*
  * Local Variables:

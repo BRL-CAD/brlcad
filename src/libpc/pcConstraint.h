@@ -44,15 +44,22 @@ class Constraint {
 public:
     std::list<std::string> Variables;
 
+    /** constructors & Destructors */
     Constraint(PCSet &pcs);
     Constraint(PCSet &pcs, std::string Cid, std::string Cexpr, functor);
-    Constraint(PCSet &pcs, std::string Cid, std::string Cexpr, functor, int count,...);
+    Constraint(PCSet &pcs, std::string Cid, std::string Cexpr, functor, int count,va_list * args);
+    
     bool solved();
     bool check(std::vector<VariableAbstract *> V);
     void function(functor pf) { funct = pf; };
+    
+    /** Data access/modification methods */
     std::string getID() const { return id; }
     std::string getExp() const { return expression; }
     void setStatus(int st) { status = st; }
+
+    /** Display methods */
+    void display();
 private:
     int status;
     PCSet &pcset;
