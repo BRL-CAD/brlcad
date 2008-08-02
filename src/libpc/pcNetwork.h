@@ -92,28 +92,29 @@ public:
     BinaryNetwork();
     BinaryNetwork(std::vector<Variable<T> >, std::vector<Constraint>);
     BinaryNetwork(PCSet & pcset);
+    
+    /** Data access methods */
+    void getVertexbyID(std::string, Vertex&);
+
+    /** Data addition/modification methods */
     void add_vertex(Variable<T> V);
     void add_edge(Constraint C);
     void setVariable(Vertex v, Variable<T>& var);
 
-    void getVertexbyID(std::string, Vertex&);
-    void display();
+    /** Solution support functions */
     bool check();
-    /* TODO: Implement Solver Hierarchy and Friendship Inheritance ? */
-    friend class GTSolver<T>;
-    friend class BTSolver<T>;
+
+    /** Data display methods */
+    void display();
 private:
     std::vector<Edge> precedents;
     Solution<T> S;
     Vertex v;
     Edge e;
-
-    void preprocess();
-    void propagate();
-    bool happy();
-    void atomic();
-    void split();
     Graph G;
+
+friend class GTSolver<T>;
+friend class BTSolver<T>;
 };
 
 #endif

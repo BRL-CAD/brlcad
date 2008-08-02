@@ -27,6 +27,7 @@
  */
 #include "pcNetwork.h"
 
+/** Default Constructor */
 template<class T>
 BinaryNetwork<T>::BinaryNetwork()
 {
@@ -48,6 +49,7 @@ BinaryNetwork<T>::BinaryNetwork(std::vector<Variable<T> > V, std::vector<Constra
     }
 }
 
+/** BinaryNetwork construction from PCSet */
 template<class T>
 BinaryNetwork<T>::BinaryNetwork(PCSet & pcset)
 {
@@ -115,7 +117,6 @@ void BinaryNetwork<T>::display()
 			  boost::make_graph_attributes_writer(graph_attr, vertex_attr, edge_attr));
 
 }
-
 
 template<class T>
 void BinaryNetwork<T>::getVertexbyID(std::string Vid, Vertex& v)
