@@ -60,8 +60,6 @@ include/vmath.h
 	ELEMENTS_PER_PT -> ELEMENTS_PER_POINT
 	HVECT_LEN -> ELEMENTS_PER_HVECT
 	HPT_LEN -> ELEMENTS_PER_HPOINT
-	M_SQRT2_DIV2 -> M_SQRT1_2
-	PI -> M_PI
 srt/librt/cmd.c
 	rt_split_cmd() -> bu_argv_from_string() [deprecated 7.12]
 src/rt/viewarea.c
@@ -93,6 +91,12 @@ include/raytrace.h
 ************
 * OBSOLETE *
 ************
+
+7.14.0
+------
+include/vmath.h
+	PI -> M_PI
+	M_SQRT2_DIV2 -> M_SQRT1_2
 
 7.12.4
 ------

@@ -131,9 +131,6 @@ __BEGIN_DECLS
 #ifndef M_SQRT1_2
 #  define M_SQRT1_2	0.70710678118654752440084436210 /**< sqrt(1/2) */
 #endif
-#ifndef M_SQRT2_DIV2
-#  define M_SQRT2_DIV2	0.70710678118654752440  /**< sqrt(2)/2 , DEPRECATED - use M_SQRT1_2 */
-#endif
 #ifndef M_SQRT2
 #  define M_SQRT2	1.41421356237309504880168872421 /**< sqrt(2) */
 #endif
@@ -144,9 +141,6 @@ __BEGIN_DECLS
 #  define M_SQRTPI	1.77245385090551602729816748334 /**< sqrt(pi) */
 #endif
 
-#ifndef PI
-#  define PI 		M_PI /**< DEPRECATED - do not use */
-#endif
 #ifndef DEG2RAD
 #  define DEG2RAD       0.017453292519943295769236907684 /**< pi/180 */
 #endif
