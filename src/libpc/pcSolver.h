@@ -37,10 +37,6 @@
 #include "pcConstraint.h"
 #include "pcNetwork.h"
 
-
-template<class T>
-class BinaryNetwork;
-
 /* Generate Test based Solver Technique */
 using namespace boost;
 template<class T>

@@ -43,13 +43,23 @@ typedef Variable<int> * Vip;
 struct f1 {
 public:
     bool operator() (PCSet & pcset, std::list<std::string> Vid) const {
-    return true;//((Vip (V[0]))->getValue()*(Vip (V[1]))->getValue()-12 == 0);
+    typedef Variable<int> * Vi ;
+    int A = ((Vi) pcset.getVariablebyID("A"))->getValue();
+    int B = ((Vi) pcset.getVariablebyID("B"))->getValue();
+    //std::cout << "!== A  " << A << std::endl;
+    //std::cout << "!== B  " << B << std::endl;
+    return true; //(A * B == 12);
     }
 } f1;
 struct f2 {
 public:
     bool operator() (PCSet & pcset, std::list<std::string> Vid) const {
-    return true; //((Vip (V[0]))->getValue()+(Vip (V[1]))->getValue()-5 < 0);
+    typedef Variable<int> * Vi ;
+    int B = ((Vi) pcset.getVariablebyID("B"))->getValue();
+    int C = ((Vi) pcset.getVariablebyID("C"))->getValue();
+    //std::cout << "!== B  " << B << std::endl;
+    //std::cout << "!== C  " << C << std::endl;
+    return true; //(B + C < 5);
     }
 } f2;
 

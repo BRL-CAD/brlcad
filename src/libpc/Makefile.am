@@ -28,6 +28,7 @@ libpc_nil_la_SOURCES = \
 	pcVariable.cpp \
 	pcConstraint.cpp \
 	pcPCSet.cpp \
+	pcNetwork.cpp \
 	pcGenerator.cpp \
 	pcParser.cpp
 
