@@ -11,15 +11,32 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
---- 2008-06-XX  Release 7.12.5                                     ---
+--- 2008-06-XX  Release 7.12.6                                     ---
 ----------------------------------------------------------------------
 
+This release enhances the formatting options available "out of the
+box" for NIRT, as well as adding an -L option to list available
+options.
+
+The tire tool has had several updates - it will no longer overwrite
+pre-existing files, corrections to the tread geometry have been
+introduced, and a "w" flag now accepts a value of "0" to disable
+creation of the default wheel rim.
+
+MGED's dbconcat command no longer hangs when not specifying an affix,
+and the solid_illum bug has been fixed. Raytracing performance on
+the pipe primitive was improved, and a bug in the extrude primitive's
+handling of invalid geometry was fixed.
+
+* add w option to tire to allow disabling wheel generation - C. Yapp
+* tweak tread 2 in tire tool; avoid artifacts on tread wall - C. Yapp
+* fixed mged 'dbconcat' hang when not specifying an affix - Bob Parker
+* fixed primitive selection solid_illum bug in mged - Bob Parker
 * fix bug in tire tool's geometry causing 'nicks' in tread - C. Yapp
 * increased raytrace performace of pipe primitive - John Anderson
 * fixed bugs handling invalid extrude objects - Sean Morrison
 * fixed dependency bug in library pkg-config files - Sean Morrison
 * platform installers use consistent naming conventions- Sean Morrison
-* added -C color option to the mged 'E' command - Bob Parker
 * added new -c character option to the loop command - Dawn Thomas
 * tire now checks for files instead of overwriting - Cliff Yapp
 * add new nirt formatting options, -L listing option - C. Yapp
