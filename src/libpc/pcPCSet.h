@@ -49,7 +49,7 @@ class Constraint;
 class PCSet
 {
 
-    typedef boost::function1< bool, std::vector<VariableAbstract *> > functor;
+    typedef boost::function2< bool, PCSet &, std::list<std::string> > functor;
 public:
     std::list<VariableAbstract *> Vars;
     std::list<Constraint *> Constraints;

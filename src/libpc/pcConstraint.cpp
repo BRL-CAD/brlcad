@@ -63,13 +63,9 @@ bool Constraint::solved()
         return true;
 }
 
-bool Constraint::check(std::vector<VariableAbstract *> V)
+bool Constraint::check()
 {
-    /*typename std::vector<T>::iterator i;
-    std::cout<<"##Checking for Values";
-      for (i = V.begin(); i!= V.end(); i++) std::cout << " " << *i;
-      std::cout << " for the constraint " << getExp() << std::endl;*/
-    if (eval(V)) {
+    if (eval(pcset, Variables)) {
 	status =1;
 	return true;
     } else {

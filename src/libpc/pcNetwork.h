@@ -314,8 +314,9 @@ bool BinaryNetwork<T>::check()
 	u = target(e, G);
 	assignment.push_back(&G[v]);
 	assignment.push_back(&G[u]);
-	if (! G[e].check(assignment)) {
-	    assignment.clear();
+	/*if (! G[e].check(assignment)) {*/
+	if (! G[e].check()) {
+	    //assignment.clear();
 	    return false;
 	}
 	assignment.clear();

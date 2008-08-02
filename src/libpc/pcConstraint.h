@@ -40,7 +40,7 @@
 class PCSet;
 
 class Constraint {
-    typedef boost::function1< bool, std::vector<VariableAbstract *> > functor;
+    typedef boost::function2< bool, PCSet &,std::list<std::string> > functor;
 public:
 
     /** constructors & Destructors */
@@ -49,7 +49,7 @@ public:
     Constraint(PCSet &pcs, std::string Cid, std::string Cexpr, functor, int count,va_list * args);
     
     bool solved();
-    bool check(std::vector<VariableAbstract *> V);
+    bool check();
     void evalfunction(functor pf) { eval = pf; };
     
     /** Data access/modification methods */

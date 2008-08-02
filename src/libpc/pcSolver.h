@@ -213,7 +213,8 @@ bool BTSolver<T>::check()
 	    assignment.push_back(&(N->G[v]));
 	    assignment.push_back(&(N->G[u]));
 	    ++num_checks;
-	    if (!N->G[*e_i].check(assignment)) {
+	    /*if (!N->G[*e_i].check(assignment)) {*/
+	    if (!N->G[*e_i].check()) {
 		assignment.clear();
 		//std::cout<<"Constraint unsolved"<<std::endl;
 		return false;

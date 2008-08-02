@@ -40,19 +40,32 @@
 
 typedef Variable<int> * Vip;
 /* Constraint functions */
-bool f1(std::vector<VariableAbstract *> V ) {
-    
-    return ((Vip (V[0]))->getValue()*(Vip (V[1]))->getValue()-12 == 0);
-}
-bool f2(std::vector<VariableAbstract *> V ) {
-    return ((Vip (V[0]))->getValue()+(Vip (V[1]))->getValue()-5 < 0);
-}
-bool f3(std::vector<VariableAbstract *> V ) {
-    return ((Vip (V[0]))->getValue()- (Vip (V[1]))->getValue() - 2 == 0);
-}
-bool f4(std::vector<VariableAbstract *> V ) {
-    return ((Vip (V[1]))->getValue()* (Vip (V[0]))->getValue() - 4 == 0);
-}
+struct f1 {
+public:
+    bool operator() (PCSet & pcset, std::list<std::string> Vid) const {
+    return true;//((Vip (V[0]))->getValue()*(Vip (V[1]))->getValue()-12 == 0);
+    }
+} f1;
+struct f2 {
+public:
+    bool operator() (PCSet & pcset, std::list<std::string> Vid) const {
+    return true; //((Vip (V[0]))->getValue()+(Vip (V[1]))->getValue()-5 < 0);
+    }
+} f2;
+
+struct f3 {
+public:
+    bool operator() (PCSet & pcset, std::list<std::string> Vid) const {
+    return true; //((Vip (V[0]))->getValue()- (Vip (V[1]))->getValue() - 2 == 0);
+    }
+} f3;
+
+struct f4 {
+public:
+    bool operator() (PCSet & pcset, std::list<std::string> Vid) const {
+    return true; //((Vip (V[1]))->getValue()* (Vip (V[0]))->getValue() - 4 == 0);
+    }
+} f4;
 
 int main()
 {
