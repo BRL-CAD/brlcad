@@ -3344,7 +3344,6 @@ get_new_name(const char *name,
 
     bu_vls_init(&new_name);
     bu_vls_init(&prev_name);
-    bu_vls_printf(&prev_name, " ");
 
     do {
 	/* iterate until we find an object name that is not in
