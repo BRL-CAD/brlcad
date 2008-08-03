@@ -151,7 +151,7 @@ int main()
     S.clear();
     std::cout << "-----------------------------" << std::endl;
     
-    //BTS.solve(&N,&S);
+    BTS.solve(&N,&S);
     std::cout << "Solution using BackTracking" << std::endl;
     
     S.display();

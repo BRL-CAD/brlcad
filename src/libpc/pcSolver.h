@@ -123,14 +123,19 @@ using namespace boost;
 template<class T>
 class BTSolver
 {
-private:
     typedef typename boost::adjacency_list<vecS, vecS, bidirectionalS,
-					   Variable<T>, Constraint> Graph;
+					   Variable<T>*, Constraint *> Graph;
     typedef graph_traits<Graph> GraphTraits;
     typedef typename GraphTraits::vertex_descriptor Vertex;
     typedef typename GraphTraits::edge_descriptor Edge;
     typename GraphTraits::vertex_iterator v_i, v_end;
     typename GraphTraits::edge_iterator e_i, e_end;
+
+public:
+    bool solve(class BinaryNetwork<T>* , Solution<T>* );
+    long numChecks() { return num_checks; }
+
+private:
     Vertex v,u;
     long num_checks;
     std::vector<bool> labels;
@@ -144,53 +149,32 @@ private:
     }
     bool backtrack();
     bool check();
-
-
-public:
-    bool solve(class BinaryNetwork<T>* , Solution<T>* );
-    long numChecks() { return num_checks; }
 };
 
 template<class T>
 bool BTSolver<T>::backtrack()
 {
-    //std::cout << "-------------------------------" << std::endl;
     bool nexttest = false;
     typename GraphTraits::vertex_iterator ver_i, ver_end;
 
     if (labelsize() == num_vertices(N->G)) {
-	//std::cout << "+------------------------------" << std::endl;
 	return true;
     }
     tie(ver_i,ver_end) = vertices(N->G);
     while (labels[*ver_i] && ver_i!= ver_end)
 	++ver_i;
     labels[*ver_i] = true;
-    //std::cout<<"Variable: "<<N->G[*ver_i].getID()<<std::endl;
     for (N->G[*ver_i]->setValue(N->G[*ver_i]->getFirst()); \
 	     N->G[*ver_i]->getValue() != N->G[*ver_i]->getLast(); \
 	     ++*(N->G[*ver_i])) {
 	if (check()) {
-	    //std::cout<<"Passed checking"<<std::endl;
-	    //std::cout<<"==-----------------------------"<<std::endl;
 	    nexttest = backtrack();
-	    //std::cout<<"Backtrack returned "<<nexttest<<std::endl;
 	    if (nexttest) {
-		//std::cout<<"++-----------------------------"<<std::endl;
 		return true;
-		break;
 	    }
-
-	} /*else {
-	    labels[*v_i] = false;
-	    }*/
-	//std::cout<<"Chance to Increment Variable: "<<N->G[*ver_i].getID()<< " from " << N->G[*ver_i].getValue()<<std::endl;
-//	if (N->G[*v_i].getValue() == N->G[*v_i].getLast()) break;
+	}
     }
-//    N->G[*v_i].setValue(N->G[*v_i].getFirst());
     labels[*ver_i] = false;
-    //std::cout<<"Backtrack to previous"<<std::endl;
-    //std::cout<<"+++----------------------------"<<std::endl;
     return false;
 }
 
@@ -201,16 +185,12 @@ bool BTSolver<T>::check()
 	v = source(*e_i,N->G);
 	u = target(*e_i,N->G);
 	if (labels[v] && labels[u] ) {
-	    //std::cout<<"---"<<N->G[*e_i].getExp()<<"  "<<N->G[v].getValue()<<","<<N->G[u].getValue()<<std::endl;
 	    ++num_checks;
-	    /*if (!N->G[*e_i].check(assignment)) {*/
 	    if (!N->G[*e_i]->check()) {
-		//std::cout<<"Constraint unsolved"<<std::endl;
 		return false;
 	    }
 	}
     }
-    //std::cout<<"Constraint solved"<<std::endl;
     return true;
 }
 
