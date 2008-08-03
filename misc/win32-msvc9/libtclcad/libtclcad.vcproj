@@ -84,7 +84,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="imm32.lib comctl32.lib tcl85.lib tk85.lib itcl34.lib itk34.lib libbu.lib libbn.lib librt.lib libfb.lib libdm.lib BLT24.lib"
+				AdditionalDependencies="imm32.lib comctl32.lib tcl85.lib tk85.lib itcl34.lib itk34.lib libfb.lib libbu.lib libged.lib libbn.lib librt.lib libdm.lib BLT24.lib"
 				OutputFile=".\$(PlatformName)\$(ConfigurationName)/libtclcad.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -229,6 +229,10 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat;f90;for;f;fpp"
 			>
+			<File
+				RelativePath="..\..\..\src\libtclcad\ged_obj.c"
+				>
+			</File>
 			<File
 				RelativePath="..\..\..\src\libtclcad\tclcad.c"
 				>
