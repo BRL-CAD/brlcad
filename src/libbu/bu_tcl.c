@@ -38,8 +38,6 @@
 
 #include "tcl.h"
 #include "cmd.h"		/* this includes bu.h */
-#include "vmath.h"
-#include "bn.h"
 #include "bu.h"
 
 /*XXX Temporary global interp */
@@ -1095,7 +1093,7 @@ bu_tcl_rgb_to_hsv(ClientData	clientData,
     rgb[2] = rgb_int[2];
 
     bu_rgb_to_hsv( rgb, hsv );
-    bu_vls_printf(&result, "%g %g %g", V3ARGS(hsv));
+    bu_vls_printf(&result, "%g %g %g", hsv[0], hsv[1], hsv[2]);
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
     return TCL_OK;
@@ -1145,7 +1143,7 @@ bu_tcl_hsv_to_rgb(ClientData	clientData,
 	return TCL_ERROR;
     }
 
-    bu_vls_printf(&result, "%d %d %d", V3ARGS(rgb));
+    bu_vls_printf(&result, "%d %d %d", rgb[0], rgb[1], rgb[2]);
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
     return TCL_OK;
@@ -1419,7 +1417,7 @@ bu_tcl_units_conversion(ClientData	clientData,
     }
 
     conv_factor = bu_units_conversion(argv[1]);
-    if (NEAR_ZERO(conv_factor, SMALL_FASTF)) {
+    if (conv_factor <= 0.0) {
 	Tcl_AppendResult(interp, "ERROR: bu_units_conversion: Unrecognized units string: ",
 			 argv[1], "\n", (char *)NULL);
 	return TCL_ERROR;
