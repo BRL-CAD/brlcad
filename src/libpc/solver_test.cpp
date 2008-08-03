@@ -141,17 +141,17 @@ int main()
       S = N.solve();
       S.display();
     */
-    GTSolver<int> GTS(N);
+    GTSolver<int> GTS;
     BTSolver<int> BTS;
 
     std::cout << "-----------------------------" << std::endl;
-    GTS.solve(&S);
+    GTS.solve(N,S);
     std::cout << "Solution using Generate-Test" << std::endl;
     S.display();
     S.clear();
     std::cout << "-----------------------------" << std::endl;
     
-    BTS.solve(&N,&S);
+    BTS.solve(N,S);
     std::cout << "Solution using BackTracking" << std::endl;
     
     S.display();

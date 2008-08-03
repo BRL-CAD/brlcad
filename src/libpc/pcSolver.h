@@ -42,7 +42,6 @@ using namespace boost;
 template<class T>
 class GTSolver
 {
-private:
     typedef typename boost::adjacency_list<vecS, vecS, bidirectionalS,
 					   Variable<T>*, Constraint *> Graph;
     typedef graph_traits<Graph> GraphTraits;
@@ -50,23 +49,23 @@ private:
     typedef typename GraphTraits::edge_descriptor Edge;
     typename GraphTraits::vertex_iterator v_i, v_end;
 
+public:
+    GTSolver() : initiated(false) { }
+    bool solve(BinaryNetwork<T>&, Solution<T>& );
+    long numChecks () { return num_checks; }
+private:
     long num_checks;
     bool initiated;
-    class BinaryNetwork<T>& N;
+    BinaryNetwork<T>* N;
     bool generator();
     void initiate();
-
-public:
-    GTSolver(BinaryNetwork<T> & BN) : initiated(false), N(BN) { }
-    bool solve(Solution<T> * );
-    long numChecks () { return num_checks; }
 };
 
 
 template<class T>
 void GTSolver<T>::initiate() {
-    for (tie(v_i,v_end) = vertices(N.G); v_i != v_end; ++v_i)
-	N.G[*v_i]->setValue(N.G[*v_i]->getFirst());
+    for (tie(v_i,v_end) = vertices(N->G); v_i != v_end; ++v_i)
+	N->G[*v_i]->setValue(N->G[*v_i]->getFirst());
     initiated = true;
 }
 
@@ -76,25 +75,25 @@ bool GTSolver<T>::generator() {
 	initiate();
     } else {
 	typename GraphTraits::vertex_iterator vertex_v, vertex_u,vertex_end;
-	tie(vertex_u,vertex_v) = vertices(N.G);
+	tie(vertex_u,vertex_v) = vertices(N->G);
 	vertex_end = vertex_v;
 	--vertex_v;
 	T v1,v2;
 	while (vertex_v != vertex_u) {
-	    if (N.G[*vertex_v]->getValue() == N.G[*vertex_v]->getLast())
+	    if (N->G[*vertex_v]->getValue() == N->G[*vertex_v]->getLast())
 		--vertex_v;
 	    else
 		break;
 	}
 
-	if (N.G[*vertex_u]->getValue() == N.G[*vertex_v]->getLast())
+	if (N->G[*vertex_u]->getValue() == N->G[*vertex_v]->getLast())
 	    return false;
 	/* Increment one variable and set the other variables to the first value */
-	++(*(N.G[*vertex_v]));
+	++(*(N->G[*vertex_v]));
 	if (true ||vertex_v != vertex_u) {
 	    ++vertex_v;
 	    while (vertex_v != vertex_end) {
-		N.G[*vertex_v]->setValue(N.G[*vertex_v]->getFirst());
+		N->G[*vertex_v]->setValue(N->G[*vertex_v]->getFirst());
 		++vertex_v;
 	    }
 	}
@@ -103,14 +102,15 @@ bool GTSolver<T>::generator() {
 }
 
 template<class T>
-bool GTSolver<T>::solve(Solution<T> * S) {
+bool GTSolver<T>::solve(BinaryNetwork<T>& BN, Solution<T>& S) {
+    N = &BN;
     num_checks = 0;
     while (generator()) {
 	++num_checks;
-	if (N.check()) {
-	    for (tie(v_i,v_end) = vertices(N.G); v_i != v_end; ++v_i) {
-		S->VarDom.push_back(VarDomain<T>(*(N.G[*v_i]),\
-						 Domain<T>(N.G[*v_i]->getValue(),N.G[*v_i]->getValue(),1)));
+	if (N->check()) {
+	    for (tie(v_i,v_end) = vertices(N->G); v_i != v_end; ++v_i) {
+		S.VarDom.push_back(VarDomain<T>(*(N->G[*v_i]),\
+						 Domain<T>(N->G[*v_i]->getValue(),N->G[*v_i]->getValue(),1)));
 	    }
 	    return true;
 	}
@@ -132,7 +132,7 @@ class BTSolver
     typename GraphTraits::edge_iterator e_i, e_end;
 
 public:
-    bool solve(class BinaryNetwork<T>* , Solution<T>* );
+    bool solve(class BinaryNetwork<T>& , Solution<T>& );
     long numChecks() { return num_checks; }
 
 private:
@@ -141,15 +141,18 @@ private:
     std::vector<bool> labels;
     class BinaryNetwork<T>* N;
 
-    int labelsize() {
-	int i=0;
-	for (tie(v_i,v_end) = vertices(N->G); v_i != v_end; ++v_i)
-	    if (labels[*v_i] == true) i++;
-	return i;
-    }
+    int labelsize();
     bool backtrack();
     bool check();
 };
+
+template<class T>
+int BTSolver<T>::labelsize() {
+    int i=0;
+    for (tie(v_i,v_end) = vertices(N->G); v_i != v_end; ++v_i)
+	if (labels[*v_i] == true) i++;
+    return i;
+}
 
 template<class T>
 bool BTSolver<T>::backtrack()
@@ -195,8 +198,8 @@ bool BTSolver<T>::check()
 }
 
 template<class T>
-bool BTSolver<T>::solve(class BinaryNetwork<T>* BN,Solution<T>* S) {
-    N = BN;
+bool BTSolver<T>::solve(class BinaryNetwork<T>& BN,Solution<T>& S) {
+    N = &BN;
     num_checks = 0;
     for (tie(v_i,v_end) = vertices(N->G); v_i != v_end; ++v_i) {
 	labels.push_back(false);
@@ -205,8 +208,8 @@ bool BTSolver<T>::solve(class BinaryNetwork<T>* BN,Solution<T>* S) {
     backtrack();
     if (N->check()) {
 	for (tie(v_i,v_end) = vertices(N->G); v_i != v_end; ++v_i) {
-	    S->VarDom.push_back(VarDomain<T>(*(N->G[*v_i]),\
-					     Domain<T>(N->G[*v_i]->getValue(),N->G[*v_i]->getValue(),1)));
+	    S.VarDom.push_back(VarDomain<T>(*(N->G[*v_i]),\
+		    Domain<T>(N->G[*v_i]->getValue(),N->G[*v_i]->getValue(),1)));
 	}
 	return true;
     }
