@@ -229,6 +229,10 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat;f90;for;f;fpp"
 			>
 			<File
+				RelativePath="..\..\..\src\libbu\argv.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libbu\association.c"
 				>
 				<FileConfiguration
@@ -267,6 +271,10 @@
 						AdditionalIncludeDirectories=""
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libbu\backtrace.c"
+				>
 			</File>
 			<File
 				RelativePath="..\..\..\src\libbu\badmagic.c"
@@ -487,6 +495,10 @@
 						AdditionalIncludeDirectories=""
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libbu\crashreport.c"
+				>
 			</File>
 			<File
 				RelativePath="..\..\..\src\libbu\dirent.c"
@@ -1363,6 +1375,10 @@
 						AdditionalIncludeDirectories=""
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libbu\vlb.c"
+				>
 			</File>
 			<File
 				RelativePath="..\..\..\src\libbu\vls.c"
