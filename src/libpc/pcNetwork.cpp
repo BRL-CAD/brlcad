@@ -34,9 +34,9 @@ BinaryNetwork<T>::BinaryNetwork()
 };
 
 template<class T>
-BinaryNetwork<T>::BinaryNetwork(std::vector<Variable<T> > V, std::vector<Constraint> C) {
-    typename std::vector<Variable<T> >::iterator i = V.begin();
-    typename std::vector<Constraint>::iterator j = C.begin();
+BinaryNetwork<T>::BinaryNetwork(std::vector<Variable<T> *> V, std::vector<Constraint *> C) {
+    typename std::vector<Variable<T> *>::iterator i = V.begin();
+    typename std::vector<Constraint *>::iterator j = C.begin();
 
     while (i!=V.end()) {
 	add_vertex(*i, G);
@@ -58,31 +58,31 @@ BinaryNetwork<T>::BinaryNetwork(PCSet & pcset)
 
     for ( i = pcset.Vars.begin(); i != pcset.Vars.end(); ++i) {
 	typedef Variable<T>* Vp;
-	add_vertex(*(Vp (*i)));
+	add_vertex(Vp (*i));
     }
     for ( j = pcset.Constraints.begin(); j != pcset.Constraints.end(); ++j) {
-	add_edge(**j);
+	add_edge(*j);
     }
 }
 
 template<class T>
-void BinaryNetwork<T>::add_vertex(Variable<T> V)
+void BinaryNetwork<T>::add_vertex(Variable<T>* V)
 {
     boost::add_vertex(V, G);
 }
 
 template<class T>
-void BinaryNetwork<T>::add_edge(Constraint C)
+void BinaryNetwork<T>::add_edge(Constraint * C)
 {
     Vertex v1, v2;
-    std::list<std::string>  vl = C.getVariableList();
+    std::list<std::string>  vl = C->getVariableList();
     getVertexbyID(vl.front(), v1);
     getVertexbyID(vl.back(), v2);
     boost::add_edge(v1, v2, C, G);
 }
 
 template<class T>
-void BinaryNetwork<T>::setVariable(Vertex v, Variable<T>& var)
+void BinaryNetwork<T>::setVariable(Vertex v, Variable<T>* var)
 {
     G[v] = var;
 }
@@ -93,7 +93,7 @@ bool BinaryNetwork<T>::check()
     typename GraphTraits::edge_iterator e_i, e_end;
     for (tie(e_i, e_end) = edges(G); e_i != e_end; ++e_i) {
 	e = *e_i;
-	if (! G[e].check()) {
+	if (! G[e]->check()) {
 	    return false;
 	}
     }
@@ -122,10 +122,9 @@ template<class T>
 void BinaryNetwork<T>::getVertexbyID(std::string Vid, Vertex& v)
 {
     for (tie(v_i, v_end) = vertices(G); v_i != v_end; ++v_i) {
-	if ( G[*v_i].getID() == Vid ) {
+	if ( G[*v_i]->getID() == Vid ) {
 	    v = *v_i;
 	    return ;
-	    break;
 	}
     }
     return ;

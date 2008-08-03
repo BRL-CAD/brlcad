@@ -44,7 +44,7 @@ class GTSolver
 {
 private:
     typedef typename boost::adjacency_list<vecS, vecS, bidirectionalS,
-					   Variable<T>, Constraint> Graph;
+					   Variable<T>*, Constraint *> Graph;
     typedef graph_traits<Graph> GraphTraits;
     typedef typename GraphTraits::vertex_descriptor Vertex;
     typedef typename GraphTraits::edge_descriptor Edge;
@@ -66,35 +66,35 @@ public:
 template<class T>
 void GTSolver<T>::initiate() {
     for (tie(v_i,v_end) = vertices(N.G); v_i != v_end; ++v_i)
-	N.G[*v_i].setValue(N.G[*v_i].getFirst());
+	N.G[*v_i]->setValue(N.G[*v_i]->getFirst());
+    initiated = true;
 }
 
 template<class T>
 bool GTSolver<T>::generator() {
     if (!initiated) {
 	initiate();
-	initiated = true;
     } else {
 	typename GraphTraits::vertex_iterator vertex_v, vertex_u,vertex_end;
 	tie(vertex_u,vertex_v) = vertices(N.G);
 	vertex_end = vertex_v;
 	--vertex_v;
+	T v1,v2;
 	while (vertex_v != vertex_u) {
-	    //std::cout << N.G[*vertex_v].getValue() << " ???" << N.G[*vertex_v].getLast() << std::endl;
-	    if (N.G[*vertex_v].getValue() == N.G[*vertex_v].getLast())
+	    if (N.G[*vertex_v]->getValue() == N.G[*vertex_v]->getLast())
 		--vertex_v;
 	    else
 		break;
 	}
 
-	if (N.G[*vertex_u].getValue() == N.G[*vertex_v].getLast())
+	if (N.G[*vertex_u]->getValue() == N.G[*vertex_v]->getLast())
 	    return false;
 	/* Increment one variable and set the other variables to the first value */
-	++(N.G[*vertex_v]);
+	++(*(N.G[*vertex_v]));
 	if (true ||vertex_v != vertex_u) {
 	    ++vertex_v;
 	    while (vertex_v != vertex_end) {
-		N.G[*vertex_v].setValue(N.G[*vertex_v].getFirst());
+		N.G[*vertex_v]->setValue(N.G[*vertex_v]->getFirst());
 		++vertex_v;
 	    }
 	}
@@ -106,14 +106,11 @@ template<class T>
 bool GTSolver<T>::solve(Solution<T> * S) {
     num_checks = 0;
     while (generator()) {
-    /*for (tie(v_i,v_end) = vertices(N.G); v_i != v_end; ++v_i)
-	  std::cout << N.G[*v_i].getValue();
-	  std::cout << std::endl;*/
 	++num_checks;
 	if (N.check()) {
 	    for (tie(v_i,v_end) = vertices(N.G); v_i != v_end; ++v_i) {
-		S->VarDom.push_back(VarDomain<T>(N.G[*v_i],\
-						 Domain<T>(N.G[*v_i].getValue(),N.G[*v_i].getValue(),1)));
+		S->VarDom.push_back(VarDomain<T>(*(N.G[*v_i]),\
+						 Domain<T>(N.G[*v_i]->getValue(),N.G[*v_i]->getValue(),1)));
 	    }
 	    return true;
 	}
@@ -170,9 +167,9 @@ bool BTSolver<T>::backtrack()
 	++ver_i;
     labels[*ver_i] = true;
     //std::cout<<"Variable: "<<N->G[*ver_i].getID()<<std::endl;
-    for (N->G[*ver_i].setValue(N->G[*ver_i].getFirst()); \
-	     N->G[*ver_i].getValue() != N->G[*ver_i].getLast(); \
-	     ++N->G[*ver_i]) {
+    for (N->G[*ver_i]->setValue(N->G[*ver_i]->getFirst()); \
+	     N->G[*ver_i]->getValue() != N->G[*ver_i]->getLast(); \
+	     ++*(N->G[*ver_i])) {
 	if (check()) {
 	    //std::cout<<"Passed checking"<<std::endl;
 	    //std::cout<<"==-----------------------------"<<std::endl;
@@ -200,23 +197,18 @@ bool BTSolver<T>::backtrack()
 template<class T>
 bool BTSolver<T>::check()
 {
-    std::vector<VariableAbstract *> assignment;
     for (tie(e_i,e_end) = edges(N->G); e_i != e_end; ++e_i) {
 	v = source(*e_i,N->G);
 	u = target(*e_i,N->G);
 	if (labels[v] && labels[u] ) {
 	    //std::cout<<"---"<<N->G[*e_i].getExp()<<"  "<<N->G[v].getValue()<<","<<N->G[u].getValue()<<std::endl;
-	    assignment.push_back(&(N->G[v]));
-	    assignment.push_back(&(N->G[u]));
 	    ++num_checks;
 	    /*if (!N->G[*e_i].check(assignment)) {*/
-	    if (!N->G[*e_i].check()) {
-		assignment.clear();
+	    if (!N->G[*e_i]->check()) {
 		//std::cout<<"Constraint unsolved"<<std::endl;
 		return false;
 	    }
 	}
-	assignment.clear();
     }
     //std::cout<<"Constraint solved"<<std::endl;
     return true;
@@ -228,13 +220,13 @@ bool BTSolver<T>::solve(class BinaryNetwork<T>* BN,Solution<T>* S) {
     num_checks = 0;
     for (tie(v_i,v_end) = vertices(N->G); v_i != v_end; ++v_i) {
 	labels.push_back(false);
-	N->G[*v_i].setValue(N->G[*v_i].getFirst());
+	N->G[*v_i]->setValue(N->G[*v_i]->getFirst());
     }
     backtrack();
     if (N->check()) {
 	for (tie(v_i,v_end) = vertices(N->G); v_i != v_end; ++v_i) {
-	    S->VarDom.push_back(VarDomain<T>(N->G[*v_i],\
-					     Domain<T>(N->G[*v_i].getValue(),N->G[*v_i].getValue(),1)));
+	    S->VarDom.push_back(VarDomain<T>(*(N->G[*v_i]),\
+					     Domain<T>(N->G[*v_i]->getValue(),N->G[*v_i]->getValue(),1)));
 	}
 	return true;
     }

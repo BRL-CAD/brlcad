@@ -44,11 +44,13 @@ struct f1 {
 public:
     bool operator() (PCSet & pcset, std::list<std::string> Vid) const {
     typedef Variable<int> * Vi ;
-    int A = ((Vi) pcset.getVariablebyID("A"))->getValue();
+    int A = ((Variable<int>*) pcset.getVariablebyID("A"))->getValue();
     int B = ((Vi) pcset.getVariablebyID("B"))->getValue();
     //std::cout << "!== A  " << A << std::endl;
     //std::cout << "!== B  " << B << std::endl;
-    return true; //(A * B == 12);
+    //PC_PCSET_GETVAR(pcset, int, A);
+    //PC_PCSET_GETVAR(pcset, int, B);
+    return (A * B == 12);
     }
 } f1;
 struct f2 {
@@ -59,21 +61,33 @@ public:
     int C = ((Vi) pcset.getVariablebyID("C"))->getValue();
     //std::cout << "!== B  " << B << std::endl;
     //std::cout << "!== C  " << C << std::endl;
-    return true; //(B + C < 5);
+    //PC_PCSET_GETVAR(pcset, int, B);
+    //PC_PCSET_GETVAR(pcset, int, C);
+    return (B + C < 5);
     }
 } f2;
 
 struct f3 {
 public:
     bool operator() (PCSet & pcset, std::list<std::string> Vid) const {
-    return true; //((Vip (V[0]))->getValue()- (Vip (V[1]))->getValue() - 2 == 0);
+    typedef Variable<int> * Vi ;
+    int A = ((Vi) pcset.getVariablebyID("A"))->getValue();
+    int D = ((Vi) pcset.getVariablebyID("D"))->getValue();
+    //PC_PCSET_GETVAR(pcset, int, A);
+    //PC_PCSET_GETVAR(pcset, int, D);
+    return (A - D == 2);
     }
 } f3;
 
 struct f4 {
 public:
     bool operator() (PCSet & pcset, std::list<std::string> Vid) const {
-    return true; //((Vip (V[1]))->getValue()* (Vip (V[0]))->getValue() - 4 == 0);
+    typedef Variable<int> * Vi ;
+    int C = ((Vi) pcset.getVariablebyID("C"))->getValue();
+    int A = ((Vi) pcset.getVariablebyID("A"))->getValue();
+    //PC_PCSET_GETVAR(pcset, int, A);
+    //PC_PCSET_GETVAR(pcset, int, C);
+    return (A * C == 4);
     }
 } f4;
 
@@ -98,7 +112,7 @@ int main()
     pc_free_pcset(&pcs);
 
     typedef boost::adjacency_list<vecS, vecS, bidirectionalS,
-	Variable<int>, Constraint > Graph;
+	Variable<int>*, Constraint *> Graph;
     typedef boost::graph_traits<Graph> GraphTraits;
     typedef GraphTraits::vertex_descriptor Vertex;
     typedef GraphTraits::edge_descriptor Edge;
@@ -137,7 +151,7 @@ int main()
     S.clear();
     std::cout << "-----------------------------" << std::endl;
     
-    BTS.solve(&N,&S);
+    //BTS.solve(&N,&S);
     std::cout << "Solution using BackTracking" << std::endl;
     
     S.display();

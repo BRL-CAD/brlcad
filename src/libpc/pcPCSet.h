@@ -37,6 +37,8 @@
 #include "pcVariable.h"
 #include "pcConstraint.h"
 
+#define PC_PCSET_GETVAR(_pcset, _type, _name) \
+	_type _name = ((Variable<_type>*) _pcset.getVariablebyID("_name"))->getValue();
 /**
  * A wrapper class for a set of Variables and Constraints
  * After a hypergraph representation, this might get deprecated.

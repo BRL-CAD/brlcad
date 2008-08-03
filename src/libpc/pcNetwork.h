@@ -49,13 +49,13 @@ class BTSolver;
 
 template<class T>
 class Vertexwriter {
-    typedef typename boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS, Variable<T>, Constraint > Graph;
+    typedef typename boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS, Variable<T> *, Constraint *> Graph;
     typedef boost::graph_traits<Graph> GraphTraits;
     typedef typename GraphTraits::vertex_descriptor Vertex;
 public:
     Vertexwriter(const Graph& g):g(g) {};
     void operator() (std::ostream& output, const Vertex& v) const {
-	output << "[label=\"" << g[v].getID() << "\"]";
+	output << "[label=\"" << g[v]->getID() << "\"]";
     }
 private:
     const Graph& g;
@@ -64,13 +64,13 @@ private:
 
 template<class T>
 class Edgewriter {
-    typedef typename boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS, Variable<T>, Constraint > Graph;
+    typedef typename boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS, Variable<T> *, Constraint *> Graph;
     typedef boost::graph_traits<Graph> GraphTraits;
     typedef typename GraphTraits::edge_descriptor Edge;
 public:
     Edgewriter(const Graph& g):g(g) {};
     void operator() (std::ostream& output, const Edge& e) const {
-	output << "[label=\"" << g[e].getExp() << "\"]";
+	output << "[label=\"" << g[e]->getExp() << "\"]";
     }
 private:
     const Graph& g;
@@ -80,7 +80,7 @@ private:
 template<class T>
 class BinaryNetwork
 {
-    typedef typename boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS, Variable<T>, Constraint > Graph;
+    typedef typename boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS, Variable<T> *, Constraint *> Graph;
     typedef boost::graph_traits<Graph> GraphTraits;
     typedef typename GraphTraits::vertex_descriptor Vertex;
     typedef typename GraphTraits::edge_descriptor Edge;
@@ -88,18 +88,19 @@ class BinaryNetwork
     typename GraphTraits::vertex_iterator v_i, v_end;
     typename GraphTraits::out_edge_iterator e_i, e_end;
 public:
+    Graph G;
     /** Constructors and Destructors */
     BinaryNetwork();
-    BinaryNetwork(std::vector<Variable<T> >, std::vector<Constraint>);
+    BinaryNetwork(std::vector<Variable<T> *>, std::vector<Constraint *>);
     BinaryNetwork(PCSet & pcset);
     
     /** Data access methods */
     void getVertexbyID(std::string, Vertex&);
 
     /** Data addition/modification methods */
-    void add_vertex(Variable<T> V);
-    void add_edge(Constraint C);
-    void setVariable(Vertex v, Variable<T>& var);
+    void add_vertex(Variable<T>* V);
+    void add_edge(Constraint * C);
+    void setVariable(Vertex v, Variable<T>* var);
 
     /** Solution support functions */
     bool check();
@@ -111,7 +112,6 @@ private:
     Solution<T> S;
     Vertex v;
     Edge e;
-    Graph G;
 
 friend class GTSolver<T>;
 friend class BTSolver<T>;
