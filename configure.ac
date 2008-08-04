@@ -3826,6 +3826,7 @@ AC_CONFIG_FILES([
 	src/conv/Makefile
 	src/conv/comgeom/Makefile
 	src/conv/iges/Makefile
+	src/conv/intaval/Makefile
 	src/conv/jack/Makefile
 	src/conv/off/Makefile
 	src/conv/patch/Makefile
@@ -3907,7 +3908,6 @@ AC_CONFIG_FILES([
 	src/other/incrTcl/itk/library/Makefile
 	src/other/incrTcl/itk/pkgIndex.tcl
 	src/other/incrTcl/tools/Makefile
-	src/other/intaval/Makefile
 	src/other/iwidgets/Makefile
 	src/other/iwidgets/doc/Makefile
 	src/other/iwidgets/generic/Makefile

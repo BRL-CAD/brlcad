@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2008-06-XX  Release 7.13.0                                     ---
 ----------------------------------------------------------------------
 
+* integrated tgf-g with the default compile/install - Daniel Roßberg
 * add w option to tire to allow disabling wheel generation - C. Yapp
 * deprecated the mged '-n' option, use '-c' instead - Sean Morrison
 * added the ability to invoke mged through icons/menus - Sean Morrison

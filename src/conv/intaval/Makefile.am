@@ -1,6 +1,5 @@
-# $Id$
 
-EXTRA_PROGRAMS = tgf-g
+bin_PROGRAMS = tgf-g
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS} ${OPENNURBS_CPPFLAGS}
 

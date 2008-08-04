@@ -31,6 +31,7 @@ SUBDIRS = \
         3dm \
 	comgeom \
 	iges \
+	intaval \
 	jack \
 	off \
 	patch

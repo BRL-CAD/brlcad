@@ -137,8 +137,7 @@ SUBDIRS = \
 	${BLTDIR} \
 	${OPENNURBSDIR} \
 	${TNTDIR} \
-	awf \
-	intaval
+	awf
 
 endif
 # end ONLY_RTS
@@ -151,7 +150,6 @@ DIST_SUBDIRS = \
 	awf \
 	blt \
 	incrTcl \
-	intaval \
 	iwidgets \
 	jove \
 	libpng \

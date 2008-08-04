@@ -1,8 +1,6 @@
-/COUNT
-/DATE
-/HOST
+/.deps
+/.libs
 /Makefile
 /Makefile.in
-/PATH
-/TS
-/USER
+/tgf-g
+/tgf2g.plg
