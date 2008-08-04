@@ -16,9 +16,10 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
- *
  */
 /** @file dxf-g.c
+ *
+ * Program to convert from the DXF file format to BRL-CAD format
  *
  */
 
