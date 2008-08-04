@@ -1350,8 +1350,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rtmlt", "..\rtmlt\rtmlt.vcp
 		{D2A218BF-FAB3-4BEA-B288-E357FE003E29} = {D2A218BF-FAB3-4BEA-B288-E357FE003E29}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "remrt", "..\remrt\remrt.vcproj", "{967938AD-1A5C-4435-98F8-718038E62555}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -2310,12 +2308,6 @@ Global
 		{51AF37DF-E031-4918-BE3B-AE6E5A1C516A}.Release|Win32.ActiveCfg = Release|Win32
 		{51AF37DF-E031-4918-BE3B-AE6E5A1C516A}.Release|Win32.Build.0 = Release|Win32
 		{51AF37DF-E031-4918-BE3B-AE6E5A1C516A}.Release|x64.ActiveCfg = Release|Win32
-		{967938AD-1A5C-4435-98F8-718038E62555}.Debug|Win32.ActiveCfg = Debug|Win32
-		{967938AD-1A5C-4435-98F8-718038E62555}.Debug|Win32.Build.0 = Debug|Win32
-		{967938AD-1A5C-4435-98F8-718038E62555}.Debug|x64.ActiveCfg = Debug|Win32
-		{967938AD-1A5C-4435-98F8-718038E62555}.Release|Win32.ActiveCfg = Release|Win32
-		{967938AD-1A5C-4435-98F8-718038E62555}.Release|Win32.Build.0 = Release|Win32
-		{967938AD-1A5C-4435-98F8-718038E62555}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
