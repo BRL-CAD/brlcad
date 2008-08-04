@@ -54,7 +54,7 @@
 				Optimization="2"
 				InlineFunctionExpansion="1"
 				AdditionalIncludeDirectories="../../../include;../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/tk/generic;../../../src/other/tk/win;../../../src/other/tk/bitmaps;../../../src/other/tk/xlib;../../../src/other/incrTcl/itcl/generic;../../../src/other/incrTcl/itk/generic;../../../src/other/blt/src"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;TCLCAD_EXPORT_DLL;DM_WGL;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;_CRT_SECURE_NO_WARNINGS;inline=__inline"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;TCLCAD_EXPORT_DLL;DM_WGL;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;IF_WGL;IF_REMOTE;_CRT_SECURE_NO_WARNINGS;inline=__inline"
 				StringPooling="true"
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="2"
