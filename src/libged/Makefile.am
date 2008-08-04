@@ -149,9 +149,12 @@ libged_nil_la_SOURCES = \
 	viewdir.c \
 	vrot.c \
 	vutil.c \
+	wdb_bigE.c \
 	wdb_comb_std.c \
 	wdb_importFg4Section.c \
+	wdb_nirt.c \
 	wdb_obj.c \
+	wdb_qray.c \
 	wdb_track.c \
 	wdb_vdraw.c \
 	whatid.c \

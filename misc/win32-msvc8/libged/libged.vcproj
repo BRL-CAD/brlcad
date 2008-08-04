@@ -710,6 +710,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\wdb_bigE.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\wdb_comb_std.c"
 				>
 			</File>
@@ -718,7 +722,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\wdb_nirt.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\wdb_obj.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\wdb_qray.c"
 				>
 			</File>
 			<File

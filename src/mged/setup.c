@@ -124,15 +124,11 @@ static struct cmdtab cmdtab[] = {
     {"decompose", f_decompose},
     {"delay", f_delay},
     {"dir2ae", cmd_dir2ae},
-#if 0
     {"dump",	cmd_dump},
-#endif
     {"dm", f_dm},
     {"draw", cmd_draw},
     {"dup", cmd_dup},
-#if 0
     {"E", cmd_E},
-#endif
     {"e", cmd_draw},
     {"eac", f_eac},
     {"echo", cmd_echo},

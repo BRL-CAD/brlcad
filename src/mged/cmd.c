@@ -2893,8 +2893,6 @@ cmd_vdraw(ClientData	clientData,
     return vdraw_cmd(dgop, interp, argc, argv);
 }
 
-/*XXX Temporarily disabled */
-#if 0
 /**
  *			C M D _ E
  *
@@ -2950,7 +2948,6 @@ cmd_E(ClientData	clientData,
 
     return TCL_OK;
 }
-#endif
 
 int
 cmd_bot_face_sort( ClientData	clientData,

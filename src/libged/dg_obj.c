@@ -104,12 +104,10 @@ static int dgo_shaded_mode_tcl();
 	return TCL_ERROR;						\
     }
 
-#if 0
 /* declared in qray.c */
 extern int	dgo_qray_cmd(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char *argv[]);
 extern void	dgo_init_qray(struct dg_obj *dgop);
 extern void	dgo_free_qray(struct dg_obj *dgop);
-#endif
 
 /* in wdb_obj.c */
 void wdb_print_node(struct rt_wdb *wdbp, Tcl_Interp *interp, register struct directory *dp, int pathpos, int indentSize, char prefix, int cflag, int displayDepth, int currdisplayDepth);
@@ -134,15 +132,11 @@ static int dgo_assoc_tcl(ClientData clientData, Tcl_Interp *interp, int argc, ch
 static int dgo_rtcheck_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
 static int dgo_observer_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
 static int dgo_report_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-#if 0
 extern int dgo_E_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-#endif
 static int dgo_autoview_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-#if 0
 static int dgo_qray_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
 static int dgo_nirt_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
 static int dgo_vnirt_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-#endif
 static int dgo_vdraw_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
 static int dgo_tree_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
 
@@ -172,9 +166,7 @@ static struct bu_cmdtab dgo_cmds[] = {
     {"blast",			dgo_blast_tcl},
     {"clear",			dgo_zap_tcl},
     {"draw",			dgo_draw_tcl},
-#if 0
     {"E",			dgo_E_tcl},
-#endif
     {"erase",			dgo_erase_tcl},
     {"erase_all",		dgo_erase_all_tcl},
     {"ev",			dgo_ev_tcl},
@@ -184,14 +176,10 @@ static struct bu_cmdtab dgo_cmds[] = {
     {"how",			dgo_how_tcl},
     {"illum",			dgo_illum_tcl},
     {"label",			dgo_label_tcl},
-#if 0
     {"nirt",			dgo_nirt_tcl},
-#endif
     {"observer",		dgo_observer_tcl},
     {"overlay",			dgo_overlay_tcl},
-#if 0
     {"qray",			dgo_qray_tcl},
-#endif
     {"report",			dgo_report_tcl},
     {"rt",			dgo_rt_tcl},
     {"rtabort",			dgo_rtabort_tcl},
@@ -202,10 +190,8 @@ static struct bu_cmdtab dgo_cmds[] = {
     {"set_transparency",	dgo_set_transparency_tcl},
     {"shaded_mode",		dgo_shaded_mode_tcl},
     {"tree",			dgo_tree_tcl},
-#if 0
     {"vdraw",			dgo_vdraw_tcl},
     {"vnirt",			dgo_vnirt_tcl},
-#endif
     {"who",			dgo_who_tcl},
     {"zap",			dgo_zap_tcl},
     {(char *)0,			(int (*)())0}
@@ -256,9 +242,7 @@ dgo_deleteProc(ClientData clientData)
 
 
     bu_vls_free(&dgop->dgo_name);
-#if 0
-    ged_free_qray(dgop);
-#endif
+    dgo_free_qray(dgop);
 
     BU_LIST_DEQUEUE(&dgop->l);
     bu_free((genptr_t)dgop, "dgo_deleteProc: dgop");
@@ -305,9 +289,7 @@ dgo_open_cmd(char		*oname,
     dgop->dgo_freeSolids = &FreeSolid;
     dgop->dgo_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
 
-#if 0
     dgo_init_qray(dgop);
-#endif
 
     /* append to list of dg_obj's */
     BU_LIST_APPEND(&HeadDGObj.l, &dgop->l);
@@ -584,7 +566,6 @@ dgo_draw_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
     return ret;
 }
 
-#if 0
 /*
  *
  * Evaluated Edit something (add to visible display)
@@ -602,7 +583,6 @@ dgo_E_tcl(ClientData	clientData,
 
     return dgo_E_cmd(dgop, interp, argc-1, argv+1);
 }
-#endif
 
 /*
  * Prepare database objects for drawing.
@@ -1137,9 +1117,7 @@ dgo_autoview_tcl(ClientData	clientData,
 	return TCL_ERROR;
     }
 
-#if 0
     DGO_CHECK_WDBP_NULL(dgop, interp);
-#endif
 
     /* search for view object */
     for (BU_LIST_FOR(vop, view_obj, &HeadViewObj.l)) {
@@ -2257,7 +2235,6 @@ dgo_rtabort_tcl(ClientData clientData,
     return dgo_rtabort_cmd(dgop, interp, argc-1, argv+1);
 }
 
-#if 0
 static int
 dgo_qray_tcl(ClientData	clientData,
 	     Tcl_Interp	*interp,
@@ -2341,7 +2318,6 @@ dgo_vnirt_tcl(ClientData	clientData,
 
     return dgo_vnirt_cmd(dgop, vop, interp, argc-2, argv+2);
 }
-#endif
 
 int
 dgo_set_outputHandler_cmd(struct dg_obj	*dgop,
