@@ -1,4 +1,4 @@
-/*                         V R O T . C
+/*                         V I E W . C
  * BRL-CAD
  *
  * Copyright (c) 2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file vrot.c
+/** @file view.c
  *
- * The vrot command.
+ * The view command.
  *
  */
 
@@ -32,12 +32,9 @@
 #include "ged_private.h"
 
 int
-ged_vrot(struct ged *gedp, int argc, const char *argv[])
+ged_view(struct ged *gedp, int argc, const char *argv[])
 {
-    register int i;
-    int ac;
-    char *av[6];
-    static const char *usage = "x y z";
+    static const char *usage = "quat|ypr|aet|center|eye|size [args]";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
@@ -54,19 +51,37 @@ ged_vrot(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_OK;
     }
 
-    if (argc != 2 && argc != 4) {
+    if (argc < 1 || 6 < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
 
-    av[0] = (char *)argv[0];
-    av[1] = "-v";
-    ac = argc+1;
-    for (i = 1; i < argc; ++i)
-	av[i+1] = (char *)argv[i];
-    av[i+1] = (char *)0;
+    if (!strcmp(argv[1], "quat")) {
+	return ged_quat(gedp, argc-1, argv+1);
+    }
 
-    return ged_rot(gedp, ac, (const char **)av);
+    if (!strcmp(argv[1], "ypr")) {
+	return ged_ypr(gedp, argc-1, argv+1);
+    }
+
+    if (!strcmp(argv[1], "aet")) {
+	return ged_aet(gedp, argc-1, argv+1);
+    }
+
+    if (!strcmp(argv[1], "center")) {
+	return ged_center(gedp, argc-1, argv+1);
+    }
+
+    if (!strcmp(argv[1], "eye")) {
+	return ged_eye(gedp, argc-1, argv+1);
+    }
+
+    if (!strcmp(argv[1], "size")) {
+	return ged_size(gedp, argc-1, argv+1);
+    }
+
+    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    return BRLCAD_ERROR;
 }
 
 /*

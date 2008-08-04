@@ -42,6 +42,7 @@ libged_nil_la_SOURCES = \
 	facetize.c \
 	find.c \
 	form.c \
+	fracture.c \
 	ged.c \
 	get.c \
 	get_autoview.c \
@@ -99,9 +100,12 @@ libged_nil_la_SOURCES = \
 	pmodel2view.c \
 	pov.c \
 	prcolor.c \
+	prefix.c \
 	push.c \
 	put.c \
 	qray.c \
+	quat.c \
+	regdef.c \
 	region.c \
 	remove.c \
 	report.c \
@@ -139,6 +143,7 @@ libged_nil_la_SOURCES = \
 	v2m_point.c \
 	vdraw.c \
 	version.c \
+	view.c \
 	view2model.c \
 	view_obj.c \
 	viewdir.c \
@@ -154,6 +159,7 @@ libged_nil_la_SOURCES = \
 	who.c \
 	wmater.c \
 	xpush.c \
+	ypr.c \
 	zap.c \
 	zoom.c
 

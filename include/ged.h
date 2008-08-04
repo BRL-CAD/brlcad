@@ -1239,6 +1239,15 @@ GED_EXPORT BU_EXTERN(int ged_find, (struct ged *gedp, int argc, const char *argv
 GED_EXPORT BU_EXTERN(int ged_form, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Given an NMG solid, break it up into several NMG solids, each
+ * containing a single shell with a single sub-element.
+ *
+ * Usage:
+ *     fracture nmgsolid [prefix]
+ */
+GED_EXPORT BU_EXTERN(int ged_fracture, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Get object attributes
  *
  * Usage:
@@ -1665,6 +1674,14 @@ GED_EXPORT BU_EXTERN(int ged_pov, (struct ged *gedp, int argc, const char *argv[
 GED_EXPORT BU_EXTERN(int ged_prcolor, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Prefix the specified objects with the specified prefix
+ *
+ * Usage:
+ *     prefix new_prefix object(s)
+ */
+GED_EXPORT BU_EXTERN(int ged_prefix, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Push objects' path transformations to  primitives
  *
  * Usage:
@@ -1688,10 +1705,26 @@ GED_EXPORT BU_EXTERN(int ged_put, (struct ged *gedp, int argc, const char *argv[
  */
 GED_EXPORT BU_EXTERN(int ged_qray, (struct ged *gedp, int argc, const char *argv[]));
 
+/**
+ * Get/set the view orientation using a quaternion
+ *
+ * Usage:
+ *     quat a b c d
+ */
+GED_EXPORT BU_EXTERN(int ged_quat, (struct ged *gedp, int argc, const char *argv[]));
+
 GED_EXPORT BU_EXTERN(void ged_init_qray,
 		    (struct ged_drawable *gdp));
 GED_EXPORT BU_EXTERN(void ged_free_qray,
 		    (struct ged_drawable *gdp));
+
+/**
+ * Change the default region ident codes: item air los mat
+ *
+ * Usage:
+ *     regdef item air los mat
+ */
+GED_EXPORT BU_EXTERN(int ged_regdef, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Create or append objects to a region
@@ -1983,6 +2016,14 @@ GED_EXPORT BU_EXTERN(int ged_vdraw, (struct ged *gedp, int argc, const char *arg
 GED_EXPORT BU_EXTERN(int ged_version, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Get/set view attributes
+ *
+ * Usage:
+ *     view quat|ypr|aet|center|eye|size [args]
+ */
+GED_EXPORT BU_EXTERN(int ged_view, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Get the view2model matrix.
  *
  * Usage:
@@ -2054,6 +2095,14 @@ GED_EXPORT BU_EXTERN(int ged_wmater, (struct ged *gedp, int argc, const char *ar
  *     xpush object
  */
 GED_EXPORT BU_EXTERN(int ged_xpush, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Get/set the view orientation using yaw, pitch and roll
+ *
+ * Usage:
+ *     ypr yaw pitch roll
+ */
+GED_EXPORT BU_EXTERN(int ged_ypr, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Erase all currently displayed geometry

@@ -1,4 +1,4 @@
-/*                         V R O T . C
+/*                         Q U A T . C
  * BRL-CAD
  *
  * Copyright (c) 2008 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file vrot.c
+/** @file quat.c
  *
- * The vrot command.
+ * The quat command.
  *
  */
 
@@ -32,12 +32,10 @@
 #include "ged_private.h"
 
 int
-ged_vrot(struct ged *gedp, int argc, const char *argv[])
+ged_quat(struct ged *gedp, int argc, const char *argv[])
 {
-    register int i;
-    int ac;
-    char *av[6];
-    static const char *usage = "x y z";
+    quat_t quat;
+    static const char *usage = "a b c d";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
@@ -47,26 +45,33 @@ ged_vrot(struct ged *gedp, int argc, const char *argv[])
     gedp->ged_result = GED_RESULT_NULL;
     gedp->ged_result_flags = 0;
 
-    /* must be wanting help */
+    /* return Viewrot as a quaternion */
     if (argc == 1) {
-	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	quat_mat2quat(quat, gedp->ged_gvp->gv_rotation);
+	bu_vls_printf(&gedp->ged_result_str, "%.12g %.12g %.12g %.12g", V4ARGS(quat));
 	return BRLCAD_OK;
     }
 
-    if (argc != 2 && argc != 4) {
+    if (argc != 6) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
 
-    av[0] = (char *)argv[0];
-    av[1] = "-v";
-    ac = argc+1;
-    for (i = 1; i < argc; ++i)
-	av[i+1] = (char *)argv[i];
-    av[i+1] = (char *)0;
+    /* Set the view orientation given a quaternion */
+    if (sscanf(argv[2], "%lf", quat) != 1 ||
+	sscanf(argv[3], "%lf", quat+1) != 1 ||
+	sscanf(argv[4], "%lf", quat+2) != 1 ||
+	sscanf(argv[5], "%lf", quat+3) != 1) {
 
-    return ged_rot(gedp, ac, (const char **)av);
+	bu_vls_printf(&gedp->ged_result_str, "%s quat: bad value detected - %s %s %s %s",
+		      argv[0], argv[2], argv[3], argv[4], argv[5]);
+	return BRLCAD_ERROR;
+    }
+
+    quat_quat2mat(gedp->ged_gvp->gv_rotation, quat);
+    ged_view_update(gedp->ged_gvp);
+
+    return BRLCAD_OK;
 }
 
 /*

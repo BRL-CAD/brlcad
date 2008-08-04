@@ -488,6 +488,14 @@ BN_EXPORT BU_EXTERN(fastf_t bn_mat_determinant,
 
 BN_EXPORT BU_EXTERN(int bn_mat_is_non_unif,
 		    (const mat_t m));
+void
+BN_EXPORT BU_EXTERN(bn_wrt_point_direc,
+		    (mat_t out,
+		     const mat_t change,
+		     const mat_t in,
+		     const point_t point,
+		     const vect_t direc));
+
 /*----------------------------------------------------------------------*/
 /* msr.c */
 /** @addtogroup msr */
