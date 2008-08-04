@@ -22,7 +22,7 @@
  *
  * Program to convert a BRL-CAD model (in a .g file) to a DXF file by
  * calling on the NMG booleans.  Based on g-acad.c.
- *
+ * 
  */
 
 #include "common.h"
@@ -356,8 +356,20 @@ static unsigned char rgb[]={
     221, 221, 221,
     255, 255, 255 };
 
-/*
- *			M A I N
+
+/**
+ * M A I N
+ *
+ * This is the gist for what is going on (not verified):
+ *
+ * 1. initialize tree_state (db_tree_state)
+ * 2. Deal with command line arguments. Strip off everything but regions for processing.
+ * 3. Open geometry (.g) file and build directory db_dirbuild
+ * 4. db_walk_tree (get_layer) for layer names only
+ * 5. Initialize tree_state
+ * 6. Initialize model (nmg)\
+ * 7. db_walk_tree (do_region_end)
+ * 8. Cleanup
  */
 int
 main(argc, argv)
