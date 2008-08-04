@@ -282,6 +282,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\fracture.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\ged.c"
 				>
 			</File>
@@ -510,6 +514,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\prefix.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\push.c"
 				>
 			</File>
@@ -519,6 +527,14 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\qray.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\quat.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\regdef.c"
 				>
 			</File>
 			<File
@@ -670,6 +686,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\view.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\view2model.c"
 				>
 			</File>
@@ -727,6 +747,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\xpush.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\ypr.c"
 				>
 			</File>
 			<File
