@@ -20,6 +20,7 @@ librender_la_SOURCES = \
 
 librender_la_LIBADD = \
 	${LIBM} \
+	$(top_builddir)/src/libbn/libbn.la \
 	$(top_builddir)/src/libbu/libbu.la
 
 AM_CFLAGS = \
