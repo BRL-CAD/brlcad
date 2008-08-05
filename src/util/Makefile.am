@@ -339,7 +339,7 @@ pix_sun_SOURCES = pix-sun.c
 pix_sun_LDADD = ${BU}
 
 pix_yuv_SOURCES = pix-yuv.c
-pix_yuv_LDADD = ${FB} ${BU}
+pix_yuv_LDADD = ${FB} ${BN} ${BU}
 
 pixbackgnd_SOURCES = pixbackgnd.c
 pixbackgnd_LDADD = ${BU}
@@ -351,13 +351,13 @@ pixblend_SOURCES = pixblend.c
 pixblend_LDADD = ${BU}
 
 pixborder_SOURCES = pixborder.c
-pixborder_LDADD = ${FB} ${BU}
+pixborder_LDADD = ${FB} ${BN} ${BU}
 
 pixbustup_SOURCES = pixbustup.c
 pixbustup_LDADD = ${BU}
 
 pixclump_SOURCES = pixclump.c
-pixclump_LDADD = ${BU}
+pixclump_LDADD = ${BN} ${BU}
 
 pixcolors_SOURCES = pixcolors.c
 pixcolors_LDADD = ${BU}
@@ -544,7 +544,7 @@ xyz_pl_SOURCES = xyz-pl.c
 xyz_pl_LDADD = ${BN} ${BU}
 
 yuv_pix_SOURCES = yuv-pix.c
-yuv_pix_LDADD = ${FB} ${BU}
+yuv_pix_LDADD = ${FB} ${BN} ${BU}
 
 
 man_MANS = \
