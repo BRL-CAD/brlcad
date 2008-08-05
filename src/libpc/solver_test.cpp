@@ -111,8 +111,8 @@ int main()
     pc_set.display();
     pc_free_pcset(&pcs);
 
-    typedef boost::adjacency_list<vecS, vecS, bidirectionalS,
-	Variable<int>*, Constraint *> Graph;
+    typedef boost::adjacency_list<boost::vecS, boost::vecS,
+		    boost::bidirectionalS, Variable<int>*, Constraint *> Graph;
     typedef boost::graph_traits<Graph> GraphTraits;
     typedef GraphTraits::vertex_descriptor Vertex;
     typedef GraphTraits::edge_descriptor Edge;

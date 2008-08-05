@@ -38,13 +38,12 @@
 #include "pcNetwork.h"
 
 /* Generate Test based Solver Technique */
-using namespace boost;
 template<class T>
 class GTSolver
 {
-    typedef typename boost::adjacency_list<vecS, vecS, bidirectionalS,
-					   Variable<T>*, Constraint *> Graph;
-    typedef graph_traits<Graph> GraphTraits;
+    typedef typename boost::adjacency_list<boost::vecS, boost::vecS,\
+	    	    boost::bidirectionalS, Variable<T>*, Constraint *> Graph;
+    typedef boost::graph_traits<Graph> GraphTraits;
     typedef typename GraphTraits::vertex_descriptor Vertex;
     typedef typename GraphTraits::edge_descriptor Edge;
     typename GraphTraits::vertex_iterator v_i, v_end;
@@ -119,13 +118,12 @@ bool GTSolver<T>::solve(BinaryNetwork<T>& BN, Solution<T>& S) {
 }
 
 /* BackTracking Solver Technique */
-using namespace boost;
 template<class T>
 class BTSolver
 {
-    typedef typename boost::adjacency_list<vecS, vecS, bidirectionalS,
-					   Variable<T>*, Constraint *> Graph;
-    typedef graph_traits<Graph> GraphTraits;
+    typedef typename boost::adjacency_list<boost::vecS, boost::vecS,
+		    boost::bidirectionalS, Variable<T>*, Constraint *> Graph;
+    typedef boost::graph_traits<Graph> GraphTraits;
     typedef typename GraphTraits::vertex_descriptor Vertex;
     typedef typename GraphTraits::edge_descriptor Edge;
     typename GraphTraits::vertex_iterator v_i, v_end;
