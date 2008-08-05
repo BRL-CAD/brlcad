@@ -143,6 +143,7 @@ int main()
     */
     GTSolver<int> GTS;
     BTSolver<int> BTS;
+    PCSolver<int> PCS;
 
     std::cout << "-----------------------------" << std::endl;
     GTS.solve(N,S);
@@ -150,14 +151,19 @@ int main()
     S.display();
     S.clear();
     std::cout << "-----------------------------" << std::endl;
-    
     BTS.solve(N,S);
     std::cout << "Solution using BackTracking" << std::endl;
-    
     S.display();
+    S.clear();
+    std::cout << "-----------------------------" << std::endl;
+    PCS.solve(mypcset,S);
+    std::cout << "Solution using Generic GT Solver" << std::endl;
+    S.display();    
+    std::cout << "-----------------------------" << std::endl;
     std::cout << "Number of Constraint checks performed" << std::endl;
     std::cout << "Generate-Test Solution:" << GTS.numChecks() << std::endl;
     std::cout << "BackTracking based Solution:" << BTS.numChecks() << std::endl;
+    std::cout << "Generic Generate-Test Solution:" << PCS.numChecks() << std::endl;
     
     return 0;
 }

@@ -37,6 +37,85 @@
 #include "pcConstraint.h"
 #include "pcNetwork.h"
 
+/* Generic solver for PCSet */
+template<class T>
+class PCSolver
+{
+public:
+    PCSolver() : initiated(false) { }
+    bool solve(PCSet &, Solution<T> & );
+    long numChecks () { return num_checks; }
+private:
+    long num_checks;
+    bool initiated;
+    PCSet * pcs;
+    bool generator();
+    void initiate();
+};
+
+template<class T>
+void PCSolver<T>::initiate() {
+    std::list<VariableAbstract *>::iterator i;
+    for (i = pcs->Vars.begin(); i != pcs->Vars.end(); ++i) {
+	typedef Variable<T> * Vp;
+	(Vp (*i))->setValue((Vp (*i))->getFirst());
+    }
+    initiated = true;
+}
+
+template<class T>
+bool PCSolver<T>::generator() {
+    if (!initiated) {
+	initiate();
+    } else {
+	std::list<VariableAbstract *>::iterator i,j;
+	i = pcs->Vars.begin();
+	j = pcs->Vars.end();
+	--j;
+	typedef Variable<T> * Vp;
+	while (j != i) {
+	    if ( (Vp (*j))->getValue() == (Vp (*j))->getLast())
+		--j;
+	    else
+		break;
+	}
+
+	if ((Vp (*i))->getValue() == (Vp (*i))->getLast())
+	    return false;
+	/* Increment one variable , set other variables to the first value */
+	++(*(Vp (*j)));
+	if (true || j != i) {
+	    ++j;
+	    while (j != pcs->Vars.end()) {
+		(Vp (*j))->setValue((Vp (*j))->getFirst());
+		++j;
+	    }
+	}
+    }
+    return true;
+}
+
+template<class T>
+bool PCSolver<T>::solve(PCSet & pcset, Solution<T>& S) {
+    pcs = &pcset;
+    num_checks = 0;
+    while (generator()) {
+	++num_checks;
+	if (pcs->check()) {
+	    std::list<VariableAbstract *>::iterator i;	    
+	    Variable<T> * j;
+	    for (i = pcs->Vars.begin(); i != pcs->Vars.end(); ++i) {
+		typedef Variable<T> * Vp;
+		j = Vp (*i);
+		S.VarDom.push_back(VarDomain<T>(*j,
+		    Domain<T>(j->getValue(),j->getValue(),1)));
+	    }
+	    return true;
+	}
+    }
+    return false;
+}
+
 /* Generate Test based Solver Technique */
 template<class T>
 class GTSolver
@@ -77,7 +156,6 @@ bool GTSolver<T>::generator() {
 	tie(vertex_u,vertex_v) = vertices(N->G);
 	vertex_end = vertex_v;
 	--vertex_v;
-	T v1,v2;
 	while (vertex_v != vertex_u) {
 	    if (N->G[*vertex_v]->getValue() == N->G[*vertex_v]->getLast())
 		--vertex_v;
@@ -87,7 +165,7 @@ bool GTSolver<T>::generator() {
 
 	if (N->G[*vertex_u]->getValue() == N->G[*vertex_v]->getLast())
 	    return false;
-	/* Increment one variable and set the other variables to the first value */
+	/* Increment one variable , set other variables to the first value */
 	++(*(N->G[*vertex_v]));
 	if (true ||vertex_v != vertex_u) {
 	    ++vertex_v;

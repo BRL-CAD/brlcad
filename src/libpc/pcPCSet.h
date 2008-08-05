@@ -73,6 +73,9 @@ public:
     /** Variable access method */
     VariableAbstract * getVariablebyID(std::string vid);
     
+    /** Constraint status check method */
+    bool check();
+
     /** Display methods */
     void display();
 private:

@@ -97,6 +97,17 @@ void PCSet::display()
     }
 }
 
+bool PCSet::check()
+{
+    std::list<Constraint *>::iterator i;
+    for (i = Constraints.begin(); i != Constraints.end(); ++i) {
+	if (! (**i).check()) {
+	    return false;
+	}
+    }
+    return true;
+}
+
 /** @} */
 /*
  * Local Variables:
