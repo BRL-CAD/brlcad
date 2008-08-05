@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* Setting FB_FILE to a remote host, e.g. export FB_FILE=mac:/dev/X:0
+  doesn't work - not finding host.
+
 * g2asc of a v4 is apparently writing out the wrong s_cgtypes and
   otherwise parsing v4 .g files incorrectly
 
