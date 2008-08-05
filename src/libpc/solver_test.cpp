@@ -32,7 +32,7 @@
 #include <algorithm>                 // for std::for_each
 
 #include "pcVariable.h"
-#include "pcPCSet.h"
+#include "pcVCSet.h"
 #include "pcNetwork.h"
 #include "pcSolver.h"
 #include "pcParser.h"
@@ -42,10 +42,10 @@ typedef Variable<int> * Vip;
 /* Constraint functions */
 struct f1 {
 public:
-    bool operator() (PCSet & pcset, std::list<std::string> Vid) const {
+    bool operator() (VCSet & vcset, std::list<std::string> Vid) const {
     typedef Variable<int> * Vi ;
-    int A = ((Variable<int>*) pcset.getVariablebyID("A"))->getValue();
-    int B = ((Vi) pcset.getVariablebyID("B"))->getValue();
+    int A = ((Variable<int>*) vcset.getVariablebyID("A"))->getValue();
+    int B = ((Vi) vcset.getVariablebyID("B"))->getValue();
     //std::cout << "!== A  " << A << std::endl;
     //std::cout << "!== B  " << B << std::endl;
     //PC_PCSET_GETVAR(pcset, int, A);
@@ -55,10 +55,10 @@ public:
 } f1;
 struct f2 {
 public:
-    bool operator() (PCSet & pcset, std::list<std::string> Vid) const {
+    bool operator() (VCSet & vcset, std::list<std::string> Vid) const {
     typedef Variable<int> * Vi ;
-    int B = ((Vi) pcset.getVariablebyID("B"))->getValue();
-    int C = ((Vi) pcset.getVariablebyID("C"))->getValue();
+    int B = ((Vi) vcset.getVariablebyID("B"))->getValue();
+    int C = ((Vi) vcset.getVariablebyID("C"))->getValue();
     //std::cout << "!== B  " << B << std::endl;
     //std::cout << "!== C  " << C << std::endl;
     //PC_PCSET_GETVAR(pcset, int, B);
@@ -69,10 +69,10 @@ public:
 
 struct f3 {
 public:
-    bool operator() (PCSet & pcset, std::list<std::string> Vid) const {
+    bool operator() (VCSet & vcset, std::list<std::string> Vid) const {
     typedef Variable<int> * Vi ;
-    int A = ((Vi) pcset.getVariablebyID("A"))->getValue();
-    int D = ((Vi) pcset.getVariablebyID("D"))->getValue();
+    int A = ((Vi) vcset.getVariablebyID("A"))->getValue();
+    int D = ((Vi) vcset.getVariablebyID("D"))->getValue();
     //PC_PCSET_GETVAR(pcset, int, A);
     //PC_PCSET_GETVAR(pcset, int, D);
     return (A - D == 2);
@@ -81,10 +81,10 @@ public:
 
 struct f4 {
 public:
-    bool operator() (PCSet & pcset, std::list<std::string> Vid) const {
+    bool operator() (VCSet & vcset, std::list<std::string> Vid) const {
     typedef Variable<int> * Vi ;
-    int C = ((Vi) pcset.getVariablebyID("C"))->getValue();
-    int A = ((Vi) pcset.getVariablebyID("A"))->getValue();
+    int C = ((Vi) vcset.getVariablebyID("C"))->getValue();
+    int A = ((Vi) vcset.getVariablebyID("A"))->getValue();
     //PC_PCSET_GETVAR(pcset, int, A);
     //PC_PCSET_GETVAR(pcset, int, C);
     return (A * C == 4);
@@ -95,20 +95,20 @@ int main()
 {
 
     struct pc_pc_set pcs;
-    PCSet pc_set;
+    VCSet vc_set;
     PC_INIT_PCSET(pcs);
     pc_pushparameter(&pcs,"Testpar123=325.0");
     pc_pushparameter(&pcs,"Testpar234 = 1289.36243");
     pc_pushparameter(&pcs,"Testpar452 =1325.043");
     pc_pushconstraint(&pcs,"Constraint-test");
     
-    Parser myparser(pc_set);
+    Parser myparser(vc_set);
     myparser.parse(&pcs);
     
     /* display the set of variables and constraints generated as a
      * result of parsing
      */
-    pc_set.display();
+    vc_set.display();
     pc_free_pcset(&pcs);
 
     typedef boost::adjacency_list<boost::vecS, boost::vecS,
@@ -118,23 +118,23 @@ int main()
     typedef GraphTraits::edge_descriptor Edge;
 
     /* declare a graph object */
-    PCSet mypcset;
+    VCSet myvcset;
     Solution<int> S;
 
-    /* add Variables to PCSet */
-    mypcset.addVariable<int>("A", 1, 0, 5, 1);
-    mypcset.addVariable<int>("B", 3, 0, 5, 1);
-    mypcset.addVariable<int>("C", 2, 0, 5, 1);
-    mypcset.addVariable<int>("D", 0, 0, 5, 1);
+    /* add Variables to VCSet */
+    myvcset.addVariable<int>("A", 1, 0, 5, 1);
+    myvcset.addVariable<int>("B", 3, 0, 5, 1);
+    myvcset.addVariable<int>("C", 2, 0, 5, 1);
+    myvcset.addVariable<int>("D", 0, 0, 5, 1);
     
-    /* add Constraints to PCSet */
-    mypcset.addConstraint("0", "A * B = 12", f1, 2, "A", "B");
-    mypcset.addConstraint("1", "B + C < 5", f2, 2, "B", "C");
-    mypcset.addConstraint("2", "A - D = 2", f3, 2, "A", "D");
-    mypcset.addConstraint("3", "A * C = 4", f4, 2, "A", "C");
-    mypcset.display();
+    /* add Constraints to VCSet */
+    myvcset.addConstraint("0", "A * B = 12", f1, 2, "A", "B");
+    myvcset.addConstraint("1", "B + C < 5", f2, 2, "B", "C");
+    myvcset.addConstraint("2", "A - D = 2", f3, 2, "A", "D");
+    myvcset.addConstraint("3", "A * C = 4", f4, 2, "A", "C");
+    myvcset.display();
     
-    BinaryNetwork<int > N(mypcset);
+    BinaryNetwork<int > N(myvcset);
     N.display();
 
     /*N.display();
@@ -156,7 +156,7 @@ int main()
     S.display();
     S.clear();
     std::cout << "-----------------------------" << std::endl;
-    PCS.solve(mypcset,S);
+    PCS.solve(myvcset,S);
     std::cout << "Solution using Generic GT Solver" << std::endl;
     S.display();    
     std::cout << "-----------------------------" << std::endl;

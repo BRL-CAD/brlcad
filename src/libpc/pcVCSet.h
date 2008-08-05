@@ -1,4 +1,4 @@
-/*                    P C P C S E T . H
+/*                    P C V C S E T . H
  * BRL-CAD
  *
  * Copyright (c) 2008 United States Government as represented by
@@ -19,14 +19,14 @@
  */
 /** @addtogroup libpc */
 /** @{ */
-/** @file pcPCSet.h
+/** @file pcVCSet.h
  *
- * PCSet Class definition : A Set of Variables and Constraints
+ * VCSet Class definition : A Set of Variables and Constraints
  *
  * @author Dawn Thomas
  */
-#ifndef __PCPCSET_H__
-#define __PCPCSET_H__
+#ifndef __PCVCSET_H__
+#define __PCVCSET_H__
 
 #include "common.h"
 
@@ -37,7 +37,7 @@
 #include "pcVariable.h"
 #include "pcConstraint.h"
 
-#define PC_PCSET_GETVAR(_pcset, _type, _name) \
+#define PC_VCSET_GETVAR(_vcset, _type, _name) \
 	_type _name = ((Variable<_type>*) _pcset.getVariablebyID("_name"))->getValue();
 /**
  * A wrapper class for a set of Variables and Constraints
@@ -48,15 +48,15 @@
  */
 class Constraint;
 
-class PCSet
+class VCSet
 {
 
-    typedef boost::function2< bool, PCSet &, std::list<std::string> > functor;
+    typedef boost::function2< bool, VCSet &, std::list<std::string> > functor;
 public:
     std::list<VariableAbstract *> Vars;
     std::list<Constraint *> Constraints;
     
-    virtual ~PCSet();
+    virtual ~VCSet();
     
     /** Private Data modification methods */
     void pushChar(char c) { name.push_back(c); }
@@ -84,14 +84,14 @@ private:
 };
 
 template<typename T>
-void PCSet::addVariable(std::string vid, T vvalue)
+void VCSet::addVariable(std::string vid, T vvalue)
 {
     Variable<T> *v = new Variable<T>(vid,vvalue);
     Vars.push_back(v);
 }
 
 template<typename T>
-void PCSet::addVariable(std::string vid, T vvalue, T vlow, T vhigh, T vstep)
+void VCSet::addVariable(std::string vid, T vvalue, T vlow, T vhigh, T vstep)
 {
     Variable<T> *v = new Variable<T>(vid,vvalue);
     v->intersectInterval(Interval<T>(vlow,vhigh,vstep));

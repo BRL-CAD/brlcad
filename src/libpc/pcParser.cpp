@@ -30,8 +30,8 @@
 
 /* Grammar Classes */
 
-Variable_grammar::Variable_grammar(PCSet &pcs) :
-pcset(pcs)
+Variable_grammar::Variable_grammar(VCSet &vcs) :
+vcset(vcs)
 {
 }
 
@@ -39,8 +39,8 @@ Variable_grammar::~Variable_grammar()
 {
 }
 
-Constraint_grammar::Constraint_grammar(PCSet &pcs) :
-pcset(pcs)
+Constraint_grammar::Constraint_grammar(VCSet &vcs) :
+vcset(vcs)
 {
 }
 Constraint_grammar::~Constraint_grammar()
@@ -49,10 +49,10 @@ Constraint_grammar::~Constraint_grammar()
 
 /* Parser Class */
 
-Parser::Parser(PCSet &pcs): pcset(pcs), var_gram(NULL), con_gram(NULL)
+Parser::Parser(VCSet &vcs): vcset(vcs), var_gram(NULL), con_gram(NULL)
 {
-    var_gram = new Variable_grammar(pcset);
-    con_gram = new Constraint_grammar(pcset);
+    var_gram = new Variable_grammar(vcset);
+    con_gram = new Constraint_grammar(vcset);
 }
 
 Parser::~Parser()
@@ -73,7 +73,7 @@ void Parser::parse(struct pc_pc_set * pcs)
 	std::cout<<"Parameter expression Input: "<<(char *) bu_vls_addr(&(par->name))<<std::endl;
         boost::spirit::classic::parse_info<> p_info = boost::spirit::classic::parse((char *) bu_vls_addr(&(par->name)), *var_gram, boost::spirit::classic::space_p);
 	if (p_info.full) {
-            pcset.pushVar();
+            vcset.pushVar();
 	} else {
 	    std::cout << "Error during Variable expression parsing" << std::endl;
 	}

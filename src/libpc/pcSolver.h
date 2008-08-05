@@ -37,18 +37,18 @@
 #include "pcConstraint.h"
 #include "pcNetwork.h"
 
-/* Generic solver for PCSet */
+/* Generic solver for VCSet */
 template<class T>
 class PCSolver
 {
 public:
     PCSolver() : initiated(false) { }
-    bool solve(PCSet &, Solution<T> & );
+    bool solve(VCSet &, Solution<T> & );
     long numChecks () { return num_checks; }
 private:
     long num_checks;
     bool initiated;
-    PCSet * pcs;
+    VCSet * vcs;
     bool generator();
     void initiate();
 };
@@ -56,7 +56,7 @@ private:
 template<class T>
 void PCSolver<T>::initiate() {
     std::list<VariableAbstract *>::iterator i;
-    for (i = pcs->Vars.begin(); i != pcs->Vars.end(); ++i) {
+    for (i = vcs->Vars.begin(); i != vcs->Vars.end(); ++i) {
 	typedef Variable<T> * Vp;
 	(Vp (*i))->setValue((Vp (*i))->getFirst());
     }
@@ -69,8 +69,8 @@ bool PCSolver<T>::generator() {
 	initiate();
     } else {
 	std::list<VariableAbstract *>::iterator i,j;
-	i = pcs->Vars.begin();
-	j = pcs->Vars.end();
+	i = vcs->Vars.begin();
+	j = vcs->Vars.end();
 	--j;
 	typedef Variable<T> * Vp;
 	while (j != i) {
@@ -86,7 +86,7 @@ bool PCSolver<T>::generator() {
 	++(*(Vp (*j)));
 	if (true || j != i) {
 	    ++j;
-	    while (j != pcs->Vars.end()) {
+	    while (j != vcs->Vars.end()) {
 		(Vp (*j))->setValue((Vp (*j))->getFirst());
 		++j;
 	    }
@@ -96,15 +96,15 @@ bool PCSolver<T>::generator() {
 }
 
 template<class T>
-bool PCSolver<T>::solve(PCSet & pcset, Solution<T>& S) {
-    pcs = &pcset;
+bool PCSolver<T>::solve(VCSet & vcset, Solution<T>& S) {
+    vcs = &vcset;
     num_checks = 0;
     while (generator()) {
 	++num_checks;
-	if (pcs->check()) {
+	if (vcs->check()) {
 	    std::list<VariableAbstract *>::iterator i;	    
 	    Variable<T> * j;
-	    for (i = pcs->Vars.begin(); i != pcs->Vars.end(); ++i) {
+	    for (i = vcs->Vars.begin(); i != vcs->Vars.end(); ++i) {
 		typedef Variable<T> * Vp;
 		j = Vp (*i);
 		S.VarDom.push_back(VarDomain<T>(*j,

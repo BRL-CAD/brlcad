@@ -49,18 +49,18 @@ BinaryNetwork<T>::BinaryNetwork(std::vector<Variable<T> *> V, std::vector<Constr
     }
 }
 
-/** BinaryNetwork construction from PCSet */
+/** BinaryNetwork construction from VCSet */
 template<class T>
-BinaryNetwork<T>::BinaryNetwork(PCSet & pcset)
+BinaryNetwork<T>::BinaryNetwork(VCSet & vcset)
 {
     std::list<VariableAbstract *>::iterator i;
     std::list<Constraint *>::iterator j;
 
-    for ( i = pcset.Vars.begin(); i != pcset.Vars.end(); ++i) {
+    for ( i = vcset.Vars.begin(); i != vcset.Vars.end(); ++i) {
 	typedef Variable<T>* Vp;
 	add_vertex(Vp (*i));
     }
-    for ( j = pcset.Constraints.begin(); j != pcset.Constraints.end(); ++j) {
+    for ( j = vcset.Constraints.begin(); j != vcset.Constraints.end(); ++j) {
 	add_edge(*j);
     }
 }
@@ -134,7 +134,7 @@ void BinaryNetwork<T>::getVertexbyID(std::string Vid, Vertex& v)
 /* Temporary Hack for separation of code between hpp and cpp
  * would be unnecessary after detemplating
  */
-template BinaryNetwork<int>::BinaryNetwork(PCSet&);
+template BinaryNetwork<int>::BinaryNetwork(VCSet&);
 template void BinaryNetwork<int>::display();
 template bool BinaryNetwork<int>::check();
 

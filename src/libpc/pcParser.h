@@ -34,7 +34,7 @@
 #include <iostream>
 #include <boost/spirit/include/classic.hpp>
 
-#include "pcPCSet.h"
+#include "pcVCSet.h"
 #include "pcGenerator.h"
 
 #include "bu.h"
@@ -49,9 +49,9 @@
 class Variable_grammar : public boost::spirit::classic::grammar<Variable_grammar>
 {
 private:
-    PCSet &pcset;
+    VCSet &vcset;
 public:
-    Variable_grammar(PCSet &pcset);
+    Variable_grammar(VCSet &vcset);
     virtual ~Variable_grammar();
     template<typename ScannerT>
     struct definition
@@ -63,9 +63,9 @@ public:
 	        =    boost::spirit::real_p[varvalue(self.pcparser)]
 		;*/
 	    variable
-	        =    *(boost::spirit::classic::alnum_p)[Generators::varname(self.pcset)]
+	        =    *(boost::spirit::classic::alnum_p)[Generators::varname(self.vcset)]
 		     >> '='
-	             >>boost::spirit::classic::real_p[Generators::varvalue(self.pcset)]
+	             >>boost::spirit::classic::real_p[Generators::varvalue(self.vcset)]
 		     /* expression*/
 		;
 	}
@@ -76,9 +76,9 @@ public:
 class Constraint_grammar : public boost::spirit::classic::grammar<Constraint_grammar>
 {
 private:
-    PCSet &pcset;
+    VCSet &vcset;
 public:
-    Constraint_grammar(PCSet &pcset);
+    Constraint_grammar(VCSet &vcset);
     virtual ~Constraint_grammar();
     template<typename ScannerT>
     struct definition
@@ -131,11 +131,11 @@ class Parser {
 private:
     std::string name;
     double value;
-    PCSet &pcset;
+    VCSet &vcset;
     Variable_grammar *var_gram;
     Constraint_grammar *con_gram;
 public:
-    Parser(PCSet &pcs);
+    Parser(VCSet &vcs);
     virtual ~Parser();
     void parse(struct pc_pc_set * pcs);
     //void pushChar(char c) { name.push_back(c); }

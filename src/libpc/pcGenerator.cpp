@@ -30,11 +30,11 @@
 #include "pcGenerator.h"
 
 void Generators::varname::operator () (char c) const {
-    pcset.pushChar(c);
+    vcset.pushChar(c);
 }
 
 void Generators::varvalue::operator () (double v) const {
-    pcset.setValue(v);
+    vcset.setValue(v);
 }
 
 /** @} */

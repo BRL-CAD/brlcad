@@ -31,7 +31,7 @@
 
 #include "common.h"
 
-#include "pcPCSet.h"
+#include "pcVCSet.h"
 
 /* Functors associated with the generation of Variables */
 namespace Generators {
@@ -39,19 +39,19 @@ namespace Generators {
     struct varname
     {
         public:
-	varname(PCSet &pcs) : pcset(pcs) {}
+	varname(VCSet &vcs) : vcset(vcs) {}
 	void operator () (char c) const;
 	private:
-	PCSet &pcset;
+	VCSet &vcset;
     };
 
     struct varvalue
     {
         public:
-	varvalue(PCSet &pcs) : pcset(pcs) {}
+	varvalue(VCSet &vcs) : vcset(vcs) {}
 	void operator () (double v) const;
 	private:
-	PCSet &pcset;
+	VCSet &vcset;
     };
 /**
  *  Various precompiled functors which are called during parsing depending

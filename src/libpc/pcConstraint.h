@@ -37,16 +37,16 @@
 #include <boost/function.hpp>
 #include "pcVariable.h"
 
-class PCSet;
+class VCSet;
 
 class Constraint {
-    typedef boost::function2< bool, PCSet &,std::list<std::string> > functor;
+    typedef boost::function2< bool, VCSet &,std::list<std::string> > functor;
 public:
 
     /** constructors & Destructors */
-    Constraint(PCSet &pcs);
-    Constraint(PCSet &pcs, std::string Cid, std::string Cexpr, functor);
-    Constraint(PCSet &pcs, std::string Cid, std::string Cexpr, functor, int count,va_list * args);
+    Constraint(VCSet &vcs);
+    Constraint(VCSet &vcs, std::string Cid, std::string Cexpr, functor);
+    Constraint(VCSet &vcs, std::string Cid, std::string Cexpr, functor, int count,va_list * args);
     
     bool solved();
     bool check();
@@ -62,7 +62,7 @@ public:
     void display();
 private:
     int status;
-    PCSet &pcset;
+    VCSet &vcset;
     std::string id;
     std::string expression;
     std::list<std::string> Variables;

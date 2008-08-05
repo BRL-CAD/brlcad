@@ -26,16 +26,16 @@
  * @author Dawn Thomas
  */
 #include "pcConstraint.h"
-#include "pcPCSet.h"
+#include "pcVCSet.h"
 
-Constraint::Constraint(PCSet &pcs) :
-    pcset(pcs),
+Constraint::Constraint(VCSet &vcs) :
+    vcset(vcs),
     status(0)
 {
 }
 
-Constraint::Constraint(PCSet &pcs, std::string Cid, std::string Cexpression, functor pf) :
-    pcset(pcs),
+Constraint::Constraint(VCSet &vcs, std::string Cid, std::string Cexpression, functor pf) :
+    vcset(vcs),
     status(0),
     id(Cid),
     expression(Cexpression),
@@ -43,8 +43,8 @@ Constraint::Constraint(PCSet &pcs, std::string Cid, std::string Cexpression, fun
 {
 }
 
-Constraint::Constraint(PCSet &pcs, std::string Cid, std::string Cexpression, functor pf, int count, va_list * args) :
-    pcset(pcs),
+Constraint::Constraint(VCSet &vcs, std::string Cid, std::string Cexpression, functor pf, int count, va_list * args) :
+    vcset(vcs),
     status(0),
     id(Cid),
     expression(Cexpression),
@@ -65,7 +65,7 @@ bool Constraint::solved()
 
 bool Constraint::check()
 {
-    if (eval(pcset, Variables)) {
+    if (eval(vcset, Variables)) {
 	status =1;
 	return true;
     } else {

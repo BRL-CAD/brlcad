@@ -19,15 +19,15 @@
  */
 /** @addtogroup libpc */
 /** @{ */
-/** @file pcPCSet.h
+/** @file pcVCSet.cpp
  *
- * PCSet Class Methods
+ * VCSet Class Methods
  * 
  * @author Dawn Thomas
  */
-#include "pcPCSet.h"
+#include "pcVCSet.h"
 
-PCSet::~PCSet()
+VCSet::~VCSet()
 {
     std::list<VariableAbstract *>::iterator i;
     for (i = Vars.begin(); i != Vars.end(); i++) {
@@ -49,7 +49,7 @@ PCSet::~PCSet()
     }
 }
 
-void PCSet::pushVar()
+void VCSet::pushVar()
 {
     Variable<double> *v = new Variable<double>(name,value);
     v->addInterval(Interval<double>( -std::numeric_limits<double>::max(), std::numeric_limits<double>::max(), 0.00001));
@@ -58,7 +58,7 @@ void PCSet::pushVar()
     name.clear();
 }
 
-void PCSet::addConstraint(std::string cid, std::string cexpr, functor f,int count,...)
+void VCSet::addConstraint(std::string cid, std::string cexpr, functor f,int count,...)
 {
     va_list args;
     va_start(args,count);
@@ -67,7 +67,7 @@ void PCSet::addConstraint(std::string cid, std::string cexpr, functor f,int coun
     Constraints.push_back(c);
 }
 
-VariableAbstract * PCSet::getVariablebyID(std::string vid)
+VariableAbstract * VCSet::getVariablebyID(std::string vid)
 {
     std::list<VariableAbstract *>::iterator i;
     for (i = Vars.begin(); i != Vars.end(); i++) {
@@ -78,13 +78,13 @@ VariableAbstract * PCSet::getVariablebyID(std::string vid)
 }
 
 
-void PCSet::display()
+void VCSet::display()
 {
     using std::endl;
     std::list<VariableAbstract *>::iterator i;
     std::list<Constraint *>::iterator j;
     std::cout << "----------------------------------------------" << endl;
-    std::cout << "-----------Parameter-Constraint Set-----------" << endl;
+    std::cout << "-----------Variable - Constraint Set----------" << endl;
     if (!Vars.empty()) {
 	std::cout<< endl << "Variables:" << endl << endl;
 	for (i = Vars.begin(); i != Vars.end(); i++)
@@ -97,7 +97,7 @@ void PCSet::display()
     }
 }
 
-bool PCSet::check()
+bool VCSet::check()
 {
     std::list<Constraint *>::iterator i;
     for (i = Constraints.begin(); i != Constraints.end(); ++i) {

@@ -40,7 +40,7 @@
 #include "pcBasic.h"
 #include "pcVariable.h"
 #include "pcConstraint.h"
-#include "pcPCSet.h"
+#include "pcVCSet.h"
 
 template<typename T>
 class GTSolver;
@@ -92,7 +92,7 @@ public:
     /** Constructors and Destructors */
     BinaryNetwork();
     BinaryNetwork(std::vector<Variable<T> *>, std::vector<Constraint *>);
-    BinaryNetwork(PCSet & pcset);
+    BinaryNetwork(VCSet & vcset);
     
     /** Data access methods */
     void getVertexbyID(std::string, Vertex&);
