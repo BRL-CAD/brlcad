@@ -29,6 +29,10 @@
 #ifndef __VEGITATION_H__
 #define __VEGITATION_H__
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#define _CRT_RAND_S
+#endif
+
 #include "common.h"
 
 #include <stdlib.h>
