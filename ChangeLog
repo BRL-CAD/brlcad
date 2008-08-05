@@ -910,3 +910,70 @@
 	  Update all the version numbers I can spot, start tweaking the
 	  NEWS file.
 
+2008-08-02 04:19  starseeker
+
+	* [r32214] ChangeLog:
+	  Release ChangeLog, per HACKING. Since this release is a true
+	  branch and not a tagging of trunk, ChangeLog is from pre-7-12-6
+	  branch - the release building effort.
+
+2008-08-02 05:51  starseeker
+
+	* [r32217] src/libged/wdb_obj.c:
+	  doggone it dbconcat is crashing - revert and take another look at
+	  the changes to try and figure out why.
+
+2008-08-02 16:25  starseeker
+
+	* [r32225] src/libged/wdb_obj.c:
+	  OK, restore the previous wdb_obj changes (checking for infinite
+	  looping in naming) while initializing prev-name to a space char -
+	  this way the initial comparison doesn't trigger a crash and a
+	  single space character is an unlikely name choice for any object.
+
+2008-08-03 20:05  starseeker
+
+	* [r32230] ., doc/deprecation.txt, include/vmath.h,
+	  src/libbu/vls.c, src/libged/wdb_obj.c, src/librt/primitives,
+	  src/librt/primitives/arb8, src/librt/primitives/arbn,
+	  src/librt/primitives/ars, src/librt/primitives/bot,
+	  src/librt/primitives/brep, src/librt/primitives/cline,
+	  src/librt/primitives/dsp, src/librt/primitives/ebm,
+	  src/librt/primitives/ehy, src/librt/primitives/ell,
+	  src/librt/primitives/epa, src/librt/primitives/eto,
+	  src/librt/primitives/extrude, src/librt/primitives/grip,
+	  src/librt/primitives/half, src/librt/primitives/hf,
+	  src/librt/primitives/hyp, src/librt/primitives/metaball,
+	  src/librt/primitives/part, src/librt/primitives/pipe,
+	  src/librt/primitives/poly, src/librt/primitives/rec,
+	  src/librt/primitives/rhc, src/librt/primitives/rpc,
+	  src/librt/primitives/sketch, src/librt/primitives/sph,
+	  src/librt/primitives/submodel, src/librt/primitives/superell,
+	  src/librt/primitives/tgc, src/librt/primitives/tor,
+	  src/librt/primitives/vol, src/librt/primitives/xxx:
+	  Import proper fix for dbconcat crash from trunk and revert
+	  previous workaround - dbconcat now functional.
+
+2008-08-04 00:26  starseeker
+
+	* [r32235] doc/deprecation.txt, include/vmath.h:
+	  Revert depreciation in vmath.h per request from Sean - not due
+	  until next release.
+
+2008-08-04 15:25  bob1961
+
+	* [r32244] src/mged/chgview.c:
+	  Add in fix for illumination bug when doing primitive editing -
+	  r31737
+
+2008-08-04 17:17  starseeker
+
+	* [r32250] misc/win32-msvc8/tire,
+	  misc/win32-msvc8/tire/tire.vcproj, src/proc-db/tire.c:
+	  Merge Bob's changes from trunk to add tire to the Windows build.
+
+2008-08-04 19:35  bob1961
+
+	* [r32253] misc/win32-msvc8/brlcad/brlcad.sln:
+	  Added project for the tire command.
+
