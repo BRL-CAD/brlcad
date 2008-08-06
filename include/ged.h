@@ -649,7 +649,7 @@ GED_EXPORT BU_EXTERN(int	wdb_version_cmd,
 		     Tcl_Interp *interp,
 		     int argc,
 		     char *argv[]));
-GED_EXPORT BU_EXTERN(int	wdb_binary_cmd,
+GED_EXPORT BU_EXTERN(int	wdb_bo_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
 		     int argc,
