@@ -15,19 +15,27 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 
 This release enhances the formatting options available "out of the
-box" for NIRT, as well as adding an -L option to list available
-options.
+box" for the NIRT tool, allowing users to easily select different
+data reporting options without having to define their own custom
+configuration files.  CSV output options also allow for quick
+and easy import into spreadsheets.  The new -L option lists available
+formats.
 
-The tire tool has had several updates - it will no longer overwrite
-pre-existing files, corrections to the tread geometry have been
-introduced, and a "w" flag now accepts a value of "0" to disable
-creation of the default wheel rim.
+The tire tool's behavior has been improved - it will no longer
+overwrite pre-existing files and a "w" flag now accepts a value of
+"0" to disable creation of the default wheel rim for modelers wishing
+to supply their own rim.  A number of small but visual flaws in the
+tread geometry definitions were also corrected.
 
-MGED's dbconcat command no longer hangs when not specifying an affix,
-and the solid_illum bug has been fixed. Raytracing performance on
-the pipe primitive was improved, and a bug in the extrude primitive's
-handling of invalid geometry was fixed.
+MGED's dbconcat command works again without needing to specifying an
+affix for object names when importing geometry from one database to 
+another.  Primitive selection via the Edit menu is working again
+thanks to the fixing of the solid_illum bug. The pipe primitive's
+performance problems during raytracing, due to unnecessary memory
+allocations, are now fixed.  The extrude primitive's handling of 
+invalid geometry is now more robust.
 
+* fixed error in parsing remotefb location specification - S. Morrison
 * add w option to tire to allow disabling wheel generation - C. Yapp
 * tweak tread 2 in tire tool; avoid artifacts on tread wall - C. Yapp
 * fixed mged 'dbconcat' hang when not specifying an affix - Bob Parker
