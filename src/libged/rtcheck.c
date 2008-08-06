@@ -116,10 +116,10 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 
 #ifndef _WIN32
     vp = &gedp->ged_gdp->gd_rt_cmd[0];
-    *vp++ = argv[0];
+    *vp++ = (char *)argv[0];
     *vp++ = "-M";
     for (i=1; i < argc; i++)
-	*vp++ = argv[i];
+	*vp++ = (char *)argv[i];
     *vp++ = gedp->ged_wdbp->dbip->dbi_filename;
 
     /*
@@ -135,7 +135,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 					       &gedp->ged_gdp->gd_rt_cmd[MAXARGS]);
     } else {
 	while (i < argc)
-	    *vp++ = argv[i++];
+	    *vp++ = (char *)argv[i++];
 	*vp = 0;
 	vp = &gedp->ged_gdp->gd_rt_cmd[0];
 	while (*vp)
@@ -430,7 +430,7 @@ ged_rtcheck_output_handler(ClientData clientData, int mask)
     if (rtcop->gedp->ged_output_handler != (void (*)())0)
 	rtcop->gedp->ged_output_handler(rtcop->gedp, line);
     else
-	bu_vls_printf(&rtcop->gedp->ged_gdp, "%s", line);
+	bu_vls_printf(&rtcop->gedp->ged_result_str, "%s", line);
 }
 
 #else
