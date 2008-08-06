@@ -1239,14 +1239,14 @@ set_localunit_TclVar(void)
 
 
 int
-f_binary(ClientData	clientData,
+f_bo(ClientData	clientData,
 	 Tcl_Interp	*interp,
 	 int		argc,
 	 char 		**argv)
 {
     CHECK_DBI_NULL;
 
-    return wdb_binary_cmd(wdbp, interp, argc, argv);
+    return wdb_bo_cmd(wdbp, interp, argc, argv);
 }
 
 int cmd_bot_smooth( ClientData	clientData,

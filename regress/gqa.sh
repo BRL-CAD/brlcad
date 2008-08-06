@@ -29,7 +29,7 @@ echo "2 1 gas" >> density_table.txt
 
 cat > gqa.mged <<EOF
 units m
-binary -i u c _DENSITIES density_table.txt
+bo -i u c _DENSITIES density_table.txt
 
 in box1.s rpp 0 10 0 10 0 10
 in box2.s rpp 1  9 1  9 1  9

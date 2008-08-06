@@ -54,7 +54,7 @@ set mged_help_data(attr)        $helplib_data(wdb_attr)
 set mged_help_data(autoview)	{{}	{set view size and center so that all displayed solids are in view}}
 set mged_help_data(B)		$helplib_data(dgo_blast)
 set mged_help_data(bev)		{{"[-t] [-P#] new_obj obj1 op obj2 op obj3 op ..."}	{boolean evaluation of objects via NMG's}}
-set mged_help_data(binary)	{{{-i major_type minor_type | -o} dest source}
+set mged_help_data(bo)	{{{-i major_type minor_type | -o} dest source}
     {manipulate opaque objects.
 	Must specify one of -i (for creating or adjusting objects (input))
 	or -o for extracting objects (output).

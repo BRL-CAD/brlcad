@@ -47,9 +47,10 @@ new names should be listed for reference.
 **************
 * DEPRECATED *
 **************
+
 7.14
 ----
-src/mged/mged.c
+mged
 	-n option -> -c option [deprecated 7.14]
 
 7.12
@@ -98,6 +99,11 @@ include/vmath.h
 	PI -> M_PI
 	M_SQRT2_DIV2 -> M_SQRT1_2
 
+7.12.6
+------
+mged
+	binary -> bo [rename]
+
 7.12.4
 ------
 include/raytrace.h
@@ -141,6 +147,8 @@ include/noalias.h
 	removed [non-stdc]
 src/librt/wdb_obj.c -> src/librt/db_obj.c
 	removed wdb_tree_cmd(), added dgo_tree_cmd() [rename]
+mged
+	dbbinary -> binary [rename]
 
 
 7.10.4
