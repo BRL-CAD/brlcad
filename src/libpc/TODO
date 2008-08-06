@@ -24,9 +24,9 @@ CODING PLAN
 ** Add BinaryNetowrk(PCSet &) constructor
 ** Test BinaryNetwork generation from PCSet
 ** Rename "funct" functor in Constraint to more meaningful eval()
--  Using PCSet methods make the above functor argumentless
-*  Create a math_expression_eval functor for the constraints
-	* Use Stack<Boost::any> ?
+**  Using PCSet methods make the above functor argumentless
+-  Create a math_expression_eval functor for the constraints
+	 - Defining custom stack with polymorphic nodes
 *  Create a math_expression_eval_generate functor for the Parser
 *  Generate math expressions and the *_eval/*_eval_generate from strings via parser
 *  Test Constraint Evaluation

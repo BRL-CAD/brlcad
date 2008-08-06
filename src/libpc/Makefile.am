@@ -16,6 +16,7 @@ noinst_HEADERS = \
 	pcBasic.h \
 	pcInterval.h \
 	pcVariable.h \
+	pcParameter.h \
 	pcConstraint.h \
 	pcVCSet.h \
 	pcNetwork.h \
@@ -26,6 +27,7 @@ noinst_HEADERS = \
 libpc_nil_la_SOURCES = \
 	pc_main.c \
 	pcVariable.cpp \
+	pcParameter.cpp \
 	pcConstraint.cpp \
 	pcVCSet.cpp \
 	pcNetwork.cpp \
