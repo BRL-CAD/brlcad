@@ -47,6 +47,7 @@ new names should be listed for reference.
 **************
 * DEPRECATED *
 **************
+
 7.12
 ----
 include/raytrace.h
@@ -56,6 +57,7 @@ include/vmath.h
 	HVECT_LEN -> ELEMENTS_PER_HVECT
 	HPT_LEN -> ELEMENTS_PER_HPOINT
 	M_SQRT2_DIV2 -> M_SQRT1_2
+	PI -> M_PI
 srt/librt/cmd.c
 	rt_split_cmd() -> bu_argv_from_string() [deprecated 7.12]
 src/rt/viewarea.c
@@ -87,6 +89,11 @@ include/raytrace.h
 ************
 * OBSOLETE *
 ************
+
+7.12.6
+------
+mged
+	binary -> bo [rename]
 
 7.12.4
 ------
@@ -131,6 +138,8 @@ include/noalias.h
 	removed [non-stdc]
 src/librt/wdb_obj.c -> src/librt/db_obj.c
 	removed wdb_tree_cmd(), added dgo_tree_cmd() [rename]
+mged
+	dbbinary -> binary [rename]
 
 
 7.10.4

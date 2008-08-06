@@ -35,6 +35,7 @@ performance problems during raytracing, due to unnecessary memory
 allocations, are now fixed.  The extrude primitive's handling of 
 invalid geometry is now more robust.
 
+* renamed mged binary command to bo for binary objects - Sean Morrison
 * fixed error in parsing remotefb location specification - S. Morrison
 * add w option to tire to allow disabling wheel generation - C. Yapp
 * tweak tread 2 in tire tool; avoid artifacts on tread wall - C. Yapp

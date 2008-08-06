@@ -279,7 +279,7 @@ static int wdb_summary_tcl(ClientData clientData, Tcl_Interp *interp, int argc, 
 static int wdb_pathlist_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_lt_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_version_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_binary_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int wdb_bo_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_bot_face_sort_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_bot_decimate_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_move_arb_edge_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -339,7 +339,7 @@ static struct bu_cmdtab wdb_cmds[] = {
     {"adjust",	wdb_adjust_tcl},
     {"arced",	wdb_newcmds_tcl},
     {"attr",	wdb_attr_tcl},
-    {"binary",	wdb_binary_tcl},
+    {"bo",	wdb_bo_tcl},
     {"bot_face_sort", wdb_bot_face_sort_tcl},
     {"bot_decimate", wdb_bot_decimate_tcl},
     {"c",		wdb_comb_std_tcl},
@@ -9092,7 +9092,7 @@ wdb_bot_smooth_tcl(ClientData	clientData,
  *
  */
 int
-wdb_binary_cmd(struct rt_wdb	*wdbp,
+wdb_bo_cmd(struct rt_wdb	*wdbp,
 	       Tcl_Interp	*interp,
 	       int		argc,
 	       char 		**argv)
@@ -9142,7 +9142,7 @@ wdb_binary_cmd(struct rt_wdb	*wdbp,
 
     if ( input_mode + output_mode != 1 ) {
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib_alias binary %s", cname);
+	bu_vls_printf(&vls, "helplib_alias bo %s", cname);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -9153,7 +9153,7 @@ wdb_binary_cmd(struct rt_wdb	*wdbp,
 
     if ( (input_mode && argc != 4) || (output_mode && argc != 2) ) {
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib_alias binary %s", cname);
+	bu_vls_printf(&vls, "helplib_alias bo %s", cname);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -9223,7 +9223,7 @@ wdb_binary_cmd(struct rt_wdb	*wdbp,
 
 	if ( minor_type == 0 ) {
 	    bu_vls_init(&vls);
-	    bu_vls_printf(&vls, "helplib_alias binary %s", cname);
+	    bu_vls_printf(&vls, "helplib_alias bo %s", cname);
 	    Tcl_Eval(interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	    return TCL_ERROR;
@@ -9315,7 +9315,7 @@ wdb_binary_cmd(struct rt_wdb	*wdbp,
 	return TCL_OK;
     } else {
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib_alias binary %s", cname);
+	bu_vls_printf(&vls, "helplib_alias bo %s", cname);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -9327,17 +9327,17 @@ wdb_binary_cmd(struct rt_wdb	*wdbp,
 
 /**
  * Usage:
- *        procname binary args
+ *        procname bo args
  */
 static int
-wdb_binary_tcl(ClientData	clientData,
+wdb_bo_tcl(ClientData	clientData,
 	       Tcl_Interp	*interp,
 	       int		argc,
 	       char		**argv)
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
-    return wdb_binary_cmd(wdbp, interp, argc-1, argv+1);
+    return wdb_bo_cmd(wdbp, interp, argc-1, argv+1);
 }
 
 /**
@@ -9754,7 +9754,7 @@ wdb_vls_long_dpp(struct bu_vls		*vls,
 		    len = 6;
 		    break;
 		case DB5_MAJORTYPE_BINARY_MIME:
-		    len = strlen( "binary (mime)" );
+		    len = strlen( "binary(mime)" );
 		    break;
 		case DB5_MAJORTYPE_BINARY_UNIF:
 		    len = strlen( binu_types[list_of_names[i]->d_minor_type] );
