@@ -48,7 +48,6 @@ ged_ypr(struct ged *gedp, int argc, const char *argv[])
 
     /* return Viewrot as yaw, pitch and roll */
     if (argc == 1) {
-	int n;
 	point_t pt;
 
 	bn_mat_trn(mat, gedp->ged_gvp->gv_rotation);
@@ -75,7 +74,7 @@ ged_ypr(struct ged *gedp, int argc, const char *argv[])
 	sscanf(argv[3], "%lf", ypr+1) != 1 ||
 	sscanf(argv[4], "%lf", ypr+2) != 1) {
 
-	bu_vls_printf(&gedp->ged_result, "%s ypr: bad value detected - %s %s %s",
+	bu_vls_printf(&gedp->ged_result_str, "%s ypr: bad value detected - %s %s %s",
 		      argv[0], argv[2], argv[3], argv[4]);
 	return BRLCAD_ERROR;
     }
