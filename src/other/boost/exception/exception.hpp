@@ -27,7 +27,7 @@ boost
         error_info_container:
             public exception_detail::counted_base
             {
-            virtual char const * diagnostic_information( char const *, std::type_info const & ) const = 0;
+            virtual char const * what( std::type_info const & ) const = 0;
             virtual shared_ptr<error_info_base const> get( std::type_info const & ) const = 0;
             virtual void set( shared_ptr<error_info_base const> const & ) = 0;
             };
@@ -49,9 +49,19 @@ boost
 
         virtual
         char const *
-        diagnostic_information() const throw()
+        what() const throw()
             {
-            return _diagnostic_information(0);
+            if( data_ )
+                try
+                    {
+                    char const * w = data_->what(typeid(*this));
+                    BOOST_ASSERT(0!=w);
+                    return w;
+                    }
+                catch(...)
+                    {
+                    }
+            return typeid(*this).name();
             }
 
         protected:
@@ -63,22 +73,6 @@ boost
         exception( exception const & e ):
             data_(e.data_)
             {
-            }
-
-        char const *
-        _diagnostic_information( char const * std_what ) const throw()
-            {
-            if( data_ )
-                try
-                    {
-                    char const * w = data_->diagnostic_information(std_what,typeid(*this));
-                    BOOST_ASSERT(0!=w);
-                    return w;
-                    }
-                catch(...)
-                    {
-                    }
-            return std_what ? std_what : typeid(*this).name();
             }
 
 #if BOOST_WORKAROUND( BOOST_MSVC, BOOST_TESTED_AT(1500) )

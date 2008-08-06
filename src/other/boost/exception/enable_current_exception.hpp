@@ -92,7 +92,7 @@ boost
                 count_(0)
                 {
                 if( boost::exception * be1=dynamic_cast<boost::exception *>(this) )
-                    if( boost::exception const * be2=dynamic_cast<boost::exception const *>(&x) )
+					if( boost::exception const * be2=dynamic_cast<boost::exception const *>(&x) )
                         *be1 = *be2;
                 }
 
@@ -121,7 +121,6 @@ boost
             };
 
         template <class T>
-        inline
         clone_base *
         make_clone( T const & x )
             {
@@ -145,7 +144,6 @@ boost
         }
 
     template <class T>
-    inline
     exception_detail::clone_impl<T>
     enable_current_exception( T const & x )
         {
