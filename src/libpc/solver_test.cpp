@@ -36,6 +36,7 @@
 #include "pcNetwork.h"
 #include "pcSolver.h"
 #include "pcParser.h"
+#include "pcMathVM.h"
 #include "pc.h"
 
 typedef Variable<int> * Vip;

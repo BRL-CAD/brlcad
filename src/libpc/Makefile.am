@@ -22,6 +22,7 @@ noinst_HEADERS = \
 	pcNetwork.h \
 	pcGenerator.h \
 	pcParser.h \
+	pcMathVM.h \
 	pcSolver.h
 
 libpc_nil_la_SOURCES = \
