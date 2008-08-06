@@ -31,6 +31,7 @@ libged_nil_la_SOURCES = \
 	draw.c \
 	dump.c \
 	dup.c \
+	edcodes.c \
 	edcomb.c \
 	editit.c \
 	edmater.c \
@@ -105,6 +106,7 @@ libged_nil_la_SOURCES = \
 	put.c \
 	qray.c \
 	quat.c \
+	rcodes.c \
 	regdef.c \
 	region.c \
 	remove.c \
@@ -149,6 +151,7 @@ libged_nil_la_SOURCES = \
 	viewdir.c \
 	vrot.c \
 	vutil.c \
+	wcodes.c \
 	wdb_bigE.c \
 	wdb_comb_std.c \
 	wdb_importFg4Section.c \
@@ -159,6 +162,7 @@ libged_nil_la_SOURCES = \
 	wdb_vdraw.c \
 	whatid.c \
 	which.c \
+	which_shader.c \
 	who.c \
 	wmater.c \
 	xpush.c \

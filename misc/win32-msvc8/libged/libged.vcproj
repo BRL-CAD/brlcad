@@ -238,6 +238,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\edcodes.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\edcomb.c"
 				>
 			</File>
@@ -534,6 +538,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\rcodes.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\regdef.c"
 				>
 			</File>
@@ -710,6 +718,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\wcodes.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\wdb_bigE.c"
 				>
 			</File>
@@ -747,6 +759,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\which.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\which_shader.c"
 				>
 			</File>
 			<File

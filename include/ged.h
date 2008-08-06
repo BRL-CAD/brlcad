@@ -1149,6 +1149,14 @@ GED_EXPORT BU_EXTERN(int ged_dup, (struct ged *gedp, int argc, const char *argv[
 GED_EXPORT BU_EXTERN(int ged_E, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Edit region ident codes.
+ *
+ * Usage:
+ *     edcodes object(s)
+ */
+GED_EXPORT BU_EXTERN(int ged_edcodes, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Edit combination.
  *
  * Usage:
@@ -1719,6 +1727,14 @@ GED_EXPORT BU_EXTERN(void ged_free_qray,
 		    (struct ged_drawable *gdp));
 
 /**
+ * Read region ident codes from filename.
+ *
+ * Usage:
+ *     rcodes filename
+ */
+GED_EXPORT BU_EXTERN(int ged_rcodes, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Change the default region ident codes: item air los mat
  *
  * Usage:
@@ -2048,7 +2064,15 @@ GED_EXPORT BU_EXTERN(int ged_vrot, (struct ged *gedp, int argc, const char *argv
 GED_EXPORT BU_EXTERN(int ged_viewdir, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
- * Return the specified region's id
+ * Write region ident codes to filename.
+ *
+ * Usage:
+ *     wcodes filename object(s)
+ */
+GED_EXPORT BU_EXTERN(int ged_wcodes, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Return the specified region's id.
  *
  * Usage:
  *     whatid region
@@ -2058,19 +2082,27 @@ GED_EXPORT BU_EXTERN(int ged_whatid, (struct ged *gedp, int argc, const char *ar
 /**
  * The ged_which() function serves both whichair and whichid.
  *
- * Find the regions with the specified air codes
+ * Find the regions with the specified air codes.
  *
  * Usage:
  *     whichair codes(s)
  *
  *
- * Find the regions with the specified region ids
+ * Find the regions with the specified region ids.
  *
  * Usage:
  *     whichid [-s] id(s)
  *
  */
 GED_EXPORT BU_EXTERN(int ged_which, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Return all combinations with the specified shaders.
+ *
+ * Usage:
+ *     which_shader [-s] args
+ */
+GED_EXPORT BU_EXTERN(int ged_which_shader, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * List the objects currently prepped for drawing
