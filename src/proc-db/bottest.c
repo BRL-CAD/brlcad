@@ -46,13 +46,13 @@ main(int argc, char **argv)
     outfp = wdb_fopen( "bot-test.g" );
     mk_id( outfp, "BOT test" );
 
-    VSET( vertices, 0.0, 0.0, 0.0 )
-	VSET( &vertices[3], 0.0, 100.0, 0.0 )
-	VSET( &vertices[6], 0.0, 100.0, 50.0 )
-	VSET( &vertices[9], 200.0, 0.0, 0.0 )
+    VSET( vertices, 0.0, 0.0, 0.0 );
+    VSET( &vertices[3], 0.0, 100.0, 0.0 );
+    VSET( &vertices[6], 0.0, 100.0, 50.0 );
+    VSET( &vertices[9], 200.0, 0.0, 0.0 );
 
-	/* face #1 */
-	faces[0] = 0;
+    /* face #1 */
+    faces[0] = 0;
     faces[1] = 1;
     faces[2] = 2;
 
