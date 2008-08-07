@@ -37,6 +37,7 @@
 #include <boost/spirit/include/classic_symbols.hpp>
 
 #include <list>
+#include <vector>
 
 class Stack;
 
@@ -67,16 +68,34 @@ private:
     void copy(Stack::container_t const &);
 };
 
-struct function;
+struct MathFunction;
 
 struct MathVM
 {
     Stack stack;
     boost::spirit::classic::symbols<double> variables;
-    boost::spirit::classic::symbols<boost::shared_ptr<function> > functions;
+    boost::spirit::classic::symbols<boost::shared_ptr<MathFunction> > functions;
 };
 
 double evaluate(Stack s);
+
+struct MathFunction
+{
+    MathFunction() {}
+    MathFunction(std::string const &);
+    virtual ~MathFunction() {}
+    
+    /** Data access methods */
+    std::string const & getName() const;
+    virtual std::size_t arity() const = 0;
+
+    /** The evaluation method */
+    double eval(std::vector<double> const & args) const;
+private:
+    virtual double evalp(std::vector<double> const & args) const = 0;
+    std::string name;
+
+};
 
 /* Node Implementations */
 
@@ -87,7 +106,7 @@ struct number_node : public Node
 
 struct function_node : public Node
 {
-    virtual function const & func() const = 0;
+    virtual MathFunction const & func() const = 0;
 };
 
 #endif

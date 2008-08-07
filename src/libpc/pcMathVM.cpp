@@ -27,6 +27,7 @@
  */
 
 #include "pcMathVM.h"
+#include <cassert>
 
 Stack::Stack(Stack const & s)
 {
@@ -40,6 +41,30 @@ void Stack::copy(Stack::container_t const & a)
     Stack::container_t::const_iterator const end = a.end();
     for (; i != end; ++i)
 	data.push_back(*i);
+}
+
+/* MathFunction methods */
+
+MathFunction::MathFunction(std::string const & n) :
+	name(n)
+{}
+
+/** getName() returns the name of the function */
+std::string const & MathFunction::getName() const
+{
+    return name;
+}
+
+/** 
+ * eval() is effectively a wrapper function over the private evaluation
+ * function . It does an arity check to match the number of provided
+ * arguments with the expected.
+ */
+
+double MathFunction::eval(std::vector<double> const & args) const
+{
+    assert(args.size() == arity());
+    return evalp(args);
 }
 
 /** @} */
