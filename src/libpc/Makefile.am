@@ -10,7 +10,8 @@ AM_CPPFLAGS = \
 
 noinst_PROGRAMS = \
 	pc_test \
-	solver_test
+	solver_test \
+	vm_test
 
 noinst_HEADERS = \
 	pcBasic.h \
@@ -33,7 +34,8 @@ libpc_nil_la_SOURCES = \
 	pcVCSet.cpp \
 	pcNetwork.cpp \
 	pcGenerator.cpp \
-	pcParser.cpp
+	pcParser.cpp \
+	pcMathVM.cpp
 
 libpc_la_SOURCES =
 libpc_la_LDFLAGS = -version-info 19:1 -no-undefined -Wc,${FEXCEPTIONS}
@@ -46,6 +48,9 @@ pc_test_LDADD = libpc.la
 
 solver_test_SOURCES = solver_test.cpp
 solver_test_LDADD = libpc.la
+
+vm_test_SOURCES = vm_test.cpp
+vm_test_LDADD = libpc.la
 
 FAST_OBJECTS = \
 	$(libpc_nil_la_OBJECTS) \
