@@ -23,4 +23,5 @@ add_subdirectory(../../src/libwdb .)
 add_subdirectory(Dll .)
 
 # buld tools
+add_subdirectory(../../src/conv .)
 add_subdirectory(../../src/conv/3dm .)

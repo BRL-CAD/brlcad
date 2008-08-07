@@ -372,7 +372,7 @@ nmg_vlg(const struct loop_g *lg)
 
     NMG_CK_LOOP_G(lg);
 
-    for (i=0; i < ELEMENTS_PER_PT; ++i)
+    for (i=0; i < ELEMENTS_PER_POINT; ++i)
 	if (lg->min_pt[i] > lg->max_pt[i])
 	    bu_bomb("nmg_vlg() loop geom min_pt greater than max_pt\n");
 }
@@ -513,7 +513,7 @@ nmg_vface(const struct face *f, const struct faceuse *fup)
     if (f->fu_p != fu) bu_bomb("nmg_vface() can't get to parent faceuse from face\n");
 #endif
 
-    for (i=0; i < ELEMENTS_PER_PT; ++i)
+    for (i=0; i < ELEMENTS_PER_POINT; ++i)
 	if (f->min_pt[i] >= f->max_pt[i]) {
 	    bu_log("nmg_vface() face min_pt[%d]:%g greater than max_pt[%d]:%g\n",
 		   i, f->min_pt[i], i, f->max_pt[i]);

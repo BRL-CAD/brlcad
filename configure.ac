@@ -114,18 +114,17 @@ AC_SUBST(BRLCAD_VERSION)
 
 # force locale setting to C so things like date output as expected
 LC_ALL=C
+LANG=C
 
 CONFIG_DAY=`date +%d`
 CONFIG_MONTH=`date +%m`
 CONFIG_YEAR=`date +%Y`
 CONFIG_DATE="${CONFIG_YEAR}${CONFIG_MONTH}${CONFIG_DAY}"
-CONFIG_TIME="`date '+%H %M %S'`"
-CONFIG_TS="`date`"
+CONFIG_TS="`date -R 2>/dev/null || date +'%a, %d %b %Y %H:%M:%S %z' 2>/dev/null || date`" # try RFC 2822
 AC_SUBST(CONFIG_DAY)
 AC_SUBST(CONFIG_MONTH)
 AC_SUBST(CONFIG_YEAR)
 AC_SUBST(CONFIG_DATE)
-AC_SUBST(CONFIG_TIME)
 AC_SUBST(CONFIG_TS)
 
 
@@ -134,8 +133,8 @@ title="Configuring BRL-CAD Release $BRLCAD_VERSION, Build $CONFIG_DATE"
 length="`echo x${title}x | wc -c`"
 separator=""
 while test $length -gt 1 ; do
-separator="${separator}*"
-length="`expr $length - 1`"
+    separator="${separator}*"
+    length="`expr $length - 1`"
 done
 
 BC_BOLD
@@ -1987,14 +1986,13 @@ BC_COMPLIANT_DOUBLE
 if test "x$bc_compliant_float" = "xno" || test "x$bc_compliant_double" = "xno" ; then
     AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
     AC_MSG_WARN([The floating point implementation does not seem to be IEEE 754])
-    AC_MSG_WARN([compliant.  The behavior or htond and htonf may be incorrect.])
+    AC_MSG_WARN([compliant.  The behavior of htond and htonf may be incorrect.])
     AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
     sleep 1
 fi
 
 dnl AC_C_PROTOTYPES
 AM_C_PROTOTYPES
-AC_DEFINE(USE_PROTOTYPES,1,heh)
 
 AC_C_CONST
 AC_C_INLINE
@@ -2078,6 +2076,7 @@ AC_CHECK_FUNCS(\
 	setpriority \
 	setprogname \
 	srand48 \
+	strcasecmp \
 	strchr \
 	strdup \
 	strlcat \
@@ -2090,6 +2089,7 @@ AC_CHECK_FUNCS(\
 	vfork \
 	writev \
 )
+# strcasecmp checked for BLT
 
 dnl *** check if basename() exists ***
 AC_MSG_CHECKING([for basename])
@@ -2573,6 +2573,7 @@ AC_MSG_CHECKING(whether to build Tcl)
 TCL=""
 TCLSTUB=""
 TCL_CPPFLAGS=""
+unset ac_cv_c_tclconfig
 if test "x$build_brlcad_tcl" = "xyes" ; then
     TCL_VERSION="8.5"
     AC_MSG_RESULT(yes)
@@ -2611,11 +2612,7 @@ else
 	sleep 1
     fi
 fi
-AC_SUBST(TCL)
-AC_SUBST(TCLSTUB)
-AC_SUBST(TCL_CPPFLAGS)
-AC_SUBST(TCL_VERSION)
-AC_SUBST(LIBTCL)
+dnl AC_SUBST values are below after itcl sanity check
 
 
 dnl *** Tk ***
@@ -2693,6 +2690,7 @@ AC_MSG_CHECKING(whether to build Tk)
 TK=""
 TKSTUB=""
 TK_CPPFLAGS=""
+unset ac_cv_c_tkconfig
 if test "x$build_brlcad_tk" = "xyes" ; then
     TK_VERSION="8.5"
     build_against_tk="yes"
@@ -2728,11 +2726,7 @@ else
 	sleep 1
     fi
 fi
-AC_SUBST(TK)
-AC_SUBST(TKSTUB)
-AC_SUBST(TK_CPPFLAGS)
-AC_SUBST(TK_VERSION)
-AC_SUBST(LIBTK)
+dnl AC_SUBST values are below after itcl sanity check
 
 
 dnl *** incrTcl ***
@@ -2829,6 +2823,55 @@ ITCL_LIB_FILE="libitcl${ITCL_VERSION}.a"
 ITK_LIB_FILE="libitk${ITCL_VERSION}.a"
 AC_SUBST(ITCL_LIB_FILE)
 AC_SUBST(ITK_LIB_FILE)
+
+
+dnl *** tcl+itcl sanity ***
+dnl See if the tcl we're using is compatible with the incrTcl we're using.
+dnl Our incrTcl is latest sources that make it only work with 8.5+
+if test "x$TCL" = "x$LIBTCL" ; then
+    if test "x$ITCL" != "x$LIBITCL" && test "x$TCL_VERSION" != "x8.5" ; then
+	# apparently want to use system tcl with non-system incrTcl
+	# is that sane? probably not until 8.5 is everywhere.
+	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	AC_MSG_WARN([Unable to find a system incrTcl compatible with the available system Tcl])
+	AC_MSG_WARN([Enabling compilation of both Tcl and incrTcl])
+	AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
+	# nope!
+	build_brlcad_tcl="yes"
+	build_brlcad_tk="yes"
+	TCL_VERSION="8.5"
+	TK_VERSION="8.5"
+
+	case $host_os in
+	    darwin*)
+		TCL='-L${top_builddir}/src/other/tcl/unix'" -ltcl${TCL_VERSION} $FRAMEWORK_COREFOUNDATION"
+		;;
+	    *)
+		TCL='-L${top_builddir}/src/other/tcl/unix'" -ltcl${TCL_VERSION} ${LIBDL} ${LIBM}"
+		;;
+	esac
+	TCLSTUB='-L${top_builddir}/src/other/tcl/unix'" -ltclstub${TCL_VERSION}"
+	TCL_CPPFLAGS='-I${top_srcdir}/src/other/tcl/generic -I${top_srcdir}/src/other/tcl/unix'
+
+	TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TK_VERSION}"
+	TKSTUB='-L${top_builddir}/src/other/tk/unix'" -ltkstub${TK_VERSION}"
+	TK_CPPFLAGS='-I${top_srcdir}/src/other/tk/generic -I${top_srcdir}/src/other/tk/unix -I${top_srcdir}/src/other/tk/win'
+	if test "x$bc_build_aquatk" = "xyes" ; then
+	    TK_CPPFLAGS="$TK_CPPFLAGS "'-I${top_srcdir}/src/other/tk/xlib'
+	fi
+    fi
+fi
+AC_SUBST(TCL)
+AC_SUBST(TCLSTUB)
+AC_SUBST(TCL_CPPFLAGS)
+AC_SUBST(TCL_VERSION)
+AC_SUBST(LIBTCL)
+AC_SUBST(TK)
+AC_SUBST(TKSTUB)
+AC_SUBST(TK_CPPFLAGS)
+AC_SUBST(TK_VERSION)
+AC_SUBST(LIBTK)
+
 
 dnl *** iwidgets ***
 dnl See if the iwidgets are available
@@ -3108,6 +3151,10 @@ fi
 AC_SUBST(TERMLIB)
 AC_SUBST(TERMLIB_CPPFLAGS)
 
+dnl *** Boost ***
+dnl Header only Library requiring no build
+BOOST_CPPFLAGS='-I${top_srcdir}/src/other/boost'
+AC_SUBST(BOOST_CPPFLAGS)
 
 dnl *** libm ***
 AC_MSG_CHECKING(whether to link with the system math library)
@@ -3555,8 +3602,6 @@ if test "x$bc_build_parallel" != "xno" ; then
 	AC_DEFINE(PARALLEL, 1, [Define to enable SMP architecture parallel computation support ])
 fi
 
-AC_DEFINE_UNQUOTED([USE_FBSERV], [1], [Required for libdm/mged to allow direct fbserv render connections])
-
 
 #
 # set up the BRL-CAD libraries
@@ -3726,17 +3771,17 @@ AC_CONFIG_FILES([
 	misc/macosx/Resources/Welcome.rtfd/Makefile
 	misc/nsis/Makefile
 	misc/pkgconfig/Makefile
-	misc/pkgconfig/bn.pc
-	misc/pkgconfig/brlcad.pc
-	misc/pkgconfig/bu.pc
-	misc/pkgconfig/dm.pc
-	misc/pkgconfig/fb.pc
-	misc/pkgconfig/fft.pc
-	misc/pkgconfig/multispectral.pc
-	misc/pkgconfig/optical.pc
-	misc/pkgconfig/pkg.pc
-	misc/pkgconfig/rt.pc
-	misc/pkgconfig/wdb.pc
+	misc/pkgconfig/libbn.pc
+	misc/pkgconfig/libbrlcad.pc
+	misc/pkgconfig/libbu.pc
+	misc/pkgconfig/libdm.pc
+	misc/pkgconfig/libfb.pc
+	misc/pkgconfig/libfft.pc
+	misc/pkgconfig/libmultispectral.pc
+	misc/pkgconfig/liboptical.pc
+	misc/pkgconfig/libpkg.pc
+	misc/pkgconfig/librt.pc
+	misc/pkgconfig/libwdb.pc
 	misc/win32-msvc/Dll/Makefile
 	misc/win32-msvc/Makefile
 	misc/win32-msvc8/Makefile
@@ -3947,7 +3992,7 @@ dnl
 dnl Compute configuration time elapsed
 dnl
 if test -x "${srcdir}/sh/elapsed.sh" ; then
-	time_elapsed="`${srcdir}/sh/elapsed.sh $CONFIG_TIME`"
+	time_elapsed="`${srcdir}/sh/elapsed.sh $CONFIG_TS`"
 else
 	time_elapsed="unknown"
 fi

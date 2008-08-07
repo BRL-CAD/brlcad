@@ -85,37 +85,80 @@
 
 __BEGIN_DECLS
 
-#ifndef M_PI
-#  define M_E		2.7182818284590452354	/* e */
-#  define M_LOG2E	1.4426950408889634074	/* log_2 e */
-#  define M_LOG10E	0.43429448190325182765	/* log_10 e */
-#  define M_LN2		0.69314718055994530942	/* log_e 2 */
-#  define M_LN10	2.30258509299404568402	/* log_e 10 */
-#  define M_PI		3.14159265358979323846	/* pi */
-#  define M_PI_2	1.57079632679489661923	/* pi/2 */
-#  define M_PI_4	0.78539816339744830962	/* pi/4 */
-#  define M_1_PI	0.31830988618379067154	/* 1/pi */
-#  define M_2_PI	0.63661977236758134308	/* 2/pi */
-#  define M_2_SQRTPI	1.12837916709551257390	/* 2/sqrt(pi) */
-#  define M_SQRT2	1.41421356237309504880	/* sqrt(2) */
-#  define M_SQRT1_2	0.70710678118654752440	/* 1/sqrt(2) */
-#  define M_SQRT2_DIV2	0.70710678118654752440  /* 1/sqrt(2) */
+#ifndef M_
+#  define M_		XXX /**< */
 #endif
+
+#ifndef M_1_PI
+#  define M_1_PI	0.31830988618379067153776752675 /**< 1/pi */
+#endif
+#ifndef M_2_PI
+#  define M_2_PI	0.63661977236758134307553505349 /**< 2/pi */
+#endif
+#ifndef M_2_SQRTPI
+#  define M_2_SQRTPI	1.12837916709551257389615890312 /**< 2/sqrt(pi) */
+#endif
+#ifndef M_E
+#  define M_E		2.71828182845904523536028747135 /**< e */
+#endif
+#ifndef M_EULER
+#  define M_EULER	0.57721566490153286060651209008 /**< Euler's constant */
+#endif
+#ifndef M_LOG2E
+#  define M_LOG2E	1.44269504088896340735992468100 /**< log_2(e) */
+#endif
+#ifndef M_LOG10E
+#  define M_LOG10E	0.43429448190325182765112891892 /**< log_10(e) */
+#endif
+#ifndef M_LN10
+#  define M_LN10	2.30258509299404568401799145468 /**< log_e(10) */
+#endif
+#ifndef M_LN2
+#  define M_LN2		0.69314718055994530941723212146 /**< log_e(2) */
+#endif
+#ifndef M_LNPI
+#  define M_LNPI	1.14472988584940017414342735135 /**< log_e(pi) */
+#endif
+#ifndef M_PI
+#  define M_PI		3.14159265358979323846264338328 /**< pi */
+#endif
+#ifndef M_PI_2
+#  define M_PI_2	1.57079632679489661923132169164 /**< pi/2 */
+#endif
+#ifndef M_PI_4
+#  define M_PI_4	0.78539816339744830966156608458 /**< pi/4 */
+#endif
+#ifndef M_SQRT1_2
+#  define M_SQRT1_2	0.70710678118654752440084436210 /**< sqrt(1/2) */
+#endif
+#ifndef M_SQRT2_DIV2
+#  define M_SQRT2_DIV2	0.70710678118654752440  /**< sqrt(2)/2 , DEPRECATED - use M_SQRT1_2 */
+#endif
+#ifndef M_SQRT2
+#  define M_SQRT2	1.41421356237309504880168872421 /**< sqrt(2) */
+#endif
+#ifndef M_SQRT3
+#  define M_SQRT3	1.73205080756887729352744634151 /**< sqrt(3) */
+#endif
+#ifndef M_SQRTPI
+#  define M_SQRTPI	1.77245385090551602729816748334 /**< sqrt(pi) */
+#endif
+
 #ifndef PI
-#  define PI M_PI
+#  define PI 		M_PI /**< DEPRECATED - do not use */
 #endif
 #ifndef DEG2RAD
-#  define DEG2RAD       0.017453292519943295769236907684 /* pi/180 */
+#  define DEG2RAD       0.017453292519943295769236907684 /**< pi/180 */
 #endif
 #ifndef RAD2DEG
-#  define RAD2DEG      57.295779513082320876798154814105 /* 180/pi */
+#  define RAD2DEG	57.295779513082320876798154814105 /**< 180/pi */
 #endif
 
 
 /* minimum computation tolerances */
 #ifdef vax
-#  define VDIVIDE_TOL	( 1.0e-10 )
-#  define VUNITIZE_TOL	( 1.0e-7 )
+#  define VDIVIDE_TOL		( 1.0e-10 )
+#  define VUNITIZE_TOL		( 1.0e-7 )
 #else
 #  ifdef DBL_EPSILON
 #    define VDIVIDE_TOL		( DBL_EPSILON )
@@ -129,42 +172,66 @@ __BEGIN_DECLS
 #  endif
 #endif
 
+/** @brief # of fastf_t's per vect2d_t */
+#define ELEMENTS_PER_VECT2D	2
+
+/** @brief # of fastf_t's per point2d_t */
+#define ELEMENTS_PER_POINT2D	2
+
 /** @brief # of fastf_t's per vect_t */
 #define ELEMENTS_PER_VECT	3
-#define ELEMENTS_PER_PT         3
-/** @brief # of fastf_t's per hvect_t */
-#define HVECT_LEN		4
-#define HPT_LEN			4
+
+/** @brief # of fastf_t's per point_t */
+#define ELEMENTS_PER_POINT	3
+#define ELEMENTS_PER_PT		ELEMENTS_PER_POINT /**< DEPRECATED */
+
+/** @brief # of fastf_t's per hvect_t (homogeneous vector) */
+#define ELEMENTS_PER_HVECT	4
+#define HVECT_LEN		ELEMENTS_PER_HVECT /**< DEPRECATED */
+
+/** @brief # of fastf_t's per hpt_t (homogeneous point) */
+#define ELEMENTS_PER_HPOINT	4
+#define HPT_LEN			ELEMENTS_PER_HPOINT /**< DEPRECATED */
 
 /** @brief # of fastf_t's per plane_t */
 #define ELEMENTS_PER_PLANE	4
+
+/** @brief # of fastf_t's per mat_t */
 #define ELEMENTS_PER_MAT	(ELEMENTS_PER_PLANE*ELEMENTS_PER_PLANE)
 
 /*
  * Types for matrixes and vectors.
  */
-/** @brief 4x4 matrix */
-typedef	fastf_t	mat_t[ELEMENTS_PER_MAT];
-typedef	fastf_t	*matp_t;
+
+/** @brief 2-tuple vector */
+typedef fastf_t vect2d_t[ELEMENTS_PER_VECT2D];
+typedef fastf_t *vect2dp_t;
+
+/** @brief 2-tuple point */
+typedef fastf_t point2d_t[ELEMENTS_PER_POINT2D];
+typedef fastf_t *point2dp_t;
 
 /** @brief 3-tuple vector */
 typedef	fastf_t	vect_t[ELEMENTS_PER_VECT];
 typedef	fastf_t	*vectp_t;
 
 /** @brief 3-tuple point */
-typedef fastf_t	point_t[ELEMENTS_PER_PT];
+typedef fastf_t	point_t[ELEMENTS_PER_POINT];
 typedef fastf_t	*pointp_t;
 
-typedef fastf_t point2d_t[2];
-
 /** @brief 4-tuple vector */
-typedef fastf_t hvect_t[HVECT_LEN];
+typedef fastf_t hvect_t[ELEMENTS_PER_HVECT];
 
 /** @brief 4-tuple point */
-typedef fastf_t hpoint_t[HPT_LEN];
+typedef fastf_t hpoint_t[ELEMENTS_PER_HPOINT];
 
 /** @brief 4-element quaternion */
 #define quat_t	hvect_t
+
+/** @brief 4x4 matrix */
+typedef	fastf_t	mat_t[ELEMENTS_PER_MAT];
+typedef	fastf_t	*matp_t;
+
 
 /**
  * return truthfully whether a value is within some epsilon from zero
@@ -519,6 +586,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	for (_vadd3 = 0; _vadd3 < (n); _vadd3++) \
 		(a)[_vadd3] = (b)[_vadd3] + (c)[_vadd3] + (d)[_vadd3]; \
 	}
+
+#define V2ADD3(a, b, c, d)	{ \
+			(a)[X] = (b)[X] + (c)[X] + (d)[X];\
+			(a)[Y] = (b)[Y] + (c)[Y] + (d)[Y];}
 
 /** @brief Add 4 vectors at `b', `c', `d', and `e', store result at `a' */
 #ifdef SHORT_VECTORS
@@ -1090,9 +1161,9 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
  */
 #define VADD2_2D(a, b, c)	V2ADD2(a, b, c)
 #define VSUB2_2D(a, b, c)	V2SUB2(a, b, c)
-#define MAGSQ_2D(a)	MAG2SQ(a)
-#define VDOT_2D(a, b)	V2DOT(a, b)
-#define VMOVE_2D(a, b)	V2MOVE(a, b)
+#define MAGSQ_2D(a)		MAG2SQ(a)
+#define VDOT_2D(a, b)		V2DOT(a, b)
+#define VMOVE_2D(a, b)		V2MOVE(a, b)
 #define VSCALE_2D(a, b, c)	V2SCALE(a, b, c)
 #define VJOIN1_2D(a, b, c, d) 	V2JOIN1(a, b, c, d)
 
@@ -1302,8 +1373,8 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
  * Convert a direction vector to azimuth/elevation (in radians)
  */
 #define AZEL_FROM_V3DIR(_a, _e, _d) { \
-	(_a) = (((_d)[X] == 0) && ((_d)[Y] == 0)) ? 0.0 : atan2( -((_d)[Y]), -((_d)[X]) ) * RAD2DEG; \
-	(_e) = atan2( -((_d)[Z]), sqrt((_d)[X]*(_d)[X] + (_d)[Y]*(_d)[Y]) ) * RAD2DEG; \
+	(_a) = (((_d)[X] == 0) && ((_d)[Y] == 0)) ? 0.0 : atan2( -((_d)[Y]), -((_d)[X]) ) * -RAD2DEG; \
+	(_e) = atan2( -((_d)[Z]), sqrt((_d)[X]*(_d)[X] + (_d)[Y]*(_d)[Y]) ) * -RAD2DEG; \
 }
 
 __END_DECLS

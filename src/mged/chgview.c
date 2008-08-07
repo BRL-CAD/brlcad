@@ -67,13 +67,6 @@ int mged_otran(const fastf_t *tvec);
 int mged_vtran(const fastf_t *tvec);
 int mged_tran(fastf_t *tvec);
 
-#ifndef M_SQRT2
-#define M_SQRT2		1.41421356237309504880
-#endif
-
-#ifndef M_SQRT2_DIV2
-#define M_SQRT2_DIV2       0.70710678118654752440
-#endif
 
 extern vect_t curr_e_axes_pos;
 extern long	nvectors;
@@ -1647,6 +1640,7 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     int early_out = 0;
 
     char **nargv;
+    char **orig_nargv;
     struct bu_vls vlsargv;
 
     CHECK_DBI_NULL;
@@ -1664,11 +1658,12 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     bu_vls_init(&vlsargv);
     bu_vls_from_argv(&vlsargv, argc, argv);
     nargv = bu_calloc(argc+1, sizeof(char *), "calloc f_ill nargv");
+    orig_nargv = nargv;
     c = bu_argv_from_string(nargv, argc, bu_vls_addr(&vlsargv));
     if (c != argc) {
 	Tcl_AppendResult(interp, "ERROR: unable to processes command arguments for f_ill()\n", (char*)NULL);
 	
-	bu_free(nargv, "free f_ill nargv");
+	bu_free(orig_nargv, "free f_ill nargv");
 	bu_vls_free(&vlsargv);
 
 	return TCL_ERROR;
@@ -1713,7 +1708,7 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     }
 
     argc -= (bu_optind - 1);
-    argv += (bu_optind - 1);
+    nargv += (bu_optind - 1);
 
     if (argc != 2) {
 	struct bu_vls vls;
@@ -1723,7 +1718,7 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
-	bu_free(nargv, "free f_ill nargv");
+	bu_free(orig_nargv, "free f_ill nargv");
 	bu_vls_free(&vlsargv);
 
 	return TCL_ERROR;
@@ -1739,14 +1734,16 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	;
 
     if (nm_pieces == 0) {
-	Tcl_AppendResult(interp, "Bad solid path: '", argv[1], "'\n", (char *)NULL);
+	Tcl_AppendResult(interp, "Bad solid path: '", nargv[1], "'\n", (char *)NULL);
 	goto bail_out;
     }
 
     basename = path_piece[nm_pieces - 1];
 
-    if ( (dp = db_lookup( dbip,  basename, LOOKUP_NOISY )) == DIR_NULL )
+    if ( (dp = db_lookup( dbip,  basename, LOOKUP_NOISY )) == DIR_NULL ) {
+	Tcl_AppendResult(interp, "db_lookup failed for '", basename, "'\n", (char *)NULL);
 	goto bail_out;
+    }
 
     nmatch = 0;
     if (!(dp -> d_flags & DIR_SOLID)) {
@@ -1781,13 +1778,13 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     }
 
     if (nmatch == 0) {
-	Tcl_AppendResult(interp, argv[1], " not being displayed\n", (char *)NULL);
+	Tcl_AppendResult(interp, nargv[1], " not being displayed\n", (char *)NULL);
 	goto bail_out;
     }
 
     /* preserve same old behavior */
     if (nmatch > 1 && ri == 0) {
-	Tcl_AppendResult(interp, argv[1], " multiply referenced\n", (char *)NULL);
+	Tcl_AppendResult(interp, nargv[1], " multiply referenced\n", (char *)NULL);
 	goto bail_out;
     } else if (ri != 0 && ri != nmatch) {
 	Tcl_AppendResult(interp,
@@ -1818,7 +1815,7 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	bu_free((genptr_t) path_piece, "f_ill: char **");
     }
 
-    bu_free(nargv, "free f_ill nargv");
+    bu_free(orig_nargv, "free f_ill nargv");
     bu_vls_free(&vlsargv);
 
     return TCL_OK;
@@ -1844,7 +1841,7 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	bu_free((genptr_t) path_piece, "f_ill: char **");
     }
 
-    bu_free(nargv, "free f_ill nargv");
+    bu_free(orig_nargv, "free f_ill nargv");
     bu_vls_free(&vlsargv);
 
     return TCL_ERROR;

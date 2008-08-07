@@ -279,7 +279,7 @@ static int wdb_summary_tcl(ClientData clientData, Tcl_Interp *interp, int argc, 
 static int wdb_pathlist_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_lt_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_version_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int wdb_binary_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int wdb_bo_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_bot_face_sort_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_bot_decimate_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_move_arb_edge_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -339,7 +339,7 @@ static struct bu_cmdtab wdb_cmds[] = {
     {"adjust",	wdb_adjust_tcl},
     {"arced",	wdb_newcmds_tcl},
     {"attr",	wdb_attr_tcl},
-    {"binary",	wdb_binary_tcl},
+    {"bo",	wdb_bo_tcl},
     {"bot_face_sort", wdb_bot_face_sort_tcl},
     {"bot_decimate", wdb_bot_decimate_tcl},
     {"c",		wdb_comb_std_tcl},
@@ -3318,11 +3318,13 @@ get_new_name(const char *name,
 	     struct concat_data *cc_data)
 {
     struct bu_vls new_name;
+    struct bu_vls prev_name;
     Tcl_HashEntry *ptr = NULL;
     char *aname = NULL;
     char *ret_name = NULL;
-    int new=0;
-    long num=0;
+    int new_entry = 0;
+    long num = 0;
+    long repeat = 0;
 
     RT_CK_DBI(dbip);
     BU_ASSERT(name_tbl);
@@ -3334,13 +3336,14 @@ get_new_name(const char *name,
 	name = "UNKNOWN";
     }
 
-    ptr = Tcl_CreateHashEntry( name_tbl, name, &new );
+    ptr = Tcl_CreateHashEntry( name_tbl, name, &new_entry );
 
-    if ( !new ) {
+    if ( !new_entry ) {
 	return( (char *)Tcl_GetHashValue( ptr ) );
     }
 
-    bu_vls_init( &new_name );
+    bu_vls_init(&new_name);
+    bu_vls_init(&prev_name);
 
     do {
 	/* iterate until we find an object name that is not in
@@ -3383,7 +3386,7 @@ get_new_name(const char *name,
 	    bu_vls_printf( &new_name, "%ld_", num );
 	    bu_vls_strcat( &new_name, name );
 	} else {
-	    /* no custom suffix/prefix specified, use prefix */
+	    /* no custom suffix/prefix specified, use suffix */
 	    if (num > 0) {
 		bu_vls_printf( &new_name, "_%ld", num );
 	    }
@@ -3400,6 +3403,18 @@ get_new_name(const char *name,
 	aname = bu_vls_addr( &new_name );
 
 	num++;
+
+	/* basic infinite loop sanity check */
+	if (bu_vls_strcmp(&new_name, &prev_name) == 0) {
+	    if (repeat > 100) {
+		bu_log("ERROR: we seem to be stuck in an infinite loop generating a new name (%s)\n", bu_vls_addr(&new_name));
+		return NULL;
+	    }
+	    repeat++;
+	} else {
+	    bu_vls_trunc(&prev_name, 0);
+	    bu_vls_vlscat(&prev_name, &new_name);
+	}
 
     } while (db_lookup( dbip, aname, LOOKUP_QUIET ) != DIR_NULL ||
 	     Tcl_FindHashEntry( used_names_tbl, aname ) != NULL);
@@ -3418,7 +3433,7 @@ get_new_name(const char *name,
     /* we should now have a unique name.  store it in the hash */
     ret_name = bu_vls_strgrab( &new_name );
     Tcl_SetHashValue( ptr, (ClientData)ret_name );
-    (void)Tcl_CreateHashEntry( used_names_tbl, ret_name, &new );
+    (void)Tcl_CreateHashEntry( used_names_tbl, ret_name, &new_entry );
     bu_vls_free( &new_name );
 
     return( ret_name );
@@ -3586,6 +3601,7 @@ wdb_concat_cmd(struct rt_wdb	*wdbp,
 	return TCL_ERROR;
     }
 
+    memset(&cc_data, 0, sizeof(struct concat_data));
     bu_vls_init( &cc_data.affix );
     cc_data.copy_mode = 0;
 
@@ -3634,7 +3650,7 @@ wdb_concat_cmd(struct rt_wdb	*wdbp,
 	cc_data.copy_mode |= AUTO_PREFIX;
 
 	if (strcmp(argv[2], "/") == 0) {
-	    cc_data.copy_mode = NO_AFFIX;
+	    cc_data.copy_mode = NO_AFFIX | CUSTOM_PREFIX;
 	} else {
 	    (void)bu_vls_strcpy(&cc_data.affix, argv[2]);
 	    cc_data.copy_mode |= CUSTOM_PREFIX;
@@ -9076,7 +9092,7 @@ wdb_bot_smooth_tcl(ClientData	clientData,
  *
  */
 int
-wdb_binary_cmd(struct rt_wdb	*wdbp,
+wdb_bo_cmd(struct rt_wdb	*wdbp,
 	       Tcl_Interp	*interp,
 	       int		argc,
 	       char 		**argv)
@@ -9126,7 +9142,7 @@ wdb_binary_cmd(struct rt_wdb	*wdbp,
 
     if ( input_mode + output_mode != 1 ) {
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib_alias binary %s", cname);
+	bu_vls_printf(&vls, "helplib_alias bo %s", cname);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -9137,7 +9153,7 @@ wdb_binary_cmd(struct rt_wdb	*wdbp,
 
     if ( (input_mode && argc != 4) || (output_mode && argc != 2) ) {
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib_alias binary %s", cname);
+	bu_vls_printf(&vls, "helplib_alias bo %s", cname);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -9207,7 +9223,7 @@ wdb_binary_cmd(struct rt_wdb	*wdbp,
 
 	if ( minor_type == 0 ) {
 	    bu_vls_init(&vls);
-	    bu_vls_printf(&vls, "helplib_alias binary %s", cname);
+	    bu_vls_printf(&vls, "helplib_alias bo %s", cname);
 	    Tcl_Eval(interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	    return TCL_ERROR;
@@ -9299,7 +9315,7 @@ wdb_binary_cmd(struct rt_wdb	*wdbp,
 	return TCL_OK;
     } else {
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib_alias binary %s", cname);
+	bu_vls_printf(&vls, "helplib_alias bo %s", cname);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -9311,17 +9327,17 @@ wdb_binary_cmd(struct rt_wdb	*wdbp,
 
 /**
  * Usage:
- *        procname binary args
+ *        procname bo args
  */
 static int
-wdb_binary_tcl(ClientData	clientData,
+wdb_bo_tcl(ClientData	clientData,
 	       Tcl_Interp	*interp,
 	       int		argc,
 	       char		**argv)
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
-    return wdb_binary_cmd(wdbp, interp, argc-1, argv+1);
+    return wdb_bo_cmd(wdbp, interp, argc-1, argv+1);
 }
 
 /**
@@ -9738,7 +9754,7 @@ wdb_vls_long_dpp(struct bu_vls		*vls,
 		    len = 6;
 		    break;
 		case DB5_MAJORTYPE_BINARY_MIME:
-		    len = strlen( "binary (mime)" );
+		    len = strlen( "binary(mime)" );
 		    break;
 		case DB5_MAJORTYPE_BINARY_UNIF:
 		    len = strlen( binu_types[list_of_names[i]->d_minor_type] );

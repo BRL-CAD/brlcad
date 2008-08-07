@@ -77,7 +77,7 @@ if [ "x$TMPDIR" = "x" ] || [ ! -w $TMPDIR ] ; then
     fi
 fi
 
-DMG_NAME="${NAME}-${VERSION}"
+DMG_NAME="${NAME}_${VERSION}"
 DMG="${DMG_NAME}.dmg"
 if [ -d "$DMG" ] ; then
     echo "ERROR: there is a directory of same name in the way of creating $DMG"

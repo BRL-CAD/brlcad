@@ -69,7 +69,7 @@
 <TD WIDTH="22%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#bev"><FONT SIZE=2>bev</FONT></A></TD>
 <TD WIDTH="21%" VALIGN="MIDDLE">
-<FONT SIZE=2><P></FONT><A HREF="#binary"><FONT SIZE=2>binary</FONT></A></TD>
+<FONT SIZE=2><P></FONT><A HREF="#bo"><FONT SIZE=2>bo</FONT></A></TD>
 </TR>
 <TR><TD WIDTH="18%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#bot_condense"><FONT SIZE=2>bot_condense</FONT></A></TD>
@@ -890,8 +890,8 @@
 </FONT>
 
 <DL>
-<B><A NAME="binary"></A>binary </B><I>[-o|-i pattern type] dest source</I> </DT>
-<DD>The &quot;binary&quot; command is used to create or retrieve binary opaque objects.  One of <I>-i</I> or <I>-o</I> must be specified.</DD>
+<B><A NAME="bo"></A>bo </B><I>[-o|-i pattern type] dest source</I> </DT>
+<DD>The &quot;bo&quot; command is used to create or retrieve binary opaque objects.  One of <I>-i</I> or <I>-o</I> must be specified.</DD>
 <dd>The <i>-o</i> option &quot;outputs&quot; or extracts a binary object from the database object <i>source</i> to a file called <i>dest</i>.</dd>
 <dd>The <i>-i</i> option &quot;inputs&quot; or imports a file called <i>source</i> into a binary object called <i>dest</i> in the database.  There are two additional arguments that must be specified with the <i>-i</i> option:  pattern and type.  Currently, only uniform binary objects (arrays of values) are supported.  As a result, the <i>pattern</i> is always <i>u</i> for &quot;uniform&quot; pattern.  The <i>type</i> can be one of the following:
 <DD><i>f </I>-&gt; float</DD>
@@ -906,10 +906,10 @@
 <DD><I>L </I>-&gt; unsigned long (64 bit)</DD>
 <DD> </DD>
 <DT><FONT SIZE=4>Examples: </DT></FONT>
-<DD> <TT>mged&gt;</TT> <B>binary -i -u c cmds /usr/brlcad/html/manuals/mged/mged_cmds.html</B></DD>
+<DD> <TT>mged&gt;</TT> <B>bo -i -u c cmds /usr/brlcad/html/manuals/mged/mged_cmds.html</B></DD>
 <DD>-- Create an opaque uniform binary object of characters with the name <I>cmds</I> that contains the contents of the file <I>/usr/brlcad/html/manuals/mged/mged_cmds.html.</I></DD>
 <DD></DD>
-<DD><TT>mged&gt;</TT> <B>binary -o /home/jim/cmds.html cmds</B></DD>
+<DD><TT>mged&gt;</TT> <B>bo -o /home/jim/cmds.html cmds</B></DD>
 <DD>-- Copy the contents of the binary object named <I>cmds</I> into the file named <i>/home/jim/cmds.html.</i></DD>
 </dl>
 <DT><HR ALIGN="RIGHT"></DT>

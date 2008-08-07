@@ -40,7 +40,7 @@
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
-#include "./bot.h"
+#include "bot.h"
 
 
 #define TRI_NULL	((struct tri_specific *)0)

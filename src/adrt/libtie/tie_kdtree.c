@@ -37,6 +37,66 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 
+#define _MIN(a, b) (a)<(b)?(a):(b)
+#define _MAX(a, b) (a)>(b)?(a):(b)
+#define	MATH_MIN3(_a, _b, _c, _d) _a = _MIN((_b), _MIN((_c), (_d)))
+#define MATH_MAX3(_a, _b, _c, _d) _a = _MAX((_b), _MAX((_c), (_d)))
+#define MATH_VEC_MIN(_a, _b) VMIN(_a.v, _b.v)
+#define MATH_VEC_MAX(_a, _b) VMAX(_a.v, _b.v)
+
+#define MATH_BBOX(_a, _b, _c, _d, _e) { \
+	MATH_MIN3(_a.v[0], _c.v[0], _d.v[0], _e.v[0]); \
+	MATH_MIN3(_a.v[1], _c.v[1], _d.v[1], _e.v[1]); \
+	MATH_MIN3(_a.v[2], _c.v[2], _d.v[2], _e.v[2]); \
+	MATH_MAX3(_b.v[0], _c.v[0], _d.v[0], _e.v[0]); \
+	MATH_MAX3(_b.v[1], _c.v[1], _d.v[1], _e.v[1]); \
+	MATH_MAX3(_b.v[2], _c.v[2], _d.v[2], _e.v[2]); }
+
+/* ======================== X-tests ======================== */
+#define AXISTEST_X01(a, b, fa, fb) \
+	p.v[0] = a*v0.v[1] - b*v0.v[2]; \
+	p.v[2] = a*v2.v[1] - b*v2.v[2]; \
+        if (p.v[0] < p.v[2]) { min = p.v[0]; max = p.v[2]; } else { min = p.v[2]; max = p.v[0]; } \
+	rad = fa * half_size -> v[1] + fb * half_size -> v[2]; \
+	if (min > rad || max < -rad) return 0; \
+
+#define AXISTEST_X2(a, b, fa, fb) \
+	p.v[0] = a*v0.v[1] - b*v0.v[2]; \
+	p.v[1] = a*v1.v[1] - b*v1.v[2]; \
+        if (p.v[0] < p.v[1]) { min = p.v[0]; max = p.v[1]; } else { min = p.v[1]; max = p.v[0]; } \
+	rad = fa * half_size -> v[1] + fb * half_size -> v[2]; \
+	if (min > rad || max < -rad) return 0;
+
+/* ======================== Y-tests ======================== */
+#define AXISTEST_Y02(a, b, fa, fb) \
+	p.v[0] = -a*v0.v[0] + b*v0.v[2]; \
+	p.v[2] = -a*v2.v[0] + b*v2.v[2]; \
+        if (p.v[0] < p.v[2]) { min = p.v[0]; max = p.v[2]; } else { min = p.v[2]; max = p.v[0]; } \
+	rad = fa * half_size -> v[0] + fb * half_size -> v[2]; \
+	if (min > rad || max < -rad) return 0;
+
+#define AXISTEST_Y1(a, b, fa, fb) \
+	p.v[0] = -a*v0.v[0] + b*v0.v[2]; \
+	p.v[1] = -a*v1.v[0] + b*v1.v[2]; \
+        if (p.v[0] < p.v[1]) { min = p.v[0]; max = p.v[1]; } else { min = p.v[1]; max = p.v[0]; } \
+	rad = fa * half_size -> v[0] + fb * half_size -> v[2]; \
+	if (min > rad || max < -rad) return 0;
+
+/* ======================== Z-tests ======================== */
+#define AXISTEST_Z12(a, b, fa, fb) \
+	p.v[1] = a*v1.v[0] - b*v1.v[1]; \
+	p.v[2] = a*v2.v[0] - b*v2.v[1]; \
+        if (p.v[2] < p.v[1]) { min = p.v[2]; max = p.v[1]; } else { min = p.v[1]; max = p.v[2]; } \
+	rad = fa * half_size -> v[0] + fb * half_size -> v[1]; \
+	if (min > rad || max < -rad) return 0;
+
+#define AXISTEST_Z0(a, b, fa, fb) \
+	p.v[0] = a*v0.v[0] - b*v0.v[1]; \
+	p.v[1] = a*v1.v[0] - b*v1.v[1]; \
+        if (p.v[0] < p.v[1]) { min = p.v[0]; max = p.v[1]; } else { min = p.v[1]; max = p.v[0]; } \
+	rad = fa * half_size -> v[0] + fb * half_size -> v[1]; \
+	if (min > rad || max < -rad) return 0;
+
 
 tfloat TIE_PREC;
 
@@ -128,11 +188,11 @@ static void tie_kdtree_cache_free_node(tie_t *tie, tie_kdtree_t *node, void **ca
     }
 }
 
-static void tie_kdtree_prep_head(tie_t *tie, tie_tri_t *tri_list, int tri_num)
+static void tie_kdtree_prep_head(tie_t *tie, tie_tri_t *tri_list, unsigned int tri_num)
 {
     tie_geom_t *g;
     TIE_3 min, max;
-    uint32_t i;
+    unsigned int i;
 
 
     if (!tri_num)
@@ -255,11 +315,11 @@ static int tie_kdtree_tri_box_overlap(TIE_3 *center, TIE_3 *half_size, TIE_3 tri
     return t >= d ? 1 : 0;
 }
 
-static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 min, TIE_3 max, int node_a, int node_b) 
+static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, unsigned int depth, TIE_3 min, TIE_3 max, unsigned int node_a, unsigned int node_b) 
 {
     tie_geom_t *child[2], *node_gd = (tie_geom_t *)(node->data);
     TIE_3 cmin[2], cmax[2], center[2], half_size[2];
-    uint32_t i, j, n, split, cnt[2];
+    unsigned int i, j, n, split, cnt[2];
 
 #if 0
 /*  if (depth >= 26) */
@@ -329,8 +389,8 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
 /****************************************
  * Justin's Aggressive KD-Tree Algorithm *
  *****************************************/
-	int slice[3][MAX_SLICES+MIN_SLICES], gap[3][2], active, split_slice;
-	int side[3][MAX_SLICES+MIN_SLICES][2], d, s, k, smax[3], smin, slice_num;
+	unsigned int slice[3][MAX_SLICES+MIN_SLICES], gap[3][2], active, split_slice;
+	unsigned int side[3][MAX_SLICES+MIN_SLICES][2], d, s, k, smax[3], smin, slice_num;
 	tfloat coef[3][MAX_SLICES+MIN_SLICES], split_coef, beg, end, d_min, d_max;
 	tie_tri_t *tri;
 
@@ -672,7 +732,15 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, int depth, TIE_3 mi
 	}
 
 /* Resize Tri List to actual ammount of memory used */
-	child[n]->tri_list = (tie_tri_t **)bu_realloc(child[n]->tri_list, sizeof(tie_tri_t *)*child[n]->tri_num, __FUNCTION__);
+	/* TODO: examine if this is correct. A 0 re-alloc is probably a very bad
+	 * thing. */
+	if( child[n]->tri_num == 0 )
+	    if( child[n]->tri_list ) {
+		bu_free( child[n]->tri_list, "child[n]->tri_list" );
+		child[n]->tri_list = NULL;
+	    }
+	else
+	    child[n]->tri_list = (tie_tri_t **)bu_realloc(child[n]->tri_list, sizeof(tie_tri_t *)*child[n]->tri_num, __FUNCTION__);
     }
 
 /*
@@ -724,7 +792,13 @@ TIE_FUNC(uint32_t tie_kdtree_cache_free, tie_t *tie, void **cache)
     tie_kdtree_cache_free_node(tie, tie->kdtree, cache, &size, &mem);
 
 /* Resize the array back to it's real value */
-    *cache = bu_realloc(*cache, size, "cache");
+	/* TODO: examine if this is correct. A 0 re-alloc is probably a very bad
+	 * thing. */
+    if( size == 0 ) {
+	bu_free (*cache, "freeing unused cache");
+	*cache = NULL;
+    } else
+	*cache = bu_realloc(*cache, size, "cache");
 
     bu_free(tie->kdtree, "kdtree");
     tie->kdtree = NULL;
@@ -835,8 +909,13 @@ TIE_FUNC(void tie_kdtree_prep, tie_t *tie)
 	return;
 
 /* Trim KDTREE to number of actual triangles if it's not that size already. */
+	/* TODO: examine if this is correct. A 0 re-alloc is probably a very bad
+	 * thing. */
     if (!already_built)
-	((tie_geom_t *)(tie->kdtree->data))->tri_list = (tie_tri_t **)bu_realloc(((tie_geom_t *)(tie->kdtree->data))->tri_list, sizeof(tie_tri_t *) * ((tie_geom_t *)(tie->kdtree->data))->tri_num, "prep tri_list");
+	if (((tie_geom_t *)(tie->kdtree->data))->tri_num)
+	    ((tie_geom_t *)(tie->kdtree->data))->tri_list = (tie_tri_t **)bu_realloc(((tie_geom_t *)(tie->kdtree->data))->tri_list, sizeof(tie_tri_t *) * ((tie_geom_t *)(tie->kdtree->data))->tri_num, "prep tri_list");
+	else
+	    bu_free (((tie_geom_t *)(tie->kdtree->data))->tri_list, "freeing tri list");
 
 /*
  * Compute Floating Fuzz Precision Value

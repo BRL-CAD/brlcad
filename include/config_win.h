@@ -32,8 +32,8 @@
 #ifndef IGNORE_CONFIG_H
 #if defined(_WIN32)
 
+/* !!! this should not be here, should fix the build system settings */
 #define __STDC__ 1
-#define USE_PROTOTYPES 1
 
 /*  4244 conversion from type 1 to type 2
  *  4305 truncation

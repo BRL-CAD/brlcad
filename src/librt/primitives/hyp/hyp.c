@@ -49,7 +49,15 @@
  *		rt_solid_type_lookup[]
  *		also add the interface table and to rt_id_solid() in table.c
  *	go to src/mged and create the edit support
- *
+ *  
+ *  Hyperboloid of one sheet:
+ *  
+ *  	[ (x * x) / (r1 * r1) ] + [ (y * y) / (r2 * r2) ] - [ (z*z) * (c*c) / (a*a) ] = 1
+ *  
+ *  	r1:	semi-major axis, along Au
+ *  	r2:	semi-minor axis, along Au x H
+ *  	c:	slope of asymptotic cone in the Au-H plane
+ *  
  *  Authors - Timothy Van Ruitenbeek
  *
  */
@@ -121,7 +129,7 @@ rt_hyp_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip )
     mat_t	R;	/* rotation matrix */
     mat_t	Rinv;	/* inverse rotation matrix */
     mat_t	S;	/* scale matrix ( c = 1, |a| = 1, |b| = 1 ) */
-    fastf_t	a, b, c;
+    fastf_t	a, b, c, sqH;
 
 
 #ifndef NO_MAGIC_CHECKING
@@ -164,6 +172,7 @@ rt_hyp_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip )
     a = hyp_ip->hyp_r1;
     b = hyp_ip->hyp_r2;
     c = hyp_ip->hyp_c;
+    sqH = MAGSQ( hyp_ip->hyp_H );
 
     MAT_IDN( S );
 
@@ -176,7 +185,7 @@ rt_hyp_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip )
 
     /* calculate bounding sphere */
     VMOVE( stp->st_center, hyp->hyp_V );
-    stp->st_aradius = hyp->hyp_Hmag * sqrt( ((a*a) / (c*c)) + 1 );
+    stp->st_aradius = sqrt((c*c)*sqH + (a*a) + sqH );
     stp->st_bradius = stp->st_aradius;
 
     /* cheat, make bounding RPP by enclosing bounding sphere (copied from g_ehy.c) */
@@ -229,6 +238,8 @@ rt_hyp_print( const struct soltab *stp )
 int
 rt_hyp_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead )
 {
+    register int numHits = 0;
+
     register struct hyp_specific *hyp =
 	(struct hyp_specific *)stp->st_specific;
     register struct seg *segp;
@@ -247,6 +258,7 @@ rt_hyp_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct
     fastf_t	hitX, hitY;
 
     hitp = &hits[0];
+
 
     MAT4X3VEC( dp, hyp->hyp_SoR, rp->r_dir );
     VSUB2( xlated, rp->r_pt, hyp->hyp_V );
@@ -271,6 +283,7 @@ rt_hyp_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct
 	    hitp->hit_dist = k1;
 	    hitp->hit_surfno = HYP_NORM_BODY;
 	    hitp++;
+	    numHits++;
 	}
 
 	VJOIN1( hitp->hit_vpriv, pp, k2, dp );
@@ -280,6 +293,7 @@ rt_hyp_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct
 	    hitp->hit_dist = k1;
 	    hitp->hit_surfno = HYP_NORM_BODY;
 	    hitp++;
+	    numHits++;
 	}
 
     } else if ( !NEAR_ZERO( b, RT_PCOEF_TOL ) ) {
@@ -291,6 +305,7 @@ rt_hyp_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct
 	    hitp->hit_dist = k1;
 	    hitp->hit_surfno = HYP_NORM_BODY;
 	    hitp++;
+	    numHits++;
 	}
     }
 
@@ -307,6 +322,7 @@ rt_hyp_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct
 	hitp->hit_dist = k1;
 	hitp->hit_surfno = HYP_NORM_BODY;
 	hitp++;
+	numHits++;
     }
 
     VJOIN1( hitp->hit_vpriv, pp, k2, dp );
@@ -318,10 +334,14 @@ rt_hyp_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct
 	hitp->hit_dist = k2;
 	hitp->hit_surfno = HYP_NORM_BODY;
 	hitp++;
+	numHits++;
     }
 
-    if ( hitp == &hits[0] )
+    /* bu_log("numHits: %d\n", numHits); */
+
+    if ( hitp == &hits[0] ) {
 	return(0);	/* MISS */
+    }
 
     if ( hitp == &hits[2] ) {	/* 2 hits */
 	if ( hits[0].hit_dist < hits[1].hit_dist )  {
@@ -386,8 +406,6 @@ rt_hyp_shot( struct soltab *stp, struct xray *rp, struct application *ap, struct
 
 	return(4);
     }
-    return(0);	/* MISS */
-
 }
 
 #define RT_HYP_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
@@ -543,13 +561,96 @@ rt_hyp_class( const struct soltab *stp, const vect_t min, const vect_t max, cons
 int
 rt_hyp_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol )
 {
+    register int		i,j;	/* loop indices */
     struct rt_hyp_internal	*hyp_ip;
+    vect_t 	majorAxis[8],		/* vector offsets along major axis */
+		minorAxis[8],		/* vector offsets along minor axis */
+		heightAxis[7],		/* vector offsets for layers */
+		Bunit;		/* unit vector along semi-minor axis */
+    vect_t	ell[16];	/* stores 16 points to draw ellipses */
+    vect_t	ribs[16][7];	/* assume 7 layers for now */
+    fastf_t 	scale;		/* used to calculate semi-major/minor axes for top/bottom */
+    fastf_t	cos22_5 = 0.9238795325112867385,
+		cos67_5 = 0.3826834323650898373;
 
     RT_CK_DB_INTERNAL(ip);
     hyp_ip = (struct rt_hyp_internal *)ip->idb_ptr;
     RT_HYP_CK_MAGIC(hyp_ip);
 
-    return(-1);
+    VCROSS( Bunit, hyp_ip->hyp_H, hyp_ip->hyp_Au );
+    VUNITIZE( Bunit );
+
+    VMOVE( heightAxis[0], hyp_ip->hyp_H );
+    VSCALE( heightAxis[1], heightAxis[0], 0.5 );
+    VSCALE( heightAxis[2], heightAxis[0], 0.25 );
+    VSETALL( heightAxis[3], 0 );
+    VREVERSE( heightAxis[4], heightAxis[2] );
+    VREVERSE( heightAxis[5], heightAxis[1] );
+    VREVERSE( heightAxis[6], heightAxis[0] );
+
+    for ( i = 0; i < 7; i++ ) {
+	/* determine Z height depending on i */
+	scale = sqrt(MAGSQ( heightAxis[i] )*(hyp_ip->hyp_c * hyp_ip->hyp_c)/(hyp_ip->hyp_r1 * hyp_ip->hyp_r1) + 1 );
+
+	/* calculate vectors for offset */
+	VSCALE( majorAxis[0], hyp_ip->hyp_Au, hyp_ip->hyp_r1 * scale );
+	VSCALE( majorAxis[1], majorAxis[0], cos22_5 );
+	VSCALE( majorAxis[2], majorAxis[0], M_SQRT1_2 );
+	VSCALE( majorAxis[3], majorAxis[0], cos67_5 );
+	VREVERSE( majorAxis[4], majorAxis[3] );
+	VREVERSE( majorAxis[5], majorAxis[2] );
+	VREVERSE( majorAxis[6], majorAxis[1] );
+	VREVERSE( majorAxis[7], majorAxis[0] );
+
+	VSCALE( minorAxis[0], Bunit, hyp_ip->hyp_r2 * scale );
+	VSCALE( minorAxis[1], minorAxis[0], cos22_5 );
+	VSCALE( minorAxis[2], minorAxis[0], M_SQRT1_2 );
+	VSCALE( minorAxis[3], minorAxis[0], cos67_5 );
+	VREVERSE( minorAxis[4], minorAxis[3] );
+	VREVERSE( minorAxis[5], minorAxis[2] );
+	VREVERSE( minorAxis[6], minorAxis[1] );
+	VREVERSE( minorAxis[7], minorAxis[0] );
+
+	/* calculate ellipse */
+	VADD3( ell[ 0], hyp_ip->hyp_V, heightAxis[i], majorAxis[0] );
+	VADD4( ell[ 1], hyp_ip->hyp_V, heightAxis[i], majorAxis[1], minorAxis[3] );
+	VADD4( ell[ 2], hyp_ip->hyp_V, heightAxis[i], majorAxis[2], minorAxis[2] );
+	VADD4( ell[ 3], hyp_ip->hyp_V, heightAxis[i], majorAxis[3], minorAxis[1] );
+	VADD3( ell[ 4], hyp_ip->hyp_V, heightAxis[i], minorAxis[0] );
+	VADD4( ell[ 5], hyp_ip->hyp_V, heightAxis[i], majorAxis[4], minorAxis[1] );
+	VADD4( ell[ 6], hyp_ip->hyp_V, heightAxis[i], majorAxis[5], minorAxis[2] );
+	VADD4( ell[ 7], hyp_ip->hyp_V, heightAxis[i], majorAxis[6], minorAxis[3] );
+	VADD3( ell[ 8], hyp_ip->hyp_V, heightAxis[i], majorAxis[7] );
+	VADD4( ell[ 9], hyp_ip->hyp_V, heightAxis[i], majorAxis[6], minorAxis[4] );
+	VADD4( ell[10], hyp_ip->hyp_V, heightAxis[i], majorAxis[5], minorAxis[5] );
+	VADD4( ell[11], hyp_ip->hyp_V, heightAxis[i], majorAxis[4], minorAxis[6] );
+	VADD3( ell[12], hyp_ip->hyp_V, heightAxis[i], minorAxis[7] );
+	VADD4( ell[13], hyp_ip->hyp_V, heightAxis[i], majorAxis[3], minorAxis[6] );
+	VADD4( ell[14], hyp_ip->hyp_V, heightAxis[i], majorAxis[2], minorAxis[5] );
+	VADD4( ell[15], hyp_ip->hyp_V, heightAxis[i], majorAxis[1], minorAxis[4] );
+
+	/* draw ellipse */
+	RT_ADD_VLIST( vhead, ell[15], BN_VLIST_LINE_MOVE );
+	for ( j=0; j<16; j++ )  {
+	    RT_ADD_VLIST( vhead, ell[j], BN_VLIST_LINE_DRAW );
+	}
+
+	/* add ellipse's points to ribs */
+	for ( j=0; j<16; j++ ) {
+	    VMOVE( ribs[j][i], ell[j] );
+	}
+    }
+
+    /* draw ribs */
+    for ( i=0; i<16; i++ )  {
+	RT_ADD_VLIST( vhead, ribs[i][0], BN_VLIST_LINE_MOVE );
+	for ( j=1; j<7; j++ )  {
+	    RT_ADD_VLIST( vhead, ribs[i][j], BN_VLIST_LINE_DRAW );
+	}
+
+    }
+
+    return 0;
 }
 
 /**
@@ -571,82 +672,6 @@ rt_hyp_tess( struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     return(-1);
 }
 
-/**
- *			R T _ H Y P _ I M P O R T
- *
- *  Import an HYP from the database format to the internal format.
- *  Apply modeling transformations as well.
- */
-int
-rt_hyp_import( struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip )
-{
-    struct rt_hyp_internal	*hyp_ip;
-    union record			*rp;
-
-    BU_CK_EXTERNAL( ep );
-    rp = (union record *)ep->ext_buf;
-    /* Check record type */
-    if ( rp->u_id != ID_SOLID )  {
-	bu_log("rt_hyp_import: defective record\n");
-	return(-1);
-    }
-
-    RT_CK_DB_INTERNAL( ip );
-    ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    ip->idb_type = ID_HYP;
-    ip->idb_meth = &rt_functab[ID_HYP];
-    ip->idb_ptr = bu_malloc( sizeof(struct rt_hyp_internal), "rt_hyp_internal");
-    hyp_ip = (struct rt_hyp_internal *)ip->idb_ptr;
-    hyp_ip->hyp_magic = RT_HYP_INTERNAL_MAGIC;
-
-    if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT( hyp_ip->hyp_V, mat, &rp->s.s_values[0] );
-
-    return(0);			/* OK */
-}
-
-/**
- *			R T _ H Y P _ E X P O R T
- *
- *  The name is added by the caller, in the usual place.
- */
-int
-rt_hyp_export( struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip )
-{
-    struct rt_hyp_internal	*hyp_ip;
-    union record		*rec;
-
-    RT_CK_DB_INTERNAL(ip);
-    if ( ip->idb_type != ID_HYP )  return(-1);
-    hyp_ip = (struct rt_hyp_internal *)ip->idb_ptr;
-    RT_HYP_CK_MAGIC(hyp_ip);
-
-    BU_CK_EXTERNAL(ep);
-    ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "hyp external");
-    rec = (union record *)ep->ext_buf;
-
-    rec->s.s_id = ID_SOLID;
-/* FIXME    rec->s.s_type = HYP;	/* GED primitive type from db.h */
-
-    /* Since libwdb users may want to operate in units other
-     * than mm, we offer the opportunity to scale the solid
-     * (to get it into mm) on the way out.
-     */
-
-
-    /* convert from local editing units to mm and export
-     * to database record format
-     *
-     * Warning: type conversion: double to float
-     */
-/* FIXME
-    VSCALE( &rec->s.s_values[0], hyp_ip->hyp_V, local2mm );
-    rec->s.s_values[3] = hyp_ip->hyp_radius * local2mm;
-*/
-    return(0);
-}
-
 
 /**
  *			R T _ H Y P _ I M P O R T 5
@@ -662,12 +687,12 @@ int
 rt_hyp_import5( struct rt_db_internal  *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip )
 {
     struct rt_hyp_internal	*hyp_ip;
-    fastf_t				vv[ELEMENTS_PER_VECT*1];
+    fastf_t			vec[ELEMENTS_PER_VECT*4];
 
     RT_CK_DB_INTERNAL(ip)
 	BU_CK_EXTERNAL( ep );
 
-    BU_ASSERT_LONG( ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 3*4 );
+    BU_ASSERT_LONG( ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 3 * 4 );
 
     /* set up the internal structure */
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -682,11 +707,18 @@ rt_hyp_import5( struct rt_db_internal  *ip, const struct bu_external *ep, const 
      * (Big Endian ints, IEEE double floating point) to host local data
      * representations.
      */
-    ntohd( (unsigned char *)&vv, (char *)ep->ext_buf, ELEMENTS_PER_VECT*1 );
+    ntohd( (unsigned char *)&vec, (const unsigned char *)ep->ext_buf, ELEMENTS_PER_VECT*4 );
 
     /* Apply the modeling transformation */
     if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT( hyp_ip->v, mat, vv );
+    MAT4X3PNT( hyp_ip->hyp_V, mat, &vec[0*3] );
+    MAT4X3PNT( hyp_ip->hyp_H, mat, &vec[1*3] );
+    MAT4X3PNT( hyp_ip->hyp_Au, mat, &vec[2*3] );
+    VUNITIZE( hyp_ip->hyp_Au );
+
+    hyp_ip->hyp_r1 = vec[ 9] / mat[15];
+    hyp_ip->hyp_r2 = vec[10] / mat[15];
+    hyp_ip->hyp_c  = vec[11] / mat[15];
 
     return(0);			/* OK */
 }
@@ -704,7 +736,7 @@ int
 rt_hyp_export5( struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip )
 {
     struct rt_hyp_internal	*hyp_ip;
-    fastf_t			vec[ELEMENTS_PER_VECT];
+    fastf_t			vec[ELEMENTS_PER_VECT * 4];
 
     RT_CK_DB_INTERNAL(ip);
     if ( ip->idb_type != ID_HYP )  return(-1);
@@ -712,7 +744,7 @@ rt_hyp_export5( struct bu_external *ep, const struct rt_db_internal *ip, double 
     RT_HYP_CK_MAGIC(hyp_ip);
 
     BU_CK_EXTERNAL(ep);
-    ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
+    ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT * 4;
     ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "hyp external");
 
 
@@ -720,10 +752,15 @@ rt_hyp_export5( struct bu_external *ep, const struct rt_db_internal *ip, double 
      * than mm, we offer the opportunity to scale the solid
      * (to get it into mm) on the way out.
      */
-    VSCALE( vec, hyp_ip->v, local2mm );
+    VSCALE( &vec[0*3], hyp_ip->hyp_V, local2mm );
+    VSCALE( &vec[1*3], hyp_ip->hyp_H, local2mm );
+    VMOVE( &vec[2*3], hyp_ip->hyp_Au );
+    vec[ 9] = hyp_ip->hyp_r1 * local2mm;
+    vec[10] = hyp_ip->hyp_r2 * local2mm;
+    vec[11] = hyp_ip->hyp_c * local2mm;
 
     /* Convert from internal (host) to database (network) format */
-    htond( ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*1 );
+    htond( ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*4 );
 
     return 0;
 }
@@ -746,10 +783,27 @@ rt_hyp_describe( struct bu_vls *str, const struct rt_db_internal *ip, int verbos
     bu_vls_strcat( str, "truncated general hyp (HYP)\n");
 
     sprintf(buf, "\tV (%g, %g, %g)\n",
-	    INTCLAMP(hyp_ip->v[X] * mm2local),
-	    INTCLAMP(hyp_ip->v[Y] * mm2local),
-	    INTCLAMP(hyp_ip->v[Z] * mm2local) );
+	    INTCLAMP(hyp_ip->hyp_V[X] * mm2local),
+	    INTCLAMP(hyp_ip->hyp_V[Y] * mm2local),
+	    INTCLAMP(hyp_ip->hyp_V[Z] * mm2local) );
     bu_vls_strcat( str, buf );
+
+    sprintf(buf, "\tH (%g, %g, %g) mag=%g\n",
+	    INTCLAMP(hyp_ip->hyp_H[X] * mm2local),
+	    INTCLAMP(hyp_ip->hyp_H[Y] * mm2local),
+	    INTCLAMP(hyp_ip->hyp_H[Z] * mm2local),
+	    INTCLAMP(MAGNITUDE(hyp_ip->hyp_H) * mm2local) );
+    bu_vls_strcat( str, buf );
+
+    sprintf(buf, "\tA=%g\n", INTCLAMP(hyp_ip->hyp_r1 * mm2local));
+    bu_vls_strcat( str, buf );
+
+    sprintf(buf, "\tB=%g\n", INTCLAMP(hyp_ip->hyp_r2 * mm2local));
+    bu_vls_strcat( str, buf );
+
+    sprintf(buf, "\tc=%g\n", INTCLAMP(hyp_ip->hyp_c * mm2local));
+    bu_vls_strcat( str, buf );
+
 
     return(0);
 }

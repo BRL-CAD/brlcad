@@ -1,9 +1,0 @@
-2005-07-09
-==========
-ISST can now connect to a component server to provide it a list of components hit.
-g-adrt is used to convert a .g file containing bots into an adrt framework.
-
-
-2005-06-17
-==========
-After 21 months of development ADRT has become open source.

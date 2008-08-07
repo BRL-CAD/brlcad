@@ -100,7 +100,7 @@ proc make_binunif { id w } {
 	return
     }
 
-    if { [catch {binary -i u $binunif_types($type) $name $fileName} ret] != 0 } {
+    if { [catch {bo -i u $binunif_types($type) $name $fileName} ret] != 0 } {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "ERROR creating BINUNIF" $ret "" 0 OK
 	return
     }

@@ -59,18 +59,19 @@ ged_mirror(struct rt_wdb *wdbp, int argc, const char *argv[])
     }
 
 #if 1
-    while ((k = bu_getopt(argc, argv, "d:D:hHo:O:p::P:xXyYzZ")) != EOF) {
-#else
-    /* get a writable copy of argv */
-    bu_vls_init(&vlsargv);
-    bu_vls_from_argv(&vlsargv, argc, argv);
-    nargv = bu_calloc(argc+1, sizeof(char *), "calloc f_ill nargv");
-    bu_argv_from_string(nargv, argc, bu_vls_addr(&vlsargv));
-
     bu_optind = 1;
+    while ((k = bu_getopt(argc, (char * const *)argv, (const char *)"d:D:hHo:O:p:P:xXyYzZ")) != EOF) {
+#else
+	/* get a writable copy of argv */
+	bu_vls_init(&vlsargv);
+	bu_vls_from_argv(&vlsargv, argc, argv);
+	nargv = bu_calloc(argc+1, sizeof(char *), "calloc f_ill nargv");
+	bu_argv_from_string(nargv, argc, bu_vls_addr(&vlsargv));
 
-    /* Process arguments */
-    while ((k = bu_getopt(argc, nargv, "d:D:hHo:O:p::P:xXyYzZ")) != EOF) {
+	bu_optind = 1;
+
+	/* Process arguments */
+	while ((k = bu_getopt(argc, nargv, "d:D:hHo:O:p:P:xXyYzZ")) != EOF) {
 #endif
 	switch (k) {
 	case 'd':
@@ -115,8 +116,8 @@ ged_mirror(struct rt_wdb *wdbp, int argc, const char *argv[])
 	    bu_vls_printf(&wdbp->wdb_result_str, "Usage: %s %s", argv[0], usage);
 
 #if 0
-	    bu_free(nargv, "free f_ill nargv");
-	    bu_vls_free(&vlsargv);
+		    bu_free(nargv, "free f_ill nargv");
+		    bu_vls_free(&vlsargv);
 #endif
 
 	    return GED_OK;
@@ -125,11 +126,11 @@ ged_mirror(struct rt_wdb *wdbp, int argc, const char *argv[])
 	    early_out = 1;
 	    break;
 	}
-    }
+	}
 
 #if 0
-    bu_free(nargv, "free f_ill nargv");
-    bu_vls_free(&vlsargv);
+	bu_free(nargv, "free f_ill nargv");
+	bu_vls_free(&vlsargv);
 #endif
 
     if (early_out) {

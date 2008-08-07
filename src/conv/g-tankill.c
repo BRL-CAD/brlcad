@@ -318,7 +318,7 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, struct db_f
 	nmg_region_a( r, &tol );
 
     /* Check if region extents are beyond the limitations of the TANKILL format */
-    for ( i=X; i<ELEMENTS_PER_PT; i++ )
+    for ( i=X; i<ELEMENTS_PER_POINT; i++ )
     {
 	if ( r->ra_p->min_pt[i] < (-12000.0) )
 	{

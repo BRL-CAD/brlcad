@@ -1,4 +1,4 @@
-# $Id: Makefile.am 31009 2008-05-06 21:28:40Z brlcad $
+# $Id$
 
 EXTRA_DIST = \
 	brlcad.ico \

@@ -1,4 +1,4 @@
-# $Id: Makefile.am 30974 2008-05-04 04:37:42Z brlcad $
+# $Id$
 
 SUBDIRS = \
 	archlinux \

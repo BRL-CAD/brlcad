@@ -193,7 +193,7 @@ parse_file(char *file, char *host, int *portp, char *device, int length)
 	goto done;
     }
     if ( (colon = strchr(file, ':')) != NULL ) {
-	bu_strlcpy( prefix, file, colon-file );
+	bu_strlcpy( prefix, file, colon - file + 1 );
 	rest = colon+1;
 	if ( numeric(prefix) ) {
 	    /* 0:[dev] */
@@ -212,7 +212,7 @@ parse_file(char *file, char *host, int *portp, char *device, int length)
 	    } else {
 		/* check for [host]:0:[dev] */
 		if ( (colon = strchr(rest, ':')) != NULL ) {
-		    bu_strlcpy( prefix, rest, colon-rest );
+		    bu_strlcpy( prefix, rest, colon - rest + 1);
 		    if ( numeric(prefix) ) {
 			port = atoi(prefix);
 			dev = colon+1;

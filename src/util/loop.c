@@ -19,7 +19,7 @@
  */
 /** @file loop.c
  *
- *	Simple program to output integers or floats between
+ *	Simple program to output integers or floats or chars between
  *	"start" and "finish", inclusive.  Default is an increment
  *	of +1 if start < finish or -1 if start > finish.  User may
  *	specify an alternate increment.  Also, user may left-pad
@@ -45,6 +45,7 @@
 
 #define	INTEGER 0
 #define	REAL	1
+#define CHAR	2
 
 int
 main(int argc, char **argv)
@@ -57,9 +58,17 @@ main(int argc, char **argv)
     register double	d;
     register double	dstart, dfinish, dincr;
 
-    if (argc < 3 || argc > 4) {
-	bu_exit(9, "Usage:  loop start finish [incr]\n");
+    register char       c;
+    register char       cstart, cfinish;
+    register int	cincr;
+
+    if (argc < 3 || argc > 5) {
+	bu_exit(9, "Usage:  loop [-c|-n] start finish [incr] \n -n is the default option\n");
     }
+
+    /* Check if -c is present in comandline argument*/
+
+    if(argv[1][0] == '-' && argv[1][1]) status = CHAR;
 
     /* determine if any arguments are real */
     for (i = 1; i < argc; i++) {
@@ -88,7 +97,7 @@ main(int argc, char **argv)
 	else
 	    for (d = dstart; d >= dfinish; d += dincr)
 		printf("%g\n", d);
-    } else {
+    } else if (status == INTEGER) {
 	/* print out integer output */
 	char	*cp;
 	char	fmt_string[50];
@@ -157,6 +166,24 @@ main(int argc, char **argv)
 	else
 	    for (i = start; i >= finish; i += incr)
 		printf(fmt_string, i);
+    } else {
+	/* print out integer output */
+	cstart = argv[2][0];
+	cfinish = argv[3][0];
+	
+	if (argc == 5) cincr = atoi(argv[4]);
+	else {
+	    if (cstart > cfinish)
+		cincr = -1;
+	    else
+		cincr = 1;
+	}
+	if (cincr >= 0)
+	    for (c=cstart; c <= cfinish; c += cincr)
+		printf("%c\n",c);
+	else
+	    for (c=cstart; c >= cfinish; c +=cincr)
+		printf("%c\n",c);
     }
 
     return 0;

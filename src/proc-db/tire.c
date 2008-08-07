@@ -42,6 +42,7 @@
 #define ROWS 5
 #define COLS 5
 #define F_PI 3.1415926535897932384626433832795029L
+#define DEFAULT_TIRE_FILENAME "tire.g"
 
 /**
  * Display eto input parameters when debugging
@@ -79,23 +80,38 @@ void PrintMatrix(fastf_t **matrix, char *name)
 /**
  * Help message printed when -h option is supplied
  */
-void show_help(const char *name)
+void show_help(const char *name, const char *optstr)
 {
-    bu_log("%s options:", name);
-    bu_log("-a\t\tAut-generate top level name using\n\t\t(tire-<width>-<aspect>R<rim size>)\n\n");
-    bu_log("-c <count>\tSpecify number of tread patterns around tire\n\n");
-    bu_log("-d <width>/<aspect>R<rim size>\n\t\tSpecify tire dimensions (American units, integer values only)\n\n");
-    bu_log("-W <width>\tSpecify tire width in inches (overrides -d)\n\n");
-    bu_log("-R <aspect>\tSpecify tire aspect ratio (#/100) (overrides -d)\n\n");
-    bu_log("-D <rim size>\tSpecify rim size in inches (overrides -d)\n\n");
-    bu_log("-g <depth>\tSpecify tread depth in terms of 32nds of an inch.\n\n");
-    bu_log("-j <width>\tSpecify rim width in inches.\n\n");
-    bu_log("-n <name>\tSpecify custom top level root name\n\n");
-    bu_log("-p <type>\tGenerate tread with tread pattern as specified\n\n");
-    bu_log("-s <radius>\tSpecify the radius of the maximum sidewall width\n\n");
-    bu_log("-t <type>\tGenerate tread with tread type as specified\n\n");
-    bu_log("-u <thickness>\tSpecify tire thickness in mm\n\n");
-    bu_log("-h\t\tShow help\n\n");
+    struct bu_vls str;
+    const char *cp = optstr;
+
+    bu_vls_init(&str);
+    while (cp && *cp != '\0') {
+	if (*cp == ':') {
+	    cp++;
+	    continue;
+	}
+	bu_vls_strncat(&str, cp, 1);
+	cp++;
+    }
+
+    bu_log("usage: %s [%s]\n", name, bu_vls_addr(&str));
+    bu_log("options:\n"
+	   "\t-a\n\t\tAuto-generate top level name using\n\t\t(tire-<width>-<aspect>R<rim size>)\n"
+	   "\t-c <count>\n\t\tSpecify number of tread patterns around tire\n"
+	   "\t-d <width>/<aspect>R<rim size>\n\t\tSpecify tire dimensions\n\t\t(U.S. customary units, integer values only)\n"
+	   "\t-W <width>\n\t\tSpecify tire width in inches (overrides -d)\n"
+	   "\t-R <aspect>\n\t\tSpecify tire aspect ratio (#/100) (overrides -d)\n"
+	   "\t-D <rim size>\n\t\tSpecify rim size in inches (overrides -d)\n"
+	   "\t-g <depth>\n\t\tSpecify tread depth in terms of 32nds of an inch.\n"
+	   "\t-j <width>\n\t\tSpecify rim width in inches.\n"
+	   "\t-n <name>\n\t\tSpecify custom top level root name\n"
+	   "\t-p <type>\n\t\tGenerate tread with tread pattern as specified\n"
+	   "\t-s <radius>\n\t\tSpecify the radius of the maximum sidewall width\n"
+	   "\t-t <type>\n\t\tGenerate tread with tread type as specified\n"
+	   "\t-u <thickness>\n\t\tSpecify tire thickness in mm\n"
+	   "\t-h\n\t\tShow help\n\n"
+	);
     return;
 }
 
@@ -445,9 +461,10 @@ void MakeWheelCenter(struct rt_wdb (*file), char *suffix,
     point_t origin, vertex;
     mat_t y;
     struct bu_vls str;
-    bu_vls_init(&str);
     int i;
     struct wmember bolthole, boltholes, hubhole, hubholes, innerhub;
+
+    bu_vls_init(&str);
 
     bu_vls_trunc(&str, 0);
     bu_vls_printf(&str, "Inner-Hub%s.s", suffix);
@@ -806,10 +823,11 @@ void MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts,
     vect_t u_vec, v_vec, h;
     int i;
     struct bu_vls str;
-    bu_vls_init(&str);
     struct bu_vls str2;
-    bu_vls_init(&str2);
     point2d_t tmpvert[] = {{0, 0}};
+
+    bu_vls_init(&str);
+    bu_vls_init(&str2);
 
     /* Basic allocation of structure */
     skt = (struct rt_sketch_internal *)bu_calloc(1, sizeof(struct rt_sketch_internal), "sketch");
@@ -881,27 +899,19 @@ void MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts,
     mk_extrusion(file, bu_vls_addr(&str2), bu_vls_addr(&str), V, h, u_vec, v_vec, 0);
 }
 
-
+#define SKETCHNUM2 4
 void MakeTreadPattern2(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
 		       fastf_t z_base, fastf_t ztire, int number_of_patterns)
 {
     struct bu_vls str;
-    bu_vls_init(&str);
     struct bu_vls str2;
-    bu_vls_init(&str2);
     struct wmember treadpattern, tread, treadrotated;
     fastf_t patternwidth1, patternwidth2;
     mat_t y;
     int i, j;
-    int sketchnum = 4;
-    int vertcounts[sketchnum];
-    point2d_t *verts[sketchnum];
+    int vertcounts[SKETCHNUM2];
+    point2d_t *verts[SKETCHNUM2];
     unsigned char rgb[3];
-    VSET(rgb, 40, 40, 40);
-
-    patternwidth1 = ztire * sin(F_PI / number_of_patterns);
-    patternwidth2 = z_base * sin(F_PI / number_of_patterns);
-
     point2d_t verts1[] = {
 	{ 0, 0 },
 	{ 0, .1 },
@@ -917,30 +927,18 @@ void MakeTreadPattern2(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
 	{ .33, .1 },
 	{ .4, 0 }
     };
-
-    verts[0] = verts1;
-    vertcounts[0] = 12;
-
     point2d_t verts2[] = {
 	{ .2, .13 },
 	{ -.6, .2 },
 	{ -.5, .27 },
 	{ .4, .2 }
     };
-
-    verts[1] = verts2;
-    vertcounts[1] = 4;
-
     point2d_t verts3[] = {
 	{ .5, .45 },
 	{ -.5, .4 },
-	{ -.7, .5 },
-	{ .3, .55 }
+	{ -.6, .5 },
+	{ .5, .55 }
     };
-
-    verts[2] = verts3;
-    vertcounts[2] = 4;
-
     point2d_t verts4[] = {
 	{ .6, .73 },
 	{ -.3, .8 },
@@ -948,12 +946,29 @@ void MakeTreadPattern2(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
 	{ .8, .8 }
     };
 
+    VSET(rgb, 40, 40, 40);
+
+    bu_vls_init(&str);
+    bu_vls_init(&str2);
+
+    patternwidth1 = ztire * sin(F_PI / number_of_patterns);
+    patternwidth2 = z_base * sin(F_PI / number_of_patterns);
+
+    verts[0] = verts1;
+    vertcounts[0] = 12;
+
+    verts[1] = verts2;
+    vertcounts[1] = 4;
+
+    verts[2] = verts3;
+    vertcounts[2] = 4;
+
     verts[3] = verts4;
     vertcounts[3] = 4;
 
     BU_LIST_INIT(&treadpattern.l);
 
-    for ( i = 0; i < sketchnum; i++ ) {
+    for ( i = 0; i < SKETCHNUM2; i++ ) {
 	bu_vls_trunc(&str, 0);
 	bu_vls_printf(&str, "-%d%s", i + 1, suffix);
 	MakeExtrude(file, bu_vls_addr(&str), verts[i], vertcounts[i],
@@ -1007,26 +1022,19 @@ void MakeTreadPattern2(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
 }
 
 
+#define SKETCHNUM1 9
 void MakeTreadPattern1(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
 		       fastf_t z_base, fastf_t ztire, int number_of_patterns)
 {
     struct bu_vls str;
-    bu_vls_init(&str);
     struct bu_vls str2;
-    bu_vls_init(&str2);
     struct wmember treadpattern, tread, treadrotated;
     fastf_t patternwidth1, patternwidth2;
     mat_t y;
     int i, j;
-    int sketchnum = 9;
-    int vertcounts[sketchnum];
-    point2d_t *verts[sketchnum];
+    int vertcounts[SKETCHNUM1];
+    point2d_t *verts[SKETCHNUM1];
     unsigned char rgb[3];
-    VSET(rgb, 40, 40, 40);
-
-    patternwidth1 = ztire * sin(F_PI / number_of_patterns);
-    patternwidth2 = z_base * sin(F_PI / number_of_patterns);
-
     point2d_t verts1[] = {
 	{ .9, 0 },
 	{ .6, .3 },
@@ -1038,10 +1046,6 @@ void MakeTreadPattern1(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
 	{ .73, .3 },
 	{ 1.03, 0 }
     };
-
-    verts[0] = verts1;
-    vertcounts[0] = 8;
-
     point2d_t verts2[] = {
 	{ .3, 0 },
 	{ .0, .3 },
@@ -1053,70 +1057,42 @@ void MakeTreadPattern1(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
 	{ .1, .3 },
 	{ .4, 0 }
     };
-
-    verts[1] = verts2;
-    vertcounts[1] = 8;
-
     point2d_t verts3[] = {
 	{ -.1, .1 },
 	{ -.1, .12 },
 	{ 1.1, .12 },
 	{ 1.1, .1 }
     };
-
-    verts[2] = verts3;
-    vertcounts[2] = 4;
-
     point2d_t verts4[] = {
 	{ -.1, .20 },
 	{ -.1, .23 },
 	{ 1.1, .23 },
 	{ 1.1, .20 }
     };
-
-    verts[3] = verts4;
-    vertcounts[3] = 4;
-
     point2d_t verts5[] = {
 	{ -.1, .37 },
 	{ -.1, .4 },
 	{ 1.1, .4 },
 	{ 1.1, .37 }
     };
-
-    verts[4] = verts5;
-    vertcounts[4] = 4;
-
     point2d_t verts6[] = {
 	{ -.1, .49 },
 	{ -.1, .51},
 	{ 1.1, .51 },
 	{ 1.1, .49 }
     };
-
-    verts[5] = verts6;
-    vertcounts[5] = 4;
-
     point2d_t verts7[] = {
 	{ -.1, .6 },
 	{ -.1, .63 },
 	{ 1.1, .63 },
 	{ 1.1, .6 }
     };
-
-    verts[6] = verts7;
-    vertcounts[6] = 4;
-
     point2d_t verts8[] = {
 	{ -.1, .77 },
 	{ -.1, .80 },
 	{ 1.1, .80 },
 	{ 1.1, .77 }
     };
-
-    verts[7] = verts8;
-    vertcounts[7] = 4;
-
     point2d_t verts9[] = {
 	{ -.1, .88 },
 	{ -.1, .9 },
@@ -1124,12 +1100,44 @@ void MakeTreadPattern1(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
 	{ 1.1, .88 }
     };
 
+    VSET(rgb, 40, 40, 40);
+
+    bu_vls_init(&str);
+    bu_vls_init(&str2);
+
+    patternwidth1 = ztire * sin(F_PI / number_of_patterns);
+    patternwidth2 = z_base * sin(F_PI / number_of_patterns);
+
+    verts[0] = verts1;
+    vertcounts[0] = 8;
+
+    verts[1] = verts2;
+    vertcounts[1] = 8;
+
+    verts[2] = verts3;
+    vertcounts[2] = 4;
+
+    verts[3] = verts4;
+    vertcounts[3] = 4;
+
+    verts[4] = verts5;
+    vertcounts[4] = 4;
+
+    verts[5] = verts6;
+    vertcounts[5] = 4;
+
+    verts[6] = verts7;
+    vertcounts[6] = 4;
+
+    verts[7] = verts8;
+    vertcounts[7] = 4;
+
     verts[8] = verts9;
     vertcounts[8] = 4;
 
     BU_LIST_INIT(&treadpattern.l);
 
-    for ( i = 0; i < sketchnum; i++ ) {
+    for ( i = 0; i < SKETCHNUM1; i++ ) {
 	bu_vls_trunc(&str, 0);
 	bu_vls_printf(&str, "-%d%s", i+1, suffix);
 	MakeExtrude(file, bu_vls_addr(&str), verts[i], vertcounts[i],
@@ -1216,15 +1224,10 @@ void MakeTireSurface(struct rt_wdb (*file), char *suffix,
     struct wmember tireslick;
     struct wmember innersolid;
     struct bu_vls str;
-    bu_vls_init(&str);
     vect_t vertex, height;
     point_t origin, normal, C;
 
-
-    PrintCADParams(ell1cadparams, "ell1");
-    PrintCADParams(ell2cadparams, "ell2");
-    PrintCADParams(ell3cadparams, "ell3");
-
+    bu_vls_init(&str);
 
     /* Insert primitives */
     VSET(origin, 0, ell1cadparams[0], 0);
@@ -1490,9 +1493,15 @@ void MakeTreadSolid(struct rt_wdb (*file), char *suffix,
     mk_eto(file, bu_vls_addr(&str), origin, normal, C, ell2treadcadparams[1], ell2treadcadparams[4]);
 
     VSET(vertex, 0, -ell1treadcadparams[2] - ell1treadcadparams[2] * .01, 0);
-    VSET(height, 0, 2 * (ell1treadcadparams[2] + ell1treadcadparams[2]  * .01), 0);
+    VSET(height, 0, ell2treadcadparams[3] + ell1treadcadparams[2] * .01 , 0);
     bu_vls_trunc(&str, 0);
-    bu_vls_printf(&str, "TopTreadClip%s.s", suffix);
+    bu_vls_printf(&str, "TopTreadClipL%s.s", suffix);
+    mk_rcc(file, bu_vls_addr(&str), vertex, height, ztire - dztred);
+
+    VSET(vertex, 0, ell1treadcadparams[2] + ell1treadcadparams[2] * .01, 0);
+    VSET(height, 0, -ell2treadcadparams[3] - ell1treadcadparams[2] * .01, 0);
+    bu_vls_trunc(&str, 0);
+    bu_vls_printf(&str, "TopTreadClipR%s.s", suffix);
     mk_rcc(file, bu_vls_addr(&str), vertex, height, ztire - dztred);
 
     VSET(vertex, 0, -d1_intercept, 0);
@@ -1507,8 +1516,11 @@ void MakeTreadSolid(struct rt_wdb (*file), char *suffix,
     bu_vls_printf(&str, "Ellipse1tread%s.s", suffix);
     (void)mk_addmember(bu_vls_addr(&str), &premtreadshape.l, NULL, WMOP_UNION);
     bu_vls_trunc(&str, 0);
-    bu_vls_printf(&str, "TopTreadClip%s.s", suffix);
+    bu_vls_printf(&str, "TopTreadClipL%s.s", suffix);
     (void)mk_addmember(bu_vls_addr(&str), &premtreadshape.l, NULL, WMOP_SUBTRACT);
+    bu_vls_trunc(&str, 0);
+    bu_vls_printf(&str, "TopTreadClipR%s.s", suffix);
+   (void)mk_addmember(bu_vls_addr(&str), &premtreadshape.l, NULL, WMOP_SUBTRACT);
     bu_vls_trunc(&str, 0);
     bu_vls_printf(&str, "Ellipse2tread%s.s", suffix);
     (void)mk_addmember(bu_vls_addr(&str), &premtreadshape.l, NULL, WMOP_UNION);
@@ -1573,9 +1585,10 @@ void MakeTreadSolid1(struct rt_wdb (*file), char *suffix,
     struct wmember tiretreadintercept, tiretreadsolid, tiretreadshape;
     int i;
     struct bu_vls str;
-    bu_vls_init(&str);
     vect_t vertex, height;
     point_t origin, normal, C;
+
+    bu_vls_init(&str);
 
     matrixelltred1 = (fastf_t **)bu_malloc(5 * sizeof(fastf_t *),
 					   "matrixrows");
@@ -1692,6 +1705,20 @@ void MakeTreadSolid1(struct rt_wdb (*file), char *suffix,
 
 }
 
+typedef void (*MakeTreadProfile)
+	(struct rt_wdb (*file),
+	 char *suffix,
+	 fastf_t *ell2coefficients,
+	 fastf_t ztire,
+	 fastf_t dztred,
+	 fastf_t d1,
+	 fastf_t dytred,
+	 fastf_t dyhub,
+	 fastf_t zhub,
+	 fastf_t dyside1,
+	 int number_of_tread_patterns,
+	 int patterntype);
+
 /**********************************************************************
  *                                                                    *
  *           MakeTire is the "top level" tire generation              *
@@ -1724,10 +1751,12 @@ void MakeTire(struct rt_wdb (*file), char *suffix, fastf_t dytred,
     fastf_t cut_d1, cut_dyside1, cut_zside1, cut_ztire, 	cut_dyhub, cut_zhub;
     struct wmember tire;
     unsigned char rgb[3];
+    MakeTreadProfile TreadProfile[2];
 
     struct bu_vls str;
-    bu_vls_init(&str);
     struct bu_vls str2;
+
+    bu_vls_init(&str);
     bu_vls_init(&str2);
 
     /* Set Tire color */
@@ -1796,21 +1825,6 @@ void MakeTire(struct rt_wdb (*file), char *suffix, fastf_t dytred,
 		    ell3cadparams, ztire_with_offset, dztred, dytred, dyhub,
 		    zhub, dyside1, zside1);
 
-    typedef void (*MakeTreadProfile)
-	(struct rt_wdb (*file),
-	 char *suffix,
-	 fastf_t *ell2coefficients,
-	 fastf_t ztire,
-	 fastf_t dztred,
-	 fastf_t d1,
-	 fastf_t dytred,
-	 fastf_t dyhub,
-	 fastf_t zhub,
-	 fastf_t dyside1,
-	 int number_of_tread_patterns,
-	 int patterntype);
-
-    MakeTreadProfile TreadProfile[2];
     TreadProfile[0] = &MakeTreadSolid;
     TreadProfile[1] = &MakeTreadSolid1;
 
@@ -1914,14 +1928,15 @@ void MakeTire(struct rt_wdb (*file), char *suffix, fastf_t dytred,
 }
 
 
-void MakeAirRegion(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t zhub)
+void MakeAirRegion(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t zhub, int usewheel)
 {
     struct wmember wheelair;
     struct bu_list air;
     struct bu_vls str;
-    bu_vls_init(&str);
     point_t origin;
     vect_t height;
+
+    bu_vls_init(&str);
 
     VSET(origin, 0, -dyhub/2, 0);
     VSET(height, 0, dyhub, 0);
@@ -1929,21 +1944,26 @@ void MakeAirRegion(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
     bu_vls_printf(&str, "Air-Cyl%s.s", suffix);
     mk_rcc(file, bu_vls_addr(&str), origin, height, zhub);
 
-    BU_LIST_INIT(&wheelair.l);
-    bu_vls_trunc(&str, 0);
-    bu_vls_printf(&str, "Air-Cyl%s.s", suffix);
-    (void)mk_addmember(bu_vls_addr(&str), &wheelair.l, NULL, WMOP_UNION);
-    bu_vls_trunc(&str, 0);
-    bu_vls_printf(&str, "wheel-rim-solid%s.c", suffix);
-    (void)mk_addmember(bu_vls_addr(&str), &wheelair.l, NULL, WMOP_SUBTRACT);
-    bu_vls_trunc(&str, 0);
-    bu_vls_printf(&str, "wheel-air%s.c", suffix);
-    mk_lcomb(file, bu_vls_addr(&str), &wheelair, 0,  NULL, NULL, NULL, 0);
-
+    if (usewheel != 0) {
+        BU_LIST_INIT(&wheelair.l);
+        bu_vls_trunc(&str, 0);
+        bu_vls_printf(&str, "Air-Cyl%s.s", suffix);
+        (void)mk_addmember(bu_vls_addr(&str), &wheelair.l, NULL, WMOP_UNION);
+        bu_vls_trunc(&str, 0);
+        bu_vls_printf(&str, "wheel-rim-solid%s.c", suffix);
+        (void)mk_addmember(bu_vls_addr(&str), &wheelair.l, NULL, WMOP_SUBTRACT);
+        bu_vls_trunc(&str, 0);
+        bu_vls_printf(&str, "wheel-air%s.c", suffix);
+        mk_lcomb(file, bu_vls_addr(&str), &wheelair, 0,  NULL, NULL, NULL, 0);
+    }
+    
     BU_LIST_INIT(&air);
-    bu_vls_trunc(&str, 0);
-    bu_vls_printf(&str, "wheel-air%s.c", suffix);
-    (void)mk_addmember(bu_vls_addr(&str), &air, NULL, WMOP_UNION);
+    
+    if (usewheel != 0) {
+        bu_vls_trunc(&str, 0);
+        bu_vls_printf(&str, "wheel-air%s.c", suffix);
+        (void)mk_addmember(bu_vls_addr(&str), &air, NULL, WMOP_UNION);
+    }
     bu_vls_trunc(&str, 0);
     bu_vls_printf(&str, "tire-cut%s.c", suffix);
     (void)mk_addmember(bu_vls_addr(&str), &air, NULL, WMOP_UNION);
@@ -1954,17 +1974,18 @@ void MakeAirRegion(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t z
 }
 
 /* Process command line arguments */
-int ReadArgs(int argc, char **argv, fastf_t *isoarray, fastf_t *overridearray, struct bu_vls *name, struct bu_vls *dimens, int *gen_name, int *treadtype, int *number_of_tread_patterns, fastf_t *tread_depth, fastf_t *tire_thickness, fastf_t *hub_width, int *pattern_type, fastf_t *zside1)
+int ReadArgs(int argc, char **argv, fastf_t *isoarray, fastf_t *overridearray, struct bu_vls *name, struct bu_vls *dimens, int *gen_name, int *treadtype, int *number_of_tread_patterns, fastf_t *tread_depth, fastf_t *tire_thickness, fastf_t *hub_width, int *pattern_type, fastf_t *zside1, int *usewheel)
 {
     int c = 0;
-    char *options="d:n:c:g:j:p:s:t:u:W:R:D:ah";
+    char *options="d:n:c:g:j:p:s:t:u:w:W:R:D:ah";
     int d1, d2, d3;
     int count;
-    int tdtype, ptype;
+    int tdtype, ptype, usewheelc;
     float hwidth, treadep, tthickness, zsideh;
     float fd1, fd2, fd3;
     char spacer1, tiretype;
 
+    /* don't report errors */
     bu_opterr = 0;
 
     while ((c=bu_getopt(argc, argv, options)) != -1) {
@@ -2024,9 +2045,15 @@ int ReadArgs(int argc, char **argv, fastf_t *isoarray, fastf_t *overridearray, s
 		sscanf(bu_optarg, "%f", &tthickness);
 		*tire_thickness = tthickness;
 		break;
+	    case 'w':
+	        sscanf(bu_optarg, "%d", &usewheelc);
+		*usewheel = usewheelc;
+		break;
+	    default:
+		bu_log("%s: illegal option -- %c\n", bu_getprogname(), c);
 	    case 'h':
-		show_help(*argv);
-		bu_exit(EXIT_SUCCESS, "exiting after help");
+		show_help(*argv, options);
+		bu_exit(EXIT_SUCCESS, NULL);
 	}
     }
     return(bu_optind);
@@ -2048,12 +2075,14 @@ int main(int ac, char *av[])
     struct bu_vls str;
     int gen_name = 0;
     int tread_type = 0;
+    int usewheel = 1;
     int number_of_tread_patterns = 30;
     fastf_t tread_depth = 11;
     fastf_t tire_thickness = 0;
     fastf_t hub_width = 0;
     int pattern_type = 0;
     fastf_t zside1 = 0;
+    fastf_t tread_depth_float = tread_depth/32.0;
 
     bu_vls_init(&str);
     bu_vls_init(&name);
@@ -2072,10 +2101,10 @@ int main(int ac, char *av[])
     overridearray[2] = 0;
 
     /* Process arguments */
-    ReadArgs(ac, av, isoarray, overridearray, &name, &dimen, &gen_name, &tread_type, &number_of_tread_patterns, &tread_depth, &tire_thickness, &hub_width, &pattern_type, &zside1);
+    ReadArgs(ac, av, isoarray, overridearray, &name, &dimen, &gen_name, &tread_type, &number_of_tread_patterns, &tread_depth, &tire_thickness, &hub_width, &pattern_type, &zside1, &usewheel);
 
     /* Calculate floating point value for tread depth */
-    fastf_t tread_depth_float = tread_depth/32.0;
+    tread_depth_float = tread_depth/32.0;
 
     /* Based on arguments, assign name for toplevel object Default of
      * "tire" is respected unless overridden by user supplied options.
@@ -2101,12 +2130,21 @@ int main(int ac, char *av[])
     }
 
     /* Create file name if supplied, else use "tire.g" */
-    db_fp = wdb_fopen( av[bu_optind] );
-    if (db_fp == NULL) {
-	db_fp = wdb_fopen("tire.g");
-	mk_id(db_fp, "Tire");
+    if (av[bu_optind]) {
+	if (!bu_file_exists(av[bu_optind])) {
+	    db_fp = wdb_fopen( av[bu_optind] );
+	} else {
+	    bu_exit(-1,"Error - refusing to overwrite pre-existing file %s",av[bu_optind]);
+	}
     }
-
+    if (!av[bu_optind]) {
+	if (!bu_file_exists(DEFAULT_TIRE_FILENAME)) {
+	    db_fp = wdb_fopen(DEFAULT_TIRE_FILENAME);
+	} else {
+	    bu_exit(-1,"Error - no filename supplied and tire.g exists.");
+	}
+    }
+    mk_id(db_fp, "Tire");
 
     if (overridearray[0] > 0) isoarray[0] = overridearray[0];
     if (overridearray[1] > 0) isoarray[1] = overridearray[1];
@@ -2162,10 +2200,11 @@ int main(int ac, char *av[])
     rim_thickness = tire_thickness/2.0;
 
     /* Make the wheel region*/
-    MakeWheelRims(db_fp, bu_vls_addr(&dimen), dyhub, zhub, bolts, bolt_diam, bolt_circ_diam, spigot_diam, fixing_offset, bead_height, bead_width, rim_thickness);
-
+    if (usewheel != 0) {
+        MakeWheelRims(db_fp, bu_vls_addr(&dimen), dyhub, zhub, bolts, bolt_diam, bolt_circ_diam, spigot_diam, fixing_offset, bead_height, bead_width, rim_thickness);
+    }
     /* Make the air region*/
-    MakeAirRegion(db_fp, bu_vls_addr(&dimen), dyhub, zhub);
+    MakeAirRegion(db_fp, bu_vls_addr(&dimen), dyhub, zhub, usewheel);
 
     /* Final top level providing a single name for tire+wheel */
     BU_LIST_INIT(&wheel_and_tire.l);
@@ -2175,9 +2214,11 @@ int main(int ac, char *av[])
     bu_vls_trunc(&str, 0);
     bu_vls_printf(&str, "air%s.r", bu_vls_addr(&dimen));
     (void)mk_addmember(bu_vls_addr(&str), &wheel_and_tire.l, NULL, WMOP_UNION);
-    bu_vls_trunc(&str, 0);
-    bu_vls_printf(&str, "wheel%s.r",bu_vls_addr(&dimen));
-    (void)mk_addmember(bu_vls_addr(&str), &wheel_and_tire.l, NULL, WMOP_UNION);
+    if (usewheel != 0) {
+        bu_vls_trunc(&str, 0);
+        bu_vls_printf(&str, "wheel%s.r",bu_vls_addr(&dimen));
+        (void)mk_addmember(bu_vls_addr(&str), &wheel_and_tire.l, NULL, WMOP_UNION);
+    }
     mk_lcomb(db_fp, bu_vls_addr(&name), &wheel_and_tire, 0,  NULL, NULL, NULL, 0);
 
 

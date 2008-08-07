@@ -45,6 +45,17 @@
 extern const char bu_vls_message[];
 extern const char bu_strdup_message[];
 
+/* private constants */
+
+/** minimum initial allocation size */
+static const int _VLS_ALLOC_MIN = 40;
+
+/** minimum vls allocation increment size */
+static const int _VLS_ALLOC_STEP = 120;
+
+/** minimum vls buffer allocation size */
+static const int _VLS_ALLOC_READ = 4096;
+
 
 /**
  * b u _ v l s _ i n i t
@@ -120,7 +131,6 @@ char *
 bu_vls_addr(register const struct bu_vls *vp)
 {
     static char nullbuf[4] = {0, 0, 0, 0};
-
     BU_CK_VLS(vp);
 
     if ( vp->vls_max == 0 || vp->vls_str == (char *)NULL )  {
@@ -157,8 +167,8 @@ bu_vls_extend(register struct bu_vls *vp, unsigned int extra)
     BU_CK_VLS(vp);
 
     /* increment by at least 40 bytes */
-    if ( extra < 40 )
-	extra = 40;
+    if ( extra < _VLS_ALLOC_MIN )
+	extra = _VLS_ALLOC_MIN;
 
     /* first time allocation */
     if ( vp->vls_max <= 0 || vp->vls_str == (char *)0 ) {
@@ -173,9 +183,9 @@ bu_vls_extend(register struct bu_vls *vp, unsigned int extra)
     /* need more space? */
     if ( vp->vls_offset + vp->vls_len + extra >= (size_t)vp->vls_max )  {
 	vp->vls_max += extra;
-	if ( vp->vls_max < 120 ) {
+	if ( vp->vls_max < _VLS_ALLOC_STEP ) {
 	    /* extend to at least this much */
-	    vp->vls_max = 120;
+	    vp->vls_max = _VLS_ALLOC_STEP;
 	}
 	vp->vls_str = (char *)bu_realloc( vp->vls_str, (size_t)vp->vls_max, bu_vls_message );
     }
@@ -574,6 +584,19 @@ bu_vls_strcmp(struct bu_vls *s1, struct bu_vls *s2)
     BU_CK_VLS(s1);
     BU_CK_VLS(s2);
 
+    /* A zero-length VLS is a null string, account for it */
+    if ( s1->vls_max == 0 || s1->vls_str == (char *)NULL ) {
+	/* s1 is empty */
+	/* ensure first-time allocation for null-termination */
+	bu_vls_extend(s1, 1);
+    }
+    if ( s2->vls_max == 0 || s2->vls_str == (char *)NULL ) {
+	/* s2 is empty */
+	/* ensure first-time allocation for null-termination */
+	bu_vls_extend(s2, 1);
+    }
+
+    /* neither empty, straight up comparison */
     return strcmp(s1->vls_str+s1->vls_offset, s2->vls_str+s2->vls_offset);
 }
 
@@ -595,6 +618,18 @@ bu_vls_strncmp(struct bu_vls *s1, struct bu_vls *s2, size_t n)
     if (n <= 0) {
 	/* they match at zero chars */
 	return 0;
+    }
+
+    /* A zero-length VLS is a null string, account for it */
+    if ( s1->vls_max == 0 || s1->vls_str == (char *)NULL ) {
+	/* s1 is empty */
+	/* ensure first-time allocation for null-termination */
+	bu_vls_extend(s1, 1);
+    }
+    if ( s2->vls_max == 0 || s2->vls_str == (char *)NULL ) {
+	/* s2 is empty */
+	/* ensure first-time allocation for null-termination */
+	bu_vls_extend(s2, 1);
     }
 
     return strncmp(s1->vls_str+s1->vls_offset, s2->vls_str+s2->vls_offset, n);
@@ -794,7 +829,7 @@ bu_vls_read( struct bu_vls *vp, int fd )
     BU_CK_VLS(vp);
 
     for (;;)  {
-	bu_vls_extend( vp, 4096 );
+	bu_vls_extend( vp, _VLS_ALLOC_READ );
 	todo = (size_t)vp->vls_max - vp->vls_len - vp->vls_offset - 1;
 	
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -881,7 +916,7 @@ bu_vls_putc(register struct bu_vls *vp, int c)
     BU_CK_VLS(vp);
 
     if ( vp->vls_offset + vp->vls_len+1 >= vp->vls_max )
-	bu_vls_extend( vp, 80 );
+	bu_vls_extend( vp, _VLS_ALLOC_STEP );
 
     vp->vls_str[vp->vls_offset + vp->vls_len++] = (char)c;
     vp->vls_str[vp->vls_offset + vp->vls_len] = '\0'; /* force null termination */
@@ -946,7 +981,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 
     BU_CK_VLS(vls);
 
-    bu_vls_extend(vls, 96);
+    bu_vls_extend(vls, _VLS_ALLOC_STEP);
 
     sp = fmt;
     while ( *sp ) {
@@ -1279,7 +1314,7 @@ bu_vls_detab(struct bu_vls *vp)
 
     bu_vls_init( &src );
     bu_vls_vlscatzap( &src, vp );	/* make temporary copy of src */
-    bu_vls_extend( vp, (unsigned)bu_vls_strlen(&src)+50 );
+    bu_vls_extend( vp, (unsigned)bu_vls_strlen(&src) + _VLS_ALLOC_STEP );
 
     cp = bu_vls_addr( &src );
     used = 0;

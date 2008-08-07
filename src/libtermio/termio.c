@@ -23,7 +23,7 @@
 
 #include "common.h"
 
-#include <stdio.h>
+#include <fcntl.h>
 
 #ifdef HAVE_SYS_FILE_H
 #  include <sys/file.h>
@@ -36,6 +36,8 @@
 #		define OCRNL   0000010
 #	endif
 #endif
+
+#include "bio.h"
 
 
 /*

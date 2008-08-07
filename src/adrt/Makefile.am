@@ -27,9 +27,6 @@ endif
 
 EXTRA_DIST = \
 	AUTHORS \
-	COPYING \
-	Doxyfile \
-	NEWS \
 	README
 
 DEPS = src/libbu

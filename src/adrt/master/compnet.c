@@ -120,7 +120,7 @@ void compnet_update(char *string, char status) {
     snprintf(message, ADRT_NAME_SIZE, "%c%s,%d%c", SET_BASE_ATTS_STATE, string, status, TERM);
 
     /* Send string */
-    tienet_send(master_compserv_socket, message, strlen(message), 0);
+    tienet_send(master_compserv_socket, message, strlen(message));
 }
 
 
@@ -131,7 +131,7 @@ void compnet_reset() {
 	return;
 
     message = RESET_BASE_ATTS;
-    tienet_send(master_compserv_socket, &message, 1, 0);
+    tienet_send(master_compserv_socket, &message, 1);
 }
 
 /*

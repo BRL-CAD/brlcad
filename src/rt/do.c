@@ -717,7 +717,7 @@ do_frame(int framenumber)
 #ifdef HAVE_SYS_STAT_H
 	/*
 	 *  This code allows the computation of a particular frame
-	 *  to a disk file to be resumed automaticly.
+	 *  to a disk file to be resumed automatically.
 	 *  This is worthwhile crash protection.
 	 *  This use of stat() and fseek() is UNIX-specific.
 	 *

@@ -365,19 +365,19 @@ void tienet_master_connect_slaves(fd_set *readfds)
 		    {
 			/* Send endian to slave */
 			op = 1;
-			tienet_send(daemon_socket, &op, sizeof(short), 0);
+			tienet_send(daemon_socket, &op, sizeof(short));
 
 			/* Read Version Key and Compare to ver_key, if valid proceed, if not tell slave to disconnect */
-			tienet_recv(daemon_socket, &slave_ver_key, sizeof(int), 0);
+			tienet_recv(daemon_socket, &slave_ver_key, sizeof(int));
 			if (slave_ver_key != tienet_master_ver_key)
 			{
 			    op = TN_OP_COMPLETE;
-			    tienet_send(daemon_socket, &op, sizeof(short), 0);
+			    tienet_send(daemon_socket, &op, sizeof(short));
 			}
 			else
 			{
 			    op = TN_OP_OKAY;
-			    tienet_send(daemon_socket, &op, sizeof(short), 0);
+			    tienet_send(daemon_socket, &op, sizeof(short));
 
 			    /* Append to select list */
 			    tmp = tienet_master_socket_list;
@@ -508,19 +508,19 @@ void* tienet_master_listener(void *ptr)
 
 			/* Send endian to slave */
 			op = 1;
-			tienet_send(slave_socket, &op, sizeof(short), 0);
+			tienet_send(slave_socket, &op, sizeof(short));
 			/* Read Version Key and Compare to ver_key, if valid proceed, if not tell slave to disconnect */
-			tienet_recv(slave_socket, &slave_ver_key, sizeof(int), 0);
+			tienet_recv(slave_socket, &slave_ver_key, sizeof(int));
 			if (slave_ver_key != tienet_master_ver_key)
 			{
 			    op = TN_OP_COMPLETE;
-			    tienet_send(slave_socket, &op, sizeof(short), 0);
+			    tienet_send(slave_socket, &op, sizeof(short));
 			}
 			else
 			{
 			    /* Version is okay, proceed */
 			    op = TN_OP_OKAY;
-			    tienet_send(slave_socket, &op, sizeof(short), 0);
+			    tienet_send(slave_socket, &op, sizeof(short));
 
 			    /* Append to select list */
 			    if (slave_socket > tienet_master_highest_fd)
@@ -534,7 +534,7 @@ void* tienet_master_listener(void *ptr)
 		else
 		{
 		    /* Make sure socket is still active on this recv */
-		    r = tienet_recv(sock->num, &op, sizeof(short), 0);
+		    r = tienet_recv(sock->num, &op, sizeof(short));
 		    /* if "r", error code returned, remove slave from pool */
 		    if (r)
 		    {
@@ -640,9 +640,9 @@ void tienet_master_send_work(tienet_master_socket_t *sock)
     if (sock->mesg.size)
     {
 	op = TN_OP_SENDWORK;
-	tienet_send(sock->num, &op, sizeof(short), 0);
-	tienet_send(sock->num, &sock->mesg.size, sizeof(int), 0);
-	tienet_send(sock->num, sock->mesg.data, sock->mesg.size, 0);
+	tienet_send(sock->num, &op, sizeof(short));
+	tienet_send(sock->num, &sock->mesg.size, sizeof(int));
+	tienet_send(sock->num, sock->mesg.data, sock->mesg.size);
 
 	bu_free(sock->mesg.data, "message data");
 	sock->mesg.data = NULL;
@@ -666,7 +666,7 @@ void tienet_master_send_work(tienet_master_socket_t *sock)
 
 	/* Send Work Unit */
 	TCOPY(int, tienet_master_buffer[tienet_master_pos_read].data, sizeof(short), &size, 0);
-	tienet_send(sock->num, tienet_master_buffer[tienet_master_pos_read].data, sizeof(short) + sizeof(int) + size, 0);
+	tienet_send(sock->num, tienet_master_buffer[tienet_master_pos_read].data, sizeof(short) + sizeof(int) + size);
 
 	if (sizeof(short) + sizeof(int) + size > sock->work.size)
 	{
@@ -712,18 +712,18 @@ void tienet_master_result(tienet_master_socket_t *sock)
     tienet_sem_wait(&tienet_master_sem_out);
 
     /* receive result length */
-    tienet_recv(sock->num, &tienet_master_result_buffer.ind, sizeof(unsigned int), 0);
+    tienet_recv(sock->num, &tienet_master_result_buffer.ind, sizeof(unsigned int));
     tienet_master_transfer += sizeof(unsigned int);
 
     /* allocate memory for result buffer if more is needed */
     TIENET_BUFFER_SIZE(tienet_master_result_buffer, tienet_master_result_buffer.ind);
 #if TN_COMPRESSION
     /* receive compressed length */
-    tienet_recv(sock->num, &tienet_master_result_buffer_comp.ind, sizeof(unsigned int), 0);
+    tienet_recv(sock->num, &tienet_master_result_buffer_comp.ind, sizeof(unsigned int));
 
     TIENET_BUFFER_SIZE(tienet_master_result_buffer_comp, comp_len);
 
-    tienet_recv(sock->num, tienet_master_result_buffer_comp.data, comp_len, 0);
+    tienet_recv(sock->num, tienet_master_result_buffer_comp.data, comp_len);
 
     /* uncompress the data */
     dest_len = tienet_master_result_buffer.ind+32;	/* some extra padding for zlib to work with */
@@ -732,7 +732,7 @@ void tienet_master_result(tienet_master_socket_t *sock)
     tienet_master_transfer += tienet_master_result_buffer_comp.ind + sizeof(unsigned int);
 #else
     /* receive result data */
-    tienet_recv(sock->num, tienet_master_result_buffer.data, tienet_master_result_buffer.ind, 0);
+    tienet_recv(sock->num, tienet_master_result_buffer.data, tienet_master_result_buffer.ind);
     tienet_master_transfer += tienet_master_result_buffer.ind;
 #endif
 
@@ -774,7 +774,7 @@ void tienet_master_shutdown()
 	{
 	    /* Only if slave socket do we send data to it. */
 	    op = TN_OP_COMPLETE;
-	    tienet_send(socket->num, &op, sizeof(short), 0);
+	    tienet_send(socket->num, &op, sizeof(short));
 
 	    /*
 	     * Wait on Recv.  When slave socket closes, select will be triggered.
@@ -783,7 +783,7 @@ void tienet_master_shutdown()
 	     * the socket into an evil wait state
 	     */
 
-	    tienet_recv(socket->num, &op, sizeof(short), 0);
+	    tienet_recv(socket->num, &op, sizeof(short));
 	    close(socket->num);
 	}
     }

@@ -13,7 +13,6 @@ bin_PROGRAMS = \
 	reshoot \
 	rt \
 	rt_bot_faces \
-	rt_simple \
 	rtarea \
 	rtcell \
 	rtcheck \
@@ -51,7 +50,6 @@ ALLSRCS = \
 	libfb-dummy.c \
 	read-rtlog.c \
 	reshoot.c \
-	rt_simple.c \
 	rtexample.c \
 	rtregis.c \
 	rtscale.c \
@@ -77,7 +75,6 @@ ALLSRCS = \
 	viewweight.c \
 	viewxray.c
 
-rt_simple_SOURCES = rt_simple.c
 rtexample_SOURCES = rtexample.c
 reshoot_SOURCES = reshoot.c
 rtwalk_SOURCES = rtwalk.c
@@ -223,11 +220,11 @@ FAST_OBJECTS = \
 	$(reshoot_OBJECTS) \
 	$(rt_OBJECTS) \
 	$(rt_bot_faces_OBJECTS) \
-	$(rt_simple_OBJECTS) \
 	$(rtarea_OBJECTS) \
 	$(rtcell_OBJECTS) \
 	$(rtcheck_OBJECTS) \
 	$(rtedge_OBJECTS) \
+	$(rtexample_OBJECTS) \
 	$(rtfrac_OBJECTS) \
 	$(rtg3_OBJECTS) \
 	$(rthide_OBJECTS) \
@@ -242,7 +239,6 @@ FAST_OBJECTS = \
 	$(rtwalk_OBJECTS) \
 	$(rtweight_OBJECTS) \
 	$(rtxray_OBJECTS) \
-	$(rtexample_OBJECTS) \
 	$(bin_PROGRAMS) \
 	$(noinst_PROGRAMS)
 
