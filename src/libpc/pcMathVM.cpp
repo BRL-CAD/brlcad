@@ -42,7 +42,18 @@ void Stack::copy(Stack::container_t const & a)
     for (; i != end; ++i)
 	data.push_back(*i);
 }
-
+/* MathVM methods */
+void MathVM::display()
+{
+   boost::shared_ptr<MathFunction> * a = (boost::spirit::classic::find<boost::shared_ptr<MathFunction> >(functions,"sin#1"));
+   if (!(*a)) {
+   std::cout << "Function not found" << std::endl;
+   } else {
+   std::cout << "Function found" << std::endl;
+   (*a)->display();
+   }
+}
+    
 /* MathFunction methods */
 
 MathFunction::MathFunction(std::string const & n) :
@@ -66,6 +77,7 @@ double MathFunction::eval(std::vector<double> const & args) const
     assert(args.size() == arity());
     return evalp(args);
 }
+
 
 /** @} */
 /*

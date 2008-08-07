@@ -36,6 +36,7 @@
 #include <boost/iterator/indirect_iterator.hpp>
 #include <boost/spirit/include/classic_symbols.hpp>
 
+#include <iostream>
 #include <list>
 #include <vector>
 
@@ -75,9 +76,13 @@ struct MathVM
     Stack stack;
     boost::spirit::classic::symbols<double> variables;
     boost::spirit::classic::symbols<boost::shared_ptr<MathFunction> > functions;
+    void display();
 };
 
 double evaluate(Stack s);
+
+struct UserFunction;
+struct UserFunctionExpression;
 
 struct MathFunction
 {
@@ -85,19 +90,55 @@ struct MathFunction
     MathFunction(std::string const &);
     virtual ~MathFunction() {}
     
+    virtual UserFunction * asUserFunction() {};
+
     /** Data access methods */
     std::string const & getName() const;
     virtual std::size_t arity() const = 0;
 
     /** The evaluation method */
     double eval(std::vector<double> const & args) const;
+    void display() {
+	std::cout << MathFunction::name << std::endl;
+    }
 private:
     virtual double evalp(std::vector<double> const & args) const = 0;
     std::string name;
 
 };
 
-/* Node Implementations */
+/** Implemation of various convenience Function types*/
+
+/** Unary function */
+template<typename T>
+struct MathF1 : public MathFunction
+{
+    /* function pointer to a function taking a unary argument */
+    typedef T (* function_ptr) (T);
+
+    MathF1(std::string const & name, function_ptr fp)
+	: MathFunction(name),
+	  funct(fp)
+    {}
+    
+    /* Implementation of the virtual function in MathFunction class
+     * to return an arity of 1
+     */
+    std::size_t arity() const { return 1;}
+private:
+    double evalp(std::vector<double> const & args) const
+    {
+	return funct(static_cast<T>(args[0]));
+    }
+    function_ptr funct;
+};
+
+/**UserFunction Defintion */
+struct UserFunction : public MathFunction
+{
+
+};
+/** Node Implementations */
 
 struct number_node : public Node
 {

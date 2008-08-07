@@ -27,13 +27,41 @@
 
 #include "common.h"
 
-#include <iostream>
 #include "pcMathVM.h"
+#include <iostream>
+#include <cmath>
+
+/* Type definitions for unary and binary function pointers */
+
+typedef double (* function2_ptr) (double, double);
+typedef double (* function1_ptr) (double);
+
+/* Binary function maker 
+boost::shared_ptr<MathFunction> make_function(char const * name, function2_ptr f2_p)
+{
+    return boost::shared_ptr<MathFunction>(new MathF2<double>(name, f2_p));
+}
+*/
+
+/* Unary function maker */
+boost::shared_ptr<MathFunction> make_function(char const * name, function1_ptr f1_p)
+{
+    return boost::shared_ptr<MathFunction>(new MathF1<double>(name, f1_p));
+}
+
+/* Arity based function maker 
+boost::shared_ptr<MathFunction> make_function(char const * name, int arity)
+{
+    return boost::shared_ptr<MathFunction>(new UserFunction(name, arity));
+}
+*/
 
 void eval()
 {
     std::cout << "MathVM evaluation" << std::endl;
     MathVM vm;
+    vm.functions.add("sin#1", make_function("sin",&sin));
+    vm.display();
 }
 
 int main()
