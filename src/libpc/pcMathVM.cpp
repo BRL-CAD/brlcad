@@ -77,6 +77,63 @@ void Stack::clear()
 }
 
 /**
+ * 			     Stack Iterator Methods
+ *
+ * Indirect iterators from bost are generated using wrapper functions.
+ * Indirect iterator adapts an iterator by applying an extra dereference inside
+ * of operator*(). For example, this iterator adaptor makes it possible to view
+ * a container of pointers (e.g. list<foo*>) as if it were a container of the 
+ * pointed-to type (e.g. list<foo>).
+ *
+ */
+
+Stack::iterator makeIterator(Stack::container_t::iterator i)
+{
+    return boost::make_indirect_iterator(i);
+}
+
+Stack::const_iterator makeIterator(Stack::container_t::const_iterator i)
+{
+    return boost::make_indirect_iterator(i);
+}
+
+Stack::iterator Stack::begin()
+{
+    return makeIterator(data.begin());
+}
+
+Stack::iterator Stack::end()
+{
+    return makeIterator(data.end());
+}
+
+Stack::const_iterator Stack::begin() const
+{
+    return makeIterator(data.begin());
+}
+
+Stack::const_iterator Stack::end() const
+{
+    return makeIterator(data.end());
+}
+
+Stack::iterator Stack::erase(iterator location)
+{
+    return makeIterator(data.erase(location.base()));
+}
+
+Stack::iterator Stack::erase(iterator begin, iterator end)
+{
+    return makeIterator(data.erase(begin.base(), end.base()));
+}
+
+Stack::iterator Stack::insert(iterator location, Node * n)
+{
+    assert(n);
+    return makeIterator(data.insert(location.base(), boost::shared_ptr<Node>(n)));
+}
+
+/**
  * 			     Math Virtual Machine methods
  */
 

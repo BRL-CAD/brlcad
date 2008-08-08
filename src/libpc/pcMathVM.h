@@ -62,10 +62,12 @@ struct Node {
 /** Stack object: A collection of Node pointers and associated methods */
 class Stack
 {
+public:
     typedef std::list<boost::shared_ptr<Node> > container_t;
     typedef container_t::size_type size_type;
     typedef boost::indirect_iterator<container_t::iterator> iterator;
-public:
+    typedef boost::indirect_iterator<container_t::const_iterator> const_iterator;
+
     /** Create and Copy Constructors*/
     Stack() {}
     Stack(Stack const &);
@@ -76,8 +78,17 @@ public:
     void push_back(Node * n);
     void clear();
 
+    /** Stack iterator methods */
     iterator begin();
     iterator end();
+    const_iterator begin() const;
+    const_iterator end() const;
+
+    iterator erase(iterator location);
+    iterator erase(iterator begin, iterator end);
+
+    iterator insert(iterator location, Node * n);
+
 private:
     container_t data;
     void copy(Stack::container_t const &);
