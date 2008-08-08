@@ -38,6 +38,9 @@ using boost::spirit::classic::find;
 /* Test functions */
 
 double add(double a, double b) { return a+b; }
+double multiply(double a, double b) { return a*b; }
+double div(double a, double b) { return a/b; }
+
 /* Type definitions for unary and binary function pointers */
 
 typedef double (* function2_ptr) (double, double);
@@ -77,22 +80,51 @@ void eval()
     ct * a;
     std::vector<double> args;
     std::cout << "MathVM evaluation" << std::endl;
-    vm.functions.add("sin#1", make_function("sin",&sin))
-		    ("add##2", make_function("add#", &add));
-    findfunction(&a,"sin#1",vm);
+    vm.functions.add("sin", make_function("sin",&sin))
+		    ("sqrt", make_function("sqrt",&sqrt))
+		    ("add", make_function("add", &add))
+		    ("multiply", make_function("multiply", &multiply));
+		    ("divide", make_function("div", &div));
+    findfunction(&a,"sqrt",vm);
     if(a) {
-	args.push_back(0.7585);
+	args.push_back(3);
 	std::cout << (*a)->eval(args) <<std::endl;
 	args.clear();
     }
-    findfunction(&a,"add##2",vm);
+    findfunction(&a,"add",vm);
     if(a) {
 	args.push_back(24.3);
 	args.push_back(42.3);
 	std::cout << (*a)->eval(args) <<std::endl;
 	args.clear();
     }
-    findfunction(&a,"sub",vm);
+    
+    using boost::spirit::classic::find;
+    
+    vm.stack.push_back(new ConstantNode(100));
+    vm.stack.push_back(new ConstantNode(2));
+    vm.stack.push_back(new sysFunctionNode(*find(vm.functions,"sqrt")));
+    vm.stack.push_back(new sysFunctionNode(*find(vm.functions,"add")));
+    vm.stack.push_back(new sysFunctionNode(*find(vm.functions,"sqrt")));
+
+    std::cout << " sqrt(100 + sqrt(2)) = " << evaluate(vm.stack) << std::endl;
+    vm.stack.clear();
+    
+    vm.stack.push_back(new ConstantNode(3.14));
+    vm.stack.push_back(new ConstantNode(2));
+    vm.stack.push_back(new ConstantNode(4));
+    vm.stack.push_back(new ConstantNode(4));
+    vm.stack.push_back(new sysFunctionNode(*find(vm.functions,"multiply")));
+    vm.stack.push_back(new sysFunctionNode(*find(vm.functions,"sqrt")));
+    vm.stack.push_back(new sysFunctionNode(*find(vm.functions,"add")));
+    vm.stack.push_back(new ConstantNode(12));
+    /*vm.stack.push_back(new sysFunctionNode(*find(vm.functions,"div")));*/
+    vm.stack.push_back(new sysFunctionNode(*find(vm.functions,"multiply")));
+    vm.stack.push_back(new sysFunctionNode(*find(vm.functions,"multiply")));
+    vm.stack.push_back(new sysFunctionNode(*find(vm.functions,"sin")));
+
+    std::cout << " sin( pi * (2 + sqrt(4*4)) * 12) = " << evaluate(vm.stack) << std::endl;
+
 }
 
 int main()
