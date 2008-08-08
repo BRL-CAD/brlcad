@@ -65,6 +65,7 @@ class Stack
 public:
     typedef std::list<boost::shared_ptr<Node> > container_t;
     typedef container_t::size_type size_type;
+    typedef container_t::difference_type difference_type;
     typedef boost::indirect_iterator<container_t::iterator> iterator;
     typedef boost::indirect_iterator<container_t::const_iterator> const_iterator;
 
@@ -238,6 +239,15 @@ struct VariableNode : public NumberNode
     double & getVar() const; /* Get the variable reference */
 
     double * pd;
+};
+
+struct sysFunctionNode : public FunctionNode
+{
+    sysFunctionNode(boost::shared_ptr<MathFunction> const & funcp);
+    boost::shared_ptr<Node> clone() const;
+    MathFunction const & func() const;
+private:
+    boost::shared_ptr<MathFunction> fp;
 };
 
 #endif

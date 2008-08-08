@@ -27,6 +27,8 @@
  */
 
 #include "pcMathVM.h"
+
+#include <boost/next_prior.hpp>
 #include <cassert>
 #include <map>
 
@@ -343,14 +345,81 @@ double & VariableNode::getVar() const
     return *pd;
 }
 
+sysFunctionNode::sysFunctionNode(boost::shared_ptr<MathFunction> const & funcp)
+{
+    fp = funcp;
+}
+
+boost::shared_ptr<Node> sysFunctionNode::clone() const
+{
+    return boost::shared_ptr<Node>(new sysFunctionNode(*this));
+}
+
+MathFunction const & sysFunctionNode::func() const
+{
+    return *fp;
+}
+
+/** Functions assisting evaluation */
+
+NumberNode * getNumberNode(Stack::iterator i)
+{
+    NumberNode * n = dynamic_cast<NumberNode *>(&*i);
+    assert(n);
+    return n;
+}
+
+VariableNode * getVariableNode(Stack::iterator i)
+{
+    VariableNode * n = dynamic_cast<VariableNode *>(&*i);
+    assert(n);
+    return n;
+}
+
+std::vector<double> const makeArgList(Stack::iterator const & begin, Stack::iterator const & end)
+{
+    std::vector<double> v;
+    v.reserve(std::distance(begin,end));
+
+    Stack::iterator i = begin;
+    for (; i != end; ++i)
+	v.push_back(getNumberNode(i)->getValue());
+    return v;
+}
+
 /**
  * 				   Stack Evaluation Method
  */
+
 
 double evaluate(Stack s)
 {
     if (s.empty())
 	return 0.0;
+
+    Stack::iterator i = s.begin();
+    while (i != s.end()) {
+	if (FunctionNode const * f = dynamic_cast<FunctionNode const *>(&*i)) {
+	    MathFunction const & funct = f->func();
+
+	    Stack::difference_type const arity = funct.arity();
+	    Stack::iterator j = boost::prior(i,arity);
+	    double const result = funct.eval(makeArgList(j,i));
+
+	    i = s.erase(j,boost::next(i));
+	    s.insert(i, new ConstantNode(result));
+	    continue;
+	}
+
+	++i;
+    }
+
+    if (s.empty())
+	return 0.0;
+    
+    /* If stack size = 1 */
+    assert(s.size() == 1) ;
+    return getNumberNode(s.begin())->getValue();
 }
 
 /** @} */
