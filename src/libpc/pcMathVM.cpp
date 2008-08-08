@@ -185,6 +185,34 @@ void updateStack(Stack & s, std::map<double *,double *> const & pmap)
 {
     typedef std::map<double *, double *> mapd;
 
+    Stack::iterator i = s.begin();
+    Stack::iterator const end = s.end();
+    for (; i != end; ++i)
+    {
+	VariableNode * vn = dynamic_cast<VariableNode *>(&*i);
+	if (vn) {
+	    mapd::const_iterator j = pmap.find(vn->pd);
+	    if (j == pmap.end()) {
+		std::cerr << " Warning: Pointer " << vn->pd << ","
+			  << *vn->pd << " not found!" <<std::endl;
+		continue;
+	    } else {
+		vn->pd = j->second;
+	    }
+	}
+
+	std::size_t const nbranches = i->branchSize();
+	if (nbranches == 0)
+	    continue;
+	
+	for(std::size_t k =0; k !=nbranches; ++k)
+	{
+	    Stack * stk = i->branch(k);
+	    if (!stk)
+		continue;
+	    updateStack(*stk,pmap);
+	}
+    }
 }
 
 void updateStack(Stack & s,
@@ -206,7 +234,6 @@ void updateStack(Stack & s,
 	double * p2 = find(slocalvariables,argn[i].c_str());
 	pmap[p1] = p2;
     }
-
     updateStack(s,pmap);
 }
 
@@ -232,7 +259,9 @@ UserFunction::UserFunction(UserFunction const & other)
       argnames(other.argnames),
       localvariables_(other.localvariables_),
       stack(other.stack)
-{}
+{
+    updateStack(stack, localvariables_, other.localvariables_, argnames);
+}
 
 /** Arity return method */
 std::size_t UserFunction::arity() const
@@ -320,7 +349,8 @@ double & VariableNode::getVar() const
 
 double evaluate(Stack s)
 {
-    return 0;
+    if (s.empty())
+	return 0.0;
 }
 
 /** @} */

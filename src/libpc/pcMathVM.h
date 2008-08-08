@@ -55,7 +55,7 @@ struct Node {
     virtual boost::shared_ptr<Node> clone() const = 0;
     
     /** Branch Methods */
-    virtual std::size_t branchsize() const { return 0; }
+    virtual std::size_t branchSize() const { return 0; }
     virtual Stack * branch(std::size_t) { return 0; }
 };
 
