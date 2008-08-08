@@ -5,7 +5,7 @@
 //  shared_ptr.hpp
 //
 //  (C) Copyright Greg Colvin and Beman Dawes 1998, 1999.
-//  Copyright (c) 2001-2007 Peter Dimov
+//  Copyright (c) 2001-2008 Peter Dimov
 //
 //  Distributed under the Boost Software License, Version 1.0. (See
 //  accompanying file LICENSE_1_0.txt or copy at
@@ -516,64 +516,10 @@ public:
         return pn < rhs.pn;
     }
 
-    // atomic access
-
-#if !defined(BOOST_SP_NO_ATOMIC_ACCESS)
-
-    shared_ptr<T> atomic_load( memory_order /*mo*/ = memory_order_seq_cst ) const
+    bool _internal_equiv( shared_ptr const & r ) const
     {
-        boost::detail::spinlock_pool<2>::scoped_lock lock( this );
-        return *this;
+        return px == r.px && pn == r.pn;
     }
-
-    void atomic_store( shared_ptr<T> r, memory_order /*mo*/ = memory_order_seq_cst )
-    {
-        boost::detail::spinlock_pool<2>::scoped_lock lock( this );
-        swap( r );
-    }
-
-    shared_ptr<T> atomic_swap( shared_ptr<T> r, memory_order /*mo*/ = memory_order_seq_cst )
-    {
-        boost::detail::spinlock & sp = boost::detail::spinlock_pool<2>::spinlock_for( this );
-
-        sp.lock();
-        swap( r );
-        sp.unlock();
-
-        return r; // return std::move(r)
-    }
-
-    bool atomic_compare_swap( shared_ptr<T> & v, shared_ptr<T> w )
-    {
-        boost::detail::spinlock & sp = boost::detail::spinlock_pool<2>::spinlock_for( this );
-
-        sp.lock();
-
-        if( px == v.px && pn == v.pn )
-        {
-            swap( w );
-
-            sp.unlock();
-
-            return true;
-        }
-        else
-        {
-            shared_ptr tmp( *this );
-
-            sp.unlock();
-
-            tmp.swap( v );
-            return false;
-        }
-    }
-
-    inline bool atomic_compare_swap( shared_ptr<T> & v, shared_ptr<T> w, memory_order /*success*/, memory_order /*failure*/ )
-    {
-        return atomic_compare_swap( v, w ); // std::move( w )
-    }
-
-#endif
 
 // Tasteless as this may seem, making all members public allows member templates
 // to work in the absence of member template friends. (Matthew Langston)
@@ -783,6 +729,85 @@ template<class D, class T> D * get_deleter( shared_ptr<T> const & p )
 
     return del;
 }
+
+// atomic access
+
+#if !defined(BOOST_SP_NO_ATOMIC_ACCESS)
+
+template<class T> inline bool atomic_is_lock_free( shared_ptr<T> const * /*p*/ )
+{
+    return false;
+}
+
+template<class T> shared_ptr<T> atomic_load( shared_ptr<T> const * p )
+{
+    boost::detail::spinlock_pool<2>::scoped_lock lock( p );
+    return *p;
+}
+
+template<class T> inline shared_ptr<T> atomic_load_explicit( shared_ptr<T> const * p, memory_order /*mo*/ )
+{
+    return atomic_load( p );
+}
+
+template<class T> void atomic_store( shared_ptr<T> * p, shared_ptr<T> r )
+{
+    boost::detail::spinlock_pool<2>::scoped_lock lock( p );
+    p->swap( r );
+}
+
+template<class T> inline void atomic_store_explicit( shared_ptr<T> * p, shared_ptr<T> r, memory_order /*mo*/ )
+{
+    atomic_store( p, r ); // std::move( r )
+}
+
+template<class T> shared_ptr<T> atomic_exchange( shared_ptr<T> * p, shared_ptr<T> r )
+{
+    boost::detail::spinlock & sp = boost::detail::spinlock_pool<2>::spinlock_for( p );
+
+    sp.lock();
+    p->swap( r );
+    sp.unlock();
+
+    return r; // return std::move( r )
+}
+
+template<class T> shared_ptr<T> atomic_exchange_explicit( shared_ptr<T> * p, shared_ptr<T> r, memory_order /*mo*/ )
+{
+    return atomic_exchange( p, r ); // std::move( r )
+}
+
+template<class T> bool atomic_compare_exchange( shared_ptr<T> * p, shared_ptr<T> * v, shared_ptr<T> w )
+{
+    boost::detail::spinlock & sp = boost::detail::spinlock_pool<2>::spinlock_for( p );
+
+    sp.lock();
+
+    if( p->_internal_equiv( *v ) )
+    {
+        p->swap( w );
+
+        sp.unlock();
+
+        return true;
+    }
+    else
+    {
+        shared_ptr<T> tmp( *p );
+
+        sp.unlock();
+
+        tmp.swap( *v );
+        return false;
+    }
+}
+
+template<class T> inline bool atomic_compare_exchange_explicit( shared_ptr<T> * p, shared_ptr<T> * v, shared_ptr<T> w, memory_order /*success*/, memory_order /*failure*/ )
+{
+    return atomic_compare_exchange( p, v, w ); // std::move( w )
+}
+
+#endif
 
 } // namespace boost
 

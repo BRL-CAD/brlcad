@@ -121,6 +121,17 @@ namespace boost
             }
             return true;
         }
+        template<typename lock_type>
+        bool timed_wait(lock_type& m,xtime const& wait_until)
+        {
+            return timed_wait(m,system_time(wait_until));
+        }
+
+        template<typename lock_type,typename duration_type>
+        bool timed_wait(lock_type& m,duration_type const& wait_duration)
+        {
+            return timed_wait(m,get_system_time()+wait_duration);
+        }
 
         template<typename lock_type,typename predicate_type>
         bool timed_wait(lock_type& m,boost::system_time const& wait_until,predicate_type pred)

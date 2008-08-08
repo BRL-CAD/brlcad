@@ -12,7 +12,8 @@ Notes about libpc implementation
 	6. graph/adjacency_list.hpp in pcNetwork.h
 	7. graph/graphviz.hpp in pcNetwork.h
 	8. spirit/include/classic_symbols.hpp in pcMathVM.h
+	9. next_prior.hpp in pcMathVM.cpp
    The above and corresponding dependencies are added to the src/other/boost directory using
    	bcp --scan --boost=BOOST_DIR pcMathVM.h pcConstraint.h\
-			pcParser.h pcNetwork.h ../other
+		pcParser.h pcNetwork.h pcMathVM.cpp ../other
 

@@ -173,15 +173,24 @@ namespace boost
         }
         
 #else
+#ifdef BOOST_NO_SFINAE
+        template <class F>
+        explicit thread(F f):
+            thread_info(make_thread_info(f))
+        {
+            start_thread();
+        }
+#else
         template <class F>
         explicit thread(F f,typename disable_if<boost::is_convertible<F&,detail::thread_move_t<F> >, dummy* >::type=0):
             thread_info(make_thread_info(f))
         {
             start_thread();
         }
+#endif
         
         template <class F>
-        thread(detail::thread_move_t<F> f):
+        explicit thread(detail::thread_move_t<F> f):
             thread_info(make_thread_info(f))
         {
             start_thread();

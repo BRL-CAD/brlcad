@@ -20,7 +20,7 @@ namespace boost
     }
 
     class mutex:
-		boost::noncopyable,
+        boost::noncopyable,
         public ::boost::detail::underlying_mutex
     {
     public:

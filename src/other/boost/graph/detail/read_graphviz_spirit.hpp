@@ -53,6 +53,7 @@
 #include <utility>
 #include <map>
 #include <boost/graph/graphviz.hpp>
+#include <boost/throw_exception.hpp>
 
 namespace phoenix {
 // Workaround:  std::map::operator[] uses a different return type than all
@@ -292,12 +293,12 @@ struct dot_grammar : public boost::spirit::grammar<dot_grammar> {
 
     void check_undirected() {
       if(self.graph_.is_directed())
-        throw boost::undirected_graph_error();
+          boost::throw_exception(boost::undirected_graph_error());
     }
 
     void check_directed() {
       if(!self.graph_.is_directed())
-        throw boost::directed_graph_error();
+          boost::throw_exception(boost::directed_graph_error());
     }
     
     void memoize_node() {

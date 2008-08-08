@@ -14,7 +14,7 @@
 namespace boost {
 namespace date_time {
   //! Return the day of the week (0==Sunday, 1==Monday, etc)
-  /*! Converts a the year-month-day into a day of the week number
+  /*! Converts a year-month-day into a day of the week number
    */
   template<typename ymd_type_, typename date_int_type_>
   BOOST_DATE_TIME_INLINE

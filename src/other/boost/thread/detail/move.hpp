@@ -6,8 +6,10 @@
 #ifndef BOOST_THREAD_MOVE_HPP
 #define BOOST_THREAD_MOVE_HPP
 
+#ifndef BOOST_NO_SFINAE
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits/is_convertible.hpp>
+#endif
 
 #include <boost/config/abi_prefix.hpp>
 
@@ -37,11 +39,13 @@ namespace boost
         };
     }
 
+#ifndef BOOST_NO_SFINAE
     template<typename T>
     typename enable_if<boost::is_convertible<T&,detail::thread_move_t<T> >, detail::thread_move_t<T> >::type move(T& t)
     {
         return t;
     }
+#endif
     
     template<typename T>
     detail::thread_move_t<T> move(detail::thread_move_t<T> t)

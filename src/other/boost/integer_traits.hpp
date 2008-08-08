@@ -27,6 +27,8 @@
 #include <wchar.h>
 #endif
 
+#include <boost/detail/extended_integer.hpp>  // for BOOST_HAS_XINT, etc.
+
 
 namespace boost {
 template<class T>
@@ -155,77 +157,18 @@ class integer_traits<unsigned long>
     public detail::integer_traits_base<unsigned long, 0, ULONG_MAX>
 { };
 
-#if !defined(BOOST_NO_INTEGRAL_INT64_T) && !defined(BOOST_NO_INT64_T)
-#if defined(ULLONG_MAX) && defined(BOOST_HAS_LONG_LONG)
-
+#if !defined(BOOST_NO_INTEGRAL_INT64_T) && !defined(BOOST_NO_INT64_T) && BOOST_HAS_XINT
 template<>
-class integer_traits< ::boost::long_long_type>
-  : public std::numeric_limits< ::boost::long_long_type>,
-    public detail::integer_traits_base< ::boost::long_long_type, LLONG_MIN, LLONG_MAX>
+class integer_traits< detail::xint_t >
+  : public std::numeric_limits< detail::xint_t >,
+    public detail::integer_traits_base< detail::xint_t, BOOST_XINT_MIN, BOOST_XINT_MAX >
 { };
 
 template<>
-class integer_traits< ::boost::ulong_long_type>
-  : public std::numeric_limits< ::boost::ulong_long_type>,
-    public detail::integer_traits_base< ::boost::ulong_long_type, 0, ULLONG_MAX>
+class integer_traits< detail::uxint_t >
+  : public std::numeric_limits< detail::uxint_t >,
+    public detail::integer_traits_base< detail::uxint_t, 0u, BOOST_UXINT_MAX >
 { };
-
-#elif defined(ULONG_LONG_MAX) && defined(BOOST_HAS_LONG_LONG)
-
-template<>
-class integer_traits< ::boost::long_long_type>  : public std::numeric_limits< ::boost::long_long_type>,    public detail::integer_traits_base< ::boost::long_long_type, LONG_LONG_MIN, LONG_LONG_MAX>{ };
-template<>
-class integer_traits< ::boost::ulong_long_type>
-  : public std::numeric_limits< ::boost::ulong_long_type>,
-    public detail::integer_traits_base< ::boost::ulong_long_type, 0, ULONG_LONG_MAX>
-{ };
-
-#elif defined(ULONGLONG_MAX) && defined(BOOST_HAS_LONG_LONG)
-
-template<>
-class integer_traits< ::boost::long_long_type>
-  : public std::numeric_limits< ::boost::long_long_type>,
-    public detail::integer_traits_base< ::boost::long_long_type, LONGLONG_MIN, LONGLONG_MAX>
-{ };
-
-template<>
-class integer_traits< ::boost::ulong_long_type>
-  : public std::numeric_limits< ::boost::ulong_long_type>,
-    public detail::integer_traits_base< ::boost::ulong_long_type, 0, ULONGLONG_MAX>
-{ };
-
-#elif defined(_LLONG_MAX) && defined(_C2) && defined(BOOST_HAS_LONG_LONG)
-
-template<>
-class integer_traits< ::boost::long_long_type>
-  : public std::numeric_limits< ::boost::long_long_type>,
-    public detail::integer_traits_base< ::boost::long_long_type, -_LLONG_MAX - _C2, _LLONG_MAX>
-{ };
-
-template<>
-class integer_traits< ::boost::ulong_long_type>
-  : public std::numeric_limits< ::boost::ulong_long_type>,
-    public detail::integer_traits_base< ::boost::ulong_long_type, 0, _ULLONG_MAX>
-{ };
-
-#elif defined(BOOST_HAS_LONG_LONG)
-//
-// we have long long but no constants, this happens for example with gcc in -ansi mode,
-// we'll just have to work out the values for ourselves (assumes 2's compliment representation):
-//
-template<>
-class integer_traits< ::boost::long_long_type>
-  : public std::numeric_limits< ::boost::long_long_type>,
-    public detail::integer_traits_base< ::boost::long_long_type, (1LL << (sizeof(::boost::long_long_type) - 1)), ~(1LL << (sizeof(::boost::long_long_type) - 1))>
-{ };
-
-template<>
-class integer_traits< ::boost::ulong_long_type>
-  : public std::numeric_limits< ::boost::ulong_long_type>,
-    public detail::integer_traits_base< ::boost::ulong_long_type, 0, ~0uLL>
-{ };
-
-#endif
 #endif
 
 } // namespace boost

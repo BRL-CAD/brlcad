@@ -13,6 +13,7 @@
 #include "thread_primitives.hpp"
 #include "interlocked_read.hpp"
 #include <boost/thread/thread_time.hpp>
+#include <boost/thread/xtime.hpp>
 #include <boost/detail/interlocked.hpp>
 
 #include <boost/config/abi_prefix.hpp>
@@ -115,6 +116,11 @@ namespace boost
             bool timed_lock(Duration const& timeout)
             {
                 return timed_lock(get_system_time()+timeout);
+            }
+
+            bool timed_lock(boost::xtime const& timeout)
+            {
+                return timed_lock(system_time(timeout));
             }
 
             long get_active_count()

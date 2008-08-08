@@ -31,7 +31,7 @@ namespace gregorian {
   //! Exception that flags that a weekday number is incorrect
   struct bad_weekday : public std::out_of_range
   {
-    bad_weekday() : std::out_of_range(std::string("Weekday os out of range 0..6")) {}
+    bad_weekday() : std::out_of_range(std::string("Weekday is out of range 0..6")) {}
   };
   typedef CV::simple_exception_policy<unsigned short, 0, 6, bad_weekday> greg_weekday_policies;
   typedef CV::constrained_value<greg_weekday_policies> greg_weekday_rep;

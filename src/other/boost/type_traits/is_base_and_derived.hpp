@@ -133,7 +133,7 @@ struct bd_helper
 template<typename B, typename D>
 struct is_base_and_derived_impl2
 {
-#if BOOST_WORKAROUND(BOOST_MSVC, >= 1400)
+#if BOOST_WORKAROUND(_MSC_FULL_VER, >= 140050000)
 #pragma warning(push)
 #pragma warning(disable:6334)
 #endif
@@ -156,7 +156,7 @@ struct is_base_and_derived_impl2
 
     BOOST_STATIC_CONSTANT(bool, value =
         sizeof(bd_helper<B,D>::check_sig(Host(), 0)) == sizeof(type_traits::yes_type));
-#if BOOST_WORKAROUND(BOOST_MSVC, >= 1400)
+#if BOOST_WORKAROUND(_MSC_FULL_VER, >= 140050000)
 #pragma warning(pop)
 #endif
 };

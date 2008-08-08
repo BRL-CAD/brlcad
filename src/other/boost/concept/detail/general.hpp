@@ -29,6 +29,14 @@ struct requirement
     static void failed() { ((Model*)0)->~Model(); }
 };
 
+struct failed {};
+
+template <class Model>
+struct requirement<failed ************ Model::************>
+{
+    static void failed() { ((Model*)0)->~Model(); }
+};
+
 # ifdef BOOST_OLD_CONCEPT_SUPPORT
 
 template <class Model>
@@ -42,7 +50,7 @@ struct requirement_<void(*)(Model)>
   : mpl::if_<
         concept::not_satisfied<Model>
       , constraint<Model>
-      , requirement<Model>
+      , requirement<failed ************ Model::************>
     >::type
 {};
   
@@ -51,7 +59,7 @@ struct requirement_<void(*)(Model)>
 // For GCC-2.x, these can't have exactly the same name
 template <class Model>
 struct requirement_<void(*)(Model)>
-  : requirement<Model>
+    : requirement<failed ************ Model::************>
 {};
   
 # endif

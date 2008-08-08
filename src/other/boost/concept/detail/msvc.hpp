@@ -14,6 +14,7 @@
 
 namespace boost { namespace concept {
 
+
 template <class Model>
 struct check
 {
@@ -22,7 +23,19 @@ struct check
         x->~Model();
     }
 };
-  
+
+# ifndef BOOST_NO_PARTIAL_SPECIALIZATION
+struct failed {};
+template <class Model>
+struct check<failed ************ Model::************>
+{
+    virtual void failed(Model* x)
+    {
+        x->~Model();
+    }
+};
+# endif
+
 # ifdef BOOST_OLD_CONCEPT_SUPPORT
   
 namespace detail
@@ -38,7 +51,11 @@ struct require
   : mpl::if_c<
         not_satisfied<Model>::value
       , detail::constraint
+# ifndef BOOST_NO_PARTIAL_SPECIALIZATION
       , check<Model>
+# else
+      , check<failed ************ Model::************>
+# endif 
         >::type
 {};
       
@@ -46,7 +63,11 @@ struct require
   
 template <class Model>
 struct require
-  : check<Model>
+# ifndef BOOST_NO_PARTIAL_SPECIALIZATION
+    : check<Model>
+# else
+    : check<failed ************ Model::************>
+# endif 
 {};
   
 # endif

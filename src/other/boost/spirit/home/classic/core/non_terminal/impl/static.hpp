@@ -1,5 +1,5 @@
 /*=============================================================================
-    Copyright (c) 2006 João Abecasis
+    Copyright (c) 2006 Joao Abecasis
     http://spirit.sourceforge.net/
 
   Distributed under the Boost Software License, Version 1.0. (See accompanying
@@ -34,7 +34,7 @@ BOOST_SPIRIT_CLASSIC_NAMESPACE_BEGIN
     //  Requirements:
     //      T is default constructible
     //          (There's an alternate implementation that relaxes this
-    //              requirement -- João Abecasis)
+    //              requirement -- Joao Abecasis)
     //      T::T() MUST not throw!
     //          this is a requirement of boost::call_once.
     //
@@ -42,29 +42,33 @@ BOOST_SPIRIT_CLASSIC_NAMESPACE_BEGIN
     struct static_
         : boost::noncopyable
     {
+    private:
+
+        struct destructor
+        {
+            ~destructor()
+            {
+                static_::get_address()->~value_type();
+            }
+        };
+
+        struct default_ctor
+        {
+            static void construct()
+            {
+                ::new (static_::get_address()) value_type();
+                static destructor d;
+            }
+        };
+
+    public:
+
         typedef T value_type;
         typedef typename boost::call_traits<T>::reference reference;
         typedef typename boost::call_traits<T>::const_reference const_reference;
 
         static_(Tag = Tag())
         {
-            struct destructor
-            {
-                ~destructor()
-                {
-                    static_::get_address()->~value_type();
-                }
-            };
-
-            struct default_ctor
-            {
-                static void construct()
-                {
-                    ::new (static_::get_address()) value_type();
-                    static destructor d;
-                }
-            };
-
             boost::call_once(&default_ctor::construct, constructed_);
         }
 

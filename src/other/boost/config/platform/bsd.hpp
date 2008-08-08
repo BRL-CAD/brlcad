@@ -43,7 +43,19 @@
 //
 // No wide character support in the BSD header files:
 //
-#if !(defined(__FreeBSD__) && (__FreeBSD__ >= 5))
+#if defined(__NetBSD__)
+#define __NetBSD_GCC__ (__GNUC__         * 1000000 \
+                       + __GNUC_MINOR__ *    1000 \
+                       + __GNUC_PATCHLEVEL__)
+// XXX - the following is required until c++config.h
+//       defines _GLIBCXX_HAVE_SWPRINTF and friends
+//       or the preprocessor conditionals are removed
+//       from the cwchar header.
+#define _GLIBCXX_HAVE_SWPRINTF 1
+#endif
+
+#if !((defined(__FreeBSD__) && (__FreeBSD__ >= 5)) \
+      || (__NetBSD_GCC__ >= 2095003))
 #  define BOOST_NO_CWCHAR
 #endif
 //

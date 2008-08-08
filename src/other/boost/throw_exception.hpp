@@ -24,6 +24,10 @@
 #include <boost/detail/workaround.hpp>
 #include <exception>
 
+#if !defined( BOOST_EXCEPTION_DISABLE ) && defined( BOOST_NO_TYPEID )
+# define BOOST_EXCEPTION_DISABLE
+#endif
+
 #if !defined( BOOST_EXCEPTION_DISABLE ) && defined( __BORLANDC__ ) && BOOST_WORKAROUND( __BORLANDC__, < 0x590 )
 # define BOOST_EXCEPTION_DISABLE
 #endif
