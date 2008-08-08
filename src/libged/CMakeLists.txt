@@ -27,6 +27,7 @@ set(LIBGED_SOURCES
     draw.c
     dump.c
     dup.c
+    edcodes.c
     edcomb.c
     editit.c
     edmater.c
@@ -101,6 +102,7 @@ set(LIBGED_SOURCES
     put.c
     qray.c
     quat.c
+    rcodes.c
     regdef.c
     region.c
     remove.c
@@ -145,6 +147,7 @@ set(LIBGED_SOURCES
     viewdir.c
     vrot.c
     vutil.c
+    wcodes.c
     wdb_bigE.c
     wdb_comb_std.c
     wdb_importFg4Section.c
@@ -155,6 +158,7 @@ set(LIBGED_SOURCES
     wdb_vdraw.c
     whatid.c
     which.c
+    which_shader.c
     who.c
     wmater.c
     xpush.c
