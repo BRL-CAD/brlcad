@@ -98,16 +98,57 @@ std::string const & MathFunction::getName() const
     return name;
 }
 
+UserFunction * MathFunction::asUserFunction()
+{
+    return 0;
+}
+
 /** 
  * eval() is effectively a wrapper function over the private evaluation
  * function . It does an arity check to match the number of provided
  * arguments with the expected.
  */
-
 double MathFunction::eval(std::vector<double> const & args) const
 {
     assert(args.size() == arity());
     return evalp(args);
+}
+
+/** 
+ * 				  UserFunction methods
+ */
+
+/** Default constructor */
+UserFunction::UserFunction()
+    : arity_(0)
+{}
+
+UserFunction::UserFunction(std::string const & name, std::size_t const farity)
+    : MathFunction(name),
+      arity_(farity)
+{}
+
+/** Copy constructor */
+UserFunction::UserFunction(UserFunction const & other)
+    : MathFunction(other),
+      arity_(other.arity_),
+      argnames(other.argnames),
+      localvariables_(other.localvariables_),
+      stack(other.stack)
+{}
+
+/** Arity return method */
+std::size_t UserFunction::arity() const
+{
+    return arity_;
+}
+
+double UserFunction::evalp(std::vector<double> const & args) const
+{
+    /** assert that the size of arguments is as expected */
+    assert(argnames.size() == arity_);
+    
+    return 0;
 }
 
 /**

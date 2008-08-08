@@ -37,6 +37,7 @@
 #include <boost/spirit/include/classic_symbols.hpp>
 
 #include <iostream>
+#include <string>
 #include <list>
 #include <vector>
 
@@ -101,7 +102,7 @@ struct MathFunction
     MathFunction(std::string const &);
     virtual ~MathFunction() {}
     
-    virtual UserFunction * asUserFunction() {};
+    virtual UserFunction * asUserFunction();
 
     /** Data access methods */
     std::string const & getName() const;
@@ -170,8 +171,24 @@ private:
 struct UserFunctionExpression;
 struct UserFunction : public MathFunction
 {
+    typedef boost::spirit::classic::symbols<double> symboltable;
+    typedef boost::shared_ptr<symboltable> stptr;
 
+    /** Create and Copy constructors */
+    UserFunction();
+    UserFunction(std::string const & name, std::size_t const farity);
+    UserFunction(UserFunction const & other);
+
+    /** Arity return method */
+    std::size_t arity() const;
+private:
+    double evalp(std::vector<double> const & args) const;
+    std::size_t arity_;
+    std::vector<std::string> argnames;
+    symboltable localvariables_;
+    Stack stack;
 };
+
 /** Node Implementations */
 
 struct NumberNode : public Node
