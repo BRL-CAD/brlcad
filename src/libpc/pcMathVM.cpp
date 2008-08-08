@@ -29,11 +29,17 @@
 #include "pcMathVM.h"
 #include <cassert>
 
+/**
+ * 				Stack Object Methods
+ */
+
+/** Copy constructor */
 Stack::Stack(Stack const & s)
 {
     copy(s.data);
 }
 
+/** Private copy function used by the copy constructor */
 void Stack::copy(Stack::container_t const & a)
 {
     data.clear();
@@ -42,13 +48,45 @@ void Stack::copy(Stack::container_t const & a)
     for (; i != end; ++i)
 	data.push_back(*i);
 }
-/* MathVM methods */
+
+/** Size access method */
+Stack::size_type Stack::size() const
+{
+    return data.size();
+}
+
+/** Stack empty check method */
+bool Stack::empty() const
+{
+    return data.empty();
+}
+
+/** Node addition method */
+void Stack::push_back(Node * n)
+{
+    /** assert that node exists */
+    assert(n);
+    data.push_back(boost::shared_ptr<Node>(n));
+}
+
+/** Stack clear */
+void Stack::clear()
+{
+    data.clear();
+}
+
+/**
+ * 			     Math Virtual Machine methods
+ */
+
 void MathVM::display()
 {
 
 }
     
-/* MathFunction methods */
+/** 
+ * 				  MathFunction methods
+ */
 
 MathFunction::MathFunction(std::string const & n) :
 	name(n)
@@ -71,7 +109,6 @@ double MathFunction::eval(std::vector<double> const & args) const
     assert(args.size() == arity());
     return evalp(args);
 }
-
 
 /** @} */
 /*

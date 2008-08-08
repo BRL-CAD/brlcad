@@ -42,6 +42,10 @@
 
 class Stack;
 
+/**
+ * Node element : holds each individual entity in an expression
+ * to be evaluated
+ */
 struct Node {
     /** Destructor */
     virtual ~Node() {}
@@ -51,17 +55,23 @@ struct Node {
     virtual Stack * branch(std::size_t) { return 0; }
 };
 
+/** Stack object: A collection of Node pointers and associated methods */
 class Stack
 {
     typedef std::list<boost::shared_ptr<Node> > container_t;
+    typedef container_t::size_type size_type;
     typedef boost::indirect_iterator<container_t::iterator> iterator;
 public:
     /** Create and Copy Constructors*/
     Stack() {}
     Stack(Stack const &);
 
-    /** Push Method */
+    /** Data access/mnodification methods */
+    size_type size() const;
+    bool empty() const;
     void push_back(Node * n);
+    void clear();
+
     iterator begin();
     iterator end();
 private:
@@ -71,6 +81,7 @@ private:
 
 struct MathFunction;
 
+/** The core Math Virtual Machine Object */
 struct MathVM
 {
     Stack stack;
@@ -79,6 +90,7 @@ struct MathVM
     void display();
 };
 
+/** Stack evaluation function ( TODO: Consider shifting to Stack object )*/
 double evaluate(Stack s);
 
 struct UserFunction;
