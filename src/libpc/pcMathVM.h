@@ -94,7 +94,6 @@ struct MathVM
 double evaluate(Stack s);
 
 struct UserFunction;
-struct UserFunctionExpression;
 
 struct MathFunction
 {
@@ -168,20 +167,42 @@ private:
 };
 
 /** UserFunction Defintion */
+struct UserFunctionExpression;
 struct UserFunction : public MathFunction
 {
 
 };
 /** Node Implementations */
 
-struct number_node : public Node
+struct NumberNode : public Node
 {
-    virtual double value() const = 0;
+    virtual double getValue() const = 0;
 };
 
-struct function_node : public Node
+struct FunctionNode : public Node
 {
     virtual MathFunction const & func() const = 0;
+};
+
+struct ConstantNode : public NumberNode
+{
+    ConstantNode(double v);
+    boost::shared_ptr<Node> clone() const;
+    double getValue() const;
+private:
+    double value;
+};
+
+struct VariableNode : public NumberNode
+{
+    VariableNode(double * p);
+    boost::shared_ptr<Node> clone() const;
+
+    /** Data access methods */
+    double getValue() const; /* Get the variable value */
+    double & getVar() const; /* Get the variable reference */
+
+    double * pd;
 };
 
 #endif

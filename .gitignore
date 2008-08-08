@@ -2,5 +2,6 @@
 /.libs
 /Makefile
 /Makefile.in
-/tgf-g
-/tgf2g.plg
+/pc_test
+/vm_test
+/solver_test

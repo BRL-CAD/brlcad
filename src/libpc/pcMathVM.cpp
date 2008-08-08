@@ -110,6 +110,47 @@ double MathFunction::eval(std::vector<double> const & args) const
     return evalp(args);
 }
 
+/**
+ * 				   Node Methods
+ */
+
+ConstantNode::ConstantNode(double v)
+    : value(v)
+{}
+
+/* Creating a clone of the existing node */
+boost::shared_ptr<Node> ConstantNode::clone() const
+{
+    return boost::shared_ptr<Node>(new ConstantNode(*this));
+}
+
+double ConstantNode::getValue() const
+{
+    return value;
+}
+
+VariableNode::VariableNode(double * p)
+    : pd(p) 
+{
+    /** Assert that pointer to double(pd) is not NULL */
+    assert(pd);
+}
+
+boost::shared_ptr<Node> VariableNode::clone() const
+{
+    return boost::shared_ptr<Node>(new VariableNode(*this));
+}
+
+double VariableNode::getValue() const
+{
+    return *pd;
+}
+
+double & VariableNode::getVar() const
+{
+    return *pd;
+}
+
 /** @} */
 /*
  * Local Variables:
