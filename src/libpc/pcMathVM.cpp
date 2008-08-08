@@ -45,13 +45,7 @@ void Stack::copy(Stack::container_t const & a)
 /* MathVM methods */
 void MathVM::display()
 {
-   boost::shared_ptr<MathFunction> * a = (boost::spirit::classic::find<boost::shared_ptr<MathFunction> >(functions,"sin#1"));
-   if (!(*a)) {
-   std::cout << "Function not found" << std::endl;
-   } else {
-   std::cout << "Function found" << std::endl;
-   (*a)->display();
-   }
+
 }
     
 /* MathFunction methods */

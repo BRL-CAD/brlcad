@@ -31,17 +31,23 @@
 #include <iostream>
 #include <cmath>
 
+
+typedef boost::shared_ptr<MathFunction> ct;
+using boost::spirit::classic::find;
+
+/* Test functions */
+
+double add(double a, double b) { return a+b; }
 /* Type definitions for unary and binary function pointers */
 
 typedef double (* function2_ptr) (double, double);
 typedef double (* function1_ptr) (double);
 
-/* Binary function maker 
+/* Binary function maker */
 boost::shared_ptr<MathFunction> make_function(char const * name, function2_ptr f2_p)
 {
     return boost::shared_ptr<MathFunction>(new MathF2<double>(name, f2_p));
 }
-*/
 
 /* Unary function maker */
 boost::shared_ptr<MathFunction> make_function(char const * name, function1_ptr f1_p)
@@ -55,13 +61,38 @@ boost::shared_ptr<MathFunction> make_function(char const * name, int arity)
     return boost::shared_ptr<MathFunction>(new UserFunction(name, arity));
 }
 */
+void findfunction(ct ** ap, const char * s,MathVM & vm) {
+   *ap = find<ct>(vm.functions,s);
+   if (! *ap) {
+	std::cout << "Function not found" << std::endl;
+   } else {
+	std::cout << "Function found " << (**ap)->arity() << std::endl;
+	(**ap)->display();
+   }
+}
 
 void eval()
 {
-    std::cout << "MathVM evaluation" << std::endl;
     MathVM vm;
-    vm.functions.add("sin#1", make_function("sin",&sin));
-    vm.display();
+    ct * a;
+    std::vector<double> args;
+    std::cout << "MathVM evaluation" << std::endl;
+    vm.functions.add("sin#1", make_function("sin",&sin))
+		    ("add##2", make_function("add#", &add));
+    findfunction(&a,"sin#1",vm);
+    if(a) {
+	args.push_back(0.7585);
+	std::cout << (*a)->eval(args) <<std::endl;
+	args.clear();
+    }
+    findfunction(&a,"add##2",vm);
+    if(a) {
+	args.push_back(24.3);
+	args.push_back(42.3);
+	std::cout << (*a)->eval(args) <<std::endl;
+	args.clear();
+    }
+    findfunction(&a,"sub",vm);
 }
 
 int main()
