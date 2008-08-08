@@ -39,7 +39,8 @@ using boost::spirit::classic::find;
 
 double add(double a, double b) { return a+b; }
 double multiply(double a, double b) { return a*b; }
-double div(double a, double b) { return a/b; }
+double div(double a, double b) { return a / b; }
+double avg(double a, double b) { return (a+b)/2; }
 
 /* Type definitions for unary and binary function pointers */
 
@@ -79,19 +80,20 @@ void eval()
     MathVM vm;
     ct * a;
     std::vector<double> args;
-    std::cout << "MathVM evaluation" << std::endl;
+    std::cout << "MathVM evaluation" <<std::endl;
     vm.functions.add("sin", make_function("sin",&sin))
 		    ("sqrt", make_function("sqrt",&sqrt))
 		    ("add", make_function("add", &add))
-		    ("multiply", make_function("multiply", &multiply));
-		    ("divide", make_function("div", &div));
+		    ("multiply", make_function("multiply", &multiply))
+		    ("divide", make_function("div", &div))
+		    ("avg", make_function("avg", &avg));
     findfunction(&a,"sqrt",vm);
     if(a) {
 	args.push_back(3);
 	std::cout << (*a)->eval(args) <<std::endl;
 	args.clear();
     }
-    findfunction(&a,"add",vm);
+    findfunction(&a,"avg",vm);
     if(a) {
 	args.push_back(24.3);
 	args.push_back(42.3);
@@ -118,13 +120,18 @@ void eval()
     vm.stack.push_back(new sysFunctionNode(*find(vm.functions,"sqrt")));
     vm.stack.push_back(new sysFunctionNode(*find(vm.functions,"add")));
     vm.stack.push_back(new ConstantNode(12));
-    /*vm.stack.push_back(new sysFunctionNode(*find(vm.functions,"div")));*/
-    vm.stack.push_back(new sysFunctionNode(*find(vm.functions,"multiply")));
+    vm.stack.push_back(new sysFunctionNode(*find(vm.functions,"divide")));
     vm.stack.push_back(new sysFunctionNode(*find(vm.functions,"multiply")));
     vm.stack.push_back(new sysFunctionNode(*find(vm.functions,"sin")));
 
-    std::cout << " sin( pi * (2 + sqrt(4*4)) * 12) = " << evaluate(vm.stack) << std::endl;
+    std::cout << " sin( pi * (2 + sqrt(4*4)) / 12) = " << evaluate(vm.stack) << std::endl;
+    vm.stack.clear();
+    
+    vm.stack.push_back(new ConstantNode(3.14));
+    vm.stack.push_back(new ConstantNode(2));
+    vm.stack.push_back(new sysFunctionNode(*find(vm.functions,"divide")));
 
+    std::cout << "  pi / 2 = " << evaluate(vm.stack) << std::endl;
 }
 
 int main()
