@@ -28,6 +28,7 @@
 
 #include "pcMathVM.h"
 #include <cassert>
+#include <map>
 
 /**
  * 				Stack Object Methods
@@ -46,7 +47,7 @@ void Stack::copy(Stack::container_t const & a)
     Stack::container_t::const_iterator i = a.begin();
     Stack::container_t::const_iterator const end = a.end();
     for (; i != end; ++i)
-	data.push_back(*i);
+	data.push_back((*i)->clone());
 }
 
 /** Size access method */
@@ -114,6 +115,45 @@ double MathFunction::eval(std::vector<double> const & args) const
     return evalp(args);
 }
 
+
+/** 
+ * 				  updateStack Functions
+ * updates the stack members according to the variable table provided.
+ * uses std::map internally for creating a map between source and destination
+ * variable addresses.
+ *
+ */
+
+void updateStack(Stack & s, std::map<double *,double *> const & pmap)
+{
+    typedef std::map<double *, double *> mapd;
+
+}
+
+void updateStack(Stack & s,
+		 UserFunction::symboltable const & slocalvariables,
+		 UserFunction::symboltable const & dlocalvariables,
+		 std::vector<std::string> argn)
+{
+    using boost::spirit::classic::find;
+    if (s.empty())
+	return;
+    /** create a map between data adresses in destination Variable table
+     * and source Variable table
+     */
+    typedef std::map<double *, double *> mapd;
+    mapd pmap;
+    for (std::size_t i = 0; i != argn.size(); ++i)
+    {
+	double * p1 = find(dlocalvariables,argn[i].c_str());
+	double * p2 = find(slocalvariables,argn[i].c_str());
+	pmap[p1] = p2;
+    }
+
+    updateStack(s,pmap);
+}
+
+
 /** 
  * 				  UserFunction methods
  */
@@ -143,12 +183,37 @@ std::size_t UserFunction::arity() const
     return arity_;
 }
 
+UserFunction * UserFunction::asUserFunction()
+{
+    return this;
+}
+
+boost::spirit::classic::symbols<double> const & UserFunction::localvariables() const
+{
+    return localvariables_;
+}
+
+/** Actual (private) evaluation function */
 double UserFunction::evalp(std::vector<double> const & args) const
 {
     /** assert that the size of arguments is as expected */
     assert(argnames.size() == arity_);
     
-    return 0;
+    /** create a copy of symbol table*/
+    symboltable temp = localvariables_;
+    
+    /** store data from args into the copy */
+    std::size_t const size = argnames.size();
+    for(std::size_t i =0; i != size ; ++i) {
+	double * const p = boost::spirit::classic::find(temp, argnames[i].c_str());
+	assert(p);
+	*p = args[i];
+    }
+    
+    Stack stackcopy = stack;
+    updateStack(stackcopy, temp, localvariables_, argnames);
+
+    return evaluate(stackcopy);
 }
 
 /**
@@ -190,6 +255,15 @@ double VariableNode::getValue() const
 double & VariableNode::getVar() const
 {
     return *pd;
+}
+
+/**
+ * 				   Stack Evaluation Method
+ */
+
+double evaluate(Stack s)
+{
+    return 0;
 }
 
 /** @} */

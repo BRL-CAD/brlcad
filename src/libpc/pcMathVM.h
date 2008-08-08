@@ -51,6 +51,9 @@ struct Node {
     /** Destructor */
     virtual ~Node() {}
 
+    /** Clone method */
+    virtual boost::shared_ptr<Node> clone() const = 0;
+    
     /** Branch Methods */
     virtual std::size_t branchsize() const { return 0; }
     virtual Stack * branch(std::size_t) { return 0; }
@@ -178,6 +181,10 @@ struct UserFunction : public MathFunction
     UserFunction();
     UserFunction(std::string const & name, std::size_t const farity);
     UserFunction(UserFunction const & other);
+
+    /** Data access methods */
+    UserFunction * asUserFunction();
+    boost::spirit::classic::symbols<double> const & localvariables() const;
 
     /** Arity return method */
     std::size_t arity() const;
