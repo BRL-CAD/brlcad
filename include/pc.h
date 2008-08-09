@@ -67,7 +67,7 @@
 #define PC_GETPARAMETER(_par) \
 	BU_GETSTRUCT(_par,pc_param); \
 	bu_vls_init(&(_par->name)); \
-	bu_vls_init(&(_par->expression));
+	bu_vls_init(&(_par->data.expression));
 #define PC_GETCONSTRAINT(_con) \
 	BU_GETSTRUCT(_con,pc_constrnt); \
 	bu_vls_init(&(_con->name)); \

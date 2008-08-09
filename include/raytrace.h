@@ -1808,18 +1808,27 @@ struct bezier_seg	/**< @brief  Bezier curve segment */
  */
 struct pc_param {
     struct bu_list l;
-    struct bu_vls name;
-    struct bu_vls expression;
-    enum ptype {
-	pc_value,
-	pc_point,
-	pc_vector
-    } ptype;
-    union {
-	fastf_t *valuep;
-	pointp_t pointp;
-	vectp_t vectorp;
-    } pval;
+    struct bu_vls name; /** Name of the parameter */
+    
+    enum ctype {	/** Container type used for storing data */
+    	bystruct,
+	byexpression
+    } ctype;
+    
+    enum dtype {	/** Data type of the data pointed to */
+	    pc_value,
+	    pc_point,
+	    pc_vector
+    } dtype;
+    
+    union {		/** The Actual data / pointer */
+    	struct bu_vls expression;
+    	union {
+	    fastf_t *valuep;
+	    pointp_t pointp;
+	    vectp_t vectorp;
+	} pval;
+    } data;
 };
 struct pc_constrnt {
     struct bu_list l;

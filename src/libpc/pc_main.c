@@ -48,6 +48,7 @@ pc_pushparameter(struct pc_pc_set * pcsp, const char * str)
     struct pc_param * par;
     PC_GETPARAMETER(par);
     bu_vls_strcat(&(par->name), str);
+    par->ctype = byexpression;
     PC_PCSET_PUSHP(pcsp, par);
 }
 
@@ -81,9 +82,9 @@ pc_free_pcset(struct pc_pc_set * pcs)
     struct pc_constrnt * con;
     while (BU_LIST_WHILE(par,pc_param,&(pcs->ps->l))) { 
         bu_vls_free(&(par->name));
-        bu_vls_free(&(par->expression));
+        bu_vls_free(&(par->data.expression));
         BU_LIST_DEQUEUE(&(par->l));
-        bu_free(par, "free parameter");
+	bu_free(par, "free parameter");
     }
     bu_free(pcs->ps, "free parameter");
     while (BU_LIST_WHILE(con,pc_constrnt,&(pcs->cs->l))) {
