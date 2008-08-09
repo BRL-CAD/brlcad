@@ -37,6 +37,38 @@
 #include "pc.h"
 
 /**
+ * 			PC_INIT_PCSET
+ * initiates a pc_set object by calling the appropriate bu_list init macros
+ *
+ */
+void
+pc_init_pcset(struct pc_pc_set * pcsp)
+{
+    BU_GETSTRUCT(pcsp->ps,pc_param);
+    BU_LIST_INIT(&(pcsp->ps->l));
+    BU_GETSTRUCT(pcsp->cs,pc_constrnt);
+    BU_LIST_INIT(&(pcsp->cs->l));
+}
+
+/**
+ * 			PC_GETPARAMETER
+ * allocates memory for the parameter if parameter storage accoring to
+ * the integer argument
+ *
+ * 	0 : data storage by expression
+ * 	anything else : data storage by structure
+ *
+ */
+void
+pc_getparameter(struct pc_param ** p, int n)
+{
+    BU_GETSTRUCT(*p,pc_param);
+    bu_vls_init(&((*p)->name));
+    //if (n == 0)
+	bu_vls_init(&((*p)->data.expression));
+}
+
+/**
  * 			PC_PUSHPARAMETER
  * pushes a given parameter expression into the parameter
  * list in the pc set
@@ -46,10 +78,28 @@ void
 pc_pushparameter(struct pc_pc_set * pcsp, const char * str)
 {
     struct pc_param * par;
-    PC_GETPARAMETER(par);
+    pc_getparameter(&par,0);
     bu_vls_strcat(&(par->name), str);
     par->ctype = byexpression;
     PC_PCSET_PUSHP(pcsp, par);
+}
+
+/**
+ * 			PC_GETCONSTRAINT
+ * allocates memory for the parameter if parameter storage accoring to
+ * the integer argument
+ *
+ * 	0 : data storage by expression
+ * 	anything else : data storage by structure
+ *
+ */
+void
+pc_getconstraint(struct pc_constrnt ** c, int n)
+{
+    BU_GETSTRUCT(*c,pc_constrnt);
+    bu_vls_init(&((*c)->name));
+    /*if (n == 0) */
+    bu_vls_init(&((*c)->expression));
 }
 
 /**
@@ -62,7 +112,7 @@ void
 pc_pushconstraint(struct pc_pc_set * pcsp, const char * str)
 {
     struct pc_constrnt * con;
-    PC_GETCONSTRAINT(con);
+    pc_getconstraint(&con,0);
     bu_vls_strcat(&(con->name), str);
     PC_PCSET_PUSHC(pcsp, con);
 }

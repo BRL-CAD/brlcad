@@ -97,7 +97,7 @@ int main()
 
     struct pc_pc_set pcs;
     VCSet vc_set;
-    PC_INIT_PCSET(pcs);
+    pc_init_pcset(&pcs);
     pc_pushparameter(&pcs,"Testpar123=325.0");
     pc_pushparameter(&pcs,"Testpar234 = 1289.36243");
     pc_pushparameter(&pcs,"Testpar452 =1325.043");

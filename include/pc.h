@@ -59,24 +59,10 @@
 #  define PC_ARGS(args)                        ()
 #endif
 
-#define PC_INIT_PCSET(_pcs) \
-	BU_GETSTRUCT(_pcs.ps,pc_param); \
-	BU_LIST_INIT(&(_pcs.ps->l)); \
-	BU_GETSTRUCT(_pcs.cs,pc_constrnt); \
-	BU_LIST_INIT(&(_pcs.cs->l));
-#define PC_GETPARAMETER(_par) \
-	BU_GETSTRUCT(_par,pc_param); \
-	bu_vls_init(&(_par->name)); \
-	bu_vls_init(&(_par->data.expression));
-#define PC_GETCONSTRAINT(_con) \
-	BU_GETSTRUCT(_con,pc_constrnt); \
-	bu_vls_init(&(_con->name)); \
-	bu_vls_init(&(_con->expression));
 #define PC_PCSET_PUSHP(_pcsp,_par) \
 	BU_LIST_PUSH(&(_pcsp->ps->l),&(_par->l));
 #define PC_PCSET_PUSHC(_pcsp,_con) \
 	BU_LIST_PUSH(&(_pcsp->cs->l),&(_con->l));
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -85,8 +71,11 @@ extern "C" {
 /* functions defined in pc_main.c */
 
 PC_EXPORT PC_EXTERN(int pc_mk_constraint, (struct rt_wdb *wdbp, const char *constraintname, int append_ok));
+PC_EXPORT PC_EXTERN(void pc_init_pcset, (struct pc_pc_set * pcs));
 PC_EXPORT PC_EXTERN(void pc_free_pcset, (struct pc_pc_set * pcs));
+PC_EXPORT PC_EXTERN(void pc_getparameter, (struct pc_param ** p, int t));
 PC_EXPORT PC_EXTERN(void pc_pushparameter, (struct pc_pc_set * pcs, const char * str));
+PC_EXPORT PC_EXTERN(void pc_getconstraint, (struct pc_constrnt ** c, int t));
 PC_EXPORT PC_EXTERN(void pc_pushconstraint, (struct pc_pc_set * pcs, const char * str));
 
 #ifdef __cplusplus
