@@ -69,18 +69,33 @@ pc_getparameter(struct pc_param ** p, int n)
 }
 
 /**
- * 			PC_PUSHPARAMETER
- * pushes a given parameter expression into the parameter
- * list in the pc set
+ * 			PC_PUSHPARAM_EXPR
+ * pushes a given parameter expression into the parameter list in the pc set
  *
  */
 void
-pc_pushparameter(struct pc_pc_set * pcsp, const char * str)
+pc_pushparam_expr(struct pc_pc_set * pcsp,const char * name, const char * str)
 {
     struct pc_param * par;
     pc_getparameter(&par,0);
-    bu_vls_strcat(&(par->name), str);
+    bu_vls_strcat(&(par->name), name);
     par->ctype = byexpression;
+    bu_vls_strcat(&(par->data.expression), str);
+    PC_PCSET_PUSHP(pcsp, par);
+}
+
+/**
+ * 			PC_PUSHPARAM_STRUCT
+ * pushes a given parameter into the parameter list in the pc set
+ *
+ */
+void
+pc_pushparam_struct(struct pc_pc_set * pcsp,const char * name)
+{
+    struct pc_param * par;
+    pc_getparameter(&par,1);
+    bu_vls_strcat(&(par->name), name);
+    par->ctype = bystruct;
     PC_PCSET_PUSHP(pcsp, par);
 }
 
@@ -132,14 +147,15 @@ pc_free_pcset(struct pc_pc_set * pcs)
     struct pc_constrnt * con;
     while (BU_LIST_WHILE(par,pc_param,&(pcs->ps->l))) { 
         bu_vls_free(&(par->name));
-        bu_vls_free(&(par->data.expression));
+	if (par->ctype == byexpression)
+	    bu_vls_free(&(par->data.expression));
         BU_LIST_DEQUEUE(&(par->l));
 	bu_free(par, "free parameter");
     }
     bu_free(pcs->ps, "free parameter");
     while (BU_LIST_WHILE(con,pc_constrnt,&(pcs->cs->l))) {
         bu_vls_free(&(con->name));
-        bu_vls_free(&(con->expression));
+	bu_vls_free(&(con->expression));
         BU_LIST_DEQUEUE(&(con->l));
         bu_free(con, "free constraint");
     }

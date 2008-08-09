@@ -98,10 +98,10 @@ int main()
     struct pc_pc_set pcs;
     VCSet vc_set;
     pc_init_pcset(&pcs);
-    pc_pushparameter(&pcs,"Testpar123=325.0");
-    pc_pushparameter(&pcs,"Testpar234 = 1289.36243");
-    pc_pushparameter(&pcs,"Testpar452 =1325.043");
-    pc_pushconstraint(&pcs,"Constraint-test");
+    pc_pushparam_expr(&pcs,"A", "Testpar123=325.0");
+    pc_pushparam_expr(&pcs,"B", "Testpar234 = 1289.36243");
+    pc_pushparam_expr(&pcs,"C", "Testpar452 =1325.043");
+    pc_pushconstraint(&pcs, "Constraint-test");
     
     Parser myparser(vc_set);
     myparser.parse(&pcs);

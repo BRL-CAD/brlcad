@@ -74,7 +74,8 @@ PC_EXPORT PC_EXTERN(int pc_mk_constraint, (struct rt_wdb *wdbp, const char *cons
 PC_EXPORT PC_EXTERN(void pc_init_pcset, (struct pc_pc_set * pcs));
 PC_EXPORT PC_EXTERN(void pc_free_pcset, (struct pc_pc_set * pcs));
 PC_EXPORT PC_EXTERN(void pc_getparameter, (struct pc_param ** p, int t));
-PC_EXPORT PC_EXTERN(void pc_pushparameter, (struct pc_pc_set * pcs, const char * str));
+PC_EXPORT PC_EXTERN(void pc_pushparam_expr, (struct pc_pc_set * pcs,const char * name, const char * str));
+PC_EXPORT PC_EXTERN(void pc_pushparam_struct, (struct pc_pc_set * pcs,const char * name));
 PC_EXPORT PC_EXTERN(void pc_getconstraint, (struct pc_constrnt ** c, int t));
 PC_EXPORT PC_EXTERN(void pc_pushconstraint, (struct pc_pc_set * pcs, const char * str));
 
