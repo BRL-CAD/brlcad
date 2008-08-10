@@ -321,15 +321,20 @@ LIBPC
 
 * BNF Parser for generation of constraint objects from expressions
 
-* Freeze a parameter and constraint struct type, and test simple constraint solution via Read->Generate->Solve->Update routine ( See wiki/Developer Documents)
+* Make better pc_pc_set, pc_param and pc_constraint structures
+instead of the current ugly ones.
 
-* Implement Non-deterministic solution techniques:  Backjumping, Backmarking
+* Test constraint solution via Read->Generate->Solve->Update routine 
+
+* Implement Non-deterministic solution techniques:  Backjumping,
+Backmarking
 
 * Implement Deterministic propagators: NC, AC1-7, PC1-5
 
 * Check STL structures in public API ; wrapping with bu_list
 
-* Boost constrained_value based functor integration for 'compiled' constraints
+* Boost constrained_value based functor integration for 'compiled' 
+constraints
 
 * Implement Hypergraph representation system
 
