@@ -26,6 +26,7 @@
  * @author Dawn Thomas
  */
 #include "pcVCSet.h"
+#include "pc.h"
 
 VCSet::~VCSet()
 {
@@ -46,6 +47,20 @@ VCSet::~VCSet()
     std::list<Constraint *>::iterator j;
     for (j = Constraints.begin(); j != Constraints.end(); j++) {
 	delete *j;
+    }
+    std::list<Parameter *>::iterator k = ParTable.begin();
+    std::list<Parameter *>::iterator p_end = ParTable.end();
+    for (; k != p_end; k++) {
+	switch ((**k).getType()) {
+	    case PC_DB_FASTF_T:
+		break;
+	    case PC_DB_POINT_T:
+		break;
+	    case PC_DB_VECTOR_T:
+		delete (Vector *) *k;
+		break;
+	    default:;
+	}
     }
 }
 
@@ -77,6 +92,25 @@ VariableAbstract * VCSet::getVariablebyID(std::string vid)
     return NULL;
 }
 
+void VCSet::addParameter(std::string pname, int type)
+{
+    switch (type) {
+	case PC_DB_VECTOR_T:
+	    {
+		Vector * v = new Vector(*this,pname); 
+		ParTable.push_back(v);
+		std::cout << "!-- Pushed " << pname << std::endl;
+		break;
+	    }
+	case PC_DB_FASTF_T:
+	    break;
+	case PC_DB_POINT_T:
+	    break;
+	default:
+	    std::cerr << " Invalid parameter type detected"
+		      << pname << std::endl;
+    }
+}
 
 void VCSet::display()
 {

@@ -36,6 +36,7 @@
 #include <list>
 #include "pcVariable.h"
 #include "pcConstraint.h"
+#include "pcParameter.h"
 
 #define PC_VCSET_GETVAR(_vcset, _type, _name) \
 	_type _name = ((Variable<_type>*) _pcset.getVariablebyID("_name"))->getValue();
@@ -55,7 +56,9 @@ class VCSet
 public:
     std::list<VariableAbstract *> Vars;
     std::list<Constraint *> Constraints;
-    
+
+    std::list<Parameter *> ParTable;
+
     virtual ~VCSet();
     
     /** Private Data modification methods */
@@ -69,6 +72,7 @@ public:
     template<typename T>
     void addVariable(std::string vid, T vvalue, T vlow, T vhigh, T vstep);
     void addConstraint(std::string cid, std::string cexpr, functor f,int count,...);
+    void addParameter(std::string pname, int type);
     
     /** Variable access method */
     VariableAbstract * getVariablebyID(std::string vid);
