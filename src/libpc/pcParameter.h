@@ -35,21 +35,29 @@
 #include <string>
 #include <list>
 
-class Parameter
+class VCSet;
 
+class Parameter
 {
 public:
+    Parameter(VCSet & vcs, std::string n = "default Parameter");
     std::string getName();
+    int getType() { return type; }
+    void setType(int n) { type = n; }
+protected:
+    int type;
 private:
+    VCSet & vcset;
     std::string name;
     std::list<VariableAbstract *> Variables;
 };
 
 class Vector : public Parameter
 {
-
+public:
+    Vector(VCSet & vcs, std::string n = "default Vector" );
 };
-
+ 
 #endif
 /** @} */
 /*

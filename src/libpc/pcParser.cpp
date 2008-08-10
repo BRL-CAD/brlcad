@@ -91,6 +91,8 @@ void Parser::parse(struct pc_pc_set * pcs)
 			    *(par->data.pval.vectorp + 1) << ", " <<
 			    *(par->data.pval.vectorp + 2) << ")" <<
 			    std::endl;
+		vcset.addParameter((char *) bu_vls_addr(&(par->name)),\
+				    PC_DB_VECTOR_T);
 	    } else if (par->dtype == PC_DB_POINT_T) {
 		std::cout << "Point ( " <<
 			    *(par->data.pval.pointp) << ", " <<

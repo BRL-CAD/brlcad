@@ -26,12 +26,22 @@
  * @author Dawn Thomas
  */
 #include "pcParameter.h"
+#include "pc.h"
+
+Parameter::Parameter(VCSet & vcs, std::string n)
+    : vcset(vcs), name(n)
+{}
 
 std::string Parameter::getName()
 {
     return name;
 }
 
+Vector::Vector(VCSet & vcs,std::string n)
+    : Parameter(vcs, n)
+{
+    Parameter::setType(PC_DB_VECTOR_T);
+}   
 /** @} */
 /*
  * Local Variables:
