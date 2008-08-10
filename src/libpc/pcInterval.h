@@ -34,13 +34,12 @@
 
 template<class T>
 class Interval {
-private:
-    T low;
-    T high;
-    T step;
 public:
+    /** Constructors */
     Interval();
     Interval(const T l, const T h, const T s);
+    
+    /** Data access & modification methods */
     void assign(const T l, const T h,const T s);
     void setLow(const T l);
     void setHigh(const T h);
@@ -50,9 +49,17 @@ public:
     T getStep();
     T getWidth();
 
+    /** Interval related checking functions */
     bool inInterval(T);
+    bool isUnique();
+    
+    /** Operator overloading for Interval comparison */
     bool operator<(Interval<T> &U) const;
     bool operator>(Interval<T> &U) const;
+private:
+    T low;
+    T high;
+    T step;
 };
 
 /* Interval Class Functions */
@@ -125,6 +132,15 @@ template<class T>
 bool Interval<T>::inInterval(T t)
 {
     if (t>=low && t<=high)
+	return true;
+    else
+	return false;
+}
+
+template<class T>
+bool Interval<T>::isUnique()
+{
+    if (high == low)
 	return true;
     else
 	return false;
