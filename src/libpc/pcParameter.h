@@ -46,16 +46,16 @@ public:
     void setType(int n) { type = n; }
 protected:
     int type;
-private:
     VCSet & vcset;
     std::string name;
+private:
     std::list<VariableAbstract *> Variables;
 };
 
 class Vector : public Parameter
 {
 public:
-    Vector(VCSet & vcs, std::string n = "default Vector" );
+    Vector(VCSet & vcs, std::string n = "default Vector", void * ptr = NULL);
 };
  
 #endif

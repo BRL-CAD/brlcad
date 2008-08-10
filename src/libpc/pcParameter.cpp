@@ -26,7 +26,13 @@
  * @author Dawn Thomas
  */
 #include "pcParameter.h"
+#include "pcVCSet.h"
 #include "pc.h"
+
+#define PC_PARAM_ADDVAR(_vcs,_name,_value) \
+	    Parameter::_vcs.addVariable<double>(_name,_value,\
+		    -std::numeric_limits<double>::max(), \
+		    std::numeric_limits<double>::max(), .00001);
 
 Parameter::Parameter(VCSet & vcs, std::string n)
     : vcset(vcs), name(n)
@@ -37,11 +43,24 @@ std::string Parameter::getName()
     return name;
 }
 
-Vector::Vector(VCSet & vcs,std::string n)
+Vector::Vector(VCSet & vcs,std::string n, void * ptr)
     : Parameter(vcs, n)
 {
     Parameter::setType(PC_DB_VECTOR_T);
-}   
+    vectp_t p = vectp_t (ptr);
+    if (ptr) {
+	std::string t = Parameter::name; 
+	t+="[x]";
+	PC_PARAM_ADDVAR(vcset,t,*p);
+	t = Parameter::name; 
+	t+="[y]";
+	PC_PARAM_ADDVAR(vcset,t,*(p+1));
+	t = Parameter::name; 
+	t+="[z]";
+	PC_PARAM_ADDVAR(vcset,t,*(p+2));
+    }
+}
+
 /** @} */
 /*
  * Local Variables:

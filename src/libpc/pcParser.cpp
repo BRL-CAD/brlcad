@@ -77,7 +77,7 @@ void Parser::parse(struct pc_pc_set * pcs)
 			    (char *) bu_vls_addr(&(par->data.expression)),\
 			    *var_gram, boost::spirit::classic::space_p);
 	    if (p_info.full) {
-		vcset.pushVar();
+		//vcset.pushVar();
 	    } else {
 		std::cout << "Error during Variable expression parsing\n";
 	    }
@@ -92,7 +92,7 @@ void Parser::parse(struct pc_pc_set * pcs)
 			    *(par->data.pval.vectorp + 2) << ")" <<
 			    std::endl;
 		vcset.addParameter((char *) bu_vls_addr(&(par->name)),\
-				    PC_DB_VECTOR_T);
+				    PC_DB_VECTOR_T,par->data.pval.vectorp);
 	    } else if (par->dtype == PC_DB_POINT_T) {
 		std::cout << "Point ( " <<
 			    *(par->data.pval.pointp) << ", " <<

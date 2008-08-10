@@ -64,6 +64,7 @@ VCSet::~VCSet()
     }
 }
 
+#if 0
 void VCSet::pushVar()
 {
     Variable<double> *v = new Variable<double>(name,value);
@@ -71,7 +72,8 @@ void VCSet::pushVar()
     Vars.push_back(v);
     /*addVariable<double>(name, value);*/
     name.clear();
-}
+} 
+#endif
 
 void VCSet::addConstraint(std::string cid, std::string cexpr, functor f,int count,...)
 {
@@ -92,12 +94,12 @@ VariableAbstract * VCSet::getVariablebyID(std::string vid)
     return NULL;
 }
 
-void VCSet::addParameter(std::string pname, int type)
+void VCSet::addParameter(std::string pname, int type, void * ptr)
 {
     switch (type) {
 	case PC_DB_VECTOR_T:
 	    {
-		Vector * v = new Vector(*this,pname); 
+		Vector * v = new Vector(*this,pname,ptr); 
 		ParTable.push_back(v);
 		std::cout << "!-- Pushed " << pname << std::endl;
 		break;
