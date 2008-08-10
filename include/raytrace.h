@@ -43,6 +43,7 @@
 #include "bn.h"
 #include "db5.h"
 #include "nmg.h"
+#include "pc.h"
 
 __BEGIN_DECLS
 
@@ -1800,37 +1801,6 @@ struct bezier_seg	/**< @brief  Bezier curve segment */
     unsigned long	magic;
     int			degree;		/**< @brief  degree of curve (number of control points - 1) */
     int			*ctl_points;	/**< @brief  array of indices for control points */
-};
-
-/**
- * A composite set of parameters constraints with respect to those 
- * parameters. Used for declaration by each geometry object
- */
-struct pc_param {
-    struct bu_list l;
-    struct bu_vls name; /** Name of the parameter */
-    
-    /** @todo convert to enum after pc becomes a dependency of rt */
-    int ctype;	/** Container type used for storing data */
-    int dtype; 	/** Data type of the data pointed to */
-    
-    union {		/** The Actual data / pointer */
-    	struct bu_vls expression;
-    	union {
-	    fastf_t *valuep;
-	    pointp_t pointp;
-	    vectp_t vectorp;
-	} pval;
-    } data;
-};
-struct pc_constrnt {
-    struct bu_list l;
-    struct bu_vls name;
-    struct bu_vls expression;
-};
-struct pc_pc_set {
-    struct pc_param * ps;
-    struct pc_constrnt * cs;
 };
 
 /**

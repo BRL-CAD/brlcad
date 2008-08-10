@@ -29,7 +29,8 @@
 
 #include "bu.h"
 #include "bn.h"
-#include "raytrace.h"
+
+__BEGIN_DECLS
 
 #ifndef PC_EXPORT
 #  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
@@ -74,9 +75,40 @@
 extern "C" {
 #endif
 
+/**
+ * A composite set of parameters constraints with respect to those 
+ * parameters. Used for declaration by each geometry object
+ */
+struct pc_param {
+    struct bu_list l;
+    struct bu_vls name; /** Name of the parameter */
+    
+    /** @todo convert to enum after pc becomes a dependency of rt */
+    int ctype;	/** Container type used for storing data */
+    int dtype; 	/** Data type of the data pointed to */
+    
+    union {		/** The Actual data / pointer */
+    	struct bu_vls expression;
+    	union {
+	    fastf_t *valuep;
+	    pointp_t pointp;
+	    vectp_t vectorp;
+	} pval;
+    } data;
+};
+struct pc_constrnt {
+    struct bu_list l;
+    struct bu_vls name;
+    struct bu_vls expression;
+};
+
+struct pc_pc_set {
+    struct pc_param * ps;
+    struct pc_constrnt * cs;
+};
+
 /* functions defined in pc_main.c */
 
-PC_EXPORT PC_EXTERN(int pc_mk_constraint, (struct rt_wdb *wdbp, const char *constraintname, int append_ok));
 PC_EXPORT PC_EXTERN(void pc_init_pcset, (struct pc_pc_set * pcs));
 PC_EXPORT PC_EXTERN(void pc_free_pcset, (struct pc_pc_set * pcs));
 PC_EXPORT PC_EXTERN(void pc_getparameter, (struct pc_param ** p, int t));
@@ -89,6 +121,7 @@ PC_EXPORT PC_EXTERN(void pc_pushconstraint, (struct pc_pc_set * pcs, const char 
 }
 #endif
 
+__END_DECLS
 #endif
 /** @} */
 /*

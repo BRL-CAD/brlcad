@@ -44,13 +44,13 @@ libpc_la_LIBADD = \
 	${PC_LIBS}
 
 pc_test_SOURCES = pc_test.c
-pc_test_LDADD = libpc.la
+pc_test_LDADD = libpc.la ${PC_LIBS}
 
 solver_test_SOURCES = solver_test.cpp
-solver_test_LDADD = libpc.la
+solver_test_LDADD = libpc.la ${PC_LIBS}
 
 vm_test_SOURCES = vm_test.cpp
-vm_test_LDADD = libpc.la
+vm_test_LDADD = libpc.la ${PC_LIBS}
 
 FAST_OBJECTS = \
 	$(libpc_nil_la_OBJECTS) \

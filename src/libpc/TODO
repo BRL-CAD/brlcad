@@ -12,6 +12,8 @@ FIXING REQUIRED
 	a. convert std::string arguments to const char *
 	b. clean up stl::list<T> passing in the interface / public API
 
+3. Write ostream<< overloading for display of objects
+
 CODING PLAN
 
 *  ahead
@@ -25,7 +27,8 @@ CODING PLAN
 ** Rename "funct" functor in Constraint to more meaningful eval()
 **  Using PCSet methods make the above functor argumentless
 -  Create a math_expression_eval functor for the constraints
-	 - Defining custom stack with polymorphic nodes
+	 ** Defining custom stack with polymorphic nodes
+	 -  Use spirit/phoenix for populating the stack
 *  Create a math_expression_eval_generate functor for the Parser
 *  Generate math expressions and the *_eval/*_eval_generate from strings via parser
 *  Test Constraint Evaluation

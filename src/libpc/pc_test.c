@@ -34,18 +34,11 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include "bio.h"
-
-#include "db.h"
-#include "raytrace.h"
-#include "wdb.h"
-#include "rtgeom.h"
-#include "pc.h"
-
 
 int
 main(int argc, char **argv)
 {
+#if 0
     int i,ret;
     struct rt_wdb *fp;
     struct directory *dp;
@@ -104,7 +97,7 @@ main(int argc, char **argv)
     /*rt_db_get_internal(&intern, dp, fp->dbip, NULL, &rt_uniresource);*/
 
 
-    pc_mk_constraint(fp,"Constraint",0);
+    //pc_mk_constraint(fp,"Constraint",0);
     if ((dp = db_lookup(fp->dbip,"Constraint",LOOKUP_QUIET)) == DIR_NULL)
 	return 3;
     wdb_import(fp, &ip,solnam, (matp_t)NULL);
@@ -121,6 +114,7 @@ main(int argc, char **argv)
     wdb_close(fp);
 
     return ret;
+#endif
 }
 
 /*

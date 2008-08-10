@@ -30,6 +30,7 @@ required_dirs = \
 	libbu \
 	libbn \
 	libsysv \
+	libpc \
 	librt \
 	external
 
@@ -53,7 +54,6 @@ kitchensink_dirs = \
 	libfft \
 	libmultispectral \
 	libtclcad \
-	libpc \
 	libtermio \
 	adrt \
 	anim \
