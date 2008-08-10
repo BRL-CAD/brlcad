@@ -27,14 +27,6 @@
 #ifndef __PC_H__
 #define __PC_H__
 
-/** Definitions for data storage and transfer type information */
-#define PC_DB_FASTF_T 1
-#define PC_DB_POINT_T 2
-#define PC_DB_VECTOR_T 3
-
-#define PC_DB_BYSTRUCT 1
-#define PC_DB_BYEXPR 2
-
 #include "bu.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -69,6 +61,14 @@
 	BU_LIST_PUSH(&(_pcsp->ps->l),&(_par->l));
 #define PC_PCSET_PUSHC(_pcsp,_con) \
 	BU_LIST_PUSH(&(_pcsp->cs->l),&(_con->l));
+
+/** Definitions for data storage and transfer type information */
+#define PC_DB_FASTF_T 1
+#define PC_DB_POINT_T 2
+#define PC_DB_VECTOR_T 3
+
+#define PC_DB_BYSTRUCT 1
+#define PC_DB_BYEXPR 2
 
 #ifdef __cplusplus
 extern "C" {
