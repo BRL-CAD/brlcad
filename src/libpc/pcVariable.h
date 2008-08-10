@@ -47,29 +47,42 @@
 template<class T>
 class Domain
 {
-private:
-    std::list<Interval<T> > Interv;
-    int mergeIntervals (typename std::list<Interval<T> >::iterator);
-    void packIntervals ();
 public:
+    /** Constructors and Destructor */
     Domain();
     ~Domain();
     Domain(T low,T high,T step);
+    
+    /** Data access methods */
     int size() { return Interv.size(); }
     Interval<T> getInterval(T) throw(pcException);
     T getFirst() { return Interv.front().getLow();}
     T getLast() { return Interv.back().getHigh(); }
     T getNextLow (T);
+
+    /** Data modification methods */
     void addInterval(const Interval<T>);
     void addInterval(T, T, T);
     void intersectInterval(Interval<T>);
+    
+    /** Emptiness check */
+    bool isEmpty();
+
+    /** Disjoint check */
+    bool isDisjoint();
+
+    /** Uniqueness check */
+    bool isUnique();
+
+    /** Display method */
     void display();
+private:
+    std::list<Interval<T> > Interv;
+    int mergeIntervals (typename std::list<Interval<T> >::iterator);
+    void packIntervals ();
 };
 
 class VariableAbstract {
-private:
-    std::string  id;
-    int constrained;
 public:
     VariableAbstract(std::string vid ="");
     int getType() const { return type; }
@@ -77,13 +90,13 @@ public:
     virtual void display();
 protected:
     int type;
+private:
+    std::string  id;
+    int constrained;
 };
 
 template<class T>
 class Variable : public VariableAbstract {
-private:
-    T value;
-    Domain<T> D;
 public:
 /* TODO: Implement functionality to search which domain the variable belongs to
    and increment according to the stepvalue of that domain */
@@ -108,6 +121,9 @@ public:
 
     Variable& operator++();
     /*Variable operator++(T) { value++; return this; }*/
+private:
+    T value;
+    Domain<T> D;
 };
 
 template<class T>
@@ -208,6 +224,33 @@ T Domain<T>::getNextLow (T value)
 	return Interv.begin()->getLow();
     else
 	return i->getLow();
+}
+
+template<class T>
+bool Domain<T>::isEmpty()
+{
+    if ( Interv.empty() )
+	return true;
+    else
+	return false;
+}
+
+template<class T>
+bool Domain<T>::isDisjoint()
+{
+    if (Interv.size() == 1)
+	return false;
+    else
+	return true;
+}
+
+template<class T>
+bool Domain<T>::isUnique()
+{
+    if ( Interv.size() == 1 && Interv.front().isUnique() )
+	return true;
+    else
+	return false;
 }
 
 template<class T>
