@@ -1810,16 +1810,9 @@ struct pc_param {
     struct bu_list l;
     struct bu_vls name; /** Name of the parameter */
     
-    enum ctype {	/** Container type used for storing data */
-    	bystruct,
-	byexpression
-    } ctype;
-    
-    enum dtype {	/** Data type of the data pointed to */
-	    pc_value,
-	    pc_point,
-	    pc_vector
-    } dtype;
+    /** @todo convert to enum after pc becomes a dependency of rt */
+    int ctype;	/** Container type used for storing data */
+    int dtype; 	/** Data type of the data pointed to */
     
     union {		/** The Actual data / pointer */
     	struct bu_vls expression;

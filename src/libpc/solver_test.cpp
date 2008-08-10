@@ -101,6 +101,12 @@ int main()
     pc_pushparam_expr(&pcs,"A", "Testpar123=325.0");
     pc_pushparam_expr(&pcs,"B", "Testpar234 = 1289.36243");
     pc_pushparam_expr(&pcs,"C", "Testpar452 =1325.043");
+    fastf_t D = 8.04;
+    point_t E = {8.04,3.2,0.0};
+    vect_t F = {10.2,3.6,4.4};
+    pc_pushparam_struct(&pcs,"D", PC_DB_FASTF_T, &D);
+    pc_pushparam_struct(&pcs,"E", PC_DB_POINT_T, &E);
+    pc_pushparam_struct(&pcs,"F", PC_DB_VECTOR_T, &F);
     pc_pushconstraint(&pcs, "Constraint-test");
     
     Parser myparser(vc_set);

@@ -27,7 +27,13 @@
 #ifndef __PC_H__
 #define __PC_H__
 
-#define PC_MAX_STACK_SIZE 1000
+/** Definitions for data storage and transfer type information */
+#define PC_DB_FASTF_T 1
+#define PC_DB_POINT_T 2
+#define PC_DB_VECTOR_T 3
+
+#define PC_DB_BYSTRUCT 1
+#define PC_DB_BYEXPR 2
 
 #include "bu.h"
 #include "bn.h"
@@ -75,7 +81,7 @@ PC_EXPORT PC_EXTERN(void pc_init_pcset, (struct pc_pc_set * pcs));
 PC_EXPORT PC_EXTERN(void pc_free_pcset, (struct pc_pc_set * pcs));
 PC_EXPORT PC_EXTERN(void pc_getparameter, (struct pc_param ** p, int t));
 PC_EXPORT PC_EXTERN(void pc_pushparam_expr, (struct pc_pc_set * pcs,const char * name, const char * str));
-PC_EXPORT PC_EXTERN(void pc_pushparam_struct, (struct pc_pc_set * pcs,const char * name));
+PC_EXPORT PC_EXTERN(void pc_pushparam_struct, (struct pc_pc_set * pcs,const char * name, int type, void * ptr));
 PC_EXPORT PC_EXTERN(void pc_getconstraint, (struct pc_constrnt ** c, int t));
 PC_EXPORT PC_EXTERN(void pc_pushconstraint, (struct pc_pc_set * pcs, const char * str));
 

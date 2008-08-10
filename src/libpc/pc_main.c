@@ -64,7 +64,7 @@ pc_getparameter(struct pc_param ** p, int n)
 {
     BU_GETSTRUCT(*p,pc_param);
     bu_vls_init(&((*p)->name));
-    //if (n == 0)
+    if (n == PC_DB_BYEXPR)
 	bu_vls_init(&((*p)->data.expression));
 }
 
@@ -77,9 +77,9 @@ void
 pc_pushparam_expr(struct pc_pc_set * pcsp,const char * name, const char * str)
 {
     struct pc_param * par;
-    pc_getparameter(&par,0);
+    pc_getparameter(&par,PC_DB_BYEXPR);
     bu_vls_strcat(&(par->name), name);
-    par->ctype = byexpression;
+    par->ctype = PC_DB_BYEXPR;
     bu_vls_strcat(&(par->data.expression), str);
     PC_PCSET_PUSHP(pcsp, par);
 }
@@ -90,13 +90,38 @@ pc_pushparam_expr(struct pc_pc_set * pcsp,const char * name, const char * str)
  *
  */
 void
-pc_pushparam_struct(struct pc_pc_set * pcsp,const char * name)
+pc_pushparam_struct(struct pc_pc_set * pcsp,const char * name, int type, void * ptr)
 {
     struct pc_param * par;
-    pc_getparameter(&par,1);
+    /*va_list args;
+    va_start(args,n);*/
+    
+    pc_getparameter(&par,PC_DB_BYSTRUCT);
     bu_vls_strcat(&(par->name), name);
-    par->ctype = bystruct;
+    par->ctype = PC_DB_BYSTRUCT;
+    
+    switch (type) {
+	case PC_DB_FASTF_T :
+	    par->data.pval.valuep = (fastf_t *) ptr;
+	    par->dtype = PC_DB_FASTF_T;
+	    break;
+	case PC_DB_POINT_T :
+	    par->data.pval.pointp = (pointp_t) ptr;
+	    par->dtype = PC_DB_POINT_T;
+	    break;
+	case PC_DB_VECTOR_T :
+	    par->data.pval.vectorp = (vectp_t) ptr;
+	    par->dtype = PC_DB_VECTOR_T;
+	    break;
+	default :
+	    bu_log("!!! Unknown data structure for Variable : %s \n", name);
+    }
+
+    /** the acual push operation into the pc_pc_set */
     PC_PCSET_PUSHP(pcsp, par);
+    
+    /* End variable argument parsing 
+    va_end(args);*/
 }
 
 /**
@@ -147,7 +172,7 @@ pc_free_pcset(struct pc_pc_set * pcs)
     struct pc_constrnt * con;
     while (BU_LIST_WHILE(par,pc_param,&(pcs->ps->l))) { 
         bu_vls_free(&(par->name));
-	if (par->ctype == byexpression)
+	if (par->ctype == PC_DB_BYEXPR)
 	    bu_vls_free(&(par->data.expression));
         BU_LIST_DEQUEUE(&(par->l));
 	bu_free(par, "free parameter");

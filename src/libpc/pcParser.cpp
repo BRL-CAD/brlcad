@@ -71,14 +71,35 @@ void Parser::parse(struct pc_pc_set * pcs)
     while (BU_LIST_WHILE(par, pc_param, &(pcs->ps->l))) {
 	name.clear();
 	//std::cout<<"Parameter expression Input: "<<(char *) bu_vls_addr(&(par->name))<<std::endl;
-        boost::spirit::classic::parse_info<> p_info = boost::spirit::classic::parse((char *) bu_vls_addr(&(par->data.expression)), *var_gram, boost::spirit::classic::space_p);
-	if (p_info.full) {
-            vcset.pushVar();
+	if (par->ctype == PC_DB_BYEXPR) {
+	    boost::spirit::classic::parse_info<> p_info = \
+	    boost::spirit::classic::parse(\
+			    (char *) bu_vls_addr(&(par->data.expression)),\
+			    *var_gram, boost::spirit::classic::space_p);
+	    if (p_info.full) {
+		vcset.pushVar();
+	    } else {
+		std::cout << "Error during Variable expression parsing\n";
+	    }
+	    bu_vls_free(&(par->data.expression));
 	} else {
-	    std::cout << "Error during Variable expression parsing" << std::endl;
+	    if (par->dtype == PC_DB_FASTF_T) {
+		std::cout << *(par->data.pval.valuep) << std::endl;
+	    } else if (par->dtype == PC_DB_VECTOR_T) {
+		std::cout << "Vector ( " <<
+			    *(par->data.pval.vectorp) << ", " <<
+			    *(par->data.pval.vectorp + 1) << ", " <<
+			    *(par->data.pval.vectorp + 2) << ")" <<
+			    std::endl;
+	    } else if (par->dtype == PC_DB_POINT_T) {
+		std::cout << "Point ( " <<
+			    *(par->data.pval.pointp) << ", " <<
+			    *(par->data.pval.pointp + 1) << ", " <<
+			    *(par->data.pval.pointp + 2) << ")" <<
+			    std::endl;
+	    }
 	}
 	bu_vls_free(&(par->name));
-	bu_vls_free(&(par->data.expression));
 	BU_LIST_DEQUEUE(&(par->l));
 	bu_free(par, "free parameter");
     }
