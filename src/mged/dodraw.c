@@ -31,9 +31,10 @@
 #include "vmath.h"
 #include "bn.h"
 #include "nmg.h"
-#include "dg.h"
 #include "rtgeom.h"		/* for ID_POLY special support */
+#include "raytrace.h"
 #include "db.h"
+#include "dg.h"
 
 #include "./mged.h"
 #include "./mged_dm.h"

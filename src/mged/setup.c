@@ -45,7 +45,7 @@
 #include "./cmd.h"
 
 extern void init_qray(void);
-
+extern void mged_global_variable_setup(Tcl_Interp *interp);
 
 struct gedtab {
     char *name;

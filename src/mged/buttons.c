@@ -42,7 +42,8 @@ extern void set_e_axes_pos(int both);
 extern int mged_zoom(double val);
 extern void set_absolute_tran(void);	/* defined in set.c */
 extern void set_scroll_private(void);	/* defined in set.c */
-extern void adc_set_scroll(void);		/* defined in adc.c */
+extern void adc_set_scroll(void);	/* defined in adc.c */
+extern void stateChange(int, int);	/* defined in dm-generic.c */
 
 /*
  * This flag indicates that Primitive editing is in effect.

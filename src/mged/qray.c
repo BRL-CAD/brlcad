@@ -32,6 +32,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "dg.h"
 #include "./mged.h"
 #include "./mged_dm.h"
 #include "./qray.h"

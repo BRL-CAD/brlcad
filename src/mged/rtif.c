@@ -56,6 +56,9 @@
 #include "./cmd.h"
 
 
+/* defined in chgview.c */
+extern int edit_com(int argc, const char **argv, int kind, int catch_sigint);
+
 extern int mged_svbase(void);
 extern void set_perspective(); /* from set.c */
 
@@ -422,6 +425,7 @@ rt_output_handler(ClientData clientData, int mask)
 
     /* output buffer */
 #ifndef _WIN32
+    int rpid;
     char line[RT_MAXLINE+1] = {0};
 #else
     char line[5120+1] = {0};
@@ -440,7 +444,6 @@ rt_output_handler(ClientData clientData, int mask)
 #  define DWORD int
 #endif
 	DWORD retcode = 0;
-	int rpid;
 	int aborted;
 
 	display_error();
@@ -1255,7 +1258,7 @@ f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 		editArgv[0] = "e";
 		editArgv[1] = objects;
 		editArgv[2] = (char *)NULL;
-		if (edit_com( 2, editArgv, 1, 1 ) != 0) {
+		if (edit_com(2, (const char **)editArgv, 1, 1) != 0) {
 		    Tcl_AppendResult(interp, "Unable to load object: ", objects, "\n", (char *)NULL);
 		}
 
@@ -1785,7 +1788,7 @@ f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	insertArgv[0] = "-u";
 	insertArgv[1] = "1";
 	insertArgv[2] = (char *)0;
-	newArgv = bu_dupinsert_argv(1, insertArgc, insertArgv, argc, argv);
+	newArgv = bu_dupinsert_argv(1, insertArgc, (const char **)insertArgv, argc, (const char **)argv);
 	newArgc = argc + insertArgc;
 	ret = dgo_nirt_cmd(dgop, view_state->vs_vop, interp, newArgc, newArgv);
 	bu_free_argv(newArgc, newArgv);
@@ -2553,7 +2556,7 @@ cm_end(int argc, char **argv)
 	av[1] = NULL;
 
 	(void)cmd_zap( (ClientData)NULL, interp, 1, av );
-	edit_com( rt_cmd_vec_len, rt_cmd_vec, rtif_mode, 0 );
+	edit_com(rt_cmd_vec_len, (const char **)rt_cmd_vec, rtif_mode, 0);
     }
 
     view_state->vs_flag = 1;
