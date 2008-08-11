@@ -145,7 +145,10 @@ bin_PROGRAMS = \
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
-noinst_PROGRAMS = roots_example
+noinst_PROGRAMS = \
+	roots_example \
+	pc_test
+
 
 dist_bin_SCRIPTS = \
 	rtwizard \
@@ -521,6 +524,9 @@ rle_pix_CFLAGS = ${RLE_CPPFLAGS}
 
 roots_example_SOURCES = roots_example.c
 roots_example_LDADD = ${RT} ${BU}
+
+pc_test_SOURCES = pc_test.c
+pc_test_LDADD = ${PC} ${PC_LIBS} ${WDB} ${WDB_LIBS}
 
 sgi_pix_SOURCES = sgi-pix.c
 sgi_pix_LDADD = ${BU} ${LIBSGIGL}
