@@ -5876,7 +5876,7 @@ sedit(void)
 	RT_ARB_CK_MAGIC( arb );
 
 	bu_vls_init(&error_msg);
-	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &mged_tol < 0))
+	if (rt_arb_calc_planes(&error_msg, arb, es_type, es_peqn, &mged_tol) < 0)
 	    Tcl_AppendResult( interp, bu_vls_addr(&error_msg), (char *)0);
 	bu_vls_free(&error_msg);
     }
