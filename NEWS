@@ -14,6 +14,8 @@ changes made.  See document footer for additional details.
 --- 2008-06-XX  Release 7.13.0                                     ---
 ----------------------------------------------------------------------
 
+* added procedural geometry tools to the Windows port
+	- Bob Parker, Andre Castelo
 * renamed mged binary command to bo for binary objects - Sean Morrison
 * fixed bug that caused remote framebuffers to fail - Sean Morrison
 * integrated tgf-g with the default compile/install - Daniel Roßberg
