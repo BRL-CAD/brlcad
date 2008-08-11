@@ -19,9 +19,12 @@ librender_la_SOURCES = \
 	surfel.c
 
 librender_la_LIBADD = \
-	${LIBM} \
-	$(top_builddir)/src/libbn/libbn.la \
-	$(top_builddir)/src/libbu/libbu.la
+	${top_builddir}/src/adrt/libtienet/libtienet.la \
+	${top_builddir}/src/adrt/libtie/libtie.la \
+	${top_builddir}/src/adrt/libutil/libtieutil.la \
+	${BN} \
+	${BU} \
+	${LIBM}
 
 AM_CFLAGS = \
 	-I${top_srcdir}/src/adrt \
