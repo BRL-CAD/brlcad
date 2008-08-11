@@ -35,10 +35,17 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bio.h"
+
+#include "db.h"
+#include "raytrace.h"
+#include "wdb.h"
+#include "rtgeom.h"
+#include "pc.h"
+
 int
 main(int argc, char **argv)
 {
-#if 0
     int i,ret;
     struct rt_wdb *fp;
     struct directory *dp;
@@ -114,7 +121,6 @@ main(int argc, char **argv)
     wdb_close(fp);
 
     return ret;
-#endif
 }
 
 /*
