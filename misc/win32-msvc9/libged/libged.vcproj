@@ -238,6 +238,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\edcodes.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\edcomb.c"
 				>
 			</File>
@@ -279,6 +283,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\form.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\fracture.c"
 				>
 			</File>
 			<File
@@ -510,6 +518,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\prefix.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\push.c"
 				>
 			</File>
@@ -519,6 +531,18 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\qray.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\quat.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\rcodes.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\regdef.c"
 				>
 			</File>
 			<File
@@ -670,6 +694,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\view.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\view2model.c"
 				>
 			</File>
@@ -690,6 +718,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\wcodes.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\wdb_bigE.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\wdb_comb_std.c"
 				>
 			</File>
@@ -698,7 +734,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\wdb_nirt.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\wdb_obj.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\wdb_qray.c"
 				>
 			</File>
 			<File
@@ -718,6 +762,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\which_shader.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\who.c"
 				>
 			</File>
@@ -727,6 +775,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\xpush.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\ypr.c"
 				>
 			</File>
 			<File
