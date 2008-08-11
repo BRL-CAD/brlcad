@@ -102,6 +102,7 @@ struct mlt_app {
                          * due to the application's pointer already being used to point
                          * to the mlt structure.
                          */
+    int m_user;     /** @brief Application specific information */
 };
 
 /*
@@ -135,6 +136,7 @@ view_2init(struct application *ap)
     mlt_application->lightSources = (struct point_list*) NULL;
     mlt_application->paths = (struct path_list*) NULL;
     mlt_application->m_uptr = (genptr_t) NULL;
+    /*mlt_application->m_user = 0;*/
 
     /* Setting application callback functions and
      * linkage to the mlt application */
@@ -440,16 +442,25 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
 
     /* Preparing the direction of the new ray */
     if (BU_LIST_NOT_HEAD((&LightHead), &(LightHead.l))) {
+    /*    if (p_mlt->m_user == 0) {
+            bu_log("Using light position.. \n");
+            p_mlt->m_user = 1;
+        }
+    */
         VSUB2(new_dir, lp->lt_pos, pp->pt_inhit->hit_point);
     }
     else {
+    /*    if (p_mlt->m_user == 0) {
+            bu_log("Using default light position.. \n");
+            p_mlt->m_user = 1;
+        }
+    */
         VSET(new_dir, 1.0, 1.0, 1.0);   /* Placeholder value
                                          * What is the vector to the
                                          * Default light?
                                          */
     }
     VUNITIZE(new_dir);
-
 
 	sub_ap = *ap;	/* struct copy */
 	sub_ap.a_level = ap->a_level+1;
@@ -461,7 +472,8 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
     VMOVE(sub_ap.a_ray.r_dir, new_dir);
 
 	sub_ap.a_purpose = "Secondary Hit, shadows treatment";
-    
+    sub_ap.a_uptr = ap->a_uptr;
+        
     (void) rt_shootray(&sub_ap);
 
     /* Checks whether the secondary ray hit and acts accordingly */
@@ -562,22 +574,24 @@ secondary_hit(register struct application *ap, struct partition *PartHeadp, stru
     pp = PartHeadp->pt_forw;    
 
     for (; pp != PartHeadp; pp = pp->pt_forw)
-	    if (pp->pt_outhit->hit_dist >= 0.0) break;
+        if (pp->pt_outhit->hit_dist >= 0.0)  break;
 
     if (pp == PartHeadp) {
         bu_log("rayhit: no hit out front?");
+        ap->a_user = 0;
         return 0;
     }
 
     hitp = pp->pt_inhit;
 
     /* This is used find the hit point: */
-    RT_HIT_NORMAL(normal, 
+    /*RT_HIT_NORMAL(normal, 
         hitp,
         pp->pt_inseg->seg_stp,
         &(ap->a_ray),
         pp->pt_inflip);
-
+    */
+    
     ap->a_user = 1;
 
     return 1;
