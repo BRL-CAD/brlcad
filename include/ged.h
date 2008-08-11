@@ -51,6 +51,12 @@ __BEGIN_DECLS
 #  endif
 #endif
 
+#define GED_VMIN -2048.0
+#define GED_VMAX 2047.0
+#define GED_VRANGE 4095.0
+#define INV_GED_V 0.00048828125
+#define INV_4096_V 0.000244140625
+
 #define GED_NULL (struct ged *)0
 #define GED_DRAWABLE_NULL (struct ged_drawable *)0
 #define GED_VIEW_NULL (struct ged_view *)0
@@ -906,6 +912,24 @@ GED_EXPORT BU_EXTERN(int	vo_dir2ae_cmd,
  */
 GED_EXPORT BU_EXTERN(int ged_editit, (const char *file));
 
+/* Defined in vutil.c */
+GED_EXPORT BU_EXTERN(void ged_persp_mat,
+		     (fastf_t *m,
+		      fastf_t fovy,
+		      fastf_t aspect,
+		      fastf_t near1,
+		      fastf_t far1,
+		      fastf_t backoff));
+GED_EXPORT BU_EXTERN(void ged_mike_persp_mat,
+		     (fastf_t *pmat,
+		      const fastf_t *eye));
+GED_EXPORT BU_EXTERN(void ged_deering_persp_mat,
+		     (fastf_t *m,
+		      const fastf_t *l,
+		      const fastf_t *h,
+		      const fastf_t *eye));
+
+
 /**
  * Convert az/el to a direction vector.
  *
@@ -1408,6 +1432,14 @@ GED_EXPORT BU_EXTERN(int ged_killtree, (struct ged *gedp, int argc, const char *
 GED_EXPORT BU_EXTERN(int ged_list, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Load the view
+ *
+ * Usage:
+ *     loadview filename
+ */
+GED_EXPORT BU_EXTERN(int ged_loadview, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Used to control logging.
  *
  * Usage:
@@ -1847,6 +1879,14 @@ GED_EXPORT BU_EXTERN(int ged_rtabort, (struct ged *gedp, int argc, const char *a
 GED_EXPORT BU_EXTERN(int ged_rtcheck, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Save the view
+ *
+ * Usage:
+ *     saveview [-e] [-i] [-l] [-o] filename [args]
+ */
+GED_EXPORT BU_EXTERN(int ged_saveview, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Scale the view.
  *
  * Usage:
@@ -1927,6 +1967,14 @@ GED_EXPORT BU_EXTERN(int ged_showmats, (struct ged *gedp, int argc, const char *
 GED_EXPORT BU_EXTERN(int ged_size, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * 
+ *
+ * Usage:
+ *     solids_on_ray
+ */
+GED_EXPORT BU_EXTERN(int ged_solids_on_ray, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Slew the view
  *
  * Usage:
@@ -1941,6 +1989,26 @@ GED_EXPORT BU_EXTERN(int ged_slew, (struct ged *gedp, int argc, const char *argv
  *     summary [p r g]
  */
 GED_EXPORT BU_EXTERN(int ged_summary, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * The ged_tables() function serves idents, regions and solids.
+ *
+ * Make ascii summary of region idents.
+ *
+ * Usage:
+ *     idents file object(s)
+ *
+ * Make ascii summary of regions.
+ *
+ * Usage:
+ *     regions file object(s)
+ *
+ * Make ascii summary of solid parameters.
+ *
+ * Usage:
+ *     solids file object(s)
+ */
+GED_EXPORT BU_EXTERN(int ged_tables, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Set/get the database title
@@ -1979,9 +2047,19 @@ GED_EXPORT BU_EXTERN(int ged_tra, (struct ged *gedp, int argc, const char *argv[
  * Create a track
  *
  * Usage:
- *     track args
+ *     track basename rX1 rX2 rZ rR dX dZ dR iX iZ iR minX minY th
  */
 GED_EXPORT BU_EXTERN(int ged_track, (struct ged *gedp, int argc, const char *argv[]));
+
+#if 0
+/**
+ * 
+ *
+ * Usage:
+ *     tracker [-fh] [# links] [increment] [spline.iges] [link...]
+ */
+GED_EXPORT BU_EXTERN(int ged_tracker, (struct ged *gedp, int argc, const char *argv[]));
+#endif
 
 /**
  * Return the object hierarchy for all object(s) specified or for all currently displayed

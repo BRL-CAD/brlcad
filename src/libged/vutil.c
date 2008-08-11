@@ -312,6 +312,64 @@ ged_mike_persp_mat(mat_t		pmat,
 }
 
 /*
+ *  Map "display plate coordinates" (which can just be the screen viewing cube),
+ *  into [-1,+1] coordinates, with perspective.
+ *  Per "High Resolution Virtual Reality" by Michael Deering,
+ *  Computer Graphics 26, 2, July 1992, pp 195-201.
+ *
+ *  L is lower left corner of screen, H is upper right corner.
+ *  L[Z] is the front (near) clipping plane location.
+ *  H[Z] is the back (far) clipping plane location.
+ *
+ *  This corresponds to the SGI "window()" routine, but taking into account
+ *  skew due to the eyepoint being offset parallel to the image plane.
+ *
+ *  The gist of the algorithm is to translate the display plate to the
+ *  view center, shear the eye point to (0, 0, 1), translate back,
+ *  then apply an off-axis perspective projection.
+ *
+ *  Another (partial) reference is "A comparison of stereoscopic cursors
+ *  for the interactive manipulation of B-splines" by Barham & McAllister,
+ *  SPIE Vol 1457 Stereoscopic Display & Applications, 1991, pg 19.
+ */
+void
+ged_deering_persp_mat(fastf_t *m, const fastf_t *l, const fastf_t *h, const fastf_t *eye)
+    /* lower left corner of screen */
+    /* upper right (high) corner of screen */
+    /* eye location.  Traditionally at (0, 0, 1) */
+{
+    vect_t	diff;	/* H - L */
+    vect_t	sum;	/* H + L */
+
+    VSUB2(diff, h, l);
+    VADD2(sum, h, l);
+
+    m[0] = 2 * eye[Z] / diff[X];
+    m[1] = 0;
+    m[2] = (sum[X] - 2 * eye[X]) / diff[X];
+    m[3] = -eye[Z] * sum[X] / diff[X];
+
+    m[4] = 0;
+    m[5] = 2 * eye[Z] / diff[Y];
+    m[6] = (sum[Y] - 2 * eye[Y]) / diff[Y];
+    m[7] = -eye[Z] * sum[Y] / diff[Y];
+
+    /* Multiplied by -1, to do right-handed Z coords */
+    m[8] = 0;
+    m[9] = 0;
+    m[10] = -(sum[Z] - 2 * eye[Z]) / diff[Z];
+    m[11] = -(-eye[Z] + 2 * h[Z] * eye[Z]) / diff[Z];
+
+    m[12] = 0;
+    m[13] = 0;
+    m[14] = -1;
+    m[15] = eye[Z];
+
+/* XXX May need to flip Z ? (lefthand to righthand?) */
+}
+
+
+/*
  * Local Variables:
  * tab-width: 8
  * mode: C

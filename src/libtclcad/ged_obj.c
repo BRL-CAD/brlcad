@@ -388,6 +388,7 @@ static struct go_cmdtab go_cmds[] = {
     {"hide",	(char *)0, MAXARGS, go_pass_through_func, ged_hide},
     {"how",	(char *)0, MAXARGS, go_pass_through_func, ged_how},
     {"i",	(char *)0, MAXARGS, go_pass_through_func, ged_instance},
+    {"idents",	(char *)0, MAXARGS, go_pass_through_func, ged_tables},
     {"idle_mode",	"vname", MAXARGS, go_idle_mode, GED_FUNC_PTR_NULL},
     {"illum",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_illum},
     {"importFg4Section",	(char *)0, MAXARGS, go_pass_through_func, ged_importFg4Section},
@@ -404,6 +405,7 @@ static struct go_cmdtab go_cmds[] = {
     {"list_views",	(char *)0, MAXARGS, go_list_views, GED_FUNC_PTR_NULL},
     {"listen",	"vname [port]", MAXARGS, go_listen, GED_FUNC_PTR_NULL},
     {"listeval",	(char *)0, MAXARGS, go_pass_through_func, ged_pathsum},
+    {"loadview",	"vname filename", 3, go_view_func, ged_loadview},
     {"log",	(char *)0, MAXARGS, go_pass_through_func, ged_log},
     {"lookat",	"vname x y z", 5, go_view_func, ged_lookat},
     {"ls",	(char *)0, MAXARGS, go_pass_through_func, ged_ls},
@@ -452,6 +454,7 @@ static struct go_cmdtab go_cmds[] = {
     {"refresh",	"vname", MAXARGS, go_refresh, GED_FUNC_PTR_NULL},
     {"refresh_all",	(char *)0, MAXARGS, go_refresh_all, GED_FUNC_PTR_NULL},
     {"regdef",	(char *)0, MAXARGS, go_pass_through_func, ged_regdef},
+    {"regions",	(char *)0, MAXARGS, go_pass_through_func, ged_tables},
     {"report",	(char *)0, MAXARGS, go_pass_through_func, ged_report},
     {"rm",	(char *)0, MAXARGS, go_pass_through_func, ged_remove},
     {"rmap",	(char *)0, MAXARGS, go_pass_through_func, ged_rmap},
@@ -469,6 +472,7 @@ static struct go_cmdtab go_cmds[] = {
     {"rtedge",	"vname [args]", GO_MAX_RT_ARGS, go_view_func, ged_rt},
     {"rtcheck",	"vname [args]", GO_MAX_RT_ARGS, go_view_func, ged_rtcheck},
 #endif
+    {"saveview",	"vname filename", 3, go_view_func, ged_saveview},
     {"sca",	"vname sf", 3, go_view_func, ged_scale},
     {"scale_mode",	"vname x y", MAXARGS, go_scale_mode, GED_FUNC_PTR_NULL},
     {"set_coord",	"vname [m|v]", MAXARGS, go_set_coord, GED_FUNC_PTR_NULL},
@@ -483,11 +487,14 @@ static struct go_cmdtab go_cmds[] = {
     {"showmats",	(char *)0, MAXARGS, go_pass_through_func, ged_showmats},
     {"size",	"vname [size]", 3, go_view_func, ged_size},
     {"slew",	"vname x y [z]", 5, go_view_func, ged_slew},
+    {"solids",	(char *)0, MAXARGS, go_pass_through_func, ged_tables},
+    {"solids_on_ray",	(char *)0, MAXARGS, go_pass_through_func, ged_solids_on_ray},
     {"summary",	(char *)0, MAXARGS, go_pass_through_func, ged_summary},
     {"title",	(char *)0, MAXARGS, go_pass_through_func, ged_title},
     {"tol",	(char *)0, MAXARGS, go_pass_through_func, ged_tol},
     {"tops",	(char *)0, MAXARGS, go_pass_through_func, ged_tops},
     {"tra",	"vname [-m|-v] x y z", 6, go_view_func, ged_tra},
+    {"track",	(char *)0, MAXARGS, go_pass_through_func, ged_track},
     {"translate_mode",	"vname x y", MAXARGS, go_translate_mode, GED_FUNC_PTR_NULL},
     {"tree",	(char *)0, MAXARGS, go_pass_through_func, ged_tree},
     {"unhide",	(char *)0, MAXARGS, go_pass_through_func, ged_unhide},
@@ -2975,11 +2982,15 @@ go_view_func(struct ged		*gedp,
     av[i-1] = (char *)0;
     ret = (*func)(gedp, ac, (const char **)av);
 
+    /* Keep the view's perspective in sync with its corresponding display manager */
+    gdvp->gdv_dmp->dm_perspective = gdvp->gdv_view->gv_perspective;
+
     if (ac != 1 && ret == BRLCAD_OK)
 	go_refresh_view(gdvp);
 
     return ret;
 }
+
 
 /*************************** Local Utility Functions ***************************/
 static void
@@ -3238,7 +3249,56 @@ go_refresh_view(struct ged_dm_view *gdvp)
 	DM_DRAW_END(gdvp->gdv_dmp);
 	return;
     } else if (gdvp->gdv_fbs.fbs_mode < GED_OBJ_FB_MODE_INTERLAY) {
-	DM_LOADMATRIX(gdvp->gdv_dmp, gdvp->gdv_view->gv_model2view, 0);
+	mat_t new;
+	matp_t mat;
+	mat_t perspective_mat;
+
+	mat = gdvp->gdv_view->gv_model2view;
+
+	if (0 < gdvp->gdv_view->gv_perspective) {
+#if 1
+	    point_t l, h;
+
+	    VSET(l, -1.0, -1.0, -1.0);
+	    VSET(h, 1.0, 1.0, 200.0);
+
+	    if (gdvp->gdv_view->gv_eye_pos[Z] == 1.0) {
+		/* This way works, with reasonable Z-clipping */
+		ged_persp_mat(perspective_mat, gdvp->gdv_view->gv_perspective,
+			      (fastf_t)1.0f, (fastf_t)0.01f, (fastf_t)1.0e10f, (fastf_t)1.0f);
+	    } else {
+		/* This way does not have reasonable Z-clipping,
+		 * but includes shear, for GDurf's testing.
+		 */
+		ged_deering_persp_mat(perspective_mat, l, h, gdvp->gdv_view->gv_eye_pos);
+	    }
+#else
+	    /*
+	     *  There are two strategies that could be used:
+	     *  1)  Assume a standard head location w.r.t. the
+	     *  screen, and fix the perspective angle.
+	     *  2)  Based upon the perspective angle, compute
+	     *  where the head should be to achieve that field of view.
+	     *  Try strategy #2 for now.
+	     */
+	    fastf_t	to_eye_scr;	/* screen space dist to eye */
+	    point_t	l, h, eye;
+
+	    /* Determine where eye should be */
+	    to_eye_scr = 1 / tan(gdvp->gdv_view->gv_perspective * bn_degtorad * 0.5);
+
+	    VSET(l, -1.0, -1.0, -1.0);
+	    VSET(h, 1.0, 1.0, 200.0);
+	    VSET(eye, 0.0, 0.0, to_eye_scr);
+
+	    /* Non-stereo case */
+	    ged_mike_persp_mat(perspective_mat, gdvp->gdv_view->gv_eye_pos);
+#endif
+	    bn_mat_mul(new, perspective_mat, mat);
+	    mat = new;
+	}
+
+	DM_LOADMATRIX(gdvp->gdv_dmp, mat, 0);
 	go_drawSList(gdvp->gdv_dmp, &gdvp->gdv_gop->go_gedp->ged_gdp->gd_headSolid);
     }
 

@@ -382,6 +382,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\loadview.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\log.c"
 				>
 			</File>
@@ -598,6 +602,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\saveview.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\scale.c"
 				>
 			</File>
@@ -642,7 +650,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\solids_on_ray.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\summary.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\tables.c"
 				>
 			</File>
 			<File
