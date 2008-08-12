@@ -74,6 +74,9 @@
  * @defgroup vls Variable Length Strings
  * @ingroup libbu
  *
+ * @defgroup vlb Variable Length Buffer
+ * @ingroup libbu
+ *
  * @defgroup vfont vector fonts
  * @ingroup libbu
  * 
