@@ -63,6 +63,7 @@ set(LIBGED_SOURCES
     killtree.c
     label.c
     list.c
+    loadview.c
     log.c
     lookat.c
     ls.c
@@ -117,6 +118,7 @@ set(LIBGED_SOURCES
     rt.c
     rtabort.c
     rtcheck.c
+    saveview.c
     scale.c
     set_output_script.c
     set_transparency.c
@@ -128,7 +130,9 @@ set(LIBGED_SOURCES
     showmats.c
     size.c
     slew.c
+    solids_on_ray.c
     summary.c
+    tables.c
     title.c
     tol.c
     tops.c
