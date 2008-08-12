@@ -109,6 +109,19 @@ int main()
     pc_pushparam_struct(&pcs,"F", PC_DB_VECTOR_T, &F);
     pc_pushconstraint_expr(&pcs, "Constraint-test","A + B < 0");
     
+    double **a = NULL;
+    a = (double **) malloc(2 *(sizeof(double *)));
+    int i;
+    for (i =0; i< 3; i++)
+	a[i] = (double *)malloc(3 *(sizeof(double)));
+    
+    a[0][0] =1;
+    a[0][1] =1;
+    a[0][2] =1;
+    a[1][0] =1;
+    a[1][1] =1;
+    a[1][2] =1;
+    pc_isperpendicular(a);
     Parser myparser(vc_set);
     myparser.parse(&pcs);
     
@@ -117,7 +130,7 @@ int main()
      */
     vc_set.display();
     pc_free_pcset(&pcs);
-
+#if 0
     typedef boost::adjacency_list<boost::vecS, boost::vecS,
 		    boost::bidirectionalS, Variable<int>*, Constraint *> Graph;
     typedef boost::graph_traits<Graph> GraphTraits;
@@ -171,7 +184,7 @@ int main()
     std::cout << "Generate-Test Solution:" << GTS.numChecks() << std::endl;
     std::cout << "BackTracking based Solution:" << BTS.numChecks() << std::endl;
     std::cout << "Generic Generate-Test Solution:" << PCS.numChecks() << std::endl;
-    
+#endif
     return 0;
 }
 

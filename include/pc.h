@@ -129,6 +129,7 @@ PC_EXPORT PC_EXTERN(void pc_getconstraint, (struct pc_constrnt ** c, int t));
 PC_EXPORT PC_EXTERN(void pc_pushconstraint_expr, (struct pc_pc_set * pcs,const char * name, const char * str));
 PC_EXPORT PC_EXTERN(void pc_pushconstraint_struct, (struct pc_pc_set * pcs,const char * name, int nargs, int dimension, int (*fp) (double ** args)));
 PC_EXPORT PC_EXTERN(void pc_pushconstraint, (struct pc_pc_set * pcs, const char * str));
+PC_EXPORT PC_EXTERN(int pc_isperpendicular, (double ** v));
 
 #ifdef __cplusplus
 }
