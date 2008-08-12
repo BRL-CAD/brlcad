@@ -96,10 +96,21 @@ struct pc_param {
 	} pval;
     } data;
 };
+
+struct pc_constraint_fp {
+	int nargs;
+	int dimension;
+	int (*fp) (double ** a);
+};
+
 struct pc_constrnt {
     struct bu_list l;
     struct bu_vls name;
-    struct bu_vls expression;
+    int ctype;
+    union {
+    	struct bu_vls expression;
+	struct pc_constraint_fp cf;
+    } data;
 };
 
 struct pc_pc_set {
@@ -115,6 +126,8 @@ PC_EXPORT PC_EXTERN(void pc_getparameter, (struct pc_param ** p, int t));
 PC_EXPORT PC_EXTERN(void pc_pushparam_expr, (struct pc_pc_set * pcs,const char * name, const char * str));
 PC_EXPORT PC_EXTERN(void pc_pushparam_struct, (struct pc_pc_set * pcs,const char * name, int type, void * ptr));
 PC_EXPORT PC_EXTERN(void pc_getconstraint, (struct pc_constrnt ** c, int t));
+PC_EXPORT PC_EXTERN(void pc_pushconstraint_expr, (struct pc_pc_set * pcs,const char * name, const char * str));
+PC_EXPORT PC_EXTERN(void pc_pushconstraint_struct, (struct pc_pc_set * pcs,const char * name, int nargs, int dimension, int (*fp) (double ** args)));
 PC_EXPORT PC_EXTERN(void pc_pushconstraint, (struct pc_pc_set * pcs, const char * str));
 
 #ifdef __cplusplus

@@ -109,7 +109,7 @@ void Parser::parse(struct pc_pc_set * pcs)
 	std::cout<<"Constraint: "<<(char *) bu_vls_addr(&(con->name))<<std::endl;
 	/*boost::spirit::parse((char *) bu_vls_addr(&(con->name)), *con_gram, boost::spirit::space_p);*/
         bu_vls_free(&(con->name));
-        bu_vls_free(&(con->expression));	
+        bu_vls_free(&(con->data.expression));	
 	BU_LIST_DEQUEUE(&(con->l));
 	bu_free(con, "free constraint");
     }

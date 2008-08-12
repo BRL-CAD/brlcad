@@ -136,22 +136,46 @@ pc_getconstraint(struct pc_constrnt ** c, int n)
 {
     BU_GETSTRUCT(*c,pc_constrnt);
     bu_vls_init(&((*c)->name));
-    /*if (n == 0) */
-    bu_vls_init(&((*c)->expression));
+    if (n == PC_DB_BYEXPR)
+	bu_vls_init(&((*c)->data.expression));
 }
 
 /**
- * 			PC_PUSHCONSTRAINT
- * pushes a given constraint expression into the constraint list
- * in the pc set
+ * 			PC_PUSHCONSTRAINT_EXPR
+ * pushes a given parameter expression into the parameter list in the pc set
  *
  */
 void
-pc_pushconstraint(struct pc_pc_set * pcsp, const char * str)
+pc_pushconstraint_expr(struct pc_pc_set * pcsp,const char * name, const char * str)
 {
     struct pc_constrnt * con;
-    pc_getconstraint(&con,0);
-    bu_vls_strcat(&(con->name), str);
+    pc_getconstraint(&con,PC_DB_BYEXPR);
+    bu_vls_strcat(&(con->name), name);
+    con->ctype = PC_DB_BYEXPR;
+    bu_vls_strcat(&(con->data.expression), str);
+    PC_PCSET_PUSHC(pcsp, con);
+}
+
+/**
+ * 			PC_PUSHCONSTRAINT_STRUCT
+ * pushes a given parameter into the parameter list in the pc set
+ *
+ */
+void
+pc_pushconstraint_struct(struct pc_pc_set * pcsp,const char * name, int nargs, int dimension, int  (*fp) (double ** args))
+{
+    struct pc_constrnt * con;
+    
+    pc_getconstraint(&con,PC_DB_BYSTRUCT);
+    bu_vls_strcat(&(con->name), name);
+    con->ctype = PC_DB_BYSTRUCT;
+    
+    con->data.cf.nargs = nargs;
+    con->data.cf.dimension = dimension;
+    con->data.cf.fp = fp;
+
+
+    /** the acual push operation into the pc_pc_set */
     PC_PCSET_PUSHC(pcsp, con);
 }
 
@@ -178,7 +202,8 @@ pc_free_pcset(struct pc_pc_set * pcs)
     bu_free(pcs->ps, "free parameter");
     while (BU_LIST_WHILE(con,pc_constrnt,&(pcs->cs->l))) {
         bu_vls_free(&(con->name));
-	bu_vls_free(&(con->expression));
+	if (con->ctype == PC_DB_BYEXPR)
+	    bu_vls_free(&(con->data.expression));
         BU_LIST_DEQUEUE(&(con->l));
         bu_free(con, "free constraint");
     }

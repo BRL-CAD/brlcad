@@ -107,7 +107,7 @@ int main()
     pc_pushparam_struct(&pcs,"D", PC_DB_FASTF_T, &D);
     pc_pushparam_struct(&pcs,"E", PC_DB_POINT_T, &E);
     pc_pushparam_struct(&pcs,"F", PC_DB_VECTOR_T, &F);
-    pc_pushconstraint(&pcs, "Constraint-test");
+    pc_pushconstraint_expr(&pcs, "Constraint-test","A + B < 0");
     
     Parser myparser(vc_set);
     myparser.parse(&pcs);
