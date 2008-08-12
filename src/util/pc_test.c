@@ -104,7 +104,7 @@ main(int argc, char **argv)
     /*rt_db_get_internal(&intern, dp, fp->dbip, NULL, &rt_uniresource);*/
 
 
-    //pc_mk_constraint(fp,"Constraint",0);
+    pc_mk_constraint(fp,"Constraint",0);
     if ((dp = db_lookup(fp->dbip,"Constraint",LOOKUP_QUIET)) == DIR_NULL)
 	return 3;
     wdb_import(fp, &ip,solnam, (matp_t)NULL);

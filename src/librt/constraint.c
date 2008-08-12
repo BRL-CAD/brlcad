@@ -35,7 +35,6 @@
 #include "bu.h"
 #include "bn.h"
 #include "db.h"
-#include "wdb.h"
 #include "pc.h"
 #include "raytrace.h"
 
