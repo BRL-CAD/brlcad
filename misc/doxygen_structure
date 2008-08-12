@@ -76,6 +76,9 @@
  *
  * @defgroup vfont vector fonts
  * @ingroup libbu
+ * 
+ * @defgroup image Image Routines
+ * @ingroup libbu
  */
 
 /** @defgroup libbn libbn (numerical functions)
