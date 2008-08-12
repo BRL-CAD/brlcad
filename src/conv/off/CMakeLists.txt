@@ -13,16 +13,16 @@ add_definitions(
     -DON_DLL_IMPORTS
 )
 
-add_executable(patch-g
-    patch-g.c
+add_executable(g-off
+    g-off.c
 )
-target_link_libraries(patch-g
+target_link_libraries(g-off
     BrlcadCore
 )
 
-add_executable(rpatch
-    rpatch.c
+add_executable(off-g
+    off-g.c
 )
-target_link_libraries(rpatch
+target_link_libraries(off-g
     BrlcadCore
 )

@@ -13,16 +13,12 @@ add_definitions(
     -DON_DLL_IMPORTS
 )
 
-add_executable(patch-g
-    patch-g.c
+add_executable(tgf-g
+    read_dra.cpp
+    regtab.cpp
+    tgf-g.cpp
+    write_brl.cpp
 )
-target_link_libraries(patch-g
-    BrlcadCore
-)
-
-add_executable(rpatch
-    rpatch.c
-)
-target_link_libraries(rpatch
+target_link_libraries(tgf-g
     BrlcadCore
 )

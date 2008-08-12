@@ -22,7 +22,12 @@ add_subdirectory(../../src/libwdb .)
 # build DLL
 add_subdirectory(Dll .)
 
-# buld tools
+# build tools
 add_subdirectory(../../src/conv .)
 add_subdirectory(../../src/conv/3dm .)
+add_subdirectory(../../src/conv/comgeom .)
+add_subdirectory(../../src/conv/iges .)
+add_subdirectory(../../src/conv/intaval .)
+add_subdirectory(../../src/conv/jack .)
+add_subdirectory(../../src/conv/off .)
 add_subdirectory(../../src/conv/patch .)

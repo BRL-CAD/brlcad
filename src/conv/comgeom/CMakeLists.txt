@@ -13,16 +13,16 @@ add_definitions(
     -DON_DLL_IMPORTS
 )
 
-add_executable(patch-g
-    patch-g.c
-)
-target_link_libraries(patch-g
-    BrlcadCore
+add_executable(comgeom-g
+    cvt.c
+    f2a.c
+    mat.c
+    read.c
+    region.c
+    solid.c
+    tools.c
 )
 
-add_executable(rpatch
-    rpatch.c
-)
-target_link_libraries(rpatch
+target_link_libraries(comgeom-g
     BrlcadCore
 )

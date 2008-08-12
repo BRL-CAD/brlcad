@@ -8,7 +8,8 @@ include_directories(
 
 add_definitions(
     -DBRLCAD_DLL
-    -DUSE_PROTOTYPES
+    -DHAVE_CONFIG_H
+    -DBRLCADBUILD
     -DON_DLL_IMPORTS
 )
 
