@@ -114,3 +114,14 @@ void Parser::parse(struct pc_pc_set * pcs)
 	bu_free(con, "free constraint");
     }
 }
+
+/** @} */
+/*
+ * Local Variables:
+ * mode: C++
+ * tab-width: 8
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

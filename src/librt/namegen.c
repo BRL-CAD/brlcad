@@ -696,7 +696,7 @@ main(int argc, char **argv)
     db_close(dbip);
 }
 
-
+/** @} */
 /*
  * Local Variables:
  * tab-width: 8
