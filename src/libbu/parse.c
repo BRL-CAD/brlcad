@@ -2267,7 +2267,7 @@ bu_structparse_get_terse_form(struct bu_vls *log, const struct bu_structparse *s
  * Operates on argv[0] and argv[1], then on argv[2] and argv[3], ...
  *
  *
- * @param vls	- vls for dumping info that might have gone to bu_log
+ * @param log	- vls for dumping info that might have gone to bu_log
  * @param argc	- number of elements in argv
  * @param argv	- contains the keyword-value pairs
  * @param desc	- structure description
