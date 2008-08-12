@@ -31,7 +31,8 @@ changes made.  See document footer for additional details.
 * increased raytrace performace of pipe primitive - John Anderson
 * fixed bugs handling invalid extrude objects - Sean Morrison
 * fixed dependency bug in library pkg-config files - Sean Morrison
-* platform installers use consistent naming conventions- Sean Morrison
+* platform installers now use a more consistent naming convention
+	- Sean Morrison, Bob Parker
 * added -C color option to the mged 'E' command - Bob Parker
 * fixed curvature calc bug in ehy primitive - Timothy Van Ruitenbeek
 * added new -c character option to the loop command - Dawn Thomas
