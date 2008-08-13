@@ -32,40 +32,55 @@
 #include "common.h"
 
 #include "pcVCSet.h"
+#include <string>
 
 /* Functors associated with the generation of Variables */
 namespace Generators {
 
-    struct varname
-    {
-        public:
-	varname(VCSet &vcs) : vcset(vcs) {}
-	void operator () (char c) const;
-	private:
-	VCSet &vcset;
-    };
+struct varname
+{
+public:
+    varname(VCSet &vcs) : vcset(vcs) {}
+    void operator () (char c) const;
+private:
+    VCSet &vcset;
+};
 
-    struct varvalue
-    {
-        public:
-	varvalue(VCSet &vcs) : vcset(vcs) {}
-	void operator () (double v) const;
-	private:
-	VCSet &vcset;
-    };
+struct varvalue
+{
+public:
+    varvalue(VCSet &vcs) : vcset(vcs) {}
+    void operator () (double v) const;
+private:
+    VCSet &vcset;
+};
+
 /**
  *  Various precompiled functors which are called during parsing depending
  *  on the constraint represented in the expression
  */
 
-    struct is_equal
-    {
-        template<typename IteratorT>
-	void operator() (IteratorT first, IteratorT last) const;
-    };
+struct is_equal
+{
+    template<typename IteratorT>
+    void operator() (IteratorT first, IteratorT last) const;
+};
+
+/** Constraint wrapper taking 2 Vectors as arguments
+ * @todo parametrize the dimension ( Vector / Fastf) and
+ * number of arguments
+ */
+
+typedef struct constraint2V
+{
+public:
+    constraint2V(bool (*fp) (double **)) { fp = fp_; }
+    bool operator() (VCSet & vcset, std::list<std::string> Vid) const;
+private:
+    bool (*fp_) (double **);
+} constraint2V;
 
 }
-
 #endif
 /** @} */
 /*
