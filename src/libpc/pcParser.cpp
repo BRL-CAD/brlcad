@@ -108,12 +108,15 @@ void Parser::parse(struct pc_pc_set * pcs)
     while (BU_LIST_WHILE(con, pc_constrnt, &(pcs->cs->l))) {
 	std::cout << "Constraint: " << (char *) bu_vls_addr(&(con->name)) << "\n";
 	if (con->ctype == PC_DB_BYEXPR) {
-	    std::cout << " -> " <<  (char *) bu_vls_addr(&(con->data.expression))
-		  << std::endl;
+	    std::cout << "by Expression -> " 
+		      <<  (char *) bu_vls_addr(&(con->data.expression))
+		      << std::endl;
+	    bu_vls_free(&(con->data.expression));	
+	} else if (con->ctype == PC_DB_BYSTRUCT) {
+	    std::cout << "Constraint by Struct -> ";
 	}
 	/*boost::spirit::parse((char *) bu_vls_addr(&(con->name)), *con_gram, boost::spirit::space_p);*/
         bu_vls_free(&(con->name));
-        bu_vls_free(&(con->data.expression));	
 	BU_LIST_DEQUEUE(&(con->l));
 	bu_free(con, "free constraint");
     }
