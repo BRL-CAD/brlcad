@@ -46,7 +46,10 @@ public:
     /** constructors & Destructors */
     Constraint(VCSet &vcs);
     Constraint(VCSet &vcs, std::string Cid, std::string Cexpr, functor);
-    Constraint(VCSet &vcs, std::string Cid, std::string Cexpr, functor, int count,va_list * args);
+    Constraint(VCSet &vcs, std::string Cid, std::string Cexpr, functor,\
+					    std::list<std::string> Vid);
+    Constraint(VCSet &vcs, std::string Cid, std::string Cexpr, functor,\
+					    int count,va_list * args);
     
     bool solved();
     bool check();

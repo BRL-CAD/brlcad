@@ -43,6 +43,16 @@ Constraint::Constraint(VCSet &vcs, std::string Cid, std::string Cexpression, fun
 {
 }
 
+Constraint::Constraint(VCSet &vcs, std::string Cid, std::string Cexpression, functor pf, std::list<std::string> Vid) :
+    vcset(vcs),
+    status(0),
+    id(Cid),
+    expression(Cexpression),
+    eval(pf),
+    Variables(Vid)
+{ 
+}
+
 Constraint::Constraint(VCSet &vcs, std::string Cid, std::string Cexpression, functor pf, int count, va_list * args) :
     vcset(vcs),
     status(0),

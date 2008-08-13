@@ -84,6 +84,12 @@ void VCSet::addConstraint(std::string cid, std::string cexpr, functor f,int coun
     Constraints.push_back(c);
 }
 
+void VCSet::addConstraint(std::string cid, functor f, std::list<std::string> Vid)
+{
+    Constraint *c = new Constraint(*this, cid, "", f, Vid);
+    Constraints.push_back(c);
+}
+
 VariableAbstract * VCSet::getVariablebyID(std::string vid)
 {
     std::list<VariableAbstract *>::iterator i;
@@ -101,7 +107,7 @@ void VCSet::addParameter(std::string pname, int type, void * ptr)
 	    {
 		Vector * v = new Vector(*this,pname,ptr); 
 		ParTable.push_back(v);
-		std::cout << "!-- Pushed " << pname << std::endl;
+		//std::cout << "!-- Pushed " << pname << std::endl;
 		break;
 	    }
 	case PC_DB_FASTF_T:

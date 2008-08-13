@@ -71,14 +71,14 @@ struct is_equal
  * number of arguments
  */
 
-typedef struct constraint2V
+struct constraint2V
 {
 public:
-    constraint2V(bool (*fp) (double **)) { fp = fp_; }
+    constraint2V(int (*fp) (double **)) { fp = fp_; }
     bool operator() (VCSet & vcset, std::list<std::string> Vid) const;
 private:
-    bool (*fp_) (double **);
-} constraint2V;
+    int (*fp_) (double **);
+};
 
 }
 #endif
