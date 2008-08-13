@@ -6,8 +6,7 @@ For Major TODO please see the LIBPC section in the TODO in root folder.
 FIXING REQUIRED
 
 1. Memory Leaks
-	a. addVariable() in PCSet 36 bytes per Variable due to specialized constructor not being called?
-
+	a. check malloc while pushconstraint_struct
 2. STL Modifications
 	a. convert std::string arguments to const char *
 	b. clean up stl::list<T> passing in the interface / public API

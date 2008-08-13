@@ -159,17 +159,24 @@ pc_pushconstraint_expr(struct pc_pc_set * pcsp,const char * name, const char * s
 /**
  * 			PC_PUSHCONSTRAINT_STRUCT
  * pushes a given parameter into the parameter list in the pc set
- *
+ * @todo nargs and dimension should be contained withing a datastructure by
+ * the constraint evaluation struct (fp) .But due to lack of functors in C
+ * this might as well need to exist as an independent struct especially in
+ * the case of complex constraint functions
  */
 void
-pc_pushconstraint_struct(struct pc_pc_set * pcsp,const char * name, int nargs, int dimension, int  (*fp) (double ** args))
+pc_pushconstraint_struct(struct pc_pc_set * pcsp,const char * name, int nargs, int dimension, int  (*fp) (double ** args), char **a)
 {
     struct pc_constrnt * con;
+    int i;
     
     pc_getconstraint(&con,PC_DB_BYSTRUCT);
+    con->args = (char **) bu_malloc(nargs*sizeof(char *),"argument array");
     bu_vls_strcat(&(con->name), name);
     con->ctype = PC_DB_BYSTRUCT;
     
+    for (i =0; i < nargs; i++)
+	con->args[i] = a[i];
     con->data.cf.nargs = nargs;
     con->data.cf.dimension = dimension;
     con->data.cf.fp = fp;
@@ -204,6 +211,8 @@ pc_free_pcset(struct pc_pc_set * pcs)
         bu_vls_free(&(con->name));
 	if (con->ctype == PC_DB_BYEXPR)
 	    bu_vls_free(&(con->data.expression));
+	if (con->ctype == PC_DB_BYEXPR) 
+	    bu_free(con->args,"free argument array");
         BU_LIST_DEQUEUE(&(con->l));
         bu_free(con, "free constraint");
     }

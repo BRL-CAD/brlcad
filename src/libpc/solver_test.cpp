@@ -106,9 +106,11 @@ int main()
     vect_t F = {10.2,3.6,4.4};
     pc_pushparam_struct(&pcs,"D", PC_DB_FASTF_T, &D);
     pc_pushparam_struct(&pcs,"E", PC_DB_POINT_T, &E);
+    pc_pushparam_struct(&pcs,"G", PC_DB_VECTOR_T, &F);
     pc_pushparam_struct(&pcs,"F", PC_DB_VECTOR_T, &F);
+    char * args[] = {"F","G"};
     pc_pushconstraint_expr(&pcs, "Constraint-test","A + B < 0");
-    pc_pushconstraint_struct(&pcs, "Struct-test",2,3,&pc_isperpendicular);
+    pc_pushconstraint_struct(&pcs, "Struct-test",2,3,&pc_isperpendicular,args);
     
     Parser myparser(vc_set);
     myparser.parse(&pcs);

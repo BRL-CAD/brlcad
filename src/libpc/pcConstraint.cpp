@@ -86,8 +86,12 @@ bool Constraint::check()
 
 void Constraint::display()
 {
+    std::list<std::string>::iterator i;
+    std::list<std::string>::iterator end = Variables.end();
     std::cout<< "Constraint id = " << id << "\t Expression = " << expression \
 	    << "\tSolved status = " << status << std::endl;
+    for ( i = Variables.begin(); i != end; i++)
+	std::cout << "--| " << *i << std::endl;
 }
 
 /** @} */

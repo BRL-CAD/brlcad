@@ -123,8 +123,8 @@ void Parser::parse(struct pc_pc_set * pcs)
 	    Generators::constraint2V c2v(con->data.cf.fp);
 	    //vcset.getVariableIds(con->args);
 	    std::list<std::string> vid;
-	    vid.push_back("AA");
-	    vid.push_back("AB");
+	    for (int i = 0; i < con->data.cf.nargs; i++)
+		vid.push_back(con->args[i]);
 	    vcset.addConstraint((char *) bu_vls_addr(&(con->name)), c2v,vid);
 	}
 	/*boost::spirit::parse((char *) bu_vls_addr(&(con->name)), *con_gram, boost::spirit::space_p);*/

@@ -53,8 +53,10 @@ VCSet::~VCSet()
     for (; k != p_end; k++) {
 	switch ((**k).getType()) {
 	    case PC_DB_FASTF_T:
+		delete (FastF *) *k;
 		break;
 	    case PC_DB_POINT_T:
+		delete (Point *) *k;
 		break;
 	    case PC_DB_VECTOR_T:
 		delete (Vector *) *k;
