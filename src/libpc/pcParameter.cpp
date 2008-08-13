@@ -61,6 +61,35 @@ Vector::Vector(VCSet & vcs,std::string n, void * ptr)
     }
 }
 
+Point::Point(VCSet & vcs,std::string n, void * ptr)
+    : Parameter(vcs, n)
+{
+    Parameter::setType(PC_DB_POINT_T);
+    pointp_t p = pointp_t (ptr);
+    if (ptr) {
+	std::string t = Parameter::name; 
+	t+="[x]";
+	PC_PARAM_ADDVAR(vcset,t,*p);
+	t = Parameter::name; 
+	t+="[y]";
+	PC_PARAM_ADDVAR(vcset,t,*(p+1));
+	t = Parameter::name; 
+	t+="[z]";
+	PC_PARAM_ADDVAR(vcset,t,*(p+2));
+    }
+}
+
+FastF::FastF(VCSet & vcs,std::string n, void * ptr)
+    : Parameter(vcs, n)
+{
+    Parameter::setType(PC_DB_FASTF_T);
+    fastf_t *p = (fastf_t *) ptr;
+    if (ptr) {
+	std::string t = Parameter::name; 
+	PC_PARAM_ADDVAR(vcset,t,*p);
+    }
+}
+
 /** @} */
 /*
  * Local Variables:

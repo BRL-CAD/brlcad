@@ -113,8 +113,8 @@ int main()
     Parser myparser(vc_set);
     myparser.parse(&pcs);
 
-    BinaryNetwork<int > N(vc_set);
-    N.display();
+    //BinaryNetwork<int > N(vc_set);
+    //N.display();
     /* display the set of variables and constraints generated as a
      * result of parsing
      */

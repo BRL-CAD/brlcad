@@ -111,9 +111,17 @@ void VCSet::addParameter(std::string pname, int type, void * ptr)
 		break;
 	    }
 	case PC_DB_FASTF_T:
-	    break;
+	    {
+		FastF * f = new FastF(*this,pname,ptr); 
+		ParTable.push_back(f);
+		break;
+	    }
 	case PC_DB_POINT_T:
-	    break;
+	    {
+		Point * p = new Point(*this,pname,ptr); 
+		ParTable.push_back(p);
+		break;
+	    }
 	default:
 	    std::cerr << " Invalid parameter type detected"
 		      << pname << std::endl;
