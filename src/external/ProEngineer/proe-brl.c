@@ -3405,40 +3405,68 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
     ProError status;
     int ret_status=0;
 
+
     empty_parts_root = NULL;
 #if 1
+    ProMessageDisplay(MSGFIL, "USER_INFO", "Launching proe_brl...");
+
     /* use UI dialog */
     status = ProUIDialogCreate( "proe_brl", "proe_brl" );
     if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to create dialog box for proe-brl, error = %d\n", status );
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "Failed to create dialog box for proe-brl, error = %d\n", status );
+	ProMessageDisplay(MSGFIL, "USER_INFO", bu_vls_addr(&vls));
+	bu_vls_free(&vls);
 	return( 0 );
     }
 
     status = ProUICheckbuttonActivateActionSet( "proe_brl", "elim_small", elim_small_activate, NULL );
     if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to set action for \"eliminate small features\" checkbutton, error = %d\n", status );
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "Failed to set action for \"eliminate small features\" checkbutton, error = %d\n", status );
+	ProMessageDisplay(MSGFIL, "USER_INFO", bu_vls_addr(&vls));
+	bu_vls_free(&vls);
 	return( 0 );
     }
 
     status = ProUIPushbuttonActivateActionSet( "proe_brl", "doit", doit, NULL );
     if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to set action for 'Go' button\n" );
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "Failed to set action for 'Go' button\n" );
+	ProMessageDisplay(MSGFIL, "USER_INFO", bu_vls_addr(&vls));
 	ProUIDialogDestroy( "proe_brl" );
+	bu_vls_free(&vls);
 	return( 0 );
     }
 
     status = ProUIPushbuttonActivateActionSet( "proe_brl", "quit", do_quit, NULL );
     if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to set action for 'Quit' button\n" );
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "Failed to set action for 'Quit' button\n" );
+	ProMessageDisplay(MSGFIL, "USER_INFO", bu_vls_addr(&vls));
 	ProUIDialogDestroy( "proe_brl" );
+	bu_vls_free(&vls);
 	return( 0 );
     }
 
     status = ProUIDialogActivate( "proe_brl", &ret_status );
     if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Error in proe-brl Dialog, error = %d\n",
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "Error in proe-brl Dialog, error = %d\n",
 		 status );
-	fprintf( stderr, "\t dialog returned %d\n", ret_status );
+	bu_vls_printf(&vls, "\t dialog returned %d\n", ret_status );
+	ProMessageDisplay(MSGFIL, "USER_INFO", bu_vls_addr(&vls));
+	bu_vls_free(&vls);
     }
 
 #else
