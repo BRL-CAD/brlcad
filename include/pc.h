@@ -111,6 +111,7 @@ struct pc_constrnt {
     	struct bu_vls expression;
 	struct pc_constraint_fp cf;
     } data;
+    char **args;
 };
 
 struct pc_pc_set {
