@@ -26,6 +26,9 @@
  *	John R. Anderson
  */
 
+#include "common.h"
+#include "bio.h"
+
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
@@ -42,6 +45,7 @@
 #include "ProPart.h"
 #include "ProSolid.h"
 #include "ProSkeleton.h"
+#include "ProWindows.h"
 #include "ProUIDialog.h"
 #include "ProUIInputpanel.h"
 #include "ProUILabel.h"
@@ -55,6 +59,8 @@
 #include "vmath.h"
 #include "bu.h"
 #include "bn.h"
+
+int is_non_identity(ProMatrix xform);
 
 static wchar_t  MSGFIL[] = {'u', 's', 'e', 'r', 'm', 's', 'g', '.', 't', 'x', 't', '\0'};
 
@@ -699,7 +705,7 @@ add_to_done_part( wchar_t *name )
 
     name_copy = ( wchar_t *)bu_calloc( wcslen( name ) + 1, sizeof( wchar_t ),
 				       "part name for done list" );
-    wcslcpy( name_copy, name, wcslen(name)+1 );
+    wcsncpy( name_copy, name, wcslen(name)+1 );
 
     if ( bu_rb_insert( done_list_part, name_copy ) < 0 ) {
 	bu_free( (char *)name_copy, "part name for done list" );
@@ -740,7 +746,7 @@ add_to_done_asm( wchar_t *name )
 
     name_copy = ( wchar_t *)bu_calloc( wcslen( name ) + 1, sizeof( wchar_t ),
 				       "asm name for done list" );
-    wcslcpy( name_copy, name, wcslen(name)+1 );
+    wcsncpy( name_copy, name, wcslen(name)+1 );
 
     if ( bu_rb_insert( done_list_asm, name_copy ) < 0 ) {
 	bu_free( (char *)name_copy, "asm name for done list" );
@@ -2699,7 +2705,7 @@ output_top_level_object( ProMdl model, ProMdlType type )
     }
 
     /* save name */
-    strlcpy( top_level, curr_part_name, sizeof(top_level) );
+    bu_strlcpy( top_level, curr_part_name, sizeof(top_level) );
 
     if ( logger ) {
 	fprintf( logger, "Output top level object (%s)\n", top_level );
@@ -3423,7 +3429,7 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 
     status = ProUIPushbuttonActivateActionSet( "proe_brl", "quit", do_quit, NULL );
     if ( status != PRO_TK_NO_ERROR ) {
-	fprintf( stderr, "Failed to set action for 'Go' button\n" );
+	fprintf( stderr, "Failed to set action for 'Quit' button\n" );
 	ProUIDialogDestroy( "proe_brl" );
 	return( 0 );
     }
