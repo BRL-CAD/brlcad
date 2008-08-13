@@ -4,6 +4,7 @@ set(LIBWDB_SOURCES
     ars.c
     bot.c
     cline.c
+    constraint.c
     dsp.c
     dynamic_geometry.c
     ebm.c
