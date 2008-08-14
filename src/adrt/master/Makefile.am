@@ -19,6 +19,7 @@ adrt_master_CFLAGS = \
 
 adrt_master_LDADD = \
 	${top_builddir}/src/adrt/libtienet/libtienet.la \
+	${BU} \
 	${LIBTHREAD} \
 	${LIBM} \
 	${LIBZ}
