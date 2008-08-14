@@ -126,6 +126,7 @@ void Parser::parse(struct pc_pc_set * pcs)
 	    for (int i = 0; i < con->data.cf.nargs; i++)
 		vid.push_back(con->args[i]);
 	    vcset.addConstraint((char *) bu_vls_addr(&(con->name)), c2v,vid);
+	    bu_free(con->args,"free argument array");
 	}
 	/*boost::spirit::parse((char *) bu_vls_addr(&(con->name)), *con_gram, boost::spirit::space_p);*/
         bu_vls_free(&(con->name));

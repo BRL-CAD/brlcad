@@ -211,7 +211,7 @@ pc_free_pcset(struct pc_pc_set * pcs)
         bu_vls_free(&(con->name));
 	if (con->ctype == PC_DB_BYEXPR)
 	    bu_vls_free(&(con->data.expression));
-	if (con->ctype == PC_DB_BYEXPR) 
+	if (con->ctype == PC_DB_BYSTRUCT) 
 	    bu_free(con->args,"free argument array");
         BU_LIST_DEQUEUE(&(con->l));
         bu_free(con, "free constraint");
