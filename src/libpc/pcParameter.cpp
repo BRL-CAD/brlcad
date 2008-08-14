@@ -117,11 +117,17 @@ Vector::Vector(VCSet & vcs,std::string n, void * ptr)
 	std::string t = Parameter::name; 
 	t+="[x]";
 	Variables.push_back(PC_PARAM_ADDVAR(vcset,t,*p));
+	//PC_PARAM_ADDVAR(vcset,t,*p);
+	//Variables.push_back(vcs.getVariablebyID(t));
 	t = Parameter::name; 
 	t+="[y]";
 	Variables.push_back(PC_PARAM_ADDVAR(vcset,t,*(p+1)));
+	//PC_PARAM_ADDVAR(vcset,t,*(p+1));
+	//Variables.push_back(vcs.getVariablebyID(t));
 	t = Parameter::name; 
 	t+="[z]";
+	//PC_PARAM_ADDVAR(vcset,t,*(p+2));
+	//Variables.push_back(vcs.getVariablebyID(t));
 	Variables.push_back(PC_PARAM_ADDVAR(vcset,t,*(p+2)));
     }
 }

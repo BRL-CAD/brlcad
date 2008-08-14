@@ -83,7 +83,9 @@ bool PCSolver<T>::generator() {
 	if ((Vp (*i))->getValue() == (Vp (*i))->getLast())
 	    return false;
 	/* Increment one variable , set other variables to the first value */
+	//std::cout << "Incrementing Variable " << (Vp (*i))->getID() << (Vp (*i))->getValue() << "\n";
 	++(*(Vp (*j)));
+	//std::cout << "Post increment " << (Vp (*i))->getID() << (Vp (*i))->getValue() << "\n";
 	if (true || j != i) {
 	    ++j;
 	    while (j != vcs->Vars.end()) {

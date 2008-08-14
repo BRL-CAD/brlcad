@@ -115,14 +115,19 @@ int main()
     Parser myparser(vc_set);
     myparser.parse(&pcs);
 
-    //BinaryNetwork<int > N(vc_set);
-    //N.display();
+    vc_set.display();
+
+    PCSolver<double> PCS1;
+    Solution<double> S1;
+    PCS1.solve(vc_set,S1);
+    std::cout << "Solution using Generic GT Solver" << std::endl;
+    S1.display();    
+    std::cout << "-----------------------------" << std::endl;
+ 
     /* display the set of variables and constraints generated as a
      * result of parsing
      */
-    vc_set.display();
     pc_free_pcset(&pcs);
-#if 0
     typedef boost::adjacency_list<boost::vecS, boost::vecS,
 		    boost::bidirectionalS, Variable<int>*, Constraint *> Graph;
     typedef boost::graph_traits<Graph> GraphTraits;
@@ -149,10 +154,6 @@ int main()
     BinaryNetwork<int > N(myvcset);
     N.display();
 
-    /*N.display();
-      S = N.solve();
-      S.display();
-    */
     GTSolver<int> GTS;
     BTSolver<int> BTS;
     PCSolver<int> PCS;
@@ -176,7 +177,6 @@ int main()
     std::cout << "Generate-Test Solution:" << GTS.numChecks() << std::endl;
     std::cout << "BackTracking based Solution:" << BTS.numChecks() << std::endl;
     std::cout << "Generic Generate-Test Solution:" << PCS.numChecks() << std::endl;
-#endif
     return 0;
 }
 

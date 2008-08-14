@@ -225,10 +225,10 @@ int
 pc_isperpendicular(double ** v)
 {
     
-	bu_log("Dot product of the Vectors:\n%f %f %f \n%f %f %f\nis %f\n",\
+	//bu_log("Dot product of the Vectors:\n%f %f %f \n%f %f %f\nis %f\n",\
 		v[0][0], v[0][1], v[0][2], v[1][0], v[1][1], v[1][2],\
 		(v[0][0]*v[1][0] + v[0][1]*v[1][1] +v[0][2]*v[1][2]));
-    if (NEAR_ZERO( (v[0][0]*v[1][0] + v[0][1]*v[1][1] +v[0][2]*v[1][2]),\
+    if (NEAR_ZERO( (v[0][0]*v[1][0] + v[0][1]*v[1][1] +v[0][2]*v[1][2] - 280),\
 		    .00001)) 
     	return 0;
     else
