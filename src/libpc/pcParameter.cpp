@@ -28,11 +28,15 @@
 #include "pcParameter.h"
 #include "pcVCSet.h"
 #include "pc.h"
-
+#if 0
 #define PC_PARAM_ADDVAR(_vcs,_name,_value) \
 	    Parameter::_vcs.addVariable<double>(_name,_value,\
 		    -std::numeric_limits<double>::max(), \
 		    std::numeric_limits<double>::max(), .00001)
+#endif
+#define PC_PARAM_ADDVAR(_vcs,_name,_value) \
+	    Parameter::_vcs.addVariable<double>(_name,_value,\
+		    -10, 10, .01)
 
 /**
  *			Parameter Methods

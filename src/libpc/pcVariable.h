@@ -202,7 +202,8 @@ void Domain<T>::intersectInterval(Interval<T> t)
 	i--;
 	while (i != Interv.begin() && i->getLow() > t.getHigh() )
 	    Interv.erase(i--);
-	i->setHigh(t.getHigh());	
+	i->setHigh(t.getHigh());
+	i->setStep(t.getStep());
     }
 }
 template<class T>
