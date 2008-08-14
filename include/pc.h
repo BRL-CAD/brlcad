@@ -89,11 +89,7 @@ struct pc_param {
     
     union {		/** The Actual data / pointer */
     	struct bu_vls expression;
-    	union {
-	    fastf_t *valuep;
-	    pointp_t pointp;
-	    vectp_t vectorp;
-	} pval;
+    	void * ptr;
     } data;
 };
 

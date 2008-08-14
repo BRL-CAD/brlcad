@@ -97,18 +97,16 @@ pc_pushparam_struct(struct pc_pc_set * pcsp,const char * name, int type, void * 
     pc_getparameter(&par,PC_DB_BYSTRUCT);
     bu_vls_strcat(&(par->name), name);
     par->ctype = PC_DB_BYSTRUCT;
+    par->data.ptr = ptr;
     
     switch (type) {
 	case PC_DB_FASTF_T :
-	    par->data.pval.valuep = (fastf_t *) ptr;
 	    par->dtype = PC_DB_FASTF_T;
 	    break;
 	case PC_DB_POINT_T :
-	    par->data.pval.pointp = (pointp_t) ptr;
 	    par->dtype = PC_DB_POINT_T;
 	    break;
 	case PC_DB_VECTOR_T :
-	    par->data.pval.vectorp = (vectp_t) ptr;
 	    par->dtype = PC_DB_VECTOR_T;
 	    break;
 	default :

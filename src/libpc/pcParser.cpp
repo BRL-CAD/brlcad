@@ -83,29 +83,8 @@ void Parser::parse(struct pc_pc_set * pcs)
 	    }
 	    bu_vls_free(&(par->data.expression));
 	} else {
-	    /** @todo simplify interface by just making a single function call
-		since we are passing type information anyways */
-	    if (par->dtype == PC_DB_FASTF_T) {
-		vcset.addParameter((char *) bu_vls_addr(&(par->name)),\
-				    PC_DB_FASTF_T,par->data.pval.valuep);
-		//std::cout << *(par->data.pval.valuep) << std::endl;
-	    } else if (par->dtype == PC_DB_VECTOR_T) {
-		/*std::cout << "Vector ( " <<
-			    *(par->data.pval.vectorp) << ", " <<
-			    *(par->data.pval.vectorp + 1) << ", " <<
-			    *(par->data.pval.vectorp + 2) << ")" <<
-			    std::endl;*/
-		vcset.addParameter((char *) bu_vls_addr(&(par->name)),\
-				    PC_DB_VECTOR_T,par->data.pval.vectorp);
-	    } else if (par->dtype == PC_DB_POINT_T) {
-		vcset.addParameter((char *) bu_vls_addr(&(par->name)),\
-				    PC_DB_POINT_T,par->data.pval.pointp);
-		/*std::cout << "Point ( " <<
-			    *(par->data.pval.pointp) << ", " <<
-			    *(par->data.pval.pointp + 1) << ", " <<
-			    *(par->data.pval.pointp + 2) << ")" <<
-			    std::endl;*/
-	    }
+	    vcset.addParameter((char *) bu_vls_addr(&(par->name)),\
+					par->dtype,par->data.ptr);
 	}
 	bu_vls_free(&(par->name));
 	BU_LIST_DEQUEUE(&(par->l));
@@ -114,9 +93,7 @@ void Parser::parse(struct pc_pc_set * pcs)
     while (BU_LIST_WHILE(con, pc_constrnt, &(pcs->cs->l))) {
 	//std::cout << "Constraint: " << (char *) bu_vls_addr(&(con->name)) << "\n";
 	if (con->ctype == PC_DB_BYEXPR) {
-	    std::cout << "by Expression -> " 
-		      <<  (char *) bu_vls_addr(&(con->data.expression))
-		      << std::endl;
+	    //std::cout << "by Expression -> " 
 	    bu_vls_free(&(con->data.expression)); 
 	} else if (con->ctype == PC_DB_BYSTRUCT) {
 	    //std::cout << "Constraint by Struct -> \n";
