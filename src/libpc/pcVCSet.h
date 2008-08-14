@@ -57,8 +57,6 @@ public:
     std::list<VariableAbstract *> Vars;
     std::list<Constraint *> Constraints;
 
-    std::list<Parameter *> ParTable;
-
     virtual ~VCSet();
     
     /** Private Data modification methods */
@@ -68,9 +66,9 @@ public:
     /** Element addition methods */
     void pushVar();
     template<typename T>
-    void addVariable(std::string vid, T vvalue);
+    VariableAbstract * addVariable(std::string vid, T vvalue);
     template<typename T>
-    void addVariable(std::string vid, T vvalue, T vlow, T vhigh, T vstep);
+    VariableAbstract * addVariable(std::string vid, T vvalue, T vlow, T vhigh, T vstep);
     void addConstraint(std::string cid, std::string cexpr, functor f,int count,...);
     void addConstraint(std::string cid, functor f, std::list<std::string> Vid);
     void addParameter(std::string pname, int type, void * ptr);
@@ -78,29 +76,36 @@ public:
     /** Variable access method */
     VariableAbstract * getVariablebyID(std::string vid);
     
+    /** Parameter table data access */
+    Parameter * getParameter(std::string pid);
+    std::list<std::string> getParamVariables(const char *);
+
     /** Constraint status check method */
     bool check();
 
     /** Display methods */
     void display();
 private:
+    std::list<Parameter *> ParTable;
     std::string name;
     double value;
 };
 
 template<typename T>
-void VCSet::addVariable(std::string vid, T vvalue)
+VariableAbstract * VCSet::addVariable(std::string vid, T vvalue)
 {
     Variable<T> *v = new Variable<T>(vid,vvalue);
     Vars.push_back(v);
+    return v;
 }
 
 template<typename T>
-void VCSet::addVariable(std::string vid, T vvalue, T vlow, T vhigh, T vstep)
+VariableAbstract * VCSet::addVariable(std::string vid, T vvalue, T vlow, T vhigh, T vstep)
 {
     Variable<T> *v = new Variable<T>(vid,vvalue);
     v->intersectInterval(Interval<T>(vlow,vhigh,vstep));
     Vars.push_back(v);
+    return v;
 }
 
 #endif

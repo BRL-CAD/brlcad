@@ -92,16 +92,6 @@ void VCSet::addConstraint(std::string cid, functor f, std::list<std::string> Vid
     Constraints.push_back(c);
 }
 
-VariableAbstract * VCSet::getVariablebyID(std::string vid)
-{
-    std::list<VariableAbstract *>::iterator i;
-    for (i = Vars.begin(); i != Vars.end(); i++) {
-	if (vid.compare((**i).getID()) == 0)
-	    return *i;
-    }
-    return NULL;
-}
-
 void VCSet::addParameter(std::string pname, int type, void * ptr)
 {
     switch (type) {
@@ -130,13 +120,59 @@ void VCSet::addParameter(std::string pname, int type, void * ptr)
     }
 }
 
+VariableAbstract * VCSet::getVariablebyID(std::string vid)
+{
+    std::list<VariableAbstract *>::iterator i;
+    for (i = Vars.begin(); i != Vars.end(); i++) {
+	if (vid.compare((**i).getID()) == 0)
+	    return *i;
+    }
+    return NULL;
+}
+
+Parameter * VCSet::getParameter(std::string pname)
+{
+    std::list<Parameter *>::iterator i;
+    for (i = ParTable.begin(); i != ParTable.end(); i++) {
+	if ((**i).getName().compare(pname) == 0)
+	    return *i;
+    }
+    return NULL;
+}
+
+/** @todo remove std::list passing */
+std::list<std::string> VCSet::getParamVariables(const char * pname)
+{
+    std::cout << "!!! Searching for " << pname << std::endl;
+    Parameter * p = getParameter(pname);
+    if (p) {
+	std::list<std::string> V;
+	std::cout << "!!! Found parameter " << p->getName() << " " << p->getSize() << std::endl;
+	Parameter::iterator i = p->begin();
+	Parameter::iterator end = p->end();
+	for (; i !=end; i++) {
+	    std::cout << "!!! Associated variable " << i->getID() << std::endl;
+	    V.push_back(i->getID());
+	}
+	return V;
+    } else {
+	std::cout << "!!! No parameters found" << std::endl;
+    }
+}
+
 void VCSet::display()
 {
     using std::endl;
+    std::list<Parameter *>::iterator h;
     std::list<VariableAbstract *>::iterator i;
     std::list<Constraint *>::iterator j;
     std::cout << "----------------------------------------------" << endl;
     std::cout << "-----------Variable - Constraint Set----------" << endl;
+    if (!Vars.empty()) {
+	std::cout << endl << "Parameters" << endl << endl;
+	for (h = ParTable.begin(); h != ParTable.end(); h++)
+	    (**h).display();
+    }
     if (!Vars.empty()) {
 	std::cout<< endl << "Variables:" << endl << endl;
 	for (i = Vars.begin(); i != Vars.end(); i++)
