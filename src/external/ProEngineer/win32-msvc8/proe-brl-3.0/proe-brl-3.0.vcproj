@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="proe-brl-4.0"
-	ProjectGUID="{7A304943-FEC3-4190-9A36-6C22CAFE2CB7}"
-	RootNamespace="proe-brl-4.0"
+	Name="proe-brl-3.0"
+	ProjectGUID="{6035025B-4B4B-47E7-9660-E37F04B86D24}"
+	RootNamespace="proe-brl-3.0"
 	Keyword="Win32Proj"
 	>
 	<Platforms>
@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="&quot;C:\Program Files\proeWildfire 4.0\protoolkit\protk_appls\includes&quot;;&quot;C:\Program Files\proeWildfire 4.0\protoolkit\includes&quot;;&quot;C:\Program Files\proeWildfire 4.0\prodevelop\includes&quot;;../../../../../include;../../../../other/tcl/generic"
+				AdditionalIncludeDirectories="&quot;C:\Program Files\proeWildfire 3.0\protoolkit\protk_appls\includes&quot;;&quot;C:\Program Files\proeWildfire 3.0\protoolkit\includes&quot;;&quot;C:\Program Files\proeWildfire 3.0\prodevelop\includes&quot;;../../../../../include;../../../../other/tcl/generic"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;_CRT_SECURE_NO_WARNINGS;inline=__inline;PRO_MACHINE=29;PRO_OS=4;MSB_LEFT;_X86=1;_WSTDIO_DEFINED"
 				RuntimeLibrary="2"
 				DisableLanguageExtensions="false"
@@ -65,9 +65,9 @@
 				AdditionalDependencies="libbu.lib libbn.lib protk_dll.lib protoolkit.lib prodev_dll.lib prodevelop.lib kernel32.lib user32.lib wsock32.lib advapi32.lib mpr.lib winspool.lib netapi32.lib psapi.lib gdi32.lib shell32.lib comdlg32.lib ole32.lib"
 				OutputFile="Release\proe-brl.dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;C:\Program Files\proeWildfire 4.0\protoolkit\i486_nt\obj&quot;;&quot;C:\Program Files\proeWildfire 4.0\prodevelop\i486_nt\obj&quot;;../../../../../brlcadInstall/lib"
+				AdditionalLibraryDirectories="&quot;C:\Program Files\proeWildfire 3.0\protoolkit\i486_nt\obj&quot;;&quot;C:\Program Files\proeWildfire 3.0\prodevelop\i486_nt\obj&quot;;../../../../../brlcadInstall/lib"
 				IgnoreAllDefaultLibraries="false"
-				IgnoreDefaultLibraryNames="libcmt.lib"
+				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="false"
 				SubSystem="1"
 				OptimizeReferences="2"
