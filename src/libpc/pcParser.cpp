@@ -121,10 +121,11 @@ void Parser::parse(struct pc_pc_set * pcs)
 	} else if (con->ctype == PC_DB_BYSTRUCT) {
 	    //std::cout << "Constraint by Struct -> \n";
 	    Generators::constraint2V c2v(con->data.cf.fp);
-	    //vcset.getVariableIds(con->args);
-	    std::list<std::string> vid;
-	    for (int i = 0; i < con->data.cf.nargs; i++)
-		vid.push_back(con->args[i]);
+	    std::list<std::string> vid,t;
+	    for (int i = 0; i < con->data.cf.nargs; i++) {
+		t = vcset.getParamVariables(con->args[i]);
+		vid.merge(t);
+	    }
 	    vcset.addConstraint((char *) bu_vls_addr(&(con->name)), c2v,vid);
 	    bu_free(con->args,"free argument array");
 	}

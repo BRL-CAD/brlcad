@@ -32,7 +32,7 @@
 #define PC_PARAM_ADDVAR(_vcs,_name,_value) \
 	    Parameter::_vcs.addVariable<double>(_name,_value,\
 		    -std::numeric_limits<double>::max(), \
-		    std::numeric_limits<double>::max(), .00001);
+		    std::numeric_limits<double>::max(), .00001)
 
 /**
  *			Parameter Methods
@@ -94,6 +94,11 @@ int Parameter::getType() const
     return type;
 }
 
+void Parameter::display() const
+{
+    std::cout << "!-- " << name << "  Type = " << type <<std::endl;
+}
+ 
 /**
  *			Vector Methods
  *
@@ -107,13 +112,13 @@ Vector::Vector(VCSet & vcs,std::string n, void * ptr)
     if (ptr) {
 	std::string t = Parameter::name; 
 	t+="[x]";
-	PC_PARAM_ADDVAR(vcset,t,*p);
+	Variables.push_back(PC_PARAM_ADDVAR(vcset,t,*p));
 	t = Parameter::name; 
 	t+="[y]";
-	PC_PARAM_ADDVAR(vcset,t,*(p+1));
+	Variables.push_back(PC_PARAM_ADDVAR(vcset,t,*(p+1)));
 	t = Parameter::name; 
 	t+="[z]";
-	PC_PARAM_ADDVAR(vcset,t,*(p+2));
+	Variables.push_back(PC_PARAM_ADDVAR(vcset,t,*(p+2)));
     }
 }
 
@@ -130,13 +135,13 @@ Point::Point(VCSet & vcs,std::string n, void * ptr)
     if (ptr) {
 	std::string t = Parameter::name; 
 	t+="[x]";
-	PC_PARAM_ADDVAR(vcset,t,*p);
+	Variables.push_back(PC_PARAM_ADDVAR(vcset,t,*p));
 	t = Parameter::name; 
 	t+="[y]";
-	PC_PARAM_ADDVAR(vcset,t,*(p+1));
+	Variables.push_back(PC_PARAM_ADDVAR(vcset,t,*(p+1)));
 	t = Parameter::name; 
 	t+="[z]";
-	PC_PARAM_ADDVAR(vcset,t,*(p+2));
+	Variables.push_back(PC_PARAM_ADDVAR(vcset,t,*(p+2)));
     }
 }
 
@@ -152,7 +157,7 @@ FastF::FastF(VCSet & vcs,std::string n, void * ptr)
     fastf_t *p = (fastf_t *) ptr;
     if (ptr) {
 	std::string t = Parameter::name; 
-	PC_PARAM_ADDVAR(vcset,t,*p);
+	Variables.push_back(PC_PARAM_ADDVAR(vcset,t,*p));
     }
 }
 

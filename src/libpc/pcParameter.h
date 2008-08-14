@@ -59,15 +59,19 @@ public:
     /** Data access methods */
     std::string getName() const;
     int getType() const;
+    Varlist::size_type getSize() { return Variables.size(); }
     
     /** Data modification methods */
     void setType(int n) { type = n; }
+    
+    /** Display method */
+    void display() const;
+
 protected:
     int type;
     VCSet & vcset;
     std::string name;
-private:
-    std::list<VariableAbstract *> Variables;
+    Varlist Variables;
 };
 
 class Vector : public Parameter
