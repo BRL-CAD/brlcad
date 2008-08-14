@@ -2,7 +2,7 @@
 
 lib_LTLIBRARIES = libtie.la
 
-libtie_la_LIBADD = libtie0.la libtie1.la ${BU}
+libtie_la_LIBADD = libtie0.la libtie1.la ${BU_LIBS}
 libtie_la_SOURCES =
 
 SOURCES = tie.c tie_kdtree.c
