@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="proe-brl"
+	Name="proe-brl-4.0"
 	ProjectGUID="{7A304943-FEC3-4190-9A36-6C22CAFE2CB7}"
-	RootNamespace="proebrl"
+	RootNamespace="proe-brl-4.0"
 	Keyword="Win32Proj"
 	>
 	<Platforms>
@@ -63,6 +63,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="libbu.lib libbn.lib protk_dll.lib protoolkit.lib prodev_dll.lib prodevelop.lib kernel32.lib user32.lib wsock32.lib advapi32.lib mpr.lib winspool.lib netapi32.lib psapi.lib gdi32.lib shell32.lib comdlg32.lib ole32.lib"
+				OutputFile="$(OutDir)\proe-brl.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;C:\Program Files\proeWildfire 4.0\protoolkit\i486_nt\obj&quot;;&quot;C:\Program Files\proeWildfire 4.0\prodevelop\i486_nt\obj&quot;;../../../../../brlcadInstall/lib"
 				IgnoreAllDefaultLibraries="false"
