@@ -31,7 +31,7 @@
 #include "common.h"
 
 #include "pcVariable.h"
-
+#include <boost/iterator/indirect_iterator.hpp>
 #include <string>
 #include <list>
 
@@ -40,9 +40,27 @@ class VCSet;
 class Parameter
 {
 public:
+    typedef std::list<VariableAbstract *> Varlist;
+    typedef boost::indirect_iterator<Varlist::iterator> iterator;
+    typedef boost::indirect_iterator<Varlist::const_iterator> const_iterator;
+
+    /** Constructor */
     Parameter(VCSet & vcs, std::string n = "default Parameter");
-    std::string getName();
-    int getType() { return type; }
+
+    /** Iterator methods */
+    iterator begin();
+    iterator end();
+    const_iterator begin() const;
+    const_iterator end() const;
+
+    iterator erase(iterator location);
+    iterator erase(iterator begin, iterator end);
+    
+    /** Data access methods */
+    std::string getName() const;
+    int getType() const;
+    
+    /** Data modification methods */
     void setType(int n) { type = n; }
 protected:
     int type;

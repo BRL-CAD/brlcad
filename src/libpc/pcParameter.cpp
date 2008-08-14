@@ -21,7 +21,7 @@
 /** @{ */
 /** @file pcParameter.cpp
  *
- * Parameter Class Methods
+ * Methods of Parameter and derived classes
  *
  * @author Dawn Thomas
  */
@@ -34,14 +34,70 @@
 		    -std::numeric_limits<double>::max(), \
 		    std::numeric_limits<double>::max(), .00001);
 
+/**
+ *			Parameter Methods
+ *
+ */
+
 Parameter::Parameter(VCSet & vcs, std::string n)
     : vcset(vcs), name(n)
 {}
 
-std::string Parameter::getName()
+Parameter::iterator makeIterator(Parameter::Varlist::iterator i)
+{
+    return boost::make_indirect_iterator(i);
+}
+
+Parameter::const_iterator makeIterator(Parameter::Varlist::const_iterator i)
+{
+    return boost::make_indirect_iterator(i);
+}
+
+Parameter::iterator Parameter::begin()
+{
+    return makeIterator(Variables.begin());
+}
+
+Parameter::iterator Parameter::end()
+{
+    return makeIterator(Variables.end());
+}
+
+Parameter::const_iterator Parameter::begin() const
+{
+    return makeIterator(Variables.begin());
+}
+
+Parameter::const_iterator Parameter::end() const
+{
+    return makeIterator(Variables.end());
+}
+
+Parameter::iterator Parameter::erase(iterator location)
+{
+    return makeIterator(Variables.erase(location.base()));
+}
+
+Parameter::iterator Parameter::erase(iterator begin, iterator end)
+{
+    return makeIterator(Variables.erase(begin.base(), end.base()));
+}
+
+
+std::string Parameter::getName() const
 {
     return name;
 }
+
+int Parameter::getType() const
+{
+    return type;
+}
+
+/**
+ *			Vector Methods
+ *
+ */
 
 Vector::Vector(VCSet & vcs,std::string n, void * ptr)
     : Parameter(vcs, n)
@@ -61,6 +117,11 @@ Vector::Vector(VCSet & vcs,std::string n, void * ptr)
     }
 }
 
+/**
+ *			Point Methods
+ *
+ */
+
 Point::Point(VCSet & vcs,std::string n, void * ptr)
     : Parameter(vcs, n)
 {
@@ -78,6 +139,11 @@ Point::Point(VCSet & vcs,std::string n, void * ptr)
 	PC_PARAM_ADDVAR(vcset,t,*(p+2));
     }
 }
+
+/**
+ *			FastF Methods
+ *
+ */
 
 FastF::FastF(VCSet & vcs,std::string n, void * ptr)
     : Parameter(vcs, n)
