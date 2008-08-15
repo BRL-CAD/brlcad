@@ -64,7 +64,8 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
     struct rt_arbn_internal *arbn_ip;
     struct rt_superell_internal	*superell_ip;
     struct rt_metaball_internal	*metaball_ip;
-    static const char *usage = "-h | -t | -o origin -s sf name <arb8|arb7|arb6|arb5|arb4|arbn|ars|bot|ehy|ell|ell1|epa|eto|extrude|grip|half|nmg|part|pipe|rcc|rec|rhc|rpc|rpp|sketch|sph|tec|tgc|tor|trc>";
+    struct rt_pnts_internal *pnts_ip;
+    static const char *usage = "-h | -t | -o origin -s sf name <arb8|arb7|arb6|arb5|arb4|arbn|ars|bot|ehy|ell|ell1|epa|eto|extrude|grip|half|nmg|part|pipe|pnts|rcc|rec|rhc|rpc|rpp|sketch|sph|tec|tgc|tor|trc>";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -107,7 +108,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	    case 'T':
 		if (argc == 2) {
 		    gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
-		    bu_vls_printf(&gedp->ged_result_str, "arb8 arb7 arb6 arb5 arb4 arbn ars bot ehy ell ell1 epa eto extrude grip half nmg part pipe rcc rec rhc rpc rpp sketch sph tec tgc tor trc superell metaball");
+		    bu_vls_printf(&gedp->ged_result_str, "arb8 arb7 arb6 arb5 arb4 arbn ars bot ehy ell ell1 epa eto extrude grip half nmg part pipe pnts rcc rec rhc rpc rpp sketch sph tec tgc tor trc superell metaball");
 		    return BRLCAD_OK;
 		}
 
@@ -587,6 +588,25 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	ps->pp_id = 0.25*ps->pp_od;
 	ps->pp_bendradius = ps->pp_od;
 	BU_LIST_INSERT(&pipe_ip->pipe_segs_head, &ps->l);
+    } else if (strcmp(argv[bu_optind + 1], "pnts") == 0) {
+	struct pnt *point;
+
+	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	internal.idb_type = ID_PNTS;
+	internal.idb_meth = &rt_functab[ID_PNTS];
+	internal.idb_ptr = (genptr_t) bu_malloc(sizeof(struct rt_pnts_internal), "rt_pnts_internal");
+
+	pnts_ip = (struct rt_pnts_internal *) internal.idb_ptr;
+	pnts_ip->magic = RT_PNTS_INTERNAL_MAGIC;
+	pnts_ip->numPoints = 1;
+	pnts_ip->weight = 0;
+
+	BU_GETSTRUCT(pnts_ip->vList, pnt);
+	BU_LIST_INIT(&(pnts_ip->vList->l));
+	BU_GETSTRUCT(point, pnt);
+	VSET(point->v, origin[X], origin[Y], origin[Z]);
+	BU_LIST_PUSH(&(pnts_ip->vList->l), &point->l);
+
     } else if (strcmp(argv[bu_optind+1], "bot") == 0) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_BOT;

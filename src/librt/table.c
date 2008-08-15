@@ -229,6 +229,9 @@ RT_DECLARE_INTERFACE(binunif);
 RT_DECLARE_INTERFACE(binexpm);
 */
 
+#define rt_pnts_xform rt_generic_xform
+RT_DECLARE_INTERFACE(pnts);
+
 #if OBJ_BREP
 #define rt_brep_xform rt_generic_xform
 RT_DECLARE_INTERFACE(brep);
@@ -412,6 +415,8 @@ BU_EXTERN(int rt_extrude_adjust, (struct bu_vls *log,
 				  struct rt_db_internal *intern, int argc, char **argv,
 				  struct resource *resp));
 BU_EXTERN(int rt_extrude_form, (struct bu_vls *log, const struct rt_functab *ftp));
+
+/* PNTS */
 
 /* XXX from shoot.c / vshoot.c */
 BU_EXTERN(void rt_vstub, (struct soltab *stp[], struct xray *rp[],
@@ -1034,7 +1039,21 @@ const struct rt_functab rt_functab[] = {
      rt_revolve_describe,	rt_nul_xform,	rt_revolve_parse,
      sizeof(struct rt_revolve_internal),	RT_REVOLVE_INTERNAL_MAGIC,
      rt_parsetab_get,	rt_parsetab_adjust,	rt_parsetab_form,
-     NULL, rt_nul_params,
+     NULL, rt_nul_params
+    },
+
+    {RT_FUNCTAB_MAGIC, "ID_PNTS", "pnts",
+     0,
+     NULL,	NULL,	rt_pnts_print,	NULL,
+     NULL,	NULL,
+     NULL,	NULL,	NULL,	NULL,
+     rt_pnts_plot,	NULL,	NULL,	NULL,
+     rt_pnts_import5,	rt_pnts_export5,
+     NULL,	NULL,	rt_pnts_ifree,
+     NULL,	rt_pnts_xform,	NULL,
+     sizeof(struct rt_pnts_internal),	RT_PNTS_INTERNAL_MAGIC,
+     NULL,	NULL,	NULL,
+     NULL, NULL
     },
 
     {0L, ">ID_MAXIMUM", ">id_max",

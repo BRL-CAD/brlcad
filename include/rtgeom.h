@@ -558,6 +558,24 @@ struct rt_bot_internal
 
 #define RT_BOT_CK_MAGIC(_p)	BU_CKMAG(_p, RT_BOT_INTERNAL_MAGIC, "rt_bot_internal")
 
+/*
+ *      ID_PNTS
+ */
+
+struct pnt {
+    struct bu_list l;
+    point_t v;
+};
+
+struct rt_pnts_internal {
+    long magic;
+    unsigned long numPoints;
+    double weight;
+    struct pnt *vList;
+};
+#define RT_PNTS_CK_MAGIC(_p)     BU_CKMAG(_p, RT_PNTS_INTERNAL_MAGIC, "rt_pnts_internal")
+
+
 __END_DECLS
 
 #endif /* __RTGEOM_H__ */

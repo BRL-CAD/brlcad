@@ -141,6 +141,7 @@ librt_nil_la_SOURCES = \
 	primitives/nmg/nmg_visit.c \
 	primitives/part/part.c \
 	primitives/pipe/pipe.c \
+	primitives/pnts/pnts.c \
 	primitives/poly/poly.c \
 	primitives/rec/rec.c \
 	primitives/revolve/revolve.c \

@@ -108,6 +108,7 @@
 #define RT_TGC_INTERNAL_MAGIC		0xaabbdd87
 #define RT_TOR_INTERNAL_MAGIC		0x9bffed87
 #define RT_VOL_INTERNAL_MAGIC		0x987ba1d0
+#define RT_PNTS_INTERNAL_MAGIC          0x706e7473 /**< pnts */
 
 /* n-manifold geometry */
 
