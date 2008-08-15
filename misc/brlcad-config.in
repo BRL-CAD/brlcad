@@ -69,6 +69,7 @@ Libraries:
     dm
     fb
     fft
+    ged
     multispectral
     optical
     pkg
@@ -152,6 +153,9 @@ while test $# -gt 0; do
 	    ;;
 	fft)
 	    libs="$libs -lfft"
+	    ;;
+	ged)
+	    libs="$libs -lged"
 	    ;;
 	multispectral)
 	    libs="$libs -lmultispectral"
@@ -255,6 +259,7 @@ BU="@BU@ @BU_LIBS@"
 DM="@DM@ @DM_LIBS@"
 FB="@FB@ @FB_LIBS@"
 FFT="@FFT@ @FFT_LIBS@"
+GED="@GED@ @GED_LIBS@"
 MULTISPECTRAL="@MULTISPECTRAL@ @MULTISPECTRAL_LIBS@"
 OPTICAL="@OPTICAL@ @OPTICAL_LIBS@"
 PKG="@PKG@ @PKG_LIBS@"
@@ -305,6 +310,13 @@ for lib in $libs ; do
 		cadlibs="$cadlibs $FFT"
 		cadlibs="`check \"$cadlibs\"`"
 		fftadded=yes
+	    fi
+	    ;;
+	-lged)
+	    if test "x$gedadded" = "x" ; then
+		cadlibs="$cadlibs $GED"
+		cadlibs="`check \"$cadlibs\"`"
+		gedadded=yes
 	    fi
 	    ;;
 	-lmultispectral)
