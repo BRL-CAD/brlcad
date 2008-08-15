@@ -547,6 +547,120 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
 }
 
 /*
+ *      M L T _ B U I L D _ P A T H
+ *
+ *  This is a callback function that will be passed to ap->a_hit.
+ *  It will call itself recursively and adding hit points to the
+ *  mlt application structure. 
+ *
+ *  The stopping condition, with path tracing, is determined by the
+ *  probability of the light being absorbed.
+ *
+ *  Also, long paths, with 5 or more points, contribute little to
+ *  the final image, so those can be discarded.
+ */
+int
+mlt_build_path(register struct application *ap, struct partition *PartHeadp, struct seg *segp)
+{
+    struct hit *hitp;
+    struct partition *pp;
+    struct application new_app;
+    struct mlt_app *p_mlt;
+    struct path_list* p_path;
+
+    vect_t normal, new_dir;
+    fastf_t	diffuse0 = 0;
+    fastf_t	cosI0 = 0;
+
+    /*  The application uses a generic pointer (genptr_t)
+     *  to point to a struct mlt_app
+     *
+     *  In view.c, this generic pointer is used to store visited regions
+     *  information. If it proves needed here, mlt_app has a generic pointer
+     *  that can handle that.
+     */    
+    p_mlt = (struct mlt_app*) ap->a_uptr;
+    p_path = p_mlt->paths;
+    pp = PartHeadp->pt_forw;    
+
+    for (; pp != PartHeadp; pp = pp->pt_forw)
+        if (pp->pt_outhit->hit_dist >= 0.0)  break;
+
+    if (pp == PartHeadp) {
+        bu_log("rayhit: no hit out front?");
+        ap->a_user = 0;
+        return 0;
+    }
+
+    hitp = pp->pt_inhit;
+
+    /* This is used find the hit point: */
+    RT_HIT_NORMAL(normal, 
+        hitp,
+        pp->pt_inseg->seg_stp,
+        &(ap->a_ray),
+        pp->pt_inflip);
+
+    VSET(new_dir, 1,0,1);   /* Temporary value */
+    
+    if (p_mlt->m_user < 5) {    /* Arbitrary stopping condition */
+
+        /*  This block verifies if the path list already exists.
+         *  If not, it allocates memory and initializes a new point_list
+         *  and adds the hit point found to that list.
+         *
+         *  If it exists, this block verifies if the point list also
+         *  exists and allocates memory accordingly.
+         */
+
+        if (p_path) {
+            if (p_path->pt_list) {
+                struct point_list* new_point;
+                BU_GETSTRUCT(new_point, point_list);
+                            
+                VMOVE(new_point->pt_cell, segp->seg_in.hit_point);
+                BU_LIST_PUSH(&(p_path->pt_list->l), &(new_point->l));
+            }
+            
+            else {
+                BU_GETSTRUCT(p_path->pt_list, point_list);
+                BU_LIST_INIT(&(p_path->pt_list->l));
+                VMOVE(p_path->pt_list->pt_cell, segp->seg_in.hit_point);
+            }
+
+        }
+        else {
+            BU_GETSTRUCT(p_path, path_list);
+            BU_LIST_INIT(&(p_path->l));
+            p_path->pt_list = (struct point_list *) NULL;
+
+            BU_GETSTRUCT(p_path->pt_list, point_list);
+            BU_LIST_INIT(&(p_path->pt_list->l));
+            VMOVE(p_path->pt_list->pt_cell, segp->seg_in.hit_point);
+        }
+
+	    new_app = *ap;	/* struct copy */
+	    new_app.a_level = ap->a_level+1;
+        new_app.a_hit = mlt_build_path;
+        new_app.a_miss = ap->a_miss;
+        
+        /* Setting up new ray */
+        VMOVE(new_app.a_ray.r_pt, segp->seg_in.hit_point);
+        VMOVE(new_app.a_ray.r_dir, new_dir);
+
+	    new_app.a_purpose = "Path building";
+        new_app.a_uptr = ap->a_uptr;
+            
+        (void) rt_shootray(&new_app);
+    }
+
+    ap->a_user = 1;
+
+    return 1;
+
+}
+
+/*
  *      S E C O N D A R Y _ H I T
  *
  *  Called by rayhit() to handle shadows. The idea is, primarily,
