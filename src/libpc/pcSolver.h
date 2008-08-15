@@ -58,7 +58,8 @@ void PCSolver<T>::initiate() {
     std::list<VariableAbstract *>::iterator i;
     for (i = vcs->Vars.begin(); i != vcs->Vars.end(); ++i) {
 	typedef Variable<T> * Vp;
-	(Vp (*i))->setValue((Vp (*i))->getFirst());
+	if (!((*i)->isConst()))
+	    (Vp (*i))->setValue((Vp (*i))->getFirst());
     }
     initiated = true;
 }
@@ -74,22 +75,26 @@ bool PCSolver<T>::generator() {
 	--j;
 	typedef Variable<T> * Vp;
 	while (j != i) {
-	    if ( (Vp (*j))->getValue() == (Vp (*j))->getLast())
+	    if ( ((Vp (*j))->getValue() == (Vp (*j))->getLast()) ||
+		 (*j)->isConst() )
 		--j;
 	    else
 		break;
 	}
 
-	if ((Vp (*i))->getValue() == (Vp (*i))->getLast())
+	if ( ((Vp (*i))->getValue() == (Vp (*i))->getLast()) ||
+	     (*i)->isConst() )
 	    return false;
 	/* Increment one variable , set other variables to the first value */
 	//std::cout << "Incrementing Variable " << (Vp (*i))->getID() << (Vp (*i))->getValue() << "\n";
-	++(*(Vp (*j)));
+	if (! (*j)->isConst())
+	    ++(*(Vp (*j)));
 	//std::cout << "Post increment " << (Vp (*i))->getID() << (Vp (*i))->getValue() << "\n";
 	if (true || j != i) {
 	    ++j;
 	    while (j != vcs->Vars.end()) {
-		(Vp (*j))->setValue((Vp (*j))->getFirst());
+		if(! (*j)->isConst())
+		    (Vp (*j))->setValue((Vp (*j))->getFirst());
 		++j;
 	    }
 	}
