@@ -36,6 +36,7 @@ void Generators::varname::operator () (char c) const {
 void Generators::varvalue::operator () (double v) const {
     vcset.setValue(v);
 }
+
 bool Generators::constraint2V::operator() (VCSet & vcset, std::list<std::string> Vid) const {
     typedef Variable<double> * Vi;
     double ** a = new double*[2];
@@ -59,6 +60,44 @@ bool Generators::constraint2V::operator() (VCSet & vcset, std::list<std::string>
 	    return true;
 	} else {
 	    for (int i = 0 ; i < 3; i++)
+		delete[] a[i];
+	    delete[] a;
+	    return false;
+	}
+    } else {
+	std::cout << "!!! Constraint evaluation pointer NULL\n";
+    }
+}
+
+Generators::constraintInterface::constraintInterface(pc_constrnt * c)
+    : fp_(c->data.cf.fp),
+      nargs_(c->data.cf.nargs),
+      dimension_(c->data.cf.dimension)
+{}
+
+bool Generators::constraintInterface::operator() (VCSet & vcset, std::list<std::string> Vid) const {
+    typedef Variable<double> * Vi;
+    double ** a = new double*[nargs_];
+    //a = (double **) malloc(2 *(sizeof(double *)));
+    
+    for (int i =0; i< nargs_; i++)
+        a[i] = new double[dimension_];
+	//a[i] = (double *)malloc(3 *(sizeof(double)));
+    for (int i =0; i < nargs_; i++) {
+        for (int j = 0; j < dimension_; j++) {
+	    a[i][j] = ((Vi) vcset.getVariablebyID(Vid.front()))->getValue();
+	    Vid.pop_front();
+	}
+    }
+
+    if (fp_) {
+        if ( fp_(a) == 0) {
+	    for (int i = 0 ; i < dimension_; i++)
+		delete[] a[i];
+	    delete[] a;
+	    return true;
+	} else {
+	    for (int i = 0 ; i < dimension_; i++)
 		delete[] a[i];
 	    delete[] a;
 	    return false;

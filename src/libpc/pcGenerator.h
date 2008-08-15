@@ -34,6 +34,8 @@
 #include "pcVCSet.h"
 #include <string>
 
+#include "pc.h"
+
 /* Functors associated with the generation of Variables */
 namespace Generators {
 
@@ -78,6 +80,17 @@ public:
     bool operator() (VCSet & vcset, std::list<std::string> Vid) const;
 private:
     int (*fp_) (double **);
+};
+
+struct constraintInterface
+{
+public:
+    constraintInterface (struct pc_constrnt * c);
+    bool operator() (VCSet & vcset, std::list<std::string> Vid) const;
+private:
+    int (*fp_) (double **);
+    int nargs_;
+    int dimension_;
 };
 
 }
