@@ -88,8 +88,12 @@ public:
     int getType() const { return type; }
     std::string getID() const { return id; }
     virtual void display();
+    void setConst() { const_ = true; }
+    void setVar() { const_ = false; }
+    bool isConst() { return const_; } 
 protected:
     int type;
+    bool const_;
 private:
     std::string  id;
     int constrained;

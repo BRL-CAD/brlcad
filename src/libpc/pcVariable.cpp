@@ -32,7 +32,8 @@
 VariableAbstract::VariableAbstract(std::string vid) :
     type(VAR_ABS),
     id(vid),
-    constrained(0)
+    constrained(0),
+    const_(false)
 {
 }
 
