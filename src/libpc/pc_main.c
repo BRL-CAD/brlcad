@@ -165,7 +165,7 @@ pc_pushconstraint_expr(struct pc_pc_set * pcsp,const char * name, const char * s
 void
 pc_pushconstraint_struct(struct pc_pc_set * pcsp,const char * name, int nargs, int dimension, int  (*fp) (double ** args), char **a)
 {
-    struct pc_constrnt * con;
+    struct pc_constrnt *con;
     int i;
     
     pc_getconstraint(&con,PC_DB_BYSTRUCT);
@@ -179,8 +179,13 @@ pc_pushconstraint_struct(struct pc_pc_set * pcsp,const char * name, int nargs, i
     con->data.cf.dimension = dimension;
     con->data.cf.fp = fp;
 
-
     /** the acual push operation into the pc_pc_set */
+    PC_PCSET_PUSHC(pcsp, con);
+}
+
+void
+pc_pushconstraint_struct1(struct pc_pc_set * pcsp,struct pc_constrnt * con)
+{
     PC_PCSET_PUSHC(pcsp, con);
 }
 
@@ -235,12 +240,20 @@ pc_isperpendicular(double ** v)
     	return -1;
 }
 
-pc_mk_isperpendicular(struct pc_constrnt * c,const char * name)
+void
+pc_mk_isperpendicular(struct pc_constrnt * c,const char * name, char ** args)
 {
+    register int i;
+    
+    pc_getconstraint(&c,PC_DB_BYSTRUCT);
+    c->args = (char **) bu_malloc(2*sizeof(char *),"argument array");
     bu_vls_strcat(&(c->name), name);
+    c->ctype = PC_DB_BYSTRUCT;
     c->data.cf.fp = &pc_isperpendicular;
     c->data.cf.nargs = 2;
     c->data.cf.dimension = 3;
+    for (i = 0; i < 2; i++)
+	c->args[i] = args[i];
 }
 
 /** @} */
