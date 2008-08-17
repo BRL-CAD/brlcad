@@ -121,21 +121,33 @@ pc_pushparam_struct(struct pc_pc_set * pcsp,const char * name, int type, void * 
 }
 
 /**
- * 			PC_GETCONSTRAINT
- * allocates memory for the parameter if parameter storage accoring to
- * the integer argument
- *
- * 	0 : data storage by expression
- * 	anything else : data storage by structure
+ * 			PC_GETCONSTRAINT_EXPR
+ * allocate storage for a constraint by expression
  *
  */
 void
-pc_getconstraint(struct pc_constrnt ** c, int n)
+pc_getconstraint_expr(struct pc_constrnt ** c)
 {
     BU_GETSTRUCT(*c,pc_constrnt);
     bu_vls_init(&((*c)->name));
-    if (n == PC_DB_BYEXPR)
-	bu_vls_init(&((*c)->data.expression));
+    bu_vls_init(&((*c)->data.expression));
+    (*c)->ctype = PC_DB_BYEXPR;
+}
+
+/**
+ * 			PC_GETCONSTRAINT_STRUCT
+ * allocate storage for a pc_constrnt object which uses data structure for
+ * storage
+ *
+ */
+
+void
+pc_getconstraint_struct(struct pc_constrnt ** c, int nargs)
+{
+    BU_GETSTRUCT(*c,pc_constrnt);
+    bu_vls_init(&((*c)->name));
+    (*c)->args = (char **) bu_malloc(nargs*sizeof(char *), "argument array");
+    (*c)->ctype = PC_DB_BYSTRUCT;
 }
 
 /**
@@ -147,9 +159,8 @@ void
 pc_pushconstraint_expr(struct pc_pc_set * pcsp,const char * name, const char * str)
 {
     struct pc_constrnt * con;
-    pc_getconstraint(&con,PC_DB_BYEXPR);
+    pc_getconstraint_expr(&con);
     bu_vls_strcat(&(con->name), name);
-    con->ctype = PC_DB_BYEXPR;
     bu_vls_strcat(&(con->data.expression), str);
     PC_PCSET_PUSHC(pcsp, con);
 }
@@ -168,11 +179,8 @@ pc_pushconstraint_struct(struct pc_pc_set * pcsp,const char * name, int nargs, i
     struct pc_constrnt *con;
     int i;
     
-    pc_getconstraint(&con,PC_DB_BYSTRUCT);
-    con->args = (char **) bu_malloc(nargs*sizeof(char *),"argument array");
+    pc_getconstraint_struct(&con,nargs);
     bu_vls_strcat(&(con->name), name);
-    con->ctype = PC_DB_BYSTRUCT;
-    
     for (i =0; i < nargs; i++)
 	con->args[i] = a[i];
     con->data.cf.nargs = nargs;
@@ -245,10 +253,8 @@ pc_mk_isperpendicular(struct pc_constrnt * c,const char * name, char ** args)
 {
     register int i;
     
-    pc_getconstraint(&c,PC_DB_BYSTRUCT);
-    c->args = (char **) bu_malloc(2*sizeof(char *),"argument array");
+    pc_getconstraint_struct(&c,2);
     bu_vls_strcat(&(c->name), name);
-    c->ctype = PC_DB_BYSTRUCT;
     c->data.cf.fp = &pc_isperpendicular;
     c->data.cf.nargs = 2;
     c->data.cf.dimension = 3;
