@@ -90,13 +90,15 @@ public:
     virtual void display();
     void setConst() { const_ = true; }
     void setVar() { const_ = false; }
-    bool isConst() { return const_; } 
+    bool isConst() { return const_; }
+    int isConstrained() { return constrained_; }
+    void setConstrained(int n) { constrained_ = n; }
 protected:
     int type;
     bool const_;
 private:
     std::string  id;
-    int constrained;
+    int constrained_;
 };
 
 template<class T>

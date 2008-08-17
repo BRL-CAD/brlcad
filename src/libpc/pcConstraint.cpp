@@ -51,6 +51,10 @@ Constraint::Constraint(VCSet &vcs, std::string Cid, std::string Cexpression, fun
     eval(pf),
     Variables(Vid)
 { 
+    std::list<std::string>::iterator i = Variables.begin();
+    std::list<std::string>::iterator end = Variables.end();
+    for (; i != end; ++i)
+	vcset.getVariablebyID(*i)->setConstrained(1);
 }
 
 Constraint::Constraint(VCSet &vcs, std::string Cid, std::string Cexpression, functor pf, int count, va_list * args) :
@@ -61,7 +65,9 @@ Constraint::Constraint(VCSet &vcs, std::string Cid, std::string Cexpression, fun
     eval(pf)
 {
     for (int i=0; i<count; i++) {
-	Variables.push_back(va_arg(*args,char *));
+	std::string tmp = va_arg(*args,char *);
+	Variables.push_back(tmp);
+	vcset.getVariablebyID(tmp)->setConstrained(1);
     }
 }
 

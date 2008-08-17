@@ -48,7 +48,7 @@ public:
 private:
     long num_checks;
     bool initiated;
-    VCSet * vcs;
+    std::list<VariableAbstract *> vars;
     bool generator();
     void initiate();
 };
@@ -56,7 +56,7 @@ private:
 template<class T>
 void PCSolver<T>::initiate() {
     std::list<VariableAbstract *>::iterator i;
-    for (i = vcs->Vars.begin(); i != vcs->Vars.end(); ++i) {
+    for (i = vars.begin(); i != vars.end(); ++i) {
 	typedef Variable<T> * Vp;
 	if (!((*i)->isConst()))
 	    (Vp (*i))->setValue((Vp (*i))->getFirst());
@@ -70,8 +70,8 @@ bool PCSolver<T>::generator() {
 	initiate();
     } else {
 	std::list<VariableAbstract *>::iterator i,j;
-	i = vcs->Vars.begin();
-	j = vcs->Vars.end();
+	i = vars.begin();
+	j = vars.end();
 	--j;
 	typedef Variable<T> * Vp;
 	while (j != i) {
@@ -92,7 +92,7 @@ bool PCSolver<T>::generator() {
 	//std::cout << "Post increment " << (Vp (*i))->getID() << (Vp (*i))->getValue() << "\n";
 	if (true || j != i) {
 	    ++j;
-	    while (j != vcs->Vars.end()) {
+	    while (j != vars.end()) {
 		if(! (*j)->isConst())
 		    (Vp (*j))->setValue((Vp (*j))->getFirst());
 		++j;
@@ -104,14 +104,19 @@ bool PCSolver<T>::generator() {
 
 template<class T>
 bool PCSolver<T>::solve(VCSet & vcset, Solution<T>& S) {
-    vcs = &vcset;
+    std::list<VariableAbstract *>::iterator i = vcset.Vars.begin();
+    std::list<VariableAbstract *>::iterator end = vcset.Vars.end();
     num_checks = 0;
+    
+    for (; i != end; ++i)
+	if ( (*i)->isConstrained() == 1 ) {
+	    vars.push_back(*i);
+	}
     while (generator()) {
 	++num_checks;
-	if (vcs->check()) {
-	    std::list<VariableAbstract *>::iterator i;	    
+	if (vcset.check()) {
 	    Variable<T> * j;
-	    for (i = vcs->Vars.begin(); i != vcs->Vars.end(); ++i) {
+	    for (i = vcset.Vars.begin(); i != vcset.Vars.end(); ++i) {
 		typedef Variable<T> * Vp;
 		j = Vp (*i);
 		S.VarDom.push_back(VarDomain<T>(*j,
