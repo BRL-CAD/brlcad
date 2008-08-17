@@ -27,10 +27,44 @@
  */
 #include "pcConstraint.h"
 #include "pcVCSet.h"
+#include "pc.h"
+
+bool constraint2V::operator() (VCSet & vcset, std::list<std::string> Vid) const {
+    typedef Variable<double> * Vi;
+    double ** a = new double*[2];
+    //a = (double **) malloc(2 *(sizeof(double *)));
+    
+    for (int i =0; i< 3; i++)
+        a[i] = new double[3];
+	//a[i] = (double *)malloc(3 *(sizeof(double)));
+    for (int i =0; i < 2; i++) {
+        for (int j = 0; j < 3; j++) {
+	    a[i][j] = ((Vi) vcset.getVariablebyID(Vid.front()))->getValue();
+	    Vid.pop_front();
+	}
+    }
+
+    if (fp_) {
+        if ( fp_(a) == 0) {
+	    for (int i = 0 ; i < 3; i++)
+		delete[] a[i];
+	    delete[] a;
+	    return true;
+	} else {
+	    for (int i = 0 ; i < 3; i++)
+		delete[] a[i];
+	    delete[] a;
+	    return false;
+	}
+    } else {
+	std::cout << "!!! Constraint evaluation pointer NULL\n";
+    }
+}
 
 Constraint::Constraint(VCSet &vcs) :
     vcset(vcs),
-    status(0)
+    status(0),
+    cif(NULL)
 {
 }
 
@@ -39,6 +73,7 @@ Constraint::Constraint(VCSet &vcs, std::string Cid, std::string Cexpression, fun
     status(0),
     id(Cid),
     expression(Cexpression),
+    cif(NULL),
     eval(pf)
 {
 }
@@ -48,6 +83,7 @@ Constraint::Constraint(VCSet &vcs, std::string Cid, std::string Cexpression, fun
     status(0),
     id(Cid),
     expression(Cexpression),
+    cif(NULL),
     eval(pf),
     Variables(Vid)
 { 
@@ -62,6 +98,7 @@ Constraint::Constraint(VCSet &vcs, std::string Cid, std::string Cexpression, fun
     status(0),
     id(Cid),
     expression(Cexpression),
+    cif(NULL),
     eval(pf)
 {
     for (int i=0; i<count; i++) {
@@ -69,6 +106,25 @@ Constraint::Constraint(VCSet &vcs, std::string Cid, std::string Cexpression, fun
 	Variables.push_back(tmp);
 	vcset.getVariablebyID(tmp)->setConstrained(1);
     }
+}
+
+Constraint::Constraint(VCSet &vcs, pc_constrnt * c)
+    : vcset(vcs),
+      status(0),
+      id(bu_vls_addr(&(c->name))),
+      expression(""),
+      cif(c->data.cf.fp),
+      eval(cif)
+{
+    std::list<std::string> t;
+    for (int i = 0; i < c->data.cf.nargs; i++) {
+	t = vcset.getParamVariables(c->args[i]);
+	Variables.merge(t);
+    }
+    std::list<std::string>::iterator i = Variables.begin();
+    std::list<std::string>::iterator end = Variables.end();
+    for (; i != end; ++i)
+	vcset.getVariablebyID(*i)->setConstrained(1);
 }
 
 bool Constraint::solved()

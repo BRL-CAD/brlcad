@@ -92,6 +92,12 @@ void VCSet::addConstraint(std::string cid, functor f, std::list<std::string> Vid
     Constraints.push_back(c);
 }
 
+void VCSet::addConstraint(pc_constrnt * con)
+{
+    Constraint *c = new Constraint(*this, con);
+    Constraints.push_back(c);
+}
+
 void VCSet::addParameter(std::string pname, int type, void * ptr)
 {
     switch (type) {

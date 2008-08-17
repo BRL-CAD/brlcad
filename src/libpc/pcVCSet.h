@@ -48,6 +48,7 @@
  *
  */
 class Constraint;
+struct pc_constrnt;
 
 class VCSet
 {
@@ -71,6 +72,7 @@ public:
     VariableAbstract * addVariable(std::string vid, T vvalue, T vlow, T vhigh, T vstep);
     void addConstraint(std::string cid, std::string cexpr, functor f,int count,...);
     void addConstraint(std::string cid, functor f, std::list<std::string> Vid);
+    void addConstraint(pc_constrnt * c);
     void addParameter(std::string pname, int type, void * ptr);
     
     /** Variable access method */

@@ -37,7 +37,17 @@
 #include <boost/function.hpp>
 #include "pcVariable.h"
 
+struct pc_constrnt;
 class VCSet;
+
+struct constraint2V
+{
+public:
+    constraint2V(int (*fp) (double **)) { fp_ = fp; }
+    bool operator() (VCSet & vcset, std::list<std::string> Vid) const;
+private:
+    int (*fp_) (double **);
+};
 
 class Constraint {
     typedef boost::function2< bool, VCSet &,std::list<std::string> > functor;
@@ -50,6 +60,7 @@ public:
 					    std::list<std::string> Vid);
     Constraint(VCSet &vcs, std::string Cid, std::string Cexpr, functor,\
 					    int count,va_list * args);
+    Constraint(VCSet &vcs, pc_constrnt *);
     
     bool solved();
     bool check();
@@ -65,6 +76,7 @@ public:
     void display();
 private:
     int status;
+    constraint2V cif;
     VCSet &vcset;
     std::string id;
     std::string expression;
