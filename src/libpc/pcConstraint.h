@@ -49,6 +49,17 @@ private:
     int (*fp_) (double **);
 };
 
+struct ConstraintInterface
+{
+public:
+    ConstraintInterface (struct pc_constrnt * c);
+    bool operator() (VCSet & vcset, std::list<std::string> Vid) const;
+private:
+    int (*fp_) (double **);
+    int nargs_;
+    int dimension_;
+};
+
 class Constraint {
     typedef boost::function2< bool, VCSet &,std::list<std::string> > functor;
 public:

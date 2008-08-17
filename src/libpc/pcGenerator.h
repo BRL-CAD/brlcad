@@ -67,23 +67,6 @@ struct is_equal
     template<typename IteratorT>
     void operator() (IteratorT first, IteratorT last) const;
 };
-
-/** Constraint wrapper taking 2 Vectors as arguments
- * @todo parametrize the dimension ( Vector / Fastf) and
- * number of arguments
- */
-
-struct constraintInterface
-{
-public:
-    constraintInterface (struct pc_constrnt * c);
-    bool operator() (VCSet & vcset, std::list<std::string> Vid) const;
-private:
-    int (*fp_) (double **);
-    int nargs_;
-    int dimension_;
-};
-
 }
 #endif
 /** @} */

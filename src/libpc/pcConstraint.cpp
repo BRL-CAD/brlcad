@@ -61,6 +61,41 @@ bool constraint2V::operator() (VCSet & vcset, std::list<std::string> Vid) const 
     }
 }
 
+ConstraintInterface::ConstraintInterface(pc_constrnt * c)
+    : fp_(c->data.cf.fp),
+      nargs_(c->data.cf.nargs),
+      dimension_(c->data.cf.dimension)
+{}
+
+bool ConstraintInterface::operator() (VCSet & vcset, std::list<std::string> Vid) const {
+    typedef Variable<double> * Vi;
+    double ** a = new double*[nargs_];
+    //a = (double **) malloc(2 *(sizeof(double *)));
+    
+    for (int i =0; i< nargs_; i++)
+        a[i] = new double[dimension_];
+	//a[i] = (double *)malloc(3 *(sizeof(double)));
+    for (int i =0; i < nargs_; i++) {
+        for (int j = 0; j < dimension_; j++) {
+	    a[i][j] = ((Vi) vcset.getVariablebyID(Vid.front()))->getValue();
+	    Vid.pop_front();
+	}
+    }
+
+    if (fp_) {
+        for (int i = 0 ; i < dimension_; i++)
+	    delete[] a[i];
+        delete[] a;
+        if ( fp_(a) == 0) {
+	    return true;
+	} else {
+	    return false;
+	}
+    } else {
+	std::cout << "!!! Constraint evaluation pointer NULL\n";
+    }
+}
+
 Constraint::Constraint(VCSet &vcs) :
     vcset(vcs),
     status(0),
