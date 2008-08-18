@@ -237,38 +237,6 @@ pc_free_pcset(struct pc_pc_set * pcs)
     bu_free(pcs->cs, "free constraint");
 }
 
-/** pc_isperpendicular : simple implicit constraint test
- * The double pointer is expected to point to a properly initialized array
- */
-
-int
-pc_isperpendicular(double ** v)
-{
-    
-	//bu_log("Dot product of the Vectors:\n%f %f %f \n%f %f %f\nis %f\n",\
-		v[0][0], v[0][1], v[0][2], v[1][0], v[1][1], v[1][2],\
-		(v[0][0]*v[1][0] + v[0][1]*v[1][1] +v[0][2]*v[1][2]));
-    if (NEAR_ZERO( (v[0][0]*v[1][0] + v[0][1]*v[1][1] +v[0][2]*v[1][2] - 280),\
-		    .00001)) 
-    	return 0;
-    else
-    	return -1;
-}
-
-void
-pc_mk_isperpendicular(struct pc_constrnt ** c,const char * name, char ** args)
-{
-    register int i;
-    
-    pc_getconstraint_struct(c,2);
-    bu_vls_strcat(&((*c)->name), name);
-    (*c)->data.cf.fp = &pc_isperpendicular;
-    (*c)->data.cf.nargs = 2;
-    (*c)->data.cf.dimension = 3;
-    for (i = 0; i < 2; i++)
-	(*c)->args[i] = args[i];
-}
-
 /** @} */
 /*
  * Local Variables:
