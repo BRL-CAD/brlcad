@@ -15,6 +15,10 @@ on-going issues.
 Recent Bugs
 -----------
 
+* mged command window is showing up as an empty 0x0 dimensioned window
+  on freebsd using xfce and metacity (single display, 1680x1050 res).
+  dm shows up just fine.
+
 * wireframe is failing to draw when framebuffer is displayed (underlay
   or overlay) in mged.  problem is specific to dm-ogl (dm-x is fine).
 
