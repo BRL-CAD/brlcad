@@ -32,18 +32,17 @@
 constraint2V::constraint2V(int (*fp) (double **))
 {
     fp_ = fp ;
-    //a = new double*[2];
-    a = (double **) malloc(2 *(sizeof(double *)));
+    a = new double*[2];
     
     for (int i =0; i< 2; i++)
-        //a[i] = new double[3];
-	a[i] = (double *)malloc(3 *(sizeof(double)));
+        a[i] = new double[3];
 }
+
 constraint2V::~constraint2V()
 {
     for (int i = 0 ; i < 2; i++)
-	free(a[i]);//delete[] a[i];
-    free(a);//delete[] a;
+	delete[] a[i];
+    delete[] a;
 }
 
 bool constraint2V::operator() (VCSet & vcset, std::list<std::string> Vid) const {
@@ -66,19 +65,27 @@ bool constraint2V::operator() (VCSet & vcset, std::list<std::string> Vid) const 
 }
 
 ConstraintInterface::ConstraintInterface(pc_constrnt * c)
-    : fp_(c->data.cf.fp),
-      nargs_(c->data.cf.nargs),
+    : nargs_(c->data.cf.nargs),
       dimension_(c->data.cf.dimension)
-{}
+{
+    fp_ = c->data.cf.fp;
+    a = new double*[nargs_];
+    
+    for (int i =0; i< nargs_; i++) {
+        a[i] = new double[dimension_];
+    }
+}
+
+ConstraintInterface::~ConstraintInterface()
+{
+    for (int i = 0 ; i < nargs_; i++) {
+	delete[] a[i];
+    }
+    delete[] a;
+}
 
 bool ConstraintInterface::operator() (VCSet & vcset, std::list<std::string> Vid) const {
     typedef Variable<double> * Vi;
-    double ** a = new double*[nargs_];
-    //a = (double **) malloc(2 *(sizeof(double *)));
-    
-    for (int i =0; i< nargs_; i++)
-        a[i] = new double[dimension_];
-	//a[i] = (double *)malloc(3 *(sizeof(double)));
     for (int i =0; i < nargs_; i++) {
         for (int j = 0; j < dimension_; j++) {
 	    a[i][j] = ((Vi) vcset.getVariablebyID(Vid.front()))->getValue();
@@ -87,9 +94,6 @@ bool ConstraintInterface::operator() (VCSet & vcset, std::list<std::string> Vid)
     }
 
     if (fp_) {
-        for (int i = 0 ; i < dimension_; i++)
-	    delete[] a[i];
-        delete[] a;
         if ( fp_(a) == 0) {
 	    return true;
 	} else {
@@ -152,7 +156,7 @@ Constraint::Constraint(VCSet &vcs, pc_constrnt * c)
       status(0),
       id(bu_vls_addr(&(c->name))),
       expression(""),
-      cif(c->data.cf.fp)
+      cif(c)
 {
     eval = boost::ref(cif);
     std::list<std::string> t;

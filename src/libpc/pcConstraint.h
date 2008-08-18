@@ -44,7 +44,7 @@ class VCSet;
 struct constraint2V
 {
 public:
-    constraint2V(int (*fp) (double **));// { fp_ = fp; }
+    constraint2V(int (*fp) (double **));
     ~constraint2V(); 
     bool operator() (VCSet & vcset, std::list<std::string> Vid) const;
     double **a;
@@ -55,14 +55,14 @@ private:
 struct ConstraintInterface
 {
 public:
-    ConstraintInterface (struct pc_constrnt * c);
+    ConstraintInterface(struct pc_constrnt * c);
+    ~ConstraintInterface();
     bool operator() (VCSet & vcset, std::list<std::string> Vid) const;
+    double ** a;
 private:
-    typedef int (*functptr) (double **);
-    functptr fp_;
+    int (*fp_) (double **);
     int nargs_;
     int dimension_;
-    double ** a;
 };
 
 class Constraint {
@@ -92,7 +92,7 @@ public:
     void display();
 private:
     int status;
-    constraint2V cif;
+    ConstraintInterface cif;
     VCSet &vcset;
     std::string id;
     std::string expression;
