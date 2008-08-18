@@ -16,7 +16,7 @@ Recent Bugs
 -----------
 
 * wireframe is failing to draw when framebuffer is displayed (underlay
-  or overlay) in mged.  at least occurs with ogl dm.
+  or overlay) in mged.  problem is specific to dm-ogl (dm-x is fine).
 
 * g2asc of a v4 is apparently writing out the wrong s_cgtypes and
   otherwise parsing v4 .g files incorrectly
