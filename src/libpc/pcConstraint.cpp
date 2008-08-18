@@ -29,41 +29,6 @@
 #include "pcVCSet.h"
 #include "pc.h"
 
-constraint2V::constraint2V(int (*fp) (double **))
-{
-    fp_ = fp ;
-    a = new double*[2];
-    
-    for (int i =0; i< 2; i++)
-        a[i] = new double[3];
-}
-
-constraint2V::~constraint2V()
-{
-    for (int i = 0 ; i < 2; i++)
-	delete[] a[i];
-    delete[] a;
-}
-
-bool constraint2V::operator() (VCSet & vcset, std::list<std::string> Vid) const {
-    typedef Variable<double> * Vi;
-    for (int i =0; i < 2; i++) {
-        for (int j = 0; j < 3; j++) {
-	    a[i][j] = ((Vi) vcset.getVariablebyID(Vid.front()))->getValue();
-	    Vid.pop_front();
-	}
-    }
-    if (fp_) {
-        if (fp_(a) == 0) {
-	    return true;
-	} else {
-	    return false;
-	}
-    } else {
-	std::cout << "!!! Constraint evaluation pointer NULL\n";
-    }
-}
-
 ConstraintInterface::ConstraintInterface(pc_constrnt * c)
     : nargs_(c->data.cf.nargs),
       dimension_(c->data.cf.dimension)

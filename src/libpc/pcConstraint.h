@@ -41,17 +41,6 @@
 struct pc_constrnt;
 class VCSet;
 
-struct constraint2V
-{
-public:
-    constraint2V(int (*fp) (double **));
-    ~constraint2V(); 
-    bool operator() (VCSet & vcset, std::list<std::string> Vid) const;
-    double **a;
-private:
-    int (*fp_) (double **);
-};
-
 struct ConstraintInterface
 {
 public:
