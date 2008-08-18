@@ -35,6 +35,7 @@
 #include <vector>
 #include <list>
 #include <boost/function.hpp>
+#include <boost/ref.hpp>
 #include "pcVariable.h"
 
 struct pc_constrnt;
@@ -43,8 +44,10 @@ class VCSet;
 struct constraint2V
 {
 public:
-    constraint2V(int (*fp) (double **)) { fp_ = fp; }
+    constraint2V(int (*fp) (double **));// { fp_ = fp; }
+    ~constraint2V(); 
     bool operator() (VCSet & vcset, std::list<std::string> Vid) const;
+    double **a;
 private:
     int (*fp_) (double **);
 };
@@ -55,9 +58,11 @@ public:
     ConstraintInterface (struct pc_constrnt * c);
     bool operator() (VCSet & vcset, std::list<std::string> Vid) const;
 private:
-    int (*fp_) (double **);
+    typedef int (*functptr) (double **);
+    functptr fp_;
     int nargs_;
     int dimension_;
+    double ** a;
 };
 
 class Constraint {

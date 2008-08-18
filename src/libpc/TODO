@@ -11,6 +11,9 @@ FIXING REQUIRED
 
 2. Write ostream<< overloading for display of objects
 
+3. Memory Leaks
+	a. 104 bytes per pc_getconstraint
+
 CODING PLAN
 
 *  ahead

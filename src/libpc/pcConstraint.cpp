@@ -29,31 +29,35 @@
 #include "pcVCSet.h"
 #include "pc.h"
 
+constraint2V::constraint2V(int (*fp) (double **))
+{
+    fp_ = fp ;
+    //a = new double*[2];
+    a = (double **) malloc(2 *(sizeof(double *)));
+    
+    for (int i =0; i< 2; i++)
+        //a[i] = new double[3];
+	a[i] = (double *)malloc(3 *(sizeof(double)));
+}
+constraint2V::~constraint2V()
+{
+    for (int i = 0 ; i < 2; i++)
+	free(a[i]);//delete[] a[i];
+    free(a);//delete[] a;
+}
+
 bool constraint2V::operator() (VCSet & vcset, std::list<std::string> Vid) const {
     typedef Variable<double> * Vi;
-    double ** a = new double*[2];
-    //a = (double **) malloc(2 *(sizeof(double *)));
-    
-    for (int i =0; i< 3; i++)
-        a[i] = new double[3];
-	//a[i] = (double *)malloc(3 *(sizeof(double)));
     for (int i =0; i < 2; i++) {
         for (int j = 0; j < 3; j++) {
 	    a[i][j] = ((Vi) vcset.getVariablebyID(Vid.front()))->getValue();
 	    Vid.pop_front();
 	}
     }
-
     if (fp_) {
-        if ( fp_(a) == 0) {
-	    for (int i = 0 ; i < 3; i++)
-		delete[] a[i];
-	    delete[] a;
+        if (fp_(a) == 0) {
 	    return true;
 	} else {
-	    for (int i = 0 ; i < 3; i++)
-		delete[] a[i];
-	    delete[] a;
 	    return false;
 	}
     } else {
@@ -148,9 +152,9 @@ Constraint::Constraint(VCSet &vcs, pc_constrnt * c)
       status(0),
       id(bu_vls_addr(&(c->name))),
       expression(""),
-      cif(c->data.cf.fp),
-      eval(cif)
+      cif(c->data.cf.fp)
 {
+    eval = boost::ref(cif);
     std::list<std::string> t;
     for (int i = 0; i < c->data.cf.nargs; i++) {
 	t = vcset.getParamVariables(c->args[i]);
