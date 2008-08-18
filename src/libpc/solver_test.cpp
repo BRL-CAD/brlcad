@@ -107,33 +107,28 @@ int main()
     pc_pushparam_struct(&pcs,"D", PC_DB_FASTF_T, &D);
     pc_pushparam_struct(&pcs,"E", PC_DB_POINT_T, &E);
     pc_pushparam_struct(&pcs,"G", PC_DB_VECTOR_T, &F);
-    pc_pushparam_struct(&pcs,"F", PC_DB_VECTOR_T, &F);
     char * args[] = {"F","G"};
     pc_pushconstraint_expr(&pcs, "Constraint-test","A + B < 0");
+    pc_pushparam_struct(&pcs,"F", PC_DB_VECTOR_T, &F);
+    pc_constrnt *con;
+    pc_mk_isperpendicular(&con,"G _|_ F", args);
+    pc_pushconstraint_struct(&pcs, "Struct-test",2,3,&pc_isperpendicular,args);
+    pc_free_constraint(con);
+
+
     Parser myparser(vc_set);
     myparser.parse(&pcs);
-    pc_free_pcset(&pcs);
-    pc_constrnt *con;
-    pc_getconstraint_struct(&con, 2);
-    pc_free_constraint(con);
-#if 0    
-    //pc_mk_isperpendicular(&con,"G _|_ F", args);
-    //pc_pushconstraint_struct(&pcs, "Struct-test",2,3,&pc_isperpendicular,args);
     
-
     vc_set.display();
-
     PCSolver<double> PCS1;
     Solution<double> S1;
     PCS1.solve(vc_set,S1);
-    std::cout << "Solution using Generic GT Solver" << std::endl;
-    S1.display();    
-    std::cout << "-----------------------------" << std::endl;
- 
-    /* display the set of variables and constraints generated as a
-     * result of parsing
-     */
+    std::cout << "\n\nSolution using Generic GT Solver" << std::endl;
+    S1.display();
+
     pc_free_pcset(&pcs);
+
+#if 0    
     typedef boost::adjacency_list<boost::vecS, boost::vecS,
 		    boost::bidirectionalS, Variable<int>*, Constraint *> Graph;
     typedef boost::graph_traits<Graph> GraphTraits;

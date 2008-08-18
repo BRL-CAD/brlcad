@@ -91,8 +91,6 @@ void
 pc_pushparam_struct(struct pc_pc_set * pcsp,const char * name, int type, void * ptr)
 {
     struct pc_param * par;
-    /*va_list args;
-    va_start(args,n);*/
     
     pc_getparameter(&par,PC_DB_BYSTRUCT);
     bu_vls_strcat(&(par->name), name);
@@ -115,9 +113,6 @@ pc_pushparam_struct(struct pc_pc_set * pcsp,const char * name, int type, void * 
 
     /** the acual push operation into the pc_pc_set */
     PC_PCSET_PUSHP(pcsp, par);
-    
-    /* End variable argument parsing 
-    va_end(args);*/
 }
 
 /**
@@ -146,7 +141,7 @@ pc_getconstraint_struct(struct pc_constrnt ** c, int nargs)
 {
     BU_GETSTRUCT(*c,pc_constrnt);
     bu_vls_init(&((*c)->name));
-    (*c)->args = (char **) bu_malloc(nargs*sizeof(char *), "argument array");
+    (*c)->args = (char **) malloc(nargs*sizeof(char *));
     (*c)->ctype = PC_DB_BYSTRUCT;
 }
 
@@ -204,13 +199,13 @@ pc_pushconstraint_struct1(struct pc_pc_set * pcsp,struct pc_constrnt * con)
  */
 
 void
-pc_free_constraint(struct pc_constrnt * con)
+pc_free_constraint(struct pc_constrnt * c)
 {
-    bu_vls_free(&(con->name));
-    if (con->ctype == PC_DB_BYEXPR)
-        bu_vls_free(&(con->data.expression));
-    if (con->ctype == PC_DB_BYSTRUCT) 
-        bu_free(con->args, "free argument array");
+    bu_vls_free(&(c->name));
+    if (c->ctype == PC_DB_BYEXPR)
+        bu_vls_free(&(c->data.expression));
+    if (c->ctype == PC_DB_BYSTRUCT) 
+        free(c->args);
 }
 
 /**
@@ -261,17 +256,17 @@ pc_isperpendicular(double ** v)
 }
 
 void
-pc_mk_isperpendicular(struct pc_constrnt * c,const char * name, char ** args)
+pc_mk_isperpendicular(struct pc_constrnt ** c,const char * name, char ** args)
 {
     register int i;
     
-    pc_getconstraint_struct(&c,2);
-    bu_vls_strcat(&(c->name), name);
-    c->data.cf.fp = &pc_isperpendicular;
-    c->data.cf.nargs = 2;
-    c->data.cf.dimension = 3;
+    pc_getconstraint_struct(c,2);
+    bu_vls_strcat(&((*c)->name), name);
+    (*c)->data.cf.fp = &pc_isperpendicular;
+    (*c)->data.cf.nargs = 2;
+    (*c)->data.cf.dimension = 3;
     for (i = 0; i < 2; i++)
-	c->args[i] = args[i];
+	(*c)->args[i] = args[i];
 }
 
 /** @} */
