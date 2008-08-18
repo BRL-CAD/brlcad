@@ -58,8 +58,7 @@ void PCSolver<T>::initiate() {
     std::list<VariableAbstract *>::iterator i;
     for (i = vars.begin(); i != vars.end(); ++i) {
 	typedef Variable<T> * Vp;
-	if (!((*i)->isConst()))
-	    (Vp (*i))->setValue((Vp (*i))->getFirst());
+	(Vp (*i))->setValue((Vp (*i))->getFirst());
     }
     initiated = true;
 }
@@ -72,31 +71,18 @@ bool PCSolver<T>::generator() {
 	std::list<VariableAbstract *>::iterator i,j;
 	i = vars.begin();
 	j = vars.end();
-	--j;
 	typedef Variable<T> * Vp;
-	while (j != i) {
-	    if ( ((Vp (*j))->getValue() == (Vp (*j))->getLast()) ||
-		 (*j)->isConst() )
-		--j;
-	    else
-		break;
-	}
+	while (--j != i && ((Vp (*j))->getLast() - (Vp (*j))->getValue()) < .01/*(Vp (*j))->getStep()*/ );
 
-	if ( ((Vp (*i))->getValue() == (Vp (*i))->getLast()) ||
-	     (*i)->isConst() )
+	if ((Vp (*i))->getLast() - (Vp (*i))->getValue() < .01)
 	    return false;
 	/* Increment one variable , set other variables to the first value */
-	//std::cout << "Incrementing Variable " << (Vp (*i))->getID() << (Vp (*i))->getValue() << "\n";
-	if (! (*j)->isConst())
-	    ++(*(Vp (*j)));
-	//std::cout << "Post increment " << (Vp (*i))->getID() << (Vp (*i))->getValue() << "\n";
-	if (true || j != i) {
+	++(*(Vp (*j)));
+	
+	++j;
+	while (j != vars.end()) {
+	    (Vp (*j))->setValue((Vp (*j))->getFirst());
 	    ++j;
-	    while (j != vars.end()) {
-		if(! (*j)->isConst())
-		    (Vp (*j))->setValue((Vp (*j))->getFirst());
-		++j;
-	    }
 	}
     }
     return true;
@@ -109,10 +95,20 @@ bool PCSolver<T>::solve(VCSet & vcset, Solution<T>& S) {
     num_checks = 0;
     
     for (; i != end; ++i)
-	if ( (*i)->isConstrained() == 1 ) {
+	if ( (*i)->isConstrained() == 1 && ! (*i)->isConst()) {
+	    (*i)->display();
 	    vars.push_back(*i);
 	}
     while (generator()) {
+	/*std::cout << ".";
+	if (num_checks%1000 == 0) {
+	    std::cout<<std::endl;
+	    std::list<VariableAbstract *>::iterator i = vars.begin();
+	    std::list<VariableAbstract *>::iterator end = vars.end();
+	    for (; i != end; ++i)
+		(*i)->display(); 
+	    std::cout<<std::endl;
+	}*/
 	++num_checks;
 	if (vcset.check()) {
 	    Variable<T> * j;

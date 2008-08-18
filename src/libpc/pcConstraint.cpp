@@ -30,23 +30,27 @@
 #include "pc.h"
 
 ConstraintInterface::ConstraintInterface(pc_constrnt * c)
-    : nargs_(c->data.cf.nargs),
-      dimension_(c->data.cf.dimension)
 {
-    fp_ = c->data.cf.fp;
-    a = new double*[nargs_];
-    
-    for (int i =0; i< nargs_; i++) {
+    if (c) {
+	nargs_ = c->data.cf.nargs;
+        dimension_ = c->data.cf.dimension;
+        fp_ = c->data.cf.fp;
+        a = new double*[nargs_];
+	
+	for (int i =0; i< nargs_; i++) {
         a[i] = new double[dimension_];
+	}
     }
 }
 
 ConstraintInterface::~ConstraintInterface()
 {
-    for (int i = 0 ; i < nargs_; i++) {
-	delete[] a[i];
+    if (a) {
+	for (int i = 0 ; i < nargs_; i++) {
+	    delete[] a[i];
+	}
+	delete[] a;
     }
-    delete[] a;
 }
 
 bool ConstraintInterface::operator() (VCSet & vcset, std::list<std::string> Vid) const {

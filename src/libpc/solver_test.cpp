@@ -94,7 +94,6 @@ public:
 
 int main()
 {
-
     struct pc_pc_set pcs;
     VCSet vc_set;
     pc_init_pcset(&pcs);
@@ -103,7 +102,7 @@ int main()
     pc_pushparam_expr(&pcs,"C", "Testpar452 =1325.043");
     fastf_t D = 8.04;
     point_t E = {8.04,3.2,0.0};
-    vect_t F = {10.2,3.6,4.4};
+    vect_t F = {5.4,3.6,4.4};
     pc_pushparam_struct(&pcs,"D", PC_DB_FASTF_T, &D);
     pc_pushparam_struct(&pcs,"E", PC_DB_POINT_T, &E);
     pc_pushparam_struct(&pcs,"G", PC_DB_VECTOR_T, &F);
@@ -119,6 +118,7 @@ int main()
     Parser myparser(vc_set);
     myparser.parse(&pcs);
     
+    vc_set.getParameter("G")->setConst(true); 
     vc_set.display();
     PCSolver<double> PCS1;
     Solution<double> S1;
@@ -127,8 +127,7 @@ int main()
     S1.display();
 
     pc_free_pcset(&pcs);
-
-#if 0    
+#if 0
     typedef boost::adjacency_list<boost::vecS, boost::vecS,
 		    boost::bidirectionalS, Variable<int>*, Constraint *> Graph;
     typedef boost::graph_traits<Graph> GraphTraits;

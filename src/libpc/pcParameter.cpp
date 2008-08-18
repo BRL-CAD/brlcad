@@ -87,7 +87,6 @@ Parameter::iterator Parameter::erase(iterator begin, iterator end)
     return makeIterator(Variables.erase(begin.base(), end.base()));
 }
 
-
 std::string Parameter::getName() const
 {
     return name;
@@ -102,7 +101,19 @@ void Parameter::display() const
 {
     std::cout << "!-- " << name << "  Type = " << type <<std::endl;
 }
- 
+/** Convenience wrappers around setConst() methods of Variables */
+
+void Parameter::setConst(bool t)
+{
+    iterator i;
+    for ( i = begin(); i != end(); ++i) {
+	if (t)
+	    (*i).setConst();
+	else
+	    (*i).setVar();
+    }
+}
+
 /**
  *			Vector Methods
  *

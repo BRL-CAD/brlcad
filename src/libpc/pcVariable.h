@@ -364,7 +364,10 @@ void Variable<T>::addInterval(T low, T high, T step)
 template<class T>
 void Variable<T>::display()
 {
-    std::cout << "!-- " << getID() << " = " << getValue() << "\tType value = "<< VariableAbstract::type << std::endl;
+    std::cout << "!-- " << getID() << " = " << getValue() 
+	      << "\tType = "<< VariableAbstract::type
+	      << "\tConstant = "<< VariableAbstract::const_
+	      << std::endl;
     D.display();
 }
 /* Solution Class Functions */

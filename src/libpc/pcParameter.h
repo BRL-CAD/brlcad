@@ -60,10 +60,12 @@ public:
     std::string getName() const;
     int getType() const;
     Varlist::size_type getSize() { return Variables.size(); }
+    bool isConst();
     
     /** Data modification methods */
     void setType(int n) { type = n; }
-    
+    void setConst(bool t);
+ 
     /** Display method */
     void display() const;
 
