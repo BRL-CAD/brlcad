@@ -119,6 +119,7 @@ struct pc_pc_set {
 
 PC_EXPORT PC_EXTERN(void pc_init_pcset, (struct pc_pc_set * pcs));
 PC_EXPORT PC_EXTERN(void pc_free_pcset, (struct pc_pc_set * pcs));
+PC_EXPORT PC_EXTERN(void pc_free_constraint, (struct pc_constrnt * c));
 PC_EXPORT PC_EXTERN(void pc_getparameter, (struct pc_param ** p, int t));
 PC_EXPORT PC_EXTERN(void pc_pushparam_expr, (struct pc_pc_set * pcs,const char * name, const char * str));
 PC_EXPORT PC_EXTERN(void pc_pushparam_struct, (struct pc_pc_set * pcs,const char * name, int type, void * ptr));

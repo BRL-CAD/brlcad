@@ -198,6 +198,22 @@ pc_pushconstraint_struct1(struct pc_pc_set * pcsp,struct pc_constrnt * con)
 }
 
 /**
+ * 			PC_FREE_CONSTRAINT
+ * frees the memory allocation for a pc_constrnt object.
+ *
+ */
+
+void
+pc_free_constraint(struct pc_constrnt * con)
+{
+    bu_vls_free(&(con->name));
+    if (con->ctype == PC_DB_BYEXPR)
+        bu_vls_free(&(con->data.expression));
+    if (con->ctype == PC_DB_BYSTRUCT) 
+        bu_free(con->args, "free argument array");
+}
+
+/**
  * 			PC_FREE_PCSET
  * frees the parameter&constraint set (pc_pc_set) pointed to by the
  * pointer taken as an argument. It also frees the corresponding allocation
@@ -219,11 +235,7 @@ pc_free_pcset(struct pc_pc_set * pcs)
     }
     bu_free(pcs->ps, "free parameter");
     while (BU_LIST_WHILE(con,pc_constrnt,&(pcs->cs->l))) {
-        bu_vls_free(&(con->name));
-	if (con->ctype == PC_DB_BYEXPR)
-	    bu_vls_free(&(con->data.expression));
-	if (con->ctype == PC_DB_BYSTRUCT) 
-	    bu_free(con->args,"free argument array");
+	pc_free_constraint(con);
         BU_LIST_DEQUEUE(&(con->l));
         bu_free(con, "free constraint");
     }

@@ -110,10 +110,16 @@ int main()
     pc_pushparam_struct(&pcs,"F", PC_DB_VECTOR_T, &F);
     char * args[] = {"F","G"};
     pc_pushconstraint_expr(&pcs, "Constraint-test","A + B < 0");
-    pc_pushconstraint_struct(&pcs, "Struct-test",2,3,&pc_isperpendicular,args);
-    
     Parser myparser(vc_set);
     myparser.parse(&pcs);
+    pc_free_pcset(&pcs);
+    pc_constrnt *con;
+    pc_getconstraint_struct(&con, 2);
+    pc_free_constraint(con);
+#if 0    
+    //pc_mk_isperpendicular(&con,"G _|_ F", args);
+    //pc_pushconstraint_struct(&pcs, "Struct-test",2,3,&pc_isperpendicular,args);
+    
 
     vc_set.display();
 
@@ -177,6 +183,7 @@ int main()
     std::cout << "Generate-Test Solution:" << GTS.numChecks() << std::endl;
     std::cout << "BackTracking based Solution:" << BTS.numChecks() << std::endl;
     std::cout << "Generic Generate-Test Solution:" << PCS.numChecks() << std::endl;
+#endif
     return 0;
 }
 
