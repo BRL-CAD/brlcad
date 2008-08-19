@@ -136,6 +136,7 @@ public:
     T getValue() { return value; }
     T getFirst() { return D.getFirst(); }
     T getLast() { return D.getLast(); }
+    T getStep() { return D.getInterval(value).getStep(); }
     void setValue(T t) { value = t; }
     
     /* Value storing and restoring methods to assist in iteration */
