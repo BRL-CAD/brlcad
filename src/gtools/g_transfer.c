@@ -24,7 +24,7 @@
  * geometry objects, transfer those objects to a remote host, and
  * using standard librt routines on the remote objects while keeping
  * the remote geometry in memory only.  The transfer program interface
- * is designed in a simple TCP fashion using libpkg.
+ * is designed in a simple 'ttcp' fashion using libpkg.
  *
  * To compile from an install:
  * gcc -I/usr/brlcad/include/brlcad -L/usr/brlcad/lib -o g_transfer g_transfer.c -lpkg -lrt -lbu
