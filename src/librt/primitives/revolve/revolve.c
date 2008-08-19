@@ -42,12 +42,11 @@
 #include "./revolve.h"
 
 
-#define START_FACE	1
-#define END_FACE	2
-#define LINE_SEG	3
-#define CARC_SEG	4
-#define NURB_SEG	5
-#define BEZIER_SEG	6
+#define START_FACE_POS	-1
+#define START_FACE_NEG	-2
+#define END_FACE_POS	-3
+#define END_FACE_NEG	-4
+#define HORIZ_SURF	-5
 
 #define MAX_HITS	64
 
@@ -76,7 +75,7 @@ rt_revolve_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     vect_t	xEnd, yEnd;
 
     int		*endcount;
-    int 	nseg, degree, i, j, nends;
+    int 	nseg, degree, i, j, k, nends;
 
     fastf_t	bounds[4];	/* { XMIN, XMAX, YMIN, YMAX } */
 
@@ -157,17 +156,32 @@ rt_revolve_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     }
 
     /* convert endcounts to store which endpoints are odd */
-    for ( i=0, j=0; i<rev->sk->vert_count; i++ ) {
-	if ( endcount[i] % 2 != 0 ) endcount[j++] = i;
+    for ( i=0, j=0; i<rip->sk->vert_count; i++ ) {
+	if ( endcount[i] % 2 != 0 ) {
+	    /* add 'i' to list, insertion sort by vert[i][Y] */
+	    for( k=j; k>0; k-- ) {
+		if ( ( NEAR_ZERO( rip->sk->verts[i][Y] - rip->sk->verts[endcount[k-1]][Y], SMALL_FASTF ) 
+		       && rip->sk->verts[i][X] > rip->sk->verts[endcount[k-1]][X] ) 
+		     || ( !NEAR_ZERO( rip->sk->verts[i][Y] - rip->sk->verts[endcount[k-1]][Y], SMALL_FASTF )
+			  && rip->sk->verts[i][Y] < rip->sk->verts[endcount[k-1]][Y] ) ) {
+		    endcount[k] = endcount[k-1];
+		} else {
+		    break;
+		}
+	    }
+	    endcount[k] = i;
+	    j++;
+	}
     }
     while ( j < rev->sk->vert_count ) endcount[j++] = -1;
 
     rev->ends = endcount;
 
     /* bounding volume */
-    rt_sketch_bounds( rev->sk, bounds );
-    VJOIN1( stp->st_center, rev->v3d, 0.5*(bounds[2]+bounds[3]), rev->zUnit );
-    stp->st_aradius = sqrt( 0.25*(bounds[3]-bounds[2])*(bounds[3]-bounds[2]) + FMAX( bounds[0]*bounds[0], bounds[1]*bounds[1] ) );
+    rt_sketch_bounds( rev->sk, rev->bounds );
+    if ( endcount[0] != -1 && rev->bounds[0] > 0 ) rev->bounds[0] = 0;
+    VJOIN1( stp->st_center, rev->v3d, 0.5*(rev->bounds[2]+rev->bounds[3]), rev->zUnit );
+    stp->st_aradius = sqrt( 0.25*(rev->bounds[3]-rev->bounds[2])*(rev->bounds[3]-rev->bounds[2]) + FMAX( rev->bounds[0]*rev->bounds[0], rev->bounds[1]*rev->bounds[1] ) );
     stp->st_bradius = stp->st_aradius;
 
     /* cheat, make bounding RPP by enclosing bounding sphere (copied from g_ehy.c) */
@@ -282,8 +296,8 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 		hitp = hits[nhits++];
 		hitp->hit_magic = RT_HIT_MAGIC;
 		hitp->hit_dist = start;
-		hitp->hit_surfno = (hit2d[X]>0) ? -START_FACE : START_FACE;
-		VJOIN1( hitp->hit_vpriv, pr, hitp->hit_dist, vr );
+		hitp->hit_surfno = (hit2d[X]>0) ? START_FACE_NEG : START_FACE_POS;
+		VSET( hitp->hit_vpriv, -hit2d[X], hit2d[Y], 0 );
 	    }
 	}
 	
@@ -306,8 +320,8 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 		hitp = hits[nhits++];
 		hitp->hit_magic = RT_HIT_MAGIC;
 		hitp->hit_dist = end;
-		hitp->hit_surfno = (hit2d[X]>0) ? -END_FACE : END_FACE;
-		VJOIN1( hitp->hit_vpriv, pr, hitp->hit_dist, vr );
+		hitp->hit_surfno = (hit2d[X]>0) ? END_FACE_NEG : END_FACE_POS;
+		VSET( hitp->hit_vpriv, -hit2d[X], hit2d[Y], 0 );
 	    }
 	}
     }
@@ -363,7 +377,7 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 		hitp = hits[nhits++];
 		hitp->hit_magic = RT_HIT_MAGIC;
 		hitp->hit_dist = (hit2d[Y] - pr[Z]) / vr[Z];
-		hitp->hit_surfno = LINE_SEG;
+		hitp->hit_surfno = HORIZ_SURF;
 		VJOIN1( hitp->hit_vpriv, pr, hitp->hit_dist, vr );
 		hitp->hit_point[X] = hit2d[X];
 		hitp->hit_point[Y] = hit2d[Y];
@@ -376,13 +390,29 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 		    angle += 2*M_PI;
 		}
 		hit2d[X] = -hit2d[X];
-		if ( angle > rev->ang ) nhits--;
-		else if ( ( angle + M_PI < rev->ang || angle - M_PI > 0 ) 
+		if ( angle > rev->ang ) {
+		    nhits--;
+		    continue;
+		} else if ( ( angle + M_PI < rev->ang || angle - M_PI > 0 ) 
 			    && rt_sketch_contains( rev->sk, hit2d )
 			    && hit2d[X] > 0 ) {
 		    nhits--;
+		    continue;
 		}
-		hitp->hit_vpriv[Z] = MAX_FASTF;	/* slope = 0, so 1/slope = inf */
+		/* X and Y are used for uv(), Z is used for norm() */
+		hitp->hit_vpriv[X] = pt1[X];
+		hitp->hit_vpriv[Y] = angle;
+		if ( i+1 < rev->sk->vert_count && rev->ends[i+1] != -1 &&
+		     NEAR_ZERO( rev->sk->verts[rev->ends[i]][Y] 
+				- rev->sk->verts[rev->ends[i+1]][Y], SMALL ) ) {
+		    hitp->hit_vpriv[Z] = rev->sk->verts[rev->ends[i+1]][X];
+		    i++;
+		    if ( fabs( hit2d[X] ) < fabs( hitp->hit_vpriv[Z] ) ) {
+			nhits--;
+		    }
+		} else {
+		    hitp->hit_vpriv[Z] = 0;
+		}
 	    }
 	}
     }
@@ -424,7 +454,7 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 			    hitp->hit_vpriv[Z] = -1.0/m;
 			    hitp->hit_magic = RT_HIT_MAGIC;
 			    hitp->hit_dist = k1;
-			    hitp->hit_surfno = LINE_SEG;
+			    hitp->hit_surfno = i;
 			}
 		    }
 		    if ( FMIN( pt1[X], pt2[X] ) < -aa && -aa < FMAX( pt1[X], pt2[X] ) ) {
@@ -449,7 +479,7 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 			    hitp->hit_vpriv[Z] = 1.0/m;
 			    hitp->hit_magic = RT_HIT_MAGIC;
 			    hitp->hit_dist = k1;
-			    hitp->hit_surfno = LINE_SEG;
+			    hitp->hit_surfno = i;
 			}
 		    }
 		} else if ( NEAR_ZERO( ur[Z], RT_DOT_TOL ) ) {
@@ -481,7 +511,7 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 				hitp->hit_vpriv[Z] = (hit2d[X]>0) ? 1.0/m : -1.0/m;
 				hitp->hit_magic = RT_HIT_MAGIC;
 				hitp->hit_dist = k1;
-				hitp->hit_surfno = LINE_SEG;
+				hitp->hit_surfno = i;
 			    }
 			    
 			    VJOIN1( hit2, pr, k2, vr );
@@ -503,7 +533,7 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 				hitp->hit_vpriv[Z] = (hit2d[X]>0) ? 1.0/m : -1.0/m;
 				hitp->hit_magic = RT_HIT_MAGIC;
 				hitp->hit_dist = k2;
-				hitp->hit_surfno = LINE_SEG;
+				hitp->hit_surfno = i;
 			    }
 			}
 		    }
@@ -545,7 +575,7 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 				    hitp->hit_vpriv[Z] = (hit2d[X]>0) ? 1.0/m : -1.0/m;
 				    hitp->hit_magic = RT_HIT_MAGIC;
 				    hitp->hit_dist = k1;
-				    hitp->hit_surfno = LINE_SEG;
+				    hitp->hit_surfno = i;
 				}
 			    }
 			}
@@ -573,7 +603,7 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 				    hitp->hit_vpriv[Z] = (hit2d[X]>0) ? 1.0/m : -1.0/m;
 				    hitp->hit_magic = RT_HIT_MAGIC;
 				    hitp->hit_dist = k2;
-				    hitp->hit_surfno = LINE_SEG;
+				    hitp->hit_surfno = i;
 				}
 			    }
 			}
@@ -606,7 +636,7 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 				hitp->hit_vpriv[Z] = (hit2d[X]>0) ? 1.0/m : -1.0/m;;
 				hitp->hit_magic = RT_HIT_MAGIC;
 				hitp->hit_dist = k1;
-				hitp->hit_surfno = LINE_SEG;
+				hitp->hit_surfno = i;
 			    }
 			}
 		    }
@@ -709,17 +739,17 @@ rt_revolve_norm( struct hit *hitp, struct soltab *stp, struct xray *rp )
 
     VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
     switch ( hitp->hit_surfno ) {
-	case START_FACE:
+	case START_FACE_POS:
 	    VREVERSE( hitp->hit_normal, rev->yUnit );
 	    break;
-	case -START_FACE:
+	case START_FACE_NEG:
 	    VMOVE( hitp->hit_normal, rev->yUnit );
 	    break;
-	case END_FACE:
+	case END_FACE_POS:
 	    VCROSS( hitp->hit_normal, rev->zUnit, rev->rEnd );
 	    VUNITIZE( hitp->hit_normal );
 	    break;
-	case -END_FACE:
+	case END_FACE_NEG:
 	    VCROSS( hitp->hit_normal, rev->rEnd, rev->zUnit );
 	    VUNITIZE( hitp->hit_normal );
 	    break;
@@ -727,7 +757,7 @@ rt_revolve_norm( struct hit *hitp, struct soltab *stp, struct xray *rp )
 	    VSET( n, hitp->hit_vpriv[X], hitp->hit_vpriv[Y], 0 );
 	    n[Z] = MAGNITUDE( n ) * hitp->hit_vpriv[Z];
 
-	    if ( NEAR_ZERO( 1.0/hitp->hit_vpriv[Z], SMALL_FASTF ) ) {
+	    if ( hitp->hit_surfno == HORIZ_SURF ) {
 		VSET( n, 0, 0, 1 );
 	    }
 
@@ -778,8 +808,88 @@ rt_revolve_curve( struct curvature *cvp, struct hit *hitp, struct soltab *stp )
 void
 rt_revolve_uv( struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp )
 {
-    register struct revolve_specific *revolve =
+    register struct revolve_specific *rev =
 	(struct revolve_specific *)stp->st_specific;
+
+    point_t		hitpoint;
+    fastf_t		angle;
+    long		*lng;
+    struct line_seg	*lsg;
+    struct carc_seg	*csg;
+    struct nurb_seg	*nsg;
+    struct bezier_seg	*bsg;
+
+    VJOIN1( hitpoint, hitp->hit_rayp->r_pt, hitp->hit_dist, hitp->hit_rayp->r_dir );
+
+    switch ( hitp->hit_surfno ) {
+	case START_FACE_POS:
+	case START_FACE_NEG:
+	case END_FACE_POS:
+	case END_FACE_NEG:
+	    uvp->uv_u = fabs( (hitp->hit_vpriv[X] - rev->bounds[0]) / (rev->bounds[1] - rev->bounds[0]) );
+	    uvp->uv_v = fabs( (hitp->hit_vpriv[Y] - rev->bounds[2]) / (rev->bounds[3] - rev->bounds[2]) ); 
+	    break;
+	case HORIZ_SURF:
+	    hitpoint[Z] = 0;
+
+	    /* Y is the angle: [0,2pi] */
+	    uvp->uv_u = hitp->hit_vpriv[Y] / rev->ang;
+
+	    /* X is the coord of the endpoint that we're connecting to the revolve axis */
+	    uvp->uv_v = fabs( (MAGNITUDE( hitpoint ) - hitp->hit_vpriv[Z]) 
+				/ ( hitp->hit_vpriv[X]- hitp->hit_vpriv[Z]) );
+	    /* bu_log( "\tmin: %3.2f\tmax: %3.2f\n", hitp->hit_vpriv[Z], hitp->hit_vpriv[X] ); */
+	    break;
+	default:
+	    angle = atan2( hitp->hit_vpriv[Y], hitp->hit_vpriv[X] );
+	    if ( angle < 0 ) angle += 2*M_PI;
+	    uvp->uv_u = angle / rev->ang;
+
+	    lng = (long *)rev->sk->skt_curve.segments[hitp->hit_surfno];
+
+	    switch ( *lng ) {
+		case CURVE_LSEG_MAGIC:
+		    lsg = (struct line_seg *)lng;
+		    if ( NEAR_ZERO( 1.0/hitp->hit_vpriv[Z], SMALL_FASTF ) ) {
+			/* use hitpoint radius and sketch's X values */
+			hitpoint[Z] = 0;
+			uvp->uv_v = (MAGNITUDE( hitpoint) - rev->sk->verts[lsg->end][X]) /
+				(rev->sk->verts[lsg->start][X] - rev->sk->verts[lsg->end][X]);
+		    } else {
+			/* use hitpoint Z and sketch's Y values */
+			uvp->uv_v = (hitpoint[Z] - rev->sk->verts[lsg->end][Y]) /
+				(rev->sk->verts[lsg->start][Y] - rev->sk->verts[lsg->end][Y]);
+		    }
+		    break;
+		case CURVE_CARC_MAGIC:
+		    csg = (struct carc_seg *)lng;
+		    break;
+		case CURVE_BEZIER_MAGIC:
+		    bsg = (struct bezier_seg *)lng;
+		    break;
+		case CURVE_NURB_MAGIC:
+		    nsg = (struct nurb_seg *)lng;
+		    break;
+		default:
+		    bu_log( "rt_revolve_prep: ERROR: unrecognized segment type!\n" );
+		    break;
+	    }
+
+	    break;
+    }
+    if ( uvp->uv_v > 1 || uvp->uv_v < 0 || uvp->uv_u > 1 || uvp->uv_u < 0 ) {
+	bu_log( "UV error:\t%d\t%2.2f\t%2.2f\t", hitp->hit_surfno, uvp->uv_u, uvp->uv_v );
+	bu_log( "\tX: (%3.2f, %3.2f)\tY: (%3.2f, %3.2f)\n", rev->bounds[0], rev->bounds[1], rev->bounds[2], rev->bounds[3] );
+    }
+    /* sanity checks */
+    if ( uvp->uv_u < 0.0 )
+	uvp->uv_u = 0.0;
+    else if ( uvp->uv_u > 1.0 )
+	uvp->uv_u = 1.0;
+    if ( uvp->uv_v < 0.0 )
+	uvp->uv_v = 0.0;
+    else if ( uvp->uv_v > 1.0 )
+	uvp->uv_v = 1.0;
 }
 
 /**
@@ -1027,11 +1137,10 @@ rt_revolve_plot( struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 int
 rt_revolve_tess( struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol )
 {
-    struct rt_revolve_internal	*revolve_ip;
+    struct rt_revolve_internal *rip;
 
-    RT_CK_DB_INTERNAL(ip);
-    revolve_ip = (struct rt_revolve_internal *)ip->idb_ptr;
-    RT_REVOLVE_CK_MAGIC(revolve_ip);
+    rip = (struct rt_revolve_internal *)ip->idb_ptr;
+    RT_REVOLVE_CK_MAGIC(rip);
 
     return(-1);
 }
