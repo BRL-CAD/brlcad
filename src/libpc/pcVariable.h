@@ -52,18 +52,19 @@ public:
     typedef std::list<Interval<T> > IntervalList;
     typedef typename IntervalList::size_type size_type;
     typedef typename IntervalList::difference_type difference_type;
-    typedef typename boost::indirect_iterator<typename IntervalList::iterator> iterator;
-    typedef typename boost::indirect_iterator<typename IntervalList::const_iterator>\
-							 const_iterator;
+    typedef typename boost::indirect_iterator
+			<typename IntervalList::iterator> iterator;
+    typedef typename boost::indirect_iterator
+			<typename IntervalList::const_iterator> const_iterator;
 
     /** Constructors and Destructor */
-    Domain();
-    ~Domain();
+    Domain() {}
+    ~Domain() {}
     Domain(T low,T high,T step);
     
     /** Data access methods */
     int size() { return Interv.size(); }
-    Interval<T> getInterval(T) throw(pcException);
+    Interval<T> & getInterval(T) throw(pcException);
     T getFirst() { return Interv.front().getLow();}
     T getLast() { return Interv.back().getHigh(); }
     T getNextLow (T);
@@ -112,6 +113,7 @@ public:
     bool isConst() { return const_; }
     int isConstrained() { return constrained_; }
     void setConstrained(int n) { constrained_ = n; }
+
 protected:
     int type;
     bool const_;
@@ -135,19 +137,30 @@ public:
     T getFirst() { return D.getFirst(); }
     T getLast() { return D.getLast(); }
     void setValue(T t) { value = t; }
+    
+    /* Value storing and restoring methods to assist in iteration */
+    void storeValue() { vcopy_ = value; }
+    void restoreValue() { value = vcopy_; }
 
     /* Domain Modification methods */
     void addInterval(const Interval<T>);
     void addInterval(T low, T high, T step);
     void intersectInterval(Interval<T> t) { D.intersectInterval(t); }
-    
+
+    /* value location in domain check methods */
+    bool atUpperBoundary();
+    bool atLowerBoundary(); 
+    bool atCriticalBelow();
+    bool atCriticalAbove();
+
     /* Variable display method */
     void display();
-
+    
     Variable& operator++();
     /*Variable operator++(T) { value++; return this; }*/
 private:
     T value;
+    T vcopy_;
     Domain<T> D;
 };
 
@@ -177,18 +190,6 @@ class SearchStructure {
 
 /* Domain Class Functions */
 template<class T>
-Domain<T>::Domain()
-{
-
-}
-
-template<class T>
-Domain<T>::~Domain()
-{
-
-}
-
-template<class T>
 Domain<T>::Domain(T low,T high,T step) {
     addInterval(Interval<T>(low, high, step) );
 }
@@ -206,6 +207,70 @@ void Domain<T>::addInterval(const Interval<T> t)
 */
     this->Interv.insert(i,t);
     packIntervals();
+}
+
+template<typename T>
+typename Domain<T>::iterator
+makeIterator(typename Domain<T>::IntervalList::iterator i)
+{
+    return boost::make_indirect_iterator(i);
+}
+
+template<typename T>
+typename Domain<T>::const_iterator
+makeIterator(typename Domain<T>::IntervalList::const_iterator i)
+{
+    return boost::make_indirect_iterator(i);
+}
+
+template<typename T>
+typename Domain<T>::iterator
+Domain<T>::begin()
+{
+    return makeIterator(Interv.begin());
+}
+
+template<typename T>
+typename Domain<T>::iterator
+Domain<T>::end()
+{
+    return makeIterator(Interv.end());
+}
+
+template<typename T>
+typename Domain<T>::const_iterator
+Domain<T>::begin() const
+{
+    return makeIterator(Interv.begin());
+}
+
+template<typename T>
+typename Domain<T>::const_iterator
+Domain<T>::end() const
+{
+    return makeIterator(Interv.end());
+}
+
+template<typename T>
+typename Domain<T>::iterator
+Domain<T>::erase(iterator location)
+{
+    return makeIterator(Interv.erase(location.base()));
+}
+
+template<typename T>
+typename Domain<T>::iterator
+Domain<T>::erase(iterator begin, iterator end)
+{
+    return makeIterator(Interv.erase(begin.base(), end.base()));
+}
+
+template<typename T>
+typename Domain<T>::iterator
+Domain<T>::insert(iterator location, Interval<T> * I)
+{
+    assert(I);
+    return makeIterator(Interv.insert(location.base(), I));
 }
 
 template<class T>
@@ -232,7 +297,7 @@ void Domain<T>::intersectInterval(Interval<T> t)
     }
 }
 template<class T>
-Interval<T> Domain<T>::getInterval(T t) throw(pcException)
+Interval<T> & Domain<T>::getInterval(T t) throw(pcException)
 {
     typename std::list<Interval<T> >::iterator i;
     for (i = this->Interv.begin(); i != this->Interv.end(); i++) {
@@ -318,7 +383,6 @@ void  Domain<T>::packIntervals ()
 
 	do {
 
-/*	    display();std::cout << "++++" << i->getHigh() << " " << j->getLow() << std::endl;*/
 	    if (i->getHigh() > j->getLow() ) {
 		if (mergeIntervals(i) !=0) {
 		    std::cout << "Error: Incompatible stepsizes" << std::endl;
@@ -332,9 +396,6 @@ void  Domain<T>::packIntervals ()
 		continue;
 	    }
 	} while (j != Interv.end());
-	/*std::cout << "!!!!!" << j->getHigh() << " " << j->getLow() << std::endl;
-	  std::cout << "-----------------------------------" << std::endl;*/
-	return;
     }
 }
 
@@ -343,9 +404,10 @@ void  Domain<T>::packIntervals ()
  */
 
 template<class T>
-Variable<T>::Variable(std::string vid, T vvalue) :
-    VariableAbstract(vid),
-    value(vvalue)
+Variable<T>::Variable(std::string vid, T vvalue)
+    : VariableAbstract(vid),
+      value(vvalue),
+      vcopy_(vvalue)
 {
 }
 
@@ -389,6 +451,27 @@ void Variable<T>::display()
 	      << std::endl;
     D.display();
 }
+
+template<class T>
+bool Variable<T>::atUpperBoundary()
+{
+}
+
+template<class T>
+bool Variable<T>::atLowerBoundary()
+{
+}
+
+template<class T>
+bool Variable<T>::atCriticalBelow()
+{
+}
+
+template<class T>
+bool Variable<T>::atCriticalAbove()
+{
+}
+
 /* Solution Class Functions */
 template <class T>
 VarDomain<T>::VarDomain(Variable<T> Variable,Domain<T> Domain) {
