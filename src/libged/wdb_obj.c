@@ -4736,7 +4736,7 @@ wdb_rmap_cmd(struct rt_wdb	*wdbp,
 
     if (wdbp->dbip->dbi_version < 5) {
 	Tcl_DStringAppend(&ds, argv[0], -1);
-	Tcl_DStringAppend(&ds, " is not available prior to dbversion 5\n", -1);
+	Tcl_DStringAppend(&ds, " is not available prior to version 5 of the .g file format\n", -1);
 	Tcl_DStringResult(interp, &ds);
 	return TCL_ERROR;
     }
