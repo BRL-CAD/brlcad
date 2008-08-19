@@ -311,7 +311,7 @@ ged_rt_write(struct ged *gedp,
     (void)fprintf(fp, "end;\n");
 }
 
-#ifndef _WIN32
+
 void
 ged_rt_output_handler(ClientData	clientData,
 		      int		mask)
@@ -319,6 +319,7 @@ ged_rt_output_handler(ClientData	clientData,
     struct ged_rt_client_data *drcdp = (struct ged_rt_client_data *)clientData;
     struct ged_run_rt *run_rtp;
     int count;
+    int read_failed = 0;
     char line[RT_MAXLINE+1];
 
     if (drcdp == (struct ged_rt_client_data *)NULL ||
@@ -330,8 +331,19 @@ ged_rt_output_handler(ClientData	clientData,
     run_rtp = drcdp->rrtp;
 
     /* Get data from rt */
+#ifndef _WIN32
     count = read((int)run_rtp->fd, line, RT_MAXLINE);
     if (count <= 0) {
+	read_failed = 1;
+    }
+#else
+    if (Tcl_Eof(run_rtp->chan) ||
+	(!ReadFile(run_rtp->fd, line, 10240, &count, 0))) {
+	read_failed = 1;
+    }
+#endif
+
+    if (read_failed) {
 	int retcode = 0;
 	int rpid;
 	int aborted;
@@ -340,6 +352,8 @@ ged_rt_output_handler(ClientData	clientData,
 	    perror("READ ERROR");
 	}
 
+	/* was it aborted? */
+#ifndef _WIN32
 	Tcl_DeleteFileHandler(run_rtp->fd);
 	close(run_rtp->fd);
 
@@ -347,6 +361,30 @@ ged_rt_output_handler(ClientData	clientData,
 	while ((rpid = wait(&retcode)) != run_rtp->pid && rpid != -1);
 
 	aborted = run_rtp->aborted;
+#else
+	Tcl_DeleteChannelHandler(run_rtp->chan,
+				 ged_rt_output_handler,
+				 (ClientData)drcdp);
+	Tcl_Close(brlcad_interp, run_rtp->chan);
+
+	/* wait for the forked process
+	 * either EOF has been sent or there was a read error.
+	 * there is no need to block indefinately
+	 */
+	WaitForSingleObject( run_rtp->hProcess, 120 );
+	/* !!! need to observe implications of being non-infinate
+	 *	WaitForSingleObject( run_rtp->hProcess, INFINITE );
+	 */
+
+	if (GetLastError() == ERROR_PROCESS_ABORTED) {
+	    run_rtp->aborted = 1;
+	}
+
+	GetExitCodeProcess( run_rtp->hProcess, &retcode );
+	/* may be useful to try pr_wait_status() here */
+
+	aborted = run_rtp->aborted;
+#endif
 
 #if 0
 	/*XXX Still need to address this */
@@ -398,109 +436,11 @@ ged_rt_output_handler(ClientData	clientData,
 	bu_vls_printf(&drcdp->gedp->ged_result_str, "%s", line);
 }
 
-#else
-void
-ged_rt_output_handler(ClientData	clientData,
-		      int		mask)
-{
-    struct ged_rt_client_data *drcdp = (struct ged_rt_client_data *)clientData;
-    struct ged_run_rt *run_rtp;
-    int count;
-    char line[10240+1] = {0};
 
-    if (drcdp == (struct ged_rt_client_data *)NULL ||
-	drcdp->gedp == (struct ged *)NULL ||
-	drcdp->rrtp == (struct ged_run_rt *)NULL ||
-	brlcad_interp == (Tcl_Interp *)NULL)
-	return;
-
-    run_rtp = drcdp->rrtp;
-
-    /* Get data from rt */
-    if (Tcl_Eof(run_rtp->chan) ||
-	(!ReadFile(run_rtp->fd, line, 10240, &count, 0))) {
-	int aborted;
-	int retcode;
-
-	Tcl_DeleteChannelHandler(run_rtp->chan,
-				 ged_rt_output_handler,
-				 (ClientData)drcdp);
-	Tcl_Close(brlcad_interp, run_rtp->chan);
-
-	/* wait for the forked process
-	 * either EOF has been sent or there was a read error.
-	 * there is no need to block indefinately
-	 */
-	WaitForSingleObject( run_rtp->hProcess, 120 );
-	/* !!! need to observe implications of being non-infinate
-	 *	WaitForSingleObject( run_rtp->hProcess, INFINITE );
-	 */
-
-	if (GetLastError() == ERROR_PROCESS_ABORTED) {
-	    run_rtp->aborted = 1;
-	}
-
-	GetExitCodeProcess( run_rtp->hProcess, &retcode );
-	/* may be useful to try pr_wait_status() here */
-
-	aborted = run_rtp->aborted;
-
-#if 0
-	/*XXX Still need to address this */
-	if (drcdp->gedp->ged_gdp->gd_outputHandler != NULL) {
-	    struct bu_vls vls;
-
-	    bu_vls_init(&vls);
-
-	    if (aborted)
-		bu_vls_printf(&vls, "%s \"Raytrace aborted.\n\"",
-			      drcdp->gedp->ged_gdp->gd_outputHandler);
-	    else if (retcode)
-		bu_vls_printf(&vls, "%s \"Raytrace failed.\n\"",
-			      drcdp->gedp->ged_gdp->gd_outputHandler);
-	    else
-		bu_vls_printf(&vls, "%s \"Raytrace complete.\n\"",
-			      drcdp->gedp->ged_gdp->gd_outputHandler);
-
-	    Tcl_Eval(brlcad_interp, bu_vls_addr(&vls));
-	    bu_vls_free(&vls);
-	} else {
-	    if (aborted)
-		bu_log("Raytrace aborted.\n");
-	    else if (retcode)
-		bu_log("Raytrace failed.\n");
-	    else
-		bu_log("Raytrace complete.\n");
-	}
-#endif
-
-	if (drcdp->gedp->ged_gdp->gd_rtCmdNotify != (void (*)())0)
-	    drcdp->gedp->ged_gdp->gd_rtCmdNotify();
-
-	/* free run_rtp */
-	BU_LIST_DEQUEUE(&run_rtp->l);
-	bu_free((genptr_t)run_rtp, "ged_rt_output_handler: run_rtp");
-
-	bu_free((genptr_t)drcdp, "ged_rt_output_handler: drcdp");
-
-	return;
-    }
-
-    line[count] = '\0';
-
-    /*XXX For now just blather to stderr */
-    if (drcdp->gedp->ged_output_handler != (void (*)())0)
-	drcdp->gedp->ged_output_handler(drcdp->gedp, line);
-    else
-	bu_vls_printf(&drcdp->gedp->ged_result_str, "%s", line);
-}
-
-#endif
-
-/*
- *                    G E D _ B U I L D _ T O P S
+/**
+ * G E D _ B U I L D _ T O P S
  *
- *  Build a command line vector of the tops of all objects in view.
+ * Build a command line vector of the tops of all objects in view.
  */
 int
 ged_build_tops(struct ged	*gedp,
