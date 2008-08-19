@@ -5,7 +5,7 @@ Notes about libpc implementation
 
 	The following are the boost library includes in libpc
 	1. shared_ptr.hpp in pcMathVM.h
-	2. indirect_iterator.hpp in pcMathVM.h
+	2. indirect_iterator.hpp in pcMathVM.h, pcVariable.h
 	3. function.hpp in pcConstraint.h
 	4. spirit/include/classic.hpp in pcParser.h
 	5. graph/graph_traits.hpp in pcNetwork.h

@@ -43,11 +43,19 @@
 #include "pcBasic.h"
 #include "pcInterval.h"
 
+#include <boost/iterator/indirect_iterator.hpp>
 
 template<class T>
 class Domain
 {
 public:
+    typedef std::list<Interval<T> > IntervalList;
+    typedef typename IntervalList::size_type size_type;
+    typedef typename IntervalList::difference_type difference_type;
+    typedef typename boost::indirect_iterator<typename IntervalList::iterator> iterator;
+    typedef typename boost::indirect_iterator<typename IntervalList::const_iterator>\
+							 const_iterator;
+
     /** Constructors and Destructor */
     Domain();
     ~Domain();
@@ -65,6 +73,17 @@ public:
     void addInterval(T, T, T);
     void intersectInterval(Interval<T>);
     
+    /** Iterator methods */
+    iterator begin();
+    iterator end();
+    const_iterator begin() const;
+    const_iterator end() const;
+
+    iterator erase(iterator location);
+    iterator erase(iterator begin, iterator end);
+
+    iterator insert(iterator location, Interval<T> * I);
+    
     /** Emptiness check */
     bool isEmpty();
 
@@ -77,7 +96,7 @@ public:
     /** Display method */
     void display();
 private:
-    std::list<Interval<T> > Interv;
+    IntervalList Interv;
     int mergeIntervals (typename std::list<Interval<T> >::iterator);
     void packIntervals ();
 };
