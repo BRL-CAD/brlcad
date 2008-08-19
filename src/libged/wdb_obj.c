@@ -299,9 +299,7 @@ static struct bu_cmdtab wdb_newcmds[] = {
     {"make_name",	ged_make_name},
     {"mater",		ged_mater},
     {"mirror",		ged_mirror},
-#if GED_USE_RUN_RT
     {"nirt",		ged_nirt},
-#endif
     {"ocenter",		ged_ocenter},
     {"orotate",		ged_orotate},
     {"oscale",		ged_oscale},
@@ -362,9 +360,7 @@ static struct bu_cmdtab wdb_cmds[] = {
     {"move_arb_face",	wdb_move_arb_face_tcl},
     {"mv",		wdb_move_tcl},
     {"mvall",	wdb_move_all_tcl},
-#if GED_USE_RUN_RT
     {"nirt",	wdb_newcmds_tcl},
-#endif
     {"nmg_collapse", wdb_nmg_collapse_tcl},
     {"nmg_simplify", wdb_nmg_simplify_tcl},
     {"observer",	wdb_observer_tcl},

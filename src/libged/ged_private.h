@@ -219,7 +219,6 @@ BU_EXTERN(struct directory ** ged_getspace,
 BU_EXTERN (void ged_rt_set_eye_model,
 	   (struct ged *gedp,
 	    vect_t eye_model));
-#if GED_USE_RUN_RT
 BU_EXTERN (int ged_run_rt,
 	   (struct ged *gdp));
 BU_EXTERN (void ged_rt_write,
@@ -234,7 +233,6 @@ BU_EXTERN (int ged_build_tops,
 	    struct solid	*hsp,
 	    char		**start,
 	    register char	**end));
-#endif
 
 /* defined in rtcheck.c */
 BU_EXTERN (void ged_wait_status,

@@ -128,9 +128,8 @@ ged_drawable_init(struct ged_drawable *gdp)
 #if 0
     BU_LIST_INIT(&gdp->gd_observers.l);
 #endif
-#if GED_USE_RUN_RT
     BU_LIST_INIT(&gdp->gd_headRunRt.l);
-#endif
+
     gdp->gd_freeSolids = &FreeSolid;
     gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
     ged_init_qray(gdp);

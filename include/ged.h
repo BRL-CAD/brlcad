@@ -29,13 +29,14 @@
 #ifndef __GED_H__
 #define __GED_H__
 
-#define GED_USE_RUN_RT 1
-
-#if GED_USE_RUN_RT
-/* Seems to be needed on windows if using ged_run_rt */
-#include "bio.h"
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#  define NOMINMAX
+#  include <windows.h>
+#  include <io.h>
 #endif
+
 #include "raytrace.h"
+
 
 __BEGIN_DECLS
 
@@ -172,7 +173,7 @@ __BEGIN_DECLS
 	return (_ret); \
     }
 
-#if GED_USE_RUN_RT
+
 struct ged_run_rt {
     struct bu_list l;
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -191,7 +192,6 @@ struct ged_run_rt {
 #endif
     int aborted;
 };
-#endif
 
 struct ged_qray_color {
     unsigned char r;
@@ -213,9 +213,8 @@ struct ged_drawable {
 
     char			*gd_rt_cmd[RT_MAXARGS];
     int				gd_rt_cmd_len;
-#if GED_USE_RUN_RT
     struct ged_run_rt		gd_headRunRt;		/**< @brief  head of forked rt processes */
-#endif
+
     void			(*gd_rtCmdNotify)();	/**< @brief  function called when rt command completes */
 
     int				gd_uplotOutputMode;	/**< @brief  output mode for unix plots */

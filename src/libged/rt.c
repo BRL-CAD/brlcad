@@ -34,7 +34,6 @@
 #include "ged_private.h"
 
 
-#if GED_USE_RUN_RT
 int
 ged_rt(struct ged *gedp, int argc, const char *argv[])
 {
@@ -541,7 +540,6 @@ ged_build_tops(struct ged	*gedp,
     *vp = (char *) 0;
     return vp-start;
 }
-#endif
 
 
 void
