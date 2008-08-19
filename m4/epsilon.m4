@@ -79,6 +79,7 @@ dnl determine the minimum single-precision floating point tolerance
 dnl value at compile time such that: 1.0 + value != 1.0
 dnl ANSI defines this as FLT_EPSILON but float.h may not provide it.
 AC_MSG_CHECKING([single-precision floating point tolerance])
+AC_REQUIRE([BC_TRY_RUN_OUTPUT])
 BC_TRY_RUN_OUTPUT(bc_flt_epsilon, [
 #include <stdio.h>
 int main (int ac, char *av[]) {
@@ -97,6 +98,7 @@ AC_MSG_RESULT([$bc_flt_epsilon])
 
 # BC_DOUBLE_EPSILON()
 AC_DEFUN([BC_DOUBLE_EPSILON], [
+AC_REQUIRE([BC_TRY_RUN_OUTPUT])
 dnl determine the minimum double-precision floating point tolerance
 dnl value at compile time such that: 1.0 + value != 1.0
 dnl ANSI defines this as DBL_EPSILON but float.h may not provide it.
