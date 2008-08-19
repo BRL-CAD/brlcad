@@ -455,21 +455,41 @@ void Variable<T>::display()
 template<class T>
 bool Variable<T>::atUpperBoundary()
 {
+    T st = D.getInterval(getLast()).getStep();
+    if (getLast() - value < st)
+	return true;
+    else
+	return false;
 }
 
 template<class T>
 bool Variable<T>::atLowerBoundary()
 {
+    T st = D.getInterval(getFirst()).getStep();
+    if (value - getFirst() < st)
+    	return true;
+    else
+	return false;
 }
 
 template<class T>
 bool Variable<T>::atCriticalBelow()
 {
+    T st = D.getInterval(vcopy_).getStep();
+    if (vcopy_ - value < st)
+	return true;
+    else
+	return false;
 }
 
 template<class T>
 bool Variable<T>::atCriticalAbove()
 {
+    T st = D.getInterval(vcopy_).getStep();
+    if (value - vcopy_ < st)
+	return true;
+    else
+	return false;
 }
 
 /* Solution Class Functions */

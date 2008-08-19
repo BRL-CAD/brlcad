@@ -72,9 +72,9 @@ bool PCSolver<T>::generator() {
 	i = vars.begin();
 	j = vars.end();
 	typedef Variable<T> * Vp;
-	while (--j != i && ((Vp (*j))->getLast() - (Vp (*j))->getValue()) < .01/*(Vp (*j))->getStep()*/ );
+	while (--j != i && (Vp (*j))->atUpperBoundary());
 
-	if ((Vp (*i))->getLast() - (Vp (*i))->getValue() < .01)
+	if ((Vp (*i))->atUpperBoundary())
 	    return false;
 	/* Increment one variable , set other variables to the first value */
 	++(*(Vp (*j)));
@@ -100,15 +100,6 @@ bool PCSolver<T>::solve(VCSet & vcset, Solution<T>& S) {
 	    vars.push_back(*i);
 	}
     while (generator()) {
-	/*std::cout << ".";
-	if (num_checks%1000 == 0) {
-	    std::cout<<std::endl;
-	    std::list<VariableAbstract *>::iterator i = vars.begin();
-	    std::list<VariableAbstract *>::iterator end = vars.end();
-	    for (; i != end; ++i)
-		(*i)->display(); 
-	    std::cout<<std::endl;
-	}*/
 	++num_checks;
 	if (vcset.check()) {
 	    Variable<T> * j;
@@ -116,7 +107,7 @@ bool PCSolver<T>::solve(VCSet & vcset, Solution<T>& S) {
 		typedef Variable<T> * Vp;
 		j = Vp (*i);
 		S.VarDom.push_back(VarDomain<T>(*j,
-		    Domain<T>(j->getValue(),j->getValue(),1)));
+		    Domain<T>(j->getValue(),j->getValue(),j->getStep())));
 	    }
 	    return true;
 	}
