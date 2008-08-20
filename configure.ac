@@ -306,13 +306,13 @@ BC_ARG_ENABLE([build_tkimg], [tkimg-build], [Build the included tkImg], [auto])
 BC_ARG_ENABLE([build_tnt], [tnt-install], [Install the included Template Numerical Toolkit], [auto])
 
 # jove
-BC_ARG_ENABLE([build_jove], [jove-build], [Enable compilation of jove], [auto])
+BC_ARG_ENABLE([build_jove], [jove-build], [Enable compilation of jove (optional)], [auto])
 
 # endgame framework simulation module
-BC_ARG_ENABLE([build_ef], [ef-build], [Enable compilation of Endgame Framework module], [no])
+BC_ARG_ENABLE([build_ef], [ef-build], [Enable compilation of Endgame Framework module (optional)], [no])
 
 # unigraphics plugin
-BC_ARG_ENABLE([build_ug], [unigraphics-build], [Enable compilation of Unigraphics importer], [no])
+BC_ARG_ENABLE([build_ug], [unigraphics-build], [Enable compilation of Unigraphics importer (optional)], [no])
 
 # example geometry
 BC_ARG_ENABLE([install_geometry], [models-install], [Enable installation of example geometry models], [yes])
@@ -349,19 +349,19 @@ dnl *** with options ***
 BC_WITH_FLAG_ARGS
 
 # use the jdk
-BC_ARG_WITH([with_java], [jdk], [Specify use of or path to the Java Development Kit], [auto])
+BC_ARG_WITH([with_java], [jdk], [Specify use of or path to the JDK for librtserver (optional)], [auto])
 
 # use x11
-BC_ARG_WITH([with_x11], [x11], [Specify use of or path to X11], [auto])
+BC_ARG_WITH([with_x11], [x11], [Specify use of or path to X11 (optional)], [auto])
 
 # use opengl
-BC_ARG_WITH([with_opengl], [ogl], [Specify use of or path to OpenGL], [auto])
+BC_ARG_WITH([with_opengl], [ogl], [Specify use of or path to OpenGL (optional)], [auto])
 
 # use wgl
 BC_ARG_WITH([with_wgl], [wgl], [Specify use of or path to WindowsGL], [auto])
 
 # use pro/engineer
-BC_ARG_WITH([with_proe], [proe], [Specify build of Pro/ENGINEER plugin or path to Pro/ENGINEER installation], [no])
+BC_ARG_WITH([with_proe], [proe], [Specify build of Pro/ENGINEER plugin or path to Pro/ENGINEER installation (optional)], [no])
 
 ###
 # argument aliases
