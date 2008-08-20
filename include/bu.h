@@ -27,7 +27,7 @@
  *  This library provides several layers of low-level utility routines,
  *  providing features that make coding much easier.
  *	Parallel processing support:  threads, sempahores, parallel-malloc.
- *	Consolodated logging support:  bu_log(), bu_exit(), and bu_bomb().
+ *	Consolidated logging support:  bu_log(), bu_exit(), and bu_bomb().
  *
  *  The intention is that these routines are general extensions to
  *  the data types offered by the C language itself, and to the
