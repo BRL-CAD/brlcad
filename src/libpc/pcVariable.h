@@ -168,20 +168,21 @@ private:
 template<class T>
 class VarDomain {
 public:
-    Variable<T> V;
-    Domain<T> D;
-    VarDomain() {};
-    ~VarDomain() {};
-    VarDomain(Variable<T> V,Domain<T> D);
+    VarDomain(VariableAbstract * V,Domain<T>& D);
+    void display();
+private:
+    VariableAbstract * V_;
+    Domain<T> D_;
 };
 
 template<class T>
 class Solution {
-private:
 public:
-    std::list<VarDomain<T> > VarDom;
+    void insert(VariableAbstract * v);
     void display();
     void clear();
+private:
+    std::list<VarDomain<T> > VarDom;
 };
 
 template<class T>
@@ -494,23 +495,37 @@ bool Variable<T>::atCriticalAbove()
 }
 
 /* Solution Class Functions */
-template <class T>
-VarDomain<T>::VarDomain(Variable<T> Variable,Domain<T> Domain) {
-    V = Variable;
-    D = Domain;
+template <typename T>
+VarDomain<T>::VarDomain(VariableAbstract * V,Domain<T>& D)
+    : V_(V),
+      D_(D)
+{}
+
+template <typename T>
+void VarDomain<T>::display()
+{
+    V_->display();
+    D_.display();
 }
 
+template<typename T>
+void Solution<T>::insert(VariableAbstract * v)
+{
+    Variable<T> * vt = (Variable<T> *) v;
+    Domain<T> dom(vt->getValue(),vt->getValue(),vt->getStep());
+    VarDom.push_back(VarDomain<T>(v,dom));
+
+}
 template<class T>
 void Solution<T>::display()
 {
     typename std::list<VarDomain<T> >::iterator i;
     for (i = VarDom.begin(); i != VarDom.end(); i++) {
-	i->V.display();
-	//i->D.display();
+	i->display();
     }
 }
 
-template<class T>
+template<typename T>
 void Solution<T>::clear()
 {
     VarDom.clear();

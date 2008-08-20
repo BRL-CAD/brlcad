@@ -94,8 +94,11 @@ public:
 
 int main()
 {
+    PCSolver<double> PCS1;
+    Solution<double> S1;
     struct pc_pc_set pcs;
     VCSet vc_set;
+
     pc_init_pcset(&pcs);
     pc_pushparam_expr(&pcs,"A", "Testpar123=325.0");
     pc_pushparam_expr(&pcs,"B", "Testpar234 = 1289.36243");
@@ -120,21 +123,16 @@ int main()
     
     vc_set.getParameter("G")->setConst(true); 
     vc_set.display();
-    PCSolver<double> PCS1;
-    Solution<double> S1;
+
     PCS1.solve(vc_set,S1);
-    std::cout << "\n\nSolution using Generic GT Solver" << std::endl;
+    std::cout << "\n\nSolution using Generic GT Solver "
+              << PCS1.numChecks() << std::endl;
     S1.display();
 
     pc_free_pcset(&pcs);
-#if 0
-    typedef boost::adjacency_list<boost::vecS, boost::vecS,
-		    boost::bidirectionalS, Variable<int>*, Constraint *> Graph;
-    typedef boost::graph_traits<Graph> GraphTraits;
-    typedef GraphTraits::vertex_descriptor Vertex;
-    typedef GraphTraits::edge_descriptor Edge;
+    
+    /** Testing PCSolver Methods */
 
-    /* declare a graph object */
     VCSet myvcset;
     Solution<int> S;
 
@@ -174,10 +172,9 @@ int main()
     S.display();    
     std::cout << "-----------------------------" << std::endl;
     std::cout << "Number of Constraint checks performed" << std::endl;
-    std::cout << "Generate-Test Solution:" << GTS.numChecks() << std::endl;
-    std::cout << "BackTracking based Solution:" << BTS.numChecks() << std::endl;
-    std::cout << "Generic Generate-Test Solution:" << PCS.numChecks() << std::endl;
-#endif
+    std::cout << "Generate-Test:" << GTS.numChecks() << std::endl;
+    std::cout << "BackTracking based:" << BTS.numChecks() << std::endl;
+    std::cout << "Generic Generate-Test:" << PCS.numChecks() << std::endl;
     return 0;
 }
 

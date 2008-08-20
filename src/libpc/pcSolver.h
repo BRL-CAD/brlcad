@@ -102,13 +102,8 @@ bool PCSolver<T>::solve(VCSet & vcset, Solution<T>& S) {
     while (generator()) {
 	++num_checks;
 	if (vcset.check()) {
-	    Variable<T> * j;
-	    for (i = vcset.Vars.begin(); i != vcset.Vars.end(); ++i) {
-		typedef Variable<T> * Vp;
-		j = Vp (*i);
-		S.VarDom.push_back(VarDomain<T>(*j,
-		    Domain<T>(j->getValue(),j->getValue(),j->getStep())));
-	    }
+	    for (i = vcset.Vars.begin(); i != vcset.Vars.end(); ++i)
+		S.insert(*i);
 	    return true;
 	}
     }
@@ -185,8 +180,7 @@ bool GTSolver<T>::solve(BinaryNetwork<T>& BN, Solution<T>& S) {
 	++num_checks;
 	if (N->check()) {
 	    for (tie(v_i,v_end) = vertices(N->G); v_i != v_end; ++v_i) {
-		S.VarDom.push_back(VarDomain<T>(*(N->G[*v_i]),\
-						 Domain<T>(N->G[*v_i]->getValue(),N->G[*v_i]->getValue(),1)));
+		S.insert(N->G[*v_i]);
 	    }
 	    return true;
 	}
@@ -283,8 +277,7 @@ bool BTSolver<T>::solve(class BinaryNetwork<T>& BN,Solution<T>& S) {
     backtrack();
     if (N->check()) {
 	for (tie(v_i,v_end) = vertices(N->G); v_i != v_end; ++v_i) {
-	    S.VarDom.push_back(VarDomain<T>(*(N->G[*v_i]),\
-		    Domain<T>(N->G[*v_i]->getValue(),N->G[*v_i]->getValue(),1)));
+	    S.insert(N->G[*v_i]);
 	}
 	return true;
     }
