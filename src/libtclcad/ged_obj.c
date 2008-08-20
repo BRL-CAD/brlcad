@@ -315,13 +315,10 @@ static void go_output_handler(struct ged *gedp, char *line);
 typedef int (*go_wrapper_func_ptr)(struct ged *, int, const char *[], ged_func_ptr, const char *, int);
 #define GO_WRAPPER_FUNC_PTR_NULL (go_wrapper_func_ptr)0
 
+#define GO_MAX_RT_ARGS 64
+
 static struct ged_obj HeadGedObj;
 static struct ged_obj *go_current_gop = GED_OBJ_NULL;
-
-
-#if GED_USE_RUN_RT
-#define GO_MAX_RT_ARGS 64
-#endif
 
 struct go_cmdtab {
     char	 *go_name;
@@ -465,13 +462,11 @@ static struct go_cmdtab go_cmds[] = {
     {"rot_point",	"vname x y z", 5, go_view_func, ged_rot_point},
     {"rotate_arb_face",	(char *)0, MAXARGS, go_pass_through_func, ged_rotate_arb_face},
     {"rotate_mode",	"vname x y", MAXARGS, go_rotate_mode, GED_FUNC_PTR_NULL},
-#if GED_USE_RUN_RT
     {"rt",	"vname [args]", GO_MAX_RT_ARGS, go_view_func, ged_rt},
     {"rt_gettrees",	(char *)0, MAXARGS, go_rt_gettrees, GED_FUNC_PTR_NULL},
     {"rtabort",	(char *)0, GO_MAX_RT_ARGS, go_pass_through_func, ged_rtabort},
     {"rtedge",	"vname [args]", GO_MAX_RT_ARGS, go_view_func, ged_rt},
     {"rtcheck",	"vname [args]", GO_MAX_RT_ARGS, go_view_func, ged_rtcheck},
-#endif
     {"saveview",	"vname filename", 3, go_view_func, ged_saveview},
     {"sca",	"vname sf", 3, go_view_func, ged_scale},
     {"scale_mode",	"vname x y", MAXARGS, go_scale_mode, GED_FUNC_PTR_NULL},
