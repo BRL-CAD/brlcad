@@ -40,6 +40,12 @@ ged_regdef(struct ged *gedp, int argc, const char *argv[])
     gedp->ged_result = GED_RESULT_NULL;
     gedp->ged_result_flags = 0;
 
+    /* invalid command name */
+    if (argc < 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Error: command name not provided");
+	return BRLCAD_ERROR;
+    }
+
     if (argc < 2 || 5 < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;

@@ -46,6 +46,12 @@ ged_get(struct ged *gedp, int argc, const char *argv[])
     gedp->ged_result = GED_RESULT_NULL;
     gedp->ged_result_flags = 0;
 
+    /* invalid command name */
+    if (argc < 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Error: command name not provided");
+	return BRLCAD_ERROR;
+    }
+
     /* must be wanting help */
     if (argc == 1) {
 	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
@@ -53,7 +59,7 @@ ged_get(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_OK;
     }
 
-    if (argc < 2 || argc > 3) {
+    if (argc > 3) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }

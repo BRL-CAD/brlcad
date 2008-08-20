@@ -167,6 +167,12 @@ ged_vdraw_cmd(struct ged *gedp, int argc, const char *argv[])
     gedp->ged_result = GED_RESULT_NULL;
     gedp->ged_result_flags = 0;
 
+    /* invalid command name */
+    if (argc < 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Error: command name not provided");
+	return BRLCAD_ERROR;
+    }
+
     /* must be wanting help */
     if (argc == 1) {
 	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
@@ -196,6 +202,17 @@ ged_vdraw_write(struct ged *gedp, int argc, const char *argv[])
     int index, uind;
     struct bn_vlist *vp, *cp;
     static const char *usage = "i|next c x y z";
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+    gedp->ged_result = GED_RESULT_NULL;
+    gedp->ged_result_flags = 0;
+
+    /* invalid command name */
+    if (argc < 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Error: command name not provided");
+	return BRLCAD_ERROR;
+    }
 
     /* must be wanting help */
     if (argc == 2) {
@@ -305,6 +322,17 @@ ged_vdraw_insert(struct ged *gedp, int argc, const char *argv[])
     int uind;
     static const char *usage = "i c x y z";
 
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+    gedp->ged_result = GED_RESULT_NULL;
+    gedp->ged_result_flags = 0;
+
+    /* invalid command name */
+    if (argc < 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Error: command name not provided");
+	return BRLCAD_ERROR;
+    }
+
     /* must be wanting help */
     if (argc == 2) {
 	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
@@ -394,6 +422,17 @@ ged_vdraw_delete(struct ged *gedp, int argc, const char *argv[])
     int i;
     int uind;
     static const char *usage = "i|last|all";
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+    gedp->ged_result = GED_RESULT_NULL;
+    gedp->ged_result_flags = 0;
+
+    /* invalid command name */
+    if (argc < 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Error: command name not provided");
+	return BRLCAD_ERROR;
+    }
 
     /* must be wanting help */
     if (argc == 2) {
@@ -493,6 +532,17 @@ ged_vdraw_read(struct ged *gedp, int argc, const char *argv[])
     int length;
     static const char *usage = "read i|color|length|name";
 
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+    gedp->ged_result = GED_RESULT_NULL;
+    gedp->ged_result_flags = 0;
+
+    /* invalid command name */
+    if (argc < 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Error: command name not provided");
+	return BRLCAD_ERROR;
+    }
+
     /* must be wanting help */
     if (argc == 2) {
 	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
@@ -570,6 +620,17 @@ ged_vdraw_send(struct ged *gedp, int argc, const char *argv[])
     int index;
     int real_flag;
 
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+    gedp->ged_result = GED_RESULT_NULL;
+    gedp->ged_result_flags = 0;
+
+    /* invalid command name */
+    if (argc < 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Error: command name not provided");
+	return BRLCAD_ERROR;
+    }
+
     if (!gedp->ged_gdp->gd_currVHead) {
 	bu_vls_printf(&gedp->ged_result_str, "%s %s: no vlist is currently open.", argv[0], argv[1]);
 	return BRLCAD_ERROR;
@@ -613,6 +674,17 @@ ged_vdraw_params(struct ged *gedp, int argc, const char *argv[])
     struct vd_curve *rcp;
     unsigned long rgb;
     static const char *usage = "color|name args";
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+    gedp->ged_result = GED_RESULT_NULL;
+    gedp->ged_result_flags = 0;
+
+    /* invalid command name */
+    if (argc < 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Error: command name not provided");
+	return BRLCAD_ERROR;
+    }
 
     /* must be wanting help */
     if (argc == 2) {
@@ -663,6 +735,17 @@ ged_vdraw_open(struct ged *gedp, int argc, const char *argv[])
     struct bn_vlist *vp;
     char temp_name[RT_VDRW_MAXNAME+1];
     static const char *usage = "[name]";
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+    gedp->ged_result = GED_RESULT_NULL;
+    gedp->ged_result_flags = 0;
+
+    /* invalid command name */
+    if (argc < 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Error: command name not provided");
+	return BRLCAD_ERROR;
+    }
 
     if (argc == 2) {
 	if (gedp->ged_gdp->gd_currVHead) {
@@ -727,6 +810,17 @@ ged_vdraw_vlist(struct ged *gedp, int argc, const char *argv[])
 {
     struct vd_curve *rcp, *rcp2;
     static const char *usage = "list\n\tdelete name";
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+    gedp->ged_result = GED_RESULT_NULL;
+    gedp->ged_result_flags = 0;
+
+    /* invalid command name */
+    if (argc < 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Error: command name not provided");
+	return BRLCAD_ERROR;
+    }
 
     /* must be wanting help */
     if (argc == 2) {

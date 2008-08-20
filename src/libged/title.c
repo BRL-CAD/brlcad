@@ -45,13 +45,19 @@ ged_title(struct ged *gedp, int argc, const char *argv[])
     gedp->ged_result = GED_RESULT_NULL;
     gedp->ged_result_flags = 0;
 
+    /* invalid command name */
+    if (argc < 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Error: command name not provided");
+	return BRLCAD_ERROR;
+    }
+
     /* get title */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "%s", gedp->ged_wdbp->dbip->dbi_title);
 	return BRLCAD_OK;
     }
 
-    if (argc < 1 || MAXARGS < argc) {
+    if (MAXARGS < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
