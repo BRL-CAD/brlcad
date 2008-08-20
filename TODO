@@ -367,6 +367,24 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 * make struct rt_functab's ft_label bigger and/or dynamic (e.g. vls)
 
 
+FUNCTIONALITY NEEDED TO SPEED UP RAYTRACING
+-------------------------------------------
+
+* merge shot and vshot
+
+* implement bundles shot - array of rays
+
+* separate ray structs - make fit in cache line
+
+* refactor primitive data -  make fit in cache line
+
+* implement SIMD shots
+
+* implement SAH for all primitives
+
+* write and use kdtree - make traversal cache coherent
+
+
 DOCUMENTATION
 -------------
 
