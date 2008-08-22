@@ -514,7 +514,10 @@ mged> <command>?</command>
 	 </example>
        </glossdef>
       </glossentry>
-
+	<para>
+	NOTE - when converting arced from pdf verison,
+	there is an error - xlate|ro should be xlate|rot
+	</para>
      <glossentry>
        <glossterm><command></command></glossterm>
        <glossdef>
