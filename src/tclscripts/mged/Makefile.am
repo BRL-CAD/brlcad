@@ -37,6 +37,7 @@ scripties = \
 	font.tcl \
 	g2asc.tcl \
 	garbage_collect.tcl \
+	get_regions.tcl \
 	grid.tcl \
 	help.tcl \
 	helpdevel.tcl \
