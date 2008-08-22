@@ -18,72 +18,17 @@
 # information.
 #
 ###
-# Author: Christopher Sean Morrison
 #
 # assign region IDs to all regions under some assembly starting at
 # some given region ID number.
 #
 
-set extern_commands "attr"
+set extern_commands [list db get_regions attr]
 foreach cmd $extern_commands {
     if {[expr [string compare [info command $cmd] $cmd] != 0]} {
 	puts stderr "[info script]: Application fails to provide command '$cmd'"
 	return
     }
-}
-
-
-proc get_regions { args } {
-    if { [llength $args] != 1 } {
-	puts "Usage: get_regions object"
-	return ""
-    }
-
-    set object [lindex $args 0]
-    set objectData [db get $object]
-
-    if { [lindex $objectData 0] != "comb" } {
-	# ignore primitive
-	return ""
-    }
-    if { [lindex $objectData 2] == "yes" } {
-	# found region, go no further
-	return $object
-    }
-
-    # list of all regions underneath this node (including duplicates)
-    set regions [list]
-
-    # process children
-    set children [lt $object]
-    if { $children != "" } {
-	foreach node $children {
-	    set child [lindex $node 1]
-
-	    if { [lindex [db get $child] 0] != "comb" } {
-		# ignore primitive
-		continue
-	    }
-
-	    if { [lindex [db get $child] 2] == "yes" } {
-		# found a region, add to the list and stop recursion
-		lappend regions $child
-	    } else {
-		# found a combination, recurse
-		set regions [concat $regions [get_regions $child]]
-	    }
-	}
-    }
-
-    set unique [list]
-    # if we haven't already encountered this region.
-    foreach region $regions {
-	if { [lsearch $unique $region] == -1 } {
-	    lappend unique $region
-	}
-    }
-
-    return $unique
 }
 
 
