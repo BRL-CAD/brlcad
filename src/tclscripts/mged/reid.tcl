@@ -43,12 +43,18 @@ proc get_regions { args } {
     set objectData [db get $object]
 
     if { [lindex $objectData 0] != "comb" } {
-	# found primitive
+	# ignore primitive
 	return ""
     }
+    if { [lindex $objectData 2] == "yes" } {
+	# found region, go no further
+	return $object
+    }
 
-    set regions ""
+    # list of all regions underneath this node (including duplicates)
+    set regions [list]
 
+    # process children
     set children [lt $object]
     if { $children != "" } {
 	foreach node $children {
@@ -61,14 +67,23 @@ proc get_regions { args } {
 
 	    if { [lindex [db get $child] 2] == "yes" } {
 		# found a region, add to the list and stop recursion
-		set regions [concat $regions $child]
+		lappend regions $child
 	    } else {
 		# found a combination, recurse
 		set regions [concat $regions [get_regions $child]]
 	    }
 	}
     }
-    return "$regions"
+
+    set unique [list]
+    # if we haven't already encountered this region.
+    foreach region $regions {
+	if { [lsearch $unique $region] == -1 } {
+	    lappend unique $region
+	}
+    }
+
+    return $unique
 }
 
 

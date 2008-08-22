@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2008-06-XX  Release 7.13.0                                     ---
 ----------------------------------------------------------------------
 
+* mged get_regions and reid ignore duplicate regions - Sean Morrison
 * added procedural geometry tools to the Windows port
 	- Bob Parker, Andre Castelo
 * renamed mged binary command to bo for binary objects - Sean Morrison
