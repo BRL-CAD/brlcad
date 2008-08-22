@@ -113,17 +113,12 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
     gedp->ged_result_flags = 0;
-
-    /* invalid command name */
-    if (argc < 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Error: command name not provided");
-	return BRLCAD_ERROR;
-    }
 
     /* must be wanting help */
     if (argc == 1) {
@@ -216,7 +211,7 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 		editArgv[0] = "draw";
 		editArgv[1] = objects;
 		editArgv[2] = (char *)NULL;
-		if (ged_draw(gedp, 2, editArgv) != BRLCAD_OK) {
+		if (ged_draw(gedp, 2, (const char **)editArgv) != BRLCAD_OK) {
 		    bu_vls_printf(&gedp->ged_result_str, "Unable to load object: %s\n", objects);
 		}
 

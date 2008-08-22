@@ -61,17 +61,12 @@ ged_dup(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "file.g prefix";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
     gedp->ged_result_flags = 0;
-
-    /* invalid command name */
-    if (argc < 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Error: command name not provided");
-	return BRLCAD_ERROR;
-    }
 
     /* must be wanting help */
     if (argc == 1) {
@@ -80,7 +75,7 @@ ged_dup(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_OK;
     }
 
-    if (3 < argc) {
+    if (argc > 3) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }

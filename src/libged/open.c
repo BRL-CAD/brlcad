@@ -38,6 +38,7 @@ ged_reopen(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "[filename]";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -61,7 +62,7 @@ ged_reopen(struct ged *gedp, int argc, const char *argv[])
 
 	av[0] = "zap";
 	av[1] = (char *)0;
-	ged_zap(gedp, 1, av);
+	ged_zap(gedp, 1, (const char **)av);
 
 	/* close current database */
 	db_close(gedp->ged_wdbp->dbip);

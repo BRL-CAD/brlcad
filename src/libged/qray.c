@@ -119,6 +119,7 @@ ged_qray(struct ged	*gedp,
 	 const char 	*argv[])
 {
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -132,7 +133,7 @@ ged_qray(struct ged	*gedp,
 	return BRLCAD_OK;
     }
 
-    if (6 < argc) {
+    if (argc > 6) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage:\n%s", qray_syntax);
 	return BRLCAD_ERROR;
     }

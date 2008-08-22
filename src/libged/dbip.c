@@ -35,6 +35,7 @@ int
 ged_dbip(struct ged *gedp, int argc, const char *argv[])
 {
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -49,7 +50,17 @@ ged_dbip(struct ged *gedp, int argc, const char *argv[])
 #if defined(_WIN32) && !defined(__CYGWIN__)
     bu_vls_printf(&gedp->ged_result_str, "%llu", (_int64)gedp->ged_wdbp->dbip);
 #else
-    bu_vls_printf(&gedp->ged_result_str, "%llu", (unsigned long long)gedp->ged_wdbp->dbip);
+    switch (sizeof(gedp->ged_wdbp->dbip)) {
+	case sizeof(long long unsigned):
+	    bu_vls_printf(&gedp->ged_result_str, "%llu", gedp->ged_wdbp->dbip);
+	    break;
+	case sizeof(long unsigned):
+	    bu_vls_printf(&gedp->ged_result_str, "%lu", gedp->ged_wdbp->dbip);
+	    break;
+	default:
+	    bu_vls_printf(&gedp->ged_result_str, "%u", gedp->ged_wdbp->dbip);
+	    break;
+    }
 #endif
 
     return BRLCAD_OK;
