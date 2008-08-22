@@ -136,7 +136,6 @@ set mged_help_data(fracture)	{{NMGsolid [prefix]}	{fracture an NMG solid into ma
 set mged_help_data(g)		$helplib_data(wdb_group)
 set mged_help_data(garbage_collect)	{{}	{eliminate unused space in database file}}
 set mged_help_data(get)		$helplib_data(wdb_get)
-set mged_help_data(get_regions)	{{combination}	{returns the names of all regions under a given combination/assembly}}
 set mged_help_data(gui)	{{[-config b|c|g] [-d display_string]
     [-gd graphics_display_string] [-dt graphics_type]
     [-id name] [-c -h -j -s]}	{create display/command window pair}}
