@@ -24,7 +24,7 @@
 #
 
 # make sure the mged commands we need actually exist
-set extern_commands [list attr get_regions]
+set extern_commands [list db get_regions attr]
 foreach cmd $extern_commands {
     if {[expr [string compare [info command $cmd] $cmd] != 0]} {
 	puts stderr "[info script]: Application fails to provide command '$cmd'"
