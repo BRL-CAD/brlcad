@@ -39,6 +39,7 @@
 #include <limits>
 #include <string>
 #include <list>
+#include <vector>
 
 #include "pcBasic.h"
 #include "pcInterval.h"
@@ -165,7 +166,7 @@ private:
     Domain<T> D;
 };
 
-template<class T>
+template <typename T>
 class VarDomain {
 public:
     VarDomain(VariableAbstract * V,Domain<T>& D);
@@ -178,10 +179,19 @@ private:
 template<class T>
 class Solution {
 public:
+    typedef std::vector<VariableAbstract *> VarSet;
+    typedef std::vector<Domain<T> > Domains;
+    typedef std::vector<Domains> DomSet;
+    typedef VarSet::size_type vindex;
+    typedef typename DomSet::size_type dindex;
+
     void insert(VariableAbstract * v);
     void display();
     void clear();
+    bool addSolution(VarSet & V);
 private:
+    VarSet Varset_;
+    DomSet Domset_;
     std::list<VarDomain<T> > VarDom;
 };
 
@@ -513,15 +523,24 @@ void Solution<T>::insert(VariableAbstract * v)
 {
     Variable<T> * vt = (Variable<T> *) v;
     Domain<T> dom(vt->getValue(),vt->getValue(),vt->getStep());
-    VarDom.push_back(VarDomain<T>(v,dom));
-
+    Varset_.push_back(v);
+    //Domset_.back().push_back(dom);
+    //VarDom.push_back(VarDomain<T>(v,dom));
 }
+
+template<class T>
+bool Solution<T>::addSolution(VarSet & V)
+{
+    return true;
+}
+
 template<class T>
 void Solution<T>::display()
 {
-    typename std::list<VarDomain<T> >::iterator i;
-    for (i = VarDom.begin(); i != VarDom.end(); i++) {
-	i->display();
+    VarSet::iterator i;
+    typename std::vector<Domain<T> >::iterator j;
+    for (i = Varset_.begin(); i != Varset_.end(); i++) {
+	if (*i) (*i)->display();
     }
 }
 
