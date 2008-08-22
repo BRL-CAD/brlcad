@@ -39,7 +39,6 @@
 #include <limits>
 #include <string>
 #include <list>
-#include <vector>
 
 #include "pcBasic.h"
 #include "pcInterval.h"
@@ -166,24 +165,12 @@ private:
     Domain<T> D;
 };
 
-template <typename T>
-class VarDomain {
-public:
-    VarDomain(VariableAbstract * V,Domain<T>& D);
-    void display();
-private:
-    VariableAbstract * V_;
-    Domain<T> D_;
-};
-
 template<class T>
 class Solution {
 public:
-    typedef std::vector<VariableAbstract *> VarSet;
-    typedef std::vector<Domain<T> > Domains;
-    typedef std::vector<Domains> DomSet;
-    typedef VarSet::size_type vindex;
-    typedef typename DomSet::size_type dindex;
+    typedef std::list<VariableAbstract *> VarSet;
+    typedef std::list<Domain<T> > Domains;
+    typedef std::list<Domains> DomSet;
 
     void insert(VariableAbstract * v);
     void display();
@@ -192,7 +179,6 @@ public:
 private:
     VarSet Varset_;
     DomSet Domset_;
-    std::list<VarDomain<T> > VarDom;
 };
 
 template<class T>
@@ -505,18 +491,6 @@ bool Variable<T>::atCriticalAbove()
 }
 
 /* Solution Class Functions */
-template <typename T>
-VarDomain<T>::VarDomain(VariableAbstract * V,Domain<T>& D)
-    : V_(V),
-      D_(D)
-{}
-
-template <typename T>
-void VarDomain<T>::display()
-{
-    V_->display();
-    D_.display();
-}
 
 template<typename T>
 void Solution<T>::insert(VariableAbstract * v)
@@ -525,12 +499,12 @@ void Solution<T>::insert(VariableAbstract * v)
     Domain<T> dom(vt->getValue(),vt->getValue(),vt->getStep());
     Varset_.push_back(v);
     //Domset_.back().push_back(dom);
-    //VarDom.push_back(VarDomain<T>(v,dom));
 }
 
 template<class T>
 bool Solution<T>::addSolution(VarSet & V)
 {
+    Varset_ = V;
     return true;
 }
 
@@ -538,7 +512,6 @@ template<class T>
 void Solution<T>::display()
 {
     VarSet::iterator i;
-    typename std::vector<Domain<T> >::iterator j;
     for (i = Varset_.begin(); i != Varset_.end(); i++) {
 	if (*i) (*i)->display();
     }
@@ -547,7 +520,8 @@ void Solution<T>::display()
 template<typename T>
 void Solution<T>::clear()
 {
-    VarDom.clear();
+    Varset_.clear();
+    Domset_.clear();
 }
 
 #endif

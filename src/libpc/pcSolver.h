@@ -103,7 +103,7 @@ bool PCSolver<T>::solve(VCSet & vcset, Solution<T>& S) {
 	++num_checks;
 	if (vcset.check()) {
 	    for (i = vcset.Vars.begin(); i != vcset.Vars.end(); ++i)
-		S.insert(*i);
+		S.addSolution(vcset.Vars);//S.insert(*i);
 	    return true;
 	}
     }
