@@ -62,6 +62,13 @@ __BEGIN_DECLS
 #define GED_DRAWABLE_NULL (struct ged_drawable *)0
 #define GED_VIEW_NULL (struct ged_view *)0
 
+#define GED_VIEW_OBJ_NULL ((struct view_obj *)0)
+#define GED_RESULT_NULL ((void *)0)
+#define GED_RESULT_FLAGS_HELP_BIT 0x1
+
+#define GED_FUNC_PTR_NULL (ged_func_ptr)0
+
+
 /*XXX This macro is temporary */
 #define GED_INIT(_gedp, _wdbp) { \
     bu_vls_init(&(_gedp)->ged_log); \
@@ -146,6 +153,14 @@ __BEGIN_DECLS
 	return (_ret); \
     }
 
+/** make sure there is a command name given */
+#define GED_CHECK_ARGC_GT_0(_gedp, _argc, _ret) \
+    if ((_argc) < 1) { \
+	bu_vls_printf(&(_gedp)->ged_result_str, "ERROR: command name not provided (%s:%d)", __FILE__, __LINE__); \
+	return (_ret); \
+    }
+
+/** add a new directory entry to the currently open database */
 #define GED_DB_DIRADD(_gedp, _dp, _name, _laddr, _len, _flags, _ptr, _ret) \
     if (((_dp) = db_diradd((_gedp)->ged_wdbp->dbip, (_name), (_laddr), (_len), (_flags), (_ptr))) == DIR_NULL) { \
 	bu_vls_printf(&(_gedp)->ged_result_str, "An error has occured while adding a new object to the database."); \
@@ -294,6 +309,8 @@ struct ged {
 #endif
 };
 
+typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);
+
 
 /**
  * V I E W _ O B J
@@ -326,12 +343,6 @@ struct view_obj {
     int			vo_zclip;
 };
 
-typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);
-#define GED_FUNC_PTR_NULL (ged_func_ptr)0
-
-#define GED_VIEW_OBJ_NULL ((struct view_obj *)0)
-#define GED_RESULT_NULL ((void *)0)
-#define GED_RESULT_FLAGS_HELP_BIT 0x1
 
 /* defined in ged.c */
 GED_EXPORT BU_EXTERN(struct ged *ged_open,
