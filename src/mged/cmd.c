@@ -1995,7 +1995,7 @@ cmd_make_name(ClientData	clientData,
     GED_INIT_FROM_WDBP(&ged, wdbp);
 #endif
 
-    ret = ged_make_name(&ged, argc, argv);
+    ret = ged_make_name(&ged, argc, (const char **)argv);
 
     /* Convert to Tcl codes */
     if (ret == BRLCAD_OK)

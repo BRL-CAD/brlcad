@@ -576,9 +576,9 @@ f_make(ClientData	clientData,
 	av[6] = argv[2];
 	av[7] = (char *)0;
 
-	ret = ged_make(&ged, 7, av);
+	ret = ged_make(&ged, 7, (const char **)av);
     } else
-	ret = ged_make(&ged, argc, argv);
+	ret = ged_make(&ged, argc, (const char **)argv);
 
     /* Convert to Tcl codes */
     if (ret == BRLCAD_OK)

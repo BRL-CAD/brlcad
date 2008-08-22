@@ -265,7 +265,7 @@ f_arced(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     GED_INIT_FROM_WDBP(&ged, wdbp);
 #endif
 
-    ret = ged_arced(&ged, argc, argv);
+    ret = ged_arced(&ged, argc, (const char **)argv);
 
     /* Convert to Tcl codes */
     if (ret == BRLCAD_OK)
