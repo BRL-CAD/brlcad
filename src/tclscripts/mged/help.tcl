@@ -229,9 +229,9 @@ set mged_help_data(refresh)	{{}	{send new control list}}
 set mged_help_data(regdebug)	{{[number]}	{toggle display manager debugging or set debug level}}
 set mged_help_data(regdef)	{{ident [air [los [material]]]}	{change next region default codes}}
 set mged_help_data(regions)	{{file object(s)}	{make ascii summary of regions}}
-set mged_help_data(reid)	{{assembly regionID}	{assign region IDs to all regions under some assembly/combination starting with the given region ID number}}
+set mged_help_data(reid)	{{assembly regionID}	{incrementally assign region IDs to all regions under a given assembly starting with the given region ID number}}
 set mged_help_data(release)	{{[name]}	{release display processor}}
-set mged_help_data(remat)	{{assembly GIFTmater}	{assign a given material ID number to all regions under some assembly/combination}}
+set mged_help_data(remat)	{{assembly materialID}	{assign the same material ID number to all regions under some given assembly}}
 set mged_help_data(reset)	{{}	{Reset view such that all solids can be seen}}
 set mged_help_data(rfarb)	{{}	{makes arb given point, 2 coord of 3 pts, rot, fb, thickness}}
 set mged_help_data(rm)		$helplib_data(wdb_remove)

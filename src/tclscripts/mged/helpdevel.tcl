@@ -31,9 +31,10 @@ helplib
 set mged_helpdevel_data(aip)		{{[fb]}	{advance illumination pointer or path position forward or backward}}
 set mged_helpdevel_data(cmd_win)	{{cmd}	{routine for maintaining command windows}}
 set mged_helpdevel_data(collaborate)	{{join id | quit id | show}	{routine for maintaining the collaborative session}}
-set mged_helpdevel_data(get_comb)	{{comb_name}	{get information about combination}}
+set mged_helpdevel_data(get_comb)	{{combination}	{get information about combination}}
 set mged_helpdevel_data(get_dm_list)	{{}	{returns a list of all display managers}}
 set mged_helpdevel_data(get_autoview)	{{}	{get view size and center such that all displayed solids would be in view}}
+set mged_helpdevel_data(get_regions)	{{combination}	{returns the names of all regions at or under a given combination}}
 set mged_helpdevel_data(get_sed)	{{[-c]}	{get the solid parameters for the solid currently
     being edited}}
 set mged_helpdevel_data(get_solid_keypoint) {{} {set the solid keypoint using the default rules}}
