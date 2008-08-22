@@ -36,7 +36,7 @@
 #endif
 #define PC_PARAM_ADDVAR(_vcs,_name,_value) \
 	    Parameter::_vcs.addVariable<double>(_name,_value,\
-		    -10, 10, .01)
+		    -10, 10, .1)
 
 /**
  *			Parameter Methods

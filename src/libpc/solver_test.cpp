@@ -126,7 +126,7 @@ int main()
 
     PCS1.solve(vc_set,S1);
     std::cout << "\n\nSolution using Generic GT Solver "
-              << PCS1.numChecks() << std::endl;
+              << PCS1.numChecks() << "\t" << PCS1.numSolutions() << std::endl;
     S1.display();
 
     pc_free_pcset(&pcs);
@@ -174,7 +174,8 @@ int main()
     std::cout << "Number of Constraint checks performed" << std::endl;
     std::cout << "Generate-Test:" << GTS.numChecks() << std::endl;
     std::cout << "BackTracking based:" << BTS.numChecks() << std::endl;
-    std::cout << "Generic Generate-Test:" << PCS.numChecks() << std::endl;
+    std::cout << "Generic Generate-Test:" << PCS.numChecks() 
+	      << "\t" << PCS.numSolutions() << std::endl;
     return 0;
 }
 

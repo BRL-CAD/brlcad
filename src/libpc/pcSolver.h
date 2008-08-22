@@ -38,39 +38,50 @@
 #include "pcNetwork.h"
 
 /* Generic solver for VCSet */
-template<class T>
+template <typename T>
 class PCSolver
 {
 public:
-    PCSolver() : initiated(false) { }
+    PCSolver();
     bool solve(VCSet &, Solution<T> & );
-    long numChecks () { return num_checks; }
+    unsigned long numChecks () { return num_checks_; }
+    unsigned long numSolutions () { return num_solutions_; }
 private:
-    long num_checks;
-    bool initiated;
-    std::list<VariableAbstract *> vars;
+    unsigned long num_checks_;
+    unsigned long num_solutions_;
+    bool initiated_;
+    bool solved_;
+    std::list<VariableAbstract *> vars_;
     bool generator();
     void initiate();
 };
 
-template<class T>
+template <typename T>
+PCSolver<T>::PCSolver()
+    : num_checks_(0),
+      num_solutions_(0),
+      solved_(false),
+      initiated_(false)
+{}
+
+template <typename T>
 void PCSolver<T>::initiate() {
     std::list<VariableAbstract *>::iterator i;
-    for (i = vars.begin(); i != vars.end(); ++i) {
+    for (i = vars_.begin(); i != vars_.end(); ++i) {
 	typedef Variable<T> * Vp;
 	(Vp (*i))->setValue((Vp (*i))->getFirst());
     }
-    initiated = true;
+    initiated_ = true;
 }
 
-template<class T>
+template <typename T>
 bool PCSolver<T>::generator() {
-    if (!initiated) {
+    if (!initiated_) {
 	initiate();
     } else {
 	std::list<VariableAbstract *>::iterator i,j;
-	i = vars.begin();
-	j = vars.end();
+	i = vars_.begin();
+	j = vars_.end();
 	typedef Variable<T> * Vp;
 	while (--j != i && (Vp (*j))->atUpperBoundary());
 
@@ -80,7 +91,7 @@ bool PCSolver<T>::generator() {
 	++(*(Vp (*j)));
 	
 	++j;
-	while (j != vars.end()) {
+	while (j != vars_.end()) {
 	    (Vp (*j))->setValue((Vp (*j))->getFirst());
 	    ++j;
 	}
@@ -88,30 +99,33 @@ bool PCSolver<T>::generator() {
     return true;
 }
 
-template<class T>
+template <typename T>
 bool PCSolver<T>::solve(VCSet & vcset, Solution<T>& S) {
     std::list<VariableAbstract *>::iterator i = vcset.Vars.begin();
     std::list<VariableAbstract *>::iterator end = vcset.Vars.end();
-    num_checks = 0;
+    num_checks_ = 0;
+    num_solutions_ = 0;
+    solved_ = false;
     
     for (; i != end; ++i)
 	if ( (*i)->isConstrained() == 1 && ! (*i)->isConst()) {
 	    (*i)->display();
-	    vars.push_back(*i);
+	    vars_.push_back(*i);
 	}
     while (generator()) {
-	++num_checks;
+	++num_checks_;
 	if (vcset.check()) {
 	    for (i = vcset.Vars.begin(); i != vcset.Vars.end(); ++i)
 		S.addSolution(vcset.Vars);//S.insert(*i);
-	    return true;
+	    solved_ = true;
+	    num_solutions_++;
 	}
     }
-    return false;
+    return solved_;
 }
 
 /* Generate Test based Solver Technique */
-template<class T>
+template <typename T>
 class GTSolver
 {
     typedef typename boost::adjacency_list<boost::vecS, boost::vecS,\
@@ -134,14 +148,14 @@ private:
 };
 
 
-template<class T>
+template <typename T>
 void GTSolver<T>::initiate() {
     for (tie(v_i,v_end) = vertices(N->G); v_i != v_end; ++v_i)
 	N->G[*v_i]->setValue(N->G[*v_i]->getFirst());
     initiated = true;
 }
 
-template<class T>
+template <typename T>
 bool GTSolver<T>::generator() {
     if (!initiated) {
 	initiate();
@@ -172,7 +186,7 @@ bool GTSolver<T>::generator() {
     return true;
 }
 
-template<class T>
+template <typename T>
 bool GTSolver<T>::solve(BinaryNetwork<T>& BN, Solution<T>& S) {
     N = &BN;
     num_checks = 0;
@@ -189,7 +203,7 @@ bool GTSolver<T>::solve(BinaryNetwork<T>& BN, Solution<T>& S) {
 }
 
 /* BackTracking Solver Technique */
-template<class T>
+template <typename T>
 class BTSolver
 {
     typedef typename boost::adjacency_list<boost::vecS, boost::vecS,
@@ -215,7 +229,7 @@ private:
     bool check();
 };
 
-template<class T>
+template <typename T>
 int BTSolver<T>::labelsize() {
     int i=0;
     for (tie(v_i,v_end) = vertices(N->G); v_i != v_end; ++v_i)
@@ -223,7 +237,7 @@ int BTSolver<T>::labelsize() {
     return i;
 }
 
-template<class T>
+template <typename T>
 bool BTSolver<T>::backtrack()
 {
     bool nexttest = false;
@@ -250,7 +264,7 @@ bool BTSolver<T>::backtrack()
     return false;
 }
 
-template<class T>
+template <typename T>
 bool BTSolver<T>::check()
 {
     for (tie(e_i,e_end) = edges(N->G); e_i != e_end; ++e_i) {
@@ -266,7 +280,7 @@ bool BTSolver<T>::check()
     return true;
 }
 
-template<class T>
+template <typename T>
 bool BTSolver<T>::solve(class BinaryNetwork<T>& BN,Solution<T>& S) {
     N = &BN;
     num_checks = 0;
