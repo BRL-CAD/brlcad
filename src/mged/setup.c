@@ -49,7 +49,7 @@ extern void mged_global_variable_setup(Tcl_Interp *interp);
 
 struct gedtab {
     char *name;
-    int (*func)(int, const char *[]);
+    int (*func)(struct ged *gedp, int argc, const char *[]);
 };
 static struct gedtab newtab[] = {
     {"edmater", ged_edmater},
