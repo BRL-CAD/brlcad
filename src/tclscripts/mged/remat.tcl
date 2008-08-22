@@ -18,14 +18,13 @@
 # information.
 #
 ###
-# Author: Christopher Sean Morrison
 #
 # assign material IDs to all regions under some assembly to some given
 # material ID number.
 #
 
 # make sure the mged commands we need actually exist
-set extern_commands "attr"
+set extern_commands [list attr get_regions]
 foreach cmd $extern_commands {
     if {[expr [string compare [info command $cmd] $cmd] != 0]} {
 	puts stderr "[info script]: Application fails to provide command '$cmd'"
@@ -34,9 +33,9 @@ foreach cmd $extern_commands {
 }
 
 
-proc  remat { args } {
+proc remat { args } {
     if { [llength $args] != 2 } {
-	puts "Usage: remat assembly GIFTmater"
+	puts "Usage: remat assembly materialID"
 	return
     }
 
@@ -48,19 +47,9 @@ proc  remat { args } {
 	return
     }
 
-    set children [lt $name]
-    while { $children != "" } {
-	foreach node $children {
-	    set child [lindex $node 1]
-
-	    if { [lindex [db get $child] 2] == "yes" } {
-		attr set $child material_id $matid
-	    } else {
-		set children [concat $children [lt $child]]
-	    }
-
-	    set children [lrange $children 1 end]
-	}
+    set regions [get_regions $name]
+    foreach region $regions {
+	attr set $region material_id $matid
     }
 }
 
