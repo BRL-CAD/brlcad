@@ -41,7 +41,7 @@ ged_autoview(struct ged *gedp, int argc, const char *argv[])
     vect_t		minus, plus;
     vect_t		center;
     vect_t		radial;
-    vect_t		small;
+    vect_t		sqrt_small;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
@@ -60,7 +60,7 @@ ged_autoview(struct ged *gedp, int argc, const char *argv[])
 
     VSETALL(min,  INFINITY);
     VSETALL(max, -INFINITY);
-    VSETALL(small, SQRT_SMALL_FASTF);
+    VSETALL(sqrt_small, SQRT_SMALL_FASTF);
 
     FOR_ALL_SOLIDS(sp, &gedp->ged_gdp->gd_headSolid) {
 	minus[X] = sp->s_center[X] - sp->s_size;
@@ -83,7 +83,7 @@ ged_autoview(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* make sure it's not inverted */
-    VMAX(radial, small);
+    VMAX(radial, sqrt_small);
 
     /* make sure it's not too small */
     if (VNEAR_ZERO(radial, SQRT_SMALL_FASTF))
