@@ -94,14 +94,14 @@ __BEGIN_DECLS
 }
 #endif
 
-/* Check if the object is a combination */
+/** Check if the object is a combination */
 #define	GED_CHECK_COMB(_gedp, _dp, _ret) \
     if (((_dp)->d_flags & DIR_COMB) == 0) { \
 	bu_vls_printf(&(_gedp)->ged_result_str, "%s: not a combination", (_dp)->d_namep); \
 	return (_ret); \
     }
 
-/* Check if a database is open */
+/** Check if a database is open */
 #define GED_CHECK_DATABASE_OPEN(_gedp, _ret) \
     if ((_gedp) == GED_NULL || (_gedp)->ged_wdbp == RT_WDB_NULL || (_gedp)->ged_wdbp->dbip == DBI_NULL) { \
 	if ((_gedp) != GED_NULL) \
@@ -111,35 +111,35 @@ __BEGIN_DECLS
 	return (_ret); \
     }
 
-/* Check if a drawable exists */
+/** Check if a drawable exists */
 #define GED_CHECK_DRAWABLE(_gedp, _ret) \
     if (_gedp->ged_gdp == GED_DRAWABLE_NULL) { \
 	bu_vls_printf(&(_gedp)->ged_result_str, "A drawable does not exist!"); \
 	return (_ret); \
     }
 
-/* Check if a view exists */
+/** Check if a view exists */
 #define GED_CHECK_VIEW(_gedp, _ret) \
     if (_gedp->ged_gvp == GED_VIEW_NULL) { \
 	bu_vls_printf(&(_gedp)->ged_result_str, "A view does not exist!"); \
 	return (_ret); \
     }
 
-/* Lookup database object */
+/** Lookup database object */
 #define GED_CHECK_EXISTS(_gedp, _name, _noisy, _ret) \
     if (db_lookup((_gedp)->ged_wdbp->dbip, (_name), (_noisy)) != DIR_NULL) { \
 	bu_vls_printf(&(_gedp)->ged_result_str, "%s already exists", (_name)); \
 	return (_ret); \
     }
 
-/* Check if the database is read only */
+/** Check if the database is read only */
 #define	GED_CHECK_READ_ONLY(_gedp, _ret) \
     if ((_gedp)->ged_wdbp->dbip->dbi_read_only) { \
 	bu_vls_printf(&(_gedp)->ged_result_str, "Sorry, this database is READ-ONLY"); \
 	return (_ret); \
     }
 
-/* Check if the object is a region */
+/** Check if the object is a region */
 #define	GED_CHECK_REGION(_gedp, _dp, _ret) \
     if (((_dp)->d_flags & DIR_REGION) == 0) { \
 	bu_vls_printf(&(_gedp)->ged_result_str, "%s: not a region", (_dp)->d_namep); \
@@ -152,21 +152,21 @@ __BEGIN_DECLS
 	return (_ret); \
     }
 
-/* Lookup database object */
+/** Lookup database object */
 #define GED_DB_LOOKUP(_gedp, _dp, _name, _noisy, _ret) \
     if (((_dp) = db_lookup((_gedp)->ged_wdbp->dbip, (_name), (_noisy))) == DIR_NULL) { \
 	bu_vls_printf(&(_gedp)->ged_result_str, "%s: not found", (_name)); \
 	return (_ret); \
     }
 
-/* Get internal representation */
+/** Get internal representation */
 #define GED_DB_GET_INTERNAL(_gedp, _intern, _dp, _mat, _resource, _ret) \
     if (rt_db_get_internal((_intern), (_dp), (_gedp)->ged_wdbp->dbip, (_mat), (_resource)) < 0) { \
 	bu_vls_printf(&(_gedp)->ged_result_str, "Database read error, aborting"); \
 	return (_ret); \
     }
 
-/* Put internal representation */
+/** Put internal representation */
 #define GED_DB_PUT_INTERNAL(_gedp, _dp, _intern, _resource, _ret) \
     if (rt_db_put_internal((_dp), (_gedp)->ged_wdbp->dbip, (_intern), (_resource)) < 0) { \
 	bu_vls_printf(&(_gedp)->ged_result_str, "Database write error, aborting"); \
@@ -272,10 +272,10 @@ struct ged {
     struct bu_list		l;
     struct rt_wdb		*ged_wdbp;
 
-    /* for catching log messages */
+    /** for catching log messages */
     struct bu_vls		ged_log;
 
-    /* for setting results */
+    /** for setting results */
     void			*ged_result;
     struct bu_vls		ged_result_str;
     unsigned int		ged_result_flags;
