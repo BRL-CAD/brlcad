@@ -94,6 +94,10 @@ public:
     /** Uniqueness check */
     bool isUnique();
 
+    /** Comparison */
+    bool operator==(Domain<T> & d) {
+			if (Interv == d.Interv) return true;
+			else return false; } 
     /** Display method */
     void display();
 private:
@@ -504,17 +508,50 @@ void Solution<T>::insert(VariableAbstract * v)
 template<class T>
 bool Solution<T>::addSolution(VarSet & V)
 {
-    Varset_ = V;
+    if (Varset_.empty())
+	Varset_ = V;
+    else if (Varset_ != V) {
+	/** @todo throw exception */
+	std::cout << "!-- Incompatible solutions : Variable set mismatch\n";
+	return false;
+    }
+    VarSet::iterator i = Varset_.begin();
+    typename DomSet::iterator j = Domset_.begin();
+
+    Domains D;
+    bool validnew = true;
+
+    for (; i != Varset_.end(); ++i) {
+	Variable<T> * vt = (Variable<T> *) *i;
+	Domain<T> dom(vt->getValue(),vt->getValue(),vt->getStep());
+	D.push_back(dom);
+    }
+
+    /** No check performed to see if solution already exists */
+    Domset_.push_back(D);
+
     return true;
 }
-
 template<class T>
 void Solution<T>::display()
 {
     VarSet::iterator i;
+    typename DomSet::iterator j;
+    typename Domains::iterator k;
     for (i = Varset_.begin(); i != Varset_.end(); i++) {
-	if (*i) (*i)->display();
+	if (*i) std::cout << (*i)->getID() << "\t";
     }
+    std::cout << std::endl;
+    if (!Domset_.empty()) {
+	for (j = Domset_.begin(); j != Domset_.end(); ++j) {
+	    for ( k = j->begin(); k != j->end(); ++k) {
+		std::cout << k->getFirst() << "\t";
+	    }
+	    std::cout << std::endl;
+	}
+	std::cout << std::endl;
+    }
+    std::cout << "Number of Solutions: " << Domset_.size() << std::endl;
 }
 
 template<typename T>
