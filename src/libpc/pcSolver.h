@@ -37,31 +37,43 @@
 #include "pcConstraint.h"
 #include "pcNetwork.h"
 
-/* Generic solver for VCSet */
-template <typename T>
-class PCSolver
+/** Base Solver Class */
+class Solver
 {
 public:
-    PCSolver();
-    bool solve(VCSet &, Solution<T> & );
+    Solver();
     unsigned long numChecks () { return num_checks_; }
     unsigned long numSolutions () { return num_solutions_; }
-private:
+protected:
     unsigned long num_checks_;
     unsigned long num_solutions_;
     bool initiated_;
     bool solved_;
     std::list<VariableAbstract *> vars_;
+};
+
+Solver::Solver()
+    : num_checks_(0),
+      num_solutions_(0),
+      solved_(false),
+      initiated_(false)
+{}
+
+/* Generic solver for VCSet */
+template <typename T>
+class PCSolver : public Solver
+{
+public:
+    PCSolver();
+    bool solve(VCSet &, Solution<T> & );
+private:
     bool generator();
     void initiate();
 };
 
 template <typename T>
 PCSolver<T>::PCSolver()
-    : num_checks_(0),
-      num_solutions_(0),
-      solved_(false),
-      initiated_(false)
+    : Solver()
 {}
 
 template <typename T>
@@ -136,7 +148,7 @@ bool PCSolver<T>::solve(VCSet & vcset, Solution<T>& S) {
 
 /* Generate Test based Solver Technique */
 template <typename T>
-class GTSolver
+class GTSolver : public Solver
 {
     typedef typename boost::adjacency_list<boost::vecS, boost::vecS,\
 	    	    boost::bidirectionalS, Variable<T>*, Constraint *> Graph;
@@ -146,28 +158,29 @@ class GTSolver
     typename GraphTraits::vertex_iterator v_i, v_end;
 
 public:
-    GTSolver() : initiated(false) { }
+    GTSolver();
     bool solve(BinaryNetwork<T>&, Solution<T>& );
-    long numChecks () { return num_checks; }
 private:
-    long num_checks;
-    bool initiated;
     BinaryNetwork<T>* N;
     bool generator();
     void initiate();
 };
 
+template <typename T>
+GTSolver<T>::GTSolver()
+    : Solver()
+{}
 
 template <typename T>
 void GTSolver<T>::initiate() {
     for (tie(v_i,v_end) = vertices(N->G); v_i != v_end; ++v_i)
 	N->G[*v_i]->setValue(N->G[*v_i]->getFirst());
-    initiated = true;
+    initiated_ = true;
 }
 
 template <typename T>
 bool GTSolver<T>::generator() {
-    if (!initiated) {
+    if (!initiated_) {
 	initiate();
     } else {
 	typename GraphTraits::vertex_iterator vertex_v, vertex_u,vertex_end;
@@ -199,13 +212,14 @@ bool GTSolver<T>::generator() {
 template <typename T>
 bool GTSolver<T>::solve(BinaryNetwork<T>& BN, Solution<T>& S) {
     N = &BN;
-    num_checks = 0;
+    num_checks_ = 0;
+    for (tie(v_i,v_end) = vertices(N->G); v_i != v_end; ++v_i)
+	vars_.push_back(N->G[*v_i]);
+
     while (generator()) {
-	++num_checks;
+	++num_checks_;
 	if (N->check()) {
-	    for (tie(v_i,v_end) = vertices(N->G); v_i != v_end; ++v_i) {
-		S.insert(N->G[*v_i]);
-	    }
+	    S.addSolution(vars_);
 	    return true;
 	}
     }
@@ -214,7 +228,7 @@ bool GTSolver<T>::solve(BinaryNetwork<T>& BN, Solution<T>& S) {
 
 /* BackTracking Solver Technique */
 template <typename T>
-class BTSolver
+class BTSolver : public Solver
 {
     typedef typename boost::adjacency_list<boost::vecS, boost::vecS,
 		    boost::bidirectionalS, Variable<T>*, Constraint *> Graph;
@@ -225,12 +239,10 @@ class BTSolver
     typename GraphTraits::edge_iterator e_i, e_end;
 
 public:
+    BTSolver();
     bool solve(class BinaryNetwork<T>& , Solution<T>& );
-    long numChecks() { return num_checks; }
-
 private:
     Vertex v,u;
-    long num_checks;
     std::vector<bool> labels;
     class BinaryNetwork<T>* N;
 
@@ -238,6 +250,11 @@ private:
     bool backtrack();
     bool check();
 };
+
+template <typename T>
+BTSolver<T>::BTSolver()
+    : Solver()
+{}
 
 template <typename T>
 int BTSolver<T>::labelsize() {
@@ -281,7 +298,7 @@ bool BTSolver<T>::check()
 	v = source(*e_i,N->G);
 	u = target(*e_i,N->G);
 	if (labels[v] && labels[u] ) {
-	    ++num_checks;
+	    ++num_checks_;
 	    if (!N->G[*e_i]->check()) {
 		return false;
 	    }
@@ -293,16 +310,17 @@ bool BTSolver<T>::check()
 template <typename T>
 bool BTSolver<T>::solve(class BinaryNetwork<T>& BN,Solution<T>& S) {
     N = &BN;
-    num_checks = 0;
+    num_checks_ = 0;
+    for (tie(v_i,v_end) = vertices(N->G); v_i != v_end; ++v_i)
+	vars_.push_back(N->G[*v_i]);
+
     for (tie(v_i,v_end) = vertices(N->G); v_i != v_end; ++v_i) {
 	labels.push_back(false);
 	N->G[*v_i]->setValue(N->G[*v_i]->getFirst());
     }
     backtrack();
     if (N->check()) {
-	for (tie(v_i,v_end) = vertices(N->G); v_i != v_end; ++v_i) {
-	    S.insert(N->G[*v_i]);
-	}
+    	S.addSolution(vars_);
 	return true;
     }
     return false;
