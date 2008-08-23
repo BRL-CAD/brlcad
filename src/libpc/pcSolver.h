@@ -80,12 +80,16 @@ bool PCSolver<T>::generator() {
 	initiate();
     } else {
 	std::list<VariableAbstract *>::iterator i,j;
+	bool atend = true;
 	i = vars_.begin();
 	j = vars_.end();
 	typedef Variable<T> * Vp;
 	while (--j != i && (Vp (*j))->atUpperBoundary());
 
-	if ((Vp (*i))->atUpperBoundary())
+	for (; i != vars_.end(); ++i)
+	    if (! (Vp (*i))->atUpperBoundary())
+		atend = false;
+	if (atend)
 	    return false;
 	/* Increment one variable , set other variables to the first value */
 	++(*(Vp (*j)));
@@ -114,9 +118,15 @@ bool PCSolver<T>::solve(VCSet & vcset, Solution<T>& S) {
 	}
     while (generator()) {
 	++num_checks_;
+	/* std::cout << "Checking ";
+	std::list<VariableAbstract *>::iterator i = vcset.Vars.begin();
+	typedef Variable<int> * Vi;
+	for (; i != vcset.Vars.end(); ++i)
+	    std::cout <<  (Vi (*i))->getValue() << "\t";
+	std::cout << std::endl;*/
+
 	if (vcset.check()) {
-	    for (i = vcset.Vars.begin(); i != vcset.Vars.end(); ++i)
-		S.addSolution(vcset.Vars);//S.insert(*i);
+	    S.addSolution(vcset.Vars);
 	    solved_ = true;
 	    num_solutions_++;
 	}
