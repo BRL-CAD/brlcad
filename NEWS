@@ -11,20 +11,50 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
---- 2008-06-XX  Release 7.13.0                                     ---
+--- 2008-09-XX  Release 7.13.0                                     ---
 ----------------------------------------------------------------------
 
 * mged get_regions and reid ignore duplicate regions - Sean Morrison
 * added procedural geometry tools to the Windows port
 	- Bob Parker, Andre Castelo
-* renamed mged binary command to bo for binary objects - Sean Morrison
-* fixed bug that caused remote framebuffers to fail - Sean Morrison
 * integrated tgf-g with the default compile/install - Daniel Roßberg
-* add w option to tire to allow disabling wheel generation - C. Yapp
 * deprecated the mged '-n' option, use '-c' instead - Sean Morrison
 * added the ability to invoke mged through icons/menus - Sean Morrison
 * new -a option to mged 'killtree' for killing references - Bob Parker
 * added new 'killrefs' command to mged - Bob Parker
+* added -C color option to the mged 'E' command - Bob Parker
+* fixed curvature calc bug in ehy primitive - Timothy Van Ruitenbeek
+* added compilation support for MSVC 9 - André Castelo
+
+
+----------------------------------------------------------------------
+--- 2008-06-XX  Release 7.12.6                                     ---
+----------------------------------------------------------------------
+
+This release enhances the formatting options available "out of the
+box" for the NIRT tool, allowing users to easily select different
+data reporting options without having to define their own custom
+configuration files.  CSV output options also allow for quick
+and easy import into spreadsheets.  The new -L option lists available
+formats.
+
+The tire tool's behavior has been improved - it will no longer
+overwrite pre-existing files and a "w" flag now accepts a value of
+"0" to disable creation of the default wheel rim for modelers wishing
+to supply their own rim.  A number of small but visual flaws in the
+tread geometry definitions were also corrected.
+
+MGED's dbconcat command works again without needing to specifying an
+affix for object names when importing geometry from one database to 
+another.  Primitive selection via the Edit menu is working again
+thanks to the fixing of the solid_illum bug. The pipe primitive's
+performance problems during raytracing, due to unnecessary memory
+allocations, are now fixed.  The extrude primitive's handling of 
+invalid geometry is now more robust.
+
+* renamed mged binary command to bo for binary objects - Sean Morrison
+* fixed bug that caused remote framebuffers to fail - Sean Morrison
+* add w option to tire to allow disabling wheel generation - C. Yapp
 * tweak tread 2 in tire tool; avoid artifacts on tread wall - C. Yapp
 * fixed mged 'dbconcat' hang when not specifying an affix - Bob Parker
 * fixed primitive selection solid_illum bug in mged - Bob Parker
@@ -34,14 +64,11 @@ changes made.  See document footer for additional details.
 * fixed dependency bug in library pkg-config files - Sean Morrison
 * platform installers now use a more consistent naming convention
 	- Sean Morrison, Bob Parker
-* added -C color option to the mged 'E' command - Bob Parker
-* fixed curvature calc bug in ehy primitive - Timothy Van Ruitenbeek
 * added new -c character option to the loop command - Dawn Thomas
 * tire now checks for files instead of overwriting - Cliff Yapp
 * add new nirt formatting options, -L listing option - C. Yapp
 * fixed nirt's dest cmd's handling of file name string - Cliff Yapp
 * modified mged nirt command to include air in results - Bob Parker
-* added compilation support for MSVC 9 - André Castelo
 
 
 ----------------------------------------------------------------------
