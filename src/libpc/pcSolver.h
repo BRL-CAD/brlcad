@@ -78,39 +78,37 @@ PCSolver<T>::PCSolver()
 
 template <typename T>
 void PCSolver<T>::initiate() {
-    std::list<VariableAbstract *>::iterator i;
-    for (i = vars_.begin(); i != vars_.end(); ++i) {
-	typedef Variable<T> * Vp;
-	(Vp (*i))->setValue((Vp (*i))->getFirst());
+    if (!initiated_) {
+	std::list<VariableAbstract *>::iterator i;
+        for (i = vars_.begin(); i != vars_.end(); ++i) {
+		typedef Variable<T> * Vp;
+		(Vp (*i))->setValue((Vp (*i))->getFirst());
+        }
+	initiated_ = true;
     }
-    initiated_ = true;
 }
 
 template <typename T>
 bool PCSolver<T>::generator() {
-    if (!initiated_) {
-	initiate();
-    } else {
-	std::list<VariableAbstract *>::iterator i,j;
-	bool atend = true;
-	i = vars_.begin();
-	j = vars_.end();
-	typedef Variable<T> * Vp;
-	while (--j != i && (Vp (*j))->atUpperBoundary());
-
-	for (; i != vars_.end(); ++i)
-	    if (! (Vp (*i))->atUpperBoundary())
+    std::list<VariableAbstract *>::iterator i,j;
+    bool atend = true;
+    i = vars_.begin();
+    j = vars_.end();
+    typedef Variable<T> * Vp;
+    while (--j != i && (Vp (*j))->atUpperBoundary());
+    
+    for (; i != vars_.end(); ++i)
+        if (! (Vp (*i))->atUpperBoundary())
 		atend = false;
-	if (atend)
-	    return false;
-	/* Increment one variable , set other variables to the first value */
-	++(*(Vp (*j)));
-	
-	++j;
-	while (j != vars_.end()) {
-	    (Vp (*j))->setValue((Vp (*j))->getFirst());
-	    ++j;
-	}
+    if (atend)
+        return false;
+    /* Increment one variable , set other variables to the first value */
+    ++(*(Vp (*j)));
+    
+    ++j;
+    while (j != vars_.end()) {
+        (Vp (*j))->setValue((Vp (*j))->getFirst());
+        ++j;
     }
     return true;
 }
@@ -128,11 +126,13 @@ bool PCSolver<T>::solve(VCSet & vcset, Solution<T>& S) {
 	    (*i)->display();
 	    vars_.push_back(*i);
 	}
+    
+    initiate();
     while (generator()) {
 	++num_checks_;
-	/* std::cout << "Checking ";
+	/*std::cout << "Checking ";
 	std::list<VariableAbstract *>::iterator i = vcset.Vars.begin();
-	typedef Variable<int> * Vi;
+	typedef Variable<T> * Vi;
 	for (; i != vcset.Vars.end(); ++i)
 	    std::cout <<  (Vi (*i))->getValue() << "\t";
 	std::cout << std::endl;*/
@@ -155,7 +155,6 @@ class GTSolver : public Solver
     typedef boost::graph_traits<Graph> GraphTraits;
     typedef typename GraphTraits::vertex_descriptor Vertex;
     typedef typename GraphTraits::edge_descriptor Edge;
-    typename GraphTraits::vertex_iterator v_i, v_end;
 
 public:
     GTSolver();
@@ -173,37 +172,30 @@ GTSolver<T>::GTSolver()
 
 template <typename T>
 void GTSolver<T>::initiate() {
-    for (tie(v_i,v_end) = vertices(N->G); v_i != v_end; ++v_i)
-	N->G[*v_i]->setValue(N->G[*v_i]->getFirst());
-    initiated_ = true;
+    if ( !initiated_) {
+        typename GraphTraits::vertex_iterator v_i, v_end;
+	for (tie(v_i,v_end) = vertices(N->G); v_i != v_end; ++v_i)
+	    N->G[*v_i]->setValue(N->G[*v_i]->getFirst());
+	initiated_ = true;
+    }
 }
 
 template <typename T>
 bool GTSolver<T>::generator() {
-    if (!initiated_) {
-	initiate();
-    } else {
-	typename GraphTraits::vertex_iterator vertex_v, vertex_u,vertex_end;
-	tie(vertex_u,vertex_v) = vertices(N->G);
-	vertex_end = vertex_v;
-	--vertex_v;
-	while (vertex_v != vertex_u) {
-	    if (N->G[*vertex_v]->getValue() == N->G[*vertex_v]->getLast())
-		--vertex_v;
-	    else
-		break;
-	}
-
-	if (N->G[*vertex_u]->getValue() == N->G[*vertex_v]->getLast())
-	    return false;
-	/* Increment one variable , set other variables to the first value */
-	++(*(N->G[*vertex_v]));
-	if (true ||vertex_v != vertex_u) {
+    typename GraphTraits::vertex_iterator vertex_v, vertex_u,vertex_end;
+    tie(vertex_u,vertex_v) = vertices(N->G);
+    vertex_end = vertex_v;
+    while (--vertex_v != vertex_u && N->G[*vertex_v]->atUpperBoundary());
+    
+    if (N->G[*vertex_u]->getValue() == N->G[*vertex_v]->getLast())
+        return false;
+    /* Increment one variable , set other variables to the first value */
+    ++(*(N->G[*vertex_v]));
+    if (vertex_v != vertex_u) {
+        ++vertex_v;
+	while (vertex_v != vertex_end) {
+	    N->G[*vertex_v]->setValue(N->G[*vertex_v]->getFirst());
 	    ++vertex_v;
-	    while (vertex_v != vertex_end) {
-		N->G[*vertex_v]->setValue(N->G[*vertex_v]->getFirst());
-		++vertex_v;
-	    }
 	}
     }
     return true;
@@ -211,19 +203,25 @@ bool GTSolver<T>::generator() {
 
 template <typename T>
 bool GTSolver<T>::solve(BinaryNetwork<T>& BN, Solution<T>& S) {
+    typename GraphTraits::vertex_iterator v_i, v_end;
     N = &BN;
     num_checks_ = 0;
+    num_solutions_ = 0;
+    solved_ = true;
+
     for (tie(v_i,v_end) = vertices(N->G); v_i != v_end; ++v_i)
 	vars_.push_back(N->G[*v_i]);
 
+    initiate();
     while (generator()) {
 	++num_checks_;
 	if (N->check()) {
 	    S.addSolution(vars_);
-	    return true;
+	    solved_ = true;
+	    ++num_solutions_;
 	}
     }
-    return false;
+    return solved_;
 }
 
 /* BackTracking Solver Technique */
@@ -277,9 +275,8 @@ bool BTSolver<T>::backtrack()
     while (labels[*ver_i] && ver_i!= ver_end)
 	++ver_i;
     labels[*ver_i] = true;
-    for (N->G[*ver_i]->setValue(N->G[*ver_i]->getFirst()); \
-	     N->G[*ver_i]->getValue() != N->G[*ver_i]->getLast(); \
-	     ++*(N->G[*ver_i])) {
+    for (N->G[*ver_i]->minimize(); ! N->G[*ver_i]->atUpperBoundary(); \
+	++*(N->G[*ver_i])) {
 	if (check()) {
 	    nexttest = backtrack();
 	    if (nexttest) {

@@ -142,6 +142,8 @@ public:
     T getLast() { return D.getLast(); }
     T getStep() { return D.getInterval(value).getStep(); }
     void setValue(T t) { value = t; }
+    void minimize() { value = D.getFirst(); }
+    void maximize() { value = D.getLast(); }
     
     /* Value storing and restoring methods to assist in iteration */
     void storeValue() { vcopy_ = value; }
