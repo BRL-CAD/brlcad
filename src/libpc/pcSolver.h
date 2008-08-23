@@ -49,7 +49,6 @@ protected:
     unsigned long num_solutions_;
     bool initiated_;
     bool solved_;
-    std::list<VariableAbstract *> vars_;
 };
 
 Solver::Solver()
@@ -67,6 +66,7 @@ public:
     PCSolver();
     bool solve(VCSet &, Solution<T> & );
 private:
+    std::list<VariableAbstract *> vars_;
     bool generator();
     void initiate();
 };
@@ -105,11 +105,8 @@ bool PCSolver<T>::generator() {
     /* Increment one variable , set other variables to the first value */
     ++(*(Vp (*j)));
     
-    ++j;
-    while (j != vars_.end()) {
-        (Vp (*j))->setValue((Vp (*j))->getFirst());
-        ++j;
-    }
+    while (++j != vars_.end())
+	(Vp (*j))->minimize();
     return true;
 }
 
@@ -160,6 +157,7 @@ public:
     GTSolver();
     bool solve(BinaryNetwork<T>&, Solution<T>& );
 private:
+    std::list<VariableAbstract *> vars_;
     BinaryNetwork<T>* N;
     bool generator();
     void initiate();
@@ -223,6 +221,87 @@ bool GTSolver<T>::solve(BinaryNetwork<T>& BN, Solution<T>& S) {
     }
     return solved_;
 }
+/** Generic BackTracking Solver */
+
+template <typename T>
+class BackTrackSolver : public Solver
+{
+public:
+    typedef Variable<T>  * Vp;
+    BackTrackSolver();
+    bool solve(VCSet&, Solution<T>&);
+private:
+    std::vector<bool> labels;
+    std::vector<VariableAbstract *> vars_;
+    VCSet * vcs;
+
+    int labelsize();
+    bool backtrack();
+};
+
+template <typename T>
+BackTrackSolver<T>::BackTrackSolver()
+    : Solver()
+{}
+
+template <typename T>
+int BackTrackSolver<T>::labelsize() {
+    int j,i = 0;
+    for (j = 0; j < vars_.size(); ++j)
+	if (labels[j] == true) i++;
+    return i;
+}
+
+template <typename T>
+bool BackTrackSolver<T>::backtrack()
+{
+    bool nexttest = false;
+    int i =0;
+
+    if (labelsize() == vars_.size()) {
+	return true;
+    }
+    while (labels[i] && i < vars_.size())
+	++i;
+    labels[i] = true;
+    
+    Vp vptr = Vp (vars_[i]);
+    for (vptr->minimize(); ! vptr->atUpperBoundary(); ++*(vptr)) {
+	if (vcs->check()) {
+	    nexttest = backtrack();
+	    if (nexttest) {
+		return true;
+	    }
+	}
+    }
+    labels[i] = false;
+    return false;
+}
+
+template <typename T>
+bool BackTrackSolver<T>::solve(VCSet & vcset, Solution<T>& S) {
+    std::list<VariableAbstract *>::iterator i = vcset.Vars.begin();
+    std::list<VariableAbstract *>::iterator end = vcset.Vars.end();
+    num_checks_ = 0;
+    num_solutions_ = 0;
+    solved_ = false;
+    vcs  = &vcset;
+    
+    for (; i != end; ++i)
+	if ( (*i)->isConstrained() == 1 && ! (*i)->isConst()) {
+	    (*i)->display();
+	    vars_.push_back(*i);
+	    labels.push_back(false);
+	    (Vp (*i))->minimize();
+	}
+
+    backtrack();
+    if (vcset.check()) {
+    	S.addSolution(vcset.Vars);
+	return true;
+    }
+    return false;
+}
 
 /* BackTracking Solver Technique */
 template <typename T>
@@ -243,6 +322,7 @@ private:
     Vertex v,u;
     std::vector<bool> labels;
     class BinaryNetwork<T>* N;
+    std::list<VariableAbstract *> vars_;
 
     int labelsize();
     bool backtrack();
