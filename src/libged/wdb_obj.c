@@ -7769,8 +7769,11 @@ wdb_attr_cmd(struct rt_wdb	*wdbp,
 	    return TCL_ERROR;
 	}
 
-	i = 3;
+	i = 3;	
 	while ( i < argc ) {
+	    if(strcmp( argv[i], "region") == 0 && strcmp(argv[i+1], "R") == 0) {
+		dp->d_flags = DIR_REGION | DIR_COMB;
+	    }
 	    (void)bu_avs_add( &avs, argv[i], argv[i+1] );
 	    i += 2;
 	}
@@ -7787,6 +7790,9 @@ wdb_attr_cmd(struct rt_wdb	*wdbp,
     } else if ( strcmp( argv[1], "rm" ) == 0 ) {
 	i = 3;
 	while ( i < argc ) {
+	    if(strcmp( argv[i], "region") == 0) {
+		dp->d_flags = DIR_COMB;
+	    }
 	    (void)bu_avs_remove( &avs, argv[i] );
 	    i++;
 	}
@@ -7812,6 +7818,9 @@ wdb_attr_cmd(struct rt_wdb	*wdbp,
 	while ( i < argc ) {
 	    const char *old_val;
 
+	    if(strcmp( argv[i], "region") == 0 && strcmp(argv[i+1], "R") == 0) {
+		dp->d_flags = DIR_REGION | DIR_COMB;
+	    }
 	    old_val = bu_avs_get( &avs, argv[i] );
 	    if ( !old_val ) {
 		(void)bu_avs_add( &avs, argv[i], argv[i+1] );
@@ -7843,18 +7852,9 @@ wdb_attr_cmd(struct rt_wdb	*wdbp,
 	int tabs1=0;
         int is_region=0;
 	
-	
 	/* pretty print */
 	bu_vls_init( &vls );
 	
-	/* Need to check attributes explicitly here - as of r32532 DIR_REGION isn't updated
-	 * based on attributes before attr is run
-	 */
-	avpp = avs.avp;
-	for ( i=0; i < avs.count; i++, avpp++ ) {
-	      if(strcmp(avpp->name, "region") && strcmp(avpp->value, "R")) is_region = 1;
-	}
-
 	if ( dp->d_flags & DIR_COMB ) {
 	    if ( (dp->d_flags & DIR_REGION) || (is_region == 1)  ) {
 		bu_vls_printf( &vls, "%s region:\n", argv[2] );
