@@ -528,6 +528,14 @@ char *p_revolve[] = {
     "Enter name of sketch: "
 };
 
+char *p_pnts[] = {
+    "Enter number of points: ",
+    "Enter point weight: ",
+    "Enter X, Y, Z",
+    "Enter Y",
+    "Enter Z"
+};
+
 /*	F _ I N ( ) :  	decides which solid reader to call
  *			Used for manual entry of solids.
  */
@@ -578,7 +586,8 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	superell_in(char **cmd_argvs, struct rt_db_internal *intern),
 	metaball_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt),
 	hyp_in(char **cmd_argvs, struct rt_db_internal *intern),
-	revolve_in(char **cmd_argvs, struct rt_db_internal *intern);
+	revolve_in(char **cmd_argvs, struct rt_db_internal *intern),
+	pnts_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt);
 
     CHECK_DBI_NULL;
 
@@ -869,6 +878,17 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	nvals = 3*4 + 2;
 	menu = p_superell;
 	fn_in = superell_in;
+    } else if (strcmp(argv[2], "pnts") == 0) {
+	switch (pnts_in(argc, argv, &internal, p_pnts)) {
+	case CMD_BAD:
+	    Tcl_AppendResult(interp, "ERROR, pnts not made!\n", (char *)NULL);
+	    rt_db_free_internal(&internal, &rt_uniresource);
+	    return TCL_ERROR;
+	case CMD_MORE:
+	    return TCL_ERROR;
+	}
+
+	goto do_new_update;
     } else if (strcmp(argv[2], "cline") == 0 ||
 	       strcmp(argv[2], "grip") == 0 ||
 	       strcmp(argv[2], "nmg") == 0 ||
@@ -2879,6 +2899,86 @@ metaball_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
     }
 
     return CMD_OK;
+}
+
+/*   P N T S _ I N */
+int
+pnts_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt) {
+    int i, j;
+    double weight;
+    unsigned long numPoints;
+    struct rt_pnts_internal *pnts;
+    struct pnt *point;
+    struct bu_vls tmpVls;
+
+    CHECK_DBI_NULL;
+
+    /* prompt for numPoints if not entered */
+    if (argc < 4) {
+	Tcl_AppendResult(interp, MORE_ARGS_STR, prompt[0], (char *)NULL);
+	return CMD_MORE;
+    }
+
+    /* validate numPoints */
+    if (atol(argv[3]) < 0) {
+	Tcl_AppendResult(interp, "Number of points must be nonnegative!\n", (char *)NULL);
+	return CMD_BAD;
+    }
+
+    numPoints = atol(argv[3]);
+
+    /* prompt for weight of points if not entered */
+    if (argc < 5) {
+	Tcl_AppendResult(interp, MORE_ARGS_STR, prompt[1], (char *)NULL);
+	return CMD_MORE;
+    }
+
+    /* validate weight */
+    if (atof(argv[4]) < 0) {
+	Tcl_AppendResult(interp, "Weight must be nonnegative!\n", (char *)NULL);
+	return CMD_BAD;
+    }
+
+    weight = atof(argv[4]);
+
+    /* set database structure */
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_type = ID_PNTS;
+    intern->idb_meth = &rt_functab[ID_PNTS];
+    intern->idb_ptr = (genptr_t) bu_malloc(sizeof(struct rt_pnts_internal), "rt_pnts_internal");
+
+    /* set internal structure */
+    pnts = (struct rt_pnts_internal *) intern->idb_ptr;
+    pnts->magic = RT_PNTS_INTERNAL_MAGIC;
+    pnts->numPoints = numPoints;
+    pnts->weight = weight;
+    BU_GETSTRUCT(pnts->vList, pnt);
+    BU_LIST_INIT(&(pnts->vList->l));
+
+    /* prompt for X, Y, Z of points */
+    if (argc < 5 + numPoints * ELEMENTS_PER_PT) {
+        bu_vls_init(&tmpVls);
+
+        bu_vls_printf(&tmpVls, "%s for point %d: ", prompt[(argc - 2) % ELEMENTS_PER_PT + 2],
+		      1 + (argc - 5) / ELEMENTS_PER_PT);
+
+	Tcl_AppendResult(interp, MORE_ARGS_STR, bu_vls_addr(&tmpVls), (char *)NULL);
+
+        bu_vls_free(&tmpVls);
+
+        return CMD_MORE;
+    }
+
+    /* store points in list */
+    for(i = 5; i < argc; i += 3) {
+        BU_GETSTRUCT(point, pnt);
+
+        point->v[X] = atof(argv[i]) * local2base;
+        point->v[Y] = atof(argv[i + 1]) * local2base;
+        point->v[Z] = atof(argv[i + 2]) * local2base;
+
+        BU_LIST_PUSH(&(pnts->vList->l), &(point->l));
+    }
 }
 
 /*

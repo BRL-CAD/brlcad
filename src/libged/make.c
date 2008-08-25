@@ -595,7 +595,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_PNTS;
 	internal.idb_meth = &rt_functab[ID_PNTS];
-	internal.idb_ptr = (genptr_t) bu_malloc(sizeof(struct rt_pnts_internal), "rt_pnts_internal");
+	internal.idb_ptr = (genptr_t) bu_malloc(sizeof(struct rt_pnts_internal),"rt_pnts_internal");
 
 	pnts_ip = (struct rt_pnts_internal *) internal.idb_ptr;
 	pnts_ip->magic = RT_PNTS_INTERNAL_MAGIC;
@@ -603,10 +603,10 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	pnts_ip->weight = 0;
 
 	BU_GETSTRUCT(pnts_ip->vList, pnt);
-	BU_LIST_INIT(&(pnts_ip->vList->l));
+	BU_LIST_INIT(&pnts_ip->vList->l);
 	BU_GETSTRUCT(point, pnt);
 	VSET(point->v, origin[X], origin[Y], origin[Z]);
-	BU_LIST_PUSH(&(pnts_ip->vList->l), &point->l);
+	BU_LIST_PUSH(&pnts_ip->vList->l, &point->l);
 
     } else if (strcmp(argv[bu_optind+1], "bot") == 0) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
