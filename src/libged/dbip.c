@@ -48,19 +48,9 @@ ged_dbip(struct ged *gedp, int argc, const char *argv[])
     }
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
-    bu_vls_printf(&gedp->ged_result_str, "%llu", (_int64)gedp->ged_wdbp->dbip);
+    bu_vls_printf(&gedp->ged_result_str, "%lu", (UINT_PTR)gedp->ged_wdbp->dbip);
 #else
-    switch (sizeof(gedp->ged_wdbp->dbip)) {
-	case sizeof(long long unsigned):
-	    bu_vls_printf(&gedp->ged_result_str, "%llu", gedp->ged_wdbp->dbip);
-	    break;
-	case sizeof(long unsigned):
-	    bu_vls_printf(&gedp->ged_result_str, "%lu", gedp->ged_wdbp->dbip);
-	    break;
-	default:
-	    bu_vls_printf(&gedp->ged_result_str, "%u", gedp->ged_wdbp->dbip);
-	    break;
-    }
+    bu_vls_printf(&gedp->ged_result_str, "%lu", (unsigned long)gedp->ged_wdbp->dbip);
 #endif
 
     return BRLCAD_OK;
