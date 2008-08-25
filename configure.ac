@@ -1719,18 +1719,23 @@ if test "xyes" = "xyes" ; then
     fi
 
     dnl dynamic SSE optimizations for NURBS processing
-    BC_COMPILER_AND_LINKER_RECOGNIZES([-msse], [msse], [nokeep])
-    MSSE=""
-    if test "x$bc_msse_works" = "xyes" ; then
-       MSSE="-msse"
-    fi
-    MSSE2=""
-    BC_COMPILER_AND_LINKER_RECOGNIZES([-msse2], [msse2], [nokeep])
-    if test "x$bc_msse2_works" = "xyes" ; then
-       MSSE2="-msse2"
-    fi
-    SSE="$MSSE $MSSE2"
-    AC_SUBST(SSE)
+dnl
+dnl XXX disable the SSE flags for now as they can cause illegal instructions.
+dnl     the test needs to also be tied to run-time functionality since gcc
+dnl     may still output SSE instructions (e.g., for cross-compiling).
+dnl
+dnl     BC_COMPILER_AND_LINKER_RECOGNIZES([-msse], [msse], [nokeep])
+dnl     MSSE=""
+dnl     if test "x$bc_msse_works" = "xyes" ; then
+dnl        MSSE="-msse"
+dnl     fi
+dnl     MSSE2=""
+dnl     BC_COMPILER_AND_LINKER_RECOGNIZES([-msse2], [msse2], [nokeep])
+dnl     if test "x$bc_msse2_works" = "xyes" ; then
+dnl        MSSE2="-msse2"
+dnl     fi
+dnl     SSE="$MSSE $MSSE2"
+dnl     AC_SUBST(SSE)
 
     dnl check for -search_paths_first linker flag.
     dnl prevent a false-positive where it can be treated as a -s and-e
