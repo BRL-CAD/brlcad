@@ -7841,11 +7841,22 @@ wdb_attr_cmd(struct rt_wdb	*wdbp,
 	struct bu_vls vls;
 	int max_attr_name_len=0;
 	int tabs1=0;
-
+        int is_region=0;
+	
+	
 	/* pretty print */
 	bu_vls_init( &vls );
+	
+	/* Need to check attributes explicitly here - as of r32532 DIR_REGION isn't updated
+	 * based on attributes before attr is run
+	 */
+	avpp = avs.avp;
+	for ( i=0; i < avs.count; i++, avpp++ ) {
+	      if(strcmp(avpp->name, "region") && strcmp(avpp->value, "R")) is_region = 1;
+	}
+
 	if ( dp->d_flags & DIR_COMB ) {
-	    if ( dp->d_flags & DIR_REGION ) {
+	    if ( (dp->d_flags & DIR_REGION) || (is_region == 1)  ) {
 		bu_vls_printf( &vls, "%s region:\n", argv[2] );
 	    } else {
 		bu_vls_printf( &vls, "%s combination:\n", argv[2] );
