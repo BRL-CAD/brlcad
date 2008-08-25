@@ -320,6 +320,8 @@ typedef int (*go_wrapper_func_ptr)(struct ged *, int, const char *[], ged_func_p
 static struct ged_obj HeadGedObj;
 static struct ged_obj *go_current_gop = GED_OBJ_NULL;
 
+#define GO_MAX_RT_ARGS 64
+
 struct go_cmdtab {
     char	 *go_name;
     char	 *go_usage;
@@ -380,6 +382,7 @@ static struct go_cmdtab go_cmds[] = {
     {"g",	(char *)0, MAXARGS, go_pass_through_func, ged_group},
     {"get",	(char *)0, MAXARGS, go_pass_through_func, ged_get},
     {"get_autoview",	(char *)0, MAXARGS, go_pass_through_func, ged_get_autoview},
+    {"get_comb",	(char *)0, MAXARGS, go_pass_through_func, ged_get_comb},
     {"get_eyemodel",	"vname", 2, go_view_func, ged_get_eyemodel},
     {"get_type",	(char *)0, MAXARGS, go_pass_through_func, ged_get_type},
     {"hide",	(char *)0, MAXARGS, go_pass_through_func, ged_hide},
@@ -434,9 +437,11 @@ static struct go_cmdtab go_cmds[] = {
     {"orotate",	(char *)0, MAXARGS, go_pass_through_func, ged_orotate},
     {"oscale",	(char *)0, MAXARGS, go_pass_through_func, ged_oscale},
     {"otranslate",	(char *)0, MAXARGS, go_pass_through_func, ged_otranslate},
+    {"overlay",	(char *)0, MAXARGS, go_autoview_func, ged_overlay},
     {"pathlist",	(char *)0, MAXARGS, go_pass_through_func, ged_pathlist},
     {"paths",	(char *)0, MAXARGS, go_pass_through_func, ged_pathsum},
     {"perspective",	"vname [angle]", 3, go_view_func, ged_perspective},
+    {"plot",	(char *)0, MAXARGS, go_pass_through_func, ged_plot},
     {"pmat",	"vname [mat]", 3, go_view_func, ged_pmat},
     {"pmodel2view",	"vname", 2, go_view_func, ged_pmodel2view},
     {"pov",	"vname center quat scale eye_pos perspective", 7, go_view_func, ged_pmat},
@@ -444,15 +449,20 @@ static struct go_cmdtab go_cmds[] = {
     {"prefix",	(char *)0, MAXARGS, go_pass_through_func, ged_prefix},
     {"push",	(char *)0, MAXARGS, go_pass_through_func, ged_push},
     {"put",	(char *)0, MAXARGS, go_pass_through_func, ged_put},
+    {"put_comb",	(char *)0, MAXARGS, go_pass_through_func, ged_put_comb},
+    {"putmat",	(char *)0, MAXARGS, go_pass_through_func, ged_putmat},
     {"qray",	(char *)0, MAXARGS, go_pass_through_func, ged_qray},
-    {"quat",	"vname a b c d", 5, go_view_func, ged_quat},
+    {"quat",	"vname a b c d", 6, go_view_func, ged_quat},
+    {"qvrot",	"vname x y z angle", 6, go_view_func, ged_qvrot},
     {"r",	(char *)0, MAXARGS, go_pass_through_func, ged_region},
     {"rcodes",	(char *)0, MAXARGS, go_pass_through_func, ged_rcodes},
+    {"red",	(char *)0, MAXARGS, go_pass_through_func, ged_red},
     {"refresh",	"vname", MAXARGS, go_refresh, GED_FUNC_PTR_NULL},
     {"refresh_all",	(char *)0, MAXARGS, go_refresh_all, GED_FUNC_PTR_NULL},
     {"regdef",	(char *)0, MAXARGS, go_pass_through_func, ged_regdef},
     {"regions",	(char *)0, MAXARGS, go_pass_through_func, ged_tables},
     {"report",	(char *)0, MAXARGS, go_pass_through_func, ged_report},
+    {"rfarb",	(char *)0, MAXARGS, go_pass_through_func, ged_rfarb},
     {"rm",	(char *)0, MAXARGS, go_pass_through_func, ged_remove},
     {"rmap",	(char *)0, MAXARGS, go_pass_through_func, ged_rmap},
     {"rmat",	"vname [mat]", 3, go_view_func, ged_rmat},
@@ -464,9 +474,12 @@ static struct go_cmdtab go_cmds[] = {
     {"rotate_mode",	"vname x y", MAXARGS, go_rotate_mode, GED_FUNC_PTR_NULL},
     {"rt",	"vname [args]", GO_MAX_RT_ARGS, go_view_func, ged_rt},
     {"rt_gettrees",	(char *)0, MAXARGS, go_rt_gettrees, GED_FUNC_PTR_NULL},
+    {"rtarea",	"vname [args]", GO_MAX_RT_ARGS, go_view_func, ged_rt},
     {"rtabort",	(char *)0, GO_MAX_RT_ARGS, go_pass_through_func, ged_rtabort},
     {"rtedge",	"vname [args]", GO_MAX_RT_ARGS, go_view_func, ged_rt},
     {"rtcheck",	"vname [args]", GO_MAX_RT_ARGS, go_view_func, ged_rtcheck},
+    {"rtweight",	"vname [args]", GO_MAX_RT_ARGS, go_view_func, ged_rt},
+    {"savekey",	"vname filename", 3, go_view_func, ged_savekey},
     {"saveview",	"vname filename", 3, go_view_func, ged_saveview},
     {"sca",	"vname sf", 3, go_view_func, ged_scale},
     {"scale_mode",	"vname x y", MAXARGS, go_scale_mode, GED_FUNC_PTR_NULL},
@@ -511,7 +524,7 @@ static struct go_cmdtab go_cmds[] = {
     {"who",	(char *)0, MAXARGS, go_pass_through_func, ged_who},
     {"wmater",	(char *)0, MAXARGS, go_pass_through_func, ged_wmater},
     {"xpush",	(char *)0, MAXARGS, go_pass_through_func, ged_xpush},
-    {"ypr",	"vname yaw pitch roll", 3, go_view_func, ged_ypr},
+    {"ypr",	"vname yaw pitch roll", 5, go_view_func, ged_ypr},
     {"zap",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_zap},
     {"zbuffer",	"vname [0|1]", MAXARGS, go_zbuffer, GED_FUNC_PTR_NULL},
     {"zclip",	"vname [0|1]", MAXARGS, go_zclip, GED_FUNC_PTR_NULL},

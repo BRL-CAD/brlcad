@@ -18,6 +18,7 @@ libged_nil_la_SOURCES = \
 	bot_smooth.c \
 	cat.c \
 	center.c \
+	clip.c \
 	color.c \
 	comb.c \
 	comb_color.c \
@@ -47,6 +48,7 @@ libged_nil_la_SOURCES = \
 	ged.c \
 	get.c \
 	get_autoview.c \
+	get_comb.c \
 	get_eyemodel.c \
 	get_obj_bounds.c \
 	get_type.c \
@@ -98,6 +100,7 @@ libged_nil_la_SOURCES = \
 	pathlist.c \
 	pathsum.c \
 	perspective.c \
+	plot.c \
 	pmat.c \
 	pmodel2view.c \
 	pov.c \
@@ -105,13 +108,18 @@ libged_nil_la_SOURCES = \
 	prefix.c \
 	push.c \
 	put.c \
+	put_comb.c \
+	putmat.c \
 	qray.c \
 	quat.c \
+	qvrot.c \
 	rcodes.c \
+	red.c \
 	regdef.c \
 	region.c \
 	remove.c \
 	report.c \
+	rfarb.c \
 	rmap.c \
 	rmat.c \
 	rmater.c \
@@ -122,6 +130,7 @@ libged_nil_la_SOURCES = \
 	rt.c \
 	rtabort.c \
 	rtcheck.c \
+	savekey.c \
 	saveview.c \
 	scale.c \
 	set_output_script.c \

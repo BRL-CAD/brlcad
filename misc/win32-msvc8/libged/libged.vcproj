@@ -186,6 +186,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\clip.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\color.c"
 				>
 			</File>
@@ -299,6 +303,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\get_autoview.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\get_comb.c"
 				>
 			</File>
 			<File
@@ -506,6 +514,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\plot.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\pmat.c"
 				>
 			</File>
@@ -534,6 +546,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\put_comb.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\putmat.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\qray.c"
 				>
 			</File>
@@ -542,7 +562,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\qvrot.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\rcodes.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\red.c"
 				>
 			</File>
 			<File
@@ -559,6 +587,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\report.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\rfarb.c"
 				>
 			</File>
 			<File
@@ -599,6 +631,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\rtcheck.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\savekey.c"
 				>
 			</File>
 			<File

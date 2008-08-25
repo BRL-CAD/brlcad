@@ -161,6 +161,11 @@ BU_EXTERN (void ged_eraseobj,
 	   (struct ged			*gedp,
 	    register struct directory	**dpp));
 
+/* defined in get_comb.c */
+BU_EXTERN(void ged_vls_print_matrix,
+	  (struct bu_vls *vls,
+	   matp_t matrix));
+
 /* defined in get_obj_bounds.c */
 BU_EXTERN (int ged_get_obj_bounds,
 	   (struct ged		*gedp,
@@ -214,6 +219,30 @@ BU_EXTERN(void ged_vls_line_dpp,
 BU_EXTERN(struct directory ** ged_getspace,
 	  (struct db_i	*dbip,
 	   register int	num_entries));
+
+/* defined in red.c */
+extern char ged_tmpfil[MAXPATHLEN];
+extern char ged_tmpcomb[17];
+extern char *ged_tmpcomb_init;
+extern char delims[];
+BU_EXTERN(int ged_make_tree,
+	  (struct ged *gedp,
+	   struct rt_comb_internal *comb,
+	   struct directory *dp,
+	   int node_count,
+	   char *old_name,
+	   char *new_name,
+	   struct rt_tree_array *rt_tree_array,
+	   int tree_index));
+BU_EXTERN(int ged_save_comb,
+	  (struct ged *gedp,
+	   struct directory *dpold));
+BU_EXTERN(void ged_restore_comb,
+	  (struct ged *gedp,
+	   struct directory *dp));
+BU_EXTERN(void ged_print_matrix,
+	  (FILE *fp, matp_t matrix));
+
 
 /* defined in rt.c */
 BU_EXTERN (void ged_rt_set_eye_model,

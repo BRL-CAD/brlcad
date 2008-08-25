@@ -34,7 +34,7 @@ ged_overlay(struct ged *gedp, int argc, const char *argv[])
     FILE *fp;
     double char_size;
     char *name;
-    static const char *usage = "file.pl [name]";
+    static const char *usage = "file.pl char_size [name]";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);

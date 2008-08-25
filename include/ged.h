@@ -1306,6 +1306,14 @@ GED_EXPORT BU_EXTERN(int ged_get, (struct ged *gedp, int argc, const char *argv[
 GED_EXPORT BU_EXTERN(int ged_get_autoview, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Get combination information
+ *
+ * Usage:
+ *     get_comb comb
+ */
+GED_EXPORT BU_EXTERN(int ged_get_comb, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Get the viewsize, orientation and eye point.
  *
  * Usage:
@@ -1692,6 +1700,14 @@ GED_EXPORT BU_EXTERN(int ged_pathsum, (struct ged *gedp, int argc, const char *a
 GED_EXPORT BU_EXTERN(int ged_perspective, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Create a unix plot file of the currently displayed objects.
+ *
+ * Usage:
+ *     plot file [2|3] [f] [g] [z]
+ */
+GED_EXPORT BU_EXTERN(int ged_plot, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Set/get the perspective matrix.
  *
  * Usage:
@@ -1745,7 +1761,24 @@ GED_EXPORT BU_EXTERN(int ged_push, (struct ged *gedp, int argc, const char *argv
  * Usage:
  *     put object type attrs
  */
+
 GED_EXPORT BU_EXTERN(int ged_put, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Set combination attributes
+ *
+ * Usage:
+ *     put_comb comb_name is_Region id air material los color shader inherit boolean_expr";
+ */
+GED_EXPORT BU_EXTERN(int ged_put_comb, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Replace the matrix on an arc
+ *
+ * Usage:
+ *     putmat a/b I|m0 m1 ... m15
+ */
+GED_EXPORT BU_EXTERN(int ged_putmat, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Get/set query_ray attributes
@@ -1763,6 +1796,14 @@ GED_EXPORT BU_EXTERN(int ged_qray, (struct ged *gedp, int argc, const char *argv
  */
 GED_EXPORT BU_EXTERN(int ged_quat, (struct ged *gedp, int argc, const char *argv[]));
 
+/**
+ * Set the view from a direction vector and twist.
+ *
+ * Usage:
+ *     qvrot x y z angle
+ */
+GED_EXPORT BU_EXTERN(int ged_qvrot, (struct ged *gedp, int argc, const char *argv[]));
+
 GED_EXPORT BU_EXTERN(void ged_init_qray,
 		    (struct ged_drawable *gdp));
 GED_EXPORT BU_EXTERN(void ged_free_qray,
@@ -1775,6 +1816,14 @@ GED_EXPORT BU_EXTERN(void ged_free_qray,
  *     rcodes filename
  */
 GED_EXPORT BU_EXTERN(int ged_rcodes, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Edit region/comb
+ *
+ * Usage:
+ *     red object
+ */
+GED_EXPORT BU_EXTERN(int ged_red, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Change the default region ident codes: item air los mat
@@ -1793,14 +1842,6 @@ GED_EXPORT BU_EXTERN(int ged_regdef, (struct ged *gedp, int argc, const char *ar
 GED_EXPORT BU_EXTERN(int ged_region, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
- * Returns a list of id to region name mappings for the entire database.
- *
- * Usage:
- *     rmap
- */
-GED_EXPORT BU_EXTERN(int ged_rmap, (struct ged *gedp, int argc, const char *argv[]));
-
-/**
  * Remove members from a combination
  *
  * Usage:
@@ -1815,6 +1856,22 @@ GED_EXPORT BU_EXTERN(int ged_remove, (struct ged *gedp, int argc, const char *ar
  *     report [lvl]
  */
 GED_EXPORT BU_EXTERN(int ged_report, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Makes and arb given a point, 2 coord of 3 pts, rot, fb and thickness.
+ *
+ * Usage:
+ *     rfarb name args
+ */
+GED_EXPORT BU_EXTERN(int ged_rfarb, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Returns a list of id to region name mappings for the entire database.
+ *
+ * Usage:
+ *     rmap
+ */
+GED_EXPORT BU_EXTERN(int ged_rmap, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Set/get the rotation matrix.
@@ -1887,6 +1944,14 @@ GED_EXPORT BU_EXTERN(int ged_rtabort, (struct ged *gedp, int argc, const char *a
  *     rtcheck [args]
  */
 GED_EXPORT BU_EXTERN(int ged_rtcheck, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Save keyframe in file (experimental)
+ *
+ * Usage:
+ *     savekey file [time]
+ */
+GED_EXPORT BU_EXTERN(int ged_savekey, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Save the view

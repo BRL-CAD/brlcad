@@ -660,6 +660,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\pnts\pnts.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\poly\poly.c"
 				>
 			</File>
