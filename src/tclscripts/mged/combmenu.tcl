@@ -51,6 +51,10 @@ proc build_comb_menu_all_displayed {} {
     global mouse_behavior
     global ::tk::Priv
 
+    if ![info exists mged_players] {
+	return
+    }
+
     set win [winset]
     set id [get_player_id_dm $win]
 
@@ -82,6 +86,10 @@ proc ray_build_comb_menu { x y } {
     global mged_players
     global mged_gui
     global mouse_behavior
+
+    if ![info exists mged_players] {
+	return
+    }
 
     set win [winset]
     set id [get_player_id_dm $win]

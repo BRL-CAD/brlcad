@@ -624,6 +624,10 @@ proc grid_control_update { sf } {
     global grid_control
     global localunit
 
+    if ![info exists mged_players] {
+	return
+    }
+
     foreach id $mged_players {
 	if {[info exists grid_control($id,anchor)] &&\
 		[llength $grid_control($id,anchor)] == 3} {

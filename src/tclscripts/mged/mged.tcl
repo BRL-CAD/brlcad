@@ -166,6 +166,10 @@ proc ::tk::TextInsert {w s} {
 proc get_player_id_t { w } {
     global mged_players
 
+    if ![info exists mged_players] {
+	return
+    }
+
     foreach id $mged_players {
 	set _w .$id.t
 	if { $w == $_w } {

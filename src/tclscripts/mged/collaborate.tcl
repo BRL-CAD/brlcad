@@ -68,6 +68,10 @@ proc collab_join { id } {
     global mged_collaborators
     global mged_players
 
+    if ![info exists mged_players] {
+	return
+    }
+
     if { [lsearch -exact $mged_players $id] == -1 } {
 	return "collab_join: $id is not listed as an mged_player"
     }
