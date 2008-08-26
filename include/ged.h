@@ -941,6 +941,25 @@ GED_EXPORT BU_EXTERN(void ged_deering_persp_mat,
 
 
 /**
+ * Creates an arb8 given the following:
+ *   1)   3 points of one face
+ *   2)   coord x, y or z and 2 coordinates of the 4th point in that face
+ *   3)   thickness
+ *
+ * Usage:
+ *     3ptarb name x1 y1 z1 x2 y2 z2 x3 y3 z3 coord c1 c2 th
+ */
+GED_EXPORT BU_EXTERN(int ged_3ptarb, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Creates an arb8 given rotation and fallback angles
+ *
+ * Usage:
+ *     arb name rot fb
+ */
+GED_EXPORT BU_EXTERN(int ged_arb, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Convert az/el to a direction vector.
  *
  * Usage:
@@ -963,6 +982,14 @@ GED_EXPORT BU_EXTERN(int ged_aet, (struct ged *gedp, int argc, const char *argv[
  *     adjust object attr value ?attr value?
  */
 GED_EXPORT BU_EXTERN(int ged_adjust, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Returns lots of information about the specified object(s)
+ *
+ * Usage:
+ *     analyze object(s)
+ */
+GED_EXPORT BU_EXTERN(int ged_analyze, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Allow editing of the matrix, etc., along an arc.
@@ -1005,6 +1032,15 @@ GED_EXPORT BU_EXTERN(int ged_arot, (struct ged *gedp, int argc, const char *argv
 GED_EXPORT BU_EXTERN(int ged_autoview, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Tesselates each operand object, then performs the
+ * boolean evaluation, storing result in new_obj
+ *
+ * Usage:
+ *     bev [P|t] new_obj obj1 op obj2 op obj3 ...
+ */
+GED_EXPORT BU_EXTERN(int ged_bev, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Manipulate opaque objects.
  * Must specify one of -i (for creating or adjusting objects (input))
  * or -o for extracting objects (output).
@@ -1037,6 +1073,14 @@ GED_EXPORT BU_EXTERN(int ged_binary, (struct ged *gedp, int argc, const char *ar
 GED_EXPORT BU_EXTERN(int ged_blast, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Create new_bot by condensing old_bot
+ *
+ * Usage:
+ *     bot_condense new_bot old_bot
+ */
+GED_EXPORT BU_EXTERN(int ged_bot_condense, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Uses edge decimation to reduce the number of triangles in the
  * specified BOT while keeping within the specified constraints.
  *
@@ -1044,6 +1088,14 @@ GED_EXPORT BU_EXTERN(int ged_blast, (struct ged *gedp, int argc, const char *arg
  *     bot_decimate -c maximum_chord_error -n maximum_normal_error -e minimum_edge_length new_bot_name current_bot_name
  */
 GED_EXPORT BU_EXTERN(int ged_bot_decimate, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Create new_bot by fusing faces in old_bot
+ *
+ * Usage:
+ *     bot_face_fuse new_bot old_bot
+ */
+GED_EXPORT BU_EXTERN(int ged_bot_face_fuse, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Sort the facelist of BOT solids to optimize ray trace performance
@@ -1055,12 +1107,36 @@ GED_EXPORT BU_EXTERN(int ged_bot_decimate, (struct ged *gedp, int argc, const ch
 GED_EXPORT BU_EXTERN(int ged_bot_face_sort, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Create bot_dest by merging the bot sources.
+ *
+ * Usage:
+ *     bot_merge bot_dest bot1_src [botn_src]
+ */
+GED_EXPORT BU_EXTERN(int ged_bot_merge, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Calculate vertex normals for the BOT primitive
  *
  * Usage:
  *     bot_smoooth [-t ntol] new_bot old_bot
  */
 GED_EXPORT BU_EXTERN(int ged_bot_smooth, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Split the specified bot
+ *
+ * Usage:
+ *     bot_split bot_obj
+ */
+GED_EXPORT BU_EXTERN(int ged_bot_split, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Fuse bot vertices
+ *
+ * Usage:
+ *     bot_vertex_fuse new_bot old_bot
+ */
+GED_EXPORT BU_EXTERN(int ged_bot_vertex_fuse, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * List attributes (brief).

@@ -126,6 +126,10 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat;f90;for;f;fpp"
 			>
 			<File
+				RelativePath="..\..\..\src\libged\3ptarb.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\adjust.c"
 				>
 			</File>
@@ -135,6 +139,14 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\aet.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\analyze.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\arb.c"
 				>
 			</File>
 			<File
@@ -154,6 +166,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\bev.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\bigE.c"
 				>
 			</File>
@@ -166,7 +182,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\bot_condense.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\bot_decimate.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\bot_face_fuse.c"
 				>
 			</File>
 			<File
@@ -174,7 +198,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\bot_merge.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\bot_smooth.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\bot_split.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\bot_vertex_fuse.c"
 				>
 			</File>
 			<File

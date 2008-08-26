@@ -117,6 +117,18 @@ BU_EXTERN (void ged_print_node,
 BU_EXTERN (struct db_i *ged_open_dbip,
 	   (const char *filename));
 
+/* defined in clip.c */
+int
+BU_EXTERN (ged_clip,
+	   (fastf_t *xp1,
+	    fastf_t *yp1,
+	    fastf_t *xp2,
+	    fastf_t *yp2));
+BU_EXTERN (ged_vclip,
+	   (vect_t a,
+	    vect_t b,
+	    register fastf_t *min,
+	    register fastf_t *max));
 
 /* defined in comb.c */
 BU_EXTERN (struct directory *ged_combadd,

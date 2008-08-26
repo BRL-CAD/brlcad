@@ -153,7 +153,7 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 	offset = 2;
     }
 
-    put_rgb_into_comb(comb, argv[offset + 1]);
+    put_rgb_into_comb(comb, (char *)argv[offset + 1]);
     bu_vls_strcpy(&comb->shader, argv[offset +2]);
 
     if (*argv[offset + 3] == 'y' || *argv[offset + 3] == 'Y')
@@ -198,7 +198,6 @@ ged_put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct d
     union tree		*tp;
     matp_t		matrix;
     struct bu_vls	vls;
-    int			result;
 
     if (str == (char *)NULL)
 	return BRLCAD_ERROR;
