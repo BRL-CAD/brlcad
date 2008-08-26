@@ -7650,16 +7650,12 @@ wdb_unhide_tcl(ClientData	clientData,
  *@brief
  *	implements the "attr" command.
  *
- *	argv[1] is either a sub-command:
+ *	argv[1] is a sub-command:
  *		get - get attributes
  *		set - add a new attribute or replace an existing one
  *		rm  - remove an attribute
  *		append - append to an existing attribute
  *		edit - invoke an editor to edit all attributes
- *
- *      or an option:
- *              -nonstd - display all non-standard attributes
- *              -shader - display all objects with shader properties
  * 
  *	argv[2] is the name of the object
  *
@@ -7690,7 +7686,7 @@ wdb_attr_cmd(struct rt_wdb	*wdbp,
 	return TCL_ERROR;
     }
     
-    if (argc < 3 && (strcmp( argv[1], "-nonstd" ) != 0) && (strcmp( argv[1], "-shader" ) != 0)) {
+    if (argc < 3) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -7709,52 +7705,7 @@ wdb_attr_cmd(struct rt_wdb	*wdbp,
 	return TCL_ERROR;
     }
 
-    if ( strcmp( argv[1], "-nonstd" ) == 0 ) {
-	Tcl_AppendResult(interp, "Object Name", "\t\t", "Attrbute Name", "\t\t", "Attribute Value", "\n", (char *)NULL);
-    	for ( i =  0; i < RT_DBNHASH; i++ ) {
-	    for (dp = wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
-		if (!(dp->d_flags & DIR_HIDDEN)) {
-		    bu_avs_init_empty(&avs);
-		    db5_get_attributes( wdbp->dbip, &avs, dp );
-		    avpp = avs.avp;
-		    for (j=0; j < avs.count; j++, avpp++ ) {
-			if (strcmp(avpp->name, "region") != 0 && strcmp(avpp->name, "region_id") != 0 && 
-				strcmp(avpp->name, "material_id") != 0 && strcmp(avpp->name, "los") != 0 && 
-				strcmp(avpp->name, "aircode") != 0 && strcmp(avpp->name, "oshader") != 0 &&
-				strcmp(avpp->name, "rgb") != 0 && strcmp(avpp->name, "oshader") != 0) {
-			    Tcl_AppendResult(interp, dp->d_namep, "\t\t", avpp->name, "\t\t", avpp->value, "\n", (char *)NULL);
-			}
-		    }
-		    bu_avs_free(&avs);
-		}
-	    }
-	}
-    	return TCL_OK;	
-    } 	
-    
 
-    if ( strcmp( argv[1], "-shader" ) == 0 ) {
-	Tcl_AppendResult(interp, "Object Name", "\t\t", "Shader", "\n", (char *)NULL);
-    	for ( i =  0; i < RT_DBNHASH; i++ ) {
-	    for (dp = wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
-		if (!(dp->d_flags & DIR_HIDDEN)) {
-		    bu_avs_init_empty(&avs);
-		    db5_get_attributes( wdbp->dbip, &avs, dp );
-		    avpp = avs.avp;
-		    for (j=0; j < avs.count; j++, avpp++ ) {
-			if (strcmp(avpp->name, "oshader") == 0 ) { 
-			    Tcl_AppendResult(interp, dp->d_namep, "\t\t", avpp->value, "\n", (char *)NULL);
-			}
-		    }
-		    bu_avs_free(&avs);
-		}
-	    }
-	}
-    	return TCL_OK;	
-    } 	
-    
-   
-    
     if ( (dp=db_lookup( wdbp->dbip, argv[2], LOOKUP_QUIET)) == DIR_NULL ) {
 	Tcl_AppendResult(interp,
 			 argv[2],
