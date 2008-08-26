@@ -7822,7 +7822,7 @@ wdb_attr_cmd(struct rt_wdb	*wdbp,
 	i = 3;	
 	while ( i < argc ) {
 	    if(strcmp( argv[i], "region") == 0 && strcmp(argv[i+1], "R") == 0) {
-		dp->d_flags = DIR_REGION | DIR_COMB;
+		dp->d_flags |= DIR_REGION;
 	    }
 	    (void)bu_avs_add( &avs, argv[i], argv[i+1] );
 	    i += 2;
@@ -7841,7 +7841,7 @@ wdb_attr_cmd(struct rt_wdb	*wdbp,
 	i = 3;
 	while ( i < argc ) {
 	    if(strcmp( argv[i], "region") == 0) {
-		dp->d_flags = DIR_COMB;
+		dp->d_flags = dp->d_flags & ~(DIR_REGION);
 	    }
 	    (void)bu_avs_remove( &avs, argv[i] );
 	    i++;
@@ -7869,7 +7869,7 @@ wdb_attr_cmd(struct rt_wdb	*wdbp,
 	    const char *old_val;
 
 	    if(strcmp( argv[i], "region") == 0 && strcmp(argv[i+1], "R") == 0) {
-		dp->d_flags = DIR_REGION | DIR_COMB;
+		dp->d_flags |= DIR_REGION;
 	    }
 	    old_val = bu_avs_get( &avs, argv[i] );
 	    if ( !old_val ) {
