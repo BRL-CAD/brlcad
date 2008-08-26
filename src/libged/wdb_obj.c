@@ -7675,7 +7675,7 @@ wdb_attr_cmd(struct rt_wdb	*wdbp,
 	     int		argc,
 	     char 		*argv[])
 {
-    int			i,j;
+    int			i;
     struct directory	*dp;
     struct bu_attribute_value_set avs;
     struct bu_attribute_value_pair	*avpp;
@@ -7686,7 +7686,7 @@ wdb_attr_cmd(struct rt_wdb	*wdbp,
 	return TCL_ERROR;
     }
     
-    if (argc < 3) {
+    if ( argc < 3 ) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -7704,7 +7704,6 @@ wdb_attr_cmd(struct rt_wdb	*wdbp,
 			 (char *)NULL);
 	return TCL_ERROR;
     }
-
 
     if ( (dp=db_lookup( wdbp->dbip, argv[2], LOOKUP_QUIET)) == DIR_NULL ) {
 	Tcl_AppendResult(interp,
@@ -7851,13 +7850,11 @@ wdb_attr_cmd(struct rt_wdb	*wdbp,
 	struct bu_vls vls;
 	int max_attr_name_len=0;
 	int tabs1=0;
-        int is_region=0;
 	
 	/* pretty print */
 	bu_vls_init( &vls );
-	
 	if ( dp->d_flags & DIR_COMB ) {
-	    if ( (dp->d_flags & DIR_REGION) || (is_region == 1)  ) {
+	    if ( dp->d_flags & DIR_REGION ) {
 		bu_vls_printf( &vls, "%s region:\n", argv[2] );
 	    } else {
 		bu_vls_printf( &vls, "%s combination:\n", argv[2] );
