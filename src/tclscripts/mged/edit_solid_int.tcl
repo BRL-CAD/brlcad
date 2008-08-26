@@ -506,6 +506,10 @@ proc esolint_update {} {
     global solid_data
     global esolint_control
 
+    if ![info exists mged_players] {
+	return
+    }
+
     if [catch {get_sed} esolint_info] {
 	# a Tcl output routine doesn't exist for this solid type
 	return
