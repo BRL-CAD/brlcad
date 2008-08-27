@@ -1211,12 +1211,44 @@ GED_EXPORT BU_EXTERN(int ged_copy, (struct ged *gedp, int argc, const char *argv
 GED_EXPORT BU_EXTERN(int ged_copyeval, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Copy the matrix from one combination's arc to another.
+ *
+ * Usage:
+ *     copymat a/b c/d
+ */
+GED_EXPORT BU_EXTERN(int ged_copymat, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Copy cylinder and position at end of original cylinder
+ *
+ * Usage:
+ *     cpi from to
+ */
+GED_EXPORT BU_EXTERN(int ged_cpi, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Get dbip
  *
  * Usage:
  *     dbip
  */
 GED_EXPORT BU_EXTERN(int ged_dbip, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Decompose nmg_solid into maximally connected shells
+ *
+ * Usage:
+ *     decompose nmg [prefix]
+ */
+GED_EXPORT BU_EXTERN(int ged_decompose, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Delay the specified amount of time
+ *
+ * Usage:
+ *     delay sec usec
+ */
+GED_EXPORT BU_EXTERN(int ged_delay, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Convert a direction vector to az/el.
@@ -1257,6 +1289,22 @@ GED_EXPORT BU_EXTERN(int ged_dup, (struct ged *gedp, int argc, const char *argv[
  *     E [-C#/#/# -s] objects(s)
  */
 GED_EXPORT BU_EXTERN(int ged_E, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Prepare all regions with the given air code(s) for display
+ *
+ * Usage:
+ *     eac air_code(s)
+ */
+GED_EXPORT BU_EXTERN(int ged_eac, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Text edit the color table
+ *
+ * Usage:
+ *     edcolor
+ */
+GED_EXPORT BU_EXTERN(int ged_edcolor, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Edit region ident codes.
@@ -1404,6 +1452,14 @@ GED_EXPORT BU_EXTERN(int ged_get_eyemodel, (struct ged *gedp, int argc, const ch
  *     get_type object
  */
 GED_EXPORT BU_EXTERN(int ged_get_type, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Globs expression against the database
+ *
+ * Usage:
+ *     glob expression
+ */
+GED_EXPORT BU_EXTERN(int ged_glob, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Create or append objects to a group

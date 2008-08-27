@@ -81,7 +81,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="tcl85.lib libbu.lib libbn.lib libsysv.lib libregex.lib opennurbs.lib librt.lib"
+				AdditionalDependencies="tcl85.lib libbu.lib libbn.lib libsysv.lib libregex.lib opennurbs.lib librt.lib ws2_32.lib"
 				OutputFile=".\Release/libged.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -254,7 +254,23 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\copymat.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\cpi.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\dbip.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\decompose.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\delay.c"
 				>
 			</File>
 			<File
@@ -278,7 +294,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\eac.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\edcodes.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\edcolor.c"
 				>
 			</File>
 			<File
@@ -355,6 +379,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\get_type.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\glob.c"
 				>
 			</File>
 			<File

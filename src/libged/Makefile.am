@@ -34,14 +34,20 @@ libged_nil_la_SOURCES = \
 	comb_std.c \
 	concat.c \
 	copy.c \
+	copymat.c \
 	copyeval.c \
+	cpi.c \
 	dbip.c \
+	decompose.c \
+	delay.c \
 	dg_obj.c \
 	dir2ae.c \
 	draw.c \
 	dump.c \
 	dup.c \
+	eac.c \
 	edcodes.c \
+	edcolor.c \
 	edcomb.c \
 	editit.c \
 	edmater.c \
@@ -61,6 +67,7 @@ libged_nil_la_SOURCES = \
 	get_eyemodel.c \
 	get_obj_bounds.c \
 	get_type.c \
+	glob.c \
 	globals.c \
 	group.c \
 	hide.c \

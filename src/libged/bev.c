@@ -70,7 +70,7 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_OK;
     }
 
-    if (argc < 2) {
+    if (argc < 3) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
@@ -115,14 +115,13 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
     argv++;
     argc--;
 
-    if ( db_lookup( gedp->ged_wdbp->dbip, newname, LOOKUP_QUIET ) != DIR_NULL )  {
-	bu_vls_printf(&gedp->ged_result_str, "%s: solid '%s' already exists, aborting\n", cmdname, newname);
+    if (argc < 1) {
+	bu_vls_printf(&gedp->ged_result_str, "%s: Nothing to evaluate!!!\n", cmdname);
 	return BRLCAD_ERROR;
     }
 
-    if ( argc < 1 )
-    {
-	bu_vls_printf(&gedp->ged_result_str, "%s: Nothing to evaluate!!!\n", cmdname);
+    if ( db_lookup( gedp->ged_wdbp->dbip, newname, LOOKUP_QUIET ) != DIR_NULL )  {
+	bu_vls_printf(&gedp->ged_result_str, "%s: solid '%s' already exists, aborting\n", cmdname, newname);
 	return BRLCAD_ERROR;
     }
 
