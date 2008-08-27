@@ -1,17 +1,26 @@
 set(LIBGED_SOURCES
+    3ptarb.c
     adjust.c
     ae2dir.c
     aet.c
+    analyze.c
+    arb.c
     arced.c
     arot.c
     attr.c
     autoview.c
+    bev.c
     bigE.c
     binary.c
     blast.c
+    bot_condense.c
     bot_decimate.c
+    bot_face_fuse.c
     bot_face_sort.c
+    bot_merge.c
     bot_smooth.c
+    bot_split.c
+    bot_vertex_fuse.c
     cat.c
     center.c
     clip.c
