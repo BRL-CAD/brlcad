@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2008-09-XX  Release 7.13.0                                     ---
 ----------------------------------------------------------------------
 
+* NIRT's dest command now avoids overwriting files - C. Yapp
 * fixed mged_players error on tra in classic mode mged  - Bob Parker
 * fix attr behavior when setting the region attribute - C. Yapp
 * identified fix for "Illegal instruction" bug in rt - Simon Clubley
