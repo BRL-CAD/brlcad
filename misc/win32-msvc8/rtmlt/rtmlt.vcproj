@@ -10,16 +10,21 @@
 		<Platform
 			Name="Win32"
 		/>
+		<Platform
+			Name="x64"
+		/>
 	</Platforms>
 	<ToolFiles>
 	</ToolFiles>
 	<Configurations>
 		<Configuration
-			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			Name="Release|Win32"
+			OutputDirectory=".\$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory=".\$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="1"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			CharacterSet="2"
+			WholeProgramOptimization="0"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -38,12 +43,22 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="0"
-				MinimalRebuild="true"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
+				Optimization="2"
+				InlineFunctionExpansion="1"
+				EnableIntrinsicFunctions="false"
+				AdditionalIncludeDirectories="../../../include;../../../src/rt;../../../src/other/tcl/generic"
+				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;TCL_THREADS=1;__win32;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;_CRT_SECURE_NO_WARNINGS"
+				StringPooling="true"
+				RuntimeLibrary="2"
+				EnableFunctionLevelLinking="true"
+				TreatWChar_tAsBuiltInType="false"
+				PrecompiledHeaderFile=".\$(PlatformName)\$(ConfigurationName)/rtarea.pch"
+				AssemblerListingLocation=".\$(PlatformName)\$(ConfigurationName)/"
+				ObjectFile=".\$(PlatformName)\$(ConfigurationName)/"
+				ProgramDataBaseFileName=".\$(PlatformName)\$(ConfigurationName)/"
 				WarningLevel="3"
-				DebugInformationFormat="4"
+				DebugInformationFormat="0"
+				CompileAs="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -56,7 +71,18 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				GenerateDebugInformation="true"
+				AdditionalDependencies="libbn.lib librt.lib"
+				OutputFile=".\$(PlatformName)\$(ConfigurationName)/rtmlt.exe"
+				LinkIncremental="1"
+				SuppressStartupBanner="true"
+				AdditionalLibraryDirectories="../../../brlcadInstall/lib"
+				GenerateDebugInformation="false"
+				ProgramDatabaseFile=".\$(PlatformName)\$(ConfigurationName)/rtmlt.pdb"
+				SubSystem="1"
+				OptimizeReferences="0"
+				EnableCOMDATFolding="0"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -79,10 +105,11 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall\bin"
 			/>
 		</Configuration>
 		<Configuration
-			Name="Release|Win32"
+			Name="Release|x64"
 			OutputDirectory=".\$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory=".\$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="1"
