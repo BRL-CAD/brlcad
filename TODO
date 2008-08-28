@@ -318,6 +318,11 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * implement find command inside of BRL-CAD
 
+* design plugin system to allow domain specific tools (say, for example,
+  a tool to create propeller parts) to identify themselves and their
+  features to BRL-CAD, and to allow BRL-CAD to incorporate those features
+  as an integrated part of interaction environments.  
+
 LIBPC
 -----
 
