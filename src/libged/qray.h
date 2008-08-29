@@ -26,6 +26,8 @@
  */
 /** @} */
 
+#include "ged.h"
+
 #ifndef SEEN_QRAY_H
 #define SEEN_QRAY_H
 
