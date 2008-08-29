@@ -102,6 +102,10 @@ ged_init(struct ged *gedp)
 {
     bu_vls_init(&gedp->ged_log);
     bu_vls_init(&gedp->ged_result_str);
+
+    bu_vls_extend(&gedp->ged_log, 1);
+    bu_vls_extend(&gedp->ged_result_str, 1);
+
     ged_drawable_init(gedp->ged_gdp);
 }
 
