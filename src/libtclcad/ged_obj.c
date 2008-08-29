@@ -3347,6 +3347,35 @@ go_refresh_view(struct ged_dm_view *gdvp)
 #endif
     DM_DRAW_POINT_2D(gdvp->gdv_dmp, 0.0, 0.0);
 
+    /*XXX Whether or not and how things are drawn needs to be application settable.
+     *    For the moment, things are hardwired.
+     */
+    /*Draw view axes */
+    {
+	point_t origin = {0.0, 0.0, 0.0};
+	int axes_color[3] = {100, 100, 255};
+	int axes_label_color[3] = {255, 255, 0};
+
+	dmo_drawAxes_cmd(gdvp->gdv_dmp,
+			 gdvp->gdv_view->gv_size,
+			 gdvp->gdv_view->gv_rotation,
+			 origin,
+			 0.25,
+			 axes_color,
+			 axes_label_color,
+			 0, /* line width */
+			 0, /* positive direction only */
+			 0, /* three colors (i.e. X-red, Y-green, Z-blue) */
+			 0, /* no ticks */
+			 0, /* tick len */
+			 0, /* major tick len */
+			 0, /* tick interval */
+			 0, /* ticks per major */
+			 NULL, /* tick color */
+			 NULL, /* major tick color */
+			 0 /* tick threshold */);
+    }
+
     DM_DRAW_END(gdvp->gdv_dmp);
 }
 
