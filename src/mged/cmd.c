@@ -1991,23 +1991,19 @@ cmd_make_name(ClientData	clientData,
     /*XXX Temporary */
 #if 1
     GED_INIT(&ged, wdbp);
-#else
-    GED_INIT_FROM_WDBP(&ged, wdbp);
 #endif
 
     ret = ged_make_name(&ged, argc, (const char **)argv);
-
-    /* Convert to Tcl codes */
-    if (ret == BRLCAD_OK)
-	ret = TCL_OK;
-    else
-	ret = TCL_ERROR;
 
     Tcl_DStringInit(&ds);
     Tcl_DStringAppend(&ds, bu_vls_addr(&ged.ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    return ret;
+    /* Convert to Tcl codes */
+    if (ret == BRLCAD_ERROR)
+	return TCL_ERROR;
+
+    return TCL_OK;
 }
 
 int

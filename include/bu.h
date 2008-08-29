@@ -59,7 +59,8 @@ __BEGIN_DECLS
 #endif
 
 #define BRLCAD_OK 0
-#define BRLCAD_ERROR 1
+#define BRLCAD_HELP 1
+#define BRLCAD_ERROR 2
 
 /** @def BU_DIR_SEPARATOR
  * define BU_DIR_SEPARATOR to the directory separator character

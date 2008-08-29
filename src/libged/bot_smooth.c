@@ -52,13 +52,11 @@ ged_bot_smooth(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
-    gedp->ged_result_flags = 0;
 
     /* must be wanting help */
     if (argc == 1) {
-	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_OK;
+	return BRLCAD_HELP;
     }
 
     /* check that we are using a version 5 database */

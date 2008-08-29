@@ -10552,8 +10552,6 @@ wdb_newcmds_tcl(ClientData	clientData,
      */
 #if 1
     GED_INIT(&ged, wdbp);
-#else
-    GED_INIT_FROM_WDBP(&ged, wdbp);
 #endif
 
     for (ctp = wdb_newcmds; ctp->ct_name != (char *)0; ctp++) {
@@ -10569,13 +10567,16 @@ wdb_newcmds_tcl(ClientData	clientData,
 	bu_vls_trunc(&ged.ged_result_str, 0);
 	bu_vls_printf(&ged.ged_result_str, "%s not found", argv[1]);
 	ged.ged_result = GED_RESULT_NULL;
-	ged.ged_result_flags = 0;
 	ret = BRLCAD_ERROR;
     }
 
     Tcl_DStringInit(&ds);
-    snprintf(flags, 127, "%u", ged.ged_result_flags);
-    Tcl_DStringAppendElement(&ds, flags);
+
+    if (ret == BRLCAD_HELP)
+	Tcl_DStringAppendElement(&ds, "1");
+    else
+	Tcl_DStringAppendElement(&ds, "0");
+
     Tcl_DStringAppendElement(&ds, bu_vls_addr(&ged.ged_result_str));
     Tcl_DStringResult(interp, &ds);
 

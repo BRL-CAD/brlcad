@@ -644,10 +644,6 @@ go_cmd(ClientData	clientData,
 	return TCL_ERROR;
     }
 
-#if 0
-    snprintf(flags, 127, "%u", gop->go_gedp->ged_result_flags);
-    Tcl_DStringAppend(&ds, flags, -1);
-#endif
     Tcl_DStringAppend(&ds, bu_vls_addr(&gop->go_gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
@@ -849,7 +845,6 @@ go_autoview(struct ged		*gedp,
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
-    gedp->ged_result_flags = 0;
 
     if (argc != 2) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
@@ -883,7 +878,7 @@ go_blast(struct ged	*gedp,
 
     ret = ged_blast(gedp, argc, argv);
 
-    if (ret == BRLCAD_ERROR || gedp->ged_result_flags & GED_RESULT_FLAGS_HELP_BIT)
+    if (ret != BRLCAD_OK)
 	return ret;
 
     go_autoview_all_views(go_current_gop);
@@ -905,7 +900,6 @@ go_configure(struct ged		*gedp,
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
-    gedp->ged_result_flags = 0;
 
     if (argc != 2) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
@@ -954,13 +948,11 @@ go_constrain_rmode(struct ged	*gedp,
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
-    gedp->ged_result_flags = 0;
 
     /* must be wanting help */
     if (argc == 1) {
-	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_OK;
+	return BRLCAD_HELP;
     }
 
     if (argc != 5) {
@@ -1021,13 +1013,11 @@ go_constrain_tmode(struct ged	*gedp,
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
-    gedp->ged_result_flags = 0;
 
     /* must be wanting help */
     if (argc == 1) {
-	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_OK;
+	return BRLCAD_HELP;
     }
 
     if (argc != 5) {
@@ -1086,13 +1076,11 @@ go_delete_view(struct ged	*gedp,
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
-    gedp->ged_result_flags = 0;
 
     /* must be wanting help */
     if (argc == 1) {
-	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_OK;
+	return BRLCAD_HELP;
     }
 
     if (argc != 2) {
@@ -1133,13 +1121,11 @@ go_idle_mode(struct ged		*gedp,
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
-    gedp->ged_result_flags = 0;
 
     /* must be wanting help */
     if (argc == 1) {
-	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_OK;
+	return BRLCAD_HELP;
     }
 
     if (argc != 2) {
@@ -1180,13 +1166,11 @@ go_light(struct ged	*gedp,
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
-    gedp->ged_result_flags = 0;
 
     /* must be wanting help */
     if (argc == 1) {
-	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_OK;
+	return BRLCAD_HELP;
     }
 
     if (3 < argc) {
@@ -1240,7 +1224,6 @@ go_list_views(struct ged	*gedp,
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
-    gedp->ged_result_flags = 0;
 
     if (argc != 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
@@ -1266,13 +1249,11 @@ go_listen(struct ged	*gedp,
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
-    gedp->ged_result_flags = 0;
 
     /* must be wanting help */
     if (argc == 1) {
-	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_OK;
+	return BRLCAD_HELP;
     }
 
     if (3 < argc) {
@@ -1335,13 +1316,12 @@ go_make(struct ged	*gedp,
 
     ret = ged_make(gedp, argc, argv);
 
-    if (ret == BRLCAD_ERROR || gedp->ged_result_flags & GED_RESULT_FLAGS_HELP_BIT)
-	return ret;
-
-    av[0] = "draw";
-    av[1] = (char *)argv[argc-2];
-    av[2] = (char *)0;
-    go_autoview_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
+    if (ret == BRLCAD_OK) {
+	av[0] = "draw";
+	av[1] = (char *)argv[argc-2];
+	av[2] = (char *)0;
+	go_autoview_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
+    }
 
     return ret;
 }
@@ -1359,13 +1339,12 @@ go_mirror(struct ged	*gedp,
 
     ret = ged_mirror(gedp, argc, argv);
 
-    if (ret == BRLCAD_ERROR || gedp->ged_result_flags & GED_RESULT_FLAGS_HELP_BIT)
-	return ret;
-
-    av[0] = "draw";
-    av[1] = (char *)argv[argc-1];
-    av[2] = (char *)0;
-    go_autoview_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
+    if (ret == BRLCAD_OK) {
+	av[0] = "draw";
+	av[1] = (char *)argv[argc-1];
+	av[2] = (char *)0;
+	go_autoview_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
+    }
 
     return ret;
 }
@@ -1390,13 +1369,11 @@ go_mouse_constrain_rot(struct ged	*gedp,
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
-    gedp->ged_result_flags = 0;
 
     /* must be wanting help */
     if (argc == 1) {
-	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_OK;
+	return BRLCAD_HELP;
     }
 
     if (argc != 5) {
@@ -1495,13 +1472,11 @@ go_mouse_constrain_trans(struct ged	*gedp,
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
-    gedp->ged_result_flags = 0;
 
     /* must be wanting help */
     if (argc == 1) {
-	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_OK;
+	return BRLCAD_HELP;
     }
 
     if (argc != 5) {
@@ -1599,13 +1574,11 @@ go_mouse_rot(struct ged		*gedp,
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
-    gedp->ged_result_flags = 0;
 
     /* must be wanting help */
     if (argc == 1) {
-	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_OK;
+	return BRLCAD_HELP;
     }
 
     if (argc != 4) {
@@ -1688,13 +1661,11 @@ go_mouse_scale(struct ged	*gedp,
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
-    gedp->ged_result_flags = 0;
 
     /* must be wanting help */
     if (argc == 1) {
-	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_OK;
+	return BRLCAD_HELP;
     }
 
     if (argc != 4) {
@@ -1781,13 +1752,11 @@ go_mouse_trans(struct ged	*gedp,
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
-    gedp->ged_result_flags = 0;
 
     /* must be wanting help */
     if (argc == 1) {
-	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_OK;
+	return BRLCAD_HELP;
     }
 
     if (argc != 4) {
@@ -1867,13 +1836,11 @@ go_new_view(struct ged		*gedp,
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
-    gedp->ged_result_flags = 0;
 
     /* must be wanting help */
     if (argc == 1) {
-	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_OK;
+	return BRLCAD_HELP;
     }
 
     if (argc < 3) {
@@ -2164,7 +2131,12 @@ go_refresh(struct ged	*gedp,
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
-    gedp->ged_result_flags = 0;
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_HELP;
+    }
 
     if (argc != 2) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
@@ -2223,13 +2195,11 @@ go_rotate_mode(struct ged	*gedp,
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
-    gedp->ged_result_flags = 0;
 
     /* must be wanting help */
     if (argc == 1) {
-	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_OK;
+	return BRLCAD_HELP;
     }
 
     if (argc != 4) {
@@ -2315,13 +2285,11 @@ go_rt_gettrees(struct ged	*gedp,
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
-    gedp->ged_result_flags = 0;
 
     /* must be wanting help */
     if (argc == 1) {
-	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_OK;
+	return BRLCAD_HELP;
     }
 
     if (argc < 3) {
@@ -2408,13 +2376,11 @@ go_scale_mode(struct ged	*gedp,
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
-    gedp->ged_result_flags = 0;
 
     /* must be wanting help */
     if (argc == 1) {
-	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_OK;
+	return BRLCAD_HELP;
     }
 
     if (argc != 4) {
@@ -2465,13 +2431,11 @@ go_set_coord(struct ged		*gedp,
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
-    gedp->ged_result_flags = 0;
 
     /* must be wanting help */
     if (argc == 1) {
-	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_OK;
+	return BRLCAD_HELP;
     }
 
     if (3 < argc) {
@@ -2520,13 +2484,11 @@ go_set_fb_mode(struct ged	*gedp,
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
-    gedp->ged_result_flags = 0;
 
     /* must be wanting help */
     if (argc == 1) {
-	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_OK;
+	return BRLCAD_HELP;
     }
 
     if (3 < argc) {
@@ -2582,13 +2544,11 @@ go_translate_mode(struct ged	*gedp,
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
-    gedp->ged_result_flags = 0;
 
     /* must be wanting help */
     if (argc == 1) {
-	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_OK;
+	return BRLCAD_HELP;
     }
 
     if (argc != 4) {
@@ -2639,13 +2599,11 @@ go_vmake(struct ged	*gedp,
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
-    gedp->ged_result_flags = 0;
 
     /* must be wanting help */
     if (argc == 1) {
-	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_OK;
+	return BRLCAD_HELP;
     }
 
     if (argc != 4) {
@@ -2717,13 +2675,11 @@ go_vslew(struct ged	*gedp,
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
-    gedp->ged_result_flags = 0;
 
     /* must be wanting help */
     if (argc == 1) {
-	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_OK;
+	return BRLCAD_HELP;
     }
 
     if (argc != 4) {
@@ -2783,13 +2739,11 @@ go_zbuffer(struct ged	*gedp,
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
-    gedp->ged_result_flags = 0;
 
     /* must be wanting help */
     if (argc == 1) {
-	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_OK;
+	return BRLCAD_HELP;
     }
 
     if (3 < argc) {
@@ -2844,13 +2798,11 @@ go_zclip(struct ged	*gedp,
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
-    gedp->ged_result_flags = 0;
 
     /* must be wanting help */
     if (argc == 1) {
-	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_OK;
+	return BRLCAD_HELP;
     }
 
     if (3 < argc) {
@@ -2914,13 +2866,12 @@ go_autoview_func(struct ged	*gedp,
 
     ret = (*func)(gedp, argc, (const char **)argv);
 
-    if (ret == BRLCAD_ERROR || gedp->ged_result_flags & GED_RESULT_FLAGS_HELP_BIT)
-	return ret;
-
-    if (aflag)
-	go_autoview_all_views(go_current_gop);
-    else
-	go_refresh_all_views(go_current_gop);
+    if (ret == BRLCAD_OK) {
+	if (aflag)
+	    go_autoview_all_views(go_current_gop);
+	else
+	    go_refresh_all_views(go_current_gop);
+    }
 
     return ret;
 }
@@ -2948,10 +2899,8 @@ go_pass_through_and_refresh_func(struct ged	*gedp,
 
     ret = (*func)(gedp, argc, argv);
 
-    if (ret == BRLCAD_ERROR || gedp->ged_result_flags & GED_RESULT_FLAGS_HELP_BIT)
-	return ret;
-
-    go_refresh_all_views(go_current_gop);
+    if (ret == BRLCAD_OK)
+	go_refresh_all_views(go_current_gop);
 
     return ret;
 }
@@ -2973,13 +2922,11 @@ go_view_func(struct ged		*gedp,
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
-    gedp->ged_result_flags = 0;
 
     /* must be wanting help */
     if (argc == 1) {
-	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_OK;
+	return BRLCAD_HELP;
     }
 
     if (MAXARGS < maxargs || maxargs < argc) {
@@ -3009,7 +2956,7 @@ go_view_func(struct ged		*gedp,
     /* Keep the view's perspective in sync with its corresponding display manager */
     gdvp->gdv_dmp->dm_perspective = gdvp->gdv_view->gv_perspective;
 
-    if (ac != 1 && ret == BRLCAD_OK)
+    if (ret == BRLCAD_OK)
 	go_refresh_view(gdvp);
 
     return ret;

@@ -71,23 +71,19 @@ f_itemair(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     /*XXX Temporary */
 #if 1
     GED_INIT(&ged, wdbp);
-#else
-    GED_INIT_FROM_WDBP(&ged, wdbp);
 #endif
 
     ret = ged_item(&ged, argc, argv);
-
-    /* Convert to Tcl codes */
-    if (ret == BRLCAD_OK)
-	ret = TCL_OK;
-    else
-	ret = TCL_ERROR;
 
     Tcl_DStringInit(&ds);
     Tcl_DStringAppend(&ds, bu_vls_addr(&ged.ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    return ret;
+    /* Convert to Tcl codes */
+    if (ret == BRLCAD_ERROR)
+	return TCL_ERROR;
+
+    return TCL_OK;
 }
 
 /* Modify material information */
@@ -279,23 +275,19 @@ f_edmater(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     /*XXX Temporary */
 #if 1
     GED_INIT(&ged, wdbp);
-#else
-    GED_INIT_FROM_WDBP(&ged, wdbp);
 #endif
 
     ret = ged_edmater(&ged, argc, argv);
-
-    /* Convert to Tcl codes */
-    if (ret == BRLCAD_OK)
-	ret = TCL_OK;
-    else
-	ret = TCL_ERROR;
 
     Tcl_DStringInit(&ds);
     Tcl_DStringAppend(&ds, bu_vls_addr(&ged.ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    return ret;
+    /* Convert to Tcl codes */
+    if (ret == BRLCAD_ERROR)
+	return TCL_ERROR;
+
+    return TCL_OK;
 }
 
 
@@ -312,23 +304,19 @@ f_wmater(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
     /*XXX Temporary */
 #if 1
     GED_INIT(&ged, wdbp);
-#else
-    GED_INIT_FROM_WDBP(&ged, wdbp);
 #endif
 
     ret = ged_wmater(&ged, argc, argv);
-
-    /* Convert to Tcl codes */
-    if (ret == BRLCAD_OK)
-	ret = TCL_OK;
-    else
-	ret = TCL_ERROR;
 
     Tcl_DStringInit(&ds);
     Tcl_DStringAppend(&ds, bu_vls_addr(&ged.ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    return ret;
+    /* Convert to Tcl codes */
+    if (ret == BRLCAD_ERROR)
+	return TCL_ERROR;
+
+    return TCL_OK;
 }
 
 
@@ -345,23 +333,19 @@ f_rmater(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
     /*XXX Temporary */
 #if 1
     GED_INIT(&ged, wdbp);
-#else
-    GED_INIT_FROM_WDBP(&ged, wdbp);
 #endif
 
     ret = ged_rmater(&ged, argc, argv);
-
-    /* Convert to Tcl codes */
-    if (ret == BRLCAD_OK)
-	ret = TCL_OK;
-    else
-	ret = TCL_ERROR;
 
     Tcl_DStringInit(&ds);
     Tcl_DStringAppend(&ds, bu_vls_addr(&ged.ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    return ret;
+    /* Convert to Tcl codes */
+    if (ret == BRLCAD_ERROR)
+	return TCL_ERROR;
+
+    return TCL_OK;
 }
 
 
@@ -384,23 +368,19 @@ f_comb_color(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     /*XXX Temporary */
 #if 1
     GED_INIT(&ged, wdbp);
-#else
-    GED_INIT_FROM_WDBP(&ged, wdbp);
 #endif
 
     ret = ged_comb_color(&ged, argc, (const char **)argv);
-
-    /* Convert to Tcl codes */
-    if (ret == BRLCAD_OK)
-	ret = TCL_OK;
-    else
-	ret = TCL_ERROR;
 
     Tcl_DStringInit(&ds);
     Tcl_DStringAppend(&ds, bu_vls_addr(&ged.ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    return ret;
+    /* Convert to Tcl codes */
+    if (ret == BRLCAD_ERROR)
+	return TCL_ERROR;
+
+    return TCL_OK;
 }
 
 /*
@@ -424,23 +404,19 @@ f_shader(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     /*XXX Temporary */
 #if 1
     GED_INIT(&ged, wdbp);
-#else
-    GED_INIT_FROM_WDBP(&ged, wdbp);
 #endif
 
     ret = ged_shader(&ged, argc, (const char **)argv);
-
-    /* Convert to Tcl codes */
-    if (ret == BRLCAD_OK)
-	ret = TCL_OK;
-    else
-	ret = TCL_ERROR;
 
     Tcl_DStringInit(&ds);
     Tcl_DStringAppend(&ds, bu_vls_addr(&ged.ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    return ret;
+    /* Convert to Tcl codes */
+    if (ret == BRLCAD_ERROR)
+	return TCL_ERROR;
+
+    return TCL_OK;
 }
 
 
@@ -461,23 +437,15 @@ f_mirror(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
     /*XXX Temporary */
 #if 1
     GED_INIT(&ged, wdbp);
-#else
-    GED_INIT_FROM_WDBP(&ged, wdbp);
 #endif
 
     ret = ged_mirror(&ged, argc, argv);
-
-    /* Convert to Tcl codes */
-    if (ret == BRLCAD_OK)
-	ret = TCL_OK;
-    else
-	ret = TCL_ERROR;
 
     Tcl_DStringInit(&ds);
     Tcl_DStringAppend(&ds, bu_vls_addr(&ged.ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    if (ged.ged_result_flags == 0 && ret == TCL_OK) {
+    if (ret == BRLCAD_OK) {
 	const char *av[3];
 
 	av[0] = "draw";
@@ -486,7 +454,11 @@ f_mirror(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 	cmd_draw(clientData, interp, 2, av);
     }
 
-    return ret;
+    /* Convert to Tcl codes */
+    if (ret == BRLCAD_ERROR)
+	return TCL_ERROR;
+
+    return TCL_OK;
 }
 
 /* Modify Combination record information */
@@ -504,23 +476,19 @@ f_edcomb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     /*XXX Temporary */
 #if 1
     GED_INIT(&ged, wdbp);
-#else
-    GED_INIT_FROM_WDBP(&ged, wdbp);
 #endif
 
     ret = ged_edcomb(&ged, argc, (const char **)argv);
-
-    /* Convert to Tcl codes */
-    if (ret == BRLCAD_OK)
-	ret = TCL_OK;
-    else
-	ret = TCL_ERROR;
 
     Tcl_DStringInit(&ds);
     Tcl_DStringAppend(&ds, bu_vls_addr(&ged.ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    return ret;
+    /* Convert to Tcl codes */
+    if (ret == BRLCAD_ERROR)
+	return TCL_ERROR;
+
+    return TCL_OK;
 }
 
 /* tell him it already exists */
@@ -552,8 +520,6 @@ f_make(ClientData	clientData,
     /*XXX Temporary */
 #if 1
     GED_INIT(&ged, wdbp);
-#else
-    GED_INIT_FROM_WDBP(&ged, wdbp);
 #endif
 
     if (argc == 3) {
@@ -580,17 +546,11 @@ f_make(ClientData	clientData,
     } else
 	ret = ged_make(&ged, argc, (const char **)argv);
 
-    /* Convert to Tcl codes */
-    if (ret == BRLCAD_OK)
-	ret = TCL_OK;
-    else
-	ret = TCL_ERROR;
-
     Tcl_DStringInit(&ds);
     Tcl_DStringAppend(&ds, bu_vls_addr(&ged.ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    if (ged.ged_result_flags == 0 && ret == TCL_OK) {
+    if (ret == BRLCAD_OK) {
 	const char *av[3];
 
 	av[0] = "draw";
@@ -599,7 +559,11 @@ f_make(ClientData	clientData,
 	cmd_draw(clientData, interp, 2, av);
     }
 
-    return ret;
+    /* Convert to Tcl codes */
+    if (ret == BRLCAD_ERROR)
+	return TCL_ERROR;
+
+    return TCL_OK;
 }
 
 int

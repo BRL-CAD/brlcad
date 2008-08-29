@@ -64,7 +64,6 @@ __BEGIN_DECLS
 
 #define GED_VIEW_OBJ_NULL ((struct view_obj *)0)
 #define GED_RESULT_NULL ((void *)0)
-#define GED_RESULT_FLAGS_HELP_BIT 0x1
 
 #define GED_FUNC_PTR_NULL (ged_func_ptr)0
 
@@ -73,33 +72,10 @@ __BEGIN_DECLS
 #define GED_INIT(_gedp, _wdbp) { \
     bu_vls_init(&(_gedp)->ged_log); \
     bu_vls_init(&(_gedp)->ged_result_str); \
+    bu_vls_extend(&(_gedp)->ged_log, 1);   \
+    bu_vls_extend(&(_gedp)->ged_result_str, 1);	\
     (_gedp)->ged_wdbp = (_wdbp); \
 }
-
-#if 0
-/*XXX This macro is temporary */
-#define GED_INIT_FROM_WDBP(_gedp, _wdbp) { \
-    bu_vls_init(&(_gedp)->ged_name); \
-    bu_vls_init(&(_gedp)->ged_log); \
-    bu_vls_init(&(_gedp)->ged_result_str); \
-    bu_vls_init(&(_gedp)->ged_prestr); \
-\
-    (_gedp)->ged_type = (_wdbp)->type; \
-    (_gedp)->ged_dbip = (_wdbp)->dbip; \
-    bu_vls_vlscat(&(_gedp)->ged_name, &(_wdbp)->wdb_name); \
-    (_gedp)->ged_initial_tree_state = (_wdbp)->wdb_initial_tree_state; \
-    (_gedp)->ged_ttol = (_wdbp)->wdb_ttol; \
-    (_gedp)->ged_tol = (_wdbp)->wdb_tol; \
-    (_gedp)->ged_resp = (_wdbp)->wdb_resp; \
-    (_gedp)->ged_result_flags = 0; \
-    (_gedp)->ged_ncharadd = 0; \
-    (_gedp)->ged_num_dups = 0; \
-    (_gedp)->ged_item_default = (_wdbp)->wdb_item_default; \
-    (_gedp)->ged_air_default = (_wdbp)->wdb_air_default; \
-    (_gedp)->ged_mat_default = (_wdbp)->wdb_mat_default; \
-    (_gedp)->ged_los_default = (_wdbp)->wdb_los_default; \
-}
-#endif
 
 /** Check if the object is a combination */
 #define	GED_CHECK_COMB(_gedp, _dp, _ret) \
@@ -293,7 +269,6 @@ struct ged {
     /** for setting results */
     void			*ged_result;
     struct bu_vls		ged_result_str;
-    unsigned int		ged_result_flags;
 
 #if 1
     struct ged_drawable		*ged_gdp;

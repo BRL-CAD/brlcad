@@ -124,13 +124,11 @@ ged_qray(struct ged	*gedp,
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
-    gedp->ged_result_flags = 0;
 
     /* must be wanting help */
     if (argc == 1) {
-	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage:\n%s", qray_syntax);
-	return BRLCAD_OK;
+	return BRLCAD_HELP;
     }
 
     if (argc > 6) {
@@ -406,9 +404,8 @@ ged_qray(struct ged	*gedp,
     }
 
     if (strcmp(argv[1], "help") == 0) {
-	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], qray_syntax);
-	return BRLCAD_OK;
+	return BRLCAD_HELP;
     }
 
     bu_vls_printf(&gedp->ged_result_str, "qray: unrecognized command: '%s'\n", argv[1]);

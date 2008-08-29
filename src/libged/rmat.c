@@ -24,6 +24,7 @@
  */
 
 #include "common.h"
+#include "bio.h"
 
 #include <stdlib.h>
 #include <ctype.h>
@@ -44,7 +45,6 @@ ged_rmat(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
-    gedp->ged_result_flags = 0;
 
     /* get the rotation matrix */
     if (argc == 1) {

@@ -74,13 +74,11 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
-    gedp->ged_result_flags = 0;
 
     /* must be wanting help */
     if (argc == 1) {
-	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_OK;
+	return BRLCAD_HELP;
     }
 
     bu_optind = 1;
@@ -108,18 +106,16 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	    case 't':
 	    case 'T':
 		if (argc == 2) {
-		    gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 		    bu_vls_printf(&gedp->ged_result_str, "arb8 arb7 arb6 arb5 arb4 arbn ars bot ehy ell ell1 epa eto extrude grip half nmg part pipe pnts rcc rec rhc rpc rpp sketch sph tec tgc tor trc superell metaball");
-		    return BRLCAD_OK;
+		    return BRLCAD_HELP;
 		}
 
 		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		return BRLCAD_ERROR;
 	    case 'h':
 	    case 'H':
-		gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		return BRLCAD_OK;
+		return BRLCAD_HELP;
 	    default:
 		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		return BRLCAD_ERROR;

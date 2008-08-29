@@ -23,8 +23,11 @@
  *
  */
 
-#include "ged_private.h"
+#include "common.h"
+#include "bio.h"
+
 #include "solid.h"
+#include "ged_private.h"
 
 /*
  * Auto-adjust the view so that all displayed geometry is in view
@@ -51,7 +54,6 @@ ged_autoview(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
     gedp->ged_result = GED_RESULT_NULL;
-    gedp->ged_result_flags = 0;
 
     if (argc != 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);

@@ -2223,11 +2223,14 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+    gedp->ged_result = GED_RESULT_NULL;
+
     /* must be wanting help */
     if (argc == 1) {
-	gedp->ged_result_flags |= GED_RESULT_FLAGS_HELP_BIT;
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_OK;
+	return BRLCAD_HELP;
     }
 
     if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
