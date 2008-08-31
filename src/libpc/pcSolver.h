@@ -41,6 +41,7 @@
 class Solver
 {
 public:
+    typedef std::list<VariableAbstract *> Varlist;
     Solver();
     unsigned long numChecks () { return num_checks_; }
     unsigned long numSolutions () { return num_solutions_; }
@@ -231,12 +232,13 @@ public:
     BackTrackSolver();
     bool solve(VCSet&, Solution<T>&);
 private:
-    std::vector<bool> labels;
-    std::vector<VariableAbstract *> vars_;
+    std::map<VariableAbstract *, bool> labels;
+    std::list<VariableAbstract *> vars_;
     VCSet * vcs;
 
     int labelsize();
     bool backtrack();
+    bool check();
 };
 
 template <typename T>
@@ -246,35 +248,64 @@ BackTrackSolver<T>::BackTrackSolver()
 
 template <typename T>
 int BackTrackSolver<T>::labelsize() {
-    int j,i = 0;
-    for (j = 0; j < vars_.size(); ++j)
-	if (labels[j] == true) i++;
-    return i;
+    int sum = 0;
+    Varlist::iterator i = vars_.begin();
+    Varlist::iterator end = vars_.end();
+    for (; i != end; ++i) {
+	std::cout << "label size " << labels[*i] << "\n";
+	if (labels[*i] == true) sum++;
+    }
+    std::cout << "==============\n";
+    return sum;
+}
+
+template <typename T>
+bool BackTrackSolver<T>::check()
+{
+    bool labelsum = true;
+    std::list<Constraint *>::iterator i = vcs->Constraints.begin();
+    std::list<Constraint *>::iterator end = vcs->Constraints.end();
+    for (; i != end; ++i) {
+	typedef std::list<std::string> Vlist;
+	Vlist variables = (*i)->getVariableList();
+	Vlist::iterator j = variables.begin();	
+	for (; j != variables.end(); ++j)
+	    if (! labels[vcs->getVariablebyID(*j)]) {
+		std::cout << "+++++||||||||||||||+++++++\n";
+		labelsum = false;
+		break;
+	    }
+	if (labelsum) {
+	    ++num_checks_;
+	    if (!(*i)->check()) {
+		return false;
+	    }
+	}
+    }
+    return true;
 }
 
 template <typename T>
 bool BackTrackSolver<T>::backtrack()
 {
-    bool nexttest = false;
-    int i =0;
+    Varlist::iterator i = vars_.begin();
 
     if (labelsize() == vars_.size()) {
 	return true;
     }
-    while (labels[i] && i < vars_.size())
+    while (labels[*i] && i != vars_.end())
 	++i;
-    labels[i] = true;
     
-    Vp vptr = Vp (vars_[i]);
-    for (vptr->minimize(); ! vptr->atUpperBoundary(); ++*(vptr)) {
-	if (vcs->check()) {
-	    nexttest = backtrack();
-	    if (nexttest) {
+    labels[*i] = true;
+    Vp vptr = Vp (*i);
+    for (vptr->minimize(); ! vptr->atUpperBoundary(); ++(*vptr)) {
+	if (check()) {
+	    if (backtrack()) {
 		return true;
 	    }
 	}
     }
-    labels[i] = false;
+    labels[*i] = false;
     return false;
 }
 
@@ -291,7 +322,7 @@ bool BackTrackSolver<T>::solve(VCSet & vcset, Solution<T>& S) {
 	if ( (*i)->isConstrained() == 1 && ! (*i)->isConst()) {
 	    (*i)->display();
 	    vars_.push_back(*i);
-	    labels.push_back(false);
+	    labels[*i] = false;
 	    (Vp (*i))->minimize();
 	}
 
@@ -345,7 +376,6 @@ int BTSolver<T>::labelsize() {
 template <typename T>
 bool BTSolver<T>::backtrack()
 {
-    bool nexttest = false;
     typename GraphTraits::vertex_iterator ver_i, ver_end;
 
     if (labelsize() == num_vertices(N->G)) {
@@ -358,8 +388,7 @@ bool BTSolver<T>::backtrack()
     for (N->G[*ver_i]->minimize(); ! N->G[*ver_i]->atUpperBoundary(); \
 	++*(N->G[*ver_i])) {
 	if (check()) {
-	    nexttest = backtrack();
-	    if (nexttest) {
+	    if (backtrack()) {
 		return true;
 	    }
 	}

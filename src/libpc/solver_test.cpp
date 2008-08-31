@@ -94,15 +94,12 @@ public:
 
 int main()
 {
-    PCSolver<double> PCS1;
+    BackTrackSolver<double> PCS1;
     Solution<double> S1;
     struct pc_pc_set pcs;
     VCSet vc_set;
 
     pc_init_pcset(&pcs);
-    pc_pushparam_expr(&pcs,"A", "Testpar123=325.0");
-    pc_pushparam_expr(&pcs,"B", "Testpar234 = 1289.36243");
-    pc_pushparam_expr(&pcs,"C", "Testpar452 =1325.043");
     fastf_t D = 8.04;
     point_t E = {8.04,3.2,0.0};
     vect_t F = {5.4,3.6,4.4};
@@ -153,7 +150,7 @@ int main()
     N.display();
 
     GTSolver<int> GTS;
-    BTSolver<int> BTS;
+    BackTrackSolver<int> BTS;
     PCSolver<int> PCS;
 
     std::cout << "-----------------------------" << std::endl;
@@ -162,7 +159,7 @@ int main()
     S.display();
     S.clear();
     std::cout << "-----------------------------" << std::endl;
-    BTS.solve(N,S);
+    BTS.solve(myvcset,S);
     std::cout << "Solution using BackTracking" << std::endl;
     S.display();
     S.clear();
