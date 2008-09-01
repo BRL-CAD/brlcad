@@ -149,20 +149,15 @@ Parameter * VCSet::getParameter(std::string pname)
 /** @todo remove std::list passing */
 std::list<std::string> VCSet::getParamVariables(const char * pname)
 {
-    std::cout << "!!! Searching for " << pname << std::endl;
     Parameter * p = getParameter(pname);
     if (p) {
 	std::list<std::string> V;
-	std::cout << "!!! Found parameter " << p->getName() << " " << p->getSize() << std::endl;
 	Parameter::iterator i = p->begin();
 	Parameter::iterator end = p->end();
 	for (; i !=end; i++) {
-	    std::cout << "!!! Associated variable " << i->getID() << std::endl;
 	    V.push_back(i->getID());
 	}
 	return V;
-    } else {
-	std::cout << "!!! No parameters found" << std::endl;
     }
 }
 

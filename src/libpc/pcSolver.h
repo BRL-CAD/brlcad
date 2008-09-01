@@ -119,12 +119,20 @@ bool PCSolver<T>::solve(VCSet & vcset, Solution<T>& S) {
     num_solutions_ = 0;
     solved_ = false;
     
+    std::string av =""; /* Actual varying variables in the network */
+    std::string ov = ""; /* Constant or non constrained variables */
+
     for (; i != end; ++i)
 	if ( (*i)->isConstrained() == 1 && ! (*i)->isConst()) {
-	    (*i)->display();
+	    av += (*i)->getID() + " ";
 	    vars_.push_back(*i);
+	} else {
+	    ov += (*i)->getID() + " ";
 	}
-    
+    std::cout << std::endl << "Generic Constraint Solution" <<std::endl;
+    std::cout << "Actual Variables: " << av << std::endl;
+    std::cout << "Other Variables: " << ov << std::endl;
+
     initiate();
     while (generator()) {
 	++num_checks_;
@@ -320,14 +328,23 @@ bool BackTrackSolver<T>::solve(VCSet & vcset, Solution<T>& S) {
     num_solutions_ = 0;
     solved_ = false;
     vcs  = &vcset;
-    
+
+    std::string av =""; /* Actual varying variables in the network */
+    std::string ov = ""; /* Constant or non constrained variables */    
+
     for (; i != end; ++i)
 	if ( (*i)->isConstrained() == 1 && ! (*i)->isConst()) {
-	    (*i)->display();
+	    av += (*i)->getID() + " ";
 	    vars_.push_back(*i);
 	    labels[*i] = false;
 	    (Vp (*i))->minimize();
+	} else {
+	    ov += (*i)->getID() + " ";
 	}
+
+    std::cout << std::endl << "Gneric Backtracking Constraint Solution" <<std::endl;
+    std::cout << "Actual Variables: " << av << std::endl;
+    std::cout << "Other Variables: " << ov << std::endl;
 
     backtrack();
     if (vcset.check()) {
