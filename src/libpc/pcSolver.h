@@ -252,10 +252,8 @@ int BackTrackSolver<T>::labelsize() {
     Varlist::iterator i = vars_.begin();
     Varlist::iterator end = vars_.end();
     for (; i != end; ++i) {
-	std::cout << "label size " << labels[*i] << "\n";
 	if (labels[*i] == true) sum++;
     }
-    std::cout << "==============\n";
     return sum;
 }
 
@@ -269,12 +267,17 @@ bool BackTrackSolver<T>::check()
 	typedef std::list<std::string> Vlist;
 	Vlist variables = (*i)->getVariableList();
 	Vlist::iterator j = variables.begin();	
-	for (; j != variables.end(); ++j)
-	    if (! labels[vcs->getVariablebyID(*j)]) {
-		std::cout << "+++++||||||||||||||+++++++\n";
+	for (; j != variables.end(); ++j) {
+	    Varlist::iterator k = vars_.begin();
+	    bool varisrelevant = false;
+	    for (; k != vars_.end(); ++k)
+		if ((*j).compare((*k)->getID()) == 0)
+		    varisrelevant = true;
+	    if (varisrelevant && ! labels[vcs->getVariablebyID(*j)]) {
 		labelsum = false;
 		break;
 	    }
+	}
 	if (labelsum) {
 	    ++num_checks_;
 	    if (!(*i)->check()) {

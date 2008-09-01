@@ -94,7 +94,8 @@ public:
 
 int main()
 {
-    BackTrackSolver<double> PCS1;
+    BackTrackSolver<double> GBTS; /* Generic Backtracker */
+    PCSolver<double> GPCS; /* Generic Solver */
     Solution<double> S1;
     struct pc_pc_set pcs;
     VCSet vc_set;
@@ -114,20 +115,28 @@ int main()
     pc_pushconstraint_struct(&pcs, "Struct-test",2,3,&pc_isperpendicular,args);
     pc_free_constraint(con);
 
-
-    Parser myparser(vc_set);
+    Parser myparser(vc_set); /* generate vc_set from pcs using parser */
     myparser.parse(&pcs);
-    
-    vc_set.getParameter("G")->setConst(true); 
-    vc_set.display();
+   
+    /* modify/access parameter property in vc_set using getParameter */
+    vc_set.getParameter("G")->setConst(true);
 
-    PCS1.solve(vc_set,S1);
-    std::cout << "\n\nSolution using Generic GT Solver "
-              << PCS1.numChecks() << "\t" << PCS1.numSolutions() << std::endl;
+    /* Two solution methods */
+
+    GBTS.solve(vc_set,S1);
+    std::cout << "\nSolution using Generic BackTracking Solver "
+              << GBTS.numChecks() << "\t" << GBTS.numSolutions() << std::endl;
     S1.display();
 
+    S1.clear();
+    GPCS.solve(vc_set,S1);
+    std::cout << "\nSolution using Generic BackTracking Solver "
+              << GPCS.numChecks() << "\t" << GPCS.numSolutions() << std::endl;
+    S1.display();
+
+
     pc_free_pcset(&pcs);
-    
+#if 0    
     /** Testing PCSolver Methods */
 
     VCSet myvcset;
@@ -171,8 +180,8 @@ int main()
     std::cout << "Number of Constraint checks performed" << std::endl;
     std::cout << "Generate-Test:" << GTS.numChecks() << std::endl;
     std::cout << "BackTracking based:" << BTS.numChecks() << std::endl;
-    std::cout << "Generic Generate-Test:" << PCS.numChecks() 
-	      << "\t" << PCS.numSolutions() << std::endl;
+    std::cout << "Generic Generate-Test:" << PCS.numChecks() << std::endl;
+#endif
     return 0;
 }
 
