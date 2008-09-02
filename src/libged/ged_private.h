@@ -58,6 +58,17 @@ __BEGIN_DECLS
 #define GED_SHADED_MODE_ALL 2
 #define GED_BOOL_EVAL 3
 
+struct ged_id_names {
+    struct bu_list l;
+    struct bu_vls name;		/**< name associated with region id */
+};
+
+struct ged_id_to_names {
+    struct bu_list l;
+    int id;				/**< starting id (i.e. region id or air code) */
+    struct ged_id_names headName;	/**< head of list of names */
+};
+
 struct ged_client_data {
     struct ged	       	*gedp;
     int			wireframe_color_override;
@@ -323,6 +334,7 @@ BU_EXTERN (int ged_do_tra,
 BU_EXTERN (int ged_do_zoom,
 	   (struct ged	*gedp,
 	    fastf_t	sf));
+
 
 
 __END_DECLS

@@ -31,17 +31,6 @@
 #include "cmd.h"
 #include "ged_private.h"
 
-struct ged_id_names {
-    struct bu_list l;
-    struct bu_vls name;		/**< name associated with region id */
-};
-
-struct ged_id_to_names {
-    struct bu_list l;
-    int id;				/**< starting id (i.e. region id or air code) */
-    struct ged_id_names headName;	/**< head of list of names */
-};
-
 int
 ged_which(struct ged *gedp, int argc, const char *argv[])
 {
