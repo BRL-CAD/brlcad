@@ -26,6 +26,7 @@
  */
 
 #include "common.h"
+#include "bio.h"
 
 #include "dm.h"
 #include "brlcad_version.h"

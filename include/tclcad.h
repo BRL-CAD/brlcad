@@ -78,18 +78,14 @@ struct ged_dm_view {
     struct ged_view	*gdv_view;
     struct dm		*gdv_dmp;
     struct fbserv_obj	gdv_fbs;
+    struct ged_adc_state gdv_gas;
     struct ged_obj	*gdv_gop; /* Pointer back to its ged object */
 };
 
 struct ged_obj {
     struct bu_list	l;
     struct ged		*go_gedp;
-#if 1
     struct ged_dm_view	go_head_views;
-#else
-    struct ged_view	*go_views[GED_OBJ_NUM_VIEWS];
-    struct dm		*go_dmp;
-#endif
     struct bu_vls	go_name;
     struct bu_observer	go_observers;
     Tcl_Interp		*go_interp;

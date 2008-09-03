@@ -230,6 +230,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\adc.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\adjust.c"
 				>
 			</File>

@@ -30,6 +30,7 @@ DM_TK_CFLAGS =
 endif
 
 libdm_la_SOURCES = \
+	adc.c \
 	axes.c \
 	clip.c \
 	color.c \

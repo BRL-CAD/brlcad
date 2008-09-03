@@ -4,6 +4,7 @@ noinst_LTLIBRARIES = libged_nil.la
 
 libged_nil_la_SOURCES = \
 	3ptarb.c \
+	adc.c \
 	adjust.c \
 	ae2dir.c \
 	aet.c \

@@ -30,6 +30,7 @@
 
 #include "bu.h"
 #include "vmath.h"
+#include "ged.h"
 
 #define USE_FBSERV 1
 
@@ -75,6 +76,9 @@
 #define	GED_TO_Xy(_dmp, x) ((int)((0.5-DIVBY4096(x))*_dmp->dm_height))
 #define Xx_TO_GED(_dmp, x) ((int)(((x)/(double)_dmp->dm_width - 0.5) * GED_RANGE))
 #define Xy_TO_GED(_dmp, x) ((int)((0.5 - (x)/(double)_dmp->dm_height) * GED_RANGE))
+
+/* +-2048 to +-1 */
+#define GED_TO_PM1(x) (((fastf_t)(x))*INV_GED)
 
 #if IR_KNOBS
 #define NOISE 16		/* Size of dead spot on knob */
@@ -344,6 +348,12 @@ DM_EXPORT BU_EXTERN(int vclip,
 		     fastf_t *,
 		     register fastf_t *,
 		     register fastf_t *));
+
+/* adc.c */
+DM_EXPORT BU_EXTERN(void dm_draw_adc,
+		    (struct dm *dmp,
+		     struct ged_adc_state *gasp,
+		     struct ged_view *gvp));
 
 /* axes.c */
 DM_EXPORT BU_EXTERN(void dmo_drawDataAxes_cmd,

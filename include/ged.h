@@ -164,6 +164,30 @@ __BEGIN_DECLS
 	return (_ret); \
     }
 
+struct ged_adc_state {
+    int		gas_draw;
+    int		gas_dv_x;
+    int		gas_dv_y;
+    int		gas_dv_a1;
+    int		gas_dv_a2;
+    int		gas_dv_dist;
+    fastf_t	gas_pos_model[3];
+    fastf_t	gas_pos_view[3];
+    fastf_t	gas_pos_grid[3];
+    fastf_t	gas_a1;
+    fastf_t	gas_a2;
+    fastf_t	gas_dst;
+    int		gas_anchor_pos;
+    int		gas_anchor_a1;
+    int		gas_anchor_a2;
+    int		gas_anchor_dst;
+    fastf_t	gas_anchor_pt_a1[3];
+    fastf_t	gas_anchor_pt_a2[3];
+    fastf_t	gas_anchor_pt_dst[3];
+    int		gas_line_color[3];
+    int		gas_tick_color[3];
+    int		gas_linewidth;
+};
 
 struct ged_run_rt {
     struct bu_list l;
@@ -317,6 +341,50 @@ struct view_obj {
     genptr_t		vo_clientData;		/**< @brief  passed to vo_callback */
     int			vo_zclip;
 };
+
+
+/* defined in adc.c */
+GED_EXPORT BU_EXTERN(void ged_adc_model_To_adc_view,
+		     (struct ged_adc_state *gasp,
+		      struct ged_view *gvp));
+GED_EXPORT BU_EXTERN(void ged_adc_grid_To_adc_view,
+		     (struct ged_adc_state *gasp,
+		      struct ged_view *gvp));
+GED_EXPORT BU_EXTERN(void ged_adc_view_To_adc_grid,
+		     (struct ged_adc_state *gasp,
+		      struct ged_view *gvp));
+GED_EXPORT BU_EXTERN(void ged_calc_adc_pos,
+		     (struct ged_adc_state *gasp,
+		      struct ged_view *gvp));
+GED_EXPORT BU_EXTERN(void ged_calc_adc_a1,
+		     (struct ged_adc_state *gasp,
+		      struct ged_view *gvp));
+GED_EXPORT BU_EXTERN(void ged_calc_adc_a2,
+		     (struct ged_adc_state *gasp,
+		      struct ged_view *gvp));
+GED_EXPORT BU_EXTERN(void ged_calc_adc_dst,
+		     (struct ged_adc_state *gasp,
+		      struct ged_view *gvp));
+GED_EXPORT BU_EXTERN(void ged_adc_reset,
+		     (struct ged_adc_state *gasp,
+		      struct ged_view *gvp));
+GED_EXPORT BU_EXTERN(void ged_adc_vls_print,
+		     (struct ged_adc_state *gasp,
+		      struct ged_view *gvp,
+		      fastf_t base2local,
+		      struct bu_vls *out_vp));
+
+/* defined in clip.c */
+GED_EXPORT BU_EXTERN(int ged_clip,
+		     (fastf_t *xp1,
+		      fastf_t *yp1,
+		      fastf_t *xp2,
+		      fastf_t *yp2));
+GED_EXPORT BU_EXTERN(int ged_vclip,
+		     (vect_t a,
+		      vect_t b,
+		      register fastf_t *min,
+		      register fastf_t *max));
 
 
 /* defined in ged.c */
