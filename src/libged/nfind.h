@@ -67,7 +67,7 @@ enum ntype {
 /* node definition */
 typedef struct _plandata {
 	struct _plandata *next;			/* next node */
-	int (*eval)(struct _plandata *, struct directory *);
+	int (*eval)(struct _plandata *, struct db_full_path *);
 									/* node evaluation function */
 #define	F_EQUAL		1			/* [acm]time inum links size */
 #define	F_LESSTHAN	2
@@ -122,7 +122,7 @@ typedef struct _option {
 
 void	 brace_subst(char *, char **, char *, int);
 PLAN	*find_create(char ***);
-void	 find_execute(PLAN *, char *, struct rt_wdb *);
+void	 find_execute(PLAN *, struct db_full_path *, struct rt_wdb *);
 PLAN	*find_formplan(char **);
 PLAN	*not_squish(PLAN *);
 OPTION	*option(char *);

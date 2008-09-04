@@ -77,7 +77,7 @@ static OPTION options[] = {
 };
 
 static PLAN *
-palloc(enum ntype t, int (*f)(PLAN *, struct directory *))
+palloc(enum ntype t, int (*f)(PLAN *, struct db_full_path *))
 {
         PLAN *new;
 
@@ -96,7 +96,7 @@ palloc(enum ntype t, int (*f)(PLAN *, struct directory *))
  *      True if expression is true.
  */
 int
-f_expr(PLAN *plan, struct directory *entry)
+f_expr(PLAN *plan, struct db_full_path *entry)
 {
         PLAN *p;
         int state;
@@ -115,13 +115,13 @@ f_expr(PLAN *plan, struct directory *entry)
 PLAN *
 c_openparen(char *ignore, char ***ignored, int unused)
 {
-        return (palloc(N_OPENPAREN, (int (*)(PLAN *, struct directory *))-1));
+        return (palloc(N_OPENPAREN, (int (*)(PLAN *, struct db_full_path *))-1));
 }
  
 PLAN *
 c_closeparen(char *ignore, char ***ignored, int unused)
 {
-        return (palloc(N_CLOSEPAREN, (int (*)(PLAN *, struct directory *))-1));
+        return (palloc(N_CLOSEPAREN, (int (*)(PLAN *, struct db_full_path *))-1));
 }
 
 
@@ -131,7 +131,7 @@ c_closeparen(char *ignore, char ***ignored, int unused)
  *      Negation of a primary; the unary NOT operator.
  */
 int
-f_not(PLAN *plan, struct directory *entry)
+f_not(PLAN *plan, struct db_full_path *entry)
 {
         PLAN *p;
         int state;
@@ -154,7 +154,7 @@ c_not(char *ignore, char ***ignored, int unused)
  * not evaluated if the first expression is true.
  */
 int
-f_or(PLAN *plan, struct directory *entry)
+f_or(PLAN *plan, struct db_full_path *entry)
 {
         PLAN *p;
         int state;
@@ -184,9 +184,9 @@ c_or(char *ignore, char ***ignored, int unused)
  *      matches pattern using Pattern Matching Notation S3.14
  */
 int
-f_name(PLAN *plan, struct directory *entry)
+f_name(PLAN *plan, struct db_full_path *entry)
 {
-        return (!fnmatch(plan->c_data, entry->d_namep, 0));
+    	return (!fnmatch(plan->c_data, DB_FULL_PATH_CUR_DIR(entry)->d_namep, 0));
 }
 
 PLAN *
@@ -207,18 +207,18 @@ c_name(char *pattern, char ***ignored, int unused)
  *      standard output.
  */
 int
-f_print(PLAN *plan, struct directory *entry)
+f_print(PLAN *plan, struct db_full_path *entry)
 {
-        bu_log("%s\n", entry->d_namep);
+        bu_log("%s\n", db_path_to_string(entry));
 		isoutput = 0;
         return(1);
 }
 
 /* ARGSUSED */
 int
-f_print0(PLAN *plan, struct directory *entry)
+f_print0(PLAN *plan, struct db_full_path *entry)
 {
-        (void)fputs(entry->d_namep, stdout);
+        (void)fputs(db_path_to_string(entry), stdout);
         (void)fputc('\0', stdout);
         return(1);
 }
@@ -333,7 +333,7 @@ yankexpr(PLAN **planp)          /* pointer to top of plan (modified) */
         PLAN *node;             /* pointer to returned node or expression */
         PLAN *tail;             /* pointer to tail of subplan */
         PLAN *subplan;          /* pointer to head of ( ) expression */
-        extern int f_expr(PLAN *, struct directory *);
+        extern int f_expr(PLAN *, struct db_full_path *);
     
         /* first pull the top node from the plan */
         if ((node = yanknode(planp)) == NULL)
@@ -618,84 +618,27 @@ find_formplan(char **argv)
 }
 
 void
-find_execute_plans(struct db_i *dbip, struct directory *dp, genptr_t inputplan) {
+find_execute_plans(struct db_i *dbip, struct db_full_path *dfp, genptr_t inputplan) {
 	PLAN *p;
-	PLAN *plan = (PLAN *)inputplan;	
-	for (p = plan; p && (p->eval)(p, dp); p = p->next)
-                    ;
+	PLAN *plan = (PLAN *)inputplan;
+	for (p = plan; p && (p->eval)(p, dfp); p = p->next) 
+		    ;
 
 }
 
 void
 find_execute(PLAN *plan,        /* search plan */
-	char *pathname,               /* array of pathnames to traverse */
+	struct db_full_path *pathname,               /* array of pathnames to traverse */
 	struct rt_wdb *wdbp)
 {
-		struct directory *dp;
+    		struct directory *dp;
 		int i;
-		if (strcmp(pathname, "/") != 0) {
-			dp = db_lookup(wdbp->dbip, pathname, LOOKUP_NOISY);
-			db_functree(wdbp->dbip, dp, find_execute_plans, find_execute_plans, wdbp->wdb_resp, plan);
-		} else {
-			for (i = 0; i < RT_DBNHASH; i++) {
-				for (dp = wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
-					if (dp->d_nref == 0 && !(dp->d_flags & DIR_HIDDEN) && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
-					    db_functree(wdbp->dbip, dp, find_execute_plans, find_execute_plans, wdbp->wdb_resp, plan);
-					}
-				}
-			}
-		}
+		db_fullpath_traverse(wdbp->dbip, pathname, find_execute_plans, find_execute_plans, wdbp->wdb_resp, plan);
 }
 
-
-static void
-ged_find_ref(struct db_i		*dbip,
-	     struct rt_comb_internal	*comb,
-	     union tree			*comb_leaf,
-	     genptr_t			object,
-	     genptr_t			comb_name_ptr,
-	     genptr_t			user_ptr3)
-{
-    char *obj_name;
-    char *comb_name;
-    struct ged *gedp = (struct ged *)user_ptr3;
-
-    RT_CK_TREE(comb_leaf);
-
-    obj_name = (char *)object;
-    if (strcmp(comb_leaf->tr_l.tl_name, obj_name))
-	return;
-
-    comb_name = (char *)comb_name_ptr;
-
-    bu_vls_printf(&gedp->ged_result_str, "%s", comb_name);
-}
 
 int isoutput;
    
-int
-ged_find(struct ged *gedp, int argc, char *argv[])
-{
-    register int				i, k;
-    register struct directory		*dp;
-    struct rt_db_internal			intern;
-    register struct rt_comb_internal	*comb=(struct rt_comb_internal *)NULL;
-    int c;
-    int aflag = 0;		
-    static const char *usage = "<objects>";
-    struct ged_find_ref *gfref;
-
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
-    bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
- 
-    
-    find_execute(find_formplan(argv), "/", gedp);
-    
-    return BRLCAD_OK;
-}
-
 int
 wdb_find_cmd2(struct rt_wdb      *wdbp,
              Tcl_Interp         *interp,
@@ -708,13 +651,29 @@ wdb_find_cmd2(struct rt_wdb      *wdbp,
     register struct rt_comb_internal    *comb=(struct rt_comb_internal *)NULL;
     struct bu_vls vls;
     int aflag = 0;              /* look at all objects */
-	char *defaultdir = "/";
-	isoutput = 0;
-	if (!(argv[1][0] == '-')) {
-		find_execute(find_formplan(&argv[2]), argv[1], wdbp);
+    struct db_full_path dfp;
+    db_full_path_init(&dfp);
+    db_update_nref(wdbp->dbip, &rt_uniresource);
+	if (!(argv[1][0] == '-') && (strcmp(argv[1],"/") != 0)) {
+    	        db_string_to_path(&dfp, wdbp->dbip, argv[1]);	
+	        isoutput = 0;
+		find_execute(find_formplan(&argv[2]), &dfp, wdbp);
 	} else {
-		find_execute(find_formplan(&argv[1]), defaultdir, wdbp);
+                for (i = 0; i < RT_DBNHASH; i++) {
+                      for (dp = wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
+                              if (dp->d_nref == 0 && !(dp->d_flags & DIR_HIDDEN) && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
+				  db_string_to_path(&dfp, wdbp->dbip, dp->d_namep);
+				  isoutput = 0;
+				  if (argv[1][0] == '-') {
+				      find_execute(find_formplan(&argv[1]), &dfp, wdbp);
+				  } else {
+				      find_execute(find_formplan(&argv[2]), &dfp, wdbp);
+				  }
+			      }
+		      }
+		}
 	}
+    db_free_full_path(&dfp);
     return TCL_OK;
 }
 
