@@ -70,6 +70,7 @@ libged_nil_la_SOURCES = \
 	get_type.c \
 	glob.c \
 	globals.c \
+	grid.c \
 	group.c \
 	hide.c \
 	how.c \

@@ -111,6 +111,19 @@ static char go_adc_syntax[] = "\
  adc vname help			prints this help message\n\
 ";
 
+static char go_grid_syntax[] = "\
+ grid vname			toggle display of grid\n\
+ grid vname vars		print a list of all variables (i.e. var = val)\n\
+ grid vname draw [0|1]		set or get the draw parameter\n\
+ grid vname snap [0|1]		set or get the snap parameter\n\
+ grid vname rh [fval]		set or get the resolution (horizontal)\n\
+ grid vname rv [fval]		set or get the resolution (vertical)\n\
+ grid vname mrh [ival]		set or get the major resolution (horizontal)\n\
+ grid vname mrv [ival]		set or get the major resolution (vertical)\n\
+ grid vname color [r g b]	set or get the color\n\
+ grid vname help		prints this help message\n\
+";
+
 static int go_open_tcl(ClientData clientData,
 		       Tcl_Interp *interp,
 		       int argc,
@@ -157,6 +170,12 @@ static int go_delete_view(struct ged	*gedp,
 			  ged_func_ptr	func,
 			  const char	*usage,
 			  int		maxargs);
+static int go_grid(struct ged	*gedp,
+		   int		argc,
+		   const char	*argv[],
+		   ged_func_ptr	func,
+		   const char	*usage,
+		   int		maxargs);
 static int go_idle_mode(struct ged	*gedp,
 			int		argc,
 			const char	*argv[],
@@ -286,6 +305,12 @@ static int go_vmake(struct ged		*gedp,
 		    const char		*usage,
 		    int			maxargs);
 static int go_vslew(struct ged		*gedp,
+		    int			argc,
+		    const char		*argv[],
+		    ged_func_ptr	func,
+		    const char		*usage,
+		    int			maxargs);
+static int go_vsnap(struct ged		*gedp,
 		    int			argc,
 		    const char		*argv[],
 		    ged_func_ptr	func,
@@ -435,6 +460,7 @@ static struct go_cmdtab go_cmds[] = {
     {"get_eyemodel",	"vname", 2, go_view_func, ged_get_eyemodel},
     {"get_type",	(char *)0, MAXARGS, go_pass_through_func, ged_get_type},
     {"glob",	(char *)0, MAXARGS, go_pass_through_func, ged_glob},
+    {"grid",	go_grid_syntax, MAXARGS, go_grid, GED_FUNC_PTR_NULL},
     {"hide",	(char *)0, MAXARGS, go_pass_through_func, ged_hide},
     {"how",	(char *)0, MAXARGS, go_pass_through_func, ged_how},
     {"i",	(char *)0, MAXARGS, go_pass_through_func, ged_instance},
@@ -566,6 +592,7 @@ static struct go_cmdtab go_cmds[] = {
     {"vmake",	"vname pname ptype", MAXARGS, go_vmake, GED_FUNC_PTR_NULL},
     {"vnirt",	"vname [args]", GO_MAX_RT_ARGS, go_view_func, ged_vnirt},
     {"vslew",	"vname x y", MAXARGS, go_vslew, GED_FUNC_PTR_NULL},
+    {"vsnap",	"vname", MAXARGS, go_vsnap, GED_FUNC_PTR_NULL},
     {"wcodes",	(char *)0, MAXARGS, go_pass_through_func, ged_wcodes},
     {"whatid",	(char *)0, MAXARGS, go_pass_through_func, ged_whatid},
     {"which_shader",	(char *)0, MAXARGS, go_pass_through_func, ged_which_shader},
@@ -903,10 +930,10 @@ go_adc(struct ged	*gedp,
     }
 
     if (argc == 2) {
-	if (gdvp->gdv_gas.gas_draw)
-	    gdvp->gdv_gas.gas_draw = 0;
+	if (gdvp->gdv_adc.gas_draw)
+	    gdvp->gdv_adc.gas_draw = 0;
 	else
-	    gdvp->gdv_gas.gas_draw = 1;
+	    gdvp->gdv_adc.gas_draw = 1;
 
 	go_refresh_view(gdvp);
 	return BRLCAD_OK;
@@ -936,15 +963,15 @@ go_adc(struct ged	*gedp,
 
     if (strcmp(parameter, "draw") == 0) {
 	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_gas.gas_draw);
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_adc.gas_draw);
 	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    i = (int)user_pt[X];
 
 	    if (i)
-		gdvp->gdv_gas.gas_draw = 1;
+		gdvp->gdv_adc.gas_draw = 1;
 	    else
-		gdvp->gdv_gas.gas_draw = 0;
+		gdvp->gdv_adc.gas_draw = 0;
 
 	    go_refresh_view(gdvp);
 	    return BRLCAD_OK;
@@ -956,16 +983,16 @@ go_adc(struct ged	*gedp,
 
     if (strcmp(parameter, "a1") == 0) {
 	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%.15e", gdvp->gdv_gas.gas_a1);
+	    bu_vls_printf(&gedp->ged_result_str, "%g", gdvp->gdv_adc.gas_a1);
 	    return BRLCAD_OK;
 	} else if (argc == 1) {
-	    if (!gdvp->gdv_gas.gas_anchor_a1) {
+	    if (!gdvp->gdv_adc.gas_anchor_a1) {
 		if (incr_flag)
-		    gdvp->gdv_gas.gas_a1 += user_pt[0];
+		    gdvp->gdv_adc.gas_a1 += user_pt[0];
 		else
-		    gdvp->gdv_gas.gas_a1 = user_pt[0];
+		    gdvp->gdv_adc.gas_a1 = user_pt[0];
 
-		gdvp->gdv_gas.gas_dv_a1 = (1.0 - (gdvp->gdv_gas.gas_a1 / 45.0)) * GED_MAX;
+		gdvp->gdv_adc.gas_dv_a1 = (1.0 - (gdvp->gdv_adc.gas_a1 / 45.0)) * GED_MAX;
 		go_refresh_view(gdvp);
 	    }
 
@@ -978,16 +1005,16 @@ go_adc(struct ged	*gedp,
 
     if (strcmp(parameter, "a2") == 0) {
 	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%.15e", gdvp->gdv_gas.gas_a2);
+	    bu_vls_printf(&gedp->ged_result_str, "%g", gdvp->gdv_adc.gas_a2);
 	    return BRLCAD_OK;
 	} else if (argc == 1) {
-	    if (!gdvp->gdv_gas.gas_anchor_a2) {
+	    if (!gdvp->gdv_adc.gas_anchor_a2) {
 		if (incr_flag)
-		    gdvp->gdv_gas.gas_a2 += user_pt[0];
+		    gdvp->gdv_adc.gas_a2 += user_pt[0];
 		else
-		    gdvp->gdv_gas.gas_a2 = user_pt[0];
+		    gdvp->gdv_adc.gas_a2 = user_pt[0];
 
-		gdvp->gdv_gas.gas_dv_a2 = (1.0 - (gdvp->gdv_gas.gas_a2 / 45.0)) * GED_MAX;
+		gdvp->gdv_adc.gas_dv_a2 = (1.0 - (gdvp->gdv_adc.gas_a2 / 45.0)) * GED_MAX;
 		go_refresh_view(gdvp);
 	    }
 
@@ -1000,16 +1027,16 @@ go_adc(struct ged	*gedp,
 
     if (strcmp(parameter, "dst") == 0) {
 	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%.15e", gdvp->gdv_gas.gas_dst * gdvp->gdv_view->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
+	    bu_vls_printf(&gedp->ged_result_str, "%g", gdvp->gdv_adc.gas_dst * gdvp->gdv_view->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
 	    return BRLCAD_OK;
 	} else if (argc == 1) {
-	    if (!gdvp->gdv_gas.gas_anchor_dst) {
+	    if (!gdvp->gdv_adc.gas_anchor_dst) {
 		if (incr_flag)
-		    gdvp->gdv_gas.gas_dst += user_pt[0] / (gdvp->gdv_view->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
+		    gdvp->gdv_adc.gas_dst += user_pt[0] / (gdvp->gdv_view->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
 		else
-		    gdvp->gdv_gas.gas_dst = user_pt[0] / (gdvp->gdv_view->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
+		    gdvp->gdv_adc.gas_dst = user_pt[0] / (gdvp->gdv_view->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
 
-		gdvp->gdv_gas.gas_dv_dist = (gdvp->gdv_gas.gas_dst / M_SQRT1_2 - 1.0) * GED_MAX;
+		gdvp->gdv_adc.gas_dv_dist = (gdvp->gdv_adc.gas_dst / M_SQRT1_2 - 1.0) * GED_MAX;
 		go_refresh_view(gdvp);
 	    }
 
@@ -1022,16 +1049,16 @@ go_adc(struct ged	*gedp,
 
     if (strcmp(parameter, "odst") == 0) {
 	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_gas.gas_dv_dist);
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_adc.gas_dv_dist);
 	    return BRLCAD_OK;
 	} else if (argc == 1) {
-	    if (!gdvp->gdv_gas.gas_anchor_dst) {
+	    if (!gdvp->gdv_adc.gas_anchor_dst) {
 		if (incr_flag)
-		    gdvp->gdv_gas.gas_dv_dist += user_pt[0];
+		    gdvp->gdv_adc.gas_dv_dist += user_pt[0];
 		else
-		    gdvp->gdv_gas.gas_dv_dist = user_pt[0];
+		    gdvp->gdv_adc.gas_dv_dist = user_pt[0];
 
-		gdvp->gdv_gas.gas_dst = (gdvp->gdv_gas.gas_dv_dist * INV_GED + 1.0) * M_SQRT1_2;
+		gdvp->gdv_adc.gas_dst = (gdvp->gdv_adc.gas_dv_dist * INV_GED + 1.0) * M_SQRT1_2;
 		go_refresh_view(gdvp);
 	    }
 
@@ -1044,10 +1071,10 @@ go_adc(struct ged	*gedp,
 
     if (strcmp(parameter, "dh") == 0) {
 	if (argc == 1) {
-	    if (!gdvp->gdv_gas.gas_anchor_pos) {
-		gdvp->gdv_gas.gas_pos_grid[X] += user_pt[0] / (gdvp->gdv_view->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
-		ged_adc_grid_To_adc_view(&gdvp->gdv_gas, gdvp->gdv_view);
-		MAT4X3PNT(gdvp->gdv_gas.gas_pos_model, gdvp->gdv_view->gv_view2model, gdvp->gdv_gas.gas_pos_view);
+	    if (!gdvp->gdv_adc.gas_anchor_pos) {
+		gdvp->gdv_adc.gas_pos_grid[X] += user_pt[0] / (gdvp->gdv_view->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
+		ged_adc_grid_To_adc_view(&gdvp->gdv_adc, gdvp->gdv_view);
+		MAT4X3PNT(gdvp->gdv_adc.gas_pos_model, gdvp->gdv_view->gv_view2model, gdvp->gdv_adc.gas_pos_view);
 		go_refresh_view(gdvp);
 	    }
 
@@ -1060,10 +1087,10 @@ go_adc(struct ged	*gedp,
 
     if (strcmp(parameter, "dv") == 0) {
 	if (argc == 1) {
-	    if (!gdvp->gdv_gas.gas_anchor_pos) {
-		gdvp->gdv_gas.gas_pos_grid[Y] += user_pt[0] / (gdvp->gdv_view->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
-		ged_adc_grid_To_adc_view(&gdvp->gdv_gas, gdvp->gdv_view);
-		MAT4X3PNT(gdvp->gdv_gas.gas_pos_model, gdvp->gdv_view->gv_view2model, gdvp->gdv_gas.gas_pos_view);
+	    if (!gdvp->gdv_adc.gas_anchor_pos) {
+		gdvp->gdv_adc.gas_pos_grid[Y] += user_pt[0] / (gdvp->gdv_view->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
+		ged_adc_grid_To_adc_view(&gdvp->gdv_adc, gdvp->gdv_view);
+		MAT4X3PNT(gdvp->gdv_adc.gas_pos_model, gdvp->gdv_view->gv_view2model, gdvp->gdv_adc.gas_pos_view);
 		go_refresh_view(gdvp);
 	    }
 
@@ -1076,23 +1103,23 @@ go_adc(struct ged	*gedp,
 
     if (strcmp(parameter, "hv") == 0) {
 	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%.15e %.15e",
-			  gdvp->gdv_gas.gas_pos_grid[X] * gdvp->gdv_view->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local,
-			  gdvp->gdv_gas.gas_pos_grid[Y] * gdvp->gdv_view->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
+	    bu_vls_printf(&gedp->ged_result_str, "%g %g",
+			  gdvp->gdv_adc.gas_pos_grid[X] * gdvp->gdv_view->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local,
+			  gdvp->gdv_adc.gas_pos_grid[Y] * gdvp->gdv_view->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
 	    return BRLCAD_OK;
 	} else if (argc == 2) {
-	    if (!gdvp->gdv_gas.gas_anchor_pos) {
+	    if (!gdvp->gdv_adc.gas_anchor_pos) {
 		if (incr_flag) {
-		    gdvp->gdv_gas.gas_pos_grid[X] += user_pt[X] / (gdvp->gdv_view->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
-		    gdvp->gdv_gas.gas_pos_grid[Y] += user_pt[Y] / (gdvp->gdv_view->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
+		    gdvp->gdv_adc.gas_pos_grid[X] += user_pt[X] / (gdvp->gdv_view->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
+		    gdvp->gdv_adc.gas_pos_grid[Y] += user_pt[Y] / (gdvp->gdv_view->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
 		} else {
-		    gdvp->gdv_gas.gas_pos_grid[X] = user_pt[X] / (gdvp->gdv_view->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
-		    gdvp->gdv_gas.gas_pos_grid[Y] = user_pt[Y] / (gdvp->gdv_view->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
+		    gdvp->gdv_adc.gas_pos_grid[X] = user_pt[X] / (gdvp->gdv_view->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
+		    gdvp->gdv_adc.gas_pos_grid[Y] = user_pt[Y] / (gdvp->gdv_view->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
 		}
 
-		gdvp->gdv_gas.gas_pos_grid[Z] = 0.0;
-		ged_adc_grid_To_adc_view(&gdvp->gdv_gas, gdvp->gdv_view);
-		MAT4X3PNT(gdvp->gdv_gas.gas_pos_model, gdvp->gdv_view->gv_view2model, gdvp->gdv_gas.gas_pos_model);
+		gdvp->gdv_adc.gas_pos_grid[Z] = 0.0;
+		ged_adc_grid_To_adc_view(&gdvp->gdv_adc, gdvp->gdv_view);
+		MAT4X3PNT(gdvp->gdv_adc.gas_pos_model, gdvp->gdv_view->gv_view2model, gdvp->gdv_adc.gas_pos_model);
 		go_refresh_view(gdvp);
 	    }
 
@@ -1105,10 +1132,10 @@ go_adc(struct ged	*gedp,
 
     if (strcmp(parameter, "dx") == 0) {
 	if (argc == 1) {
-	    if (!gdvp->gdv_gas.gas_anchor_pos) {
-		gdvp->gdv_gas.gas_pos_model[X] += user_pt[0] * gedp->ged_wdbp->dbip->dbi_local2base;
-		ged_adc_model_To_adc_view(&gdvp->gdv_gas, gdvp->gdv_view);
-		ged_adc_view_To_adc_grid(&gdvp->gdv_gas, gdvp->gdv_view);
+	    if (!gdvp->gdv_adc.gas_anchor_pos) {
+		gdvp->gdv_adc.gas_pos_model[X] += user_pt[0] * gedp->ged_wdbp->dbip->dbi_local2base;
+		ged_adc_model_To_adc_view(&gdvp->gdv_adc, gdvp->gdv_view);
+		ged_adc_view_To_adc_grid(&gdvp->gdv_adc, gdvp->gdv_view);
 		go_refresh_view(gdvp);
 	    }
 
@@ -1121,10 +1148,10 @@ go_adc(struct ged	*gedp,
 
     if (strcmp(parameter, "dy") == 0) {
 	if (argc == 1) {
-	    if (!gdvp->gdv_gas.gas_anchor_pos) {
-		gdvp->gdv_gas.gas_pos_model[Y] += user_pt[0] * gedp->ged_wdbp->dbip->dbi_local2base;
-		ged_adc_model_To_adc_view(&gdvp->gdv_gas, gdvp->gdv_view);
-		ged_adc_view_To_adc_grid(&gdvp->gdv_gas, gdvp->gdv_view);
+	    if (!gdvp->gdv_adc.gas_anchor_pos) {
+		gdvp->gdv_adc.gas_pos_model[Y] += user_pt[0] * gedp->ged_wdbp->dbip->dbi_local2base;
+		ged_adc_model_To_adc_view(&gdvp->gdv_adc, gdvp->gdv_view);
+		ged_adc_view_To_adc_grid(&gdvp->gdv_adc, gdvp->gdv_view);
 		go_refresh_view(gdvp);
 	    }
 
@@ -1137,10 +1164,10 @@ go_adc(struct ged	*gedp,
 
     if (strcmp(parameter, "dz") == 0) {
 	if (argc == 1) {
-	    if (!gdvp->gdv_gas.gas_anchor_pos) {
-		gdvp->gdv_gas.gas_pos_model[Z] += user_pt[0] * gedp->ged_wdbp->dbip->dbi_local2base;
-		ged_adc_model_To_adc_view(&gdvp->gdv_gas, gdvp->gdv_view);
-		ged_adc_view_To_adc_grid(&gdvp->gdv_gas, gdvp->gdv_view);
+	    if (!gdvp->gdv_adc.gas_anchor_pos) {
+		gdvp->gdv_adc.gas_pos_model[Z] += user_pt[0] * gedp->ged_wdbp->dbip->dbi_local2base;
+		ged_adc_model_To_adc_view(&gdvp->gdv_adc, gdvp->gdv_view);
+		ged_adc_view_To_adc_grid(&gdvp->gdv_adc, gdvp->gdv_view);
 		go_refresh_view(gdvp);
 	    }
 
@@ -1153,20 +1180,20 @@ go_adc(struct ged	*gedp,
 
     if (strcmp(parameter, "xyz") == 0) {
 	if (argc == 0) {
-	    VSCALE(scaled_pos, gdvp->gdv_gas.gas_pos_model, gedp->ged_wdbp->dbip->dbi_base2local);
-	    bu_vls_printf(&gedp->ged_result_str, "%.15e %.15e %.15e", V3ARGS(scaled_pos));
+	    VSCALE(scaled_pos, gdvp->gdv_adc.gas_pos_model, gedp->ged_wdbp->dbip->dbi_base2local);
+	    bu_vls_printf(&gedp->ged_result_str, "%g %g %g", V3ARGS(scaled_pos));
 	    return BRLCAD_OK;
 	} else if (argc == 3) {
 	    VSCALE(user_pt, user_pt, gedp->ged_wdbp->dbip->dbi_local2base);
 
 	    if (incr_flag) {
-		VADD2(gdvp->gdv_gas.gas_pos_model, gdvp->gdv_gas.gas_pos_model, user_pt);
+		VADD2(gdvp->gdv_adc.gas_pos_model, gdvp->gdv_adc.gas_pos_model, user_pt);
 	    } else {
-		VMOVE(gdvp->gdv_gas.gas_pos_model, user_pt);
+		VMOVE(gdvp->gdv_adc.gas_pos_model, user_pt);
 	    }
 
-	    ged_adc_model_To_adc_view(&gdvp->gdv_gas, gdvp->gdv_view);
-	    ged_adc_view_To_adc_grid(&gdvp->gdv_gas, gdvp->gdv_view);
+	    ged_adc_model_To_adc_view(&gdvp->gdv_adc, gdvp->gdv_view);
+	    ged_adc_view_To_adc_grid(&gdvp->gdv_adc, gdvp->gdv_view);
 	    go_refresh_view(gdvp);
 
 	    return BRLCAD_OK;
@@ -1178,20 +1205,20 @@ go_adc(struct ged	*gedp,
 
     if (strcmp(parameter, "x") == 0) {
 	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_gas.gas_dv_x);
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_adc.gas_dv_x);
 	    return BRLCAD_OK;
 	} else if (argc == 1) {
-	    if (!gdvp->gdv_gas.gas_anchor_pos) {
+	    if (!gdvp->gdv_adc.gas_anchor_pos) {
 		if (incr_flag) {
-		    gdvp->gdv_gas.gas_dv_x += user_pt[0];
+		    gdvp->gdv_adc.gas_dv_x += user_pt[0];
 		} else {
-		    gdvp->gdv_gas.gas_dv_x = user_pt[0];
+		    gdvp->gdv_adc.gas_dv_x = user_pt[0];
 		}
 
-		gdvp->gdv_gas.gas_pos_view[X] = gdvp->gdv_gas.gas_dv_x * INV_GED;
-		gdvp->gdv_gas.gas_pos_view[Y] = gdvp->gdv_gas.gas_dv_y * INV_GED;
-		ged_adc_view_To_adc_grid(&gdvp->gdv_gas, gdvp->gdv_view);
-		MAT4X3PNT(gdvp->gdv_gas.gas_pos_model, gdvp->gdv_view->gv_view2model, gdvp->gdv_gas.gas_pos_view);
+		gdvp->gdv_adc.gas_pos_view[X] = gdvp->gdv_adc.gas_dv_x * INV_GED;
+		gdvp->gdv_adc.gas_pos_view[Y] = gdvp->gdv_adc.gas_dv_y * INV_GED;
+		ged_adc_view_To_adc_grid(&gdvp->gdv_adc, gdvp->gdv_view);
+		MAT4X3PNT(gdvp->gdv_adc.gas_pos_model, gdvp->gdv_view->gv_view2model, gdvp->gdv_adc.gas_pos_view);
 		go_refresh_view(gdvp);
 	    }
 
@@ -1204,20 +1231,20 @@ go_adc(struct ged	*gedp,
 
     if (strcmp(parameter, "y") == 0) {
 	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_gas.gas_dv_y);
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_adc.gas_dv_y);
 	    return BRLCAD_OK;
 	} else if (argc == 1) {
-	    if (!gdvp->gdv_gas.gas_anchor_pos) {
+	    if (!gdvp->gdv_adc.gas_anchor_pos) {
 		if (incr_flag) {
-		    gdvp->gdv_gas.gas_dv_y += user_pt[0];
+		    gdvp->gdv_adc.gas_dv_y += user_pt[0];
 		} else {
-		    gdvp->gdv_gas.gas_dv_y = user_pt[0];
+		    gdvp->gdv_adc.gas_dv_y = user_pt[0];
 		}
 
-		gdvp->gdv_gas.gas_pos_view[X] = gdvp->gdv_gas.gas_dv_x * INV_GED;
-		gdvp->gdv_gas.gas_pos_view[Y] = gdvp->gdv_gas.gas_dv_y * INV_GED;
-		ged_adc_view_To_adc_grid(&gdvp->gdv_gas, gdvp->gdv_view);
-		MAT4X3PNT(gdvp->gdv_gas.gas_pos_model, gdvp->gdv_view->gv_view2model, gdvp->gdv_gas.gas_pos_view);
+		gdvp->gdv_adc.gas_pos_view[X] = gdvp->gdv_adc.gas_dv_x * INV_GED;
+		gdvp->gdv_adc.gas_pos_view[Y] = gdvp->gdv_adc.gas_dv_y * INV_GED;
+		ged_adc_view_To_adc_grid(&gdvp->gdv_adc, gdvp->gdv_view);
+		MAT4X3PNT(gdvp->gdv_adc.gas_pos_model, gdvp->gdv_view->gv_view2model, gdvp->gdv_adc.gas_pos_view);
 		go_refresh_view(gdvp);
 	    }
 
@@ -1230,7 +1257,7 @@ go_adc(struct ged	*gedp,
 
     if (strcmp(parameter, "anchor_pos") == 0) {
 	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_gas.gas_anchor_pos);
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_adc.gas_anchor_pos);
 	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    i = (int)user_pt[X];
@@ -1240,8 +1267,8 @@ go_adc(struct ged	*gedp,
 		return BRLCAD_ERROR;
 	    }
 
-	    gdvp->gdv_gas.gas_anchor_pos = i;
-	    ged_calc_adc_pos(&gdvp->gdv_gas, gdvp->gdv_view);
+	    gdvp->gdv_adc.gas_anchor_pos = i;
+	    ged_calc_adc_pos(&gdvp->gdv_adc, gdvp->gdv_view);
 	    go_refresh_view(gdvp);
 
 	    return BRLCAD_OK;
@@ -1253,17 +1280,17 @@ go_adc(struct ged	*gedp,
 
     if (strcmp(parameter, "anchor_a1") == 0) {
 	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_gas.gas_anchor_a1);
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_adc.gas_anchor_a1);
 	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    i = (int)user_pt[X];
 
 	    if (i)
-		gdvp->gdv_gas.gas_anchor_a1 = 1;
+		gdvp->gdv_adc.gas_anchor_a1 = 1;
 	    else
-		gdvp->gdv_gas.gas_anchor_a1 = 0;
+		gdvp->gdv_adc.gas_anchor_a1 = 0;
 
-	    ged_calc_adc_a1(&gdvp->gdv_gas, gdvp->gdv_view);
+	    ged_calc_adc_a1(&gdvp->gdv_adc, gdvp->gdv_view);
 	    go_refresh_view(gdvp);
 
 	    return BRLCAD_OK;
@@ -1275,20 +1302,20 @@ go_adc(struct ged	*gedp,
 
     if (strcmp(parameter, "anchorpoint_a1") == 0) {
 	if (argc == 0) {
-	    VSCALE(scaled_pos, gdvp->gdv_gas.gas_anchor_pt_a1, gedp->ged_wdbp->dbip->dbi_base2local);
-	    bu_vls_printf(&gedp->ged_result_str, "%.15e %.15e %.15e", V3ARGS(scaled_pos));
+	    VSCALE(scaled_pos, gdvp->gdv_adc.gas_anchor_pt_a1, gedp->ged_wdbp->dbip->dbi_base2local);
+	    bu_vls_printf(&gedp->ged_result_str, "%g %g %g", V3ARGS(scaled_pos));
 
 	    return BRLCAD_OK;
 	} else if (argc == 3) {
 	    VSCALE(user_pt, user_pt, gedp->ged_wdbp->dbip->dbi_local2base);
 
 	    if (incr_flag) {
-		VADD2(gdvp->gdv_gas.gas_anchor_pt_a1, gdvp->gdv_gas.gas_anchor_pt_a1, user_pt);
+		VADD2(gdvp->gdv_adc.gas_anchor_pt_a1, gdvp->gdv_adc.gas_anchor_pt_a1, user_pt);
 	    } else {
-		VMOVE(gdvp->gdv_gas.gas_anchor_pt_a1, user_pt);
+		VMOVE(gdvp->gdv_adc.gas_anchor_pt_a1, user_pt);
 	    }
 
-	    ged_calc_adc_a1(&gdvp->gdv_gas, gdvp->gdv_view);
+	    ged_calc_adc_a1(&gdvp->gdv_adc, gdvp->gdv_view);
 	    go_refresh_view(gdvp);
 
 	    return BRLCAD_OK;
@@ -1300,18 +1327,18 @@ go_adc(struct ged	*gedp,
 
     if (strcmp(parameter, "anchor_a2") == 0) {
 	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_gas.gas_anchor_a2);
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_adc.gas_anchor_a2);
 
 	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    i = (int)user_pt[X];
 
 	    if (i)
-		gdvp->gdv_gas.gas_anchor_a2 = 1;
+		gdvp->gdv_adc.gas_anchor_a2 = 1;
 	    else
-		gdvp->gdv_gas.gas_anchor_a2 = 0;
+		gdvp->gdv_adc.gas_anchor_a2 = 0;
 
-	    ged_calc_adc_a2(&gdvp->gdv_gas, gdvp->gdv_view);
+	    ged_calc_adc_a2(&gdvp->gdv_adc, gdvp->gdv_view);
 	    go_refresh_view(gdvp);
 
 	    return BRLCAD_OK;
@@ -1323,21 +1350,21 @@ go_adc(struct ged	*gedp,
 
     if (strcmp(parameter, "anchorpoint_a2") == 0) {
 	if (argc == 0) {
-	    VSCALE(scaled_pos, gdvp->gdv_gas.gas_anchor_pt_a2, gedp->ged_wdbp->dbip->dbi_base2local);
+	    VSCALE(scaled_pos, gdvp->gdv_adc.gas_anchor_pt_a2, gedp->ged_wdbp->dbip->dbi_base2local);
 
-	    bu_vls_printf(&gedp->ged_result_str, "%.15e %.15e %.15e", V3ARGS(scaled_pos));
+	    bu_vls_printf(&gedp->ged_result_str, "%g %g %g", V3ARGS(scaled_pos));
 
 	    return BRLCAD_OK;
 	} else if (argc == 3) {
 	    VSCALE(user_pt, user_pt, gedp->ged_wdbp->dbip->dbi_local2base);
 
 	    if (incr_flag) {
-		VADD2(gdvp->gdv_gas.gas_anchor_pt_a2, gdvp->gdv_gas.gas_anchor_pt_a2, user_pt);
+		VADD2(gdvp->gdv_adc.gas_anchor_pt_a2, gdvp->gdv_adc.gas_anchor_pt_a2, user_pt);
 	    } else {
-		VMOVE(gdvp->gdv_gas.gas_anchor_pt_a2, user_pt);
+		VMOVE(gdvp->gdv_adc.gas_anchor_pt_a2, user_pt);
 	    }
 
-	    ged_calc_adc_a2(&gdvp->gdv_gas, gdvp->gdv_view);
+	    ged_calc_adc_a2(&gdvp->gdv_adc, gdvp->gdv_view);
 	    go_refresh_view(gdvp);
 
 	    return BRLCAD_OK;
@@ -1349,18 +1376,18 @@ go_adc(struct ged	*gedp,
 
     if (strcmp(parameter, "anchor_dst") == 0) {
 	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_gas.gas_anchor_dst);
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_adc.gas_anchor_dst);
 
 	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    i = (int)user_pt[X];
 
 	    if (i) {
-		gdvp->gdv_gas.gas_anchor_dst = 1;
+		gdvp->gdv_adc.gas_anchor_dst = 1;
 	    } else
-		gdvp->gdv_gas.gas_anchor_dst = 0;
+		gdvp->gdv_adc.gas_anchor_dst = 0;
 
-	    ged_calc_adc_dst(&gdvp->gdv_gas, gdvp->gdv_view);
+	    ged_calc_adc_dst(&gdvp->gdv_adc, gdvp->gdv_view);
 	    go_refresh_view(gdvp);
 
 	    return BRLCAD_OK;
@@ -1372,20 +1399,20 @@ go_adc(struct ged	*gedp,
 
     if (strcmp(parameter, "anchorpoint_dst") == 0) {
 	if (argc == 0) {
-	    VSCALE(scaled_pos, gdvp->gdv_gas.gas_anchor_pt_dst, gedp->ged_wdbp->dbip->dbi_base2local);
-	    bu_vls_printf(&gedp->ged_result_str, "%.15e %.15e %.15e", V3ARGS(scaled_pos));
+	    VSCALE(scaled_pos, gdvp->gdv_adc.gas_anchor_pt_dst, gedp->ged_wdbp->dbip->dbi_base2local);
+	    bu_vls_printf(&gedp->ged_result_str, "%g %g %g", V3ARGS(scaled_pos));
 
 	    return BRLCAD_OK;
 	} else if (argc == 3) {
 	    VSCALE(user_pt, user_pt, gedp->ged_wdbp->dbip->dbi_local2base);
 
 	    if (incr_flag) {
-		VADD2(gdvp->gdv_gas.gas_anchor_pt_dst, gdvp->gdv_gas.gas_anchor_pt_dst, user_pt);
+		VADD2(gdvp->gdv_adc.gas_anchor_pt_dst, gdvp->gdv_adc.gas_anchor_pt_dst, user_pt);
 	    } else {
-		VMOVE(gdvp->gdv_gas.gas_anchor_pt_dst, user_pt);
+		VMOVE(gdvp->gdv_adc.gas_anchor_pt_dst, user_pt);
 	    }
 
-	    ged_calc_adc_dst(&gdvp->gdv_gas, gdvp->gdv_view);
+	    ged_calc_adc_dst(&gdvp->gdv_adc, gdvp->gdv_view);
 	    go_refresh_view(gdvp);
 
 	    return BRLCAD_OK;
@@ -1397,7 +1424,7 @@ go_adc(struct ged	*gedp,
 
     if (strcmp(parameter, "reset") == 0) {
 	if (argc == 0) {
-	    ged_adc_reset(&gdvp->gdv_gas, gdvp->gdv_view);
+	    ged_adc_reset(&gdvp->gdv_adc, gdvp->gdv_view);
 	    go_refresh_view(gdvp);
 
 	    return BRLCAD_OK;
@@ -1408,7 +1435,7 @@ go_adc(struct ged	*gedp,
     }
 
     if (strcmp(parameter, "vars") == 0) {
-	ged_adc_vls_print(&gdvp->gdv_gas, gdvp->gdv_view, gedp->ged_wdbp->dbip->dbi_base2local, &gedp->ged_result_str);
+	ged_adc_vls_print(&gdvp->gdv_adc, gdvp->gdv_view, gedp->ged_wdbp->dbip->dbi_base2local, &gedp->ged_result_str);
 	return BRLCAD_OK;
     }
 
@@ -1575,6 +1602,7 @@ go_constrain_rmode(struct ged	*gedp,
 
     gdvp->gdv_view->gv_prevMouseX = x;
     gdvp->gdv_view->gv_prevMouseY = y;
+    gdvp->gdv_view->gv_mode = GED_CONSTRAINED_ROTATE_MODE;
 
     bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %S <Motion> {%S mouse_constrain_rot %S %s %%x %%y}; break",
@@ -1640,6 +1668,7 @@ go_constrain_tmode(struct ged	*gedp,
 
     gdvp->gdv_view->gv_prevMouseX = x;
     gdvp->gdv_view->gv_prevMouseY = y;
+    gdvp->gdv_view->gv_mode = GED_CONSTRAINED_TRANSLATE_MODE;
 
     bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %S <Motion> {%S mouse_constrain_trans %S %s %%x %%y}; break",
@@ -1698,6 +1727,216 @@ go_delete_view(struct ged	*gedp,
 }
 
 static int
+go_grid(struct ged	*gedp,
+	int		argc,
+	const char	*argv[],
+	ged_func_ptr	func,
+	const char	*usage,
+	int		maxargs)
+{
+    char *command;
+    char *parameter;
+    char **argp = (char **)argv;
+    point_t user_pt;		/* Value(s) provided by user */
+    point_t scaled_pos;
+    int incr_flag;
+    int i;
+    struct ged_dm_view *gdvp;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+    gedp->ged_result = GED_RESULT_NULL;
+
+    if (argc < 2 || 7 < argc) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    if (argc == 2) {
+	if (gdvp->gdv_grid.ggs_draw)
+	    gdvp->gdv_grid.ggs_draw = 0;
+	else
+	    gdvp->gdv_grid.ggs_draw = 1;
+
+	go_refresh_view(gdvp);
+	return BRLCAD_OK;
+    }
+
+    command = (char *)argv[0];
+    parameter = (char *)argv[2];
+    argc -= 3;
+    argp += 3;
+
+    for (i = 0; i < argc; ++i)
+	user_pt[i] = atof(argp[i]);
+
+    if (strcmp(parameter, "draw") == 0) {
+	if (argc == 0) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_grid.ggs_draw);
+	    return BRLCAD_OK;
+	} else if (argc == 1) {
+	    i = (int)user_pt[X];
+
+	    if (i)
+		gdvp->gdv_grid.ggs_draw = 1;
+	    else
+		gdvp->gdv_grid.ggs_draw = 0;
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	bu_vls_printf(&gedp->ged_result_str, "The '%s draw' command accepts 0 or 1 argument\n", command);
+	return BRLCAD_ERROR;
+    }
+
+    if (strcmp(parameter, "snap") == 0) {
+	if (argc == 0) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_grid.ggs_snap);
+	    return BRLCAD_OK;
+	} else if (argc == 1) {
+	    i = (int)user_pt[X];
+
+	    if (i)
+		gdvp->gdv_grid.ggs_snap = 1;
+	    else
+		gdvp->gdv_grid.ggs_snap = 0;
+
+	    return BRLCAD_OK;
+	}
+
+	bu_vls_printf(&gedp->ged_result_str, "The '%s draw' command accepts 0 or 1 argument\n", command);
+	return BRLCAD_ERROR;
+    }
+
+    if (strcmp(parameter, "rh") == 0) {
+	if (argc == 0) {
+	    bu_vls_printf(&gedp->ged_result_str, "%g",
+			  gdvp->gdv_grid.ggs_res_h * gedp->ged_wdbp->dbip->dbi_base2local);
+	    return BRLCAD_OK;
+	} else if (argc == 1) {
+	    gdvp->gdv_grid.ggs_res_h = user_pt[X] * gedp->ged_wdbp->dbip->dbi_local2base;
+	    go_refresh_view(gdvp);
+
+	    return BRLCAD_OK;
+	}
+
+	bu_vls_printf(&gedp->ged_result_str, "The '%s rh' command accepts 0 or 1 argument\n", command);
+	return BRLCAD_ERROR;
+    }
+
+    if (strcmp(parameter, "rv") == 0) {
+	if (argc == 0) {
+	    bu_vls_printf(&gedp->ged_result_str, "%g",
+			  gdvp->gdv_grid.ggs_res_v * gedp->ged_wdbp->dbip->dbi_base2local);
+	    return BRLCAD_OK;
+	} else if (argc == 1) {
+	    gdvp->gdv_grid.ggs_res_v = user_pt[X] * gedp->ged_wdbp->dbip->dbi_local2base;
+	    go_refresh_view(gdvp);
+
+	    return BRLCAD_OK;
+	}
+
+	bu_vls_printf(&gedp->ged_result_str, "The '%s rv' command accepts 0 or 1 argument\n", command);
+	return BRLCAD_ERROR;
+    }
+
+    if (strcmp(parameter, "mrh") == 0) {
+	if (argc == 0) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_grid.ggs_res_major_h);
+	    return BRLCAD_OK;
+	} else if (argc == 1) {
+	    gdvp->gdv_grid.ggs_res_major_h = (int)user_pt[X];
+	    go_refresh_view(gdvp);
+
+	    return BRLCAD_OK;
+	}
+
+	bu_vls_printf(&gedp->ged_result_str, "The '%s mrh' command accepts 0 or 1 argument\n", command);
+	return BRLCAD_ERROR;
+    }
+
+    if (strcmp(parameter, "mrv") == 0) {
+	if (argc == 0) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_grid.ggs_res_major_v);
+	    return BRLCAD_OK;
+	} else if (argc == 1) {
+	    gdvp->gdv_grid.ggs_res_major_v = (int)user_pt[X];
+	    go_refresh_view(gdvp);
+
+	    return BRLCAD_OK;
+	}
+
+	bu_vls_printf(&gedp->ged_result_str, "The '%s mrv' command accepts 0 or 1 argument\n", command);
+	return BRLCAD_ERROR;
+    }
+
+    if (strcmp(parameter, "anchor") == 0) {
+	if (argc == 0) {
+	    bu_vls_printf(&gedp->ged_result_str, "%g %g %g",
+			  gdvp->gdv_grid.ggs_anchor[X] * gedp->ged_wdbp->dbip->dbi_base2local,
+			  gdvp->gdv_grid.ggs_anchor[Y] * gedp->ged_wdbp->dbip->dbi_base2local,
+			  gdvp->gdv_grid.ggs_anchor[Z] * gedp->ged_wdbp->dbip->dbi_base2local);
+	    return BRLCAD_OK;
+	} else if (argc == 3) {
+	    gdvp->gdv_grid.ggs_anchor[0] = user_pt[X] * gedp->ged_wdbp->dbip->dbi_local2base;
+	    gdvp->gdv_grid.ggs_anchor[1] = user_pt[Y] * gedp->ged_wdbp->dbip->dbi_local2base;
+	    gdvp->gdv_grid.ggs_anchor[2] = user_pt[Z] * gedp->ged_wdbp->dbip->dbi_local2base;
+	    go_refresh_view(gdvp);
+
+	    return BRLCAD_OK;
+	}
+
+	bu_vls_printf(&gedp->ged_result_str, "The '%s color' command requires 0 or 3 arguments\n", command);
+	return BRLCAD_ERROR;
+    }
+
+    if (strcmp(parameter, "color") == 0) {
+	if (argc == 0) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
+			  gdvp->gdv_grid.ggs_color[X],
+			  gdvp->gdv_grid.ggs_color[Y],
+			  gdvp->gdv_grid.ggs_color[Z]);
+	    return BRLCAD_OK;
+	} else if (argc == 3) {
+	    gdvp->gdv_grid.ggs_color[0] = (int)user_pt[X];
+	    gdvp->gdv_grid.ggs_color[1] = (int)user_pt[Y];
+	    gdvp->gdv_grid.ggs_color[2] = (int)user_pt[Z];
+	    go_refresh_view(gdvp);
+
+	    return BRLCAD_OK;
+	}
+
+	bu_vls_printf(&gedp->ged_result_str, "The '%s color' command requires 0 or 3 arguments\n", command);
+	return BRLCAD_ERROR;
+    }
+
+    if (strcmp(parameter, "vars") == 0) {
+	ged_grid_vls_print(&gdvp->gdv_grid, gdvp->gdv_view, gedp->ged_wdbp->dbip->dbi_base2local, &gedp->ged_result_str);
+	return BRLCAD_OK;
+    }
+
+    if (strcmp(parameter, "help") == 0) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", command, usage);
+	return BRLCAD_HELP;
+    }
+
+    bu_vls_printf(&gedp->ged_result_str, "%s: unrecognized command '%s'\nUsage: %s %s\n",
+		  command, parameter, command, usage);
+    return BRLCAD_ERROR;
+}
+
+static int
 go_idle_mode(struct ged		*gedp,
 	     int		argc,
 	     const char		*argv[],
@@ -1738,6 +1977,15 @@ go_idle_mode(struct ged		*gedp,
 		  &gdvp->gdv_dmp->dm_pathName);
     Tcl_Eval(go_current_gop->go_interp, bu_vls_addr(&bindings));
     bu_vls_free(&bindings);
+
+    if (gdvp->gdv_grid.ggs_snap &&
+	(gdvp->gdv_view->gv_mode == GED_TRANSLATE_MODE ||
+	 gdvp->gdv_view->gv_mode == GED_CONSTRAINED_TRANSLATE_MODE)) {
+	ged_snap_view_center_to_grid(&gdvp->gdv_grid, gdvp->gdv_view, gedp->ged_wdbp->dbip->dbi_base2local);
+	go_refresh_view(gdvp);
+    }
+
+    gdvp->gdv_view->gv_mode = GED_IDLE_MODE;
 
     return BRLCAD_OK;
 }
@@ -2112,8 +2360,8 @@ go_mouse_constrain_trans(struct ged	*gedp,
 	dy = gdvp->gdv_view->gv_maxMouseDelta;
 
     inv_width = 1.0 / gdvp->gdv_dmp->dm_width;
-    dx *= inv_width * gdvp->gdv_view->gv_size;
-    dy *= inv_width * gdvp->gdv_view->gv_size;
+    dx *= inv_width * gdvp->gdv_view->gv_size * gedp->ged_wdbp->dbip->dbi_local2base;
+    dy *= inv_width * gdvp->gdv_view->gv_size * gedp->ged_wdbp->dbip->dbi_local2base;
 
     if (fabs(dx) > fabs(dy))
 	sf = dx;
@@ -2387,8 +2635,8 @@ go_mouse_trans(struct ged	*gedp,
 	dy = gdvp->gdv_view->gv_maxMouseDelta;
 
     inv_width = 1.0 / gdvp->gdv_dmp->dm_width;
-    dx *= inv_width * gdvp->gdv_view->gv_size;
-    dy *= inv_width * gdvp->gdv_view->gv_size;
+    dx *= inv_width * gdvp->gdv_view->gv_size * gedp->ged_wdbp->dbip->dbi_local2base;
+    dy *= inv_width * gdvp->gdv_view->gv_size * gedp->ged_wdbp->dbip->dbi_local2base;
 
     bu_vls_init(&trans_vls);
     bu_vls_printf(&trans_vls, "%lf %lf 0", dx, dy);
@@ -2518,14 +2766,27 @@ go_new_view(struct ged		*gedp,
     new_gdvp->gdv_fbs.fbs_clientData = new_gdvp;
     new_gdvp->gdv_fbs.fbs_interp = go_current_gop->go_interp;
 
-    new_gdvp->gdv_gas.gas_a1 = 45.0;
-    new_gdvp->gdv_gas.gas_a2 = 45.0;
-    new_gdvp->gdv_gas.gas_line_color[0] = 255;
-    new_gdvp->gdv_gas.gas_line_color[1] = 255;
-    new_gdvp->gdv_gas.gas_line_color[2] = 0;
-    new_gdvp->gdv_gas.gas_tick_color[0] = 255;
-    new_gdvp->gdv_gas.gas_tick_color[1] = 255;
-    new_gdvp->gdv_gas.gas_tick_color[2] = 255;
+    new_gdvp->gdv_adc.gas_a1 = 45.0;
+    new_gdvp->gdv_adc.gas_a2 = 45.0;
+    new_gdvp->gdv_adc.gas_line_color[0] = 255;
+    new_gdvp->gdv_adc.gas_line_color[1] = 255;
+    new_gdvp->gdv_adc.gas_line_color[2] = 0;
+    new_gdvp->gdv_adc.gas_tick_color[0] = 255;
+    new_gdvp->gdv_adc.gas_tick_color[1] = 255;
+    new_gdvp->gdv_adc.gas_tick_color[2] = 255;
+
+    new_gdvp->gdv_grid.ggs_draw = 1;
+    new_gdvp->gdv_grid.ggs_snap = 0;
+    new_gdvp->gdv_grid.ggs_anchor[0] = 0.0;
+    new_gdvp->gdv_grid.ggs_anchor[1] = 0.0;
+    new_gdvp->gdv_grid.ggs_anchor[2] = 0.0;
+    new_gdvp->gdv_grid.ggs_res_h = 1.0;
+    new_gdvp->gdv_grid.ggs_res_v = 1.0;
+    new_gdvp->gdv_grid.ggs_res_major_h = 5;
+    new_gdvp->gdv_grid.ggs_res_major_v = 5;
+    new_gdvp->gdv_grid.ggs_color[0] = 255;
+    new_gdvp->gdv_grid.ggs_color[1] = 255;
+    new_gdvp->gdv_grid.ggs_color[2] = 255;
 
     /* open the framebuffer */
     go_open_fbs(new_gdvp, go_current_gop->go_interp);
@@ -2824,6 +3085,7 @@ go_rotate_mode(struct ged	*gedp,
 
     gdvp->gdv_view->gv_prevMouseX = x;
     gdvp->gdv_view->gv_prevMouseY = y;
+    gdvp->gdv_view->gv_mode = GED_ROTATE_MODE;
 
     bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %S <Motion> {%S mouse_rot %S %%x %%y}",
@@ -3005,6 +3267,7 @@ go_scale_mode(struct ged	*gedp,
 
     gdvp->gdv_view->gv_prevMouseX = x;
     gdvp->gdv_view->gv_prevMouseY = y;
+    gdvp->gdv_view->gv_mode = GED_SCALE_MODE;
 
     bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %S <Motion> {%S mouse_scale %S %%x %%y}",
@@ -3173,6 +3436,7 @@ go_translate_mode(struct ged	*gedp,
 
     gdvp->gdv_view->gv_prevMouseX = x;
     gdvp->gdv_view->gv_prevMouseY = y;
+    gdvp->gdv_view->gv_mode = GED_TRANSLATE_MODE;
 
     bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %S <Motion> {%S mouse_trans %S %%x %%y}",
@@ -3318,10 +3582,54 @@ go_vslew(struct ged	*gedp,
     ret = ged_slew(gedp, ac, (const char **)av);
     bu_vls_free(&slew_vec);
 
-    if (ac != 1 && ret == BRLCAD_OK)
+    if (ret == BRLCAD_OK) {
+	if (gdvp->gdv_grid.ggs_snap)
+	    ged_snap_view_center_to_grid(&gdvp->gdv_grid, gdvp->gdv_view, gedp->ged_wdbp->dbip->dbi_base2local);
 	go_refresh_view(gdvp);
+    }
 
     return ret;
+}
+
+static int
+go_vsnap(struct ged	*gedp,
+	 int		argc,
+	 const char	*argv[],
+	 ged_func_ptr	func,
+	 const char	*usage,
+	 int		maxargs)
+{
+    struct ged_dm_view *gdvp;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+    gedp->ged_result = GED_RESULT_NULL;
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_HELP;
+    }
+
+    if (argc != 2) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    ged_snap_view_center_to_grid(&gdvp->gdv_grid, gdvp->gdv_view, gedp->ged_wdbp->dbip->dbi_base2local);
+    go_refresh_view(gdvp);
+
+    return BRLCAD_OK;
 }
 
 static int
@@ -3923,8 +4231,12 @@ go_refresh_view(struct ged_dm_view *gdvp)
     }
 
     /* Draw the angle distance cursor */
-    if (gdvp->gdv_gas.gas_draw)
-	dm_draw_adc(gdvp->gdv_dmp, &gdvp->gdv_gas, gdvp->gdv_view);
+    if (gdvp->gdv_adc.gas_draw)
+	dm_draw_adc(gdvp->gdv_dmp, &gdvp->gdv_adc, gdvp->gdv_view);
+
+    /* Draw grid */
+    if (gdvp->gdv_grid.ggs_draw)
+	dm_draw_grid(gdvp->gdv_dmp, &gdvp->gdv_grid, gdvp->gdv_view, gdvp->gdv_gop->go_gedp->ged_wdbp->dbip->dbi_base2local);
 
     DM_DRAW_END(gdvp->gdv_dmp);
 }

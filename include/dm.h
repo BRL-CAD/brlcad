@@ -388,6 +388,14 @@ DM_EXPORT BU_EXTERN(void dmo_drawAxes_cmd,
 /* focus.c */
 DM_EXPORT BU_EXTERN(void dm_applicationfocus, (void));
 
+/* grid.c */
+DM_EXPORT BU_EXTERN(void dm_draw_grid,
+		    (struct dm *dmp,
+		     struct ged_grid_state *ggsp,
+		     struct ged_view *gvp,
+		     fastf_t base2local));
+
+
 #endif /* __DM_H__ */
 
 /** @} */

@@ -377,6 +377,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libdm\grid.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libdm\knob.c"
 				>
 				<FileConfiguration

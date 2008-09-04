@@ -44,6 +44,7 @@ libdm_la_SOURCES = \
 	dm-wgl.c \
 	dm_obj.c \
 	focus.c \
+	grid.c \
 	knob.c \
 	options.c \
 	query.c \
@@ -71,6 +72,6 @@ EXTRA_DIST = \
 	dm-pex.c \
 	libdm.dsp
 
-DEPS=src/librt src/libfb
+DEPS=src/librt src/libfb src/libged
 
 include $(top_srcdir)/misc/Makefile.defs

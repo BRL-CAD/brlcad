@@ -67,6 +67,12 @@ __BEGIN_DECLS
 
 #define GED_FUNC_PTR_NULL (ged_func_ptr)0
 
+#define GED_IDLE_MODE 0
+#define GED_ROTATE_MODE 1
+#define GED_TRANSLATE_MODE 2
+#define GED_SCALE_MODE 3
+#define GED_CONSTRAINED_ROTATE_MODE 4
+#define GED_CONSTRAINED_TRANSLATE_MODE 5
 
 /*XXX This macro is temporary */
 #define GED_INIT(_gedp, _wdbp) { \
@@ -163,6 +169,17 @@ __BEGIN_DECLS
 	bu_vls_printf(&(_gedp)->ged_result_str, "Database write error, aborting"); \
 	return (_ret); \
     }
+
+struct ged_grid_state {
+    int		ggs_draw;		/* draw grid */
+    int		ggs_snap;		/* snap to grid */
+    fastf_t	ggs_anchor[3];
+    fastf_t	ggs_res_h;		/* grid resolution in h */
+    fastf_t	ggs_res_v;		/* grid resolution in v */
+    int		ggs_res_major_h;	/* major grid resolution in h */
+    int		ggs_res_major_v;	/* major grid resolution in v */
+    int		ggs_color[3];
+};
 
 struct ged_adc_state {
     int		gas_draw;
@@ -280,6 +297,7 @@ struct ged_view {
     fastf_t		gv_maxMouseDelta;
     fastf_t		gv_rscale;
     fastf_t		gv_sscale;
+    int			gv_mode;
 };
 
 
@@ -395,6 +413,24 @@ GED_EXPORT BU_EXTERN(void ged_close,
 		     (struct ged *gedp));
 GED_EXPORT BU_EXTERN(void ged_view_init,
 		     (struct ged_view *gvp));
+
+/* defined in grid.c */
+GED_EXPORT BU_EXTERN(void ged_grid_vls_print,
+		     (struct ged_grid_state *ggsp,
+		      struct ged_view *gvp,
+		      fastf_t base2local,
+		      struct bu_vls *out_vp));
+GED_EXPORT BU_EXTERN(void ged_snap_to_grid,
+		     (struct ged_grid_state *ggsp,
+		      struct ged_view *gvp,
+		      fastf_t base2local,
+		      fastf_t *mx,
+		      fastf_t *my));
+GED_EXPORT BU_EXTERN(void ged_snap_view_center_to_grid,
+		     (struct ged_grid_state *ggsp,
+		      struct ged_view *gvp,
+		      fastf_t base2local));
+
 
 /* defined in wdb_comb_std.c */
 GED_EXPORT BU_EXTERN(int wdb_comb_std_cmd,

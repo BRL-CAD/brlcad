@@ -494,6 +494,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\grid.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\group.c"
 				>
 			</File>
