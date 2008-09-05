@@ -24,7 +24,7 @@
 #
 
 # make sure the mged commands we need actually exist
-set extern_commands [list db get_regions attr]
+set extern_commands [list get get_regions attr]
 foreach cmd $extern_commands {
     if {[expr [string compare [info command $cmd] $cmd] != 0]} {
 	puts stderr "[info script]: Application fails to provide command '$cmd'"
@@ -42,7 +42,7 @@ proc remat { args } {
     set name [lindex $args 0]
     set matid [lindex $args 1]
 
-    set objData [db get $name]
+    set objData [get $name]
     if { [lindex $objData 0] != "comb" } {
 	return
     }

@@ -22,7 +22,7 @@
 # list all regions at or under a given hierarchy node
 #
 
-set extern_commands [list db]
+set extern_commands [list get]
 foreach cmd $extern_commands {
     if {[expr [string compare [info command $cmd] $cmd] != 0]} {
 	puts stderr "[info script]: Application fails to provide command '$cmd'"
@@ -38,7 +38,7 @@ proc get_regions { args } {
     }
 
     set object [lindex $args 0]
-    set objectData [db get $object]
+    set objectData [get $object]
 
     if { [lindex $objectData 0] != "comb" } {
 	# ignore primitive
@@ -58,12 +58,12 @@ proc get_regions { args } {
 	foreach node $children {
 	    set child [lindex $node 1]
 
-	    if { [lindex [db get $child] 0] != "comb" } {
+	    if { [lindex [get $child] 0] != "comb" } {
 		# ignore primitive
 		continue
 	    }
 
-	    if { [lindex [db get $child] 2] == "yes" } {
+	    if { [lindex [get $child] 2] == "yes" } {
 		# found a region, add to the list and stop recursion
 		lappend regions $child
 	    } else {
