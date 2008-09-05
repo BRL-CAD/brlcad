@@ -111,7 +111,7 @@ typedef struct _plandata {
 typedef struct _option {
 	char *name;				/* option name */
 	enum ntype token;			/* token type */
-	PLAN *(*create)(char *, char ***, int);	/* create function */
+	int (*create)(char *, char ***, int, PLAN **);	/* create function */
 #define	O_NONE		0x01			/* no call required */
 #define	O_ZERO		0x02			/* pass: nothing */
 #define	O_ARGV		0x04			/* pass: argv, increment argv */
@@ -121,13 +121,13 @@ typedef struct _option {
 
 
 void	 brace_subst(char *, char **, char *, int);
-PLAN	*find_create(char ***);
+int	find_create(char ***, PLAN **);
 void	 find_execute(PLAN *, struct db_full_path *, struct rt_wdb *);
-PLAN	*find_formplan(char **);
-PLAN	*not_squish(PLAN *);
+int	find_formplan(char **, PLAN **);
+int	not_squish(PLAN *, PLAN **);
 OPTION	*option(char *);
-PLAN	*or_squish(PLAN *);
-PLAN	*paren_squish(PLAN *);
+int	or_squish(PLAN *, PLAN **);
+int	paren_squish(PLAN *, PLAN **);
 struct stat;
 void	 printlong(char *, char *, struct stat *);
 int	     queryuser(char **);
@@ -142,15 +142,15 @@ PLAN	*c_iname(char *, char ***, int);
 PLAN	*c_ls(char *, char ***, int);
 PLAN	*c_maxdepth(char *, char ***, int);
 PLAN	*c_mindepth(char *, char ***, int);
-PLAN	*c_name(char *, char ***, int);
+int	c_name(char *, char ***, int, PLAN **);
 PLAN	*c_path(char *, char ***, int);
-PLAN	*c_print(char *, char ***, int);
-PLAN	*c_print0(char *, char ***, int);
+int	c_print(char *, char ***, int, PLAN **);
+int	c_print0(char *, char ***, int, PLAN **);
 PLAN	*c_prune(char *, char ***, int);
 PLAN	*c_type(char *, char ***, int);
-PLAN	*c_openparen(char *, char ***, int);
-PLAN	*c_closeparen(char *, char ***, int);
-PLAN	*c_not(char *, char ***, int);
-PLAN	*c_or(char *, char ***, int);
+int	c_openparen(char *, char ***, int, PLAN **);
+int	c_closeparen(char *, char ***, int, PLAN **);
+int	c_not(char *, char ***, int, PLAN **);
+int	c_or(char *, char ***, int, PLAN **);
 
 extern int isdepth, isoutput;

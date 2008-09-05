@@ -86,7 +86,7 @@ palloc(enum ntype t, int (*f)(PLAN *, struct db_full_path *))
                 new->eval = f; 
                 return (new);
         }
-        err(1, NULL);
+        bu_exit(1, NULL);
         /* NOTREACHED */ 
 }
 
@@ -112,16 +112,18 @@ f_expr(PLAN *plan, struct db_full_path *entry)
  * eliminated during phase 2 of find_formplan() --- the '(' node is converted
  * to a N_EXPR node containing the expression and the ')' node is discarded.
  */
-PLAN *
-c_openparen(char *ignore, char ***ignored, int unused)
+int
+c_openparen(char *ignore, char ***ignored, int unused, PLAN **resultplan)
 {
-        return (palloc(N_OPENPAREN, (int (*)(PLAN *, struct db_full_path *))-1));
+        (*resultplan) = (palloc(N_OPENPAREN, (int (*)(PLAN *, struct db_full_path *))-1));
+	return BRLCAD_OK;
 }
  
-PLAN *
-c_closeparen(char *ignore, char ***ignored, int unused)
+int
+c_closeparen(char *ignore, char ***ignored, int unused, PLAN **resultplan)
 {
-        return (palloc(N_CLOSEPAREN, (int (*)(PLAN *, struct db_full_path *))-1));
+        (*resultplan) = (palloc(N_CLOSEPAREN, (int (*)(PLAN *, struct db_full_path *))-1));
+	return BRLCAD_OK;
 }
 
 
@@ -141,10 +143,11 @@ f_not(PLAN *plan, struct db_full_path *entry)
         return (!state);
 }
  
-PLAN *
-c_not(char *ignore, char ***ignored, int unused)
+int
+c_not(char *ignore, char ***ignored, int unused, PLAN **resultplan)
 {
-        return (palloc(N_NOT, f_not));
+        (*resultplan) =  (palloc(N_NOT, f_not));
+	return BRLCAD_OK;
 }
  
 /*
@@ -170,10 +173,11 @@ f_or(PLAN *plan, struct db_full_path *entry)
         return (state); 
 }
 
-PLAN *  
-c_or(char *ignore, char ***ignored, int unused)
+int 
+c_or(char *ignore, char ***ignored, int unused, PLAN **resultplan)
 {
-        return (palloc(N_OR, f_or));
+        (*resultplan) = (palloc(N_OR, f_or));
+	return BRLCAD_OK;
 }
 
 
@@ -189,14 +193,15 @@ f_name(PLAN *plan, struct db_full_path *entry)
     	return (!fnmatch(plan->c_data, DB_FULL_PATH_CUR_DIR(entry)->d_namep, 0));
 }
 
-PLAN *
-c_name(char *pattern, char ***ignored, int unused)
+int
+c_name(char *pattern, char ***ignored, int unused, PLAN **resultplan)
 {
         PLAN *new;
 
         new = palloc(N_NAME, f_name);
         new->c_data = pattern;
-        return (new);
+	(*resultplan) = new;
+        return BRLCAD_OK;
 }
 
 
@@ -223,20 +228,22 @@ f_print0(PLAN *plan, struct db_full_path *entry)
         return(1);
 }
 
-PLAN *
-c_print(char *ignore, char ***ignored, int unused)
+int
+c_print(char *ignore, char ***ignored, int unused, PLAN **resultplan)
 {
         isoutput = 1;
-
-        return(palloc(N_PRINT, f_print));
+	
+	(*resultplan) = palloc(N_PRINT, f_print);
+	return BRLCAD_OK;
 }
 
-PLAN *
-c_print0(char *ignore, char ***ignored, int unused)
+int
+c_print0(char *ignore, char ***ignored, int unused, PLAN **resultplan)
 {
         isoutput = 1;
 
-        return(palloc(N_PRINT0, f_print0));
+	(*resultplan) = palloc(N_PRINT0, f_print0);
+	return BRLCAD_OK;
 }
 
 
@@ -250,8 +257,8 @@ c_print0(char *ignore, char ***ignored, int unused)
  *      add create/process function pointers to node, so we can skip
  *      this switch stuff.
  */
-PLAN *
-find_create(char ***argvp)
+int
+find_create(char ***argvp, PLAN **resultplan)
 {
         OPTION *p;
         PLAN *new;
@@ -259,30 +266,34 @@ find_create(char ***argvp)
 
         argv = *argvp;
 
-        if ((p = option(*argv)) == NULL)
-                errx(1, "%s: unknown option", *argv);
+        if ((p = option(*argv)) == NULL) {        
+	    	bu_log("%s: unknown option passed to find_create\n", *argv);
+		return BRLCAD_ERROR;
+	}
         ++argv;
-        if (p->flags & (O_ARGV|O_ARGVP) && !*argv)
-                errx(1, "%s: requires additional arguments", *--argv);
-
+        if (p->flags & (O_ARGV|O_ARGVP) && !*argv) {
+                bu_log("%s: requires additional arguments\n", *--argv);
+		return BRLCAD_ERROR;
+	}
         switch(p->flags) {
         case O_NONE:
                 new = NULL;
                 break;
         case O_ZERO:
-                new = (p->create)(NULL, NULL, 0);
+                (p->create)(NULL, NULL, 0, &new);
                 break;
         case O_ARGV:
-                new = (p->create)(*argv++, NULL, 0);
+                (p->create)(*argv++, NULL, 0, &new);
                 break;
         case O_ARGVP: 
-                new = (p->create)(NULL, &argv, p->token == N_OK);
+                (p->create)(NULL, &argv, p->token == N_OK, &new);
                 break;
         default:
-                return NULL;
+                return BRLCAD_OK;
         }
         *argvp = argv;
-        return (new);
+	(*resultplan) = new;
+        return BRLCAD_OK;
 }
 
 OPTION *
@@ -326,8 +337,8 @@ yanknode(PLAN **planp)          /* pointer to top of plan (modified) */
  *      paren_squish.  In comments below, an expression is either a
  *      simple node or a N_EXPR node containing a list of simple nodes.
  */
-static PLAN *
-yankexpr(PLAN **planp)          /* pointer to top of plan (modified) */
+int
+yankexpr(PLAN **planp, PLAN **resultplan)          /* pointer to top of plan (modified) */
 {
         PLAN *next;     /* temp node holding subexpression results */
         PLAN *node;             /* pointer to returned node or expression */
@@ -336,9 +347,10 @@ yankexpr(PLAN **planp)          /* pointer to top of plan (modified) */
         extern int f_expr(PLAN *, struct db_full_path *);
     
         /* first pull the top node from the plan */
-        if ((node = yanknode(planp)) == NULL)
-                return (NULL);
-
+        if ((node = yanknode(planp)) == NULL) {
+	    	(*resultplan) = NULL;
+                return BRLCAD_OK;
+ 	}
         /*
          * If the node is an '(' then we recursively slurp up expressions
          * until we find its associated ')'.  If it's a closing paren we
@@ -347,8 +359,11 @@ yankexpr(PLAN **planp)          /* pointer to top of plan (modified) */
          */
         if (node->type == N_OPENPAREN) 
                 for (tail = subplan = NULL;;) {
-                        if ((next = yankexpr(planp)) == NULL)
-                                errx(1, "(: missing closing ')'");
+		    	yankexpr(planp, &next);
+                        if (next == NULL) {
+                                bu_log("(: missing closing ')'\n");
+				return BRLCAD_ERROR;
+			}
                         /* 
                          * If we find a closing ')' we store the collected
                          * subplan in our '(' node and convert the node to
@@ -358,7 +373,7 @@ yankexpr(PLAN **planp)          /* pointer to top of plan (modified) */
                          */
                         if (next->type == N_CLOSEPAREN) {
                                 if (subplan == NULL)
-                                        errx(1, "(): empty inner expression");
+                                        bu_exit(1, "(): empty inner expression");
                                 node->p_data[0] = subplan;
                                 node->type = N_EXPR;
                                 node->eval = f_expr;
@@ -373,7 +388,8 @@ yankexpr(PLAN **planp)          /* pointer to top of plan (modified) */
                                 tail->next = NULL;
                         }
                 }
-        return (node);
+	(*resultplan) = node;
+	return BRLCAD_OK;
 }
 
 
@@ -381,8 +397,8 @@ yankexpr(PLAN **planp)          /* pointer to top of plan (modified) */
  * paren_squish --
  *      replaces "parentheisized" plans in our search plan with "expr" nodes.
  */
-PLAN *
-paren_squish(PLAN *plan)                /* plan with ( ) nodes */
+int
+paren_squish(PLAN *plan, PLAN **resultplan)                /* plan with ( ) nodes */
 {
         PLAN *expr;     /* pointer to next expression */
         PLAN *tail;     /* pointer to tail of result plan */
@@ -394,13 +410,14 @@ paren_squish(PLAN *plan)                /* plan with ( ) nodes */
          * the basic idea is to have yankexpr do all our work and just
          * collect it's results together.
          */
-        while ((expr = yankexpr(&plan)) != NULL) {
+	if (yankexpr(&plan, &expr) != BRLCAD_OK) return BRLCAD_ERROR;
+        while (expr != NULL) {
                 /*
                  * if we find an unclaimed ')' it means there is a missing
                  * '(' someplace.
                  */
                 if (expr->type == N_CLOSEPAREN)
-                        errx(1, "): no beginning '('");
+                        bu_exit(1, "): no beginning '('");
 
                 /* add the expression to our result plan */
                 if (result == NULL)
@@ -410,16 +427,18 @@ paren_squish(PLAN *plan)                /* plan with ( ) nodes */
                         tail = expr;
                 }
                 tail->next = NULL;
+		if (yankexpr(&plan, &expr) != BRLCAD_OK) return BRLCAD_ERROR;
         }
-        return (result);
+ 	(*resultplan) = result;
+ 	return BRLCAD_OK;
 }
  
 /*
  * not_squish --
  *      compresses "!" expressions in our search plan.
  */
-PLAN *
-not_squish(PLAN *plan)          /* plan to process */
+int
+not_squish(PLAN *plan, PLAN **resultplan)          /* plan to process */
 {
         PLAN *next;     /* next node being processed */
         PLAN *node;     /* temporary node used in N_NOT processing */
@@ -434,7 +453,7 @@ not_squish(PLAN *plan)          /* plan to process */
                  * the expr subplan.
                  */
                 if (next->type == N_EXPR) 
-                        next->p_data[0] = not_squish(next->p_data[0]);
+                        not_squish(next->p_data[0], &(next->p_data[0]));
 
                 /*
                  * if we encounter a not, then snag the next node and place
@@ -450,11 +469,11 @@ not_squish(PLAN *plan)          /* plan to process */
                                 node = yanknode(&plan);
                         }
                         if (node == NULL)
-                                errx(1, "!: no following expression");
+                                bu_exit(1, "!: no following expression");
                         if (node->type == N_OR)
-                                errx(1, "!: nothing between ! and -o");
+                                bu_exit(1, "!: nothing between ! and -o");
                         if (node->type == N_EXPR)
-                                node = not_squish(node);
+                                not_squish(node, &node);
                         if (notlevel % 2 != 1)
                                 next = node;
                         else
@@ -470,7 +489,8 @@ not_squish(PLAN *plan)          /* plan to process */
                 }
                 tail->next = NULL;
         }
-        return (result);
+	(*resultplan) = result;
+        return BRLCAD_OK;
 }
 
 
@@ -478,8 +498,8 @@ not_squish(PLAN *plan)          /* plan to process */
  * or_squish --
  *      compresses -o expressions in our search plan.
  */
-PLAN *
-or_squish(PLAN *plan)           /* plan with ors to be squished */
+int
+or_squish(PLAN *plan, PLAN **resultplan)           /* plan with ors to be squished */
 {
         PLAN *next;     /* next node being processed */
         PLAN *tail;     /* pointer to tail of result plan */
@@ -493,11 +513,11 @@ or_squish(PLAN *plan)           /* plan with ors to be squished */
                  * the expr subplan.
                  */
                 if (next->type == N_EXPR) 
-                        next->p_data[0] = or_squish(next->p_data[0]);
+                        or_squish(next->p_data[0], &(next->p_data[0]));
 
                 /* if we encounter a not then look for not's in the subplan */
                 if (next->type == N_NOT)
-                        next->p_data[0] = or_squish(next->p_data[0]);
+                        or_squish(next->p_data[0], &(next->p_data[0]));
 
                 /*
                  * if we encounter an or, then place our collected plan in the
@@ -506,12 +526,13 @@ or_squish(PLAN *plan)           /* plan with ors to be squished */
                  */
                 if (next->type == N_OR) {
                         if (result == NULL)
-                                errx(1, "-o: no expression before -o");
+                                bu_exit(1, "-o: no expression before -o");
                         next->p_data[0] = result;
-                        next->p_data[1] = or_squish(plan);
+                        or_squish(plan, &(next->p_data[1]));
                         if (next->p_data[1] == NULL)
-                                errx(1, "-o: no expression after -o");
-                        return (next);
+                                bu_exit(1, "-o: no expression after -o");
+                        (*resultplan) = next;
+			return BRLCAD_OK;
                 }
 
                 /* add the node to our result plan */
@@ -523,7 +544,8 @@ or_squish(PLAN *plan)           /* plan with ors to be squished */
                 }
                 tail->next = NULL;
         }
-        return (result);
+	(*resultplan) = result;
+        return BRLCAD_OK;
 }
 
 
@@ -534,8 +556,8 @@ or_squish(PLAN *plan)           /* plan with ors to be squished */
  *      process the command line and create a "plan" corresponding to the
  *      command arguments.
  */
-PLAN *
-find_formplan(char **argv)
+int
+find_formplan(char **argv, PLAN **resultplan)
 {
         PLAN *plan, *tail, *new;
 
@@ -556,7 +578,8 @@ find_formplan(char **argv)
          * plan->next pointer.
          */
         for (plan = tail = NULL; *argv;) {
-                if (!(new = find_create(&argv)))
+	    	if (find_create(&argv, &new) != BRLCAD_OK) return BRLCAD_ERROR;
+                if (!(new))
                         continue;
                 if (plan == NULL)
                         tail = plan = new;
@@ -573,16 +596,16 @@ find_formplan(char **argv)
          */
         if (!isoutput) {
                 if (plan == NULL) {
-                        new = c_print(NULL, NULL, 0);
+                        c_print(NULL, NULL, 0, &new);
                         tail = plan = new;
                 } else {
-                        new = c_openparen(NULL, NULL, 0);
+                        c_openparen(NULL, NULL, 0, &new);
                         new->next = plan;
                         plan = new;
-                        new = c_closeparen(NULL, NULL, 0);
+                        c_closeparen(NULL, NULL, 0, &new);
                         tail->next = new;
                         tail = new;
-                        new = c_print(NULL, NULL, 0);
+                        c_print(NULL, NULL, 0, &new);
                         tail->next = new;
                         tail = new;
                 }
@@ -611,10 +634,11 @@ find_formplan(char **argv)
          * operators are handled in order of precedence.
          */
 
-        plan = paren_squish(plan);              /* ()'s */
+        paren_squish(plan, &plan);              /* ()'s */
         /*plan = not_squish(plan);*/                /* !'s */
         /*plan = or_squish(plan);*/                 /* -o's */
-        return (plan);
+	(*resultplan) = plan;
+        return BRLCAD_OK;
 }
 
 void
@@ -651,13 +675,20 @@ wdb_find_cmd2(struct rt_wdb      *wdbp,
     register struct rt_comb_internal    *comb=(struct rt_comb_internal *)NULL;
     struct bu_vls vls;
     int aflag = 0;              /* look at all objects */
+    PLAN *dbplan;
     struct db_full_path dfp;
+    
     db_full_path_init(&dfp);
     db_update_nref(wdbp->dbip, &rt_uniresource);
 	if (!(argv[1][0] == '-') && (strcmp(argv[1],"/") != 0)) {
     	        db_string_to_path(&dfp, wdbp->dbip, argv[1]);	
 	        isoutput = 0;
-		find_execute(find_formplan(&argv[2]), &dfp, wdbp);
+		if (find_formplan(&argv[2], &dbplan) != BRLCAD_OK) {
+		    Tcl_AppendResult(interp, "Failed to build find plan.\n", (char *)NULL);
+		    return TCL_ERROR;
+		} else {
+		   find_execute(dbplan, &dfp, wdbp);
+		}
 	} else {
                 for (i = 0; i < RT_DBNHASH; i++) {
                       for (dp = wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
@@ -665,9 +696,19 @@ wdb_find_cmd2(struct rt_wdb      *wdbp,
 				  db_string_to_path(&dfp, wdbp->dbip, dp->d_namep);
 				  isoutput = 0;
 				  if (argv[1][0] == '-') {
-				      find_execute(find_formplan(&argv[1]), &dfp, wdbp);
+				      	if (find_formplan(&argv[1], &dbplan) != BRLCAD_OK) {
+		    				Tcl_AppendResult(interp, "Failed to build find plan.\n", (char *)NULL);
+		    				return TCL_ERROR;
+					} else {
+		   				find_execute(dbplan, &dfp, wdbp);
+					}
 				  } else {
-				      find_execute(find_formplan(&argv[2]), &dfp, wdbp);
+			      		if (find_formplan(&argv[2], &dbplan) != BRLCAD_OK) {
+					        Tcl_AppendResult(interp, "Failed to build find plan.\n", (char *)NULL);
+		    				return TCL_ERROR;
+					} else {
+		   				find_execute(dbplan, &dfp, wdbp);
+					}
 				  }
 			      }
 		      }
