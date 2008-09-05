@@ -678,8 +678,10 @@ int f_closedb(
     char	**argv);
 void new_edit_mats(void);
 void new_mats(void);
-void pr_prompt(void);
 void pr_beep(void);
+
+extern int interactive; /* for pr_prompt */
+void pr_prompt(int show_prompt);
 
 /* grid.c */
 void round_to_grid(fastf_t *view_dx, fastf_t *view_dy);

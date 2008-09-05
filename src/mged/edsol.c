@@ -3730,7 +3730,7 @@ sedit(void)
 #endif
 	    }
 
-	    pr_prompt();
+	    pr_prompt(interactive);
 	    fixv--;
 	    es_edflag = ECMD_ARB_ROTATE_FACE;
 	    view_state->vs_flag = 1;	/* draw arrow, etc */
@@ -7982,7 +7982,7 @@ oedit_accept(void)
 	    sp->s_iflag = DOWN;
 	}
 	bu_log("Sorry, this database is READ-ONLY\n");
-	pr_prompt();
+	pr_prompt(interactive);
 
 	return;
     }
@@ -8173,7 +8173,7 @@ sedit_accept(void)
     if (dbip->dbi_read_only) {
 	sedit_reject();
 	bu_log( "Sorry, this database is READ-ONLY\n" );
-	pr_prompt();
+	pr_prompt(interactive);
 	return;
     }
 

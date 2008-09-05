@@ -794,7 +794,6 @@ void
 mged_print_result(int status)
 {
     int len;
-    extern void pr_prompt(void);
     const char *result = Tcl_GetStringResult(interp);
 
 #if 0
@@ -807,7 +806,7 @@ mged_print_result(int status)
 		bu_log("%s%s", result,
 		       result[len-1] == '\n' ? "" : "\n");
 
-		pr_prompt();
+		pr_prompt(interactive);
 	    }
 
 	    break;
@@ -819,7 +818,7 @@ mged_print_result(int status)
 		bu_log("%s%s", result,
 		       result[len-1] == '\n' ? "" : "\n");
 
-		pr_prompt();
+		pr_prompt(interactive);
 	    }
 
 	    break;
@@ -830,7 +829,7 @@ mged_print_result(int status)
 	bu_log("%s%s", result,
 	       result[len-1] == '\n' ? "" : "\n");
 
-	pr_prompt();
+	pr_prompt(interactive);
     }
 #endif
 

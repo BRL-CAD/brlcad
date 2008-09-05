@@ -1437,6 +1437,7 @@ AC_CHECK_HEADERS( \
 	memory.h \
 	ncurses.h \
 	netinet/in.h \
+	poll.h \
 	pthread.h \
 	pwd.h \
 	rle.h \

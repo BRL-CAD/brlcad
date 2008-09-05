@@ -384,7 +384,7 @@ static struct cmdtab cmdtab[] = {
 void
 mged_rtCmdNotify()
 {
-    pr_prompt();
+    pr_prompt(interactive);
 }
 
 /**
