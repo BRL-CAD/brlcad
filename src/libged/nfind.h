@@ -1,4 +1,4 @@
-/*                         F I N D . H
+/*                       N F I N D . H
  * BRL-CAD
  *
  * Copyright (c) 2008 United States Government as represented by
@@ -57,6 +57,7 @@
 /* node type */
 enum ntype {
 	N_AND = 1, 				/* must start > 0 */
+	N_ATTR,
 	N_CLOSEPAREN, N_DEPTH, N_EMPTY, N_EXEC, N_EXECDIR, N_EXPR,
 	N_FLAGS, N_INAME, N_LS, N_MAXDEPTH,
 	N_MINDEPTH, N_NAME, N_NOT, N_OK, N_OPENPAREN, N_OR, N_PATH, 
@@ -67,7 +68,7 @@ enum ntype {
 /* node definition */
 typedef struct _plandata {
 	struct _plandata *next;			/* next node */
-	int (*eval)(struct _plandata *, struct db_full_path *);
+	int (*eval)(struct _plandata *, struct db_full_path *, struct db_i *dbip);
 									/* node evaluation function */
 #define	F_EQUAL		1			/* [acm]time inum links size */
 #define	F_LESSTHAN	2
@@ -92,12 +93,14 @@ typedef struct _plandata {
 		} ex;
 		char *_a_data[2];		/* array of char pointers */
 		char *_c_data;			/* char pointer */
+		char *_attr_data;		/* char pointer */
 		int _max_data;			/* tree depth */
 		int _min_data;			/* tree depth */
 	} p_un;
 } PLAN;
 #define	a_data		p_un._a_data
 #define	c_data		p_un._c_data
+#define attr_data	p_un._attr_data
 #define fl_flags	p_un.fl._f_flags
 #define fl_mask		p_un.fl._f_mask
 #define	g_data		p_un._g_data
@@ -133,6 +136,7 @@ void	 printlong(char *, char *, struct stat *);
 int	     queryuser(char **);
 void	 show_path(int);
 
+int	c_attr(char *, char ***, int, PLAN **);
 PLAN	*c_depth(char *, char ***, int);
 PLAN	*c_empty(char *, char ***, int);
 PLAN	*c_exec(char *, char ***, int);

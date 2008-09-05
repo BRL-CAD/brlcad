@@ -1,4 +1,4 @@
-/*                         F I N D . C
+/*                       N F I N D . C
  * BRL-CAD
  *
  * Copyright (c) 2008 United States Government as represented by
@@ -46,9 +46,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/** @file find.c
+/** @file nfind.c
  *
- * The find command.
+ * The nfind command.
  *
  */
 
@@ -70,14 +70,15 @@ static OPTION options[] = {
         { "!",          N_NOT,          c_not,          O_ZERO },
         { "(",          N_OPENPAREN,    c_openparen,    O_ZERO },
         { ")",          N_CLOSEPAREN,   c_closeparen,   O_ZERO },
+	{ "-attr",	N_ATTR,		c_attr,		O_ARGV },
         { "-name",      N_NAME,         c_name,         O_ARGV },
-		{ "-o",         N_OR,           c_or,           O_ZERO },
-		{ "-print",     N_PRINT,        c_print,        O_ZERO },
-		{ "-print0",    N_PRINT0,       c_print0,       O_ZERO },
+	{ "-o",         N_OR,           c_or,           O_ZERO },
+	{ "-print",     N_PRINT,        c_print,        O_ZERO },
+	{ "-print0",    N_PRINT0,       c_print0,       O_ZERO },
 };
 
 static PLAN *
-palloc(enum ntype t, int (*f)(PLAN *, struct db_full_path *))
+palloc(enum ntype t, int (*f)(PLAN *, struct db_full_path *, struct db_i *))
 {
         PLAN *new;
 
@@ -96,13 +97,13 @@ palloc(enum ntype t, int (*f)(PLAN *, struct db_full_path *))
  *      True if expression is true.
  */
 int
-f_expr(PLAN *plan, struct db_full_path *entry)
+f_expr(PLAN *plan, struct db_full_path *entry, struct db_i *dbip)
 {
         PLAN *p;
         int state;
 
         for (p = plan->p_data[0];
-            p && (state = (p->eval)(p, entry)); p = p->next);
+            p && (state = (p->eval)(p, entry, dbip)); p = p->next);
         return (state);
 }
 
@@ -115,14 +116,14 @@ f_expr(PLAN *plan, struct db_full_path *entry)
 int
 c_openparen(char *ignore, char ***ignored, int unused, PLAN **resultplan)
 {
-        (*resultplan) = (palloc(N_OPENPAREN, (int (*)(PLAN *, struct db_full_path *))-1));
+        (*resultplan) = (palloc(N_OPENPAREN, (int (*)(PLAN *, struct db_full_path *, struct db_i *))-1));
 	return BRLCAD_OK;
 }
  
 int
 c_closeparen(char *ignore, char ***ignored, int unused, PLAN **resultplan)
 {
-        (*resultplan) = (palloc(N_CLOSEPAREN, (int (*)(PLAN *, struct db_full_path *))-1));
+        (*resultplan) = (palloc(N_CLOSEPAREN, (int (*)(PLAN *, struct db_full_path *, struct db_i *))-1));
 	return BRLCAD_OK;
 }
 
@@ -133,13 +134,13 @@ c_closeparen(char *ignore, char ***ignored, int unused, PLAN **resultplan)
  *      Negation of a primary; the unary NOT operator.
  */
 int
-f_not(PLAN *plan, struct db_full_path *entry)
+f_not(PLAN *plan, struct db_full_path *entry, struct db_i *dbip)
 {
         PLAN *p;
         int state;
 
         for (p = plan->p_data[0];
-            p && (state = (p->eval)(p, entry)); p = p->next);
+            p && (state = (p->eval)(p, entry, dbip)); p = p->next);
         return (!state);
 }
  
@@ -157,19 +158,19 @@ c_not(char *ignore, char ***ignored, int unused, PLAN **resultplan)
  * not evaluated if the first expression is true.
  */
 int
-f_or(PLAN *plan, struct db_full_path *entry)
+f_or(PLAN *plan, struct db_full_path *entry, struct db_i *dbip)
 {
         PLAN *p;
         int state;
 
         for (p = plan->p_data[0];
-            p && (state = (p->eval)(p, entry)); p = p->next);
+            p && (state = (p->eval)(p, entry, dbip)); p = p->next);
 
         if (state)
                 return (1);
 
         for (p = plan->p_data[1];
-            p && (state = (p->eval)(p, entry)); p = p->next);
+            p && (state = (p->eval)(p, entry, dbip)); p = p->next);
         return (state); 
 }
 
@@ -188,7 +189,7 @@ c_or(char *ignore, char ***ignored, int unused, PLAN **resultplan)
  *      matches pattern using Pattern Matching Notation S3.14
  */
 int
-f_name(PLAN *plan, struct db_full_path *entry)
+f_name(PLAN *plan, struct db_full_path *entry, struct db_i *dbip)
 {
     	return (!fnmatch(plan->c_data, DB_FULL_PATH_CUR_DIR(entry)->d_namep, 0));
 }
@@ -204,6 +205,89 @@ c_name(char *pattern, char ***ignored, int unused, PLAN **resultplan)
         return BRLCAD_OK;
 }
 
+/*
+ * -attr functions --
+ *
+ *      True if the database object being examined has the attribute
+ *      supplied to the attr option
+ */
+int
+f_attr(PLAN *plan, struct db_full_path *entry, struct db_i *dbip)
+{
+	struct bu_vls attribname;
+	struct bu_vls value;
+	struct bu_attribute_value_set avs;
+	struct bu_attribute_value_pair *avpp;
+	int equalpos = 0;
+	int checkval = 0;
+	int i;
+	bu_vls_init(&attribname);
+	bu_vls_init(&value);
+	
+	    
+	/* Check for unescaped equal sign - if present, the
+	 * attribute must not only be present but have the
+ 	 * value indicated.  Escaping is done with the "/" 
+	 * character.
+	 */
+
+	while ((equalpos < strlen(plan->attr_data)) && (plan->attr_data[equalpos] != '=')) {
+	    if ((plan->attr_data[equalpos] == '/') && (plan->attr_data[equalpos + 1] == '=')) {equalpos++;}
+	    equalpos++;
+	}
+
+	if (equalpos == strlen(plan->attr_data)){
+	    bu_vls_strcpy(&attribname, plan->attr_data);
+	} else {
+	    checkval = 1;
+	    bu_vls_strncpy(&attribname, plan->attr_data, equalpos);
+	    bu_vls_strncpy(&value, &(plan->attr_data[equalpos+1]), strlen(plan->attr_data) - equalpos - 1);
+	}
+	
+	/* Get attributes for object and check all of
+	 * them to see if there is a match to the requested
+	 * attribute.  If a value is supplied, check the
+	 * value of any matches to the attribute name before
+	 * returning success.
+	 */
+	
+	bu_avs_init_empty(&avs);
+	db5_get_attributes( dbip, &avs, DB_FULL_PATH_CUR_DIR(entry));
+        avpp = avs.avp;
+	for (i = 0; i < avs.count; i++, avpp++) {
+	    if (!fnmatch(avpp->name, bu_vls_addr(&attribname), 0)) {
+		if ( checkval == 1 ) {
+		    if (!fnmatch(avpp->value, bu_vls_addr(&value), 0)) {
+			bu_avs_free( &avs);
+			bu_vls_free( &attribname);
+			bu_vls_free( &value);
+			return (1);
+		    }
+		} else {
+		    bu_avs_free( &avs);
+		    bu_vls_free( &attribname);
+		    bu_vls_free( &value);
+		    return (1);
+		}
+	    }
+	 }
+	bu_avs_free( &avs);
+	bu_vls_free( &attribname);
+	bu_vls_free( &value);
+	return (0);
+}
+
+int
+c_attr(char *pattern, char ***ignored, int unused, PLAN **resultplan)
+{
+            PLAN *new;
+
+            new = palloc(N_ATTR, f_attr);
+            new->attr_data = pattern;
+            (*resultplan) = new;
+            return BRLCAD_OK; 
+}
+
 
 /*
  * -print functions --
@@ -212,7 +296,7 @@ c_name(char *pattern, char ***ignored, int unused, PLAN **resultplan)
  *      standard output.
  */
 int
-f_print(PLAN *plan, struct db_full_path *entry)
+f_print(PLAN *plan, struct db_full_path *entry, struct db_i *dbip)
 {
         bu_log("%s\n", db_path_to_string(entry));
 		isoutput = 0;
@@ -221,7 +305,7 @@ f_print(PLAN *plan, struct db_full_path *entry)
 
 /* ARGSUSED */
 int
-f_print0(PLAN *plan, struct db_full_path *entry)
+f_print0(PLAN *plan, struct db_full_path *entry, struct db_i *dbip)
 {
         (void)fputs(db_path_to_string(entry), stdout);
         (void)fputc('\0', stdout);
@@ -344,7 +428,7 @@ yankexpr(PLAN **planp, PLAN **resultplan)          /* pointer to top of plan (mo
         PLAN *node;             /* pointer to returned node or expression */
         PLAN *tail;             /* pointer to tail of subplan */
         PLAN *subplan;          /* pointer to head of ( ) expression */
-        extern int f_expr(PLAN *, struct db_full_path *);
+        extern int f_expr(PLAN *, struct db_full_path *, struct db_i *);
         int error_return = BRLCAD_OK;       
 	
         /* first pull the top node from the plan */
@@ -652,7 +736,7 @@ void
 find_execute_plans(struct db_i *dbip, struct db_full_path *dfp, genptr_t inputplan) {
 	PLAN *p;
 	PLAN *plan = (PLAN *)inputplan;
-	for (p = plan; p && (p->eval)(p, dfp); p = p->next) 
+	for (p = plan; p && (p->eval)(p, dfp, dbip); p = p->next) 
 		    ;
 
 }
