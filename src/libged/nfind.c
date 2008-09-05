@@ -345,7 +345,8 @@ yankexpr(PLAN **planp, PLAN **resultplan)          /* pointer to top of plan (mo
         PLAN *tail;             /* pointer to tail of subplan */
         PLAN *subplan;          /* pointer to head of ( ) expression */
         extern int f_expr(PLAN *, struct db_full_path *);
-    
+        int error_return = BRLCAD_OK;       
+	
         /* first pull the top node from the plan */
         if ((node = yanknode(planp)) == NULL) {
 	    	(*resultplan) = NULL;
@@ -359,7 +360,7 @@ yankexpr(PLAN **planp, PLAN **resultplan)          /* pointer to top of plan (mo
          */
         if (node->type == N_OPENPAREN) 
                 for (tail = subplan = NULL;;) {
-		    	yankexpr(planp, &next);
+		    	if ((error_return = yankexpr(planp, &next)) != BRLCAD_OK) return BRLCAD_ERROR;
                         if (next == NULL) {
                                 bu_log("(: missing closing ')'\n");
 				return BRLCAD_ERROR;
@@ -372,8 +373,10 @@ yankexpr(PLAN **planp, PLAN **resultplan)          /* pointer to top of plan (mo
                          * subplan.
                          */
                         if (next->type == N_CLOSEPAREN) {
-                                if (subplan == NULL)
-                                        bu_exit(1, "(): empty inner expression");
+                                if (subplan == NULL) {
+                                        bu_log("(): empty inner expression");
+					return BRLCAD_ERROR;
+				}
                                 node->p_data[0] = subplan;
                                 node->type = N_EXPR;
                                 node->eval = f_expr;
@@ -389,7 +392,11 @@ yankexpr(PLAN **planp, PLAN **resultplan)          /* pointer to top of plan (mo
                         }
                 }
 	(*resultplan) = node;
-	return BRLCAD_OK;
+	if (!(error_return == BRLCAD_OK)) {
+	    return BRLCAD_ERROR;
+	} else {
+	    return BRLCAD_OK;
+	}
 }
 
 
@@ -634,9 +641,9 @@ find_formplan(char **argv, PLAN **resultplan)
          * operators are handled in order of precedence.
          */
 
-        paren_squish(plan, &plan);              /* ()'s */
-        /*plan = not_squish(plan);*/                /* !'s */
-        /*plan = or_squish(plan);*/                 /* -o's */
+        if(paren_squish(plan, &plan) != BRLCAD_OK) return BRLCAD_ERROR;              /* ()'s */
+        if(not_squish(plan, &plan) != BRLCAD_OK) return BRLCAD_ERROR;                /* !'s */
+        if(or_squish(plan, &plan) != BRLCAD_OK) return BRLCAD_ERROR;                 /* -o's */
 	(*resultplan) = plan;
         return BRLCAD_OK;
 }
@@ -680,7 +687,7 @@ wdb_find_cmd2(struct rt_wdb      *wdbp,
     
     db_full_path_init(&dfp);
     db_update_nref(wdbp->dbip, &rt_uniresource);
-	if (!(argv[1][0] == '-') && (strcmp(argv[1],"/") != 0)) {
+	if ( !( (argv[1][0] == '-') || (argv[1][0] == '!')  || (argv[1][0] == '(') )&& (strcmp(argv[1],"/") != 0)) {
     	        db_string_to_path(&dfp, wdbp->dbip, argv[1]);	
 	        isoutput = 0;
 		if (find_formplan(&argv[2], &dbplan) != BRLCAD_OK) {
@@ -695,7 +702,7 @@ wdb_find_cmd2(struct rt_wdb      *wdbp,
                               if (dp->d_nref == 0 && !(dp->d_flags & DIR_HIDDEN) && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
 				  db_string_to_path(&dfp, wdbp->dbip, dp->d_namep);
 				  isoutput = 0;
-				  if (argv[1][0] == '-') {
+				  if ( (argv[1][0] == '-') || (argv[1][0] == '!')  || (argv[1][0] == '(') ) {
 				      	if (find_formplan(&argv[1], &dbplan) != BRLCAD_OK) {
 		    				Tcl_AppendResult(interp, "Failed to build find plan.\n", (char *)NULL);
 		    				return TCL_ERROR;
