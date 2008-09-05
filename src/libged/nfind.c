@@ -61,7 +61,7 @@
 #include "cmd.h"
 #include "ged_private.h"
 
-#include "find.h"
+#include "nfind.h"
 
 int typecompare(const void *, const void *);
 
