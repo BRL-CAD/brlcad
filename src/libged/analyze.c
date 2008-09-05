@@ -261,7 +261,7 @@ static const int farb4[6][4] = {
  * angles = pointer to 5 fastf_t's to store angles
  * unitv = pointer to the unit vector (previously computed)
  */
-void
+static void
 findang(register fastf_t *angles, register fastf_t *unitv)
 {
     fastf_t f;
