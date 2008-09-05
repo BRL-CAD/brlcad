@@ -92,6 +92,7 @@ MGED_EXTERN(int cmd_mmenu_get, (ClientData clientData, Tcl_Interp *interp, int a
 MGED_EXTERN(int cmd_mrot, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_mvall, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_name, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+MGED_EXTERN(int cmd_nfind, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_nmg_collapse, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_nmg_simplify, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_nop, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));

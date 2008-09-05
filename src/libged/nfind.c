@@ -671,7 +671,7 @@ find_execute(PLAN *plan,        /* search plan */
 int isoutput;
    
 int
-wdb_find_cmd2(struct rt_wdb      *wdbp,
+wdb_nfind_cmd(struct rt_wdb      *wdbp,
              Tcl_Interp         *interp,
              int                argc,
              char               *argv[])
@@ -685,8 +685,13 @@ wdb_find_cmd2(struct rt_wdb      *wdbp,
     PLAN *dbplan;
     struct db_full_path dfp;
     
-    db_full_path_init(&dfp);
-    db_update_nref(wdbp->dbip, &rt_uniresource);
+    if (argc < 3) {
+	Tcl_AppendResult(interp, "nfind [path] [expressions...]\n", (char *)NULL);
+    } else {
+        db_full_path_init(&dfp);
+        db_update_nref(wdbp->dbip, &rt_uniresource);
+
+   
 	if ( !( (argv[1][0] == '-') || (argv[1][0] == '!')  || (argv[1][0] == '(') )&& (strcmp(argv[1],"/") != 0)) {
     	        db_string_to_path(&dfp, wdbp->dbip, argv[1]);	
 	        isoutput = 0;
@@ -721,7 +726,8 @@ wdb_find_cmd2(struct rt_wdb      *wdbp,
 		      }
 		}
 	}
-    db_free_full_path(&dfp);
+       db_free_full_path(&dfp);
+    }
     return TCL_OK;
 }
 

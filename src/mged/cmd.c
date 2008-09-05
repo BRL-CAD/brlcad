@@ -2585,6 +2585,24 @@ cmd_find(ClientData	clientData,
     return wdb_find_cmd(wdbp, interp, argc, argv);
 }
 
+/**
+ *  			C M D _ N F I N D
+ *
+ *  Unix style find command for db objects.
+ */
+int
+cmd_nfind(ClientData	clientData,
+	 Tcl_Interp	*interp,
+	 int		argc,
+	 char		**argv)
+{
+    CHECK_DBI_NULL;
+
+    return wdb_nfind_cmd(wdbp, interp, argc, argv);
+}
+
+
+
 /** Grouping command
  * Format: g groupname object1 object2 .... objectn
  */

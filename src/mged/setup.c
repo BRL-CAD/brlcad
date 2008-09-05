@@ -218,6 +218,7 @@ static struct cmdtab cmdtab[] = {
     {"mv", cmd_name},
     {"mvall", cmd_mvall},
     {"nirt", f_nirt},
+    {"nfind", cmd_nfind},
     {"nmg_collapse", cmd_nmg_collapse},
     {"nmg_simplify", cmd_nmg_simplify},
     {"o_rotate",		be_o_rotate},
