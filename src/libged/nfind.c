@@ -76,6 +76,7 @@ static OPTION options[] = {
 	{ "-o",         N_OR,           c_or,           O_ZERO },
 	{ "-print",     N_PRINT,        c_print,        O_ZERO },
 	{ "-print0",    N_PRINT0,       c_print0,       O_ZERO },
+	{ "-stdattr",	N_STDATTR,	c_stdattr,	O_ARGV },
 };
 
 static PLAN *
@@ -368,6 +369,69 @@ c_nattr(char *pattern, char ***ignored, int unused, PLAN **resultplan)
 
             new = palloc(N_ATTR, f_nattr);
             new->nattr_data = pattern;
+            (*resultplan) = new;
+            return BRLCAD_OK; 
+}
+
+/*
+ * -stdattr function --
+ *
+ *    Report based on the presence or absence of the
+ *    "standard" attributes - supply a "1" argument and
+ *    objects with ONLY "standard" attribute flags
+ *    and NO non-standard flags are
+ *    reported - supply a "0" and only objects with
+ *    one or more non-standard flags are reported.
+ */
+int
+f_stdattr(PLAN *plan, struct db_full_path *entry, struct db_i *dbip)
+{
+	struct bu_attribute_value_set avs;
+	struct bu_attribute_value_pair *avpp;
+	int i;
+	int found_nonstd_attr = 0;
+        int found_attr = 0;	
+
+	/* Get attributes for object and check all of
+	 * them to see if there is not a match to the 
+	 * standard attributes.  If any is found return
+	 * failure, otherwise success.
+	 */
+	
+	bu_avs_init_empty(&avs);
+	db5_get_attributes( dbip, &avs, DB_FULL_PATH_CUR_DIR(entry));
+        avpp = avs.avp;
+	for (i = 0; i < avs.count; i++, avpp++) {
+	  found_attr = 1;
+	  if  (strcmp(avpp->name, "region") != 0 && 
+	       strcmp(avpp->name, "region_id") != 0 && 
+	       strcmp(avpp->name, "material_id") != 0 && 
+	       strcmp(avpp->name, "los") != 0 &&
+	       strcmp(avpp->name, "aircode") != 0 &&
+	       strcmp(avpp->name, "oshader") != 0 &&
+	       strcmp(avpp->name, "rgb") != 0){
+	     
+	      found_nonstd_attr = 1;	       
+	  }
+        }
+
+      	bu_avs_free( &avs);
+        
+	if (plan->stdflag && found_nonstd_attr)  return 0;
+	if (plan->stdflag && !found_nonstd_attr && found_attr)  return 1;
+	if (!(plan->stdflag) && found_nonstd_attr)  return 1;
+	if (!(plan->stdflag) && !found_nonstd_attr)  return 0;
+
+	return 0;
+}
+
+int
+c_stdattr(char *pattern, char ***ignored, int unused, PLAN **resultplan)
+{
+            PLAN *new;
+
+            new = palloc(N_STDATTR, f_stdattr);
+	    new->stdflag = atoi(pattern);
             (*resultplan) = new;
             return BRLCAD_OK; 
 }
