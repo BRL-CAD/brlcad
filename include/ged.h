@@ -76,10 +76,7 @@ __BEGIN_DECLS
 
 /*XXX This macro is temporary */
 #define GED_INIT(_gedp, _wdbp) { \
-    bu_vls_init(&(_gedp)->ged_log); \
-    bu_vls_init(&(_gedp)->ged_result_str); \
-    bu_vls_extend(&(_gedp)->ged_log, 1);   \
-    bu_vls_extend(&(_gedp)->ged_result_str, 1);	\
+    ged_init((_gedp)); \
     (_gedp)->ged_wdbp = (_wdbp); \
 }
 
