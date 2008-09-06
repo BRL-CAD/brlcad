@@ -72,6 +72,7 @@ static OPTION options[] = {
         { ")",          N_CLOSEPAREN,   c_closeparen,   O_ZERO },
 	{ "-attr",	N_ATTR,		c_attr,		O_ARGV },
         { "-name",      N_NAME,         c_name,         O_ARGV },
+	{ "-nattr",	N_NATTR,	c_nattr,	O_ARGV },
 	{ "-o",         N_OR,           c_or,           O_ZERO },
 	{ "-print",     N_PRINT,        c_print,        O_ZERO },
 	{ "-print0",    N_PRINT0,       c_print0,       O_ZERO },
@@ -287,6 +288,91 @@ c_attr(char *pattern, char ***ignored, int unused, PLAN **resultplan)
             (*resultplan) = new;
             return BRLCAD_OK; 
 }
+
+/*
+ * -nattr functions --
+ *
+ *      True if the database object being examined does not have
+ *      the attribute supplied to the nattr option
+ */
+int
+f_nattr(PLAN *plan, struct db_full_path *entry, struct db_i *dbip)
+{
+	struct bu_vls attribname;
+	struct bu_vls value;
+	struct bu_attribute_value_set avs;
+	struct bu_attribute_value_pair *avpp;
+	int equalpos = 0;
+	int checkval = 0;
+	int i;
+	bu_vls_init(&attribname);
+	bu_vls_init(&value);
+	
+	    
+	/* Check for unescaped equal sign - if present, the
+	 * attribute may be present but must not have the
+ 	 * value indicated.  Escaping is done with the "/" 
+	 * character.
+	 */
+
+	while ((equalpos < strlen(plan->nattr_data)) && (plan->nattr_data[equalpos] != '=')) {
+	    if ((plan->nattr_data[equalpos] == '/') && (plan->nattr_data[equalpos + 1] == '=')) {equalpos++;}
+	    equalpos++;
+	}
+
+	if (equalpos == strlen(plan->nattr_data)){
+	    bu_vls_strcpy(&attribname, plan->nattr_data);
+	} else {
+	    checkval = 1;
+	    bu_vls_strncpy(&attribname, plan->nattr_data, equalpos);
+	    bu_vls_strncpy(&value, &(plan->nattr_data[equalpos+1]), strlen(plan->nattr_data) - equalpos - 1);
+	}
+	
+	/* Get attributes for object and check all of
+	 * them to see if there is not a match to the requested
+	 * attribute.  If a value is supplied, check the
+	 * value of any matches to the attribute name before
+	 * returning failure.
+	 */
+	
+	bu_avs_init_empty(&avs);
+	db5_get_attributes( dbip, &avs, DB_FULL_PATH_CUR_DIR(entry));
+        avpp = avs.avp;
+	for (i = 0; i < avs.count; i++, avpp++) {
+	    if (!fnmatch(bu_vls_addr(&attribname), avpp->name, 0)) {
+		if ( checkval == 1 ) {
+		    if (!fnmatch(bu_vls_addr(&value), avpp->value, 0)) {
+			bu_avs_free( &avs);
+			bu_vls_free( &attribname);
+			bu_vls_free( &value);
+			return (0);
+		    }
+		} else {
+		    bu_avs_free( &avs);
+		    bu_vls_free( &attribname);
+		    bu_vls_free( &value);
+		    return (0);
+		}
+	    }
+	 }
+	bu_avs_free( &avs);
+	bu_vls_free( &attribname);
+	bu_vls_free( &value);
+	return (1);
+}
+
+int
+c_nattr(char *pattern, char ***ignored, int unused, PLAN **resultplan)
+{
+            PLAN *new;
+
+            new = palloc(N_ATTR, f_nattr);
+            new->nattr_data = pattern;
+            (*resultplan) = new;
+            return BRLCAD_OK; 
+}
+
+
 
 
 /*
