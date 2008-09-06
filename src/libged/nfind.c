@@ -255,9 +255,9 @@ f_attr(PLAN *plan, struct db_full_path *entry, struct db_i *dbip)
 	db5_get_attributes( dbip, &avs, DB_FULL_PATH_CUR_DIR(entry));
         avpp = avs.avp;
 	for (i = 0; i < avs.count; i++, avpp++) {
-	    if (!fnmatch(avpp->name, bu_vls_addr(&attribname), 0)) {
+	    if (!fnmatch(bu_vls_addr(&attribname), avpp->name, 0)) {
 		if ( checkval == 1 ) {
-		    if (!fnmatch(avpp->value, bu_vls_addr(&value), 0)) {
+		    if (!fnmatch(bu_vls_addr(&value), avpp->value, 0)) {
 			bu_avs_free( &avs);
 			bu_vls_free( &attribname);
 			bu_vls_free( &value);
