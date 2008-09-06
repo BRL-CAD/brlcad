@@ -26,6 +26,7 @@
 
 set extern_commands "M _mged_M"
 foreach cmd $extern_commands {
+    catch {auto_load $cmd} val
     if {[expr [string compare [info command $cmd] $cmd] != 0]} {
 	puts stderr "[info script]: Application fails to provide command '$cmd'"
 	return

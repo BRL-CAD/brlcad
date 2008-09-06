@@ -23,8 +23,9 @@
 # some given region ID number.
 #
 
-set extern_commands [list get get_regions attr]
+set extern_commands [list db get_regions attr]
 foreach cmd $extern_commands {
+    catch {auto_load $cmd} val
     if {[expr [string compare [info command $cmd] $cmd] != 0]} {
 	puts stderr "[info script]: Application fails to provide command '$cmd'"
 	return
@@ -41,7 +42,7 @@ proc  reid { args } {
     set name [lindex $args 0]
     set regionid [lindex $args 1]
 
-    set objData [get $name]
+    set objData [db get $name]
     if { [lindex $objData 0] != "comb" } {
 	return
     }
