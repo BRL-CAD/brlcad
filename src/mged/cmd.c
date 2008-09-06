@@ -3052,6 +3052,17 @@ cmd_has_embedded_fb(ClientData	clientData,
     return TCL_OK;
 }
 
+int
+cmd_stub(ClientData	clientData,
+	Tcl_Interp	*interp,
+	int		argc,
+	char		**argv)
+{
+    CHECK_DBI_NULL;
+
+    return wdb_stub_cmd(wdbp, interp, argc, argv);
+}
+
 /*
  * Local Variables:
  * mode: C

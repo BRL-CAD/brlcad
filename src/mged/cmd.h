@@ -125,6 +125,7 @@ MGED_EXTERN(int cmd_showmats, (ClientData clientData, Tcl_Interp *interp, int ar
 MGED_EXTERN(int cmd_size, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_solid_report, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_solids_on_ray, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+MGED_EXTERN(int cmd_stub, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_stuff_str, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_summary, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_title, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));

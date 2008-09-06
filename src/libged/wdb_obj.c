@@ -264,6 +264,7 @@ static int wdb_rotate_arb_face_tcl(ClientData clientData, Tcl_Interp *interp, in
 static int wdb_rmap_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
 static int wdb_importFg4Section_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
 static int wdb_newcmds_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
+static int wdb_stub_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
 
 void wdb_deleteProc(ClientData clientData);
 static void wdb_deleteProc_rt(ClientData clientData);
@@ -325,6 +326,7 @@ static struct bu_cmdtab wdb_cmds[] = {
     {"concat",	wdb_concat_tcl},
     {"copyeval",	wdb_copyeval_tcl},
     {"cp",		wdb_copy_tcl},
+    {"db",	wdb_stub_tcl},
     {"dbip",	wdb_dbip_tcl},
     {"dump",	wdb_dump_tcl},
     {"dup",		wdb_dup_tcl},
@@ -1921,6 +1923,45 @@ wdb_dump_tcl(ClientData	clientData,
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
     return wdb_dump_cmd(wdbp, interp, argc-1, argv+1);
+}
+
+/**
+ *
+ */
+int
+wdb_stub_cmd(struct rt_wdb	*wdbp,
+	     Tcl_Interp		*interp,
+	     int		argc,
+	     char		*argv[])
+{
+    if (argc != 1) {
+	struct bu_vls vls;
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib_alias wdb_%s %s", argv[0], argv[0]);
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    Tcl_AppendResult(interp, "%s: no database is currently opened!", argv[0], (char *)NULL);
+    return TCL_ERROR;
+}
+
+/**
+ * Stub command callback for commands that only exist after a database
+ * is opened (e.g., db).
+ *
+ * @returns false
+ */
+static int
+wdb_stub_tcl(ClientData	clientData,
+	     Tcl_Interp	*interp,
+	     int	argc,
+	     char	*argv[])
+{
+    struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+
+    return wdb_stub_cmd(wdbp, interp, argc-1, argv+1);
 }
 
 /**
