@@ -880,10 +880,10 @@ struct rt_comb_internal  {
     char		region_flag;	/**< @brief !0 ==> this COMB is a REGION */
     char		is_fastgen;	/**< @brief REGION_NON_FASTGEN/_PLATE/_VOLUME */
     /* Begin GIFT compatability */
-    int			region_id;
-    int			aircode;
-    int			GIFTmater;
-    int			los;
+    long		region_id;
+    long		aircode;
+    long		GIFTmater;
+    long		los;
     /* End GIFT compatability */
     char		rgb_valid;	/**< @brief !0 ==> rgb[] has valid color */
     unsigned char	rgb[3];
