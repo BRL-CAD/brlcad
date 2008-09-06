@@ -163,4 +163,4 @@ int	c_closeparen(char *, char ***, int, PLAN **);
 int	c_not(char *, char ***, int, PLAN **);
 int	c_or(char *, char ***, int, PLAN **);
 
-extern int isdepth, isoutput;
+extern int isdepth, isoutput, printed_attr_header;

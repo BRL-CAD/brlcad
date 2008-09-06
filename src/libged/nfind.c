@@ -379,9 +379,14 @@ c_nattr(char *pattern, char ***ignored, int unused, PLAN **resultplan)
  *    Report based on the presence or absence of the
  *    "standard" attributes - supply a "1" argument and
  *    objects with ONLY "standard" attribute flags
- *    and NO non-standard flags are
- *    reported - supply a "0" and only objects with
+ *    and NO non-standard flags are reported.
+ *    Supply a "0" and only objects with
  *    one or more non-standard flags are reported.
+ *    stdattr also accepts a "-1" value which enables a
+ *    special purpose table reporting of all non standard
+ *    attributes and disables normal find behavior - e.g.
+ *    a stdattr -1 option will cause find to not match any
+ *    other options.
  */
 int
 f_stdattr(PLAN *plan, struct db_full_path *entry, struct db_i *dbip)
@@ -403,25 +408,32 @@ f_stdattr(PLAN *plan, struct db_full_path *entry, struct db_i *dbip)
         avpp = avs.avp;
 	for (i = 0; i < avs.count; i++, avpp++) {
 	  found_attr = 1;
-	  if  (strcmp(avpp->name, "region") != 0 && 
-	       strcmp(avpp->name, "region_id") != 0 && 
-	       strcmp(avpp->name, "material_id") != 0 && 
-	       strcmp(avpp->name, "los") != 0 &&
+	   if (strcmp(avpp->name, "GIFTmater") != 0 &&
 	       strcmp(avpp->name, "aircode") != 0 &&
+	       strcmp(avpp->name, "inherit") != 0 &&
+	       strcmp(avpp->name, "los") != 0 &&
+	       strcmp(avpp->name, "material_id") != 0 && 
 	       strcmp(avpp->name, "oshader") != 0 &&
+	       strcmp(avpp->name, "region") != 0 && 
+	       strcmp(avpp->name, "region_id") != 0 && 
 	       strcmp(avpp->name, "rgb") != 0){
 	     
-	      found_nonstd_attr = 1;	       
+	      found_nonstd_attr = 1;
+	      if ((plan->stdflag == -1) && !(printed_attr_header) ) {
+	      	 bu_log("Object\t\tAttribute\t\tValue\n");
+		 printed_attr_header = 1;
+	      }
+	      if (plan->stdflag == -1) bu_log("%s\t\t%s\t\t%s\n",DB_FULL_PATH_CUR_DIR(entry)->d_namep, avpp->name, avpp->value);
 	  }
         }
 
       	bu_avs_free( &avs);
         
-	if (plan->stdflag && found_nonstd_attr)  return 0;
-	if (plan->stdflag && !found_nonstd_attr && found_attr)  return 1;
-	if (!(plan->stdflag) && found_nonstd_attr)  return 1;
-	if (!(plan->stdflag) && !found_nonstd_attr)  return 0;
-
+	if ((plan->stdflag == 1) && found_nonstd_attr)  return 0;
+	if ((plan->stdflag == 1) && !found_nonstd_attr && found_attr)  return 1;
+	if ((plan->stdflag == 0) && !found_nonstd_attr) return 0;
+	if ((plan->stdflag == 0) && found_nonstd_attr)  return 1;
+	if (plan->stdflag == -1)  return 0;
 	return 0;
 }
 
@@ -903,7 +915,8 @@ find_execute(PLAN *plan,        /* search plan */
 
 
 int isoutput;
-   
+int printed_attr_header;
+
 int
 wdb_nfind_cmd(struct rt_wdb      *wdbp,
              Tcl_Interp         *interp,
@@ -918,7 +931,8 @@ wdb_nfind_cmd(struct rt_wdb      *wdbp,
     int aflag = 0;              /* look at all objects */
     PLAN *dbplan;
     struct db_full_path dfp;
-    
+
+    printed_attr_header = 0;
     if (argc < 3) {
 	Tcl_AppendResult(interp, "nfind [path] [expressions...]\n", (char *)NULL);
     } else {
