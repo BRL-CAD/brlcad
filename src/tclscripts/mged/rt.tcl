@@ -578,7 +578,8 @@ proc do_fbclear { id } {
 	set blue 0
     }
 
-    set result [catch { exec fbclear -F $rt_control($id,cooked_dest)\
+    set fbclear [bu_brlcad_root "bin/fbclear"]
+    set result [catch { exec $fbclear -F $rt_control($id,cooked_dest)\
 			    $red $green $blue & } rt_error]
 
     if {$result != 0} {

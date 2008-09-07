@@ -109,7 +109,8 @@ proc shoot_a_ray {} {
     clearf
     printf "Shooting a ray at $time...\n"
 
-    exec nirt ~pjt/mged/scene.g scene
+    set nirt [bu_brlcad_root "bin/nirt"]
+    exec $nirt ~pjt/mged/scene.g scene
 
 }
 

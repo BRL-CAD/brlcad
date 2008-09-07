@@ -475,7 +475,8 @@ body GeometryBrowser::destructor {} {
     # destroy the framebuffer, if we opened it
     if { $_weStartedFbserv } {
 	puts "cleaning up fbserv"
-	if { [ catch { exec fbfree -F $_fbservPort } error ] } {
+	set fbfree [bu_brlcad_root "bin/fbfree"]
+	if { [ catch { exec $fbfree -F $_fbservPort } error ] } {
 	    puts $error
 	    puts "Unable to properly clean up after our fbserv"
 	}
@@ -964,6 +965,10 @@ body GeometryBrowser::renderPreview { { rtoptions "-P4 -R -B" } } {
     set device /dev/X
     set rgb "255 255 255"
     set rtrun ""
+    set fbserv [bu_brlcad_root "bin/fbserv"]
+    set fbfree [bu_brlcad_root "bin/fbfree"]
+    set fbclear [bu_brlcad_root "bin/fbclear"]
+    set fbline [bu_brlcad_root "bin/fbline"]
 
     # see if we can try to use the mged graphics window instead of firing up our own framebuffer
     set useMgedWindow 0
@@ -986,7 +991,7 @@ body GeometryBrowser::renderPreview { { rtoptions "-P4 -R -B" } } {
 	# if we previously started up a framebuffer, shut it down
 	if { $_weStartedFbserv } {
 	    puts "cleaning up fbserv"
-	    if { [ catch { exec fbfree -F $_fbservPort } error ] } {
+	    if { [ catch { exec $fbfree -F $_fbservPort } error ] } {
 		puts $error
 		puts "Unable to properly clean up after our fbserv"
 	    }
@@ -1019,22 +1024,22 @@ body GeometryBrowser::renderPreview { { rtoptions "-P4 -R -B" } } {
 	# try to fire up our own framebuffer.
 
 	# see if there is an fbserv running
-	if { [ catch { exec fbclear -c -F $_fbservPort -s$size $rgb } error ] } {
+	if { [ catch { exec $fbclear -c -F $_fbservPort -s$size $rgb } error ] } {
 
 	    if { $_debug } {
 		puts "$error"
 	    }
 
 	    # failed, so try to start one
-	    puts "exec fbserv -S $size -p $_fbservPort -F $device > /dev/null &"
-	    exec fbserv -S $size -p $_fbservPort -F $device > /dev/null &
+	    puts "exec $fbserv -S $size -p $_fbservPort -F $device > /dev/null &"
+	    exec $fbserv -S $size -p $_fbservPort -F $device > /dev/null &
 	    exec sleep 1
 
 	    # keep track of the fact that we started this fbserv, so we have to clean up
 	    set _weStartedFbserv 1
 
 	    # try again
-	    if { [ catch { exec fbclear -c -F $_fbservPort $rgb } error ] } {
+	    if { [ catch { exec $fbclear -c -F $_fbservPort $rgb } error ] } {
 
 		if { $_debug } {
 		    puts "$error"
@@ -1044,12 +1049,12 @@ body GeometryBrowser::renderPreview { { rtoptions "-P4 -R -B" } } {
 		incr _fbservPort
 
 		# still failing, try to start one again
-		puts "exec fbserv -S $size -p $_fbservPort -F $device > /dev/null &"
-		exec fbserv -S $size -p $_fbservPort -F $device > /dev/null &
+		puts "exec $fbserv -S $size -p $_fbservPort -F $device > /dev/null &"
+		exec $fbserv -S $size -p $_fbservPort -F $device > /dev/null &
 		exec sleep 1
 
 		# try again
-		if { [ catch { exec fbclear -c -F $_fbservPort $rgb } error ] } {
+		if { [ catch { exec $fbclear -c -F $_fbservPort $rgb } error ] } {
 
 		    if { $_debug } {
 			puts "$error"
@@ -1058,12 +1063,12 @@ body GeometryBrowser::renderPreview { { rtoptions "-P4 -R -B" } } {
 		    incr _fbservPort
 
 		    # still failing, try to start one again
-		    puts "exec fbserv -S $size -p $_fbservPort -F $device > /dev/null &"
-		    exec fbserv -S $size $_fbservPort $device > /dev/null &
+		    puts "exec $fbserv -S $size -p $_fbservPort -F $device > /dev/null &"
+		    exec $fbserv -S $size $_fbservPort $device > /dev/null &
 		    exec sleep 1
 
 		    # last try
-		    if { [ catch { exec fbclear -c -F $_fbservPort $rgb } error ] } {
+		    if { [ catch { exec $fbclear -c -F $_fbservPort $rgb } error ] } {
 			# strike three, give up!
 			puts $error
 			puts "Unable to attach to a framebuffer"
@@ -1083,9 +1088,9 @@ body GeometryBrowser::renderPreview { { rtoptions "-P4 -R -B" } } {
 	# write out some status lines for status-rendering cheesily via exec.
 	# these hang for some reason if sent to the mged graphics window through
 	# mged (though they work fine via command-line).
-	exec fbline -F $_fbservPort -r 255 -g 0 -b 0 [expr $size - 1] 0 [expr $size - 1] [expr $size - 1]
-	exec fbline -F $_fbservPort -r 0 -g 255 -b 0 [expr $size - 2] 0 [expr $size - 2] [expr $size - 1]
-	exec fbline -F $_fbservPort -r 0 -g 0 -b 255 [expr $size - 3] 0 [expr $size - 3] [expr $size - 1]
+	exec $fbline -F $_fbservPort -r 255 -g 0 -b 0 [expr $size - 1] 0 [expr $size - 1] [expr $size - 1]
+	exec $fbline -F $_fbservPort -r 0 -g 255 -b 0 [expr $size - 2] 0 [expr $size - 2] [expr $size - 1]
+	exec $fbline -F $_fbservPort -r 0 -g 0 -b 255 [expr $size - 3] 0 [expr $size - 3] [expr $size - 1]
 
 	# if we got here, then we were able to attach to a running framebuffer..
 	scan $rgb {%d %d %d} r g b
@@ -1115,8 +1120,9 @@ body GeometryBrowser::raytracePanel {} {
 # simply fires off rtwizard
 #
 body GeometryBrowser::raytraceWizard {} {
-    puts "exec rtwizard &"
-    return [ exec rtwizard & ]
+    set rtwizard [bu_brlcad_root "bin/rtwizard"]
+    puts "exec $rtwizard &"
+    return [ exec $rtwizard & ]
 }
 
 

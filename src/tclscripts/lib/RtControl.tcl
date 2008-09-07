@@ -854,10 +854,11 @@ option add *RtControl*tearoff 0 widgetDefault
     set cooked_dest [get_cooked_dest]
     set color [get_color]
 
+    set fbclear [bu_brlcad_root "bin/fbclear"]
     if {$color == ""} {
-	set result [catch {exec fbclear -F $cooked_dest 0 0 0 &} rt_error]
+	set result [catch {exec $fbclear -F $cooked_dest 0 0 0 &} rt_error]
     } else {
-	set result [catch {eval exec fbclear -F $cooked_dest $color &} rt_error]
+	set result [catch {eval exec $fbclear -F $cooked_dest $color &} rt_error]
     }
 
     if {$result} {
