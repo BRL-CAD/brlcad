@@ -349,6 +349,8 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
 
     if ((pid1 = fork()) == 0) {
+	const char *cad_boundp = bu_brlcad_root("bin/cad_boundp", 1);
+
 	dup2(fd1[0], fileno(stdin));
 	dup2(fd2[1], fileno(stdout));
 
@@ -359,10 +361,12 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	close(fd3[0]);
 	close(fd3[1]);
 
-	execlp("cad_boundp", "cad_boundp", "-t", tol_ptr, (char *)NULL);
+	execlp(cad_boundp, cad_boundp, "-t", tol_ptr, (char *)NULL);
     }
 
     if ((pid2 = fork()) == 0) {
+	const char *cad_parea = bu_brlcad_root("bin/cad_parea", 1);
+
 	dup2(fd2[0], fileno(stdin));
 	dup2(fd3[1], fileno(stdout));
 
@@ -373,7 +377,7 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	close(fd3[0]);
 	close(fd3[1]);
 
-	execlp("cad_parea", "cad_parea", (char *)NULL);
+	execlp(cad_parea, cad_parea, (char *)NULL);
     }
 
     close(fd1[0]);
