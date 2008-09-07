@@ -71,7 +71,7 @@ set helplib_data(wdb_attr)        {{ {set|get|show|rm|append} object [args]}
 set helplib_data(wdb_bot_face_sort)     {{triangles_per_piece bot_solid1 [bot_solid2 bot_solid3 ...]} {sort the facelist of BOT solids to optimize ray trace performance for a particular number of triangles per raytrace piece }}
 set helplib_data(wdb_bot_decimate)      {{ -c maximum_chord_error -n maximum_normal_error -e minimum_edge_length new_bot_name current_bot_name} {Uses edge decimation to reduce the number of triangles in the specified BOT while keeping within the specified constraints}}
 set helplib_data(wdb_cat)		{{<objects>} {list attributes (brief)}}
-set helplib_data(wdb_color)		{{low high r g b} {make color entry}}
+set helplib_data(wdb_color)		{{[-e] [low high r g b]} {text edit color table or make new color entry}}
 set helplib_data(wdb_comb)		{{comb_name <operation solid>}	{create or extend combination w/booleans}}
 set helplib_data(wdb_comb_std)		{{[-cr] comb_name <boolean_expr>}	{create or extend a combination using standard notation}}
 set helplib_data(wdb_concat)		{{[-s|-p] file.g [suffix|prefix]} {import a database into the current database using an auto-incrementing or custom affix}}

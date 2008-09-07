@@ -43,7 +43,6 @@ set(LIBGED_SOURCES
     dup.c
     eac.c
     edcodes.c
-    edcolor.c
     edcomb.c
     editit.c
     edmater.c

@@ -53,6 +53,7 @@ struct gedtab {
 };
 static struct gedtab newtab[] = {
     {"edmater", ged_edmater},
+    {"color", ged_color},
     {NULL, NULL}
 };
 
@@ -134,7 +135,7 @@ static struct cmdtab cmdtab[] = {
     {"eac", f_eac},
     {"echo", cmd_echo},
     {"edcodes", f_edcodes},
-    {"edcolor", f_edcolor},
+    {"edcolor", f_edcolor}, /* XXX kill this */
     {"edcomb", f_edcomb},
     {"edgedir", f_edgedir},
     {"edmater", f_edmater},

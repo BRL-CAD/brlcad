@@ -90,9 +90,7 @@ ged_open(const char *dbtype, const char *filename)
     }
 
     BU_GETSTRUCT(gedp, ged);
-    BU_GETSTRUCT(gedp->ged_gdp, ged_drawable);
-    gedp->ged_wdbp = wdbp;
-    ged_init(gedp);
+    GED_INIT(gedp, wdbp);
 
     return gedp;
 }
@@ -106,6 +104,7 @@ ged_init(struct ged *gedp)
     bu_vls_extend(&gedp->ged_log, 1);
     bu_vls_extend(&gedp->ged_result_str, 1);
 
+    BU_GETSTRUCT(gedp->ged_gdp, ged_drawable);
     ged_drawable_init(gedp->ged_gdp);
 }
 

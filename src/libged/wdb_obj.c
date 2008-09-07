@@ -232,7 +232,6 @@ static int wdb_find_tcl(ClientData clientData, Tcl_Interp *interp, int argc, cha
 static int wdb_which_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
 static int wdb_title_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
 static int wdb_track_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static int wdb_color_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
 static int wdb_prcolor_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
 static int wdb_tol_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
 static int wdb_push_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
@@ -291,6 +290,7 @@ static int pathListNoLeaf = 0;
 
 static struct bu_cmdtab wdb_newcmds[] = {
     {"arced",		ged_arced},
+    {"color",		ged_color},
     {"comb_color",	ged_comb_color},
     {"edcomb",		ged_edcomb},
     {"edmater",		ged_edmater},
@@ -320,7 +320,6 @@ static struct bu_cmdtab wdb_cmds[] = {
     {"bot_decimate", wdb_bot_decimate_tcl},
     {"c",		wdb_comb_std_tcl},
     {"cat",		wdb_cat_tcl},
-    {"color",	wdb_color_tcl},
     {"comb",	wdb_comb_tcl},
     {"comb_color",	wdb_newcmds_tcl},
     {"concat",	wdb_concat_tcl},
@@ -5451,185 +5450,6 @@ wdb_track_tcl(ClientData clientData,
     return wdb_track_cmd(wdbp, interp, argc-1, argv+1);
 }
 
-
-/**
- *  			W D B _ C O L O R _ P U T R E C
- *@brief
- *  Used to create a database record and get it written out to a granule.
- *  In some cases, storage will need to be allocated.
- */
-static void
-wdb_color_putrec(register struct mater	*mp,
-		 Tcl_Interp		*interp,
-		 struct db_i		*dbip)
-{
-    struct directory dir;
-    union record rec;
-
-    /* we get here only if database is NOT read-only */
-
-    rec.md.md_id = ID_MATERIAL;
-    rec.md.md_low = mp->mt_low;
-    rec.md.md_hi = mp->mt_high;
-    rec.md.md_r = mp->mt_r;
-    rec.md.md_g = mp->mt_g;
-    rec.md.md_b = mp->mt_b;
-
-    /* Fake up a directory entry for db_* routines */
-    RT_DIR_SET_NAMEP( &dir, "color_putrec" );
-    dir.d_magic = RT_DIR_MAGIC;
-    dir.d_flags = 0;
-
-    if (mp->mt_daddr == MATER_NO_ADDR) {
-	/* Need to allocate new database space */
-	if (db_alloc(dbip, &dir, 1) < 0) {
-	    Tcl_AppendResult(interp,
-			     "Database alloc error, aborting",
-			     (char *)NULL);
-	    return;
-	}
-	mp->mt_daddr = dir.d_addr;
-    } else {
-	dir.d_addr = mp->mt_daddr;
-	dir.d_len = 1;
-    }
-
-    if (db_put(dbip, &dir, &rec, 0, 1) < 0) {
-	Tcl_AppendResult(interp,
-			 "Database write error, aborting",
-			 (char *)NULL);
-	return;
-    }
-}
-
-/**
- *  			W D B _ C O L O R _ Z A P R E C
- *@brief
- *  Used to release database resources occupied by a material record.
- */
-static void
-wdb_color_zaprec(register struct mater	*mp,
-		 Tcl_Interp		*interp,
-		 struct db_i		*dbip)
-{
-    struct directory dir;
-
-    /* we get here only if database is NOT read-only */
-    if (mp->mt_daddr == MATER_NO_ADDR)
-	return;
-
-    dir.d_magic = RT_DIR_MAGIC;
-    RT_DIR_SET_NAMEP( &dir, "color_zaprec" );
-    dir.d_len = 1;
-    dir.d_addr = mp->mt_daddr;
-    dir.d_flags = 0;
-
-    if (db_delete(dbip, &dir) < 0) {
-	Tcl_AppendResult(interp,
-			 "Database delete error, aborting",
-			 (char *)NULL);
-	return;
-    }
-    mp->mt_daddr = MATER_NO_ADDR;
-}
-
-/**
- *
- *
- */
-int
-wdb_color_cmd(struct rt_wdb	*wdbp,
-	      Tcl_Interp	*interp,
-	      int		argc,
-	      char 		*argv[])
-{
-    register struct mater *newp;
-    register struct mater *mp;
-    register struct mater *next_mater;
-
-    WDB_TCL_CHECK_READ_ONLY;
-
-    if (argc != 6) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib_alias wdb_color %s", argv[0]);
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
-    if (wdbp->dbip->dbi_version < 5) {
-	/* Delete all color records from the database */
-	mp = rt_material_head();
-	while (mp != MATER_NULL) {
-	    next_mater = mp->mt_forw;
-	    wdb_color_zaprec(mp, interp, wdbp->dbip);
-	    mp = next_mater;
-	}
-
-	/* construct the new color record */
-	BU_GETSTRUCT(newp, mater);
-	newp->mt_low = atoi(argv[1]);
-	newp->mt_high = atoi(argv[2]);
-	newp->mt_r = atoi(argv[3]);
-	newp->mt_g = atoi(argv[4]);
-	newp->mt_b = atoi(argv[5]);
-	newp->mt_daddr = MATER_NO_ADDR;		/* not in database yet */
-
-	/* Insert new color record in the in-memory list */
-	rt_insert_color(newp);
-
-	/* Write new color records for all colors in the list */
-	mp = rt_material_head();
-	while (mp != MATER_NULL) {
-	    next_mater = mp->mt_forw;
-	    wdb_color_putrec(mp, interp, wdbp->dbip);
-	    mp = next_mater;
-	}
-    } else {
-	struct bu_vls colors;
-
-	/* construct the new color record */
-	BU_GETSTRUCT(newp, mater);
-	newp->mt_low = atoi(argv[1]);
-	newp->mt_high = atoi(argv[2]);
-	newp->mt_r = atoi(argv[3]);
-	newp->mt_g = atoi(argv[4]);
-	newp->mt_b = atoi(argv[5]);
-	newp->mt_daddr = MATER_NO_ADDR;		/* not in database yet */
-
-	/* Insert new color record in the in-memory list */
-	rt_insert_color(newp);
-
-	/*
-	 * Gather color records from the in-memory list to build
-	 * the _GLOBAL objects regionid_colortable attribute.
-	 */
-	bu_vls_init(&colors);
-	rt_vls_color_map(&colors);
-
-	db5_update_attribute("_GLOBAL", "regionid_colortable", bu_vls_addr(&colors), wdbp->dbip);
-	bu_vls_free(&colors);
-    }
-
-    return TCL_OK;
-}
-
-/**
- * Usage:
- *        procname color low high r g b
- */
-static int
-wdb_color_tcl(ClientData	clientData,
-	      Tcl_Interp	*interp,
-	      int		argc,
-	      char		*argv[])
-{
-    struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
-
-    return wdb_color_cmd(wdbp, interp, argc-1, argv+1);
-}
 
 /**
  *

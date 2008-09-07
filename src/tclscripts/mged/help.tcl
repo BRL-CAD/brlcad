@@ -116,7 +116,6 @@ set mged_help_data(em)          {{"[-C#/#/#] value [value value...]"} {display a
 set mged_help_data(eac)		{{air_code(s)}	{display all regions with given air code}}
 set mged_help_data(echo)	{{[text]}	{echo arguments back}}
 set mged_help_data(edcodes)	{{object(s)}	{edit region ident codes}}
-set mged_help_data(edcolor)	{{}	{text edit color table}}
 set mged_help_data(edcomb)	{{combname Regionflag regionid air los [material]}	{edit combination record info}}
 set mged_help_data(edgedir)	{{[delta_x delta_y delta_z]|[rot fb]}	{define direction of ARB edge being moved}}
 set mged_help_data(edmater)	{{comb(s)}	{edit combination materials}}

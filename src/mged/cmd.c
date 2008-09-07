@@ -1981,8 +1981,8 @@ cmd_make_name(ClientData	clientData,
 	      int		argc,
 	      char		**argv)
 {
-    Tcl_DString ds;
     int ret;
+    Tcl_DString ds;
     struct ged ged;
 
     CHECK_DBI_NULL;
@@ -2487,13 +2487,27 @@ cmd_color(ClientData	clientData,
 	  char		**argv)
 {
     int ret;
+    Tcl_DString ds;
+    struct ged ged;
 
     CHECK_DBI_NULL;
 
-    ret = wdb_color_cmd(wdbp, interp, argc, argv);
-    color_soltab();
+    /*XXX Temporary */
+#if 1
+    GED_INIT(&ged, wdbp);
+#endif
 
-    return ret;
+    ret = ged_color(&ged, argc, (const char **)argv);
+
+    Tcl_DStringInit(&ds);
+    Tcl_DStringAppend(&ds, bu_vls_addr(&ged.ged_result_str), -1);
+    Tcl_DStringResult(interp, &ds);
+
+    /* Convert to Tcl codes */
+    if (ret == BRLCAD_ERROR)
+	return TCL_ERROR;
+
+    return TCL_OK;
 }
 
 /**

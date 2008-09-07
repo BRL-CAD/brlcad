@@ -48,7 +48,6 @@ libged_nil_la_SOURCES = \
 	dup.c \
 	eac.c \
 	edcodes.c \
-	edcolor.c \
 	edcomb.c \
 	editit.c \
 	edmater.c \
