@@ -3251,6 +3251,7 @@ RT_EXPORT BU_EXTERN(void db_functree,
 		     struct resource *resp,
 		     genptr_t client_data));
 
+/* EXPERIMENTAL - DO NOT USE */
 RT_EXPORT BU_EXTERN(void db_fullpath_traverse,
                     (struct db_i *dbip,
                      struct db_full_path *dfp,
