@@ -199,13 +199,17 @@ static OPTION options[] = {
         { "!",          N_NOT,          c_not,          O_ZERO },
         { "(",          N_OPENPAREN,    c_openparen,    O_ZERO },
         { ")",          N_CLOSEPAREN,   c_closeparen,   O_ZERO },
+	{ "-a",         N_AND,          NULL,           O_NONE },
+	{ "-and",       N_AND,          NULL,           O_NONE },
 	{ "-attr",	N_ATTR,		c_attr,		O_ARGV },
         { "-name",      N_NAME,         c_name,         O_ARGV },
-	{ "-o",         N_OR,           c_or,           O_ZERO },
+        { "-not",       N_NOT,          c_not,          O_ZERO },
+	{ "-o",         N_OR,           c_or,		O_ZERO },
+	{ "-or", 	N_OR, 		c_or, 		O_ZERO },
 	{ "-print",     N_PRINT,        c_print,        O_ZERO },
 	{ "-print0",    N_PRINT0,       c_print0,       O_ZERO },
 	{ "-stdattr",   N_STDATTR,      c_stdattr,      O_ZERO },
-	{ "-type",   N_TYPE,      c_type,      O_ARGV },
+	{ "-type",   	N_TYPE,     	c_type,		O_ARGV },
 };
 
 static PLAN *
