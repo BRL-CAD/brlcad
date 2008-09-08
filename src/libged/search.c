@@ -61,7 +61,7 @@
 #include "cmd.h"
 #include "ged_private.h"
 
-#include "nfind.h"
+#include "search.h"
 
 /*
  * D B _ F U L L P A T H _ T R A V E R S E _ S U B T R E E

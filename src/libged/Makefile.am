@@ -104,7 +104,6 @@ libged_nil_la_SOURCES = \
 	move_arb_edge.c \
 	move_arb_face.c \
 	mrot.c \
-	nfind.c \
 	nirt.c \
 	nmg_collapse.c \
 	nmg_simplify.c \
@@ -152,6 +151,7 @@ libged_nil_la_SOURCES = \
 	savekey.c \
 	saveview.c \
 	scale.c \
+	search.c \
 	set_output_script.c \
 	set_transparency.c \
 	set_uplotOutputMode.c \
@@ -207,7 +207,7 @@ AM_CPPFLAGS = \
 	${TCL_CPPFLAGS} -DNEW_TOPS_BEHAVIOR
 
 noinst_HEADERS = \
-	nfind.h \
+	search.h \
 	ged_private.h \
 	qray.h
 
