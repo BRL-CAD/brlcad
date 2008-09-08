@@ -61,7 +61,7 @@ enum ntype {
 	N_CLOSEPAREN, N_DEPTH, N_EMPTY, N_EXEC, N_EXECDIR, N_EXPR,
 	N_FLAGS, N_INAME, N_LS, N_MAXDEPTH,
 	N_MINDEPTH, N_NAME, N_NOT, N_OK, N_OPENPAREN, N_OR, N_PATH, 
-	N_PRINT, N_PRINT0, N_PRUNE, N_TYPE
+	N_PRINT, N_PRINT0, N_PRUNE, N_STDATTR, N_TYPE
 };
 
 
@@ -151,6 +151,7 @@ PLAN	*c_path(char *, char ***, int);
 int	c_print(char *, char ***, int, PLAN **);
 int	c_print0(char *, char ***, int, PLAN **);
 PLAN	*c_prune(char *, char ***, int);
+int     c_stdattr(char *, char ***, int, PLAN **);
 PLAN	*c_type(char *, char ***, int);
 int	c_openparen(char *, char ***, int, PLAN **);
 int	c_closeparen(char *, char ***, int, PLAN **);
