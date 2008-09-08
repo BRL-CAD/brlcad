@@ -636,8 +636,10 @@ paren_squish(PLAN *plan, PLAN **resultplan)                /* plan with ( ) node
                  * if we find an unclaimed ')' it means there is a missing
                  * '(' someplace.
                  */
-                if (expr->type == N_CLOSEPAREN)
-                        bu_exit(1, "): no beginning '('");
+                if (expr->type == N_CLOSEPAREN) {
+                        bu_log("): no beginning '('");
+						return BRLCAD_ERROR;
+				}
 
                 /* add the expression to our result plan */
                 if (result == NULL)
@@ -673,7 +675,7 @@ not_squish(PLAN *plan, PLAN **resultplan)          /* plan to process */
                  * the expr subplan.
                  */
                 if (next->type == N_EXPR) 
-                        not_squish(next->p_data[0], &(next->p_data[0]));
+                        if (not_squish(next->p_data[0], &(next->p_data[0])) != BRLCAD_OK) return BRLCAD_ERROR;
 
                 /*
                  * if we encounter a not, then snag the next node and place
@@ -688,12 +690,16 @@ not_squish(PLAN *plan, PLAN **resultplan)          /* plan to process */
                                 ++notlevel;
                                 node = yanknode(&plan);
                         }
-                        if (node == NULL)
-                                bu_exit(1, "!: no following expression");
-                        if (node->type == N_OR)
-                                bu_exit(1, "!: nothing between ! and -o");
+                        if (node == NULL) {
+                                bu_log("!: no following expression");
+								return BRLCAD_ERROR;
+						}
+                        if (node->type == N_OR) {
+                                bu_log("!: nothing between ! and -o");
+								return BRLCAD_ERROR;
+						}
                         if (node->type == N_EXPR)
-                                not_squish(node, &node);
+                                if (not_squish(node, &node) != BRLCAD_OK) return BRLCAD_ERROR;
                         if (notlevel % 2 != 1)
                                 next = node;
                         else
@@ -733,11 +739,11 @@ or_squish(PLAN *plan, PLAN **resultplan)           /* plan with ors to be squish
                  * the expr subplan.
                  */
                 if (next->type == N_EXPR) 
-                        or_squish(next->p_data[0], &(next->p_data[0]));
+                       if(or_squish(next->p_data[0], &(next->p_data[0])) != BRLCAD_OK) return BRLCAD_ERROR;
 
                 /* if we encounter a not then look for not's in the subplan */
                 if (next->type == N_NOT)
-                        or_squish(next->p_data[0], &(next->p_data[0]));
+						if(or_squish(next->p_data[0], &(next->p_data[0])) != BRLCAD_OK) return BRLCAD_ERROR;
 
                 /*
                  * if we encounter an or, then place our collected plan in the
@@ -745,12 +751,16 @@ or_squish(PLAN *plan, PLAN **resultplan)           /* plan with ors to be squish
                  * remaining stuff into the second subplan and return the or.
                  */
                 if (next->type == N_OR) {
-                        if (result == NULL)
-                                bu_exit(1, "-o: no expression before -o");
+                        if (result == NULL) {
+                                bu_log("-o: no expression before -o");
+								return BRLCAD_ERROR;
+						}
                         next->p_data[0] = result;
-                        or_squish(plan, &(next->p_data[1]));
-                        if (next->p_data[1] == NULL)
-                                bu_exit(1, "-o: no expression after -o");
+                        if(or_squish(plan, &(next->p_data[1]))  != BRLCAD_OK) return BRLCAD_ERROR;
+                        if (next->p_data[1] == NULL) {
+                                bu_log("-o: no expression after -o");
+								return BRLCAD_ERROR;
+						}
                         (*resultplan) = next;
 			return BRLCAD_OK;
                 }
@@ -898,7 +908,7 @@ wdb_search_cmd(struct rt_wdb      *wdbp,
     PLAN *dbplan;
     struct db_full_path dfp;
     
-    if (argc < 3) {
+    if (argc < 2) {
 	Tcl_AppendResult(interp, "search [path] [expressions...]\n", (char *)NULL);
     } else {
         db_full_path_init(&dfp);
@@ -906,7 +916,7 @@ wdb_search_cmd(struct rt_wdb      *wdbp,
 
    
 	if ( !( (argv[1][0] == '-') || (argv[1][0] == '!')  || (argv[1][0] == '(') )&& (strcmp(argv[1],"/") != 0)) {
-    	        db_string_to_path(&dfp, wdbp->dbip, argv[1]);	
+			db_string_to_path(&dfp, wdbp->dbip, argv[1]);	
 	        isoutput = 0;
 		if (find_formplan(&argv[2], &dbplan) != BRLCAD_OK) {
 		    Tcl_AppendResult(interp, "Failed to build find plan.\n", (char *)NULL);
