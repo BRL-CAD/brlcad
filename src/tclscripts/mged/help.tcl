@@ -257,6 +257,7 @@ Save the current view to specified 'file' as an rt render script
       -i inputfile   specify input data file (default is opendb filepath)
 }}
 set mged_help_data(sca)		$helplib_data(vo_sca)
+set mged_help_data(search)	$helplib_data(wdb_search)
 set mged_help_data(sed)		{{<path>}	{solid-edit named solid}}
 set mged_help_data(setview)	$helplib_data(vo_setview)
 set mged_help_data(shader)	{{comb {shader_name {keyword value keyword value ...}}}	{assign shader using Tcl list format}}
