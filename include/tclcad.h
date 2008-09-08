@@ -73,14 +73,15 @@ __BEGIN_DECLS
 #define GED_OBJ_FB_MODE_OVERLAY  3
 
 struct ged_dm_view {
-    struct bu_list	l;
-    struct bu_vls	gdv_name;
-    struct ged_view	*gdv_view;
-    struct dm		*gdv_dmp;
-    struct fbserv_obj	gdv_fbs;
-    struct ged_adc_state gdv_adc;
-    struct ged_grid_state gdv_grid;
-    struct ged_obj	*gdv_gop; /* Pointer back to its ged object */
+    struct bu_list		l;
+    struct bu_vls		gdv_name;
+    struct ged_view		*gdv_view;
+    struct dm			*gdv_dmp;
+    struct fbserv_obj		gdv_fbs;
+    struct ged_adc_state 	gdv_adc;
+    struct ged_grid_state 	gdv_grid;
+    struct ged_rect_state 	gdv_rect;
+    struct ged_obj		*gdv_gop; /* Pointer back to its ged object */
 };
 
 struct ged_obj {

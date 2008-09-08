@@ -203,6 +203,20 @@ struct ged_adc_state {
     int		gas_linewidth;
 };
 
+struct ged_rect_state {
+    int		grs_active;	/* 1 - actively drawing a rectangle */
+    int		grs_draw;	/* draw rubber band rectangle */
+    int		grs_linewidth;
+    int		grs_linestyle;  /* 0 - solid, 1 - dashed */
+    int		grs_pos[2];	/* Position in image coordinates */
+    int		grs_dim[2];	/* Rectangle dimension in image coordinates */
+    fastf_t	grs_x;		/* Corner of rectangle in normalized     */
+    fastf_t	grs_y;		/* ------ view coordinates (i.e. +-1.0). */
+    fastf_t	grs_width;	/* Width and height of rectangle in      */
+    fastf_t	grs_height;	/* ------ normalized view coordinates.   */
+    int		grs_color[3];
+};
+
 struct ged_run_rt {
     struct bu_list l;
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -997,6 +1011,41 @@ GED_EXPORT BU_EXTERN(int	vo_dir2ae_cmd,
  *     editit file
  */
 GED_EXPORT BU_EXTERN(int ged_editit, (const char *file));
+
+
+/* Defined in rect.c */
+GED_EXPORT BU_EXTERN(void ged_rect_vls_print,
+		     (struct ged_rect_state *grsp,
+		      struct bu_vls *out_vp));
+GED_EXPORT BU_EXTERN(void ged_rect_view2image,
+		     (struct ged_rect_state *grsp,
+		      int width,
+		      int height,
+		      fastf_t aspect));
+GED_EXPORT BU_EXTERN(void ged_rect_image2view,
+		     (struct ged_rect_state *grsp,
+		      int width,
+		      int height,
+		      fastf_t aspect));
+GED_EXPORT BU_EXTERN(void ged_adjust_rect_for_zoom,
+		     (struct ged_rect_state *grsp,
+		      fastf_t aspect));
+GED_EXPORT BU_EXTERN(int ged_rt_rect_area,
+		     (struct ged *gedp,
+		      struct ged_rect_state *grsp,
+		      int width,
+		      int height,
+		      fastf_t aspect,
+		      int port,
+		      int color[3]));
+GED_EXPORT BU_EXTERN(int ged_zoom_rect_area,
+		     (struct ged *gedp,
+		      struct ged_rect_state *grsp,
+		      int canvas_width,
+		      int canvas_height,
+		      fastf_t canvas_aspect));
+
+
 
 /* Defined in vutil.c */
 GED_EXPORT BU_EXTERN(void ged_persp_mat,

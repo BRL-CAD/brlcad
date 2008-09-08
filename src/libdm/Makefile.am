@@ -48,6 +48,7 @@ libdm_la_SOURCES = \
 	knob.c \
 	options.c \
 	query.c \
+	rect.c \
 	tcl.c \
 	vers.c
 

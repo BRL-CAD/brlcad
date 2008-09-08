@@ -742,6 +742,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\rect.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\red.c"
 				>
 			</File>

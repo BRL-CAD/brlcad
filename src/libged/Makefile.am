@@ -132,6 +132,7 @@ libged_nil_la_SOURCES = \
 	quat.c \
 	qvrot.c \
 	rcodes.c \
+	rect.c \
 	red.c \
 	regdef.c \
 	region.c \

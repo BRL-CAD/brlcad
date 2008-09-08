@@ -395,6 +395,13 @@ DM_EXPORT BU_EXTERN(void dm_draw_grid,
 		     struct ged_view *gvp,
 		     fastf_t base2local));
 
+/* rect.c */
+DM_EXPORT BU_EXTERN(void dm_draw_rect,
+		    (struct dm *dmp,
+		     struct ged_rect_state *grsp,
+		     struct ged_view *gvp));
+
+
 
 #endif /* __DM_H__ */
 

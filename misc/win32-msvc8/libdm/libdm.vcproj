@@ -441,6 +441,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libdm\rect.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libdm\tcl.c"
 				>
 				<FileConfiguration
