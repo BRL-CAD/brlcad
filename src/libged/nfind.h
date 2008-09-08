@@ -68,7 +68,7 @@ enum ntype {
 /* node definition */
 typedef struct _plandata {
 	struct _plandata *next;			/* next node */
-	int (*eval)(struct _plandata *, struct db_full_path *, struct db_i *dbip);
+	int (*eval)(struct _plandata *, struct db_full_path *, struct rt_wdb *wdbp);
 									/* node evaluation function */
 #define	F_EQUAL		1			/* [acm]time inum links size */
 #define	F_LESSTHAN	2
@@ -94,6 +94,7 @@ typedef struct _plandata {
 		char *_a_data[2];		/* array of char pointers */
 		char *_c_data;			/* char pointer */
 		char *_attr_data;		/* char pointer */
+		char *_type_data;
 		int _max_data;			/* tree depth */
 		int _min_data;			/* tree depth */
 	} p_un;
@@ -107,6 +108,7 @@ typedef struct _plandata {
 #define	max_data	p_un._max_data
 #define	min_data	p_un._min_data
 #define	p_data		p_un._p_data
+#define type_data	p_un._type_data
 #define	e_argv		p_un.ex._e_argv
 #define	e_orig		p_un.ex._e_orig
 #define	e_len		p_un.ex._e_len
@@ -152,7 +154,7 @@ int	c_print(char *, char ***, int, PLAN **);
 int	c_print0(char *, char ***, int, PLAN **);
 PLAN	*c_prune(char *, char ***, int);
 int     c_stdattr(char *, char ***, int, PLAN **);
-PLAN	*c_type(char *, char ***, int);
+int     c_type(char *, char ***, int, PLAN **);
 int	c_openparen(char *, char ***, int, PLAN **);
 int	c_closeparen(char *, char ***, int, PLAN **);
 int	c_not(char *, char ***, int, PLAN **);

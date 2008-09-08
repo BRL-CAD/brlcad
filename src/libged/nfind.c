@@ -71,15 +71,15 @@
  */
 void
 db_fullpath_traverse_subtree(union tree *tp,
-		    void (*traverse_func) ( struct db_i *, struct db_full_path *,
-									void (*) (struct db_i *, struct db_full_path *, genptr_t),
-									void (*) (struct db_i *, struct db_full_path *, genptr_t),
+		    void (*traverse_func) ( struct rt_wdb *, struct db_full_path *,
+									void (*) (struct rt_wdb *, struct db_full_path *, genptr_t),
+									void (*) (struct rt_wdb *, struct db_full_path *, genptr_t),
 									struct resource *,
 									genptr_t),
-		    struct db_i *dbip,
+		    struct rt_wdb *wdbp,
 			struct db_full_path *dfp,
-			void (*comb_func) (struct db_i *, struct db_full_path *, genptr_t),
-			void (*leaf_func) (struct db_i *, struct db_full_path *, genptr_t),
+			void (*comb_func) (struct rt_wdb *, struct db_full_path *, genptr_t),
+			void (*leaf_func) (struct rt_wdb *, struct db_full_path *, genptr_t),
 			struct resource *resp,
 			genptr_t client_data)
 {
@@ -89,18 +89,18 @@ db_fullpath_traverse_subtree(union tree *tp,
 	return;
 
     RT_CK_FULL_PATH( dfp );
-    RT_CHECK_DBI( dbip );
+    RT_CHECK_DBI( wdbp->dbip );
     RT_CK_TREE( tp );
     RT_CK_RESOURCE( resp );
 
     switch ( tp->tr_op )  {
 
 	case OP_DB_LEAF:
-	    if ( (dp=db_lookup( dbip, tp->tr_l.tl_name, LOOKUP_NOISY )) == DIR_NULL ) {
+	    if ( (dp=db_lookup( wdbp->dbip, tp->tr_l.tl_name, LOOKUP_NOISY )) == DIR_NULL ) {
 			return;
 		} else {
 			db_add_node_to_full_path( dfp, dp);
-			traverse_func( dbip, dfp, comb_func, leaf_func, resp, client_data );
+			traverse_func( wdbp, dfp, comb_func, leaf_func, resp, client_data );
 			DB_FULL_PATH_POP(dfp);
 			break;
 		}
@@ -108,8 +108,8 @@ db_fullpath_traverse_subtree(union tree *tp,
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
-		db_fullpath_traverse_subtree( tp->tr_b.tb_left, traverse_func, dbip, dfp, comb_func, leaf_func, resp, client_data );
-		db_fullpath_traverse_subtree( tp->tr_b.tb_right, traverse_func, dbip, dfp, comb_func, leaf_func, resp, client_data );
+		db_fullpath_traverse_subtree( tp->tr_b.tb_left, traverse_func, wdbp, dfp, comb_func, leaf_func, resp, client_data );
+		db_fullpath_traverse_subtree( tp->tr_b.tb_right, traverse_func, wdbp, dfp, comb_func, leaf_func, resp, client_data );
 		break;
 	default:
 	    bu_log( "db_functree_subtree: unrecognized operator %d\n", tp->tr_op );
@@ -130,41 +130,41 @@ db_fullpath_traverse_subtree(union tree *tp,
  *  use db_full_path structures instead of directory structures.
  */
 void
-db_fullpath_traverse( struct db_i *dbip,
+db_fullpath_traverse( struct rt_wdb *wdbp,
 	    struct db_full_path *dfp,
-	    void (*comb_func) (struct db_i *, struct db_full_path *, genptr_t),
-	    void (*leaf_func) (struct db_i *, struct db_full_path *, genptr_t),
+	    void (*comb_func) (struct rt_wdb *, struct db_full_path *, genptr_t),
+	    void (*leaf_func) (struct rt_wdb *, struct db_full_path *, genptr_t),
 	    struct resource *resp,
 	    genptr_t client_data )
 {
 	struct directory *dp;
     register int i;
     RT_CK_FULL_PATH(dfp);
-    RT_CK_DBI(dbip);
+    RT_CK_DBI(wdbp->dbip);
 
 	dp = DB_FULL_PATH_CUR_DIR(dfp);
 
 	if ( dp->d_flags & DIR_COMB )  {
 		/* entering region */
 		if ( comb_func )
-			comb_func( dbip, dfp, client_data );
-		if ( dbip->dbi_version < 5 ) {
+			comb_func( wdbp, dfp, client_data );
+		if ( wdbp->dbip->dbi_version < 5 ) {
 			register union record   *rp;
 			register struct directory *mdp;
 			/*
 			* Load the combination into local record buffer
 			* This is in external v4 format.
 			*/
-			if ( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
+			if ( (rp = db_getmrec( wdbp->dbip, dp )) == (union record *)0 )
 				return;
 			/* recurse */
 			for ( i=1; i < dp->d_len; i++ )  {
-			if ( (mdp = db_lookup( dbip, rp[i].M.m_instname,
+			if ( (mdp = db_lookup( wdbp->dbip, rp[i].M.m_instname,
 						LOOKUP_NOISY )) == DIR_NULL ) {
 					continue;
 				} else {
 					db_add_node_to_full_path(dfp, mdp);
-					db_fullpath_traverse(dbip, dfp, comb_func, leaf_func, resp, client_data);
+					db_fullpath_traverse(wdbp, dfp, comb_func, leaf_func, resp, client_data);
 					DB_FULL_PATH_POP(dfp);
 				}
 			}
@@ -174,12 +174,12 @@ db_fullpath_traverse( struct db_i *dbip,
 			struct rt_comb_internal *comb;
 			struct directory *ndp;
 
-			if ( rt_db_get_internal5( &in, dp, dbip, NULL, resp ) < 0 )
+			if ( rt_db_get_internal5( &in, dp, wdbp->dbip, NULL, resp ) < 0 )
 				return;
 
 			comb = (struct rt_comb_internal *)in.idb_ptr;
 
-			db_fullpath_traverse_subtree( comb->tree, db_fullpath_traverse, dbip, dfp, comb_func, leaf_func, resp, client_data );
+			db_fullpath_traverse_subtree( comb->tree, db_fullpath_traverse, wdbp, dfp, comb_func, leaf_func, resp, client_data );
 
 			rt_db_free_internal( &in, resp );
 		}
@@ -187,7 +187,7 @@ db_fullpath_traverse( struct db_i *dbip,
 	if ( dp->d_flags & DIR_SOLID || dp->d_major_type & DB5_MAJORTYPE_BINARY_MASK )  {
 	   /* at leaf */
 	   if ( leaf_func )
-	       leaf_func( dbip, dfp, client_data );
+	       leaf_func( wdbp, dfp, client_data );
     }
 }
 
@@ -205,10 +205,11 @@ static OPTION options[] = {
 	{ "-print",     N_PRINT,        c_print,        O_ZERO },
 	{ "-print0",    N_PRINT0,       c_print0,       O_ZERO },
 	{ "-stdattr",   N_STDATTR,      c_stdattr,      O_ZERO },
+	{ "-type",   N_TYPE,      c_type,      O_ARGV },
 };
 
 static PLAN *
-palloc(enum ntype t, int (*f)(PLAN *, struct db_full_path *, struct db_i *))
+palloc(enum ntype t, int (*f)(PLAN *, struct db_full_path *, struct rt_wdb *))
 {
         PLAN *new;
 
@@ -227,13 +228,13 @@ palloc(enum ntype t, int (*f)(PLAN *, struct db_full_path *, struct db_i *))
  *      True if expression is true.
  */
 int
-f_expr(PLAN *plan, struct db_full_path *entry, struct db_i *dbip)
+f_expr(PLAN *plan, struct db_full_path *entry, struct rt_wdb *wdbp)
 {
         PLAN *p;
         int state;
 
         for (p = plan->p_data[0];
-            p && (state = (p->eval)(p, entry, dbip)); p = p->next);
+            p && (state = (p->eval)(p, entry, wdbp)); p = p->next);
         return (state);
 }
 
@@ -246,14 +247,14 @@ f_expr(PLAN *plan, struct db_full_path *entry, struct db_i *dbip)
 int
 c_openparen(char *ignore, char ***ignored, int unused, PLAN **resultplan)
 {
-        (*resultplan) = (palloc(N_OPENPAREN, (int (*)(PLAN *, struct db_full_path *, struct db_i *))-1));
+        (*resultplan) = (palloc(N_OPENPAREN, (int (*)(PLAN *, struct db_full_path *, struct rt_wdb *))-1));
 	return BRLCAD_OK;
 }
  
 int
 c_closeparen(char *ignore, char ***ignored, int unused, PLAN **resultplan)
 {
-        (*resultplan) = (palloc(N_CLOSEPAREN, (int (*)(PLAN *, struct db_full_path *, struct db_i *))-1));
+        (*resultplan) = (palloc(N_CLOSEPAREN, (int (*)(PLAN *, struct db_full_path *, struct rt_wdb *))-1));
 	return BRLCAD_OK;
 }
 
@@ -264,13 +265,13 @@ c_closeparen(char *ignore, char ***ignored, int unused, PLAN **resultplan)
  *      Negation of a primary; the unary NOT operator.
  */
 int
-f_not(PLAN *plan, struct db_full_path *entry, struct db_i *dbip)
+f_not(PLAN *plan, struct db_full_path *entry, struct rt_wdb *wdbp)
 {
         PLAN *p;
         int state;
 
         for (p = plan->p_data[0];
-            p && (state = (p->eval)(p, entry, dbip)); p = p->next);
+            p && (state = (p->eval)(p, entry, wdbp)); p = p->next);
         return (!state);
 }
  
@@ -288,19 +289,19 @@ c_not(char *ignore, char ***ignored, int unused, PLAN **resultplan)
  * not evaluated if the first expression is true.
  */
 int
-f_or(PLAN *plan, struct db_full_path *entry, struct db_i *dbip)
+f_or(PLAN *plan, struct db_full_path *entry, struct rt_wdb *wdbp)
 {
         PLAN *p;
         int state;
 
         for (p = plan->p_data[0];
-            p && (state = (p->eval)(p, entry, dbip)); p = p->next);
+            p && (state = (p->eval)(p, entry, wdbp)); p = p->next);
 
         if (state)
                 return (1);
 
         for (p = plan->p_data[1];
-            p && (state = (p->eval)(p, entry, dbip)); p = p->next);
+            p && (state = (p->eval)(p, entry, wdbp)); p = p->next);
         return (state); 
 }
 
@@ -319,7 +320,7 @@ c_or(char *ignore, char ***ignored, int unused, PLAN **resultplan)
  *      matches pattern using Pattern Matching Notation S3.14
  */
 int
-f_name(PLAN *plan, struct db_full_path *entry, struct db_i *dbip)
+f_name(PLAN *plan, struct db_full_path *entry, struct rt_wdb *wdbp)
 {
     	return (!fnmatch(plan->c_data, DB_FULL_PATH_CUR_DIR(entry)->d_namep, 0));
 }
@@ -342,7 +343,7 @@ c_name(char *pattern, char ***ignored, int unused, PLAN **resultplan)
  *      supplied to the attr option
  */
 int
-f_attr(PLAN *plan, struct db_full_path *entry, struct db_i *dbip)
+f_attr(PLAN *plan, struct db_full_path *entry, struct rt_wdb *wdbp)
 {
 	struct bu_vls attribname;
 	struct bu_vls value;
@@ -382,7 +383,7 @@ f_attr(PLAN *plan, struct db_full_path *entry, struct db_i *dbip)
 	 */
 	
 	bu_avs_init_empty(&avs);
-	db5_get_attributes( dbip, &avs, DB_FULL_PATH_CUR_DIR(entry));
+	db5_get_attributes( wdbp->dbip, &avs, DB_FULL_PATH_CUR_DIR(entry));
         avpp = avs.avp;
 	for (i = 0; i < avs.count; i++, avpp++) {
 	    if (!fnmatch(bu_vls_addr(&attribname), avpp->name, 0)) {
@@ -428,7 +429,7 @@ c_attr(char *pattern, char ***ignored, int unused, PLAN **resultplan)
   *    associated with an object.
   */	 
  int	 
- f_stdattr(PLAN *plan, struct db_full_path *entry, struct db_i *dbip)	 
+ f_stdattr(PLAN *plan, struct db_full_path *entry, struct rt_wdb *wdbp)	 
  {	 
          struct bu_attribute_value_set avs;	 
          struct bu_attribute_value_pair *avpp;	 
@@ -443,7 +444,7 @@ c_attr(char *pattern, char ***ignored, int unused, PLAN **resultplan)
           */	 
  	 
          bu_avs_init_empty(&avs);	 
-         db5_get_attributes( dbip, &avs, DB_FULL_PATH_CUR_DIR(entry));	 
+         db5_get_attributes( wdbp->dbip, &avs, DB_FULL_PATH_CUR_DIR(entry));	 
          avpp = avs.avp;	 
          for (i = 0; i < avs.count; i++, avpp++) {	 
            found_attr = 1;	 
@@ -477,6 +478,173 @@ c_attr(char *pattern, char ***ignored, int unused, PLAN **resultplan)
              return BRLCAD_OK;	 
  }	
 
+/*	 
+  * -type function --	 
+  *	 
+  *    Search based on the type of the object - primitives are matched
+  *    based on their primitive type (tor, tgc, arb4, etc.) and combinations
+  *    are matched based on whether they are a combination or region.
+  */	 
+ int	 
+ f_type(PLAN *plan, struct db_full_path *entry, struct rt_wdb *wdbp)	 
+ {	 
+         struct rt_db_internal intern;	 
+		 int type_match = 0;
+         int type;	 
+
+		 rt_db_get_internal(&intern, DB_FULL_PATH_CUR_DIR(entry), wdbp->dbip, (fastf_t *)NULL, &rt_uniresource);
+
+		 if(intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) return 0; 
+ 
+		 /* Eventually this whole switch statement needs to go away
+		  * in favor of a function to query the primitive's short name
+		  * and use that for the comparison - will be MUCH shorter and
+		  * simpler.
+		  */
+		 switch (intern.idb_minor_type) {
+			case DB5_MINORTYPE_BRLCAD_TOR:
+				type_match = (!fnmatch(plan->type_data, "tor", 0));
+				break;
+			case DB5_MINORTYPE_BRLCAD_TGC:
+				type_match = (!fnmatch(plan->type_data, "tgc", 0));
+				break;
+			case DB5_MINORTYPE_BRLCAD_ELL:
+				type_match = (!fnmatch(plan->type_data, "ell", 0));
+				break;
+			case DB5_MINORTYPE_BRLCAD_ARB8:
+				type = rt_arb_std_type(&intern, &wdbp->wdb_tol);
+
+				switch (type) {
+				case 4:
+					type_match = (!fnmatch(plan->type_data, "arb4", 0));
+					break;
+				case 5:
+					type_match = (!fnmatch(plan->type_data, "arb5", 0));
+					break;
+				case 6:
+					type_match = (!fnmatch(plan->type_data, "arb6", 0));
+					break;
+				case 7:
+					type_match = (!fnmatch(plan->type_data, "arb7", 0));
+					break;
+				case 8:
+					type_match = (!fnmatch(plan->type_data, "arb8", 0));
+					break;
+				default:
+					type_match = (!fnmatch(plan->type_data, "invalid", 0));
+					break;
+				}
+
+				break;
+			case DB5_MINORTYPE_BRLCAD_ARS:
+				type_match = (!fnmatch(plan->type_data, "ars", 0));
+				break;
+			case DB5_MINORTYPE_BRLCAD_HALF:
+				type_match = (!fnmatch(plan->type_data, "half", 0));
+				break;
+			case DB5_MINORTYPE_BRLCAD_REC:
+				type_match = (!fnmatch(plan->type_data, "rec", 0));
+				break;
+			case DB5_MINORTYPE_BRLCAD_POLY:
+				type_match = (!fnmatch(plan->type_data, "poly", 0));
+				break;
+			case DB5_MINORTYPE_BRLCAD_BSPLINE:
+				type_match = (!fnmatch(plan->type_data, "spline", 0));
+				break;
+			case DB5_MINORTYPE_BRLCAD_SPH:
+				type_match = (!fnmatch(plan->type_data, "sph", 0));
+				break;
+			case DB5_MINORTYPE_BRLCAD_NMG:
+				type_match = (!fnmatch(plan->type_data, "nmg", 0));
+				break;
+			case DB5_MINORTYPE_BRLCAD_EBM:
+				type_match = (!fnmatch(plan->type_data, "ebm", 0));
+				break;
+			case DB5_MINORTYPE_BRLCAD_VOL:
+				type_match = (!fnmatch(plan->type_data, "vol", 0));
+				break;
+			case DB5_MINORTYPE_BRLCAD_ARBN:
+				type_match = (!fnmatch(plan->type_data, "arbn", 0));
+				break;
+			case DB5_MINORTYPE_BRLCAD_PIPE:
+				type_match = (!fnmatch(plan->type_data, "pipe", 0));
+				break;
+			case DB5_MINORTYPE_BRLCAD_PARTICLE:
+				type_match = (!fnmatch(plan->type_data, "part", 0));
+				break;
+			case DB5_MINORTYPE_BRLCAD_RPC:
+				type_match = (!fnmatch(plan->type_data, "rpc", 0));
+				break;
+			case DB5_MINORTYPE_BRLCAD_RHC:
+				type_match = (!fnmatch(plan->type_data, "rhc", 0));
+				break;
+			case DB5_MINORTYPE_BRLCAD_EPA:
+				type_match = (!fnmatch(plan->type_data, "epa", 0));
+				break;
+			case DB5_MINORTYPE_BRLCAD_EHY:
+				type_match = (!fnmatch(plan->type_data, "ehy", 0));
+				break;
+			case DB5_MINORTYPE_BRLCAD_ETO:
+				type_match = (!fnmatch(plan->type_data, "eto", 0));
+				break;
+			case DB5_MINORTYPE_BRLCAD_GRIP:
+				type_match = (!fnmatch(plan->type_data, "grip", 0));
+				break;
+			case DB5_MINORTYPE_BRLCAD_JOINT:
+				type_match = (!fnmatch(plan->type_data, "joint", 0));
+				break;
+			case DB5_MINORTYPE_BRLCAD_HF:
+				type_match = (!fnmatch(plan->type_data, "hf", 0));
+				break;
+			case DB5_MINORTYPE_BRLCAD_DSP:
+				type_match = (!fnmatch(plan->type_data, "dsp", 0));
+				break;
+			case DB5_MINORTYPE_BRLCAD_SKETCH:
+				type_match = (!fnmatch(plan->type_data, "sketch", 0));
+				break;
+			case DB5_MINORTYPE_BRLCAD_EXTRUDE:
+				type_match = (!fnmatch(plan->type_data, "extrude", 0));
+				break;
+			case DB5_MINORTYPE_BRLCAD_SUBMODEL:
+				type_match = (!fnmatch(plan->type_data, "submodel", 0));
+				break;
+			case DB5_MINORTYPE_BRLCAD_CLINE:
+				type_match = (!fnmatch(plan->type_data, "cline", 0));
+				break;
+			case DB5_MINORTYPE_BRLCAD_BOT:
+				type_match = (!fnmatch(plan->type_data, "bot", 0));
+				break;
+			case DB5_MINORTYPE_BRLCAD_COMBINATION:
+				if (DB_FULL_PATH_CUR_DIR(entry)->d_flags & DIR_REGION) {
+					if ((!fnmatch(plan->type_data, "r", 0)) || (!fnmatch(plan->type_data, "region", 0))) {
+						type_match = 1;
+					}
+				} else {
+					if ((!fnmatch(plan->type_data, "comb", 0)) || (!fnmatch(plan->type_data, "combination", 0))) {
+						type_match = 1;
+					}
+				}
+				break;
+			default:
+				type_match = (!fnmatch(plan->type_data, "other", 0));
+				break;
+    }
+
+    rt_db_free_internal(&intern, &rt_uniresource);
+	return (type_match);
+ }	 
+ 	 
+ int	 
+ c_type(char *pattern, char ***ignored, int unused, PLAN **resultplan)	 
+ {	 
+             PLAN *new;	 
+ 	 
+             new = palloc(N_TYPE, f_type);
+			 new->type_data = pattern;
+             (*resultplan) = new;	 
+             return BRLCAD_OK;	 
+ }	
+
 
 
 /*
@@ -486,7 +654,7 @@ c_attr(char *pattern, char ***ignored, int unused, PLAN **resultplan)
  *      standard output.
  */
 int
-f_print(PLAN *plan, struct db_full_path *entry, struct db_i *dbip)
+f_print(PLAN *plan, struct db_full_path *entry, struct rt_wdb *wdbp)
 {
         bu_log("%s\n", db_path_to_string(entry));
 		isoutput = 0;
@@ -495,7 +663,7 @@ f_print(PLAN *plan, struct db_full_path *entry, struct db_i *dbip)
 
 /* ARGSUSED */
 int
-f_print0(PLAN *plan, struct db_full_path *entry, struct db_i *dbip)
+f_print0(PLAN *plan, struct db_full_path *entry, struct rt_wdb *wdbp)
 {
         (void)fputs(db_path_to_string(entry), stdout);
         (void)fputc('\0', stdout);
@@ -618,7 +786,7 @@ yankexpr(PLAN **planp, PLAN **resultplan)          /* pointer to top of plan (mo
         PLAN *node;             /* pointer to returned node or expression */
         PLAN *tail;             /* pointer to tail of subplan */
         PLAN *subplan;          /* pointer to head of ( ) expression */
-        extern int f_expr(PLAN *, struct db_full_path *, struct db_i *);
+        extern int f_expr(PLAN *, struct db_full_path *, struct rt_wdb *);
         int error_return = BRLCAD_OK;       
 	
         /* first pull the top node from the plan */
@@ -933,10 +1101,10 @@ find_formplan(char **argv, PLAN **resultplan)
 }
 
 void
-find_execute_plans(struct db_i *dbip, struct db_full_path *dfp, genptr_t inputplan) {
+find_execute_plans(struct rt_wdb *wdbp, struct db_full_path *dfp, genptr_t inputplan) {
 	PLAN *p;
 	PLAN *plan = (PLAN *)inputplan;
-	for (p = plan; p && (p->eval)(p, dfp, dbip); p = p->next) 
+	for (p = plan; p && (p->eval)(p, dfp, wdbp); p = p->next) 
 		    ;
 
 }
@@ -953,18 +1121,20 @@ find_execute(PLAN *plan,        /* search plan */
 		db_full_path_init(&fullname);
 		switch (execute_style) {
 		    case 0:
-			db_fullpath_traverse(wdbp->dbip, pathname, find_execute_plans, find_execute_plans, wdbp->wdb_resp, plan);
+			db_fullpath_traverse(wdbp, pathname, find_execute_plans, find_execute_plans, wdbp->wdb_resp, plan);
 			break;
 		    case 1:
 			for (i = 0; i < RT_DBNHASH; i++) {
 			    for (dp = wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
-				db_string_to_path(&fullname, wdbp->dbip, dp->d_namep);
-				find_execute_plans(wdbp->dbip, &fullname, plan);
+					if (!(dp->d_flags & DIR_HIDDEN) && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
+						db_string_to_path(&fullname, wdbp->dbip, dp->d_namep);
+						find_execute_plans(wdbp, &fullname, plan);
+					}
 			    }
 			}
 			break;
 		    default:
-			db_fullpath_traverse(wdbp->dbip, pathname, find_execute_plans, find_execute_plans, wdbp->wdb_resp, plan);
+			db_fullpath_traverse(wdbp, pathname, find_execute_plans, find_execute_plans, wdbp->wdb_resp, plan);
 			break;
 		}
 		db_free_full_path(&fullname);
