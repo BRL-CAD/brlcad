@@ -125,7 +125,7 @@ typedef struct _option {
 
 void	 brace_subst(char *, char **, char *, int);
 int	find_create(char ***, PLAN **);
-void	 find_execute(PLAN *, struct db_full_path *, struct rt_wdb *);
+void	 find_execute(PLAN *, struct db_full_path *, struct rt_wdb *, int);
 int	find_formplan(char **, PLAN **);
 int	not_squish(PLAN *, PLAN **);
 OPTION	*option(char *);

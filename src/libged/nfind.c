@@ -883,11 +883,30 @@ find_execute_plans(struct db_i *dbip, struct db_full_path *dfp, genptr_t inputpl
 void
 find_execute(PLAN *plan,        /* search plan */
 	struct db_full_path *pathname,               /* array of pathnames to traverse */
-	struct rt_wdb *wdbp)
+	struct rt_wdb *wdbp,
+	int execute_style)
 {
     		struct directory *dp;
+		struct db_full_path fullname;
 		int i;
-		db_fullpath_traverse(wdbp->dbip, pathname, find_execute_plans, find_execute_plans, wdbp->wdb_resp, plan);
+		db_full_path_init(&fullname);
+		switch (execute_style) {
+		    case 0:
+			db_fullpath_traverse(wdbp->dbip, pathname, find_execute_plans, find_execute_plans, wdbp->wdb_resp, plan);
+			break;
+		    case 1:
+			for (i = 0; i < RT_DBNHASH; i++) {
+			    for (dp = wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
+				db_string_to_path(&fullname, wdbp->dbip, dp->d_namep);
+				find_execute_plans(wdbp->dbip, &fullname, plan);
+			    }
+			}
+			break;
+		    default:
+			db_fullpath_traverse(wdbp->dbip, pathname, find_execute_plans, find_execute_plans, wdbp->wdb_resp, plan);
+			break;
+		}
+		db_free_full_path(&fullname);
 }
 
 
@@ -915,16 +934,25 @@ wdb_search_cmd(struct rt_wdb      *wdbp,
         db_update_nref(wdbp->dbip, &rt_uniresource);
 
    
-	if ( !( (argv[1][0] == '-') || (argv[1][0] == '!')  || (argv[1][0] == '(') )&& (strcmp(argv[1],"/") != 0)) {
-			db_string_to_path(&dfp, wdbp->dbip, argv[1]);	
+	if ( !( (argv[1][0] == '-') || (argv[1][0] == '!')  || (argv[1][0] == '(') ) && (strcmp(argv[1],"/") != 0) && (strcmp(argv[1],".") != 0) ) {
+		db_string_to_path(&dfp, wdbp->dbip, argv[1]);	
 	        isoutput = 0;
 		if (find_formplan(&argv[2], &dbplan) != BRLCAD_OK) {
 		    Tcl_AppendResult(interp, "Failed to build find plan.\n", (char *)NULL);
 		    return TCL_ERROR;
 		} else {
-		   find_execute(dbplan, &dfp, wdbp);
+		   find_execute(dbplan, &dfp, wdbp, 0);
 		}
 	} else {
+	    if (strcmp(argv[1],".") == 0) {
+		   isoutput = 0;
+		   if (find_formplan(&argv[2], &dbplan) != BRLCAD_OK) {
+		       Tcl_AppendResult(interp, "Failed to build find plan.\n", (char *)NULL);
+		       return TCL_ERROR;
+		   } else {
+	               find_execute(dbplan, NULL, wdbp, 1);
+                   } 
+	    } else {
                 for (i = 0; i < RT_DBNHASH; i++) {
                       for (dp = wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
                               if (dp->d_nref == 0 && !(dp->d_flags & DIR_HIDDEN) && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
@@ -935,19 +963,20 @@ wdb_search_cmd(struct rt_wdb      *wdbp,
 		    				Tcl_AppendResult(interp, "Failed to build find plan.\n", (char *)NULL);
 		    				return TCL_ERROR;
 					} else {
-		   				find_execute(dbplan, &dfp, wdbp);
+		   				find_execute(dbplan, &dfp, wdbp, 0);
 					}
 				  } else {
 			      		if (find_formplan(&argv[2], &dbplan) != BRLCAD_OK) {
 					        Tcl_AppendResult(interp, "Failed to build find plan.\n", (char *)NULL);
 		    				return TCL_ERROR;
 					} else {
-		   				find_execute(dbplan, &dfp, wdbp);
+		   				find_execute(dbplan, &dfp, wdbp, 0);
 					}
 				  }
 			      }
 		      }
 		}
+	    }
 	}
        db_free_full_path(&dfp);
     }
