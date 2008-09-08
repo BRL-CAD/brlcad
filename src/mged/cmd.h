@@ -92,7 +92,6 @@ MGED_EXTERN(int cmd_mmenu_get, (ClientData clientData, Tcl_Interp *interp, int a
 MGED_EXTERN(int cmd_mrot, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_mvall, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_name, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
-MGED_EXTERN(int cmd_nfind, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_nmg_collapse, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_nmg_simplify, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_nop, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
@@ -117,6 +116,7 @@ MGED_EXTERN(int cmd_rt, (ClientData clientData, Tcl_Interp *interp, int argc, ch
 MGED_EXTERN(int cmd_rt_gettrees, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_rtabort, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_sca, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+MGED_EXTERN(int cmd_search, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_set_more_default, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_setview, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_shaded_mode, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));

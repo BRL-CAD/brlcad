@@ -3251,19 +3251,6 @@ RT_EXPORT BU_EXTERN(void db_functree,
 		     struct resource *resp,
 		     genptr_t client_data));
 
-/* EXPERIMENTAL - DO NOT USE */
-RT_EXPORT BU_EXTERN(void db_fullpath_traverse,
-                    (struct db_i *dbip,
-                     struct db_full_path *dfp,
-                     void (*comb_func)(struct db_i *,
-		                       struct db_full_path *,
-                                       genptr_t),
-		     void (*leaf_func)(struct db_i *,
-		                       struct db_full_path *,
-		                       genptr_t),
-		     struct resource *resp,
-		     genptr_t client_data));
-
 /* mirror.c */
 RT_EXPORT BU_EXTERN(struct directory *rt_mirror,
 		    (struct db_i *dpip,

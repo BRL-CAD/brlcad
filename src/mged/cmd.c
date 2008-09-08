@@ -2599,19 +2599,20 @@ cmd_find(ClientData	clientData,
 }
 
 /**
- *  			C M D _ N F I N D
+ *  			C M D _ S E A R C H 
  *
- *  Unix style find command for db objects.
+ *  Search command in the style of the Unix find command 
+ *  for db objects.
  */
 int
-cmd_nfind(ClientData	clientData,
+cmd_search(ClientData	clientData,
 	 Tcl_Interp	*interp,
 	 int		argc,
 	 char		**argv)
 {
     CHECK_DBI_NULL;
 
-    return wdb_nfind_cmd(wdbp, interp, argc, argv);
+    return wdb_search_cmd(wdbp, interp, argc, argv);
 }
 
 

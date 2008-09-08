@@ -1,4 +1,4 @@
-/*                       N F I N D . C
+/*                       S E A R C H . C
  * BRL-CAD
  *
  * Copyright (c) 2008 United States Government as represented by
@@ -46,9 +46,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/** @file nfind.c
+/** @file search.c
  *
- * The nfind command.
+ * The search command.
  *
  */
 
@@ -62,6 +62,135 @@
 #include "ged_private.h"
 
 #include "nfind.h"
+
+/*
+ * D B _ F U L L P A T H _ T R A V E R S E _ S U B T R E E
+ *
+ * A generic traversal function maintaining awareness of
+ * the full path to a given object.
+ */
+void
+db_fullpath_traverse_subtree(union tree *tp,
+		    void (*traverse_func) ( struct db_i *, struct db_full_path *,
+									void (*) (struct db_i *, struct db_full_path *, genptr_t),
+									void (*) (struct db_i *, struct db_full_path *, genptr_t),
+									struct resource *,
+									genptr_t),
+		    struct db_i *dbip,
+			struct db_full_path *dfp,
+			void (*comb_func) (struct db_i *, struct db_full_path *, genptr_t),
+			void (*leaf_func) (struct db_i *, struct db_full_path *, genptr_t),
+			struct resource *resp,
+			genptr_t client_data)
+{
+    struct directory *dp;
+
+    if ( !tp )
+	return;
+
+    RT_CK_FULL_PATH( dfp );
+    RT_CHECK_DBI( dbip );
+    RT_CK_TREE( tp );
+    RT_CK_RESOURCE( resp );
+
+    switch ( tp->tr_op )  {
+
+	case OP_DB_LEAF:
+	    if ( (dp=db_lookup( dbip, tp->tr_l.tl_name, LOOKUP_NOISY )) == DIR_NULL ) {
+			return;
+		} else {
+			db_add_node_to_full_path( dfp, dp);
+			traverse_func( dbip, dfp, comb_func, leaf_func, resp, client_data );
+			DB_FULL_PATH_POP(dfp);
+			break;
+		}
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+		db_fullpath_traverse_subtree( tp->tr_b.tb_left, traverse_func, dbip, dfp, comb_func, leaf_func, resp, client_data );
+		db_fullpath_traverse_subtree( tp->tr_b.tb_right, traverse_func, dbip, dfp, comb_func, leaf_func, resp, client_data );
+		break;
+	default:
+	    bu_log( "db_functree_subtree: unrecognized operator %d\n", tp->tr_op );
+	    bu_bomb( "db_functree_subtree: unrecognized operator\n" );
+    }
+}
+
+/*
+ *     D B _ F U L L P A T H _ T R A V E R S E
+ *
+ *  This subroutine is called for a no-frills tree-walk,
+ *  with the provided subroutines being called when entering and
+ *  exiting combinations and at leaf (solid) nodes.
+ *
+ *  This routine is recursive, so no variables may be declared static.
+ *
+ *  Unlike db_preorder_traverse, this routine and its subroutines
+ *  use db_full_path structures instead of directory structures.
+ */
+void
+db_fullpath_traverse( struct db_i *dbip,
+	    struct db_full_path *dfp,
+	    void (*comb_func) (struct db_i *, struct db_full_path *, genptr_t),
+	    void (*leaf_func) (struct db_i *, struct db_full_path *, genptr_t),
+	    struct resource *resp,
+	    genptr_t client_data )
+{
+	struct directory *dp;
+    register int i;
+    RT_CK_FULL_PATH(dfp);
+    RT_CK_DBI(dbip);
+
+	dp = DB_FULL_PATH_CUR_DIR(dfp);
+
+	if ( dp->d_flags & DIR_COMB )  {
+		/* entering region */
+		if ( comb_func )
+			comb_func( dbip, dfp, client_data );
+		if ( dbip->dbi_version < 5 ) {
+			register union record   *rp;
+			register struct directory *mdp;
+			/*
+			* Load the combination into local record buffer
+			* This is in external v4 format.
+			*/
+			if ( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
+				return;
+			/* recurse */
+			for ( i=1; i < dp->d_len; i++ )  {
+			if ( (mdp = db_lookup( dbip, rp[i].M.m_instname,
+						LOOKUP_NOISY )) == DIR_NULL ) {
+					continue;
+				} else {
+					db_add_node_to_full_path(dfp, mdp);
+					db_fullpath_traverse(dbip, dfp, comb_func, leaf_func, resp, client_data);
+					DB_FULL_PATH_POP(dfp);
+				}
+			}
+			bu_free( (char *)rp, "db_preorder_traverse[]" );
+		} else {
+			struct rt_db_internal in;
+			struct rt_comb_internal *comb;
+			struct directory *ndp;
+
+			if ( rt_db_get_internal5( &in, dp, dbip, NULL, resp ) < 0 )
+				return;
+
+			comb = (struct rt_comb_internal *)in.idb_ptr;
+
+			db_fullpath_traverse_subtree( comb->tree, db_fullpath_traverse, dbip, dfp, comb_func, leaf_func, resp, client_data );
+
+			rt_db_free_internal( &in, resp );
+		}
+	}
+	if ( dp->d_flags & DIR_SOLID || dp->d_major_type & DB5_MAJORTYPE_BINARY_MASK )  {
+	   /* at leaf */
+	   if ( leaf_func )
+	       leaf_func( dbip, dfp, client_data );
+    }
+}
+
 
 int typecompare(const void *, const void *);
 
@@ -755,7 +884,7 @@ find_execute(PLAN *plan,        /* search plan */
 int isoutput;
    
 int
-wdb_nfind_cmd(struct rt_wdb      *wdbp,
+wdb_search_cmd(struct rt_wdb      *wdbp,
              Tcl_Interp         *interp,
              int                argc,
              char               *argv[])
@@ -770,7 +899,7 @@ wdb_nfind_cmd(struct rt_wdb      *wdbp,
     struct db_full_path dfp;
     
     if (argc < 3) {
-	Tcl_AppendResult(interp, "nfind [path] [expressions...]\n", (char *)NULL);
+	Tcl_AppendResult(interp, "search [path] [expressions...]\n", (char *)NULL);
     } else {
         db_full_path_init(&dfp);
         db_update_nref(wdbp->dbip, &rt_uniresource);
