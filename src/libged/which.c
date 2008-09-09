@@ -51,7 +51,6 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     if (!strcmp(argv[0], "whichair"))
 	isAir = 1;

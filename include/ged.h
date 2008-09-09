@@ -320,21 +320,13 @@ struct ged {
     struct bu_vls		ged_log;
 
     /** for setting results */
-    void			*ged_result;
     struct bu_vls		ged_result_str;
 
-#if 1
     struct ged_drawable		*ged_gdp;
     struct ged_view		*ged_gvp;
-#else
-    struct ged_drawable		*ged_head_drawables;
-    struct ged_view		*ged_head_views;
-#endif
+
     void			(*ged_output_handler)();	/**< @brief  function for handling output */
     char			*ged_output_script;		/**< @brief  script for use by the outputHandler */
-#if 0
-    struct bu_observer		ged_observers;
-#endif
 };
 
 typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);

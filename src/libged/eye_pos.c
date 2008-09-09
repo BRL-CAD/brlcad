@@ -44,7 +44,6 @@ ged_eye_pos(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* get eye position */
     if (argc == 1) {

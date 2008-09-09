@@ -112,7 +112,6 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
 #ifndef _WIN32
     vp = &gedp->ged_gdp->gd_rt_cmd[0];

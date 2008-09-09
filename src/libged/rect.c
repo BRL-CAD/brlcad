@@ -121,7 +121,6 @@ ged_rt_rect_area(struct ged *gedp, struct ged_rect_state *grsp, int width, int h
 
     /* initialize result in case we need to report something here */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     if (NEAR_ZERO(grsp->grs_width, (fastf_t)SMALL_FASTF) &&
 	NEAR_ZERO(grsp->grs_height, (fastf_t)SMALL_FASTF))
@@ -216,7 +215,6 @@ ged_zoom_rect_area(struct ged *gedp, struct ged_rect_state *grsp, int canvas_wid
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     if (NEAR_ZERO(grsp->grs_width, (fastf_t)SMALL_FASTF) &&
 	NEAR_ZERO(grsp->grs_height, (fastf_t)SMALL_FASTF))

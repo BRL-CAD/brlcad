@@ -51,7 +51,6 @@
  *
  */
 
-
 #include <sys/cdefs.h>
 
 /* node type */

@@ -952,7 +952,6 @@ go_adc(struct ged	*gedp,
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     if (argc < 2 || 7 < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
@@ -1501,7 +1500,6 @@ go_autoview(struct ged		*gedp,
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     if (argc != 2) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
@@ -1556,7 +1554,6 @@ go_configure(struct ged		*gedp,
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     if (argc != 2) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
@@ -1604,7 +1601,6 @@ go_constrain_rmode(struct ged	*gedp,
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* must be wanting help */
     if (argc == 1) {
@@ -1670,7 +1666,6 @@ go_constrain_tmode(struct ged	*gedp,
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* must be wanting help */
     if (argc == 1) {
@@ -1734,7 +1729,6 @@ go_delete_view(struct ged	*gedp,
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* must be wanting help */
     if (argc == 1) {
@@ -1783,7 +1777,6 @@ go_grid(struct ged	*gedp,
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     if (argc < 2 || 6 < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
@@ -1987,7 +1980,6 @@ go_idle_mode(struct ged		*gedp,
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* must be wanting help */
     if (argc == 1) {
@@ -2041,7 +2033,6 @@ go_light(struct ged	*gedp,
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* must be wanting help */
     if (argc == 1) {
@@ -2099,7 +2090,6 @@ go_list_views(struct ged	*gedp,
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     if (argc != 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
@@ -2124,7 +2114,6 @@ go_listen(struct ged	*gedp,
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* must be wanting help */
     if (argc == 1) {
@@ -2244,7 +2233,6 @@ go_mouse_constrain_rot(struct ged	*gedp,
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* must be wanting help */
     if (argc == 1) {
@@ -2347,7 +2335,6 @@ go_mouse_constrain_trans(struct ged	*gedp,
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* must be wanting help */
     if (argc == 1) {
@@ -2449,7 +2436,6 @@ go_mouse_rot(struct ged		*gedp,
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* must be wanting help */
     if (argc == 1) {
@@ -2536,7 +2522,6 @@ go_mouse_scale(struct ged	*gedp,
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* must be wanting help */
     if (argc == 1) {
@@ -2627,7 +2612,6 @@ go_mouse_trans(struct ged	*gedp,
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* must be wanting help */
     if (argc == 1) {
@@ -2711,7 +2695,6 @@ go_new_view(struct ged		*gedp,
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* must be wanting help */
     if (argc == 1) {
@@ -3037,7 +3020,6 @@ go_paint_rect_area(struct ged	*gedp,
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* must be wanting help */
     if (argc == 1) {
@@ -3082,7 +3064,6 @@ go_rect(struct ged	*gedp,
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* must be wanting help */
     if (argc == 1) {
@@ -3286,7 +3267,6 @@ go_rect_zoom(struct ged		*gedp,
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* must be wanting help */
     if (argc == 1) {
@@ -3331,7 +3311,6 @@ go_refresh(struct ged	*gedp,
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* must be wanting help */
     if (argc == 1) {
@@ -3395,7 +3374,6 @@ go_rotate_mode(struct ged	*gedp,
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* must be wanting help */
     if (argc == 1) {
@@ -3474,7 +3452,6 @@ go_rt_rect_area(struct ged	*gedp,
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* must be wanting help */
     if (argc == 1) {
@@ -3535,7 +3512,6 @@ go_rt_gettrees(struct ged	*gedp,
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* must be wanting help */
     if (argc == 1) {
@@ -3626,7 +3602,6 @@ go_scale_mode(struct ged	*gedp,
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* must be wanting help */
     if (argc == 1) {
@@ -3682,7 +3657,6 @@ go_set_coord(struct ged		*gedp,
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* must be wanting help */
     if (argc == 1) {
@@ -3735,7 +3709,6 @@ go_set_fb_mode(struct ged	*gedp,
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* must be wanting help */
     if (argc == 1) {
@@ -3795,7 +3768,6 @@ go_translate_mode(struct ged	*gedp,
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* must be wanting help */
     if (argc == 1) {
@@ -3851,7 +3823,6 @@ go_vmake(struct ged	*gedp,
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* must be wanting help */
     if (argc == 1) {
@@ -3927,7 +3898,6 @@ go_vslew(struct ged	*gedp,
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* must be wanting help */
     if (argc == 1) {
@@ -3993,7 +3963,6 @@ go_vsnap(struct ged	*gedp,
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* must be wanting help */
     if (argc == 1) {
@@ -4035,7 +4004,6 @@ go_zbuffer(struct ged	*gedp,
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* must be wanting help */
     if (argc == 1) {
@@ -4094,7 +4062,6 @@ go_zclip(struct ged	*gedp,
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* must be wanting help */
     if (argc == 1) {
@@ -4218,7 +4185,6 @@ go_view_func(struct ged		*gedp,
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* must be wanting help */
     if (argc == 1) {

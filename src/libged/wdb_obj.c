@@ -10427,7 +10427,6 @@ wdb_newcmds_tcl(ClientData	clientData,
     if (ctp->ct_name == (char *)0) {
 	bu_vls_trunc(&ged.ged_result_str, 0);
 	bu_vls_printf(&ged.ged_result_str, "%s not found", argv[1]);
-	ged.ged_result = GED_RESULT_NULL;
 	ret = BRLCAD_ERROR;
     }
 

@@ -165,7 +165,6 @@ ged_vdraw_cmd(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* must be wanting help */
     if (argc == 1) {
@@ -200,7 +199,6 @@ ged_vdraw_write(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* must be wanting help */
     if (argc == 2) {
@@ -313,7 +311,6 @@ ged_vdraw_insert(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* must be wanting help */
     if (argc == 2) {
@@ -408,7 +405,6 @@ ged_vdraw_delete(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* must be wanting help */
     if (argc == 2) {
@@ -511,7 +507,6 @@ ged_vdraw_read(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* must be wanting help */
     if (argc == 2) {
@@ -593,7 +588,6 @@ ged_vdraw_send(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     if (!gedp->ged_gdp->gd_currVHead) {
 	bu_vls_printf(&gedp->ged_result_str, "%s %s: no vlist is currently open.", argv[0], argv[1]);
@@ -643,7 +637,6 @@ ged_vdraw_params(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* must be wanting help */
     if (argc == 2) {
@@ -698,7 +691,6 @@ ged_vdraw_open(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     if (argc == 2) {
 	if (gedp->ged_gdp->gd_currVHead) {
@@ -768,7 +760,6 @@ ged_vdraw_vlist(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    gedp->ged_result = GED_RESULT_NULL;
 
     /* must be wanting help */
     if (argc == 2) {
