@@ -99,15 +99,6 @@ ged_adc(struct ged	*gedp,
 	return BRLCAD_ERROR;
     }
 
-    if (argc == 1) {
-	if (gedp->ged_gvp->gv_adc.gas_draw)
-	    gedp->ged_gvp->gv_adc.gas_draw = 0;
-	else
-	    gedp->ged_gvp->gv_adc.gas_draw = 1;
-
-	return BRLCAD_OK;
-    }
-
     command = (char *)argv[0];
 
     if (strcmp(argv[1], "-i") == 0) {
