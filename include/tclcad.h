@@ -78,9 +78,6 @@ struct ged_dm_view {
     struct ged_view		*gdv_view;
     struct dm			*gdv_dmp;
     struct fbserv_obj		gdv_fbs;
-    struct ged_adc_state 	gdv_adc;
-    struct ged_grid_state 	gdv_grid;
-    struct ged_rect_state 	gdv_rect;
     struct ged_obj		*gdv_gop; /* Pointer back to its ged object */
 };
 

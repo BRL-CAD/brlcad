@@ -280,35 +280,38 @@ struct ged_drawable {
 
 
 struct ged_view {
-    struct bu_list 	l;
-    fastf_t		gv_scale;
-    fastf_t		gv_size;		/**< @brief  2.0 * scale */
-    fastf_t		gv_isize;		/**< @brief  1.0 / size */
-    fastf_t		gv_perspective;		/**< @brief  perspective angle */
-    vect_t		gv_aet;
-    vect_t		gv_eye_pos;		/**< @brief  eye position */
-    vect_t		gv_keypoint;
-    char		gv_coord;		/**< @brief  coordinate system */
-    char		gv_rotate_about;	/**< @brief  indicates what point rotations are about */
-    mat_t		gv_rotation;
-    mat_t		gv_center;
-    mat_t		gv_model2view;
-    mat_t		gv_pmodel2view;
-    mat_t		gv_view2model;
-    mat_t		gv_pmat;		/**< @brief  perspective matrix */
+    struct bu_list		l;
+    fastf_t			gv_scale;
+    fastf_t			gv_size;		/**< @brief  2.0 * scale */
+    fastf_t			gv_isize;		/**< @brief  1.0 / size */
+    fastf_t			gv_perspective;		/**< @brief  perspective angle */
+    vect_t			gv_aet;
+    vect_t			gv_eye_pos;		/**< @brief  eye position */
+    vect_t			gv_keypoint;
+    char			gv_coord;		/**< @brief  coordinate system */
+    char			gv_rotate_about;	/**< @brief  indicates what point rotations are about */
+    mat_t			gv_rotation;
+    mat_t			gv_center;
+    mat_t			gv_model2view;
+    mat_t			gv_pmodel2view;
+    mat_t			gv_view2model;
+    mat_t			gv_pmat;		/**< @brief  perspective matrix */
 #if 0
-    struct bu_observer	gv_observers;
-    void 		(*gv_callback)();	/**< @brief  called in vo_update with gv_clientData and gvp */
-    genptr_t		gv_clientData;		/**< @brief  passed to gv_callback */
+    struct bu_observer		gv_observers;
+    void 			(*gv_callback)();	/**< @brief  called in vo_update with gv_clientData and gvp */
+    genptr_t			gv_clientData;		/**< @brief  passed to gv_callback */
 #endif
-    int			gv_zclip;
-    fastf_t		gv_prevMouseX;
-    fastf_t		gv_prevMouseY;
-    fastf_t		gv_minMouseDelta;
-    fastf_t		gv_maxMouseDelta;
-    fastf_t		gv_rscale;
-    fastf_t		gv_sscale;
-    int			gv_mode;
+    int				gv_zclip;
+    fastf_t			gv_prevMouseX;
+    fastf_t			gv_prevMouseY;
+    fastf_t			gv_minMouseDelta;
+    fastf_t			gv_maxMouseDelta;
+    fastf_t			gv_rscale;
+    fastf_t			gv_sscale;
+    int				gv_mode;
+    struct ged_adc_state 	gv_adc;
+    struct ged_grid_state 	gv_grid;
+    struct ged_rect_state 	gv_rect;
 };
 
 
