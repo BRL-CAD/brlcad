@@ -39,6 +39,7 @@
 #include <limits>
 #include <string>
 #include <list>
+#include <vector>
 
 #include "pcBasic.h"
 #include "pcInterval.h"
@@ -180,6 +181,7 @@ public:
 
     void insert(VariableAbstract * v);
     void display();
+    void cdisplay();
     void clear();
     bool addSolution(VarSet & V);
 private:
@@ -554,6 +556,59 @@ void Solution<T>::display()
 	std::cout << std::endl;
     }
     std::cout << "Number of Solutions: " << Domset_.size() << std::endl;
+}
+
+template<class T>
+void Solution<T>::cdisplay()
+{
+    if (Domset_.size() < 2)
+	display();
+    else {
+	int l;
+	VarSet::iterator i;
+	typename DomSet::iterator j;
+        typename Domains::iterator k;
+	std::vector<double> minmax;
+	
+        std::cout << "Solution Ranges are shown due to existance of non-unique solutions." << std::endl;
+	for (i = Varset_.begin(); i != Varset_.end(); i++) {
+	    if (*i) std::cout << (*i)->getID() << "\t";
+	}
+        std::cout << std::endl;
+	
+	if (!Domset_.empty()) {
+	    j = Domset_.begin();
+	    for ( k = j->begin(), l=0; k != j->end(); ++k,++l) {
+	        minmax.push_back(k->getFirst());
+	        minmax.push_back(k->getFirst());
+	    }
+	    
+	    for (j = Domset_.begin(); j != Domset_.end(); ++j) {
+		for ( k = j->begin(), l = 0; k != j->end(); ++k,++l) {
+		    T value = k->getFirst();
+		    minmax[2*l] = (value < minmax[2*l])?value:minmax[2*l];
+		    minmax[2*l+1] = (value > minmax[2*l])?value:minmax[2*l+1];
+		}
+	    }
+	}
+    for (l = 0; l < minmax.size()/2; ++l) {
+   	std::cout << minmax[2*l] << "\t";
+    }
+    std::cout << std::endl;
+
+    for (l = 0; l < minmax.size()/2; ++l) {
+	if ( minmax[2*l] != minmax[2*l+1])
+	    std::cout << "to" << "\t";
+    }
+    std::cout << std::endl;
+    
+    for (l = 0; l < minmax.size()/2; ++l) {
+	if ( minmax[2*l] != minmax[2*l+1])
+	    std::cout << minmax[2*l+1] << "\t";
+    }
+    
+    std::cout << std::endl << "Number of Solutions: " << Domset_.size() << std::endl;
+    }
 }
 
 template<typename T>

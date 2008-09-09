@@ -130,9 +130,9 @@ int main()
 
     S1.clear();
     GPCS.solve(vc_set,S1);
-    std::cout << "\nSolution using Generic BackTracking Solver "
+    std::cout << "\nSolution using Generic Solver "
               << GPCS.numChecks() << "\t" << GPCS.numSolutions() << std::endl;
-    S1.display();
+    S1.cdisplay();
 
 
     pc_free_pcset(&pcs);
