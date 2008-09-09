@@ -368,35 +368,14 @@ struct view_obj {
 
 
 /* defined in adc.c */
-GED_EXPORT BU_EXTERN(void ged_adc_model_To_adc_view,
-		     (struct ged_adc_state *gasp,
-		      struct ged_view *gvp));
-GED_EXPORT BU_EXTERN(void ged_adc_grid_To_adc_view,
-		     (struct ged_adc_state *gasp,
-		      struct ged_view *gvp));
-GED_EXPORT BU_EXTERN(void ged_adc_view_To_adc_grid,
-		     (struct ged_adc_state *gasp,
-		      struct ged_view *gvp));
 GED_EXPORT BU_EXTERN(void ged_calc_adc_pos,
-		     (struct ged_adc_state *gasp,
-		      struct ged_view *gvp));
+		     (struct ged_view *gvp));
 GED_EXPORT BU_EXTERN(void ged_calc_adc_a1,
-		     (struct ged_adc_state *gasp,
-		      struct ged_view *gvp));
+		     (struct ged_view *gvp));
 GED_EXPORT BU_EXTERN(void ged_calc_adc_a2,
-		     (struct ged_adc_state *gasp,
-		      struct ged_view *gvp));
+		     (struct ged_view *gvp));
 GED_EXPORT BU_EXTERN(void ged_calc_adc_dst,
-		     (struct ged_adc_state *gasp,
-		      struct ged_view *gvp));
-GED_EXPORT BU_EXTERN(void ged_adc_reset,
-		     (struct ged_adc_state *gasp,
-		      struct ged_view *gvp));
-GED_EXPORT BU_EXTERN(void ged_adc_vls_print,
-		     (struct ged_adc_state *gasp,
-		      struct ged_view *gvp,
-		      fastf_t base2local,
-		      struct bu_vls *out_vp));
+		     (struct ged_view *gvp));
 
 /* defined in clip.c */
 GED_EXPORT BU_EXTERN(int ged_clip,
@@ -410,13 +389,14 @@ GED_EXPORT BU_EXTERN(int ged_vclip,
 		      register fastf_t *min,
 		      register fastf_t *max));
 
-
 /* defined in ged.c */
+GED_EXPORT BU_EXTERN(void ged_close,
+		     (struct ged *gedp));
+GED_EXPORT BU_EXTERN(void ged_init,
+		     (struct ged *gedp));
 GED_EXPORT BU_EXTERN(struct ged *ged_open,
 		     (const char *dbtype,
 		      const char *filename));
-GED_EXPORT BU_EXTERN(void ged_close,
-		     (struct ged *gedp));
 GED_EXPORT BU_EXTERN(void ged_view_init,
 		     (struct ged_view *gvp));
 
@@ -1072,6 +1052,22 @@ GED_EXPORT BU_EXTERN(void ged_deering_persp_mat,
 GED_EXPORT BU_EXTERN(int ged_3ptarb, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Angle distance cursor.
+ *
+ * Usage:
+ *     adc args
+ */
+GED_EXPORT BU_EXTERN(int ged_adc, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Adjust object's attribute(s)
+ *
+ * Usage:
+ *     adjust object attr value ?attr value?
+ */
+GED_EXPORT BU_EXTERN(int ged_adjust, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Creates an arb8 given rotation and fallback angles
  *
  * Usage:
@@ -1094,14 +1090,6 @@ GED_EXPORT BU_EXTERN(int ged_ae2dir, (struct ged *gedp, int argc, const char *ar
  *     ae [[-i] az el [tw]]
  */
 GED_EXPORT BU_EXTERN(int ged_aet, (struct ged *gedp, int argc, const char *argv[]));
-
-/**
- * Adjust object's attribute(s)
- *
- * Usage:
- *     adjust object attr value ?attr value?
- */
-GED_EXPORT BU_EXTERN(int ged_adjust, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Returns lots of information about the specified object(s)

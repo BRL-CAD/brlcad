@@ -352,7 +352,6 @@ DM_EXPORT BU_EXTERN(int vclip,
 /* adc.c */
 DM_EXPORT BU_EXTERN(void dm_draw_adc,
 		    (struct dm *dmp,
-		     struct ged_adc_state *gasp,
 		     struct ged_view *gvp));
 
 /* axes.c */

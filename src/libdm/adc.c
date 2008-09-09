@@ -36,7 +36,7 @@
 
 
 static void
-dm_draw_ticks(struct dm *dmp, struct ged_adc_state *gasp, struct ged_view *gvp, fastf_t angle)
+dm_draw_ticks(struct dm *dmp, struct ged_view *gvp, fastf_t angle)
 {
     fastf_t c_tdist;
     fastf_t d1, d2;
@@ -49,7 +49,7 @@ dm_draw_ticks(struct dm *dmp, struct ged_adc_state *gasp, struct ged_view *gvp, 
      */
     /* map -2048 - 2047 into 0 - 2048 * sqrt (2) */
     /* Tick distance */
-    c_tdist = ((fastf_t)(gasp->gas_dv_dist) + GED_MAX) * M_SQRT1_2;
+    c_tdist = ((fastf_t)(gvp->gv_adc.gas_dv_dist) + GED_MAX) * M_SQRT1_2;
 
     d1 = c_tdist * cos (angle);
     d2 = c_tdist * sin (angle);
@@ -57,10 +57,10 @@ dm_draw_ticks(struct dm *dmp, struct ged_adc_state *gasp, struct ged_view *gvp, 
     t2 = 20.0 * cos (angle);
 
     /* Quadrant 1 */
-    x1 = gasp->gas_dv_x + d1 + t1;
-    Y1 = gasp->gas_dv_y + d2 - t2;
-    x2 = gasp->gas_dv_x + d1 -t1;
-    y2 = gasp->gas_dv_y + d2 + t2;
+    x1 = gvp->gv_adc.gas_dv_x + d1 + t1;
+    Y1 = gvp->gv_adc.gas_dv_y + d2 - t2;
+    x2 = gvp->gv_adc.gas_dv_x + d1 -t1;
+    y2 = gvp->gv_adc.gas_dv_y + d2 + t2;
     if (ged_clip(&x1, &Y1, &x2, &y2) == 0) {
 	DM_DRAW_LINE_2D(dmp,
 			GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->dm_aspect,
@@ -68,10 +68,10 @@ dm_draw_ticks(struct dm *dmp, struct ged_adc_state *gasp, struct ged_view *gvp, 
     }
 
     /* Quadrant 2 */
-    x1 = gasp->gas_dv_x - d2 + t2;
-    Y1 = gasp->gas_dv_y + d1 + t1;
-    x2 = gasp->gas_dv_x - d2 - t2;
-    y2 = gasp->gas_dv_y + d1 - t1;
+    x1 = gvp->gv_adc.gas_dv_x - d2 + t2;
+    Y1 = gvp->gv_adc.gas_dv_y + d1 + t1;
+    x2 = gvp->gv_adc.gas_dv_x - d2 - t2;
+    y2 = gvp->gv_adc.gas_dv_y + d1 - t1;
     if (ged_clip(&x1, &Y1, &x2, &y2) == 0) {
 	DM_DRAW_LINE_2D(dmp,
 			GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->dm_aspect,
@@ -79,10 +79,10 @@ dm_draw_ticks(struct dm *dmp, struct ged_adc_state *gasp, struct ged_view *gvp, 
     }
 
     /* Quadrant 3 */
-    x1 = gasp->gas_dv_x - d1 - t1;
-    Y1 = gasp->gas_dv_y - d2 + t2;
-    x2 = gasp->gas_dv_x - d1 + t1;
-    y2 = gasp->gas_dv_y - d2 - t2;
+    x1 = gvp->gv_adc.gas_dv_x - d1 - t1;
+    Y1 = gvp->gv_adc.gas_dv_y - d2 + t2;
+    x2 = gvp->gv_adc.gas_dv_x - d1 + t1;
+    y2 = gvp->gv_adc.gas_dv_y - d2 - t2;
     if (ged_clip(&x1, &Y1, &x2, &y2) == 0) {
 	DM_DRAW_LINE_2D(dmp,
 			GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->dm_aspect,
@@ -90,10 +90,10 @@ dm_draw_ticks(struct dm *dmp, struct ged_adc_state *gasp, struct ged_view *gvp, 
     }
 
     /* Quadrant 4 */
-    x1 = gasp->gas_dv_x + d2 - t2;
-    Y1 = gasp->gas_dv_y - d1 - t1;
-    x2 = gasp->gas_dv_x + d2 + t2;
-    y2 = gasp->gas_dv_y - d1 + t1;
+    x1 = gvp->gv_adc.gas_dv_x + d2 - t2;
+    Y1 = gvp->gv_adc.gas_dv_y - d1 - t1;
+    x2 = gvp->gv_adc.gas_dv_x + d2 + t2;
+    y2 = gvp->gv_adc.gas_dv_y - d1 + t1;
     if (ged_clip(&x1, &Y1, &x2, &y2) == 0) {
 	DM_DRAW_LINE_2D(dmp,
 			GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->dm_aspect,
@@ -106,7 +106,7 @@ dm_draw_ticks(struct dm *dmp, struct ged_adc_state *gasp, struct ged_view *gvp, 
  * Compute and display the angle/distance cursor.
  */
 void
-dm_draw_adc(struct dm *dmp, struct ged_adc_state *gasp, struct ged_view *gvp)
+dm_draw_adc(struct dm *dmp, struct ged_view *gvp)
 {
     fastf_t x1, Y1;	/* not "y1", due to conflict with math lib */
     fastf_t x2, y2;
@@ -115,42 +115,42 @@ dm_draw_adc(struct dm *dmp, struct ged_adc_state *gasp, struct ged_view *gvp)
     fastf_t d1, d2;
     fastf_t angle1, angle2;
 
-    ged_calc_adc_pos(gasp, gvp);
-    ged_calc_adc_a1(gasp, gvp);
-    ged_calc_adc_a2(gasp, gvp);
-    ged_calc_adc_dst(gasp, gvp);
+    ged_calc_adc_pos(gvp);
+    ged_calc_adc_a1(gvp);
+    ged_calc_adc_a2(gvp);
+    ged_calc_adc_dst(gvp);
 
     DM_SET_FGCOLOR(dmp,
-		   gasp->gas_line_color[0],
-		   gasp->gas_line_color[1],
-		   gasp->gas_line_color[2], 1, 1.0);
-    DM_SET_LINE_ATTR(dmp, gasp->gas_linewidth, 0);
+		   gvp->gv_adc.gas_line_color[0],
+		   gvp->gv_adc.gas_line_color[1],
+		   gvp->gv_adc.gas_line_color[2], 1, 1.0);
+    DM_SET_LINE_ATTR(dmp, gvp->gv_adc.gas_linewidth, 0);
 
     /* Horizontal */
     DM_DRAW_LINE_2D(dmp,
-		    GED_TO_PM1(GED_MIN), GED_TO_PM1(gasp->gas_dv_y) * dmp->dm_aspect,
-		    GED_TO_PM1(GED_MAX), GED_TO_PM1(gasp->gas_dv_y) * dmp->dm_aspect);
+		    GED_TO_PM1(GED_MIN), GED_TO_PM1(gvp->gv_adc.gas_dv_y) * dmp->dm_aspect,
+		    GED_TO_PM1(GED_MAX), GED_TO_PM1(gvp->gv_adc.gas_dv_y) * dmp->dm_aspect);
 
     /* Vertical */
     DM_DRAW_LINE_2D(dmp,
-		    GED_TO_PM1(gasp->gas_dv_x), GED_TO_PM1(GED_MAX),
-		    GED_TO_PM1(gasp->gas_dv_x), GED_TO_PM1(GED_MIN));
+		    GED_TO_PM1(gvp->gv_adc.gas_dv_x), GED_TO_PM1(GED_MAX),
+		    GED_TO_PM1(gvp->gv_adc.gas_dv_x), GED_TO_PM1(GED_MIN));
 
-    angle1 = gasp->gas_a1 * DEG2RAD;
-    angle2 = gasp->gas_a2 * DEG2RAD;
+    angle1 = gvp->gv_adc.gas_a1 * DEG2RAD;
+    angle2 = gvp->gv_adc.gas_a2 * DEG2RAD;
 
     /* sin for X and cos for Y to reverse sense of knob */
     d1 = cos (angle1) * 8000.0;
     d2 = sin (angle1) * 8000.0;
-    x1 = gasp->gas_dv_x + d1;
-    Y1 = gasp->gas_dv_y + d2;
-    x2 = gasp->gas_dv_x - d1;
-    y2 = gasp->gas_dv_y - d2;
+    x1 = gvp->gv_adc.gas_dv_x + d1;
+    Y1 = gvp->gv_adc.gas_dv_y + d2;
+    x2 = gvp->gv_adc.gas_dv_x - d1;
+    y2 = gvp->gv_adc.gas_dv_y - d2;
 
-    x3 = gasp->gas_dv_x + d2;
-    y3 = gasp->gas_dv_y - d1;
-    x4 = gasp->gas_dv_x - d2;
-    y4 = gasp->gas_dv_y + d1;
+    x3 = gvp->gv_adc.gas_dv_x + d2;
+    y3 = gvp->gv_adc.gas_dv_y - d1;
+    x4 = gvp->gv_adc.gas_dv_x - d2;
+    y4 = gvp->gv_adc.gas_dv_y + d1;
 
     DM_DRAW_LINE_2D(dmp,
 		    GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->dm_aspect,
@@ -161,32 +161,32 @@ dm_draw_adc(struct dm *dmp, struct ged_adc_state *gasp, struct ged_view *gvp)
 
     d1 = cos(angle2) * 8000.0;
     d2 = sin(angle2) * 8000.0;
-    x1 = gasp->gas_dv_x + d1;
-    Y1 = gasp->gas_dv_y + d2;
-    x2 = gasp->gas_dv_x - d1;
-    y2 = gasp->gas_dv_y - d2;
+    x1 = gvp->gv_adc.gas_dv_x + d1;
+    Y1 = gvp->gv_adc.gas_dv_y + d2;
+    x2 = gvp->gv_adc.gas_dv_x - d1;
+    y2 = gvp->gv_adc.gas_dv_y - d2;
 
-    x3 = gasp->gas_dv_x + d2;
-    y3 = gasp->gas_dv_y - d1;
-    x4 = gasp->gas_dv_x - d2;
-    y4 = gasp->gas_dv_y + d1;
+    x3 = gvp->gv_adc.gas_dv_x + d2;
+    y3 = gvp->gv_adc.gas_dv_y - d1;
+    x4 = gvp->gv_adc.gas_dv_x - d2;
+    y4 = gvp->gv_adc.gas_dv_y + d1;
 
-    DM_SET_LINE_ATTR(dmp, gasp->gas_linewidth, 1);
+    DM_SET_LINE_ATTR(dmp, gvp->gv_adc.gas_linewidth, 1);
     DM_DRAW_LINE_2D(dmp,
 		    GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->dm_aspect,
 		    GED_TO_PM1(x2), GED_TO_PM1(y2) * dmp->dm_aspect);
     DM_DRAW_LINE_2D(dmp,
 		    GED_TO_PM1(x3), GED_TO_PM1(y3) * dmp->dm_aspect,
 		    GED_TO_PM1(x4), GED_TO_PM1(y4) * dmp->dm_aspect);
-    DM_SET_LINE_ATTR(dmp, gasp->gas_linewidth, 0);
+    DM_SET_LINE_ATTR(dmp, gvp->gv_adc.gas_linewidth, 0);
 
     DM_SET_FGCOLOR(dmp,
-		   gasp->gas_tick_color[0],
-		   gasp->gas_tick_color[1],
-		   gasp->gas_tick_color[2], 1, 1.0);
-    dm_draw_ticks(dmp, gasp, gvp, 0.0);
-    dm_draw_ticks(dmp, gasp, gvp, angle1);
-    dm_draw_ticks(dmp, gasp, gvp, angle2);
+		   gvp->gv_adc.gas_tick_color[0],
+		   gvp->gv_adc.gas_tick_color[1],
+		   gvp->gv_adc.gas_tick_color[2], 1, 1.0);
+    dm_draw_ticks(dmp, gvp, 0.0);
+    dm_draw_ticks(dmp, gvp, angle1);
+    dm_draw_ticks(dmp, gvp, angle2);
 }
 
 

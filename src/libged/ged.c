@@ -48,7 +48,6 @@
 #include "ged_private.h"
 
 int ged_decode_dbip(const char *dbip_string, struct db_i **dbipp);
-void ged_init(struct ged *gedp);
 void ged_drawable_init(struct ged_drawable *gdp);
 void ged_drawable_close(struct ged_drawable *gdp);
 
