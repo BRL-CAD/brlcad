@@ -84,13 +84,21 @@ slave_load_MySQL (uint32_t pid, tie_t *tie, const char *hostname)
     mysql_init (&slave_load_mysql_db);
 
     /* establish connection to database */
-    mysql_real_connect (&slave_load_mysql_db, hostname, ADRT_MYSQL_USER, ADRT_MYSQL_PASS, ADRT_MYSQL_DB, 0, 0, 0);
+
+    if ( mysql_real_connect (&slave_load_mysql_db, hostname, ADRT_MYSQL_USER, ADRT_MYSQL_PASS, ADRT_MYSQL_DB, 0, 0, 0) == NULL ) {
+	printf("Unable to connect to db: %s\n", mysql_error(&slave_load_mysql_db));
+	return -1;
+    }
 
 
     /* Obtain the geometry id for this project id */
     sprintf (query, "select gid from project where pid = '%d'", pid);
     mysql_query (&slave_load_mysql_db, query);
     res = mysql_use_result (&slave_load_mysql_db);
+    if(res == NULL) {
+	printf("Unable to get gid... \"%s\"\n", query);
+	return -1;
+    }
     row = mysql_fetch_row (res);
     gid = atoi (row[0]);
     mysql_free_result (res);
@@ -234,12 +242,13 @@ slave_load_MySQL (uint32_t pid, tie_t *tie, const char *hostname)
 int
 slave_load (tie_t *tie, struct adrt_load_info *li, uint32_t dlen)
 {
+    void *data = (void *)li;
     TIE_VAL(tie_check_degenerate) = 0;
 
-    switch(li->fmt) {
+    switch( *(char *)data) {
 #if HAVE_MYSQL
-	case 0x0:	/* mysql float */
-		return slave_load_MySQL ( li->pid, tie, li->dbnam );
+	case 0x64:	/* mysql float */
+	    return slave_load_MySQL ( *((uint32_t *)data + 1), tie, (char *)data + 9);
 #endif
 	default:
 	    fprintf(stderr, "Unknown load format\n");
