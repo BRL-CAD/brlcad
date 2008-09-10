@@ -1934,6 +1934,8 @@ BU_EXPORT BU_EXTERN(int	bu_file_readable, (const char *path));
 BU_EXPORT BU_EXTERN(int	bu_file_writable, (const char *path));
 BU_EXPORT BU_EXTERN(int	bu_file_executable, (const char *path));
 
+/* fnmatch.c */
+BU_EXPORT BU_EXTERN(int bu_fnmatch, (const char *, const char *, int));
 
 /* dirent.c */
 BU_EXPORT BU_EXTERN(int bu_count_path, (char *path, char *substr));

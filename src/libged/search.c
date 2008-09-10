@@ -366,7 +366,7 @@ c_or(char *ignore, char ***ignored, int unused, PLAN **resultplan)
 int
 f_name(PLAN *plan, struct db_full_path *entry, struct rt_wdb *wdbp)
 {
-    	return (!fnmatch(plan->c_data, DB_FULL_PATH_CUR_DIR(entry)->d_namep, 0));
+    	return (!bu_fnmatch(plan->c_data, DB_FULL_PATH_CUR_DIR(entry)->d_namep, 0));
 }
 
 int
@@ -485,9 +485,9 @@ f_attr(PLAN *plan, struct db_full_path *entry, struct rt_wdb *wdbp)
 	db5_get_attributes( wdbp->dbip, &avs, DB_FULL_PATH_CUR_DIR(entry));
         avpp = avs.avp;
 	for (i = 0; i < avs.count; i++, avpp++) {
-	    if (!fnmatch(bu_vls_addr(&attribname), avpp->name, 0)) {
+	    if (!bu_fnmatch(bu_vls_addr(&attribname), avpp->name, 0)) {
 		if ( checkval == 1 ) {
-		    if (!fnmatch(bu_vls_addr(&value), avpp->value, 0)) {
+		    if (!bu_fnmatch(bu_vls_addr(&value), avpp->value, 0)) {
 			bu_avs_free( &avs);
 			bu_vls_free( &attribname);
 			bu_vls_free( &value);
@@ -602,130 +602,130 @@ c_attr(char *pattern, char ***ignored, int unused, PLAN **resultplan)
 		  */
 		 switch (intern.idb_minor_type) {
 			case DB5_MINORTYPE_BRLCAD_TOR:
-				type_match = (!fnmatch(plan->type_data, "tor", 0));
+				type_match = (!bu_fnmatch(plan->type_data, "tor", 0));
 				break;
 			case DB5_MINORTYPE_BRLCAD_TGC:
-				type_match = (!fnmatch(plan->type_data, "tgc", 0));
+				type_match = (!bu_fnmatch(plan->type_data, "tgc", 0));
 				break;
 			case DB5_MINORTYPE_BRLCAD_ELL:
-				type_match = (!fnmatch(plan->type_data, "ell", 0));
+				type_match = (!bu_fnmatch(plan->type_data, "ell", 0));
 				break;
 			case DB5_MINORTYPE_BRLCAD_ARB8:
 				type = rt_arb_std_type(&intern, &wdbp->wdb_tol);
 
 				switch (type) {
 				case 4:
-					type_match = (!fnmatch(plan->type_data, "arb4", 0));
+					type_match = (!bu_fnmatch(plan->type_data, "arb4", 0));
 					break;
 				case 5:
-					type_match = (!fnmatch(plan->type_data, "arb5", 0));
+					type_match = (!bu_fnmatch(plan->type_data, "arb5", 0));
 					break;
 				case 6:
-					type_match = (!fnmatch(plan->type_data, "arb6", 0));
+					type_match = (!bu_fnmatch(plan->type_data, "arb6", 0));
 					break;
 				case 7:
-					type_match = (!fnmatch(plan->type_data, "arb7", 0));
+					type_match = (!bu_fnmatch(plan->type_data, "arb7", 0));
 					break;
 				case 8:
-					type_match = (!fnmatch(plan->type_data, "arb8", 0));
+					type_match = (!bu_fnmatch(plan->type_data, "arb8", 0));
 					break;
 				default:
-					type_match = (!fnmatch(plan->type_data, "invalid", 0));
+					type_match = (!bu_fnmatch(plan->type_data, "invalid", 0));
 					break;
 				}
 
 				break;
 			case DB5_MINORTYPE_BRLCAD_ARS:
-				type_match = (!fnmatch(plan->type_data, "ars", 0));
+				type_match = (!bu_fnmatch(plan->type_data, "ars", 0));
 				break;
 			case DB5_MINORTYPE_BRLCAD_HALF:
-				type_match = (!fnmatch(plan->type_data, "half", 0));
+				type_match = (!bu_fnmatch(plan->type_data, "half", 0));
 				break;
 			case DB5_MINORTYPE_BRLCAD_REC:
-				type_match = (!fnmatch(plan->type_data, "rec", 0));
+				type_match = (!bu_fnmatch(plan->type_data, "rec", 0));
 				break;
 			case DB5_MINORTYPE_BRLCAD_POLY:
-				type_match = (!fnmatch(plan->type_data, "poly", 0));
+				type_match = (!bu_fnmatch(plan->type_data, "poly", 0));
 				break;
 			case DB5_MINORTYPE_BRLCAD_BSPLINE:
-				type_match = (!fnmatch(plan->type_data, "spline", 0));
+				type_match = (!bu_fnmatch(plan->type_data, "spline", 0));
 				break;
 			case DB5_MINORTYPE_BRLCAD_SPH:
-				type_match = (!fnmatch(plan->type_data, "sph", 0));
+				type_match = (!bu_fnmatch(plan->type_data, "sph", 0));
 				break;
 			case DB5_MINORTYPE_BRLCAD_NMG:
-				type_match = (!fnmatch(plan->type_data, "nmg", 0));
+				type_match = (!bu_fnmatch(plan->type_data, "nmg", 0));
 				break;
 			case DB5_MINORTYPE_BRLCAD_EBM:
-				type_match = (!fnmatch(plan->type_data, "ebm", 0));
+				type_match = (!bu_fnmatch(plan->type_data, "ebm", 0));
 				break;
 			case DB5_MINORTYPE_BRLCAD_VOL:
-				type_match = (!fnmatch(plan->type_data, "vol", 0));
+				type_match = (!bu_fnmatch(plan->type_data, "vol", 0));
 				break;
 			case DB5_MINORTYPE_BRLCAD_ARBN:
-				type_match = (!fnmatch(plan->type_data, "arbn", 0));
+				type_match = (!bu_fnmatch(plan->type_data, "arbn", 0));
 				break;
 			case DB5_MINORTYPE_BRLCAD_PIPE:
-				type_match = (!fnmatch(plan->type_data, "pipe", 0));
+				type_match = (!bu_fnmatch(plan->type_data, "pipe", 0));
 				break;
 			case DB5_MINORTYPE_BRLCAD_PARTICLE:
-				type_match = (!fnmatch(plan->type_data, "part", 0));
+				type_match = (!bu_fnmatch(plan->type_data, "part", 0));
 				break;
 			case DB5_MINORTYPE_BRLCAD_RPC:
-				type_match = (!fnmatch(plan->type_data, "rpc", 0));
+				type_match = (!bu_fnmatch(plan->type_data, "rpc", 0));
 				break;
 			case DB5_MINORTYPE_BRLCAD_RHC:
-				type_match = (!fnmatch(plan->type_data, "rhc", 0));
+				type_match = (!bu_fnmatch(plan->type_data, "rhc", 0));
 				break;
 			case DB5_MINORTYPE_BRLCAD_EPA:
-				type_match = (!fnmatch(plan->type_data, "epa", 0));
+				type_match = (!bu_fnmatch(plan->type_data, "epa", 0));
 				break;
 			case DB5_MINORTYPE_BRLCAD_EHY:
-				type_match = (!fnmatch(plan->type_data, "ehy", 0));
+				type_match = (!bu_fnmatch(plan->type_data, "ehy", 0));
 				break;
 			case DB5_MINORTYPE_BRLCAD_ETO:
-				type_match = (!fnmatch(plan->type_data, "eto", 0));
+				type_match = (!bu_fnmatch(plan->type_data, "eto", 0));
 				break;
 			case DB5_MINORTYPE_BRLCAD_GRIP:
-				type_match = (!fnmatch(plan->type_data, "grip", 0));
+				type_match = (!bu_fnmatch(plan->type_data, "grip", 0));
 				break;
 			case DB5_MINORTYPE_BRLCAD_JOINT:
-				type_match = (!fnmatch(plan->type_data, "joint", 0));
+				type_match = (!bu_fnmatch(plan->type_data, "joint", 0));
 				break;
 			case DB5_MINORTYPE_BRLCAD_HF:
-				type_match = (!fnmatch(plan->type_data, "hf", 0));
+				type_match = (!bu_fnmatch(plan->type_data, "hf", 0));
 				break;
 			case DB5_MINORTYPE_BRLCAD_DSP:
-				type_match = (!fnmatch(plan->type_data, "dsp", 0));
+				type_match = (!bu_fnmatch(plan->type_data, "dsp", 0));
 				break;
 			case DB5_MINORTYPE_BRLCAD_SKETCH:
-				type_match = (!fnmatch(plan->type_data, "sketch", 0));
+				type_match = (!bu_fnmatch(plan->type_data, "sketch", 0));
 				break;
 			case DB5_MINORTYPE_BRLCAD_EXTRUDE:
-				type_match = (!fnmatch(plan->type_data, "extrude", 0));
+				type_match = (!bu_fnmatch(plan->type_data, "extrude", 0));
 				break;
 			case DB5_MINORTYPE_BRLCAD_SUBMODEL:
-				type_match = (!fnmatch(plan->type_data, "submodel", 0));
+				type_match = (!bu_fnmatch(plan->type_data, "submodel", 0));
 				break;
 			case DB5_MINORTYPE_BRLCAD_CLINE:
-				type_match = (!fnmatch(plan->type_data, "cline", 0));
+				type_match = (!bu_fnmatch(plan->type_data, "cline", 0));
 				break;
 			case DB5_MINORTYPE_BRLCAD_BOT:
-				type_match = (!fnmatch(plan->type_data, "bot", 0));
+				type_match = (!bu_fnmatch(plan->type_data, "bot", 0));
 				break;
 			case DB5_MINORTYPE_BRLCAD_COMBINATION:
 				if (DB_FULL_PATH_CUR_DIR(entry)->d_flags & DIR_REGION) {
-					if ((!fnmatch(plan->type_data, "r", 0)) || (!fnmatch(plan->type_data, "region", 0))) {
+					if ((!bu_fnmatch(plan->type_data, "r", 0)) || (!fnmatch(plan->type_data, "region", 0))) {
 						type_match = 1;
 					}
 				} else {
-					if ((!fnmatch(plan->type_data, "comb", 0)) || (!fnmatch(plan->type_data, "combination", 0))) {
+					if ((!bu_fnmatch(plan->type_data, "comb", 0)) || (!fnmatch(plan->type_data, "combination", 0))) {
 						type_match = 1;
 					}
 				}
 				break;
 			default:
-				type_match = (!fnmatch(plan->type_data, "other", 0));
+				type_match = (!bu_fnmatch(plan->type_data, "other", 0));
 				break;
     }
 
