@@ -409,12 +409,14 @@ c_regex_common(enum ntype type, char *regexp, bool icase, PLAN **resultplan)
 		rv = regcomp(&reg, regexp, REG_NOSUB|REG_EXTENDED);
 	}	
 	if (rv != 0) {
+	    	regfree(&reg);
 		bu_log("Error - regex compile did not succeed: %s\n", regexp);
 		return BRLCAD_ERROR;
 	}
 	new = palloc(type, f_regex);
 	new->regexp_data = reg;
 	(*resultplan) = new;
+	regfree(&reg);
 	return BRLCAD_OK;
 }
 
