@@ -2977,25 +2977,54 @@ BU_EXPORT BU_EXTERN(int bu_image_save,
 
 /* fchmod.c */
 BU_EXPORT BU_EXTERN(int bu_fchmod,
-		    (FILE *fp,
-		     unsigned long pmode));
+		    (FILE *fp, unsigned long pmode));
 
 /* argv.c */
+
+/**
+ * Deallocate all strings in a given argv array and the array itself
+ *
+ * This call presumes the array has been allocated with bu_dup_argv()
+ * or bu_argv_from_path().
+ */
 BU_EXPORT BU_EXTERN(void bu_free_argv,
-		    (int argc,
-		     char *argv[]));
-BU_EXPORT BU_EXTERN(char ** bu_dup_argv,
-		    (int argc,
-		     const char *argv[]));
-BU_EXPORT BU_EXTERN(char ** bu_dupinsert_argv,
-		    (int insert,
-		     int insertArgc,
-		     const char *insertArgv[],
-		     int argc,
-		     const char *argv[]));
-BU_EXPORT BU_EXTERN(char ** bu_argv_from_path,
-		    (const char *path,
-		     int *ac));
+		    (int argc, char *argv[]));
+
+/**
+ * Dynamically duplicate an argv array and all elements in the array
+ *
+ * Duplicate an argv array by duplicating all strings and the array
+ * itself.  It is the caller's responsibility to free the array
+ * returned including all elements in the array by calling bu_free()
+ * or bu_free_argv().
+ */
+BU_EXPORT BU_EXTERN(char **bu_dup_argv,
+		    (int argc, const char *argv[]));
+
+/**
+ * Combine two argv arrays into one new (duplicated) argv array.
+ *
+ * If insert is negative, the insertArgv array elements will be
+ * prepended into the new argv array.  If insert is greater than or
+ * equal to argc, the insertArgv array elements will be appended after
+ * all duplicated elementes in the specified argv array.  Otherwise,
+ * the insert argument is the position where the insertArgv array
+ * elements will be merged with the specified argv array.
+ */
+BU_EXPORT BU_EXTERN(char **bu_dupinsert_argv,
+		    (int insert, int insertArgc, const char *insertArgv[], int argc, const char *argv[]));
+
+/**
+ * Generate an argv array from a path
+ *
+ * Given a path string, separate the path elements into a dynamically
+ * allocated argv array with the path separators removed.  It is the
+ * caller's responsibility to free the array that is returned as well
+ * as all elements in the array using bu_free_argv() or manually
+ * calling bu_free().
+ */
+BU_EXPORT BU_EXTERN(char **bu_argv_from_path,
+		    (const char *path, int *ac));
 
 
 __END_DECLS
