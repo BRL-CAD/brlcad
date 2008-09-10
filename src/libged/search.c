@@ -89,14 +89,15 @@
  */
 
 #include "common.h"
+
 #include <string.h>
 #include <stdlib.h>
-
+#include <time.h>
+#include <regex.h>
 #include "bio.h"
+
 #include "cmd.h"
 #include "ged_private.h"
-
-#include <regex.h>
 
 #include "search.h"
 
@@ -714,11 +715,11 @@ c_attr(char *pattern, char ***ignored, int unused, PLAN **resultplan)
 				break;
 			case DB5_MINORTYPE_BRLCAD_COMBINATION:
 				if (DB_FULL_PATH_CUR_DIR(entry)->d_flags & DIR_REGION) {
-					if ((!bu_fnmatch(plan->type_data, "r", 0)) || (!fnmatch(plan->type_data, "region", 0))) {
+					if ((!bu_fnmatch(plan->type_data, "r", 0)) || (!bu_fnmatch(plan->type_data, "region", 0))) {
 						type_match = 1;
 					}
 				} else {
-					if ((!bu_fnmatch(plan->type_data, "comb", 0)) || (!fnmatch(plan->type_data, "combination", 0))) {
+					if ((!bu_fnmatch(plan->type_data, "comb", 0)) || (!bu_fnmatch(plan->type_data, "combination", 0))) {
 						type_match = 1;
 					}
 				}

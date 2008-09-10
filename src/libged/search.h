@@ -51,8 +51,6 @@
  *
  */
 
-#include <sys/cdefs.h>
-
 /* node type */
 enum ntype {
 	N_AND = 1, 				/* must start > 0 */
