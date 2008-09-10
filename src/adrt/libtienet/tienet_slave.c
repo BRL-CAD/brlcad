@@ -80,7 +80,8 @@ void tienet_slave_init(int port, char *host,
 }
 
 
-void tienet_slave_free() {
+void tienet_slave_free()
+{
 }
 
 

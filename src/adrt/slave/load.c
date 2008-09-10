@@ -50,8 +50,7 @@ slave_load_free ()
     free (texture_list);
 
     /* Free mesh data */
-    for (i = 0; i < db->mesh_num; i++)
-    {
+    for (i = 0; i < db->mesh_num; i++) {
 	/* Free triangle data */
 	free (db->mesh_list[i]->tri_list);
 	free (db->mesh_list[i]);
@@ -95,7 +94,7 @@ slave_load_MySQL (uint32_t pid, tie_t *tie, const char *hostname)
     sprintf (query, "select gid from project where pid = '%d'", pid);
     mysql_query (&slave_load_mysql_db, query);
     res = mysql_use_result (&slave_load_mysql_db);
-    if(res == NULL) {
+    if (res == NULL) {
 	printf("Unable to get gid... \"%s\"\n", query);
 	return -1;
     }
@@ -131,8 +130,7 @@ slave_load_MySQL (uint32_t pid, tie_t *tie, const char *hostname)
     gind = sizeof(uint16_t);
 
     /* For each mesh */
-    while (gind < gsize)
-    {
+    while (gind < gsize) {
 	slave_load_mesh_list[mind].texture = NULL;
 	slave_load_mesh_list[mind].flags = 0;
 	slave_load_mesh_list[mind].attributes = (adrt_mesh_attributes_t *)bu_malloc(sizeof(adrt_mesh_attributes_t), "mesh attributes");
@@ -245,7 +243,7 @@ slave_load (tie_t *tie, struct adrt_load_info *li, uint32_t dlen)
     void *data = (void *)li;
     TIE_VAL(tie_check_degenerate) = 0;
 
-    switch( *(char *)data) {
+    switch ( *(char *)data) {
 #if HAVE_MYSQL
 	case 0x64:	/* mysql float */
 	    return slave_load_MySQL ( *((uint32_t *)data + 1), tie, (char *)data + 9);
