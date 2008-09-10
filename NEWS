@@ -14,7 +14,17 @@ changes made.  See document footer for additional details.
 --- 2008-09-XX  Release 7.13.0                                     ---
 ----------------------------------------------------------------------
 
-* add -regex and -iregex to search command - C. Yapp
+Of the many enhancements included in this release, MGED gets a
+powerful new command called 'search' that is very similar to the UNIX
+'find' command but for geometry hierarchies.  Included in the
+implementation of 'search' is the ability to list geometry that
+matches a specified name using globbing patterns or regular
+expressions.  You can also search for objects that have attributes
+set, that are referenced in combinations, are at a particular depth in
+the geometry hierarchy, and much more.  You can combine search
+expressions together using boolean logic as well for even more
+powerful operations.
+
 * new search command enabling Unix find style searches - C. Yapp
 * mged no longer requires PATH for internal commands - Sean Morrison
 * mged 'edcolor' command turns into 'color -e' - Sean Morrison
