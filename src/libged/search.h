@@ -58,9 +58,9 @@ enum ntype {
 	N_AND = 1, 				/* must start > 0 */
 	N_ATTR,
 	N_CLOSEPAREN, N_DEPTH, N_EMPTY, N_EXEC, N_EXECDIR, N_EXPR,
-	N_FLAGS, N_INAME, N_LS, N_MAXDEPTH,
+	N_FLAGS, N_INAME, N_IREGEX, N_LS, N_MAXDEPTH,
 	N_MINDEPTH, N_NAME, N_NOT, N_OK, N_OPENPAREN, N_OR, N_PATH, 
-	N_PRINT, N_PRINT0, N_PRUNE, N_STDATTR, N_TYPE
+	N_PRINT, N_PRINT0, N_PRUNE, N_REGEX, N_STDATTR, N_TYPE
 };
 
 
@@ -94,12 +94,14 @@ typedef struct _plandata {
 		char *_c_data;			/* char pointer */
 		char *_attr_data;		/* char pointer */
 		char *_type_data;
+		regex_t _regex_data;	/* compiled regexp */
 		int _max_data;			/* tree depth */
 		int _min_data;			/* tree depth */
 	} p_un;
 } PLAN;
 #define	a_data		p_un._a_data
 #define	c_data		p_un._c_data
+#define regexp_data p_un._regex_data
 #define attr_data	p_un._attr_data
 #define fl_flags	p_un.fl._f_flags
 #define fl_mask		p_un.fl._f_mask
@@ -148,6 +150,8 @@ PLAN	*c_ls(char *, char ***, int);
 PLAN	*c_maxdepth(char *, char ***, int);
 PLAN	*c_mindepth(char *, char ***, int);
 int	c_name(char *, char ***, int, PLAN **);
+int	c_regex(char *, char ***, int, PLAN **);
+int	c_iregex(char *, char ***, int, PLAN **);
 PLAN	*c_path(char *, char ***, int);
 int	c_print(char *, char ***, int, PLAN **);
 int	c_print0(char *, char ***, int, PLAN **);

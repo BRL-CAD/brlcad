@@ -17,8 +17,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  *
- * Includes code from OpenBSD's find command:
+ * Includes code from OpenBSD's and NetBSD's find commands:
  *
+ * OpenBSD:
+ * 
  * Copyright (c) 1990, 1993
  *      The Regents of the University of California.  All rights reserved.
  *
@@ -45,6 +47,40 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * NetBSD:
+ * 
+ * Copyright (c) 1990, 1993, 1994
+ * The Regents of the University of California.  All rights reserved.
+ *   
+ * This code is derived from software contributed to Berkeley by
+ * Cimarron D. Taylor of the University of California, Berkeley.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.                             
+ *
+ * 
  */
 /** @file search.c
  *
@@ -53,13 +89,15 @@
  */
 
 #include "common.h"
-
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #include "bio.h"
 #include "cmd.h"
 #include "ged_private.h"
+
+#include <regex.h>
 
 #include "search.h"
 
@@ -199,17 +237,19 @@ static OPTION options[] = {
         { "!",          N_NOT,          c_not,          O_ZERO },
         { "(",          N_OPENPAREN,    c_openparen,    O_ZERO },
         { ")",          N_CLOSEPAREN,   c_closeparen,   O_ZERO },
-	{ "-a",         N_AND,          NULL,           O_NONE },
-	{ "-and",       N_AND,          NULL,           O_NONE },
-	{ "-attr",	N_ATTR,		c_attr,		O_ARGV },
-        { "-name",      N_NAME,         c_name,         O_ARGV },
+		{ "-a",         N_AND,          NULL,           O_NONE },
+		{ "-and",       N_AND,          NULL,           O_NONE },
+		{ "-attr",	N_ATTR,		c_attr,		O_ARGV },
+		{ "-iregex",   N_IREGEX,      c_iregex,      O_ARGV },
+		{ "-name",      N_NAME,         c_name,         O_ARGV },
         { "-not",       N_NOT,          c_not,          O_ZERO },
-	{ "-o",         N_OR,           c_or,		O_ZERO },
-	{ "-or", 	N_OR, 		c_or, 		O_ZERO },
-	{ "-print",     N_PRINT,        c_print,        O_ZERO },
-	{ "-print0",    N_PRINT0,       c_print0,       O_ZERO },
-	{ "-stdattr",   N_STDATTR,      c_stdattr,      O_ZERO },
-	{ "-type",   	N_TYPE,     	c_type,		O_ARGV },
+		{ "-o",         N_OR,           c_or,		O_ZERO },
+		{ "-or", 	N_OR, 		c_or, 		O_ZERO },
+		{ "-print",     N_PRINT,        c_print,        O_ZERO },
+		{ "-print0",    N_PRINT0,       c_print0,       O_ZERO },
+		{ "-regex",   N_REGEX,      c_regex,      O_ARGV },
+		{ "-stdattr",   N_STDATTR,      c_stdattr,      O_ZERO },
+		{ "-type",   	N_TYPE,     	c_type,		O_ARGV },
 };
 
 static PLAN *
@@ -339,6 +379,60 @@ c_name(char *pattern, char ***ignored, int unused, PLAN **resultplan)
 	(*resultplan) = new;
         return BRLCAD_OK;
 }
+
+
+
+/*
+ * -regex regexp (and related) functions --
+ *
+ *	True if the complete file path matches the regular expression regexp.
+ *	For -regex, regexp is a case-sensitive (basic) regular expression.
+ *	For -iregex, regexp is a case-insensitive (basic) regular expression.
+ */
+int
+f_regex(PLAN *plan, struct db_full_path *entry, struct rt_wdb *wdbp)
+{
+	return (!(regexec(&plan->regexp_data, db_path_to_string(entry), 0, NULL, 0)));
+}
+
+int
+c_regex_common(enum ntype type, char *regexp, bool icase, PLAN **resultplan)
+{
+	regex_t reg;
+	PLAN *new;
+	int rv;
+	size_t len;
+	bu_log("Matching extened regular expression: %s\n", regexp);
+	if (icase) {
+		rv = regcomp(&reg, regexp, REG_NOSUB|REG_EXTENDED|REG_ICASE);
+	} else {
+		rv = regcomp(&reg, regexp, REG_NOSUB|REG_EXTENDED);
+	}	
+	if (rv != 0) {
+		bu_log("Error - regex compile did not succeed: %s\n", regexp);
+		return BRLCAD_ERROR;
+	}
+	new = palloc(type, f_regex);
+	new->regexp_data = reg;
+	(*resultplan) = new;
+	return BRLCAD_OK;
+}
+
+int
+c_regex(char *pattern, char ***ignored, int unused, PLAN **resultplan)
+{
+	return (c_regex_common(N_REGEX, pattern, false, resultplan));
+}
+
+int
+c_iregex(char *pattern, char ***ignored, int unused, PLAN **resultplan)
+{
+
+	return (c_regex_common(N_IREGEX, pattern, true, resultplan));
+}
+
+
+
 
 /*
  * -attr functions --

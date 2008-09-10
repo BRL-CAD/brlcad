@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2008-09-XX  Release 7.13.0                                     ---
 ----------------------------------------------------------------------
 
+* add -regex and -iregex to search command - C. Yapp
 * new search command enabling Unix find style searches - C. Yapp
 * mged no longer requires PATH for internal commands - Sean Morrison
 * mged 'edcolor' command turns into 'color -e' - Sean Morrison
