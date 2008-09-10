@@ -74,7 +74,6 @@
 #define BU_FNM_IGNORECASE  BU_FNM_CASEFOLD
 #define BU_FNM_FILE_NAME   BU_FNM_PATHNAME
 
-
 #define	BU_FNM_EOS	'\0'
 
 #define	BU_FNM_RANGE_MATCH	1
@@ -82,7 +81,60 @@
 #define	BU_FNM_RANGE_ERROR	(-1)
 
 
-static int bu_rangematch(const char *, char, int, char **);
+static int
+bu_rangematch(const char *pattern, char test, int flags, char **newp)
+{
+	int negate, ok;
+	char c, c2;
+
+	/*
+	 * A bracket expression starting with an unquoted circumflex
+	 * character produces unspecified results (IEEE 1003.2-1992,
+	 * 3.13.2).  This implementation treats it like '!', for
+	 * consistency with the regular expression syntax.
+	 * J.T. Conklin (conklin@ngai.kaleida.com)
+	 */
+	if ((negate = (*pattern == '!' || *pattern == '^')))
+		++pattern;
+
+	if (flags & BU_FNM_CASEFOLD)
+		test = (char)tolower((unsigned char)test);
+
+	/*
+	 * A right bracket shall lose its special meaning and represent
+	 * itself in a bracket expression if it occurs first in the list.
+	 * -- POSIX.2 2.8.3.2
+	 */
+	ok = 0;
+	c = *pattern++;
+	do {
+		if (c == '\\' && !(flags & BU_FNM_NOESCAPE))
+			c = *pattern++;
+		if (c == BU_FNM_EOS)
+			return (BU_FNM_RANGE_ERROR);
+		if (c == '/' && (flags & BU_FNM_PATHNAME))
+			return (BU_FNM_RANGE_NOMATCH);
+		if ((flags & BU_FNM_CASEFOLD))
+			c = (char)tolower((unsigned char)c);
+		if (*pattern == '-'
+		    && (c2 = *(pattern+1)) != BU_FNM_EOS && c2 != ']') {
+			pattern += 2;
+			if (c2 == '\\' && !(flags & BU_FNM_NOESCAPE))
+				c2 = *pattern++;
+			if (c2 == BU_FNM_EOS)
+				return (BU_FNM_RANGE_ERROR);
+			if (flags & BU_FNM_CASEFOLD)
+				c2 = (char)tolower((unsigned char)c2);
+			if (c <= test && test <= c2)
+				ok = 1;
+		} else if (c == test)
+			ok = 1;
+	} while ((c = *pattern++) != ']');
+
+	*newp = (char *)pattern;
+	return (ok == negate ? BU_FNM_RANGE_NOMATCH : BU_FNM_RANGE_MATCH);
+}
+
 
 int
 bu_fnmatch(const char *pattern, const char *string, int flags)
@@ -184,56 +236,3 @@ bu_fnmatch(const char *pattern, const char *string, int flags)
 	/* NOTREACHED */
 }
 
-static int
-bu_rangematch(const char *pattern, char test, int flags, char **newp)
-{
-	int negate, ok;
-	char c, c2;
-
-	/*
-	 * A bracket expression starting with an unquoted circumflex
-	 * character produces unspecified results (IEEE 1003.2-1992,
-	 * 3.13.2).  This implementation treats it like '!', for
-	 * consistency with the regular expression syntax.
-	 * J.T. Conklin (conklin@ngai.kaleida.com)
-	 */
-	if ((negate = (*pattern == '!' || *pattern == '^')))
-		++pattern;
-
-	if (flags & BU_FNM_CASEFOLD)
-		test = (char)tolower((unsigned char)test);
-
-	/*
-	 * A right bracket shall lose its special meaning and represent
-	 * itself in a bracket expression if it occurs first in the list.
-	 * -- POSIX.2 2.8.3.2
-	 */
-	ok = 0;
-	c = *pattern++;
-	do {
-		if (c == '\\' && !(flags & BU_FNM_NOESCAPE))
-			c = *pattern++;
-		if (c == BU_FNM_EOS)
-			return (BU_FNM_RANGE_ERROR);
-		if (c == '/' && (flags & BU_FNM_PATHNAME))
-			return (BU_FNM_RANGE_NOMATCH);
-		if ((flags & BU_FNM_CASEFOLD))
-			c = (char)tolower((unsigned char)c);
-		if (*pattern == '-'
-		    && (c2 = *(pattern+1)) != BU_FNM_EOS && c2 != ']') {
-			pattern += 2;
-			if (c2 == '\\' && !(flags & BU_FNM_NOESCAPE))
-				c2 = *pattern++;
-			if (c2 == BU_FNM_EOS)
-				return (BU_FNM_RANGE_ERROR);
-			if (flags & BU_FNM_CASEFOLD)
-				c2 = (char)tolower((unsigned char)c2);
-			if (c <= test && test <= c2)
-				ok = 1;
-		} else if (c == test)
-			ok = 1;
-	} while ((c = *pattern++) != ']');
-
-	*newp = (char *)pattern;
-	return (ok == negate ? BU_FNM_RANGE_NOMATCH : BU_FNM_RANGE_MATCH);
-}
