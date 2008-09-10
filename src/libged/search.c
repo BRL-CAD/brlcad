@@ -91,7 +91,6 @@
 #include "common.h"
 #include <string.h>
 #include <stdlib.h>
-#include <stdbool.h>
 
 #include "bio.h"
 #include "cmd.h"
@@ -396,14 +395,14 @@ f_regex(PLAN *plan, struct db_full_path *entry, struct rt_wdb *wdbp)
 }
 
 int
-c_regex_common(enum ntype type, char *regexp, bool icase, PLAN **resultplan)
+c_regex_common(enum ntype type, char *regexp, int icase, PLAN **resultplan)
 {
 	regex_t reg;
 	PLAN *new;
 	int rv;
 	size_t len;
 	bu_log("Matching extened regular expression: %s\n", regexp);
-	if (icase) {
+	if (icase = 1 ) {
 		rv = regcomp(&reg, regexp, REG_NOSUB|REG_EXTENDED|REG_ICASE);
 	} else {
 		rv = regcomp(&reg, regexp, REG_NOSUB|REG_EXTENDED);
@@ -422,14 +421,14 @@ c_regex_common(enum ntype type, char *regexp, bool icase, PLAN **resultplan)
 int
 c_regex(char *pattern, char ***ignored, int unused, PLAN **resultplan)
 {
-	return (c_regex_common(N_REGEX, pattern, false, resultplan));
+	return (c_regex_common(N_REGEX, pattern, 0, resultplan));
 }
 
 int
 c_iregex(char *pattern, char ***ignored, int unused, PLAN **resultplan)
 {
 
-	return (c_regex_common(N_IREGEX, pattern, true, resultplan));
+	return (c_regex_common(N_IREGEX, pattern, 1, resultplan));
 }
 
 
