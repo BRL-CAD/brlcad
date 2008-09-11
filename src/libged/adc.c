@@ -119,7 +119,10 @@ ged_adc(struct ged	*gedp,
     }
 
     for (i = 0; i < argc; ++i)
-	user_pt[i] = atof(argp[i]);
+	if (sscanf(argp[i], "%lf", &user_pt[i]) != 1) {
+	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    return BRLCAD_ERROR;
+	}
 
     if (strcmp(parameter, "draw") == 0) {
 	if (argc == 0) {
