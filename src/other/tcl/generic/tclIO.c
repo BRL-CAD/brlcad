@@ -5431,6 +5431,8 @@ ReadChars(
     char *src, *dst;
     Tcl_EncodingState oldState;
     int encEndFlagSuppressed = 0;
+    static int mflag = 0;
+    static int maxInt = 2147483647;
 
     factor = *factorPtr;
     offset = *offsetPtr;
@@ -5460,12 +5462,24 @@ ReadChars(
 	 * larger.
 	 */
 
+	if (mflag) {
+	    mflag = 0;
+	    return -1;
+	}
+
 	length = offset * 2;
 	if (offset < dstNeeded) {
 	    length = offset + dstNeeded;
 	}
-	spaceLeft = length - offset;
-	length += TCL_UTF_MAX + 1;
+
+	if (length < 0) {
+	    length = maxInt;
+	    mflag = 1;
+	    spaceLeft = length - offset;
+	} else {
+	    spaceLeft = length - offset;
+	    length += TCL_UTF_MAX + 1;
+	}
 	Tcl_SetObjLength(objPtr, length);
     }
     if (toRead == srcLen) {
