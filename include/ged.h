@@ -167,17 +167,6 @@ __BEGIN_DECLS
 	return (_ret); \
     }
 
-struct ged_grid_state {
-    int		ggs_draw;		/* draw grid */
-    int		ggs_snap;		/* snap to grid */
-    fastf_t	ggs_anchor[3];
-    fastf_t	ggs_res_h;		/* grid resolution in h */
-    fastf_t	ggs_res_v;		/* grid resolution in v */
-    int		ggs_res_major_h;	/* major grid resolution in h */
-    int		ggs_res_major_v;	/* major grid resolution in v */
-    int		ggs_color[3];
-};
-
 struct ged_adc_state {
     int		gas_draw;
     int		gas_dv_x;
@@ -203,6 +192,17 @@ struct ged_adc_state {
     int		gas_linewidth;
 };
 
+struct ged_grid_state {
+    int		ggs_draw;		/* draw grid */
+    int		ggs_snap;		/* snap to grid */
+    fastf_t	ggs_anchor[3];
+    fastf_t	ggs_res_h;		/* grid resolution in h */
+    fastf_t	ggs_res_v;		/* grid resolution in v */
+    int		ggs_res_major_h;	/* major grid resolution in h */
+    int		ggs_res_major_v;	/* major grid resolution in v */
+    int		ggs_color[3];
+};
+
 struct ged_rect_state {
     int		grs_active;	/* 1 - actively drawing a rectangle */
     int		grs_draw;	/* draw rubber band rectangle */
@@ -214,7 +214,10 @@ struct ged_rect_state {
     fastf_t	grs_y;		/* ------ view coordinates (i.e. +-1.0). */
     fastf_t	grs_width;	/* Width and height of rectangle in      */
     fastf_t	grs_height;	/* ------ normalized view coordinates.   */
-    int		grs_color[3];
+    int		grs_bg[3];	/* Background color */
+    int		grs_color[3];	/* Rectangle color */
+    int		grs_cdim[2];	/* Canvas dimension in pixels */
+    fastf_t	grs_aspect;	/* Canvas aspect ratio */
 };
 
 struct ged_run_rt {
@@ -399,24 +402,6 @@ GED_EXPORT BU_EXTERN(struct ged *ged_open,
 		      const char *filename));
 GED_EXPORT BU_EXTERN(void ged_view_init,
 		     (struct ged_view *gvp));
-
-/* defined in grid.c */
-GED_EXPORT BU_EXTERN(void ged_grid_vls_print,
-		     (struct ged_grid_state *ggsp,
-		      struct ged_view *gvp,
-		      fastf_t base2local,
-		      struct bu_vls *out_vp));
-GED_EXPORT BU_EXTERN(void ged_snap_to_grid,
-		     (struct ged_grid_state *ggsp,
-		      struct ged_view *gvp,
-		      fastf_t base2local,
-		      fastf_t *mx,
-		      fastf_t *my));
-GED_EXPORT BU_EXTERN(void ged_snap_view_center_to_grid,
-		     (struct ged_grid_state *ggsp,
-		      struct ged_view *gvp,
-		      fastf_t base2local));
-
 
 /* defined in wdb_comb_std.c */
 GED_EXPORT BU_EXTERN(int wdb_comb_std_cmd,
@@ -988,40 +973,6 @@ GED_EXPORT BU_EXTERN(int	vo_dir2ae_cmd,
 GED_EXPORT BU_EXTERN(int ged_editit, (const char *file));
 
 
-/* Defined in rect.c */
-GED_EXPORT BU_EXTERN(void ged_rect_vls_print,
-		     (struct ged_rect_state *grsp,
-		      struct bu_vls *out_vp));
-GED_EXPORT BU_EXTERN(void ged_rect_view2image,
-		     (struct ged_rect_state *grsp,
-		      int width,
-		      int height,
-		      fastf_t aspect));
-GED_EXPORT BU_EXTERN(void ged_rect_image2view,
-		     (struct ged_rect_state *grsp,
-		      int width,
-		      int height,
-		      fastf_t aspect));
-GED_EXPORT BU_EXTERN(void ged_adjust_rect_for_zoom,
-		     (struct ged_rect_state *grsp,
-		      fastf_t aspect));
-GED_EXPORT BU_EXTERN(int ged_rt_rect_area,
-		     (struct ged *gedp,
-		      struct ged_rect_state *grsp,
-		      int width,
-		      int height,
-		      fastf_t aspect,
-		      int port,
-		      int color[3]));
-GED_EXPORT BU_EXTERN(int ged_zoom_rect_area,
-		     (struct ged *gedp,
-		      struct ged_rect_state *grsp,
-		      int canvas_width,
-		      int canvas_height,
-		      fastf_t canvas_aspect));
-
-
-
 /* Defined in vutil.c */
 GED_EXPORT BU_EXTERN(void ged_persp_mat,
 		     (fastf_t *m,
@@ -1570,6 +1521,14 @@ GED_EXPORT BU_EXTERN(int ged_get_type, (struct ged *gedp, int argc, const char *
 GED_EXPORT BU_EXTERN(int ged_glob, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Grid utility command.
+ *
+ * Usage:
+ *     grid args
+ */
+GED_EXPORT BU_EXTERN(int ged_grid, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Create or append objects to a group
  *
  * Usage:
@@ -2056,6 +2015,14 @@ GED_EXPORT BU_EXTERN(void ged_free_qray,
  *     rcodes filename
  */
 GED_EXPORT BU_EXTERN(int ged_rcodes, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Rubber band rectangle utility.
+ *
+ * Usage:
+ *     rect args
+ */
+GED_EXPORT BU_EXTERN(int ged_rect, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Edit region/comb
