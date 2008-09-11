@@ -124,7 +124,7 @@ sh_null_render( struct application *ap, struct partition *pp, struct shadework *
  */
 HIDDEN void
 sh_null_print( register struct region *rp, char *dp ) {
-    bu_log("%S uses the null shader\n", rp->reg_name);
+    bu_log("%V uses the null shader\n", rp->reg_name);
 }
 
 

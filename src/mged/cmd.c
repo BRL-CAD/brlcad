@@ -1146,22 +1146,22 @@ f_tie(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	for ( BU_LIST_FOR(clp, cmd_list, &head_cmd_list.l) ) {
 	    bu_vls_trunc(&vls, 0);
 	    if (clp->cl_tie) {
-		bu_vls_printf(&vls, "%S %S", &clp->cl_name,
+		bu_vls_printf(&vls, "%V %V", &clp->cl_name,
 			      &clp->cl_tie->dml_dmp->dm_pathName);
 		Tcl_AppendElement(interp, bu_vls_addr(&vls));
 	    } else {
-		bu_vls_printf(&vls, "%S {}", &clp->cl_name);
+		bu_vls_printf(&vls, "%V {}", &clp->cl_name);
 		Tcl_AppendElement(interp, bu_vls_addr(&vls));
 	    }
 	}
 
 	bu_vls_trunc(&vls, 0);
 	if (clp->cl_tie) {
-	    bu_vls_printf(&vls, "%S %S", &clp->cl_name,
+	    bu_vls_printf(&vls, "%V %V", &clp->cl_name,
 			  &clp->cl_tie->dml_dmp->dm_pathName);
 	    Tcl_AppendElement(interp, bu_vls_addr(&vls));
 	} else {
-	    bu_vls_printf(&vls, "%S {}", &clp->cl_name);
+	    bu_vls_printf(&vls, "%V {}", &clp->cl_name);
 	    Tcl_AppendElement(interp, bu_vls_addr(&vls));
 	}
 

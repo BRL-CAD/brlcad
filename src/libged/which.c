@@ -187,9 +187,9 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
 
 	while (BU_LIST_WHILE(inp, ged_id_names, &itnp->headName.l)) {
 	    if (sflag)
-		bu_vls_printf(&gedp->ged_result_str, " %S", &inp->name);
+		bu_vls_printf(&gedp->ged_result_str, " %V", &inp->name);
 	    else
-		bu_vls_printf(&gedp->ged_result_str, "   %S\n", &inp->name);
+		bu_vls_printf(&gedp->ged_result_str, "   %V\n", &inp->name);
 
 	    BU_LIST_DEQUEUE(&inp->l);
 	    bu_vls_free(&inp->name);

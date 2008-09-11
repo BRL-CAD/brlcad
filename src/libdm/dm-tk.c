@@ -310,7 +310,7 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
 		  (char *)Tk_Name(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin));
 
     bu_vls_init(&str);
-    bu_vls_printf(&str, "_init_dm %S %S\n",
+    bu_vls_printf(&str, "_init_dm %V %V\n",
 		  &init_proc_vls,
 		  &dmp->dm_pathName);
 

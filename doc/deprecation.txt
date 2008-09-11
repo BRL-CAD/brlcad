@@ -50,6 +50,8 @@ new names should be listed for reference.
 
 7.14
 ----
+include/bu.h
+	%S format specifier -> %V format specifier for bu_vls [deprecated 7.14]
 mged
 	-n option -> -c option [deprecated 7.14]
 

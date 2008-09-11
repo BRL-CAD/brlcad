@@ -1051,7 +1051,7 @@ go_constrain_rmode(struct ged	*gedp,
     gdvp->gdv_view->gv_mode = GED_CONSTRAINED_ROTATE_MODE;
 
     bu_vls_init(&bindings);
-    bu_vls_printf(&bindings, "bind %S <Motion> {%S mouse_constrain_rot %S %s %%x %%y}; break",
+    bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_constrain_rot %V %s %%x %%y}; break",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &go_current_gop->go_name,
 		  &gdvp->gdv_name,
@@ -1116,7 +1116,7 @@ go_constrain_tmode(struct ged	*gedp,
     gdvp->gdv_view->gv_mode = GED_CONSTRAINED_TRANSLATE_MODE;
 
     bu_vls_init(&bindings);
-    bu_vls_printf(&bindings, "bind %S <Motion> {%S mouse_constrain_trans %S %s %%x %%y}; break",
+    bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_constrain_trans %V %s %%x %%y}; break",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &go_current_gop->go_name,
 		  &gdvp->gdv_name,
@@ -1413,7 +1413,7 @@ go_idle_mode(struct ged		*gedp,
     }
 
     bu_vls_init(&bindings);
-    bu_vls_printf(&bindings, "bind %S <Motion> {}",
+    bu_vls_printf(&bindings, "bind %V <Motion> {}",
 		  &gdvp->gdv_dmp->dm_pathName);
     Tcl_Eval(go_current_gop->go_interp, bu_vls_addr(&bindings));
     bu_vls_free(&bindings);
@@ -1507,7 +1507,7 @@ go_list_views(struct ged	*gedp,
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l))
-	bu_vls_printf(&gedp->ged_result_str, "%S ", &gdvp->gdv_name);
+	bu_vls_printf(&gedp->ged_result_str, "%V ", &gdvp->gdv_name);
 
     return BRLCAD_OK;
 }
@@ -2236,177 +2236,177 @@ go_new_view(struct ged		*gedp,
 	struct bu_vls bindings;
 
 	bu_vls_init(&bindings);
-	bu_vls_printf(&bindings, "bind %S <Configure> {%S configure %S; break}; ",
+	bu_vls_printf(&bindings, "bind %V <Configure> {%V configure %V; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %S <Expose> {%S refresh %S; break}; ",
+	bu_vls_printf(&bindings, "bind %V <Expose> {%V refresh %V; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "wm protocol %S WM_DELETE_WINDOW {%S delete_view %S; break}; ",
+	bu_vls_printf(&bindings, "wm protocol %V WM_DELETE_WINDOW {%V delete_view %V; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %S <2> {%S vslew %S %%x %%y; break}; ",
+	bu_vls_printf(&bindings, "bind %V <2> {%V vslew %V %%x %%y; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %S <1> {%S zoom %S 0.5; break}; ",
+	bu_vls_printf(&bindings, "bind %V <1> {%V zoom %V 0.5; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %S <3> {%S zoom %S 2.0; break}; ",
+	bu_vls_printf(&bindings, "bind %V <3> {%V zoom %V 2.0; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
 
 	/* Idle Mode */
-	bu_vls_printf(&bindings, "bind %S <ButtonRelease> {%S idle_mode %S; break}; ",
+	bu_vls_printf(&bindings, "bind %V <ButtonRelease> {%V idle_mode %V; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %S <KeyRelease-Control_L> {%S idle_mode %S; break}; ",
+	bu_vls_printf(&bindings, "bind %V <KeyRelease-Control_L> {%V idle_mode %V; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %S <KeyRelease-Control_R> {%S idle_mode %S; break}; ",
+	bu_vls_printf(&bindings, "bind %V <KeyRelease-Control_R> {%V idle_mode %V; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %S <KeyRelease-Shift_L> {%S idle_mode %S; break}; ",
+	bu_vls_printf(&bindings, "bind %V <KeyRelease-Shift_L> {%V idle_mode %V; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %S <KeyRelease-Shift_R> {%S idle_mode %S; break}; ",
+	bu_vls_printf(&bindings, "bind %V <KeyRelease-Shift_R> {%V idle_mode %V; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %S <KeyRelease-Alt_L> {%S idle_mode %S; break}; ",
+	bu_vls_printf(&bindings, "bind %V <KeyRelease-Alt_L> {%V idle_mode %V; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %S <KeyRelease-Alt_R> {%S idle_mode %S; break}; ",
+	bu_vls_printf(&bindings, "bind %V <KeyRelease-Alt_R> {%V idle_mode %V; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
 
 	/* Rotate Mode */
-	bu_vls_printf(&bindings, "bind %S <Control-ButtonPress-1> {%S rotate_mode %S %%x %%y; break}; ",
+	bu_vls_printf(&bindings, "bind %V <Control-ButtonPress-1> {%V rotate_mode %V %%x %%y; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %S <Control-ButtonPress-2> {%S rotate_mode %S %%x %%y; break}; ",
+	bu_vls_printf(&bindings, "bind %V <Control-ButtonPress-2> {%V rotate_mode %V %%x %%y; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %S <Control-ButtonPress-3> {%S rotate_mode %S %%x %%y; break}; ",
+	bu_vls_printf(&bindings, "bind %V <Control-ButtonPress-3> {%V rotate_mode %V %%x %%y; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
 
 	/* Translate Mode */
-	bu_vls_printf(&bindings, "bind %S <Shift-ButtonPress-1> {%S translate_mode %S %%x %%y; break}; ",
+	bu_vls_printf(&bindings, "bind %V <Shift-ButtonPress-1> {%V translate_mode %V %%x %%y; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %S <Shift-ButtonPress-2> {%S translate_mode %S %%x %%y; break}; ",
+	bu_vls_printf(&bindings, "bind %V <Shift-ButtonPress-2> {%V translate_mode %V %%x %%y; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %S <Shift-ButtonPress-3> {%S translate_mode %S %%x %%y; break}; ",
+	bu_vls_printf(&bindings, "bind %V <Shift-ButtonPress-3> {%V translate_mode %V %%x %%y; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
 
 	/* Scale Mode */
-	bu_vls_printf(&bindings, "bind %S <Control-Shift-ButtonPress-1> {%S scale_mode %S %%x %%y; break}; ",
+	bu_vls_printf(&bindings, "bind %V <Control-Shift-ButtonPress-1> {%V scale_mode %V %%x %%y; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %S <Control-Shift-ButtonPress-2> {%S scale_mode %S %%x %%y; break}; ",
+	bu_vls_printf(&bindings, "bind %V <Control-Shift-ButtonPress-2> {%V scale_mode %V %%x %%y; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %S <Control-Shift-ButtonPress-3> {%S scale_mode %S %%x %%y; break}; ",
+	bu_vls_printf(&bindings, "bind %V <Control-Shift-ButtonPress-3> {%V scale_mode %V %%x %%y; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %S <Alt-Control-Shift-ButtonPress-1> {%S scale_mode %S %%x %%y; break}; ",
+	bu_vls_printf(&bindings, "bind %V <Alt-Control-Shift-ButtonPress-1> {%V scale_mode %V %%x %%y; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %S <Alt-Control-Shift-ButtonPress-2> {%S scale_mode %S %%x %%y; break}; ",
+	bu_vls_printf(&bindings, "bind %V <Alt-Control-Shift-ButtonPress-2> {%V scale_mode %V %%x %%y; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %S <Alt-Control-Shift-ButtonPress-3> {%S scale_mode %S %%x %%y; break}; ",
+	bu_vls_printf(&bindings, "bind %V <Alt-Control-Shift-ButtonPress-3> {%V scale_mode %V %%x %%y; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
 
 	/* Constrained Rotate Mode */
-	bu_vls_printf(&bindings, "bind %S <Alt-Control-ButtonPress-1> {%S constrain_rmode %S x %%x %%y; break}; ",
+	bu_vls_printf(&bindings, "bind %V <Alt-Control-ButtonPress-1> {%V constrain_rmode %V x %%x %%y; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %S <Alt-Control-ButtonPress-2> {%S constrain_rmode %S y %%x %%y; break}; ",
+	bu_vls_printf(&bindings, "bind %V <Alt-Control-ButtonPress-2> {%V constrain_rmode %V y %%x %%y; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %S <Alt-Control-ButtonPress-3> {%S constrain_rmode %S z %%x %%y; break}; ",
+	bu_vls_printf(&bindings, "bind %V <Alt-Control-ButtonPress-3> {%V constrain_rmode %V z %%x %%y; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
 
 	/* Constrained Translate Mode */
-	bu_vls_printf(&bindings, "bind %S <Alt-Shift-ButtonPress-1> {%S constrain_tmode %S x %%x %%y; break}; ",
+	bu_vls_printf(&bindings, "bind %V <Alt-Shift-ButtonPress-1> {%V constrain_tmode %V x %%x %%y; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %S <Alt-Shift-ButtonPress-2> {%S constrain_tmode %S y %%x %%y; break}; ",
+	bu_vls_printf(&bindings, "bind %V <Alt-Shift-ButtonPress-2> {%V constrain_tmode %V y %%x %%y; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %S <Alt-Shift-ButtonPress-3> {%S constrain_tmode %S z %%x %%y; break}; ",
+	bu_vls_printf(&bindings, "bind %V <Alt-Shift-ButtonPress-3> {%V constrain_tmode %V z %%x %%y; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
 
 	/* Key Bindings */
-	bu_vls_printf(&bindings, "bind %S 3 {%S aet %S 35 25; break}; ",
+	bu_vls_printf(&bindings, "bind %V 3 {%V aet %V 35 25; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %S 4 {%S aet %S 45 45; break}; ",
+	bu_vls_printf(&bindings, "bind %V 4 {%V aet %V 45 45; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %S f {%S aet %S 0 0; break}; ",
+	bu_vls_printf(&bindings, "bind %V f {%V aet %V 0 0; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %S R {%S aet %S 180 0; break}; ",
+	bu_vls_printf(&bindings, "bind %V R {%V aet %V 180 0; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %S r {%S aet %S 270 0; break}; ",
+	bu_vls_printf(&bindings, "bind %V r {%V aet %V 270 0; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %S l {%S aet %S 90 0; break}; ",
+	bu_vls_printf(&bindings, "bind %V l {%V aet %V 90 0; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %S t {%S aet %S 0 90; break}; ",
+	bu_vls_printf(&bindings, "bind %V t {%V aet %V 0 90; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "bind %S b {%S aet %S 0 270; break}; ",
+	bu_vls_printf(&bindings, "bind %V b {%V aet %V 0 270; break}; ",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
-	bu_vls_printf(&bindings, "event generate %S <Configure>; %S autoview %S",
+	bu_vls_printf(&bindings, "event generate %V <Configure>; %V autoview %V",
 		      &new_gdvp->gdv_dmp->dm_pathName,
 		      &go_current_gop->go_name,
 		      &new_gdvp->gdv_name);
@@ -2817,7 +2817,7 @@ go_rotate_mode(struct ged	*gedp,
     gdvp->gdv_view->gv_mode = GED_ROTATE_MODE;
 
     bu_vls_init(&bindings);
-    bu_vls_printf(&bindings, "bind %S <Motion> {%S mouse_rot %S %%x %%y}",
+    bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_rot %V %%x %%y}",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &go_current_gop->go_name,
 		  &gdvp->gdv_name);
@@ -3045,7 +3045,7 @@ go_scale_mode(struct ged	*gedp,
     gdvp->gdv_view->gv_mode = GED_SCALE_MODE;
 
     bu_vls_init(&bindings);
-    bu_vls_printf(&bindings, "bind %S <Motion> {%S mouse_scale %S %%x %%y}",
+    bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_scale %V %%x %%y}",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &go_current_gop->go_name,
 		  &gdvp->gdv_name);
@@ -3211,7 +3211,7 @@ go_translate_mode(struct ged	*gedp,
     gdvp->gdv_view->gv_mode = GED_TRANSLATE_MODE;
 
     bu_vls_init(&bindings);
-    bu_vls_printf(&bindings, "bind %S <Motion> {%S mouse_trans %S %%x %%y}",
+    bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_trans %V %%x %%y}",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &go_current_gop->go_name,
 		  &gdvp->gdv_name);

@@ -255,7 +255,7 @@ hook_file(
  *	These are only used when editing a v4 database
  */
 const struct bu_structparse rt_dsp_parse[] = {
-    {"%S",	1, "file", DSP_O(dsp_name), hook_file },
+    {"%V",	1, "file", DSP_O(dsp_name), hook_file },
     {"%i",	1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL },
     {"%d",	1, "w", DSP_O(dsp_xcnt), BU_STRUCTPARSE_FUNC_NULL },
     {"%d",	1, "n", DSP_O(dsp_ycnt), BU_STRUCTPARSE_FUNC_NULL },
@@ -264,7 +264,7 @@ const struct bu_structparse rt_dsp_parse[] = {
 };
 
 const struct bu_structparse rt_dsp_ptab[] = {
-    {"%S",	1, "file", DSP_O(dsp_name), BU_STRUCTPARSE_FUNC_NULL },
+    {"%V",	1, "file", DSP_O(dsp_name), BU_STRUCTPARSE_FUNC_NULL },
     {"%i",	1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL },
     {"%d",	1, "w", DSP_O(dsp_xcnt), BU_STRUCTPARSE_FUNC_NULL },
     {"%d",	1, "n", DSP_O(dsp_ycnt), BU_STRUCTPARSE_FUNC_NULL },
@@ -4052,7 +4052,7 @@ hook_verify(const struct bu_structparse	*ip,
 
 const struct bu_structparse fake_dsp_printab[] = {
     {"%c",  1, "src", DSP_O(dsp_datasrc), hook_verify },
-    {"%S",  1, "name", DSP_O(dsp_name), BU_STRUCTPARSE_FUNC_NULL },
+    {"%V",  1, "name", DSP_O(dsp_name), BU_STRUCTPARSE_FUNC_NULL },
     {"%d",  1, "w",  DSP_O(dsp_xcnt),	 hook_verify },
     {"%d",  1, "n",  DSP_O(dsp_ycnt),	 hook_verify },
     {"%i",  1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL },

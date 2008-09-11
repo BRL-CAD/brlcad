@@ -52,8 +52,8 @@
 #define RT_SUBMODEL_O(m)	bu_offsetof(struct rt_submodel_internal, m)
 
 const struct bu_structparse rt_submodel_parse[] = {
-    {"%S",	1, "file",	RT_SUBMODEL_O(file),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%S",	1, "treetop",	RT_SUBMODEL_O(treetop),		BU_STRUCTPARSE_FUNC_NULL },
+    {"%V",	1, "file",	RT_SUBMODEL_O(file),		BU_STRUCTPARSE_FUNC_NULL },
+    {"%V",	1, "treetop",	RT_SUBMODEL_O(treetop),		BU_STRUCTPARSE_FUNC_NULL },
     {"%d",	1, "meth",	RT_SUBMODEL_O(meth),		BU_STRUCTPARSE_FUNC_NULL },
     {"",	0, (char *)0, 0,			BU_STRUCTPARSE_FUNC_NULL }
 };

@@ -158,7 +158,7 @@ HIDDEN int img_load_datasource(struct img_specific *image, struct db_i *dbInstan
 
 	    /* check size of object */
 	    if (image->i_binunifp->count < size) {
-		bu_log("\nWARNING: %S needs %d bytes, binary object only has %d\n", &image->i_name, size, image->i_binunifp->count);
+		bu_log("\nWARNING: %V needs %d bytes, binary object only has %d\n", &image->i_name, size, image->i_binunifp->count);
 	    } else if (image->i_binunifp->count > size) {
 		bu_log("\nWARNING: Binary object is larger than specified image size\n\tBinary Object: %d pixels\n\tSpecified Image Size: %d pixels\n...continuing to load using image subsection...", image->i_binunifp->count);
 	    }
@@ -179,7 +179,7 @@ HIDDEN int img_load_datasource(struct img_specific *image, struct db_i *dbInstan
 	    return -1;				/* FAIL */
 
 	if (image->i_data->buflen < size) {
-	    bu_log("\nWARNING: %S needs %d bytes, file only has %d\n", &image->i_name, size, image->i_data->buflen);
+	    bu_log("\nWARNING: %V needs %d bytes, file only has %d\n", &image->i_name, size, image->i_data->buflen);
 	} else if (image->i_data->buflen > size) {
 	    bu_log("\nWARNING: Image file size is larger than specified image size\n\tInput File: %d pixels\n\tSpecified Image Size: %d pixels\n...continuing to load using image subsection...", image->i_data->buflen, size);
 	}
@@ -391,10 +391,10 @@ orient_hook(register const struct bu_structparse *sdp, register const char *name
  * structure above
  */
 struct bu_structparse img_parse_tab[] = {
-    {"%S",	1, "image",		IMG_O(i_name),		BU_STRUCTPARSE_FUNC_NULL},
-    {"%S",  1, "file",		IMG_O(i_name),		img_source_hook},
-    {"%S",	1, "obj",		IMG_O(i_name),		img_source_hook},
-    {"%S",	1, "object",		IMG_O(i_name),		img_source_hook},
+    {"%V",	1, "image",		IMG_O(i_name),		BU_STRUCTPARSE_FUNC_NULL},
+    {"%V",  1, "file",		IMG_O(i_name),		img_source_hook},
+    {"%V",	1, "obj",		IMG_O(i_name),		img_source_hook},
+    {"%V",	1, "object",		IMG_O(i_name),		img_source_hook},
     {"%d",	1, "w",			IMG_O(i_width),		dimen_hook},
     {"%d",	1, "n",			IMG_O(i_height),	dimen_hook},
     {"%f",	1, "viewsize",		IMG_O(i_viewsize),	dimen_hook},

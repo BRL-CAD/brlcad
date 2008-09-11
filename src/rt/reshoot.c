@@ -124,9 +124,9 @@ struct reg_hit {
 };
 
 static const struct bu_structparse reg_sp[] = {
-    {"%S", 1, "region", bu_offsetof(struct reg_hit, regname), BU_STRUCTPARSE_FUNC_NULL },
-    {"%S", 1, "in", bu_offsetof(struct reg_hit, in_primitive), BU_STRUCTPARSE_FUNC_NULL},
-    {"%S", 1, "out", bu_offsetof(struct reg_hit, out_primitive), BU_STRUCTPARSE_FUNC_NULL},
+    {"%V", 1, "region", bu_offsetof(struct reg_hit, regname), BU_STRUCTPARSE_FUNC_NULL },
+    {"%V", 1, "in", bu_offsetof(struct reg_hit, in_primitive), BU_STRUCTPARSE_FUNC_NULL},
+    {"%V", 1, "out", bu_offsetof(struct reg_hit, out_primitive), BU_STRUCTPARSE_FUNC_NULL},
     {"%f", 1, "indist", bu_offsetof(struct reg_hit, indist), BU_STRUCTPARSE_FUNC_NULL},
     {"%f", 1, "outdist", bu_offsetof(struct reg_hit, outdist), BU_STRUCTPARSE_FUNC_NULL},
     {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL }
@@ -218,7 +218,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 	    status = 1;
 	}
 	if (bu_vls_strlen(&result) > 0) {
-	    bu_log("Ray Pt %g,%g,%g Dir %g,%g,%g\n%S",
+	    bu_log("Ray Pt %g,%g,%g Dir %g,%g,%g\n%V",
 		   V3ARGS(sh->pt),
 		   V3ARGS(sh->dir),
 		   &result);

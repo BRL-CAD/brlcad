@@ -210,13 +210,13 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 	/* make ordered idents */
 	bu_vls_strcpy(&cmd, sortcmd);
 	bu_vls_strcat(&cmd, argv[1]);
-	bu_vls_printf(&gedp->ged_result_str, "%S\n", &cmd);
+	bu_vls_printf(&gedp->ged_result_str, "%V\n", &cmd);
 	(void)system( bu_vls_addr(&cmd) );
 
 	bu_vls_trunc( &cmd, 0 );
 	bu_vls_strcpy( &cmd, catcmd );
 	bu_vls_strcat( &cmd, argv[1] );
-	bu_vls_printf(&gedp->ged_result_str, "%S\n", &cmd);
+	bu_vls_printf(&gedp->ged_result_str, "%V\n", &cmd);
 	(void)system( bu_vls_addr(&cmd) );
 
 	(void)unlink( "/tmp/ord_id\0" );

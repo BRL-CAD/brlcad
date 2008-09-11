@@ -158,7 +158,7 @@ f_mater(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	if ( bu_vls_strlen( &comb->shader ) == 0 )
 	    bu_vls_printf(&curr_cmd_list->cl_more_default, "del");
 	else
-	    bu_vls_printf(&curr_cmd_list->cl_more_default, "\"%S\"", &tmp_vls );
+	    bu_vls_printf(&curr_cmd_list->cl_more_default, "\"%V\"", &tmp_vls );
 
 	bu_vls_free( &tmp_vls );
 

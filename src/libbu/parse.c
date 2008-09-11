@@ -646,7 +646,10 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 		}
 	    }
 	    break;
-	    case 'S':
+	    case 'S': /* XXX - DEPRECATED [7.14] */
+		printf("DEVELOPER DEPRECATION NOTICE: Using %S for string printing is deprecated, use %V instead\n");
+		/* fall through */
+	    case 'V':
 	    {
 		struct bu_vls *vls = (struct bu_vls *)loc;
 		bu_vls_init_if_uninit( vls );
@@ -2222,7 +2225,8 @@ bu_structparse_get_terse_form(struct bu_vls *log, const struct bu_structparse *s
 	/* These types are specified by lengths, e.g. %80s */
 	if (strcmp(sp->sp_fmt, "%c") == 0 ||
 	    strcmp(sp->sp_fmt, "%s") == 0 ||
-	    strcmp(sp->sp_fmt, "%S") == 0) {
+	    strcmp(sp->sp_fmt, "%S") == 0 || /* XXX - DEPRECATED [7.14] */
+	    strcmp(sp->sp_fmt, "%V") == 0) {
 	    if (sp->sp_count > 1) {
 		/* Make them all look like %###s */
 		bu_vls_printf(log, "%%%lds", sp->sp_count);
@@ -2342,7 +2346,10 @@ bu_structparse_argv(struct bu_vls		*log,
 		    bu_vls_printf(log, "%s %c ", sdp->sp_name, *loc);
 		}
 		break;
-	    case 'S': {
+	    case 'S': /* XXX - DEPRECATED [7.14] */
+		printf("DEVELOPER DEPRECATION NOTICE: Using %S for string printing is deprecated, use %V instead\n");
+		/* fall through */
+	    case 'V': {
 		/* copy the string to a bu_vls
 		 * (string of variable length provided by libbu)
 		 */
@@ -2355,7 +2362,7 @@ bu_structparse_argv(struct bu_vls		*log,
 
 		if (argc < 1) {
 		    bu_vls_printf(log,
-				  "not enough values for \"%S\" argument: should be %ld",
+				  "not enough values for \"%V\" argument: should be %ld",
 				  sdp->sp_name,
 				  sdp->sp_count);
 		    return BRLCAD_ERROR;

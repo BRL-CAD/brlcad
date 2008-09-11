@@ -157,7 +157,8 @@ bu_tcl_structparse_get_terse_form(Tcl_Interp			*interp,
 	/* These types are specified by lengths, e.g. %80s */
 	if (strcmp(sp->sp_fmt, "%c") == 0 ||
 	    strcmp(sp->sp_fmt, "%s") == 0 ||
-	    strcmp(sp->sp_fmt, "%S") == 0) {
+	    strcmp(sp->sp_fmt, "%S") == 0 || /* XXX - DEPRECATED [7.14] */
+	    strcmp(sp->sp_fmt, "%V") == 0) {
 	    if (sp->sp_count > 1) {
 		/* Make them all look like %###s */
 		bu_vls_printf(&str, "%%%lds", sp->sp_count);

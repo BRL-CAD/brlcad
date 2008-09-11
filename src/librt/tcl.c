@@ -1357,10 +1357,10 @@ rt_parsetab_get(struct bu_vls *log, const struct rt_db_internal *intern, const c
 				(char *)intern->idb_ptr, ' ');
 
 	    if (sp->sp_count < 2)
-		bu_vls_printf(log, " %S", &str);
+		bu_vls_printf(log, " %V", &str);
 	    else {
 		bu_vls_printf(log, " {");
-		bu_vls_printf(log, "%S", &str);
+		bu_vls_printf(log, "%V", &str);
 		bu_vls_printf(log, "} ");
 	    }
 

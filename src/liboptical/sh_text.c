@@ -108,10 +108,10 @@ struct mfuncs txt_mfuncs[] = {
 
 struct bu_structparse txt_parse[] = {
     {"%d",	1, "transp",	bu_offsetofarray(struct txt_specific, tx_transp),	txt_transp_hook },
-    {"%S",	1, "file", TX_O(tx_name),		txt_source_hook },
-    {"%S",	1, "obj", TX_O(tx_name),		txt_source_hook },
-    {"%S",	1, "object", TX_O(tx_name),		txt_source_hook },
-    {"%S",	1, "texture", TX_O(tx_name),	 BU_STRUCTPARSE_FUNC_NULL },
+    {"%V",	1, "file", TX_O(tx_name),		txt_source_hook },
+    {"%V",	1, "obj", TX_O(tx_name),		txt_source_hook },
+    {"%V",	1, "object", TX_O(tx_name),		txt_source_hook },
+    {"%V",	1, "texture", TX_O(tx_name),	 BU_STRUCTPARSE_FUNC_NULL },
     {"%d",	1, "w",		TX_O(tx_w),		BU_STRUCTPARSE_FUNC_NULL },
     {"%d",	1, "n",		TX_O(tx_n),		BU_STRUCTPARSE_FUNC_NULL },
     {"%d",	1, "l",		TX_O(tx_n),		BU_STRUCTPARSE_FUNC_NULL }, /*compat*/
@@ -179,7 +179,7 @@ HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInst
 	bu_bomb("ERROR: txt_load_datasource() received NULL arg (struct txt_specific *)\n");
     }
 
-    bu_log("Loading texture %s [%S]...", texture->tx_datasrc==TXT_SRC_AUTO?"from auto-determined datasource":texture->tx_datasrc==TXT_SRC_OBJECT?"from a database object":texture->tx_datasrc==TXT_SRC_FILE?"from a file":"from an unknown source (ERROR)", &texture->tx_name);
+    bu_log("Loading texture %s [%V]...", texture->tx_datasrc==TXT_SRC_AUTO?"from auto-determined datasource":texture->tx_datasrc==TXT_SRC_OBJECT?"from a database object":texture->tx_datasrc==TXT_SRC_FILE?"from a file":"from an unknown source (ERROR)", &texture->tx_name);
 
     /* if the source is auto or object, we try to load the object */
     if ((texture->tx_datasrc==TXT_SRC_AUTO) || (texture->tx_datasrc==TXT_SRC_OBJECT)) {
@@ -217,7 +217,7 @@ HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInst
 
 	    /* check size of object */
 	    if (texture->tx_binunifp->count < size) {
-		bu_log("\nWARNING: %S needs %d bytes, binary object only has %d\n", texture->tx_name, size, texture->tx_binunifp->count);
+		bu_log("\nWARNING: %V needs %d bytes, binary object only has %d\n", texture->tx_name, size, texture->tx_binunifp->count);
 	    } else if (texture->tx_binunifp->count > size) {
 		bu_log("\nWARNING: Binary object is larger than specified texture size\n\tBinary Object: %d pixels\n\tSpecified Texture Size: %d pixels\n...continuing to load using image subsection...", texture->tx_binunifp->count);
 	    }
@@ -235,7 +235,7 @@ HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInst
 	    return -1;				/* FAIL */
 
 	if (texture->tx_mp->buflen < size) {
-	    bu_log("\nWARNING: %S needs %d bytes, file only has %d\n", &texture->tx_name, size, texture->tx_mp->buflen);
+	    bu_log("\nWARNING: %V needs %d bytes, file only has %d\n", &texture->tx_name, size, texture->tx_mp->buflen);
 	} else if (texture->tx_mp->buflen > size) {
 	    bu_log("\nWARNING: Texture file size is larger than specified texture size\n\tInput File: %d pixels\n\tSpecified Texture Size: %d pixels\n...continuing to load using image subsection...", texture->tx_mp->buflen, size);
 	}
@@ -301,7 +301,7 @@ txt_render(struct application *ap, struct partition *pp, struct shadework *swp, 
      */
 
     if ((bu_vls_strlen(&tp->tx_name)<=0) || (!tp->tx_mp && !tp->tx_binunifp)) {
-	bu_log("WARNING: texture [%S] could not be read\n", &tp->tx_name);
+	bu_log("WARNING: texture [%V] could not be read\n", &tp->tx_name);
 	VSET( swp->sw_color, uvc.uv_u, 0, uvc.uv_v );
 	if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 	    (void)rr_render( ap, pp, swp );

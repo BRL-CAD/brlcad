@@ -952,7 +952,7 @@ bu_vls_trimspace( struct bu_vls *vp )
  * to be known at compile time.
  *
  * %s continues to be a regular 'C' string, null terminated.
- * %S is a pointer to a (struct bu_vls *) string.
+ * %V is a pointer to a (struct bu_vls *) string.
  *
  * This routine appends to the given vls similar to how vprintf
  * appends to stdout (see bu_vls_vsprintf for overwriting the vls).
@@ -1065,7 +1065,10 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		}
 	    }
 	    break;
-	    case 'S':
+	    case 'S': /* XXX - DEPRECATED [7.14] */
+		printf("DEVELOPER DEPRECATION NOTICE: Using %S for string printing is deprecated, use %V instead\n");
+		/* fall through */
+	    case 'V':
 	    {
 		register struct bu_vls *vp;
 
@@ -1221,7 +1224,7 @@ bu_vls_printf(struct bu_vls *vls, const char *fmt, ...)
  * appending to the vls).
  *
  * %s continues to be a regular 'C' string, null terminated.
- * %S is a pointer to a (struct bu_vls *) string.
+ * %V is a pointer to a (struct bu_vls *) string.
  */
 void
 bu_vls_sprintf(struct bu_vls *vls, const char *fmt, ...)
