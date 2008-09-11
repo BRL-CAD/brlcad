@@ -1,7 +1,7 @@
-/*                       N F I N D . H
+/*                        S E A R C H . H
  * BRL-CAD
  *
- * Copyright (c) 2008 United States Government as represented by
+ * Copyright (c) 1990-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -16,8 +16,14 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
+ */
+/** @file search.h
  *
- * Includes code from OpenBSD's find command:
+ * Brief description
+ *
+ */
+
+/* Includes code from OpenBSD's find command:
  *
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -53,20 +59,20 @@
 
 /* node type */
 enum ntype {
-	N_AND = 1, 				/* must start > 0 */
-	N_ATTR,
-	N_CLOSEPAREN, N_DEPTH, N_EMPTY, N_EXEC, N_EXECDIR, N_EXPR,
-	N_FLAGS, N_INAME, N_IREGEX, N_LS, N_MAXDEPTH,
-	N_MINDEPTH, N_NAME, N_NOT, N_OK, N_OPENPAREN, N_OR, N_PATH, 
-	N_PRINT, N_PRINT0, N_PRUNE, N_REGEX, N_STDATTR, N_TYPE
+    N_AND = 1, 				/* must start > 0 */
+    N_ATTR,
+    N_CLOSEPAREN, N_DEPTH, N_EMPTY, N_EXEC, N_EXECDIR, N_EXPR,
+    N_FLAGS, N_INAME, N_IREGEX, N_LS, N_MAXDEPTH,
+    N_MINDEPTH, N_NAME, N_NOT, N_OK, N_OPENPAREN, N_OR, N_PATH,
+    N_PRINT, N_PRINT0, N_PRUNE, N_REGEX, N_STDATTR, N_TYPE
 };
 
 
 /* node definition */
 typedef struct _plandata {
-	struct _plandata *next;			/* next node */
-	int (*eval)(struct _plandata *, struct db_full_path *, struct rt_wdb *wdbp);
-									/* node evaluation function */
+    struct _plandata *next;			/* next node */
+    int (*eval)(struct _plandata *, struct db_full_path *, struct rt_wdb *wdbp);
+    /* node evaluation function */
 #define	F_EQUAL		1			/* [acm]time inum links size */
 #define	F_LESSTHAN	2
 #define	F_GREATER	3
@@ -74,28 +80,28 @@ typedef struct _plandata {
 #define	F_MTFLAG	1			/* fstype */
 #define	F_MTTYPE	2
 #define	F_ATLEAST	1			/* perm */
-	int flags;				/* private flags */
-	enum ntype type;			/* plan node type */
-	union {
-		gid_t _g_data;			/* gid */
-		struct {
-			u_int _f_flags;
-			u_int _f_mask;
-		} fl;
-		struct _plandata *_p_data[2];	/* PLAN trees */
-		struct _ex {
-			char **_e_argv;		/* argv array */
-			char **_e_orig;		/* original strings */
-			int *_e_len;		/* allocated length */
-		} ex;
-		char *_a_data[2];		/* array of char pointers */
-		char *_c_data;			/* char pointer */
-		char *_attr_data;		/* char pointer */
-		char *_type_data;
-		regex_t _regex_data;	/* compiled regexp */
-		int _max_data;			/* tree depth */
-		int _min_data;			/* tree depth */
-	} p_un;
+    int flags;				/* private flags */
+    enum ntype type;			/* plan node type */
+    union {
+	gid_t _g_data;			/* gid */
+	struct {
+	    u_int _f_flags;
+	    u_int _f_mask;
+	} fl;
+	struct _plandata *_p_data[2];	/* PLAN trees */
+	struct _ex {
+	    char **_e_argv;		/* argv array */
+	    char **_e_orig;		/* original strings */
+	    int *_e_len;		/* allocated length */
+	} ex;
+	char *_a_data[2];		/* array of char pointers */
+	char *_c_data;			/* char pointer */
+	char *_attr_data;		/* char pointer */
+	char *_type_data;
+	regex_t _regex_data;	/* compiled regexp */
+	int _max_data;			/* tree depth */
+	int _min_data;			/* tree depth */
+    } p_un;
 } PLAN;
 #define	a_data		p_un._a_data
 #define	c_data		p_un._c_data
@@ -113,14 +119,14 @@ typedef struct _plandata {
 #define	e_len		p_un.ex._e_len
 
 typedef struct _option {
-	char *name;				/* option name */
-	enum ntype token;			/* token type */
-	int (*create)(char *, char ***, int, PLAN **);	/* create function */
+    char *name;				/* option name */
+    enum ntype token;			/* token type */
+    int (*create)(char *, char ***, int, PLAN **);	/* create function */
 #define	O_NONE		0x01			/* no call required */
 #define	O_ZERO		0x02			/* pass: nothing */
 #define	O_ARGV		0x04			/* pass: argv, increment argv */
 #define	O_ARGVP		0x08		/* pass: *argv, N_OK || N_EXEC || N_EXECDIR */
-	int flags;
+    int flags;
 } OPTION;
 
 
@@ -162,3 +168,13 @@ int	c_not(char *, char ***, int, PLAN **);
 int	c_or(char *, char ***, int, PLAN **);
 
 extern int isdepth, isoutput;
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */
