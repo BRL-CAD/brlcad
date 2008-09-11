@@ -647,7 +647,7 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 	    }
 	    break;
 	    case 'S': /* XXX - DEPRECATED [7.14] */
-		printf("DEVELOPER DEPRECATION NOTICE: Using %S for string printing is deprecated, use %V instead\n");
+		printf("DEVELOPER DEPRECATION NOTICE: Using %%S for string printing is deprecated, use %%V instead\n");
 		/* fall through */
 	    case 'V':
 	    {
@@ -952,7 +952,7 @@ bu_vls_struct_item(struct bu_vls *vp, const struct bu_structparse *sdp, const ch
 		bu_vls_printf( vp, "%s", (char *)loc );
 	    break;
 	case 'S': /* XXX - DEPRECATED [7.14] */
-	    printf("DEVELOPER DEPRECATION NOTICE: Using %S for string printing is deprecated, use %V instead\n");
+	    printf("DEVELOPER DEPRECATION NOTICE: Using %%S for string printing is deprecated, use %%V instead\n");
 	    /* fall through */
 	case 'V': {
 	    register struct bu_vls *vls = (struct bu_vls *)loc;
@@ -1070,7 +1070,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 			    (char *)loc );
 		break;
 	    case 'S': /* XXX - DEPRECATED [7.14] */
-		printf("DEVELOPER DEPRECATION NOTICE: Using %S for string printing is deprecated, use %V instead\n");
+		printf("DEVELOPER DEPRECATION NOTICE: Using %%S for string printing is deprecated, use %%V instead\n");
 		/* fall through */
 	    case 'V':
 	    {
@@ -1291,7 +1291,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		vls->vls_len += strlen(cp);
 		break;
 	    case 'S': /* XXX - DEPRECATED [7.14] */
-		printf("DEVELOPER DEPRECATION NOTICE: Using %S for string printing is deprecated, use %V instead\n");
+		printf("DEVELOPER DEPRECATION NOTICE: Using %%S for string printing is deprecated, use %%V instead\n");
 		/* fall through */
 	    case 'V':
 	    {
@@ -1425,7 +1425,7 @@ bu_vls_struct_print2(struct bu_vls			*vls_out,
 				  (char *)loc );
 		break;
 	    case 'S': /* XXX - DEPRECATED [7.14] */
-		printf("DEVELOPER DEPRECATION NOTICE: Using %S for string printing is deprecated, use %V instead\n");
+		printf("DEVELOPER DEPRECATION NOTICE: Using %%S for string printing is deprecated, use %%V instead\n");
 		/* fall through */
 	    case 'V':
 	    {
@@ -2359,7 +2359,7 @@ bu_structparse_argv(struct bu_vls		*log,
 		}
 		break;
 	    case 'S': /* XXX - DEPRECATED [7.14] */
-		printf("DEVELOPER DEPRECATION NOTICE: Using %S for string printing is deprecated, use %V instead\n");
+		printf("DEVELOPER DEPRECATION NOTICE: Using %%S for string printing is deprecated, use %%V instead\n");
 		/* fall through */
 	    case 'V':
 	    {

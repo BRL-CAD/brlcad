@@ -311,7 +311,7 @@ bu_tcl_structparse_argv(Tcl_Interp			*interp,
 		    }
 		    break;
 		case 'S': /* XXX - DEPRECATED [7.14] */
-		    printf("DEVELOPER DEPRECATION NOTICE: Using %S for string printing is deprecated, use %V instead\n");
+		    printf("DEVELOPER DEPRECATION NOTICE: Using %%S for string printing is deprecated, use %%V instead\n");
 		    /* fall through */
 		case 'V': {
 		    struct bu_vls *vls = (struct bu_vls *)loc;

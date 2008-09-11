@@ -1066,7 +1066,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	    }
 	    break;
 	    case 'S': /* XXX - DEPRECATED [7.14] */
-		printf("DEVELOPER DEPRECATION NOTICE: Using %S for string printing is deprecated, use %V instead\n");
+		printf("DEVELOPER DEPRECATION NOTICE: Using %%S for string printing is deprecated, use %%V instead\n");
 		/* fall through */
 	    case 'V':
 	    {
