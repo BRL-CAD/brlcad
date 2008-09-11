@@ -190,7 +190,7 @@ bu_fnmatch(const char *pattern, const char *string, int flags)
 
 		/* General case, use recursion. */
 		while ((test = *string) != BU_FNM_EOS) {
-		    if (!fnmatch(pattern, string, flags & ~BU_FNM_PERIOD))
+		    if (!bu_fnmatch(pattern, string, flags & ~BU_FNM_PERIOD))
 			return (0);
 		    if (test == '/' && (flags & BU_FNM_PATHNAME))
 			break;
