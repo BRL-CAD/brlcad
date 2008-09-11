@@ -63,6 +63,8 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu.h"
+
 
 #define _BU_FNMATCH_H_
 
