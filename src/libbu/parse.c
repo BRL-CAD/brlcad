@@ -951,7 +951,10 @@ bu_vls_struct_item(struct bu_vls *vp, const struct bu_structparse *sdp, const ch
 	    else
 		bu_vls_printf( vp, "%s", (char *)loc );
 	    break;
-	case 'S': {
+	case 'S': /* XXX - DEPRECATED [7.14] */
+	    printf("DEVELOPER DEPRECATION NOTICE: Using %S for string printing is deprecated, use %V instead\n");
+	    /* fall through */
+	case 'V': {
 	    register struct bu_vls *vls = (struct bu_vls *)loc;
 
 	    bu_vls_vlscat( vp, vls ); }
@@ -1066,7 +1069,10 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 		    bu_log( " %s=\"%s\"\n", sdp->sp_name,
 			    (char *)loc );
 		break;
-	    case 'S':
+	    case 'S': /* XXX - DEPRECATED [7.14] */
+		printf("DEVELOPER DEPRECATION NOTICE: Using %S for string printing is deprecated, use %V instead\n");
+		/* fall through */
+	    case 'V':
 	    {
 		int delta = strlen(sdp->sp_name)+2;
 		register struct bu_vls *vls =
@@ -1284,7 +1290,10 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		}
 		vls->vls_len += strlen(cp);
 		break;
-	    case 'S':
+	    case 'S': /* XXX - DEPRECATED [7.14] */
+		printf("DEVELOPER DEPRECATION NOTICE: Using %S for string printing is deprecated, use %V instead\n");
+		/* fall through */
+	    case 'V':
 	    {
 		register struct bu_vls *vls_p = (struct bu_vls *)loc;
 
@@ -1415,7 +1424,10 @@ bu_vls_struct_print2(struct bu_vls			*vls_out,
 		    bu_vls_printf(vls_out, " %s=\"%s\"\n", sdp->sp_name,
 				  (char *)loc );
 		break;
-	    case 'S':
+	    case 'S': /* XXX - DEPRECATED [7.14] */
+		printf("DEVELOPER DEPRECATION NOTICE: Using %S for string printing is deprecated, use %V instead\n");
+		/* fall through */
+	    case 'V':
 	    {
 		int delta = strlen(sdp->sp_name)+2;
 		register struct bu_vls *vls =
@@ -2349,7 +2361,8 @@ bu_structparse_argv(struct bu_vls		*log,
 	    case 'S': /* XXX - DEPRECATED [7.14] */
 		printf("DEVELOPER DEPRECATION NOTICE: Using %S for string printing is deprecated, use %V instead\n");
 		/* fall through */
-	    case 'V': {
+	    case 'V':
+	    {
 		/* copy the string to a bu_vls
 		 * (string of variable length provided by libbu)
 		 */
