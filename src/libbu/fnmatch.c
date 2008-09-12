@@ -59,6 +59,7 @@
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
 #include "bio.h"
