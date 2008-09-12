@@ -85,13 +85,76 @@
 #define	BU_FNM_RANGE_NOMATCH	0
 #define	BU_FNM_RANGE_ERROR	(-1)
 
+typedef struct _charclass {
+    char *idstring;		/* identifying string */
+    int (*checkfun)(int);	/* testing function */
+} CHARCLASS;
+
+static CHARCLASS charclasses[] = {
+    { "alnum", isalnum },
+    { "alpha", isalpha },
+    { "blank", isblank },
+    { "cntrl", iscntrl },
+    { "digit", isdigit },
+    { "graph", isgraph },
+    { "lower", islower },
+    { "print", isprint },
+    { "punct", ispunct },
+    { "space", isspace },
+    { "upper", isupper },
+    { "xdigit", isxdigit },
+};
+
+int
+classcompare(const void *a, const void *b)
+{
+        return (strcmp(((CHARCLASS *)a)->idstring, ((CHARCLASS *)b)->idstring));
+}
+
+CHARCLASS *
+findclass(char *class)
+{
+    CHARCLASS tmp;
+    tmp.idstring = class;
+    return( (CHARCLASS *)bsearch(&tmp, charclasses, sizeof(charclasses)/sizeof(CHARCLASS), sizeof(CHARCLASS), classcompare) );
+}
+
 
 static int
-bu_rangematch(const char *pattern, char test, int flags, char **newp)
+charclassmatch(const char *pattern, char test)
 {
-    int negate, ok;
-    char c, c2;
+    char c;
+    int counter = 0;
+    struct bu_vls classname;
+    CHARCLASS *ctclass;
+    bu_vls_init(&classname);
+    while ((c = *pattern++) && (c != ':')) {
+	if (c == BU_FNM_EOS) return -1;
+   	counter++; 
+    }
+    c = *pattern++;
+    if (c != ']') return -1;
+    bu_vls_strncpy(&classname, pattern-counter-2, counter);
+    if ((ctclass = findclass(bu_vls_addr(&classname))) == NULL) {
+	bu_log("Unknown character class type: %s\n", bu_vls_addr(&classname));
+	return (BU_FNM_RANGE_ERROR);
+    }
+    bu_log("classname: %s, test char = %c, isdigit=%d, (class->checkfun)=%d\n", bu_vls_addr(&classname), test, (ctclass->checkfun)(test));
+    if ((ctclass->checkfun)(test) != 0) {
+	return counter;
+    } else {
+	return 0; 
 
+    }
+    bu_vls_free(&classname);
+}
+
+
+static int
+_rangematch(const char *pattern, char test, int flags, char **newp)
+{
+    int negate, ok, s;
+    char c, c2;
     /*
      * A bracket expression starting with an unquoted circumflex
      * character produces unspecified results (IEEE 1003.2-1992,
@@ -102,15 +165,25 @@ bu_rangematch(const char *pattern, char test, int flags, char **newp)
     if ((negate = (*pattern == '!' || *pattern == '^')))
 	++pattern;
 
+   
     if (flags & BU_FNM_CASEFOLD)
 	test = (char)tolower((unsigned char)test);
+
+    ok = 0;
+    
+    if ((*pattern == '[') && (*(pattern+1) == ':')) {
+	s = charclassmatch(pattern+2, test);
+	if (s == -1) return (BU_FNM_RANGE_ERROR);
+	if (s == 0) return (BU_FNM_RANGE_NOMATCH);
+ 	ok = 1; 
+	pattern = pattern + s + 3;
+    }
 
     /*
      * A right bracket shall lose its special meaning and represent
      * itself in a bracket expression if it occurs first in the list.
      * -- POSIX.2 2.8.3.2
      */
-    ok = 0;
     c = *pattern++;
     do {
 	if (c == '\\' && !(flags & BU_FNM_NOESCAPE))
@@ -121,7 +194,13 @@ bu_rangematch(const char *pattern, char test, int flags, char **newp)
 	    return (BU_FNM_RANGE_NOMATCH);
 	if ((flags & BU_FNM_CASEFOLD))
 	    c = (char)tolower((unsigned char)c);
-	if (*pattern == '-'
+	if ((*pattern == '[') && (*(pattern+1) == ':')) {
+		s = charclassmatch(pattern+1, test);
+		if (s == -1) return (BU_FNM_RANGE_ERROR);
+		if (s == 0) return (BU_FNM_RANGE_NOMATCH);
+    		ok = 1; 
+		pattern = pattern + s + 3;
+    	} else 	if (*pattern == '-'
 	    && (c2 = *(pattern+1)) != BU_FNM_EOS && c2 != ']') {
 	    pattern += 2;
 	    if (c2 == '\\' && !(flags & BU_FNM_NOESCAPE))
@@ -147,7 +226,6 @@ bu_fnmatch(const char *pattern, const char *string, int flags)
     const char *stringstart;
     char *newp;
     char c, test;
-
     for (stringstart = string;;) {
 	switch (c = *pattern++) {
 	    case BU_FNM_EOS:
@@ -209,7 +287,7 @@ bu_fnmatch(const char *pattern, const char *string, int flags)
 		     ((flags & BU_FNM_PATHNAME) && *(string - 1) == '/')))
 		    return (BU_FNM_NOMATCH);
 
-		switch (bu_rangematch(pattern, *string, flags, &newp)) {
+		switch (_rangematch(pattern, *string, flags, &newp)) {
 		    case BU_FNM_RANGE_ERROR:
 			/* not a good range, treat as normal text */
 			goto normal;
