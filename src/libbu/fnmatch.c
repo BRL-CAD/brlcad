@@ -109,7 +109,7 @@ static CHARCLASS charclasses[] = {
 int
 classcompare(const void *a, const void *b)
 {
-        return (strcmp(((CHARCLASS *)a)->idstring, ((CHARCLASS *)b)->idstring));
+    return (strcmp(((CHARCLASS *)a)->idstring, ((CHARCLASS *)b)->idstring));
 }
 
 CHARCLASS *
@@ -122,39 +122,42 @@ findclass(char *class)
 
 
 static int
-charclassmatch(const char *pattern, char test)
+charclassmatch(const char *pattern, char test, int *s)
 {
     char c;
     int counter = 0;
+    int resultholder = 0;
     struct bu_vls classname;
     CHARCLASS *ctclass;
     bu_vls_init(&classname);
-    while ((c = *pattern++) && (c != ':')) {
-	if (c == BU_FNM_EOS) return -1;
+    while ((c = *pattern++) && (c != ':') && (resultholder != -1)) {
+	if (c == BU_FNM_EOS) resultholder = -1;
    	counter++; 
     }
     c = *pattern++;
-    if (c != ']') return -1;
+    if (c != ']') resultholder = -1;
     bu_vls_strncpy(&classname, pattern-counter-2, counter);
     if ((ctclass = findclass(bu_vls_addr(&classname))) == NULL) {
 	bu_log("Unknown character class type: %s\n", bu_vls_addr(&classname));
-	return (BU_FNM_RANGE_ERROR);
-    }
-    bu_log("classname: %s, test char = %c, isdigit=%d, (class->checkfun)=%d\n", bu_vls_addr(&classname), test, (ctclass->checkfun)(test));
-    if ((ctclass->checkfun)(test) != 0) {
-	return counter;
+	resultholder = -1;
     } else {
-	return 0; 
-
+        bu_log("classname: %s, test char = %c, (class->checkfun)=%d\n", bu_vls_addr(&classname), test, (ctclass->checkfun)(test));
+        if ((ctclass->checkfun)(test) != 0) {
+	    resultholder = counter;
+    	} else {
+	    resultholder = 0; 
+    	}
     }
+    *s = resultholder;
     bu_vls_free(&classname);
+    return counter;
 }
 
 
 static int
 _rangematch(const char *pattern, char test, int flags, char **newp)
 {
-    int negate, ok, s;
+    int negate, ok, s, incpattern;
     char c, c2;
     /*
      * A bracket expression starting with an unquoted circumflex
@@ -171,15 +174,7 @@ _rangematch(const char *pattern, char test, int flags, char **newp)
 	test = (char)tolower((unsigned char)test);
 
     ok = 0;
-    
-    if ((*pattern == '[') && (*(pattern+1) == ':')) {
-	s = charclassmatch(pattern+2, test);
-	if (s == -1) return (BU_FNM_RANGE_ERROR);
-	if (s == 0) return (BU_FNM_RANGE_NOMATCH);
- 	ok = 1; 
-	pattern = pattern + s + 3;
-    }
-
+   
     /*
      * A right bracket shall lose its special meaning and represent
      * itself in a bracket expression if it occurs first in the list.
@@ -195,13 +190,7 @@ _rangematch(const char *pattern, char test, int flags, char **newp)
 	    return (BU_FNM_RANGE_NOMATCH);
 	if ((flags & BU_FNM_CASEFOLD))
 	    c = (char)tolower((unsigned char)c);
-	if ((*pattern == '[') && (*(pattern+1) == ':')) {
-		s = charclassmatch(pattern+1, test);
-		if (s == -1) return (BU_FNM_RANGE_ERROR);
-		if (s == 0) return (BU_FNM_RANGE_NOMATCH);
-    		ok = 1; 
-		pattern = pattern + s + 3;
-    	} else 	if (*pattern == '-'
+	if (*pattern == '-'
 	    && (c2 = *(pattern+1)) != BU_FNM_EOS && c2 != ']') {
 	    pattern += 2;
 	    if (c2 == '\\' && !(flags & BU_FNM_NOESCAPE))
@@ -212,8 +201,14 @@ _rangematch(const char *pattern, char test, int flags, char **newp)
 		c2 = (char)tolower((unsigned char)c2);
 	    if (c <= test && test <= c2)
 		ok = 1;
-	} else if (c == test)
+	} else if (c == test) {
 	    ok = 1;
+	} else if ((c == '[') && (*pattern == ':')) {
+	    incpattern = charclassmatch(pattern+1, test, &s);
+	    if (s == -1) return (BU_FNM_RANGE_ERROR);
+	    if (s > 0) ok = 1;
+	    pattern = pattern + incpattern + 3;
+    	}
     } while ((c = *pattern++) != ']');
 
     *newp = (char *)pattern;
