@@ -62,6 +62,12 @@ __BEGIN_DECLS
 #define BRLCAD_HELP 1
 #define BRLCAD_ERROR 2
 
+/**
+ * Flag for non-case-sensitive searching
+ */
+#define BU_CASEFOLD 0x10
+
+
 /** @def BU_DIR_SEPARATOR
  * define BU_DIR_SEPARATOR to the directory separator character
  */

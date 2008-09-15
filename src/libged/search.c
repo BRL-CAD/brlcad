@@ -98,6 +98,7 @@
 
 #include "search.h"
 
+
 /*
  * D B _ F U L L P A T H _ T R A V E R S E _ S U B T R E E
  *
@@ -238,6 +239,7 @@ static OPTION options[] = {
     { "-and",       N_AND,          NULL,           O_NONE },
     { "-attr",	N_ATTR,		c_attr,		O_ARGV },
     { "-empty",       N_EMPTY,          c_empty,           O_ZERO },
+    { "-iname",      N_INAME,         c_iname,         O_ARGV },
     { "-iregex",   N_IREGEX,      c_iregex,      O_ARGV },
     { "-maxdepth",      N_MAXDEPTH,         c_maxdepth,         O_ARGV },
     { "-mindepth",      N_MINDEPTH,         c_mindepth,         O_ARGV },
@@ -379,6 +381,31 @@ c_name(char *pattern, char ***ignored, int unused, PLAN **resultplan)
     (*resultplan) = new;
     return BRLCAD_OK;
 }
+
+
+/*
+ * -iname function --
+ *
+ *      True if the basename of the filename being examined
+ *      matches pattern using case insensitive Pattern Matching Notation S3.14
+ */
+int
+f_iname(PLAN *plan, struct db_full_path *entry, struct rt_wdb *wdbp)
+{
+    return (!bu_fnmatch(plan->c_data, DB_FULL_PATH_CUR_DIR(entry)->d_namep, BU_CASEFOLD));
+}
+
+int
+c_iname(char *pattern, char ***ignored, int unused, PLAN **resultplan)
+{
+    PLAN *new;
+
+    new = palloc(N_INAME, f_iname);
+    new->ci_data = pattern;
+    (*resultplan) = new;
+    return BRLCAD_OK;
+}
+
 
 
 /*

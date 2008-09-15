@@ -76,8 +76,7 @@
 #define BU_FNM_PATHNAME    0x02    /* Slash must be matched by slash. */
 #define BU_FNM_PERIOD      0x04    /* Period must be matched by period. */
 #define BU_FNM_LEADING_DIR 0x08    /* Ignore /<tail> after Imatch. */
-#define BU_FNM_CASEFOLD    0x10    /* Case insensitive search. */
-#define BU_FNM_IGNORECASE  BU_FNM_CASEFOLD
+#define BU_FNM_IGNORECASE  BU_CASEFOLD
 #define BU_FNM_FILE_NAME   BU_FNM_PATHNAME
 
 #define	BU_FNM_EOS	'\0'
@@ -170,7 +169,7 @@ _rangematch(const char *pattern, char test, int flags, char **newp)
 	++pattern;
 
    
-    if (flags & BU_FNM_CASEFOLD)
+    if (flags & BU_CASEFOLD)
 	test = (char)tolower((unsigned char)test);
 
     ok = 0;
@@ -188,7 +187,7 @@ _rangematch(const char *pattern, char test, int flags, char **newp)
 	    return (BU_FNM_RANGE_ERROR);
 	if (c == '/' && (flags & BU_FNM_PATHNAME))
 	    return (BU_FNM_RANGE_NOMATCH);
-	if ((flags & BU_FNM_CASEFOLD))
+	if ((flags & BU_CASEFOLD))
 	    c = (char)tolower((unsigned char)c);
 	if (*pattern == '-'
 	    && (c2 = *(pattern+1)) != BU_FNM_EOS && c2 != ']') {
@@ -197,7 +196,7 @@ _rangematch(const char *pattern, char test, int flags, char **newp)
 		c2 = *pattern++;
 	    if (c2 == BU_FNM_EOS)
 		return (BU_FNM_RANGE_ERROR);
-	    if (flags & BU_FNM_CASEFOLD)
+	    if (flags & BU_CASEFOLD)
 		c2 = (char)tolower((unsigned char)c2);
 	    if (c <= test && test <= c2)
 		ok = 1;
@@ -305,7 +304,7 @@ bu_fnmatch(const char *pattern, const char *string, int flags)
 		/* FALLTHROUGH */
 	    default:
 	    normal:
-		if (c != *string && !((flags & BU_FNM_CASEFOLD) &&
+		if (c != *string && !((flags & BU_CASEFOLD) &&
 				      (tolower((unsigned char)c) ==
 				       tolower((unsigned char)*string))))
 		    return (BU_FNM_NOMATCH);

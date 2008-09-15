@@ -96,6 +96,7 @@ typedef struct _plandata {
 	} ex;
 	char *_a_data[2];		/* array of char pointers */
 	char *_c_data;			/* char pointer */
+	char *_ci_data;			/* char pointer */
 	char *_attr_data;		/* char pointer */
 	char *_type_data;
 	regex_t _regex_data;	/* compiled regexp */
@@ -105,6 +106,7 @@ typedef struct _plandata {
 } PLAN;
 #define	a_data		p_un._a_data
 #define	c_data		p_un._c_data
+#define ci_data		p_un._ci_data
 #define regexp_data p_un._regex_data
 #define attr_data	p_un._attr_data
 #define fl_flags	p_un.fl._f_flags
@@ -148,7 +150,7 @@ int	c_empty(char *, char ***, int, PLAN **);
 PLAN	*c_exec(char *, char ***, int);
 PLAN	*c_execdir(char *, char ***, int);
 PLAN	*c_flags(char *, char ***, int);
-PLAN	*c_iname(char *, char ***, int);
+int	c_iname(char *, char ***, int, PLAN **);
 PLAN	*c_ls(char *, char ***, int);
 int	c_maxdepth(char *, char ***, int, PLAN **);
 int	c_mindepth(char *, char ***, int, PLAN **);
