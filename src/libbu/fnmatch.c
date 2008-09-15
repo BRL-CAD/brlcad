@@ -141,7 +141,7 @@ charclassmatch(const char *pattern, char test, int *s)
 	bu_log("Unknown character class type: %s\n", bu_vls_addr(&classname));
 	resultholder = -1;
     } else {
-        bu_log("classname: %s, test char = %c, (class->checkfun)=%d\n", bu_vls_addr(&classname), test, (ctclass->checkfun)(test));
+        /*bu_log("classname: %s, test char = %c, (class->checkfun)=%d\n", bu_vls_addr(&classname), test, (ctclass->checkfun)(test));*/
         if ((ctclass->checkfun)(test) != 0) {
 	    resultholder = counter;
     	} else {
