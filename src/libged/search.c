@@ -238,6 +238,8 @@ static OPTION options[] = {
     { "-and",       N_AND,          NULL,           O_NONE },
     { "-attr",	N_ATTR,		c_attr,		O_ARGV },
     { "-iregex",   N_IREGEX,      c_iregex,      O_ARGV },
+    { "-maxdepth",      N_MAXDEPTH,         c_maxdepth,         O_ARGV },
+    { "-mindepth",      N_MINDEPTH,         c_mindepth,         O_ARGV },
     { "-name",      N_NAME,         c_name,         O_ARGV },
     { "-not",       N_NOT,          c_not,          O_ZERO },
     { "-o",         N_OR,           c_or,		O_ZERO },
@@ -737,6 +739,73 @@ c_type(char *pattern, char ***ignored, int unused, PLAN **resultplan)
     (*resultplan) = new;
     return BRLCAD_OK;
 }
+
+/*
+ * -maxdepth function --
+ *
+ *      True if the object being examined is at depth <= the
+ *      supplied depth.
+ *
+ */
+int
+f_maxdepth(PLAN *plan, struct db_full_path *entry, struct rt_wdb *wdbp)
+{
+    struct db_full_path depthtest;
+    int depthcount = -1;
+    db_full_path_init(&depthtest);
+    db_dup_full_path(&depthtest,entry);
+    while (depthtest.fp_len > 0) {
+	depthcount++;
+	DB_FULL_PATH_POP(&depthtest);
+    }
+    db_free_full_path(&depthtest);
+    return (depthcount <= plan->max_data);
+}
+
+int
+c_maxdepth(char *pattern, char ***ignored, int unused, PLAN **resultplan)
+{
+    PLAN *new;
+
+    new = palloc(N_MAXDEPTH, f_maxdepth);
+    new->max_data = atoi(pattern);
+    (*resultplan) = new;
+    return BRLCAD_OK;
+}
+
+/*
+ * -mindepth function --
+ *
+ *      True if the object being examined is at depth >= the
+ *      supplied depth.
+ *
+ */
+int
+f_mindepth(PLAN *plan, struct db_full_path *entry, struct rt_wdb *wdbp)
+{
+    struct db_full_path depthtest;
+    int depthcount = -1;
+    db_full_path_init(&depthtest);
+    db_dup_full_path(&depthtest,entry);
+    while (depthtest.fp_len > 0) {
+	depthcount++;
+	DB_FULL_PATH_POP(&depthtest);
+    }
+    db_free_full_path(&depthtest);
+    return (depthcount >= plan->min_data);
+}
+
+int
+c_mindepth(char *pattern, char ***ignored, int unused, PLAN **resultplan)
+{
+    PLAN *new;
+
+    new = palloc(N_MINDEPTH, f_mindepth);
+    new->min_data = atoi(pattern);
+    (*resultplan) = new;
+    return BRLCAD_OK;
+}
+
 
 
 /*
