@@ -237,6 +237,7 @@ static OPTION options[] = {
     { "-a",         N_AND,          NULL,           O_NONE },
     { "-and",       N_AND,          NULL,           O_NONE },
     { "-attr",	N_ATTR,		c_attr,		O_ARGV },
+    { "-empty",       N_EMPTY,          c_empty,           O_ZERO },
     { "-iregex",   N_IREGEX,      c_iregex,      O_ARGV },
     { "-maxdepth",      N_MAXDEPTH,         c_maxdepth,         O_ARGV },
     { "-mindepth",      N_MINDEPTH,         c_mindepth,         O_ARGV },
@@ -802,6 +803,42 @@ c_mindepth(char *pattern, char ***ignored, int unused, PLAN **resultplan)
 
     new = palloc(N_MINDEPTH, f_mindepth);
     new->min_data = atoi(pattern);
+    (*resultplan) = new;
+    return BRLCAD_OK;
+}
+
+/*
+ * -empty function --
+ *
+ *      True if the object is of type COMB and has no children.
+ */
+int
+f_empty(PLAN *plan, struct db_full_path *entry, struct rt_wdb *wdbp)
+{
+    struct rt_db_internal in;
+    struct rt_comb_internal *comb;
+    struct directory *testdp;
+    if (DB_FULL_PATH_CUR_DIR(entry)->d_flags & DIR_COMB) {
+    	rt_db_get_internal5( &in, DB_FULL_PATH_CUR_DIR(entry), wdbp->dbip, (fastf_t *)NULL, &rt_uniresource);
+    	comb = (struct rt_comb_internal *)in.idb_ptr;
+        if (comb->tree == NULL) {
+	    rt_db_free_internal( &in, &rt_uniresource );
+	    return 1;
+	} else {
+	    rt_db_free_internal( &in, &rt_uniresource );
+	    return 0;
+	}
+    } else {
+	return 0;
+    }
+}
+
+int
+c_empty(char *pattern, char ***ignored, int unused, PLAN **resultplan)
+{
+    PLAN *new;
+
+    new = palloc(N_EMPTY, f_empty);
     (*resultplan) = new;
     return BRLCAD_OK;
 }

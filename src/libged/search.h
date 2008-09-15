@@ -144,8 +144,7 @@ int	     queryuser(char **);
 void	 show_path(int);
 
 int	c_attr(char *, char ***, int, PLAN **);
-PLAN	*c_depth(char *, char ***, int);
-PLAN	*c_empty(char *, char ***, int);
+int	c_empty(char *, char ***, int, PLAN **);
 PLAN	*c_exec(char *, char ***, int);
 PLAN	*c_execdir(char *, char ***, int);
 PLAN	*c_flags(char *, char ***, int);
