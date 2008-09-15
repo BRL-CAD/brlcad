@@ -247,6 +247,7 @@ static OPTION options[] = {
     { "-not",       N_NOT,          c_not,          O_ZERO },
     { "-o",         N_OR,           c_or,		O_ZERO },
     { "-or", 	N_OR, 		c_or, 		O_ZERO },
+    { "-path",      N_PATH,         c_path,         O_ARGV },
     { "-print",     N_PRINT,        c_print,        O_ZERO },
     { "-print0",    N_PRINT0,       c_print0,       O_ZERO },
     { "-regex",   N_REGEX,      c_regex,      O_ARGV },
@@ -870,6 +871,29 @@ c_empty(char *pattern, char ***ignored, int unused, PLAN **resultplan)
     return BRLCAD_OK;
 }
 
+/*
+ * -path function --
+ *
+ *      True if the object being examined shares the pattern as
+ *      part of its path. To exclude results of certain directories
+ *      use the -not option with this option. 
+ */
+int
+f_path(PLAN *plan, struct db_full_path *entry, struct rt_wdb *wdbp)
+{
+    return(!bu_fnmatch(plan->path_data, db_path_to_string(entry), 0));
+}
+
+int
+c_path(char *pattern, char ***ignored, int unused, PLAN **resultplan)
+{
+    PLAN *new;
+
+    new = palloc(N_PATH, f_path);
+    new->path_data = pattern;
+    (*resultplan) = new;
+    return BRLCAD_OK;
+}
 
 
 /*

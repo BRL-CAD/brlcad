@@ -97,6 +97,7 @@ typedef struct _plandata {
 	char *_a_data[2];		/* array of char pointers */
 	char *_c_data;			/* char pointer */
 	char *_ci_data;			/* char pointer */
+	char *_path_data;		/* char pointer */
 	char *_attr_data;		/* char pointer */
 	char *_type_data;
 	regex_t _regex_data;	/* compiled regexp */
@@ -107,7 +108,8 @@ typedef struct _plandata {
 #define	a_data		p_un._a_data
 #define	c_data		p_un._c_data
 #define ci_data		p_un._ci_data
-#define regexp_data p_un._regex_data
+#define path_data	p_un._path_data
+#define regexp_data 	p_un._regex_data
 #define attr_data	p_un._attr_data
 #define fl_flags	p_un.fl._f_flags
 #define fl_mask		p_un.fl._f_mask
@@ -148,8 +150,6 @@ void	 show_path(int);
 int	c_attr(char *, char ***, int, PLAN **);
 int	c_empty(char *, char ***, int, PLAN **);
 PLAN	*c_exec(char *, char ***, int);
-PLAN	*c_execdir(char *, char ***, int);
-PLAN	*c_flags(char *, char ***, int);
 int	c_iname(char *, char ***, int, PLAN **);
 PLAN	*c_ls(char *, char ***, int);
 int	c_maxdepth(char *, char ***, int, PLAN **);
@@ -157,7 +157,7 @@ int	c_mindepth(char *, char ***, int, PLAN **);
 int	c_name(char *, char ***, int, PLAN **);
 int	c_regex(char *, char ***, int, PLAN **);
 int	c_iregex(char *, char ***, int, PLAN **);
-PLAN	*c_path(char *, char ***, int);
+int	c_path(char *, char ***, int, PLAN **);
 int	c_print(char *, char ***, int, PLAN **);
 int	c_print0(char *, char ***, int, PLAN **);
 PLAN	*c_prune(char *, char ***, int);
