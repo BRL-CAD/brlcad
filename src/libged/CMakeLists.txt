@@ -1,5 +1,6 @@
 set(LIBGED_SOURCES
     3ptarb.c
+    adc.c
     adjust.c
     ae2dir.c
     aet.c
@@ -64,6 +65,7 @@ set(LIBGED_SOURCES
     get_type.c
     glob.c
     globals.c
+    grid.c
     group.c
     hide.c
     how.c
@@ -125,6 +127,7 @@ set(LIBGED_SOURCES
     quat.c
     qvrot.c
     rcodes.c
+    rect.c
     red.c
     regdef.c
     region.c
@@ -144,6 +147,7 @@ set(LIBGED_SOURCES
     savekey.c
     saveview.c
     scale.c
+    search.c
     set_output_script.c
     set_transparency.c
     set_uplotOutputMode.c

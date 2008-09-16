@@ -20,6 +20,7 @@ set(LIBBU_SOURCES
     endian.c
     fchmod.c
     fgets.c
+    fnmatch.c
     fopen_uniq.c
     getopt.c
     globals.c
