@@ -149,6 +149,11 @@
 #define fmax __max
 #define ioctl ioctlsocket
 
+/* we need the function pointer of this */
+static int isblank(int c) {
+    return ((c == ' ') || (c == '\t')) ? 1 : 0;
+}
+
 /*
  * types
  */
