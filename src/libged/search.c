@@ -740,13 +740,12 @@ f_type(PLAN *plan, struct db_full_path *entry, struct rt_wdb *wdbp)
 	    break;
 	case DB5_MINORTYPE_BRLCAD_COMBINATION:
 	    if (DB_FULL_PATH_CUR_DIR(entry)->d_flags & DIR_REGION) {
-		if ((!bu_fnmatch(plan->type_data, "r", 0)) || (!bu_fnmatch(plan->type_data, "region", 0))) {
+		if ((!bu_fnmatch(plan->type_data, "r", 0)) || (!bu_fnmatch(plan->type_data, "reg", 0))  || (!bu_fnmatch(plan->type_data, "region", 0))) {
 		    type_match = 1;
 		}
-	    } else {
-		if ((!bu_fnmatch(plan->type_data, "comb", 0)) || (!bu_fnmatch(plan->type_data, "combination", 0))) {
+	    }
+     	    if ( (!bu_fnmatch(plan->type_data, "c", 0)) || (!bu_fnmatch(plan->type_data, "comb", 0)) || (!bu_fnmatch(plan->type_data, "combination", 0))) {
 		    type_match = 1;
-		}
 	    }
 	    break;
 	default:
