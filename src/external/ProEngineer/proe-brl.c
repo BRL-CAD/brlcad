@@ -52,6 +52,7 @@
 #include "ProUIPushbutton.h"
 #include "ProUICheckbutton.h"
 #include "ProUITextarea.h"
+#include "ProUIRadiogroup.h"
 #include "ProAsmcomppath.h"
 #include "ProHole.h"
 #include "ProNotify.h"
@@ -70,8 +71,13 @@ static ProBool do_facets_only;	/* flag to indicate no CSG should be done */
 static ProBool get_normals;	/* flag to indicate surface normals should be extracted from geometry */
 static ProBool do_elims;	/* flag to indicate that small features are to be eliminated */
 static double max_error=1.5;	/* (mm) maximimum allowable error in facetized approximation */
+static double min_error=1.5;	/* (mm) maximimum allowable error in facetized approximation */
 static double tol_dist=0.005;	/* (mm) minimum distance between two distinct vertices */
-static double angle_cntrl=0.5;	/* angle control for tessellation ( 0.0 - 1.0 ) */
+static double max_angle_cntrl=0.5;	/* max angle control for tessellation ( 0.0 - 1.0 ) */
+static double min_angle_cntrl=0.5;	/* min angle control for tessellation ( 0.0 - 1.0 ) */
+static int max_to_min_steps = 1;	/* number of steps between max and min */
+static double error_increment=0.0;
+static double angle_increment=0.0;
 static double local_tol=0.0;	/* tolerance in Pro/E units */
 static double local_tol_sq=0.0;	/* tolerance squared */
 static double min_hole_diameter=0.0; /* if > 0.0, all holes features smaller than this will be deleted */
@@ -103,6 +109,14 @@ static int *part_norms=NULL;		/* list of indices into normals (matches part_tris
 static FILE *outfp=NULL;		/* output file */
 
 static FILE *logger=NULL;			/* log file */
+
+#define LOGGER_TYPE_NONE -1
+#define LOGGER_TYPE_FAILURE 0
+#define LOGGER_TYPE_SUCCESS 1
+#define LOGGER_TYPE_FAILURE_OR_SUCCESS 2
+#define LOGGER_TYPE_ALL 3
+
+static int logger_type = LOGGER_TYPE_NONE;
 
 static ProCharName curr_part_name;	/* current part name */
 static ProCharName curr_asm_name;	/* current assembly name */
@@ -550,13 +564,13 @@ create_unique_name( char *name )
     int initial_length=0;
     int count=0;
 
-    if ( logger ) {
+    if ( logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( logger, "create_unique_name( %s )\n", name );
     }
 
     /* if we do not already have a brlcad name tree, create one here */
     if ( !brlcad_names ) {
-	if ( logger ) {
+	if ( logger_type == LOGGER_TYPE_ALL ) {
 	    fprintf( logger, "\tCreating rb tree for brlcad names\n" );
 	}
 	brlcad_names = bu_rb_create1( "BRL-CAD names", strcmp );
@@ -572,7 +586,7 @@ create_unique_name( char *name )
     while ( bu_rb_insert( brlcad_names, bu_vls_addr( &tmp_name ) ) < 0 ) {
 	char *data;
 	if ( (data=(char *)bu_rb_search1( brlcad_names, bu_vls_addr( &tmp_name ) ) ) != NULL ) {
-	    if ( logger ) {
+	    if ( logger_type == LOGGER_TYPE_ALL ) {
 		fprintf( logger, "\t\tfound duplicate (%s)\n", data );
 		fflush( logger );
 	    }
@@ -580,12 +594,12 @@ create_unique_name( char *name )
 	bu_vls_trunc( &tmp_name, initial_length );
 	count++;
 	bu_vls_printf( &tmp_name, "_%d", count );
-	if ( logger ) {
+	if ( logger_type == LOGGER_TYPE_ALL ) {
 	    fprintf( logger, "\tTrying %s\n", bu_vls_addr( &tmp_name ) );
 	}
     }
 
-    if ( logger ) {
+    if ( logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( logger, "\tnew name for %s is %s\n", name, bu_vls_addr( &tmp_name ) );
     }
     return( bu_vls_strgrab( &tmp_name ) );
@@ -603,7 +617,7 @@ get_brlcad_name( char *part_name )
     name_copy = bu_strdup( part_name );
     lower_case( name_copy );
 
-    if ( logger ) {
+    if ( logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( logger, "get_brlcad_name( %s )\n", name_copy );
     }
 
@@ -611,7 +625,7 @@ get_brlcad_name( char *part_name )
     entry = bu_find_hash_entry( name_hash, (unsigned char *)name_copy, strlen( name_copy ), &prev, &index );
 
     if ( entry ) {
-	if ( logger ) {
+	if ( logger_type == LOGGER_TYPE_ALL ) {
 	    fprintf( logger, "\treturning %s\n", (char *)bu_get_hash_value( entry ) );
 	}
 	bu_free( name_copy, "name_copy" );
@@ -622,7 +636,7 @@ get_brlcad_name( char *part_name )
 	brlcad_name = create_unique_name( name_copy );
 	entry = bu_hash_add_entry( name_hash, (unsigned char *)name_copy, strlen( name_copy ), &new_entry );
 	bu_set_hash_value( entry, (unsigned char *)brlcad_name );
-	if ( logger ) {
+	if ( logger_type == LOGGER_TYPE_ALL ) {
 	    fprintf( logger, "\tCreating new brlcad name (%s) for part (%s)\n", brlcad_name, name_copy );
 	}
 	bu_free( name_copy, "name_copy" );
@@ -647,7 +661,7 @@ model_units( ProMdl model )
     } else {
 	ProMessageDisplay(MSGFIL, "USER_NO_UNITS" );
 	ProMessageClear();
-	if ( logger ) {
+	if ( logger_type == LOGGER_TYPE_ALL ) {
 	    fprintf( logger, "No units specified, assuming inches\n" );
 	}
 	fprintf( stderr, "No units specified, assuming inches\n" );
@@ -659,7 +673,7 @@ model_units( ProMdl model )
     local_tol = tol_dist / proe_to_brl_conv;
     local_tol_sq = local_tol * local_tol;
 
-    if ( logger ) {
+    if ( logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( logger, "Units: %s, proe_to_brl_conv = %g\n",
 		 ProWstringToString( astr, unit_name ),
 		 proe_to_brl_conv );
@@ -693,7 +707,7 @@ add_to_done_part( wchar_t *name )
 {
     wchar_t *name_copy;
 
-    if ( logger ) {
+    if ( logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( logger, "Added %s to list of done parts\n", ProWstringToString( astr, name ) );
     }
 
@@ -734,7 +748,7 @@ add_to_done_asm( wchar_t *name )
 {
     wchar_t *name_copy;
 
-    if ( logger ) {
+    if ( logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( logger, "Added %s to list of done assemblies\n", ProWstringToString( astr, name ) );
     }
 
@@ -775,7 +789,7 @@ add_to_empty_list( char *name )
     struct empty_parts *ptr;
     int found=0;
 
-    if ( logger ) {
+    if ( logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( logger, "Adding %s to list of empty parts\n", name );
     }
 
@@ -808,16 +822,16 @@ kill_empty_parts()
 {
     struct empty_parts *ptr;
 
-    if ( logger ) {
+    if ( logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( logger, "Adding code to remove empty parts:\n" );
     }
 
     ptr = empty_parts_root;
     while ( ptr ) {
-	if ( logger ) {
+	if ( logger_type == LOGGER_TYPE_ALL ) {
 	    fprintf( logger, "\t%s\n", ptr->name );
 	}
-	fprintf( outfp, "set combs [find %s]\n", ptr->name );
+	fprintf( outfp, "set combs [dbfind %s]\n", ptr->name );
 	fprintf( outfp, "foreach comb $combs {\n\tcatch {rm $comb %s}\n}\n", ptr->name );
 	ptr = ptr->next;
     }
@@ -828,7 +842,7 @@ free_empty_parts()
 {
     struct empty_parts *ptr, *prev;
 
-    if ( logger ) {
+    if ( logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( logger, "Free empty parts list\n" );
     }
 
@@ -842,7 +856,7 @@ free_empty_parts()
 
     empty_parts_root = NULL;
 
-    if ( logger ) {
+    if ( logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( logger, "Free empty parts list done\n" );
     }
 }
@@ -1017,7 +1031,7 @@ Add_to_feature_delete_list( int id )
     }
     feat_ids_to_delete[feat_id_count++] = id;
 
-    if ( logger ) {
+    if ( logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( logger, "Adding feature %d to list of features to delete (list length = %d)\n",
 		 id, feat_id_count );
     }
@@ -1316,7 +1330,7 @@ Subtract_hole()
 	    return 0;
     }
 
-    if ( logger ) {
+    if ( logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( logger, "Doing a CSG hole subtraction\n" );
     }
 
@@ -1642,7 +1656,7 @@ remove_holes_from_id_list( ProMdl model )
     ProError status;
     ProFeattype type;
 
-    if ( logger ) {
+    if ( logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( logger, "Removing any holes from CSG list and from features to delete\n" );
     }
 
@@ -1654,7 +1668,7 @@ remove_holes_from_id_list( ProMdl model )
 	if ( status != PRO_TK_NO_ERROR ) {
 	    fprintf( stderr, "Failed to get handle for id %d\n",
 		     feat_ids_to_delete[i] );
-	    if ( logger ) {
+	    if ( logger_type == LOGGER_TYPE_ALL ) {
 		fprintf( logger, "Failed to get handle for id %d\n",
 			 feat_ids_to_delete[i] );
 	    }
@@ -1663,7 +1677,7 @@ remove_holes_from_id_list( ProMdl model )
 	if ( status != PRO_TK_NO_ERROR ) {
 	    fprintf( stderr, "Failed to get feature type for id %d\n",
 		     feat_ids_to_delete[i] );
-	    if ( logger ) {
+	    if ( logger_type == LOGGER_TYPE_ALL ) {
 		fprintf( logger, "Failed to get feature type for id %d\n",
 			 feat_ids_to_delete[i] );
 	    }
@@ -1672,7 +1686,7 @@ remove_holes_from_id_list( ProMdl model )
 	    /* remove this from the list */
 	    int j;
 
-	    if ( logger ) {
+	    if ( logger_type == LOGGER_TYPE_ALL ) {
 		fprintf( logger, "\tRemoving feature id %d from deltion list\n",
 			 feat_ids_to_delete[i] );
 	    }
@@ -1730,7 +1744,7 @@ build_tree( char *sol_name, struct bu_vls *tree )
 {
     struct csg_ops *ptr;
 
-    if ( logger ) {
+    if ( logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( logger, "Building CSG tree for %s\n", sol_name );
     }
     ptr = csg_root;
@@ -1744,14 +1758,14 @@ build_tree( char *sol_name, struct bu_vls *tree )
     bu_vls_strcat( tree, "} }" );
     ptr = csg_root;
     while ( ptr ) {
-	if ( logger ) {
+	if ( logger_type == LOGGER_TYPE_ALL ) {
 	    fprintf( logger, "Adding %c %s\n", ptr->operator, bu_vls_addr( &ptr->name ) );
 	}
 	bu_vls_printf( tree, " {l {%s}}}", bu_vls_addr( &ptr->name ) );
 	ptr = ptr->next;
     }
 
-    if ( logger ) {
+    if ( logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( logger, "Final tree: %s\n", bu_vls_addr( tree ) );
     }
 }
@@ -1764,7 +1778,7 @@ output_csg_prims()
     ptr = csg_root;
 
     while ( ptr ) {
-	if ( logger ) {
+	if ( logger_type == LOGGER_TYPE_ALL ) {
 	    fprintf( logger, "Creating primitive: %s %s\n",
 		     bu_vls_addr( &ptr->name ), bu_vls_addr( &ptr->dbput ) );
 	}
@@ -1810,6 +1824,9 @@ output_part( ProMdl model )
     int ret_status=0;
     char err_mess[512];
     wchar_t werr_mess[512];
+    double curr_error;
+    double curr_angle;
+    register int i;
 
     /* if this part has already been output, do not do it again */
     if ( ProMdlNameGet( model, part_name ) != PRO_TK_NO_ERROR ) {
@@ -1819,7 +1836,7 @@ output_part( ProMdl model )
     if ( already_done_part( part_name ) )
 	return( 0 );
 
-    if ( logger ) {
+    if ( logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( logger, "Processing %s:\n", ProWstringToString( astr, part_name ) );
     }
 
@@ -1850,7 +1867,7 @@ output_part( ProMdl model )
 	if ( feat_id_count ) {
 	    int i;
 
-	    if ( logger ) {
+	    if ( logger_type == LOGGER_TYPE_ALL ) {
 		fprintf( logger, "suppressing %d features of %s:\n",
 			 feat_id_count, curr_part_name );
 		for ( i=0; i<feat_id_count; i++ ) {
@@ -1868,7 +1885,7 @@ output_part( ProMdl model )
 
 		resume_opts[0] = PRO_FEAT_RESUME_INCLUDE_PARENTS;
 
-		if ( logger ) {
+		if ( logger_type == LOGGER_TYPE_ALL ) {
 		    fprintf( logger, "Failed to suppress features!!!\n" );
 		}
 		fprintf( stderr, "Failed to delete %d features from %s\n",
@@ -1881,7 +1898,7 @@ output_part( ProMdl model )
 		    if ( status != PRO_TK_NO_ERROR ) {
 			fprintf( stderr, "Failed to get handle for id %d\n",
 				 feat_ids_to_delete[i] );
-			if ( logger ) {
+			if ( logger_type == LOGGER_TYPE_ALL ) {
 			    fprintf( logger, "Failed to get handle for id %d\n",
 				     feat_ids_to_delete[i] );
 			}
@@ -1891,13 +1908,13 @@ output_part( ProMdl model )
 			    fprintf( stderr,
 				     "Failed to get status for feature %d\n",
 				     feat_ids_to_delete[i] );
-			    if ( logger ) {
+			    if ( logger_type == LOGGER_TYPE_ALL ) {
 				fprintf( logger,
 					 "Failed to get status for feature %d\n",
 					 feat_ids_to_delete[i] );
 			    }
 			} else {
-			    if ( logger ) {
+			    if ( logger_type == LOGGER_TYPE_ALL ) {
 				if ( feat_stat < 0 ) {
 				    fprintf( logger,
 					     "invalid feature (%d)\n",
@@ -1910,7 +1927,7 @@ output_part( ProMdl model )
 			    }
 			    if ( feat_stat == PRO_FEAT_SUPPRESSED ) {
 				/* unsuppress this one */
-				if ( logger ) {
+				if ( logger_type == LOGGER_TYPE_ALL ) {
 				    fprintf( logger,
 					     "Unsuppressing feature %d\n",
 					     feat_ids_to_delete[i] );
@@ -1918,7 +1935,7 @@ output_part( ProMdl model )
 				status = ProFeatureResume( ProMdlToSolid(model),
 							   &feat_ids_to_delete[i],
 							   1, resume_opts, 1 );
-				if ( logger ) {
+				if ( logger_type == LOGGER_TYPE_ALL ) {
 				    if ( status == PRO_TK_NO_ERROR ) {
 					fprintf( logger,
 						 "\tfeature id %d unsuppressed\n",
@@ -1952,29 +1969,54 @@ output_part( ProMdl model )
      */
 
     /* tessellate part */
-    if ( logger ) {
+    if ( logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( logger, "Tessellate part (%s)\n", curr_part_name );
     }
 
+#if 1
+    /* Going from coarse to fine tessellation */
+    for (i = 0; i <= max_to_min_steps; ++i) {
+	curr_error = max_error - (i * error_increment);
+	curr_angle = min_angle_cntrl + (i * angle_increment);
+
+	if ( logger_type == LOGGER_TYPE_ALL ) {
+	    fprintf(logger, "max_error = %g, min_error - %g, error_increment - %g\n", max_error, min_error, error_increment);
+	    fprintf(logger, "max_angle_cntrl = %g, min_angle_cntrl - %g, angle_increment - %g\n", max_angle_cntrl, min_angle_cntrl, angle_increment);
+	    fprintf(logger, "curr_error = %g, curr_angle - %g\n", curr_error, curr_angle);
+	    fprintf(logger, "Trying to tessellate %s using:  tessellation error - %g, angle - %g\n", curr_part_name, curr_error, curr_angle);
+	}
+
+	status = ProPartTessellate( ProMdlToPart(model), curr_error/proe_to_brl_conv,
+				    curr_angle, PRO_B_TRUE, &tess  );
+
+	if ( status == PRO_TK_NO_ERROR )
+	    break;
+
+	if ( logger_type == LOGGER_TYPE_ALL || logger_type == LOGGER_TYPE_FAILURE || logger_type == LOGGER_TYPE_FAILURE_OR_SUCCESS) {
+	    fprintf(logger, "Failed to tessellate %s using:  tessellation error - %g, angle - %g\n", curr_part_name, curr_error, curr_angle);
+	}
+    }
+#else
     status = ProPartTessellate( ProMdlToPart(model), max_error/proe_to_brl_conv,
-				angle_cntrl, PRO_B_TRUE, &tess  );
+				max_angle_cntrl, PRO_B_TRUE, &tess  );
+#endif
     if ( status != PRO_TK_NO_ERROR ) {
 	/* Failed!!! */
 
-	if ( logger ) {
+	if ( logger_type == LOGGER_TYPE_ALL || logger_type == LOGGER_TYPE_FAILURE || logger_type == LOGGER_TYPE_FAILURE_OR_SUCCESS) {
 	    fprintf( logger, "Failed to tessellate %s!!!\n", curr_part_name );
 	}
-	snprintf( astr, sizeof(astr), "Failed to tessellate part (%s)", curr_part_name );
+	snprintf( astr, sizeof(astr), "Failed to tessellate part (%s)", curr_part_name);
 	(void)ProMessageDisplay(MSGFIL, "USER_ERROR", astr );
 	ProMessageClear();
 	fprintf( stderr, "%s\n", astr );
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
+	add_to_empty_list( get_brlcad_name( curr_part_name ) );
 	ret = 1;
     } else if ( !tess ) {
 	/* not a failure, just an empty part */
-
-	if ( logger ) {
-	    fprintf( logger, "part (%s) is empty\n", curr_part_name );
+	if ( logger_type == LOGGER_TYPE_ALL || logger_type == LOGGER_TYPE_SUCCESS || logger_type == LOGGER_TYPE_FAILURE_OR_SUCCESS) {
+	    fprintf( logger, "Empty part. (%s) has no surfaces!!!\n", curr_part_name );
 	}
 	snprintf( astr, sizeof(astr), "%s has no surfaces, ignoring", curr_part_name );
 	(void)ProMessageDisplay(MSGFIL, "USER_WARNING", astr );
@@ -1987,6 +2029,11 @@ output_part( ProMdl model )
 	/* output the triangles */
 	int surface_count;
 
+	if ( logger_type == LOGGER_TYPE_ALL || logger_type == LOGGER_TYPE_SUCCESS || logger_type == LOGGER_TYPE_FAILURE_OR_SUCCESS) {
+	    fprintf( logger, "Successfully tessellated %s using: tessellation error - %g, angle - %g!!!\n",
+		     curr_part_name, curr_error, curr_angle );
+	}
+
 	status = ProArraySizeGet( (ProArray)tess, &surface_count );
 	if ( status != PRO_TK_NO_ERROR ) {
 	    (void)ProMessageDisplay(MSGFIL, "USER_ERROR", "Failed to get array size" );
@@ -1995,8 +2042,8 @@ output_part( ProMdl model )
 	    (void)ProWindowRefresh( PRO_VALUE_UNUSED );
 	    ret = 1;
 	} else if ( surface_count < 1 ) {
-	    if ( logger ) {
-		fprintf( logger, "part (%s) has no surfaces\n", curr_part_name );
+	    if ( logger_type == LOGGER_TYPE_ALL || logger_type == LOGGER_TYPE_SUCCESS || logger_type == LOGGER_TYPE_FAILURE_OR_SUCCESS) {
+		fprintf( logger, "Empty part. (%s) has no surfaces!!!\n", curr_part_name );
 	    }
 	    snprintf( astr, sizeof(astr), "%s has no surfaces, ignoring", curr_part_name );
 	    (void)ProMessageDisplay(MSGFIL, "USER_WARNING", astr );
@@ -2022,7 +2069,7 @@ output_part( ProMdl model )
 	    clean_vert_tree(norm_tree_root);
 
 	    /* add all vertices and triangles to our lists */
-	    if ( logger ) {
+	    if ( logger_type == LOGGER_TYPE_ALL ) {
 		fprintf( logger, "Processing surfaces of part %s\n", curr_part_name );
 	    }
 	    for ( surfno=0; surfno<surface_count; surfno++ ) {
@@ -2069,7 +2116,7 @@ output_part( ProMdl model )
 	    brl_name = get_brlcad_name( curr_part_name );
 	    sol_name = (char *)bu_malloc( strlen( brl_name ) + 3, "aol_name" );
 	    snprintf( sol_name, strlen(brl_name)+3, "s.%s", brl_name );
-	    if ( logger ) {
+	    if ( logger_type == LOGGER_TYPE_ALL ) {
 		fprintf( logger, "Creating bot primitive (%s) for part %s\n",
 			 sol_name, brl_name );
 	    }
@@ -2114,7 +2161,7 @@ output_part( ProMdl model )
 	    /* get the surface properties for the part
 	     * and create a region using the actual part name
 	     */
-	    if ( logger ) {
+	    if ( logger_type == LOGGER_TYPE_ALL ) {
 		fprintf( logger, "Creating region for part %s\n", curr_part_name );
 	    }
 	    stat = prodb_get_surface_props( model, SEL_3D_PART, -1, 0, &props );
@@ -2212,7 +2259,7 @@ output_part( ProMdl model )
 
     /* unsuppress anything we suppressed */
     if ( feat_id_count ) {
-	if ( logger ) {
+	if ( logger_type == LOGGER_TYPE_ALL ) {
 	    fprintf( logger, "Unsuppressing %d features\n", feat_id_count );
 	}
 	fprintf( stderr, "Unsuppressing %d features\n", feat_id_count );
@@ -2267,7 +2314,7 @@ free_assem( struct asm_head *curr_assem )
 {
     struct asm_member *ptr, *tmp;
 
-    if ( logger ) {
+    if ( logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( logger, "Freeing assembly info\n" );
     }
 
@@ -2319,7 +2366,7 @@ output_assembly( ProMdl model )
     if ( already_done_asm( asm_name ) )
 	return;
 
-    if ( logger ) {
+    if ( logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( logger, "Processing assembly %s:\n", ProWstringToString( astr, asm_name ) );
     }
 
@@ -2352,7 +2399,7 @@ output_assembly( ProMdl model )
     status = ProAssemblyIsExploded( model, &is_exploded );
     if ( status != PRO_TK_NO_ERROR ) {
 	fprintf( stderr, "Failed to get explode status of %s\n", curr_assem.name );
-	if ( logger ) {
+	if ( logger_type == LOGGER_TYPE_ALL ) {
 	    fprintf( logger, "Failed to get explode status of %s\n", curr_assem.name );
 	}
     }
@@ -2363,7 +2410,7 @@ output_assembly( ProMdl model )
 	if ( status != PRO_TK_NO_ERROR ) {
 	    fprintf( stderr, "Failed to un-explode assembly %s\n", curr_assem.name );
 	    fprintf( stderr, "\tcomponents will be incorrectly positioned\n" );
-	    if ( logger ) {
+	    if ( logger_type == LOGGER_TYPE_ALL ) {
 		fprintf( logger, "Failed to un-explode assembly %s\n", curr_assem.name );
 		fprintf( logger, "\tcomponents will be incorrectly positioned\n" );
 	    }
@@ -2388,7 +2435,7 @@ output_assembly( ProMdl model )
 	member = member->next;
     }
 
-    if ( logger ) {
+    if ( logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( logger, "Output %d members of assembly\n", member_count );
     }
 
@@ -2434,7 +2481,7 @@ output_assembly( ProMdl model )
     fprintf( outfp, "\n" );
 
     /* calculate mass properties */
-    if ( logger ) {
+    if ( logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( logger, "Getting mass properties for this assmebly\n" );
     }
 
@@ -2485,7 +2532,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 	return status;
     }
     (void)ProWstringToString( curr_part_name, name );
-    if ( logger ) {
+    if ( logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( logger, "Processing assembly member %s\n", curr_part_name );
     }
 
@@ -2707,7 +2754,7 @@ output_top_level_object( ProMdl model, ProMdlType type )
     /* save name */
     bu_strlcpy( top_level, curr_part_name, sizeof(top_level) );
 
-    if ( logger ) {
+    if ( logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( logger, "Output top level object (%s)\n", top_level );
     }
 
@@ -2807,10 +2854,10 @@ create_temp_directory()
     /* get the angle control */
     (void) ProMessageDisplay( MSGFIL, "USER_PROMPT_DOUBLE",
 			      "Enter a value for angle control: ",
-			      &angle_cntrl );
+			      &max_angle_cntrl );
     range[0] = 0.0;
     range[1] = 1.0;
-    status = ProMessageDoubleRead( range, &angle_cntrl );
+    status = ProMessageDoubleRead( range, &max_angle_cntrl );
     if ( status == PRO_TK_MSG_USER_QUIT ) {
 	return( 0 );
     }
@@ -2843,14 +2890,14 @@ create_name_hash( FILE *name_fd )
 
     htbl = bu_create_hash_tbl( NUM_HASH_TABLE_BINS );
 
-    if ( logger ) {
+    if ( logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( logger, "name hash created, now filling it:\n" );
     }
     while ( bu_fgets( line, MAX_LINE_LEN, name_fd ) ) {
 	char *part_no, *part_name, *ptr;
 	line_no++;
 
-	if ( logger ) {
+	if ( logger_type == LOGGER_TYPE_ALL ) {
 	    fprintf( logger, "line %ld: %s", line_no, line );
 	}
 
@@ -2872,7 +2919,7 @@ create_name_hash( FILE *name_fd )
 	}
 	entry = bu_hash_add_entry( htbl, (unsigned char *)part_no, strlen( part_no ), &new_entry );
 	if ( !new_entry ) {
-	    if ( logger ) {
+	    if ( logger_type == LOGGER_TYPE_ALL ) {
 		fprintf( logger, "\t\t\tHash table entry already exists for part number (%s)\n", part_no );
 	    }
 	    bu_free( part_no, "part_no" );
@@ -2898,12 +2945,12 @@ create_name_hash( FILE *name_fd )
 	lower_case( part_name );
 	part_name = create_unique_name( part_name );
 
-	if ( logger ) {
+	if ( logger_type == LOGGER_TYPE_ALL ) {
 	    fprintf( logger, "\t\tpart_no = %s, part name = %s\n", part_no, part_name );
 	}
 
 
-	if ( logger ) {
+	if ( logger_type == LOGGER_TYPE_ALL ) {
 	    fprintf( logger, "\t\t\tCreating new hash tabel entry for above names\n" );
 	}
 	bu_set_hash_value( entry, (unsigned char *)part_name );
@@ -2928,6 +2975,9 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     char output_file[128];
     char name_file[128];
     char log_file[128];
+    int n_selected_names;
+    char **selected_names;
+    char logger_type_str[128];
     int ret_status=0;
 
     empty_parts_root = (struct empty_parts *)NULL;
@@ -2944,6 +2994,20 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 		 status );
 	fprintf( stderr, "\t dialog returned %d\n", ret_status );
     }
+
+#if 1
+    /* get logger type */
+    status = ProUIRadiogroupSelectednamesGet( "proe_brl", "log_file_type_rg", &n_selected_names, &selected_names );
+    if ( status != PRO_TK_NO_ERROR ) {
+	fprintf( stderr, "Failed to get log file type\n" );
+	ProUIDialogDestroy( "proe_brl" );
+	return;
+    }
+    sprintf(logger_type_str,"%s", selected_names[0]);
+    ProStringarrayFree(selected_names, n_selected_names);
+#else
+    sprintf(logger_type_str, "Failure");
+#endif
 
     /* get the name of the log file */
     status = ProUIInputpanelValueGet( "proe_brl", "log_file", &tmp_str );
@@ -3001,8 +3065,23 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     ProWstringFree( tmp_str );
     max_error = atof( astr );
 
-    /* get the angle control */
-    status = ProUIInputpanelValueGet( "proe_brl", "angle_ctrl", &tmp_str );
+    /* get min error */
+    status = ProUIInputpanelValueGet( "proe_brl", "min_error", &tmp_str );
+    if ( status != PRO_TK_NO_ERROR ) {
+	fprintf( stderr, "Failed to get min tesellation error\n" );
+	ProUIDialogDestroy( "proe_brl" );
+	return;
+    }
+
+    ProWstringToString( astr, tmp_str );
+    ProWstringFree( tmp_str );
+    min_error = atof( astr );
+
+    if (max_error < min_error)
+	max_error = min_error;
+
+    /* get the max angle control */
+    status = ProUIInputpanelValueGet( "proe_brl", "max_angle_ctrl", &tmp_str );
     if ( status != PRO_TK_NO_ERROR ) {
 	fprintf( stderr, "Failed to get angle control\n" );
 	ProUIDialogDestroy( "proe_brl" );
@@ -3011,7 +3090,52 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 
     ProWstringToString( astr, tmp_str );
     ProWstringFree( tmp_str );
-    angle_cntrl = atof( astr );
+    max_angle_cntrl = atof( astr );
+
+    /* get the min angle control */
+    status = ProUIInputpanelValueGet( "proe_brl", "min_angle_ctrl", &tmp_str );
+    if ( status != PRO_TK_NO_ERROR ) {
+	fprintf( stderr, "Failed to get angle control\n" );
+	ProUIDialogDestroy( "proe_brl" );
+	return;
+    }
+
+    ProWstringToString( astr, tmp_str );
+    ProWstringFree( tmp_str );
+    min_angle_cntrl = atof( astr );
+
+    if (max_angle_cntrl < min_angle_cntrl)
+	max_angle_cntrl = min_angle_cntrl;
+
+    /* get the max to min steps */
+    status = ProUIInputpanelValueGet( "proe_brl", "isteps", &tmp_str );
+    if ( status != PRO_TK_NO_ERROR ) {
+	fprintf( stderr, "Failed to get max to min steps\n" );
+	ProUIDialogDestroy( "proe_brl" );
+	return;
+    }
+
+    ProWstringToString( astr, tmp_str );
+    ProWstringFree( tmp_str );
+    max_to_min_steps = atoi( astr );
+    if (max_to_min_steps <= 0) {
+	max_to_min_steps = 0;
+	error_increment = 0;
+	angle_increment = 0;
+    } else {
+	if (NEAR_ZERO((max_error - min_error), SMALL_FASTF))
+	    error_increment = 0;
+	else
+	    error_increment = (max_error - min_error) / (double)max_to_min_steps;
+
+	if (NEAR_ZERO((max_angle_cntrl - min_angle_cntrl), SMALL_FASTF))
+	    angle_increment = 0;
+	else
+	    angle_increment = (max_angle_cntrl - min_angle_cntrl) / (double)max_to_min_steps;
+
+	if (error_increment == 0 && angle_increment == 0)
+	    max_to_min_steps = 0;
+    }
 
     /* check if user wants to do any CSG */
     status = ProUICheckbuttonGetState( "proe_brl", "facets_only", &do_facets_only );
@@ -3109,15 +3233,26 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	    ProUIDialogDestroy( "proe_brl" );
 	    return;
 	}
+
+	/* Set logger type */
+	if (!strcmp("Failure", logger_type_str))
+	    logger_type = LOGGER_TYPE_FAILURE;
+	else if (!strcmp("Success", logger_type_str))
+	    logger_type = LOGGER_TYPE_SUCCESS;
+	else if (!strcmp("Failure/Success", logger_type_str))
+	    logger_type = LOGGER_TYPE_FAILURE_OR_SUCCESS;
+	else
+	    logger_type = LOGGER_TYPE_ALL;
     } else {
 	logger = (FILE *)NULL;
+	logger_type = LOGGER_TYPE_NONE;
     }
 
     /* open part name mapper file, if a name was provided */
     if ( strlen( name_file ) > 0 ) {
 	FILE *name_fd;
 
-	if ( logger ) {
+	if ( logger_type == LOGGER_TYPE_ALL ) {
 	    fprintf( logger, "Opening part name map file (%s)\n", name_file );
 	}
 
@@ -3126,7 +3261,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	    int dialog_return=0;
 	    wchar_t w_error_msg[512];
 
-	    if ( logger ) {
+	    if ( logger_type == LOGGER_TYPE_ALL ) {
 		fprintf( logger, "Failed to open part name map file (%s)\n", name_file );
 		fprintf( logger, "%s\n", strerror( errno ) );
 	    }
@@ -3161,7 +3296,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	}
 
 	/* create a hash table of part numbers to part names */
-	if ( logger ) {
+	if ( logger_type == LOGGER_TYPE_ALL ) {
 	    fprintf( logger, "Creating name hash\n" );
 	}
 
@@ -3181,7 +3316,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	fclose( name_fd );
 
     } else {
-	if ( logger ) {
+	if ( logger_type == LOGGER_TYPE_ALL ) {
 	    fprintf( logger, "No name hash used\n" );
 	}
 	/* create an empty hash table */
@@ -3319,14 +3454,14 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 
     free_empty_parts();
 
-    if ( logger ) {
+    if ( logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( logger, "Closing output file\n" );
     }
 
     fclose( outfp );
 
     if ( name_hash ) {
-	if ( logger ) {
+	if ( logger_type == LOGGER_TYPE_ALL ) {
 	    fprintf( logger, "freeing name hash\n" );
 	}
 	free_hash_values( name_hash );
@@ -3335,17 +3470,19 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     }
 
     if ( brlcad_names ) {
-	if ( logger ) {
+	if ( logger_type == LOGGER_TYPE_ALL ) {
 	    fprintf( logger, "freeing name rb_tree\n" );
 	}
 	bu_rb_free( brlcad_names, NULL );	/* data was already freed by free_hash_values() */
 	brlcad_names = (bu_rb_tree *)NULL;
     }
 
-    if ( logger ) {
-	fprintf( logger, "Closing logger file\n" );
+    if ( logger_type != LOGGER_TYPE_NONE ) {
+	if ( logger_type == LOGGER_TYPE_ALL )
+	    fprintf( logger, "Closing logger file\n" );
 	fclose( logger );
 	logger = (FILE *)NULL;
+	logger_type = LOGGER_TYPE_NONE;
     }
 
     return;
@@ -3526,10 +3663,10 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
     /* get the angle control */
     (void) ProMessageDisplay( MSGFIL, "USER_PROMPT_DOUBLE",
 			      "Enter a value for angle control: ",
-			      &angle_cntrl );
+			      &max_angle_cntrl );
     range[0] = 0.0;
     range[1] = 1.0;
-    status = ProMessageDoubleRead( range, &angle_cntrl );
+    status = ProMessageDoubleRead( range, &max_angle_cntrl );
     if ( status == PRO_TK_MSG_USER_QUIT ) {
 	return( 0 );
     }
