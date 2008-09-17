@@ -50,7 +50,7 @@
  *
  */
 
-#include "raytrace.h"
+#include "common.h"
 
 #include <stddef.h>
 #include <stdio.h>
@@ -60,6 +60,7 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "raytrace.h"
 #include "rtgeom.h"
 #include "db.h"
 #include "plot3.h"
