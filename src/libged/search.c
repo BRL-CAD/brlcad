@@ -769,6 +769,13 @@ f_type(PLAN *plan, struct db_full_path *entry, struct rt_wdb *wdbp)
 		    if (rcount > 0) type_match = 1;
 	        }
             }
+	    if (DB_FULL_PATH_CUR_DIR(entry)->d_flags & DIR_REGION) {
+		if ( (!bu_fnmatch(plan->type_data, "nr", 0)) || (!bu_fnmatch(plan->type_data, "nested_region", 0))) {
+	            int rcount = 0;
+		    db_fullpath_traverse( wdbp, entry, count_if_region, NULL, wdbp->wdb_resp, &rcount );
+		    if (rcount > 1) type_match = 1;
+	        }
+            }
      	    if ( (!bu_fnmatch(plan->type_data, "c", 0)) || (!bu_fnmatch(plan->type_data, "comb", 0)) || (!bu_fnmatch(plan->type_data, "combination", 0))) {
 		    type_match = 1;
 	    }
