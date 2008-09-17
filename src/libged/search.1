@@ -174,7 +174,7 @@ Find all objects in the database that are elliptical tori.  Notice the
 use of "." for the path, which means to find the objects themselves in
 a flat search rather than all instances in the tree hierarchy.
 .TP
-search -type comb ! ( -type region -type assem )
+search -type comb -not ( -type region -or -type assem )
 Find all instances of combinations that are not regions and do not contain regions.
 
 .SH DIAGNOSTICS
