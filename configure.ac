@@ -1799,6 +1799,7 @@ if test "x$bc_use_profiling" != "xno" ; then
 	fi
 
 	if test "x$bc_profile_flag_works" = "xno" ; then
+		# no profiling
 		if test "x$bc_use_profiling" = "xyes" ; then
 			dnl profiling was requested, so abort
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
@@ -1808,8 +1809,11 @@ if test "x$bc_use_profiling" != "xno" ; then
 		AC_MSG_WARN([Don't know how to profile with this compiler])
 		sleep 1
 	else
-		# convert 'auto' to 'no' even though it works
-		bc_use_profiling=no
+		# profiling works
+		if test "x$bc_use_profiling" = "xauto" ; then
+			# convert 'auto' to 'no' even though it works
+			bc_use_profiling=no
+		fi
 	fi
 fi
 
@@ -1817,6 +1821,7 @@ dnl debug flags
 if test "x$bc_use_debug" != "xno" ; then
 	BC_COMPILER_AND_LINKER_RECOGNIZES([-g], [debug_flag])
 	if test "x$bc_debug_flag_works" = "xno" ; then
+		# no debug
 		if test "x$bc_use_debug" = "xyes" ; then
 			dnl debug was requested, so abort
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
@@ -1826,8 +1831,11 @@ if test "x$bc_use_debug" != "xno" ; then
 		AC_MSG_WARN([Do not know how to debug with this compiler])
 		sleep 1
 	else
-		# convert 'auto' to 'yes'
-		bc_use_debug="yes"
+		# debug works
+		if test "x$bc_use_debug" = "xauto" ; then
+			# convert 'auto' to 'yes'
+			bc_use_debug="yes"
+		fi
 	fi
 fi
 
