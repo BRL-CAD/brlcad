@@ -25,6 +25,7 @@ the geometry hierarchy, and much more.  You can combine search
 expressions together using boolean logic as well for even more
 powerful operations.
 
+* additional logging options in Pro/E exporter - Bob Parker
 * Pro/E exporter enhancements for dynamic tess tolerance - Bob Parker
 * new search command enabling Unix find style searches - C. Yapp
 * mged no longer requires PATH for internal commands - Sean Morrison
