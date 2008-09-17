@@ -803,7 +803,7 @@ const struct rt_functab rt_functab[] = {
      rt_dsp_prep,	rt_dsp_shot,	rt_dsp_print,	rt_dsp_norm,
      rt_nul_piece_shot, rt_nul_piece_hitsegs,
      rt_dsp_uv,	rt_dsp_curve,	rt_dsp_class,	rt_dsp_free,
-     rt_dsp_plot,	rt_vstub,	rt_nul_tess,	rt_nul_tnurb,
+     rt_dsp_plot,	rt_vstub,	rt_dsp_tess,	rt_nul_tnurb,
      rt_dsp_import5, rt_dsp_export5,
      rt_dsp_import,	rt_dsp_export,	rt_dsp_ifree,
      rt_dsp_describe, rt_dsp_xform,	rt_dsp_parse,
