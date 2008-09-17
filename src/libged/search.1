@@ -119,14 +119,68 @@ True if the object path matches
 Pattern evaluation is done using Regular Expression matching.
 .TP
 .B stdattr 
-Returns TRUE if an object has ONLY standard attributes associated with it.
+Returns TRUE if an object has ONLY standard attributes associated with it.  Standard attributes in BRL-CAD are:
+.br
+ 
+.br
+.ta 1.5i
+.br
+aircode      GIFTmater      inherit
+.br
+los          material_id    oshader
+.br
+region       region_id      rgb
+.br
+ 
+.br
 .TP
 .B type pattern
 Returns TRUE if the type of the object matches
 .I pattern.
 Pattern evaluation is done using shell pattern matching.  Types
-recognized include specific primitive types (sph, eto, arb8, etc...)
-as well as combinations, regions and assemblies.
+recognized include:
+.br
+ 
+.br
+.ta 1.5i
+.br
+.B Primitives
+.br
+arb4      arb5      arb6      arb7      arb8      arbn
+.br
+ars       bot       cline     dsp       ebm       ehy
+.br
+ell       epa       eto       extrude   grip      half
+.br
+hf        joint     nmg       part      pipe      poly
+.br
+rec       rhc       rpc       sketch    sph       spline
+.br
+submodel  tgc       tor       vol
+.br
+
+.br
+.B Combinations
+.br
+Type             Abbreviations Recognized
+.br
+-----------      ------------------------
+.br
+combination      c, comb, combination
+.br
+region           r, reg, region
+.br
+assembly         a, assem, assembly
+.br
+nested region*   nr, nested_region
+.br
+ 
+.br
+* Nested regions are cases where a region is used
+in the subtree of another region - this is usually
+a consequence of subtracting large geometries as a unit and
+is considered poor modeling practice in BRL-CAD. If
+a nested region is found, the top region is reported.
 .LP
 .SH OPERATORS
 .TP
@@ -157,7 +211,7 @@ search expression.  E.g. !(-name [a-z] -or -name [0-9]) must be written as:
 While this may seem like a rather verbose way of writing the expression, it greatly
 simplifies the parsing of the expression and is standard for virtually all
 .B find
-commands.
+type commands. Because [a-z] and [0-9] are atomic arguments as far as search is concerned, they should NOT be expanded in a similar fashion.
 
 .SH EXAMPLES
 The following are run from the MGED command prompt:
