@@ -42,6 +42,7 @@ bin_PROGRAMS = \
 	asc2pix \
 	bot-bldxf \
 	bot-raw \
+	bot-stl \
 	bot_shell-vtk \
 	conv-vg2g \
 	cy-g \
@@ -112,6 +113,9 @@ bot_bldxf_LDADD = ${RT}
 
 bot_raw_SOURCES = bot-raw.c
 bot_raw_LDADD = ${RT}
+
+bot_stl_SOURCES = bot-stl.c
+bot_stl_LDADD = ${RT}
 
 bot_shell_vtk_SOURCES = bot_shell-vtk.c
 bot_shell_vtk_LDADD = ${RT}
