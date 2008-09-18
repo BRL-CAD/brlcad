@@ -236,8 +236,12 @@ static OPTION options[] = {
     { "(",          N_OPENPAREN,    c_openparen,    O_ZERO },
     { ")",          N_CLOSEPAREN,   c_closeparen,   O_ZERO },
     { "-a",         N_AND,          NULL,           O_NONE },
+    { "-ab",         N_ABOVE,          c_above,           O_ZERO },
+    { "-above",      N_ABOVE,          c_above,           O_ZERO },
     { "-and",       N_AND,          NULL,           O_NONE },
     { "-attr",	N_ATTR,		c_attr,		O_ARGV },
+    { "-bl",         N_BELOW,          c_below,           O_ZERO },
+    { "-below",         N_BELOW,          c_below,           O_ZERO },
     { "-empty",       N_EMPTY,          c_empty,           O_ZERO },
     { "-iname",      N_INAME,         c_iname,         O_ARGV },
     { "-iregex",   N_IREGEX,      c_iregex,      O_ARGV },
@@ -328,6 +332,261 @@ c_not(char *ignore, char ***ignored, int unused, PLAN **resultplan)
     (*resultplan) =  (palloc(N_NOT, f_not));
     return BRLCAD_OK;
 }
+
+
+
+int
+find_execute_nested_plans(struct rt_wdb *wdbp, struct db_full_path *entry, genptr_t inputplan) {
+    PLAN *p;
+    PLAN *plan = (PLAN *)inputplan;
+    int state;
+    for (p = plan; p && (state = (p->eval)(p, entry, wdbp)); p = p->next)
+	;
+    return state;   	
+}
+
+
+/*
+ * -above expression functions --
+ *
+ *      Conduct the test described by expression on all levels
+ *      above the current level in the tree - in this case meaning
+ *      following the tree path back to the root, NOT testing all
+ *      objects at any level above the current object depth.
+ */
+int
+f_above(PLAN *plan, struct db_full_path *entry, struct rt_wdb *wdbp)
+{
+    PLAN *p;
+    int state = 0;
+    struct db_full_path abovepath;
+    db_full_path_init(&abovepath);
+    db_dup_full_path(&abovepath, entry);
+    DB_FULL_PATH_POP(&abovepath);
+    while ((abovepath.fp_len > 0) && (state == 0)) {
+	state = find_execute_nested_plans(wdbp, &abovepath, plan->ab_data[0]);
+	DB_FULL_PATH_POP(&abovepath);
+    }
+    db_free_full_path(&abovepath);
+    return (state);
+}
+
+int
+c_above(char *ignore, char ***ignored, int unused, PLAN **resultplan)
+{
+    (*resultplan) =  (palloc(N_ABOVE, f_above));
+    return BRLCAD_OK;
+}
+
+
+
+
+
+
+/*
+ * D B _ F U L L P A T H _ S T A T E F U L _ T R A V E R S E _ S U B T R E E
+ *
+ * A generic traversal function maintaining awareness of
+ * the full path to a given object and with function types allowing
+ * a return of an integer state.
+ */
+int
+db_fullpath_stateful_traverse_subtree(union tree *tp,
+			     int (*traverse_func) ( struct rt_wdb *, struct db_full_path *,
+						     int (*) (struct rt_wdb *, struct db_full_path *, genptr_t),
+						     int (*) (struct rt_wdb *, struct db_full_path *, genptr_t),
+						     struct resource *,
+						     genptr_t),
+			     struct rt_wdb *wdbp,
+			     struct db_full_path *dfp,
+			     int (*comb_func) (struct rt_wdb *, struct db_full_path *, genptr_t),
+			     int (*leaf_func) (struct rt_wdb *, struct db_full_path *, genptr_t),
+			     struct resource *resp,
+			     genptr_t client_data)
+{
+    struct directory *dp;
+    int state = 0;
+    if ( !tp )
+	return 0;
+
+    RT_CK_FULL_PATH( dfp );
+    RT_CHECK_DBI( wdbp->dbip );
+    RT_CK_TREE( tp );
+    RT_CK_RESOURCE( resp );
+
+    switch ( tp->tr_op )  {
+
+	case OP_DB_LEAF:
+	    if ( (dp=db_lookup( wdbp->dbip, tp->tr_l.tl_name, LOOKUP_NOISY )) == DIR_NULL ) {
+		return 0;
+	    } else {
+		db_add_node_to_full_path( dfp, dp);
+		state = traverse_func( wdbp, dfp, comb_func, leaf_func, resp, client_data );
+		DB_FULL_PATH_POP(dfp);
+		if (state == 1) {
+		    return 1;
+		} else {
+		    return 0;
+		}
+	    }
+	    break;
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+	    state = db_fullpath_stateful_traverse_subtree( tp->tr_b.tb_left, traverse_func, wdbp, dfp, comb_func, leaf_func, resp, client_data );
+	    if (state == 1) return 1;
+	    db_fullpath_stateful_traverse_subtree( tp->tr_b.tb_right, traverse_func, wdbp, dfp, comb_func, leaf_func, resp, client_data );
+	    if (state == 1) {
+		return 1;
+	    } else {
+		return 0;
+	    }
+	    break;
+	default:
+	    bu_log( "db_functree_subtree: unrecognized operator %d\n", tp->tr_op );
+	    bu_bomb( "db_functree_subtree: unrecognized operator\n" );
+    }
+}
+
+/*
+ *     D B _ F U L L P A T H _ S T A T E F U L _ T R A V E R S E
+ *
+ *  This subroutine is called for a no-frills tree-walk,
+ *  with the provided subroutines being called when entering and
+ *  exiting combinations and at leaf (solid) nodes.
+ *
+ *  This routine is recursive, so no variables may be declared static.
+ *
+ *  Unlike db_preorder_traverse, this routine and its subroutines
+ *  use db_full_path structures instead of directory structures.
+ *
+ *  This walker will hault if either comb_func or leaf_func return
+ *  a value > 0 and return that value.
+ */
+int
+db_fullpath_stateful_traverse( struct rt_wdb *wdbp,
+		      struct db_full_path *dfp,
+		      int (*comb_func) (struct rt_wdb *, struct db_full_path *, genptr_t),
+		      int (*leaf_func) (struct rt_wdb *, struct db_full_path *, genptr_t),
+		      struct resource *resp,
+		      genptr_t client_data )
+{
+    struct directory *dp;
+    register int i;
+    int state = 0;
+    RT_CK_FULL_PATH(dfp);
+    RT_CK_DBI(wdbp->dbip);
+
+    dp = DB_FULL_PATH_CUR_DIR(dfp);
+
+    if ( dp->d_flags & DIR_COMB )  {
+	/* entering region */
+	if ( comb_func ) 
+	    if (comb_func( wdbp, dfp, client_data )) return 1;
+	if ( wdbp->dbip->dbi_version < 5 ) {
+	    register union record   *rp;
+	    register struct directory *mdp;
+	    /*
+	     * Load the combination into local record buffer
+	     * This is in external v4 format.
+	     */
+	    if ( (rp = db_getmrec( wdbp->dbip, dp )) == (union record *)0 )
+		return 0;
+	    /* recurse */
+	    for ( i=1; i < dp->d_len; i++ )  {
+		if ( (mdp = db_lookup( wdbp->dbip, rp[i].M.m_instname,
+				       LOOKUP_NOISY )) == DIR_NULL ) {
+		    continue;
+		} else {
+		    db_add_node_to_full_path(dfp, mdp);
+		    state = db_fullpath_stateful_traverse(wdbp, dfp, comb_func, leaf_func, resp, client_data);
+		    DB_FULL_PATH_POP(dfp);
+		    if (state == 1) {
+		       return 1;
+		    } else {
+	 	       return 0;
+		    }		
+		}
+	    }
+	    bu_free( (char *)rp, "db_preorder_traverse[]" );
+	} else {
+	    struct rt_db_internal in;
+	    struct rt_comb_internal *comb;
+	    struct directory *ndp;
+
+	    if ( rt_db_get_internal5( &in, dp, wdbp->dbip, NULL, resp ) < 0 )
+		return 0;
+
+	    comb = (struct rt_comb_internal *)in.idb_ptr;
+
+	    state = db_fullpath_stateful_traverse_subtree( comb->tree, db_fullpath_stateful_traverse, wdbp, dfp, comb_func, leaf_func, resp, client_data );
+
+	    rt_db_free_internal( &in, resp );
+	    if (state == 1) {
+		return 1;
+	    } else {
+		return 0;
+	    }
+	}
+    }
+    if ( dp->d_flags & DIR_SOLID || dp->d_major_type & DB5_MAJORTYPE_BINARY_MASK )  {
+	/* at leaf */
+	if ( leaf_func )
+	    if(leaf_func( wdbp, dfp, client_data )) return 1;
+    }
+}
+
+
+
+
+/*
+ * -below expression functions --
+ *
+ *      Conduct the test described by expression on all objects
+ *      below the current object in the tree. 
+ */
+int
+f_below(PLAN *plan, struct db_full_path *entry, struct rt_wdb *wdbp)
+{
+    PLAN *p;
+    int state = 0;
+    struct db_full_path belowpath;
+    struct rt_db_internal in;
+    struct rt_comb_internal *comb;
+    struct directory *ndp;
+    db_full_path_init(&belowpath);
+    db_dup_full_path(&belowpath, entry);
+
+
+    if ( rt_db_get_internal5( &in, DB_FULL_PATH_CUR_DIR(entry), wdbp->dbip, NULL, wdbp->wdb_resp ) < 0 )
+	return 0;
+
+    comb = (struct rt_comb_internal *)in.idb_ptr;
+
+    state = db_fullpath_stateful_traverse_subtree( comb->tree, db_fullpath_stateful_traverse, wdbp, &belowpath, find_execute_nested_plans, find_execute_nested_plans, wdbp->wdb_resp, plan->bl_data[0] );
+
+    rt_db_free_internal( &in, wdbp->wdb_resp );
+    
+    db_free_full_path(&belowpath);
+    if (state >= 1) {
+	return 1;
+    } else {
+	return 0;
+    }
+	
+}
+
+int
+c_below(char *ignore, char ***ignored, int unused, PLAN **resultplan)
+{
+    (*resultplan) =  (palloc(N_BELOW, f_below));
+    return BRLCAD_OK;
+}
+
+
+
+
 
 /*
  * expression -o expression functions --
@@ -1226,6 +1485,131 @@ not_squish(PLAN *plan, PLAN **resultplan)          /* plan to process */
 
 
 /*
+ * above_squish --
+ *      compresses "-above" expressions in our search plan.
+ */
+int
+above_squish(PLAN *plan, PLAN **resultplan)          /* plan to process */
+{
+    PLAN *next;     /* next node being processed */
+    PLAN *node;     /* temporary node used in N_NOT processing */
+    PLAN *tail;     /* pointer to tail of result plan */
+    PLAN *result;           /* pointer to head of result plan */
+
+    tail = result = next = NULL;
+
+    while ((next = yanknode(&plan)) != NULL) {
+	/*
+	 * if we encounter a ( expression ) then look for aboves in
+	 * the expr subplan.
+	 */
+	if (next->type == N_EXPR)
+	    if (above_squish(next->ab_data[0], &(next->ab_data[0])) != BRLCAD_OK) return BRLCAD_ERROR;
+
+	/*
+	 * if we encounter an above, then snag the next node and place
+	 * it in the not's subplan.  
+	 */
+	if (next->type == N_ABOVE) {
+
+	    node = yanknode(&plan);
+	    if (node != NULL && node->type == N_ABOVE) {
+		bu_log("Error - repeated -above node in plan.\n");
+		return BRLCAD_ERROR;
+	    }
+	    if (node == NULL) {
+		bu_log("-above: no following expression");
+		return BRLCAD_ERROR;
+	    }
+	    if (node->type == N_OR) {
+		bu_log("-above: nothing between -above and -o");
+		return BRLCAD_ERROR;
+	    }
+	    if (node->type == N_EXPR)
+		if (above_squish(node, &node) != BRLCAD_OK) return BRLCAD_ERROR;
+	    /*Made it*/
+	    next->ab_data[0] = node;
+	}
+
+	/* add the node to our result plan */
+	if (result == NULL)
+	    tail = result = next;
+	else {
+	    tail->next = next;
+	    tail = next;
+	}
+	tail->next = NULL;
+    }
+    (*resultplan) = result;
+    return BRLCAD_OK;
+}
+
+/*
+ * below_squish --
+ *      compresses "-below" expressions in our search plan.
+ */
+int
+below_squish(PLAN *plan, PLAN **resultplan)          /* plan to process */
+{
+    PLAN *next;     /* next node being processed */
+    PLAN *node;     /* temporary node used in N_NOT processing */
+    PLAN *tail;     /* pointer to tail of result plan */
+    PLAN *result;           /* pointer to head of result plan */
+
+    tail = result = next = NULL;
+
+    while ((next = yanknode(&plan)) != NULL) {
+	/*
+	 * if we encounter a ( expression ) then look for nots in
+	 * the expr subplan.
+	 */
+	if (next->type == N_EXPR)
+	    if (below_squish(next->bl_data[0], &(next->bl_data[0])) != BRLCAD_OK) return BRLCAD_ERROR;
+
+	/*
+	 * if we encounter a not, then snag the next node and place
+	 * it in the not's subplan. 
+	 */
+	if (next->type == N_BELOW) {
+	    
+	    node = yanknode(&plan);
+	    if (node != NULL && node->type == N_BELOW) {
+	    	bu_log("Error - repeated -below node in plan.\n");
+		return BRLCAD_ERROR;
+	    }
+	    if (node == NULL) {
+		bu_log("-below: no following expression");
+		return BRLCAD_ERROR;
+	    }
+	    if (node->type == N_OR) {
+		bu_log("-below: nothing between -below and -o");
+		return BRLCAD_ERROR;
+	    }
+	    if (node->type == N_EXPR)
+		if (below_squish(node, &node) != BRLCAD_OK) return BRLCAD_ERROR;
+	    /* Made it */
+	    next->bl_data[0] = node;
+	}
+
+	/* add the node to our result plan */
+	if (result == NULL)
+	    tail = result = next;
+	else {
+	    tail->next = next;
+	    tail = next;
+	}
+	tail->next = NULL;
+    }
+    (*resultplan) = result;
+    return BRLCAD_OK;
+}
+
+
+
+
+
+
+/*
  * or_squish --
  *      compresses -o expressions in our search plan.
  */
@@ -1369,6 +1753,8 @@ find_formplan(char **argv, PLAN **resultplan)
 
     if(paren_squish(plan, &plan) != BRLCAD_OK) return BRLCAD_ERROR;              /* ()'s */
     if(not_squish(plan, &plan) != BRLCAD_OK) return BRLCAD_ERROR;                /* !'s */
+    if(above_squish(plan, &plan) != BRLCAD_OK) return BRLCAD_ERROR;                /* above's */
+    if(below_squish(plan, &plan) != BRLCAD_OK) return BRLCAD_ERROR;                /* below's */
     if(or_squish(plan, &plan) != BRLCAD_OK) return BRLCAD_ERROR;                 /* -o's */
     (*resultplan) = plan;
     return BRLCAD_OK;

@@ -59,8 +59,8 @@
 
 /* node type */
 enum ntype {
-    N_AND = 1, 				/* must start > 0 */
-    N_ATTR,
+    N_ABOVE = 1, 			/* must start > 0 */
+    N_AND, N_ATTR, N_BELOW,
     N_CLOSEPAREN, N_DEPTH, N_EMPTY, N_EXEC, N_EXECDIR, N_EXPR,
     N_FLAGS, N_INAME, N_IREGEX, N_LS, N_MAXDEPTH,
     N_MINDEPTH, N_NAME, N_NOT, N_OK, N_OPENPAREN, N_OR, N_PATH,
@@ -94,6 +94,8 @@ typedef struct _plandata {
 	    char **_e_orig;		/* original strings */
 	    int *_e_len;		/* allocated length */
 	} ex;
+	struct _plandata *_ab_data[2];	/* PLAN trees */
+	struct _plandata *_bl_data[2];  /* PLAN trees */
 	char *_a_data[2];		/* array of char pointers */
 	char *_c_data;			/* char pointer */
 	char *_ci_data;			/* char pointer */
@@ -117,6 +119,8 @@ typedef struct _plandata {
 #define	max_data	p_un._max_data
 #define	min_data	p_un._min_data
 #define	p_data		p_un._p_data
+#define	ab_data		p_un._ab_data
+#define	bl_data		p_un._bl_data
 #define type_data	p_un._type_data
 #define	e_argv		p_un.ex._e_argv
 #define	e_orig		p_un.ex._e_orig
@@ -138,6 +142,8 @@ void	 brace_subst(char *, char **, char *, int);
 int	find_create(char ***, PLAN **);
 void	 find_execute(PLAN *, struct db_full_path *, struct rt_wdb *, int);
 int	find_formplan(char **, PLAN **);
+int	above_squish(PLAN *, PLAN **);
+int	below_squish(PLAN *, PLAN **);
 int	not_squish(PLAN *, PLAN **);
 OPTION	*option(char *);
 int	or_squish(PLAN *, PLAN **);
@@ -167,6 +173,8 @@ int	c_openparen(char *, char ***, int, PLAN **);
 int	c_closeparen(char *, char ***, int, PLAN **);
 int	c_not(char *, char ***, int, PLAN **);
 int	c_or(char *, char ***, int, PLAN **);
+int	c_above(char *, char ***, int, PLAN **);
+int	c_below(char *, char ***, int, PLAN **);
 
 extern int isdepth, isoutput;
 
