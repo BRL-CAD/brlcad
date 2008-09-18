@@ -85,6 +85,21 @@
 #define	BU_FNM_RANGE_NOMATCH	0
 #define	BU_FNM_RANGE_ERROR	(-1)
 
+/* To make sure we have uniform behavior everywhere, ensure
+ * isblank is undefined.
+ */
+#ifdef isblank
+# undef isblank
+#endif
+
+/* isblank appears to be obsolete in newer ctype.h files
+ */
+int 
+isblank(int c)
+{
+	return(c == ' ' || c == '\t');
+}
+
 typedef struct _charclass {
     char *idstring;		/* identifying string */
     int (*checkfun)(int);	/* testing function */
