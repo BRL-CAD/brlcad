@@ -436,7 +436,7 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
 	case OP_XOR:
 	    state = db_fullpath_stateful_traverse_subtree( tp->tr_b.tb_left, traverse_func, wdbp, dfp, comb_func, leaf_func, resp, client_data );
 	    if (state == 1) return 1;
-	    db_fullpath_stateful_traverse_subtree( tp->tr_b.tb_right, traverse_func, wdbp, dfp, comb_func, leaf_func, resp, client_data );
+	    state = db_fullpath_stateful_traverse_subtree( tp->tr_b.tb_right, traverse_func, wdbp, dfp, comb_func, leaf_func, resp, client_data );
 	    if (state == 1) {
 		return 1;
 	    } else {
@@ -533,7 +533,11 @@ db_fullpath_stateful_traverse( struct rt_wdb *wdbp,
     if ( dp->d_flags & DIR_SOLID || dp->d_major_type & DB5_MAJORTYPE_BINARY_MASK )  {
 	/* at leaf */
 	if ( leaf_func )
-	    if(leaf_func( wdbp, dfp, client_data )) return 1;
+	    if (leaf_func( wdbp, dfp, client_data )) {
+		return 1;
+	    } else {
+		return 0;
+	    }
     }
 }
 
@@ -558,16 +562,16 @@ f_below(PLAN *plan, struct db_full_path *entry, struct rt_wdb *wdbp)
     db_full_path_init(&belowpath);
     db_dup_full_path(&belowpath, entry);
 
+    if (DB_FULL_PATH_CUR_DIR(entry)->d_flags & DIR_COMB) {
+	if ( rt_db_get_internal5( &in, DB_FULL_PATH_CUR_DIR(entry), wdbp->dbip, NULL, wdbp->wdb_resp ) < 0 )
+		return 0;
 
-    if ( rt_db_get_internal5( &in, DB_FULL_PATH_CUR_DIR(entry), wdbp->dbip, NULL, wdbp->wdb_resp ) < 0 )
-	return 0;
+    	comb = (struct rt_comb_internal *)in.idb_ptr;
 
-    comb = (struct rt_comb_internal *)in.idb_ptr;
+    	state = db_fullpath_stateful_traverse_subtree( comb->tree, db_fullpath_stateful_traverse, wdbp, &belowpath, find_execute_nested_plans, find_execute_nested_plans, wdbp->wdb_resp, plan->bl_data[0] );
 
-    state = db_fullpath_stateful_traverse_subtree( comb->tree, db_fullpath_stateful_traverse, wdbp, &belowpath, find_execute_nested_plans, find_execute_nested_plans, wdbp->wdb_resp, plan->bl_data[0] );
-
-    rt_db_free_internal( &in, wdbp->wdb_resp );
-    
+    	rt_db_free_internal( &in, wdbp->wdb_resp );
+    }
     db_free_full_path(&belowpath);
     if (state >= 1) {
 	return 1;
@@ -1827,14 +1831,16 @@ wdb_search_cmd(struct rt_wdb      *wdbp,
 
 	if ( !( (argv[1][0] == '-') || (argv[1][0] == '!')  || (argv[1][0] == '(') ) && (strcmp(argv[1],"/") != 0) && (strcmp(argv[1],".") != 0) ) {
 	    /* We seem to have a path - make sure it's valid */
-	    if (db_lookup(wdbp->dbip, argv[1], LOOKUP_QUIET) == DIR_NULL) {
+	    db_string_to_path(&dfp, wdbp->dbip, argv[1]);
+	    if (db_lookup(wdbp->dbip, dfp.fp_names[0]->d_namep , LOOKUP_QUIET) == DIR_NULL) {
 		Tcl_AppendResult(interp, "path not found in database.\n", (char *)NULL);
+		db_free_full_path(&dfp);
 		return TCL_ERROR;
 	    }
-	    db_string_to_path(&dfp, wdbp->dbip, argv[1]);
 	    isoutput = 0;
 	    if (find_formplan(&argv[2], &dbplan) != BRLCAD_OK) {
 		Tcl_AppendResult(interp, "Failed to build find plan.\n", (char *)NULL);
+		db_free_full_path(&dfp);
 		return TCL_ERROR;
 	    } else {
 		find_execute(dbplan, &dfp, wdbp, 0);
