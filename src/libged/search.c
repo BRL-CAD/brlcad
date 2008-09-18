@@ -1831,9 +1831,8 @@ wdb_search_cmd(struct rt_wdb      *wdbp,
 
 	if ( !( (argv[1][0] == '-') || (argv[1][0] == '!')  || (argv[1][0] == '(') ) && (strcmp(argv[1],"/") != 0) && (strcmp(argv[1],".") != 0) ) {
 	    /* We seem to have a path - make sure it's valid */
-	    db_string_to_path(&dfp, wdbp->dbip, argv[1]);
-	    if (db_lookup(wdbp->dbip, dfp.fp_names[0]->d_namep , LOOKUP_QUIET) == DIR_NULL) {
-		Tcl_AppendResult(interp, "path not found in database.\n", (char *)NULL);
+	    if (db_string_to_path(&dfp, wdbp->dbip, argv[1]) == -1) {
+		Tcl_AppendResult(interp, " Search path not found in database.\n", (char *)NULL);
 		db_free_full_path(&dfp);
 		return TCL_ERROR;
 	    }
