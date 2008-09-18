@@ -1440,6 +1440,11 @@ wdb_search_cmd(struct rt_wdb      *wdbp,
 
 
 	if ( !( (argv[1][0] == '-') || (argv[1][0] == '!')  || (argv[1][0] == '(') ) && (strcmp(argv[1],"/") != 0) && (strcmp(argv[1],".") != 0) ) {
+	    /* We seem to have a path - make sure it's valid */
+	    if (db_lookup(wdbp->dbip, argv[1], LOOKUP_QUIET) == DIR_NULL) {
+		Tcl_AppendResult(interp, "path not found in database.\n", (char *)NULL);
+		return TCL_ERROR;
+	    }
 	    db_string_to_path(&dfp, wdbp->dbip, argv[1]);
 	    isoutput = 0;
 	    if (find_formplan(&argv[2], &dbplan) != BRLCAD_OK) {
