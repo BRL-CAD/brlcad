@@ -208,7 +208,6 @@ db_fullpath_traverse( struct rt_wdb *wdbp,
 	} else {
 	    struct rt_db_internal in;
 	    struct rt_comb_internal *comb;
-	    struct directory *ndp;
 
 	    if ( rt_db_get_internal5( &in, dp, wdbp->dbip, NULL, resp ) < 0 )
 		return;
@@ -321,8 +320,8 @@ f_not(PLAN *plan, struct db_full_path *entry, struct rt_wdb *wdbp)
     PLAN *p;
     int state;
 
-    for (p = plan->p_data[0];
-	 p && (state = (p->eval)(p, entry, wdbp)); p = p->next);
+    for (p = plan->p_data[0]; p && (state = (p->eval)(p, entry, wdbp)); p = p->next)
+	;
     return (!state);
 }
 
@@ -356,7 +355,6 @@ find_execute_nested_plans(struct rt_wdb *wdbp, struct db_full_path *entry, genpt
 int
 f_above(PLAN *plan, struct db_full_path *entry, struct rt_wdb *wdbp)
 {
-    PLAN *p;
     int state = 0;
     struct db_full_path abovepath;
     db_full_path_init(&abovepath);
@@ -508,7 +506,6 @@ db_fullpath_stateful_traverse( struct rt_wdb *wdbp,
 	} else {
 	    struct rt_db_internal in;
 	    struct rt_comb_internal *comb;
-	    struct directory *ndp;
 
 	    if ( rt_db_get_internal5( &in, dp, wdbp->dbip, NULL, resp ) < 0 )
 		return 0;
@@ -527,13 +524,16 @@ db_fullpath_stateful_traverse( struct rt_wdb *wdbp,
     }
     if ( dp->d_flags & DIR_SOLID || dp->d_major_type & DB5_MAJORTYPE_BINARY_MASK )  {
 	/* at leaf */
-	if ( leaf_func )
+	if ( leaf_func ) {
 	    if (leaf_func( wdbp, dfp, client_data )) {
 		return 1;
 	    } else {
 		return 0;
 	    }
+	}
     }
+
+    return 0;
 }
 
 
@@ -546,12 +546,11 @@ db_fullpath_stateful_traverse( struct rt_wdb *wdbp,
 int
 f_below(PLAN *plan, struct db_full_path *entry, struct rt_wdb *wdbp)
 {
-    PLAN *p;
-    int state = 0;
     struct db_full_path belowpath;
     struct rt_db_internal in;
     struct rt_comb_internal *comb;
-    struct directory *ndp;
+    int state = 0;
+
     db_full_path_init(&belowpath);
     db_dup_full_path(&belowpath, entry);
 
@@ -680,9 +679,9 @@ c_regex_common(enum ntype type, char *regexp, int icase, PLAN **resultplan)
     regex_t reg;
     PLAN *new;
     int rv;
-    size_t len;
+
     bu_log("Matching extened regular expression: %s\n", regexp);
-    if (icase = 1 ) {
+    if (icase == 1) {
 	rv = regcomp(&reg, regexp, REG_NOSUB|REG_EXTENDED|REG_ICASE);
     } else {
 	rv = regcomp(&reg, regexp, REG_NOSUB|REG_EXTENDED);
@@ -1097,7 +1096,7 @@ f_empty(PLAN *plan, struct db_full_path *entry, struct rt_wdb *wdbp)
 {
     struct rt_db_internal in;
     struct rt_comb_internal *comb;
-    struct directory *testdp;
+
     if (DB_FULL_PATH_CUR_DIR(entry)->d_flags & DIR_COMB) {
 	rt_db_get_internal5( &in, DB_FULL_PATH_CUR_DIR(entry), wdbp->dbip, (fastf_t *)NULL, &rt_uniresource);
 	comb = (struct rt_comb_internal *)in.idb_ptr;
@@ -1767,13 +1766,9 @@ wdb_search_cmd(struct rt_wdb      *wdbp,
 	       int                argc,
 	       char               *argv[])
 {
-    register int                                i, k;
-    register struct directory           *dp;
-    struct rt_db_internal                       intern;
-    register struct rt_comb_internal    *comb=(struct rt_comb_internal *)NULL;
-    struct bu_vls vls;
-    int aflag = 0;              /* look at all objects */
     PLAN *dbplan;
+    register int i;
+    register struct directory *dp;
     struct db_full_path dfp;
 
     if (argc < 2) {
