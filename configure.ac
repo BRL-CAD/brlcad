@@ -1140,7 +1140,7 @@ if test "x$bc_with_x11" != "xno" ; then
 	AC_MSG_WARN([This will likely result in a build failure.])
 	AC_MSG_WARN([See config.log for details why (look for this comment)])
 	AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-	sleep 1
+	sleep 5
     fi
 
     CPPFLAGS="$PRECPPFLAGS"
@@ -1615,7 +1615,7 @@ if test "x$bc_with_java " != "xno" ; then
 	    AC_MSG_WARN([Build will try to use what it found, but you should update])
 	    AC_MSG_NOTICE([See http://developer.apple.com/java/ for updates])
 	    AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-	    sleep 1
+	    sleep 5
 	fi
     fi # search_for_jni_h_more
     CPPFLAGS="$PRECPPFLAGS"
@@ -1904,7 +1904,7 @@ if test "x$bc_compliant_float" = "xno" || test "x$bc_compliant_double" = "xno" ;
     AC_MSG_WARN([The floating point implementation does not seem to be IEEE 754])
     AC_MSG_WARN([compliant.  The behavior of htond and htonf may be incorrect.])
     AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-    sleep 1
+    sleep 5
 fi
 
 dnl AC_C_PROTOTYPES
@@ -2065,7 +2065,7 @@ if test "x$ac_cv_prog_LEX" != "x" ; then
 	AC_MSG_WARN([of the package (various MGED commands) will be disabled.])
 	AC_MSG_NOTICE([Installation of GNU Bison or Yacc before continuing is recommended.])
 	AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-	sleep 1
+	sleep 5
     fi
 else
     AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
@@ -2079,7 +2079,7 @@ else
 	AC_MSG_NOTICE([Installation of Bison/Yacc and Flex/Lex before continuing is recommended.])
     fi
     AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-    sleep 1
+    sleep 5
 fi
 AC_MSG_CHECKING([whether we have the essentials to make parsers])
 if test "x$build_parsers" = "xyes" ; then
@@ -3195,7 +3195,7 @@ else
 	build_brlcad_64bit="no (8-bit)"
     else
 	AC_MSG_WARN([Unknown pointer size: $pointer_size])
-	sleep 1
+	sleep 5
     fi
 fi
 
@@ -3267,7 +3267,7 @@ if test "x$bc_with_proe" != "xno" ; then
 		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 		AC_MSG_WARN([Unable to locate ProToolkit.h. Make sure your installation of Pro/E also has Pro/TOOLKIT])
 		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-		sleep 1
+		sleep 5
 	    fi
 	    if test "x$bc_with_proe" = "xauto" ; then
 		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
@@ -3275,7 +3275,7 @@ if test "x$bc_with_proe" != "xno" ; then
 		AC_MSG_WARN([Try adding --with-proe=/path/to/proe to find the ProToolkit.h])
 		AC_MSG_WARN([Compilation of Pro/ENGINEER plugin will be disabled])
 		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-		sleep 1
+		sleep 5
 	    fi
 	else
 	    if test "x$bc_with_proe" = "xauto" ; then
@@ -3499,7 +3499,7 @@ if test "x$bc_build_runtime_debug" = "xno" ; then
 	AC_MSG_WARN([in the inevitable event of a user encountering a bug.])
 	AC_MSG_WARN([You have been warned.  Proceed at your own risk.])
 	AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-	sleep 1
+	sleep 5
 	AC_DEFINE(NO_BOMBING_MACROS, 1, [Define to not do anything for macros that only bomb on a fatal error])
 	AC_DEFINE(NO_MAGIC_CHECKING, 1, [Define to not perform magic number checking])
 	AC_DEFINE(NO_BADRAY_CHECKING, 1, [Define to not check for divide by zero during ray shots])
