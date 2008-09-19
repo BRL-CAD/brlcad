@@ -66,6 +66,8 @@ public:
     /** Data access methods */
     int size() { return Interv.size(); }
     Interval<T> & getInterval(T) throw(pcException);
+    Interval<T> & getNextInterval(T) throw (pcException);
+    Interval<T> & getPreviousInterval(T) throw (pcException);
     T getFirst() { return Interv.front().getLow();}
     T getLast() { return Interv.back().getHigh(); }
     T getNextLow (T);
@@ -147,8 +149,8 @@ public:
     void maximize() { value = D.getLast(); }
     
     /* Value storing and restoring methods to assist in iteration */
-    void storeValue() { vcopy_ = value; }
-    void restoreValue() { value = vcopy_; }
+    void store() { vcopy_ = value; }
+    void restore() { value = vcopy_; }
 
     /* Domain Modification methods */
     void addInterval(const Interval<T>);
@@ -311,7 +313,41 @@ Interval<T> & Domain<T>::getInterval(T t) throw(pcException)
     }
     throw new pcException("Variable not in domain");
 }
+/*
+template<class T>
+Interval<T> & Domain<T>::getPreviousInterval(T t) throw(pcException)
+{
+    typename std::list<Interval<T> >::iterator i;
+    for (i = this->Interv.begin(); i != this->Interv.end(); i++) {
+	if (i->inInterval(t))
+	    break;
+    }
+    if (*i == Interv.front())
+	return Interv.back();
+    else {
+	i--;
+	return *i;
+    }
+    throw new pcException("Variable not in domain");
+}
 
+template<class T>
+Interval<T> & Domain<T>::getNextInterval(T t) throw(pcException)
+{
+    typename std::list<Interval<T> >::iterator i;
+    for (i = this->Interv.begin(); i != this->Interv.end(); i++) {
+	if (i->inInterval(t))
+	    break;
+    }
+    if (*i == Interv.back())
+	return Interv.front();
+    else {
+	i++;
+        return *i;
+    }
+    throw new pcException("Variable not in domain");    
+}
+*/
 template<class T>
 T Domain<T>::getNextLow (T value)
 {

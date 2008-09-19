@@ -12,7 +12,7 @@ FIXING REQUIRED
 2. Write ostream<< overloading for display of objects
 
 3. Memory Leaks
-	a. 104 bytes per pc_getconstraint
+	a. 504 bytes in 11 blocks in solver_test
 
 CODING PLAN
 

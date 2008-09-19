@@ -83,7 +83,8 @@ void PCSolver<T>::initiate() {
 	std::list<VariableAbstract *>::iterator i;
         for (i = vars_.begin(); i != vars_.end(); ++i) {
 		typedef Variable<T> * Vp;
-		(Vp (*i))->setValue((Vp (*i))->getFirst());
+		(Vp (*i))->store();
+		//(Vp (*i))->setValue((Vp (*i))->getFirst());
         }
 	initiated_ = true;
     }
@@ -96,10 +97,10 @@ bool PCSolver<T>::generator() {
     i = vars_.begin();
     j = vars_.end();
     typedef Variable<T> * Vp;
-    while (--j != i && (Vp (*j))->atUpperBoundary());
+    while (--j != i && (Vp (*j))->atCriticalBelow());
     
     for (; i != vars_.end(); ++i)
-        if (! (Vp (*i))->atUpperBoundary())
+        if (! (Vp (*i))->atCriticalBelow())
 		atend = false;
     if (atend)
         return false;
@@ -107,7 +108,7 @@ bool PCSolver<T>::generator() {
     ++(*(Vp (*j)));
     
     while (++j != vars_.end())
-	(Vp (*j))->minimize();
+	(Vp (*j))->restore();
     return true;
 }
 
@@ -143,6 +144,7 @@ bool PCSolver<T>::solve(VCSet & vcset, Solution<T>& S) {
 	    std::cout <<  (Vi (*i))->getValue() << "\t";
 	std::cout << std::endl;*/
 
+	std::cout << "+D++D++G+D++D+D\n";
 	if (vcset.check()) {
 	    S.addSolution(vcset.Vars);
 	    solved_ = true;
