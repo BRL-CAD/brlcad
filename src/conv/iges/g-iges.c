@@ -120,6 +120,7 @@ BU_EXTERN( int sph_to_iges, ( struct rt_db_internal *ip, char *name, FILE *fp_di
 BU_EXTERN( int tor_to_iges, ( struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param ));
 BU_EXTERN( int tgc_to_iges, ( struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param ));
 BU_EXTERN( int nmg_to_iges, ( struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param ));
+BU_EXTERN( int sketch_to_iges, ( struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param ));
 BU_EXTERN( void iges_init, ( struct bn_tol *set_tol, struct rt_tess_tol *set_ttol, int set_verbose, struct db_i *dbip_set ) );
 BU_EXTERN( void Print_stats, ( FILE *fp ) );
 
@@ -155,7 +156,7 @@ struct iges_functab iges_write[ID_MAXIMUM+1]={
     {null_to_iges},	/* ID_JOINT */
     {nmg_to_iges},	/* ID_HF */
     {nmg_to_iges},	/* ID_DSP */
-    {null_to_iges},	/* ID_SKETCH */
+    {sketch_to_iges},	/* ID_SKETCH */
     {nmg_to_iges},	/* ID_EXTRUDE */
     {null_to_iges},	/* ID_SUBMODEL */
     {nmg_to_iges},	/* ID_CLINE */

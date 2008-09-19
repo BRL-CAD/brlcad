@@ -2779,6 +2779,38 @@ nmg_to_iges( ip, name, fp_dir, fp_param )
 }
 
 int
+sketch_to_iges( struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param )
+{
+    struct rt_sketch_internal	*sketch;
+    struct bu_vls		str;
+    int			dir_entry[21];
+    int			name_de;
+    int			i;
+
+    if ( ip->idb_type != ID_SKETCH )
+	bu_log( "sketch_to_iges called for non-sketch (type=%d)\n", ip->idb_type );
+
+    sketch = (struct rt_sketch_internal *)ip->idb_ptr;
+
+    RT_SKETCH_CK_MAGIC( sketch );
+
+    /* write name entity */
+    name_de = write_name_entity( name, fp_dir, fp_param );
+
+    bu_vls_init( &str );
+
+    /* initialize directory entry */
+    for ( i=0; i<21; i++ )
+	dir_entry[i] = DEFAULT;
+
+    bu_log("The 'sketch' primitive is not yet supported for IGES export.\n");
+    bu_log("Unable to export %s\n", name);
+
+    return( 0 );
+}
+
+
+int
 null_to_iges( ip, name, fp_dir, fp_param )
     struct rt_db_internal *ip;
     char *name;
