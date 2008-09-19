@@ -204,6 +204,7 @@ EXTRA_DIST = \
 	$(sample_applications_DATA) \
         CMakeLists.txt \
 	brep_test.cpp \
+	namegen.c \
 	parse.c \
 	pmalloc.c \
 	primitives/bot/g_bot_include.c \
