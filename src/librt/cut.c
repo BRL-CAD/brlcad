@@ -1442,14 +1442,22 @@ rt_ck_overlap(register const fastf_t *min, register const fastf_t *max, register
 	    goto fail;
     }
 
-    /* RPP overlaps, invoke per-solid method for detailed check */
-    if ( rt_functab[stp->st_id].ft_classify( stp, min, max,
-					     &rtip->rti_tol ) == RT_CLASSIFY_OUTSIDE )  goto fail;
+    if (!rt_functab[stp->st_id].ft_classify)
+	goto fail;
 
-    if ( RT_G_DEBUG&DEBUG_BOXING )  bu_log("rt_ck_overlap:  TRUE\n");
+    /* RPP overlaps, invoke per-solid method for detailed check */
+    if (rt_functab[stp->st_id].ft_classify(stp, min, max, &rtip->rti_tol) == RT_CLASSIFY_OUTSIDE)
+	goto fail;
+
+    if (RT_G_DEBUG&DEBUG_BOXING)
+	bu_log("rt_ck_overlap:  TRUE\n");
+
     return(1);
+
  fail:
-    if ( RT_G_DEBUG&DEBUG_BOXING )  bu_log("rt_ck_overlap:  FALSE\n");
+    if (RT_G_DEBUG&DEBUG_BOXING)
+	bu_log("rt_ck_overlap:  FALSE\n");
+
     return(0);
 }
 

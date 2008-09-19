@@ -368,15 +368,10 @@ rt_submodel_a_hit(struct application *ap, struct partition *PartHeadp, struct se
 		up_segp->seg_out.hit_dist, up_ap->a_ray.r_dir );
 
 	/* RT_HIT_NORMAL */
-	inseg->seg_stp->st_meth->ft_norm(
-	    &inseg->seg_in,
-	    inseg->seg_stp,
-	    inseg->seg_in.hit_rayp );
-	outseg->seg_stp->st_meth->ft_norm(
-	    &outseg->seg_out,
-	    outseg->seg_stp,
-	    outseg->seg_out.hit_rayp );
-/* XXX error checking */
+	inseg->seg_stp->st_meth->ft_norm(&inseg->seg_in, inseg->seg_stp, inseg->seg_in.hit_rayp);
+	outseg->seg_stp->st_meth->ft_norm(&outseg->seg_out, outseg->seg_stp, outseg->seg_out.hit_rayp);
+
+	/* XXX error checking */
 	{
 	    fastf_t cosine = fabs(VDOT( ap->a_ray.r_dir, inseg->seg_in.hit_normal ));
 	    if ( cosine > 1.00001 )  {
@@ -659,8 +654,9 @@ struct goodies {
  */
 HIDDEN union tree *rt_submodel_wireframe_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
 {
-    union tree	*curtree;
-    struct goodies	*gp;
+    union tree *curtree;
+    struct goodies *gp;
+    int ret;
 
     RT_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
@@ -681,9 +677,11 @@ HIDDEN union tree *rt_submodel_wireframe_leaf(struct db_tree_state *tsp, struct 
 	bu_free((genptr_t)sofar, "path string");
     }
 
-    if ( ip->idb_meth->ft_plot(
-	     gp->vheadp, ip,
-	     tsp->ts_ttol, tsp->ts_tol ) < 0 )  {
+    ret = -1;
+    if (ip->idb_meth->ft_plot) {
+	ret = ip->idb_meth->ft_plot(gp->vheadp, ip, tsp->ts_ttol, tsp->ts_tol);
+    }
+    if (ret < 0) {
 	bu_log("rt_submodel_wireframe_leaf(%s): %s plot failure\n",
 	       ip->idb_meth->ft_name,
 	       DB_FULL_PATH_CUR_DIR(pathp)->d_namep );

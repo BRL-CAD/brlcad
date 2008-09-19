@@ -1304,8 +1304,12 @@ rt_shootray(register struct application *ap)
 		 */
 		resp->re_piece_shots++;
 		psp->cutp = cutp;
-		if ( (ret = stp->st_meth->ft_piece_shot(
-			  psp, plp, ss.dist_corr, &ss.newray, ap, &waiting_segs )) <= 0 )  {
+
+		ret = -1;
+		if (stp->st_meth->ft_piece_shot) {
+		    ret = stp->st_meth->ft_piece_shot(psp, plp, ss.dist_corr, &ss.newray, ap, &waiting_segs);
+		}
+		if (ret <= 0) {
 		    /* No hits at all */
 		    resp->re_piece_shot_miss++;
 		} else {
@@ -1322,7 +1326,8 @@ rt_shootray(register struct application *ap)
 		    /* Convert hits into segs */
 		    if (debug_shoot)bu_log("shooting %s pieces complete, making segs\n", stp->st_name);
 		    /* Distance correction was handled in ft_piece_shot */
-		    stp->st_meth->ft_piece_hitsegs( psp, &waiting_segs, ap );
+		    if (stp->st_meth->ft_piece_hitsegs)
+			stp->st_meth->ft_piece_hitsegs( psp, &waiting_segs, ap );
 		    rt_htbl_reset( &psp->htab );
 		    BU_BITSET( solidbits, stp->st_bit );
 
@@ -1340,6 +1345,7 @@ rt_shootray(register struct application *ap)
 	    stpp = &(cutp->bn.bn_list[cutp->bn.bn_len-1]);
 	    for (; stpp >= cutp->bn.bn_list; stpp-- )  {
 		register struct soltab *stp = *stpp;
+		int ret;
 
 		if ( BU_BITTEST( solidbits, stp->st_bit ) )  {
 		    resp->re_ndup++;
@@ -1367,8 +1373,12 @@ rt_shootray(register struct application *ap)
 		if (debug_shoot)bu_log("shooting %s\n", stp->st_name);
 		resp->re_shots++;
 		BU_LIST_INIT( &(new_segs.l) );
-		if ( stp->st_meth->ft_shot(
-			 stp, &ss.newray, ap, &new_segs ) <= 0 )  {
+
+		ret = -1;
+		if (stp->st_meth->ft_shot) {
+		    ret = stp->st_meth->ft_shot(stp, &ss.newray, ap, &new_segs);
+		}
+		if (ret <= 0) {
 		    resp->re_shot_miss++;
 		    continue;	/* MISS */
 		}
@@ -2049,9 +2059,10 @@ rt_vstub(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct 
     /* Number of ray/object pairs */
     /* pointer to an application */
 {
-    register int    i;
+    register int i;
     register struct seg *tmp_seg;
-    struct seg	seghead;
+    struct seg seghead;
+    int ret;
 
     BU_LIST_INIT( &(seghead.l) );
 
@@ -2060,7 +2071,11 @@ rt_vstub(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct 
 	if (stp[i] != 0) {
 	    /* skip call if solid table pointer is NULL */
 	    /* do scalar call, place results in segp array */
-	    if ( rt_functab[stp[i]->st_id].ft_shot(stp[i], rp[i], ap, &seghead) <= 0 )  {
+	    ret = -1;
+	    if (rt_functab[stp[i]->st_id].ft_shot) {
+		ret = rt_functab[stp[i]->st_id].ft_shot(stp[i], rp[i], ap, &seghead);
+	    }
+	    if (ret <= 0) {
 		SEG_MISS(segp[i]);
 	    } else {
 		tmp_seg = BU_LIST_FIRST(seg, &(seghead.l) );

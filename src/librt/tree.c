@@ -428,12 +428,13 @@ HIDDEN union tree *rt_gettree_leaf(struct db_tree_state *tsp, struct db_full_pat
     /*const*/
 
 {
-    register struct soltab	*stp;
-    union tree		*curtree;
-    struct directory	*dp;
-    register matp_t		mat;
-    int			i;
-    struct rt_i		*rtip;
+    register struct soltab *stp;
+    struct directory *dp;
+    register matp_t mat;
+    union tree *curtree;
+    struct rt_i *rtip;
+    int ret;
+    int i;
 
     RT_CK_DBTS(tsp);
     RT_CK_DBI(tsp->ts_dbip);
@@ -497,8 +498,12 @@ HIDDEN union tree *rt_gettree_leaf(struct db_tree_state *tsp, struct db_full_pat
      * that is OK, as long as idb_ptr is set to null.  Note that the
      * prep routine may have changed st_id.
      */
-    if ( stp->st_meth->ft_prep( stp, ip, rtip ) )  {
-	int	hash;
+    ret = -1;
+    if (stp->st_meth->ft_prep) {
+	ret = stp->st_meth->ft_prep(stp, ip, rtip);
+    }
+    if (ret != 0) {
+	int hash;
 	/* Error, solid no good */
 	bu_log("rt_gettree_leaf(%s):  prep failure\n", dp->d_namep );
 	/* Too late to delete soltab entry; mark it as "dead" */
@@ -553,8 +558,13 @@ HIDDEN union tree *rt_gettree_leaf(struct db_tree_state *tsp, struct db_full_pat
 	struct bu_vls	str;
 	bu_log("\n---Primitive %d: %s\n", stp->st_bit, dp->d_namep);
 	bu_vls_init( &str );
+
 	/* verbose=1, mm2local=1.0 */
-	if ( stp->st_meth->ft_describe( &str, ip, 1, 1.0, tsp->ts_resp, tsp->ts_dbip ) < 0 )  {
+	ret = -1;
+	if (stp->st_meth->ft_describe) {
+	    ret = stp->st_meth->ft_describe(&str, ip, 1, 1.0, tsp->ts_resp, tsp->ts_dbip);
+	}
+	if (ret < 0) {
 	    bu_log("rt_gettree_leaf(%s):  solid describe failure\n",
 		   dp->d_namep );
 	}
@@ -619,7 +629,8 @@ rt_free_soltab(struct soltab *stp)
     RELEASE_SEMAPHORE_TREE(hash);		/* end critical section */
 
     if ( stp->st_aradius > 0 )  {
-	stp->st_meth->ft_free( stp );
+	if (stp->st_meth->ft_free)
+	    stp->st_meth->ft_free(stp);
 	stp->st_aradius = 0;
     }
     if ( stp->st_matp )  bu_free( (char *)stp->st_matp, "st_matp");
