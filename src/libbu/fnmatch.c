@@ -85,19 +85,17 @@
 #define	BU_FNM_RANGE_NOMATCH	0
 #define	BU_FNM_RANGE_ERROR	(-1)
 
-/* To make sure we have uniform behavior everywhere, ensure
- * isblank is undefined.
+/* isblank appears to be obsolete in newer ctype.h files so use
+ * ccblank instead when looking for the "blank" character class.
  */
-#ifdef isblank
-# undef isblank
-#endif
-
-/* isblank appears to be obsolete in newer ctype.h files
- */
-int 
-isblank(int c)
+static int 
+ccblank(int c)
 {
-	return(c == ' ' || c == '\t');
+#ifdef isblank
+    return isblank(c);
+#else
+    return(c == ' ' || c == '\t');
+#endif
 }
 
 typedef struct _charclass {
@@ -108,7 +106,7 @@ typedef struct _charclass {
 static CHARCLASS charclasses[] = {
     { "alnum", isalnum },
     { "alpha", isalpha },
-    { "blank", isblank },
+    { "blank", ccblank },
     { "cntrl", iscntrl },
     { "digit", isdigit },
     { "graph", isgraph },
@@ -120,13 +118,13 @@ static CHARCLASS charclasses[] = {
     { "xdigit", isxdigit },
 };
 
-int
+static int
 classcompare(const void *a, const void *b)
 {
     return (strcmp(((CHARCLASS *)a)->idstring, ((CHARCLASS *)b)->idstring));
 }
 
-CHARCLASS *
+static CHARCLASS *
 findclass(char *class)
 {
     CHARCLASS tmp;
