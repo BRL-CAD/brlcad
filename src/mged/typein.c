@@ -2920,8 +2920,8 @@ pnts_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt) {
     }
 
     /* validate numPoints */
-    if (atol(argv[3]) < 0) {
-	Tcl_AppendResult(interp, "Number of points must be nonnegative!\n", (char *)NULL);
+    if (atol(argv[3]) <= 0) {
+	Tcl_AppendResult(interp, "Number of points must be positive!\n", (char *)NULL);
 	return CMD_BAD;
     }
 
@@ -2956,7 +2956,7 @@ pnts_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt) {
     BU_LIST_INIT(&(pnts->vList->l));
 
     /* prompt for X, Y, Z of points */
-    if (argc < 5 + numPoints * ELEMENTS_PER_PT) {
+    if (argc < 5 + (numPoints * ELEMENTS_PER_PT)) {
         bu_vls_init(&tmpVls);
 
         bu_vls_printf(&tmpVls, "%s for point %d: ", prompt[(argc - 2) % ELEMENTS_PER_PT + 2],
@@ -2970,15 +2970,19 @@ pnts_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt) {
     }
 
     /* store points in list */
-    for(i = 5; i < argc; i += 3) {
+    for (i = 5; i < 5 + (numPoints * ELEMENTS_PER_PT); i += 3) {
         BU_GETSTRUCT(point, pnt);
 
-        point->v[X] = atof(argv[i]) * local2base;
-        point->v[Y] = atof(argv[i + 1]) * local2base;
-        point->v[Z] = atof(argv[i + 2]) * local2base;
+	/* bu_log("%d: [%s, %s, %s]\n", ((i-5)/3)+1, argv[i], argv[i+1], argv[i+2]); */
+
+        point->v[X] = strtod(argv[i], NULL) * local2base;
+        point->v[Y] = strtod(argv[i + 1], NULL) * local2base;
+        point->v[Z] = strtod(argv[i + 2], NULL) * local2base;
 
         BU_LIST_PUSH(&(pnts->vList->l), &(point->l));
     }
+
+    return CMD_OK;
 }
 
 /*
