@@ -575,6 +575,16 @@ GED_EXPORT BU_EXTERN(int	wdb_remove_cmd,
 		     Tcl_Interp *interp,
 		     int argc,
 		     char *argv[]));
+GED_EXPORT BU_EXTERN(int	wdb_search_cmd,
+		    (struct rt_wdb *wdbp,
+		     Tcl_Interp *interp,
+		     int argc,
+		     char *argv[]));
+GED_EXPORT BU_EXTERN(int	wdb_stub_cmd,
+		    (struct rt_wdb *wdbp,
+		     Tcl_Interp *interp,
+		     int argc,
+		     char *argv[]));
 GED_EXPORT BU_EXTERN(int	wdb_region_cmd,
 		    (struct rt_wdb *wdbp,
 		     Tcl_Interp *interp,
