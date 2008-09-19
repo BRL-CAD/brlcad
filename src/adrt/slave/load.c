@@ -238,16 +238,55 @@ slave_load_MySQL (uint32_t pid, tie_t *tie, const char *hostname)
 #endif
 
 int
+slave_load_g (tie_t *tie, char *data)
+{
+    char *filename, *region;
+    filename = data;
+    region = data + strlen(filename) + 1;
+    printf("Want to read %s from %s\n", region, filename);
+    return -1;
+}
+
+int
+slave_load_region (tie_t *tie, char *data)
+{
+    /* 
+     * data contains a region name and the triangle soup.
+     * Meant to be called several times, with slave_load_kdtree called at the
+     * end to finally prep it up.
+     */
+    return -1;
+}
+
+int
+slave_load_kdtree (tie_t *tie, char *data)
+{
+    /* after slave_load_region calls have filled in all the geometry, this loads
+     * a tree or requests a tree generation if data is NULL
+     */
+    return -1;
+}
+
+int
 slave_load (tie_t *tie, struct adrt_load_info *li, uint32_t dlen)
 {
     void *data = (void *)li;
     TIE_VAL(tie_check_degenerate) = 0;
 
     switch ( *(char *)data) {
+	case ADRT_LOAD_FORMAT_MYSQL_F:	/* mysql float */
 #if HAVE_MYSQL
-	case 0x64:	/* mysql float */
 	    return slave_load_MySQL ( *((uint32_t *)data + 1), tie, (char *)data + 9);
+#else
+	    printf("Not compiled to support MySQL.\n");
+	    return -1;
 #endif
+	case ADRT_LOAD_FORMAT_G:	/* given a filename and 1 toplevel region, recursively load from a .g file */
+	    return slave_load_g ( tie, (char *)data + 1 );
+	case ADRT_LOAD_FORMAT_REG:	/* special magic for catching data on the pipe */
+	    return slave_load_region (tie, (char *)data + 1);
+	case ADRT_LOAD_FORMAT_KDTREE:	/* more special magic */
+	    return slave_load_kdtree (tie, (char *)data + 1);
 	default:
 	    fprintf(stderr, "Unknown load format\n");
 	    return 1;
