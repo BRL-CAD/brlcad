@@ -773,46 +773,25 @@ void oedit_accept(void);
 void oedit_reject(void);
 void objedit_mouse( const vect_t mousevec );
 extern int nurb_closest2d(int *surface, int *uval, int *vval, const struct rt_nurb_internal *spl, const fastf_t *ref_pt, const fastf_t *mat);
-void label_edited_solid(
-    int *num_lines,
-    point_t *lines,
-    struct rt_point_labels	pl[],
-    int			max_pl,
-    const mat_t		xform,
-    struct rt_db_internal	*ip);
+void label_edited_solid(int *num_lines, point_t *lines, struct rt_point_labels pl[], int max_pl, const mat_t xform, struct rt_db_internal *ip);
 void init_oedit(void);
 void init_sedit(void);
 
-#if 0
-#ifdef HIDE_MGEDS_ARB_ROUTINES
-#  define rt_arb_calc_planes(planes, arb, type, tol) \
-rt_arb_calc_planes(interp, arb, type, planes, tol)
-#else
-int rt_arb_calc_planes(
-    plane_t			planes[6],
-    struct rt_arb_internal	*arb,
-    int			type,
-    const struct bn_tol	*tol);
-#endif
-#endif
-
+int rt_arb_calc_planes(plane_t planes[6], struct rt_arb_internal *arb, int type, const struct bn_tol *tol);
 
 /* share.c */
 void usurp_all_resources(struct dm_list *dlp1, struct dm_list *dlp2);
 
 /* inside.c */
-int torin(struct rt_db_internal *ip, fastf_t thick[6] );
+int torin(struct rt_db_internal *ip, fastf_t thick[6]);
 int tgcin(struct rt_db_internal *ip, fastf_t thick[6]);
 int rhcin(struct rt_db_internal *ip, fastf_t thick[4]);
 int rpcin(struct rt_db_internal *ip, fastf_t thick[4]);
-int partin(struct rt_db_internal *ip, fastf_t *thick );
-int nmgin( struct rt_db_internal *ip, fastf_t thick );
-int arbin(
-    struct rt_db_internal	*ip,
-    fastf_t	thick[6],
-    int	nface,
-    int	cgtype,		/* # of points, 4..8 */
-    plane_t	planes[6]);
+int partin(struct rt_db_internal *ip, fastf_t *thick);
+int nmgin(struct rt_db_internal *ip, fastf_t thick);
+
+/* cgtype is # of points, 4..8 */
+int arbin(struct rt_db_internal	*ip, fastf_t thick[6], int face, int cgtype, plane_t planes[6]);
 int ehyin(struct rt_db_internal *ip, fastf_t thick[2]);
 int ellgin(struct rt_db_internal *ip, fastf_t thick[6]);
 int epain(struct rt_db_internal *ip, fastf_t thick[2]);

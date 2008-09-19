@@ -9012,56 +9012,6 @@ label_edited_solid(
     pl[npl].str[0] = '\0';	/* Mark ending */
 }
 
-#if 0
-#ifndef HIDE_MGEDS_ARB_ROUTINES
-/* -------------------------------- */
-/*
- *			R T _ A R B _ C A L C _ P L A N E S
- *
- *	Calculate the plane (face) equations for an arb
- *	output previously went to es_peqn[i].
- *
- *  Returns -
- *	-1	Failure
- *	 0	OK
- */
-int
-rt_arb_calc_planes(
-    plane_t			planes[6],
-    struct rt_arb_internal	*arb,
-    int			type,
-    const struct bn_tol	*tol)
-{
-    register int i, p1, p2, p3;
-
-    RT_ARB_CK_MAGIC( arb);
-    BN_CK_TOL( tol );
-
-    type -= 4;	/* ARB4 at location 0, ARB5 at 1, etc */
-
-    for (i=0; i<6; i++) {
-	if (rt_arb_faces[type][i*4] == -1)
-	    break;	/* faces are done */
-	p1 = rt_arb_faces[type][i*4];
-	p2 = rt_arb_faces[type][i*4+1];
-	p3 = rt_arb_faces[type][i*4+2];
-
-	if ( bn_mk_plane_3pts( planes[i],
-			       arb->pt[p1], arb->pt[p2], arb->pt[p3], tol ) < 0 )  {
-	    struct bu_vls tmp_vls;
-
-	    bu_vls_init(&tmp_vls);
-	    bu_vls_printf(&tmp_vls, "rt_arb_calc_planes: No eqn for face %d%d%d%d\n",
-			  p1+1, p2+1, p3+1, rt_arb_faces[type][i*4+3]+1);
-	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-	    bu_vls_free(&tmp_vls);
-	    return -1;
-	}
-    }
-    return 0;
-}
-#endif
-#endif
 
 /* -------------------------------- */
 void
