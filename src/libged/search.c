@@ -866,22 +866,6 @@ c_stdattr(char *pattern, char ***ignored, int unused, PLAN **resultplan)
 }
 
 
-/*
- * -count_if_region-
- *
- *  This function checks if the current combination is also a region and if
- *  it is, increments the counter.  Used in the assembly type determination
- *  tree walk.
- *
- */
-static void count_if_region(struct rt_wdb *wdb, struct db_full_path *entry, genptr_t rcount)
-{
-        int *counter = (int*)rcount;
-	if (DB_FULL_PATH_CUR_DIR(entry)->d_flags & DIR_REGION) {
-	    (*counter)++;
-	}
-}
-
 
 /*
  * -type function --
@@ -1025,21 +1009,7 @@ f_type(PLAN *plan, struct db_full_path *entry, struct rt_wdb *wdbp)
 		    type_match = 1;
 		}
 	    }
-	    if (!(DB_FULL_PATH_CUR_DIR(entry)->d_flags & DIR_REGION)) {
-		if ( (!bu_fnmatch(plan->type_data, "a", 0)) || (!bu_fnmatch(plan->type_data, "assem", 0)) || (!bu_fnmatch(plan->type_data, "assembly", 0))) {
-	            int rcount = 0;
-		    db_fullpath_traverse( wdbp, entry, count_if_region, NULL, wdbp->wdb_resp, &rcount );
-		    if (rcount > 0) type_match = 1;
-	        }
-            }
-	    if (DB_FULL_PATH_CUR_DIR(entry)->d_flags & DIR_REGION) {
-		if ( (!bu_fnmatch(plan->type_data, "nr", 0)) || (!bu_fnmatch(plan->type_data, "nested_region", 0))) {
-	            int rcount = 0;
-		    db_fullpath_traverse( wdbp, entry, count_if_region, NULL, wdbp->wdb_resp, &rcount );
-		    if (rcount > 1) type_match = 1;
-	        }
-            }
-     	    if ( (!bu_fnmatch(plan->type_data, "c", 0)) || (!bu_fnmatch(plan->type_data, "comb", 0)) || (!bu_fnmatch(plan->type_data, "combination", 0))) {
+    	    if ( (!bu_fnmatch(plan->type_data, "c", 0)) || (!bu_fnmatch(plan->type_data, "comb", 0)) || (!bu_fnmatch(plan->type_data, "combination", 0))) {
 		    type_match = 1;
 	    }
 	    break;

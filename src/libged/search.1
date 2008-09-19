@@ -174,17 +174,7 @@ combination      c, comb, combination
 .br
 region           r, reg, region
 .br
-assembly         a, assem, assembly
-.br
-nested region*   nr, nested_region
-.br
  
-.br
-* Nested regions are cases where a region is used
-in the subtree of another region - this is usually
-a consequence of subtracting large geometries as a unit and
-is considered poor modeling practice in BRL-CAD. If
-a nested region is found, the top region is reported.
 .LP
 .SH OPERATORS
 .TP
@@ -192,11 +182,25 @@ a nested region is found, the top region is reported.
 Evaluates to true if the expression inside the parenthesies evaluates to true.
 Used to establish order of operations.
 .TP
+.B -above expression
+The above operator applies the expression to every object above the current
+object in the full path to that object, and returns TRUE if one or more of
+them satisfies the expression - e.g -above -name s\* applied to
+/component/region.r/start_comb.c/prim1.s would return TRUE for /component and 
+/component/region.r as both being "above" start_comb.c, but would return FALSE
+the deeper objects.
+.TP
 .B expression -and expression  (a.k.a -a)
 The and operator operates like the logical AND operator - TRUE only if both
 expressions are true.  AND is the default
 operator assumed if two expressions are present with no operator explicitly
 defined.
+.TP
+.B -below expression
+The below operator applies the expression to every object below the current
+object in the tree hierarchy - in effect it does a "mini-search" of the tree
+using the current object path as a starting point and returns TRUE if the
+expression is satisfied by one or more objects in the sub-tree.
 .TP
 .B -not expression (a.k.a -!)
 The logical NOT operator - returns the opposite of the evaluation result of
@@ -234,6 +238,15 @@ a flat search rather than all instances in the tree hierarchy.
 .TP
 search -type comb -not ( -type region -or -type assem )
 Find all instances of combinations that are not regions and do not contain regions.
+.TP
+search -below -type region -type region
+Find all instances of objects of type region that contain a region in the
+subtree.  This searches for regions being used "below" other regions, which
+is considered bad practice in BRL-CAD
+.TP
+search -below -type region -type combination ! -type region
+Find all instances of objects of type combination that contain regions but are
+not themselves regions.  These are regarded as "assemblies" in BRL-CAD.
 
 .SH DIAGNOSTICS
 Errors will be returned if parsing of the arguments fails, or one of the primaries's
