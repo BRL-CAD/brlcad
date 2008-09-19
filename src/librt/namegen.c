@@ -45,7 +45,7 @@
  *
  * e - an extension - like %n, but can optionally be assigned based on
  * the type of object being created.
- * 
+ *
  * A formatting string for a primitive name MUST have at least one
  * incremental section. If no separators are specified between a %n
  * and a %i, it is assumed that the first digit character encountered
@@ -76,7 +76,8 @@
 #define PRIM_EXT 's'
 
 
-static void count_if_region(struct db_i *dbip, struct directory *dp, genptr_t rcount)
+static void
+count_if_region(struct db_i *dbip, struct directory *dp, genptr_t rcount)
 {
     int *counter = (int*)rcount;
     if (dp->d_flags & DIR_REGION) {
@@ -84,7 +85,9 @@ static void count_if_region(struct db_i *dbip, struct directory *dp, genptr_t rc
     }
 }
 
-int determine_object_type(struct db_i *dbip, struct directory *dp) {
+static int
+determine_object_type(struct db_i *dbip, struct directory *dp)
+{
     struct resource *resp = &rt_uniresource;
     int rcount = 0;
     int object_type;
@@ -123,7 +126,8 @@ struct formatting_style {
     int pos_of_type_id_char;
 };
 
-int count_format_blocks(char *formatstring)
+static int
+count_format_blocks(char *formatstring)
 {
     int i;
     int components = 0;
@@ -135,7 +139,8 @@ int count_format_blocks(char *formatstring)
     return components;
 }
 
-int is_number(char *substring)
+static int
+is_number(char *substring)
 {
     int ret = -1;
     regex_t compiled_regex;
@@ -148,7 +153,8 @@ int is_number(char *substring)
     }
 }
 
-int contains_number(char *substring)
+static int
+contains_number(char *substring)
 {
     int ret = -1;
     regex_t compiled_regex;
@@ -162,29 +168,28 @@ int contains_number(char *substring)
 }
 
 
-
-void test_regex(char *name, int style){
-
-
+static void
+test_regex(char *name, int style)
+{
     struct formatting_style *standard1;
+    struct formatting_style *standard2;
+
+    regex_t compiled_regex;
+    regmatch_t *result_locations;
+    int i, ret, components;
+    struct bu_vls testresult;
+
+    int *iterators;
+
     BU_GETSTRUCT(standard1, formatting_style);
     bu_vls_init(&(standard1->regex_spec));
     bu_vls_strcat(&(standard1->regex_spec), "([rcs][.])?([^0-9^.]*)?([0-9]*)?([.][oicb])?([0-9]*)?([+u-])?([0-9]*)?");
     standard1->pos_of_type_id_char = 1;
 
-
-
-    struct formatting_style *standard2;
     BU_GETSTRUCT(standard2, formatting_style);
     bu_vls_init(&(standard2->regex_spec));
     bu_vls_strcat(&(standard2->regex_spec), "([^0-9^.]*)?([0-9]*)?([^.]*)?([.][rcs])?([0-9]*)?([+u-])?([0-9]*)?");
     standard2->pos_of_type_id_char = 5;
-	
-    regex_t compiled_regex;
-    regmatch_t *result_locations;
-    int i, ret, components;
-    struct bu_vls testresult;
-    bu_vls_init(&testresult);
 
     if (style == 1) {
 	ret=regcomp(&compiled_regex, bu_vls_addr(&(standard1->regex_spec)), REG_EXTENDED);
@@ -196,17 +201,15 @@ void test_regex(char *name, int style){
 	components = count_format_blocks(bu_vls_addr(&(standard2->regex_spec)));
     }
 
-
     result_locations = (regmatch_t *)bu_calloc(components + 1, sizeof(regmatch_t), "array to hold answers from regex");
 
-    bu_log("components: %d\n",components);	
+    bu_log("components: %d\n",components);
 
-    int *iterators;
-   
     iterators = (int *)bu_calloc(components, sizeof(int), "array for iterator status of results");
-    
+
     ret=regexec(&compiled_regex, name, components+1, result_locations, 0);
-	
+
+    bu_vls_init(&testresult);
     for (i=1; i<=components; i++) {
 	bu_vls_trunc(&testresult,0);
 	bu_vls_strncpy(&testresult, name+result_locations[i].rm_so, result_locations[i].rm_eo - result_locations[i].rm_so);
@@ -224,22 +227,9 @@ void test_regex(char *name, int style){
 	bu_log("%d ", iterators[i]);
     }
     bu_log("\n");
-    
+
     bu_free(result_locations, "free regex results");
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 struct increment_data {
@@ -263,19 +253,14 @@ struct object_name_item {
 
 
 /*NOTE - this needs to be redone to use regex instead of the custom parse!!!*/
-struct object_name_data *
+static struct object_name_data *
 parse_obj_name(struct db_i *dbip, char *fmt, char *name)
 {
     struct object_name_data *objcomponents;
-    BU_GETSTRUCT(objcomponents, object_name_data);
-    BU_LIST_INIT(&(objcomponents->name_components));
-    BU_LIST_INIT(&(objcomponents->separators));
-    BU_LIST_INIT(&(objcomponents->incrementals));
-    bu_vls_init(&(objcomponents->extension));
 
     struct object_name_item *objname;
     struct increment_data *incdata;
-	
+
     struct directory *dp = (struct directory *)NULL;
     struct resource *resp = &rt_uniresource;
     int rcount = 0;
@@ -286,21 +271,24 @@ parse_obj_name(struct db_i *dbip, char *fmt, char *name)
     int len = 0;
     int i;
 
-    if (!fmt || fmt[0] == '\0' || !name || name[0] == '\0') { 
+    BU_GETSTRUCT(objcomponents, object_name_data);
+    BU_LIST_INIT(&(objcomponents->name_components));
+    BU_LIST_INIT(&(objcomponents->separators));
+    BU_LIST_INIT(&(objcomponents->incrementals));
+    bu_vls_init(&(objcomponents->extension));
+
+    if (!fmt || fmt[0] == '\0' || !name || name[0] == '\0') {
 	bu_log("ERROR: empty name or format string passed to parse_name\n");
 	return;
     }
-
-
 
     dp = db_lookup(dbip, name, LOOKUP_QUIET);
     if (!dp) {
 	bu_log("ERROR:  No object named %s found in database.\n", name);
 	return;
     }
-	
 
-    objcomponents->object_type = determine_object_type(dbip, dp);	
+    objcomponents->object_type = determine_object_type(dbip, dp);
 
     for (i = 0; i < strlen(fmt); i++) {
 	if (len <= strlen(name)) {
@@ -342,7 +330,7 @@ parse_obj_name(struct db_i *dbip, char *fmt, char *name)
 		    }
 		    incdata->numerval = atoi(bu_vls_addr(&(incdata->namestring)));
 		    BU_LIST_INSERT(&(objcomponents->incrementals), &(incdata->l));
-				
+
 		}
 		break;
 		case 's':
@@ -442,7 +430,7 @@ parse_obj_name(struct db_i *dbip, char *fmt, char *name)
 				    {
 					bu_log("Error - invalid object type returned by determine_object_type\n");
 				    }
-				    break;	
+				    break;
 				}
 				bu_log("Note: naming convention requres extension here, but char at designated point is not a valid extension.  Selecting extension char %s based on object type.\n", bu_vls_addr(&(objcomponents->extension)));
 			    }
@@ -464,8 +452,9 @@ parse_obj_name(struct db_i *dbip, char *fmt, char *name)
 }
 
 
-void test_obj_struct(struct db_i *dbip, char *fmt, char *testname){
-	
+static void
+test_obj_struct(struct db_i *dbip, char *fmt, char *testname)
+{
     struct object_name_item *testitem;
     struct increment_data *inctest;
     struct object_name_data *test;
@@ -488,10 +477,10 @@ void test_obj_struct(struct db_i *dbip, char *fmt, char *testname){
     bu_log("\nExtension:    ");
     bu_log("%s ",bu_vls_addr(&(test->extension)));
     bu_log("\n\n");
-	
+
     for ( BU_LIST_FOR( testitem, object_name_item,  &(test->name_components) ) ) {
 	bu_free(testitem, "free names");
-    }	
+    }
 
     for ( BU_LIST_FOR( testitem, object_name_item, &(test->separators) ) )  {
 	bu_free(testitem, "free separators");
@@ -499,19 +488,18 @@ void test_obj_struct(struct db_i *dbip, char *fmt, char *testname){
     for ( BU_LIST_FOR( inctest, increment_data, &(test->incrementals) ) )  {
 	bu_free(inctest, "free incrementals");
     }
-	
+
     bu_vls_free(&(test->extension));
     bu_free(test, "free name structure");
 }
 
 /* Per discussion with Sean - use argc, argv pair for actual requesting, generation and return of names.
  */
- 
-void
+
+static void
 get_next_name(struct db_i *dbip, char *fmt, char *basename, int pos_iterator, int inc_iterator, int argc, char *argv[])
 {
     struct bu_vls stringassembly;
-    bu_vls_init(&stringassembly);
 
     struct object_name_data *parsed_name;
     struct object_name_item *objname;
@@ -523,6 +511,8 @@ get_next_name(struct db_i *dbip, char *fmt, char *basename, int pos_iterator, in
     int ignore_separator_flag = 0;
 
     char *finishedname;
+
+    bu_vls_init(&stringassembly);
 
     parsed_name = parse_obj_name(dbip, fmt, basename);
 
@@ -548,7 +538,7 @@ get_next_name(struct db_i *dbip, char *fmt, char *basename, int pos_iterator, in
 		{
 		    iterator_pos++;
 		    if (iterator_pos == pos_iterator) {
-			bu_vls_printf(&stringassembly, "%d", incdata->numerval + iterator_count*inc_iterator);					
+			bu_vls_printf(&stringassembly, "%d", incdata->numerval + iterator_count*inc_iterator);
 		    } else {
 			bu_vls_printf(&stringassembly, "%d", incdata->numerval);
 		    }
@@ -590,17 +580,18 @@ get_next_name(struct db_i *dbip, char *fmt, char *basename, int pos_iterator, in
     }
 }
 
-main(int argc, char **argv)
-{
 
+int
+main(int argc, char *argv[])
+{
     int num_of_copies = 10;
     int j;
     char **av;
     struct db_i *dbip;
+    struct bu_vls temp;
+
     dbip = db_open( "./test.g", "r" );
     db_dirbuild(dbip);
-
-    struct bu_vls temp;
 
     bu_vls_init(&temp);
 
@@ -611,7 +602,7 @@ main(int argc, char **argv)
     bu_vls_printf(&temp,"%s","core-001a.s");
 
     /*	test_obj_struct(dbip, "nsinse", bu_vls_addr(&temp));
- 	get_next_name(dbip, "nsinse", bu_vls_addr(&temp), 1, 3, num_of_copies, (char **)av);
+	get_next_name(dbip, "nsinse", bu_vls_addr(&temp), 1, 3, num_of_copies, (char **)av);
 	for (j=0; j < num_of_copies; j++){
 	bu_log("%s\n",av[j]);
 	}
@@ -635,9 +626,9 @@ main(int argc, char **argv)
     test_regex("comb2.r",2);
     test_regex("assem1",2);
     test_regex("test.q",2);
-    
+
     /*	test_obj_struct(dbip, "esnisni", bu_vls_addr(&temp));
- 	get_next_name(dbip, "esnisni", bu_vls_addr(&temp), 1, 3, num_of_copies, (char **)av);	
+	get_next_name(dbip, "esnisni", bu_vls_addr(&temp), 1, 3, num_of_copies, (char **)av);
 	for (j=0; j < num_of_copies; j++){
 	bu_log("%s\n",av[j]);
 	}
@@ -647,7 +638,7 @@ main(int argc, char **argv)
 	bu_vls_trunc(&temp,0);
 	bu_vls_printf(&temp,"%s","comb1.c");
 	test_obj_struct(dbip, "nise", bu_vls_addr(&temp));
- 	get_next_name(dbip, "nise", bu_vls_addr(&temp), 1, 3, num_of_copies, (char **)av);	
+	get_next_name(dbip, "nise", bu_vls_addr(&temp), 1, 3, num_of_copies, (char **)av);
 	for (j=0; j < num_of_copies; j++){
 	bu_log("%s\n",av[j]);
 	}
@@ -657,7 +648,7 @@ main(int argc, char **argv)
 	bu_vls_trunc(&temp,0);
 	bu_vls_printf(&temp,"%s","comb2.r");
 	test_obj_struct(dbip, "nise", bu_vls_addr(&temp));
- 	get_next_name(dbip, "nise", bu_vls_addr(&temp), 1, 3, num_of_copies, (char **)av);	
+	get_next_name(dbip, "nise", bu_vls_addr(&temp), 1, 3, num_of_copies, (char **)av);
 	for (j=0; j < num_of_copies; j++){
 	bu_log("%s\n",av[j]);
 	}
@@ -667,7 +658,7 @@ main(int argc, char **argv)
 	bu_vls_trunc(&temp,0);
 	bu_vls_printf(&temp,"%s","comb3.r");
 	test_obj_struct(dbip, "nise", bu_vls_addr(&temp));
- 	get_next_name(dbip, "nise", bu_vls_addr(&temp), 1, 3, num_of_copies, (char **)av);	
+	get_next_name(dbip, "nise", bu_vls_addr(&temp), 1, 3, num_of_copies, (char **)av);
 	for (j=0; j < num_of_copies; j++){
 	bu_log("%s\n",av[j]);
 	}
@@ -677,7 +668,7 @@ main(int argc, char **argv)
 	bu_vls_trunc(&temp,0);
 	bu_vls_printf(&temp,"%s","assem1");
 	test_obj_struct(dbip, "ni", bu_vls_addr(&temp));
- 	get_next_name(dbip, "ni", bu_vls_addr(&temp), 1, 3, num_of_copies, (char **)av);
+	get_next_name(dbip, "ni", bu_vls_addr(&temp), 1, 3, num_of_copies, (char **)av);
 	for (j=0; j < num_of_copies; j++){
 	bu_log("%s\n",av[j]);
 	}
@@ -687,12 +678,12 @@ main(int argc, char **argv)
 	bu_vls_trunc(&temp,0);
 	bu_vls_printf(&temp,"%s","test.q");
 	test_obj_struct(dbip, "nise", bu_vls_addr(&temp));
- 	get_next_name(dbip, "nise", bu_vls_addr(&temp), 1, 3, num_of_copies, (char **)av);	
+	get_next_name(dbip, "nise", bu_vls_addr(&temp), 1, 3, num_of_copies, (char **)av);
 	for (j=0; j < num_of_copies; j++){
 	bu_log("%s\n",av[j]);
 	}
 	bu_free(av, "done with name strings, free memory");
-    */	
+    */
     db_close(dbip);
 }
 
