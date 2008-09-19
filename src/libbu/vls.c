@@ -865,40 +865,49 @@ bu_vls_read( struct bu_vls *vp, int fd )
  * reading the next line into the vls.
  *
  * Returns -
- *	>=0	the length of the resulting vls
- *	 -1	on EOF where no characters were added to the vls.
+ *   >=0  the length of the resulting vls
+ *   -1   on EOF where no characters were read or added to the vls
  */
 int
 bu_vls_gets(register struct bu_vls *vp, register FILE *fp)
 {
     int	startlen;
     int endlen;
-    char buffer[BUFSIZ*10] = {0};
+    int done;
     char *bufp;
+    char buffer[BUFSIZ+1] = {0};
 
     BU_CK_VLS(vp);
 
     startlen = bu_vls_strlen(vp);
 
-    bufp = bu_fgets(buffer, BUFSIZ*10, fp);
+    do {
+	bufp = bu_fgets(buffer, BUFSIZ+1, fp);
 
-    if (!bufp)
-	return -1;
+	if (!bufp)
+	    return -1;
 
-    /* strip the trailing EOL (or at least part of it) */
-    if ((bufp[strlen(bufp)-1] == '\n') ||
-	(bufp[strlen(bufp)-1] == '\r'))
-	bufp[strlen(bufp)-1] = '\0';
+	/* keep reading if we just filled the buffer */
+	if ((strlen(bufp) == BUFSIZ) && (bufp[BUFSIZ-1] != '\n') && (bufp[BUFSIZ-1] != '\r')) {
+	    done = 0;
+	} else {
+	    done = 1;
+	}
 
-    /* handle \r\n lines */
-    if (bufp[strlen(bufp)-1] == '\r')
-	bufp[strlen(bufp)-1] = '\0';
+	/* strip the trailing EOL (or at least part of it) */
+	if ((bufp[strlen(bufp)-1] == '\n') || (bufp[strlen(bufp)-1] == '\r'))
+	    bufp[strlen(bufp)-1] = '\0';
 
-    bu_vls_printf(vp, "%s", bufp);
+	/* handle \r\n lines */
+	if (bufp[strlen(bufp)-1] == '\r')
+	    bufp[strlen(bufp)-1] = '\0';
+
+	bu_vls_printf(vp, "%s", bufp);
+    } while (!done);
 
     /* sanity check */
     endlen = bu_vls_strlen(vp);
-    if (endlen < startlen )
+    if (endlen < startlen)
 	return -1;
 
     return endlen;

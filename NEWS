@@ -25,6 +25,7 @@ the geometry hierarchy, and much more.  You can combine search
 expressions together using boolean logic as well for even more
 powerful operations.
 
+* fixed bug parsing long command lines in mged - Sean Morrison
 * tessellation support for the DSP primitive - John Anderson
 * additional logging options in Pro/E exporter - Bob Parker
 * Pro/E exporter enhancements for dynamic tess tolerance - Bob Parker
