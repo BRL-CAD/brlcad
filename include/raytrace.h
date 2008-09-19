@@ -2359,12 +2359,14 @@ RT_EXPORT BU_EXTERN(int rt_boolfinal,
 
 RT_EXPORT BU_EXTERN(void rt_grow_boolstack,
 		    (struct resource *res));
-/* Approx Floating compare */
+
+/* DEPRECATED: Approx Floating compare (use NEAR_ZERO) */
 RT_EXPORT BU_EXTERN(int rt_fdiff,
 		    (double a, double b));
-/* Relative Difference */
+/* DEPRECATED: Relative Difference (use NEAR_ZERO) */
 RT_EXPORT BU_EXTERN(double rt_reldiff,
 		    (double a, double b));
+
 /* Print a soltab */
 RT_EXPORT BU_EXTERN(void rt_pr_soltab,
 		    (const struct soltab *stp));
