@@ -65,10 +65,6 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * implement support for exporting sketch objects via g-iges
 
-* providing stdin input to mged too quickly on invocation now makes it
-  thinks it's not interactive.  should probably use isatty() afterall
-  as a last resort check.
-
 * implement mged object name globbing similar to tclsh's globbing
   (i.e. via a globbing command and quoting globs that use []).  testing
   shows db_glob doesn't seem to behave correctly, at least not like

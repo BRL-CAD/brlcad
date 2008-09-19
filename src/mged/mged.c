@@ -411,6 +411,11 @@ main(int argc, char **argv)
 		    interactive = 1;
 		}
 	    }
+
+	    /* just in case we get input too quickly, see if it's coming from a tty */
+	    if (isatty(fileno(stdin))) {
+		interactive = 1;
+	    }
 	} /* read_set */
 
 	if (bu_debug && out != stdout) { 
