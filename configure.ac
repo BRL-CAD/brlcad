@@ -1104,6 +1104,7 @@ if test "x$bc_with_x11" != "xno" ; then
     fi
 
     dnl find X11 libraries.  sets X_CFLAGS, X_LIBS, and X_EXTRA_LIBS
+    BC_SEARCH_DIRECTORY([/usr/X11], [X11])
     AC_PATH_XTRA
     if test "x$have_x" = "xyes" ; then
 	AC_DEFINE(HAVE_X11_XLIB_H, 1, Define to 1 if you have the <X11/Xlib.h> header file.)
