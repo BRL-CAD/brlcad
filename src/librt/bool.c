@@ -843,6 +843,8 @@ rt_fastgen_vol_vol_overlap(struct region **fr1, struct region **fr2, const struc
  *  	-1	if a < b
  *  	 0	if a ~= b
  *  	+1	if a > b
+ *
+ * DEVELOPER DEPRECATION NOTICE: use NEAR_ZERO instead.
  */
 int
 rt_fdiff(double a, double b)
@@ -2111,6 +2113,8 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
  * Returns -
  *	0.0 if exactly the same, otherwise
  *	ratio of difference, relative to the larger of the two (range 0.0-1.0)
+ *
+ * DEVELOPER DEPRECATION NOTICE: use NEAR_ZERO instead.
  */
 double
 rt_reldiff(double a, double b)
