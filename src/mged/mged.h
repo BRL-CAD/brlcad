@@ -777,8 +777,6 @@ void label_edited_solid(int *num_lines, point_t *lines, struct rt_point_labels p
 void init_oedit(void);
 void init_sedit(void);
 
-int rt_arb_calc_planes(plane_t planes[6], struct rt_arb_internal *arb, int type, const struct bn_tol *tol);
-
 /* share.c */
 void usurp_all_resources(struct dm_list *dlp1, struct dm_list *dlp2);
 
