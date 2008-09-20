@@ -39,22 +39,22 @@
 .\"
 .\".\".\"
 .SH NAME
-pickett_fence \- Pickett fence geometry file generator
+picket_fence \- Pickett fence geometry file generator
 .SH SYNOPSIS
-.B pickett_fence
+.B picket_fence
 <filename> <prefix> <height> <spacing> <x0> <y0> <z0> ... <xn> <yn> <zn> [-r]
 .SH DESCRIPTION
-.I pickett_fence\^
+.I picket_fence\^
 creates a geometry file in
 .I <filename>\^
-of a pickett fence.  All parameters for the fence are in mm.  If more than two
+of a picket fence.  All parameters for the fence are in mm.  If more than two
 points are specified it will generate a fence with multiple sections connecting
 the points.  Parts of the fence are created starting at the origin.  The
 two backing boards are created in the negative x halfspace.  The pickets are
 created in the positive x halfspace and translated down the y-axis to their
 proper positions.  The entire segment is then rotated and translated to the
 position specified by the user.  To create a box of fence with the
-picketts on the outside, the points must be specified in a counter-clockwise
+pickets on the outside, the points must be specified in a counter-clockwise
 order.  Parts of the model are named according to the format
 .RS
 <prefix><partname><sec_num>[-<part_num>].<obj_type>
@@ -63,15 +63,15 @@ The
 .I <prefix>\^
 above is the second argument to the program.  The
 .I spacing\^
-parameter specifies the ammount of space (in mm) between picketts.  The
+parameter specifies the ammount of space (in mm) between pickets.  The
 .I -r\^
-option specifies round fronts for the picketts.
+option specifies round fronts for the pickets.
 .SH EXAMPLE
-The following will create a pickett fence two meters high and six meters long
-with fifteen millimeter spaces between the picketts.  It will start at
+The following will create a picket fence two meters high and six meters long
+with fifteen millimeter spaces between the pickets.  It will start at
 the origin and extend to the point (100, 6000, 0).
 .RS
-$ \|\fIpickett_fence \|fence.g \|2000 \|15 \|0 \|0 \|0 \|100 \|6000 \|0 \fP
+$ \|\fIpicket_fence \|fence.g \|2000 \|15 \|0 \|0 \|0 \|100 \|6000 \|0 \fP
 .RE
 .SH "SEE ALSO"
 .I
