@@ -17,9 +17,6 @@ http://sf.net/pm/?group_id=105292
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------
 
-* stabilize and test mged
-  (massive command restructuring in progress with libged)
-
 * change rtarea output to have new cpa values in their own section
 
 * refactor all of the nmg processing (back) into its own library so
