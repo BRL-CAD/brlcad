@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "../../resources/standard/dtd/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry id='aliaspix1'>
+<refmeta>
+<refentrytitle>ALIAS-PIX</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>alias-pix</refname>
+<refpurpose>convert an image from Alias(tm) pix format to BRL PIX(5) format</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<cmdsynopsis>
+  <command>alias-pix</command>    
+    <arg choice='opt'>-v </arg>
+    <arg>&lt;</arg>
+    <arg choice='plain'><replaceable>ALIASpixfile</replaceable></arg>
+    <arg>&gt;</arg>
+    <arg choice='plain'><replaceable>BRLpixfile</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para><command>alias-pix</command>
+converts the
+<emphasis remap='I'>Alias pix</emphasis>
+format file on the standard input to an
+<emphasis remap='I'>BRL PIX(5)</emphasis>
+format file on the standard output.</para>
+</refsect1>
+
+<refsect1 id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-v</option></term>
+  <listitem>
+<para>print a text summary of the Alias pix file header on standard error output.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+</refentry>
+

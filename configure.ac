@@ -890,8 +890,9 @@ if test "x$bc_build_progress" != "xyes" ; then
 fi
 
 # xsltproc is needed for docbook
-if test "$bc_build_docbook_docs" = "xyes" ; then
-	AC_PATH_PROG(XSLTPROC, xsltproc, bc_build_docbook_docs = no, [$PATH:/usr/bin])
+if test "$bc_build_docbook_docs" == "yes" ; then
+	AC_PATH_PROG(XSLTPROC, xsltproc, bc_build_docbook_docs=no, [$PATH:/usr/bin])
+	AC_SUBST(XSLTPROC)
 fi
 
 # AN_MAKEVAR([AR], [BC_PROG_AR])
@@ -3675,7 +3676,9 @@ AC_CONFIG_FILES([
 	doc/Makefile
 	doc/book/Makefile
 	doc/docbook/Makefile
-        doc/docbook/tutorials/Makefile
+        doc/docbook/system/Makefile
+	doc/docbook/system/man1/Makefile
+	doc/docbook/tutorials/Makefile
 	doc/docbook/tutorials/oed/Makefile
 	doc/html/Makefile
 	doc/html/ReleaseNotes/Makefile
