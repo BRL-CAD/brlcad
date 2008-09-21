@@ -25,6 +25,7 @@ the geometry hierarchy, and much more.  You can combine search
 expressions together using boolean logic as well for even more
 powerful operations.
 
+* numerous documentation fixes to manual pages - Cliff Yapp
 * new bot-stl converter for exporting BoTs unevaluated - Bob Parker
 * fixed bug parsing long command lines in mged - Sean Morrison
 * tessellation support for the DSP primitive - John Anderson
