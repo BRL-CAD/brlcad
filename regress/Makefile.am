@@ -1,6 +1,6 @@
-.PHONY : regression regress test moss lights solids shaders spdi iges weight gqa
+.PHONY : regression regress test mged moss lights solids shaders spdi iges weight gqa fastgen flawfinder repository
 
-regression: clean mged solids shaders spdi moss lights Makefile iges weight gqa flawfinder
+regression: Makefile clean mged moss lights solids shaders spdi iges weight gqa fastgen flawfinder repository
 	@${ECHO} ---
 	@${ECHO} Regression testing completed.
 
@@ -41,7 +41,11 @@ weight: $(top_srcdir)/regress/weight.sh
 	@${ECHO} +++ $@ test complete.
 
 gqa: $(top_srcdir)/regress/gqa.sh
-	-${SH} $(top_srcdir)/regress/gqa.sh
+	-${SH} $(top_srcdir)/regress/gqa.sh $(top_srcdir)
+	@${ECHO} +++ $@ test complete.
+
+fastgen: $(top_srcdir)/regress/fastgen.sh
+	-${SH} $(top_srcdir)/regress/fastgen.sh $(top_srcdir)
 	@${ECHO} +++ $@ test complete.
 
 flawfinder: $(top_srcdir)/regress/flawfinder.sh
@@ -54,6 +58,8 @@ repository: $(top_srcdir)/regress/repository.sh
 
 # these are here because they go in the distribution but are not installed
 EXTRA_DIST = \
+	fastgen.sh \
+	fastgen_dos.fast4 \
 	flawfinder.sh \
 	gqa.sh \
 	iges.sh \
@@ -77,6 +83,7 @@ EXTRA_DIST = \
 	weight.sh
 
 CLEANFILES = \
+	$(MOSTLYCLEANFILES) \
 	.density \
 	adj_air.pl \
 	density_table.txt \
@@ -84,10 +91,11 @@ CLEANFILES = \
 	eagleCAD-512x438.pix \
 	ebm.bw \
 	exp_air.pl \
-	flawfinder.log \
+	fastgen_box.fast4 \
+	fastgen_dos.g \
+	fastgen_unix.g \
 	gaps.pl \
 	gqa.g \
-	gqa.log \
 	gqa.mged \
 	gqa_mged.log \
 	iges.g \
@@ -104,10 +112,7 @@ CLEANFILES = \
 	mged.g \
 	mged.log \
 	moss-diff.log \
-	moss-png.log \
-	moss.asc \
 	moss.g \
-	moss.log \
 	moss.pix \
 	moss.pix.diff \
 	moss.png \
@@ -118,7 +123,6 @@ CLEANFILES = \
 	repository.log \
 	shaders.dat \
 	shaders.g \
-	shaders.log \
 	shaders.mged \
 	shaders.pix \
 	shaders.pix.diff \
@@ -139,7 +143,6 @@ CLEANFILES = \
 	solids_ref.pix \
 	spdi \
 	spdi.g \
-	spdi.log \
 	spdi.mged \
 	spdi.pix \
 	spdi_diff.pix \
@@ -147,13 +150,13 @@ CLEANFILES = \
 	spdi_ref.pix \
 	volume.pl \
 	weight.g \
-	weight.log \
 	weight.mged \
 	weight.out \
 	weight.ref \
 	wgt.out
 
 MOSTLYCLEANFILES = \
+	fastgen.log \
 	flawfinder.log \
 	gqa.log \
 	lights.log \
