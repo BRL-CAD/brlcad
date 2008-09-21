@@ -246,7 +246,7 @@ get_line(void)
     struct bu_vls buffer;
 
     bu_vls_init(&buffer);
-    len = bu_vls_gets(&buffer, stdin);
+    len = bu_vls_gets(&buffer, fpin);
 
     /* eof? */
     if (len < 0)
