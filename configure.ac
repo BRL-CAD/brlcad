@@ -260,6 +260,9 @@ BC_ARG_ENABLE([only_rts], [only-rtserver], [Only build the components necessary 
 # run-time debugging
 BC_ARG_ENABLE([build_runtime_debug], [runtime-debug], [Enable run-time debug checking], [yes])
 
+# enable building Docbook documentation
+BC_ARG_ENABLE([build_docbook_docs], [documentation], [Enable building of Docbook documentation], [yes])
+
 # enable 64-bit builds
 BC_ARG_ENABLE([build_64bit], [64bit-build], [Enable 64-bit compilation mode], [auto])
 
@@ -398,6 +401,11 @@ BC_ARG_ALIAS([only_rts], [librtserver-only])
 BC_ARG_ALIAS([build_runtime_debug], [run-time-debug])
 BC_ARG_ALIAS([build_runtime_debug], [runtime-debugging])
 BC_ARG_ALIAS([build_runtime_debug], [run-time-debugging])
+
+# Docbook documentation (help uses documentation)
+BC_ARG_ALIAS([build_docbook_docs], [docs])
+BC_ARG_ALIAS([build_docbook_docs], [documentation])
+BC_ARG_ALIAS([build_docbook_docs], [docbook])
 
 # 64-bit compilation (help uses 64bit-build)
 BC_ARG_ALIAS([build_64bit], [64bit])
@@ -722,6 +730,9 @@ AC_MSG_RESULT($bc_only_rts)
 AC_MSG_CHECKING(whether to use run-time debug checks)
 AC_MSG_RESULT($bc_build_runtime_debug)
 
+AC_MSG_CHECKING(whether to build docbook documentation)
+AC_MSG_RESULT($bc_build_docbook_docs)
+
 AC_MSG_CHECKING(whether to compile in 64-bit mode)
 AC_MSG_RESULT($bc_build_64bit)
 
@@ -877,6 +888,11 @@ if test "x$bc_build_progress" != "xyes" ; then
 	if test "x$LIBTOOL" != "x" ; then
 		LIBTOOL="$LIBTOOL --silent"
 	fi
+fi
+
+# xsltproc is needed for docbook
+if test "$bc_build_docbook_docs" = "xyes" ; then
+	AC_PATH_PROG(XSLTPROC, xsltproc, bc_build_docbook_docs = no, [$PATH:/usr/bin])
 fi
 
 # AN_MAKEVAR([AR], [BC_PROG_AR])
@@ -3465,6 +3481,7 @@ AM_CONDITIONAL(WITH_JAVA, [test "x$build_against_java" != "xno"])
 AM_CONDITIONAL(WITH_PROE, [test "x$build_against_proe" != "xno"])
 AM_CONDITIONAL(WITH_PARSERS, [test "x$build_parsers" != "xno"])
 
+AM_CONDITIONAL(BUILD_DOCBOOK, [test "x$bc_build_docbook_docs" = "xyes"])
 AM_CONDITIONAL(INSTALL_MODELS, [test "x$bc_install_geometry" = "xyes"])
 AM_CONDITIONAL(ONLY_BENCHMARK, [test "x$bc_only_benchmark" != "xno"])
 AM_CONDITIONAL(ONLY_RTS, [test "x$bc_only_rts" != "xno"])
@@ -4000,6 +4017,7 @@ AC_MSG_RESULT([Print verbose compilation progress ...: $bc_build_progress])
 AC_MSG_RESULT([])
 AC_MSG_RESULT([Only build benchmark suite ...........: $bc_only_benchmark])
 AC_MSG_RESULT([Only build librtserver ...............: $bc_only_rts])
+AC_MSG_RESULT([Build Docbook documentation ..........: $bc_build_docbook_docs])
 AC_MSG_RESULT([Install example geometry models ......: $bc_install_geometry])
 AC_MSG_RESULT([])
 if test "x$time_elapsed" != "xunknown" ; then
