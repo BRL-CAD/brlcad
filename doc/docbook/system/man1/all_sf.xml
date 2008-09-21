@@ -48,7 +48,9 @@
 
 <refnamediv id='name'>
   <refname>all_sf</refname>
-  <refpurpose>obtain shape factors between named regions of an entire mged database</refpurpose>
+  <refpurpose>
+    obtain shape factors between named regions of an entire mged database
+  </refpurpose>
 </refnamediv>
 
 <!-- body begins here -->

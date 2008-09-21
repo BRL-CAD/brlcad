@@ -48,7 +48,9 @@
 
 <refnamediv id='name'>
   <refname>alias-pix</refname>
-  <refpurpose>convert an image from Alias(tm) pix format to BRL PIX(5) format</refpurpose>
+  <refpurpose>
+    convert an image from Alias(tm) pix format to BRL PIX(5) format
+  </refpurpose>
 </refnamediv>
 
 <!-- body begins here -->
@@ -64,9 +66,10 @@
 <refsect1 id='description'>
   <title>DESCRIPTION</title>
   <para>
-    <command>alias-pix</command> converts the <emphasis remap='I'>Alias pix</emphasis>
-    format file on the standard input to an <emphasis remap='I'>BRL PIX(5)</emphasis> 
-    format file on the standard output.
+    <command>alias-pix</command> converts the 
+    <emphasis remap='I'>Alias pix</emphasis> format file on the standard 
+    input to an <emphasis remap='I'>BRL PIX(5)</emphasis>  format file on 
+    the standard output.
   </para>
 </refsect1>
 
