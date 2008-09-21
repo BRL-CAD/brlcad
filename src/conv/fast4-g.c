@@ -243,25 +243,24 @@ static int
 get_line(void)
 {
     int len;
+    struct bu_vls buffer;
+
+    bu_vls_init(&buffer);
+    len = bu_vls_gets(&buffer, stdin);
+
+    /* eof? */
+    if (len < 0)
+	return 0;
+
+    if (len > MAX_LINE_SIZE)
+	bu_log("WARNING: long line truncated\n");
 
     memset((void *)line, 0, MAX_LINE_SIZE);
+    snprintf(line, MAX_LINE_SIZE, "%s", bu_vls_addr(&buffer));
 
-    if (bu_fgets(line, MAX_LINE_SIZE, fpin) == (char *)NULL)
-	return(0);
+    bu_vls_free(&buffer);
 
-    len = strlen(line);
-    if (line[len-1] != '\n') {
-	/* long line skip over remainder of line */
-	int c=1;
-
-	while (c != '\n' && c != EOF)
-	    c = getc(fpin);
-	if (c == EOF)
-	    return(0);
-    } else
-	line[len-1] = '\0';
-
-    return(1);
+    return (len >= 0);
 }
 
 
