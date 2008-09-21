@@ -404,7 +404,6 @@ BC_ARG_ALIAS([build_runtime_debug], [run-time-debugging])
 
 # Docbook documentation (help uses documentation)
 BC_ARG_ALIAS([build_docbook_docs], [docs])
-BC_ARG_ALIAS([build_docbook_docs], [documentation])
 BC_ARG_ALIAS([build_docbook_docs], [docbook])
 
 # 64-bit compilation (help uses 64bit-build)
