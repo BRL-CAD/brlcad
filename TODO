@@ -117,8 +117,6 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * implement graphical crash reporter tool (bombardier)
 
-* test mged text flood hang (e.g. large rtarea report) on slow machine
-
 * windows smp support
 
 * modify the new tree traversal code to be generic
