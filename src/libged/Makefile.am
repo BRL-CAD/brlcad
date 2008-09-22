@@ -212,9 +212,6 @@ noinst_HEADERS = \
 	ged_private.h \
 	qray.h
 
-man_MANS = \
-	search.1
-
 libged_la_SOURCES =
 libged_la_LDFLAGS = -version-info 19:1 -no-undefined
 libged_la_LIBADD = \
@@ -222,7 +219,6 @@ libged_la_LIBADD = \
 	${GED_LIBS}
 
 EXTRA_DIST = \
-	$(man_MANS) \
         CMakeLists.txt
 
 DEPENDS = src/librt
