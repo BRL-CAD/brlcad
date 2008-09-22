@@ -41,8 +41,8 @@ bin_PROGRAMS = \
 	asc2g \
 	asc2pix \
 	bot-bldxf \
+	bot_dump \
 	bot-raw \
-	bot-stl \
 	bot_shell-vtk \
 	conv-vg2g \
 	cy-g \
@@ -111,11 +111,11 @@ asc_nmg_LDADD = ${WDB}
 bot_bldxf_SOURCES = bot-bldxf.c
 bot_bldxf_LDADD = ${RT}
 
+bot_dump_SOURCES = bot_dump.c
+bot_dump_LDADD = ${RT}
+
 bot_raw_SOURCES = bot-raw.c
 bot_raw_LDADD = ${RT}
-
-bot_stl_SOURCES = bot-stl.c
-bot_stl_LDADD = ${RT}
 
 bot_shell_vtk_SOURCES = bot_shell-vtk.c
 bot_shell_vtk_LDADD = ${RT}

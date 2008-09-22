@@ -1,4 +1,4 @@
-/*                       B O T - S T L . C
+/*                       B O T _ D U M P . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2008 United States Government as represented by
@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file bot-stl.c
+/** @file bot_dump.c
  *
  */
 
@@ -38,9 +38,19 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-static char usage[] = "\
-Usage: bot-stl [-b] [-i] [-m directory] [-o file] [-v] geom.g\n";
+#define V3ARGSIN(_a)       (_a)[X]/25.4, (_a)[Y]/25.4, (_a)[Z]/25.4
 
+static char usage[] = "\
+Usage: bot-stl [-b] [-i] [-m directory] [-o file] [-t dxf|obj|stl] [-v] geom.g\n";
+
+enum otype {
+    OTYPE_DXF = 1,
+    OTYPE_OBJ,
+    OTYPE_STL
+};
+
+static enum otype output_type = OTYPE_STL;
+static fastf_t mm2inches = 1.0/25.4;
 static int binary = 0;
 static int inches = 0;
 static int verbose = 0;
@@ -58,7 +68,8 @@ lswap(unsigned int *v)
 	| ((r & 0xff000000) >> 24);
 }
 
-void write_bot(struct rt_bot_internal *bot, FILE *fp, char *name)
+void
+write_bot_dxf(struct rt_bot_internal *bot, FILE *fp, char *name)
 {
     int num_vertices;
     fastf_t *vertices;
@@ -66,9 +77,89 @@ void write_bot(struct rt_bot_internal *bot, FILE *fp, char *name)
     point_t A;
     point_t B;
     point_t C;
+    register int i, vi;
+
+    num_vertices = bot->num_vertices;
+    vertices = bot->vertices;
+    num_faces = bot->num_faces;
+    faces = bot->faces;
+
+    for (i = 0; i < num_faces; i++) {
+	vi = 3*faces[3*i];
+	VSET(A, vertices[vi], vertices[vi+1], vertices[vi+2]);
+	vi = 3*faces[3*i+1];
+	VSET(B, vertices[vi], vertices[vi+1], vertices[vi+2]);
+	vi = 3*faces[3*i+2];
+	VSET(C, vertices[vi], vertices[vi+1], vertices[vi+2]);
+
+	if (inches) {
+	    VSCALE(A, A, mm2inches);
+	    VSCALE(B, B, mm2inches);
+	    VSCALE(C, C, mm2inches);
+	}
+
+	fprintf( fp, "0\n3DFACE\n8\n%s\n62\n7\n", name );
+	fprintf( fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
+		 10, A[X], 20, A[Y], 30, A[Z] );
+	fprintf( fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
+		 11, B[X], 21, B[Y], 31, B[Z] );
+	fprintf( fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
+		 12, C[X], 22, C[Y], 32, C[Z] );
+	fprintf( fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
+		 12, C[X], 22, C[Y], 32, C[Z] );
+    }
+
+}
+
+void
+write_bot_obj(struct rt_bot_internal *bot, FILE *fp, char *name)
+{
+    int num_vertices;
+    fastf_t *vertices;
+    int num_faces, *faces;
+    register int i;
+
+    num_vertices = bot->num_vertices;
+    vertices = bot->vertices;
+    num_faces = bot->num_faces;
+    faces = bot->faces;
+
+    fprintf( fp, "g %s\n", name);
+
+    for (i = 0; i < num_vertices; i++) {
+	if (inches)
+	    fprintf( fp, "v %f %f %f\n",
+		     vertices[3*i]*mm2inches,
+		     vertices[3*i+1]*mm2inches,
+		     vertices[3*i+2]*mm2inches);
+	else
+	    fprintf( fp, "v %f %f %f\n",
+		     vertices[3*i],
+		     vertices[3*i+1],
+		     vertices[3*i+2]);
+    }
+
+    for (i = 0; i < num_faces; i++) {
+	fprintf( fp, "f %d %d %d\n", faces[3*i], faces[3*i+1], faces[3*i+2]);
+    }
+}
+
+#define DUMP_STL_NORMALS 0
+
+void
+write_bot_stl(struct rt_bot_internal *bot, FILE *fp, char *name)
+{
+    int num_vertices;
+    fastf_t *vertices;
+    int num_faces, *faces;
+    point_t A;
+    point_t B;
+    point_t C;
+#if DUMP_STL_NORMALS
     vect_t BmA;
     vect_t CmA;
     vect_t norm;
+#endif
     register int i, vi;
 
     num_vertices = bot->num_vertices;
@@ -85,18 +176,26 @@ void write_bot(struct rt_bot_internal *bot, FILE *fp, char *name)
 	vi = 3*faces[3*i+2];
 	VSET(C, vertices[vi], vertices[vi+1], vertices[vi+2]);
 
-	VSUB2(BmA, B, A);
-	VSUB2(CmA, C, A);
-	VCROSS(norm, BmA, CmA);
-	VUNITIZE(norm);
-
 	if (inches) {
-	    VSCALE(A, A, 25.4);
-	    VSCALE(B, B, 25.4);
-	    VSCALE(C, C, 25.4);
+	    VSCALE(A, A, mm2inches);
+	    VSCALE(B, B, mm2inches);
+	    VSCALE(C, C, mm2inches);
 	}
 
+#if DUMP_STL_NORMALS
+	VSUB2(BmA, B, A);
+	VSUB2(CmA, C, A);
+	if (bot->orientation != RT_BOT_CW) {
+	    VCROSS(norm, BmA, CmA);
+	} else {
+	    VCROSS(norm, CmA, BmA);
+	}
+	VUNITIZE(norm);
+
 	fprintf( fp, "  facet normal %lf %lf %lf\n", V3ARGS(norm));
+#else
+	fprintf( fp, "  facet\n");
+#endif
 	fprintf( fp, "    outer loop\n");
 	fprintf( fp, "      vertex %lf %lf %lf\n", V3ARGS(A));
 	fprintf( fp, "      vertex %lf %lf %lf\n", V3ARGS(B));
@@ -107,7 +206,8 @@ void write_bot(struct rt_bot_internal *bot, FILE *fp, char *name)
     fprintf( fp, "endsolid %s\n", name);
 }
 
-void write_bot_binary(struct rt_bot_internal *bot, int fd, char *name)
+void
+write_bot_stl_binary(struct rt_bot_internal *bot, int fd, char *name)
 {
     int num_vertices;
     fastf_t *vertices;
@@ -139,13 +239,17 @@ void write_bot_binary(struct rt_bot_internal *bot, int fd, char *name)
 
 	VSUB2(BmA, B, A);
 	VSUB2(CmA, C, A);
-	VCROSS(norm, BmA, CmA);
+	if (bot->orientation != RT_BOT_CW) {
+	    VCROSS(norm, BmA, CmA);
+	} else {
+	    VCROSS(norm, CmA, BmA);
+	}
 	VUNITIZE(norm);
 
 	if (inches) {
-	    VSCALE(A, A, 25.4);
-	    VSCALE(B, B, 25.4);
-	    VSCALE(C, C, 25.4);
+	    VSCALE(A, A, mm2inches);
+	    VSCALE(B, B, mm2inches);
+	    VSCALE(C, C, mm2inches);
 	}
 
 	memset(vert_buffer, 0, sizeof( vert_buffer ));
@@ -182,6 +286,7 @@ main(int argc, char *argv[])
     struct rt_i *rtip;
     struct directory *dp;
     struct bu_vls file_name;
+    char *file_ext;
     FILE *fp;
     int fd;
     char c;
@@ -192,7 +297,7 @@ main(int argc, char *argv[])
     bu_optind = 1;
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "bio:m:v")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "bio:m:t:v")) != EOF) {
 	switch (c) {
 	case 'b':		/* Binary output file */
 	    binary=1;
@@ -200,12 +305,22 @@ main(int argc, char *argv[])
 	case 'i':
 	    inches = 1;
 	    break;
-	case 'o':		/* Output file name. */
-	    output_file = bu_optarg;
-	    break;
 	case 'm':
 	    output_directory = bu_optarg;
 	    bu_vls_init( &file_name );
+	    break;
+	case 'o':		/* Output file name. */
+	    output_file = bu_optarg;
+	    break;
+	case 't':
+	    if (!strcmp("dxf", bu_optarg))
+		output_type = OTYPE_DXF;
+	    else if (!strcmp("obj", bu_optarg))
+		output_type = OTYPE_OBJ;
+	    else if (!strcmp("stl", bu_optarg))
+		output_type = OTYPE_STL;
+	    else
+		bu_exit(1, usage, argv[0]);
 	    break;
 	case 'v':
 	    verbose = 1;
@@ -230,16 +345,18 @@ main(int argc, char *argv[])
 	    bu_exit(1, "Can't output binary to stdout\n");
 	}
 	fp = stdout;
-    } else if ( output_file ) {
-	if ( !binary ) {
-	    /* Open ASCII output file */
-	    if ( (fp=fopen( output_file, "wb+" )) == NULL )
-	    {
-		perror( argv[0] );
-		bu_exit(1, "Cannot open ASCII output file (%s) for writing\n", output_file );
-	    }
 
-	} else {
+	/* Set this to something non-null in order to possibly write eof */
+	output_file = "stdout";
+
+	/* output DXF header and start of TABLES section */
+	if (output_type == OTYPE_DXF) {
+	    fprintf(fp,
+		    "0\nSECTION\n2\nHEADER\n999\n%s (All Bots)\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n",
+		    argv[argc-1]);
+	}
+    } else if ( output_file ) {
+	if ( binary && output_type == OTYPE_STL ) {
 	    char buf[81];	/* need exactly 80 chars for header */
 
 	    /* Open binary output file */
@@ -261,6 +378,20 @@ main(int argc, char *argv[])
 	    /* write a place keeper for the number of triangles */
 	    memset(buf, 0, 4);
 	    write(fd, &buf, 4);
+	} else {
+	    /* Open ASCII output file */
+	    if ( (fp=fopen( output_file, "wb+" )) == NULL )
+	    {
+		perror( argv[0] );
+		bu_exit(1, "Cannot open ASCII output file (%s) for writing\n", output_file );
+	    }
+
+	    /* output DXF header and start of TABLES section */
+	    if (output_type == OTYPE_DXF) {
+		fprintf(fp,
+			"0\nSECTION\n2\nHEADER\n999\n%s (All Bots)\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n",
+			argv[argc-1]);
+	    }
 	}
     }
 
@@ -276,11 +407,26 @@ main(int argc, char *argv[])
 
     MAT_IDN(mat);
 
+    if (output_directory) {
+	switch (output_type) {
+	case OTYPE_DXF:
+	    file_ext = ".dxf";
+	    break;
+	case OTYPE_OBJ:
+	    file_ext = ".obj";
+	    break;
+	case OTYPE_STL:
+	default:
+	    file_ext = ".stl";
+	    break;
+	}
+    }
+
     /* dump all the bots */
     FOR_ALL_DIRECTORY_START(dp, rtip->rti_dbip)
 
-	/* we only dump BOT primitives, so skip some obvious exceptions */
-	if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD) continue;
+    /* we only dump BOT primitives, so skip some obvious exceptions */
+    if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD) continue;
     if (dp->d_flags & DIR_COMB) continue;
 
     /* get the internal form */
@@ -315,9 +461,9 @@ main(int argc, char *argv[])
 	    }
 	    cp++;
 	}
-	bu_vls_strcat( &file_name, ".stl" );
+	bu_vls_strcat( &file_name, file_ext);
 
-	if (binary) {
+	if ( binary && output_type == OTYPE_STL ) {
 	    char buf[81];	/* need exactly 80 chars for header */
 	    unsigned char tot_buffer[4];
 
@@ -339,7 +485,7 @@ main(int argc, char *argv[])
 	    memset(buf, 0, 4);
 	    write(fd, &buf, 4);
 
-	    write_bot_binary(bot, fd, dp->d_namep);
+	    write_bot_stl_binary(bot, fd, dp->d_namep);
 
 	    /* Re-position pointer to 80th byte */
 	    lseek( fd, 80, SEEK_SET );
@@ -356,22 +502,50 @@ main(int argc, char *argv[])
 		bu_exit(1, "Cannot open ASCII output file (%s) for writing\n", bu_vls_addr(&file_name));
 	    }
 
-	    write_bot(bot, fp, dp->d_namep);
+	    switch (output_type) {
+	    case OTYPE_DXF:
+		fprintf(fp,
+			"0\nSECTION\n2\nHEADER\n999\n%s (BOT from %s)\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n",
+			dp->d_namep, argv[argc-1]);
+		write_bot_dxf(bot, fp, dp->d_namep);
+		fprintf( fp, "0\nENDSEC\n0\nEOF\n" );
+		break;
+	    case OTYPE_OBJ:
+		write_bot_obj(bot, fp, dp->d_namep);
+		break;
+	    case OTYPE_STL:
+	    default:
+		write_bot_stl(bot, fp, dp->d_namep);
+		break;
+	    }
+
 	    fclose(fp);
 	}
     } else {
-	if (binary) {
+	if ( binary && output_type == OTYPE_STL ) {
 	    total_faces += bot->num_faces;
-	    write_bot_binary(bot, fd, dp->d_namep);
-	} else
-	    write_bot(bot, fp, dp->d_namep);
+	    write_bot_stl_binary(bot, fd, dp->d_namep);
+	} else {
+	    switch (output_type) {
+	    case OTYPE_DXF:
+		write_bot_dxf(bot, fp, dp->d_namep);
+		break;
+	    case OTYPE_OBJ:
+		write_bot_obj(bot, fp, dp->d_namep);
+		break;
+	    case OTYPE_STL:
+	    default:
+		write_bot_stl(bot, fp, dp->d_namep);
+		break;
+	    }
+	}
     }
 
 
     FOR_ALL_DIRECTORY_END
 
     if (output_file) {
-	if (binary) {
+	if ( binary && output_type == OTYPE_STL ) {
 	    unsigned char tot_buffer[4];
 
 	    /* Re-position pointer to 80th byte */
@@ -382,8 +556,13 @@ main(int argc, char *argv[])
 	    lswap( (unsigned int *)tot_buffer );
 	    write(fd, tot_buffer, 4);
 	    close(fd);
-	} else
+	} else {
+	    /* end of layers section, start of ENTITIES SECTION */
+	    if (output_type == OTYPE_DXF)
+		fprintf( fp, "0\nENDSEC\n0\nEOF\n" );
+
 	    fclose(fp);
+	}
     }
 
     return 0;
