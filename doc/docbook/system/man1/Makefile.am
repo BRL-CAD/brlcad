@@ -15,7 +15,8 @@ XML_CATALOG_FILES=$(top_srcdir)/doc/docbook/catalog.xml
 
 man1DOCBOOK = \
 	alias-pix.xml \
-	all_sf.xml 
+	all_sf.xml \
+	search.xml
 
 if BUILD_DOCBOOK
 BUILTMAN_SOURCES = \
