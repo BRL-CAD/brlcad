@@ -198,8 +198,6 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 * Optional compile-time support for using GMP or CLN for arbitrary
   exact precision arithmetic computation support
 
-* c++ geometry engine/api using librt/libbn/libbu
-
 * inside/outside point and voxel testing capability in librt
 
 * automatic geometry voxelizer (perhaps using arbs or vol primitive)
@@ -278,8 +276,6 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 * make the DSP primitive use less memory when data is coming from
   a binunif. allocating 160 times binunif size is a bit extravagant
   (which comes from sizeof(struct dsp_bb)).
-
-* implement tess() for the DSP primitive
 
 * add dynamic geometry support. i.e. the ability to modify the parsed
   in-memory geometry tree on the fly via api calls (e.g. to add holes)
