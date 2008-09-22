@@ -416,32 +416,22 @@
     </para>
   </example>
 
-  <example>
-    <title>Finding all Combinations below Regions</title>
-    <para>
-      <userinput>search -type comb -not ( -type region -or -type assem )</userinput>
-    </para>
-    <para>
-      Find all instances of combinations that are not regions and do not contain regions.
-    </para>
-  </example>
-
-  <example>
+ <example>
     <title>Finding all Nested Regions</title>
     <para>
-      <userinput>search -below -type region -type region</userinput>
+      <userinput>search -type region -above -type region</userinput>
     </para>
     <para>
       Find all instances of objects of type region that contain a region in the
-      subtree.  This searches for regions being used "below" other regions, which
-      is considered bad practice in BRL-CAD
+      subtree.  This searches for regions being used within the subtrees of other regions, which
+      is considered bad practice in BRL-CAD.
     </para>
   </example>
 
   <example>
     <title>Finding all Assemblies</title>
     <para>
-      <userinput>search -below -type region -type combination ! -type region</userinput>
+      <userinput>search -below -type region ! -type region</userinput>
     </para>
     <para>
       Find all instances of objects of type combination that contain regions but are
@@ -449,6 +439,16 @@
     </para>
   </example>
 
+  <example>
+    <title>Finding all Combinations below Regions</title>
+    <para>
+      <userinput>search ! ( -below -type region ) ! -type region -type comb</userinput>
+    </para>
+    <para>
+      Find all instances of combinations that are not regions and do not contain regions.
+    </para>
+  </example>
+ 
 </refsect1>
 
 <refsect1 id='diagnostics'>
