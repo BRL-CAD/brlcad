@@ -82,7 +82,7 @@
   <title>PRIMITIVES:</title>
   <variablelist remap='TP'>
     <varlistentry>
-      <term><emphasis remap='B' role='bold'>attr</emphasis> <emphasis remap='I'>attrib[=val]</emphasis></term>
+      <term><emphasis remap='B' role='bold'>-attr</emphasis> <emphasis remap='I'>attrib[=val]</emphasis></term>
       <listitem>
 	<para>
 	  Returns TRUE if the object has attribute
@@ -97,7 +97,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='bold'>empty</emphasis></term>
+      <term><emphasis remap='B' role='bold'>-empty</emphasis></term>
       <listitem>
 	<para>
 	  Returns TRUE if the object is a combination and has no tree below it.
@@ -105,7 +105,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='bold'>iname</emphasis> <emphasis remap='I'>pattern</emphasis></term>
+      <term><emphasis remap='B' role='bold'>-iname</emphasis> <emphasis remap='I'>pattern</emphasis></term>
       <listitem>
 	<para>
 	  Like <emphasis remap='B' role='bold'>name</emphasis> except the match is 
@@ -114,7 +114,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='bold'>iregex</emphasis> <emphasis remap='I'>pattern</emphasis></term>
+      <term><emphasis remap='B' role='bold'>-iregex</emphasis> <emphasis remap='I'>pattern</emphasis></term>
       <listitem>
 	<para>
 	  Like <emphasis remap='B' role='bold'>regex</emphasis>
@@ -123,7 +123,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='bold'>maxdepth</emphasis> <emphasis remap='I'>n</emphasis></term>
+      <term><emphasis remap='B' role='bold'>-maxdepth</emphasis> <emphasis remap='I'>n</emphasis></term>
       <listitem>
 	<para>
 	  True if the depth of the object in the tree is less than
@@ -132,7 +132,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='bold'>mindepth</emphasis> <emphasis remap='I'>n</emphasis></term>
+      <term><emphasis remap='B' role='bold'>-mindepth</emphasis> <emphasis remap='I'>n</emphasis></term>
       <listitem>
 	<para>
 	  True if the depth of the object in the gree is greater than 
@@ -141,7 +141,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='bold'>name</emphasis> <emphasis remap='I'>pattern</emphasis></term>
+      <term><emphasis remap='B' role='bold'>-name</emphasis> <emphasis remap='I'>pattern</emphasis></term>
       <listitem>
 	<para>
 	  True if the object name (not the full path, just the name) matches
@@ -151,7 +151,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='bold'>path</emphasis> <emphasis remap='I'>pattern</emphasis></term>
+      <term><emphasis remap='B' role='bold'>-path</emphasis> <emphasis remap='I'>pattern</emphasis></term>
       <listitem>
 	<para>
 	  True if the object path matches <emphasis remap='I'>pattern.</emphasis>
@@ -160,7 +160,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='bold'>print</emphasis></term>
+      <term><emphasis remap='B' role='bold'>-print</emphasis></term>
       <listitem>
 	<para>
 	  Evaluates to TRUE - used to print out the path and name of the object.
@@ -168,7 +168,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='bold'>print0</emphasis></term>
+      <term><emphasis remap='B' role='bold'>-print0</emphasis></term>
       <listitem>
 	<para>
 	  Evaluates to TRUE - prints the pathname of the object to standard output, 
@@ -177,7 +177,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='bold'>regex</emphasis> <emphasis remap='I'>pattern</emphasis></term>
+      <term><emphasis remap='B' role='bold'>-regex</emphasis> <emphasis remap='I'>pattern</emphasis></term>
       <listitem>
 	<para>
 	  True if the object path matches <emphasis remap='I'>pattern.</emphasis>
@@ -186,7 +186,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='bold'>stdattr</emphasis></term>
+      <term><emphasis remap='B' role='bold'>-stdattr</emphasis></term>
       <listitem>
 	<para>
 	  Returns TRUE if an object has ONLY standard attributes associated with it.  
@@ -205,7 +205,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='bold'>type</emphasis> <emphasis remap='I'>pattern</emphasis></term>
+      <term><emphasis remap='B' role='bold'>-type</emphasis> <emphasis remap='I'>pattern</emphasis></term>
       <listitem>
 	<para>
 	  Returns TRUE if the type of the object matches <emphasis remap='I'>pattern.</emphasis>
@@ -457,6 +457,11 @@
     Errors will be returned if parsing of the arguments fails, or one of the primaries's
     evaluation functions returns an error.
   </para>
+</refsect1>
+
+<refsect1 id='author'>
+  <title>AUTHOR</title>
+  <para>Clifford Yapp</para>
 </refsect1>
 
 <refsect1 id='copyright'>
