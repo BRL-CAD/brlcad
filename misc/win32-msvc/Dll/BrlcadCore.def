@@ -71,6 +71,7 @@ bu_units_conversion
 bu_units_string
 bu_vls_addr
 bu_vls_free
+bu_vls_gets
 bu_vls_init_if_uninit
 bu_vls_init
 bu_vls_printf
