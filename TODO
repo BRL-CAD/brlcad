@@ -139,8 +139,6 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
   (e.g., as an rt option) for things like adding an image title, the
   az/el, and objects displayed.
 
-* eliminate vararg.h and non-ansi cray-specific support code
-
 * implement a lighting model for rt that visualizes how expensive each
   individual pixel is to compute with an intensity (heat graph)
 
