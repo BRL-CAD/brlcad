@@ -115,6 +115,15 @@ int		sub_xmin = 0;		/* lower left of sub rectangle */
 int		sub_ymin = 0;
 int		sub_xmax = 0;		/* upper right of sub rectangle */
 int		sub_ymax = 0;
+
+/**
+ *  If this variable is set to zero, then "air" solids in the model
+ *  will be entirely discarded.
+ *  If this variable is set non-zero, then "air" solids will be
+ *  retained, and can be expected to show up in the partition lists.
+ */
+int		use_air = 0;		/* whether librt should handle air */
+
 /***** end variables shared with do.c *****/
 
 

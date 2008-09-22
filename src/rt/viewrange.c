@@ -54,8 +54,6 @@ extern int	npsw;			/* number of worker PSWs to run */
 float		max_dist;
 struct cell	*cellp;
 
-int		use_air = 0;		/* Internal air recognition is off */
-
 int		using_mlib = 0;		/* Material routines NOT used */
 
 /* Viewing module specific "set" variables */
@@ -73,7 +71,7 @@ Options:\n\
  -e Elev	Elevation in degrees	(conflicts with -M)\n\
  -M		Read model2view matrix on stdin (conflicts with -a, -e)\n\
  -o model.g	Specify output file (default=stdout)\n\
- -U #		Set use_air boolean to # (default=1)\n\
+ -U #		Set use_air boolean to # (default=0)\n\
  -x #		Set librt debug flags\n\
 ";
 

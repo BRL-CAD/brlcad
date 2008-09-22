@@ -77,9 +77,6 @@ struct cell	*find_cell(struct cell *cur_cellp, struct cell *next_cellp);
 struct cell	*botp;			/* pointer to bottom line   */
 struct cell	*topp;			/* pointer to top line	    */
 
-
-int		use_air = 0;		/* Internal air recognition is off */
-
 int		using_mlib = 0;		/* Material routines NOT used */
 
 /* Viewing module specific "set" variables */
@@ -98,7 +95,7 @@ Options:\n\
  -e Elev	Elevation in degrees	(conflicts with -M)\n\
  -M		Read model2view matrix on stdin (conflicts with -a, -e)\n\
  -o output.pl	Specify output file (default=stdout)\n\
- -U #		Set use_air boolean to # (default=1)\n\
+ -U #		Set use_air boolean to # (default=0)\n\
  -x #		Set librt debug flags\n\
 ";
 

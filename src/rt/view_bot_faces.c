@@ -51,8 +51,6 @@ extern point_t	viewbase_model;
 
 extern int	npsw;			/* number of worker PSWs to run */
 
-int		use_air = 1;		/* Handling of air in librt */
-
 extern int 	 rpt_overlap;
 
 extern fastf_t  rt_cline_radius;        /* from g_cline.c */
@@ -99,6 +97,8 @@ int raymiss();
 int
 view_init( struct application *ap, char *file, char *obj, int minus_o )
 {
+    /* report air regions */
+    use_air = 1;
 
     if ( !minus_o )
 	outfp = stdout;

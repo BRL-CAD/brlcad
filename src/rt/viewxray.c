@@ -79,7 +79,6 @@ Options:\n\
  -l 1		Floating point X-Rays (path lengths in doubles)\n\
 ";
 
-int	use_air = 0;			/* Handling of air in librt */
 int	using_mlib = 0;			/* Material routines NOT used */
 
 

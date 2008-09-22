@@ -38,13 +38,6 @@
 double	cell_depth;
 int	depth;
 
-/*
- *  If this variable is set to zero, then "air" solids in the model
- *  will be entirely discarded.
- *  If this variable is set non-zero, then "air" solids will be
- *  retained, and can be expected to show up in the partition lists.
- */
-int	use_air = 1;		/* Handling of air in librt */
 
 /*
  *  Viewing module specific "set" variables.
@@ -84,6 +77,9 @@ int	raymiss(register struct application *ap);
 int
 view_init(register struct application *ap, char *file, char *obj, int minus_o)
 {
+    /* Handling of air in librt */
+    use_air = 1;
+
     if ( !minus_o )
 	outfp = stdout;
 

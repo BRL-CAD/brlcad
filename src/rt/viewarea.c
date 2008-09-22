@@ -42,8 +42,6 @@
 
 extern int	npsw;			/* number of worker PSWs to run */
 
-int		use_air = 1;		/* Handling of air in librt */
-
 extern int 	 rpt_overlap;
 
 extern fastf_t  rt_cline_radius;        /* from g_cline.c */
@@ -115,6 +113,9 @@ int area_center(struct point_list *ptlist, int number, point_t *center);
 int
 view_init( register struct application *ap, char *file, char *obj )
 {
+    /* report air regions */
+    use_air = 1;
+
     ap->a_hit = rayhit;
     ap->a_miss = raymiss;
     ap->a_onehit = 0;

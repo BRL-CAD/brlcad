@@ -52,7 +52,6 @@
 
 #define RTEDGE_DEBUG 1
 
-int	use_air = 0;			/* Handling of air in librt */
 int	using_mlib = 0;			/* Material routines NOT used */
 
 extern 	FBIO	*fbp;			/* Framebuffer handle */

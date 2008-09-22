@@ -47,7 +47,6 @@
 #define	MAXREFLECT	16
 #define	DEFAULTREFLECT	8
 
-int		use_air = 0;		/* Handling of air in librt */
 int		using_mlib = 0;		/* Material routines NOT used */
 
 static struct rayinfo {

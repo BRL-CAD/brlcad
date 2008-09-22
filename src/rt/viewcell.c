@@ -45,8 +45,6 @@ extern point_t	viewbase_model;
 
 extern int	npsw;			/* number of worker PSWs to run */
 
-int		use_air = 0;		/* Handling of air in librt */
-
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
     {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
@@ -67,7 +65,7 @@ Options:\n\
  -G #		Grid cell height in millimeters (conflicts with -s\n\
  -J #		Jitter.  Default is off.  Any non-zero number is on\n\
  -o model.cell	Specify output file (default=stdout)\n\
- -U #		Set use_air boolean to # (default=1)\n\
+ -U #		Set use_air boolean to # (default=0)\n\
  -x #		Set librt debug flags\n\
 ";
 

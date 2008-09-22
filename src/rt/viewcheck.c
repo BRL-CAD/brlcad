@@ -46,7 +46,6 @@
 #define OVLP_TOL	0.1
 
 extern int	rpt_overlap;		/* report overlapping region names */
-int		use_air = 0;		/* Handling of air in librt */
 extern int	output_is_binary;
 
 

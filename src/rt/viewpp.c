@@ -38,8 +38,6 @@
 #include "raytrace.h"
 
 
-int		use_air = 0;		/* Handling of air in librt */
-
 const char title[] = "RT Pretty Picture";
 const char usage[] = "\
 Usage:  rtpp [options] model.g objects... >file.pp\n\

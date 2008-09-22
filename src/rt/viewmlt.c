@@ -53,7 +53,6 @@ extern int per_processor_chunk;	/* how many pixels to do at once */
 extern int cur_pixel;		/* current pixel number, 0..last_pixel */
 extern int last_pixel;		/* last pixel number */
 
-int use_air = 0;
 int ibackground[3] = {0};
 int inonbackground[3] = {0};
 static short int pwidth;			/* Width of each pixel (in bytes) */

@@ -79,7 +79,6 @@ Options:\n\
  -U #		Use air if # is greater than 0\n\
 ";
 
-int		use_air = 0;		/* Handling of air in librt */
 
 extern FBIO	*fbp;			/* Framebuffer handle */
 
