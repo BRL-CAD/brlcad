@@ -1709,9 +1709,9 @@ find_formplan(char **argv, PLAN **resultplan)
      */
 
     if(paren_squish(plan, &plan) != BRLCAD_OK) return BRLCAD_ERROR;              /* ()'s */
-    if(not_squish(plan, &plan) != BRLCAD_OK) return BRLCAD_ERROR;                /* !'s */
     if(above_squish(plan, &plan) != BRLCAD_OK) return BRLCAD_ERROR;                /* above's */
     if(below_squish(plan, &plan) != BRLCAD_OK) return BRLCAD_ERROR;                /* below's */
+    if(not_squish(plan, &plan) != BRLCAD_OK) return BRLCAD_ERROR;                /* !'s */
     if(or_squish(plan, &plan) != BRLCAD_OK) return BRLCAD_ERROR;                 /* -o's */
     (*resultplan) = plan;
     return BRLCAD_OK;
