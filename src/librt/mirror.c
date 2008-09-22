@@ -21,12 +21,6 @@
  *
  * Routine(s) to mirror objects.
  *
- * Authors -
- *   Christopher Sean Morrison
- *   Michael John Muuss
- *
- * Source -
- *   BRL-CAD Open Source
  */
 
 #include "common.h"
