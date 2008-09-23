@@ -81,9 +81,6 @@ BU_EXTERN(struct bn_table	*bn_table_make_visible_and_uniform, (int num,
 								     double first, double last, int vis_nsamp));
 
 
-int		use_air = 0;		/* Handling of air in librt */
-
-
 const char title[] = "Thermal Multi-Spectral RT";
 const char usage[] = "\
 Usage:  rttherm [options] model.g objects...\n\

@@ -349,7 +349,7 @@ struct frame *FreeFrame;
 extern double	AmbientIntensity;
 extern double	azimuth, elevation;
 extern int	lightmodel;
-int		use_air = 0;
+extern int	use_air;
 
 /* variables shared with worker() */
 extern int	hypersample;
