@@ -52,8 +52,6 @@
 
 #define RTEDGE_DEBUG 1
 
-int	using_mlib = 0;			/* Material routines NOT used */
-
 extern 	FBIO	*fbp;			/* Framebuffer handle */
 extern	fastf_t	viewsize;
 extern	int	lightmodel;

@@ -77,8 +77,6 @@ struct cell	*find_cell(struct cell *cur_cellp, struct cell *next_cellp);
 struct cell	*botp;			/* pointer to bottom line   */
 struct cell	*topp;			/* pointer to top line	    */
 
-int		using_mlib = 0;		/* Material routines NOT used */
-
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
     {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL }

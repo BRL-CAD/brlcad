@@ -47,8 +47,6 @@
 #define	MAXREFLECT	16
 #define	DEFAULTREFLECT	8
 
-int		using_mlib = 0;		/* Material routines NOT used */
-
 static struct rayinfo {
     int	sight;
     vect_t	ip;		/* intersection point */

@@ -38,8 +38,6 @@
 extern	int	width;			/* # of pixels in X; picture width */
 extern int	npsw;			/* number of worker PSWs to run */
 
-int		using_mlib = 0;		/* Material routines NOT used */
-
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
     {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL }
