@@ -15,6 +15,11 @@ on-going issues.
 Recent Bugs
 -----------
 
+* Mouse cursor turns into a huge yellow-translucent arrow when running
+  MGED through remote X11.
+
+  Running this fixes the bug: .id_0t config -cursor "xterm black"
+
 * mged (on debian) is reporting this when the user presses tab:
   Error in bgerror: invalid command name "::swidgets::togglearrow"
   the second time they press tab, they get:
