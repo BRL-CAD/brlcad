@@ -25,6 +25,7 @@ the geometry hierarchy, and much more.  You can combine search
 expressions together using boolean logic as well for even more
 powerful operations.
 
+* DSP tessellation honors cut type and handles zeros - John Anderson
 * fixed 'gets' command input bug in mged - Sean Morrison, Bob Parker
 * improved fast4-g DOS file line-ending support - Sean Morrison
 * numerous documentation fixes to manual pages - Cliff Yapp
