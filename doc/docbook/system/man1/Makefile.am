@@ -14,7 +14,7 @@ XML_CATALOG_FILES=$(top_srcdir)/doc/docbook/catalog.xml
 
 
 .fo.pdf: .xml.fo
-	$(APACHEFOP) $*.fo -pdf $*.pdf
+	$(APACHEFOP) $? -pdf $@
 
 .xml.fo:
 	XML_CATALOG_FILES=$(XML_CATALOG_FILES) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_FO_STYLESHEET) $?
