@@ -15,6 +15,15 @@ on-going issues.
 Recent Bugs
 -----------
 
+* mged (on debian) is reporting this when the user presses tab:
+  Error in bgerror: invalid command name "::swidgets::togglearrow"
+  the second time they press tab, they get:
+  Error in bgerror: window name "_secErrorDialog" already exists in parent
+
+  The problem was noticed on 7.12.4 and happens regardless of there
+  being a db opened or not.  The problem does not occur in classic
+  mode.
+
 * mged command window is showing up as an empty 0x0 dimensioned window
   on freebsd using xfce and metacity (single display, 1680x1050 res).
   dm shows up just fine.
