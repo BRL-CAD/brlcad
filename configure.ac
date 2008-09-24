@@ -263,6 +263,9 @@ BC_ARG_ENABLE([build_runtime_debug], [runtime-debug], [Enable run-time debug che
 # enable building Docbook documentation
 BC_ARG_ENABLE([build_docbook_docs], [documentation], [Enable building of Docbook documentation], [yes])
 
+# enable building Docbook pdf output
+BC_ARG_ENABLE([build_docbook_pdf], [pdfdocumentation], [Enable Docbook pdf output], [yes])
+
 # enable 64-bit builds
 BC_ARG_ENABLE([build_64bit], [64bit-build], [Enable 64-bit compilation mode], [auto])
 
@@ -405,6 +408,10 @@ BC_ARG_ALIAS([build_runtime_debug], [run-time-debugging])
 # Docbook documentation (help uses documentation)
 BC_ARG_ALIAS([build_docbook_docs], [docs])
 BC_ARG_ALIAS([build_docbook_docs], [docbook])
+
+# Docbook documentation (help uses documentation)
+BC_ARG_ALIAS([build_docbook_pdf], [pdf])
+BC_ARG_ALIAS([build_docbook_pdf], [docbook-pdf])
 
 # 64-bit compilation (help uses 64bit-build)
 BC_ARG_ALIAS([build_64bit], [64bit])
@@ -732,6 +739,9 @@ AC_MSG_RESULT($bc_build_runtime_debug)
 AC_MSG_CHECKING(whether to build docbook documentation)
 AC_MSG_RESULT($bc_build_docbook_docs)
 
+AC_MSG_CHECKING(whether to enable docbook pdf)
+AC_MSG_RESULT($bc_build_docbook_pdf)
+
 AC_MSG_CHECKING(whether to compile in 64-bit mode)
 AC_MSG_RESULT($bc_build_64bit)
 
@@ -893,7 +903,17 @@ fi
 if test "$bc_build_docbook_docs" == "yes" ; then
 	AC_PATH_PROG(XSLTPROC, xsltproc, bc_build_docbook_docs=no, [$PATH:/usr/bin])
 	AC_SUBST(XSLTPROC)
+else
+	bc_build_docbook_pdf=no
 fi
+
+# Apache fop is needed for docbook pdf
+
+if test "$bc_build_docbook_pdf" == "yes" ; then
+	AC_PATH_PROG(APACHEFOP, fop, bc_build_docbook_pdf=no, [$PATH:/usr/bin])
+	AC_SUBST(APACHEFOP)
+fi
+
 
 # AN_MAKEVAR([AR], [BC_PROG_AR])
 # AN_PROGRAM([ar], [BC_PROG_AR])
@@ -3481,7 +3501,8 @@ AM_CONDITIONAL(WITH_JAVA, [test "x$build_against_java" != "xno"])
 AM_CONDITIONAL(WITH_PROE, [test "x$build_against_proe" != "xno"])
 AM_CONDITIONAL(WITH_PARSERS, [test "x$build_parsers" != "xno"])
 
-AM_CONDITIONAL(BUILD_DOCBOOK, [test "x$bc_build_docbook_docs" = "xyes"])
+AM_CONDITIONAL(BUILD_DOCBOOK, [test "x$bc_build_docbook_docs" != "xno"])
+AM_CONDITIONAL(BUILD_DOCBOOK_PDF, [test "x$bc_build_docbook_pdf" != "xno"])
 AM_CONDITIONAL(INSTALL_MODELS, [test "x$bc_install_geometry" = "xyes"])
 AM_CONDITIONAL(ONLY_BENCHMARK, [test "x$bc_only_benchmark" != "xno"])
 AM_CONDITIONAL(ONLY_RTS, [test "x$bc_only_rts" != "xno"])
@@ -4020,6 +4041,7 @@ AC_MSG_RESULT([])
 AC_MSG_RESULT([Only build benchmark suite ...........: $bc_only_benchmark])
 AC_MSG_RESULT([Only build librtserver ...............: $bc_only_rts])
 AC_MSG_RESULT([Build Docbook documentation ..........: $bc_build_docbook_docs])
+AC_MSG_RESULT([Enable Docbook pdf output ............: $bc_build_docbook_pdf])
 AC_MSG_RESULT([Install example geometry models ......: $bc_install_geometry])
 AC_MSG_RESULT([])
 if test "x$time_elapsed" != "xunknown" ; then
