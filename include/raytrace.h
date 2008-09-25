@@ -812,20 +812,30 @@ struct directory  {
     struct bu_list	d_use_hd;		/**< @brief heads list of uses (struct soltab l2) */
     char		d_shortname[16];	/**< @brief Stash short names locally */
 };
-#define DIR_NULL	((struct directory *)0)
+#define RT_DIR_NULL	((struct directory *)0)
 #define RT_CK_DIR(_dp)	BU_CKMAG(_dp, RT_DIR_MAGIC, "(librt)directory")
 
 #define d_addr	d_un.file_offset
 #define RT_DIR_PHONY_ADDR	(-1L)	/**< @brief Special marker for d_addr field */
 
 /* flags for db_diradd() and friends */
-#define DIR_SOLID	0x1	/**< @brief this name is a solid */
-#define DIR_COMB	0x2	/**< @brief combination */
-#define DIR_REGION	0x4	/**< @brief region */
-#define DIR_HIDDEN	0x8	/**< @brief object name is hidden */
-#define	DIR_NON_GEOM	0x10	/**< @brief object is not geometry (e.g. binary object) */
-#define DIR_USED	0x80	/**< @brief One bit, used similar to d_nref */
-#define RT_DIR_INMEM	0x100	/**< @brief object is in memory (only) */
+#define RT_DIR_SOLID    0x1   /**< @brief this name is a solid */
+#define RT_DIR_COMB     0x2   /**< @brief combination */
+#define RT_DIR_REGION   0x4   /**< @brief region */
+#define RT_DIR_HIDDEN   0x8   /**< @brief object name is hidden */
+#define RT_DIR_NON_GEOM 0x10  /**< @brief object is not geometry (e.g. binary object) */
+#define RT_DIR_USED     0x80  /**< @brief One bit, used similar to d_nref */
+#define RT_DIR_INMEM    0x100 /**< @brief object is in memory (only) */
+
+
+#define DIR_NULL     RT_DIR_NULL     /* DEPRECATED */
+#define DIR_SOLID    RT_DIR_SOLID    /* DEPRECATED */
+#define DIR_COMB     RT_DIR_COMB     /* DEPRECATED */
+#define DIR_REGION   RT_DIR_REGION   /* DEPRECATED */
+#define DIR_HIDDEN   RT_DIR_HIDDEN   /* DEPRECATED */
+#define DIR_NON_GEOM RT_DIR_NON_GEOM /* DEPRECATED */
+#define DIR_USED     RT_DIR_USED     /* DEPRECATED */
+
 
 /**< @brief Args to db_lookup() */
 #define LOOKUP_NOISY	1
