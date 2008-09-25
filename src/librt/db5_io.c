@@ -1106,6 +1106,7 @@ int db5_update_ident( struct db_i *dbip, const char *title, double local2mm )
 
     ret = db5_update_attributes( dp, &avs, dbip );
     bu_vls_free( &units );
+    bu_avs_free( &avs );
 
     /* protect from loosing memory and from freeing what we are
        about to dup */
