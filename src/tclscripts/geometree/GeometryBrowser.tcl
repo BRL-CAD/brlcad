@@ -511,7 +511,7 @@ body GeometryBrowser::destructor {} {
 #
 body GeometryBrowser::getNodeChildren { { node "" } { updateLists "no" }} {
     if { $_debug } {
-	puts "getNodeChildren $node $updateLists"
+	puts "getNodeChildren \"$node\" \"$updateLists\""
     }
 
     # get a list of children for the current node.  the result in childList
@@ -645,7 +645,7 @@ body GeometryBrowser::getNodeChildren { { node "" } { updateLists "no" }} {
 #
 body GeometryBrowser::toggleNode { { node "" } } {
     if { $_debug } {
-	puts "toggleNode [ lindex $node 0 ]"
+	puts "toggleNode $node"
     }
 
     $itk_interior.cadtree toggle [ lindex $node 1 ]
@@ -688,6 +688,7 @@ body GeometryBrowser::updateGeometryLists { { node "" } } {
 
     # iterate over nodes displayed and generate list of geometry
     foreach currentNode [ $itk_interior.cadtree expState ] {
+
 	set children [ $this getNodeChildren $currentNode no ]
 	foreach child $children {
 	    set childName [ lindex $child 1 ]
@@ -740,7 +741,7 @@ body GeometryBrowser::updateGeometryLists { { node "" } } {
 #
 body GeometryBrowser::displayNode { { node "" } { display "appended" } } {
     if { $_debug } {
-	puts "displayNode $node $display"
+	puts "displayNode \"$node\" \"$display\""
     }
 
     # XXX hack to handle the pop-up window since it does not call current properly
@@ -815,7 +816,7 @@ body GeometryBrowser::undisplayNode { { node "" } } {
 #
 body GeometryBrowser::setNodeColor { { node "" } { color "" } } {
     if { $_debug } {
-	puts "setNodeColor $node $color"
+	puts "setNodeColor \"$node\" \"$color\""
     }
 
     # if we did not get a node, assume we were clicked on by the popup window
