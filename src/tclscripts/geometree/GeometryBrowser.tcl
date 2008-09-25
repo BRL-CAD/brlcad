@@ -87,6 +87,7 @@ class GeometryBrowser {
 	method toggleAutosizing { { state "" } } {}
 	method toggleAutorender { { state "" } } {}
 
+	method toggleDebug {} {}
     }
 
     protected {
@@ -1231,6 +1232,18 @@ body GeometryBrowser::toggleAutorender { { state "" } } {
     set retval [ set _autoRender 0 ]
     $this checkAutoRender
     return $retval
+}
+
+# toggleDebug
+#
+# turns debugging on/off
+#
+body GeometryBrowser::toggleDebug { } {
+    if { $_debug } {
+	set _debug 0
+    } else {
+	set _debug 1
+    }
 }
 
 ##########
