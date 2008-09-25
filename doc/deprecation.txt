@@ -50,6 +50,8 @@ new names should be listed for reference.
 
 7.14
 ----
+src/other/jove
+	jove -> emacs [deprecated 7.14]
 include/raytrace.h
 	rt_fdiff -> NEAR_ZERO [deprecated 7.14]
 	rt_reldiff -> NEAR_ZERO [deprecated 7.14]

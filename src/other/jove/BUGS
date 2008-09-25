@@ -1,0 +1,2 @@
+
+Fails to properly open/buffer text files with more than 16k lines.

@@ -45,6 +45,7 @@ dist_man_MANS = \
 descdir = $(BRLCAD_DATA)/jove
 desc_DATA = \
 	describe.com \
+	jove.emacs \
 	jove-tutorial
 
 version.c: $(SRCS) Makefile
@@ -56,6 +57,8 @@ version.o: version.c
 EXTRA_DIST = \
 	$(BUILT_SOURCES) \
 	$(desc_DATA) \
+	BUGS \
+	README \
 	mkversion.sh \
 	teach-jove \
 	teach-jove.in
