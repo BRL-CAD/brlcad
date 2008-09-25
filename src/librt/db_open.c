@@ -377,6 +377,12 @@ db_dump(struct rt_wdb *wdbp, struct db_i *dbip)
     RT_CK_DBI(dbip);
     RT_CK_WDB(wdbp);
 
+    /* just in case since we don't actually handle it below */
+    if (dbip->dbi_version != wdbp->dbip->dbi_version) {
+	bu_log("Internal Error: dumping a v%d database into a v%d database is untested\n", dbip->dbi_version, wdbp->dbip->dbi_version);
+	return -1;
+    }
+
     /* Output all directory entries */
     for ( i=0; i < RT_DBNHASH; i++ )  {
 	for ( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
