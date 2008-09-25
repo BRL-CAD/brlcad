@@ -120,14 +120,6 @@ db_create_inmem(void) {
     RT_CK_DBI(dbip);
     RT_CK_WDB(dbip->dbi_wdbp);
 
-#if 0
-    /* create the header record? */
-    db5_export_object3( &out, DB5HDR_HFLAGS_DLI_HEADER_OBJECT,
-			NULL, 0, NULL, NULL,
-			DB5_MAJORTYPE_RESERVED, 0,
-			DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED );
-#endif
-
     /* Second, create the attribute-only _GLOBAL object */
     bu_vls_init( &units );
     bu_vls_printf( &units, "%.25e", dbip->dbi_local2base );
