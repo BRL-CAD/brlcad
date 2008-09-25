@@ -1367,7 +1367,7 @@ db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip
     }
 
     /* Second, obtain storage for final object */
-    if ( ep->ext_nbytes != dp->d_len || dp->d_addr == -1L )  {
+    if ( ep->ext_nbytes != dp->d_len || dp->d_addr == RT_DIR_PHONY_ADDR )  {
 	if ( db5_realloc( dbip, dp, ep ) < 0 )  {
 	    bu_log("db_put_external(%s) db_realloc5() failed\n", dp->d_namep);
 	    return -5;
@@ -1426,7 +1426,7 @@ rt_db_put_internal5(
     }
     BU_CK_EXTERNAL( &ext );
 
-    if ( ext.ext_nbytes != dp->d_len || dp->d_addr == -1L )  {
+    if ( ext.ext_nbytes != dp->d_len || dp->d_addr == RT_DIR_PHONY_ADDR )  {
 	if ( db5_realloc( dbip, dp, &ext ) < 0 )  {
 	    bu_log("rt_db_put_internal5(%s) db_realloc5() failed\n", dp->d_namep);
 	    goto fail;
