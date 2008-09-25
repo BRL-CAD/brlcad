@@ -3699,8 +3699,10 @@ AC_CONFIG_FILES([
 	doc/docbook/Makefile
         doc/docbook/system/Makefile
 	doc/docbook/system/man1/Makefile
-	doc/docbook/tutorials/Makefile
-	doc/docbook/tutorials/oed/Makefile
+	doc/docbook/articles/Makefile
+	doc/docbook/articles/oed/Makefile
+	doc/docbook/books/Makefile
+	doc/docbook/books/tutorial_series/Makefile
 	doc/html/Makefile
 	doc/html/ReleaseNotes/Makefile
 	doc/html/ReleaseNotes/Rel5.0/Makefile
