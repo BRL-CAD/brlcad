@@ -54,6 +54,7 @@ static fastf_t mm2inches = 1.0/25.4;
 static int binary = 0;
 static int inches = 0;
 static int verbose = 0;
+static int v_offset = 1;
 static char *output_file = NULL;	/* output filename */
 static char *output_directory = NULL;	/* directory name to hold output files */
 
@@ -140,8 +141,10 @@ write_bot_obj(struct rt_bot_internal *bot, FILE *fp, char *name)
     }
 
     for (i = 0; i < num_faces; i++) {
-	fprintf( fp, "f %d %d %d\n", faces[3*i], faces[3*i+1], faces[3*i+2]);
+	fprintf( fp, "f %d %d %d\n", faces[3*i]+v_offset, faces[3*i+1]+v_offset, faces[3*i+2]+v_offset);
     }
+
+    v_offset += num_vertices;
 }
 
 #define DUMP_STL_NORMALS 0
@@ -511,6 +514,7 @@ main(int argc, char *argv[])
 		fprintf( fp, "0\nENDSEC\n0\nEOF\n" );
 		break;
 	    case OTYPE_OBJ:
+		v_offset = 1;
 		write_bot_obj(bot, fp, dp->d_namep);
 		break;
 	    case OTYPE_STL:
