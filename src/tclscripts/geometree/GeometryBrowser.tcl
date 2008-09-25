@@ -1418,11 +1418,11 @@ body GeometryBrowser::validateGeometry { } {
 
     # if the database is not open, poll a little slower
     if { $dbNotOpen == 1 } {
-	# set up the next hook for 7 seconds
-	set _updateHook [ after 7000 [ code $this validateGeometry ] ]
+	# set up the next hook for 6 seconds
+	set _updateHook [ after 6000 [ code $this validateGeometry ] ]
     } else {
-	# set up the next hook for 4 seconds
-	set _updateHook [ after 4000 [ code $this validateGeometry ] ]
+	# set up the next hook for 3 seconds
+	set _updateHook [ after 3000 [ code $this validateGeometry ] ]
     }
     return
 }
