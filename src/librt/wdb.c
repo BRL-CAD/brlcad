@@ -196,7 +196,11 @@ wdb_export_external(
 		    return -3;
 		}
 	    }
-	    dp->d_flags = (dp->d_flags & ~7) | flags;
+	    /* keep the caller's flags, except we don't want to
+	     * pretend a disk dp is an inmem dp.  the data is
+	     * read/written differently for both.
+	     */
+	    dp->d_flags = (dp->d_flags & ~7) | (flags & ~(RT_DIR_INMEM));
 	    if ( db_put_external( ep, dp, wdbp->dbip ) < 0 )  {
 		bu_log("wdb_export_external(%s): db_put_external error\n",
 		       name );
