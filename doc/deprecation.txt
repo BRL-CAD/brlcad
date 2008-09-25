@@ -53,6 +53,7 @@ new names should be listed for reference.
 include/raytrace.h
 	rt_fdiff -> NEAR_ZERO [deprecated 7.14]
 	rt_reldiff -> NEAR_ZERO [deprecated 7.14]
+	DIR_* -> RT_DIR_* [deprecated 7.14]
 include/bu.h
 	%S format specifier -> %V format specifier for bu_vls [deprecated 7.14]
 mged
