@@ -62,7 +62,7 @@
     after header.</title>
     <mediaobject>
       <imageobject>
-	<imagedata align = "center" fileref="../../tutorials/mgedrc/mgedrc_images/figure1.png" format="PNG"></imagedata>
+	<imagedata align = "center" fileref="../../articles/mgedrc/mgedrc_images/figure1.png" format="PNG"></imagedata>
       </imageobject>
     </mediaobject>
   </figure>
@@ -204,7 +204,7 @@ proc cps {oldprim newprim} {cp $oldprim $newprim; sed $newprim}
     <title>Sample elements and functionality of a .mgedrc file.</title>
     <mediaobject>
       <imageobject>
-	<imagedata align = "center" fileref="../../tutorials/mgedrc/mgedrc_images/figure2.png" format="PNG"></imagedata>
+	<imagedata align = "center" fileref="../../articles/mgedrc/mgedrc_images/figure2.png" format="PNG"></imagedata>
       </imageobject>
     </mediaobject>
   </figure>
@@ -252,7 +252,7 @@ proc cps {oldprim newprim} {cp $oldprim $newprim; sed $newprim}
     <title>Sample window dimension input and positioning.</title>
     <mediaobject>
       <imageobject>
-	<imagedata align = "center" fileref="../../tutorials/mgedrc/mgedrc_images/figure3.png" format="PNG"></imagedata>
+	<imagedata align = "center" fileref="../../articles/mgedrc/mgedrc_images/figure3.png" format="PNG"></imagedata>
       </imageobject>
     </mediaobject>
   </figure>

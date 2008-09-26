@@ -81,7 +81,7 @@
       <title>Basic pipe with parameters.</title>
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../tutorials/pipes/pipe_images/figure1.png" format="PNG"></imagedata>
+	  <imagedata align = "center" fileref="../../articles/pipes/pipe_images/figure1.png" format="PNG"></imagedata>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -90,7 +90,7 @@
       <title>Various bend radii.</title>
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../tutorials/pipes/pipe_images/figure2.png" format="PNG"></imagedata>
+	  <imagedata align = "center" fileref="../../articles/pipes/pipe_images/figure2.png" format="PNG"></imagedata>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -99,7 +99,7 @@
       <title>Example of special uses of the pipe.</title>
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../tutorials/pipes/pipe_images/figure3.png" format="PNG"></imagedata>
+	  <imagedata align = "center" fileref="../../articles/pipes/pipe_images/figure3.png" format="PNG"></imagedata>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -182,7 +182,7 @@
       <title>Determining the point positions for the copper coil.</title>
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../tutorials/pipes/pipe_images/figure4.png" format="PNG"></imagedata>
+	  <imagedata align = "center" fileref="../../articles/pipes/pipe_images/figure4.png" format="PNG"></imagedata>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -283,35 +283,35 @@
 	<tbody>
 	  <row>
 	    <entry>- mged>p 500 -500 150</entry>
-	    <entry><inlinegraphic fileref="../../tutorials/pipes/pipe_images/inline1.png" /></entry>
+	    <entry><inlinegraphic fileref="../../articles/pipes/pipe_images/inline1.png" /></entry>
 	  </row>
 	  <row>
 	    <entry>- mged>p -500 -500 250</entry>
-	    <entry><inlinegraphic fileref="../../tutorials/pipes/pipe_images/inline2.png" /></entry>
+	    <entry><inlinegraphic fileref="../../articles/pipes/pipe_images/inline2.png" /></entry>
 	  </row>
 	  <row>
 	    <entry>- mged>p -500 500 350</entry>
-	    <entry><inlinegraphic fileref="../../tutorials/pipes/pipe_images/inline3.png" /></entry>
+	    <entry><inlinegraphic fileref="../../articles/pipes/pipe_images/inline3.png" /></entry>
 	  </row>
 	  <row>
 	    <entry>- mged>p 500 500 450</entry>
-	    <entry><inlinegraphic fileref="../../tutorials/pipes/pipe_images/inline4.png" /></entry>
+	    <entry><inlinegraphic fileref="../../articles/pipes/pipe_images/inline4.png" /></entry>
 	  </row>
 	  <row>
 	    <entry>- mged>p 500 -500 550</entry>
-	    <entry><inlinegraphic fileref="../../tutorials/pipes/pipe_images/inline5.png" /></entry>
+	    <entry><inlinegraphic fileref="../../articles/pipes/pipe_images/inline5.png" /></entry>
 	  </row>
 	  <row>
 	    <entry>- mged>p -500 -500 650</entry>
-	    <entry><inlinegraphic fileref="../../tutorials/pipes/pipe_images/inline6.png" /></entry>
+	    <entry><inlinegraphic fileref="../../articles/pipes/pipe_images/inline6.png" /></entry>
 	  </row>
 	  <row>
 	    <entry>- mged>p -500 500 750</entry>
-	    <entry><inlinegraphic fileref="../../tutorials/pipes/pipe_images/inline7.png" /></entry>
+	    <entry><inlinegraphic fileref="../../articles/pipes/pipe_images/inline7.png" /></entry>
 	  </row>
 	  <row>
 	    <entry>- mged>p 0 500 800</entry>
-	    <entry><inlinegraphic fileref="../../tutorials/pipes/pipe_images/inline8.png" /></entry>
+	    <entry><inlinegraphic fileref="../../articles/pipes/pipe_images/inline8.png" /></entry>
 	  </row>
 	</tbody>
       </tgroup>
@@ -325,7 +325,7 @@
       <title>Raytraced coil segment.</title>
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../tutorials/pipes/pipe_images/figure5.png" format="PNG"></imagedata>
+	  <imagedata align = "center" fileref="../../articles/pipes/pipe_images/figure5.png" format="PNG"></imagedata>
 	</imageobject>
       </mediaobject>
     </figure>

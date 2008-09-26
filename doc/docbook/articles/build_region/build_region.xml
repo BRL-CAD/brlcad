@@ -50,7 +50,7 @@
     <title>The rounded corners of a toy wagon.</title>
     <mediaobject>
       <imageobject>
-	<imagedata align = "center" fileref="../../tutorials/build_region/build_region_images/figure1.png" format="PNG"></imagedata>
+	<imagedata align = "center" fileref="../../articles/build_region/build_region_images/figure1.png" format="PNG"></imagedata>
       </imageobject>
     </mediaobject>
   </figure>
@@ -69,7 +69,7 @@
     <title>Arb8, cylinder, and two Boolean primitives.</title>
     <mediaobject>
       <imageobject>
-	<imagedata align = "center" fileref="../../tutorials/build_region/build_region_images/figure2.png" format="PNG"></imagedata>
+	<imagedata align = "center" fileref="../../articles/build_region/build_region_images/figure2.png" format="PNG"></imagedata>
       </imageobject>
     </mediaobject>
   </figure>
@@ -103,7 +103,7 @@ u wgn.s2 + wgn.s2+1 - wgn.s2-1
     <title>The region and the subtraction primitives.</title>
     <mediaobject>
       <imageobject>
-	<imagedata align = "center" fileref="../../tutorials/build_region/build_region_images/figure3.png" format="PNG"></imagedata>
+	<imagedata align = "center" fileref="../../articles/build_region/build_region_images/figure3.png" format="PNG"></imagedata>
       </imageobject>
     </mediaobject>
   </figure>
@@ -118,7 +118,7 @@ u wgn.s2 + wgn.s2+1 - wgn.s2-1
     <title>Raytraced image with hole.</title>
     <mediaobject>
       <imageobject>
-	<imagedata align = "center" fileref="../../tutorials/build_region/build_region_images/figure4.png" format="PNG"></imagedata>
+	<imagedata align = "center" fileref="../../articles/build_region/build_region_images/figure4.png" format="PNG"></imagedata>
       </imageobject>
     </mediaobject>
   </figure>

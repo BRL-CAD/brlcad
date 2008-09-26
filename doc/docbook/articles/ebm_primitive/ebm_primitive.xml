@@ -29,7 +29,7 @@
     <title>Example of the .bw image used for ebm.</title>
     <mediaobject>
       <imageobject>
-	<imagedata align = "center" fileref="../../tutorials/ebm_primitive/ebm_primitive_images/figure1.png" format="PNG"></imagedata>
+	<imagedata align = "center" fileref="../../articles/ebm_primitive/ebm_primitive_images/figure1.png" format="PNG"></imagedata>
       </imageobject>
     </mediaobject>
   </figure>
@@ -38,7 +38,7 @@
     <title>Example of ebm.</title>
     <mediaobject>
       <imageobject>
-	<imagedata align = "center" fileref="../../tutorials/ebm_primitive/ebm_primitive_images/figure2.png" format="PNG"></imagedata>
+	<imagedata align = "center" fileref="../../articles/ebm_primitive/ebm_primitive_images/figure2.png" format="PNG"></imagedata>
       </imageobject>
     </mediaobject>
   </figure>
@@ -47,7 +47,7 @@
     <title>Example of the ebm with projection shader added.</title>
     <mediaobject>
       <imageobject>
-	<imagedata align = "center" fileref="../../tutorials/ebm_primitive/ebm_primitive_images/figure3.png" format="PNG"></imagedata>
+	<imagedata align = "center" fileref="../../articles/ebm_primitive/ebm_primitive_images/figure3.png" format="PNG"></imagedata>
       </imageobject>
     </mediaobject>
   </figure>
