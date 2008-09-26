@@ -1,7 +1,7 @@
 /*                      P I X P A S T E . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2008 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,14 +27,8 @@
  *	Christopher T. Johnson
  *	September 12, 1992
  *
- *  Source -
- *	Paladin Software
- *	P.O. Box 187
- *	Aberdeen, MD	21001-0187
- *
- *  Copyright Notice -
- *	This software is Copyright (C) 1992 by Paladin Software
- *	All rights reserved.
+ * This software is Copyright (C) 1992 by Paladin Software.
+ * All rights reserved.
  */
 
 #include "common.h"

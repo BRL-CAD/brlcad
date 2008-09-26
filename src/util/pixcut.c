@@ -1,7 +1,7 @@
 /*                        P I X C U T . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2008 United States Government as represented by
+ * Copyright (c) 2004-2008 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,18 +23,12 @@
  * extracted do not fit within the original pix file then the extra area is
  * filled with a background solid color.
  *
- *  Author -
+ * Author -
  *	Christopher T. Johnson
  *	September 12, 1992
  *
- *  Source -
- *	Paladin Software
- *	P.O. Box 187
- *	Aberdeen, MD	21001-0187
- *
- *  Copyright Notice -
- *	This software is Copyright (C) 1992 by Paladin Software
- *	All rights reserved.
+ * This software is Copyright (C) 1992 by Paladin Software.
+ * All rights reserved.
  */
 
 #include "common.h"
