@@ -54,6 +54,8 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
+* give bot-raw and bot-bldxf the axe
+
 * refactor all of the nmg processing (back) into its own library so
   that external users can manage mesh geometry without needing to pull
   in everything else in librt
