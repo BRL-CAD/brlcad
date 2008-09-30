@@ -19,49 +19,27 @@ XML_CATALOG_FILES=$(top_srcdir)/doc/docbook/catalog.xml
 .xml.fo:
 	XML_CATALOG_FILES=$(XML_CATALOG_FILES) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_FO_STYLESHEET) $?
 
-
 man1DOCBOOK = \
 	alias-pix.xml \
 	all_sf.xml \
 	search.xml
 
-
-man1DOCBOOKhtml = \
-	$(man1DOCBOOK)
-
-man1DOCBOOKpdf = \
-	$(man1DOCBOOK)
-
-
 man1DOCBOOKhtmldir = $(BRLCAD_DATA)/html/man1
+man1DOCBOOKhtml_DATA = $(BUILTHTML)
 
 BUILTHTML = \
-	${man1DOCBOOKhtml:xml=html} 
+	${man1DOCBOOK:xml=html} 
 
-man1DOCBOOKhtml_DATA = \
-	$(BUILTHTML)
-
-if BUILD_DOCBOOK_PDF
 
 man1DOCBOOKpdfdir = $(BRLCAD_DATA)/pdf/man1
+man1DOCBOOKpdf_DATA = $(BUILTPDF)
 
 BUILTPDF = \
-	${man1DOCBOOKpdf:xml=pdf}
-
-man1DOCBOOKpdf_DATA = \
-	$(BUILTPDF)
-
+	${man1DOCBOOK:xml=pdf}
 
 BUILT_SOURCES = \
 	$(BUILTHTML) \
 	$(BUILTPDF)
-
-else !BUILD_DOCBOOK_PDF
-
-BUILT_SOURCES = \
-        $(BUILTHTML)
-
-endif
 
 BUILTMAN_SOURCES = \
 	${man1DOCBOOK:xml=1}  
@@ -69,13 +47,10 @@ BUILTMAN_SOURCES = \
 man_MANS = \
          $(BUILTMAN_SOURCES)
 
-
-
- 
 MOSTLYCLEANFILES = \
          $(BUILT_SOURCES) \
          $(BUILTMAN_SOURCES)
- 
+
 EXTRA_DIST = \
 	${man1DOCBOOK}
 

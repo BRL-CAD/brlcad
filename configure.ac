@@ -260,12 +260,6 @@ BC_ARG_ENABLE([only_rts], [only-rtserver], [Only build the components necessary 
 # run-time debugging
 BC_ARG_ENABLE([build_runtime_debug], [runtime-debug], [Enable run-time debug checking], [yes])
 
-# enable building Docbook documentation
-BC_ARG_ENABLE([build_docbook_docs], [documentation], [Enable building of Docbook documentation], [yes])
-
-# enable building Docbook pdf output
-BC_ARG_ENABLE([build_docbook_pdf], [pdfdocumentation], [Enable Docbook pdf output], [yes])
-
 # enable 64-bit builds
 BC_ARG_ENABLE([build_64bit], [64bit-build], [Enable 64-bit compilation mode], [auto])
 
@@ -322,6 +316,9 @@ BC_ARG_ENABLE([build_ug], [unigraphics-build], [Enable compilation of Unigraphic
 
 # example geometry
 BC_ARG_ENABLE([install_geometry], [models-install], [Enable installation of example geometry models], [yes])
+
+# enable building Docbook documentation
+BC_ARG_ENABLE([build_docs], [documentation], [Enable compilation and installation of extra documentation], [auto])
 
 # optimized
 BC_ARG_ENABLE([use_optimized], [optimized], [Enable optimized compilation], [no])
@@ -406,12 +403,9 @@ BC_ARG_ALIAS([build_runtime_debug], [runtime-debugging])
 BC_ARG_ALIAS([build_runtime_debug], [run-time-debugging])
 
 # Docbook documentation (help uses documentation)
-BC_ARG_ALIAS([build_docbook_docs], [docs])
-BC_ARG_ALIAS([build_docbook_docs], [docbook])
-
-# Docbook documentation (help uses documentation)
-BC_ARG_ALIAS([build_docbook_pdf], [pdf])
-BC_ARG_ALIAS([build_docbook_pdf], [docbook-pdf])
+BC_ARG_ALIAS([build_docs], [documentation-install])
+BC_ARG_ALIAS([build_docs], [docs])
+BC_ARG_ALIAS([build_docs], [docs-install])
 
 # 64-bit compilation (help uses 64bit-build)
 BC_ARG_ALIAS([build_64bit], [64bit])
@@ -736,11 +730,8 @@ AC_MSG_RESULT($bc_only_rts)
 AC_MSG_CHECKING(whether to use run-time debug checks)
 AC_MSG_RESULT($bc_build_runtime_debug)
 
-AC_MSG_CHECKING(whether to build docbook documentation)
-AC_MSG_RESULT($bc_build_docbook_docs)
-
-AC_MSG_CHECKING(whether to enable docbook pdf)
-AC_MSG_RESULT($bc_build_docbook_pdf)
+AC_MSG_CHECKING(whether to compile and install Docbook documentation)
+AC_MSG_RESULT($bc_build_docs)
 
 AC_MSG_CHECKING(whether to compile in 64-bit mode)
 AC_MSG_RESULT($bc_build_64bit)
@@ -899,21 +890,16 @@ if test "x$bc_build_progress" != "xyes" ; then
 	fi
 fi
 
-# xsltproc is needed for docbook
-if test "$bc_build_docbook_docs" == "yes" ; then
-	AC_PATH_PROG(XSLTPROC, xsltproc, bc_build_docbook_docs=no, [$PATH:/usr/bin])
+# xsltproc is needed for docbook processing, fop is needed for pdf generation
+xsltproc_works=no
+fop_works=no
+if test "x$bc_build_docs" != "xno" ; then
+	AC_PATH_PROG(XSLTPROC, xsltproc)
 	AC_SUBST(XSLTPROC)
-else
-	bc_build_docbook_pdf=no
-fi
 
-# Apache fop is needed for docbook pdf
-
-if test "$bc_build_docbook_pdf" == "yes" ; then
-	AC_PATH_PROG(APACHEFOP, fop, bc_build_docbook_pdf=no, [$PATH:/usr/bin])
+	AC_PATH_PROG(APACHEFOP, fop)
 	AC_SUBST(APACHEFOP)
 fi
-
 
 # AN_MAKEVAR([AR], [BC_PROG_AR])
 # AN_PROGRAM([ar], [BC_PROG_AR])
@@ -3435,6 +3421,29 @@ fi
 AC_MSG_RESULT($dials_and_buttons)
 
 
+dnl *** Docbook functionality ***
+docbook_processing=no
+if test "x$bc_build_docs" != "xno" ; then
+    docbook_processing=yes
+    if test "x$bc_build_docs" = "xyes" ; then
+	if test "x$XSLTPROC" = "x" || test "x$APACHEFOP" = "x" ; then
+	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	    AC_MSG_WARN([Extra documentation is enabled but xsltproc or fop was not found])
+	    AC_MSG_ERROR([*** Don't know how to generate documentation without xsltproc and fop ***])
+	fi
+    fi
+
+    if test "x$XSLTPROC" = "x" ; then
+        docbook_processing=no
+    fi
+    if test "x$APACHEFOP" = "x" ; then
+        docbook_processing=no
+    fi
+fi
+AC_MSG_CHECKING(for Docbook processing functionality)
+AC_MSG_RESULT($docbook_processing)
+
+
 # XXX nasty temp hack for backwards cake compatibility. code needs to be fixed.
 if test "x$host_os" = "xirix6.5" ; then
     # XXX the code that relies on this will be going away, but until then..
@@ -3501,8 +3510,7 @@ AM_CONDITIONAL(WITH_JAVA, [test "x$build_against_java" != "xno"])
 AM_CONDITIONAL(WITH_PROE, [test "x$build_against_proe" != "xno"])
 AM_CONDITIONAL(WITH_PARSERS, [test "x$build_parsers" != "xno"])
 
-AM_CONDITIONAL(BUILD_DOCBOOK, [test "x$bc_build_docbook_docs" != "xno"])
-AM_CONDITIONAL(BUILD_DOCBOOK_PDF, [test "x$bc_build_docbook_pdf" != "xno"])
+AM_CONDITIONAL(BUILD_DOCS, [test "x$docbook_processing" != "xno"])
 AM_CONDITIONAL(INSTALL_MODELS, [test "x$bc_install_geometry" = "xyes"])
 AM_CONDITIONAL(ONLY_BENCHMARK, [test "x$bc_only_benchmark" != "xno"])
 AM_CONDITIONAL(ONLY_RTS, [test "x$bc_only_rts" != "xno"])
@@ -4042,8 +4050,7 @@ AC_MSG_RESULT([Print verbose compilation progress ...: $bc_build_progress])
 AC_MSG_RESULT([])
 AC_MSG_RESULT([Only build benchmark suite ...........: $bc_only_benchmark])
 AC_MSG_RESULT([Only build librtserver ...............: $bc_only_rts])
-AC_MSG_RESULT([Build Docbook documentation ..........: $bc_build_docbook_docs])
-AC_MSG_RESULT([Enable Docbook pdf output ............: $bc_build_docbook_pdf])
+AC_MSG_RESULT([Install extra documentation ..........: $docbook_processing])
 AC_MSG_RESULT([Install example geometry models ......: $bc_install_geometry])
 AC_MSG_RESULT([])
 if test "x$time_elapsed" != "xunknown" ; then
