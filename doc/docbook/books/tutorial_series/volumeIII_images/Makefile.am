@@ -1,6 +1,6 @@
 # $Id$
 
-volIIIimagesdir = $(BRLCAD_DATA)/html/tutorial_series/volumeIII_images
+volIIIimagesdir = $(BRLCAD_DATA)/html/books/tutorial_series/volumeIII_images
 
 volIIIimages_DATA = \
 	figure10.png \

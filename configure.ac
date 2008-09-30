@@ -3709,6 +3709,18 @@ AC_CONFIG_FILES([
 	doc/book/Makefile
 	doc/docbook/Makefile
         doc/docbook/articles/Makefile
+	doc/docbook/articles/build_pattern/Makefile
+	doc/docbook/articles/build_pattern/build_pattern_images/Makefile
+	doc/docbook/articles/build_region/Makefile
+	doc/docbook/articles/build_region/build_region_images/Makefile
+	doc/docbook/articles/ebm_primitive/Makefile
+	doc/docbook/articles/ebm_primitive/ebm_primitive_images/Makefile
+	doc/docbook/articles/mgedrc/Makefile
+	doc/docbook/articles/mgedrc/mgedrc_images/Makefile
+	doc/docbook/articles/pipes/Makefile
+	doc/docbook/articles/pipes/pipe_images/Makefile
+	doc/docbook/articles/projection_shader/Makefile
+	doc/docbook/articles/projection_shader/projection_shader_images/Makefile
 	doc/docbook/articles/oed/Makefile
 	doc/docbook/articles/oed/oed_images/Makefile
 	doc/docbook/books/Makefile
@@ -3716,6 +3728,21 @@ AC_CONFIG_FILES([
 	doc/docbook/books/tutorial_series/volumeIII_images/Makefile
 	doc/docbook/lessons/Makefile
 	doc/docbook/lessons/mged/Makefile
+	doc/docbook/lessons/mged/assigning_material_properties_and_raytracing_images/Makefile
+	doc/docbook/lessons/mged/creating_a_goblet_images/Makefile
+	doc/docbook/lessons/mged/creating_mug_images/Makefile
+	doc/docbook/lessons/mged/creating_primitive_shapes_images/Makefile
+	doc/docbook/lessons/mged/creating_toy_truck_images/Makefile
+	doc/docbook/lessons/mged/globe_in_display_box_images/Makefile
+	doc/docbook/lessons/mged/goblet_material_properties_images/Makefile
+	doc/docbook/lessons/mged/goblet_material_properties2_images/Makefile
+	doc/docbook/lessons/mged/learning_boolean_expressions_images/Makefile
+	doc/docbook/lessons/mged/learning_viewing_options_images/Makefile
+	doc/docbook/lessons/mged/modeling_techniques_and_structures_images/Makefile
+	doc/docbook/lessons/mged/mug_through_gui_images/Makefile
+	doc/docbook/lessons/mged/placing_shapes_in_3d_images/Makefile
+	doc/docbook/lessons/mged/placing_shapes_in_3d_2_images/Makefile
+	doc/docbook/lessons/mged/refining_mug_images/Makefile
 	doc/docbook/system/Makefile
 	doc/docbook/system/man1/Makefile
 	doc/html/Makefile

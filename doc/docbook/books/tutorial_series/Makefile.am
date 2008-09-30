@@ -29,10 +29,10 @@ BUILTPDF = ${tutorial_seriesDOCBOOK:xml=pdf}
 
 endif
 
-tutorial_seriesDOCBOOKhtmldir = $(BRLCAD_DATA)/html/tutorial_series
+tutorial_seriesDOCBOOKhtmldir = $(BRLCAD_DATA)/html/books/tutorial_series
 tutorial_seriesDOCBOOKhtml_DATA = $(BUILTHTML)
 
-tutorial_seriesDOCBOOKpdfdir = $(BRLCAD_DATA)/pdf/tutorial_series
+tutorial_seriesDOCBOOKpdfdir = $(BRLCAD_DATA)/pdf/books/tutorial_series
 tutorial_seriesDOCBOOKpdf_DATA = $(BUILTPDF)
 
 BUILT_SOURCES = \
