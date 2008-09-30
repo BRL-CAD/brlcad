@@ -1,4 +1,11 @@
 
-SUBDIRS = oed
+SUBDIRS = \
+	build_pattern \
+	build_region \
+	ebm_primitive \
+	mgedrc \
+	oed \
+	pipes \
+	projection_shader 
 
 include $(top_srcdir)/misc/Makefile.defs
