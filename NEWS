@@ -25,6 +25,7 @@ the geometry hierarchy, and much more.  You can combine search
 expressions together using boolean logic as well for even more
 powerful operations.
 
+* abort during non-planar collapse or simplify of NMG  - John Anderson
 * jove is deprecated and will no longer be maintained - Sean Morrison
 * plugged attribute memory leak in all database tools - Daniel Roßberg
 * DSP tessellation honors cut type and handles zeros - John Anderson
