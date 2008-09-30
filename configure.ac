@@ -4055,8 +4055,12 @@ AC_MSG_RESULT([Print verbose compilation progress ...: $bc_build_progress])
 AC_MSG_RESULT([])
 AC_MSG_RESULT([Only build benchmark suite ...........: $bc_only_benchmark])
 AC_MSG_RESULT([Only build librtserver ...............: $bc_only_rts])
-AC_MSG_RESULT([Build DocBook documentation ..........: $docbook_processing])
-AC_MSG_RESULT([Generate pdf from Docbook ............: $docbook_pdf_processing])
+if test "x$APACHEFOP" != "x" && test "x$docbook_processing" != "xno"; then
+AC_MSG_RESULT([Build extra docs  ......(man/html/pdf): $docbook_processing])
+fi
+if test "x$APACHEFOP" == "x" && test "x$docbook_processing" != "xno"; then
+AC_MSG_RESULT([Build extra docs ......(man/html only): $docbook_processing])
+fi
 AC_MSG_RESULT([Install example geometry models ......: $bc_install_geometry])
 AC_MSG_RESULT([])
 if test "x$time_elapsed" != "xunknown" ; then
