@@ -14,24 +14,39 @@ XML_CATALOG_FILES=$(top_srcdir)/doc/docbook/catalog.xml
 	XML_CATALOG_FILES=$(XML_CATALOG_FILES) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_FO_STYLESHEET) $?
 
 
-tutorial_seriesDOCBOOK = \
-	VolumeII.xml\
-	VolumeIII.xml
+lessonsDOCBOOK = \
+	assigning_material_properties_and_raytracing.xml \
+	creating_a_goblet.xml \
+	creating_mug.xml \
+	creating_primitive_shapes.xml \
+	creating_toy_truck.xml \
+	globe_in_display_box.xml \
+	goblet_material_properties.xml \
+	goblet_material_properties2.xml \
+	learning_boolean_expressions.xml \
+	learning_viewing_options.xml \
+	modeling_techniques_and_structures.xml \
+	mug_through_gui.xml \
+	placing_shapes_in_3d.xml \
+	placing_shapes_in_3d_2.xml \
+	refining_mug.xml \
+	using_insert_command.xml
 
-BUILTHTML = ${tutorial_seriesDOCBOOK:xml=html} 
+
+BUILTHTML = ${lessonsDOCBOOK:xml=html} 
 
 
 if BUILD_PDF_DOCS
 
-BUILTPDF = ${tutorial_seriesDOCBOOK:xml=pdf}
+BUILTPDF = ${lessonsDOCBOOK:xml=pdf}
 
 endif
 
-tutorial_seriesDOCBOOKhtmldir = $(BRLCAD_DATA)/html/tutorial_series
-tutorial_seriesDOCBOOKhtml_DATA = $(BUILTHTML)
+lessonsDOCBOOKhtmldir = $(BRLCAD_DATA)/html/lessons/mged
+lessonsDOCBOOKhtml_DATA = $(BUILTHTML)
 
-tutorial_seriesDOCBOOKpdfdir = $(BRLCAD_DATA)/pdf/tutorial_series
-tutorial_seriesDOCBOOKpdf_DATA = $(BUILTPDF)
+lessonsDOCBOOKpdfdir = $(BRLCAD_DATA)/pdf/lessons/mged
+lessonsDOCBOOKpdf_DATA = $(BUILTPDF)
 
 BUILT_SOURCES = \
 	$(BUILTHTML) \
@@ -41,6 +56,6 @@ MOSTLYCLEANFILES = \
          $(BUILT_SOURCES)
 
 EXTRA_DIST = \
-	${tutorial_seriesDOCBOOK}
+	${lessonsDOCBOOK}
 
 include $(top_srcdir)/misc/Makefile.defs

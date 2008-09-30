@@ -3423,26 +3423,28 @@ AC_MSG_RESULT($dials_and_buttons)
 
 dnl *** Docbook functionality ***
 docbook_processing=no
+docbook_pdf_processing=no
 if test "x$bc_build_docs" != "xno" ; then
     docbook_processing=yes
     if test "x$bc_build_docs" = "xyes" ; then
-	if test "x$XSLTPROC" = "x" || test "x$APACHEFOP" = "x" ; then
+	if test "x$XSLTPROC" = "x" ; then
 	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-	    AC_MSG_WARN([Extra documentation is enabled but xsltproc or fop was not found])
-	    AC_MSG_ERROR([*** Don't know how to generate documentation without xsltproc and fop ***])
+	    AC_MSG_WARN([Extra documentation is enabled but xsltproc was not found])
+	    AC_MSG_ERROR([*** Don't know how to generate documentation without xsltproc ***])
 	fi
     fi
 
     if test "x$XSLTPROC" = "x" ; then
         docbook_processing=no
     fi
-    if test "x$APACHEFOP" = "x" ; then
-        docbook_processing=no
+    if test "x$APACHEFOP" != "x" ; then
+	docbook_pdf_processing=yes
     fi
 fi
 AC_MSG_CHECKING(for Docbook processing functionality)
 AC_MSG_RESULT($docbook_processing)
-
+AC_MSG_CHECKING(for Docbook pdf generation functionality)
+AC_MSG_RESULT($docbook_pdf_processing)
 
 # XXX nasty temp hack for backwards cake compatibility. code needs to be fixed.
 if test "x$host_os" = "xirix6.5" ; then
@@ -3511,6 +3513,7 @@ AM_CONDITIONAL(WITH_PROE, [test "x$build_against_proe" != "xno"])
 AM_CONDITIONAL(WITH_PARSERS, [test "x$build_parsers" != "xno"])
 
 AM_CONDITIONAL(BUILD_DOCS, [test "x$docbook_processing" != "xno"])
+AM_CONDITIONAL(BUILD_PDF_DOCS, [test "x$docbook_pdf_processing" != "xno"])
 AM_CONDITIONAL(INSTALL_MODELS, [test "x$bc_install_geometry" = "xyes"])
 AM_CONDITIONAL(ONLY_BENCHMARK, [test "x$bc_only_benchmark" != "xno"])
 AM_CONDITIONAL(ONLY_RTS, [test "x$bc_only_rts" != "xno"])
@@ -3705,12 +3708,14 @@ AC_CONFIG_FILES([
 	doc/Makefile
 	doc/book/Makefile
 	doc/docbook/Makefile
-        doc/docbook/system/Makefile
-	doc/docbook/system/man1/Makefile
-	doc/docbook/articles/Makefile
+        doc/docbook/articles/Makefile
 	doc/docbook/articles/oed/Makefile
 	doc/docbook/books/Makefile
 	doc/docbook/books/tutorial_series/Makefile
+	doc/docbook/lessons/Makefile
+	doc/docbook/lessons/mged/Makefile
+	doc/docbook/system/Makefile
+	doc/docbook/system/man1/Makefile
 	doc/html/Makefile
 	doc/html/ReleaseNotes/Makefile
 	doc/html/ReleaseNotes/Rel5.0/Makefile
@@ -4050,7 +4055,8 @@ AC_MSG_RESULT([Print verbose compilation progress ...: $bc_build_progress])
 AC_MSG_RESULT([])
 AC_MSG_RESULT([Only build benchmark suite ...........: $bc_only_benchmark])
 AC_MSG_RESULT([Only build librtserver ...............: $bc_only_rts])
-AC_MSG_RESULT([Install extra documentation ..........: $docbook_processing])
+AC_MSG_RESULT([Build DocBook documentation ..........: $docbook_processing])
+AC_MSG_RESULT([Generate pdf from Docbook ............: $docbook_pdf_processing])
 AC_MSG_RESULT([Install example geometry models ......: $bc_install_geometry])
 AC_MSG_RESULT([])
 if test "x$time_elapsed" != "xunknown" ; then

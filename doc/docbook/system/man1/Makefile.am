@@ -31,11 +31,14 @@ BUILTHTML = \
 	${man1DOCBOOK:xml=html} 
 
 
+if BUILD_PDF_DOCS
+
+BUILTPDF = ${man1DOCBOOK:xml=pdf}
+
+endif
+
 man1DOCBOOKpdfdir = $(BRLCAD_DATA)/pdf/man1
 man1DOCBOOKpdf_DATA = $(BUILTPDF)
-
-BUILTPDF = \
-	${man1DOCBOOK:xml=pdf}
 
 BUILT_SOURCES = \
 	$(BUILTHTML) \
