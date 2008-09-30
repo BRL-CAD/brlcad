@@ -3710,8 +3710,10 @@ AC_CONFIG_FILES([
 	doc/docbook/Makefile
         doc/docbook/articles/Makefile
 	doc/docbook/articles/oed/Makefile
+	doc/docbook/articles/oed/oed_images/Makefile
 	doc/docbook/books/Makefile
 	doc/docbook/books/tutorial_series/Makefile
+	doc/docbook/books/tutorial_series/volumeIII_images/Makefile
 	doc/docbook/lessons/Makefile
 	doc/docbook/lessons/mged/Makefile
 	doc/docbook/system/Makefile

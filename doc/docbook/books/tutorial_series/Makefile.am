@@ -4,6 +4,8 @@ XSL_CHUNKED_XHTML_STYLESHEET=$(top_srcdir)/doc/docbook/resources/standard/xsl/xh
 XSL_FO_STYLESHEET=$(top_srcdir)/doc/docbook/resources/standard/xsl/fo/docbook.xsl
 XML_CATALOG_FILES=$(top_srcdir)/doc/docbook/catalog.xml
 
+SUBDIRS = volumeIII_images
+
 .xml.html: 
 	XML_CATALOG_FILES=$(XML_CATALOG_FILES) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_SINGLE_XHTML_STYLESHEET) $?
 

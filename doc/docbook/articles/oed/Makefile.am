@@ -1,25 +1,49 @@
+XSLTPROC_FLAGS=-nonet -xinclude
+XSL_SINGLE_XHTML_STYLESHEET=$(top_srcdir)/doc/docbook/resources/standard/xsl/xhtml-1_1/docbook.xsl
+XSL_CHUNKED_XHTML_STYLESHEET=$(top_srcdir)/doc/docbook/resources/standard/xsl/xhtml-1_1/chunk.xsl
+XSL_FO_STYLESHEET=$(top_srcdir)/doc/docbook/resources/standard/xsl/fo/docbook.xsl
+XML_CATALOG_FILES=$(top_srcdir)/doc/docbook/catalog.xml
 
-docbookdir = $(BRLCAD_DATA)/docbook/oed
+SUBDIRS = oed_images
 
-docbook_DATA = \
-	README \
-	lollipop.png \
-	oed.xml \
-	oed_0001.png \
-        oed_0002.png \
-        oed_0003.png \
-        oed_0004.png \
-        oed_0005.png \
-        oed_0006.png \
-        oed_0007.png \
-        oed_0008.png \
-        oed_0009.png \
-        oed_0010.png \
-        oed_0011.png \
-        oed_0012.png \
-	oed_examples.asc
+.xml.html: 
+	XML_CATALOG_FILES=$(XML_CATALOG_FILES) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_SINGLE_XHTML_STYLESHEET) $?
+
+.fo.pdf: .xml.fo
+	$(APACHEFOP) $? -pdf $@
+
+.xml.fo:
+	XML_CATALOG_FILES=$(XML_CATALOG_FILES) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_FO_STYLESHEET) $?
+
+
+oedDOCBOOK = \
+	oed.xml
+
+
+BUILTHTML = ${oedDOCBOOK:xml=html} 
+
+
+if BUILD_PDF_DOCS
+
+BUILTPDF = ${oedDOCBOOK:xml=pdf}
+
+endif
+
+oedDOCBOOKhtmldir = $(BRLCAD_DATA)/html/articles/oed
+oedDOCBOOKhtml_DATA = $(BUILTHTML)
+
+oedDOCBOOKpdfdir = $(BRLCAD_DATA)/pdf/articles/oed
+oedDOCBOOKpdf_DATA = $(BUILTPDF)
+
+BUILT_SOURCES = \
+	$(BUILTHTML) \
+	$(BUILTPDF)
+
+MOSTLYCLEANFILES = \
+         $(BUILT_SOURCES)
 
 EXTRA_DIST = \
-	$(docbook_DATA)
+	${oedDOCBOOK} \
+	oed_examples.asc
 
 include $(top_srcdir)/misc/Makefile.defs
