@@ -136,8 +136,12 @@ ged_bot_decimate(struct ged *gedp, int argc, const char *argv[])
     RT_BOT_CK_MAGIC( bot );
 
     /* convert maximum error and edge length to mm */
-    max_chord_error = max_chord_error * gedp->ged_wdbp->dbip->dbi_local2base;
-    min_edge_length = min_edge_length * gedp->ged_wdbp->dbip->dbi_local2base;
+    if(max_chord_error > 0.0) {
+	max_chord_error = max_chord_error * gedp->ged_wdbp->dbip->dbi_local2base;
+    }
+    if(min_edge_length > 0.0) {
+	min_edge_length = min_edge_length * gedp->ged_wdbp->dbip->dbi_local2base;
+    }
 
     /* do the decimation */
     if ( rt_bot_decimate( bot, max_chord_error, max_normal_error, min_edge_length) < 0 ) {

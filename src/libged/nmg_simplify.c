@@ -41,6 +41,8 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
     struct model *m;
     struct nmgregion *r;
     struct shell *s;
+    struct bu_ptbl faces;
+    struct face *fp;
     int do_all=1;
     int do_arb=0;
     int do_tgc=0;
@@ -115,6 +117,19 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 
     m = (struct model *)nmg_intern.idb_ptr;
     NMG_CK_MODEL(m);
+
+    /* check that all faces are planar */
+    nmg_face_tabulate(&faces, &m->magic);
+    for (BU_PTBL_FOR( fp, (struct face *), &faces)) {
+	if( fp->g.magic_p != NULL && *(fp->g.magic_p) != NMG_FACE_G_PLANE_MAGIC) {
+	    bu_ptbl_free(&faces);
+	    bu_vls_printf(&gedp->ged_result_str,
+			  "%s cannot be applied to \"%s\" because it has non-planar faces\n",
+			  argv[0], nmg_name);
+	    return BRLCAD_ERROR;
+	}
+    }
+    bu_ptbl_free(&faces);
 
     /* count shells */
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {

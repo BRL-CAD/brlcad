@@ -7873,6 +7873,8 @@ wdb_nmg_simplify_cmd(struct rt_wdb	*wdbp,
     struct model *m;
     struct nmgregion *r;
     struct shell *s;
+    struct bu_ptbl faces;
+    struct face *fp;
     int do_all=1;
     int do_arb=0;
     int do_tgc=0;
@@ -7944,6 +7946,19 @@ wdb_nmg_simplify_cmd(struct rt_wdb	*wdbp,
 
     m = (struct model *)nmg_intern.idb_ptr;
     NMG_CK_MODEL(m);
+
+    /* check that all faces are planar */
+    nmg_face_tabulate(&faces, &m->magic);
+    for (BU_PTBL_FOR( fp, (struct face *), &faces)) {
+	if( fp->g.magic_p != NULL && *(fp->g.magic_p) != NMG_FACE_G_PLANE_MAGIC) {
+	    bu_ptbl_free(&faces);
+	    Tcl_AppendResult(interp, argv[0], " cannot be applied to \"", argv[1],
+			     "\" because it has non-planar faces\n", (char *)NULL );
+	    return TCL_ERROR;
+	}
+    }
+    bu_ptbl_free(&faces);
+    
 
     /* count shells */
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
@@ -8120,6 +8135,8 @@ wdb_nmg_collapse_cmd(struct rt_wdb	*wdbp,
     struct model *m;
     struct rt_db_internal intern;
     struct directory *dp;
+    struct bu_ptbl faces;
+    struct face *fp;
     long count;
     char count_str[32];
     fastf_t tol_coll;
@@ -8185,6 +8202,18 @@ wdb_nmg_collapse_cmd(struct rt_wdb	*wdbp,
 
     m = (struct model *)intern.idb_ptr;
     NMG_CK_MODEL(m);
+
+    /* check that all faces are planar */
+    nmg_face_tabulate(&faces, &m->magic);
+    for (BU_PTBL_FOR( fp, (struct face *), &faces)) {
+	if( fp->g.magic_p != NULL && *(fp->g.magic_p) != NMG_FACE_G_PLANE_MAGIC) {
+	    bu_ptbl_free(&faces);
+	    Tcl_AppendResult(interp, argv[0], " cannot be applied to \"", argv[1],
+			     "\" because it has non-planar faces\n", (char *)NULL );
+	    return TCL_ERROR;
+	}
+    }
+    bu_ptbl_free(&faces);
 
     /* triangulate model */
     nmg_triangulate_model(m, &wdbp->wdb_tol);
