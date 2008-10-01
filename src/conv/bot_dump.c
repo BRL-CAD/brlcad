@@ -428,22 +428,29 @@ write_bot_stl(struct rt_bot_internal *bot, FILE *fp, char *name)
 void
 write_bot_stl_binary(struct rt_bot_internal *bot, int fd, char *name)
 {
-    int num_vertices;
+    unsigned long num_vertices;
     fastf_t *vertices;
-    int num_faces, *faces;
+    unsigned long num_faces, *faces;
     point_t A;
     point_t B;
     point_t C;
     vect_t BmA;
     vect_t CmA;
     vect_t norm;
-    register int i, j, vi;
+    register unsigned long i, j, vi;
+    unsigned char tot_buffer[4];
 
     num_vertices = bot->num_vertices;
     vertices = bot->vertices;
     num_faces = bot->num_faces;
     faces = bot->faces;
 
+    /* Write out number of triangles */
+    bu_plong(tot_buffer, num_faces);
+    lswap((unsigned int *)tot_buffer);
+    write(fd, tot_buffer, 4);
+
+    /* Write out the vertex data for each triangl */
     for (i = 0; i < num_faces; i++) {
 	float flts[12];
 	float *flt_ptr;
@@ -697,7 +704,6 @@ main(int argc, char *argv[])
 
 	    if (binary && output_type == OTYPE_STL) {
 		char buf[81];	/* need exactly 80 chars for header */
-		unsigned char tot_buffer[4];
 
 		if ((fd=open(bu_vls_addr(&file_name), O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0) {
 		    perror(bu_vls_addr(&file_name));
@@ -713,19 +719,7 @@ main(int argc, char *argv[])
 		}
 		write(fd, &buf, 80);
 
-		/* write a place keeper for the number of triangles */
-		memset(buf, 0, 4);
-		write(fd, &buf, 4);
-
 		write_bot_stl_binary(bot, fd, dp->d_namep);
-
-		/* Re-position pointer to 80th byte */
-		lseek(fd, 80, SEEK_SET);
-
-		/* Write out number of triangles */
-		bu_plong(tot_buffer, (unsigned long)bot->num_faces);
-		lswap((unsigned int *)tot_buffer);
-		write(fd, tot_buffer, 4);
 
 		close(fd);
 	    } else {
