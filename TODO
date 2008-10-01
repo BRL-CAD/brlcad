@@ -294,8 +294,6 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * add support for filesystem-based geometry collections
 
-* add support for levels of detail
-
 * modify the raytracers to use common fb and file output code
 
 * add missing manual pages (jra generated list on 04.2007):
@@ -305,6 +303,7 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
   a tool to create propeller parts) to identify themselves and their
   features to BRL-CAD, and to allow BRL-CAD to incorporate those features
   as an integrated part of interaction environments.  
+
 
 LIBPC
 -----
@@ -329,6 +328,7 @@ constraints
 * Implement Hypergraph representation system
 
 * Explore analytic and symbolic solution system
+
 
 ODDITIES
 --------
