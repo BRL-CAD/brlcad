@@ -112,9 +112,9 @@ write_bot_sat(struct rt_bot_internal *bot, FILE *fp, char *name)
     curr_shell_id = curr_lump_id + 1;
     curr_face_id = curr_shell_id + 1 + num_vertices*2 + num_faces*6;
 
-    fprintf( fp, "-%d body $-1 $%d $-1 $-1 #\n", curr_body_id, curr_lump_id);
-    fprintf( fp, "-%d lump $-1 $-1 $%d $%d #\n", curr_lump_id, curr_shell_id, curr_body_id);
-    fprintf( fp, "-%d shell $-1 $-1 $-1 $%d $-1 $%d #\n", curr_shell_id, curr_face_id, curr_lump_id);
+    fprintf(fp, "-%d body $-1 $%d $-1 $-1 #\n", curr_body_id, curr_lump_id);
+    fprintf(fp, "-%d lump $-1 $-1 $%d $%d #\n", curr_lump_id, curr_shell_id, curr_body_id);
+    fprintf(fp, "-%d shell $-1 $-1 $-1 $%d $-1 $%d #\n", curr_shell_id, curr_face_id, curr_lump_id);
 
     curr_line_num += 3;
 
@@ -135,7 +135,7 @@ write_bot_sat(struct rt_bot_internal *bot, FILE *fp, char *name)
 	    }
 	}
 
-	fprintf( fp, "-%d vertex $-1 $%d $%d #\n", curr_line_num, curr_edge_id, curr_line_num+num_vertices);
+	fprintf(fp, "-%d vertex $-1 $%d $%d #\n", curr_line_num, curr_edge_id, curr_line_num+num_vertices);
 	++curr_line_num;
     }
     last_vertex = curr_line_num-1;
@@ -144,9 +144,9 @@ write_bot_sat(struct rt_bot_internal *bot, FILE *fp, char *name)
     first_pt = curr_line_num;
     for (i = 0; i < num_vertices; i++) {
 	if (inches)
-	    fprintf( fp, "-%d point $-1 %f %f %f #\n", curr_line_num, V3ARGSIN(&vertices[3*i]));
+	    fprintf(fp, "-%d point $-1 %f %f %f #\n", curr_line_num, V3ARGSIN(&vertices[3*i]));
 	else
-	    fprintf( fp, "-%d point $-1 %f %f %f #\n", curr_line_num, V3ARGS(&vertices[3*i]));
+	    fprintf(fp, "-%d point $-1 %f %f %f #\n", curr_line_num, V3ARGS(&vertices[3*i]));
 
 	++curr_line_num;
     }
@@ -156,17 +156,17 @@ write_bot_sat(struct rt_bot_internal *bot, FILE *fp, char *name)
     first_coedge = curr_line_num;
     curr_loop_id = first_coedge+num_faces*7;
     for (i = 0; i < num_faces; i++) {
-	fprintf( fp, "-%d coedge $-1 $%d $%d $-1 $%d forward $%d $-1 #\n",
-		 curr_line_num, curr_line_num+1, curr_line_num+2,
-		 curr_line_num+num_faces*3, curr_loop_id);
+	fprintf(fp, "-%d coedge $-1 $%d $%d $-1 $%d forward $%d $-1 #\n",
+		curr_line_num, curr_line_num+1, curr_line_num+2,
+		curr_line_num+num_faces*3, curr_loop_id);
 	++curr_line_num;
-	fprintf( fp, "-%d coedge $-1 $%d $%d $-1 $%d forward $%d $-1 #\n",
-		 curr_line_num, curr_line_num+1, curr_line_num-2,
-		 curr_line_num+num_faces*3, curr_loop_id);
+	fprintf(fp, "-%d coedge $-1 $%d $%d $-1 $%d forward $%d $-1 #\n",
+		curr_line_num, curr_line_num+1, curr_line_num-2,
+		curr_line_num+num_faces*3, curr_loop_id);
 	++curr_line_num;
-	fprintf( fp, "-%d coedge $-1 $%d $%d $-1 $%d forward $%d $-1 #\n",
-		 curr_line_num, curr_line_num-2, curr_line_num-1,
-		 curr_line_num+num_faces*3,  curr_loop_id);
+	fprintf(fp, "-%d coedge $-1 $%d $%d $-1 $%d forward $%d $-1 #\n",
+		curr_line_num, curr_line_num-2, curr_line_num-1,
+		curr_line_num+num_faces*3,  curr_loop_id);
 	++curr_line_num;
 	++curr_loop_id;
     }
@@ -175,17 +175,17 @@ write_bot_sat(struct rt_bot_internal *bot, FILE *fp, char *name)
     /* Dump out edges */
     first_edge = curr_line_num;
     for (i = 0; i < num_faces; i++) {
-	fprintf( fp, "-%d edge $-1 $%d $%d $%d $%d forward #\n", curr_line_num,
-		 faces[3*i]+first_vertex, faces[3*i+1]+first_vertex,
-		 first_coedge + i*3, curr_line_num + num_faces*5);
+	fprintf(fp, "-%d edge $-1 $%d $%d $%d $%d forward #\n", curr_line_num,
+		faces[3*i]+first_vertex, faces[3*i+1]+first_vertex,
+		first_coedge + i*3, curr_line_num + num_faces*5);
 	++curr_line_num;
-	fprintf( fp, "-%d edge $-1 $%d $%d $%d $%d forward #\n", curr_line_num,
-		 faces[3*i+1]+first_vertex, faces[3*i+2]+first_vertex,
-		 first_coedge + i*3 + 1, curr_line_num + num_faces*5);
+	fprintf(fp, "-%d edge $-1 $%d $%d $%d $%d forward #\n", curr_line_num,
+		faces[3*i+1]+first_vertex, faces[3*i+2]+first_vertex,
+		first_coedge + i*3 + 1, curr_line_num + num_faces*5);
 	++curr_line_num;
-	fprintf( fp, "-%d edge $-1 $%d $%d $%d $%d forward #\n", curr_line_num,
-		 faces[3*i+2]+first_vertex, faces[3*i]+first_vertex,
-		 first_coedge + i*3 + 2, curr_line_num + num_faces*5);
+	fprintf(fp, "-%d edge $-1 $%d $%d $%d $%d forward #\n", curr_line_num,
+		faces[3*i+2]+first_vertex, faces[3*i]+first_vertex,
+		first_coedge + i*3 + 2, curr_line_num + num_faces*5);
 	++curr_line_num;
     }
     last_edge = curr_line_num-1;
@@ -193,22 +193,22 @@ write_bot_sat(struct rt_bot_internal *bot, FILE *fp, char *name)
     /* Dump out faces */
     first_face = curr_line_num;
     for (i = 0; i < num_faces-1; i++) {
-	fprintf( fp, "-%d face $-1 $%d $%d $%d $-1 $%d forward single #\n",
-		 curr_line_num, curr_line_num+1, curr_line_num+num_faces,
-		 curr_shell_id, curr_line_num + num_faces*5);
+	fprintf(fp, "-%d face $-1 $%d $%d $%d $-1 $%d forward single #\n",
+		curr_line_num, curr_line_num+1, curr_line_num+num_faces,
+		curr_shell_id, curr_line_num + num_faces*5);
 	++curr_line_num;
     }
-    fprintf( fp, "-%d face $-1 $-1 $%d $%d $-1 $%d forward single #\n",
-	     curr_line_num, curr_line_num+num_faces, curr_shell_id,
-             curr_line_num + num_faces*5);
+    fprintf(fp, "-%d face $-1 $-1 $%d $%d $-1 $%d forward single #\n",
+	    curr_line_num, curr_line_num+num_faces, curr_shell_id,
+	    curr_line_num + num_faces*5);
     ++curr_line_num;
     last_face = curr_line_num-1;
 
     /* Dump out loops */
     first_loop = curr_line_num;
     for (i = 0; i < num_faces; i++) {
-	fprintf( fp, "-%d loop $-1 $-1 $%d $%d #\n",
-		 curr_line_num, first_coedge+i*3, first_face+i);
+	fprintf(fp, "-%d loop $-1 $-1 $%d $%d #\n",
+		curr_line_num, first_coedge+i*3, first_face+i);
 	++curr_line_num;
     }
     last_loop = curr_line_num-1;
@@ -315,15 +315,15 @@ write_bot_dxf(struct rt_bot_internal *bot, FILE *fp, char *name)
 	    VSCALE(C, C, mm2inches);
 	}
 
-	fprintf( fp, "0\n3DFACE\n8\n%s\n62\n7\n", name );
-	fprintf( fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
-		 10, A[X], 20, A[Y], 30, A[Z] );
-	fprintf( fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
-		 11, B[X], 21, B[Y], 31, B[Z] );
-	fprintf( fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
-		 12, C[X], 22, C[Y], 32, C[Z] );
-	fprintf( fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
-		 12, C[X], 22, C[Y], 32, C[Z] );
+	fprintf(fp, "0\n3DFACE\n8\n%s\n62\n7\n", name);
+	fprintf(fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
+		10, A[X], 20, A[Y], 30, A[Z]);
+	fprintf(fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
+		11, B[X], 21, B[Y], 31, B[Z]);
+	fprintf(fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
+		12, C[X], 22, C[Y], 32, C[Z]);
+	fprintf(fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
+		12, C[X], 22, C[Y], 32, C[Z]);
     }
 
 }
@@ -341,23 +341,23 @@ write_bot_obj(struct rt_bot_internal *bot, FILE *fp, char *name)
     num_faces = bot->num_faces;
     faces = bot->faces;
 
-    fprintf( fp, "g %s\n", name);
+    fprintf(fp, "g %s\n", name);
 
     for (i = 0; i < num_vertices; i++) {
 	if (inches)
-	    fprintf( fp, "v %f %f %f\n",
-		     vertices[3*i]*mm2inches,
-		     vertices[3*i+1]*mm2inches,
-		     vertices[3*i+2]*mm2inches);
+	    fprintf(fp, "v %f %f %f\n",
+		    vertices[3*i]*mm2inches,
+		    vertices[3*i+1]*mm2inches,
+		    vertices[3*i+2]*mm2inches);
 	else
-	    fprintf( fp, "v %f %f %f\n",
-		     vertices[3*i],
-		     vertices[3*i+1],
-		     vertices[3*i+2]);
+	    fprintf(fp, "v %f %f %f\n",
+		    vertices[3*i],
+		    vertices[3*i+1],
+		    vertices[3*i+2]);
     }
 
     for (i = 0; i < num_faces; i++) {
-	fprintf( fp, "f %d %d %d\n", faces[3*i]+v_offset, faces[3*i+1]+v_offset, faces[3*i+2]+v_offset);
+	fprintf(fp, "f %d %d %d\n", faces[3*i]+v_offset, faces[3*i+1]+v_offset, faces[3*i+2]+v_offset);
     }
 
     v_offset += num_vertices;
@@ -386,7 +386,7 @@ write_bot_stl(struct rt_bot_internal *bot, FILE *fp, char *name)
     num_faces = bot->num_faces;
     faces = bot->faces;
 
-    fprintf( fp, "solid %s\n", name);
+    fprintf(fp, "solid %s\n", name);
     for (i = 0; i < num_faces; i++) {
 	vi = 3*faces[3*i];
 	VSET(A, vertices[vi], vertices[vi+1], vertices[vi+2]);
@@ -411,18 +411,18 @@ write_bot_stl(struct rt_bot_internal *bot, FILE *fp, char *name)
 	}
 	VUNITIZE(norm);
 
-	fprintf( fp, "  facet normal %lf %lf %lf\n", V3ARGS(norm));
+	fprintf(fp, "  facet normal %lf %lf %lf\n", V3ARGS(norm));
 #else
-	fprintf( fp, "  facet\n");
+	fprintf(fp, "  facet\n");
 #endif
-	fprintf( fp, "    outer loop\n");
-	fprintf( fp, "      vertex %lf %lf %lf\n", V3ARGS(A));
-	fprintf( fp, "      vertex %lf %lf %lf\n", V3ARGS(B));
-	fprintf( fp, "      vertex %lf %lf %lf\n", V3ARGS(C));
-	fprintf( fp, "    endloop\n");
-	fprintf( fp, "  endfacet\n");
+	fprintf(fp, "    outer loop\n");
+	fprintf(fp, "      vertex %lf %lf %lf\n", V3ARGS(A));
+	fprintf(fp, "      vertex %lf %lf %lf\n", V3ARGS(B));
+	fprintf(fp, "      vertex %lf %lf %lf\n", V3ARGS(C));
+	fprintf(fp, "    endloop\n");
+	fprintf(fp, "  endfacet\n");
     }
-    fprintf( fp, "endsolid %s\n", name);
+    fprintf(fp, "endsolid %s\n", name);
 }
 
 void
@@ -471,7 +471,7 @@ write_bot_stl_binary(struct rt_bot_internal *bot, int fd, char *name)
 	    VSCALE(C, C, mm2inches);
 	}
 
-	memset(vert_buffer, 0, sizeof( vert_buffer ));
+	memset(vert_buffer, 0, sizeof(vert_buffer));
 
 	flt_ptr = flts;
 	VMOVE(flt_ptr, norm);
@@ -484,7 +484,7 @@ write_bot_stl_binary(struct rt_bot_internal *bot, int fd, char *name)
 	flt_ptr += 3;
 
 	htonf(vert_buffer, (const unsigned char *)flts, 12);
-	for ( j=0; j<12; j++ ) {
+	for (j=0; j<12; j++) {
 	    lswap((unsigned int *)&vert_buffer[j*4]);
 	}
 	write(fd, vert_buffer, 50);
@@ -518,37 +518,37 @@ main(int argc, char *argv[])
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "bio:m:t:v")) != EOF) {
 	switch (c) {
-	case 'b':		/* Binary output file */
-	    binary=1;
-	    break;
-	case 'i':
-	    inches = 1;
-	    break;
-	case 'm':
-	    output_directory = bu_optarg;
-	    bu_vls_init( &file_name );
-	    break;
-	case 'o':		/* Output file name. */
-	    output_file = bu_optarg;
-	    break;
-	case 't':
-	    if (!strcmp("dxf", bu_optarg))
-		output_type = OTYPE_DXF;
-	    else if (!strcmp("obj", bu_optarg))
-		output_type = OTYPE_OBJ;
-	    else if (!strcmp("sat", bu_optarg))
-		output_type = OTYPE_SAT;
-	    else if (!strcmp("stl", bu_optarg))
-		output_type = OTYPE_STL;
-	    else
+	    case 'b':		/* Binary output file */
+		binary=1;
+		break;
+	    case 'i':
+		inches = 1;
+		break;
+	    case 'm':
+		output_directory = bu_optarg;
+		bu_vls_init(&file_name);
+		break;
+	    case 'o':		/* Output file name. */
+		output_file = bu_optarg;
+		break;
+	    case 't':
+		if (!strcmp("dxf", bu_optarg))
+		    output_type = OTYPE_DXF;
+		else if (!strcmp("obj", bu_optarg))
+		    output_type = OTYPE_OBJ;
+		else if (!strcmp("sat", bu_optarg))
+		    output_type = OTYPE_SAT;
+		else if (!strcmp("stl", bu_optarg))
+		    output_type = OTYPE_STL;
+		else
+		    bu_exit(1, usage, argv[0]);
+		break;
+	    case 'v':
+		verbose = 1;
+		break;
+	    default:
 		bu_exit(1, usage, argv[0]);
-	    break;
-	case 'v':
-	    verbose = 1;
-	    break;
-	default:
-	    bu_exit(1, usage, argv[0]);
-	    break;
+		break;
 	}
     }
 
@@ -556,13 +556,13 @@ main(int argc, char *argv[])
 	bu_exit(1, usage, argv[0]);
     }
 
-    if ( output_file && output_directory ) {
-	fprintf(stderr, "ERROR: options \"-o\" and \"-m\" are mutually exclusive\n" );
-	bu_exit(1, usage, argv[0] );
+    if (output_file && output_directory) {
+	fprintf(stderr, "ERROR: options \"-o\" and \"-m\" are mutually exclusive\n");
+	bu_exit(1, usage, argv[0]);
     }
 
-    if ( !output_file && !output_directory ) {
-	if ( binary ) {
+    if (!output_file && !output_directory) {
+	if (binary) {
 	    bu_exit(1, "Can't output binary to stdout\n");
 	}
 	fp = stdout;
@@ -571,23 +571,23 @@ main(int argc, char *argv[])
 	output_file = "stdout";
     }
 
-    if ( output_file ) {
-	if ( binary && output_type == OTYPE_STL ) {
+    if (output_file) {
+	if (binary && output_type == OTYPE_STL) {
 	    char buf[81];	/* need exactly 80 chars for header */
 
 	    /* Open binary output file */
-	    if ( (fd=open( output_file, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0 )
+	    if ((fd=open(output_file, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0)
 	    {
-		perror( argv[0] );
-		bu_exit(1, "Cannot open binary output file (%s) for writing\n", output_file );
+		perror(argv[0]);
+		bu_exit(1, "Cannot open binary output file (%s) for writing\n", output_file);
 	    }
 
 	    /* Write out STL header if output file is binary */
-	    memset(buf, 0, sizeof( buf ));
+	    memset(buf, 0, sizeof(buf));
 	    if (inches) {
-		bu_strlcpy( buf, "BRL-CAD generated STL FILE (Units=inches)", sizeof(buf));
+		bu_strlcpy(buf, "BRL-CAD generated STL FILE (Units=inches)", sizeof(buf));
 	    } else {
-		bu_strlcpy( buf, "BRL-CAD generated STL FILE (Units=mm)", sizeof(buf));
+		bu_strlcpy(buf, "BRL-CAD generated STL FILE (Units=mm)", sizeof(buf));
 	    }
 	    write(fd, &buf, 80);
 
@@ -596,32 +596,32 @@ main(int argc, char *argv[])
 	    write(fd, &buf, 4);
 	} else {
 	    /* Open ASCII output file */
-	    if ( (fp=fopen( output_file, "wb+" )) == NULL )
+	    if ((fp=fopen(output_file, "wb+")) == NULL)
 	    {
-		perror( argv[0] );
-		bu_exit(1, "Cannot open ASCII output file (%s) for writing\n", output_file );
+		perror(argv[0]);
+		bu_exit(1, "Cannot open ASCII output file (%s) for writing\n", output_file);
 	    }
 
 	    switch (output_type) {
-	    case OTYPE_DXF:
-		/* output DXF header and start of TABLES section */
-		fprintf(fp,
-			"0\nSECTION\n2\nHEADER\n999\n%s (All Bots)\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n",
-			argv[argc-1]);
-		break;
-	    case OTYPE_SAT:
-		fprintf( fp, "400 0 1 0\n");
-                /*XXX Temporarily hardwired */
+		case OTYPE_DXF:
+		    /* output DXF header and start of TABLES section */
+		    fprintf(fp,
+			    "0\nSECTION\n2\nHEADER\n999\n%s (All Bots)\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n",
+			    argv[argc-1]);
+		    break;
+		case OTYPE_SAT:
+		    fprintf(fp, "400 0 1 0\n");
+		    /*XXX Temporarily hardwired */
 #if 1
-		fprintf( fp, "37 SolidWorks(2008000)-Sat-Convertor-2.0 11 ACIS 8.0 NT 24 Wed Dec 03 09:26:53 2003\n");
+		    fprintf(fp, "37 SolidWorks(2008000)-Sat-Convertor-2.0 11 ACIS 8.0 NT 24 Wed Dec 03 09:26:53 2003\n");
 #else
-		fprintf( fp, "08 BRL-CAD-bot_dump-4.0 11 ACIS 4.0 NT 24 Thur Sep 25 15:00:00 2008\n");
+		    fprintf(fp, "08 BRL-CAD-bot_dump-4.0 11 ACIS 4.0 NT 24 Thur Sep 25 15:00:00 2008\n");
 #endif
-		fprintf( fp, "1 9.9999999999999995e-007 1e-010\n");
-		curr_line_num = 0;
-		break;
-	    default:
-		break;
+		    fprintf(fp, "1 9.9999999999999995e-007 1e-010\n");
+		    curr_line_num = 0;
+		    break;
+		default:
+		    break;
 	    }
 	}
     }
@@ -640,186 +640,185 @@ main(int argc, char *argv[])
 
     if (output_directory) {
 	switch (output_type) {
-	case OTYPE_DXF:
-	    file_ext = ".dxf";
-	    break;
-	case OTYPE_OBJ:
-	    file_ext = ".obj";
-	    break;
-	case OTYPE_SAT:
-	    file_ext = ".sat";
-	    break;
-	case OTYPE_STL:
-	default:
-	    file_ext = ".stl";
-	    break;
+	    case OTYPE_DXF:
+		file_ext = ".dxf";
+		break;
+	    case OTYPE_OBJ:
+		file_ext = ".obj";
+		break;
+	    case OTYPE_SAT:
+		file_ext = ".sat";
+		break;
+	    case OTYPE_STL:
+	    default:
+		file_ext = ".stl";
+		break;
 	}
     }
 
     /* dump all the bots */
-    FOR_ALL_DIRECTORY_START(dp, rtip->rti_dbip)
+    FOR_ALL_DIRECTORY_START(dp, rtip->rti_dbip) {
 
-    /* we only dump BOT primitives, so skip some obvious exceptions */
-    if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD) continue;
-    if (dp->d_flags & DIR_COMB) continue;
+	/* we only dump BOT primitives, so skip some obvious exceptions */
+	if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD) continue;
+	if (dp->d_flags & DIR_COMB) continue;
 
-    /* get the internal form */
-    i=rt_db_get_internal(&intern, dp, rtip->rti_dbip, mat, &rt_uniresource);
+	/* get the internal form */
+	i=rt_db_get_internal(&intern, dp, rtip->rti_dbip, mat, &rt_uniresource);
 
-    if (i < 0) {
-	fprintf(stderr, "rt_get_internal failure %d on %s\n", i, dp->d_namep);
-	continue;
-    }
+	if (i < 0) {
+	    fprintf(stderr, "rt_get_internal failure %d on %s\n", i, dp->d_namep);
+	    continue;
+	}
 
-    if (i != ID_BOT) {
-	continue;
-    }
+	if (i != ID_BOT) {
+	    continue;
+	}
 
-    bot = (struct rt_bot_internal *)intern.idb_ptr;
+	bot = (struct rt_bot_internal *)intern.idb_ptr;
 
-    if (output_directory) {
-	char *cp;
+	if (output_directory) {
+	    char *cp;
 
-	bu_vls_trunc( &file_name, 0 );
-	bu_vls_strcpy( &file_name, output_directory );
-	bu_vls_putc( &file_name, '/' );
-	cp = dp->d_namep;
-	cp++;
-	while ( *cp != '\0' ) {
-	    if ( *cp == '/' ) {
-		bu_vls_putc( &file_name, '@' );
-	    } else if ( *cp == '.' || isspace( *cp ) ) {
-		bu_vls_putc( &file_name, '_' );
-	    } else {
-		bu_vls_putc( &file_name, *cp );
-	    }
+	    bu_vls_trunc(&file_name, 0);
+	    bu_vls_strcpy(&file_name, output_directory);
+	    bu_vls_putc(&file_name, '/');
+	    cp = dp->d_namep;
 	    cp++;
-	}
-	bu_vls_strcat( &file_name, file_ext);
-
-	if ( binary && output_type == OTYPE_STL ) {
-	    char buf[81];	/* need exactly 80 chars for header */
-	    unsigned char tot_buffer[4];
-
-	    if ((fd=open(bu_vls_addr(&file_name), O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0) {
-		perror(bu_vls_addr(&file_name));
-		bu_exit(1, "Cannot open binary output file (%s) for writing\n", bu_vls_addr(&file_name));
+	    while (*cp != '\0') {
+		if (*cp == '/') {
+		    bu_vls_putc(&file_name, '@');
+		} else if (*cp == '.' || isspace(*cp)) {
+		    bu_vls_putc(&file_name, '_');
+		} else {
+		    bu_vls_putc(&file_name, *cp);
+		}
+		cp++;
 	    }
+	    bu_vls_strcat(&file_name, file_ext);
 
-	    /* Write out STL header */
-	    memset(buf, 0, sizeof( buf ));
-	    if (inches) {
-		bu_strlcpy( buf, "BRL-CAD generated STL FILE (Units=inches)", sizeof(buf));
+	    if (binary && output_type == OTYPE_STL) {
+		char buf[81];	/* need exactly 80 chars for header */
+		unsigned char tot_buffer[4];
+
+		if ((fd=open(bu_vls_addr(&file_name), O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0) {
+		    perror(bu_vls_addr(&file_name));
+		    bu_exit(1, "Cannot open binary output file (%s) for writing\n", bu_vls_addr(&file_name));
+		}
+
+		/* Write out STL header */
+		memset(buf, 0, sizeof(buf));
+		if (inches) {
+		    bu_strlcpy(buf, "BRL-CAD generated STL FILE (Units=inches)", sizeof(buf));
+		} else {
+		    bu_strlcpy(buf, "BRL-CAD generated STL FILE (Units=mm)", sizeof(buf));
+		}
+		write(fd, &buf, 80);
+
+		/* write a place keeper for the number of triangles */
+		memset(buf, 0, 4);
+		write(fd, &buf, 4);
+
+		write_bot_stl_binary(bot, fd, dp->d_namep);
+
+		/* Re-position pointer to 80th byte */
+		lseek(fd, 80, SEEK_SET);
+
+		/* Write out number of triangles */
+		bu_plong(tot_buffer, (unsigned long)bot->num_faces);
+		lswap((unsigned int *)tot_buffer);
+		write(fd, tot_buffer, 4);
+
+		close(fd);
 	    } else {
-		bu_strlcpy( buf, "BRL-CAD generated STL FILE (Units=mm)", sizeof(buf));
-	    }
-	    write(fd, &buf, 80);
+		if ((fp=fopen(bu_vls_addr(&file_name), "wb+")) == NULL) {
+		    perror(bu_vls_addr(&file_name));
+		    bu_exit(1, "Cannot open ASCII output file (%s) for writing\n", bu_vls_addr(&file_name));
+		}
 
-	    /* write a place keeper for the number of triangles */
-	    memset(buf, 0, 4);
-	    write(fd, &buf, 4);
+		switch (output_type) {
+		    case OTYPE_DXF:
+			fprintf(fp,
+				"0\nSECTION\n2\nHEADER\n999\n%s (BOT from %s)\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n",
+				dp->d_namep, argv[argc-1]);
+			write_bot_dxf(bot, fp, dp->d_namep);
+			fprintf(fp, "0\nENDSEC\n0\nEOF\n");
+			break;
+		    case OTYPE_OBJ:
+			v_offset = 1;
+			write_bot_obj(bot, fp, dp->d_namep);
+			break;
+		    case OTYPE_SAT:
+			curr_line_num = 0;
 
-	    write_bot_stl_binary(bot, fd, dp->d_namep);
-
-	    /* Re-position pointer to 80th byte */
-	    lseek( fd, 80, SEEK_SET );
-
-	    /* Write out number of triangles */
-	    bu_plong( tot_buffer, (unsigned long)bot->num_faces );
-	    lswap( (unsigned int *)tot_buffer );
-	    write(fd, tot_buffer, 4);
-
-	    close(fd);
-	} else {
-	    if ((fp=fopen( bu_vls_addr(&file_name), "wb+")) == NULL) {
-		perror(bu_vls_addr(&file_name));
-		bu_exit(1, "Cannot open ASCII output file (%s) for writing\n", bu_vls_addr(&file_name));
-	    }
-
-	    switch (output_type) {
-	    case OTYPE_DXF:
-		fprintf(fp,
-			"0\nSECTION\n2\nHEADER\n999\n%s (BOT from %s)\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n",
-			dp->d_namep, argv[argc-1]);
-		write_bot_dxf(bot, fp, dp->d_namep);
-		fprintf( fp, "0\nENDSEC\n0\nEOF\n" );
-		break;
-	    case OTYPE_OBJ:
-		v_offset = 1;
-		write_bot_obj(bot, fp, dp->d_namep);
-		break;
-	    case OTYPE_SAT:
-		curr_line_num = 0;
-
-		fprintf( fp, "400 0 1 0\n");
-                /*XXX Temporarily hardwired */
+			fprintf(fp, "400 0 1 0\n");
+			/*XXX Temporarily hardwired */
 #if 1
-		fprintf( fp, "37 SolidWorks(2008000)-Sat-Convertor-2.0 11 ACIS 8.0 NT 24 Wed Dec 03 09:26:53 2003\n");
+			fprintf(fp, "37 SolidWorks(2008000)-Sat-Convertor-2.0 11 ACIS 8.0 NT 24 Wed Dec 03 09:26:53 2003\n");
 #else
-		fprintf( fp, "08 BRL-CAD-bot_dump-4.0 11 ACIS 4.0 NT 24 Thur Sep 25 15:00:00 2008\n");
+			fprintf(fp, "08 BRL-CAD-bot_dump-4.0 11 ACIS 4.0 NT 24 Thur Sep 25 15:00:00 2008\n");
 #endif
-		fprintf( fp, "1 9.9999999999999995e-007 1e-010\n");
+			fprintf(fp, "1 9.9999999999999995e-007 1e-010\n");
 
-		write_bot_sat(bot, fp, dp->d_namep);
-		fprintf( fp, "End-of-ACIS-data\n");
-		break;
-	    case OTYPE_STL:
-	    default:
-		write_bot_stl(bot, fp, dp->d_namep);
-		break;
+			write_bot_sat(bot, fp, dp->d_namep);
+			fprintf(fp, "End-of-ACIS-data\n");
+			break;
+		    case OTYPE_STL:
+		    default:
+			write_bot_stl(bot, fp, dp->d_namep);
+			break;
+		}
+
+		fclose(fp);
 	    }
-
-	    fclose(fp);
-	}
-    } else {
-	if ( binary && output_type == OTYPE_STL ) {
-	    total_faces += bot->num_faces;
-	    write_bot_stl_binary(bot, fd, dp->d_namep);
 	} else {
-	    switch (output_type) {
-	    case OTYPE_DXF:
-		write_bot_dxf(bot, fp, dp->d_namep);
-		break;
-	    case OTYPE_OBJ:
-		write_bot_obj(bot, fp, dp->d_namep);
-		break;
-	    case OTYPE_SAT:
-		write_bot_sat(bot, fp, dp->d_namep);
-		break;
-	    case OTYPE_STL:
-	    default:
-		write_bot_stl(bot, fp, dp->d_namep);
-		break;
+	    if (binary && output_type == OTYPE_STL) {
+		total_faces += bot->num_faces;
+		write_bot_stl_binary(bot, fd, dp->d_namep);
+	    } else {
+		switch (output_type) {
+		    case OTYPE_DXF:
+			write_bot_dxf(bot, fp, dp->d_namep);
+			break;
+		    case OTYPE_OBJ:
+			write_bot_obj(bot, fp, dp->d_namep);
+			break;
+		    case OTYPE_SAT:
+			write_bot_sat(bot, fp, dp->d_namep);
+			break;
+		    case OTYPE_STL:
+		    default:
+			write_bot_stl(bot, fp, dp->d_namep);
+			break;
+		}
 	    }
 	}
-    }
 
-
-    FOR_ALL_DIRECTORY_END
+    } FOR_ALL_DIRECTORY_END;
 
     if (output_file) {
-	if ( binary && output_type == OTYPE_STL ) {
+	if (binary && output_type == OTYPE_STL) {
 	    unsigned char tot_buffer[4];
 
 	    /* Re-position pointer to 80th byte */
-	    lseek( fd, 80, SEEK_SET );
+	    lseek(fd, 80, SEEK_SET);
 
 	    /* Write out number of triangles */
-	    bu_plong( tot_buffer, (unsigned long)total_faces );
-	    lswap( (unsigned int *)tot_buffer );
+	    bu_plong(tot_buffer, (unsigned long)total_faces);
+	    lswap((unsigned int *)tot_buffer);
 	    write(fd, tot_buffer, 4);
 	    close(fd);
 	} else {
 	    /* end of layers section, start of ENTITIES SECTION */
 	    switch (output_type) {
-	    case OTYPE_DXF:
-		fprintf( fp, "0\nENDSEC\n0\nEOF\n" );
-		break;
-	    case OTYPE_SAT:
-		fprintf( fp, "End-of-ACIS-data\n");
-		break;
-	    default:
-		break;
+		case OTYPE_DXF:
+		    fprintf(fp, "0\nENDSEC\n0\nEOF\n");
+		    break;
+		case OTYPE_SAT:
+		    fprintf(fp, "End-of-ACIS-data\n");
+		    break;
+		default:
+		    break;
 	    }
 
 	    fclose(fp);
