@@ -576,8 +576,7 @@ main(int argc, char *argv[])
 	    char buf[81];	/* need exactly 80 chars for header */
 
 	    /* Open binary output file */
-	    if ((fd=open(output_file, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0)
-	    {
+	    if ((fd=open(output_file, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0) {
 		perror(argv[0]);
 		bu_exit(1, "Cannot open binary output file (%s) for writing\n", output_file);
 	    }
@@ -596,8 +595,7 @@ main(int argc, char *argv[])
 	    write(fd, &buf, 4);
 	} else {
 	    /* Open ASCII output file */
-	    if ((fp=fopen(output_file, "wb+")) == NULL)
-	    {
+	    if ((fp=fopen(output_file, "wb+")) == NULL) {
 		perror(argv[0]);
 		bu_exit(1, "Cannot open ASCII output file (%s) for writing\n", output_file);
 	    }
