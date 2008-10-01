@@ -86,9 +86,11 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 * make including the main headers work for 3rd party apps including
   for C++ projects, working out of the box
 
-* fix metaball "shelling" issue
+* fix metaball "shelling" but that causes the primitive to invert and
+  just give paper thin surface (something wrong in the intersection).
 
-* extend metaball control info beyond simple points
+* extend metaball control info beyond simple points (e.g., line
+  segments)
 
 * verify/finish clone mirror support
 
