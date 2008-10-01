@@ -56,7 +56,7 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
-* give bot-bldxf the axe
+* give bot-bldxf the axe (reconcile and merge with bot_dump)
 
 * refactor all of the nmg processing (back) into its own library so
   that external users can manage mesh geometry without needing to pull
