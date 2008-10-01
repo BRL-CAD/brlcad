@@ -29,6 +29,8 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 * implement make, ted, edsol, mirror, and analyze for hyp primitive
 
+* implement make, ted, edsol, mirror, and analyze for revolve primitive
+
 * fix incrTcl pathing issues when only using system tcl/tk
   (get incrTcl subconfigure to work like was done for Tcl)
 
