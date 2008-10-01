@@ -41,7 +41,7 @@
 #define V3ARGSIN(_a)       (_a)[X]*mm2inches, (_a)[Y]*mm2inches, (_a)[Z]*mm2inches
 
 static char usage[] = "\
-Usage: bot-stl [-b] [-i] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-v] geom.g\n";
+Usage: %s [-b] [-i] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-v] geom.g\n";
 
 enum otype {
     OTYPE_DXF = 1,
