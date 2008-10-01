@@ -239,9 +239,6 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
   of memory requirements for a geometry database can be computed on
   the fly via a pre-prep phase.
 
-* short introductory documentation on using mged, covering a majority
-  of the various commands.
-
 * support to the raytracers for multiple image file formats,
   recognizing an option and/or the file suffix of the -o filename.
 
@@ -352,7 +349,7 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
   values, construction history, and timestamping.
 
 * see doc/deprecation.txt for items that have been marked as
-  deprecated or are available for deprecation.
+  deprecated or available to be removed as obsolete items.
 
 * make struct rt_functab's ft_label bigger and/or dynamic (e.g. vls)
 
