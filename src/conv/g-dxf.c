@@ -22,7 +22,7 @@
  *
  * Program to convert a BRL-CAD model (in a .g file) to a DXF file by
  * calling on the NMG booleans.  Based on g-acad.c.
- * 
+ *
  */
 
 #include "common.h"

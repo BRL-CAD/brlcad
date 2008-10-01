@@ -301,12 +301,12 @@ is_a_hole(int id)
 
 
 /*
-static void
-add_to_holes(char *name)
-{
-    if (mk_addmember(name, &hole_head.l, NULL, WMOP_UNION) == (struct wmember *)NULL)
-	bu_log("add_to_holes: mk_addmember failed for region %s\n", name);
-}
+  static void
+  add_to_holes(char *name)
+  {
+  if (mk_addmember(name, &hole_head.l, NULL, WMOP_UNION) == (struct wmember *)NULL)
+  bu_log("add_to_holes: mk_addmember failed for region %s\n", name);
+  }
 */
 
 
@@ -492,7 +492,7 @@ Insert_region_name(char *name, int reg_id)
 
     if (foundn != foundr) {
 	bu_log("Insert_region_name: name %s ident %d\n\tfound name is %d\n\tfound ident is %d\n",
-		name, reg_id, foundn, foundr);
+	       name, reg_id, foundn, foundr);
 	List_names();
 	bu_exit(1, "\tCannot insert new node\n");
     }
@@ -704,93 +704,93 @@ make_solid_name(char type, int element_id, int c_id, int g_id, int inner)
 
 
 /*
-static void
-insert_int(int in)
-{
-    int i;
+  static void
+  insert_int(int in)
+  {
+  int i;
 
-    for (i=0; i<int_list_count; i++) {
-	if (int_list[i] == in)
-	    return;
-    }
+  for (i=0; i<int_list_count; i++) {
+  if (int_list[i] == in)
+  return;
+  }
 
-    if (int_list_count == int_list_length) {
-	if (int_list_length == 0)
-	    int_list = (int *)bu_malloc(INT_LIST_BLOCK*sizeof(int), "insert_id: int_list");
-	else
-	    int_list = (int *)bu_realloc((char *)int_list, (int_list_length + INT_LIST_BLOCK)*sizeof(int), "insert_id: int_list");
-	int_list_length += INT_LIST_BLOCK;
-    }
+  if (int_list_count == int_list_length) {
+  if (int_list_length == 0)
+  int_list = (int *)bu_malloc(INT_LIST_BLOCK*sizeof(int), "insert_id: int_list");
+  else
+  int_list = (int *)bu_realloc((char *)int_list, (int_list_length + INT_LIST_BLOCK)*sizeof(int), "insert_id: int_list");
+  int_list_length += INT_LIST_BLOCK;
+  }
 
-    int_list[int_list_count] = in;
-    int_list_count++;
+  int_list[int_list_count] = in;
+  int_list_count++;
 
-    if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
-	bu_log("ERROR: bu_mem_barriercheck failed in insert_int\n");
-}
+  if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
+  bu_log("ERROR: bu_mem_barriercheck failed in insert_int\n");
+  }
 */
 
 
 /*
-static void
-Subtract_holes(struct wmember *head, int comp_id, int group_id)
-{
-    struct holes *hole_ptr;
-    struct hole_list *list_ptr;
+  static void
+  Subtract_holes(struct wmember *head, int comp_id, int group_id)
+  {
+  struct holes *hole_ptr;
+  struct hole_list *list_ptr;
 
-    if (debug)
-	bu_log("Subtract_holes(comp_id=%d, group_id=%d)\n", comp_id, group_id);
+  if (debug)
+  bu_log("Subtract_holes(comp_id=%d, group_id=%d)\n", comp_id, group_id);
 
-    hole_ptr = hole_root;
-    while (hole_ptr) {
-	if (hole_ptr->group == group_id && hole_ptr->component == comp_id) {
-	    list_ptr = hole_ptr->holes;
-	    while (list_ptr) {
-		struct name_tree *ptr;
-		int reg_id;
+  hole_ptr = hole_root;
+  while (hole_ptr) {
+  if (hole_ptr->group == group_id && hole_ptr->component == comp_id) {
+  list_ptr = hole_ptr->holes;
+  while (list_ptr) {
+  struct name_tree *ptr;
+  int reg_id;
 
-		reg_id = list_ptr->group * 1000 + list_ptr->component;
-		ptr = name_root;
-		while (ptr && ptr->region_id != reg_id) {
-		    int diff;
+  reg_id = list_ptr->group * 1000 + list_ptr->component;
+  ptr = name_root;
+  while (ptr && ptr->region_id != reg_id) {
+  int diff;
 
-		    diff = reg_id - ptr->region_id;
-		    if (diff > 0)
-			ptr = ptr->rright;
-		    else if (diff < 0)
-			ptr = ptr->rleft;
-		}
+  diff = reg_id - ptr->region_id;
+  if (diff > 0)
+  ptr = ptr->rright;
+  else if (diff < 0)
+  ptr = ptr->rleft;
+  }
 
-		bu_ptbl_reset(&stack);
+  bu_ptbl_reset(&stack);
 
-		while (ptr && ptr->region_id == reg_id) {
+  while (ptr && ptr->region_id == reg_id) {
 
-		    while (ptr && ptr->region_id == reg_id) {
-			PUSH(ptr);
-			ptr = ptr->rleft;
-		    }
-		    POP(name_tree, ptr);
-		    if (!ptr ||  ptr->region_id != reg_id)
-			break;
+  while (ptr && ptr->region_id == reg_id) {
+  PUSH(ptr);
+  ptr = ptr->rleft;
+  }
+  POP(name_tree, ptr);
+  if (!ptr ||  ptr->region_id != reg_id)
+  break;
 
-		    if (debug)
-			bu_log("\tSubtracting %s\n", ptr->name);
+  if (debug)
+  bu_log("\tSubtracting %s\n", ptr->name);
 
-		    if (mk_addmember(ptr->name, &(head->l), NULL, WMOP_SUBTRACT) == (struct wmember *)NULL)
-			bu_exit(1, "Subtract_holes: mk_addmember failed\n");
+  if (mk_addmember(ptr->name, &(head->l), NULL, WMOP_SUBTRACT) == (struct wmember *)NULL)
+  bu_exit(1, "Subtract_holes: mk_addmember failed\n");
 
-		    ptr = ptr->rright;
-		}
+  ptr = ptr->rright;
+  }
 
-		list_ptr = list_ptr->next;
-	    }
-	    break;
-	}
-	hole_ptr = hole_ptr->next;
-    }
-    if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
-	bu_log("ERROR: bu_mem_barriercheck failed in subtract_holes\n");
-}
+  list_ptr = list_ptr->next;
+  }
+  break;
+  }
+  hole_ptr = hole_ptr->next;
+  }
+  if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
+  bu_log("ERROR: bu_mem_barriercheck failed in subtract_holes\n");
+  }
 */
 
 
@@ -1018,79 +1018,79 @@ Delete_name(struct name_tree **root, char *name)
 
 
 /*
-static void
-add_to_series(char *name, int reg_id)
-{
-    if (group_id < 0 || group_id > 10) {
-	bu_log("add_to_series: region (%s) not added, illegal group number %d, region_id=%d\n",
-		name, group_id, reg_id);
-	return;
-    }
+  static void
+  add_to_series(char *name, int reg_id)
+  {
+  if (group_id < 0 || group_id > 10) {
+  bu_log("add_to_series: region (%s) not added, illegal group number %d, region_id=%d\n",
+  name, group_id, reg_id);
+  return;
+  }
 
-    if (mk_addmember(name, &group_head[group_id].l, NULL, WMOP_UNION) == (struct wmember *)NULL)
-	bu_log("add_to_series: mk_addmember failed for region %s\n", name);
-}
+  if (mk_addmember(name, &group_head[group_id].l, NULL, WMOP_UNION) == (struct wmember *)NULL)
+  bu_log("add_to_series: mk_addmember failed for region %s\n", name);
+  }
 */
 
 
 /*
-static void
-make_comp_group(void)
-{
-    struct wmember g_head;
-    struct name_tree *ptr;
+  static void
+  make_comp_group(void)
+  {
+  struct wmember g_head;
+  struct name_tree *ptr;
 
-    if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
-	bu_log("ERROR: bu_mem_barriercheck failed in make_comp_group\n");
+  if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
+  bu_log("ERROR: bu_mem_barriercheck failed in make_comp_group\n");
 
-    BU_LIST_INIT(&g_head.l);
+  BU_LIST_INIT(&g_head.l);
 
-    bu_ptbl_reset(&stack);
+  bu_ptbl_reset(&stack);
 
-    ptr = name_root;
-    while (1) {
-	while (ptr) {
-	    PUSH(ptr);
-	    ptr = ptr->nleft;
-	}
-	POP(name_tree, ptr);
-	if (!ptr)
-	    break;
+  ptr = name_root;
+  while (1) {
+  while (ptr) {
+  PUSH(ptr);
+  ptr = ptr->nleft;
+  }
+  POP(name_tree, ptr);
+  if (!ptr)
+  break;
 
-	if (ptr->region_id == region_id && !ptr->inner && !ptr->in_comp_group)	{
-	    if (mk_addmember(ptr->name, &g_head.l, NULL, WMOP_UNION) == (struct wmember *)NULL) {
-		bu_log("make_comp_group: Could not add %s to group for ident %d\n", ptr->name, ptr->region_id);
-		break;
-	    }
-	    ptr->in_comp_group = 1;
-	}
-	ptr = ptr->nright;
-    }
+  if (ptr->region_id == region_id && !ptr->inner && !ptr->in_comp_group)	{
+  if (mk_addmember(ptr->name, &g_head.l, NULL, WMOP_UNION) == (struct wmember *)NULL) {
+  bu_log("make_comp_group: Could not add %s to group for ident %d\n", ptr->name, ptr->region_id);
+  break;
+  }
+  ptr->in_comp_group = 1;
+  }
+  ptr = ptr->nright;
+  }
 
-    if (BU_LIST_NON_EMPTY(&g_head.l)) {
-	char *name;
-	struct bu_vls vls;
+  if (BU_LIST_NON_EMPTY(&g_head.l)) {
+  char *name;
+  struct bu_vls vls;
 
-	if (!(name=find_region_name(group_id, comp_id))) {
-	    bu_vls_init(&vls);
-	    bu_vls_printf(&vls, "comp_%d", region_id);
-	    name = make_unique_name(bu_vls_addr(&vls));
-	    bu_vls_free(&vls);
-	    if (warnings)
-		bu_log("Creating default name (%s) for group %d component %d\n",
-			name, group_id, comp_id);
-	    Insert_name(&name_root, name, 1);
-	}
+  if (!(name=find_region_name(group_id, comp_id))) {
+  bu_vls_init(&vls);
+  bu_vls_printf(&vls, "comp_%d", region_id);
+  name = make_unique_name(bu_vls_addr(&vls));
+  bu_vls_free(&vls);
+  if (warnings)
+  bu_log("Creating default name (%s) for group %d component %d\n",
+  name, group_id, comp_id);
+  Insert_name(&name_root, name, 1);
+  }
 
-	mk_lfcomb(fpout, name, &g_head, 0);
-	if (!is_a_hole(region_id))
-	    add_to_series(name, region_id);
-	else
-	    add_to_holes(name);
+  mk_lfcomb(fpout, name, &g_head, 0);
+  if (!is_a_hole(region_id))
+  add_to_series(name, region_id);
+  else
+  add_to_holes(name);
 
-	bu_free((char *)name, "str_dupped name");
-    }
-}
+  bu_free((char *)name, "str_dupped name");
+  }
+  }
 */
 
 
@@ -1445,7 +1445,7 @@ f4_do_ccone1(void)
 	if (!get_line()) {
 	    bu_log("Unexpected EOF while reading continuation card for CCONE1\n");
 	    bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
-		    group_id, comp_id, element_id);
+		   group_id, comp_id, element_id);
 	    bu_exit(1, "ERROR: unexpected end-of-file");
 	}
 	return;
@@ -1469,7 +1469,7 @@ f4_do_ccone1(void)
     if (!get_line()) {
 	bu_log("Unexpected EOF while reading continuation card for CCONE1\n");
 	bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
-		group_id, comp_id, element_id, c1);
+	       group_id, comp_id, element_id, c1);
 	bu_exit(1, "ERROR: unexpected end-of-file");
     }
 
@@ -1479,7 +1479,7 @@ f4_do_ccone1(void)
     if (c1 != c2) {
 	bu_log("WARNING: CCONE1 continuation flags disagree, %d vs %d\n", c1, c2);
 	bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
-		group_id, comp_id, element_id);
+	       group_id, comp_id, element_id);
     }
 
     bu_strlcpy(field, &line[8], sizeof(field));
@@ -1494,7 +1494,7 @@ f4_do_ccone1(void)
     if (r1 < 0.0 || r2 < 0.0) {
 	bu_log("ERROR: CCONE1 has illegal radii, %f and %f\n", r1/25.4, r2/25.4);
 	bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
-		group_id, comp_id, element_id);
+	       group_id, comp_id, element_id);
 	bu_log("\tCCONE1 solid ignored\n");
 	return;
     }
@@ -1503,7 +1503,7 @@ f4_do_ccone1(void)
 	if (thick <= 0.0) {
 	    bu_log("ERROR: Plate mode CCONE1 has illegal thickness (%f)\n", thick/25.4);
 	    bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
-		    group_id, comp_id, element_id);
+		   group_id, comp_id, element_id);
 	    bu_log("\tCCONE1 solid ignored\n");
 	    return;
 	}
@@ -1511,7 +1511,7 @@ f4_do_ccone1(void)
 	if (r1-thick < min_radius && r2-thick < min_radius) {
 	    bu_log("ERROR: Plate mode CCONE1 has too large thickness (%f)\n", thick/25.4);
 	    bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
-		    group_id, comp_id, element_id);
+		   group_id, comp_id, element_id);
 	    bu_log("\tCCONE1 solid ignored\n");
 	    return;
 	}
@@ -1520,7 +1520,7 @@ f4_do_ccone1(void)
     if (pt1 < 1 || pt1 > max_grid_no || pt2 < 1 || pt2 > max_grid_no || pt1 == pt2) {
 	bu_log("ERROR: CCONE1 has illegal grid points (%d and %d)\n", pt1, pt2);
 	bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
-		group_id, comp_id, element_id);
+	       group_id, comp_id, element_id);
 	bu_log("\tCCONE1 solid ignored\n");
 	return;
     }
@@ -1609,7 +1609,7 @@ f4_do_ccone1(void)
 	if (VDOT(inner_height, height) <= 0.0) {
 	    bu_log("ERROR: CCONE1 height (%f) too small for thickness (%f)\n", length/25.4, thick/25.4);
 	    bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
-		    group_id, comp_id, element_id);
+		   group_id, comp_id, element_id);
 	    bu_log("\tCCONE1 inner solid ignored\n");
 	} else {
 	    /* make inner tgc */
@@ -1649,7 +1649,7 @@ f4_do_ccone2(void)
 	if (!get_line()) {
 	    bu_log("Unexpected EOF while reading continuation card for CCONE2\n");
 	    bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
-		    group_id, comp_id, element_id);
+		   group_id, comp_id, element_id);
 	    bu_exit(1, "ERROR: unexpected end-of-file encountered\n");
 	}
 	return;
@@ -1670,7 +1670,7 @@ f4_do_ccone2(void)
     if (!get_line()) {
 	bu_log("Unexpected EOF while reading continuation card for CCONE2\n");
 	bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
-		group_id, comp_id, element_id, c1);
+	       group_id, comp_id, element_id, c1);
 	bu_exit(1, "ERROR: unexpected end-of-file encountered\n");
     }
 
@@ -1680,7 +1680,7 @@ f4_do_ccone2(void)
     if (c1 != c2) {
 	bu_log("WARNING: CCONE2 continuation flags disagree, %d vs %d\n", c1, c2);
 	bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
-		group_id, comp_id, element_id);
+	       group_id, comp_id, element_id);
     }
 
     bu_strlcpy(field, &line[8], sizeof(field));
@@ -1695,14 +1695,14 @@ f4_do_ccone2(void)
     if (pt1 == pt2) {
 	bu_log("ERROR: CCONE2 has same endpoints %d and %d\n", pt1, pt2);
 	bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
-		group_id, comp_id, element_id);
+	       group_id, comp_id, element_id);
 	return;
     }
 
     if (ro1 < 0.0 || ro2 < 0.0 || ri1 < 0.0 || ri2 < 0.0) {
 	bu_log("ERROR: CCONE2 has illegal radii %f %f %f %f\n", ro1, ro2, ri1, ri2);
 	bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
-		group_id, comp_id, element_id);
+	       group_id, comp_id, element_id);
 	return;
     }
 
@@ -1766,7 +1766,7 @@ f4_do_ccone3(void)
 	if (!get_line()) {
 	    bu_log("Unexpected EOF while reading continuation card for CCONE3\n");
 	    bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
-		    group_id, comp_id, element_id);
+		   group_id, comp_id, element_id);
 	    bu_exit(1, "ERROR: unexpected end-of-file encountered\n");
 	}
 	return;
@@ -1789,14 +1789,14 @@ f4_do_ccone3(void)
     if (!get_line()) {
 	bu_log("Unexpected EOF while reading continuation card for CCONE3\n");
 	bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %8.8s\n",
-		group_id, comp_id, element_id, field);
+	       group_id, comp_id, element_id, field);
 	bu_exit(1, "ERROR: unexpected end-of-file encountered\n");
     }
 
     if (strncmp(field, line, 8)) {
 	bu_log("WARNING: CCONE3 continuation flags disagree, %8.8s vs %8.8s\n", field, line);
 	bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
-		group_id, comp_id, element_id);
+	       group_id, comp_id, element_id);
     }
 
     for (i=0; i<4; i++) {
@@ -1805,7 +1805,7 @@ f4_do_ccone3(void)
 	if (ro[i] < 0.0) {
 	    bu_log("ERROR: CCONE3 has illegal radius %f\n", ro[i]);
 	    bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
-		    group_id, comp_id, element_id);
+		   group_id, comp_id, element_id);
 	    return;
 	}
 	if (!strcmp(field, "        "))
@@ -1818,7 +1818,7 @@ f4_do_ccone3(void)
 	if (ri[i] < 0.0) {
 	    bu_log("ERROR: CCONE3 has illegal radius %f\n", ri[i]);
 	    bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
-		    group_id, comp_id, element_id);
+		   group_id, comp_id, element_id);
 	    return;
 	}
 	if (!strcmp(field, "        "))
@@ -1839,7 +1839,7 @@ f4_do_ccone3(void)
 	    if (ri[i] == -1.0) {
 		bu_log("ERROR: both inner and outer radii at g%d of a CCONE3 are undefined\n", i+1);
 		bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
-			group_id, comp_id, element_id);
+		       group_id, comp_id, element_id);
 		return;
 	    } else {
 		ro[i] = ri[i];
@@ -2024,8 +2024,8 @@ Add_holes(int type, int gr, int comp, struct hole_list *ptr)
     prev = hole_root;
     while (hole_ptr) {
 	if (hole_ptr->group == gr &&
-	     hole_ptr->component == comp &&
-	     hole_ptr->type == type)
+	    hole_ptr->component == comp &&
+	    hole_ptr->type == type)
 	    break;
 	prev = hole_ptr;
 	hole_ptr = hole_ptr->next;
@@ -2385,7 +2385,7 @@ make_bot_object(void)
 
     name = make_solid_name(BOT, element_id, comp_id, group_id, 0);
     mk_bot(fpout, name, bot_mode, RT_BOT_UNORIENTED, 0, bot_ip.num_vertices, bot_ip.num_faces, bot_ip.vertices,
-	    bot_ip.faces, bot_ip.thickness, bot_ip.face_mode);
+	   bot_ip.faces, bot_ip.thickness, bot_ip.face_mode);
     bu_free(name, "solid_name");
 
     if (mode == PLATE_MODE) {
@@ -2407,9 +2407,9 @@ skip_section(void)
     section_start = ftell(fpin);
     if (get_line()) {
 	while (line[0] && strncmp(line, "SECTION", 7) &&
-		strncmp(line, "HOLE", 4) &&
-		strncmp(line, "WALL", 4) &&
-		strncmp(line, "VEHICLE", 7)) {
+	       strncmp(line, "HOLE", 4) &&
+	       strncmp(line, "WALL", 4) &&
+	       strncmp(line, "VEHICLE", 7)) {
 	    section_start = ftell(fpin);
 	    if (!get_line())
 		break;
@@ -2468,7 +2468,7 @@ f4_do_section(int final)
 	mode = atoi(field);
 	if (mode != 1 && mode != 2) {
 	    bu_log("Illegal mode (%d) for group %d component %d, using volume mode\n",
-		    mode, group_id, comp_id);
+		   mode, group_id, comp_id);
 	    mode = 2;
 	}
 
@@ -2476,7 +2476,7 @@ f4_do_section(int final)
 	    nm_ptr = Search_ident(name_root, region_id, &found);
 	    if (found && nm_ptr->mode != mode) {
 		bu_log("ERROR: second SECTION card found with different mode for component (group=%d, component=%d), conversion of this component will be incorrect!\n",
-			group_id, comp_id);
+		       group_id, comp_id);
 	    }
 	}
     }
@@ -2506,7 +2506,7 @@ f4_do_hex1(void)
 	if (!get_line()) {
 	    bu_log("Unexpected EOF while reading continuation card for CHEX1\n");
 	    bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
-		    group_id, comp_id, element_id);
+		   group_id, comp_id, element_id);
 	    bu_exit(1, "ERROR: unexpected end-of-file encountered\n");
 	}
 	return;
@@ -2531,7 +2531,7 @@ f4_do_hex1(void)
     if (!get_line()) {
 	bu_log("Unexpected EOF while reading continuation card for CHEX1\n");
 	bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
-		group_id, comp_id, element_id, cont1);
+	       group_id, comp_id, element_id, cont1);
 	bu_exit(1, "ERROR: unexpected end-of-file encountered\n");
     }
 
@@ -2541,7 +2541,7 @@ f4_do_hex1(void)
     if (cont1 != cont2) {
 	bu_log("Continuation card numbers do not match for CHEX1 element (%d vs %d)\n", cont1, cont2);
 	bu_log("\tskipping CHEX1 element: group_id = %d, comp_id = %d, element_id = %d\n",
-		group_id, comp_id, element_id);
+	       group_id, comp_id, element_id);
 	return;
     }
 
@@ -2599,7 +2599,7 @@ f4_do_hex2(void)
 	if (!get_line()) {
 	    bu_log("Unexpected EOF while reading continuation card for CHEX2\n");
 	    bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
-		    group_id, comp_id, element_id);
+		   group_id, comp_id, element_id);
 	    bu_exit(1, "ERROR: unexpected end-of-file encountered\n");
 	}
 	return;
@@ -2616,7 +2616,7 @@ f4_do_hex2(void)
     if (!get_line()) {
 	bu_log("Unexpected EOF while reading continuation card for CHEX2\n");
 	bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
-		group_id, comp_id, element_id, cont1);
+	       group_id, comp_id, element_id, cont1);
 	bu_exit(1, "ERROR: unexpected end-of-file encountered\n");
     }
 
@@ -2626,7 +2626,7 @@ f4_do_hex2(void)
     if (cont1 != cont2) {
 	bu_log("Continuation card numbers do not match for CHEX2 element (%d vs %d)\n", cont1, cont2);
 	bu_log("\tskipping CHEX2 element: group_id = %d, comp_id = %d, element_id = %d\n",
-		group_id, comp_id, element_id);
+	       group_id, comp_id, element_id);
 	return;
     }
 
@@ -2667,7 +2667,7 @@ Process_hole_wall(void)
 	    mode = atoi(field);
 	    if (mode != 1 && mode != 2) {
 		bu_log("Illegal mode (%d) for group %d component %d, using volume mode\n",
-			mode, group_id, comp_id);
+		       mode, group_id, comp_id);
 		mode = 2;
 	    }
 	} else if (!strncmp(line, "ENDDATA", 7)) {
@@ -2896,41 +2896,41 @@ fix_regions(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 
 
 /*
-static void
-Post_process(char *output_file)
-{
-    struct db_i *dbip = (struct db_i *)NULL;
-    struct directory *dp = (struct directory *)NULL;
+  static void
+  Post_process(char *output_file)
+  {
+  struct db_i *dbip = (struct db_i *)NULL;
+  struct directory *dp = (struct directory *)NULL;
 
-    bu_log("Cleaning up please wait.....\n");
+  bu_log("Cleaning up please wait.....\n");
 
-    if ((dbip = db_open(output_file, "rw")) == DBI_NULL) {
-	bu_log("Cannot open %s, post processing not completed\n", output_file);
-	return;
-    }
+  if ((dbip = db_open(output_file, "rw")) == DBI_NULL) {
+  bu_log("Cannot open %s, post processing not completed\n", output_file);
+  return;
+  }
 
-    if (debug)
-	bu_log("Rescanning file\n");
+  if (debug)
+  bu_log("Rescanning file\n");
 
-    db_dirbuild(dbip);
+  db_dirbuild(dbip);
 
-    if (debug)
-	bu_log("looking up 'all'\n");
+  if (debug)
+  bu_log("looking up 'all'\n");
 
-    if ((dp=db_lookup(dbip, "all", 0)) == DIR_NULL) {
-	bu_log("Cannot find group 'all' in model, post processing not completed\n");
-	db_close(dbip);
-	return;
-    }
+  if ((dp=db_lookup(dbip, "all", 0)) == DIR_NULL) {
+  bu_log("Cannot find group 'all' in model, post processing not completed\n");
+  db_close(dbip);
+  return;
+  }
 
-    if (debug)
-	bu_log("Calling db_functree\n");
+  if (debug)
+  bu_log("Calling db_functree\n");
 
-    db_functree(dbip, dp, fix_regions, 0, &rt_uniresource, NULL);
+  db_functree(dbip, dp, fix_regions, 0, &rt_uniresource, NULL);
 
-    if (debug)
-	bu_log("Post-processing complete\n");
-}
+  if (debug)
+  bu_log("Post-processing complete\n");
+  }
 */
 
 
@@ -3089,8 +3089,8 @@ make_regions(void)
 	    }
 	    MK_REGION(fpout, &region, ptr1->name, ptr1->region_id, get_fast4_color(ptr1->region_id));
 
-		/* create new region by subtracting halfspace */
-		BU_LIST_INIT(&region.l);
+	    /* create new region by subtracting halfspace */
+	    BU_LIST_INIT(&region.l);
 	    if (mk_addmember(solids_name, &region.l, NULL, WMOP_UNION) == (struct wmember *)NULL)
 		bu_log("make_regions: mk_addmember failed to add %s to %s\n", solids_name, ptr1->name);
 
@@ -3192,7 +3192,7 @@ main(int argc, char **argv)
 	    case 'm':
 		if ((fp_muves=fopen(bu_optarg, "wb")) == (FILE *)NULL) {
 		    bu_log("Unable to open MUVES file (%s)\n\tno MUVES file created\n",
-			    bu_optarg);
+			   bu_optarg);
 		}
 		break;
 	    case 'o':	/* output a plotfile of original FASTGEN4 elements */

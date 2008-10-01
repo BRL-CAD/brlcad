@@ -28,7 +28,7 @@ EXTRA_DIST =
 else !ONLY_BENCHMARK
 
 SUBDIRS = \
-        3dm \
+	3dm \
 	comgeom \
 	iges \
 	intaval \

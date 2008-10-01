@@ -54,7 +54,7 @@ f2a(float f, char *s, int w, int d)
     if ( (sign = n) < 0 )	n = -n;		/* get sign.*/
     i = 0;			/* CONVERT to ASCII.*/
     do {
- 	s[i++] = n % 10 + '0';
+	s[i++] = n % 10 + '0';
 	if ( i == d )	s[i++] = '.';
     } while ( (n /= 10) > 0 );
     if ( i < d )		/* zero fill the d field if (f < 1).*/

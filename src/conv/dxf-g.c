@@ -2144,7 +2144,7 @@ drawString( char *theText, point_t firstAlignmentPoint, point_t secondAlignmentP
     stringLength = strlen( copyOfText );
 
     if ( horizAlignment == FIT && vertAlignment == BASELINE ) {
- 	/* fit along baseline */
+	/* fit along baseline */
 	VSUB2( diff, firstAlignmentPoint, secondAlignmentPoint );
 	allowedLength = MAGNITUDE( diff );
 	xScale = allowedLength / stringLength;
