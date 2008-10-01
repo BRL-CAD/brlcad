@@ -6,6 +6,7 @@ SUBDIRS = \
 	mgedrc \
 	oed \
 	pipes \
-	projection_shader 
+	projection_shader \
+	tire 
 
 include $(top_srcdir)/misc/Makefile.defs

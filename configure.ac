@@ -3723,6 +3723,8 @@ AC_CONFIG_FILES([
 	doc/docbook/articles/projection_shader/projection_shader_images/Makefile
 	doc/docbook/articles/oed/Makefile
 	doc/docbook/articles/oed/oed_images/Makefile
+	doc/docbook/articles/tire/Makefile
+	doc/docbook/articles/tire/tire_images/Makefile
 	doc/docbook/books/Makefile
 	doc/docbook/books/tutorial_series/Makefile
 	doc/docbook/books/tutorial_series/volumeIII_images/Makefile

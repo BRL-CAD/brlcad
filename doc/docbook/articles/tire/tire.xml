@@ -1,5 +1,5 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-"/usr/share/sgml/docbook/xml-dtd-4.4/docbookx.dtd">
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+"../../resources/standard/dtd/docbookx.dtd">
 <article>
   <articleinfo>
     <title>Vehicle Tire and Wheel Creation in BRL-CAD</title>
@@ -66,7 +66,7 @@
     <informalfigure>
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="tire_0001.png" format="PNG"></imagedata>
+	  <imagedata align = "center" fileref="../../articles/tire/tire_images/tire_0001.png" format="PNG"></imagedata>
 	</imageobject>
 	<caption>
 	  <para>
@@ -185,7 +185,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="tire_0002.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../articles/tire/tire_images/tire_0002.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -210,7 +210,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="tire_0003.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../articles/tire/tire_images/tire_0003.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -289,7 +289,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="tire_0004.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../articles/tire/tire_images/tire_0004.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -309,7 +309,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="tire_0005.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../articles/tire/tire_images/tire_0005.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -333,7 +333,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="tire_0006.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../articles/tire/tire_images/tire_0006.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -360,7 +360,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="tire_0007.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../articles/tire/tire_images/tire_0007.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -385,7 +385,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="tire_0008.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../articles/tire/tire_images/tire_0008.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -441,7 +441,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="tire_0009.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../articles/tire/tire_images/tire_0009.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -462,7 +462,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="tire_0010.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../articles/tire/tire_images/tire_0010.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -488,7 +488,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="tire_0011.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../articles/tire/tire_images/tire_0011.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -516,7 +516,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="tire_0012.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../articles/tire/tire_images/tire_0012.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -541,7 +541,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="tire_0013.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../articles/tire/tire_images/tire_0013.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -598,7 +598,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="tire_0014.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../articles/tire/tire_images/tire_0014.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
