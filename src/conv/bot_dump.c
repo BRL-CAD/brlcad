@@ -156,17 +156,17 @@ write_bot_sat(struct rt_bot_internal *bot, FILE *fp, char *name)
     first_coedge = curr_line_num;
     curr_loop_id = first_coedge+num_faces*7;
     for (i = 0; i < num_faces; i++) {
-	fprintf(fp, "-%d coedge $-1 $%d $%d $-1 $%d forward $%d $-1 #\n",
-		curr_line_num, curr_line_num+1, curr_line_num+2,
-		curr_line_num+num_faces*3, curr_loop_id);
+	fprintf( fp, "-%d coedge $-1 $%d $%d $%d $%d forward $%d $-1 #\n",
+		 curr_line_num, curr_line_num+1, curr_line_num+2, curr_line_num,
+		 curr_line_num+num_faces*3, curr_loop_id);
 	++curr_line_num;
-	fprintf(fp, "-%d coedge $-1 $%d $%d $-1 $%d forward $%d $-1 #\n",
-		curr_line_num, curr_line_num+1, curr_line_num-2,
-		curr_line_num+num_faces*3, curr_loop_id);
+	fprintf( fp, "-%d coedge $-1 $%d $%d $%d $%d forward $%d $-1 #\n",
+		 curr_line_num, curr_line_num+1, curr_line_num-1, curr_line_num,
+		 curr_line_num+num_faces*3, curr_loop_id);
 	++curr_line_num;
-	fprintf(fp, "-%d coedge $-1 $%d $%d $-1 $%d forward $%d $-1 #\n",
-		curr_line_num, curr_line_num-2, curr_line_num-1,
-		curr_line_num+num_faces*3,  curr_loop_id);
+	fprintf( fp, "-%d coedge $-1 $%d $%d $%d $%d forward $%d $-1 #\n",
+		 curr_line_num, curr_line_num-2, curr_line_num-1, curr_line_num,
+		 curr_line_num+num_faces*3,  curr_loop_id);
 	++curr_line_num;
 	++curr_loop_id;
     }
