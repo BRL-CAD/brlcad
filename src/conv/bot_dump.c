@@ -450,7 +450,7 @@ write_bot_stl_binary(struct rt_bot_internal *bot, int fd, char *name)
     lswap((unsigned int *)tot_buffer);
     write(fd, tot_buffer, 4);
 
-    /* Write out the vertex data for each triangl */
+    /* Write out the vertex data for each triangle */
     for (i = 0; i < num_faces; i++) {
 	float flts[12];
 	float *flt_ptr;
@@ -496,6 +496,26 @@ write_bot_stl_binary(struct rt_bot_internal *bot, int fd, char *name)
 	}
 	write(fd, vert_buffer, 50);
     }
+
+/* SHOULD RECONCILE THIS WITH THE ABOVE (from bot-raw) */
+/*     /\* Name *\/ */
+/*     memset(string, 0, 64); */
+/*     memcpy (string, name, strlen(name)); */
+/*     fwrite (string, 64, 1, fh); */
+
+/*     /\* Vertices *\/ */
+/*     fwrite (&num_vertices, sizeof(int), 1, fh); */
+/*     for (i = 0; i < num_vertices; i++) */
+/* 	for (n = 0; n < 3; n++) { */
+/* 	    v = (float)vertices[3*i+n] * 0.001; */
+/* 	    fwrite ( &v, sizeof(float), 1, fh); */
+/* 	} */
+
+/*     /\* Faces *\/ */
+/*     fwrite (&num_faces, sizeof(int), 1, fh); */
+/*     for (i = 0; i < num_faces; i++) */
+/* 	for (n = 0; n < 3; n++) */
+/* 	    fwrite (&faces[3*i+n], sizeof(int), 1, fh); */
 }
 
 
