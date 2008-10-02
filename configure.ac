@@ -3710,26 +3710,36 @@ AC_CONFIG_FILES([
 	doc/docbook/Makefile
         doc/docbook/articles/Makefile
 	doc/docbook/articles/build_pattern/Makefile
+	doc/docbook/articles/build_pattern/en/Makefile
 	doc/docbook/articles/build_pattern/build_pattern_images/Makefile
 	doc/docbook/articles/build_region/Makefile
+	doc/docbook/articles/build_region/en/Makefile
 	doc/docbook/articles/build_region/build_region_images/Makefile
 	doc/docbook/articles/ebm_primitive/Makefile
+	doc/docbook/articles/ebm_primitive/en/Makefile
 	doc/docbook/articles/ebm_primitive/ebm_primitive_images/Makefile
 	doc/docbook/articles/mgedrc/Makefile
+	doc/docbook/articles/mgedrc/en/Makefile
 	doc/docbook/articles/mgedrc/mgedrc_images/Makefile
 	doc/docbook/articles/pipes/Makefile
+	doc/docbook/articles/pipes/en/Makefile
 	doc/docbook/articles/pipes/pipe_images/Makefile
 	doc/docbook/articles/projection_shader/Makefile
+	doc/docbook/articles/projection_shader/en/Makefile
 	doc/docbook/articles/projection_shader/projection_shader_images/Makefile
 	doc/docbook/articles/oed/Makefile
+	doc/docbook/articles/oed/en/Makefile
 	doc/docbook/articles/oed/oed_images/Makefile
 	doc/docbook/articles/tire/Makefile
+	doc/docbook/articles/tire/en/Makefile
 	doc/docbook/articles/tire/tire_images/Makefile
 	doc/docbook/books/Makefile
 	doc/docbook/books/tutorial_series/Makefile
+	doc/docbook/books/tutorial_series/en/Makefile
 	doc/docbook/books/tutorial_series/volumeIII_images/Makefile
 	doc/docbook/lessons/Makefile
 	doc/docbook/lessons/mged/Makefile
+	doc/docbook/lessons/mged/en/Makefile
 	doc/docbook/lessons/mged/assigning_material_properties_and_raytracing_images/Makefile
 	doc/docbook/lessons/mged/creating_a_goblet_images/Makefile
 	doc/docbook/lessons/mged/creating_mug_images/Makefile
@@ -3747,6 +3757,7 @@ AC_CONFIG_FILES([
 	doc/docbook/lessons/mged/refining_mug_images/Makefile
 	doc/docbook/system/Makefile
 	doc/docbook/system/man1/Makefile
+	doc/docbook/system/man1/en/Makefile
 	doc/html/Makefile
 	doc/html/ReleaseNotes/Makefile
 	doc/html/ReleaseNotes/Rel5.0/Makefile
