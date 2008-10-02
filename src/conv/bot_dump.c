@@ -363,8 +363,6 @@ write_bot_obj(struct rt_bot_internal *bot, FILE *fp, char *name)
     v_offset += num_vertices;
 }
 
-#define DUMP_STL_NORMALS 0
-
 void
 write_bot_stl(struct rt_bot_internal *bot, FILE *fp, char *name)
 {
@@ -374,11 +372,9 @@ write_bot_stl(struct rt_bot_internal *bot, FILE *fp, char *name)
     point_t A;
     point_t B;
     point_t C;
-#if DUMP_STL_NORMALS
     vect_t BmA;
     vect_t CmA;
     vect_t norm;
-#endif
     register int i, vi;
 
     num_vertices = bot->num_vertices;
@@ -401,7 +397,6 @@ write_bot_stl(struct rt_bot_internal *bot, FILE *fp, char *name)
 	    VSCALE(C, C, mm2inches);
 	}
 
-#if DUMP_STL_NORMALS
 	VSUB2(BmA, B, A);
 	VSUB2(CmA, C, A);
 	if (bot->orientation != RT_BOT_CW) {
@@ -412,9 +407,6 @@ write_bot_stl(struct rt_bot_internal *bot, FILE *fp, char *name)
 	VUNITIZE(norm);
 
 	fprintf(fp, "  facet normal %lf %lf %lf\n", V3ARGS(norm));
-#else
-	fprintf(fp, "  facet\n");
-#endif
 	fprintf(fp, "    outer loop\n");
 	fprintf(fp, "      vertex %lf %lf %lf\n", V3ARGS(A));
 	fprintf(fp, "      vertex %lf %lf %lf\n", V3ARGS(B));
@@ -430,7 +422,7 @@ write_bot_stl_binary(struct rt_bot_internal *bot, int fd, char *name)
 {
     unsigned long num_vertices;
     fastf_t *vertices;
-    unsigned long num_faces, *faces;
+    int num_faces, *faces;
     point_t A;
     point_t B;
     point_t C;
@@ -444,11 +436,6 @@ write_bot_stl_binary(struct rt_bot_internal *bot, int fd, char *name)
     vertices = bot->vertices;
     num_faces = bot->num_faces;
     faces = bot->faces;
-
-    /* Write out number of triangles */
-    bu_plong(tot_buffer, num_faces);
-    lswap((unsigned int *)tot_buffer);
-    write(fd, tot_buffer, 4);
 
     /* Write out the vertex data for each triangle */
     for (i = 0; i < num_faces; i++) {
@@ -496,26 +483,6 @@ write_bot_stl_binary(struct rt_bot_internal *bot, int fd, char *name)
 	}
 	write(fd, vert_buffer, 50);
     }
-
-/* SHOULD RECONCILE THIS WITH THE ABOVE (from bot-raw) */
-/*     /\* Name *\/ */
-/*     memset(string, 0, 64); */
-/*     memcpy (string, name, strlen(name)); */
-/*     fwrite (string, 64, 1, fh); */
-
-/*     /\* Vertices *\/ */
-/*     fwrite (&num_vertices, sizeof(int), 1, fh); */
-/*     for (i = 0; i < num_vertices; i++) */
-/* 	for (n = 0; n < 3; n++) { */
-/* 	    v = (float)vertices[3*i+n] * 0.001; */
-/* 	    fwrite ( &v, sizeof(float), 1, fh); */
-/* 	} */
-
-/*     /\* Faces *\/ */
-/*     fwrite (&num_faces, sizeof(int), 1, fh); */
-/*     for (i = 0; i < num_faces; i++) */
-/* 	for (n = 0; n < 3; n++) */
-/* 	    fwrite (&faces[3*i+n], sizeof(int), 1, fh); */
 }
 
 
@@ -724,6 +691,7 @@ main(int argc, char *argv[])
 
 	    if (binary && output_type == OTYPE_STL) {
 		char buf[81];	/* need exactly 80 chars for header */
+		unsigned char tot_buffer[4];
 
 		if ((fd=open(bu_vls_addr(&file_name), O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0) {
 		    perror(bu_vls_addr(&file_name));
@@ -739,7 +707,19 @@ main(int argc, char *argv[])
 		}
 		write(fd, &buf, 80);
 
+		/* write a place keeper for the number of triangles */
+		memset(buf, 0, 4);
+		write(fd, &buf, 4);
+
 		write_bot_stl_binary(bot, fd, dp->d_namep);
+
+		/* Re-position pointer to 80th byte */
+		lseek(fd, 80, SEEK_SET);
+
+		/* Write out number of triangles */
+		bu_plong(tot_buffer, (unsigned long)total_faces);
+		lswap((unsigned int *)tot_buffer);
+		write(fd, tot_buffer, 4);
 
 		close(fd);
 	    } else {
@@ -819,6 +799,7 @@ main(int argc, char *argv[])
 	    bu_plong(tot_buffer, (unsigned long)total_faces);
 	    lswap((unsigned int *)tot_buffer);
 	    write(fd, tot_buffer, 4);
+
 	    close(fd);
 	} else {
 	    /* end of layers section, start of ENTITIES SECTION */
