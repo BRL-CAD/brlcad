@@ -38,10 +38,10 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-#define V3ARGSIN(_a)       (_a)[X]*mm2inches, (_a)[Y]*mm2inches, (_a)[Z]*mm2inches
+#define V3ARGS_SCALE(_a)       (_a)[X]*cfactor, (_a)[Y]*cfactor, (_a)[Z]*cfactor
 
 static char usage[] = "\
-Usage: %s [-b] [-i] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-v] geom.g\n";
+Usage: %s [-b] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] [-v] geom.g\n";
 
 enum otype {
     OTYPE_DXF = 1,
@@ -51,9 +51,8 @@ enum otype {
 };
 
 static enum otype output_type = OTYPE_STL;
-static fastf_t mm2inches = 1.0/25.4;
 static int binary = 0;
-static int inches = 0;
+static fastf_t cfactor = 1.0;
 static int verbose = 0;
 static int v_offset = 1;
 static char *output_file = NULL;	/* output filename */
@@ -143,11 +142,7 @@ write_bot_sat(struct rt_bot_internal *bot, FILE *fp, char *name)
     /* Dump out points */
     first_pt = curr_line_num;
     for (i = 0; i < num_vertices; i++) {
-	if (inches)
-	    fprintf(fp, "-%d point $-1 %f %f %f #\n", curr_line_num, V3ARGSIN(&vertices[3*i]));
-	else
-	    fprintf(fp, "-%d point $-1 %f %f %f #\n", curr_line_num, V3ARGS(&vertices[3*i]));
-
+	fprintf(fp, "-%d point $-1 %f %f %f #\n", curr_line_num, V3ARGS_SCALE(&vertices[3*i]));
 	++curr_line_num;
     }
     last_pt = curr_line_num-1;
@@ -237,11 +232,11 @@ write_bot_sat(struct rt_bot_internal *bot, FILE *fp, char *name)
 	VUNITIZE(CmB);
 	VUNITIZE(AmC);
 
-	fprintf(fp, "-%d straight-curve $-1 %f %f %f %f %f %f I I #\n", curr_line_num, V3ARGS(A), V3ARGS(BmA));
+	fprintf(fp, "-%d straight-curve $-1 %f %f %f %f %f %f I I #\n", curr_line_num, V3ARGS_SCALE(A), V3ARGS(BmA));
 	++curr_line_num;
-	fprintf(fp, "-%d straight-curve $-1 %f %f %f %f %f %f I I #\n", curr_line_num, V3ARGS(B), V3ARGS(CmB));
+	fprintf(fp, "-%d straight-curve $-1 %f %f %f %f %f %f I I #\n", curr_line_num, V3ARGS_SCALE(B), V3ARGS(CmB));
 	++curr_line_num;
-	fprintf(fp, "-%d straight-curve $-1 %f %f %f %f %f %f I I #\n", curr_line_num, V3ARGS(C), V3ARGS(AmC));
+	fprintf(fp, "-%d straight-curve $-1 %f %f %f %f %f %f I I #\n", curr_line_num, V3ARGS_SCALE(C), V3ARGS(AmC));
 	++curr_line_num;
     }
 
@@ -279,7 +274,7 @@ write_bot_sat(struct rt_bot_internal *bot, FILE *fp, char *name)
 	VUNITIZE(BmA);
 
 	fprintf(fp, "-%d plane-surface $-1 %f %f %f %f %f %f %f %f %f forward_v I I I I #\n",
-		curr_line_num, V3ARGS(A), V3ARGS(norm), V3ARGS(BmA));
+		curr_line_num, V3ARGS_SCALE(A), V3ARGS(norm), V3ARGS(BmA));
 
 	++curr_line_num;
     }
@@ -309,11 +304,9 @@ write_bot_dxf(struct rt_bot_internal *bot, FILE *fp, char *name)
 	vi = 3*faces[3*i+2];
 	VSET(C, vertices[vi], vertices[vi+1], vertices[vi+2]);
 
-	if (inches) {
-	    VSCALE(A, A, mm2inches);
-	    VSCALE(B, B, mm2inches);
-	    VSCALE(C, C, mm2inches);
-	}
+	VSCALE(A, A, cfactor);
+	VSCALE(B, B, cfactor);
+	VSCALE(C, C, cfactor);
 
 	fprintf(fp, "0\n3DFACE\n8\n%s\n62\n7\n", name);
 	fprintf(fp, "%d\n%f\n%d\n%f\n%d\n%f\n",
@@ -344,16 +337,7 @@ write_bot_obj(struct rt_bot_internal *bot, FILE *fp, char *name)
     fprintf(fp, "g %s\n", name);
 
     for (i = 0; i < num_vertices; i++) {
-	if (inches)
-	    fprintf(fp, "v %f %f %f\n",
-		    vertices[3*i]*mm2inches,
-		    vertices[3*i+1]*mm2inches,
-		    vertices[3*i+2]*mm2inches);
-	else
-	    fprintf(fp, "v %f %f %f\n",
-		    vertices[3*i],
-		    vertices[3*i+1],
-		    vertices[3*i+2]);
+	fprintf(fp, "v %f %f %f\n", V3ARGS_SCALE(&vertices[3*i]));
     }
 
     for (i = 0; i < num_faces; i++) {
@@ -391,12 +375,6 @@ write_bot_stl(struct rt_bot_internal *bot, FILE *fp, char *name)
 	vi = 3*faces[3*i+2];
 	VSET(C, vertices[vi], vertices[vi+1], vertices[vi+2]);
 
-	if (inches) {
-	    VSCALE(A, A, mm2inches);
-	    VSCALE(B, B, mm2inches);
-	    VSCALE(C, C, mm2inches);
-	}
-
 	VSUB2(BmA, B, A);
 	VSUB2(CmA, C, A);
 	if (bot->orientation != RT_BOT_CW) {
@@ -408,9 +386,9 @@ write_bot_stl(struct rt_bot_internal *bot, FILE *fp, char *name)
 
 	fprintf(fp, "  facet normal %lf %lf %lf\n", V3ARGS(norm));
 	fprintf(fp, "    outer loop\n");
-	fprintf(fp, "      vertex %lf %lf %lf\n", V3ARGS(A));
-	fprintf(fp, "      vertex %lf %lf %lf\n", V3ARGS(B));
-	fprintf(fp, "      vertex %lf %lf %lf\n", V3ARGS(C));
+	fprintf(fp, "      vertex %lf %lf %lf\n", V3ARGS_SCALE(A));
+	fprintf(fp, "      vertex %lf %lf %lf\n", V3ARGS_SCALE(B));
+	fprintf(fp, "      vertex %lf %lf %lf\n", V3ARGS_SCALE(C));
 	fprintf(fp, "    endloop\n");
 	fprintf(fp, "  endfacet\n");
     }
@@ -459,11 +437,9 @@ write_bot_stl_binary(struct rt_bot_internal *bot, int fd, char *name)
 	}
 	VUNITIZE(norm);
 
-	if (inches) {
-	    VSCALE(A, A, mm2inches);
-	    VSCALE(B, B, mm2inches);
-	    VSCALE(C, C, mm2inches);
-	}
+	VSCALE(A, A, cfactor);
+	VSCALE(B, B, cfactor);
+	VSCALE(C, C, cfactor);
 
 	memset(vert_buffer, 0, sizeof(vert_buffer));
 
@@ -510,13 +486,10 @@ main(int argc, char *argv[])
     bu_optind = 1;
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "bio:m:t:v")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "bo:m:t:u:v")) != EOF) {
 	switch (c) {
 	    case 'b':		/* Binary output file */
 		binary=1;
-		break;
-	    case 'i':
-		inches = 1;
 		break;
 	    case 'm':
 		output_directory = bu_optarg;
@@ -536,6 +509,13 @@ main(int argc, char *argv[])
 		    output_type = OTYPE_STL;
 		else
 		    bu_exit(1, usage, argv[0]);
+		break;
+	    case 'u':
+		if ((cfactor = bu_units_conversion(bu_optarg)) == 0.0)
+		    cfactor = 1.0;
+		else
+		    cfactor = 1.0 / cfactor;
+
 		break;
 	    case 'v':
 		verbose = 1;
@@ -577,11 +557,7 @@ main(int argc, char *argv[])
 
 	    /* Write out STL header if output file is binary */
 	    memset(buf, 0, sizeof(buf));
-	    if (inches) {
-		bu_strlcpy(buf, "BRL-CAD generated STL FILE (Units=inches)", sizeof(buf));
-	    } else {
-		bu_strlcpy(buf, "BRL-CAD generated STL FILE (Units=mm)", sizeof(buf));
-	    }
+	    bu_strlcpy(buf, "BRL-CAD generated STL FILE", sizeof(buf));
 	    write(fd, &buf, 80);
 
 	    /* write a place keeper for the number of triangles */
@@ -700,11 +676,7 @@ main(int argc, char *argv[])
 
 		/* Write out STL header */
 		memset(buf, 0, sizeof(buf));
-		if (inches) {
-		    bu_strlcpy(buf, "BRL-CAD generated STL FILE (Units=inches)", sizeof(buf));
-		} else {
-		    bu_strlcpy(buf, "BRL-CAD generated STL FILE (Units=mm)", sizeof(buf));
-		}
+		bu_strlcpy(buf, "BRL-CAD generated STL FILE", sizeof(buf));
 		write(fd, &buf, 80);
 
 		/* write a place keeper for the number of triangles */
