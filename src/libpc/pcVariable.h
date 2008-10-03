@@ -151,6 +151,7 @@ public:
     /* Value storing and restoring methods to assist in iteration */
     void store() { vcopy_ = value; }
     void restore() { value = vcopy_; }
+    T diff() { return vcopy_ - value; }
 
     /* Domain Modification methods */
     void addInterval(const Interval<T>);
@@ -467,7 +468,9 @@ Variable<T>& Variable<T>::operator++()
     if (I.inInterval(value)) {
 	return *this;
     } else {
-	value = D.getNextLow(value);
+	/* Temporary? fix for the boundary problem by not assigning
+	   Boundary values */
+	value = D.getNextLow(value) + I.getStep();
 	return *this;
     }
 };
@@ -518,7 +521,7 @@ template<class T>
 bool Variable<T>::atCriticalBelow()
 {
     T st = D.getInterval(vcopy_).getStep();
-    if (vcopy_ - value < st)
+    if (vcopy_ - value < st && vcopy_ -value > 0.0)
 	return true;
     else
 	return false;

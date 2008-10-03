@@ -47,10 +47,6 @@ public:
     typedef Variable<int> * Vi ;
     int A = ((Variable<int>*) vcset.getVariablebyID("A"))->getValue();
     int B = ((Vi) vcset.getVariablebyID("B"))->getValue();
-    //std::cout << "!== A  " << A << std::endl;
-    //std::cout << "!== B  " << B << std::endl;
-    //PC_PCSET_GETVAR(pcset, int, A);
-    //PC_PCSET_GETVAR(pcset, int, B);
     return (A * B == 12);
     }
 } f1;
@@ -60,10 +56,6 @@ public:
     typedef Variable<int> * Vi ;
     int B = ((Vi) vcset.getVariablebyID("B"))->getValue();
     int C = ((Vi) vcset.getVariablebyID("C"))->getValue();
-    //std::cout << "!== B  " << B << std::endl;
-    //std::cout << "!== C  " << C << std::endl;
-    //PC_PCSET_GETVAR(pcset, int, B);
-    //PC_PCSET_GETVAR(pcset, int, C);
     return (B + C < 5);
     }
 } f2;
@@ -74,8 +66,6 @@ public:
     typedef Variable<int> * Vi ;
     int A = ((Vi) vcset.getVariablebyID("A"))->getValue();
     int D = ((Vi) vcset.getVariablebyID("D"))->getValue();
-    //PC_PCSET_GETVAR(pcset, int, A);
-    //PC_PCSET_GETVAR(pcset, int, D);
     return (A - D == 2);
     }
 } f3;
@@ -86,8 +76,6 @@ public:
     typedef Variable<int> * Vi ;
     int C = ((Vi) vcset.getVariablebyID("C"))->getValue();
     int A = ((Vi) vcset.getVariablebyID("A"))->getValue();
-    //PC_PCSET_GETVAR(pcset, int, A);
-    //PC_PCSET_GETVAR(pcset, int, C);
     return (A * C == 4);
     }
 } f4;
@@ -121,7 +109,7 @@ int main()
     /* modify/access parameter property in vc_set using getParameter */
     vc_set.getParameter("G")->setConst(true);
 
-    /* Two solution methods */
+    /* Two solution methods*/ 
 
     GBTS.solve(vc_set,S1);
     std::cout << "\nSolution using Generic BackTracking Solver "
@@ -133,7 +121,6 @@ int main()
     std::cout << "\nSolution using Generic Solver "
               << GPCS.numChecks() << "\t" << GPCS.numSolutions() << std::endl;
     S1.cdisplay();
-
 
     pc_free_pcset(&pcs);
 #if 0    

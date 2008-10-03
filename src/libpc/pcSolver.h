@@ -92,22 +92,27 @@ void PCSolver<T>::initiate() {
 
 template <typename T>
 bool PCSolver<T>::generator() {
-    std::list<VariableAbstract *>::iterator i,j;
+    std::list<VariableAbstract *>::iterator i, j, k;
     bool atend = true;
     i = vars_.begin();
     j = vars_.end();
     typedef Variable<T> * Vp;
-    while (--j != i && (Vp (*j))->atCriticalBelow());
+    j--;
+    //while (--j != i && (Vp (*j))->atUpperBoundary());
+    while ((Vp (*j))->atCriticalBelow() && j != i ) j--;
     
-    for (; i != vars_.end(); ++i)
+    /*k = j;
+    for (; i != ++k; ++i)
+        //if (! (Vp (*i))->atUpperBoundary())
         if (! (Vp (*i))->atCriticalBelow())
 		atend = false;
-    if (atend)
+    if (atend)*/
+    if (i == j && (Vp (*i))->atCriticalBelow())
         return false;
     /* Increment one variable , set other variables to the first value */
     ++(*(Vp (*j)));
-    
     while (++j != vars_.end())
+	//(Vp (*j))->setValue((Vp (*j))->getFirst());
 	(Vp (*j))->restore();
     return true;
 }
@@ -119,7 +124,8 @@ bool PCSolver<T>::solve(VCSet & vcset, Solution<T>& S) {
     num_checks_ = 0;
     num_solutions_ = 0;
     solved_ = false;
-    
+
+    /** BEGIN DEBUG CODE */
     std::string av =""; /* Actual varying variables in the network */
     std::string ov = ""; /* Constant or non constrained variables */
 
@@ -127,24 +133,25 @@ bool PCSolver<T>::solve(VCSet & vcset, Solution<T>& S) {
 	if ( (*i)->isConstrained() == 1 && ! (*i)->isConst()) {
 	    av += (*i)->getID() + " ";
 	    vars_.push_back(*i);
+	    ((Variable<T> *) *i)->store();
 	} else {
 	    ov += (*i)->getID() + " ";
 	}
     std::cout << std::endl << "Generic Constraint Solution" <<std::endl;
     std::cout << "Actual Variables: " << av << std::endl;
     std::cout << "Other Variables: " << ov << std::endl;
+    /** END DEBUG CODE */
 
     initiate();
     while (generator()) {
 	++num_checks_;
-	/*std::cout << "Checking ";
+	std::cout << "Checking ";
 	std::list<VariableAbstract *>::iterator i = vcset.Vars.begin();
 	typedef Variable<T> * Vi;
 	for (; i != vcset.Vars.end(); ++i)
-	    std::cout <<  (Vi (*i))->getValue() << "\t";
-	std::cout << std::endl;*/
+	    std::cout <<  (Vi (*i))->diff() << "\t";
+	std::cout << std::endl;
 
-	std::cout << "+D++D++G+D++D+D\n";
 	if (vcset.check()) {
 	    S.addSolution(vcset.Vars);
 	    solved_ = true;
@@ -163,6 +170,7 @@ class GTSolver : public Solver
     typedef boost::graph_traits<Graph> GraphTraits;
     typedef typename GraphTraits::vertex_descriptor Vertex;
     typedef typename GraphTraits::edge_descriptor Edge;
+    typedef typename GraphTraits::vertex_iterator VertexIterator;
 
 public:
     GTSolver();
@@ -191,7 +199,7 @@ void GTSolver<T>::initiate() {
 
 template <typename T>
 bool GTSolver<T>::generator() {
-    typename GraphTraits::vertex_iterator vertex_v, vertex_u,vertex_end;
+    VertexIterator vertex_v, vertex_u,vertex_end;
     tie(vertex_u,vertex_v) = vertices(N->G);
     vertex_end = vertex_v;
     while (--vertex_v != vertex_u && N->G[*vertex_v]->atUpperBoundary());
