@@ -41,7 +41,7 @@
 #define V3ARGS_SCALE(_a)       (_a)[X]*cfactor, (_a)[Y]*cfactor, (_a)[Z]*cfactor
 
 static char usage[] = "\
-Usage: %s [-b] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] [-v] geom.g\n";
+Usage: %s [-b] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] [-v] geom.g [bot1 bot2 ...]\n";
 
 enum otype {
     OTYPE_DXF = 1,
@@ -57,6 +57,7 @@ static int verbose = 0;
 static int v_offset = 1;
 static char *output_file = NULL;	/* output filename */
 static char *output_directory = NULL;	/* directory name to hold output files */
+static unsigned int total_faces = 0;
 
 static int curr_line_num = 0;
 static int curr_body_id;
@@ -98,7 +99,6 @@ write_bot_sat(struct rt_bot_internal *bot, FILE *fp, char *name)
     int last_face;
     int first_loop;
     int last_loop;
-    int edge_id;
     int num_vertices = bot->num_vertices;
     int num_faces = bot->num_faces;
     int num_edges = num_faces*3;
@@ -213,7 +213,6 @@ write_bot_sat(struct rt_bot_internal *bot, FILE *fp, char *name)
 	point_t A;
 	point_t B;
 	point_t C;
-	point_t center;
 	vect_t BmA;
 	vect_t CmB;
 	vect_t AmC;
@@ -408,7 +407,6 @@ write_bot_stl_binary(struct rt_bot_internal *bot, int fd, char *name)
     vect_t CmA;
     vect_t norm;
     register unsigned long i, j, vi;
-    unsigned char tot_buffer[4];
 
     num_vertices = bot->num_vertices;
     vertices = bot->vertices;
@@ -461,6 +459,123 @@ write_bot_stl_binary(struct rt_bot_internal *bot, int fd, char *name)
     }
 }
 
+void
+bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, struct bu_vls *file_name, const char *file_ext, const char *db_name)
+{
+    if (output_directory) {
+	char *cp;
+
+	bu_vls_trunc(file_name, 0);
+	bu_vls_strcpy(file_name, output_directory);
+	bu_vls_putc(file_name, '/');
+	cp = dp->d_namep;
+	cp++;
+	while (*cp != '\0') {
+	    if (*cp == '/') {
+		bu_vls_putc(file_name, '@');
+	    } else if (*cp == '.' || isspace(*cp)) {
+		bu_vls_putc(file_name, '_');
+	    } else {
+		bu_vls_putc(file_name, *cp);
+	    }
+	    cp++;
+	}
+	bu_vls_strcat(file_name, file_ext);
+
+	if (binary && output_type == OTYPE_STL) {
+	    char buf[81];	/* need exactly 80 chars for header */
+	    unsigned char tot_buffer[4];
+
+	    if ((fd=open(bu_vls_addr(file_name), O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0) {
+		perror(bu_vls_addr(file_name));
+		bu_exit(1, "Cannot open binary output file (%s) for writing\n", bu_vls_addr(file_name));
+	    }
+
+	    /* Write out STL header */
+	    memset(buf, 0, sizeof(buf));
+	    bu_strlcpy(buf, "BRL-CAD generated STL FILE", sizeof(buf));
+	    write(fd, &buf, 80);
+
+	    /* write a place keeper for the number of triangles */
+	    memset(buf, 0, 4);
+	    write(fd, &buf, 4);
+
+	    write_bot_stl_binary(bot, fd, dp->d_namep);
+
+	    /* Re-position pointer to 80th byte */
+	    lseek(fd, 80, SEEK_SET);
+
+	    /* Write out number of triangles */
+	    bu_plong(tot_buffer, (unsigned long)total_faces);
+	    lswap((unsigned int *)tot_buffer);
+	    write(fd, tot_buffer, 4);
+
+	    close(fd);
+	} else {
+	    if ((fp=fopen(bu_vls_addr(file_name), "wb+")) == NULL) {
+		perror(bu_vls_addr(file_name));
+		bu_exit(1, "Cannot open ASCII output file (%s) for writing\n", bu_vls_addr(file_name));
+	    }
+
+	    switch (output_type) {
+	    case OTYPE_DXF:
+		fprintf(fp,
+			"0\nSECTION\n2\nHEADER\n999\n%s (BOT from %s)\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n",
+			dp->d_namep, db_name);
+		write_bot_dxf(bot, fp, dp->d_namep);
+		fprintf(fp, "0\nENDSEC\n0\nEOF\n");
+		break;
+	    case OTYPE_OBJ:
+		v_offset = 1;
+		write_bot_obj(bot, fp, dp->d_namep);
+		break;
+	    case OTYPE_SAT:
+		curr_line_num = 0;
+
+		fprintf(fp, "400 0 1 0\n");
+		/*XXX Temporarily hardwired */
+#if 1
+		fprintf(fp, "37 SolidWorks(2008000)-Sat-Convertor-2.0 11 ACIS 8.0 NT 24 Wed Dec 03 09:26:53 2003\n");
+#else
+		fprintf(fp, "08 BRL-CAD-bot_dump-4.0 11 ACIS 4.0 NT 24 Thur Sep 25 15:00:00 2008\n");
+#endif
+		fprintf(fp, "1 9.9999999999999995e-007 1e-010\n");
+
+		write_bot_sat(bot, fp, dp->d_namep);
+		fprintf(fp, "End-of-ACIS-data\n");
+		break;
+	    case OTYPE_STL:
+	    default:
+		write_bot_stl(bot, fp, dp->d_namep);
+		break;
+	    }
+
+	    fclose(fp);
+	}
+    } else {
+	if (binary && output_type == OTYPE_STL) {
+	    total_faces += bot->num_faces;
+	    write_bot_stl_binary(bot, fd, dp->d_namep);
+	} else {
+	    switch (output_type) {
+	    case OTYPE_DXF:
+		write_bot_dxf(bot, fp, dp->d_namep);
+		break;
+	    case OTYPE_OBJ:
+		write_bot_obj(bot, fp, dp->d_namep);
+		break;
+	    case OTYPE_SAT:
+		write_bot_sat(bot, fp, dp->d_namep);
+		break;
+	    case OTYPE_STL:
+	    default:
+		write_bot_stl(bot, fp, dp->d_namep);
+		break;
+	    }
+	}
+    }
+}
+
 
 /*
  *	M A I N
@@ -475,13 +590,14 @@ main(int argc, char *argv[])
     struct rt_i *rtip;
     struct directory *dp;
     struct bu_vls file_name;
-    char *file_ext;
-    FILE *fp;
-    int fd;
+    char *file_ext = '\0';
+    FILE *fp = (FILE *)0;
+    int fd = -1;
     char c;
     mat_t mat;
-    int i;
-    unsigned int total_faces = 0;
+    register int i;
+    char *db_name;
+    char *cmd_name;
 
     bu_optind = 1;
 
@@ -594,15 +710,27 @@ main(int argc, char *argv[])
 	}
     }
 
-    /* Open brl-cad database */
+    /* save the command name */
+    cmd_name = argv[0];
+
+    /* skip past the command name and optional args */
     argc -= bu_optind;
     argv += bu_optind;
 
     RT_INIT_DB_INTERNAL(&intern);
+
+    /* Open brl-cad database */
     if ((rtip=rt_dirbuild(argv[0], idbuf, sizeof(idbuf)))==RTI_NULL) {
 	fprintf(stderr, "rtexample: rt_dirbuild failure\n");
 	return 2;
     }
+
+    /* save the database name */
+    db_name = argv[0];
+
+    /* skip past the database name */
+    --argc;
+    ++argv;
 
     MAT_IDN(mat);
 
@@ -624,141 +752,62 @@ main(int argc, char *argv[])
 	}
     }
 
-    /* dump all the bots */
-    FOR_ALL_DIRECTORY_START(dp, rtip->rti_dbip) {
+    if (argc < 1) {
+	/* dump all the bots */
+	FOR_ALL_DIRECTORY_START(dp, rtip->rti_dbip) {
 
-	/* we only dump BOT primitives, so skip some obvious exceptions */
-	if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD) continue;
-	if (dp->d_flags & DIR_COMB) continue;
+	    /* we only dump BOT primitives, so skip some obvious exceptions */
+	    if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD) continue;
+	    if (dp->d_flags & DIR_COMB) continue;
 
-	/* get the internal form */
-	i=rt_db_get_internal(&intern, dp, rtip->rti_dbip, mat, &rt_uniresource);
+	    /* get the internal form */
+	    i=rt_db_get_internal(&intern, dp, rtip->rti_dbip, mat, &rt_uniresource);
 
-	if (i < 0) {
-	    fprintf(stderr, "rt_get_internal failure %d on %s\n", i, dp->d_namep);
-	    continue;
-	}
-
-	if (i != ID_BOT) {
-	    continue;
-	}
-
-	bot = (struct rt_bot_internal *)intern.idb_ptr;
-
-	if (output_directory) {
-	    char *cp;
-
-	    bu_vls_trunc(&file_name, 0);
-	    bu_vls_strcpy(&file_name, output_directory);
-	    bu_vls_putc(&file_name, '/');
-	    cp = dp->d_namep;
-	    cp++;
-	    while (*cp != '\0') {
-		if (*cp == '/') {
-		    bu_vls_putc(&file_name, '@');
-		} else if (*cp == '.' || isspace(*cp)) {
-		    bu_vls_putc(&file_name, '_');
-		} else {
-		    bu_vls_putc(&file_name, *cp);
-		}
-		cp++;
+	    if (i < 0) {
+		fprintf(stderr, "%s: rt_get_internal failure %d on %s\n", cmd_name, i, dp->d_namep);
+		continue;
 	    }
-	    bu_vls_strcat(&file_name, file_ext);
 
-	    if (binary && output_type == OTYPE_STL) {
-		char buf[81];	/* need exactly 80 chars for header */
-		unsigned char tot_buffer[4];
-
-		if ((fd=open(bu_vls_addr(&file_name), O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0) {
-		    perror(bu_vls_addr(&file_name));
-		    bu_exit(1, "Cannot open binary output file (%s) for writing\n", bu_vls_addr(&file_name));
-		}
-
-		/* Write out STL header */
-		memset(buf, 0, sizeof(buf));
-		bu_strlcpy(buf, "BRL-CAD generated STL FILE", sizeof(buf));
-		write(fd, &buf, 80);
-
-		/* write a place keeper for the number of triangles */
-		memset(buf, 0, 4);
-		write(fd, &buf, 4);
-
-		write_bot_stl_binary(bot, fd, dp->d_namep);
-
-		/* Re-position pointer to 80th byte */
-		lseek(fd, 80, SEEK_SET);
-
-		/* Write out number of triangles */
-		bu_plong(tot_buffer, (unsigned long)total_faces);
-		lswap((unsigned int *)tot_buffer);
-		write(fd, tot_buffer, 4);
-
-		close(fd);
-	    } else {
-		if ((fp=fopen(bu_vls_addr(&file_name), "wb+")) == NULL) {
-		    perror(bu_vls_addr(&file_name));
-		    bu_exit(1, "Cannot open ASCII output file (%s) for writing\n", bu_vls_addr(&file_name));
-		}
-
-		switch (output_type) {
-		    case OTYPE_DXF:
-			fprintf(fp,
-				"0\nSECTION\n2\nHEADER\n999\n%s (BOT from %s)\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n",
-				dp->d_namep, argv[argc-1]);
-			write_bot_dxf(bot, fp, dp->d_namep);
-			fprintf(fp, "0\nENDSEC\n0\nEOF\n");
-			break;
-		    case OTYPE_OBJ:
-			v_offset = 1;
-			write_bot_obj(bot, fp, dp->d_namep);
-			break;
-		    case OTYPE_SAT:
-			curr_line_num = 0;
-
-			fprintf(fp, "400 0 1 0\n");
-			/*XXX Temporarily hardwired */
-#if 1
-			fprintf(fp, "37 SolidWorks(2008000)-Sat-Convertor-2.0 11 ACIS 8.0 NT 24 Wed Dec 03 09:26:53 2003\n");
-#else
-			fprintf(fp, "08 BRL-CAD-bot_dump-4.0 11 ACIS 4.0 NT 24 Thur Sep 25 15:00:00 2008\n");
-#endif
-			fprintf(fp, "1 9.9999999999999995e-007 1e-010\n");
-
-			write_bot_sat(bot, fp, dp->d_namep);
-			fprintf(fp, "End-of-ACIS-data\n");
-			break;
-		    case OTYPE_STL:
-		    default:
-			write_bot_stl(bot, fp, dp->d_namep);
-			break;
-		}
-
-		fclose(fp);
+	    if (i != ID_BOT) {
+		continue;
 	    }
-	} else {
-	    if (binary && output_type == OTYPE_STL) {
-		total_faces += bot->num_faces;
-		write_bot_stl_binary(bot, fd, dp->d_namep);
-	    } else {
-		switch (output_type) {
-		    case OTYPE_DXF:
-			write_bot_dxf(bot, fp, dp->d_namep);
-			break;
-		    case OTYPE_OBJ:
-			write_bot_obj(bot, fp, dp->d_namep);
-			break;
-		    case OTYPE_SAT:
-			write_bot_sat(bot, fp, dp->d_namep);
-			break;
-		    case OTYPE_STL:
-		    default:
-			write_bot_stl(bot, fp, dp->d_namep);
-			break;
-		}
+
+	    bot = (struct rt_bot_internal *)intern.idb_ptr;
+	    bot_dump(dp, bot, fp, fd, &file_name, file_ext, db_name);
+
+	} FOR_ALL_DIRECTORY_END;
+    } else {
+	/* dump only the specified bots */
+	for (i = 0; i < argc; ++i) {
+	    int ret;
+
+	    if ((dp=db_lookup(rtip->rti_dbip, argv[i], LOOKUP_QUIET)) == DIR_NULL) {
+		fprintf(stderr, "%s: db_lookup failed on %s\n", cmd_name, argv[i]);
+		continue;
 	    }
+
+	    /* we only dump BOT primitives, so skip some obvious exceptions */
+	    if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD) continue;
+	    if (dp->d_flags & DIR_COMB) continue;
+
+	    /* get the internal form */
+	    ret=rt_db_get_internal(&intern, dp, rtip->rti_dbip, mat, &rt_uniresource);
+
+	    if (ret < 0) {
+		fprintf(stderr, "%s: rt_get_internal failure %d on %s\n", cmd_name, ret, dp->d_namep);
+		continue;
+	    }
+
+	    if (ret != ID_BOT) {
+		fprintf(stderr, "%s: %s is not a bot (ignored)\n", cmd_name, argv[i]);
+		continue;
+	    }
+
+	    bot = (struct rt_bot_internal *)intern.idb_ptr;
+	    bot_dump(dp, bot, fp, fd, &file_name, file_ext, db_name);
 	}
+    }
 
-    } FOR_ALL_DIRECTORY_END;
 
     if (output_file) {
 	if (binary && output_type == OTYPE_STL) {
