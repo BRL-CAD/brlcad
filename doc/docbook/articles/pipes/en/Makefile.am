@@ -27,10 +27,10 @@ BUILTPDF = ${pipesDOCBOOK:xml=pdf}
 
 endif
 
-pipesDOCBOOKhtmldir = $(BRLCAD_DATA)/html/articles/pipes
+pipesDOCBOOKhtmldir = $(BRLCAD_DATA)/html/articles/pipes/en
 pipesDOCBOOKhtml_DATA = $(BUILTHTML)
 
-pipesDOCBOOKpdfdir = $(BRLCAD_DATA)/pdf/articles/pipes
+pipesDOCBOOKpdfdir = $(BRLCAD_DATA)/pdf/articles/pipes/en
 pipesDOCBOOKpdf_DATA = $(BUILTPDF)
 
 BUILT_SOURCES = \

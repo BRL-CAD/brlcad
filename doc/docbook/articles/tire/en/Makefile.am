@@ -27,10 +27,10 @@ BUILTPDF = ${tireDOCBOOK:xml=pdf}
 
 endif
 
-tireDOCBOOKhtmldir = $(BRLCAD_DATA)/html/articles/tire
+tireDOCBOOKhtmldir = $(BRLCAD_DATA)/html/articles/tire/en
 tireDOCBOOKhtml_DATA = $(BUILTHTML)
 
-tireDOCBOOKpdfdir = $(BRLCAD_DATA)/pdf/articles/tire
+tireDOCBOOKpdfdir = $(BRLCAD_DATA)/pdf/articles/tire/en
 tireDOCBOOKpdf_DATA = $(BUILTPDF)
 
 BUILT_SOURCES = \

@@ -27,10 +27,10 @@ BUILTPDF = ${mgedrcDOCBOOK:xml=pdf}
 
 endif
 
-mgedrcDOCBOOKhtmldir = $(BRLCAD_DATA)/html/articles/mgedrc
+mgedrcDOCBOOKhtmldir = $(BRLCAD_DATA)/html/articles/mgedrc/en
 mgedrcDOCBOOKhtml_DATA = $(BUILTHTML)
 
-mgedrcDOCBOOKpdfdir = $(BRLCAD_DATA)/pdf/articles/mgedrc
+mgedrcDOCBOOKpdfdir = $(BRLCAD_DATA)/pdf/articles/mgedrc/en
 mgedrcDOCBOOKpdf_DATA = $(BUILTPDF)
 
 BUILT_SOURCES = \

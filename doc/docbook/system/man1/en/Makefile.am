@@ -24,7 +24,7 @@ man1DOCBOOK = \
 	all_sf.xml \
 	search.xml
 
-man1DOCBOOKhtmldir = $(BRLCAD_DATA)/html/man1
+man1DOCBOOKhtmldir = $(BRLCAD_DATA)/html/man1/en
 man1DOCBOOKhtml_DATA = $(BUILTHTML)
 
 BUILTHTML = \
@@ -37,7 +37,7 @@ BUILTPDF = ${man1DOCBOOK:xml=pdf}
 
 endif
 
-man1DOCBOOKpdfdir = $(BRLCAD_DATA)/pdf/man1
+man1DOCBOOKpdfdir = $(BRLCAD_DATA)/pdf/man1/en
 man1DOCBOOKpdf_DATA = $(BUILTPDF)
 
 BUILT_SOURCES = \

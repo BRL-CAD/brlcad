@@ -79,7 +79,7 @@
       <title>Example of pattern-generated assembly names.</title>
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../articles/build_pattern/build_pattern_images/figure1.png" format="PNG"></imagedata>
+	  <imagedata align = "center" fileref="../../../articles/build_pattern/build_pattern_images/figure1.png" format="PNG"></imagedata>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -124,7 +124,7 @@ part.s26 part.s26-1 part.s27 part.s28 part.s28+1 part.s28-1 part.s29
      Each element of the object must have the source string so the user must be
      thorough and name each primitive, region, and assembly properly. Consider
      the following example: 
-     <inlinegraphic fileref="../../articles/build_pattern/build_pattern_images/inline1.png" />
+     <inlinegraphic fileref="../../../articles/build_pattern/build_pattern_images/inline1.png" />
     </para>
     <para>
       Top-level duplications copy the patterned object and reference its entire 
@@ -178,7 +178,7 @@ part.s26 part.s26-1 part.s27 part.s28 part.s28+1 part.s28-1 part.s29
       <title>The user interface for building rectangular patterns.</title>
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../articles/build_pattern/build_pattern_images/figure2.png" format="PNG"></imagedata>
+	  <imagedata align = "center" fileref="../../../articles/build_pattern/build_pattern_images/figure2.png" format="PNG"></imagedata>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -232,7 +232,7 @@ part.s26 part.s26-1 part.s27 part.s28 part.s28+1 part.s28-1 part.s29
       <title>The user interface for building spherical patterns.</title>
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../articles/build_pattern/build_pattern_images/figure3.png" format="PNG"></imagedata>
+	  <imagedata align = "center" fileref="../../../articles/build_pattern/build_pattern_images/figure3.png" format="PNG"></imagedata>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -255,7 +255,7 @@ part.s26 part.s26-1 part.s27 part.s28 part.s28+1 part.s28-1 part.s29
       <title>Examples of different spherical pattern orientations.</title>
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../articles/build_pattern/build_pattern_images/figure4.png" format="PNG"></imagedata>
+	  <imagedata align = "center" fileref="../../../articles/build_pattern/build_pattern_images/figure4.png" format="PNG"></imagedata>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -265,7 +265,7 @@ part.s26 part.s26-1 part.s27 part.s28 part.s28+1 part.s28-1 part.s29
       <title>Implementation of spherical patterns.</title>
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../articles/build_pattern/build_pattern_images/figure5.png" format="PNG"></imagedata>
+	  <imagedata align = "center" fileref="../../../articles/build_pattern/build_pattern_images/figure5.png" format="PNG"></imagedata>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -290,7 +290,7 @@ part.s26 part.s26-1 part.s27 part.s28 part.s28+1 part.s28-1 part.s29
       <title>The user interface for building cylindrical patterns.</title>
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../articles/build_pattern/build_pattern_images/figure6.png" format="PNG"></imagedata>
+	  <imagedata align = "center" fileref="../../../articles/build_pattern/build_pattern_images/figure6.png" format="PNG"></imagedata>
 	</imageobject>
       </mediaobject>
     </figure>

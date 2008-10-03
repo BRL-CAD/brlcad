@@ -74,7 +74,7 @@
     
     <para>
     <screenshot>
-      <graphic align = "center" fileref="../../articles/oed/oed_images/lollipop.png"></graphic>
+      <graphic align = "center" fileref="../../../articles/oed/oed_images/lollipop.png"></graphic>
     </screenshot>
     </para>
 
@@ -221,7 +221,7 @@ lollipop/
     
     <para>
       <screenshot>
-	<graphic align="center" fileref="../../articles/oed/oed_images/oed_0001.png"></graphic>
+	<graphic align="center" fileref="../../../articles/oed/oed_images/oed_0001.png"></graphic>
       </screenshot>
     </para>
     
@@ -284,7 +284,7 @@ cube.s:  ARB8
 
     <para>
       <screenshot>
-	<graphic align="center" fileref="../../articles/oed/oed_images/oed_0002.png"></graphic>
+	<graphic align="center" fileref="../../../articles/oed/oed_images/oed_0002.png"></graphic>
       </screenshot>
     </para>
 
@@ -297,7 +297,7 @@ cube.s:  ARB8
 
     <para>
       <screenshot>
-	<graphic align="center" fileref="../../articles/oed/oed_images/oed_0003.png"></graphic>
+	<graphic align="center" fileref="../../../articles/oed/oed_images/oed_0003.png"></graphic>
       </screenshot>
     </para>
 
@@ -309,7 +309,7 @@ cube.s:  ARB8
 
     <para>
       <screenshot>
-	<graphic align="center" fileref="../../articles/oed/oed_images/oed_0004.png"></graphic>
+	<graphic align="center" fileref="../../../articles/oed/oed_images/oed_0004.png"></graphic>
       </screenshot>
     </para>
     
@@ -360,7 +360,7 @@ cube.s:  ARB8
     
     <para>
       <screenshot>
-	<graphic align="center" fileref="../../articles/oed/oed_images/oed_0005.png"></graphic>
+	<graphic align="center" fileref="../../../articles/oed/oed_images/oed_0005.png"></graphic>
       </screenshot>
     </para>
     
@@ -488,7 +488,7 @@ cube.s:  ARB8
     
     <para>
       <screenshot>
-	<graphic align="center" fileref="../../articles/oed/oed_images/oed_0006.png"></graphic>
+	<graphic align="center" fileref="../../../articles/oed/oed_images/oed_0006.png"></graphic>
       </screenshot>
     </para>
     
@@ -529,7 +529,7 @@ cube.s:  ARB8
     
     <para>
       <screenshot>
-	<graphic align="center" fileref="../../articles/oed/oed_images/oed_0007.png"></graphic>
+	<graphic align="center" fileref="../../../articles/oed/oed_images/oed_0007.png"></graphic>
       </screenshot>
     </para>
     
@@ -601,7 +601,7 @@ object2.c:  --
     <literallayout class="monospaced">accept</literallayout>
 
     <screenshot>
-      <graphic align="center" fileref="../../articles/oed/oed_images/oed_0008.png"></graphic>
+      <graphic align="center" fileref="../../../articles/oed/oed_images/oed_0008.png"></graphic>
     </screenshot>
         
     <literallayout class="monospaced">
@@ -638,7 +638,7 @@ object2.c:  --
     
     <para>
       <screenshot>
-	<graphic align="center" fileref="../../articles/oed/oed_images/oed_0009.png"></graphic>
+	<graphic align="center" fileref="../../../articles/oed/oed_images/oed_0009.png"></graphic>
       </screenshot>
     </para>
     
@@ -688,7 +688,7 @@ object1.c:  --
 
     <para>
       <screenshot>
-	<graphic align="center" fileref="../../articles/oed/oed_images/oed_0010.png"></graphic>
+	<graphic align="center" fileref="../../../articles/oed/oed_images/oed_0010.png"></graphic>
       </screenshot>
     </para>
 
@@ -703,7 +703,7 @@ object1.c:  --
 
     <para>
       <screenshot>
-	<graphic align="center" fileref="../../articles/oed/oed_images/oed_0011.png"></graphic>
+	<graphic align="center" fileref="../../../articles/oed/oed_images/oed_0011.png"></graphic>
       </screenshot>
     </para>
     
@@ -769,7 +769,7 @@ object1.c:  --
     <literallayout class="monospaced">B bigobject.r</literallayout>
 
     <screenshot>
-      <graphic align="center" fileref="../../articles/oed/oed_images/oed_0012.png"></graphic>
+      <graphic align="center" fileref="../../../articles/oed/oed_images/oed_0012.png"></graphic>
     </screenshot>
     </para>
 

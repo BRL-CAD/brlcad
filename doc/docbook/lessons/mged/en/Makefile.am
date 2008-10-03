@@ -42,10 +42,10 @@ BUILTPDF = ${lessonsDOCBOOK:xml=pdf}
 
 endif
 
-lessonsDOCBOOKhtmldir = $(BRLCAD_DATA)/html/lessons/mged
+lessonsDOCBOOKhtmldir = $(BRLCAD_DATA)/html/lessons/mged/en
 lessonsDOCBOOKhtml_DATA = $(BUILTHTML)
 
-lessonsDOCBOOKpdfdir = $(BRLCAD_DATA)/pdf/lessons/mged
+lessonsDOCBOOKpdfdir = $(BRLCAD_DATA)/pdf/lessons/mged/en
 lessonsDOCBOOKpdf_DATA = $(BUILTPDF)
 
 BUILT_SOURCES = \

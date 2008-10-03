@@ -116,7 +116,7 @@
 	<informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/mged/learning_boolean_expressions_images/unionspheres.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/learning_boolean_expressions_images/unionspheres.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -148,7 +148,7 @@
 	<informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/mged/learning_boolean_expressions_images/subtractionspheres.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/learning_boolean_expressions_images/subtractionspheres.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -188,7 +188,7 @@
 	<informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/mged/learning_boolean_expressions_images/intersectionspheres.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/learning_boolean_expressions_images/intersectionspheres.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -224,7 +224,7 @@
 	<informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/mged/learning_boolean_expressions_images/twoprimitivespheres.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/learning_boolean_expressions_images/twoprimitivespheres.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -288,7 +288,7 @@
 	<informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/mged/learning_boolean_expressions_images/combinationeditor.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/learning_boolean_expressions_images/combinationeditor.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -328,8 +328,8 @@
 	<tgroup cols='2'>
 	  <tbody>
 	    <row>
-	      <entry><inlinegraphic fileref="../../lessons/mged/learning_boolean_expressions_images/raytracedpart1.png" /></entry>
-	      <entry><inlinegraphic fileref="../../lessons/mged/learning_boolean_expressions_images/raytracedpart2.png" /></entry>
+	      <entry><inlinegraphic fileref="../../../lessons/mged/learning_boolean_expressions_images/raytracedpart1.png" /></entry>
+	      <entry><inlinegraphic fileref="../../../lessons/mged/learning_boolean_expressions_images/raytracedpart2.png" /></entry>
 	    </row>
 	    <row>
 	      <entry>Raytraced part1.r</entry>
@@ -408,7 +408,7 @@
 	<informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/mged/learning_boolean_expressions_images/raytracedpart3.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/learning_boolean_expressions_images/raytracedpart3.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -475,7 +475,7 @@
 	<informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../lessons/mged/learning_boolean_expressions_images/raytraceddome.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/learning_boolean_expressions_images/raytraceddome.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>

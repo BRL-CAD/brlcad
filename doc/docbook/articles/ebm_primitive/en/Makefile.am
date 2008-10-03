@@ -27,10 +27,10 @@ BUILTPDF = ${ebm_primitiveDOCBOOK:xml=pdf}
 
 endif
 
-ebm_primitiveDOCBOOKhtmldir = $(BRLCAD_DATA)/html/articles/ebm_primitive
+ebm_primitiveDOCBOOKhtmldir = $(BRLCAD_DATA)/html/articles/ebm_primitive/en
 ebm_primitiveDOCBOOKhtml_DATA = $(BUILTHTML)
 
-ebm_primitiveDOCBOOKpdfdir = $(BRLCAD_DATA)/pdf/articles/ebm_primitive
+ebm_primitiveDOCBOOKpdfdir = $(BRLCAD_DATA)/pdf/articles/ebm_primitive/en
 ebm_primitiveDOCBOOKpdf_DATA = $(BUILTPDF)
 
 BUILT_SOURCES = \

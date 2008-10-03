@@ -27,10 +27,10 @@ BUILTPDF = ${oedDOCBOOK:xml=pdf}
 
 endif
 
-oedDOCBOOKhtmldir = $(BRLCAD_DATA)/html/articles/oed
+oedDOCBOOKhtmldir = $(BRLCAD_DATA)/html/articles/oed/en
 oedDOCBOOKhtml_DATA = $(BUILTHTML)
 
-oedDOCBOOKpdfdir = $(BRLCAD_DATA)/pdf/articles/oed
+oedDOCBOOKpdfdir = $(BRLCAD_DATA)/pdf/articles/oed/en
 oedDOCBOOKpdf_DATA = $(BUILTPDF)
 
 BUILT_SOURCES = \

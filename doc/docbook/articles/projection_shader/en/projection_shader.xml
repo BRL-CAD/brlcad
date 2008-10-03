@@ -28,7 +28,7 @@
       <title>The many components of a circuit board.</title>
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../articles/projection_shader/projection_shader_images/figure1.png" format="PNG"></imagedata>
+	  <imagedata align = "center" fileref="../../../articles/projection_shader/projection_shader_images/figure1.png" format="PNG"></imagedata>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -167,7 +167,7 @@
       <title>Using the Raytrace Control Panel to size the graphics window.</title>
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../articles/projection_shader/projection_shader_images/figure2.png" format="PNG"></imagedata>
+	  <imagedata align = "center" fileref="../../../articles/projection_shader/projection_shader_images/figure2.png" format="PNG"></imagedata>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -295,7 +295,7 @@ Diagrammed, this command breaks down as follows:
       <title>Fitting the geometry view to the image dimensions.</title>
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../articles/projection_shader/projection_shader_images/figure3.png" format="PNG"></imagedata>
+	  <imagedata align = "center" fileref="../../../articles/projection_shader/projection_shader_images/figure3.png" format="PNG"></imagedata>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -333,7 +333,7 @@ Diagrammed, this command breaks down as follows:
       <title>Applying the shader settings with the combination editor.</title>
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../articles/projection_shader/projection_shader_images/figure4.png" format="PNG"></imagedata>
+	  <imagedata align = "center" fileref="../../../articles/projection_shader/projection_shader_images/figure4.png" format="PNG"></imagedata>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -342,7 +342,7 @@ Diagrammed, this command breaks down as follows:
       <title>Original image (left) and image with circular cutouts (right).</title>
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../articles/projection_shader/projection_shader_images/figure5.png" format="PNG"></imagedata>
+	  <imagedata align = "center" fileref="../../../articles/projection_shader/projection_shader_images/figure5.png" format="PNG"></imagedata>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -367,7 +367,7 @@ prj_add circuitboard.prj circuit_front_950.pix 950 950
       <title>The projection shader applied to the front of the circuit board.</title>
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../articles/projection_shader/projection_shader_images/figure6.png" format="PNG"></imagedata>
+	  <imagedata align = "center" fileref="../../../articles/projection_shader/projection_shader_images/figure6.png" format="PNG"></imagedata>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -380,7 +380,7 @@ prj_add circuitboard.prj circuit_front_950.pix 950 950
       <title>The circuit board .prj file.</title>
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="../../articles/projection_shader/projection_shader_images/figure7.png" format="PNG"></imagedata>
+	  <imagedata align = "center" fileref="../../../articles/projection_shader/projection_shader_images/figure7.png" format="PNG"></imagedata>
 	</imageobject>
       </mediaobject>
     </figure>

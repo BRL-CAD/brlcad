@@ -27,10 +27,10 @@ BUILTPDF = ${build_patternDOCBOOK:xml=pdf}
 
 endif
 
-build_patternDOCBOOKhtmldir = $(BRLCAD_DATA)/html/articles/build_pattern
+build_patternDOCBOOKhtmldir = $(BRLCAD_DATA)/html/articles/build_pattern/en
 build_patternDOCBOOKhtml_DATA = $(BUILTHTML)
 
-build_patternDOCBOOKpdfdir = $(BRLCAD_DATA)/pdf/articles/build_pattern
+build_patternDOCBOOKpdfdir = $(BRLCAD_DATA)/pdf/articles/build_pattern/en
 build_patternDOCBOOKpdf_DATA = $(BUILTPDF)
 
 BUILT_SOURCES = \

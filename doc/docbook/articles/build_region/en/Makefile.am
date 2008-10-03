@@ -27,10 +27,10 @@ BUILTPDF = ${build_regionDOCBOOK:xml=pdf}
 
 endif
 
-build_regionDOCBOOKhtmldir = $(BRLCAD_DATA)/html/articles/build_region
+build_regionDOCBOOKhtmldir = $(BRLCAD_DATA)/html/articles/build_region/en
 build_regionDOCBOOKhtml_DATA = $(BUILTHTML)
 
-build_regionDOCBOOKpdfdir = $(BRLCAD_DATA)/pdf/articles/build_region
+build_regionDOCBOOKpdfdir = $(BRLCAD_DATA)/pdf/articles/build_region/en
 build_regionDOCBOOKpdf_DATA = $(BUILTPDF)
 
 BUILT_SOURCES = \

@@ -27,10 +27,10 @@ BUILTPDF = ${projection_shaderDOCBOOK:xml=pdf}
 
 endif
 
-projection_shaderDOCBOOKhtmldir = $(BRLCAD_DATA)/html/articles/projection_shader
+projection_shaderDOCBOOKhtmldir = $(BRLCAD_DATA)/html/articles/projection_shader/en
 projection_shaderDOCBOOKhtml_DATA = $(BUILTHTML)
 
-projection_shaderDOCBOOKpdfdir = $(BRLCAD_DATA)/pdf/articles/projection_shader
+projection_shaderDOCBOOKpdfdir = $(BRLCAD_DATA)/pdf/articles/projection_shader/en
 projection_shaderDOCBOOKpdf_DATA = $(BUILTPDF)
 
 BUILT_SOURCES = \
