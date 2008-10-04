@@ -470,6 +470,8 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 	    tkv2;
 	fastf_t		tess;
 	int		num_knots;
+	int             refined_col = 0;
+	int             refined_row = 0;
 	fastf_t		rt_nurb_par_edge(const struct face_g_snurb *srf, fastf_t epsilon);
 
 	n = (struct face_g_snurb *) sip->srfs[s];
@@ -517,8 +519,18 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 			n->v.knots[n->v.k_size-1], num_knots, (struct resource *)NULL);
 
 
-	r = (struct face_g_snurb *) rt_nurb_s_refine( n, RT_NURB_SPLIT_COL, &tkv2, (struct resource *)NULL);
-	c = (struct face_g_snurb *) rt_nurb_s_refine( r, RT_NURB_SPLIT_ROW, &tkv1, (struct resource *)NULL);
+	if( tkv2.k_size > n->v.k_size ) {
+	    r = (struct face_g_snurb *) rt_nurb_s_refine( n, RT_NURB_SPLIT_COL, &tkv2, (struct resource *)NULL);
+	    refined_col = 1;
+	} else {
+	    r = n;
+	}
+	if( tkv1.k_size > r->u.k_size ) {
+	    c = (struct face_g_snurb *) rt_nurb_s_refine( r, RT_NURB_SPLIT_ROW, &tkv1, (struct resource *)NULL);
+	    refined_row = 1;
+	} else {
+	    c = r;
+	}
 
 	coords = RT_NURB_EXTRACT_COORDS(n->pt_type);
 
@@ -555,9 +567,12 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 		vp += stride;
 	    }
 	}
-	rt_nurb_free_snurb(c, (struct resource *)NULL);
-	rt_nurb_free_snurb(r, (struct resource *)NULL);
-
+	if( refined_col ) {
+	    rt_nurb_free_snurb(r, (struct resource *)NULL);
+	}
+	if( refined_row ) {
+	    rt_nurb_free_snurb(c, (struct resource *)NULL);
+	}
 	bu_free( (char *) tkv1.knots, "rt_nurb_plot:tkv1>knots");
 	bu_free( (char *) tkv2.knots, "rt_nurb_plot:tkv2.knots");
     }
