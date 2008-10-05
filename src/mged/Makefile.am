@@ -166,7 +166,6 @@ cad_parea_LDADD = ${BU}
 noinst_HEADERS = \
 	cmd.h \
 	comb_bool.h \
-	editobjGui.h \
 	fbserv.h \
 	htmlLibraryUi.h \
 	icreateGui.h \
