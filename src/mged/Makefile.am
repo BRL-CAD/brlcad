@@ -178,7 +178,6 @@ noinst_HEADERS = \
 	scroll.h \
 	sedit.h \
 	titles.h \
-	vgdev.h \
 	vld_std.h \
 	vmathUi.h
 
