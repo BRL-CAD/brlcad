@@ -496,7 +496,6 @@ struct dm_list {
 #define scroll_y curr_dm_list->dml_scroll_y
 #define scroll_array curr_dm_list->dml_scroll_array
 
-#define MINVIEW		0.001
 #define VIEWSIZE	(2.0*view_state->vs_Viewscale)	/* Width of viewing cube */
 #define VIEWFACTOR	(1/view_state->vs_Viewscale)	/* 2.0 / VIEWSIZE */
 

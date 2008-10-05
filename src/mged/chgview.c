@@ -3255,8 +3255,8 @@ abs_zoom(void)
 	    view_state->vs_vop->vo_scale = view_state->vs_i_Viewscale * (1.0 + (view_state->vs_absolute_scale * -9.0));
     }
 
-    if (view_state->vs_vop->vo_scale < MINVIEW)
-	view_state->vs_vop->vo_scale = MINVIEW;
+    if (view_state->vs_vop->vo_scale < RT_MINVIEWSIZE)
+	view_state->vs_vop->vo_scale = RT_MINVIEWSIZE;
 
     vo_zoom(view_state->vs_vop, interp, 1.0);
 
