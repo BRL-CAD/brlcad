@@ -76,24 +76,24 @@
 /* Needed to define struct solid */
 #include "solid.h"
 
-#define HIDE_MGEDS_ARB_ROUTINES 1
 
 #define MGED_DB_NAME "db"
 #define MGED_INMEM_NAME ".inmem"
 #define MGED_DG_NAME "dg"
 
-#define	MGED_EXTERN(type_and_name, args) extern type_and_name args
 
-extern double	degtorad, radtodeg;	/* Defined in usepen.c */
+/* Defined in usepen.c */
+extern double degtorad;
+extern double radtodeg;
 
 /*
  * All GED files are stored in a fixed base unit (MM).
  * These factors convert database unit to local (or working) units.
  */
-extern struct db_i	*dbip;		       /* defined in mged.c */
-extern int		 dbih;		       /* defined in mged.c */
-extern struct rt_wdb	*wdbp;			/* defined in mged.c */
-extern struct dg_obj	*dgop;			/* defined in mged.c */
+extern struct db_i	*dbip;		/* defined in mged.c */
+extern int		 dbih;		/* defined in mged.c */
+extern struct rt_wdb	*wdbp;		/* defined in mged.c */
+extern struct dg_obj	*dgop;		/* defined in mged.c */
 #define	base2local	(dbip->dbi_base2local)
 #define local2base	(dbip->dbi_local2base)
 #define	cur_title	(dbip->dbi_title)      /* current model title */
@@ -109,24 +109,16 @@ extern struct dg_obj	*dgop;			/* defined in mged.c */
 #  define TRUE 1
 #endif
 
-#ifndef False
-#  define False (0)
-#endif
-
-#ifndef True
-#  define True (1)
-#endif
-
 /* Tolerances */
-extern double		mged_abs_tol;		/* abs surface tolerance */
-extern double		mged_rel_tol;		/* rel surface tolerance */
-extern double		mged_nrm_tol;		/* surface normal tolerance */
+extern double mged_abs_tol; /* abs surface tolerance */
+extern double mged_rel_tol; /* rel surface tolerance */
+extern double mged_nrm_tol; /* surface normal tolerance */
 
-/* default region codes       defined in mover.c */
-extern int	item_default;
-extern int	air_default;
-extern int	mat_default;
-extern int	los_default;
+/* default region codes defined in mover.c */
+extern int item_default;
+extern int air_default;
+extern int mat_default;
+extern int los_default;
 
 /**
  * Definitions.
@@ -190,43 +182,67 @@ extern struct solid MGED_FreeSolid;	/* Head of freelist */
  * GED functions referenced in more than one source file:
  */
 
-extern int tran(), irot();
+extern int tran();
+extern int irot();
 extern void mged_setup(void);
-extern void dir_build(), buildHrot(fastf_t *, double, double, double), dozoom(int which_eye),
-    pr_schain(struct solid *startp, int lvl);
+extern void dir_build();
+extern void buildHrot(fastf_t *, double, double, double);
+extern void dozoom(int which_eye);
+extern void pr_schain(struct solid *startp, int lvl);
 #ifndef _WIN32
 extern void itoa(int n, char *s, int w);
 #endif
-extern void eraseobj(register struct directory **dpp), eraseobjall(register struct directory **dpp), mged_finish(int exitcode), slewview(fastf_t *view_pos),
-    mmenu_init(void), moveHinstance(struct directory *cdp, struct directory *dp, matp_t xlate), moveHobj(register struct directory *dp, matp_t xlate),
-    quit(void), refresh(void), rej_sedit(), sedit(void),
-    setview(double a1, double a2, double a3),
-    adcursor(void), mmenu_display(int y_top), mmenu_set(int index, struct menu_item *value), mmenu_set_all(int index, struct menu_item *value),
-    col_item(), col_putchar(), col_eol(), col_pr4v();
+extern void eraseobj(register struct directory **dpp);
+extern void eraseobjall(register struct directory **dpp);
+extern void mged_finish(int exitcode);
+extern void slewview(fastf_t *view_pos);
+extern void mmenu_init(void);
+extern void moveHinstance(struct directory *cdp, struct directory *dp, matp_t xlate);
+extern void moveHobj(register struct directory *dp, matp_t xlate);
+extern void quit(void);
+extern void refresh(void);
+extern void rej_sedit();
+extern void sedit(void);
+extern void setview(double a1, double a2, double a3);
+extern void adcursor(void);
+extern void mmenu_display(int y_top);
+extern void mmenu_set(int index, struct menu_item *value);
+extern void mmenu_set_all(int index, struct menu_item *value);
+extern void
+    col_item();
+extern void col_putchar();
+extern void col_eol();
+extern void col_pr4v();
 extern void sedit_menu(void);
-extern void attach(), get_attached(void);
+extern void attach();
+extern void get_attached(void);
 extern void (*cur_sigint)();	/* Current SIGINT status */
-extern void sig2(int), sig3(int);
+extern void sig2(int);
+extern void sig3(int);
 
 extern void aexists(char *name);
-extern int getname(), use_pen(), dir_print();
-extern int mged_cmd_arg_check(), release(char *name, int need_close);
-extern struct directory	*combadd(), **dir_getspace();
+extern int getname();
+extern int use_pen();
+extern int dir_print();
+extern int mged_cmd_arg_check();
+extern int release(char *name, int need_close);
+extern struct directory	*combadd();
+extern struct directory **dir_getspace();
 extern void ellipse();
 
 /* mged.c */
 extern void mged_view_obj_callback(genptr_t clientData, struct view_obj *vop);
 
 /* buttons.c */
-MGED_EXTERN(void button, (int bnum) );
-MGED_EXTERN(void press, (char *str) );
-MGED_EXTERN(char *label_button, (int bnum) );
-MGED_EXTERN(int not_state, (int desired, char *str) );
-MGED_EXTERN(int chg_state, (int from, int to, char *str) );
-MGED_EXTERN(void state_err, (char *str) );
+BU_EXTERN(void button, (int bnum) );
+BU_EXTERN(void press, (char *str) );
+BU_EXTERN(char *label_button, (int bnum) );
+BU_EXTERN(int not_state, (int desired, char *str) );
+BU_EXTERN(int chg_state, (int from, int to, char *str) );
+BU_EXTERN(void state_err, (char *str) );
 
-MGED_EXTERN(void do_list, (struct bu_vls *outstrp, struct directory *dp, int verbose));
-MGED_EXTERN(int invoke_db_wrapper, (Tcl_Interp *interpreter, int argc, char **argv));
+BU_EXTERN(void do_list, (struct bu_vls *outstrp, struct directory *dp, int verbose));
+BU_EXTERN(int invoke_db_wrapper, (Tcl_Interp *interpreter, int argc, char **argv));
 
 /* history.c */
 void history_record(

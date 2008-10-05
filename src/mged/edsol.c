@@ -71,10 +71,10 @@ point_t e_axes_pos;
 point_t curr_e_axes_pos;
 short int fixv;		/* used in ECMD_ARB_ROTATE_FACE,f_eqn(): fixed vertex */
 
-MGED_EXTERN( struct wdb_pipept *find_pipept_nearest_pt, (const struct bu_list *pipe_hd, const point_t pt ) );
-MGED_EXTERN( void split_pipept, (struct bu_list *pipe_hd, struct wdb_pipept *ps, point_t pt ) );
-MGED_EXTERN( struct wdb_pipept *del_pipept, (struct wdb_pipept *ps ) );
-MGED_EXTERN( struct wdb_pipept *add_pipept, (struct rt_pipe_internal *pipe, struct wdb_pipept *pp, const point_t new_pt ) );
+BU_EXTERN( struct wdb_pipept *find_pipept_nearest_pt, (const struct bu_list *pipe_hd, const point_t pt ) );
+BU_EXTERN( void split_pipept, (struct bu_list *pipe_hd, struct wdb_pipept *ps, point_t pt ) );
+BU_EXTERN( struct wdb_pipept *del_pipept, (struct wdb_pipept *ps ) );
+BU_EXTERN( struct wdb_pipept *add_pipept, (struct rt_pipe_internal *pipe, struct wdb_pipept *pp, const point_t new_pt ) );
 
 /* data for solid editing */
 int			sedraw;	/* apply solid editing changes */
