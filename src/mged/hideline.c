@@ -42,6 +42,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "solid.h"
+#include "plot3.h"
 
 #include "./mged.h"
 #include "./mged_dm.h"
@@ -190,9 +191,9 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     a.a_rbeam = 0;
 
     if (argc > 2) {
-	sscanf(argv[2], "%f", &step);
+	sscanf(argv[2], "%lf", &step);
 	step = view_state->vs_vop->vo_scale/step;
-	sscanf(argv[3], "%f", &epsilon);
+	sscanf(argv[3], "%lf", &epsilon);
 	epsilon *= view_state->vs_vop->vo_scale/100;
     } else {
 	step = view_state->vs_vop->vo_scale/256;
