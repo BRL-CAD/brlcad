@@ -64,6 +64,7 @@
 
 #include "tcl.h"
 #include "wdb.h"
+#include "dg.h"
 
 /* Needed to define struct menu_item */
 #include "./menu.h"
