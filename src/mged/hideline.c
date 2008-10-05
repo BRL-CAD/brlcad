@@ -19,23 +19,17 @@
  */
 /** @file hideline.c
  *
- *	Takes the vector  list for the  current  display  and  raytraces
- *	along those vectors.  If the first point hit in the model is the
- *	same as that  vector,  continue  the line  through  that  point;
- *	otherwise,  stop  drawing  that  vector  or  draw  dotted  line.
- *	Produces Unix-plot type output.
+ * Takes the vector list for the current display and raytraces along
+ * those vectors.  If the first point hit in the model is the same as
+ * that vector, continue the line through that point; otherwise, stop
+ * drawing that vector or draw dotted line.  Produces Unix-plot type
+ * output.
  *
- *	The command is "H file.pl [stepsize] [%epsilon]". Stepsize is the
- *	number of segments into which the window size should be broken.
- *	%Epsilon specifies how close two points must be before they are
- *	considered equal. A good values for stepsize and %epsilon are 128
- *	and 1, respectively.
- *
- * Author -
- *	Mark Huston Bowden
- *
- * History -
- *	01 Aug 88		Began initial coding
+ * The command is "H file.pl [stepsize] [%epsilon]". Stepsize is the
+ * number of segments into which the window size should be broken.
+ * %Epsilon specifies how close two points must be before they are
+ * considered equal. A good values for stepsize and %epsilon are 128
+ * and 1, respectively.
  *
  */
 
@@ -55,33 +49,29 @@
 
 #define MAXOBJECTS	3000
 
-#define VIEWSIZE	(2*view_state->vs_Viewscale)
-#define TRUE	1
-#define FALSE	0
-
 #define MOVE(v)	  VMOVE(last_move, (v))
 
 #define DRAW(v)	{ vect_t a, b;\
-		  MAT4X3PNT(a, view_state->vs_model2view, last_move);\
-		  MAT4X3PNT(b, view_state->vs_model2view, (v));\
+		  MAT4X3PNT(a, view_state->vs_vop->vo_model2view, last_move);\
+		  MAT4X3PNT(b, view_state->vs_vop->vo_model2view, (v));\
 		  pdv_3line(plotfp, a, b ); }
 
 extern struct db_i *dbip;	/* current database instance */
 
 fastf_t epsilon;
 vect_t aim_point;
-struct solid *sp;
 
-/*
+
+/**
  * hit_headon - routine called by rt_shootray if ray hits model
  */
-
 static int
-hit_headon(struct application *ap, struct partition *PartHeadp)
+hit_headon(struct application *ap, struct partition *PartHeadp, struct seg *segp)
 {
     register char diff_solid;
     vect_t	diff;
     register fastf_t len;
+    struct solid *sp;
 
     if (PartHeadp->pt_forw->pt_forw != PartHeadp)
 	Tcl_AppendResult(interp, "hit_headon: multiple partitions\n", (char *)NULL);
@@ -94,17 +84,14 @@ hit_headon(struct application *ap, struct partition *PartHeadp)
 		  PartHeadp->pt_forw->pt_inseg->seg_stp->st_dp);
     len = MAGNITUDE(diff);
 
-    if (	NEAR_ZERO(len, epsilon)
-		||
-		( diff_solid &&
-		  VDOT(diff, ap->a_ray.r_dir) > 0 )
-	)
+    if (NEAR_ZERO(len, epsilon) || (diff_solid && VDOT(diff, ap->a_ray.r_dir) > 0))
 	return(1);
     else
 	return(0);
 }
 
-/*
+
+/**
  * hit_tangent - routine called by rt_shootray if ray misses model
  *
  *     We know we are shooting at the model since we are aiming at the
@@ -113,24 +100,24 @@ hit_headon(struct application *ap, struct partition *PartHeadp)
  *     time rt_shootray reports a miss. Therefore, this routine is really
  *     a "hit" routine.
  */
-
 static int
-hit_tangent(struct application *ap, struct partition *PartHeadp)
+hit_tangent(struct application *ap)
 {
     return(1);		/* always a hit */
 }
 
-/*
+
+/**
  * hit_overlap - called by rt_shootray if ray hits an overlap
  */
-
 static int
-hit_overlap(struct application *ap, struct partition *PartHeadp)
+hit_overlap(struct application *ap, struct partition *ph, struct region *r1, struct region *r2, struct partition *hp)
 {
     return(0);		/* never a hit */
 }
 
-/*
+
+/**
  *			F _ H I D E L I N E
  */
 int
@@ -149,6 +136,7 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     vect_t temp;
     vect_t last, dir;
     register struct bn_vlist	*vp;
+    struct solid *sp;
 
     CHECK_DBI_NULL;
 
@@ -171,9 +159,9 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     /*  Build list of objects being viewed */
     numobjs = 0;
-    FOR_ALL_SOLIDS(sp) {
-	for (i = 0; i < numobjs; i++)  {
-	    if ( objname[i] == FIRST_SOLID(sp)->d_namep )
+    FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
+	for (i = 0; i < numobjs; i++) {
+	    if (objname[i] == FIRST_SOLID(sp)->d_namep)
 		break;
 	}
 	if (i == numobjs)
@@ -203,12 +191,12 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     if (argc > 2) {
 	sscanf(argv[2], "%f", &step);
-	step = view_state->vs_Viewscale/step;
+	step = view_state->vs_vop->vo_scale/step;
 	sscanf(argv[3], "%f", &epsilon);
-	epsilon *= view_state->vs_Viewscale/100;
+	epsilon *= view_state->vs_vop->vo_scale/100;
     } else {
-	step = view_state->vs_Viewscale/256;
-	epsilon = 0.1*view_state->vs_Viewscale;
+	step = view_state->vs_vop->vo_scale/256;
+	epsilon = 0.1*view_state->vs_vop->vo_scale;
     }
 
     for (i = 0; i < numobjs; i++)
@@ -218,24 +206,24 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     /* Crawl along the vectors raytracing as we go */
     VSET(temp, 0.0, 0.0, -1.0);				/* looking at model */
-    MAT4X3VEC(a.a_ray.r_dir, view_state->vs_view2model, temp);
+    MAT4X3VEC(a.a_ray.r_dir, view_state->vs_vop->vo_view2model, temp);
     VUNITIZE(a.a_ray.r_dir);
 
-    FOR_ALL_SOLIDS(sp) {
+    FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
 
 	ratio = sp->s_size / VIEWSIZE;		/* ignore if small or big */
-	if (ratio >= dmp->dmr_bound || ratio < 0.001)
+	if (ratio >= dmp->dm_bound || ratio < 0.001)
 	    continue;
 
 	Tcl_AppendResult(interp, "Primitive\n", (char *)NULL);
-	for ( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
+	for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
 	    register int	i;
 	    register int	nused = vp->nused;
 	    register int	*cmd = vp->cmd;
 	    register point_t *pt = vp->pt;
-	    for ( i = 0; i < nused; i++, cmd++, pt++ )  {
+	    for (i = 0; i < nused; i++, cmd++, pt++) {
 		Tcl_AppendResult(interp, "\tVector\n", (char *)NULL);
-		switch ( *cmd )  {
+		switch (*cmd) {
 		    case BN_VLIST_POLY_START:
 		    case BN_VLIST_POLY_VERTNORM:
 			break;
@@ -263,17 +251,17 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			}
 			for (u = 0; u <= len; u += step) {
 			    VJOIN1(aim_point, last, u, dir);
-			    MAT4X3PNT(temp, view_state->vs_model2view, aim_point);
+			    MAT4X3PNT(temp, view_state->vs_vop->vo_model2view, aim_point);
 			    temp[Z] = 100;			/* parallel project */
-			    MAT4X3PNT(a.a_ray.r_pt, view_state->vs_view2model, temp);
+			    MAT4X3PNT(a.a_ray.r_pt, view_state->vs_vop->vo_view2model, temp);
 			    if (rt_shootray(&a)) {
 				if (!visible) {
-				    visible = TRUE;
+				    visible = 1;
 				    MOVE(aim_point);
 				}
 			    } else {
 				if (visible) {
-				    visible = FALSE;
+				    visible = 0;
 				    DRAW(aim_point);
 				}
 			    }

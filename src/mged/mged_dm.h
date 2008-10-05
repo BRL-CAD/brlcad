@@ -496,8 +496,8 @@ struct dm_list {
 #define scroll_y curr_dm_list->dml_scroll_y
 #define scroll_array curr_dm_list->dml_scroll_array
 
-#define VIEWSIZE	(2.0*view_state->vs_Viewscale)	/* Width of viewing cube */
-#define VIEWFACTOR	(1/view_state->vs_Viewscale)	/* 2.0 / VIEWSIZE */
+#define VIEWSIZE	(2.0*view_state->vs_vop->vo_scale)	/* Width of viewing cube */
+#define VIEWFACTOR	(1/view_state->vs_vop->vo_scale)	/* 2.0 / VIEWSIZE */
 
 #define RATE_ROT_FACTOR 6.0
 #define ABS_ROT_FACTOR 180.0

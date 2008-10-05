@@ -90,6 +90,7 @@ mged_SOURCES = \
 	facedef.c \
 	fbserv.c \
 	grid.c \
+	hideline.c \
 	history.c \
 	inside.c \
 	mater.c \
@@ -204,7 +205,6 @@ EXTRA_DIST = \
 	dm-X.c \
 	dm-tk.c \
 	fbserv_win32.c \
-	hideline.c \
 	memalloc.c \
 	mged.bat \
 	mged.dsp
