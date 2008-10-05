@@ -153,12 +153,6 @@ extern mat_t	modelchanges;		/* full changes this edit */
 extern mat_t	incr_change;		/* change(s) from last cycle */
 extern point_t	recip_vanishing_point;
 
-
-/*
- * Identity matrix.  Handy to have around. - initialized in e1.c
- */
-extern mat_t	identity;
-
 /* defined in buttons.c */
 extern fastf_t	acc_sc_sol;	/* accumulate solid scale factor */
 extern fastf_t  acc_sc_obj;	/* accumulate global object scale factor */

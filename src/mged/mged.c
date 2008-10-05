@@ -554,7 +554,6 @@ main(int argc, char **argv)
     owner = 1;
     frametime = 1;
 
-    MAT_IDN( identity );		/* Handy to have around */
     MAT_IDN( modelchanges );
     MAT_IDN( acc_rot_sol );
 
