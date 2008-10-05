@@ -33,8 +33,6 @@
 
 #include "bu.h"
 
-#include	"./vld_std.h"
-
 
 typedef struct
 {
@@ -42,7 +40,7 @@ typedef struct
     double	y;			/* Y coordinate */
 }	point;			/* polygon vertex */
 
-static bool_t	GetArgs(int argc, char **argv), Input(register point *coop);
+static int	GetArgs(int argc, char **argv), Input(register point *coop);
 static void	Output(double result), Usage(void);
 
 
@@ -62,7 +60,7 @@ main(int argc, char **argv)			/* "cad_parea" entry point */
     point		previous;	/* previous point */
     point		current;	/* current point */
     point		first;		/* saved first point */
-    register bool_t	saved;		/* "`first' valid" flag */
+    register int	saved;		/* "`first' valid" flag */
     double		sum;		/* accumulator */
 
     if ( !GetArgs( argc, argv ) )	/* process command arguments */
@@ -71,7 +69,7 @@ main(int argc, char **argv)			/* "cad_parea" entry point */
 	return 1;
     }
 
-    saved = false;
+    saved = 0;
     sum = 0.0;
 
     while ( Input( &current ) )
@@ -81,7 +79,7 @@ main(int argc, char **argv)			/* "cad_parea" entry point */
 	{
 	    /* first input only */
 	    first = current;
-	    saved = true;
+	    saved = 1;
 	}
 	else	/* accumulate cross-product */
 	    sum += previous.x * current.y -
@@ -98,13 +96,13 @@ main(int argc, char **argv)			/* "cad_parea" entry point */
 }
 
 
-static bool_t
+static int
 GetArgs(int argc, char **argv)			/* process command arguments */
     /* argument count */
     /* argument strings */
 {
-    static bool_t	iflag = false;	/* set if "-i" option found */
-    static bool_t	oflag = false;	/* set if "-o" option found */
+    static int	iflag = 0;	/* set if "-i" option found */
+    static int	oflag = 0;	/* set if "-o" option found */
     int		c;		/* option letter */
 
     while ( (c = bu_getopt( argc, argv, "i:o:" )) != EOF )
@@ -116,9 +114,9 @@ GetArgs(int argc, char **argv)			/* process command arguments */
 		    (void)printf(
 			"cad_parea: too many -i options\n"
 			);
-		    return false;
+		    return 0;
 		}
-		iflag = true;
+		iflag = 1;
 
 		if ( strcmp( bu_optarg, "-" ) != 0
 		     && freopen( bu_optarg, "r", stdin ) == NULL
@@ -127,7 +125,7 @@ GetArgs(int argc, char **argv)			/* process command arguments */
 			"cad_parea: can't open \"%s\"\n",
 			bu_optarg
 			);
-		    return false;
+		    return 0;
 		}
 		break;
 
@@ -137,9 +135,9 @@ GetArgs(int argc, char **argv)			/* process command arguments */
 		    (void)printf(
 			"cad_parea: too many -o options\n"
 			);
-		    return false;
+		    return 0;
 		}
-		oflag = true;
+		oflag = 1;
 
 		if ( strcmp( bu_optarg, "-" ) != 0
 		     && freopen( bu_optarg, "w", stdout ) == NULL
@@ -148,20 +146,20 @@ GetArgs(int argc, char **argv)			/* process command arguments */
 			"cad_parea: can't create \"%s\"\n",
 			bu_optarg
 			);
-		    return false;
+		    return 0;
 		}
 		break;
 
 	    case '?':
 		Usage();	/* print usage message */
-		return false;
+		return 0;
 	}
 
-    return true;
+    return 1;
 }
 
 
-static bool_t
+static int
 Input(register point *coop)				/* input a coordinate record */
     /* -> input coordinates */
 {
@@ -178,7 +176,7 @@ Input(register point *coop)				/* input a coordinate record */
 	    continue;	/* skip color, comment, etc. */
 
 	if ( cvt == 2 )
-	    return true;	/* successfully converted */
+	    return 1;	/* successfully converted */
 
 	(void)printf( "cad_parea: bad input:\n%s\n", inbuf
 	    );
@@ -186,7 +184,7 @@ Input(register point *coop)				/* input a coordinate record */
 	bu_exit( 2, NULL );		/* return false insufficient */
     }
 
-    return false;			/* EOF */
+    return 0;			/* EOF */
 }
 
 
