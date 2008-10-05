@@ -159,12 +159,6 @@ extern fastf_t  acc_sc_obj;	/* accumulate global object scale factor */
 extern fastf_t	acc_sc[3];	/* accumulate local object scale factors */
 extern mat_t	acc_rot_sol;	/* accumulate solid rotations */
 
-/* defined in dodraw.c */
-extern int	no_memory;	/* flag indicating memory for drawing is used up */
-
-/* defined in menu.c */
-extern int	menuflag;	/* flag indicating if a menu item is selected */
-
 /* defined in mged.c */
 extern FILE *infile;
 extern FILE *outfile;
@@ -239,16 +233,10 @@ BU_EXTERN(void do_list, (struct bu_vls *outstrp, struct directory *dp, int verbo
 BU_EXTERN(int invoke_db_wrapper, (Tcl_Interp *interpreter, int argc, char **argv));
 
 /* history.c */
-void history_record(
-    struct bu_vls *cmdp,
-    struct timeval *start,
-    struct timeval *finish,
-    int status);			   /* Either CMD_OK or CMD_BAD */
+void history_record(struct bu_vls *cmdp, struct timeval *start, struct timeval *finish, int status); /* Either CMD_OK or CMD_BAD */
 void history_setup(void);
 
-
 /* cmd.c */
-
 extern void start_catching_output(struct bu_vls *vp);
 extern void stop_catching_output(struct bu_vls *vp);
 
@@ -261,11 +249,11 @@ extern struct solid *illump;/* == 0 if none, else points to ill. solid */
 extern int sedraw;		/* apply solid editing changes */
 
 /* defined in chgview.c */
-extern int inpara;		/* parameter input from keyboard flag */
+extern int inpara;	/* parameter input from keyboard flag */
 extern int newedge;	/* new edge for arb editing */
 
 /* defined in usepen.c */
-extern int	ipathpos;	/* path index of illuminated element */
+extern int ipathpos;	/* path index of illuminated element */
 
 #define RARROW		001
 #define UARROW		002
