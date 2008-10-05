@@ -168,7 +168,6 @@ noinst_HEADERS = \
 	comb_bool.h \
 	fbserv.h \
 	htmlLibraryUi.h \
-	icreateGui.h \
 	joints.h \
 	menu.h \
 	mgdev.h \
