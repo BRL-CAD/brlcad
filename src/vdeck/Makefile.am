@@ -15,8 +15,6 @@ noinst_HEADERS = std.h vextern.h
 
 man_MANS = vdeck.1
 
-EXTRA_DIST = \
-	$(man_MANS) \
-	vproc.c
+EXTRA_DIST = $(man_MANS)
 
 include $(top_srcdir)/misc/Makefile.defs
