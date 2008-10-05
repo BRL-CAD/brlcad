@@ -199,7 +199,6 @@ EXTRA_DIST = \
 	dm-X.c \
 	dm-tk.c \
 	fbserv_win32.c \
-	memalloc.c \
 	mged.bat \
 	mged.dsp
 
