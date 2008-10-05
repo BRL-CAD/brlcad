@@ -1082,7 +1082,7 @@ f_tables(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	bu_ptbl_reset( &cur_path );
 	if ( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY)) != DIR_NULL )
-	    new_tables( dp, &cur_path, identity, flag);
+	    new_tables( dp, &cur_path, bn_mat_identity, flag);
 	else
 	    Tcl_AppendResult(interp, " skip this object\n", (char *)NULL);
     }
