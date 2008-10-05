@@ -177,8 +177,7 @@ noinst_HEADERS = \
 	qray.h \
 	scroll.h \
 	sedit.h \
-	titles.h \
-	vmathUi.h
+	titles.h
 
 man_MANS = \
 	cad_boundp.1 \
