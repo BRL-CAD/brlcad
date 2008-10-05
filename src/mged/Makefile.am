@@ -190,7 +190,6 @@ INCLUDES = \
 
 EXTRA_DIST = \
 	$(man_MANS) \
-	arb.c \
 	bool_rewrite.c \
 	comb_bool_parse.y \
 	comb_bool_scan.l \
