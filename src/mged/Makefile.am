@@ -177,7 +177,6 @@ noinst_HEADERS = \
 	qray.h \
 	scroll.h \
 	sedit.h \
-	sunicon.h \
 	titles.h \
 	vgdev.h \
 	vld_std.h \
