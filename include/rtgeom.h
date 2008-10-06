@@ -560,16 +560,69 @@ struct rt_bot_internal
  *      ID_PNTS
  */
 
+typedef enum {
+    PNT_TYPE_PNT = 0,
+    PNT_TYPE_COL = 0+1,
+    PNT_TYPE_SCA = 0+2,
+    PNT_TYPE_NRM = 0+4,
+    PNT_TYPE_COL_SCA = 0+1+2,
+    PNT_TYPE_COL_NRM = 0+1+4,
+    PNT_TYPE_SCA_NRM = 0+2+4,
+    PNT_TYPE_COL_SCA_NRM = 0+1+2+4
+} rt_pnt_type;
+
 struct pnt {
     struct bu_list l;
     point_t v;
 };
+struct pnt_color {
+    struct bu_list l;
+    point_t v;
+    struct bu_color c;
+};
+struct pnt_scale {
+    struct bu_list l;
+    point_t v;
+    fastf_t s;
+};
+struct pnt_normal {
+    struct bu_list l;
+    point_t v;
+    vect_t n;
+};
+struct pnt_color_scale {
+    struct bu_list l;
+    point_t v;
+    struct bu_color c;
+    fastf_t s;
+};
+struct pnt_color_normal {
+    struct bu_list l;
+    point_t v;
+    struct bu_color c;
+    vect_t n;
+};
+struct pnt_scale_normal {
+    struct bu_list l;
+    point_t v;
+    fastf_t s;
+    vect_t n;
+};
+struct pnt_color_scale_normal {
+    struct bu_list l;
+    point_t v;
+    struct bu_color c;
+    fastf_t s;
+    vect_t n;
+};
+
 
 struct rt_pnts_internal {
     long magic;
-    unsigned long numPoints;
-    double weight;
-    struct pnt *vList;
+    double scale;
+    rt_pnt_type type;
+    unsigned long count;
+    void *point;
 };
 #define RT_PNTS_CK_MAGIC(_p)     BU_CKMAG(_p, RT_PNTS_INTERNAL_MAGIC, "rt_pnts_internal")
 

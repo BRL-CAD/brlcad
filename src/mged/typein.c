@@ -2905,10 +2905,11 @@ metaball_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt)
 int
 pnts_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt) {
     int i, j;
-    double weight;
+    double scale;
     unsigned long numPoints;
     struct rt_pnts_internal *pnts;
     struct pnt *point;
+    struct pnt *headPoint;
     struct bu_vls tmpVls;
 
     CHECK_DBI_NULL;
@@ -2927,19 +2928,19 @@ pnts_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt) {
 
     numPoints = atol(argv[3]);
 
-    /* prompt for weight of points if not entered */
+    /* prompt for scale of points if not entered */
     if (argc < 5) {
 	Tcl_AppendResult(interp, MORE_ARGS_STR, prompt[1], (char *)NULL);
 	return CMD_MORE;
     }
 
-    /* validate weight */
+    /* validate scale */
     if (atof(argv[4]) < 0) {
-	Tcl_AppendResult(interp, "Weight must be nonnegative!\n", (char *)NULL);
+	Tcl_AppendResult(interp, "Scale must be nonnegative!\n", (char *)NULL);
 	return CMD_BAD;
     }
 
-    weight = atof(argv[4]);
+    scale = atof(argv[4]);
 
     /* set database structure */
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -2950,10 +2951,12 @@ pnts_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt) {
     /* set internal structure */
     pnts = (struct rt_pnts_internal *) intern->idb_ptr;
     pnts->magic = RT_PNTS_INTERNAL_MAGIC;
-    pnts->numPoints = numPoints;
-    pnts->weight = weight;
-    BU_GETSTRUCT(pnts->vList, pnt);
-    BU_LIST_INIT(&(pnts->vList->l));
+    pnts->scale = scale;
+    pnts->type = PNT_TYPE_PNT;
+    pnts->count = numPoints;
+    headPoint = pnts->point;
+    BU_GETSTRUCT(headPoint, pnt); /* empty list head */
+    BU_LIST_INIT(&(headPoint->l));
 
     /* prompt for X, Y, Z of points */
     if (argc < 5 + (numPoints * ELEMENTS_PER_PT)) {
@@ -2979,7 +2982,7 @@ pnts_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt) {
         point->v[Y] = strtod(argv[i + 1], NULL) * local2base;
         point->v[Z] = strtod(argv[i + 2], NULL) * local2base;
 
-        BU_LIST_PUSH(&(pnts->vList->l), &(point->l));
+        BU_LIST_PUSH(&(headPoint->l), &(point->l));
     }
 
     return CMD_OK;
