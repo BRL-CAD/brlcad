@@ -251,7 +251,7 @@ regression: all
 	@cd regress && make regression
 
 dox : misc/Doxyfile misc/doxygen_structure
-	doxygen misc/Doxyfile
+	doxygen $(top_srcdir)/misc/Doxyfile
 
 regress: regression
 
