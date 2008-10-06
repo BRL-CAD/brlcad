@@ -295,7 +295,7 @@ BU_EXTERN(int rt_binunif_describe, (struct bu_vls *str,
 BU_EXTERN( void rt_binunif_make, (const struct rt_functab *ftp,
 				  struct rt_db_internal	*intern,
 				  double diameter ) );
-BU_EXTERN( int rt_binunif_get, (Tcl_Interp *interp,
+BU_EXTERN( int rt_binunif_get, (struct bu_vls *log,
 				   const struct rt_db_internal *intern,
 				   const char *attr ) );
 BU_EXTERN(int rt_binunif_adjust, (struct bu_vls *log,
