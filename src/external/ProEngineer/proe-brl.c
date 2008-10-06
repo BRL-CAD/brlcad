@@ -2120,7 +2120,13 @@ output_part( ProMdl model )
 		fprintf( logger, "Creating bot primitive (%s) for part %s\n",
 			 sol_name, brl_name );
 	    }
-	    fprintf( outfp, "put {%s} bot mode volume orient no V { ", sol_name );
+
+	    if ( get_normals ) {
+		fprintf( outfp, "put {%s} bot mode volume orient no V { ", sol_name );
+	    } else {
+		fprintf( outfp, "put {%s} bot mode volume orient lh V { ", sol_name );
+	    }
+
 	    for ( i=0; i<vert_tree_root->curr_vert; i++ ) {
 		fprintf( outfp, " {%.12e %.12e %.12e}",
 			 vert_tree_root->the_array[i*3] * proe_to_brl_conv,
