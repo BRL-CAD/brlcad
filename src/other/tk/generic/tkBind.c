@@ -574,6 +574,9 @@ static int flagArray[TK_LASTEVENT] = {
    /* ColormapNotify */		COLORMAP,
    /* ClientMessage */		0,
    /* MappingNotify */		0,
+#ifdef GenericEvent
+    /* GenericEvent */		0,
+#endif
    /* VirtualEvent */		VIRTUAL,
    /* Activate */		ACTIVATE,
    /* Deactivate */		ACTIVATE,
