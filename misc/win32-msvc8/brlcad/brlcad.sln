@@ -1056,12 +1056,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bot2bldxf", "..\bot2bldxf\b
 		Release.AspNetCompiler.Debug = "False"
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bot2raw", "..\bot2raw\bot2raw.vcproj", "{71223DEE-4B16-4F44-A774-56AAD5F15170}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
-	EndProjectSection
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bot_shell2vtk", "..\bot_shell2vtk\bot_shell2vtk.vcproj", "{58BB0769-6E8A-4B8F-8D7B-5D9C73753AED}"
 	ProjectSection(WebsiteProperties) = preProject
 		Debug.AspNetCompiler.Debug = "True"
