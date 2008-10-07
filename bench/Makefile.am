@@ -27,7 +27,7 @@ run: all
 	@if test -r ${srcdir}/run.sh ; then \
 		LD_LIBRARY_PATH=$(top_builddir)/src/other/tcl/unix:$(top_builddir)/src/other/tk/unix:$$LD_LIBRARY_PATH \
 		DYLD_LIBRARY_PATH=$(top_builddir)/src/other/tcl/unix:$(top_buildir)/src/other/tk/unix:$$DYLD_LIBRARY_PATH \
-		${SH} ${srcdir}/run.sh ; \
+		${SH} ${srcdir}/run.sh run ; \
 	fi
 	@$(ECHO) "---"
 	@$(ECHO) "Run 'make clean' in the bench directory to delete the log"

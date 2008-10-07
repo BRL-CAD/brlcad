@@ -25,6 +25,7 @@ the geometry hierarchy, and much more.  You can combine search
 expressions together using boolean logic as well for even more
 powerful operations.
 
+* improved benchmark suite usage and instructions - Sean Morrison
 * improved mesh normals from Pro/E exporter - Bob Parker
 * fixed 'bspline' surface primitive wireframe plot bug - John Anderson
 * removed bot-raw, functionality replaced by bot_dump - Sean Morrison

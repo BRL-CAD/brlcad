@@ -45,57 +45,7 @@
 # compare cpu and cache performance, versions of BRL-CAD, and
 # different compiler characteristics.
 #
-# The suite is intended to be run from a source distribution of
-# BRL-CAD after the package has been compiled either directly or via a
-# make build system target.  There are, however, several environment
-# variables that will modify how the BRL-CAD benchmark behaves so that
-# it may be run in a stand-alone environment:
-#
-#   RT - the rt binary (e.g. ../src/rt/rt or /usr/brlcad/bin/rt)
-#   DB - the directory containing the reference geometry (e.g. ../db)
-#   PIX - the directory containing the reference images (e.g. ../pix)
-#   LOG - the directory containing the reference logs (e.g. ../pix)
-#   CMP - the name of a pixcmp tool (e.g. ./pixcmp or cmp)
-#   ELP - the name of an elapsed time tool (e.g. ../sh/elapsed.sh)
-#   TIMEFRAME - the minimum number of seconds each trace needs to take
-#   MAXTIME - the maximum number of seconds to spend on any test
-#   DEVIATION - the minimum sufficient % deviation from the average
-#   AVERAGE - how many frames to average together
-#   VERBOSE - turn on extra debug output for testing/development
-#   QUIET - turn off all printing output (writes results to summary)
-#
-# The TIMEFRAME, MAXTIME, DEVIATION, and AVERAGE options control how
-# the benchmark will proceed including how long it should take.  Each
-# individual benchmark run will consume at least a minimum TIMEFRAME
-# of wallclock time so that the results can stabilize.  After
-# consuming at least the minimum TIMEFRAME, additional frames may be
-# computed until the standard deviation from the last AVERAGE count of
-# frames is below the specified DEVIATION.  When a test is run and it
-# completes in less than TIMEFRAME, the raytrace is restarted using
-# double the number of rays from the previous run.  If the machine is
-# fast enough, the benchmark may accelerate the number or rays being
-# fired.  These additional rays are hypersampled but without any
-# jitter, so it's effectively performing a multiplier amount of work
-# over the initial frame.
-#
-# Plese send your BRL-CAD Benchmark results to the developers along
-# with detailed system information to <devs@brlcad.org>.  Include at
-# least:
-#
-#   0) Compiler name and version (e.g. gcc --version)
-#   1) CPU configuration (e.g. cat /proc/cpuinfo or hinv or sysctl -a)
-#   2) Cache (data and/or instruction) details for L1/L2/L3 and system
-#      (e.g. cat /proc/cpuinfo or hinv or sysctl -a)
-#   3) All generated log files (i.e. *.log* after benchmark completes)
-#   4) Anything else you think might be relevant to performance
-#
-# Authors -
-#  Mike Muuss
-#  Susan Muuss
-#  Christopher Sean Morrison
-#
-#  @(#)$Header$ (BRL)
-
+###
 
 # Ensure /bin/sh
 export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
@@ -107,9 +57,9 @@ PATH_TO_THIS=`dirname $0`
 THIS="$PATH_TO_THIS/$NAME_OF_THIS"
 
 # sanity check
-if [ ! -f "$THIS" ] ; then
+if test ! -f "$THIS" ; then
     echo "INTERNAL ERROR: $THIS does not exist"
-    if [ ! "x$0" = "x$THIS" ] ; then
+    if test ! "x$0" = "x$THIS" ; then
 	echo "INTERNAL ERROR: dirname/basename inconsistency: $0 != $THIS"
     fi
     exit 1
@@ -142,6 +92,7 @@ if test ! x$? = x0 ; then
     exit 1
 fi
 
+
 # determine the behavior of echo
 case `echo "testing\c"; echo 1,2,3`,`echo -n testing; echo 1,2,3` in
     *c*,-n*) ECHO_N= ECHO_C='
@@ -149,6 +100,250 @@ case `echo "testing\c"; echo 1,2,3`,`echo -n testing; echo 1,2,3` in
     *c*,*  ) ECHO_N=-n ECHO_C= ECHO_T= ;;
     *)       ECHO_N= ECHO_C='\c' ECHO_T= ;;
 esac
+
+
+#######################
+# log to tty and file #
+#######################
+log ( ) {
+
+    # this routine writes the provided argument(s) to a log file as
+    # well as echoing them to stdout if we're not in quiet mode.
+
+    echo "$*" >> "$LOGFILE"
+    if test ! "x$QUIET" = "x1" ; then
+	echo "$*"
+    fi
+}
+
+
+##############################
+# ensure a 0|1 boolean value #
+##############################
+booleanize ( ) {
+
+    # this routine examines the value of the specified variable and
+    # converts it to a simple zero or one value in order to simplify
+    # checks later on
+
+    for var in $* ; do
+
+	VAR="$var"
+	VALCMD="echo \$$VAR"
+	VAL="`eval $VALCMD`"
+
+	CMD=__UNSET__
+	case "x$VAL" in
+	    x)
+		CMD="$VAR=0"
+		;;
+	    x0)
+		CMD="$VAR=0"
+		;;
+	    x[nN]*)
+		CMD="$VAR=0"
+		;;
+	    x*)
+		CMD="$VAR=1"
+		;;
+	esac
+
+	if test ! "x$CMD" = "x__UNSET__" ; then
+	    eval $CMD
+	    export $VAR
+	fi
+
+    done
+}
+
+
+# process the argument list for commands
+NEWARGS=""
+for arg in $ARGS ; do
+    case "x$arg" in
+	x*[cC][lL][eE][aA][nN])
+	    CLEAN=1
+	    shift
+	    ;;
+	x*[cC][lL][oO][bB][bB][eE][rR])
+	    CLEAN=1
+	    CLOBBER=1
+	    shift
+	    ;;
+	x*[hH])
+	    HELP=1
+	    shift
+	    ;;
+	x*[hH][eE][lL][pP])
+	    HELP=1
+	    shift
+	    ;;
+	x*[iI][nN][sS][tT][rR][uU][cC][tT]*)
+	    INSTRUCTIONS=1
+	    shift
+	    ;;
+	x*[sS][tT][aA][rR][tT])
+	    shift
+	    ;;
+	x*[qQ][uU][iI][eE][tT])
+	    QUIET=1
+	    shift
+	    ;;
+	x*[vV][eE][rR][bB][oO][sS][eE])
+	    VERBOSE=1
+	    shift
+	    ;;
+	x*[rR][uU][nN])
+	    RUN=1
+	    shift
+	    ;;
+	x*=*)
+	    VAR=`echo $arg | sed 's/=.*//g'`
+	    if test ! "x$VAR" = "x" ; then
+		VAL=`echo $arg | sed 's/.*=//g'`
+		CMD="$VAR=$VAL"
+		eval $CMD
+		export $VAR
+	    fi
+	    shift
+	    ;;
+	x*)
+	    echo "WARNING: Passing unknown option [$1] to RT"
+	    NEWARGS="$NEWARGS $arg"
+	    ;;
+    esac
+done
+
+# reload post-shifting
+ARGS="$NEWARGS"
+
+# validate and clean up options (all default to 0)
+booleanize CLOBBER HELP INSTRUCTIONS QUIET VERBOSE RUN
+
+
+###
+# handle help before main processing
+###
+if test "x$HELP" = "x1" ; then
+    echo "Usage: $0 [command(s)] [OPTION=value] [RT_OPTIONS]"
+    echo ""
+    echo "Available commands:"
+    echo "  clean"
+    echo "  clobber"
+    echo "  help          (this is what you are reading right now)"
+    echo "  instructions"
+    echo "  quiet"
+    echo "  verbose"
+    echo "  run           (this is probably what you want)"
+    echo ""
+    echo "Available options:"
+    echo "  RT=/path/to/rt_binary (e.g., rt)"
+    echo "  DB=/path/to/reference/geometry (e.g. ../db)"
+    echo "  PIX=/path/to/reference/images (e.g., ../pix)"
+    echo "  LOG=/path/to/reference/logs (e.g., ../pix)"
+    echo "  CMP=/path/to/pixcmp_tool (e.g., pixcmp)"
+    echo "  ELP=/path/to/time_tool (e.g., elapsed.sh)"
+    echo "  TIMEFRAME=#seconds (default 32)"
+    echo "  MAXTIME=#seconds (default 300)"
+    echo "  DEVIATION=%deviation (default 3)"
+    echo "  AVERAGE=#frames (default 3)"
+    echo ""
+    echo "Available RT options:"
+    echo "  -P# (e.g., -P1 to force single CPU)"
+    echo "  See the 'rt' manpage for additional options"
+    echo ""
+    echo "The BRL-CAD Benchmark tests the overall performance of a system"
+    echo "compared to a stable well-known baseline.  The Benchmark calculates a"
+    echo "figure-of-merit for this system that may be directly compared to other"
+    echo "Benchmark runs on other system configurations."
+    echo ""
+    echo "BRL-CAD is a powerful cross-platform open source solid modeling system."
+    echo "For more information about BRL-CAD, see http://brlcad.org"
+    echo ""
+    echo "Run '$0 instructions' or see the manpage for additional information."
+    exit 1
+fi
+
+
+###
+# handle instructions before main processing
+###
+if test "x$INSTRUCTIONS" = "x1" ; then
+    cat <<EOF
+
+This program runs the BRL-CAD Benchmark.  The benchmark suite will
+test the performance of a system by iteratively rendering several
+well-known datasets into 512x512 images where performance metrics are
+documented and fairly well understood.  The local machine's
+performance is compared to the base system (called VGR) and a numeric
+"VGR" mulitplier of performance is computed.  This number is a
+simplified metric from which one may qualitatively compare cpu and
+cache performance, versions of BRL-CAD, and different compiler
+characteristics.
+
+The suite is intended to be run from a source distribution of BRL-CAD
+after the package has been compiled either directly or via a make
+build system target.  There are, however, several environment
+variables that will modify how the BRL-CAD benchmark behaves so that
+it may be run in a stand-alone environment:
+
+  RT - the rt binary (e.g. ../src/rt/rt or /usr/brlcad/bin/rt)
+  DB - the directory containing the reference geometry (e.g. ../db)
+  PIX - the directory containing the reference images (e.g. ../pix)
+  LOG - the directory containing the reference logs (e.g. ../pix)
+  CMP - the name of a pixcmp tool (e.g. ./pixcmp or cmp)
+  ELP - the name of an elapsed time tool (e.g. ../sh/elapsed.sh)
+  TIMEFRAME - the minimum number of seconds each trace needs to take
+  MAXTIME - the maximum number of seconds to spend on any test
+  DEVIATION - the minimum sufficient % deviation from the average
+  AVERAGE - how many frames to average together
+  VERBOSE - turn on extra debug output for testing/development
+  QUIET - turn off all printing output (writes results to summary)
+  INSTRUCTIONS - display detailed instructions
+  RUN - start a benchmark analysis
+
+The TIMEFRAME, MAXTIME, DEVIATION, and AVERAGE options control how the
+benchmark will proceed including how long it should take.  Each
+individual benchmark run will consume at least a minimum TIMEFRAME of
+wallclock time so that the results can stabilize.  After consuming at
+least the minimum TIMEFRAME, additional frames may be computed until
+the standard deviation from the last AVERAGE count of frames is below
+the specified DEVIATION.  When a test is run and it completes in less
+than TIMEFRAME, the raytrace is restarted using double the number of
+rays from the previous run.  If the machine is fast enough, the
+benchmark may accelerate the number or rays being fired.  These
+additional rays are hypersampled but without any jitter, so it's
+effectively performing a multiplier amount of work over the initial
+frame.
+
+Plese send your BRL-CAD Benchmark results to the developers along with
+detailed system information to <devs@brlcad.org>.  Include at least:
+
+  0) Compiler name and version (e.g. gcc --version)
+  1) CPU configuration (e.g. cat /proc/cpuinfo or hinv or sysctl -a)
+  2) Cache (data and/or instruction) details for L1/L2/L3 and system
+     (e.g. cat /proc/cpuinfo or hinv or sysctl -a)
+  3) All generated log files (i.e. *.log* after benchmark completes)
+  4) Anything else you think might be relevant to performance
+
+The manual page has even more information and specific usage examples.
+Run 'brlman benchmark'.
+
+EOF
+    exit 0
+fi
+
+
+# make sure they ask for it
+if test "x$RUN" = "x0" ; then
+    echo "Type '$0 help' for usage."
+    exit 1
+fi
+
+
+###
+# B E G I N
+###
 
 # where to write results
 LOGFILE=run-$$-benchmark.log
@@ -161,47 +356,20 @@ if test ! -w "$LOGFILE" ; then
 fi
 
 VERBOSE_ECHO=:
-ECHO=:
-if [ "x$QUIET" = "xyes" ] ; then
-    if [ "x$VERBOSE" = "xyes" ] ; then
+ECHO=log
+if test "x$QUIET" = "x1" ; then
+    if test "x$VERBOSE" = "x1" ; then
 	echo "Verbose output quelled by quiet option.  Further output disabled."
     fi
 else
-    ECHO=log
-    if [ "x$VERBOSE" = "xyes" ] ; then
-	echo "Verbose output enabled"
+    if test "x$VERBOSE" = "x1" ; then
 	VERBOSE_ECHO=echo
+	echo "Verbose output enabled"
     fi
 fi
 
-
-#######################
-# log to tty and file #
-#######################
-log ( ) {
-
-    # this routine writes the provided argument(s) to a log file as
-    # well as echoing them too.
-
-    echo "$*" >> "$LOGFILE"
-    echo "$*"
-}
-
-
 $ECHO "B R L - C A D   B E N C H M A R K"
 $ECHO "================================="
-
-
-# recognize a cleanup command
-case "x$1" in
-    xclean)
-	CLEAN=1
-	;;
-    xclobber)
-	CLEAN=1
-	CLOBBER=1
-	;;
-esac
 
 if test "x$CLEAN" = "x1" ; then
     ECHO=echo
@@ -470,9 +638,7 @@ versions="`$RT 2>&1 | grep BRL-CAD`"
 if test "x$versions" = "x" ; then
     $ECHO "Unknown"
 else
-    cat <<EOF
-$versions
-EOF
+    $ECHO "$versions"
 fi
 $ECHO
 
