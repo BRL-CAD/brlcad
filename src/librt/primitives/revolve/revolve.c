@@ -426,6 +426,9 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 		V2MOVE( pt1, rev->sk->verts[lsg->start] );
 		V2MOVE( pt2, rev->sk->verts[lsg->end] );
 		V2SUB2( dir, pt2, pt1 );
+		if (NEAR_ZERO(dir[X], SMALL_FASTF)) {
+		    m = 1.0;
+		}
 		m = dir[Y] / dir[X];
 
 		if ( NEAR_ZERO( fabs(ur[Z]) - 1.0, RT_DOT_TOL ) ) {
@@ -449,7 +452,11 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 			    hitp->hit_point[Y] = hit2d[Y];
 			    hitp->hit_point[Z] = 0;
 			    VMOVE( hitp->hit_vpriv, hit1 );
-			    hitp->hit_vpriv[Z] = -1.0/m;
+			    if (NEAR_ZERO(m, SMALL_FASTF)) {
+				hitp->hit_vpriv[Z] = 0.0;
+			    } else {
+				hitp->hit_vpriv[Z] = -1.0/m;
+			    }
 			    hitp->hit_magic = RT_HIT_MAGIC;
 			    hitp->hit_dist = k1;
 			    hitp->hit_surfno = i;
@@ -474,7 +481,11 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 			    hitp->hit_point[Y] = hit2d[Y];
 			    hitp->hit_point[Z] = 0;
 			    VMOVE( hitp->hit_vpriv, hit1 );
-			    hitp->hit_vpriv[Z] = 1.0/m;
+			    if (NEAR_ZERO(m, SMALL_FASTF)) {
+				hitp->hit_vpriv[Z] = 0.0;
+			    } else {
+				hitp->hit_vpriv[Z] = 1.0/m;
+			    }
 			    hitp->hit_magic = RT_HIT_MAGIC;
 			    hitp->hit_dist = k1;
 			    hitp->hit_surfno = i;
@@ -483,7 +494,11 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 		} else if ( NEAR_ZERO( ur[Z], RT_DOT_TOL ) ) {
 		    /* ray is horizontal line at y = h; hit2d[X] > aa */
 		    if ( FMIN( pt1[Y], pt2[Y] ) < h && h < FMAX( pt1[Y], pt2[Y] ) ) {
-			hit2d[X] = pt1[X] + (h-pt1[Y])/m;
+			if (NEAR_ZERO(m, SMALL_FASTF)) {
+			    hit2d[X] = pt1[X];
+			} else {
+			    hit2d[X] = pt1[X] + (h-pt1[Y])/m;
+			}
 			hit2d[Y] = h;
 			if ( fabs( hit2d[X] ) > aa ) {
 			    k1 = k + sqrt( hit2d[X]*hit2d[X] - aa*aa );
@@ -506,7 +521,11 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 				hitp->hit_point[Y] = hit2d[Y];
 				hitp->hit_point[Z] = 0;
 				VMOVE( hitp->hit_vpriv, hit1 );
-				hitp->hit_vpriv[Z] = (hit2d[X]>0) ? 1.0/m : -1.0/m;
+				if (NEAR_ZERO(m, SMALL_FASTF)) {
+				    hitp->hit_vpriv[Z] = 0.0;
+				} else {
+				    hitp->hit_vpriv[Z] = (hit2d[X]>0) ? 1.0/m : -1.0/m;
+				}
 				hitp->hit_magic = RT_HIT_MAGIC;
 				hitp->hit_dist = k1;
 				hitp->hit_surfno = i;
@@ -528,7 +547,11 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 				hitp->hit_point[Y] = hit2d[Y];
 				hitp->hit_point[Z] = 0;
 				VMOVE( hitp->hit_vpriv, hit2 );
-				hitp->hit_vpriv[Z] = (hit2d[X]>0) ? 1.0/m : -1.0/m;
+				if (NEAR_ZERO(m, SMALL_FASTF)) {
+				    hitp->hit_vpriv[Z] = 0.0;
+				} else {
+				    hitp->hit_vpriv[Z] = (hit2d[X]>0) ? 1.0/m : -1.0/m;
+				}
 				hitp->hit_magic = RT_HIT_MAGIC;
 				hitp->hit_dist = k2;
 				hitp->hit_surfno = i;
@@ -570,7 +593,11 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 				    hitp->hit_point[Y] = hit2d[Y];
 				    hitp->hit_point[Z] = 0;
 				    VMOVE( hitp->hit_vpriv, hit1 );
-				    hitp->hit_vpriv[Z] = (hit2d[X]>0) ? 1.0/m : -1.0/m;
+				    if (NEAR_ZERO(m, SMALL_FASTF)) {
+					hitp->hit_vpriv[Z] = 0.0;
+				    } else {
+					hitp->hit_vpriv[Z] = (hit2d[X]>0) ? 1.0/m : -1.0/m;
+				    }
 				    hitp->hit_magic = RT_HIT_MAGIC;
 				    hitp->hit_dist = k1;
 				    hitp->hit_surfno = i;
@@ -586,8 +613,8 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 				angle += M_PI;
 			    } else if ( angle < 0 ) {
 				angle += 2*M_PI;
-			    }
-			    hit2d[X] = -hit2d[X];
+			    }	
+		    hit2d[X] = -hit2d[X];
 			    if ( angle < rev->ang ) {
 				if ( ( angle + M_PI < rev->ang || angle - M_PI > 0 ) 
 					&& rt_sketch_contains( rev->sk, hit2d ) ) {
@@ -598,7 +625,11 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 				    hitp->hit_point[Y] = hit2d[Y];
 				    hitp->hit_point[Z] = 0;
 				    VMOVE( hitp->hit_vpriv, hit2 );
-				    hitp->hit_vpriv[Z] = (hit2d[X]>0) ? 1.0/m : -1.0/m;
+				    if (NEAR_ZERO(m, SMALL_FASTF)) {
+					hitp->hit_vpriv[Z] = 0.0;
+				    } else {
+					hitp->hit_vpriv[Z] = (hit2d[X]>0) ? 1.0/m : -1.0/m;
+				    }
 				    hitp->hit_magic = RT_HIT_MAGIC;
 				    hitp->hit_dist = k2;
 				    hitp->hit_surfno = i;
@@ -631,7 +662,11 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 				hitp->hit_point[Y] = hit2d[Y];
 				hitp->hit_point[Z] = 0;
 				VMOVE( hitp->hit_vpriv, hit1 );
-				hitp->hit_vpriv[Z] = (hit2d[X]>0) ? 1.0/m : -1.0/m;;
+				if (NEAR_ZERO(m, SMALL_FASTF)) {
+				    hitp->hit_vpriv[Z] = 0.0;
+				} else {
+				    hitp->hit_vpriv[Z] = (hit2d[X]>0) ? 1.0/m : -1.0/m;;
+				}
 				hitp->hit_magic = RT_HIT_MAGIC;
 				hitp->hit_dist = k1;
 				hitp->hit_surfno = i;
@@ -700,8 +735,8 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 	hits[out] = NULL;
 	BU_LIST_INSERT( &(seghead->l), &(segp->l) );
     }
-    return nhits;
 
+    return nhits;
 }
 
 #define RT_REVOLVE_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
@@ -736,6 +771,13 @@ rt_revolve_norm( struct hit *hitp, struct soltab *stp, struct xray *rp )
     fastf_t	angle;
 
     VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
+
+/*
+  XXX debug printing
+    VPRINT("hitp", hitp->hit_point);
+    VPRINT("vpriv", hitp->hit_vpriv);
+*/
+
     switch ( hitp->hit_surfno ) {
 	case START_FACE_POS:
 	    VREVERSE( hitp->hit_normal, rev->yUnit );
@@ -752,8 +794,8 @@ rt_revolve_norm( struct hit *hitp, struct soltab *stp, struct xray *rp )
 	    VUNITIZE( hitp->hit_normal );
 	    break;
 	default:
-	    VSET( n, hitp->hit_vpriv[X], hitp->hit_vpriv[Y], 0 );
-	    n[Z] = MAGNITUDE( n ) * hitp->hit_vpriv[Z];
+	    VMOVE(n, hitp->hit_vpriv);
+	    n[Z] *= sqrt((hitp->hit_vpriv[X] * hitp->hit_vpriv[X]) + (hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y]));
 
 	    if ( hitp->hit_surfno == HORIZ_SURF ) {
 		VSET( n, 0, 0, 1 );
@@ -768,7 +810,17 @@ rt_revolve_norm( struct hit *hitp, struct soltab *stp, struct xray *rp )
 	    nT[Z] = ( rev->xUnit[Z] * n[X] )
 		+ ( rev->yUnit[Z] * n[Y] )
 		+ ( rev->zUnit[Z] * n[Z] );
+
 	    VUNITIZE( nT );
+
+/* XXX Debug printing
+	    VPRINT("xUnit", rev->xUnit);
+	    VPRINT("yUnit", rev->yUnit);
+	    VPRINT("zUnit", rev->zUnit);
+	    VPRINT("n", n);
+	    VPRINT("nT", nT);
+*/
+
 	    if ( VDOT( nT, rp->r_dir) < 0 ) {
 		VMOVE( hitp->hit_normal, nT );
 	    } else {
