@@ -192,8 +192,6 @@ rt_revolve_prep( struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     stp->st_min[Z] = stp->st_center[Z] - stp->st_bradius;
     stp->st_max[Z] = stp->st_center[Z] + stp->st_bradius;
 
-    bu_log("rt_revolve_prep\n");
-
     return 0;			/* OK */
 }
 
