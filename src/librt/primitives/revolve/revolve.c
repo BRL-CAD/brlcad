@@ -428,8 +428,9 @@ rt_revolve_shot( struct soltab *stp, struct xray *rp, struct application *ap, st
 		V2SUB2( dir, pt2, pt1 );
 		if (NEAR_ZERO(dir[X], SMALL_FASTF)) {
 		    m = 1.0;
+		} else {
+		    m = dir[Y] / dir[X];
 		}
-		m = dir[Y] / dir[X];
 
 		if ( NEAR_ZERO( fabs(ur[Z]) - 1.0, RT_DOT_TOL ) ) {
 		    /* ray is vertical line at x=aa */
