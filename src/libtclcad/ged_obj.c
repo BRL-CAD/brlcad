@@ -351,6 +351,7 @@ static struct go_cmdtab go_cmds[] = {
     {"blast",	(char *)0, MAXARGS, go_blast, GED_FUNC_PTR_NULL},
     {"bot_condense",	(char *)0, MAXARGS, go_pass_through_func, ged_bot_condense},
     {"bot_decimate",	(char *)0, MAXARGS, go_pass_through_func, ged_bot_decimate},
+    {"bot_dump",	(char *)0, MAXARGS, go_pass_through_func, ged_bot_dump},
     {"bot_face_fuse",	(char *)0, MAXARGS, go_pass_through_func, ged_bot_face_fuse},
     {"bot_face_sort",	(char *)0, MAXARGS, go_pass_through_func, ged_bot_face_sort},
     {"bot_merge",	(char *)0, MAXARGS, go_pass_through_func, ged_bot_merge},
@@ -814,11 +815,11 @@ Usage: go_open\n\
 
     if (argc == 3 || strcmp(argv[2], "db") == 0) {
 	if (argc == 3)
-	    gedp = ged_open("filename", argv[2]); 
+	    gedp = ged_open("filename", argv[2], 0); 
 	else
-	    gedp = ged_open("db", argv[3]); 
+	    gedp = ged_open("db", argv[3], 0); 
     } else
-	gedp = ged_open(argv[2], argv[3]); 
+	gedp = ged_open(argv[2], argv[3], 0); 
 
     /* initialize ged_obj */
     BU_GETSTRUCT(gop, ged_obj);

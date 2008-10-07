@@ -127,7 +127,8 @@ BU_EXTERN (void ged_print_node,
 	    int                 displayDepth,
 	    int                 currdisplayDepth));
 BU_EXTERN (struct db_i *ged_open_dbip,
-	   (const char *filename));
+	   (const char *filename,
+	    int existing_only));
 
 /* defined in clip.c */
 BU_EXTERN (int ged_clip,

@@ -52,7 +52,7 @@ void ged_drawable_init(struct ged_drawable *gdp);
 void ged_drawable_close(struct ged_drawable *gdp);
 
 struct ged *
-ged_open(const char *dbtype, const char *filename)
+ged_open(const char *dbtype, const char *filename, int existing_only)
 {
     struct ged *gedp;
     struct rt_wdb *wdbp;
@@ -60,7 +60,7 @@ ged_open(const char *dbtype, const char *filename)
     if (strcmp(dbtype, "db") == 0) {
 	struct db_i	*dbip;
 
-	if ((dbip = ged_open_dbip(filename)) == DBI_NULL)
+	if ((dbip = ged_open_dbip(filename, existing_only)) == DBI_NULL)
 	    return GED_NULL;
 
 	RT_CK_DBI(dbip);
@@ -97,6 +97,9 @@ ged_open(const char *dbtype, const char *filename)
 void
 ged_init(struct ged *gedp)
 {
+    if (gedp == GED_NULL)
+	return;
+
     bu_vls_init(&gedp->ged_log);
     bu_vls_init(&gedp->ged_result_str);
 
@@ -110,6 +113,9 @@ ged_init(struct ged *gedp)
 void
 ged_close(struct ged *gedp)
 {
+    if (gedp == GED_NULL)
+	return;
+
     wdb_close(gedp->ged_wdbp);
     ged_drawable_close(gedp->ged_gdp);
 
@@ -125,6 +131,9 @@ ged_close(struct ged *gedp)
 void
 ged_drawable_init(struct ged_drawable *gdp)
 {
+    if (gdp == GED_DRAWABLE_NULL)
+	return;
+
     BU_LIST_INIT(&gdp->gd_headSolid);
     BU_LIST_INIT(&gdp->gd_headVDraw);
 #if 0
@@ -140,6 +149,9 @@ ged_drawable_init(struct ged_drawable *gdp)
 void
 ged_drawable_close(struct ged_drawable *gdp)
 {
+    if (gdp == GED_DRAWABLE_NULL)
+	return;
+
     ged_free_qray(gdp);
     bu_free((genptr_t)gdp, "struct ged_drawable");
 }
@@ -147,6 +159,9 @@ ged_drawable_close(struct ged_drawable *gdp)
 void
 ged_view_init(struct ged_view *gvp)
 {
+    if (gvp == GED_VIEW_NULL)
+	return;
+
     gvp->gv_scale = 1.0;
     gvp->gv_size = 2.0 * gvp->gv_scale;
     gvp->gv_isize = 1.0 / gvp->gv_size;
@@ -168,7 +183,7 @@ ged_view_init(struct ged_view *gvp)
  * Open/Create the database and build the in memory directory.
  */
 struct db_i *
-ged_open_dbip(const char *filename)
+ged_open_dbip(const char *filename, int existing_only)
 {
     struct db_i *dbip;
 
@@ -184,6 +199,9 @@ ged_open_dbip(const char *filename)
 
 	    return DBI_NULL;
 	}
+
+	if (existing_only)
+	    return DBI_NULL;
 
 	/* db_create does a db_dirbuild */
 	if ((dbip = db_create(filename, 5)) == DBI_NULL) {

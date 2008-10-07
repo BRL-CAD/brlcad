@@ -399,7 +399,8 @@ GED_EXPORT BU_EXTERN(void ged_init,
 		     (struct ged *gedp));
 GED_EXPORT BU_EXTERN(struct ged *ged_open,
 		     (const char *dbtype,
-		      const char *filename));
+		      const char *filename,
+		      int existing_only));
 GED_EXPORT BU_EXTERN(void ged_view_init,
 		     (struct ged_view *gvp));
 
@@ -1162,6 +1163,14 @@ GED_EXPORT BU_EXTERN(int ged_bot_condense, (struct ged *gedp, int argc, const ch
  *     bot_decimate -c maximum_chord_error -n maximum_normal_error -e minimum_edge_length new_bot_name current_bot_name
  */
 GED_EXPORT BU_EXTERN(int ged_bot_decimate, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Dump bots to the specified format.
+ *
+ * Usage:
+ *     bot_dump [-b] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] [bot1 bot2 ...]";
+ */
+GED_EXPORT BU_EXTERN(int ged_bot_dump, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Create new_bot by fusing faces in old_bot

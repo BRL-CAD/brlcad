@@ -111,7 +111,7 @@ bot_bldxf_SOURCES = bot-bldxf.c
 bot_bldxf_LDADD = ${RT}
 
 bot_dump_SOURCES = bot_dump.c
-bot_dump_LDADD = ${RT}
+bot_dump_LDADD = ${RT} ${GED}
 
 bot_shell_vtk_SOURCES = bot_shell-vtk.c
 bot_shell_vtk_LDADD = ${RT}

@@ -294,6 +294,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\bot_dump.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\bot_face_fuse.c"
 				>
 			</File>
