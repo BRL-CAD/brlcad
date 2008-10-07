@@ -2952,7 +2952,7 @@ pnts_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt) {
     pnts = (struct rt_pnts_internal *) intern->idb_ptr;
     pnts->magic = RT_PNTS_INTERNAL_MAGIC;
     pnts->scale = scale;
-    pnts->type = PNT_TYPE_PNT;
+    pnts->type = RT_PNT_TYPE_PNT;
     pnts->count = numPoints;
     headPoint = pnts->point;
     BU_GETSTRUCT(headPoint, pnt); /* empty list head */

@@ -561,14 +561,14 @@ struct rt_bot_internal
  */
 
 typedef enum {
-    PNT_TYPE_PNT = 0,
-    PNT_TYPE_COL = 0+1,
-    PNT_TYPE_SCA = 0+2,
-    PNT_TYPE_NRM = 0+4,
-    PNT_TYPE_COL_SCA = 0+1+2,
-    PNT_TYPE_COL_NRM = 0+1+4,
-    PNT_TYPE_SCA_NRM = 0+2+4,
-    PNT_TYPE_COL_SCA_NRM = 0+1+2+4
+    RT_PNT_TYPE_PNT = 0,
+    RT_PNT_TYPE_COL = 0+1,
+    RT_PNT_TYPE_SCA = 0+2,
+    RT_PNT_TYPE_NRM = 0+4,
+    RT_PNT_TYPE_COL_SCA = 0+1+2,
+    RT_PNT_TYPE_COL_NRM = 0+1+4,
+    RT_PNT_TYPE_SCA_NRM = 0+2+4,
+    RT_PNT_TYPE_COL_SCA_NRM = 0+1+2+4
 } rt_pnt_type;
 
 struct pnt {

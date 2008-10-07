@@ -586,6 +586,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	BU_LIST_INSERT(&pipe_ip->pipe_segs_head, &ps->l);
     } else if (strcmp(argv[bu_optind + 1], "pnts") == 0) {
 	struct pnt *point;
+	struct pnt *headPoint;
 
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_PNTS;
@@ -594,14 +595,16 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 
 	pnts_ip = (struct rt_pnts_internal *) internal.idb_ptr;
 	pnts_ip->magic = RT_PNTS_INTERNAL_MAGIC;
-	pnts_ip->numPoints = 1;
-	pnts_ip->weight = 0;
+	pnts_ip->count = 1;
+	pnts_ip->type = RT_PNT_TYPE_PNT;
+	pnts_ip->scale = 0;
 
-	BU_GETSTRUCT(pnts_ip->vList, pnt);
-	BU_LIST_INIT(&pnts_ip->vList->l);
+	BU_GETSTRUCT(pnts_ip->point, pnt);
+	headPoint = pnts_ip->point;
+	BU_LIST_INIT(&headPoint->l);
 	BU_GETSTRUCT(point, pnt);
 	VSET(point->v, origin[X], origin[Y], origin[Z]);
-	BU_LIST_PUSH(&pnts_ip->vList->l, &point->l);
+	BU_LIST_PUSH(&headPoint->l, &point->l);
 
     } else if (strcmp(argv[bu_optind+1], "bot") == 0) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
