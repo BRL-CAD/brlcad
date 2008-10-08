@@ -96,7 +96,7 @@ proc ia_man_help { parent screen cmds } {
 
     catch { destroy $w }
     toplevel $w -screen $screen
-    wm title $w "MGED Help"
+    wm title $w "MGED Manual Pages"
 
     button $w.cancel -command "destroy $w" -text "Cancel"
     pack $w.cancel -side bottom -fill x
@@ -107,7 +107,7 @@ proc ia_man_help { parent screen cmds } {
     pack $w.l -side top -fill both -expand yes
 
     foreach cmd $cmds {
-	$w.l insert end $cmd
+	if {[file exists [bu_brlcad_data [format "html/man1/en/%s.html" $cmd]]]} {$w.l insert end $cmd}
     }
 
     #    bind $w.l <Button-1> "mged_help %W $screen"
