@@ -29,6 +29,7 @@ bin_PROGRAMS = \
 	azel \
 	bary \
 	binfo \
+	bombardier \
 	buffer \
 	bw-a \
 	bw-imp \
@@ -177,8 +178,8 @@ bary_LDADD = ${BU}
 binfo_SOURCES = binfo.c
 binfo_LDADD = ${RT} ${FB} ${BU}
 
-# bombardier_SOURCES = bombardier.c
-# bombardier_LDADD = ${TCLCAD} ${BU} ${TCL} ${TK}
+bombardier_SOURCES = bombardier.c
+bombardier_LDADD = ${TCLCAD} ${BU} ${TCL} ${TK}
 
 buffer_SOURCES = buffer.c
 buffer_LDADD = ${BU}
