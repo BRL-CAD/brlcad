@@ -178,10 +178,9 @@ bary_LDADD = ${BU}
 binfo_SOURCES = binfo.c
 binfo_LDADD = ${RT} ${FB} ${BU}
 
-bombardier_SOURCES = bombardier.c
+bombardier_SOURCES = bombardier.c bombardier.h
 bombardier_LDADD = ${TCLCAD} ${BU} ${TCL} ${TK}
 bombardier_CPPFLAGS = ${TK_CPPFLAGS} ${TCL_CPPFLAGS}
-
 
 buffer_SOURCES = buffer.c
 buffer_LDADD = ${BU}
