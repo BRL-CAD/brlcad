@@ -22,6 +22,7 @@ XML_CATALOG_FILES=$(top_srcdir)/doc/docbook/catalog.xml
 man1DOCBOOK = \
 	alias-pix.xml \
 	all_sf.xml \
+	bwscale.xml \
 	rt.xml \
 	search.xml
 
