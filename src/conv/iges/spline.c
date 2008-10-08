@@ -47,6 +47,7 @@ spline( entityno, b_patch )
     int	n1, n2;
     int	i, j, k;
     int	count=0;
+    int point_size;
     fastf_t	min_knot;
     fastf_t max_wt;
 
@@ -83,10 +84,17 @@ spline( entityno, b_patch )
      *	num_cols	num control points in U direction
      *	point_size	number of values in a point (e.g. 3 or 4)
      */
+
+    if(prop3 == 0) {
+	point_size = 4;
+    } else {
+	point_size = 3;
+    }
+    
     (*b_patch) = rt_nurb_new_snurb(
 	m1+1, m2+1,
 	n1+2*m1+1, n2+2*m2+1,
-	k2+1, k1+1, RT_NURB_MAKE_PT_TYPE( 4, 2, 0 ), (struct resource *)NULL );
+	k2+1, k1+1, RT_NURB_MAKE_PT_TYPE( point_size, 2, (prop3==0?RT_NURB_PT_RATIONAL:RT_NURB_PT_NONRAT) ), (struct resource *)NULL );
 
     /* U knot vector */
     min_knot = 0.0;
@@ -115,7 +123,7 @@ spline( entityno, b_patch )
     }
     if ( min_knot < 0.0 )
     {
-	for (i = 0; i <= n1+2*m1; i++)
+	for (i = 0; i <= n2+2*m2; i++)
 	{
 	    (*b_patch)->v.knots[i] -= min_knot;
 	}
@@ -129,9 +137,13 @@ spline( entityno, b_patch )
     {
 	for ( j=0; j<= k1; j++ )
 	{
-	    Readdbl( &(*b_patch)->ctl_points[ count*4 + 3 ], "" );
-	    if ( (*b_patch)->ctl_points[ count*4 + 3 ] > max_wt )
-		max_wt = (*b_patch)->ctl_points[ count*4 + 3 ];
+	    if(point_size == 4) {
+		Readdbl( &(*b_patch)->ctl_points[ count*4 + 3 ], "" );
+		if ( (*b_patch)->ctl_points[ count*4 + 3 ] > max_wt )
+		    max_wt = (*b_patch)->ctl_points[ count*4 + 3 ];
+	    } else {
+		Readdbl( &max_wt, "" );
+	    }
 	    count++;
 	}
     }
@@ -142,22 +154,24 @@ spline( entityno, b_patch )
     {
 	for (j = 0; j <= k1; j++)
 	{
-	    Readcnv( &(*b_patch)->ctl_points[ count*4 ], "" );
-	    Readcnv( &(*b_patch)->ctl_points[ count*4 + 1 ], "" );
-	    Readcnv( &(*b_patch)->ctl_points[ count*4 + 2 ], "" );
+	    Readcnv( &(*b_patch)->ctl_points[ count*point_size ], "" );
+	    Readcnv( &(*b_patch)->ctl_points[ count*point_size + 1 ], "" );
+	    Readcnv( &(*b_patch)->ctl_points[ count*point_size + 2 ], "" );
 	    count++;
 	}
     }
 
-    /* apply weights */
-    count = 0;
-    for (i = 0; i <= k2; i++)
-    {
-	for (j = 0; j <= k1; j++)
+    if(point_size == 4) {
+	/* apply weights */
+	count = 0;
+	for (i = 0; i <= k2; i++)
 	{
-	    for ( k=0; k<3; k++ )
-		(*b_patch)->ctl_points[ count*4 + k ] *= (*b_patch)->ctl_points[ count*4 + 3];
-	    count++;
+	    for (j = 0; j <= k1; j++)
+	    {
+		for ( k=0; k<3; k++ )
+		    (*b_patch)->ctl_points[ count*4 + k ] *= (*b_patch)->ctl_points[ count*4 + 3];
+		count++;
+	    }
 	}
     }
 
