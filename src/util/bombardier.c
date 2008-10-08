@@ -159,7 +159,6 @@ init(Tcl_Interp *interp)
 int
 main(int argc, char *argv[])
 {
-    int i;
     int tkargc = 1;
     char *tkargv[2] = {NULL, NULL};
     tkargv[0] = argv[0];
@@ -168,6 +167,7 @@ main(int argc, char *argv[])
 	bu_exit(1, "Usage: %s logfile(s)\n", argv[0]);
     }
 
+    /* load all file arguments into our buffer */
     while (argc > 1) {
 	if (!bu_file_exists(argv[1])) {
 	    bu_log("WARNING: Log file [%s] does not exist\n", argv[1]);
@@ -179,10 +179,8 @@ main(int argc, char *argv[])
 	argv++;
     }
 
-    /* bu_log("REPORT IS:\n%s", report); */
-
     /* no tcl shell prompt */
-    close(0);
+    fclose(stdout);
 
     /* let the fun begin */
     Tk_Main(tkargc, tkargv, init);
