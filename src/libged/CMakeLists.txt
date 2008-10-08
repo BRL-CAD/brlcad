@@ -16,6 +16,7 @@ set(LIBGED_SOURCES
     blast.c
     bot_condense.c
     bot_decimate.c
+    bot_dump.c
     bot_face_fuse.c
     bot_face_sort.c
     bot_merge.c
