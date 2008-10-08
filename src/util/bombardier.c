@@ -97,9 +97,7 @@ wm minsize . [lindex [split [wm geometry .] x+] 0] [lindex [split [wm geometry .
 wm state . normal \n\
 ";
 
-#define MAX_BUFLEN 4096
-#define MAX_REPORT 1024 * 1024
-static char report[MAX_REPORT] = {0};
+static struct bu_vls *report = NULL;
 static void
 load_file(const char *filename)
 {
@@ -118,11 +116,15 @@ load_file(const char *filename)
     }
 
     bu_vls_init(&buffer);
+    if (!report) {
+	BU_GETSTRUCT(report, bu_vls);
+	bu_vls_init(report);
+    }
 
     /* read in the file */
     while (bu_vls_gets(&buffer, fp) != -1) {
 	/* total bleh, but it does the job */
-	snprintf(report, MAX_REPORT, "%s%s\n", report, bu_vls_addr(&buffer));
+	bu_vls_printf(report, "%s\n", bu_vls_addr(&buffer));
 	bu_vls_trunc(&buffer, 0);
     }
 
@@ -149,7 +151,12 @@ init(Tcl_Interp *interp)
 	return TCL_ERROR;
     }
 
-    Tcl_SetVar(interp, "report", report, 0);
+    if (!report) {
+	bu_log("Initialization error, report is NULL\n");
+	return TCL_ERROR;
+    }
+
+    Tcl_SetVar(interp, "report", bu_vls_addr(report), 0);
     Tcl_SetVar(interp, "script", crash_reporter, 0);
 
     if (Tcl_Eval(interp, crash_reporter) != TCL_OK) {
@@ -189,6 +196,10 @@ main(int argc, char *argv[])
 
     /* let the fun begin */
     Tk_Main(tkargc, tkargv, init);
+
+    /* release our report string */
+    bu_vls_free(report);
+    bu_free(report, "report");
 
     return 0;
 }
