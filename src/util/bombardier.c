@@ -37,6 +37,8 @@
 #include "tclcad.h"
 #include "bu.h"
 
+#include "./bombardier.h"
+
 
 /* here be bombardier's gui in all its glory
  */
@@ -57,6 +59,12 @@ bind . <Command-Key-w> {destroy .} \n\
 \n\
 wm withdraw . \n\
 update \n\
+set msg \"The application $application quit rather unexpectedly.\n\nWe hate it when that happens at least as much as you do.  Please let us know about it so we can fix the problem.\" \n\
+set response [tk_dialog .supg {Ooops...} $msg bombardier 1 {Close} {Report...}] \n\
+if {$response == 0} { \n\
+  destroy . \n\
+  exit \n\
+} \n\
 tk appname \"BRL-CAD Crash Report\" \n\
 wm title . \"BRL-CAD Crash Report\" \n\
 \n\
@@ -64,8 +72,8 @@ frame .f \n\
 frame .f_top \n\
 frame .f_bottom \n\
 label .l_top -text {Crash details and system information:} \n\
-label .l_bottom -text {Please describe what you were doing when the problem happened:} \n\
-label .l_info -justify left -text {Your crash report will help BRL-CAD improve.  No other information is sent with this report other that what is shown.  You will not be contacted back in response to this report unless you file a formal bug report.} \n\
+label .l_bottom -text {Please describe what you were doing when the crash occurred:} \n\
+label .l_info -justify left -text {Your crash report will help BRL-CAD improve.  No other information is sent with this report other that what is shown.  You will not be contacted in response to this report unless you file a formal bug report to the project bug tracker.  See http://brlcad.org for details.} \n\
 .l_info configure -wraplength 500 \n\
 text .t_top -width 80 -height 24 -borderwidth 1 -relief sunken -maxundo 0 -undo 1 \n\
 text .t_bottom -width 80 -height 8 -borderwidth 1 -relief sunken -maxundo 0 -undo 1 \n\
@@ -75,7 +83,7 @@ scrollbar .s_bottom -orient vert \n\
 .s_top conf -command {.t_top yview} \n\
 .t_bottom conf -yscrollcommand {.s_bottom set} \n\
 .s_bottom conf -command {.t_bottom yview} \n\
-button .b -text {Send to BRL-CAD developers...} -command {destroy .} \n\
+button .button_yes -text {Send to BRL-CAD developers...} -command {deploy; destroy .} \n\
 \n\
 pack .t_top -in .f_top -side left -expand 1 -fill both \n\
 pack .s_top -in .f_top -side right -fill y \n\
@@ -86,7 +94,7 @@ pack .s_bottom -in .f_bottom -side right -fill y \n\
 pack .l_bottom -in .f -anchor w \n\
 pack .f_bottom -in .f -pady {0 10} -fill both \n\
 pack .l_info -in .f -fill x \n\
-pack .b -in .f -pady 10 -side right \n\
+pack .button_yes -in .f -pady 10 -side right \n\
 pack .f -padx 16 -pady 16 -expand 1 -fill both \n\
 \n\
 update \n\
@@ -161,12 +169,28 @@ load_file(const char *filename)
 }
 
 
+/* the workhorse that actually sends the report in
+ */
+int
+deploy(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
+{
+    struct bu_vls *daBomb = (struct bu_vls *)data;
+
+    /* bu_log("REPORT:\n%V\n", daBomb); */
+    bu_log("Pretending that we're sending the log file to brlcad.org\n");
+
+    return TCL_OK;
+}
+
+
 /* main app initialization where Tcl/Tk is initialized, the gui is
  * created, and displayed.
  */
 static int
 init(Tcl_Interp *interp)
 {
+    static char appname[128] = {0};
+
     /* locate brl-cad specific scripts (or uninstalled tcl/tk stuff) */
     tclcad_auto_path(interp);
 
@@ -180,13 +204,20 @@ init(Tcl_Interp *interp)
 	return TCL_ERROR;
     }
 
+    Tk_DefineBitmap(interp, "bombardier", bomb_icon_bits, bomb_icon_width, bomb_icon_height);
+
     if (!report) {
 	bu_log("Initialization error, report is NULL\n");
 	return TCL_ERROR;
     }
 
+    snprintf(appname, 128, "%s", bu_getprogname());
+
+    Tcl_SetVar(interp, "application", appname, 0);
     Tcl_SetVar(interp, "report", bu_vls_addr(report), 0);
     Tcl_SetVar(interp, "script", crash_reporter, 0);
+
+    Tcl_CreateCommand(interp, "deploy", deploy, (ClientData)report, NULL);
 
     if (Tcl_Eval(interp, crash_reporter) != TCL_OK) {
 	bu_log("ERROR: Unable to initialize\n");
