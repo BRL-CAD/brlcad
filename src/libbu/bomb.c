@@ -156,9 +156,6 @@ bu_bomb(const char *str)
 	    bu_semaphore_acquire( BU_SEM_SYSCALL );
 	    fputs("Saving stack trace to ", stderr);
 	    fputs(tracefile, stderr);
-	    fputs(str, stderr);
-	    fputs(str, stderr);
-	    fputs(str, stderr);
 	    fputc('\n', stderr);
 	    fflush(stderr);
 	    bu_semaphore_release( BU_SEM_SYSCALL );
