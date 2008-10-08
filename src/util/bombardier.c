@@ -104,7 +104,7 @@ static void
 load_file(const char *filename)
 {
     FILE *fp = NULL;
-    char buffer[MAX_BUFLEN] = {0};
+    struct bu_vls buffer;
 
     if (!bu_file_exists(filename)) {
 	return;
@@ -117,11 +117,16 @@ load_file(const char *filename)
 	return;
     }
 
+    bu_vls_init(&buffer);
+
     /* read in the file */
-    while (bu_fgets(buffer, MAX_BUFLEN, fp)) {
+    while (bu_vls_gets(&buffer, fp) != -1) {
 	/* total bleh, but it does the job */
-	snprintf(report, MAX_REPORT, "%s%s", report, buffer);
+	snprintf(report, MAX_REPORT, "%s%s\n", report, bu_vls_addr(&buffer));
+	bu_vls_trunc(&buffer, 0);
     }
+
+    bu_vls_free(&buffer);
 
     (void)fclose(fp);
     return;
