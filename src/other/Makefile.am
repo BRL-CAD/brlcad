@@ -137,7 +137,7 @@ SUBDIRS = \
 	${BLTDIR} \
 	${OPENNURBSDIR} \
 	${TNTDIR} \
-	awf
+	awf 
 
 endif
 # end ONLY_RTS
@@ -160,6 +160,7 @@ DIST_SUBDIRS = \
 	openNURBS \
 	tcl \
 	tk \
+	tkhtml3 \
 	tkimg \
 	tnt
 

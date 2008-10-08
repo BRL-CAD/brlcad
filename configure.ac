@@ -3940,6 +3940,9 @@ AC_CONFIG_FILES([
 	src/other/openNURBS/Makefile
 	src/other/tcl/Makefile
 	src/other/tk/Makefile
+	src/other/tkhtml3/Makefile
+	src/other/tkhtml3/src/Makefile
+	src/other/tkhtml3/include/Makefile
 	src/other/tkimg/Makefile
 	src/other/tkimg/base/Makefile
 	src/other/tkimg/png/Makefile
