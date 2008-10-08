@@ -38,6 +38,8 @@
 #include "bu.h"
 
 
+/* here be bombardier's gui in all its glory
+ */
 static char *crash_reporter="\
 catch {console hide} meh \n\
 \n\
@@ -97,7 +99,30 @@ wm minsize . [lindex [split [wm geometry .] x+] 0] [lindex [split [wm geometry .
 wm state . normal \n\
 ";
 
+
+/* crash report file(s) specified on the command line are stored in
+ * here and released when the application terminates via an atexit
+ * handler.
+ */
 static struct bu_vls *report = NULL;
+
+
+/* used as an atexit handler to release our report memory since
+ * Tk_Main never returns
+ */
+static void
+_free_report_memory()
+{
+    /* release our report string */
+    if (report) {
+	bu_vls_free(report);
+	bu_free(report, "report");
+    }
+}
+
+
+/* loads the specified file into our report buffer
+ */
 static void
 load_file(const char *filename)
 {
@@ -119,6 +144,7 @@ load_file(const char *filename)
     if (!report) {
 	BU_GETSTRUCT(report, bu_vls);
 	bu_vls_init(report);
+	atexit(_free_report_memory);
     }
 
     /* read in the file */
@@ -135,6 +161,9 @@ load_file(const char *filename)
 }
 
 
+/* main app initialization where Tcl/Tk is initialized, the gui is
+ * created, and displayed.
+ */
 static int
 init(Tcl_Interp *interp)
 {
@@ -196,10 +225,6 @@ main(int argc, char *argv[])
 
     /* let the fun begin */
     Tk_Main(tkargc, tkargv, init);
-
-    /* release our report string */
-    bu_vls_free(report);
-    bu_free(report, "report");
 
     return 0;
 }
