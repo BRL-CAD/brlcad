@@ -25,6 +25,7 @@ the geometry hierarchy, and much more.  You can combine search
 expressions together using boolean logic as well for even more
 powerful operations.
 
+* enhanced documentation management system within mged - Cliff Yapp
 * conversion of documentation to Docbook format, editing, and review
 	- Cliff Yapp, Janine Gettier
 * improved benchmark suite usage and instructions - Sean Morrison
