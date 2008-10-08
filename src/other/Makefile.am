@@ -137,7 +137,8 @@ SUBDIRS = \
 	${BLTDIR} \
 	${OPENNURBSDIR} \
 	${TNTDIR} \
-	awf 
+	awf \
+	tkhtml3 
 
 endif
 # end ONLY_RTS
