@@ -25,6 +25,8 @@ the geometry hierarchy, and much more.  You can combine search
 expressions together using boolean logic as well for even more
 powerful operations.
 
+* conversion of documentation to Docbook format, editing, and review
+	- Cliff Yapp, Janine Gettier
 * improved benchmark suite usage and instructions - Sean Morrison
 * improved mesh normals from Pro/E exporter - Bob Parker
 * fixed 'bspline' surface primitive wireframe plot bug - John Anderson
