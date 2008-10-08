@@ -107,7 +107,7 @@ proc ia_man_help { parent screen cmds } {
     pack $w.l -side top -fill both -expand yes
 
     foreach cmd $cmds {
-	if {[file exists [bu_brlcad_data [format "html/man1/en/%s.html" $cmd]]]} {$w.l insert end $cmd}
+	if {[file exists [bu_brlcad_data "html/man1/en/$cmd.html" ]]} {$w.l insert end $cmd}
     }
 
     #    bind $w.l <Button-1> "mged_help %W $screen"
@@ -139,10 +139,10 @@ proc mged_help { w1 screen } {
 proc mged_man_help { w1 screen } {
     global ::tk::Priv
     
-    if {![file exists [bu_brlcad_data [format "html/man1/en/%s.html" [$w1 get [$w1 curselection]]]]]} {
+    if {![file exists [bu_brlcad_data "html/man1/en/[$w1 get [$w1 curselection]].html" ]]} {
 	return
     } else {
-    	set man_fd [open [bu_brlcad_data [format "html/man1/en/%s.html" [$w1 get [$w1 curselection]]]]]
+    	set man_fd [open [bu_brlcad_data  "html/man1/en/[$w1 get [$w1 curselection]].html" ]]
     	set man_data [read $man_fd]
     	close $man_fd
     	man_dialog $::tk::Priv(man_dialog) $screen $w1 $man_data 0 OK
