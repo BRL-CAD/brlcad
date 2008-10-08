@@ -80,18 +80,15 @@ proc man {cmdname} {
     	grid rowconfigure .man.top.msgF 0 -weight 1
     	pack .man.top.msgF -side right -expand yes -fill both -padx 2m -pady 2m
 
-    	button .man.bot.buttonOK -text "OK" -command "set button.man OK"
+    	button .man.bot.buttonOK -text "OK" -command "catch {destroy .man} "
     	frame .man.bot.default -relief sunken -bd 1
     	raise .man.bot.buttonOK
     	pack .man.bot.default -side left -expand yes -padx 2m -pady 1m
     	pack .man.bot.buttonOK -in .man.bot.default -side left -padx 1m \
               -pady 1m -ipadx 1m -ipady 1
-	   
-	# Make sure the button closes the window
-    	bind .man <Return> "catch { destroy .man }"
-    	bind .man <1> "catch { destroy .man }"
-    	bind .man <2> "catch { destroy .man }"
 
+	bind .man <Return> "catch {destroy .man}"
+	   
     }
 }
 
