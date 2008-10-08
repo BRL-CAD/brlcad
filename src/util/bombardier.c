@@ -34,6 +34,10 @@
 #include "tcl.h"
 #include "tk.h"
 
+#include "tclcad.h"
+#include "bu.h"
+
+
 static char *crash_reporter="\
 catch {console hide} meh \n\
 \n\
@@ -128,7 +132,7 @@ static int
 init(Tcl_Interp *interp)
 {
     /* locate brl-cad specific scripts (or uninstalled tcl/tk stuff) */
-//    tclcad_auto_path(interp);
+    tclcad_auto_path(interp);
 
     if (Tcl_Init(interp) == TCL_ERROR) {
 	bu_log("Tcl_Init error %s\n", Tcl_GetStringResult(interp));
