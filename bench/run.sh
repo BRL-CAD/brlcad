@@ -334,43 +334,9 @@ EOF
 fi
 
 
-# make sure they ask for it
-if test "x$RUN" = "x0" ; then
-    echo "Type '$0 help' for usage."
-    exit 1
-fi
-
-
 ###
-# B E G I N
+# handle clean/clobber before main processing
 ###
-
-# where to write results
-LOGFILE=run-$$-benchmark.log
-touch "$LOGFILE"
-if test ! -w "$LOGFILE" ; then
-    if test ! "x$LOGFILE" = "x/dev/null" ; then
-	echo "ERROR: Unable to log to $LOGFILE"
-    fi
-    LOGFILE=/dev/null
-fi
-
-VERBOSE_ECHO=:
-ECHO=log
-if test "x$QUIET" = "x1" ; then
-    if test "x$VERBOSE" = "x1" ; then
-	echo "Verbose output quelled by quiet option.  Further output disabled."
-    fi
-else
-    if test "x$VERBOSE" = "x1" ; then
-	VERBOSE_ECHO=echo
-	echo "Verbose output enabled"
-    fi
-fi
-
-$ECHO "B R L - C A D   B E N C H M A R K"
-$ECHO "================================="
-
 if test "x$CLEAN" = "x1" ; then
     ECHO=echo
     rm -f "$LOGFILE"
@@ -420,6 +386,42 @@ if test "x$CLEAN" = "x1" ; then
     exit 0
 fi
 
+
+###
+# B E G I N
+###
+
+# make sure they ask for it
+if test "x$RUN" = "x0" ; then
+    echo "Type '$0 help' for usage."
+    exit 1
+fi
+
+# where to write results
+LOGFILE=run-$$-benchmark.log
+touch "$LOGFILE"
+if test ! -w "$LOGFILE" ; then
+    if test ! "x$LOGFILE" = "x/dev/null" ; then
+	echo "ERROR: Unable to log to $LOGFILE"
+    fi
+    LOGFILE=/dev/null
+fi
+
+VERBOSE_ECHO=:
+ECHO=log
+if test "x$QUIET" = "x1" ; then
+    if test "x$VERBOSE" = "x1" ; then
+	echo "Verbose output quelled by quiet option.  Further output disabled."
+    fi
+else
+    if test "x$VERBOSE" = "x1" ; then
+	VERBOSE_ECHO=echo
+	echo "Verbose output enabled"
+    fi
+fi
+
+$ECHO "B R L - C A D   B E N C H M A R K"
+$ECHO "================================="
 $ECHO "Running $THIS on `date`"
 $ECHO "Logging output to $LOGFILE"
 $ECHO "`uname -a 2>&1`"
