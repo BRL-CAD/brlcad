@@ -29,6 +29,7 @@
 #include "common.h"
 
 #include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
 
 #include "tcl.h"
@@ -189,7 +190,8 @@ deploy(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
 static int
 init(Tcl_Interp *interp)
 {
-    static char appname[128] = {0};
+    char *c;
+    struct bu_vls appname;
 
     /* locate brl-cad specific scripts (or uninstalled tcl/tk stuff) */
     tclcad_auto_path(interp);
@@ -211,10 +213,38 @@ init(Tcl_Interp *interp)
 	return TCL_ERROR;
     }
 
-    snprintf(appname, 128, "%s", bu_getprogname());
+    bu_vls_init(&appname);
 
-    Tcl_SetVar(interp, "application", appname, 0);
-    Tcl_SetVar(interp, "report", bu_vls_addr(report), 0);
+    /* try to pull the command name from the report */
+    c = bu_vls_addr(report);
+    while (c[0] != '\0') {
+	if (strncmp(c, "Command:", 8) == 0) {
+	    c+=8;
+	    while (c[0] != '\0' && isspace(c[0])) {
+		c++;
+	    }
+	    while (c[0] != '\0' && !isspace(c[0])) {
+		bu_vls_putc(&appname, c[0]);
+		c++;
+	    }
+	    break;
+	}
+	c++;
+    }
+
+    if (bu_vls_addr(&appname)[0] != '\0') {
+	Tcl_SetVar(interp, "application", bu_vls_addr(&appname), 0);
+    } else {
+	Tcl_SetVar(interp, "application", "unknown", 0);
+    }
+    bu_vls_free(&appname);
+
+    if (bu_vls_addr(report)[0] != '\0') {
+	Tcl_SetVar(interp, "report", bu_vls_addr(report), 0);
+    } else {
+	Tcl_SetVar(interp, "report", "ERROR", 0);
+    }
+
     Tcl_SetVar(interp, "script", crash_reporter, 0);
 
     Tcl_CreateCommand(interp, "deploy", deploy, (ClientData)report, NULL);
