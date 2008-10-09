@@ -1123,18 +1123,6 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	    case 'g':
 	    case 'G':
 		/* All floating point ==> "double" */
-#if defined(LONGDBL)
-		if (flags & LONGDBL) {
-		    register long double ld;
-
-		    ld = va_arg(ap, long double);
-		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, ld);
-		    else
-			snprintf(buf, BUFSIZ, fbuf, ld);
-		    bu_vls_strcat(vls, buf);
-		} else
-#endif
 		{
 		    register double d;
 		    
