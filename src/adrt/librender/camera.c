@@ -84,7 +84,7 @@ void render_camera_init(render_camera_t *camera, int threads)
 
     /* Initialize camera to rendering surface normals */
     render_normal_init(&camera->render);
-    camera->rm = RENDER_METHOD_NORMAL;
+    camera->rm = RENDER_METHOD_PHONG;
 
     render_tlist = NULL;
     if (camera->thread_num > 1)
