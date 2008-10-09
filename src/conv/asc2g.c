@@ -1770,6 +1770,9 @@ main(int argc, char *argv[])
 		sktbld();
 		continue;
 
+	    case '#':
+		continue;
+
 	    default:
 		bu_log("asc2g: bad record type '%c' (0%o), skipping\n", buf[0], buf[0]);
 		bu_log("%s\n", buf);
