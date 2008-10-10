@@ -1,0 +1,35 @@
+
+/*------------------------------*/
+/*      QUIRKS MODE RULES       */
+/*------------------------------*/
+ 
+/* Tables are historically special. All font attributes except font-family,
+ * text-align, white-space and line-height) take their initial values.
+ */
+TABLE {
+  white-space:  normal;
+  line-height:  normal;
+  font-size:    medium;
+  font-weight:  normal;
+  font-style:   normal;
+  font-variant: normal;
+  text-align: left;
+}
+
+TABLE[align] {
+  text-align: left;
+}
+
+/* Vertical margins of <p> elements do not collapse against the top or
+ * bottom of containing table cells.
+ */
+TH > P:first-child, TD > P:first-child {
+  margin-top: 0px;
+}
+TH > P:last-child, TD > P:last-child {
+  margin-bottom: 0px;
+}
+
+FORM {
+  margin-bottom: 1em;
+}
