@@ -20,6 +20,7 @@ XML_CATALOG_FILES=$(top_srcdir)/doc/docbook/catalog.xml
 	XML_CATALOG_FILES=$(XML_CATALOG_FILES) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_FO_STYLESHEET) $?
 
 man1DOCBOOK = \
+	3ptarb.xml \
 	alias-pix.xml \
 	all_sf.xml \
 	bwscale.xml \
