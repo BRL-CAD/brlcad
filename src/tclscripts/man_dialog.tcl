@@ -25,27 +25,7 @@
 #
 ###############################################################################
 
-if {![info exists ::tk::Priv(wait_cmd)]} {
-    set ::tk::Priv(wait_cmd) tkwait
-}
-    
-if {$tcl_platform(platform) == "windows"} {
-    set ext "dll"
-    set tkimgdir [bu_brlcad_root "bin"]
-} else {
-    set ext "so"
-    set tkhtml3dir [bu_brlcad_root "lib"]
-        if {![file exists $tkhtml3dir]} {
-            set tkhtml3dir [file join [bu_brlcad_data "src"] other tkhtml3 .libs]
-        }
-    }
-
-if {![file exists [file join $tkhtml3dir tkhtml3.$ext]]} {
-     puts "ERROR: Unable to initialize tkhtml3"
-     exit 1
-}
-
-load [file join $tkhtml3dir tkhtml3.$ext]
+package require Tkhtml 3.0
 
 # man_dialog --
 #

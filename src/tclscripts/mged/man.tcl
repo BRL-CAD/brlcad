@@ -19,19 +19,7 @@
 # information.
 #
 
-if {$tcl_platform(platform) == "windows"} { 
-    set ext "dll"
-    set tkimgdir [bu_brlcad_root "bin"]
-} else {
-    set ext "so"
-    set tkhtml3dir [bu_brlcad_root "lib"]
-        if {![file exists $tkhtml3dir]} {
-            set tkhtml3dir [file join [bu_brlcad_data "src"] other tkhtml3 .libs]
-        }
-    }
-
-load [file join $tkhtml3dir tkhtml3.$ext]
-
+package require Tkhtml 3.0
 
 proc man {cmdname} {
     global mged_gui
