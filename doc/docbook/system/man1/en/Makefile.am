@@ -24,6 +24,7 @@ man1DOCBOOK = \
 	alias-pix.xml \
 	all_sf.xml \
 	bwscale.xml \
+	nirt.xml \
 	rt.xml \
 	search.xml
 
