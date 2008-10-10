@@ -26,6 +26,7 @@ man1DOCBOOK = \
 	bwscale.xml \
 	nirt.xml \
 	rt.xml \
+	rtarea.xml \
 	search.xml
 
 man1DOCBOOKhtmldir = $(BRLCAD_DATA)/html/man1/en
