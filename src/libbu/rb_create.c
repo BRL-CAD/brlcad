@@ -21,7 +21,7 @@
 /** @{ */
 /** @file rb_create.c
  *
- *		Routines to create a red-black tree
+ * Routines to create a red-black tree
  *
  */
 
@@ -32,23 +32,24 @@
 #include "bu.h"
 #include "./rb_internals.h"
 
-/**		    B U _ R B _ C R E A T E ( )
+/**
+ * B U _ R B _ C R E A T E ()
  *
- *		    Create a red-black tree
+ * Create a red-black tree
  *
- *	This function has three parameters: a comment describing the
- *	tree to create, the number of linear orders to maintain
- *	simultaneously, and the comparison functions (one per order).
- *	bu_rb_create() returns a pointer to the red-black tree header
- *	record.
+ * This function has three parameters: a comment describing the
+ * tree to create, the number of linear orders to maintain
+ * simultaneously, and the comparison functions (one per order).
+ * bu_rb_create() returns a pointer to the red-black tree header
+ * record.
  */
-bu_rb_tree *bu_rb_create (char *description, int nm_orders, int (**order_funcs)() )
+bu_rb_tree *bu_rb_create (char *description, int nm_orders, int (**order_funcs)())
 {
     int		order;
     bu_rb_tree	*tree;
 
     /*
-     *	Allocate memory for the tree
+     * Allocate memory for the tree
      */
     tree = (bu_rb_tree *) bu_malloc(sizeof(bu_rb_tree), "red-black tree");
     tree -> rbt_root = (struct bu_rb_node **)
@@ -79,7 +80,7 @@ bu_rb_tree *bu_rb_create (char *description, int nm_orders, int (**order_funcs)(
 	bu_malloc(nm_orders * sizeof(struct bu_rb_package *),
 		  "red-black packages");
     /*
-     *	Fill in the tree
+     * Fill in the tree
      */
     tree -> rbt_magic = BU_RB_TREE_MAGIC;
     tree -> rbt_description = description;
@@ -95,7 +96,7 @@ bu_rb_tree *bu_rb_create (char *description, int nm_orders, int (**order_funcs)(
     BU_LIST_INIT(&(tree -> rbt_packages.l));
 
     /*
-     *	Initialize the nil sentinel
+     * Initialize the nil sentinel
      */
     bu_rb_null(tree) -> rbn_magic = BU_RB_NODE_MAGIC;
     bu_rb_null(tree) -> rbn_tree = tree;
@@ -112,19 +113,20 @@ bu_rb_tree *bu_rb_create (char *description, int nm_orders, int (**order_funcs)(
     return (tree);
 }
 
-/**		    B U _ R B _ C R E A T E 1 ( )
+/**
+ * B U _ R B _ C R E A T E 1 ()
  *
- *		Create a single-order red-black tree
+ * Create a single-order red-black tree
  *
- *	This function has two parameters: a comment describing the
- *	tree to create and a comparison function.  bu_rb_create1() builds
- *	an array of one function pointer and passes it to bu_rb_create().
- *	bu_rb_create1() returns a pointer to the red-black tree header
- *	record.
+ * This function has two parameters: a comment describing the
+ * tree to create and a comparison function.  bu_rb_create1() builds
+ * an array of one function pointer and passes it to bu_rb_create().
+ * bu_rb_create1() returns a pointer to the red-black tree header
+ * record.
  *
- *	N.B. - Since this function allocates storage for the array of
- *	function pointers, in order to avoid memory leaks on freeing
- *	the tree, applications should call bu_rb_free1(), NOT bu_rb_free().
+ * N.B. - Since this function allocates storage for the array of
+ * function pointers, in order to avoid memory leaks on freeing
+ * the tree, applications should call bu_rb_free1(), NOT bu_rb_free().
  */
 bu_rb_tree *bu_rb_create1 (char *description, int (*order_func) (/* ??? */))
 {

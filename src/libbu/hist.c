@@ -21,14 +21,14 @@
 /** @{ */
 /** @file hist.c
  *
- *  @brief
- *  General purpose histogram handling routines.
+ * @brief
+ * General purpose histogram handling routines.
  *
- *  The macro RT_HISTOGRAM_TALLY is used to record items that
- *  live in a single "bin", while the subroutine rt_hist_range()
- *  is used to record items that may extend across multiple "bin"s.
+ * The macro RT_HISTOGRAM_TALLY is used to record items that
+ * live in a single "bin", while the subroutine rt_hist_range()
+ * is used to record items that may extend across multiple "bin"s.
  *
- *  @author  Michael John Muuss
+ * @author  Michael John Muuss
  *
  */
 
@@ -41,40 +41,40 @@
 #include "bu.h"
 
 /**
- *			B U _ H I S T _ F R E E
+ * B U _ H I S T _ F R E E
  */
 void
 bu_hist_free(struct bu_hist *histp)
 {
-    if ( (histp==(struct bu_hist *)NULL) ||
-	 (histp && (histp->magic == 0 || histp->magic == (unsigned int)-1)) )
+    if ((histp==(struct bu_hist *)NULL) ||
+	(histp && (histp->magic == 0 || histp->magic == (unsigned int)-1)))
     {
 	return;
     }
 
     BU_CK_HIST(histp);
 
-    if ( histp->hg_bins )
-	bu_free( (char *)histp->hg_bins, "old bu_hist bins");
+    if (histp->hg_bins)
+	bu_free((char *)histp->hg_bins, "old bu_hist bins");
     histp->hg_bins = (long *)0;
     histp->hg_nbins = 0;
     histp->magic = (unsigned int)-1;	/* sanity */
 }
 
 /**
- *			B U _ H I S T _ I N I T
+ * B U _ H I S T _ I N I T
  *
- *  Initialize a bu_hist structure.
- *  It is expected that the structure is junk upon entry.
+ * Initialize a bu_hist structure.
+ * It is expected that the structure is junk upon entry.
  */
 void
 bu_hist_init(struct bu_hist *histp, fastf_t min, fastf_t max, unsigned int nbins)
 {
 
-    if ( max <= min )  max = min+1;
-    if ( nbins < 1 )  {
+    if (max <= min)  max = min+1;
+    if (nbins < 1) {
 	nbins = 1;	/* nbins=1 makes for a nice 2-bin binary histogram */
-    } else if ( nbins > 10000 )  {
+    } else if (nbins > 10000) {
 	nbins = 10000;	/* This is a lot of lines to print out */
     }
 
@@ -83,15 +83,15 @@ bu_hist_init(struct bu_hist *histp, fastf_t min, fastf_t max, unsigned int nbins
     histp->hg_nbins = nbins;
 
     histp->hg_clumpsize = ((max-min)/nbins);
-    if ( histp->hg_clumpsize <= 0 )  histp->hg_clumpsize = 1;
+    if (histp->hg_clumpsize <= 0)  histp->hg_clumpsize = 1;
 
     histp->hg_nsamples = 0L;
-    histp->hg_bins = (long *)bu_calloc( nbins+1, sizeof(long), "bu_hist bins");
+    histp->hg_bins = (long *)bu_calloc(nbins+1, sizeof(long), "bu_hist bins");
     histp->magic = BU_HIST_MAGIC;
 }
 
 /**
- *			B U _ H I S T _ R A N G E
+ * B U _ H I S T _ R A N G E
  */
 void
 bu_hist_range(register struct bu_hist *hp, fastf_t low, fastf_t high)
@@ -101,26 +101,26 @@ bu_hist_range(register struct bu_hist *hp, fastf_t low, fastf_t high)
     register int	i;
 
     BU_CK_HIST(hp);
-    if ( low <= hp->hg_min )
+    if (low <= hp->hg_min)
 	a = 0;
     else
 	a = (low - hp->hg_min) / hp->hg_clumpsize;
-    if ( high >= hp->hg_max )
+    if (high >= hp->hg_max)
 	b = hp->hg_nbins-1;
     else
 	b = (high - hp->hg_min) / hp->hg_clumpsize;
-    if ( b >= hp->hg_nbins )  b = hp->hg_nbins-1;
+    if (b >= hp->hg_nbins)  b = hp->hg_nbins-1;
 
-    for ( i=a; i <= b; i++ )  {
+    for (i=a; i <= b; i++) {
 	hp->hg_bins[i]++;
     }
     hp->hg_nsamples++;
 }
 
 /**
- *			B U _ H I S T _ P R _ S U P P R E S S
+ * B U _ H I S T _ P R _ S U P P R E S S
  *
- *  Allows caller control over zero-suppression feature.
+ * Allows caller control over zero-suppression feature.
  */
 void
 bu_hist_pr_suppress(register const struct bu_hist *histp, const char *title, int zero_suppress)
@@ -139,16 +139,16 @@ bu_hist_pr_suppress(register const struct bu_hist *histp, const char *title, int
 
     /* Find entry with highest count */
     maxcount = 0L;
-    for ( i=0; i<=histp->hg_nbins; i++ )  {
-	if ( histp->hg_bins[i] > maxcount )
+    for (i=0; i<=histp->hg_nbins; i++) {
+	if (histp->hg_bins[i] > maxcount)
 	    maxcount = histp->hg_bins[i];
     }
-    if ( maxcount <= 0 )  maxcount = 1;
+    if (maxcount <= 0)  maxcount = 1;
 
     nbins = histp->hg_nbins;
-    if ( zero_suppress )  {
+    if (zero_suppress) {
 	/* Supress trailing bins with zero counts.  nbins s/b >= 1 */
-	for (; nbins >= 1; nbins-- )
+	for (; nbins >= 1; nbins--)
 	    if (histp->hg_bins[nbins] > 0)  break;
     }
 
@@ -157,27 +157,27 @@ bu_hist_pr_suppress(register const struct bu_hist *histp, const char *title, int
 	   title,
 	   histp->hg_min, histp->hg_max,
 	   histp->hg_nbins, histp->hg_clumpsize,
-	   histp->hg_nsamples, maxcount );
+	   histp->hg_nsamples, maxcount);
 
     /* Print each bin. */
     i = 0;
-    if ( zero_suppress )  {
+    if (zero_suppress) {
 	/* Leading bins with zero counts are supressed. */
-	for (; i <= nbins; i++ )  {
+	for (; i <= nbins; i++) {
 	    if (histp->hg_bins[i] > 0)  break;
 	}
     }
-    for (; i <= nbins; i++ )  {
+    for (; i <= nbins; i++) {
 	percent = (int)(((double)histp->hg_bins[i])*100.0/maxcount);
 	mark_count = percent*NMARKS/100;
-	if ( mark_count <= 0 && histp->hg_bins[i] > 0 )
+	if (mark_count <= 0 && histp->hg_bins[i] > 0)
 	    mark_count = 1;
-	if ( mark_count > NMARKS )  {
+	if (mark_count > NMARKS) {
 	    bu_log("mark_count=%d, NMARKS=%d, hg_bins[%d]=%ld, maxcount=%ld\n",
 		   mark_count, NMARKS, i, histp->hg_bins[i], maxcount);
 	    bu_bomb("bu_hist_pr() bogus mark_count\n");
 	}
-	if ( mark_count <= 0 )  {
+	if (mark_count <= 0) {
 	    buf[0] = '\0';
 	} else {
 	    memcpy(buf, marks, mark_count);
@@ -186,19 +186,19 @@ bu_hist_pr_suppress(register const struct bu_hist *histp, const char *title, int
 	val = histp->hg_min + i*histp->hg_clumpsize;
 	bu_log("%8g %8ld %3d |%s\n",
 	       val,
-	       histp->hg_bins[i], percent, buf );
+	       histp->hg_bins[i], percent, buf);
     }
 }
 
 /**
- *			B U _ H I S T _ P R
+ * B U _ H I S T _ P R
  *
- *  The original interface.
+ * The original interface.
  */
 void
 bu_hist_pr(register const struct bu_hist *histp, const char *title)
 {
-    bu_hist_pr_suppress( histp, title, 1 );
+    bu_hist_pr_suppress(histp, title, 1);
 }
 
 /** @} */

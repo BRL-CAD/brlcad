@@ -25,11 +25,6 @@
  * specified programs from the user's PATH. This is useful to locate
  * binaries and resources at run-time.
  *
- * Author -
- *   Christopher Sean Morrison
- *
- * Source -
- *   BRL-CAD Open Source
  */
 
 #include "common.h"

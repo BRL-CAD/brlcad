@@ -88,13 +88,13 @@
 /* isblank appears to be obsolete in newer ctype.h files so use
  * ccblank instead when looking for the "blank" character class.
  */
-static int 
+static int
 ccblank(int c)
 {
 #ifdef isblank
     return isblank(c);
 #else
-    return(c == ' ' || c == '\t');
+    return (c == ' ' || c == '\t');
 #endif
 }
 
@@ -129,7 +129,7 @@ findclass(char *class)
 {
     CHARCLASS tmp;
     tmp.idstring = class;
-    return( (CHARCLASS *)bsearch(&tmp, charclasses, sizeof(charclasses)/sizeof(CHARCLASS), sizeof(CHARCLASS), classcompare) );
+    return ((CHARCLASS *)bsearch(&tmp, charclasses, sizeof(charclasses)/sizeof(CHARCLASS), sizeof(CHARCLASS), classcompare));
 }
 
 
@@ -144,7 +144,7 @@ charclassmatch(const char *pattern, char test, int *s)
     bu_vls_init(&classname);
     while ((c = *pattern++) && (c != ':') && (resultholder != -1)) {
 	if (c == BU_FNM_EOS) resultholder = -1;
-   	counter++; 
+	counter++;
     }
     c = *pattern++;
     if (c != ']') resultholder = -1;
@@ -153,12 +153,12 @@ charclassmatch(const char *pattern, char test, int *s)
 	bu_log("Unknown character class type: %s\n", bu_vls_addr(&classname));
 	resultholder = -1;
     } else {
-        /*bu_log("classname: %s, test char = %c, (class->checkfun)=%d\n", bu_vls_addr(&classname), test, (ctclass->checkfun)(test));*/
-        if ((ctclass->checkfun)(test) != 0) {
+	/*bu_log("classname: %s, test char = %c, (class->checkfun)=%d\n", bu_vls_addr(&classname), test, (ctclass->checkfun)(test));*/
+	if ((ctclass->checkfun)(test) != 0) {
 	    resultholder = counter;
-    	} else {
-	    resultholder = 0; 
-    	}
+	} else {
+	    resultholder = 0;
+	}
     }
     *s = resultholder;
     bu_vls_free(&classname);
@@ -181,12 +181,12 @@ _rangematch(const char *pattern, char test, int flags, char **newp)
     if ((negate = (*pattern == '!' || *pattern == '^')))
 	++pattern;
 
-   
+
     if (flags & BU_CASEFOLD)
 	test = (char)tolower((unsigned char)test);
 
     ok = 0;
-   
+
     /*
      * A right bracket shall lose its special meaning and represent
      * itself in a bracket expression if it occurs first in the list.
@@ -220,7 +220,7 @@ _rangematch(const char *pattern, char test, int flags, char **newp)
 	    if (s == -1) return (BU_FNM_RANGE_ERROR);
 	    if (s > 0) ok = 1;
 	    pattern = pattern + incpattern + 3;
-    	}
+	}
     } while ((c = *pattern++) != ']');
 
     *newp = (char *)pattern;
@@ -316,7 +316,7 @@ bu_fnmatch(const char *pattern, const char *string, int flags)
 		}
 		/* FALLTHROUGH */
 	    default:
-	    normal:
+	normal:
 		if (c != *string && !((flags & BU_CASEFOLD) &&
 				      (tolower((unsigned char)c) ==
 				       tolower((unsigned char)*string))))

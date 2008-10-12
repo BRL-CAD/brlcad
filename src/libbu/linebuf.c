@@ -21,10 +21,10 @@
 /** @{ */
 /** @file linebuf.c
  *
- *  @brief
- *  A portable way of doing setlinebuf().
+ * @brief
+ * A portable way of doing setlinebuf().
  *
- *	A portable way of doing setlinebuf().
+ * A portable way of doing setlinebuf().
  *
  */
 
@@ -38,7 +38,8 @@
 #  define BUFSIZE 2048
 #endif
 
-/** deprecated call for compatibility
+/**
+ * deprecated call for compatibility
  */
 void
 port_setlinebuf(FILE *fp)
@@ -58,7 +59,7 @@ bu_setlinebuf(FILE *fp)
     }
 
     /* prefer this one */
-    if (setvbuf( fp, (char *) NULL, _IOLBF, BUFSIZE) != 0) {
+    if (setvbuf(fp, (char *) NULL, _IOLBF, BUFSIZE) != 0) {
 	perror("bu_setlinebuf");
     }
 }

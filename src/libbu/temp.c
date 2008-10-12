@@ -107,7 +107,7 @@ _bu_add_to_list(const char *fn, int fd)
 
 	bu_vls_strcpy(&_bu_tf->fn, fn);
 	_bu_tf->fd = fd;
-	
+
 	return;
     }
 
@@ -163,7 +163,7 @@ mkstemp(char *file_template)
 
 
 /**
- *  b u _ t e m p _ f i l e
+ * b u _ t e m p _ f i l e
  *
  * Create a temporary file.  The first readable/writable directory
  * will be used, searching TMPDIR/TEMP/TMP environment variable
@@ -184,20 +184,20 @@ mkstemp(char *file_template)
  *
  * Typical Use:
  @code
- *	FILE *fp;
- *	char filename[MAXPATHLEN];
- *	fp = bu_temp_file(&filename, MAXPATHLEN); // get file name
- *	...
- *	fclose(fp); // optional, auto-closed on exit
+ * FILE *fp;
+ * char filename[MAXPATHLEN];
+ * fp = bu_temp_file(&filename, MAXPATHLEN); // get file name
+ * ...
+ * fclose(fp); // optional, auto-closed on exit
  *
- *	...
+ * ...
  *
- *	fp = bu_temp_file(NULL, 0); // don't need file name
+ * fp = bu_temp_file(NULL, 0); // don't need file name
  *      fchmod(fileno(fp), 0777);
- *	...
- *	rewind(fp);
- *	while (fputc(0, fp) == 0);
- *	fclose(fp);
+ * ...
+ * rewind(fp);
+ * while (fputc(0, fp) == 0);
+ * fclose(fp);
  @endcode
 */
 FILE *
@@ -216,7 +216,7 @@ bu_temp_file(char *filepath, size_t len)
 #endif
 	"/tmp",
 	"/usr/tmp",
-	"/var/tmp", 
+	"/var/tmp",
 	".", /* last resort */
 	NULL
     };

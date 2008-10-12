@@ -21,16 +21,12 @@
 /** @{ */
 /** @file ./libbu/bomb.c
  *
- *  The bu_bomb routine is called on a fatal error, generally where no
- *  recovery is possible.  Error handlers may, however, be registered
- *  with BU_SETJMP.  This routine intentionally limits calls to other
- *  functions and intentionally uses no stack variables.  Just in case
- *  the application is out of memory, bu_bomb deallocates a small
- *  buffer of memory.
- *
- *  @par Functions -
- *    bu_bomb		Called during unexpected fatal errors.
- *    bu_exit		Causes termination of the application.
+ * The bu_bomb routine is called on a fatal error, generally where no
+ * recovery is possible.  Error handlers may, however, be registered
+ * with BU_SETJMP.  This routine intentionally limits calls to other
+ * functions and intentionally uses no stack variables.  Just in case
+ * the application is out of memory, bu_bomb deallocates a small
+ * buffer of memory.
  *
  */
 
@@ -79,8 +75,8 @@ bu_bomb_failsafe_init()
 
 
 /**
- *			B U _ B O M B
- *@brief
+ * B U _ B O M B
+ * @brief
  * Abort the program with a message.
  *
  * Only produce a core-dump when that debugging bit is set.  Note that
@@ -113,13 +109,13 @@ bu_bomb(const char *str)
 	bu_call_hook(&bu_bomb_hook_list, (genptr_t)str);
     }
 
-    if ( bu_setjmp_valid )  {
+    if (bu_setjmp_valid) {
 	/* Application is catching fatal errors */
-	if ( bu_is_parallel() )  {
+	if (bu_is_parallel()) {
 	    fprintf(stderr, "bu_bomb(): in parallel mode, could not longjmp up to application handler\n");
 	} else {
 	    /* Application is non-parallel, so this is safe */
-	    longjmp( (void *)(bu_jmpbuf), 1 );
+	    longjmp((void *)(bu_jmpbuf), 1);
 	    /* NOTREACHED */
 	}
     }
@@ -150,19 +146,19 @@ bu_bomb(const char *str)
 	 * mapped file semaphore so we only have one thread writing to
 	 * the file at a time (can't just use BU_SEM_SYSCALL).
 	 */
-	bu_semaphore_acquire( BU_SEM_MAPPEDFILE );
+	bu_semaphore_acquire(BU_SEM_MAPPEDFILE);
 	snprintf(tracefile, 512, "%s-%d-bomb.log", bu_getprogname(), bu_process_id());
 	if (!bu_file_exists(tracefile)) {
-	    bu_semaphore_acquire( BU_SEM_SYSCALL );
+	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    fputs("Saving stack trace to ", stderr);
 	    fputs(tracefile, stderr);
 	    fputc('\n', stderr);
 	    fflush(stderr);
-	    bu_semaphore_release( BU_SEM_SYSCALL );
+	    bu_semaphore_release(BU_SEM_SYSCALL);
 
 	    bu_crashreport(tracefile);
 	}
-	bu_semaphore_release( BU_SEM_MAPPEDFILE );
+	bu_semaphore_release(BU_SEM_MAPPEDFILE);
     }
 #endif
 
@@ -170,13 +166,13 @@ bu_bomb(const char *str)
     bu_kill_parallel();
 
     /* try to save a core dump */
-    if ( bu_debug & BU_DEBUG_COREDUMP )  {
-	bu_semaphore_acquire( BU_SEM_SYSCALL );
+    if (bu_debug & BU_DEBUG_COREDUMP) {
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	fputs("Causing intentional core dump due to debug flag\n", stdout);
 	fputs("Causing intentional core dump due to debug flag\n", stderr);
 	fflush(stdout);
 	fflush(stderr);
-	bu_semaphore_release( BU_SEM_SYSCALL );
+	bu_semaphore_release(BU_SEM_SYSCALL);
 
 	fd = open("/dev/tty", 1);
 	if (fd > 0) {

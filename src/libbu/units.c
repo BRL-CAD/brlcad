@@ -21,10 +21,10 @@
 /** @{ */
 /** @file units.c
  *
- *  Module of libbu to handle units conversion between strings and mm.
+ * Module of libbu to handle units conversion between strings and mm.
  *
- *  @author
- *	Michael John Muuss
+ * @author
+ * Michael John Muuss
  *
  */
 /** @} */
@@ -128,14 +128,14 @@ static const struct cvt_tab {
 #define BU_UNITS_TABLE_SIZE (sizeof(bu_units_tab) / sizeof(struct cvt_tab) - 1)
 
 /**
- *			B U _ U N I T S _ C O N V E R S I O N
+ * B U _ U N I T S _ C O N V E R S I O N
  *
- *  Given a string representation of a unit of distance (eg, "feet"),
- *  return the multiplier which will convert that unit into millimeters.
+ * Given a string representation of a unit of distance (eg, "feet"),
+ * return the multiplier which will convert that unit into millimeters.
  *
- *  Returns -
- *	0.0	error
- *	>0.0	success
+ * Returns -
+ * 0.0	error
+ * >0.0	success
  */
 double
 bu_units_conversion(const char *str)
@@ -146,14 +146,14 @@ bu_units_conversion(const char *str)
     char		ubuf[256];
     int		len;
 
-    bu_strlcpy( ubuf, str, sizeof(ubuf) );
+    bu_strlcpy(ubuf, str, sizeof(ubuf));
 
     /* Copy the given string, making it lower case */
     ip = ubuf;
-    while ( (c = *ip) )  {
-	if ( !isascii(c) )
+    while ((c = *ip)) {
+	if (!isascii(c))
 	    *ip++ = '_';
-	else if ( isupper(c) )
+	else if (isupper(c))
 	    *ip++ = tolower(c);
 	else
 	    ip++;
@@ -161,15 +161,15 @@ bu_units_conversion(const char *str)
 
     /* Remove any trailing "s" (plural) */
     len = strlen(ubuf);
-    if ( ubuf[len-1] == 's' )  ubuf[len-1] = '\0';
+    if (ubuf[len-1] == 's')  ubuf[len-1] = '\0';
 
     /* Search for this string in the table */
-    for ( tp=bu_units_tab; tp->name[0]; tp++ )  {
-	if ( ubuf[0] != tp->name[0] )  continue;
-	if ( strcmp( ubuf, tp->name ) != 0 )  continue;
-	return( tp->val );
+    for (tp=bu_units_tab; tp->name[0]; tp++) {
+	if (ubuf[0] != tp->name[0])  continue;
+	if (strcmp(ubuf, tp->name) != 0)  continue;
+	return (tp->val);
     }
-    return(0.0);		/* Unable to find it */
+    return (0.0);		/* Unable to find it */
 }
 
 /**
@@ -181,8 +181,8 @@ bu_units_conversion(const char *str)
  * The algorithm depends on the table being sorted small-to-large.
  *
  * Returns -
- *	char*	units string
- *	NULL	No known unit matches this conversion factor.
+ * char* units string
+ * NULL	No known unit matches this conversion factor.
  */
 const char *
 bu_units_string(register const double mm)
@@ -193,7 +193,7 @@ bu_units_string(register const double mm)
 	return (char *)NULL;
 
     /* Search for this string in the table */
-    for (tp=bu_units_tab; tp->name[0]; tp++)  {
+    for (tp=bu_units_tab; tp->name[0]; tp++) {
 	fastf_t	diff, bigger;
 
 	if (mm == tp->val)
@@ -227,8 +227,8 @@ bu_units_string(register const double mm)
  * the closest matching unit.
  *
  * Returns -
- *	char*	units string
- *	NULL	Invalid conversion factor (non-positive)
+ * char* units string
+ * NULL	Invalid conversion factor (non-positive)
  */
 const char *
 bu_nearest_units_string(register const double mm)
@@ -242,7 +242,7 @@ bu_nearest_units_string(register const double mm)
 	return (char *)NULL;
 
     /* Search for this unit in the table */
-    for (tp=bu_units_tab; tp->name[0]; tp++)  {
+    for (tp=bu_units_tab; tp->name[0]; tp++) {
 	double nearness;
 
 	/* skip zero so we don't return 'none' */
@@ -271,14 +271,14 @@ bu_nearest_units_string(register const double mm)
 
 
 /**
- *			B U _ M M _ V A L U E
+ * B U _ M M _ V A L U E
  *
  * Given a string of the form "25cm" or "5.2ft" returns the
  * corresponding distance in mm.
  *
- *  Returns -
- *	-1	on error
- *	>0	on success
+ * Returns -
+ * -1	on error
+ * >0	on success
  */
 double
 bu_mm_value(const char *s)
@@ -289,19 +289,19 @@ bu_mm_value(const char *s)
 
     v = strtod(s, &ptr);
 
-    if (ptr == s)  {
+    if (ptr == s) {
 	/* No number could be found, unity is implied */
 	/* e.g. interprept "ft" as "1ft" */
 	v = 1.0;
     }
-    if ( ! *ptr)  {
+    if (! *ptr) {
 	/* There are no characters following the scaned number */
 	return v;
     }
 
-    for (tp=bu_units_tab; tp->name[0]; tp++ )  {
-	if ( *ptr != tp->name[0] )  continue;
-	if ( strcmp( ptr, tp->name ) == 0 ) {
+    for (tp=bu_units_tab; tp->name[0]; tp++) {
+	if (*ptr != tp->name[0])  continue;
+	if (strcmp(ptr, tp->name) == 0) {
 	    v *= tp->val;
 	    return v;
 	}
@@ -311,10 +311,11 @@ bu_mm_value(const char *s)
     return -1;
 }
 
-/**	B U _ M M _ C V T
+/**
+ * B U _ M M _ C V T
  *
- *  Used primarily as a hooked function for bu_structparse tables
- *  to allow input of floating point values in other units.
+ * Used primarily as a hooked function for bu_structparse tables
+ * to allow input of floating point values in other units.
  */
 void
 bu_mm_cvt(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)

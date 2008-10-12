@@ -21,7 +21,7 @@
 /** @{ */
 /** @file rb_rotate.c
  *
- *	    Routines to perform rotations on a red-black tree
+ * Routines to perform rotations on a red-black tree
  *
  */
 /** @} */
@@ -37,14 +37,15 @@
 #include "./rb_internals.h"
 
 
-/**		    _ R B _ R O T _ L E F T ( )
+/**
+ * _ R B _ R O T _ L E F T
  *
- *		Perfrom left rotation on a red-black tree
+ * Perfrom left rotation on a red-black tree
  *
- *	This function has two parameters: the node about which to rotate
- *	and the order to be rotated.  _rb_rot_left() is an implementation
- *	of the routine called LEFT-ROTATE on p. 266 of Cormen et al,
- *	with modification on p. 285.
+ * This function has two parameters: the node about which to rotate
+ * and the order to be rotated.  _rb_rot_left() is an implementation
+ * of the routine called LEFT-ROTATE on p. 266 of Cormen et al, with
+ * modification on p. 285.
  */
 void _rb_rot_left (struct bu_rb_node *x, int order)
 {
@@ -54,7 +55,7 @@ void _rb_rot_left (struct bu_rb_node *x, int order)
     bu_rb_tree		*tree = x -> rbn_tree;	/* Tree where it all happens */
 
     /*
-     *	Set y and check data types of both x and y
+     * Set y and check data types of both x and y
      */
     BU_CKMAG(x, BU_RB_NODE_MAGIC, "red-black node");
     BU_RB_CKORDER(x -> rbn_tree, order);
@@ -86,13 +87,15 @@ void _rb_rot_left (struct bu_rb_node *x, int order)
 	       x, order, bu_rb_size(x, order), y, order, bu_rb_size(y, order));
 }
 
-/**		    _ R B _ R O T _ R I G H T ( )
+
+/**
+ * _ R B _ R O T _ R I G H T
  *
- *		Perfrom right rotation on a red-black tree
+ * Perfrom right rotation on a red-black tree
  *
- *	This function has two parameters: the node about which to rotate
- *	and the order to be rotated.  _rb_rot_right() is hacked from
- *	_rb_rot_left() above.
+ * This function has two parameters: the node about which to rotate
+ * and the order to be rotated.  _rb_rot_right() is hacked from
+ * _rb_rot_left() above.
  */
 void _rb_rot_right (struct bu_rb_node *y, int order)
 {
@@ -102,7 +105,7 @@ void _rb_rot_right (struct bu_rb_node *y, int order)
     bu_rb_tree		*tree = y -> rbn_tree;	/* Tree where it all happens */
 
     /*
-     *	Set x and check data types of both x and y
+     * Set x and check data types of both x and y
      */
     BU_CKMAG(y, BU_RB_NODE_MAGIC, "red-black node");
     BU_RB_CKORDER(y -> rbn_tree, order);
@@ -133,7 +136,9 @@ void _rb_rot_right (struct bu_rb_node *y, int order)
 	bu_log("After rotation, size(%p, %d)=%d, size(%p, %d)=%d\n",
 	       x, order, bu_rb_size(x, order), y, order, bu_rb_size(y, order));
 }
+
 /** @} */
+
 /*
  * Local Variables:
  * mode: C

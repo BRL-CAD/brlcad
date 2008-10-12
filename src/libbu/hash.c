@@ -22,7 +22,7 @@
 /** @file hash.c
  *
  * @brief
- *	An implimentation of hash tables.
+ * An implimentation of hash tables.
  */
 
 #include "common.h"
@@ -35,7 +35,8 @@
 #include "bu.h"
 
 
-/**		B U _ H A S H
+/**
+ * B U _ H A S H
  * the hashing function
  */
 unsigned long
@@ -45,7 +46,7 @@ bu_hash(unsigned char *str, int len)
     int i, c;
 
     c = *str;
-    for ( i=0; i<len; i++ ) {
+    for (i=0; i<len; i++) {
 	c = *str;
 	hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
 	str++;
@@ -54,38 +55,39 @@ bu_hash(unsigned char *str, int len)
     return hash;
 }
 
-/**			B U _ C R E A T E _ H A S H _ T B L
- *@brief
- *	Create an empty hash table
- *	The input is the number of desired hash bins.
- *	This number will be rounded up to the nearest power of two.
+/**
+ * B U _ C R E A T E _ H A S H _ T B L
+ * @brief
+ * Create an empty hash table
+ * The input is the number of desired hash bins.
+ * This number will be rounded up to the nearest power of two.
  */
 struct bu_hash_tbl *
-bu_create_hash_tbl( unsigned long tbl_size )
+bu_create_hash_tbl(unsigned long tbl_size)
 {
     struct bu_hash_tbl *hsh_tbl;
     unsigned long power_of_two=64;
     int power=6;
-    int max_power=(sizeof( unsigned long ) * 8) - 1;
+    int max_power=(sizeof(unsigned long) * 8) - 1;
 
     /* allocate the table structure (do not use bu_malloc() as this may be used for MEM_DEBUG) */
-    hsh_tbl = (struct bu_hash_tbl *)malloc( sizeof( struct bu_hash_tbl ) );
-    if ( !hsh_tbl ) {
-	fprintf( stderr, "Failed to allocate hash table\n" );
-	return( (struct bu_hash_tbl *)NULL );
+    hsh_tbl = (struct bu_hash_tbl *)malloc(sizeof(struct bu_hash_tbl));
+    if (!hsh_tbl) {
+	fprintf(stderr, "Failed to allocate hash table\n");
+	return ((struct bu_hash_tbl *)NULL);
     }
 
     /* the number of bins in the hash table will be a power of two */
-    while ( power_of_two < tbl_size && power < max_power ) {
+    while (power_of_two < tbl_size && power < max_power) {
 	power_of_two = power_of_two << 1;
 	power++;
     }
 
-    if ( power == max_power ) {
+    if (power == max_power) {
 	int i;
 
 	hsh_tbl->mask = 1;
-	for ( i=1; i<max_power; i++ ) {
+	for (i=1; i<max_power; i++) {
 	    hsh_tbl->mask = (hsh_tbl->mask << 1) + 1;
 	}
 	hsh_tbl->num_lists = hsh_tbl->mask + 1;
@@ -95,18 +97,19 @@ bu_create_hash_tbl( unsigned long tbl_size )
     }
 
     /* allocate the bins (do not use bu_malloc() as this may be used for MEM_DEBUG) */
-    hsh_tbl->lists = (struct bu_hash_entry **)calloc( hsh_tbl->num_lists, sizeof( struct bu_hash_entry *) );
+    hsh_tbl->lists = (struct bu_hash_entry **)calloc(hsh_tbl->num_lists, sizeof(struct bu_hash_entry *));
 
     hsh_tbl->num_entries = 0;
     hsh_tbl->magic = BU_HASH_TBL_MAGIC;
 
-    return( hsh_tbl );
+    return (hsh_tbl);
 }
 
-/**			B U _ F I N D _ H A S H _ E N T R Y
+/**
+ * B U _ F I N D _ H A S H _ E N T R Y
  *
  * @brief
- *	Find the hash table entry corresponding to the provided key
+ * Find the hash table entry corresponding to the provided key
  *
  *
  * @param[in] hsh_tbl - The hash table to look in
@@ -118,36 +121,36 @@ bu_create_hash_tbl( unsigned long tbl_size )
  * @param[out] idx - the index of the hash bin for this key
  *
  * @return
- *	the hash table entry corresponding to the provided key, or NULL if not found
+ * the hash table entry corresponding to the provided key, or NULL if not found
  */
 struct bu_hash_entry *
-bu_find_hash_entry( struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len, struct bu_hash_entry **prev, unsigned long *idx )
+bu_find_hash_entry(struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len, struct bu_hash_entry **prev, unsigned long *idx)
 {
     struct bu_hash_entry *hsh_entry=NULL;
     int found=0;
 
-    BU_CK_HASH_TBL( hsh_tbl );
+    BU_CK_HASH_TBL(hsh_tbl);
 
     /* calculate the index into the bin array */
-    *idx = bu_hash( key, key_len ) & hsh_tbl->mask;
-    if ( *idx >= hsh_tbl->num_lists ) {
-	fprintf( stderr, "hash function returned too large value (%ld), only have %ld lists\n",
-		 *idx, hsh_tbl->num_lists );
+    *idx = bu_hash(key, key_len) & hsh_tbl->mask;
+    if (*idx >= hsh_tbl->num_lists) {
+	fprintf(stderr, "hash function returned too large value (%ld), only have %ld lists\n",
+		*idx, hsh_tbl->num_lists);
 	*prev = NULL;
-	return( (struct bu_hash_entry *)NULL );
+	return ((struct bu_hash_entry *)NULL);
     }
 
     /* look for the provided key in the list of entries in this bin */
     *prev = NULL;
-    if ( hsh_tbl->lists[*idx] ) {
+    if (hsh_tbl->lists[*idx]) {
 	*prev = NULL;
 	hsh_entry = hsh_tbl->lists[*idx];
-	while ( hsh_entry ) {
+	while (hsh_entry) {
 	    unsigned char *c1, *c2;
 	    int i;
 
 	    /* compare key lengths first for performance */
-	    if ( hsh_entry->key_len != key_len ) {
+	    if (hsh_entry->key_len != key_len) {
 		*prev = hsh_entry;
 		hsh_entry = hsh_entry->next;
 		continue;
@@ -157,8 +160,8 @@ bu_find_hash_entry( struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len
 	    found = 1;
 	    c1 = key;
 	    c2 = hsh_entry->key;
-	    for ( i=0; i<key_len; i++ ) {
-		if ( *c1 != *c2 ) {
+	    for (i=0; i<key_len; i++) {
+		if (*c1 != *c2) {
 		    found = 0;
 		    break;
 		}
@@ -167,7 +170,7 @@ bu_find_hash_entry( struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len
 	    }
 
 	    /* if we have a match, get out of this loop */
-	    if ( found ) break;
+	    if (found) break;
 
 	    /* step to next entry in this bin */
 	    *prev = hsh_entry;
@@ -175,60 +178,64 @@ bu_find_hash_entry( struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len
 	}
     }
 
-    if ( found ) {
+    if (found) {
 	/* return the found entry */
-	return( hsh_entry );
+	return (hsh_entry);
     } else {
 	/* did not find the entry, return NULL */
-	return( (struct bu_hash_entry *)NULL );
+	return ((struct bu_hash_entry *)NULL);
     }
 }
 
 
-/**			B U _ S E T _ H A S H _ V A L U E
- *@brief
- *	Set the value for a hash table entry
+/**
+ * B U _ S E T _ H A S H _ V A L U E
+ * @brief
+ * Set the value for a hash table entry
  *
- *	Note that this is just a pointer copy, the hash table does not maintain its own copy
- *	of this value.
+ * Note that this is just a pointer copy, the hash table does not maintain its own copy
+ * of this value.
  */
 void
-bu_set_hash_value( struct bu_hash_entry *hsh_entry, unsigned char *value )
+bu_set_hash_value(struct bu_hash_entry *hsh_entry, unsigned char *value)
 {
-    BU_CK_HASH_ENTRY( hsh_entry );
+    BU_CK_HASH_ENTRY(hsh_entry);
 
     /* just copy a pointer */
     hsh_entry->value = value;
 }
 
-/**			B U _ G E T _ H A S H _ V A L U E
+/**
+ * B U _ G E T _ H A S H _ V A L U E
  *
- *	get the value pointer stored for the specified hash table entry
+ * get the value pointer stored for the specified hash table entry
  */
 unsigned char *
-bu_get_hash_value( struct bu_hash_entry *hsh_entry )
+bu_get_hash_value(struct bu_hash_entry *hsh_entry)
 {
-    BU_CK_HASH_ENTRY( hsh_entry );
+    BU_CK_HASH_ENTRY(hsh_entry);
 
-    return( hsh_entry->value );
+    return (hsh_entry->value);
 }
 
-/**			B U _ G E T _ H A S H _ K E Y
+/**
+ * B U _ G E T _ H A S H _ K E Y
  *
- *	get the key pointer stored for the specified hash table entry
+ * get the key pointer stored for the specified hash table entry
  */
 unsigned char *
-bu_get_hash_key( struct bu_hash_entry *hsh_entry )
+bu_get_hash_key(struct bu_hash_entry *hsh_entry)
 {
-    BU_CK_HASH_ENTRY( hsh_entry );
+    BU_CK_HASH_ENTRY(hsh_entry);
 
-    return( hsh_entry->key );
+    return (hsh_entry->key);
 }
 
 
-/**			B U _ H A S H _ A D D _ E N T R Y
+/**
+ * B U _ H A S H _ A D D _ E N T R Y
  *
- *	Add an new entry to a hash table
+ * Add an new entry to a hash table
  *
  *
  * @param[in] hsh_tbl - the hash table to accept thye new entry
@@ -236,40 +243,40 @@ bu_get_hash_key( struct bu_hash_entry *hsh_entry )
  * @param[in] key_len - the number of bytes in the key
  *
  * @param[out] new - a flag, non-zero indicates that a new entry was created.
- *	              zero indicates that an entry already exists with the specified key and key length
+ * zero indicates that an entry already exists with the specified key and key length
  *
  * @return
- *	a hash table entry. If "new" is non-zero, a new, empty entry is returned.
- *	if "new" is zero, the returned entry is the one matching the specified key and key_len
+ * a hash table entry. If "new" is non-zero, a new, empty entry is returned.
+ * if "new" is zero, the returned entry is the one matching the specified key and key_len
  */
 struct bu_hash_entry *
-bu_hash_add_entry( struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len, int *new )
+bu_hash_add_entry(struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len, int *new)
 {
     struct bu_hash_entry *hsh_entry, *prev;
     unsigned long idx;
 
-    BU_CK_HASH_TBL( hsh_tbl );
+    BU_CK_HASH_TBL(hsh_tbl);
 
     /* do a find for three reasons
      * does this key already exist in the table?
      * get the hash bin index for this key
      * find the previous entry to link the new one to
      */
-    hsh_entry = bu_find_hash_entry( hsh_tbl, key, key_len, &prev, &idx );
+    hsh_entry = bu_find_hash_entry(hsh_tbl, key, key_len, &prev, &idx);
 
-    if ( hsh_entry ) {
+    if (hsh_entry) {
 	/* this key is already in the table, return the entry, with flag set to 0 */
 	*new = 0;
-	return( hsh_entry );
+	return (hsh_entry);
     }
 
-    if ( prev ) {
+    if (prev) {
 	/* already have an entry in this bin, just link to it */
-	prev->next = (struct bu_hash_entry *)calloc( 1, sizeof( struct bu_hash_entry ) );
+	prev->next = (struct bu_hash_entry *)calloc(1, sizeof(struct bu_hash_entry));
 	hsh_entry = prev->next;
     } else {
 	/* first entry in this bin */
-	hsh_entry = (struct bu_hash_entry *)calloc( 1, sizeof( struct bu_hash_entry ) );
+	hsh_entry = (struct bu_hash_entry *)calloc(1, sizeof(struct bu_hash_entry));
 	hsh_tbl->lists[idx] = hsh_entry;
     }
 
@@ -280,67 +287,69 @@ bu_hash_add_entry( struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len,
     hsh_entry->magic = BU_HASH_ENTRY_MAGIC;
 
     /* make a copy of the key */
-    hsh_entry->key = (unsigned char *)malloc( (size_t)key_len );
+    hsh_entry->key = (unsigned char *)malloc((size_t)key_len);
     memcpy(hsh_entry->key, key, (size_t)key_len);
 
     /* set "new" flag, increment count of entries, and return new entry */
     *new = 1;
     hsh_tbl->num_entries++;
-    return( hsh_entry );
+    return (hsh_entry);
 }
 
-/**			B U _ H A S H _ T B L _ P R
- *@brief
- *	Print the specified hash table to stderr.
- *	(Note that the keys and values are printed as pointers)
+/**
+ * B U _ H A S H _ T B L _ P R
+ * @brief
+ * Print the specified hash table to stderr.
+ * (Note that the keys and values are printed as pointers)
  */
 void
-bu_hash_tbl_pr( struct bu_hash_tbl *hsh_tbl, char *str )
+bu_hash_tbl_pr(struct bu_hash_tbl *hsh_tbl, char *str)
 {
     unsigned long idx;
     struct bu_hash_entry *hsh_entry;
 
-    BU_CK_HASH_TBL( hsh_tbl );
+    BU_CK_HASH_TBL(hsh_tbl);
 
-    fprintf( stderr, "%s\n", str );
-    fprintf( stderr, "bu_hash_table (%ld entries):\n", hsh_tbl->num_entries );
+    fprintf(stderr, "%s\n", str);
+    fprintf(stderr, "bu_hash_table (%ld entries):\n", hsh_tbl->num_entries);
 
     /* visit all the entries in this table */
-    for ( idx=0; idx<hsh_tbl->num_lists; idx++ ) {
+    for (idx=0; idx<hsh_tbl->num_lists; idx++) {
 	hsh_entry = hsh_tbl->lists[idx];
-	while ( hsh_entry ) {
-	    BU_CK_HASH_ENTRY( hsh_entry );
-	    fprintf( stderr, "\tindex=%ld, key=x%lx, value=x%lx\n", idx, (unsigned long int)hsh_entry->key, (unsigned long int)hsh_entry->value );
+	while (hsh_entry) {
+	    BU_CK_HASH_ENTRY(hsh_entry);
+	    fprintf(stderr, "\tindex=%ld, key=x%lx, value=x%lx\n", idx, (unsigned long int)hsh_entry->key, (unsigned long int)hsh_entry->value);
 	    hsh_entry = hsh_entry->next;
 	}
     }
 }
 
-/**			B U _ H A S H _ T B L _ F R E E
- *@brief
- *	Free all the memory associated with the specified hash table.
- *	Note that the keys are freed (they are copies), but the "values" are not freed.
- *	(The values are merely pointers)
+/**
+ * B U _ H A S H _ T B L _ F R E E
+ * @brief
+ * Free all the memory associated with the specified hash table.
+ * Note that the keys are freed (they are copies), but the "values" are not freed.
+ * (The values are merely pointers)
  */
 void
-bu_hash_tbl_free( struct bu_hash_tbl *hsh_tbl )
+bu_hash_tbl_free(struct bu_hash_tbl *hsh_tbl)
 {
     unsigned long idx;
     struct bu_hash_entry *hsh_entry, *tmp;
 
-    BU_CK_HASH_TBL( hsh_tbl );
+    BU_CK_HASH_TBL(hsh_tbl);
 
     /* loop through all the bins in this hash table */
-    for ( idx=0; idx<hsh_tbl->num_lists; idx++ ) {
+    for (idx=0; idx<hsh_tbl->num_lists; idx++) {
 	/* traverse all the entries in the list for this bin */
 	hsh_entry = hsh_tbl->lists[idx];
-	while ( hsh_entry ) {
-	    BU_CK_HASH_ENTRY( hsh_entry );
+	while (hsh_entry) {
+	    BU_CK_HASH_ENTRY(hsh_entry);
 	    tmp = hsh_entry->next;
 
 	    /* free the copy of the key, and this entry */
-	    free( hsh_entry->key );
-	    free( hsh_entry );
+	    free(hsh_entry->key);
+	    free(hsh_entry);
 
 	    /* step to next entry in libnked list */
 	    hsh_entry = tmp;
@@ -348,29 +357,30 @@ bu_hash_tbl_free( struct bu_hash_tbl *hsh_tbl )
     }
 
     /* free the array of bins */
-    free( hsh_tbl->lists );
+    free(hsh_tbl->lists);
 
     /* free the actual hash table structure */
-    free( hsh_tbl );
+    free(hsh_tbl);
 }
 
 
-/**			B U _ H A S H _ T B L _ F I R S T
- *@brief
- *	get the "first" entry in a hash table
+/**
+ * B U _ H A S H _ T B L _ F I R S T
+ * @brief
+ * get the "first" entry in a hash table
  *
  *
  * @param[in] hsh_tbl - the hash table of interest
  * @param[in] rec - an empty "bu_hash_record" structure for use by this routine and "bu_hash_tbl_next"
  *
  * @return
- *	the first non-null entry in the hash table, or NULL if there are no entries
- *	(Note that the order of enties is not likely to have any significance)
+ * the first non-null entry in the hash table, or NULL if there are no entries
+ * (Note that the order of enties is not likely to have any significance)
  */
 struct bu_hash_entry *
-bu_hash_tbl_first( struct bu_hash_tbl *hsh_tbl, struct bu_hash_record *rec )
+bu_hash_tbl_first(struct bu_hash_tbl *hsh_tbl, struct bu_hash_record *rec)
 {
-    BU_CK_HASH_TBL( hsh_tbl );
+    BU_CK_HASH_TBL(hsh_tbl);
 
     /* initialize the record structure */
     rec->magic = BU_HASH_RECORD_MAGIC;
@@ -378,62 +388,63 @@ bu_hash_tbl_first( struct bu_hash_tbl *hsh_tbl, struct bu_hash_record *rec )
     rec->index = (unsigned long)-1;
     rec->hsh_entry = (struct bu_hash_entry *)NULL;
 
-    if ( hsh_tbl->num_entries == 0 ) {
+    if (hsh_tbl->num_entries == 0) {
 	/* this table is empty */
-	return( (struct bu_hash_entry *)NULL );
+	return ((struct bu_hash_entry *)NULL);
     }
 
     /* loop through all the bins in this hash table, looking for a non-null entry */
-    for ( rec->index=0; rec->index < hsh_tbl->num_lists; rec->index++ ) {
+    for (rec->index=0; rec->index < hsh_tbl->num_lists; rec->index++) {
 	rec->hsh_entry = hsh_tbl->lists[rec->index];
-	if ( rec->hsh_entry ) {
-	    return( rec->hsh_entry );
+	if (rec->hsh_entry) {
+	    return (rec->hsh_entry);
 	}
     }
 
     /* no entry found, return NULL */
-    return( (struct bu_hash_entry *)NULL );
+    return ((struct bu_hash_entry *)NULL);
 }
 
-/**			B U _ H A S H _ T B L _ N E X T
+/**
+ * B U _ H A S H _ T B L _ N E X T
  *
- *	get the "next" entry in a hash table
+ * get the "next" entry in a hash table
  *
  * input:
- *	rec - the "bu_hash_record" structure that was passed to "bu_hash_tbl_first"
+ * rec - the "bu_hash_record" structure that was passed to "bu_hash_tbl_first"
  *
  * return:
- *	the "next" non-null hash entry in this hash table
+ * the "next" non-null hash entry in this hash table
  */
 struct bu_hash_entry *
-bu_hash_tbl_next( struct bu_hash_record *rec )
+bu_hash_tbl_next(struct bu_hash_record *rec)
 {
     struct bu_hash_tbl *hsh_tbl;
 
-    BU_CK_HASH_RECORD( rec );
+    BU_CK_HASH_RECORD(rec);
     hsh_tbl = rec->tbl;
-    BU_CK_HASH_TBL( hsh_tbl );
+    BU_CK_HASH_TBL(hsh_tbl);
 
     /* if the entry in the record structure has a non-null "next",
      * return it, and update the record structure
      */
-    if ( rec->hsh_entry ) {
+    if (rec->hsh_entry) {
 	rec->hsh_entry = rec->hsh_entry->next;
-	if ( rec->hsh_entry ) {
-	    return( rec->hsh_entry );
+	if (rec->hsh_entry) {
+	    return (rec->hsh_entry);
 	}
     }
 
     /* must move to a new bin to find another entry */
-    for ( rec->index++; rec->index < hsh_tbl->num_lists; rec->index++ ) {
+    for (rec->index++; rec->index < hsh_tbl->num_lists; rec->index++) {
 	rec->hsh_entry = hsh_tbl->lists[rec->index];
-	if ( rec->hsh_entry ) {
-	    return( rec->hsh_entry );
+	if (rec->hsh_entry) {
+	    return (rec->hsh_entry);
 	}
     }
 
     /* no more entries, return NULL */
-    return( (struct bu_hash_entry *)NULL );
+    return ((struct bu_hash_entry *)NULL);
 }
 /** @} */
 /*

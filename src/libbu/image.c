@@ -21,9 +21,9 @@
 /** @{ */
 /** @file image.c
  *
- *  @brief image save/load routines
+ * @brief image save/load routines
  *
- *  save or load images in a variety of formats.
+ * save or load images in a variety of formats.
  *
  */
 /** @} */
@@ -60,7 +60,7 @@ image_flip(unsigned char *buf, int width, int height)
     size_t pitch = width * 3 * sizeof(char);
 
     buf2 = (unsigned char *)bu_malloc((size_t)(height * pitch), "image flip");
-    for(i=0 ; i<height ; i++)
+    for (i=0 ; i<height ; i++)
 	memcpy (buf2+i*pitch, buf+(height-i)*pitch, pitch);
     memcpy (buf, buf2, height * pitch);
     bu_free (buf2, "image flip");

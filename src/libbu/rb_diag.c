@@ -21,7 +21,7 @@
 /** @{ */
 /** @file rb_diag.c
  *
- *	Diagnostic routines for red-black tree maintenance
+ * Diagnostic routines for red-black tree maintenance
  *
  */
 
@@ -38,13 +38,15 @@
 
 static int d_order;	/* Used by describe_node() */
 
-/*@		    D E S C R I B E _ N O D E ( )
+
+/**
+ * D E S C R I B E _ N O D E
  *
- *		Print out the contents of a red-black node
+ * Print out the contents of a red-black node
  *
- *	This function has two parameters:  the node to describe and
- *	its depth in the tree.  Describe_node() is intended to be
- *	called by bu_rb_diagnose_tree().
+ * This function has two parameters:  the node to describe and
+ * its depth in the tree.  Describe_node() is intended to be
+ * called by bu_rb_diagnose_tree().
  */
 static void describe_node (struct bu_rb_node *node, int depth)
 {
@@ -73,13 +75,14 @@ static void describe_node (struct bu_rb_node *node, int depth)
 	bu_log("\n");
 }
 
-/**		    B U _ R B _ D I A G N O S E _ T R E E ( )
+/**
+ * B U _ R B _ D I A G N O S E _ T R E E ()
  *
- *	    Produce a diagnostic printout of a red-black tree
+ * Produce a diagnostic printout of a red-black tree
  *
- *	This function has three parameters: the root and order of the tree
- *	to print out and the type of traversal (preorder, inorder, or
- *	postorder).
+ * This function has three parameters: the root and order of the tree
+ * to print out and the type of traversal (preorder, inorder, or
+ * postorder).
  */
 void bu_rb_diagnose_tree (bu_rb_tree *tree, int order, int trav_type)
 {
@@ -97,13 +100,14 @@ void bu_rb_diagnose_tree (bu_rb_tree *tree, int order, int trav_type)
     bu_log("--------------------------------------------------\n");
 }
 
-/**		B U _ R B _ S U M M A R I Z E _ T R E E ( )
+/**
+ * B U _ R B _ S U M M A R I Z E _ T R E E ()
  *
- *		    Describe a red-black tree
+ * Describe a red-black tree
  *
- *	This function has one parameter: a pointer to a red-black
- *	tree.  bu_rb_summarize_tree() prints out the header information
- *	for the tree.  It is intended for diagnostic purposes.
+ * This function has one parameter: a pointer to a red-black
+ * tree.  bu_rb_summarize_tree() prints out the header information
+ * for the tree.  It is intended for diagnostic purposes.
  */
 void bu_rb_summarize_tree (bu_rb_tree *tree)
 {

@@ -22,14 +22,14 @@
 /** @file getopt.c
  *
  * @brief
- *  Special re-entrant version of getopt.
+ * Special re-entrant version of getopt.
  *
- *  Everything is prefixed with bu_, to distinguish it from the various
- *  getopt routines found in libc.
+ * Everything is prefixed with bu_, to distinguish it from the various
+ * getopt routines found in libc.
  *
- *  Important note -
- *	If bu_getopt() it going to be used more than once, it is necessary
- *	to reinitialize bu_optind=1 before beginning on the next argument list.
+ * Important note -
+ * If bu_getopt() it going to be used more than once, it is necessary
+ * to reinitialize bu_optind=1 before beginning on the next argument list.
  */
 
 #include "common.h"
@@ -45,12 +45,12 @@
 
 #define BADCH	(int)'?'
 #define EMSG	""
-#define tell(s)	if (bu_opterr)  { \
+#define tell(s)	if (bu_opterr) { \
     fputs(*nargv, stderr); \
     fputs(s, stderr); \
     fputc(bu_optopt, stderr); \
     fputc('\n', stderr); \
-} return(BADCH);
+} return (BADCH);
 
 
 /**
@@ -67,15 +67,15 @@ bu_getopt(int nargc, char * const nargv[], const char *ostr)
     if (*place=='\0') {
 	/* update scanning pointer */
 	if (bu_optind >= nargc || *(place = nargv[bu_optind]) != '-' ||
-	    !*++place)  {
+	    !*++place) {
 	    place = EMSG;
-	    return(EOF);
+	    return (EOF);
 	}
 	if (*place == '-') {
 	    /* found "--" */
 	    place = EMSG;
 	    ++bu_optind;
-	    return(EOF);
+	    return (EOF);
 	}
     }				/* option letter okay? */
     if ((bu_optopt = (int)*place++) == (int)':' || !(oli = strchr(ostr, bu_optopt))) {
@@ -110,7 +110,7 @@ bu_getopt(int nargc, char * const nargv[], const char *ostr)
 	place = EMSG;
 	++bu_optind;
     }
-    return(bu_optopt);			/* dump back option letter */
+    return (bu_optopt);			/* dump back option letter */
 }
 /** @} */
 /*

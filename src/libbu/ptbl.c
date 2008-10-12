@@ -21,15 +21,15 @@
 /** @{ */
 /** @file ptbl.c
  *
- *  @brief Support for generalized "pointer tables"
+ * @brief Support for generalized "pointer tables"
  *
- *  Support for generalized "pointer tables",
- *  kept compactly in a dynamic array.
+ * Support for generalized "pointer tables",
+ * kept compactly in a dynamic array.
  *
- *  The table is currently un-ordered, and is merely a array of pointers.
- *  The support routine nmg_tbl manipulates the array for you.
- *  Pointers to be operated on (inserted, deleted,
- *  searched for) are passed as a "pointer to long".
+ * The table is currently un-ordered, and is merely a array of pointers.
+ * The support routine nmg_tbl manipulates the array for you.
+ * Pointers to be operated on (inserted, deleted,
+ * searched for) are passed as a "pointer to long".
  *
  */
 
@@ -42,10 +42,10 @@
 
 
 /**
- *			B U _ P T B L _ I N I T
+ * B U _ P T B L _ I N I T
  *
- *  Initialize struct & get storage for table.
- *  Recommend 8 or 64 for initial len.
+ * Initialize struct & get storage for table.
+ * Recommend 8 or 64 for initial len.
  */
 void
 bu_ptbl_init(struct bu_ptbl *b, int len, const char *str)
@@ -54,7 +54,7 @@ bu_ptbl_init(struct bu_ptbl *b, int len, const char *str)
 	bu_log("bu_ptbl_init(%8x, len=%d, %s)\n", b, len, str);
     BU_LIST_INIT(&b->l);
     b->l.magic = BU_PTBL_MAGIC;
-    if ( len <= 0 )  len = 64;
+    if (len <= 0)  len = 64;
     b->blen = len;
     b->buffer = (long **)bu_calloc(b->blen, sizeof(long *), str);
     b->end = 0;
@@ -62,9 +62,9 @@ bu_ptbl_init(struct bu_ptbl *b, int len, const char *str)
 
 
 /**
- *			B U _ P T B L _ R E S E T
+ * B U _ P T B L _ R E S E T
  *
- *  Reset the table to have no elements, but retain any existing storage.
+ * Reset the table to have no elements, but retain any existing storage.
  */
 void
 bu_ptbl_reset(struct bu_ptbl *b)
@@ -78,9 +78,9 @@ bu_ptbl_reset(struct bu_ptbl *b)
 
 
 /**
- *			B U _ P T B L _ I N S
+ * B U _ P T B L _ I N S
  *
- *  Append/Insert a (long *) item to/into the table.
+ * Append/Insert a (long *) item to/into the table.
  */
 int
 bu_ptbl_ins(struct bu_ptbl *b, long int *p)
@@ -93,22 +93,22 @@ bu_ptbl_ins(struct bu_ptbl *b, long int *p)
 	bu_log("bu_ptbl_ins(%8x, %8x)\n", b, p);
 
     if (b->blen == 0) bu_ptbl_init(b, 64, "bu_ptbl_ins() buffer");
-    if (b->end >= b->blen)  {
-	b->buffer = (long **)bu_realloc( (char *)b->buffer,
-					 sizeof(p)*(b->blen *= 4),
-					 "bu_ptbl.buffer[] (ins)" );
+    if (b->end >= b->blen) {
+	b->buffer = (long **)bu_realloc((char *)b->buffer,
+					sizeof(p)*(b->blen *= 4),
+					"bu_ptbl.buffer[] (ins)");
     }
 
     i=b->end++;
     b->buffer[i] = p;
-    return(i);
+    return (i);
 }
 
 
 /**
- *			B U _ P T B L _ L O C A T E
+ * B U _ P T B L _ L O C A T E
  *
- *  locate a (long *) in an existing table
+ * locate a (long *) in an existing table
  *
  *
  * @return	index of first matching element in array, if found
@@ -126,18 +126,18 @@ bu_ptbl_locate(const struct bu_ptbl *b, const long int *p)
 
     BU_CK_PTBL(b);
     pp = (const long **)b->buffer;
-    for ( k = b->end-1; k >= 0; k-- )
-	if (pp[k] == p) return(k);
+    for (k = b->end-1; k >= 0; k--)
+	if (pp[k] == p) return (k);
 
-    return(-1);
+    return (-1);
 }
 
 
 /**
- *			B U _ P T B L _ Z E R O
+ * B U _ P T B L _ Z E R O
  *
- *  Set all occurrences of "p" in the table to zero.
- *  This is different than deleting them.
+ * Set all occurrences of "p" in the table to zero.
+ * This is different than deleting them.
  */
 void
 bu_ptbl_zero(struct bu_ptbl *b, const long int *p)
@@ -147,19 +147,19 @@ bu_ptbl_zero(struct bu_ptbl *b, const long int *p)
 
     BU_CK_PTBL(b);
     pp = (const long **)b->buffer;
-    for ( k = b->end-1; k >= 0; k-- )
+    for (k = b->end-1; k >= 0; k--)
 	if (pp[k] == p) pp[k] = (long *)0;
 }
 
 
 /**
- *			B U _ P T B L _ I N S _ U N I Q U E
+ * B U _ P T B L _ I N S _ U N I Q U E
  *
- *  Append item to table, if not already present.  Unique insert.
+ * Append item to table, if not already present.  Unique insert.
  *
  *
- *  @return	index of first matchine element in array, if found.  (table unchanged)
- *  @return	-1	if table extended to hold new element
+ * @return	index of first matchine element in array, if found.  (table unchanged)
+ * @return	-1	if table extended to hold new element
  *
  * We do this a great deal, so make it go as fast as possible.
  * this is the biggest argument I can make for changing to an
@@ -174,31 +174,31 @@ bu_ptbl_ins_unique(struct bu_ptbl *b, long int *p)
     BU_CK_PTBL(b);
 
     /* search for existing */
-    for ( k = b->end-1; k >= 0; k-- )
-	if (pp[k] == p) return(k);
+    for (k = b->end-1; k >= 0; k--)
+	if (pp[k] == p) return (k);
 
     if (bu_debug & BU_DEBUG_PTBL)
 	bu_log("bu_ptbl_ins_unique(%8x, %8x)\n", b, p);
 
-    if (b->blen <= 0 || b->end >= b->blen)  {
+    if (b->blen <= 0 || b->end >= b->blen) {
 	/* Table needs to grow */
-	bu_ptbl_ins( b, p );
+	bu_ptbl_ins(b, p);
 	return -1;	/* To signal that it was added */
     }
 
     b->buffer[k=b->end++] = p;
-    return(-1);		/* To signal that it was added */
+    return (-1);		/* To signal that it was added */
 }
 
 
 /**
- *			B U _ P T B L _ R M
+ * B U _ P T B L _ R M
  *
- *  Remove all occurrences of an item from a table
+ * Remove all occurrences of an item from a table
  *
  *
- *  @return	Number of copies of 'p' that were removed from the table.
- *  @return	0 if none found.
+ * @return	Number of copies of 'p' that were removed from the table.
+ * @return	0 if none found.
  *
  * we go backwards down the table looking for occurrences
  * of p to delete.  We do it backwards to reduce the amount
@@ -214,7 +214,7 @@ bu_ptbl_rm(struct bu_ptbl *b, const long int *p)
     int	ndel = 0;
 
     BU_CK_PTBL(b);
-    for (l = b->end-1; l >= 0; --l)  {
+    for (l = b->end-1; l >= 0; --l) {
 	if (pp[l] == p) {
 	    /* delete consecutive occurrence(s) of p */
 	    ndel++;
@@ -236,10 +236,10 @@ bu_ptbl_rm(struct bu_ptbl *b, const long int *p)
 
 
 /**
- *			B U _ P T B L _ C A T
+ * B U _ P T B L _ C A T
  *
- *  Catenate one table onto end of another.
- *  There is no checking for duplication.
+ * Catenate one table onto end of another.
+ * There is no checking for duplication.
  */
 void
 bu_ptbl_cat(struct bu_ptbl *dest, const struct bu_ptbl *src)
@@ -251,9 +251,9 @@ bu_ptbl_cat(struct bu_ptbl *dest, const struct bu_ptbl *src)
 
     if ((dest->blen - dest->end) < src->end) {
 	dest->blen = (dest->blen + src->end) * 2 + 8;
-	dest->buffer = (long **)bu_realloc( (char *)dest->buffer,
-					    dest->blen * sizeof(long *),
-					    "bu_ptbl.buffer[] (cat)");
+	dest->buffer = (long **)bu_realloc((char *)dest->buffer,
+					   dest->blen * sizeof(long *),
+					   "bu_ptbl.buffer[] (cat)");
     }
     memcpy((char *)&dest->buffer[dest->end], (char *)src->buffer, src->end*sizeof(long *));
     dest->end += src->end;
@@ -261,12 +261,12 @@ bu_ptbl_cat(struct bu_ptbl *dest, const struct bu_ptbl *src)
 
 
 /**
- *			B U _ P T B L _ C A T _ U N I Q
+ * B U _ P T B L _ C A T _ U N I Q
  *
- *  Catenate one table onto end of another,
- *  ensuring that no entry is duplicated.
- *  Duplications between multiple items in 'src' are not caught.
- *  The search is a nasty n**2 one.  The tables are expected to be short.
+ * Catenate one table onto end of another,
+ * ensuring that no entry is duplicated.
+ * Duplications between multiple items in 'src' are not caught.
+ * The search is a nasty n**2 one.  The tables are expected to be short.
  */
 void
 bu_ptbl_cat_uniq(struct bu_ptbl *dest, const struct bu_ptbl *src)
@@ -280,21 +280,21 @@ bu_ptbl_cat_uniq(struct bu_ptbl *dest, const struct bu_ptbl *src)
 
     /* Assume the worst, ensure sufficient space to add all 'src' items */
     if ((dest->blen - dest->end) < src->end) {
-	dest->buffer = (long **)bu_realloc( (char *)dest->buffer,
-					    sizeof(long *)*(dest->blen += src->blen + 8),
-					    "bu_ptbl.buffer[] (cat_uniq)");
+	dest->buffer = (long **)bu_realloc((char *)dest->buffer,
+					   sizeof(long *)*(dest->blen += src->blen + 8),
+					   "bu_ptbl.buffer[] (cat_uniq)");
     }
-    for ( BU_PTBL_FOR( p, (long **), src ) )  {
-	bu_ptbl_ins_unique( dest, *p );
+    for (BU_PTBL_FOR(p, (long **), src)) {
+	bu_ptbl_ins_unique(dest, *p);
     }
 }
 
 
 /**
- *			B U _ P T B L _ F R E E
+ * B U _ P T B L _ F R E E
  *
- *  Deallocate dynamic buffer associated with a table,
- *  and render this table unusable without a subsequent bu_ptbl_init().
+ * Deallocate dynamic buffer associated with a table,
+ * and render this table unusable without a subsequent bu_ptbl_init().
  */
 void
 bu_ptbl_free(struct bu_ptbl *b)
@@ -310,9 +310,9 @@ bu_ptbl_free(struct bu_ptbl *b)
 
 
 /**
- *			B U _ P T B L
+ * B U _ P T B L
  *
- *  This version maintained for source compatibility with existing NMG code.
+ * This version maintained for source compatibility with existing NMG code.
  */
 int
 bu_ptbl(struct bu_ptbl *b, int func, long int *p)
@@ -327,16 +327,16 @@ bu_ptbl(struct bu_ptbl *b, int func, long int *p)
 	return bu_ptbl_ins(b, p);
     } else if (func == BU_PTBL_LOC) {
 	return bu_ptbl_locate(b, p);
-    } else if ( func == BU_PTBL_ZERO ) {
+    } else if (func == BU_PTBL_ZERO) {
 	bu_ptbl_zero(b, p);
-	return( 0 );
+	return (0);
     } else if (func == BU_PTBL_INS_UNIQUE) {
 	return bu_ptbl_ins_unique(b, p);
     } else if (func == BU_PTBL_RM) {
 	return bu_ptbl_rm(b, p);
     } else if (func == BU_PTBL_CAT) {
-	bu_ptbl_cat( b, (const struct bu_ptbl *)p );
-	return(0);
+	bu_ptbl_cat(b, (const struct bu_ptbl *)p);
+	return (0);
     } else if (func == BU_PTBL_FREE) {
 	bu_ptbl_free(b);
 	return (0);
@@ -345,14 +345,14 @@ bu_ptbl(struct bu_ptbl *b, int func, long int *p)
 	bu_log("bu_ptbl(%8x) Unknown table function %d\n", b, func);
 	bu_bomb("bu_ptbl");
     }
-    return(-1);/* this is here to keep lint happy */
+    return (-1);/* this is here to keep lint happy */
 }
 
 
 /**
- *			B U _ P R _ P T B L
+ * B U _ P R _ P T B L
  *
- *  Print a bu_ptbl array for inspection.
+ * Print a bu_ptbl array for inspection.
  */
 void
 bu_pr_ptbl(const char *title, const struct bu_ptbl *tbl, int verbose)
@@ -361,34 +361,34 @@ bu_pr_ptbl(const char *title, const struct bu_ptbl *tbl, int verbose)
 
     BU_CK_PTBL(tbl);
     bu_log("%s: bu_ptbl array with %d entries\n",
-	   title, tbl->end );
+	   title, tbl->end);
 
-    if ( !verbose )  return;
+    if (!verbose)  return;
 
     /* Go in ascending order */
-    for ( lp = (long **)BU_PTBL_BASEADDR(tbl);
-	  lp <= (long **)BU_PTBL_LASTADDR(tbl); lp++
-	)  {
-	if ( *lp == 0 )  {
+    for (lp = (long **)BU_PTBL_BASEADDR(tbl);
+	 lp <= (long **)BU_PTBL_LASTADDR(tbl); lp++
+	) {
+	if (*lp == 0) {
 	    bu_log("  %.8x NULL entry\n", *lp);
 	    continue;
 	}
-	bu_log("  %.8x %s\n", *lp, bu_identify_magic(**lp) );
+	bu_log("  %.8x %s\n", *lp, bu_identify_magic(**lp));
     }
 }
 
 
 /**
- *			B U _ P T B L _ T R U N C
+ * B U _ P T B L _ T R U N C
  *
- *	truncate a bu_ptbl
+ * truncate a bu_ptbl
  */
 void
 bu_ptbl_trunc(struct bu_ptbl *tbl, int end)
 {
     BU_CK_PTBL(tbl);
 
-    if ( tbl->end <= end )
+    if (tbl->end <= end)
 	return;
 
     tbl->end = end;

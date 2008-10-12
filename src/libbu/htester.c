@@ -21,14 +21,14 @@
 /** @{ */
 /** @file htester.c
  *
- *  @brief
- *  Test network float conversion.
+ * @brief
+ * Test network float conversion.
  *
- *  Expected to be used in pipes, or with TTCP links to other machines,
- *  or with files RCP'ed between machines.
+ * Expected to be used in pipes, or with TTCP links to other machines,
+ * or with files RCP'ed between machines.
  *
- *  @author
- *	Michael John Muuss
+ * @author
+ * Michael John Muuss
  */
 /** @} */
 
@@ -49,7 +49,7 @@ void
 flpr(unsigned char *cp)
 {
     unsigned int i;
-    for ( i=0; i<sizeof(double); i++ )  {
+    for (i=0; i<sizeof(double); i++) {
 	putchar("0123456789ABCDEFx"[*cp>>4]);
 	putchar("0123456789ABCDEFx"[*cp&0xF]);
 	cp++;
@@ -61,19 +61,19 @@ int
 ckbytes(unsigned char *a, unsigned char *b, unsigned int n)
 {
 #ifndef vax
-    while ( n-- > 0 )  {
-	if ( *a++ != *b++ )
-	    return(-1);	/* BAD */
+    while (n-- > 0) {
+	if (*a++ != *b++)
+	    return (-1);	/* BAD */
     }
-    return(0);			/* OK */
+    return (0);			/* OK */
 #else
     /* VAX floating point has bytes swapped, vis-a-vis normal VAX order */
     int i;
-    for ( i=0; i<n; i++ )  {
-	if ( a[i^1] != b[i^1] )
-	    return(-1);	/* BAD */
+    for (i=0; i<n; i++) {
+	if (a[i^1] != b[i^1])
+	    return (-1);	/* BAD */
     }
-    return(0);			/* OK */
+    return (0);			/* OK */
 #endif
 }
 
@@ -84,59 +84,59 @@ main(int argc, char **argv)
     unsigned int nbytes;
 
 #define A argv[1][1]
-    if ( argc != 2 || argv[1][0] != '-' || ( A != 'o' && A != 'i' && A != 'v' )) {
+    if (argc != 2 || argv[1][0] != '-' || (A != 'o' && A != 'i' && A != 'v')) {
 	bu_exit(1, "Usage:  htester [-i|-o|-v] < input\n");
     }
 
     /* First stage, generate the reference pattern */
-    for ( i=0; i<1000; i++ )  {
+    for (i=0; i<1000; i++) {
 	orig[i] = ((double)i)/(7*16);
     }
-    for ( i=1000; i<2000; i++ )  {
+    for (i=1000; i<2000; i++) {
 	orig[i] = -1.0/(i-1000+1);
     }
     orig[2000] = -1;
-    for ( i=2001; i<2035; i++ )  {
+    for (i=2001; i<2035; i++) {
 	orig[i] = orig[i-1] * -0.1;
     }
-    for ( i=2035; i<3000; i++ )  {
+    for (i=2035; i<3000; i++) {
 	orig[i] = orig[i-1000] + (i&1)?(-1):1;
     }
 
     /* Second stage, write out, or read and compare */
-    if ( argv[1][1] == 'o' )  {
+    if (argv[1][1] == 'o') {
 	/* Write out */
-	htond( (unsigned char *)buf, (unsigned char *)orig, NUM );
-	fwrite( buf, 8, NUM, stdout );
+	htond((unsigned char *)buf, (unsigned char *)orig, NUM);
+	fwrite(buf, 8, NUM, stdout);
 	exit(0);
     }
 
     /* Read and compare */
-    if ( sizeof(double) >= 8 )
+    if (sizeof(double) >= 8)
 	nbytes = 6;
     else
 	nbytes = 4;
-    fread( buf, 8, NUM, stdin );
-/*	ntohd( (char *)after, buf, NUM );	*//* bulk conversion */
-    for ( i=0; i<NUM; i++ )  {
-	ntohd( (unsigned char *)&after[i], (unsigned char *)&buf[i*8], 1 );	/* incremental */
+    fread(buf, 8, NUM, stdin);
+/* ntohd((char *)after, buf, NUM);	*//* bulk conversion */
+    for (i=0; i<NUM; i++) {
+	ntohd((unsigned char *)&after[i], (unsigned char *)&buf[i*8], 1);	/* incremental */
 	/* Floating point compare */
-	if ( orig[i] == after[i] )  continue;
+	if (orig[i] == after[i])  continue;
 
 	/* Byte-for-byte compare */
-	if ( ckbytes( (unsigned char *)&orig[i], 
-		      (unsigned char *)&after[i], nbytes ) == 0 )
+	if (ckbytes((unsigned char *)&orig[i],
+		    (unsigned char *)&after[i], nbytes) == 0)
 	    continue;
 
 	/* Wrong */
 	printf("%4d: calc ", i);
-	flpr( (unsigned char *)&orig[i] );
+	flpr((unsigned char *)&orig[i]);
 	printf(" %g\n", orig[i]);
 	printf("      aftr ");
-	flpr( (unsigned char *)&after[i] );
-	printf(" %g\n", after[i] );
+	flpr((unsigned char *)&after[i]);
+	printf(" %g\n", after[i]);
 	printf("      buf  ");
-	flpr( &buf[i*8] );
+	flpr(&buf[i*8]);
 	printf("\n");
     }
     exit(0);

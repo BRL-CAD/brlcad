@@ -32,10 +32,10 @@
 
 
 /**
- *  B U _ B A S E N A M E
+ * B U _ B A S E N A M E
  *
- *  Given a string containing slashes such as a pathname, return a
- *  pointer to the first character after the last slash.
+ * Given a string containing slashes such as a pathname, return a
+ * pointer to the first character after the last slash.
  *
  *	/usr/dir/file	file
  * @n	/usr/dir/	dir
@@ -57,8 +57,8 @@ bu_basename(const char *str)
 	return NULL;
     }
 
-    while ( *p != '\0' )
-	if ( *p++ == '/' )
+    while (*p != '\0')
+	if (*p++ == '/')
 	    str = p;
 
     return str;

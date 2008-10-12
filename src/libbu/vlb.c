@@ -56,10 +56,10 @@ bu_vlb_init(struct bu_vlb *vlb)
 void
 bu_vlb_initialize(struct bu_vlb *vlb, int initialSize)
 {
-    if( initialSize <= 0 ) {
-        bu_log( "bu_vlb_initialize: WARNING - illegal initial size (%d), ignored\n", initialSize);
-        bu_vlb_init(vlb);
-        return;
+    if (initialSize <= 0) {
+	bu_log("bu_vlb_initialize: WARNING - illegal initial size (%d), ignored\n", initialSize);
+	bu_vlb_init(vlb);
+	return;
     }
     vlb->buf = bu_calloc(1, initialSize, "bu_vlb");
     vlb->bufCapacity = initialSize;
@@ -80,19 +80,19 @@ bu_vlb_write(struct bu_vlb *vlb, unsigned char *start, int len)
 {
     int addBlocks = 0;
     int currCapacity;
-    
+
     BU_CKMAG(vlb, BU_VLB_MAGIC, "magic for bu_vlb");
     currCapacity = vlb->bufCapacity;
     while (currCapacity <= (vlb->nextByte + len)) {
-        addBlocks++;
-        currCapacity += BU_VLB_BLOCK_SIZE;
+	addBlocks++;
+	currCapacity += BU_VLB_BLOCK_SIZE;
     }
-    
+
     if (addBlocks) {
-        vlb->buf = bu_realloc(vlb->buf, currCapacity, "enlarging vlb");
-        vlb->bufCapacity = currCapacity;
+	vlb->buf = bu_realloc(vlb->buf, currCapacity, "enlarging vlb");
+	vlb->bufCapacity = currCapacity;
     }
-    
+
     memcpy(&vlb->buf[vlb->nextByte], start, len);
     vlb->nextByte += len;
 }
@@ -109,12 +109,12 @@ bu_vlb_reset(struct bu_vlb *vlb)
     BU_CKMAG(vlb, BU_VLB_MAGIC, "magic for bu_vlb");
     vlb->nextByte = 0;
 }
- /**
-  * Get a pointer to the byte array held by the bu_vlb structure
-  *
-  * @param vlb Pointer to the bu_vlb structure
-  * @return A pointer to the byte array contained by the bu_vlb structure
-  */
+/**
+ * Get a pointer to the byte array held by the bu_vlb structure
+ *
+ * @param vlb Pointer to the bu_vlb structure
+ * @return A pointer to the byte array contained by the bu_vlb structure
+ */
 unsigned char *
 bu_vlb_getBuffer(struct bu_vlb *vlb)
 {
@@ -139,14 +139,14 @@ bu_vlb_getBufferLength(struct bu_vlb *vlb)
  * Free the memory allocated for the byte array in the bu_vlb structure.
  * Also unitializes the structure.
  *
- *  @param vlb Pointer to the bu_vlb structure
+ * @param vlb Pointer to the bu_vlb structure
  */
 void
 bu_vlb_free(struct bu_vlb *vlb)
 {
     BU_CKMAG(vlb, BU_VLB_MAGIC, "magic for bu_vlb");
-    if( vlb->buf != NULL ) {
-        bu_free(vlb->buf, "vlb");
+    if (vlb->buf != NULL) {
+	bu_free(vlb->buf, "vlb");
     }
     vlb->buf = NULL;
     vlb->bufCapacity = 0;

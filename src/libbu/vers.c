@@ -21,7 +21,7 @@
  *
  * version information about LIBBU
  *
- *@author
+ * @author
  *   Christopher Sean Morrison
  */
 

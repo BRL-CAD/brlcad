@@ -21,10 +21,10 @@
 /** @{ */
 /** @file parallel.c
  *
- *  @brief routines for parallel processing
+ * @brief routines for parallel processing
  *
- *  Machine-specific routines for parallel processing.
- *  Primarily calling functions in multiple threads on multiple CPUs.
+ * Machine-specific routines for parallel processing.
+ * Primarily calling functions in multiple threads on multiple CPUs.
  *
  */
 
@@ -176,11 +176,11 @@ static struct taskcontrol {
 #endif
 
 /**
- *			B U _ N I C E _ S E T
+ * B U _ N I C E _ S E T
  *
- *  Without knowing what the current UNIX "nice" value is,
- *  change to a new absolute "nice" value.
- *  (The system routine makes a relative change).
+ * Without knowing what the current UNIX "nice" value is,
+ * change to a new absolute "nice" value.
+ * (The system routine makes a relative change).
  */
 void
 bu_nice_set(int newnice)
@@ -191,11 +191,11 @@ bu_nice_set(int newnice)
 #  ifndef PRIO_PROCESS  /* necessary for linux */
 #    define PRIO_PROCESS  0	/* From /usr/include/sys/resource.h */
 #  endif
-    opri = getpriority( PRIO_PROCESS, 0 );
-    setpriority( PRIO_PROCESS, 0, newnice );
-    npri = getpriority( PRIO_PROCESS, 0 );
+    opri = getpriority(PRIO_PROCESS, 0);
+    setpriority(PRIO_PROCESS, 0, newnice);
+    npri = getpriority(PRIO_PROCESS, 0);
 
-    if ( bu_debug ) {
+    if (bu_debug) {
 	bu_log("bu_nice_set() Priority changed from %d to %d\n", opri, npri);
     }
 
@@ -209,10 +209,10 @@ bu_nice_set(int newnice)
 
 
 /**
- *			B U _ C P U L I M I T _ G E T
+ * B U _ C P U L I M I T _ G E T
  *
- *  Return the current CPU limit, in seconds.
- *  Zero or negative return indicates that limits are not in effect.
+ * Return the current CPU limit, in seconds.
+ * Zero or negative return indicates that limits are not in effect.
  */
 int
 bu_cpulimit_get(void)
@@ -221,21 +221,21 @@ bu_cpulimit_get(void)
     long	old;			/* 64-bit clock counts */
     extern long limit();
 
-    if ( (old = limit( C_PROC, 0, L_CPU, -1 )) < 0 )  {
+    if ((old = limit(C_PROC, 0, L_CPU, -1)) < 0) {
 	perror("bu_cpulimit_get(): CPU limit(get)");
     }
-    if ( old <= 0 )
-	return(999999);		/* virtually unlimited */
-    return( (old + HZ - 1) / HZ );
+    if (old <= 0)
+	return (999999);		/* virtually unlimited */
+    return ((old + HZ - 1) / HZ);
 #else
-    return(-1);
+    return (-1);
 #endif
 }
 
 /**
- *			B U _ C P U L I M I T _ S E T
+ * B U _ C P U L I M I T _ S E T
  *
- *  Set CPU time limit, in seconds.
+ * Set CPU time limit, in seconds.
  */
 /* ARGSUSED */
 void
@@ -249,17 +249,17 @@ bu_cpulimit_set(int sec)
 
     old = bu_cpulimit_get();
     new = old + sec;
-    if ( new <= 0 || new > 999999 )
+    if (new <= 0 || new > 999999)
 	new = 999999;	/* no limit, for practical purposes */
     newtick = new * HZ;
-    if ( limit( C_PROC, 0, L_CPU, newtick ) < 0 )  {
+    if (limit(C_PROC, 0, L_CPU, newtick) < 0) {
 	perror("bu_cpulimit_set: CPU limit(set)");
     }
     bu_log("Cray CPU limit changed from %d to %d seconds\n",
-	   old, newtick/HZ );
+	   old, newtick/HZ);
 
     /* Eliminate any memory limit */
-    if ( limit( C_PROC, 0, L_MEM, 0 ) < 0 )  {
+    if (limit(C_PROC, 0, L_MEM, 0) < 0) {
 	/* Hopefully, not fatal if memory limits are imposed */
 	perror("bu_cpulimit_set: MEM limit(set)");
     }
@@ -269,17 +269,17 @@ bu_cpulimit_set(int sec)
 
 
 /**
- *			B U _ A V A I L _ C P U S
+ * B U _ A V A I L _ C P U S
  *
- *  Return the maximum number of physical CPUs that are considered to be
- *  available to this process now.
+ * Return the maximum number of physical CPUs that are considered to be
+ * available to this process now.
  */
 int
 bu_avail_cpus(void)
 {
     int ncpu = -1;
 
-#ifdef PARALLEL 
+#ifdef PARALLEL
 
 #  if defined(_SC_NPROCESSORS_ONLN)
     /* SUNOS and linux */
@@ -333,7 +333,7 @@ bu_avail_cpus(void)
 
 #    if !defined(i860)
 	/* FX/8 */
-	lib_syscfg( &memsize, &ipnum, &cenum, &detnum, &attnum );
+	lib_syscfg(&memsize, &ipnum, &cenum, &detnum, &attnum);
 #    else
 	/* FX/2800 */
 	attnum = 28;
@@ -353,7 +353,7 @@ bu_avail_cpus(void)
 
 	cmd = SYS_GETPARMS;
 	parmlen = sizeof(struct var);
-	if ( sysconfig(cmd, &p, parmlen) != 0 ) {
+	if (sysconfig(cmd, &p, parmlen) != 0) {
 	    bu_bomb("bu_parallel(): sysconfig error for sp3");
 	}
 	ncpu = p.v_ncpus;
@@ -363,7 +363,7 @@ bu_avail_cpus(void)
 
 
 #  if defined(n16)
-    if ( (ncpu = sysadmin( SADMIN_NUMCPUS, 0 )) < 0 )
+    if ((ncpu = sysadmin(SADMIN_NUMCPUS, 0)) < 0)
 	perror("sysadmin");
     goto DONE_NCPU;
 #  endif /* n16 */
@@ -463,7 +463,7 @@ bu_avail_cpus(void)
 
     if (bu_debug & BU_DEBUG_PARALLEL) {
 	/* do not use bu_log() here, this can get called before semaphores are initialized */
-	fprintf( stderr, "bu_avail_cpus: counted %d cpus.\n", ncpu);
+	fprintf(stderr, "bu_avail_cpus: counted %d cpus.\n", ncpu);
     }
 
     if (ncpu > 0) {
@@ -476,14 +476,14 @@ bu_avail_cpus(void)
 
 
 /**
- *			B U _ G E T _ L O A D _ A V E R A G E
+ * B U _ G E T _ L O A D _ A V E R A G E
  *
- *  A generally portable method for obtaining the 1-minute load average.
- *  Vendor-specific methods which don't involve a fork/exec sequence
- *  would be preferable.
- *  Alas, very very few systems put the load average in /proc,
- *  most still grunge the avenrun[3] array out of /dev/kmem,
- *  which requires special privleges to open.
+ * A generally portable method for obtaining the 1-minute load average.
+ * Vendor-specific methods which don't involve a fork/exec sequence
+ * would be preferable.
+ * Alas, very very few systems put the load average in /proc,
+ * most still grunge the avenrun[3] array out of /dev/kmem,
+ * which requires special privleges to open.
  */
 fastf_t
 bu_get_load_average(void)
@@ -497,28 +497,28 @@ bu_get_load_average(void)
 
     /* XXX - wow. eek. */
     fp = popen("PATH=/bin:/usr/bin:/usr/ucb:/usr/bsd; export PATH; uptime|sed -e 's/.*average: //' -e 's/,.*//' ", "r");
-    if ( !fp )
+    if (!fp)
 	return -1.0;
 
-    fscanf( fp, "%lf", &load );
+    fscanf(fp, "%lf", &load);
     fclose(fp);
 
-    while ( wait(NULL) != -1 )
+    while (wait(NULL) != -1)
 	;	/* NIL */
 #endif
     return load;
 }
 
 /**
- *			B U _ G E T _ P U B L I C _ C P U S
+ * B U _ G E T _ P U B L I C _ C P U S
  *
- *  A general mechanism for non-privleged users of a server system to control
- *  how many processors of their server get consumed by multi-thread
- *  cruncher processes, by leaving a world-writable file.
+ * A general mechanism for non-privleged users of a server system to control
+ * how many processors of their server get consumed by multi-thread
+ * cruncher processes, by leaving a world-writable file.
  *
- *  If the number in the file is negative, it means "all but that many."
+ * If the number in the file is negative, it means "all but that many."
  *
- *  Returns the number of processors presently available for "public" use.
+ * Returns the number of processors presently available for "public" use.
  */
 #ifndef _WIN32
 #  define PUBLIC_CPUS1	"/var/tmp/public_cpus"
@@ -532,13 +532,13 @@ bu_get_public_cpus(void)
     int	public_cpus = 1;
     FILE	*fp;
 
-    if ( (fp = fopen(PUBLIC_CPUS1, "rb")) != NULL ||
-	 (fp = fopen(PUBLIC_CPUS2, "rb")) != NULL
-	)  {
-	(void)fscanf( fp, "%d", &public_cpus );
+    if ((fp = fopen(PUBLIC_CPUS1, "rb")) != NULL ||
+	(fp = fopen(PUBLIC_CPUS2, "rb")) != NULL
+	) {
+	(void)fscanf(fp, "%d", &public_cpus);
 	fclose(fp);
-	if ( public_cpus < 0 )  public_cpus = avail_cpus + public_cpus;
-	if ( public_cpus > avail_cpus )  public_cpus = avail_cpus;
+	if (public_cpus < 0)  public_cpus = avail_cpus + public_cpus;
+	if (public_cpus > avail_cpus)  public_cpus = avail_cpus;
 	return public_cpus;
     }
 
@@ -555,14 +555,14 @@ bu_get_public_cpus(void)
 }
 
 /**
- *			B U _ S E T _ R E A L T I M E
+ * B U _ S E T _ R E A L T I M E
  *
- *  If possible, mark this process for real-time scheduler priority.
- *  Will often need root privs to succeed.
+ * If possible, mark this process for real-time scheduler priority.
+ * Will often need root privs to succeed.
  *
- *  Returns -
- *	1	realtime priority obtained
- *	0	running with non-realtime scheduler behavior
+ * Returns -
+ * 1	realtime priority obtained
+ * 0	running with non-realtime scheduler behavior
  */
 int
 bu_set_realtime(void)
@@ -571,17 +571,17 @@ bu_set_realtime(void)
     {
 	int	policy;
 
-	if ( (policy = sched_getscheduler(0)) >= 0 )  {
-	    if ( policy == SCHED_RR || policy == SCHED_FIFO )
+	if ((policy = sched_getscheduler(0)) >= 0) {
+	    if (policy == SCHED_RR || policy == SCHED_FIFO)
 		return 1;
 	}
 
-	sched_getparam( 0, &bu_param );
+	sched_getparam(0, &bu_param);
 
-	if ( sched_setscheduler( 0,
-				 SCHED_RR,		/* policy */
-				 &bu_param
-		 ) >= 0 )  {
+	if (sched_setscheduler(0,
+			       SCHED_RR,		/* policy */
+			       &bu_param
+		) >= 0) {
 	    return 1;		/* realtime */
 	}
 	/* Fall through to return 0 */
@@ -606,7 +606,7 @@ bu_set_realtime(void)
 #  ifdef SGI_4D
 
 /**
- *			B U _ W O R K E R _ T B L _ N O T _ E M P T Y
+ * B U _ W O R K E R _ T B L _ N O T _ E M P T Y
  */
 static int
 bu_worker_tbl_not_empty(int tbl[MAX_PSW])
@@ -617,11 +617,11 @@ bu_worker_tbl_not_empty(int tbl[MAX_PSW])
     for (i=1; i < MAX_PSW; ++i)
 	if (tbl[i]) children++;
 
-    return(children);
+    return (children);
 }
 
 /**
- *			B U _ K I L L _ W O R K E R S
+ * B U _ K I L L _ W O R K E R S
  */
 static void
 bu_kill_workers(int tbl[MAX_PSW])
@@ -629,8 +629,8 @@ bu_kill_workers(int tbl[MAX_PSW])
     register int i;
 
     for (i=1; i < MAX_PSW; ++i) {
-	if ( tbl[i] ) {
-	    if ( kill(tbl[i], 9) ) {
+	if (tbl[i]) {
+	    if (kill(tbl[i], 9)) {
 		perror("bu_kill_workers(): SIGKILL to child process");
 	    }
 	    else {
@@ -653,19 +653,19 @@ static genptr_t	bu_parallel_arg;		/* User's arg to his threads */
 
 
 /**
- *			B U _ P A R A L L E L _ I N T E R F A C E
+ * B U _ P A R A L L E L _ I N T E R F A C E
  *
- *  Interface layer between bu_parallel and the user's function.
- *  Necessary so that we can provide unique thread numbers as a
- *  parameter to the user's function, and to decrement the global
- *  counter when the user's function returns to us (as opposed to
- *  dumping core or longjmp'ing too far).
+ * Interface layer between bu_parallel and the user's function.
+ * Necessary so that we can provide unique thread numbers as a
+ * parameter to the user's function, and to decrement the global
+ * counter when the user's function returns to us (as opposed to
+ * dumping core or longjmp'ing too far).
  *
- *  Note that not all architectures can pass an argument
- *  (e.g. the pointer to the user's function), so we depend on
- *  using a global variable to communicate this.
- *  This is no problem, since only one copy of bu_parallel()
- *  may be active at any one time.
+ * Note that not all architectures can pass an argument
+ * (e.g. the pointer to the user's function), so we depend on
+ * using a global variable to communicate this.
+ * This is no problem, since only one copy of bu_parallel()
+ * may be active at any one time.
  */
 static void
 bu_parallel_interface(void)
@@ -681,22 +681,22 @@ bu_parallel_interface(void)
     }
 #endif
 #endif
-    bu_semaphore_acquire( BU_SEM_SYSCALL );
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
     cpu = bu_nthreads_started++;
-    bu_semaphore_release( BU_SEM_SYSCALL );
+    bu_semaphore_release(BU_SEM_SYSCALL);
 
     (*bu_parallel_func)(cpu, bu_parallel_arg);
 
-    bu_semaphore_acquire( BU_SEM_SYSCALL );
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
     bu_nthreads_finished++;
-    bu_semaphore_release( BU_SEM_SYSCALL );
+    bu_semaphore_release(BU_SEM_SYSCALL);
 
 #  if defined(SGI_4D) || defined(IRIX)
     /*
-     *  On an SGI, a process/thread created with the "sproc" syscall has
-     *  all of it's file descriptors closed when it "returns" to sproc.
-     *  Since this trashes file descriptors which may still be in use by
-     *  other processes, we avoid ever returning to sproc.
+     * On an SGI, a process/thread created with the "sproc" syscall has
+     * all of it's file descriptors closed when it "returns" to sproc.
+     * Since this trashes file descriptors which may still be in use by
+     * other processes, we avoid ever returning to sproc.
      */
     if (cpu) _exit(0);
 #  endif /* SGI */
@@ -705,48 +705,48 @@ bu_parallel_interface(void)
 
 #ifdef SGI_4D
 /**
- *			B U _ P R _ F I L E
+ * B U _ P R _ F I L E
  *
- *  SGI-specific.  Formatted printing of stdio's FILE struct.
+ * SGI-specific.  Formatted printing of stdio's FILE struct.
  */
 void
 bu_pr_FILE(title, fp)
     char	*title;
     FILE	*fp;
 {
-    bu_log("FILE structure '%s', at x%x:\n", title, fp );
+    bu_log("FILE structure '%s', at x%x:\n", title, fp);
     bu_log(" _cnt = x%x\n", fp->_cnt);
     bu_log(" _ptr = x%x\n", fp->_ptr);
     bu_log(" _base = x%x\n", fp->_base);
     bu_log(" _file = x%x\n", fp->_file);
     bu_printb(" _flag ", fp->_flag & 0xFF,
-	      "\010\010_IORW\7_100\6_IOERR\5_IOEOF\4_IOMYBUF\3_004\2_IOWRT\1_IOREAD" );
+	      "\010\010_IORW\7_100\6_IOERR\5_IOEOF\4_IOMYBUF\3_004\2_IOWRT\1_IOREAD");
     bu_log("\n");
 }
 #endif
 
 
 /**
- *			B U _ P A R A L L E L
+ * B U _ P A R A L L E L
  *
- *  Create 'ncpu' copies of function 'func' all running in parallel,
- *  with private stack areas.  Locking and work dispatching are
- *  handled by 'func' using a "self-dispatching" paradigm.
+ * Create 'ncpu' copies of function 'func' all running in parallel,
+ * with private stack areas.  Locking and work dispatching are
+ * handled by 'func' using a "self-dispatching" paradigm.
  *
- *  'func' is called with one parameter, it's thread number.
- *  Threads are given increasing numbers, starting with zero.
+ * 'func' is called with one parameter, it's thread number.
+ * Threads are given increasing numbers, starting with zero.
  *
- *  This function will not return control until all invocations
- *  of the subroutine are finished.
+ * This function will not return control until all invocations
+ * of the subroutine are finished.
  *
- *  Don't use registers in this function (bu_parallel).  At least on the Alliant,
- *  register context is NOT preserved when exiting the parallel mode,
- *  because the serial portion resumes on some arbitrary processor,
- *  not necessarily the one that serial execution started on.
- *  The registers are not shared.
+ * Don't use registers in this function (bu_parallel).  At least on the Alliant,
+ * register context is NOT preserved when exiting the parallel mode,
+ * because the serial portion resumes on some arbitrary processor,
+ * not necessarily the one that serial execution started on.
+ * The registers are not shared.
  */
 void
-bu_parallel( func, ncpu, arg )
+bu_parallel(func, ncpu, arg)
     void		(*func) BU_ARGS((int, genptr_t));
     int		ncpu;
     genptr_t	arg;
@@ -755,7 +755,7 @@ bu_parallel( func, ncpu, arg )
 
 #ifndef PARALLEL
 
-    bu_log("bu_parallel( %p, %d., %p ):  Not compiled for PARALLEL machine, running single-threaded\n", func, ncpu, arg );
+    bu_log("bu_parallel(%p, %d., %p):  Not compiled for PARALLEL machine, running single-threaded\n", func, ncpu, arg);
     /* do the work anyways */
     (*func)(0, arg);
 
@@ -795,10 +795,10 @@ bu_parallel( func, ncpu, arg )
     memset(worker_pid_tbl, 0, MAX_PSW * sizeof(int));
 #  endif
 
-    if ( bu_debug & BU_DEBUG_PARALLEL )
-	bu_log("bu_parallel(%p, %d, %p)\n", func, ncpu, arg );
+    if (bu_debug & BU_DEBUG_PARALLEL)
+	bu_log("bu_parallel(%p, %d, %p)\n", func, ncpu, arg);
 
-    if ( bu_pid_of_initiating_thread )
+    if (bu_pid_of_initiating_thread)
 	bu_bomb("bu_parallel() called from within parallel section\n");
 
     bu_pid_of_initiating_thread = bu_process_id();
@@ -815,8 +815,8 @@ bu_parallel( func, ncpu, arg )
     /* if we're in debug mode, allow additional cpus */
     if (!(bu_debug & BU_DEBUG_PARALLEL)) {
 	avail_cpus = bu_avail_cpus();
-	if ( ncpu > avail_cpus ) {
-	    bu_log( "%d cpus requested, but only %d available\n", ncpu, avail_cpus );
+	if (ncpu > avail_cpus) {
+	    bu_log("%d cpus requested, but only %d available\n", ncpu, avail_cpus);
 	    ncpu = avail_cpus;
 	}
     }
@@ -824,9 +824,9 @@ bu_parallel( func, ncpu, arg )
 #  ifdef HEP
     bu_nthreads_started = 1;
     bu_nthreads_finished = 1;
-    for ( x=1; x<ncpu; x++ )  {
+    for (x=1; x<ncpu; x++) {
 	/* This is more expensive when GEMINUS>1 */
-	Dcreate( bu_parallel_interface );
+	Dcreate(bu_parallel_interface);
     }
     (*func)(0, arg);	/* avoid wasting this task */
 #  endif /* HEP */
@@ -835,16 +835,16 @@ bu_parallel( func, ncpu, arg )
     bu_nthreads_started = 1;
     bu_nthreads_finished = 1;
     /* Create any extra worker tasks */
-    for ( x=1; x<ncpu; x++ ) {
+    for (x=1; x<ncpu; x++) {
 	bu_taskcontrol[x].tsk_len = 3;
 	bu_taskcontrol[x].tsk_value = x;
-	TSKSTART( &bu_taskcontrol[x], bu_parallel_interface );
+	TSKSTART(&bu_taskcontrol[x], bu_parallel_interface);
     }
     (*func)(0, arg);	/* avoid wasting this task */
 
     /* Wait for them to finish */
-    for ( x=1; x<ncpu; x++ )  {
-	TSKWAIT( &bu_taskcontrol[x] );
+    for (x=1; x<ncpu; x++) {
+	TSKWAIT(&bu_taskcontrol[x]);
     }
     /* There needs to be some way to kill the tfork()'ed processes here */
 #  endif
@@ -871,21 +871,21 @@ bu_parallel( func, ncpu, arg )
 
 #  if defined(alliant) && defined(i860)
 #pragma loop cncall
-    for ( x=0; x<ncpu; x++) {
+    for (x=0; x<ncpu; x++) {
 	bu_parallel_interface();
     }
 #  endif
 
 #  if defined(convex) || defined(__convex__)
     /*$dir force_parallel */
-    for ( x=0; x<ncpu; x++ )  {
+    for (x=0; x<ncpu; x++) {
 	bu_parallel_interface();
     }
 #  endif /* convex */
 
 #  ifdef ardent
     /* The stack size parameter is pure guesswork */
-    parstack( bu_parallel_interface, 1024*1024, ncpu );
+    parstack(bu_parallel_interface, 1024*1024, ncpu);
 #  endif /* ardent */
 
 #  ifdef SGI_4D
@@ -896,15 +896,15 @@ bu_parallel( func, ncpu, arg )
 
     /* Note:  it may be beneficial to call prctl(PR_SETEXITSIG); */
     /* prctl(PR_TERMCHILD) could help when parent dies.  But SIGHUP??? hmmm */
-    for ( x = 1; x < ncpu; x++)  {
+    for (x = 1; x < ncpu; x++) {
 	/*
-	 *  Start a share-group process, sharing ALL resources.
-	 *  This direct sys-call can be used because none of the
-	 *  task-management services of, eg, taskcreate() are needed.
+	 * Start a share-group process, sharing ALL resources.
+	 * This direct sys-call can be used because none of the
+	 * task-management services of, eg, taskcreate() are needed.
 	 */
 #    if defined(IRIX) && IRIX <= 4
-	/*  Stack size per proc comes from RLIMIT_STACK (typ 64MBytes). */
-	new = sproc( bu_parallel_interface, PR_SALL, 0 );
+	/* Stack size per proc comes from RLIMIT_STACK (typ 64MBytes). */
+	new = sproc(bu_parallel_interface, PR_SALL, 0);
 #    else
 	/* State maximum stack size.
 	 * Be generous, as this mainly costs address space.
@@ -915,21 +915,21 @@ bu_parallel( func, ncpu, arg )
 	 * in the hopes of creating a small 32k "buffer zone"
 	 * to catch stack overflows.
 	 */
-	new = sprocsp( (void (*)(void *, size_t))bu_parallel_interface,
-		       PR_SALL, 0, NULL,
+	new = sprocsp((void (*)(void *, size_t))bu_parallel_interface,
+		      PR_SALL, 0, NULL,
 #      if defined(IRIX64)
-		       64*1024*1024 - 32*1024
+		      64*1024*1024 - 32*1024
 #      else
-		       4*1024*1024 - 32*1024
+		      4*1024*1024 - 32*1024
 #      endif
 	    );
 #    endif
-	if ( new < 0 )  {
+	if (new < 0) {
 	    perror("sproc");
-	    bu_log("ERROR bu_parallel(): sproc(x%x, x%x, )=%d failed on processor %d\n",
+	    bu_log("ERROR bu_parallel(): sproc(x%x, x%x,)=%d failed on processor %d\n",
 		   bu_parallel_interface, PR_SALL,
-		   new, x );
-	    bu_log("sbrk(0)=%p\n", sbrk(0) );
+		   new, x);
+	    bu_log("sbrk(0)=%p\n", sbrk(0));
 	    bu_bomb("bu_parallel() failure");
 	} else {
 	    worker_pid_tbl[x] = new;
@@ -945,9 +945,9 @@ bu_parallel( func, ncpu, arg )
 	/*
 	 * Make sure all children are done.
 	 */
-	while ( children=bu_worker_tbl_not_empty(worker_pid_tbl) ) {
+	while (children=bu_worker_tbl_not_empty(worker_pid_tbl)) {
 	    pstat = 0;
-	    if ( (pid = wait(&pstat)) < 0) {
+	    if ((pid = wait(&pstat)) < 0) {
 		perror("bu_parallel() wait()");
 		bu_kill_workers(worker_pid_tbl);
 		bu_bomb("parallelism error");
@@ -956,7 +956,7 @@ bu_parallel( func, ncpu, arg )
 		bu_kill_workers(worker_pid_tbl);
 		bu_bomb("Missing worker");
 	    } else {
-		if ( (pstat & 0xFF) != 0 )  {
+		if ((pstat & 0xFF) != 0) {
 		    bu_log("***ERROR: bu_parallel() worker %d exited with status x%x!\n", pid, pstat);
 		    /* XXX How to cope with this;  can't back out work that was lost at this level. */
 #    ifdef IRIX
@@ -974,7 +974,7 @@ bu_parallel( func, ncpu, arg )
 		    if (WIFSTOPPED(pstat))
 			bu_log("child is stopped on signal %d 0x%x\n", WSTOPSIG(pstat));
 
-		    if ( (pstat & 0177777) == 0177777 )
+		    if ((pstat & 0177777) == 0177777)
 			bu_log("child has continued\n");
 
 #    endif
@@ -994,24 +994,24 @@ bu_parallel( func, ncpu, arg )
 	    }
 	}
     }
-    if ( ftell(stdin) != stdin_pos )  {
+    if (ftell(stdin) != stdin_pos) {
 	/*
-	 *  Gross SGI bug:  when a thread is finished, it returns
-	 *  to the stack frame created by sproc(), which
-	 *  just calls exit(0), resulting in all STDIO file buffers
-	 *  being fflush()ed.  This zaps the stdin position, and
-	 *  may wreak additional havoc.
-	 *  Exists in IRIX 3.3.1, Irix 4.0.5,
-	 *  should be fixed in a later release.  Maybe.
+	 * Gross SGI bug:  when a thread is finished, it returns
+	 * to the stack frame created by sproc(), which
+	 * just calls exit(0), resulting in all STDIO file buffers
+	 * being fflush()ed.  This zaps the stdin position, and
+	 * may wreak additional havoc.
+	 * Exists in IRIX 3.3.1, Irix 4.0.5,
+	 * should be fixed in a later release.  Maybe.
 	 */
 	bu_log("\nWarning:  stdin file pointer has been corrupted by SGI multi-processor bug!\n");
-	if ( bu_debug & BU_DEBUG_PARALLEL )  {
-	    bu_log("Original position was x%x, now position is x%x!\n", stdin_pos, ftell(stdin) );
+	if (bu_debug & BU_DEBUG_PARALLEL) {
+	    bu_log("Original position was x%x, now position is x%x!\n", stdin_pos, ftell(stdin));
 	    bu_pr_FILE("saved stdin", &stdin_save);
 	    bu_pr_FILE("current stdin", stdin);
 	}
 	fseek(stdin, stdin_pos, SEEK_SET);
-	if ( ftell(stdin) != stdin_pos )  {
+	if (ftell(stdin) != stdin_pos) {
 	    bu_log("WARNING: fseek() did not recover proper position.\n");
 	} else {
 	    bu_log("It was fixed by fseek()\n");
@@ -1022,7 +1022,7 @@ bu_parallel( func, ncpu, arg )
 #  if defined(n16)
     /* The shared memory size requirement is sheer guesswork */
     /* The stack size is also guesswork */
-    if ( task_init( 8*1024*1024, ncpu, bu_parallel_interface, 128*1024, 0 ) < 0 )
+    if (task_init(8*1024*1024, ncpu, bu_parallel_interface, 128*1024, 0) < 0)
 	perror("bu_parallel()/task_init()");
 #  endif
 
@@ -1048,7 +1048,7 @@ bu_parallel( func, ncpu, arg )
     }
 
     /* Create the threads */
-    for (x = 0; x < ncpu; x++)  {
+    for (x = 0; x < ncpu; x++) {
 
 	if (thr_create(0, 0, (void *(*)(void *))bu_parallel_interface, 0, 0, &thread)) {
 	    fprintf(stderr, "ERROR parallel.c/bu_parallel(): thr_create(0x0, 0x0, 0x%x, 0x0, 0, 0x%x) failed on processor %d\n",
@@ -1057,7 +1057,7 @@ bu_parallel( func, ncpu, arg )
 		   bu_parallel_interface, &thread, x);
 	    /* Not much to do, lump it */
 	} else {
-	    if ( bu_debug & BU_DEBUG_PARALLEL )
+	    if (bu_debug & BU_DEBUG_PARALLEL)
 		bu_log("bu_parallel(): created thread: (thread: 0x%x) (loop:%d) (nthreadc:%d)\n",
 		       thread, x, nthreadc);
 
@@ -1066,7 +1066,7 @@ bu_parallel( func, ncpu, arg )
 	}
     }
 
-    if ( bu_debug & BU_DEBUG_PARALLEL )
+    if (bu_debug & BU_DEBUG_PARALLEL)
 	for (i = 0; i < nthreadc; i++)
 	    bu_log("bu_parallel(): thread_tbl[%d] = 0x%x\n",
 		   i, thread_tbl[i]);
@@ -1079,8 +1079,8 @@ bu_parallel( func, ncpu, arg )
      */
     thread = 0;
     nthreade = 0;
-    for (x = 0; x < nthreadc; x++)  {
-	if ( bu_debug & BU_DEBUG_PARALLEL )
+    for (x = 0; x < nthreadc; x++) {
+	if (bu_debug & BU_DEBUG_PARALLEL)
 	    bu_log("bu_parallel(): waiting for thread to complete:\t(loop:%d) (nthreadc:%d) (nthreade:%d)\n",
 		   x, nthreadc, nthreade);
 
@@ -1103,12 +1103,12 @@ bu_parallel( func, ncpu, arg )
 		   thread);
 	}
 
-	if ( bu_debug & BU_DEBUG_PARALLEL )
+	if (bu_debug & BU_DEBUG_PARALLEL)
 	    bu_log("bu_parallel(): thread completed: (thread: %d)\t(loop:%d) (nthreadc:%d) (nthreade:%d)\n",
 		   thread, x, nthreadc, nthreade);
     }
 
-    if ( bu_debug & BU_DEBUG_PARALLEL )
+    if (bu_debug & BU_DEBUG_PARALLEL)
 	bu_log("bu_parallel(): %d threads created.  %d threads exited.\n",
 	       nthreadc, nthreade);
 #  endif	/* SUNOS */
@@ -1121,7 +1121,7 @@ bu_parallel( func, ncpu, arg )
     /* XXX How to advise thread library that we need 'ncpu' processors? */
 
     /* Create the threads */
-    for (x = 0; x < ncpu; x++)  {
+    for (x = 0; x < ncpu; x++) {
 	pthread_attr_t attrs;
 	pthread_attr_init(&attrs);
 	pthread_attr_setstacksize(&attrs, 10*1024*1024);
@@ -1134,7 +1134,7 @@ bu_parallel( func, ncpu, arg )
 		   bu_parallel_interface, &thread, x);
 	    /* Not much to do, lump it */
 	} else {
-	    if ( bu_debug & BU_DEBUG_PARALLEL ) {
+	    if (bu_debug & BU_DEBUG_PARALLEL) {
 		bu_log("bu_parallel(): created thread: (thread: %p) (loop:%d) (nthreadc:%d)\n",
 		       thread, x, nthreadc);
 	    }
@@ -1145,7 +1145,7 @@ bu_parallel( func, ncpu, arg )
     }
 
 
-    if ( bu_debug & BU_DEBUG_PARALLEL ) {
+    if (bu_debug & BU_DEBUG_PARALLEL) {
 	for (i = 0; i < nthreadc; i++) {
 	    bu_log("bu_parallel(): thread_tbl[%d] = %p\n",
 		   i, thread_tbl[i]);
@@ -1162,46 +1162,46 @@ bu_parallel( func, ncpu, arg )
      */
     thread = 0;
     nthreade = 0;
-    for (x = 0; x < nthreadc; x++)  {
+    for (x = 0; x < nthreadc; x++) {
 	int ret;
 
-	if ( bu_debug & BU_DEBUG_PARALLEL )
+	if (bu_debug & BU_DEBUG_PARALLEL)
 	    bu_log("bu_parallel(): waiting for thread %p to complete:\t(loop:%d) (nthreadc:%d) (nthreade:%d)\n",
 		   thread_tbl[x], x, nthreadc, nthreade);
 
-	if ( (ret = pthread_join(thread_tbl[x], NULL)) != 0) {
+	if ((ret = pthread_join(thread_tbl[x], NULL)) != 0) {
 	    /* badness happened */
 	    fprintf(stderr, "pthread_join(thread_tbl[%d]=0x%lx) ret=%d\n", x, (size_t)thread_tbl[x], ret);
 	}
 	nthreade++;
 	thread_tbl[x] = (rt_thread_t)-1;
 
-	if ( bu_debug & BU_DEBUG_PARALLEL )
+	if (bu_debug & BU_DEBUG_PARALLEL)
 	    bu_log("bu_parallel(): thread completed: (thread: %p)\t(loop:%d) (nthreadc:%d) (nthreade:%d)\n",
 		   thread, x, nthreadc, nthreade);
     }
 
-    if ( bu_debug & BU_DEBUG_PARALLEL )
+    if (bu_debug & BU_DEBUG_PARALLEL)
 	bu_log("bu_parallel(): %d threads created.  %d threads exited.\n",
 	       nthreadc, nthreade);
 
 #  endif /* end if posix threads */
 
     /*
-     *  Ensure that all the threads are REALLY finished.
-     *  On some systems, if threads core dump, the rest of
-     *  the gang keeps going, so this can actually happen (sigh).
+     * Ensure that all the threads are REALLY finished.
+     * On some systems, if threads core dump, the rest of
+     * the gang keeps going, so this can actually happen (sigh).
      */
-    if ( bu_nthreads_finished != bu_nthreads_started )  {
+    if (bu_nthreads_finished != bu_nthreads_started) {
 	bu_log("*** ERROR bu_parallel(%d): %d workers did not finish!\n\n",
 	       ncpu, ncpu - bu_nthreads_finished);
     }
-    if ( bu_nthreads_started != ncpu )  {
+    if (bu_nthreads_started != ncpu) {
 	bu_log("bu_parallel() NOTICE:  only %d workers started, expected %d\n",
-	       bu_nthreads_started, ncpu );
+	       bu_nthreads_started, ncpu);
     }
 
-    if ( bu_debug & BU_DEBUG_PARALLEL )
+    if (bu_debug & BU_DEBUG_PARALLEL)
 	bu_log("bu_parallel(%d) complete, now serial\n", ncpu);
 
 #  ifdef CHECK_PIDS
@@ -1214,7 +1214,7 @@ bu_parallel( func, ncpu, arg )
     x = bu_process_id();
     if (bu_pid_of_initiating_thread != x) {
 	bu_log("WARNING: bu_parallel():  PID of initiating thread changed from %d to %d, open file table may be botched!\n",
-	       bu_pid_of_initiating_thread, x );
+	       bu_pid_of_initiating_thread, x);
     }
 #  endif
     bu_pid_of_initiating_thread = 0;	/* No threads any more */

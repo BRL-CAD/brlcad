@@ -46,7 +46,7 @@
 
 /**
  * "Multiple try" read.  Read multiple times until quantity is
- *  obtained or an error occurs.  This is useful for pipes.
+ * obtained or an error occurs.  This is useful for pipes.
  */
 long int
 bu_mread(int fd, void *bufp, long int n)
@@ -57,7 +57,7 @@ bu_mread(int fd, void *bufp, long int n)
 
     while (count < n) {
 	nread = read(fd, cbufp, (size_t)n-count);
-	if (nread < 0)  {
+	if (nread < 0) {
 	    return nread;
 	}
 	if (nread == 0) {

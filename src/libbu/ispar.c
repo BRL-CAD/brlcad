@@ -47,10 +47,10 @@ extern int bu_pid_of_initiating_thread;
 
 
 /**
- *			B U _ I S _ P A R A L L E L
+ * B U _ I S _ P A R A L L E L
  *
- *  A clean way for bu_bomb() to tell if this is a parallel application.
- *  If bu_parallel() is active, this routine will return non-zero.
+ * A clean way for bu_bomb() to tell if this is a parallel application.
+ * If bu_parallel() is active, this routine will return non-zero.
  */
 int
 bu_is_parallel(void)
@@ -61,10 +61,10 @@ bu_is_parallel(void)
 }
 
 /**
- *			B U _ K I L L _ P A R A L L E L
+ * B U _ K I L L _ P A R A L L E L
  *
- *  Used by bu_bomb() to help terminate parallel threads,
- *  without dragging in the whole parallel library if it isn't being used.
+ * Used by bu_bomb() to help terminate parallel threads,
+ * without dragging in the whole parallel library if it isn't being used.
  */
 void
 bu_kill_parallel(void)

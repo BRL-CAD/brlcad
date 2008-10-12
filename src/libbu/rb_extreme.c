@@ -21,8 +21,8 @@
 /** @{ */
 /** @file rb_extreme.c
  *
- *	Routines to extract mins, maxes, adjacent, and current nodes
- *			from a red-black tree
+ * Routines to extract mins, maxes, adjacent, and current nodes
+ * from a red-black tree
  *
  */
 /** @} */
@@ -38,14 +38,15 @@
 #include "./rb_internals.h"
 
 
-/**		        _ R B _ E X T R E M E ( )
+/**
+ * _ R B _ E X T R E M E ()
  *
- *	Find the minimum or maximum node in one order of a red-black tree
+ * Find the minimum or maximum node in one order of a red-black tree
  *
- *	This function has four parameters: the root of the tree, the
- *	order, the sense (min or max), and the address to be understood
- *	as the nil node pointer. _rb_extreme() returns a pointer to the
- *	extreme node.
+ * This function has four parameters: the root of the tree, the
+ * order, the sense (min or max), and the address to be understood
+ * as the nil node pointer. _rb_extreme() returns a pointer to the
+ * extreme node.
  */
 static struct bu_rb_node *_rb_extreme (struct bu_rb_node *root, int order, int sense, struct bu_rb_node *empty_node)
 {
@@ -74,14 +75,15 @@ static struct bu_rb_node *_rb_extreme (struct bu_rb_node *root, int order, int s
     return (root);
 }
 
-/**		        B U _ R B _ E X T R E M E ( )
+/**
+ * B U _ R B _ E X T R E M E ()
  *
- *		Applications interface to _rb_extreme()
+ * Applications interface to _rb_extreme()
  *
- *	This function has three parameters: the tree in which to find an
- *	extreme node, the order on which to do the search, and the sense
- *	(min or max).  On success, bu_rb_extreme() returns a pointer to the
- *	data in the extreme node.  Otherwise it returns NULL.
+ * This function has three parameters: the tree in which to find an
+ * extreme node, the order on which to do the search, and the sense
+ * (min or max).  On success, bu_rb_extreme() returns a pointer to the
+ * data in the extreme node.  Otherwise it returns NULL.
  */
 void *bu_rb_extreme (bu_rb_tree *tree, int order, int sense)
 {
@@ -105,15 +107,16 @@ void *bu_rb_extreme (bu_rb_tree *tree, int order, int sense)
 	return (bu_rb_data(node, order));
 }
 
-/**		    _ R B _ N E I G H B O R ( )
+/**
+ * _ R B _ N E I G H B O R ()
  *
- *	    Return a node adjacent to a given red-black node
+ * Return a node adjacent to a given red-black node
  *
- *	This function has three parameters: the node of interest, the
- *	order on which to do the search, and the sense (min or max,
- *	which is to say predecessor or successor).  _rb_neighbor()
- *	returns a pointer to the adjacent node.  This function is
- *	modeled after the routine TREE-SUCCESSOR on p. 249 of Cormen et al.
+ * This function has three parameters: the node of interest, the
+ * order on which to do the search, and the sense (min or max,
+ * which is to say predecessor or successor).  _rb_neighbor()
+ * returns a pointer to the adjacent node.  This function is
+ * modeled after the routine TREE-SUCCESSOR on p. 249 of Cormen et al.
  */
 struct bu_rb_node *_rb_neighbor (struct bu_rb_node *node, int order, int sense)
 {
@@ -146,16 +149,17 @@ struct bu_rb_node *_rb_neighbor (struct bu_rb_node *node, int order, int sense)
     return (parent);
 }
 
-/**		        B U _ R B _ N E I G H B O R ( )
+/**
+ * B U _ R B _ N E I G H B O R ()
  *
- *	    Return a node adjacent to the current red-black node
+ * Return a node adjacent to the current red-black node
  *
- *	This function has three parameters: the tree and order on which
- *	to do the search and the sense (min or max, which is to say
- *	predecessor or successor) of the search.  bu_rb_neighbor() returns
- *	a pointer to the data in the node adjacent to the current node
- *	in the specified direction, if that node exists.  Otherwise,
- *	it returns NULL.
+ * This function has three parameters: the tree and order on which
+ * to do the search and the sense (min or max, which is to say
+ * predecessor or successor) of the search.  bu_rb_neighbor() returns
+ * a pointer to the data in the node adjacent to the current node
+ * in the specified direction, if that node exists.  Otherwise,
+ * it returns NULL.
  */
 void *bu_rb_neighbor (bu_rb_tree *tree, int order, int sense)
 {
@@ -182,14 +186,15 @@ void *bu_rb_neighbor (bu_rb_tree *tree, int order, int sense)
     }
 }
 
-/**		            B U _ R B _ C U R R ( )
+/**
+ * B U _ R B _ C U R R ()
  *
- *	    Return the current red-black node
+ * Return the current red-black node
  *
- *	This function has two parameters: the tree and order in which
- *	to find the current node.  bu_rb_curr() returns a pointer to
- *	the data in the current node, if it exists.  Otherwise,
- *	it returns NULL.
+ * This function has two parameters: the tree and order in which
+ * to find the current node.  bu_rb_curr() returns a pointer to
+ * the data in the current node, if it exists.  Otherwise,
+ * it returns NULL.
  */
 void *bu_rb_curr (bu_rb_tree *tree, int order)
 {

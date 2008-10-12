@@ -102,9 +102,9 @@ htond(register unsigned char *out, register const unsigned char *in, int count)
     switch (bu_byteorder()) {
 	case BU_BIG_ENDIAN:
 	    /*
-	     *  First, the case where the system already operates in
-	     *  IEEE format internally, using big-endian order.  These
-	     *  are the lucky ones.
+	     * First, the case where the system already operates in
+	     * IEEE format internally, using big-endian order.  These
+	     * are the lucky ones.
 	     */
 	    memcpy(out, in, count*8);
 	    return;
@@ -112,7 +112,7 @@ htond(register unsigned char *out, register const unsigned char *in, int count)
 	    /*
 	     * This machine uses IEEE, but in little-endian byte order
 	     */
-	    for ( i=count-1; i >= 0; i-- )  {
+	    for (i=count-1; i >= 0; i--) {
 		*out++ = in[7];
 		*out++ = in[6];
 		*out++ = in[5];
@@ -134,13 +134,13 @@ htond(register unsigned char *out, register const unsigned char *in, int count)
 
 #if defined(sgi) && !defined(mips)
     /*
-     *  Silicon Graphics Iris workstation.
-     *  On the 2-D and 3-D, a double is type converted to a float
-     *  (4 bytes), but IEEE single precision has a different
-     *  number of exponent bits than double precision, so we
-     *  have to engage in gyrations here.
+     * Silicon Graphics Iris workstation.
+     * On the 2-D and 3-D, a double is type converted to a float
+     * (4 bytes), but IEEE single precision has a different
+     * number of exponent bits than double precision, so we
+     * have to engage in gyrations here.
      */
-    for ( i=count-1; i >= 0; i-- )  {
+    for (i=count-1; i >= 0; i--) {
 	/* Brain-damaged 3-D case */
 	float small;
 	long float big;
@@ -166,11 +166,11 @@ htond(register unsigned char *out, register const unsigned char *in, int count)
 #endif
 #if defined(vax)
     /*
-     *  Digital Equipment's VAX.
-     *  VAX order is +6, +4, +2, sign|exp|fraction+0
-     *  with 8 bits of exponent, excess 128 base 2, exp=0 => zero.
+     * Digital Equipment's VAX.
+     * VAX order is +6, +4, +2, sign|exp|fraction+0
+     * with 8 bits of exponent, excess 128 base 2, exp=0 => zero.
      */
-    for ( i=count-1; i >= 0; i-- )  {
+    for (i=count-1; i >= 0; i--) {
 	register unsigned long left, right, signbit;
 	register int exp;
 
@@ -180,8 +180,8 @@ htond(register unsigned char *out, register const unsigned char *in, int count)
 
 	exp = (left >> 23) & 0xFF;
 	signbit = left & 0x80000000;
-	if ( exp == 0 )  {
-	    if ( signbit )  {
+	if (exp == 0) {
+	    if (signbit) {
 		OUT_IEEE_NAN;
 	    } else {
 		OUT_IEEE_ZERO;
@@ -208,11 +208,11 @@ htond(register unsigned char *out, register const unsigned char *in, int count)
 #endif
 #if defined(ibm) || defined(gould)
     /*
-     *  IBM Format.
-     *  7-bit exponent, base 16.
-     *  No hidden bits in mantissa (56 bits).
+     * IBM Format.
+     * 7-bit exponent, base 16.
+     * No hidden bits in mantissa (56 bits).
      */
-    for ( i=count-1; i >= 0; i-- )  {
+    for (i=count-1; i >= 0; i--) {
 	register unsigned long left, right, signbit;
 	register int exp;
 
@@ -221,21 +221,21 @@ htond(register unsigned char *out, register const unsigned char *in, int count)
 	in += 8;
 
 	exp = (left>>24) & 0x7F;	/* excess 64, base 16 */
-	if ( left == 0 && right == 0 )
+	if (left == 0 && right == 0)
 	    OUT_IEEE_ZERO;
 
 	signbit = left & 0x80000000;
 	left &= 0x00FFFFFF;
-	if ( signbit )  {
+	if (signbit) {
 	    /* The IBM uses 2's compliment on the mantissa,
 	     * and IEEE does not.
 	     */
 	    left  ^= 0xFFFFFFFF;
 	    right ^= 0xFFFFFFFF;
-	    if ( right & 0x80000000 )  {
+	    if (right & 0x80000000) {
 		/* There may be a carry */
 		right += 1;
-		if ( (right & 0x80000000) == 0 )  {
+		if ((right & 0x80000000) == 0) {
 		    /* There WAS a carry */
 		    left += 1;
 		}
@@ -249,32 +249,32 @@ htond(register unsigned char *out, register const unsigned char *in, int count)
 	exp -= (64-32+1);		/* excess 32, base 16, + fudge */
 	exp *= 4;			/* excess 128, base 2 */
     ibm_normalized:
-	if ( left & 0x00800000 )  {
+	if (left & 0x00800000) {
 	    /* fix = 0; */
 	    exp += 1023-129+1+ 3-0;/* fudge, slide hidden bit */
-	} else if ( left & 0x00400000 ) {
+	} else if (left & 0x00400000) {
 	    /* fix = 1; */
 	    exp += 1023-129+1+ 3-1;
 	    left = (left<<1) |
-		( (right>>(32-1)) & (0x7FFFFFFF>>(31-1)) );
+		((right>>(32-1)) & (0x7FFFFFFF>>(31-1)));
 	    right <<= 1;
-	} else if ( left & 0x00200000 ) {
+	} else if (left & 0x00200000) {
 	    /* fix = 2; */
 	    exp += 1023-129+1+ 3-2;
 	    left = (left<<2) |
-		( (right>>(32-2)) & (0x7FFFFFFF>>(31-2)) );
+		((right>>(32-2)) & (0x7FFFFFFF>>(31-2)));
 	    right <<= 2;
-	} else if ( left & 0x00100000 ) {
+	} else if (left & 0x00100000) {
 	    /* fix = 3; */
 	    exp += 1023-129+1+ 3-3;
 	    left = (left<<3) |
-		( (right>>(32-3)) & (0x7FFFFFFF>>(31-3)) );
+		((right>>(32-3)) & (0x7FFFFFFF>>(31-3)));
 	    right <<= 3;
 	} else {
-	    /*  Encountered 4 consecutive 0 bits of mantissa,
-	     *  attempt to normalize, and loop.
-	     *  This case was not expected, but does happen,
-	     *  at least on the Gould.
+	    /* Encountered 4 consecutive 0 bits of mantissa,
+	     * attempt to normalize, and loop.
+	     * This case was not expected, but does happen,
+	     * at least on the Gould.
 	     */
 	    exp -= 4;
 	    left = (left<<4) | (right>>(32-4));
@@ -283,7 +283,7 @@ htond(register unsigned char *out, register const unsigned char *in, int count)
 	}
 
 	/* After suitable testing, this check can be deleted */
-	if ( (left & 0x00800000) == 0 )  {
+	if ((left & 0x00800000) == 0) {
 	    fprintf(stderr, "ibm->ieee missing 1, left=x%x\n", left);
 	    left = (left<<1) | (right>>31);
 	    right <<= 1;
@@ -311,11 +311,11 @@ htond(register unsigned char *out, register const unsigned char *in, int count)
 #endif
 #if defined(CRAY1) || defined(CRAY2) || defined(eta10)
     /*
-     *  Cray version.  Somewhat easier using 64-bit registers.
-     *  15 bit exponent, biased 040000 (octal).  48 mantissa bits.
-     *  No hidden bits.
+     * Cray version.  Somewhat easier using 64-bit registers.
+     * 15 bit exponent, biased 040000 (octal).  48 mantissa bits.
+     * No hidden bits.
      */
-    for ( i=count-1; i >= 0; i-- )  {
+    for (i=count-1; i >= 0; i--) {
 	register unsigned long word, signbit;
 	register int exp;
 
@@ -325,16 +325,16 @@ htond(register unsigned char *out, register const unsigned char *in, int count)
 	    (((long)in[6])<<8) | ((long)in[7]);
 	in += 8;
 
-	if ( word == 0 )
+	if (word == 0)
 	    OUT_IEEE_ZERO;
 	exp = (word >> 48) & 0x7FFF;
 	signbit = word & 0x8000000000000000L;
 #ifdef redundant
-	if ( exp <= 020001 || exp >= 060000 )
+	if (exp <= 020001 || exp >= 060000)
 	    OUT_IEEE_NAN;
 #endif
 	exp += 1023 - 040000 - 1;
-	if ( (exp & ~0x7FF) != 0 )  {
+	if ((exp & ~0x7FF) != 0) {
 	    fprintf(stderr, "htond:  Cray exponent too large on x%x\n", word);
 	    OUT_IEEE_NAN;
 	}
@@ -359,13 +359,13 @@ htond(register unsigned char *out, register const unsigned char *in, int count)
 #endif
 #if defined(convex_NATIVE) || defined(__convex__NATIVE)
     /*
-     *  Convex C1 version, for Native Convex floating point.
-     *  (Which seems to be VAX "G" format -- almost IEEE).
-     *  CC_OPTS = -fn to get this.
-     *  In modern times, Convex seems to use IEEE by default,
-     *  so we do too.
+     * Convex C1 version, for Native Convex floating point.
+     * (Which seems to be VAX "G" format -- almost IEEE).
+     * CC_OPTS = -fn to get this.
+     * In modern times, Convex seems to use IEEE by default,
+     * so we do too.
      */
-    for ( i=count-1; i >= 0; i-- )  {
+    for (i=count-1; i >= 0; i--) {
 	register unsigned long long	word;
 	register int exp;
 
@@ -373,12 +373,12 @@ htond(register unsigned char *out, register const unsigned char *in, int count)
 	word = *((unsigned long long *)in);
 	in += 8;
 
-	if ( word == 0 )
+	if (word == 0)
 	    OUT_IEEE_ZERO;
 	exp = (word >> 52) & 0x7FF;
 	/* What value here is a Convex NaN ? */
 	exp += 1023 - 1024 - 1;
-	if ( (exp & ~0x7FF) != 0 )  {
+	if ((exp & ~0x7FF) != 0) {
 	    fprintf(stderr, "htond:  Convex exponent too large on x%lx\n", word);
 	    OUT_IEEE_NAN;
 	}
@@ -408,11 +408,11 @@ ntohd(register unsigned char *out, register const unsigned char *in, int count)
     switch (bu_byteorder()) {
 	case BU_BIG_ENDIAN:
 	    /*
-	     *  First, the case where the system already operates in
-	     *  IEEE format internally, using big-endian order.  These
-	     *  are the lucky ones.
+	     * First, the case where the system already operates in
+	     * IEEE format internally, using big-endian order.  These
+	     * are the lucky ones.
 	     */
-	    if ( sizeof(double) != SIZEOF_NETWORK_DOUBLE )
+	    if (sizeof(double) != SIZEOF_NETWORK_DOUBLE)
 		bu_bomb("ntohd:  sizeof(double) != SIZEOF_NETWORK_DOUBLE\n");
 	    memcpy(out, in, count*SIZEOF_NETWORK_DOUBLE);
 	    return;
@@ -420,7 +420,7 @@ ntohd(register unsigned char *out, register const unsigned char *in, int count)
 	    /*
 	     * This machine uses IEEE, but in little-endian byte order
 	     */
-	    for ( i=count-1; i >= 0; i-- )  {
+	    for (i=count-1; i >= 0; i--) {
 		*out++ = in[7];
 		*out++ = in[6];
 		*out++ = in[5];
@@ -442,10 +442,10 @@ ntohd(register unsigned char *out, register const unsigned char *in, int count)
 
 #if defined(sgi) && !defined(mips)
     /*
-     *  Silicon Graphics Iris workstation.
-     *  See comments in htond() for discussion of the braindamage.
+     * Silicon Graphics Iris workstation.
+     * See comments in htond() for discussion of the braindamage.
      */
-    for ( i=count-1; i >= 0; i-- )  {
+    for (i=count-1; i >= 0; i--) {
 	/* Brain-damaged 3-D case */
 	float small;
 	long float big;
@@ -469,11 +469,11 @@ ntohd(register unsigned char *out, register const unsigned char *in, int count)
 #endif
 #if defined(vax)
     /*
-     *  Digital Equipment's VAX.
-     *  VAX order is +6, +4, +2, sign|exp|fraction+0
-     *  with 8 bits of exponent, excess 128 base 2, exp=0 => zero.
+     * Digital Equipment's VAX.
+     * VAX order is +6, +4, +2, sign|exp|fraction+0
+     * with 8 bits of exponent, excess 128 base 2, exp=0 => zero.
      */
-    for ( i=count-1; i >= 0; i-- )  {
+    for (i=count-1; i >= 0; i--) {
 	register unsigned long left, right, signbit;
 	register int fix, exp;
 
@@ -483,7 +483,7 @@ ntohd(register unsigned char *out, register const unsigned char *in, int count)
 
 	exp = (left >> 20) & 0x7FF;
 	signbit = left & 0x80000000;
-	if ( exp == 0 )  {
+	if (exp == 0) {
 	    *out++ = 0;		/* VAX zero */
 	    *out++ = 0;
 	    *out++ = 0;
@@ -493,7 +493,7 @@ ntohd(register unsigned char *out, register const unsigned char *in, int count)
 	    *out++ = 0;
 	    *out++ = 0;
 	    continue;
-	} else if ( exp == 0x7FF )  {
+	} else if (exp == 0x7FF) {
 	vax_undef:		*out++ = 0x80;		/* VAX "undefined" */
 	*out++ = 0;
 	*out++ = 0;
@@ -506,7 +506,7 @@ ntohd(register unsigned char *out, register const unsigned char *in, int count)
 	}
 	exp += 129 - 1023;
 	/* Check for exponent out of range */
-	if ( (exp & ~0xFF) != 0 )  {
+	if ((exp & ~0xFF) != 0) {
 	    fprintf(stderr, "ntohd: VAX exponent overflow\n");
 	    goto vax_undef;
 	}
@@ -527,11 +527,11 @@ ntohd(register unsigned char *out, register const unsigned char *in, int count)
 #endif
 #if defined(ibm) || defined(gould)
     /*
-     *  IBM Format.
-     *  7-bit exponent, base 16.
-     *  No hidden bits in mantissa (56 bits).
+     * IBM Format.
+     * 7-bit exponent, base 16.
+     * No hidden bits in mantissa (56 bits).
      */
-    for ( i=count-1; i >= 0; i-- )  {
+    for (i=count-1; i >= 0; i--) {
 	register unsigned long left, right;
 	register int fix, exp, signbit;
 
@@ -541,7 +541,7 @@ ntohd(register unsigned char *out, register const unsigned char *in, int count)
 
 	exp = ((left >> 20) & 0x7FF);
 	signbit = (left & 0x80000000) >> 24;
-	if ( exp == 0 || exp == 0x7FF )  {
+	if (exp == 0 || exp == 0x7FF) {
 	ibm_undef:		*out++ = 0;		/* IBM zero.  No NAN */
 	*out++ = 0;
 	*out++ = 0;
@@ -559,26 +559,26 @@ ntohd(register unsigned char *out, register const unsigned char *in, int count)
 	fix = exp % 4;		/* 2^4 == 16^1;  get fractional exp */
 	exp /= 4;		/* excess 32, base 16 */
 	exp += (64-32+1);	/* excess 64, base 16, plus fudge */
-	if ( (exp & ~0xFF) != 0 )  {
+	if ((exp & ~0xFF) != 0) {
 	    fprintf(stderr, "ntohd:  IBM exponent overflow\n");
 	    goto ibm_undef;
 	}
 
-	if ( fix )  {
+	if (fix) {
 	    left = (left<<fix) | (right >> (32-fix));
 	    right <<= fix;
 	}
 
-	if ( signbit )  {
+	if (signbit) {
 	    /* The IBM actually uses complimented mantissa
 	     * and exponent.
 	     */
 	    left  ^= 0xFFFFFFFF;
 	    right ^= 0xFFFFFFFF;
-	    if ( right & 0x80000000 )  {
+	    if (right & 0x80000000) {
 		/* There may be a carry */
 		right += 1;
-		if ( (right & 0x80000000) == 0 )  {
+		if ((right & 0x80000000) == 0) {
 		    /* There WAS a carry */
 		    left += 1;
 		}
@@ -591,11 +591,11 @@ ntohd(register unsigned char *out, register const unsigned char *in, int count)
 	}
 
 
-	/*  Not actually required, but for comparison purposes,
-	 *  normalize the number.  Remove for production speed.
+	/* Not actually required, but for comparison purposes,
+	 * normalize the number.  Remove for production speed.
 	 */
-	while ( (left & 0x00F00000) == 0 && left != 0 )  {
-	    if ( signbit && exp <= 0x41 )  break;
+	while ((left & 0x00F00000) == 0 && left != 0) {
+	    if (signbit && exp <= 0x41)  break;
 
 	    left = (left << 4) | (right >> (32-4));
 	    right <<= 4;
@@ -616,11 +616,11 @@ ntohd(register unsigned char *out, register const unsigned char *in, int count)
 #endif
 #if defined(CRAY1) || defined(CRAY2) || defined(eta10)
     /*
-     *  Cray version.  Somewhat easier using 64-bit registers.
-     *  15 bit exponent, biased 040000 (octal).  48 mantissa bits.
-     *  No hidden bits.
+     * Cray version.  Somewhat easier using 64-bit registers.
+     * 15 bit exponent, biased 040000 (octal).  48 mantissa bits.
+     * No hidden bits.
      */
-    for ( i=count-1; i >= 0; i-- )  {
+    for (i=count-1; i >= 0; i--) {
 	register unsigned long word, signbit;
 	register int exp;
 
@@ -632,11 +632,11 @@ ntohd(register unsigned char *out, register const unsigned char *in, int count)
 
 	exp = (word>>(64-12)) & 0x7FF;
 	signbit = word & 0x8000000000000000L;
-	if ( exp == 0 )  {
+	if (exp == 0) {
 	    word = 0;
 	    goto cray_out;
 	}
-	if ( exp == 0x7FF )  {
+	if (exp == 0x7FF) {
 	    word = 067777L<<48;	/* Cray out of range */
 	    goto cray_out;
 	}
@@ -659,9 +659,9 @@ ntohd(register unsigned char *out, register const unsigned char *in, int count)
 #endif
 #if defined(convex_NATIVE) || defined(__convex__NATIVE)
     /*
-     *  Convex C1 version, for Native Convex floating point.
+     * Convex C1 version, for Native Convex floating point.
      */
-    for ( i=count-1; i >= 0; i-- )  {
+    for (i=count-1; i >= 0; i--) {
 	register unsigned long long	word;
 	register int exp;
 
@@ -669,11 +669,11 @@ ntohd(register unsigned char *out, register const unsigned char *in, int count)
 	in += 8;
 
 	exp = (word >> 52) & 0x7FF;
-	if ( exp == 0 )  {
+	if (exp == 0) {
 	    word = 0;
 	    goto convex_out;
 	}
-	if ( exp == 0x7FF )  {
+	if (exp == 0x7FF) {
 	    /* IEEE NaN = Convex what? */
 	    fprintf(stderr, "ntohd: Convex NaN unimplemented\n");
 	    word = 0;

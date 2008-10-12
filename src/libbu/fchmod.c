@@ -21,13 +21,7 @@
 /** @{ */
 /** @file fchmod.c
  *
- * @brief
- *  Wrapper around fchmod.
- *
- * @par Functions
- *	bu_fchmod  	Change file permissions
- *
- * @author Bob Parker
+ * Wrapper around fchmod.
  *
  */
 
@@ -55,7 +49,7 @@ bu_fchmod(FILE	     	*fp,
     return fchmod(fileno(fp), (mode_t)pmode);
 #else
     return -1; /* probably Windows, fchmod unavailable and chmod insecure */
-#endif    
+#endif
 }
 
 /** @} */

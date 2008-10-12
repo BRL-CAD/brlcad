@@ -66,7 +66,7 @@ bu_observer_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
  * Attach observer.
  *
  * Usage:
- *	  attach observer [cmd]
+ * attach observer [cmd]
  *
  */
 static int
@@ -119,7 +119,7 @@ bu_observer_attach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char
  * Detach observer.
  *
  * Usage:
- *	  detach observer
+ * detach observer
  *
  */
 static int
@@ -157,7 +157,7 @@ bu_observer_detach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char
  * Show/list observers.
  *
  * Usage:
- *	  show
+ * show
  *
  */
 static int

@@ -56,7 +56,7 @@
  * @return a 32 bit vector.
  *
  * Format description:
- *	[channels][h|n][s|u] c|s|i|l|d|8|16|32|64 [N|C|L]
+ * [channels][h|n][s|u] c|s|i|l|d|8|16|32|64 [N|C|L]
  *
  * @n channels must be null or 1
  * @n Host | Network
@@ -97,7 +97,7 @@ bu_cv_cookie(char *in)			/* input format */
     if (*p == 'u') {
 	++p;
     } else if (*p == 's') {
- 	/* could be 'signed' or 'short' */
+	/* could be 'signed' or 'short' */
 	char *p2;
 	p2 = p+1;
 	if (*p2 && (islower(*p2) || isdigit(*p2))) {
@@ -141,7 +141,7 @@ bu_cv_cookie(char *in)			/* input format */
     }
     p++;
 
-    if (!*p) return(result);
+    if (!*p) return (result);
     if (*p == 'N') {
 	result |= CV_NORMAL;
     } else if (*p == 'C') {
@@ -151,43 +151,43 @@ bu_cv_cookie(char *in)			/* input format */
     } else {
 	return 0;
     }
-    return(result);
+    return (result);
 }
 
 /**
  *
  */
 void
-bu_cv_fmt_cookie( char * buf, size_t buflen, int cookie )
+bu_cv_fmt_cookie(char * buf, size_t buflen, int cookie)
 {
     register char *cp = buf;
     unsigned int	len;
 
-    if ( buflen == 0 )	{
-	fprintf( stderr, "bu_cv_pr_cookie:  call me with a bigger buffer\n");
+    if (buflen == 0)	{
+	fprintf(stderr, "bu_cv_pr_cookie:  call me with a bigger buffer\n");
 	return;
     }
     buflen--;
-    if ( cookie == 0 )  {
-	bu_strlcpy( cp, "bogus!", buflen );
+    if (cookie == 0) {
+	bu_strlcpy(cp, "bogus!", buflen);
 	return;
     }
 
-    snprintf( cp, buflen, "%d", cookie & CV_CHANNEL_MASK );
+    snprintf(cp, buflen, "%d", cookie & CV_CHANNEL_MASK);
     len = strlen(cp);
     cp += len;
-    if ( buflen < len )
+    if (buflen < len)
     {
-	fprintf( stderr, "bu_cv_pr_cookie:  call me with a bigger buffer\n");
+	fprintf(stderr, "bu_cv_pr_cookie:  call me with a bigger buffer\n");
 	return;
     }
     buflen -= len;
 
-    if ( buflen == 0 )	{
-	fprintf( stderr, "bu_cv_pr_cookie:  call me with a bigger buffer\n");
+    if (buflen == 0)	{
+	fprintf(stderr, "bu_cv_pr_cookie:  call me with a bigger buffer\n");
 	return;
     }
-    if ( cookie & CV_HOST_MASK )  {
+    if (cookie & CV_HOST_MASK) {
 	*cp++ = 'h';
 	buflen--;
     } else {
@@ -195,11 +195,11 @@ bu_cv_fmt_cookie( char * buf, size_t buflen, int cookie )
 	buflen--;
     }
 
-    if ( buflen == 0 )	{
-	fprintf( stderr, "bu_cv_pr_cookie:  call me with a bigger buffer\n");
+    if (buflen == 0)	{
+	fprintf(stderr, "bu_cv_pr_cookie:  call me with a bigger buffer\n");
 	return;
     }
-    if ( cookie & CV_SIGNED_MASK )  {
+    if (cookie & CV_SIGNED_MASK) {
 	*cp++ = 's';
 	buflen--;
     } else {
@@ -207,27 +207,27 @@ bu_cv_fmt_cookie( char * buf, size_t buflen, int cookie )
 	buflen--;
     }
 
-    if ( buflen == 0 )	{
-	fprintf( stderr, "bu_cv_pr_cookie:  call me with a bigger buffer\n");
+    if (buflen == 0)	{
+	fprintf(stderr, "bu_cv_pr_cookie:  call me with a bigger buffer\n");
 	return;
     }
-    switch ( cookie & CV_TYPE_MASK )  {
+    switch (cookie & CV_TYPE_MASK) {
 	case CV_8:
 	    *cp++ = '8';
 	    buflen--;
 	    break;
 	case CV_16:
-	    bu_strlcpy( cp, "16", buflen );
+	    bu_strlcpy(cp, "16", buflen);
 	    cp += 2;
 	    buflen -= 2;
 	    break;
 	case CV_32:
-	    bu_strlcpy( cp, "32", buflen );
+	    bu_strlcpy(cp, "32", buflen);
 	    cp += 2;
 	    buflen -= 2;
 	    break;
 	case CV_64:
-	    bu_strlcpy( cp, "64", buflen );
+	    bu_strlcpy(cp, "64", buflen);
 	    cp += 2;
 	    buflen -= 2;
 	    break;
@@ -241,11 +241,11 @@ bu_cv_fmt_cookie( char * buf, size_t buflen, int cookie )
 	    break;
     }
 
-    if ( buflen == 0 )	{
-	fprintf( stderr, "bu_cv_pr_cookie:  call me with a bigger buffer\n");
+    if (buflen == 0)	{
+	fprintf(stderr, "bu_cv_pr_cookie:  call me with a bigger buffer\n");
 	return;
     }
-    switch ( cookie & CV_CONVERT_MASK )  {
+    switch (cookie & CV_CONVERT_MASK) {
 	case CV_CLIP:
 	    *cp++ = 'C';
 	    buflen -= 1;
@@ -271,15 +271,16 @@ bu_cv_fmt_cookie( char * buf, size_t buflen, int cookie )
  *
  */
 void
-bu_cv_pr_cookie( char *title, int cookie )
+bu_cv_pr_cookie(char *title, int cookie)
 {
     char	buf[128];
 
-    bu_cv_fmt_cookie( buf, sizeof(buf), cookie );
-    fprintf( stderr, "%s cookie '%s' (x%x)\n", title, buf, cookie );
+    bu_cv_fmt_cookie(buf, sizeof(buf), cookie);
+    fprintf(stderr, "%s cookie '%s' (x%x)\n", title, buf, cookie);
 }
 
-/**		c v
+/**
+ * c v
  * @brief
  * convert from one format to another.
  *
@@ -298,15 +299,15 @@ cv(genptr_t out, char *outfmt, size_t size, genptr_t in, char *infmt, int count)
     int	incookie, outcookie;
     incookie = bu_cv_cookie(infmt);
     outcookie = bu_cv_cookie(outfmt);
-    return(bu_cv_w_cookie(out, outcookie, size, in, incookie, count));
+    return (bu_cv_w_cookie(out, outcookie, size, in, incookie, count));
 }
 
 /**
- *			C V _ O P T I M I Z E
+ * C V _ O P T I M I Z E
  *
- *  It is always more efficient to handle host data, rather than network.
- *  If host and network formats are the same, and the request was for
- *  network format, modify the cookie to request host format.
+ * It is always more efficient to handle host data, rather than network.
+ * If host and network formats are the same, and the request was for
+ * network format, modify the cookie to request host format.
  */
 int
 bu_cv_optimize(register int cookie)
@@ -314,7 +315,7 @@ bu_cv_optimize(register int cookie)
     static int Endian = END_NOTSET;
     int	fmt;
 
-    if ( cookie & CV_HOST_MASK )
+    if (cookie & CV_HOST_MASK)
 	return cookie;		/* already in most efficient form */
 
     /* This is a network format request */
@@ -331,7 +332,7 @@ bu_cv_optimize(register int cookie)
 
 	if (soli == 8) {
 	    Endian = END_CRAY;	/* is this good enough? */
-	    if ( ( (testval >> 31) >> 1 ) == 0x01020304) {
+	    if (((testval >> 31) >> 1) == 0x01020304) {
 		Endian = END_BIG; /* XXX 64bit */
 	    } else if (testval == 0x04030201) {
 		Endian = END_LITTLE;	/* 64 bit */
@@ -347,7 +348,7 @@ bu_cv_optimize(register int cookie)
 	}
     }
 
-    switch (fmt)  {
+    switch (fmt) {
 	case CV_D:
 	    cookie |= CV_HOST_MASK;	/* host uses network fmt */
 	    return cookie;
@@ -357,7 +358,7 @@ bu_cv_optimize(register int cookie)
 	case CV_32:
 	case CV_64:
 	    /* host is big-endian, so is network */
-	    if ( Endian == END_BIG )
+	    if (Endian == END_BIG)
 		cookie |= CV_HOST_MASK;
 	    return cookie;
     }
@@ -365,9 +366,9 @@ bu_cv_optimize(register int cookie)
 }
 
 /**
- *			C V _ I T E M L E N
+ * C V _ I T E M L E N
  *
- *  Returns the number of bytes each "item" of type "cookie" occupies.
+ * Returns the number of bytes each "item" of type "cookie" occupies.
  */
 int
 bu_cv_itemlen(register int cookie)
@@ -378,13 +379,14 @@ bu_cv_itemlen(register int cookie)
 				     sizeof(long int), sizeof(double)};
     static int net_size_table[8] = {0, 1, 2, 4, 8, 8};
 
-    if ( cookie & CV_HOST_MASK )
+    if (cookie & CV_HOST_MASK)
 	return host_size_table[fmt];
     return net_size_table[fmt];
 }
 
 
-/**	bu_cv_ntohss
+/**
+ * bu_cv_ntohss
  *
  * @brief
  * Network TO Host Signed Short
@@ -420,7 +422,7 @@ bu_cv_ntohss(register short int *out, size_t size, register genptr_t in, int cou
 	 */
 	in = ((char *)in) + 2;
     }
-    return(count);
+    return (count);
 }
 
 /**
@@ -441,7 +443,7 @@ bu_cv_ntohus(register short unsigned int *out, size_t size, register genptr_t in
 	    ((unsigned char *)in)[1];
 	in = ((char *)in) + 2;
     }
-    return(count);
+    return (count);
 }
 /**
  *
@@ -465,7 +467,7 @@ bu_cv_ntohsl(register long int *out, size_t size, register genptr_t in, int coun
 	in = ((char *)in) + 4;
     }
 
-    return(count);
+    return (count);
 }
 /**
  *
@@ -487,7 +489,7 @@ bu_cv_ntohul(register long unsigned int *out, size_t size, register genptr_t in,
 	    ((unsigned char *)in)[3];
 	in = ((char *)in) + 4;
     }
-    return(count);
+    return (count);
 }
 
 /*****/
@@ -504,13 +506,13 @@ bu_cv_htonss(genptr_t out, size_t size, register short int *in, int count)
     register int	val;
 
     limit = size / 2;
-    if ( count > limit )  count = limit;
+    if (count > limit)  count = limit;
 
     for (i=0; i<count; i++) {
 	*cp++ = (val = *in++)>>8;
 	*cp++ = val;
     }
-    return(count);
+    return (count);
 }
 /**
  *
@@ -525,13 +527,13 @@ bu_cv_htonus(genptr_t out, size_t size, register short unsigned int *in, int cou
     register int	val;
 
     limit = size / 2;
-    if ( count > limit )  count = limit;
+    if (count > limit)  count = limit;
 
     for (i=0; i<count; i++) {
 	*cp++ = (val = *in++)>>8;
 	*cp++ = val;
     }
-    return(count);
+    return (count);
 }
 /**
  *
@@ -546,7 +548,7 @@ bu_cv_htonsl(genptr_t out, size_t size, register long int *in, int count)
     register long	val;
 
     limit = size / 4;
-    if ( count > limit )  count = limit;
+    if (count > limit)  count = limit;
 
     for (i=0; i<count; i++) {
 	*cp++ = (val = *in++)>>24;
@@ -554,7 +556,7 @@ bu_cv_htonsl(genptr_t out, size_t size, register long int *in, int count)
 	*cp++ = val>> 8;
 	*cp++ = val;
     }
-    return(count);
+    return (count);
 }
 /**
  *
@@ -569,7 +571,7 @@ bu_cv_htonul(genptr_t out, size_t size, register long unsigned int *in, int coun
     register long	val;
 
     limit = size / 4;
-    if ( count > limit ) {
+    if (count > limit) {
 	count = limit;
     }
 
@@ -579,11 +581,12 @@ bu_cv_htonul(genptr_t out, size_t size, register long unsigned int *in, int coun
 	*cp++ = val>> 8;
 	*cp++ = val;
     }
-    return(count);
+    return (count);
 }
 
 
-/** bu_cv_w_cookie
+/**
+ * bu_cv_w_cookie
  *
  * @brief
  * convert with cookie
@@ -650,7 +653,7 @@ bu_cv_htonul(genptr_t out, size_t size, register long unsigned int *in, int coun
  *			ntoh?(from, t1);
  *			from = t1;
  *		fi
- *		if (infmt != double ) {
+ *		if (infmt != double) {
  *			if (outIsHost == host) {
  *				to = out;
  *			else
@@ -660,7 +663,7 @@ bu_cv_htonul(genptr_t out, size_t size, register long unsigned int *in, int coun
  *			from = to;
  *		fi
  *
- *		if (outfmt == double ) {
+ *		if (outfmt == double) {
  *			if (outIsHost == net) {
  *				hton?(from, out);
  *			fi
@@ -696,8 +699,8 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
     if (work_count > count)
 	work_count = count;
 
-    incookie = bu_cv_optimize( incookie );
-    outcookie = bu_cv_optimize( outcookie );
+    incookie = bu_cv_optimize(incookie);
+    outcookie = bu_cv_optimize(outcookie);
 
     /*
      * break out the conversion code and the format code.
@@ -711,8 +714,8 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
     /*
      * Find the number of bytes required for one item of each kind.
      */
-    outsize = bu_cv_itemlen( outcookie );
-    insize = bu_cv_itemlen( incookie );
+    outsize = bu_cv_itemlen(outcookie);
+    insize = bu_cv_itemlen(incookie);
 
     /*
      * If the input format is the same as the output format then the
@@ -740,7 +743,7 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 	     * This is the simplest case, binary copy and out.
 	     */
 	    memmove((genptr_t)out, (genptr_t)in, (size_t)number_done * outsize);
-	    return(number_done);
+	    return (number_done);
 
 	    /*
 	     * Well it's still the same format but the conversion are different.
@@ -752,16 +755,16 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 	    /* net format */
 	    switch (incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
 		case CV_SIGNED_MASK | CV_16:
-		    return(	bu_cv_ntohss((signed short *)out, size, in, count));
+		    return (	bu_cv_ntohss((signed short *)out, size, in, count));
 		case CV_16:
-		    return( bu_cv_ntohus((unsigned short *)out, size, in, count));
+		    return (bu_cv_ntohus((unsigned short *)out, size, in, count));
 		case CV_SIGNED_MASK | CV_32:
-		    return( bu_cv_ntohsl((signed long *)out, size, in, count));
+		    return (bu_cv_ntohsl((signed long *)out, size, in, count));
 		case CV_32:
-		    return( bu_cv_ntohul((unsigned long *)out, size, in, count));
+		    return (bu_cv_ntohul((unsigned long *)out, size, in, count));
 		case CV_D:
 		    (void) ntohd((unsigned char *)out, (unsigned char *)in, count);
-		    return(count);
+		    return (count);
 	    }
 
 	    /*
@@ -771,16 +774,16 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 	} else {
 	    switch (incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
 		case CV_SIGNED_MASK | CV_16:
-		    return(	bu_cv_htonss(out, size, (short *)in, count));
+		    return (	bu_cv_htonss(out, size, (short *)in, count));
 		case CV_16:
-		    return( bu_cv_htonus(out, size, (unsigned short *)in, count));
+		    return (bu_cv_htonus(out, size, (unsigned short *)in, count));
 		case CV_SIGNED_MASK | CV_32:
-		    return( bu_cv_htonsl(out, size, (long *)in, count));
+		    return (bu_cv_htonsl(out, size, (long *)in, count));
 		case CV_32:
-		    return( bu_cv_htonul(out, size, (unsigned long *)in, count));
+		    return (bu_cv_htonul(out, size, (unsigned long *)in, count));
 		case CV_D:
 		    (void) htond((unsigned char *)out, (unsigned char *)in, count);
-		    return(count);
+		    return (count);
 	    }
 	}
     }
@@ -802,7 +805,7 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
     /*
      * From here on we will be working on a chunk of process at a time.
      */
-    while ( size >= (unsigned int)outsize  && number_done < count) {
+    while (size >= (unsigned int)outsize  && number_done < count) {
 	int remaining;
 
 	/*
@@ -943,7 +946,7 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 		    }
 		    break;
 		default:
-		    fprintf( stderr, "Unimplemented input format\n");
+		    fprintf(stderr, "Unimplemented input format\n");
 		    break;
 	    }
 	    from = hold;
@@ -1017,7 +1020,7 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 		    }
 		    break;
 		default:
-		    fprintf( stderr, "Unimplemented output format\n");
+		    fprintf(stderr, "Unimplemented output format\n");
 		    break;
 
 	    }
@@ -1073,7 +1076,7 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
     bu_free(t1, "vert.c: t1");
     bu_free(t2, "vert.c: t2");
     bu_free(t3, "vert.c: t3");
-    return(number_done);
+    return (number_done);
 }
 /** @} */
 /*

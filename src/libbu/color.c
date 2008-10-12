@@ -21,18 +21,18 @@
 /** @{ */
 /** @file color.c
  *
- *		Convert between RGB and HSV color models
+ * Convert between RGB and HSV color models
  *
- *	R, G, and B are in {0, 1, ..., 255},
+ * R, G, and B are in {0, 1, ..., 255},
  *
- *	H is in [0.0, 360.0), and S and V are in [0.0, 1.0],
+ * H is in [0.0, 360.0), and S and V are in [0.0, 1.0],
  *
- *	unless S = 0.0, in which case H = ACHROMATIC.
+ * unless S = 0.0, in which case H = ACHROMATIC.
  *
- *	These two routines are adapted from:
- *	pp. 592-3 of J.D. Foley, A. van Dam, S.K. Feiner, and J.F. Hughes,
- *	_Computer graphics: principles and practice_, 2nd ed., Addison-Wesley,
- *	Reading, MA, 1990.
+ * These two routines are adapted from:
+ * pp. 592-3 of J.D. Foley, A. van Dam, S.K. Feiner, and J.F. Hughes,
+ * _Computer graphics: principles and practice_, 2nd ed., Addison-Wesley,
+ * Reading, MA, 1990.
  */
 
 #include "common.h"
@@ -65,12 +65,12 @@
 #define Z 2
 #define VSET(a, b, c, d) { (a)[X] = (b); (a)[Y] = (c); (a)[Z] = (d); }
 #define VSETALL(a, s) { (a)[X] = (a)[Y] = (a)[Z] = (s); }
-#define NEAR_ZERO(val, epsilon)	( ((val) > -epsilon) && ((val) < epsilon) )
+#define NEAR_ZERO(val, epsilon)	(((val) > -epsilon) && ((val) < epsilon))
 #define V3ARGS(a) (a)[X], (a)[Y], (a)[Z]
 
 
 /**
- *			B U _ R G B _ T O _ H S V
+ * B U _ R G B _ T O _ H S V
  *
  */
 void bu_rgb_to_hsv (unsigned char *rgb, fastf_t *hsv)
@@ -83,7 +83,7 @@ void bu_rgb_to_hsv (unsigned char *rgb, fastf_t *hsv)
     fastf_t	delta;
 
     /*
-     *	Compute value
+     * Compute value
      */
     max = min = red = ((fastf_t) rgb[RED]) / 255.0;
 
@@ -102,7 +102,7 @@ void bu_rgb_to_hsv (unsigned char *rgb, fastf_t *hsv)
     *val = max;
 
     /*
-     *	Compute saturation
+     * Compute saturation
      */
     delta = max - min;
     if (max > 0.0)
@@ -111,7 +111,7 @@ void bu_rgb_to_hsv (unsigned char *rgb, fastf_t *hsv)
 	*sat = 0.0;
 
     /*
-     *	Compute hue
+     * Compute hue
      */
     if (NEAR_ZERO(*sat, SMALL_FASTF)) {
 	*hue = ACHROMATIC;
@@ -124,7 +124,7 @@ void bu_rgb_to_hsv (unsigned char *rgb, fastf_t *hsv)
 	    *hue = 4.0 + (red - grn) / delta;
 
 	/*
-	 *	Convert hue to degrees
+	 * Convert hue to degrees
 	 */
 	*hue *= 60.0;
 	if (*hue < 0.0)
@@ -133,7 +133,7 @@ void bu_rgb_to_hsv (unsigned char *rgb, fastf_t *hsv)
 }
 
 /**
- *			B U _ H S V _ T O _ R G B
+ * B U _ H S V _ T O _ R G B
  *
  */
 int bu_hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
@@ -192,7 +192,7 @@ int bu_hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
 }
 
 /**
- *			B U _ S T R _ T O _ R G B
+ * B U _ S T R _ T O _ R G B
  *
  */
 int bu_str_to_rgb (char *str, unsigned char *rgb)

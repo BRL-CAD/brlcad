@@ -117,7 +117,7 @@ bu_strlcpym(char *dst, const char *src, size_t size, const char *label)
 {
     size_t srcsize;
 
-    
+
     if (!dst && label) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	fprintf(stderr, "WARNING: NULL destination string, size %ld [%s]\n", size, label);
@@ -133,7 +133,7 @@ bu_strlcpym(char *dst, const char *src, size_t size, const char *label)
     srcsize = strlen(src);
 
     if (bu_debug) {
-	if (srcsize >= size ) {
+	if (srcsize >= size) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    fprintf(stderr, "WARNING: [%s] string truncation, exceeding %ld char max copying %ld chars\n", label, size-1, srcsize);
 	    bu_semaphore_release(BU_SEM_SYSCALL);
@@ -182,17 +182,17 @@ bu_strdupm(register const char *cp, const char *label)
 	label = "bu_strdup";
     }
 
-    len = strlen( cp )+1;
-    base = bu_malloc( len, label);
+    len = strlen(cp)+1;
+    base = bu_malloc(len, label);
 
     if (bu_debug&BU_DEBUG_MEM_LOG) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	fprintf(stderr, "%8lx strdup%7ld \"%s\"\n", (long)base, (long)len, cp );
+	fprintf(stderr, "%8lx strdup%7ld \"%s\"\n", (long)base, (long)len, cp);
 	bu_semaphore_release(BU_SEM_SYSCALL);
     }
 
     memcpy(base, cp, len);
-    return(base);
+    return (base);
 }
 
 
