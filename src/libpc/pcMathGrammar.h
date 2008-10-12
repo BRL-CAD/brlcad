@@ -24,21 +24,33 @@
  * Math Grammar
  *
  * Plan:
- * 	1. Stack closure inclusion
- *	2. Expression grammar definiton
- *	3. Variable grammar completion
- *	*. lazy function evaluation
+ *	1. Expression grammar definiton
+ *	2. Variable grammar completion
+ *	3. lazy function evaluation
  * @author Dawn Thomas
  */
 #ifndef PC_MATH_GRAMMAR
 #define PC_MATH_GRAMMAR
 
-#include "yac_stack_closure.hpp"
+#include "pcMathVM.h"
 
 #include <boost/spirit/include/classic.hpp>
 #include <boost/spirit/core.hpp>
+#include <boost/spirit/attribute/closure.hpp>
 #include <boost/spirit/phoenix.hpp>
 #include <boost/spirit/symbols/symbols.hpp>
+
+/**
+ * 				boost::spirit::closure
+ * a nifty implementation of the closure concept, needed in our case
+ * since the grammar would be reentrant. More details can be accessed
+ * at ( or the latest boost documentation )
+ * http://www.boost.org/doc/libs/1_36_0/libs/spirit/classic/doc/closures.html 
+ */
+struct StackClosure : boost::spirit::closure<StackClosure, Stack>
+{
+    member1 stack;
+};
 
 class NameGrammar : public boost::spirit::classic::grammar<NameGrammar
 {
@@ -61,19 +73,46 @@ public:
 		 - self.keywords
 		 ;
 	}
-	typedef typename boost::spirit::rule<T> rule_t;
+	typedef typename boost::spirit::rule<ScannerT> rule_t;
 	rule_t const & start() const { return name;}
 	private:
 	    rule_t name;
     };
 };
 
-struct ExpressionGrammar : public boost::spirit::classic::grammar<ExpressionGrammar>
+/**
+ * ExpressionGrammar implementation
+ * Stack closure is attached to the grammar itself
+ */
+struct ExpressionGrammar : public boost::spirit::classic::grammar<ExpressionGrammar,StackClosure::context_t>
 {
 };
 
-struct VariableGrammar : public boost::spirit::classic::grammar<VariableGrammar>
+/**
+ * VariableGrammar implementation
+ * Stack closure is attached to the grammar itself
+ */
+struct VariableGrammar : public boost::spirit::classic::grammar<VariableGrammar, StackClosure::context_t>
 {
+    typedef boost::spirit::symbols<boost::shared_ptr<MathFunction> > FunctionTable;
+    typedef boost::spirit::symbols<double> VarTable;
+
+    FunctionTable functions;
+    VarTable & variables;
+
+    VariableGrammar(FunctionTable const & f, VarTable & v)
+        : functions(f), variables(v)
+    {}
+
+    template <typename ScannerT>
+    struct definition
+    {
+	definition(VariableGrammar const & self)
+	    : expression(self.functions, self.variables)
+	{
+	}
+	boost::spirit::classic::rule<ScannerT> const & start const {}
+    };
 };
 
 
