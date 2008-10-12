@@ -59,6 +59,7 @@ Emacs. For example, invoke:
 	(print file)
 	(find-file file)
 	(c-set-offset 'case-label '+)
+	(c-set-offset 'statement-case-open '+)
 	(indent-region (point-min) (point-max) nil)
 	(save-buffer)
 	(setq command-line-args-left (cdr command-line-args-left))))
