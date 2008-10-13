@@ -3803,6 +3803,8 @@ AC_CONFIG_FILES([
 	misc/pkgconfig/libdm.pc
 	misc/pkgconfig/libfb.pc
 	misc/pkgconfig/libfft.pc
+	misc/pkgconfig/libged.pc
+	misc/pkgconfig/libgcv.pc
 	misc/pkgconfig/libmultispectral.pc
 	misc/pkgconfig/liboptical.pc
 	misc/pkgconfig/libpc.pc

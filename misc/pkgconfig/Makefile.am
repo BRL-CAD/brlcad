@@ -8,6 +8,8 @@ pkgconfig_DATA = \
 	libdm.pc \
 	libfb.pc \
 	libfft.pc \
+	libgcv.pc \
+	libged.pc \
 	libmultispectral.pc \
 	liboptical.pc \
 	libpc.pc \
@@ -22,6 +24,8 @@ EXTRA_DIST = \
 	libdm.pc.in \
 	libfb.pc.in \
 	libfft.pc.in \
+	libgcv.pc.in \
+	libged.pc.in \
 	libmultispectral.pc.in \
 	liboptical.pc.in \
 	libpc.pc.in \
