@@ -170,7 +170,7 @@ g_shell_rect_SOURCES = g-shell.rect.c
 g_shell_rect_LDADD = ${WDB}
 
 g_stl_SOURCES = g-stl.c
-g_stl_LDADD = ${WDB}
+g_stl_LDADD = ${WDB} ${GCV}
 
 g_tankill_SOURCES = g-tankill.c
 g_tankill_LDADD = ${RT}
