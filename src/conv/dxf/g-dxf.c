@@ -53,9 +53,6 @@
     (a)[Z] = (b)[Z]/25.4; \
 }
 
-BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
-BU_EXTERN(union tree *get_layer, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
-
 
 static char	usage[] = "\
 Usage: %s [-v] [-i] [-p] [-xX lvl] \n\
@@ -100,218 +97,10 @@ static int		regions_written = 0;
 static int		inches = 0;
 static unsigned int	tot_polygons = 0;
 
+struct callback {
+    void (*convert)(struct nmgregion *r, struct db_full_path *pathp, int region_id, int material_id, float color[3]);
+};
 
-/**
- * M A I N
- *
- * This is the gist for what is going on (not verified):
- *
- * 1. initialize tree_state (db_tree_state)
- * 2. Deal with command line arguments. Strip off everything but regions for processing.
- * 3. Open geometry (.g) file and build directory db_dirbuild
- * 4. db_walk_tree (get_layer) for layer names only
- * 5. Initialize tree_state
- * 6. Initialize model (nmg)\
- * 7. db_walk_tree (do_region_end)
- * 8. Cleanup
- */
-int
-main(argc, argv)
-    int	argc;
-    char	*argv[];
-{
-    register int	c;
-    double		percent;
-    int		i;
-
-    bu_setlinebuf( stderr );
-
-#if MEMORY_LEAK_CHECKING
-    rt_g.debug |= DEBUG_MEM_FULL;
-#endif
-    tree_state = rt_initial_tree_state;	/* struct copy */
-    tree_state.ts_tol = &tol;
-    tree_state.ts_ttol = &ttol;
-    tree_state.ts_m = &the_model;
-
-    /* Set up tesselation tolerance defaults */
-    ttol.magic = RT_TESS_TOL_MAGIC;
-    /* Defaults, updated by command line options. */
-    ttol.abs = 0.0;
-    ttol.rel = 0.01;
-    ttol.norm = 0.0;
-
-    /* Set up calculation tolerance defaults */
-    /* XXX These need to be improved */
-    tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.005;
-    tol.dist_sq = tol.dist * tol.dist;
-    tol.perp = 1e-5;
-    tol.para = 1 - tol.perp;
-
-    /* init resources we might need */
-    rt_init_resource( &rt_uniresource, 0, NULL );
-
-    BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
-
-    /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "a:n:o:pr:vx:D:P:X:i")) != EOF) {
-	switch (c) {
-	    case 'a':		/* Absolute tolerance. */
-		ttol.abs = atof(bu_optarg);
-		ttol.rel = 0.0;
-		break;
-	    case 'n':		/* Surface normal tolerance. */
-		ttol.norm = atof(bu_optarg);
-		ttol.rel = 0.0;
-		break;
-	    case 'o':		/* Output file name. */
-		output_file = bu_optarg;
-		break;
-	    case 'p':
-		polyface_mesh = 1;
-		break;
-	    case 'r':		/* Relative tolerance. */
-		ttol.rel = atof(bu_optarg);
-		break;
-	    case 'v':
-		verbose++;
-		break;
-	    case 'P':
-		ncpu = atoi( bu_optarg );
-		rt_g.debug = 1;	/* XXX DEBUG_ALLRAYS -- to get core dumps */
-		break;
-	    case 'x':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
-		break;
-	    case 'D':
-		tol.dist = atof(bu_optarg);
-		tol.dist_sq = tol.dist * tol.dist;
-		rt_pr_tol( &tol );
-		break;
-	    case 'X':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
-		NMG_debug = rt_g.NMG_debug;
-		break;
-	    case 'i':
-		inches = 1;
-		break;
-	    default:
-		bu_exit(1, usage, argv[0], brlcad_ident("BRL-CAD to DXF Exporter"));
-		break;
-	}
-    }
-
-    if (bu_optind+1 >= argc) {
-	bu_exit(1, usage, argv[0], brlcad_ident("BRL-CAD to DXF Exporter"));
-    }
-
-    if (!output_file) {
-	fp = stdout;
-#if defined(_WIN32) && !defined(__CYGWIN__)
-	setmode(fileno(fp), O_BINARY);
-#endif
-    } else {
-	/* Open output file */
-	if ((fp=fopen(output_file, "w+b")) == NULL) {
-	    perror( argv[0] );
-	    bu_exit(1, " Cannot open output file (%s) for writing\n", output_file);
-	}
-    }
-
-    /* Open BRL-CAD database */
-    argc -= bu_optind;
-    argv += bu_optind;
-    if ((dbip = db_open(argv[0], "r")) == DBI_NULL) {
-	perror(argv[0]);
-	bu_exit(1, "Unable to open geometry file (%s) for reading\n", argv[0]);
-    }
-
-    if ( db_dirbuild( dbip ) ) {
-	bu_exit(1, "db_dirbuild failed\n" );
-    }
-
-    BN_CK_TOL(tree_state.ts_tol);
-    RT_CK_TESS_TOL(tree_state.ts_ttol);
-
-    if ( verbose ) {
-	bu_log( "Model: %s\n", argv[0] );
-	bu_log( "Objects:" );
-	for ( i=1; i<argc; i++ )
-	    bu_log( " %s", argv[i] );
-	bu_log( "\nTesselation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
-		tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm );
-	bu_log( "Calculational tolerances:\n\tdist = %g mm perp = %g\n",
-		tree_state.ts_tol->dist, tree_state.ts_tol->perp );
-    }
-
-    /* output DXF header and start of TABLES section */
-    fprintf(fp,
-	    "0\nSECTION\n2\nHEADER\n999\n%s\n0\nENDSEC\n0\nSECTION\n2\nTABLES\n0\nTABLE\n2\nLAYER\n",
-	    argv[argc-1]);
-
-    /* Walk indicated tree(s) just for layer names to put in TABLES section */
-    (void) db_walk_tree(dbip, argc-1, (const char **)(argv+1),
-			1,			/* ncpu */
-			&tree_state,
-			0,			/* take all regions */
-			get_layer,
-			NULL,
-			(genptr_t)NULL);	/* in librt/nmg_bool.c */
-
-    /* end of layers section, start of ENTOTIES SECTION */
-    fprintf( fp, "0\nENDTAB\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n" );
-
-    /* Walk indicated tree(s).  Each region will be output separately */
-    tree_state = rt_initial_tree_state;	/* struct copy */
-    tree_state.ts_tol = &tol;
-    tree_state.ts_ttol = &ttol;
-    /* make empty NMG model */
-    the_model = nmg_mm();
-    tree_state.ts_m = &the_model;
-    (void) db_walk_tree(dbip, argc-1, (const char **)(argv+1),
-			1,			/* ncpu */
-			&tree_state,
-			0,			/* take all regions */
-			do_region_end,
-			nmg_booltree_leaf_tess,
-			(genptr_t)NULL);	/* in librt/nmg_bool.c */
-
-    percent = 0;
-    if (regions_tried>0) {
-	percent = ((double)regions_converted * 100) / regions_tried;
-	if ( verbose )
-	    bu_log("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
-		   regions_tried, regions_converted, percent);
-    }
-    percent = 0;
-
-    if ( regions_tried > 0 ) {
-	percent = ((double)regions_written * 100) / regions_tried;
-	if ( verbose )
-	    bu_log( "                  %d triangulated successfully. %g%%\n",
-		    regions_written, percent );
-    }
-
-    bu_log( "%ld triangles written\n", tot_polygons );
-
-    fprintf( fp, "0\nENDSEC\n0\nEOF\n" );
-
-    if ( output_file ) {
-	fclose(fp);
-    }
-
-    /* Release dynamic storage */
-    nmg_km(the_model);
-    rt_vlist_cleanup();
-    db_close(dbip);
-
-#if MEMORY_LEAK_CHECKING
-    bu_prmem("After complete G-DXF conversion");
-#endif
-
-    return 0;
-}
 
 static int
 find_closest_color( float color[3] )
@@ -341,12 +130,9 @@ find_closest_color( float color[3] )
     return color_num;
 }
 
+
 static void
-nmg_to_dxf( r, pathp, region_id, color )
-    struct nmgregion *r;
-    struct db_full_path *pathp;
-    int region_id;
-    float color[3];
+nmg_to_dxf( struct nmgregion *r, struct db_full_path *pathp, int region_id, int material_id, float color[3] )
 {
     struct model *m;
     struct shell *s;
@@ -513,7 +299,7 @@ nmg_to_dxf( r, pathp, region_id, color )
 		}
 		if ( vert_count > 3 ) {
 		    bu_free( region_name, "region name" );
-		    bu_log( "lu x%x has %d vertices!\n", lu, vert_count );
+		    bu_log( "lu x%x has %d vertices!\n", (unsigned int)lu, vert_count );
 		    bu_exit(1, "ERROR: LU is not a triangle\n");
 		} else if ( vert_count < 3 ) {
 		    continue;
@@ -560,31 +346,13 @@ nmg_to_dxf( r, pathp, region_id, color )
 
 }
 
-union tree *get_layer(tsp, pathp, curtree, client_data)
-    register struct db_tree_state	*tsp;
-    struct db_full_path	*pathp;
-    union tree		*curtree;
-    genptr_t		client_data;
-{
-    char *layer_name;
-    int color_num;
 
-    layer_name = db_path_to_string(pathp);
-    color_num = find_closest_color( tsp->ts_mater.ma_color );
-
-    fprintf( fp, "0\nLAYER\n2\n%s\n62\n%d\n", layer_name, color_num );
-
-    bu_free( layer_name, "layer name" );
-
-    return( (union tree *)NULL );
-}
-
-/*
- *			D O _ R E G I O N _ E N D
+/**
+ * D O _ R E G I O N _ E N D
  *
- *  Called from db_walk_tree().
+ * Called from db_walk_tree().
  *
- *  This routine must be prepared to run in parallel.
+ * This routine must be prepared to run in parallel.
  */
 union tree *do_region_end(tsp, pathp, curtree, client_data)
     register struct db_tree_state	*tsp;
@@ -595,6 +363,13 @@ union tree *do_region_end(tsp, pathp, curtree, client_data)
     union tree		*ret_tree;
     struct bu_list		vhead;
     struct nmgregion	*r;
+
+    struct callback *c = (struct callback *)client_data;
+
+    if (!c || !c->convert) {
+	bu_log("do_region_end missing conversion callback\n");
+	return TREE_NULL;
+    }
 
     RT_CK_FULL_PATH(pathp);
     RT_CK_TREE(curtree);
@@ -725,8 +500,8 @@ union tree *do_region_end(tsp, pathp, curtree, client_data)
 		*tsp->ts_m = nmg_mm();
 		goto out;
 	    }
-	    /* Write the region to the DXF file */
-	    nmg_to_dxf( r, pathp, tsp->ts_regionid, tsp->ts_mater.ma_color );
+	    /* Write the region out */
+	    c->convert( r, pathp, tsp->ts_regionid, tsp->ts_gmater, tsp->ts_mater.ma_color );
 
 	    regions_written++;
 
@@ -763,6 +538,242 @@ union tree *do_region_end(tsp, pathp, curtree, client_data)
     curtree->magic = RT_TREE_MAGIC;
     curtree->tr_op = OP_NOP;
     return(curtree);
+}
+
+
+union tree *get_layer(tsp, pathp, curtree, client_data)
+    register struct db_tree_state	*tsp;
+    struct db_full_path	*pathp;
+    union tree		*curtree;
+    genptr_t		client_data;
+{
+    char *layer_name;
+    int color_num;
+
+    layer_name = db_path_to_string(pathp);
+    color_num = find_closest_color( tsp->ts_mater.ma_color );
+
+    fprintf( fp, "0\nLAYER\n2\n%s\n62\n%d\n", layer_name, color_num );
+
+    bu_free( layer_name, "layer name" );
+
+    return( (union tree *)NULL );
+}
+
+
+/**
+ * M A I N
+ *
+ * This is the gist for what is going on (not verified):
+ *
+ * 1. initialize tree_state (db_tree_state)
+ * 2. Deal with command line arguments. Strip off everything but regions for processing.
+ * 3. Open geometry (.g) file and build directory db_dirbuild
+ * 4. db_walk_tree (get_layer) for layer names only
+ * 5. Initialize tree_state
+ * 6. Initialize model (nmg)\
+ * 7. db_walk_tree (do_region_end)
+ * 8. Cleanup
+ */
+int
+main(argc, argv)
+    int	argc;
+    char	*argv[];
+{
+    register int	c;
+    double		percent;
+    int		i;
+
+    struct callback call;
+    call.convert = nmg_to_dxf;
+
+    bu_setlinebuf( stderr );
+
+#if MEMORY_LEAK_CHECKING
+    rt_g.debug |= DEBUG_MEM_FULL;
+#endif
+    tree_state = rt_initial_tree_state;	/* struct copy */
+    tree_state.ts_tol = &tol;
+    tree_state.ts_ttol = &ttol;
+    tree_state.ts_m = &the_model;
+
+    /* Set up tesselation tolerance defaults */
+    ttol.magic = RT_TESS_TOL_MAGIC;
+    /* Defaults, updated by command line options. */
+    ttol.abs = 0.0;
+    ttol.rel = 0.01;
+    ttol.norm = 0.0;
+
+    /* Set up calculation tolerance defaults */
+    /* XXX These need to be improved */
+    tol.magic = BN_TOL_MAGIC;
+    tol.dist = 0.005;
+    tol.dist_sq = tol.dist * tol.dist;
+    tol.perp = 1e-5;
+    tol.para = 1 - tol.perp;
+
+    /* init resources we might need */
+    rt_init_resource( &rt_uniresource, 0, NULL );
+
+    BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
+
+    /* Get command line arguments. */
+    while ((c = bu_getopt(argc, argv, "a:n:o:pr:vx:D:P:X:i")) != EOF) {
+	switch (c) {
+	    case 'a':		/* Absolute tolerance. */
+		ttol.abs = atof(bu_optarg);
+		ttol.rel = 0.0;
+		break;
+	    case 'n':		/* Surface normal tolerance. */
+		ttol.norm = atof(bu_optarg);
+		ttol.rel = 0.0;
+		break;
+	    case 'o':		/* Output file name. */
+		output_file = bu_optarg;
+		break;
+	    case 'p':
+		polyface_mesh = 1;
+		break;
+	    case 'r':		/* Relative tolerance. */
+		ttol.rel = atof(bu_optarg);
+		break;
+	    case 'v':
+		verbose++;
+		break;
+	    case 'P':
+		ncpu = atoi( bu_optarg );
+		rt_g.debug = 1;	/* XXX DEBUG_ALLRAYS -- to get core dumps */
+		break;
+	    case 'x':
+		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
+		break;
+	    case 'D':
+		tol.dist = atof(bu_optarg);
+		tol.dist_sq = tol.dist * tol.dist;
+		rt_pr_tol( &tol );
+		break;
+	    case 'X':
+		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
+		NMG_debug = rt_g.NMG_debug;
+		break;
+	    case 'i':
+		inches = 1;
+		break;
+	    default:
+		bu_exit(1, usage, argv[0], brlcad_ident("BRL-CAD to DXF Exporter"));
+		break;
+	}
+    }
+
+    if (bu_optind+1 >= argc) {
+	bu_exit(1, usage, argv[0], brlcad_ident("BRL-CAD to DXF Exporter"));
+    }
+
+    if (!output_file) {
+	fp = stdout;
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	setmode(fileno(fp), O_BINARY);
+#endif
+    } else {
+	/* Open output file */
+	if ((fp=fopen(output_file, "w+b")) == NULL) {
+	    perror( argv[0] );
+	    bu_exit(1, " Cannot open output file (%s) for writing\n", output_file);
+	}
+    }
+
+    /* Open BRL-CAD database */
+    argc -= bu_optind;
+    argv += bu_optind;
+    if ((dbip = db_open(argv[0], "r")) == DBI_NULL) {
+	perror(argv[0]);
+	bu_exit(1, "Unable to open geometry file (%s) for reading\n", argv[0]);
+    }
+
+    if ( db_dirbuild( dbip ) ) {
+	bu_exit(1, "db_dirbuild failed\n" );
+    }
+
+    BN_CK_TOL(tree_state.ts_tol);
+    RT_CK_TESS_TOL(tree_state.ts_ttol);
+
+    if ( verbose ) {
+	bu_log( "Model: %s\n", argv[0] );
+	bu_log( "Objects:" );
+	for ( i=1; i<argc; i++ )
+	    bu_log( " %s", argv[i] );
+	bu_log( "\nTesselation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
+		tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm );
+	bu_log( "Calculational tolerances:\n\tdist = %g mm perp = %g\n",
+		tree_state.ts_tol->dist, tree_state.ts_tol->perp );
+    }
+
+    /* output DXF header and start of TABLES section */
+    fprintf(fp,
+	    "0\nSECTION\n2\nHEADER\n999\n%s\n0\nENDSEC\n0\nSECTION\n2\nTABLES\n0\nTABLE\n2\nLAYER\n",
+	    argv[argc-1]);
+
+    /* Walk indicated tree(s) just for layer names to put in TABLES section */
+    (void) db_walk_tree(dbip, argc-1, (const char **)(argv+1),
+			1,			/* ncpu */
+			&tree_state,
+			0,			/* take all regions */
+			get_layer,
+			NULL,
+			(genptr_t)NULL);	/* in librt/nmg_bool.c */
+
+    /* end of layers section, start of ENTOTIES SECTION */
+    fprintf( fp, "0\nENDTAB\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n" );
+
+    /* Walk indicated tree(s).  Each region will be output separately */
+    tree_state = rt_initial_tree_state;	/* struct copy */
+    tree_state.ts_tol = &tol;
+    tree_state.ts_ttol = &ttol;
+    /* make empty NMG model */
+    the_model = nmg_mm();
+    tree_state.ts_m = &the_model;
+    (void) db_walk_tree(dbip, argc-1, (const char **)(argv+1),
+			1,			/* ncpu */
+			&tree_state,
+			0,			/* take all regions */
+			do_region_end,
+			nmg_booltree_leaf_tess,
+			(genptr_t)&call);	/* callback data for do_region_end */
+
+    percent = 0;
+    if (regions_tried>0) {
+	percent = ((double)regions_converted * 100) / regions_tried;
+	if ( verbose )
+	    bu_log("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
+		   regions_tried, regions_converted, percent);
+    }
+    percent = 0;
+
+    if ( regions_tried > 0 ) {
+	percent = ((double)regions_written * 100) / regions_tried;
+	if ( verbose )
+	    bu_log( "                  %d triangulated successfully. %g%%\n",
+		    regions_written, percent );
+    }
+
+    bu_log( "%ld triangles written\n", (long int)tot_polygons );
+
+    fprintf( fp, "0\nENDSEC\n0\nEOF\n" );
+
+    if ( output_file ) {
+	fclose(fp);
+    }
+
+    /* Release dynamic storage */
+    nmg_km(the_model);
+    rt_vlist_cleanup();
+    db_close(dbip);
+
+#if MEMORY_LEAK_CHECKING
+    bu_prmem("After complete G-DXF conversion");
+#endif
+
+    return 0;
 }
 
 /*
