@@ -334,7 +334,7 @@ get_layer()
     }
 
     if ( verbose && curr_layer != old_layer ) {
-	bu_log( "changed to layer #%d, (m = x%x, s=x%x)\n", curr_layer, layers[curr_layer]->m, layers[curr_layer]->s );
+	bu_log( "changed to layer #%d, (m = x%x, s=x%x)\n", curr_layer, (unsigned int)layers[curr_layer]->m, (unsigned int)layers[curr_layer]->s );
     }
 }
 
@@ -1498,8 +1498,7 @@ process_ellipse_entities_code( int code )
     double majorRadius, minorRadius;
     point_t tmp_pt;
     vect_t xdir, ydir, zdir;
-    int numSegs;
-    int coord, i;
+    int coord;
     int fullCircle;
     int done;
     struct vertex *v0=NULL, *v1=NULL, *v2=NULL;
@@ -1590,19 +1589,19 @@ process_ellipse_entities_code( int code )
 	    }
 	    done = 0;
 	    while ( !done ) {
-		point_t p0, p1, p2;
-		double r1, r2;
+		point_t p0, p1;
+		double r0, r1;
 
 		if ( angle >= endAngle ) {
 		    angle = endAngle;
 		    done = 1;
 		}
 
-		r1 = majorRadius * cos( angle );
-		r2 = minorRadius * sin( angle );
-		VJOIN2( p2, center, r1, xdir, r2, ydir );
+		r0 = majorRadius * cos( angle );
+		r1 = minorRadius * sin( angle );
+		VJOIN2( p1, center, r0, xdir, r1, ydir );
 		if ( angle == startAngle ) {
-		    VMOVE( p0, p2 );
+		    VMOVE( p0, p1 );
 		    angle += delta;
 		    continue;
 		}
@@ -1617,7 +1616,7 @@ process_ellipse_entities_code( int code )
 		}
 		v2 = eu->eumate_p->vu_p->v_p;
 		if ( v2 != v0 ) {
-		    nmg_vertex_gv( v2, p2 );
+		    nmg_vertex_gv( v2, p1 );
 		}
 		if ( verbose ) {
 		    bu_log( "Wire edge (ellipse): (%g %g %g) <-> (%g %g %g)\n",
