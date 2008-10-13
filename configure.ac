@@ -3844,6 +3844,7 @@ AC_CONFIG_FILES([
 	src/canon/Makefile
 	src/conv/Makefile
 	src/conv/comgeom/Makefile
+	src/conv/dxf/Makefile
 	src/conv/iges/Makefile
 	src/conv/intaval/Makefile
 	src/conv/jack/Makefile

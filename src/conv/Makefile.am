@@ -30,6 +30,7 @@ else !ONLY_BENCHMARK
 SUBDIRS = \
 	3dm \
 	comgeom \
+	dxf \
 	iges \
 	intaval \
 	jack \
@@ -40,13 +41,11 @@ bin_PROGRAMS = \
 	asc-nmg \
 	asc2g \
 	asc2pix \
-	bot-bldxf \
 	bot_dump \
 	bot_shell-vtk \
 	conv-vg2g \
 	cy-g \
 	dbupgrade \
-	dxf-g \
 	enf-g \
 	euclid-g \
 	euclid_format \
@@ -54,7 +53,6 @@ bin_PROGRAMS = \
 	fast4-g \
 	g-acad \
 	g-adrt \
-	g-dxf \
 	g-euclid \
 	g-euclid1 \
 	g-var \
@@ -107,9 +105,6 @@ asc2pix_SOURCES = asc2pix.c
 asc_nmg_SOURCES = asc-nmg.c
 asc_nmg_LDADD = ${WDB}
 
-bot_bldxf_SOURCES = bot-bldxf.c
-bot_bldxf_LDADD = ${RT}
-
 bot_dump_SOURCES = bot_dump.c
 bot_dump_LDADD = ${RT} ${GED}
 
@@ -124,9 +119,6 @@ cy_g_LDADD = ${WDB}
 
 dbupgrade_SOURCES = dbupgrade.c
 dbupgrade_LDADD = ${WDB}
-
-dxf_g_SOURCES = dxf-g.c
-dxf_g_LDADD = ${WDB}
 
 enf_g_SOURCES = enf-g.c
 enf_g_LDADD = ${WDB}
@@ -157,9 +149,6 @@ g_acad_LDADD = ${WDB}
 
 g_adrt_SOURCES = g-adrt.c
 g_adrt_LDADD = ${WDB}
-
-g_dxf_SOURCES = g-dxf.c
-g_dxf_LDADD = ${WDB}
 
 g_euclid1_SOURCES = g-euclid1.c
 g_euclid1_LDADD = ${RT}
@@ -244,12 +233,10 @@ dist_man_MANS = \
 	cy-g.1 \
 	dbclean.1 \
 	dbupgrade.1 \
-	dxf-g.1 \
 	enf-g.1 \
 	euclid-g.1 \
 	fast4-g.1 \
 	g-acad.1 \
-	g-dxf.1 \
 	g-euclid.1 \
 	g-var.1 \
 	g-nff.1 \
@@ -296,13 +283,11 @@ FAST_OBJECTS = \
 	$(asc2g_OBJECTS) \
 	$(asc2pix_OBJECTS) \
 	$(asc_nmg_OBJECTS) \
-	$(bot_bldxf_OBJECTS) \
 	$(bot_raw_OBJECTS) \
 	$(bot_shell_vtk_OBJECTS) \
 	$(conv_vg2g_OBJECTS) \
 	$(cy_g_OBJECTS) \
 	$(dbupgrade_OBJECTS) \
-	$(dxf_g_OBJECTS) \
 	$(enf_g_OBJECTS) \
 	$(euclid_format_OBJECTS) \
 	$(euclid_g_OBJECTS) \
@@ -313,7 +298,6 @@ FAST_OBJECTS = \
 	$(g5_g4_OBJECTS) \
 	$(g_acad_OBJECTS) \
 	$(g_adrt_OBJECTS) \
-	$(g_dxf_OBJECTS) \
 	$(g_euclid1_OBJECTS) \
 	$(g_euclid_OBJECTS) \
 	$(g_nff_OBJECTS) \
