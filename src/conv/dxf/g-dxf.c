@@ -97,10 +97,6 @@ static int		regions_written = 0;
 static int		inches = 0;
 static unsigned int	tot_polygons = 0;
 
-struct callback {
-    void (*convert)(struct nmgregion *r, struct db_full_path *pathp, int region_id, int material_id, float color[3]);
-};
-
 
 static int
 find_closest_color( float color[3] )
@@ -364,9 +360,9 @@ union tree *do_region_end(tsp, pathp, curtree, client_data)
     struct bu_list		vhead;
     struct nmgregion	*r;
 
-    struct callback *c = (struct callback *)client_data;
+    void (*write_region)(struct nmgregion *r, struct db_full_path *pathp, int region_id, int material_id, float color[3]) = client_data;
 
-    if (!c || !c->convert) {
+    if (!write_region) {
 	bu_log("do_region_end missing conversion callback\n");
 	return TREE_NULL;
     }
@@ -501,7 +497,7 @@ union tree *do_region_end(tsp, pathp, curtree, client_data)
 		goto out;
 	    }
 	    /* Write the region out */
-	    c->convert( r, pathp, tsp->ts_regionid, tsp->ts_gmater, tsp->ts_mater.ma_color );
+	    write_region( r, pathp, tsp->ts_regionid, tsp->ts_gmater, tsp->ts_mater.ma_color );
 
 	    regions_written++;
 
@@ -583,9 +579,6 @@ main(argc, argv)
     register int	c;
     double		percent;
     int		i;
-
-    struct callback call;
-    call.convert = nmg_to_dxf;
 
     bu_setlinebuf( stderr );
 
@@ -738,7 +731,7 @@ main(argc, argv)
 			0,			/* take all regions */
 			do_region_end,
 			nmg_booltree_leaf_tess,
-			(genptr_t)&call);	/* callback data for do_region_end */
+			(genptr_t)nmg_to_dxf);	/* callback for do_region_end */
 
     percent = 0;
     if (regions_tried>0) {
