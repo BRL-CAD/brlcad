@@ -496,10 +496,6 @@ main(int argc, char **argv)
 	    continue;
 	}
 
-#if 0
-	fprintf ( fp_out, "#Includes group %s\n", argv[i]);
-#endif
-
 	/* light source must be a combibation */
 	if ( !(dp->d_flags & DIR_COMB) )
 	    continue;
@@ -635,15 +631,8 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
     }
     else
     {
-#if 1
 	fprintf( fp, "\t<Shape DEF=\"%s\">\n", full_path);
 	fprintf( fp, "\t\t<Appearance>\n");
-#else
-	fprintf( fp, "\t\tShape { \n");
-	fprintf( fp, "\t\t\t# Component_ID: %d   %s\n", comb->region_id, full_path);
-	fprintf( fp, "\t\t\tappearance Appearance { \n");
-#endif
-
 
 	if ( strncmp( "plastic", mat.shader, 7 ) == 0 )
 	{
@@ -652,16 +641,7 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 	    if ( mat.transparency < 0.0 )
 		mat.transparency = 0.0;
 
-#if 1
 	    fprintf( fp, "\t\t\t<Material diffuseColor=\"%g %g %g\" shininess=\"%g\" transparency=\"%g\" specularColor=\"%g %g %g\"/>\n", r, g, b, 1.0-exp(-(double)mat.shininess/20.0), mat.transparency, 1.0, 1.0, 1.0);
-#else
-	    fprintf( fp, "\t\t\t\tmaterial Material {\n" );
-	    fprintf( fp, "\t\t\t\t\tdiffuseColor %g %g %g \n", r, g, b );
-	    fprintf( fp, "\t\t\t\t\tshininess %g\n", 1.0-exp(-(double)mat.shininess/20.0 ) );
-	    if ( mat.transparency > 0.0 )
-		fprintf( fp, "\t\t\t\t\ttransparency %g\n", mat.transparency );
-	    fprintf( fp, "\t\t\t\t\tspecularColor %g %g %g \n\t\t\t\t}\n", 1.0, 1.0, 1.0 );
-#endif
 	}
 	else if ( strncmp( "glass", mat.shader, 5 ) == 0 )
 	{
@@ -670,94 +650,16 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 	    if ( mat.transparency < 0.0 )
 		mat.transparency = 0.8;
 
-#if 1
 	    fprintf( fp, "\t\t\t<Material diffuseColor=\"%g %g %g\" shininess=\"%g\" transparency=\"%g\" specularColor=\"%g %g %g\"/>\n", r, g, b, 1.0-exp(-(double)mat.shininess/20.0), mat.transparency, 1.0, 1.0, 1.0);
-#else
-	    fprintf( fp, "\t\t\t\tmaterial Material {\n" );
-	    fprintf( fp, "\t\t\t\t\tdiffuseColor %g %g %g \n", r, g, b );
-	    fprintf( fp, "\t\t\t\t\tshininess %g\n", 1.0-exp(-(double)mat.shininess/20.0 ) );
-	    if ( mat.transparency > 0.0 )
-		fprintf( fp, "\t\t\t\t\ttransparency %g\n", mat.transparency );
-	    fprintf( fp, "\t\t\t\t\tspecularColor %g %g %g \n\t\t\t\t}\n", 1.0, 1.0, 1.0 );
-#endif
 	}
-#if 0
-/*XXX please fix */
-	else if ( strncmp( "texture", mat.shader, 7 ) == 0 )
-	{
-	    if ( mat.tx_w < 0 )
-		mat.tx_w = 512;
-	    if ( mat.tx_n < 0 )
-		mat.tx_n = 512;
-
-	    if ( strlen( mat.tx_file ) )
-	    {
-		int tex_fd;
-		int nbytes;
-		long tex_len;
-		long bytes_read=0;
-		unsigned char tex_buf[TXT_BUF_LEN*3];
-
-		if ((tex_fd = open(mat.tx_file, O_RDONLY | O_BINARY)) == (-1)) {
-		    bu_log( "Cannot open texture file (%s)\n", mat.tx_file );
-		    perror( "g-x3d: " );
-		}
-		else
-		{
-		    /* Johns note - need to check (test) the texture stuff */
-		    fprintf( fp, "\t\t\t\ttextureTransform TextureTransform {\n");
-		    fprintf( fp, "\t\t\t\t\tscale 1.33333 1.33333\n\t\t\t\t}\n");
-		    fprintf( fp, "\t\t\t\ttexture PixelTexture {\n");
-		    fprintf( fp, "\t\t\t\t\trepeatS TRUE\n");
-		    fprintf( fp, "\t\t\t\t\trepeatT TRUE\n");
-		    fprintf( fp, "\t\t\t\t\timage %d %d %d\n", mat.tx_w, mat.tx_n, 3 );
-		    tex_len = mat.tx_w*mat.tx_n*3;
-		    while ( bytes_read < tex_len )
-		    {
-			long bytes_to_go=tex_len;
-			long readval;
-
-			bytes_to_go = tex_len - bytes_read;
-			if ( bytes_to_go > TXT_BUF_LEN*3 )
-			    bytes_to_go = TXT_BUF_LEN*3;
-			nbytes = 0;
-			while ( nbytes < bytes_to_go ) {
-			    readval = read( tex_fd, &tex_buf[nbytes], bytes_to_go-nbytes );
-			    if (readval < 0) {
-				perror("READ ERROR");
-				break;
-			    } else {
-				nbytes += readval;
-			    }
-			}
-
-			bytes_read += nbytes;
-			for ( i=0; i<nbytes; i += 3 )
-			    fprintf( fp, "\t\t\t0x%02x%02x%02x\n",
-				     tex_buf[i],
-				     tex_buf[i+1],
-				     tex_buf[i+2] );
-		    }
-		    fprintf( fp, "\t\t\t\t}\n" );
-		}
-	    }
-	}
-#endif
 	else if ( mater->ma_color_valid )
 	{
-#if 1
 	    fprintf( fp, "\t\t\t<Material diffuseColor=\"%g %g %g\"/>\n", r, g, b);
-#else
-	    /* no shader specified, but a color is assigned */
-	    fprintf( fp, "\t\t\t\tmaterial Material {\n" );
-	    fprintf( fp, "\t\t\t\t\tdiffuseColor %g %g %g }\n", r, g, b );
-#endif
 	}
 	else
 	{
 	    /* If no color was defined set the colors according to the thousands groups */
 	    int thou = comb->region_id/1000;
-#if 1
 	    thou == 0 ? fprintf( fp, "\t\t\t<Material USE=\"Material_999\"/>\n")
 		: thou == 1 ? fprintf( fp, "\t\t\t<Material USE=\"Material_1999\"/>\n")
 		: thou == 2 ? fprintf( fp, "\t\t\t<Material USE=\"Material_2999\"/>\n")
@@ -768,23 +670,6 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 		: thou == 7 ? fprintf( fp, "\t\t\t<Material USE=\"Material_7999\"/>\n")
 		: thou == 8 ? fprintf( fp, "\t\t\t<Material USE=\"Material_8999\"/>\n")
 		: fprintf( fp, "\t\t\t<Material USE=\"Material_9999\"/>\n");
-#else
-	    thou == 0 ? fprintf( fp, "\t\t\tmaterial USE Material_999\n")
-		: thou == 1 ? fprintf( fp, "\t\t\tmaterial USE Material_1999\n")
-		: thou == 2 ? fprintf( fp, "\t\t\tmaterial USE Material_2999\n")
-		: thou == 3 ? fprintf( fp, "\t\t\tmaterial USE Material_3999\n")
-		: thou == 4 ? fprintf( fp, "\t\t\tmaterial USE Material_4999\n")
-		: thou == 5 ? fprintf( fp, "\t\t\tmaterial USE Material_5999\n")
-		: thou == 6 ? fprintf( fp, "\t\t\tmaterial USE Material_6999\n")
-		: thou == 7 ? fprintf( fp, "\t\t\tmaterial USE Material_7999\n")
-		: thou == 8 ? fprintf( fp, "\t\t\tmaterial USE Material_8999\n")
-		: fprintf( fp, "\t\t\tmaterial USE Material_9999\n");
-#endif
-
-/*			fprintf( fp, "\t\t\t\tmaterial Material {\n" );
- *			fprintf( fp, "\t\t\t\t\tdiffuseColor %g %g %g \n", r, g, b );
- *			fprintf( fp, "\t\t\t\t\tspecularColor %g %g %g \n\t\t\t\t}\n", 1.0, 1.0, 1.0 );
- */
 	}
     }
 
@@ -858,17 +743,9 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 		s = next_s;
 	    }
 	}
-#if 1
 	fprintf( fp, "\t\t</Appearance>\n");
-#else
-	fprintf( fp, "\t\t\t} \n");
-	fprintf( fp, "\t\t\tgeometry IndexedFaceSet { \n");
-	fprintf( fp, "\t\t\t\tcoord Coordinate { \n");
-#endif
-
     }
 
-#if 1
     /* XXX need code to handle light */
 
     /* get list of vertices */
@@ -973,135 +850,7 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
     fprintf( fp, "\t\t</IndexedFaceSet>\n");
     /* Shape end tag */
     fprintf( fp, "\t</Shape>\n");
-#else
-    /* get list of vertices */
-    nmg_vertex_tabulate( &verts, &m->magic );
-    if ( !is_light )
-	fprintf( fp, "\t\t\t\t\tpoint [");
-    else
-    {
-	VSETALL( ave_pt, 0.0 );
-    }
 
-    for ( i=0; i<BU_PTBL_END( &verts ); i++ )
-    {
-	struct vertex *v;
-	struct vertex_g *vg;
-	point_t pt_meters;
-
-	v = (struct vertex *)BU_PTBL_GET( &verts, i );
-	NMG_CK_VERTEX( v );
-	vg = v->vg_p;
-	NMG_CK_VERTEX_G( vg );
-
-	/* convert to desired units */
-	VSCALE( pt_meters, vg->coord, scale_factor );
-
-	if ( is_light )
-	    VADD2( ave_pt, ave_pt, pt_meters )
-		if ( first )
-		{
-		    if ( !is_light )
-			fprintf( fp, " %10.10e %10.10e %10.10e, # point %d\n", V3ARGS( pt_meters ), i );
-		    first = 0;
-		}
-		else
-		    if ( !is_light )
-			fprintf( fp, "\t\t\t\t\t%10.10e %10.10e %10.10e, # point %d\n", V3ARGS( pt_meters ), i );
-    }
-    if ( !is_light )
-	fprintf( fp, "\t\t\t\t\t]\n\t\t\t\t}\n" );
-    else
-    {
-	fastf_t one_over_count;
-
-	one_over_count = 1.0/(fastf_t)BU_PTBL_END( &verts );
-	VSCALE( ave_pt, ave_pt, one_over_count );
-    }
-
-    first = 1;
-    if ( !is_light )
-    {
-	fprintf( fp, "\t\t\t\tcoordIndex [\n");
-	for ( BU_LIST_FOR( reg, nmgregion, &m->r_hd ) )
-	{
-	    struct shell *s;
-
-	    NMG_CK_REGION( reg );
-	    for ( BU_LIST_FOR( s, shell, &reg->s_hd ) )
-	    {
-		struct faceuse *fu;
-
-		NMG_CK_SHELL( s );
-		for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
-		{
-		    struct loopuse *lu;
-
-		    NMG_CK_FACEUSE( fu );
-
-		    if ( fu->orientation != OT_SAME )
-			continue;
-
-		    for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
-		    {
-			struct edgeuse *eu;
-
-			NMG_CK_LOOPUSE( lu );
-
-			if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
-			    continue;
-
-			if ( !first )
-			    fprintf( fp, ",\n" );
-			else
-			    first = 0;
-
-			fprintf( fp, "\t\t\t\t\t" );
-			for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
-			{
-			    struct vertex *v;
-
-			    NMG_CK_EDGEUSE( eu );
-
-			    v = eu->vu_p->v_p;
-			    NMG_CK_VERTEX( v );
-			    fprintf( fp, " %d,", bu_ptbl_locate( &verts, (long *)v ) );
-			}
-			fprintf( fp, "-1" );
-		    }
-		}
-	    }
-	}
-	fprintf( fp, "\n\t\t\t\t]\n\t\t\t\tnormalPerVertex FALSE\n");
-	fprintf( fp, "\t\t\t\tconvex FALSE\n");
-	fprintf( fp, "\t\t\t\tcreaseAngle 0.5\n");
-	fprintf( fp, "\t\t\t}\n\t\t}\n");
-    }
-#endif
-
-#if 0
-/*XXX please fix */
-    else
-    {
-	mat.lt_fraction = 0.0;
-	mat.lt_angle = 180.0;
-	VSETALL( mat.lt_dir, 0.0 );
-
-	if ( mat.lt_dir[X] != 0.0 || mat.lt_dir[Y] != 0.0 ||mat.lt_dir[Z] != 0.0 )
-	{
-	    fprintf( fp, "\t\tSpotLight {\n" );
-	    fprintf( fp, "\t\t\ton \tTRUE\n" );
-	    if ( mat.lt_fraction > 0.0 )
-		fprintf( fp, "\t\t\tintensity \t%g\n", mat.lt_fraction );
-	    fprintf( fp, "\t\t\tcolor \t%g %g %g\n", r, g, b );
-	    fprintf( fp, "\t\t\tlocation \t%g %g %g\n", V3ARGS( ave_pt ) );
-	    fprintf( fp, "\t\t\tdirection \t%g %g %g\n", V3ARGS( mat.lt_dir ) );
-	    fprintf( fp, "\t\t\tcutOffAngle \t%g }\n", mat.lt_angle );
-	}
-	else
-	    fprintf( fp, "\t\tPointLight {\n\t\t\ton TRUE\n\t\t\tintensity 1\n\t\t\tcolor %g %g %g\n\t\t\tlocation %g %g %g\n\t\t}\n", r, g, b, V3ARGS( ave_pt ) );
-    }
-#endif
     BARRIER_CHECK;
 }
 
@@ -1121,23 +870,13 @@ bot2vrml( struct plate_mode *pmp, struct db_full_path *pathp, int region_id )
     /* replace all occurences of '.' with '_' */
     char_replace(path_str, '.', '_');
 
-#if 1
     fprintf( fp_out, "\t<Shape DEF=\"%s\">\n", path_str);
-#else
-    fprintf( fp_out, "\t\tShape {\n\t\t\t# Component_ID: %d   %s\n",
-	     region_id, path_str );
-#endif
     bu_free( path_str, "result of db_path_to_string" );
 
     appearance = region_id / 1000;
     appearance = appearance * 1000 + 999;
-#if 1
     fprintf( fp_out, "\t\t<Appearance USE=\"Material_%d\">\n", appearance);
-#else
-    fprintf( fp_out, "\t\t\tappearance Appearance {\n\t\t\tmaterial USE Material_%d\n\t\t\t}\n", appearance );
-#endif
 
-#if 1
     fprintf( fp_out, "\t\t<IndexedFaceSet coordIndex=\"\n");
     vert_count = 0;
     for ( bot_num = 0; bot_num < pmp->num_bots; bot_num++ ) {
@@ -1180,38 +919,7 @@ bot2vrml( struct plate_mode *pmp, struct db_full_path *pathp, int region_id )
     fprintf( fp_out, "\t\t</IndexedFaceSet>\n");
     /* Shape end tag */
     fprintf( fp_out, "\t</Shape>\n");
-#else
-    fprintf( fp_out, "\t\t\tgeometry IndexedFaceSet {\n\t\t\t\tcoord Coordinate {\n\t\t\t\tpoint [\n" );
-    for ( bot_num = 0; bot_num < pmp->num_bots; bot_num++ ) {
-	bot = pmp->bots[bot_num];
-	RT_BOT_CK_MAGIC( bot );
-	for ( i=0; i<bot->num_vertices; i++ )
-	{
-	    point_t pt;
 
-	    VSCALE( pt, &bot->vertices[i*3], scale_factor );
-	    fprintf( fp_out, "\t\t\t\t\t%10.10e %10.10e %10.10e, # point %d\n", V3ARGS( pt ), vert_count );
-	    vert_count++;
-	}
-    }
-    fprintf( fp_out, "\t\t\t\t\t]\n\t\t\t\t}\n\t\t\t\tcoordIndex [\n" );
-    vert_count = 0;
-    for ( bot_num = 0; bot_num < pmp->num_bots; bot_num++ ) {
-	bot = pmp->bots[bot_num];
-	RT_BOT_CK_MAGIC( bot );
-	for ( i=0; i<bot->num_faces; i++ )
-	    fprintf( fp_out, "\t\t\t\t\t%d, %d, %d, -1,\n",
-		     vert_count+bot->faces[i*3],
-		     vert_count+bot->faces[i*3+1],
-		     vert_count+bot->faces[i*3+2]);
-	vert_count += bot->num_vertices;
-    }
-    fprintf( fp_out, "\t\t\t\t]\n\t\t\t\tnormalPerVertex FALSE\n" );
-    fprintf( fp_out, "\t\t\t\tconvex TRUE\n" );
-    fprintf( fp_out, "\t\t\t\tcreaseAngle 0.5\n" );
-    fprintf( fp_out, "\t\t\t\tsolid FALSE\n" );
-    fprintf( fp_out, "\t\t\t}\n\t\t}\n" );
-#endif
     BARRIER_CHECK;
 }
 
