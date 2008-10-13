@@ -11,7 +11,7 @@ dxf_g_SOURCES = dxf-g.c
 dxf_g_LDADD = ${WDB}
 
 g_dxf_SOURCES = g-dxf.c
-g_dxf_LDADD = ${WDB}
+g_dxf_LDADD = ${WDB} ${GCV}
 
 dist_man_MANS = \
 	dxf-g.1 \

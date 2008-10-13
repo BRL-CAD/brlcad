@@ -8,7 +8,7 @@ COMMON_EXTRA = \
 
 if ONLY_BENCHMARK
 
-SUBDIRS =
+SUBDIRS = .
 
 bin_PROGRAMS = \
 	asc2g \
@@ -28,6 +28,7 @@ EXTRA_DIST =
 else !ONLY_BENCHMARK
 
 SUBDIRS = \
+	. \
 	3dm \
 	comgeom \
 	dxf \

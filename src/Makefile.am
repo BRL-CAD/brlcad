@@ -40,6 +40,7 @@ bench_dirs = \
 	libpkg \
 	libfb \
 	libwdb \
+	libgcv \
 	libged \
 	liboptical \
 	liborle \

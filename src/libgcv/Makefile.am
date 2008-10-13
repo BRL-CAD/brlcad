@@ -1,0 +1,24 @@
+
+lib_LTLIBRARIES = libgcv.la
+noinst_LTLIBRARIES = libgcv_nil.la
+
+libgcv_nil_la_SOURCES = \
+	region_end.c
+
+libgcv_la_SOURCES =
+libgcv_la_LDFLAGS = -version-info 19:1 -no-undefined
+libgcv_la_LIBADD = \
+	libgcv_nil.la \
+	${GCV_LIBS}
+
+EXTRA_DIST = \
+        CMakeLists.txt
+
+DEPENDS = src/librt
+
+include $(top_srcdir)/misc/Makefile.defs
+
+FAST_OBJECTS = \
+	$(libgcv_nil_la_OBJECTS) \
+	$(libgcv_la_OBJECTS) \
+	$(lib_LTLIBRARIES)

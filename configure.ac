@@ -3579,6 +3579,7 @@ CURSOR='${top_builddir}/src/libcursor/libcursor.la'
 DM='${top_builddir}/src/libdm/libdm.la'
 FB='${top_builddir}/src/libfb/libfb.la'
 FFT='${top_builddir}/src/libfft/libfft.la'
+GCV='${top_builddir}/src/libgcv/libgcv.la'
 GED='${top_builddir}/src/libged/libged.la'
 MULTISPECTRAL='${top_builddir}/src/libmultispectral/libmultispectral.la'
 OPTICAL='${top_builddir}/src/liboptical/liboptical.la'
@@ -3601,6 +3602,7 @@ FFT_LIBS="${LIBM}"
 BU_LIBS="${TCL} ${PNG} ${LIBM} ${LIBMALLOC} ${LIBTHREAD}"
 BN_LIBS="${BU} ${BU_LIBS} ${TCL} ${LIBM}"
 RT_LIBS="${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${REGEX} ${LIBM} ${SYSV} ${OPENNURBS}"
+GCV_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 GED_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 WDB_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 FB_LIBS="${BU} ${BU_LIBS} ${PKG} ${TCL} ${SOCKET} ${NSL}" # additional/optional FB_LIBS: ${TK} ${X_LIBS} ${LIBGL}
@@ -3617,6 +3619,7 @@ AC_SUBST(CURSOR)
 AC_SUBST(DM)
 AC_SUBST(FB)
 AC_SUBST(FFT)
+AC_SUBST(GCV)
 AC_SUBST(GED)
 AC_SUBST(MULTISPECTRAL)
 AC_SUBST(OPTICAL)
@@ -3636,6 +3639,7 @@ AC_SUBST(CURSOR_LIBS)
 AC_SUBST(DM_LIBS)
 AC_SUBST(FB_LIBS)
 AC_SUBST(FFT_LIBS)
+AC_SUBST(GCV_LIBS)
 AC_SUBST(GED_LIBS)
 AC_SUBST(MULTISPECTRAL_LIBS)
 AC_SUBST(OPTICAL_LIBS)
@@ -3877,6 +3881,7 @@ AC_CONFIG_FILES([
 	src/libdm/Makefile
 	src/libfb/Makefile
 	src/libfft/Makefile
+	src/libgcv/Makefile
 	src/libged/Makefile
 	src/libmultispectral/Makefile
 	src/liboptical/Makefile
