@@ -41,7 +41,7 @@
 ###
 
 
-for dir in src/libbn src/libbu src/libged src/librt src/libsysv src/libwdb ; do
+for dir in src/libbn src/libbu src/libged src/librt src/libsysv src/libwdb src/libged ; do
 
     if test ! -f $dir/CMakeLists.txt ; then
 	echo "ERROR: cannot find $dir/CMakeLists.txt"
