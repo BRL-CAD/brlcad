@@ -2322,102 +2322,9 @@ process_mtext_entities_code( int code )
     return( 0 );
 }
 
-static int
-process_attrib_entities_code( int code )
-{
-    static char *theText=NULL;
-    static int horizAlignment=0;
-    static int vertAlignment=0;
-    static int textFlag=0;
-    static point_t firstAlignmentPoint = {0.0, 0.0, 0.0 };
-    static point_t secondAlignmentPoint = {0.0, 0.0, 0.0 };
-    static double textScale=1.0;
-    static double textHeight;
-    static double textRotation=0.0;
-    point_t tmp_pt;
-    int coord;
-
-    switch ( code ) {
-	case 1:
-	    theText = bu_strdup( line );
-	    break;
-	case 8:		/* layer name */
-	    if ( curr_layer_name ) {
-		bu_free( curr_layer_name, "curr_layer_name" );
-	    }
-	    curr_layer_name = make_brlcad_name( line );
-	    break;
-	case 10:
-	case 20:
-	case 30:
-	    coord = (code / 10) - 1;
-	    firstAlignmentPoint[coord] = atof( line ) * units_conv[units] * scale_factor;
-	    break;
-	case 11:
-	case 21:
-	case 31:
-	    coord = (code / 10) - 1;
-	    secondAlignmentPoint[coord] = atof( line ) * units_conv[units] * scale_factor;
-	    break;
-	case 40:
-	    textHeight = atof( line );
-	    break;
-	case 41:
-	    textScale = atof( line );
-	    break;
-	case 50:
-	    textRotation = atof( line );
-	    break;
-	case 62:	/* color number */
-	    curr_color = atoi( line );
-	    break;
-	case 71:
-	    textFlag = atoi( line );
-	    break;
-	case 72:
-	    horizAlignment = atoi( line );
-	    break;
-	case 74:
-	    vertAlignment = atoi( line );
-	    break;
-	case 0:
-	    if ( theText != NULL ) {
-		if ( verbose ) {
-		    bu_log( "TEXT (%s), height = %g, scale = %g\n", theText, textHeight, textScale );
-		}
-		/* draw the text */
-		get_layer();
-
-		if ( !layers[curr_layer]->m ) {
-		    create_nmg();
-		}
-
-		/* apply transformation */
-		MAT4X3PNT( tmp_pt, curr_state->xform, firstAlignmentPoint );
-		VMOVE( firstAlignmentPoint, tmp_pt );
-		MAT4X3PNT( tmp_pt, curr_state->xform, secondAlignmentPoint );
-		VMOVE( secondAlignmentPoint, tmp_pt );
-
-		drawString( theText, firstAlignmentPoint, secondAlignmentPoint,
-			    textHeight, textScale, textRotation, horizAlignment, vertAlignment, textFlag );
-		layers[curr_layer]->attrib_count++;
-	    }
-	    horizAlignment=0;
-	    vertAlignment=0;
-	    textFlag=0;
-	    VSET( firstAlignmentPoint, 0.0, 0.0, 0.0 );
-	    VSET( secondAlignmentPoint, 0.0, 0.0, 0.0 );
-	    textScale=1.0;
-	    textRotation=0.0;
-	    curr_state->sub_state = UNKNOWN_ENTITY_STATE;
-	    process_entities_code[curr_state->sub_state]( code );
-	    break;
-    }
-    return 0;
-}
 
 static int
-process_text_entities_code( int code )
+process_text_attrib_entities_code( int code )
 {
     /* Secret text code used in DXF files:
      *
@@ -3310,12 +3217,12 @@ main( int argc, char *argv[] )
     process_entities_code[CIRCLE_ENTITY_STATE] = process_circle_entities_code;
     process_entities_code[ARC_ENTITY_STATE] = process_arc_entities_code;
     process_entities_code[DIMENSION_ENTITY_STATE] = process_dimension_entities_code;
-    process_entities_code[TEXT_ENTITY_STATE] = process_text_entities_code;
+    process_entities_code[TEXT_ENTITY_STATE] = process_text_attrib_entities_code;
     process_entities_code[SOLID_ENTITY_STATE] = process_solid_entities_code;
     process_entities_code[LWPOLYLINE_ENTITY_STATE] = process_lwpolyline_entities_code;
     process_entities_code[MTEXT_ENTITY_STATE] = process_mtext_entities_code;
-    process_entities_code[ATTRIB_ENTITY_STATE] = process_attrib_entities_code;
-    process_entities_code[ATTDEF_ENTITY_STATE] = process_attrib_entities_code;
+    process_entities_code[ATTRIB_ENTITY_STATE] = process_text_attrib_entities_code;
+    process_entities_code[ATTDEF_ENTITY_STATE] = process_text_attrib_entities_code;
     process_entities_code[ELLIPSE_ENTITY_STATE] = process_ellipse_entities_code;
     process_entities_code[LEADER_ENTITY_STATE] = process_leader_entities_code;
     process_entities_code[SPLINE_ENTITY_STATE] = process_spline_entities_code;
