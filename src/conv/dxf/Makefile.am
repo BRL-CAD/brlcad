@@ -17,6 +17,8 @@ dist_man_MANS = \
 	dxf-g.1 \
 	g-dxf.1
 
+noinst_HEADERS = dxf.h
+
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \
