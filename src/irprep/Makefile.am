@@ -76,9 +76,7 @@ EXTRA_DIST = \
 	pictx.1 \
 	pictx.c \
 	see.1 \
-	see.c \
-	see2.1 \
-	see2.c
+	see.c
 
 DEPS=src/librt
 
