@@ -1,13 +1,11 @@
 # $Id$
 
-# XXX uncomment after 7.8.4
-# lib_LTLIBRARIES = libbrlcad.la
+lib_LTLIBRARIES = libbrlcad.la
 noinst_LTLIBRARIES = libbrlcad_nil.la
 
-# libbrlcad_la_SOURCES =
-# libbrlcad_la_LDFLAGS = -version-info 19:1
-# libbrlcad_la_LIBADD = \
-#	libbrlcad_nil.la
+libbrlcad_la_SOURCES =
+libbrlcad_la_LDFLAGS = -version-info 19:1
+libbrlcad_la_LIBADD = libbrlcad_nil.la
 
 if BUILD_OPENNURBS
 ON_NIL = $(top_builddir)/src/other/openNURBS/libopenNURBS_nil.la
