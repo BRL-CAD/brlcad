@@ -74,9 +74,7 @@ EXTRA_DIST = \
 	pictsgi.1 \
 	pictsgi.c \
 	pictx.1 \
-	pictx.c \
-	see.1 \
-	see.c
+	pictx.c
 
 DEPS=src/librt
 
