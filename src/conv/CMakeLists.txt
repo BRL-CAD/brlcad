@@ -58,14 +58,14 @@ target_link_libraries(dbupgrade
 )
 
 add_executable(dxf-g
-    dxf-g.c
+    dxf/dxf-g.c
 )
 target_link_libraries(dxf-g
     BrlcadCore
 )
 
 add_executable(g-dxf
-    g-dxf.c
+    dxf/g-dxf.c
 )
 target_link_libraries(g-dxf
     BrlcadCore
