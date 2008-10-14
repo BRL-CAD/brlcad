@@ -86,7 +86,7 @@ extern const char bu_strdup_message[];
  * Add another entry to the memory debug table
  */
 HIDDEN void
-bu_memdebug_add(char *ptr, unsigned int cnt, const char *str)
+bu_memdebug_add(genptr_t ptr, unsigned int cnt, const char *str)
 {
     register struct memdebug *mp;
  top:
@@ -147,7 +147,7 @@ bu_memdebug_add(char *ptr, unsigned int cnt, const char *str)
  * Check an entry against the memory debug table, based upon it's address.
  */
 HIDDEN struct memdebug *
-bu_memdebug_check(register char *ptr, const char *str)
+bu_memdebug_check(register genptr_t ptr, const char *str)
 {
     register struct memdebug *mp = &bu_memdebug[bu_memdebug_len-1];
     register long	*ip;
@@ -164,7 +164,7 @@ bu_memdebug_check(register char *ptr, const char *str)
 	if (mp->magic != MDB_MAGIC)  bu_bomb("bu_memdebug_check() malloc tracing table corrupted!\n");
 	if (mp->mdb_len <= 0)  continue;
 	if (mp->mdb_addr != ptr)  continue;
-	ip = (long *)(ptr+mp->mdb_len-sizeof(long));
+	ip = (long *)((char *)ptr+mp->mdb_len-sizeof(long));
 	if (*ip != MDB_MAGIC) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    fprintf(stderr, "ERROR bu_memdebug_check(x%lx, %s) %s, barrier word corrupted!\nbarrier at x%lx was=x%lx s/b=x%x, len=%d\n",
@@ -374,8 +374,8 @@ bu_free(genptr_t ptr, const char *str)
 genptr_t
 bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 {
-    struct memdebug		*mp=NULL;
-    char	*original_ptr;
+    struct memdebug *mp=NULL;
+    genptr_t original_ptr;
 
     if (! ptr) {
 	/* This is so we are compatible with system realloc.
