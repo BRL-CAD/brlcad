@@ -392,7 +392,7 @@ orient_hook(register const struct bu_structparse *sdp, register const char *name
  */
 struct bu_structparse img_parse_tab[] = {
     {"%V",	1, "image",		IMG_O(i_name),		BU_STRUCTPARSE_FUNC_NULL},
-    {"%V",  1, "file",		IMG_O(i_name),		img_source_hook},
+    {"%V",	1, "file",		IMG_O(i_name),		img_source_hook},
     {"%V",	1, "obj",		IMG_O(i_name),		img_source_hook},
     {"%V",	1, "object",		IMG_O(i_name),		img_source_hook},
     {"%d",	1, "w",			IMG_O(i_width),		dimen_hook},
@@ -442,6 +442,7 @@ struct mfuncs prj_mfuncs[] = {
  */
 HIDDEN int
 prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+
 
 
     /* pointer to reg_udata in *rp */
