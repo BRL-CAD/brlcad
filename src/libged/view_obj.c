@@ -148,7 +148,7 @@ vo_cmd(ClientData	clientData,
        int		argc,
        char		*argv[])
 {
-    return bu_cmd(clientData, interp, argc, argv, vo_cmds, 1);
+    return bu_cmd(clientData, interp, argc, (const char **)argv, vo_cmds, 1);
 }
 
 int
@@ -1806,7 +1806,7 @@ vo_observer_cmd(struct view_obj	*vop,
 	return TCL_ERROR;
     }
 
-    return bu_observer_cmd((ClientData)&vop->vo_observers, interp, argc-1, argv+1);
+    return bu_observer_cmd((ClientData)&vop->vo_observers, interp, argc-1, (const char **)argv+1);
 }
 
 /*

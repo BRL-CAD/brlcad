@@ -440,7 +440,7 @@ Wdb_Init(Tcl_Interp *interp)
 static int
 wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
-    return bu_cmd(clientData, interp, argc, argv, wdb_cmds, 1);
+    return bu_cmd(clientData, interp, argc, (const char **)argv, wdb_cmds, 1);
 }
 
 /**
@@ -7018,7 +7018,7 @@ wdb_observer_cmd(struct rt_wdb	*wdbp,
 	return TCL_ERROR;
     }
 
-    return bu_observer_cmd((ClientData)&wdbp->wdb_observers, interp, argc-1, argv+1);
+    return bu_observer_cmd((ClientData)&wdbp->wdb_observers, interp, argc-1, (const char **)argv+1);
 }
 
 /**

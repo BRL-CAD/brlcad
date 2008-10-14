@@ -155,7 +155,7 @@ vdraw_cmd(struct dg_obj	*dgop,
 	  int		argc,
 	  char 		*argv[])
 {
-    return bu_cmd((ClientData)dgop, interp, argc-1, argv+1, vdraw_cmds, 0);
+    return bu_cmd((ClientData)dgop, interp, argc-1, (const char **)argv+1, vdraw_cmds, 0);
 }
 
 
