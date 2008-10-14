@@ -69,8 +69,6 @@ libdm_la_LIBADD = \
 	${DM_OGL_LIBS}
 
 EXTRA_DIST = \
-	dm-glx.c \
-	dm-pex.c \
 	libdm.dsp
 
 DEPS=src/librt src/libfb src/libged
