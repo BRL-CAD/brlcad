@@ -250,7 +250,7 @@ bu_get_hash_key(struct bu_hash_entry *hsh_entry)
  * if "new" is zero, the returned entry is the one matching the specified key and key_len
  */
 struct bu_hash_entry *
-bu_hash_add_entry(struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len, int *new)
+bu_hash_add_entry(struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len, int *new_entry)
 {
     struct bu_hash_entry *hsh_entry, *prev;
     unsigned long idx;
@@ -266,7 +266,7 @@ bu_hash_add_entry(struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len, 
 
     if (hsh_entry) {
 	/* this key is already in the table, return the entry, with flag set to 0 */
-	*new = 0;
+	*new_entry = 0;
 	return (hsh_entry);
     }
 
@@ -291,7 +291,7 @@ bu_hash_add_entry(struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len, 
     memcpy(hsh_entry->key, key, (size_t)key_len);
 
     /* set "new" flag, increment count of entries, and return new entry */
-    *new = 1;
+    *new_entry = 1;
     hsh_tbl->num_entries++;
     return (hsh_entry);
 }

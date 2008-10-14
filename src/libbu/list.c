@@ -41,12 +41,12 @@
 struct bu_list *
 bu_list_new(void)
 {
-    struct bu_list *new;
+    struct bu_list *new_list;
 
-    BU_GETSTRUCT(new, bu_list);
-    BU_LIST_INIT(new);
+    BU_GETSTRUCT(new_list, bu_list);
+    BU_LIST_INIT(new_list);
 
-    return (new);
+    return (new_list);
 }
 
 /**

@@ -168,18 +168,18 @@ bu_log_call_hooks(genptr_t buf)
  * to bu_log come from non-librt routines.
  */
 HIDDEN void
-bu_log_do_indent_level(struct bu_vls *new, register const char *old)
+bu_log_do_indent_level(struct bu_vls *new_vls, register const char *old_vls)
 {
     register int i;
 
-    while (*old) {
-	bu_vls_putc(new, (int)(*old));
-	if (*old == '\n') {
+    while (*old_vls) {
+	bu_vls_putc(new_vls, (int)(*old_vls));
+	if (*old_vls == '\n') {
 	    i = bu_log_indent_cur_level;
 	    while (i-- > 0)
-		bu_vls_putc(new, ' ');
+		bu_vls_putc(new_vls, ' ');
 	}
-	++old;
+	++old_vls;
     }
 }
 
