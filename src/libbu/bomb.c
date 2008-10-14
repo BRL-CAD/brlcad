@@ -68,7 +68,7 @@ bu_bomb_failsafe_init()
 	return 1;
     }
     /* cannot use bu_*alloc here */
-    _bu_bomb_failsafe = malloc(65536);
+    _bu_bomb_failsafe = (char *)malloc(65536);
     atexit(_free_bu_bomb_failsafe);
     return 1;
 }
@@ -115,7 +115,7 @@ bu_bomb(const char *str)
 	    fprintf(stderr, "bu_bomb(): in parallel mode, could not longjmp up to application handler\n");
 	} else {
 	    /* Application is non-parallel, so this is safe */
-	    longjmp((void *)(bu_jmpbuf), 1);
+	    longjmp(bu_jmpbuf, 1);
 	    /* NOTREACHED */
 	}
     }
