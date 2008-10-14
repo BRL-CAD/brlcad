@@ -21,10 +21,38 @@
 
 package require Tkhtml 3.0
 
+proc handle_select { w y } {
+    set curr_sel [$w curselection]
+    if { $curr_sel != "" } {
+        $w selection clear $curr_sel
+    }
+    $w selection set [$w nearest $y]
+}
+
+proc get_html_data {cmdname} {
+    global man_data
+
+    # get file data
+    set man_fd [open [bu_brlcad_data "html/man1/en/$cmdname.html"]]
+    set man_data [read $man_fd]
+    close $man_fd
+}
+
+proc re_display {w} {
+
+    global man_data
+    $w reset;
+    $w configure -parsemode html
+    $w parse $man_data    
+
+}
+
+
 proc man {cmdname} {
     global mged_gui
     global ::tk::Priv
     global mged_players
+    global man_data
 
     if [winfo exists .man] {
         catch {destroy .man}
@@ -45,10 +73,7 @@ proc man {cmdname} {
     	puts "No man page found for $cmdname"
 	return
     } else {
-	# get file data
-        set man_fd [open [bu_brlcad_data "html/man1/en/$cmdname.html"]]
-        set man_data [read $man_fd]
-        close $man_fd
+	get_html_data $cmdname
 	# make dialog
 	toplevel .man -screen $mged_gui($_mgedFramebufferId,screen)
     	wm title .man $cmdname
@@ -68,6 +93,18 @@ proc man {cmdname} {
     	grid rowconfigure .man.top.msgF 0 -weight 1
     	pack .man.top.msgF -side right -expand yes -fill both -padx 2m -pady 2m
 
+	frame .man.top.listing
+   	scrollbar .man.top.s -command ".man.top.l yview"
+    	listbox .man.top.l -bd 2 -yscroll ".man.top.s set" -width 16 -exportselection false
+	grid .man.top.l .man.top.s -sticky nsew -in .man.top.listing
+	grid columnconfigure .man.top.listing 0 -weight 0
+	grid rowconfigure .man.top.listing 0 -weight 1
+	set cmds [concat [?]]
+	foreach cmd $cmds {
+           if {[file exists [bu_brlcad_data "html/man1/en/$cmd.html" ]]} {.man.top.l insert end $cmd}
+	}
+  	pack .man.top.listing -side left -expand no -fill y
+
     	button .man.bot.buttonOK -text "OK" -command "catch {destroy .man} "
     	frame .man.bot.default -relief sunken -bd 1
     	raise .man.bot.buttonOK
@@ -75,6 +112,8 @@ proc man {cmdname} {
     	pack .man.bot.buttonOK -in .man.bot.default -side left -padx 1m \
               -pady 1m -ipadx 1m -ipady 1
 
+	bind .man.top.l <Button-1> {handle_select %W %y; get_html_data [%W get [%W curselection]]; re_display .man.top.msgT}
+	
 	bind .man <Return> "catch {destroy .man}"
 	   
     }
