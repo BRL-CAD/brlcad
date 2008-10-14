@@ -1800,7 +1800,7 @@ struct bu_observer {
  */
 struct bu_cmdtab {
     char *ct_name;
-    int (*ct_func)(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv);
+    int (*ct_func)();
 };
 
 /*----------------------------------------------------------------------*/
