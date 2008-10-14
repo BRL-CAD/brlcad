@@ -1042,20 +1042,16 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 				     work_count);
 			break;
 		    case CV_16 | CV_SIGNED_MASK:
-			(void) bu_cv_htonss(out, bufsize, from,
-					    work_count);
+			(void) bu_cv_htonss(out, bufsize, (short int *)from, work_count);
 			break;
 		    case CV_16:
-			(void) bu_cv_htonus(out, bufsize, from,
-					    work_count);
+			(void) bu_cv_htonus(out, bufsize, (unsigned short int *)from, work_count);
 			break;
 		    case CV_32 | CV_SIGNED_MASK:
-			(void) bu_cv_htonsl(out, bufsize, from,
-					    work_count);
+			(void) bu_cv_htonsl(out, bufsize, (long int *)from, work_count);
 			break;
 		    case CV_32:
-			(void) bu_cv_htonul(out, bufsize, from,
-					    work_count);
+			(void) bu_cv_htonul(out, bufsize, (unsigned long int *)from, work_count);
 			break;
 		}
 	    }
