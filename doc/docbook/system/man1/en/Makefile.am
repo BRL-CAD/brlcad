@@ -34,7 +34,8 @@ man1DOCBOOKhtmldir = $(BRLCAD_DATA)/html/man1/en
 man1DOCBOOKhtml_DATA = $(BUILTHTML)
 
 BUILTHTML = \
-	${man1DOCBOOK:xml=html} 
+	${man1DOCBOOK:xml=html} \
+	Introduction.html 
 
 
 if BUILD_PDF_DOCS
@@ -49,6 +50,7 @@ man1DOCBOOKpdf_DATA = $(BUILTPDF)
 BUILT_SOURCES = \
 	$(BUILTHTML) \
 	$(BUILTPDF)
+
 
 BUILTMAN_SOURCES = \
 	${man1DOCBOOK:xml=1}  

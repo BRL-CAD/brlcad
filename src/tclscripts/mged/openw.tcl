@@ -251,8 +251,6 @@ set ::tk::Priv(wait_cmd) mged_wait
 # Used throughout the GUI as the dialog window name.
 # This helps prevent window clutter.
 set ::tk::Priv(cad_dialog) .mged_dialog
-set ::tk::Priv(man_dialog) .mged_dialog
-
 
 proc gui { args } {
     global tmp_hoc
@@ -1987,7 +1985,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	accuracy with the mouse, query rays for interrogating the geometry, and
 	improved solid/object/combination selection from among displayed geometry." } }
     .$id.menubar.help add command -label "Command Manual Pages" -underline 0\
-	-command "man_help $id"
+	-command "man Introduction"
     .$id.menubar.help add command -label "Shift Grips" -underline 0\
 	-command "hoc_dialog .$id.menubar.help \"Help,Shift Grips\""
     hoc_register_menu_data "Help" "Shift Grips" "Shift Grips"\

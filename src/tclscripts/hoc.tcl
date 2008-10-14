@@ -32,10 +32,6 @@ if {![info exists ::tk::Priv(cad_dialog)]} {
     set ::tk::Priv(cad_dialog) .cad_dialog
 }
 
-if {![info exists ::tk::Priv(man_dialog)]} {
-    set ::tk::Priv(man_dialog) .man_dialog
-}
-
 # hoc_build_string --
 #
 # Generic procedure for building uniform "Help On Context" strings.

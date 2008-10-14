@@ -115,7 +115,7 @@ proc man {cmdname} {
 	bind .man.top.l <Button-1> {handle_select %W %y; get_html_data [%W get [%W curselection]]; re_display .man.top.msgT}
 	
 	bind .man <Return> "catch {destroy .man}"
-	   
+	place_near_mouse .man   
     }
 }
 

@@ -91,34 +91,6 @@ proc ia_help { parent screen cmds } {
     place_near_mouse $w
 }
 
-proc ia_man_help { parent screen cmds } {
-    set w $parent.help
-
-    catch { destroy $w }
-    toplevel $w -screen $screen
-    wm title $w "MGED Manual Pages"
-
-    button $w.cancel -command "destroy $w" -text "Cancel"
-    pack $w.cancel -side bottom -fill x
-
-    scrollbar $w.s -command "$w.l yview"
-    listbox $w.l -bd 2 -yscroll "$w.s set" -exportselection false
-    pack $w.s -side right -fill y
-    pack $w.l -side top -fill both -expand yes
-
-    foreach cmd $cmds {
-	if {[file exists [bu_brlcad_data "html/man1/en/$cmd.html" ]]} {$w.l insert end $cmd}
-    }
-
-    #    bind $w.l <Button-1> "mged_help %W $screen"
-    bind $w.l <Button-1> "handle_select %W %y; mged_man_help %W $screen; break"
-    bind $w.l <Button-2> "handle_select %W %y; mged_man_help %W $screen; break"
-    bind $w.l <Return> "mged_man_help %W $screen; break"
-
-    place_near_mouse $w
-}
-
-
 
 proc handle_select { w y } {
     set curr_sel [$w curselection]
@@ -134,19 +106,6 @@ proc mged_help { w1 screen } {
 
     catch { help [$w1 get [$w1 curselection]]} msg
     cad_dialog $::tk::Priv(cad_dialog) $screen Usage $msg info 0 OK
-}
-
-proc mged_man_help { w1 screen } {
-    global ::tk::Priv
-    
-    if {![file exists [bu_brlcad_data "html/man1/en/[$w1 get [$w1 curselection]].html" ]]} {
-	return
-    } else {
-    	set man_fd [open [bu_brlcad_data  "html/man1/en/[$w1 get [$w1 curselection]].html" ]]
-    	set man_data [read $man_fd]
-    	close $man_fd
-    	man_dialog $::tk::Priv(man_dialog) $screen $w1 $man_data 0 OK
-    }
 }
 
 
@@ -465,12 +424,6 @@ proc command_help { id } {
     global mged_gui
 
     ia_help .$id $mged_gui($id,screen) [concat [?]]
-}
-
-proc man_help { id } {
-    global mged_gui
-
-    ia_man_help .$id $mged_gui($id,screen) [concat [?]]
 }
 
 proc on_context_help { id } {
