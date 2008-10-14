@@ -173,6 +173,7 @@ libged_nil_la_SOURCES = \
 	trace.c \
 	track.c \
 	tree.c \
+	typein.c \
 	unhide.c \
 	units.c \
 	v2m_point.c \
@@ -222,7 +223,7 @@ libged_la_LIBADD = \
 EXTRA_DIST = \
         CMakeLists.txt
 
-DEPENDS = src/librt
+DEPENDS = src/librt src/libwdb
 
 include $(top_srcdir)/misc/Makefile.defs
 

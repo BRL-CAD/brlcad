@@ -1585,6 +1585,14 @@ GED_EXPORT BU_EXTERN(int ged_how, (struct ged *gedp, int argc, const char *argv[
 GED_EXPORT BU_EXTERN(int ged_illum, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Create a primitive via keyboard.
+ *
+ * Usage:
+ *     in name type args
+ */
+GED_EXPORT BU_EXTERN(int ged_in, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Add instance of obj to comb
  *
  * Usage:

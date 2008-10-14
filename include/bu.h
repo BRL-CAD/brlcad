@@ -62,6 +62,7 @@ __BEGIN_DECLS
 #define BRLCAD_OK 0
 #define BRLCAD_HELP 1
 #define BRLCAD_ERROR 2
+#define BRLCAD_MORE_ARGS 3
 
 /**
  * Flag for non-case-sensitive searching

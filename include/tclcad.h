@@ -87,6 +87,7 @@ struct ged_obj {
     struct ged_dm_view	go_head_views;
     struct bu_vls	go_name;
     struct bu_observer	go_observers;
+    struct bu_vls	go_more_args_callback;
     Tcl_Interp		*go_interp;
 };
 

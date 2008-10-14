@@ -160,6 +160,12 @@ static int go_mirror(struct ged		*gedp,
 		     ged_func_ptr	func,
 		     const char		*usage,
 		     int		maxargs);
+static int go_more_args_callback(struct ged	*gedp,
+				 int		argc,
+				 const char	*argv[],
+				 ged_func_ptr	func,
+				 const char	*usage,
+				 int		maxargs);
 static int go_mouse_constrain_rot(struct ged	*gedp,
 				  int		argc,
 				  const char	*argv[],
@@ -282,6 +288,12 @@ static int go_autoview_func(struct ged	*gedp,
 			   ged_func_ptr	func,
 			   const char	*usage,
 			   int		maxargs);
+static int go_more_args_func(struct ged		*gedp,
+			     int		argc,
+			     const char		*argv[],
+			     ged_func_ptr	func,
+			     const char		*usage,
+			     int		maxargs);
 static int go_pass_through_func(struct ged	*gedp,
 				int		argc,
 				const char	*argv[],
@@ -413,6 +425,7 @@ static struct go_cmdtab go_cmds[] = {
     {"idents",	(char *)0, MAXARGS, go_pass_through_func, ged_tables},
     {"idle_mode",	"vname", MAXARGS, go_idle_mode, GED_FUNC_PTR_NULL},
     {"illum",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_illum},
+    {"in",	(char *)0, MAXARGS, go_more_args_func, ged_in},
     {"importFg4Section",	(char *)0, MAXARGS, go_pass_through_func, ged_importFg4Section},
     {"isize",	"vname", 2, go_view_func, ged_isize},
     {"item",	(char *)0, MAXARGS, go_pass_through_func, ged_item},
@@ -439,6 +452,7 @@ static struct go_cmdtab go_cmds[] = {
     {"match",	(char *)0, MAXARGS, go_pass_through_func, ged_match},
     {"mater",	(char *)0, MAXARGS, go_pass_through_func, ged_mater},
     {"mirror",	(char *)0, MAXARGS, go_mirror, GED_FUNC_PTR_NULL},
+    {"more_args_callback",	"set/get the \"more args\" callback", MAXARGS, go_more_args_callback, GED_FUNC_PTR_NULL},
     {"model2view",	"vname", 2, go_view_func, ged_model2view},
     {"move_arb_edge",	(char *)0, MAXARGS, go_pass_through_func, ged_move_arb_edge},
     {"move_arb_face",	(char *)0, MAXARGS, go_pass_through_func, ged_move_arb_face},
@@ -746,6 +760,7 @@ go_init_obj(Tcl_Interp		*interp,
     /* initialize ged_obj */
     bu_vls_init(&gop->go_name);
     bu_vls_strcpy(&gop->go_name, oname);
+    bu_vls_init(&gop->go_more_args_callback);
 
     BU_LIST_INIT(&gop->go_observers.l);
     gop->go_interp = interp;
@@ -827,6 +842,7 @@ Usage: go_open\n\
     gop->go_gedp->ged_output_handler = go_output_handler;
     bu_vls_init(&gop->go_name);
     bu_vls_strcpy(&gop->go_name, argv[1]);
+    bu_vls_init(&gop->go_more_args_callback);
     BU_LIST_INIT(&gop->go_observers.l);
     gop->go_interp = interp;
 
@@ -1381,6 +1397,34 @@ go_mirror(struct ged	*gedp,
     }
 
     return ret;
+}
+
+static int
+go_more_args_callback(struct ged	*gedp,
+		      int		argc,
+		      const char	*argv[],
+		      ged_func_ptr	func,
+		      const char	*usage,
+		      int		maxargs)
+{
+    register int i;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    /* get the callback string */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "%s", bu_vls_addr(&go_current_gop->go_more_args_callback));
+	
+	return BRLCAD_OK;
+    }
+
+    /* set the callback string */
+    bu_vls_trunc(&go_current_gop->go_more_args_callback, 0);
+    for (i = 1; i < argc; ++i)
+	bu_vls_printf(&go_current_gop->go_more_args_callback, "%s ", argv[i]);
+
+    return BRLCAD_OK;
 }
 
 static int
@@ -2970,6 +3014,96 @@ go_autoview_func(struct ged	*gedp,
 	else
 	    go_refresh_all_views(go_current_gop);
     }
+
+    return ret;
+}
+
+static int
+go_more_args_func(struct ged	*gedp,
+		  int		argc,
+		  const char	*argv[],
+		  ged_func_ptr	func,
+		  const char	*usage,
+		  int		maxargs)
+{
+    register int i;
+    int ac;
+    int ret;
+    char *av[256];
+    struct bu_vls callback_cmd;
+    struct bu_vls temp;
+
+    bu_vls_init(&callback_cmd);
+    bu_vls_init(&temp);
+
+    /* copy all args */
+    ac = argc;
+    for (i = 0; i < ac; ++i)
+	av[i] = bu_strdup((char *)argv[i]);
+    av[ac] = (char *)0;
+
+    while ((ret = (*func)(gedp, ac, (const char **)av)) == BRLCAD_MORE_ARGS) {
+	int n;
+	int ac_more;
+	const char **avmp;
+	const char **av_more = NULL;
+
+	if (0 < bu_vls_strlen(&go_current_gop->go_more_args_callback)) {
+	    bu_vls_printf(&callback_cmd, "%s \"%s\"",
+			  bu_vls_addr(&go_current_gop->go_more_args_callback),
+			  bu_vls_addr(&gedp->ged_result_str));
+
+	    if (Tcl_Eval(go_current_gop->go_interp, bu_vls_addr(&callback_cmd)) != TCL_OK) {
+		bu_vls_printf(&gedp->ged_result_str, "%s", Tcl_GetStringResult(go_current_gop->go_interp));
+		Tcl_ResetResult(go_current_gop->go_interp);
+		return BRLCAD_ERROR;
+	    }
+
+	    bu_vls_printf(&temp, Tcl_GetStringResult(go_current_gop->go_interp));
+	    Tcl_ResetResult(go_current_gop->go_interp);
+	} else {
+	    bu_log("\r%s", bu_vls_addr(&gedp->ged_result_str));
+	    bu_vls_trunc(&temp, 0);
+	    if (bu_vls_gets(&temp, stdin) < 0) {
+		break;
+	    }
+	}
+	
+	if (Tcl_SplitList(go_current_gop->go_interp, bu_vls_addr(&temp), &ac_more, &av_more) != TCL_OK) {
+	    continue;
+	}
+
+	if (ac_more < 1) {
+	    /* space has still been allocated */
+	    Tcl_Free((char *)av_more);
+
+	    continue;
+	}
+
+	/* skip first element if empty */
+	avmp = av_more;
+	if (*avmp[0] == '\0') {
+	    --ac_more;
+	    ++avmp;
+	}
+
+	/* ignore last element if empty */
+	if (*avmp[ac_more-1] == '\0')
+	    --ac_more;
+
+	/* copy additional args */
+	for(i = 0; i < ac_more; ++i)
+	    av[ac++] = bu_strdup(avmp[i]);
+	av[ac+1] = (char *)0;
+
+	Tcl_Free((char *)av_more);
+    }
+
+    bu_vls_free(&callback_cmd);
+    bu_vls_free(&temp);
+
+    for (i = 0; i < ac; ++i)
+	bu_free((void *)av[i], "go_in");
 
     return ret;
 }

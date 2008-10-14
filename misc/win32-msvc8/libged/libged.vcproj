@@ -84,7 +84,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="tcl85.lib libbu.lib libbn.lib libsysv.lib libregex.lib opennurbs.lib librt.lib ws2_32.lib"
+				AdditionalDependencies="tcl85.lib libbu.lib libbn.lib libsysv.lib libregex.lib opennurbs.lib librt.lib libwdb.lib ws2_32.lib"
 				OutputFile=".\$(PlatformName)\$(ConfigurationName)/libged.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -181,7 +181,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="tcl85.lib libbu.lib libbn.lib libsysv.lib libregex.lib opennurbs.lib librt.lib ws2_32.lib"
+				AdditionalDependencies="tcl85.lib libbu.lib libbn.lib libsysv.lib libregex.lib opennurbs.lib librt.lib libwdb.lib ws2_32.lib"
 				OutputFile=".\$(PlatformName)\$(ConfigurationName)/libged.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -903,6 +903,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\tree.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\typein.c"
 				>
 			</File>
 			<File
