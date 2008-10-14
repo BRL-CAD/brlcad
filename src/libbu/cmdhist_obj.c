@@ -35,20 +35,12 @@
 
 #include "cmd.h"
 
-/* bu_cmdhist routines are defined in libbu/cmdhist.c */
-extern int bu_cmdhist_history(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-extern int bu_cmdhist_add(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-extern int bu_cmdhist_curr(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-extern int bu_cmdhist_next(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-extern int bu_cmdhist_prev(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-
-int cho_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
 static struct bu_cmdhist_obj HeadCmdHistObj;		/* head of command history object list */
 
 static struct bu_cmdtab ch_cmds[] =
 {
-    {"add",		bu_cmdhist_add},
+    {"add",	bu_cmdhist_add},
     {"curr",	bu_cmdhist_curr},
     {"next",	bu_cmdhist_next},
     {"prev",	bu_cmdhist_prev},
@@ -59,7 +51,7 @@ static struct bu_cmdtab ch_cmds[] =
  *
  */
 int
-cho_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cho_hist(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     return bu_cmd(clientData, interp, argc, argv, ch_cmds, 1);
 }
@@ -70,7 +62,7 @@ cho_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  */
 static struct bu_cmdtab cho_cmds[] =
 {
-    {"add",		bu_cmdhist_add},
+    {"add",	bu_cmdhist_add},
     {"curr",	bu_cmdhist_curr},
     {"history",	bu_cmdhist_history},
     {"next",	bu_cmdhist_next},
@@ -83,7 +75,7 @@ static struct bu_cmdtab cho_cmds[] =
  *
  */
 static int
-cho_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cho_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     return bu_cmd(clientData, interp, argc, argv, cho_cmds, 1);
 }

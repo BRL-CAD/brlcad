@@ -66,7 +66,7 @@ static struct bu_cmdtab bu_cmds[] = {
     {"bu_shader_to_tcl_list",		bu_tcl_shader_to_key_val},
     {"bu_key_val_to_key_eq",		bu_tcl_key_val_to_key_eq},
     {"bu_shader_to_key_eq",		bu_tcl_shader_to_key_eq},
-    {(char *)NULL,			(int (*)())0 }
+    {(char *)NULL,			NULL }
 };
 
 

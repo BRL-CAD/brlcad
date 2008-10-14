@@ -1800,7 +1800,7 @@ struct bu_observer {
  */
 struct bu_cmdtab {
     char *ct_name;
-    int (*ct_func)();
+    int (*ct_func)(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv);
 };
 
 /*----------------------------------------------------------------------*/
@@ -2699,97 +2699,97 @@ BU_EXPORT BU_EXTERN(int bu_tcl_mem_barriercheck,
 		    (ClientData	clientData,
 		     Tcl_Interp	*interp,
 		     int	argc,
-		     char	**argv));
+		     const char	**argv));
 
 BU_EXPORT BU_EXTERN(int bu_tcl_ck_malloc_ptr,
 		    (ClientData		clientData,
 		     Tcl_Interp		*interp,
 		     int		argc,
-		     char		**argv));
+		     const char		**argv));
 
 BU_EXPORT BU_EXTERN(int bu_tcl_malloc_len_roundup,
 		    (ClientData	clientData,
 		     Tcl_Interp	*interp,
 		     int	argc,
-		     char	**argv));
+		     const char	**argv));
 
 BU_EXPORT BU_EXTERN(int bu_tcl_prmem,
 		    (ClientData	clientData,
 		     Tcl_Interp	*interp,
 		     int	argc,
-		     char	**argv));
+		     const char	**argv));
 
 BU_EXPORT BU_EXTERN(int bu_tcl_printb,
 		    (ClientData	clientData,
 		     Tcl_Interp	*interp,
 		     int	argc,
-		     char	**argv));
+		     const char	**argv));
 
 BU_EXPORT BU_EXTERN(int bu_tcl_get_value_by_keyword,
 		    (ClientData	clientData,
 		     Tcl_Interp	*interp,
 		     int	argc,
-		     char	**argv));
+		     const char	**argv));
 
 BU_EXPORT BU_EXTERN(int bu_tcl_get_all_keyword_values,
 		    (ClientData	clientData,
 		     Tcl_Interp	*interp,
 		     int	argc,
-		     char	**argv));
+		     const char	**argv));
 
 BU_EXPORT BU_EXTERN(int bu_tcl_rgb_to_hsv,
 		    (ClientData	clientData,
 		     Tcl_Interp	*interp,
 		     int	argc,
-		     char	**argv));
+		     const char	**argv));
 
 BU_EXPORT BU_EXTERN(int bu_tcl_hsv_to_rgb,
 		    (ClientData	clientData,
 		     Tcl_Interp	*interp,
 		     int	argc,
-		     char	**argv));
+		     const char	**argv));
 
 BU_EXPORT BU_EXTERN(int bu_tcl_key_eq_to_key_val,
 		    (ClientData	clientData,
 		     Tcl_Interp	*interp,
 		     int	argc,
-		     char	**argv));
+		     const char	**argv));
 
 BU_EXPORT BU_EXTERN(int bu_tcl_shader_to_key_val,
 		    (ClientData	clientData,
 		     Tcl_Interp	*interp,
 		     int	argc,
-		     char	**argv));
+		     const char	**argv));
 
 BU_EXPORT BU_EXTERN(int bu_tcl_key_val_to_key_eq,
 		    (ClientData	clientData,
 		     Tcl_Interp	*interp,
 		     int	argc,
-		     char	**argv));
+		     const char	**argv));
 
 BU_EXPORT BU_EXTERN(int bu_tcl_shader_to_key_eq,
 		    (ClientData	clientData,
 		     Tcl_Interp	*interp,
 		     int	argc,
-		     char	**argv));
+		     const char	**argv));
 
 BU_EXPORT BU_EXTERN(int bu_tcl_brlcad_root,
 		    (ClientData	clientData,
 		     Tcl_Interp	*interp,
 		     int	 argc,
-		     char	**argv));
+		     const char	**argv));
 
 BU_EXPORT BU_EXTERN(int bu_tcl_brlcad_data,
 		    (ClientData	clientData,
 		     Tcl_Interp	*interp,
 		     int	 argc,
-		     char	**argv));
+		     const char	**argv));
 
 BU_EXPORT BU_EXTERN(int bu_tcl_units_conversion,
 		    (ClientData	clientData,
 		     Tcl_Interp	*interp,
 		     int	argc,
-		     char	**argv));
+		     const char	**argv));
 
 BU_EXPORT BU_EXTERN(void bu_tcl_setup,
 		    (Tcl_Interp *interp));

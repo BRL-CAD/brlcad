@@ -57,7 +57,7 @@ int
 bu_cmd(ClientData	clientData,
        Tcl_Interp	*interp,
        int		argc,
-       char		**argv,
+       const char	**argv,
        struct bu_cmdtab	*cmds,
        int		cmd_index)
 {

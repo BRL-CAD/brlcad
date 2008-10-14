@@ -93,7 +93,7 @@ timediff(struct timeval *tvdiff, struct timeval *start, struct timeval *finish)
  *        procname history [-delays] [-outfile filename]
  */
 int
-bu_cmdhist_history(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+bu_cmdhist_history(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     struct bu_cmdhist_obj *chop = (struct  bu_cmdhist_obj *)clientData;
     FILE *fp;
@@ -176,7 +176,7 @@ bu_cmdhist_history(ClientData clientData, Tcl_Interp *interp, int argc, char **a
  *        procname add cmd
  */
 int
-bu_cmdhist_add(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+bu_cmdhist_add(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     struct bu_cmdhist_obj *chop = (struct  bu_cmdhist_obj *)clientData;
     struct bu_vls vls;
@@ -212,7 +212,7 @@ bu_cmdhist_add(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *        procname prev
  */
 int
-bu_cmdhist_prev(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+bu_cmdhist_prev(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     struct bu_cmdhist_obj *chop = (struct  bu_cmdhist_obj *)clientData;
     struct bu_cmdhist *hp;
@@ -242,7 +242,7 @@ bu_cmdhist_prev(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
  *        procname curr
  */
 int
-bu_cmdhist_curr(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+bu_cmdhist_curr(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     struct bu_cmdhist_obj *chop = (struct  bu_cmdhist_obj *)clientData;
 
@@ -269,7 +269,7 @@ bu_cmdhist_curr(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
  *        procname next
  */
 int
-bu_cmdhist_next(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+bu_cmdhist_next(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     struct bu_cmdhist_obj *chop = (struct  bu_cmdhist_obj *)clientData;
 

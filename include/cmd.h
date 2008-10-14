@@ -38,7 +38,7 @@
 #include "bu.h"
 
 #define MAXARGS 9000
-#define CMD_NULL (int (*)())NULL
+#define CMD_NULL (int (*)(ClientData, Tcl_Interp *, int, const char **))NULL
 #define CMDHIST_NULL (struct bu_cmdhist *)NULL
 #define CMDHIST_OBJ_NULL (struct bu_cmdhist_obj *)NULL
 
@@ -57,14 +57,14 @@ struct bu_cmdhist_obj {
     struct bu_cmdhist *cho_curr;
 };
 
-BU_EXPORT BU_EXTERN(int bu_cmd, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv, struct bu_cmdtab *cmds, int cmd_index));
+BU_EXPORT BU_EXTERN(int bu_cmd, (ClientData clientData, Tcl_Interp *interp, int argc, const char **argv, struct bu_cmdtab *cmds, int cmd_index));
 BU_EXPORT BU_EXTERN(void bu_register_cmds, (Tcl_Interp *interp, struct bu_cmdtab *cmds));
 
-BU_EXPORT BU_EXTERN(int bu_cmdhist_history, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
-BU_EXPORT BU_EXTERN(int bu_cmdhist_add, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
-BU_EXPORT BU_EXTERN(int bu_cmdhist_curr, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
-BU_EXPORT BU_EXTERN(int bu_cmdhist_next, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
-BU_EXPORT BU_EXTERN(int bu_cmdhist_prev, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+BU_EXPORT BU_EXTERN(int bu_cmdhist_history, (ClientData clientData, Tcl_Interp *interp, int argc, const char **argv));
+BU_EXPORT BU_EXTERN(int bu_cmdhist_add, (ClientData clientData, Tcl_Interp *interp, int argc, const char **argv));
+BU_EXPORT BU_EXTERN(int bu_cmdhist_curr, (ClientData clientData, Tcl_Interp *interp, int argc, const char **argv));
+BU_EXPORT BU_EXTERN(int bu_cmdhist_next, (ClientData clientData, Tcl_Interp *interp, int argc, const char **argv));
+BU_EXPORT BU_EXTERN(int bu_cmdhist_prev, (ClientData clientData, Tcl_Interp *interp, int argc, const char **argv));
 
 BU_EXPORT BU_EXTERN(int cho_open_tcl, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 
