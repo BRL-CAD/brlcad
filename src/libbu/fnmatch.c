@@ -125,10 +125,10 @@ classcompare(const void *a, const void *b)
 }
 
 static CHARCLASS *
-findclass(char *class)
+findclass(char *charclass)
 {
     CHARCLASS tmp;
-    tmp.idstring = class;
+    tmp.idstring = charclass;
     return ((CHARCLASS *)bsearch(&tmp, charclasses, sizeof(charclasses)/sizeof(CHARCLASS), sizeof(CHARCLASS), classcompare));
 }
 
