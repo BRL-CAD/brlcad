@@ -592,7 +592,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
     char c;
     mat_t mat;
     register int i;
-    char *cmd_name;
+    const char *cmd_name;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -609,7 +609,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
     bu_optind = 1;
 
     /* Get command line options. */
-    while ((c = bu_getopt(argc, argv, "bo:m:t:u")) != EOF) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "bo:m:t:u")) != EOF) {
 	switch (c) {
 	    case 'b':		/* Binary output file */
 		binary=1;
