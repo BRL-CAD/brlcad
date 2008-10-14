@@ -235,7 +235,7 @@ init(Tcl_Interp *interp)
     if (bu_vls_addr(&appname)[0] != '\0') {
 	Tcl_SetVar(interp, "application", bu_vls_addr(&appname), 0);
     } else {
-	Tcl_SetVar(interp, "application", "unknown", 0);
+	Tcl_SetVar(interp, "application", "[UNKNOWN]", 0);
     }
     bu_vls_free(&appname);
 
