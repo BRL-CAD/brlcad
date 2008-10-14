@@ -863,11 +863,11 @@ AC_PROG_YACC
 # sanity check failure if a C++ compiler is not installed.  This makes
 # the sanity test pass regardless of whether there is a c++ compiler.
 if test "x$CXXCPP" = "x" ; then
-	if test "x$CPP" = "x" ; then
-		CXXCPP="cpp"
-	else
-		CXXCPP="$CPP"
-	fi
+    if test "x$CPP" = "x" ; then
+	CXXCPP="cpp"
+    else
+	CXXCPP="$CPP"
+    fi
 fi
 
 dnl disable unnecessary libtool test for fortran
@@ -881,24 +881,24 @@ AC_SUBST(LIBTOOL_DEPS)
 
 dnl verbose compilation progress
 if test "x$bc_build_progress" != "xyes" ; then
-	LIBTOOLFLAGS=--silent
-	AC_SUBST(LIBTOOLFLAGS)
-	# LIBTOOLFLAGS isn't often not enough;
-	# tack --silent onto the LIBTOOL command.
-	if test "x$LIBTOOL" != "x" ; then
-		LIBTOOL="$LIBTOOL --silent"
-	fi
+    LIBTOOLFLAGS=--silent
+    AC_SUBST(LIBTOOLFLAGS)
+    # LIBTOOLFLAGS isn't often not enough;
+    # tack --silent onto the LIBTOOL command.
+    if test "x$LIBTOOL" != "x" ; then
+	LIBTOOL="$LIBTOOL --silent"
+    fi
 fi
 
 # xsltproc is needed for docbook processing, fop is needed for pdf generation
 xsltproc_works=no
 fop_works=no
 if test "x$bc_build_docs" != "xno" ; then
-	AC_PATH_PROG(XSLTPROC, xsltproc)
-	AC_SUBST(XSLTPROC)
+    AC_PATH_PROG(XSLTPROC, xsltproc)
+    AC_SUBST(XSLTPROC)
 
-	AC_PATH_PROG(APACHEFOP, fop)
-	AC_SUBST(APACHEFOP)
+    AC_PATH_PROG(APACHEFOP, fop)
+    AC_SUBST(APACHEFOP)
 fi
 
 # AN_MAKEVAR([AR], [BC_PROG_AR])
@@ -919,8 +919,8 @@ AC_PATH_PROG(MV, mv)
 AC_PATH_PROG(CP, cp)
 AC_PATH_PROG(RM, rm)
 
-if test "$bc_with_dtrace" == "yes" ; then
-	AC_PATH_PROG(DTRACE, dtrace, bc_with_dtrace=no, [$PATH:/usr/sbin])
+if test "x$bc_with_dtrace" = "xyes" ; then
+    AC_PATH_PROG(DTRACE, dtrace, bc_with_dtrace=no, [$PATH:/usr/sbin])
 fi
 
 dnl figure out which compiler is seems like we are using
@@ -931,40 +931,40 @@ compiler=unknown
 
 dnl Determine whether we are using GCC
 if test "x$GCC" = "xyes" ; then
-	compiler=gnu
+    compiler=gnu
 fi
 
 dnl Determine whether we are using the MIPSpro compiler on SGI systems
 if test "x$build_vendor" = "xsgi" ; then
-	AC_MSG_CHECKING([whether we are using the MIPSpro compiler])
-	using_mipspro=no
-	AC_LINK_IFELSE([#if defined(sgi) && defined(_COMPILER_VERSION) && !defined(__GNUC__)
+    AC_MSG_CHECKING([whether we are using the MIPSpro compiler])
+    using_mipspro=no
+    AC_LINK_IFELSE([#if defined(sgi) && defined(_COMPILER_VERSION) && !defined(__GNUC__)
 If we get here, we are using the MIPSPro compiler (and the link should fail).
 #endif
 int main() { return 0; }
-	], [using_mipspro=no], [using_mipspro=yes])
-	AC_MSG_RESULT($using_mipspro)
-	if test "x$using_mipspro" = "xyes" ; then
-		compiler=sgi
-	fi
+    ], [using_mipspro=no], [using_mipspro=yes])
+    AC_MSG_RESULT($using_mipspro)
+    if test "x$using_mipspro" = "xyes" ; then
+	compiler=sgi
+    fi
 fi
 
 dnl Determine whether we are using the SUNWspro Sun Workshop compiler
 if test "x$build_vendor" = "xsun" ; then
-	AC_MSG_CHECKING([whether we are using the SUNWspro compiler])
-	using_sunpro=no
-	AC_LINK_IFELSE([#if defined(sun) && defined(__SUNPRO_C) && !defined(__GNUC__)
+    AC_MSG_CHECKING([whether we are using the SUNWspro compiler])
+    using_sunpro=no
+    AC_LINK_IFELSE([#if defined(sun) && defined(__SUNPRO_C) && !defined(__GNUC__)
 If we get here, we are using the SUNWspro compiler (and the link should fail).
 #endif
 int main() { return 0; }
-	], [using_sunpro=no], [using_sunpro=yes])
-	AC_MSG_RESULT($using_sunpro)
-	if test "x$using_sunpro" = "xyes" ; then
-		AR="CC -xar"
-		LD="CC -G"
-		export AR LD
-		compiler=sun
-	fi
+    ], [using_sunpro=no], [using_sunpro=yes])
+    AC_MSG_RESULT($using_sunpro)
+    if test "x$using_sunpro" = "xyes" ; then
+	AR="CC -xar"
+	LD="CC -G"
+	export AR LD
+	compiler=sun
+    fi
 fi
 
 AC_FUNC_ALLOCA
@@ -974,10 +974,10 @@ dnl disabled, see if there is either emacs or jove available.
 dnl i.e. auto for jove is dependant on what is installed
 BCEDITOR=""
 if test "x$bc_build_jove" = "xauto" ; then
-	AC_PATH_PROG(BCEDITOR, emacs, , $PATH)
-	if test "x$BCEDITOR" = "x" ; then
-		AC_PATH_PROG(BCEDITOR, jove, , $PATH)
-	fi
+    AC_PATH_PROG(BCEDITOR, emacs, , $PATH)
+    if test "x$BCEDITOR" = "x" ; then
+	AC_PATH_PROG(BCEDITOR, jove, , $PATH)
+    fi
 fi
 
 
@@ -3425,7 +3425,6 @@ dnl *** Docbook functionality ***
 docbook_processing=no
 docbook_pdf_processing=no
 if test "x$bc_build_docs" != "xno" ; then
-    docbook_processing=yes
     if test "x$bc_build_docs" = "xyes" ; then
 	if test "x$XSLTPROC" = "x" ; then
 	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
@@ -3439,6 +3438,9 @@ if test "x$bc_build_docs" != "xno" ; then
     fi
     if test "x$APACHEFOP" != "x" ; then
 	docbook_pdf_processing=yes
+        docbook_processing="yes (man/html/pdf)"
+    else
+        docbook_processing="yes (man/html only)"
     fi
 fi
 AC_MSG_CHECKING(for Docbook processing functionality)
@@ -4109,13 +4111,8 @@ AC_MSG_RESULT([Print verbose compilation progress ...: $bc_build_progress])
 AC_MSG_RESULT([])
 AC_MSG_RESULT([Only build benchmark suite ...........: $bc_only_benchmark])
 AC_MSG_RESULT([Only build librtserver ...............: $bc_only_rts])
-if test "x$APACHEFOP" != "x" && test "x$docbook_processing" != "xno"; then
-AC_MSG_RESULT([Build extra docs  ......(man/html/pdf): $docbook_processing])
-fi
-if test "x$APACHEFOP" == "x" && test "x$docbook_processing" != "xno"; then
-AC_MSG_RESULT([Build extra docs ......(man/html only): $docbook_processing])
-fi
 AC_MSG_RESULT([Install example geometry models ......: $bc_install_geometry])
+AC_MSG_RESULT([Install extra docs ...................: $docbook_processing])
 AC_MSG_RESULT([])
 if test "x$time_elapsed" != "xunknown" ; then
 AC_MSG_RESULT([Elapsed configuration time ...........: $time_elapsed])
