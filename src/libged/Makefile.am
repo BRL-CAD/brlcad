@@ -76,6 +76,7 @@ libged_nil_la_SOURCES = \
 	how.c \
 	illum.c \
 	importFg4Section.c \
+	inside.c \
 	instance.c \
 	isize.c \
 	item.c \

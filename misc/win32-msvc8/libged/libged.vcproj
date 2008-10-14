@@ -518,6 +518,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\inside.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\instance.c"
 				>
 			</File>

@@ -1593,6 +1593,14 @@ GED_EXPORT BU_EXTERN(int ged_illum, (struct ged *gedp, int argc, const char *arg
 GED_EXPORT BU_EXTERN(int ged_in, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Finds the inside primitive per the specified thickness.
+ *
+ * Usage:
+ *     inside out_prim in_prim th(s)
+ */
+GED_EXPORT BU_EXTERN(int ged_inside, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Add instance of obj to comb
  *
  * Usage:

@@ -425,8 +425,9 @@ static struct go_cmdtab go_cmds[] = {
     {"idents",	(char *)0, MAXARGS, go_pass_through_func, ged_tables},
     {"idle_mode",	"vname", MAXARGS, go_idle_mode, GED_FUNC_PTR_NULL},
     {"illum",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_illum},
-    {"in",	(char *)0, MAXARGS, go_more_args_func, ged_in},
     {"importFg4Section",	(char *)0, MAXARGS, go_pass_through_func, ged_importFg4Section},
+    {"in",	(char *)0, MAXARGS, go_more_args_func, ged_in},
+    {"inside",	(char *)0, MAXARGS, go_more_args_func, ged_inside},
     {"isize",	"vname", 2, go_view_func, ged_isize},
     {"item",	(char *)0, MAXARGS, go_pass_through_func, ged_item},
     {"keep",	(char *)0, MAXARGS, go_pass_through_func, ged_keep},
@@ -2020,7 +2021,7 @@ go_new_view(struct ged		*gedp,
     new_gdvp->gdv_view->gv_grid.ggs_color[1] = 255;
     new_gdvp->gdv_view->gv_grid.ggs_color[2] = 255;
 
-    new_gdvp->gdv_view->gv_rect.grs_draw = 1;
+    new_gdvp->gdv_view->gv_rect.grs_draw = 0;
     new_gdvp->gdv_view->gv_rect.grs_pos[0] = 128;
     new_gdvp->gdv_view->gv_rect.grs_pos[1] = 128;
     new_gdvp->gdv_view->gv_rect.grs_dim[0] = 256;
