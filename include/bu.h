@@ -1595,7 +1595,7 @@ struct bu_structparse {
     long		sp_count;		/**< @brief number of elements  */
     char		*sp_name;		/**< @brief Element's symbolic name  */
     long		sp_offset;		/**< @brief Byte offset in struct  */
-    void		(*sp_hook)(const struct bu_structparse *, const char *name, const char *base, const char *value);	/**< @brief Optional hooked function, or indir ptr  */
+    void		(*sp_hook)();	/**< @brief Optional hooked function, or indir ptr  */
     char		*sp_desc;		/**< @brief description of element  */
     void		*sp_default;		/**< @brief ptr to default value  */
 };
@@ -2675,7 +2675,7 @@ BU_EXPORT BU_EXTERN(struct bu_vls *bu_association,
 /** @{ */
 
 /* Things that live in libbu/observer.c */
-BU_EXPORT BU_EXTERN(int bu_observer_cmd, (ClientData clientData, Tcl_Interp *interp, int argc, const char **argv));
+BU_EXPORT BU_EXTERN(int bu_observer_cmd, (ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]));
 BU_EXPORT BU_EXTERN(void bu_observer_notify,());
 BU_EXPORT BU_EXTERN(void bu_observer_free, (struct bu_observer *));
 
