@@ -57,25 +57,16 @@ struct bu_cmdhist_obj {
     struct bu_cmdhist *cho_curr;
 };
 
-BU_EXPORT BU_EXTERN(int bu_cmd,
-		    ());
-BU_EXPORT BU_EXTERN(void bu_register_cmds,
-		    ());
+BU_EXPORT BU_EXTERN(int bu_cmd, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv, struct bu_cmdtab *cmds, int cmd_index));
+BU_EXPORT BU_EXTERN(void bu_register_cmds, (Tcl_Interp *interp, struct bu_cmdtab *cmds));
 
-/* bu_cmdhist routines are defined in libbu/cmdhist.c */
-BU_EXPORT BU_EXTERN(int bu_cmdhist_history,
-		    ());
-BU_EXPORT BU_EXTERN(int bu_cmdhist_add,
-		    ());
-BU_EXPORT BU_EXTERN(int bu_cmdhist_curr,
-		    ());
-BU_EXPORT BU_EXTERN(int bu_cmdhist_next,
-		    ());
-BU_EXPORT BU_EXTERN(int bu_cmdhist_prev,
-		    ());
+BU_EXPORT BU_EXTERN(int bu_cmdhist_history, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+BU_EXPORT BU_EXTERN(int bu_cmdhist_add, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+BU_EXPORT BU_EXTERN(int bu_cmdhist_curr, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+BU_EXPORT BU_EXTERN(int bu_cmdhist_next, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+BU_EXPORT BU_EXTERN(int bu_cmdhist_prev, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 
-BU_EXPORT BU_EXTERN(int cho_open_tcl,
-		    ());
+BU_EXPORT BU_EXTERN(int cho_open_tcl, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 
 #endif  /* __CMD_H__ */
 /** @} */
