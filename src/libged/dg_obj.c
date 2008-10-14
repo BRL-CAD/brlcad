@@ -209,7 +209,7 @@ static struct bu_cmdtab dgo_cmds[] = {
 int
 dgo_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
-    return bu_cmd(clientData, interp, argc, argv, dgo_cmds, 1);
+    return bu_cmd(clientData, interp, argc, (const char **)argv, dgo_cmds, 1);
 }
 
 int
@@ -2144,7 +2144,7 @@ dgo_observer_cmd(struct dg_obj	*dgop,
 	return TCL_ERROR;
     }
 
-    return bu_observer_cmd((ClientData)&dgop->dgo_observers, interp, argc-1, argv+1);
+    return bu_observer_cmd((ClientData)&dgop->dgo_observers, interp, argc-1, (const char **)argv+1);
 }
 
 /*
