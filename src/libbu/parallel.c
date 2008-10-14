@@ -746,10 +746,7 @@ bu_pr_FILE(title, fp)
  * The registers are not shared.
  */
 void
-bu_parallel(func, ncpu, arg)
-    void		(*func) BU_ARGS((int, genptr_t));
-    int		ncpu;
-    genptr_t	arg;
+bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 {
     int	avail_cpus = 1;
 

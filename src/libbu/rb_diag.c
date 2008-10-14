@@ -52,7 +52,7 @@ static void describe_node (struct bu_rb_node *node, int depth)
 {
     bu_rb_tree			*tree;
     struct bu_rb_package	*package;
-    void			(*pp)();	/* Pretty print function */
+    void			(*pp)(void *);	/* Pretty print function */
 
     BU_CKMAG(node, BU_RB_NODE_MAGIC, "red-black node");
     tree = node->rbn_tree;

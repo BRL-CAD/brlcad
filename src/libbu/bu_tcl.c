@@ -663,7 +663,7 @@ int
 bu_tcl_mem_barriercheck(ClientData	clientData,
 			Tcl_Interp	*interp,
 			int		argc,
-			char		**argv)
+			const char	**argv)
 {
     int	ret;
 
@@ -700,7 +700,7 @@ int
 bu_tcl_ck_malloc_ptr(ClientData		clientData,
 		     Tcl_Interp		*interp,
 		     int		argc,
-		     char		**argv)
+		     const char		**argv)
 {
     /* quell usage warning */
     clientData = clientData;
@@ -730,7 +730,7 @@ int
 bu_tcl_malloc_len_roundup(ClientData	clientData,
 			  Tcl_Interp	*interp,
 			  int		argc,
-			  char		**argv)
+			  const char	**argv)
 {
     int	val;
 
@@ -764,7 +764,7 @@ int
 bu_tcl_prmem(ClientData	clientData,
 	     Tcl_Interp	*interp,
 	     int	argc,
-	     char	**argv)
+	     const char	**argv)
 {
     /* quell usage warning */
     clientData = clientData;
@@ -795,7 +795,7 @@ int
 bu_tcl_printb(ClientData	clientData,
 	      Tcl_Interp	*interp,
 	      int		argc,
-	      char		**argv)
+	      const char	**argv)
 {
     struct bu_vls	str;
 
@@ -844,12 +844,12 @@ int
 bu_tcl_get_value_by_keyword(ClientData	clientData,
 			    Tcl_Interp	*interp,
 			    int		argc,
-			    char	**argv)
+			    const char	**argv)
 {
     int	listc;
-    char	**listv;
-    register char	*iwant;
-    char	**tofree = (char **)NULL;
+    const char	**listv;
+    const char	*iwant;
+    const char	**tofree = (const char **)NULL;
     int	i;
 
     /* quell usage warning */
@@ -968,12 +968,12 @@ int
 bu_tcl_get_all_keyword_values(ClientData	clientData,
 			      Tcl_Interp	*interp,
 			      int		argc,
-			      char		**argv)
+			      const char	**argv)
 {
     struct bu_vls	variable;
     int	listc;
-    char	**listv;
-    char	**tofree = (char **)NULL;
+    const char	**listv;
+    const char	**tofree = (const char **)NULL;
     int	i;
 
     /* quell usage warning */
@@ -1064,7 +1064,7 @@ int
 bu_tcl_rgb_to_hsv(ClientData	clientData,
 		  Tcl_Interp	*interp,
 		  int		argc,
-		  char		**argv)
+		  const char	**argv)
 {
     int		rgb_int[3];
     unsigned char	rgb[3];
@@ -1121,7 +1121,7 @@ int
 bu_tcl_hsv_to_rgb(ClientData	clientData,
 		  Tcl_Interp	*interp,
 		  int		argc,
-		  char		**argv)
+		  const char	**argv)
 {
     fastf_t		hsv[3];
     unsigned char	rgb[3];
@@ -1171,7 +1171,7 @@ int
 bu_tcl_key_eq_to_key_val(ClientData	clientData,
 			 Tcl_Interp	*interp,
 			 int		argc,
-			 char		**argv)
+			 const char	**argv)
 {
     struct bu_vls vls;
     char *next;
@@ -1182,10 +1182,8 @@ bu_tcl_key_eq_to_key_val(ClientData	clientData,
 
     bu_vls_init(&vls);
 
-    while (++i < argc)
-    {
-	if (bu_key_eq_to_key_val(argv[i], &next, &vls))
-	{
+    while (++i < argc) {
+	if (bu_key_eq_to_key_val(argv[i], (const char **)&next, &vls)) {
 	    bu_vls_free(&vls);
 	    return TCL_ERROR;
 	}
@@ -1220,7 +1218,7 @@ int
 bu_tcl_shader_to_key_val(ClientData	clientData,
 			 Tcl_Interp	*interp,
 			 int		argc,
-			 char		**argv)
+			 const char	**argv)
 {
     struct bu_vls vls;
 
@@ -1234,8 +1232,7 @@ bu_tcl_shader_to_key_val(ClientData	clientData,
 
     bu_vls_init(&vls);
 
-    if (bu_shader_to_tcl_list(argv[1], &vls))
-    {
+    if (bu_shader_to_tcl_list(argv[1], &vls)) {
 	bu_vls_free(&vls);
 	return (TCL_ERROR);
     }
@@ -1265,15 +1262,14 @@ int
 bu_tcl_key_val_to_key_eq(ClientData	clientData,
 			 Tcl_Interp	*interp,
 			 int		argc,
-			 char		**argv)
+			 const char	**argv)
 {
     int i=0;
 
     /* quell usage warning */
     clientData = clientData;
 
-    for (i=1; i<argc; i += 2)
-    {
+    for (i=1; i<argc; i += 2) {
 	if (i+1 < argc-1)
 	    Tcl_AppendResult(interp, argv[i], "=", argv[i+1], " ", NULL);
 	else
@@ -1301,7 +1297,7 @@ int
 bu_tcl_shader_to_key_eq(ClientData	clientData,
 			Tcl_Interp	*interp,
 			int		argc,
-			char		**argv)
+			const char	**argv)
 {
     struct bu_vls vls;
 
@@ -1344,7 +1340,7 @@ int
 bu_tcl_brlcad_root(ClientData	clientData,
 		   Tcl_Interp	*interp,
 		   int		 argc,
-		   char		**argv)
+		   const char	**argv)
 {
     /* quell usage warning */
     clientData = clientData;
@@ -1375,7 +1371,7 @@ int
 bu_tcl_brlcad_data(ClientData	clientData,
 		   Tcl_Interp	*interp,
 		   int		 argc,
-		   char		**argv)
+		   const char	**argv)
 {
     /* quell usage warning */
     clientData = clientData;
@@ -1406,7 +1402,7 @@ int
 bu_tcl_units_conversion(ClientData	clientData,
 			Tcl_Interp	*interp,
 			int		argc,
-			char		**argv)
+			const char	**argv)
 {
     double conv_factor;
     struct bu_vls result;

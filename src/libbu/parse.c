@@ -388,8 +388,7 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 		return (-1);
 	}
 	if (ip->sp_hook) {
-
-	    ip->sp_hook (ip, ip->sp_name, base, (char *)NULL);
+	    ip->sp_hook(ip, ip->sp_name, (const char *)base, NULL);
 	}
     }
 
@@ -1547,10 +1546,10 @@ bu_parse_mm(register const struct bu_structparse *sdp, register const char *name
  *
  */
 int
-bu_key_eq_to_key_val(char *in, char **next, struct bu_vls *vls)
+bu_key_eq_to_key_val(const char *in, const char **next, struct bu_vls *vls)
 {
-    char *iptr=in;
-    char *start;
+    const char *iptr=in;
+    const char *start;
     int state=STATE_IN_KEYWORD;
 
     BU_CK_VLS(vls);
@@ -1559,7 +1558,7 @@ bu_key_eq_to_key_val(char *in, char **next, struct bu_vls *vls)
 
     while (*iptr)
     {
-	char *prev='\0';
+	const char *prev='\0';
 
 	switch (state)
 	{
@@ -1687,7 +1686,7 @@ bu_shader_to_tcl_list(const char *in, struct bu_vls *vls)
     int is_stack=0;
     int shader_name_len=0;
     char *iptr;
-    char *shader;
+    const char *shader;
     char *copy = bu_strdup(in);
     char *next = copy;
 
@@ -1774,7 +1773,7 @@ bu_shader_to_tcl_list(const char *in, struct bu_vls *vls)
 	{
 	    bu_vls_strcat(vls, " {");
 	    len = bu_vls_strlen(vls);
-	    if (bu_key_eq_to_key_val(iptr, &next, vls)) {
+	    if (bu_key_eq_to_key_val(iptr, (const char **)&next, vls)) {
 		bu_free(copy, BU_FLSTR);
 		return (1);
 	    }
@@ -1900,7 +1899,7 @@ bu_list_elem(const char *in, int index)
     }
 
     len = end - start + 1;
-    out = bu_malloc(len+1, "bu_list_elem:out");
+    out = (char *)bu_malloc(len+1, "bu_list_elem:out");
     strncpy(out, start, len);
     *(out + len) = '\0';
 
@@ -2020,7 +2019,7 @@ bu_key_val_to_vls(struct bu_vls *vls, char *params)
  * B U _ S H A D E R _ T O _ K E Y _ E Q
  */
 int
-bu_shader_to_key_eq(char *in, struct bu_vls *vls)
+bu_shader_to_key_eq(const char *in, struct bu_vls *vls)
 {
     int len;
     int ret=0;
@@ -2146,7 +2145,7 @@ bu_hexdump_external(FILE *fp, const struct bu_external *ep, const char *str)
     fprintf(fp, "%s:\n", str);
     if (ep->ext_nbytes <= 0)  fprintf(fp, "\tWarning: 0 length external buffer\n");
 
-    cp = ep->ext_buf;
+    cp = (const unsigned char *)ep->ext_buf;
     endp = cp + ep->ext_nbytes;
     for (i=0; i < ep->ext_nbytes; i += 16) {
 	const unsigned char	*sp = cp;

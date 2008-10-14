@@ -1595,7 +1595,7 @@ struct bu_structparse {
     long		sp_count;		/**< @brief number of elements  */
     char		*sp_name;		/**< @brief Element's symbolic name  */
     long		sp_offset;		/**< @brief Byte offset in struct  */
-    void		(*sp_hook)();		/**< @brief Optional hooked function, or indir ptr  */
+    void		(*sp_hook)(const struct bu_structparse *, const char *name, const char *base, const char *value);	/**< @brief Optional hooked function, or indir ptr  */
     char		*sp_desc;		/**< @brief description of element  */
     void		*sp_default;		/**< @brief ptr to default value  */
 };
@@ -1698,7 +1698,7 @@ typedef struct
     unsigned long 	rbt_magic;	  /**< @brief  Magic no. for integrity check */
     int			rbt_nm_nodes;	  /**< @brief  Number of nodes */
     /* CLASS II - Applications may read/write directly. */
-    void		(*rbt_print)();	  /**< @brief  Data pretty-print function */
+    void		(*rbt_print)(void *);	  /**< @brief  Data pretty-print function */
     int			rbt_debug;	  /**< @brief  Debug bits */
     char		*rbt_description; /**< @brief  Comment for diagnostics */
     /* CLASS III - Applications should not manipulate directly. */
@@ -2250,8 +2250,8 @@ BU_EXPORT BU_EXTERN(void bu_parse_mm,
 		     char *base,
 		     const char *value));
 BU_EXPORT BU_EXTERN(int bu_key_eq_to_key_val,
-		    (char *in,
-		     char **next,
+		    (const char *in,
+		     const char **next,
 		     struct bu_vls *vls));
 BU_EXPORT BU_EXTERN(int bu_shader_to_tcl_list,
 		    (const char *in,
@@ -2259,7 +2259,7 @@ BU_EXPORT BU_EXTERN(int bu_shader_to_tcl_list,
 BU_EXPORT BU_EXTERN(int bu_key_val_to_key_eq,
 		    (char *in));
 BU_EXPORT BU_EXTERN(int bu_shader_to_key_eq,
-		    (char *in, struct bu_vls *vls));
+		    (const char *in, struct bu_vls *vls));
 BU_EXPORT BU_EXTERN(int bu_fwrite_external,
 		    (FILE *fp,
 		     const struct bu_external *ep));
@@ -2675,11 +2675,7 @@ BU_EXPORT BU_EXTERN(struct bu_vls *bu_association,
 /** @{ */
 
 /* Things that live in libbu/observer.c */
-BU_EXPORT BU_EXTERN(int bu_observer_cmd,
-		    (ClientData clientData,
-		     Tcl_Interp *interp,
-		     int argc,
-		     char **argv));
+BU_EXPORT BU_EXTERN(int bu_observer_cmd, (ClientData clientData, Tcl_Interp *interp, int argc, const char **argv));
 BU_EXPORT BU_EXTERN(void bu_observer_notify,());
 BU_EXPORT BU_EXTERN(void bu_observer_free, (struct bu_observer *));
 
