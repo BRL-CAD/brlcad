@@ -30,6 +30,7 @@ libged_nil_la_SOURCES = \
 	cat.c \
 	center.c \
 	clip.c \
+	clone.c \
 	color.c \
 	comb.c \
 	comb_color.c \

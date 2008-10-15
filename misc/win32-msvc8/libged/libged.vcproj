@@ -334,6 +334,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\clone.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\color.c"
 				>
 			</File>

@@ -1238,6 +1238,14 @@ GED_EXPORT BU_EXTERN(int ged_cat, (struct ged *gedp, int argc, const char *argv[
 GED_EXPORT BU_EXTERN(int ged_center, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Performs a deep copy of object.
+ *
+ * Usage:
+ *     clone [-abhimnprtv] <object>
+ */
+GED_EXPORT BU_EXTERN(int ged_clone, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Make color entry.
  *
  * Usage:

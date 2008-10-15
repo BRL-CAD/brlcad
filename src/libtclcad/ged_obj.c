@@ -374,6 +374,7 @@ static struct go_cmdtab go_cmds[] = {
     {"cat",	(char *)0, MAXARGS, go_pass_through_func, ged_cat},
     {"center",	"vname [x y z]", 5, go_view_func, ged_center},
     {"clear",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_zap},
+    {"clone",	(char *)0, MAXARGS, go_pass_through_func, ged_clone},
     {"color",	(char *)0, MAXARGS, go_pass_through_func, ged_color},
     {"comb",	(char *)0, MAXARGS, go_pass_through_func, ged_comb},
     {"comb_color",	(char *)0, MAXARGS, go_pass_through_func, ged_comb_color},
