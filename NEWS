@@ -25,6 +25,8 @@ the geometry hierarchy, and much more.  You can combine search
 expressions together using boolean logic as well for even more
 powerful operations.
 
+* Help menu restructuring in MGED, focus on most useful - C. Yapp
+* update openNURBS to version 4.0 - Cliff Yapp
 * handle (i.e., ignore) comments in asc2g conversions - Eric Greenwald
 * fix crash in iges-g when run with -n option - John Anderson
 * enhanced documentation management system within mged - Cliff Yapp

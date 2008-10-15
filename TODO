@@ -57,8 +57,6 @@ THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 
 * review librt polynomial root solver (cubic and quadratic case)
 
-* integrate July 2007 openNURBS updates
-
 * give bot-bldxf the axe (reconcile and merge with bot_dump)
 
 * refactor all of the nmg processing (back) into its own library so
