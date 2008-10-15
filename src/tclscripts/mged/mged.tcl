@@ -420,12 +420,6 @@ $mged_default(html_dir)" \
 	    {} 0 OK
 }
 
-proc command_help { id } {
-    global mged_gui
-
-    ia_help .$id $mged_gui($id,screen) [concat [?]]
-}
-
 proc on_context_help { id } {
 }
 
