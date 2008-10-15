@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -34,7 +34,7 @@
 
 #if _MSC_VER >= 1300
 #define ON_COMPILER_MSC1300
-// If you are using VC7/.NET and are having trouble linking
+// If you are using VC7/.NET and are having trouble linking 
 // to functions that have whcar_t types in arguments, then
 // read the documentation about the wchar_t type and
 // the /Zc:wchar_t compiler option.
@@ -57,16 +57,14 @@
 
 #endif
 
-#if defined(__GNUC__) || defined(__GNUG_) || defined(__GNUC_) || defined(_GNU_SOURCE)
+#if defined(__GNUG_) || defined(__GNUG__) || defined(__GNUC_) || defined(__GNUC__) || defined(_GNU_SOURCE) || defined(__GNU_SOURCE)
 /* using Gnu's compiler */
 #if !defined(ON_COMPILER_GNU)
 #define ON_COMPILER_GNU
 #endif
+#if !defined(_GNU_SOURCE)
+#define _GNU_SOURCE
 #endif
-
-#if defined(__BORLANDC__)
-/* using Borland's compiler */
-#define ON_COMPILER_BORLAND
 #endif
 
 #if defined(sgi) || defined(__sgi)
@@ -77,6 +75,17 @@
 #define ON_COMPILER_SUN
 #endif
 
+#if defined(_GNU_SOURCE) && defined(__APPLE__)
+/* using Apple's OSX XCode compiler */
+#if !defined(ON_COMPILER_XCODE)
+#define ON_COMPILER_XCODE
+#endif
+#endif
+
+#if defined(__BORLANDC__)
+/* using Borland's compiler */
+#define ON_COMPILER_BORLAND
+#endif
 
 /*
 // Define ON_NO_WINDOWS if you are compiling on a Windows system but want
@@ -88,14 +97,14 @@
 /*
 /////////////////////////////////////////////////////////////////////////
 //
-// Begin Windows system includes -
+// Begin Windows system includes - 
 */
 #if defined(_WIN32) || defined(WIN32) || defined(_WIN64) || defined(WIN64)
 
 /*
 // From windows.h openNURBS only needs definitions of BOOL, TRUE,
 // and FALSE, and a declarations of OutputDebugString(), and
-// WideCharToMultiByte().  These
+// WideCharToMultiByte().  These 
 // defines disable the inclusion of most of the Windows garbage.
 */
 
@@ -135,7 +144,11 @@ extern "C" {
 
 #include <stdlib.h>
 #include <memory.h>
+#if defined(ON_COMPILER_XCODE)
+#include <malloc/malloc.h>
+#else
 //#include <malloc.h>
+#endif
 #include <string.h>
 #include <math.h>
 #include <stdio.h>
@@ -144,7 +157,6 @@ extern "C" {
 #include <time.h>
 #include <limits.h>
 #include <ctype.h>
-#include <assert.h>
 
 #if defined(ON_COMPILER_IRIX) || defined(ON_COMPILER_SUN)
 #include <alloca.h>
@@ -172,6 +184,9 @@ extern "C" {
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <wctype.h>
+#if defined(ON_COMPILER_XCODE)
+#include <uuid/uuid.h>
+#endif
 #endif
 
 #ifdef __cplusplus
@@ -214,10 +229,10 @@ typedef int BOOL;
 #endif
 
 #if !defined(_WCHAR_T_DEFINED)
-// If you are using VC7/.NET and are having trouble linking
+// If you are using VC7/.NET and are having trouble linking 
 // to functions that have whcar_t types in arguments, then
 // read the documentation about the wchar_t type and
-// the /Zc:wchar_t compiler option.  Since
+// the /Zc:wchar_t compiler option.  Since 
 
 /* 16-bit wide character ("UNICODE") */
 
@@ -231,12 +246,22 @@ typedef unsigned short wchar_t;
 #endif
 
 
+#if defined(ON_PURIFY_BUILD)
+// ON_PURIFY_BUILD is defined in the DebugPurify and ReleasePurify
+// build configurations.  pure.h contains delclarations of the 
+// Purify API functions.  The file \src4\PurifyAPI\pure_api.c
+// contains the definitions.
+#pragma message(" --- OpenNURBS Purify build.")
+#include "../PurifyAPI/pure.h"
+#endif
+
+
 // As 64 bit compilers become more common, the definitions
 // of the next 6 typedefs may need to vary with compiler.
-// As much as possible, the size of runtime types is left
-// up to the compiler so performance and ease of use can
-// be maximized.  In the rare cases where it is critical
-// to use an integer that is exactly 16 bits, 32 bits
+// As much as possible, the size of runtime types is left 
+// up to the compiler so performance and ease of use can 
+// be maximized.  In the rare cases where it is critical 
+// to use an integer that is exactly 16 bits, 32 bits 
 // or 64 bits, the ON__INT16, ON__INT32, and ON__INT64
 // typedefs are used.
 

@@ -18,11 +18,13 @@ ON_INC = \
 	opennurbs_array_defs.h \
 	opennurbs_bezier.h \
 	opennurbs_bitmap.h \
+	opennurbs_box.h \
 	opennurbs_bounding_box.h \
 	opennurbs_brep.h \
 	opennurbs_circle.h \
 	opennurbs_color.h \
 	opennurbs_cone.h \
+	opennurbs_crashtest.h \
 	opennurbs_crc.h \
 	opennurbs_curve.h \
 	opennurbs_curveonsurface.h \
@@ -109,6 +111,7 @@ ON_SRC = \
 	opennurbs_bezier.cpp \
 	opennurbs_beziervolume.cpp \
 	opennurbs_bitmap.cpp \
+	opennurbs_box.cpp \
 	opennurbs_bounding_box.cpp \
 	opennurbs_brep.cpp \
 	opennurbs_brep_changesrf.cpp \
@@ -205,31 +208,14 @@ libopenNURBS_la_LIBADD = libopenNURBS_nil.la
 ON_EXTRA = \
 	opennurbs.sln \
 	opennurbs.vcproj \
-	opennurbs_bezier_volume.cpp \
-	opennurbs_bezier_volume.h \
-	opennurbs_curvetree.cpp \
-	opennurbs_exception.cpp \
-	opennurbs_exception.h \
-	opennurbs_ginfinity.cpp \
-	opennurbs_ginfinity.h \
-	opennurbs_layerset.cpp \
-	opennurbs_layerset.h \
-	opennurbs_linestyle.cpp \
-	opennurbs_meshtree.cpp \
-	opennurbs_meshtree.h \
-	opennurbs_meshx.cpp \
 	opennurbs_staticlib.vcproj \
-	opennurbs_surfacetree.cpp \
 	opennurbs_vc60.dsw \
 	opennurbs.rc \
-	opennurbs_array_defs.h.orig \
-	opennurbs_brep_io.cpp.orig \
 	opennurbs_dll.cpp \
 	opennurbs_dll_resource.h \
 	opennurbs_gl.cpp \
 	opennurbs_precompiledheader.cpp \
 	opennurbs_static_vc60.dsp \
-	opennurbs_temp.h \
 	opennurbs_vc60.dsp \
 	opennurbs_x.cpp
 
@@ -246,6 +232,7 @@ EXTRA_DIST = \
 	faq.txt \
 	opennurbs_memory_new.cpp \
 	opennurbs_zlib_memory.cpp \
+	opennurbs.xcodeproj \
 	readme.txt
 
 if BUILD_ZLIB

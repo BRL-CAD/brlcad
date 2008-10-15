@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -48,12 +48,12 @@ public:
     initialized.
   Parameters:
     text_log - [in] if the object is not valid and text_log
-        is not NULL, then a brief englis description of the
-        reason the object is not valid is appened to the log.
-        The information appended to text_log is suitable for
-        low-level debugging purposes by programmers and is
-        not intended to be useful as a high level user
-        interface tool.
+	is not NULL, then a brief englis description of the
+	reason the object is not valid is appened to the log.
+	The information appended to text_log is suitable for 
+	low-level debugging purposes by programmers and is 
+	not intended to be useful as a high level user 
+	interface tool.
   Returns:
     @untitled table
     TRUE     object is valid
@@ -68,12 +68,12 @@ public:
 
   // virtual
   BOOL Write(
-         ON_BinaryArchive&  // serialize definition to binary archive
+	 ON_BinaryArchive&  // serialize definition to binary archive
        ) const;
 
   // virtual
   BOOL Read(
-         ON_BinaryArchive&  // restore definition from binary archive
+	 ON_BinaryArchive&  // restore definition from binary archive
        );
 
   void EmergencyDestroy();
@@ -148,12 +148,14 @@ public:
   // added at ver 1.3
   double LengthFactor() const;
   void SetLengthactor( double);
+  void SetLengthFactor( double); // added 6/24/07 because of typo
 
   bool Alternate() const;
   void SetAlternate( bool);
 
   double AlternateLengthFactor() const;
   void SetAlternateLengthactor( double);
+  void SetAlternateLengthFactor( double); // added 6/24/07 because of typo
 
   int AlternateLengthFormat() const;
   void SetAlternateLengthFormat( int);
@@ -213,9 +215,9 @@ public:
     fn_lengthfactor               = 16,
     fn_bAlternate                 = 17,
     fn_alternate_lengthfactor     = 18,
-    fn_alternate_lengthformat     = 19,
+    fn_alternate_lengthformat     = 19, 
     fn_alternate_lengthresolution = 20,
-    fn_alternate_angleformat      = 21,
+    fn_alternate_angleformat      = 21, 
     fn_alternate_angleresolution  = 22,
     fn_prefix                     = 23,
     fn_suffix                     = 24,
@@ -263,17 +265,17 @@ public:
   int m_angleformat;   // 0: decimal degrees, ...
   int m_angleresolution;    // for decimal degrees, digits past decimal
   int m_lengthresolution;   // depends on m_lengthformat
-                            // for decimal, digits past the decimal point
+			    // for decimal, digits past the decimal point
   int m_fontindex;     // index of the ON_Font used by this dimstyle
 
   // added fields version 1.2, Jan 13, 05
   double m_lengthfactor;  // (dimlfac) model units multiplier for length display
   bool m_bAlternate;      // (dimalt) display alternate dimension string (or not)
-                          // using m_alternate_xxx values
+			  // using m_alternate_xxx values
   double m_alternate_lengthfactor;  // (dimaltf) model units multiplier for alternate length display
   int m_alternate_lengthformat;     // 0: decimal, 1: feet, 2: feet & inches
   int m_alternate_lengthresolution; // depends on m_lengthformat
-                                    // for decimal, digits past the decimal point
+				    // for decimal, digits past the decimal point
   int m_alternate_angleformat;      // 0: decimal degrees, ...
   int m_alternate_angleresolution;  // for decimal degrees, digits past decimal
   ON_wString m_prefix;              // string preceding dimension value string

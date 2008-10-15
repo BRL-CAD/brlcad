@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -52,11 +52,11 @@ void ON_Font::Defaults()
 
 BOOL ON_Font::IsValid( ON_TextLog* text_log ) const
 {
-  return ( m_font_name.Length() > 0
-           && m_font_index >= 0
-           && m_facename[0] > 32
-           && m_facename[64] == 0
-           );
+  return ( m_font_name.Length() > 0 
+	   && m_font_index >= 0 
+	   && m_facename[0] > 32 
+	   && m_facename[64] == 0
+	   );
 }
 
 void ON_Font::Dump( ON_TextLog& dump ) const
@@ -93,7 +93,7 @@ BOOL ON_Font::Write(
       memset(sh,0,sizeof(sh));
       int i;
       for ( i = 0; i < 64 && i < face_name_size-1; i++ )
-        sh[i] = m_facename[i];
+	sh[i] = m_facename[i];
       rc = file.WriteShort(64, sh);
       if  (!rc) break;
     }
@@ -125,7 +125,7 @@ BOOL ON_Font::Read(
   int major_version = 0;
   int minor_version = 0;
   bool rc = file.Read3dmChunkVersion(&major_version,&minor_version);
-  if ( rc && major_version == 1 )
+  if ( rc && major_version == 1 ) 
   {
     int i;
     for(;;)
@@ -136,42 +136,42 @@ BOOL ON_Font::Read(
       if  (!rc) break;
 
       {
-        // 18 October 2002 Dale Lear:
-        //   Lowell, wchar_t has different sizes on different OSs.
-        //   When writing a wchar_t string, you should use one
-        //   of the WriteString functions.  This function must continue
-        //   to use ReadShort(64,...) so old files will remain valid.
-        unsigned short sh[64];
-        rc = file.ReadShort(64, sh);
-        if (!rc) break;
+	// 18 October 2002 Dale Lear:
+	//   Lowell, wchar_t has different sizes on different OSs.
+	//   When writing a wchar_t string, you should use one
+	//   of the WriteString functions.  This function must continue
+	//   to use ReadShort(64,...) so old files will remain valid.
+	unsigned short sh[64];
+	rc = file.ReadShort(64, sh);
+	if (!rc) break;
 
-        wchar_t facename[65];
-        for ( i = 0; i < 64; i++ )
-        {
-          facename[i] = sh[i];
-        }
-        facename[64] = 0;
-        SetFontFaceName(facename);
+	wchar_t facename[65];
+	for ( i = 0; i < 64; i++ )
+	{
+	  facename[i] = sh[i];
+	}
+	facename[64] = 0;
+	SetFontFaceName(facename);
       }
 
       if( minor_version >= 1 )
       {
-        rc = file.ReadInt( &i );
-        if (!rc) break;
-        SetFontWeight(i);
+	rc = file.ReadInt( &i );
+	if (!rc) break;
+	SetFontWeight(i);
 
-        rc = file.ReadInt( &i);
-        if (!rc) break;
-        SetIsItalic(i?true:false);
+	rc = file.ReadInt( &i);
+	if (!rc) break;
+	SetIsItalic(i?true:false);
 
-        rc = file.ReadDouble( &m_linefeed_ratio );
-        if (!rc) break;
+	rc = file.ReadDouble( &m_linefeed_ratio );
+	if (!rc) break;
 
-        if ( minor_version >= 2 )
-        {
-          rc = file.ReadUuid( m_font_id );
-          if (!rc) break;
-        }
+	if ( minor_version >= 2 )
+	{
+	  rc = file.ReadUuid( m_font_id );
+	  if (!rc) break;
+	}
       }
 
       break;
@@ -219,12 +219,12 @@ const wchar_t* ON_Font::FontName() const
 }
 
 #if defined(ON_OS_WINDOWS_GDI)
-static
+static 
 int CALLBACK ON__IsSymbolFontFaceNameHelper( ENUMLOGFONTEX*, NEWTEXTMETRICEX*, DWORD, LPARAM)
 {
   // If the fontname in the logfont structure has
-  // a corresponding symbol font on the system,
-  // set the  lfCharSet member to SYMBOL_CHARSET,
+  // a corresponding symbol font on the system, 
+  // set the  lfCharSet member to SYMBOL_CHARSET, 
   // otherwise DEFAULT_CHARSET
   // The input logfont structure may be modified.
   return 7;
@@ -238,21 +238,21 @@ bool ON_Font::IsSymbolFontFaceName( const wchar_t* s)
 #if defined(ON_OS_WINDOWS_GDI)
   if( s && s[0])
   {
-    HDC hdc = ::GetDC( NULL);
+    HDC hdc = ::GetDC( NULL);    
     if( hdc)
-    {
+    {      
       LOGFONT logfont;
       memset( &logfont, 0, sizeof( logfont));
       int i;
       for ( i = 0; i < LF_FACESIZE && s[i]; i++ )
       {
-        logfont.lfFaceName[i] = s[i];
+	logfont.lfFaceName[i] = s[i];
       }
       logfont.lfCharSet = ON_Font::symbol_charset;
       if( 7 == ::EnumFontFamiliesEx( hdc, &logfont, (FONTENUMPROC)ON__IsSymbolFontFaceNameHelper, 0, 0))
       {
-        rc = true;
-      }
+	rc = true;
+      }    
       ::ReleaseDC( NULL, hdc);
     }
   }
@@ -284,8 +284,8 @@ bool ON_Font::SetFontFaceName( const wchar_t* s )
   }
 
   m_logfont.lfCharSet = ON_Font::IsSymbolFontFaceName( s)
-                      ? ON_Font::symbol_charset
-                      : ON_Font::default_charset;
+		      ? ON_Font::symbol_charset
+		      : ON_Font::default_charset;
 #endif
 
   m_I_height = 0;
@@ -393,7 +393,7 @@ void ON_Font::SetBold( bool bBold )
 
 /*
 Returns:
-  Height of the 'I' character when the font is drawn
+  Height of the 'I' character when the font is drawn 
   with m_logfont.lfHeight = 256.
 */
 int ON_Font::HeightOfI() const
@@ -403,8 +403,8 @@ int ON_Font::HeightOfI() const
     // Default is height of Arial 'I'.  If we are running
     // on Windows, then we calculate the actual height of
     // an 'I' in the font.
-    //   The ..ON_Font::normal_font_height/256 is here
-    //   so this code will continue to work correctly
+    //   The ..ON_Font::normal_font_height/256 is here 
+    //   so this code will continue to work correctly 
     //   if somebody changes ON_Font::normal_font_height.
     int I_height = (166*ON_Font::normal_font_height)/256;
 
@@ -415,51 +415,51 @@ int ON_Font::HeightOfI() const
       HDC hdc = ::GetDC( NULL);
       if (hdc)
       {
-        LOGFONT logfont = m_logfont;
-        logfont.lfHeight = normal_font_height;
-        HFONT font = ::CreateFontIndirect( &logfont);
-        if ( font )
-        {
-          wchar_t str[2];
-          str[0] = ON_Font::m_metrics_char;
-          str[1] = 0;
-          HFONT oldfont = (HFONT)::SelectObject( hdc, font);
-          ::SetBkMode( hdc, TRANSPARENT);
-          ::BeginPath(hdc);
-          ::ExtTextOut( hdc, 0, 0, 0, NULL, str, 1, NULL);
-          ::EndPath( hdc);
-          int numPoints = ::GetPath( hdc, NULL, NULL, 0);
+	LOGFONT logfont = m_logfont;
+	logfont.lfHeight = normal_font_height;
+	HFONT font = ::CreateFontIndirect( &logfont);
+	if ( font )
+	{
+	  wchar_t str[2];
+	  str[0] = ON_Font::m_metrics_char;
+	  str[1] = 0;
+	  HFONT oldfont = (HFONT)::SelectObject( hdc, font);
+	  ::SetBkMode( hdc, TRANSPARENT);
+	  ::BeginPath(hdc);
+	  ::ExtTextOut( hdc, 0, 0, 0, NULL, str, 1, NULL);
+	  ::EndPath( hdc);
+	  int numPoints = ::GetPath( hdc, NULL, NULL, 0);
 
-          if( numPoints > 2)
-          {
-            // Allocate room for the points & point types
-            LPPOINT pPoints = (LPPOINT)onmalloc( numPoints * sizeof(*pPoints) );
-            LPBYTE pTypes = (LPBYTE)onmalloc( numPoints * sizeof(*pTypes) );
-            if ( pTypes && pPoints)
-            {
-              // Get the points and types from the current path
-              numPoints = ::GetPath( hdc, pPoints, pTypes, numPoints);
-              if( numPoints > 2)
-              {
-                int ymin = pPoints[0].y;
-                int ymax = ymin;
-                int k;
-                for( k = 1; k < numPoints; k++)
-                {
-                  if( pPoints[k].y < ymin)
-                    ymin = pPoints[k].y;
-                  else if( pPoints[k].y > ymax)
-                    ymax = pPoints[k].y;
-                }
-                I_height = ymax - ymin + 1;
-              }
-            }
-            onfree( pPoints);
-            onfree( pTypes);
-          }
-          ::SelectObject( hdc, oldfont);
-          ::DeleteObject( font);
-        }
+	  if( numPoints > 2)
+	  {
+	    // Allocate room for the points & point types
+	    LPPOINT pPoints = (LPPOINT)onmalloc( numPoints * sizeof(*pPoints) );
+	    LPBYTE pTypes = (LPBYTE)onmalloc( numPoints * sizeof(*pTypes) );
+	    if ( pTypes && pPoints)
+	    {
+	      // Get the points and types from the current path
+	      numPoints = ::GetPath( hdc, pPoints, pTypes, numPoints);
+	      if( numPoints > 2)
+	      {
+		int ymin = pPoints[0].y;
+		int ymax = ymin;
+		int k;
+		for( k = 1; k < numPoints; k++)
+		{
+		  if( pPoints[k].y < ymin)
+		    ymin = pPoints[k].y;
+		  else if( pPoints[k].y > ymax)
+		    ymax = pPoints[k].y;
+		}
+		I_height = ymax - ymin + 1;
+	      }
+	    }
+	    onfree( pPoints);
+	    onfree( pTypes);
+	  }
+	  ::SelectObject( hdc, oldfont);
+	  ::DeleteObject( font);
+	}
       }
       ::ReleaseDC( NULL, hdc);
     }
@@ -485,7 +485,7 @@ bool ON_Font::SetLogFont( const LOGFONT& logfont )
   {
     memcpy(&m_logfont,&logfont,sizeof(m_logfont));
   }
-
+    
   // synch persistent fields
   m_font_weight = m_logfont.lfWeight;
   m_font_italic = (m_logfont.lfItalic?true:false);
@@ -493,7 +493,7 @@ bool ON_Font::SetLogFont( const LOGFONT& logfont )
   int i;
   for ( i = 0; i < face_name_size && i < LF_FACESIZE; i++ )
   {
-    m_facename[i] = (wchar_t)m_logfont.lfFaceName[i];
+    m_facename[i] = (wchar_t)m_logfont.lfFaceName[i]; 
   }
   m_facename[face_name_size-1] = 0;
 

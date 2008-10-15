@@ -2,20 +2,19 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
 */
 
 #include "opennurbs.h"
-
 
 ON_VIRTUAL_OBJECT_IMPLEMENT(ON_Geometry,ON_Object,"4ED7D4DA-E947-11d3-BFE5-0010830122F0");
 
@@ -42,7 +41,7 @@ ON_BoundingBox ON_Geometry::BoundingBox() const
   return bbox;
 }
 
-BOOL
+BOOL 
 ON_Geometry::GetBoundingBox( // returns TRUE if successful
        ON_BoundingBox& bbox,
        BOOL bGrowBox
@@ -51,7 +50,7 @@ ON_Geometry::GetBoundingBox( // returns TRUE if successful
   return GetBoundingBox( bbox.m_min, bbox.m_max, bGrowBox );
 }
 
-BOOL
+BOOL 
 ON_Geometry::GetBoundingBox( // returns TRUE if successful
        ON_3dPoint& boxmin,
        ON_3dPoint& boxmax,
@@ -97,8 +96,8 @@ ON_Geometry::GetBoundingBox( // returns TRUE if successful
   return rc;
 }
 
-bool ON_Geometry::GetTightBoundingBox(
-			ON_BoundingBox& tight_bbox,
+bool ON_Geometry::GetTightBoundingBox( 
+			ON_BoundingBox& tight_bbox, 
       int bGrowBox,
 			const ON_Xform* xform
       ) const
@@ -122,7 +121,7 @@ bool ON_Geometry::GetTightBoundingBox(
     {
       world_bbox.GetCorners(corners);
       if ( corners.GetTightBoundingBox(tight_bbox,bGrowBox,xform) )
-        bGrowBox = true;
+	bGrowBox = true;
     }
   }
   else
@@ -148,12 +147,12 @@ BOOL ON_Geometry::SwapCoordinates(
       int k;
       ON_Xform swapij(0.0);
       for ( k = 0; k < 4; k++ ) {
-        if ( i == k )
-          swapij[k][j] = 1.0;
-        else if ( j == k )
-          swapij[k][i] = 1.0;
-        else
-          swapij[k][k] = 1.0;
+	if ( i == k )
+	  swapij[k][j] = 1.0;
+	else if ( j == k )
+	  swapij[k][i] = 1.0;
+	else
+	  swapij[k][k] = 1.0;
       }
       rc = Transform( swapij );
     }
@@ -243,7 +242,7 @@ ON_COMPONENT_INDEX ON_Geometry::ComponentIndex() const
   // default constructor sets
   // m_type = ON_COMPONENT_INDEX::invalid_type and m_index = -1.
   ON_COMPONENT_INDEX ci;
-  return ci;
+  return ci;  
 }
 
 bool ON_Geometry::EvaluatePoint( const class ON_ObjRef& objref, ON_3dPoint& P ) const

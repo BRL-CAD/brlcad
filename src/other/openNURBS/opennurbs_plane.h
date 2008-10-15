@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -53,10 +53,10 @@ public:
   Parameters:
     origin - [in] point on the plane
     x_dir - [in] non-zero vector in the plane that
-        determines the xaxis direction.
+	determines the xaxis direction.
     y_dir - [in] non-zero vector not parallel to x_dir
-        that is used to determine the yaxis direction.
-        y_dir does not have to be perpindicular to x_dir.
+	that is used to determine the yaxis direction.
+	y_dir does not have to be perpindicular to x_dir.
   */
   ON_Plane(
     const ON_3dPoint& origin,
@@ -70,10 +70,10 @@ public:
   Parameters:
     origin - [in] point on the plane
     x_point - [in] second point in the plane.
-        The xaxis will be parallel to x_point-origin.
+	The xaxis will be parallel to x_point-origin.
     y_point - [in] third point on the plane that is
-        not colinear with the first two points.
-        yaxis*(y_point-origin) will be > 0.
+	not colinear with the first two points.
+	yaxis*(y_point-origin) will be > 0.
   */
   ON_Plane(
     const ON_3dPoint& origin,
@@ -122,10 +122,10 @@ public:
   Parameters:
     origin - [in] point on the plane
     x_dir - [in] non-zero vector in the plane that
-        determines the xaxis direction.
+	determines the xaxis direction.
     y_dir - [in] non-zero vector not parallel to x_dir
-        that is used to determine the yaxis direction.
-        y_dir does not have to be perpindicular to x_dir.
+	that is used to determine the yaxis direction.
+	y_dir does not have to be perpindicular to x_dir.
   Returns:
     TRUE if valid plane is created.
   */
@@ -141,10 +141,10 @@ public:
   Parameters:
     origin - [in] point on the plane
     point_on_x - [in] second point in the plane.
-        The xaxis will be parallel to x_point-origin.
+	The xaxis will be parallel to x_point-origin.
     point_on - [in] third point on the plane that is
-        not colinear with the first two points.
-        yaxis*(y_point-origin) will be > 0.
+	not colinear with the first two points.
+	yaxis*(y_point-origin) will be > 0.
   Returns:
     TRUE if valid plane is created.
   */
@@ -162,12 +162,12 @@ public:
        one of equation[0], equation[1], or equation[2]
        being non-zero.
   Remarks:
-    points on the plane will satisfy
+    points on the plane will satisfy 
     x*equation[0] +y*equation[1] + z*equation[2] + equation[3] = 0
   Returns:
     TRUE if valid plane is created.
   */
-  bool CreateFromEquation(
+  bool CreateFromEquation( 
     const double equation[4]
     );
 
@@ -212,7 +212,7 @@ public:
     origin - [in] the new origin
   */
   void SetOrigin( const ON_3dPoint& origin );
-
+  
   /*
   Description:
     Evaluate a point on the plane
@@ -248,18 +248,18 @@ public:
     Get an isoparameteric line on the plane.
   Parameters:
     dir - [in] direction of iso-parametric line
-        0: first parameter varies and second parameter is constant
-           e.g., line(t) = plane(t,c)
-        1: first parameter is constant and second parameter varies
-           e.g., line(t) = plane(c,t)
-    c - [in] value of constant parameter
+	0: first parameter varies and second parameter is constant
+	   e.g., line(t) = plane(t,c)
+	1: first parameter is constant and second parameter varies
+	   e.g., line(t) = plane(c,t)
+    c - [in] value of constant parameter 
   Returns:
     iso-parametric line
   */
   ON_Line IsoLine(
-         int dir,
-         double c
-         ) const;
+	 int dir,
+	 double c
+	 ) const;
 
   /*
   Description:
@@ -274,27 +274,27 @@ public:
     If the point is below the plane the distance is < 0.
     The zaxis determines the plane's orientation.
   */
-  double DistanceTo(
-        const ON_3dPoint& point
-        ) const;
+  double DistanceTo( 
+	const ON_3dPoint& point
+	) const;
 
 
   bool GetDistanceToBoundingBox(
-           //returns false if plane has zero length normal
+	   //returns false if plane has zero length normal
 				   const ON_BoundingBox&, // Box
 
-           //output
-				   double* min,    // min signed dist from plane to box
-           double* max     //max signed dist from plane to box
-           ) const;
+	   //output
+				   double* min,    // min signed dist from plane to box 
+	   double* max     //max signed dist from plane to box
+	   ) const;
 
   // OBSOLETE - use plane_equation.ValueAt()
-  //__declspec(deprecated) double EquationAt(
+  //__declspec(deprecated) double EquationAt( 
   //      const ON_3dPoint& point
   //      ) const;
 
   // OBSOLETE - use plane_equation.ValueAt()
-  //__declspec(deprecated) double EquationAt(
+  //__declspec(deprecated) double EquationAt( 
   //      const ON_4dPoint& point
   //      ) const;
 
@@ -306,7 +306,7 @@ public:
     TRUE if successful.  FALSE if zaxis is zero.
   Remarks:
     If you modify a plane's origin or zaxis, call UpdateEquation()
-    to set equation[].
+    to set equation[]. 
   */
   bool UpdateEquation();
 
@@ -315,17 +315,17 @@ public:
     Get point on plane that is closest to a given point.
   Parameters:
     world_point - [in] 3d point
-    u - [out]
+    u - [out] 
     v - [out] The point ON_Plane::PointAt(*u,*v) is the point
-              on the plane that is closest to world_point.
+	      on the plane that is closest to world_point.
   Returns:
     TRUE if successful.
   */
-  bool ClosestPointTo(
-         ON_3dPoint world_point,
-         double* u,
-         double* v
-         ) const;
+  bool ClosestPointTo( 
+	 ON_3dPoint world_point,
+	 double* u,
+	 double* v
+	 ) const;
 
   /*
   Description:
@@ -335,9 +335,9 @@ public:
   Returns:
     A 3d point on the plane that is closest to world_point.
   */
-  ON_3dPoint ClosestPointTo(
-         ON_3dPoint point
-         ) const;
+  ON_3dPoint ClosestPointTo( 
+	 ON_3dPoint point
+	 ) const;
 
   // For intersections see ON_Intersect();
 
@@ -349,9 +349,9 @@ public:
   Returns:
     TRUE if successful
   */
-  bool Transform(
-        const ON_Xform& xform
-        );
+  bool Transform( 
+	const ON_Xform& xform
+	);
 
   /*
   Description:
@@ -371,14 +371,14 @@ public:
   Parameters:
     i - [in]
     j - [in] indices of coordinates to swap.
-        0 = x coordinate, 1 = y coordinate, 2 = z coordinate.
+	0 = x coordinate, 1 = y coordinate, 2 = z coordinate.
   Returns:
     TRUE if successful.
   */
   bool SwapCoordinates(
-        int i,
-        int j
-        );
+	int i,
+	int j
+	);
 
   /*
   Description:
@@ -391,10 +391,10 @@ public:
     TRUE if successful
   */
   bool Rotate(
-        double sin_angle,
-        double cos_angle,
-        const ON_3dVector& axis
-        );
+	double sin_angle,
+	double cos_angle,
+	const ON_3dVector& axis
+	);
 
   /*
   Description:
@@ -406,9 +406,9 @@ public:
     TRUE if successful
   */
   bool Rotate(
-        double angle,
-        const ON_3dVector& axis
-        );
+	double angle,
+	const ON_3dVector& axis
+	);
 
   /*
   Description:
@@ -422,11 +422,11 @@ public:
     TRUE if successful
   */
   bool Rotate(
-        double sin_angle,
-        double cos_angle,
-        const ON_3dVector& axis,
-        const ON_3dPoint&  center
-        );
+	double sin_angle,
+	double cos_angle,
+	const ON_3dVector& axis,
+	const ON_3dPoint&  center
+	);
 
   /*
   Description:
@@ -439,10 +439,10 @@ public:
     TRUE if successful
   */
   bool Rotate(
-        double angle,
-        const ON_3dVector& axis,
-        const ON_3dPoint& center
-        );
+	double angle,
+	const ON_3dVector& axis,
+	const ON_3dPoint& center
+	);
 
   /*
   Description:
@@ -453,8 +453,8 @@ public:
     TRUE if successful
   */
   bool Translate(
-        const ON_3dVector&  delta
-        );
+	const ON_3dVector&  delta
+	);
 
   /*
   Description:
@@ -465,9 +465,9 @@ public:
   */
   bool Flip();
 
-// world plane coordinate system ON_Plane(ON_origin, ON_xaxis, ON_yaxis);
+// world plane coordinate system ON_Plane(ON_origin, ON_xaxis, ON_yaxis); 
 	const static
-	ON_Plane World_xy;
+	ON_Plane World_xy;	
 
 public:
   // origin of plane
@@ -521,7 +521,7 @@ public:
 #if defined(ON_DLL_TEMPLATE)
 
 // This stuff is here because of a limitation in the way Microsoft
-// handles templates and DLLs.  See Microsoft's knowledge base
+// handles templates and DLLs.  See Microsoft's knowledge base 
 // article ID Q168958 for details.
 #pragma warning( push )
 #pragma warning( disable : 4231 )
@@ -545,7 +545,7 @@ Parameters:
     but is too slow for hundreds of points.
   hull -[out]
     Equations of the sides of the convex hull are appended to
-    this list.
+    this list.  
     A point P is inside the hull if hull[i].ValueAt(P) <= 0 for
     every plane equation.
 Returns:
@@ -556,9 +556,9 @@ Returns:
   If >= 4, then the points are in a 3d convex hull.
 */
 ON_DECL
-int ON_Get3dConvexHull(
-          const ON_SimpleArray<ON_3dPoint> & points,
-          ON_SimpleArray<ON_PlaneEquation> & hull
-          );
+int ON_Get3dConvexHull( 
+	  const ON_SimpleArray<ON_3dPoint> & points, 
+	  ON_SimpleArray<ON_PlaneEquation> & hull 
+	  );
 
 #endif

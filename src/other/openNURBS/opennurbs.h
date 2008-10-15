@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -60,6 +60,7 @@
 #include "opennurbs_cylinder.h"       // simple 3d elliptical cylinder
 #include "opennurbs_cone.h"           // simple 3d right circular cone
 #include "opennurbs_sphere.h"         // simple 3d sphere
+#include "opennurbs_box.h"            // simple 3d box
 #include "opennurbs_torus.h"          // simple 3d torus
 #include "opennurbs_bezier.h"         // simple bezier and polynomial curves and surfaces
 #include "opennurbs_math.h"           // utilities for performing simple calculations
@@ -120,7 +121,6 @@
 #include "opennurbs_offsetsurface.h"  // ON_OffsetSurface definition
 #include "opennurbs_detail.h"         // ON_Detail definition
 #include "opennurbs_object_history.h"
-
 #include "opennurbs_extensions.h"
 
 #endif

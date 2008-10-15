@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2002 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -24,15 +24,15 @@
 ON_OBJECT_IMPLEMENT(ON_BrepVertex,ON_Point,"60B5DBC0-E660-11d3-BFE4-0010830122F0");
 
 ON_BrepVertex::ON_BrepVertex()
-              : m_vertex_index(-1),
-                m_tolerance(ON_UNSET_VALUE)
+	      : m_vertex_index(-1),
+		m_tolerance(ON_UNSET_VALUE)
 {
   memset(&m_vertex_user,0,sizeof(m_vertex_user));
 }
 
-ON_BrepVertex::ON_BrepVertex( int vertex_index )
-              : m_vertex_index(vertex_index),
-                m_tolerance(ON_UNSET_VALUE)
+ON_BrepVertex::ON_BrepVertex( int vertex_index ) 
+	      : m_vertex_index(vertex_index),
+		m_tolerance(ON_UNSET_VALUE)
 {
   memset(&m_vertex_user,0,sizeof(m_vertex_user));
 }
@@ -57,7 +57,7 @@ ON_BrepVertex& ON_BrepVertex::operator=(const ON_BrepVertex& src)
   return *this;
 }
 
-BOOL
+BOOL 
 ON_BrepVertex::IsValid( ON_TextLog* text_log ) const
 {
   if (m_vertex_index < 0)
@@ -73,14 +73,14 @@ ON_BrepVertex::IsValid( ON_TextLog* text_log ) const
     if ( ei < 0 )
     {
       if ( text_log )
-        text_log->Print("ON_BrepVertex m_ei[%d] = %d.  m_ei[] values should be >= 0\n",vei,ei);
+	text_log->Print("ON_BrepVertex m_ei[%d] = %d.  m_ei[] values should be >= 0\n",vei,ei);
       return false;
     }
   }
-  return true;
+  return ON_Point::IsValid(text_log);
 }
 
-void
+void 
 ON_BrepVertex::Dump( ON_TextLog& dump ) const
 {
   dump.Print("ON_BrepVertex[%d]: ",m_vertex_index);
@@ -122,20 +122,20 @@ ON_BrepVertex::EdgeCount() const
 ON_OBJECT_IMPLEMENT(ON_BrepEdge,ON_CurveProxy,"60B5DBC1-E660-11d3-BFE4-0010830122F0");
 
 ON_BrepEdge::ON_BrepEdge() : ON_CurveProxy(0),
-                         m_edge_index(-1),
-                         m_c3i(-1),
-                         m_tolerance(ON_UNSET_VALUE),
-                         m_brep(0)
+			 m_edge_index(-1),
+			 m_c3i(-1),
+			 m_tolerance(ON_UNSET_VALUE),
+			 m_brep(0)
 {
   memset(&m_edge_user,0,sizeof(m_edge_user));
   m_vi[0] = m_vi[1] = -1;
 }
 
 ON_BrepEdge::ON_BrepEdge(int edge_index ) : ON_CurveProxy(0),
-                         m_edge_index(edge_index),
-                         m_c3i(-1),
-                         m_tolerance(ON_UNSET_VALUE),
-                         m_brep(0)
+			 m_edge_index(edge_index),
+			 m_c3i(-1),
+			 m_tolerance(ON_UNSET_VALUE),
+			 m_brep(0)
 {
   memset(&m_edge_user,0,sizeof(m_edge_user));
   m_vi[0] = m_vi[1] = -1;
@@ -158,7 +158,7 @@ unsigned int ON_BrepEdge::SizeOf() const
 
 ON_BrepEdge& ON_BrepEdge::operator=(const ON_BrepEdge& src)
 {
-  if ( &src != this )
+  if ( &src != this ) 
   {
     // do not copy m_brep pointer
     ON_CurveProxy::operator=(src);
@@ -233,8 +233,8 @@ BOOL ON_BrepEdge::IsClosed() const
 {
   // This function must return true if ON_CurveProxy::IsClosed() is true.
   BOOL rc = ON_CurveProxy::IsClosed();
-  if ( 0 == rc
-       && m_vi[0] >= 0
+  if ( 0 == rc 
+       && m_vi[0] >= 0 
        && m_vi[0] == m_vi[1]
        && 0 != ProxyCurve()
        && ProxyCurveDomain() == ProxyCurve()->Domain()
@@ -250,9 +250,9 @@ BOOL ON_BrepEdge::IsClosed() const
     ON_3dPoint Q = PointAtEnd();
     ON_3dPoint V = v.point;
     double vtx_tol = v.m_tolerance;
-    if ( P.DistanceTo(Q) <= m_tolerance
-         && V.DistanceTo(P) <= vtx_tol
-         && V.DistanceTo(Q) <= vtx_tol )
+    if ( P.DistanceTo(Q) <= m_tolerance 
+	 && V.DistanceTo(P) <= vtx_tol
+	 && V.DistanceTo(Q) <= vtx_tol )
       rc = true;
   }
   return rc;
@@ -291,10 +291,10 @@ BOOL ON_BrepEdge::Reverse()
       ON_Curve* c3 = const_cast<ON_Curve*>(EdgeCurveOf());
       if ( c3 )
       {
-        rc = c3->Reverse();
-        edge_domain.Reverse();
-        c3->SetDomain(edge_domain);
-        SetProxyCurve(c3);
+	rc = c3->Reverse();
+	edge_domain.Reverse();
+	c3->SetDomain(edge_domain);
+	SetProxyCurve(c3);
       }
     }
   }
@@ -312,12 +312,12 @@ BOOL ON_BrepEdge::Reverse()
       const int tcount = m_brep->m_T.Count();
       int ti, eti;
       for ( eti = m_ti.Count()-1; eti >= 0; eti-- ) {
-        ti = m_ti[eti];
-        if ( ti >= 0 && ti < tcount )
-        {
-          ON_BrepTrim& trim = m_brep->m_T[ti];
-          trim.m_bRev3d = trim.m_bRev3d ? false : true;
-        }
+	ti = m_ti[eti];
+	if ( ti >= 0 && ti < tcount ) 
+	{
+	  ON_BrepTrim& trim = m_brep->m_T[ti];
+	  trim.m_bRev3d = trim.m_bRev3d ? false : true;
+	}
       }
     }
   }
@@ -325,8 +325,8 @@ BOOL ON_BrepEdge::Reverse()
 }
 
 bool ON_BrepEdge::IsSmoothManifoldEdge(
-                                       double angle_tolerance //ON_DEFAULT_ANGLE_TOLERANCE
-                                       ) const
+				       double angle_tolerance //ON_DEFAULT_ANGLE_TOLERANCE
+				       ) const
 
 {
   if (angle_tolerance < ON_ZERO_TOLERANCE) angle_tolerance = ON_ZERO_TOLERANCE;
@@ -346,7 +346,7 @@ bool ON_BrepEdge::IsSmoothManifoldEdge(
   double cos_tol = cos(angle_tolerance);
   double t = 0.0;
   double del = 1.0/(double)(count-1);
-
+ 
   for (int i=0; i<count-1; i++){
     double edge_param = Domain().ParameterAt(t);
     double trim_param;
@@ -389,47 +389,47 @@ bool ON_BrepEdge::IsSmoothManifoldEdge(
 ON_OBJECT_IMPLEMENT(ON_BrepTrim,ON_CurveProxy,"60B5DBC2-E660-11d3-BFE4-0010830122F0");
 
 ON_BrepTrim::ON_BrepTrim()
-              : m_trim_index(-1),
-                m_c2i(-1),
-                m_ei(-1),
-                m_bRev3d(false),
-                m_type(ON_BrepTrim::unknown),
-                m_iso(ON_Surface::not_iso),
-                m_li(-1),
-                m__legacy_2d_tol(ON_UNSET_VALUE),
-                m__legacy_3d_tol(ON_UNSET_VALUE),
-                m__legacy_flags(0),
-                m_brep(0)
+	      : m_trim_index(-1), 
+		m_c2i(-1), 
+		m_ei(-1), 
+		m_bRev3d(false), 
+		m_type(ON_BrepTrim::unknown), 
+		m_iso(ON_Surface::not_iso),
+		m_li(-1),
+		m__legacy_2d_tol(ON_UNSET_VALUE), 
+		m__legacy_3d_tol(ON_UNSET_VALUE),
+		m__legacy_flags(0),
+		m_brep(0)
 {
   memset(&m_trim_user,0,sizeof(m_trim_user));
-  m_vi[0] = m_vi[1] = -1;
+  m_vi[0] = m_vi[1] = -1; 
   m_tolerance[0] = m_tolerance[1] = ON_UNSET_VALUE;
-  m_pline.Reserve(4); // This is a stopgap fix to insures the memory
-                      // pool used for pline segments is the same as
-                      // the memory pool used for the rest of this brep.
+  m_pline.Reserve(4); // This is a stopgap fix to insures the memory 
+		      // pool used for pline segments is the same as
+		      // the memory pool used for the rest of this brep.
   //m_P[0] = ON_UNSET_POINT;
   //m_P[1] = ON_UNSET_POINT;
 }
 
-ON_BrepTrim::ON_BrepTrim(int trim_index)
-              : m_trim_index(trim_index),
-                m_c2i(-1),
-                m_ei(-1),
-                m_bRev3d(false),
-                m_type(ON_BrepTrim::unknown),
-                m_iso(ON_Surface::not_iso),
-                m_li(-1),
-                m__legacy_2d_tol(ON_UNSET_VALUE),
-                m__legacy_3d_tol(ON_UNSET_VALUE),
-                m__legacy_flags(0),
-                m_brep(0)
+ON_BrepTrim::ON_BrepTrim(int trim_index) 
+	      : m_trim_index(trim_index), 
+		m_c2i(-1), 
+		m_ei(-1), 
+		m_bRev3d(false), 
+		m_type(ON_BrepTrim::unknown), 
+		m_iso(ON_Surface::not_iso),
+		m_li(-1),
+		m__legacy_2d_tol(ON_UNSET_VALUE), 
+		m__legacy_3d_tol(ON_UNSET_VALUE),
+		m__legacy_flags(0),
+		m_brep(0)
 {
   memset(&m_trim_user,0,sizeof(m_trim_user));
-  m_vi[0] = m_vi[1] = -1;
+  m_vi[0] = m_vi[1] = -1; 
   m_tolerance[0] = m_tolerance[1] = ON_UNSET_VALUE;
-  m_pline.Reserve(4); // This is a stopgap fix to insures the memory
-                      // pool used for pline segments is the same as
-                      // the memory pool used for the rest of this brep.
+  m_pline.Reserve(4); // This is a stopgap fix to insures the memory 
+		      // pool used for pline segments is the same as
+		      // the memory pool used for the rest of this brep.
   //m_P[0] = ON_UNSET_POINT;
   //m_P[1] = ON_UNSET_POINT;
 }
@@ -446,7 +446,7 @@ unsigned int ON_BrepTrim::SizeOf() const
 
 ON_BrepTrim& ON_BrepTrim::operator=(const ON_BrepTrim& src)
 {
-  if ( &src != this )
+  if ( &src != this ) 
   {
     // do not copy m_brep pointer
     ON_CurveProxy::operator=(src);
@@ -484,7 +484,7 @@ ON_BrepLoop* ON_BrepTrim::Loop() const
   ON_BrepLoop* loop = 0;
   if ( m_brep && m_li >= 0 && m_li < m_brep->m_L.Count() )
     loop = &m_brep->m_L[m_li];
-  return loop;
+  return loop;  
 }
 
 ON_BrepFace* ON_BrepTrim::Face() const
@@ -504,7 +504,7 @@ ON_BrepEdge* ON_BrepTrim::Edge() const
   ON_BrepEdge* edge = 0;
   if ( m_brep && m_ei >= 0 && m_ei < m_brep->m_E.Count() )
     edge = &m_brep->m_E[m_ei];
-  return edge;
+  return edge;  
 }
 
 
@@ -529,13 +529,13 @@ BOOL ON_BrepTrim::IsValid( ON_TextLog* text_log ) const
     rc = false;
   }
 
-  if ( m_ei < 0 )
+  if ( m_ei < 0 ) 
   {
     if ( m_type != singular )
     {
       if ( text_log )
       {
-        text_log->Print("trim.m_ei = %d but trim.mtype != singular\n",m_ei);
+	text_log->Print("trim.m_ei = %d but trim.mtype != singular\n",m_ei);
       }
       rc = false;
     }
@@ -627,10 +627,10 @@ BOOL ON_BrepTrim::Reverse()
       ON_Curve* c2 = const_cast<ON_Curve*>(TrimCurveOf());
       if ( c2 )
       {
-        rc = c2->Reverse();
-        trim_domain.Reverse();
-        c2->SetDomain(trim_domain);
-        SetProxyCurve(c2);
+	rc = c2->Reverse();
+	trim_domain.Reverse();
+	c2->SetDomain(trim_domain);
+	SetProxyCurve(c2);
       }
     }
   }
@@ -657,19 +657,19 @@ BOOL ON_BrepTrim::Reverse()
 ON_OBJECT_IMPLEMENT(ON_BrepLoop,ON_Geometry,"60B5DBC3-E660-11d3-BFE4-0010830122F0");
 
 ON_BrepLoop::ON_BrepLoop()
-              : m_loop_index(-1),
-                m_type(ON_BrepLoop::unknown),
-                m_fi(-1),
-                m_brep(0)
+	      : m_loop_index(-1), 
+		m_type(ON_BrepLoop::unknown), 
+		m_fi(-1),
+		m_brep(0)
 {
   memset(&m_loop_user,0,sizeof(m_loop_user));
 }
 
-ON_BrepLoop::ON_BrepLoop(int loop_index)
-              : m_loop_index(loop_index),
-                m_type(ON_BrepLoop::unknown),
-                m_fi(-1),
-                m_brep(0)
+ON_BrepLoop::ON_BrepLoop(int loop_index) 
+	      : m_loop_index(loop_index), 
+		m_type(ON_BrepLoop::unknown), 
+		m_fi(-1),
+		m_brep(0)
 {
   memset(&m_loop_user,0,sizeof(m_loop_user));
 }
@@ -696,8 +696,8 @@ unsigned int ON_BrepLoop::SizeOf() const
 ON_BrepTrim* ON_BrepLoop::Trim( int lti ) const
 {
   ON_BrepTrim* trim = ( m_brep && lti >= 0 && lti < m_ti.Count() )
-                    ? m_brep->Trim(m_ti[lti])
-                    : 0;
+		    ? m_brep->Trim(m_ti[lti])
+		    : 0;
   return trim;
 }
 
@@ -708,7 +708,7 @@ int ON_BrepLoop::TrimCount() const
 
 ON_BrepLoop& ON_BrepLoop::operator=(const ON_BrepLoop& src)
 {
-  if ( &src != this )
+  if ( &src != this ) 
   {
     // do not copy m_brep pointer
     ON_Object::operator=(src);
@@ -739,34 +739,34 @@ BOOL ON_BrepLoop::IsValid( ON_TextLog* text_log ) const
     if ( m_ti.Count() < 1 )
     {
       if ( rc )
-        BadLoopMessage(m_loop_index,text_log);
+	BadLoopMessage(m_loop_index,text_log);
       if ( text_log )
-        text_log->Print("loop.m_ti[] is empty.\n");
+	text_log->Print("loop.m_ti[] is empty.\n");
       rc = false;
     }
     int i = m_type;
     if ( i < 0 || i > type_count )
     {
       if ( rc )
-        BadLoopMessage(m_loop_index,text_log);
+	BadLoopMessage(m_loop_index,text_log);
       if ( text_log )
-        text_log->Print("loop.m_type = %d is not a valid value.\n",i);
+	text_log->Print("loop.m_type = %d is not a valid value.\n",i);
       rc = false;
     }
     if ( m_fi < 0 )
     {
       if ( rc )
-        BadLoopMessage(m_loop_index,text_log);
+	BadLoopMessage(m_loop_index,text_log);
       if ( text_log )
-        text_log->Print("loop.m_fi = %d (should be >= 0 ).\n",m_fi);
+	text_log->Print("loop.m_fi = %d (should be >= 0 ).\n",m_fi);
       rc = false;
     }
     if ( !m_brep )
     {
       if ( rc )
-        BadLoopMessage(m_loop_index,text_log);
+	BadLoopMessage(m_loop_index,text_log);
       if ( text_log )
-        text_log->Print("loop.m_brep is NULL.\n");
+	text_log->Print("loop.m_brep is NULL.\n");
       rc = false;
     }
     if ( !rc && text_log )
@@ -778,8 +778,8 @@ BOOL ON_BrepLoop::IsValid( ON_TextLog* text_log ) const
 void ON_BrepLoop::Dump( ON_TextLog& dump ) const
 {
   dump.Print("ON_BrepLoop[%d]: m_fi = %d, m_type = %d m_ti.Count() = %d\n",
-             m_loop_index,m_fi,m_type,m_ti.Count()
-             );
+	     m_loop_index,m_fi,m_type,m_ti.Count()
+	     );
 }
 
 int ON_BrepLoop::IndexOfTrim( const ON_BrepTrim& trim ) const
@@ -801,28 +801,28 @@ int ON_BrepLoop::IndexOfTrim( const ON_BrepTrim& trim ) const
 ON_OBJECT_IMPLEMENT(ON_BrepFace,ON_SurfaceProxy,"60B5DBC4-E660-11d3-BFE4-0010830122F0");
 
 ON_BrepFace::ON_BrepFace() : ON_SurfaceProxy(0),
-                m_face_index(-1),
-                m_si(-1),
-                m_bRev(false),
-                m_face_material_channel(0),
-                m_render_mesh(0),
-                m_analysis_mesh(0),
-                m_preview_mesh(0),
-                m_brep(0)
+		m_face_index(-1), 
+		m_si(-1), 
+		m_bRev(false),
+		m_face_material_channel(0),
+		m_render_mesh(0),
+		m_analysis_mesh(0),
+		m_preview_mesh(0),
+		m_brep(0)
 {
   m_face_uuid = ON_nil_uuid;
   memset(&m_face_user,0,sizeof(m_face_user));
 }
 
 ON_BrepFace::ON_BrepFace(int face_index) : ON_SurfaceProxy(0),
-                m_face_index(face_index),
-                m_si(-1),
-                m_bRev(false),
-                m_face_material_channel(0),
-                m_render_mesh(0),
-                m_analysis_mesh(0),
-                m_preview_mesh(0),
-                m_brep(0)
+		m_face_index(face_index),
+		m_si(-1), 
+		m_bRev(false),
+		m_face_material_channel(0),
+		m_render_mesh(0),
+		m_analysis_mesh(0),
+		m_preview_mesh(0),
+		m_brep(0)
 {
   m_face_uuid = ON_nil_uuid;
   memset(&m_face_user,0,sizeof(m_face_user));
@@ -846,7 +846,7 @@ unsigned int ON_BrepFace::SizeOf() const
 
 ON_BrepFace& ON_BrepFace::operator=(const ON_BrepFace& src)
 {
-  if ( &src != this )
+  if ( &src != this ) 
   {
     // do not copy m_brep pointer
     ON_SurfaceProxy::operator=(src);
@@ -863,21 +863,21 @@ ON_BrepFace& ON_BrepFace::operator=(const ON_BrepFace& src)
     }
     if ( src.m_render_mesh ) {
       m_render_mesh = new ON_Mesh(*src.m_render_mesh);
-    }
+    }    
     if ( m_analysis_mesh ) {
       delete m_analysis_mesh;
       m_analysis_mesh = 0;
     }
     if ( src.m_analysis_mesh ) {
       m_analysis_mesh = new ON_Mesh(*src.m_analysis_mesh);
-    }
+    }    
     if ( m_preview_mesh ) {
       delete m_preview_mesh;
       m_preview_mesh = 0;
     }
     if ( src.m_preview_mesh ) {
       m_preview_mesh = new ON_Mesh(*src.m_preview_mesh);
-    }
+    }    
     //m_material_index = src.m_material_index;
   }
   return *this;
@@ -893,7 +893,7 @@ void ON_Brep::MemoryRelocate()
 {
   int i, count;
 
-  // The call to the base class MemoryRelocate() takes care of
+  // The call to the base class MemoryRelocate() takes care of 
   // updating user data back-pointers.
   ON_Geometry::MemoryRelocate();
 
@@ -950,7 +950,7 @@ ON_BrepLoop* ON_BrepFace::OuterLoop() const
     {
       if ( ON_BrepLoop::outer == m_brep->m_L[li].m_type  )
       {
-        return &m_brep->m_L[li];
+	return &m_brep->m_L[li];
       }
     }
   }
@@ -1047,26 +1047,26 @@ void ON_BrepFace::DestroyMesh( ON::mesh_type mt, bool bDeleteMesh )
 {
   switch(mt) {
   case ON::render_mesh:
-    if ( m_render_mesh )
+    if ( m_render_mesh ) 
     {
       if ( bDeleteMesh )
-        delete m_render_mesh;
+	delete m_render_mesh;
       m_render_mesh = 0;
     }
     break;
   case ON::analysis_mesh:
-    if (m_analysis_mesh)
+    if (m_analysis_mesh) 
     {
       if ( bDeleteMesh )
-        delete m_analysis_mesh;
+	delete m_analysis_mesh;
       m_analysis_mesh = 0;
     }
     break;
   case ON::preview_mesh:
-    if (m_preview_mesh)
+    if (m_preview_mesh) 
     {
       if ( bDeleteMesh )
-        delete m_preview_mesh;
+	delete m_preview_mesh;
       m_preview_mesh = 0;
     }
     break;
@@ -1186,24 +1186,24 @@ void ON_Brep::Initialize()
   m_bbox.Destroy();
 }
 
-ON_Brep* ON_Brep::New()
+ON_Brep* ON_Brep::New() 
 {
   // use instead of new ON_Brep()
-  // (When openNURBS is used as a Windows DLL,
+  // (When openNURBS is used as a Windows DLL, 
   // this forces the call to new to happen in the openNURBS DLL.)
   return new ON_Brep();
 }
 
-ON_Brep* ON_Brep::New(const ON_Brep& src)
+ON_Brep* ON_Brep::New(const ON_Brep& src) 
 {
   // use instead of new ON_Brep(const ON_Brep&)
-  // (When openNURBS is used as a Windows DLL,
+  // (When openNURBS is used as a Windows DLL, 
   // this forces the call to new to happen in the openNURBS DLL.)
   return new ON_Brep(src);
 }
 
 ON_Brep::ON_Brep()
-{
+{ 
   ON__SET__THIS__PTR(m_s_ON_Brep_ptr);
   Initialize();
 }
@@ -1216,7 +1216,7 @@ ON_Brep::ON_Brep(const ON_Brep& src) : ON_Geometry(src)
 }
 
 ON_Brep::~ON_Brep()
-{
+{ 
   DestroyMesh(ON::any_mesh,true);
   // everything is in array classes that destroy themselves.
 }
@@ -1353,7 +1353,7 @@ static void ON_BrepTransformSwapSrfHelper( ON_Brep& brep, ON_NurbsSurface* nurbs
   udholder.MoveUserDataFrom(*old_srf);
   udholder.MoveUserDataTo(*nurbs_srf,false);
   brep.m_S[si] = nurbs_srf;
-
+  
   // Update faces to use new surface.
   const int fcount = brep.m_F.Count();
   ON_BrepFace* f = brep.m_F.Array();
@@ -1364,7 +1364,7 @@ static void ON_BrepTransformSwapSrfHelper( ON_Brep& brep, ON_NurbsSurface* nurbs
       const bool bIsTransposed = f[fi].ProxySurfaceIsTransposed();
       f[fi].SetProxySurface(nurbs_srf);
       if (bIsTransposed)
-        f[fi].ON_SurfaceProxy::Transpose();
+	f[fi].ON_SurfaceProxy::Transpose();
     }
   }
 
@@ -1375,7 +1375,7 @@ BOOL ON_Brep::Transform( const ON_Xform& xform )
 {
   int i, count;
   BOOL rc = true;
-
+  
   TransformUserData(xform);
   DestroyRuntimeCache();
 
@@ -1397,74 +1397,74 @@ BOOL ON_Brep::Transform( const ON_Xform& xform )
   m_bbox.Destroy();
 
   count = m_C3.Count();
-  for ( i = 0; i < count; i++ )
+  for ( i = 0; i < count; i++ ) 
   {
-    if ( m_C3[i] )
+    if ( m_C3[i] ) 
     {
       if ( !m_C3[i]->Transform(xform) )
-        rc = false;
+	rc = false;
     }
   }
 
   count = m_S.Count();
   for ( i = 0; i < count; i++ ) {
-    if ( m_S[i] )
-
+    if ( m_S[i] ) 
+    
     {
       ON_NurbsSurface* nurbs_srf = 0;
       if ( !is_similarity )
       {
-        if (    1 == m_S[i]->Degree(0) // degree tests reduce calls to
-             && 1 == m_S[i]->Degree(1) // slow ON_PlaneSurface::Cast()
-             && 0 != ON_PlaneSurface::Cast(m_S[i]) )
-        {
-          nurbs_srf = ON_NurbsSurface::New();
-          if ( !m_S[i]->GetNurbForm(*nurbs_srf) )
-          {
-            delete nurbs_srf;
-            nurbs_srf = 0;
-          }
-          else if ( !nurbs_srf->Transform(xform) )
-          {
-            delete nurbs_srf;
-            nurbs_srf = 0;
-          }
-        }
+	if (    1 == m_S[i]->Degree(0) // degree tests reduce calls to
+	     && 1 == m_S[i]->Degree(1) // slow ON_PlaneSurface::Cast()
+	     && 0 != ON_PlaneSurface::Cast(m_S[i]) )
+	{
+	  nurbs_srf = ON_NurbsSurface::New();
+	  if ( !m_S[i]->GetNurbForm(*nurbs_srf) )
+	  {
+	    delete nurbs_srf;
+	    nurbs_srf = 0;
+	  }
+	  else if ( !nurbs_srf->Transform(xform) )
+	  {
+	    delete nurbs_srf;
+	    nurbs_srf = 0;
+	  }
+	}
       }
 
       if ( !m_S[i]->Transform(xform) )
       {
-        if ( nurbs_srf )
-        {
-          ON_BrepTransformSwapSrfHelper(*this,nurbs_srf,i);
-          nurbs_srf = 0;
-        }
-        else
-        {
-          rc = false;
-        }
+	if ( nurbs_srf )
+	{
+	  ON_BrepTransformSwapSrfHelper(*this,nurbs_srf,i);
+	  nurbs_srf = 0;
+	}
+	else
+	{
+	  rc = false;
+	}
       }
       else if ( nurbs_srf )
       {
-        // make sure transformation was good
-        ON_Interval u = nurbs_srf->Domain(0);
-        ON_Interval v = nurbs_srf->Domain(1);
-        for ( int ui = 0; ui < 2 && nurbs_srf; ui++ ) for (int vi = 0; vi < 2 && nurbs_srf; vi++)
-        {
-          ON_3dPoint P = nurbs_srf->PointAt(u[ui],v[vi]);
-          ON_3dPoint Q = m_S[i]->PointAt(u[ui],v[vi]);
-          if ( P.DistanceTo(Q) > ON_ZERO_TOLERANCE )
-          {
-            ON_BrepTransformSwapSrfHelper(*this,nurbs_srf,i);
-            nurbs_srf = 0;
-            break;
-          }
-        }
-        if ( nurbs_srf )
-        {
-          delete nurbs_srf;
-          nurbs_srf = 0;
-        }
+	// make sure transformation was good
+	ON_Interval u = nurbs_srf->Domain(0);
+	ON_Interval v = nurbs_srf->Domain(1);
+	for ( int ui = 0; ui < 2 && nurbs_srf; ui++ ) for (int vi = 0; vi < 2 && nurbs_srf; vi++)
+	{
+	  ON_3dPoint P = nurbs_srf->PointAt(u[ui],v[vi]);
+	  ON_3dPoint Q = m_S[i]->PointAt(u[ui],v[vi]);
+	  if ( P.DistanceTo(Q) > ON_ZERO_TOLERANCE )
+	  {
+	    ON_BrepTransformSwapSrfHelper(*this,nurbs_srf,i);
+	    nurbs_srf = 0;
+	    break;
+	  }
+	}
+	if ( nurbs_srf )
+	{
+	  delete nurbs_srf;
+	  nurbs_srf = 0;
+	}
       }
     }
   }
@@ -1481,7 +1481,7 @@ BOOL ON_Brep::Transform( const ON_Xform& xform )
   }
 
   count = m_F.Count();
-  for ( i = 0; i < count; i++ )
+  for ( i = 0; i < count; i++ ) 
   {
     ON_BrepFace& face = m_F[i];
     face.TransformUserData(xform);
@@ -1495,20 +1495,20 @@ BOOL ON_Brep::Transform( const ON_Xform& xform )
     {
       face.m_bbox = srf->BoundingBox();
       if ( face.m_face_index != -1 )
-        m_bbox.Union( face.m_bbox );
+	m_bbox.Union( face.m_bbox );
     }
 
     // 12 May 2003 Dale Lear - RR 10528
-    //     Use surface evaluation to update rendermesh when
+    //     Use surface evaluation to update rendermesh when 
     //     calling ON_Mesh::Transform() will map mesh normals
     //     to some thing different that the "true" surface
     //     normal.
     bool bEvMesh = ( fabs(det) <= ON_SQRT_EPSILON
-                     || xform[3][0] != 0.0
-                     || xform[3][1] != 0.0
-                     || xform[3][2] != 0.0
-                     || xform[3][3] != 1.0
-                     );
+		     || xform[3][0] != 0.0
+		     || xform[3][1] != 0.0
+		     || xform[3][2] != 0.0
+		     || xform[3][3] != 1.0
+		     );
     if ( 0 == srf )
       bEvMesh = false;
 
@@ -1516,35 +1516,35 @@ BOOL ON_Brep::Transform( const ON_Xform& xform )
     {
       if ( bEvMesh && face.m_render_mesh->EvaluateMeshGeometry(*srf) )
       {
-        if ( face.m_bRev )
-        {
-          // 29 September 2003 Dale Lear
-          //     Normals on render meshes (and face orientations)
-          //     take face.m_bRev into account so that two sided
-          //     materials work as expected.  EvaluateMeshGeometry()
-          //     does not take face.m_bRev into account, so we need
-          //     to reverse the face normals here.
-          int ni, ncnt = face.m_render_mesh->m_N.Count();
-          for ( ni = 0; ni < ncnt; ni++ )
-          {
-            face.m_render_mesh->m_N[ni].Reverse();
-          }
-        }
+	if ( face.m_bRev )
+	{
+	  // 29 September 2003 Dale Lear
+	  //     Normals on render meshes (and face orientations)
+	  //     take face.m_bRev into account so that two sided
+	  //     materials work as expected.  EvaluateMeshGeometry()
+	  //     does not take face.m_bRev into account, so we need
+	  //     to reverse the face normals here.
+	  int ni, ncnt = face.m_render_mesh->m_N.Count();
+	  for ( ni = 0; ni < ncnt; ni++ )
+	  {
+	    face.m_render_mesh->m_N[ni].Reverse();
+	  }
+	}
       }
       else
-        face.m_render_mesh->Transform(xform);
+	face.m_render_mesh->Transform(xform);
     }
 
     if ( 0 != face.m_analysis_mesh )
     {
       if ( !bEvMesh || !face.m_analysis_mesh->EvaluateMeshGeometry(*srf) )
-        face.m_analysis_mesh->Transform(xform);
+	face.m_analysis_mesh->Transform(xform);
     }
 
     if ( 0 != face.m_preview_mesh )
     {
       if ( !bEvMesh || !face.m_preview_mesh->EvaluateMeshGeometry(*srf) )
-        face.m_preview_mesh->Transform(xform);
+	face.m_preview_mesh->Transform(xform);
     }
   }
 
@@ -1554,7 +1554,7 @@ BOOL ON_Brep::Transform( const ON_Xform& xform )
 /////////////////////////////////////////////////////////////////
 // ON_Brep Creation Interface
 
-int
+int 
 ON_Brep::AddTrimCurve( ON_Curve* pC )
 {
   int c2i = -1;
@@ -1585,7 +1585,7 @@ ON_Brep::AddTrimCurve( ON_Curve* pC )
   return c2i;
 }
 
-int
+int 
 ON_Brep::AddEdgeCurve( ON_Curve* pC )
 {
   int c3i = -1;
@@ -1601,7 +1601,7 @@ ON_Brep::AddEdgeCurve( ON_Curve* pC )
       pC->ChangeDimension(3);
       dim = pC->Dimension();
     }
-
+    
     if ( 3 == dim )
     {
       c3i = m_C3.Count();
@@ -1611,11 +1611,11 @@ ON_Brep::AddEdgeCurve( ON_Curve* pC )
   return c3i;
 }
 
-int
+int 
 ON_Brep::AddSurface( ON_Surface* pS )
 {
   int si = -1;
-  if ( pS && pS->Dimension() == 3 )
+  if ( pS && pS->Dimension() == 3 ) 
   {
     si = m_S.Count();
     m_S.Append(pS);
@@ -1625,7 +1625,7 @@ ON_Brep::AddSurface( ON_Surface* pS )
   return si;
 }
 
-ON_BrepVertex&
+ON_BrepVertex& 
 ON_Brep::NewVertex()
 {
   int vi = m_V.Count();
@@ -1638,7 +1638,7 @@ ON_Brep::NewVertex()
   return vertex;
 }
 
-ON_BrepVertex&
+ON_BrepVertex& 
 ON_Brep::NewVertex( ON_3dPoint vertex_point, double vertex_tolerance )
 {
   ON_BrepVertex& vertex = NewVertex();
@@ -1647,7 +1647,7 @@ ON_Brep::NewVertex( ON_3dPoint vertex_point, double vertex_tolerance )
   return vertex;
 }
 
-ON_BrepEdge&
+ON_BrepEdge& 
 ON_Brep::NewEdge( int c3i )
 {
   int ei = m_E.Count();
@@ -1655,7 +1655,7 @@ ON_Brep::NewEdge( int c3i )
   edge.m_tolerance = ON_UNSET_VALUE;
   edge.m_edge_index = ei;
   edge.m_c3i = c3i;
-  if ( edge.m_c3i >= 0 && edge.m_c3i < m_C3.Count() )
+  if ( edge.m_c3i >= 0 && edge.m_c3i < m_C3.Count() ) 
   {
     edge.SetProxyCurve(m_C3[edge.m_c3i]);
   }
@@ -1663,10 +1663,10 @@ ON_Brep::NewEdge( int c3i )
   return edge;
 }
 
-ON_BrepEdge&
-ON_Brep::NewEdge( ON_BrepVertex& v0, ON_BrepVertex& v1,
-                  int c3i, const ON_Interval* edomain,
-                  double edge_tolerance )
+ON_BrepEdge& 
+ON_Brep::NewEdge( ON_BrepVertex& v0, ON_BrepVertex& v1, 
+		  int c3i, const ON_Interval* edomain,
+		  double edge_tolerance )
 {
   ON_BrepEdge& edge = NewEdge(c3i);
   edge.m_vi[0] = v0.m_vertex_index;
@@ -1683,7 +1683,7 @@ ON_Brep::NewEdge( ON_BrepVertex& v0, ON_BrepVertex& v1,
   return edge;
 }
 
-bool ON_Brep::SetEdgeCurve(
+bool ON_Brep::SetEdgeCurve( 
   ON_BrepEdge& edge,
   int c3_index,
   const ON_Interval* sub_domain
@@ -1702,16 +1702,16 @@ bool ON_Brep::SetEdgeCurve(
     if ( !sub_domain || (sub_domain->IsIncreasing() && curve_domain.Includes(*sub_domain)) )
     {
       edge.m_c3i = c3_index;
-      edge.SetProxyCurve( m_C3[c3_index],
-                          (sub_domain) ? *sub_domain : curve_domain
-                          );
+      edge.SetProxyCurve( m_C3[c3_index], 
+			  (sub_domain) ? *sub_domain : curve_domain
+			  );
       rc = true;
     }
   }
   return rc;
 }
 
-bool ON_Brep::SetTrimCurve(
+bool ON_Brep::SetTrimCurve( 
   ON_BrepTrim& trim,
   int c2_index,
   const ON_Interval* sub_domain
@@ -1740,7 +1740,7 @@ bool ON_Brep::SetTrimCurve(
   return rc;
 }
 
-ON_BrepTrim&
+ON_BrepTrim& 
 ON_Brep::NewTrim( int c2i )
 {
   m_is_solid = 0;
@@ -1759,10 +1759,10 @@ ON_Brep::NewTrim( int c2i )
   trim.m__legacy_2d_tol = ON_UNSET_VALUE;
   trim.m__legacy_3d_tol = ON_UNSET_VALUE;
   trim.m__legacy_flags = 0;
-  const ON_Curve* c2 = (c2i >= 0 && c2i < m_C2.Count())
-                     ? m_C2[c2i]
-                     : 0;
-  if ( c2 )
+  const ON_Curve* c2 = (c2i >= 0 && c2i < m_C2.Count()) 
+		     ? m_C2[c2i] 
+		     : 0;
+  if ( c2 ) 
   {
     trim.SetProxyCurve( c2 );
     trim.m_pbox = c2->BoundingBox();
@@ -1773,7 +1773,7 @@ ON_Brep::NewTrim( int c2i )
   return trim;
 }
 
-ON_BrepTrim&
+ON_BrepTrim& 
 ON_Brep::NewTrim( ON_BrepEdge& edge, BOOL bRev3d, int c2i )
 {
   m_is_solid = 0;
@@ -1787,7 +1787,7 @@ ON_Brep::NewTrim( ON_BrepEdge& edge, BOOL bRev3d, int c2i )
 }
 
 
-ON_BrepTrim&
+ON_BrepTrim& 
 ON_Brep::NewTrim( ON_BrepEdge& edge, BOOL bRev3d, ON_BrepLoop& loop, int c2i )
 {
   m_is_solid = 0;
@@ -1803,12 +1803,12 @@ ON_Brep::NewTrim( ON_BrepEdge& edge, BOOL bRev3d, ON_BrepLoop& loop, int c2i )
       ON_BoundingBox c2_bbox;
       if ( c2->GetBoundingBox(c2_bbox) )
       {
-        c2_bbox.m_min.z = 0.0;
-        c2_bbox.m_max.z = 0.0;
-        if ( loop.m_ti.Count() == 1 )
-          loop.m_pbox = c2_bbox;
-        else
-          loop.m_pbox.Union(c2_bbox);
+	c2_bbox.m_min.z = 0.0;
+	c2_bbox.m_max.z = 0.0;
+	if ( loop.m_ti.Count() == 1 )
+	  loop.m_pbox = c2_bbox;
+	else
+	  loop.m_pbox.Union(c2_bbox);
       }
     }
   }
@@ -1829,7 +1829,7 @@ ON_Brep::NewTrim( ON_BrepEdge& edge, BOOL bRev3d, ON_BrepLoop& loop, int c2i )
     ON_BrepTrim& other_trim = m_T[edge.m_ti[0]];
     if ( other_trim.m_li == loop.m_loop_index )
       trim_type = ON_BrepTrim::seam;
-    else
+    else 
       trim_type = ON_BrepTrim::mated;
     trim.m_type = trim_type;
     other_trim.m_type = trim_type;
@@ -1843,9 +1843,9 @@ ON_Brep::NewTrim( ON_BrepEdge& edge, BOOL bRev3d, ON_BrepLoop& loop, int c2i )
       ON_BrepTrim& other_trim = m_T[edge.m_ti[eti]];
       if ( other_trim.m_li == loop.m_loop_index )
       {
-        other_trim.m_type = ON_BrepTrim::seam;
-        trim_type = ON_BrepTrim::seam;
-        break;
+	other_trim.m_type = ON_BrepTrim::seam;
+	trim_type = ON_BrepTrim::seam;
+	break;
       }
     }
     trim.m_type = trim_type;
@@ -1854,7 +1854,7 @@ ON_Brep::NewTrim( ON_BrepEdge& edge, BOOL bRev3d, ON_BrepLoop& loop, int c2i )
 }
 
 
-ON_BrepTrim&
+ON_BrepTrim& 
 ON_Brep::NewTrim( BOOL bRev3d, ON_BrepLoop& loop, int c2i )
 {
   m_is_solid = 0;
@@ -1870,12 +1870,12 @@ ON_Brep::NewTrim( BOOL bRev3d, ON_BrepLoop& loop, int c2i )
       ON_BoundingBox c2_bbox;
       if ( c2->GetBoundingBox(c2_bbox) )
       {
-        c2_bbox.m_min.z = 0.0;
-        c2_bbox.m_max.z = 0.0;
-        if ( loop.m_ti.Count() == 1 )
-          loop.m_pbox = c2_bbox;
-        else
-          loop.m_pbox.Union( c2_bbox );
+	c2_bbox.m_min.z = 0.0;
+	c2_bbox.m_max.z = 0.0;
+	if ( loop.m_ti.Count() == 1 )
+	  loop.m_pbox = c2_bbox;
+	else
+	  loop.m_pbox.Union( c2_bbox );
       }
     }
   }
@@ -1930,7 +1930,7 @@ void ON_Brep::Append( const ON_Brep& b )
       obj = s->Duplicate();
       s = ON_Surface::Cast(obj);
       if ( !s )
-        delete obj;
+	delete obj;
     }
     m_S.Append(s);
   }
@@ -1940,7 +1940,7 @@ void ON_Brep::Append( const ON_Brep& b )
       obj = c->Duplicate();
       c = ON_Curve::Cast(obj);
       if ( !c )
-        delete obj;
+	delete obj;
     }
     m_C2.Append(c);
   }
@@ -1950,7 +1950,7 @@ void ON_Brep::Append( const ON_Brep& b )
       obj = c->Duplicate();
       c = ON_Curve::Cast(obj);
       if ( !c )
-        delete obj;
+	delete obj;
     }
     m_C3.Append(c);
   }
@@ -1972,18 +1972,18 @@ void ON_Brep::Append( const ON_Brep& b )
     jcnt = vertex.m_ei.Count();
     for ( j = 0; j < jcnt; j++ ) {
       if ( vertex.m_ei[j] >=0 )
-        vertex.m_ei[j] += ecount0;
+	vertex.m_ei[j] += ecount0;
     }
   }
 
-  for ( i = 0; i < ecount1; i++ )
+  for ( i = 0; i < ecount1; i++ ) 
   {
     ON_BrepEdge& edge = m_E[ecount0+i];
     if ( edge.m_edge_index >= 0 )
       edge.m_edge_index += ecount0;
     else
       edge.m_edge_index = -1;
-    if ( edge.m_c3i >= 0 )
+    if ( edge.m_c3i >= 0 ) 
       edge.m_c3i += c3count0;
     if ( edge.m_vi[0] >= 0 )
       edge.m_vi[0] += vcount0;
@@ -1992,12 +1992,12 @@ void ON_Brep::Append( const ON_Brep& b )
     jcnt = edge.m_ti.Count();
     for ( j = 0; j < jcnt; j++ ) {
       if ( edge.m_ti[j] >= 0 )
-        edge.m_ti[j] += tcount0;
+	edge.m_ti[j] += tcount0;
     }
     edge.m_brep = this;
     if (edge.m_c3i >= 0)
       edge.SetProxyCurve( m_C3[edge.m_c3i], b.m_E[i].ProxyCurveDomain() );
-    else
+    else 
       edge.SetProxyCurve( 0, b.m_E[i].ProxyCurveDomain() );
     if ( b.m_E[i].ProxyCurveIsReversed() != edge.ProxyCurveIsReversed() )
       edge.ON_CurveProxy::Reverse();
@@ -2023,14 +2023,14 @@ void ON_Brep::Append( const ON_Brep& b )
       trim.m_li += lcount0;
     if (trim.m_c2i >= 0)
       trim.SetProxyCurve( m_C2[trim.m_c2i], b.m_T[i].ProxyCurveDomain() );
-    else
+    else 
       trim.SetProxyCurve( 0, b.m_T[i].ProxyCurveDomain() );
     if ( b.m_T[i].ProxyCurveIsReversed() != trim.ProxyCurveIsReversed() )
       trim.ON_CurveProxy::Reverse();
     trim.SetDomain( b.m_T[i].Domain() );
   }
 
-  for ( i = 0; i < lcount1; i++ )
+  for ( i = 0; i < lcount1; i++ ) 
   {
     ON_BrepLoop& loop = m_L[lcount0+i];
     if ( loop.m_loop_index >= 0 )
@@ -2040,7 +2040,7 @@ void ON_Brep::Append( const ON_Brep& b )
     jcnt = loop.m_ti.Count();
     for ( j = 0; j < jcnt; j++ ) {
       if ( loop.m_ti[j] >= 0)
-        loop.m_ti[j] += tcount0;
+	loop.m_ti[j] += tcount0;
     }
     if ( loop.m_fi >= 0 )
       loop.m_fi += fcount0;
@@ -2056,7 +2056,7 @@ void ON_Brep::Append( const ON_Brep& b )
     jcnt = face.m_li.Count();
     for ( j = 0; j < jcnt; j++ ) {
       if ( face.m_li[j] >= 0 )
-        face.m_li[j] += lcount0;
+	face.m_li[j] += lcount0;
     }
     if ( face.m_si >= 0 )
       face.m_si += scount0;
@@ -2076,7 +2076,7 @@ void ON_Brep::Append( const ON_Brep& b )
   return;
 }
 
-ON_BrepLoop&
+ON_BrepLoop& 
 ON_Brep::NewLoop( ON_BrepLoop::TYPE looptype )
 {
   m_is_solid = 0;
@@ -2090,7 +2090,7 @@ ON_Brep::NewLoop( ON_BrepLoop::TYPE looptype )
   return loop;
 }
 
-ON_BrepLoop&
+ON_BrepLoop& 
 ON_Brep::NewLoop( ON_BrepLoop::TYPE looptype, ON_BrepFace& face )
 {
   m_is_solid = 0;
@@ -2098,7 +2098,7 @@ ON_Brep::NewLoop( ON_BrepLoop::TYPE looptype, ON_BrepFace& face )
   loop.m_fi = face.m_face_index;
   if ( ON_BrepLoop::outer == looptype )
   {
-    // the index of the outer loop is always
+    // the index of the outer loop is always 
     // in face.m_li[0]
     face.m_li.Insert(0,loop.m_loop_index);
   }
@@ -2208,15 +2208,15 @@ ON_Brep::SetTrimIsoFlags( ON_BrepTrim& trim )
       const ON_Surface* pS = m_F[fi].SurfaceOf();
       if ( pS )
       {
-        const ON_Curve* pC = (trim.m_c2i >= 0 && trim.m_c2i < m_C2.Count())
-                           ? m_C2[trim.m_c2i]
-                           : 0;
-        if ( pC )
-        {
-          ON_Interval PD = trim.ProxyCurveDomain();
-          trim.m_iso = pS->IsIsoparametric( *pC, &PD);
-          rc = true;
-        }
+	const ON_Curve* pC = (trim.m_c2i >= 0 && trim.m_c2i < m_C2.Count()) 
+			   ? m_C2[trim.m_c2i]
+			   : 0;
+	if ( pC ) 
+	{
+	  ON_Interval PD = trim.ProxyCurveDomain(); 
+	  trim.m_iso = pS->IsIsoparametric( *pC, &PD);
+	  rc = true;
+	}
       }
     }
   }
@@ -2267,40 +2267,40 @@ ON_BrepTrim::TYPE ON_Brep::TrimType( const ON_BrepTrim& trim, BOOL bLazy ) const
   ON_BrepTrim::TYPE trim_type = bLazy ? trim.m_type : ON_BrepTrim::unknown;
   int eti, other_ti;
 
-  if ( trim_type == ON_BrepTrim::unknown && trim.m_li >= 0 && trim.m_li < m_L.Count() )
+  if ( trim_type == ON_BrepTrim::unknown && trim.m_li >= 0 && trim.m_li < m_L.Count() ) 
   {
     const ON_BrepLoop& loop = m_L[trim.m_li];
     if ( loop.m_type == ON_BrepLoop::ptonsrf )
       trim_type = ON_BrepTrim::ptonsrf;
     else if (loop.m_type == ON_BrepLoop::crvonsrf )
       trim_type = ON_BrepTrim::crvonsrf;
-    else if ( trim.m_ei == -1 )
+    else if ( trim.m_ei == -1 ) 
     {
       trim_type = ON_BrepTrim::singular;
     }
-    else if ( trim.m_ei >= 0 && trim.m_ei < m_E.Count() )
+    else if ( trim.m_ei >= 0 && trim.m_ei < m_E.Count() ) 
     {
       const ON_BrepEdge& edge = m_E[trim.m_ei];
-      if ( edge.m_ti.Count() == 1 && edge.m_ti[0] == trim.m_trim_index )
+      if ( edge.m_ti.Count() == 1 && edge.m_ti[0] == trim.m_trim_index ) 
       {
-        trim_type = ON_BrepTrim::boundary;
+	trim_type = ON_BrepTrim::boundary;
       }
-      else if ( edge.m_ti.Count() > 1 )
+      else if ( edge.m_ti.Count() > 1 ) 
       {
-        trim_type = ON_BrepTrim::mated;
-        // check for seam
-        for ( eti = 0; eti < edge.m_ti.Count(); eti++ )
-        {
-          other_ti = edge.m_ti[eti];
-          if ( other_ti != trim.m_trim_index && other_ti >= 0 && other_ti < m_T.Count() )
-          {
-            if ( m_T[other_ti].m_li == trim.m_li )
-            {
-              trim_type = ON_BrepTrim::seam;
-              break;
-            }
-          }
-        }
+	trim_type = ON_BrepTrim::mated;
+	// check for seam
+	for ( eti = 0; eti < edge.m_ti.Count(); eti++ ) 
+	{
+	  other_ti = edge.m_ti[eti];
+	  if ( other_ti != trim.m_trim_index && other_ti >= 0 && other_ti < m_T.Count() ) 
+	  {
+	    if ( m_T[other_ti].m_li == trim.m_li ) 
+	    {
+	      trim_type = ON_BrepTrim::seam;
+	      break;
+	    }
+	  }
+	}
       }
     }
   }
@@ -2317,15 +2317,15 @@ ON_Brep::SetTrimTypeFlags( ON_BrepTrim& trim, BOOL bLazy )
 
 bool
 ON_Brep::GetTrim2dStart(int trim_index,
-                        ON_2dPoint& P
-                        ) const
+			ON_2dPoint& P
+			) const
 
 {
   if (trim_index < 0 || trim_index >= m_T.Count())
     return false;
   const ON_BrepTrim& trim = m_T[trim_index];
   ON_3dPoint pp;
-  if (!trim.EvPoint(trim.Domain()[0], pp))
+  if (!trim.EvPoint(trim.Domain()[0], pp)) 
     return false;
   P = pp;
   return true;
@@ -2333,8 +2333,8 @@ ON_Brep::GetTrim2dStart(int trim_index,
 
 bool
 ON_Brep::GetTrim2dEnd(int trim_index,
-                        ON_2dPoint& P
-                        ) const
+			ON_2dPoint& P
+			) const
 
 {
   if (trim_index < 0 || trim_index >= m_T.Count())
@@ -2349,8 +2349,8 @@ ON_Brep::GetTrim2dEnd(int trim_index,
 
 bool
 ON_Brep::GetTrim3dStart(int trim_index,
-                        ON_3dPoint& P
-                        ) const
+			ON_3dPoint& P
+			) const
 {
   const ON_Surface* srf = 0;
   ON_3dPoint uv;
@@ -2362,10 +2362,10 @@ ON_Brep::GetTrim3dStart(int trim_index,
       const int fi = m_L[trim.m_li].m_fi;
       if ( fi >= 0 && fi < m_F.Count() )
       {
-        if ( trim.Evaluate(trim.Domain()[0],0,3,&uv.x) )
-        {
-          srf = m_F[fi].SurfaceOf();
-        }
+	if ( trim.Evaluate(trim.Domain()[0],0,3,&uv.x) )
+	{
+	  srf = m_F[fi].SurfaceOf();
+	}
       }
     }
   }
@@ -2374,8 +2374,8 @@ ON_Brep::GetTrim3dStart(int trim_index,
 
 bool
 ON_Brep::GetTrim3dEnd(int trim_index,
-                        ON_3dPoint& P
-                        ) const
+			ON_3dPoint& P
+			) const
 
 {
   const ON_Surface* srf = 0;
@@ -2388,10 +2388,10 @@ ON_Brep::GetTrim3dEnd(int trim_index,
       const int fi = m_L[trim.m_li].m_fi;
       if ( fi >= 0 && fi < m_F.Count() )
       {
-        if ( trim.Evaluate(trim.Domain()[1],0,3,&uv.x) )
-        {
-          srf = m_F[fi].SurfaceOf();
-        }
+	if ( trim.Evaluate(trim.Domain()[1],0,3,&uv.x) )
+	{
+	  srf = m_F[fi].SurfaceOf();
+	}
       }
     }
   }
@@ -2399,7 +2399,7 @@ ON_Brep::GetTrim3dEnd(int trim_index,
 }
 
 
-ON_BrepLoop::TYPE
+ON_BrepLoop::TYPE 
 ON_Brep::ComputeLoopType( const ON_BrepLoop& loop ) const
 {
   // This function must always compute the type from the
@@ -2433,27 +2433,27 @@ ON_Brep::ComputeLoopType( const ON_BrepLoop& loop ) const
   const ON_2dPoint basePt( srf_domain[0].ParameterAt(0.5), srf_domain[1].ParameterAt(0.5) );
 
   const int trim_count = loop.m_ti.Count();
-  for ( lti = 0; lti < trim_count; lti++ )
+  for ( lti = 0; lti < trim_count; lti++ ) 
   {
     ti = loop.m_ti[lti];
     const ON_BrepTrim& trim = m_T[ti];
     p0 = trim.PointAtStart();
     u_tol0 = trim.m_tolerance[0];
     v_tol0 = trim.m_tolerance[1];
-    if ( !lti )
+    if ( !lti ) 
     {
       loop_start = p0;
       loop_start_utol = trim.m_tolerance[0];
       loop_start_vtol = trim.m_tolerance[1];
     }
-    else
+    else 
     {
       d = fabs(p0.x-p1.x);
       if ( d > utol0 + trim.m_tolerance[0] )
-        ugap_count++;
+	ugap_count++;
       d = fabs(p0.y-p1.y);
       if ( d > vtol0 + trim.m_tolerance[1] )
-        vgap_count++;
+	vgap_count++;
     }
     p1 = c2->PointAtEnd();
   }
@@ -2471,7 +2471,7 @@ ON_Brep::IsValidTrim( int trim_index, ON_TextLog* text_log ) const
     if ( text_log )
     {
       text_log->Print("brep trim_index = %d (should be >=0 and <%d=brep.m_T.Count()).\n",
-                      trim_index, m_T.Count());
+		      trim_index, m_T.Count());
     }
     return false;
   }
@@ -2483,7 +2483,7 @@ ON_Brep::IsValidTrim( int trim_index, ON_TextLog* text_log ) const
       text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
       text_log->PushIndent();
       text_log->Print("trim.m_trim_index = %d (should be %d).\n",
-                       trim.m_trim_index, trim_index );
+		       trim.m_trim_index, trim_index );
       text_log->PopIndent();
     }
     return false;
@@ -2574,7 +2574,7 @@ ON_Brep::IsValidTrim( int trim_index, ON_TextLog* text_log ) const
       text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
       text_log->PushIndent();
       text_log->Print("trim.Domain() = (%g,%g) is not included in brep.m_C2[trim.m_c2i=%d]->Domain() = (%g,%g)\n",
-                      trim_domain[0], trim_domain[1], trim.m_c2i, c2_domain[0], c2_domain[1] );
+		      trim_domain[0], trim_domain[1], trim.m_c2i, c2_domain[0], c2_domain[1] );
       text_log->PopIndent();
     }
     return false;
@@ -2588,7 +2588,7 @@ ON_Brep::IsValidTrim( int trim_index, ON_TextLog* text_log ) const
       text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
       text_log->PushIndent();
       text_log->Print("trim.m_vi[0] = %d (should be >= 0 and < %d=brep.m_V.Count()).\n",
-                       trim_index, vi0, m_V.Count() );
+		       trim_index, vi0, m_V.Count() );
       text_log->PopIndent();
     }
     return false;
@@ -2600,24 +2600,24 @@ ON_Brep::IsValidTrim( int trim_index, ON_TextLog* text_log ) const
       text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
       text_log->PushIndent();
       text_log->Print("trim.m_vi[1] = %d (should be >= 0 and < %d=brep.m_V.Count()).\n",
-                       trim_index, vi1, m_V.Count() );
+		       trim_index, vi1, m_V.Count() );
       text_log->PopIndent();
     }
     return false;
   }
   const int ei = trim.m_ei;
   int trim_eti = -1;
-  if ( trim.m_type == ON_BrepTrim::singular )
+  if ( trim.m_type == ON_BrepTrim::singular ) 
   {
     // singular trim - no edge and 3d v0 = 3d v1
     if ( ei != -1 )
     {
       if ( text_log )
       {
-        text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
-        text_log->PushIndent();
-        text_log->Print("trim.m_type = singular but trim.m_ei = %d (should be -1)\n",ei);
-        text_log->PopIndent();
+	text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
+	text_log->PushIndent();
+	text_log->Print("trim.m_type = singular but trim.m_ei = %d (should be -1)\n",ei);
+	text_log->PopIndent();
       }
       return false;
     }
@@ -2625,11 +2625,11 @@ ON_Brep::IsValidTrim( int trim_index, ON_TextLog* text_log ) const
     {
       if ( text_log )
       {
-        text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
-        text_log->PushIndent();
-        text_log->Print("trim.m_type = singular but trim.m_vi[] = [%d,%d] (the m_vi[] values should be equal).\n",
-                        vi0,vi1);
-        text_log->PopIndent();
+	text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
+	text_log->PushIndent();
+	text_log->Print("trim.m_type = singular but trim.m_vi[] = [%d,%d] (the m_vi[] values should be equal).\n",
+			vi0,vi1);
+	text_log->PopIndent();
       }
       return false;
     }
@@ -2637,11 +2637,11 @@ ON_Brep::IsValidTrim( int trim_index, ON_TextLog* text_log ) const
     {
       if ( text_log )
       {
-        text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
-        text_log->PushIndent();
-        text_log->Print("trim.m_type = singular but brep.m_C2[trim.m_c2i=%d]->IsClosed() is true.\n",
-                        trim.m_c2i,trim.m_c2i);
-        text_log->PopIndent();
+	text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
+	text_log->PushIndent();
+	text_log->Print("trim.m_type = singular but brep.m_C2[trim.m_c2i=%d]->IsClosed() is true.\n",
+			trim.m_c2i,trim.m_c2i);
+	text_log->PopIndent();
       }
       return false;
     }
@@ -2653,11 +2653,11 @@ ON_Brep::IsValidTrim( int trim_index, ON_TextLog* text_log ) const
     {
       if ( text_log )
       {
-        text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
-        text_log->PushIndent();
-        text_log->Print("trim.m_type != singular and trim.m_ei = %d (m_ei should be >=0 and <brep.m_E.Count()=%d\n",
-                        trim.m_ei,m_E.Count());
-        text_log->PopIndent();
+	text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
+	text_log->PushIndent();
+	text_log->Print("trim.m_type != singular and trim.m_ei = %d (m_ei should be >=0 and <brep.m_E.Count()=%d\n",
+			trim.m_ei,m_E.Count());
+	text_log->PopIndent();
       }
       return false;
     }
@@ -2666,10 +2666,10 @@ ON_Brep::IsValidTrim( int trim_index, ON_TextLog* text_log ) const
     {
       if ( text_log )
       {
-        text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
-        text_log->PushIndent();
-        text_log->Print("trim.m_vi[0] != brep.m_E[trim.m_ei=%d].m_vi[trim.m_bRev3d?1:0]\n",ei);
-        text_log->PopIndent();
+	text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
+	text_log->PushIndent();
+	text_log->Print("trim.m_vi[0] != brep.m_E[trim.m_ei=%d].m_vi[trim.m_bRev3d?1:0]\n",ei);
+	text_log->PopIndent();
       }
       return false;
     }
@@ -2677,27 +2677,27 @@ ON_Brep::IsValidTrim( int trim_index, ON_TextLog* text_log ) const
     {
       if ( text_log )
       {
-        text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
-        text_log->PushIndent();
-        text_log->Print("trim.m_vi[1] != brep.m_E[trim.m_ei=%d].m_vi[trim.m_bRev3d?0:1]\n",ei);
-        text_log->PopIndent();
+	text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
+	text_log->PushIndent();
+	text_log->Print("trim.m_vi[1] != brep.m_E[trim.m_ei=%d].m_vi[trim.m_bRev3d?0:1]\n",ei);
+	text_log->PopIndent();
       }
       return false;
     }
-    if ( trim_domain == c2_domain && pC->IsClosed() )
+    if ( trim_domain == c2_domain && pC->IsClosed() ) 
     {
       // (open 2d trims can still have vi0 = vi1 on closed surfaces)
       if ( vi0 != vi1 )
       {
-        if ( text_log )
-        {
-          text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
-          text_log->PushIndent();
-          text_log->Print("trim.m_vi[] = [%d,%d] but brep.m_C2[trim.m_c2i=%d]->IsClosed()=true\n",
-                          vi0, vi1, trim.m_c2i );
-          text_log->PopIndent();
-        }
-        return false;
+	if ( text_log )
+	{
+	  text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
+	  text_log->PushIndent();
+	  text_log->Print("trim.m_vi[] = [%d,%d] but brep.m_C2[trim.m_c2i=%d]->IsClosed()=true\n",
+			  vi0, vi1, trim.m_c2i );
+	  text_log->PopIndent();
+	}
+	return false;
       }
     }
     else if ( vi0 == vi1 )
@@ -2710,12 +2710,12 @@ ON_Brep::IsValidTrim( int trim_index, ON_TextLog* text_log ) const
       // TODO: check that trim start/end is not a closed surface seam point.
     }
     int i;
-    for ( i = 0; i < edge.m_ti.Count(); i++ )
+    for ( i = 0; i < edge.m_ti.Count(); i++ ) 
     {
       if ( edge.m_ti[i] == trim_index )
       {
-        trim_eti = i;
-        break;
+	trim_eti = i;
+	break;
       }
     }
 
@@ -2723,11 +2723,11 @@ ON_Brep::IsValidTrim( int trim_index, ON_TextLog* text_log ) const
     {
       if ( text_log )
       {
-        text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
-        text_log->PushIndent();
-        text_log->Print("trim index %d is not in brep.m_E[trim.m_ei=%d].m_ti[]\n",
-                        trim_index, trim.m_ei );
-        text_log->PopIndent();
+	text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
+	text_log->PushIndent();
+	text_log->Print("trim index %d is not in brep.m_E[trim.m_ei=%d].m_ti[]\n",
+			trim_index, trim.m_ei );
+	text_log->PopIndent();
       }
       return false;
     }
@@ -2737,22 +2737,22 @@ ON_Brep::IsValidTrim( int trim_index, ON_TextLog* text_log ) const
       int other_ti = edge.m_ti[ (edge.m_ti[0]==trim_index)?1:0 ];
       if ( other_ti >= 0 && other_ti < m_T.Count() && other_ti != trim_index )
       {
-        const ON_BrepTrim& other_trim = m_T[other_ti];
-        if ( other_trim.m_li == trim.m_li )
-        {
-          if ( trim.m_type != ON_BrepTrim::seam )
-          {
-            if ( text_log )
-            {
-              text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
-              text_log->PushIndent();
-              text_log->Print("trim.m_type!=seam but brep.m_E[trim.m_ei=%d] references two trims in loop trim.m_li=%d.\n",
-                              trim.m_ei,trim.m_li);
-              text_log->PopIndent();
-            }
-            return false;
-          }
-        }
+	const ON_BrepTrim& other_trim = m_T[other_ti];
+	if ( other_trim.m_li == trim.m_li )
+	{
+	  if ( trim.m_type != ON_BrepTrim::seam )
+	  {
+	    if ( text_log )
+	    {
+	      text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
+	      text_log->PushIndent();
+	      text_log->Print("trim.m_type!=seam but brep.m_E[trim.m_ei=%d] references two trims in loop trim.m_li=%d.\n",
+			      trim.m_ei,trim.m_li);
+	      text_log->PopIndent();
+	    }
+	    return false;
+	  }
+	}
       }
     }
   }
@@ -2787,10 +2787,10 @@ ON_Brep::IsValidTrim( int trim_index, ON_TextLog* text_log ) const
     {
       if ( text_log )
       {
-        text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
-        text_log->PushIndent();
-        text_log->Print("trim.m_type = unknown (should be set to the correct ON_BrepTrim::TYPE value)\n");
-        text_log->PopIndent();
+	text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
+	text_log->PushIndent();
+	text_log->Print("trim.m_type = unknown (should be set to the correct ON_BrepTrim::TYPE value)\n");
+	text_log->PopIndent();
       }
       return false;
     }
@@ -2801,25 +2801,25 @@ ON_Brep::IsValidTrim( int trim_index, ON_TextLog* text_log ) const
       const ON_BrepEdge& edge = m_E[trim.m_ei];
       if ( edge.m_ti.Count() > 1 )
       {
-        if ( text_log )
-        {
-          text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
-          text_log->PushIndent();
-          text_log->Print("trim.m_type = boundary but brep.m_E[trim.m_ei=%d] has 2 or more trims.\n",trim.m_ei);
-          text_log->PopIndent();
-        }
-        return false;
+	if ( text_log )
+	{
+	  text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
+	  text_log->PushIndent();
+	  text_log->Print("trim.m_type = boundary but brep.m_E[trim.m_ei=%d] has 2 or more trims.\n",trim.m_ei);
+	  text_log->PopIndent();
+	}
+	return false;
       }
       if ( loop.m_type != ON_BrepLoop::outer && loop.m_type != ON_BrepLoop::inner )
       {
-        if ( text_log )
-        {
-          text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
-          text_log->PushIndent();
-          text_log->Print("trim.m_type = boundary but brep.m_L[trim.m_li=%d].m_type is not inner or outer.\n",trim.m_li);
-          text_log->PopIndent();
-        }
-        return false;
+	if ( text_log )
+	{
+	  text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
+	  text_log->PushIndent();
+	  text_log->Print("trim.m_type = boundary but brep.m_L[trim.m_li=%d].m_type is not inner or outer.\n",trim.m_li);
+	  text_log->PopIndent();
+	}
+	return false;
       }
     }
     break;
@@ -2829,25 +2829,25 @@ ON_Brep::IsValidTrim( int trim_index, ON_TextLog* text_log ) const
       const ON_BrepEdge& edge = m_E[trim.m_ei];
       if ( edge.m_ti.Count() < 2 )
       {
-        if ( text_log )
-        {
-          text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
-          text_log->PushIndent();
-          text_log->Print("trim.m_type = mated but brep.m_E[trim.m_ei=%d] only references this trim.\n",trim.m_ei);
-          text_log->PopIndent();
-        }
-        return false;
+	if ( text_log )
+	{
+	  text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
+	  text_log->PushIndent();
+	  text_log->Print("trim.m_type = mated but brep.m_E[trim.m_ei=%d] only references this trim.\n",trim.m_ei);
+	  text_log->PopIndent();
+	}
+	return false;
       }
       if ( loop.m_type != ON_BrepLoop::outer && loop.m_type != ON_BrepLoop::inner )
       {
-        if ( text_log )
-        {
-          text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
-          text_log->PushIndent();
-          text_log->Print("trim.m_type = mated but brep.m_L[trim.m_li=%d].m_type is not inner or outer.\n",trim.m_li);
-          text_log->PopIndent();
-        }
-        return false;
+	if ( text_log )
+	{
+	  text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
+	  text_log->PushIndent();
+	  text_log->Print("trim.m_type = mated but brep.m_L[trim.m_li=%d].m_type is not inner or outer.\n",trim.m_li);
+	  text_log->PopIndent();
+	}
+	return false;
       }
     }
     break;
@@ -2857,86 +2857,86 @@ ON_Brep::IsValidTrim( int trim_index, ON_TextLog* text_log ) const
       const ON_BrepEdge& edge = m_E[trim.m_ei];
       if ( edge.m_ti.Count() < 2 )
       {
-        if ( text_log )
-        {
-          text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
-          text_log->PushIndent();
-          text_log->Print("trim.m_type = seam but brep.m_E[trim.m_ei=%d] < 2.\n",trim.m_ei);
-          text_log->PopIndent();
-        }
-        return false;
+	if ( text_log )
+	{
+	  text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
+	  text_log->PushIndent();
+	  text_log->Print("trim.m_type = seam but brep.m_E[trim.m_ei=%d] < 2.\n",trim.m_ei);
+	  text_log->PopIndent();
+	}
+	return false;
       }
       int other_ti = -1;
-      for ( int eti = 0; eti < edge.m_ti.Count(); eti++ )
+      for ( int eti = 0; eti < edge.m_ti.Count(); eti++ ) 
       {
-        if ( trim_eti == eti )
-          continue;
-        int i = edge.m_ti[eti];
-        if ( i == trim_index )
-        {
-          if ( text_log )
-          {
-            text_log->Print("brep.m_E[%d] trim is not valid.\n",trim.m_ei);
-            text_log->PushIndent();
-            text_log->Print("edge.m_ti[%d] = m_ti[%d] = %d.\n",trim_eti,eti,trim_index);
-            text_log->PopIndent();
-          }
-          return false;
-        }
+	if ( trim_eti == eti )
+	  continue;
+	int i = edge.m_ti[eti];
+	if ( i == trim_index )
+	{
+	  if ( text_log )
+	  {
+	    text_log->Print("brep.m_E[%d] trim is not valid.\n",trim.m_ei);
+	    text_log->PushIndent();
+	    text_log->Print("edge.m_ti[%d] = m_ti[%d] = %d.\n",trim_eti,eti,trim_index);
+	    text_log->PopIndent();
+	  }
+	  return false;
+	}
 
-        if ( i < 0 || i >= m_T.Count() )
-        {
-          if ( text_log )
-          {
-            text_log->Print("brep.m_E[%d] trim is not valid.\n",trim.m_ei);
-            text_log->PushIndent();
-            text_log->Print("edge.m_ti[%d]=%d is not a valid m_T[] index.\n",eti,i);
-            text_log->PopIndent();
-          }
-          return false;
-        }
+	if ( i < 0 || i >= m_T.Count() )
+	{
+	  if ( text_log )
+	  {
+	    text_log->Print("brep.m_E[%d] trim is not valid.\n",trim.m_ei);
+	    text_log->PushIndent();
+	    text_log->Print("edge.m_ti[%d]=%d is not a valid m_T[] index.\n",eti,i);
+	    text_log->PopIndent();
+	  }
+	  return false;
+	}
 
-        const ON_BrepTrim& other_trim = m_T[i];
-        if ( other_trim.m_type == ON_BrepTrim::seam && other_trim.m_li == trim.m_li )
-        {
-          if ( other_ti < 0 )
-            other_ti = i;
-          else
-          {
-            if ( text_log )
-            {
-              text_log->Print("brep.m_T[%d,%d, or %d] trim is not valid.\n",trim_index,other_ti,i);
-              text_log->PushIndent();
-              text_log->Print("All three trims have m_type = seam m_ei=%d and m_li = %d.\n",trim.m_ei,trim.m_li);
-              text_log->PopIndent();
-            }
-            return false;
-          }
-        }
+	const ON_BrepTrim& other_trim = m_T[i];
+	if ( other_trim.m_type == ON_BrepTrim::seam && other_trim.m_li == trim.m_li )
+	{
+	  if ( other_ti < 0 )
+	    other_ti = i;
+	  else
+	  {
+	    if ( text_log )
+	    {
+	      text_log->Print("brep.m_T[%d,%d, or %d] trim is not valid.\n",trim_index,other_ti,i);
+	      text_log->PushIndent();
+	      text_log->Print("All three trims have m_type = seam m_ei=%d and m_li = %d.\n",trim.m_ei,trim.m_li);
+	      text_log->PopIndent();
+	    }
+	    return false;
+	  }
+	}
       }
 
       if ( other_ti < 0 )
       {
-        if ( text_log )
-        {
-          text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
-          text_log->PushIndent();
-          text_log->Print("trim.m_type = seam but its other trim is not in the loop.\n");
-          text_log->PopIndent();
-        }
-        return false;
+	if ( text_log )
+	{
+	  text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
+	  text_log->PushIndent();
+	  text_log->Print("trim.m_type = seam but its other trim is not in the loop.\n");
+	  text_log->PopIndent();
+	}
+	return false;
       }
 
       if ( loop.m_type != ON_BrepLoop::outer && edge.m_ti.Count() <= 2 )
       {
-        if ( text_log )
-        {
-          text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
-          text_log->PushIndent();
-          text_log->Print("trim.m_type = seam, the edge is manifold, but brep.m_L[trim.m_li=%d].m_type is not outer.\n",trim.m_li);
-          text_log->PopIndent();
-        }
-        return false;
+	if ( text_log )
+	{
+	  text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
+	  text_log->PushIndent();
+	  text_log->Print("trim.m_type = seam, the edge is manifold, but brep.m_L[trim.m_li=%d].m_type is not outer.\n",trim.m_li);
+	  text_log->PopIndent();
+	}
+	return false;
       }
       // 31 Jan 2002 - The definition of a seam trim is a trim that is connected to
       //               an edge, is part of loop, and exactly one other trim in the
@@ -2960,14 +2960,14 @@ ON_Brep::IsValidTrim( int trim_index, ON_TextLog* text_log ) const
   case ON_BrepTrim::singular:
     // most requirements are checked above
     if ( trim.m_iso != ON_Surface::W_iso && trim.m_iso != ON_Surface::N_iso &&
-         trim.m_iso != ON_Surface::E_iso && trim.m_iso != ON_Surface::S_iso )
+	 trim.m_iso != ON_Surface::E_iso && trim.m_iso != ON_Surface::S_iso )
     {
       if ( text_log )
       {
-        text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
-        text_log->PushIndent();
-        text_log->Print("trim.m_type = singular but trim.m_iso != N/S/E/W_iso\n");
-        text_log->PopIndent();
+	text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
+	text_log->PushIndent();
+	text_log->Print("trim.m_type = singular but trim.m_iso != N/S/E/W_iso\n");
+	text_log->PopIndent();
       }
       return false;
     }
@@ -2977,15 +2977,15 @@ ON_Brep::IsValidTrim( int trim_index, ON_TextLog* text_log ) const
       const ON_BrepLoop& loop = m_L[trim.m_li];
       if ( loop.m_type != ON_BrepLoop::crvonsrf )
       {
-        return false;
+	return false;
       }
       if ( trim.m_c2i < 0 || trim.m_c2i >= m_C2.Count() )
       {
-        return false;
+	return false;
       }
       if ( trim.m_ei < 0 || trim.m_ei >= m_E.Count() )
       {
-        return false;
+	return false;
       }
     }
     break;
@@ -2994,25 +2994,25 @@ ON_Brep::IsValidTrim( int trim_index, ON_TextLog* text_log ) const
       const ON_BrepLoop& loop = m_L[trim.m_li];
       if ( loop.m_type != ON_BrepLoop::ptonsrf )
       {
-        return false;
+	return false;
       }
       if ( trim.m_ei != -1 )
       {
-        return false;
+	return false;
       }
       if ( trim.m_c2i != -1 )
       {
-        return false;
+	return false;
       }
-      if ( trim.m_pbox.m_min.x != trim.m_pbox.m_max.x || trim.m_pbox.m_min.y != trim.m_pbox.m_max.y || trim.m_pbox.m_min.z != trim.m_pbox.m_max.z )
+      if ( trim.m_pbox.m_min.x != trim.m_pbox.m_max.x || trim.m_pbox.m_min.y != trim.m_pbox.m_max.y || trim.m_pbox.m_min.z != trim.m_pbox.m_max.z ) 
       {
-        // m_pbox must be a single point that defines surface parameters of the point.
-        return false;
+	// m_pbox must be a single point that defines surface parameters of the point.
+	return false;
       }
-      if ( trim.m_pbox.m_min.x == ON_UNSET_VALUE || trim.m_pbox.m_min.y == ON_UNSET_VALUE || trim.m_pbox.m_min.z != 0.0 )
+      if ( trim.m_pbox.m_min.x == ON_UNSET_VALUE || trim.m_pbox.m_min.y == ON_UNSET_VALUE || trim.m_pbox.m_min.z != 0.0 ) 
       {
-        // m_pbox must be a single point that defines surface parameters of the point.
-        return false;
+	// m_pbox must be a single point that defines surface parameters of the point.
+	return false;
       }
     }
     break;
@@ -3021,10 +3021,10 @@ ON_Brep::IsValidTrim( int trim_index, ON_TextLog* text_log ) const
     {
       if ( text_log )
       {
-        text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
-        text_log->PushIndent();
-        text_log->Print("trim.m_type = ON_BrepTrim::slit (should be set to the correct ON_BrepTrim::TYPE value)\n");
-        text_log->PopIndent();
+	text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
+	text_log->PushIndent();
+	text_log->Print("trim.m_type = ON_BrepTrim::slit (should be set to the correct ON_BrepTrim::TYPE value)\n");
+	text_log->PopIndent();
       }
       return false;
     }
@@ -3034,10 +3034,10 @@ ON_Brep::IsValidTrim( int trim_index, ON_TextLog* text_log ) const
     {
       if ( text_log )
       {
-        text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
-        text_log->PushIndent();
-        text_log->Print("trim.m_type = type_count (should be set to the correct ON_BrepTrim::TYPE value)\n");
-        text_log->PopIndent();
+	text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
+	text_log->PushIndent();
+	text_log->Print("trim.m_type = type_count (should be set to the correct ON_BrepTrim::TYPE value)\n");
+	text_log->PopIndent();
       }
       return false;
     }
@@ -3047,10 +3047,10 @@ ON_Brep::IsValidTrim( int trim_index, ON_TextLog* text_log ) const
     {
       if ( text_log )
       {
-        text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
-        text_log->PushIndent();
-        text_log->Print("trim.m_type = garbage (should be set to the correct ON_BrepTrim::TYPE value)\n");
-        text_log->PopIndent();
+	text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
+	text_log->PushIndent();
+	text_log->Print("trim.m_type = garbage (should be set to the correct ON_BrepTrim::TYPE value)\n");
+	text_log->PopIndent();
       }
       return false;
     }
@@ -3115,7 +3115,7 @@ ON_Brep::IsValidLoop( int loop_index, ON_TextLog* text_log  ) const
     if ( text_log )
     {
       text_log->Print("brep loop_index = %d (should be >=0 and <%d=brep.m_L.Count()).\n",
-                      loop_index, m_L.Count());
+		      loop_index, m_L.Count());
     }
     return false;
   }
@@ -3127,7 +3127,7 @@ ON_Brep::IsValidLoop( int loop_index, ON_TextLog* text_log  ) const
       text_log->Print("brep.m_L[%d] loop is not valid.\n",loop_index);
       text_log->PushIndent();
       text_log->Print("loop.m_loop_index = %d (should be %d).\n",
-                       loop.m_loop_index, loop_index );
+		       loop.m_loop_index, loop_index );
       text_log->PopIndent();
     }
     return false;
@@ -3156,9 +3156,9 @@ ON_Brep::IsValidLoop( int loop_index, ON_TextLog* text_log  ) const
     return false;
   }
 
-  if (    loop.m_type != ON_BrepLoop::outer
-       && loop.m_type != ON_BrepLoop::inner
-       && loop.m_type != ON_BrepLoop::slit
+  if (    loop.m_type != ON_BrepLoop::outer 
+       && loop.m_type != ON_BrepLoop::inner 
+       && loop.m_type != ON_BrepLoop::slit 
        )
   {
     if ( text_log )
@@ -3166,7 +3166,7 @@ ON_Brep::IsValidLoop( int loop_index, ON_TextLog* text_log  ) const
       text_log->Print("brep.m_L[%d] loop is not valid.\n",loop_index);
       text_log->PushIndent();
       text_log->Print("loop.m_type = %d (must be %d=outer, %d=inner, or %d=slit)\n",
-                      loop.m_type,ON_BrepLoop::outer,ON_BrepLoop::inner,ON_BrepLoop::slit);
+		      loop.m_type,ON_BrepLoop::outer,ON_BrepLoop::inner,ON_BrepLoop::slit);
       text_log->PopIndent();
     }
     return false;
@@ -3192,26 +3192,26 @@ ON_Brep::IsValidLoop( int loop_index, ON_TextLog* text_log  ) const
     for ( i = 0; i < lti; i++ ) {
       if ( loop.m_ti[i] == ti )
       {
-        if ( text_log )
-        {
-          text_log->Print("brep.m_L[%d] loop is not valid.\n",loop_index);
-          text_log->PushIndent();
-          text_log->Print("loop.m_ti[%d] = loop.m_ti[%d] = %d (trim index can only appear once)\n",
-                          lti, i, ti);
-          text_log->PopIndent();
-        }
-        return false;
+	if ( text_log )
+	{
+	  text_log->Print("brep.m_L[%d] loop is not valid.\n",loop_index);
+	  text_log->PushIndent();
+	  text_log->Print("loop.m_ti[%d] = loop.m_ti[%d] = %d (trim index can only appear once)\n",
+			  lti, i, ti);
+	  text_log->PopIndent();
+	}
+	return false;
       }
     }
     if ( !IsValidTrim( ti, text_log ) )
     {
       if ( text_log )
       {
-        text_log->Print("brep.m_L[%d] loop is not valid.\n",loop_index);
-        text_log->PushIndent();
-        text_log->Print("brep.m_T[loop.m_ti[%d]=%d] is not valid.\n",
-                        lti, ti);
-        text_log->PopIndent();
+	text_log->Print("brep.m_L[%d] loop is not valid.\n",loop_index);
+	text_log->PushIndent();
+	text_log->Print("brep.m_T[loop.m_ti[%d]=%d] is not valid.\n",
+			lti, ti);
+	text_log->PopIndent();
       }
       return false;
     }
@@ -3219,11 +3219,11 @@ ON_Brep::IsValidLoop( int loop_index, ON_TextLog* text_log  ) const
     {
       if ( text_log )
       {
-        text_log->Print("brep.m_L[%d] loop is not valid.\n",loop_index);
-        text_log->PushIndent();
-        text_log->Print("brep.m_T[loop.m_ti[%d]=%d].m_li=%d (m_li should be %d).\n",
-                        lti, ti, m_T[ti].m_li, loop_index );
-        text_log->PopIndent();
+	text_log->Print("brep.m_L[%d] loop is not valid.\n",loop_index);
+	text_log->PushIndent();
+	text_log->Print("brep.m_T[loop.m_ti[%d]=%d].m_li=%d (m_li should be %d).\n",
+			lti, ti, m_T[ti].m_li, loop_index );
+	text_log->PopIndent();
       }
       return false;
     }
@@ -3236,10 +3236,10 @@ ON_Brep::IsValidLoop( int loop_index, ON_TextLog* text_log  ) const
     {
       if ( text_log )
       {
-        text_log->Print("brep.m_L[%d] loop is not valid.\n",loop_index);
-        text_log->PushIndent();
-        text_log->Print("loop.m_type = slit but loop has %d trims\n",loop.m_ti.Count());
-        text_log->PopIndent();
+	text_log->Print("brep.m_L[%d] loop is not valid.\n",loop_index);
+	text_log->PushIndent();
+	text_log->Print("loop.m_type = slit but loop has %d trims\n",loop.m_ti.Count());
+	text_log->PopIndent();
       }
       return false;
     }
@@ -3250,15 +3250,15 @@ ON_Brep::IsValidLoop( int loop_index, ON_TextLog* text_log  ) const
       const ON_BrepTrim& trim = m_T[ti];
       if ( trim.m_type != ON_BrepTrim::seam )
       {
-        if ( text_log )
-        {
-          text_log->Print("brep.m_L[%d] slit loop is not valid.\n",loop_index);
-          text_log->PushIndent();
-          text_log->Print("brep.m_T[loop.m_ti[%d]=%d].m_type = %d (should be %d = seam)\n",
-                          lti,ti,trim.m_type,ON_BrepTrim::seam);
-          text_log->PopIndent();
-        }
-        return false;
+	if ( text_log )
+	{
+	  text_log->Print("brep.m_L[%d] slit loop is not valid.\n",loop_index);
+	  text_log->PushIndent();
+	  text_log->Print("brep.m_T[loop.m_ti[%d]=%d].m_type = %d (should be %d = seam)\n",
+			  lti,ti,trim.m_type,ON_BrepTrim::seam);
+	  text_log->PopIndent();
+	}
+	return false;
       }
       switch( trim.m_iso )
       {
@@ -3266,26 +3266,26 @@ ON_Brep::IsValidLoop( int loop_index, ON_TextLog* text_log  ) const
       case ON_Surface::E_iso:
       case ON_Surface::S_iso:
       case ON_Surface::N_iso:
-        {
-          if ( text_log )
-          {
-            text_log->Print("brep.m_L[%d] slit loop is not valid.\n",loop_index);
-            text_log->PushIndent();
-            text_log->Print("brep.m_T[loop.m_ti[%d]=%d].m_iso = E/W/N/S_iso (should be interior)\n",
-                            lti,ti);
-            text_log->PopIndent();
-          }
-          return false;
-        }
-        break;
+	{
+	  if ( text_log )
+	  {
+	    text_log->Print("brep.m_L[%d] slit loop is not valid.\n",loop_index);
+	    text_log->PushIndent();
+	    text_log->Print("brep.m_T[loop.m_ti[%d]=%d].m_iso = E/W/N/S_iso (should be interior)\n",
+			    lti,ti);
+	    text_log->PopIndent();
+	  }
+	  return false;
+	}
+	break;
 
       case ON_Surface::not_iso:
       case ON_Surface::x_iso:
       case ON_Surface::y_iso:
       case ON_Surface::iso_count:
-        break;
+	break;
       }
-    }
+    }   
   }
 
 
@@ -3293,7 +3293,7 @@ ON_Brep::IsValidLoop( int loop_index, ON_TextLog* text_log  ) const
   int ci0, ci1, next_lti;
   ON_3dPoint P0, P1;
   const ON_Curve *pC0, *pC1;
-  for ( lti = 0; lti < loop_trim_count; lti++ )
+  for ( lti = 0; lti < loop_trim_count; lti++ ) 
   {
     //double x_tol = ON_ZERO_TOLERANCE;
     //double y_tol = ON_ZERO_TOLERANCE;
@@ -3314,27 +3314,27 @@ ON_Brep::IsValidLoop( int loop_index, ON_TextLog* text_log  ) const
       //    Added relative tol check so cases with huge
       //    coordinate values that agreed to 10 places
       //    didn't get flagged as bad.
-//       double xtol = (fabs(P0.x) + fabs(P1.x))*1.0e-10; XXX - not using our tolerance? WTF?
-//       double ytol = (fabs(P0.y) + fabs(P1.y))*1.0e-10;
+//      double xtol = (fabs(P0.x) + fabs(P1.x))*1.0e-10;  XXX - not using our tolerance? WTF?
+//      double ytol = (fabs(P0.y) + fabs(P1.y))*1.0e-10;
       double xtol = (fabs(P0.x) + fabs(P1.x))*trim0.m_tolerance[0];
       double ytol = (fabs(P0.y) + fabs(P1.y))*trim0.m_tolerance[1];
       if ( xtol < ON_ZERO_TOLERANCE )
-        xtol = ON_ZERO_TOLERANCE;
+	xtol = ON_ZERO_TOLERANCE;
       if ( ytol < ON_ZERO_TOLERANCE )
-        ytol = ON_ZERO_TOLERANCE;
+	ytol = ON_ZERO_TOLERANCE;
       double dx = fabs(P0.x-P1.x);
       double dy = fabs(P0.y-P1.y);
       if ( dx > xtol || dy > ytol )
       {
-        if ( text_log )
-        {
-          text_log->Print("brep.m_L[%d] loop is not valid.\n",loop_index);
-          text_log->PushIndent();
-          text_log->Print("end of brep.m_T[loop.m_ti[%d]=%d]=(%g,%g) and start \n", lti, loop.m_ti[lti],P0.x,P0.y);
-          text_log->Print("of brep.m_T[loop.m_ti[%d]=%d]=(%g,%g) do not match.\n",next_lti, loop.m_ti[next_lti],P1.x,P1.y);
-          text_log->PopIndent();
-        }
-        return false;
+	if ( text_log )
+	{
+	  text_log->Print("brep.m_L[%d] loop is not valid.\n",loop_index);
+	  text_log->PushIndent();
+	  text_log->Print("end of brep.m_T[loop.m_ti[%d]=%d]=(%g,%g) and start \n", lti, loop.m_ti[lti],P0.x,P0.y);
+	  text_log->Print("of brep.m_T[loop.m_ti[%d]=%d]=(%g,%g) do not match.\n",next_lti, loop.m_ti[next_lti],P1.x,P1.y);
+	  text_log->PopIndent();
+	}
+	return false;
       }
     }
   }
@@ -3351,7 +3351,7 @@ ON_Brep::IsValidLoop( int loop_index, ON_TextLog* text_log  ) const
     return false;
   }
 
-  return true;
+  return true; 
 }
 
 
@@ -3363,7 +3363,7 @@ ON_Brep::IsValidFace( int face_index, ON_TextLog* text_log  ) const
     if ( text_log )
     {
       text_log->Print("brep face_index = %d (should be >=0 and <%d=brep.m_F.Count()).\n",
-                      face_index, m_F.Count());
+		      face_index, m_F.Count());
     }
     return false;
   }
@@ -3375,7 +3375,7 @@ ON_Brep::IsValidFace( int face_index, ON_TextLog* text_log  ) const
       text_log->Print("brep.m_F[%d] face is not valid.\n",face_index);
       text_log->PushIndent();
       text_log->Print("face.m_face_index = %d (should be %d).\n",
-                       face.m_face_index, face_index );
+		       face.m_face_index, face_index );
       text_log->PopIndent();
     }
     return false;
@@ -3406,32 +3406,32 @@ ON_Brep::IsValidFace( int face_index, ON_TextLog* text_log  ) const
   }
 
   int i, fli, li;
-  for ( fli = 0; fli < face_loop_count; fli++ )
+  for ( fli = 0; fli < face_loop_count; fli++ ) 
   {
     li = face.m_li[fli];
-    for ( i = 0; i < fli; i++ )
+    for ( i = 0; i < fli; i++ ) 
     {
       if ( face.m_li[i] == li )
       {
-        if ( text_log )
-        {
-          text_log->Print("brep.m_F[%d] face is not valid.\n",face_index);
-          text_log->PushIndent();
-          text_log->Print("face.m_li[%d]=face.m_li[%d]=%d (a loop index should appear once in face.m_li[])\n",
-                          fli,i,li);
-          text_log->PopIndent();
-        }
-        return false;
+	if ( text_log )
+	{
+	  text_log->Print("brep.m_F[%d] face is not valid.\n",face_index);
+	  text_log->PushIndent();
+	  text_log->Print("face.m_li[%d]=face.m_li[%d]=%d (a loop index should appear once in face.m_li[])\n",
+			  fli,i,li);
+	  text_log->PopIndent();
+	}
+	return false;
       }
     }
     if ( !IsValidLoop( li, text_log ) )
     {
       if ( text_log )
       {
-        text_log->Print("brep.m_F[%d] face is not valid.\n",face_index);
-        text_log->PushIndent();
-        text_log->Print("brep.m_L[face.m_li[%d]=%d] is not valid.\n",fli,li);
-        text_log->PopIndent();
+	text_log->Print("brep.m_F[%d] face is not valid.\n",face_index);
+	text_log->PushIndent();
+	text_log->Print("brep.m_L[face.m_li[%d]=%d] is not valid.\n",fli,li);
+	text_log->PopIndent();
       }
       return false;
     }
@@ -3440,11 +3440,11 @@ ON_Brep::IsValidFace( int face_index, ON_TextLog* text_log  ) const
     {
       if ( text_log )
       {
-        text_log->Print("brep.m_F[%d] face is not valid.\n",face_index);
-        text_log->PushIndent();
-        text_log->Print("face.m_li[%d]=%d is a deleted loop\n",
-                        fli,li);
-        text_log->PopIndent();
+	text_log->Print("brep.m_F[%d] face is not valid.\n",face_index);
+	text_log->PushIndent();
+	text_log->Print("face.m_li[%d]=%d is a deleted loop\n",
+			fli,li);
+	text_log->PopIndent();
       }
       return false;
     }
@@ -3452,42 +3452,42 @@ ON_Brep::IsValidFace( int face_index, ON_TextLog* text_log  ) const
     {
       if ( text_log )
       {
-        text_log->Print("brep.m_F[%d] face is not valid.\n",face_index);
-        text_log->PushIndent();
-        text_log->Print("face.m_li[%d]=%d but brep.m_L[%d].m_fi=%d (m_fi should be %d)\n",
-                        fli,li,li,loop.m_fi,face_index);
-        text_log->PopIndent();
+	text_log->Print("brep.m_F[%d] face is not valid.\n",face_index);
+	text_log->PushIndent();
+	text_log->Print("face.m_li[%d]=%d but brep.m_L[%d].m_fi=%d (m_fi should be %d)\n",
+			fli,li,li,loop.m_fi,face_index);
+	text_log->PopIndent();
       }
       return false;
     }
-    if ( fli == 0 )
+    if ( fli == 0 ) 
     {
       if ( loop.m_type != ON_BrepLoop::outer )
       {
-        if ( text_log )
-        {
-          text_log->Print("brep.m_F[%d] face is not valid.\n",face_index);
-          text_log->PushIndent();
-          text_log->Print("brep.m_L[face.m_li[0]=%d].m_type is not outer.\n",li);
-          text_log->PopIndent();
-        }
-        return false;
+	if ( text_log )
+	{
+	  text_log->Print("brep.m_F[%d] face is not valid.\n",face_index);
+	  text_log->PushIndent();
+	  text_log->Print("brep.m_L[face.m_li[0]=%d].m_type is not outer.\n",li);
+	  text_log->PopIndent();
+	}
+	return false;
       }
     }
     else
     {
-      if (   loop.m_type != ON_BrepLoop::slit
-           && loop.m_type != ON_BrepLoop::inner
-         )
+      if (   loop.m_type != ON_BrepLoop::slit 
+	   && loop.m_type != ON_BrepLoop::inner 
+	 )
       {
-        if ( text_log )
-        {
-          text_log->Print("brep.m_F[%d] face is not valid.\n",face_index);
-          text_log->PushIndent();
-          text_log->Print("brep.m_L[face.m_li[%d]=%d].m_type is not inner or slit.\n",fli,li);
-          text_log->PopIndent();
-        }
-        return false;
+	if ( text_log )
+	{
+	  text_log->Print("brep.m_F[%d] face is not valid.\n",face_index);
+	  text_log->PushIndent();
+	  text_log->Print("brep.m_L[face.m_li[%d]=%d].m_type is not inner or slit.\n",fli,li);
+	  text_log->PopIndent();
+	}
+	return false;
       }
     }
   }
@@ -3500,7 +3500,7 @@ ON_Brep::IsValidFace( int face_index, ON_TextLog* text_log  ) const
       text_log->Print("brep.m_F[%d] face is not valid.\n",face_index);
       text_log->PushIndent();
       text_log->Print("face.m_si=%d (should be >=0 and <%d=m_S.Count())\n",
-                      face.m_si,m_S.Count());
+		      face.m_si,m_S.Count());                      
       text_log->PopIndent();
     }
     return false;
@@ -3542,7 +3542,7 @@ ON_Brep::IsValidFace( int face_index, ON_TextLog* text_log  ) const
     return false;
   }
 
-  return true;
+  return true; 
 }
 
 bool
@@ -3552,7 +3552,7 @@ ON_Brep::IsValidEdge( int edge_index, ON_TextLog* text_log ) const
   {
     if ( text_log )
       text_log->Print("brep edge_index = %d (should be >=0 and <%d=brep.m_E.Count() ).\n",
-                      edge_index, m_E.Count());
+		      edge_index, m_E.Count());
     return false;
   }
   const ON_BrepEdge& edge = m_E[edge_index];
@@ -3574,7 +3574,7 @@ ON_Brep::IsValidEdge( int edge_index, ON_TextLog* text_log ) const
       text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
       text_log->PushIndent();
       text_log->Print("edge.m_edge_index = %d (should be %d).\n",
-                       edge.m_edge_index, edge_index );
+		       edge.m_edge_index, edge_index );
       text_log->PopIndent();
     }
     return false;
@@ -3599,12 +3599,12 @@ ON_Brep::IsValidEdge( int edge_index, ON_TextLog* text_log ) const
       text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
       text_log->PushIndent();
       text_log->Print("edge.m_c3i = %d (should be >=0 and <%d=m_C3.Count()\n",
-                      edge.m_c3i,m_C3.Count() );
+		      edge.m_c3i,m_C3.Count() );
       text_log->PopIndent();
     }
     return false;
   }
-
+  
   if ( m_C3[ci] != edge.ProxyCurve() || 0 == m_C3[ci] )
   {
     if ( text_log )
@@ -3616,7 +3616,7 @@ ON_Brep::IsValidEdge( int edge_index, ON_TextLog* text_log ) const
     }
     return false;
   }
-
+  
   //if ( edge.ProxyCurveIsReversed() )
   //{
   //  if ( text_log )
@@ -3651,7 +3651,7 @@ ON_Brep::IsValidEdge( int edge_index, ON_TextLog* text_log ) const
       text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
       text_log->PushIndent();
       text_log->Print("edge.m_vi[0]=%d (should be >=0 and <%d=m_V.Count()\n",
-                       vi0, m_V.Count() );
+		       vi0, m_V.Count() );
       text_log->PopIndent();
     }
     return false;
@@ -3663,13 +3663,13 @@ ON_Brep::IsValidEdge( int edge_index, ON_TextLog* text_log ) const
       text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
       text_log->PushIndent();
       text_log->Print("edge.m_vi[1]=%d (should be >=0 and <%d=m_V.Count()\n",
-                       vi1, m_V.Count() );
+		       vi1, m_V.Count() );
       text_log->PopIndent();
     }
     return false;
   }
   int evi;
-  for ( evi = 0; evi < 2; evi++ )
+  for ( evi = 0; evi < 2; evi++ ) 
   {
     const ON_BrepVertex& vertex = m_V[edge.m_vi[evi]];
 
@@ -3677,11 +3677,11 @@ ON_Brep::IsValidEdge( int edge_index, ON_TextLog* text_log ) const
     {
       if ( text_log )
       {
-        text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
-        text_log->PushIndent();
-        text_log->Print("edge.m_vi[%d]=%d is a deleted vertex\n",
-                         evi,edge.m_vi[evi] );
-        text_log->PopIndent();
+	text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
+	text_log->PushIndent();
+	text_log->Print("edge.m_vi[%d]=%d is a deleted vertex\n",
+			 evi,edge.m_vi[evi] );
+	text_log->PopIndent();
       }
       return false;
     }
@@ -3697,11 +3697,11 @@ ON_Brep::IsValidEdge( int edge_index, ON_TextLog* text_log ) const
     {
       if ( text_log )
       {
-        text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
-        text_log->PushIndent();
-        text_log->Print("edge.m_vi[%d]=%d but edge is not referenced in m_V[%d].m_ei[]\n",
-                         evi,edge.m_vi[evi],edge.m_vi[evi] );
-        text_log->PopIndent();
+	text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
+	text_log->PushIndent();
+	text_log->Print("edge.m_vi[%d]=%d but edge is not referenced in m_V[%d].m_ei[]\n",
+			 evi,edge.m_vi[evi],edge.m_vi[evi] );
+	text_log->PopIndent();
       }
       return false;
     }
@@ -3712,11 +3712,11 @@ ON_Brep::IsValidEdge( int edge_index, ON_TextLog* text_log ) const
     {
       if ( text_log )
       {
-        text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
-        text_log->PushIndent();
-        text_log->Print("edge.m_vi[]=(%d,%d) but edge.IsClosed() is true\n",
-                         vi0,vi1);
-        text_log->PopIndent();
+	text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
+	text_log->PushIndent();
+	text_log->Print("edge.m_vi[]=(%d,%d) but edge.IsClosed() is true\n",
+			 vi0,vi1);
+	text_log->PopIndent();
       }
       return false;
     }
@@ -3726,11 +3726,11 @@ ON_Brep::IsValidEdge( int edge_index, ON_TextLog* text_log ) const
     {
       if ( text_log )
       {
-        text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
-        text_log->PushIndent();
-        text_log->Print("edge.m_vi[0]=edge.m_vi[1]=%d but edge.IsClosed() is false.\n",
-                         vi0);
-        text_log->PopIndent();
+	text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
+	text_log->PushIndent();
+	text_log->Print("edge.m_vi[0]=edge.m_vi[1]=%d but edge.IsClosed() is false.\n",
+			 vi0);
+	text_log->PopIndent();
       }
       return false;
     }
@@ -3756,10 +3756,10 @@ ON_Brep::IsValidEdge( int edge_index, ON_TextLog* text_log ) const
     {
       if ( text_log )
       {
-        text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
-        text_log->PushIndent();
-        text_log->Print("edge.m_ti[%d]=%d (should be >=0 and <%d=m_T.Count())\n",eti,ti);
-        text_log->PopIndent();
+	text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
+	text_log->PushIndent();
+	text_log->Print("edge.m_ti[%d]=%d (should be >=0 and <%d=m_T.Count())\n",eti,ti);
+	text_log->PopIndent();
       }
       return false;
     }
@@ -3767,25 +3767,25 @@ ON_Brep::IsValidEdge( int edge_index, ON_TextLog* text_log ) const
     {
       if ( text_log )
       {
-        text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
-        text_log->PushIndent();
-        text_log->Print("edge.m_ti[%d]=%d is a deleted trim\n",eti,ti);
-        text_log->PopIndent();
+	text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
+	text_log->PushIndent();
+	text_log->Print("edge.m_ti[%d]=%d is a deleted trim\n",eti,ti);
+	text_log->PopIndent();
       }
       return false;
     }
-    for ( i = 0; i < eti; i++ )
+    for ( i = 0; i < eti; i++ ) 
     {
       if ( edge.m_ti[i] == ti )
       {
-        if ( text_log )
-        {
-          text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
-          text_log->PushIndent();
-          text_log->Print("edge.m_ti[%d]=edge.m_ti[%d]=%d (a trim should be referenced once).\n",i,eti,ti);
-          text_log->PopIndent();
-        }
-        return false;
+	if ( text_log )
+	{
+	  text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
+	  text_log->PushIndent();
+	  text_log->Print("edge.m_ti[%d]=edge.m_ti[%d]=%d (a trim should be referenced once).\n",i,eti,ti);
+	  text_log->PopIndent();
+	}
+	return false;
       }
     }
     const ON_BrepTrim& trim = m_T[ti];
@@ -3793,10 +3793,10 @@ ON_Brep::IsValidEdge( int edge_index, ON_TextLog* text_log ) const
     {
       if ( text_log )
       {
-        text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
-        text_log->PushIndent();
-        text_log->Print("edge.m_ti[%d]=%d but brep.m_T[%d].m_ei=%d\n",eti,ti,ti,trim.m_ei);
-        text_log->PopIndent();
+	text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
+	text_log->PushIndent();
+	text_log->Print("edge.m_ti[%d]=%d but brep.m_T[%d].m_ei=%d\n",eti,ti,ti,trim.m_ei);
+	text_log->PopIndent();
       }
       return false;
     }
@@ -3824,7 +3824,7 @@ ON_Brep::IsValidVertex( int vertex_index, ON_TextLog* text_log ) const
   {
     if ( text_log )
       text_log->Print("brep vertex_index = %d (should be >=0 and <%d=brep.m_V.Count() ).\n",
-                      vertex_index, m_V.Count());
+		      vertex_index, m_V.Count());
     return false;
   }
   const ON_BrepVertex& vertex = m_V[vertex_index];
@@ -3835,7 +3835,7 @@ ON_Brep::IsValidVertex( int vertex_index, ON_TextLog* text_log ) const
       text_log->Print("brep.m_V[%d] vertex is not valid.\n",vertex_index);
       text_log->PushIndent();
       text_log->Print("vertex.m_vertex_index = %d (should be %d).\n",
-                       vertex.m_vertex_index, vertex_index );
+		       vertex.m_vertex_index, vertex_index );
       text_log->PopIndent();
     }
     return false;
@@ -3849,10 +3849,10 @@ ON_Brep::IsValidVertex( int vertex_index, ON_TextLog* text_log ) const
     {
       if ( text_log )
       {
-        text_log->Print("brep.m_V[%d] vertex is not valid.\n",vertex_index);
-        text_log->PushIndent();
-        text_log->Print("vertex.m_ei[%d] = %d (should be >=0 and <%d).\n", vei, ei, m_E.Count());
-        text_log->PopIndent();
+	text_log->Print("brep.m_V[%d] vertex is not valid.\n",vertex_index);
+	text_log->PushIndent();
+	text_log->Print("vertex.m_ei[%d] = %d (should be >=0 and <%d).\n", vei, ei, m_E.Count());
+	text_log->PopIndent();
       }
       return false;
     }
@@ -3861,60 +3861,60 @@ ON_Brep::IsValidVertex( int vertex_index, ON_TextLog* text_log ) const
     {
       if ( text_log )
       {
-        text_log->Print("brep.m_V[%d] vertex is not valid.\n",vertex_index);
-        text_log->PushIndent();
-        text_log->Print("vertex.m_ei[%d] = %d is a deleted edge.\n", vei, ei);
-        text_log->PopIndent();
+	text_log->Print("brep.m_V[%d] vertex is not valid.\n",vertex_index);
+	text_log->PushIndent();
+	text_log->Print("vertex.m_ei[%d] = %d is a deleted edge.\n", vei, ei);
+	text_log->PopIndent();
       }
       return false;
     }
-    for ( i = 0; i < vei; i++ )
+    for ( i = 0; i < vei; i++ ) 
     {
-      if ( vertex.m_ei[i] == ei )
+      if ( vertex.m_ei[i] == ei ) 
       {
-        // edge should be closed
-        if ( edge.m_vi[0] != vertex_index || edge.m_vi[1] != vertex_index )
-        {
-          if ( text_log )
-          {
-            text_log->Print("brep.m_V[%d] vertex is not valid.\n",vertex_index);
-            text_log->PushIndent();
-            text_log->Print("vertex.m_ei[%d] and vertex.m_ei[%d] = %d but brep.m_E[%d].m_vi[0] = %d",
-                             i,vei,ei,ei,edge.m_vi[0]);
-            text_log->Print("and ON_Brep.m_E[%d].m_vi[1] = %d (both m_vi[] values should be %d).\n",
-                            ei,edge.m_vi[1],vertex_index);
-            text_log->PopIndent();
-          }
-          return false;
-        }
-        for (j = i+1; j < vei; j++ )
-        {
-          if ( vertex.m_ei[j] == ei )
-          {
-            if ( text_log )
-            {
-              text_log->Print("brep.m_V[%d] vertex is not valid.\n",vertex_index);
-              text_log->PushIndent();
-              text_log->Print("vertex.m_ei[%d,%d,%d] = %d. An open edge index should appear once\n",i,vei,j,ei);
-              text_log->Print("in vertex.m_ei[] and a closed edge index should appear twice.\n");
-              text_log->PopIndent();
-            }
-            return false;
-          }
-        }
-        break;
+	// edge should be closed
+	if ( edge.m_vi[0] != vertex_index || edge.m_vi[1] != vertex_index )
+	{
+	  if ( text_log )
+	  {
+	    text_log->Print("brep.m_V[%d] vertex is not valid.\n",vertex_index);
+	    text_log->PushIndent();
+	    text_log->Print("vertex.m_ei[%d] and vertex.m_ei[%d] = %d but brep.m_E[%d].m_vi[0] = %d",
+			     i,vei,ei,ei,edge.m_vi[0]);
+	    text_log->Print("and ON_Brep.m_E[%d].m_vi[1] = %d (both m_vi[] values should be %d).\n",
+			    ei,edge.m_vi[1],vertex_index);
+	    text_log->PopIndent();
+	  }
+	  return false;
+	}
+	for (j = i+1; j < vei; j++ ) 
+	{
+	  if ( vertex.m_ei[j] == ei )
+	  {
+	    if ( text_log )
+	    {
+	      text_log->Print("brep.m_V[%d] vertex is not valid.\n",vertex_index);
+	      text_log->PushIndent();
+	      text_log->Print("vertex.m_ei[%d,%d,%d] = %d. An open edge index should appear once\n",i,vei,j,ei);
+	      text_log->Print("in vertex.m_ei[] and a closed edge index should appear twice.\n");
+	      text_log->PopIndent();
+	    }
+	    return false;
+	  }
+	}
+	break;
       }
     }
     if ( edge.m_vi[0] != vertex_index && edge.m_vi[1] != vertex_index )
     {
       if ( text_log )
       {
-        text_log->Print("brep.m_V[%d] vertex is not valid.\n",vertex_index);
-        text_log->PushIndent();
-        text_log->Print("vertex.m_ei[%d] = %d but ON_Brep.m_E[%d].m_vi[] = [%d,%d]. "
-                        "At least one edge m_vi[] value should be %d.\n",
-                        vei,ei,ei,edge.m_vi[0],edge.m_vi[1],vertex_index);
-        text_log->PopIndent();
+	text_log->Print("brep.m_V[%d] vertex is not valid.\n",vertex_index);
+	text_log->PushIndent();
+	text_log->Print("vertex.m_ei[%d] = %d but ON_Brep.m_E[%d].m_vi[] = [%d,%d]. "
+			"At least one edge m_vi[] value should be %d.\n",
+			vei,ei,ei,edge.m_vi[0],edge.m_vi[1],vertex_index);
+	text_log->PopIndent();
       }
       return false;
     }
@@ -3943,7 +3943,7 @@ bool TestTrimPBox( const ON_BrepTrim& trim, ON_TextLog* text_log )
   double d;
   ON_BoundingBox pbox = trim.m_pbox;
 
-
+  
   d = ON_SQRT_EPSILON*(fabs(pbox.m_min.x)+fabs(pbox.m_max.x));
   if ( d < ON_ZERO_TOLERANCE )
     d = ON_ZERO_TOLERANCE;
@@ -3984,6 +3984,55 @@ bool TestTrimPBox( const ON_BrepTrim& trim, ON_TextLog* text_log )
   return true;
 }
 
+static
+bool CheckTrimOnSrfHelper( const ON_Interval& srf_domain0,
+			   const ON_Interval& srf_domain1,
+			   const ON_BrepTrim& trim,
+			   ON_TextLog* text_log
+			   )
+{
+  // this check only works if the pline exists.
+  const ON_BrepTrimPoint* tp = trim.m_pline.Array();
+  int i, count = trim.m_pline.Count();
+  const double a = -0.01;
+  const double b =  1.01;
+  double s,t;
+  for ( i = 0; i < count; i++ )
+  {
+    s = srf_domain0.NormalizedParameterAt(tp[i].p.x);
+    t = srf_domain1.NormalizedParameterAt(tp[i].p.y);
+    if ( s < a || s > b || t < a || t > b )
+    {
+      if ( text_log )
+      {
+	text_log->Print("ON_Brep.m_T[%d] 2d curve is not inside surface domain.\n",trim.m_trim_index);
+      }
+      return false;
+    }
+  }
+  return true;
+}
+
+static
+bool CheckLoopOnSrfHelper( const ON_Brep& brep, 
+			   const ON_Interval& srf_domain0,
+			   const ON_Interval& srf_domain1,
+			   const ON_BrepLoop& loop,
+			   ON_TextLog* text_log
+			   )
+{
+  for ( int lti = 0; lti < loop.m_ti.Count(); lti++ )
+  {
+    int ti = loop.m_ti[lti];
+    if ( ti < 0 || ti >= brep.m_T.Count() )
+      continue;
+    if ( ! CheckTrimOnSrfHelper( srf_domain0, srf_domain1, brep.m_T[ti], text_log ) )
+      return false;
+  }
+  return true;
+}
+
+
 BOOL
 ON_Brep::IsValid( ON_TextLog* text_log ) const
 {
@@ -4010,31 +4059,31 @@ ON_Brep::IsValid( ON_TextLog* text_log ) const
     if ( 0 == edge_count )
     {
       if ( text_log )
-        text_log->Print( "ON_Brep has no edges.\n");
+	text_log->Print( "ON_Brep has no edges.\n");
       return false;
     }
     if ( 0 == loop_count )
     {
       if ( text_log )
-        text_log->Print( "ON_Brep has no loops.\n");
+	text_log->Print( "ON_Brep has no loops.\n");
       return false;
     }
     if ( 0 == surface_count )
     {
       if ( text_log )
-        text_log->Print( "ON_Brep has no surfaces.\n");
+	text_log->Print( "ON_Brep has no surfaces.\n");
       return false;
     }
     if ( 0 == trim_count )
     {
       if ( text_log )
-        text_log->Print( "ON_Brep has no trims.\n");
+	text_log->Print( "ON_Brep has no trims.\n");
       return false;
     }
     if ( 0 == curve2d_count )
     {
       if ( text_log )
-        text_log->Print( "ON_Brep has no 2d curves.\n");
+	text_log->Print( "ON_Brep has no 2d curves.\n");
       return false;
     }
   }
@@ -4044,207 +4093,207 @@ ON_Brep::IsValid( ON_TextLog* text_log ) const
     if ( 0 == curve3d_count )
     {
       if ( text_log )
-        text_log->Print( "ON_Brep has no 3d curves.\n");
+	text_log->Print( "ON_Brep has no 3d curves.\n");
       return false;
     }
     if ( 0 == vertex_count )
     {
       if ( text_log )
-        text_log->Print( "ON_Brep has no vertices.\n");
+	text_log->Print( "ON_Brep has no vertices.\n");
       return false;
     }
   }
 
   // check element indices match array positions
-  for ( vi = 0; vi < vertex_count; vi++ )
+  for ( vi = 0; vi < vertex_count; vi++ ) 
   {
     if ( m_V[vi].m_vertex_index == -1 )
     {
       const ON_BrepVertex& vertex = m_V[vi];
       if ( vertex.m_ei.Count() > 0 )
       {
-        if ( text_log )
-          text_log->Print( "ON_Brep.m_V[%d] is deleted (m_vertex_index = -1) but vertex.m_ei.Count() = %d.\n",
-                           vi, vertex.m_ei.Count() );
-        return false;
+	if ( text_log )
+	  text_log->Print( "ON_Brep.m_V[%d] is deleted (m_vertex_index = -1) but vertex.m_ei.Count() = %d.\n",
+			   vi, vertex.m_ei.Count() );
+	return false;
       }
     }
     else if ( m_V[vi].m_vertex_index != vi )
     {
       if ( text_log )
-        text_log->Print( "ON_Brep.m_V[%d].m_vertex_index = %d (should be %d)\n",
-                         vi, m_V[vi].m_vertex_index, vi );
+	text_log->Print( "ON_Brep.m_V[%d].m_vertex_index = %d (should be %d)\n",
+			 vi, m_V[vi].m_vertex_index, vi );
       return false;
     }
   }
 
-  for ( ei = 0; ei < edge_count; ei++ )
+  for ( ei = 0; ei < edge_count; ei++ ) 
   {
     if ( m_E[ei].m_edge_index == -1 )
     {
       const ON_BrepEdge& edge = m_E[ei];
       if ( edge.m_ti.Count() > 0 )
       {
-        if ( text_log )
-          text_log->Print( "ON_Brep.m_E[%d] is deleted (m_edge_index = -1) but edge.m_ei.Count() = %d.\n",
-                           ei, edge.m_ti.Count() );
-        return false;
+	if ( text_log )
+	  text_log->Print( "ON_Brep.m_E[%d] is deleted (m_edge_index = -1) but edge.m_ei.Count() = %d.\n",
+			   ei, edge.m_ti.Count() );
+	return false;
       }
       if ( edge.m_c3i != -1 )
       {
-        if ( text_log )
-          text_log->Print( "ON_Brep.m_E[%d] is deleted (m_edge_index = -1) but edge.m_c3i=%d (should be -1).\n",
-                           ei, edge.m_c3i );
-        return false;
+	if ( text_log )
+	  text_log->Print( "ON_Brep.m_E[%d] is deleted (m_edge_index = -1) but edge.m_c3i=%d (should be -1).\n",
+			   ei, edge.m_c3i );
+	return false;
       }
       if ( edge.ProxyCurve() )
       {
-        if ( text_log )
-          text_log->Print( "ON_Brep.m_E[%d] is deleted (m_edge_index = -1) but edge.m_curve is not NULL.\n",
-                           ei );
-        return false;
+	if ( text_log )
+	  text_log->Print( "ON_Brep.m_E[%d] is deleted (m_edge_index = -1) but edge.m_curve is not NULL.\n",
+			   ei );
+	return false;
       }
       if ( edge.m_vi[0] != -1 )
       {
-        if ( text_log )
-          text_log->Print( "ON_Brep.m_E[%d] is deleted (m_edge_index = -1) but edge.m_vi[0]=%d (should be -1).\n",
-                           ei, edge.m_vi[0] );
-        return false;
+	if ( text_log )
+	  text_log->Print( "ON_Brep.m_E[%d] is deleted (m_edge_index = -1) but edge.m_vi[0]=%d (should be -1).\n",
+			   ei, edge.m_vi[0] );
+	return false;
       }
       if ( edge.m_vi[1] != -1 )
       {
-        if ( text_log )
-          text_log->Print( "ON_Brep.m_E[%d] is deleted (m_edge_index = -1) but edge.m_vi[1]=%d (should be -1).\n",
-                           ei, edge.m_vi[1] );
-        return false;
+	if ( text_log )
+	  text_log->Print( "ON_Brep.m_E[%d] is deleted (m_edge_index = -1) but edge.m_vi[1]=%d (should be -1).\n",
+			   ei, edge.m_vi[1] );
+	return false;
       }
     }
     else if ( m_E[ei].m_edge_index != ei )
     {
       if ( text_log )
-        text_log->Print( "ON_Brep.m_E[%d].m_edge_index = %d (should be %d)\n",
-                         ei, m_E[ei].m_edge_index, ei );
+	text_log->Print( "ON_Brep.m_E[%d].m_edge_index = %d (should be %d)\n",
+			 ei, m_E[ei].m_edge_index, ei );
       return false;
     }
   }
 
-  for ( ti = 0; ti < trim_count; ti++ )
+  for ( ti = 0; ti < trim_count; ti++ ) 
   {
     if ( m_T[ti].m_trim_index == -1 )
     {
       const ON_BrepTrim& trim = m_T[ti];
       if ( trim.m_ei != -1 )
       {
-        if ( text_log )
-          text_log->Print( "ON_Brep.m_T[%d] is deleted (m_trim_index = -1) but trim.m_ei=%d (should be -1).\n",
-                           ti, trim.m_ei );
-        return false;
+	if ( text_log )
+	  text_log->Print( "ON_Brep.m_T[%d] is deleted (m_trim_index = -1) but trim.m_ei=%d (should be -1).\n",
+			   ti, trim.m_ei );
+	return false;
       }
       if ( trim.m_li != -1 )
       {
-        if ( text_log )
-          text_log->Print( "ON_Brep.m_T[%d] is deleted (m_trim_index = -1) but trim.m_li=%d (should be -1).\n",
-                           ti, trim.m_li );
-        return false;
+	if ( text_log )
+	  text_log->Print( "ON_Brep.m_T[%d] is deleted (m_trim_index = -1) but trim.m_li=%d (should be -1).\n",
+			   ti, trim.m_li );
+	return false;
       }
       if ( trim.m_c2i != -1 )
       {
-        if ( text_log )
-          text_log->Print( "ON_Brep.m_T[%d] is deleted (m_trim_index = -1) but trim.m_c2i=%d (should be -1).\n",
-                           ti, trim.m_c2i );
-        return false;
+	if ( text_log )
+	  text_log->Print( "ON_Brep.m_T[%d] is deleted (m_trim_index = -1) but trim.m_c2i=%d (should be -1).\n",
+			   ti, trim.m_c2i );
+	return false;
       }
       if ( trim.m_vi[0] != -1 )
       {
-        if ( text_log )
-          text_log->Print( "ON_Brep.m_T[%d] is deleted (m_trim_index = -1) but trim.m_vi[0]=%d (should be -1).\n",
-                           ti, trim.m_vi[0] );
-        return false;
+	if ( text_log )
+	  text_log->Print( "ON_Brep.m_T[%d] is deleted (m_trim_index = -1) but trim.m_vi[0]=%d (should be -1).\n",
+			   ti, trim.m_vi[0] );
+	return false;
       }
       if ( trim.m_vi[1] != -1 )
       {
-        if ( text_log )
-          text_log->Print( "ON_Brep.m_T[%d] is deleted (m_trim_index = -1) but trim.m_vi[1]=%d (should be -1).\n",
-                           ti, trim.m_vi[1] );
-        return false;
+	if ( text_log )
+	  text_log->Print( "ON_Brep.m_T[%d] is deleted (m_trim_index = -1) but trim.m_vi[1]=%d (should be -1).\n",
+			   ti, trim.m_vi[1] );
+	return false;
       }
     }
     else if ( m_T[ti].m_trim_index != ti  )
     {
       if ( text_log )
-        text_log->Print( "ON_Brep.m_T[%d].m_trim_index = %d (should be %d)\n",
-                         ti, m_T[ti].m_trim_index, ti );
+	text_log->Print( "ON_Brep.m_T[%d].m_trim_index = %d (should be %d)\n",
+			 ti, m_T[ti].m_trim_index, ti );
       return false;
     }
     else if ( !m_T[ti].IsValid( text_log ) )
     {
       if ( text_log )
-        text_log->Print( "ON_Brep.m_T[%d] is not valid\n",ti );
+	text_log->Print( "ON_Brep.m_T[%d] is not valid\n",ti );
       return false;
     }
   }
 
-  for ( li = 0; li < loop_count; li++ )
+  for ( li = 0; li < loop_count; li++ ) 
   {
     if ( m_L[li].m_loop_index == -1 )
     {
       const ON_BrepLoop& loop = m_L[li];
       if ( loop.m_fi != -1 )
       {
-        if ( text_log )
-          text_log->Print( "ON_Brep.m_L[%d] is deleted (m_loop_index = -1) but loop.m_fi=%d (should be -1).\n",
-                           li, loop.m_fi );
-        return false;
+	if ( text_log )
+	  text_log->Print( "ON_Brep.m_L[%d] is deleted (m_loop_index = -1) but loop.m_fi=%d (should be -1).\n",
+			   li, loop.m_fi );
+	return false;
       }
       if ( loop.m_ti.Count() > 0 )
       {
-        if ( text_log )
-          text_log->Print( "ON_Brep.m_L[%d] is deleted (m_loop_index = -1) but loop.m_ti.Count()=%d.\n",
-                           li, loop.m_ti.Count() );
-        return false;
+	if ( text_log )
+	  text_log->Print( "ON_Brep.m_L[%d] is deleted (m_loop_index = -1) but loop.m_ti.Count()=%d.\n",
+			   li, loop.m_ti.Count() );
+	return false;
       }
     }
     else if ( m_L[li].m_loop_index != li )
     {
       if ( text_log )
-        text_log->Print( "ON_Brep.m_L[%d].m_loop_index = %d (should be %d)\n",
-                         li, m_L[li].m_loop_index, li );
+	text_log->Print( "ON_Brep.m_L[%d].m_loop_index = %d (should be %d)\n",
+			 li, m_L[li].m_loop_index, li );
       return false;
     }
   }
 
-  for ( fi = 0; fi < face_count; fi++ )
+  for ( fi = 0; fi < face_count; fi++ ) 
   {
     if ( m_F[fi].m_face_index == -1 )
     {
       const ON_BrepFace& face = m_F[fi];
       if ( face.m_si != -1 )
       {
-        if ( text_log )
-          text_log->Print( "ON_Brep.m_F[%d] is deleted (m_face_index = -1) but face.m_si=%d (should be -1).\n",
-                           fi, face.m_si );
-        return false;
+	if ( text_log )
+	  text_log->Print( "ON_Brep.m_F[%d] is deleted (m_face_index = -1) but face.m_si=%d (should be -1).\n",
+			   fi, face.m_si );
+	return false;
       }
       if ( face.ProxySurface() )
       {
-        if ( text_log )
-          text_log->Print( "ON_Brep.m_F[%d] is deleted (m_face_index = -1) but face.ProxySurface() is not NULL.\n",
-                           fi );
-        return false;
+	if ( text_log )
+	  text_log->Print( "ON_Brep.m_F[%d] is deleted (m_face_index = -1) but face.ProxySurface() is not NULL.\n",
+			   fi );
+	return false;
       }
       if ( face.m_li.Count() > 0 )
       {
-        if ( text_log )
-          text_log->Print( "ON_Brep.m_F[%d] is deleted (m_face_index = -1) but face.m_li.Count()=%d.\n",
-                           fi, face.m_li.Count() );
-        return false;
+	if ( text_log )
+	  text_log->Print( "ON_Brep.m_F[%d] is deleted (m_face_index = -1) but face.m_li.Count()=%d.\n",
+			   fi, face.m_li.Count() );
+	return false;
       }
     }
     else if ( m_F[fi].m_face_index != fi )
     {
       if ( text_log )
-        text_log->Print( "ON_Brep.m_F[%d].m_face_index = %d (should be %d)\n",
-                         fi, m_F[fi].m_face_index, fi );
+	text_log->Print( "ON_Brep.m_F[%d].m_face_index = %d (should be %d)\n",
+			 fi, m_F[fi].m_face_index, fi );
       return false;
     }
   }
@@ -4262,21 +4311,21 @@ ON_Brep::IsValid( ON_TextLog* text_log ) const
     if ( !m_C2[c2i]->IsValid(text_log) )
     {
       if ( text_log )
-        text_log->Print("ON_Brep.m_C2[%d] is invalid.\n",c2i);
+	text_log->Print("ON_Brep.m_C2[%d] is invalid.\n",c2i);
       return false;
     }
     int c2_dim = m_C2[c2i]->Dimension();
     if ( c2_dim != 2 )
     {
       if ( text_log )
-        text_log->Print("ON_Brep.m_C2[%d]->Dimension() = %d (should be 2).\n", c2i, c2_dim );
+	text_log->Print("ON_Brep.m_C2[%d]->Dimension() = %d (should be 2).\n", c2i, c2_dim );
       return false;
     }
     const ON_PolyCurve* polycurve = ON_PolyCurve::Cast(m_C2[c2i]);
     if ( polycurve && polycurve->IsNested() )
     {
       if ( text_log )
-        text_log->Print("ON_Brep.m_C2[%d] is a nested polycurve.\n", c2i );
+	text_log->Print("ON_Brep.m_C2[%d] is a nested polycurve.\n", c2i );
       return false;
     }
   }
@@ -4294,21 +4343,21 @@ ON_Brep::IsValid( ON_TextLog* text_log ) const
     if ( !m_C3[c3i]->IsValid(text_log) )
     {
       if ( text_log )
-        text_log->Print("ON_Brep.m_C3[%d] is invalid.\n",c3i);
+	text_log->Print("ON_Brep.m_C3[%d] is invalid.\n",c3i);
       return false;
     }
     int c3_dim = m_C3[c3i]->Dimension();
     if ( c3_dim != 3 )
     {
       if ( text_log )
-        text_log->Print("ON_Brep.m_C3[%d]->Dimension() = %d (should be 3).\n", c3i, c3_dim );
+	text_log->Print("ON_Brep.m_C3[%d]->Dimension() = %d (should be 3).\n", c3i, c3_dim );
       return false;
     }
     const ON_PolyCurve* polycurve = ON_PolyCurve::Cast(m_C3[c3i]);
     if ( polycurve && polycurve->IsNested() )
     {
       if ( text_log )
-        text_log->Print("ON_Brep.m_C3[%d] is a nested polycurve.\n", c3i );
+	text_log->Print("ON_Brep.m_C3[%d] is a nested polycurve.\n", c3i );
       return false;
     }
   }
@@ -4326,14 +4375,14 @@ ON_Brep::IsValid( ON_TextLog* text_log ) const
     if ( !m_S[si]->IsValid(text_log) )
     {
       if ( text_log )
-        text_log->Print("ON_Brep.m_S[%d] is invalid.\n",si);
+	text_log->Print("ON_Brep.m_S[%d] is invalid.\n",si);
       return false;
     }
     int dim = m_S[si]->Dimension();
     if ( dim != 3 )
     {
       if ( text_log )
-        text_log->Print("ON_Brep.m_S[%d]->Dimension() = %d (should be 3).\n", si, dim );
+	text_log->Print("ON_Brep.m_S[%d]->Dimension() = %d (should be 3).\n", si, dim );
       return false;
     }
   }
@@ -4344,31 +4393,31 @@ ON_Brep::IsValid( ON_TextLog* text_log ) const
       continue;
     if ( !IsValidVertex( vi, text_log ) ) {
       if ( text_log )
-        text_log->Print("ON_Brep.m_V[%d] is invalid.\n",vi);
+	text_log->Print("ON_Brep.m_V[%d] is invalid.\n",vi);
       return false;
     }
   }
 
   // check edges
-  for ( ei = 0; ei < edge_count; ei++ )
+  for ( ei = 0; ei < edge_count; ei++ ) 
   {
     if ( m_E[ei].m_edge_index == -1 )
       continue;
     if ( !IsValidEdge( ei, text_log ) ) {
       if ( text_log )
-        text_log->Print("ON_Brep.m_E[%d] is invalid.\n",ei);
+	text_log->Print("ON_Brep.m_E[%d] is invalid.\n",ei);
       return false;
     }
   }
 
   // check faces
-  for ( fi = 0; fi < face_count; fi++ )
+  for ( fi = 0; fi < face_count; fi++ ) 
   {
     if ( m_F[fi].m_face_index == -1 )
       continue;
     if ( !IsValidFace( fi, text_log ) ) {
       if ( text_log )
-        text_log->Print("ON_Brep.m_F[%d] is invalid.\n",fi);
+	text_log->Print("ON_Brep.m_F[%d] is invalid.\n",fi);
       return false;
     }
   }
@@ -4386,18 +4435,18 @@ ON_Brep::IsValid( ON_TextLog* text_log ) const
     if ( loop.m_fi < 0 || loop.m_fi >= m_F.Count() )
     {
       if ( text_log )
-        text_log->Print("ON_Brep.m_L[%d].m_fi = %d is not invalid.\n",li,loop.m_fi);
+	text_log->Print("ON_Brep.m_L[%d].m_fi = %d is not invalid.\n",li,loop.m_fi);
       return false;
     }
     if ( m_F[loop.m_fi].m_face_index != loop.m_fi )
     {
       if ( text_log )
-        text_log->Print("ON_Brep.m_L[%d].m_fi = %d is a deleted face.\n",li,loop.m_fi);
+	text_log->Print("ON_Brep.m_L[%d].m_fi = %d is a deleted face.\n",li,loop.m_fi);
       return false;
     }
 
-    // This for() loop check is performed in IsValidLoop() which is
-    // called by IsValidFace() in the "check faces" loop above.
+    // This for() loop check is performed in IsValidLoop() which is 
+    // called by IsValidFace() in the "check faces" loop above.  
     // I think it can be removed.  If anybody every sees this code
     // find a flaw, please tell Dale Lear.
     for ( int lti = 0; lti < loop.m_ti.Count(); lti++ )
@@ -4405,23 +4454,23 @@ ON_Brep::IsValid( ON_TextLog* text_log ) const
       ti = loop.m_ti[lti];
       if ( ti < 0 || ti >= m_T.Count() )
       {
-        if ( text_log )
-          text_log->Print("ON_Brep.m_L[%d].m_ti[%d] = %d is not invalid.\n",li,lti,ti);
-        return false;
+	if ( text_log )
+	  text_log->Print("ON_Brep.m_L[%d].m_ti[%d] = %d is not invalid.\n",li,lti,ti);
+	return false;
       }
       if ( m_T[ti].m_trim_index != ti )
       {
-        if ( text_log )
-          text_log->Print("ON_Brep.m_L[%d].m_ti[%d] = %d is a deleted trim.\n",li,lti,ti);
-        return false;
+	if ( text_log )
+	  text_log->Print("ON_Brep.m_L[%d].m_ti[%d] = %d is a deleted trim.\n",li,lti,ti);
+	return false;
       }
     }
   }
 
-  // check trims - this check is necessary at the brep
-  // level to make sure there are no orphan trims and
-  // to test tolerances.  Most of these tests are duplicates
-  // of ones in ON_Brep::IsValidTrim, which is called by
+  // check trims - this check is necessary at the brep 
+  // level to make sure there are no orphan trims and 
+  // to test tolerances.  Most of these tests are duplicates 
+  // of ones in ON_Brep::IsValidTrim, which is called by 
   // ON_Brep::IsValidLoop, which is called by ON_Brep::IsValidFace.
   for ( ti = 0; ti < trim_count; ti++ )
   {
@@ -4432,54 +4481,54 @@ ON_Brep::IsValid( ON_TextLog* text_log ) const
     if ( trim.m_vi[0] < 0 || trim.m_vi[0] >= m_V.Count() )
     {
       if ( text_log )
-        text_log->Print("ON_Brep.m_T[%d].m_vi[0] = %d is not invalid.\n",ti,trim.m_vi[0]);
+	text_log->Print("ON_Brep.m_T[%d].m_vi[0] = %d is not invalid.\n",ti,trim.m_vi[0]);
       return false;
     }
     if ( trim.m_vi[1] < 0 || trim.m_vi[1] >= m_V.Count() )
     {
       if ( text_log )
-        text_log->Print("ON_Brep.m_T[%d].m_vi[1] = %d is not invalid.\n",ti,trim.m_vi[1]);
+	text_log->Print("ON_Brep.m_T[%d].m_vi[1] = %d is not invalid.\n",ti,trim.m_vi[1]);
       return false;
     }
 
     if ( m_V[trim.m_vi[0]].m_vertex_index != trim.m_vi[0] )
     {
       if ( text_log )
-        text_log->Print("ON_Brep.m_T[%d].m_vi[0] is deleted.\n",ti);
+	text_log->Print("ON_Brep.m_T[%d].m_vi[0] is deleted.\n",ti);
       return false;
     }
     if ( m_V[trim.m_vi[1]].m_vertex_index != trim.m_vi[1] )
     {
       if ( text_log )
-        text_log->Print("ON_Brep.m_T[%d].m_vi[1] is deleted.\n",ti);
+	text_log->Print("ON_Brep.m_T[%d].m_vi[1] is deleted.\n",ti);
       return false;
     }
 
     if ( trim.m_c2i < 0 || trim.m_c2i >= m_C2.Count() )
     {
       if ( text_log )
-        text_log->Print("ON_Brep.m_T[%d].m_c2i = %d is not valid.\n",ti,trim.m_c2i);
+	text_log->Print("ON_Brep.m_T[%d].m_c2i = %d is not valid.\n",ti,trim.m_c2i);
       return false;
     }
 
     if ( 0 == m_C2[trim.m_c2i] )
     {
       if ( text_log )
-        text_log->Print("ON_Brep.m_T[%d].m_c2i = %d, but m_C2[%d] is NULL.\n",ti,trim.m_c2i,trim.m_c2i);
+	text_log->Print("ON_Brep.m_T[%d].m_c2i = %d, but m_C2[%d] is NULL.\n",ti,trim.m_c2i,trim.m_c2i);
       return false;
     }
 
     if ( trim.m_li < 0 || trim.m_li >= m_L.Count() )
     {
       if ( text_log )
-        text_log->Print("ON_Brep.m_T[%d].m_li = %d is not valid.\n",ti,trim.m_li);
+	text_log->Print("ON_Brep.m_T[%d].m_li = %d is not valid.\n",ti,trim.m_li);
       return false;
     }
 
     if ( m_L[trim.m_li].m_loop_index != trim.m_li )
     {
       if ( text_log )
-        text_log->Print("ON_Brep.m_T[%d].m_li = %d is a deleted loop.\n",ti,trim.m_li);
+	text_log->Print("ON_Brep.m_T[%d].m_li = %d is a deleted loop.\n",ti,trim.m_li);
       return false;
     }
 
@@ -4488,14 +4537,14 @@ ON_Brep::IsValid( ON_TextLog* text_log ) const
       const ON_Surface* srf = m_S[m_F[m_L[trim.m_li].m_fi].m_si];
       if ( srf )
       {
-        ON_Interval PD = trim.ProxyCurveDomain();
-        ON_Surface::ISO iso = srf->IsIsoparametric(*c2, &PD);
-        if ( trim.m_iso != iso )
-        {
-          if ( text_log )
-            text_log->Print("ON_Brep.m_T[%d].m_iso = %d and it should be %d\n",ti,trim.m_iso,iso);
-          return false;
-        }
+	ON_Interval PD = trim.ProxyCurveDomain();
+	ON_Surface::ISO iso = srf->IsIsoparametric(*c2, &PD);
+	if ( trim.m_iso != iso )
+	{
+	  if ( text_log )
+	    text_log->Print("ON_Brep.m_T[%d].m_iso = %d and it should be %d\n",ti,trim.m_iso,iso);
+	  return false;
+	}
       }
     }
 
@@ -4503,9 +4552,9 @@ ON_Brep::IsValid( ON_TextLog* text_log ) const
     {
       if ( trim.m_ei != -1 )
       {
-        if ( text_log )
-          text_log->Print("ON_Brep.m_T[%d].m_type = singular, but m_ei = %d (should be -1).\n",ti,trim.m_ei);
-        return false;
+	if ( text_log )
+	  text_log->Print("ON_Brep.m_T[%d].m_type = singular, but m_ei = %d (should be -1).\n",ti,trim.m_ei);
+	return false;
       }
       continue;
     }
@@ -4513,15 +4562,15 @@ ON_Brep::IsValid( ON_TextLog* text_log ) const
     if ( trim.m_ei < 0 || trim.m_ei >= m_E.Count() )
     {
       if ( text_log )
-        text_log->Print("ON_Brep.m_T[%d].m_ei = %d is not invalid.\n",ti,trim.m_ei);
+	text_log->Print("ON_Brep.m_T[%d].m_ei = %d is not invalid.\n",ti,trim.m_ei);
       return false;
     }
-
+    
     const ON_BrepEdge& edge = m_E[trim.m_ei];
     if ( edge.m_edge_index != trim.m_ei )
     {
       if ( text_log )
-        text_log->Print("ON_Brep.m_T[%d].m_ei is deleted.\n",ti);
+	text_log->Print("ON_Brep.m_T[%d].m_ei is deleted.\n",ti);
       return false;
     }
 
@@ -4530,13 +4579,13 @@ ON_Brep::IsValid( ON_TextLog* text_log ) const
     if ( trim.m_vi[0] != edge.m_vi[evi0] )
     {
       if ( text_log )
-        text_log->Print("ON_Brep.m_T[%d].m_bRev3d = %d, but m_vi[0] != m_E[m_ei].m_vi[%d].\n",ti,trim.m_bRev3d,evi0);
+	text_log->Print("ON_Brep.m_T[%d].m_bRev3d = %d, but m_vi[0] != m_E[m_ei].m_vi[%d].\n",ti,trim.m_bRev3d,evi0);
       return false;
     }
     if ( trim.m_vi[1] != edge.m_vi[evi1] )
     {
       if ( text_log )
-        text_log->Print("ON_Brep.m_T[%d].m_bRev3d = %d, but m_vi[0] != m_E[m_ei].m_vi[%d].\n",ti,trim.m_bRev3d,evi1);
+	text_log->Print("ON_Brep.m_T[%d].m_bRev3d = %d, but m_vi[0] != m_E[m_ei].m_vi[%d].\n",ti,trim.m_bRev3d,evi1);
       return false;
     }
 
@@ -4546,8 +4595,8 @@ ON_Brep::IsValid( ON_TextLog* text_log ) const
       ON_3dVector trim_der0, trim_der1, srf_du0, srf_dv0, srf_du1, srf_dv1;
       ON_Interval trim_domain = trim.Domain();
       // trim_pt0 should be closed to trim_pt1 except when
-      // trim starts and ends on opposite sides of a surface
-      // seam.  Even when the trim curve is closed, the
+      // trim starts and ends on opposite sides of a surface 
+      // seam.  Even when the trim curve is closed, the 
       // derivatives can be different when there is
       // a kink at the start/end of a trim.
       trim.Ev1Der( trim_domain[0], trim_pt0, trim_der0 );
@@ -4570,30 +4619,30 @@ ON_Brep::IsValid( ON_TextLog* text_log ) const
       double d1 = trim_tangent1*edge_tangent1;
       if ( trim.m_bRev3d )
       {
-        d0 = -d0;
-        d1 = -d1;
+	d0 = -d0;
+	d1 = -d1;
       }
-      if (    trim.m_vi[0] == trim.m_vi[1]
-           && edge.m_vi[0] == edge.m_vi[1]
-           && trim.m_vi[0] == edge.m_vi[0]
-           )
+      if (    trim.m_vi[0] == trim.m_vi[1] 
+	   && edge.m_vi[0] == edge.m_vi[1] 
+	   && trim.m_vi[0] == edge.m_vi[0] 
+	   )
       {
-        // For high quality models, d0 and d1 should be close to +1.
-        // If both are close to -1, the trim.m_bRev3d flag is most
-        // likely set opposite of what it should be.
+	// For high quality models, d0 and d1 should be close to +1.
+	// If both are close to -1, the trim.m_bRev3d flag is most
+	// likely set opposite of what it should be.
 
-        // check start tangent to see if m_bRev3d is set correctly
-        if ( d0 < 0.0 || d1 < 0.0)
-        {
-          if ( text_log )
-          {
-            if ( trim.m_bRev3d )
-              text_log->Print("ON_Brep.m_T[%d].m_bRev3d = true, but closed curve directions are the same.\n",ti);
-            else
-              text_log->Print("ON_Brep.m_T[%d].m_bRev3d = false, but closed curve directions are opposite.\n",ti);
-          }
-          return false;
-        }
+	// check start tangent to see if m_bRev3d is set correctly
+	if ( d0 < 0.0 || d1 < 0.0)
+	{
+	  if ( text_log )
+	  {
+	    if ( trim.m_bRev3d )
+	      text_log->Print("ON_Brep.m_T[%d].m_bRev3d = true, but closed curve directions are the same.\n",ti);
+	    else
+	      text_log->Print("ON_Brep.m_T[%d].m_bRev3d = false, but closed curve directions are opposite.\n",ti);
+	  }
+	  return false;
+	}
       }
 
       // Make sure edge and tolerances are realistic
@@ -4605,24 +4654,24 @@ ON_Brep::IsValid( ON_TextLog* text_log ) const
       double etol = edge.m_tolerance;
       double dtol = 10.0*(etol + t0_tol + t1_tol);
       if ( dtol < 0.01 )
-        dtol = 0.01;
+	dtol = 0.01;
       if ( d0 > dtol  )
       {
-        if ( text_log )
-        {
-          text_log->Print("Distance from start of ON_Brep.m_T[%d] to 3d edge is %g.  (edge tol = %g, trim tol ~ %g).\n",
-                          ti, d0, etol,t0_tol);
-        }
-        return false;
+	if ( text_log )
+	{
+	  text_log->Print("Distance from start of ON_Brep.m_T[%d] to 3d edge is %g.  (edge tol = %g, trim tol ~ %g).\n",
+			  ti, d0, etol,t0_tol);
+	}
+	return false;
       }
       if ( d1 > dtol )
       {
-        if ( text_log )
-        {
-          text_log->Print("Distance from end of ON_Brep.m_T[%d] to 3d edge is %g.  (edge tol = %g, trim tol ~ %g).\n",
-                          ti, d1, etol,t1_tol);
-        }
-        return false;
+	if ( text_log )
+	{
+	  text_log->Print("Distance from end of ON_Brep.m_T[%d] to 3d edge is %g.  (edge tol = %g, trim tol ~ %g).\n",
+			  ti, d1, etol,t1_tol);
+	}
+	return false;
       }
     }
 
@@ -4630,19 +4679,19 @@ ON_Brep::IsValid( ON_TextLog* text_log ) const
     {
       if ( trim.m_pbox.m_min.z != 0.0 )
       {
-        if ( text_log )
-           text_log->Print("ON_Brep.m_T[%d].m_pbox.m_min.z = %g (should be zero).\n",ti,trim.m_pbox.m_min.z);
-        return false;
+	if ( text_log )
+	   text_log->Print("ON_Brep.m_T[%d].m_pbox.m_min.z = %g (should be zero).\n",ti,trim.m_pbox.m_min.z);
+	return false;
       }
       if ( trim.m_pbox.m_max.z != 0.0 )
       {
-        if ( text_log )
-           text_log->Print("ON_Brep.m_T[%d].m_pbox.m_max.z = %g (should be zero).\n",ti,trim.m_pbox.m_max.z);
-        return false;
+	if ( text_log )
+	   text_log->Print("ON_Brep.m_T[%d].m_pbox.m_max.z = %g (should be zero).\n",ti,trim.m_pbox.m_max.z);
+	return false;
       }
-
+      
       if ( !TestTrimPBox( trim, text_log ) )
-        return false;
+	return false;
 
     }
   }
@@ -4656,13 +4705,13 @@ ON_Brep::IsValid( ON_TextLog* text_log ) const
     if ( loop.m_pbox.m_min.z != 0.0 )
     {
       if ( text_log )
-         text_log->Print("ON_Brep.m_L[%d].m_pbox.m_min.z = %g (should be zero).\n",li,loop.m_pbox.m_min.z);
+	 text_log->Print("ON_Brep.m_L[%d].m_pbox.m_min.z = %g (should be zero).\n",li,loop.m_pbox.m_min.z);
       return false;
     }
     if ( loop.m_pbox.m_max.z != 0.0 )
     {
       if ( text_log )
-         text_log->Print("ON_Brep.m_L[%d].m_pbox.m_max.z = %g (should be zero).\n",li,loop.m_pbox.m_max.z);
+	 text_log->Print("ON_Brep.m_L[%d].m_pbox.m_max.z = %g (should be zero).\n",li,loop.m_pbox.m_max.z);
       return false;
     }
     int first_trim_ti = -4;
@@ -4675,23 +4724,23 @@ ON_Brep::IsValid( ON_TextLog* text_log ) const
       const ON_BrepTrim& trim = m_T[loop.m_ti[lti]];
       if ( !loop.m_pbox.IsPointIn(trim.m_pbox.m_min) || !loop.m_pbox.IsPointIn(trim.m_pbox.m_max) )
       {
-        if ( text_log )
-           text_log->Print("ON_Brep.m_L[%d].m_pbox does not contain m_T[loop.m_ti[%d]].m_pbox.\n",li,lti);
-        return false;
+	if ( text_log )
+	   text_log->Print("ON_Brep.m_L[%d].m_pbox does not contain m_T[loop.m_ti[%d]].m_pbox.\n",li,lti);
+	return false;
       }
       if ( 0 == lti )
       {
-        first_trim_ti = loop.m_ti[lti];
-        first_trim_vi0 = trim.m_vi[0];
+	first_trim_ti = loop.m_ti[lti];
+	first_trim_vi0 = trim.m_vi[0];
       }
       else if ( prev_trim_vi1 != trim.m_vi[0] )
       {
-        // 23 May 2003 Dale Lear
-        //     Added this test to make sure adjacent trims
-        //     in a loop shared vertices.
-        if ( text_log )
-           text_log->Print("ON_Brep.m_L[%d] loop has trim vertex mismatch:\n  m_T[loop.m_ti[%d]=%d].m_vi[1] = %d != m_T[loop.m_ti[%d]=%d].m_vi[0]=%d.\n",li,lti-1,prev_trim_ti,prev_trim_vi1,lti,loop.m_ti[lti],trim.m_vi[0]);
-        return false;
+	// 23 May 2003 Dale Lear
+	//     Added this test to make sure adjacent trims
+	//     in a loop shared vertices.
+	if ( text_log )
+	   text_log->Print("ON_Brep.m_L[%d] loop has trim vertex mismatch:\n  m_T[loop.m_ti[%d]=%d].m_vi[1] = %d != m_T[loop.m_ti[%d]=%d].m_vi[0]=%d.\n",li,lti-1,prev_trim_ti,prev_trim_vi1,lti,loop.m_ti[lti],trim.m_vi[0]);
+	return false;
       }
       prev_trim_ti = loop.m_ti[lti];
       prev_trim_vi1 = trim.m_vi[1];
@@ -4703,8 +4752,8 @@ ON_Brep::IsValid( ON_TextLog* text_log ) const
       //     Added this test to make sure adjacent trims
       //     in a loop shared vertices.
       if ( text_log )
-         text_log->Print("ON_Brep.m_L[%d] loop has trim vertex mismatch:\n  m_T[loop.m_ti[%d]=%d].m_vi[1] = %d != m_T[loop.m_ti[%d]=%d].m_vi[0]=%d.\n",
-                         li,lti-1,prev_trim_ti,prev_trim_vi1,0,first_trim_ti,first_trim_vi0);
+	 text_log->Print("ON_Brep.m_L[%d] loop has trim vertex mismatch:\n  m_T[loop.m_ti[%d]=%d].m_vi[1] = %d != m_T[loop.m_ti[%d]=%d].m_vi[0]=%d.\n",
+			 li,lti-1,prev_trim_ti,prev_trim_vi1,0,first_trim_ti,first_trim_vi0);
       return false;
     }
   }
@@ -4712,6 +4761,7 @@ ON_Brep::IsValid( ON_TextLog* text_log ) const
   // 21 October 2003 Dale Lear - fix RR 11980 - check for split seams
   // This block of code assumes the preceding checks have all passed.
   // It looks for boundary trims on seams that should be joined as a seam trim.
+  ON_Interval srf_domain[2];
   for ( fi = 0; fi < face_count; fi++ )
   {
     const ON_BrepFace& face = m_F[fi];
@@ -4720,6 +4770,18 @@ ON_Brep::IsValid( ON_TextLog* text_log ) const
     const ON_Surface* srf = m_S[face.m_si];
     if ( 0 == srf )
       continue;
+
+    srf_domain[0] = srf->Domain(0);
+    srf_domain[1] = srf->Domain(1);
+    for ( int fli = 0; fli < face.m_li.Count(); fli++ )
+    {
+      int li = face.m_li[fli];
+      if ( li < 0 || li >= m_L.Count() )
+	continue;
+      if ( !CheckLoopOnSrfHelper(*this,srf_domain[0],srf_domain[1],m_L[li],text_log) )
+	return false;
+    }
+
     const ON_BrepLoop* outer_loop = face.OuterLoop();
     if ( 0 == outer_loop )
       continue;
@@ -4742,68 +4804,68 @@ ON_Brep::IsValid( ON_TextLog* text_log ) const
     {
       const ON_BrepTrim& trim = m_T[outer_loop->m_ti[lti]];
       if ( ON_BrepTrim::boundary !=  trim.m_type )
-        continue;
+	continue;
       if ( ON_Surface::E_iso == trim.m_iso && bClosed[0] )
       {
-        iso_type = ON_Surface::W_iso;
-        endpt_index = 1;
+	iso_type = ON_Surface::W_iso;
+	endpt_index = 1;
       }
       else if ( ON_Surface::W_iso == trim.m_iso && bClosed[0] )
       {
-        iso_type = ON_Surface::E_iso;
-        endpt_index = 1;
+	iso_type = ON_Surface::E_iso;
+	endpt_index = 1;
       }
       else if( ON_Surface::S_iso == trim.m_iso && bClosed[1] )
       {
-        iso_type = ON_Surface::N_iso;
-        endpt_index = 0;
+	iso_type = ON_Surface::N_iso;
+	endpt_index = 0;
       }
       else if( ON_Surface::N_iso == trim.m_iso && bClosed[1] )
       {
-        iso_type = ON_Surface::S_iso;
-        endpt_index = 0;
+	iso_type = ON_Surface::S_iso;
+	endpt_index = 0;
       }
       else
-        continue;
+	continue;
 
       side_interval.Set(trim.PointAtStart()[endpt_index],trim.PointAtEnd()[endpt_index]);
       if ( ON_Surface::N_iso == iso_type || ON_Surface::W_iso == iso_type )
       {
-        if ( !side_interval.IsIncreasing() )
-          continue;
+	if ( !side_interval.IsIncreasing() )
+	  continue;
       }
       else
       {
-        if ( !side_interval.IsDecreasing() )
-          continue;
+	if ( !side_interval.IsDecreasing() )
+	  continue;
       }
 
       // search for seam
       for ( lti1 = 0; lti1 < outer_trim_count; lti1++ )
       {
-        if ( lti1 == lti )
-          continue;
-        const ON_BrepTrim& trim1 = m_T[outer_loop->m_ti[lti1]];
-        if ( iso_type != trim1.m_iso )
-          continue;
-        if ( ON_BrepTrim::boundary != trim1.m_type )
-          continue;
+	if ( lti1 == lti )
+	  continue;
+	const ON_BrepTrim& trim1 = m_T[outer_loop->m_ti[lti1]];
+	if ( iso_type != trim1.m_iso )
+	  continue;
+	if ( ON_BrepTrim::boundary != trim1.m_type )
+	  continue;
+	
+	s1 = side_interval.NormalizedParameterAt(trim1.PointAtStart()[endpt_index]);
+	if ( fabs(s1-1.0) > side_tol )
+	  continue;
+	s0 = side_interval.NormalizedParameterAt(trim1.PointAtEnd()[endpt_index]);
+	if ( fabs(s0) > side_tol )
+	  continue;
 
-        s1 = side_interval.NormalizedParameterAt(trim1.PointAtStart()[endpt_index]);
-        if ( fabs(s1-1.0) > side_tol )
-          continue;
-        s0 = side_interval.NormalizedParameterAt(trim1.PointAtEnd()[endpt_index]);
-        if ( fabs(s0) > side_tol )
-          continue;
-
-        if ( text_log )
-        {
-         text_log->Print("ON_Brep.m_F[%d] is on a closed surface. Outer loop m_L[%d] contains boundary trims %d and %d.  They should be seam trims connected to the same edge.\n",
-                         face.m_face_index,outer_loop->m_loop_index,
-                         trim.m_trim_index,trim1.m_trim_index
-                         );
-        }
-        return false;
+	if ( text_log )
+	{
+	 text_log->Print("ON_Brep.m_F[%d] is on a closed surface. Outer loop m_L[%d] contains boundary trims %d and %d.  They should be seam trims connected to the same edge.\n",
+			 face.m_face_index,outer_loop->m_loop_index,
+			 trim.m_trim_index,trim1.m_trim_index
+			 );
+	}
+	return false;                
       }
     }
   }
@@ -4872,7 +4934,7 @@ bool ON_Brep::SetTrimStartVertex( const int ti0, const int vi )
   for ( ti = ti0, tvi = 0, counter = 0; ti >= 0 && counter < 512; counter++ ) {
     if ( counter > 0 ) {
       if ( ti == ti0 && tvi == 0 )
-        return true; // vertex was interior
+	return true; // vertex was interior
     }
     ON_BrepTrim& trim = m_T[ti];
     if ( trim.m_type == ON_BrepTrim::singular ) {
@@ -4882,9 +4944,9 @@ bool ON_Brep::SetTrimStartVertex( const int ti0, const int vi )
       ti = next_ti;
       tvi = 1-tvi;
       if ( ti == ti0 && tvi == 0 )
-        return true; // vertex was interior
+	return true; // vertex was interior
       if ( m_T[ti].m_type != ON_BrepTrim::singular )
-        HopAcrossEdge( ti, tvi ); // OK if hop fails because ti is a boundary
+	HopAcrossEdge( ti, tvi ); // OK if hop fails because ti is a boundary
       continue;
     }
 
@@ -4924,13 +4986,13 @@ bool ON_Brep::SetTrimStartVertex( const int ti0, const int vi )
     // back up until we get to a non-singular trim
     while ( m_T[ti].m_type == ON_BrepTrim::singular ) {
       if ( ti != ti0 ) {
-        m_T[ti].m_vi[0] = vi;
-        m_T[ti].m_vi[1] = vi;
+	m_T[ti].m_vi[0] = vi;
+	m_T[ti].m_vi[1] = vi;
       }
       ti = PrevTrim(ti);
       tvi = 1;
       if ( ti == ti0 )
-        break;
+	break;
     }
     ei = m_T[ti].m_ei;
     if ( ei >= 0 ) {
@@ -4970,11 +5032,11 @@ bool ON_Brep::SetTrimStartVertex( const int ti0, const int vi )
 
   const int ti1 = ti;
   const int tvi1 = tvi;
-
+  
   for ( ti = ti1, tvi = tvi1, counter = 0; ti >= 0 && counter < 512; counter++ ) {
     if ( counter > 0 ) {
       if ( ti == ti1 && tvi == tvi1 )
-        return false; // vertex is not interior - so this should not happen
+	return false; // vertex is not interior - so this should not happen
     }
     ON_BrepTrim& trim = m_T[ti];
     if ( trim.m_type == ON_BrepTrim::singular ) {
@@ -4984,9 +5046,9 @@ bool ON_Brep::SetTrimStartVertex( const int ti0, const int vi )
       ti = next_ti;
       tvi = 1-tvi;
       if ( ti == ti1 && tvi == tvi1 )
-        return false; // vertex is not interior - so this should not happen
+	return false; // vertex is not interior - so this should not happen
       if ( m_T[ti].m_type != ON_BrepTrim::singular )
-        HopAcrossEdge( ti, tvi );  // OK if hop fails because ti is a boundary
+	HopAcrossEdge( ti, tvi );  // OK if hop fails because ti is a boundary
       continue;
     }
 
@@ -4999,7 +5061,7 @@ bool ON_Brep::SetTrimStartVertex( const int ti0, const int vi )
     tvi = 1-tvi;
     if ( ti < 0 )
       return false; // should not happen
-
+    
     if ( m_T[ti].m_type == ON_BrepTrim::singular )
       continue;
     ei = m_T[ti].m_ei;
@@ -5102,7 +5164,7 @@ int ON_Brep::NextEdge(int ei, int endi, int* next_endi ) const
   if ( edge.m_vi[0] == edge.m_vi[1]  && endi ) {
     // get next occurance of edge index
     //
-    // On closed edges, edge.m_vi[0] = edge.m_vi[1] and edge.edge_index
+    // On closed edges, edge.m_vi[0] = edge.m_vi[1] and edge.edge_index 
     // appears TWICE in vertex.m_ei[].  The first occurance of edge.edge_index
     // in vertex.m_ei[] corresponds to edge.m_vi[0].  The second occurance
     // of edge.edge_index in vertex.m_ei[] corresponds to edge.m_vi[1].
@@ -5118,10 +5180,10 @@ int ON_Brep::NextEdge(int ei, int endi, int* next_endi ) const
     if ( m_E[next_ei].m_vi[0] == m_E[next_ei].m_vi[1] ) {
       *next_endi = 1;
       for ( vei++; vei < edge_count; vei++ ) {
-        if ( vertex.m_ei[vei] == next_ei ) {
-          *next_endi = 0;
-          break;
-        }
+	if ( vertex.m_ei[vei] == next_ei ) {
+	  *next_endi = 0;
+	  break;
+	}
       }
     }
     else if ( m_E[next_ei].m_vi[1] == vi )
@@ -5146,7 +5208,7 @@ int ON_Brep::PrevEdge(int ei, int endi, int* prev_endi ) const
   if ( edge.m_vi[0] == edge.m_vi[1] && endi ) {
     // get next occurance of edge index
     //
-    // On closed edges, edge.m_vi[0] = edge.m_vi[1] and edge.edge_index
+    // On closed edges, edge.m_vi[0] = edge.m_vi[1] and edge.edge_index 
     // appears TWICE in vertex.m_ei[].  The first occurance of edge.edge_index
     // in vertex.m_ei[] corresponds to edge.m_vi[0].  The second occurance
     // of edge.edge_index in vertex.m_ei[] corresponds to edge.m_vi[1].
@@ -5162,10 +5224,10 @@ int ON_Brep::PrevEdge(int ei, int endi, int* prev_endi ) const
     if ( m_E[prev_ei].m_vi[0] == m_E[prev_ei].m_vi[1] ) {
       *prev_endi = 1;
       for ( vei++; vei < edge_count; vei++ ) {
-        if ( vertex.m_ei[vei] == prev_ei ) {
-          *prev_endi = 0;
-          break;
-        }
+	if ( vertex.m_ei[vei] == prev_ei ) {
+	  *prev_endi = 0;
+	  break;
+	}
       }
     }
     else if ( m_E[prev_ei].m_vi[1] == vi ) {
@@ -5201,7 +5263,7 @@ void ON_Brep::SetVertices(void)
 {
   const int face_count = m_F.Count();
   int fi;
-
+  
   ClearEdgeVertices();
   ClearTrimVertices();
   m_V.Empty();
@@ -5223,36 +5285,36 @@ void ON_Brep::SetVertices(void)
   const int vertex_count = m_V.Count();
   int vi;
   ON_3dPoint VP, EP;
-  for ( vi = 0; vi < vertex_count; vi++ )
+  for ( vi = 0; vi < vertex_count; vi++ ) 
   {
     VP.Zero();
     double d = 0.0;
     ON_BrepVertex& vertex = m_V[vi];
     const int edge_count = vertex.m_ei.Count();
     int vei;
-    for ( vei = 0; vei < edge_count; vei++ )
+    for ( vei = 0; vei < edge_count; vei++ ) 
     {
       const int ei = vertex.m_ei[vei];
-      if ( ei < 0 )
-        continue;
+      if ( ei < 0 ) 
+	continue;
       const ON_BrepEdge& edge = m_E[ei];
       if ( edge.m_c3i < 0 )
-        continue;
+	continue;
       const ON_Curve* pC = edge.EdgeCurveOf();
       if ( !pC )
-        continue;
+	continue;
       if ( edge.m_vi[0] == vi )
-        EP = edge.PointAtStart();
+	EP = edge.PointAtStart();
       else if ( edge.m_vi[1] == vi )
-        EP = edge.PointAtEnd();
+	EP = edge.PointAtEnd();
       else
-        continue;
+	continue;
       VP.x += EP.x;
       VP.y += EP.y;
       VP.z += EP.z;
       d += 1.0;
     }
-    if ( d > 0.0 )
+    if ( d > 0.0 ) 
     {
       d = 1.0/d;
       vertex.point = d*VP;
@@ -5267,22 +5329,22 @@ void ON_Brep::SetVertices(void)
     // see if we have any 3d edges that are closed as 3d curves
     // but have distinct end vertices
     const ON_BrepEdge& edge = m_E[ei];
-    if (    edge.m_vi[0] >= 0
-         && edge.m_vi[1] >= 0
-         && edge.m_vi[0] != edge.m_vi[1]
-         && 0 != edge.EdgeCurveOf()
-         && edge.IsClosed() )
+    if (    edge.m_vi[0] >= 0 
+	 && edge.m_vi[1] >= 0
+	 && edge.m_vi[0] != edge.m_vi[1]
+	 && 0 != edge.EdgeCurveOf()
+	 && edge.IsClosed() )
     {
       EDGE_ENDS& ee = edge_ends.AppendNew();
       if ( edge.m_vi[0] < edge.m_vi[1] )
       {
-        ee.vi0 = edge.m_vi[0];
-        ee.vi1 = edge.m_vi[1];
+	ee.vi0 = edge.m_vi[0];
+	ee.vi1 = edge.m_vi[1];
       }
       else
       {
-        ee.vi0 = edge.m_vi[1];
-        ee.vi1 = edge.m_vi[0];
+	ee.vi0 = edge.m_vi[1];
+	ee.vi1 = edge.m_vi[0];
       }
       ee.ei = ei;
     }
@@ -5301,30 +5363,30 @@ void ON_Brep::SetVertices(void)
       bool bSortAgain = false;
       for ( i0 = 0; i0 < edge_ends_count; i0++ )
       {
-        vi0 = edge_ends[i0].vi0;
-        vi1 = edge_ends[i0].vi1;
-        for ( i1 = i0+1; i1 < edge_ends_count; i1++ )
-        {
-          EDGE_ENDS& ee = edge_ends[i1];
-          if ( ee.vi0 == vi1 )
-          {
-            ee.vi0 = vi0;
-            bSortAgain = true;
-          }
-          if ( ee.vi1 == vi1 )
-          {
-            ee.vi1 = ee.vi0;
-            ee.vi0 = vi0;
-            bSortAgain = true;
-          }
-        }
+	vi0 = edge_ends[i0].vi0;
+	vi1 = edge_ends[i0].vi1;
+	for ( i1 = i0+1; i1 < edge_ends_count; i1++ )
+	{
+	  EDGE_ENDS& ee = edge_ends[i1];
+	  if ( ee.vi0 == vi1 )
+	  {
+	    ee.vi0 = vi0;
+	    bSortAgain = true;
+	  }
+	  if ( ee.vi1 == vi1 )
+	  {
+	    ee.vi1 = ee.vi0;
+	    ee.vi0 = vi0;
+	    bSortAgain = true;
+	  }
+	}
       }
       if ( bSortAgain )
       {
-        edge_ends.HeapSort( ON_CompareIncreasing<EDGE_ENDS> );
+	edge_ends.HeapSort( ON_CompareIncreasing<EDGE_ENDS> );
       }
       else
-        break;
+	break;
     }
 
     // combine vertices at ends of closed edges into a single vertex
@@ -5334,20 +5396,20 @@ void ON_Brep::SetVertices(void)
       vi0 = edge_ends[i0].vi0;
       for ( i1 = i0+1; i1 < edge_ends.Count() && vi0 == edge_ends[i1].vi0; i1++ )
       {
-        // empty body
+	// empty body
       }
       vi1 = vi0;
       for ( i = i0; i < i1; i++ )
       {
-        if ( edge_ends[i].vi1 > vi1 )
-        {
-          vi1 = edge_ends[i].vi1;
-          if ( 0 <= vi0 && vi0 < vi1 && vi1 < m_V.Count())
-          {
-            CombineCoincidentVertices(m_V[vi0],m_V[vi1] );
-            bCullUnusedVertices = true;
-          }
-        }
+	if ( edge_ends[i].vi1 > vi1 )
+	{
+	  vi1 = edge_ends[i].vi1;
+	  if ( 0 <= vi0 && vi0 < vi1 && vi1 < m_V.Count())
+	  {
+	    CombineCoincidentVertices(m_V[vi0],m_V[vi1] );
+	    bCullUnusedVertices = true;
+	  }
+	}
       }
     }
     if ( bCullUnusedVertices )
@@ -5416,7 +5478,7 @@ void ON_Brep::SetTolsFromLegacyValues()
   ON_3dPoint endP;
   double d;
   int vi, ti, vei, evi, vecnt;
-
+  
   // set trim and edge tolerances from values in file
   for ( ti = 0; ti < tcnt; ti++ ) {
     ON_BrepTrim& trim = m_T[ti];
@@ -5425,7 +5487,7 @@ void ON_Brep::SetTolsFromLegacyValues()
     if ( trim.m_ei >= 0 ) {
       ON_BrepEdge& edge = m_E[trim.m_ei];
       if ( edge.m_tolerance < trim.m__legacy_3d_tol )
-        edge.m_tolerance = trim.m__legacy_3d_tol; // "e_tol"
+	edge.m_tolerance = trim.m__legacy_3d_tol; // "e_tol"
     }
   }
 
@@ -5436,17 +5498,17 @@ void ON_Brep::SetTolsFromLegacyValues()
     for ( vei = 0; vei < vecnt; vei++ ) {
       const ON_BrepEdge& edge = m_E[vertex.m_ei[vei]];
       if ( vertex.m_tolerance < edge.m_tolerance )
-        vertex.m_tolerance = edge.m_tolerance;
+	vertex.m_tolerance = edge.m_tolerance;
       const ON_Curve* c = m_C3[edge.m_c3i];
       evi = 0;
       if ( edge.m_vi[0] != vi )
-        evi = 1;
+	evi = 1;
       if ( edge.m_vi[evi] == vi ) {
-        endP = c->PointAt( c->Domain()[evi] );
-        d = vertex.point.DistanceTo( endP );
-        if ( d > vertex.m_tolerance ) {
-          vertex.m_tolerance = d;
-        }
+	endP = c->PointAt( c->Domain()[evi] );
+	d = vertex.point.DistanceTo( endP );
+	if ( d > vertex.m_tolerance ) {
+	  vertex.m_tolerance = d;      
+	}
       }
     }
   }
@@ -5472,16 +5534,16 @@ void ON_BrepFace::ClearBoundingBox()
 
 BOOL
 ON_BrepFace::GetBBox(
-          double* box_min, // [3],
-          double* box_max, // [3],
-          BOOL bGrowBox     // = false
-          ) const
+	  double* box_min, // [3],
+	  double* box_max, // [3],
+	  BOOL bGrowBox     // = false
+	  ) const
 {
-  if ( !m_bbox.IsValid()
-       && 0 != m_brep
-       && m_face_index >= 0
+  if ( !m_bbox.IsValid() 
+       && 0 != m_brep 
+       && m_face_index >= 0 
        && m_face_index < m_brep->m_F.Count()
-       && &m_brep->m_F[m_face_index] == this
+       && &m_brep->m_F[m_face_index] == this 
        )
   {
     const ON_Surface* srf = ProxySurface();
@@ -5518,23 +5580,23 @@ ON_BrepFace::GetBBox(
 
 BOOL
 ON_Brep::GetBBox(
-          double* box_min, // [3],
-          double* box_max, // [3],
-          BOOL bGrowBox     // = false
-          ) const
+	  double* box_min, // [3],
+	  double* box_max, // [3],
+	  BOOL bGrowBox     // = false
+	  ) const
 {
   if ( !m_bbox.IsValid() )
   {
     ON_Brep* ptr = const_cast<ON_Brep*>(this);
     const int face_count = m_F.Count();
     int fi;
-    for ( fi = 0; fi < face_count; fi++ )
+    for ( fi = 0; fi < face_count; fi++ ) 
     {
       if ( m_F[fi].m_face_index == -1 )
-        continue;
+	continue;
       const ON_Surface* srf = m_F[fi].ProxySurface();
       if ( !srf )
-        continue;
+	continue;
       srf->GetBoundingBox( ptr->m_bbox, m_bbox.IsValid() );
     }
   }
@@ -5571,14 +5633,14 @@ ON_Brep::SwapCoordinates( int i, int j )
   const int srf_count = m_S.Count();
   int si;
   for ( si = 0; si < srf_count; si++ ) {
-    if ( !m_S[si] )
+    if ( !m_S[si] ) 
       continue;
     rc = m_S[si]->SwapCoordinates(i,j);
     if ( !rc ) {
       while ( --si >= 0 ) {
-        // undo any changes;
-        if ( m_S[si] )
-          m_S[si]->SwapCoordinates(i,j);
+	// undo any changes;
+	if ( m_S[si] )
+	  m_S[si]->SwapCoordinates(i,j);
       }
       return false;
     }
@@ -5587,18 +5649,18 @@ ON_Brep::SwapCoordinates( int i, int j )
   const int crv_count = m_S.Count();
   int ci;
   for ( ci = 0; ci < crv_count; ci++ ) {
-    if ( !m_C3[ci] )
+    if ( !m_C3[ci] ) 
       continue;
     rc = m_C3[ci]->SwapCoordinates(i,j);
     if ( !rc ) {
       // undo any changes;
       while ( --ci >= 0 ) {
-        if ( m_C3[ci] )
-          m_C3[ci]->SwapCoordinates(i,j);
-        for ( si = 0; si < srf_count; si++ ) {
-          if ( m_S[si] )
-            m_S[si]->SwapCoordinates(i,j);
-        }
+	if ( m_C3[ci] )
+	  m_C3[ci]->SwapCoordinates(i,j);
+	for ( si = 0; si < srf_count; si++ ) {
+	  if ( m_S[si] )
+	    m_S[si]->SwapCoordinates(i,j);
+	}
       }
       return false;
     }
@@ -5608,8 +5670,8 @@ ON_Brep::SwapCoordinates( int i, int j )
 
 bool
 ON_Brep::SwapTrimParameters(
-        int trim_index
-        )
+	int trim_index
+	)
 {
   // helper for SwapLoopParameters
   if ( trim_index < 0 || trim_index >= m_T.Count() )
@@ -5655,7 +5717,7 @@ ON_Brep::SwapTrimParameters(
   }
 
   // reflect iso type
-  switch ( trim.m_iso )
+  switch ( trim.m_iso ) 
   {
   case ON_Surface::not_iso:
     trim.m_iso = ON_Surface::not_iso;
@@ -5688,8 +5750,8 @@ ON_Brep::SwapTrimParameters(
 
 bool
 ON_Brep::SwapLoopParameters(
-        int loop_index
-        )
+	int loop_index
+	)
 {
   bool rc = false;
   if ( loop_index < 0 || loop_index >= m_L.Count() )
@@ -5704,9 +5766,9 @@ ON_Brep::SwapLoopParameters(
     rc = SwapTrimParameters( ti );
     if ( !rc ) {
       while ( --lti >= 0 ) {
-        // undo any changes
-        ti = L.m_ti[lti];
-        SwapTrimParameters( ti );
+	// undo any changes
+	ti = L.m_ti[lti];
+	SwapTrimParameters( ti );
       }
       return false;
     }
@@ -5746,7 +5808,7 @@ int ON_Brep::SolidOrientation() const
   case 3: // not a solid
     rc = 0;
     break;
-
+  
   default:
     if ( IsSolid() )
     {
@@ -5784,87 +5846,87 @@ ON_Brep::IsManifold( BOOL* pbIsOriented, BOOL* pbHasBoundary ) const
   const int brep_loop_count = m_L.Count();
   const int brep_trim_count = m_T.Count();
   const int brep_edge_count = m_E.Count();
-  for ( fi = 0; fi < fcnt && bIsManifold; fi++ )
+  for ( fi = 0; fi < fcnt && bIsManifold; fi++ ) 
   {
     const ON_BrepFace& face = m_F[fi];
     lcnt = face.m_li.Count();
     if ( lcnt < 1 ) {
       bIsManifold = false;
     }
-    for ( fli = 0; fli < lcnt && bIsManifold; fli++ )
+    for ( fli = 0; fli < lcnt && bIsManifold; fli++ ) 
     {
       const int li = face.m_li[fli];
       if ( li < 0 || li >= brep_loop_count )
       {
-        ON_ERROR("Bogus loop index in face.m_li[]");
-        continue;
+	ON_ERROR("Bogus loop index in face.m_li[]");
+	continue;
       }
       const ON_BrepLoop& loop = m_L[li];
       tcnt = loop.m_ti.Count();
       if (tcnt < 1 ) {
-        bIsManifold = false;
+	bIsManifold = false;
       }
-      for ( lti = 0; lti < tcnt && bIsManifold; lti++ )
+      for ( lti = 0; lti < tcnt && bIsManifold; lti++ ) 
       {
-        const int ti = loop.m_ti[lti];
-        if ( ti < 0 || ti >= brep_trim_count )
-        {
-          ON_ERROR("Bogus loop index in loop.m_ti[]");
-          continue;
-        }
-        const ON_BrepTrim& trim = m_T[ti];
-        switch ( trim.m_type ) {
-        case ON_BrepTrim::boundary:
-          bHasBoundary = true;
-          break;
-        case ON_BrepTrim::mated:
-        case ON_BrepTrim::seam:
-          // make sure we have a manifold join
-          if ( trim.m_ei >= 0 && trim.m_ei < brep_edge_count )
-          {
-            const ON_BrepEdge& edge = m_E[trim.m_ei];
-            if ( edge.m_ti.Count() != 2 ) {
-              bIsManifold = false;
-            }
-            else {
-              other_ti = edge.m_ti[0];
-              if ( other_ti == ti )
-                other_ti = edge.m_ti[1];
-              if ( other_ti == ti ) {
-                bIsManifold = false;
-              }
-              else {
-                const ON_BrepTrim& other_trim = m_T[other_ti];
+	const int ti = loop.m_ti[lti];
+	if ( ti < 0 || ti >= brep_trim_count )
+	{
+	  ON_ERROR("Bogus loop index in loop.m_ti[]");
+	  continue;
+	}
+	const ON_BrepTrim& trim = m_T[ti];
+	switch ( trim.m_type ) {
+	case ON_BrepTrim::boundary:
+	  bHasBoundary = true;
+	  break;
+	case ON_BrepTrim::mated:
+	case ON_BrepTrim::seam:
+	  // make sure we have a manifold join
+	  if ( trim.m_ei >= 0 && trim.m_ei < brep_edge_count )
+	  {
+	    const ON_BrepEdge& edge = m_E[trim.m_ei];
+	    if ( edge.m_ti.Count() != 2 ) {
+	      bIsManifold = false;
+	    }
+	    else {
+	      other_ti = edge.m_ti[0];
+	      if ( other_ti == ti )
+		other_ti = edge.m_ti[1];
+	      if ( other_ti == ti ) {
+		bIsManifold = false;
+	      }
+	      else {
+		const ON_BrepTrim& other_trim = m_T[other_ti];
 
-                BOOL bFlipTrim = trim.m_bRev3d;
-                if ( m_F[m_L[trim.m_li].m_fi].m_bRev )
-                  bFlipTrim = !bFlipTrim;
+		BOOL bFlipTrim = trim.m_bRev3d;
+		if ( m_F[m_L[trim.m_li].m_fi].m_bRev )
+		  bFlipTrim = !bFlipTrim;
 
-                BOOL bFlipOther = other_trim.m_bRev3d;
-                if ( m_F[m_L[other_trim.m_li].m_fi].m_bRev )
-                  bFlipOther = !bFlipOther;
+		BOOL bFlipOther = other_trim.m_bRev3d;
+		if ( m_F[m_L[other_trim.m_li].m_fi].m_bRev )
+		  bFlipOther = !bFlipOther;
 
-                if ( bFlipTrim && bFlipOther ) {
-                  bIsOriented = false;
-                }
-                else if ( !bFlipTrim && !bFlipOther ) {
-                  bIsOriented = false;
-                }
-              }
-            }
-          }
-          else
-          {
-            ON_ERROR("Bogus trim.m_ei or trim.m_type value");
-          }
-          break;
-        case ON_BrepTrim::singular:
-          // nothing to check here
-          break;
-        default:
-          bIsManifold = false;
-          break;
-        }
+		if ( bFlipTrim && bFlipOther ) {
+		  bIsOriented = false;
+		}
+		else if ( !bFlipTrim && !bFlipOther ) {
+		  bIsOriented = false;
+		}
+	      }
+	    }
+	  }
+	  else
+	  {
+	    ON_ERROR("Bogus trim.m_ei or trim.m_type value");
+	  }
+	  break;
+	case ON_BrepTrim::singular:
+	  // nothing to check here
+	  break;
+	default:
+	  bIsManifold = false;
+	  break;
+	}
       }
     }
   }
@@ -5900,7 +5962,7 @@ ON_Brep::IsSurface() const
   return (m_F.Count() == 1 && FaceIsSurface(0));
 }
 
-bool
+bool 
 ON_Brep::FaceIsSurface( int face_index ) const
 {
   // returns true if the face has a single
@@ -5919,7 +5981,7 @@ ON_Brep::FaceIsSurface( int face_index ) const
   return bTrivialFace;
 }
 
-bool
+bool 
 ON_Brep::LoopIsSurfaceBoundary( int loop_index ) const
 {
   // returns true if the loop's trims run along the underlying surface boundary
@@ -5931,16 +5993,16 @@ ON_Brep::LoopIsSurfaceBoundary( int loop_index ) const
       bTrivialLoop = true;
       int ti;
       for ( ti = 0; ti < trim_count && bTrivialLoop; ti++ ) {
-        const ON_BrepTrim& trim = m_T[loop.m_ti[ti]];
-        if ( trim.m_iso == ON_Surface::W_iso )
-          continue;
-        if ( trim.m_iso == ON_Surface::S_iso )
-          continue;
-        if ( trim.m_iso == ON_Surface::N_iso )
-          continue;
-        if ( trim.m_iso == ON_Surface::E_iso )
-          continue;
-        bTrivialLoop = false;
+	const ON_BrepTrim& trim = m_T[loop.m_ti[ti]];
+	if ( trim.m_iso == ON_Surface::W_iso )
+	  continue;
+	if ( trim.m_iso == ON_Surface::S_iso )
+	  continue;
+	if ( trim.m_iso == ON_Surface::N_iso )
+	  continue;
+	if ( trim.m_iso == ON_Surface::E_iso )
+	  continue;
+	bTrivialLoop = false;
       }
     }
   }
@@ -5960,13 +6022,13 @@ ON_Brep::FlipReversedSurfaces()
 
   bool rc = true;
   int fi;
-  for ( fi = 0; fi < face_count; fi++ )
+  for ( fi = 0; fi < face_count; fi++ ) 
   {
     ON_BrepFace& face = m_F[fi];
     if ( face.m_bRev )
     {
       if ( !face.Transpose() )
-        rc = false;
+	rc = false;
     }
   }
   return rc;
@@ -5980,7 +6042,7 @@ bool ON_Brep::SetTrimDomain(
        )
 {
   bool rc = false;
-  if ( trim_index >= 0 && trim_index < m_T.Count() && domain.IsIncreasing() )
+  if ( trim_index >= 0 && trim_index < m_T.Count() && domain.IsIncreasing() ) 
   {
     ON_BrepTrim& trim = m_T[trim_index];
     rc = trim.SetDomain(domain);
@@ -5996,7 +6058,7 @@ bool ON_Brep::SetEdgeDomain(
        )
 {
   bool rc = false;
-  if ( edge_index >= 0 && edge_index < m_E.Count() && domain.IsIncreasing() )
+  if ( edge_index >= 0 && edge_index < m_E.Count() && domain.IsIncreasing() ) 
   {
     ON_BrepEdge& edge = m_E[edge_index];
     rc = edge.SetDomain(domain);
@@ -6049,12 +6111,12 @@ BOOL ON_BrepFace::Reverse(int dir)
     if ( loop )
       m_brep->FlipLoop( *loop );
   }
-
+  
   m_bRev = m_bRev ? false : true;
 
   if (m_brep->m_is_solid == 1 || m_brep->m_is_solid == 2) m_brep->m_is_solid = 0;
 
-	// Greg Arden 10 April 2003.  Fix TRR#9624.
+	// Greg Arden 10 April 2003.  Fix TRR#9624.  
 	// Update analysis and render meshes.
 	if(m_render_mesh)
   {
@@ -6117,7 +6179,7 @@ BOOL ON_BrepFace::Transpose()
     if ( loop )
       m_brep->FlipLoop( *loop );
   }
-
+  
   m_bRev = m_bRev ? false : true;
 
   if (m_brep->m_is_solid == 1 || m_brep->m_is_solid == 2) m_brep->m_is_solid = 0;
@@ -6149,7 +6211,7 @@ bool ON_BrepFace::SetDomain(
     return false;
   if ( !v_dom.IsIncreasing() )
     return false;
-
+  
   ON_Surface* srf = const_cast<ON_Surface*>(SurfaceOf());
   if ( 0 == srf )
     return false;
@@ -6165,12 +6227,12 @@ bool ON_BrepFace::SetDomain(
     if ( u0_dom != u_dom )
     {
       if ( !ux.IntervalChange(0,u0_dom,u_dom) )
-        return false;
+	return false;
     }
     if ( v0_dom != v_dom )
     {
       if ( !vx.IntervalChange(1,v0_dom,v_dom) )
-        return false;
+	return false;
     }
     xform = ux*vx;
   }
@@ -6209,12 +6271,12 @@ bool ON_BrepFace::SetDomain(
     if ( u0_dom != u_dom )
     {
       if ( !ux.IntervalChange(0,u0_dom,u_dom) )
-        return false;
+	return false;
     }
     if ( v0_dom != v_dom )
     {
       if ( !vx.IntervalChange(1,v0_dom,v_dom) )
-        return false;
+	return false;
     }
     xform = ux*vx;
   }
@@ -6234,14 +6296,14 @@ bool ON_BrepFace::SetDomain(
       ON_Interval dom1 = dir ? v_dom : u_dom;
       if ( mdom.IsIncreasing() && dom0 != dom1 )
       {
-        if ( mdom == dom0 )
-          mdom = dom1;
-        else
-        {
-          double t0 = dom1.ParameterAt(dom0.NormalizedParameterAt(mdom[0]));
-          double t1 = dom1.ParameterAt(dom0.NormalizedParameterAt(mdom[1]));
-          mdom.Set(t0,t1);
-        }
+	if ( mdom == dom0 )
+	  mdom = dom1;
+	else
+	{
+	  double t0 = dom1.ParameterAt(dom0.NormalizedParameterAt(mdom[0]));
+	  double t1 = dom1.ParameterAt(dom0.NormalizedParameterAt(mdom[1]));
+	  mdom.Set(t0,t1);
+	}        
       }
     }
   }
@@ -6249,16 +6311,16 @@ bool ON_BrepFace::SetDomain(
   return true;
 }
 
-BOOL ON_BrepFace::SetDomain(
+BOOL ON_BrepFace::SetDomain( 
     int dir, // 0 sets first parameter's domain, 1 gets second parameter's domain
-    double t0,
+    double t0, 
     double t1
     )
 {
-  if (    dir < 0
-       || dir > 1
-       || t0 == ON_UNSET_VALUE
-       || t1 == ON_UNSET_VALUE
+  if (    dir < 0 
+       || dir > 1 
+       || t0 == ON_UNSET_VALUE 
+       || t1 == ON_UNSET_VALUE 
        || t0 >= t1
        || 0 == m_brep )
     return false;
@@ -6332,7 +6394,7 @@ int ON_Brep::SurfaceUseCount( int surface_index, int max_count ) const
 
 ////////
 // Change the domain of a face
-// This also transforms the "u" and "v" coordinates of all the
+// This also transforms the "u" and "v" coordinates of all the 
 // face's parameter space trimming curves.
 //bool ON_Brep::SetFaceDomain(
 //       int face_index, // index of face in m_F[] array
@@ -6391,13 +6453,13 @@ ON_Brep::FlipFace( ON_BrepFace& face )
   if (m_is_solid == 1 || m_is_solid == 2) m_is_solid = 0;
 }
 
-//void
+//void 
 //ON_Brep::FlipTrim(ON_BrepTrim& trim)
 //{
 //  trim.Reverse();
 //}
 
-void
+void 
 ON_Brep::FlipLoop(ON_BrepLoop& loop)
 {
   int ti, lti;
@@ -6407,10 +6469,10 @@ ON_Brep::FlipLoop(ON_BrepLoop& loop)
   // reverse order of trimming curves
   loop.m_ti.Reverse();
   // reverse direction of individual trimming curves
-  for ( lti = 0; lti < loop_trim_count; lti++ )
+  for ( lti = 0; lti < loop_trim_count; lti++ ) 
   {
     ti = loop.m_ti[lti];
-    if ( ti >= 0 && ti < brep_trim_count )
+    if ( ti >= 0 && ti < brep_trim_count ) 
     {
       m_T[ti].Reverse();
     }
@@ -6431,11 +6493,11 @@ static int curve_area( ON_3dPoint& start_point, const ON_Curve* curve, const ON_
     return false;
   const ON_PolyCurve* polycurve = ON_PolyCurve::Cast(curve);
   if ( polycurve ) {
-    span_count = polycurve->Count();
+    span_count = polycurve->Count();  
     for ( span_i = 0; span_i < span_count; span_i++ ) {
       if ( !curve_area( start_point, polycurve->SegmentCurve(span_i), curve_domain, &twice_area ) ) {
-        *area = 0.0;
-        return false;
+	*area = 0.0;
+	return false;
       }
       *area += twice_area;
     }
@@ -6458,7 +6520,7 @@ static int curve_area( ON_3dPoint& start_point, const ON_Curve* curve, const ON_
       //     after the < by one until it works.  Add
       //     the curve to RR and list the RR number here.
       while ( span_count*degree < 16 )
-        degree *= 2;
+	degree *= 2;
     }
 
     span_vector = ws.GetDoubleMemory(span_count+1+degree);
@@ -6474,22 +6536,22 @@ static int curve_area( ON_3dPoint& start_point, const ON_Curve* curve, const ON_
     for ( span_i = 0; span_i < span_count; span_i++ ) {
       span_domain.Set( span_vector[span_i], span_vector[span_i+1] );
       if ( span_domain[1] <= curve_domain[0] )
-        continue;
+	continue;
       if ( span_domain[0] >= curve_domain[1] )
-        break;
+	break;
       if ( span_domain[1] > curve_domain[1] )
-        span_domain.m_t[1] = curve_domain[1];
+	span_domain.m_t[1] = curve_domain[1];
       if ( span_domain[0] < curve_domain[0] )
-        span_domain.m_t[0] = curve_domain[0];
+	span_domain.m_t[0] = curve_domain[0];
       if ( span_domain[0] >= span_domain[1] )
-        continue;
+	continue;
       for ( j = 0; j < degree; j++ ) {
-        p0 = p1;
-        p1 = curve->PointAt(span_domain.ParameterAt(t[j]));
-        twice_area += (p0.x-p1.x)*(p0.y+p1.y);
-        if ( !span_i && !j ) {
-          // check gap
-        }
+	p0 = p1;
+	p1 = curve->PointAt(span_domain.ParameterAt(t[j]));
+	twice_area += (p0.x-p1.x)*(p0.y+p1.y);
+	if ( !span_i && !j ) {
+	  // check gap
+	}
       }
     }
     p0 = p1;
@@ -6497,8 +6559,8 @@ static int curve_area( ON_3dPoint& start_point, const ON_Curve* curve, const ON_
     twice_area += (p0.x-p1.x)*(p0.y+p1.y);
     start_point = p1;
     *area = 0.5*twice_area;
-  }
-
+  }  
+  
   return true;
 }
 
@@ -6550,7 +6612,7 @@ bool ON_Brep::SortFaceLoops( ON_BrepFace& face ) const
 }
 
 
-int
+int 
 ON_Brep::LoopDirection( const ON_BrepLoop& loop ) const
 {
   ON_3dPoint start_point;
@@ -6574,11 +6636,11 @@ ON_Brep::LoopDirection( const ON_BrepLoop& loop ) const
       a = 0.0;
       break;
     }
-    if ( lti == 0 )
+    if ( lti == 0 ) 
     {
       // evaluate start of first trim
       if ( m_C2[c2i] )
-        start_point = m_T[ti].PointAtStart(); //m_C2[c2i]->PointAt(m_T[ti].m_t[0]);
+	start_point = m_T[ti].PointAtStart(); //m_C2[c2i]->PointAt(m_T[ti].m_t[0]);
     }
     if ( !curve_area( start_point, &m_T[ti], m_T[ti].Domain(), &d ) ) {
       a = 0.0;
@@ -6613,10 +6675,10 @@ bool ON_Brep::SetVertexTolerances( BOOL bLazy )
 bool
 ON_Brep::SetVertexTolerance( ON_BrepVertex& vertex,
   BOOL bLazySet // default = false
-                // false: recompute tolerance even if
-                //        its current value is positive
-                // true:  recompute tolerance only if
-                //        its current value is nonpositive
+		// false: recompute tolerance even if
+		//        its current value is positive
+		// true:  recompute tolerance only if
+		//        its current value is nonpositive
   ) const
 {
   if ( vertex.m_tolerance < 0.0 || !bLazySet ) {
@@ -6634,44 +6696,44 @@ ON_Brep::SetVertexTolerance( ON_BrepVertex& vertex,
       const ON_Surface* s=0;
       int vei, ei, eti, endi;
       const int vertex_index = vertex.m_vertex_index;
-      for ( vei = 0; vei < vertex_edge_count; vei++ )
+      for ( vei = 0; vei < vertex_edge_count; vei++ ) 
       {
-        ei = vertex.m_ei[vei];
-        if ( ei < 0 )
-          return false;
-        const ON_BrepEdge& edge = m_E[ei];
-        if ( !edge.ProxyCurve() )
-          return false;
-        edge_domain = edge.Domain();
-        for ( endi = 0; endi < 2; endi++ )
-        {
-          if ( edge.m_vi[endi] == vertex_index )
-          {
-            d = vertex.point.DistanceTo( edge.PointAt(edge_domain[endi]) );
-            if ( tolerance < d )
-              tolerance = d;
-          }
-        }
-        const int edge_trim_count = edge.m_ti.Count();
-        for ( eti = 0; eti < edge_trim_count; eti++ )
-        {
-          const ON_BrepTrim* trim = Trim(edge.m_ti[eti]);
-          if ( 0 == trim )
-            continue;
-          if ( 0 == trim->TrimCurveOf() )
-            continue;
-          s = trim->SurfaceOf();
-          if ( 0 == s )
-            continue;
-          for ( endi = 0; endi < 2; endi++ ) {
-            if ( edge.m_vi[endi] == vertex_index ) {
-              uv = trim->PointAt( trim->Domain()[trim->m_bRev3d?1-endi:endi] );
-              d = vertex.point.DistanceTo( s->PointAt(uv.x,uv.y) );
-              if ( tolerance < d )
-                tolerance = d;
-            }
-          }
-        }
+	ei = vertex.m_ei[vei];
+	if ( ei < 0 )
+	  return false;
+	const ON_BrepEdge& edge = m_E[ei];
+	if ( !edge.ProxyCurve() )
+	  return false;
+	edge_domain = edge.Domain();
+	for ( endi = 0; endi < 2; endi++ )
+	{
+	  if ( edge.m_vi[endi] == vertex_index ) 
+	  {
+	    d = vertex.point.DistanceTo( edge.PointAt(edge_domain[endi]) );
+	    if ( tolerance < d )
+	      tolerance = d;
+	  }
+	}
+	const int edge_trim_count = edge.m_ti.Count();
+	for ( eti = 0; eti < edge_trim_count; eti++ ) 
+	{
+	  const ON_BrepTrim* trim = Trim(edge.m_ti[eti]);
+	  if ( 0 == trim )
+	    continue;
+	  if ( 0 == trim->TrimCurveOf() )
+	    continue;
+	  s = trim->SurfaceOf();
+	  if ( 0 == s )
+	    continue;
+	  for ( endi = 0; endi < 2; endi++ ) {
+	    if ( edge.m_vi[endi] == vertex_index ) {
+	      uv = trim->PointAt( trim->Domain()[trim->m_bRev3d?1-endi:endi] );
+	      d = vertex.point.DistanceTo( s->PointAt(uv.x,uv.y) );
+	      if ( tolerance < d )
+		tolerance = d;
+	    }
+	  }
+	}
       }
       vertex.m_tolerance = (tolerance <= ON_ZERO_TOLERANCE) ? 0.0 : 1.001*tolerance;
     }
@@ -6695,37 +6757,37 @@ ON_Brep::SetTrimTolerance( ON_BrepTrim& trim, BOOL bLazy ) const
       const int loop_trim_count = loop.m_ti.Count();
       for ( lti = 0; lti < loop_trim_count; lti++ )
       {
-        if ( loop.m_ti[lti] == trim.m_trim_index )
-        {
-          prev_ti = loop.m_ti[(lti-1+loop_trim_count)%loop_trim_count];
-          next_ti = loop.m_ti[(lti+1)%loop_trim_count];
-          if ( prev_ti >= 0 && next_ti >= 0 && prev_ti < m_T.Count() && next_ti < m_T.Count() )
-          {
-            const ON_BrepTrim& prev_trim = m_T[prev_ti];
-            const ON_BrepTrim& next_trim = m_T[next_ti];
-            const ON_Curve* prev_c2 = prev_trim.TrimCurveOf();
-            const ON_Curve* next_c2 = next_trim.TrimCurveOf();
-            const ON_Curve* c2 = trim.TrimCurveOf();
-            if ( prev_c2 && c2 && next_c2 )
-            {
-              ON_3dPoint prev_end = prev_trim.PointAtEnd(); //prev_c2->PointAt( prev_trim.m_t[1] );
-              ON_3dPoint this_start = trim.PointAtStart(); //c2->PointAt( trim.m_t[0] );
-              ON_3dPoint this_end = trim.PointAtEnd(); // c2->PointAt( trim.m_t[1] );
-              ON_3dPoint next_start = next_trim.PointAtStart(); //prev_c2->PointAt( next_trim.m_t[0] );
-              for ( dir = 0; dir < 2; dir++ )
-              {
-                if ( trim.m_tolerance[dir] < 0.0 || !bLazy )
-                {
-                  ds = fabs(prev_end[dir] - this_start[dir] );
-                  de = fabs(this_end[dir] - next_start[dir] );
-                  d = (ds >= de) ? ds : de;
-                  trim.m_tolerance[dir] = ( d > ON_ZERO_TOLERANCE ) ? 1.001*d : 0.0;
-                }
-              }
-            }
-          }
-          break;
-        }
+	if ( loop.m_ti[lti] == trim.m_trim_index )
+	{
+	  prev_ti = loop.m_ti[(lti-1+loop_trim_count)%loop_trim_count];
+	  next_ti = loop.m_ti[(lti+1)%loop_trim_count];
+	  if ( prev_ti >= 0 && next_ti >= 0 && prev_ti < m_T.Count() && next_ti < m_T.Count() )
+	  {
+	    const ON_BrepTrim& prev_trim = m_T[prev_ti];
+	    const ON_BrepTrim& next_trim = m_T[next_ti];
+	    const ON_Curve* prev_c2 = prev_trim.TrimCurveOf();
+	    const ON_Curve* next_c2 = next_trim.TrimCurveOf();
+	    const ON_Curve* c2 = trim.TrimCurveOf();
+	    if ( prev_c2 && c2 && next_c2 )
+	    {
+	      ON_3dPoint prev_end = prev_trim.PointAtEnd(); //prev_c2->PointAt( prev_trim.m_t[1] );
+	      ON_3dPoint this_start = trim.PointAtStart(); //c2->PointAt( trim.m_t[0] );
+	      ON_3dPoint this_end = trim.PointAtEnd(); // c2->PointAt( trim.m_t[1] );
+	      ON_3dPoint next_start = next_trim.PointAtStart(); //prev_c2->PointAt( next_trim.m_t[0] );
+	      for ( dir = 0; dir < 2; dir++ )
+	      {
+		if ( trim.m_tolerance[dir] < 0.0 || !bLazy )
+		{
+		  ds = fabs(prev_end[dir] - this_start[dir] );
+		  de = fabs(this_end[dir] - next_start[dir] );
+		  d = (ds >= de) ? ds : de;
+		  trim.m_tolerance[dir] = ( d > ON_ZERO_TOLERANCE ) ? 1.001*d : 0.0;
+		}
+	      }
+	    }
+	  }
+	  break;
+	}
       }
     }
   }
@@ -6735,14 +6797,14 @@ ON_Brep::SetTrimTolerance( ON_BrepTrim& trim, BOOL bLazy ) const
 bool
 ON_Brep::SetEdgeTolerance( ON_BrepEdge& edge, BOOL bLazySet ) const
 {
-  if ( edge.m_tolerance < 0.0 || !bLazySet )
+  if ( edge.m_tolerance < 0.0 || !bLazySet ) 
   {
     const int edge_trim_count = edge.m_ti.Count();
-    if ( edge_trim_count < 1 )
+    if ( edge_trim_count < 1 ) 
     {
       edge.m_tolerance = 0.0;
     }
-    else
+    else 
     {
       edge.m_tolerance = ON_UNSET_VALUE;
       // TL_Brep::SetEdgeTolerance overrides ON_Brep::SetEdgeTolerance
@@ -6806,11 +6868,11 @@ void ON_Brep::Dump( ON_TextLog& dump ) const
       c_end = c2->PointAtEnd();
       const char* s = c2->ClassId()->ClassName();
       if ( !s )
-        s = "";
+	s = "";
       dump.Print("curve2d[%2d]: %s domain(%g,%g) start(%g,%g) end(%g,%g)\n",
-                  c2i, s, cdom[0], cdom[1],
-                  c_start.x, c_start.y,
-                  c_end.x, c_end.y);
+		  c2i, s, cdom[0], cdom[1],
+		  c_start.x, c_start.y,
+		  c_end.x, c_end.y);
     }
     else
     {
@@ -6830,11 +6892,11 @@ void ON_Brep::Dump( ON_TextLog& dump ) const
       c_end = c3->PointAtEnd();
       const char* s = c3->ClassId()->ClassName();
       if ( !s )
-        s = "";
+	s = "";
       dump.Print("curve3d[%2d]: %s domain(%g,%g) start(%g,%g,%g) end(%g,%g,%g)\n",
-                 c3i, s, cdom[0], cdom[1],
-                 c_start.x, c_start.y, c_start.z,
-                 c_end.x, c_end.y, c_end.z);
+		 c3i, s, cdom[0], cdom[1],
+		 c_start.x, c_start.y, c_start.z,
+		 c_end.x, c_end.y, c_end.z);
     }
     else
     {
@@ -6852,20 +6914,20 @@ void ON_Brep::Dump( ON_TextLog& dump ) const
       ON_Interval vdom = srf->Domain(1);
       const char* s = srf->ClassId()->ClassName();
       if ( !s )
-        s = "";
+	s = "";
       dump.Print("surface[%2d]: %s u(%g,%g) v(%g,%g)\n",
-                 si, s,
-                 udom[0], udom[1],
-                 vdom[0], vdom[1]
-                 );
+		 si, s, 
+		 udom[0], udom[1], 
+		 vdom[0], vdom[1]
+		 );
       if ( m_S.Count() == 1 && IsSurface() )
       {
-        dump.PushIndent();
-        dump.Print("surface details:\n");
-        dump.PushIndent();
-        srf->Dump(dump);
-        dump.PopIndent();
-        dump.PopIndent();
+	dump.PushIndent();
+	dump.Print("surface details:\n");
+	dump.PushIndent();
+	srf->Dump(dump);
+	dump.PopIndent();
+	dump.PopIndent();
       }
     }
     else
@@ -6878,14 +6940,14 @@ void ON_Brep::Dump( ON_TextLog& dump ) const
   for ( vi = 0; vi < m_V.Count(); vi++ ) {
     const ON_BrepVertex& vertex = m_V[vi];
     dump.Print("vertex[%2d]: (%f %f %f) tolerance(%g)\n",
-               vi,vertex.point.x,vertex.point.y,vertex.point.z,
-               vertex.m_tolerance);
+	       vi,vertex.point.x,vertex.point.y,vertex.point.z,
+	       vertex.m_tolerance);
     if ( vertex.m_ei.Count() > 0 ) {
       int vei;
       dump.PushIndent();
       dump.Print("edges (");
       for ( vei = 0; vei < vertex.m_ei.Count(); vei++ ) {
-        dump.Print( (vei)?",%d":"%d", vertex.m_ei[vei] );
+	dump.Print( (vei)?",%d":"%d", vertex.m_ei[vei] );
       }
       dump.PopIndent();
       dump.Print(")\n");
@@ -6896,7 +6958,7 @@ void ON_Brep::Dump( ON_TextLog& dump ) const
   for ( ei = 0; ei < m_E.Count(); ei++ ) {
     const ON_BrepEdge& edge = m_E[ei];
     dump.Print("edge[%2d]: v0(%2d) v1(%2d) 3d_curve(%d) tolerance(%g)\n",
-               ei,edge.m_vi[0],edge.m_vi[1],edge.m_c3i,edge.m_tolerance);
+	       ei,edge.m_vi[0],edge.m_vi[1],edge.m_c3i,edge.m_tolerance);
 
     dump.PushIndent();
 
@@ -6906,30 +6968,30 @@ void ON_Brep::Dump( ON_TextLog& dump ) const
       ON_3dPoint edge_start = edge.PointAtStart();
       ON_3dPoint edge_end = edge.PointAtEnd();
       dump.Print("domain(%g,%g) start(%g,%g,%g) end(%g,%g,%g)\n",
-           edge.Domain()[0],edge.Domain()[1],
-           edge_start.x,edge_start.y,edge_start.z,
-           edge_end.x,edge_end.y,edge_end.z
-           );
+	   edge.Domain()[0],edge.Domain()[1],
+	   edge_start.x,edge_start.y,edge_start.z,
+	   edge_end.x,edge_end.y,edge_end.z
+	   );
     }
     else
     {
       dump.Print("domain(%g,%g) start(?,?,?) end(?,?,?)\n",
-           edge.Domain()[0],edge.Domain()[1]);
+	   edge.Domain()[0],edge.Domain()[1]);
     }
 
-    if ( edge.m_ti.Count() > 0 )
+    if ( edge.m_ti.Count() > 0 ) 
     {
 
       dump.Print("trims (",edge.m_ti.Count());
       int eti;
       for ( eti = 0; eti < edge.m_ti.Count(); eti++ )
       {
-        ti = edge.m_ti[eti];
-        const char* sign = "?";
-        if ( ti >= 0 && ti < m_T.Count() ) {
-          sign = m_T[ti].m_bRev3d ? "-" : "+";
-        }
-        dump.Print( (eti)?",%s%d":"%s%d", sign,edge.m_ti[eti]);
+	ti = edge.m_ti[eti];
+	const char* sign = "?";
+	if ( ti >= 0 && ti < m_T.Count() ) {
+	  sign = m_T[ti].m_bRev3d ? "-" : "+";
+	}
+	dump.Print( (eti)?",%s%d":"%s%d", sign,edge.m_ti[eti]);
       }
 
       dump.Print(")\n");
@@ -6943,7 +7005,7 @@ void ON_Brep::Dump( ON_TextLog& dump ) const
     const ON_BrepFace& face = m_F[fi];
     const ON_Surface* face_srf = face.SurfaceOf();
     dump.Print("face[%2d]: surface(%d) reverse(%d) loops(",
-               fi,face.m_si,face.m_bRev);
+	       fi,face.m_si,face.m_bRev);
     int fli;
     for ( fli = 0; fli < face.m_li.Count(); fli++ ) {
       dump.Print( (fli)?",%d":"%d", face.m_li[fli]);
@@ -6961,128 +7023,128 @@ void ON_Brep::Dump( ON_TextLog& dump ) const
     }
 
 
-    for ( fli = 0; fli < face.m_li.Count(); fli++ )
+    for ( fli = 0; fli < face.m_li.Count(); fli++ ) 
     {
       const int li = face.m_li[fli];
       const ON_BrepLoop& loop = m_L[li];
       const char* sLoopType = 0;
-      switch( loop.m_type )
+      switch( loop.m_type ) 
       {
       case ON_BrepLoop::unknown:
-        sLoopType = "unknown";
-        break;
+	sLoopType = "unknown";
+	break;
       case ON_BrepLoop::outer:
-        sLoopType = "outer";
-        break;
+	sLoopType = "outer";
+	break;
       case ON_BrepLoop::inner:
-        sLoopType = "inner";
-        break;
+	sLoopType = "inner";
+	break;
       case ON_BrepLoop::slit:
-        sLoopType = "slit";
-        break;
+	sLoopType = "slit";
+	break;
       case ON_BrepLoop::crvonsrf:
-        sLoopType = "crvonsrf";
-        break;
+	sLoopType = "crvonsrf";
+	break;
       default:
-        sLoopType = "unknown";
-        break;
+	sLoopType = "unknown";
+	break;
       }
       dump.Print("loop[%2d]: type(%s) %d trims(",
-                 li, sLoopType, loop.m_ti.Count());
+		 li, sLoopType, loop.m_ti.Count());
       int lti;
-      for ( lti = 0; lti < loop.m_ti.Count(); lti++ )
+      for ( lti = 0; lti < loop.m_ti.Count(); lti++ ) 
       {
-        dump.Print( (lti)?",%d":"%d", loop.m_ti[lti]);
+	dump.Print( (lti)?",%d":"%d", loop.m_ti[lti]);
       }
       dump.Print(")\n");
       dump.PushIndent();
-      for ( lti = 0; lti < loop.m_ti.Count(); lti++ )
+      for ( lti = 0; lti < loop.m_ti.Count(); lti++ ) 
       {
-        const int ti = loop.m_ti[lti];
-        const ON_BrepTrim& trim = m_T[ti];
-        const char* sTrimType = "?";
-        const char* sTrimIso = "-?";
-        const ON_Curve* c2 = trim.TrimCurveOf();
-        ON_3dPoint trim_start, trim_end;
-        switch( trim.m_type ) {
-        case ON_BrepTrim::unknown:
-          sTrimType = "unknown ";
-          break;
-        case ON_BrepTrim::boundary:
-          sTrimType = "boundary";
-          break;
-        case ON_BrepTrim::mated:
-          sTrimType = "mated   ";
-          break;
-        case ON_BrepTrim::seam:
-          sTrimType = "seam    ";
-          break;
-        case ON_BrepTrim::singular:
-          sTrimType = "singular";
-          break;
-        case ON_BrepTrim::crvonsrf:
-          sTrimType = "crvonsrf";
-          break;
-        default:
-          sTrimType = "unknown";
-          break;
-        }
-        switch( trim.m_iso ) {
-        case ON_Surface::not_iso:
-          sTrimIso = "";
-          break;
-        case ON_Surface::x_iso:
-          sTrimIso = "-u iso";
-          break;
-        case ON_Surface::W_iso:
-          sTrimIso = "-west side iso";
-          break;
-        case ON_Surface::E_iso:
-          sTrimIso = "-east side iso";
-          break;
-        case ON_Surface::y_iso:
-          sTrimIso = "-v iso";
-          break;
-        case ON_Surface::S_iso:
-          sTrimIso = "-south side iso";
-          break;
-        case ON_Surface::N_iso:
-          sTrimIso = "-north side iso";
-          break;
-        default:
-          sTrimIso = "-unknown_iso_flag";
-          break;
-        }
-        dump.Print("trim[%2d]: edge(%2d) v0(%2d) v1(%2d) tolerance(%g,%g)\n",
-                   ti,
-                   trim.m_ei,trim.m_vi[0],trim.m_vi[1],
-                   trim.m_tolerance[0],trim.m_tolerance[1]);
-        dump.PushIndent();
-        dump.Print("type(%s%s) rev3d(%d) 2d_curve(%d)\n",
-                   sTrimType, sTrimIso, trim.m_bRev3d, trim.m_c2i);
-        if ( c2 )
-        {
-          trim_start = trim.PointAtStart();
-          trim_end = trim.PointAtEnd();
-          dump.Print("domain(%g,%g) start(%g,%g) end(%g,%g)\n",
-               trim.Domain()[0],trim.Domain()[1],
-               trim_start.x,trim_start.y,
-               trim_end.x,trim_end.y);
-          if ( 0 != face_srf )
-          {
-            ON_3dPoint trim_srfstart = face_srf->PointAt(trim_start.x,trim_start.y);
-            ON_3dPoint trim_srfend = face_srf->PointAt(trim_end.x,trim_end.y);
-            dump.Print("surface points start(%g,%g,%g) end(%g,%g,%g)\n",
-                 trim_srfstart.x,trim_srfstart.y,trim_srfstart.z,
-                 trim_srfend.x,trim_srfend.y,trim_srfend.z);
-          }
-        }
-        else
-        {
-          dump.Print("domain(%g,%g) start(?,?) end(?,?)\n",
-               trim.Domain()[0],trim.Domain()[1]);
-        }
-        dump.PopIndent();
+	const int ti = loop.m_ti[lti];
+	const ON_BrepTrim& trim = m_T[ti];
+	const char* sTrimType = "?";
+	const char* sTrimIso = "-?";
+	const ON_Curve* c2 = trim.TrimCurveOf();
+	ON_3dPoint trim_start, trim_end;
+	switch( trim.m_type ) {
+	case ON_BrepTrim::unknown:
+	  sTrimType = "unknown ";
+	  break;
+	case ON_BrepTrim::boundary:
+	  sTrimType = "boundary";
+	  break;
+	case ON_BrepTrim::mated:
+	  sTrimType = "mated   ";
+	  break;
+	case ON_BrepTrim::seam:
+	  sTrimType = "seam    ";
+	  break;
+	case ON_BrepTrim::singular:
+	  sTrimType = "singular";
+	  break;
+	case ON_BrepTrim::crvonsrf:
+	  sTrimType = "crvonsrf";
+	  break;
+	default:
+	  sTrimType = "unknown";
+	  break;
+	}
+	switch( trim.m_iso ) {
+	case ON_Surface::not_iso:
+	  sTrimIso = "";
+	  break;
+	case ON_Surface::x_iso:
+	  sTrimIso = "-u iso";
+	  break;
+	case ON_Surface::W_iso:
+	  sTrimIso = "-west side iso";
+	  break;
+	case ON_Surface::E_iso:
+	  sTrimIso = "-east side iso";
+	  break;
+	case ON_Surface::y_iso:
+	  sTrimIso = "-v iso";
+	  break;
+	case ON_Surface::S_iso:
+	  sTrimIso = "-south side iso";
+	  break;
+	case ON_Surface::N_iso:
+	  sTrimIso = "-north side iso";
+	  break;
+	default:
+	  sTrimIso = "-unknown_iso_flag";
+	  break;
+	}
+	dump.Print("trim[%2d]: edge(%2d) v0(%2d) v1(%2d) tolerance(%g,%g)\n",
+		   ti,
+		   trim.m_ei,trim.m_vi[0],trim.m_vi[1],
+		   trim.m_tolerance[0],trim.m_tolerance[1]);
+	dump.PushIndent();
+	dump.Print("type(%s%s) rev3d(%d) 2d_curve(%d)\n",
+		   sTrimType, sTrimIso, trim.m_bRev3d, trim.m_c2i);
+	if ( c2 )
+	{
+	  trim_start = trim.PointAtStart();
+	  trim_end = trim.PointAtEnd();
+	  dump.Print("domain(%g,%g) start(%g,%g) end(%g,%g)\n",
+	       trim.Domain()[0],trim.Domain()[1],
+	       trim_start.x,trim_start.y,
+	       trim_end.x,trim_end.y);
+	  if ( 0 != face_srf )
+	  {
+	    ON_3dPoint trim_srfstart = face_srf->PointAt(trim_start.x,trim_start.y);
+	    ON_3dPoint trim_srfend = face_srf->PointAt(trim_end.x,trim_end.y);
+	    dump.Print("surface points start(%g,%g,%g) end(%g,%g,%g)\n",
+		 trim_srfstart.x,trim_srfstart.y,trim_srfstart.z,
+		 trim_srfend.x,trim_srfend.y,trim_srfend.z);
+	  }
+	}
+	else
+	{
+	  dump.Print("domain(%g,%g) start(?,?) end(?,?)\n",
+	       trim.Domain()[0],trim.Domain()[1]);
+	}
+	dump.PopIndent();
       }
       dump.PopIndent();
     }
@@ -7216,12 +7278,12 @@ void ON_Brep::DeleteVertex(ON_BrepVertex& vertex)
     for ( vei = vertex.m_ei.Count()-1; vei>=0; vei-- ) {
       ei = vertex.m_ei[vei];
       if ( ei >= 0 && ei < m_E.Count() ) {
-        ON_BrepEdge& edge = m_E[ei];
-        if ( edge.m_vi[0] == vi )
-          edge.m_vi[0] = -1;
-        if ( edge.m_vi[1] == vi )
-          edge.m_vi[1] = -1;
-        DeleteEdge( edge, false );
+	ON_BrepEdge& edge = m_E[ei];
+	if ( edge.m_vi[0] == vi )
+	  edge.m_vi[0] = -1;
+	if ( edge.m_vi[1] == vi )
+	  edge.m_vi[1] = -1;
+	DeleteEdge( edge, false );
       }
     }
   }
@@ -7229,7 +7291,7 @@ void ON_Brep::DeleteVertex(ON_BrepVertex& vertex)
   vertex.m_tolerance = ON_UNSET_VALUE;
 }
 
-int ON_Brep::Loop3dCurve(
+int ON_Brep::Loop3dCurve( 
   const ON_BrepLoop& loop,
   ON_SimpleArray<ON_Curve*>& curve_list,
   BOOL bRevCurveIfFaceRevIsTrue
@@ -7254,9 +7316,9 @@ int ON_Brep::Loop3dCurve(
     {
       const ON_BrepTrim& trim = m_T[ti];
       if ( seam_lti < 0 && trim.m_type == ON_BrepTrim::seam )
-        seam_lti = lti;
+	seam_lti = lti;
       else if ( wire_lti < 0 && trim.m_type != ON_BrepTrim::singular )
-        wire_lti = lti;
+	wire_lti = lti;
     }
   }
 
@@ -7285,8 +7347,8 @@ int ON_Brep::Loop3dCurve(
     {
       if (!bOnSeam)
       {
-        trim_index.Append(-1);
-        bOnSeam = true;
+	trim_index.Append(-1);
+	bOnSeam = true;
       }
       continue;
     }
@@ -7303,7 +7365,7 @@ int ON_Brep::Loop3dCurve(
     if ( ti < 0 )
     {
       if ( loop_curve )
-        curve_list.Append(loop_curve);
+	curve_list.Append(loop_curve);
       loop_curve = 0;
       poly_curve = 0;
       continue;
@@ -7341,7 +7403,7 @@ int ON_Brep::Loop3dCurve(
     if ( fi >= 0 && fi < m_F.Count() && m_F[fi].m_bRev )
     {
       for ( i = curve_list_count0; i < curve_list.Count(); i++ )
-        curve_list[i]->Reverse();
+	curve_list[i]->Reverse();
     }
   }
 
@@ -7362,7 +7424,7 @@ ON_Curve* ON_Brep::Loop3dCurve( const ON_BrepLoop& loop, BOOL bRevCurveIfFaceRev
     {
       const ON_BrepTrim& trim = m_T[ti];
       if ( trim.EdgeCurveOf() )
-        trim_index.Append(ti);
+	trim_index.Append(ti);
     }
   }
 
@@ -7413,7 +7475,7 @@ ON_Curve* ON_Brep::Loop2dCurve( const ON_BrepLoop& loop ) const
     {
       const ON_BrepTrim& trim = m_T[ti];
       if ( trim.TrimCurveOf() )
-        trim_index.Append(ti);
+	trim_index.Append(ti);
     }
   }
   for ( i = 0; i < trim_index.Count(); i++ )
@@ -7451,34 +7513,34 @@ void ON_Brep::DeleteEdge(ON_BrepEdge& edge, BOOL bDeleteEdgeVertices )
     for ( eti = edge.m_ti.Count()-1; eti >= 0; eti-- ) {
       ti = edge.m_ti[eti];
       if ( ti >= 0 && ti < m_T.Count() ) {
-        ON_BrepTrim& trim = m_T[ti];
-        trim.m_ei = -1;
-        if ( trim.m_li >= 0 && trim.m_li < m_L.Count() ) {
-          ON_BrepLoop& loop = m_L[trim.m_li];
-          if ( loop.m_fi >= 0 && loop.m_fi < m_F.Count() ) {
-            DeleteFace( m_F[loop.m_fi], bDeleteEdgeVertices );
-          }
-        }
-        DeleteTrim(trim,false);
+	ON_BrepTrim& trim = m_T[ti];
+	trim.m_ei = -1;
+	if ( trim.m_li >= 0 && trim.m_li < m_L.Count() ) {
+	  ON_BrepLoop& loop = m_L[trim.m_li];
+	  if ( loop.m_fi >= 0 && loop.m_fi < m_F.Count() ) {
+	    DeleteFace( m_F[loop.m_fi], bDeleteEdgeVertices );
+	  }
+	}
+	DeleteTrim(trim,false);
       }
     }
 
-    for (evi = 0; evi < 2; evi++ )
+    for (evi = 0; evi < 2; evi++ ) 
     {
       vi = edge.m_vi[evi];
-      if ( vi >= 0 && vi < m_V.Count() )
+      if ( vi >= 0 && vi < m_V.Count() ) 
       {
-        ON_BrepVertex& v = m_V[vi];
-        for ( vei = v.m_ei.Count()-1; vei >= 0; vei-- )
-        {
-          if ( v.m_ei[vei] == ei )
-            v.m_ei.Remove(vei);
-        }
-        if ( bDeleteEdgeVertices && v.m_ei.Count() <= 0 )
-        {
-          v.m_ei.Destroy();
-          DeleteVertex(v);
-        }
+	ON_BrepVertex& v = m_V[vi];
+	for ( vei = v.m_ei.Count()-1; vei >= 0; vei-- ) 
+	{
+	  if ( v.m_ei[vei] == ei )
+	    v.m_ei.Remove(vei);
+	}
+	if ( bDeleteEdgeVertices && v.m_ei.Count() <= 0 )
+	{
+	  v.m_ei.Destroy();
+	  DeleteVertex(v);
+	}
       }
     }
   }
@@ -7499,71 +7561,71 @@ void ON_Brep::DeleteTrim(ON_BrepTrim& trim, BOOL bDeleteTrimEdges )
   const int ti = trim.m_trim_index;
   trim.m_trim_index = -1;
 
-  if ( ti >= 0 && ti < m_T.Count() )
+  if ( ti >= 0 && ti < m_T.Count() ) 
   {
     const int ei = trim.m_ei;
-    if ( ei >= 0 && ei < m_E.Count() )
+    if ( ei >= 0 && ei < m_E.Count() ) 
     {
       ON_BrepEdge& edge = m_E[ei];
-      if ( bDeleteTrimEdges && edge.m_ti.Count() == 1 && edge.m_ti[0] == ti )
+      if ( bDeleteTrimEdges && edge.m_ti.Count() == 1 && edge.m_ti[0] == ti ) 
       {
-        edge.m_ti.Empty();
-        DeleteEdge(edge,bDeleteTrimEdges);
+	edge.m_ti.Empty();
+	DeleteEdge(edge,bDeleteTrimEdges);
       }
-      else
+      else 
       {
-        int mate_ti = (trim.m_type == ON_BrepTrim::mated) ? -1 : -2; // set to >= 0 if a single mate exists
-        int seam_ti = (trim.m_type == ON_BrepTrim::seam) ? -1 : -2; // set to >= 0 if a single seam partner exists
-        int eti;
-        for ( eti = edge.m_ti.Count()-1; eti >= 0; eti-- )
-        {
-          int other_ti = edge.m_ti[eti];
-          if ( other_ti == ti )
-          {
-            edge.m_ti.Remove(eti);
-            if ( edge.m_ti.Count() == 0 )
-              edge.m_tolerance = 0.0;
-            continue;
-          }
+	int mate_ti = (trim.m_type == ON_BrepTrim::mated) ? -1 : -2; // set to >= 0 if a single mate exists
+	int seam_ti = (trim.m_type == ON_BrepTrim::seam) ? -1 : -2; // set to >= 0 if a single seam partner exists
+	int eti;
+	for ( eti = edge.m_ti.Count()-1; eti >= 0; eti-- ) 
+	{
+	  int other_ti = edge.m_ti[eti];
+	  if ( other_ti == ti ) 
+	  {
+	    edge.m_ti.Remove(eti);
+	    if ( edge.m_ti.Count() == 0 )
+	      edge.m_tolerance = 0.0;
+	    continue;
+	  }
+	  
+	  if ( (mate_ti >= -1 || seam_ti >= -1 ) && other_ti >= 0 && other_ti < m_T.Count() )
+	  {
+	    const ON_BrepTrim& other_trim = m_T[other_ti];
+	    if ( other_trim.m_trim_index != other_ti )
+	      continue;
+	    if ( mate_ti >= -1 && other_trim.m_type == ON_BrepTrim::mated )
+	    {
+	      // see if other_trim is the only mate of trim
+	      if ( mate_ti == -1 )
+		mate_ti = other_ti;
+	      else
+		mate_ti = -2;
+	    }
+	    else if ( seam_ti >= -1 && other_trim.m_type == ON_BrepTrim::seam && other_trim.m_li == trim.m_li )
+	    {
+	      // trim and other_trim are both seam trims in the same loop connected
+	      // to the same edge.
+	      if ( seam_ti == -1 )
+		seam_ti = other_ti;
+	      else
+		seam_ti = -2;
+	    }
+	  }
+	}
 
-          if ( (mate_ti >= -1 || seam_ti >= -1 ) && other_ti >= 0 && other_ti < m_T.Count() )
-          {
-            const ON_BrepTrim& other_trim = m_T[other_ti];
-            if ( other_trim.m_trim_index != other_ti )
-              continue;
-            if ( mate_ti >= -1 && other_trim.m_type == ON_BrepTrim::mated )
-            {
-              // see if other_trim is the only mate of trim
-              if ( mate_ti == -1 )
-                mate_ti = other_ti;
-              else
-                mate_ti = -2;
-            }
-            else if ( seam_ti >= -1 && other_trim.m_type == ON_BrepTrim::seam && other_trim.m_li == trim.m_li )
-            {
-              // trim and other_trim are both seam trims in the same loop connected
-              // to the same edge.
-              if ( seam_ti == -1 )
-                seam_ti = other_ti;
-              else
-                seam_ti = -2;
-            }
-          }
-        }
-
-        if ( seam_ti >= 0  )
-        {
-          // m_T[seam_ti] used to be a seam partner with trim.
-          // Now it is either a boundary trim or is mated to m_T[mate_ti]
-          m_T[seam_ti].m_type = (mate_ti>=0)
-                              ? ON_BrepTrim::mated     // m_T[mate_ti] is mated to m_T[seam_ti]
-                              : ON_BrepTrim::boundary; // m_T[seam_ti] is all alone
-        }
-        else if ( mate_ti >= 0 )
-        {
-          // m_T[mate_ti] just lost its only mate and is now a boundary
-          m_T[mate_ti].m_type = ON_BrepTrim::boundary;
-        }
+	if ( seam_ti >= 0  )
+	{
+	  // m_T[seam_ti] used to be a seam partner with trim.
+	  // Now it is either a boundary trim or is mated to m_T[mate_ti]
+	  m_T[seam_ti].m_type = (mate_ti>=0) 
+			      ? ON_BrepTrim::mated     // m_T[mate_ti] is mated to m_T[seam_ti]
+			      : ON_BrepTrim::boundary; // m_T[seam_ti] is all alone
+	}
+	else if ( mate_ti >= 0 )
+	{
+	  // m_T[mate_ti] just lost its only mate and is now a boundary
+	  m_T[mate_ti].m_type = ON_BrepTrim::boundary;
+	}
       }
     }
 
@@ -7572,8 +7634,8 @@ void ON_Brep::DeleteTrim(ON_BrepTrim& trim, BOOL bDeleteTrimEdges )
       ON_BrepLoop& loop = m_L[li];
       int lti;
       for ( lti = loop.m_ti.Count()-1; lti >= 0; lti-- ) {
-        if ( loop.m_ti[lti] == ti )
-          loop.m_ti.Remove(lti);
+	if ( loop.m_ti[lti] == ti )
+	  loop.m_ti.Remove(lti);
       }
     }
   }
@@ -7606,7 +7668,7 @@ void ON_Brep::DeleteLoop(ON_BrepLoop& loop,  BOOL bDeleteLoopEdges  )
   if ( loop.m_fi >= 0 )
     DestroyMesh(ON::any_mesh,true);
 
-  if ( li >= 0 && li < m_L.Count() )
+  if ( li >= 0 && li < m_L.Count() ) 
   {
     const int tcount = m_T.Count();
     int lti, ti;
@@ -7615,23 +7677,23 @@ void ON_Brep::DeleteLoop(ON_BrepLoop& loop,  BOOL bDeleteLoopEdges  )
       ti = loop.m_ti[lti];
       if ( ti >= 0 && ti < tcount )
       {
-        ON_BrepTrim& trim = m_T[ti];
-        trim.m_li = -1;
-        DeleteTrim(trim,bDeleteLoopEdges);
+	ON_BrepTrim& trim = m_T[ti];
+	trim.m_li = -1;
+	DeleteTrim(trim,bDeleteLoopEdges);
       }
     }
 
     const int fi = loop.m_fi;
-    if ( fi >= 0 && fi < m_F.Count() )
+    if ( fi >= 0 && fi < m_F.Count() ) 
     {
       ON_BrepFace& face = m_F[fi];
       int fli;
       for ( fli = face.m_li.Count()-1; fli >= 0; fli-- )
       {
-        if ( face.m_li[fli] == li )
-        {
-          face.m_li.Remove(fli);
-        }
+	if ( face.m_li[fli] == li ) 
+	{
+	  face.m_li.Remove(fli);
+	}
       }
     }
   }
@@ -7657,9 +7719,9 @@ void ON_Brep::DeleteFace(ON_BrepFace& face, BOOL bDeleteFaceEdges )
     for ( fli = face.m_li.Count()-1; fli >= 0; fli-- ) {
       li = face.m_li[fli];
       if ( li >= 0 && li < lcount ) {
-        ON_BrepLoop& loop = m_L[li];
-        loop.m_fi = -1;
-        DeleteLoop(loop,bDeleteFaceEdges);
+	ON_BrepLoop& loop = m_L[li];
+	loop.m_fi = -1;
+	DeleteLoop(loop,bDeleteFaceEdges);
       }
     }
   }
@@ -7671,10 +7733,10 @@ void ON_Brep::DeleteFace(ON_BrepFace& face, BOOL bDeleteFaceEdges )
   face.m_bbox.Destroy();
 }
 
-static void PropagateLabel(ON_Brep& B,
-                           ON_SimpleArray<int>& fids,
-                           int label
-                           )
+static void PropagateLabel(ON_Brep& B, 
+			   ON_SimpleArray<int>& fids,
+			   int label
+			   )
 //on input, each face in fids must have m_face_user.i = label
 {
   if (fids.Count() == 0) return;
@@ -7689,34 +7751,34 @@ static void PropagateLabel(ON_Brep& B,
       L.m_loop_user.i = label;
       for (int edge_i=0; edge_i<L.m_ti.Count(); edge_i++)
       {
-        ON_BrepTrim& T = B.m_T[L.m_ti[edge_i]];
-        memset(&T.m_trim_user,0,sizeof(T.m_trim_user));
-        T.m_trim_user.i = label;
-        if (T.m_ei < 0)
-          continue;
-        ON_BrepEdge& E = B.m_E[T.m_ei];
-        memset(&E.m_edge_user,0,sizeof(E.m_edge_user));
-        E.m_edge_user.i = label;
-        for (int vertex_i=0; vertex_i<2; vertex_i++)
-        {
-          if (E.m_vi[vertex_i] >= 0)
-          {
-            ON_BrepVertex& V = B.m_V[E.m_vi[vertex_i]];
-            memset(&V.m_vertex_user,0,sizeof(V.m_vertex_user));
-            V.m_vertex_user.i = label;
-          }
-        }
+	ON_BrepTrim& T = B.m_T[L.m_ti[edge_i]];
+	memset(&T.m_trim_user,0,sizeof(T.m_trim_user));
+	T.m_trim_user.i = label;
+	if (T.m_ei < 0) 
+	  continue;
+	ON_BrepEdge& E = B.m_E[T.m_ei];
+	memset(&E.m_edge_user,0,sizeof(E.m_edge_user));
+	E.m_edge_user.i = label;
+	for (int vertex_i=0; vertex_i<2; vertex_i++)
+	{
+	  if (E.m_vi[vertex_i] >= 0) 
+	  {
+	    ON_BrepVertex& V = B.m_V[E.m_vi[vertex_i]];
+	    memset(&V.m_vertex_user,0,sizeof(V.m_vertex_user));
+	    V.m_vertex_user.i = label;
+	  }
+	}
 
-        for (int trim_i=0; trim_i<E.m_ti.Count(); trim_i++)
-        {
-          int fi = B.m_T[E.m_ti[trim_i]].FaceIndexOf();
-          if (fi < 0 || B.m_F[fi].m_face_user.i == label)
-            continue;
-          ON_BrepFace& F = B.m_F[fi];
-          memset(&F.m_face_user,0,sizeof(F.m_face_user));
-          F.m_face_user.i = label;
-          new_fids.Append(fi);
-        }
+	for (int trim_i=0; trim_i<E.m_ti.Count(); trim_i++)
+	{
+	  int fi = B.m_T[E.m_ti[trim_i]].FaceIndexOf();
+	  if (fi < 0 || B.m_F[fi].m_face_user.i == label) 
+	    continue;
+	  ON_BrepFace& F = B.m_F[fi];
+	  memset(&F.m_face_user,0,sizeof(F.m_face_user));
+	  F.m_face_user.i = label;
+	  new_fids.Append(fi);
+	}
       }
     }
   }
@@ -7754,8 +7816,8 @@ int ON_Brep::LabelConnectedComponents()
     {
       if (m_F[j].m_face_user.i == 0)
       {
-        face_index = j;
-        break;
+	face_index = j;
+	break;
       }
     }
     if (face_index == -1)
@@ -7783,14 +7845,14 @@ int ON_Brep::GetConnectedComponents( ON_SimpleArray< ON_Brep* >& components, boo
       fi.SetCount(0);
       for ( int j = 0; j < brep.m_F.Count(); j++ )
       {
-        if ( brep.m_F[j].m_face_user.i == cci )
-          fi.Append(j);
+	if ( brep.m_F[j].m_face_user.i == cci )
+	  fi.Append(j);
       }
       if ( fi.Count() > 0 )
       {
-        ON_Brep* cc = brep.DuplicateFaces( fi.Count(), fi.Array(), bDuplicateMeshes );
-        if ( cc )
-          components.Append(cc);
+	ON_Brep* cc = brep.DuplicateFaces( fi.Count(), fi.Array(), bDuplicateMeshes );
+	if ( cc )
+	  components.Append(cc);
       }
     }
   }
@@ -7837,43 +7899,43 @@ ON_Brep* ON_Brep::DuplicateFaces( int face_count, const int* face_index, BOOL bD
       f_remap[fi] = 1;
       si = face.m_si;
       if ( si >= 0 && si < m_S.Count() ) {
-        s_remap[si] = 1;
+	s_remap[si] = 1;
       }
-      for ( fli = 0; fli < face.m_li.Count(); fli++ )
+      for ( fli = 0; fli < face.m_li.Count(); fli++ ) 
       {
-        li = face.m_li[fli];
-        if ( li < 0 || li >= m_L.Count() )
-          continue;
-        const ON_BrepLoop& loop = m_L[li];
-        for ( lti = 0; lti < loop.m_ti.Count(); lti++ )
-        {
-          ti = loop.m_ti[lti];
-          if ( ti < 0 || ti >= m_T.Count() )
-            continue;
-          const ON_BrepTrim& trim = m_T[ti];
-          if ( trim.m_ei >= 0 && trim.m_ei < m_E.Count() )
-          {
-            int vi;
-            e_remap[trim.m_ei] = 1;
-            vi = m_E[trim.m_ei].m_vi[0];
-            if ( vi >= 0 )
-              v_remap[vi] = 1;
-            vi = m_E[trim.m_ei].m_vi[1];
-            if ( vi >= 0 )
-              v_remap[vi] = 1;
-          }
-          if ( trim.m_vi[0] >= 0 )
-            v_remap[trim.m_vi[0]] = 1;
-          if ( trim.m_vi[1] >= 0 )
-            v_remap[trim.m_vi[1]] = 1;
-          int ci = trim.EdgeCurveIndexOf();
-          if ( ci >= 0 ) {
-            c3_remap[ci] = 1;
-          }
-          ci = trim.TrimCurveIndexOf();
-          if ( ci >= 0 )
-            c2_remap[ci] = 1;
-        }
+	li = face.m_li[fli];
+	if ( li < 0 || li >= m_L.Count() )
+	  continue;
+	const ON_BrepLoop& loop = m_L[li];
+	for ( lti = 0; lti < loop.m_ti.Count(); lti++ ) 
+	{
+	  ti = loop.m_ti[lti];
+	  if ( ti < 0 || ti >= m_T.Count() )
+	    continue;
+	  const ON_BrepTrim& trim = m_T[ti];
+	  if ( trim.m_ei >= 0 && trim.m_ei < m_E.Count() ) 
+	  {
+	    int vi;
+	    e_remap[trim.m_ei] = 1;
+	    vi = m_E[trim.m_ei].m_vi[0];
+	    if ( vi >= 0 )
+	      v_remap[vi] = 1;
+	    vi = m_E[trim.m_ei].m_vi[1];
+	    if ( vi >= 0 )
+	      v_remap[vi] = 1;
+	  }
+	  if ( trim.m_vi[0] >= 0 )
+	    v_remap[trim.m_vi[0]] = 1;
+	  if ( trim.m_vi[1] >= 0 )
+	    v_remap[trim.m_vi[1]] = 1;
+	  int ci = trim.EdgeCurveIndexOf();
+	  if ( ci >= 0 ) {
+	    c3_remap[ci] = 1;
+	  }
+	  ci = trim.TrimCurveIndexOf();
+	  if ( ci >= 0 )
+	    c2_remap[ci] = 1;
+	}
       }
     }
   }
@@ -7887,11 +7949,11 @@ ON_Brep* ON_Brep::DuplicateFaces( int face_count, const int* face_index, BOOL bD
   {
     if ( s_remap[i] ) {
       if ( !m_S[i] )
-        break;
+	break;
       dup = m_S[i]->Duplicate();
       ON_Surface* srf_copy = ON_Surface::Cast(dup);
       if ( !srf_copy )
-        break;
+	break;
       s_remap[i] = brep_copy->AddSurface(srf_copy);
       dup = 0;
     }
@@ -7905,11 +7967,11 @@ ON_Brep* ON_Brep::DuplicateFaces( int face_count, const int* face_index, BOOL bD
   {
     if ( c2_remap[i] ) {
       if ( !m_C2[i] )
-        break;
+	break;
       dup = m_C2[i]->Duplicate();
       ON_Curve* crv_copy = ON_Curve::Cast(dup);
       if ( !crv_copy )
-        break;
+	break;
       c2_remap[i] = brep_copy->AddTrimCurve(crv_copy);
       dup = 0;
     }
@@ -7923,11 +7985,11 @@ ON_Brep* ON_Brep::DuplicateFaces( int face_count, const int* face_index, BOOL bD
   {
     if ( c3_remap[i] ) {
       if ( !m_C3[i] )
-        break;
+	break;
       dup = m_C3[i]->Duplicate();
       ON_Curve* crv_copy = ON_Curve::Cast(dup);
       if ( !crv_copy )
-        break;
+	break;
       c3_remap[i] = brep_copy->AddEdgeCurve(crv_copy);
       dup = 0;
     }
@@ -7937,9 +7999,9 @@ ON_Brep* ON_Brep::DuplicateFaces( int face_count, const int* face_index, BOOL bD
   rc = ( rc && i == m_C3.Count() );
 
   // duplicate vertices
-  for (i = 0; i < m_V.Count() && rc; i++ )
+  for (i = 0; i < m_V.Count() && rc; i++ ) 
   {
-    if (v_remap[i])
+    if (v_remap[i]) 
     {
       ON_BrepVertex& vertex_copy = brep_copy->NewVertex(m_V[i].point);
       memset(&vertex_copy.m_vertex_user,0,sizeof(vertex_copy.m_vertex_user));
@@ -7952,23 +8014,23 @@ ON_Brep* ON_Brep::DuplicateFaces( int face_count, const int* face_index, BOOL bD
   rc = ( rc && i == m_V.Count() );
 
   // duplicate edges
-  for (i = 0; i < m_E.Count() && rc; i++ )
+  for (i = 0; i < m_E.Count() && rc; i++ ) 
   {
-    if (e_remap[i])
+    if (e_remap[i]) 
     {
       const ON_BrepEdge& edge = m_E[i];
       //int vi0 = edge.m_vi[0];
       if ( edge.m_vi[0] < 0 || edge.m_vi[1] < 0 || edge.m_c3i < 0 )
-        break;
+	break;
       if ( v_remap[edge.m_vi[0]] < 0 || v_remap[edge.m_vi[1]] < 0 || c3_remap[edge.m_c3i] < 0)
-        break;
-      ON_BrepEdge& edge_copy = brep_copy->NewEdge( brep_copy->m_V[v_remap[edge.m_vi[0]]],
-                                                   brep_copy->m_V[v_remap[edge.m_vi[1]]],
-                                                   c3_remap[edge.m_c3i]
-                                                   );
+	break;
+      ON_BrepEdge& edge_copy = brep_copy->NewEdge( brep_copy->m_V[v_remap[edge.m_vi[0]]], 
+						   brep_copy->m_V[v_remap[edge.m_vi[1]]], 
+						   c3_remap[edge.m_c3i]
+						   );
       edge_copy.SetProxyCurveDomain( edge.ProxyCurveDomain());
       if ( edge.ProxyCurveIsReversed() )
-        edge_copy.ON_CurveProxy::Reverse();
+	edge_copy.ON_CurveProxy::Reverse();
       edge_copy.SetDomain(edge.Domain());
 
       memset(&edge_copy.m_edge_user,0,sizeof(edge_copy.m_edge_user));
@@ -8014,55 +8076,55 @@ ON_Brep* ON_Brep::DuplicateFaces( int face_count, const int* face_index, BOOL bD
       loop_copy.m_loop_user.i = li;
       for ( lti = 0; lti < loop.m_ti.Count(); lti++ )
       {
-        ti = loop.m_ti[lti];
-        const ON_BrepTrim& trim = m_T[ti];
-        i = (trim.m_c2i>=0) ? c2_remap[trim.m_c2i] : -1;
-        if ( trim.m_ei >= 0 ) {
-          i = brep_copy->NewTrim( brep_copy->m_E[e_remap[trim.m_ei]], trim.m_bRev3d, loop_copy, i ).m_trim_index;
-        }
-        else {
-          i = brep_copy->NewTrim( trim.m_bRev3d, loop_copy, i ).m_trim_index;
-          int vi0 = (trim.m_vi[0]>=0) ? v_remap[trim.m_vi[0]] : -1;
-          int vi1 = (trim.m_vi[1]>=0) ? v_remap[trim.m_vi[1]] : -1;
-          brep_copy->m_T[i].m_vi[0] = vi0;
-          brep_copy->m_T[i].m_vi[1] = vi1;
-        }
-        ON_BrepTrim& trim_copy = brep_copy->m_T[i];
+	ti = loop.m_ti[lti];
+	const ON_BrepTrim& trim = m_T[ti];
+	i = (trim.m_c2i>=0) ? c2_remap[trim.m_c2i] : -1;
+	if ( trim.m_ei >= 0 ) {
+	  i = brep_copy->NewTrim( brep_copy->m_E[e_remap[trim.m_ei]], trim.m_bRev3d, loop_copy, i ).m_trim_index;
+	}
+	else {
+	  i = brep_copy->NewTrim( trim.m_bRev3d, loop_copy, i ).m_trim_index;
+	  int vi0 = (trim.m_vi[0]>=0) ? v_remap[trim.m_vi[0]] : -1;
+	  int vi1 = (trim.m_vi[1]>=0) ? v_remap[trim.m_vi[1]] : -1;
+	  brep_copy->m_T[i].m_vi[0] = vi0;
+	  brep_copy->m_T[i].m_vi[1] = vi1;
+	}
+	ON_BrepTrim& trim_copy = brep_copy->m_T[i];
+	
+	//trim_copy.m_t = trim.m_t;
+	trim_copy.SetProxyCurveDomain( trim.ProxyCurveDomain());
+	if ( trim.ProxyCurveIsReversed() )
+	  trim_copy.ON_CurveProxy::Reverse();
+	trim_copy.SetDomain(trim.Domain());
 
-        //trim_copy.m_t = trim.m_t;
-        trim_copy.SetProxyCurveDomain( trim.ProxyCurveDomain());
-        if ( trim.ProxyCurveIsReversed() )
-          trim_copy.ON_CurveProxy::Reverse();
-        trim_copy.SetDomain(trim.Domain());
-
-        memset(&trim_copy.m_trim_user,0,sizeof(trim_copy.m_trim_user));
-        trim_copy.m_trim_user.i = ti;
-        trim_copy.m_iso = trim.m_iso;
-        trim_copy.m_tolerance[0] = trim.m_tolerance[0];
-        trim_copy.m_tolerance[1] = trim.m_tolerance[1];
-        trim_copy.m_pline = trim.m_pline;
-        trim_copy.m_pbox = trim.m_pbox;
-        trim_copy.m__legacy_2d_tol = trim.m__legacy_2d_tol;
-        trim_copy.m__legacy_3d_tol = trim.m__legacy_3d_tol;
-        trim_copy.m__legacy_flags = trim.m__legacy_flags;
+	memset(&trim_copy.m_trim_user,0,sizeof(trim_copy.m_trim_user));
+	trim_copy.m_trim_user.i = ti;
+	trim_copy.m_iso = trim.m_iso;
+	trim_copy.m_tolerance[0] = trim.m_tolerance[0];
+	trim_copy.m_tolerance[1] = trim.m_tolerance[1];
+	trim_copy.m_pline = trim.m_pline;
+	trim_copy.m_pbox = trim.m_pbox;
+	trim_copy.m__legacy_2d_tol = trim.m__legacy_2d_tol;
+	trim_copy.m__legacy_3d_tol = trim.m__legacy_3d_tol;
+	trim_copy.m__legacy_flags = trim.m__legacy_flags;
       }
       loop_copy.m_pbox = loop.m_pbox;
     }
 
-    if ( bDuplicateMeshes )
+    if ( bDuplicateMeshes ) 
     {
       if ( face.m_render_mesh )
-        face_copy.m_render_mesh = face.m_render_mesh->Duplicate();
+	face_copy.m_render_mesh = face.m_render_mesh->Duplicate();
       if ( face.m_analysis_mesh )
-        face_copy.m_analysis_mesh = face.m_analysis_mesh->Duplicate();
+	face_copy.m_analysis_mesh = face.m_analysis_mesh->Duplicate();
       if ( face.m_preview_mesh )
-        face_copy.m_preview_mesh = face.m_preview_mesh->Duplicate();
+	face_copy.m_preview_mesh = face.m_preview_mesh->Duplicate();
     }
 
     rc = true;
   }
   rc = ( rc && fi == m_F.Count() );
-
+  
   if ( !rc ) {
     if ( dup ) {
       delete dup;
@@ -8073,7 +8135,7 @@ ON_Brep* ON_Brep::DuplicateFaces( int face_count, const int* face_index, BOOL bD
       brep_copy = 0;
     }
   }
-  else
+  else 
   {
     // set flags, tolerances, etc. that have changed
     brep_copy->SetTrimTypeFlags();
@@ -8137,13 +8199,13 @@ bool ON_Brep::CullUnusedFaces()
     for ( fi = 0; fi < fcount; fi++ ) {
       ON_BrepFace& face = m_F[fi];
       if ( face.m_face_index == -1)
-        fmap[fi] = -1;
+	fmap[fi] = -1;
       else if ( face.m_face_index == fi )
-        fmap[fi] = face.m_face_index = mi++;
+	fmap[fi] = face.m_face_index = mi++;
       else {
-        ON_ERROR("Brep face has illegal m_face_index.");
-        rc = false;
-        fmap[fi] = face.m_face_index;
+	ON_ERROR("Brep face has illegal m_face_index.");
+	rc = false;
+	fmap[fi] = face.m_face_index;
       }
     }
 
@@ -8154,22 +8216,22 @@ bool ON_Brep::CullUnusedFaces()
       // set new face indices
       mi = 0;
       for ( fi = fcount-1; fi >= 0; fi-- ) {
-        if ( m_F[fi].m_face_index  == -1 )
-          m_F.Remove(fi);
-        else
-          m_F[fi].m_face_index = fmap[fi];
+	if ( m_F[fi].m_face_index  == -1 )
+	  m_F.Remove(fi);
+	else
+	  m_F[fi].m_face_index = fmap[fi];
       }
 
       // remap loop.m_fi indices
       for ( li = 0; li < lcount; li++ ) {
-        ON_BrepLoop& loop = m_L[li];
-        fi = loop.m_fi;
-        if ( fi < -1 || fi >= fcount ) {
-          ON_ERROR("Brep loop has illegal m_fi.");
-          rc = false;
-        }
-        else
-          loop.m_fi = fmap[fi];
+	ON_BrepLoop& loop = m_L[li];
+	fi = loop.m_fi;
+	if ( fi < -1 || fi >= fcount ) {
+	  ON_ERROR("Brep loop has illegal m_fi.");
+	  rc = false;
+	}
+	else 
+	  loop.m_fi = fmap[fi];
       }
 
     }
@@ -8195,20 +8257,20 @@ bool ON_Brep::CullUnusedSurfaces()
     for ( fi = 0; fi < fcount; fi++ ) {
       ON_BrepFace& face = m_F[fi];
       if ( face.m_face_index == -1 ) {
-        face.m_si = -1;
-        continue;
+	face.m_si = -1;
+	continue;
       }
       si = face.m_si;
       if ( si == -1 )
-        continue;
+	continue;
       if ( si < 0 || si >= scount ) {
-        ON_ERROR("Brep face has illegal m_si.");
-        rc = false;
+	ON_ERROR("Brep face has illegal m_si.");
+	rc = false;
       }
       else {
-        if ( !smap[si] )
-          mi++;
-        smap[si]++;
+	if ( !smap[si] )
+	  mi++;
+	smap[si]++;
       }
     }
 
@@ -8218,27 +8280,27 @@ bool ON_Brep::CullUnusedSurfaces()
     else if ( mi < scount ) {
       mi = 0;
       for ( si = 0; si < scount; si++ ) {
-        if ( smap[si] )
-          smap[si] = mi++;
-        else {
-          delete m_S[si];
-          m_S[si] = 0;
-          smap[si] = -1;
-        }
+	if ( smap[si] )
+	  smap[si] = mi++;
+	else {
+	  delete m_S[si];
+	  m_S[si] = 0;
+	  smap[si] = -1;
+	}
       }
 
       for ( fi = 0; fi < fcount; fi++ ) {
-        ON_BrepFace& face = m_F[fi];
-        si = face.m_si;
-        if ( si >= 0 && si < scount )
-          face.m_si = smap[si];
+	ON_BrepFace& face = m_F[fi];
+	si = face.m_si;
+	if ( si >= 0 && si < scount )
+	  face.m_si = smap[si];
       }
 
       for ( si = scount-1; si >= 0; si-- ) {
-        if ( smap[si] < 0 ) {
-          m_S.Remove(si);
-          scount--;
-        }
+	if ( smap[si] < 0 ) {
+	  m_S.Remove(si);
+	  scount--;
+	}
       }
     }
   }
@@ -8263,20 +8325,20 @@ bool ON_Brep::CullUnused3dCurves()
     for ( ei = 0; ei < ecount; ei++ ) {
       ON_BrepEdge& edge = m_E[ei];
       if ( edge.m_edge_index == -1 ) {
-        edge.m_c3i = -1;
-        continue;
+	edge.m_c3i = -1;
+	continue;
       }
       c3i = edge.m_c3i;
       if ( c3i == -1 )
-        continue;
+	continue;
       if ( c3i < -1 || c3i >= c3count ) {
-        ON_ERROR("Brep edge has illegal m_c3i.");
-        rc = false;
+	ON_ERROR("Brep edge has illegal m_c3i.");
+	rc = false;
       }
       else {
-        if ( !c3map[c3i] )
-          mi++;
-        c3map[c3i]++;
+	if ( !c3map[c3i] )
+	  mi++;
+	c3map[c3i]++;
       }
     }
 
@@ -8286,27 +8348,27 @@ bool ON_Brep::CullUnused3dCurves()
     else if ( mi < c3count ) {
       mi = 0;
       for ( c3i = 0; c3i < c3count; c3i++ ) {
-        if ( c3map[c3i] )
-          c3map[c3i] = mi++;
-        else {
-          delete m_C3[c3i];
-          m_C3[c3i] = 0;
-          c3map[c3i] = -1;
-        }
+	if ( c3map[c3i] )
+	  c3map[c3i] = mi++;
+	else {
+	  delete m_C3[c3i];
+	  m_C3[c3i] = 0;
+	  c3map[c3i] = -1;
+	}
       }
 
       for ( ei = 0; ei < ecount; ei++ ) {
-        ON_BrepEdge& edge = m_E[ei];
-        c3i = edge.m_c3i;
-        if ( c3i >= 0 && c3i < c3count )
-          edge.m_c3i = c3map[c3i];
+	ON_BrepEdge& edge = m_E[ei];
+	c3i = edge.m_c3i;
+	if ( c3i >= 0 && c3i < c3count )
+	  edge.m_c3i = c3map[c3i];
       }
 
       for ( c3i = c3count-1; c3i >= 0; c3i-- ) {
-        if ( c3map[c3i] < 0 ) {
-          m_C3.Remove(c3i);
-          c3count--;
-        }
+	if ( c3map[c3i] < 0 ) {
+	  m_C3.Remove(c3i);
+	  c3count--;
+	}
       }
     }
   }
@@ -8323,7 +8385,7 @@ bool ON_Brep::CullUnused2dCurves()
   int c2count = m_C2.Count();
   int c2i, ti, mi;
 
-  if ( c2count > 0 )
+  if ( c2count > 0 ) 
   {
     ON_Workspace ws;
     int* c2map = ws.GetIntMemory(c2count+1);
@@ -8333,20 +8395,20 @@ bool ON_Brep::CullUnused2dCurves()
     for ( ti = 0; ti < tcount; ti++ ) {
       ON_BrepTrim& trim = m_T[ti];
       if ( trim.m_trim_index == -1 ) {
-        trim.m_c2i = -1;
-        continue;
+	trim.m_c2i = -1;
+	continue;
       }
       c2i = trim.m_c2i;
       if ( c2i == -1 )
-        continue;
+	continue;
       if ( c2i < -1 || c2i >= c2count ) {
-        ON_ERROR("Brep trim has illegal m_c2i.");
-        rc = false;
+	ON_ERROR("Brep trim has illegal m_c2i.");
+	rc = false;
       }
       else {
-        if ( !c2map[c2i] )
-          mi++;
-        c2map[c2i]++;
+	if ( !c2map[c2i] )
+	  mi++;
+	c2map[c2i]++;
       }
     }
 
@@ -8356,27 +8418,27 @@ bool ON_Brep::CullUnused2dCurves()
     else if ( mi < c2count ) {
       mi = 0;
       for ( c2i = 0; c2i < c2count; c2i++ ) {
-        if ( c2map[c2i] )
-          c2map[c2i] = mi++;
-        else {
-          delete m_C2[c2i];
-          m_C2[c2i] = 0;
-          c2map[c2i] = -1;
-        }
+	if ( c2map[c2i] )
+	  c2map[c2i] = mi++;
+	else {
+	  delete m_C2[c2i];
+	  m_C2[c2i] = 0;
+	  c2map[c2i] = -1;
+	}
       }
 
       for ( ti = 0; ti < tcount; ti++ ) {
-        ON_BrepTrim& trim = m_T[ti];
-        c2i = trim.m_c2i;
-        if ( c2i >= 0 && c2i < c2count )
-          trim.m_c2i = c2map[c2i];
+	ON_BrepTrim& trim = m_T[ti];
+	c2i = trim.m_c2i;
+	if ( c2i >= 0 && c2i < c2count )
+	  trim.m_c2i = c2map[c2i];
       }
 
       for ( c2i = c2count-1; c2i >= 0; c2i-- ) {
-        if ( c2map[c2i] < 0 ) {
-          m_C2.Remove(c2i);
-          c2count--;
-        }
+	if ( c2map[c2i] < 0 ) {
+	  m_C2.Remove(c2i);
+	  c2count--;
+	}
       }
     }
   }
@@ -8402,13 +8464,13 @@ bool ON_Brep::CullUnusedLoops()
     for ( li = 0; li < lcount; li++ ) {
       ON_BrepLoop& loop = m_L[li];
       if ( loop.m_loop_index == -1)
-        lmap[li] = -1;
+	lmap[li] = -1;
       else if ( loop.m_loop_index == li )
-        lmap[li] = loop.m_loop_index = mi++;
+	lmap[li] = loop.m_loop_index = mi++;
       else {
-        ON_ERROR("Brep loop has illegal m_loop_index.");
-        rc = false;
-        lmap[li] = loop.m_loop_index;
+	ON_ERROR("Brep loop has illegal m_loop_index.");
+	rc = false;
+	lmap[li] = loop.m_loop_index;
       }
     }
 
@@ -8419,45 +8481,45 @@ bool ON_Brep::CullUnusedLoops()
 
       // remap loops
       for ( li = lcount-1; li >= 0; li-- ) {
-        if ( m_L[li].m_loop_index == -1 )
-          m_L.Remove(li);
-        else
-          m_L[li].m_loop_index = lmap[li];
+	if ( m_L[li].m_loop_index == -1 )
+	  m_L.Remove(li);
+	else
+	  m_L[li].m_loop_index = lmap[li];
       }
 
       // remap ON_BrepFace.m_li[] indices
       for ( fi = 0; fi < fcount; fi++ ) {
-        ON_BrepFace& face = m_F[fi];
-        flcnt = face.m_li.Count();
-        for ( fli = flcnt-1; fli >= 0; fli-- ) {
-          li = face.m_li[fli];
-          if ( li < -1 || li >= lcount ) {
-            ON_ERROR("Brep face m_li[] has illegal loop index.");
-            rc = false;
-          }
-          else {
-            li = lmap[li];
-            if (li >= 0 ) {
-              face.m_li[fli] = li;
-            }
-            else {
-              face.m_li.Remove(fli);
-            }
-          }
-        }
+	ON_BrepFace& face = m_F[fi];
+	flcnt = face.m_li.Count();
+	for ( fli = flcnt-1; fli >= 0; fli-- ) {
+	  li = face.m_li[fli];
+	  if ( li < -1 || li >= lcount ) {
+	    ON_ERROR("Brep face m_li[] has illegal loop index.");
+	    rc = false;
+	  }
+	  else {
+	    li = lmap[li];
+	    if (li >= 0 ) {
+	      face.m_li[fli] = li;
+	    }
+	    else {
+	      face.m_li.Remove(fli);
+	    }
+	  }
+	}
       }
 
       // remap ON_BrepTrim.m_li indices
       for ( ti = 0; ti < tcount; ti++ ) {
-        ON_BrepTrim& trim = m_T[ti];
-        li = trim.m_li;
-        if ( li < -1 || li >= lcount ) {
-          ON_ERROR("Brep trim has illegal m_li.");
-          rc = false;
-        }
-        else {
-          trim.m_li = lmap[li];
-        }
+	ON_BrepTrim& trim = m_T[ti];
+	li = trim.m_li;
+	if ( li < -1 || li >= lcount ) {
+	  ON_ERROR("Brep trim has illegal m_li.");
+	  rc = false;
+	}
+	else {
+	  trim.m_li = lmap[li];
+	}
       }
     }
   }
@@ -8482,13 +8544,13 @@ bool ON_Brep::CullUnusedTrims()
     for ( ti = 0; ti < tcount; ti++ ) {
       ON_BrepTrim& trim = m_T[ti];
       if ( trim.m_trim_index == -1)
-        tmap[ti] = -1;
+	tmap[ti] = -1;
       else if ( trim.m_trim_index == ti )
-        tmap[ti] = trim.m_trim_index = mi++;
+	tmap[ti] = trim.m_trim_index = mi++;
       else {
-        ON_ERROR("Brep trim has illegal m_trim_index.");
-        rc = false;
-        tmap[ti] = trim.m_trim_index;
+	ON_ERROR("Brep trim has illegal m_trim_index.");
+	rc = false;
+	tmap[ti] = trim.m_trim_index;
       }
     }
 
@@ -8498,56 +8560,56 @@ bool ON_Brep::CullUnusedTrims()
     else if ( mi < tcount ) {
       // remap trim indices
       for ( ti = tcount-1; ti >= 0; ti-- ) {
-        if ( m_T[ti].m_trim_index == -1 ) {
-          m_T.Remove(ti);
-        }
-        else {
-          m_T[ti].m_trim_index = tmap[ti];
-        }
+	if ( m_T[ti].m_trim_index == -1 ) {
+	  m_T.Remove(ti);
+	}
+	else {
+	  m_T[ti].m_trim_index = tmap[ti];
+	}
       }
 
       // remap loop.m_ti[] indicies
       for ( li = 0; li < lcount; li++ ) {
-        ON_BrepLoop& loop = m_L[li];
-        ltcnt = loop.m_ti.Count();
-        for ( lti = ltcnt-1; lti >= 0; lti-- ) {
-          ti = loop.m_ti[lti];
-          if ( ti < -1 || ti >= tcount ) {
-            ON_ERROR("Brep loop.m_ti[] has illegal index.");
-            rc = false;
-          }
-          else {
-            ti = tmap[ti];
-            if (ti >= 0 ) {
-              loop.m_ti[lti] = ti;
-            }
-            else {
-              loop.m_ti.Remove(lti);
-            }
-          }
-        }
+	ON_BrepLoop& loop = m_L[li];
+	ltcnt = loop.m_ti.Count();
+	for ( lti = ltcnt-1; lti >= 0; lti-- ) {
+	  ti = loop.m_ti[lti];
+	  if ( ti < -1 || ti >= tcount ) {
+	    ON_ERROR("Brep loop.m_ti[] has illegal index.");
+	    rc = false;
+	  }
+	  else {
+	    ti = tmap[ti];
+	    if (ti >= 0 ) {
+	      loop.m_ti[lti] = ti;
+	    }
+	    else {
+	      loop.m_ti.Remove(lti);
+	    }
+	  }
+	}
       }
 
       // remap edge.m_ti[] indicies
       for ( ei = 0; ei < ecount; ei++ ) {
-        ON_BrepEdge& edge = m_E[ei];
-        etcnt = edge.m_ti.Count();
-        for ( eti = etcnt-1; eti >= 0; eti-- ) {
-          ti = edge.m_ti[eti];
-          if ( ti < -1 || ti >= tcount ) {
-            ON_ERROR("Brep edge.m_ti[] has illegal index.");
-            rc = false;
-          }
-          else {
-            ti = tmap[ti];
-            if (ti >= 0 ) {
-              edge.m_ti[eti] = ti;
-            }
-            else {
-              edge.m_ti.Remove(eti);
-            }
-          }
-        }
+	ON_BrepEdge& edge = m_E[ei];
+	etcnt = edge.m_ti.Count();
+	for ( eti = etcnt-1; eti >= 0; eti-- ) {
+	  ti = edge.m_ti[eti];
+	  if ( ti < -1 || ti >= tcount ) {
+	    ON_ERROR("Brep edge.m_ti[] has illegal index.");
+	    rc = false;
+	  }
+	  else {
+	    ti = tmap[ti];
+	    if (ti >= 0 ) {
+	      edge.m_ti[eti] = ti;
+	    }
+	    else {
+	      edge.m_ti.Remove(eti);
+	    }
+	  }
+	}
       }
     }
   }
@@ -8572,64 +8634,64 @@ bool ON_Brep::CullUnusedEdges()
     for ( ei = 0; ei < ecount; ei++ ) {
       ON_BrepEdge& edge = m_E[ei];
       if ( edge.m_edge_index == -1)
-        emap[ei] = -1;
+	emap[ei] = -1;
       else if ( edge.m_edge_index == ei )
-        emap[ei] = edge.m_edge_index = mi++;
+	emap[ei] = edge.m_edge_index = mi++;
       else {
-        ON_ERROR("Brep edge has illegal m_edge_index.");
-        rc = false;
-        emap[ei] = edge.m_edge_index;
+	ON_ERROR("Brep edge has illegal m_edge_index.");
+	rc = false;
+	emap[ei] = edge.m_edge_index;
       }
     }
 
     if ( mi == 0 ) {
       m_E.Destroy();
     }
-    else if ( mi < ecount )
+    else if ( mi < ecount ) 
     {
       // remap edge indices
       for ( ei = ecount-1; ei >= 0; ei-- ) {
-        if ( m_E[ei].m_edge_index == -1 ) {
-          m_E.Remove(ei);
-        }
-        else {
-          m_E[ei].m_edge_index = emap[ei];
-        }
+	if ( m_E[ei].m_edge_index == -1 ) {
+	  m_E.Remove(ei);
+	}
+	else {
+	  m_E[ei].m_edge_index = emap[ei];
+	}
       }
 
       // remap trim.m_ei
       for ( ti = 0; ti < tcount; ti++ ) {
-        ON_BrepTrim& trim = m_T[ti];
-        ei = trim.m_ei;
-        if ( ei < -1 || ei >= ecount ) {
-          ON_ERROR("Brep trim.m_ei has illegal index.");
-          rc = false;
-        }
-        else {
-          trim.m_ei = emap[ei];
-        }
+	ON_BrepTrim& trim = m_T[ti];
+	ei = trim.m_ei;
+	if ( ei < -1 || ei >= ecount ) {
+	  ON_ERROR("Brep trim.m_ei has illegal index.");
+	  rc = false;
+	}
+	else {
+	  trim.m_ei = emap[ei];
+	}
       }
 
       // remap vertex.m_ei[]
       for ( vi = 0; vi < vcount; vi++ ) {
-        ON_BrepVertex& vertex = m_V[vi];
-        vecnt = vertex.m_ei.Count();
-        for ( vei = vecnt-1; vei >= 0; vei-- ) {
-          ei = vertex.m_ei[vei];
-          if ( ei < -1 || ei >= ecount ) {
-            ON_ERROR("Brep vertex.m_ei[] has illegal index.");
-            rc = false;
-          }
-          else {
-            ei = emap[ei];
-            if (ei >= 0 ) {
-              vertex.m_ei[vei] = ei;
-            }
-            else {
-              vertex.m_ei.Remove(vei);
-            }
-          }
-        }
+	ON_BrepVertex& vertex = m_V[vi];
+	vecnt = vertex.m_ei.Count();
+	for ( vei = vecnt-1; vei >= 0; vei-- ) {
+	  ei = vertex.m_ei[vei];
+	  if ( ei < -1 || ei >= ecount ) {
+	    ON_ERROR("Brep vertex.m_ei[] has illegal index.");
+	    rc = false;
+	  }
+	  else {
+	    ei = emap[ei];
+	    if (ei >= 0 ) {
+	      vertex.m_ei[vei] = ei;
+	    }
+	    else {
+	      vertex.m_ei.Remove(vei);
+	    }
+	  }
+	}
       }
     }
   }
@@ -8642,7 +8704,7 @@ bool ON_Brep::CullUnusedVertices()
 {
   bool rc = true;
   const int vcount = m_V.Count();
-  if ( vcount > 0 )
+  if ( vcount > 0 ) 
   {
     ON_Workspace ws;
     int* vmap = ws.GetIntMemory(vcount+1);
@@ -8656,68 +8718,68 @@ bool ON_Brep::CullUnusedVertices()
     for ( vi = 0; vi < vcount; vi++ ) {
       ON_BrepVertex& vertex = m_V[vi];
       if ( vertex.m_vertex_index == -1)
-        vmap[vi] = -1;
+	vmap[vi] = -1;
       else if ( vertex.m_vertex_index == vi )
-        vmap[vi] = vertex.m_vertex_index = mi++;
+	vmap[vi] = vertex.m_vertex_index = mi++;
       else {
-        ON_ERROR("Brep vertex has illegal m_vertex_index.");
-        rc = false;
-        vmap[vi] = vertex.m_vertex_index;
+	ON_ERROR("Brep vertex has illegal m_vertex_index.");
+	rc = false;
+	vmap[vi] = vertex.m_vertex_index;
       }
     }
 
-    if ( mi == 0 )
+    if ( mi == 0 ) 
     {
       m_V.Destroy();
     }
-    else if ( mi < vcount )
+    else if ( mi < vcount ) 
     {
       // remap vertex indices
-      for ( vi = vcount-1; vi >= 0; vi-- )
+      for ( vi = vcount-1; vi >= 0; vi-- ) 
       {
-        if ( m_V[vi].m_vertex_index == -1 )
-        {
-          m_V.Remove(vi);
-        }
-        else {
-          m_V[vi].m_vertex_index = vmap[vi];
-        }
+	if ( m_V[vi].m_vertex_index == -1 )
+	{
+	  m_V.Remove(vi);
+	}
+	else {
+	  m_V[vi].m_vertex_index = vmap[vi];
+	}
       }
 
       // remap edge indices
-      for ( ei = 0; ei < ecount; ei++ )
+      for ( ei = 0; ei < ecount; ei++ ) 
       {
-        ON_BrepEdge& edge = m_E[ei];
-        for ( j = 0; j < 2; j++ )
-        {
-          vi = edge.m_vi[j];
-          if ( vi < -1 || vi >= vcount )
-          {
-            ON_ERROR("Brep edge.m_vi[] has illegal index.");
-            rc = false;
-          }
-          else {
-            edge.m_vi[j] = vmap[vi];
-          }
-        }
+	ON_BrepEdge& edge = m_E[ei];
+	for ( j = 0; j < 2; j++ ) 
+	{
+	  vi = edge.m_vi[j];
+	  if ( vi < -1 || vi >= vcount ) 
+	  {
+	    ON_ERROR("Brep edge.m_vi[] has illegal index.");
+	    rc = false;
+	  }
+	  else {
+	    edge.m_vi[j] = vmap[vi];
+	  }
+	}
       }
 
       // remap trim indices
       for ( ti = 0; ti < tcount; ti++ )
       {
-        ON_BrepTrim& trim = m_T[ti];
-        for ( j = 0; j < 2; j++ )
-        {
-          vi = trim.m_vi[j];
-          if ( vi < -1 || vi >= vcount )
-          {
-            ON_ERROR("Brep trim.m_vi[] has illegal index.");
-            rc = false;
-          }
-          else {
-            trim.m_vi[j] = vmap[vi];
-          }
-        }
+	ON_BrepTrim& trim = m_T[ti];
+	for ( j = 0; j < 2; j++ ) 
+	{
+	  vi = trim.m_vi[j];
+	  if ( vi < -1 || vi >= vcount ) 
+	  {
+	    ON_ERROR("Brep trim.m_vi[] has illegal index.");
+	    rc = false;
+	  }
+	  else {
+	    trim.m_vi[j] = vmap[vi];
+	  }
+	}
       }
 
     }
@@ -8769,13 +8831,13 @@ bool ON_Brep::Compact()
     {
       const ON_BrepTrim& trim = m_T[i];
       if ( trim.m_trim_index != i || trim.m_c2i < 0 || trim.m_c2i >= count )
-        bSyncUp = false;
+	bSyncUp = false;
       else
       {
-        if (used[trim.m_c2i])
-          bSyncUp = false;
-        else
-          used[trim.m_c2i] = true;
+	if (used[trim.m_c2i])
+	  bSyncUp = false;
+	else
+	  used[trim.m_c2i] = true;
       }
     }
     if ( bSyncUp )
@@ -8783,13 +8845,13 @@ bool ON_Brep::Compact()
       ON_SimpleArray< ON_Curve* > ptr(count);
       for( i = 0; i < count; i++ )
       {
-        ON_BrepTrim& trim = m_T[i];
-        ptr[i] = m_C2[trim.m_c2i];
-        trim.m_c2i = i;
+	ON_BrepTrim& trim = m_T[i];
+	ptr[i] = m_C2[trim.m_c2i];
+	trim.m_c2i = i;
       }
       for( i = 0; i < count; i++ )
       {
-        m_C2[i] = ptr[i];
+	m_C2[i] = ptr[i];
       }
     }
   }
@@ -8805,13 +8867,13 @@ bool ON_Brep::Compact()
     {
       const ON_BrepEdge& edge = m_E[i];
       if ( edge.m_edge_index != i || edge.m_c3i < 0 || edge.m_c3i >= count )
-        bSyncUp = false;
+	bSyncUp = false;
       else
       {
-        if (used[edge.m_c3i])
-          bSyncUp = false;
-        else
-          used[edge.m_c3i] = true;
+	if (used[edge.m_c3i])
+	  bSyncUp = false;
+	else
+	  used[edge.m_c3i] = true;
       }
     }
     if ( bSyncUp )
@@ -8819,13 +8881,13 @@ bool ON_Brep::Compact()
       ON_SimpleArray< ON_Curve* > ptr(count);
       for( i = 0; i < count; i++ )
       {
-        ON_BrepEdge& edge = m_E[i];
-        ptr[i] = m_C3[edge.m_c3i];
-        edge.m_c3i = i;
+	ON_BrepEdge& edge = m_E[i];
+	ptr[i] = m_C3[edge.m_c3i];
+	edge.m_c3i = i;
       }
       for( i = 0; i < count; i++ )
       {
-        m_C3[i] = ptr[i];
+	m_C3[i] = ptr[i];
       }
     }
   }
@@ -8841,13 +8903,13 @@ bool ON_Brep::Compact()
     {
       const ON_BrepFace& face = m_F[i];
       if ( face.m_face_index != i || face.m_si < 0 || face.m_si >= count )
-        bSyncUp = false;
+	bSyncUp = false;
       else
       {
-        if (used[face.m_si])
-          bSyncUp = false;
-        else
-          used[face.m_si] = true;
+	if (used[face.m_si])
+	  bSyncUp = false;
+	else
+	  used[face.m_si] = true;
       }
     }
     if ( bSyncUp )
@@ -8855,13 +8917,13 @@ bool ON_Brep::Compact()
       ON_SimpleArray< ON_Surface* > ptr(count);
       for( i = 0; i < count; i++ )
       {
-        ON_BrepFace& face = m_F[i];
-        ptr[i] = m_S[face.m_si];
-        face.m_si = i;
+	ON_BrepFace& face = m_F[i];
+	ptr[i] = m_S[face.m_si];
+	face.m_si = i;
       }
       for( i = 0; i < count; i++ )
       {
-        m_S[i] = ptr[i];
+	m_S[i] = ptr[i];
       }
     }
   }
@@ -8872,7 +8934,7 @@ bool ON_Brep::Compact()
 
 ON_Brep& ON_Brep::operator=(const ON_Brep& src)
 {
-  if ( this != &src )
+  if ( this != &src ) 
   {
     Destroy();
     ON_Geometry::operator=(src);
@@ -8894,35 +8956,35 @@ ON_Brep& ON_Brep::operator=(const ON_Brep& src)
     src.m_S.Duplicate( m_S );
 
     int i, count = m_V.Count();
-    for ( i = 0; i < count; i++ )
+    for ( i = 0; i < count; i++ ) 
     {
       m_V[i] = src.m_V[i];
     }
 
     count = m_E.Count();
-    for ( i = 0; i < count; i++ )
+    for ( i = 0; i < count; i++ ) 
     {
       m_E[i] = src.m_E[i];
       ON_BrepEdge& e = m_E[i];
       e.m_brep = this;
 
       // update curve proxy info to point at 3d curve in this brep
-      e.SetProxyCurve( ( e.m_c3i >= 0 ) ? m_C3[e.m_c3i] : 0,
-                       src.m_E[i].ProxyCurveDomain()
-                       );
+      e.SetProxyCurve( ( e.m_c3i >= 0 ) ? m_C3[e.m_c3i] : 0, 
+		       src.m_E[i].ProxyCurveDomain()
+		       );
       if ( src.m_E[i].ProxyCurveIsReversed() )
-        e.ON_CurveProxy::Reverse();
+	e.ON_CurveProxy::Reverse();
       e.SetDomain( src.m_E[i].Domain() );
     }
 
     count = m_L.Count();
-    for ( i = 0; i < count; i++ )
+    for ( i = 0; i < count; i++ ) 
     {
       m_L[i].m_brep = this;
     }
 
     count = m_F.Count();
-    for ( i = 0; i < count; i++ )
+    for ( i = 0; i < count; i++ ) 
     {
       m_F[i] = src.m_F[i];
       ON_BrepFace& f = m_F[i];
@@ -8933,23 +8995,23 @@ ON_Brep& ON_Brep::operator=(const ON_Brep& src)
     }
 
     count = m_T.Count();
-    for ( i = 0; i < count; i++ )
+    for ( i = 0; i < count; i++ ) 
     {
       m_T[i] = src.m_T[i];
       ON_BrepTrim& trim = m_T[i];
       trim.m_brep = this;
 
       // update curve proxy info to point at 2d curve in this brep
-      trim.SetProxyCurve( ( trim.m_c2i >= 0 ) ? m_C2[trim.m_c2i] : 0,
-                          src.m_T[i].ProxyCurveDomain()
-                         );
+      trim.SetProxyCurve( ( trim.m_c2i >= 0 ) ? m_C2[trim.m_c2i] : 0, 
+			  src.m_T[i].ProxyCurveDomain()
+			 );
       if ( src.m_T[i].ProxyCurveIsReversed() )
-        trim.ON_CurveProxy::Reverse();
+	trim.ON_CurveProxy::Reverse();
       trim.SetDomain( src.m_T[i].Domain() );
     }
 
     count = m_L.Count();
-    for ( i = 0; i < count; i++ )
+    for ( i = 0; i < count; i++ ) 
     {
       m_L[i] = src.m_L[i];
     }
@@ -8998,7 +9060,7 @@ void ON_Brep::Destroy()
 }
 
 void ON_Brep::EmergencyDestroy()
-{
+{ 
   // call if memory pool used by b-rep members becomes invalid
   // but ON_Brep class memory is in a valid pool
   m_V.EmergencyDestroy();
@@ -9031,54 +9093,54 @@ bool ON_Brep::CombineCoincidentVertices(ON_BrepVertex& vertex0, ON_BrepVertex& v
     for ( vei = 0; vei < vecnt; vei++ ) {
       ei = vertex1.m_ei[vei];
       if ( ei >= 0 ) {
-        // update edge vertex indices
-        ON_BrepEdge& edge = m_E[ei];
-        if ( edge.m_vi[0] == vertex1.m_vertex_index )
-          edge.m_vi[0] = vertex0.m_vertex_index;
-        if ( edge.m_vi[1] == vertex1.m_vertex_index )
-          edge.m_vi[1] = vertex0.m_vertex_index;
+	// update edge vertex indices
+	ON_BrepEdge& edge = m_E[ei];
+	if ( edge.m_vi[0] == vertex1.m_vertex_index )
+	  edge.m_vi[0] = vertex0.m_vertex_index;
+	if ( edge.m_vi[1] == vertex1.m_vertex_index )
+	  edge.m_vi[1] = vertex0.m_vertex_index;
 
-        // update trim vertex indices
-        etcnt = edge.m_ti.Count();
-        for (eti = 0; eti < etcnt; eti++ ) {
-          ti = edge.m_ti[eti];
-          if (ti >= 0 ) {
-            ON_BrepTrim& trim = m_T[ti];
-            if ( trim.m_vi[0] == vertex1.m_vertex_index ) {
-              trim.m_vi[0] = vertex0.m_vertex_index;
-              // check for previous singular trims using vertex0
-              for (prev_ti = PrevTrim(ti), runaway=0;prev_ti >= 0 && prev_ti != ti && runaway < 1024;prev_ti=PrevTrim(prev_ti),runaway++) {
-                ON_BrepTrim& prevtrim = m_T[prev_ti];
-                if ( prevtrim.m_ei >= 0 )
-                  break;
-                if ( prevtrim.m_vi[0] == vertex1.m_vertex_index )
-                  prevtrim.m_vi[0] = vertex0.m_vertex_index;
-                if ( prevtrim.m_vi[1] == vertex1.m_vertex_index )
-                  prevtrim.m_vi[1] = vertex0.m_vertex_index;
-              }
-            }
-            if ( trim.m_vi[1] == vertex1.m_vertex_index ) {
-              trim.m_vi[1] = vertex0.m_vertex_index;
-               // check for previous singular trims using vertex0
-              for (next_ti = NextTrim(ti), runaway=0;next_ti >= 0 && next_ti != ti && runaway < 1024;next_ti=NextTrim(next_ti),runaway++) {
-                ON_BrepTrim& nexttrim = m_T[next_ti];
-                if ( nexttrim.m_ei >= 0 )
-                  break;
-                if ( nexttrim.m_vi[0] == vertex1.m_vertex_index )
-                  nexttrim.m_vi[0] = vertex0.m_vertex_index;
-                if ( nexttrim.m_vi[1] == vertex1.m_vertex_index )
-                  nexttrim.m_vi[1] = vertex0.m_vertex_index;
-              }
-            }
-          }
-        }
-        vertex0.m_ei.Append(ei);
+	// update trim vertex indices
+	etcnt = edge.m_ti.Count();
+	for (eti = 0; eti < etcnt; eti++ ) {
+	  ti = edge.m_ti[eti];
+	  if (ti >= 0 ) {
+	    ON_BrepTrim& trim = m_T[ti];
+	    if ( trim.m_vi[0] == vertex1.m_vertex_index ) {
+	      trim.m_vi[0] = vertex0.m_vertex_index;
+	      // check for previous singular trims using vertex0
+	      for (prev_ti = PrevTrim(ti), runaway=0;prev_ti >= 0 && prev_ti != ti && runaway < 1024;prev_ti=PrevTrim(prev_ti),runaway++) {
+		ON_BrepTrim& prevtrim = m_T[prev_ti];
+		if ( prevtrim.m_ei >= 0 )
+		  break;
+		if ( prevtrim.m_vi[0] == vertex1.m_vertex_index )
+		  prevtrim.m_vi[0] = vertex0.m_vertex_index;
+		if ( prevtrim.m_vi[1] == vertex1.m_vertex_index )
+		  prevtrim.m_vi[1] = vertex0.m_vertex_index;
+	      }
+	    }
+	    if ( trim.m_vi[1] == vertex1.m_vertex_index ) {
+	      trim.m_vi[1] = vertex0.m_vertex_index;
+	       // check for previous singular trims using vertex0
+	      for (next_ti = NextTrim(ti), runaway=0;next_ti >= 0 && next_ti != ti && runaway < 1024;next_ti=NextTrim(next_ti),runaway++) {
+		ON_BrepTrim& nexttrim = m_T[next_ti];
+		if ( nexttrim.m_ei >= 0 )
+		  break;
+		if ( nexttrim.m_vi[0] == vertex1.m_vertex_index )
+		  nexttrim.m_vi[0] = vertex0.m_vertex_index;
+		if ( nexttrim.m_vi[1] == vertex1.m_vertex_index )
+		  nexttrim.m_vi[1] = vertex0.m_vertex_index;
+	      }
+	    }
+	  }
+	}
+	vertex0.m_ei.Append(ei);
       }
     }
   }
 
   // update vertex tolerances
-  if ( vertex0.m_tolerance != ON_UNSET_VALUE)
+  if ( vertex0.m_tolerance != ON_UNSET_VALUE) 
     SetVertexTolerance(vertex0);
 
   vertex1.m_vertex_index = -1;
@@ -9089,9 +9151,9 @@ bool ON_Brep::CombineCoincidentVertices(ON_BrepVertex& vertex0, ON_BrepVertex& v
 }
 
 
-ON_BrepEdge* ON_Brep::CombineContiguousEdges(
-  int ei0,
-  int ei1,
+ON_BrepEdge* ON_Brep::CombineContiguousEdges( 
+  int ei0, 
+  int ei1, 
   double angle_tolerance_radians
   )
 {
@@ -9122,7 +9184,7 @@ ON_BrepEdge* ON_Brep::CombineContiguousEdges(
 	// GBA 1/6/03 Fixed TRR#8951.
 	// Check that the vertex to be eliminated has exactly 2 incident edges.
   int end0 = 1, end1 = 0;
-	bool MatchFound = false;
+	bool MatchFound = false;			
 	for(end0=1; !MatchFound && end0>=0; /* empty */){
 		int vi = edge0->m_vi[end0];
 		const ON_BrepVertex* v =  Vertex(vi);
@@ -9130,8 +9192,8 @@ ON_BrepEdge* ON_Brep::CombineContiguousEdges(
 			for(end1=0; !MatchFound && end1<2; /*empty*/){
 				MatchFound = (vi == edge1->m_vi[end1]);
 				if(!MatchFound)
-					end1++;
-			}
+					end1++; 
+			}	
 		}
 		if(!MatchFound)
 			end0--;
@@ -9257,9 +9319,9 @@ ON_BrepEdge* ON_Brep::CombineContiguousEdges(
     {
       if ( !ec1->Reverse() )
       {
-        delete ec0;
-        delete ec1;
-        return 0;
+	delete ec0;
+	delete ec1;
+	return 0;
       }
     }
     ec = new ON_PolyCurve();
@@ -9299,9 +9361,9 @@ ON_BrepEdge* ON_Brep::CombineContiguousEdges(
     {
       if ( !c0->Append(*c1) )
       {
-        delete c0;
-        delete c1;
-        break;
+	delete c0;
+	delete c1;
+	break;
       }
       delete c1;
       c1 = 0;
@@ -9311,9 +9373,9 @@ ON_BrepEdge* ON_Brep::CombineContiguousEdges(
     {
       if ( !c1->Append(*c0) )
       {
-        delete c0;
-        delete c1;
-        break;
+	delete c0;
+	delete c1;
+	break;
       }
       delete c0;
       c0 = c1;
@@ -9345,9 +9407,9 @@ ON_BrepEdge* ON_Brep::CombineContiguousEdges(
 		edge.m_tolerance= ON_UNSET_VALUE;
 	else if ( edge0->m_tolerance> edge1->m_tolerance)
 		edge.m_tolerance= edge0->m_tolerance;
-	else
+	else 	
 		edge.m_tolerance= edge1->m_tolerance;
-
+		
 
   // dynamic m_T[] is grown to full size here.
   // Trim refs are good after NewTrim()
@@ -9378,16 +9440,16 @@ ON_BrepEdge* ON_Brep::CombineContiguousEdges(
 		int ri = loop_lti1[eti];			// removed index
     int li = loop.m_loop_index;
 		for(int ii=0; ii<trim_count; ii++){
-      if(loop_lti0[ii]>ri && m_T[trim0_index[ii]].m_li == li)
-        loop_lti0[ii]--;
-			if(loop_lti1[ii]>ri && m_T[trim1_index[ii]].m_li == li)
-        loop_lti1[ii]--;
+      if(loop_lti0[ii]>ri && m_T[trim0_index[ii]].m_li == li) 
+	loop_lti0[ii]--;
+			if(loop_lti1[ii]>ri && m_T[trim1_index[ii]].m_li == li) 
+	loop_lti1[ii]--;
 		}
-
-
+		
+		    
 		trim.m_type = trim0.m_type;
 		trim.m_iso = ON_Surface::not_iso;
-		if( trim0.m_iso==trim1.m_iso)
+		if( trim0.m_iso==trim1.m_iso) 
 			trim.m_iso = trim0.m_iso;
     trim0.m_li = -1;
     trim1.m_li = -1;
@@ -9401,32 +9463,32 @@ ON_BrepEdge* ON_Brep::CombineContiguousEdges(
 }
 
 bool ON_Brep::GetTrimParameter(
-        int,     // trim_index          - formal parameter intentionally ignored in this virtual function
-        double,  // edge_t              - formal parameter intentionally ignored in this virtual function
-        double*, // trim_t              - formal parameter intentionally ignored in this virtual function
-        bool     // bOkToBuildTrimPline - formal parameter intentionally ignored in this virtual function
-        ) const
+	int,     // trim_index          - formal parameter intentionally ignored in this virtual function
+	double,  // edge_t              - formal parameter intentionally ignored in this virtual function
+	double*, // trim_t              - formal parameter intentionally ignored in this virtual function
+	bool     // bOkToBuildTrimPline - formal parameter intentionally ignored in this virtual function
+	) const
 {
   // Rhino overrides this virtual function and makes it work
   return false;
 }
 
 bool ON_Brep::GetEdgeParameter(
-        int,    // trim_index - formal parameter intentionally ignored in this virtual function
-        double, // trim_t     - formal parameter intentionally ignored in this virtual function
-        double* // edge_t     - formal parameter intentionally ignored in this virtual function
-        ) const
+	int,    // trim_index - formal parameter intentionally ignored in this virtual function
+	double, // trim_t     - formal parameter intentionally ignored in this virtual function
+	double* // edge_t     - formal parameter intentionally ignored in this virtual function
+	) const
 {
   // Rhino overrides this virtual function and makes it work
   return false;
 }
 
-bool ON_Brep::SplitEdge(int eid,
-                        double t3d,
-                        const ON_SimpleArray<double>& t2d,
-                        int vid,
-                        bool bSetTrimBoxesAndFlags
-                        )
+bool ON_Brep::SplitEdge(int eid, 
+			double t3d, 
+			const ON_SimpleArray<double>& t2d,
+			int vid,
+			bool bSetTrimBoxesAndFlags
+			)
 {
   if ( eid > 0 )
   {
@@ -9519,8 +9581,8 @@ bool ON_Brep::SplitEdge(int eid,
     int j;
     for (j=0; j<Loop.m_ti.Count(); j++){
       if (Loop.m_ti[j] == T.m_trim_index){
-        tid = j;
-        break;
+	tid = j;
+	break;
       }
     }
 
@@ -9537,7 +9599,7 @@ bool ON_Brep::SplitEdge(int eid,
       //insert NewT in Loop after T
       Loop.m_ti.Insert(tid+1, NewT.m_trim_index);
     }
-    else
+    else 
     {
       //NewT.m_t.m_t[0] = T.m_t[0];
       //T.m_t.m_t[0] = NewT.m_t.m_t[1] = t2d[i];
@@ -9569,17 +9631,17 @@ bool ON_Brep::SplitEdge(int eid,
 bool ON_Brep::CombineCoincidentEdges(ON_BrepEdge& edge0, ON_BrepEdge& edge1)
 {
   bool rc = false;
-  if ( edge0.m_edge_index == edge1.m_edge_index )
+  if ( edge0.m_edge_index == edge1.m_edge_index ) 
   {
     ON_ERROR("ON_Brep::CombineCoincidentEdges - edge0 = edge1.");
     return rc;
   }
   int ti, eti, etcnt;
-  if (    edge0.m_edge_index >= 0
-       && edge1.m_edge_index >= 0
+  if (    edge0.m_edge_index >= 0 
+       && edge1.m_edge_index >= 0 
        && edge0.m_edge_index != edge1.m_edge_index
-       && edge0.m_vi[0] == edge1.m_vi[0]
-       && edge0.m_vi[1] == edge1.m_vi[1] )
+       && edge0.m_vi[0] == edge1.m_vi[0] 
+       && edge0.m_vi[1] == edge1.m_vi[1] ) 
   {
     rc = true;
     etcnt = edge1.m_ti.Count();
@@ -9587,15 +9649,15 @@ bool ON_Brep::CombineCoincidentEdges(ON_BrepEdge& edge0, ON_BrepEdge& edge1)
     for ( eti = 0; eti < etcnt; eti++ ) {
       ti = edge1.m_ti[eti];
       if ( ti >= 0 && ti < tcount ) {
-        ON_BrepTrim& trim = m_T[ti];
-        trim.m_ei = edge0.m_edge_index;
-        edge0.m_ti.Append(ti);
-        // TODO - tolerances ?
+	ON_BrepTrim& trim = m_T[ti];
+	trim.m_ei = edge0.m_edge_index;
+	edge0.m_ti.Append(ti);
+	// TODO - tolerances ?
 
-        //set edge tolerance
-        if (edge0.m_tolerance != ON_UNSET_VALUE && edge1.m_tolerance != ON_UNSET_VALUE)
-          SetEdgeTolerance(edge0, false);
-        else edge0.m_tolerance = ON_UNSET_VALUE;
+	//set edge tolerance
+	if (edge0.m_tolerance != ON_UNSET_VALUE && edge1.m_tolerance != ON_UNSET_VALUE)
+	  SetEdgeTolerance(edge0, false); 
+	else edge0.m_tolerance = ON_UNSET_VALUE;
       }
     }
     edge1.m_ti.Destroy();
@@ -9605,11 +9667,11 @@ bool ON_Brep::CombineCoincidentEdges(ON_BrepEdge& edge0, ON_BrepEdge& edge1)
     if ( etcnt >= 2 ) for ( eti = 0; eti < etcnt; eti++ )
     {
       ti = edge0.m_ti[eti];
-      if ( ti >= 0 && ti < tcount )
+      if ( ti >= 0 && ti < tcount ) 
       {
-        ON_BrepTrim& trim = m_T[ti];
-        if ( trim.m_type == ON_BrepTrim::boundary )
-          trim.m_type = ON_BrepTrim::mated;
+	ON_BrepTrim& trim = m_T[ti];
+	if ( trim.m_type == ON_BrepTrim::boundary )
+	  trim.m_type = ON_BrepTrim::mated;
       }
     }
   }
@@ -9617,12 +9679,12 @@ bool ON_Brep::CombineCoincidentEdges(ON_BrepEdge& edge0, ON_BrepEdge& edge1)
 }
 
 
-bool ON_Brep::JoinEdges(
-          ON_BrepEdge& edge,
-          ON_BrepEdge& other_edge,
-          double join_tolerance,
-          BOOL bCheckFaceOrientaion
-          )
+bool ON_Brep::JoinEdges( 
+	  ON_BrepEdge& edge, 
+	  ON_BrepEdge& other_edge,
+	  double join_tolerance,
+	  BOOL bCheckFaceOrientaion
+	  )
 {
   double tol = ( join_tolerance == 0.0 ) ? ON_ZERO_TOLERANCE : join_tolerance;
 
@@ -9651,18 +9713,18 @@ bool ON_Brep::JoinEdges(
     {
       vi = e.m_vi[j];
       if ( vi < 0 || vi >= m_V.Count() )
-        return false;
+	return false;
     }
     for ( j = 0; j < e.m_ti.Count(); j++ )
     {
       ti = e.m_ti[j];
       if ( ti < 0 || ei >= m_T.Count() )
-        return false;
+	return false;
       const ON_BrepTrim& trim = m_T[ti];
       if ( trim.m_trim_index != ti )
-        return false;
+	return false;
       if ( trim.m_ei != e.m_edge_index )
-        return false;
+	return false;
     }
   }
 
@@ -9705,7 +9767,7 @@ bool ON_Brep::JoinEdges(
     else if ( ot1 > ot2 )
       bOppositeDir = true;
     else
-      return false;
+      return false;      
   }
   else
   {
@@ -9737,8 +9799,8 @@ bool ON_Brep::JoinEdges(
     other_edge.Reverse();
 
   if ( bCheckFaceOrientaion
-       && edge.m_ti.Count() == 1
-       && other_edge.m_ti.Count() == 1
+       && edge.m_ti.Count() == 1 
+       && other_edge.m_ti.Count() == 1 
        )
   {
     const ON_BrepTrim& trim = m_T[edge.m_ti[0]];
@@ -9749,28 +9811,28 @@ bool ON_Brep::JoinEdges(
     {
       bool same_trim_rev = (trim.m_bRev3d == other_trim.m_bRev3d) ? true : false;
       bool same_face_rev = (m_F[fi].m_bRev == m_F[other_fi].m_bRev) ? true : false;
-      if (same_trim_rev == same_face_rev)
+      if (same_trim_rev == same_face_rev) 
       {
-        // 29 May 2003 Chuck and Dale L - RR 10297
-        //     Changed
-        // FlipFace(m_F[other_fi])
-        //   to the following component flipper.
-        Clear_user_i();
-        LabelConnectedComponent(other_fi,1);
-        if ( 0 == m_F[fi].m_face_user.i && 1 == m_F[other_fi].m_face_user.i )
-        {
-          int j;
-          for ( j = m_F.Count()-1; j >= 0; j-- )
-          {
-            if( 1 == m_F[j].m_face_user.i )
-              FlipFace(m_F[j]);
-          }
-        }
-        Clear_user_i();
+	// 29 May 2003 Chuck and Dale L - RR 10297
+	//     Changed
+	// FlipFace(m_F[other_fi])
+	//   to the following component flipper.
+	Clear_user_i();
+	LabelConnectedComponent(other_fi,1);
+	if ( 0 == m_F[fi].m_face_user.i && 1 == m_F[other_fi].m_face_user.i )
+	{
+	  int j;
+	  for ( j = m_F.Count()-1; j >= 0; j-- )
+	  {
+	    if( 1 == m_F[j].m_face_user.i )
+	      FlipFace(m_F[j]);
+	  }
+	}
+	Clear_user_i();
       }
     }
   }
-
+  
   // since we may have flipped other_edge, get these values again
   int other_vi0 = other_edge.m_vi[0];
   int other_vi1 = other_edge.m_vi[1];
@@ -9808,12 +9870,12 @@ bool ON_Brep::Create( ON_Surface*& pS )
 BOOL ON_Brep::FaceTool( ON_Surface* pS )
 {
   // private face adding tool
-  if (!pS)
+  if (!pS) 
     return false;
   double u[2], v[2];
-  if (!pS->GetDomain(0, &u[0], &u[1]))
+  if (!pS->GetDomain(0, &u[0], &u[1])) 
       return false;
-  if (!pS->GetDomain(1, &v[0], &v[1]))
+  if (!pS->GetDomain(1, &v[0], &v[1])) 
       return false;
 
   ON_3dPoint srf_P[2][2];
@@ -9850,21 +9912,21 @@ BOOL ON_Brep::FaceTool( ON_Surface* pS )
   bIsSingular[3] = pS->IsSingular(3);
 
 
-  if (bIsSingular[0] || bIsClosed[0])
+  if (bIsSingular[0] || bIsClosed[0]) 
     se_vi = sw_vi;
-  else
+  else 
     se_vi = NewVertex( srf_P[1][0], 0.0 ).m_vertex_index;
 
-  if (bIsSingular[1] || bIsClosed[1])
+  if (bIsSingular[1] || bIsClosed[1]) 
     ne_vi = se_vi;
-  else
+  else 
     ne_vi = NewVertex( srf_P[1][1], 0.0 ).m_vertex_index;
 
-  if (bIsSingular[2] || bIsClosed[0])
+  if (bIsSingular[2] || bIsClosed[0]) 
     nw_vi = ne_vi;
-  else if (bIsSingular[3] || bIsClosed[1])
+  else if (bIsSingular[3] || bIsClosed[1]) 
     nw_vi = sw_vi;
-  else
+  else 
     nw_vi = NewVertex( srf_P[0][1], 0.0 ).m_vertex_index;
 
   ON_BrepVertex& sw_vertex = m_V[sw_vi];
@@ -9904,10 +9966,10 @@ BOOL ON_Brep::FaceTool( ON_Surface* pS )
       eid[0] = edge.m_edge_index;
       ON_BrepTrim& trim = NewTrim(edge, false, loop, c2i);
       trim.m_iso = ON_Surface::S_iso;
-      if (bIsClosed[1])
-        trim.m_type = ON_BrepTrim::seam;
-      else
-        trim.m_type = ON_BrepTrim::boundary;
+      if (bIsClosed[1]) 
+	trim.m_type = ON_BrepTrim::seam;
+      else 
+	trim.m_type = ON_BrepTrim::boundary;
     }
   }
 
@@ -9923,10 +9985,10 @@ BOOL ON_Brep::FaceTool( ON_Surface* pS )
       eid[1] = edge.m_edge_index;
       ON_BrepTrim& trim = NewTrim(edge, false, loop, c2i);
       trim.m_iso = ON_Surface::E_iso;
-      if (bIsClosed[0])
-        trim.m_type = ON_BrepTrim::seam;
-      else
-        trim.m_type = ON_BrepTrim::boundary;
+      if (bIsClosed[0]) 
+	trim.m_type = ON_BrepTrim::seam;
+      else 
+	trim.m_type = ON_BrepTrim::boundary;
     }
   }
 
@@ -9938,24 +10000,24 @@ BOOL ON_Brep::FaceTool( ON_Surface* pS )
     }
     else{
       if (bIsClosed[1]) {
-        id3[2] = id3[0];
-        eid[2] = eid[0];
-        rev = true;
+	id3[2] = id3[0];
+	eid[2] = eid[0];
+	rev = true;
       }
       else {
-        ON_Curve* pC3 = pS->IsoCurve(0, v[1]);
-        if (pC3) pC3->Reverse();
-        id3[2] = AddEdgeCurve(pC3);
-        ON_BrepEdge& edge = NewEdge(ne_vertex, nw_vertex, id3[2]);
-        edge.m_tolerance = 0.0;
-        eid[2] = edge.m_edge_index;
+	ON_Curve* pC3 = pS->IsoCurve(0, v[1]);
+	if (pC3) pC3->Reverse();
+	id3[2] = AddEdgeCurve(pC3);
+	ON_BrepEdge& edge = NewEdge(ne_vertex, nw_vertex, id3[2]);
+	edge.m_tolerance = 0.0;
+	eid[2] = edge.m_edge_index;
       }
       ON_BrepTrim& trim = NewTrim(m_E[eid[2]], rev, loop, c2i);
       trim.m_iso = ON_Surface::N_iso;
-      if (bIsClosed[1])
-        trim.m_type = ON_BrepTrim::seam;
-      else
-        trim.m_type = ON_BrepTrim::boundary;
+      if (bIsClosed[1]) 
+	trim.m_type = ON_BrepTrim::seam;
+      else 
+	trim.m_type = ON_BrepTrim::boundary;
     }
   }
 
@@ -9968,23 +10030,23 @@ BOOL ON_Brep::FaceTool( ON_Surface* pS )
     else {
       if (bIsClosed[0]){
       id3[3] = id3[1];
-        eid[3] = eid[1];
-        rev = true;
+	eid[3] = eid[1];
+	rev = true;
       }
       else {
-        ON_Curve* pC3 = pS->IsoCurve(1, u[0]);
-        if (pC3) pC3->Reverse();
-        id3[3] = AddEdgeCurve(pC3);
-        ON_BrepEdge& edge = NewEdge(nw_vertex, sw_vertex, id3[3]);
-        edge.m_tolerance = 0.0;
-        eid[3] = edge.m_edge_index;
+	ON_Curve* pC3 = pS->IsoCurve(1, u[0]);
+	if (pC3) pC3->Reverse();
+	id3[3] = AddEdgeCurve(pC3);
+	ON_BrepEdge& edge = NewEdge(nw_vertex, sw_vertex, id3[3]);
+	edge.m_tolerance = 0.0;
+	eid[3] = edge.m_edge_index;
       }
       ON_BrepTrim& trim = NewTrim( m_E[eid[3]], rev, loop, c2i );
       trim.m_iso = ON_Surface::W_iso;
-      if (bIsClosed[0])
-        trim.m_type = ON_BrepTrim::seam;
-      else
-        trim.m_type = ON_BrepTrim::boundary;
+      if (bIsClosed[0]) 
+	trim.m_type = ON_BrepTrim::seam;
+      else 
+	trim.m_type = ON_BrepTrim::boundary;
     }
   }
 
@@ -10050,7 +10112,7 @@ ON_Brep* ON_Brep::BrepForm( ON_Brep* brep ) const
   if ( brep )
   {
     if ( brep != this )
-      *brep = *this;
+      *brep = *this;      
   }
   else
   {
@@ -10063,7 +10125,7 @@ void ON_Brep::Clear_vertex_user_i()
 {
   int vi;
   int vertex_count = m_V.Count();
-  for ( vi = 0; vi < vertex_count; vi++ )
+  for ( vi = 0; vi < vertex_count; vi++ ) 
   {
     memset(&m_V[vi].m_vertex_user,0,sizeof(ON_U));
   }
@@ -10073,7 +10135,7 @@ void ON_Brep::Clear_edge_user_i()
 {
   int ei;
   int edge_count = m_E.Count();
-  for ( ei = 0; ei < edge_count; ei++ )
+  for ( ei = 0; ei < edge_count; ei++ ) 
   {
     memset(&m_E[ei].m_edge_user,0,sizeof(ON_U));
   }
@@ -10083,7 +10145,7 @@ void ON_Brep::Clear_edge_user_i(int i)
 {
   int ei;
   int edge_count = m_E.Count();
-  for ( ei = 0; ei < edge_count; ei++ )
+  for ( ei = 0; ei < edge_count; ei++ ) 
   {
     memset(&m_E[ei].m_edge_user,0,sizeof(ON_U));
     m_E[ei].m_edge_user.i = i;
@@ -10131,14 +10193,14 @@ void ON_Brep::Set_user(ON_U u)
 {
   int i, count;
   m_brep_user=u;
-
+  
   count = m_V.Count();
   ON_BrepVertex* V = m_V.Array();
   for ( i = 0; i < count; i++ )
   {
     V[i].m_vertex_user = u;
   }
-
+  
   count = m_E.Count();
   ON_BrepEdge* E = m_E.Array();
   for ( i = 0; i < count; i++ )
@@ -10146,21 +10208,21 @@ void ON_Brep::Set_user(ON_U u)
     E[i].m_edge_user = u;
   }
 
-
+  
   count = m_T.Count();
   ON_BrepTrim* T = m_T.Array();
   for ( i = 0; i < count; i++ )
   {
     T[i].m_trim_user = u;
   }
-
+  
   count = m_L.Count();
   ON_BrepLoop* L = m_L.Array();
   for ( i = 0; i < count; i++ )
   {
     L[i].m_loop_user = u;
   }
-
+  
   count = m_F.Count();
   ON_BrepFace* F = m_F.Array();
   for ( i = 0; i < count; i++ )
@@ -10171,14 +10233,14 @@ void ON_Brep::Set_user(ON_U u)
 
 
 
-ON_BrepVertex& ON_Brep::NewPointOnFace(
+ON_BrepVertex& ON_Brep::NewPointOnFace( 
   ON_BrepFace& face,
   double s,
   double t
   )
 {
   ON_3dPoint point = face.PointAt(s,t);
-
+  
   ON_BrepVertex& vertex = NewVertex( point );
   ON_BrepLoop& loop = NewLoop( ON_BrepLoop::ptonsrf, face );
   ON_BrepTrim& trim = NewTrim(false,loop,-1);
@@ -10221,15 +10283,29 @@ static void AdjustEdgeEnds(ON_BrepEdge& edge)
   {
     if (edge.m_vi[0] >= 0)
     {
-      const ON_BrepVertex& V = pB->m_V[edge.m_vi[0]];
-      if (V.IsValid())
-        c3->SetStartPoint(V.Point());
+      ON_BrepVertex& V = pB->m_V[edge.m_vi[0]];
+      if (V.IsValid()){
+	c3->SetStartPoint(V.Point());
+	V.m_tolerance = ON_UNSET_VALUE;
+	int i;
+	for (i=0; i<V.m_ei.Count(); i++){
+	  ON_BrepEdge& ve = pB->m_E[V.m_ei[i]];
+	  ve.m_tolerance = ON_UNSET_VALUE;
+	}
+      }
     }
     if (edge.m_vi[1] >= 0)
     {
-      const ON_BrepVertex& V = pB->m_V[edge.m_vi[1]];
-      if (V.IsValid())
-        c3->SetEndPoint(V.Point());
+      ON_BrepVertex& V = pB->m_V[edge.m_vi[1]];
+      if (V.IsValid()){
+	c3->SetEndPoint(V.Point());
+	V.m_tolerance = ON_UNSET_VALUE;
+	int i;
+	for (i=0; i<V.m_ei.Count(); i++){
+	  ON_BrepEdge& ve = pB->m_E[V.m_ei[i]];
+	  ve.m_tolerance = ON_UNSET_VALUE;
+	}
+      }
     }
   }
 
@@ -10253,56 +10329,56 @@ bool ON_Brep::StandardizeEdgeCurve( int edge_index, bool bAdjustEnds )
       ON_Interval edom = edge->Domain();
       bool bNewCurve = false;
       if ( edge->ProxyCurveIsReversed() )
-        bNewCurve = true;
+	bNewCurve = true;
       else if ( c3dom != pdom )
-        bNewCurve = true; // curve proxy is trimmed
+	bNewCurve = true; // curve proxy is trimmed
       else if ( EdgeCurveUseCount( edge->m_c3i,2 ) > 1 )
-        bNewCurve = true; // 2 or more edges use c3
+	bNewCurve = true; // 2 or more edges use c3
       else if ( edom != c3dom )
       {
-        // can fix this problem by changing c3 domain
-        // and proxy settings
-        if ( m_C3[edge->m_c3i]->SetDomain(edom) )
-        {
-          edge->SetProxyCurveDomain(edom);
-          edge->SetDomain(edom);
-          rc = true;
-        }
-        else
-        {
-          bNewCurve = true;
-        }
+	// can fix this problem by changing c3 domain
+	// and proxy settings
+	if ( m_C3[edge->m_c3i]->SetDomain(edom) )
+	{
+	  edge->SetProxyCurveDomain(edom);
+	  edge->SetDomain(edom);
+	  rc = true;
+	}
+	else
+	{
+	  bNewCurve = true;
+	}
       }
       else
-        rc = true;
-
+	rc = true;
+      
       if ( bNewCurve )
       {
-        ON_Curve* newc3 = c3->Duplicate();
-        if ( !newc3 )
-          return false;
-        if ( !newc3->Trim(pdom) )
-        {
-          delete newc3;
-          return false;
-        }
-        if ( edge->ProxyCurveIsReversed() )
-        {
-          if ( !newc3->Reverse() )
-          {
-            delete newc3;
-            return false;
-          }
-        }
-        newc3->SetDomain(edom);
-        if ( newc3->Domain() != edom )
-        {
-          delete newc3;
-          return false;
-        }
-        int c3i = AddEdgeCurve(newc3);
-        edge->m_c3i = c3i;
-        edge->SetProxyCurve(newc3);
+	ON_Curve* newc3 = c3->Duplicate();
+	if ( !newc3 )
+	  return false;
+	if ( !newc3->Trim(pdom) )
+	{
+	  delete newc3;
+	  return false;
+	}
+	if ( edge->ProxyCurveIsReversed() )
+	{
+	  if ( !newc3->Reverse() )
+	  {
+	    delete newc3;
+	    return false;
+	  }
+	}
+	newc3->SetDomain(edom);
+	if ( newc3->Domain() != edom )
+	{
+	  delete newc3;
+	  return false;
+	}
+	int c3i = AddEdgeCurve(newc3);
+	edge->m_c3i = c3i;
+	edge->SetProxyCurve(newc3);
       }
     }
   }
@@ -10315,27 +10391,27 @@ bool ON_Brep::StandardizeEdgeCurve( int edge_index, bool bAdjustEnds )
     {
       if (edge->m_vi[0] >= 0)
       {
-        const ON_BrepVertex& V = m_V[edge->m_vi[0]];
-        if (V.IsValid())
-          c3->SetStartPoint(V.Point());
+	const ON_BrepVertex& V = m_V[edge->m_vi[0]];
+	if (V.IsValid())
+	  c3->SetStartPoint(V.Point());
       }
       if (edge->m_vi[1] >= 0)
       {
-        const ON_BrepVertex& V = m_V[edge->m_vi[1]];
-        if (V.IsValid())
-          c3->SetEndPoint(V.Point());
+	const ON_BrepVertex& V = m_V[edge->m_vi[1]];
+	if (V.IsValid())
+	  c3->SetEndPoint(V.Point());
       }
     }
   }
   */
 
   return rc;
-}
+} 
 
 void ON_Brep::StandardizeEdgeCurves( bool bAdjustEnds)
 {
 
-  //The ends will not adjust properly unless
+  //The ends will not adjust properly unless 
   //all of the edge curves have been standardized first.
   //So call standardize on all edges without adjusting, then do the adjusting
   //chuck - 9/5/2006
@@ -10348,6 +10424,8 @@ void ON_Brep::StandardizeEdgeCurves( bool bAdjustEnds)
   if (bAdjustEnds){
     for ( ei = 0; ei < edge_count; ei++ )
       AdjustEdgeEnds(m_E[ei]);
+    SetVertexTolerances(TRUE);
+    SetEdgeTolerances(TRUE);
   }
 }
 
@@ -10366,57 +10444,57 @@ bool ON_Brep::StandardizeTrimCurve( int trim_index )
       ON_Interval tdom = trim->Domain();
       bool bNewCurve = false;
       if ( trim->ProxyCurveIsReversed() )
-        bNewCurve = true;
+	bNewCurve = true;
       else if ( c2dom != pdom )
-        bNewCurve = true; // curve proxy is trimmed
+	bNewCurve = true; // curve proxy is trimmed
       else if ( TrimCurveUseCount( trim->m_c2i, 2 ) > 1 )
-        bNewCurve = true; // 2 or more edges use c3
+	bNewCurve = true; // 2 or more edges use c3
       else if ( tdom != c2dom )
       {
-        // can fix this problem by changing c3 domain
-        // and proxy settings
-        if ( m_C2[trim->m_c2i]->SetDomain(tdom) )
-        {
-          trim->SetProxyCurveDomain(tdom);
-          trim->SetDomain(tdom);
-          rc = true;
-        }
-        else
-        {
-          bNewCurve = true;
-        }
+	// can fix this problem by changing c3 domain
+	// and proxy settings
+	if ( m_C2[trim->m_c2i]->SetDomain(tdom) )
+	{
+	  trim->SetProxyCurveDomain(tdom);
+	  trim->SetDomain(tdom);
+	  rc = true;
+	}
+	else
+	{
+	  bNewCurve = true;
+	}
       }
       else
-        rc = true;
-
+	rc = true;
+      
       if ( bNewCurve )
       {
-        ON_Curve* newc2 = c2->Duplicate();
-        if ( !newc2 )
-          return false;
-        if ( !newc2->Trim(pdom) )
-        {
-          delete newc2;
-          return false;
-        }
-        if ( trim->ProxyCurveIsReversed() )
-        {
-          if ( !newc2->Reverse() )
-          {
-            delete newc2;
-            return false;
-          }
-        }
-        newc2->SetDomain(tdom);
-        if ( newc2->Domain() != tdom )
-        {
-          delete newc2;
-          return false;
-        }
-        int c2i = AddTrimCurve(newc2);
-        trim->m_c2i = c2i;
-        trim->SetProxyCurve(newc2);
-        rc = true;
+	ON_Curve* newc2 = c2->Duplicate();
+	if ( !newc2 )
+	  return false;
+	if ( !newc2->Trim(pdom) )
+	{
+	  delete newc2;
+	  return false;
+	}
+	if ( trim->ProxyCurveIsReversed() )
+	{
+	  if ( !newc2->Reverse() )
+	  {
+	    delete newc2;
+	    return false;
+	  }
+	}
+	newc2->SetDomain(tdom);
+	if ( newc2->Domain() != tdom )
+	{
+	  delete newc2;
+	  return false;
+	}
+	int c2i = AddTrimCurve(newc2);
+	trim->m_c2i = c2i;
+	trim->SetProxyCurve(newc2);
+	rc = true;
       }
     }
   }
@@ -10444,17 +10522,17 @@ bool ON_Brep::StandardizeFaceSurface( int face_index )
     {
       if ( face->m_bRev )
       {
-        if ( SurfaceUseCount( face->m_si, 2 ) >= 2 )
-        {
-          ON_Surface* newsrf = srf->Duplicate();
-          face->m_si = AddSurface(newsrf);
-          face->SetProxySurface(m_S[face->m_si]);
-          srf = newsrf;
-        }
-        rc = face->Transpose() ? true : false;
+	if ( SurfaceUseCount( face->m_si, 2 ) >= 2 )
+	{
+	  ON_Surface* newsrf = srf->Duplicate();
+	  face->m_si = AddSurface(newsrf);
+	  face->SetProxySurface(m_S[face->m_si]);
+	  srf = newsrf;
+	}
+	rc = face->Transpose() ? true : false;
       }
       else
-        rc = true;
+	rc = true;
     }
   }
   return rc;
@@ -10494,7 +10572,7 @@ bool ON_Brep::ShrinkSurface( ON_BrepFace& face, int DisableMask )
   const int trim_count = m_T.Count();
   ON_BoundingBox outer_pbox;
 
-  bool bAllTrimsAreIsoTrims = true;
+  bool bAllTrimsAreIsoTrims = true; 
   bool bSomeTrimsAreIsoTrims = false;
 
   // 4 April 2003 Dale Lear:
@@ -10518,49 +10596,49 @@ bool ON_Brep::ShrinkSurface( ON_BrepFace& face, int DisableMask )
     {
       // may be more than one outer loop
       if ( outer_loop_li )
-        outer_loop_li = li;
+	outer_loop_li = li;
       outer_pbox.Union( loop.m_pbox );
 
       int loop_trim_count = loop.m_ti.Count();
       for ( lti = 0; lti < loop_trim_count; lti++ )
       {
-        ti = loop.m_ti[lti];
-        if ( ti >= 0 && ti < trim_count )
-        {
-          bool bIsIso = false;
-          switch( m_T[ti].m_iso )
-          {
-          case ON_Surface::x_iso:
-          case ON_Surface::y_iso:
-            bIsIso = true;
-            break;
-          case ON_Surface::W_iso:
-            bIsIso = true;
-            bIsSrfEdge[0] = true;
-            break;
-          case ON_Surface::S_iso:
-            bIsIso = true;
-            bIsSrfEdge[1] = true;
-            break;
-          case ON_Surface::E_iso:
-            bIsIso = true;
-            bIsSrfEdge[2] = true;
-            break;
-          case ON_Surface::N_iso:
-            bIsIso = true;
-            bIsSrfEdge[3] = true;
-            break;
-          default:
-            // it's not an iso curve trim
-            bAllTrimsAreIsoTrims = false;
-          }
-          if (bIsIso){
-            // it's an iso curve trim
-            trim_iso_endbox.Set( m_T[ti].PointAtStart(), true );
-            trim_iso_endbox.Set( m_T[ti].PointAtEnd(), true );
-            bSomeTrimsAreIsoTrims = true;
-          }
-        }
+	ti = loop.m_ti[lti];
+	if ( ti >= 0 && ti < trim_count )
+	{
+	  bool bIsIso = false;
+	  switch( m_T[ti].m_iso )
+	  {
+	  case ON_Surface::x_iso:
+	  case ON_Surface::y_iso:
+	    bIsIso = true;
+	    break;
+	  case ON_Surface::W_iso:
+	    bIsIso = true;
+	    bIsSrfEdge[0] = true;
+	    break;
+	  case ON_Surface::S_iso:
+	    bIsIso = true;
+	    bIsSrfEdge[1] = true;
+	    break;
+	  case ON_Surface::E_iso:
+	    bIsIso = true;
+	    bIsSrfEdge[2] = true;
+	    break;
+	  case ON_Surface::N_iso:
+	    bIsIso = true;
+	    bIsSrfEdge[3] = true;
+	    break;
+	  default:
+	    // it's not an iso curve trim
+	    bAllTrimsAreIsoTrims = false;
+	  }
+	  if (bIsIso){
+	    // it's an iso curve trim
+	    trim_iso_endbox.Set( m_T[ti].PointAtStart(), true );
+	    trim_iso_endbox.Set( m_T[ti].PointAtEnd(), true );
+	    bSomeTrimsAreIsoTrims = true;
+	  }
+	}
       }
 
     }
@@ -10568,7 +10646,7 @@ bool ON_Brep::ShrinkSurface( ON_BrepFace& face, int DisableMask )
 
   if ( !outer_pbox.IsValid() )
     return false;
-
+  
   bool rc = false;
   ON_Interval outer_udom( outer_pbox.m_min.x, outer_pbox.m_max.x );
   ON_Interval outer_vdom( outer_pbox.m_min.y, outer_pbox.m_max.y );
@@ -10619,7 +10697,7 @@ bool ON_Brep::ShrinkSurface( ON_BrepFace& face, int DisableMask )
   }
   */
 
-  // GBA 8 May 2006.  Added DiasbleMask
+  // GBA 8 May 2006.  Added DiasbleMask 
   if( DisableMask & 0x0001)     // West
     outer_udom[0] = srf_udom[0];
   if( DisableMask & 0x0002)     // South
@@ -10633,7 +10711,7 @@ bool ON_Brep::ShrinkSurface( ON_BrepFace& face, int DisableMask )
   // added 4 April 2003 Dale Lear
   if ( outer_udom.IsIncreasing() && outer_vdom.IsIncreasing() )
   {
-    if ( outer_udom.Length() < srf_udom.Length() || outer_vdom.Length() < srf_vdom.Length())
+    if ( outer_udom.Length() < srf_udom.Length() || outer_vdom.Length() < srf_vdom.Length())  
       bShrinkIt = true;
   }
 
@@ -10644,37 +10722,37 @@ bool ON_Brep::ShrinkSurface( ON_BrepFace& face, int DisableMask )
     if ( small_srf->Trim( 0, outer_udom ) )
     {
       if ( small_srf->Trim( 1, outer_vdom) )
-        si = AddSurface(small_srf);
+	si = AddSurface(small_srf);
       if ( si >= 0 )
       {
 				int srf_index = face.m_si;
-        face.m_si = si;
-        face.SetProxySurface( m_S[face.m_si] );
+	face.m_si = si;
+	face.SetProxySurface( m_S[face.m_si] );
 
-        // 5 Dec 2002 Chuck - dont delete original surface if used by more than one face
+	// 5 Dec 2002 Chuck - dont delete original surface if used by more than one face
 				if (srf_use == 1) DeleteSurface(srf_index);
 
-        // 1 Nov 2002 Dale Lear - reset face bbox and destroy brep too big bounding box
-        face.m_bbox = small_srf->BoundingBox();
-        m_bbox.Destroy();
+	// 1 Nov 2002 Dale Lear - reset face bbox and destroy brep too big bounding box
+	face.m_bbox = small_srf->BoundingBox();
+	m_bbox.Destroy();
 
 				// Set trim.m_iso flags
 				for(int li=0; li<face.LoopCount(); li++){
 					ON_BrepLoop& loop = *face.Loop(li);
 					for(int ti=0; ti<loop.TrimCount(); ti++){
 						ON_BrepTrim& trim = *loop.Trim(ti);
-            //Since the slop used in calculating m_iso depends on the srf domain
-            //all isos should be rechecked after shrinking
+	    //Since the slop used in calculating m_iso depends on the srf domain
+	    //all isos should be rechecked after shrinking
 
-            /*
-						if(	trim.m_iso==ON_Surface::x_iso ||
+	    /*
+						if(	trim.m_iso==ON_Surface::x_iso || 
 								trim.m_iso==ON_Surface::y_iso )
-                */
-            if (trim.m_iso != ON_Surface::not_iso)
-							trim.m_iso = face.IsIsoparametric(trim);
+		*/
+	    if (trim.m_iso != ON_Surface::not_iso)
+							trim.m_iso = face.IsIsoparametric(trim);	
 					}
 				}
-        rc = true;
+	rc = true;
       }
     }
     if ( !rc )
@@ -10750,37 +10828,43 @@ int ON_Brep::ComponentIndex( const ON_BrepFace& face ) const
 
 ON_Brep::COMPONENT_TYPE ON_Brep::ComponentIndexType( int component_index )
 {
-  switch( brep_component_mask & component_index ) {
-    case brep_vertex: return brep_vertex;
-    case brep_edge: return brep_edge;
-    case brep_trim: return brep_trim;
-    case brep_loop: return brep_loop;
-    case brep_face: return brep_face;
+  switch( brep_component_mask & component_index )
+  {
+  case brep_vertex: return brep_vertex;
+  case brep_edge: return brep_edge;
+  case brep_trim: return brep_trim;
+  case brep_loop: return brep_loop;
+  case brep_face: return brep_face;
   }
   return brep_component_unset;
 }
 */
 
-const ON_Geometry* ON_Brep::BrepComponent(ON_COMPONENT_INDEX ci) const
+const ON_Geometry* ON_Brep::BrepComponent( 
+  ON_COMPONENT_INDEX ci
+  ) const
 {
   const ON_Geometry* component = 0;
-  switch ( ci.m_type ) {
-    case ON_COMPONENT_INDEX::brep_vertex:
-      component = Vertex(ci.m_index);
-      break;
-    case ON_COMPONENT_INDEX::brep_edge:
-      component = Edge(ci.m_index);
-      break;
-    case ON_COMPONENT_INDEX::brep_face:
-      component = Face(ci.m_index);
-      break;
-    case ON_COMPONENT_INDEX::brep_trim:
-      component = Trim(ci.m_index);
-      break;
-    case ON_COMPONENT_INDEX::brep_loop:
-      component = Loop(ci.m_index);
-      break;
-    default:
+  int citype = ci.m_type; // use int to quiet gcc warnings about not handling
+			  // every value of the ON_COMPONENT_INDEX::TYPE enum
+  switch ( citype )
+  {
+  case ON_COMPONENT_INDEX::brep_vertex:
+    component = Vertex(ci.m_index);
+    break;
+  case ON_COMPONENT_INDEX::brep_edge:
+    component = Edge(ci.m_index);
+    break;
+  case ON_COMPONENT_INDEX::brep_face:
+    component = Face(ci.m_index);
+    break;
+  case ON_COMPONENT_INDEX::brep_trim:
+    component = Trim(ci.m_index);
+    break;
+  case ON_COMPONENT_INDEX::brep_loop:
+    component = Loop(ci.m_index);
+    break;
+  default:
       /* unsupported component type */
       break;
   }
@@ -10788,14 +10872,16 @@ const ON_Geometry* ON_Brep::BrepComponent(ON_COMPONENT_INDEX ci) const
 }
 
 /*
-const ON_Geometry* ON_Brep::BrepComponent(int component_index) const
+const ON_Geometry* ON_Brep::BrepComponent( 
+  int component_index
+  ) const
 {
   const ON_Geometry* component = 0;
   if ( -1 != component_index && 0 != component_index)
   {
     switch( ON_Brep::ComponentIndexType(component_index) )
     {
-    case brep_vertex:
+    case brep_vertex: 
       component = Vertex(component_index);
       break;
     case brep_edge:
@@ -10828,8 +10914,8 @@ ON_BrepVertex* ON_Brep::Vertex( int vertex_index ) const
 ON_BrepVertex* ON_Brep::Vertex( ON_COMPONENT_INDEX vertex_index ) const
 {
   ON_BrepVertex* vertex = 0;
-  if ( ON_COMPONENT_INDEX::brep_vertex == vertex_index.m_type
-       && vertex_index.m_index >= 0
+  if ( ON_COMPONENT_INDEX::brep_vertex == vertex_index.m_type 
+       && vertex_index.m_index >= 0 
        && vertex_index.m_index < m_V.Count() )
   {
     vertex = const_cast<ON_BrepVertex*>(&m_V[vertex_index.m_index]);
@@ -10849,8 +10935,8 @@ ON_BrepEdge* ON_Brep::Edge( int edge_index ) const
 ON_BrepEdge* ON_Brep::Edge( ON_COMPONENT_INDEX edge_index ) const
 {
   ON_BrepEdge* edge = 0;
-  if ( ON_COMPONENT_INDEX::brep_edge == edge_index.m_type
-       && edge_index.m_index >= 0
+  if ( ON_COMPONENT_INDEX::brep_edge == edge_index.m_type 
+       && edge_index.m_index >= 0 
        && edge_index.m_index < m_E.Count() )
   {
     edge = const_cast<ON_BrepEdge*>(&m_E[edge_index.m_index]);
@@ -10869,8 +10955,8 @@ ON_BrepTrim* ON_Brep::Trim( int trim_index ) const
 ON_BrepTrim* ON_Brep::Trim( ON_COMPONENT_INDEX trim_index ) const
 {
   ON_BrepTrim* trim = 0;
-  if ( ON_COMPONENT_INDEX::brep_trim == trim_index.m_type
-       && trim_index.m_index >= 0
+  if ( ON_COMPONENT_INDEX::brep_trim == trim_index.m_type 
+       && trim_index.m_index >= 0 
        && trim_index.m_index < m_T.Count() )
   {
     trim = const_cast<ON_BrepTrim*>(&m_T[trim_index.m_index]);
@@ -10889,8 +10975,8 @@ ON_BrepLoop* ON_Brep::Loop( int loop_index ) const
 ON_BrepLoop* ON_Brep::Loop( ON_COMPONENT_INDEX loop_index ) const
 {
   ON_BrepLoop* loop = 0;
-  if ( ON_COMPONENT_INDEX::brep_loop == loop_index.m_type
-       && loop_index.m_index >= 0
+  if ( ON_COMPONENT_INDEX::brep_loop == loop_index.m_type 
+       && loop_index.m_index >= 0 
        && loop_index.m_index < m_L.Count() )
   {
     loop = const_cast<ON_BrepLoop*>(&m_L[loop_index.m_index]);
@@ -10909,8 +10995,8 @@ ON_BrepFace* ON_Brep::Face( int face_index ) const
 ON_BrepFace* ON_Brep::Face( ON_COMPONENT_INDEX face_index ) const
 {
   ON_BrepFace* face = 0;
-  if ( ON_COMPONENT_INDEX::brep_face == face_index.m_type
-       && face_index.m_index >= 0
+  if ( ON_COMPONENT_INDEX::brep_face == face_index.m_type 
+       && face_index.m_index >= 0 
        && face_index.m_index < m_F.Count() )
   {
     face = const_cast<ON_BrepFace*>(&m_F[face_index.m_index]);
@@ -10949,7 +11035,7 @@ bool ON_BrepTrim::ChangeTrimCurve( int c2i )
   return true;
 }
 
-bool ON_BrepTrim::RemoveFromEdge(
+bool ON_BrepTrim::RemoveFromEdge( 
       bool bRemoveFromStartVertex,
       bool bRemoveFromEndVertex
       )
@@ -10962,14 +11048,14 @@ bool ON_BrepTrim::RemoveFromEdge(
       ON_BrepEdge* edge = m_brep->Edge(m_ei);
       if ( 0 != edge )
       {
-        int eti = 0;
-        while( eti < edge->m_ti.Count() )
-        {
-          if ( edge->m_ti[eti] == m_trim_index )
-            edge->m_ti.Remove(eti);
-          else
-            eti++;
-        }
+	int eti = 0;
+	while( eti < edge->m_ti.Count() )
+	{
+	  if ( edge->m_ti[eti] == m_trim_index )
+	    edge->m_ti.Remove(eti);
+	  else
+	    eti++;
+	}
       }
     }
     m_ei = -1;
@@ -10996,11 +11082,11 @@ bool ON_BrepTrim::AttachToEdge(
       rc = RemoveFromEdge(true,true);
       if (rc)
       {
-        edge->m_ti.Append(m_trim_index);
-        m_ei = edge->m_edge_index;
-        m_bRev3d = bRev3d ? true : false;
-        m_vi[0] = edge->m_vi[bRev3d?1:0];
-        m_vi[1] = edge->m_vi[bRev3d?0:1];
+	edge->m_ti.Append(m_trim_index);
+	m_ei = edge->m_edge_index;
+	m_bRev3d = bRev3d ? true : false;
+	m_vi[0] = edge->m_vi[bRev3d?1:0];
+	m_vi[1] = edge->m_vi[bRev3d?0:1];
       }
     }
   }
@@ -11119,7 +11205,7 @@ int ON_BrepTrim::SurfaceIndexOf() const
     {
       si = m_brep->m_F[fi].m_si;
       if ( si < 0 || si >= m_brep->m_S.Count() )
-        si = -1;
+	si = -1;
     }
   }
   return si;
@@ -11166,7 +11252,7 @@ const ON_BrepTrim* SlitSeamMateHelper( const ON_BrepTrim& trim )
     if ( trim.m_li == brep->m_T[ti].m_li )
     {
       if (other_ti >= 0 )
-        return 0;
+	return 0;
       other_ti = ti;
     }
   }
@@ -11179,7 +11265,7 @@ bool ON_BrepTrim::IsSlit() const
 {
   // 17 Nov 2006
   //     At this point in the development cycle, I cannot
-  //     add a "slit" type to trim.  So, I will use this
+  //     add a "slit" type to trim.  So, I will use this 
   //     function to distinguish between "slit" and "seam"
   //     trims.
   switch(m_iso)
@@ -11208,7 +11294,7 @@ bool ON_BrepTrim::IsSeam() const
 {
   // 17 Nov 2006
   //     At this point in the development cycle, I cannot
-  //     add a "slit" type to trim.  So, I will use this
+  //     add a "slit" type to trim.  So, I will use this 
   //     function to distinguish between "slit" and "seam"
   //     trims.
   ON_Surface::ISO other_iso = ON_Surface::not_iso;
@@ -11248,11 +11334,11 @@ int ON_BrepFace::SurfaceIndexOf() const
   return (m_brep && m_si >= 0 && m_si < m_brep->m_S.Count()) ? m_si : 0;
 }
 
-bool ON_Brep::RebuildEdges( ON_BrepFace& face,
-                   double tolerance,
-                   BOOL bRebuildSharedEdges,
-                   BOOL bRebuildVertices
-                   )
+bool ON_Brep::RebuildEdges( ON_BrepFace& face, 
+		   double tolerance,
+		   BOOL bRebuildSharedEdges,
+		   BOOL bRebuildVertices
+		   )
 {
   DestroyMesh( ON::any_mesh );
   ON_SimpleArray<unsigned char> bRebuiltEdge( m_E.Count() );
@@ -11280,69 +11366,69 @@ bool ON_Brep::RebuildEdges( ON_BrepFace& face,
     {
       ti = loop.m_ti[lti];
       if ( ti < 0 || ti >= m_T.Count() )
-        continue;
+	continue;
       const ON_BrepTrim& trim = m_T[ti];
       if ( trim.m_ei < 0 || trim.m_ei >= m_E.Count() )
-        continue;
+	continue;
       const ON_Curve* c2 = trim.TrimCurveOf();
       if ( !c2 )
-        continue;
+	continue;
       if ( bRebuiltEdge[trim.m_ei] )
-        continue; // already did this one (a seam edge)
+	continue; // already did this one (a seam edge)
       ON_BrepEdge& edge = m_E[trim.m_ei];
       ON_Interval edge_domain = edge.Domain();
       if ( !bRebuildSharedEdges && edge.EdgeCurveOf() )
       {
-        // don't mess with 3d curve if edge is used by other faces
-        for ( eti = 0; eti < edge.m_ti.Count(); eti++ )
-        {
-          ti = edge.m_ti[eti];
-          if ( ti < 0 || ti >= m_T.Count() )
-            continue;
-          li = m_T[ti].m_li;
-          if ( li < 0 || li >= m_L.Count() )
-            continue;
-          fi = m_L[li].m_fi;
-          if ( fi != face.m_face_index )
-            break;
-        }
-        if ( eti < edge.m_ti.Count() )
-          continue;
+	// don't mess with 3d curve if edge is used by other faces
+	for ( eti = 0; eti < edge.m_ti.Count(); eti++ )
+	{
+	  ti = edge.m_ti[eti];
+	  if ( ti < 0 || ti >= m_T.Count() )
+	    continue;
+	  li = m_T[ti].m_li;
+	  if ( li < 0 || li >= m_L.Count() )
+	    continue;
+	  fi = m_L[li].m_fi;
+	  if ( fi != face.m_face_index )
+	    break;
+	}
+	if ( eti < edge.m_ti.Count() )
+	  continue;
       }
       ON_Curve* c3 = pSurface->Pushup( trim, tolerance );
       if ( c3 )
       {
-        if ( trim.m_bRev3d )
-          c3->Reverse();
-        c3->SetDomain(edge_domain);
-        edge.m_c3i = AddEdgeCurve(c3);
-        edge.SetProxyCurve( c3 );
-        m_bbox.Destroy();
-        edge.m_tolerance = tolerance;
-        bRebuiltEdge[trim.m_ei] = true;
-        if ( bRebuildVertices )
-        {
-          for ( evi = 0; evi < 2; evi++ )
-          {
-            vi = edge.m_vi[evi];
-            if ( vi < 0 || vi >= m_V.Count() )
-              continue;
-            if ( bRebuiltVertex[vi] )
-              continue;
-            ON_BrepVertex& vertex = m_V[vi];
-            vertex.point = c3->PointAt( edge.ProxyCurveDomain()[evi] );
-            vertex.m_tolerance = ON_UNSET_VALUE;
-            bRebuiltVertex[vi] = 1;
-            if (edge.IsClosed() && edge.m_vi[0] != edge.m_vi[1]){
-              ON_BrepVertex& V0 = m_V[edge.m_vi[0]];
-              ON_BrepVertex& V1 = m_V[edge.m_vi[1]];
-              CombineCoincidentVertices(V0, V1);
-            }
-          }
-        }
+	if ( trim.m_bRev3d )
+	  c3->Reverse();
+	c3->SetDomain(edge_domain);
+	edge.m_c3i = AddEdgeCurve(c3);
+	edge.SetProxyCurve( c3 );
+	m_bbox.Destroy();
+	edge.m_tolerance = tolerance;
+	bRebuiltEdge[trim.m_ei] = true;
+	if ( bRebuildVertices )
+	{
+	  for ( evi = 0; evi < 2; evi++ )
+	  {
+	    vi = edge.m_vi[evi];
+	    if ( vi < 0 || vi >= m_V.Count() )
+	      continue;
+	    if ( bRebuiltVertex[vi] )
+	      continue;
+	    ON_BrepVertex& vertex = m_V[vi];
+	    vertex.point = c3->PointAt( edge.ProxyCurveDomain()[evi] );  
+	    vertex.m_tolerance = ON_UNSET_VALUE;
+	    bRebuiltVertex[vi] = 1;
+	    if (edge.IsClosed() && edge.m_vi[0] != edge.m_vi[1]){
+	      ON_BrepVertex& V0 = m_V[edge.m_vi[0]];
+	      ON_BrepVertex& V1 = m_V[edge.m_vi[1]];
+	      CombineCoincidentVertices(V0, V1);
+	    }
+	  }
+	}
       }
       else
-        rc = false;
+	rc = false;
     }
   }
 
@@ -11363,7 +11449,7 @@ bool ON_BrepFace::TransformTrim( const ON_Xform& xform )
     if ( loop )
     {
       if ( !loop->TransformTrim(xform) )
-        return false;
+	return false;
     }
   }
   return true;
@@ -11381,7 +11467,7 @@ bool ON_BrepLoop::TransformTrim( const ON_Xform& xform )
     if ( trim )
     {
       if ( !trim->TransformTrim(xform) )
-        return false;
+	return false;
       m_pbox.Union( trim->m_pbox );
     }
   }
@@ -11485,17 +11571,17 @@ bool ON_Brep::AreaMassProperties(
   // The _MassPropertiesBrep() function is provided by the Rhino SDK.
   if ( 0 != ON_Brep::m__MassProperties )
   {
-    int mprc = ON_Brep::m__MassProperties(
-            *this, NULL, 2, ON_UNSET_POINT, mp,
-            bArea, bFirstMoments, bSecondMoments, bProductMoments,
-            rel_tol, abs_tol );
+    int mprc = ON_Brep::m__MassProperties( 
+	    *this, NULL, 2, ON_UNSET_POINT, mp, 
+	    bArea, bFirstMoments, bSecondMoments, bProductMoments, 
+	    rel_tol, abs_tol );
     rc = (mprc != 0);
   }
   return rc;
 }
 
 bool ON_Brep::VolumeMassProperties(
-  ON_MassProperties& mp,
+  ON_MassProperties& mp, 
   bool bVolume,
   bool bFirstMoments,
   bool bSecondMoments,
@@ -11509,10 +11595,10 @@ bool ON_Brep::VolumeMassProperties(
   // The _MassPropertiesBrep() function is provided by the Rhino SDK.
   if ( 0 != ON_Brep::m__MassProperties )
   {
-    int mprc = ON_Brep::m__MassProperties(
-            *this, NULL, 3, base_point, mp,
-            bVolume, bFirstMoments, bSecondMoments, bProductMoments,
-            rel_tol, abs_tol );
+    int mprc = ON_Brep::m__MassProperties( 
+	    *this, NULL, 3, base_point, mp, 
+	    bVolume, bFirstMoments, bSecondMoments, bProductMoments, 
+	    rel_tol, abs_tol );
     rc = (mprc != 0);
   }
   return rc;
@@ -11532,17 +11618,17 @@ bool ON_Surface::AreaMassProperties(
   // The _MassPropertiesSurface() function is provided by the Rhino SDK.
   if ( 0 != _MassPropertiesSurface )
   {
-    int mprc = _MassPropertiesSurface(
-            *this, NULL, 2, ON_UNSET_POINT, mp,
-            bArea, bFirstMoments, bSecondMoments, bProductMoments,
-            rel_tol, abs_tol );
+    int mprc = _MassPropertiesSurface( 
+	    *this, NULL, 2, ON_UNSET_POINT, mp, 
+	    bArea, bFirstMoments, bSecondMoments, bProductMoments, 
+	    rel_tol, abs_tol );
     rc = (mprc != 0);
   }
   return rc;
 }
 
 bool ON_Surface::VolumeMassProperties(
-  ON_MassProperties& mp,
+  ON_MassProperties& mp, 
   bool bVolume,
   bool bFirstMoments,
   bool bSecondMoments,
@@ -11556,10 +11642,10 @@ bool ON_Surface::VolumeMassProperties(
   // The _MassPropertiesSurface() function is provided by the Rhino SDK.
   if ( 0 != _MassPropertiesSurface )
   {
-    int mprc = _MassPropertiesSurface(
-            *this, NULL, 3, base_point, mp,
-            bVolume, bFirstMoments, bSecondMoments, bProductMoments,
-            rel_tol, abs_tol );
+    int mprc = _MassPropertiesSurface( 
+	    *this, NULL, 3, base_point, mp, 
+	    bVolume, bFirstMoments, bSecondMoments, bProductMoments, 
+	    rel_tol, abs_tol );
     rc = (mprc != 0);
   }
   return rc;
@@ -11579,10 +11665,10 @@ bool ON_Curve::LengthMassProperties(
   // The _MassPropertiesSurface() function is provided by the Rhino SDK.
   if ( 0 != _MassPropertiesCurve )
   {
-    int mprc = _MassPropertiesCurve(
-            *this, NULL, 1, ON_UNSET_POINT, ON_UNSET_POINT, mp,
-            bLength, bFirstMoments, bSecondMoments, bProductMoments,
-            rel_tol, abs_tol );
+    int mprc = _MassPropertiesCurve( 
+	    *this, NULL, 1, ON_UNSET_POINT, ON_UNSET_POINT, mp, 
+	    bLength, bFirstMoments, bSecondMoments, bProductMoments, 
+	    rel_tol, abs_tol );
     rc = (mprc != 0);
   }
   return rc;
@@ -11591,7 +11677,7 @@ bool ON_Curve::LengthMassProperties(
 bool ON_Curve::AreaMassProperties(
     ON_3dPoint base_point,
     ON_3dVector plane_normal,
-    ON_MassProperties& mp,
+    ON_MassProperties& mp, 
     bool bArea,
     bool bFirstMoments,
     bool bSecondMoments,
@@ -11604,10 +11690,10 @@ bool ON_Curve::AreaMassProperties(
   // The _MassPropertiesSurface() function is provided by the Rhino SDK.
   if ( 0 != _MassPropertiesCurve )
   {
-    int mprc = _MassPropertiesCurve(
-            *this, NULL, 2, base_point,plane_normal, mp,
-            bArea, bFirstMoments, bSecondMoments, bProductMoments,
-            rel_tol, abs_tol );
+    int mprc = _MassPropertiesCurve( 
+	    *this, NULL, 2, base_point,plane_normal, mp, 
+	    bArea, bFirstMoments, bSecondMoments, bProductMoments, 
+	    rel_tol, abs_tol );
     rc = (mprc != 0);
   }
   return rc;
@@ -11619,10 +11705,10 @@ int ON_BrepLoop::Dimension() const
 }
 
 BOOL ON_BrepLoop::GetBBox(
-        double* boxmin,
-        double* boxmax,
-        BOOL bGrowBox
-        ) const
+	double* boxmin,
+	double* boxmax,
+	BOOL bGrowBox
+	) const
 {
   bool rc = m_pbox.IsValid();
   if (rc)

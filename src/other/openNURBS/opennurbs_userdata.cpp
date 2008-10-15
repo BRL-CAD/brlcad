@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -19,24 +19,24 @@
 ON_VIRTUAL_OBJECT_IMPLEMENT(ON_UserData,ON_Object,"850324A7-050E-11d4-BFFA-0010830122F0");
 
 ON_UserData::ON_UserData()
-            : m_userdata_uuid(ON_nil_uuid),
-              m_application_uuid(ON_nil_uuid),
-              m_userdata_copycount(0),
-              m_userdata_xform(1),
-              m_userdata_owner(0),
-              m_userdata_next(0)
+	    : m_userdata_uuid(ON_nil_uuid), 
+	      m_application_uuid(ON_nil_uuid),
+	      m_userdata_copycount(0),
+	      m_userdata_xform(1),
+	      m_userdata_owner(0),
+	      m_userdata_next(0)
 {}
 
-ON_UserData::ON_UserData(const ON_UserData& src)
-            : ON_Object(src),
-              m_userdata_uuid(src.m_userdata_uuid),
-              m_application_uuid(src.m_application_uuid),
-              m_userdata_copycount(src.m_userdata_copycount),
-              m_userdata_xform(src.m_userdata_xform),
-              m_userdata_owner(0), // do not copy owner
-              m_userdata_next(0)   // do not copy next
+ON_UserData::ON_UserData(const ON_UserData& src) 
+	    : ON_Object(src),
+	      m_userdata_uuid(src.m_userdata_uuid), 
+	      m_application_uuid(src.m_application_uuid),
+	      m_userdata_copycount(src.m_userdata_copycount),
+	      m_userdata_xform(src.m_userdata_xform),
+	      m_userdata_owner(0), // do not copy owner
+	      m_userdata_next(0)   // do not copy next
 {
-  if ( m_userdata_copycount)
+  if ( m_userdata_copycount) 
   {
     m_userdata_copycount++;
     if ( !m_userdata_copycount )
@@ -47,7 +47,7 @@ ON_UserData::ON_UserData(const ON_UserData& src)
 //virtual
 BOOL ON_UserData::Archive() const
 {
-  // If you want your userdata to be saved, you must override
+  // If you want your userdata to be saved, you must override 
   // ON_UserData::Archive() and have it return true.
   return false;
 }
@@ -65,11 +65,11 @@ ON_UserData& ON_UserData::operator=(const ON_UserData& src)
   //    Do not copy the m_userdata_uuid, m_application_uuid,
   //    m_userdata_owner, or m_userdata_next values.
   //    The m_userdata_uuid and m_application_uuid are
-  //    set when the class is constructed and should not be
+  //    set when the class is constructed and should not be 
   //    changed.  The m_userdata_owner and m_userdata_next
   //    values are set when the user data is attached
   //    to a parent object.
-  if ( this != &src )
+  if ( this != &src ) 
   {
     ON_Object::operator=(src);
     m_userdata_copycount = src.m_userdata_copycount;
@@ -78,7 +78,7 @@ ON_UserData& ON_UserData::operator=(const ON_UserData& src)
     {
       m_userdata_copycount++;
       if ( !m_userdata_copycount )
-        m_userdata_copycount = 1;
+	m_userdata_copycount = 1;
     }
   }
 
@@ -94,15 +94,15 @@ ON_UserData::~ON_UserData()
     ON_UserData* p;
     for ( p = owner->m_userdata_list; p; prev = p, p = p->m_userdata_next ) {
       if ( p == this ) {
-        if ( prev ) {
-          prev->m_userdata_next = p->m_userdata_next;
-        }
-        else {
-          owner->m_userdata_list = p->m_userdata_next;
-        }
-        p->m_userdata_next = 0;
-        p->m_userdata_owner = 0;
-        break;
+	if ( prev ) {
+	  prev->m_userdata_next = p->m_userdata_next;
+	}
+	else {
+	  owner->m_userdata_list = p->m_userdata_next;
+	}
+	p->m_userdata_next = 0;
+	p->m_userdata_owner = 0;
+	break;
       }
     }
   }
@@ -191,8 +191,8 @@ ON_UUID ON_UserData::UserDataClassUuid() const
 {
   const ON_ClassId* cid = ClassId();
   return ( cid == &ON_UnknownUserData::m_ON_UnknownUserData_class_id )
-          ? ((ON_UnknownUserData*)this)->m_unknownclass_uuid
-          : cid->Uuid();
+	  ? ((ON_UnknownUserData*)this)->m_unknownclass_uuid
+	  : cid->Uuid();
 }
 
 BOOL ON_UserData::IsUnknownUserData() const
@@ -208,26 +208,26 @@ BOOL ON_UserData::GetDescription( ON_wString& description )
 
 ON_OBJECT_IMPLEMENT(ON_UnknownUserData,ON_UserData,"850324A8-050E-11d4-BFFA-0010830122F0");
 
-ON_UnknownUserData::ON_UnknownUserData()
-                   : m_unknownclass_uuid(ON_nil_uuid),
-                     m_sizeof_buffer(0),
-                     m_buffer(0),
-                     m_3dm_version(0)
+ON_UnknownUserData::ON_UnknownUserData() 
+		   : m_unknownclass_uuid(ON_nil_uuid), 
+		     m_sizeof_buffer(0),
+		     m_buffer(0),
+		     m_3dm_version(0)
 {}
 
-ON_UnknownUserData::ON_UnknownUserData(const ON_UnknownUserData& src) : ON_UserData(src),
-                   m_unknownclass_uuid(ON_nil_uuid),
-                   m_sizeof_buffer(0),
-                   m_buffer(0),
-                   m_3dm_version(0)
+ON_UnknownUserData::ON_UnknownUserData(const ON_UnknownUserData& src) : ON_UserData(src), 
+		   m_unknownclass_uuid(ON_nil_uuid), 
+		   m_sizeof_buffer(0), 
+		   m_buffer(0),
+		   m_3dm_version(0)
 {
-  if ( m_userdata_copycount > 0 && src.m_sizeof_buffer > 0 && src.m_buffer )
+  if ( m_userdata_copycount > 0 && src.m_sizeof_buffer > 0 && src.m_buffer ) 
   {
     // For most kinds of user data except ON_UnknownUserData,
     // m_userdata_uuid is set by the constructor and should not
     // be copied from src (which may be a derived class).  However,
-    // for ON_UnknownUserData, the value of m_userdata_uuid is
-    // varies because it is set by the missing userdata class.
+    // for ON_UnknownUserData, the value of m_userdata_uuid is 
+    // varies because it is set by the missing userdata class. 
     // So it has to be copied here.
     m_userdata_uuid = src.m_userdata_uuid;
 
@@ -240,7 +240,7 @@ ON_UnknownUserData::ON_UnknownUserData(const ON_UnknownUserData& src) : ON_UserD
 
 ON_UnknownUserData& ON_UnknownUserData::operator=(const ON_UnknownUserData& src)
 {
-  if ( this != &src )
+  if ( this != &src ) 
   {
     m_sizeof_buffer = 0;
     if ( 0 != m_buffer )
@@ -260,14 +260,14 @@ ON_UnknownUserData& ON_UnknownUserData::operator=(const ON_UnknownUserData& src)
     // by the missing userdata class.  So it has to be copied here.
     m_userdata_uuid = src.m_userdata_uuid;
 
-    if ( m_userdata_copycount > 0 && src.m_sizeof_buffer > 0 && src.m_buffer )
+    if ( m_userdata_copycount > 0 && src.m_sizeof_buffer > 0 && src.m_buffer ) 
     {
       m_unknownclass_uuid = src.m_unknownclass_uuid;
       m_sizeof_buffer = src.m_sizeof_buffer;
       m_buffer = onmemdup( src.m_buffer, src.m_sizeof_buffer);
       m_3dm_version = src.m_3dm_version;
     }
-    else
+    else 
     {
       // The unknown user data is not supposed to copy
       m_userdata_uuid = ON_nil_uuid;
@@ -288,7 +288,7 @@ ON_UnknownUserData::~ON_UnknownUserData()
 
 unsigned int ON_UnknownUserData::SizeOf() const
 {
-  return ON_UserData::SizeOf()
+  return ON_UserData::SizeOf() 
     + (sizeof(ON_UnknownUserData)-sizeof(ON_UserData))
     + m_sizeof_buffer;
 }
@@ -302,17 +302,17 @@ BOOL ON_UnknownUserData::GetDescription( ON_wString& s )
 BOOL ON_UnknownUserData::IsValid( ON_TextLog* text_log ) const
 {
   BOOL rc = ON_UserData::IsValid(text_log);
-
+  
   // valid unknown user data must have something in it
-  if (rc)
+  if (rc) 
     rc = (m_sizeof_buffer>0);
-  if (rc)
+  if (rc) 
     rc = (m_buffer != NULL);
-
+  
   // the unknown class uuid cannot be nil
-  if (rc)
+  if (rc) 
     rc = ON_UuidCompare( &m_unknownclass_uuid, &ON_nil_uuid );
-
+  
   // the unknown class uuid cannot be the ON_UnknownUserData class uuid
   if (rc) {
     ON_UUID ON_UnknownUserData_classuuid = ON_UnknownUserData::m_ON_UnknownUserData_class_id.Uuid();
@@ -364,13 +364,13 @@ public:
 
   // ON_BinaryArchive overrides
   size_t CurrentPosition( // current offset (in bytes) into archive ( like ftell() )
-                ) const;
+		) const; 
   bool SeekFromCurrentPosition( // seek from current position ( like fseek( ,SEEK_CUR) )
-                int // byte offset ( >= -CurrentPostion() )
-                );
+		int // byte offset ( >= -CurrentPostion() )
+		); 
   bool SeekFromStart(  // seek from current position ( like fseek( ,SEEK_SET) )
-                size_t // byte offset ( >= 0 )
-                );
+		size_t // byte offset ( >= 0 )
+		);
   bool AtEnd() const; // true if at end of file
 
 protected:
@@ -407,7 +407,7 @@ bool ON_UnknownUserDataArchive::SeekFromCurrentPosition( int offset )
 {
   bool rc = false;
   size_t newpos = m_buffer_position + offset;
-  if ( newpos >= 0 && newpos < m_sizeof_buffer )
+  if ( newpos >= 0 && newpos < m_sizeof_buffer ) 
   {
     m_buffer_position = newpos;
     rc = true;
@@ -418,7 +418,7 @@ bool ON_UnknownUserDataArchive::SeekFromCurrentPosition( int offset )
 bool ON_UnknownUserDataArchive::SeekFromStart( size_t offset )
 {
   bool rc = false;
-  if ( offset >= 0 && offset < m_sizeof_buffer )
+  if ( offset >= 0 && offset < m_sizeof_buffer ) 
   {
     m_buffer_position = offset;
     rc = true;
@@ -435,7 +435,7 @@ size_t ON_UnknownUserDataArchive::Read( size_t count, void* buffer )
 {
   size_t maxcount = 0;
 
-  if ( m_sizeof_buffer > m_buffer_position )
+  if ( m_sizeof_buffer > m_buffer_position ) 
   {
     maxcount = m_sizeof_buffer - m_buffer_position;
   }
@@ -445,7 +445,7 @@ size_t ON_UnknownUserDataArchive::Read( size_t count, void* buffer )
     count = maxcount;
   }
 
-  if ( count > 0 )
+  if ( count > 0 ) 
   {
     memcpy( buffer, m_buffer+m_buffer_position, count );
     m_buffer_position += count;
@@ -479,18 +479,18 @@ ON_UserData* ON_UnknownUserData::Convert() const
       // to convert the buffer into a valid class
       ON_Object* pObject = pID->Create();
       if ( pObject ) {
-        ud = ON_UserData::Cast(pObject);
-        if ( !ud )
-          delete pObject;
-        else
-        {
-          // use class's Read() function to initialize class members from buffer
-          ON_UnknownUserDataArchive file(*this);
-          // copy values that would be set by reading the base class
-          ud->m_userdata_copycount = m_userdata_copycount;
-          ud->m_userdata_xform = m_userdata_xform;
-          ud->Read(file);
-        }
+	ud = ON_UserData::Cast(pObject);
+	if ( !ud )
+	  delete pObject;
+	else 
+	{
+	  // use class's Read() function to initialize class members from buffer
+	  ON_UnknownUserDataArchive file(*this);
+	  // copy values that would be set by reading the base class
+	  ud->m_userdata_copycount = m_userdata_copycount;
+	  ud->m_userdata_xform = m_userdata_xform;
+	  ud->Read(file);
+	}
       }
     }
   }
@@ -594,7 +594,7 @@ void ON_UserString::Dump(ON_TextLog& text_log) const
   if ( !s )
     s = L"";
   text_log.Print("Key: %s\n");
-
+  
   s = m_string_value;
   if ( !s )
     s = L"";
@@ -696,10 +696,10 @@ BOOL ON_UserStringList::Read(ON_BinaryArchive& archive)
     for ( int i = 0; i < count; i++ )
     {
       rc = m_e.AppendNew().Read(archive);
-      if ( !rc)
+      if ( !rc) 
       {
-        m_e.Remove();
-        break;
+	m_e.Remove();
+	break;
       }
     }
     if (!rc) break;
@@ -726,11 +726,11 @@ bool ON_UserStringList::SetUserString( const wchar_t* key, const wchar_t* string
     {
       if ( string_value && string_value[0] )
       {
-        m_e[i].m_string_value = string_value;
+	m_e[i].m_string_value = string_value;
       }
       else
       {
-        m_e.Remove(i);
+	m_e.Remove(i);
       }
       m_userdata_copycount++;
       return true;
@@ -758,8 +758,8 @@ bool ON_UserStringList::GetUserString( const wchar_t* key, ON_wString& string_va
     {
       if ( !m_e[i].m_key.CompareNoCase(key) )
       {
-        string_value = m_e[i].m_string_value;
-        return true;
+	string_value = m_e[i].m_string_value;
+	return true;
       }
     }
   }
@@ -772,6 +772,7 @@ bool ON_UserStringList::GetUserString( const wchar_t* key, ON_wString& string_va
 bool ON_Object::SetUserString( const wchar_t* key, const wchar_t* string_value )
 {
   ON_UserStringList* us = ON_UserStringList::Cast(GetUserData(ON_UserStringList::m_ON_UserStringList_class_id.Uuid()));
+  bool b = false;
   if ( !us )
   {
     us = new ON_UserStringList();
@@ -780,8 +781,35 @@ bool ON_Object::SetUserString( const wchar_t* key, const wchar_t* string_value )
       delete us;
       us = 0;
     }
+    else
+    {
+      b = true;
+    }
   }
-  return (us) ? us->SetUserString(key,string_value) : false;
+
+  if ( us )
+  {
+    if ( us->SetUserString(key,string_value) )
+    {
+      if ( b && 2 == us->m_userdata_copycount )
+      {
+	// user data is brand new - roll back the 
+	// m_userdata_copycount++ that happens in 
+	// SetUserString().
+	us->m_userdata_copycount = 1;
+      }
+      b = true;
+    }
+    else if ( b )
+    {
+      // user data was new-ed up and has nothing in it
+      // because the input was bogus.
+      delete us;
+      us = 0;
+      b = false;
+    }
+  }
+  return b;
 }
 
 bool ON_Object::GetUserString( const wchar_t* key, ON_wString& string_value ) const
@@ -791,8 +819,8 @@ bool ON_Object::GetUserString( const wchar_t* key, ON_wString& string_value ) co
   return us ? us->GetUserString(key,string_value) : false;
 }
 
-int ON_Object::GetUserStrings(
-  ON_ClassArray<ON_UserString>& user_strings
+int ON_Object::GetUserStrings( 
+  ON_ClassArray<ON_UserString>& user_strings 
   ) const
 {
   const int count0 = user_strings.Count();
@@ -803,8 +831,8 @@ int ON_Object::GetUserStrings(
   return user_strings.Count() - count0;
 }
 
-int ON_Object::GetUserStringKeys(
-  ON_ClassArray<ON_wString>& user_string_keys
+int ON_Object::GetUserStringKeys( 
+  ON_ClassArray<ON_wString>& user_string_keys 
   ) const
 {
   const int count0 = user_string_keys.Count();

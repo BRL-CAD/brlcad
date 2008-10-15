@@ -2,18 +2,17 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
 */
-
 
 #if !defined(OPENNURBS_BEZIER_INC_)
 #define OPENNURBS_BEZIER_INC_
@@ -55,7 +54,7 @@ public:
   ON_PolynomialCurve& operator=(const ON_BezierCurve&);
 
   // Description:
-  //   Initializes fields and allocates the m_cv array.
+  //   Initializes fields and allocates the m_cv array. 
   // Parameters:
   //   dim - [in] dimension of the curve
   //   bIsRational - [in] TRUE if rational
@@ -84,11 +83,11 @@ public:
   // Returns:
   //   FALSE if unable to evaluate.
   BOOL Evaluate(
-         double t,
-         int der_count,
-         int v_stride,
-         double* v
-         ) const;
+	 double t,
+	 int der_count,
+	 int v_stride,
+	 double* v
+	 ) const;
 
   // dimension of polynomial curve (1,2, or 3)
   int m_dim;
@@ -131,18 +130,18 @@ public:
   void Destroy();
 
   BOOL Evaluate(          // returns FALSE if unable to evaluate
-         double s,
-         double t,        // evaluation parameter
-         int der_count,   // number of derivatives (>=0)
-         int v_stride,    // array stride (>=Dimension())
-         double* v        // array of length stride*(ndir+1)*(ndir+2)/2
-         ) const;
+	 double s, 
+	 double t,        // evaluation parameter
+	 int der_count,   // number of derivatives (>=0)
+	 int v_stride,    // array stride (>=Dimension())
+	 double* v        // array of length stride*(ndir+1)*(ndir+2)/2
+	 ) const;
 
   int m_dim;    // 1,2, or 3
   int m_is_rat; // 1 if rational, 0 if not rational
   int m_order[2];
   ON_4dPointArray m_cv; // coefficients ( m_C.Length() = m_order[0]*m_order[1]
-                        // coefficient of s^m*t^n = m_cv[m_order[1]*m+n]
+			// coefficient of s^m*t^n = m_cv[m_order[1]*m+n]
   ON_Interval m_domain[2];
 };
 
@@ -218,9 +217,9 @@ public:
   // Returns:
   //   TRUE if successful
   // Remarks:
-  //   The result has order = points.Count() and the loft uses the
+  //   The result has order = points.Count() and the loft uses the 
   //   uniform parameterizaton curve( i/(points.Count()-1) ) = points[i].
-  bool Loft(
+  bool Loft( 
     const ON_3dPointArray& points
     );
 
@@ -236,7 +235,7 @@ public:
   // Returns:
   //   TRUE if successful
   // Remarks:
-  //   The result has order = points.Count() and the loft uses the
+  //   The result has order = points.Count() and the loft uses the 
   //   parameterizaton curve( t[i] ) = points[i].
   bool Loft(
     int pt_dim,
@@ -261,10 +260,10 @@ public:
   // Returns:
   //   TRUE if successful.
   bool GetBBox( // returns TRUE if successful
-         double* box_min,
-         double* box_max,
-         int bGrowBox = false
-         ) const;
+	 double* box_min,
+	 double* box_max,
+	 int bGrowBox = false
+	 ) const;
 
   // Description:
   //   Gets bounding box.
@@ -272,14 +271,14 @@ public:
   //   bbox - [out] axis aligned bounding box returned here.
   //   bGrowBox - [in] if TRUE, input bbox must be a valid
   //      bounding box and this box is enlarged to
-  //      be the union of the input box and the
+  //      be the union of the input box and the 
   //      bezier's bounding box.
   // Returns:
   //   TRUE if successful.
   bool GetBoundingBox(
-         ON_BoundingBox& bbox,
-         int bGrowBox = false
-         ) const;
+	 ON_BoundingBox& bbox,
+	 int bGrowBox = false
+	 ) const;
 
   // Description:
   //   Gets bounding box.
@@ -292,19 +291,19 @@ public:
     Get tight bounding box of the bezier.
 	Parameters:
 		tight_bbox - [in/out] tight bounding box
-		bGrowBox -[in]	(default=false)
+		bGrowBox -[in]	(default=false)			
       If true and the input tight_bbox is valid, then returned
-      tight_bbox is the union of the input tight_bbox and the
+      tight_bbox is the union of the input tight_bbox and the 
       tight bounding box of the bezier curve.
 		xform -[in] (default=NULL)
       If not NULL, the tight bounding box of the transformed
       bezier is calculated.  The bezier curve is not modified.
 	Returns:
-    True if the returned tight_bbox is set to a valid
+    True if the returned tight_bbox is set to a valid 
     bounding box.
   */
-	bool GetTightBoundingBox(
-			ON_BoundingBox& tight_bbox,
+	bool GetTightBoundingBox( 
+			ON_BoundingBox& tight_bbox, 
       int bGrowBox = false,
 			const ON_Xform* xform = 0
       ) const;
@@ -316,9 +315,9 @@ public:
   // Returns:
   //   TRUE if successful.  FALSE if bezier is invalid
   //   and cannot be transformed.
-  bool Transform(
-         const ON_Xform& xform
-         );
+  bool Transform( 
+	 const ON_Xform& xform
+	 );
 
   bool Morph( const ON_SpaceMorph& morph );
 
@@ -336,11 +335,11 @@ public:
   // Remarks:
   //   Uses ON_BezierCurve::Transform() function to calculate the result.
   bool Rotate(
-        double sin_angle,
-        double cos_angle,
-        const ON_3dVector& rotation_axis,
-        const ON_3dPoint& rotation_center
-        );
+	double sin_angle,
+	double cos_angle,
+	const ON_3dVector& rotation_axis,
+	const ON_3dPoint& rotation_center
+	);
 
   // Description:
   //   Rotates the bezier curve about the specified axis.  A positive
@@ -355,10 +354,10 @@ public:
   // Remarks:
   //   Uses ON_BezierCurve::Transform() function to calculate the result.
   bool Rotate(
-        double rotation_angle,
-        const ON_3dVector& rotation_axis,
-        const ON_3dPoint& rotation_center
-        );
+	double rotation_angle,
+	const ON_3dVector& rotation_axis,
+	const ON_3dPoint& rotation_center
+	);
 
   // Description:
   //   Translates the bezier curve along the specified vector.
@@ -368,7 +367,7 @@ public:
   //   TRUE if bezier curve successfully translated
   // Remarks:
   //   Uses ON_BezierCurve::Transform() function to calculate the result.
-  bool Translate(
+  bool Translate( 
     const ON_3dVector& translation_vector
     );
 
@@ -381,7 +380,7 @@ public:
   //   TRUE if bezier curve successfully scaled
   // Remarks:
   //   Uses ON_BezierCurve::Transform() function to calculate the result.
-  bool Scale(
+  bool Scale( 
     double scale_factor
     );
 
@@ -400,9 +399,9 @@ public:
   //   t - [in] evaluation parameter
   // Returns:
   //   Point (location of curve at the parameter t).
-  ON_3dPoint  PointAt(
-                double t
-                ) const;
+  ON_3dPoint  PointAt( 
+		double t 
+		) const;
 
   // Description:
   //   Evaluate first derivative at a parameter.
@@ -415,8 +414,8 @@ public:
   // See Also:
   //   ON_Curve::Ev1Der
   ON_3dVector DerivativeAt(
-                double t
-                ) const;
+		double t 
+		) const;
 
   // Description:
   //   Evaluate unit tangent vector at a parameter.
@@ -429,8 +428,8 @@ public:
   // See Also:
   //   ON_Curve::EvTangent
   ON_3dVector TangentAt(
-                double t
-                ) const;
+		double t 
+		) const;
 
   // Description:
   //   Evaluate the curvature vector at a parameter.
@@ -443,8 +442,8 @@ public:
   // See Also:
   //   ON_Curve::EvCurvature
   ON_3dVector CurvatureAt(
-                double t
-                ) const;
+		double t
+		) const;
 
   // Description:
   //   Evaluate point at a parameter with error checking.
@@ -454,9 +453,9 @@ public:
   // Returns:
   //   FALSE if unable to evaluate.
   bool EvPoint(
-         double t,
-         ON_3dPoint& point
-         ) const;
+	 double t,
+	 ON_3dPoint& point
+	 ) const;
 
   // Description:
   //   Evaluate first derivative at a parameter with error checking.
@@ -467,10 +466,10 @@ public:
   // Returns:
   //   FALSE if unable to evaluate.
   bool Ev1Der(
-         double t,
-         ON_3dPoint& point,
-         ON_3dVector& first_derivative
-         ) const;
+	 double t,
+	 ON_3dPoint& point,
+	 ON_3dVector& first_derivative
+	 ) const;
 
   // Description:
   //   Evaluate second derivative at a parameter with error checking.
@@ -482,11 +481,11 @@ public:
   // Returns:
   //   FALSE if unable to evaluate.
   bool Ev2Der(
-         double t,
-         ON_3dPoint& point,
-         ON_3dVector& first_derivative,
-         ON_3dVector& second_derivative
-         ) const;
+	 double t,
+	 ON_3dPoint& point,
+	 ON_3dVector& first_derivative,
+	 ON_3dVector& second_derivative
+	 ) const;
 
   /*
   Description:
@@ -502,10 +501,10 @@ public:
     ON_Curve::Ev1Der
   */
   bool EvTangent(
-         double t,
-         ON_3dPoint& point,
-         ON_3dVector& tangent
-         ) const;
+	 double t,
+	 ON_3dPoint& point,
+	 ON_3dVector& tangent
+	 ) const;
 
   /*
   Description:
@@ -519,11 +518,11 @@ public:
     FALSE if unable to evaluate.
   */
   bool EvCurvature(
-         double t,
-         ON_3dPoint& point,
-         ON_3dVector& tangent,
-         ON_3dVector& kappa
-         ) const;
+	 double t,
+	 ON_3dPoint& point,
+	 ON_3dVector& tangent,
+	 ON_3dVector& kappa
+	 ) const;
 
   // Description:
   //   Evaluate a bezier.
@@ -539,11 +538,11 @@ public:
   // Returns:
   //   TRUE if successful
   bool Evaluate(
-         double t,
-         int der_count,
-         int v_stride,
-         double* v
-         ) const;
+	 double t,
+	 int der_count,
+	 int v_stride,
+	 double* v
+	 ) const;
 
   // virtual ON_Curve override
   int NumIntersectionsWith(const ON_Line& segment) const;
@@ -556,14 +555,14 @@ public:
   //       The domain is [0,1].
   // Returns:
   //   TRUE if successful
-  bool GetNurbForm(
+  bool GetNurbForm( 
     ON_NurbsCurve& nurbs_curve
     ) const;
 
   // Returns:
   //   TRUE if bezier is rational.
   bool IsRational() const;
-
+  
   // Returns:
   //   Number of doubles per control vertex.
   //   (= IsRational() ? Dim()+1 : Dim())
@@ -573,11 +572,11 @@ public:
   //   Number of control vertices in the bezier.
   //   This is always the same as the order of the bezier.
   int CVCount() const;
-
+  
   // Returns:
   //   Order of the bezier. (order=degree+1)
   int Order() const;        // order = degree + 1
-
+	
   // Returns:
   //   Degree of the bezier. (degree=order-1)
   int Degree() const;
@@ -586,17 +585,17 @@ public:
   Description:
     Expert user function to get a pointer to control vertex
     memory.  If you are not an expert user, please use
-    ON_BezierCurve::GetCV( ON_3dPoint& ) or
+    ON_BezierCurve::GetCV( ON_3dPoint& ) or 
     ON_BezierCurve::GetCV( ON_4dPoint& ).
   Parameters:
     cv_index - [in] (0 <= cv_index < m_order)
   Returns:
     Pointer to control vertex.
   Remarks:
-    If the Bezier curve is rational, the format of the
+    If the Bezier curve is rational, the format of the 
     returned array is a homogeneos rational point with
-    length m_dim+1.  If the Bezier curve is not rational,
-    the format of the returned array is a nonrational
+    length m_dim+1.  If the Bezier curve is not rational, 
+    the format of the returned array is a nonrational 
     euclidean point with length m_dim.
   See Also
     ON_BezierCurve::CVStyle
@@ -604,8 +603,8 @@ public:
     ON_BezierCurve::Weight
   */
   double* CV(
-        int cv_index
-        ) const;
+	int cv_index
+	) const;
 
   /*
   Description:
@@ -622,8 +621,8 @@ public:
   // Returns:
   //   Weight of the i-th control vertex.
   double Weight(
-        int cv_index
-        ) const;
+	int cv_index
+	) const;
 
   // Description:
   //   Set weight of a control vertex.
@@ -639,9 +638,9 @@ public:
   //   ON_BezierCurve::SetCV, ON_BezierCurve::MakeRational,
   //   ON_BezierCurve::IsRational, ON_BezierCurve::Weight
   bool SetWeight(
-        int cv_index,
-        double weight
-        );
+	int cv_index,
+	double weight
+	);
 
   // Description:
   //   Set control vertex
@@ -649,7 +648,7 @@ public:
   //   cv_index - [in] control vertex index (0 <= cv_index < m_order)
   //   pointstyle - [in] specifes what kind of values are passed
   //      in the cv array.
-  //        ON::not_rational
+  //        ON::not_rational 
   //          cv[] is an array of length m_dim that defines
   //          a euclidean (world coordinate) point
   //        ON::homogeneous_rational
@@ -657,20 +656,20 @@ public:
   //          a rational homogeneous point.
   //        ON::euclidean_rational
   //          cv[] is an array of length (m_dim+1).  The first
-  //          m_dim values define the euclidean (world coordinate)
+  //          m_dim values define the euclidean (world coordinate) 
   //          location of the point.  cv[m_dim] is the weight
   //        ON::intrinsic_point_style
   //          If m_is_rat is TRUE, cv[] has ON::homogeneous_rational
-  //          point style.  If m_is_rat is FALSE, cv[] has
+  //          point style.  If m_is_rat is FALSE, cv[] has 
   //          ON::not_rational point style.
   //   cv - [in] array with control vertex value.
   // Returns:
   //   TRUE if the point can be set.
   bool SetCV(
-        int cv_index,
-        ON::point_style pointstyle,
-        const double* cv
-        );
+	int cv_index,
+	ON::point_style pointstyle,
+	const double* cv
+	);
 
   // Description:
   //   Set location of a control vertex.
@@ -684,9 +683,9 @@ public:
   //   ON_BezierCurve::CV, ON_BezierCurve::SetCV,
   //   ON_BezierCurve::SetWeight, ON_BezierCurve::Weight
   bool SetCV(
-        int cv_index,
-        const ON_3dPoint& point
-        );
+	int cv_index,
+	const ON_3dPoint& point
+	);
 
   // Description:
   //   Set value of a control vertex.
@@ -701,16 +700,16 @@ public:
   //   ON_BezierCurve::CV, ON_BezierCurve::SetCV,
   //   ON_BezierCurve::SetWeight, ON_BezierCurve::Weight
   bool SetCV(
-        int cv_index,
-        const ON_4dPoint& point
-        );
+	int cv_index,
+	const ON_4dPoint& point
+	);
 
   // Description:
   //   Get location of a control vertex.
   // Parameters:
   //   cv_index - [in] control vertex index (0 <= cv_index < m_order)
   //   pointstyle - [in] specifes what kind of values to get
-  //        ON::not_rational
+  //        ON::not_rational 
   //          cv[] is an array of length m_dim that defines
   //          a euclidean (world coordinate) point
   //        ON::homogeneous_rational
@@ -718,20 +717,20 @@ public:
   //          a rational homogeneous point.
   //        ON::euclidean_rational
   //          cv[] is an array of length (m_dim+1).  The first
-  //          m_dim values define the euclidean (world coordinate)
+  //          m_dim values define the euclidean (world coordinate) 
   //          location of the point.  cv[m_dim] is the weight
   //        ON::intrinsic_point_style
   //          If m_is_rat is TRUE, cv[] has ON::homogeneous_rational
-  //          point style.  If m_is_rat is FALSE, cv[] has
+  //          point style.  If m_is_rat is FALSE, cv[] has 
   //          ON::not_rational point style.
   //   cv - [out] array with control vertex value.
   // Returns:
   //   TRUE if successful.  FALSE if cv_index is invalid.
   bool GetCV(
-        int cv_index,
-        ON::point_style pointstyle,
-        double* cv
-        ) const;
+	int cv_index,
+	ON::point_style pointstyle,
+	double* cv
+	) const;
 
   // Description:
   //   Get location of a control vertex.
@@ -742,9 +741,9 @@ public:
   // Returns:
   //   TRUE if successful.
   bool GetCV(
-        int cv_index,
-        ON_3dPoint& point
-        ) const;
+	int cv_index,
+	ON_3dPoint& point
+	) const;
 
   // Description:
   //   Get value of a control vertex.
@@ -755,13 +754,13 @@ public:
   // Returns:
   //   TRUE if successful.
   bool GetCV(
-        int cv_index,
-        ON_4dPoint& point
-        ) const;
+	int cv_index,
+	ON_4dPoint& point
+	) const;
 
   // Description:
   //   Zeros control vertices and, if rational, sets weights to 1.
-  bool ZeroCVs();
+  bool ZeroCVs(); 
 
   // Description:
   //   Make beizer rational.
@@ -786,8 +785,8 @@ public:
   // Returns:
   //   TRUE if successful.  FALSE if desired_degree < current degree.
   bool IncreaseDegree(
-          int desired_degree
-          );
+	  int desired_degree
+	  );
 
   // Description:
   //   Change dimension of bezier.
@@ -796,8 +795,8 @@ public:
   // Returns:
   //   TRUE if successful.  FALSE if desired_dimension < 1
   bool ChangeDimension(
-          int desired_dimension
-          );
+	  int desired_dimension
+	  );
 
   /////////////////////////////////////////////////////////////////
   // Tools for managing CV and knot memory
@@ -813,8 +812,8 @@ public:
     );
 
   // Description:
-  //   Trims (or extends) the bezier so the bezier so that the
-  //   result starts bezier(interval[0]) and ends at
+  //   Trims (or extends) the bezier so the bezier so that the 
+  //   result starts bezier(interval[0]) and ends at 
   //   bezier(interval[1]) (Evaluation performed on input bezier.)
   // Parameters:
   //   interval -[in]
@@ -822,8 +821,8 @@ public:
   //   An interval of [0,1] leaves the bezier unchanged.  An
   //   interval of [0.5,1] would trim away the left half.  An
   //   interval of [0.0,2.0] would extend the right end.
-  bool Trim(
-    const ON_Interval& interval
+  bool Trim( 
+    const ON_Interval& interval 
     );
 
   // Description:
@@ -833,18 +832,18 @@ public:
   // Parameters:
   //   t - [in] (0 < t < 1 ) parameter to split at
   //   left_side - [out]
-  //   right_side - [out]
+  //   right_side - [out]  
   // Example:
   //       ON_BezierCurve crv = ...;
   //       ON_BezierCurve right_side;
   //       crv.Split( 0.5, crv, right_side );
   //   would split crv at the 1/2, put the left side in crv,
   //   and return the right side in right_side.
-  bool Split(
-         double t,
-         ON_BezierCurve& left_side,
-         ON_BezierCurve& right_side
-         ) const;
+  bool Split( 
+	 double t,
+	 ON_BezierCurve& left_side,
+	 ON_BezierCurve& right_side
+	 ) const;
 
   // Description:
   //   returns the length of the control polygon
@@ -865,36 +864,36 @@ public:
     The reparametrization is performed by composing the input Bezier with
     the function lambda: [0,1] -> [0,1] given by
 
-          t ->  c*t / ( (c-1)*t + 1 )
+	  t ->  c*t / ( (c-1)*t + 1 )
 
-    Note that lambda(0) = 0, lambda(1) = 1, lambda'(t) > 0,
+    Note that lambda(0) = 0, lambda(1) = 1, lambda'(t) > 0, 
     lambda'(0) = c and lambda'(1) = 1/c.
 
-    If the input Bezier has control vertices {B_0, ..., B_d}, then the
-    output Bezier has control vertices
+    If the input Bezier has control vertices {B_0, ..., B_d}, then the 
+    output Bezier has control vertices 
 
-          (B_0, ... c^i * B_i, ..., c^d * B_d).
+	  (B_0, ... c^i * B_i, ..., c^d * B_d).
 
     To derive this formula, simply compute the i-th Bernstein polynomial
     composed with lambda().
 
-    The inverse parametrization is given by 1/c.  That is, the
+    The inverse parametrization is given by 1/c.  That is, the 
     cumulative effect of the two calls
 
-          Reparametrize(c)
-          Reparametrize(1.0/c)
+	  Reparametrize(c)
+	  Reparametrize(1.0/c)
 
     is to leave the bezier unchanged.
   See Also:
     ON_Bezier::ScaleConrolPoints
   */
   bool Reparametrize(
-          double c
-          );
+	  double c
+	  );
 
   /*
   Description:
-    Scale a rational Bezier's control vertices to set a weight to a
+    Scale a rational Bezier's control vertices to set a weight to a 
     specified value.
   Parameters:
     i - [in] (0 <= i < order)
@@ -908,14 +907,14 @@ public:
     ON_Bezier::Reparametrize
     ON_Bezier::ChangeWeights
   */
-  bool ScaleConrolPoints(
-          int i,
-          double w
-          );
+  bool ScaleConrolPoints( 
+	  int i, 
+	  double w
+	  );
 
   /*
   Description:
-    Use a combination of scaling and reparametrization to set two
+    Use a combination of scaling and reparametrization to set two 
     rational Bezier weights to specified values.
   Parameters:
     i0 - [in] control point index (0 <= i0 < order, i0 != i1)
@@ -926,36 +925,36 @@ public:
     True if successful.  The returned bezier has the same locus but
     probably has a different parameterization.
   Remarks:
-    The i0-th cv will have weight w0 and the i1-rst cv will have
-    weight w1.  If v0 and v1 are the cv's input weights,
-    then  v0, v1, w0 and w1 must all be nonzero, and w0*v0
+    The i0-th cv will have weight w0 and the i1-rst cv will have 
+    weight w1.  If v0 and v1 are the cv's input weights, 
+    then  v0, v1, w0 and w1 must all be nonzero, and w0*v0 
     and w1*v1 must have the same sign.
 
     The equations
 
-          s * r^i0 = w0/v0
-          s * r^i1 = w1/v1
+	  s * r^i0 = w0/v0
+	  s * r^i1 = w1/v1
 
-    determine the scaling and reparametrization necessary to
-    change v0,v1 to w0,w1.
+    determine the scaling and reparametrization necessary to 
+    change v0,v1 to w0,w1. 
 
-    If the input Bezier has control vertices
+    If the input Bezier has control vertices 
+    
+	  (B_0, ..., B_d),
 
-          (B_0, ..., B_d),
-
-    then the output Bezier has control vertices
-
-          (s*B_0, ... s*r^i * B_i, ..., s*r^d * B_d).
+    then the output Bezier has control vertices 
+    
+	  (s*B_0, ... s*r^i * B_i, ..., s*r^d * B_d).
   See Also:
     ON_Bezier::Reparametrize
     ON_Bezier::ScaleConrolPoints
   */
   bool ChangeWeights(
-          int i0,
-          double w0,
-          int i1,
-          double w1
-          );
+	  int i0, 
+	  double w0, 
+	  int i1, 
+	  double w1
+	  );
 
   /*
   Description:
@@ -983,12 +982,12 @@ public:
     find multiple closest points, make a curve tree and use it.
     See the ON_BezierCurve::GetClosestPoint code for an example.
   */
-  bool GetClosestPoint(
-          ON_3dPoint P,
-          double* t,
-          double maximum_distance = 0.0,
-          const ON_Interval* sub_domain = 0
-          ) const;
+  bool GetClosestPoint( 
+	  ON_3dPoint P,
+	  double* t,
+	  double maximum_distance = 0.0,
+	  const ON_Interval* sub_domain = 0
+	  ) const;
 
 
   /*
@@ -1008,12 +1007,12 @@ public:
   Returns:
     True if a point is found.
   */
-  bool GetLocalClosestPoint(
-          ON_3dPoint P,
-          double seed_parameter,
-          double* t,
-          const ON_Interval* sub_domain = 0
-          ) const;
+  bool GetLocalClosestPoint( 
+	  ON_3dPoint P,
+	  double seed_parameter,
+	  double* t,
+	  const ON_Interval* sub_domain = 0
+	  ) const;
 
 
   /*
@@ -1031,30 +1030,30 @@ public:
     True if something is returned in (t,u,v).  Check
     answer.
   */
-  bool GetLocalCurveIntersection(
-          const ON_BezierCurve* other_bezcrv,
-          double this_seed_t,
-          double other_seed_t,
-          double* this_t,
-          double* other_t,
-          const ON_Interval* this_domain = 0,
-          const ON_Interval* other_domain = 0
-          ) const;
+  bool GetLocalCurveIntersection( 
+	  const ON_BezierCurve* other_bezcrv,
+	  double this_seed_t,
+	  double other_seed_t,
+	  double* this_t,
+	  double* other_t,
+	  const ON_Interval* this_domain = 0,
+	  const ON_Interval* other_domain = 0
+	  ) const;
 
   /*
   Description:
     Find bezier self intersection points.
   Parameters:
-    x - [out]
+    x - [out] 
        Intersection events are appended to this array.
     intersection_tolerance - [in]
   Returns:
     Number of intersection events appended to x.
   */
-  int IntersectSelf(
-          ON_SimpleArray<ON_X_EVENT>& x,
-          double intersection_tolerance = 0.0
-          ) const;
+  int IntersectSelf( 
+	  ON_SimpleArray<ON_X_EVENT>& x,
+	  double intersection_tolerance = 0.0
+	  ) const;
 
   /*
   Description:
@@ -1066,11 +1065,11 @@ public:
       on this curve to curveB is <= intersection tolerance,
       then the point will be part of an intersection event.
       If the input intersection_tolerance <= 0.0, then 0.001 is used.
-    overlap_tolerance - [in] If t1 and t2 are parameters of this
-      curve's intersection events and the distance from curve(t) to
+    overlap_tolerance - [in] If t1 and t2 are parameters of this 
+      curve's intersection events and the distance from curve(t) to 
       curveB is <= overlap_tolerance for every t1 <= t <= t2,
       then the event will be returened as an overlap event.
-      If the input overlap_tolerance <= 0.0, then
+      If the input overlap_tolerance <= 0.0, then 
       intersection_tolerance*2.0 is used.
     curveA_domain - [in] optional restriction on this bezier's domain
     curveB_domain - [in] optional restriction on bezierB domain
@@ -1081,14 +1080,14 @@ public:
     you should create curve trees and intersect them.
     See the IntersectBezierCurve code for an example.
   */
-  int IntersectCurve(
-          const ON_BezierCurve* bezierB,
-          ON_SimpleArray<ON_X_EVENT>& x,
-          double intersection_tolerance = 0.0,
-          double overlap_tolerance = 0.0,
-          const ON_Interval* bezierA_domain = 0,
-          const ON_Interval* bezierB_domain = 0
-          ) const;
+  int IntersectCurve( 
+	  const ON_BezierCurve* bezierB,
+	  ON_SimpleArray<ON_X_EVENT>& x,
+	  double intersection_tolerance = 0.0,
+	  double overlap_tolerance = 0.0,
+	  const ON_Interval* bezierA_domain = 0,
+	  const ON_Interval* bezierB_domain = 0
+	  ) const;
 
   /*
   Description:
@@ -1108,18 +1107,18 @@ public:
     True if something is returned in (t,u,v).  Check
     answer.
   */
-  bool GetLocalSurfaceIntersection(
-          const ON_BezierSurface* bezsrf,
-          double seed_t,
-          double seed_u,
-          double seed_v,
-          double* t,
-          double* u,
-          double* v,
-          const ON_Interval* tdomain = 0,
-          const ON_Interval* udomain = 0,
-          const ON_Interval* vdomain = 0
-          ) const;
+  bool GetLocalSurfaceIntersection( 
+	  const ON_BezierSurface* bezsrf,
+	  double seed_t,
+	  double seed_u,
+	  double seed_v,
+	  double* t,
+	  double* u,
+	  double* v,
+	  const ON_Interval* tdomain = 0,
+	  const ON_Interval* udomain = 0,
+	  const ON_Interval* vdomain = 0
+	  ) const;
 
 
   /*
@@ -1136,7 +1135,7 @@ public:
       intersection events and the distance from curve(t) to the
       surface is <= overlap_tolerance for every t1 <= t <= t2,
       then the event will be returened as an overlap event.
-      If the input overlap_tolerance <= 0.0, then
+      If the input overlap_tolerance <= 0.0, then 
       intersection_tolerance*2.0 is used.
     curveA_domain - [in] optional restriction on this curve's domain
     surfaceB_udomain - [in] optional restriction on surfaceB u domain
@@ -1145,19 +1144,19 @@ public:
     Number of intersection events appended to x.
   Remarks:
     If you are performing more than one intersection,
-    you should create curve and surface trees and
+    you should create curve and surface trees and 
     intersect them. See the IntersectBezierSurface code
     for an example.
   */
-  int IntersectSurface(
-          const ON_BezierSurface* bezsrfB,
-          ON_SimpleArray<ON_X_EVENT>& x,
-          double intersection_tolerance = 0.0,
-          double overlap_tolerance = 0.0,
-          const ON_Interval* bezierA_domain = 0,
-          const ON_Interval* bezsrfB_udomain = 0,
-          const ON_Interval* bezsrfB_vdomain = 0
-          ) const;
+  int IntersectSurface( 
+	  const ON_BezierSurface* bezsrfB,
+	  ON_SimpleArray<ON_X_EVENT>& x,
+	  double intersection_tolerance = 0.0,
+	  double overlap_tolerance = 0.0,
+	  const ON_Interval* bezierA_domain = 0,
+	  const ON_Interval* bezsrfB_udomain = 0,
+	  const ON_Interval* bezsrfB_vdomain = 0
+	  ) const;
 
 
   /////////////////////////////////////////////////////////////////
@@ -1262,27 +1261,27 @@ public:
   Returns:
     True if successful.
   */
-  bool Loft(
-    int count,
-    const ON_BezierCurve* const* curve_list
+  bool Loft( 
+    int count, 
+    const ON_BezierCurve* const* curve_list 
     );
 
   bool GetBBox(        // returns TRUE if successful
-         double*,      // minimum
-         double*,      // maximum
-         int bGrowBox = false  // TRUE means grow box
-         ) const;
+	 double*,      // minimum
+	 double*,      // maximum
+	 int bGrowBox = false  // TRUE means grow box
+	 ) const;
 
   bool GetBoundingBox(
-        ON_BoundingBox& bbox,
-        int bGrowBox
-        ) const;
+	ON_BoundingBox& bbox,
+	int bGrowBox
+	) const;
 
   ON_BoundingBox BoundingBox() const;
 
-  bool Transform(
-         const ON_Xform&
-         );
+  bool Transform( 
+	 const ON_Xform&
+	 );
 
   bool Morph( const ON_SpaceMorph& morph );
 
@@ -1300,11 +1299,11 @@ public:
   // Remarks:
   //   Uses ON_BezierSurface::Transform() function to calculate the result.
   bool Rotate(
-        double sin_angle,
-        double cos_angle,
-        const ON_3dVector& rotation_axis,
-        const ON_3dPoint& rotation_center
-        );
+	double sin_angle,
+	double cos_angle,
+	const ON_3dVector& rotation_axis,
+	const ON_3dPoint& rotation_center
+	);
 
   // Description:
   //   Rotates the bezier surface about the specified axis.  A positive
@@ -1319,10 +1318,10 @@ public:
   // Remarks:
   //   Uses ON_BezierSurface::Transform() function to calculate the result.
   bool Rotate(
-        double rotation_angle,
-        const ON_3dVector& rotation_axis,
-        const ON_3dPoint& rotation_center
-        );
+	double rotation_angle,
+	const ON_3dVector& rotation_axis,
+	const ON_3dPoint& rotation_center
+	);
 
   // Description:
   //   Translates the bezier surface along the specified vector.
@@ -1332,7 +1331,7 @@ public:
   //   TRUE if bezier surface successfully translated
   // Remarks:
   //   Uses ON_BezierSurface::Transform() function to calculate the result.
-  bool Translate(
+  bool Translate( 
     const ON_3dVector& translation_vector
     );
 
@@ -1345,7 +1344,7 @@ public:
   //   TRUE if bezier surface successfully scaled
   // Remarks:
   //   Uses ON_BezierSurface::Transform() function to calculate the result.
-  bool Scale(
+  bool Scale( 
     double scale_factor
     );
 
@@ -1354,39 +1353,39 @@ public:
     ) const;
 
   bool Reverse( int );  // reverse parameterizatrion
-                        // Domain changes from [a,b] to [-b,-a]
-
+			// Domain changes from [a,b] to [-b,-a]
+  
   bool Transpose(); // transpose surface parameterization (swap "s" and "t")
 
   bool Evaluate( // returns FALSE if unable to evaluate
-         double, double, // evaluation parameter
-         int,            // number of derivatives (>=0)
-         int,            // array stride (>=Dimension())
-         double*         // array of length stride*(ndir+1)*(ndir+2)/2
-         ) const;
+	 double, double, // evaluation parameter
+	 int,            // number of derivatives (>=0)
+	 int,            // array stride (>=Dimension())
+	 double*         // array of length stride*(ndir+1)*(ndir+2)/2
+	 ) const;
 
   ON_3dPoint PointAt(double s, double t) const;
 
   bool GetNurbForm( ON_NurbsSurface& ) const;
 
   bool IsRational() const;  // TRUE if NURBS curve is rational
-
-  int CVSize() const;       // number of doubles per control vertex
-                // = IsRational() ? Dim()+1 : Dim()
-
+  
+  int CVSize() const;       // number of doubles per control vertex 
+		// = IsRational() ? Dim()+1 : Dim()
+  
   int Order(        // order = degree + 1
-        int // dir
-        ) const;
-
+	int // dir
+	) const;
+	
   int Degree(       // degree = order - 1
-        int // dir
-        ) const;
+	int // dir
+	) const;
 
   /*
   Description:
     Expert user function to get a pointer to control vertex
     memory.  If you are not an expert user, please use
-    ON_BezierSurface::GetCV( ON_3dPoint& ) or
+    ON_BezierSurface::GetCV( ON_3dPoint& ) or 
     ON_BezierSurface::GetCV( ON_4dPoint& ).
   Parameters:
     cv_index0 - [in] (0 <= cv_index0 < m_order[0])
@@ -1394,10 +1393,10 @@ public:
   Returns:
     Pointer to control vertex.
   Remarks:
-    If the Bezier surface is rational, the format of the
+    If the Bezier surface is rational, the format of the 
     returned array is a homogeneos rational point with
-    length m_dim+1.  If the Bezier surface is not rational,
-    the format of the returned array is a nonrational
+    length m_dim+1.  If the Bezier surface is not rational, 
+    the format of the returned array is a nonrational 
     euclidean point with length m_dim.
   See Also
     ON_BezierSurface::CVStyle
@@ -1405,9 +1404,9 @@ public:
     ON_BezierSurface::Weight
   */
   double* CV(
-        int cv_index0,
-        int cv_index1
-        ) const;
+	int cv_index0,
+	int cv_index1
+	) const;
 
   /*
   Description:
@@ -1420,50 +1419,50 @@ public:
   ON::point_style CVStyle() const;
 
   double Weight(        // get value of control vertex weight
-        int,int          // CV index ( >= 0 and < CVCount() )
-        ) const;
+	int,int          // CV index ( >= 0 and < CVCount() )
+	) const;
 
   bool SetWeight(      // set value of control vertex weight
-        int,int,         // CV index ( >= 0 and < CVCount() )
-        double
-        );
+	int,int,         // CV index ( >= 0 and < CVCount() )
+	double
+	);
 
   bool SetCV(              // set a single control vertex
-        int,int,         // CV index ( >= 0 and < CVCount() )
-        ON::point_style, // style of input point
-        const double*     // value of control vertex
-        );
+	int,int,         // CV index ( >= 0 and < CVCount() )
+	ON::point_style, // style of input point
+	const double*     // value of control vertex
+	);
 
   bool SetCV(               // set a single control vertex
-        int,int,         // CV index ( >= 0 and < CVCount() )
-        const ON_3dPoint& // value of control vertex
-                           // If NURBS is rational, weight
-                           // will be set to 1.
-        );
+	int,int,         // CV index ( >= 0 and < CVCount() )
+	const ON_3dPoint& // value of control vertex
+			   // If NURBS is rational, weight
+			   // will be set to 1.
+	);
 
   bool SetCV(              // set a single control vertex
-        int,int,         // CV index ( >= 0 and < CVCount() )
-        const ON_4dPoint& // value of control vertex
-                          // If NURBS is not rational, euclidean
-                          // location of homogeneous point will
-                          // be used.
-        );
+	int,int,         // CV index ( >= 0 and < CVCount() )
+	const ON_4dPoint& // value of control vertex
+			  // If NURBS is not rational, euclidean
+			  // location of homogeneous point will
+			  // be used.
+	);
 
   bool GetCV(              // get a single control vertex
-        int,int,          // CV index ( >= 0 and < CVCount() )
-        ON::point_style, // style to use for output point
-        double*           // array of length >= CVSize()
-        ) const;
+	int,int,          // CV index ( >= 0 and < CVCount() )
+	ON::point_style, // style to use for output point
+	double*           // array of length >= CVSize()
+	) const;
 
   bool GetCV(              // get a single control vertex
-        int,int,         // CV index ( >= 0 and < CVCount() )
-        ON_3dPoint&      // gets euclidean cv when NURBS is rational
-        ) const;
+	int,int,         // CV index ( >= 0 and < CVCount() )
+	ON_3dPoint&      // gets euclidean cv when NURBS is rational
+	) const;
 
   bool GetCV(              // get a single control vertex
-        int,int,         // CV index ( >= 0 and < CVCount() )
-        ON_4dPoint&      // gets homogeneous cv
-        ) const;
+	int,int,         // CV index ( >= 0 and < CVCount() )
+	ON_4dPoint&      // gets homogeneous cv
+	) const;
 
   bool ZeroCVs(); // zeros control vertices and, if rational, sets weights to 1
 
@@ -1471,33 +1470,33 @@ public:
 
   bool MakeNonRational();
 
-  bool Split(
-         int, // 0 split at "u"=t, 1= split at "v"=t
-         double, // t = splitting parameter must 0 < t < 1
-         ON_BezierSurface&, // west/south side returned here (can pass *this)
-         ON_BezierSurface&  // east/north side returned here (can pass *this)
-         ) const;
+  bool Split( 
+	 int, // 0 split at "u"=t, 1= split at "v"=t
+	 double, // t = splitting parameter must 0 < t < 1
+	 ON_BezierSurface&, // west/south side returned here (can pass *this)
+	 ON_BezierSurface&  // east/north side returned here (can pass *this)
+	 ) const;
 
   bool Trim(
        int dir,
        const ON_Interval& domain
        );
 
-	// returns the isocurve.
+	// returns the isocurve.  
 	ON_BezierCurve* IsoCurve(
 		   int dir,    // 0 first parameter varies and second parameter is constant
-                   //   e.g., point on IsoCurve(0,c) at t is srf(t,c)
-                   // 1 first parameter is constant and second parameter varies
-                   //   e.g., point on IsoCurve(1,c) at t is srf(c,t)
+		   //   e.g., point on IsoCurve(0,c) at t is srf(t,c)
+		   // 1 first parameter is constant and second parameter varies
+		   //   e.g., point on IsoCurve(1,c) at t is srf(c,t)
        double c,    // value of constant parameter
 			 ON_BezierCurve* iso=NULL	// When NULL result is constructed on the heap.
 			 ) const;
 
 	bool IsSingular( // TRUE if surface side is collapsed to a point
-         int        // side of parameter space to test
-                   // 0 = south, 1 = east, 2 = north, 3 = west
-         ) const;
-
+	 int        // side of parameter space to test
+		   // 0 = south, 1 = east, 2 = north, 3 = west
+	 ) const;
+ 
 
   /////////////////////////////////////////////////////////////////
   // Tools for managing CV and knot memory
@@ -1536,14 +1535,14 @@ public:
     find multiple closest points, make a surface tree and use it.
     See the ON_BezierSurface::GetClosestPoint code for an example.
   */
-  bool GetClosestPoint(
-          ON_3dPoint P,
-          double* s,
-          double* t,
-          double maximum_distance = 0.0,
-          const ON_Interval* sub_domain0 = 0,
-          const ON_Interval* sub_domain1 = 0
-          ) const;
+  bool GetClosestPoint( 
+	  ON_3dPoint P,
+	  double* s,
+	  double* t,
+	  double maximum_distance = 0.0,
+	  const ON_Interval* sub_domain0 = 0,
+	  const ON_Interval* sub_domain1 = 0
+	  ) const;
 
   /*
   Description:
@@ -1567,15 +1566,15 @@ public:
   Returns:
     True if a point is found.
   */
-  bool GetLocalClosestPoint(
-          ON_3dPoint P,
-          double s_seed,
-          double t_seed,
-          double* s,
-          double* t,
-          const ON_Interval* sub_domain0 = 0,
-          const ON_Interval* sub_domain1 = 0
-          ) const;
+  bool GetLocalClosestPoint( 
+	  ON_3dPoint P,
+	  double s_seed,
+	  double t_seed,
+	  double* s,
+	  double* t,
+	  const ON_Interval* sub_domain0 = 0,
+	  const ON_Interval* sub_domain1 = 0
+	  ) const;
 
   /////////////////////////////////////////////////////////////////
   // Implementation
@@ -1592,7 +1591,7 @@ public:
   int     m_dim;           // >= 1
   int     m_is_rat;        // 0 = no, 1 = yes
   int     m_order[2];      // order = degree+1 >= 2
-  int     m_cv_stride[2];
+  int     m_cv_stride[2];  
   double* m_cv;
   int     m_cv_capacity;   // if 0, then destructor does not free m_cv
 #if 8 == ON_SIZEOF_POINTER
@@ -1634,7 +1633,7 @@ public:
     order1 - [in]
     order2 - [in]
   */
-  ON_BezierCage(
+  ON_BezierCage( 
     const ON_BoundingBox& bbox,
     int order0,
     int order1,
@@ -1648,27 +1647,27 @@ public:
     to an eight sided box.
   Parameters:
     box_corners - [in] 8 points that define corners of the
-                       target volume.
+		       target volume.
 
-            7______________6
-            |\             |\
-            | \            | \
-            |  \ _____________\
-            |   4          |   5
-            |   |          |   |
-            |   |          |   |
-            3---|----------2   |
-            \   |          \   |
-             \  |t          \  |
-            s \ |            \ |
-               \0_____________\1
-                       r
+	    7______________6
+	    |\             |\
+	    | \            | \
+	    |  \ _____________\
+	    |   4          |   5
+	    |   |          |   |
+	    |   |          |   |
+	    3---|----------2   |
+	    \   |          \   |
+	     \  |t          \  |
+	    s \ |            \ |
+	       \0_____________\1
+		       r
 
     order0 - [in]
     order1 - [in]
     order2 - [in]
   */
-  ON_BezierCage(
+  ON_BezierCage( 
     const ON_3dPoint* box_corners,
     int order0,
     int order1,
@@ -1731,7 +1730,7 @@ public:
     Create a Bezier volume with corners defined by a bounding box.
   Parameters:
     bbox - [in] target bounding box - the bezier will
-               map the unit cube onto this bounding box.
+	       map the unit cube onto this bounding box.
     order0 - [in]
     order1 - [in]
     order2 - [in]
@@ -1749,19 +1748,19 @@ public:
   Parameters:
     box_corners - [in] 8 points that define corners of the volume
 
-            7______________6
-            |\             |\
-            | \            | \
-            |  \ _____________\
-            |   4          |   5
-            |   |          |   |
-            |   |          |   |
-            3---|----------2   |
-            \   |          \   |
-             \  |t          \  |
-            s \ |            \ |
-               \0_____________\1
-                       r
+	    7______________6
+	    |\             |\
+	    | \            | \
+	    |  \ _____________\
+	    |   4          |   5
+	    |   |          |   |
+	    |   |          |   |
+	    3---|----------2   |
+	    \   |          \   |
+	     \  |t          \  |
+	    s \ |            \ |
+	       \0_____________\1
+		       r
 
   */
   bool Create(
@@ -1821,20 +1820,20 @@ public:
     boxmin - [in] array of Dimension() doubles
     boxmax - [in] array of Dimension() doubles
     bGrowBox =  [in] if true and the input is a valid box
-                          then the input box is grown to
-                          include this object's bounding box.
+			  then the input box is grown to
+			  include this object's bounding box.
   Returns:
     true if successful.
   */
   bool GetBBox(
-         double* boxmin,
-         double* boxmax,
-         int bGrowBox = false
-         ) const;
+	 double* boxmin,
+	 double* boxmax,
+	 int bGrowBox = false 
+	 ) const;
 
-  bool Transform(
-         const ON_Xform& xform
-         );
+  bool Transform( 
+	 const ON_Xform& xform
+	 );
 
   bool Morph( const ON_SpaceMorph& morph );
 
@@ -1852,11 +1851,11 @@ public:
   // Remarks:
   //   Uses ON_BezierCage::Transform() function to calculate the result.
   bool Rotate(
-        double sin_angle,
-        double cos_angle,
-        const ON_3dVector& rotation_axis,
-        const ON_3dPoint& rotation_center
-        );
+	double sin_angle,
+	double cos_angle,
+	const ON_3dVector& rotation_axis,
+	const ON_3dPoint& rotation_center
+	);
 
   // Description:
   //   Rotates the bezier surface about the specified axis.  A positive
@@ -1871,10 +1870,10 @@ public:
   // Remarks:
   //   Uses ON_BezierCage::Transform() function to calculate the result.
   bool Rotate(
-        double rotation_angle,
-        const ON_3dVector& rotation_axis,
-        const ON_3dPoint& rotation_center
-        );
+	double rotation_angle,
+	const ON_3dVector& rotation_axis,
+	const ON_3dPoint& rotation_center
+	);
 
   // Description:
   //   Translates the bezier surface along the specified vector.
@@ -1884,7 +1883,7 @@ public:
   //   TRUE if bezier surface successfully translated
   // Remarks:
   //   Uses ON_BezierCage::Transform() function to calculate the result.
-  bool Translate(
+  bool Translate( 
     const ON_3dVector& translation_vector
     );
 
@@ -1897,7 +1896,7 @@ public:
   //   TRUE if bezier surface successfully scaled
   // Remarks:
   //   Uses ON_BezierCage::Transform() function to calculate the result.
-  bool Scale(
+  bool Scale( 
     double scale_factor
     );
 
@@ -1906,14 +1905,14 @@ public:
     ) const;
 
   // returns FALSE if unable to evaluate
-  bool Evaluate(
-         double r,
-         double s,
-         double t,
-         int der_count,
-         int v_stride,
-         double* v        // array of length stride*(ndir+1)*(ndir+2)/2
-         ) const;
+  bool Evaluate( 
+	 double r, 
+	 double s, 
+	 double t,
+	 int der_count,
+	 int v_stride,
+	 double* v        // array of length stride*(ndir+1)*(ndir+2)/2
+	 ) const;
 
   /*
   Description:
@@ -1924,10 +1923,10 @@ public:
     Value of the bezier volume map at (r,s,t).
   */
   ON_3dPoint PointAt(
-         double r,
-         double s,
-         double t
-         ) const;
+	 double r, 
+	 double s, 
+	 double t
+	 ) const;
 
   /*
   Description:
@@ -1938,32 +1937,32 @@ public:
     Value of the bezier volume map at (rst.x,rst.y,rst.z).
   */
   ON_3dPoint PointAt(
-         ON_3dPoint rst
-         ) const;
+	 ON_3dPoint rst
+	 ) const;
 
   bool IsRational() const;  // TRUE if NURBS curve is rational
-
+  
   bool IsSingular( // TRUE if surface side is collapsed to a point
-        int        // side of parameter space to test
-                   // 0 = south, 1 = east, 2 = north, 3 = west
-        ) const;
+	int        // side of parameter space to test
+		   // 0 = south, 1 = east, 2 = north, 3 = west
+	) const;
 
-  int CVSize() const;       // number of doubles per control vertex
-                // = IsRational() ? Dim()+1 : Dim()
-
+  int CVSize() const;       // number of doubles per control vertex 
+		// = IsRational() ? Dim()+1 : Dim()
+  
   int Order(        // order = degree + 1
-        int // dir
-        ) const;
-
+	int // dir
+	) const;
+	
   int Degree(       // degree = order - 1
-        int // dir
-        ) const;
+	int // dir
+	) const;
 
   /*
   Description:
     Expert user function to get a pointer to control vertex
     memory.  If you are not an expert user, please use
-    ON_BezierCage::GetCV( ON_3dPoint& ) or
+    ON_BezierCage::GetCV( ON_3dPoint& ) or 
     ON_BezierCage::GetCV( ON_4dPoint& ).
   Parameters:
     cv_index0 - [in] (0 <= cv_index0 < m_order[0])
@@ -1971,10 +1970,10 @@ public:
   Returns:
     Pointer to control vertex.
   Remarks:
-    If the Bezier surface is rational, the format of the
+    If the Bezier surface is rational, the format of the 
     returned array is a homogeneos rational point with
-    length m_dim+1.  If the Bezier surface is not rational,
-    the format of the returned array is a nonrational
+    length m_dim+1.  If the Bezier surface is not rational, 
+    the format of the returned array is a nonrational 
     euclidean point with length m_dim.
   See Also
     ON_BezierCage::CVStyle
@@ -1982,10 +1981,10 @@ public:
     ON_BezierCage::Weight
   */
   double* CV(
-        int i,
-        int j,
-        int k
-        ) const;
+	int i,
+	int j,
+	int k
+	) const;
 
   /*
   Description:
@@ -1998,35 +1997,35 @@ public:
   ON::point_style CVStyle() const;
 
   double Weight(        // get value of control vertex weight
-        int i,
-        int j,
-        int k
-        ) const;
+	int i,
+	int j,
+	int k
+	) const;
 
   bool SetWeight(      // set value of control vertex weight
-        int i,
-        int j,
-        int k,
-        double w
-        );
+	int i,
+	int j,
+	int k,
+	double w
+	);
 
   bool SetCV(              // set a single control vertex
-        int i,
-        int j,
-        int k,
-        ON::point_style, // style of input point
-        const double*     // value of control vertex
-        );
+	int i,
+	int j,
+	int k,
+	ON::point_style, // style of input point
+	const double*     // value of control vertex
+	);
 
   // set a single control vertex
   // If NURBS is rational, weight
   // will be set to 1.
   bool SetCV(
-        int i,
-        int j,
-        int k,
-        const ON_3dPoint& point
-        );
+	int i,
+	int j,
+	int k,
+	const ON_3dPoint& point
+	);
 
   // set a single control vertex
   // value of control vertex
@@ -2034,33 +2033,33 @@ public:
   // location of homogeneous point will
   // be used.
   bool SetCV(
-        int i,
-        int j,
-        int k,
-        const ON_4dPoint& hpoint
-        );
+	int i,
+	int j,
+	int k,
+	const ON_4dPoint& hpoint
+	);
 
   bool GetCV(              // get a single control vertex
-        int i,
-        int j,
-        int k,
-        ON::point_style, // style to use for output point
-        double*           // array of length >= CVSize()
-        ) const;
+	int i,
+	int j,
+	int k,
+	ON::point_style, // style to use for output point
+	double*           // array of length >= CVSize()
+	) const;
 
   bool GetCV(              // get a single control vertex
-        int i,
-        int j,
-        int k,
-        ON_3dPoint&      // gets euclidean cv when NURBS is rational
-        ) const;
+	int i,
+	int j,
+	int k,
+	ON_3dPoint&      // gets euclidean cv when NURBS is rational
+	) const;
 
   bool GetCV(              // get a single control vertex
-        int i,
-        int j,
-        int k,
-        ON_4dPoint&      // gets homogeneous cv
-        ) const;
+	int i,
+	int j,
+	int k,
+	ON_4dPoint&      // gets homogeneous cv
+	) const;
 
   bool ZeroCVs(); // zeros control vertices and, if rational, sets weights to 1
 
@@ -2111,45 +2110,45 @@ public:
   Description:
     Override of virtual ON_SpaceMorph::MorphPoint.
   Parameters:
-    point - [in]
+    point - [in] 
       (x,y,z) gets mapped to m_rst2xyz(m_xyz2rst*point);
   */
-  ON_3dPoint MorphPoint(
-            ON_3dPoint point
-            ) const;
+  ON_3dPoint MorphPoint( 
+	    ON_3dPoint point 
+	    ) const;
 
   /*
   Description:
     Create a Bezier volume.
   Parameters:
-    P0 - [in]
-    P1 - [in]
-    P2 - [in]
-    P3 - [in]
-         P0,P1,P2,P3 defines a parallepiped in world space. The morph
-         maps this parallepiped to the (0,1)x(0,1)x(0,1) unit cube
-         and then applies the BezierCage map.
+    P0 - [in] 
+    P1 - [in] 
+    P2 - [in] 
+    P3 - [in] 
+	 P0,P1,P2,P3 defines a parallepiped in world space. The morph
+	 maps this parallepiped to the (0,1)x(0,1)x(0,1) unit cube
+	 and then applies the BezierCage map.
+	      
 
-
-             ______________
-            |\             |\
-            | \            | \
-            |  \P3____________\
-            |   |          |   |
-            |   |          |   |
-            |   |          |   |
-           P2---|----------    |
-            \   |          \   |
-             \  |z          \  |
-            y \ |            \ |
-               \P0____________P1
-                       x
+	     ______________
+	    |\             |\
+	    | \            | \
+	    |  \P3____________\
+	    |   |          |   |
+	    |   |          |   |
+	    |   |          |   |
+	   P2---|----------    |
+	    \   |          \   |
+	     \  |z          \  |
+	    y \ |            \ |
+	       \P0____________P1
+		       x
 
 
     point_countX - [in]
     point_countY - [in]
     point_countZ - [in]
-      Number of control points in the bezier volume map.  The
+      Number of control points in the bezier volume map.  The 
       bezier volume in the returned morph is the identity map
       which can be modified as needed.
   Returns:
@@ -2158,7 +2157,7 @@ public:
     ON_BezierCage::SetBezierCage
     ON_BezierCage::SetXform
   */
-  bool Create(
+  bool Create( 
     ON_3dPoint P0,
     ON_3dPoint P1,
     ON_3dPoint P2,
@@ -2194,7 +2193,7 @@ public:
       to world space.
   Returns
     True if current transformation matrix and input
-    bezier volume are valid.  In all cases, the
+    bezier volume are valid.  In all cases, the 
     morph's m_rst2xyz member is set.
   See Also:
     ON_BezierCage::Create
@@ -2232,7 +2231,7 @@ private:
 #if defined(ON_DLL_TEMPLATE)
 
 // This stuff is here because of a limitation in the way Microsoft
-// handles templates and DLLs.  See Microsoft's knowledge base
+// handles templates and DLLs.  See Microsoft's knowledge base 
 // article ID Q168958 for details.
 #pragma warning( push )
 #pragma warning( disable : 4231 )

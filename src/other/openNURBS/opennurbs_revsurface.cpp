@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -40,11 +40,11 @@ ON_RevSurface* ON_RevSurface::New( const ON_RevSurface& rev_surface )
   return new ON_RevSurface(rev_surface);
 }
 
-ON_RevSurface::ON_RevSurface() : m_curve(0),
-                                 m_axis( ON_origin, ON_zaxis ),
-                                 m_angle( 0.0, 2.0*ON_PI ),
-                                 m_t( 0.0, 2.0*ON_PI ),
-                                 m_bTransposed(0)
+ON_RevSurface::ON_RevSurface() : m_curve(0), 
+				 m_axis( ON_origin, ON_zaxis ), 
+				 m_angle( 0.0, 2.0*ON_PI ),
+				 m_t( 0.0, 2.0*ON_PI ),
+				 m_bTransposed(0)
 {
   ON__SET__THIS__PTR(m_s_ON_RevSurface_ptr);
 }
@@ -103,11 +103,11 @@ ON__UINT32 ON_RevSurface::DataCRC(ON__UINT32 current_remainder) const
 
 ON_RevSurface& ON_RevSurface::operator=( const ON_RevSurface& src )
 {
-  if ( this != &src )
+  if ( this != &src ) 
   {
     Destroy();
     ON_Surface::operator=(src);
-    if ( src.m_curve )
+    if ( src.m_curve ) 
       m_curve = src.m_curve->Duplicate();
     m_axis = src.m_axis;
     m_angle = src.m_angle;
@@ -145,9 +145,9 @@ BOOL ON_RevSurface::SetAngleDegrees (
   double end_angle_degrees
   )
 {
-  return SetAngleRadians(
-    start_angle_degrees*ON_PI/180.0,
-    end_angle_degrees*ON_PI/180.0
+  return SetAngleRadians( 
+    start_angle_degrees*ON_PI/180.0, 
+    end_angle_degrees*ON_PI/180.0 
     );
 }
 
@@ -183,7 +183,7 @@ BOOL ON_RevSurface::IsValid( ON_TextLog* text_log ) const
   {
     if ( text_log )
       text_log->Print( "ON_RevSurface.m_angle = (%g,%g) (should be an increasing interval)\n",
-                       m_angle[0],m_angle[1]);
+		       m_angle[0],m_angle[1]);
     return false;
   }
   double length = m_angle.Length();
@@ -203,7 +203,7 @@ BOOL ON_RevSurface::IsValid( ON_TextLog* text_log ) const
   {
     if ( text_log )
       text_log->Print( "ON_RevSurface.m_t = (%g,%g) (should be an increasing interval)\n",
-                       m_t[0],m_t[1]);
+		       m_t[0],m_t[1]);
     return false;
   }
   return true;
@@ -229,25 +229,25 @@ void ON_RevSurface::Dump( ON_TextLog& dump ) const
     dump.PushIndent();
     m_curve->Dump(dump);
     dump.PopIndent();
-  }
+  }  
 }
 
 BOOL ON_RevSurface::Write( ON_BinaryArchive& file ) const
 {
   BOOL rc = file.Write3dmChunkVersion(2,0);
-  if (rc)
+  if (rc) 
   {
     rc = file.WriteLine( m_axis );
     rc = file.WriteInterval( m_angle );
     rc = file.WriteInterval( m_t );
     rc = file.WriteBoundingBox( m_bbox );
     rc = file.WriteInt( m_bTransposed );
-    if ( m_curve )
+    if ( m_curve ) 
     {
       rc = file.WriteChar((char)1);
       if (rc) rc = file.WriteObject(*m_curve);
     }
-    else
+    else 
     {
       rc = file.WriteChar((char)0);
     }
@@ -262,28 +262,28 @@ BOOL ON_RevSurface::Read( ON_BinaryArchive& file )
   int minor_version = 0;
   char bHaveCurve = 0;
   BOOL rc = file.Read3dmChunkVersion(&major_version,&minor_version);
-  if (rc && major_version == 1)
+  if (rc && major_version == 1) 
   {
     rc = file.ReadLine( m_axis );
     rc = file.ReadInterval( m_angle );
     rc = file.ReadBoundingBox( m_bbox );
     rc = file.ReadInt( &m_bTransposed );
     rc = file.ReadChar( &bHaveCurve );
-    if ( bHaveCurve )
+    if ( bHaveCurve ) 
     {
       ON_Object* obj = 0;
       rc = file.ReadObject(&obj);
-      if ( obj )
+      if ( obj ) 
       {
-        m_curve = ON_Curve::Cast(obj);
-        if ( !m_curve )
-          delete obj;
+	m_curve = ON_Curve::Cast(obj);
+	if ( !m_curve )
+	  delete obj;
       }
     }
     m_t[0] = m_angle.Min();
     m_t[1] = m_angle.Max();
   }
-  else if (rc && major_version == 2)
+  else if (rc && major_version == 2) 
   {
     rc = file.ReadLine( m_axis );
     rc = file.ReadInterval( m_angle );
@@ -291,15 +291,15 @@ BOOL ON_RevSurface::Read( ON_BinaryArchive& file )
     rc = file.ReadBoundingBox( m_bbox );
     rc = file.ReadInt( &m_bTransposed );
     rc = file.ReadChar( &bHaveCurve );
-    if ( bHaveCurve )
+    if ( bHaveCurve ) 
     {
       ON_Object* obj = 0;
       rc = file.ReadObject(&obj);
-      if ( obj )
+      if ( obj ) 
       {
-        m_curve = ON_Curve::Cast(obj);
-        if ( !m_curve )
-          delete obj;
+	m_curve = ON_Curve::Cast(obj);
+	if ( !m_curve )
+	  delete obj;
       }
     }
   }
@@ -356,13 +356,13 @@ BOOL ON_RevSurface::Evaluate( // returns false if unable to evaluate
        int v_stride,            // array stride (>=Dimension())
        double* v,        // array of length stride*(ndir+1)*(ndir+2)/2
        int side,        // optional - determines which quadrant to evaluate from
-                       //         0 = default
-                       //         1 from NE quadrant
-                       //         2 from NW quadrant
-                       //         3 from SW quadrant
-                       //         4 from SE quadrant
+		       //         0 = default
+		       //         1 from NE quadrant
+		       //         2 from NW quadrant
+		       //         3 from SW quadrant
+		       //         4 from SE quadrant
        int* hint       // optional - evaluation hint (int[2]) used to speed
-                       //            repeated evaluations
+		       //            repeated evaluations
        ) const
 {
   bool rc = false;
@@ -372,12 +372,12 @@ BOOL ON_RevSurface::Evaluate( // returns false if unable to evaluate
   int i, j, k, src_i, dst_i;
   ON_3dPoint pt;
 
-  if ( m_bTransposed )
+  if ( m_bTransposed ) 
   {
     x = s; s = t; t = x;
     if ( side == 2 ) side = 4; else if ( side == 4 ) side = 2;
   }
-
+  
   if ( m_t != m_angle )
   {
     if ( m_t.m_t[1] != m_t.m_t[0] )
@@ -389,17 +389,17 @@ BOOL ON_RevSurface::Evaluate( // returns false if unable to evaluate
     }
   }
 
-
+  
   double a = cos(s);
   double b = sin(s);
   const double ca[4] = {a, -b, -a,  b}; // cosine derivatives
   const double sa[4] = {b,  a, -b, -a}; // sine derivatives
 
   const int curve_dim = m_curve ? m_curve->Dimension() : 0;
-  if ( curve_dim == 2 || curve_dim == 3 )
+  if ( curve_dim == 2 || curve_dim == 3 ) 
   {
     int curve_side = 0;
-    switch(side)
+    switch(side) 
     {
     case 1:
     case 2:
@@ -411,7 +411,7 @@ BOOL ON_RevSurface::Evaluate( // returns false if unable to evaluate
       break;
     }
     rc = m_curve->Evaluate( t, der_count, v_stride, v, curve_side, hint )?true:false;
-    if ( rc )
+    if ( rc ) 
     {
       ON_3dVector zaxis = m_axis.Tangent();
       ON_3dVector xaxis, yaxis;
@@ -420,74 +420,74 @@ BOOL ON_RevSurface::Evaluate( // returns false if unable to evaluate
       yaxis = ON_CrossProduct(zaxis,xaxis);
 
       // move curve derivatives to pure t partial spaces in v[]
-      if ( curve_dim == 2 )
+      if ( curve_dim == 2 ) 
       {
-        for ( i = der_count; i >= 1; i-- )
-        {
-          // move curve derivative to proper spots
-          src_i = v_stride*i;
-          dst_i = v_stride*((i+1)*(i+2)/2 - 1);
-          v[dst_i++] = v[src_i++];
-          v[dst_i++] = 0.0;
-          v[dst_i]   = v[src_i];
-        }
+	for ( i = der_count; i >= 1; i-- ) 
+	{
+	  // move curve derivative to proper spots
+	  src_i = v_stride*i;
+	  dst_i = v_stride*((i+1)*(i+2)/2 - 1);
+	  v[dst_i++] = v[src_i++];
+	  v[dst_i++] = 0.0;
+	  v[dst_i]   = v[src_i];
+	}
       }
-      else
+      else 
       {
-        for ( i = der_count; i >= 1; i-- )
-        {
-          // move curve derivative to proper spots
-          src_i = v_stride*i;
-          dst_i = v_stride*((i+1)*(i+2)/2 - 1);
-          v[dst_i++] = v[src_i++];
-          v[dst_i++] = v[src_i++];
-          v[dst_i]   = v[src_i];
-        }
+	for ( i = der_count; i >= 1; i-- ) 
+	{
+	  // move curve derivative to proper spots
+	  src_i = v_stride*i;
+	  dst_i = v_stride*((i+1)*(i+2)/2 - 1);
+	  v[dst_i++] = v[src_i++];
+	  v[dst_i++] = v[src_i++];
+	  v[dst_i]   = v[src_i];
+	}
       }
 
       // convert location coordinates to local frame with origin at m_axis.from
       {
-        pt = ON_3dPoint(v)-m_axis.from;
-        v[0] = pt*xaxis;
-        v[1] = pt*yaxis;
-        v[2] = pt*zaxis;
+	pt = ON_3dPoint(v)-m_axis.from;
+	v[0] = pt*xaxis;
+	v[1] = pt*yaxis;
+	v[2] = pt*zaxis;
       }
 
       // convert curve derivative coordinates to local frame
-      for ( i = 1; i <= der_count; i++ )
+      for ( i = 1; i <= der_count; i++ ) 
       {
-        dst_i = v_stride*((i+1)*(i+2)/2 - 1);
-        pt = ON_3dPoint(v+dst_i); // pt = curve derivative in world coords
-        v[dst_i++] = pt*xaxis;
-        v[dst_i++] = pt*yaxis;
-        v[dst_i]   = pt*zaxis;
+	dst_i = v_stride*((i+1)*(i+2)/2 - 1);
+	pt = ON_3dPoint(v+dst_i); // pt = curve derivative in world coords
+	v[dst_i++] = pt*xaxis;
+	v[dst_i++] = pt*yaxis;
+	v[dst_i]   = pt*zaxis;
       }
 
       for ( i = der_count; i >= 0; i-- )
       {
-        // i = total order of derivative
-        double f = 1.0; // f = chain rule scale factor
-        for ( j = i; j >= 0; j-- )
-        {
-          // j = number of partials w.r.t curve parameter
-          // i-j = number of partials w.r.t angular parameter
-          dst_i = v_stride*(i*(i+1)/2 + j); //
-          src_i = v_stride*((j+1)*(j+2)/2 - 1); // curve derivative
-          k=(i-j)%4;
-          a = f*ca[k];
-          b = f*sa[k];
-          f *= ds;
+	// i = total order of derivative
+	double f = 1.0; // f = chain rule scale factor
+	for ( j = i; j >= 0; j-- )
+	{
+	  // j = number of partials w.r.t curve parameter
+	  // i-j = number of partials w.r.t angular parameter
+	  dst_i = v_stride*(i*(i+1)/2 + j); // 
+	  src_i = v_stride*((j+1)*(j+2)/2 - 1); // curve derivative
+	  k=(i-j)%4;
+	  a = f*ca[k];
+	  b = f*sa[k];
+	  f *= ds;
 
-          // calculate derivative in local frame
-          x = a*v[src_i] - b*v[src_i+1];
-          y = b*v[src_i] + a*v[src_i+1];
-          z = (j<i) ? 0.0 : v[src_i+2];
-          // store answer in world coordinates
-          pt = x*xaxis + y*yaxis + z*zaxis;
-          v[dst_i++] = pt.x;
-          v[dst_i++] = pt.y;
-          v[dst_i]   = pt.z;
-        }
+	  // calculate derivative in local frame
+	  x = a*v[src_i] - b*v[src_i+1];
+	  y = b*v[src_i] + a*v[src_i+1];
+	  z = (j<i) ? 0.0 : v[src_i+2];
+	  // store answer in world coordinates
+	  pt = x*xaxis + y*yaxis + z*zaxis;
+	  v[dst_i++] = pt.x;
+	  v[dst_i++] = pt.y;
+	  v[dst_i]   = pt.z;
+	}
       }
 
       // translate location
@@ -495,22 +495,22 @@ BOOL ON_RevSurface::Evaluate( // returns false if unable to evaluate
       v[1] += m_axis.from.y;
       v[2] += m_axis.from.z;
 
-      if ( m_bTransposed )
+      if ( m_bTransposed ) 
       {
-        for ( i = 1; i <= der_count; i++ )
-        {
-          for ( j = 0, k = i; j < k; j++, k-- )
-          {
-            dst_i = i*(i+1)/2;
-            src_i = dst_i + k;
-            dst_i += j;
-            src_i *= v_stride;
-            dst_i *= v_stride;
-            x = v[src_i]; v[src_i++] = v[dst_i]; v[dst_i++] = x;
-            x = v[src_i]; v[src_i++] = v[dst_i]; v[dst_i++] = x;
-            x = v[src_i]; v[src_i]   = v[dst_i]; v[dst_i]   = x;
-          }
-        }
+	for ( i = 1; i <= der_count; i++ ) 
+	{
+	  for ( j = 0, k = i; j < k; j++, k-- ) 
+	  {
+	    dst_i = i*(i+1)/2;
+	    src_i = dst_i + k;
+	    dst_i += j;
+	    src_i *= v_stride;
+	    dst_i *= v_stride;
+	    x = v[src_i]; v[src_i++] = v[dst_i]; v[dst_i++] = x;
+	    x = v[src_i]; v[src_i++] = v[dst_i]; v[dst_i++] = x;
+	    x = v[src_i]; v[src_i]   = v[dst_i]; v[dst_i]   = x;
+	  }
+	}
       }
     }
   }
@@ -529,11 +529,11 @@ public:
   int DimensionB() const;
   int DimensionC() const;
   bool Evaluate( double,        // a
-                 const double*, // A
-                 double,        // b
-                 const double*, // B
-                 double*        // C
-                );
+		 const double*, // A
+		 double,        // b
+		 const double*, // B
+		 double*        // C
+		);
 };
 
 int ON_RevolutionTensor::DimensionA() const
@@ -567,7 +567,7 @@ bool ON_RevolutionTensor::Evaluate( double a, const double* ArcPoint, double b, 
 		B[2] = b*ShapePoint[2];
 		ShapePoint = B;
 	}
-
+	
 
 	x = (ShapePoint[0] - O.x)*X.x + (ShapePoint[1] - O.y)*X.y + (ShapePoint[2] - O.z)*X.z;
 	y = (ShapePoint[0] - O.x)*Y.x + (ShapePoint[1] - O.y)*Y.y + (ShapePoint[2] - O.z)*Y.z;
@@ -589,78 +589,78 @@ bool ON_RevolutionTensor::Evaluate( double a, const double* ArcPoint, double b, 
 int ON_RevSurface::GetNurbForm(class ON_NurbsSurface& srf , double tolerance ) const
 {
   int rc = 0;
-  if ( 0 != m_curve )
+  if ( 0 != m_curve ) 
   {
     ON_NurbsCurve a, c;
     ON_Arc arc;
     arc.plane.CreateFromNormal( ON_origin, ON_zaxis );
     arc.radius = 1.0;
     arc.SetAngleRadians(m_angle[1]-m_angle[0]);
-    if ( arc.GetNurbForm(a) )
+    if ( arc.GetNurbForm(a) ) 
     {
       if ( m_t.IsIncreasing() )
-        a.SetDomain( m_t[0], m_t[1] );
+	a.SetDomain( m_t[0], m_t[1] );
       rc = m_curve->GetNurbForm(c,tolerance);
-      if (rc)
+      if (rc) 
       {
-        if ( m_angle[0] != 0.0 )
-        {
-          c.Rotate( m_angle[0], m_axis.Direction(), m_axis.from );
-        }
-        ON_RevolutionTensor rho;
-        rho.O = m_axis.from;
-        rho.Z = m_axis.Direction();
-        rho.Z.Unitize();
-        rho.X.PerpendicularTo(rho.Z);
-        rho.X.Unitize();
-        rho.Y = ON_CrossProduct(rho.Z,rho.X);
-        rho.Y.Unitize();
-        srf.TensorProduct( a, c, rho );
+	if ( m_angle[0] != 0.0 )
+	{
+	  c.Rotate( m_angle[0], m_axis.Direction(), m_axis.from );
+	}
+	ON_RevolutionTensor rho;
+	rho.O = m_axis.from;
+	rho.Z = m_axis.Direction();
+	rho.Z.Unitize();
+	rho.X.PerpendicularTo(rho.Z);
+	rho.X.Unitize();
+	rho.Y = ON_CrossProduct(rho.Z,rho.X);
+	rho.Y.Unitize();
+	srf.TensorProduct( a, c, rho );
 
-        // make singular points "spot on"
-        ON_3dPoint C0 = c.PointAtStart();
-        ON_3dPoint C1 = c.PointAtEnd();
-        ON_3dPoint A0, A1;
-        ON_4dPoint CV;
-        double t0 = ON_UNSET_VALUE;
-        double t1 = ON_UNSET_VALUE;
-        if (m_axis.ClosestPointTo(C0,&t0) && ON_IsValid(t0) )
-        {
-          A0 = m_axis.PointAt(t0);
-          if ( C0.DistanceTo(A0) <= ON_ZERO_TOLERANCE )
-          {
-            // SouthPole
-            int j = 0;
-            for ( int i = 0; i < srf.m_cv_count[0]; i++ )
-            {
-              CV.w = srf.Weight(i,j);
-              CV.x = CV.w*A0.x;
-              CV.y = CV.w*A0.y;
-              CV.z = CV.w*A0.z;
-              srf.SetCV(i,j,CV);
-            }
-          }
-        }
-        if (m_axis.ClosestPointTo(C1,&t1) && ON_IsValid(t1) )
-        {
-          A1 = m_axis.PointAt(t1);
-          if ( C1.DistanceTo(A1) <= ON_ZERO_TOLERANCE )
-          {
-            // NorthPole
-            int j = srf.m_cv_count[1]-1;
-            for ( int i = 0; i < srf.m_cv_count[0]; i++ )
-            {
-              CV.w = srf.Weight(i,j);
-              CV.x = CV.w*A1.x;
-              CV.y = CV.w*A1.y;
-              CV.z = CV.w*A1.z;
-              srf.SetCV(i,j,CV);
-            }
-          }
-        }
+	// make singular points "spot on"
+	ON_3dPoint C0 = c.PointAtStart();
+	ON_3dPoint C1 = c.PointAtEnd();
+	ON_3dPoint A0, A1;
+	ON_4dPoint CV;
+	double t0 = ON_UNSET_VALUE;
+	double t1 = ON_UNSET_VALUE;
+	if (m_axis.ClosestPointTo(C0,&t0) && ON_IsValid(t0) )
+	{
+	  A0 = m_axis.PointAt(t0);
+	  if ( C0.DistanceTo(A0) <= ON_ZERO_TOLERANCE )
+	  {
+	    // SouthPole
+	    int j = 0;
+	    for ( int i = 0; i < srf.m_cv_count[0]; i++ )
+	    {
+	      CV.w = srf.Weight(i,j);
+	      CV.x = CV.w*A0.x;
+	      CV.y = CV.w*A0.y;
+	      CV.z = CV.w*A0.z;
+	      srf.SetCV(i,j,CV);
+	    }
+	  }
+	}
+	if (m_axis.ClosestPointTo(C1,&t1) && ON_IsValid(t1) )
+	{
+	  A1 = m_axis.PointAt(t1);
+	  if ( C1.DistanceTo(A1) <= ON_ZERO_TOLERANCE )
+	  {
+	    // NorthPole
+	    int j = srf.m_cv_count[1]-1;
+	    for ( int i = 0; i < srf.m_cv_count[0]; i++ )
+	    {
+	      CV.w = srf.Weight(i,j);
+	      CV.x = CV.w*A1.x;
+	      CV.y = CV.w*A1.y;
+	      CV.z = CV.w*A1.z;
+	      srf.SetCV(i,j,CV);
+	    }
+	  }
+	}
 
-        if ( m_bTransposed )
-          srf.Transpose();
+	if ( m_bTransposed )
+	  srf.Transpose();
       }
     }
   }
@@ -749,7 +749,7 @@ ON_Curve* ON_RevSurface::IsoCurve( int dir, double c ) const
     return NULL;
 
   ON_Curve* crv = 0;
-
+  
   if ( m_bTransposed )
     dir = 1-dir;
 
@@ -773,8 +773,8 @@ ON_Curve* ON_RevSurface::IsoCurve( int dir, double c ) const
       circle.plane.xaxis = P-Q;
       if ( !circle.plane.xaxis.Unitize() )
       {
-        // Then: just use a vector perp to zaxis
-        circle.plane.xaxis.PerpendicularTo(circle.plane.zaxis);
+	// Then: just use a vector perp to zaxis
+	circle.plane.xaxis.PerpendicularTo(circle.plane.zaxis);
       }
     }
     circle.plane.yaxis = ON_CrossProduct( circle.plane.zaxis, circle.plane.xaxis );
@@ -791,12 +791,12 @@ ON_Curve* ON_RevSurface::IsoCurve( int dir, double c ) const
       double a = c;
       if ( m_t != m_angle )
       {
-        double t = m_t.NormalizedParameterAt(c);
-        a = m_angle.ParameterAt(t);
+	double t = m_t.NormalizedParameterAt(c);
+	a = m_angle.ParameterAt(t);
       }
       if ( a != 0.0 )
       {
-        crv->Rotate( a, m_axis.Direction(), m_axis.from );
+	crv->Rotate( a, m_axis.Direction(), m_axis.from );
       }
     }
   }
@@ -852,9 +852,9 @@ bool ON_RevSurface::Extend(
       const ON_Interval& domain
       )
 {
-  if ( dir != 0 && dir != 1 )
+  if ( dir != 0 && dir != 1 ) 
     return false;
-  if (IsClosed(dir))
+  if (IsClosed(dir)) 
     return false;
   bool do_it = false;
   ON_Interval dom = Domain(dir);
@@ -863,17 +863,17 @@ bool ON_RevSurface::Extend(
     dom[0] = domain[0];
     do_it = true;
   }
-
+  
   if (domain[1] > dom[1])
   {
     dom[1] = domain[1];
     do_it = true;
   }
 
-  if (!do_it)
+  if (!do_it) 
     return false;
 
-  if ( m_bTransposed )
+  if ( m_bTransposed ) 
     dir = 1-dir;
 
   bool rc = false;
@@ -946,21 +946,21 @@ BOOL ON_RevSurface::Split(
       double a = m_angle.ParameterAt( t );
       if ( m_angle.Includes(a,true) )
       {
-        rc = true;
+	rc = true;
 
-        left_angle[1] = a;
-        right_angle[0] = a;
-        left_t[1] = c;
-        right_t[0] = c;
+	left_angle[1] = a;
+	right_angle[0] = a;
+	left_t[1] = c;
+	right_t[0] = c;
 
-        if ( srf_ws == this )
-          left_side = m_curve;
-        else
-          left_side = m_curve->Duplicate();
-        if ( srf_en == this )
-          right_side = m_curve;
-        else
-          right_side = m_curve->Duplicate();
+	if ( srf_ws == this )
+	  left_side = m_curve;
+	else
+	  left_side = m_curve->Duplicate();
+	if ( srf_en == this )
+	  right_side = m_curve;
+	else
+	  right_side = m_curve->Duplicate();
       }
     }
   }
@@ -971,13 +971,13 @@ BOOL ON_RevSurface::Split(
     {
       if ( this == srf_ws )
       {
-        delete m_curve;
-        srf_ws->m_curve = left_side;
+	delete m_curve;
+	srf_ws->m_curve = left_side;
       }
       else if ( this == srf_en )
       {
-        delete m_curve;
-        srf_en->m_curve = right_side;
+	delete m_curve;
+	srf_en->m_curve = right_side;
       }
     }
   }
@@ -1032,13 +1032,13 @@ BOOL ON_RevSurface::Split(
 }
 
 
-bool ON_RevSurface::GetClosestPoint(
-        const ON_3dPoint& test_point,
-        double* angle_t, double* curve_t,  // parameters of local closest point returned here
-        double maximum_distance,
-        const ON_Interval* angle_sub_domain, // can be NULL
-        const ON_Interval* curve_sub_domain  // can be NULL
-        ) const
+bool ON_RevSurface::GetClosestPoint( 
+	const ON_3dPoint& test_point,
+	double* angle_t, double* curve_t,  // parameters of local closest point returned here
+	double maximum_distance,
+	const ON_Interval* angle_sub_domain, // can be NULL
+	const ON_Interval* curve_sub_domain  // can be NULL
+	) const
 {
   bool rc = false;
 
@@ -1065,13 +1065,13 @@ bool ON_RevSurface::GetClosestPoint(
     {
       if ( m_t != m_angle )
       {
-        angle_domain[0] = m_angle.ParameterAt( m_t.NormalizedParameterAt(angle_sub_domain->Min()) );
-        angle_domain[1] = m_angle.ParameterAt( m_t.NormalizedParameterAt(angle_sub_domain->Max()) );
+	angle_domain[0] = m_angle.ParameterAt( m_t.NormalizedParameterAt(angle_sub_domain->Min()) );
+	angle_domain[1] = m_angle.ParameterAt( m_t.NormalizedParameterAt(angle_sub_domain->Max()) );
       }
       else
       {
-        angle_domain[0] = angle_sub_domain->Min();
-        angle_domain[1] = angle_sub_domain->Max();
+	angle_domain[0] = angle_sub_domain->Min();
+	angle_domain[1] = angle_sub_domain->Max();
       }
       angle_domain.Intersection(m_angle);
     }
@@ -1101,8 +1101,8 @@ BOOL ON_RevSurface::Transpose()
 
 bool ON_RevSurface::IsContinuous(
     ON::continuity desired_continuity,
-    double s,
-    double t,
+    double s, 
+    double t, 
     int* hint, // default = NULL,
     double point_tolerance, // default=ON_ZERO_TOLERANCE
     double d1_tolerance, // default==ON_ZERO_TOLERANCE
@@ -1116,8 +1116,8 @@ bool ON_RevSurface::IsContinuous(
   {
     double curve_t =  m_bTransposed ? s : t;
     rc = m_curve->IsContinuous( desired_continuity, curve_t, hint,
-                                point_tolerance, d1_tolerance, d2_tolerance,
-                                cos_angle_tolerance, curvature_tolerance );
+				point_tolerance, d1_tolerance, d2_tolerance,
+				cos_angle_tolerance, curvature_tolerance );
   }
   return rc;
 }
@@ -1143,17 +1143,17 @@ BOOL ON_RevSurface::Reverse( int dir )
   return rc;
 }
 
-bool ON_RevSurface::GetNextDiscontinuity(
-                int dir,
-                ON::continuity c,
-                double t0,
-                double t1,
-                double* t,
-                int* hint,
-                int* dtype,
-                double cos_angle_tolerance,
-                double curvature_tolerance
-                ) const
+bool ON_RevSurface::GetNextDiscontinuity( 
+		int dir,
+		ON::continuity c,
+		double t0,
+		double t1,
+		double* t,
+		int* hint,
+		int* dtype,
+		double cos_angle_tolerance,
+		double curvature_tolerance
+		) const
 {
   // 28 Jan 2005 - untested code
   bool rc = false;
@@ -1215,7 +1215,7 @@ BOOL ON_RevSurface::IsSingular( int side ) const // 0 = south, 1 = east, 2 = nor
     //     other coordinates that are very large.  The
     //     fabs(Q.*)*ON_SQRT_EPSILON term is required
     //     in cases where the evaluations in PointAtStart()
-    //     and/or ClosestPointTo() have more numerical
+    //     and/or ClosestPointTo() have more numerical 
     //     error than ON_ZERO_TOLERANCE.  The numerical
     //     tolerance term has to be calculated on a
     //     coordinate-by-coordinate basis.  See RR 9683.
@@ -1233,10 +1233,10 @@ BOOL ON_RevSurface::IsSingular( int side ) const // 0 = south, 1 = east, 2 = nor
       tol = ON_ZERO_TOLERANCE + fabs(Q.y)*ON_SQRT_EPSILON;
       if ( d <= tol )
       {
-        d = fabs(P.z - Q.z);
-        tol = ON_ZERO_TOLERANCE + fabs(Q.z)*ON_SQRT_EPSILON;
-        if ( d <= tol )
-          rc = true;
+	d = fabs(P.z - Q.z);
+	tol = ON_ZERO_TOLERANCE + fabs(Q.z)*ON_SQRT_EPSILON;
+	if ( d <= tol )
+	  rc = true;
       }
     }
   }
@@ -1294,11 +1294,11 @@ BOOL ON_RevSurface::IsClosed( int dir ) const  // dir  0 = "s", 1 = "t"
 }
 
 BOOL ON_RevSurface::GetParameterTolerance( // returns tminus < tplus: parameters tminus <= s <= tplus
-         int dir,        // 0 gets first parameter, 1 gets second parameter
-         double t,       // t = parameter in domain
-         double* tminus, // tminus
-         double* tplus   // tplus
-         ) const
+	 int dir,        // 0 gets first parameter, 1 gets second parameter
+	 double t,       // t = parameter in domain
+	 double* tminus, // tminus
+	 double* tplus   // tplus
+	 ) const
 {
   BOOL rc = false;
   if ( m_bTransposed )
@@ -1315,9 +1315,9 @@ BOOL ON_RevSurface::GetParameterTolerance( // returns tminus < tplus: parameters
   return rc;
 }
 
-BOOL ON_RevSurface::SetDomain(
+BOOL ON_RevSurface::SetDomain( 
   int dir, // 0 sets first parameter's domain, 1 gets second parameter's domain
-  double t0,
+  double t0, 
   double t1
   )
 {
@@ -1357,9 +1357,9 @@ ON_Interval ON_RevSurface::Domain( int dir ) const
   return d;
 }
 
-BOOL ON_RevSurface::GetSurfaceSize(
-    double* width,
-    double* height
+BOOL ON_RevSurface::GetSurfaceSize( 
+    double* width, 
+    double* height 
     ) const
 {
   BOOL rc = false;
@@ -1387,24 +1387,24 @@ BOOL ON_RevSurface::GetSurfaceSize(
       double r;
       for ( i = 0; i <= imax; i++ )
       {
-        if ( m_curve->EvPoint( cdom.ParameterAt(i*d), pt, 0, &hint ) )
-        {
-          r = m_axis.DistanceTo(pt);
-          if ( r > radius_estimate )
-            radius_estimate = r;
-          if ( pt0 != ON_UNSET_POINT )
-            length_estimate += pt0.DistanceTo(pt);
-          pt0 = pt;
-        }
+	if ( m_curve->EvPoint( cdom.ParameterAt(i*d), pt, 0, &hint ) )
+	{
+	  r = m_axis.DistanceTo(pt);
+	  if ( r > radius_estimate )
+	    radius_estimate = r;
+	  if ( pt0 != ON_UNSET_POINT )
+	    length_estimate += pt0.DistanceTo(pt);
+	  pt0 = pt;
+	}
       }
       if ( width != NULL )
-        *width = m_angle.Length()*radius_estimate;
+	*width = m_angle.Length()*radius_estimate;
     }
 
     if ( height != NULL )
     {
       if ( !m_curve->GetLength( height, 1.0e-4 ) )
-        *height = length_estimate;
+	*height = length_estimate;
     }
   }
   else
@@ -1451,7 +1451,7 @@ BOOL ON_RevSurface::GetSpanVector( int dir, double* s ) const
       double d = 1.0/span_count;
       s[0] = m_t[0];
       for ( int i = 1; i < span_count; i++ )
-        s[i] = m_t.ParameterAt( i*d );
+	s[i] = m_t.ParameterAt( i*d );
       s[span_count] = m_t[1];
       rc = true;
     }
@@ -1505,33 +1505,33 @@ BOOL ON_RevSurface::GetBBox(    // returns true if successful
       double t;
       for ( i = 0; i < 8; i++ )
       {
-        P = corners[i];
-        if ( m_axis.ClosestPointTo(P,&t) )
-        {
-          arc.plane.origin = m_axis.PointAt(t);
-          arc.plane.xaxis = P-arc.plane.origin;
-          arc.radius = arc.plane.xaxis.Length();
-          if ( !arc.plane.xaxis.Unitize() )
-            continue;
-          if ( fabs(arc.plane.xaxis*arc.plane.zaxis) > 0.0001 )
-            continue;
-          arc.plane.yaxis = ON_CrossProduct(arc.plane.zaxis,arc.plane.xaxis);
-          if ( !arc.plane.yaxis.Unitize() )
-            continue;
-          arc.plane.UpdateEquation();
-          arc.plane.Rotate( m_angle[0], arc.plane.zaxis );
-          if ( arc.IsValid() )
-          {
-            abox = arc.BoundingBox();
-            bbox.Union(abox);
-          }
-        }
+	P = corners[i];
+	if ( m_axis.ClosestPointTo(P,&t) )
+	{
+	  arc.plane.origin = m_axis.PointAt(t);
+	  arc.plane.xaxis = P-arc.plane.origin;
+	  arc.radius = arc.plane.xaxis.Length();
+	  if ( !arc.plane.xaxis.Unitize() )
+	    continue;
+	  if ( fabs(arc.plane.xaxis*arc.plane.zaxis) > 0.0001 )
+	    continue;
+	  arc.plane.yaxis = ON_CrossProduct(arc.plane.zaxis,arc.plane.xaxis);
+	  if ( !arc.plane.yaxis.Unitize() )
+	    continue;
+	  arc.plane.UpdateEquation();
+	  arc.plane.Rotate( m_angle[0], arc.plane.zaxis );
+	  if ( arc.IsValid() )
+	  {
+	    abox = arc.BoundingBox();
+	    bbox.Union(abox);
+	  }
+	}
       }
       if ( bbox.IsValid() )
       {
-        ON_RevSurface* ptr = const_cast<ON_RevSurface*>(this);
-        ptr->m_bbox = bbox;
-        rc = true;
+	ON_RevSurface* ptr = const_cast<ON_RevSurface*>(this);
+	ptr->m_bbox = bbox;
+	rc = true;
       }
     }
   }
@@ -1541,27 +1541,27 @@ BOOL ON_RevSurface::GetBBox(    // returns true if successful
     if ( boxmin )
     {
       if (bGrowBox){
-        if (m_bbox.m_min.x < boxmin[0]) boxmin[0] = m_bbox.m_min.x;
-        if (m_bbox.m_min.y < boxmin[1]) boxmin[1] = m_bbox.m_min.y;
-        if (m_bbox.m_min.z < boxmin[2]) boxmin[2] = m_bbox.m_min.z;
+	if (m_bbox.m_min.x < boxmin[0]) boxmin[0] = m_bbox.m_min.x;
+	if (m_bbox.m_min.y < boxmin[1]) boxmin[1] = m_bbox.m_min.y;
+	if (m_bbox.m_min.z < boxmin[2]) boxmin[2] = m_bbox.m_min.z;
       }
       else {
-        boxmin[0] = m_bbox.m_min.x;
-        boxmin[1] = m_bbox.m_min.y;
-        boxmin[2] = m_bbox.m_min.z;
+	boxmin[0] = m_bbox.m_min.x;
+	boxmin[1] = m_bbox.m_min.y;
+	boxmin[2] = m_bbox.m_min.z;
       }
     }
     if ( boxmax )
     {
       if (bGrowBox){
-        if (m_bbox.m_max.x > boxmax[0]) boxmax[0] = m_bbox.m_max.x;
-        if (m_bbox.m_max.y > boxmax[1]) boxmax[1] = m_bbox.m_max.y;
-        if (m_bbox.m_max.z > boxmax[2]) boxmax[2] = m_bbox.m_max.z;
+	if (m_bbox.m_max.x > boxmax[0]) boxmax[0] = m_bbox.m_max.x;
+	if (m_bbox.m_max.y > boxmax[1]) boxmax[1] = m_bbox.m_max.y;
+	if (m_bbox.m_max.z > boxmax[2]) boxmax[2] = m_bbox.m_max.z;
       }
       else {
-        boxmax[0] = m_bbox.m_max.x;
-        boxmax[1] = m_bbox.m_max.y;
-        boxmax[2] = m_bbox.m_max.z;
+	boxmax[0] = m_bbox.m_max.x;
+	boxmax[1] = m_bbox.m_max.y;
+	boxmax[2] = m_bbox.m_max.z;
       }
     }
   }
@@ -1587,24 +1587,725 @@ BOOL ON_RevSurface::IsSpherical(ON_Sphere* sphere, double tolerance ) const
     {
       if ( m_curve->IsArc( &plane, &arc, tolerance ) )
       {
-        P = m_axis.ClosestPointTo( arc.Center() );
-        if ( P.DistanceTo(arc.Center()) <= tolerance )
-        {
-          rc = true;
-          if ( sphere )
-          {
-            sphere->plane.origin = arc.Center();
-            sphere->plane.zaxis = m_axis.Tangent();
-            sphere->plane.yaxis = arc.plane.zaxis;
-            sphere->plane.xaxis = ON_CrossProduct( sphere->plane.zaxis, sphere->plane.yaxis );
-            sphere->plane.UpdateEquation();
-            sphere->radius = arc.radius;
-          }
-        }
+	P = m_axis.ClosestPointTo( arc.Center() );
+	if ( P.DistanceTo(arc.Center()) <= tolerance )
+	{
+	  rc = true;
+	  if ( sphere )
+	  {
+	    sphere->plane.origin = arc.Center();
+	    sphere->plane.zaxis = m_axis.Tangent();
+	    sphere->plane.yaxis = arc.plane.zaxis;
+	    sphere->plane.xaxis = ON_CrossProduct( sphere->plane.zaxis, sphere->plane.yaxis );
+	    sphere->plane.UpdateEquation();
+	    sphere->radius = arc.radius;
+	  }
+	}
       }
     }
   }
   return rc;
+}
+
+
+bool ON_Surface::IsSphere( ON_Sphere* sphere, double tolerance ) const
+{
+  if ( !ON_IsValid(tolerance) || tolerance <= 0.0 )
+    tolerance = ON_ZERO_TOLERANCE;
+  const ON_RevSurface* rs = ON_RevSurface::Cast(this);
+  if (rs)
+  {
+    return rs->IsSpherical(sphere,tolerance) ? true : false;
+  }
+
+  ON_Curve* crv = IsoCurve(0,Domain(1).Mid());
+  if ( !crv )
+    return false;
+
+  ON_Arc arc0;
+  int bIsArc0 = crv->IsArc(0,&arc0,tolerance > ON_ZERO_TOLERANCE ? tolerance : 0.0);
+  delete crv;
+  crv = 0;
+  if ( !bIsArc0 )
+    return false;
+
+  crv = IsoCurve(1,Domain(0).Mid());
+  if ( !crv )
+    return false;
+  ON_Arc arc1;
+  int bIsArc1 = crv->IsArc(0,&arc1,tolerance > ON_ZERO_TOLERANCE ? tolerance : 0.0);
+  delete crv;
+  crv = 0;
+  if ( !bIsArc1 )
+    return false;
+
+  // Determine if one of these arcs is a a portion of a 
+  // great circle.
+
+  ON_Sphere sph0;
+  sph0.plane = arc0.plane;
+  sph0.radius = arc0.radius;
+  bool bTestSphere0 = sph0.IsValid();
+
+  ON_Sphere sph1;
+  sph1.plane = arc1.plane;
+  sph1.radius = arc1.radius;
+  bool bTestSphere1 = sph1.IsValid();
+
+  if ( !bTestSphere0 && !bTestSphere1 )
+    return false;
+
+  double sph0tol = 0.0;
+  double sph1tol = 0.0;
+
+  double tol = 0.5*ON_SQRT_EPSILON*(arc0.radius+arc1.radius);
+
+  ON_3dPoint P, S;
+  double a, d;
+  for ( a = 0.0; a < 1.0; a += 0.25 )
+  {
+    P = arc0.PointAt(a*2.0*ON_PI);
+    if ( bTestSphere0 )
+    {
+      S = sph0.ClosestPointTo(P);
+      d = S.DistanceTo(P);
+      if ( d > tol )
+      {
+	bTestSphere0 = false;
+	if ( !bTestSphere1 )
+	  return false;
+      }
+      else if ( d > sph0tol )
+	sph0tol = d;
+    }
+    if ( bTestSphere1 )
+    {
+      S = sph1.ClosestPointTo(P);
+      d = S.DistanceTo(P);
+      if ( d > tol )
+      {
+	bTestSphere1 = false;
+	if ( !bTestSphere0 )
+	  return false;
+      }
+      else if ( d > sph1tol )
+	sph1tol = d;
+    }
+
+    P = arc1.PointAt(a*2.0*ON_PI);
+    if ( bTestSphere0 )
+    {
+      S = sph0.ClosestPointTo(P);
+      d = S.DistanceTo(P);
+      if ( d > tol )
+      {
+	bTestSphere0 = false;
+	if ( !bTestSphere1 )
+	  return false;
+      }
+      else if ( d > sph0tol )
+	sph0tol = d;
+    }
+    if ( bTestSphere1 )
+    {
+      S = sph1.ClosestPointTo(P);
+      d = S.DistanceTo(P);
+      if ( d > tol )
+      {
+	bTestSphere1 = false;
+	if ( !bTestSphere0 )
+	  return false;
+      }
+      else if ( d > sph1tol )
+	sph1tol = d;
+    }
+  }
+  // If the arc's are both great circles, then
+  // both will be true unless we have a bug or
+  // numerical issues.
+  if (!bTestSphere0 && !bTestSphere1)
+    return false;
+
+  if ( tol < tolerance )
+    tol = tolerance;
+
+  double u, v;
+  int sc0 = SpanCount(0);
+  int sc1 = SpanCount(1);
+  double* s = (double*)onmalloc( (sc0+sc1+2)*sizeof(s[0]) );
+  double* t = s + (sc0+1);
+  GetSpanVector(0,s);
+  GetSpanVector(1,t);
+  for ( int i = 0; i < sc0; i++ )
+  {
+    for ( int ii = i?1:0; ii <= 4; ii++ )
+    {
+      u = 0.25*((4-ii)*s[i] + ii*s[i+1]);
+      for ( int j = 0; j <= sc1; j++ )
+      {
+	for ( int jj = j?1:0; jj <= 4; jj++ )
+	{
+	  v = 0.25*((4-jj)*t[j] + jj*t[j+1]);
+	  P = PointAt(u,v);
+	  if ( bTestSphere0 )
+	  {
+	    S = sph0.ClosestPointTo(P);
+	    d = S.DistanceTo(P);
+	    if ( d > tol )
+	    {
+	      bTestSphere0 = false;
+	      if ( !bTestSphere1 )
+	      {
+		onfree(s);
+		return false;
+	      }
+	    }
+	    else if ( d > sph0tol )
+	      sph0tol = d;
+	  }
+	  if ( bTestSphere1 )
+	  {
+	    S = sph1.ClosestPointTo(P);
+	    d = S.DistanceTo(P);
+	    if ( d > tol )
+	    {
+	      bTestSphere1 = false;
+	      if ( !bTestSphere0 )
+	      {
+		onfree(s);
+		return false;
+	      }
+	    }
+	    else if ( d > sph1tol )
+	      sph1tol = d;
+	  }
+	}
+      }
+    }
+  }
+  onfree(s);
+
+  bool rc = (bTestSphere0 || bTestSphere1);
+  if ( rc && sphere )
+  {
+    if (!bTestSphere0)
+      *sphere = sph1;
+    else if (!bTestSphere1)
+      *sphere = sph0;
+    else if (sph0tol <= sph1tol)
+      *sphere = sph0;
+    else
+      *sphere = sph1;
+  }
+
+  return rc;
+}
+
+bool ON_Surface::IsCylinder( ON_Cylinder* cylinder, double tolerance ) const
+{
+  if ( !ON_IsValid(tolerance) || tolerance <= 0.0 )
+    tolerance = ON_ZERO_TOLERANCE;
+  const ON_RevSurface* rs = ON_RevSurface::Cast(this);
+  bool rc = rs && rs->IsCylindrical(cylinder,tolerance);
+
+  if ( !rc && !rs )
+  {
+    ON_Curve* crv = IsoCurve(0,Domain(1).Mid());
+    if ( !crv )
+      return false;
+
+    ON_Arc arc;
+    ON_Line line;
+    int bIsLine = 0;
+    int bIsArc = crv->IsArc(0,&arc,tolerance > ON_ZERO_TOLERANCE ? tolerance : 0.0);
+    if ( !bIsArc )
+    {
+      bIsLine = crv->IsLinear(tolerance > ON_ZERO_TOLERANCE ? tolerance : 0.0);
+      if ( bIsLine )
+      {
+	line.from = crv->PointAtStart();
+	line.to = crv->PointAtEnd();
+      }
+    }
+    delete crv;
+    crv = 0;
+    if ( !bIsArc && !bIsLine )
+      return false;
+
+    crv = IsoCurve(1,Domain(0).Mid());
+    if ( !crv )
+      return false;
+    if ( !bIsArc )
+      bIsArc = crv->IsArc(0,&arc,tolerance > ON_ZERO_TOLERANCE ? tolerance : 0.0);
+    else if ( !bIsLine )
+    {
+      bIsLine = crv->IsLinear(tolerance > ON_ZERO_TOLERANCE ? tolerance : 0.0);
+      if ( bIsLine )
+      {
+	line.from = crv->PointAtStart();
+	line.to = crv->PointAtEnd();
+      }
+    }
+    delete crv;
+    crv = 0;
+    if ( !bIsArc || !bIsLine )
+      return false;
+
+    double tol = 0.5*ON_SQRT_EPSILON*(arc.radius);
+    if ( tol < tolerance )
+      tol = tolerance;
+    double r = arc.plane.origin.DistanceTo(arc.plane.ClosestPointTo(line.from));
+    if ( fabs(arc.radius - r) > tol )
+      return false;
+    r = arc.plane.origin.DistanceTo(arc.plane.ClosestPointTo(line.to));
+    if ( fabs(arc.radius - r) > tol )
+      return false;
+
+    ON_3dPoint P;
+    double u, v;
+    int sc0 = SpanCount(0);
+    int sc1 = SpanCount(1);
+    double* s = (double*)onmalloc( (sc0+sc1+2)*sizeof(s[0]) );
+    double* t = s + (sc0+1);
+    GetSpanVector(0,s);
+    GetSpanVector(1,t);
+    for ( int i = 0; i < sc0; i++ )
+    {
+      for ( int ii = i?1:0; ii <= 4; ii++ )
+      {
+	u = 0.25*((4-ii)*s[i] + ii*s[i+1]);
+	for ( int j = 0; j <= sc1; j++ )
+	{
+	  for ( int jj = j?1:0; jj <= 4; jj++ )
+	  {
+	    v = 0.25*((4-jj)*t[j] + jj*t[j+1]);
+	    P = PointAt(u,v);
+	    r = arc.plane.origin.DistanceTo(arc.plane.ClosestPointTo(P));
+	    if ( fabs(arc.radius - r) > tol )
+	    {
+	      onfree(s);
+	      return false;
+	    }
+	  }
+	}
+      }
+    }
+    onfree(s);
+
+
+    rc = true;
+    if ( cylinder )
+    {
+      cylinder->Create(arc);
+      rc = cylinder->IsValid();
+    }
+  }
+
+  return rc;
+}
+
+
+bool ON_Surface::IsCone( ON_Cone* cone, double tolerance ) const
+{
+  if ( !ON_IsValid(tolerance) || tolerance <= 0.0 )
+    tolerance = ON_ZERO_TOLERANCE;
+
+  const ON_RevSurface* rs = ON_RevSurface::Cast(this);
+  if (rs)
+  {
+    return rs->IsConical(cone,tolerance) ? true : false;
+  }
+
+
+  ON_Curve* crv = IsoCurve(0,Domain(1).Mid());
+  if ( !crv )
+    return false;
+
+  ON_Arc arc;
+  ON_Line line;
+  int bIsLine = 0;
+  int bIsArc = crv->IsArc(0,&arc,tolerance > ON_ZERO_TOLERANCE ? tolerance : 0.0);
+  if ( !bIsArc )
+  {
+    bIsLine = crv->IsLinear(tolerance > ON_ZERO_TOLERANCE ? tolerance : 0.0);
+    if ( bIsLine )
+    {
+      line.from = crv->PointAtStart();
+      line.to = crv->PointAtEnd();
+    }
+  }
+  delete crv;
+  crv = 0;
+  if ( !bIsArc && !bIsLine )
+    return false;
+
+  crv = IsoCurve(1,Domain(0).Mid());
+  if ( !crv )
+    return false;
+  if ( !bIsArc )
+    bIsArc = crv->IsArc(0,&arc,tolerance > ON_ZERO_TOLERANCE ? tolerance : 0.0);
+  else if ( !bIsLine )
+  {
+    bIsLine = crv->IsLinear(tolerance > ON_ZERO_TOLERANCE ? tolerance : 0.0);
+    if ( bIsLine )
+    {
+      line.from = crv->PointAtStart();
+      line.to = crv->PointAtEnd();
+    }
+  }
+  delete crv;
+  crv = 0;
+  if ( !bIsArc || !bIsLine )
+    return false;
+
+  double r0 = arc.plane.origin.DistanceTo(arc.plane.ClosestPointTo(line.from));
+  double r1 = arc.plane.origin.DistanceTo(arc.plane.ClosestPointTo(line.to));
+  if ( fabs(r0-r1) <= ON_ZERO_TOLERANCE )
+    return false;
+  double h0 = arc.plane.plane_equation.ValueAt(line.from);
+  double h1 = arc.plane.plane_equation.ValueAt(line.to);
+  if ( fabs(h0-h1) <= ON_ZERO_TOLERANCE )
+    return false;
+  double tol = 0.5*ON_SQRT_EPSILON*(r0+r1);
+
+  ON_Cone cn;
+  cn.height = (h0*r1 - r0*h1)/(r1-r0);
+  if ( !ON_IsValid(cn.height) || fabs(cn.height) <= ON_ZERO_TOLERANCE )
+    return false;
+  cn.plane = arc.plane;
+  cn.plane.origin = cn.plane.origin + cn.height*cn.plane.zaxis;
+  cn.plane.UpdateEquation();
+  if ( r0 >= r1 )
+  {
+    cn.radius = r0;
+    cn.height = h0-cn.height;
+  }
+  else
+  {
+    cn.radius = r1;
+    cn.height = h1-cn.height;
+  }
+  if ( !cn.IsValid() )
+    return false;
+  tol *= fabs(cn.height);
+
+  // if (r - h*cn.radius/cn.height > tolerance) return false;
+  double h = cn.plane.plane_equation.ValueAt(line.from);
+  if ( fabs(r0*cn.height - h*cn.radius) > tol )
+    return false;
+  h = cn.plane.plane_equation.ValueAt(line.to);
+  if ( fabs(r1*cn.height - h*cn.radius) > tol )
+    return false;
+
+  ON_3dPoint P;
+  double u, v, r;
+  int sc0 = SpanCount(0);
+  int sc1 = SpanCount(1);
+  double* s = (double*)onmalloc( (sc0+sc1+2)*sizeof(s[0]) );
+  double* t = s + (sc0+1);
+  GetSpanVector(0,s);
+  GetSpanVector(1,t);
+  tol = 0.5*ON_SQRT_EPSILON*(r0+r1);
+  if ( tol < tolerance )
+    tol = tolerance;
+  tol *= fabs(cn.height);
+  for ( int i = 0; i < sc0; i++ )
+  {
+    for ( int ii = i?1:0; ii <= 4; ii++ )
+    {
+      u = 0.25*((4-ii)*s[i] + ii*s[i+1]);
+      for ( int j = 0; j <= sc1; j++ )
+      {
+	for ( int jj = j?1:0; jj <= 4; jj++ )
+	{
+	  v = 0.25*((4-jj)*t[j] + jj*t[j+1]);
+	  P = PointAt(u,v);
+	  h = cn.plane.plane_equation.ValueAt(P);
+	  r = cn.plane.origin.DistanceTo(cn.plane.ClosestPointTo(P));
+	  // if (r - h*cn.radius/cn.height > tolerance) return false;
+	  if ( fabs(r*cn.height - h*cn.radius) > tol )
+	  {
+	    return false;
+	    onfree(s);
+	    return false;
+	  }
+	}
+      }
+    }
+  }
+  onfree(s);
+
+  if ( cone )
+  {
+    *cone = cn;
+  }
+
+  return true;
+}
+
+
+bool ON_Surface::IsTorus( ON_Torus* torus, double tolerance ) const
+{
+  if ( !ON_IsValid(tolerance) || tolerance <= 0.0 )
+    tolerance = ON_ZERO_TOLERANCE;
+
+  ON_Curve* crv = IsoCurve(0,Domain(1).Mid());
+  if ( !crv )
+    return false;
+
+  ON_Arc arc0;
+  int bIsArc0 = crv->IsArc(0,&arc0,tolerance > ON_ZERO_TOLERANCE ? tolerance : 0.0);
+  delete crv;
+  crv = 0;
+  if ( !bIsArc0 )
+    return false;
+
+  crv = IsoCurve(1,Domain(0).Mid());
+  if ( !crv )
+    return false;
+  ON_Arc arc1;
+  int bIsArc1 = crv->IsArc(0,&arc1,tolerance > ON_ZERO_TOLERANCE ? tolerance : 0.0);
+  delete crv;
+  crv = 0;
+  if ( !bIsArc1 )
+    return false;
+
+  double tol = 0.5*ON_SQRT_EPSILON*(arc0.radius+arc1.radius);
+
+  ON_Torus tr0;
+  tr0.plane = arc0.plane;
+  double h = tr0.plane.plane_equation.ValueAt(arc1.plane.origin);
+  tr0.plane.origin = tr0.plane.origin + h*tr0.plane.zaxis;
+  tr0.plane.UpdateEquation();
+  tr0.major_radius = tr0.plane.origin.DistanceTo(arc1.plane.origin);
+  tr0.minor_radius = arc1.radius;
+
+  ON_Torus tr1;
+  tr1.plane = arc1.plane;
+  h = tr1.plane.plane_equation.ValueAt(arc0.plane.origin);
+  tr1.plane.origin = tr1.plane.origin + h*tr1.plane.zaxis;
+  tr1.plane.UpdateEquation();
+  tr1.major_radius = tr1.plane.origin.DistanceTo(arc0.plane.origin);
+  tr1.minor_radius = arc0.radius;
+
+  bool bTestTorus0 = tr0.IsValid()?true:false;
+  bool bTestTorus1 = tr1.IsValid()?true:false;
+  if ( !bTestTorus0 && !bTestTorus1 )
+    return false;
+  double tr0tol = 0.0;
+  double tr1tol = 0.0;
+
+  ON_3dPoint P, T;
+  double a, d;
+  for ( a = 0.0; a < 1.0; a += 0.25 )
+  {
+    P = arc0.PointAt(a*2.0*ON_PI);
+    if ( bTestTorus0 )
+    {
+      T = tr0.ClosestPointTo(P);
+      d = T.DistanceTo(P);
+      if ( d > tol )
+      {
+	bTestTorus0 = false;
+	if ( !bTestTorus1 )
+	  return false;
+      }
+      else if ( d > tr0tol )
+	tr0tol = d;
+    }
+    if ( bTestTorus1 )
+    {
+      T = tr1.ClosestPointTo(P);
+      d = T.DistanceTo(P);
+      if ( d > tol )
+      {
+	bTestTorus1 = false;
+	if ( !bTestTorus0 )
+	  return false;
+      }
+      else if ( d > tr1tol )
+	tr1tol = d;
+    }
+
+    P = arc1.PointAt(a*2.0*ON_PI);
+    if ( bTestTorus0 )
+    {
+      T = tr0.ClosestPointTo(P);
+      d = T.DistanceTo(P);
+      if ( d > tol )
+      {
+	bTestTorus0 = false;
+	if ( !bTestTorus1 )
+	  return false;
+      }
+      else if ( d > tr0tol )
+	tr0tol = d;
+    }
+    if ( bTestTorus1 )
+    {
+      T = tr1.ClosestPointTo(P);
+      d = T.DistanceTo(P);
+      if ( d > tol )
+      {
+	bTestTorus1 = false;
+	if ( !bTestTorus0 )
+	  return false;
+      }
+      else if ( d > tr1tol )
+	tr1tol = d;
+    }
+  }
+  // If the arc's planes are perpendicular, then
+  // both will be true unless we have a bug or
+  // numerical issues.
+  if (!bTestTorus0 && !bTestTorus1)
+    return false;
+
+  if ( tol < tolerance )
+    tol = tolerance;
+
+  double u, v;
+  int sc0 = SpanCount(0);
+  int sc1 = SpanCount(1);
+  double* s = (double*)onmalloc( (sc0+sc1+2)*sizeof(s[0]) );
+  double* t = s + (sc0+1);
+  GetSpanVector(0,s);
+  GetSpanVector(1,t);
+  for ( int i = 0; i < sc0; i++ )
+  {
+    for ( int ii = i?1:0; ii <= 4; ii++ )
+    {
+      u = 0.25*((4-ii)*s[i] + ii*s[i+1]);
+      for ( int j = 0; j <= sc1; j++ )
+      {
+	for ( int jj = j?1:0; jj <= 4; jj++ )
+	{
+	  v = 0.25*((4-jj)*t[j] + jj*t[j+1]);
+	  P = PointAt(u,v);
+	  if ( bTestTorus0 )
+	  {
+	    T = tr0.ClosestPointTo(P);
+	    d = T.DistanceTo(P);
+	    if ( d > tol )
+	    {
+	      bTestTorus0 = false;
+	      if ( !bTestTorus1 )
+	      {
+		onfree(s);
+		return false;
+	      }
+	    }
+	    else if ( d > tr0tol )
+	      tr0tol = d;
+	  }
+	  if ( bTestTorus1 )
+	  {
+	    T = tr1.ClosestPointTo(P);
+	    d = T.DistanceTo(P);
+	    if ( d > tol )
+	    {
+	      bTestTorus1 = false;
+	      if ( !bTestTorus0 )
+	      {
+		onfree(s);
+		return false;
+	      }
+	    }
+	    else if ( d > tr1tol )
+	      tr1tol = d;
+	  }
+	}
+      }
+    }
+  }
+  onfree(s);
+
+  bool rc = (bTestTorus0 || bTestTorus1);
+  if ( rc && torus )
+  {
+    if (!bTestTorus0)
+      *torus = tr1;
+    else if (!bTestTorus1)
+      *torus = tr0;
+    else if (tr0tol <= tr1tol)
+      *torus = tr0;
+    else
+      *torus = tr1;
+  }
+
+  return rc;
+}
+
+static
+bool ON__IsCylConeHelper(
+	  const ON_Line& axis, 
+	  const ON_Curve* curve,
+	  double tolerance,
+	  ON_Plane& plane,
+	  ON_Line& line,
+	  double r[2],
+	  double& h
+	  )
+{
+  if ( !axis.IsValid() )
+    return false;
+  if ( !curve )
+    return false;
+  line.from = curve->PointAtStart();
+  line.to   = curve->PointAtEnd();
+  if ( !line.IsValid() )
+    return false;
+  if ( line.Length() <= ON_ZERO_TOLERANCE )
+    return false;
+
+  plane.zaxis = axis.Tangent();
+  h = plane.zaxis*line.Direction();
+  if ( !ON_IsValid(h) )
+    return false;
+  if ( h < 0.0 )
+  {
+    plane.zaxis.Reverse();
+    h = -h;
+  }
+  if ( h <= ON_ZERO_TOLERANCE )
+    return false;
+
+  double a0 = ON_UNSET_VALUE;
+  if ( !axis.ClosestPointTo(line.from,&a0) )
+    return false;
+  double a1 = ON_UNSET_VALUE;
+  if ( !axis.ClosestPointTo(line.to,&a1) )
+    return false;
+  if ( !ON_IsValid(a0) || !ON_IsValid(a1) )
+    return false;
+
+
+  ON_3dPoint A0 = axis.PointAt(a0);
+  ON_3dPoint A1 = axis.PointAt(a1);
+  plane.origin = A0;
+  ON_3dVector x0 = line.from - A0;
+  ON_3dVector x1 = line.to   - A1;
+  r[0] = x0.Length();
+  r[1] = x1.Length();
+  if ( x0*x0 < 0.0 && r[0] > ON_ZERO_TOLERANCE && r[1] > ON_ZERO_TOLERANCE )
+    return false;
+  plane.xaxis = ( r[0] >= r[1] ) ? x0 : x1;
+  if (fabs(plane.xaxis.Length()) <= ON_ZERO_TOLERANCE)
+    return false;
+  if ( !plane.xaxis.Unitize() )
+    return false;
+  plane.yaxis = ON_CrossProduct(plane.zaxis,plane.xaxis);
+  if ( !plane.yaxis.Unitize() )
+    return false;
+  plane.UpdateEquation();
+  if ( !plane.IsValid() )
+    return false;
+
+  x0 = line.Tangent();
+  if ( fabs(x0*plane.yaxis) > ON_ZERO_TOLERANCE )
+    return false;
+
+  return (curve->IsLinear( tolerance )?true:false);
 }
 
 BOOL ON_RevSurface::IsCylindrical(
@@ -1612,57 +2313,24 @@ BOOL ON_RevSurface::IsCylindrical(
       double tolerance
       ) const
 {
-  BOOL rc = false;
-  if ( m_curve )
-  {
-    ON_Plane plane;
-    ON_Line line;
-    ON_3dPoint P, Q;
-    P = m_curve->PointAt( m_curve->Domain().Mid() );
-    plane.origin = m_axis.from;
-    plane.yaxis = m_axis.Tangent();
-    plane.zaxis = ON_CrossProduct( P-plane.origin, plane.yaxis );
-    plane.zaxis.Unitize();
-    plane.xaxis = ON_CrossProduct( plane.zaxis, plane.yaxis );
-    plane.UpdateEquation();
-    if ( plane.IsValid() )
-    {
-      if ( m_curve->IsLinear( tolerance ) )
-      {
-        double h0, h1, r0, r1;
-        line.from = m_curve->PointAtStart();
-        line.to = m_curve->PointAtEnd();
-        if (    plane.DistanceTo(line.from) <= tolerance
-             && plane.DistanceTo(line.to) <= tolerance
-             && m_axis.ClosestPointTo( line.from, &h0 )
-             && m_axis.ClosestPointTo( line.to, &h1 ) )
-        {
-          P = m_axis.PointAt(h0);
-          Q = m_axis.PointAt(h1);
-          r0 = P.DistanceTo( line.from );
-          r1 = Q.DistanceTo( line.from );
-          if ( fabs( r0-r1) <= tolerance )
-          {
-            rc = true;
-            if ( cylinder )
-            {
-              P = line.ClosestPointTo(m_axis.from);
-              cylinder->circle.plane.origin = m_axis.from;
-              cylinder->circle.plane.zaxis = m_axis.Tangent();
-              cylinder->circle.plane.xaxis = P - m_axis.from;
-              cylinder->circle.plane.xaxis.Unitize();
-              cylinder->circle.plane.yaxis = ON_CrossProduct( cylinder->circle.plane.zaxis, cylinder->circle.plane.xaxis );
-              cylinder->circle.plane.UpdateEquation();
-              cylinder->circle.radius = P.DistanceTo(m_axis.from);
-              cylinder->height[0] = h0;
-              cylinder->height[1] = h1;
-            }
-          }
-        }
-      }
-    }
-  }
-  return rc;
+  ON_Cylinder c;
+  ON_Line line;
+  double r[2] = {0.0,0.0};
+  double h = 0.0;
+  if ( !ON_IsValid(tolerance) || tolerance <= 0.0 )
+    tolerance = ON_ZERO_TOLERANCE;
+  if ( !ON__IsCylConeHelper(m_axis,m_curve,tolerance,c.circle.plane,line,r,h) )
+    return false;
+  if ( fabs(r[0]-r[1]) > tolerance )
+    return false;
+  if ( fabs(line.Tangent()*c.circle.plane.xaxis) > ON_ZERO_TOLERANCE )
+    return false;
+  c.circle.radius = (r[0]==r[1]) ? r[0] : (0.5*(r[0]+r[1]));
+  c.height[0] = 0.0;
+  c.height[1] = h;
+  if ( cylinder )
+    *cylinder = c;
+  return c.IsValid();
 }
 
 BOOL ON_RevSurface::IsConical(
@@ -1670,70 +2338,60 @@ BOOL ON_RevSurface::IsConical(
       double tolerance
       ) const
 {
-  BOOL rc = false;
-  if ( m_curve )
+  ON_Cone c;
+  ON_Line line;
+  double r[2] = {0.0,0.0};
+  double h = 0.0;
+  if ( !ON_IsValid(tolerance) || tolerance <= 0.0 )
+    tolerance = ON_ZERO_TOLERANCE;
+  if ( !ON__IsCylConeHelper(m_axis,m_curve,tolerance,c.plane,line,r,h) )
+    return false;
+  double dr = r[0]-r[1];
+  if ( fabs(dr) <= ON_ZERO_TOLERANCE )
+    return false;
+  if ( 0.0 == r[0] )
   {
-    ON_Plane plane;
-    ON_Line line;
-    ON_3dPoint P, Q;
-    P = m_curve->PointAt( m_curve->Domain().Mid() );
-    plane.origin = m_axis.from;
-    plane.yaxis = m_axis.Tangent();
-    plane.zaxis = ON_CrossProduct( P-plane.origin, plane.yaxis );
-    plane.zaxis.Unitize();
-    plane.xaxis = ON_CrossProduct( plane.zaxis, plane.yaxis );
-    plane.UpdateEquation();
-    if ( plane.IsValid() )
-    {
-      if ( m_curve->IsLinear( tolerance ) )
-      {
-        double h0, h1, r0, r1;
-        line.from = m_curve->PointAtStart();
-        line.to = m_curve->PointAtEnd();
-        if (    plane.DistanceTo(line.from) <= tolerance
-             && plane.DistanceTo(line.to) <= tolerance
-             && m_axis.ClosestPointTo( line.from, &h0 )
-             && m_axis.ClosestPointTo( line.to, &h1 ) )
-        {
-          P = m_axis.PointAt(h0);
-          Q = m_axis.PointAt(h1);
-          r0 = P.DistanceTo( line.from );
-          r1 = Q.DistanceTo( line.from );
-          if ( fabs( r0-r1) <= tolerance )
-          {
-            rc = true;
-            if ( cone )
-            {
-              P = line.ClosestPointTo(m_axis.from);
-              /*
-              cone->circle.plane.origin = m_axis.from;
-              cone->circle.plane.zaxis = m_axis.Tangent();
-              cone->circle.plane.xaxis = P - m_axis.from;
-              cone->circle.plane.xaxis.Unitize();
-              cone->circle.plane.yaxis = ON_CrossProduct( cylinder->circle.plane.zaxis, cylinder->circle.plane.xaxis );
-              cone->circle.plane.UpdateEquation();
-              cone->circle.radius = P.DistanceTo(m_axis.from);
-              cone->height[0] = h0;
-              cone->height[1] = h1;
-              */
-            }
-          }
-        }
-      }
-    }
+    c.radius = r[1];
+    c.height = h;
   }
-  return rc;
+  else if ( 0.0 == r[1] )
+  {
+    c.plane.origin += h*c.plane.zaxis;
+    c.plane.UpdateEquation();
+    c.radius = r[0];
+    c.height = -h;
+  }
+  else if ( dr > 0.0 )
+  {
+    h *= (r[0]/dr);
+    c.plane.origin += h*c.plane.zaxis;
+    c.plane.UpdateEquation();
+    c.radius = r[0];
+    c.height = -h;
+  }
+  else
+  {
+    double d = h*r[0]/dr;
+    c.plane.origin += d*c.plane.zaxis;
+    c.plane.UpdateEquation();
+    c.radius = r[1];
+    c.height = h-d;
+  }
+
+  if ( cone )
+    *cone = c;
+  return c.IsValid();
 }
 
-double ON_ClosestPointAngle(
-            const ON_Line& axis,
-            const ON_Curve& curve,
-            ON_Interval angle_domain,
-            const ON_3dPoint& test_point,
-            ON_3dPoint& curve_test_point,
-            double* sine_angle,
-            double* cosine_angle
-            )
+double ON_ClosestPointAngle( 
+	    const ON_Line& axis, 
+	    const ON_Curve& curve, 
+	    ON_Interval angle_domain,
+	    const ON_3dPoint& test_point,
+	    ON_3dPoint& curve_test_point, 
+	    double* sine_angle, 
+	    double* cosine_angle 
+	    )
 {
   // this assumes curve (revolute) is coplanar with axis and midpoint of curve is
   // not on the axis
@@ -1755,7 +2413,7 @@ double ON_ClosestPointAngle(
   double cos_angle = v0*v1;
   ON_3dVector Cross = ON_CrossProduct( v0, v1 );
   double sin_angle = Cross.Length();
-  if (axis.Direction()*Cross < 0.0)
+  if (axis.Direction()*Cross < 0.0) 
     sin_angle *= -1.0;
 
   // 16 November 2002 Dale Lear: I was getting the wrong pullback on
@@ -1789,36 +2447,36 @@ double ON_ClosestPointAngle(
 
       // if angle is too small, add 2pi
       while ( angle < angle_domain[0] )
-        angle += twopi;
+	angle += twopi;
 
       // if angle is too big, subtract 2pi
       while ( angle > angle_domain[0]+twopi && angle > angle_domain[1] )
-        angle -= twopi;
+	angle -= twopi;
 
       if ( !angle_domain.Includes(angle) )
       {
-        // a0 = smallest angle between "angle" and angle[0]
-        double d0 = fabs(angle - angle_domain[0]);
-        double d1 = fabs(angle - angle_domain[0] - twopi);
-        double d2 = fabs(angle - angle_domain[0] + twopi);
-        double a0 = (d0<=d1) ? ((d0<=d2)?d0:d2) : ((d1<=d2)?d1:d2);
+	// a0 = smallest angle between "angle" and angle[0]
+	double d0 = fabs(angle - angle_domain[0]);
+	double d1 = fabs(angle - angle_domain[0] - twopi);
+	double d2 = fabs(angle - angle_domain[0] + twopi);
+	double a0 = (d0<=d1) ? ((d0<=d2)?d0:d2) : ((d1<=d2)?d1:d2);
 
-        // a1 = smallest angle between "angle" and angle[1]
-        d0 = fabs(angle - angle_domain[1]);
-        d1 = fabs(angle - angle_domain[1] - twopi);
-        d2 = fabs(angle - angle_domain[1] + twopi);
-        double a1 = (d0<=d1) ? ((d0<=d2)?d0:d2) : ((d1<=d2)?d1:d2);
+	// a1 = smallest angle between "angle" and angle[1]
+	d0 = fabs(angle - angle_domain[1]);
+	d1 = fabs(angle - angle_domain[1] - twopi);
+	d2 = fabs(angle - angle_domain[1] + twopi);
+	double a1 = (d0<=d1) ? ((d0<=d2)?d0:d2) : ((d1<=d2)?d1:d2);
 
-        if ( a0 <= a1 )
-        {
-          // angle is closest to angle_domain[0]
-          angle = angle_domain[0];
-        }
-        else
-        {
-          // angle is closest to angle_domain[1]
-          angle = angle_domain[1];
-        }
+	if ( a0 <= a1 )
+	{
+	  // angle is closest to angle_domain[0]
+	  angle = angle_domain[0];
+	}
+	else
+	{
+	  // angle is closest to angle_domain[1]
+	  angle = angle_domain[1];
+	}
       }
     }
   }

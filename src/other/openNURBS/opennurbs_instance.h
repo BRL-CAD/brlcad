@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2002 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -19,7 +19,7 @@
 
 /*
 Description:
-  An ON_InstanceDefinition defines the geometry used by
+  An ON_InstanceDefinition defines the geometry used by 
   instance references.
 See Also:
   ON_InstanceRef
@@ -31,37 +31,37 @@ class ON_CLASS ON_InstanceDefinition : public ON_Geometry
 public:
 
   // IDEF_UPDATE_TYPE lists the possible relationships between
-  // the instance definition geometry and the archive
+  // the instance definition geometry and the archive 
   // (m_source_archive) containing the original defition.
   enum IDEF_UPDATE_TYPE
   {
     static_def = 0,   // This instance definition is never updated.
-                      // If m_source_archive is set, it records the
-                      // origin of the instance definition geometry
-                      // and, but m_source_archive is never used
-                      // to update the instance definition
+		      // If m_source_archive is set, it records the
+		      // origin of the instance definition geometry
+		      // and, but m_source_archive is never used
+		      // to update the instance definition
     embedded_def = 1, // This instance definition geometry was
-                      // imported from another archive (m_source_archive)
-                      // and is embedded. If m_source_archive changes,
-                      // the user is asked if they want to update
-                      // the instance definition.
+		      // imported from another archive (m_source_archive)
+		      // and is embedded. If m_source_archive changes,
+		      // the user is asked if they want to update
+		      // the instance definition.
     linked_and_embedded_def = 2,
-                      // This instance definition geometry was
-                      // imported from another archive (m_source_archive)
-                      // and is embedded. If m_source_archive changes,
-                      // the instance definition is automatically updated.
-                      // If m_source_archive is not available, the
-                      // instance definition is still valid.
+		      // This instance definition geometry was
+		      // imported from another archive (m_source_archive)
+		      // and is embedded. If m_source_archive changes,
+		      // the instance definition is automatically updated.
+		      // If m_source_archive is not available, the
+		      // instance definition is still valid.
     linked_def = 3,   // This instance definition geometry was
-                      // imported from another archive (m_source_archive)
-                      // and is not embedded. If m_source_archive changes,
-                      // the instance definition is automatically updated.
-                      // If m_source_archive is not available, the
-                      // instance definition is not valid.
-                      // This does not save runtime memory.  It may
-                      // save a little disk space, but it is a
-                      // foolish option requested by people who do not
-                      // understand all the issues.
+		      // imported from another archive (m_source_archive)
+		      // and is not embedded. If m_source_archive changes,
+		      // the instance definition is automatically updated.
+		      // If m_source_archive is not available, the
+		      // instance definition is not valid.
+		      // This does not save runtime memory.  It may
+		      // save a little disk space, but it is a 
+		      // foolish option requested by people who do not 
+		      // understand all the issues.
     force_32bit_idef_update_type = 0xFFFFFFFF
   };
 
@@ -90,23 +90,23 @@ public:
   // virtual ON_Object overrides
   BOOL IsValid( ON_TextLog* text_log = NULL ) const;
   BOOL Write(
-         ON_BinaryArchive& binary_archive
+	 ON_BinaryArchive& binary_archive
        ) const;
   BOOL Read(
-         ON_BinaryArchive& binary_archive
+	 ON_BinaryArchive& binary_archive
        );
   ON::object_type ObjectType() const;
 
   // virtual ON_Geometry overrides
   int Dimension() const;
   BOOL GetBBox(
-         double* boxmin,
-         double* boxmax,
-         int bGrowBox = false
-         ) const;
-  BOOL Transform(
-         const ON_Xform& xform
-         );
+	 double* boxmin,
+	 double* boxmax,
+	 int bGrowBox = false
+	 ) const;
+  BOOL Transform( 
+	 const ON_Xform& xform
+	 );
 
   // virtual
   ON_UUID ModelObjectId() const;
@@ -147,11 +147,11 @@ public:
     archive settings and update the  definition when appropriate.
     The checksum can be used to detect changed files.
   */
-  void SetSourceArchive(
-        const wchar_t* source_archive,
-        ON_CheckSum checksum,
-        IDEF_UPDATE_TYPE update_type
-        );
+  void SetSourceArchive( 
+	const wchar_t* source_archive, 
+	ON_CheckSum checksum,
+	IDEF_UPDATE_TYPE update_type
+	);
 
   /*
   Returns:
@@ -177,11 +177,11 @@ public:
 public:
 
   ON_UUID m_uuid;     // unique id for this instance definition
-  ON_wString m_name;  // The "name" is for human comfort.
-                      // It can be empty and duplicates
-                      // may exist. Instance reference use
-                      // m_uuid to find instance definitions.
-  ON_wString m_description;
+  ON_wString m_name;  // The "name" is for human comfort.  
+		      // It can be empty and duplicates
+		      // may exist. Instance reference use
+		      // m_uuid to find instance definitions.
+  ON_wString m_description; 
 
   ON_wString m_url;
   ON_wString m_url_tag;     // UI link text for m_url
@@ -189,22 +189,22 @@ public:
   ON_BoundingBox m_bbox;
 
   ON_UnitSystem  m_us;
-
-  IDEF_UPDATE_TYPE m_idef_update_type;
+  
+  IDEF_UPDATE_TYPE m_idef_update_type; 
 
   int m_idef_update_depth; // Controls how much geometry is read when
-                           // a linked idef is updated.
-                           //   0: read everything, included nested linked idefs
-                           //   1: skip nested linked idefs.
+			   // a linked idef is updated.
+			   //   0: read everything, included nested linked idefs
+			   //   1: skip nested linked idefs.
 
-  ON_wString m_source_archive;   // filename used to update idef
-                                 // (it can be empty or relative)
+  ON_wString m_source_archive;   // filename used to update idef 
+				 // (it can be empty or relative)
   bool m_source_bRelativePath;  // True if the filename in m_source_archive is
-                                 // a relative the location of the 3dm file
-                                 // containing this instance definition.
+				 // a relative the location of the 3dm file
+				 // containing this instance definition.
 
   ON_CheckSum m_source_archive_checksum; // used to detect when idef is out of
-                                         // synch with source archive.
+					 // synch with source archive.
 };
 
 
@@ -228,10 +228,10 @@ public:
   //
   BOOL IsValid( ON_TextLog* text_log = NULL ) const;
   BOOL Write(
-         ON_BinaryArchive& binary_archive
+	 ON_BinaryArchive& binary_archive
        ) const;
   BOOL Read(
-         ON_BinaryArchive& binary_archive
+	 ON_BinaryArchive& binary_archive
        );
   ON::object_type ObjectType() const;
 
@@ -241,13 +241,13 @@ public:
   //
   int Dimension() const;
   BOOL GetBBox(
-         double* boxmin,
-         double* boxmax,
-         int bGrowBox = false
-         ) const;
-  BOOL Transform(
-         const ON_Xform& xform
-         );
+	 double* boxmin,
+	 double* boxmax,
+	 int bGrowBox = false
+	 ) const;
+  BOOL Transform( 
+	 const ON_Xform& xform
+	 );
 
   // virtual ON_Geometry::IsDeformable() override
   bool IsDeformable() const;
@@ -258,7 +258,7 @@ public:
   /////////////////////////////////////////////////////////////
   //
 
-  // Unique id of the instance definition (ON_InstanceDefinition)
+  // Unique id of the instance definition (ON_InstanceDefinition) 
   // in the instance definition table that defines the geometry
   // used by this reference.
   ON_UUID m_instance_definition_uuid;

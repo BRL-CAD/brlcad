@@ -1,3 +1,19 @@
+/* $Header$ */
+/* $NoKeywords: $ */
+/*
+//
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
+// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+//
+// THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
+// ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
+// MERCHANTABILITY ARE HEREBY DISCLAIMED.
+//				
+// For complete openNURBS copyright information see <http://www.opennurbs.org>.
+//
+////////////////////////////////////////////////////////////////
+*/
+
 #if !defined(OPENNURBS_LAYER_INC_)
 #define OPENNURBS_LAYER_INC_
 
@@ -21,12 +37,12 @@ public:
     initialized.
   Parameters:
     text_log - [in] if the object is not valid and text_log
-        is not NULL, then a brief englis description of the
-        reason the object is not valid is appened to the log.
-        The information appended to text_log is suitable for
-        low-level debugging purposes by programmers and is
-        not intended to be useful as a high level user
-        interface tool.
+	is not NULL, then a brief englis description of the
+	reason the object is not valid is appened to the log.
+	The information appended to text_log is suitable for 
+	low-level debugging purposes by programmers and is 
+	not intended to be useful as a high level user 
+	interface tool.
   Returns:
     @untitled table
     TRUE     object is valid
@@ -39,11 +55,11 @@ public:
   void Dump( ON_TextLog& ) const; // for debugging
 
   BOOL Write(
-         ON_BinaryArchive&  // serialize definition to binary archive
+	 ON_BinaryArchive&  // serialize definition to binary archive
        ) const;
 
   BOOL Read(
-         ON_BinaryArchive&  // restore definition from binary archive
+	 ON_BinaryArchive&  // restore definition from binary archive
        );
 
   ON::object_type ObjectType() const;
@@ -87,8 +103,8 @@ public:
   Description:
     Controls layer visibility
   Parameters:
-    bVisible - [in] true to make layer visible,
-                    false to make layer invisible
+    bVisible - [in] true to make layer visible, 
+		    false to make layer invisible
   See Also:
     ON_Layer::IsVisible
   */
@@ -107,7 +123,7 @@ public:
     Controls layer locked
   Parameters:
     bLocked - [in] True to lock layer
-                   False to unlock layer
+		   False to unlock layer
   See Also:
     ON_Layer::IsLocked
   */
@@ -125,11 +141,11 @@ public:
   */
   bool IsVisibleAndLocked() const;
 
-  // OBSOLETE - DO NOT USE
+  // OBSOLETE - DO NOT USE 
   //__declspec(deprecated) bool IsChangeable() const; // TRUE if objects on layer can be changed (normal)
 
 
-  // OBSOLETE - DO NOT USE
+  // OBSOLETE - DO NOT USE 
   //__declspec(deprecated) bool IsSelectable() const; // TRUE if objects on layer are selectable (normal and reference)
 
   //////////
@@ -170,35 +186,35 @@ public:
 
   int m_layer_index;       // index of this layer
   ON_UUID m_layer_id;
-  ON_UUID m_parent_layer_id; // Layers are origanized in a hierarchical
-                             // structure (like file folders).
-                             // If a layer is in a parent layer,
-                             // then m_parent_layer_id is the id of
-                             // the parent layer.
+  ON_UUID m_parent_layer_id; // Layers are origanized in a hierarchical 
+			     // structure (like file folders).
+			     // If a layer is in a parent layer, 
+			     // then m_parent_layer_id is the id of 
+			     // the parent layer.
 
   int m_iges_level;        // IGES level number if this layer was made during IGES import
 
 
 
   // Rendering material:
-  //   If you want something simple and fast, set
-  //   m_material_index to the index of your rendering material
+  //   If you want something simple and fast, set 
+  //   m_material_index to the index of your rendering material 
   //   and ignore m_rendering_attributes.
   //   If you are developing a fancy plug-in renderer, and a user is
   //   assigning one of your fabulous rendering materials to this
-  //   layer, then add rendering material information to the
-  //   m_rendering_attributes.m_materials[] array.
+  //   layer, then add rendering material information to the 
+  //   m_rendering_attributes.m_materials[] array. 
   //
   // Developers:
   //   As soon as m_rendering_attributes.m_materials[] is not empty,
   //   rendering material queries slow down.  Do not populate
-  //   m_rendering_attributes.m_materials[] when setting
+  //   m_rendering_attributes.m_materials[] when setting 
   //   m_material_index will take care of your needs.
-  int m_material_index;
+  int m_material_index; 
   ON_RenderingAttributes m_rendering_attributes;
-
+  
   int m_linetype_index;    // index of linetype
-
+  
   // Layer display attributes.
   //   If m_display_material_id is nil, then m_color is the layer color
   //   and defaults are used for all other display attributes.
@@ -214,15 +230,15 @@ public:
   // Layer printing (a.k.a. plotting for you old timers) attributes.
   ON_Color m_plot_color;   // plotting color
   double m_plot_weight_mm; // thickness of plot pen in mm
-                           //   =0.0 means use the default width
-                           //   <0.0 means don't plot (visible for screen display, but does not show on plot)
+			   //   =0.0 means use the default width
+			   //   <0.0 means don't plot (visible for screen display, but does not show on plot)
   ON_wString m_name;
 
   bool m_bVisible;  // If true, objects on this layer are visible.
   bool m_bLocked;   // If true, objects on this layer cannot be modified.
   bool m_bExpanded; // If true, when the layer table is displayed in
-                    // a tree control then the list of child layers is
-                    // shown in the control.
+		    // a tree control then the list of child layers is
+		    // shown in the control.
 };
 
 

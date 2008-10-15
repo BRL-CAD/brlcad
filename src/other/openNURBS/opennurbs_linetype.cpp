@@ -1,3 +1,19 @@
+/* $Header$ */
+/* $NoKeywords: $ */
+/*
+//
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
+// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+//
+// THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
+// ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
+// MERCHANTABILITY ARE HEREBY DISCLAIMED.
+//				
+// For complete openNURBS copyright information see <http://www.opennurbs.org>.
+//
+////////////////////////////////////////////////////////////////
+*/
+
 #include "opennurbs.h"
 
 bool ON_IsHairlinePrintWidth(double width_mm)
@@ -88,14 +104,14 @@ BOOL ON_Linetype::IsValid( ON_TextLog* text_log ) const
     if ( m_segments[0].m_length <= 0.0  )
     {
       if ( text_log )
-        text_log->Print("ON_Linetype bogus single segment linetype - length <= 0.0 (it must be > 0)\n");
+	text_log->Print("ON_Linetype bogus single segment linetype - length <= 0.0 (it must be > 0)\n");
       return false;
     }
 
     if ( ON_LinetypeSegment::stLine != m_segments[0].m_seg_type )
     {
       if ( text_log )
-        text_log->Print("ON_Linetype bogus single segment linetype - type != stLine\n");
+	text_log->Print("ON_Linetype bogus single segment linetype - type != stLine\n");
       return false;
     }
   }
@@ -105,33 +121,33 @@ BOOL ON_Linetype::IsValid( ON_TextLog* text_log ) const
     {
       if ( m_segments[i].m_length < 0.0 )
       {
-        if ( text_log )
-          text_log->Print("ON_Linetype segment has negative length.\n");
-        return false;
+	if ( text_log )
+	  text_log->Print("ON_Linetype segment has negative length.\n");
+	return false;
       }
 
       if ( ON_LinetypeSegment::stLine != m_segments[i].m_seg_type && ON_LinetypeSegment::stSpace != m_segments[i].m_seg_type )
       {
-        if ( text_log )
-          text_log->Print("ON_Linetype segment has invalid m_seg_type.\n");
-        return false;
+	if ( text_log )
+	  text_log->Print("ON_Linetype segment has invalid m_seg_type.\n");
+	return false;
       }
 
       if ( i )
       {
-        if ( m_segments[i].m_seg_type == m_segments[i-1].m_seg_type )
-        {
-          if ( text_log )
-            text_log->Print("ON_Linetype consecutive segments have same type.\n");
-          return false;
-        }
+	if ( m_segments[i].m_seg_type == m_segments[i-1].m_seg_type )
+	{
+	  if ( text_log )
+	    text_log->Print("ON_Linetype consecutive segments have same type.\n");
+	  return false;
+	}
 
-        if ( 0.0 == m_segments[i].m_length && 0.0 == m_segments[i-1].m_length )
-        {
-          if ( text_log )
-            text_log->Print("ON_Linetype consecutive segments have length zero.\n");
-          return false;
-        }
+	if ( 0.0 == m_segments[i].m_length && 0.0 == m_segments[i-1].m_length )
+	{
+	  if ( text_log )
+	    text_log->Print("ON_Linetype consecutive segments have length zero.\n");
+	  return false;
+	}
       }
     }
   }
@@ -209,20 +225,20 @@ BOOL ON_Linetype::Read( ON_BinaryArchive& file)
 
   if (rc)
   {
-    if( 1 == major_version )
+    if( 1 == major_version ) 
     {
       // chunk version 1.0 fields
-      if( rc)
-        rc = file.ReadInt( &m_linetype_index );
-      if( rc)
-        rc = file.ReadString( m_linetype_name );
-      if( rc)
-        rc = file.ReadArray( m_segments );
+      if( rc) 
+	rc = file.ReadInt( &m_linetype_index );
+      if( rc) 
+	rc = file.ReadString( m_linetype_name );
+      if( rc) 
+	rc = file.ReadArray( m_segments );
 
       if ( minor_version >= 1 )
       {
-        if (rc)
-          rc = file.ReadUuid( m_linetype_id );
+	if (rc)
+	  rc = file.ReadUuid( m_linetype_id );
       }
     }
     else

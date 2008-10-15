@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -21,24 +21,24 @@ ON_OBJECT_IMPLEMENT(ON_CurveProxy,ON_Curve,"4ED7D4D9-E947-11d3-BFE5-0010830122F0
 ON_CurveProxy::ON_CurveProxy() : m_real_curve(0), m_bReversed(0)
 {}
 
-ON_CurveProxy::ON_CurveProxy( const ON_CurveProxy& src )
-             : ON_Curve(src), m_real_curve(0), m_bReversed(0)
+ON_CurveProxy::ON_CurveProxy( const ON_CurveProxy& src ) 
+	     : ON_Curve(src), m_real_curve(0), m_bReversed(0)
 {
   *this = src;
 }
 
-ON_CurveProxy::ON_CurveProxy( const ON_Curve* c )
-              : m_real_curve(c), m_bReversed(0)
+ON_CurveProxy::ON_CurveProxy( const ON_Curve* c ) 
+	      : m_real_curve(c), m_bReversed(0)
 {
   if ( m_real_curve )
     m_real_curve_domain =m_this_domain = m_real_curve->Domain();
 }
 
-ON_CurveProxy::ON_CurveProxy( const ON_Curve* c, ON_Interval domain )
-             : m_real_curve(c),
-               m_bReversed(0),
-               m_real_curve_domain(domain),
-               m_this_domain(domain)
+ON_CurveProxy::ON_CurveProxy( const ON_Curve* c, ON_Interval domain ) 
+	     : m_real_curve(c), 
+	       m_bReversed(0),
+	       m_real_curve_domain(domain),
+	       m_this_domain(domain)
 {
 }
 
@@ -63,7 +63,7 @@ ON__UINT32 ON_CurveProxy::DataCRC(ON__UINT32 current_remainder) const
 
 ON_CurveProxy& ON_CurveProxy::operator=( const ON_CurveProxy& src )
 {
-  if ( this != &src )
+  if ( this != &src ) 
   {
     ON_Curve::operator=(src);
     m_real_curve = src.m_real_curve;
@@ -142,8 +142,8 @@ void ON_CurveProxy::SetProxyCurve( const ON_Curve* real_curve )
   }
 }
 
-void ON_CurveProxy::SetProxyCurve( const ON_Curve* real_curve,
-                                   ON_Interval real_curve_subdomain)
+void ON_CurveProxy::SetProxyCurve( const ON_Curve* real_curve, 
+				   ON_Interval real_curve_subdomain)
 {
   if ( real_curve != this )
   {
@@ -209,7 +209,7 @@ bool ON_CurveProxy::SetProxyCurveDomain( ON_Interval proxy_curve_subdomain )
       cdom.Intersection( proxy_curve_subdomain );
       rc = cdom.IsIncreasing();
       if (rc )
-        m_real_curve_domain = cdom;
+	m_real_curve_domain = cdom;
     }
     else
     {
@@ -235,7 +235,7 @@ ON_Curve* ON_CurveProxy::DuplicateCurve() const
     {
       dup_crv->Trim(m_real_curve_domain);
       if( m_bReversed )
-        dup_crv->Reverse();
+	dup_crv->Reverse();
       dup_crv->SetDomain( m_this_domain );
     }
   }
@@ -251,21 +251,21 @@ ON_CurveProxy::IsValid( ON_TextLog* text_log ) const
   if ( rc && !m_real_curve_domain.IsIncreasing() )
   {
     rc = false;
-    if ( text_log)
+    if ( text_log) 
       text_log->Print("ON_CurveProxy.m_real_curve_domain is not increasing.\n");
   }
 
   if ( rc && !m_real_curve->Domain().Includes( m_real_curve_domain ) )
   {
     rc = false;
-    if ( text_log)
+    if ( text_log) 
       text_log->Print("ON_CurveProxy.m_real_curve_domain is not included m_real_curve->Domain().\n");
   }
 
   if ( rc && !m_this_domain.IsIncreasing() )
   {
     rc = false;
-    if ( text_log)
+    if ( text_log) 
       text_log->Print("ON_CurveProxy.m_this_domain is not increasing.\n");
   }
 
@@ -278,7 +278,7 @@ ON_CurveProxy::Dump( ON_TextLog& dump ) const
   dump.Print("ON_CurveProxy uses %x on [%g,%g]\n",m_real_curve,m_real_curve_domain[0],m_real_curve_domain[1]);
 }
 
-BOOL
+BOOL 
 ON_CurveProxy::Write(
        ON_BinaryArchive&  // open binary file
      ) const
@@ -286,7 +286,7 @@ ON_CurveProxy::Write(
   return false;
 }
 
-BOOL
+BOOL 
 ON_CurveProxy::Read(
        ON_BinaryArchive&  // open binary file
      )
@@ -294,18 +294,18 @@ ON_CurveProxy::Read(
   return false;
 }
 
-int
+int 
 ON_CurveProxy::Dimension() const
 {
   return ( m_real_curve ) ? m_real_curve->Dimension() : 0;
 }
 
-BOOL
+BOOL 
 ON_CurveProxy::GetBBox( // returns true if successful
-         double* boxmin,    // minimum
-         double* boxmax,    // maximum
-         BOOL bGrowBox
-         ) const
+	 double* boxmin,    // minimum
+	 double* boxmax,    // maximum
+	 BOOL bGrowBox
+	 ) const
 {
   return ( m_real_curve ) ? m_real_curve->GetBBox(boxmin,boxmax,bGrowBox) : false;
 }
@@ -345,7 +345,7 @@ int ON_CurveProxy::SpanCount() const
   if (!m_real_curve) return 0;
   int rsc = m_real_curve->SpanCount();
   ON_Interval domain = m_real_curve->Domain();
-  if (m_real_curve_domain == domain)
+  if (m_real_curve_domain == domain) 
     return rsc;
   double* rsv = (double*)onmalloc((rsc+1)*sizeof(double));
   if (!rsv) return 0;
@@ -356,7 +356,7 @@ int ON_CurveProxy::SpanCount() const
 
   int i=0;
   int sc = 0;
-
+  
   while (i <= rsc && rsv[i] <= m_real_curve_domain[0]) i++;
   while (i <= rsc && rsv[i] < m_real_curve_domain[1]){
     sc++;
@@ -375,7 +375,7 @@ BOOL ON_CurveProxy::GetSpanVector( double* d ) const
 
 #if 0
   BOOL rc = m_real_curve ? m_real_curve->GetSpanVector(d) : false;
-  if (rc && (m_bReversed || m_this_domain != m_real_curve_domain) )
+  if (rc && (m_bReversed || m_this_domain != m_real_curve_domain) ) 
   {
     double x;
     int i, j, count = SpanCount();
@@ -386,11 +386,11 @@ BOOL ON_CurveProxy::GetSpanVector( double* d ) const
     }
     if ( m_bReversed )
     {
-      for ( i = 0, j = count; i <= j; i++, j-- )
+      for ( i = 0, j = count; i <= j; i++, j-- ) 
       {
-        x = d[i];
-        d[i] = 1.0-d[j];
-        d[j] = 1.0-x;
+	x = d[i];
+	d[i] = 1.0-d[j];
+	d[j] = 1.0-x;
       }
     }
     for ( i = 0; i <= count; i++ )
@@ -423,7 +423,7 @@ BOOL ON_CurveProxy::GetSpanVector( double* d ) const
   int i=0;
   int sc = 0;
   d[0] = m_real_curve_domain[0];
-
+  
   while (i<= rsc && rsv[i] <= d[0]) i++;
   while (i <= rsc && rsv[i] < m_real_curve_domain[1]){
     sc++;
@@ -445,11 +445,11 @@ BOOL ON_CurveProxy::GetSpanVector( double* d ) const
     }
     if ( m_bReversed )
     {
-      for ( i = 0, j = sc; i <= j; i++, j-- )
+      for ( i = 0, j = sc; i <= j; i++, j-- ) 
       {
-        x = d[i];
-        d[i] = 1.0-d[j];
-        d[j] = 1.0-x;
+	x = d[i];
+	d[i] = 1.0-d[j];
+	d[j] = 1.0-x;
       }
     }
     for ( i = 0; i <= sc; i++ )
@@ -466,16 +466,16 @@ int ON_CurveProxy::Degree() const
   return m_real_curve ? m_real_curve->Degree() : 0;
 }
 
-BOOL
+BOOL 
 ON_CurveProxy::GetParameterTolerance(
-         double t,  // t = parameter in domain
-         double* tminus, // tminus
-         double* tplus   // tplus
-         ) const
+	 double t,  // t = parameter in domain
+	 double* tminus, // tminus
+	 double* tplus   // tplus
+	 ) const
 {
-  BOOL rc = ( m_real_curve )
-          ? m_real_curve->GetParameterTolerance( RealCurveParameter(t),tminus,tplus)
-          : false;
+  BOOL rc = ( m_real_curve ) 
+	  ? m_real_curve->GetParameterTolerance( RealCurveParameter(t),tminus,tplus) 
+	  : false;
   if (rc)
   {
     if ( tminus )
@@ -506,15 +506,15 @@ ON_CurveProxy::IsLinear( // true if curve locus is a line segment
     else
     {
       // The ON_CurveProxy::DuplicateCurve() scope is critical
-      // because there are situation where people derive a
+      // because there are situation where people derive a 
       // class from ON_CurveProxy, and override the virtual
       // DuplicateCurve().  In this situation I rely on getting
       // the result returned by ON_CurveProxy::DuplicateCurve().
       ON_Curve* temp_curve = ON_CurveProxy::DuplicateCurve();
       if ( 0 != temp_curve )
       {
-        rc = temp_curve->IsLinear(tolerance) ? true : false;
-        delete temp_curve;
+	rc = temp_curve->IsLinear(tolerance) ? true : false;
+	delete temp_curve;
       }
     }
   }
@@ -555,7 +555,7 @@ int ON_CurveProxy::IsPolyline(
       // return 0.
       pline_points->SetCount(0);
       if ( pline_t )
-        pline_t->SetCount(0);
+	pline_t->SetCount(0);
       rc = 0;
     }
 
@@ -565,7 +565,7 @@ int ON_CurveProxy::IsPolyline(
       // return 0.
       pline_t->SetCount(0);
       if ( pline_points )
-        pline_points->SetCount(0);
+	pline_points->SetCount(0);
       rc = 0;
     }
 
@@ -573,28 +573,28 @@ int ON_CurveProxy::IsPolyline(
     {
       if ( m_bReversed )
       {
-        if ( pline_points )
-          pline_points->Reverse();
-        if ( pline_t )
-          pline_t->Reverse();
+	if ( pline_points )
+	  pline_points->Reverse();
+	if ( pline_t )
+	  pline_t->Reverse();
       }
 
       if ( pline_points && IsClosed() && pline_points->Count() > 3 )
       {
-        // 27 February 2003 Dale Lear
-        //     If proxy curve says it's closed, then
-        //     make sure end point of returned polyline
-        //     is exactly equal to start point.
-        *pline_points->Last() = *pline_points->First();
+	// 27 February 2003 Dale Lear
+	//     If proxy curve says it's closed, then
+	//     make sure end point of returned polyline
+	//     is exactly equal to start point.
+	*pline_points->Last() = *pline_points->First();
       }
-
+      
       if ( pline_t && (m_bReversed || m_real_curve_domain != m_this_domain) )
       {
-        int i;
-        for ( i = 0; i < rc; i++ )
-        {
-          (*pline_t)[i] = ThisCurveParameter( (*pline_t)[i] );
-        }
+	int i;
+	for ( i = 0; i < rc; i++ )
+	{
+	  (*pline_t)[i] = ThisCurveParameter( (*pline_t)[i] );
+	}
       }
     }
   }
@@ -604,12 +604,12 @@ int ON_CurveProxy::IsPolyline(
     //   We have to extract a sub curve for the test, because
     //   the region in question may be a polyline and the unused
     //   portion may not be a polyline.  This tends to happen
-    //   when the "real" curve is a polycurve that contains
+    //   when the "real" curve is a polycurve that contains 
     //   a polyline and the polycurve has been parametrically
     //   trimmed during a brep operation (like a boolean).
     //
     // The ON_CurveProxy::DuplicateCurve() scope is critical
-    // because there are situation where people derive a
+    // because there are situation where people derive a 
     // class from ON_CurveProxy, and override the virtual
     // DuplicateCurve().  In this situation I rely on getting
     // the result returned by ON_CurveProxy::DuplicateCurve().
@@ -630,7 +630,7 @@ BOOL
 ON_CurveProxy::IsArc( // true if curve locus in an arc or circle
       const ON_Plane* plane, // if not NULL, test is performed in this plane
       ON_Arc* arc,         // if not NULL and true is returned, then arc
-                              // arc parameters are filled in
+			      // arc parameters are filled in
       double tolerance // tolerance to use when checking linearity
       ) const
 {
@@ -644,7 +644,7 @@ ON_CurveProxy::IsArc( // true if curve locus in an arc or circle
 BOOL
 ON_CurveProxy::IsPlanar(
       ON_Plane* plane, // if not NULL and true is returned, then plane parameters
-                         // are filled in
+			 // are filled in
       double tolerance // tolerance to use when checking linearity
       ) const
 {
@@ -660,7 +660,7 @@ ON_CurveProxy::IsInPlane(
   return ( m_real_curve ) ? m_real_curve->IsInPlane(plane,tolerance) : false;
 }
 
-BOOL
+BOOL 
 ON_CurveProxy::IsClosed() const
 {
   BOOL rc = false;
@@ -671,7 +671,7 @@ ON_CurveProxy::IsClosed() const
   return rc;
 }
 
-BOOL
+BOOL 
 ON_CurveProxy::IsPeriodic() const
 {
   BOOL rc = false;
@@ -682,16 +682,16 @@ ON_CurveProxy::IsPeriodic() const
   return rc;
 }
 
-bool ON_CurveProxy::GetNextDiscontinuity(
-                ON::continuity c,
-                double t0,
-                double t1,
-                double* t,
-                int* hint,
-                int* dtype,
-                double cos_angle_tolerance,
-                double curvature_tolerance
-                ) const
+bool ON_CurveProxy::GetNextDiscontinuity( 
+		ON::continuity c,
+		double t0,
+		double t1,
+		double* t,
+		int* hint,
+		int* dtype,
+		double cos_angle_tolerance,
+		double curvature_tolerance
+		) const
 {
   bool rc = false;
 
@@ -711,7 +711,7 @@ bool ON_CurveProxy::GetNextDiscontinuity(
     //
     //if ( m_bReversed )
     //{
-    //  // NOTE: GetNextDiscontinuity search begins at
+    //  // NOTE: GetNextDiscontinuity search begins at 
     //  //       "t0" and goes towards "t1" so it is ok if s0 > s1.
     //  s = s0; s0 = s1; s1 = s;
     //}
@@ -720,38 +720,38 @@ bool ON_CurveProxy::GetNextDiscontinuity(
 
     rc = m_real_curve->GetNextDiscontinuity(parametric_c,s0,s1,&s,hint,dtype,cos_angle_tolerance,curvature_tolerance);
 
-    if ( rc )
+    if ( rc ) 
     {
       *t = ThisCurveParameter(s);
       if ( (t0 < t1 && *t <= t0) || (t1 < t0 && *t >= t0) )
       {
-        // Sometimes proxy domain adjustments kill all the precision.
-        // To avoid infinite loops, it is critical that *t != t0
-        rc = false;
-        if ( dtype )
-          *dtype = 0;
-        double s2 = ON_SQRT_EPSILON*s1 + (1.0 - ON_SQRT_EPSILON)*s0;
-        if ( s0 < s2 && s2 < s1 )
-        {
-          rc = m_real_curve->GetNextDiscontinuity(parametric_c,s2,s1,&s,hint,dtype,cos_angle_tolerance,curvature_tolerance);
-          if ( rc )
-          {
-            *t = ThisCurveParameter(s);
-            if ( (t0 < t1 && *t <= t0) || (t1 < t0 && *t >= t0) )
-            {
-              if ( dtype )
-                *dtype = 0;
-              rc = false;
-            }
-          }
-        }
+	// Sometimes proxy domain adjustments kill all the precision.
+	// To avoid infinite loops, it is critical that *t != t0
+	rc = false;
+	if ( dtype )
+	  *dtype = 0;
+	double s2 = ON_SQRT_EPSILON*s1 + (1.0 - ON_SQRT_EPSILON)*s0;
+	if ( s0 < s2 && s2 < s1 )
+	{
+	  rc = m_real_curve->GetNextDiscontinuity(parametric_c,s2,s1,&s,hint,dtype,cos_angle_tolerance,curvature_tolerance);
+	  if ( rc )
+	  {
+	    *t = ThisCurveParameter(s);
+	    if ( (t0 < t1 && *t <= t0) || (t1 < t0 && *t >= t0) )
+	    {
+	      if ( dtype )
+		*dtype = 0;
+	      rc = false;
+	    }
+	  }
+	}
       }
     }
 
     if ( !rc && parametric_c != c )
     {
       // 20 March 2003 Dale Lear:
-      //   Let base class test decide locus continuity questions at ends
+      //   Let base class test decide locus continuity questions at ends 
       rc = ON_Curve::GetNextDiscontinuity( c, t0, t1, t, hint, dtype, cos_angle_tolerance, curvature_tolerance );
     }
   }
@@ -762,7 +762,7 @@ bool ON_CurveProxy::GetNextDiscontinuity(
 
 bool ON_CurveProxy::IsContinuous(
     ON::continuity desired_continuity,
-    double t,
+    double t, 
     int* hint, // default = NULL,
     double point_tolerance, // default=ON_ZERO_TOLERANCE
     double d1_tolerance, // default==ON_ZERO_TOLERANCE
@@ -788,33 +788,33 @@ bool ON_CurveProxy::IsContinuous(
       case ON::G1_continuous:
       case ON::G2_continuous:
       case ON::Cinfinity_continuous:
-        break;
+	break;
 
       case ON::C0_locus_continuous:
       case ON::C1_locus_continuous:
       case ON::C2_locus_continuous:
       case ON::G1_locus_continuous:
       case ON::G2_locus_continuous:
-        if ( t >= Domain()[1] )
-        {
-          // Since the proxy curve is using a subset of the real curve,
-          // the proxy can't be closed.  So if the query parameter
-          // is >= domain max, the curve cannot be locus continuous.
-          rc = false;
-        }
-        else
-        {
-          // otherwise we want the answer for a non-locus test
-          desired_continuity = ON::ParametricContinuity(desired_continuity);
-        }
-        break;
+	if ( t >= Domain()[1] )
+	{
+	  // Since the proxy curve is using a subset of the real curve,
+	  // the proxy can't be closed.  So if the query parameter
+	  // is >= domain max, the curve cannot be locus continuous.
+	  rc = false;
+	}
+	else
+	{
+	  // otherwise we want the answer for a non-locus test
+	  desired_continuity = ON::ParametricContinuity(desired_continuity);
+	}
+	break;
       }
     }
     if (rc)
-      rc = m_real_curve->IsContinuous( desired_continuity,
-                           RealCurveParameter(t), hint,
-                           point_tolerance, d1_tolerance, d2_tolerance,
-                           cos_angle_tolerance, curvature_tolerance );
+      rc = m_real_curve->IsContinuous( desired_continuity, 
+			   RealCurveParameter(t), hint, 
+			   point_tolerance, d1_tolerance, d2_tolerance, 
+			   cos_angle_tolerance, curvature_tolerance );
   }
   return rc;
 }
@@ -832,18 +832,18 @@ ON_CurveProxy::Reverse()
   return true;
 }
 
-BOOL
+BOOL 
 ON_CurveProxy::Evaluate( // returns false if unable to evaluate
        double t,       // evaluation parameter
        int der_count,  // number of derivatives (>=0)
        int v_stride,   // v[] array stride (>=Dimension())
        double* v,      // v[] array of length stride*(ndir+1)
        int side,       // optional - determines which side to evaluate from
-                       //         0 = default
-                       //      <  0 to evaluate from below,
-                       //      >  0 to evaluate from above
+		       //         0 = default
+		       //      <  0 to evaluate from below, 
+		       //      >  0 to evaluate from above
        int* hint       // optional - evaluation hint (int) used to speed
-                       //            repeated evaluations
+		       //            repeated evaluations
        ) const
 {
 	// Set side hint if we are at a domain endpoint
@@ -853,21 +853,21 @@ ON_CurveProxy::Evaluate( // returns false if unable to evaluate
 	else if( fabs(1.0 - normt)<ON_ZERO_TOLERANCE)
 		side =  m_bReversed?1:-1;
 
-  BOOL rc = ( m_real_curve )
-          ? m_real_curve->Evaluate( RealCurveParameter(t),der_count,v_stride,v,side,hint)
-          : false;
-  if ( rc && m_bReversed )
+  BOOL rc = ( m_real_curve ) 
+	  ? m_real_curve->Evaluate( RealCurveParameter(t),der_count,v_stride,v,side,hint) 
+	  : false;
+  if ( rc && m_bReversed ) 
   {
     // negate odd derivatives
     const int dim = m_real_curve->Dimension();
     int di, i;
     // GBA 8-Aug-2006  Fixed a bug here that caused memory corruption. see TRR#22030
-    for ( di = 1; di <= der_count; di+=2 )
+    for ( di = 1; di <= der_count; di+=2 ) 
     {
       v += v_stride;
-      for ( i = 0; i < dim; i++ )
+      for ( i = 0; i < dim; i++ ) 
       {
-        v[i] = -v[i];
+	v[i] = -v[i];
       }
       v += v_stride;
     }
@@ -876,13 +876,13 @@ ON_CurveProxy::Evaluate( // returns false if unable to evaluate
 }
 
 bool ON_CurveProxy::GetClosestPoint( const ON_3dPoint& test_point,
-        double* t,       // parameter of global closest point returned here
-        double maximum_distance,
-        const ON_Interval* sub_domain
-        ) const
+	double* t,       // parameter of global closest point returned here
+	double maximum_distance,
+	const ON_Interval* sub_domain
+	) const
 {
   bool rc = false;
-  if ( m_real_curve )
+  if ( m_real_curve ) 
   {
     ON_Interval scratch_domain = RealCurveInterval( sub_domain );
     rc = m_real_curve->GetClosestPoint( test_point, t, maximum_distance, &scratch_domain );
@@ -893,10 +893,10 @@ bool ON_CurveProxy::GetClosestPoint( const ON_3dPoint& test_point,
 }
 
 BOOL ON_CurveProxy::GetLength(
-        double* length,               // length returned here
-        double fractional_tolerance,  // default = 1.0e-8
-        const ON_Interval* sub_domain // default = NULL
-        ) const
+	double* length,               // length returned here
+	double fractional_tolerance,  // default = 1.0e-8
+	const ON_Interval* sub_domain // default = NULL
+	) const
 {
   if ( length )
     *length = 0;
@@ -907,36 +907,36 @@ BOOL ON_CurveProxy::GetLength(
 }
 
 BOOL ON_CurveProxy::GetNormalizedArcLengthPoint(
-        double s,
-        double* t,
-        double fractional_tolerance,
-        const ON_Interval* sub_domain
-        ) const
+	double s,
+	double* t,
+	double fractional_tolerance,
+	const ON_Interval* sub_domain
+	) const
 {
   if ( !m_real_curve )
     return false;
 	if ( s<0.0 || s>1.0)
 		return false;
-
+	 
   ON_Interval scratch_domain = RealCurveInterval( sub_domain );
 	if( m_bReversed)
 		s = 1-s;
 
 	BOOL rc =  m_real_curve->GetNormalizedArcLengthPoint(s, t , fractional_tolerance, &scratch_domain);
 	if( rc){
-		*t = ThisCurveParameter( *t);
+		*t = ThisCurveParameter( *t); 
 	}
 	return rc;
 }
 
 BOOL ON_CurveProxy::GetNormalizedArcLengthPoints(
-        int count,
-        const double* s,
-        double* t,
-        double absolute_tolerance ,
-        double fractional_tolerance ,
-        const ON_Interval* sub_domain
-        ) const
+	int count,
+	const double* s,
+	double* t,
+	double absolute_tolerance ,
+	double fractional_tolerance ,
+	const ON_Interval* sub_domain 
+	) const
 {
   // 23 July 2004 Dale Lear:
   //     Fixed a bug so this would work right when m_bReversed = true
@@ -947,7 +947,7 @@ BOOL ON_CurveProxy::GetNormalizedArcLengthPoints(
 
 	if( count<0)
 		return false;
-
+ 
   ON_Interval scratch_domain = RealCurveInterval( sub_domain );
 	ON_SimpleArray<double> ss;
 	if( m_bReversed)
@@ -966,16 +966,16 @@ BOOL ON_CurveProxy::GetNormalizedArcLengthPoints(
   {
 		for(i=0;i<count; i++)
     {
-			t[i] = ThisCurveParameter( t[i]);
+			t[i] = ThisCurveParameter( t[i]); 
     }
     if ( m_bReversed )
     {
       double x;
       for (i = 0, j = count-1; i < j; i++, j-- )
       {
-        x = t[i];
-        t[i] = t[j];
-        t[j] = x;
+	x = t[i];
+	t[i] = t[j];
+	t[j] = x;
       }
     }
 	}
@@ -986,13 +986,13 @@ BOOL ON_CurveProxy::GetNormalizedArcLengthPoints(
 
 
 BOOL ON_CurveProxy::GetLocalClosestPoint( const ON_3dPoint& test_point,
-        double seed_parameter,
-        double* t,
-        const ON_Interval* sub_domain
-        ) const
+	double seed_parameter,
+	double* t,
+	const ON_Interval* sub_domain
+	) const
 {
   BOOL rc = false;
-  if ( m_real_curve )
+  if ( m_real_curve ) 
   {
     ON_Interval scratch_domain = RealCurveInterval( sub_domain );
     double sp = RealCurveParameter(seed_parameter);
@@ -1017,10 +1017,10 @@ BOOL ON_CurveProxy::Trim(
       ON_Interval real_dom = RealCurveInterval( &trim_dom );
       if ( real_dom.IsIncreasing() )
       {
-        DestroyCurveTree();
-        m_real_curve_domain = real_dom;
-        m_this_domain = trim_dom;
-        rc = true;
+	DestroyCurveTree();
+	m_real_curve_domain = real_dom;
+	m_this_domain = trim_dom;
+	rc = true;
       }
     }
   }
@@ -1045,17 +1045,17 @@ BOOL ON_CurveProxy::Split(
       ON_CurveProxy* right_proxy = 0;
       if ( left_side )
       {
-        left_proxy = ON_CurveProxy::Cast(left_side);
-        if ( !left_proxy )
-          return false;
+	left_proxy = ON_CurveProxy::Cast(left_side);
+	if ( !left_proxy )
+	  return false;
       }
       if ( right_side )
       {
-        right_proxy = ON_CurveProxy::Cast(right_side);
-        if ( !right_proxy )
-          return false;
-        if ( right_side == left_side )
-          return false;
+	right_proxy = ON_CurveProxy::Cast(right_side);
+	if ( !right_proxy )
+	  return false;
+	if ( right_side == left_side )
+	  return false;
       }
 
       bool bRev = m_bReversed;
@@ -1063,155 +1063,155 @@ BOOL ON_CurveProxy::Split(
       ON_Interval left_real_dom, right_real_dom;
       if ( bRev )
       {
-        left_real_dom.Set(crv_t,m_real_curve_domain[1]);
-        right_real_dom.Set(m_real_curve_domain[0],crv_t);
+	left_real_dom.Set(crv_t,m_real_curve_domain[1]);
+	right_real_dom.Set(m_real_curve_domain[0],crv_t);
       }
       else
       {
-        left_real_dom.Set(m_real_curve_domain[0],crv_t);
-        right_real_dom.Set(crv_t,m_real_curve_domain[1]);
+	left_real_dom.Set(m_real_curve_domain[0],crv_t);
+	right_real_dom.Set(crv_t,m_real_curve_domain[1]);
       }
 
       ON_Interval left_this_dom(m_this_domain[0],t);
       ON_Interval right_this_dom(t,m_this_domain[1]);
 
-      if (    left_real_dom.IsIncreasing()
-           && right_real_dom.IsIncreasing()
-           && left_this_dom.IsIncreasing()
-           && right_this_dom.IsIncreasing()
-           )
+      if (    left_real_dom.IsIncreasing() 
+	   && right_real_dom.IsIncreasing()
+	   && left_this_dom.IsIncreasing()
+	   && right_this_dom.IsIncreasing()
+	   )
       {
-        // note well that left_proxy or right_proxy might also be this
-        const ON_Curve* real_crv = m_real_curve;
-        if ( real_crv )
-        {
-          ON_Interval d = real_crv->Domain();
-          if ( !d.Includes(left_real_dom) )
-            return false;
-          if ( !d.Includes(right_real_dom) )
-            return false;
-        }
+	// note well that left_proxy or right_proxy might also be this
+	const ON_Curve* real_crv = m_real_curve;
+	if ( real_crv )
+	{
+	  ON_Interval d = real_crv->Domain();
+	  if ( !d.Includes(left_real_dom) )
+	    return false;
+	  if ( !d.Includes(right_real_dom) )
+	    return false;
+	}
 
-        if ( !left_proxy )
-          left_proxy = new ON_CurveProxy();
-        if ( !right_proxy )
-          right_proxy = new ON_CurveProxy();
+	if ( !left_proxy )
+	  left_proxy = new ON_CurveProxy();
+	if ( !right_proxy )
+	  right_proxy = new ON_CurveProxy();
 
-        left_proxy->SetProxyCurve( real_crv, left_real_dom );
-        right_proxy->SetProxyCurve( real_crv, right_real_dom );
+	left_proxy->SetProxyCurve( real_crv, left_real_dom );
+	right_proxy->SetProxyCurve( real_crv, right_real_dom );
 
-        if ( bRev )
-        {
-          left_proxy->Reverse();
-          right_proxy->Reverse();
-        }
+	if ( bRev )
+	{
+	  left_proxy->Reverse();
+	  right_proxy->Reverse();
+	}
 
-        left_proxy->SetDomain(left_this_dom[0],left_this_dom[1]);
-        right_proxy->SetDomain(right_this_dom[0],right_this_dom[1]);
+	left_proxy->SetDomain(left_this_dom[0],left_this_dom[1]);
+	right_proxy->SetDomain(right_this_dom[0],right_this_dom[1]);
 
-        if (!left_side) left_side = left_proxy;
-        if (!right_side) right_side = right_proxy;
+	if (!left_side) left_side = left_proxy;
+	if (!right_side) right_side = right_proxy;
 
-        rc = true;
+	rc = true;
       }
     }
   }
   return rc;
 }
 
-int
+int 
 ON_CurveProxy::GetNurbForm( // returns 0: unable to create NURBS representation
-                 //            with desired accuracy.
-                 //         1: success - returned NURBS parameterization
-                 //            matches the curve's to wthe desired accuracy
-                 //         2: success - returned NURBS point locus matches
-                 //            the curve's to the desired accuracy but, on
-                 //            the interior of the curve's domain, the
-                 //            curve's parameterization and the NURBS
-                 //            parameterization may not match to the
-                 //            desired accuracy.
+		 //            with desired accuracy.
+		 //         1: success - returned NURBS parameterization
+		 //            matches the curve's to wthe desired accuracy
+		 //         2: success - returned NURBS point locus matches
+		 //            the curve's to the desired accuracy but, on
+		 //            the interior of the curve's domain, the 
+		 //            curve's parameterization and the NURBS
+		 //            parameterization may not match to the 
+		 //            desired accuracy.
       ON_NurbsCurve& nurbs,
       double tolerance,  // (>=0)
       const ON_Interval* sub_domain  // OPTIONAL subdomain of ON::ProxyCurve::Domain()
       ) const
 {
   BOOL rc = false;
-  if ( m_real_curve )
+  if ( m_real_curve ) 
   {
     ON_Interval scratch_domain = RealCurveInterval( sub_domain );
     rc = m_real_curve->GetNurbForm(nurbs,tolerance,&scratch_domain);
     if ( rc )
     {
       if ( m_bReversed )
-        nurbs.Reverse();
+	nurbs.Reverse();
       ON_Interval d = m_this_domain;
       if ( sub_domain )
-        d.Intersection( *sub_domain );
+	d.Intersection( *sub_domain );
       nurbs.SetDomain( d[0], d[1] );
 
       if ( nurbs.m_dim <= 3 && nurbs.m_dim >= 1 )
       {
-        double t0 = Domain()[0];
-        double t1 = Domain()[1];
-        if ( 0 != sub_domain )
-        {
-          if ( t0 < sub_domain->Min() )
-            t0 = sub_domain->Min();
-          if ( sub_domain->Max() < t1 )
-            t1 = sub_domain->Max();
-        }
-        // set ends of NURBS curve to be exactly on ends of proxy curve
-        ON_3dPoint P0 = PointAt(t0);
-        ON_3dPoint P1 = PointAt(t1);
-        ON_3dPoint N0 = nurbs.PointAtStart();
-        ON_3dPoint N1 = nurbs.PointAtEnd();
-
+	double t0 = Domain()[0];
+	double t1 = Domain()[1];
+	if ( 0 != sub_domain )
+	{
+	  if ( t0 < sub_domain->Min() )
+	    t0 = sub_domain->Min();
+	  if ( sub_domain->Max() < t1 )
+	    t1 = sub_domain->Max();
+	}
+	// set ends of NURBS curve to be exactly on ends of proxy curve
+	ON_3dPoint P0 = PointAt(t0);
+	ON_3dPoint P1 = PointAt(t1);
+	ON_3dPoint N0 = nurbs.PointAtStart();
+	ON_3dPoint N1 = nurbs.PointAtEnd();
+				
 				// 22 September 2003, GBA.  The end tuning code below should only  be applied
 				//					to clamped nurbs curves.  In particular it should not be used on
 				//					periodic nurbs curves.  Fixes TRR#11502.
 				BOOL clamped = nurbs.IsClamped(2);
-        if ( clamped && (P0 != N0 || P1 != N1) )
-        {
-          if ( 0==nurbs.m_is_rat )
-          {
-            nurbs.SetCV(0,P0);
-            nurbs.SetCV(nurbs.m_cv_count-1,P1);
-          }
-          else
-          {
-            ON_4dPoint H0, H1;
-            H0 = P0;
-            H0.w = nurbs.Weight(0);
-            H0.x *= H0.w;
-            H0.y *= H0.w;
-            H0.z *= H0.w;
-            nurbs.SetCV(0,H0);
+	if ( clamped && (P0 != N0 || P1 != N1) )
+	{
+	  if ( 0==nurbs.m_is_rat )
+	  {
+	    nurbs.SetCV(0,P0);
+	    nurbs.SetCV(nurbs.m_cv_count-1,P1);
+	  }
+	  else
+	  {
+	    ON_4dPoint H0, H1;
+	    H0 = P0;
+	    H0.w = nurbs.Weight(0);
+	    H0.x *= H0.w;
+	    H0.y *= H0.w;
+	    H0.z *= H0.w;
+	    nurbs.SetCV(0,H0);
 
-            H1 = P1;
-            H1.w = nurbs.Weight(nurbs.m_cv_count-1);
-            H1.x *= H1.w;
-            H1.y *= H1.w;
-            H1.z *= H1.w;
-            nurbs.SetCV(nurbs.m_cv_count-1,H1);
-          }
-        }
+	    H1 = P1;
+	    H1.w = nurbs.Weight(nurbs.m_cv_count-1);
+	    H1.x *= H1.w;
+	    H1.y *= H1.w;
+	    H1.z *= H1.w;
+	    nurbs.SetCV(nurbs.m_cv_count-1,H1);
+	  }
+	}
       }
     }
   }
   return rc;
 }
 
-int
+int 
 ON_CurveProxy::HasNurbForm( // returns 0: unable to create NURBS representation
-                 //            with desired accuracy.
-                 //         1: success - returned NURBS parameterization
-                 //            matches the curve's to wthe desired accuracy
-                 //         2: success - returned NURBS point locus matches
-                 //            the curve's to the desired accuracy but, on
-                 //            the interior of the curve's domain, the
-                 //            curve's parameterization and the NURBS
-                 //            parameterization may not match to the
-                 //            desired accuracy.
+		 //            with desired accuracy.
+		 //         1: success - returned NURBS parameterization
+		 //            matches the curve's to wthe desired accuracy
+		 //         2: success - returned NURBS point locus matches
+		 //            the curve's to the desired accuracy but, on
+		 //            the interior of the curve's domain, the 
+		 //            curve's parameterization and the NURBS
+		 //            parameterization may not match to the 
+		 //            desired accuracy.
       ) const
 
 {
@@ -1226,7 +1226,7 @@ BOOL ON_CurveProxy::GetCurveParameterFromNurbFormParameter(
       ) const
 {
   BOOL rc = false;
-  if ( m_real_curve )
+  if ( m_real_curve ) 
   {
     // 18 June 2003 Dale Lear and Chuck
     //     Fixing joining bug in STEP TEST 2 caused by error
@@ -1239,14 +1239,14 @@ BOOL ON_CurveProxy::GetCurveParameterFromNurbFormParameter(
       const ON_ArcCurve* arc_curve = ON_ArcCurve::Cast(m_real_curve);
       if ( 0 != arc_curve )
       {
-        tmp_real_crv = arc_curve->DuplicateCurve();
-        if ( 0 != tmp_real_crv )
-        {
-          if ( tmp_real_crv->Trim(m_real_curve_domain) )
-          {
-            real_crv = tmp_real_crv;
-          }
-        }
+	tmp_real_crv = arc_curve->DuplicateCurve();
+	if ( 0 != tmp_real_crv )
+	{
+	  if ( tmp_real_crv->Trim(m_real_curve_domain) )
+	  {
+	    real_crv = tmp_real_crv;
+	  }
+	}
       }
     }
 
@@ -1266,7 +1266,7 @@ BOOL ON_CurveProxy::GetNurbFormParameterFromCurveParameter(
       ) const
 {
   BOOL rc = false;
-  if ( m_real_curve )
+  if ( m_real_curve ) 
   {
     // 18 June 2003 Dale Lear and Chuck
     //     Fixing joining bug in STEP TEST 2 caused by error
@@ -1279,14 +1279,14 @@ BOOL ON_CurveProxy::GetNurbFormParameterFromCurveParameter(
       const ON_ArcCurve* arc_curve = ON_ArcCurve::Cast(m_real_curve);
       if ( 0 != arc_curve )
       {
-        tmp_real_crv = arc_curve->DuplicateCurve();
-        if ( 0 != tmp_real_crv )
-        {
-          if ( tmp_real_crv->Trim(m_real_curve_domain) )
-          {
-            real_crv = tmp_real_crv;
-          }
-        }
+	tmp_real_crv = arc_curve->DuplicateCurve();
+	if ( 0 != tmp_real_crv )
+	{
+	  if ( tmp_real_crv->Trim(m_real_curve_domain) )
+	  {
+	    real_crv = tmp_real_crv;
+	  }
+	}
       }
     }
 

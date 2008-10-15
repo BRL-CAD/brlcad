@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2006 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -62,26 +62,26 @@ BOOL ON_DetailView::Write( ON_BinaryArchive& archive ) const
 
   for(;;)
   {
-    // m_view is wrapped in a subchunk so ON_3dmView can be expanded
+    // m_view is wrapped in a subchunk so ON_3dmView can be expanded 
     // without breaking the file format.
     rc = archive.BeginWrite3dmChunk( TCODE_ANONYMOUS_CHUNK, 1, 0 );
-    if (rc)
+    if (rc) 
     {
       rc = m_view.Write(archive);
       if (!archive.EndWrite3dmChunk())
-        rc = false;
+	rc = false;
     }
     if(!rc)
       break;
 
-    // m_boundary is wrapped in a subchunk so ON_NurbsCurve can be expanded
+    // m_boundary is wrapped in a subchunk so ON_NurbsCurve can be expanded 
     // without breaking the file format.
     rc = archive.BeginWrite3dmChunk( TCODE_ANONYMOUS_CHUNK, 1, 0 );
-    if (rc)
+    if (rc) 
     {
       rc = m_boundary.Write(archive)?true:false;
       if (!archive.EndWrite3dmChunk())
-        rc = false;
+	rc = false;
     }
     if(!rc)
       break;
@@ -117,28 +117,28 @@ BOOL ON_DetailView::Read(ON_BinaryArchive& archive)
     rc = (1 == major_version );
     if (!rc) break;
 
-    // m_view is wrapped in a subchunk so ON_3dmView can be expanded
+    // m_view is wrapped in a subchunk so ON_3dmView can be expanded 
     // without breaking the file format.
     int mj = 0, mn = 0;
     rc = archive.BeginRead3dmChunk( TCODE_ANONYMOUS_CHUNK, &mj, &mn );
-    if (rc)
+    if (rc) 
     {
       rc = m_view.Read(archive);
       if (!archive.EndRead3dmChunk())
-        rc = false;
+	rc = false;
     }
     if (!rc) break;
 
 
-    // m_boundary is wrapped in a subchunk so ON_NurbsCurve can be expanded
+    // m_boundary is wrapped in a subchunk so ON_NurbsCurve can be expanded 
     // without breaking the file format.
     mj = mn = 0;
     rc = archive.BeginRead3dmChunk( TCODE_ANONYMOUS_CHUNK, &mj, &mn );
-    if (rc)
+    if (rc) 
     {
       rc = m_boundary.Read(archive)?true:false;
       if (!archive.EndRead3dmChunk())
-        rc = false;
+	rc = false;
     }
     if (!rc) break;
 
@@ -176,7 +176,7 @@ BOOL ON_DetailView::GetBBox(
   return m_boundary.GetBBox(boxmin,boxmax,bGrowBox);
 }
 
-bool ON_DetailView::GetTightBoundingBox(
+bool ON_DetailView::GetTightBoundingBox( 
       ON_BoundingBox& tight_bbox, int bGrowBox, const ON_Xform* xform
       ) const
 {

@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -44,13 +44,13 @@ public:
     Set check sum values for a buffer
   Parameters:
     size - [in]    number of bytes in buffer
-    buffer - [in]
+    buffer - [in]  
     time - [in] value to save in m_time
   Returns:
     True if checksum is set.
   */
-  bool SetBufferCheckSum(
-    size_t size,
+  bool SetBufferCheckSum( 
+    size_t size, 
     const void* buffer,
     time_t time
    );
@@ -63,7 +63,7 @@ public:
   Returns:
     True if checksum is set.
   */
-  bool SetFileCheckSum(
+  bool SetFileCheckSum( 
     FILE* fp
    );
 
@@ -75,7 +75,7 @@ public:
   Returns:
     True if checksum is set.
   */
-  bool SetFileCheckSum(
+  bool SetFileCheckSum( 
     const wchar_t* filename
    );
 
@@ -88,8 +88,8 @@ public:
   Returns:
     True if the buffer has a matching checksum.
   */
-  bool CheckBuffer(
-    size_t size,
+  bool CheckBuffer( 
+    size_t size, 
     const void* buffer
     ) const;
 
@@ -103,7 +103,7 @@ public:
   Returns:
     True if the file has a matching checksum.
   */
-  bool CheckFile(
+  bool CheckFile( 
     FILE* fp,
     bool bSkipTimeCheck = false
     ) const;
@@ -118,7 +118,7 @@ public:
   Returns:
     True if the file has a matching checksum.
   */
-  bool CheckFile(
+  bool CheckFile( 
     const wchar_t* filename,
     bool bSkipTimeCheck = false
     ) const;
@@ -133,7 +133,7 @@ public:
 };
 
 /////////////////////////////////////////////////////////////////////////////
-//
+// 
 // ON_String is a char (a.k.a single byte or ascii) string
 //
 // ON_wString is a wide char (a.k.a double byte or unicode) string
@@ -173,12 +173,12 @@ public:
 
 	ON_String( const char* );
 	ON_String( const char*, int /*length*/ );        // from substring
-	ON_String( char, int = 1 /* repeat count */ );
+	ON_String( char, int = 1 /* repeat count */ );   
 
 	ON_String( const unsigned char* );
 	ON_String( const unsigned char*, int /*length*/ );        // from substring
-	ON_String( unsigned char, int = 1 /* repeat count */ );
-
+	ON_String( unsigned char, int = 1 /* repeat count */ ); 
+  
 	ON_String( const wchar_t* );
 	ON_String( const wchar_t*, int /*length*/ ); // from substring
 
@@ -187,7 +187,7 @@ public:
 #if defined(ON_OS_WINDOWS)
   // Windows support
 	bool LoadResourceString( HINSTANCE, UINT); // load from Windows string resource
-										                         // 2047 chars max
+													 // 2047 chars max
 #endif
 
   void Create();
@@ -197,7 +197,7 @@ public:
   // Attributes & Operations
 	// as an array of characters
 	int Length() const;
-	bool IsEmpty() const; // returns TRUE if length == 0
+	bool IsEmpty() const; // returns TRUE if length == 0 
   void Empty();   // sets length to zero - if possible, memory is retained
 
 	char& operator[](int);
@@ -223,7 +223,7 @@ public:
   ON_String operator+(const char*) const;
   ON_String operator+(const unsigned char*) const;
 
-	// string comparison
+	// string comparison 
   bool operator==(const ON_String&) const;
   bool operator==(const char*)const ;
   bool operator!=(const ON_String&)const ;
@@ -246,7 +246,7 @@ public:
 	const ON_String& operator+=(const char*);
 	const ON_String& operator+=(const unsigned char*);
 
-	// string comparison
+	// string comparison 
   // If this < string, returns < 0.
   // If this = string, returns 0.
   // If this < string, returns > 0.
@@ -340,7 +340,7 @@ public:
 
 	// Low level access to string contents as character array
 	void ReserveArray(size_t); // make sure internal array has at least
-                          // the requested capacity.
+			  // the requested capacity.
 	void ShrinkArray();     // shrink internal storage to minimum size
   void SetLength(size_t);    // set length (<=capacity)
   char* Array();
@@ -352,8 +352,8 @@ public:
 
 protected:
 	char* m_s; // pointer to ref counted string array
-              // m_s - 12 bytes points at the strings
-              // ON_aStringHeader
+	      // m_s - 12 bytes points at the strings
+	      // ON_aStringHeader
 
 	// implementation helpers
 	ON_aStringHeader* Header() const;
@@ -399,20 +399,20 @@ public:
 
 	ON_wString( const char* );
 	ON_wString( const char*, int /*length*/ );        // from substring
-	ON_wString( char, int = 1 /* repeat count */ );
+	ON_wString( char, int = 1 /* repeat count */ );   
 
 	ON_wString( const unsigned char* );
 	ON_wString( const unsigned char*, int /*length*/ );        // from substring
-	ON_wString( unsigned char, int = 1 /* repeat count */ );
-
+	ON_wString( unsigned char, int = 1 /* repeat count */ ); 
+  
 	ON_wString( const wchar_t* );
 	ON_wString( const wchar_t*, int /*length*/ );        // from substring
-	ON_wString( wchar_t, int = 1 /* repeat count */ );
+	ON_wString( wchar_t, int = 1 /* repeat count */ );   
 
 #if defined(ON_OS_WINDOWS)
   // Windows support
 	bool LoadResourceString(HINSTANCE, UINT); // load from string resource
-										                        // 2047 characters max
+													// 2047 characters max
 #endif
 
   void Create();
@@ -466,7 +466,7 @@ public:
   ON_wString operator+(const unsigned char*) const;
   ON_wString operator+(const wchar_t*) const;
 
-	// string comparison
+	// string comparison 
   bool operator==(const ON_wString&) const;
   bool operator==(const wchar_t*) const;
   bool operator!=(const ON_wString&) const;
@@ -480,7 +480,7 @@ public:
   bool operator>=(const ON_wString&) const;
   bool operator>=(const wchar_t*) const;
 
-	// string comparison
+	// string comparison 
   // If this < string, returns < 0.
   // If this == string, returns 0.
   // If this < string, returns > 0.
@@ -536,7 +536,7 @@ public:
   Parameters:
     token - [in]
     whitespace - [in] if not null, this is a 0 terminated
-      string that lists the characters considered to be
+      string that lists the characters considered to be 
       white space.  If null, then (1,2,...,32,127) is used.
   Returns:
     Number of whitespace characters replaced.
@@ -550,7 +550,7 @@ public:
     Removes all white-space characters with the token.
   Parameters:
     whitespace - [in] if not null, this is a 0 terminated
-      string that lists the characters considered to be
+      string that lists the characters considered to be 
       white space.  If null, then (1,2,...,32,127) is used.
   Returns:
     Number of whitespace characters removed.
@@ -610,7 +610,7 @@ public:
 
 	// Low level access to string contents as character array
 	void ReserveArray(size_t); // make sure internal array has at least
-                          // the requested capacity.
+			  // the requested capacity.
 	void ShrinkArray();     // shrink internal storage to minimum size
   void SetLength(size_t); // set length (<=capacity)
   wchar_t* Array();
@@ -622,8 +622,8 @@ public:
 
 protected:
 	wchar_t* m_s; // pointer to ref counted string array
-              // m_s - 12 bytes points at the strings
-              // ON_wStringHeader
+	      // m_s - 12 bytes points at the strings
+	      // ON_wStringHeader
 
 	// implementation helpers
 	ON_wStringHeader* Header() const;

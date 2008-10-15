@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -17,13 +17,13 @@
 #include "opennurbs.h"
 
 // {EA2EFFD2-C9A9-4cb1-BE15-D2F46290F1A1}
-//const ON_UUID ON_MaterialRef::material_from_layer =
+//const ON_UUID ON_MaterialRef::material_from_layer = 
 //{ 0xea2effd2, 0xc9a9, 0x4cb1, { 0xbe, 0x15, 0xd2, 0xf4, 0x62, 0x90, 0xf1, 0xa1 } };
 
 
 
 // {86EDFDE4-8AAF-4bcd-AB7C-F7111978D7FE}
-//const ON_UUID ON_MaterialRef::material_from_parent =
+//const ON_UUID ON_MaterialRef::material_from_parent = 
 //{ 0x86edfde4, 0x8aaf, 0x4bcd, { 0xab, 0x7c, 0xf7, 0x11, 0x19, 0x78, 0xd7, 0xfe } };
 
 
@@ -89,14 +89,14 @@ char* on_strrev(char* s)
 #endif
 }
 
-// Windows code page support
+// Windows code page support 
 //   Only ON_SetStringConversionWindowsLocaleID,
-//   ON_GetStringConversionWindowsLocaleID, and
+//   ON_GetStringConversionWindowsLocaleID, and 
 //   on_wcsicmp should look at g_s__windows_locale_id
 //   and g_s__windows_locale_os.
 static unsigned int g_s__windows_locale_id = 0;
 static unsigned int g_s__windows_locale_os = 0; // 0 = Win 95/98/ME...
-                                              // 1 = Win NT/2000/XP...
+					      // 1 = Win NT/2000/XP...
 
 unsigned int ON_SetStringConversionWindowsLocaleID(unsigned int locale_id, BOOL bWin9X)
 {
@@ -119,14 +119,14 @@ static int on__hack__tolower(int c)
   // fails to provide functional localization tools.
 
 
-  // TODO:
+  // TODO: 
   //   Expand these switch statments as users provide support
   //   for symbols.  This is not the correct way to solve this
   //   problem, but it will work in some simple cases.
   //   If you are using Microsoft Developer studio in Windows,
   //   then this code is never called.
-  //
-  // Before you get too carried away, study
+  //  
+  // Before you get too carried away, study 
   //
   //  http://www.microsoft.com/globaldev/wrguide/WRG_sort.asp
   //
@@ -155,128 +155,128 @@ static int on__hack__tolower(int c)
     switch(c)
     {
       case 192:  // UNICODE Latin capital letter A with grave  (A`)
-        i = 224; // UNICODE Latin small letter A with grave    (a`)
-        break;
+	i = 224; // UNICODE Latin small letter A with grave    (a`)
+	break;
 
       case 193:  // UNICODE Latin capital letter A with acute  (A')
-        i = 225; // UNICODE Latin small letter A with acute    (a')
-        break;
+	i = 225; // UNICODE Latin small letter A with acute    (a')
+	break;
 
       case 194:  // UNICODE Latin capital letter A with circumflex (A^)
-        i = 226; // UNICODE Latin small letter A with circumflex   (a^)
-        break;
+	i = 226; // UNICODE Latin small letter A with circumflex   (a^)
+	break;
 
       case 195:  // UNICODE Latin capital letter A with tilde (A~)
-        i = 227; // UNICODE Latin small letter A with tilde   (a~)
-        break;
+	i = 227; // UNICODE Latin small letter A with tilde   (a~)
+	break;
 
       case 196:  // UNICODE Latin capital letter A with diaeresis (A")
-        i = 228; // UNICODE Latin small letter A with diaeresis   (a")
-        break;
+	i = 228; // UNICODE Latin small letter A with diaeresis   (a")
+	break;
 
       case 197:  // UNICODE Latin capital letter A with ring above (A ring above)
-        i = 229; // UNICODE Latin small letter A with ring above   (a ring above)
-        break;
+	i = 229; // UNICODE Latin small letter A with ring above   (a ring above)
+	break;
 
       case 198:  // UNICODE Latin capital letter Ae
-        i = 230; // UNICODE Latin small letter Ae
-        break;
+	i = 230; // UNICODE Latin small letter Ae
+	break;
 
       case 199:  // UNICODE Latin capital letter C with cedilla (C,)
-        i = 231; // UNICODE Latin small letter C with cedilla   (c,)
-        break;
+	i = 231; // UNICODE Latin small letter C with cedilla   (c,)
+	break;
 
       case 200:  // UNICODE Latin capital letter E with grave (E`)
-        i = 232; // UNICODE Latin small letter E with grave   (e`)
-        break;
+	i = 232; // UNICODE Latin small letter E with grave   (e`)
+	break;
 
       case 201:  // UNICODE Latin capital letter E with acute (E')
-        i = 233; // UNICODE Latin small letter E with acute   (e')
-        break;
+	i = 233; // UNICODE Latin small letter E with acute   (e')
+	break;
 
       case 202:  // UNICODE Latin capital letter E with circumflex (E^)
-        i = 234; // UNICODE Latin small letter E with circumflex   (e^)
-        break;
+	i = 234; // UNICODE Latin small letter E with circumflex   (e^)
+	break;
 
       case 203:  // UNICODE Latin capital letter E with diaeresis (E")
-        i = 235; // UNICODE Latin small letter E with diaeresis   (e")
-        break;
+	i = 235; // UNICODE Latin small letter E with diaeresis   (e")
+	break;
 
       case 204:  // UNICODE Latin capital letter I with grave (I`)
-        i = 236; // UNICODE Latin small letter I with grave   (i`)
-        break;
+	i = 236; // UNICODE Latin small letter I with grave   (i`)
+	break;
 
       case 205:  // UNICODE Latin capital letter I with acute (I')
-        i = 237; // UNICODE Latin small letter I with acute   (i')
-        break;
+	i = 237; // UNICODE Latin small letter I with acute   (i')
+	break;
 
       case 206:  // UNICODE Latin capital letter I with circumflex (I^)
-        i = 238; // UNICODE Latin small letter I with circumflex   (i^)
-        break;
+	i = 238; // UNICODE Latin small letter I with circumflex   (i^)
+	break;
 
       case 207:  // UNICODE Latin capital letter I with diaeresis (I")
-        i = 239; // UNICODE Latin small letter I with diaeresis   (i")
-        break;
+	i = 239; // UNICODE Latin small letter I with diaeresis   (i")
+	break;
 
       case 208:  // UNICODE Latin capital letter Eth (ED)
-        i = 240; // UNICODE Latin small letter Eth (ed)
-        break;
+	i = 240; // UNICODE Latin small letter Eth (ed)
+	break;
 
       case 209:  // UNICODE Latin capital letter N with tilde (N~)
-        i = 241; // UNICODE Latin small letter n with tilde (n~)
-        break;
+	i = 241; // UNICODE Latin small letter n with tilde (n~)
+	break;
 
       case 210:  // UNICODE Latin capital letter O with grave (O`)
-        i = 242; // UNICODE Latin small letter O with grave   (o`)
-        break;
+	i = 242; // UNICODE Latin small letter O with grave   (o`)
+	break;
 
       case 211:  // UNICODE Latin capital letter O with acute (O')
-        i = 243; // UNICODE Latin small letter O with acute   (o')
-        break;
+	i = 243; // UNICODE Latin small letter O with acute   (o')
+	break;
 
       case 212:  // UNICODE Latin capital letter O with circumflex (O^)
-        i = 244; // UNICODE Latin small letter O with circumflex   (o^)
-        break;
+	i = 244; // UNICODE Latin small letter O with circumflex   (o^)
+	break;
 
       case 213:  // UNICODE Latin capital letter O with tilde (O~)
-        i = 245; // UNICODE Latin small letter O with tilde   (o~)
-        break;
+	i = 245; // UNICODE Latin small letter O with tilde   (o~)
+	break;
 
       case 214:  // UNICODE Latin capital letter O with diaeresis (O")
-        i = 246; // UNICODE Latin small letter O with diaeresis   (o")
-        break;
+	i = 246; // UNICODE Latin small letter O with diaeresis   (o")
+	break;
 
       case 216:  // UNICODE Latin capital letter O with stroke (O/)
-        i = 248; // UNICODE Latin small letter O with stroke   (o/)
-        break;
+	i = 248; // UNICODE Latin small letter O with stroke   (o/)
+	break;
 
       case 217:  // UNICODE Latin capital letter U with grave (U`)
-        i = 249; // UNICODE Latin small letter U with grave   (u`)
-        break;
+	i = 249; // UNICODE Latin small letter U with grave   (u`)
+	break;
 
       case 218:  // UNICODE Latin capital letter U with acute (U')
-        i = 250; // UNICODE Latin small letter U with acute   (u')
-        break;
+	i = 250; // UNICODE Latin small letter U with acute   (u')
+	break;
 
       case 219:  // UNICODE Latin capital letter U with circumflex (U^)
-        i = 251; // UNICODE Latin small letter U with circumflex   (u^)
-        break;
+	i = 251; // UNICODE Latin small letter U with circumflex   (u^)
+	break;
 
       case 220:  // UNICODE Latin capital letter U with diaeresis (U")
-        i = 252; // UNICODE Latin small letter U with diaeresis   (u")
-        break;
+	i = 252; // UNICODE Latin small letter U with diaeresis   (u")
+	break;
 
       case 221:  // UNICODE Latin capital letter Y with acute (Y')
-        i = 253; // UNICODE Latin small letter Y with acute   (y')
-        break;
+	i = 253; // UNICODE Latin small letter Y with acute   (y')
+	break;
 
       case 222:  // UNICODE Latin capital letter Thorn (P|)
-        i = 254; // UNICODE Latin small letter Thorn   (p|)
-        break;
+	i = 254; // UNICODE Latin small letter Thorn   (p|)
+	break;
 
       default:
-        i = c;
-        break;
+	i = c;
+	break;
     }
   }
   else if ( c <= 0x0177 )
@@ -332,11 +332,11 @@ static int on__hack__tolower(int c)
     {
       // example
       case 0x0391:  // UNICODE Greek capital letter alpha
-        i = 0x03B1; // UNICODE Greek small letter alpha
-        break;
+	i = 0x03B1; // UNICODE Greek small letter alpha
+	break;
 
       default:
-        i = c;
+	i = c;
     }
   }
 
@@ -351,17 +351,17 @@ int on__hack__wcsicmp( const wchar_t* s1, const wchar_t* s2)
   // that does not provide proper localization support.
 
   // handle NULL strings consistently and without crashing.
-  if ( !s1 )
+  if ( !s1 ) 
   {
     return s2 ? -1 : 0;
   }
-  else if ( !s2 )
+  else if ( !s2 ) 
   {
     return 1;
   }
 
   int rc, c1, c2;
-
+  
   do
   {
     c1 = on__hack__tolower(*s1++);
@@ -376,11 +376,11 @@ int on__hack__wcsicmp( const wchar_t* s1, const wchar_t* s2)
 int on_wcsicmp( const wchar_t* s1, const wchar_t* s2)
 {
   // handle NULL strings consistently and without crashing.
-  if ( !s1 )
+  if ( !s1 ) 
   {
     return s2 ? -1 : 0;
   }
-  else if ( !s2 )
+  else if ( !s2 ) 
   {
     return 1;
   }
@@ -389,7 +389,7 @@ int on_wcsicmp( const wchar_t* s1, const wchar_t* s2)
 
 #if defined(ON_COMPILER_BORLAND)
   // Borland's compiler / C library
-  return wcscmpi(s1,s2);
+  return wcscmpi(s1,s2); 
 #else
   // Microsoft compiler
 
@@ -398,25 +398,25 @@ int on_wcsicmp( const wchar_t* s1, const wchar_t* s2)
     if ( 0 == g_s__windows_locale_os )
     {
       // On Win 95/98/ME, CompareStringW() doesn't work
-      // and CompareStringA() is glacial.  So we test
+      // and CompareStringA() is glacial.  So we test 
       // strings and use wcsicmp() whenever it will return
-      // the right answer.
+      // the right answer.  
       {
-        const wchar_t* c1 = s1;
-        const wchar_t* c2 = s2;
-        while ( *c1 > 0 && *c1 < 128 && *c2 > 0 && *c2 < 128 )
-        {
-          c1++;
-          c2++;
-        }
-        if ( 0 == *c1 || 0 == *c2 )
-        {
+	const wchar_t* c1 = s1;
+	const wchar_t* c2 = s2;
+	while ( *c1 > 0 && *c1 < 128 && *c2 > 0 && *c2 < 128 )
+	{
+	  c1++;
+	  c2++;
+	}      
+	if ( 0 == *c1 || 0 == *c2 )
+	{
 #if defined(ON_COMPILER_MSC1400)
-          return _wcsicmp(s1,s2);
+	  return _wcsicmp(s1,s2);
 #else
-          return wcsicmp(s1,s2);
+	  return wcsicmp(s1,s2);
 #endif
-        }
+	}
       }
 
       // These convert UNICODE to wide character strings
@@ -425,44 +425,44 @@ int on_wcsicmp( const wchar_t* s1, const wchar_t* s2)
 
       // Wide char conversion
       int rc = ::CompareStringA(g_s__windows_locale_id,
-                           NORM_IGNORECASE | NORM_IGNOREWIDTH,
-                           a.Array(),
-                           -1,
-                           b.Array(),
-                           -1);
+			   NORM_IGNORECASE | NORM_IGNOREWIDTH,
+			   a.Array(),
+			   -1,
+			   b.Array(),
+			   -1);
       if (rc == CSTR_LESS_THAN)
-        return -1;
+	return -1;
       if (rc == CSTR_EQUAL)
-        return 0;
+	return 0;
       if (rc == CSTR_GREATER_THAN)
-        return 1;
+	return 1;
     }
     else
     {
       // a version of Windows with working UNICODE support
       int rc = ::CompareStringW(g_s__windows_locale_id,
-                           NORM_IGNORECASE | NORM_IGNOREWIDTH,
-                           s1,
-                           -1,
-                           s2,
-                           -1);
+			   NORM_IGNORECASE | NORM_IGNOREWIDTH,
+			   s1,
+			   -1,
+			   s2,
+			   -1);
 
       if (rc == CSTR_LESS_THAN)
-        return -1;
+	return -1;
       if (rc == CSTR_EQUAL)
-        return 0;
+	return 0;
       if (rc == CSTR_GREATER_THAN)
-        return 1;
+	return 1;
     }
   }
 
   // Microsoft's wcsicmp() doesn't work right for
-  // upper/lower case accented latin characters,
+  // upper/lower case accented latin characters, 
   // upper/lower case cyrillic, upper/lower case Greek,
-  // Asian characters, etc.
+  // Asian characters, etc.  
   //
   // Basically, if the character code >= 127 or you are
-  // using a language other than US english, then
+  // using a language other than US english, then 
   // Microsoft's wcsicmp() blows it.
   //
 #if defined(ON_COMPILER_MSC1400)
@@ -493,13 +493,13 @@ wchar_t* on_wcsupr(wchar_t* s)
   return _wcsupr(s);
 #endif
 #else
-  if (s)
+  if (s) 
   {
     wchar_t c;
-    while (*s)
+    while (*s) 
     {
       if ( 0 != (c = toupper(*s)) )
-        *s = c;
+	*s = c;
       s++;
     }
   }
@@ -519,13 +519,13 @@ wchar_t* on_wcslwr(wchar_t* s)
   return _wcslwr(s);
 #endif
 #else
-  if (s)
+  if (s) 
   {
     wchar_t c;
-    while (*s)
+    while (*s) 
     {
       if ( 0 != (c = tolower(*s)) )
-        *s = c;
+	*s = c;
       s++;
     }
   }
@@ -535,125 +535,125 @@ wchar_t* on_wcslwr(wchar_t* s)
 
 void ON_wString::MakeUpper()
 {
-  if ( !IsEmpty() )
+  if ( !IsEmpty() ) 
   {
 #if defined(ON_OS_WINDOWS)
     if ( 0 != g_s__windows_locale_id )
     {
       if ( 0 == g_s__windows_locale_os )
       {
-        // On Win 95/98/ME, LCMapStringW() doesn't work.
-        // (I hope you don't need the right answer in a hurry on Win9X.)
+	// On Win 95/98/ME, LCMapStringW() doesn't work.
+	// (I hope you don't need the right answer in a hurry on Win9X.)
 
-        // These convert UNICODE to wide character strings
-        ON_String in(*this);
-        int len_in = in.Length();
-        int max_len_out = 2*len_in+16; // if 2x for wide char expansion
-        ON_String out;
-        out.ReserveArray(max_len_out+2);
-        out.SetLength(max_len_out+1);
+	// These convert UNICODE to wide character strings
+	ON_String in(*this);
+	int len_in = in.Length();
+	int max_len_out = 2*len_in+16; // if 2x for wide char expansion
+	ON_String out;
+	out.ReserveArray(max_len_out+2);
+	out.SetLength(max_len_out+1);
 
-        // Wide char conversion
-        int rc = ::LCMapStringA(g_s__windows_locale_id,
-                              LCMAP_UPPERCASE,
-                              in.Array(),
-                              len_in,
-                              out.Array(),
-                              max_len_out);
-        if (rc > 0 && rc <= max_len_out)
-        {
-          out.SetLength(rc);
-          operator=(out);
-          return;
-        }
+	// Wide char conversion
+	int rc = ::LCMapStringA(g_s__windows_locale_id, 
+			      LCMAP_UPPERCASE, 
+			      in.Array(), 
+			      len_in,
+			      out.Array(), 
+			      max_len_out);
+	if (rc > 0 && rc <= max_len_out)
+	{
+	  out.SetLength(rc);
+	  operator=(out);
+	  return;
+	}
       }
       else
       {
-        // a version of Windows with working UNICODE support
-        int len_in = Length();
-        int max_len_out = len_in+16;
-        ON_wString out;
-        out.ReserveArray(max_len_out+2);
-        out.SetLength(max_len_out+1);
+	// a version of Windows with working UNICODE support
+	int len_in = Length();
+	int max_len_out = len_in+16;
+	ON_wString out;
+	out.ReserveArray(max_len_out+2);
+	out.SetLength(max_len_out+1);
 
-        // Wide char conversion
-        int rc = ::LCMapStringW(g_s__windows_locale_id,
-                              LCMAP_UPPERCASE,
-                              Array(),
-                              len_in,
-                              out.Array(),
-                              max_len_out);
-        if (rc > 0 && rc <= max_len_out)
-        {
-          out.SetLength(rc);
-          operator=(out);
-          return;
-        }
+	// Wide char conversion
+	int rc = ::LCMapStringW(g_s__windows_locale_id, 
+			      LCMAP_UPPERCASE, 
+			      Array(), 
+			      len_in,
+			      out.Array(), 
+			      max_len_out);
+	if (rc > 0 && rc <= max_len_out)
+	{
+	  out.SetLength(rc);
+	  operator=(out);
+	  return;
+	}
       }
     }
 #endif
 
-  	CopyArray();
+	CopyArray();
     on_wcsupr(m_s);
   }
 }
 
 void ON_wString::MakeLower()
 {
-  if ( !IsEmpty() )
+  if ( !IsEmpty() ) 
   {
 #if defined(ON_OS_WINDOWS)
     if ( 0 != g_s__windows_locale_id )
     {
       if ( 0 == g_s__windows_locale_os )
       {
-        // On Win 95/98/ME, LCMapStringW() doesn't work.
-        // (I hope you don't need the right answer in a hurry on Win9X.)
+	// On Win 95/98/ME, LCMapStringW() doesn't work.
+	// (I hope you don't need the right answer in a hurry on Win9X.)
 
-        // These convert UNICODE to wide character strings
-        ON_String in(*this);
-        int len_in = in.Length();
-        int max_len_out = 2*len_in+16; // if 2x for wide char expansion
-        ON_String out;
-        out.ReserveArray(max_len_out+2);
-        out.SetLength(max_len_out+1);
+	// These convert UNICODE to wide character strings
+	ON_String in(*this);
+	int len_in = in.Length();
+	int max_len_out = 2*len_in+16; // if 2x for wide char expansion
+	ON_String out;
+	out.ReserveArray(max_len_out+2);
+	out.SetLength(max_len_out+1);
 
-        // Wide char conversion
-        int rc = ::LCMapStringA(g_s__windows_locale_id,
-                              LCMAP_LOWERCASE,
-                              in.Array(),
-                              len_in,
-                              out.Array(),
-                              max_len_out);
-        if (rc > 0 && rc <= max_len_out)
-        {
-          out.SetLength(rc);
-          operator=(out);
-          return;
-        }
+	// Wide char conversion
+	int rc = ::LCMapStringA(g_s__windows_locale_id, 
+			      LCMAP_LOWERCASE, 
+			      in.Array(), 
+			      len_in,
+			      out.Array(), 
+			      max_len_out);
+	if (rc > 0 && rc <= max_len_out)
+	{
+	  out.SetLength(rc);
+	  operator=(out);
+	  return;
+	}
       }
       else
       {
-        // a version of Windows with working UNICODE support
-        int len_in = Length();
-        int max_len_out = len_in+16;
-        ON_wString out;
-        out.ReserveArray(max_len_out+2);
-        out.SetLength(max_len_out+1);
+	// a version of Windows with working UNICODE support
+	int len_in = Length();
+	int max_len_out = len_in+16;
+	ON_wString out;
+	out.ReserveArray(max_len_out+2);
+	out.SetLength(max_len_out+1);
 
-        // Wide char conversion
-        int rc = ::LCMapStringW(g_s__windows_locale_id,
-                              LCMAP_LOWERCASE,
-                              Array(),
-                              len_in,
-                              out.Array(),
-                              max_len_out);
-        if (rc > 0 && rc <= max_len_out)
-        {
-          out.SetLength(rc);
-          operator=(out);
-          return;
-        }
+	// Wide char conversion
+	int rc = ::LCMapStringW(g_s__windows_locale_id, 
+			      LCMAP_LOWERCASE, 
+			      Array(), 
+			      len_in,
+			      out.Array(), 
+			      max_len_out);
+	if (rc > 0 && rc <= max_len_out)
+	{
+	  out.SetLength(rc);
+	  operator=(out);
+	  return;
+	}
       }
     }
 #endif
@@ -691,12 +691,12 @@ int on_WideCharToMultiByte(
 {
 #if defined(ON_OS_WINDOWS)
   unsigned int code_page = ON_GetStringConversionWindowsCodePage();
-  return ::WideCharToMultiByte( code_page, 0,
-                        lpWideCharStr, cchWideChar,
-                        lpMultiByteStr, cchMultiByte,
-                        NULL, NULL );
+  return ::WideCharToMultiByte( code_page, 0, 
+			lpWideCharStr, cchWideChar, 
+			lpMultiByteStr, cchMultiByte,
+			NULL, NULL );
 #else
-  // use simple wchar_t -> char conversion since
+  // use simple wchar_t -> char conversion since 
   // wcsnrtombs() and wcsrtombs() tend to crash on various
   // UNIX platforms.
 
@@ -714,7 +714,7 @@ int on_WideCharToMultiByte(
     for (i = 0; i < cchWideChar && i < cchMultiByte; i++ ) {
       unsigned int w = lpWideCharStr[i];
       if ( w >= 256 )
-        w = '_'; // default is underbar
+	w = '_'; // default is underbar
       u.u = (unsigned char)w;
       lpMultiByteStr[i] = u.c;
     }
@@ -747,7 +747,7 @@ int on_MultiByteToWideChar(
   unsigned int code_page = ON_GetStringConversionWindowsCodePage();
   return ::MultiByteToWideChar(code_page, 0, lpMultiByteStr, cchMultiByte, lpWideCharStr, cchWideChar);
 #else
-  // use simple char -> wchar_t conversion since
+  // use simple char -> wchar_t conversion since 
   // mbsnrtowcs() and mbsrtowcs() tend to crash on various
   // UNIX platforms.
   union
@@ -816,7 +816,7 @@ int on_vsnwprintf( wchar_t *buffer, size_t count, const wchar_t *format, va_list
 
   // convert formatted ASCII buffer to UNICODE
   on_MultiByteToWideChar( abuffer, strlen(abuffer), buffer, count );
-  onfree(abuffer);
+  onfree(abuffer);  
   return rc;
 #endif
 }
@@ -832,17 +832,17 @@ int ON::Version()
 
 
 FILE* ON::OpenFile( // like fopen() - needed when OpenNURBS is used as a DLL
-        const char* filename, // file name
-        const char* filemode // file mode
-        )
+	const char* filename, // file name
+	const char* filemode // file mode
+	)
 {
   return (filename && filename[0] && filemode && filemode[0]) ? fopen(filename,filemode) : 0;
 }
 
 FILE* ON::OpenFile( // like fopen() - needed when OpenNURBS is used as a DLL
-        const wchar_t* filename, // file name
-        const wchar_t* filemode // file mode
-        )
+	const wchar_t* filename, // file name
+	const wchar_t* filemode // file mode
+	)
 {
 #if defined(ON_OS_WINDOWS)
   return (filename && filename[0] && filemode && filemode[0]) ? _wfopen(filename,filemode) : 0;
@@ -856,8 +856,8 @@ FILE* ON::OpenFile( // like fopen() - needed when OpenNURBS is used as a DLL
 }
 
 int ON::CloseFile( // like fclose() - needed when OpenNURBS is used as a DLL
-        FILE* fp // pointer returned by OpenFile()
-        )
+	FILE* fp // pointer returned by OpenFile()
+	)
 {
   return fp ? fclose(fp) : EOF;
 }
@@ -930,9 +930,9 @@ ON::unit_system ON::UnitSystem(int i)
 }
 
 double ON::UnitScale(
-                     const class ON_3dmUnitsAndTolerances& u_and_t_from,
-                     const class ON_3dmUnitsAndTolerances& u_and_t_to
-                     )
+		     const class ON_3dmUnitsAndTolerances& u_and_t_from, 
+		     const class ON_3dmUnitsAndTolerances& u_and_t_to
+		     )
 {
   return ON::UnitScale( u_and_t_from.m_unit_system, u_and_t_to.m_unit_system );
 }
@@ -956,7 +956,7 @@ double ON::UnitScale(
 }
 
 double ON::UnitScale(
-    const class ON_UnitSystem& us_from,
+    const class ON_UnitSystem& us_from, 
     ON::unit_system us_to
     )
 {
@@ -974,9 +974,9 @@ double ON::UnitScale(
 }
 
 double ON::UnitScale(
-                     const class ON_UnitSystem& u_and_t_from,
-                     const class ON_UnitSystem& u_and_t_to
-                     )
+		     const class ON_UnitSystem& u_and_t_from, 
+		     const class ON_UnitSystem& u_and_t_to
+		     )
 {
   double scale = 1.0;
   ON::unit_system us_from = u_and_t_from.m_unit_system;
@@ -984,17 +984,17 @@ double ON::UnitScale(
 
   if ( ON::no_unit_system != us_from && ON::no_unit_system != us_to )
   {
-    if ( ON::custom_unit_system == us_from
-         && ON_IsValid(u_and_t_from.m_custom_unit_scale)
-         && u_and_t_from.m_custom_unit_scale > 0.0 )
+    if ( ON::custom_unit_system == us_from 
+	 && ON_IsValid(u_and_t_from.m_custom_unit_scale) 
+	 && u_and_t_from.m_custom_unit_scale > 0.0 )
     {
       scale /= u_and_t_from.m_custom_unit_scale;
       us_from = ON::meters;
     }
 
-    if ( ON::custom_unit_system == us_to
-         && ON_IsValid(u_and_t_to.m_custom_unit_scale)
-         && u_and_t_to.m_custom_unit_scale > 0.0 )
+    if ( ON::custom_unit_system == us_to 
+	 && ON_IsValid(u_and_t_to.m_custom_unit_scale) 
+	 && u_and_t_to.m_custom_unit_scale > 0.0 )
     {
       scale *= u_and_t_to.m_custom_unit_scale;
       us_to = ON::meters;
@@ -1009,37 +1009,37 @@ double ON::UnitScale(
 static bool IsEnglishUnit( ON::unit_system us )
 {
   return (
-          ON::microinches == us
-          || ON::mils == us
-          || ON::inches == us
-          || ON::feet == us
-          || ON::yards == us
-          || ON::miles == us
-          || ON::printer_point == us
-          || ON::printer_pica == us
-         );
+	  ON::microinches == us
+	  || ON::mils == us
+	  || ON::inches == us
+	  || ON::feet == us
+	  || ON::yards == us
+	  || ON::miles == us
+	  || ON::printer_point == us
+	  || ON::printer_pica == us
+	 );
 }
 
 double ON::UnitScale(
-            ON::unit_system u0, // from
-            ON::unit_system u1  // to
-            )
+	    ON::unit_system u0, // from
+	    ON::unit_system u1  // to
+	    )
 {
   // Scale factor for changing unit systems
-  // Examples
-  //   100.0  = UnitScale( ON::meters, ON::centimeters )
-  //     2.54 = UnitScale( ON::inches, ON::centimeters )
-  //    12.0  = UnitScale( ON::feet, ON::inches )
+  // Examples 
+  //   100.0  = UnitScale( ON::meters, ON::centimeters ) 
+  //     2.54 = UnitScale( ON::inches, ON::centimeters ) 
+  //    12.0  = UnitScale( ON::feet, ON::inches ) 
 
   // the default cases are here to keep lint quiet
   double scale = 1.0;
-
+  
   if (  u0 != u1
-        && u1 != ON::custom_unit_system
-        && ((int)u1) > 0 && ((int)u1) < 26
-        // switch weeds out bogus values of u0
-      )
-  switch( u0 )
+	&& u1 != ON::custom_unit_system
+	&& ((int)u1) > 0 && ((int)u1) < 26
+	// switch weeds out bogus values of u0
+      ) 
+  switch( u0 ) 
   {
   case ON::angstroms:
     scale = UnitScale( meters, u1)*1.0e-10;
@@ -1054,7 +1054,7 @@ double ON::UnitScale(
     break;
 
   case ON::millimeters:
-    switch( u1 )
+    switch( u1 ) 
     {
     case ON::meters:      scale = 1.0e-3; break;
     case ON::microns:     scale = 1.0e+3; break;
@@ -1062,34 +1062,34 @@ double ON::UnitScale(
 
     default:
       scale = IsEnglishUnit(u1)
-            ? UnitScale( inches, u1 )/25.4
-            : UnitScale( meters, u1 )*1.0e-3;
+	    ? UnitScale( inches, u1 )/25.4
+	    : UnitScale( meters, u1 )*1.0e-3;
       break;
     }
     break;
 
   case ON::centimeters:
-    switch( u1 )
+    switch( u1 ) 
     {
     case ON::meters:      scale = 1.0e-2; break;
     case ON::millimeters: scale = 1.0e+1; break;
 
     default:
       scale = IsEnglishUnit(u1)
-            ? UnitScale( inches, u1 )/2.54
-            : UnitScale( meters, u1 )*1.0e-2;
+	    ? UnitScale( inches, u1 )/2.54
+	    : UnitScale( meters, u1 )*1.0e-2;
       break;
     }
     break;
 
   case ON::decimeters:
     scale = IsEnglishUnit(u1)
-          ? UnitScale( inches, u1 )/0.254
-          : UnitScale( meters, u1 )*1.0e-1;
+	  ? UnitScale( inches, u1 )/0.254
+	  : UnitScale( meters, u1 )*1.0e-1;
     break;
 
   case ON::meters:
-    switch( u1 )
+    switch( u1 ) 
     {
     case ON::angstroms:      scale = 1.0e+10; break;
     case ON::nanometers:     scale = 1.0e+9;  break;
@@ -1111,7 +1111,7 @@ double ON::UnitScale(
 
     default:
       if ( IsEnglishUnit(u1) )
-        scale = UnitScale( inches, u1 )/0.0254;
+	scale = UnitScale( inches, u1 )/0.0254;
       break;
     }
     break;
@@ -1126,8 +1126,8 @@ double ON::UnitScale(
 
   case ON::kilometers:
     scale = IsEnglishUnit(u1)
-          ? UnitScale( inches, u1 )/0.0000254
-          : UnitScale( meters, u1 )*1000.0;
+	  ? UnitScale( inches, u1 )/0.0000254
+	  : UnitScale( meters, u1 )*1000.0;
     break;
 
   case ON::megameters:
@@ -1147,7 +1147,7 @@ double ON::UnitScale(
     break;
 
   case ON::inches:
-    switch( u1 )
+    switch( u1 ) 
     {
     case ON::angstroms:       scale = 2.54e+8; break;
     case ON::nanometers:      scale = 2.54e+7; break;
@@ -1178,8 +1178,8 @@ double ON::UnitScale(
     break;
 
   case ON::feet:
-    switch( u1 )
-    {
+    switch( u1 ) 
+    {      
     case ON::yards:       scale = 1.0/3.0; break;
     case ON::miles:       scale = 1.0/5280.0; break;
     default:
@@ -1189,8 +1189,8 @@ double ON::UnitScale(
     break;
 
   case ON::yards:
-    switch( u1 )
-    {
+    switch( u1 ) 
+    {      
     case ON::feet:        scale = 3.0; break;
     case ON::miles:       scale = 1.0/1760.0; break;
     default:
@@ -1207,8 +1207,8 @@ double ON::UnitScale(
     else
     {
       scale = IsEnglishUnit(u1)
-            ? UnitScale( inches, u1 )*12.0*5280.0
-            : UnitScale( meters, u1 )*1609.344;
+	    ? UnitScale( inches, u1 )*12.0*5280.0
+	    : UnitScale( meters, u1 )*1609.344;
     }
     break;
 
@@ -1226,8 +1226,8 @@ double ON::UnitScale(
 
   case ON::astronomical:
     // 1.4959787e+11  http://en.wikipedia.org/wiki/Astronomical_unit
-    // 1.495979e+11   http://units.nist.gov/Pubs/SP811/appenB9.htm
-    //    An astronomical unit (au) is the mean distance from the
+    // 1.495979e+11   http://units.nist.gov/Pubs/SP811/appenB9.htm  
+    //    An astronomical unit (au) is the mean distance from the 
     //    center of the earth to the center of the sun.
     scale = UnitScale( meters, u1 )*1.4959787e+11;
     break;
@@ -1237,14 +1237,14 @@ double ON::UnitScale(
     // 9.46073e+15 meters  http://units.nist.gov/Pubs/SP811/appenB9.htm
     //    A light year is the distance light travels in one Julian year.
     //    The speed of light is exactly 299792458 meters/second.
-    //    A Julian year is exactly 365.25 * 86400 seconds and is
+    //    A Julian year is exactly 365.25 * 86400 seconds and is 
     //    approximately the time it takes for one earth orbit.
     scale = UnitScale( meters, u1 )*9.4607304725808e+15;
     break;
 
   case ON::parsecs:
     // 3.08567758e+16  // http://en.wikipedia.org/wiki/Parsec
-    // 3.085678e+16    // http://units.nist.gov/Pubs/SP811/appenB9.htm
+    // 3.085678e+16    // http://units.nist.gov/Pubs/SP811/appenB9.htm  
     scale = UnitScale( meters, u1 )*3.08567758e+16;
     break;
 
@@ -1261,7 +1261,7 @@ double ON::UnitScale(
 //// distance_display_mode ///////////////////////////////////
 enum distance_display_mode
 {
-  decimal     = 0,
+  decimal     = 0, 
   fractional  = 1,
   feet_inches = 2
 };
@@ -1269,7 +1269,7 @@ enum distance_display_mode
 ON::distance_display_mode ON::DistanceDisplayMode(int i)
 {
   distance_display_mode dm = decimal;
-  switch (i)
+  switch (i) 
   {
   case decimal:
     dm = decimal;
@@ -1326,7 +1326,7 @@ ON::continuity ON::Continuity(int i)
   case C2_continuous: c = C2_continuous; break;
   case G1_continuous: c = G1_continuous; break;
   case G2_continuous: c = G2_continuous; break;
-
+  
   // 30 March 2003 Dale Lear added these
   case C0_locus_continuous: c = C0_locus_continuous; break;
   case C1_locus_continuous: c = C1_locus_continuous; break;
@@ -1386,7 +1386,7 @@ ON::surface_style ON::SurfaceStyle(int i)
 {
   //convertintegertosurface_styleenum
   surface_style ss = unknown_surface_style;
-
+  
   switch (i) {
   case plane: ss = plane; break;
   case circular_cylinder: ss = circular_cylinder; break;
@@ -1406,7 +1406,7 @@ ON::surface_style ON::SurfaceStyle(int i)
 ON::sort_algorithm ON::SortAlgorithm(int i)
 {
   sort_algorithm sa = heap_sort;
-
+  
   switch (i) {
   case heap_sort: sa = heap_sort; break;
   case quick_sort: sa = quick_sort; break;
@@ -1515,7 +1515,7 @@ ON::object_color_source ON::ObjectColorSource(int i)
 {
   // convert integer to object_mode enum
   ON::object_color_source cs = color_from_layer;
-  switch (i)
+  switch (i) 
   {
   case color_from_layer: // use color assigned to layer
     cs = color_from_layer;
@@ -1537,7 +1537,7 @@ ON::plot_color_source ON::PlotColorSource(int i)
 {
   // convert integer to object_mode enum
   ON::plot_color_source cs = plot_color_from_layer;
-  switch (i)
+  switch (i) 
   {
   case plot_color_from_layer:
     cs = plot_color_from_layer;
@@ -1545,7 +1545,7 @@ ON::plot_color_source ON::PlotColorSource(int i)
   case plot_color_from_object:
     cs = plot_color_from_object;
     break;
-  case plot_color_from_display:
+  case plot_color_from_display: 
     cs = plot_color_from_display;
     break;
   case plot_color_from_parent:
@@ -1636,11 +1636,11 @@ ON::curvature_style ON::CurvatureStyle(int i)
   case mean_curvature:
     cs = mean_curvature;
     break;
-  case min_curvature:
+  case min_curvature: 
     // minimum unsigned radius of curvature
     cs = min_curvature;
     break;
-  case max_curvature:
+  case max_curvature: 
     // maximum unsigned radius of curvature
     cs = max_curvature;
     break;
@@ -1664,7 +1664,7 @@ enum view_type
 {
   model_view_type     = 0,
   plot_page_view_type = 1,
-  nested_view_type    = 2
+  nested_view_type    = 2 
 };
 
 ON::view_type ON::ViewType(int vt)
@@ -1694,7 +1694,7 @@ ON::display_mode ON::DisplayMode(int i)
   case shaded_display:
     dm = shaded_display;
     break;
-  case renderpreview_display:
+  case renderpreview_display: 
     dm = renderpreview_display;
     break;
   }
@@ -1726,7 +1726,7 @@ ON::object_type ON::ObjectType(int i)
 {
   // convert integer to object_type enum
   object_type ot = unknown_object_type;
-  switch(i)
+  switch(i) 
   {
   case unknown_object_type:  ot = unknown_object_type; break;
 
@@ -1890,9 +1890,9 @@ ON::eTextDisplayMode ON::TextDisplayMode( int i)
 }
 
 
-// Windows code page support
+// Windows code page support 
 //   Only ON_SetStringConversionWindowsCodePage
-//   and ON_GetStringConversionWindowsCodePage
+//   and ON_GetStringConversionWindowsCodePage 
 //   should look at g_s__windows_code_page.
 static unsigned int g_s__windows_code_page = 0;
 

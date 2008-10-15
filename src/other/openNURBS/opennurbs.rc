@@ -27,18 +27,18 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE
+1 TEXTINCLUDE 
 BEGIN
     "opennurbs_dll_resource.h\0"
 END
 
-2 TEXTINCLUDE
+2 TEXTINCLUDE 
 BEGIN
     "#include ""afxres.h""\r\n"
     "\0"
 END
 
-3 TEXTINCLUDE
+3 TEXTINCLUDE 
 BEGIN
     "\r\n"
     "\0"
@@ -53,8 +53,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 4,0,2006,1205
- PRODUCTVERSION 4,0,2006,1205
+ FILEVERSION 4,0,2007,0718
+ PRODUCTVERSION 4,0,2007,0718
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -70,8 +70,8 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "CompanyName", "Robert McNeel & Associates"
-            VALUE "FileDescription", "openNURBS Dynamic Link Library"
-            VALUE "FileVersion", "4, 0, 2006, 1205"
+            VALUE "FileDescription", "Public openNURBS Dynamic Link Library"
+            VALUE "FileVersion", "4, 0, 2007, 0718"
             VALUE "InternalName", "openNURBS"
             VALUE "LegalCopyright", "Copyright 1993-2007 Robert McNeel & Associates. All Rights Reserved."
             VALUE "LegalTrademarks", "openNURBS is a trademark of Robert McNeel & Associates."
@@ -89,11 +89,11 @@ BEGIN
 #endif
 #endif
             VALUE "ProductName", "openNURBS"
-            VALUE "ProductVersion", "4, 0, 2006, 1205"
+            VALUE "ProductVersion", "4, 0, 2007, 0718"
 #ifdef _DEBUG
-            VALUE "openNURBSVersion", "200612059"
+            VALUE "openNURBSVersion", "200707189"
 #else
-            VALUE "openNURBSVersion", "200612050"
+            VALUE "openNURBSVersion", "200707180"
 #endif
         END
     END

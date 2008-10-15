@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2006 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -41,11 +41,11 @@ public:
   unsigned int SizeOf() const;
 
   BOOL Write(
-         ON_BinaryArchive& binary_archive
+	 ON_BinaryArchive& binary_archive
        ) const;
 
   BOOL Read(
-         ON_BinaryArchive& binary_archive
+	 ON_BinaryArchive& binary_archive
        );
 
   ON::object_type ObjectType() const; // returns ON::detail_object
@@ -53,18 +53,18 @@ public:
   //////////////////////////////////////////////////////
   //
   // virtual ON_Geometry overrides
-  // The m_boundary determines all bounding boxes
+  // The m_boundary determines all bounding boxes 
   //
   int Dimension() const;
 
   BOOL GetBBox(
-         double* boxmin,
-         double* boxmax,
-         int bGrowBox = false
-         ) const;
+	 double* boxmin,
+	 double* boxmax,
+	 int bGrowBox = false
+	 ) const;
 
-	bool GetTightBoundingBox(
-			ON_BoundingBox& tight_bbox,
+	bool GetTightBoundingBox( 
+			ON_BoundingBox& tight_bbox, 
       int bGrowBox = false,
 			const ON_Xform* xform = 0
       ) const;

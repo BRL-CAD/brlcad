@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2004 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -17,7 +17,7 @@
 #if !defined(ON_OFFSETSURFACE_INC_)
 #define ON_OFFSETSURFACE_INC_
 
-// This file is to be used in V3 plug-ins.
+// This file is to be used in V3 plug-ins.  
 // In V4, this will be included as part of opennurbs.
 // Ask Dale Lear if you have any questions.
 
@@ -70,7 +70,7 @@ public:
 
 #if defined(ON_DLL_TEMPLATE)
 // This stuff is here because of a limitation in the way Microsoft
-// handles templates and DLLs.  See Microsoft's knowledge base
+// handles templates and DLLs.  See Microsoft's knowledge base 
 // article ID Q168958 for details.
 #pragma warning( push )
 #pragma warning( disable : 4231 )
@@ -91,13 +91,13 @@ public:
     Sets base surface for the offset function.
   Parameters:
     srf - [in] pointer to the base surface.
-               This surface must remain valid while
-               the ON_OffsetSurfaceFunction class is used.
+	       This surface must remain valid while
+	       the ON_OffsetSurfaceFunction class is used.
   Returns:
     True if successful.
   */
   bool SetBaseSurface(
-    const ON_Surface* srf
+    const ON_Surface* srf 
     );
 
   /*
@@ -108,18 +108,18 @@ public:
 
   /*
   Description:
-    Use set SetSideTangency if you want the offset
+    Use set SetSideTangency if you want the offset 
     surface and base surface to have the same unit
     normals along a side of the surfaces's parameter
     spaces.
   Parameters:
     side - [in]
-               0 = south side
-               1 = east side
-               2 = north side
-               3 = west side
+	       0 = south side
+	       1 = east side
+	       2 = north side
+	       3 = west side
     bEnable - [in] true to enable tangency,
-                   false to disable tangency
+		   false to disable tangency
   Returns:
     True if successful.
   */
@@ -131,10 +131,10 @@ public:
   /*
   Parameters:
     side - [in]
-               0 = south side
-               1 = east side
-               2 = north side
-               3 = west side
+	       0 = south side
+	       1 = east side
+	       2 = north side
+	       3 = west side
   Returns:
     True if side tangency is enabled.
   */
@@ -149,7 +149,7 @@ public:
     t - [in] (s,t) is a base surface evaluation parameter
     distance - [in] distance is the offset distance.
     radius - [in] if radius>0, then this value will be the
-                  the approximate radius of the offset "bump".
+		  the approximate radius of the offset "bump".
   */
   bool SetOffsetPoint(
     double s,
@@ -166,22 +166,22 @@ public:
     s - [in]
     t - [in] (s,t) is a base surface evaluation parameter
   */
-  bool SetPoint(
-    int index,
-    double s,
+  bool SetPoint( 
+    int index, 
+    double s, 
     double t
     );
 
 
   /*
-  Description:
+  Description: 
     Set the offset distance for an existing point
   Parameters:
     index - [in] index of the point to set
     distance - [in] new distance
   */
-  bool SetDistance(
-    int index,
+  bool SetDistance( 
+    int index, 
     double distance);
 
 
@@ -229,17 +229,17 @@ public:
     t - [in] (s,t) is a base surface evaluation parameter
     num_der - [in] number of derivatives
     value - [out] value and derivatives of distance function
-                  value[0] = distance, value[1] = 1rst derivative,
-                  value[2] = 2nd derivative, ...
+		  value[0] = distance, value[1] = 1rst derivative,
+		  value[2] = 2nd derivative, ...
   Returns:
     True if successful
   */
   bool EvaluateDistance(
-        double s,
-        double t,
-        int num_der,
-        double* value
-        ) const;
+	double s,
+	double t,
+	int num_der,
+	double* value
+	) const;
 
   /*
   Description:
@@ -297,25 +297,25 @@ public:
   ON_OffsetSurface& operator=(const ON_OffsetSurface& src);
 
   BOOL GetBBox(
-         double* bbox_min,
-         double* bbox_max,
-         int bGrowBox = false
-         ) const;
+	 double* bbox_min,
+	 double* bbox_max,
+	 int bGrowBox = false
+	 ) const;
 
   BOOL Evaluate( // returns FALSE if unable to evaluate
-         double, double, // evaluation parameters
-         int,            // number of derivatives (>=0)
-         int,            // array stride (>=Dimension())
-         double*,        // array of length stride*(ndir+1)*(ndir+2)/2
-         int = 0,        // optional - determines which quadrant to evaluate from
-                         //         0 = default
-                         //         1 from NE quadrant
-                         //         2 from NW quadrant
-                         //         3 from SW quadrant
-                         //         4 from SE quadrant
-         int* = 0        // optional - evaluation hint (int[2]) used to speed
-                         //            repeated evaluations
-         ) const;
+	 double, double, // evaluation parameters
+	 int,            // number of derivatives (>=0)
+	 int,            // array stride (>=Dimension())
+	 double*,        // array of length stride*(ndir+1)*(ndir+2)/2
+	 int = 0,        // optional - determines which quadrant to evaluate from
+			 //         0 = default
+			 //         1 from NE quadrant
+			 //         2 from NW quadrant
+			 //         3 from SW quadrant
+			 //         4 from SE quadrant
+	 int* = 0        // optional - evaluation hint (int[2]) used to speed
+			 //            repeated evaluations
+	 ) const;
 
   /*
   Description:
@@ -347,9 +347,9 @@ public:
     True if successful.
   */
   bool SetBaseSurface(
-        ON_Surface* base_surface,
-        bool bManage
-        );
+	ON_Surface* base_surface, 
+	bool bManage
+	);
 
   /*
   Returns:

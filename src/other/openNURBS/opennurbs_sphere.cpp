@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -29,7 +29,7 @@ ON_Sphere::~ON_Sphere()
 
 bool ON_Sphere::IsValid() const
 {
-  return ( radius > 0.0 && plane.IsValid() ) ? true : false;
+  return ( ON_IsValid(radius) && radius > 0.0 && plane.IsValid() ) ? true : false;
 }
 
 bool ON_Sphere::Create( const ON_3dPoint& center, double r )
@@ -96,8 +96,8 @@ double ON_Sphere::Diameter() const
   return 2.0*radius;
 }
 
-bool ON_Sphere::ClosestPointTo(
-       ON_3dPoint point,
+bool ON_Sphere::ClosestPointTo( 
+       ON_3dPoint point, 
        double* longitude,
        double* latitude
        ) const
@@ -128,9 +128,9 @@ bool ON_Sphere::ClosestPointTo(
     if ( longitude ) {
       *longitude = atan2(y,x);
       if ( *longitude < 0.0 )
-        *longitude += 2.0*ON_PI;
+	*longitude += 2.0*ON_PI;
       if ( *longitude < 0.0 || *longitude >= 2.0*ON_PI)
-        *longitude = 0.0;
+	*longitude = 0.0;
     }
     if ( latitude )
       *latitude = atan(h/r);
@@ -241,14 +241,14 @@ int ON_Sphere::GetNurbForm( ON_NurbsSurface& s ) const
     const ON_3dVector z = radius*plane.zaxis;
 
     ON_3dPoint p[9] = {plane.origin+x,
-                       plane.origin+x+y,
-                       plane.origin+y,
-                       plane.origin-x+y,
-                       plane.origin-x,
-                       plane.origin-x-y,
-                       plane.origin-y,
-                       plane.origin+x-y,
-                       plane.origin+x};
+		       plane.origin+x+y,
+		       plane.origin+y,
+		       plane.origin-x+y,
+		       plane.origin-x,
+		       plane.origin-x-y,
+		       plane.origin-y,
+		       plane.origin+x-y,
+		       plane.origin+x};
 
     const double w = 1.0/sqrt(2.0);
     double w13;
@@ -263,22 +263,22 @@ int ON_Sphere::GetNurbForm( ON_NurbsSurface& s ) const
       CV[5*i+4] = northpole;
 
       if ( i%2) {
-        CV[5*i  ].x *= w;
-        CV[5*i  ].y *= w;
-        CV[5*i  ].z *= w;
-        CV[5*i  ].w = w;
-        CV[5*i+2].x *= w;
-        CV[5*i+2].y *= w;
-        CV[5*i+2].z *= w;
-        CV[5*i+2].w = w;
-        CV[5*i+4].x *= w;
-        CV[5*i+4].y *= w;
-        CV[5*i+4].z *= w;
-        CV[5*i+4].w = w;
-        w13 = 0.5;
+	CV[5*i  ].x *= w;
+	CV[5*i  ].y *= w;
+	CV[5*i  ].z *= w;
+	CV[5*i  ].w = w;
+	CV[5*i+2].x *= w;
+	CV[5*i+2].y *= w;
+	CV[5*i+2].z *= w;
+	CV[5*i+2].w = w;
+	CV[5*i+4].x *= w;
+	CV[5*i+4].y *= w;
+	CV[5*i+4].z *= w;
+	CV[5*i+4].w = w;
+	w13 = 0.5;
       }
       else {
-        w13 = w;
+	w13 = w;
       }
       CV[5*i+1].x *= w13;
       CV[5*i+1].y *= w13;

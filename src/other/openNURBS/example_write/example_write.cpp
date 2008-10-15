@@ -7,7 +7,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 ////////////////////////////////////////////////////////////////
 
 
@@ -16,20 +16,20 @@
 #include "../example_userdata/example_ud.h"
 
 static bool write_simple_file_example(
-            FILE* fp,
-            int version,
-            ON_TextLog& error_log,
-            const char* sNotes,
-            const ON_3dmSettings* settings,
-            int material_count, const ON_Material* material,  // optional rendering material
-            int layer_count,    const ON_Layer* layer,        // optional layer definitions
-            int light_count,
-            const ON_3dmObjectAttributes* light_attributes, // optional light attributes
-            ON_Light*                     light,            // lights
-            int object_count,
-            const ON_3dmObjectAttributes* object_attributes, // optional object attributes
-            ON_Object**                   object      // objects
-            )
+	    FILE* fp,
+	    int version,
+	    ON_TextLog& error_log,
+	    const char* sNotes,
+	    const ON_3dmSettings* settings,
+	    int material_count, const ON_Material* material,  // optional rendering material
+	    int layer_count,    const ON_Layer* layer,        // optional layer definitions
+	    int light_count,
+	    const ON_3dmObjectAttributes* light_attributes, // optional light attributes
+	    ON_Light*                     light,            // lights
+	    int object_count,
+	    const ON_3dmObjectAttributes* object_attributes, // optional object attributes
+	    ON_Object**                   object      // objects
+	    )
 {
   ONX_Model model;
   int i;
@@ -42,7 +42,7 @@ static bool write_simple_file_example(
 
   // set revision history information
   model.m_properties.m_RevisionHistory.NewRevision();
-
+  
   // set application information
   model.m_properties.m_Application.m_application_name = "OpenNURBS write_simple_file_example() function";
   model.m_properties.m_Application.m_application_URL = "http://www.opennurbs.org";
@@ -75,22 +75,22 @@ static bool write_simple_file_example(
     }
 
     model.m_layer_table.Reserve(layer_count);
-    for ( i = 0; i < layer_count; i++ )
+    for ( i = 0; i < layer_count; i++ ) 
     {
       // check that layer index is correct
-      if ( layer[i].LayerIndex() != i )
+      if ( layer[i].LayerIndex() != i ) 
       {
-        error_log.Print("error: layer[%d].LayerIndex() == %d\n",i,layer[i].LayerIndex());
-        layer_count = i;
-        break;
+	error_log.Print("error: layer[%d].LayerIndex() == %d\n",i,layer[i].LayerIndex());
+	layer_count = i;
+	break;
       }
       // check that layer's material index is correct
-      if (    layer[i].RenderMaterialIndex() < -1
-           || layer[i].RenderMaterialIndex() >= material_count )
+      if (    layer[i].RenderMaterialIndex() < -1 
+	   || layer[i].RenderMaterialIndex() >= material_count ) 
       {
-        error_log.Print("error: layer[%d].RenderMaterialIndex() == %d\n",i,layer[i].RenderMaterialIndex());
-        layer_count = i;
-        break;
+	error_log.Print("error: layer[%d].RenderMaterialIndex() == %d\n",i,layer[i].RenderMaterialIndex());
+	layer_count = i;
+	break;
       }
       model.m_layer_table.Append(layer[i]);
     }
@@ -98,27 +98,27 @@ static bool write_simple_file_example(
 
   if ( 0 != light && light_count > 0 )
   {
-    for ( i = 0; i < light_count; i++ )
+    for ( i = 0; i < light_count; i++ ) 
     {
       ONX_Model_RenderLight& mrl = model.m_light_table.AppendNew();
       mrl.m_light = light[i];
       if ( light_attributes )
-        mrl.m_attributes = light_attributes[i];
+	mrl.m_attributes = light_attributes[i];
     }
   }
 
   if ( 0 != object && object_count > 0 )
   {
-    for ( i = 0; i < object_count; i++ )
+    for ( i = 0; i < object_count; i++ ) 
     {
       // get object attributes and make sure layer and material indices are legit
-      if ( object[i] )
+      if ( object[i] ) 
       {
-        ONX_Model_Object& mo = model.m_object_table.AppendNew();
-        mo.m_object = object[i];
-        mo.m_bDeleteObject = false;
-        if ( object_attributes )
-          mo.m_attributes = object_attributes[i];
+	ONX_Model_Object& mo = model.m_object_table.AppendNew();
+	mo.m_object = object[i];
+	mo.m_bDeleteObject = false;
+	if ( object_attributes )
+	  mo.m_attributes = object_attributes[i];
       }
     }
   }
@@ -130,9 +130,9 @@ static bool write_simple_file_example(
   model.Polish();
   // writes model to archive
   bool ok = model.Write( archive,
-                         version,
-                         __FILE__ " write_simple_file_example() " __DATE__,
-                         &error_log );
+			 version, 
+			 __FILE__ " write_simple_file_example() " __DATE__, 
+			 &error_log );
 
   return ok;
 }
@@ -147,7 +147,7 @@ static bool write_points_example( FILE* fp, int version, ON_TextLog& error_log  
   {
     // set revision history information
     model.m_properties.m_RevisionHistory.NewRevision();
-
+    
     // set application information
     model.m_properties.m_Application.m_application_name = "OpenNURBS write_points_example() function";
     model.m_properties.m_Application.m_application_URL = "http://www.opennurbs.org";
@@ -333,15 +333,15 @@ static bool write_curves_example( FILE* fp, int version, ON_TextLog& error_log )
     {
       // write a wiggly cubic curve on the "green NURBS wiggle" layer
       ON_NurbsCurve* wiggle = new ON_NurbsCurve(
-        3, // dimension
-        false, // true if rational
-        4,     // order = degree+1
-        6      // number of control vertices
-        );
+	3, // dimension
+	false, // true if rational
+	4,     // order = degree+1
+	6      // number of control vertices
+	);
       int i;
       for ( i = 0; i < wiggle->CVCount(); i++ ) {
-        ON_3dPoint pt( 2*i, -i, (i-3)*(i-3) ); // pt = some 3d point
-        wiggle->SetCV( i, pt );
+	ON_3dPoint pt( 2*i, -i, (i-3)*(i-3) ); // pt = some 3d point
+	wiggle->SetCV( i, pt );
       }
 
       // ON_NurbsCurve's have order+cv_count-2 knots.
@@ -354,17 +354,17 @@ static bool write_curves_example( FILE* fp, int version, ON_TextLog& error_log )
       wiggle->SetKnot(6, 4.0);
       wiggle->SetKnot(7, 4.0);
 
-
-      if ( wiggle->IsValid() )
+      
+      if ( wiggle->IsValid() ) 
       {
-        ONX_Model_Object& mo = model.m_object_table.AppendNew();
-        mo.m_object = wiggle;
-        mo.m_bDeleteObject = true;
-        mo.m_attributes.m_layer_index = 1;
-        mo.m_attributes.m_name = "wiggly cubic curve";
+	ONX_Model_Object& mo = model.m_object_table.AppendNew();
+	mo.m_object = wiggle;
+	mo.m_bDeleteObject = true;
+	mo.m_attributes.m_layer_index = 1;
+	mo.m_attributes.m_name = "wiggly cubic curve";
       }
       else
-        delete wiggle;
+	delete wiggle;
     }
 
     {
@@ -432,7 +432,7 @@ static bool write_surfaces_example( FILE* fp, int version, ON_TextLog& error_log
 
   // Rational control points can be in either homogeneous
   // or euclidean form. Non-rational control points do not
-  // need to specify a weight.
+  // need to specify a weight.  
   ON_3dPoint CV[u_cv_count][v_cv_count];
 
   int i, j;
@@ -445,9 +445,9 @@ static bool write_surfaces_example( FILE* fp, int version, ON_TextLog& error_log
   }
 
   // write a line on the default layer
-  ON_NurbsSurface nurbs_surface( dim, bIsRational,
-                        u_degree+1, v_degree+1,
-                        u_cv_count, v_cv_count );
+  ON_NurbsSurface nurbs_surface( dim, bIsRational, 
+			u_degree+1, v_degree+1,
+			u_cv_count, v_cv_count );
 
   for ( i = 0; i < nurbs_surface.KnotCount(0); i++ )
     nurbs_surface.SetKnot( 0, i, u_knot[i] );
@@ -462,7 +462,7 @@ static bool write_surfaces_example( FILE* fp, int version, ON_TextLog& error_log
   }
 
   bool ok = false;
-  if ( nurbs_surface.IsValid() )
+  if ( nurbs_surface.IsValid() ) 
   {
     ON_BinaryFile archive( ON::write3dm, fp );
     ok = ON_WriteOneObjectArchive( archive, version, nurbs_surface );
@@ -477,8 +477,8 @@ static bool write_mesh_example( FILE* fp, int version, ON_TextLog& error_log )
   // example demonstrates how to create and write a mesh
 
   // create a mesh to write
-  // The mesh is a pyramid with 4 triangular sides and a quadranglar
-  // base.  The mesh has 5 vertices and 5 faces.
+  // The mesh is a pyramid with 4 triangular sides and a quadranglar 
+  // base.  The mesh has 5 vertices and 5 faces.  
   // The side faces share normals at their common vertices.  The
   // quadrangular base has normals different from the side normal.
   // Coincident vertices that have distinct normals must be
@@ -555,7 +555,7 @@ static bool write_mesh_example( FILE* fp, int version, ON_TextLog& error_log )
   //////////////////////////////////////////////////////////////
 
   bool ok = false;
-  if ( mesh.IsValid() )
+  if ( mesh.IsValid() ) 
   {
     // Most applications expect vertex normals.
     // If they are not present, ComputeVertexNormals sets
@@ -572,7 +572,7 @@ static bool write_mesh_example( FILE* fp, int version, ON_TextLog& error_log )
 static bool write_mesh_with_material_example( FILE* fp, int version, ON_TextLog& error_log )
 {
   // example demonstrates how to create and write a mesh that uses
-  // a rendering material.  You may want to study write_mesh_example()
+  // a rendering material.  You may want to study write_mesh_example() 
   // before examining this function.
   //
   // The key to attaching a texture is to create a mesh
@@ -634,7 +634,7 @@ static bool write_mesh_with_material_example( FILE* fp, int version, ON_TextLog&
   material.SetSpecular( ON_Color( 180, 180, 180 ) );
 
   material.SetShine( 0.35*ON_Material::MaxShine() ); // 0 = flat
-                                                        // MaxShine() = shiney
+							// MaxShine() = shiney
 
   material.SetTransparency( 0.2 );  // 0 = opaque, 1 = transparent
 
@@ -658,7 +658,7 @@ static bool write_mesh_with_material_example( FILE* fp, int version, ON_TextLog&
   material.SetMaterialName( L"my render material" );
 
   bool ok = false;
-  if ( mesh.IsValid() )
+  if ( mesh.IsValid() ) 
   {
     // Most applications expect vertex normals.
     // If they are not present, ComputeVertexNormals sets
@@ -673,17 +673,17 @@ static bool write_mesh_with_material_example( FILE* fp, int version, ON_TextLog&
     attributes.m_material_index = 0;
     attributes.SetMaterialSource( ON::material_from_object );
     ok = write_simple_file_example( fp, version, error_log,
-         "OpenNURBS write_mesh_with_material_example()", // notes
-         NULL,               // default settings
-         1, &material,       // render material table
-         0, NULL,            // layer table
-         0,                  // light count
-         NULL,               // light attributes
-         NULL,               // lights
-         1,                  // object count
-         &attributes,        // array of object_count attributes
-         object              // array of object_count objects
-         );
+	 "OpenNURBS write_mesh_with_material_example()", // notes
+	 NULL,               // default settings
+	 1, &material,       // render material table
+	 0, NULL,            // layer table
+	 0,                  // light count
+	 NULL,               // light attributes
+	 NULL,               // lights
+	 1,                  // object count
+	 &attributes,        // array of object_count attributes
+	 object              // array of object_count objects
+	 );
   }
 
   return ok;
@@ -703,7 +703,7 @@ static bool write_spot_light_example( FILE* fp, int version, ON_TextLog& error_l
   material.SetEmission( black );
   material.SetSpecular( white );
   material.SetShine( 0.35*ON_Material::MaxShine() ); // 0 = flat
-                                                        // MaxShine() = shiney
+							// MaxShine() = shiney
   material.SetTransparency( 0.0 );  // 0 = opaque, 1 = transparent
   material.SetMaterialName( L"white material" );
 
@@ -774,7 +774,7 @@ static bool write_spot_light_example( FILE* fp, int version, ON_TextLog& error_l
 }
 
 
-static int write_viewport_example( FILE* fp, int version, ON_TextLog& error_log,
+static bool write_viewport_example( FILE* fp, int version, ON_TextLog& error_log,
       const ON_Sphere& sphere // sphere containing region to be viewed
        )
 {
@@ -1023,28 +1023,28 @@ static int write_viewport_example( FILE* fp, int version, ON_TextLog& error_log,
   }
 
 
-  int ok = write_simple_file_example( fp, version, error_log,
-         "OpenNURBS write_viewport_example()", // notes
-         &settings,          // default settings
-         0, NULL,            // render material table
-         0, NULL,            // layer table
-         0,                  // light count
-         NULL,               // light attributes
-         NULL,               // lights
-         0,                  // object count
-         NULL,               // array of object_count attributes
-         NULL                // array of object_count objects
-         );
+  bool ok = write_simple_file_example( fp, version, error_log,
+	 "OpenNURBS write_viewport_example()", // notes
+	 &settings,          // default settings
+	 0, NULL,            // render material table
+	 0, NULL,            // layer table
+	 0,                  // light count
+	 NULL,               // light attributes
+	 NULL,               // lights
+	 0,                  // object count
+	 NULL,               // array of object_count attributes
+	 NULL                // array of object_count objects
+	 );
 
   return ok;
 }
 
-static void make_trimming_curves( ON_Brep& brep,
-                                  const ON_2dPoint& A2, // start point in parameter space
-                                  const ON_2dPoint& B2, // end point in parameter space
-                                  const ON_3dPoint& A3, // start point in parameter space
-                                  const ON_3dPoint& B3  // end point in parameter space
-                                  )
+static void make_trimming_curves( ON_Brep& brep, 
+				  const ON_2dPoint& A2, // start point in parameter space
+				  const ON_2dPoint& B2, // end point in parameter space
+				  const ON_3dPoint& A3, // start point in parameter space
+				  const ON_3dPoint& B3  // end point in parameter space
+				  )
 {
   ON_LineCurve* p2dCurve = new ON_LineCurve( A2, B2 );
   ON_LineCurve* p3dCurve = new ON_LineCurve( A3, B3 );
@@ -1073,9 +1073,9 @@ static bool write_trimmed_surface_example( FILE* fp, int version, ON_TextLog& er
   ON_2dPoint q;
 
   // Create a 10x10 plane surface at z=3 with domain [0,1]x[0,1]
-  ON_PlaneSurface* pSurface = new ON_PlaneSurface( ON_Plane( ON_3dPoint( 0, 0,3),
-                                                             ON_3dPoint(10,10,3),
-                                                             ON_3dPoint(10, 0,3) ) );
+  ON_PlaneSurface* pSurface = new ON_PlaneSurface( ON_Plane( ON_3dPoint( 0, 0,3), 
+							     ON_3dPoint(10,10,3), 
+							     ON_3dPoint(10, 0,3) ) );
   pSurface->SetDomain(0,0.0,10.0);
   pSurface->SetDomain(1,0.0,10.0);
 
@@ -1162,7 +1162,7 @@ static bool write_trimmed_surface_example( FILE* fp, int version, ON_TextLog& er
     ON_BinaryFile archive(ON::write3dm,fp);
     ok = ON_WriteOneObjectArchive( archive, version, brep );
   }
-
+  
   int bIsManifold, bIsOriented, bHasBoundary, bIsSolid;
   bIsManifold = brep.IsManifold( &bIsOriented, &bHasBoundary );
   bIsSolid = brep.IsSolid();
@@ -1172,6 +1172,9 @@ static bool write_trimmed_surface_example( FILE* fp, int version, ON_TextLog& er
 
 int main ( int argc, const char* argv[] )
 {
+  bool rc;
+  const char* filename;
+
   ON::Begin();
   // If you want to learn to write b-rep models, first work through
   // this example paying close attention to write_trimmed_surface_example(),
@@ -1195,47 +1198,79 @@ int main ( int argc, const char* argv[] )
   //FILE* error_log_fp = ON::OpenFile("error_log.txt","w");
   //ON_TextLog error_log(error_log_fp);
 
-  FILE* fp = ON::OpenFile( "my_points.3dm", "wb" );
-  write_points_example( fp, version, error_log );
+  filename = "my_points.3dm";
+  FILE* fp = ON::OpenFile( filename, "wb" );
+  rc = write_points_example( fp, version, error_log );
   ON::CloseFile( fp );
-  printf("Wrote my_points.3dm\n");
+  if (rc)
+    printf("Successfully wrote %s.\n",filename);
+  else
+    printf("Errors while writing %s.\n",filename);
 
-  fp = ON::OpenFile( "my_curves.3dm", "wb" );
-  write_curves_example( fp, version, error_log );
+  filename = "my_curves.3dm";
+  fp = ON::OpenFile( filename, "wb" );
+  rc = write_curves_example( fp, version, error_log );
   ON::CloseFile( fp );
-  printf("Wrote my_curves.3dm\n");
+  if (rc)
+    printf("Successfully wrote %s.\n",filename);
+  else
+    printf("Errors while writing %s.\n",filename);
 
-  fp = ON::OpenFile( "my_surfaces.3dm", "wb" );
-  write_surfaces_example( fp, version, error_log );
+  filename = "my_surfaces.3dm";
+  fp = ON::OpenFile( filename, "wb" );
+  rc = write_surfaces_example( fp, version, error_log );
   ON::CloseFile( fp );
-  printf("Wrote my_surfaces.3dm\n");
+  if (rc)
+    printf("Successfully wrote %s.\n",filename);
+  else
+    printf("Errors while writing %s.\n",filename);
 
-  fp = ON::OpenFile( "my_mesh.3dm", "wb" );
-  write_mesh_example( fp, version, error_log );
+  filename = "my_mesh.3dm";
+  fp = ON::OpenFile( filename, "wb" );
+  rc = write_mesh_example( fp, version, error_log );
   ON::CloseFile( fp );
-  printf("Wrote my_mesh.3dm\n");
+  if (rc)
+    printf("Successfully wrote %s.\n",filename);
+  else
+    printf("Errors while writing %s.\n",filename);
 
-  fp = ON::OpenFile( "my_mesh_with_material.3dm", "wb" );
-  write_mesh_with_material_example( fp, version, error_log );
+  filename = "my_mesh_with_material.3dm";
+  fp = ON::OpenFile( filename, "wb" );
+  rc = write_mesh_with_material_example( fp, version, error_log );
   ON::CloseFile( fp );
-  printf("Wrote my_mesh_with_material.3dm\n");
+  if (rc)
+    printf("Successfully wrote %s.\n",filename);
+  else
+    printf("Errors while writing %s.\n",filename);
 
-  fp = ON::OpenFile( "my_spot_light.3dm", "wb" );
-  write_spot_light_example( fp, version, error_log );
+  filename = "my_spot_light.3dm";
+  fp = ON::OpenFile( filename, "wb" );
+  rc = write_spot_light_example( fp, version, error_log );
   ON::CloseFile( fp );
-  printf("Wrote my_spot_light.3dm\n");
+  if (rc)
+    printf("Successfully wrote %s.\n",filename);
+  else
+    printf("Errors while writing %s.\n",filename);
 
-  fp = ON::OpenFile( "my_viewports.3dm", "wb" );
+  filename = "my_viewports.3dm";
+  fp = ON::OpenFile( filename, "wb" );
   // views will display space inside the sphere
   ON_Sphere sphere ( ON_origin, 10.0 );
-  write_viewport_example( fp, version, error_log, sphere );
+  rc = write_viewport_example( fp, version, error_log, sphere );
   ON::CloseFile( fp );
-  printf("Wrote my_viewports.3dm\n");
+  if (rc)
+    printf("Successfully wrote %s.\n",filename);
+  else
+    printf("Errors while writing %s.\n",filename);
 
-  fp = ON::OpenFile( "my_trimmed_surface.3dm", "wb" );
-  write_trimmed_surface_example( fp, version, error_log );
+  filename = "my_trimmed_surface.3dm";
+  fp = ON::OpenFile( filename, "wb" );
+  rc = write_trimmed_surface_example( fp, version, error_log );
   ON::CloseFile( fp );
-  printf("Wrote my_trimmed_surface.3dm\n");
+  if (rc)
+    printf("Successfully wrote %s.\n",filename);
+  else
+    printf("Errors while writing %s.\n",filename);
 
   ON::End();
 

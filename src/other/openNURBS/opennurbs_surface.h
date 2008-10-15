@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -37,7 +37,7 @@ class ON_SurfaceTree;
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -72,21 +72,21 @@ public:
   // note: odd values are all "x" = constant
   // and even values > 0 are all "y" = constant
   // ON_BrepTrim::m_iso uses these flags
-  enum ISO
+  enum ISO 
   {
     not_iso = 0, // curve is not an isoparameteric curve
     x_iso   = 1, // curve is a "x" = constant (vertical) isoparametric
-                 // curve in the interior of the surface's domain
+		 // curve in the interior of the surface's domain
     y_iso   = 2, // curve is a "y" = constant (horizontal) isoparametric
-                 // curve in the interior of the surface's domain
+		 // curve in the interior of the surface's domain
     W_iso   = 3, // curve is a "x" = constant isoparametric curve
-                 // along the west side of the surface's domain
+		 // along the west side of the surface's domain
     S_iso   = 4, // curve is a "y" = constant isoparametric curve
-                 // along the south side of the surface's domain
+		 // along the south side of the surface's domain
     E_iso   = 5, // curve is a "x" = constant isoparametric curve
-                 // along the east side of the surface's domain
+		 // along the east side of the surface's domain
     N_iso   = 6, // curve is a "y" = constant isoparametric curve
-                 // along the north side of the surface's domain
+		 // along the north side of the surface's domain
     iso_count = 7
   };
 
@@ -106,12 +106,12 @@ public:
   Description:
     Get a duplicate of the surface.
   Returns:
-    A duplicate of the surface.
+    A duplicate of the surface.  
   Remarks:
     The caller must delete the returned surface.
     For non-ON_SurfaceProxy objects, this simply duplicates the surface using
     ON_Object::Duplicate.
-    For ON_SurfaceProxy objects, this duplicates the actual proxy surface
+    For ON_SurfaceProxy objects, this duplicates the actual proxy surface 
     geometry and, if necessary, transposes the result to that
     the returned surfaces's parameterization and locus match the proxy surface's.
   */
@@ -140,13 +140,13 @@ public:
 
   /*
   Description:
-    Overrides virtual ON_Geometry::HasBrepForm.
+    Overrides virtual ON_Geometry::HasBrepForm.  
     Uses ON_Brep::Create( ON_Surface&* ) to create a brep
     form.  The surface is copied for use in the returned
     brep.
   Parameters:
     brep - [in] if not NULL, brep is used to store the brep
-        form of the surface.
+	form of the surface.
   Result:
     Returns a pointer to on ON_Brep or NULL.  If the brep
     parameter is not NULL, then brep is returned if the
@@ -162,40 +162,40 @@ public:
 
   /*
   Description:
-    Computes a polygon mesh approximation of the surface.
+    Computes a polygon mesh approximation of the surface.    
   Parameters:
     mp - [in] meshing parameters
     mesh - [in] if not NULL, the surface mesh will be put
-                into this mesh.
+		into this mesh.
   Returns:
     A polygon mesh of the surface.
   Remarks:
     This virtual function works in the openNURBS that is
-    part of the Rhino SDK.  The source code for this
+    part of the Rhino SDK.  The source code for this 
     functionallity is not provided in the free openNURBS
     toolkit.
   */
   virtual
-  ON_Mesh* CreateMesh(
-             const ON_MeshParameters& mp,
-             ON_Mesh* mesh = NULL
-             ) const;
+  ON_Mesh* CreateMesh( 
+	     const ON_MeshParameters& mp,
+	     ON_Mesh* mesh = NULL
+	     ) const;
 
-  BOOL GetDomain(
-         int dir,              // 0 gets first parameter, 1 gets second parameter
-         double* t0,
-         double* t1
-         ) const;
+  BOOL GetDomain( 
+	 int dir,              // 0 gets first parameter, 1 gets second parameter
+	 double* t0,
+	 double* t1
+	 ) const;
 
-  bool SetDomain(
+  bool SetDomain( 
     int dir, // 0 sets first parameter's domain, 1 gets second parameter's domain
     ON_Interval domain
     );
 
   virtual
-  BOOL SetDomain(
+  BOOL SetDomain( 
     int dir, // 0 sets first parameter's domain, 1 gets second parameter's domain
-    double t0,
+    double t0, 
     double t1
     );
 
@@ -213,63 +213,63 @@ public:
     height - [out] (corresponds to the first surface parameter)
   Example:
 
-          // Reparameterize a surface to minimize distortion
-          // in the map from parameter space to 3d.
-          ON_Surface* surf = ...;
-          double width, height;
-          if ( surf->GetSurfaceSize( &width, &height ) )
-          {
-            srf->SetDomain( 0, ON_Interval( 0.0, width ) );
-            srf->SetDomain( 1, ON_Interval( 0.0, height ) );
-          }
+	  // Reparameterize a surface to minimize distortion 
+	  // in the map from parameter space to 3d.
+	  ON_Surface* surf = ...;
+	  double width, height;
+	  if ( surf->GetSurfaceSize( &width, &height ) )
+	  {
+	    srf->SetDomain( 0, ON_Interval( 0.0, width ) );
+	    srf->SetDomain( 1, ON_Interval( 0.0, height ) );
+	  }
 
   Returns:
     TRUE if successful.
   */
   virtual
-  BOOL GetSurfaceSize(
-      double* width,
-      double* height
+  BOOL GetSurfaceSize( 
+      double* width, 
+      double* height 
       ) const;
 
 
-  virtual
+  virtual 
   int SpanCount(
     int dir // 0 gets first parameter's domain, 1 gets second parameter's domain
     ) const = 0; // number of smooth nonempty spans in the parameter direction
 
   virtual
-  BOOL GetSpanVector( // span "knots"
-        int dir, // 0 gets first parameter's domain, 1 gets second parameter's domain
-        double* span_vector // array of length SpanCount() + 1
-        ) const = 0; //
+  BOOL GetSpanVector( // span "knots" 
+	int dir, // 0 gets first parameter's domain, 1 gets second parameter's domain
+	double* span_vector // array of length SpanCount() + 1 
+	) const = 0; // 
 
   //////////
-  // If t is in the domain of the surface, GetSpanVectorIndex() returns the
+  // If t is in the domain of the surface, GetSpanVectorIndex() returns the 
   // span vector index "i" such that span_vector[i] <= t <= span_vector[i+1].
   // The "side" parameter determines which span is selected when t is at the
   // end of a span.
   virtual
   BOOL GetSpanVectorIndex(
-        int dir , // 0 gets first parameter's domain, 1 gets second parameter's domain
-        double t,      // [IN] t = evaluation parameter
-        int side,         // [IN] side 0 = default, -1 = from below, +1 = from above
-        int* span_vector_index,        // [OUT] span vector index
-        ON_Interval* span_interval // [OUT] domain of the span containing "t"
-        ) const;
+	int dir , // 0 gets first parameter's domain, 1 gets second parameter's domain
+	double t,      // [IN] t = evaluation parameter
+	int side,         // [IN] side 0 = default, -1 = from below, +1 = from above
+	int* span_vector_index,        // [OUT] span vector index
+	ON_Interval* span_interval // [OUT] domain of the span containing "t"
+	) const;
 
-  virtual
-  int Degree( // returns maximum algebraic degree of any span
-                  // ( or a good estimate if curve spans are not algebraic )
+  virtual 
+  int Degree( // returns maximum algebraic degree of any span 
+		  // ( or a good estimate if curve spans are not algebraic )
     int dir // 0 gets first parameter's domain, 1 gets second parameter's domain
-    ) const = 0;
+    ) const = 0; 
 
   virtual BOOL GetParameterTolerance( // returns tminus < tplus: parameters tminus <= s <= tplus
-         int dir,        // 0 gets first parameter, 1 gets second parameter
-         double t,       // t = parameter in domain
-         double* tminus, // tminus
-         double* tplus   // tplus
-         ) const;
+	 int dir,        // 0 gets first parameter, 1 gets second parameter
+	 double t,       // t = parameter in domain
+	 double* tminus, // tminus
+	 double* tplus   // tplus
+	 ) const;
 
   /*
   Description:
@@ -287,9 +287,9 @@ public:
   */
   virtual
   ISO IsIsoparametric(
-        const ON_Curve& curve,
-        const ON_Interval* curve_domain = NULL
-        ) const;
+	const ON_Curve& curve,
+	const ON_Interval* curve_domain = NULL
+	) const;
 
   /*
   Description:
@@ -306,15 +306,15 @@ public:
   */
   virtual
   ISO IsIsoparametric(
-        const ON_BoundingBox& bbox
-        ) const;
+	const ON_BoundingBox& bbox
+	) const;
 
   /*
   Description:
     Test a surface to see if it is planar.
   Parameters:
     plane - [out] if not NULL and TRUE is returned,
-                  the plane parameters are filled in.
+		  the plane parameters are filled in.
     tolerance - [in] tolerance to use when checking
   Returns:
     TRUE if there is a plane such that the maximum distance from
@@ -322,25 +322,89 @@ public:
   */
   virtual
   BOOL IsPlanar(
-        ON_Plane* plane = NULL,
-        double tolerance = ON_ZERO_TOLERANCE
-        ) const;
+	ON_Plane* plane = NULL,
+	double tolerance = ON_ZERO_TOLERANCE
+	) const;
 
-  virtual
+  /*
+  Description:
+    Determine if the surface is a portion of a sphere.
+  Parameters:
+    sphere - [out] if not NULL and true is returned,
+      then the sphere definition is returned.
+    tolerance - [in]
+      tolerance to use when checking
+  Returns:
+    True if the surface is a portion of a sphere.                   
+  */
+  bool IsSphere(
+	ON_Sphere* sphere = NULL,
+	double tolerance = ON_ZERO_TOLERANCE
+	) const;
+
+  /*
+  Description:
+    Determine if the surface is a portion of a cylinder.
+  Parameters:
+    cylinder - [out] if not NULL and true is returned, 
+      then the cylinder definition is returned.
+    tolerance - [in]
+      tolerance to use when checking
+  Returns:
+    True if the surface is a portion of a cylinder.                   
+  */
+  bool IsCylinder(
+	ON_Cylinder* cylinder = NULL,
+	double tolerance = ON_ZERO_TOLERANCE
+	) const;
+
+  /*
+  Description:
+    Determine if the surface is a portion of a cone.
+  Parameters:
+    cone - [out] if not NULL and true is returned, 
+      then the cone definition is returned.
+    tolerance - [in]
+      tolerance to use when checking
+  Returns:
+    True if the surface is a portion of a cone.                   
+  */
+  bool IsCone(
+	ON_Cone* cone = NULL,
+	double tolerance = ON_ZERO_TOLERANCE
+	) const;
+
+  /*
+  Description:
+    Determine if the surface is a portion of a torus.
+  Parameters:
+    torus - [out] if not NULL and true is returned,
+      then the torus definition is returned.
+    tolerance - [in]
+      tolerance to use when checking
+  Returns:
+    True if the surface is a portion of a torus.                   
+  */
+  bool IsTorus(
+	ON_Torus* torus = NULL,
+	double tolerance = ON_ZERO_TOLERANCE
+	) const;
+
+  virtual 
   BOOL IsClosed(   // TRUE if surface is closed in direction
-        int        // dir  0 = "s", 1 = "t"
-        ) const;
+	int        // dir  0 = "s", 1 = "t"
+	) const;
 
-  virtual
+  virtual 
   BOOL IsPeriodic( // TRUE if surface is periodic in direction (default is FALSE)
-        int        // dir  0 = "s", 1 = "t"
-        ) const;
+	int        // dir  0 = "s", 1 = "t"
+	) const;
 
   virtual
   BOOL IsSingular( // TRUE if surface side is collapsed to a point
-        int        // side of parameter space to test
-                   // 0 = south, 1 = east, 2 = north, 3 = west
-        ) const;
+	int        // side of parameter space to test
+		   // 0 = south, 1 = east, 2 = north, 3 = west
+	) const;
 
   /*
   Description:
@@ -354,8 +418,8 @@ public:
     true if surface is singular at (s,t)
   */
   bool IsAtSingularity(
-    double s,
-    double t,
+    double s, 
+    double t, 
     bool bExact = true
     ) const;
 
@@ -375,48 +439,48 @@ public:
     double s,
     double t
     ) const;
-
+  
   /*
   Description:
-    Search for a derivatitive, tangent, or curvature
+    Search for a derivatitive, tangent, or curvature 
     discontinuity.
   Parameters:
     dir - [in] If 0, then "u" parameter is checked.  If 1, then
-               the "v" parameter is checked.
+	       the "v" parameter is checked.
     c - [in] type of continity to test for.
     t0 - [in] Search begins at t0. If there is a discontinuity
-              at t0, it will be ignored.  This makes it
-              possible to repeatedly call GetNextDiscontinuity
-              and step through the discontinuities.
-    t1 - [in] (t0 != t1)  If there is a discontinuity at t1 is
-              will be ingored unless c is a locus discontinuity
-              type and t1 is at the start or end of the curve.
+	      at t0, it will be ignored.  This makes it 
+	      possible to repeatedly call GetNextDiscontinuity
+	      and step through the discontinuities.
+    t1 - [in] (t0 != t1)  If there is a discontinuity at t1 is 
+	      will be ingored unless c is a locus discontinuity
+	      type and t1 is at the start or end of the curve.
     t - [out] if a discontinuity is found, then *t reports the
-          parameter at the discontinuity.
-    hint - [in/out] if GetNextDiscontinuity will be called
+	  parameter at the discontinuity.
+    hint - [in/out] if GetNextDiscontinuity will be called 
        repeatedly, passing a "hint" with initial value *hint=0
-       will increase the speed of the search.
-    dtype - [out] if not NULL, *dtype reports the kind of
-        discontinuity found at *t.  A value of 1 means the first
-        derivative or unit tangent was discontinuous.  A value
-        of 2 means the second derivative or curvature was
-        discontinuous.  A value of 0 means teh curve is not
-        closed, a locus discontinuity test was applied, and
-        t1 is at the start of end of the curve.
+       will increase the speed of the search.       
+    dtype - [out] if not NULL, *dtype reports the kind of 
+	discontinuity found at *t.  A value of 1 means the first 
+	derivative or unit tangent was discontinuous.  A value 
+	of 2 means the second derivative or curvature was 
+	discontinuous.  A value of 0 means teh curve is not
+	closed, a locus discontinuity test was applied, and
+	t1 is at the start of end of the curve.
     cos_angle_tolerance - [in] default = cos(1 degree) Used only
-        when c is ON::G1_continuous or ON::G2_continuous.  If the
-        cosine of the angle between two tangent vectors is
-        <= cos_angle_tolerance, then a G1 discontinuity is reported.
-    curvature_tolerance - [in] (default = ON_SQRT_EPSILON) Used
-        only when c is ON::G2_continuous.  If K0 and K1 are
-        curvatures evaluated from above and below and
-        |K0 - K1| > curvature_tolerance, then a curvature
-        discontinuity is reported.
+	when c is ON::G1_continuous or ON::G2_continuous.  If the
+	cosine of the angle between two tangent vectors is 
+	<= cos_angle_tolerance, then a G1 discontinuity is reported.
+    curvature_tolerance - [in] (default = ON_SQRT_EPSILON) Used 
+	only when c is ON::G2_continuous.  If K0 and K1 are 
+	curvatures evaluated from above and below and 
+	|K0 - K1| > curvature_tolerance, then a curvature 
+	discontinuity is reported.
   Returns:
     Parametric continuity tests c = (C0_continuous, ..., G2_continuous):
 
-      TRUE if a parametric discontinuity was found strictly
-      between t0 and t1. Note well that all curves are
+      TRUE if a parametric discontinuity was found strictly 
+      between t0 and t1. Note well that all curves are 
       parametrically continuous at the ends of their domains.
 
     Locus continuity tests c = (C0_locus_continuous, ...,G2_locus_continuous):
@@ -424,22 +488,22 @@ public:
       TRUE if a locus discontinuity was found strictly between
       t0 and t1 or at t1 is the at the end of a curve.
       Note well that all open curves (IsClosed()=false) are locus
-      discontinuous at the ends of their domains.  All closed
-      curves (IsClosed()=true) are at least C0_locus_continuous at
+      discontinuous at the ends of their domains.  All closed 
+      curves (IsClosed()=true) are at least C0_locus_continuous at 
       the ends of their domains.
   */
   virtual
-  bool GetNextDiscontinuity(
-                  int dir,
-                  ON::continuity c,
-                  double t0,
-                  double t1,
-                  double* t,
-                  int* hint=NULL,
-                  int* dtype=NULL,
-                  double cos_angle_tolerance=0.99984769515639123915701155881391,
-                  double curvature_tolerance=ON_SQRT_EPSILON
-                  ) const;
+  bool GetNextDiscontinuity( 
+		  int dir,
+		  ON::continuity c,
+		  double t0,
+		  double t1,
+		  double* t,
+		  int* hint=NULL,
+		  int* dtype=NULL,
+		  double cos_angle_tolerance=0.99984769515639123915701155881391,
+		  double curvature_tolerance=ON_SQRT_EPSILON
+		  ) const;
 
   /*
   Description:
@@ -450,27 +514,27 @@ public:
     t - [in] surface parameter to test
     hint - [in] evaluation hint
     point_tolerance - [in] if the distance between two points is
-        greater than point_tolerance, then the surface is not C0.
+	greater than point_tolerance, then the surface is not C0.
     d1_tolerance - [in] if the difference between two first derivatives is
-        greater than d1_tolerance, then the surface is not C1.
+	greater than d1_tolerance, then the surface is not C1.
     d2_tolerance - [in] if the difference between two second derivatives is
-        greater than d2_tolerance, then the surface is not C2.
+	greater than d2_tolerance, then the surface is not C2.
     cos_angle_tolerance - [in] default = cos(1 degree) Used only when
-        c is ON::G1_continuous or ON::G2_continuous.  If the cosine
-        of the angle between two normal vectors
-        is <= cos_angle_tolerance, then a G1 discontinuity is reported.
+	c is ON::G1_continuous or ON::G2_continuous.  If the cosine
+	of the angle between two normal vectors 
+	is <= cos_angle_tolerance, then a G1 discontinuity is reported.
     curvature_tolerance - [in] (default = ON_SQRT_EPSILON) Used only when
-        c is ON::G2_continuous.  If K0 and K1 are curvatures evaluated
-        from above and below and |K0 - K1| > curvature_tolerance,
-        then a curvature discontinuity is reported.
+	c is ON::G2_continuous.  If K0 and K1 are curvatures evaluated
+	from above and below and |K0 - K1| > curvature_tolerance,
+	then a curvature discontinuity is reported.
   Returns:
     TRUE if the surface has at least the c type continuity at the parameter t.
   */
   virtual
   bool IsContinuous(
     ON::continuity c,
-    double s,
-    double t,
+    double s, 
+    double t, 
     int* hint = NULL,
     double point_tolerance=ON_ZERO_TOLERANCE,
     double d1_tolerance=ON_ZERO_TOLERANCE,
@@ -479,12 +543,12 @@ public:
     double curvature_tolerance=ON_SQRT_EPSILON
     ) const;
 
-  virtual
+  virtual 
   BOOL Reverse(  // reverse parameterizatrion, Domain changes from [a,b] to [-b,-a]
     int // dir  0 = "s", 1 = "t"
     ) = 0;
 
-  virtual
+  virtual 
   BOOL Transpose() = 0; // transpose surface parameterization (swap "s" and "t")
 
   // simple evaluation interface - no error handling
@@ -493,123 +557,123 @@ public:
   BOOL FrameAt( double u, double v, ON_Plane& frame) const;
 
   BOOL EvPoint( // returns FALSE if unable to evaluate
-         double u, double v,   // evaluation parameters
-         ON_3dPoint& point,    // returns value of surface
-         int quadrant = 0,     // optional - determines which side to evaluate from
-                               //         0 = default
-                               //         1 from NE quadrant
-                               //         2 from NW quadrant
-                               //         3 from SW quadrant
-                               //         4 from SE quadrant
-         int* hint = 0         // optional - evaluation hint (int[2]) used to speed
-                               //            repeated evaluations
-         ) const;
+	 double u, double v,   // evaluation parameters
+	 ON_3dPoint& point,    // returns value of surface
+	 int quadrant = 0,     // optional - determines which side to evaluate from
+			       //         0 = default
+			       //         1 from NE quadrant
+			       //         2 from NW quadrant
+			       //         3 from SW quadrant
+			       //         4 from SE quadrant
+	 int* hint = 0         // optional - evaluation hint (int[2]) used to speed
+			       //            repeated evaluations
+	 ) const;
 
   BOOL Ev1Der( // returns FALSE if unable to evaluate
-         double u, double v,   // evaluation parameters (s,t)
-         ON_3dPoint& point,    // returns value of surface
-         ON_3dVector& du,      // first partial derivatives (Ds)
-         ON_3dVector& dv,      // (Dt)
-         int quadrant = 0,     // optional - determines which side to evaluate from
-                               //         0 = default
-                               //         1 from NE quadrant
-                               //         2 from NW quadrant
-                               //         3 from SW quadrant
-                               //         4 from SE quadrant
-         int* hint = 0         // optional - evaluation hint (int[2]) used to speed
-                               //            repeated evaluations
-         ) const;
+	 double u, double v,   // evaluation parameters (s,t)
+	 ON_3dPoint& point,    // returns value of surface
+	 ON_3dVector& du,      // first partial derivatives (Ds)
+	 ON_3dVector& dv,      // (Dt)
+	 int quadrant = 0,     // optional - determines which side to evaluate from
+			       //         0 = default
+			       //         1 from NE quadrant
+			       //         2 from NW quadrant
+			       //         3 from SW quadrant
+			       //         4 from SE quadrant
+	 int* hint = 0         // optional - evaluation hint (int[2]) used to speed
+			       //            repeated evaluations
+	 ) const;
 
   BOOL Ev2Der( // returns FALSE if unable to evaluate
-         double u, double v,   // evaluation parameters (s,t)
-         ON_3dPoint& point,    // returns value of surface
-         ON_3dVector& du,      // first partial derivatives (Ds)
-         ON_3dVector& dv,      // (Dt)
-         ON_3dVector& duu,     // second partial derivatives (Dss)
-         ON_3dVector& duv,     // (Dst)
-         ON_3dVector& dvv,     // (Dtt)
-         int quadrant= 0,      // optional - determines which side to evaluate from
-                               //         0 = default
-                               //         1 from NE quadrant
-                               //         2 from NW quadrant
-                               //         3 from SW quadrant
-                               //         4 from SE quadrant
-         int* hint = 0         // optional - evaluation hint (int[2]) used to speed
-                               //            repeated evaluations
-         ) const;
+	 double u, double v,   // evaluation parameters (s,t)
+	 ON_3dPoint& point,    // returns value of surface
+	 ON_3dVector& du,      // first partial derivatives (Ds)
+	 ON_3dVector& dv,      // (Dt)
+	 ON_3dVector& duu,     // second partial derivatives (Dss)
+	 ON_3dVector& duv,     // (Dst)
+	 ON_3dVector& dvv,     // (Dtt)
+	 int quadrant= 0,      // optional - determines which side to evaluate from
+			       //         0 = default
+			       //         1 from NE quadrant
+			       //         2 from NW quadrant
+			       //         3 from SW quadrant
+			       //         4 from SE quadrant
+	 int* hint = 0         // optional - evaluation hint (int[2]) used to speed
+			       //            repeated evaluations
+	 ) const;
 
   BOOL EvNormal( // returns FALSE if unable to evaluate
-         double u, double v,   // evaluation parameters (s,t)
-         ON_3dPoint& point,    // returns value of surface
-         ON_3dVector& normal,  // unit normal
-         int quadrant = 0,     // optional - determines which side to evaluate from
-                               //         0 = default
-                               //         1 from NE quadrant
-                               //         2 from NW quadrant
-                               //         3 from SW quadrant
-                               //         4 from SE quadrant
-         int* hint = 0         // optional - evaluation hint (int[2]) used to speed
-                               //            repeated evaluations
-         ) const;
+	 double u, double v,   // evaluation parameters (s,t)
+	 ON_3dPoint& point,    // returns value of surface
+	 ON_3dVector& normal,  // unit normal
+	 int quadrant = 0,     // optional - determines which side to evaluate from
+			       //         0 = default
+			       //         1 from NE quadrant
+			       //         2 from NW quadrant
+			       //         3 from SW quadrant
+			       //         4 from SE quadrant
+	 int* hint = 0         // optional - evaluation hint (int[2]) used to speed
+			       //            repeated evaluations
+	 ) const;
 
   BOOL EvNormal( // returns FALSE if unable to evaluate
-         double u, double v,   // evaluation parameters (s,t)
-         ON_3dVector& normal,  // unit normal
-         int quadrant = 0,     // optional - determines which side to evaluate from
-                               //         0 = default
-                               //         1 from NE quadrant
-                               //         2 from NW quadrant
-                               //         3 from SW quadrant
-                               //         4 from SE quadrant
-         int* hint = 0         // optional - evaluation hint (int[2]) used to speed
-                               //            repeated evaluations
-         ) const;
+	 double u, double v,   // evaluation parameters (s,t)
+	 ON_3dVector& normal,  // unit normal
+	 int quadrant = 0,     // optional - determines which side to evaluate from
+			       //         0 = default
+			       //         1 from NE quadrant
+			       //         2 from NW quadrant
+			       //         3 from SW quadrant
+			       //         4 from SE quadrant
+	 int* hint = 0         // optional - evaluation hint (int[2]) used to speed
+			       //            repeated evaluations
+	 ) const;
 
   BOOL EvNormal( // returns FALSE if unable to evaluate
-         double u, double v,   // evaluation parameters (s,t)
-         ON_3dPoint& point,    // returns value of surface
-         ON_3dVector& du,      // first partial derivatives (Ds)
-         ON_3dVector& dv,      // (Dt)
-         ON_3dVector& normal,  // unit normal
-         int = 0,              // optional - determines which side to evaluate from
-                               //         0 = default
-                               //         1 from NE quadrant
-                               //         2 from NW quadrant
-                               //         3 from SW quadrant
-                               //         4 from SE quadrant
-         int* = 0              // optional - evaluation hint (int[2]) used to speed
-                               //            repeated evaluations
-         ) const;
+	 double u, double v,   // evaluation parameters (s,t)
+	 ON_3dPoint& point,    // returns value of surface
+	 ON_3dVector& du,      // first partial derivatives (Ds)
+	 ON_3dVector& dv,      // (Dt)
+	 ON_3dVector& normal,  // unit normal
+	 int = 0,              // optional - determines which side to evaluate from
+			       //         0 = default
+			       //         1 from NE quadrant
+			       //         2 from NW quadrant
+			       //         3 from SW quadrant
+			       //         4 from SE quadrant
+	 int* = 0              // optional - evaluation hint (int[2]) used to speed
+			       //            repeated evaluations
+	 ) const;
 
   // work horse evaluator
-  virtual
+  virtual 
   BOOL Evaluate( // returns FALSE if unable to evaluate
-         double u, double v,   // evaluation parameters
-         int num_der,          // number of derivatives (>=0)
-         int array_stride,     // array stride (>=Dimension())
-         double* der_array,    // array of length stride*(ndir+1)*(ndir+2)/2
-         int quadrant = 0,     // optional - determines which quadrant to evaluate from
-                               //         0 = default
-                               //         1 from NE quadrant
-                               //         2 from NW quadrant
-                               //         3 from SW quadrant
-                               //         4 from SE quadrant
-         int* hint = 0         // optional - evaluation hint (int[2]) used to speed
-                               //            repeated evaluations
-         ) const = 0;
+	 double u, double v,   // evaluation parameters
+	 int num_der,          // number of derivatives (>=0)
+	 int array_stride,     // array stride (>=Dimension())
+	 double* der_array,    // array of length stride*(ndir+1)*(ndir+2)/2
+	 int quadrant = 0,     // optional - determines which quadrant to evaluate from
+			       //         0 = default
+			       //         1 from NE quadrant
+			       //         2 from NW quadrant
+			       //         3 from SW quadrant
+			       //         4 from SE quadrant
+	 int* hint = 0         // optional - evaluation hint (int[2]) used to speed
+			       //            repeated evaluations
+	 ) const = 0;
 
   /*
   Description:
     Get isoparametric curve.
   Parameters:
     dir - [in] 0 first parameter varies and second parameter is constant
-                 e.g., point on IsoCurve(0,c) at t is srf(t,c)
-                 This is a horizontal line from left to right
-               1 first parameter is constant and second parameter varies
-                 e.g., point on IsoCurve(1,c) at t is srf(c,t
-                 This is a vertical line from bottom to top
+		 e.g., point on IsoCurve(0,c) at t is srf(t,c)
+		 This is a horizontal line from left to right
+	       1 first parameter is constant and second parameter varies
+		 e.g., point on IsoCurve(1,c) at t is srf(c,t
+		 This is a vertical line from bottom to top
 
-    c - [in] value of constant parameter
+    c - [in] value of constant parameter 
   Returns:
     Isoparametric curve.
   Remarks:
@@ -620,9 +684,9 @@ public:
   */
   virtual
   ON_Curve* IsoCurve(
-         int dir,
-         double c
-         ) const;
+	 int dir,
+	 double c
+	 ) const;
 
   /*
   Description:
@@ -641,9 +705,9 @@ public:
   */
   virtual
   ON_Curve* Pushup( const ON_Curve& curve_2d,
-                    double tolerance,
-                    const ON_Interval* curve_2d_subdomain = NULL
-                    ) const;
+		    double tolerance,
+		    const ON_Interval* curve_2d_subdomain = NULL
+		    ) const;
 
   /*
   Description:
@@ -664,11 +728,11 @@ public:
   */
   virtual
   ON_Curve* Pullback( const ON_Curve& curve_3d,
-                    double tolerance,
-                    const ON_Interval* curve_3d_subdomain = NULL,
-                    ON_3dPoint start_uv = ON_UNSET_POINT,
-                    ON_3dPoint end_uv = ON_UNSET_POINT
-                    ) const;
+		    double tolerance,
+		    const ON_Interval* curve_3d_subdomain = NULL,
+		    ON_3dPoint start_uv = ON_UNSET_POINT,
+		    ON_3dPoint end_uv = ON_UNSET_POINT
+		    ) const;
 
   /*
   Description:
@@ -676,21 +740,21 @@ public:
 
   Parameters:
     dir - [in] 0  The domain specifies an sub-interval of Domain(0)
-                  (the first surface parameter).
-               1  The domain specifies an sub-interval of Domain(1)
-                  (the second surface parameter).
+		  (the first surface parameter).
+	       1  The domain specifies an sub-interval of Domain(1)
+		  (the second surface parameter).
     domain - [in] interval of the surface to keep. If dir is 0, then
-        the portions of the surface with parameters (s,t) satisfying
-        s < Domain(0).Min() or s > Domain(0).Max() are trimmed away.
-        If dir is 1, then the portions of the surface with parameters
-        (s,t) satisfying t < Domain(1).Min() or t > Domain(1).Max()
-        are trimmed away.
+	the portions of the surface with parameters (s,t) satisfying
+	s < Domain(0).Min() or s > Domain(0).Max() are trimmed away.
+	If dir is 1, then the portions of the surface with parameters
+	(s,t) satisfying t < Domain(1).Min() or t > Domain(1).Max() 
+	are trimmed away.
   */
   virtual
   BOOL Trim(
-         int dir,
-         const ON_Interval& domain
-         );
+	 int dir,
+	 const ON_Interval& domain
+	 );
 
   /*
    Description:
@@ -698,14 +762,14 @@ public:
      Where possible, analytically extends surface to include domain.
    Parameters:
      dir - [in] 0  new Domain(0) will include domain.
-                   (the first surface parameter).
-                1  new Domain(1) will include domain.
-                   (the second surface parameter).
-     domain - [in] if domain is not included in surface domain,
-     surface will be extended so that its domain includes domain.
-     Will not work if surface is closed in direction dir.
+		   (the first surface parameter).
+		1  new Domain(1) will include domain.
+		   (the second surface parameter).
+     domain - [in] if domain is not included in surface domain, 
+     surface will be extended so that its domain includes domain.  
+     Will not work if surface is closed in direction dir. 
      Original surface is identical to the restriction of the
-     resulting surface to the original surface domain,
+     resulting surface to the original surface domain, 
    Returns:
      true if successful.
      */
@@ -718,54 +782,54 @@ public:
 
   /*
   Description:
-    Splits (divides) the surface into two parts at the
+    Splits (divides) the surface into two parts at the 
     specified parameter.
 
   Parameters:
     dir - [in] 0  The surface is split vertically.  The "west" side
-                  is returned in "west_or_south_side" and the "east"
-                  side is returned in "east_or_north_side".
-               1  The surface is split horizontally.  The "south" side
-                  is returned in "west_or_south_side" and the "north"
-                  side is returned in "east_or_north_side".
+		  is returned in "west_or_south_side" and the "east"
+		  side is returned in "east_or_north_side".
+	       1  The surface is split horizontally.  The "south" side
+		  is returned in "west_or_south_side" and the "north"
+		  side is returned in "east_or_north_side".
     c - [in] value of constant parameter in interval returned
-               by Domain(dir)
+	       by Domain(dir)
     west_or_south_side - [out] west/south portion of surface returned here
     east_or_north_side - [out] east/north portion of surface returned here
 
   Example:
 
-          ON_NurbsSurface srf = ...;
-          int dir = 1;
-          ON_NurbsSurface* south_side = 0;
-          ON_NurbsSurface* north_side = 0;
-          srf.Split( dir, srf.Domain(dir).Mid() south_side, north_side );
+	  ON_NurbsSurface srf = ...;
+	  int dir = 1;
+	  ON_NurbsSurface* south_side = 0;
+	  ON_NurbsSurface* north_side = 0;
+	  srf.Split( dir, srf.Domain(dir).Mid() south_side, north_side );
 
   */
   virtual
   BOOL Split(
-         int dir,
-         double c,
-         ON_Surface*& west_or_south_side,
-         ON_Surface*& east_or_north_side
-         ) const;
+	 int dir,
+	 double c,
+	 ON_Surface*& west_or_south_side,
+	 ON_Surface*& east_or_north_side
+	 ) const;
 
   /*
   Description:
     Get the parameters of the point on the surface that is closest to P.
   Parameters:
-    P - [in]
-            test point
+    P - [in] 
+	    test point
     s - [out]
-    t - [out]
-            (*s,*t) = parameters of the surface point that
-            is closest to P.
-    maximum_distance = 0.0 - [in]
-            optional upper bound on the distance from P to
-            the surface.  If you are only interested in
-            finding a point Q on the surface when
-            P.DistanceTo(Q) < maximum_distance, then set
-            maximum_distance to that value.
+    t - [out] 
+	    (*s,*t) = parameters of the surface point that 
+	    is closest to P.
+    maximum_distance = 0.0 - [in] 
+	    optional upper bound on the distance from P to 
+	    the surface.  If you are only interested in 
+	    finding a point Q on the surface when 
+	    P.DistanceTo(Q) < maximum_distance, then set
+	    maximum_distance to that value.
     sdomain = 0 - [in] optional domain restriction
     tdomain = 0 - [in] optional domain restriction
   Returns:
@@ -775,18 +839,18 @@ public:
     ON_Surface::GetLocalClosestPoint.
   */
   virtual
-  bool GetClosestPoint(
-          const ON_3dPoint& P,
-          double* s,
-          double* t,
-          double maximum_distance = 0.0,
-          const ON_Interval* sdomain = 0,
-          const ON_Interval* tdomain = 0
-          ) const;
+  bool GetClosestPoint( 
+	  const ON_3dPoint& P,
+	  double* s,
+	  double* t,
+	  double maximum_distance = 0.0,
+	  const ON_Interval* sdomain = 0,
+	  const ON_Interval* tdomain = 0
+	  ) const;
 
   //////////
-  // Find parameters of the point on a surface that is locally closest to
-  // the test_point.  The search for a local close point starts at
+  // Find parameters of the point on a surface that is locally closest to 
+  // the test_point.  The search for a local close point starts at 
   // seed parameters. If a sub_domain parameter is not NULL, then
   // the search is restricted to the specified portion of the surface.
   //
@@ -794,11 +858,11 @@ public:
   // the search fails.
   virtual
   BOOL GetLocalClosestPoint( const ON_3dPoint&, // test_point
-          double,double,     // seed_parameters
-          double*,double*,   // parameters of local closest point returned here
-          const ON_Interval* = NULL, // first parameter sub_domain
-          const ON_Interval* = NULL  // second parameter sub_domain
-          ) const;
+	  double,double,     // seed_parameters
+	  double*,double*,   // parameters of local closest point returned here
+	  const ON_Interval* = NULL, // first parameter sub_domain
+	  const ON_Interval* = NULL  // second parameter sub_domain
+	  ) const;
 
 
   /*
@@ -818,10 +882,10 @@ public:
   */
   virtual
   ON_Surface* Offset(
-        double offset_distance,
-        double tolerance,
-        double* max_deviation = NULL
-        ) const;
+	double offset_distance, 
+	double tolerance, 
+	double* max_deviation = NULL
+	) const;
 
 
   /*
@@ -830,25 +894,25 @@ public:
   Parameters:
     nurbs_surface - [out] NURBS representation returned here
     tolerance - [in] tolerance to use when creating NURBS
-        representation.
+	representation.
     s_subdomain - [in] if not NULL, then the NURBS representation
-        for this portion of the surface is returned.
+	for this portion of the surface is returned.
     t_subdomain - [in] if not NULL, then the NURBS representation
-        for this portion of the surface is returned.
+	for this portion of the surface is returned.
   Returns:
     0   unable to create NURBS representation
-        with desired accuracy.
+	with desired accuracy.
     1   success - returned NURBS parameterization
-        matches the surface's to wthe desired accuracy
+	matches the surface's to wthe desired accuracy
     2   success - returned NURBS point locus matches
-        the surface's to the desired accuracy and the
-        domain of the NURBS surface is correct.  On
-        However, This surface's parameterization and
-        the NURBS surface parameterization may not
-        match to the desired accuracy.  This situation
-        happens when getting NURBS representations of
-        surfaces that have a transendental parameterization
-        like spheres, cylinders, and cones.
+	the surface's to the desired accuracy and the
+	domain of the NURBS surface is correct.  On
+	However, This surface's parameterization and
+	the NURBS surface parameterization may not 
+	match to the desired accuracy.  This situation
+	happens when getting NURBS representations of
+	surfaces that have a transendental parameterization
+	like spheres, cylinders, and cones.
   Remarks:
     This is a low-level virtual function.  If you do not need
     the parameterization information provided by the return code,
@@ -858,9 +922,9 @@ public:
   */
   virtual
   int GetNurbForm(
-        ON_NurbsSurface& nurbs_surface,
-        double tolerance = 0.0
-        ) const;
+	ON_NurbsSurface& nurbs_surface,
+	double tolerance = 0.0
+	) const;
 
 
   /*
@@ -869,20 +933,20 @@ public:
   Parameters:
   Returns:
     0   unable to create NURBS representation
-        with desired accuracy.
+	with desired accuracy.
     1   success - NURBS parameterization
-        matches the surface's
+	matches the surface's
     2   success - NURBS point locus matches
-        the surface's and the
-        domain of the NURBS surface is correct.
-        However, This surface's parameterization and
-        the NURBS surface parameterization may not
-        match.  This situation
-        happens when getting NURBS representations of
-        surfaces that have a transendental parameterization
-        like spheres, cylinders, and cones.
+	the surface's and the
+	domain of the NURBS surface is correct.  
+	However, This surface's parameterization and
+	the NURBS surface parameterization may not 
+	match.  This situation
+	happens when getting NURBS representations of
+	surfaces that have a transendental parameterization
+	like spheres, cylinders, and cones.
   Remarks:
-    This is a low-level virtual function.
+    This is a low-level virtual function. 
   See Also:
     ON_Surface::GetNurbForm
     ON_Surface::NurbsSurface
@@ -910,23 +974,23 @@ public:
   // See Also:
   //   ON_Surface::GetNurbForm
   ON_NurbsSurface* NurbsSurface(
-        ON_NurbsSurface* pNurbsSurface = NULL,
-        double tolerance = 0.0,
-        const ON_Interval* s_subdomain = NULL,
-        const ON_Interval* t_subdomain = NULL
-        ) const;
+	ON_NurbsSurface* pNurbsSurface = NULL,
+	double tolerance = 0.0,
+	const ON_Interval* s_subdomain = NULL,
+	const ON_Interval* t_subdomain = NULL
+	) const;
 
   virtual
   bool GetSurfaceParameterFromNurbFormParameter(
-        double nurbs_s, double nurbs_t,
-        double* surface_s, double* surface_t
-        ) const;
+	double nurbs_s, double nurbs_t,
+	double* surface_s, double* surface_t
+	) const;
 
   virtual
   bool GetNurbFormParameterFromSurfaceParameter(
-        double surface_s, double surface_t,
-        double* nurbs_s,  double* nurbs_t
-        ) const;
+	double surface_s, double surface_t,
+	double* nurbs_s,  double* nurbs_t
+	) const;
 
 
   // If the geometry surface is modified in any way, then
@@ -942,10 +1006,10 @@ public:
   Description:
     Calculate area mass properties of the surface.
   Parameters:
-    mp - [out]
+    mp - [out] 
     bArea - [in] true to calculate area
     bFirstMoments - [in] true to calculate area first moments,
-                         area and area centroid.
+			 area and area centroid.
     bSecondMoments - [in] true to calculate area second moments.
     bProductMoments - [in] true to calculate area product moments.
   Returns:
@@ -965,13 +1029,13 @@ public:
   Description:
     Calculate volume mass properties of the surface.
   Parameters:
-    mp - [out]
+    mp - [out] 
     bVolume - [in] true to calculate volume
     bFirstMoments - [in] true to calculate volume first moments,
-                         volume, and volume centroid.
+			 volume, and volume centroid.
     bSecondMoments - [in] true to calculate volume second moments.
     bProductMoments - [in] true to calculate volume product moments.
-    base_point - [in]
+    base_point - [in] 
       If the surface is closed, then pass ON_UNSET_VALUE.
 
       This parameter is for expert users who are computing a
@@ -979,25 +1043,25 @@ public:
       breps, surfaces, and meshes.
 
       When computing the volume, volume centroid, or volume
-      first moments of a volume whose boundary is defined by
-      several breps, surfaces, and meshes, pass the same
-      base_point to each call to VolumeMassProperties.
+      first moments of a volume whose boundary is defined by 
+      several breps, surfaces, and meshes, pass the same 
+      base_point to each call to VolumeMassProperties.  
 
       When computing the volume second moments or volume product
       moments of a volume whose boundary is defined by several
-      breps, surfaces, and meshes, you MUST pass the entire
-      volume's centroid as the base_point and the input mp
+      breps, surfaces, and meshes, you MUST pass the entire 
+      volume's centroid as the base_point and the input mp 
       parameter must contain the results of a previous call
       to VolumeMassProperties(mp,true,true,false,false,base_point).
       In particular, in this case, you need to make two sets of
       calls; use first set to calculate the volume centroid and
-      the second set calculate the second moments and product
+      the second set calculate the second moments and product 
       moments.
   Returns:
     True if successful.
   */
   bool VolumeMassProperties(
-    ON_MassProperties& mp,
+    ON_MassProperties& mp, 
     bool bVolume = true,
     bool bFirstMoments = true,
     bool bSecondMoments = true,
@@ -1015,36 +1079,36 @@ protected:
 protected:
   // Helper for ON_Surface::Pullback overrides that does a segment-by-segment
   // pullback.
-  ON_Curve* PullbackPolyCurve(
-                  const ON_PolyCurve& polycurve_3d,
-                  double tolerance,
-                  const ON_Interval* curve_3d_subdomain,
-                  ON_3dPoint start_uv,
-                  ON_3dPoint end_uv
-                  ) const;
+  ON_Curve* PullbackPolyCurve( 
+		  const ON_PolyCurve& polycurve_3d,
+		  double tolerance,
+		  const ON_Interval* curve_3d_subdomain,
+		  ON_3dPoint start_uv,
+		  ON_3dPoint end_uv
+		  ) const;
 
   // Helper for ON_Surface::Pushup overrides that does a segment-by-segment
   // pushup.
   ON_Curve* PushupPolyCurve( const ON_PolyCurve& polycurve_2d,
-                    double tolerance,
-                    const ON_Interval* curve_2d_subdomain
-                    ) const;
+		    double tolerance,
+		    const ON_Interval* curve_2d_subdomain
+		    ) const;
 
 
   // Helper for ON_Surface::Pullback overrides that handles "real" curve issues.
-  ON_Curve* PullbackCurveProxy(
-                  const ON_CurveProxy& curveproxy_3d,
-                  double tolerance,
-                  const ON_Interval* curve_3d_subdomain,
-                  ON_3dPoint start_uv,
-                  ON_3dPoint end_uv
-                  ) const;
+  ON_Curve* PullbackCurveProxy( 
+		  const ON_CurveProxy& curveproxy_3d,
+		  double tolerance,
+		  const ON_Interval* curve_3d_subdomain,
+		  ON_3dPoint start_uv,
+		  ON_3dPoint end_uv
+		  ) const;
 
   // Helper for ON_Surface::Pushup overrides that handles "real" curve issues.
   ON_Curve* PushupCurveProxy( const ON_CurveProxy& curveproxy_2d,
-                    double tolerance,
-                    const ON_Interval* curve_2d_subdomain
-                    ) const;
+		    double tolerance,
+		    const ON_Interval* curve_2d_subdomain
+		    ) const;
 public:
   static ON_MassPropertiesSurface _MassPropertiesSurface;
 };
@@ -1052,7 +1116,7 @@ public:
 
 #if defined(ON_DLL_TEMPLATE)
 // This stuff is here because of a limitation in the way Microsoft
-// handles templates and DLLs.  See Microsoft's knowledge base
+// handles templates and DLLs.  See Microsoft's knowledge base 
 // article ID Q168958 for details.
 #pragma warning( push )
 #pragma warning( disable : 4231 )
@@ -1072,7 +1136,7 @@ public:
   void Destroy(); // deletes surfaces in array and sets count to 0
 
   BOOL Duplicate( ON_SurfaceArray& ) const; // operator= copies the pointer values
-                                     // duplicate copies the surfaces themselves
+				     // duplicate copies the surfaces themselves
 };
 
 ON_DECL

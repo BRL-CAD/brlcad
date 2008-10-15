@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2004 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -19,7 +19,7 @@
 ON_OBJECT_IMPLEMENT(ON_OffsetSurface,ON_SurfaceProxy,"00C61749-D430-4ecc-83A8-29130A20CF9C");
 
 ON_OffsetSurface::ON_OffsetSurface()
-                 : m__pSrf(0)
+		 : m__pSrf(0)
 {
 }
 
@@ -29,13 +29,13 @@ ON_OffsetSurface::~ON_OffsetSurface()
   if ( 0 != m__pSrf && this != m__pSrf )
     delete m__pSrf;
   m__pSrf = 0;
-
+  
 }
 
 ON_OffsetSurface::ON_OffsetSurface( const ON_OffsetSurface& src)
-                 : ON_SurfaceProxy(src),
-                   m__pSrf(0),
-                   m_offset_function(src.m_offset_function)
+		 : ON_SurfaceProxy(src),
+		   m__pSrf(0),
+		   m_offset_function(src.m_offset_function)
 {
   if ( 0 != src.m__pSrf )
   {
@@ -89,7 +89,7 @@ bool ON_OffsetSurface::SetBaseSurface(
     if ( 0 == base_surface )
     {
       if ( 0 != m__pSrf && this != m__pSrf )
-        delete m__pSrf;
+	delete m__pSrf;
       m__pSrf = 0;
       ON_SurfaceProxy::SetProxySurface(0);
       m_offset_function.SetBaseSurface(0);
@@ -97,7 +97,7 @@ bool ON_OffsetSurface::SetBaseSurface(
     else if ( BaseSurface() != base_surface )
     {
       if ( 0 != m__pSrf && this != m__pSrf )
-        delete m__pSrf;
+	delete m__pSrf;
       m__pSrf = 0;
       ON_SurfaceProxy::SetProxySurface(base_surface);
     }
@@ -107,7 +107,7 @@ bool ON_OffsetSurface::SetBaseSurface(
 }
 
 bool ON_OffsetSurface::SetBaseSurface(
-      ON_Surface* base_surface,
+      ON_Surface* base_surface, 
       bool bManage
       )
 {
@@ -137,7 +137,7 @@ BOOL ON_OffsetSurface::GetBBox(
     {
       d = fabs(m_offset_function.m_offset_value[i].m_distance);
       if ( distance < d)
-        distance = d;
+	distance = d;
     }
     distance *= 2;
     if ( 0 != bbox_min )
@@ -207,33 +207,33 @@ BOOL ON_OffsetSurface::Evaluate(
   {
     double darray[21]; // 21 = ((5+1)*(5+2)/2) = enough room for der_count <= 5
     double* d = (der_count>5)
-              ? (double*)onmalloc(((der_count+1)*(der_count+2))/2*sizeof(d[0]))
-              : darray;
+	      ? (double*)onmalloc(((der_count+1)*(der_count+2))/2*sizeof(d[0]))
+	      : darray;
     rc = m_offset_function.EvaluateDistance(s,t,der_count,d);
     if (rc)
     {
       ON_3dVector N;
       ON_EvNormal(side,
-                  srf_value[1], srf_value[2],
-                  srf_value[3], srf_value[4], srf_value[5],
-                  N);
+		  srf_value[1], srf_value[2],
+		  srf_value[3], srf_value[4], srf_value[5],
+		  N);
       v[0] += d[0]*N.x;
       v[1] += d[0]*N.y;
       v[2] += d[0]*N.z;
 
       if ( der_count > 0 )
       {
-        ON_3dVector Ns, Nt;
-        ON_EvNormalPartials(srf_value[1], srf_value[2],
-                  srf_value[3], srf_value[4], srf_value[5],
-                  Ns, Nt);
-        v[v_stride]   += d[0]*Ns.x + d[1]*N.x;
-        v[v_stride+1] += d[0]*Ns.y + d[1]*N.y;
-        v[v_stride+2] += d[0]*Ns.z + d[1]*N.z;
+	ON_3dVector Ns, Nt;
+	ON_EvNormalPartials(srf_value[1], srf_value[2],
+		  srf_value[3], srf_value[4], srf_value[5],
+		  Ns, Nt);
+	v[v_stride]   += d[0]*Ns.x + d[1]*N.x;
+	v[v_stride+1] += d[0]*Ns.y + d[1]*N.y;
+	v[v_stride+2] += d[0]*Ns.z + d[1]*N.z;
 
-        v[2*v_stride]   += d[0]*Nt.x + d[2]*N.x;
-        v[2*v_stride+1] += d[0]*Nt.y + d[2]*N.y;
-        v[2*v_stride+2] += d[0]*Nt.z + d[2]*N.z;
+	v[2*v_stride]   += d[0]*Nt.x + d[2]*N.x;
+	v[2*v_stride+1] += d[0]*Nt.y + d[2]*N.y;
+	v[2*v_stride+2] += d[0]*Nt.z + d[2]*N.z;
       }
     }
     if ( d != darray )
@@ -255,7 +255,7 @@ void ON_BumpFunction::EvaluateHelperLinearBump(double t, double dt, int der_coun
       der_count--;
       value += 2;
       while(der_count--)
-        *value++ = 0.0;
+	*value++ = 0.0;
     }
   }
 }
@@ -281,14 +281,14 @@ void ON_BumpFunction::EvaluateHelperQuinticBump(double t, double dt, int der_cou
       //  value[1] = - value[1];
       if ( der_count > 1 )
       {
-        value[2] = dt*dt*(6.0*a2*b + 12.0*a + 2.0*a1*b1);
-        if ( der_count > 2 )
-        {
-          der_count-=2;
-          value += 3;
-          while ( der_count-- )
-            *value++ = 0.0;
-        }
+	value[2] = dt*dt*(6.0*a2*b + 12.0*a + 2.0*a1*b1);
+	if ( der_count > 2 )
+	{
+	  der_count-=2;
+	  value += 3;
+	  while ( der_count-- )
+	    *value++ = 0.0;
+	}
       }
     }
   }
@@ -340,9 +340,9 @@ void ON_BumpFunction::Evaluate(double s, double t, int der_count, double* value)
   double tmp[20];
   double* xvalue;
   double* yvalue;
-  xvalue = ( der_count > 9 )
-         ? ((double*)onmalloc((der_count+1)*2*sizeof(xvalue[0])))
-         : &tmp[0];
+  xvalue = ( der_count > 9 ) 
+	 ? ((double*)onmalloc((der_count+1)*2*sizeof(xvalue[0])))
+	 : &tmp[0];
   yvalue = xvalue + (der_count+1);
   double x = s-m_x0;
   const double dx = m_sx[x >= 0.0 ? 1 : 0];
@@ -412,9 +412,9 @@ bool ON_OffsetSurfaceFunction::SetSideTangency(
 
 bool ON_OffsetSurfaceFunction::SideTangency(int side) const
 {
-  bool rc = ( 0 <= side && side < 4 )
-          ? m_bZeroSideDerivative[side]
-          : false;
+  bool rc = ( 0 <= side && side < 4 ) 
+	  ? m_bZeroSideDerivative[side] 
+	  : false;
   return rc;
 }
 
@@ -454,8 +454,8 @@ bool ON_OffsetSurfaceFunction::EvaluateDistance(
   {
     double barray[21];
     double* bump_value = (vcnt > 21)
-                       ? (double*)onmalloc(vcnt*sizeof(bump_value[0]))
-                       : barray;
+		       ? (double*)onmalloc(vcnt*sizeof(bump_value[0]))
+		       : barray;
     const int bump_count = m_bumps.Count();
     int bump_index, vi;
     for ( bump_index = 0; bump_index < bump_count; bump_index++ )
@@ -463,7 +463,7 @@ bool ON_OffsetSurfaceFunction::EvaluateDistance(
       m_bumps[bump_index].Evaluate( s, t, num_der, bump_value );
       for ( vi = 0; vi < vcnt; vi++ )
       {
-        value[vi] += bump_value[vi];
+	value[vi] += bump_value[vi];
       }
     }
     if ( bump_value != barray )
@@ -562,17 +562,17 @@ bool ON_OffsetSurfaceFunction::SetOffsetPoint(
       int i;
       for ( i = 0; i < m_offset_value.Count(); i++ )
       {
-        if ( m_offset_value[i].m_index == offset_value.m_index )
-        {
-          m_offset_value[i] = offset_value;
-          break;
-        }
+	if ( m_offset_value[i].m_index == offset_value.m_index )
+	{
+	  m_offset_value[i] = offset_value;
+	  break;
+	}
       }
       if (i == m_offset_value.Count())
       {
-        m_offset_value.Append(offset_value);
-        m_bumps.SetCount(0);
-        m_bValid = false;
+	m_offset_value.Append(offset_value);
+	m_bumps.SetCount(0);
+	m_bValid = false;
       }
       rc = true;
     }
@@ -644,7 +644,7 @@ bool ON_OffsetSurfaceFunction::Initialize()
     m_bumps.Reserve(count);
     int i;
     double a,b,ds,dt;
-
+    
     for (i = 0; i < count; i++ )
     {
       ON_BumpFunction& bump = m_bumps.AppendNew();
@@ -652,15 +652,15 @@ bool ON_OffsetSurfaceFunction::Initialize()
       double ds0 = offset_value.m_s - m_domain[0][0];
       double ds1 = m_domain[0][1] - offset_value.m_s;
       if ( 0.0 == ds0 )
-        ds0 = -ds1;
+	ds0 = -ds1;
       else if ( 0.0 == ds1 )
-        ds1 = -ds0;
+	ds1 = -ds0;
       double dt0 = offset_value.m_t - m_domain[1][0];
       double dt1 = m_domain[1][1] - offset_value.m_t;
       if ( 0.0 == dt0 )
-        dt0 = -dt1;
+	dt0 = -dt1;
       else if ( 0.0 == dt1 )
-        dt1 = -dt0;
+	dt1 = -dt0;
 
       // default is a large cubic bump
       bump.m_point.x = offset_value.m_s;
@@ -678,112 +678,112 @@ bool ON_OffsetSurfaceFunction::Initialize()
 
       if ( offset_value.m_radius > 0.0 )
       {
-        // user specified cubic bump size
-        ON_3dPoint Pt;
-        ON_3dVector Ds, Dt;
-        if ( m_srf->Ev1Der(offset_value.m_s,offset_value.m_t,Pt,Ds,Dt) )
-        {
-          ds = (ds0>ds1) ? ds0 : ds1;
-          dt = (dt0>dt1) ? dt0 : dt1;
-          a = Ds.Length();
-          if ( a > ON_ZERO_TOLERANCE )
-          {
-            b = offset_value.m_radius/a;
-            if ( b < ds )
-              ds = b;
-          }
-          a = Dt.Length();
-          if ( a > ON_ZERO_TOLERANCE )
-          {
-            b = offset_value.m_radius/a;
-            if ( b < dt )
-              dt = b;
-          }
-          if ( !m_bZeroSideDerivative[0] || dt < dt0 )
-            dt0 = dt;
-          if ( !m_bZeroSideDerivative[1] || ds < ds1 )
-            ds1 = ds;
-          if ( !m_bZeroSideDerivative[2] || dt < dt1 )
-            dt1 = dt;
-          if ( !m_bZeroSideDerivative[3] || ds < ds0 )
-            ds0 = ds;
-          bump.m_sx[0] = -1.0/ds0;
-          bump.m_sx[1] =  1.0/ds1;
-          bump.m_sy[0] = -1.0/dt0;
-          bump.m_sy[1] =  1.0/dt1;
-        }
+	// user specified cubic bump size
+	ON_3dPoint Pt;
+	ON_3dVector Ds, Dt;
+	if ( m_srf->Ev1Der(offset_value.m_s,offset_value.m_t,Pt,Ds,Dt) )
+	{
+	  ds = (ds0>ds1) ? ds0 : ds1;
+	  dt = (dt0>dt1) ? dt0 : dt1;
+	  a = Ds.Length();
+	  if ( a > ON_ZERO_TOLERANCE )
+	  {
+	    b = offset_value.m_radius/a;
+	    if ( b < ds )
+	      ds = b;
+	  }
+	  a = Dt.Length();
+	  if ( a > ON_ZERO_TOLERANCE )
+	  {
+	    b = offset_value.m_radius/a;
+	    if ( b < dt )
+	      dt = b;
+	  }
+	  if ( !m_bZeroSideDerivative[0] || dt < dt0 )
+	    dt0 = dt;
+	  if ( !m_bZeroSideDerivative[1] || ds < ds1 )
+	    ds1 = ds;
+	  if ( !m_bZeroSideDerivative[2] || dt < dt1 )
+	    dt1 = dt;
+	  if ( !m_bZeroSideDerivative[3] || ds < ds0 )
+	    ds0 = ds;
+	  bump.m_sx[0] = -1.0/ds0;
+	  bump.m_sx[1] =  1.0/ds1;
+	  bump.m_sy[0] = -1.0/dt0;
+	  bump.m_sy[1] =  1.0/dt1;
+	}
       }
       else if ( bump.m_point.x == m_domain[0][0] &&  bump.m_point.y == m_domain[1][0] )
       {
-        // SW corner bilinear bump
-        if ( !m_bZeroSideDerivative[1] && !m_bZeroSideDerivative[3] )
-        {
-          bump.m_type[0] = 1;
-          bump.m_x0 = m_domain[0][1];
-          bump.m_sx[0] = -1.0/m_domain[0].Length();
-          bump.m_sx[1] = -1.0/m_domain[0].Length();
-        }
-        if ( !m_bZeroSideDerivative[0] && !m_bZeroSideDerivative[2] )
-        {
-          bump.m_type[1] = 1;
-          bump.m_y0 = m_domain[1][1];
-          bump.m_sy[0] = -1.0/m_domain[1].Length();
-          bump.m_sy[1] = -1.0/m_domain[1].Length();
-        }
+	// SW corner bilinear bump
+	if ( !m_bZeroSideDerivative[1] && !m_bZeroSideDerivative[3] )
+	{
+	  bump.m_type[0] = 1;
+	  bump.m_x0 = m_domain[0][1];
+	  bump.m_sx[0] = -1.0/m_domain[0].Length();
+	  bump.m_sx[1] = -1.0/m_domain[0].Length();
+	}
+	if ( !m_bZeroSideDerivative[0] && !m_bZeroSideDerivative[2] )
+	{
+	  bump.m_type[1] = 1;
+	  bump.m_y0 = m_domain[1][1];
+	  bump.m_sy[0] = -1.0/m_domain[1].Length();
+	  bump.m_sy[1] = -1.0/m_domain[1].Length();
+	}
       }
       else if ( bump.m_point.x == m_domain[0][1] &&  bump.m_point.y == m_domain[1][0] )
       {
-        // SE corner bilinear bump
-        if ( !m_bZeroSideDerivative[1] && !m_bZeroSideDerivative[3] )
-        {
-          bump.m_type[0] = 1;
-          bump.m_x0 = m_domain[0][0];
-          bump.m_sx[0] = 1.0/m_domain[0].Length();
-          bump.m_sx[1] = 1.0/m_domain[0].Length();
-        }
-        if ( !m_bZeroSideDerivative[0] && !m_bZeroSideDerivative[2] )
-        {
-          bump.m_type[1] = 1;
-          bump.m_y0 = m_domain[1][1];
-          bump.m_sy[0] = -1.0/m_domain[1].Length();
-          bump.m_sy[1] = -1.0/m_domain[1].Length();
-        }
+	// SE corner bilinear bump
+	if ( !m_bZeroSideDerivative[1] && !m_bZeroSideDerivative[3] )
+	{
+	  bump.m_type[0] = 1;
+	  bump.m_x0 = m_domain[0][0];
+	  bump.m_sx[0] = 1.0/m_domain[0].Length();
+	  bump.m_sx[1] = 1.0/m_domain[0].Length();
+	}
+	if ( !m_bZeroSideDerivative[0] && !m_bZeroSideDerivative[2] )
+	{
+	  bump.m_type[1] = 1;
+	  bump.m_y0 = m_domain[1][1];
+	  bump.m_sy[0] = -1.0/m_domain[1].Length();
+	  bump.m_sy[1] = -1.0/m_domain[1].Length();
+	}
       }
       else if ( bump.m_point.x == m_domain[0][1] &&  bump.m_point.y == m_domain[1][1] )
       {
-        // NE corner bilinear bump
-        if ( !m_bZeroSideDerivative[1] && !m_bZeroSideDerivative[3] )
-        {
-          bump.m_type[0] = 1;
-          bump.m_x0 = m_domain[0][0];
-          bump.m_sx[0] = 1.0/m_domain[0].Length();
-          bump.m_sx[1] = 1.0/m_domain[0].Length();
-        }
-        if ( !m_bZeroSideDerivative[0] && !m_bZeroSideDerivative[2] )
-        {
-          bump.m_type[1] = 1;
-          bump.m_y0 = m_domain[1][0];
-          bump.m_sy[0] = 1.0/m_domain[1].Length();
-          bump.m_sy[1] = 1.0/m_domain[1].Length();
-        }
+	// NE corner bilinear bump
+	if ( !m_bZeroSideDerivative[1] && !m_bZeroSideDerivative[3] )
+	{
+	  bump.m_type[0] = 1;
+	  bump.m_x0 = m_domain[0][0];
+	  bump.m_sx[0] = 1.0/m_domain[0].Length();
+	  bump.m_sx[1] = 1.0/m_domain[0].Length();
+	}
+	if ( !m_bZeroSideDerivative[0] && !m_bZeroSideDerivative[2] )
+	{
+	  bump.m_type[1] = 1;
+	  bump.m_y0 = m_domain[1][0];
+	  bump.m_sy[0] = 1.0/m_domain[1].Length();
+	  bump.m_sy[1] = 1.0/m_domain[1].Length();
+	}
       }
       else if ( bump.m_point.x == m_domain[0][0] &&  bump.m_point.y == m_domain[1][1] )
       {
-        // NW corner bilinear bump
-        if ( !m_bZeroSideDerivative[1] && !m_bZeroSideDerivative[3] )
-        {
-          bump.m_x0 = m_domain[0][1];
-          bump.m_sx[0] = -1.0/m_domain[0].Length();
-          bump.m_sx[1] = -1.0/m_domain[0].Length();
-          bump.m_type[0] = 1;
-        }
-        if ( !m_bZeroSideDerivative[0] && !m_bZeroSideDerivative[2] )
-        {
-          bump.m_y0 = m_domain[1][0];
-          bump.m_sy[0] = 1.0/m_domain[1].Length();
-          bump.m_sy[1] = 1.0/m_domain[1].Length();
-          bump.m_type[1] = 1;
-        }
+	// NW corner bilinear bump
+	if ( !m_bZeroSideDerivative[1] && !m_bZeroSideDerivative[3] )
+	{
+	  bump.m_x0 = m_domain[0][1];
+	  bump.m_sx[0] = -1.0/m_domain[0].Length();
+	  bump.m_sx[1] = -1.0/m_domain[0].Length();
+	  bump.m_type[0] = 1;
+	}
+	if ( !m_bZeroSideDerivative[0] && !m_bZeroSideDerivative[2] )
+	{
+	  bump.m_y0 = m_domain[1][0];
+	  bump.m_sy[0] = 1.0/m_domain[1].Length();
+	  bump.m_sy[1] = 1.0/m_domain[1].Length();
+	  bump.m_type[1] = 1;
+	}
       }
     }
 
@@ -792,13 +792,13 @@ bool ON_OffsetSurfaceFunction::Initialize()
     double* B = (double*)onmalloc(2*count*sizeof(*B));
     double* X = B + count;
     int j;
-    for ( i = 0; i < count; i++ )
+    for ( i = 0; i < count; i++ ) 
     {
       ON_2dPoint p = m_bumps[i].m_point;
       B[i] = m_offset_value[i].m_distance;
       for ( j = 0; j < count; j++ )
       {
-        M[i][j] = m_bumps[j].ValueAt(p.x,p.y);
+	M[i][j] = m_bumps[j].ValueAt(p.x,p.y);
       }
     }
     int rank = M.RowReduce(ON_ZERO_TOLERANCE,B);
@@ -806,7 +806,7 @@ bool ON_OffsetSurfaceFunction::Initialize()
     {
       if ( M.BackSolve(ON_ZERO_TOLERANCE,count,B,X) )
       {
-        m_bValid = true;
+	m_bValid = true;
       }
     }
 
@@ -814,28 +814,28 @@ bool ON_OffsetSurfaceFunction::Initialize()
     {
 #if 0 //defined(TL2_MATRIX_INC_)
       // Have access to SVD - try it
-      for ( i = 0; i < count; i++ )
+      for ( i = 0; i < count; i++ ) 
       {
-        ON_2dPoint p = m_bumps[i].m_point;
-        B[i] = m_offset_value[i].m_distance;
-        for ( j = 0; j < count; j++ )
-        {
-          M[i][j] = m_bumps[j].ValueAt(p.x,p.y);
-        }
+	ON_2dPoint p = m_bumps[i].m_point;
+	B[i] = m_offset_value[i].m_distance;
+	for ( j = 0; j < count; j++ )
+	{
+	  M[i][j] = m_bumps[j].ValueAt(p.x,p.y);
+	}
       }
       ON_Matrix U, V;
       double* diagonal = (double*)onmalloc(2*count*sizeof(*diagonal));
       double* inverted_diagonal = diagonal + count;
       if ( TL2_MatrixSVD(M,U,diagonal,V,30) )
       {
-        rank = TL2_MatrixSVDInvertDiagonal(count,diagonal,inverted_diagonal);
-        if ( rank > 0 )
-        {
-          if ( TL2_MatrixSVDSolve(U,inverted_diagonal,V,1,B,1,X) )
-          {
-            m_bValid = true;
-          }
-        }
+	rank = TL2_MatrixSVDInvertDiagonal(count,diagonal,inverted_diagonal);
+	if ( rank > 0 )
+	{
+	  if ( TL2_MatrixSVDSolve(U,inverted_diagonal,V,1,B,1,X) )
+	  {
+	    m_bValid = true;
+	  }
+	}
       }
 #endif
     }
@@ -844,7 +844,7 @@ bool ON_OffsetSurfaceFunction::Initialize()
     {
       for ( i = 0; i < count; i++ )
       {
-        m_bumps[i].m_a = X[i];
+	m_bumps[i].m_a = X[i];
       }
     }
 

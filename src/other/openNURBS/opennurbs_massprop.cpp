@@ -1,5 +1,20 @@
-#include "opennurbs.h"
+/* $Header$ */
+/* $NoKeywords: $ */
+/*
+//
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
+// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+//
+// THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
+// ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
+// MERCHANTABILITY ARE HEREBY DISCLAIMED.
+//				
+// For complete openNURBS copyright information see <http://www.opennurbs.org>.
+//
+////////////////////////////////////////////////////////////////
+*/
 
+#include "opennurbs.h"
 
 void ON_MassProperties::Dump( ON_TextLog& dump ) const
 {
@@ -30,7 +45,7 @@ void ON_MassProperties::Dump( ON_TextLog& dump ) const
 
     if ( m_bValidCentroid )
       dump.Print("Centroid = (%g,%g,%g) (+/- %g,%g,%g)\n",
-                 m_x0,m_y0,m_z0,m_x0_err,m_y0_err,m_z0_err);
+		 m_x0,m_y0,m_z0,m_x0_err,m_y0_err,m_z0_err);
 
     if ( m_bValidFirstMoments )
     {
@@ -131,9 +146,9 @@ Description:
   Find the eigen values and eigen vectors of a tri-diagonal
   real symmetric 3x3 matrix
 
-         A D 0
-         D B E
-         0 E C
+	 A D 0
+	 D B E
+	 0 E C
 
 Parameters:
   A - [in] matrix entry
@@ -151,11 +166,11 @@ Returns:
   True if successful.
 */
 bool ON_SymTriDiag3x3EigenSolver( double A, double B, double C,
-                           double D, double E,
-                           double* e1, ON_3dVector E1,
-                           double* e2, ON_3dVector E2,
-                           double* e3, ON_3dVector E3
-                           )
+			   double D, double E,
+			   double* e1, ON_3dVector E1,
+			   double* e2, ON_3dVector E2,
+			   double* e3, ON_3dVector E3
+			   )
 {
   // TODO - do something more stable than using a cubic root zero finder
   return false;
@@ -166,9 +181,9 @@ Description:
   Find the eigen values and eigen vectors of a real symmetric
   3x3 matrix
 
-         A D F
-         D B E
-         F E C
+	 A D F
+	 D B E
+	 F E C
 
 Parameters:
   A - [in] matrix entry
@@ -187,11 +202,11 @@ Returns:
   True if successful.
 */
 bool ON_Sym3x3EigenSolver( double A, double B, double C,
-                           double D, double E, double F,
-                           double* e1, ON_3dVector E1,
-                           double* e2, ON_3dVector E2,
-                           double* e3, ON_3dVector E3
-                           )
+			   double D, double E, double F,
+			   double* e1, ON_3dVector E1,
+			   double* e2, ON_3dVector E2,
+			   double* e3, ON_3dVector E3
+			   )
 {
   // STEP 1: reduce to tri-diagonal form
   double cos_phi = 1.0;
@@ -225,7 +240,7 @@ bool ON_Sym3x3EigenSolver( double A, double B, double C,
     }
     else
       cos_phi = 1.0/sqrt(1.0 + t*t);
-
+    
     sin_phi = t*cos_phi;
 
     double tau = sin_phi/(1.0 + cos_phi);
@@ -244,9 +259,9 @@ bool ON_Sym3x3EigenSolver( double A, double B, double C,
   double ee1, ee2, ee3;
   ON_3dVector EE1, EE2, EE3;
   bool rc = ON_SymTriDiag3x3EigenSolver( AA, BB, CC, DD, EE,
-                                    &ee1, EE1,
-                                    &ee2, EE2,
-                                    &ee3, EE3 );
+				    &ee1, EE1,
+				    &ee2, EE2,
+				    &ee3, EE3 );
 
   E1.Set(cos_phi*EE1.x - sin_phi*EE1.z, EE1.y, sin_phi*EE1.x + cos_phi*EE1.z );
   E2.Set(cos_phi*EE2.x - sin_phi*EE2.z, EE2.y, sin_phi*EE2.x + cos_phi*EE2.z );
@@ -330,16 +345,16 @@ ON_3dVector ON_MassProperties::WorldCoordSecondMoments() const
   return v;
 }
 
-ON_Matrix* ON_MassProperties::WorldCoordIntertiaMatrix(
-              ON_Matrix* matrix
-              ) const
+ON_Matrix* ON_MassProperties::WorldCoordIntertiaMatrix( 
+	      ON_Matrix* matrix
+	      ) const
 {
   if ( m_bValidSecondMoments && m_bValidProductMoments )
   {
     if ( 0 != matrix )
     {
       if ( 3 != matrix->RowCount() || 3 != matrix->ColCount() )
-        matrix->Create(3,3);
+	matrix->Create(3,3);
     }
     else
     {
@@ -362,18 +377,18 @@ ON_Matrix* ON_MassProperties::WorldCoordIntertiaMatrix(
   return matrix;
 }
 
-bool ON_MassProperties::WorldCoordPrincipalMoments(
-              double* pxx, ON_3dVector& Ax,
-              double* pyy, ON_3dVector& Ay,
-              double* pzz, ON_3dVector& Az
-              ) const
+bool ON_MassProperties::WorldCoordPrincipalMoments( 
+	      double* pxx, ON_3dVector& Ax,
+	      double* pyy, ON_3dVector& Ay,
+	      double* pzz, ON_3dVector& Az
+	      ) const
 {
   bool rc = false;
   if ( m_bValidSecondMoments && m_bValidProductMoments )
   {
     rc = ON_Sym3x3EigenSolver( m_world_xx, m_world_yy, m_world_zz,
-                               m_world_xy, m_world_yz, m_world_zx,
-                               pxx, Ax, pyy, Ay, pzz, Az );
+			       m_world_xy, m_world_yz, m_world_zx,
+			       pxx, Ax, pyy, Ay, pzz, Az );
   }
   return rc;
 }
@@ -461,16 +476,16 @@ ON_3dVector ON_MassProperties::CentroidCoordRadiiOfGyration() const
 
 
 
-ON_Matrix* ON_MassProperties::CentroidCoordIntertiaMatrix(
-              ON_Matrix* matrix
-              ) const
+ON_Matrix* ON_MassProperties::CentroidCoordIntertiaMatrix( 
+	      ON_Matrix* matrix
+	      ) const
 {
   if ( m_bValidSecondMoments && m_bValidProductMoments )
   {
     if ( 0 != matrix )
     {
       if ( 3 != matrix->RowCount() || 3 != matrix->ColCount() )
-        matrix->Create(3,3);
+	matrix->Create(3,3);
     }
     else
     {
@@ -493,18 +508,18 @@ ON_Matrix* ON_MassProperties::CentroidCoordIntertiaMatrix(
   return matrix;
 }
 
-bool ON_MassProperties::CentroidCoordPrincipalMoments(
-              double* pxx, ON_3dVector& Ax,
-              double* pyy, ON_3dVector& Ay,
-              double* pzz, ON_3dVector& Az
-              ) const
+bool ON_MassProperties::CentroidCoordPrincipalMoments( 
+	      double* pxx, ON_3dVector& Ax,
+	      double* pyy, ON_3dVector& Ay,
+	      double* pzz, ON_3dVector& Az
+	      ) const
 {
   bool rc = false;
   if ( m_bValidSecondMoments && m_bValidProductMoments )
   {
     rc = ON_Sym3x3EigenSolver( m_ccs_xx, m_ccs_yy, m_ccs_zz,
-                               m_ccs_xy, m_ccs_yz, m_ccs_zx,
-                               pxx, Ax, pyy, Ay, pzz, Az );
+			       m_ccs_xy, m_ccs_yz, m_ccs_zx,
+			       pxx, Ax, pyy, Ay, pzz, Az );
   }
   return rc;
 }
@@ -546,10 +561,10 @@ bool ON_MassProperties::Sum(
     if ( summands[i].m_mass_type != 0 )
     {
       if ( 0 == mass_type )
-        mass_type = summands[i].m_mass_type;
+	mass_type = summands[i].m_mass_type;
       else if ( mass_type != summands[i].m_mass_type )
       {
-        return false;
+	return false;
       }
     }
   }
@@ -567,10 +582,10 @@ bool ON_MassProperties::Sum(
     if ( 0 != summands[i].m_mass_type && summands[i].m_bValidMass )
     {
       if ( 0 == mass_type )
-        mass_type = summands[i].m_mass_type;
+	mass_type = summands[i].m_mass_type;
       else if ( mass_type != summands[i].m_mass_type )
       {
-        return false;
+	return false;
       }
       x.Plus(summands[i].m_mass);
       ex.Plus(summands[i].m_mass_err);
@@ -599,13 +614,13 @@ bool ON_MassProperties::Sum(
   ey.Begin();
   z.Begin();
   ez.Begin();
-
+  
   for ( i = 0; i < count; i++ )
   {
-    if ( 0 != summands[i].m_mass_type
-         && summands[i].m_bValidMass
-         && summands[i].m_bValidFirstMoments
-         )
+    if ( 0 != summands[i].m_mass_type 
+	 && summands[i].m_bValidMass
+	 && summands[i].m_bValidFirstMoments
+	 )
     {
       x.Plus(summands[i].m_world_x);
       ex.Plus(summands[i].m_world_x_err);
@@ -651,14 +666,14 @@ bool ON_MassProperties::Sum(
   ey.Begin();
   z.Begin();
   ez.Begin();
-
+  
   for ( i = 0; i < count; i++ )
   {
-    if ( 0 != summands[i].m_mass_type
-         && summands[i].m_bValidMass
-         && summands[i].m_bValidCentroid
-         && summands[i].m_bValidSecondMoments
-         )
+    if ( 0 != summands[i].m_mass_type 
+	 && summands[i].m_bValidMass
+	 && summands[i].m_bValidCentroid
+	 && summands[i].m_bValidSecondMoments
+	 )
     {
       dx = summands[i].m_x0 - m_x0;
       dx_err = summands[i].m_x0_err + m_x0_err;
@@ -695,7 +710,7 @@ bool ON_MassProperties::Sum(
     m_world_yy_err = m_ccs_yy_err + 2.0*m_y0_err*fabs(m_y0)*m_mass + m_y0*m_y0*m_mass_err;
     m_world_zz = m_ccs_zz + m_z0*m_z0*m_mass;
     m_world_zz_err = m_ccs_zz_err + 2.0*m_z0_err*fabs(m_z0)*m_mass + m_z0*m_z0*m_mass_err;
-
+    
     m_bValidSecondMoments = true;
   }
 
@@ -706,14 +721,14 @@ bool ON_MassProperties::Sum(
   ey.Begin();
   z.Begin();
   ez.Begin();
-
+  
   for ( i = 0; i < count; i++ )
   {
-    if ( 0 != summands[i].m_mass_type
-         && summands[i].m_bValidMass
-         && summands[i].m_bValidCentroid
-         && summands[i].m_bValidSecondMoments
-         )
+    if ( 0 != summands[i].m_mass_type 
+	 && summands[i].m_bValidMass
+	 && summands[i].m_bValidCentroid
+	 && summands[i].m_bValidSecondMoments
+	 )
     {
       dx = summands[i].m_x0 - m_x0;
       dx_err = summands[i].m_x0_err + m_x0_err;
@@ -750,7 +765,7 @@ bool ON_MassProperties::Sum(
     m_world_yz_err = m_ccs_yz_err + fabs(m_y0_err*m_z0*m_mass) + fabs(m_z0_err*m_y0*m_mass) + fabs(m_y0*m_z0*m_mass_err);
     m_world_zx = m_ccs_zx + m_z0*m_x0*m_mass;
     m_world_zx_err = m_ccs_zx_err + fabs(m_z0_err*m_x0*m_mass) + fabs(m_x0_err*m_z0*m_mass) + fabs(m_z0*m_x0*m_mass_err);
-
+    
     m_bValidProductMoments = true;
   }
 

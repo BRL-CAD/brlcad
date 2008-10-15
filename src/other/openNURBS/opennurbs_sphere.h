@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -22,7 +22,7 @@ class ON_RevSurface;
 class ON_CLASS ON_Sphere
 {
 public:
-
+  
   ON_Plane plane; // equitorial plane
   double radius;  // > 0
 
@@ -46,60 +46,60 @@ public:
   double Radius() const;
 
   ON_3dPoint PointAt(
-    double longitude_radians,
+    double longitude_radians, 
     double latitude_radians
     ) const;   // longitude [0,2pi], latitude [-pi/2,pi/2] in radians
 
   ON_3dVector NormalAt(
-    double longitude_radians,
+    double longitude_radians, 
     double latitude_radians
     ) const;   // longitude [0,2pi], latitude [-pi/2,pi/2] in radians
 
   ON_BoundingBox BoundingBox() const;
 
   // returns parameters of point on sphere that is closest to given point
-  bool ClosestPointTo(
-         ON_3dPoint test_point,
-         double* longitude_radians, // longitude  [0,2pi)
-         double* latitude_radians // latitude   [-pi/2,pi/2]
-         ) const;
+  bool ClosestPointTo( 
+	 ON_3dPoint test_point, 
+	 double* longitude_radians, // longitude  [0,2pi)
+	 double* latitude_radians // latitude   [-pi/2,pi/2]
+	 ) const;
 
   // returns point on sphere that is closest to given point
-  ON_3dPoint ClosestPointTo(
-         ON_3dPoint test_point
-         ) const;
+  ON_3dPoint ClosestPointTo( 
+	 ON_3dPoint test_point
+	 ) const;
 
   // For intersections see ON_Intersect();
 
   // rotate sphere about its origin
   bool Rotate(
-        double sin_angle,               // sin(angle)
-        double cos_angle,               // cos(angle)
-        const ON_3dVector& axis_of_rotation // axis of rotation
-        );
+	double sin_angle,               // sin(angle)
+	double cos_angle,               // cos(angle)
+	const ON_3dVector& axis_of_rotation // axis of rotation
+	);
 
   bool Rotate(
-        double angle_radians,               // angle in radians
-        const ON_3dVector& axis_of_rotation // axis of rotation
-        );
+	double angle_radians,               // angle in radians
+	const ON_3dVector& axis_of_rotation // axis of rotation
+	);
 
   // rotate sphere about a point and axis
   bool Rotate(
-        double sin_angle,               // sin(angle)
-        double cos_angle,               // cos(angle)
-        const ON_3dVector& axis_of_rotation, // axis of rotation
-        const ON_3dPoint& center_of_rotation  // center of rotation
-        );
+	double sin_angle,               // sin(angle)
+	double cos_angle,               // cos(angle)
+	const ON_3dVector& axis_of_rotation, // axis of rotation
+	const ON_3dPoint& center_of_rotation  // center of rotation
+	);
 
   bool Rotate(
-        double angle_radians,               // angle in radians
-        const ON_3dVector& axis_of_rotation, // axis of rotation
-        const ON_3dPoint& center_of_rotation  // center of rotation
-        );
+	double angle_radians,               // angle in radians
+	const ON_3dVector& axis_of_rotation, // axis of rotation
+	const ON_3dPoint& center_of_rotation  // center of rotation
+	);
 
   bool Translate(
-        const ON_3dVector&
-        );
+	const ON_3dVector&
+	);
 
   bool Transform( const ON_Xform& );
 

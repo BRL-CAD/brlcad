@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -108,16 +108,16 @@ int ON_LineCurve::Dimension() const
   return m_dim;
 }
 
-BOOL
+BOOL 
 ON_LineCurve::GetBBox( // returns TRUE if successful
-         double* boxmin,    // minimum
-         double* boxmax,    // maximum
-         BOOL bGrowBox
-         ) const
+	 double* boxmin,    // minimum
+	 double* boxmax,    // maximum
+	 BOOL bGrowBox
+	 ) const
 {
-  return ON_GetPointListBoundingBox( m_dim, FALSE, 2, 3, m_line.from,
-                      boxmin, boxmax, bGrowBox?true:false
-                      );
+  return ON_GetPointListBoundingBox( m_dim, FALSE, 2, 3, m_line.from, 
+		      boxmin, boxmax, bGrowBox?true:false
+		      );
 }
 
 BOOL
@@ -229,21 +229,21 @@ bool ON_LineCurve::ChangeDimension( int desired_dimension )
     {
       // 7 April 2003 Dale Lear - zero z coords if x coord are set
       if( ON_UNSET_VALUE != m_line.from.x )
-        m_line.from.z = 0.0;
+	m_line.from.z = 0.0;
       if( ON_UNSET_VALUE != m_line.to.x )
-        m_line.to.z = 0.0;
+	m_line.to.z = 0.0;
       m_dim = 2;
     }
     else
     {
       if ( 2 == m_dim  )
       {
-        // 7 April 2003 Dale Lear
-        // zero z coords if x coords are set and z coords are not set
-        if( ON_UNSET_VALUE != m_line.from.x && ON_UNSET_VALUE == m_line.from.z )
-          m_line.from.z = 0.0;
-        if( ON_UNSET_VALUE != m_line.from.x && ON_UNSET_VALUE == m_line.to.z )
-          m_line.from.z = 0.0;
+	// 7 April 2003 Dale Lear
+	// zero z coords if x coords are set and z coords are not set
+	if( ON_UNSET_VALUE != m_line.from.x && ON_UNSET_VALUE == m_line.from.z )
+	  m_line.from.z = 0.0;
+	if( ON_UNSET_VALUE != m_line.from.x && ON_UNSET_VALUE == m_line.to.z )
+	  m_line.from.z = 0.0;
       }
       m_dim = 3;
     }
@@ -258,7 +258,7 @@ int ON_LineCurve::SpanCount() const
   return 1;
 }
 
-BOOL ON_LineCurve::GetSpanVector( // span "knots"
+BOOL ON_LineCurve::GetSpanVector( // span "knots" 
        double* s
        ) const
 {
@@ -315,7 +315,7 @@ BOOL
 ON_LineCurve::IsArc( // TRUE if curve locus in an arc or circle
       const ON_Plane* plane, // if not NULL, test is performed in this plane
       ON_Arc* arc,         // if not NULL and TRUE is returned, then arc
-                              // arc parameters are filled in
+			      // arc parameters are filled in
       double tolerance // tolerance to use when checking linearity
       ) const
 {
@@ -325,12 +325,12 @@ ON_LineCurve::IsArc( // TRUE if curve locus in an arc or circle
 BOOL
 ON_LineCurve::IsPlanar(
       ON_Plane* plane, // if not NULL and TRUE is returned, then plane parameters
-                         // are filled in
+			 // are filled in
       double tolerance // tolerance to use when checking linearity
       ) const
 {
   BOOL rc = IsValid();
-  if ( plane != NULL && rc )
+  if ( plane != NULL && rc ) 
   {
     if ( m_dim == 2 )
       rc = ON_Curve::IsPlanar(plane,tolerance);
@@ -356,13 +356,13 @@ ON_LineCurve::IsInPlane(
   return rc;
 }
 
-BOOL
+BOOL 
 ON_LineCurve::IsClosed() const
 {
   return FALSE;
 }
 
-BOOL
+BOOL 
 ON_LineCurve::IsPeriodic() const
 {
   return FALSE;
@@ -385,11 +385,11 @@ BOOL ON_LineCurve::Evaluate( // returns FALSE if unable to evaluate
        int v_stride,   // v[] array stride (>=Dimension())
        double* v,      // v[] array of length stride*(ndir+1)
        int side,       // optional - determines which side to evaluate from
-                       //         0 = default
-                       //      <  0 to evaluate from below,
-                       //      >  0 to evaluate from above
+		       //         0 = default
+		       //      <  0 to evaluate from below, 
+		       //      >  0 to evaluate from above
        int* hint       // optional - evaluation hint (int) used to speed
-                       //            repeated evaluations
+		       //            repeated evaluations
        ) const
 {
   BOOL rc = FALSE;
@@ -400,7 +400,7 @@ BOOL ON_LineCurve::Evaluate( // returns FALSE if unable to evaluate
     v[1] = p.y;
     if ( m_dim == 3 )
       v[2] = p.z;
-    if ( der_count >= 1 )
+    if ( der_count >= 1 ) 
     {
       v += v_stride;
       ON_3dVector d = m_line.to - m_line.from;
@@ -408,13 +408,13 @@ BOOL ON_LineCurve::Evaluate( // returns FALSE if unable to evaluate
       v[0] = d.x/dt;
       v[1] = d.y/dt;
       if ( m_dim == 3 )
-        v[2] = d.z/dt;
+	v[2] = d.z/dt;
       for ( int di = 2; di <= der_count; di++ ) {
-        v += v_stride;
-        v[0] = 0.0;
-        v[1] = 0.0;
-        if ( m_dim == 3 )
-          v[2] = 0.0;
+	v += v_stride;
+	v[0] = 0.0;
+	v[1] = 0.0;
+	if ( m_dim == 3 )
+	  v[2] = 0.0;
       }
     }
     rc = TRUE;
@@ -423,10 +423,10 @@ BOOL ON_LineCurve::Evaluate( // returns FALSE if unable to evaluate
 }
 
 bool ON_LineCurve::GetClosestPoint( const ON_3dPoint& test_point,
-        double* t,       // parameter of local closest point returned here
-        double maximum_distance,
-        const ON_Interval* sub_domain
-        ) const
+	double* t,       // parameter of local closest point returned here
+	double maximum_distance,
+	const ON_Interval* sub_domain
+	) const
 {
   bool rc = false;
   double s, x, d;
@@ -444,7 +444,7 @@ bool ON_LineCurve::GetClosestPoint( const ON_3dPoint& test_point,
   if ( 0.0 != s )
   {
     s = (Q.x*P1.x + Q.y*P1.y + Q.z*P1.z)/s;
-    if ( s <= 0.0 )
+    if ( s <= 0.0 ) 
       s = 0.0;
     else if ( s > 1.0 )
       s = 1.0;
@@ -455,17 +455,17 @@ bool ON_LineCurve::GetClosestPoint( const ON_3dPoint& test_point,
     {
       if ( x < sub_domain->m_t[0]  )
       {
-        if ( m_t[1] < sub_domain->m_t[0] )
-          return false;
-        x = sub_domain->m_t[0];
-        s = (x - m_t[0])/(m_t[1] - m_t[0]);
+	if ( m_t[1] < sub_domain->m_t[0] )
+	  return false;
+	x = sub_domain->m_t[0];
+	s = (x - m_t[0])/(m_t[1] - m_t[0]);
       }
       else if ( x > sub_domain->m_t[1] )
       {
-        if ( m_t[0] > sub_domain->m_t[1] )
-          return false;
-        x = sub_domain->m_t[1];
-        s = (x - m_t[0])/(m_t[1] - m_t[0]);
+	if ( m_t[0] > sub_domain->m_t[1] )
+	  return false;
+	x = sub_domain->m_t[1];
+	s = (x - m_t[0])/(m_t[1] - m_t[0]);
       }
     }
 
@@ -477,9 +477,9 @@ bool ON_LineCurve::GetClosestPoint( const ON_3dPoint& test_point,
       Q.z = d*m_line.from.z + s*m_line.to.z - test_point.z;
       d = Q.Length();
       if ( d > maximum_distance )
-        return false;
+	return false;
     }
-
+    
     *t = x;
 
     rc = true;
@@ -488,10 +488,10 @@ bool ON_LineCurve::GetClosestPoint( const ON_3dPoint& test_point,
 }
 
 BOOL ON_LineCurve::GetLocalClosestPoint( const ON_3dPoint& test_point,
-        double seed_parameter,
-        double* t,
-        const ON_Interval* sub_domain
-        ) const
+	double seed_parameter,
+	double* t,
+	const ON_Interval* sub_domain
+	) const
 {
   if ( sub_domain )
   {
@@ -501,10 +501,10 @@ BOOL ON_LineCurve::GetLocalClosestPoint( const ON_3dPoint& test_point,
       seed_parameter = sub_domain->Max();
   }
   BOOL rc = GetClosestPoint( test_point, t, 0.0, sub_domain );
-  if ( rc
-       && t
+  if ( rc 
+       && t 
        && seed_parameter != *t
-       && test_point.DistanceTo(PointAt(seed_parameter)) <= test_point.DistanceTo(PointAt(*t))
+       && test_point.DistanceTo(PointAt(seed_parameter)) <= test_point.DistanceTo(PointAt(*t)) 
        )
   {
     *t = seed_parameter;
@@ -534,10 +534,10 @@ int ON_LineCurve::NumIntersectionsWith( const ON_Line& segment ) const
 }
 
 BOOL ON_LineCurve::GetLength(
-        double* length,               // length returned here
-        double fractional_tolerance,  // default = 1.0e-8
-        const ON_Interval* sub_domain // default = NULL
-        ) const
+	double* length,               // length returned here
+	double fractional_tolerance,  // default = 1.0e-8
+	const ON_Interval* sub_domain // default = NULL
+	) const
 {
   // override when possible
   // TODO: add simple integration routine that works with C1 curves
@@ -558,11 +558,11 @@ BOOL ON_LineCurve::GetLength(
 }
 
 BOOL ON_LineCurve::GetNormalizedArcLengthPoint(
-        double s,
-        double* t,
-        double fractional_tolerance,
-        const ON_Interval* sub_domain
-        ) const
+	double s,
+	double* t,
+	double fractional_tolerance,
+	const ON_Interval* sub_domain
+	) const
 {
   ON_Interval domain = (sub_domain) ? *sub_domain : Domain();
   if ( t )
@@ -571,13 +571,13 @@ BOOL ON_LineCurve::GetNormalizedArcLengthPoint(
 }
 
 BOOL ON_LineCurve::GetNormalizedArcLengthPoints(
-        int count,
-        const double* s,
-        double* t,
-        double absolute_tolerance,
-        double fractional_tolerance,
-        const ON_Interval* sub_domain
-        ) const
+	int count,
+	const double* s,
+	double* t,
+	double absolute_tolerance,
+	double fractional_tolerance,
+	const ON_Interval* sub_domain
+	) const
 {
   if ( count > 0 || s != NULL && t != NULL )
   {
@@ -614,7 +614,7 @@ int ON_LineCurve::GetNurbForm(
       ) const
 {
   int rc = 0;
-  if ( c.Create( m_dim==2?2:3, FALSE, 2, 2 ) )
+  if ( c.Create( m_dim==2?2:3, FALSE, 2, 2 ) ) 
   {
     rc = 1;
     double t0 = m_t[0];
@@ -623,24 +623,24 @@ int ON_LineCurve::GetNurbForm(
     {
       if ( t0 < t1 )
       {
-        const ON_Interval& sd = *subdomain;
-        double s0 = sd[0];
-        double s1 = sd[1];
-        if (s0 < t0) s0 = t0;
-        if (s1 > t1) s1 = t1;
-        if (s0 < s1)
-        {
-          t0 = s0;
-          t1 = s1;
-        }
-        else
-          rc = 0;
+	const ON_Interval& sd = *subdomain;
+	double s0 = sd[0];
+	double s1 = sd[1];
+	if (s0 < t0) s0 = t0;
+	if (s1 > t1) s1 = t1;
+	if (s0 < s1)
+	{
+	  t0 = s0;
+	  t1 = s1;
+	}
+	else
+	  rc = 0;
       }
       else
       {
-        rc = 0;
+	rc = 0;
       }
-    }
+    }  
     if ( t0 < t1 )
     {
       c.m_knot[0] = t0;
@@ -686,7 +686,7 @@ BOOL ON_LineCurve::Trim( const ON_Interval& domain )
     DestroyCurveTree();
     ON_3dPoint p = PointAt( domain[0] );
     ON_3dPoint q = PointAt( domain[1] );
-		if( p.DistanceTo(q)>0){								// 2 April 2003 Greg Arden A successfull trim
+		if( p.DistanceTo(q)>0){								// 2 April 2003 Greg Arden A successfull trim 
 																					// should return an IsValid ON_LineCurve .
 			m_line.from = p;
 			m_line.to = q;
@@ -730,7 +730,7 @@ bool ON_LineCurve::Extend(
   return do_it;
 }
 
-BOOL ON_LineCurve::Split(
+BOOL ON_LineCurve::Split( 
       double t,
       ON_Curve*& left_side,
       ON_Curve*& right_side

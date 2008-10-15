@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -17,9 +17,8 @@
 #if !defined(ON_ARRAY_DEFS_INC_)
 #define ON_ARRAY_DEFS_INC_
 
-#include "opennurbs_array.h"
 
-// The main reason the definitions of the functions for the
+// The main reason the definitions of the functions for the 
 // ON_SimpleArray and ON_ClassArray templates are in this separate
 // file is so that the Microsoft developer studio autocomplete
 // functions will work on these classes.
@@ -43,34 +42,34 @@ T* ON_SimpleArray<T>::Realloc(T* ptr,int capacity)
 
 template <class T>
 ON_SimpleArray<T>::ON_SimpleArray()
-                          : m_a(0),
-                            m_count(0),
-                            m_capacity(0)
+			  : m_a(0),
+			    m_count(0),
+			    m_capacity(0)
 {}
 
 template <class T>
 ON_SimpleArray<T>::ON_SimpleArray( int c )
-                          : m_a(0),
-                            m_count(0),
-                            m_capacity(0)
+			  : m_a(0),
+			    m_count(0),
+			    m_capacity(0)
 {
-  if ( c > 0 )
+  if ( c > 0 ) 
     SetCapacity( c );
 }
 
 // Copy constructor
 template <class T>
 ON_SimpleArray<T>::ON_SimpleArray( const ON_SimpleArray<T>& src )
-                          : m_a(0),
-                            m_count(0),
-                            m_capacity(0)
+			  : m_a(0),
+			    m_count(0),
+			    m_capacity(0)
 {
   *this = src; // operator= defined below
 }
 
 template <class T>
 ON_SimpleArray<T>::~ON_SimpleArray()
-{
+{ 
   SetCapacity(0);
 }
 
@@ -83,14 +82,14 @@ ON_SimpleArray<T>& ON_SimpleArray<T>::operator=( const ON_SimpleArray<T>& src )
     }
     else {
       if ( m_capacity < src.m_count ) {
-        SetCapacity( src.m_count );
+	SetCapacity( src.m_count );
       }
       if ( m_a ) {
-        m_count = src.m_count;
-        memcpy( m_a, src.m_a, m_count*sizeof(T) );
+	m_count = src.m_count;
+	memcpy( m_a, src.m_a, m_count*sizeof(T) );
       }
     }
-  }
+  }  
   return *this;
 }
 
@@ -132,11 +131,11 @@ ON__UINT32 ON_SimpleArray<T>::DataCRC(ON__UINT32 current_remainder) const
 
 template <class T>
 T& ON_SimpleArray<T>::operator[]( int i )
-{
+{ 
 #if defined(ON_DEBUG)
   ON_ASSERT( i >=0 && i < m_capacity);
 #endif
-  return m_a[i];
+  return m_a[i]; 
 }
 
 template <class T>
@@ -191,7 +190,7 @@ void ON_SimpleArray<T>::SetArray(T* p)
 
 template <class T>
 T* ON_SimpleArray<T>::First()
-{
+{ 
   return (m_count > 0) ? m_a : 0;
 }
 
@@ -203,7 +202,7 @@ const T* ON_SimpleArray<T>::First() const
 
 template <class T>
 T* ON_SimpleArray<T>::At( int i )
-{
+{ 
   return (i >= 0 && i < m_count) ? m_a+i : 0;
 }
 
@@ -215,7 +214,7 @@ const T* ON_SimpleArray<T>::At( int i) const
 
 template <class T>
 T* ON_SimpleArray<T>::Last()
-{
+{ 
   return (m_count > 0) ? m_a+(m_count-1) : 0;
 }
 
@@ -232,7 +231,7 @@ void ON_SimpleArray<T>::Move( int dest_i, int src_i, int ele_cnt )
 {
   // private function for moving blocks of array memory
   // caller is responsible for updating m_count.
-  if ( ele_cnt <= 0 || src_i < 0 || dest_i < 0 || src_i == dest_i ||
+  if ( ele_cnt <= 0 || src_i < 0 || dest_i < 0 || src_i == dest_i || 
        src_i + ele_cnt > m_count || dest_i > m_count )
     return;
 
@@ -257,9 +256,9 @@ T& ON_SimpleArray<T>::AppendNew()
 }
 
 template <class T>
-void ON_SimpleArray<T>::Append( const T& x )
+void ON_SimpleArray<T>::Append( const T& x ) 
 {
-  if ( m_count == m_capacity )
+  if ( m_count == m_capacity ) 
   {
     const int newcapacity = (m_capacity<2) ? 4 : (2*m_capacity);
     if (m_a)
@@ -267,15 +266,15 @@ void ON_SimpleArray<T>::Append( const T& x )
       const int s = (int)(&x - m_a); // (int) cast is for 64 bit pointers
       if ( s >= 0 && s < m_capacity )
       {
-        // 26 Sep 2005 Dale Lear
-        //    User passed in an element of the m_a[]
-        //    that will get reallocated by the call
-        //    to Reserve(newcapacity).
-        T temp; // ON_*Array<> templates do not require robust copy constructor.
-        temp = x;
-        Reserve(newcapacity);
-        m_a[m_count++] = temp;
-        return;
+	// 26 Sep 2005 Dale Lear
+	//    User passed in an element of the m_a[]
+	//    that will get reallocated by the call
+	//    to Reserve(newcapacity).
+	T temp; // ON_*Array<> templates do not require robust copy constructor.
+	temp = x;
+	Reserve(newcapacity);
+	m_a[m_count++] = temp;
+	return;
       }
     }
     Reserve(newcapacity);
@@ -284,15 +283,15 @@ void ON_SimpleArray<T>::Append( const T& x )
 }
 
 template <class T>
-void ON_SimpleArray<T>::Append( int count, const T* p )
+void ON_SimpleArray<T>::Append( int count, const T* p ) 
 {
-  if ( count > 0 && p )
+  if ( count > 0 && p ) 
   {
-    if ( count + m_count > m_capacity )
+    if ( count + m_count > m_capacity ) 
     {
       int newcapacity = (m_capacity<2) ? 4 : (2*m_capacity);
       if ( newcapacity < count + m_count )
-        newcapacity = count + m_count;
+	newcapacity = count + m_count;
       Reserve(newcapacity);
     }
     memcpy( m_a + m_count, p, count*sizeof(T) );
@@ -301,16 +300,16 @@ void ON_SimpleArray<T>::Append( int count, const T* p )
 }
 
 template <class T>
-void ON_SimpleArray<T>::Insert( int i, const T& x )
+void ON_SimpleArray<T>::Insert( int i, const T& x ) 
 {
-  if( i >= 0 && i <= m_count )
+  if( i >= 0 && i <= m_count ) 
   {
-    if ( m_count == m_capacity )
+    if ( m_count == m_capacity ) 
     {
       if( m_capacity < 2 )
-        Reserve( 4 );
+	Reserve( 4 );
       else
-        Reserve( 2*m_capacity );
+	Reserve( 2*m_capacity );
     }
 	  m_count++;
     Move( i+1, i, m_count-1-i );
@@ -322,7 +321,7 @@ template <class T>
 void ON_SimpleArray<T>::Remove()
 {
   Remove(m_count-1);
-}
+} 
 
 template <class T>
 void ON_SimpleArray<T>::Remove( int i )
@@ -332,7 +331,7 @@ void ON_SimpleArray<T>::Remove( int i )
     m_count--;
     memset( &m_a[m_count], 0, sizeof(T) );
   }
-}
+} 
 
 template <class T>
 void ON_SimpleArray<T>::Empty()
@@ -349,7 +348,7 @@ void ON_SimpleArray<T>::Reverse()
   // If anything in "T" depends on the value of this's address,
   // then don't call Reverse().
   T t;
-  int i = 0;
+  int i = 0;  
   int j = m_count-1;
   for ( /*empty*/; i < j; i++, j-- ) {
     t = m_a[i];
@@ -373,7 +372,7 @@ int ON_SimpleArray<T>::Search( const T& key ) const
 {
   const T* p = &key;
   for ( int i = 0; i < m_count; i++ ) {
-    if (!memcmp(p,m_a+i,sizeof(T)))
+    if (!memcmp(p,m_a+i,sizeof(T))) 
       return i;
   }
   return -1;
@@ -383,7 +382,7 @@ template <class T>
 int ON_SimpleArray<T>::Search( const T* key, int (*compar)(const T*,const T*) ) const
 {
   for ( int i = 0; i < m_count; i++ ) {
-    if (!compar(key,m_a+i))
+    if (!compar(key,m_a+i)) 
       return i;
   }
   return -1;
@@ -392,9 +391,9 @@ int ON_SimpleArray<T>::Search( const T* key, int (*compar)(const T*,const T*) ) 
 template <class T>
 int ON_SimpleArray<T>::BinarySearch( const T* key, int (*compar)(const T*,const T*) ) const
 {
-  const T* found = (key&&m_a&&m_count>0)
-                 ? (const T*)bsearch( key, m_a, m_count, sizeof(T), (int(*)(const void*,const void*))compar )
-                 : 0;
+  const T* found = (key&&m_a&&m_count>0) 
+		 ? (const T*)bsearch( key, m_a, m_count, sizeof(T), (int(*)(const void*,const void*))compar ) 
+		 : 0;
 
   // This worked on a wide range of 32 bit compilers.
 
@@ -522,7 +521,7 @@ void ON_SimpleArray<T>::MemSet( unsigned char value )
 // memory managment ////////////////////////////////////////////////////
 
 template <class T>
-void ON_SimpleArray<T>::Reserve( int newcap )
+void ON_SimpleArray<T>::Reserve( int newcap ) 
 {
   if( m_capacity < newcap )
     SetCapacity( newcap );
@@ -543,32 +542,32 @@ void ON_SimpleArray<T>::Destroy()
 // low level memory managment //////////////////////////////////////////
 
 template <class T>
-void ON_SimpleArray<T>::SetCount( int count )
+void ON_SimpleArray<T>::SetCount( int count ) 
 {
   if ( count >= 0 && count <= m_capacity )
     m_count = count;
 }
 
 template <class T>
-void ON_SimpleArray<T>::SetCapacity( int capacity )
+void ON_SimpleArray<T>::SetCapacity( int capacity ) 
 {
   // sets capacity to input value
   if ( capacity != m_capacity ) {
     if( capacity > 0 ) {
       if ( m_count > capacity )
-        m_count = capacity;
+	m_count = capacity;
       // NOTE: Realloc() does an allocation if the first argument is NULL.
       m_a = Realloc( m_a, capacity );
       if ( m_a ) {
-        if ( capacity > m_capacity ) {
-          // zero new memory
-          memset( m_a + m_capacity, 0, (capacity-m_capacity)*sizeof(T) );
-        }
-        m_capacity = capacity;
+	if ( capacity > m_capacity ) {
+	  // zero new memory
+	  memset( m_a + m_capacity, 0, (capacity-m_capacity)*sizeof(T) );
+	}
+	m_capacity = capacity;
       }
       else {
-        // out of memory
-        m_count = m_capacity = 0;
+	// out of memory
+	m_count = m_capacity = 0;
       }
     }
     else if (m_a) {
@@ -582,7 +581,7 @@ void ON_SimpleArray<T>::SetCapacity( int capacity )
 
 
 /////////////////////////////////////////////////////////////////////////////////////
-//  Class ON_ClassArray<>
+//  Class ON_ObjectArray<>
 /////////////////////////////////////////////////////////////////////////////////////
 
 template <class T>
@@ -613,7 +612,7 @@ ON_ObjectArray<T>& ON_ObjectArray<T>::operator=( const ON_ObjectArray<T>& src)
 
 template <class T>
 ON_ObjectArray<T>::ON_ObjectArray( int c )
-                  : ON_ClassArray<T>(c)
+		  : ON_ClassArray<T>(c)
 {
 }
 
@@ -623,6 +622,8 @@ T* ON_ObjectArray<T>::Realloc(T* ptr,int capacity)
   T* reptr = (T*)onrealloc(ptr,capacity*sizeof(T));
   if ( ptr && reptr && reptr != ptr )
   {
+    // The "this->" in this->m_count and this->m_a 
+    // are needed for gcc 4 to compile.
     int i;
     for ( i = 0; i < this->m_count; i++ )
     {
@@ -631,6 +632,10 @@ T* ON_ObjectArray<T>::Realloc(T* ptr,int capacity)
   }
   return reptr;
 }
+
+/////////////////////////////////////////////////////////////////////////////////////
+//  Class ON_ClassArray<>
+/////////////////////////////////////////////////////////////////////////////////////
 
 
 // construction ////////////////////////////////////////////////////////
@@ -644,6 +649,8 @@ T* ON_ClassArray<T>::Realloc(T* ptr,int capacity)
 template <class T>
 ON__UINT32 ON_ObjectArray<T>::DataCRC(ON__UINT32 current_remainder) const
 {
+  // The "this->" in this->m_count and this->m_a 
+  // are needed for gcc 4 to compile.
   int i;
   for ( i = 0; i < this->m_count; i++ )
   {
@@ -654,34 +661,34 @@ ON__UINT32 ON_ObjectArray<T>::DataCRC(ON__UINT32 current_remainder) const
 
 template <class T>
 ON_ClassArray<T>::ON_ClassArray()
-                          : m_a(0),
-                            m_count(0),
-                            m_capacity(0)
+			  : m_a(0),
+			    m_count(0),
+			    m_capacity(0)                            
 {}
 
 template <class T>
 ON_ClassArray<T>::ON_ClassArray( int c )
-                          : m_a(0),
-                            m_count(0),
-                            m_capacity(0)
+			  : m_a(0),
+			    m_count(0),
+			    m_capacity(0)                            
 {
-  if ( c > 0 )
+  if ( c > 0 ) 
     SetCapacity( c );
 }
 
 // Copy constructor
 template <class T>
 ON_ClassArray<T>::ON_ClassArray( const ON_ClassArray<T>& src )
-                          : m_a(0),
-                            m_count(0),
-                            m_capacity(0)
+			  : m_a(0),
+			    m_count(0),
+			    m_capacity(0)                            
 {
   *this = src; // operator= defined below
 }
 
 template <class T>
 ON_ClassArray<T>::~ON_ClassArray()
-{
+{ 
   SetCapacity(0);
 }
 
@@ -695,16 +702,16 @@ ON_ClassArray<T>& ON_ClassArray<T>::operator=( const ON_ClassArray<T>& src )
     }
     else {
       if ( m_capacity < src.m_count ) {
-        SetCapacity( src.m_count );
+	SetCapacity( src.m_count );
       }
       if ( m_a ) {
-        m_count = src.m_count;
-        for ( i = 0; i < m_count; i++ ) {
-          m_a[i] = src.m_a[i];
-        }
+	m_count = src.m_count;
+	for ( i = 0; i < m_count; i++ ) {
+	  m_a[i] = src.m_a[i];
+	}
       }
     }
-  }
+  }  
   return *this;
 }
 
@@ -740,11 +747,11 @@ unsigned int ON_ClassArray<T>::SizeOfArray() const
 
 template <class T>
 T& ON_ClassArray<T>::operator[]( int i )
-{
+{ 
 #if defined(ON_DEBUG)
   ON_ASSERT( i >=0 && i < m_capacity);
 #endif
-  return m_a[i];
+  return m_a[i]; 
 }
 
 template <class T>
@@ -798,7 +805,7 @@ void ON_ClassArray<T>::SetArray(T* p)
 
 template <class T>
 T* ON_ClassArray<T>::First()
-{
+{ 
   return (m_count > 0) ? m_a : 0;
 }
 
@@ -810,7 +817,7 @@ const T* ON_ClassArray<T>::First() const
 
 template <class T>
 T* ON_ClassArray<T>::At( int i )
-{
+{ 
   return (i >= 0 && i < m_count) ? m_a+i : 0;
 }
 
@@ -822,7 +829,7 @@ const T* ON_ClassArray<T>::At( int i) const
 
 template <class T>
 T* ON_ClassArray<T>::Last()
-{
+{ 
   return (m_count > 0) ? m_a+(m_count-1) : 0;
 }
 
@@ -840,7 +847,7 @@ void ON_ClassArray<T>::Move( int dest_i, int src_i, int ele_cnt )
   // private function for moving blocks of array memory
   // caller is responsible for updating m_count and managing
   // destruction/creation.
-  if ( ele_cnt <= 0 || src_i < 0 || dest_i < 0 || src_i == dest_i ||
+  if ( ele_cnt <= 0 || src_i < 0 || dest_i < 0 || src_i == dest_i || 
        src_i + ele_cnt > m_count || dest_i > m_count )
     return;
 
@@ -884,9 +891,9 @@ T& ON_ClassArray<T>::AppendNew()
 }
 
 template <class T>
-void ON_ClassArray<T>::Append( const T& x )
+void ON_ClassArray<T>::Append( const T& x ) 
 {
-  if ( m_count == m_capacity )
+  if ( m_count == m_capacity ) 
   {
     const int newcapacity = (m_capacity<2) ? 4 : (2*m_capacity);
     if (m_a)
@@ -894,15 +901,15 @@ void ON_ClassArray<T>::Append( const T& x )
       const int s = (int)(&x - m_a); // (int) cast is for 64 bit pointers
       if ( s >= 0 && s < m_capacity )
       {
-        // 26 Sep 2005 Dale Lear
-        //    User passed in an element of the m_a[]
-        //    that will get reallocated by the call
-        //    to Reserve(newcapacity).
-        T temp; // ON_*Array<> templates do not require robust copy constructor.
-        temp = x;
-        Reserve(newcapacity);
-        m_a[m_count++] = temp;
-        return;
+	// 26 Sep 2005 Dale Lear
+	//    User passed in an element of the m_a[]
+	//    that will get reallocated by the call
+	//    to Reserve(newcapacity).
+	T temp; // ON_*Array<> templates do not require robust copy constructor.
+	temp = x;
+	Reserve(newcapacity);
+	m_a[m_count++] = temp;
+	return;
       }
     }
     Reserve(newcapacity);
@@ -911,16 +918,16 @@ void ON_ClassArray<T>::Append( const T& x )
 }
 
 template <class T>
-void ON_ClassArray<T>::Append( int count, const T* p )
+void ON_ClassArray<T>::Append( int count, const T* p ) 
 {
   int i;
-  if ( count > 0 && p )
+  if ( count > 0 && p ) 
   {
-    if ( count + m_count > m_capacity )
+    if ( count + m_count > m_capacity ) 
     {
       int newcapacity = (m_capacity<2) ? 4 : (2*m_capacity);
       if ( newcapacity < count + m_count )
-        newcapacity = count + m_count;
+	newcapacity = count + m_count;
       Reserve(newcapacity);
     }
     for ( i = 0; i < count; i++ ) {
@@ -931,16 +938,16 @@ void ON_ClassArray<T>::Append( int count, const T* p )
 
 // Insert called with a reference uses operator =
 template <class T>
-void ON_ClassArray<T>::Insert( int i, const T& x )
+void ON_ClassArray<T>::Insert( int i, const T& x ) 
 {
-  if( i >= 0 && i <= m_count )
+  if( i >= 0 && i <= m_count ) 
   {
-    if ( m_count == m_capacity )
+    if ( m_count == m_capacity ) 
     {
       if( m_capacity < 2 )
-        Reserve( 4 );
+	Reserve( 4 );
       else
-        Reserve( 2*m_capacity );
+	Reserve( 2*m_capacity );
     }
     DestroyElement( m_a[m_count] );
 	  m_count++;
@@ -960,12 +967,12 @@ template <class T>
 void ON_ClassArray<T>::Remove( )
 {
   Remove(m_count-1);
-}
+} 
 
 template <class T>
 void ON_ClassArray<T>::Remove( int i )
 {
-  if ( i >= 0 && i < m_count )
+  if ( i >= 0 && i < m_count ) 
   {
     DestroyElement( m_a[i] );
     memset( &m_a[i], 0, sizeof(T) );
@@ -974,7 +981,7 @@ void ON_ClassArray<T>::Remove( int i )
     ConstructDefaultElement(&m_a[m_count-1]);
     m_count--;
   }
-}
+} 
 
 template <class T>
 void ON_ClassArray<T>::Empty()
@@ -995,7 +1002,7 @@ void ON_ClassArray<T>::Reverse()
   // If anything in "T" depends on the value of this's address,
   // then don't call Reverse().
   char t[sizeof(T)];
-  int i = 0;
+  int i = 0;  
   int j = m_count-1;
   for ( /*empty*/; i < j; i++, j-- ) {
     memcpy( t, &m_a[i], sizeof(T) );
@@ -1018,9 +1025,9 @@ void ON_ClassArray<T>::Swap( int i, int j )
 template <class T>
 int ON_ClassArray<T>::Search( const T* key, int (*compar)(const T*,const T*) ) const
 {
-  for ( int i = 0; i < m_count; i++ )
+  for ( int i = 0; i < m_count; i++ ) 
   {
-    if (!compar(key,m_a+i))
+    if (!compar(key,m_a+i)) 
       return i;
   }
   return -1;
@@ -1030,8 +1037,8 @@ template <class T>
 int ON_ClassArray<T>::BinarySearch( const T* key, int (*compar)(const T*,const T*) ) const
 {
   const T* found = (key&&m_a&&m_count>0) ? (const T*)bsearch( key, m_a, m_count, sizeof(T), (int(*)(const void*,const void*))compar ) : 0;
-#if defined(ON_COMPILER_MSC1300) || defined(ON_COMPILER_GNU)
-  // for 32 and 64 bit compilers - the (int) converts 64 bit size_t
+#if defined(ON_COMPILER_MSC1300)
+  // for 32 and 64 bit compilers - the (int) converts 64 bit size_t 
   return found ? ((int)(found - m_a)) : -1;
 #else
   // for lamer 64 bit compilers
@@ -1043,7 +1050,7 @@ template <class T>
 bool ON_ClassArray<T>::HeapSort( int (*compar)(const T*,const T*) )
 {
   bool rc = false;
-  if ( m_a && m_count > 0 && compar )
+  if ( m_a && m_count > 0 && compar ) 
   {
     if ( m_count > 1 )
       ON_hsort( m_a, m_count, sizeof(T), (int(*)(const void*,const void*))compar );
@@ -1056,7 +1063,7 @@ template <class T>
 bool ON_ClassArray<T>::QuickSort( int (*compar)(const T*,const T*) )
 {
   bool rc = false;
-  if ( m_a && m_count > 0 && compar )
+  if ( m_a && m_count > 0 && compar ) 
   {
     if ( m_count > 1 )
       qsort( m_a, m_count, sizeof(T), (int(*)(const void*,const void*))compar );
@@ -1071,18 +1078,20 @@ template <class T>
 bool ON_ObjectArray<T>::HeapSort( int (*compar)(const T*,const T*) )
 {
   bool rc = false;
-  if ( this->m_a && this->m_count > 0 && compar )
+  // The "this->" in this->m_count and this->m_a 
+  // are needed for gcc 4 to compile.
+  if ( this->m_a && this->m_count > 0 && compar ) 
   {
     if ( this->m_count > 1 )
     {
       ON_hsort( this->m_a, this->m_count, sizeof(T), (int(*)(const void*,const void*))compar );
-
+      
       // The MemoryRelocate step is required to synch userdata back pointers
       // so the user data destructor will work correctly.
       int i;
       for ( i = 0; i < this->m_count; i++ )
       {
-        this->m_a[i].MemoryRelocate();
+	this->m_a[i].MemoryRelocate();
       }
     }
     rc = true;
@@ -1094,7 +1103,9 @@ template <class T>
 bool ON_ObjectArray<T>::QuickSort( int (*compar)(const T*,const T*) )
 {
   bool rc = false;
-  if ( this->m_a && this->m_count > 0 && compar )
+  // The "this->" in this->m_count and this->m_a 
+  // are needed for gcc 4 to compile.
+  if ( this->m_a && this->m_count > 0 && compar ) 
   {
     if ( this->m_count > 1 )
     {
@@ -1105,14 +1116,13 @@ bool ON_ObjectArray<T>::QuickSort( int (*compar)(const T*,const T*) )
       int i;
       for ( i = 0; i < this->m_count; i++ )
       {
-        this->m_a[i].MemoryRelocate();
+	this->m_a[i].MemoryRelocate();
       }
     }
     rc = true;
   }
   return rc;
 }
-
 
 
 template <class T>
@@ -1134,7 +1144,7 @@ template <class T>
 bool ON_ClassArray<T>::Sort( ON::sort_algorithm sa, int* index, int (*compar)(const T*,const T*,void*),void* p ) const
 {
   bool rc = false;
-  if ( m_a && m_count > 0 && compar && index )
+  if ( m_a && m_count > 0 && compar && index ) 
   {
     if ( m_count > 1 )
       ON_Sort(sa, index, m_a, m_count, sizeof(T), (int(*)(const void*,const void*,void*))compar, p );
@@ -1149,7 +1159,7 @@ template <class T>
 bool ON_ClassArray<T>::Permute( const int* index )
 {
   bool rc = false;
-  if ( m_a && m_count > 0 && index )
+  if ( m_a && m_count > 0 && index ) 
   {
     int i;
     T* buffer = (T*)onmalloc(m_count*sizeof(buffer[0]));
@@ -1178,7 +1188,7 @@ void ON_ClassArray<T>::Zero()
 // memory managment ////////////////////////////////////////////////////
 
 template <class T>
-void ON_ClassArray<T>::Reserve( int newcap )
+void ON_ClassArray<T>::Reserve( int newcap ) 
 {
   if( m_capacity < newcap )
     SetCapacity( newcap );
@@ -1199,21 +1209,21 @@ void ON_ClassArray<T>::Destroy()
 // low level memory managment //////////////////////////////////////////
 
 template <class T>
-void ON_ClassArray<T>::SetCount( int count )
+void ON_ClassArray<T>::SetCount( int count ) 
 {
   if ( count >= 0 && count <= m_capacity )
     m_count = count;
 }
 
 template <class T>
-void ON_ClassArray<T>::SetCapacity( int capacity )
+void ON_ClassArray<T>::SetCapacity( int capacity ) 
 {
   // uses "placement" for class construction/destruction
   int i;
   if ( capacity < 1 ) {
     if ( m_a ) {
       for ( i = m_capacity-1; i >= 0; i-- ) {
-        DestroyElement(m_a[i]);
+	DestroyElement(m_a[i]);
       }
       Realloc(m_a,0);
       m_a = 0;
@@ -1229,7 +1239,7 @@ void ON_ClassArray<T>::SetCapacity( int capacity )
     {
       memset( m_a + m_capacity, 0, (capacity-m_capacity)*sizeof(T) );
       for ( i = m_capacity; i < capacity; i++ ) {
-        ConstructDefaultElement(&m_a[i]);
+	ConstructDefaultElement(&m_a[i]);
       }
       m_capacity = capacity;
     }
@@ -1272,9 +1282,9 @@ template< class T>
 static
 int ON_CompareIncreasing( const T* a, const T* b)
 {
-	if( *a < *b )
+	if( *a < *b ) 
     return -1;
-	if( *b < *a )
+	if( *b < *a ) 
     return  1;
 	return 0;
 }
@@ -1283,9 +1293,9 @@ template< class T>
 static
 int ON_CompareDecreasing( const T* a, const T* b)
 {
-	if( *b < *a )
+	if( *b < *a ) 
     return -1;
-	if( *a < *b )
+	if( *a < *b ) 
     return  1;
 	return 0;
 }

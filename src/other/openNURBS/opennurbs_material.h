@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -21,7 +21,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
 // Class ON_Material
-//
+// 
 class ON_CLASS ON_Material : public ON_Object
 {
   ON_OBJECT_DECLARE(ON_Material);
@@ -47,12 +47,12 @@ public:
     initialized.
   Parameters:
     text_log - [in] if the object is not valid and text_log
-        is not NULL, then a brief englis description of the
-        reason the object is not valid is appened to the log.
-        The information appended to text_log is suitable for
-        low-level debugging purposes by programmers and is
-        not intended to be useful as a high level user
-        interface tool.
+	is not NULL, then a brief englis description of the
+	reason the object is not valid is appened to the log.
+	The information appended to text_log is suitable for 
+	low-level debugging purposes by programmers and is 
+	not intended to be useful as a high level user 
+	interface tool.
   Returns:
     @untitled table
     TRUE     object is valid
@@ -65,11 +65,11 @@ public:
   void Dump( ON_TextLog& ) const; // for debugging
 
   BOOL Write(
-         ON_BinaryArchive&  // open binary file
+	 ON_BinaryArchive&  // open binary file
        ) const;
 
   BOOL Read(
-         ON_BinaryArchive&  // open binary file
+	 ON_BinaryArchive&  // open binary file
        );
 
   ON::object_type ObjectType() const;
@@ -82,7 +82,7 @@ public:
   // Interface
 
   // ignores m_material_index
-  int Compare( const ON_Material& other ) const;
+  int Compare( const ON_Material& other ) const; 
 
   // OBSOLETE - use m_ambient
   ON_Color Ambient() const;
@@ -127,7 +127,7 @@ public:
   // OBSOLETE - just use m_material_name
   void SetMaterialName( const wchar_t* );
 
-  // The only reliable and persistent way to reference
+  // The only reliable and persistent way to reference 
   // materials is by the material_id.
   ON_UUID m_material_id;
 
@@ -138,11 +138,11 @@ public:
   // never change in that instance of Rhino.
   int m_material_index;
 
-  //
+  // 
   ON_wString m_material_name;  // For user comfort - duplicates permitted
-
+  
   ON_wString m_flamingo_library; // Legacy information from V3.
-                                 // Will vanish in V5.
+				 // Will vanish in V5.
 
   ON_Color   m_ambient;
   ON_Color   m_diffuse;
@@ -156,11 +156,11 @@ public:
   double     m_transparency; // 0.0 = opaque to 1.0 = transparent (1.0-alpha)
 
   bool       m_bShared;  // True means this material can be shared.  When an
-                         // object that uses this material is copied,
-                         // the new object will share the material.
-                         // False means this material is not shared.
-                         // When an object that uses this material is
-                         // duplicated.
+			 // object that uses this material is copied,
+			 // the new object will share the material.
+			 // False means this material is not shared.
+			 // When an object that uses this material is
+			 // duplicated.
 
   /*
   Description:
@@ -185,36 +185,36 @@ public:
   Parameters:
     filename - [in]  If NULL, then any filename matches.
     type - [in] If ON_Texture::no_texture_type, then
-                any texture type matches.
-    i0 - [in] If i0 is < 0, the search begins at
-              m_textures[0], if i0 >= m_textures.Count(),
-              -1 is returnd, otherwise, the search begins
-              at m_textures[i0+1].
+		any texture type matches.
+    i0 - [in] If i0 is < 0, the search begins at 
+	      m_textures[0], if i0 >= m_textures.Count(),
+	      -1 is returnd, otherwise, the search begins
+	      at m_textures[i0+1].
   Example:
-    Iterate through all the the bitmap textures on
+    Iterate through all the the bitmap textures on 
     a material.
 
-          ON_Material& mat = ...;
-          int ti = -1;
-          int bitmap_texture_count = 0;
-          for(;;)
-          {
-            ti = mat.FindTexture(
-                        NULL,
-                        ON_Texture::bitmap_texture,
-                        ti );
+	  ON_Material& mat = ...;
+	  int ti = -1;
+	  int bitmap_texture_count = 0;
+	  for(;;)
+	  {
+	    ti = mat.FindTexture( 
+			NULL, 
+			ON_Texture::bitmap_texture, 
+			ti );
 
-            if ( ti < 0 )
-            {
-              // no more bitmap textures
-              break;
-            }
+	    if ( ti < 0 )
+	    {
+	      // no more bitmap textures
+	      break;
+	    }
 
-            // we have a bitmap texture
-            bitmap_texture_count++;
-            const ON_Texture& bitmap_texture = mat.m_textures[ti];
-            ...
-          }
+	    // we have a bitmap texture
+	    bitmap_texture_count++;
+	    const ON_Texture& bitmap_texture = mat.m_textures[ti];
+	    ...
+	  }
 
   Returns:
     >=0 m_textures[] index of matching texture
@@ -241,14 +241,14 @@ public:
     textures to the material.  If you need to do something
     different, then just work on the m_textures[] array.
   */
-  int AddTexture(
+  int AddTexture( 
     const ON_Texture& tx
     );
 
   /*
   Description:
     If there is a texture with a matching type, that texture's
-    filename is modified, otherwise a new texture is added.
+    filename is modified, otherwise a new texture is added.    
   Parameters:
     filename - [in] new filename
     type - [in]
@@ -261,7 +261,7 @@ public:
   */
   int AddTexture(
     const wchar_t* filename,
-    ON_Texture::TYPE type
+    ON_Texture::TYPE type 
     );
 
   /*
@@ -270,21 +270,21 @@ public:
   Parameters:
     filename - [in]  If NULL, then any filename matches.
     type - [in] If ON_Texture::no_texture_type, then
-                any texture type matches.
+		any texture type matches.
   Returns:
     Number of textures deleted.
   */
   int DeleteTexture(
     const wchar_t* filename,
-    ON_Texture::TYPE type
+    ON_Texture::TYPE type 
     );
 
   ON_ObjectArray<ON_Texture> m_textures;
 
   /*
   Description:
-    Used to provide per face material support.
-    The parent object reference a basic material.
+    Used to provide per face material support. 
+    The parent object reference a basic material. 
     When a brep face or mesh facet wants to use
     a material besides the base material, it specifies
     a channelSupports material channel.  The default
@@ -292,10 +292,10 @@ public:
     material.  A channel of n > 0 means that face
     used the material with id m_material_channel[n-1].
     If (n-1) >= m_material_channel.Count(), then the base
-    material is used.  The value of
+    material is used.  The value of 
     m_material_channel[n].m_id is persistent.  The
     value of m_material_channel[n].m_i is a runtime
-    index in the CRhinoDoc::m_material_table[].  If
+    index in the CRhinoDoc::m_material_table[].  If 
     CRhinoDoc::m_material_table[m_i].m_uuid != m_id,
     then m_id is assumed to be correct.
   */
@@ -310,7 +310,7 @@ private:
 
 #if defined(ON_DLL_TEMPLATE)
 // This stuff is here because of a limitation in the way Microsoft
-// handles templates and DLLs.  See Microsoft's knowledge base
+// handles templates and DLLs.  See Microsoft's knowledge base 
 // article ID Q168958 for details.
 #pragma warning( push )
 #pragma warning( disable : 4231 )

@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -44,7 +44,7 @@ public:
     Get a point cloud point from an ON_COMPONENT_INDEX.
   Parameters:
     ci - [in] a component index with m_typ set to ON_COMPONENT_INDEX::pointcloud_point
-              and 0 <= m_index and m_index < m_P.Count().
+	      and 0 <= m_index and m_index < m_P.Count().
   Returns:
     Point at [ci.m_index] or ON_UNSET_POINT if ci is not valid.
   */
@@ -79,22 +79,22 @@ public:
 
   // virtual ON_Geometry override
   BOOL GetBBox( // returns TRUE if successful
-         double*,    // minimum
-         double*,    // maximum
-         BOOL = FALSE  // TRUE means grow box
-         ) const;
+	 double*,    // minimum
+	 double*,    // maximum
+	 BOOL = FALSE  // TRUE means grow box
+	 ) const;
 
   // virtual ON_Geometry override
-	bool GetTightBoundingBox(
-			ON_BoundingBox& tight_bbox,
+	bool GetTightBoundingBox( 
+			ON_BoundingBox& tight_bbox, 
       int bGrowBox = false,
 			const ON_Xform* xform = 0
       ) const;
 
   // virtual ON_Geometry override
-  BOOL Transform(
-         const ON_Xform&
-         );
+  BOOL Transform( 
+	 const ON_Xform&
+	 );
 
   // virtual ON_Geometry override
   bool IsDeformable() const;
@@ -104,8 +104,8 @@ public:
 
   // virtual ON_Geometry override
   BOOL SwapCoordinates(
-        int, int        // indices of coords to swap
-        );
+	int, int        // indices of coords to swap
+	);
 
   // virtual ON_Geometry override
   bool Morph( const ON_SpaceMorph& morph );
@@ -121,8 +121,8 @@ public:
     P - [in]
     closest_point_index - [out]
     maximum_distance - [in] optional distance constraint.
-        If maximum_distance > 0, then only points Q with
-        |P-Q| <= maximum_distance are tested.
+	If maximum_distance > 0, then only points Q with
+	|P-Q| <= maximum_distance are tested.
   Returns:
     True if a point is found; in which case *closest_point_index
     is the index of the point.  False if no point is found
@@ -130,16 +130,16 @@ public:
   See Also:
     ON_GetClosestPointInPointList
   */
-  bool GetClosestPoint(
-          ON_3dPoint P,
-          int* closest_point_index,
-          double maximum_distance = 0.0
-          ) const;
+  bool GetClosestPoint( 
+	  ON_3dPoint P,
+	  int* closest_point_index,
+	  double maximum_distance = 0.0
+	  ) const;
 
 
   /////////////////////////////////////////////////////////////////
   // Interface
-  //
+  // 
   int PointCount() const;
   void AppendPoint( const ON_3dPoint& );
   void InvalidateBoundingBox(); // call if you change values of points
@@ -229,7 +229,7 @@ public:
   /////////////////////////////////////////////////////////////////
   // Implementation - RUNTIME point visibility - not saved in 3dm files.
   //    If m_H.Count() = m_P.Count(), then
-  //    m_H[j] is true if the point m_P[j]
+  //    m_H[j] is true if the point m_P[j] 
   //    is hidden.  Otherwise, all points are visible.
   //    m_hidden_count = number of true values in the m_H[] array.
   ON_SimpleArray<bool> m_H;
@@ -238,7 +238,7 @@ public:
   ON_Plane m_plane;
   ON_BoundingBox m_bbox;
   unsigned int m_flags; // bit 1 is set if ordered
-                        // bit 2 is set if plane is set
+			// bit 2 is set if plane is set
 
 };
 

@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2001 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -41,7 +41,7 @@ void ON_Light::Default()
   memset(&m_light_id,0,sizeof(m_light_id));
 }
 
-ON_Light::ON_Light()
+ON_Light::ON_Light() 
 {
   Default();
 }
@@ -207,10 +207,10 @@ BOOL ON_Light::Read(
     if ( minor_version < 2 ) {
       // set hotspot from 1.0 or 1.1 m_spot_exponent
       double h = 1.0 - m_spot_exponent/128.0;
-      if ( h < 0.0 )
-        h = 0.0;
+      if ( h < 0.0 ) 
+	h = 0.0;
       else if ( h > 1.0 )
-        h = 1.0;
+	h = 1.0;
       m_hotspot = h;
       m_spot_exponent = 0.0;
     }
@@ -220,8 +220,8 @@ BOOL ON_Light::Read(
       if ( rc ) rc = file.ReadVector( m_length );
       if ( rc ) rc = file.ReadVector( m_width );
       if ( minor_version >= 2 ) {
-        // version 1.2 fields
-        if ( rc ) rc = file.ReadDouble( &m_hotspot );
+	// version 1.2 fields
+	if ( rc ) rc = file.ReadDouble( &m_hotspot );
       }
     }
   }
@@ -280,7 +280,7 @@ BOOL ON_Light::GetBBox( // returns TRUE if successful
     points.Append(m_location);
     rc = false;
     break;
-
+  
   case ON::world_linear_light:
     points.Append(m_location);
     points.Append(m_location+m_length);
@@ -300,18 +300,18 @@ BOOL ON_Light::GetBBox( // returns TRUE if successful
 
   if ( rc && points.Count() > 0 )
   {
-     rc = ON_GetPointListBoundingBox( 3, 0, points.Count(), 3,
-                                      (double*)points.Array(),
-                                      boxmin, boxmax,
-                                      bGrowBox?true:false )
-        ? true
-        : false;
+     rc = ON_GetPointListBoundingBox( 3, 0, points.Count(), 3, 
+				      (double*)points.Array(), 
+				      boxmin, boxmax, 
+				      bGrowBox?true:false )
+	? true 
+	: false;
   }
 
   return rc;
 }
 
-BOOL ON_Light::Transform(
+BOOL ON_Light::Transform( 
        const ON_Xform& xform
        )
 {
@@ -319,19 +319,19 @@ BOOL ON_Light::Transform(
   double vlen;
   TransformUserData(xform);
   m_location = xform*m_location;
-
+  
   v = xform*m_direction;
   vlen = v.Length();
   if ( vlen > 0.0 ) {
     m_direction = v;
   }
-
+  
   v = xform*m_length;
   vlen = v.Length();
   if ( vlen > 0.0 ) {
     m_length = v;
   }
-
+  
   v = xform*m_width;
   vlen = v.Length();
   if ( vlen > 0.0 ) {
@@ -544,7 +544,7 @@ double ON_Light::SpotAngleDegrees() const
 // The spot exponent "e", hot spot "h", and spotlight cone angle "a"
 // are mutually constrained by the formula
 //   cos(h*angle)^e = hotspot_min
-// where hotspot_min = value of spotlight exponential attenuation factor
+// where hotspot_min = value of spotlight exponential attenuation factor 
 // at the hot spot radius.  hotspot_min must be >0, < 1, and should be >= 1/2;
 //static double log_hotspot_min = log(0.5);
 static double log_hotspot_min = log(0.70710678118654752440084436210485);
@@ -563,7 +563,7 @@ void ON_Light::SetHotSpot( double h )
 {
   if ( h == ON_UNSET_VALUE || !ON_IsValid(h) )
     m_hotspot = ON_UNSET_VALUE;
-  else if ( h <= 0.0 )
+  else if ( h <= 0.0 ) 
     m_hotspot = 0.0;
   else if ( h >= 1.0 )
     m_hotspot = 1.0;
@@ -587,11 +587,11 @@ double ON_Light::SpotExponent() const
       a = h*SpotAngleRadians();
       c = cos(a);
       if ( c <= 0.0 )
-        e = 1.0;
+	e = 1.0;
       else {
-        e = log_hotspot_min/log(c);
-        if ( e < 0.0 )
-          e = 0.0;
+	e = log_hotspot_min/log(c);
+	if ( e < 0.0 )
+	  e = 0.0;
       }
     }
   }
@@ -612,23 +612,23 @@ double ON_Light::HotSpot() const
       double x, a, cos_ha;
       x = log_hotspot_min/m_spot_exponent; // note that x < 0.0
       if ( x < -690.0 ) {
-        // prevent underflow.  cos_ha is close to zero so
-        h = 1.0;
+	// prevent underflow.  cos_ha is close to zero so
+	h = 1.0;
       }
-      else
+      else 
       {
-        cos_ha = exp(x);
-        if (!ON_IsValid(cos_ha))  cos_ha =  0.0;
-        else if ( cos_ha >  1.0 ) cos_ha =  1.0;
-        else if ( cos_ha < -1.0 ) cos_ha = -1.0;
-        a = SpotAngleRadians();
-        h = acos(cos_ha)/a;
-        if ( h < 0.0 )
-          h = 0.0;
-        else if ( h > 1.0 ) {
-          // happens for smaller e
-          h = 1.0;
-        }
+	cos_ha = exp(x);
+	if (!ON_IsValid(cos_ha))  cos_ha =  0.0;
+	else if ( cos_ha >  1.0 ) cos_ha =  1.0;
+	else if ( cos_ha < -1.0 ) cos_ha = -1.0;
+	a = SpotAngleRadians();
+	h = acos(cos_ha)/a;
+	if ( h < 0.0 )
+	  h = 0.0;
+	else if ( h > 1.0 ) {
+	  // happens for smaller e
+	  h = 1.0;
+	}
       }
     }
   }
@@ -742,11 +742,11 @@ ON::coordinate_system ON_Light::CoordinateSystem() const // determined by style
   return cs;
 }
 
-BOOL ON_Light::GetLightXform(
-         const ON_Viewport& vp,
-         ON::coordinate_system dest_cs,
-         ON_Xform& xform
-         ) const
+BOOL ON_Light::GetLightXform( 
+	 const ON_Viewport& vp,
+	 ON::coordinate_system dest_cs, 
+	 ON_Xform& xform 
+	 ) const
 {
   ON::coordinate_system src_cs = CoordinateSystem();
   return vp.GetXform( src_cs, dest_cs, xform );

@@ -2,13 +2,13 @@
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2003 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -19,7 +19,7 @@
 
 /*
 Description:
-  This class is used to returned results of
+  This class is used to returned results of 
   mass properties calculations.
 */
 class ON_CLASS ON_MassProperties
@@ -49,7 +49,7 @@ public:
     count - [in] number of elements in the summands array.
     summands - [in] array of mass properties to add
     bAddTo - [in] if true, then the summands are added to
-                  the existing mass.
+		  the existing mass.
   Returns:
     True if successful.
   */
@@ -132,7 +132,7 @@ public:
 
 
 
-
+  
   // The "centroid coordinate system" (ccs) is the
   // coordinate system with origin at the centroid and
   // axes parallel to the world coordinate axes.
@@ -243,14 +243,14 @@ public:
   /*
   Description:
     Calculates the moments of inertia about world
-    coordinate axes.
+    coordinate axes.  
   Returns:
     Moments of inertia with respect to world coordinate system.
     WorldCoordMomentsOfInertia().x = integral of (y^2 + z^2) dm
     WorldCoordMomentsOfInertia().y = integral of (z^2 + x^2) dm
     WorldCoordMomentsOfInertia().z = integral of (z^2 + y^2) dm
   Remarks:
-    What is meant by "moments of intertia" varies widely in
+    What is meant by "moments of intertia" varies widely in 
     textbooks and papers.  The values returned here
     are the integrals listed in the Returns section.
     Some applications may want the values from
@@ -269,7 +269,7 @@ public:
     WorldCoordRadiiOfGyration().y = sqrt(integral of (z^2 + x^2) dm/M)
     WorldCoordRadiiOfGyration().z = sqrt(integral of (z^2 + y^2) dm/M)
   Remarks:
-    What is meant by "radii of gyration" varies widely in
+    What is meant by "radii of gyration" varies widely in 
     textbooks and papers.  The values returned here
     are the integrals listed in the Returns section.
   */
@@ -281,22 +281,22 @@ public:
     to world coordinates is returned.  This matrix is sometimes
     called the "intertia tensor".
   Parameters:
-    martix - [in] If you want to fill in an existing matrix,
-                  pass a pointer to that matrix.  Otherwise
-                  a matrix will be created and returned.
+    martix - [in] If you want to fill in an existing matrix, 
+		  pass a pointer to that matrix.  Otherwise
+		  a matrix will be created and returned.
     returned.
   Returns:
     The inertia matrix or NULL if the moments are not valid.
 
-          m_world_xx  m_world_xy  m_world_xz
-          m_world_xy  m_world_yy  m_world_yz
-          m_world_xz  m_world_yz  m_world_zz
+	  m_world_xx  m_world_xy  m_world_xz
+	  m_world_xy  m_world_yy  m_world_yz
+	  m_world_xz  m_world_yz  m_world_zz
   See Also:
     CentroidCoordIntertiaMatrix
   */
-  ON_Matrix* WorldCoordIntertiaMatrix(
-                ON_Matrix* matrix = NULL
-                ) const;
+  ON_Matrix* WorldCoordIntertiaMatrix( 
+		ON_Matrix* matrix = NULL 
+		) const;
 
   /*
   Description:
@@ -316,11 +316,11 @@ public:
   See Also:
     CentroidCoordPrincipalMoments
   */
-  bool WorldCoordPrincipalMoments(
-                double* pxx, ON_3dVector& Ax,
-                double* pyy, ON_3dVector& Ay,
-                double* pzz, ON_3dVector& Az
-                ) const;
+  bool WorldCoordPrincipalMoments( 
+		double* pxx, ON_3dVector& Ax,
+		double* pyy, ON_3dVector& Ay,
+		double* pzz, ON_3dVector& Az
+		) const;
 
   /*
   Description:
@@ -343,7 +343,7 @@ public:
   /*
   Description:
     Calculates the moments of inertia about centroid
-    coordinate axes.
+    coordinate axes.  
   Returns:
     Moments of inertia with respect to centroid coordinate system.
     WorldCoordMomentsOfInertia().x = integral of ((y-y0)^2 + (z-z0)^2) dm
@@ -351,7 +351,7 @@ public:
     WorldCoordMomentsOfInertia().z = integral of ((z-z0)^2 + (y-y0)^2) dm
     where (x0,y0,z0) = centroid.
   Remarks:
-    What is meant by "moments of intertia" varies widely in
+    What is meant by "moments of intertia" varies widely in 
     textbooks and papers.  The values returned here
     are the integrals listed in the Returns section.
     Some applications may want the values from
@@ -366,15 +366,15 @@ public:
     coordinate axes.
   Returns:
     Radii of gyration with respect to centroid coordinate system.
-    CentroidCoordRadiiOfGyration().x
+    CentroidCoordRadiiOfGyration().x 
       = sqrt(integral of ((y-y0)^2 + (z-z0)^2) dm/M)
-    CentroidCoordRadiiOfGyration().y
+    CentroidCoordRadiiOfGyration().y 
       = sqrt(integral of ((z-z0)^2 + (x-x0)^2) dm/M)
-    CentroidCoordRadiiOfGyration().z
+    CentroidCoordRadiiOfGyration().z 
       = sqrt(integral of ((z-z0)^2 + (y-y0)^2) dm/M)
     where (x0,y0,z0) = centroid.
   Remarks:
-    What is meant by "radii of gyration" varies widely in
+    What is meant by "radii of gyration" varies widely in 
     textbooks and papers.  The values returned here
     are the integrals listed in the Returns section.
   */
@@ -386,22 +386,22 @@ public:
     to centroid coordinates is returned.  This matrix is sometimes
     called the "intertia tensor".
   Parameters:
-    martix - [in] If you want to fill in an existing matrix,
-                  pass a pointer to that matrix.  Otherwise
-                  a matrix will be created and returned.
+    martix - [in] If you want to fill in an existing matrix, 
+		  pass a pointer to that matrix.  Otherwise
+		  a matrix will be created and returned.
     returned.
   Returns:
     The inertia matrix or NULL if the moments are not valid.
 
-          m_ccs_xx  m_ccs_xy  m_ccs_xz
-          m_ccs_xy  m_ccs_yy  m_ccs_yz
-          m_ccs_xz  m_ccs_yz  m_ccs_zz
+	  m_ccs_xx  m_ccs_xy  m_ccs_xz
+	  m_ccs_xy  m_ccs_yy  m_ccs_yz
+	  m_ccs_xz  m_ccs_yz  m_ccs_zz
   See Also:
     WorldCoordIntertiaMatrix
   */
-  ON_Matrix* CentroidCoordIntertiaMatrix(
-                ON_Matrix* matrix = NULL
-                ) const;
+  ON_Matrix* CentroidCoordIntertiaMatrix( 
+		ON_Matrix* matrix = NULL 
+		) const;
 
   /*
   Description:
@@ -421,11 +421,11 @@ public:
   See Also:
     WorldCoordPrincipalMoments
   */
-  bool CentroidCoordPrincipalMoments(
-                double* pxx, ON_3dVector& Ax,
-                double* pyy, ON_3dVector& Ay,
-                double* pzz, ON_3dVector& Az
-                ) const;
+  bool CentroidCoordPrincipalMoments( 
+		double* pxx, ON_3dVector& Ax,
+		double* pyy, ON_3dVector& Ay,
+		double* pzz, ON_3dVector& Az
+		) const;
 
 };
 
