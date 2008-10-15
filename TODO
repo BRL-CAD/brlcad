@@ -27,7 +27,7 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 * make Mac OS X universal binaries actually work.
 
-* add color and vectors to pnts (display rec instead of ell)
+* make color and vectors on pnts work
 
 * optimize bitv counting
 
