@@ -38,6 +38,7 @@ libdm - a 3D display manager library
 libfb - a 2D framebuffer library
 libfft - a fast Fourier transform library
 libged - the geometry editor library
+libgcv - the geometry conversion library
 libmultispectral - a multispectral ray-tracing optics library
 liboptical - an optics library for raster image ray-tracing
 liborle - an "old" run-length image encoding library
