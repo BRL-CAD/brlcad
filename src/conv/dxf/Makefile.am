@@ -19,6 +19,9 @@ dist_man_MANS = \
 
 noinst_HEADERS = dxf.h
 
+EXTRA_DIST = \
+	CMakeLists.txt
+
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \

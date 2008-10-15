@@ -57,20 +57,6 @@ target_link_libraries(dbupgrade
     BrlcadCore
 )
 
-add_executable(dxf-g
-    dxf/dxf-g.c
-)
-target_link_libraries(dxf-g
-    BrlcadCore
-)
-
-add_executable(g-dxf
-    dxf/g-dxf.c
-)
-target_link_libraries(g-dxf
-    BrlcadCore
-)
-
 add_executable(g4-g5
     g4-g5.c
 )

@@ -48,6 +48,7 @@ bu_log
 bu_malloc
 bu_mem_barriercheck
 bu_optarg
+bu_opterr
 bu_optind
 bu_plong
 bu_printb
@@ -268,6 +269,7 @@ rt_color_addrec
 rt_comb_ifree
 rt_db_free_internal
 rt_db_get_internal
+rt_db_lookup_internal
 rt_db_put_internal
 rt_dirbuild
 rt_dsp_ifree
