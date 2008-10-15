@@ -72,6 +72,7 @@ set(LIBGED_SOURCES
     how.c
     illum.c
     importFg4Section.c
+    inside.c
     instance.c
     isize.c
     item.c
@@ -169,6 +170,7 @@ set(LIBGED_SOURCES
     trace.c
     track.c
     tree.c
+    typein.c
     unhide.c
     units.c
     v2m_point.c

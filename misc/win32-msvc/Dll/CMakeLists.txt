@@ -52,6 +52,7 @@ add_library(BrlcadCore SHARED ${BRLCADCORE_SOURCES})
 target_link_libraries(BrlcadCore
     libbn
     libbu
+    libgcv
     libged
     libregex
     librt

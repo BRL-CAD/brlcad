@@ -4,6 +4,7 @@ set(LIBGCV_SOURCES
 
 include_directories(
     ../../include
+    ../other/tcl/generic
 )
 
 add_definitions(
