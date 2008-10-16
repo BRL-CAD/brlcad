@@ -33,6 +33,7 @@ man1DOCBOOK = \
 	rt.xml \
 	rtarea.xml \
 	rtcheck.xml \
+	rtedge.xml \
 	search.xml
 
 man1DOCBOOKhtmldir = $(BRLCAD_DATA)/html/man1/en
