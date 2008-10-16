@@ -27,7 +27,7 @@ powerful operations.
 
 * Help menu restructuring in MGED, focus on most useful - C. Yapp
 * update openNURBS to version 4.0.2007.0718 - Cliff Yapp
-* handle (i.e., ignore) comments in asc2g conversions - Eric Greenwald
+* handle (i.e., ignore) comments in asc2g conversions - Erik Greenwald
 * fix crash in iges-g when run with -n option - John Anderson
 * enhanced documentation management system within mged - Cliff Yapp
 * conversion of documentation to Docbook format, editing, and review
