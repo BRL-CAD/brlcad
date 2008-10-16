@@ -4,6 +4,8 @@ bin_PROGRAMS = \
 	dxf-g \
 	g-dxf
 
+AM_CPPFLAGS = ${TCL_CPPFLAGS}
+
 bot_bldxf_SOURCES = bot-bldxf.c
 bot_bldxf_LDADD = ${RT}
 
