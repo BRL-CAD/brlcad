@@ -23,6 +23,7 @@ man1DOCBOOK = \
 	3ptarb.xml \
 	alias-pix.xml \
 	all_sf.xml \
+	anim_cascade.xml \
 	bwscale.xml \
 	mged.xml \
 	nirt.xml \
