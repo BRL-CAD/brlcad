@@ -17,6 +17,7 @@
 #if !defined(ON_ARRAY_DEFS_INC_)
 #define ON_ARRAY_DEFS_INC_
 
+#include "opennurbs_array.h"
 
 // The main reason the definitions of the functions for the 
 // ON_SimpleArray and ON_ClassArray templates are in this separate
@@ -1042,7 +1043,8 @@ int ON_ClassArray<T>::BinarySearch( const T* key, int (*compar)(const T*,const T
   return found ? ((int)(found - m_a)) : -1;
 #else
   // for lamer 64 bit compilers
-  return found ? ((((unsigned int)found) - ((unsigned int)m_a))/sizeof(T)) : -1;
+  // ^^^ sorry, chum, 'unsigned int' is not always the size of a pointer, no matter how lame ya call it. -Erik
+  return found ? ((((size_t)found) - ((size_t)m_a))/sizeof(T)) : -1;
 #endif
 }
 
