@@ -230,6 +230,7 @@ EXTRA_DIST = \
 	example_userdata \
 	example_write \
 	faq.txt \
+	modified_to_orig.diff \
 	opennurbs_memory_new.cpp \
 	opennurbs_zlib_memory.cpp \
 	opennurbs.xcodeproj \
