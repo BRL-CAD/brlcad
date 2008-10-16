@@ -1995,6 +1995,14 @@ GED_EXPORT BU_EXTERN(int ged_prcolor, (struct ged *gedp, int argc, const char *a
 GED_EXPORT BU_EXTERN(int ged_prefix, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Create a postscript file of the view.
+ *
+ * Usage:
+ *     ps [-c creator] [-f font] [-s size] [-t title] [-x offset] [-y offset] file.ps
+ */
+GED_EXPORT BU_EXTERN(int ged_ps, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Push objects' path transformations to  primitives
  *
  * Usage:

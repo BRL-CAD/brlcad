@@ -718,6 +718,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\ps.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\push.c"
 				>
 			</File>

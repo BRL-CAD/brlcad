@@ -486,6 +486,7 @@ static struct go_cmdtab go_cmds[] = {
     {"pov",	"vname center quat scale eye_pos perspective", 7, go_view_func, ged_pmat},
     {"prcolor",	(char *)0, MAXARGS, go_pass_through_func, ged_prcolor},
     {"prefix",	(char *)0, MAXARGS, go_pass_through_func, ged_prefix},
+    {"ps",	"vname [options] file.ps", 16, go_view_func, ged_ps},
     {"push",	(char *)0, MAXARGS, go_pass_through_func, ged_push},
     {"put",	(char *)0, MAXARGS, go_pass_through_func, ged_put},
     {"put_comb",	(char *)0, MAXARGS, go_pass_through_func, ged_put_comb},

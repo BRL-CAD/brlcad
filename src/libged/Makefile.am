@@ -126,6 +126,7 @@ libged_nil_la_SOURCES = \
 	pov.c \
 	prcolor.c \
 	prefix.c \
+	ps.c \
 	push.c \
 	put.c \
 	put_comb.c \
