@@ -26,6 +26,7 @@ man1DOCBOOK = \
 	anim_cascade.xml \
 	anim_fly.xml \
 	anim_hardtrack.xml \
+	anim_keyread.xml \
 	bwscale.xml \
 	mged.xml \
 	nirt.xml \
