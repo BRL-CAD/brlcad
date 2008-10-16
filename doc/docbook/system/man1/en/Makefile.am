@@ -24,6 +24,8 @@ man1DOCBOOK = \
 	alias-pix.xml \
 	all_sf.xml \
 	anim_cascade.xml \
+	anim_fly.xml \
+	anim_hardtrack.xml \
 	bwscale.xml \
 	mged.xml \
 	nirt.xml \
