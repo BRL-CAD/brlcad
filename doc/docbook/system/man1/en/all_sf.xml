@@ -75,13 +75,13 @@
 
   <para>
     All_sf uses a Monte Carlo simulation, so increasing the number of
-    significant digits in the answer by one requires about one hundred
-    fold increase in the number of rays fired.
+    significant digits in the answer by one requires about a 100-fold 
+    increase in the number of rays fired.
   </para>
 
   <para>
-    Three different files are created by all_sf; an output file, a longwave
-    radiation exchange file, and an error file.  The output file lists the
+    Three different files are created by <command>all_sf</command>: an output file, a 
+    longwave radiation exchange file, and an error file.  The output file lists the
     shapefactors between each region.  The longwave radiation exchange
     file is for use with PRISM.  This file is not quite PRISM ready so the
     user must fill in the missing parameters if it is to be used with
