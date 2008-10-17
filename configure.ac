@@ -3761,6 +3761,9 @@ AC_CONFIG_FILES([
 	doc/docbook/articles/mgedrc/Makefile
 	doc/docbook/articles/mgedrc/en/Makefile
 	doc/docbook/articles/mgedrc/mgedrc_images/Makefile
+	doc/docbook/articles/nirt/Makefile
+	doc/docbook/articles/nirt/en/Makefile
+	doc/docbook/articles/nirt/nirt_images/Makefile
 	doc/docbook/articles/pipes/Makefile
 	doc/docbook/articles/pipes/en/Makefile
 	doc/docbook/articles/pipes/pipe_images/Makefile

@@ -4,6 +4,7 @@ SUBDIRS = \
 	build_region \
 	ebm_primitive \
 	mgedrc \
+	nirt \
 	oed \
 	pipes \
 	projection_shader \
