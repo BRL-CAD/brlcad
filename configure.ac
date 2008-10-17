@@ -299,6 +299,9 @@ BC_ARG_ENABLE([build_iwidgets], [iwidgets-install], [Install the included iwidge
 # force enable/disable building of blt
 BC_ARG_ENABLE([build_blt], [blt-build], [Build the included BLT], [auto])
 
+# tkhtml3
+BC_ARG_ENABLE([build_tkhtml3], [tkhtml3-build], [Build the included tkhtml3], [yes])
+
 # tkimg
 BC_ARG_ENABLE([build_tkimg], [tkimg-build], [Build the included tkImg], [auto])
 
@@ -485,6 +488,9 @@ BC_ARG_ALIAS([build_blt], [blt])
 BC_ARG_ALIAS([build_blt], [libblt])
 BC_ARG_ALIAS([build_blt], [libblt-build])
 
+# aliases to force building tkhtml3 (help uses tkhtml3-build)
+BC_ARG_ALIAS([build_tkhtml3], [tkhtml3])
+
 # aliases to force building tkimg (help uses tkimg-build)
 BC_ARG_ALIAS([build_tkimg], [tkimg])
 BC_ARG_ALIAS([build_tkimg], [libtkimg])
@@ -645,6 +651,9 @@ if test "x$set_everything" != "x" ; then
 	if test "x$bc_build_blt_set" = "xno" ; then
 		bc_build_blt="$set_everything"
 	fi
+	if test "x$bc_build_tkhtml3" = "xno" ; then
+		bc_build_tkhtml3="$set_everything"
+	fi
 	if test "x$bc_build_tkimg_set" = "xno" ; then
 		bc_build_tkimg="$set_everything"
 	fi
@@ -768,6 +777,9 @@ AC_MSG_RESULT($bc_build_iwidgets)
 
 AC_MSG_CHECKING(whether to build the BLT library)
 AC_MSG_RESULT($bc_build_blt)
+
+AC_MSG_CHECKING(whether to build the tkhtml3 library)
+AC_MSG_RESULT($bc_build_tkhtml3)
 
 AC_MSG_CHECKING(whether to build the tkImg library)
 AC_MSG_RESULT($bc_build_tkimg)
@@ -2915,6 +2927,22 @@ fi
 AC_SUBST(BLT)
 
 
+dnl *** tkhtml3 ***
+dnl figure out whether we need to build tkhtml3
+TKHTML3_VERSION="alpha16"
+AC_SUBST(TKHTML3_VERSION)
+AC_MSG_CHECKING(whether to build tkhtml3)
+if test ! "x$bc_build_tkhtml3" = "xno" ; then
+    build_brlcad_tkhtml3=yes
+    AC_MSG_RESULT(yes)
+else
+    build_brlcad_tkhtml3=no
+    TKHTML3=""
+    AC_MSG_RESULT(no)
+fi
+AC_SUBST(TKHTML3)
+
+
 dnl *** tkImg ***
 dnl figure out whether we need to build tkImg
 TKIMG_VERSION="1.3"
@@ -3490,6 +3518,7 @@ AM_CONDITIONAL(BUILD_TK, [test "x$build_brlcad_tk" = "xyes"])
 AM_CONDITIONAL(BUILD_ITCL, [test "x$build_brlcad_itcl" = "xyes"])
 AM_CONDITIONAL(BUILD_IWIDGETS, [test "x$build_brlcad_iwidgets" = "xyes"])
 AM_CONDITIONAL(BUILD_BLT, [test "x$build_brlcad_blt" = "xyes"])
+AM_CONDITIONAL(BUILD_TKHTML3, [test "x$build_brlcad_tkhtml3" = "xyes"])
 AM_CONDITIONAL(BUILD_TKIMG, [test "x$build_brlcad_tkimg" = "xyes"])
 AM_CONDITIONAL(BUILD_PNG, [test "x$build_brlcad_png" = "xyes"])
 AM_CONDITIONAL(BUILD_REGEX, [test "x$build_brlcad_regex" = "xyes"])
@@ -3706,7 +3735,9 @@ dnl configure enigma
 AC_CONFIG_SUBDIRS([misc/enigma])
 
 dnl configure tkhtml3
-AC_CONFIG_SUBDIRS([src/other/tkhtml3])
+if test "x$bc_build_tkhtml3" = "xyes" ; then
+    AC_CONFIG_SUBDIRS([src/other/tkhtml3])
+fi
 
 AC_CONFIG_FILES([
 	Makefile
@@ -4084,6 +4115,7 @@ AC_MSG_RESULT([Build Tk .............................: $build_brlcad_tk])
 AC_MSG_RESULT([Build Itcl/Itk .......................: $build_brlcad_itcl])
 AC_MSG_RESULT([Build IWidgets .......................: $build_brlcad_iwidgets])
 AC_MSG_RESULT([Build BLT ............................: $build_brlcad_blt])
+AC_MSG_RESULT([Build tkhtml3 ........................: $build_brlcad_tkhtml3])
 AC_MSG_RESULT([Build tkImg ..........................: $build_brlcad_tkimg])
 AC_MSG_RESULT([Build libpng .........................: $build_brlcad_png])
 AC_MSG_RESULT([Build libregex .......................: $build_brlcad_regex])

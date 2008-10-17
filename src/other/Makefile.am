@@ -66,6 +66,16 @@ else !BUILD_TERMLIB
 TERMLIBDIR=
 endif
 
+if BUILD_TKHTML3
+if WITH_X11
+TKHTML3DIR=tkhtml3
+else !WITH_X11
+TKHTML3DIR=
+endif
+else !BUILD_TKHTML3
+TKHTML3DIR=
+endif
+
 if BUILD_TKIMG
 if WITH_X11
 TKIMGDIR=tkimg
@@ -133,12 +143,12 @@ SUBDIRS = \
 	${IWIDGETSDIR} \
 	${TERMLIBDIR} \
 	${JOVEDIR} \
+	${TKHTML3DIR} \
 	${TKIMGDIR} \
 	${BLTDIR} \
 	${OPENNURBSDIR} \
 	${TNTDIR} \
-	awf \
-	tkhtml3 
+	awf
 
 endif
 # end ONLY_RTS
