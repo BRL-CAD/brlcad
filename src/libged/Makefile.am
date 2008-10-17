@@ -123,6 +123,7 @@ libged_nil_la_SOURCES = \
 	plot.c \
 	pmat.c \
 	pmodel2view.c \
+	png.c \
 	pov.c \
 	prcolor.c \
 	prefix.c \

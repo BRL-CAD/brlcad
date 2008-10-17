@@ -52,7 +52,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../include;../../../src/libged;../../../src/other/libregex;../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/libz;../../../src/other/opennurbs;../../../src/other/tnt"
+				AdditionalIncludeDirectories="../../../include;../../../src/libged;../../../src/other/libregex;../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/libz;../../../src/other/opennurbs;../../../src/other/tnt;../../../src/other/libpng"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;__win32;ON_DLL_IMPORTS;GED_EXPORT_DLL;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;NEW_TOPS_BEHAVIOR;OBJ_BREP=1;TCL_THREADS=1;_RT_DECL_IFREE;_CRT_SECURE_NO_WARNINGS"
 				StringPooling="true"
 				BasicRuntimeChecks="0"
@@ -84,7 +84,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="tcl85.lib libbu.lib libbn.lib libsysv.lib libregex.lib opennurbs.lib librt.lib libwdb.lib ws2_32.lib"
+				AdditionalDependencies="tcl85.lib libbu.lib libbn.lib libsysv.lib libregex.lib opennurbs.lib librt.lib libwdb.lib libpng.lib ws2_32.lib"
 				OutputFile=".\$(PlatformName)\$(ConfigurationName)/libged.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -151,7 +151,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../include;../../../src/libged;../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/libz;../../../src/other/opennurbs;../../../src/other/tnt"
+				AdditionalIncludeDirectories="../../../include;../../../src/libged;../../../src/other/tcl/generic;../../../src/other/tcl/win;../../../src/other/libz;../../../src/other/opennurbs;../../../src/other/tnt;../../../src/other/libpng"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;__win32;ON_DLL_IMPORTS;GED_EXPORT_DLL;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;NEW_TOPS_BEHAVIOR;OBJ_BREP=1;TCL_THREADS=1;_RT_DECL_IFREE;_CRT_SECURE_NO_WARNINGS"
 				StringPooling="true"
 				BasicRuntimeChecks="0"
@@ -181,7 +181,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="tcl85.lib libbu.lib libbn.lib libsysv.lib libregex.lib opennurbs.lib librt.lib libwdb.lib ws2_32.lib"
+				AdditionalDependencies="tcl85.lib libbu.lib libbn.lib libsysv.lib libregex.lib opennurbs.lib librt.lib libwdb.lib libpng.lib ws2_32.lib"
 				OutputFile=".\$(PlatformName)\$(ConfigurationName)/libged.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -703,6 +703,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\pmodel2view.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\png.c"
 				>
 			</File>
 			<File

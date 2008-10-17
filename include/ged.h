@@ -1971,6 +1971,14 @@ GED_EXPORT BU_EXTERN(int ged_pmat, (struct ged *gedp, int argc, const char *argv
 GED_EXPORT BU_EXTERN(int ged_pmodel2view, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Create a png file of the view.
+ *
+ * Usage:
+ *     png [-s size] file.png
+ */
+GED_EXPORT BU_EXTERN(int ged_png, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Set point of view
  *
  * Usage:
