@@ -40,6 +40,10 @@ static fastf_t ged_default_ps_ppi = 72.0;
 static fastf_t ged_default_ps_scale = 4.5 * 72.0 / 4096.0;
 static fastf_t ged_ps_color_sf = 1.0/255.0;
 
+static float border_red = 0.0;
+static float border_green = 0.0;
+static float border_blue = 0.0;
+
 #define GED_TO_PS(_x) ((int)((_x)+2048))
 #define GED_TO_PS_COLOR(_c) ((_c)*ged_ps_color_sf)
 
@@ -261,6 +265,16 @@ ged_draw_ps_body(struct ged *gedp, FILE *fp)
 }
 
 static void
+ged_draw_ps_border(FILE *fp)
+{
+    fprintf(fp, "%f %f %f setrgbcolor\n", border_red, border_green, border_blue);
+    fprintf(fp, "newpath 0 0 moveto 4096 0 lineto stroke\n");
+    fprintf(fp, "newpath 4096 0 moveto 4096 4096 lineto stroke\n");
+    fprintf(fp, "newpath 4096 4096 moveto 0 4096 lineto stroke\n");
+    fprintf(fp, "newpath 0 4096 moveto 0 0 lineto stroke\n");
+}
+
+static void
 ged_draw_ps_footer(FILE *fp)
 {
     fputs("% showpage	% uncomment to use raw file\n", fp);
@@ -279,8 +293,10 @@ ged_ps(struct ged *gedp, int argc, const char *argv[])
     int xoffset = 0;
     int yoffset = 0;
     int zclip = 0;
+    int border = 0;
     int k;
-    static const char *usage = "[-c creator] [-f font] [-s size] [-t title] [-x offset] [-y offset] file";
+    int r, g, b;
+    static const char *usage = "[-a author] [-b] [-c r/g/b] [-f font] [-s size] [-t title] [-x offset] [-y offset] file";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
@@ -306,57 +322,87 @@ ged_ps(struct ged *gedp, int argc, const char *argv[])
 
     /* Process options */
     bu_optind = 1;
-    while ((k = bu_getopt(argc, (char * const *)argv, "c:f:s:t:x:y:")) != EOF) {
+    while ((k = bu_getopt(argc, (char * const *)argv, "a:bc:f:s:t:x:y:")) != EOF) {
 	fastf_t tmp_f;
 
 	switch (k) {
-	    case 'c':
-		bu_vls_trunc(&creator, 0);
-		bu_vls_printf(&creator, bu_optarg);
+	case 'a':
+	    bu_vls_trunc(&creator, 0);
+	    bu_vls_printf(&creator, bu_optarg);
 
-		break;
-	    case 'f':
-		bu_vls_trunc(&font, 0);
-		bu_vls_printf(&font, bu_optarg);
+	    break;
+	case 'b':
+	    border = 1;
+	    break;
+	case 'c':
+	    if (sscanf(bu_optarg, "%d/%d/%d", &r, &g, &b) != 3) {
+		bu_vls_printf(&gedp->ged_result_str, "%s: bad color - %s", argv[0], bu_optarg);
+		return BRLCAD_ERROR;
+	    }
 
-		break;
-	    case 's':
-		if (sscanf(bu_optarg, "%lf", &tmp_f) != 1) {
-		    bu_vls_printf(&gedp->ged_result_str, "%s: bad size - %s", argv[0], bu_optarg);
-		    goto bad;
-		}
+	    /* Clamp color values */
+	    if (r < 0)
+		r = 0;
+	    else if (r > 255)
+		r = 255;
 
-		if (tmp_f < 0.0 || NEAR_ZERO(tmp_f, 0.1)) {
-		    bu_vls_printf(&gedp->ged_result_str, "%s: bad size - %s, must be greater than 0.1 inches\n", argv[0], bu_optarg);
-		    goto bad;
-		}
+	    if (g < 0)
+		g = 0;
+	    else if (g > 255)
+		g = 255;
 
-		scale = tmp_f * ged_default_ps_ppi / 4096.0;
+	    if (b < 0)
+		b = 0;
+	    else if (b > 255)
+		b = 255;
 
-		break;
-	    case 't':
-		bu_vls_trunc(&title, 0);
-		bu_vls_printf(&title, bu_optarg);
+	    border_red = GED_TO_PS_COLOR(r);
+	    border_green = GED_TO_PS_COLOR(g);
+	    border_blue = GED_TO_PS_COLOR(b);
 
-		break;
-	    case 'x':
-		if (sscanf(bu_optarg, "%lf", &tmp_f) != 1) {
-		    bu_vls_printf(&gedp->ged_result_str, "%s: bad x offset - %s", argv[0], bu_optarg);
-		    goto bad;
-		}
-		xoffset = (int)(tmp_f * ged_default_ps_ppi);
+	    break;
+	case 'f':
+	    bu_vls_trunc(&font, 0);
+	    bu_vls_printf(&font, bu_optarg);
 
-		break;
-	    case 'y':
-		if (sscanf(bu_optarg, "%lf", &tmp_f) != 1) {
-		    bu_vls_printf(&gedp->ged_result_str, "%s: bad y offset - %s", argv[0], bu_optarg);
-		    goto bad;
-		}
-		yoffset = (int)(tmp_f * ged_default_ps_ppi);
+	    break;
+	case 's':
+	    if (sscanf(bu_optarg, "%lf", &tmp_f) != 1) {
+		bu_vls_printf(&gedp->ged_result_str, "%s: bad size - %s", argv[0], bu_optarg);
+		goto bad;
+	    }
 
-		break;
+	    if (tmp_f < 0.0 || NEAR_ZERO(tmp_f, 0.1)) {
+		bu_vls_printf(&gedp->ged_result_str, "%s: bad size - %s, must be greater than 0.1 inches\n", argv[0], bu_optarg);
+		goto bad;
+	    }
+
+	    scale = tmp_f * ged_default_ps_ppi / 4096.0;
+
+	    break;
+	case 't':
+	    bu_vls_trunc(&title, 0);
+	    bu_vls_printf(&title, bu_optarg);
+
+	    break;
+	case 'x':
+	    if (sscanf(bu_optarg, "%lf", &tmp_f) != 1) {
+		bu_vls_printf(&gedp->ged_result_str, "%s: bad x offset - %s", argv[0], bu_optarg);
+		goto bad;
+	    }
+	    xoffset = (int)(tmp_f * ged_default_ps_ppi);
+
+	    break;
+	case 'y':
+	    if (sscanf(bu_optarg, "%lf", &tmp_f) != 1) {
+		bu_vls_printf(&gedp->ged_result_str, "%s: bad y offset - %s", argv[0], bu_optarg);
+		goto bad;
+	    }
+	    yoffset = (int)(tmp_f * ged_default_ps_ppi);
+
+	    break;
 	default:
-	    bu_vls_printf(&gedp->ged_result_str, "%s: Unrecognized option - %s", argv[0], bu_optarg);
+	    bu_vls_printf(&gedp->ged_result_str, "%s: Unrecognized option - %s", argv[0], argv[bu_optind-1]);
 	    goto bad;
 	}
     }
@@ -372,6 +418,8 @@ ged_ps(struct ged *gedp, int argc, const char *argv[])
     }
 
     ged_draw_ps_header(fp, bu_vls_addr(&font), bu_vls_addr(&title), bu_vls_addr(&creator), linewidth, scale, xoffset, yoffset);
+    if (border)
+	ged_draw_ps_border(fp);
     ged_draw_ps_body(gedp, fp);
     ged_draw_ps_footer(fp);
 
