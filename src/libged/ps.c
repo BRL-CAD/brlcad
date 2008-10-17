@@ -42,8 +42,6 @@ static fastf_t ged_ps_color_sf = 1.0/255.0;
 
 #define GED_TO_PS(_x) ((int)((_x)+2048))
 #define GED_TO_PS_COLOR(_c) ((_c)*ged_ps_color_sf)
-#define GED_PS_CLIPPING 0
-
 
 static void
 ged_draw_ps_header(FILE *fp, char *font, char *title, char *creator, int linewidth, fastf_t scale, int xoffset, int yoffset)
@@ -93,10 +91,8 @@ static void
 ged_draw_ps_solid(struct ged *gedp, FILE *fp, struct solid *sp, matp_t psmat)
 {
     static vect_t		last;
-#if GED_PS_CLIPPING
-    point_t			clipmin = {0.0, 0.0, 0.0};
-    point_t			clipmax = {0.0, 0.0, 0.0};
-#endif
+    point_t			clipmin = {-1.0, -1.0, -MAX_FASTF};
+    point_t			clipmax = {1.0, 1.0, MAX_FASTF};
     register struct bn_vlist	*tvp;
     register point_t		*pt_prev=NULL;
     register fastf_t		dist_prev=1.0;
@@ -214,10 +210,8 @@ ged_draw_ps_solid(struct ged *gedp, FILE *fp, struct solid *sp, matp_t psmat)
 		    break;
 	    }
 
-#if GED_PS_CLIPPING
 	    if (ged_vclip(start, fin, clipmin, clipmax) == 0)
 		continue;
-#endif
 
 	    fprintf(fp,
 		    "newpath %d %d moveto %d %d lineto stroke\n",
