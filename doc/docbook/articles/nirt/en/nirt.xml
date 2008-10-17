@@ -113,7 +113,7 @@ Options:
 	<informalfigure>
 	  <mediaobject>
 	    <imageobject>
-	      <imagedata align = "center" fileref="mged_nirt-lineupaxis_3.png" format="PNG"></imagedata>
+	      <imagedata align = "center" fileref="../../../articles/nirt/nirt_images/mged_nirt-lineupaxis_3.png" format="PNG"></imagedata>
 	    </imageobject>
 	    <caption>
 	      <para>
