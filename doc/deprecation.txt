@@ -103,6 +103,8 @@ include/raytrace.h
 
 7.14.0
 ------
+include/raytrace.h
+	GET_HITMISS -> NMG_GET_HITMISS
 mged
 	edcolor -> color -e
 include/vmath.h

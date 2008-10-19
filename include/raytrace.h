@@ -1999,7 +1999,7 @@ struct rt_shootray_status {
 
 /*********************************************************************************
  *	The following section is an exact copy of what was previously "nmg_rt.h" *
- *      (with minor changes to GET_HITMISS and NMG_FREE_HITLIST                  *
+ *      (with minor changes to NMG_GET_HITMISS and NMG_FREE_HITLIST              *
  *	moved here to use rt_g.rtg_nmgfree freelist for hitmiss structs.         *
  ******************************************************************************* */
 
@@ -2167,7 +2167,7 @@ struct ray_data {
 #define NMG_CK_RD(_rd) NMG_CKMAG(_rd, NMG_RAY_DATA_MAGIC, "ray data");
 
 
-#define GET_HITMISS(_p, _ap) { \
+#define NMG_GET_HITMISS(_p, _ap) { \
 	(_p) = BU_LIST_FIRST( hitmiss, &((_ap)->a_resource->re_nmgfree) ); \
 	if ( BU_LIST_IS_HEAD( (_p), &((_ap)->a_resource->re_nmgfree ) ) ) \
 		(_p) = (struct hitmiss *)bu_calloc(1, sizeof( struct hitmiss ), "hitmiss "BU_FLSTR ); \
