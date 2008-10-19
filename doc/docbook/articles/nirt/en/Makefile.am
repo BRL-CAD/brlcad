@@ -1,7 +1,7 @@
 XSLTPROC_FLAGS=-nonet -xinclude
 XSL_SINGLE_XHTML_STYLESHEET=$(top_srcdir)/doc/docbook/resources/standard/xsl/xhtml-1_1/docbook.xsl
 XSL_CHUNKED_XHTML_STYLESHEET=$(top_srcdir)/doc/docbook/resources/standard/xsl/xhtml-1_1/chunk.xsl
-XSL_FO_STYLESHEET=$(top_srcdir)/doc/docbook/articles/nirt/fo-custom.xsl
+XSL_FO_STYLESHEET=$(top_srcdir)/doc/docbook/articles/nirt/fo_custom.xsl
 XML_CATALOG_FILES=$(top_srcdir)/doc/docbook/catalog.xml
 
 .xml.html: 
