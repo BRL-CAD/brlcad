@@ -210,6 +210,7 @@ libged_nil_la_SOURCES = \
 
 # cannot set per-target CPPFLAGS until automake 1.7+
 AM_CPPFLAGS = \
+	${PNG_CPPFLAGS} \
 	${REGEX_CPPFLAGS} \
 	${TCL_CPPFLAGS} -DNEW_TOPS_BEHAVIOR
 
