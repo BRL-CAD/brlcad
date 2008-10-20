@@ -95,7 +95,7 @@ int main()
     pc_pushparam_struct(&pcs,"D", PC_DB_FASTF_T, &D);
     pc_pushparam_struct(&pcs,"E", PC_DB_POINT_T, &E);
     pc_pushparam_struct(&pcs,"G", PC_DB_VECTOR_T, &F);
-    const char * args[] = {"F","G"};
+    char * args[] = {"F","G"};
     pc_pushconstraint_expr(&pcs, "Constraint-test","A + B < 0");
     pc_pushparam_struct(&pcs,"F", PC_DB_VECTOR_T, &F);
     pc_constrnt *con;
