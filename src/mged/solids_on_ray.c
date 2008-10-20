@@ -139,7 +139,7 @@ free_solid(struct sol_name_dist *sol, int free_name)
  *			P R I N T _ S O L I D
  */
 static void
-print_solid(void *vp, int depth)
+print_solid(void *vp)
 {
     struct sol_name_dist	*sol = vp;
     struct bu_vls tmp_vls;
