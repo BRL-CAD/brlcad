@@ -121,7 +121,7 @@ void free_solid (char *vp)
 /*
  *			P R I N T _ S O L I D
  */
-void print_solid (void *vp, int depth)
+void print_solid (void *vp)
 {
     struct sol_name_dist	*sol = vp;
 
