@@ -334,7 +334,10 @@ get_layer()
     }
 
     if ( verbose && curr_layer != old_layer ) {
-	bu_log( "changed to layer #%d, (m = x%x, s=x%x)\n", curr_layer, (unsigned int)layers[curr_layer]->m, (unsigned int)layers[curr_layer]->s );
+	bu_log( "changed to layer #%d, (m = %p, s=%p)\n",
+		curr_layer,
+		layers[curr_layer]->m,
+		layers[curr_layer]->s );
     }
 }
 
