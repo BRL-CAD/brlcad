@@ -173,7 +173,7 @@ COMPILE		= $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(C
 # for the BINARIES that you specified above have already been done.
 #========================================================================
 
-all: binaries libraries doc
+all: binaries libraries # doc
 
 #========================================================================
 # The binaries target builds executable programs, Windows .dll's, unix
