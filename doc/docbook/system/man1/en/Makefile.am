@@ -36,13 +36,15 @@ man1DOCBOOK = \
 	rtedge.xml \
 	search.xml
 
+man1INTRO = \
+	Introduction.xml
+
 man1DOCBOOKhtmldir = $(BRLCAD_DATA)/html/man1/en
 man1DOCBOOKhtml_DATA = $(BUILTHTML)
 
 BUILTHTML = \
 	${man1DOCBOOK:xml=html} \
-	Introduction.html 
-
+	${man1INTRO:xml=html} 
 
 if BUILD_PDF_DOCS
 
