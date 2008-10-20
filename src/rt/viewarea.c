@@ -649,6 +649,13 @@ view_end(struct application *ap)
 	factor = bu_units_conversion("m");
     }
 
+    bu_log("\n"
+	   "********************************************************************\n"
+	   "WARNING: The terminology and output format of 'rtarea' is deprecated\n"
+	   "         and subject to change in a future release of BRL-CAD.\n"
+	   "********************************************************************\n"
+	   "\n");
+
     cumulative = print_region_area_list(&presented_region_count, rtip, PRESENTED_AREA);
     (void) print_region_area_list(&exposed_region_count, rtip, EXPOSED_AREA);
 
@@ -686,8 +693,10 @@ view_end(struct application *ap)
     bu_log("Number of Exposed Regions:    %8d\n", exposed_region_count);
     bu_log("Number of Exposed Assemblies: %8d\n", exposed_assembly_count);
     bu_log("\n"
+	   "********************************************************************\n"
 	   "WARNING: The terminology and output format of 'rtarea' is deprecated\n"
 	   "         and subject to change in a future release of BRL-CAD.\n"
+	   "********************************************************************\n"
 	   "\n");
 
     /* free the assembly areas */
