@@ -26,6 +26,7 @@ set(LIBGED_SOURCES
     cat.c
     center.c
     clip.c
+    clone.c
     color.c
     comb.c
     comb_color.c
@@ -118,9 +119,11 @@ set(LIBGED_SOURCES
     plot.c
     pmat.c
     pmodel2view.c
+    png.c
     pov.c
     prcolor.c
     prefix.c
+    ps.c
     push.c
     put.c
     put_comb.c
@@ -204,6 +207,8 @@ set(LIBGED_SOURCES
 
 include_directories(
     ../../include
+    ../other/libpng
+    ../other/libz
     ../other/tcl/generic
 )
 
