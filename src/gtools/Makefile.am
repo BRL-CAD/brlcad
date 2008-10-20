@@ -4,8 +4,7 @@ bin_PROGRAMS = \
 	g_diff \
 	g_lint \
 	g_qa \
-	solshoot \
-	testfree
+	solshoot
 
 noinst_PROGRAMS = \
 	g_transfer
