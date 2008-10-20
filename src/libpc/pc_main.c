@@ -141,7 +141,7 @@ pc_getconstraint_struct(struct pc_constrnt ** c, int nargs)
 {
     BU_GETSTRUCT(*c,pc_constrnt);
     bu_vls_init(&((*c)->name));
-    (*c)->args = (char **) malloc(nargs*sizeof(char *));
+    (*c)->args = (const char **) malloc(nargs*sizeof(char *));
     (*c)->ctype = PC_DB_BYSTRUCT;
 }
 
@@ -169,7 +169,7 @@ pc_pushconstraint_expr(struct pc_pc_set * pcsp,const char * name, const char * s
  * the case of complex constraint functions
  */
 void
-pc_pushconstraint_struct(struct pc_pc_set * pcsp,const char * name, int nargs, int dimension, int  (*fp) (double ** args), char **a)
+pc_pushconstraint_struct(struct pc_pc_set * pcsp,const char * name, int nargs, int dimension, int  (*fp) (double ** args), const char ** args)
 {
     struct pc_constrnt *con;
     int i;
@@ -177,7 +177,7 @@ pc_pushconstraint_struct(struct pc_pc_set * pcsp,const char * name, int nargs, i
     pc_getconstraint_struct(&con,nargs);
     bu_vls_strcat(&(con->name), name);
     for (i =0; i < nargs; i++)
-	con->args[i] = a[i];
+	con->args[i] = args[i];
     con->data.cf.nargs = nargs;
     con->data.cf.dimension = dimension;
     con->data.cf.fp = fp;

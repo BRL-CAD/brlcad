@@ -51,7 +51,7 @@ pc_isperpendicular(double ** v)
 }
 
 void
-pc_mk_isperpendicular(struct pc_constrnt ** c,const char * name, char ** args)
+pc_mk_isperpendicular(struct pc_constrnt ** c,const char * name, const char ** args)
 {
     register int i;
     
@@ -81,7 +81,7 @@ pc_isfixed(double ** v)
 }
 
 void
-pc_mk_ismodpositive(struct pc_constrnt ** c,const char * name, char ** args)
+pc_mk_ismodpositive(struct pc_constrnt ** c,const char * name, const char ** args)
 {
     register int i;
     
