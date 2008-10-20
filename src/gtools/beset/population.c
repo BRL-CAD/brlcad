@@ -59,21 +59,11 @@ int shape_number;
 void
 pop_init (struct population *p, int size)
 {
-    int i;
     p->parent = bu_malloc(sizeof(struct individual) * size, "parent");
     p->child  = bu_malloc(sizeof(struct individual) * size, "child");
     p->size = size;
     p->db_c = p->db_p = DBI_NULL;
     p->name = bu_malloc(sizeof(char **) * size, "names");
-
-    /* pre-compute indidvidual names */
-    /*
-      for (i = 0; i < size; i++) {
-      p->name[i] = bu_malloc(sizeof(char *) * 256, "name");
-      snprintf(p->name[i], 256, "ind%.3d", i);
-      }
-    */
-
 
 #define SEED 33
     /* init in main() bn_rand_init(idx, SEED);*/
@@ -103,9 +93,9 @@ void
 pop_spawn (struct population *p)
 {
     int i, j;
-    point_t p1, p2, p3;
+    point_t p1/*, p2, p3*/;
     struct wmember wm_hd;
-    double r1, r2, r3;
+    double r1/*, r2, r3*/;
 
     char shape[256];
 
