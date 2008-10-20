@@ -64,12 +64,6 @@ pc_mk_isperpendicular(struct pc_constrnt ** c,const char * name, const char ** a
 	(*c)->args[i] = args[i];
 }
 
-/** 			PC_ISMODPOSITIVE
- *
- * Checks if the modulus of a given vector is positive
- * The double pointer is expected to point to a properly initialized array
- */
-
 int
 pc_isfixed(double ** v)
 {
@@ -79,6 +73,12 @@ pc_isfixed(double ** v)
     else
     	return -1;
 }
+
+/** 			PC_ISMODPOSITIVE
+ *
+ * Checks if the modulus of a given vector is positive
+ * The double pointer is expected to point to a properly initialized array
+ */
 
 void
 pc_mk_ismodpositive(struct pc_constrnt ** c,const char * name, const char ** args)
