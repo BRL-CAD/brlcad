@@ -42,7 +42,7 @@ main(int argc, char *argv[])
     register int i, j;
     int db_index;
     char c;
-    char *av[MAXARGS];
+    const char *av[MAXARGS];
     struct ged *gedp;
 
     bu_optind = 1;
