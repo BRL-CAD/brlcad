@@ -3,8 +3,7 @@ SUBDIRS = beset
 bin_PROGRAMS = \
 	g_diff \
 	g_lint \
-	g_qa \
-	solshoot
+	g_qa
 
 noinst_PROGRAMS = \
 	g_transfer
@@ -23,12 +22,6 @@ g_lint_LDADD = ${RT}
 g_qa_SOURCES = g_qa.c
 g_qa_LDADD = ${RT}
 
-solshoot_SOURCES = solshoot.c
-solshoot_LDADD = ${RT}
-
-testfree_SOURCES = testfree.c
-testfree_LDADD = ${RT}
-
 man_MANS = \
 	g_diff.1 \
 	g_lint.1 \
@@ -42,9 +35,8 @@ sample_applications_DATA = g_transfer.c
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \
-	$(g_lint_OBJECTS) \
 	$(g_diff_OBJECTS) \
-	$(solshoot_OBJECTS) \
-	$(testfree_OBJECTS) \
+	$(g_lint_OBJECTS) \
+	$(g_qa_OBJECTS) \
 	$(noinst_PROGRAMS) \
 	$(bin_PROGRAMS)
