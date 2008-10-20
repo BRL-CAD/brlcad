@@ -7,13 +7,16 @@ docbookdirs = \
 
 if BUILD_DOCS
 
-SUBDIRS = $(docbookdirs)
+SUBDIRS = \
+	$(docbookdirs)
 
-else !BUILD_DOCS
+endif 
 
-DIST_SUBDIRS = $(docbookdirs)
+DIST_SUBDIRS = \
+	$(docbookdirs)
 
-endif
-# end BUILD_DOCS
+EXTRA_DIST = \
+	README \
+	catalog.xml
 
 include $(top_srcdir)/misc/Makefile.defs
