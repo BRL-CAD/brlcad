@@ -233,7 +233,6 @@ EXTRA_DIST = \
 	modified_to_orig.diff \
 	opennurbs_memory_new.cpp \
 	opennurbs_zlib_memory.cpp \
-	opennurbs.xcodeproj \
 	readme.txt
 
 if BUILD_ZLIB
