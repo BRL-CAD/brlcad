@@ -5,7 +5,6 @@ EXTRA_DIST= \
 	asc2nmg/asc2nmg.vcproj \
 	asc2pix/asc2pix.vcproj \
 	bot2bldxf/bot2bldxf.vcproj \
-	bot2raw/bot2raw.vcproj \
 	bot_shell2vtk/bot_shell2vtk.vcproj \
 	breplicator/breplicator.vcproj \
 	brlcad/brlcad.sln \
