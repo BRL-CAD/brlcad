@@ -34,6 +34,7 @@
 
 #include <stdlib.h>
 #include <math.h>
+#include <ctype.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <string.h>
@@ -47,6 +48,7 @@
 #include "raytrace.h"
 #include "wdb.h"
 #include "mater.h"
+#include "ged.h"
 
 
 static struct mater *mater_hd1 = MATER_NULL;
@@ -609,45 +611,45 @@ verify_region_attrs( struct directory *dp, struct db_i *dbip, Tcl_Obj *obj )
 	key = Tcl_GetStringFromObj( objs[i-1], NULL );
 	value = Tcl_GetStringFromObj( objs[i], NULL );
 	if ( !strcmp( key, "region_id" ) ) {
-	    short id;
+	    long id;
 
-	    id = atoi( value );
+	    id = strtol(value, NULL, 0);
 	    if ( id != comb->region_id ) {
-		fprintf( stderr, "WARNING: %s in %s: \"region_id\" attribute says %d, while region says %d\n",
+		fprintf( stderr, "WARNING: %s in %s: \"region_id\" attribute says %ld, while region says %ld\n",
 			 dp->d_namep, dbip->dbi_filename, id, comb->region_id );
 	    }
 	} else if ( !strcmp( key, "giftmater" ) ) {
-	    short GIFTmater;
+	    long GIFTmater;
 
-	    GIFTmater = atoi( value );
+	    GIFTmater = strtol(value, NULL, 0);
 	    if ( GIFTmater != comb->GIFTmater ) {
-		fprintf( stderr, "WARNING: %s in %s: \"giftmater\" attribute says %d, while region says %d\n",
+		fprintf( stderr, "WARNING: %s in %s: \"giftmater\" attribute says %ld, while region says %ld\n",
 			 dp->d_namep, dbip->dbi_filename, GIFTmater, comb->GIFTmater );
 	    }
 	} else if ( !strcmp( key, "los" ) ) {
-	    short los;
+	    long los;
 
-	    los = atoi( value );
+	    los = strtol(value, NULL, 0);
 	    if ( los != comb->los ) {
-		fprintf( stderr, "WARNING: %s in %s: \"los\" attribute says %d, while region says %d\n",
+		fprintf( stderr, "WARNING: %s in %s: \"los\" attribute says %ld, while region says %ld\n",
 			 dp->d_namep, dbip->dbi_filename, los, comb->los );
 	    }
 	} else if ( !strcmp( key, "material" ) ) {
 	    if ( !strncmp( value, "gift", 4 ) ) {
-		short GIFTmater;
+		long GIFTmater;
 
-		GIFTmater = atoi( &value[4] );
+		GIFTmater = strtol(&value[4], NULL, 0);
 		if ( GIFTmater != comb->GIFTmater ) {
-		    fprintf( stderr, "WARNING: %s in %s: \"material\" attribute says %s, while region says %d\n",
+		    fprintf( stderr, "WARNING: %s in %s: \"material\" attribute says %s, while region says %ld\n",
 			     dp->d_namep, dbip->dbi_filename, value, comb->GIFTmater );
 		}
 	    }
 	} else if ( !strcmp( key, "aircode" ) ) {
-	    short aircode;
+	    long aircode;
 
-	    aircode = atoi( value );
+	    aircode = strtol(value, NULL, 0);
 	    if ( aircode != comb->aircode ) {
-		fprintf( stderr, "WARNING: %s in %s: \"aircode\" attribute says %d, while region says %d\n",
+		fprintf( stderr, "WARNING: %s in %s: \"aircode\" attribute says %ld, while region says %ld\n",
 			 dp->d_namep, dbip->dbi_filename, aircode, comb->aircode );
 	    }
 	}
@@ -845,7 +847,6 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 
 	if ( (dp1->d_flags & DIR_COMB) && (dp2->d_flags & DIR_COMB ) ) {
 	    /* both are combinations */
-	    int len;
 	    has_diff += compare_tcl_combs( obj1, dp1, obj2, dp2 );
 	    if ( pre_5_vers != 2 ) {
 		has_diff += compare_attrs( dp1, dp2 );
@@ -879,7 +880,8 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 	    /* need to add this object */
 	    has_diff += 1;
 	    argv[2] = dp2->d_namep;
-	    if ( wdb_get_tcl( (ClientData)(wdb2), interp, 3, argv ) == TCL_ERROR || !strncmp( Tcl_GetStringResult(interp), "invalid", 7 ) ) {
+	    if ( wdb_get_tcl((ClientData)(wdb2), interp, 3, argv) == TCL_ERROR ||
+		 !strncmp(Tcl_GetStringResult(interp), "invalid", 7) ) {
 		/* could not get TCL version */
 		if ( mode == HUMAN )
 		    printf( "Import %s from %s\n",
@@ -909,7 +911,6 @@ main(int argc, char **argv)
     char *invoked_as;
     char *file1, *file2;
     struct rt_wdb *wdb1, *wdb2;
-    struct stat stat1, stat2;
     int c;
     int different = 0;
 

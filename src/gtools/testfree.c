@@ -44,7 +44,8 @@ void free_whatsit (struct whatsit *wp, char *s)
     bu_free((char *) wp, "a whatsit");
 }
 
-main (void)
+int
+main(int argc, char *argv[])
 {
     struct whatsit	*wp;
 

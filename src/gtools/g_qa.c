@@ -556,8 +556,10 @@ parse_args(int ac, char *av[])
 		/* find out if we have two or one args
 		 * user can separate them with, or - delimiter
 		 */
-		if (p = strchr(bu_optarg, ','))  	 *p++ = '\0';
-		else if (p = strchr(bu_optarg, '-')) *p++ = '\0';
+		if ((p = strchr(bu_optarg, ',')))
+		    *p++ = '\0';
+		else if ((p = strchr(bu_optarg, '-')))
+		    *p++ = '\0';
 
 
 		if (read_units_double(&value1, bu_optarg, units_tab[0]))
@@ -702,14 +704,14 @@ parse_densities_buffer(char *buf, unsigned long len)
 	}
 
 	if (idx < 0)
-	    bu_exit(EXIT_FAILURE, "bad density index (< 0) %d\n", idx);
+	    bu_exit(EXIT_FAILURE, "bad density index (%ld < 0)\n", idx);
 
 	density = strtod(q, &p);
 	if (q == p)
 	    bu_exit(EXIT_FAILURE, "could not convert density\n");
 
 	if (density < 0.0)
-	    bu_exit(EXIT_FAILURE, "bad density (< 0) %g\n", density);
+	    bu_exit(EXIT_FAILURE, "bad density (%lf < 0)\n", density);
 
 	while ((*p == '\t') || (*p == ' ')) p++;
 
@@ -1835,7 +1837,7 @@ terminate_check(struct cstate *state)
 			    if (hits == 0) {
 				bu_log("%s was not hit\n", regp->reg_name);
 			    } else {
-				bu_log("%s hit only %u times (< %u)\n",
+				bu_log("%s hit only %lu times (< %u)\n",
 				       regp->reg_name, hits, require_num_hits);
 			    }
 			}
@@ -2016,7 +2018,7 @@ summary_reports(struct cstate *state, int start, int ac, char *av[])
 	    if (hits == 0) {
 		bu_log("%s was not hit\n", regp->reg_name);
 	    } else {
-		bu_log("%s hit only %u times (< %u)\n",
+		bu_log("%s hit only %lu times (< %u)\n",
 		       regp->reg_name, hits, require_num_hits);
 	    }
 
@@ -2150,7 +2152,7 @@ main(int ac, char *av[])
 
 	VSCALE(state.steps, state.span, inv_spacing);
 
-	bu_log("grid spacing %g %s %d x %d x %d\n",
+	bu_log("grid spacing %g %s %ld x %ld x %ld\n",
 	       gridSpacing / units[LINE]->val,
 	       units[LINE]->name,
 	       state.steps[0]-1,
