@@ -542,7 +542,7 @@ main(int argc, char *argv[]) {
 
     /* XXX fixed in latest db_open(), but call for now just in case
        until 7.8.0 release */
-    rt_init_resource( &rt_uniresource, 0, NULL );
+    rt_init_resource(&rt_uniresource, 0, NULL);
 
     /* make sure the geometry file is a geometry database, get a
      * database instance pointer.

@@ -415,7 +415,7 @@ read_units_double(double *val, char *buf, const struct cvt_tab *cvt)
     }
     if (i == 2) {
 	*val = a;
-	for (; cvt->name[0] != '\0'; ) {
+	for (; cvt->name[0] != '\0';) {
 	    if (!strncmp(cvt->name, units_string, 256)) {
 		goto found_units;
 	    } else {
@@ -470,69 +470,69 @@ parse_args(int ac, char *av[])
     while ((c=bu_getopt(ac, av, options)) != EOF) {
 	switch (c) {
 	    case 'A'	:
-	    {
-		char *p;
-		analysis_flags = 0;
-		multiple_analyses = 0;
-		for (p = bu_optarg; *p; p++) {
-		    switch (*p) {
-			case 'A' :
-			    analysis_flags = ANALYSIS_VOLUME | ANALYSIS_WEIGHT | \
-				ANALYSIS_OVERLAPS | ANALYSIS_ADJ_AIR | ANALYSIS_GAP | \
-				ANALYSIS_EXP_AIR;
-			    multiple_analyses = 1;
-			    break;
-			case 'a' :
-			    if (analysis_flags)
+		{
+		    char *p;
+		    analysis_flags = 0;
+		    multiple_analyses = 0;
+		    for (p = bu_optarg; *p; p++) {
+			switch (*p) {
+			    case 'A' :
+				analysis_flags = ANALYSIS_VOLUME | ANALYSIS_WEIGHT | \
+				    ANALYSIS_OVERLAPS | ANALYSIS_ADJ_AIR | ANALYSIS_GAP | \
+				    ANALYSIS_EXP_AIR;
 				multiple_analyses = 1;
+				break;
+			    case 'a' :
+				if (analysis_flags)
+				    multiple_analyses = 1;
 
-			    analysis_flags |= ANALYSIS_ADJ_AIR;
+				analysis_flags |= ANALYSIS_ADJ_AIR;
 
-			    break;
-			case 'b' :
-			    if (analysis_flags)
-				multiple_analyses = 1;
+				break;
+			    case 'b' :
+				if (analysis_flags)
+				    multiple_analyses = 1;
 
-			    analysis_flags |= ANALYSIS_BOX;
+				analysis_flags |= ANALYSIS_BOX;
 
-			    break;
-			case 'e' :
-			    if (analysis_flags)
-				multiple_analyses = 1;
+				break;
+			    case 'e' :
+				if (analysis_flags)
+				    multiple_analyses = 1;
 
-			    analysis_flags |= ANALYSIS_EXP_AIR;
-			    break;
-			case 'g' :
-			    if (analysis_flags)
-				multiple_analyses = 1;
+				analysis_flags |= ANALYSIS_EXP_AIR;
+				break;
+			    case 'g' :
+				if (analysis_flags)
+				    multiple_analyses = 1;
 
-			    analysis_flags |= ANALYSIS_GAP;
-			    break;
-			case 'o' :
-			    if (analysis_flags)
-				multiple_analyses = 1;
+				analysis_flags |= ANALYSIS_GAP;
+				break;
+			    case 'o' :
+				if (analysis_flags)
+				    multiple_analyses = 1;
 
-			    analysis_flags |= ANALYSIS_OVERLAPS;
-			    break;
-			case 'v' :
-			    if (analysis_flags)
-				multiple_analyses = 1;
+				analysis_flags |= ANALYSIS_OVERLAPS;
+				break;
+			    case 'v' :
+				if (analysis_flags)
+				    multiple_analyses = 1;
 
-			    analysis_flags |= ANALYSIS_VOLUME;
-			    break;
-			case 'w' :
-			    if (analysis_flags)
-				multiple_analyses = 1;
+				analysis_flags |= ANALYSIS_VOLUME;
+				break;
+			    case 'w' :
+				if (analysis_flags)
+				    multiple_analyses = 1;
 
-			    analysis_flags |= ANALYSIS_WEIGHT;
-			    break;
-			default:
-			    bu_exit(EXIT_FAILURE, "Unknown analysis type \"%c\" requested.\n", *p);
-			    break;
+				analysis_flags |= ANALYSIS_WEIGHT;
+				break;
+			    default:
+				bu_exit(EXIT_FAILURE, "Unknown analysis type \"%c\" requested.\n", *p);
+				break;
+			}
 		    }
+		    break;
 		}
-		break;
-	    }
 	    case 'a'	:
 		bu_log("azimuth not implemented\n");
 		if (sscanf(bu_optarg, "%lg", &azimuth_deg) != 1)
@@ -548,39 +548,39 @@ parse_args(int ac, char *av[])
 	    case 'f'	: densityFileName = bu_optarg; break;
 
 	    case 'g'	:
-	    {
-		double value1, value2;
-		i = 0;
+		{
+		    double value1, value2;
+		    i = 0;
 
 
-		/* find out if we have two or one args
-		 * user can separate them with, or - delimiter
-		 */
-		if ((p = strchr(bu_optarg, ',')))
-		    *p++ = '\0';
-		else if ((p = strchr(bu_optarg, '-')))
-		    *p++ = '\0';
+		    /* find out if we have two or one args
+		     * user can separate them with, or - delimiter
+		     */
+		    if ((p = strchr(bu_optarg, ',')))
+			*p++ = '\0';
+		    else if ((p = strchr(bu_optarg, '-')))
+			*p++ = '\0';
 
 
-		if (read_units_double(&value1, bu_optarg, units_tab[0]))
-		    bu_exit(EXIT_FAILURE, "error parsing grid spacing value \"%s\"\n", bu_optarg);
-		if (p) {
-		    /* we've got 2 values, they are upper limit and lower limit */
-		    if (read_units_double(&value2, p, units_tab[0]))
-			bu_exit(EXIT_FAILURE, "error parsing grid spacing limit value \"%s\"\n", p);
-		    gridSpacing = value1;
-		    gridSpacingLimit = value2;
-		} else {
-		    gridSpacingLimit = value1;
+		    if (read_units_double(&value1, bu_optarg, units_tab[0]))
+			bu_exit(EXIT_FAILURE, "error parsing grid spacing value \"%s\"\n", bu_optarg);
+		    if (p) {
+			/* we've got 2 values, they are upper limit and lower limit */
+			if (read_units_double(&value2, p, units_tab[0]))
+			    bu_exit(EXIT_FAILURE, "error parsing grid spacing limit value \"%s\"\n", p);
+			gridSpacing = value1;
+			gridSpacingLimit = value2;
+		    } else {
+			gridSpacingLimit = value1;
 
-		    gridSpacing = 0.0; /* flag it */
+			gridSpacing = 0.0; /* flag it */
+		    }
+
+		    bu_log("set grid spacing:%g %s limit:%g %s\n",
+			   gridSpacing / units[LINE]->val, units[LINE]->name,
+			   gridSpacingLimit / units[LINE]->val, units[LINE]->name);
+		    break;
 		}
-
-		bu_log("set grid spacing:%g %s limit:%g %s\n",
-		       gridSpacing / units[LINE]->val, units[LINE]->name,
-		       gridSpacingLimit / units[LINE]->val, units[LINE]->name);
-		break;
-	    }
 	    case 'G'	:
 		makeOverlapAssemblies = 1;
 		bu_exit(EXIT_FAILURE, "-G option unimplemented\n");
@@ -599,7 +599,7 @@ parse_args(int ac, char *av[])
 		break;
 	    case 'P'	:
 		/* cannot ask for more cpu's than the machine has */
-		if ((c=atoi(bu_optarg)) > 0 && c <= max_cpus ) ncpu = c;
+		if ((c=atoi(bu_optarg)) > 0 && c <= max_cpus) ncpu = c;
 		break;
 	    case 'r'	:
 		print_per_region_stats = 1;
@@ -635,35 +635,35 @@ parse_args(int ac, char *av[])
 		}
 		break;
 	    case 'u'	:
-	    {
-		char *ptr = bu_optarg;
-		const struct cvt_tab *cv;
-		static const char *dim[3] = {"length", "volume", "weight"};
-		char *units_name[3];
+		{
+		    char *ptr = bu_optarg;
+		    const struct cvt_tab *cv;
+		    static const char *dim[3] = {"length", "volume", "weight"};
+		    char *units_name[3];
 
-		for (i=0; i < 3 && ptr; i++) {
-		    units_name[i] = strsep(&ptr, ",");
+		    for (i=0; i < 3 && ptr; i++) {
+			units_name[i] = strsep(&ptr, ",");
 
-		    /* make sure the unit value is in the table */
-		    if (*units_name[i] != '\0') {
-			for (cv= &units_tab[i][0]; cv->name[0] != '\0'; cv++) {
-			    if (!strcmp(cv->name, units_name[i])) {
-				goto found_cv;
+			/* make sure the unit value is in the table */
+			if (*units_name[i] != '\0') {
+			    for (cv= &units_tab[i][0]; cv->name[0] != '\0'; cv++) {
+				if (!strcmp(cv->name, units_name[i])) {
+				    goto found_cv;
+				}
 			    }
+			    bu_exit(EXIT_FAILURE, "Units \"%s\" not found in coversion table\n", units_name[i]);
+			found_cv:
+			    units[i] = cv;
 			}
-			bu_exit(EXIT_FAILURE, "Units \"%s\" not found in coversion table\n", units_name[i]);
-		    found_cv:
-			units[i] = cv;
 		    }
-		}
 
-		bu_log("Units: ");
-		for (i=0; i < 3; i++) {
-		    bu_log(" %s: %s", dim[i], units[i]->name);
+		    bu_log("Units: ");
+		    for (i=0; i < 3; i++) {
+			bu_log(" %s: %s", dim[i], units[i]->name);
+		    }
+		    bu_log("\n");
+		    break;
 		}
-		bu_log("\n");
-		break;
-	    }
 
 	    case '?'	:
 	    case 'h'	:
@@ -831,10 +831,10 @@ add_unique_pair(struct region_pair *list, /* list to add into */
     struct region_pair *rp, *rpair;
 
     /* look for it in our list */
-    bu_semaphore_acquire( SEM_LIST );
-    for ( BU_LIST_FOR(rp, region_pair, &list->l) ) {
+    bu_semaphore_acquire(SEM_LIST);
+    for (BU_LIST_FOR(rp, region_pair, &list->l)) {
 
-	if ( (r1 == rp->r.r1 && r2 == rp->r2) || (r1 == rp->r2 && r2 == rp->r.r1) ) {
+	if ((r1 == rp->r.r1 && r2 == rp->r2) || (r1 == rp->r2 && r2 == rp->r.r1)) {
 	    /* we already have an entry for this region pair,
 	     * we increase the counter, check the depth and
 	     * update thickness maximum and entry point if need be
@@ -860,13 +860,13 @@ add_unique_pair(struct region_pair *list, /* list to add into */
     list->max_dist ++; /* really a count */
 
     /* insert in the list at the "nice" place */
-    for ( BU_LIST_FOR(rp, region_pair, &list->l) ) {
-	if (strcmp(rp->r.r1->reg_name, r1->reg_name) <= 0 )
+    for (BU_LIST_FOR(rp, region_pair, &list->l)) {
+	if (strcmp(rp->r.r1->reg_name, r1->reg_name) <= 0)
 	    break;
     }
     BU_LIST_INSERT(&rp->l, &rpair->l);
  found:
-    bu_semaphore_release( SEM_LIST );
+    bu_semaphore_release(SEM_LIST);
     return rpair;
 }
 
@@ -909,12 +909,12 @@ overlap(struct application *ap,
 
     depth = ohitp->hit_dist - ihitp->hit_dist;
 
-    if ( depth < overlap_tolerance )
+    if (depth < overlap_tolerance)
 	/* too small to matter, pick one or none */
 	return(1);
 
-    VJOIN1( ihit, rp->r_pt, ihitp->hit_dist, rp->r_dir );
-    VJOIN1( ohit, rp->r_pt, ohitp->hit_dist, rp->r_dir );
+    VJOIN1(ihit, rp->r_pt, ihitp->hit_dist, rp->r_dir);
+    VJOIN1(ohit, rp->r_pt, ohitp->hit_dist, rp->r_dir);
 
     if (plot_overlaps) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -1015,7 +1015,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 
 
     /* examine each partition until we get back to the head */
-    for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
+    for (pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw)  {
 	struct density_entry *de;
 
 	/* inhit info */
@@ -1101,7 +1101,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 		    int los = pp->pt_regionp->reg_los;
 
 		    if (los < 1) {
-			bu_log("bad LOS (%d) on %s\n", los, pp->pt_regionp->reg_name );
+			bu_log("bad LOS (%d) on %s\n", los, pp->pt_regionp->reg_name);
 		    }
 
 		    /* accumulate the total weight values */
@@ -1285,7 +1285,7 @@ plane_worker (int cpu, genptr_t ptr)
 	v_coord = v * gridSpacing;
 	DLOG("  v = %d v_coord=%g\n", v, v_coord);
 
-	if ( (v&1) || state->first) {
+	if ((v&1) || state->first) {
 	    /* shoot all the rays in this row.
 	     * This is either the first time a view has been computed
 	     * or it is an odd numbered row in a grid refinement
@@ -1297,7 +1297,7 @@ plane_worker (int cpu, genptr_t ptr)
 
 		DLOG("%5g %5g %5g -> %g %g %g\n", V3ARGS(ap.a_ray.r_pt), V3ARGS(ap.a_ray.r_dir));
 		ap.a_user = v;
-		(void)rt_shootray( &ap );
+		(void)rt_shootray(&ap);
 
 		bu_semaphore_acquire(SEM_STATS);
 		state->shots[state->curr_view]++;
@@ -1314,7 +1314,7 @@ plane_worker (int cpu, genptr_t ptr)
 
 		DLOG("%5g %5g %5g -> %g %g %g\n", V3ARGS(ap.a_ray.r_pt), V3ARGS(ap.a_ray.r_dir));
 		ap.a_user = v;
-		(void)rt_shootray( &ap );
+		(void)rt_shootray(&ap);
 
 		bu_semaphore_acquire(SEM_STATS);
 		state->shots[state->curr_view]++;
@@ -1404,7 +1404,7 @@ allocate_per_region_data(struct cstate *state, int start, int ac, char *av[])
     reg_tbl = bu_calloc(rtip->nregions, sizeof(struct per_region_data), "per_region_data");
 
 
-    for ( i=0, BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ), i++)  {
+    for (i=0, BU_LIST_FOR(regp, region, &(rtip->HeadRegion)), i++)  {
 	regp->reg_udata = &reg_tbl[i];
 
 	reg_tbl[i].r_lenDensity = bu_calloc(sizeof(double), num_views, "r_lenDensity");
@@ -1511,8 +1511,8 @@ options_prep(struct rt_i *rtip, vect_t span)
 		   volume_tolerance / units[VOL]->val, units[VOL]->name);
 	} else
 	    bu_log("volume tolerance   %g\n", volume_tolerance);
-	if ( plot_files )
-	    if ( (plot_volume=fopen(name, "wb")) == (FILE *)NULL)
+	if (plot_files)
+	    if ((plot_volume=fopen(name, "wb")) == (FILE *)NULL)
 		bu_exit(EXIT_FAILURE, "cannot open plot file %s\n", name);
     }
     if (analysis_flags & ANALYSIS_WEIGHT) {
@@ -1533,14 +1533,14 @@ options_prep(struct rt_i *rtip, vect_t span)
     }
     if (analysis_flags & ANALYSIS_GAP) {
 	char *name = "gaps.pl";
-	if ( plot_files )
-	    if ( (plot_gaps=fopen(name, "wb")) == (FILE *)NULL)
+	if (plot_files)
+	    if ((plot_gaps=fopen(name, "wb")) == (FILE *)NULL)
 		bu_exit(EXIT_FAILURE, "cannot open plot file %s\n", name);
     }
     if (analysis_flags & ANALYSIS_OVERLAPS) {
 	if (overlap_tolerance != 0.0)
 	    bu_log("overlap tolerance to %g\n", overlap_tolerance);
-	if ( plot_files ) {
+	if (plot_files) {
 	    char *name = "overlaps.pl";
 	    if ((plot_overlaps=fopen(name, "wb")) == (FILE *)NULL)
 		bu_exit(EXIT_FAILURE, "cannot open plot file %s\n", name);
@@ -1548,24 +1548,24 @@ options_prep(struct rt_i *rtip, vect_t span)
     }
 
     if (print_per_region_stats)
-	if ( (analysis_flags & (ANALYSIS_VOLUME|ANALYSIS_WEIGHT)) == 0)
+	if ((analysis_flags & (ANALYSIS_VOLUME|ANALYSIS_WEIGHT)) == 0)
 	    bu_log("Note: -r option ignored: neither volume or weight options requested\n");
 
-    if ( analysis_flags & ANALYSIS_ADJ_AIR)
+    if (analysis_flags & ANALYSIS_ADJ_AIR)
 	if (plot_files) {
 	    char *name = "adj_air.pl";
-	    if ( (plot_adjair=fopen(name, "wb")) == (FILE *)NULL)
+	    if ((plot_adjair=fopen(name, "wb")) == (FILE *)NULL)
 		bu_exit(EXIT_FAILURE, "cannot open plot file %s\n", name);
 	}
 
-    if ( analysis_flags & ANALYSIS_EXP_AIR)
+    if (analysis_flags & ANALYSIS_EXP_AIR)
 	if (plot_files) {
 	    char *name = "exp_air.pl";
-	    if ( (plot_expair=fopen(name, "wb")) == (FILE *)NULL)
+	    if ((plot_expair=fopen(name, "wb")) == (FILE *)NULL)
 		bu_exit(EXIT_FAILURE, "cannot open plot file %s\n", name);
 	}
 
-    if ( (analysis_flags & (ANALYSIS_ADJ_AIR|ANALYSIS_EXP_AIR)) && ! use_air )
+    if ((analysis_flags & (ANALYSIS_ADJ_AIR|ANALYSIS_EXP_AIR)) && ! use_air)
 	bu_exit(EXIT_FAILURE, "Error:  Air regions discarded but air analysis requested!\nSet use_air non-zero or eliminate air analysis\n");
 
     return 0;
@@ -1785,7 +1785,7 @@ terminate_check(struct cstate *state)
      * grid spacing limit and we ALWAYS terminate on first
      * error/list-entry
      */
-    if ( (analysis_flags & ANALYSIS_OVERLAPS)) {
+    if ((analysis_flags & ANALYSIS_OVERLAPS)) {
 	if (BU_LIST_NON_EMPTY(&overlapList.l)) {
 	    /* since we've found an overlap, we can quit */
 	    return 0;
@@ -1793,19 +1793,19 @@ terminate_check(struct cstate *state)
 	    bu_log("overlaps list is empty\n");
 	}
     }
-    if ( (analysis_flags & ANALYSIS_GAP)) {
+    if ((analysis_flags & ANALYSIS_GAP)) {
 	if (BU_LIST_NON_EMPTY(&gapList.l)) {
 	    /* since we've found a gap, we can quit */
 	    return 0;
 	}
     }
-    if ( (analysis_flags & ANALYSIS_ADJ_AIR)) {
+    if ((analysis_flags & ANALYSIS_ADJ_AIR)) {
 	if (BU_LIST_NON_EMPTY(&adjAirList.l)) {
 	    /* since we've found adjacent air, we can quit */
 	    return 0;
 	}
     }
-    if ( (analysis_flags & ANALYSIS_EXP_AIR)) {
+    if ((analysis_flags & ANALYSIS_EXP_AIR)) {
 	if (BU_LIST_NON_EMPTY(&exposedAirList.l)) {
 	    /* since we've found exposed air, we can quit */
 	    return 0;
@@ -1827,11 +1827,11 @@ terminate_check(struct cstate *state)
 
 	    if (require_num_hits > 0) {
 		/* check to make sure every region was hit at least once */
-		for ( BU_LIST_FOR( regp, region, &(state->rtip->HeadRegion) ) )  {
+		for (BU_LIST_FOR(regp, region, &(state->rtip->HeadRegion)))  {
 		    RT_CK_REGION(regp);
 
 		    hits = ((struct per_region_data *)regp->reg_udata)->hits;
-		    if ( hits < require_num_hits) {
+		    if (hits < require_num_hits) {
 			all_hit = 0;
 			if (verbose) {
 			    if (hits == 0) {
@@ -1897,7 +1897,7 @@ summary_reports(struct cstate *state, int start, int ac, char *av[])
 	if (print_per_region_stats) {
 	    double *wv;
 	    bu_log("\tregions:\n");
-	    for ( BU_LIST_FOR( regp, region, &(state->rtip->HeadRegion) ))  {
+	    for (BU_LIST_FOR(regp, region, &(state->rtip->HeadRegion)))  {
 		double low = HUGE;
 		double hi = -HUGE;
 
@@ -1933,7 +1933,7 @@ summary_reports(struct cstate *state, int start, int ac, char *av[])
 	for (view=0; view < num_views; view++) {
 	    avg += state->m_weight[view] =
 		state->m_lenDensity[view] *
-		( state->area[view] / state->shots[view]);
+		(state->area[view] / state->shots[view]);
 	}
 
 	avg /= num_views;
@@ -1960,7 +1960,7 @@ summary_reports(struct cstate *state, int start, int ac, char *av[])
 	    double *vv;
 
 	    bu_log("\tregions:\n");
-	    for ( BU_LIST_FOR( regp, region, &(state->rtip->HeadRegion) ))  {
+	    for (BU_LIST_FOR(regp, region, &(state->rtip->HeadRegion)))  {
 		double low = HUGE;
 		double hi = -HUGE;
 		avg = 0.0;
@@ -1998,7 +1998,7 @@ summary_reports(struct cstate *state, int start, int ac, char *av[])
 	avg = 0.0;
 	for (view=0; view < num_views; view++) {
 	    avg += state->m_volume[view] =
-		state->m_len[view] * ( state->area[view] / state->shots[view]);
+		state->m_len[view] * (state->area[view] / state->shots[view]);
 	}
 
 	avg /= num_views;
@@ -2009,12 +2009,12 @@ summary_reports(struct cstate *state, int start, int ac, char *av[])
     if (analysis_flags & ANALYSIS_GAP) list_report(&gapList);
     if (analysis_flags & ANALYSIS_EXP_AIR) list_report(&exposedAirList);
 
-    for ( BU_LIST_FOR( regp, region, &(state->rtip->HeadRegion) ) )  {
+    for (BU_LIST_FOR(regp, region, &(state->rtip->HeadRegion)))  {
 	unsigned long hits;
 
 	RT_CK_REGION(regp);
 	hits = ((struct per_region_data *)regp->reg_udata)->hits;
-	if ( hits < require_num_hits) {
+	if (hits < require_num_hits) {
 	    if (hits == 0) {
 		bu_log("%s was not hit\n", regp->reg_name);
 	    } else {
@@ -2057,8 +2057,8 @@ main(int ac, char *av[])
 
     bu_semaphore_init(TOTAL_SEMAPHORES);
 
-    rt_init_resource( &rt_uniresource, max_cpus, NULL );
-    bn_rand_init( rt_uniresource.re_randptr, 0 );
+    rt_init_resource(&rt_uniresource, max_cpus, NULL);
+    bn_rand_init(rt_uniresource.re_randptr, 0);
 
     /*
      *  Load database.
@@ -2066,7 +2066,7 @@ main(int ac, char *av[])
      *  the database to be ray traced.  It also gives back the
      *  title string in the header (ID) record.
      */
-    if ( (rtip=rt_dirbuild(av[arg_count], idbuf, IDBUFSIZE)) == RTI_NULL ) {
+    if ((rtip=rt_dirbuild(av[arg_count], idbuf, IDBUFSIZE)) == RTI_NULL) {
 	fprintf(stderr, "g_qa: rt_dirbuild failure on %s\n", av[arg_count]);
 	bu_exit(2, NULL);
     }
@@ -2080,8 +2080,8 @@ main(int ac, char *av[])
      * Here we identify any object trees in the database that the user
      * wants included in the ray trace.
      */
-    for (; arg_count < ac; arg_count++ )  {
-	if ( rt_gettree(rtip, av[arg_count]) < 0 )
+    for (; arg_count < ac; arg_count++)  {
+	if (rt_gettree(rtip, av[arg_count]) < 0)
 	    fprintf(stderr, "rt_gettree(%s) FAILED\n", av[arg_count]);
     }
 
@@ -2089,9 +2089,9 @@ main(int ac, char *av[])
      *  Initialize all the per-CPU memory resources.
      *  The number of processors can change at runtime, init them all.
      */
-    for ( i=0; i < max_cpus; i++ )  {
-	rt_init_resource( &resource[i], i, rtip );
-	bn_rand_init( resource[i].re_randptr, i );
+    for (i=0; i < max_cpus; i++)  {
+	rt_init_resource(&resource[i], i, rtip);
+	bn_rand_init(resource[i].re_randptr, i);
     }
 
     /*
