@@ -74,10 +74,6 @@ Options:\n\
  -x #		Set librt debug flags\n\
 ";
 
-struct point_list {
-    struct bu_list l;
-    point_t pt_cell;
-};
 
 struct area {
     struct area *assembly;	/* pointer to a linked list of assemblies */
@@ -86,10 +82,6 @@ struct area {
     int seen;			/* book-keeping for exposure */
     int depth;			/* assembly depth */
     const char *name;		/* assembly name */
-    struct point_list *hit_points;	/* list of points that define the presented area */
-    struct point_list *exp_points;	/* list of points that define the exposed area */
-    int num_hit_points;	/* number of points present in hit_points */
-    int num_exp_points;	/* number of points present in exp_points */
 };
 
 struct area_list {
@@ -105,7 +97,7 @@ typedef enum area_type {
 
 int rayhit(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp);
 int raymiss(register struct application *ap);
-int area_center(struct point_list *ptlist, int number, point_t *center);
+
 
 /*
  *  			V I E W _ I N I T
@@ -113,12 +105,11 @@ int area_center(struct point_list *ptlist, int number, point_t *center);
 int
 view_init( register struct application *ap, char *file, char *obj )
 {
-    /* report air regions */
-    use_air = 1;
-
     ap->a_hit = rayhit;
     ap->a_miss = raymiss;
     ap->a_onehit = 0;
+
+    use_air = 1;
 
     if ( !rpt_overlap )
 	ap->a_logoverlap = rt_silent_logoverlap;
@@ -156,15 +147,9 @@ view_2init( struct application *ap )
 	/* allocate memory first time through */
 	cell = (struct area *)bu_calloc(1, sizeof(struct area), "view_2init area allocation");
 	cell->assembly = assembly;
-    cell->num_exp_points = cell->num_hit_points = 0;
-
-    cell->hit_points = (struct point_list*) NULL;
-    cell->exp_points = (struct point_list*) NULL;
-
-    rp->reg_udata = (genptr_t)cell;
-    } 
+	rp->reg_udata = (genptr_t)cell;
+    }
     bu_semaphore_release( RT_SEM_RESULTS );
-
 
     return;
 }
@@ -302,7 +287,6 @@ increment_assembly_counter(register struct area *cell, const char *path, area_ty
 int
 rayhit(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp)
 {
-    struct point_list * temp_point_list;
     register struct region *rp;
     struct rt_i *rtip = ap->a_rt_i;
     register struct partition *pp = PartHeadp->pt_forw;
@@ -339,25 +323,8 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp
 	    continue;
 	}
 
-
-
-
 	/* have not visited this region yet, so increment the count */
 	if (!cell->seen) {
-        /* record the exposed points in the area */
-        temp_point_list = (struct point_list *) bu_malloc(sizeof(struct point_list), "Point list allocation");
-        VMOVE(temp_point_list->pt_cell, pp->pt_inhit->hit_point);
-        
-        if (cell->exp_points) {
-            BU_LIST_INSERT(&(cell->exp_points->l), &(temp_point_list->l));
-        }
-        else {
-            BU_GETSTRUCT(cell->exp_points, point_list);
-            BU_LIST_INIT(&(cell->exp_points->l));
-            VMOVE(cell->exp_points->pt_cell, temp_point_list->pt_cell);
-        }
-
-        cell->num_exp_points++;
 	    cell->exposures++;
 	    cell->seen++;
 
@@ -392,19 +359,6 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp
 	}
 
 	cell->hits++;
-	cell->num_hit_points++;
-	/* record the presented points (hit_points) in the area */
-	temp_point_list = (struct point_list *) bu_malloc(sizeof(struct point_list), "Point list allocation");
-    VMOVE(temp_point_list->pt_cell, pp->pt_inhit->hit_point);
-
-    if (cell->hit_points) {
-        BU_LIST_INSERT(&(cell->hit_points->l), &(temp_point_list->l));
-    }
-    else {
-        BU_GETSTRUCT(cell->hit_points, point_list);
-        BU_LIST_INIT(&(cell->hit_points->l));
-        VMOVE(cell->hit_points->pt_cell, temp_point_list->pt_cell);
-    }
 
 	if (!cell->name) {
 	    /* get the region name */
@@ -512,8 +466,7 @@ print_region_area_list(long int *count, struct rt_i *rtip, area_type_t type)
 
 	cell = listp->cell;
 	if (type == PRESENTED_AREA) {
-        point_t temp;
-	    bu_log("Region %s\t(%ld hits)\t= %18.4lf square %s\t(%.4lf square %s)",
+	    bu_log("Region %s\t(%ld hits)\t= %18.4lf square %s\t(%.4lf square %s)\n",
 		   cell->name,
 		   cell->hits,
 		   cell_area * (fastf_t)cell->hits / (units*units),
@@ -521,20 +474,10 @@ print_region_area_list(long int *count, struct rt_i *rtip, area_type_t type)
 		   cell_area * (fastf_t)cell->hits / (factor*factor),
 		   bu_units_string(factor)
 		);
-        if (area_center((cell->hit_points), (cell->num_hit_points), &temp)) {
-            bu_log("\tcenter at (%.4lf, %.4lf, %.4lf)\n",
-                temp[X],
-                temp[Y],
-                temp[Z]
-            );
-        } else {
-            bu_log("\n");
-        }
 	    fflush(stdout); fflush(stderr);
 	}
 	if (type == EXPOSED_AREA) {
-        point_t temp;
-	    bu_log("Region %s\t(%ld hits)\t= %18.4lf square %s\t(%.4lf square %s)",
+	    bu_log("Region %s\t(%ld hits)\t= %18.4lf square %s\t(%.4lf square %s)\n",
 		   cell->name,
 		   cell->exposures,
 		   cell_area * (fastf_t)cell->exposures / (units*units),
@@ -542,15 +485,6 @@ print_region_area_list(long int *count, struct rt_i *rtip, area_type_t type)
 		   cell_area * (fastf_t)cell->exposures / (factor*factor),
 		   bu_units_string(factor)
 		   );
-        if (area_center((cell->exp_points), (cell->num_exp_points), &temp)) {
-            bu_log("\tcenter at (%.4lf, %.4lf, %.4lf)\n",
-                temp[X],
-                temp[Y],
-                temp[Z]
-            );
-        } else {
-            bu_log("\n");
-        }
 	    fflush(stdout); fflush(stderr);
 	}
 	listp = listp->next;
@@ -578,7 +512,6 @@ print_assembly_area_list(struct rt_i *rtip, long int max_depth, area_type_t type
     register struct area *cell = (struct area *)NULL;
     long int count = 0;
 
-
     struct area_list *listHead = (struct area_list *)bu_malloc(sizeof(struct area_list), "print_area_list area list node allocation");
     struct area_list *listp;
     listHead->cell = (struct area *)NULL;
@@ -587,13 +520,12 @@ print_assembly_area_list(struct rt_i *rtip, long int max_depth, area_type_t type
     /* insertion sort based on depth and case */
     rp = BU_LIST_FIRST(region, &(rtip->HeadRegion));
     cell = (struct area *)rp->reg_udata;
-
     for (cellp = cell->assembly; cellp; cellp = cellp->assembly) {
 	int counted_items;
 	listp = listHead;
 
 	if (type == PRESENTED_AREA) {
-        counted_items = cellp->hits;
+	    counted_items = cellp->hits;
 	}
 	if (type == EXPOSED_AREA) {
 	    counted_items = cellp->exposures;
@@ -656,9 +588,8 @@ print_assembly_area_list(struct rt_i *rtip, long int max_depth, area_type_t type
 		bu_log("--");
 	    }
 	}
-    
+
 	if (type == PRESENTED_AREA) {
-        
 	    bu_log("Assembly %s\t(%ld hits)\t= %18.4lf square %s\t(%.4lf square %s)\n",
 		   cell->name,
 		   cell->hits,
@@ -670,7 +601,6 @@ print_assembly_area_list(struct rt_i *rtip, long int max_depth, area_type_t type
 	    fflush(stdout); fflush(stderr);
 	}
 	if (type == EXPOSED_AREA) {
-
 	    bu_log("Assembly %s\t(%ld hits)\t= %18.4lf square %s\t(%.4lf square %s)\n",
 		   cell->name,
 		   cell->exposures,
@@ -770,12 +700,6 @@ view_end(struct application *ap)
 	    if (cell->name) {
 		bu_free((char *)cell->name, "view_end assembly name free");
 	    }
-        if (cell->exp_points) {
-            bu_list_free(&(cell->exp_points->l));
-        }
-        if (cell->hit_points) {
-            bu_list_free(&(cell->hit_points->l));
-        }
 	    bu_free(cell, "view_end assembly free");
 	    cell = next_cell;
 	}
@@ -801,46 +725,6 @@ view_end(struct application *ap)
 void view_setup() {}
 void view_cleanup() {}
 void application_init () {}
-
-/*
- *		 A R E A _ C E N T E R
- *
- *	This function receives a pointer to a point_list
- *	structure, the number of points to calculate, and
- *  the point address of where to record the information.
- *
- *  Since the structure of a vector and of a point is pretty
- *  similar, some vector macros can be used to handle points.
- *  The macros used in the calculation of the area center are
- *  VSET and VSETALL. In the rayhit() function, VMOVE is also
- *  used.
- */
-int
-area_center(struct point_list * ptlist, int number, point_t *center)
-{
-	struct point_list *point_it;
-    point_t temp_point;
-
-    if (BU_LIST_IS_EMPTY(&(ptlist->l))) {
-        return 0;
-    }
-
-    VSETALL(temp_point, 0);
-
-    for (BU_LIST_FOR(point_it, point_list, &(ptlist->l))) {
-
-        VSET(temp_point,
-            temp_point[X] + point_it->pt_cell[X],
-            temp_point[Y] + point_it->pt_cell[Y],
-            temp_point[Z] + point_it->pt_cell[Z]);
-	}
-    VSET(*center,
-        temp_point[X] / number,
-        temp_point[Y] / number,
-        temp_point[Z] / number);
-
-    return 1;
-}
 
 /*
  * Local Variables:
