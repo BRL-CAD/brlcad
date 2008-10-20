@@ -17,9 +17,7 @@ http://sf.net/pm/?group_id=105292
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------
 
-* change rtarea output to have new cpa values in their own section
-
-* (re)verify rtarea results, fix naming convention
+* fix distcheck
 
 
 THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
@@ -49,6 +47,8 @@ THESE SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE LOWER PRIORITY OR FOR FUTURE RELEASES
 -----------------------------------------------
 
+* (re)verify rtarea CPA results (see diff history for patch, fix
+  naming convention for presented/exposed area
 
 * ADRT: remove MySQL code, fix ISST callbacks, re-enable RISE, cleanup
 
