@@ -271,7 +271,7 @@ struct hit {
  *
  * Only the hit_dist field of pt_inhit and pt_outhit are valid when
  * a_hit() is called; to compute both hit_point and hit_normal, use
- * RT_HIT_NORM() macro; to compute just hit_point, use 
+ * RT_HIT_NORM() macro; to compute just hit_point, use
  * VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
  */
 #define RT_HIT_NORM( _hitp, _stp, _unused )  { \
@@ -939,13 +939,13 @@ struct rt_binunif_internal {
 
 /**
  * P C _ C O N S T R A I N T
- *  
+ *
  * In-memory format for database "constraint" record
  */
 struct rt_constraint_internal {
     unsigned long magic;
     int id;
-    int type; 
+    int type;
 };
 
 #define RT_CHECK_CONSTRAINT(_p)		BU_CKMAG( _p, PC_CONSTRAINT_MAGIC, "pc_constraint_internal" )
@@ -1933,7 +1933,7 @@ struct rt_functab {
 			      struct resource * /*resp*/));
     int	(*ft_form) BU_ARGS((struct bu_vls *,
 			    const struct rt_functab *));
-			    
+
     void (*ft_make) BU_ARGS((const struct rt_functab *,
 			     struct rt_db_internal *, double /*diameter*/));
     int (*ft_params) BU_ARGS((struct pc_pc_set *,const struct rt_db_internal */*ip*/));
@@ -3532,6 +3532,9 @@ RT_EXPORT BU_EXTERN(void rt_init_resource,
 		     int		cpu_num,
 		     struct rt_i	*rtip));
 RT_EXPORT BU_EXTERN(void rt_clean_resource,
+		    (struct rt_i *rtip,
+		     struct resource *resp));
+RT_EXPORT BU_EXTERN(void rt_clean_resource_complete,
 		    (struct rt_i *rtip,
 		     struct resource *resp));
 RT_EXPORT BU_EXTERN(int rt_unprep,
