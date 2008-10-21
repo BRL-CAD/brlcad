@@ -81,12 +81,12 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
     extern	char		*bu_optarg;
     static const char *usage = "object(s)";
 
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
-
-    /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {

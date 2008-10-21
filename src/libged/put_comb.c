@@ -55,12 +55,12 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
     int save_comb_flag = 0;
     static const char *usage = "comb_name is_Region id air material los color shader inherit boolean_expr";
 
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
-
-    /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {

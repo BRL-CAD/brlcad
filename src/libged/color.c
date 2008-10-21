@@ -50,12 +50,12 @@ _ged_edcolor(struct ged *gedp, int argc, const char *argv[])
     char tmpfil[MAXPATHLEN];
     static const char *usage = "";
 
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
-
-    /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
 
     fp = bu_temp_file(tmpfil, MAXPATHLEN);
     if (fp == NULL) {
@@ -164,12 +164,12 @@ ged_color(struct ged *gedp, int argc, const char *argv[])
     register struct mater *next_mater;
     static const char *usage = "[-e] [low high r g b]";
 
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
-
-    /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {

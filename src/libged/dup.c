@@ -60,11 +60,11 @@ ged_dup(struct ged *gedp, int argc, const char *argv[])
     struct dir_check_stuff	dcs;
     static const char *usage = "file.g prefix";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
-
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* must be wanting help */
     if (argc == 1) {

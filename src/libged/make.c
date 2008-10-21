@@ -67,12 +67,12 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
     struct rt_pnts_internal *pnts_ip;
     static const char *usage = "-h | -t | -o origin -s sf name <arb8|arb7|arb6|arb5|arb4|arbn|ars|bot|ehy|ell|ell1|epa|eto|extrude|grip|half|nmg|part|pipe|pnts|rcc|rec|rhc|rpc|rpp|sketch|sph|tec|tgc|tor|trc>";
 
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
-
-    /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {

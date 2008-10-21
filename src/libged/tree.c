@@ -56,12 +56,12 @@ ged_tree(struct ged *gedp, int argc, const char *argv[])
     char				*whoargv[WHOARGVMAX+1] = {0};
     static const char *usage = "[-c] [-o outfile] [-i indentSize] [-d displayDepth] [object(s)]";
 
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
-
-    /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
 
     if (MAXARGS < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
