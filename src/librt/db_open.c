@@ -326,6 +326,12 @@ db_close(register struct db_i *dbip)
 	    nextdp = dp->d_forw;
 	    RT_DIR_FREE_NAMEP(dp);	/* frees d_namep */
 
+	    if ((dp->d_flags & RT_DIR_INMEM) && (dp->d_un.ptr != NULL)) {
+		bu_free(dp->d_un.ptr, "db_close d_un.ptr");
+		dp->d_un.ptr = NULL;
+		dp->d_len    = 0;
+	    }
+
 	    /* Put 'dp' back on the freelist */
 	    dp->d_forw = rt_uniresource.re_directory_hd;
 	    rt_uniresource.re_directory_hd = dp;
