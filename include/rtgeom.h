@@ -39,6 +39,8 @@
 #include "vmath.h"
 #include "bu.h"
 
+#include "brep.h"
+
 
 __BEGIN_DECLS
 
@@ -184,7 +186,6 @@ struct rt_nurb_internal {
 #define RT_NURB_GET_CONTROL_POINT(_s, _u, _v)	((_s)->ctl_points[ \
 	((_v)*(_s)->s_size[0]+(_u))*RT_NURB_EXTRACT_COORDS((_s)->pt_type)])
 
-#include "brep.h"
 /*
  * a b-rep solid consists of a
  */
