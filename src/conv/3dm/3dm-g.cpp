@@ -33,7 +33,6 @@
 
 #include "vmath.h"		/* BRL-CAD Vector macros */
 #include "wdb.h"
-using namespace std;
 
 
 char * itoa(int num) {
@@ -137,9 +136,9 @@ int main(int argc, char** argv) {
 	myAttributes.Dump(*dump); // On debug print
 	dump->Print("\n");
 
-	string geom_base;
+	std::string geom_base;
 	if (constr == NULL) {
-	    string genName("rhino");
+	    std::string genName("rhino");
 	    genName+=itoa(mcount++);
 	    geom_base = genName.c_str();
 	    dump->Print("Object has no name - creating one %s.\n", geom_base.c_str());
@@ -148,8 +147,8 @@ int main(int argc, char** argv) {
 	    geom_base = cstr;
 	}
 
-	string geom_name(geom_base+".s");
-	string region_name(geom_base+".r");
+	std::string geom_name(geom_base+".s");
+	std::string region_name(geom_base+".r");
 
 	dump->Print("primitive is %s.\n", geom_name.c_str());
 	dump->Print("region created is %s.\n", region_name.c_str());
