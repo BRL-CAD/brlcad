@@ -53,7 +53,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/goblet_material_properties2_images/goblet_combeditor.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L008_imgs/goblet_combeditor.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -112,7 +112,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/goblet_material_properties2_images/spec_vs_diff_reflectivity.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L008_imgs/spec_vs_diff_reflectivity.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -170,7 +170,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/goblet_material_properties2_images/refractive_index.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L008_imgs/refractive_index.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -237,7 +237,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/goblet_material_properties2_images/goblet_reflectivity_1.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L008_imgs/goblet_reflectivity_1.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -250,7 +250,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/goblet_material_properties2_images/goblet_reflectivity_2.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L008_imgs/goblet_reflectivity_2.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -270,7 +270,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/goblet_material_properties2_images/comb_editor_window_mater_prop.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L008_imgs/comb_editor_window_mater_prop.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>

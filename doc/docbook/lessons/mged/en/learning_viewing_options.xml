@@ -110,7 +110,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/learning_viewing_options_images/defaultradio.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L002_imgs/defaultradio.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -245,8 +245,8 @@
 	  <tgroup cols='2' align='center'>
 	    <tbody>
 	      <row>
-		<entry><inlinegraphic fileref="../../../lessons/mged/learning_viewing_options_images/flower_zoomin.jpg" scale="60" /></entry>
-		<entry><inlinegraphic fileref="../../../lessons/mged/learning_viewing_options_images/flower_zoomout.jpg" /></entry>
+		<entry><inlinegraphic fileref="../../../lessons/mged/L002_imgs/flower_zoomin.jpg" scale="60" /></entry>
+		<entry><inlinegraphic fileref="../../../lessons/mged/L002_imgs/flower_zoomout.jpg" /></entry>
 	      </row>
 	      <row>
 		<entry>Zoom In to View Details (small size of view)</entry>
@@ -340,8 +340,8 @@
 	    <colspec colwidth="3*" />
   	    <tbody>
 	      <row>
-		<entry><inlinegraphic fileref="../../../lessons/mged/learning_viewing_options_images/truck_front.png" /></entry>
-		<entry><inlinegraphic fileref="../../../lessons/mged/learning_viewing_options_images/truck_35_0.png" /></entry>
+		<entry><inlinegraphic fileref="../../../lessons/mged/L002_imgs/truck_front.png" /></entry>
+		<entry><inlinegraphic fileref="../../../lessons/mged/L002_imgs/truck_35_0.png" /></entry>
 	      </row>
 	      <row>
 		<entry>Front (az=0, el=0)</entry>
@@ -357,8 +357,8 @@
 	    <colspec colwidth="1*" />
 	    <tbody>
 	      <row>
-		<entry><inlinegraphic fileref="../../../lessons/mged/learning_viewing_options_images/truck_left.png" /></entry>
-		<entry><inlinegraphic fileref="../../../lessons/mged/learning_viewing_options_images/truck_rear.png" /></entry>
+		<entry><inlinegraphic fileref="../../../lessons/mged/L002_imgs/truck_left.png" /></entry>
+		<entry><inlinegraphic fileref="../../../lessons/mged/L002_imgs/truck_rear.png" /></entry>
 	      </row>
 	      <row>
 		<entry>Left (az=90, el=0)</entry>
@@ -372,7 +372,7 @@
 	  <tgroup cols='1' align='center'>
 	    <tbody>
 	      <row>
-		<entry><inlinegraphic fileref="../../../lessons/mged/learning_viewing_options_images/truck_right.png" /></entry>
+		<entry><inlinegraphic fileref="../../../lessons/mged/L002_imgs/truck_right.png" /></entry>
 	      </row>
 	      <row>
 		<entry>Right (az=270, el=0)</entry>
@@ -397,24 +397,24 @@
 	  <tgroup cols='2' align='center'>
 	    <tbody>
 	      <row>
-		<entry><inlinegraphic fileref="../../../lessons/mged/learning_viewing_options_images/truck_35_0.png" /></entry>
-		<entry><inlinegraphic fileref="../../../lessons/mged/learning_viewing_options_images/truck_35_25.png" /></entry>
+		<entry><inlinegraphic fileref="../../../lessons/mged/L002_imgs/truck_35_0.png" /></entry>
+		<entry><inlinegraphic fileref="../../../lessons/mged/L002_imgs/truck_35_25.png" /></entry>
 	      </row>
 	      <row>
 		<entry>az=35, el=0</entry>
 		<entry>az=35, el=25</entry>
 	      </row>
 	      <row>
-		<entry><inlinegraphic fileref="../../../lessons/mged/learning_viewing_options_images/truck_35_60.png" /></entry>
-		<entry><inlinegraphic fileref="../../../lessons/mged/learning_viewing_options_images/truck_35_90.png" /></entry>
+		<entry><inlinegraphic fileref="../../../lessons/mged/L002_imgs/truck_35_60.png" /></entry>
+		<entry><inlinegraphic fileref="../../../lessons/mged/L002_imgs/truck_35_90.png" /></entry>
 	      </row>
 	      <row>
 		<entry>az=35, el=60</entry>
 		<entry>az=35, el=90</entry>
 	      </row>
 	      <row>
-		<entry><inlinegraphic fileref="../../../lessons/mged/learning_viewing_options_images/truck_270_90.png" /></entry>
-		<entry><inlinegraphic fileref="../../../lessons/mged/learning_viewing_options_images/truck_270_-90.png" /></entry>
+		<entry><inlinegraphic fileref="../../../lessons/mged/L002_imgs/truck_270_90.png" /></entry>
+		<entry><inlinegraphic fileref="../../../lessons/mged/L002_imgs/truck_270_-90.png" /></entry>
 	      </row>
 	      <row>
 		<entry>Top (az=270, el=90)</entry>
@@ -439,7 +439,7 @@
 	    <tgroup cols='1' align='center'>
 	      <tbody>
 		<row>
-		  <entry><inlinegraphic fileref="../../../lessons/mged/learning_viewing_options_images/truck_0_0_14.png" /></entry>
+		  <entry><inlinegraphic fileref="../../../lessons/mged/L002_imgs/truck_0_0_14.png" /></entry>
 		</row>
 		<row>
 		  <entry>Front (az=0, el=0, tw=14)</entry>
@@ -466,7 +466,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/learning_viewing_options_images/coordsys.png" scale="60" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L002_imgs/coordsys.png" scale="60" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -503,16 +503,16 @@
 	<tgroup cols='2' align='center'>
 	  <tbody>
 	    <row>
-	      <entry><inlinegraphic fileref="../../../lessons/mged/learning_viewing_options_images/radio_top.png" scale="90"/></entry>
-	      <entry><inlinegraphic fileref="../../../lessons/mged/learning_viewing_options_images/radio_35_25.png" scale="90" /></entry>
+	      <entry><inlinegraphic fileref="../../../lessons/mged/L002_imgs/radio_top.png" scale="90"/></entry>
+	      <entry><inlinegraphic fileref="../../../lessons/mged/L002_imgs/radio_35_25.png" scale="90" /></entry>
 	    </row>
 	    <row>
 	      <entry>Top</entry>
 	      <entry>az35,el25</entry>
 	    </row>
 	    <row>
-	      <entry><inlinegraphic fileref="../../../lessons/mged/learning_viewing_options_images/radio_right.png" scale="90" /></entry>
-	      <entry><inlinegraphic fileref="../../../lessons/mged/learning_viewing_options_images/radio_front.png" scale="90" /></entry>
+	      <entry><inlinegraphic fileref="../../../lessons/mged/L002_imgs/radio_right.png" scale="90" /></entry>
+	      <entry><inlinegraphic fileref="../../../lessons/mged/L002_imgs/radio_front.png" scale="90" /></entry>
 	    </row>
 	    <row>
 	      <entry>Right</entry>
@@ -541,7 +541,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/learning_viewing_options_images/multipane.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L002_imgs/multipane.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>

@@ -171,15 +171,15 @@
 
   <chapter id="Lesson-4">
     <title>Assigning Material Properties and Raytracing</title>
-    <xi:include href="../../../lessons/mged/en/assigning_material_properties_and_raytracing.xml" xpointer="assigning_material_properties_and_raytracing_overviewlist"/>
-    <xi:include href="../../../lessons/mged/en/assigning_material_properties_and_raytracing.xml" xpointer="assigning_material_properties_and_raytracing_opendb"/>
-    <xi:include href="../../../lessons/mged/en/assigning_material_properties_and_raytracing.xml" xpointer="create_region"/>
-    <xi:include href="../../../lessons/mged/en/assigning_material_properties_and_raytracing.xml" xpointer="assign_material_prop"/>
-    <xi:include href="../../../lessons/mged/en/assigning_material_properties_and_raytracing.xml" xpointer="clear_window_new_region"/>
-    <xi:include href="../../../lessons/mged/en/assigning_material_properties_and_raytracing.xml" xpointer="raytrace_model"/>
-    <xi:include href="../../../lessons/mged/en/assigning_material_properties_and_raytracing.xml" xpointer="layers_graphics_window"/>
-    <xi:include href="../../../lessons/mged/en/assigning_material_properties_and_raytracing.xml" xpointer="clear_graphics_window"/>
-    <xi:include href="../../../lessons/mged/en/assigning_material_properties_and_raytracing.xml" xpointer="assigning_material_properties_and_raytracing_review"/>
+    <xi:include href="../../../lessons/mged/en/assign_mat_prop_rt.xml" xpointer="assigning_material_properties_and_raytracing_overviewlist"/>
+    <xi:include href="../../../lessons/mged/en/assign_mat_prop_rt.xml" xpointer="assigning_material_properties_and_raytracing_opendb"/>
+    <xi:include href="../../../lessons/mged/en/assign_mat_prop_rt.xml" xpointer="create_region"/>
+    <xi:include href="../../../lessons/mged/en/assign_mat_prop_rt.xml" xpointer="assign_material_prop"/>
+    <xi:include href="../../../lessons/mged/en/assign_mat_prop_rt.xml" xpointer="clear_window_new_region"/>
+    <xi:include href="../../../lessons/mged/en/assign_mat_prop_rt.xml" xpointer="raytrace_model"/>
+    <xi:include href="../../../lessons/mged/en/assign_mat_prop_rt.xml" xpointer="layers_graphics_window"/>
+    <xi:include href="../../../lessons/mged/en/assign_mat_prop_rt.xml" xpointer="clear_graphics_window"/>
+    <xi:include href="../../../lessons/mged/en/assign_mat_prop_rt.xml" xpointer="assigning_material_properties_and_raytracing_review"/>
   </chapter>
 
   <chapter id="Lesson-5">
@@ -354,17 +354,17 @@
 
   <chapter id="lesson-16">
     <title>Learning Modeling Techniques and Structures</title>
-     <xi:include href="../../../lessons/mged/en/modeling_techniques_and_structures.xml" xpointer="modeling_techniques_and_structures_overviewlist"/>
-     <xi:include href="../../../lessons/mged/en/modeling_techniques_and_structures.xml" xpointer="modeling_techniques_and_structures_intro1"/>
-     <xi:include href="../../../lessons/mged/en/modeling_techniques_and_structures.xml" xpointer="radio_shapes_to_regions"/>
-     <xi:include href="../../../lessons/mged/en/modeling_techniques_and_structures.xml" xpointer="body_of_radio"/>
-     <xi:include href="../../../lessons/mged/en/modeling_techniques_and_structures.xml" xpointer="radio_other_regions"/>
-     <xi:include href="../../../lessons/mged/en/modeling_techniques_and_structures.xml" xpointer="radio_assembly_comb"/>
-     <xi:include href="../../../lessons/mged/en/modeling_techniques_and_structures.xml" xpointer="radio_assign_mater_props"/>
-     <xi:include href="../../../lessons/mged/en/modeling_techniques_and_structures.xml" xpointer="radio_internal_components"/>
-     <xi:include href="../../../lessons/mged/en/modeling_techniques_and_structures.xml" xpointer="radio_specialty_models"/>
-     <xi:include href="../../../lessons/mged/en/modeling_techniques_and_structures.xml" xpointer="radio_structure_redefinition"/>
-     <xi:include href="../../../lessons/mged/en/modeling_techniques_and_structures.xml" xpointer="modeling_techniques_and_structures_review"/>
+     <xi:include href="../../../lessons/mged/en/mod_tech_struct.xml" xpointer="modeling_techniques_and_structures_overviewlist"/>
+     <xi:include href="../../../lessons/mged/en/mod_tech_struct.xml" xpointer="modeling_techniques_and_structures_intro1"/>
+     <xi:include href="../../../lessons/mged/en/mod_tech_struct.xml" xpointer="radio_shapes_to_regions"/>
+     <xi:include href="../../../lessons/mged/en/mod_tech_struct.xml" xpointer="body_of_radio"/>
+     <xi:include href="../../../lessons/mged/en/mod_tech_struct.xml" xpointer="radio_other_regions"/>
+     <xi:include href="../../../lessons/mged/en/mod_tech_struct.xml" xpointer="radio_assembly_comb"/>
+     <xi:include href="../../../lessons/mged/en/mod_tech_struct.xml" xpointer="radio_assign_mater_props"/>
+     <xi:include href="../../../lessons/mged/en/mod_tech_struct.xml" xpointer="radio_internal_components"/>
+     <xi:include href="../../../lessons/mged/en/mod_tech_struct.xml" xpointer="radio_specialty_models"/>
+     <xi:include href="../../../lessons/mged/en/mod_tech_struct.xml" xpointer="radio_structure_redefinition"/>
+     <xi:include href="../../../lessons/mged/en/mod_tech_struct.xml" xpointer="modeling_techniques_and_structures_review"/>
   </chapter>
 
 <appendix label="A">

@@ -15,7 +15,7 @@ XML_CATALOG_FILES=$(top_srcdir)/doc/docbook/catalog.xml
 
 
 lessonsDOCBOOK = \
-	assigning_material_properties_and_raytracing.xml \
+	assign_mat_prop_rt.xml \
 	creating_a_goblet.xml \
 	creating_mug.xml \
 	creating_primitive_shapes.xml \
@@ -25,7 +25,7 @@ lessonsDOCBOOK = \
 	goblet_material_properties2.xml \
 	learning_boolean_expressions.xml \
 	learning_viewing_options.xml \
-	modeling_techniques_and_structures.xml \
+	mod_tech_struct.xml \
 	mug_through_gui.xml \
 	placing_shapes_in_3d.xml \
 	placing_shapes_in_3d_2.xml \

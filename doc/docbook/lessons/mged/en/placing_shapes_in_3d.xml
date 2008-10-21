@@ -46,7 +46,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/placing_shapes_in_3d_images/candle_design.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L013_imgs/candle_design.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -86,7 +86,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/placing_shapes_in_3d_images/candle_tabletop_wireframe_front.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L013_imgs/candle_tabletop_wireframe_front.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -127,7 +127,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/placing_shapes_in_3d_images/candle_tabletop_eto1_wireframe_front.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L013_imgs/candle_tabletop_eto1_wireframe_front.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -189,7 +189,7 @@ Move End H
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/placing_shapes_in_3d_images/candle_tabletop_eto1_rcc_wireframe_front.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L013_imgs/candle_tabletop_eto1_rcc_wireframe_front.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -210,7 +210,7 @@ Move End H
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/placing_shapes_in_3d_images/candle_tabletop_base_front.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L013_imgs/candle_tabletop_base_front.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -250,7 +250,7 @@ Move End H
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/placing_shapes_in_3d_images/candle_tabletop_base_candle_front.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L013_imgs/candle_tabletop_base_candle_front.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -286,7 +286,7 @@ Move End H
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/placing_shapes_in_3d_images/candle_complete_front.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L013_imgs/candle_complete_front.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -405,7 +405,7 @@ Move End H
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/placing_shapes_in_3d_images/candle_comb_ed_checker.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L013_imgs/candle_comb_ed_checker.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -471,7 +471,7 @@ Move End H
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/placing_shapes_in_3d_images/candle_raytraced_overlay.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L013_imgs/candle_raytraced_overlay.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>

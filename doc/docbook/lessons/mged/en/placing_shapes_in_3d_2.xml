@@ -51,7 +51,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/placing_shapes_in_3d_2_images/candle_base_sphere_topview.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L014_imgs/candle_base_sphere_topview.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -86,7 +86,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/placing_shapes_in_3d_2_images/candle_multipane.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L014_imgs/candle_multipane.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -123,7 +123,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/placing_shapes_in_3d_2_images/primitive_editor.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L014_imgs/primitive_editor.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -143,7 +143,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/placing_shapes_in_3d_2_images/primitive_selection_dropdown.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L014_imgs/primitive_selection_dropdown.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -163,8 +163,8 @@
 	  <tgroup cols='2'>
 	    <tbody>
 	      <row>
-		<entry><inlinegraphic fileref="../../../lessons/mged/placing_shapes_in_3d_2_images/candle_spheres_topview.png" /></entry>
-		<entry><inlinegraphic fileref="../../../lessons/mged/placing_shapes_in_3d_2_images/candle_spheres_frontview.png" /></entry>
+		<entry><inlinegraphic fileref="../../../lessons/mged/L014_imgs/candle_spheres_topview.png" /></entry>
+		<entry><inlinegraphic fileref="../../../lessons/mged/L014_imgs/candle_spheres_frontview.png" /></entry>
 	      </row>
 	      <row>
 		<entry>Candle from Top View</entry>
@@ -188,7 +188,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/placing_shapes_in_3d_2_images/candle_spheres_az35el25.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L014_imgs/candle_spheres_az35el25.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -516,7 +516,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/placing_shapes_in_3d_2_images/candle_spheres_raytraced.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L014_imgs/candle_spheres_raytraced.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>

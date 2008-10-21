@@ -111,7 +111,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/using_insert_command_images/wireframespherecylinder.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L003_imgs/wireframespherecylinder.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -252,8 +252,8 @@
 	<tgroup cols='2'>
 	  <tbody>
 	    <row>
-	      <entry><inlinegraphic fileref="../../../lessons/mged/using_insert_command_images/shapes_make_command.png" /></entry>
-	      <entry><inlinegraphic fileref="../../../lessons/mged/using_insert_command_images/shapes_in_command.png" /></entry>
+	      <entry><inlinegraphic fileref="../../../lessons/mged/L003_imgs/shapes_make_command.png" /></entry>
+	      <entry><inlinegraphic fileref="../../../lessons/mged/L003_imgs/shapes_in_command.png" /></entry>
 	    </row>
 	    <row>
 	      <entry>Shapes Created with Make Command</entry>

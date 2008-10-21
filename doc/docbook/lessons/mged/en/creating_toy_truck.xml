@@ -56,7 +56,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/creating_toy_truck_images/truck_design.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L015_imgs/truck_design.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -119,7 +119,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/creating_toy_truck_images/truck_cab1s.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L015_imgs/truck_cab1s.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -206,7 +206,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/creating_toy_truck_images/truck_cab_cutoff.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L015_imgs/truck_cab_cutoff.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -247,7 +247,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/creating_toy_truck_images/truck_multipane_1stwheel.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L015_imgs/truck_multipane_1stwheel.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -304,7 +304,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/creating_toy_truck_images/prim_ed_wheel_well.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L015_imgs/prim_ed_wheel_well.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -326,7 +326,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/creating_toy_truck_images/truck_2nd_wheel_wheel_place.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L015_imgs/truck_2nd_wheel_wheel_place.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -424,7 +424,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/creating_toy_truck_images/truck_cab_body.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L015_imgs/truck_cab_body.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -448,7 +448,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/creating_toy_truck_images/truck_wheel_wells_wireframe.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L015_imgs/truck_wheel_wells_wireframe.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -545,7 +545,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/creating_toy_truck_images/truck_wheels.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L015_imgs/truck_wheels.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -597,7 +597,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/creating_toy_truck_images/cameo_shader.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L015_imgs/cameo_shader.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -777,8 +777,8 @@
 	  <tgroup cols='2' align='center'>
 	    <tbody>
 	      <row>
-		<entry><inlinegraphic fileref="../../../lessons/mged/creating_toy_truck_images/truck_default_lighting.png" /></entry>
-		<entry><inlinegraphic fileref="../../../lessons/mged/creating_toy_truck_images/truck_ambient_lighting.png" /></entry>
+		<entry><inlinegraphic fileref="../../../lessons/mged/L015_imgs/truck_default_lighting.png" /></entry>
+		<entry><inlinegraphic fileref="../../../lessons/mged/L015_imgs/truck_ambient_lighting.png" /></entry>
 	      </row>
 	      <row>
 		<entry>Truck with Default Lighting</entry>

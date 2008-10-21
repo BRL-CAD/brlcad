@@ -114,7 +114,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/refining_mug_images/mug_raytraced_norim.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L011_imgs/mug_raytraced_norim.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -199,7 +199,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/refining_mug_images/mug_raytraced_rim.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L011_imgs/mug_raytraced_rim.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>

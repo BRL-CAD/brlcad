@@ -38,7 +38,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/goblet_material_properties_images/goblet_mater_complete.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L007_imgs/goblet_mater_complete.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -157,7 +157,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/goblet_material_properties_images/goblet_complete_window.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L007_imgs/goblet_complete_window.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -200,7 +200,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/goblet_material_properties_images/goblet_semitransparent.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L007_imgs/goblet_semitransparent.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -233,7 +233,7 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="../../../lessons/mged/goblet_material_properties_images/goblet_mirror.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../../lessons/mged/L007_imgs/goblet_mirror.png" format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
 	    <para>
