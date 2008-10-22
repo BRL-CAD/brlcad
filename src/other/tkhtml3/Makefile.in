@@ -425,6 +425,9 @@ install-lib-binaries: binaries
 	    $(INSTALL_DATA) pkgIndex.tcl $(DESTDIR)$(pkglibdir); \
 	fi
 
+#appease dvi-recursive rule from the top-level Makefile so this works as a SUBDIR
+dvi:
+
 #========================================================================
 # Install binary executables (e.g. .exe files and dependent .dll files)
 # This is for files that must go in the bin directory (located next to
