@@ -156,7 +156,9 @@ endif
 endif
 # end ONLY_BENCHMARK
 
-EXTRA_DIST = tkhtml3
+EXTRA_DIST = \
+	boost \
+	tkhtml3
 
 DIST_SUBDIRS = \
 	URToolkit \

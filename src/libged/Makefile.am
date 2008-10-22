@@ -217,7 +217,8 @@ AM_CPPFLAGS = \
 noinst_HEADERS = \
 	search.h \
 	ged_private.h \
-	qray.h
+	qray.h \
+	wdb_qray.h
 
 libged_la_SOURCES =
 libged_la_LDFLAGS = -version-info 19:1 -no-undefined
