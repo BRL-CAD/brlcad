@@ -3542,6 +3542,10 @@ AC_DEFUN(TEA_PUBLIC_TK_HEADERS, [
 		AC_MSG_ERROR([${with_tkinclude} directory does not contain tk.h])
 	    fi
 	else
+	    # Make sure list is empty, otherwise search order may be
+	    # out of wack
+	    list=""
+
 	    if test "`uname -s`" = "Darwin"; then
 		# If Tk was built as a framework, attempt to use
 		# the framework's Headers directory.
