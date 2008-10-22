@@ -77,12 +77,12 @@ ged_rect(struct ged	*gedp,
     int i;
     static const char *usage = ged_rect_syntax;
 
-    /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
-
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
 
     if (argc < 2 || 5 < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
@@ -503,11 +503,11 @@ ged_rect_zoom(struct ged *gedp)
     point_t old_view_center;
     point_t new_view_center;
 
-    /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
-
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
 
     if (NEAR_ZERO(gedp->ged_gvp->gv_rect.grs_width, (fastf_t)SMALL_FASTF) &&
 	NEAR_ZERO(gedp->ged_gvp->gv_rect.grs_height, (fastf_t)SMALL_FASTF))

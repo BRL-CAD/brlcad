@@ -32,12 +32,12 @@ ged_regdef(struct ged *gedp, int argc, const char *argv[])
     int item, air, los, mat;
     static const char *usage = "item air los mat";
 
-    /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
-
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
 
     if (argc < 2 || 5 < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);

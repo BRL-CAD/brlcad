@@ -90,9 +90,10 @@ __BEGIN_DECLS
 /** Check if a database is open */
 #define GED_CHECK_DATABASE_OPEN(_gedp, _ret) \
     if ((_gedp) == GED_NULL || (_gedp)->ged_wdbp == RT_WDB_NULL || (_gedp)->ged_wdbp->dbip == DBI_NULL) { \
-	if ((_gedp) != GED_NULL) \
+	if ((_gedp) != GED_NULL) { \
+	    bu_vls_trunc(&(_gedp)->ged_result_str, 0); \
 	    bu_vls_printf(&(_gedp)->ged_result_str, "A database is not open!"); \
-	else \
+	} else								\
 	    bu_log("A database is not open!"); \
 	return (_ret); \
     }
@@ -100,6 +101,7 @@ __BEGIN_DECLS
 /** Check if a drawable exists */
 #define GED_CHECK_DRAWABLE(_gedp, _ret) \
     if (_gedp->ged_gdp == GED_DRAWABLE_NULL) { \
+	bu_vls_trunc(&(_gedp)->ged_result_str, 0); \
 	bu_vls_printf(&(_gedp)->ged_result_str, "A drawable does not exist!"); \
 	return (_ret); \
     }
@@ -107,6 +109,7 @@ __BEGIN_DECLS
 /** Check if a view exists */
 #define GED_CHECK_VIEW(_gedp, _ret) \
     if (_gedp->ged_gvp == GED_VIEW_NULL) { \
+	bu_vls_trunc(&(_gedp)->ged_result_str, 0); \
 	bu_vls_printf(&(_gedp)->ged_result_str, "A view does not exist!"); \
 	return (_ret); \
     }
@@ -121,6 +124,7 @@ __BEGIN_DECLS
 /** Check if the database is read only */
 #define	GED_CHECK_READ_ONLY(_gedp, _ret) \
     if ((_gedp)->ged_wdbp->dbip->dbi_read_only) { \
+	bu_vls_trunc(&(_gedp)->ged_result_str, 0); \
 	bu_vls_printf(&(_gedp)->ged_result_str, "Sorry, this database is READ-ONLY"); \
 	return (_ret); \
     }
@@ -135,6 +139,7 @@ __BEGIN_DECLS
 /** make sure there is a command name given */
 #define GED_CHECK_ARGC_GT_0(_gedp, _argc, _ret) \
     if ((_argc) < 1) { \
+	bu_vls_trunc(&(_gedp)->ged_result_str, 0); \
 	bu_vls_printf(&(_gedp)->ged_result_str, "ERROR: command name not provided (%s:%d)", __FILE__, __LINE__); \
 	return (_ret); \
     }
