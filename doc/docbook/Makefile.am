@@ -17,6 +17,7 @@ DIST_SUBDIRS = \
 
 EXTRA_DIST = \
 	README \
-	catalog.xml
+	catalog.xml \
+	resources 
 
 include $(top_srcdir)/misc/Makefile.defs

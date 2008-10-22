@@ -71,6 +71,7 @@ MOSTLYCLEANFILES = \
          $(BUILTMAN_SOURCES)
 
 EXTRA_DIST = \
-	${man1DOCBOOK}
+	${man1DOCBOOK} \
+	${man1INTRO}
 
 include $(top_srcdir)/misc/Makefile.defs
