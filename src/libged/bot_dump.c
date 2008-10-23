@@ -646,7 +646,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    if (bu_optind >= argc) {
+    if (bu_optind > argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
