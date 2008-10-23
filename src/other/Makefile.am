@@ -157,8 +157,7 @@ endif
 # end ONLY_BENCHMARK
 
 EXTRA_DIST = \
-	boost \
-	tkhtml3
+	boost 
 
 DIST_SUBDIRS = \
 	URToolkit \
@@ -175,6 +174,7 @@ DIST_SUBDIRS = \
 	openNURBS \
 	tcl \
 	tk \
+	tkhtml3 \
 	tkimg \
 	tnt
 
