@@ -203,9 +203,14 @@ struct rt_db_internal  {
     struct bu_attribute_value_set idb_avs;
 };
 #define idb_type		idb_minor_type
-#define RT_INIT_DB_INTERNAL(_p)	{(_p)->idb_magic = RT_DB_INTERNAL_MAGIC; \
-	(_p)->idb_type = -1; (_p)->idb_ptr = GENPTR_NULL;\
-	(_p)->idb_avs.magic = -1;}
+#define RT_INIT_DB_INTERNAL(_p)	{ \
+	(_p)->idb_magic = RT_DB_INTERNAL_MAGIC; \
+	(_p)->idb_major_type = -1; \
+	(_p)->idb_minor_type = -1; \
+	(_p)->idb_meth = GENPTR_NULL; \
+	(_p)->idb_ptr = GENPTR_NULL; \
+	bu_avs_init_empty(&(_p)->idb_avs); \
+}
 #define RT_CK_DB_INTERNAL(_p)	BU_CKMAG(_p, RT_DB_INTERNAL_MAGIC, "rt_db_internal")
 
 /**
