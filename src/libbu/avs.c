@@ -46,8 +46,8 @@ bu_avs_init_empty(struct bu_attribute_value_set *avsp)
     avsp->magic = BU_AVS_MAGIC;
     avsp->count = 0;
     avsp->max = 0;
-    avsp->avp = (struct bu_attribute_value_pair *)NULL;
     avsp->readonly_min = avsp->readonly_max = NULL;
+    avsp->avp = (struct bu_attribute_value_pair *)NULL;
 }
 
 /**
@@ -62,12 +62,12 @@ bu_avs_init(struct bu_attribute_value_set *avsp, int len, const char *str)
 	bu_log("bu_avs_init(%p, len=%d, %s)\n", avsp, len, str);
 
     avsp->magic = BU_AVS_MAGIC;
-    if (len <= 0)  len = AVS_ALLOCATION_INCREMENT + AVS_ALLOCATION_INCREMENT;
+    if (len <= 0)
+	len = AVS_ALLOCATION_INCREMENT + AVS_ALLOCATION_INCREMENT;
     avsp->count = 0;
     avsp->max = len;
-    avsp->avp = (struct bu_attribute_value_pair *)bu_calloc(avsp->max,
-							    sizeof(struct bu_attribute_value_pair), str);
     avsp->readonly_min = avsp->readonly_max = NULL;
+    avsp->avp = (struct bu_attribute_value_pair *)bu_calloc(avsp->max, sizeof(struct bu_attribute_value_pair), str);
 }
 
 /**
