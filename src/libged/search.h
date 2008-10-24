@@ -63,7 +63,7 @@ enum ntype {
     N_AND, N_ATTR, N_BELOW,
     N_CLOSEPAREN, N_DEPTH, N_EMPTY, N_EXEC, N_EXECDIR, N_EXPR,
     N_FLAGS, N_INAME, N_IREGEX, N_LS, N_MAXDEPTH,
-    N_MINDEPTH, N_NAME, N_NOT, N_OK, N_OPENPAREN, N_OR, N_PATH,
+    N_MINDEPTH, N_NAME, N_NNODES, N_NOT, N_NSUBTN, N_OK, N_OPENPAREN, N_OR, N_PATH,
     N_PRINT, N_PRINT0, N_PRUNE, N_REGEX, N_STDATTR, N_TYPE
 };
 
@@ -161,6 +161,8 @@ PLAN	*c_ls(char *, char ***, int);
 int	c_maxdepth(char *, char ***, int, PLAN **);
 int	c_mindepth(char *, char ***, int, PLAN **);
 int	c_name(char *, char ***, int, PLAN **);
+int	c_nnodes(char *, char ***, int, PLAN **);
+int	c_nsubtn(char *, char ***, int, PLAN **);
 int	c_regex(char *, char ***, int, PLAN **);
 int	c_iregex(char *, char ***, int, PLAN **);
 int	c_path(char *, char ***, int, PLAN **);

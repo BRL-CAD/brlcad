@@ -227,6 +227,41 @@ db_fullpath_traverse( struct rt_wdb *wdbp,
 }
 
 
+int db_count_tree_leaves( const union tree *tp )
+{
+    if ( tp == TREE_NULL ) return 0;
+
+    RT_CK_TREE(tp);
+
+    switch ( tp->tr_op ) {
+	case OP_NOP:
+	    return 0;
+	case OP_DB_LEAF:
+	    return 1;
+	case OP_SOLID:
+	    return 1;
+	case OP_REGION:
+	    return db_count_tree_leaves( tp->tr_b.tb_left ) + db_count_tree_leaves( tp->tr_b.tb_right );
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+	    /* Unary ops */
+	    return db_count_tree_leaves( tp->tr_b.tb_left );
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+	    /* This node is known to be a binary op */
+	    return db_count_tree_leaves( tp->tr_b.tb_left ) + db_count_tree_leaves( tp->tr_b.tb_right );
+	default:
+	    bu_log("db_tree_nleaves: bad op %d\n", tp->tr_op);
+	    bu_bomb("db_tree_nleaves\n");
+    }
+    return( -1 );
+}
+
+
+
 int typecompare(const void *, const void *);
 
 /* NB: the following table must be sorted lexically. */
@@ -247,7 +282,9 @@ static OPTION options[] = {
     { "-maxdepth",  N_MAXDEPTH,     c_maxdepth,     O_ARGV },
     { "-mindepth",  N_MINDEPTH,     c_mindepth,     O_ARGV },
     { "-name",      N_NAME,         c_name,         O_ARGV },
+    { "-nnodes",    N_MAXDEPTH,     c_nnodes,       O_ARGV },
     { "-not",       N_NOT,          c_not,          O_ZERO },
+    { "-nsubtn",    N_MAXDEPTH,     c_nsubtn,       O_ARGV },
     { "-o",         N_OR,           c_or,	    O_ZERO },
     { "-or", 	    N_OR, 	    c_or, 	    O_ZERO },
     { "-path",      N_PATH,         c_path,         O_ARGV },
@@ -1121,6 +1158,58 @@ c_empty(char *pattern, char ***ignored, int unused, PLAN **resultplan)
     (*resultplan) = new;
     return BRLCAD_OK;
 }
+
+/*
+ * -nnodes function --
+ *
+ *      True if the object being examined has exactly # nodes.  
+ *      If an expression ># or <# is supplied, true if object
+ *      has greater than or less than that number of nodes.
+ *
+ */
+int
+f_nnodes(PLAN *plan, struct db_full_path *entry, struct rt_wdb *wdbp)
+{
+    return 0;
+}
+
+int
+c_nnodes(char *pattern, char ***ignored, int unused, PLAN **resultplan)
+{
+    PLAN *new;
+
+    new = palloc(N_NNODES, f_nnodes);
+    (*resultplan) = new;
+    return BRLCAD_OK;
+}
+
+/*
+ * -nsubtn function --
+ *
+ *      True if the total number of nodes in the subtree of 
+ *      object being examined has exactly # nodes.  
+ *      If an expression ># or <# is supplied, true if subtree
+ *      has greater than or less than that number of nodes.
+ *
+ */
+int
+f_nsubtn(PLAN *plan, struct db_full_path *entry, struct rt_wdb *wdbp)
+{
+    return 0;
+}
+
+int
+c_nsubtn(char *pattern, char ***ignored, int unused, PLAN **resultplan)
+{
+    PLAN *new;
+
+    new = palloc(N_NSUBTN, f_nsubtn);
+    (*resultplan) = new;
+    return BRLCAD_OK;
+}
+
+
+
 
 /*
  * -path function --
