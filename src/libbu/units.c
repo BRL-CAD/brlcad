@@ -41,7 +41,7 @@
 static const struct cvt_tab {
     double	val;
     char	name[32];
-} bu_units_tab[] = {
+} bu_units_length_tab[] = {
     {0.0,		"none"},
     {1.0e-21,		"ym"},
     {1.0e-21,		"yoctometer"},
@@ -125,7 +125,7 @@ static const struct cvt_tab {
     {3.08568025e+19,	"parsec"},
     {0.0,		""}			/* LAST ENTRY */
 };
-#define BU_UNITS_TABLE_SIZE (sizeof(bu_units_tab) / sizeof(struct cvt_tab) - 1)
+#define BU_UNITS_LENGTH_TABLE_SIZE (sizeof(bu_units_length_tab) / sizeof(struct cvt_tab) - 1)
 
 /**
  * B U _ U N I T S _ C O N V E R S I O N
@@ -164,7 +164,7 @@ bu_units_conversion(const char *str)
     if (ubuf[len-1] == 's')  ubuf[len-1] = '\0';
 
     /* Search for this string in the table */
-    for (tp=bu_units_tab; tp->name[0]; tp++) {
+    for (tp=bu_units_length_tab; tp->name[0]; tp++) {
 	if (ubuf[0] != tp->name[0])  continue;
 	if (strcmp(ubuf, tp->name) != 0)  continue;
 	return (tp->val);
@@ -193,7 +193,7 @@ bu_units_string(register const double mm)
 	return (char *)NULL;
 
     /* Search for this string in the table */
-    for (tp=bu_units_tab; tp->name[0]; tp++) {
+    for (tp=bu_units_length_tab; tp->name[0]; tp++) {
 	fastf_t	diff, bigger;
 
 	if (mm == tp->val)
@@ -242,7 +242,7 @@ bu_nearest_units_string(register const double mm)
 	return (char *)NULL;
 
     /* Search for this unit in the table */
-    for (tp=bu_units_tab; tp->name[0]; tp++) {
+    for (tp=bu_units_length_tab; tp->name[0]; tp++) {
 	double nearness;
 
 	/* skip zero so we don't return 'none' */
@@ -299,7 +299,7 @@ bu_mm_value(const char *s)
 	return v;
     }
 
-    for (tp=bu_units_tab; tp->name[0]; tp++) {
+    for (tp=bu_units_length_tab; tp->name[0]; tp++) {
 	if (*ptr != tp->name[0])  continue;
 	if (strcmp(ptr, tp->name) == 0) {
 	    v *= tp->val;
