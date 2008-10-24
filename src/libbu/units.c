@@ -38,10 +38,12 @@
 
 #include "bu.h"
 
-static const struct cvt_tab {
+struct cvt_tab {
     double	val;
     char	name[32];
-} bu_units_length_tab[] = {
+};
+
+static const struct cvt_tab bu_units_length_tab[] = {
     {0.0,		"none"},
     {1.0e-21,		"ym"},
     {1.0e-21,		"yoctometer"},
@@ -125,7 +127,44 @@ static const struct cvt_tab {
     {3.08568025e+19,	"parsec"},
     {0.0,		""}			/* LAST ENTRY */
 };
-#define BU_UNITS_LENGTH_TABLE_SIZE (sizeof(bu_units_length_tab) / sizeof(struct cvt_tab) - 1)
+#define BU_UNITS_TABLE_SIZE (sizeof(bu_units_length_tab) / sizeof(struct cvt_tab) - 1)
+
+static const struct cvt_tab bu_units_volume_tab[] = {
+    {0.0,		"none"},
+    {1.0,		"mm^3"},		/* default */
+    {1.0, 		"cu mm"},
+    {1.0e3, 		"cm^3"},
+    {1.0e3, 		"cu cm"},
+    {1.0e3, 		"cc"},
+    {1.0e6, 		"l"},
+    {1.0e6, 		"liter"},
+    {1.0e6, 		"litre"},
+    {1.0e9, 		"m^3"},
+    {1.0e9,		"cu m"},
+    {16387.064, 	"in^3"},
+    {16387.064, 	"cu in"},
+    {28316846.592, 	"ft^3"},
+    {28316846.592, 	"cu ft"},
+    {764554857.984, 	"yds^3"},
+    {764554857.984, 	"yards^3"},
+    {764554857.984, 	"cu yards"},
+    {0.0,               ""}                     /* LAST ENTRY */
+};
+
+static const struct cvt_tab bu_units_mass_tab[] = {
+    {0.0,		"none"},
+    {1.0,		"grams"},		/* default */
+    {1.0, 		"g"},
+    {1.0e3, 		"kilograms"},
+    {1.0e3,		"kg"},
+    {0.0648, 		"gr"},
+    {0.0648,		"grains"},
+    {0.0,               ""}                     /* LAST ENTRY */
+};
+
+
+
+
 
 /**
  * B U _ U N I T S _ C O N V E R S I O N
