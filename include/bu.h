@@ -1291,11 +1291,11 @@ struct bu_attribute_value_pair {
  * freed by the caller, and should not be individually freed.
  */
 struct bu_attribute_value_set {
-    unsigned long		magic;
-    unsigned int		count;	/**< @brief # valid entries in avp  */
-    unsigned int		max;	/**< @brief # allocated slots in avp  */
-    genptr_t			readonly_min;
-    genptr_t			readonly_max;
+    unsigned long			magic;
+    unsigned int			count;	/**< @brief # valid entries in avp  */
+    unsigned int			max;	/**< @brief # allocated slots in avp  */
+    genptr_t				readonly_min;
+    genptr_t				readonly_max;
     struct bu_attribute_value_pair	*avp;	/**< @brief array[max]  */
 };
 #define BU_CK_AVS(_avp)		BU_CKMAG(_avp, BU_AVS_MAGIC, "bu_attribute_value_set")
