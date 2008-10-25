@@ -208,7 +208,11 @@ EXTRA_DIST = \
 	parse.c \
 	pmalloc.c \
 	primitives/bot/g_bot_include.c \
+	primitives/ell/ell_brep.cpp \
+	primitives/nmg/nmg_brep.cpp \
 	primitives/nmg/nmg_junk.c \
+	primitives/sph/sph_brep.cpp \
+	primitives/tor/tor_brep.cpp \
 	timer-nt.c \
 	timer52brl.c \
 	timerhep.c \
