@@ -18,6 +18,7 @@ bin_SCRIPTS = \
 
 EXTRA_DIST = \
 	$(bin_SCRIPTS) \
+	cmakecheck.sh \
 	copyright.sh \
 	enumerate.sh \
 	footer.sh \
