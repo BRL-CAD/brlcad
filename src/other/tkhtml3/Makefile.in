@@ -333,7 +333,7 @@ distdir:
 
 	mkdir $(DIST_DIR)/tclconfig
 	cp $(srcdir)/tclconfig/install-sh $(srcdir)/tclconfig/tcl.m4 \
-	   $(srcdir)/README* $(DIST_DIR)/tclconfig/
+	   $(srcdir)/README* $(srcdir)/tclconfig/README.txt $(DIST_DIR)/tclconfig/
 	chmod 664 $(DIST_DIR)/tclconfig/tcl.m4
 	chmod +x $(DIST_DIR)/tclconfig/install-sh
 
