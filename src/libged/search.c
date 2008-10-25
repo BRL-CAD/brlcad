@@ -226,42 +226,6 @@ db_fullpath_traverse( struct rt_wdb *wdbp,
     }
 }
 
-
-int db_count_tree_leaves( const union tree *tp )
-{
-    if ( tp == TREE_NULL ) return 0;
-
-    RT_CK_TREE(tp);
-
-    switch ( tp->tr_op ) {
-	case OP_NOP:
-	    return 0;
-	case OP_DB_LEAF:
-	    return 1;
-	case OP_SOLID:
-	    return 1;
-	case OP_REGION:
-	    return db_count_tree_leaves( tp->tr_b.tb_left ) + db_count_tree_leaves( tp->tr_b.tb_right );
-	case OP_NOT:
-	case OP_GUARD:
-	case OP_XNOP:
-	    /* Unary ops */
-	    return db_count_tree_leaves( tp->tr_b.tb_left );
-	case OP_UNION:
-	case OP_INTERSECT:
-	case OP_SUBTRACT:
-	case OP_XOR:
-	    /* This node is known to be a binary op */
-	    return db_count_tree_leaves( tp->tr_b.tb_left ) + db_count_tree_leaves( tp->tr_b.tb_right );
-	default:
-	    bu_log("db_tree_nleaves: bad op %d\n", tp->tr_op);
-	    bu_bomb("db_tree_nleaves\n");
-    }
-    return( -1 );
-}
-
-
-
 int typecompare(const void *, const void *);
 
 /* NB: the following table must be sorted lexically. */
