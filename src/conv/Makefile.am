@@ -2,9 +2,15 @@
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
-COMMON_EXTRA = \
+EXTRA_DIST = \
+	CMakeLists.txt \
+	Formats.csv \
 	dbclean.sh \
-	Formats.csv
+	g-xxx.c \
+	g-xxx_facets.c \
+	g4-g5.c \
+	g5-g4.c \
+	walk_example.c
 
 if ONLY_BENCHMARK
 
@@ -15,15 +21,6 @@ bin_PROGRAMS = \
 	asc2pix \
 	g2asc \
 	pix2asc
-
-EXTRA_DIST =
-	$(COMMON_EXTRA) \
-	CMakeLists.txt \
-	g-xxx.c \
-	g-xxx_facets.c \
-	g4-g5.c \
-	g5-g4.c \
-	walk_example.c
 
 else !ONLY_BENCHMARK
 
@@ -84,9 +81,6 @@ noinst_PROGRAMS = \
 	g-xxx \
 	g-xxx_facets \
 	walk_example
-
-EXTRA_DIST = \
-	$(COMMON_EXTRA)
 
 endif
 # end ONLY_BENCHMARK

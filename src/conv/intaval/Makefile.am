@@ -16,7 +16,9 @@ noinst_HEADERS = glob.h \
 	regtab.h \
 	write_brl.h
 
-EXTRA_DIST = readme.txt
+EXTRA_DIST = \
+	CMakeLists.txt \
+	readme.txt
 
 DEPS=src/libwdb src/librt
 

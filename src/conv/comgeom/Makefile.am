@@ -23,6 +23,7 @@ man_MANS = comgeom-g.1
 
 EXTRA_DIST = \
 	$(man_MANS) \
+	CMakeLists.txt \
 	try.sh
 
 DEPS=src/libwdb src/librt

@@ -118,6 +118,7 @@ g_iges_LDADD = \
 
 EXTRA_DIST = \
 	$(man_MANS) \
+	CMakeLists.txt \
 	PullbackCurve.cpp \
 	add_face.cpp \
 	arrange.c \
