@@ -6,7 +6,11 @@ EXTRA_DIST= \
 	asc2pix/asc2pix.vcproj \
 	bot2bldxf/bot2bldxf.vcproj \
 	bot_shell2vtk/bot_shell2vtk.vcproj \
+	bottest/bottest.vcproj \
+	brep_cube/brep_cube.vcproj \
+	brep_simple/brep_simple.vcproj \
 	breplicator/breplicator.vcproj \
+	brickwall/brickwall.vcproj \
 	brlcad/brlcad.sln \
 	btclsh/btclsh.vcproj \
 	bw2fb/bw2fb.vcproj \
@@ -15,14 +19,16 @@ EXTRA_DIST= \
 	bwmod/bwmod.vcproj \
 	cat2fb/cat2fb.vcproj \
 	cell2fb/cell2fb.vcproj \
+	clutter/clutter.vcproj \
 	cmap2fb/cmap2fb.vcproj \
+	contours/contours.vcproj \
 	cy2g/cy2g.vcproj \
 	dbupgrade/dbupgrade.vcproj \
 	dxf2g/dxf2g.vcproj \
 	enf2g/enf2g.vcproj \
+	euclid2g/euclid2g.vcproj \
 	euclid_format/euclid_format.vcproj \
 	euclid_unformat/euclid_unformat.vcproj \
-	euclid2g/euclid2g.vcproj \
 	fast42g/fast42g.vcproj \
 	fb2bw/fb2bw.vcproj \
 	fb2cmap/fb2cmap.vcproj \
@@ -51,12 +57,13 @@ EXTRA_DIST= \
 	fbserv/fbserv.vcproj \
 	fbstretch/fbstretch.vcproj \
 	fbzoom/fbzoom.vcproj \
+	fence/fence.vcproj \
 	g2acad/g2acad.vcproj \
 	g2adrt/g2adrt.vcproj \
 	g2asc/g2asc.vcproj \
 	g2dxf/g2dxf.vcproj \
-	g2euclid1/g2euclid1.vcproj \
 	g2euclid/g2euclid.vcproj \
+	g2euclid1/g2euclid1.vcproj \
 	g2iges/g2iges.vcproj \
 	g2nff/g2nff.vcproj \
 	g2nmg/g2nmg.vcproj \
@@ -70,9 +77,11 @@ EXTRA_DIST= \
 	g42g5/g42g5.vcproj \
 	g52g4/g52g4.vcproj \
 	gif2fb/gif2fb.vcproj \
+	globe/globe.vcproj \
 	iges2g/iges2g.vcproj \
 	itclstub/itclstub.vcproj \
 	itkstub/itkstub.vcproj \
+	kurt/kurt.vcproj \
 	libBLT/libBLT.vcproj \
 	libItcl/libItcl.vcproj \
 	libItk/libItk.vcproj \
@@ -94,28 +103,37 @@ EXTRA_DIST= \
 	libutahrle/libutahrle.vcproj \
 	libwdb/libwdb.vcproj \
 	libz/libz.vcproj \
+	masonry/masonry.vcproj \
 	mged/mged.vcproj \
+	molecule/molecule.vcproj \
 	nastran2g/nastran2g.vcproj \
 	nirt/nirt.vcproj \
 	nmg2bot/nmg2bot.vcproj \
 	nmg2rib/nmg2rib.vcproj \
 	nmg2sgp/nmg2sgp.vcproj \
+	nmgmodel/nmgmodel.vcproj \
 	opennurbs/opennurbs.vcproj \
 	orle2fb/orle2fb.vcproj \
+	pipe/pipe.vcproj \
+	pipetest/pipetest.vcproj \
 	pix2asc/pix2asc.vcproj \
 	pix2bw/pix2bw.vcproj \
 	pix2fb/pix2fb.vcproj \
+	pix2g/pix2g.vcproj \
 	pixautosize/pixautosize.vcproj \
 	pixflip2fb/pixflip2fb.vcproj \
 	pixmatte/pixmatte.vcproj \
 	pl2fb/pl2fb.vcproj \
 	ply2g/ply2g.vcproj \
+	png2fb/png2fb.vcproj \
 	polar2fb/polar2fb.vcproj \
 	poly2bot/poly2bot.vcproj \
-	png2fb/png2fb.vcproj \
 	pp2fb/pp2fb.vcproj \
+	pyramid/pyramid.vcproj \
+	rawbot/rawbot.vcproj \
 	remrt/remrt.vcproj \
 	rle2fb/rle2fb.vcproj \
+	room/room.vcproj \
 	rt/rt.vcproj \
 	rt_bot_faces/rt_bot_faces.vcproj \
 	rtarea/rtarea.vcproj \
@@ -133,6 +151,9 @@ EXTRA_DIST= \
 	rtsil/rtsil.vcproj \
 	rtweight/rtweight.vcproj \
 	rtxray/rtxray.vcproj \
+	sketch/sketch.vcproj \
+	sphflake/sphflake.vcproj \
+	spltest/spltest.vcproj \
 	spm2fb/spm2fb.vcproj \
 	stl2g/stl2g.vcproj \
 	tankill2g/tankill2g.vcproj \
@@ -140,11 +161,19 @@ EXTRA_DIST= \
 	tclsh/library/installTree.tcl \
 	tclsh/tclsh.vcproj \
 	tclstub/tclstub.vcproj \
+	tea/tea.vcproj \
+	tea_nmg/tea_nmg.vcproj \
+	terrain/terrain.vcproj \
+	tire/tire.vcproj \
 	tkimg/tkimg.vcproj \
 	tkimgpng/tkimgpng.vcproj \
 	tkstub/tkstub.vcproj \
+	torii/torii.vcproj \
+	tube/tube.vcproj \
+	vegitation/vegitation.vcproj \
 	vg2g/vg2g.vcproj \
 	viewpoint2g/viewpoint2g.vcproj \
+	wdb_example/wdb_example.vcproj \
 	wish/wish.vcproj
 
 include $(top_srcdir)/misc/Makefile.defs
