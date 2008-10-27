@@ -97,14 +97,6 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap='B' role='bold'>-empty</emphasis></term>
-      <listitem>
-	<para>
-	  Returns TRUE if the object is a combination and has no tree below it.
-	</para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
       <term><emphasis remap='B' role='bold'>-iname</emphasis> <emphasis remap='I'>pattern</emphasis></term>
       <listitem>
 	<para>
@@ -147,6 +139,17 @@
 	  True if the object name (not the full path, just the name) matches
 	  <emphasis remap='I'>pattern</emphasis>. The evaluation is done according 
 	  to shell pattern matching rules.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><emphasis remap='B' role='bold'>-nnodes</emphasis> <emphasis remap='I'>n</emphasis></term>
+      <listitem>
+	<para>
+	  True if the object is a combination and has <emphasis remap='I'>n</emphasis> nodes.  This
+          option also supports supplying &lt;, &gt;, &lt;=, and &gt;= in front of the number to support
+          returning true for objects with node counts less than, greater than, less than or equal to,
+          and greater than or equal to <emphasis remap='I'>n</emphasis>.
 	</para>
       </listitem>
     </varlistentry>
@@ -448,6 +451,27 @@
       Find all instances of combinations that are not regions and do not contain regions.
     </para>
   </example>
+
+  <example>
+    <title>Finding all Empty Combinations</title>
+    <para>
+      <userinput>search -nnodes 0</userinput>
+    </para>
+    <para>
+      Find all instances of combinations containing zero nodes.
+    </para>
+  </example>
+
+  <example>
+    <title>Finding all Combinations With 10 or More Nodes</title>
+    <para>
+      <userinput>search -nnodes &gt;=10</userinput>
+    </para>
+    <para>
+      Find all instances of combinations with 10 or more nodes.
+    </para>
+  </example>
+
  
 </refsect1>
 

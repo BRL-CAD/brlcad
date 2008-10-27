@@ -25,6 +25,7 @@ the geometry hierarchy, and much more.  You can combine search
 expressions together using boolean logic as well for even more
 powerful operations.
 
+* add nnodes option to search, remove empty opt. - Cliff Yapp
 * upgraded libpng to 1.2.32 - Erik Greenwald
 * fixed memory leak with in-memory geometry databases - Daniel Roßberg
 * mged help menu is restructured for improved usability - Cliff Yapp

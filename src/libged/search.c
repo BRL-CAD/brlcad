@@ -240,15 +240,13 @@ static OPTION options[] = {
     { "-attr",	    N_ATTR,	    c_attr,	    O_ARGV },
     { "-bl",        N_BELOW,        c_below,        O_ZERO },
     { "-below",     N_BELOW,        c_below,        O_ZERO },
-    { "-empty",     N_EMPTY,        c_empty,        O_ZERO },
     { "-iname",     N_INAME,        c_iname,        O_ARGV },
     { "-iregex",    N_IREGEX,       c_iregex,       O_ARGV },
     { "-maxdepth",  N_MAXDEPTH,     c_maxdepth,     O_ARGV },
     { "-mindepth",  N_MINDEPTH,     c_mindepth,     O_ARGV },
     { "-name",      N_NAME,         c_name,         O_ARGV },
-    { "-nnodes",    N_MAXDEPTH,     c_nnodes,       O_ARGV },
+    { "-nnodes",    N_NNODES,       c_nnodes,       O_ARGV },
     { "-not",       N_NOT,          c_not,          O_ZERO },
-    { "-nsubtn",    N_MAXDEPTH,     c_nsubtn,       O_ARGV },
     { "-o",         N_OR,           c_or,	    O_ZERO },
     { "-or", 	    N_OR, 	    c_or, 	    O_ZERO },
     { "-path",      N_PATH,         c_path,         O_ARGV },
@@ -1087,54 +1085,119 @@ c_mindepth(char *pattern, char ***ignored, int unused, PLAN **resultplan)
     return BRLCAD_OK;
 }
 
-/*
- * -empty function --
- *
- *      True if the object is of type COMB and has no children.
- */
-int
-f_empty(PLAN *plan, struct db_full_path *entry, struct rt_wdb *wdbp)
-{
-    struct rt_db_internal in;
-    struct rt_comb_internal *comb;
-
-    if (DB_FULL_PATH_CUR_DIR(entry)->d_flags & DIR_COMB) {
-	rt_db_get_internal5( &in, DB_FULL_PATH_CUR_DIR(entry), wdbp->dbip, (fastf_t *)NULL, &rt_uniresource);
-	comb = (struct rt_comb_internal *)in.idb_ptr;
-	if (comb->tree == NULL) {
-	    rt_db_free_internal( &in, &rt_uniresource );
-	    return 1;
-	} else {
-	    rt_db_free_internal( &in, &rt_uniresource );
-	    return 0;
-	}
-    } else {
-	return 0;
-    }
-}
-
-int
-c_empty(char *pattern, char ***ignored, int unused, PLAN **resultplan)
-{
-    PLAN *new;
-
-    new = palloc(N_EMPTY, f_empty);
-    (*resultplan) = new;
-    return BRLCAD_OK;
-}
 
 /*
  * -nnodes function --
  *
- *      True if the object being examined has exactly # nodes.  
+ *      True if the object being examined is a COMB and has # nodes.  
  *      If an expression ># or <# is supplied, true if object
- *      has greater than or less than that number of nodes.
+ *      has greater than or less than that number of nodes. if >=#
+ *      or <=# is supplied, true if object has greater than or equal
+ *      to / less than or equal to # of nodes.
  *
  */
 int
 f_nnodes(PLAN *plan, struct db_full_path *entry, struct rt_wdb *wdbp)
 {
-    return 0;
+    int dogreaterthan = 0;
+    int dolessthan = 0;
+    int doequal = 0;
+    int node_count_target = 0;
+    int node_count = 0;
+    struct rt_db_internal in;
+    struct rt_comb_internal *comb;
+
+   
+    /* Check for >, < and = in the first and second
+     * character positions.
+     */
+
+    if (isdigit(plan->node_data[0])) {
+	doequal = 1;
+	node_count_target = atoi(plan->node_data);
+    } else { 
+   	if (plan->node_data[0] == '>') dogreaterthan = 1;
+   	if (plan->node_data[0] == '<') dolessthan = 1;
+   	if (plan->node_data[0] == '=') doequal = 1;
+  	if (plan->node_data[0] != '>' && plan->node_data[0] != '<' && plan->node_data[0] != '=') {
+	    return 0;
+	}
+   	if (plan->node_data[1] == '=') {
+       		doequal = 1;
+		if (isdigit(plan->node_data[2])){
+		    node_count_target = atoi((plan->node_data)+2);
+		} else {
+		    return 0;
+		}
+   	} else {
+	    	if (isdigit(plan->node_data[1])) {
+		    node_count_target = atoi((plan->node_data)+1);
+		} else {
+		    return 0;
+		}
+   	}
+    }
+    
+    /* Get the number of nodes for the current object and check
+     * if the value satisfied the logical conditions specified
+     * in the argument string.
+     */
+
+    if (DB_FULL_PATH_CUR_DIR(entry)->d_flags & DIR_COMB) {
+	rt_db_get_internal5( &in, DB_FULL_PATH_CUR_DIR(entry), wdbp->dbip, (fastf_t *)NULL, &rt_uniresource);
+	comb = (struct rt_comb_internal *)in.idb_ptr;
+	if (comb->tree == NULL) {
+		node_count = 0;
+	} else {
+    		node_count = db_tree_nleaves(comb->tree);
+	}
+	rt_db_free_internal( &in, &rt_uniresource );
+    } else {
+	return 0;
+    }	
+
+    if (doequal && dogreaterthan) {
+	if (node_count >= node_count_target) {
+	    return 1;
+	} else {
+	    return 0;
+	}
+    }
+
+   if (doequal && dolessthan) {
+	if (node_count <= node_count_target) {
+	    return 1;
+	} else {
+	    return 0;
+	}
+    }
+
+   if (dogreaterthan) {
+	if (node_count > node_count_target) {
+	    return 1;
+	} else {
+	    return 0;
+	}
+    }
+
+   if (dolessthan) {
+	if (node_count < node_count_target) {
+	    return 1;
+	} else {
+	    return 0;
+	}
+    }
+
+   
+   if (doequal) {
+	if (node_count == node_count_target) {
+	    return 1;
+	} else {
+	    return 0;
+	}
+    }
+
+    return (0);
 }
 
 int
@@ -1143,35 +1206,10 @@ c_nnodes(char *pattern, char ***ignored, int unused, PLAN **resultplan)
     PLAN *new;
 
     new = palloc(N_NNODES, f_nnodes);
-    (*resultplan) = new;
+    new->node_data = pattern;
+   (*resultplan) = new;
     return BRLCAD_OK;
 }
-
-/*
- * -nsubtn function --
- *
- *      True if the total number of nodes in the subtree of 
- *      object being examined has exactly # nodes.  
- *      If an expression ># or <# is supplied, true if subtree
- *      has greater than or less than that number of nodes.
- *
- */
-int
-f_nsubtn(PLAN *plan, struct db_full_path *entry, struct rt_wdb *wdbp)
-{
-    return 0;
-}
-
-int
-c_nsubtn(char *pattern, char ***ignored, int unused, PLAN **resultplan)
-{
-    PLAN *new;
-
-    new = palloc(N_NSUBTN, f_nsubtn);
-    (*resultplan) = new;
-    return BRLCAD_OK;
-}
-
 
 
 

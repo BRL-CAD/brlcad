@@ -61,9 +61,9 @@
 enum ntype {
     N_ABOVE = 1, 			/* must start > 0 */
     N_AND, N_ATTR, N_BELOW,
-    N_CLOSEPAREN, N_DEPTH, N_EMPTY, N_EXEC, N_EXECDIR, N_EXPR,
+    N_CLOSEPAREN, N_DEPTH, N_EXEC, N_EXECDIR, N_EXPR,
     N_FLAGS, N_INAME, N_IREGEX, N_LS, N_MAXDEPTH,
-    N_MINDEPTH, N_NAME, N_NNODES, N_NOT, N_NSUBTN, N_OK, N_OPENPAREN, N_OR, N_PATH,
+    N_MINDEPTH, N_NAME, N_NNODES, N_NOT, N_OK, N_OPENPAREN, N_OR, N_PATH,
     N_PRINT, N_PRINT0, N_PRUNE, N_REGEX, N_STDATTR, N_TYPE
 };
 
@@ -101,6 +101,7 @@ typedef struct _plandata {
 	char *_ci_data;			/* char pointer */
 	char *_path_data;		/* char pointer */
 	char *_attr_data;		/* char pointer */
+	char *_node_data;		/* char pointer */
 	char *_type_data;
 	regex_t _regex_data;	/* compiled regexp */
 	int _max_data;			/* tree depth */
@@ -113,6 +114,7 @@ typedef struct _plandata {
 #define path_data	p_un._path_data
 #define regexp_data 	p_un._regex_data
 #define attr_data	p_un._attr_data
+#define node_data	p_un._node_data
 #define fl_flags	p_un.fl._f_flags
 #define fl_mask		p_un.fl._f_mask
 #define	g_data		p_un._g_data
@@ -154,7 +156,6 @@ int	     queryuser(char **);
 void	 show_path(int);
 
 int	c_attr(char *, char ***, int, PLAN **);
-int	c_empty(char *, char ***, int, PLAN **);
 PLAN	*c_exec(char *, char ***, int);
 int	c_iname(char *, char ***, int, PLAN **);
 PLAN	*c_ls(char *, char ***, int);
@@ -162,7 +163,6 @@ int	c_maxdepth(char *, char ***, int, PLAN **);
 int	c_mindepth(char *, char ***, int, PLAN **);
 int	c_name(char *, char ***, int, PLAN **);
 int	c_nnodes(char *, char ***, int, PLAN **);
-int	c_nsubtn(char *, char ***, int, PLAN **);
 int	c_regex(char *, char ***, int, PLAN **);
 int	c_iregex(char *, char ***, int, PLAN **);
 int	c_path(char *, char ***, int, PLAN **);
