@@ -29,6 +29,7 @@ man1DOCBOOK = \
 	anim_keyread.xml \
 	anim_lookat.xml \
 	anim_offset.xml \
+	anim_orient.xml \
 	bwscale.xml \
 	g_qa.xml \
 	mged.xml \
