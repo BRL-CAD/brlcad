@@ -545,7 +545,7 @@ ged_cvt_vlblock_to_solids(struct ged *gedp, struct bn_vlblock *vbp, char *name, 
  *  	0	Ordinarily
  *	-1	On major error
  */
-static int
+int
 ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct ged_client_data *_dgcdp)
 {
     int		ret = 0;
@@ -1029,6 +1029,7 @@ ged_color_soltab(struct solid *hsp)
 	    sp->s_color[0] = sp->s_basecolor[0];
 	    sp->s_color[1] = sp->s_basecolor[1];
 	    sp->s_color[2] = sp->s_basecolor[2];
+
 	    continue;
 	}
 
@@ -1038,6 +1039,7 @@ ged_color_soltab(struct solid *hsp)
 		sp->s_color[0] = mp->mt_r;
 		sp->s_color[1] = mp->mt_g;
 		sp->s_color[2] = mp->mt_b;
+
 		goto done;
 	    }
 	}
@@ -1057,6 +1059,7 @@ ged_color_soltab(struct solid *hsp)
 	sp->s_color[0] = sp->s_basecolor[0];
 	sp->s_color[1] = sp->s_basecolor[1];
 	sp->s_color[2] = sp->s_basecolor[2];
+
     done: ;
     }
 }

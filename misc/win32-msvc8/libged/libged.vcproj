@@ -722,6 +722,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\preview.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\ps.c"
 				>
 			</File>
@@ -887,6 +891,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\libged\summary.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\libged\sync.c"
 				>
 			</File>
 			<File

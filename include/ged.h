@@ -66,6 +66,7 @@ __BEGIN_DECLS
 #define GED_RESULT_NULL ((void *)0)
 
 #define GED_FUNC_PTR_NULL (ged_func_ptr)0
+#define GED_REFRESH_CALLBACK_PTR_NULL (ged_refresh_callback_ptr)0
 
 #define GED_IDLE_MODE 0
 #define GED_ROTATE_MODE 1
@@ -336,12 +337,14 @@ struct ged {
     struct ged_drawable		*ged_gdp;
     struct ged_view		*ged_gvp;
 
+    void			*ged_refresh_clientdata;	/**< @brief  function for handling refresh requests */
+    void			(*ged_refresh_handler)();	/**< @brief  function for handling refresh requests */
     void			(*ged_output_handler)();	/**< @brief  function for handling output */
     char			*ged_output_script;		/**< @brief  script for use by the outputHandler */
 };
 
 typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);
-
+typedef void (*ged_refresh_callback_ptr)(void *);
 
 /**
  * V I E W _ O B J
@@ -2008,6 +2011,14 @@ GED_EXPORT BU_EXTERN(int ged_prcolor, (struct ged *gedp, int argc, const char *a
 GED_EXPORT BU_EXTERN(int ged_prefix, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Preview a new style RT animation script.
+ *
+ * Usage:
+ *     preview [-v] [-d sec_delay] [-D start frame] [-K last frame] rt_script_file;
+ */
+GED_EXPORT BU_EXTERN(int ged_preview, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Create a postscript file of the view.
  *
  * Usage:
@@ -2340,6 +2351,14 @@ GED_EXPORT BU_EXTERN(int ged_slew, (struct ged *gedp, int argc, const char *argv
  *     summary [p r g]
  */
 GED_EXPORT BU_EXTERN(int ged_summary, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Sync up the in-memory database with the on-disk database.
+ *
+ * Usage:
+ *     sync
+ */
+GED_EXPORT BU_EXTERN(int ged_sync, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * The ged_tables() function serves idents, regions and solids.

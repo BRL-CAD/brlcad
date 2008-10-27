@@ -178,6 +178,12 @@ BU_EXTERN (int ged_invent_solid,
 	    int			copy,
 	    fastf_t		transparency,
 	    int			dmode));
+BU_EXTERN (int ged_drawtrees,
+	   (struct ged *gedp,
+	    int argc,
+	    const char *argv[],
+	    int kind,
+	    struct ged_client_data *_dgcdp));
 
 
 /* defined in erase.c */
@@ -226,6 +232,33 @@ BU_EXTERN(void ged_do_list,
 	  (struct ged			*gedp,
 	   register struct directory	*dp,
 	   int				verbose));
+
+/* defined in loadview.c */
+extern vect_t ged_eye_model;
+extern mat_t ged_viewrot;
+extern struct ged *ged_current_gedp;
+BU_EXTERN (int ged_cm_vsize,
+	   (int argc,
+	    char **argv));
+BU_EXTERN (int ged_cm_eyept,
+	   (int argc,
+	    char **argv));
+BU_EXTERN (int ged_cm_lookat_pt,
+	   (int argc,
+	    char **argv));
+BU_EXTERN (int ged_cm_vrot,
+	   (int argc,
+	    char **argv));
+BU_EXTERN (int ged_cm_orientation,
+	   (int argc,
+	    char **argv));
+BU_EXTERN (int ged_cm_set,
+	   (int argc,
+	    char **argv));
+BU_EXTERN (int ged_cm_null,
+	   (int argc,
+	    char **argv));
+
 
 /* defined in ls.c */
 BU_EXTERN(void ged_vls_col_pr4v,

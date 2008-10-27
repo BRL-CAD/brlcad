@@ -234,10 +234,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\mged\arb.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\mged\arbs.c"
 				>
 			</File>

@@ -127,6 +127,7 @@ libged_nil_la_SOURCES = \
 	pov.c \
 	prcolor.c \
 	prefix.c \
+	preview.c \
 	ps.c \
 	push.c \
 	put.c \
@@ -169,6 +170,7 @@ libged_nil_la_SOURCES = \
 	slew.c \
 	solids_on_ray.c \
 	summary.c \
+	sync.c \
 	tables.c \
 	title.c \
 	tol.c \

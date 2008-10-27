@@ -32,18 +32,9 @@
 
 #include "ged_private.h"
 
-int ged_cm_vsize(int argc, char **argv);
-int ged_cm_eyept(int argc, char **argv);
-int ged_cm_lookat_pt(int argc, char **argv);
-int ged_cm_vrot(int argc, char **argv);
-int ged_cm_orientation(int argc, char **argv);
-int ged_cm_set(int argc, char **argv);
-int ged_cm_null(int argc, char **argv);
-
-
-static vect_t ged_eye_model;
-static mat_t ged_viewrot;
-static struct ged *current_gedp;
+vect_t ged_eye_model;
+mat_t ged_viewrot;
+struct ged *ged_current_gedp;
 
 /**
  * here we define a minimal table of commands that are supported by the
@@ -138,7 +129,7 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
     }
 
     prevPerspective =  gedp->ged_gvp->gv_perspective;
-    current_gedp = gedp;
+    ged_current_gedp = gedp;
 
     /* turn perspective mode off, by default.  A "-p" option in the
      * view script will turn it back on.
@@ -259,9 +250,9 @@ ged_cm_vsize(int argc, char **argv)
     if ( argc < 2 )
 	return(-1);
     /* for some reason, scale is supposed to be half of size... */
-    current_gedp->ged_gvp->gv_size = atof(argv[1]);
-    current_gedp->ged_gvp->gv_scale = current_gedp->ged_gvp->gv_size * 0.5;
-    current_gedp->ged_gvp->gv_isize = 1.0 / current_gedp->ged_gvp->gv_size;
+    ged_current_gedp->ged_gvp->gv_size = atof(argv[1]);
+    ged_current_gedp->ged_gvp->gv_scale = ged_current_gedp->ged_gvp->gv_size * 0.5;
+    ged_current_gedp->ged_gvp->gv_isize = 1.0 / ged_current_gedp->ged_gvp->gv_size;
     return(0);
 }
 

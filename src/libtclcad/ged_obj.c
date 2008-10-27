@@ -322,6 +322,7 @@ static void go_fbs_callback();
 static int go_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp);
 
 static void go_refresh_view(struct ged_dm_view *gdvp);
+static void go_refresh_handler(void *clientdata);
 static void go_refresh_all_views(struct ged_obj *gop);
 static void go_autoview_view(struct ged_dm_view *gdvp);
 static void go_autoview_all_views(struct ged_obj *gop);
@@ -487,6 +488,7 @@ static struct go_cmdtab go_cmds[] = {
     {"pov",	"vname center quat scale eye_pos perspective", 7, go_view_func, ged_pmat},
     {"prcolor",	(char *)0, MAXARGS, go_pass_through_func, ged_prcolor},
     {"prefix",	(char *)0, MAXARGS, go_pass_through_func, ged_prefix},
+    {"preview",	"vname [options] script", MAXARGS, go_view_func, ged_preview},
     {"ps",	"vname [options] file.ps", 16, go_view_func, ged_ps},
     {"push",	(char *)0, MAXARGS, go_pass_through_func, ged_push},
     {"put",	(char *)0, MAXARGS, go_pass_through_func, ged_put},
@@ -540,6 +542,7 @@ static struct go_cmdtab go_cmds[] = {
     {"solids",	(char *)0, MAXARGS, go_pass_through_func, ged_tables},
     {"solids_on_ray",	(char *)0, MAXARGS, go_pass_through_func, ged_solids_on_ray},
     {"summary",	(char *)0, MAXARGS, go_pass_through_func, ged_summary},
+    {"sync",	(char *)0, MAXARGS, go_pass_through_func, ged_sync},
     {"title",	(char *)0, MAXARGS, go_pass_through_func, ged_title},
     {"tol",	(char *)0, MAXARGS, go_pass_through_func, ged_tol},
     {"tops",	(char *)0, MAXARGS, go_pass_through_func, ged_tops},
@@ -844,6 +847,7 @@ Usage: go_open\n\
     BU_GETSTRUCT(gop, ged_obj);
     gop->go_gedp = gedp;
     gop->go_gedp->ged_output_handler = go_output_handler;
+    gop->go_gedp->ged_refresh_handler = go_refresh_handler;
     bu_vls_init(&gop->go_name);
     bu_vls_strcpy(&gop->go_name, argv[1]);
     bu_vls_init(&gop->go_more_args_callback);
@@ -3181,6 +3185,7 @@ go_view_func(struct ged		*gedp,
 
     /* Copy argv into av while skipping argv[1] (i.e. the view name) */
     gedp->ged_gvp = gdvp->gdv_view;
+    gedp->ged_refresh_clientdata = (void *)gdvp;
     av[0] = (char *)argv[0];
     ac = argc-1;
     for (i = 2; i < argc; ++i)
@@ -3651,6 +3656,14 @@ go_refresh_view(struct ged_dm_view *gdvp)
 #endif
 
     DM_DRAW_END(gdvp->gdv_dmp);
+}
+
+static void
+go_refresh_handler(void *clientdata)
+{
+    struct ged_dm_view *gdvp = (struct ged_dm_view *)clientdata;
+
+    go_refresh_view(gdvp);
 }
 
 static void
