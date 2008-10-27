@@ -1608,6 +1608,12 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bot_dump", "..\bot_dump\bot
 		{E1CBDBEE-887A-4CD8-9D3E-59A52CA2E45E} = {E1CBDBEE-887A-4CD8-9D3E-59A52CA2E45E}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libgcv", "..\libgcv\libgcv.vcproj", "{1D505749-0F4C-4A47-8B06-8EBAA502451D}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Release|Win32 = Release|Win32
@@ -2018,10 +2024,6 @@ Global
 		{62790B43-1B04-4CDD-B845-CB1B93C4D6D9}.Release|Win32.Build.0 = Release|Win32
 		{62790B43-1B04-4CDD-B845-CB1B93C4D6D9}.Release|x64.ActiveCfg = Release|x64
 		{62790B43-1B04-4CDD-B845-CB1B93C4D6D9}.Release|x64.Build.0 = Release|x64
-		{71223DEE-4B16-4F44-A774-56AAD5F15170}.Release|Win32.ActiveCfg = Release|Win32
-		{71223DEE-4B16-4F44-A774-56AAD5F15170}.Release|Win32.Build.0 = Release|Win32
-		{71223DEE-4B16-4F44-A774-56AAD5F15170}.Release|x64.ActiveCfg = Release|x64
-		{71223DEE-4B16-4F44-A774-56AAD5F15170}.Release|x64.Build.0 = Release|x64
 		{58BB0769-6E8A-4B8F-8D7B-5D9C73753AED}.Release|Win32.ActiveCfg = Release|Win32
 		{58BB0769-6E8A-4B8F-8D7B-5D9C73753AED}.Release|Win32.Build.0 = Release|Win32
 		{58BB0769-6E8A-4B8F-8D7B-5D9C73753AED}.Release|x64.ActiveCfg = Release|x64
@@ -2247,6 +2249,9 @@ Global
 		{F10997E6-057E-4B43-BC51-369D6A5AB20B}.Release|Win32.ActiveCfg = Release|Win32
 		{F10997E6-057E-4B43-BC51-369D6A5AB20B}.Release|Win32.Build.0 = Release|Win32
 		{F10997E6-057E-4B43-BC51-369D6A5AB20B}.Release|x64.ActiveCfg = Release|Win32
+		{1D505749-0F4C-4A47-8B06-8EBAA502451D}.Release|Win32.ActiveCfg = Release|Win32
+		{1D505749-0F4C-4A47-8B06-8EBAA502451D}.Release|Win32.Build.0 = Release|Win32
+		{1D505749-0F4C-4A47-8B06-8EBAA502451D}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
