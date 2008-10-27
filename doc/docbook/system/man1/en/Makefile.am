@@ -28,6 +28,7 @@ man1DOCBOOK = \
 	anim_hardtrack.xml \
 	anim_keyread.xml \
 	bwscale.xml \
+	g_qa.xml \
 	mged.xml \
 	nirt.xml \
 	rt.xml \
