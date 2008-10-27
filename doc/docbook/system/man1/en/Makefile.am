@@ -21,6 +21,11 @@ XML_CATALOG_FILES=$(top_srcdir)/doc/docbook/catalog.xml
 
 man1DOCBOOK = \
 	3ptarb.xml \
+	B.xml \
+	E.xml \
+	M.xml \
+	Z.xml \
+	adc.xml \
 	alias-pix.xml \
 	all_sf.xml \
 	anim_cascade.xml \
