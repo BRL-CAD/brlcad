@@ -27,6 +27,8 @@ man1DOCBOOK = \
 	anim_fly.xml \
 	anim_hardtrack.xml \
 	anim_keyread.xml \
+	anim_lookat.xml \
+	anim_offset.xml \
 	bwscale.xml \
 	g_qa.xml \
 	mged.xml \
