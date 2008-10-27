@@ -43,7 +43,11 @@ struct cvt_tab {
     char	name[32];
 };
 
-static const struct cvt_tab bu_units_length_tab[] = {
+struct conv_table {
+    struct cvt_tab *cvttab;
+};
+
+struct cvt_tab bu_units_length_tab[] = {
     {0.0,		"none"},
     {1.0e-21,		"ym"},
     {1.0e-21,		"yoctometer"},
@@ -129,7 +133,7 @@ static const struct cvt_tab bu_units_length_tab[] = {
 };
 #define BU_UNITS_TABLE_SIZE (sizeof(bu_units_length_tab) / sizeof(struct cvt_tab) - 1)
 
-static const struct cvt_tab bu_units_volume_tab[] = {
+struct cvt_tab bu_units_volume_tab[] = {
     {0.0,		"none"},
     {1.0,		"mm^3"},		/* default */
     {1.0, 		"cu mm"},
@@ -151,26 +155,31 @@ static const struct cvt_tab bu_units_volume_tab[] = {
     {0.0,               ""}                     /* LAST ENTRY */
 };
 
-static const struct cvt_tab bu_units_mass_tab[] = {
+struct cvt_tab bu_units_mass_tab[] = {
     {0.0,		"none"},
     {1.0,		"grams"},		/* default */
     {1.0, 		"g"},
-    {1.0e3, 		"kilograms"},
+    {1.0e3, 		"kilogram"},
     {1.0e3,		"kg"},
     {0.0648, 		"gr"},
-    {0.0648,		"grains"},
+    {0.0648,		"grain"},
+    {453.6,		"lb"},
+    {28.35,		"oz"},
+    {28.35,		"ounce"},
     {0.0,               ""}                     /* LAST ENTRY */
 };
 
-
-
-
+static const struct conv_table unit_lists[3] = {
+    bu_units_length_tab, bu_units_volume_tab, bu_units_mass_tab
+};
 
 /**
  * B U _ U N I T S _ C O N V E R S I O N
  *
  * Given a string representation of a unit of distance (eg, "feet"),
- * return the multiplier which will convert that unit into millimeters.
+ * return the multiplier which will convert that unit into the default
+ * unit for the dimension (millimeters for length, mm^3 for volume,
+ * and grams for mass.)
  *
  * Returns -
  * 0.0	error
@@ -182,6 +191,7 @@ bu_units_conversion(const char *str)
     register char	*ip;
     register int	c;
     register const struct cvt_tab	*tp;
+    register const struct conv_table *cvtab;
     char		ubuf[256];
     int		len;
 
@@ -203,10 +213,12 @@ bu_units_conversion(const char *str)
     if (ubuf[len-1] == 's')  ubuf[len-1] = '\0';
 
     /* Search for this string in the table */
-    for (tp=bu_units_length_tab; tp->name[0]; tp++) {
-	if (ubuf[0] != tp->name[0])  continue;
-	if (strcmp(ubuf, tp->name) != 0)  continue;
-	return (tp->val);
+    for (cvtab=unit_lists; cvtab->cvttab; cvtab++) {
+       for (tp=cvtab->cvttab; tp->name[0]; tp++) {
+	   if (ubuf[0] != tp->name[0])  continue;
+	   if (strcmp(ubuf, tp->name) != 0)  continue;
+	   return (tp->val);
+       }
     }
     return (0.0);		/* Unable to find it */
 }
