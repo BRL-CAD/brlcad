@@ -24,6 +24,7 @@ bn_vlist_2string
 
 bu_avs_free
 bu_avs_get
+bu_avs_init_empty
 bu_badmagic
 bu_bitv_clear
 bu_bitv_dup
