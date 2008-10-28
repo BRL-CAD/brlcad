@@ -286,6 +286,12 @@ BU_EXTERN(struct directory ** ged_getspace,
 	  (struct db_i	*dbip,
 	   register int	num_entries));
 
+/* defined in preview.c */
+BU_EXTERN (void ged_setup_rt,
+	   (struct ged *gedp,
+	    register char **vp,
+	    int printcmd));
+
 /* defined in red.c */
 extern char ged_tmpfil[MAXPATHLEN];
 extern char ged_tmpcomb[17];
@@ -308,7 +314,6 @@ BU_EXTERN(void ged_restore_comb,
 	   struct directory *dp));
 BU_EXTERN(void ged_print_matrix,
 	  (FILE *fp, matp_t matrix));
-
 
 /* defined in rt.c */
 BU_EXTERN (void ged_rt_set_eye_model,

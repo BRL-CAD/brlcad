@@ -151,6 +151,7 @@ libged_nil_la_SOURCES = \
 	rot_point.c \
 	rotate_about.c \
 	rotate_arb_face.c \
+	rrt.c \
 	rt.c \
 	rtabort.c \
 	rtcheck.c \

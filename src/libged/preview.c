@@ -42,11 +42,8 @@ static int preview_finalframe;
 static int preview_currentframe;
 static int preview_tree_walk_needed;
 
-static char *rt_cmd_vec[MAXARGS];
-static int rt_cmd_vec_len;
 static char rt_cmd_storage[MAXARGS*9];
 
-static void ged_setup_rt(struct ged *gedp, register char **vp, int printcmd);
 
 int
 ged_cm_anim(int argc, char **argv)
@@ -134,8 +131,8 @@ ged_cm_end(int argc, char **argv)
 	av[1] = NULL;
 
 	(void)ged_zap(ged_current_gedp, 1, av );
-	ged_eraseobjpath(ged_current_gedp, rt_cmd_vec_len, (const char **)rt_cmd_vec, LOOKUP_QUIET, 0);
-	ged_drawtrees(ged_current_gedp, rt_cmd_vec_len, (const char **)rt_cmd_vec, preview_mode, (struct ged_client_data *)0);
+	ged_eraseobjpath(ged_current_gedp, ged_current_gedp->ged_gdp->gd_rt_cmd_len, (const char **)ged_current_gedp->ged_gdp->gd_rt_cmd, LOOKUP_QUIET, 0);
+	ged_drawtrees(ged_current_gedp, ged_current_gedp->ged_gdp->gd_rt_cmd_len, (const char **)ged_current_gedp->ged_gdp->gd_rt_cmd, preview_mode, (struct ged_client_data *)0);
 	ged_color_soltab((struct solid *)&ged_current_gedp->ged_gdp->gd_headSolid);
     }
 
@@ -182,28 +179,28 @@ ged_cm_tree(int argc, char **argv)
 
     for ( i = 1;  i < argc && i < MAXARGS; i++ )  {
 	bu_strlcpy(cp, argv[i], MAXARGS*9);
-	rt_cmd_vec[i] = cp;
+	ged_current_gedp->ged_gdp->gd_rt_cmd[i] = cp;
 	cp += strlen(cp) + 1;
     }
-    rt_cmd_vec[i] = (char *)0;
-    rt_cmd_vec_len = i;
+    ged_current_gedp->ged_gdp->gd_rt_cmd[i] = (char *)0;
+    ged_current_gedp->ged_gdp->gd_rt_cmd_len = i;
 
     preview_tree_walk_needed = 1;
 
     return 0;
 }
 
-static void
+void
 ged_setup_rt(struct ged *gedp, register char **vp, int printcmd)
 {
-    rt_cmd_vec_len = vp - rt_cmd_vec;
-    rt_cmd_vec_len += ged_build_tops(gedp, 
+    ged_current_gedp->ged_gdp->gd_rt_cmd_len = vp - ged_current_gedp->ged_gdp->gd_rt_cmd;
+    ged_current_gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp, 
 				     (struct solid *)&gedp->ged_gdp->gd_headSolid,
-				     vp, &rt_cmd_vec[MAXARGS]);
+				     vp, &ged_current_gedp->ged_gdp->gd_rt_cmd[MAXARGS]);
 
     if (printcmd) {
 	/* Print out the command we are about to run */
-	vp = &rt_cmd_vec[0];
+	vp = &ged_current_gedp->ged_gdp->gd_rt_cmd[0];
 	while (*vp)
 	    bu_vls_printf(&gedp->ged_result_str, "%s ", *vp++);
 
@@ -325,8 +322,8 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    /* Build list of top-level objects in view, in rt_cmd_vec[] */
-    ged_setup_rt(gedp, rt_cmd_vec, 1);
+    /* Build list of top-level objects in view, in ged_current_gedp->ged_gdp->gd_rt_cmd[] */
+    ged_setup_rt(gedp, ged_current_gedp->ged_gdp->gd_rt_cmd, 1);
 
     preview_vbp = rt_vlblock_init();
 

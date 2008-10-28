@@ -2209,6 +2209,14 @@ GED_EXPORT BU_EXTERN(int ged_rotate_arb_face, (struct ged *gedp, int argc, const
 GED_EXPORT BU_EXTERN(int ged_rot_point, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Invoke any raytracing application with the current view.
+ *
+ * Usage:
+ *     rrt [args]
+ */
+GED_EXPORT BU_EXTERN(int ged_rrt, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Run the raytracing application.
  *
  * Usage:

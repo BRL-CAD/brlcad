@@ -516,6 +516,7 @@ static struct go_cmdtab go_cmds[] = {
     {"rot_point",	"vname x y z", 5, go_view_func, ged_rot_point},
     {"rotate_arb_face",	(char *)0, MAXARGS, go_pass_through_func, ged_rotate_arb_face},
     {"rotate_mode",	"vname x y", MAXARGS, go_rotate_mode, GED_FUNC_PTR_NULL},
+    {"rrt",	"vname [args]", GO_MAX_RT_ARGS, go_view_func, ged_rrt},
     {"rt",	"vname [args]", GO_MAX_RT_ARGS, go_view_func, ged_rt},
     {"rt_gettrees",	"[-i] [-u] pname object", MAXARGS, go_rt_gettrees, GED_FUNC_PTR_NULL},
     {"rtarea",	"vname [args]", GO_MAX_RT_ARGS, go_view_func, ged_rt},

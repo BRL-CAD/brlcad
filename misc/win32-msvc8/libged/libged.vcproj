@@ -818,6 +818,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\rrt.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\rt.c"
 				>
 			</File>
