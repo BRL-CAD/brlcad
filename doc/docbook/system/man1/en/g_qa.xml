@@ -234,7 +234,7 @@
 		<entry>report generated</entry>
 	      </row>
 	    </thead>
-	    <tfoot>
+	    <tbody>
 	      <row>
 		<entry>A</entry>
 		<entry>all</entry>
@@ -267,7 +267,7 @@
 		<entry>w</entry>
 		<entry>Weight</entry>
 	      </row>
-	    </tfoot>
+	    </tbody>
 	    </tgroup>
 	  </informaltable>
 	  </para>
