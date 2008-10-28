@@ -400,6 +400,7 @@ static struct go_cmdtab go_cmds[] = {
     {"E",	(char *)0, MAXARGS, go_autoview_func, ged_E},
     {"e",	(char *)0, MAXARGS, go_autoview_func, ged_draw},
     {"eac",	(char *)0, MAXARGS, go_autoview_func, ged_eac},
+    {"echo",	(char *)0, MAXARGS, go_pass_through_func, ged_echo},
     {"edcodes",	(char *)0, MAXARGS, go_pass_through_func, ged_edcodes},
     {"edcomb",	(char *)0, MAXARGS, go_pass_through_func, ged_edcomb},
     {"edmater",	(char *)0, MAXARGS, go_pass_through_func, ged_edmater},

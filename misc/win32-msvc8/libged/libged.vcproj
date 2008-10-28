@@ -410,6 +410,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\echo.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\edcodes.c"
 				>
 			</File>

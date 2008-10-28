@@ -1398,6 +1398,14 @@ GED_EXPORT BU_EXTERN(int ged_E, (struct ged *gedp, int argc, const char *argv[])
 GED_EXPORT BU_EXTERN(int ged_eac, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Echo the specified arguments.
+ *
+ * Usage:
+ *     echo args
+ */
+GED_EXPORT BU_EXTERN(int ged_echo, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Text edit the color table
  *
  * Usage:

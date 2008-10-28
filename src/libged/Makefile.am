@@ -49,6 +49,7 @@ libged_nil_la_SOURCES = \
 	dump.c \
 	dup.c \
 	eac.c \
+	echo.c \
 	edcodes.c \
 	edcomb.c \
 	editit.c \
