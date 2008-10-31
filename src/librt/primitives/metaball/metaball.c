@@ -664,13 +664,24 @@ rt_metaball_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *
  *		    R T _ M E T A B A L L _ A D D _ P O I N T
  *
  * Add a single point to an existing metaball, recomputing the bounding sphere
- * and box after.
+ * and box after. (should there be a matrix in this mix?)
  */
 int
 rt_metaball_add_point (struct rt_metaball_internal *mb, const point_t *loc, const fastf_t fldstr, const fastf_t goo)
 {
-    bu_log("rt_metaball_add_point called!\n");
-    return -1;
+    struct wdb_metaballpt *mbpt;
+
+    BU_GETSTRUCT( mbpt, wdb_metaballpt );
+    mbpt->l.magic = WDB_METABALLPT_MAGIC;
+    VMOVE( mbpt->coord, *loc );
+    mbpt->fldstr = fldstr;
+    mbpt->sweat = goo;
+    BU_LIST_INSERT( &mb->metaball_ctrl_head, &mbpt->l );
+
+    /* TODO: some punty way to get the soltab so we can call prep, or something. This
+     * is OKish for writing at the moment. */
+
+    return 0;
 }
 
 

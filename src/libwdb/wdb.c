@@ -661,8 +661,14 @@ mk_metaball(
     struct rt_metaball_internal *mb;
     BU_GETSTRUCT( mb, rt_metaball_internal );
     mb->magic = RT_METABALL_INTERNAL_MAGIC;
+    mb->threshold = threshold > 0 ? threshold : 1.0;
+    mb->method = method >= 0 ? method : 2;	/* default to Blinn blob */
 
-    bu_log("Not ready yet!");
+    while(nctlpt--)
+	if( rt_metaball_add_point (mb, verts[nctlpt], fldstr[nctlpt][3], verts[nctlpt][4]) != 0 ) {
+	    bu_log("something is fishy here in mk_metaball");
+	    bu_bomb("AIIEEEEEEE");
+	}
 
     return wdb_export( wdbp, name, (genptr_t)mb, ID_METABALL, mk_conv2mm );
 }
