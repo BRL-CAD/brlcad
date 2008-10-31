@@ -45,6 +45,7 @@ set(LIBGED_SOURCES
     dump.c
     dup.c
     eac.c
+    echo.c
     edcodes.c
     edcomb.c
     editit.c
@@ -123,6 +124,7 @@ set(LIBGED_SOURCES
     pov.c
     prcolor.c
     prefix.c
+    preview.c
     ps.c
     push.c
     put.c
@@ -146,6 +148,7 @@ set(LIBGED_SOURCES
     rot_point.c
     rotate_about.c
     rotate_arb_face.c
+    rrt.c
     rt.c
     rtabort.c
     rtcheck.c
@@ -165,6 +168,7 @@ set(LIBGED_SOURCES
     slew.c
     solids_on_ray.c
     summary.c
+    sync.c
     tables.c
     title.c
     tol.c
