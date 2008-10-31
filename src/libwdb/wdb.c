@@ -659,13 +659,14 @@ mk_metaball(
     const fastf_t *verts[5] )
 {
     struct rt_metaball_internal *mb;
+    int n = nctlpt;
     BU_GETSTRUCT( mb, rt_metaball_internal );
     mb->magic = RT_METABALL_INTERNAL_MAGIC;
     mb->threshold = threshold > 0 ? threshold : 1.0;
     mb->method = method >= 0 ? method : 2;	/* default to Blinn blob */
 
-    while(nctlpt--)
-	if( rt_metaball_add_point (mb, verts[nctlpt], fldstr[nctlpt][3], verts[nctlpt][4]) != 0 ) {
+    while(n)
+	if( rt_metaball_add_point (mb, (const point_t *)verts[n], verts[n][3], verts[n][4]) != 0 ) {
 	    bu_log("something is fishy here in mk_metaball");
 	    bu_bomb("AIIEEEEEEE");
 	}
