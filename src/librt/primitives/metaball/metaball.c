@@ -242,13 +242,13 @@ rt_metaballpt_print( const struct wdb_metaballpt *metaball, double mm2local )
 }
 
 fastf_t
-rt_metaball_point_value_metaball(point_t *p, struct bu_list *points)
+rt_metaball_point_value_metaball(const point_t *p, const struct bu_list *points)
 {
     bu_exit(1, "rt_metaball_point_value_metaball() No implemented");
 }
 
 fastf_t
-rt_metaball_point_value_iso(point_t *p, struct bu_list *points)
+rt_metaball_point_value_iso(const point_t *p, const struct bu_list *points)
 {
     struct wdb_metaballpt *mbpt;
     fastf_t ret = 0.0;
@@ -262,7 +262,7 @@ rt_metaball_point_value_iso(point_t *p, struct bu_list *points)
 }
 
 fastf_t
-rt_metaball_point_value_blob(point_t *p, struct bu_list *points)
+rt_metaball_point_value_blob(const point_t *p, const struct bu_list *points)
 {
     struct wdb_metaballpt *mbpt;
     fastf_t ret = 0.0;
@@ -279,7 +279,7 @@ rt_metaball_point_value_blob(point_t *p, struct bu_list *points)
 
 /* main point evaluation function, to be exposed to the ugly outside world. */
 fastf_t
-rt_metaball_point_value(point_t *p, struct rt_metaball_internal *mb)
+rt_metaball_point_value(const point_t *p, const struct rt_metaball_internal *mb)
 {
     RT_METABALL_CK_MAGIC(mb);
     switch ( mb->method ) {
@@ -319,7 +319,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 	distleft -= step;
 	VADD2(p, p, inc);
 	if (stat == 1) {
-	    if (rt_metaball_point_value(&p, mb) < mb->threshold )
+	    if (rt_metaball_point_value((const point_t *)&p, mb) < mb->threshold )
 		if (step<=finalstep) {
 		    STEPIN(out);
 		    stat = 0;
@@ -328,7 +328,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 		} else
 		    STEPBACK
 			} else
-			    if (rt_metaball_point_value(&p, mb) > mb->threshold )
+			    if (rt_metaball_point_value((const point_t *)&p, mb) > mb->threshold )
 				if (step<=finalstep) {
 				    RT_GET_SEG(segp, ap->a_resource);
 				    segp->seg_stp = stp;
@@ -661,13 +661,27 @@ rt_metaball_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *
 }
 
 /**
+ *		    R T _ M E T A B A L L _ A D D _ P O I N T
+ *
+ * Add a single point to an existing metaball, recomputing the bounding sphere
+ * and box after.
+ */
+int
+rt_metaball_add_point (struct rt_metaball_internal *mb, const point_t *loc, const fastf_t fldstr, const fastf_t goo)
+{
+    bu_log("rt_metaball_add_point called!\n");
+    return -1;
+}
+
+
+/**
  * R T _ M E T A B A L L _ P A R A M S
  *
  */
 int
 rt_metaball_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
 {
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 /*
