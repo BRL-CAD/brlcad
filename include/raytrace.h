@@ -3359,20 +3359,25 @@ RT_EXPORT BU_EXTERN(int rt_pipe_ck,
 struct rt_metaball_internal;
 RT_EXPORT BU_EXTERN(void rt_vls_metaballpt,
 		    (struct bu_vls *vp,
-		     int pt_no,
+		     const int pt_no,
 		     const struct rt_db_internal *ip,
-		     double mm2local));
+		     const double mm2local));
 RT_EXPORT BU_EXTERN(void rt_metaballpt_print,
 		    ());		/* needs wdb_metaballpt for arg */
 RT_EXPORT BU_EXTERN(int rt_metaball_ck,
 		    (const struct bu_list *headp));
 RT_EXPORT BU_EXTERN(fastf_t rt_metaball_point_value,
-		    (point_t *p,
-		     struct rt_metaball_internal *mb));
+		    (const point_t *p,
+		     const struct rt_metaball_internal *mb));
 RT_EXPORT BU_EXTERN(int rt_metaball_lookup_type_id,
 		    (const char *name));
 RT_EXPORT BU_EXTERN(const char *rt_metaball_lookup_type_name,
 		    (const int id));
+RT_EXPORT BU_EXTERN(int rt_metaball_add_point,
+		    (struct rt_metaball_internal *,
+		     const point_t *loc,
+		     const fastf_t fldstr,
+		     const fastf_t goo));
 
 /* rpc.c */
 RT_EXPORT BU_EXTERN(int rt_mk_parabola,
