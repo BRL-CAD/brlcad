@@ -196,6 +196,13 @@ WDB_EXPORT int mk_eto(
     const vect_t smajor,
     fastf_t rrot,
     fastf_t sminor );
+WDB_EXPORT int mk_metaball(
+    struct rt_wdb *wdbp,
+    const char *name,
+    const int nctlpt,		/* number of control points */
+    const int method,		/* metaball rendering method */
+    const fastf_t threshold,
+    const fastf_t *verts[5] );	/* X, Y, Z, fldstr, goo/Beta */
 
 WDB_EXPORT WDB_EXTERN(int mk_arbn, (struct rt_wdb *fp, const char *name, int neqn, plane_t eqn[]) );
 WDB_EXPORT WDB_EXTERN(int mk_ars, (struct rt_wdb *fp, const char *name, int ncurves, int pts_per_curve,

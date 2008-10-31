@@ -649,6 +649,24 @@ mk_eto(
     return wdb_export( wdbp, name, (genptr_t)eto, ID_ETO, mk_conv2mm );
 }
 
+int
+mk_metaball(
+    struct rt_wdb *wdbp,
+    const char *name,
+    const int nctlpt, /* number of control points */
+    const int method,
+    const fastf_t threshold,
+    const fastf_t *verts[5] )
+{
+    struct rt_metaball_internal *mb;
+    BU_GETSTRUCT( mb, rt_metaball_internal );
+    mb->magic = RT_METABALL_INTERNAL_MAGIC;
+
+    bu_log("Not ready yet!");
+
+    return wdb_export( wdbp, name, (genptr_t)mb, ID_METABALL, mk_conv2mm );
+}
+
 /*
  *			M K _ B I N U N I F
  *
