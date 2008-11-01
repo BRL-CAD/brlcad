@@ -295,8 +295,8 @@ cmd_get_ptr(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     char buf[128];
 
-    sprintf( buf, "%ld", (long)(*((void **)&dbip)) );
-    Tcl_AppendResult( interp, buf, (char *)NULL );
+    sprintf(buf, "%ld", (long)(*((void **)&dbip)));
+    Tcl_AppendResult(interp, buf, (char *)NULL);
     return TCL_OK;
 }
 
@@ -327,7 +327,7 @@ cmd_cmd_win(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 
 	/* Search to see if there exists a command window with this name */
-	for ( BU_LIST_FOR(clp, cmd_list, &head_cmd_list.l) )
+	for (BU_LIST_FOR (clp, cmd_list, &head_cmd_list.l))
 	    if (!strcmp(argv[2], bu_vls_addr(&clp->cl_name))) {
 		name_not_used = 0;
 		break;
@@ -359,7 +359,7 @@ cmd_cmd_win(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	/* First, search to see if there exists a command window with the name
 	   in argv[2] */
-	for ( BU_LIST_FOR(clp, cmd_list, &head_cmd_list.l) )
+	for (BU_LIST_FOR (clp, cmd_list, &head_cmd_list.l))
 	    if (!strcmp(argv[2], bu_vls_addr(&clp->cl_name)))
 		break;
 
@@ -376,7 +376,7 @@ cmd_cmd_win(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	if (clp == curr_cmd_list)
 	    curr_cmd_list = &head_cmd_list;
 
-	BU_LIST_DEQUEUE( &clp->l );
+	BU_LIST_DEQUEUE(&clp->l);
 	if (clp->cl_tie != NULL)
 	    clp->cl_tie->dml_tie = CMD_LIST_NULL;
 	bu_vls_free(&clp->cl_more_default);
@@ -410,7 +410,7 @@ cmd_cmd_win(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    return TCL_ERROR;
 	}
 
-	for ( BU_LIST_FOR(curr_cmd_list, cmd_list, &head_cmd_list.l) ) {
+	for (BU_LIST_FOR (curr_cmd_list, cmd_list, &head_cmd_list.l)) {
 	    if (strcmp(bu_vls_addr(&curr_cmd_list->cl_name), argv[2]))
 		continue;
 
@@ -478,12 +478,12 @@ debackslash(struct bu_vls *dest, struct bu_vls *src)
     char *ptr;
 
     ptr = bu_vls_addr(src);
-    while ( *ptr ) {
-	if ( *ptr == '\\' )
+    while (*ptr) {
+	if (*ptr == '\\')
 	    ++ptr;
-	if ( *ptr == '\0' )
+	if (*ptr == '\0')
 	    break;
-	bu_vls_putc( dest, *ptr++ );
+	bu_vls_putc(dest, *ptr++);
     }
 }
 
@@ -496,21 +496,21 @@ backslash_specials(struct bu_vls *dest, struct bu_vls *src)
 
     buf[1] = '\0';
     backslashed = 0;
-    for ( ptr = bu_vls_addr( src ); *ptr; ptr++ ) {
-	if ( *ptr == '[' && !backslashed )
-	    bu_vls_strcat( dest, "\\[" );
-	else if ( *ptr == ']' && !backslashed )
-	    bu_vls_strcat( dest, "\\]" );
-	else if ( backslashed ) {
-	    bu_vls_strcat( dest, "\\" );
+    for (ptr = bu_vls_addr(src); *ptr; ptr++) {
+	if (*ptr == '[' && !backslashed)
+	    bu_vls_strcat(dest, "\\[");
+	else if (*ptr == ']' && !backslashed)
+	    bu_vls_strcat(dest, "\\]");
+	else if (backslashed) {
+	    bu_vls_strcat(dest, "\\");
 	    buf[0] = *ptr;
-	    bu_vls_strcat( dest, buf );
+	    bu_vls_strcat(dest, buf);
 	    backslashed = 0;
-	} else if ( *ptr == '\\' )
+	} else if (*ptr == '\\')
 	    backslashed = 1;
 	else {
 	    buf[0] = *ptr;
-	    bu_vls_strcat( dest, buf );
+	    bu_vls_strcat(dest, buf);
 	}
     }
 }
@@ -537,26 +537,26 @@ mged_compat(struct bu_vls *dest, struct bu_vls *src, int use_first)
 	return;
     }
 
-    bu_vls_init( &word );
-    bu_vls_init( &temp );
+    bu_vls_init(&word);
+    bu_vls_init(&temp);
 
-    start = end = bu_vls_addr( src );
+    start = end = bu_vls_addr(src);
     firstword = 1;
-    while ( *end != '\0' ) {
+    while (*end != '\0') {
 	/* Run through entire string */
 
 	/* First, pass along leading whitespace. */
 
 	start = end;                   /* Begin where last word ended */
-	while ( *start != '\0' ) {
-	    if ( *start == ' '  ||
-		 *start == '\t' ||
-		 *start == '\n' )
-		bu_vls_putc( dest, *start++ );
+	while (*start != '\0') {
+	    if (*start == ' '  ||
+		*start == '\t' ||
+		*start == '\n')
+		bu_vls_putc(dest, *start++);
 	    else
 		break;
 	}
-	if ( *start == '\0' )
+	if (*start == '\0')
 	    break;
 
 	/* Next, advance "end" pointer to the end of the word, while adding
@@ -564,46 +564,46 @@ mged_compat(struct bu_vls *dest, struct bu_vls *src, int use_first)
 	   unbackslashed wildcard characters. */
 
 	end = start;
-	bu_vls_trunc( &word, 0 );
+	bu_vls_trunc(&word, 0);
 	regexp = 0;
 	backslashed = 0;
-	while ( *end != '\0' ) {
-	    if ( *end == ' '  ||
-		 *end == '\t' ||
-		 *end == '\n' )
+	while (*end != '\0') {
+	    if (*end == ' '  ||
+		*end == '\t' ||
+		*end == '\n')
 		break;
-	    if ( (*end == '*' || *end == '?' || *end == '[') && !backslashed )
+	    if ((*end == '*' || *end == '?' || *end == '[') && !backslashed)
 		regexp = 1;
-	    if ( *end == '\\' && !backslashed )
+	    if (*end == '\\' && !backslashed)
 		backslashed = 1;
 	    else
 		backslashed = 0;
-	    bu_vls_putc( &word, *end++ );
+	    bu_vls_putc(&word, *end++);
 	}
 
-	if ( firstword && !use_first )
+	if (firstword && !use_first)
 	    regexp = 0;
 
 	/* Now, if the word was suspected of being a wildcard, try to match
 	   it to the database. */
 
-	if ( regexp ) {
-	    bu_vls_trunc( &temp, 0 );
-	    if ( db_regexp_match_all( &temp, dbip,
-				      bu_vls_addr(&word) ) == 0 ) {
-		debackslash( &temp, &word );
-		backslash_specials( dest, &temp );
+	if (regexp) {
+	    bu_vls_trunc(&temp, 0);
+	    if (db_regexp_match_all(&temp, dbip,
+				    bu_vls_addr(&word)) == 0) {
+		debackslash(&temp, &word);
+		backslash_specials(dest, &temp);
 	    } else
-		bu_vls_vlscat( dest, &temp );
+		bu_vls_vlscat(dest, &temp);
 	} else {
-	    debackslash( dest, &word );
+	    debackslash(dest, &word);
 	}
 
 	firstword = 0;
     }
 
-    bu_vls_free( &temp );
-    bu_vls_free( &word );
+    bu_vls_free(&temp);
+    bu_vls_free(&word);
 }
 
 
@@ -641,7 +641,7 @@ void gettimeofday(struct timeval *tp, struct timezone *tzp)
 
     time_t ltime;
 
-    time( &ltime );
+    time(&ltime);
 
     tp->tv_sec = ltime;
     tp->tv_usec = 0;
@@ -662,7 +662,7 @@ void gettimeofday(struct timeval *tp, struct timezone *tzp)
  *	 0	no prompt needed.
  */
 int
-cmdline( struct bu_vls *vp, int record )
+cmdline(struct bu_vls *vp, int record)
 {
     int	status;
     struct bu_vls globbed;
@@ -709,17 +709,17 @@ cmdline( struct bu_vls *vp, int record )
     switch (status) {
 	case TCL_RETURN:
 	case TCL_OK:
-	    if ( setjmp( jmp_env ) == 0 ) {
+	    if (setjmp(jmp_env) == 0) {
 		len = strlen(result);
 
 		/* If the command had something to say, print it out. */
 		if (len > 0) {
-		    (void)signal( SIGINT, sig3);  /* allow interupts */
+		    (void)signal(SIGINT, sig3);  /* allow interupts */
 
 		    bu_log("%s%s", result,
 			   result[len-1] == '\n' ? "" : "\n");
 
-		    (void)signal( SIGINT, SIG_IGN );
+		    (void)signal(SIGINT, SIG_IGN);
 		}
 
 		/* A user typed this command so let everybody see, then record
@@ -856,8 +856,7 @@ mged_cmd(
 	return CMD_OK;	/* No command entered, that's fine */
 
     /* if no function table is provided, use the default mged function table */
-    if ( in_functions == (struct funtab *)NULL )
-    {
+    if (in_functions == (struct funtab *)NULL) {
 	bu_log("mged_cmd: failed to supply function table!\n");
 	return CMD_BAD;
     }
@@ -907,8 +906,6 @@ mged_cmd(
 int
 f_comm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-
-
     register int pid, rpid;
     int retcode;
 
@@ -923,12 +920,12 @@ f_comm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
 
 #ifndef _WIN32
-    (void)signal( SIGINT, SIG_IGN );
-    if ( ( pid = fork()) == 0 )  {
-	(void)signal( SIGINT, SIG_DFL );
+    (void)signal(SIGINT, SIG_IGN);
+    if ((pid = fork()) == 0) {
+	(void)signal(SIGINT, SIG_DFL);
 	(void)execl("/bin/sh", "-", (char *)NULL);
 	perror("/bin/sh");
-	mged_finish( 11 );
+	mged_finish(11);
     }
 
     while ((rpid = wait(&retcode)) != pid && rpid != -1)
@@ -945,11 +942,7 @@ f_comm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * Format: q
  */
 int
-f_quit(
-    ClientData clientData,
-    Tcl_Interp *interp,
-    int	argc,
-    char	**argv)
+f_quit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     if (argc < 1 || 1 < argc) {
 	struct bu_vls vls;
@@ -961,8 +954,8 @@ f_quit(
 	return TCL_ERROR;
     }
 
-    if ( state != ST_VIEW )
-	button( BE_REJECT );
+    if (state != ST_VIEW)
+	button(BE_REJECT);
 
     quit();			/* Exiting time */
     /* NOTREACHED */
@@ -1007,16 +1000,16 @@ helpcomm(int argc, char **argv, struct funtab *functions)
     bad = 0;
 
     /* Help command(s) */
-    for ( i=1; i<argc; i++ )  {
-	for ( ftp = functions+1; ftp->ft_name; ftp++ )  {
-	    if ( strcmp( ftp->ft_name, argv[i] ) != 0 )
+    for (i=1; i<argc; i++) {
+	for (ftp = functions+1; ftp->ft_name; ftp++) {
+	    if (strcmp(ftp->ft_name, argv[i]) != 0)
 		continue;
 
 	    Tcl_AppendResult(interp, "Usage: ", functions->ft_name, ftp->ft_name,
 			     " ", ftp->ft_parms, "\n\t(", ftp->ft_comment, ")\n", (char *)NULL);
 	    break;
 	}
-	if ( !ftp->ft_name ) {
+	if (!ftp->ft_name) {
 	    Tcl_AppendResult(interp, functions->ft_name, argv[i],
 			     ": no such command, type '", functions->ft_name,
 			     "?' for help\n", (char *)NULL);
@@ -1038,15 +1031,15 @@ f_help2(int argc, char **argv, struct funtab *functions)
 {
     register struct funtab *ftp;
 
-    if ( argc <= 1 )  {
+    if (argc <= 1) {
 	Tcl_AppendResult(interp, "The following commands are available:\n", (char *)NULL);
-	for ( ftp = functions+1; ftp->ft_name; ftp++ )  {
+	for (ftp = functions+1; ftp->ft_name; ftp++) {
 	    Tcl_AppendResult(interp,  functions->ft_name, ftp->ft_name, " ",
 			     ftp->ft_parms, "\n\t(", ftp->ft_comment, ")\n", (char *)NULL);
 	}
 	return TCL_OK;
     }
-    return helpcomm( argc, argv, functions );
+    return helpcomm(argc, argv, functions);
 }
 
 int
@@ -1055,19 +1048,19 @@ f_fhelp2(int argc, char **argv, struct funtab *functions)
     register struct funtab *ftp;
     struct bu_vls		str;
 
-    if ( argc <= 1 )  {
+    if (argc <= 1) {
 	bu_vls_init(&str);
 	Tcl_AppendResult(interp, "The following ", functions->ft_name,
 			 " commands are available:\n", (char *)NULL);
-	for ( ftp = functions+1; ftp->ft_name; ftp++ )  {
-	    vls_col_item( &str, ftp->ft_name);
+	for (ftp = functions+1; ftp->ft_name; ftp++) {
+	    vls_col_item(&str, ftp->ft_name);
 	}
-	vls_col_eol( &str );
-	Tcl_AppendResult(interp, bu_vls_addr( &str ), (char *)NULL);
+	vls_col_eol(&str);
+	Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
 	bu_vls_free(&str);
 	return TCL_OK;
     }
-    return helpcomm( argc, argv, functions );
+    return helpcomm(argc, argv, functions);
 }
 
 int
@@ -1098,7 +1091,7 @@ cmd_echo(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    for ( i=1; i < argc; i++ )  {
+    for (i=1; i < argc; i++) {
 	Tcl_AppendResult(interp, i==1 ? "" : " ", argv[i], (char *)NULL);
     }
 
@@ -1143,7 +1136,7 @@ f_tie(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
 
     if (argc == 1) {
-	for ( BU_LIST_FOR(clp, cmd_list, &head_cmd_list.l) ) {
+	for (BU_LIST_FOR (clp, cmd_list, &head_cmd_list.l)) {
 	    bu_vls_trunc(&vls, 0);
 	    if (clp->cl_tie) {
 		bu_vls_printf(&vls, "%V %V", &clp->cl_name,
@@ -1182,7 +1175,7 @@ f_tie(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    for ( BU_LIST_FOR(clp, cmd_list, &head_cmd_list.l) )
+    for (BU_LIST_FOR (clp, cmd_list, &head_cmd_list.l))
 	if (!strcmp(bu_vls_addr(&clp->cl_name), argv[1]))
 	    break;
 
@@ -1359,14 +1352,14 @@ f_winset(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
 
     /* print pathname of drawing window with primary focus */
-    if ( argc == 1 ) {
+    if (argc == 1) {
 	Tcl_AppendResult(interp, bu_vls_addr(&pathName), (char *)NULL);
 	return TCL_OK;
     }
 
     /* change primary focus to window argv[1] */
     FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
-	if ( !strcmp( argv[1], bu_vls_addr( &p->dml_dmp->dm_pathName ) ) ) {
+	if (!strcmp(argv[1], bu_vls_addr(&p->dml_dmp->dm_pathName))) {
 	    curr_dm_list = p;
 
 	    if (curr_dm_list->dml_tie)
@@ -1428,7 +1421,7 @@ f_bot_split(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     CHECK_READ_ONLY;
 
     if (argc < 2) {
-	Tcl_AppendResult(interp, "Usage:\nbot_merge bot_dest bot1_src [botn_src]\n", (char *)NULL );
+	Tcl_AppendResult(interp, "Usage:\nbot_merge bot_dest bot1_src [botn_src]\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
@@ -1439,14 +1432,14 @@ f_bot_split(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    if ( rt_db_get_internal( &intern, dp, dbip, bn_mat_identity, &rt_uniresource ) < 0 ) {
+    if (rt_db_get_internal(&intern, dp, dbip, bn_mat_identity, &rt_uniresource) < 0) {
 	Tcl_AppendResult(interp, "rt_db_get_internal(", argv[1], ") error\n", (char *)NULL);
 	return TCL_ERROR;
 
     }
 
-    if ( intern.idb_type != ID_BOT ) 	{
-	Tcl_AppendResult(interp, argv[1], " is not a BOT solid!!!  skipping\n", (char *)NULL );
+    if (intern.idb_type != ID_BOT) {
+	Tcl_AppendResult(interp, argv[1], " is not a BOT solid!  skipping\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
@@ -1465,8 +1458,8 @@ f_bot_split(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		for (e=0; e < 3; e++) {
 		    /* does e match edge? */
 
-		    if ( (fptr[e] == faceptr[edge] && fptr[ (e+1) % 3 ] == faceptr[ (edge+1) % 3 ]) ||
-			 (fptr[e] == faceptr[ (edge+1) % 3 ] && fptr[ (e+1) % 3 ] == faceptr[edge]) ) {
+		    if ((fptr[e] == faceptr[edge] && fptr[ (e+1) % 3 ] == faceptr[ (edge+1) % 3 ]) ||
+			(fptr[e] == faceptr[ (edge+1) % 3 ] && fptr[ (e+1) % 3 ] == faceptr[edge])) {
 			/* edge match */
 			edges[face*3+edge]++;
 			edges[face*3+edge]++;
@@ -1495,7 +1488,7 @@ f_bot_merge(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     CHECK_READ_ONLY;
 
     if (argc < 2) {
-	Tcl_AppendResult(interp, "Usage:\nbot_merge bot_dest bot1_src [botn_src]\n", (char *)NULL );
+	Tcl_AppendResult(interp, "Usage:\nbot_merge bot_dest bot1_src [botn_src]\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
@@ -1523,19 +1516,19 @@ f_bot_merge(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 
     /* read in all the bots */
-    for (idx=1, i=2; i < argc; i++ ) {
+    for (idx=1, i=2; i < argc; i++) {
 	if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL) {
 	    continue;
 	}
 
-	if ( rt_db_get_internal( &intern, dp, dbip, bn_mat_identity, &rt_uniresource ) < 0 ) {
+	if (rt_db_get_internal(&intern, dp, dbip, bn_mat_identity, &rt_uniresource) < 0) {
 	    Tcl_AppendResult(interp, "rt_db_get_internal(", argv[i], ") error\n", (char *)NULL);
 	    retval = TCL_ERROR;
 	    continue;
 	}
 
-	if ( intern.idb_type != ID_BOT ) 	{
-	    Tcl_AppendResult(interp, argv[i], " is not a BOT solid!!!  skipping\n", (char *)NULL );
+	if (intern.idb_type != ID_BOT) {
+	    Tcl_AppendResult(interp, argv[i], " is not a BOT solid!  skipping\n", (char *)NULL);
 	    retval = TCL_ERROR;
 	    continue;
 	}
@@ -1544,7 +1537,7 @@ f_bot_merge(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	intern.idb_ptr = (genptr_t)0;
 
-	RT_BOT_CK_MAGIC( bots[idx] );
+	RT_BOT_CK_MAGIC(bots[idx]);
 
 	bots[0]->num_vertices += bots[idx]->num_vertices;
 	bots[0]->num_faces += bots[idx]->num_faces;
@@ -1555,7 +1548,7 @@ f_bot_merge(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     if (idx == 1) return TCL_ERROR;
 
 
-    for (i=1; i < idx; i++ ) {
+    for (i=1; i < idx; i++) {
 	/* check for surface normals */
 	if (bots[0]->mode) {
 	    if (bots[0]->mode != bots[i]->mode) {
@@ -1588,7 +1581,7 @@ f_bot_merge(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     avail_face = 0;
 
 
-    for (i=1; i < idx; i++ ) {
+    for (i=1; i < idx; i++) {
 	/* copy the vertices */
 	memcpy(&bots[0]->vertices[3*avail_vert], bots[i]->vertices, bots[i]->num_vertices*3*sizeof(fastf_t));
 
@@ -1631,15 +1624,13 @@ f_bot_merge(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     intern.idb_meth = &rt_functab[ID_BOT];
     intern.idb_ptr = (genptr_t)bots[0];
 
-    if ( (new_dp=db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL )
-    {
-	Tcl_AppendResult(interp, "Cannot add ", argv[1], " to directory\n", (char *)NULL );
+    if ((new_dp=db_diradd(dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL) {
+	Tcl_AppendResult(interp, "Cannot add ", argv[1], " to directory\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    if ( rt_db_put_internal( new_dp, dbip, &intern, &rt_uniresource ) < 0 )
-    {
-	rt_db_free_internal( &intern, &rt_uniresource );
+    if (rt_db_put_internal(new_dp, dbip, &intern, &rt_uniresource) < 0) {
+	rt_db_free_internal(&intern, &rt_uniresource);
 	TCL_WRITE_ERR_return;
     }
 
@@ -1658,39 +1649,35 @@ f_bot_face_fuse(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
     CHECK_READ_ONLY;
 
     if (argc != 3) {
-	Tcl_AppendResult(interp, "Usage:\nbot_face_fuse new_bot_solid old_bot_solid\n", (char *)NULL );
+	Tcl_AppendResult(interp, "Usage:\nbot_face_fuse new_bot_solid old_bot_solid\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    if ( (old_dp = db_lookup( dbip, argv[2], LOOKUP_NOISY )) == DIR_NULL )
+    if ((old_dp = db_lookup(dbip, argv[2], LOOKUP_NOISY)) == DIR_NULL)
 	return TCL_ERROR;
 
-    if ( rt_db_get_internal( &intern, old_dp, dbip, bn_mat_identity, &rt_uniresource ) < 0 )
-    {
+    if (rt_db_get_internal(&intern, old_dp, dbip, bn_mat_identity, &rt_uniresource) < 0) {
 	Tcl_AppendResult(interp, "rt_db_get_internal() error\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    if ( intern.idb_type != ID_BOT )
-    {
-	Tcl_AppendResult(interp, argv[2], " is not a BOT solid!!!\n", (char *)NULL );
+    if (intern.idb_type != ID_BOT) {
+	Tcl_AppendResult(interp, argv[2], " is not a BOT solid!\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
     bot = (struct rt_bot_internal *)intern.idb_ptr;
-    RT_BOT_CK_MAGIC( bot );
+    RT_BOT_CK_MAGIC(bot);
 
-    (void) rt_bot_face_fuse( bot );
+    (void) rt_bot_face_fuse(bot);
 
-    if ( (new_dp=db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL )
-    {
-	Tcl_AppendResult(interp, "Cannot add ", argv[1], " to directory\n", (char *)NULL );
+    if ((new_dp=db_diradd(dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL) {
+	Tcl_AppendResult(interp, "Cannot add ", argv[1], " to directory\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    if ( rt_db_put_internal( new_dp, dbip, &intern, &rt_uniresource ) < 0 )
-    {
-	rt_db_free_internal( &intern, &rt_uniresource );
+    if (rt_db_put_internal(new_dp, dbip, &intern, &rt_uniresource) < 0) {
+	rt_db_free_internal(&intern, &rt_uniresource);
 	TCL_WRITE_ERR_return;
     }
     return TCL_OK;
@@ -1708,41 +1695,37 @@ f_bot_fuse(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     CHECK_READ_ONLY;
 
     if (argc != 3) {
-	Tcl_AppendResult(interp, "Usage:\nbot_fuse new_bot_solid old_bot_solid\n", (char *)NULL );
+	Tcl_AppendResult(interp, "Usage:\nbot_fuse new_bot_solid old_bot_solid\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    if ( (old_dp = db_lookup( dbip, argv[2], LOOKUP_NOISY )) == DIR_NULL )
+    if ((old_dp = db_lookup(dbip, argv[2], LOOKUP_NOISY)) == DIR_NULL)
 	return TCL_ERROR;
 
-    if ( rt_db_get_internal( &intern, old_dp, dbip, bn_mat_identity, &rt_uniresource ) < 0 )
-    {
+    if (rt_db_get_internal(&intern, old_dp, dbip, bn_mat_identity, &rt_uniresource) < 0) {
 	Tcl_AppendResult(interp, "rt_db_get_internal() error\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    if ( intern.idb_type != ID_BOT )
-    {
-	Tcl_AppendResult(interp, argv[2], " is not a BOT solid!!!\n", (char *)NULL );
+    if (intern.idb_type != ID_BOT) {
+	Tcl_AppendResult(interp, argv[2], " is not a BOT solid!\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
     bot = (struct rt_bot_internal *)intern.idb_ptr;
-    RT_BOT_CK_MAGIC( bot );
+    RT_BOT_CK_MAGIC(bot);
 
-    count1 = rt_bot_vertex_fuse( bot );
-    if ( count1 )
-	(void)rt_bot_condense( bot );
+    count1 = rt_bot_vertex_fuse(bot);
+    if (count1)
+	(void)rt_bot_condense(bot);
 
-    if ( (new_dp=db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL )
-    {
-	Tcl_AppendResult(interp, "Cannot add ", argv[1], " to directory\n", (char *)NULL );
+    if ((new_dp=db_diradd(dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL) {
+	Tcl_AppendResult(interp, "Cannot add ", argv[1], " to directory\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    if ( rt_db_put_internal( new_dp, dbip, &intern, &rt_uniresource ) < 0 )
-    {
-	rt_db_free_internal( &intern, &rt_uniresource );
+    if (rt_db_put_internal(new_dp, dbip, &intern, &rt_uniresource) < 0) {
+	rt_db_free_internal(&intern, &rt_uniresource);
 	TCL_WRITE_ERR_return;
     }
     return TCL_OK;
@@ -1761,41 +1744,37 @@ f_bot_condense(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     CHECK_READ_ONLY;
 
     if (argc != 3) {
-	Tcl_AppendResult(interp, "Usage:\nbot_condense new_bot_solid old_bot_solid\n", (char *)NULL );
+	Tcl_AppendResult(interp, "Usage:\nbot_condense new_bot_solid old_bot_solid\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    if ( (old_dp = db_lookup( dbip, argv[2], LOOKUP_NOISY )) == DIR_NULL )
+    if ((old_dp = db_lookup(dbip, argv[2], LOOKUP_NOISY)) == DIR_NULL)
 	return TCL_ERROR;
 
-    if ( rt_db_get_internal( &intern, old_dp, dbip, bn_mat_identity, &rt_uniresource ) < 0 )
-    {
+    if (rt_db_get_internal(&intern, old_dp, dbip, bn_mat_identity, &rt_uniresource) < 0) {
 	Tcl_AppendResult(interp, "rt_db_get_internal() error\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    if ( intern.idb_type != ID_BOT )
-    {
-	Tcl_AppendResult(interp, argv[2], " is not a BOT solid!!!\n", (char *)NULL );
+    if (intern.idb_type != ID_BOT) {
+	Tcl_AppendResult(interp, argv[2], " is not a BOT solid!\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
     bot = (struct rt_bot_internal *)intern.idb_ptr;
-    RT_BOT_CK_MAGIC( bot );
+    RT_BOT_CK_MAGIC(bot);
 
-    count2 = rt_bot_condense( bot );
-    sprintf( count_str, "%d", count2 );
-    Tcl_AppendResult(interp, count_str, " dead vertices eliminated\n", (char *)NULL );
+    count2 = rt_bot_condense(bot);
+    sprintf(count_str, "%d", count2);
+    Tcl_AppendResult(interp, count_str, " dead vertices eliminated\n", (char *)NULL);
 
-    if ( (new_dp=db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL )
-    {
-	Tcl_AppendResult(interp, "Cannot add ", argv[1], " to directory\n", (char *)NULL );
+    if ((new_dp=db_diradd(dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL) {
+	Tcl_AppendResult(interp, "Cannot add ", argv[1], " to directory\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    if ( rt_db_put_internal( new_dp, dbip, &intern, &rt_uniresource ) < 0 )
-    {
-	rt_db_free_internal( &intern, &rt_uniresource );
+    if (rt_db_put_internal(new_dp, dbip, &intern, &rt_uniresource) < 0) {
+	rt_db_free_internal(&intern, &rt_uniresource);
 	TCL_WRITE_ERR_return;
     }
     return TCL_OK;
@@ -2045,7 +2024,7 @@ cmd_pathsum(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     ret = wdb_pathsum_cmd(wdbp, interp, argc, argv);
 
 #if 0
-    (void)signal( SIGINT, SIG_IGN );
+    (void)signal(SIGINT, SIG_IGN);
 #endif
     return ret;
 }
@@ -2074,7 +2053,7 @@ cmd_copyeval(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     ret = wdb_copyeval_cmd(wdbp, interp, argc, argv);
 
-    (void)signal( SIGINT, SIG_IGN );
+    (void)signal(SIGINT, SIG_IGN);
     return ret;
 }
 
@@ -2606,9 +2585,9 @@ cmd_find(ClientData	clientData,
  */
 int
 cmd_search(ClientData	clientData,
-	 Tcl_Interp	*interp,
-	 int		argc,
-	 char		**argv)
+	   Tcl_Interp	*interp,
+	   int		argc,
+	   char		**argv)
 {
     CHECK_DBI_NULL;
 
@@ -2688,12 +2667,12 @@ cmd_list(ClientData	clientData,
 	bu_vls_init(&vls);
 
 	if (state == ST_S_EDIT)
-	    db_path_to_vls( &vls, &illump->s_fullpath );
+	    db_path_to_vls(&vls, &illump->s_fullpath);
 	else if (state == ST_O_EDIT) {
 	    register int	i;
-	    for ( i=0; i < ipathpos; i++ ) {
+	    for (i=0; i < ipathpos; i++) {
 		bu_vls_printf(&vls, "/%s",
-			      DB_FULL_PATH_GET(&illump->s_fullpath, i)->d_namep );
+			      DB_FULL_PATH_GET(&illump->s_fullpath, i)->d_namep);
 	    }
 	} else
 	    return TCL_ERROR;
@@ -2740,12 +2719,12 @@ cmd_lm(ClientData	clientData,
     int ret;
     char **new_argv;
 
-    bu_vls_init( &vls );
-    bu_vls_strcat( &vls, argv[0] );
-    for ( i=1; i<argc; i++ ) {
-	if ( *argv[i] == '-' ) {
-	    bu_vls_putc( &vls, ' ' );
-	    bu_vls_strcat( &vls, argv[i] );
+    bu_vls_init(&vls);
+    bu_vls_strcat(&vls, argv[0]);
+    for (i=1; i<argc; i++) {
+	if (*argv[i] == '-') {
+	    bu_vls_putc(&vls, ' ');
+	    bu_vls_strcat(&vls, argv[i]);
 	    last_opt = i;
 	    new_arg_count++;
 	} else {
@@ -2753,49 +2732,48 @@ cmd_lm(ClientData	clientData,
 	}
     }
 
-    bu_avs_init( &avs, argc - last_opt, "cmd_lm avs" );
-    for ( i=last_opt+1; i<argc; i++ ) {
-	bu_avs_add_nonunique( &avs, "MUVES_Component", argv[i] );
+    bu_avs_init(&avs, argc - last_opt, "cmd_lm avs");
+    for (i=last_opt+1; i<argc; i++) {
+	bu_avs_add_nonunique(&avs, "MUVES_Component", argv[i]);
     }
 
-    tbl = db_lookup_by_attr( dbip, DIR_REGION, &avs, 2 );
-    if ( !tbl ) {
-	/* Error!!! */
-	Tcl_AppendResult( interp, "Error: db_lookup_by_attr() failed!!\n", (char *)NULL );
-	bu_vls_free( &vls );
-	bu_avs_free( &avs );
+    tbl = db_lookup_by_attr(dbip, DIR_REGION, &avs, 2);
+    if (!tbl) {
+	Tcl_AppendResult(interp, "ERROR: db_lookup_by_attr() failed!\n", (char *)NULL);
+	bu_vls_free(&vls);
+	bu_avs_free(&avs);
 	return TCL_ERROR;
     }
 
-    if ( BU_PTBL_LEN( tbl ) == 0 ) {
+    if (BU_PTBL_LEN(tbl) == 0) {
 	/* no matches */
-	bu_vls_free( &vls );
-	bu_avs_free( &avs );
-	bu_ptbl_free( tbl );
-	bu_free( (char *)tbl, "cmd_lm ptbl" );
+	bu_vls_free(&vls);
+	bu_avs_free(&avs);
+	bu_ptbl_free(tbl);
+	bu_free((char *)tbl, "cmd_lm ptbl");
 	return TCL_OK;
     }
 
-    for ( i=0; i<BU_PTBL_LEN( tbl ); i++ ) {
-	dp = (struct directory *)BU_PTBL_GET( tbl, i );
-	bu_vls_putc( &vls, ' ' );
-	bu_vls_strcat( &vls, dp->d_namep );
+    for (i=0; i<BU_PTBL_LEN(tbl); i++) {
+	dp = (struct directory *)BU_PTBL_GET(tbl, i);
+	bu_vls_putc(&vls, ' ');
+	bu_vls_strcat(&vls, dp->d_namep);
 	new_arg_count++;
     }
 
-    bu_ptbl_free( tbl );
-    bu_free( (char *)tbl, "cmd_lm ptbl" );
+    bu_ptbl_free(tbl);
+    bu_free((char *)tbl, "cmd_lm ptbl");
 
     /* create a new argc and argv to pass to the cmd_ls routine */
-    new_argv = (char **)bu_calloc( new_arg_count+1, sizeof( char *), "cmd_lm new_argv" );
-    new_argc = bu_argv_from_string( new_argv, new_arg_count, bu_vls_addr( &vls ) );
+    new_argv = (char **)bu_calloc(new_arg_count+1, sizeof(char *), "cmd_lm new_argv");
+    new_argc = bu_argv_from_string(new_argv, new_arg_count, bu_vls_addr(&vls));
 
-    ret = cmd_ls( clientData, interp, new_argc, new_argv );
+    ret = cmd_ls(clientData, interp, new_argc, new_argv);
 
-    bu_vls_free( &vls );
-    bu_free( (char *)new_argv, "cmd_lm new_argv" );
+    bu_vls_free(&vls);
+    bu_free((char *)new_argv, "cmd_lm new_argv");
 
-    return( ret );
+    return(ret);
 }
 
 
@@ -2843,7 +2821,7 @@ cmd_tol(ClientData	clientData,
     mged_rel_tol = mged_ttol.rel;
     mged_nrm_tol = mged_ttol.norm;
 
-    return( ret );
+    return(ret);
 }
 
 /* defined in chgview.c */
@@ -2864,7 +2842,7 @@ cmd_blast(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     if (cmd_zap(clientData, interp, 1, av) == TCL_ERROR)
 	return TCL_ERROR;
         
-    if ( argc == 1 ) /* "B" alone is same as "Z" */
+    if (argc == 1) /* "B" alone is same as "Z" */
 	return TCL_OK;
 
     return edit_com(argc, argv, 1, 1);
@@ -2880,7 +2858,7 @@ cmd_draw(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
     return edit_com(argc, argv, 1, 1);
 }
 
-extern int emuves_com( int argc, char **argv );	/* from chgview.c */
+extern int emuves_com(int argc, char **argv);	/* from chgview.c */
 
 /**
  * Add regions with attribute MUVES_Component haveing the specified values
@@ -2966,7 +2944,7 @@ cmd_E(ClientData	clientData,
 	    new_mats();
 	    (void)mged_svbase();
 
-	    for (BU_LIST_FOR(vrp, view_ring, &view_state->vs_headView.l))
+	    for (BU_LIST_FOR (vrp, view_ring, &view_state->vs_headView.l))
 		vrp->vr_scale = view_state->vs_vop->vo_scale;
 	}
     }
@@ -2978,23 +2956,23 @@ cmd_E(ClientData	clientData,
 }
 
 int
-cmd_bot_face_sort( ClientData	clientData,
-		   Tcl_Interp	*interp,
-		   int     	argc,
-		   char    	**argv)
-{
-    CHECK_DBI_NULL;
-    return wdb_bot_face_sort_cmd( wdbp, interp, argc, argv );
-}
-
-int
-cmd_bot_decimate( ClientData	clientData,
+cmd_bot_face_sort(ClientData	clientData,
 		  Tcl_Interp	*interp,
 		  int     	argc,
 		  char    	**argv)
 {
     CHECK_DBI_NULL;
-    return wdb_bot_decimate_cmd( wdbp, interp, argc, argv );
+    return wdb_bot_face_sort_cmd(wdbp, interp, argc, argv);
+}
+
+int
+cmd_bot_decimate(ClientData	clientData,
+		 Tcl_Interp	*interp,
+		 int     	argc,
+		 char    	**argv)
+{
+    CHECK_DBI_NULL;
+    return wdb_bot_decimate_cmd(wdbp, interp, argc, argv);
 }
 
 
@@ -3069,9 +3047,9 @@ cmd_has_embedded_fb(ClientData	clientData,
 
 int
 cmd_stub(ClientData	clientData,
-	Tcl_Interp	*interp,
-	int		argc,
-	char		**argv)
+	 Tcl_Interp	*interp,
+	 int		argc,
+	 char		**argv)
 {
     CHECK_DBI_NULL;
 
