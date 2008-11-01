@@ -155,12 +155,12 @@ struct concat_data {
     struct bu_vls affix;
 };
 
-#define NO_AFFIX	1<<0
-#define AUTO_PREFIX	1<<1
-#define AUTO_SUFFIX	1<<2
-#define CUSTOM_PREFIX	1<<3
-#define CUSTOM_SUFFIX	1<<4
-#define V4_MAXNAME	NAMESIZE
+#define NO_AFFIX      1<<0
+#define AUTO_PREFIX   1<<1
+#define AUTO_SUFFIX   1<<2
+#define CUSTOM_PREFIX 1<<3
+#define CUSTOM_SUFFIX 1<<4
+#define V4_MAXNAME    NAMESIZE
 
 /* Defined in wdb_cmd_std.c */
 BU_EXTERN(int wdb_comb_std_tcl,
@@ -541,9 +541,9 @@ wdb_init_obj(Tcl_Interp *interp,
  *@n	.inmem get box.s
  *@n	.inmem close
  *
- *@n	wdb_open db file "bob.g"
- *@n	db get white.r
- *@n	db close
+ *@n wdb_open db file "bob.g"
+ *@n db get white.r
+ *@n db close
  */
 static int
 wdb_open_tcl(ClientData clientData,
@@ -1910,7 +1910,7 @@ wdb_dump_cmd(struct rt_wdb *wdbp,
  *@brief
  *  Write the current state of a database object out to a file.
  *
- * @par  Example:
+ * @par Example:
  *	.inmem dump "/tmp/foo.g"
  */
 static int
