@@ -196,9 +196,9 @@ bw_save(int fd, unsigned char *rgb, int size)
 static int
 ppm_save(int fd, unsigned char *rgb, int width, int height)
 {
-    char buf[BUFSIZ];
+    char buf[BUFSIZ] = {0};
 
-    image_flip(rgb,width,height);
+    image_flip(rgb, width, height);
     snprintf(buf, BUFSIZ, "P6 %d %d 255\n", width, height);
     write(fd, buf, strlen(buf));
     write(fd, rgb, (size_t)(3*width*height));
@@ -220,12 +220,18 @@ int
 bu_image_save(unsigned char *data, int width, int height, int depth, char *filename, int filetype)
 {
     int i;
-    struct bu_image_file *bif = bu_image_save_open(filename, filetype, width, height, depth);
+    struct bu_image_file *bif = NULL;
+
+    bif = bu_image_save_open(filename, filetype, width, height, depth);
     if (bif==NULL)
 	return -1;
-    for (i=0;i<height;++i)
-	if (bu_image_save_writeline(bif, i, (unsigned char*)(data+i*width*depth))==-1)
-	    bu_log("Uh?");
+
+    for (i=0;i<height;++i) {
+	if (bu_image_save_writeline(bif, i, (unsigned char*)(data+i*width*depth)) == -1) {
+	    bu_log("Unexpected error saving image scanline\n");
+	}
+    }
+
     return bu_image_save_close(bif);
 }
 
@@ -276,20 +282,36 @@ bu_image_save_close(struct bu_image_file *bif)
 {
     int r = 0;
     switch (bif->format) {
-	case BU_IMAGE_BMP: r = bmp_save(bif->fd, bif->data, bif->width, bif->height); break;
-	case BU_IMAGE_PNG: r = png_save(bif->fd, bif->data, bif->width, bif->height); break;
-	case BU_IMAGE_PPM: r = ppm_save(bif->fd, bif->data, bif->width, bif->height); break;
-	case BU_IMAGE_PIX: r = pix_save(bif->fd, bif->data, bif->width*bif->height*bif->depth); break;
-	case BU_IMAGE_BW: r = bw_save(bif->fd, bif->data, bif->width*bif->height*bif->depth); break;
+	case BU_IMAGE_BMP:
+	    r = bmp_save(bif->fd, bif->data, bif->width, bif->height);
+	    break;
+	case BU_IMAGE_PNG:
+	    r = png_save(bif->fd, bif->data, bif->width, bif->height);
+	    break;
+	case BU_IMAGE_PPM:
+	    r = ppm_save(bif->fd, bif->data, bif->width, bif->height);
+	    break;
+	case BU_IMAGE_PIX:
+	    r = pix_save(bif->fd, bif->data, bif->width*bif->height*bif->depth);
+	    break;
+	case BU_IMAGE_BW:
+	    r = bw_save(bif->fd, bif->data, bif->width*bif->height*bif->depth);
+	    break;
     }
     switch (r) {
-	case 0: bu_log("Failed to write image\n"); break;
+	case 0:
+	    bu_log("Failed to write image\n");
+	    break;
 	    /* 1 signals success with no further action needed */
-	case 2: close(bif->fd); break;
+	case 2:
+	    close(bif->fd);
+	    break;
     }
+ 
     bu_free(bif->filename, "bu_image_file filename");
     bu_free(bif->data, "bu_image_file data");
     bu_free(bif, "bu_image_file");
+
     return 0;
 }
 
