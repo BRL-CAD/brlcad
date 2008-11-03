@@ -32,6 +32,7 @@
 static const int unused = 0;
 
 #ifndef HAVE_STRDUP
+#include "sysv.h"
 
 /* for malloc */
 #include <stdlib.h>

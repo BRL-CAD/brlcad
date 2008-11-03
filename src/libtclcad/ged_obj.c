@@ -360,8 +360,8 @@ static struct go_cmdtab go_cmds[] = {
     {"attr",	(char *)0, MAXARGS, go_pass_through_func, ged_attr},
     {"autoview",	"vname", MAXARGS, go_autoview, GED_FUNC_PTR_NULL},
     {"bev",	(char *)0, MAXARGS, go_pass_through_func, ged_bev},
-    {"bo",	(char *)0, MAXARGS, go_pass_through_func, ged_binary},
     {"blast",	(char *)0, MAXARGS, go_blast, GED_FUNC_PTR_NULL},
+    {"bo",	(char *)0, MAXARGS, go_pass_through_func, ged_binary},
     {"bot_condense",	(char *)0, MAXARGS, go_pass_through_func, ged_bot_condense},
     {"bot_decimate",	(char *)0, MAXARGS, go_pass_through_func, ged_bot_decimate},
     {"bot_dump",	(char *)0, MAXARGS, go_pass_through_func, ged_bot_dump},
@@ -421,6 +421,7 @@ static struct go_cmdtab go_cmds[] = {
     {"get_eyemodel",	"vname", 2, go_view_func, ged_get_eyemodel},
     {"get_type",	(char *)0, MAXARGS, go_pass_through_func, ged_get_type},
     {"glob",	(char *)0, MAXARGS, go_pass_through_func, ged_glob},
+    {"gqa",	(char *)0, MAXARGS, go_pass_through_func, ged_gqa},
     {"grid",	"vname args", 6, go_view_func, ged_grid},
     {"hide",	(char *)0, MAXARGS, go_pass_through_func, ged_hide},
     {"how",	(char *)0, MAXARGS, go_pass_through_func, ged_how},
@@ -456,8 +457,8 @@ static struct go_cmdtab go_cmds[] = {
     {"match",	(char *)0, MAXARGS, go_pass_through_func, ged_match},
     {"mater",	(char *)0, MAXARGS, go_pass_through_func, ged_mater},
     {"mirror",	(char *)0, MAXARGS, go_mirror, GED_FUNC_PTR_NULL},
-    {"more_args_callback",	"set/get the \"more args\" callback", MAXARGS, go_more_args_callback, GED_FUNC_PTR_NULL},
     {"model2view",	"vname", 2, go_view_func, ged_model2view},
+    {"more_args_callback",	"set/get the \"more args\" callback", MAXARGS, go_more_args_callback, GED_FUNC_PTR_NULL},
     {"move_arb_edge",	(char *)0, MAXARGS, go_pass_through_func, ged_move_arb_edge},
     {"move_arb_face",	(char *)0, MAXARGS, go_pass_through_func, ged_move_arb_face},
     {"mouse_constrain_rot",	"vname coord x y", MAXARGS, go_mouse_constrain_rot, GED_FUNC_PTR_NULL},
@@ -594,7 +595,7 @@ Go_Init(Tcl_Interp *interp)
     (void)Tcl_CreateCommand(interp, (const char *)"go_open", go_open_tcl,
 			    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
-#if 1
+#if 0
     /*XXX Temporary */
     /* initialize database objects */
     Wdb_Init(interp);
@@ -605,6 +606,8 @@ Go_Init(Tcl_Interp *interp)
     /* initialize view objects */
     Vo_Init(interp);
 #endif
+
+    bu_semaphore_reinit(GED_SEM_LAST);
 
     return TCL_OK;
 }

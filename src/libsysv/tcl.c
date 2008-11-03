@@ -9,21 +9,8 @@
 #include "common.h"
 
 #include "tcl.h"
+#include "sysv.h"
 #include <stdio.h>
-
-
-#ifndef SYSV_EXPORT
-#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#    ifdef SYSV_EXPORT_DLL
-#      define SYSV_EXPORT __declspec(dllexport)
-#    else
-#      define SYSV_EXPORT __declspec(dllimport)
-#    endif
-#  else
-#    define SYSV_EXPORT
-#  endif
-#endif
-
 
 SYSV_EXPORT int
 Sysv_Init(Tcl_Interp *interp)

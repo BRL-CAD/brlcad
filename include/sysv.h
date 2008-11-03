@@ -37,31 +37,41 @@
 
 #include "common.h"
 
+__BEGIN_DECLS
+
+#ifndef SYSV_EXPORT
+#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
+#    ifdef SYSV_EXPORT_DLL
+#      define SYSV_EXPORT __declspec(dllexport)
+#    else
+#      define SYSV_EXPORT __declspec(dllimport)
+#    endif
+#  else
+#    define SYSV_EXPORT
+#  endif
+#endif
+
 #ifndef HAVE_MEMSET
-char *
-memset(char *s, char c, int n);
+SYSV_EXPORT extern char *memset(char *s, char c, int n);
 #endif
 
 #ifndef HAVE_STRCHR
-char *
-strchr(char *sp, char c);
+SYSV_EXPORT extern char *strchr(char *sp, char c);
 #endif
 
 #ifndef HAVE_STRDUP
-char *
-strdup(const char *cp);
+SYSV_EXPORT extern char *strdup(const char *cp);
 #endif
 
 #ifndef HAVE_STRSEP
-char *
-strsep(char **stringp, const char *delim);
+SYSV_EXPORT extern char *strsep(char **stringp, const char *delim);
 #endif
 
 #ifndef HAVE_STRTOK
-char *
-strtok(char *s, const char *delim);
+SYSV_EXPORT extern char *strtok(char *s, const char *delim);
 #endif
 
+__END_DECLS
 
 #endif /* __SYSV_H__ */
 

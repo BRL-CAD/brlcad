@@ -345,6 +345,24 @@ bu_semaphore_init(unsigned int nsemaphores)
 #endif	/* PARALLEL */
 }
 
+void
+bu_semaphore_reinit(unsigned int nsemaphores)
+{
+#if !defined(PARALLEL) && !defined(DEFINED_BU_SEMAPHORES)
+    return;					/* No support on this hardware */
+#else
+    unsigned int	i;
+
+    if (bu_nsemaphores != 0) {
+	free((void *)bu_semaphores);
+	bu_semaphores = (struct bu_semaphores *)0;
+	bu_nsemaphores = 0;
+    }
+
+    bu_semaphore_init(nsemaphores);
+#endif	/* PARALLEL */
+}
+
 /**
  * B U _ S E M A P H O R E _ A C Q U I R E
  */

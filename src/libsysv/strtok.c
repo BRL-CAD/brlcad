@@ -18,7 +18,7 @@ static const int unused = 0;
  *  don't have their own.
  */
 #ifndef HAVE_STRTOK
-
+#include "sysv.h"
 
 static char *scanpoint = 0;
 

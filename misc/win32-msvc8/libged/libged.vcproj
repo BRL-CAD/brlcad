@@ -502,6 +502,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\gqa.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\grid.c"
 				>
 			</File>

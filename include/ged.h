@@ -75,7 +75,17 @@ __BEGIN_DECLS
 #define GED_CONSTRAINED_ROTATE_MODE 4
 #define GED_CONSTRAINED_TRANSLATE_MODE 5
 
-/*XXX This macro is temporary */
+/**
+ * S E M A P H O R E S
+ *
+ * Definition of global parallel-processing semaphores.
+ *
+ */
+#define GED_SEM_WORKER RT_SEM_LAST
+#define GED_SEM_STATS GED_SEM_WORKER+1
+#define GED_SEM_LIST GED_SEM_STATS+1
+#define GED_SEM_LAST GED_SEM_LIST+1
+
 #define GED_INIT(_gedp, _wdbp) { \
     ged_init((_gedp)); \
     (_gedp)->ged_wdbp = (_wdbp); \
@@ -1567,6 +1577,14 @@ GED_EXPORT BU_EXTERN(int ged_get_type, (struct ged *gedp, int argc, const char *
  *     glob expression
  */
 GED_EXPORT BU_EXTERN(int ged_glob, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * 
+ *
+ * Usage:
+ *     gqa args
+ */
+GED_EXPORT BU_EXTERN(int ged_gqa, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Grid utility command.
