@@ -2446,8 +2446,6 @@ BU_EXPORT BU_EXTERN(void bu_rb_walk,
 /* semaphore.c */
 BU_EXPORT BU_EXTERN(void bu_semaphore_init,
 		    (unsigned int nsemaphores));
-BU_EXPORT BU_EXTERN(void bu_semaphore_reinit,
-		    (unsigned int nsemaphores));
 BU_EXPORT BU_EXTERN(void bu_semaphore_acquire,
 		    (unsigned int i));
 BU_EXPORT BU_EXTERN(void bu_semaphore_release,

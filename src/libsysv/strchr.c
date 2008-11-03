@@ -38,7 +38,6 @@ static const int unused = 0;
  * defined for folks that don't have a system strchr()
  */
 #ifndef HAVE_STRCHR
-#include "sysv.h"
 
 char *
 strchr(register char *sp, register char c)
