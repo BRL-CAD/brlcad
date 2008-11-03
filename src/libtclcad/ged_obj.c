@@ -595,7 +595,7 @@ Go_Init(Tcl_Interp *interp)
     (void)Tcl_CreateCommand(interp, (const char *)"go_open", go_open_tcl,
 			    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
-#if 0
+#if 1
     /*XXX Temporary */
     /* initialize database objects */
     Wdb_Init(interp);
