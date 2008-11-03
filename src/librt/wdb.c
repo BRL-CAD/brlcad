@@ -412,23 +412,12 @@ wdb_init(struct rt_wdb *wdbp, struct db_i *dbip, int mode)
     wdbp->wdb_resp = &rt_uniresource;
 }
 
-/**
- *			W D B _ F S Y N C
- *
- *  Flush pending data to the storage device.
- */
-int
-wdb_fflush(struct rt_wdb *wdbp)
-{
-    RT_CK_WDB(wdbp);
-    RT_CK_DBI(wdbp->dbip);
-    return fflush(wdbp->dbip->dbi_fp);
-}
 
 /**
- *			W D B _ C L O S E
+ * W D B _ C L O S E
  *
- *  Release from associated database "file", destroy dynamic data structure.
+ * Release from associated database "file", destroy dynamic data
+ * structure.
  */
 void
 wdb_close(struct rt_wdb *wdbp)
