@@ -281,7 +281,7 @@ HEADERS = html.h cssInt.h css.h cssprop.h htmltokens.h htmldefaultstyle.c
 
 HDR = $(GENHDR) $(SRCHDR)
 
-%.@OBJEXT@: %.c $(HEADERS)
+.c.@OBJEXT@: $(HEADERS)
 	$(COMPILE) -c -I. -I$(srcdir)/src `@CYGPATH@ $<` -o $@
 
 #========================================================================
