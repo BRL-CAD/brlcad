@@ -184,6 +184,8 @@ all: binaries libraries # doc
 
 binaries: $(BINARIES) pkgIndex.tcl
 
+libraries:
+
 
 #========================================================================
 # Your doc target should differentiate from doc builds (by the developer)
